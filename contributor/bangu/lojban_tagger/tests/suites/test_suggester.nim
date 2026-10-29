@@ -240,6 +240,19 @@ const
   FLOOR_PORTS_TAKEN = 15  ## Fewest random URL arguments whose port is taken; 22 read at seed `0`.
   FLOOR_PORTS_REFUSED = 60
     ## Fewest random URL arguments whose port is refused; 78 read at seed `0`.
+  OPENINGS_ENDPOINT = [
+    ("https://api.example.org:", true), ("HTTPS://api.example.org:", true),
+    ("http://127.0.0.1:", true), ("http://[::1]:", true), ("http://api.example.org:", false),
+  ]
+    ## Openings of endpoint before its port, beside whether URL may carry credential: https in
+    ##   either case, http to loopback address of each kind, and http to other host.
+  PROBLEM_ENDPOINT_PORT = "Endpoint should name port of one to five digits from 1 to 65535, " &
+      "or none; got "
+    ## Opening of problem binary gives where port of endpoint is refused, whatever its scheme.
+  PROBLEM_ENDPOINT_URL = "Endpoint should be http or https URL with host and no whitespace; got "
+    ## Opening of problem binary gives where endpoint is no URL, port aside.
+  PROBLEM_ENDPOINT_SCHEME = "Endpoint should be https, or http to loopback host; got "
+    ## Opening of problem binary gives where endpoint is URL that may not carry credential.
 
 
 
@@ -1771,8 +1784,19 @@ suite "Internal: Suggester":
           "or `max`; got `extreme` for `LOJBAN_TAGGER_EFFORT`."),
       (every, @[(KEY_ENDPOINT, "http://api.example.org/v1")], "Endpoint should be https, or " &
           "http to loopback host; got `http://api.example.org/v1` for `LOJBAN_TAGGER_ENDPOINT`."),
-      (every, @[(KEY_ENDPOINT, "api.example.org/v1")], "Endpoint should be https, or http to " &
-          "loopback host; got `api.example.org/v1` for `LOJBAN_TAGGER_ENDPOINT`."),  # no URL
+      (every, @[(KEY_ENDPOINT, "api.example.org/v1")], PROBLEM_ENDPOINT_URL &
+          "`api.example.org/v1` for `LOJBAN_TAGGER_ENDPOINT`."),  # no URL, so no scheme to name
+      (every, @[(KEY_ENDPOINT, "https:///v1/messages")], PROBLEM_ENDPOINT_URL &
+          "`https:///v1/messages` for `LOJBAN_TAGGER_ENDPOINT`."),  # https, yet no host
+      (every, @[(KEY_ENDPOINT, "https://api.example.org/v1 x")], PROBLEM_ENDPOINT_URL &
+          "`https://api.example.org/v1 x` for `LOJBAN_TAGGER_ENDPOINT`."),  # https, yet whitespace
+      (every, @[(KEY_ENDPOINT, "https://api.anthropic.com:65536/v1/messages")],
+          PROBLEM_ENDPOINT_PORT & "`https://api.anthropic.com:65536/v1/messages` for " &
+          "`LOJBAN_TAGGER_ENDPOINT`."),  # recheck claim regressions-app-5, 2026-10-29: named scheme
+      (every, @[(KEY_ENDPOINT, "https://api.anthropic.com:0/v1/messages")], PROBLEM_ENDPOINT_PORT &
+          "`https://api.anthropic.com:0/v1/messages` for `LOJBAN_TAGGER_ENDPOINT`."),  # as found
+      (every, @[(KEY_ENDPOINT, "http://127.0.0.1:99091/v1/messages")], PROBLEM_ENDPOINT_PORT &
+          "`http://127.0.0.1:99091/v1/messages` for `LOJBAN_TAGGER_ENDPOINT`."),  # http to loopback
       (every, @[(KEY_SERVICE, "chat")], "Endpoint should be named for service `chat`; got `` " &
           "for `LOJBAN_TAGGER_ENDPOINT`."),
       (every, chat[0..1], "Model should be named for service `chat`; got `` for " &
@@ -1824,6 +1848,39 @@ suite "Internal: Suggester":
     check server.heard.len == 0  # nothing sent
     check not dirExists(directory_case)  # nothing written
     stopServer(server)
+
+
+  test "endpoint refused names fault of its port, and of its scheme where URL is well formed":
+    # Recheck claim regressions-app-5, 2026-10-29: every refusal said endpoint should be https,
+    #   though value was https, or http to loopback host, and its port alone was refused.
+    let
+      text = example("lojban")
+      passage = text.argument.toPassage
+      missing = directory / "endpoints_missing"  # never made, so recording of each request misses
+    var count_port, count_scheme, count_taken = 0
+    for (opening, is_carrying) in OPENINGS_ENDPOINT:
+      for (port, is_taken) in PORTS_URL:  # 65 endpoints, exhaustive
+        var settings = Service.Claude.toSettings
+        settings.endpoint = opening & port & "/v1/messages"
+        let
+          named = "`" & settings.endpoint & "` for `" & KEY_ENDPOINT & "`.\n"
+          outcome = binary.run([(KEY_ENDPOINT, settings.endpoint)], ["--replay:" & missing,
+              text.argument])
+        if not is_taken:
+          inc count_port
+          check outcome == Outcome(report: PROBLEM_ENDPOINT_PORT & named,
+              code: 2)  # RFC 6335 6: port named first, whatever scheme and host
+        elif not is_carrying:
+          inc count_scheme
+          check outcome == Outcome(report: PROBLEM_ENDPOINT_SCHEME & named,
+              code: 2)  # URL well formed, so http to host off loopback is fault
+        else:
+          inc count_taken
+          check outcome == toOutcome(toSuggestionRecording("missing at " & pathShown(missing,
+              requestService(settings, passage))), passage, settings.model,
+              [])  # endpoint taken, so replay asks recording of its request
+    check count_port > 0 and count_scheme > 0 and count_taken > 0  # each side of law reached
+    check not dirExists(missing)  # replay makes nothing
 
 
   test "usage error exits 2, prints usage, and sends or writes nothing":
