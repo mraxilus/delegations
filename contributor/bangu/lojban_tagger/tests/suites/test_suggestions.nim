@@ -15,7 +15,6 @@
 ##     wording, never how they arise.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
-##   Corpus does not cover yet: page URL holding ill-formed UTF-8.
 
 {.experimental: "strictFuncs".}
 
@@ -193,8 +192,10 @@ const
     ##   break line, or break UTF-8.
   URLS_PASSAGE = [
     "", URL_SUITE, "https://example.org/a?b=1&c=\"d\"<e>f", "http://127.0.0.1:8080/x#y",
+    "https://example.org/caf\xE9", "https://example.org/\xF0\x9F\x98x\xFF",
   ]
-    ## URLs random passages come from: none, plain, holding every character element escapes.
+    ## URLs random passages come from: none, plain, holding every character element escapes, and
+    ##   holding ill-formed UTF-8.
   KEYS_WIRE = [
     "category", "choices", "code", "content", "error", "error_type", "finish_reason", "gloss",
     "message", "metadata", "model", "recommended_model", "refusal", "stop_details",
@@ -1515,6 +1516,23 @@ suite "Internal: Page":
     check over.count_bytes == BYTES_PASSAGE_MAX + 1  # bytes before cut kept
     check straddling.is_cut and straddling.text == "a".repeat(BYTES_PASSAGE_MAX - 1)  # boundary
     check paged.url == URL_SUITE and paged.is_page_cut and not paged.is_cut  # page facts kept
+
+
+  test "URL of passage is repaired as text is, so every body stays UTF-8":
+    let found = toPassage("x", url = "https://example.org/caf\xE9")
+    check found.url == "https://example.org/caf\uFFFD"  # case as found in suite review: kept raw
+    for service in Service:  # 3 services, exhaustive
+      let body = initSettings(service, some(EFFORT_DEFAULT)).toBody(found)
+      check body.isWellFormed  # case as found in suite review: body held byte `E9`
+    let paged = readPage("https://example.org/caf\xE9",
+        Reply(status: 200, content_type: "text/plain", body: "x"))
+    check paged.is_read and
+        paged.passage.url == "https://example.org/caf\uFFFD"  # page repairs URL as passage does
+    randomize(0)
+    let pool = poolBytes()
+    for bytes in served(pool):  # `SAMPLES_BYTES` strings, seeded
+      check toPassage("x", bytes).url ==
+          bytes.repairReference.text  # substitution of maximal subparts, chapter 3
 
 
   test "page refusals by table: status, encoding, type, charset, no text":
