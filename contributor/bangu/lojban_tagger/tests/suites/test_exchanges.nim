@@ -36,6 +36,9 @@
 ##     strict parser reads it, so has no host and gives no redirect. References of one to three
 ##     path segments, dot segments among them, hold laws: dot segments removed, target resolves
 ##     to itself, and `./` before relative path names same place.
+##     `removeDotSegments` meets examples of section 5.2.4, and reference written apart here,
+##       which slices buffer as section 5.2.4 writes it, over every path of up to eight bytes of
+##       `/`, `.` and `a`, and over random paths of up to forty segments.
 ##   URL holding whitespace or control character is refused by `redirect` and by `send`, each such
 ##     byte at start, middle and end; `send` meets live server, so refusal shows nothing went out.
 ##   Credential laws take every byte at start, middle and end of value; random secrets are spelled
@@ -79,6 +82,7 @@ import std/[
 ]
 
 import ../../app/exchanges
+from ../../app/exchanges {.all.} import removeDotSegments
 import ../../src/lojban_tagger/suggestions
 
 
@@ -320,6 +324,10 @@ const
   COUNT_REFERENCES = 2_175
     ## References of one to three `SEGMENTS_DOT`: relative or absolute, with or without query and
     ##   fragment, but none empty and none opening with `//`, which names authority.
+  BYTES_PATHS_MAX = 8  ## Most bytes of path dot segment law enumerates over `/`, `.` and `a`.
+  COUNT_PATHS = 9_841  ## Paths dot segment law enumerates: sum of 3^k for k from 0 to 8.
+  SAMPLES_PATHS = 2_000
+    ## Random paths dot segment law reads past enumerated ones: one to forty of `SEGMENTS_DOT`.
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
   LUT_HOSTS_BY_LEAF: array[Leaf, seq[string]] = [
     @["localhost", "127.0.0.1"], @["localhost"], @["127.0.0.1"], @["wrong.example"],
@@ -531,6 +539,38 @@ func referencesDotted(): seq[string] =
         if reference.len > 0 and not reference.startsWith("//"): result.add reference
 
 
+func pathsEnumerated(): seq[string] =
+  ## Build every path of up to `BYTES_PATHS_MAX` bytes over `/`, `.` and `a`, shortest first.
+  var last = @[""]
+  result = last
+  for _ in 1..BYTES_PATHS_MAX:
+    var grown: seq[string]
+    for path in last:
+      for character in "/.a": grown.add path & character
+    result.add grown
+    last = grown
+
+
+func removeDotSegmentsReference(path: string): string =
+  ## Remove dot segments as RFC 3986 section 5.2.4 writes it: input buffer sliced by each of
+  ##   steps `A` to `E`, prefix replaced where step says so, and output buffer losing last
+  ##   segment and `/` before it at `..`.
+  var input = path
+  while input.len > 0:
+    if input.startsWith("../"): input = input[3 .. ^1]  # 5.2.4 `A`
+    elif input.startsWith("./"): input = input[2 .. ^1]  # 5.2.4 `A`
+    elif input.startsWith("/./"): input = "/" & input[3 .. ^1]  # 5.2.4 `B`
+    elif input == "/.": input = "/"  # 5.2.4 `B`
+    elif input.startsWith("/../") or input == "/..":  # 5.2.4 `C`
+      input = "/" & input[min(4, input.len) .. ^1]
+      result.setLen max(result.rfind('/'), 0)
+    elif input == "." or input == "..": input = ""  # 5.2.4 `D`
+    else:  # 5.2.4 `E`
+      let stop = if input.find('/', 1) < 0: input.len else: input.find('/', 1)
+      result.add input[0..<stop]
+      input = input[stop .. ^1]
+
+
 proc lineRandom(length_max: int): string =
   ## Draw bytes of one line: empty one time in four, else any byte but line break.
   if rand(3) == 0: return ""
@@ -623,6 +663,18 @@ proc poolBodies(): seq[string] =
   ## Draw `SAMPLES_BODIES` random bodies into pool allocated once; caller seeds first.
   result = newSeqOfCap[string](SAMPLES_BODIES)
   for _ in 1..SAMPLES_BODIES: result.add bytesRandom()
+
+
+proc poolPaths(): seq[string] =
+  ## Draw `SAMPLES_PATHS` random paths into pool allocated once: one to forty of `SEGMENTS_DOT`
+  ##   joined by `/`, after `/` half time; caller seeds first.
+  result = newSeqOfCap[string](SAMPLES_PATHS)
+  for _ in 1..SAMPLES_PATHS:
+    var path = if rand(1) == 0: "/" else: ""
+    for i in 0..rand(39):
+      if i > 0: path.add '/'
+      path.add SEGMENTS_DOT.sample
+    result.add path
 
 
 proc poolPorts(): seq[string] =
@@ -1627,6 +1679,21 @@ suite "Internal: Exchange":
       if reference[0] notin {'/', '?', '#'}:
         check named & $URL_BASE.redirect(Reply(status: 302, location: "./" & reference)) ==
             named & $target  # domain: `./` before relative path names same place
+
+
+  test "dot segments go as RFC 3986 section 5.2.4 removes them, from every path, as reference does":
+    check removeDotSegments("/a/b/c/./../../g") == "/a/g"  # RFC 3986 5.2.4, first example
+    check removeDotSegments("mid/content=5/../6") == "mid/6"  # RFC 3986 5.2.4, second example
+    let paths = pathsEnumerated()
+    check paths.len == COUNT_PATHS  # every path over `/`, `.` and `a` up to `BYTES_PATHS_MAX`
+    for path in paths:
+      check path & ": " & removeDotSegments(path) ==
+          path & ": " & removeDotSegmentsReference(path)  # domain: RFC 3986 5.2.4, `A` to `E`
+    randomize(0)
+    let pool = poolPaths()
+    for path in served(pool):
+      check path & ": " & removeDotSegments(path) ==
+          path & ": " & removeDotSegmentsReference(path)  # domain: RFC 3986 5.2.4, long paths
 
 
   test "redirect follows statuses of `STATUSES_REDIRECT` alone, and only to http or https":
