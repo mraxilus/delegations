@@ -1,6 +1,6 @@
 ## Stub parser of code's compiler for suites, so they run with no compiler: each candidate group
 ##   is proven but one `REJECTED` names, as commit pin of `ronri` projects answered each
-##   (2026-10-05). `test_proofs.nim` holds ASCII verdicts to parser of 2.2.12 itself.
+##   (2026-10-05). `test_proofs.nim` holds ASCII verdicts to parser of 2.4.0 itself.
 ##   Group is named by text alone, so suite writing one text twice gets one verdict for both.
 
 {.experimental: "strictFuncs".}

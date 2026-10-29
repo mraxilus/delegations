@@ -43,10 +43,10 @@ command line built from the root of the repository.
 
 - Rejected: the flag in the `cmd` of the stub. It reaches the build that testament runs, and no
   other.
-- Verified by hand, 2026-10-06, with Nim 2.2.12. An unread import in a module of `src/` fails
-  `nim c` of `tests/test_suites.nim`, of one suite alone that imports the module, and of
-  `src/knoller.nim`. An unread import in a suite fails `nim c` of the stub and of that suite.
-  Through `koch test`, testament reads the flag too.
+- Verified by hand with Nim 2.2.12, 2026-10-06, and with Nim 2.4.0, 2026-10-29. An unread
+  import in a module of `src/` fails `nim c` of `tests/test_suites.nim`, of one suite alone that
+  imports the module, and of `src/knoller.nim`. An unread import in a suite fails `nim c` of the
+  stub and of that suite. Through `koch test`, testament reads the flag too.
 - Cost: a build of `koch` and the suites of `curator/audit` read no configuration here. So an
   unused import in knoller fails the suite of knoller alone, which `koch check` runs whenever
   knoller changes.
@@ -292,8 +292,9 @@ recipe.
   who has not. Rejected: the layout of `choosenim`, a second convention that cannot serve a
   commit pin at all.
 - Cost: the first run on a pin that the machine lacks fetches a release in seconds, or builds a
-  commit in minutes, once. A fetched release takes about 140 MB, and a built commit about
-  2.4 GB, measured below. Nothing prunes them.
+  commit in minutes, once. A fetched release takes 140 MB to 192 MB, and a built commit about
+  2.4 GB. Release 2.4.0 takes 192 MB, measured with `du`, 2026-10-29, and the others are
+  measured below. Nothing prunes them.
 - On CI, the installed compiler of each job serves its pin, so resolution stops at `PATH`.
 
 **The fetched tarball is checked against the digest published beside it.**
@@ -539,10 +540,12 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
   `rga_visualiser` (#521), and from the rulings of #533, #526 and #443.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
-- A case that 2.2.12 reads rightly asks the parser of 2.2.12, which builds the suite. A case with
-  the glyph operators of the commit pin asks the stub (`suites/stubs.nim`), since the job of
-  knoller runs 2.2.12 alone. The stub gave the verdict of the commit pin on each such case,
-  verified by hand, 2026-10-05.
+- A case in ASCII asks the parser of 2.4.0, which builds the suite. A case with the glyph
+  operators of the `ronri` projects asks the stub (`suites/stubs.nim`). The stub gives the
+  verdict of their commit pin, verified by hand, 2026-10-05. The stub stays, because that verdict
+  is the one `koch fix` gives those projects, and the job of knoller runs 2.4.0 alone. The parser
+  of 2.4.0 gives the same verdicts today, verified by hand, 2026-10-29, but a later pin of
+  knoller need not.
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
@@ -559,8 +562,9 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 **`tokens.nim` keeps the rules of the lexer of the compiler.** A run of operator characters is one
 operator. A `-` before a digit opens a number after a space or an opening bracket.
 
-- The glyphs are those of the commit pin of the `ronri` projects. It adds `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the
-  glyphs of 2.2.12, and no project on 2.2.12 spells them in code.
+- The glyphs are those of 2.4.0 and of the commit pin of the `ronri` projects, whose lexers read
+  the same set. That set adds `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the glyphs of 2.2.12, and no project on 2.2.12
+  spells them in code. Verified by hand, 2026-10-29, in the source of each lexer.
 - Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
   each Nim file outside whitespace lies in one token, and each bracket finds its partner.
 
@@ -660,8 +664,9 @@ An argument splits its own call only where that call is the whole argument.
 **A list written one item to a line takes a trailing separator (X.3).** That holds for a call,
 parameters, an array, a seq, a set, a table, a tuple of several items, a constructor and an import
 bracket. Parameters take the separator that their groups take. A parenthesis of one item takes
-none, because `(a,)` is a tuple and `(a)` is a grouping. Verified by hand with 2.2.12, 2026-10-02:
-the compiler accepts the separator in each of these lists, and `;` after the last parameter group.
+none, because `(a,)` is a tuple and `(a)` is a grouping. Verified by hand with 2.2.12, 2026-10-02,
+and with 2.4.0, 2026-10-29. Each compiler accepts the separator in each of these lists, and `;`
+after the last parameter group.
 
 - The separator stands only where the list would not fit joined onto the line where it opens
   (`isFittingJoined`). A list that fits joined takes none: a call joins under the call layout,
@@ -795,7 +800,8 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
 - The value of a binding runs on over each line of code below it at a deeper indent. Examples
   are the branches of `when`, a sum after `+`, and a `block:` below `=`. Nim reads those lines as
   part of the value, and `nim jsondoc` reads the doc below the last of them. Verified by hand
-  with `nim jsondoc` of 2.2.12 and of the commit pin of `ronri`, 2026-10-25.
+  with `nim jsondoc` of 2.2.12 and of the commit pin of `ronri`, 2026-10-25. 2.4.0 reads the
+  same, verified by hand, 2026-10-29.
 - A line of enum members ends on itself, because the `,` that closes it opens the next member.
 - A name on a line that opens inside a bracket is part of an expression, and takes no doc. Such a
   name is a field of a tuple type, or a parameter of a routine type, over several lines. A doc
@@ -817,9 +823,9 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
 - A value or a body that opens a long string, or a comment of several lines, takes its doc where
   that string or comment closes. A doc written on its first line would stand inside the string,
   and change its value.
-- Nim 2.2.12 and the commit pin of `ronri` refuse a doc after the `=` of an argument inside an
-  open bracket. They refuse one after the `:` of a field or a key there too, as `expression
-  expected`. Verified by hand with both compilers, 2026-10-25.
+- Nim 2.2.12, 2.4.0 and the commit pin of `ronri` refuse a doc after the `=` of an argument
+  inside an open bracket. They refuse one after the `:` of a field or a key there too, as
+  `expression expected`. Verified by hand with each compiler, 2026-10-29.
 
 **The fixer writes each doc where doc position puts it and `nim doc` reads it (D2 a of #760).** A
 declaration on one line takes it joined to that line, where the joined line fits and holds no
@@ -835,19 +841,22 @@ the first line of its body, at the indent of the body.
   `=`, with `block` on the next line.
 - `nim jsondoc` of 2.2.12 and of the commit pin reads a doc in each of these places. It reads
   none after the `(` of a call, after `[`, `,` or a binary operator, after `block:`, or first in
-  the body of `block:`. Verified by hand with both compilers, 2026-10-25.
+  the body of `block:`. Verified by hand with both compilers, 2026-10-25. 2.4.0 reads the same,
+  verified by hand, 2026-10-29.
 - Nim parses no doc on the line below an `=` that ends the first line. So a first line too wide
-  for a joined doc sends the doc to the close. Verified by hand with both compilers, 2026-10-25.
+  for a joined doc sends the doc to the close. Verified by hand with both compilers, 2026-10-25,
+  and with 2.4.0, 2026-10-29.
 - No comment alone gives a value that opens `block` on its first line a doc that `nim doc` reads.
   `nim jsondoc` reads none after `block:`, first in the body, after its last line, or below it at
   the indent of the declaration. A doc below the body at the indent of the body leaves its last
-  value unused, as `nim check` reports. Verified by hand with both compilers, 2026-10-25.
+  value unused, as `nim check` reports. Verified by hand with both compilers, 2026-10-25, and
+  with 2.4.0, 2026-10-29.
 
 **A forward declaration takes the doc of its routine, and the fix leaves that move for hand.**
-`nim doc` of Nim 2.2.12 reads the doc of a forward declaration, and drops the doc of the
-definition. Where the forward declaration holds no doc, the page shows none. Verified by hand
-with `nim doc` of 2.2.12, 2026-10-25. A `## TODO: Document.` there would hide the doc below it, so
-the fix writes none.
+`nim doc` of Nim 2.2.12, of 2.4.0 and of the commit pin reads the doc of a forward declaration,
+and drops the doc of the definition. Where the forward declaration holds no doc, the page shows
+none. Verified by hand with `nim doc` of 2.2.12, 2026-10-25, and of each compiler, 2026-10-29. A
+`## TODO: Document.` there would hide the doc below it, so the fix writes none.
 
 **Missing doc runs after the wraps, and before the comment above.** A doc joins a line only where
 the line fits once the wraps settle it. Rejected: missing doc before the wraps. There a doc that
@@ -876,11 +885,11 @@ trails a line which opens a bracket holds apart a call that the wraps would join
 - Verified by hand with that driver over each Nim file of this repository and of the library,
   2026-10-25. A second fix writes nothing, and no token but a comment changes. A probe parses
   each file the fix writes with `parseStmt`, under 2.2.12 and under the commit pin of `ronri`, and
-  each one parses.
+  each one parses. Each one parses under 2.4.0 too, verified by hand, 2026-10-29.
 - Cost: a doc that opens the line right below the first line of a declaration counts, though the
   value runs on past it. That holds for the first line of a `block:`, and for a line inside a
   bracket, where `nim jsondoc` reads no doc. Verified by hand with `nim jsondoc` of 2.2.12,
-  2026-10-25. The fixer never writes a doc there.
+  2026-10-25, and of 2.4.0, 2026-10-29. The fixer never writes a doc there.
 - Cost: a routine with no body reads as a forward declaration where any overload of its name
   follows.
 - Cost: a routine on one line reads as a forward where its body after `= ` is shorter than
@@ -1108,18 +1117,19 @@ file that asked nothing gives the same result again. The command line asks at mo
   from its second run.
 - The prover is a proc value (`Prover`), so the suites stub it (`suites/stubs.nim`). The stub
   answers each case as the commit pin of the `ronri` projects answered it, 2026-10-05.
-  `suites/test_proofs.nim` runs the compiler that builds it, 2.2.12 in the job of knoller, and
+  `suites/test_proofs.nim` runs the compiler that builds it, 2.4.0 in the job of knoller, and
   holds the verdicts of the ASCII cases to the real parser.
 - The compiler is the caller's. `koch fix` passes the pin of each project. The command line takes
   `--nim:path`, else the pin of the nearest nimble file, else `nim` on `PATH` (`## Compilers`).
 - Where the compiler does not run, the rule removes nothing, and the run prints one warning that
   says why. The exit code stays. Verified by `suites/test_command.nim`.
-- Rejected: the parser of the compiler linked into knoller. The source of the commit pin does not
-  build under the standard library of 2.2.12 (`llstream.nim`: `readRawData`). Knoller builds with
-  2.2.12, and the parser of 2.2.12 lexes the glyph operators of the commit pin as names.
-- Cost: a wrong compiler can prove what the right one refuses. 2.2.12 reads `■m` as one name, so
-  it proves the group of `(■m).x + y`, and the commit pin reads `■m.x` as `■(m.x)`. So `koch fix`
-  and the command line each take the pin of the project. Verified by `suites/test_proofs.nim`.
+- Rejected: the parser of the compiler linked into knoller. It would read each project with the
+  grammar of one compiler, and the projects here pin several. 2.2.12 lexes as names the glyph
+  operators that 2.4.0 and the commit pin lex as operators.
+- Cost: a wrong compiler can prove what the right one refuses. 2.4.0 and the commit pin read
+  `■m.x` as `■(m.x)`, so the group of `(■m).x + y` stays. 2.2.12 reads `■m` as one name, so it
+  proves that group. So `koch fix` and the command line each take the pin of the project.
+  Verified by `suites/test_proofs.nim` for 2.4.0, and by hand for each compiler, 2026-10-29.
 - Cost: each round of asking compiles the probe once, about 0.6 s to 0.8 s on this container.
   Measured 2026-10-05 with `knoller --check`, this head against `main`: `rga_visualiser` took
   6.0 s against 5.5 s, and `pga_benchmark` 3.1 s against 2.0 s. `dance_ontology` took 5.3 s
@@ -1714,7 +1724,7 @@ there is unverified.
 ## Open questions
 
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
-  the nimble that 2.2.12 ships.
+  the nimble that 2.4.0 ships.
 - Some rules read paths in the layout of this repository: `tests/`, a test stub, a drive file
   under `tests` or `tools`, and the umbrella `<project>/src/<project>.nim`. They read the whole
   path, so the spelling of a path changes nothing. In another repository they would need to read

@@ -1,10 +1,9 @@
 ## Hold each case that review of PGA library and delegate reports found, end to end: source as
 ##   found, comment naming where it came from, run through whole chain as `koch fix` runs it
 ##   (`formatted`), to exact output; second run writes nothing.
-##   Parser of compiler proves needless parentheses. Case 2.2.12 reads rightly asks 2.2.12, which
-##     builds this suite; case only commit pin of `ronri` projects reads, since it holds glyph
-##     operators, asks stub of `stubs.nim`, which gives verdict that pin gives (checked
-##     2026-10-05), since job of knoller runs 2.2.12 alone.
+##   Parser of compiler proves needless parentheses. Case in ASCII asks 2.4.0, which builds this
+##     suite; case of glyph operators, as code of `ronri` projects spells them, asks stub of
+##     `stubs.nim`, which gives verdict commit pin of those projects gives (checked 2026-10-05).
 ##   Lines quoted are as found; `strictFuncs` and enclosing suite, routine or block around them
 ##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller.
 ##   Each case keeps its domain test in suite of its rule; this suite adds end-to-end form.
@@ -17,7 +16,7 @@ import ./stubs
 
 
 const
-  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.2.12, whose parser answers.
+  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.4.0, whose parser answers.
   HEAD = "{.experimental: \"strictFuncs\".}\n\n"  ## Opening of module chain writes nothing to.
   DISTANCES =
     HEAD &

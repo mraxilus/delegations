@@ -1,6 +1,6 @@
 ## Replicate proof of `proofs.nim` header: probe run by compiler answers which candidate groups
 ##   go, alone and together, and compiler that does not run answers none, with reason.
-##   Parser is real here: compiler building this suite, 2.2.12 in knoller's job, so verdicts of
+##   Parser is real here: compiler building this suite, 2.4.0 in knoller's job, so verdicts of
 ##     ASCII cases that `stubs.nim` gives other suites are held to parser itself.
 
 {.experimental: "strictFuncs".}
@@ -88,12 +88,13 @@ suite "Proofs":
       check (HEAD & mended).fixedBy == HEAD & mended  # second run writes nothing
 
 
-  test "source parser cannot read keeps every group; glyph of commit pin is name to 2.2.12":
+  test "unreadable source keeps every group; glyph is operator to 2.4.0":
     check provenBy(["let x = (a) + b)\n"]) == @[newSeq[int]()]  # unreadable
-    check provenBy(["let c = ☆(m) ∧ 𝐞ₙ\n"]) == @[newSeq[int]()]  # `☆(m)` call, `☆m` name
-    # Cost: wrong compiler can prove what right one refuses. 2.2.12 reads `■m` as one name, so
-    #   `(■m).x` reads as `■m.x`; commit pin reads `■m.x` as `■(m.x)`. So `koch fix` passes pin.
-    check provenBy(["let x = (■m).x + y\n"]) == @[@[8]]
+    check provenBy(["let c = ☆(m) ∧ 𝐞ₙ\n"]) == @[@[11]]  # `☆` prefix, so `☆m` reads same
+    # Cost: wrong compiler can prove what right one refuses. 2.2.12 reads `■m` as one name, and
+    #   proves this group (by hand, 2026-10-29); 2.4.0, as commit pin, reads `■m.x` as `■(m.x)`,
+    #   so it stays, as held here. So `koch fix` passes pin.
+    check provenBy(["let x = (■m).x + y\n"]) == @[newSeq[int]()]
 
 
   test "candidates proven alone that differ together join one at a time, in source order":
