@@ -49,6 +49,10 @@
 ##   Passage is untrusted: it goes inside one `<passage>` element with `&`, `<`, `>` and `"`
 ##     escaped, so it can never close element; system text calls it data.
 ##     Cost: model reads each of those four as character reference, never as itself.
+##   Page URL reaches service and report as scheme, host, port and path alone (`dropSecrets`),
+##     so token in user part, query or fragment stays on machine; recording keeps whole URL.
+##     Cost: token held in path, as share link or webhook holds it, reaches service and report;
+##       pages their query alone names read as one URL to model and in report.
 ##   Every module here is pure: `app/suggester.nim` reads environment, sends requests and
 ##     writes files, so suites drive each step without network (Article IX.5).
 ##     Cost: wiring is held by `test_suggester.nim` alone, which builds binary and drives it.
@@ -450,7 +454,9 @@ func dropMark(text: string): string =
 
 func dropSecrets*(url: string): string =
   ## Keep scheme, host, port and path of URL alone: user part, query and fragment dropped, since
-  ##   signed or capability URL holds its secret there.
+  ##   signed URL, and capability URL holding its token as parameter, hold secret there.
+  ##   Cost: token capability URL holds in path, as share link or webhook does, is kept; pages
+  ##     their query alone names, as `index.php?title=…`, read as one URL.
   ##   Parts are those regular expression of RFC 3986 appendix `B` splits. Sibling of `toReference`
   ##     of `app/exchanges.nim`, which imports this pure module, so this one cannot import it.
   ##   User part ends at last `@` of authority, as URL Standard of WHATWG reads it, so none stays.
@@ -471,8 +477,10 @@ func dropSecrets*(url: string): string =
 func toPassage*(text: string, url = "", is_page_cut = false): Passage =
   ## Build passage: byte order mark dropped, ill-formed UTF-8 repaired and counted, text cut at
   ##   `BYTES_PASSAGE_MAX` on character boundary.
-  ##   URL keeps scheme, host, port and path alone (`dropSecrets`), so token of signed or
-  ##     capability URL reaches neither service nor report; recording of page keeps whole URL.
+  ##   URL keeps scheme, host, port and path alone (`dropSecrets`), so token in user part, query
+  ##     or fragment reaches neither service nor report; recording of page keeps whole URL.
+  ##     Cost: token held in path reaches service and report; pages their query alone names read
+  ##       as one URL to model and in report.
   ##   URL is repaired as text is, uncounted, so request body holding it stays UTF-8.
   let
     bytes = text.dropMark
