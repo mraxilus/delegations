@@ -4,9 +4,9 @@
 ##   Stamp meets published vectors of FNV-1a 64, and one law of its arithmetic: each step maps
 ##     state one to one, so requests of one length that differ in one byte never share stamp.
 ##   Random recordings hold request and body of any bytes, line breaks often and last often, and
-##     file text of other recording; label and header values hold any byte but line break.
-##     Corpus holds no line break in label or header value, and no status outside three digits:
-##     `toText` writes either, and `readRecording` refuses it; should writer refuse it instead?
+##     file text of other recording; label holds lines of any byte, joined by line breaks, and
+##     reads back on one line; header values hold no line break, since `send` unfolds each folded
+##     one; every status of one to three digits reads back.
 ##   Malformed files take one recording whose request and body span lines, each piece of its
 ##     file with each fault that piece admits; file is written by suite, never by `toText`, and
 ##     each expected line is counted from pieces before it.
@@ -20,7 +20,8 @@
 ##     from symbols no problem text holds, so any byte of value leaking into problem shows.
 ##   `send` meets servers of `std/asynchttpserver` in same process, on `127.0.0.1` at port system
 ##     chooses; raw listener of `std/asyncnet` reads request head byte for byte, since server
-##     keeps last of repeated header lines. Futures are driven by `waitFor` and `poll`; test
+##     keeps last of repeated header lines, and gives answers server never writes: folded header
+##     lines, and status `099`. Futures are driven by `waitFor` and `poll`; test
 ##     completes deadline itself once server holds request, so no test reads clock (Article
 ##     IX.12).
 ##     Test waits on future of its own beside `send`, never on deadline: `or` of
@@ -103,6 +104,7 @@ const
   FLOOR_CHANGED = 400  ## Fewest requests holding byte to change; 449 read at seed `0`.
   FLOOR_READ = 350  ## Fewest values read as credential, over every service; 446 read at seed `0`.
   FLOOR_REFUSED = 600  ## Fewest values refused, over every service; 754 read at seed `0`.
+  FLOOR_FOLDED = 150  ## Fewest random labels holding line break; 197 read at seed `0`.
   BYTES_SAMPLE_MAX = 4_096  ## Most bytes of random request or body.
   BYTES_CAP = 10_000  ## Cap `send` reads body up to here.
   BYTES_CHUNK = 1_000
@@ -129,7 +131,8 @@ const
     ## File of `RECORDING_BASE`, piece by piece, as format names them.
   LUT_PROBLEM_BY_PIECE: array[Piece, string] = [
     "", "Line should be `label <text>`.", "Line should be `request <bytes>`.",
-    "Request should hold bytes its line counts.", "Line should be `status <code>`, three digits.",
+    "Request should hold bytes its line counts.",
+    "Line should be `status <code>`, one to three digits.",
     "Line should be `content-type <value>`.", "Line should be `content-encoding <value>`.",
     "Line should be `location <value>`.", "Line should be `body <whole|cut> <bytes>`.",
     "Body should hold bytes its line counts.",
@@ -152,7 +155,7 @@ const
     ##   values take any text, so no value of theirs is refused.
   LUT_VALUES_BY_PIECE: array[Piece, seq[string]] = [
     @["lojban_tagger recording 2"], @[], @["", "x", "-1", "1 3", "1234567890"], @[],
-    @["", "20", "2000", "2x0", "-20"], @[], @[], @[],
+    @["", "+20", "2000", "2x0", "-20"], @[], @[], @[],
     @[
       "whole", "cut", "part 3", "whole x", "whole -3", "whole  3", "whole 3 3",
       "whole 1234567890",
@@ -176,6 +179,17 @@ const
   ANSWER_FOLDED = "HTTP/1.1 302 Found\r\nlocation: /a\r\n /b\r\ncontent-length: 0\r\n" &
       "connection: close\r\n\r\n"
     ## Answer raw listener gives where redirect folds its location onto second line.
+  ANSWER_ODD = "HTTP/1.1 099 Odd\r\ncontent-type: text/html;\r\n\tcharset=utf-8\r\n" &
+      "location: /a\r\n /b\r\ncontent-length: 2\r\nconnection: close\r\n\r\nhi"
+    ## Answer raw listener gives as found: status `099`, and header values folded.
+  REPLY_ODD = Reply(
+    status: 99,
+    content_type: "text/html; charset=utf-8",
+    location: "/a /b",
+    body: "hi",
+  )
+    ## Reply `send` should read from `ANSWER_ODD`: each fold one space.
+  FOLDS = [" ", "\t", " \t  "]  ## Spaces and tabs opening continuation line of folded header.
   URL_BASE = "http://a/b/c/d;p?q"  ## URL examples of RFC 3986 section 5.4 resolve against.
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
 
@@ -250,6 +264,16 @@ proc lineRandom(length_max: int): string =
     character = char(if code >= ord('\n'): code + 1 else: code)
 
 
+proc labelRandom(): string =
+  ## Draw label: one to three lines of `lineRandom`, each line break followed by up to two spaces
+  ##   or tabs, as folded header holds them.
+  result = lineRandom(40)
+  for _ in 1..rand(2):
+    result.add '\n'
+    for _ in 1..rand(2): result.add [' ', '\t'].sample
+    result.add lineRandom(40)
+
+
 proc bytesRandom(): string =
   ## Draw bytes of request or body: empty, line breaks alone, file text of recording, or up to
   ##   `BYTES_SAMPLE_MAX` of any byte, line break one time in eight and last one time in four.
@@ -264,13 +288,13 @@ proc bytesRandom(): string =
 
 
 proc recordingRandom(): Recording =
-  ## Draw recording: label and header values of any byte but line break, status of three
-  ##   digits, request and body of any bytes, cut half time.
+  ## Draw recording: label of `labelRandom`, header values of any byte but line break, status of
+  ##   one to three digits, request and body of any bytes, cut half time.
   Recording(
-    label: lineRandom(80),
+    label: labelRandom(),
     request: bytesRandom(),
     reply: Reply(
-      status: rand(100..999),
+      status: rand(0..999),
       content_type: lineRandom(80),
       content_encoding: lineRandom(16),
       location: lineRandom(200),
@@ -482,19 +506,40 @@ suite "Internal: Exchange":
     check passed >= FLOOR_CHANGED  # guard leaves enough requests holding byte to change
 
 
-  test "recording reads back as written, request and body of any bytes":
+  test "recording reads back as written, request and body of any bytes, label on one line":
+    # Regression, found in review: `toText` wrote label holding line break, and status of two
+    #   digits, each of which `readRecording` refused.
+    let
+      folded = Recording(label: "a\nb", reply: Reply(status: 200)).toText.readRecording
+      short = Recording(reply: Reply(status: 99)).toText.readRecording
+    check folded.is_read and folded.recording.label == "a b"  # case as found: one line
+    check short.is_read and short.recording.reply.status == 99  # case as found: two digits
     randomize(0)
     let pool = poolRecordings()
+    var count_folded = 0
     for recording in served(pool):
       let
         text = recording.toText
         recorded = text.readRecording
       check text.startsWith(HEADER_RECORDING & "\n")  # format and version open file
-      check recorded.is_read  # file of any request and body reads
+      check recorded.is_read  # domain: file of any recording reads
       if not recorded.is_read:
         checkpoint $recorded.line & ": " & recorded.problem
         continue
-      check recorded.recording == recording  # every field back, byte for byte
+      let back = recorded.recording
+      check back.request == recording.request  # domain: request back, byte for byte
+      check back.reply == recording.reply  # domain: reply back, byte for byte
+      check '\n' notin back.label and back.toText == text  # domain: label as written, one line
+      if '\n' in recording.label: inc count_folded
+      else: check back.label == recording.label  # domain: label of one line back as it was
+    check count_folded >= FLOOR_FOLDED  # guard leaves enough labels holding line break
+    for status in 0..999:
+      let
+        recorded = Recording(reply: Reply(status: status)).toText.readRecording
+        named = $status & ": "
+      check named & $recorded.is_read == named & "true"  # domain: one to three digits read
+      if recorded.is_read:
+        check recorded.recording.reply.status == status  # domain: status back as written
 
 
   test "malformed recording is refused naming its first faulty piece, each piece with each fault":
@@ -984,6 +1029,40 @@ suite "Internal: Send":
     if not sent.is_replied:
       check sent.problem.len > 0 and '\n' notin sent.problem  # first line of error alone
       check CREDENTIAL_SUITE notin sent.problem  # credential never in problem
+
+
+  test "folded header comes back on one line, and recording of reply reads back as sent":
+    # Regression, found in review: folded `content-type` and status `099` gave reply whose
+    #   recording `readRecording` refused, so replay refused file record mode wrote.
+    let
+      listener = listenRaw()
+      url = urlLoopback(int(listener.getLocalAddr[1]), "/odd")
+      reading_odd = listener.readHead(ANSWER_ODD)
+      odd = sendLoopback(url, "")
+    discard waitFor reading_odd
+    check odd.is_replied and odd.reply == REPLY_ODD  # case as found: one line, status 99
+    if odd.is_replied:
+      let
+        recording = Recording(label: "recorded", request: "GET " & url, reply: odd.reply)
+        recorded = recording.toText.readRecording
+      check recorded.is_read and recorded.recording == recording  # case as found: reads back
+    for fold in FOLDS:
+      for count in 1..3:
+        let
+          value = "a" & ("\r\n" & fold & "b").repeat(count)
+          answer = "HTTP/1.1 200 OK\r\ncontent-type: " & value & "\r\ncontent-encoding: " &
+              value & "\r\nlocation: " & value & "\r\ncontent-length: 0\r\n\r\n"
+          reading = listener.readHead(answer)
+          sent = sendLoopback(url, "")
+          unfolded = "a" & " b".repeat(count)
+          named = fold.escape & " " & $count & ": "
+        discard waitFor reading
+        check sent.is_replied  # answered
+        if not sent.is_replied: continue
+        check named & sent.reply.content_type == named & unfolded  # domain: each fold one space
+        check named & sent.reply.content_encoding == named & unfolded  # domain: every header
+        check named & sent.reply.location == named & unfolded  # domain: location too
+    listener.close()
 
 
   test "URL holding whitespace or control character is refused naming byte, and nothing goes out":
