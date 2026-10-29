@@ -51,9 +51,12 @@
 ##     escaped, so it can never close element; system text calls it data.
 ##     Cost: model reads each of those four as character reference, never as itself.
 ##   Page URL reaches service and report as scheme, host, port and path alone (`dropSecrets`),
-##     so token in user part, query or fragment stays on machine; recording keeps whole URL.
+##     so token in user part, query or fragment reaches neither service nor report; recording
+##     keeps whole URL.
 ##     Cost: token held in path, as share link or webhook holds it, reaches service and report;
 ##       pages their query alone names read as one URL to model and in report.
+##     Cost: page request sends query to page host, and through http proxy request line holds
+##       whole URL.
 ##   Every module here is pure: `app/suggester.nim` reads environment, sends requests and
 ##     writes files, so suites drive each step without network (Article IX.5).
 ##     Each routine is `func`, so `strictFuncs` refuses I/O, clock and global state, as compiler
