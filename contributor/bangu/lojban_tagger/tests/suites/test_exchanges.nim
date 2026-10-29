@@ -266,7 +266,7 @@ const
   ANSWER_TUNNEL = "HTTP/1.1 200 Connection established\r\n\r\n"  ## Answer tunnel gives `CONNECT`.
   BYTES_RELAY = 4_096  ## Most bytes tunnel copies at once.
   PROBLEM_VERIFY = "certificate verify failed"  ## Text OpenSSL gives where peer fails check.
-  PROBLEM_CONTEXT = "TLS context should exist for https URL; got none."
+  PROBLEM_CONTEXT = "TLS context should exist for https URL; got ``."
     ## Problem `send` gives for https URL with no context.
   COUNT_SPELLINGS_HTTP = 16  ## Spellings of `http` in any case, i.e. 2^4.
   COUNT_SPELLINGS_HTTPS = 32  ## Spellings of `https` in any case, i.e. 2^5.
@@ -504,6 +504,13 @@ func problemHost(host: string): string =
 func outcome(sent: Sent): string =
   ## Read outcome of `send` as text: problem it gave, or `replied`, so check names either.
   if sent.is_replied: "replied" else: sent.problem
+
+
+func isEchoing(problem: string): bool =
+  ## Test problem has form Article IV.4 gives: what should be, then `; got`, ending in value in
+  ##   backticks, empty backticks where value is absent, as `readCredential` writes it.
+  let at = problem.find("; got ")
+  at > 0 and " should " in problem[0..<at] and problem.endsWith("`.")
 
 
 func problemProxy(scheme: string): string =
@@ -1904,6 +1911,37 @@ suite "Internal: Send":
       check control.is_replied  # listener answers
       check (waitFor reading).lines[0] == "GET /control HTTP/1.1"  # first connection is control's
       listener.close()
+
+
+  test "each refusal of input `send` makes ends in value refused, in backticks, empty where none":
+    # Regression, found in review: https URL with no context gave problem ending `got none.`,
+    #   where Article IV.4 echoes value in backticks, as `readCredential` writes absent one.
+    when not defined(ssl): skip()  # Article IX.9: TLS refusals need `-d:ssl`, which stub gives
+    else:
+      let found = sendLoopback("https://127.0.0.1:9/v1", "{}", credential = CREDENTIAL_GIVEN)
+      check found.outcome ==
+          PROBLEM_CONTEXT  # case as found: review of phase 1 against IV.4, 2026-10-29
+      check found.outcome.isEchoing  # case as found: was `got none.`
+      for (url, proxy_url) in [
+        ("http://127.0.0.1:9/a b", none(string)),  # URL holding whitespace
+        ("http://127.0.0.1:9/a", some("http://:3128")),  # proxy naming no host
+        ("http://127.0.0.1:9/a", some("socks5h://127.0.0.1:1080")),  # proxy of other scheme
+        ("http://127.0.0.1:9/a", some("http://127.0.0.1:70000")),  # proxy port past 65535
+        ("https://127.0.0.1:9/a", none(string)),  # https URL with no context
+      ]:
+        let sent = sendLoopback(url, "{}", credential = CREDENTIAL_GIVEN, proxy_url = proxy_url)
+        check url & ": " & $sent.outcome.isEchoing == url & ": true"  # domain: IV.4, each kind
+      let pinned = waitFor send(
+        "https:///a",
+        "{}",
+        @[],
+        CREDENTIAL_GIVEN,
+        none(string),
+        authority.client,
+        BYTES_CAP,
+        newFuture[void]("deadline"),
+      )
+      check pinned.outcome.isEchoing  # domain: IV.4, host TLS cannot pin, empty one
 
   when defined(ssl):
     removeDir(authority.directory)
