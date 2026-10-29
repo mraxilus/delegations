@@ -245,6 +245,20 @@ const
 
 #[ Text ]#
 
+func sequence(lead: uint8): tuple[count_more: int, low, high: uint8] =
+  ## Read row of Table 3-7 of Unicode Standard, chapter 3, that lead opens: bytes after lead, and
+  ##   bounds of first of them; no bytes after ASCII, continuation, or byte no row opens.
+  case lead
+  of 0xC2'u8..0xDF'u8: (1, 0x80'u8, 0xBF'u8)
+  of 0xE0'u8: (2, 0xA0'u8, 0xBF'u8)
+  of 0xE1'u8..0xEC'u8, 0xEE'u8..0xEF'u8: (2, 0x80'u8, 0xBF'u8)
+  of 0xED'u8: (2, 0x80'u8, 0x9F'u8)
+  of 0xF0'u8: (3, 0x90'u8, 0xBF'u8)
+  of 0xF1'u8..0xF3'u8: (3, 0x80'u8, 0xBF'u8)
+  of 0xF4'u8: (3, 0x80'u8, 0x8F'u8)
+  else: (0, 0'u8, 0'u8)
+
+
 func repairEncoding(bytes: string): tuple[text: string, count_repaired: int] =
   ## Replace each maximal ill-formed subpart with U+FFFD, by Table 3-7 of Unicode Standard,
   ##   chapter 3; count replacements.
@@ -256,16 +270,7 @@ func repairEncoding(bytes: string): tuple[text: string, count_repaired: int] =
       result.text.add bytes[i]
       inc i
       continue
-    let (count_more, low, high) =
-      case lead
-      of 0xC2'u8..0xDF'u8: (1, 0x80'u8, 0xBF'u8)
-      of 0xE0'u8: (2, 0xA0'u8, 0xBF'u8)
-      of 0xE1'u8..0xEC'u8, 0xEE'u8..0xEF'u8: (2, 0x80'u8, 0xBF'u8)
-      of 0xED'u8: (2, 0x80'u8, 0x9F'u8)
-      of 0xF0'u8: (3, 0x90'u8, 0xBF'u8)
-      of 0xF1'u8..0xF3'u8: (3, 0x80'u8, 0xBF'u8)
-      of 0xF4'u8: (3, 0x80'u8, 0x8F'u8)
-      else: (0, 0'u8, 0'u8)
+    let (count_more, low, high) = lead.sequence
     var
       j = i + 1
       is_whole = count_more > 0
