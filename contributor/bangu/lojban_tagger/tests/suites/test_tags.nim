@@ -20,7 +20,7 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[options, random, sequtils, strutils, unittest]
-from std/unicode import validateUtf8
+from std/unicode import Rune, toUTF8, validateUtf8
 
 import ../../src/lojban_tagger/[commands, dictionary, forms, lujvo, tags]
 import ../../src/lojban_tagger/lists/gismu
@@ -75,6 +75,12 @@ const
     ## Characters outside letters, by bytes of UTF-8 each takes, Table 3-6 of Unicode Standard:
     ##   two (`é`, `ĉ`, modifier apostrophe, both ends of range), three (curly apostrophe,
     ##   ideograph, U+FFFD, both ends), four (mathematical italic, emoji, both ends).
+    ##   Structured corpus alone, never whole domain: `SAMPLES_FOREIGN` seeded draws read rest.
+  SAMPLES_FOREIGN = 1000
+    ## Random draws past ASCII Letter law reads, seeded: bytes of UTF-8 drawn first, two to four,
+    ##   then code point of that length, so each row of Table 3-6 is read often.
+  FLOOR_FOREIGN = 950
+    ## Fewest random draws that are scalar values, surrogates aside; 986 read at seed `0`.
 
 
 func tanru(text: string): Tag =
@@ -286,10 +292,25 @@ suite "Internal: Reading":
         some((Refusal.Letter, "é"))  # review finding logic-6, 2026-10-29: named byte `C3`
     check "ci’a".refusalRead ==
         some((Refusal.Letter, "’"))  # review finding logic-6, 2026-10-29: named byte `E2`
-    for character in CHARACTERS_FOREIGN:  # 14 characters of 2, 3 and 4 bytes, exhaustive
+    for character in CHARACTERS_FOREIGN:  # 14 characters, both ends of each byte length
       for text in [character & "brivla", "bri" & character & "vla", "brivla" & character]:
         check text.refusalRead == some((Refusal.Letter, character))  # lead and continuation
         check text.readTag.explain.validateUtf8 == -1  # report well-formed, at each position
+    randomize(0)
+    var count_scalar = 0
+    for _ in 1..SAMPLES_FOREIGN:  # `SAMPLES_FOREIGN` draws, seeded
+      let code =
+        case rand(2..4)
+        of 2: rand(0x80..0x7FF)
+        of 3: rand(0x800..0xFFFF)
+        else: rand(0x10000..0x10FFFF)
+      if code in 0xD800..0xDFFF: continue  # Surrogate is no scalar value.
+      inc count_scalar
+      let character = Rune(code).toUTF8
+      for text in [character & "brivla", "bri" & character & "vla", "brivla" & character]:
+        check text.refusalRead == some((Refusal.Letter, character))  # whole, at any plane
+        check text.readTag.explain.validateUtf8 == -1  # report well-formed, at each position
+    check count_scalar >= FLOOR_FOREIGN  # guard keeps most draws
 
 
   test "Cmavo alone, or lujvo ending in cmavo, is refused as Cmavo, naming it":
