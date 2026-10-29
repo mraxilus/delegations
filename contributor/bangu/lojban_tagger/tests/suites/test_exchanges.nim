@@ -159,16 +159,19 @@ const
   ]
     ## File of `RECORDING_BASE`, piece by piece, as format names them.
   LUT_PROBLEM_BY_PIECE: array[Piece, string] = [
-    "", "Line should be `label <text>`.", "Line should be `request <bytes>`.",
-    "Request should hold bytes its line counts.",
-    "Line should be `status <code>`, one to three digits.",
-    "Line should be `content-type <value>`.", "Line should be `content-encoding <value>`.",
-    "Line should be `location <value>`.", "Line should be `body <whole|cut> <bytes>`.",
-    "Body should hold bytes its line counts.",
+    "Recording should open with `" & HEADER_RECORDING & "`", "Line should be `label <text>`",
+    "Line should be `request <bytes>`",
+    "Request should hold bytes its line counts, then line break",
+    "Line should be `status <code>`, one to three digits",
+    "Line should be `content-type <value>`", "Line should be `content-encoding <value>`",
+    "Line should be `location <value>`", "Line should be `body <whole|cut> <bytes>`",
+    "Body should hold bytes its line counts, then line break",
   ]
-    ## Problem reader gives at each piece; header problem echoes line, so `problemExpected`
-    ##   builds it.
-  PROBLEM_END = "Recording should end after body."  ## Problem reader gives at byte after body.
+    ## What reader says each piece should be; `problemExpected` adds what piece holds.
+  PIECES_BLOCK = {Piece.RequestBytes, Piece.BodyBytes}
+    ## Pieces holding block of bytes, whose problem names bytes left rather than line.
+  PROBLEM_END = "Recording should end after body"
+    ## What reader says at byte after body; problem adds text after body.
   FAULTS_LINE = {Fault.Missing, Fault.Unbroken, Fault.Renamed, Fault.Doubled, Fault.Dropped}
     ## Faults every line piece admits.
   FAULTS_BLOCK = {Fault.Missing, Fault.Unbroken, Fault.Short, Fault.Long}
@@ -257,10 +260,15 @@ func lineFirst(piece: Piece): int =
 
 
 func problemExpected(piece: Piece, text: string): string =
-  ## Build problem reader gives at piece of text; header problem ends in first line text holds.
-  if piece != Piece.Header: return LUT_PROBLEM_BY_PIECE[piece]
-  let first = if '\n' in text: text.split('\n')[0] else: ""
-  "Recording should open with `" & HEADER_RECORDING & "`; got `" & first & "`."
+  ## Build problem reader gives at piece of text: what piece should be, then what it holds, as
+  ##   line made printable, empty where text ends before line break, or as bytes left of block.
+  var opening = 0
+  for _ in 1..<lineFirst(piece): opening = text.find('\n', opening) + 1
+  if piece in PIECES_BLOCK:
+    return LUT_PROBLEM_BY_PIECE[piece] & "; got `" & $(text.len - opening) & "` bytes left."
+  let close = text.find('\n', opening)
+  LUT_PROBLEM_BY_PIECE[piece] & "; got `" &
+      (if close < 0: "" else: text[opening..<close].toPrintable(80)) & "`."
 
 
 func casesMalformed(): seq[Malformed] =
@@ -298,7 +306,8 @@ func casesMalformed(): seq[Malformed] =
       of Fault.Trailing: texts.add before & own & "x"
       for text in texts:
         let (line, problem) =
-          if fault == Fault.Trailing: (lineFirst(piece) + own.count('\n'), PROBLEM_END)
+          if fault == Fault.Trailing:
+            (lineFirst(piece) + own.count('\n'), PROBLEM_END & "; got `x`.")
           else: (lineFirst(at), problemExpected(at, text))
         result.add Malformed(
           piece: piece,
@@ -859,6 +868,16 @@ suite "Internal: Exchange":
     # Regression, found in review: reader named line after faulty line it had read whole.
     check readRecording("lojban_tagger recording 1\nLabel x\n").line == 2  # case as found: was 3
     check readRecording("Lojban_tagger recording 1\n").line == 1  # case as found: was 2
+    # Regression, found in review: refusal named shape alone, so edited line, and carriage
+    #   return after status, stayed hidden.
+    let
+      labelled = readRecording(HEADER_RECORDING & "\nLabel secret-looking text\n")
+      returned = readRecording(PIECES_BASE[Piece.Header..Piece.RequestBytes].join &
+          "status 200\r\n")
+    check not labelled.is_read and labelled.problem == "Line should be `label <text>`; got " &
+        "`Label secret-looking text`."  # case as found: review finding rules-3, 2026-10-29
+    check not returned.is_read and returned.problem == "Line should be `status <code>`, one " &
+        "to three digits; got `status 200\\u{D}`."  # case as found: carriage return shown
     let cases = casesMalformed()
     var (pieces, faults) = (default(set[Piece]), default(set[Fault]))
     for malformed in cases:
