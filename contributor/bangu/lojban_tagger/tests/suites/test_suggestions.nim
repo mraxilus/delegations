@@ -1028,7 +1028,7 @@ func isPrefixed(bytes: string, at: int, prefix: string): bool =
   true
 
 
-func attributeReference(bytes: string, at: var int): Option[(string, string)] =
+func readAttributeReference(bytes: string, at: var int): Option[(string, string)] =
   ## Read attribute from `at` as HTML 13.2.3.2 gets attribute, steps 1 to 12, uppercase ASCII
   ##   lowered in name and value; `none` where `>` ends tag first, or where bytes run out, `at`
   ##   then past `bytes`.
@@ -1071,10 +1071,10 @@ func attributeReference(bytes: string, at: var int): Option[(string, string)] =
   some((name, value))
 
 
-func extractReference(text: string): string =
-  ## Extract label from value of `content` as extracting character encoding from meta element
-  ##   does, HTML 2.5.3, steps 1 to 6; empty where none, as getting encoding fails for empty
-  ##   label alone among labels drawn.
+func readLabelReference(text: string): string =
+  ## Read label from value of `content` as extracting character encoding from meta element does,
+  ##   HTML 2.5.3, steps 1 to 6; empty where none, as getting encoding fails for empty label
+  ##   alone among labels drawn.
   var at = 0
   while true:
     let found = text.find("charset", at)
@@ -1118,7 +1118,7 @@ func prescanReference(bytes: string): tuple[label: string, is_pragma: bool] =
         is_pragma_needed = none(bool)  # Need pragma of HTML.
         found_pragma = false  # Got pragma of HTML.
       while true:
-        let attribute = head.attributeReference(at)
+        let attribute = head.readAttributeReference(at)
         if attribute.isNone:
           if at >= head.len: return ("", false)
           break
@@ -1126,8 +1126,8 @@ func prescanReference(bytes: string): tuple[label: string, is_pragma: bool] =
         if name in names: continue
         names.add name
         if name == "http-equiv" and value == "content-type": found_pragma = true
-        elif name == "content" and charset.isNone and value.extractReference.len > 0:
-          (charset, is_pragma_needed) = (some(value.extractReference), some(true))
+        elif name == "content" and charset.isNone and value.readLabelReference.len > 0:
+          (charset, is_pragma_needed) = (some(value.readLabelReference), some(true))
         elif name == "charset":
           (charset, is_pragma_needed) =
             (some(value.strip(chars = CHARACTERS_SPACE)), some(false))
@@ -1141,7 +1141,7 @@ func prescanReference(bytes: string): tuple[label: string, is_pragma: bool] =
     elif head.isPrefixed(at, "<") and at + 1 < head.len and (head[at+1] in strutils.Letters or
         (head[at+1] == '/' and at + 2 < head.len and head[at+2] in strutils.Letters)):  # Tag.
       while at < head.len and head[at] notin CHARACTERS_SPACE + {'>'}: inc at
-      while head.attributeReference(at).isSome: discard
+      while head.readAttributeReference(at).isSome: discard
       if at >= head.len: return ("", false)
     elif head.isPrefixed(at, "<!") or head.isPrefixed(at, "</") or head.isPrefixed(at, "<?"):
       at = head.find('>', at + 1)
