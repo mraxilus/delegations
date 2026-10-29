@@ -373,11 +373,13 @@ func resolve(reference, base: Reference): Reference =
 
 
 func lowercaseScheme(url: string): string =
-  ## Lowercase scheme of URL, split as RFC 3986 appendix `B` splits it, since section 3.1 compares
-  ##   scheme without case and client of `std/httpclient` compares it with case.
-  let at = url.find({':', '/', '?', '#'})
-  if at > 0 and url[at] == ':': url[0..<at].toLowerAscii & url[at .. ^1]
-  else: url
+  ## Lowercase scheme of URL as `toReference` splits it, as RFC 3986 section 6.2.2.1 normalizes
+  ##   it, since section 3.1 compares scheme without case and client of `std/httpclient` compares
+  ##   it with case; rest of URL kept as written, since `toText` recomposes what `toReference`
+  ##   splits.
+  var reference = url.toReference
+  if reference.scheme.isSome: reference.scheme = some(reference.scheme.get.toLowerAscii)
+  reference.toText
 
 
 func redirect*(url: string, reply: Reply): Option[string] =
