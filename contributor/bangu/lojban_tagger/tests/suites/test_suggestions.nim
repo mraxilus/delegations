@@ -2,7 +2,7 @@
 ##   stay stable and fence passage, replies of both wire formats read to tag or named failure,
 ##   pages read to text, and every report stays printable.
 ##   CLL covers no service, so suites are `Internal:`, tests named by behaviour (Article IX.10);
-##     `Chapter 4` holds what answer takes from 4.11 and 4.12 through `readTanru` and `$`.
+##     `Chapter 4` holds what answer takes from 4.11 to 4.13 through `readTanru` and `$`.
 ##   Replies are documented shapes with illustrative values, each citing its published page:
 ##     Message object of Messages API, chat completion of OpenRouter; two keyless 401 bodies
 ##     alone are captures, taken 2026-10-28.
@@ -1104,7 +1104,15 @@ suite "Chapter 4":
         "Answer should end in gismu, as CLL 4.11 step 2 ends tanru; got `ciska+se`."  # 4.11
 
 
-  test "Section 4.12":
+  test "Section 4.12-13":
+    for (words, form) in [
+      (@["gerku", "zdani"], "gerzda"),
+      (@["bloti", "klesi"], "blolei"),
+      (@["logji", "bangu", "girzu"], "lojbaugri"),
+      (@["nakni", "ke", "cinse", "ctuca"], "nakykemcinctu"),
+    ]:  # every lujvo 4.13 scores, exhaustive
+      check readAnswer(words.toAnswer, MODEL_SUITE).tagRead.map(`$`) ==
+          some(form)  # 4.13, form scoring lowest is printed
     randomize(0)
     let pool = poolTanru()
     var (count_readback, count_shared, count_cmavo) = (0, 0, 0)
@@ -1120,7 +1128,6 @@ suite "Chapter 4":
         inc count_shared
         continue
       check suggestion.tagRead == some(tag)  # 4.5, lujvo stands for tanru of its words
-      check suggestion.tagRead.map(`$`) == some($tag)  # 4.12, form scoring lowest is printed
       check readTag($tag).is_tag and readTag($tag).tag == tag  # 4.12, form reads back as tag
       inc count_readback
     check count_readback >= FLOOR_READBACK  # guard keeps most tanru
