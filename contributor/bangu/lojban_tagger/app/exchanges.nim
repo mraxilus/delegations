@@ -38,10 +38,14 @@
 ##     no name.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
-##   Proxy URL should be `http://`, in any case, else `send` refuses it before client exists:
-##     https proxy takes TLS of its own, which no pin covers, and client opens it even for http
-##     URL, on context `send` may lack; client reads `socks5` as http proxy, and only `socks5h`
-##     as SOCKS, so one kind of proxy stays, which suite drives.
+##   Proxy URL should be `http://`, in any case, with host, and port `isPort` takes or none, else
+##     `send` refuses it before client exists, naming part: https proxy takes TLS of its own,
+##     which no pin covers, and client opens it even for http URL, on context `send` may lack;
+##     client reads `socks5` as http proxy, and only `socks5h` as SOCKS, so one kind of proxy
+##     stays, which suite drives; client reads port modulo 65536, as it reads port of URL.
+##     Host is checked first: text naming none after `//` may hold user where scheme stands, as
+##       curl reads `alice:secret@proxy:3128`; host and port stand after last `@` of authority,
+##       so problem echoes no user part or password.
 ##     Cost: proxy reachable only by https or SOCKS is refused, naming its scheme.
 ##   `send` lowercases scheme of URL and of proxy URL before client sees either, and `redirect`
 ##     scheme of its target, as RFC 3986 section 3.1 compares scheme without case: client compares
@@ -549,8 +553,9 @@ proc send*(
   ##   redirect; read body until `bytes_max`; end when `deadline` completes first.
   ##   URL holding whitespace or control character is refused, naming byte, and nothing is sent.
   ##   Deadline finished already sends nothing, since client still connecting would send later.
-  ##   Proxy URL whose scheme is other than `http`, in any case, sends nothing; client sees
-  ##     scheme of URL and of proxy URL lowercased.
+  ##   Proxy URL naming no host after `//`, scheme other than `http` in any case, or port other
+  ##     than `isPort` takes sends nothing, problem naming first such part and no user part;
+  ##     client sees scheme of URL and of proxy URL lowercased.
   ##   https URL pins its host on `context`, so certificate naming other host is refused; no
   ##     context, or host TLS cannot pin, sends nothing.
   ##   Agent, encoding and bearer are its own, whatever caller headers name.
@@ -570,9 +575,15 @@ proc send*(
         "character; got byte `" & $ord(url[at]) & "` at `" & $at & "`.")
   if deadline.finished: return Sent(is_replied: false, problem: "deadline passed")
   if proxy_url.isSome:
-    let scheme = proxy_url.get.parseUri.scheme
-    if scheme.toLowerAscii != "http":
-      return Sent(is_replied: false, problem: "Proxy should be `http://`; got `" & scheme & "`.")
+    let proxied = proxy_url.get.parseUri
+    if proxied.opaque or proxied.hostname.len == 0:
+      return Sent(is_replied: false, problem: "Proxy should name host after `//`; got ``.")
+    if proxied.scheme.toLowerAscii != "http":
+      return Sent(is_replied: false, problem: "Proxy should be `http://`; got `" &
+          proxied.scheme & "`.")
+    if proxied.port.len > 0 and not proxied.port.isPort:
+      return Sent(is_replied: false, problem: "Proxy should name port of one to five digits " &
+          "from 1 to 65535, or none; got `" & proxied.port & "`.")
   let url_sent = url.lowercaseScheme
   when defined(ssl):
     let uri = url_sent.parseUri
