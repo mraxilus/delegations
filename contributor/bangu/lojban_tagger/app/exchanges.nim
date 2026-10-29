@@ -28,6 +28,13 @@
 ##   `send` makes fresh client for each request and follows no redirect: client loop would keep
 ##     its headers across hosts, so credential could reach other host, and it would keep one
 ##     proxy for every hop. `suggester` follows page redirects itself, choosing proxy again.
+##   `send` pins host of https URL on its context before client exists, since async client of
+##     `std/httpclient` names host for SNI alone and checks no certificate against it: name pins
+##     as name, address as address, other kind cleared, so trusted leaf naming other host is
+##     refused before any byte of request leaves. Empty host is refused, since empty pin checks
+##     no name.
+##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
+##     runs them; through proxy, target host is pinned for tunnel.
 ##   `redirect` resolves location as RFC 3986 section 5.2 resolves reference, read strictly:
 ##     reference holding scheme keeps it, so `http:g` names no host and gives no redirect.
 ##     Cost: location `http:/page` that browser takes as relative is no redirect here.
@@ -61,6 +68,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[asyncdispatch, httpclient, net, options, sequtils, strutils, uri]
+when defined(ssl):
+  import std/openssl  # Names of libraries TLS of `std/net` loads, which host pin binds against.
 
 import ../src/lojban_tagger/suggestions
 
@@ -117,6 +126,8 @@ const
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
   LUT_OPENING_BY_SERVICE*: array[Service, string] = ["sk-ant-", "sk-or-", ""]
     ## Opening of credentials each service issues; opening of other service is refused.
+  PROBLEM_CONTEXT = "TLS context should exist for https URL; got none."
+    ## Problem `send` gives for https URL with no context, whose host it cannot pin.
 
 
 func `$`*(credential: Credential): string {.error:
@@ -409,6 +420,38 @@ func readRecording*(text: string): Recorded =
 
 #[ Sending ]#
 
+when defined(ssl):
+  proc SSL_CTX_get0_param(context: SslCtx): pointer {.cdecl, importc, dynlib: DLLSSLName.}
+    ## Read verification parameters of context, which each connection it opens copies.
+  proc X509_VERIFY_PARAM_set1_host(
+    parameters: pointer, name: cstring, length: csize_t
+  ): cint {.cdecl, importc, dynlib: DLLUtilName.}
+    ## Set name peer certificate should hold, clearing names set before; nil clears alone; 1 done.
+  proc X509_VERIFY_PARAM_set1_ip(
+    parameters: pointer, address: cstring, length: csize_t
+  ): cint {.cdecl, importc, dynlib: DLLUtilName.}
+    ## Set address peer certificate should hold, as raw bytes; nil clears it; 1 done.
+  proc X509_VERIFY_PARAM_set1_ip_asc(
+    parameters: pointer, address: cstring
+  ): cint {.cdecl, importc, dynlib: DLLUtilName.}
+    ## Set address peer certificate should hold, as text; 1 done, 0 where text is no address.
+
+
+  proc pinHost(context: SslContext, host: string): bool =
+    ## Pin host on context, so each connection it opens next refuses certificate naming other
+    ##   host: name as name, address as address, other kind cleared; false where host is empty,
+    ##   whose pin checks nothing, or where OpenSSL refuses it.
+    ##   Host `parseUri` gives holds no brackets, so IPv6 address reads as address.
+    if host.len == 0: return false
+    let parameters = SSL_CTX_get0_param(context.context)
+    if host.isIpAddress:
+      X509_VERIFY_PARAM_set1_ip_asc(parameters, host.cstring) == 1 and
+          X509_VERIFY_PARAM_set1_host(parameters, nil, 0) == 1
+    else:
+      X509_VERIFY_PARAM_set1_host(parameters, host.cstring, csize_t(host.len)) == 1 and
+          X509_VERIFY_PARAM_set1_ip(parameters, nil, 0) == 1
+
+
 proc readBody(response: AsyncResponse, bytes_max: int): Future[(string, bool)] {.async.} =
   ## Read body until stream ends, or `bytes_max` bytes are held; flag cut where more came.
   var body = ""
@@ -452,6 +495,8 @@ proc send*(
   ##   redirect; read body until `bytes_max`; end when `deadline` completes first.
   ##   URL holding whitespace or control character is refused, naming byte, and nothing is sent.
   ##   Deadline finished already sends nothing, since client still connecting would send later.
+  ##   https URL pins its host on `context`, so certificate naming other host is refused; no
+  ##     context, or host TLS cannot pin, sends nothing.
   ##   Agent, encoding and bearer are its own, whatever caller headers name.
 
   proc race(a, b: FutureBase): Future[void] =
@@ -468,6 +513,14 @@ proc send*(
     return Sent(is_replied: false, problem: "URL should hold no whitespace or control " &
         "character; got byte `" & $ord(url[at]) & "` at `" & $at & "`.")
   if deadline.finished: return Sent(is_replied: false, problem: "deadline passed")
+  when defined(ssl):
+    let uri = url.parseUri
+    if uri.scheme.toLowerAscii == "https":
+      if context.isNil:
+        return Sent(is_replied: false, problem: PROBLEM_CONTEXT)
+      if not context.pinHost(uri.hostname):
+        return Sent(is_replied: false, problem: "Host should be name or address TLS can pin; " &
+            "got `" & uri.hostname & "`.")
   let proxy_used = if proxy_url.isSome: newProxy(proxy_url.get) else: nil
   when defined(ssl):
     let client = newAsyncHttpClient(
