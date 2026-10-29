@@ -1436,7 +1436,7 @@ suite "Internal: Answer":
     check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).explain == "Answer should name " &
         "gismu or cmavo of list. Tag should hold Lojban letters alone; got `\\u{1}` in " &
         "`ci\\u{1}ska`."  # review finding logic-6, 2026-10-29: named `\`, never answered
-    for filler in FILLERS_WORD:  # 8 characters, exhaustive
+    for filler in FILLERS_WORD:  # 8 characters, one of each kind it names, not every character
       for count in 1 .. BYTES_ELEMENT_MAX + 1:  # each length to cap and past it, exhaustive
         let
           element = filler.repeat(count)
