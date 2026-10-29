@@ -54,8 +54,9 @@
 ##     choice of rafsi; each word at `BYTES_ELEMENT_MAX` bytes, since `readTag` time grows
 ##     faster than length. Bytes cap no words: 64 bytes hold lujvo of 18, so both caps hold.
 ##     Cost: answer past cap fails as `Long` after service is paid; text given, before request.
-##   Failure keeps reason of reader, made printable as word or form is read, so `explain` reads
-##     no value again: escape of detail never reaches reader.
+##   Failure keeps reason of reader whole, made printable as word or form is read, so `explain`
+##     reads no value again: escape of detail never reaches reader. Reader bounds reason, so
+##     display cap never cuts it.
 ##     Cost: failure built by hand holds no reason, so its wording ends in detail alone.
 ##   Refusal shows explanation of classifier as given, never parsed, as refusals page asks.
 ##     Cost: wording of report moves whenever service rewords explanation.
@@ -159,7 +160,8 @@ type
       detail*: string  ## Offending value, made printable.
       reason*: string = ""
         ## Why reader refuses word or form as read, i.e. `explain` of its reading (`commands.nim`),
-        ##   made printable when failure is made; empty for value read as tag, and other failures.
+        ##   made printable whole when failure is made; empty for value read as tag, and other
+        ##   failures.
       is_past_cap*: bool = false
         ## Word held over `BYTES_ELEMENT_MAX` bytes, so reader never read it; set when failure is
         ##   made, since escapes lengthen detail.
@@ -890,13 +892,15 @@ func toJSON(text: string): Option[JsonNode] =
 
 
 func fail(failure: Failure, detail: string, reason = "", is_past_cap = false): Suggestion =
-  ## Build suggestion that failed, detail and reason made printable; `is_past_cap` marks word
-  ##   never read.
+  ## Build suggestion that failed, detail made printable within `RUNES_SHOWN`, reason made
+  ##   printable whole; `is_past_cap` marks word never read.
+  ##   Reader bounds reason: word at `BYTES_ELEMENT_MAX` bytes, form at `COUNT_WORDS_MAX` words.
+  ##     Cap of its bytes cuts nothing, since repair never makes more characters than bytes.
   Suggestion(
     is_suggested: false,
     failure: failure,
     detail: detail.toPrintable(RUNES_SHOWN),
-    reason: reason.toPrintable(RUNES_SHOWN),
+    reason: reason.toPrintable(reason.len),
     is_past_cap: is_past_cap,
   )
 
