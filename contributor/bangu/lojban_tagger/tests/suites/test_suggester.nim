@@ -486,6 +486,12 @@ func pathRecording(directory, request: string): string =
   directory / (request.stamp & ".recording")
 
 
+func pathShown(directory, request: string): string =
+  ## Render path of recording of request as refusal and note show it: directory made printable
+  ##   and cut alone, then name holding stamp, whole.
+  directory.toPrintable(RUNES_SHOWN) / (request.stamp & ".recording")
+
+
 proc writeRecordings(directory: string, recordings: openArray[Recording]) =
   ## Write each recording under stamp of its request, as binary names it, making directory.
   createDir(directory)
@@ -498,15 +504,16 @@ func noteCredential(name: string): string =
   "Credential read from `" & name & "`."
 
 
-func noteReplayed(path, label: string): string =
-  ## Render note naming recording replayed, then its label made printable and cut, as report
-  ##   makes outside text.
-  "Reply replayed from `" & path & "`: " & label.toPrintable(RUNES_SHOWN) & "."
+func noteReplayed(directory, request, label: string): string =
+  ## Render note naming recording of request replayed, at path shown, then its label made
+  ##   printable and cut, as report makes outside text.
+  "Reply replayed from `" & pathShown(directory, request) & "`: " &
+      label.toPrintable(RUNES_SHOWN) & "."
 
 
-func noteWritten(path: string): string =
-  ## Render note naming recording written.
-  "Reply written to `" & path & "`."
+func noteWritten(directory, request: string): string =
+  ## Render note naming recording of request written, at path shown.
+  "Reply written to `" & pathShown(directory, request) & "`."
 
 
 func problemPort(url: string): string =
@@ -523,12 +530,6 @@ func toSuggestion(failure: Failure, detail: string): Suggestion =
 func toSuggestionRecording(detail: string): Suggestion =
   ## Build suggestion refused with `Recording`, detail as binary renders it: never cut whole.
   Suggestion(is_suggested: false, failure: Failure.Recording, detail: detail)
-
-
-func pathShown(directory, request: string): string =
-  ## Render path of recording of request as refusal shows it: directory made printable and cut
-  ##   alone, then name holding stamp, whole.
-  directory.toPrintable(RUNES_SHOWN) / (request.stamp & ".recording")
 
 
 func detailMalformed(recorded: Recorded; directory, request: string): string =
@@ -749,7 +750,7 @@ suite "Internal: Suggester":
             service.readReply(recordings[^1].reply),
             example.toPassage,
             service.toSettings.model,
-            recordings.mapIt(noteReplayed(pathRecording(directory_case, it.request), it.label)),
+            recordings.mapIt(noteReplayed(directory_case, it.request, it.label)),
           )
         writeRecordings(directory_case, recordings)
         var argument_lists = @[@[example.argument]]
@@ -784,7 +785,7 @@ suite "Internal: Suggester":
       writeFile(path, Recording(label: sample.label, request: request, reply: sample.reply).toText)
       let outcome = binary.run(sample.environment, replay & sample.arguments)
       check outcome == toOutcome(suggestion, passage, sample.settings.model,
-          [noteReplayed(path, sample.label)])  # settings read from environment, reply as read
+          [noteReplayed(directory_case, request, sample.label)])  # settings from environment
       if suggestion.is_suggested: inc count_suggested else: inc count_refused
       if passage.is_cut: inc count_cut
     check endpoint.heard.len == 0  # replay opens no socket
@@ -900,7 +901,7 @@ suite "Internal: Suggester":
     writeRecordings(directory_hops, hops)
     check binary.run([], ["--replay:" & directory_hops, page.argument]) ==
         toOutcome(toSuggestionRecording("missing at " & shown_service), passage_hops,
-        settings.model, hops.mapIt(noteReplayed(pathRecording(directory_hops, it.request),
+        settings.model, hops.mapIt(noteReplayed(directory_hops, it.request,
         it.label)))  # each hop replayed, then stamp of service request named
 
 
@@ -973,6 +974,47 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
+  test "note of recording names path whose directory alone is made printable and cut":
+    # Report of second suggester ladders, 2026-10-29: notes of replay, of write and of failed write
+    #   named path whole and raw, unlike refusal of recording.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      text = example("lojban")
+      passage = text.argument.toPassage
+      request = requestService(settings, passage)
+      reply = toReplyMessages(text.answer, settings.model)
+      suggestion = Service.Claude.readReply(reply)
+      long = directory / "noted" / ("\e[31m" & "d".repeat(99)) / "e".repeat(99) / "f".repeat(99)
+      name = request.stamp & ".recording"
+      record = ["--record:" & long, text.argument]
+    server.routes = @[(PATH_SERVICE, reply)]
+    check long.len >= 300  # directory of 300 characters, past `RUNES_SHOWN`, holding escape
+    let written = binary.run(settings.toEnvironment, record)
+    check written == toOutcome(suggestion, passage, settings.model, [
+      noteCredential(KEY_CREDENTIAL),
+      noteWritten(long, request),
+    ])  # written: directory made printable and cut, then name holding stamp
+    let
+      label = readFile(long / name).readRecording.recording.label
+      replayed = binary.run(settings.toEnvironment, ["--replay:" & long, text.argument])
+    check replayed == toOutcome(suggestion, passage, settings.model,
+        [noteReplayed(long, request, label)])  # replayed, path shown as written
+    removeFile(long / name)
+    createDir(long / name)  # directory in way of recording, so rename fails after reply
+    let
+      unwritten = binary.run(settings.toEnvironment, record)
+      error = unwritten.report.readFramed(noteCredential(KEY_CREDENTIAL) &
+          "\nReply should be written to `" & pathShown(long, request) & "`; got `", "`.\n" &
+          suggestion.toReport(passage, settings.model))
+    check error.isSome and error.get.len > 0 and '\n' notin error.get  # path shown, then error
+    for outcome in [written, replayed, unwritten]:
+      check outcome.code == 0 and name in outcome.report  # tag kept; stamp named whole, past cut
+      check outcome.report.allIt(it notin CHARACTERS_CONTROL)  # escape of directory never raw
+    check server.heard.len == 2  # record sent twice, replay never
+    stopServer(server)
+
+
   test "recording replays for endpoint it was made for alone, as its request names endpoint":
     # Review finding logic-9, 2026-10-29: request stamped and kept was `POST` and body alone, so
     #   reply recorded from one server replayed as reply of other.
@@ -993,7 +1035,7 @@ suite "Internal: Suggester":
       writeRecordings(directory_service, [Recording(label: LABEL_SUITE, request: request_a,
           reply: reply)])
       check binary.run(settings_a.toEnvironment, replay) == toOutcome(service.readReply(reply),
-          passage, settings_a.model, [noteReplayed(pathRecording(directory_service, request_a),
+          passage, settings_a.model, [noteReplayed(directory_service, request_a,
           LABEL_SUITE)])  # endpoint recording was made for replays it
       check binary.run(settings_b.toEnvironment, replay) == toOutcome(toSuggestionRecording(
           "missing at " & pathShown(directory_service, requestService(settings_b, passage))),
@@ -1015,14 +1057,14 @@ suite "Internal: Suggester":
     createDir(directory_case)
     writeFile(path, Recording(label: LABEL_FOUND, request: request, reply: reply).toText)
     let found = binary.run([], replay)  # `--replay:D 'mi ciska lo xatra'`, label `LABEL_FOUND`
-    check found.report == "Reply replayed from `" & path &
+    check found.report == "Reply replayed from `" & pathShown(directory_case, request) &
         "`: evil \\u{1B}[31mred\\u{1B}[0m \\u{202E}abc.\n" &
         suggestion.toReport(passage, settings.model)  # case as found in suite review
     for label in @LABELS_UNPRINTABLE & @["\xC3\xA9".repeat(RUNES_SHOWN)]:  # label at cap kept whole
       writeFile(path, Recording(label: label, request: request, reply: reply).toText)
       let outcome = binary.run([], replay)
       check outcome == toOutcome(suggestion, passage, settings.model,
-          [noteReplayed(path, label)])  # label as `toPrintable` makes it, then tag
+          [noteReplayed(directory_case, request, label)])  # label as `toPrintable` makes it
       check outcome.report.allIt(it notin CHARACTERS_CONTROL)  # no control reaches terminal
 
 
@@ -1036,13 +1078,14 @@ suite "Internal: Suggester":
         directory_case = directory / "record" / $service
         passage = text.argument.toPassage
         body = settings.toBody(passage)
-        path = pathRecording(directory_case, requestService(settings, passage))
+        request = requestService(settings, passage)
+        path = pathRecording(directory_case, request)
         reply = toReplyAnswer(service, text.answer, settings.model)
         suggestion = service.readReply(reply)
       server.routes = @[(PATH_SERVICE, reply)]
       let written = binary.run(environment, ["--record:" & directory_case, text.argument])
-      check written == toOutcome(suggestion, passage, settings.model,
-          [noteCredential(KEY_CREDENTIAL), noteWritten(path)])  # tag, and file written named
+      check written == toOutcome(suggestion, passage, settings.model, [noteCredential(
+          KEY_CREDENTIAL), noteWritten(directory_case, request)])  # tag, and file written named
       check server.heard.len == 1  # one request sent
       if server.heard.len == 1:
         let heard = server.heard[0]
@@ -1060,18 +1103,17 @@ suite "Internal: Suggester":
       check recorded.is_read  # file binary wrote reads back
       if not recorded.is_read: continue
       let label = recorded.recording.label
-      check recorded.recording.request ==
-          requestService(settings, passage)  # endpoint and body, no credential
+      check recorded.recording.request == request  # endpoint and body, no credential
       check recorded.recording.reply == reply  # reply as served
       check label.startsWith("recorded ") and label["recorded ".len .. ^1].isDate  # date of run
       check walkDir(directory_case).toSeq.len == 1  # recording alone, sibling renamed over it
       let again = binary.run(environment, ["--record:" & directory_case, text.argument])
-      check again == toOutcome(suggestion, passage, settings.model,
-          [noteCredential(KEY_CREDENTIAL), noteReplayed(path, label)])  # recording replayed
+      check again == toOutcome(suggestion, passage, settings.model, [noteCredential(
+          KEY_CREDENTIAL), noteReplayed(directory_case, request, label)])  # recording replayed
       check server.heard.len == 1  # 2xx kept, so never paid twice
       let replayed = binary.run(environment, ["--replay:" & directory_case, text.argument])
       check replayed == toOutcome(suggestion, passage, settings.model,
-          [noteReplayed(path, label)])  # same tag, credential unread
+          [noteReplayed(directory_case, request, label)])  # same tag, credential unread
       check server.heard.len == 1  # replay sends nothing
       for outcome in [written, again, replayed]:
         check CREDENTIAL_SUITE notin outcome.output & outcome.report  # credential in no stream
@@ -1146,7 +1188,7 @@ suite "Internal: Suggester":
       check binary.run(@[(KEY_SERVICE, $service)] & environment, ["--record:" & directory_case,
           text.argument]) == toOutcome(service.readReply(reply), passage, settings.model, [
         noteCredential(name),
-        noteReplayed(pathRecording(directory_case, request), LABEL_SUITE),
+        noteReplayed(directory_case, request, LABEL_SUITE),
       ])  # usual name read for default endpoint; recording replays, so nothing is sent
 
 
@@ -1193,7 +1235,7 @@ suite "Internal: Suggester":
         if is_usual:
           inc count_usual
           check outcome == toOutcome(service.readReply(reply), passage, settings.model,
-              [noteCredential(usual), noteReplayed(pathRecording(directory_case, request),
+              [noteCredential(usual), noteReplayed(directory_case, request,
               LABEL_SUITE)])  # usual name read for host of default endpoint, without case
           continue
         inc count_refused
@@ -1222,20 +1264,22 @@ suite "Internal: Suggester":
         let
           directory_case = directory / "statuses" / $service / $i
           record = @["--record:" & directory_case, text.argument]
-          path = pathRecording(directory_case, requestService(settings, passage))
+          request = requestService(settings, passage)
+          path = pathRecording(directory_case, request)
           suggestion = service.readReply(reply)
           is_kept = suggestion.is_suggested or suggestion.failure != Failure.Status
           count_before = server.heard.len
           first = binary.run(settings.toEnvironment, record)
           recorded = readFile(path).readRecording
-        check first == toOutcome(suggestion, passage, settings.model,
-            [noteCredential(KEY_CREDENTIAL), noteWritten(path)])  # sent and written, any status
+        check first == toOutcome(suggestion, passage, settings.model, [noteCredential(
+            KEY_CREDENTIAL), noteWritten(directory_case, request)])  # sent and written, any status
         check recorded.is_read and recorded.recording.reply == reply  # reply as served
         if not recorded.is_read: continue
         let second = binary.run(settings.toEnvironment, record)
         check second == toOutcome(suggestion, passage, settings.model, [
           noteCredential(KEY_CREDENTIAL),
-          if is_kept: noteReplayed(path, recorded.recording.label) else: noteWritten(path),
+          if is_kept: noteReplayed(directory_case, request, recorded.recording.label)
+          else: noteWritten(directory_case, request),
         ])  # tag and paid failure replayed; `Status` sent and written again (`Mode.Record`)
         check server.heard.len - count_before ==
             (if is_kept: 1 else: 2)  # sent again where reply reads as `Status` alone
@@ -1244,7 +1288,7 @@ suite "Internal: Suggester":
           replay = ["--replay:" & directory_case, text.argument]
           replayed = binary.run(settings.toEnvironment, replay)
         check replayed == toOutcome(suggestion, passage, settings.model,
-            [noteReplayed(path, label)])  # any reply replayed, credential unread
+            [noteReplayed(directory_case, request, label)])  # any reply replayed, credential unread
         check server.heard.len - count_before == (if is_kept: 1 else: 2)  # replay sends nothing
         if not suggestion.is_suggested: covered.incl suggestion.failure
         if is_kept: inc count_kept else: inc count_sent
@@ -1292,9 +1336,10 @@ suite "Internal: Suggester":
     ]:
       let
         directory_case = directory / "hops_kept" / $i
-        path = pathRecording(directory_case, "GET " & url)
         is_kept = recorded.status in 200..399
-        note = if is_kept: noteReplayed(path, LABEL_PAGE) else: noteWritten(path)
+        note =
+          if is_kept: noteReplayed(directory_case, "GET " & url, LABEL_PAGE)
+          else: noteWritten(directory_case, "GET " & url)
         count_before = server.heard.len
       writeRecordings(directory_case, [Recording(label: LABEL_PAGE, request: "GET " & url,
           reply: recorded)])
@@ -1381,7 +1426,8 @@ suite "Internal: Suggester":
       passage = text.argument.toPassage
       answer = toReplyMessages(text.answer, settings.model)
       directory_case = directory / "unwritten"
-      path = pathRecording(directory_case, requestService(settings, passage))
+      request = requestService(settings, passage)
+      path = pathRecording(directory_case, request)
       opening = noteCredential(KEY_CREDENTIAL) & "\nReply should be written to `"
     for (blocked, reply) in [
       (path, answer),  # directory at `<stamp>.recording`, so rename fails: as found in suite review
@@ -1396,7 +1442,8 @@ suite "Internal: Suggester":
         count_before = server.heard.len
         expected = toOutcome(Service.Claude.readReply(reply), passage, settings.model, [])
         outcome = binary.run(environment, ["--record:" & directory_case, text.argument])
-        error = outcome.report.readFramed(opening & path & "`; got `", "`.\n" & expected.report)
+        error = outcome.report.readFramed(opening & pathShown(directory_case, request) &
+            "`; got `", "`.\n" & expected.report)
       check outcome.output == expected.output and outcome.code == expected.code  # tag kept
       check error.isSome and error.get.len > 0 and '\n' notin error.get  # path, then error
       check server.heard.len == count_before + 1  # sent once, and read
@@ -1405,17 +1452,16 @@ suite "Internal: Suggester":
       url = urlLoopback(server.port, "/page")
       page = Reply(status: 200, content_type: "text/plain", body: example("alice").argument)
       passage_page = url.readPage(page).passage
-      path_page = pathRecording(directory_case, "GET " & url)
-      path_service = pathRecording(directory_case, requestService(settings, passage_page))
+      request_page = "GET " & url
       expected_page = toOutcome(Service.Claude.readReply(answer), passage_page, settings.model,
-          [noteWritten(path_service)])
+          [noteWritten(directory_case, requestService(settings, passage_page))])
     server.routes = @[("/page", page), (PATH_SERVICE, answer)]
     removeDir(directory_case)
-    createDir(path_page)
+    createDir(pathRecording(directory_case, request_page))
     let
       outcome_page = binary.run(environment, ["--record:" & directory_case, url])
-      error_page = outcome_page.report.readFramed(opening & path_page & "`; got `", "`.\n" &
-          expected_page.report)
+      error_page = outcome_page.report.readFramed(opening & pathShown(directory_case,
+          request_page) & "`; got `", "`.\n" & expected_page.report)
     check outcome_page.output == expected_page.output and outcome_page.code == 0  # tag kept
     check error_page.isSome and error_page.get.len > 0 and
         '\n' notin error_page.get  # page hop named, service request written after it
@@ -1594,8 +1640,8 @@ suite "Internal: Suggester":
       requests = @["GET " & url_moved, "GET " & url_page, requestService(settings, passage)]
       paths = requests.mapIt(pathRecording(directory_case, it))
     check binary.run(settings.toEnvironment, ["--record:" & directory_case, url_moved]) ==
-        toOutcome(suggestion, passage, settings.model,
-        @[noteCredential(KEY_CREDENTIAL)] & paths.mapIt(noteWritten(it)))  # each hop written
+        toOutcome(suggestion, passage, settings.model, @[noteCredential(KEY_CREDENTIAL)] &
+        requests.mapIt(noteWritten(directory_case, it)))  # each hop written
     stopServer(server)  # replay needs no server
     let recordings = paths.mapIt(readFile(it).readRecording)
     check recordings.allIt(it.is_read)  # each file reads back
@@ -1604,8 +1650,8 @@ suite "Internal: Suggester":
       check recordings.mapIt(it.recording.reply) ==
           @[Reply(status: 302, location: "/page"), reply_page, reply_service]  # as served
       check binary.run(settings.toEnvironment, ["--replay:" & directory_case, url_moved]) ==
-          toOutcome(suggestion, passage, settings.model, (0..2).mapIt(noteReplayed(paths[it],
-          recordings[it].recording.label)))  # same tag, read from files alone, same endpoint
+          toOutcome(suggestion, passage, settings.model, (0..2).mapIt(noteReplayed(directory_case,
+          requests[it], recordings[it].recording.label)))  # same tag, read from files alone
 
 
   test "page refused by status, type, coding, charset or text exits 1 with `Page`, naming it":
@@ -1716,8 +1762,8 @@ suite "Internal: Suggester":
     writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: "GET " & start,
         reply: Reply(status: 302, location: presigned))])
     check binary.run([], ["--replay:" & directory_case, start]) == toOutcome(Failure.Page,
-        "redirect to http://127.0.0.1:8080/bucket/obj", [noteReplayed(pathRecording(directory_case,
-        "GET " & start), LABEL_SUITE)])  # as found: https falls; replayed, as suite drives no TLS
+        "redirect to http://127.0.0.1:8080/bucket/obj", [noteReplayed(directory_case,
+        "GET " & start, LABEL_SUITE)])  # as found: https falls; replayed, as suite drives no TLS
     var count = 0  # Cases made, so each refused location has start of its own.
     for user in USERS_REDIRECT:
       for query in QUERIES_REDIRECT:
@@ -1732,7 +1778,7 @@ suite "Internal: Suggester":
                 request: "GET " & start_case, reply: Reply(status: 302, location: url))])
             let outcome = binary.run([], ["--replay:" & directory_case, start_case])
             check outcome == toOutcome(Failure.Page, opening & scheme & "://example.org:8080/page",
-                [noteReplayed(pathRecording(directory_case, "GET " & start_case),
+                [noteReplayed(directory_case, "GET " & start_case,
                 LABEL_SUITE)])  # RFC 3986 appendix `B`: scheme, host, port and path alone
             check "SECRET" notin outcome.report  # no user part, query or fragment named
 
@@ -2122,7 +2168,7 @@ suite "Internal: Suggester":
       writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
           reply: reply)])
       check binary.run([], ["--replay:" & directory_case, text]) == toOutcome(suggestion,
-          passage, settings.model, [noteReplayed(pathRecording(directory_case, request),
+          passage, settings.model, [noteReplayed(directory_case, request,
           LABEL_SUITE)])  # explained after note, nothing printed, exit 1
       covered.incl suggestion.failure
     let
@@ -2136,11 +2182,11 @@ suite "Internal: Suggester":
       url = "https://example.org/gone"
       gone = Reply(status: 404, content_type: "text/html", body: "<p>gone</p>")
       directory_page = directory / "failures" / "page"
-      path_page = pathRecording(directory_page, "GET " & url)
     writeRecordings(directory_page, [Recording(label: LABEL_SUITE, request: "GET " & url,
         reply: gone)])
     check binary.run([], ["--replay:" & directory_page, url]) == toOutcome(Failure.Page,
-        url.readPage(gone).detail, [noteReplayed(path_page, LABEL_SUITE)])  # page refused
+        url.readPage(gone).detail, [noteReplayed(directory_page, "GET " & url,
+        LABEL_SUITE)])  # page refused
     covered.incl Failure.Page
     let
       refusing = socketRefusing()  # held until refused run ends, so no other socket takes port
