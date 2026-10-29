@@ -45,18 +45,30 @@ const
     (card: "One hand, cross name · above", positive: MOST),
     (card: "Chain, cross name · above", positive: 1.5275),
     (card: "Chain, same name · above", positive: MOST),
+    (card: "Chain, cross name · high", positive: 0.8438),
+    (card: "Chain, same name · high", positive: 0.6500),
+    (card: "Chain, cross name · low", positive: 0.8650),
+    (card: "Chain, same name · low", positive: 0.7400),
   ]
-    ## Turns plan carries each rig sweep over crown from rest, way that turns positive, follow
-    ##   turning: furthest of every style toward all sweep asks (`walk.MOST`), own path and its
-    ##   mirror's (`walk.pathsFor`), engine standing each moment (`walk.replayedWay`,
+    ## Turns plan carries each rig sweep from rest, at band of its hold, way that turns positive,
+    ##   follow turning: furthest of every style toward all sweep asks (`walk.MOST`), own path
+    ##   and its mirror's (`walk.pathsFor`), engine standing each moment (`walk.replayedWay`,
     ##   `rigid.gives`).  Rig keeps that way alone (`seen.shown`), so table floors no other.
-    ##   Keyed by card as rig names its sweep, in order of `design/rig.SHOWN`, so `floors` prints
-    ##     table row for row.
+    ##   Keyed by card and level as rig names its sweep, in order of `design/rig.SHOWN`, so
+    ##     `floors` prints table row for row.
     ##   Measured by `nim r tools/build.nim floors`, which prints each row with style and start
-    ##     of its path, 2026-10-12, on physics of `6ef96eaf`, and same again 2026-10-20:
-    ##     One hand, same name: style 0 to +2.5.  One hand, cross name: style 2 to +2.5.
+    ##     of its path.  Rows above: 2026-10-12, on physics of `6ef96eaf`, same again
+    ##     2026-10-20, and same again 2026-10-29, on physics of `fd756cfb`:
+    ##     One hand, same name: style 0 to +2.5, from 1.169 m on 2026-10-29.
+    ##     One hand, cross name: style 2 to +2.5, from 0.966 m on 2026-10-29.
     ##     Chain, cross name: style 13, from 0.957 m, to 1.5275.
     ##     Chain, same name: style 4, from 0.417 m.
+    ##   Rows held high and low: 2026-10-29, on physics of `fd756cfb`, each to where no plan
+    ##     carries turn further:
+    ##     Chain, cross name, high: style 1, from 1.115 m.
+    ##     Chain, same name, high: style 14, from 0.670 m.
+    ##     Chain, cross name, low: style 11, from 1.105 m.
+    ##     Chain, same name, low: style 3, from 0.389 m.
     ##   Edge holds cross-name chain near there, its upper arm riding plan's six degrees inside:
     ##     plan with edge's margin at 0 or 3 degrees, other margins kept, stands no path past
     ##     1.540 or 1.526, and plan with no edge term none past 1.4475, engine stopping each by
@@ -363,17 +375,16 @@ func named(hand: Lifted): string =
 
 
 func turnsHeldRig(kept: JsonNode): seq[tuple[card: string, held: float]] =
-  ## Turns from rest of furthest moment each rig sweep over crown holds, by its card.
+  ## Turns from rest of furthest moment each rig sweep holds, by its card and level.
   ##   Each sweep is its way that turns positive (`seen.shown`).
   for sweep in kept["sweeps"]:
-    if sweep["band"].getStr != "above": continue
     var held = 0.0
     if sweep.hasKey("at"):
       for m in 0..<heldMoments(sweep): held = max(held, abs(sweep["at"][m].getFloat))
-    result.add (sweep["hold"].getStr & " · above", held)
+    result.add (sweep["hold"].getStr & " · " & sweep["band"].getStr, held)
 
 func floorPlanned(card: string): Option[float] =
-  ## Turns plan carries rig's sweep `card` over crown, way that turns positive
+  ## Turns plan carries rig's sweep `card`, at band of its hold, way that turns positive
   ##   (`TURNS_PLANNED`); none where table names no such card.
   for planned in TURNS_PLANNED:
     if planned.card == card: return some(planned.positive)
@@ -850,7 +861,7 @@ suite "Internal: Simulation against Reference":
     check moments_under.len == 0
 
 
-  test "every way rig sweeps over crown turns as far as plan carries it":
+  test "every way rig sweeps turns as far as plan carries it":
     ## Architect, pull request 629, 2026-10-12, D1: where walk alone lets joined hands sink, plan
     ##   lifts them.  Issue 375, 2026-10-04, D5: recording keeps planned turn of each sweep, as
     ##   each still is planned.  Plan keeps joined hands inside band and every upper arm inside
@@ -858,11 +869,13 @@ suite "Internal: Simulation against Reference":
     ##   way (`TURNS_PLANNED`).
     ##   Way holds as far as its furthest moment, in turns from rest (`heldMoments`): planned way
     ##     keeps no moment that gave.
-    ##   Domain: way of each of rig's four sweeps over crown that turns positive (`seen.shown`).
-    ##     Every hold read names its floor, and none is left unread.
+    ##   Domain: way of each of rig's eight sweeps that turns positive (`seen.shown`): four held
+    ##     above, two held high and two held low.  Every hold read names its floor, and none is
+    ##     left unread.
     ##     Cost: way that turns negative is held to no floor, since rig keeps none.
     ##   That plan's moments keep hands in band and arms inside edge is held where each moment
-    ##     is read: joined hands over crown (law above), and shoulder's edge (`test_shoulder.nim`).
+    ##     is read: joined hands over crown (law above), joined hands held low or high (law
+    ##     below), and shoulder's edge (`test_shoulder.nim`).
     ##   Rig rounds turn of each moment, so way may read under its floor by half that.
     ##   Regression of pull request 629, as found on 2026-10-12 in recordings of `bc656d30`:
     ##     cross-name chain held above stops at 1.26 of turn either way, where follow's joined
@@ -871,7 +884,7 @@ suite "Internal: Simulation against Reference":
     ##     `Chain, same name · above` to +1.78, and keeps no way that turns negative.
     let
       by_rig = turnsHeldRig(parseFile(KEPT_RIG))
-      ways_rig = SHOWN.countIt(it.band == Band.Crown)
+      ways_rig = SHOWN.len
     var short, unfloored: seq[string]
     for (card, held) in by_rig:
       let floor = floorPlanned(card)
@@ -880,7 +893,7 @@ suite "Internal: Simulation against Reference":
         continue
       checkpoint &"`{card}`: holds to `{held:.4f}` of turn, plan carries `{floor.get:.4f}`."
       if held + PLACE_RIG / 2.0 < floor.get: short.add &"{card} {held:.4f}"
-    checkpoint &"Ways read: `{by_rig.len}` of rig's sweeps over crown.  Short of plan: " &
+    checkpoint &"Ways read: `{by_rig.len}` of rig's sweeps.  Short of plan: " &
         &"`{short.join(\", \")}`.  With no floor: `{unfloored.join(\", \")}`."
     check by_rig.len == ways_rig
     check unfloored.len == 0

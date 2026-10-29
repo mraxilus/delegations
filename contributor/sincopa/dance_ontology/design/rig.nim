@@ -68,7 +68,7 @@ const SHOWN: seq[Cut] = @[
   ## Eight sweeps worth watching: four holds above, and two chains at each lower level,
   ## where floor and engine still argue.  Above is where sections `B` to `G` are drawn,
   ## and where section `A`, which draws no level, is asked.
-  ##   Reached by `design/floors`, which plans each sweep over crown, and by
+  ##   Reached by `design/floors`, which plans each at band of its hold, and by
   ##     `tests/suites/test_asks`, which counts them.
 
 const
