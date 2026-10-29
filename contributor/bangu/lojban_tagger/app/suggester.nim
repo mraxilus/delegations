@@ -268,8 +268,8 @@ proc findCredential(settings: Settings): Credentialed =
   let named = names.mapIt("`" & it & "`").join(" or ")
   if host.len > 0 and not is_usual:
     return Credentialed(is_read: false, problem: "Credential should be set in " & named &
-        " alone, since host of endpoint is not `" & host & "`; got none.")
-  Credentialed(is_read: false, problem: "Credential should be set in " & named & "; got none.")
+        " alone, since host of endpoint is not `" & host & "`; got ``.")
+  Credentialed(is_read: false, problem: "Credential should be set in " & named & "; got ``.")
 
 
 func isReplayed(reply: Reply, service: Option[Service]): bool =
