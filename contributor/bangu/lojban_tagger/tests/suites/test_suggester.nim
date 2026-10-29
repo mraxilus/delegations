@@ -24,8 +24,9 @@
 ##     none is captured.
 ##   Random passages, settings and replies, and random texts given, are drawn into pools
 ##     allocated once, after one seeding per test, and served by `served`.
-##   Corpus holds no label of control byte or bidirectional mark: replay note prints label as
-##     file holds it, though report makes other outside text printable; should note do so too?
+##   Labels of recordings suite writes hold control bytes, bidirectional marks, ill-formed UTF-8
+##     and more than `RUNES_SHOWN` characters: replay note names label made printable and cut,
+##     as report names other outside text.
 ##   Corpus holds no directory of recordings binary cannot make or write: binary raises there,
 ##     after service answered; should it name failure, and keep reply it paid for?
 ##   Cost: no root signs loopback server, so TLS past tunnel request and name lookup stay
@@ -73,7 +74,7 @@ type
     settings: Settings  ## Settings binary should read from environment.
     environment: seq[(string, string)]  ## Variables naming settings.
     reply: Reply  ## Reply recording holds.
-    label: string  ## Label recording holds, printable.
+    label: string  ## Label recording holds, of `LABELS`.
 
 
 const
@@ -144,8 +145,29 @@ const
     ## Stop reason of reply stopped at limit in wire format of each service.
   BODIES_MALFORMED = ["", "not json", "[]", "{\"tanru\": [\"ciska\"]"]
     ## Bodies of 2xx reply reading as no reply of either wire format.
-  LABELS = [LABEL_MESSAGES, LABEL_CHAT, LABEL_SUITE, "recorded 2026-10-29"]
-    ## Labels random recordings carry, printable alone.
+  LABEL_FOUND = "evil \e[31mred\e[0m \u202Eabc"
+    ## Label suite review found printed raw: escape sequences, then right-to-left override.
+  LABEL_CONTROLS = block:
+    ## Label holding each code point below U+00A0 report escapes: C0 but line feed, `DEL`, C1.
+    var label = "controls "
+    for code in 0x00..0x9F:
+      if code in 0x20..0x7E or code == 0x0A: continue
+      label.add (if code < 0x80: $char(code) else: "\xC2" & char(code))
+    label
+  LABELS_UNPRINTABLE = [
+    LABEL_FOUND,
+    LABEL_CONTROLS,
+    "marks \u061C \u200E \u200F \u202A \u202B \u202C \u202D \u202E \u2066 \u2067 \u2068 \u2069",
+    "ill-formed \xFF \xE2\x80 \xED\xA0\x80 \xC0\xAF",
+    "\xC3\xA9".repeat(RUNES_SHOWN + 1),
+  ]
+    ## Labels note makes printable or cuts: as found, controls, every bidirectional mark,
+    ##   ill-formed UTF-8, and one character past `RUNES_SHOWN`.
+  LABELS = @[LABEL_MESSAGES, LABEL_CHAT, LABEL_SUITE, "recorded 2026-10-29", ""] &
+      @LABELS_UNPRINTABLE
+    ## Labels random recordings carry: documented shapes, date, empty, and each unprintable.
+  CHARACTERS_CONTROL = {'\x00'..'\x09', '\x0B'..'\x1F', '\x7F'}
+    ## Bytes of C0 but line feed, and `DEL`, which act on terminal; no report holds one.
   GISMU_GIVEN = ["cukta", "datni", "gerku", "pixra", "tatpi", "vreji", "xatra"]
     ## Gismu random texts given join into tag.
   TEXTS_ASKED = [
@@ -365,8 +387,9 @@ func noteCredential(name: string): string =
 
 
 func noteReplayed(path, label: string): string =
-  ## Render note naming recording replayed, then its label.
-  "Reply replayed from `" & path & "`: " & label & "."
+  ## Render note naming recording replayed, then its label made printable and cut, as report
+  ##   makes outside text.
+  "Reply replayed from `" & path & "`: " & label.toPrintable(RUNES_SHOWN) & "."
 
 
 func noteWritten(path: string): string =
@@ -699,6 +722,32 @@ suite "Internal: Suggester":
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
         toOutcome(toSuggestion(Failure.Recording, path & " holds other request"), passage,
         settings.model, [])  # stamp alone never matches, whole request does
+
+
+  test "replay note names label made printable and cut, as report names other outside text":
+    # Regression, found in suite review: note named label as file held it, control bytes raw.
+    let
+      directory_case = directory / "labels"
+      text = example("lojban")
+      settings = Service.Claude.toSettings
+      passage = text.argument.toPassage
+      request = "POST " & settings.toBody(passage)
+      path = pathRecording(directory_case, request)
+      reply = toReplyMessages(text.answer, settings.model)
+      suggestion = Service.Claude.readReply(reply)
+      replay = ["--replay:" & directory_case, text.argument]
+    createDir(directory_case)
+    writeFile(path, Recording(label: LABEL_FOUND, request: request, reply: reply).toText)
+    let found = binary.run([], replay)  # `--replay:D 'mi ciska lo xatra'`, label `LABEL_FOUND`
+    check found.report == "Reply replayed from `" & path &
+        "`: evil \\u{1B}[31mred\\u{1B}[0m \\u{202E}abc.\n" &
+        suggestion.toReport(passage, settings.model)  # case as found in suite review
+    for label in @LABELS_UNPRINTABLE & @["\xC3\xA9".repeat(RUNES_SHOWN)]:  # label at cap kept whole
+      writeFile(path, Recording(label: label, request: request, reply: reply).toText)
+      let outcome = binary.run([], replay)
+      check outcome == toOutcome(suggestion, passage, settings.model,
+          [noteReplayed(path, label)])  # label as `toPrintable` makes it, then tag
+      check outcome.report.allIt(it notin CHARACTERS_CONTROL)  # no control reaches terminal
 
 
   test "record sends request service expects, writes reply, then replays it with no request":
