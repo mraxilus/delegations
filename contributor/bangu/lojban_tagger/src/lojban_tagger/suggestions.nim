@@ -145,6 +145,11 @@ const
   VERSION_ANTHROPIC = "2026-10-21"  ## Version of Messages API body is written for.
   BETA_FALLBACK = "server-side-fallback-2026-07-01"  ## Beta `fallbacks: "default"` needs.
   NAME_SCHEMA = "lojban_tag"  ## Name Chat Completions gives schema of answer.
+  ID_SESSION = "lojban_tagger"
+    ## Session OpenRouter body names: one for every request, so sticky routing sends each to
+    ##   endpoint caching system text, which passage would key apart; at most 256 characters.
+    ##   Cost: requests of one account go to one endpoint while it answers, never spread.
+    ##     https://openrouter.ai/docs/guides/best-practices/prompt-caching
   RUNES_SHOWN* = 200  ## Most characters of outside text report shows.
   RUNES_ANSWER_SHOWN* = 80
     ## Most characters of malformed answer, or of faulty line of recording, report shows.
@@ -768,6 +773,7 @@ func toBody*(settings: Settings, passage: Passage): string =
       "json_schema": {"name": NAME_SCHEMA, "strict": true, "schema": toSchema()},
     }
     body["provider"] = %*{"require_parameters": true}
+    body["session_id"] = %ID_SESSION
     body["messages"] = %*[
       {"role": "system", "content": [
         {"type": "text", "text": PROMPT_SYSTEM, "cache_control": {"type": "ephemeral"}},
