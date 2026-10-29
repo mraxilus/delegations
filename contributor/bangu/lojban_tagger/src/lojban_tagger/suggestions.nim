@@ -26,7 +26,9 @@
 ##   | decode, LABELS_*   | labels of WHATWG Encoding Standard                             |
 ##   | LUT_RUNE_BY_BYTE   | index-windows-1252, WHATWG Encoding Standard                   |
 ##   | readLabel          | extracting encoding from meta element, HTML 2.5.3              |
-##   | readCharset        | prescan of HTML 13.2.3.2, step 14 for UTF-16                   |
+##   | prescan            | prescan of HTML 13.2.3.2, steps 1, 3 and 4, up to 1,024 bytes  |
+##   | readMeta           | `<meta` branch of prescan, HTML 13.2.3.2, its steps 2 to 16    |
+##   | readAttribute      | getting attribute in prescan, HTML 13.2.3.2, steps 1 to 12     |
 ##   | readReference      | character reference states of HTML tokenizer                   |
 ##   | findCloseComment   | comment states of HTML tokenizer, 13.2.5.43 to 13.2.5.52       |
 ##   | findCloseTag       | attribute states of HTML tokenizer                             |
@@ -677,23 +679,116 @@ func readLabel(text: string): string =
   ""
 
 
+func readAttribute(head: string, at: var int): Option[(string, string)] =
+  ## Read name and value of attribute from `at` of lowercased `head`, as HTML 13.2.3.2 gets
+  ##   attribute, steps 1 to 12: spaces and `/` passed, name to `=`, space, `/` or `>`, value
+  ##   quoted to own quote or bare to space or `>`; `none` where `>` ends tag first, `at` on it.
+  ##   `at` stands past `head` where bytes ran out, so prescan stops.
+  while at < head.len and head[at] in SPACES_MARKUP + {'/'}: inc at
+  if at >= head.len or head[at] == '>': return none((string, string))
+  let start = at
+  inc at  # First byte opens name, `=` too (steps 3 and 4).
+  while at < head.len and head[at] notin CHARACTERS_ENDING_NAME + {'='}: inc at
+  let name = head[start..<at]
+  while at < head.len and head[at] in SPACES_MARKUP: inc at
+  if at >= head.len: return none((string, string))
+  if head[at] != '=': return some((name, ""))
+  inc at
+  while at < head.len and head[at] in SPACES_MARKUP: inc at
+  if at >= head.len: return none((string, string))
+  if head[at] == '>': return some((name, ""))
+  if head[at] in {'"', '\''}:
+    let close = head.find(head[at], at + 1)
+    if close < 0:
+      at = head.len
+      return none((string, string))
+    let value = head[at+1..<close]
+    at = close + 1
+    return some((name, value))
+  let finish = head.find(SPACES_MARKUP + {'>'}, at)
+  if finish < 0:
+    at = head.len
+    return none((string, string))
+  let value = head[at..<finish]
+  at = finish
+  some((name, value))
+
+
+func readMeta(head: string, at: var int): string =
+  ## Read label meta at `at` of lowercased `head` names, as HTML 13.2.3.2 prescans meta, steps 2
+  ##   to 16: first attribute of each name kept; label of `charset`, or of `content` where
+  ##   `http-equiv` is `content-type`; UTF-16 read as `utf-8`, `x-user-defined` as
+  ##   `windows-1252`; empty where meta names none, or where bytes run out.
+  ##   Label is first token of value (`readLabel`), failing where empty alone, since lists here
+  ##     hold labels of three encodings, not every label of WHATWG Encoding Standard.
+  ##     Cost: value naming no encoding is taken, where HTML reads on to next meta (step 13):
+  ##       `latin1/` reads as `latin1`, and `bogus` refuses page.
+  var
+    names: seq[string]
+    charset = none(string)  # Empty label stands for failure, distinct from none (step 5).
+    is_pragma_needed = none(bool)  # Need pragma of HTML.
+    found_pragma = false  # Got pragma of HTML.
+  while true:
+    let attribute = head.readAttribute(at)
+    if attribute.isNone: break
+    let (name, value) = attribute.get
+    if name in names: continue
+    names.add name
+    case name
+    of "http-equiv": found_pragma = value == "content-type"
+    of "content":
+      let label = value.readLabel
+      if label.len > 0 and charset.isNone: (charset, is_pragma_needed) = (some(label), some(true))
+    of "charset": (charset, is_pragma_needed) = (some(readLabel("charset=" & value)), some(false))
+    else: discard
+  if at >= head.len or is_pragma_needed.isNone or charset.get.len == 0: return ""
+  if is_pragma_needed.get and not found_pragma: return ""
+  if charset.get in LABELS_UNICODE_SIXTEEN: return "utf-8"
+  if charset.get == "x-user-defined": return "windows-1252"
+  charset.get
+
+
+func prescan(head: string): string =
+  ## Read label meta of lowercased `head` names, as HTML 13.2.3.2 prescans bytes, steps 1, 3 and
+  ##   4: comment skipped to `-->`, its own dashes counting; other tag read past its attributes;
+  ##   `<!`, `</` and `<?` skipped to `>`; empty where no meta names one, or where bytes run out.
+  ##   Meta inside raw text is read too, as prescan knows no element.
+  # TODO: Read UTF-16 declaration, step 2, and XML encoding prescan falls back on where bytes
+  #   run out: UTF-16 page with neither mark nor header now reads as UTF-8, NULs and all, and
+  #   page naming encoding in `<?xml` declaration alone reads as UTF-8.
+  var at = 0
+  while at < head.len:
+    let start = at + 1 + ord(head.continuesWith("</", at))  # Name of tag, past `/` of closing.
+    if head.continuesWith("<!--", at):
+      let close = head.find("-->", at + 2)
+      if close < 0: return ""
+      at = close + 2
+    elif head.continuesWith("<meta", at) and at + 5 < head.len and
+        head[at+5] in SPACES_MARKUP + {'/'}:
+      at += 5
+      let label = head.readMeta(at)
+      if label.len > 0: return label
+    elif head[at] == '<' and start < head.len and head[start] in strutils.Letters:
+      at = head.find(SPACES_MARKUP + {'>'}, at)
+      if at < 0: return ""
+      while head.readAttribute(at).isSome: discard
+    elif head[at] == '<' and at + 1 < head.len and head[at+1] in {'!', '/', '?'}:
+      at = head.find('>', at + 1)
+      if at < 0: return ""
+    inc at
+  ""
+
+
 func readCharset(content_type, body: string; is_markup: bool): string =
-  ## Read charset label: header parameter first, then `<meta>` of first 1,024 bytes of markup,
-  ##   else `utf-8`.
-  ##   Meta naming UTF-16 reads as UTF-8, as prescan of HTML 13.2.3.2 sets it, step 14: bytes
-  ##     prescan reads as ASCII are no UTF-16. Header naming it stays, so page is refused.
+  ## Read charset label: header parameter first, then label `prescan` reads from first 1,024
+  ##   bytes of markup, else `utf-8`.
+  ##   Header naming UTF-16 or `x-user-defined` stays, so page is refused: HTML 13.2.3.2 maps
+  ##     either for meta alone, steps 14 and 15.
   let header = content_type.readLabel
   if header.len > 0: return header
   if is_markup:
-    let head = body[0..<min(body.len, 1024)].toLowerAscii
-    var at = head.find("<meta")
-    while at >= 0:
-      let
-        close = head.find('>', at)
-        label = (if close < 0: head[at .. ^1] else: head[at..close]).readLabel
-      if label in LABELS_UNICODE_SIXTEEN: return "utf-8"
-      if label.len > 0: return label
-      at = head.find("<meta", at + 1)
+    let label = prescan(body[0..<min(body.len, 1024)].toLowerAscii)
+    if label.len > 0: return label
   "utf-8"
 
 
