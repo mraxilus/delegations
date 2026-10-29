@@ -44,6 +44,7 @@ when compileOption("profiler"):
 import std/[
   asyncdispatch, asyncnet, json, options, os, osproc, random, sequtils, strutils, unittest,
 ]
+from std/unicode import Rune, toUTF8
 
 import ../../app/exchanges
 from ../../app/suggester {.all.} import COUNT_REDIRECTS_MAX, USAGE
@@ -117,9 +118,11 @@ const
     ## Text reading as tag of 18 words in 61 bytes, which binary rendered without bound.
   PIECE_PAGE = "Alice was beginning to get very tired. "  ## Text large page repeats.
   SAMPLES_REPLAY = 200  ## Random replays wiring law reads, seeded.
-  FLOOR_REPLAYED = 180  ## Fewest random replays whose text reads as no tag; 200 read at seed `0`.
+  FLOOR_REPLAYED = 180
+    ## Fewest random replays whose text reads as no tag and holds visible character; 199 read at
+    ##   seed `0`.
   FLOOR_SUGGESTED = 24  ## Fewest random replays printing tag; 32 read at seed `0`.
-  FLOOR_REFUSED = 140  ## Fewest random replays refused; 168 read at seed `0`.
+  FLOOR_REFUSED = 140  ## Fewest random replays refused; 167 read at seed `0`.
   FLOOR_CUT = 8  ## Fewest random replays whose passage is cut; 14 read at seed `0`.
   SAMPLES_GIVEN = 200  ## Random texts given shortcut law reads, seeded.
   FLOOR_GIVEN = 100  ## Fewest random texts read as tag; 128 read at seed `0`.
@@ -130,6 +133,14 @@ const
   PIECES_FLAG = ["-", "h", "help", "record", "replay", ":", "=", " ", "dir", "R", "\xC3\xA9", "\t"]
     ## Pieces random flag joins after its `-`: dashes, names of help and of modes, their
     ##   separators and wrong ones, directory, capital, multibyte and whitespace.
+  SAMPLES_BLANK = 100  ## Random texts of one to three code points blank law reads, seeded.
+  FLOOR_BLANK = 50  ## Fewest random texts `isBlank` reads as blank; 65 read at seed `0`.
+  FLOOR_VISIBLE = 25  ## Fewest random texts holding visible character; 35 read at seed `0`.
+  CODE_LOW_MAX = 0x3100
+    ## Highest code point of low run random texts draw from: C0, Latin, C1, general punctuation,
+    ##   spaces and marks up to ideographic space; no zero, which no argument carries.
+  CODES_HIGH = [0xFEFF, 0xFFFD, 0x1F600]
+    ## Code points past low run random texts draw too: byte order mark, replacement, emoji.
   WORDS_PASSAGE = [
     "Alice", "was", "tired", "mi", "ciska", "<passage>", "</passage>", "&amp;", "\"sister\"",
     "it's", "line\nbreak", "tab\there", "caf\xC3\xA9", "\xE2\x80\xA6", "\xC4\x89u", "\xFF",
@@ -577,6 +588,20 @@ proc poolFlags(directory: string): seq[seq[string]] =
     result.add leading & @[flagRandom(), "mi ciska"]
 
 
+proc poolBlank(): seq[string] =
+  ## Draw `SAMPLES_BLANK` random texts into pool allocated once: one to three code points, each
+  ##   one exported `isBlank` reads as blank three times in four, else any code point drawn;
+  ##   caller seeds first.
+  let
+    codes = toSeq(1..CODE_LOW_MAX) & @CODES_HIGH
+    blanks = codes.filterIt(Rune(it).toUTF8.isBlank)
+  result = newSeqOfCap[string](SAMPLES_BLANK)
+  for _ in 1..SAMPLES_BLANK:
+    var text = ""
+    for _ in 1..rand(1..3): text.add Rune(if rand(3) < 3: blanks.sample else: codes.sample).toUTF8
+    result.add text
+
+
 func isFlagTaken(flag: string): bool =
   ## Test usage takes flag: `--`, or mode naming nonempty directory; `-` alone is passage.
   flag == "--" or ((flag.startsWith("--record:") or flag.startsWith("--replay:")) and
@@ -641,7 +666,8 @@ suite "Internal: Suggester":
     var (passed, count_suggested, count_refused, count_cut) = (0, 0, 0, 0)
     for sample in served(pool):
       let text = sample.arguments.join(" ")
-      if text.readTagGiven.isSome: continue  # text reading as tag asks nothing; law below
+      if text.readTagGiven.isSome or text.isBlank:
+        continue  # text reading as tag asks nothing, and blank text is usage; laws below
       inc passed
       let
         passage = text.toPassage
@@ -1421,6 +1447,40 @@ suite "Internal: Suggester":
       check binary.run([], @["--replay:" & directory_case] & arguments) ==
           toOutcome(toSuggestion(Failure.Recording, path & " missing"), passage, settings.model,
           [])  # passage after `--` read as text, flag of mode among it too
+
+
+  test "text holding no visible character exits 2 with usage, as exported `isBlank` reads it":
+    randomize(0)
+    let
+      server = startServer()
+      live = Service.Claude.toSettings(server.port).toEnvironment
+      directory_case = directory / "blank"  # never made, so recording of each request misses
+      settings = Service.Claude.toSettings
+      pool = poolBlank()
+    for text in ["\xEF\xBB\xBF", "\xC2\xA0"]:  # `suggester $'\xEF\xBB\xBF'`, then lone NBSP
+      for environment in [live, @[(KEY_SERVICE, "bogus")]]:  # credential, then bad service
+        check binary.run(environment, [text]) == Outcome(report: USAGE,
+            code: 2)  # review finding logic-11, 2026-10-29: empty passage went out, paid
+    check server.heard.len == 0  # nothing sent
+    var count_blank, count_visible = 0
+    for text in served(pool):
+      let outcome = binary.run([], ["--replay:" & directory_case, text])
+      if text.isBlank:
+        inc count_blank
+        check outcome == Outcome(report: USAGE, code: 2)  # blank text read as no text given
+        continue
+      inc count_visible
+      let
+        passage = text.toPassage
+        path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+        expected =
+          if text.readTagGiven.isSome: text.toOutcomeGiven
+          else: toOutcome(toSuggestion(Failure.Recording, path & " missing"), passage,
+              settings.model, [])
+      check outcome == expected  # text holding visible character asks shortcut, then service
+    check count_blank >= FLOOR_BLANK  # blank texts are common
+    check count_visible >= FLOOR_VISIBLE  # texts holding visible character are common
+    stopServer(server)
 
 
   test "each failure exits 1, prints nothing, and reports what pure pipeline names":
