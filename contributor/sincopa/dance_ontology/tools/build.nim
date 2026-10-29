@@ -50,8 +50,8 @@
 ##   Cost: `types` and `drive` need node and npm, and `drive` needs Chromium, which it fetches
 ##     through Playwright unless `DANCE_CHROMIUM` names one.
 ##   Cost: `types` compiles this driver, and so project code it imports, on koch's compiler
-##     (`curator/audit/src/plan.nim`, `runJobsType`). That holds while project's pin is koch's,
-##     2.2.12 both; pin that moves first splits driver.
+##     (`curator/audit/src/plan.nim`, `runJobsType`): 2.2.12, where project pins 2.4.0.  So
+##     driver and project code it imports compile on both, until koch's pin moves.
 
 {.experimental: "strictFuncs".}
 
