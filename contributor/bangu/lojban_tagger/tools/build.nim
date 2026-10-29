@@ -47,8 +47,10 @@ const
     ("coreutils", "`sha256sum`, which `lists` and `head` check each list's digest with"),
     ("libssl3", "TLS of `std/httpclient` under `-d:ssl`; `suggester` loads it when it starts"),
     ("ca-certificates", "roots `suggester` checks services and pages against"),
+    ("openssl", "command `test_exchanges` makes test root and leaves with, at run time"),
   ]
-    ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
+    ## Packages verbs and suites need, each with reason (Article II.8); `system` prints names
+    ##   alone.
 
 
 
