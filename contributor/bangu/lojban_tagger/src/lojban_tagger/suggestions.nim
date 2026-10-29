@@ -178,6 +178,15 @@ const
     "us-ascii", "windows-1252", "x-cp1252",
   ]
     ## Labels WHATWG Encoding Standard gives windows-1252, Latin-1 and ASCII among them.
+  LABELS_UNICODE_SIXTEEN = [
+    "csunicode", "iso-10646-ucs-2", "ucs-2", "unicode", "unicodefeff", "unicodefffe", "utf-16",
+    "utf-16be", "utf-16le",
+  ]
+    ## Labels WHATWG Encoding Standard gives UTF-16BE and UTF-16LE (4.2); neither is decoded.
+  LUT_LABEL_BY_MARK =
+    [("\xEF\xBB\xBF", "utf-8"), ("\xFE\xFF", "utf-16be"), ("\xFF\xFE", "utf-16le")]
+    ## Encoding each byte order mark names, as table of BOM sniff, WHATWG Encoding Standard 6.1,
+    ##   gives it.
   RUNES_BIDIRECTIONAL = [
     0x061C, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068,
     0x2069,
@@ -495,23 +504,33 @@ func readMarkup(markup: string): string =
 
 
 func readLabel(text: string): string =
-  ## Read value after `charset=` in text, unquoted and lowercased; empty where none.
-  let
-    lowered = text.toLowerAscii
-    at = lowered.find("charset=")
-  if at < 0: return ""
-  var start = at + "charset=".len
-  while start < lowered.len and lowered[start] in {'"', '\'', ' '}: inc start
-  var finish = start
-  while finish < lowered.len and
-      lowered[finish] notin {'"', '\'', ' ', ';', '>', '/', '\t', '\n', '\r'}:
-    inc finish
-  lowered[start..<finish]
+  ## Read value after `charset` and `=` in text, unquoted and lowercased; empty where none.
+  ##   Spaces may stand around `=`, as extracting character encoding from meta element skips
+  ##     them, HTML 2.5.3, steps 3 and 5; `charset` with no `=` after it is passed by, step 4.
+  ##   Header parameter takes same reading. Cost: RFC 9110 5.6.6 allows no space around `=`, so
+  ##     parameter it calls malformed is read, not dropped.
+  let lowered = text.toLowerAscii
+  var at = lowered.find("charset")
+  while at >= 0:
+    var start = at + "charset".len
+    while start < lowered.len and lowered[start] in SPACES_MARKUP: inc start
+    if start < lowered.len and lowered[start] == '=':
+      inc start
+      while start < lowered.len and lowered[start] in SPACES_MARKUP + {'"', '\''}: inc start
+      var finish = start
+      while finish < lowered.len and
+          lowered[finish] notin {'"', '\'', ' ', ';', '>', '/', '\t', '\n', '\r'}:
+        inc finish
+      return lowered[start..<finish]
+    at = lowered.find("charset", start)
+  ""
 
 
 func readCharset(content_type, body: string; is_markup: bool): string =
   ## Read charset label: header parameter first, then `<meta>` of first 1,024 bytes of markup,
   ##   else `utf-8`.
+  ##   Meta naming UTF-16 reads as UTF-8, as prescan of HTML 13.2.3.2 sets it, step 14: bytes
+  ##     prescan reads as ASCII are no UTF-16. Header naming it stays, so page is refused.
   let header = content_type.readLabel
   if header.len > 0: return header
   if is_markup:
@@ -521,9 +540,18 @@ func readCharset(content_type, body: string; is_markup: bool): string =
       let
         close = head.find('>', at)
         label = (if close < 0: head[at .. ^1] else: head[at..close]).readLabel
+      if label in LABELS_UNICODE_SIXTEEN: return "utf-8"
       if label.len > 0: return label
       at = head.find("<meta", at + 1)
   "utf-8"
+
+
+func sniffMark(bytes: string): tuple[label, mark: string] =
+  ## Read byte order mark opening bytes, as BOM sniff of WHATWG Encoding Standard 6.1 reads it:
+  ##   label of encoding it names, and mark itself; both empty where none opens bytes.
+  for (mark, label) in LUT_LABEL_BY_MARK:
+    if bytes.startsWith(mark): return (label, mark)
+  ("", "")
 
 
 func decode(body, label: string): Option[string] =
@@ -553,18 +581,25 @@ func isIdentity(coding: string): bool =
 func readPage*(url: string, reply: Reply): Paged =
   ## Read page as passage: status 2xx, encoding identity, type text or markup, charset of UTF-8
   ##   or windows-1252 group; markup read as text in one pass.
-  ##   Byte order mark is dropped first, so it hides no markup from type read off body.
+  ##   Byte order mark names encoding before any label, as decode of WHATWG Encoding Standard
+  ##     6.1 and encoding sniffing of HTML 13.2.3.2, step 1, read it: UTF-8 mark wins over header
+  ##     and meta; UTF-16 mark is refused, since UTF-16 is never decoded.
+  ##   Mark is dropped before type is read off body, so it hides no markup.
   if reply.status notin 200..299: return refusePage("status " & $reply.status)
   if not reply.content_encoding.isIdentity:
     return refusePage("content encoding " & reply.content_encoding)
   let kind = reply.content_type.split(';')[0].strip.toLowerAscii
   if kind.len > 0 and not kind.startsWith("text/") and kind != "application/xhtml+xml":
     return refusePage("type " & kind)
+  let sniffed = reply.body.sniffMark
+  if sniffed.label in LABELS_UNICODE_SIXTEEN: return refusePage("charset utf-16")
   let
-    body = reply.body.dropMark
+    body = reply.body[sniffed.mark.len .. ^1]
     is_markup = kind in ["text/html", "application/xhtml+xml"] or
         (kind.len == 0 and body.strip(trailing = false).startsWith('<'))
-    label = readCharset(reply.content_type, body, is_markup)
+    label =
+      if sniffed.label.len > 0: sniffed.label
+      else: readCharset(reply.content_type, body, is_markup)
     decoded = decode(body, label)
   if decoded.isNone: return refusePage("charset " & label)
   let passage = toPassage(
