@@ -522,6 +522,17 @@ proc readHead(
   return head
 
 
+proc readHeads(listener: AsyncSocket): Future[seq[Head]] {.async.} =
+  ## Read head of each connection listener accepts, one at time, answering each `ANSWER_RAW`,
+  ##   until listener closes; give heads in order, so count shows each connection.
+  var heads: seq[Head]
+  while true:
+    try:
+      heads.add await listener.readHead
+    except CatchableError:
+      return heads
+
+
 proc relay(source, sink: AsyncSocket) {.async.} =
   ## Copy bytes from source to sink until source ends, or either side fails as tunnel closes it.
   while true:
@@ -1102,6 +1113,25 @@ suite "Internal: Exchange":
           $code & ": " & $(not is_refused)  # domain: base holding one refused too
 
 
+  test "redirect gives target with scheme lowercased, whatever case location or URL spells":
+    # Regression, found in review: target kept `HTTPS` of location, which client read as no https.
+    let
+      location_found = "HTTPS://cdn.example/b"
+      found = "https://public.example/a".redirect(Reply(status: 302, location: location_found))
+    check found ==
+        some("https://cdn.example/b")  # case as found: review finding security-2, 2026-10-29
+    for spelled in spellingsCase("http") & spellingsCase("https"):
+      let
+        (lowered, named) = (spelled.toLowerAscii, spelled & ": ")
+        location = spelled & "://cdn.example/b"
+        moved = "http://public.example/a".redirect(Reply(status: 302, location: location))
+        kept = (spelled & "://public.example/a").redirect(Reply(status: 302, location: "/b"))
+      check named & $moved ==
+          named & $some(lowered & "://cdn.example/b")  # domain: RFC 3986 6.2.2.1, location's
+      check named & $kept ==
+          named & $some(lowered & "://public.example/b")  # domain: RFC 3986 6.2.2.1, URL's
+
+
   test "credential is read trimmed, and refused naming variable and fault, never value":
     for (value, service, expected) in [
       ("sk-ant-secret", Service.Claude, "sk-ant-secret"),
@@ -1452,6 +1482,52 @@ suite "Internal: Send":
     check server.targets ==
         newSeqWith(COUNT_SPELLINGS_HTTP, "http://example.org/page")  # domain: refused sent nothing
     check server.count_connections == COUNT_SPELLINGS_HTTP  # domain: no connection but accepted
+    stopServer(server)
+
+
+  test "https URL in any case opens tunnel through proxy, so proxy never sees credential":
+    # Regression, found in review: client compares scheme with case, so `HTTPS://` endpoint sent
+    #   whole request, bearer included, to proxy in clear.
+    when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
+    else:
+      check authority.problem == ""  # `openssl` made root and leaves
+      let
+        proxy = listenRaw()
+        proxy_url = some(urlLoopback(int(proxy.getLocalAddr[1]), ""))
+        reading = proxy.readHeads
+        urls = @["HTTPS://api.example.test/v1/messages"] &
+            spellingsCase("https").mapIt(it & "://api.example.test/v1/messages")
+      for url in urls:
+        discard waitFor send(
+          url,
+          "{}",
+          @[],
+          CREDENTIAL_GIVEN,
+          proxy_url,
+          authority.client,
+          BYTES_CAP,
+          newFuture[void]("deadline"),
+        )
+      proxy.close()
+      let heads = waitFor reading
+      check heads.len == COUNT_SPELLINGS_HTTPS + 1  # one connection to proxy each
+      for (url, head) in zip(urls, heads):
+        let
+          first = if head.lines.len > 0: head.lines[0] else: ""
+          named = url & ": "
+        check named & first ==
+            named & "CONNECT api.example.test:443 HTTP/1.1"  # case as found, then domain: RFC 9110
+        check named & $head.values("authorization") ==
+            named & "@[]"  # case as found, then domain: credential never to proxy
+
+
+  test "http URL in any case is served, direct, in origin form":
+    let server = startServer()
+    for spelled in spellingsCase("http"):
+      let sent = sendLoopback(spelled & "://127.0.0.1:" & $server.port & "/count", "")
+      check spelled & ": " & sent.outcome == spelled & ": replied"  # RFC 3986 3.1, any case
+    check server.targets ==
+        newSeqWith(COUNT_SPELLINGS_HTTP, "/count")  # RFC 9112 3.2.1, origin form each time
     stopServer(server)
 
 
