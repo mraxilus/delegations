@@ -452,6 +452,7 @@ proc send*(
   ##   redirect; read body until `bytes_max`; end when `deadline` completes first.
   ##   URL holding whitespace or control character is refused, naming byte, and nothing is sent.
   ##   Deadline finished already sends nothing, since client still connecting would send later.
+  ##   Agent, encoding and bearer are its own, whatever caller headers name.
 
   proc race(a, b: FutureBase): Future[void] =
     ## Complete future once `a` or `b` finishes, by `addCallback`, which keeps callbacks others
@@ -479,6 +480,7 @@ proc send*(
     let client = newAsyncHttpClient(userAgent = USER_AGENT, maxRedirects = 0, proxy = proxy_used)
   let fields = newHttpHeaders()
   for (name, value) in headers: fields[name] = value
+  fields["user-agent"] = USER_AGENT
   fields["accept-encoding"] = "identity"
   if credential.isSome: fields["authorization"] = "Bearer " & string(credential.get)
   let replying = client.exchange(url, body, fields, bytes_max)
