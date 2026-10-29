@@ -15,8 +15,7 @@
 ##     wording, never how they arise.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
-##   Corpus does not cover yet: page URL holding ill-formed UTF-8; word of answer holding
-##     control character.
+##   Corpus does not cover yet: page URL holding ill-formed UTF-8.
 
 {.experimental: "strictFuncs".}
 
@@ -213,6 +212,9 @@ const
     "datnyvreji", "selci'a", "Ciska", "datna", "lo", "cihska", "",
   ]
     ## Words random answers draw: gismu, cmavo, lujvo, shared stem, and refused words.
+  FILLERS_WORD = ["q", "\x01", "\x7F", "\xFF", "\u202E", "\u{1F600}"]
+    ## Characters word of answer repeats: letter outside lists, controls report escapes, byte
+    ##   repair replaces, bidirectional mark, and character of four bytes.
   TEXTS_MARKUP = [
     "word", "two words", " ", "\t", "\n", "\r\n", "x>y", "a;b", "#", "q\"uote'", "\u0109u",
     "\u65E5\u672C", "\u{1F600}", "\u00A0", "-->", "]]>", "end.",
@@ -429,6 +431,14 @@ proc readGuarded(service: Service, reply: Reply): Option[Suggestion] =
     some(readReply(service, reply))
   except Exception:
     none(Suggestion)
+
+
+proc explainGuarded(suggestion: Suggestion): Option[string] =
+  ## Explain suggestion, catching any exception, defect included; `none` where explaining raised.
+  try:
+    some(suggestion.explain)
+  except Exception:
+    none(string)
 
 
 
@@ -908,6 +918,24 @@ suite "Internal: Answer":
         "`."  # reader never runs past cap
 
 
+  test "explain judges word by its bytes as answered, never by detail that escapes lengthen":
+    let found = readAnswer(toAnswer(["\x01".repeat(13)]), MODEL_SUITE)
+    check found.explain == "Answer should name gismu or cmavo of list. " &
+        found.detail.readTag.explain  # case as found in suite review: 13 bytes judged past cap
+    for filler in FILLERS_WORD:  # 6 characters, exhaustive
+      for count in 1 .. BYTES_ELEMENT_MAX + 1:  # each length to cap and past it, exhaustive
+        let
+          element = filler.repeat(count)
+          suggestion = readAnswer(toAnswer([element]), MODEL_SUITE)
+          detail = element.toPrintableReference(RUNES_SHOWN)
+          explained =
+            if element.len > BYTES_ELEMENT_MAX:
+              "Word of answer should hold at most 64 bytes; got `" & detail & "`."
+            else: "Answer should name gismu or cmavo of list. " & detail.readTag.explain
+        check suggestion.failureRead == some((Failure.Word, detail))  # word named, printable
+        check suggestion.explain == explained  # cap judged by bytes of word as answered
+
+
   test "count of words: none is Malformed, one to six pass, seven and eight are Long":
     let ciska = "ciska".word.get
     for count in 0 .. COUNT_WORDS_MAX + 2:  # 0 to 8, exhaustive
@@ -1246,6 +1274,7 @@ suite "Internal: Reply":
           continue
         check suggestion.failure in Failure.Status..Failure.Readback  # reply names no transport
         check suggestion.detail.isPrintable  # detail made printable
+        check suggestion.explainGuarded.isSome  # explain never raises
       check count_suggested >= FLOOR_SUGGESTED  # corpus reaches answers that read
 
 
@@ -1592,11 +1621,18 @@ suite "Internal: Report":
 
 
   test "each failure explains itself, ending in its detail in backticks":
+    let found = Suggestion(is_suggested: false, failure: Failure.Readback, detail: "ciska")
+    check found.explainGuarded ==
+        some("Form should read back as its tag; got `ciska`.")  # case as found in suite review
     for failure in Failure:  # 11 members, exhaustive
-      for detail in ["", "x", "two words", "datna", "brodyci'a", "ciska+se", "7"]:
-        let explained = Suggestion(is_suggested: false, failure: failure, detail: detail).explain
-        check explained.endsWith("`" & detail & "`.")  # IV.4, message ends in its value
-        check explained[0] in {'A'..'Z'}  # sentence
+      for detail in ["", "x", "two words", "datna", "brodyci'a", "ciska+se", "7", "ciska",
+          "datnyvreji", "selci'a"]:
+        let explained =
+          Suggestion(is_suggested: false, failure: failure, detail: detail).explainGuarded
+        check explained.isSome  # explain never raises, detail reading as tag included
+        if explained.isNone: continue
+        check explained.get.endsWith("`" & detail & "`.")  # IV.4, message ends in its value
+        check explained.get[0] in {'A'..'Z'}  # sentence
     check Suggestion(is_suggested: false, failure: Failure.Truncated,
         detail: "max_tokens").explain == "Answer should end before its limit; lower effort or " &
         "shorten passage; got `max_tokens`."  # remedy named
