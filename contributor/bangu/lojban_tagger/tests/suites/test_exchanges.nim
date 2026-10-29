@@ -140,7 +140,7 @@ type
   Secured = object  ## Define what each side saw of one request sent with credential over TLS.
     port: int  ## Port server listened on, which URL names.
     sent: Sent  ## Outcome `send` gave.
-    head: Head  ## Request server read; no line where handshake was refused.
+    head: Head  ## Request server read; no line where handshake was refused or none connected.
     connect: seq[string]  ## Head proxy read where tunnel carried request; else none.
 
 
@@ -839,8 +839,11 @@ when defined(ssl):
 
   proc sendSecured(authority: Authority, leaf: Leaf, host: string, should_tunnel = false): Secured =
     ## Send request with credential to server presenting `leaf` at `https://<host>:<port>`,
-    ##   directly or through tunnel of `CONNECT` proxy, by context every call shares; drive loop
-    ##   until server and tunnel end.
+    ##   directly or through tunnel of `CONNECT` proxy, by context every call shares; close
+    ##   listeners once `send` ends, then drive loop until server and tunnel end.
+    ##   Server and tunnel accept before `send` ends, as handshake and tunnel need them, or
+    ##     never: closing listener fails accept still waiting, which reads as nothing read, so
+    ##     refusal before any connection ends red, never waiting on connection that never comes.
     let listener = listenRaw()
     result.port = int(listener.getLocalAddr[1])
     let
@@ -864,11 +867,13 @@ when defined(ssl):
       BYTES_CAP,
       newFuture[void]("deadline"),
     )
-    result.head = waitFor reading
-    if should_tunnel:
-      result.connect = waitFor tunnelling
-      proxy.close()
     listener.close()
+    if should_tunnel: proxy.close()
+    try: result.head = waitFor reading
+    except CatchableError: discard  # Accept failed as listener closed: server read nothing.
+    if should_tunnel:
+      try: result.connect = waitFor tunnelling
+      except CatchableError: discard  # Accept failed as proxy closed: proxy read nothing.
 
 
   proc sendProxied(proxy_url: string): Sent =
