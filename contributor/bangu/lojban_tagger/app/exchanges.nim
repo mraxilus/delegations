@@ -130,7 +130,9 @@
 ##     `send` gives records, and replay reads it back.
 ##   Proxy follows curl: `https_proxy` then `HTTPS_PROXY` for https, `http_proxy` alone for
 ##     http, `no_proxy` then `NO_PROXY` for bypass; loopback always goes direct. Value naming no
-##     port, or empty one, takes port 1080, as curl assumes, where client would dial 80.
+##     port, or empty one, takes port 1080, as curl assumes, where client would dial 80; port is
+##     read as RFC 3986 section 3.2 splits it (`readPort`), since `parseUri` reads every colon
+##     after unclosed `[` into host, and value from which no port splits stays as written.
 ##     Cost: bypass entry of address range is never matched, so such host goes through proxy.
 
 {.experimental: "strictFuncs".}
@@ -356,8 +358,10 @@ func lookup(environment: openArray[(string, string)], names: openArray[string]):
 func proxy*(url: string, environment: openArray[(string, string)]): Option[string] =
   ## Choose proxy for URL: https takes `https_proxy`, else `HTTPS_PROXY`; http takes
   ##   `http_proxy` alone, as curl reads it; loopback and bypassed hosts go direct; `http://`
-  ##   added where value has no scheme, and port 1080 where client would read none, as curl
-  ##   assumes 1080 where proxy names no port, and client would dial 80.
+  ##   added where value has no scheme, and port 1080 where authority names none as RFC 3986
+  ##   section 3.2 splits it (`readPort`), as curl assumes 1080 where proxy names no port, and
+  ##   client would dial 80.
+  ##   Authority from which no port splits is kept as written, so refusal of `send` names it.
   let uri = url.parseUri
   if uri.hostname.isLoopback: return none(string)
   if uri.hostname.isBypassed(environment.lookup(["no_proxy", "NO_PROXY"])): return none(string)
@@ -368,7 +372,8 @@ func proxy*(url: string, environment: openArray[(string, string)]): Option[strin
     else: ""
   if value.len == 0: return none(string)
   var reference = (if "://" in value: value else: "http://" & value).toReference
-  if reference.authority.isSome and reference.toText.parseUri.port.len == 0:
+  let port = reference.authority.get("").readPort
+  if reference.authority.isSome and port.isSome and port.get.len <= 1:
     let authority = reference.authority.get
     reference.authority = some(authority & (if authority.endsWith(':'): "" else: ":") & PORT_CURL)
   some(reference.toText)
