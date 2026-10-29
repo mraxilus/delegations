@@ -156,6 +156,32 @@ const
   SAMPLES_CREDENTIALS = 400  ## Random values credential law is checked over, under each service.
   SAMPLES_BODIES = 20  ## Random bodies `send` is checked to carry byte for byte.
   SAMPLES_PORTS = 1_000  ## Random ports URL tests are checked over.
+  USERS_AUTHORITY = [
+    ("", true), ("a@", true), ("a:b@", true), ("a:b:c@", true), ("@", true), ("a[b@", false),
+    ("a]b@", false),
+  ]
+    ## User parts of authority, beside whether `isURL` takes each: none, user, user and password,
+    ##   password holding colon, and empty (RFC 3986 section 3.2.1); and brackets, which IP
+    ##   literal alone holds.
+  HOSTS_AUTHORITY = [
+    ("example.org", true), ("127.0.0.1", true), ("[::1]", true), ("[2001:db8::7]", true),
+    ("[example.org]", false), ("[127.0.0.1]", false), ("[v1.x]", false), ("[]", false),
+    ("[::1", false), ("::1]", false), ("[[::1]]", false), ("exa[mple.org", false),
+  ]
+    ## Hosts of authority, beside whether `isURL` takes each: name, IPv4 address, and IPv6
+    ##   address in brackets (RFC 3986 section 3.2.2); in brackets, name, IPv4 address,
+    ##   IPvFuture and nothing, which URL Standard of WHATWG refuses too; and brackets unclosed,
+    ##   unopened, doubled, and inside name.
+  PORTS_AUTHORITY = [
+    ("", true), (":", true), (":80", true), (":8080", true), (":80:90", false), ("::80", false),
+    (":6:5535", false), (":80:", false), (":1:2:3:4:5", false), (":8a", false),
+  ]
+    ## Ports of authority, beside whether `isURL` takes each: none, empty (RFC 3986 section
+    ##   3.2.3), and two named; colons that `std/uri` joins into ports 8090, 80, 65535, 80 and
+    ##   12345; and letter.
+  COUNT_AUTHORITIES = 840
+    ## Authorities split law reads: each of `USERS_AUTHORITY`, `HOSTS_AUTHORITY` and
+    ##   `PORTS_AUTHORITY` with each other.
   FLOOR_CHANGED = 400  ## Fewest requests holding byte to change; 449 read at seed `0`.
   FLOOR_READ = 350  ## Fewest values read as credential, over every service; 446 read at seed `0`.
   FLOOR_REFUSED = 600  ## Fewest values refused, over every service; 754 read at seed `0`.
@@ -1112,6 +1138,31 @@ suite "Internal: Exchange":
       check named & $url.isEndpoint == named & $is_port  # domain: endpoint holds same port
       check named & $"http://127.0.0.1/a".redirect(Reply(status: 302, location: url)).isSome ==
           named & $is_port  # domain: redirect target holds same port
+
+
+  test "URL authority splits as RFC 3986 section 3.2 splits it, so no colon joins other port":
+    # Regression, found in recheck claim regressions-app-4, 2026-10-29: `std/uri` joins digits
+    #   after each colon of authority into one port, so URL naming `450:29` reached port 45029.
+    let
+      found = "http://127.0.0.1:450:29/page-by-split-port"
+      moved = "http://127.0.0.1/a".redirect(Reply(status: 302, location: found))
+    check not found.isURL  # case as found: was `true`, and client reached port 45029
+    check not found.isEndpoint  # case as found: was `true`, so bearer could go there
+    check moved.isNone  # case as found: redirect was followed there
+    var count = 0
+    for (user_part, is_user) in USERS_AUTHORITY:
+      for (host, is_host) in HOSTS_AUTHORITY:
+        for (port, is_port) in PORTS_AUTHORITY:
+          let
+            url = "https://" & user_part & host & port & "/page"
+            expected = is_user and is_host and is_port
+            named = url & ": "
+          inc count
+          check named & $url.isURL == named & $expected  # domain: RFC 3986 3.2
+          check named & $url.isEndpoint == named & $expected  # domain: endpoint split same way
+          check named & $"http://127.0.0.1/a".redirect(Reply(status: 302, location: url)).isSome ==
+              named & $expected  # domain: redirect target split same way
+    check count == COUNT_AUTHORITIES  # each user part, host and port with each other
 
 
   test "loopback host is `localhost`, `127.0.0.0/8` or `::1`, in any case":
