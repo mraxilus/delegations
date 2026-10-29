@@ -111,6 +111,12 @@ const
     ## Session OpenRouter body names, project choice: one for every request, as `URL_CACHING`
     ##   keeps one endpoint for one session.
   CHARACTERS_SESSION_MAX = 256  ## Most characters of `session_id`, as `URL_COMPLETION` gives.
+  URL_OVERVIEW = "https://platform.claude.com/docs/en/api/overview"
+    ## API overview: `anthropic-workspace-id` required with key scoped to no workspace.
+  URL_AUTHENTICATION = "https://platform.claude.com/docs/en/manage-claude/authentication"
+    ## Authentication page, select workspace: header on each request of such key, else 400.
+  WORKSPACE_SUITE = "wrkspc_01JwQvzr7rXLA5AGx3HKfFUJ"
+    ## Workspace ID suite names, as `URL_AUTHENTICATION` writes its example.
   ROWS_FALLBACK = [
     (model: "claude-fable-5-1", is_fallback: true, page: URL_REFUSALS),
     (model: "claude-mythos-5-1", is_fallback: true, page: URL_REFUSALS),
@@ -1376,6 +1382,31 @@ suite "Internal: Request":
         check headers.allIt(it[0] notin ["authorization", "x-api-key"])  # `send` adds credential
         check (row.model, body.hasKey("fallbacks"), body{"fallbacks"}.getStr) == (row.model,
             is_fallback, if is_fallback: "default" else: "")  # page of row, `ROWS_FALLBACK`
+
+
+  test "workspace named is header of `claude` alone, sorted among others, and never in body":
+    let found = Settings(service: Service.Claude, endpoint: URL_SUITE, model: "claude-opus-5-5",
+        effort: some(EFFORT_DEFAULT), workspace: WORKSPACE_SUITE)
+    check ("anthropic-workspace-id", WORKSPACE_SUITE) in
+        found.toHeaders  # review finding wire-2, 2026-10-29: key of no workspace got 400 always
+    for service in Service:  # 3 services, exhaustive
+      for row in ROWS_FALLBACK:  # 11 models, with beta and without, exhaustive
+        for workspace in ["", WORKSPACE_SUITE]:  # none and one, exhaustive
+          let
+            settings = Settings(service: service, endpoint: URL_SUITE, model: row.model,
+                effort: some(EFFORT_DEFAULT), workspace: workspace)
+            unnamed = Settings(service: service, endpoint: URL_SUITE, model: row.model,
+                effort: some(EFFORT_DEFAULT))
+            is_claude = service == Service.Claude
+          var expected: seq[(string, string)]
+          if is_claude and row.is_fallback: expected.add ("anthropic-beta", BETA_FALLBACK_SERVER)
+          if is_claude: expected.add ("anthropic-version", VERSION_MESSAGES)
+          if is_claude and workspace.len > 0: expected.add ("anthropic-workspace-id", workspace)
+          expected.add ("content-type", "application/json")
+          check (row.model, settings.toHeaders) ==
+              (row.model, expected)  # `URL_OVERVIEW`: workspace sent where named, names sorted
+          check settings.toBody(toPassage("x")) ==
+              unnamed.toBody(toPassage("x"))  # body, so stamp of request, never holds workspace
 
 
 
