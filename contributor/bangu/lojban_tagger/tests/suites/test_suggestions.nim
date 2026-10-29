@@ -208,6 +208,19 @@ const
     0x2069,
   ]
     ## Code points of property `Bidi_Control`, Unicode Standard: marks that reorder text shown.
+  RUNES_WHITE_SPACE = [
+    0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x0020, 0x0085, 0x00A0, 0x1680, 0x2000, 0x2001,
+    0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x2028, 0x2029,
+    0x202F, 0x205F, 0x3000,
+  ]
+    ## Code points of property `White_Space`, `PropList.txt` of Unicode Character Database.
+  RUNES_FORMAT_BLANK = [
+    0x00AD, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E,
+    0x2060, 0x2061, 0x2062, 0x2063, 0x2064, 0x2066, 0x2067, 0x2068, 0x2069, 0xFEFF,
+  ]
+    ## Default-ignorable format marks of category Cf reader counts blank; project choice of common
+    ##   ones, so U+061C, U+180E, U+206A to U+206F and tags count as visible.
+  SAMPLES_VISIBLE = 500  ## Random visible code points page law reads, seeded.
   FRAGMENTS_BYTES = [
     "plain ", "\x00", "\x7F", "\xC2\xA9", "\xDF\xBF", "\xE0\xA0\x80", "\xE2\x82\xAC",
     "\xED\x9F\xBF", "\xEE\x80\x80", "\xEF\xBF\xBD", "\xEF\xBB\xBF", "\xF0\x90\x80\x80",
@@ -638,6 +651,12 @@ func isPrintable(text: string): bool =
   for (code, _) in text.characters:
     if code.isEscaped: return false
   true
+
+
+func isBlankReference(code: int): bool =
+  ## Test code point is blank: `White_Space`, control of category Cc, or format mark of
+  ##   `RUNES_FORMAT_BLANK`.
+  code in RUNES_WHITE_SPACE or code < 0x20 or code in 0x7F..0x9F or code in RUNES_FORMAT_BLANK
 
 
 
@@ -1947,6 +1966,51 @@ suite "Internal: Page":
       Reply(status: 200, content_type: "text/plain", body: "x", is_cut: true),
     )
     check cut.is_read and cut.passage.is_page_cut  # page cut reaches passage
+
+
+  test "text of blank code points alone is blank, so page holding nothing else gives no text":
+    let found = readPage(
+      URL_SUITE,
+      Reply(status: 200, content_type: "text/plain", body: "\xC2\xA0"),
+    )
+    check not found.is_read and
+        found.detail == "no text"  # review finding logic-11, 2026-10-29: NBSP alone was sent
+    var wrong: seq[int]
+    for code in 0..0xFFFF:  # 63,488 scalar values of plane 0, which holds every blank one
+      if code in 0xD800..0xDFFF: continue  # surrogate, which no text holds
+      if code.encode.isBlank != code.isBlankReference: wrong.add code
+    check wrong == newSeq[int]()  # `White_Space`, Cc, and format marks of `RUNES_FORMAT_BLANK`
+    check isBlank("")  # no character is no visible one
+    for bytes in ["\xFF", "\xC2", "\x85", "\xE2\x80"]:
+      check not bytes.isBlank  # ill-formed bytes repair to visible U+FFFD, `85` alone among them
+
+    # Read pages of blank code points: each alone, as text and markup, and each pair.
+    let blanks = (0..0xFFFF).toSeq.filterIt(it.isBlankReference)
+    var bodies, bodies_read: seq[string]
+    for a in blanks:  # 105 blank code points, exhaustive
+      bodies.add a.encode
+      for b in blanks: bodies.add a.encode & b.encode  # 105 by 105 pairs, exhaustive
+    for body in bodies:
+      for (kind, opening, closing) in [("text/plain", "", ""), ("text/html", "<p>", "</p>")]:
+        let paged = readPage(
+          URL_SUITE,
+          Reply(status: 200, content_type: kind, body: opening & body & closing),
+        )
+        if paged.is_read or paged.detail != "no text": bodies_read.add body
+    check bodies_read == newSeq[string]()  # page of blank code points alone gives no text
+
+    # Read text and page of one visible code point of any plane, seeded, between two blank ones.
+    randomize(0)
+    var visibles = newSeqOfCap[int](SAMPLES_VISIBLE)
+    while visibles.len < SAMPLES_VISIBLE:
+      let code = rand(0..0x10FFFF)
+      if code notin 0xD800..0xDFFF and not code.isBlankReference: visibles.add code
+    for code in visibles:  # `SAMPLES_VISIBLE` code points, seeded, mostly past plane 0
+      let
+        text = blanks.sample.encode & code.encode & blanks.sample.encode
+        paged = readPage(URL_SUITE, Reply(status: 200, content_type: "text/plain", body: text))
+      check not code.encode.isBlank and not text.isBlank  # one visible character makes text
+      check paged.is_read  # one visible character makes page text
 
 
   test "byte order mark is no text, so page reads as page without it":
