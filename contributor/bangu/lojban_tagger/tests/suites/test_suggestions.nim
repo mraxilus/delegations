@@ -1530,8 +1530,10 @@ suite "Internal: Reply":
               some((Failure.Declined, expected))  # refusals and fallback page, `stop_details`
     let
       long = "Declined \x1B[2J" & "x".repeat(RUNES_SHOWN)
-      reply_long = toReply(%*{"content": [], "stop_reason": "refusal",
-          "stop_details": {"category": "bio", "explanation": long}})
+      reply_long = toReply(
+        %*{"content": [], "stop_reason": "refusal",
+            "stop_details": {"category": "bio", "explanation": long}},
+      )
     check readReply(Service.Claude, reply_long).failureRead == some((Failure.Declined,
         ("bio: " & long).toPrintableReference(RUNES_SHOWN)))  # displayed: printable and cut
 
@@ -1629,16 +1631,23 @@ suite "Internal: Reply":
 
 
   test "error is named as error, so error inside 2xx never reads as status other than 2xx":
-    let found = readReply(Service.OpenRouter, toReply(%*{"error": {"code": 429,
-        "message": "Rate limit exceeded", "metadata": {"error_type": "rate_limit_exceeded"}}}))
+    let found = readReply(
+      Service.OpenRouter,
+      toReply(
+        %*{"error": {"code": 429, "message": "Rate limit exceeded",
+            "metadata": {"error_type": "rate_limit_exceeded"}}},
+      ),
+    )
     check found.explain == "Service should answer without error; got `429 " &
         "rate_limit_exceeded: Rate limit exceeded`."  # review finding logic-4, 2026-10-29
     let bodies = [
       $ %*{"type": "error", "error": {"type": "api_error", "message": "Internal error"}},
       $ %*{"error": {"code": 502, "message": "Provider down", "metadata": {
           "error_type": "provider_unavailable"}}},
-      toCompletion(%*{"finish_reason": "error", "message": {"content": "partial"},
-          "error": {"code": 502, "message": "Provider disconnected mid-stream"}}).body,
+      toCompletion(
+        %*{"finish_reason": "error", "message": {"content": "partial"},
+            "error": {"code": 502, "message": "Provider disconnected mid-stream"}},
+      ).body,
     ]
     var count_inside = 0
     for service in Service:  # 3 services, exhaustive
