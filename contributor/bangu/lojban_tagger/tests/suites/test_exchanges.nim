@@ -129,6 +129,7 @@ const
   SAMPLES_RECORDINGS = 300  ## Random recordings round trip is checked over.
   SAMPLES_CREDENTIALS = 400  ## Random values credential law is checked over, under each service.
   SAMPLES_BODIES = 20  ## Random bodies `send` is checked to carry byte for byte.
+  SAMPLES_PORTS = 1_000  ## Random ports URL tests are checked over.
   FLOOR_CHANGED = 400  ## Fewest requests holding byte to change; 449 read at seed `0`.
   FLOOR_READ = 350  ## Fewest values read as credential, over every service; 446 read at seed `0`.
   FLOOR_REFUSED = 600  ## Fewest values refused, over every service; 754 read at seed `0`.
@@ -417,6 +418,15 @@ proc poolBodies(): seq[string] =
   ## Draw `SAMPLES_BODIES` random bodies into pool allocated once; caller seeds first.
   result = newSeqOfCap[string](SAMPLES_BODIES)
   for _ in 1..SAMPLES_BODIES: result.add bytesRandom()
+
+
+proc poolPorts(): seq[string] =
+  ## Draw `SAMPLES_PORTS` random ports into pool allocated once: number up to 999,999, under
+  ##   70,000 half time, after up to two zeros; caller seeds first.
+  result = newSeqOfCap[string](SAMPLES_PORTS)
+  for _ in 1..SAMPLES_PORTS:
+    let number = if rand(1) == 0: rand(70_000) else: rand(999_999)
+    result.add "0".repeat(rand(2)) & $number
 
 
 iterator served[T](pool: seq[T]): lent T =
@@ -887,6 +897,41 @@ suite "Internal: Exchange":
       ("javascript:alert(1)", false),
     ]:
       check text.isURL == expected  # one http or https URL with host and no whitespace
+
+
+  test "URL names port of one to five digits from 1 to 65535, or none, wherever it is read":
+    # Regression, found in review: client reads port modulo 65536, so `:65616` reached port 80.
+    for (port, expected) in [
+      ("", true),  # RFC 3986 3.2.3: empty port is default of scheme
+      ("0", false),  # port zero reaches no service
+      ("1", true),
+      ("00080", true),  # five digits, zeros leading
+      ("65535", true),  # largest of sixteen bits
+      ("65536", false),  # would wrap to 0
+      ("65616", false),  # would wrap to 80
+      ("110103", false),  # case as found: review finding logic-8, 2026-10-29, reached 44567
+      ("99999", false),
+      ("000080", false),  # six digits
+      ("8a", false),  # digits alone
+      ("-1", false),
+    ]:
+      for url in ["http://127.0.0.1:" & port & "/page", "https://example.org:" & port & "/page"]:
+        let named = url & ": "
+        check named & $url.isURL == named & $expected  # RFC 6335 6: port of 16 bits, 0 reserved
+        check named & $url.isEndpoint == named & $expected  # endpoint holds same port
+        check named & $"http://127.0.0.1/a".redirect(Reply(status: 302, location: url)).isSome ==
+            named & $expected  # redirect target holds same port
+    randomize(0)
+    let pool = poolPorts()
+    for port in served(pool):
+      let
+        url = "https://example.org:" & port & "/page"
+        is_port = port.len <= 5 and port.parseInt in 1..65_535
+        named = port & ": "
+      check named & $url.isURL == named & $is_port  # domain: RFC 6335 6
+      check named & $url.isEndpoint == named & $is_port  # domain: endpoint holds same port
+      check named & $"http://127.0.0.1/a".redirect(Reply(status: 302, location: url)).isSome ==
+          named & $is_port  # domain: redirect target holds same port
 
 
   test "loopback host is `localhost`, `127.0.0.0/8` or `::1`, in any case":
