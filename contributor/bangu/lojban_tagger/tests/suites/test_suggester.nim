@@ -216,6 +216,15 @@ const
   ]
     ## Texts reading as no tag: cmavo alone, English, Lojban prose, tanru joined by `+` or by
     ##   space, unlisted word, unknown letter.
+  USERS_REDIRECT = ["", "alice@", "alice:SECRET-PASSWORD@"]
+    ## User parts redirect URLs hold: none, name alone, and name with password.
+  QUERIES_REDIRECT = ["", "?", "?access_token=SECRET-TOKEN"]
+    ## Queries redirect URLs hold: none, empty, and token of capability URL.
+  FRAGMENTS_REDIRECT = ["", "#", "#SECRET-FRAGMENT"]
+    ## Fragments redirect URLs hold: none, empty, and token.
+  SCHEMES_REDIRECT = [("http", true), ("https", true), ("http", false), ("ftp", false)]
+    ## Scheme of redirect URL beside whether it loops: loop by http and by https; else location
+    ##   refused, falling from https to http, or naming ftp.
 
 
 
@@ -1633,6 +1642,52 @@ suite "Internal: Suggester":
             urlLoopback(server.port, loop[back]), [noteCredential(KEY_CREDENTIAL)])  # URL seen
         check server.heard[count_before .. ^1].mapIt(it.target) == loop  # each URL once
     stopServer(server)
+
+
+  test "refused or looping redirect names URL by scheme, host, port and path alone":
+    # Recheck claim completeness-2, 2026-10-29: detail named whole URL, so token capability or
+    #   presigned URL holds in query reached report, though `toPassage` keeps it from passage URL.
+    let
+      server = startServer()
+      environment = Service.Claude.toSettings(server.port).toEnvironment
+      capability = "/shared/doc?access_token=SECRET-CAPABILITY-123"
+      signed = "/bucket/loop?X-Amz-Signature=SIGNED-SECRET-789"
+      directory_case = directory / "trimmed"
+      start = "https://localhost:8443/dl"
+      presigned = "http://127.0.0.1:8080/bucket/obj?X-Amz-Signature=SIGNED-SECRET-456&" &
+          "X-Amz-Credential=AKIAPROBE"
+    server.routes = @[
+      (capability, Reply(status: 302, location: urlLoopback(server.port, capability))),
+      ("/dl-loop", Reply(status: 302, location: signed)),
+      (signed, Reply(status: 302, location: signed)),
+    ]
+    for (path, trimmed) in [(capability, "/shared/doc"), ("/dl-loop", "/bucket/loop")]:
+      check binary.run(environment, [urlLoopback(server.port, path)]) == toOutcome(Failure.Page,
+          "redirect loop at " & urlLoopback(server.port, trimmed), [noteCredential(
+          KEY_CREDENTIAL)])  # cases as found: token user gave, then token page gave in redirect
+    stopServer(server)
+    writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: "GET " & start,
+        reply: Reply(status: 302, location: presigned))])
+    check binary.run([], ["--replay:" & directory_case, start]) == toOutcome(Failure.Page,
+        "redirect to http://127.0.0.1:8080/bucket/obj", [noteReplayed(pathRecording(directory_case,
+        "GET " & start), LABEL_SUITE)])  # as found: https falls; replayed, as suite drives no TLS
+    var count = 0  # Cases made, so each refused location has start of its own.
+    for user in USERS_REDIRECT:
+      for query in QUERIES_REDIRECT:
+        for fragment in FRAGMENTS_REDIRECT:  # 27 URLs, exhaustive, replayed for any scheme and host
+          for (scheme, is_loop) in SCHEMES_REDIRECT:
+            let
+              url = scheme & "://" & user & "example.org:8080/page" & query & fragment
+              start_case = if is_loop: url else: "https://example.org/start/" & $count
+              opening = if is_loop: "redirect loop at " else: "redirect to "
+            inc count
+            writeRecordings(directory_case, [Recording(label: LABEL_SUITE,
+                request: "GET " & start_case, reply: Reply(status: 302, location: url))])
+            let outcome = binary.run([], ["--replay:" & directory_case, start_case])
+            check outcome == toOutcome(Failure.Page, opening & scheme & "://example.org:8080/page",
+                [noteReplayed(pathRecording(directory_case, "GET " & start_case),
+                LABEL_SUITE)])  # RFC 3986 appendix `B`: scheme, host, port and path alone
+            check "SECRET" notin outcome.report  # no user part, query or fragment named
 
 
   test "request off loopback goes through proxy environment names, and credential never with it":
