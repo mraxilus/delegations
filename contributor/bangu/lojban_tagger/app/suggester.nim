@@ -25,6 +25,9 @@
 ##   Page redirects are followed here, at most `COUNT_REDIRECTS_MAX`, choosing proxy again for
 ##     each hop; https never falls to http, and URL seen twice ends loop. Service redirect is
 ##     never followed, so credential stays with its endpoint.
+##   Record mode makes its directory before it sends, so directory it cannot make refuses run
+##     with `Recording`, and nothing is paid for; recording it cannot write after reply is named
+##     in note, and tag still prints. Cost: failed send leaves empty directory behind.
 
 {.experimental: "strictFuncs".}
 
@@ -60,7 +63,7 @@ type
     case is_replied: bool  ## Reply came, sent or replayed.
     of true:
       reply: Reply  ## Reply sent or replayed.
-      note: string  ## Report line naming recording replayed or written; empty for live exchange.
+      note: string  ## Report line naming recording replayed, written or unwritten; empty if live.
     of false:
       failure: Failure  ## `Network` or `Recording`.
       detail: string  ## Offending value, made printable.
@@ -185,6 +188,8 @@ proc exchange(
   context: var SslContext;
 ): Exchanged =
   ## Answer one exchange by mode: replay recording, or send, and write recording in record mode.
+  ##   Record mode makes directory before sending, refusing where it cannot; write failing after
+  ##   reply is named in note, and reply is kept.
   let path = command.directory / (request.stamp & ".recording")
   if command.mode != Mode.Live and fileExists(path):
     let recorded = readFile(path).readRecording
@@ -201,6 +206,12 @@ proc exchange(
   if command.mode == Mode.Replay:
     return Exchanged(is_replied: false, failure: Failure.Recording,
         detail: (path & " missing").toPrintable(RUNES_SHOWN))
+  if command.mode == Mode.Record:
+    try:
+      createDir(command.directory)
+    except CatchableError as error:
+      return Exchanged(is_replied: false, failure: Failure.Recording,
+          detail: (path & " unwritable: " & error.msg.splitLines[0]).toPrintable(RUNES_SHOWN))
   when defined(ssl):
     if context.isNil and url.toLowerAscii.startsWith("https:"):
       try:
@@ -222,10 +233,14 @@ proc exchange(
       request: request,
       reply: sent.reply,
     )
-    createDir(command.directory)
-    writeFile(path & ".writing", recording.toText)
-    moveFile(path & ".writing", path)
-    note = "Reply written to `" & path & "`."
+    try:
+      writeFile(path & ".writing", recording.toText)
+      moveFile(path & ".writing", path)
+      note = "Reply written to `" & path & "`."
+    except CatchableError as error:
+      discard tryRemoveFile(path & ".writing")
+      note = "Reply should be written to `" & path & "`; got `" &
+          error.msg.splitLines[0].toPrintable(RUNES_SHOWN) & "`."
   Exchanged(is_replied: true, reply: sent.reply, note: note)
 
 
