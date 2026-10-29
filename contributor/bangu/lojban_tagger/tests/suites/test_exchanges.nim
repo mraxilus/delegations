@@ -305,7 +305,7 @@ const
   COUNT_SECURED = 256
     ## Sends TLS law makes: each of eight cases of leaf and host after each, two sends to pair,
     ##   directly and through tunnel.
-  CONFIG_OPENSSL = "[req]\ndistinguished_name = name\n[name]\n"
+  CONFIGURATION_OPENSSL = "[req]\ndistinguished_name = name\n[name]\n"
     ## Configuration `openssl req` reads: bare but for what it demands, so no default of machine
     ##   adds extension.
   EXTENSIONS_LEAF = "basicConstraints = critical,CA:FALSE\n" &
@@ -316,8 +316,8 @@ const
   PROBLEM_VERIFY = "certificate verify failed"  ## Text OpenSSL gives where peer fails check.
   PROBLEM_CONTEXT = "TLS context should exist for https URL; got ``."
     ## Problem `send` gives for https URL with no context.
-  COUNT_SPELLINGS_HTTP = 16  ## Spellings of `http` in any case, i.e. 2^4.
-  COUNT_SPELLINGS_HTTPS = 32  ## Spellings of `https` in any case, i.e. 2^5.
+  COUNT_SPELLINGS_PLAIN = 16  ## Spellings of `http` in any case, i.e. 2^4.
+  COUNT_SPELLINGS_SECURED = 32  ## Spellings of `https` in any case, i.e. 2^5.
   PROBLEM_PROXY_HOST = "Proxy should name host after `//`; got ``."
     ## Problem `send` gives for proxy URL naming no host after `//`.
   SYMBOLS_USER = "!$&*+=~"
@@ -815,9 +815,10 @@ proc stopServer(server: Server) =
   waitFor server.accepting
 
 
-proc socketRefusing(): AsyncSocket =
+proc bindRefusing(): AsyncSocket =
   ## Bind socket on `127.0.0.1` at port system chooses, never listening and never reused, so its
   ##   port refuses each connection, and no other socket takes port, until caller closes it.
+  ##   Sibling of copy in `test_suggester.nim`, which binds same refusing socket (II.9).
   result = newAsyncSocket()
   result.bindAddr(Port(0), "127.0.0.1")
 
@@ -913,7 +914,7 @@ when defined(ssl):
         result = "Command `openssl` should run; got `" & error.msg & "`."
 
     result.directory = createTempDir("lojban_tagger_tls_", "")
-    writeFile(result.directory / "openssl.cnf", CONFIG_OPENSSL)
+    writeFile(result.directory / "openssl.cnf", CONFIGURATION_OPENSSL)
     var commands = @[
       @["genpkey", "-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:prime256v1", "-out",
           "root.key"],
@@ -1805,8 +1806,8 @@ suite "Internal: Send":
       )
     check found.outcome ==
         problemProxy("https")  # case as found: review finding logic-2, 2026-10-29
-    check spellingsCase("http").len == COUNT_SPELLINGS_HTTP  # every spelling of `http`
-    check spellingsCase("https").len == COUNT_SPELLINGS_HTTPS  # every spelling of `https`
+    check spellingsCase("http").len == COUNT_SPELLINGS_PLAIN  # every spelling of `http`
+    check spellingsCase("https").len == COUNT_SPELLINGS_SECURED  # every spelling of `https`
     for scheme in spellingsCase("http") & spellingsCase("https") & @["socks5", "socks5h"]:
       let
         proxy_taken = some(scheme & "://127.0.0.1:" & $server.port)
@@ -1825,8 +1826,8 @@ suite "Internal: Send":
     closing.close()  # every connection came before last send ended, so count ends with it
     check (waitFor counting) == 0  # domain: refused scheme opened no connection
     check server.targets ==
-        newSeqWith(COUNT_SPELLINGS_HTTP, "http://example.org/page")  # domain: refused sent nothing
-    check server.count_connections == COUNT_SPELLINGS_HTTP  # domain: no connection but accepted
+        newSeqWith(COUNT_SPELLINGS_PLAIN, "http://example.org/page")  # domain: refused sent nothing
+    check server.count_connections == COUNT_SPELLINGS_PLAIN  # domain: no connection but accepted
     stopServer(server)
 
 
@@ -1991,7 +1992,7 @@ suite "Internal: Send":
         )
       proxy.close()
       let heads = waitFor reading
-      check heads.len == COUNT_SPELLINGS_HTTPS + 1  # one connection to proxy each
+      check heads.len == COUNT_SPELLINGS_SECURED + 1  # one connection to proxy each
       for (url, head) in zip(urls, heads):
         let
           first = if head.lines.len > 0: head.lines[0] else: ""
@@ -2008,13 +2009,13 @@ suite "Internal: Send":
       let sent = sendLoopback(spelled & "://127.0.0.1:" & $server.port & "/count", "")
       check spelled & ": " & sent.outcome == spelled & ": replied"  # RFC 3986 3.1, any case
     check server.targets ==
-        newSeqWith(COUNT_SPELLINGS_HTTP, "/count")  # RFC 9112 3.2.1, origin form each time
+        newSeqWith(COUNT_SPELLINGS_PLAIN, "/count")  # RFC 9112 3.2.1, origin form each time
     stopServer(server)
 
 
   test "closed port gives problem of one line, holding no credential":
     let
-      refusing = socketRefusing()
+      refusing = bindRefusing()
       sent = sendLoopback(
         urlLoopback(int(refusing.getLocalAddr[1]), "/v1/messages"),
         "{\"a\":1}",
@@ -2101,14 +2102,14 @@ suite "Internal: Send":
       check authority.problem == ""  # `openssl` made root and leaves
       if authority.problem.len == 0:
         for (host, should_tunnel) in [("localhost", false), ("api.example.test", true)]:
-          let found = authority.sendSecured(Leaf.Wrong, host, should_tunnel)
+          let found = authority.sendSecured(Leaf.Wrong, host, should_tunnel = should_tunnel)
           check PROBLEM_VERIFY in
               found.sent.outcome  # case as found: review finding security-1, 2026-10-29
           check found.head.lines.len == 0  # case as found: server read no byte, credential least
         check casesSecured().len == COUNT_SECURED  # every ordered pair of cases, in each way
         for (leaf, host, should_tunnel) in casesSecured():
           let
-            secured = authority.sendSecured(leaf, host, should_tunnel)
+            secured = authority.sendSecured(leaf, host, should_tunnel = should_tunnel)
             is_named = host in LUT_HOSTS_BY_LEAF[leaf]
             named = $leaf & " " & host & (if should_tunnel: " tunnelled: " else: ": ")
           check named & $secured.sent.is_replied ==
