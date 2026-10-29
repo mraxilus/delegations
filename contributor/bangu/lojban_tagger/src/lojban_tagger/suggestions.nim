@@ -269,7 +269,7 @@ const
     0x2069,
   ]
     ## Marks that reorder text on terminal, so report escapes them.
-  RUNES_BLANK = [
+  RANGES_BLANK = [
     0x0000..0x0020, 0x007F..0x00A0, 0x00AD..0x00AD, 0x1680..0x1680, 0x2000..0x200F,
     0x2028..0x202F, 0x205F..0x2064, 0x2066..0x2069, 0x3000..0x3000, 0xFEFF..0xFEFF,
   ]
@@ -440,10 +440,10 @@ func toPrintable*(text: string, runes_max: int): string =
 
 
 func isBlank*(text: string): bool =
-  ## Test text holds no visible character: each code point is in `RUNES_BLANK`; ill-formed UTF-8
-  ##   counts as visible, since repair puts visible U+FFFD in its place.
+  ## Test text holds no visible character: each code point lies in range of `RANGES_BLANK`;
+  ##   ill-formed UTF-8 counts as visible, since repair puts visible U+FFFD in its place.
   for rune in repairEncoding(text).text.runes:
-    if not RUNES_BLANK.anyIt(int(rune) in it): return false
+    if not RANGES_BLANK.anyIt(int(rune) in it): return false
   true
 
 
