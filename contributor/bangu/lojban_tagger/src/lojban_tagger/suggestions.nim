@@ -422,6 +422,21 @@ func findClosingRaw(markup, name: string; at: int): int =
   markup.len
 
 
+func findCloseComment(markup: string, at: int): int =
+  ## Find `>` closing comment that opens at `at`, as comment states of HTML tokenizer close it,
+  ##   13.2.5.43 to 13.2.5.52: `>` after `--`, dashes of `<!--` among them, so `<!-->` and
+  ##   `<!--->` close at once; or `>` after `--!` past `<!--`; `markup.len` where none closes.
+  ##   Rejected: one search for `-->` and one for `--!>`, since page lacking either sends that
+  ##     search to its end for every comment.
+  var close = markup.find('>', at + 4)
+  while close >= 0:
+    if markup.continuesWith("--", close - 2) or
+        (close - 3 >= at + 4 and markup.continuesWith("--!", close - 3)):
+      return close
+    close = markup.find('>', close + 1)
+  markup.len
+
+
 func findCloseTag(markup: string, at: int): int =
   ## Find `>` closing tag from `at`, past letters of its name, reading as HTML tokenizer does:
   ##   quote opens value alone, right after `=` that follows attribute name, so quote anywhere
@@ -455,6 +470,7 @@ func readMarkup(markup: string): string =
   ## Read markup as text in one pass: comments, declarations and skipped elements dropped,
   ##   block edges as line breaks, references decoded, spaces collapsed, empty lines dropped.
   ##   Tag ends at first `>` outside quoted value; quote opens value alone (`findCloseTag`).
+  ##   Comment ends as HTML tokenizer ends it, `<!-->` and `--!>` among ends (`findCloseComment`).
   ##   Space reference stands for collapses as written one does, so block edges alone break line.
   ##   Raw text ends at own closing element alone, whatever it holds, wherever element stands.
   ##   Skipped element ends where levels of its name close, so one nested in it is skipped whole.
@@ -467,9 +483,9 @@ func readMarkup(markup: string): string =
     let character = markup[i]
     if character == '<':
       if markup.continuesWith("<!--", i):
-        let close = markup.find("-->", i + 4)
-        if close < 0: break
-        i = close + 3
+        let close = markup.findCloseComment(i)
+        if close >= markup.len: break
+        i = close + 1
         continue
       if i + 1 < markup.len and markup[i+1] in {'!', '?'}:
         let close = markup.find('>', i + 2)
