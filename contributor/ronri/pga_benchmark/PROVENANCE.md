@@ -83,10 +83,10 @@ They cover every product, complement, dual, part, attitude, carrier and cocarrie
 
 The expansion also reproduces the support, center, container and partner on one integer operand of
 each grade. The attitude takes 𝐞̅₃, the complement of the origin, as it takes 𝐞̅₄ at cga5d. The
-motor transforms take the form of Terathon for a unit motor, 15 multiplies where the expansion
-spends 30. The partners are factored by hand, 15 multiplies for a dipole where the expansion spends
-36. The script stays out of the tree, because no checker reads its kind of file. The law suites hold
-every form to the library on the pools instead.
+motor transforms factor the expansion to 14 multiplies, where it spends 30. The partners are
+factored by hand, 15 multiplies for a dipole where the expansion spends 36. The script stays out of
+the tree, because no checker reads its kind of file. The law suites hold every form to the library
+on the pools instead.
 
 Where the sign conventions of the library differ from Terathon's, the library's were adopted,
 because the library is what is measured. The bulk and weight duals of points and planes carry
@@ -108,28 +108,80 @@ with its weight negated, unitizes as the library unitizes it. The pools draw w n
 the negation no measurand sees the sign.
 
 Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library, and
-the same reader counts it. Object construction goes through the `zero3` and `read3` templates,
-rather than `Vector3()` defaults and whole-object field copies. In C, a default zero-fills its field
-through `nimZeroMem`, and a whole-object copy calls the `=dup` hook that the compiler makes for
-`Vector3`. Either cost would charge the reference for work that hand-written code does not do.
+the same reader counts it.
 
-Three builds of the bench differ only in these two templates: as committed, `Vector3()` for
-`zero3`, and a whole copy for `read3`. Five alternating runs of each, on `linux amd64, 4 cores` on
-2026-10-03 at `3121342`, time them at rga4d and cga5d. At rga4d `bulk_line` runs 2.61 ns as
-committed, 23.49 ns with `Vector3()` and 4.19 ns with the copy. The other three line rows with a
-default run 22.5 to 23.5 ns, and `attitude_plane` runs 3.35 ns against 2.14 ns.
+**Each form that builds an object reads its operands into scalars, and writes its result from
+them alone.** A scalar takes the notation of the header of its module (III.5). So `pˣ` is the x of
+a point `p`, and `lᵛˣ` is the x of the direction of a line `l`. A zero is `0.0` in each component,
+and a copy goes component by component. In C, a `Vector3()` default zero-fills through
+`nimZeroMem`, and a whole-object copy calls the `=dup` hook that the compiler makes for `Vector3`.
+Either cost would charge the reference for work that hand-written code does not do.
 
-Rows that use neither template move ×0.65 to ×1.29, so the copy in `transform_line_motor`, ×1.04,
-does not show. At cga5d a default adds 18 to 30 ns to eight rows, and a copy adds 1.6 to 4.4 ns to
-seven. Why a default costs 20 ns in a line row and 1.2 ns in `attitude_plane` is not isolated.
+The result arrives by pointer, and Nim builds C with `-fno-strict-aliasing`. So gcc must take the
+result as a possible overlap of an operand. Then a form that writes one field before it reads the
+next gets no vector instruction. With each read first, `reverse(Line)` at rga4d takes 14
+instructions under Nim 2.4.0, and 22 where each component is read just before its write. Measured
+on 2026-10-28 by `objdump` of a `noipa` wrapper of each form, built with the flags of the machine
+build.
+
+Rejected: a vector template that holds a `let`. Nim 2.4.0 zero-fills an object that `let` binds
+to the result of such a template. The forms that used them held 52 fills at rga3d and rga4d.
+Rejected too: `{.noalias.}` on each operand, which gives the same instructions as the scalars. It
+is a promise that the compiler never checks, and it keeps the copies of the templates in C.
+
+Three builds of the bench timed zeros and copies at rga4d and cga5d, five alternating runs each.
+They ran on `linux amd64, 4 cores` on 2026-10-03 at `3121342`. The builds spell zeros and copies by
+component, through `Vector3()`, and as a whole copy. At rga4d `bulk_line` runs 2.61 ns by component,
+23.49 ns with `Vector3()` and 4.19 ns with the copy. The other three line rows with a default run
+22.5 to 23.5 ns, and `attitude_plane` runs 3.35 ns against 2.14 ns.
+
+Rows that use neither move ×0.65 to ×1.29, so the copy in `transform_line_motor`, ×1.04, does not
+show. At cga5d a default adds 18 to 30 ns to eight rows, and a copy adds 1.6 to 4.4 ns to seven.
+Why a default costs 20 ns in a line row and 1.2 ns in `attitude_plane` is not isolated.
 
 Unitize forms take one reciprocal and multiply, as Terathon does, where the library divides each
-component. The divide column shows both.
+component. The divide column shows both. A form selects the factor 1 at zero weight, in place of
+an early `return`. Nim 2.4.0 fills the whole result of a function that returns early, and gcc
+keeps that fill, since the result can alias the operand.
+
+**Each motor transform spells the antisandwich 𝐐 ⟇ 𝐱 ⟇ 𝐐̰ exactly, for every motor.** In 3D the
+rotation is the matrix of the quaternion (Qᵛ, Qᵛʷ), scaled by its squared norm s. The translation
+is 𝐭 = 2(Qᵛʷ Qᵐ − Qᵐʷ Qᵛ + Qᵛ × Qᵐ). The weight of a point and the position of a plane take s.
+The moment of a line gains 2(Qᵐʷ 𝐤 + kʷ Qᵐ + Qᵐ × 𝐤), from the quaternion k = lᵛ (Qᵛʷ, −Qᵛ).
+
+In 2D the cosine is (Qʷ Qʷ − Qᶻ Qᶻ), and the weight takes the factor (Qᶻ Qᶻ + Qʷ Qʷ). The Architect
+asked on 2026-10-28 for the form most accurate to each operation (D2 of #772). That holds even
+where the form changes.
+
+The motors of the pools are unit only to within rounding. So a form that takes s as 1 errs by
+as much as it rounds. The table holds each form against the antisandwich in exact rational
+arithmetic, on motors drawn as the pools draw them. Each cell reads the unit form, then the
+exact one:
+
+| Transform | Multiplies | Worst error | Root mean square error |
+|-----------|------------|-------------|------------------------|
+| 3D point | 25 → 35 | 1.9e-15 → 1.3e-15 | 1.79e-16 → 1.45e-16 |
+| 3D line | 57 → 52 | 4.4e-15 → 2.0e-15 | 2.53e-16 → 1.69e-16 |
+| 3D plane | 36 → 35 | 4.3e-15 → 2.1e-15 | 2.28e-16 → 1.47e-16 |
+| 2D point | 15 → 14 | 1.71e-15 → 1.71e-15 | 1.68e-16 → 1.60e-16 |
+| 2D line | 15 → 14 | 2.37e-15 → 2.37e-15 | 1.62e-16 → 1.56e-16 |
+
+Measured on 2026-10-28 by a script in Python 3 with `fractions`. It evaluates the antisandwich
+from the definitions of the book, on 6 000 samples at rga4d and 4 000 at rga3d, seed 772.
+The same script holds each exact form equal to the antisandwich on 300 arbitrary rational motors,
+so the form errs by rounding alone. The script stays out of the tree, as the expansion does.
+Verified by `test_rga4d.nim` and `test_rga3d.nim`, suite `Reference: Motor of any norm`: each
+transform equals the library at each motor of the pool, scaled by 2.
+
+Rejected: a matrix that takes the motor as unit, 45 multiplies for a line, which keeps the error
+of the unit form. Rejected too: the exact form through the quaternion, as the unit form spells it.
+Its root mean square error is higher for each transform. It spends 30 multiplies for a point
+against 35, 64 for a line against 52, and 38 for a plane against 35.
 
 **No reference function calls another.** Under `--panics:off`, each call to a Nim function
 fills its result with zeros and branches on the error flag after it. Hand-written code spends
-neither. So the vector helpers and the rotation are templates, and a form that two functions
-share is spelled in each. A spelled form carries the terms of the form it repeats, so their
+neither. So each form spells every component itself, and a form that two functions share is
+spelled in each. A spelled form carries the terms of the form it repeats, so their
 arithmetic counts are equal.
 
 Five alternating runs on `linux amd64, 4 cores` on 2026-10-02 time the reference with and without
@@ -146,10 +198,9 @@ algebra that the sweep alone reaches holds one skipped test in each of those sui
 the gap. Suite `Internal: Catalogue` holds every typed cite under
 chapter 2 or a wiki page, so no cite falls outside every suite.
 
-Suite `Internal: Inspector` reads the nimcache of the test binary itself. It finds
-that `wedge(Point,Point)` spends twelve multiplies and six subtractions at rga4d, and six and
-three at rga3d, as its documentation states. It holds every reference function in that
-nimcache to no zero fill and no error check. The count it reads must reach
+Suite `Internal: Inspector` reads the nimcache of the test binary itself. It holds the doc of
+every reference function to the multiplies, adds and divides that its C spends. It holds every
+reference function to no zero fill, no whole copy and no error check. The count it reads must reach
 `FLOOR_FUNCTIONS_REFERENCE`, which is 73 at rga4d, 84 at cga5d, 50 at rga3d and 66 at cga4d.
 
 The movement model reads the size of a typed stem from the module of the function that reads
@@ -215,10 +266,15 @@ with or without the fill. So there a fill gives no measurand a discount, and the
 keeps it so as the catalogue grows. Both figures are from `linux amd64, 4 cores` on 2026-10-02.
 
 **A result of three floats or fewer is bound before it is stored.** Nim returns such a result by
-value, through a temporary that the call site fills with zeros. In a large function, the
-compiler keeps that fill as a call to an out-of-line `rep stosq`. A caller of normal size pays
-nothing, because there the fill is two stores that the compiler deletes.
-Of the 2D reference rows, 30 return such a result, and of the 3D ones none.
+value. Stored straight into its element, it passes under Nim 2.3.1 through a temporary that the
+call site fills with zeros. In a large function, gcc keeps that fill as a call to an out-of-line
+`rep stosq`. A caller of normal size pays nothing, because there the fill is two stores that gcc
+deletes. Nim 2.4.0 stores such a result in place, so the binding holds the loop free of that fill
+under either.
+
+Of the 2D reference rows, 30 return such a result, and of the 3D ones none. Compiled unbound at
+rga3d on 2026-10-28, Nim 2.3.1 sends 26 of 144 reference calls through a filled temporary, and Nim
+2.4.0 sends none.
 
 Two sessions of five alternating runs on `linux amd64, 4 cores` on 2026-10-03 time the 2D
 references, one with the fill and one bound first. With the fill, those 26 rows at rga3d and 4
@@ -226,9 +282,9 @@ at cga4d take 12.1 to 15.5 ns. Bound first, they take 0.8 to 5.0 ns. Within each
 library over reference for `complement_left_line` reads ×0.20 with the fill and ×2.98 bound
 first. The other reference rows move ×0.42 to ×1.70 between the sessions.
 
-The session bound first is the committed baseline, and the session with the fill is not
-committed. Bound first or not, the C at rga4d and cga5d is the same byte for byte. Suite
-`Internal: Inspector` holds the loop to no temporary filled with zeros.
+Neither session is committed, and both ran under Nim 2.3.1. Bound first or not, the C at rga4d and
+cga5d is the same byte for byte. Suite `Internal: Inspector` holds the loop to no temporary filled
+with zeros.
 
 `bench` runs `ROUNDS` rounds over `OBJECTS` objects, and reports the median and minimum
 nanoseconds for each object: the runtime measurements. The allocation gauge is live only
@@ -247,11 +303,11 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-19 at all four algebras**, five runs each on `linux
-amd64, 4 cores`. At rga3d, cga4d and cga5d they ran at the pin `3d9696e`, with nothing else on the
-machine. At rga4d they ran at `3838c54`, which emits the same C as the pin, so `restamp` carries
-them. Each algebra keeps the take whose median paired spread is smaller, as the Architect ruled on
-2026-10-19 (D5).
+**The runtime baselines are from 2026-10-28 at all four algebras**, five runs each on `linux
+amd64, 4 cores`. They ran at the pin `3d9696e` under Nim 2.4.0, with nothing else on the machine.
+Each algebra keeps the take whose median paired spread is smaller, as the Architect ruled on
+2026-10-19 (D5). A take under another compiler times other C, so this take is the only one at the
+pin.
 
 The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day,
 gives the drift between days. At rga4d its library runs ×1.19 to
@@ -261,11 +317,11 @@ to ×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.15
-to ×1.19 apart at each algebra. The widest measurand spreads ×2.01, as `select_part` at cga4d
-does. Its library takes 0.82 to 1.81 ns across the five runs, and its dense form 0.82 to 0.97 ns.
-The take of 2026-10-03 spread ×1.10 to ×1.12 at the median measurand, so this host now spreads
-more, with no other work on it.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.03
+to ×1.13 apart at each algebra. The widest measurand spreads ×1.87, as `complement_left_point` at
+rga3d does. Its library takes 2.41 to 3.55 ns across the five runs, and its reference 0.63 to
+1.74 ns, both slowest in the fourth run. Under Nim 2.3.1, the takes of 2026-10-03 and 2026-10-19
+spread ×1.10 to ×1.12 and ×1.15 to ×1.19, so this figure moves between takes.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -368,7 +424,8 @@ any file. Then what gcc inlines into a wrapper depends on that wrapper alone.
 
 Each wrapper has a copy, later in the same C file, which the driver calls on the same operands
 after every wrapper. `guard` makes a finding of a wrapper whose copy reads other counts. That
-finding holds the flags: without them, one copy reads apart at rga4d and one at cga5d.
+finding holds the flags: under Nim 2.3.1 without them, one copy reads apart at rga4d and one at
+cga5d.
 
 - Rejected: a twin of the same C over other operands, such as `wedge` beside `wedge_point_point`.
   `⊛` branches on the kind of its operand, so `partner` and `partner_dipole` read apart with no
@@ -397,7 +454,7 @@ of the measurand beside it, because that count names the line of C (VII.10). A m
 composes several calls names no library function, and its message says so.
 
 **The band of each count is zero, and this is its cause (VII.12).** Valgrind 3.22 ran the four
-algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
+algebras under Nim 2.3.1 on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
 
 - Two runs of one binary gave the same counts for each measurand.
 - A run with `GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX2,-AVX512F,-ERMS,-AVX_Fast_Unaligned_Load,-FMA`
@@ -413,25 +470,27 @@ algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
 
 **The gate pins a fault that grows a count, and the record holds its reading beside unchanged
 code** (`CONTRIBUTOR.md`, Tests are paramount). The fault is `+` of the library without `inline`.
-Its C body stays the same, so no static count moves. Only the counts of `add` grow, at each
-algebra. In each cell below, the first figure is the slowest and the typical reading of unchanged
-code, which are equal. The second figure is the reading of the fault:
+Its C body stays the same, so no static count moves. Under Nim 2.4.0 only the instructions of
+`add` grow, by 2 at each algebra, and its bytes stay. In each cell below, the first figure is the
+slowest and the typical reading of unchanged code, which are equal. The second figure is the
+reading of the fault:
 
 | Algebra | Instructions | Bytes read | Bytes written |
 | --- | --- | --- | --- |
-| rga3d | 42, fault 56 | 225, fault 241 | 200, fault 216 |
-| rga4d | 82, fault 97 | 417, fault 433 | 392, fault 408 |
-| cga4d | 82, fault 97 | 417, fault 433 | 392, fault 408 |
-| cga5d | 146, fault 159 | 801, fault 817 | 776, fault 792 |
+| rga3d | 25, fault 27 | 136, fault 136 | 64, fault 64 |
+| rga4d | 42, fault 44 | 264, fault 264 | 128, fault 128 |
+| cga4d | 42, fault 44 | 264, fault 264 | 128, fault 128 |
+| cga5d | 72, fault 74 | 520, fault 520 | 256, fault 256 |
 
-The readings of unchanged code are 20 runs of `inspect` and `guard` on `linux amd64, 4 cores`, on
-2026-10-22. In each run, each count of each measurand equalled its baseline. `guard` gave no
-finding and no notice in any run. The fault was read on a copy of the library at the pin, with
-`inline` taken from `+` in `pga/multivectors.nim`.
+The readings of unchanged code are 20 runs of `inspect` and `guard` under Nim 2.4.0 on `linux
+amd64, 4 cores`, on 2026-10-28 and 2026-10-29. In each run, each count of each measurand equalled
+its baseline. `guard` gave no finding and no notice in any run. The fault was read on a copy of the
+library at the pin, with `inline` taken from `+` in `pga/multivectors.nim`.
 
-The runner of CI read the same. Run 1340 of `check`, on 2026-10-22, gave no finding and no notice,
-under the same gcc package. Runs 1296, 1298 and 1306, on 2026-10-21, gave no finding. So the spread
-of unchanged code is zero, and the fault reads beyond it at each count of `add`.
+The runner of CI reads the same under Nim 2.4.0. Run 1501 of `check`, on 2026-10-29, gave no finding
+and no notice, under the same gcc package. Under Nim 2.3.1, runs 1296, 1298, 1306 and 1340, on
+2026-10-21 and 2026-10-22, gave no finding either. So the spread of unchanged code is zero, and the
+fault reads beyond it at the instructions of `add`.
 
 A wrapper that reaches a shared object is a finding. Its band would need readings of the
 runner and of a delegate, and no record holds them.
@@ -439,8 +498,13 @@ runner and of a delegate, and no record holds them.
 - Cost: the counted build is not the build that ships. A shipped caller inlines the operator,
   and the driver calls the wrapper. The flags lift limits that gcc keeps for a shipped build. So
   the counts are evidence for this build alone (VII.11).
-- Cost: the wrapper returns its expression as `result`. So the count holds what that call site
-  pays, such as a temporary that is filled with zeros and copied.
+- Cost: the wrapper returns its expression as `result`, so the count holds what that call site
+  pays. Under Nim 2.4.0 the operator writes straight into that result, with no temporary. Nim
+  builds C with `-fno-strict-aliasing`, so gcc must take that result as a possible overlap of the
+  operand. Then a map that writes one element before it reads the next gets no vector
+  instruction, as `reverse` at rga4d shows in 45 instructions. The temporary of Nim 2.3.1 lets gcc
+  vectorise it in 27, as does `restrict` on both pointers of its C body. Read with gcc 13.3.0 on
+  2026-10-28.
 - Cost: the counts are for one pair of operands. A path that another operand takes is not
   counted, such as `sqrt` of a negative number, which calls the C library.
 - Cost: the C compiler joins the build. A runner image with another gcc package fails `drive`
@@ -881,10 +945,11 @@ zero in the library, at each type and pair that they sweep. Where a map drops th
 table, the laws fail at rga4d. Where a squared norm reads half its table, they fail at cga5d and
 hold at rga4d, whose metric is diagonal.
 
-Up to 4D the laws of P04 sweep each product over every pair of named types and the whole
-multivector. At 5D and 6D they sweep a vector with each type. The compiler takes about 0.3 MiB
-for each term that a form emits. Every pair at rga5d emits some 20 000 terms, and its build peaks
-at 7 158 MiB.
+Up to 5D the laws of P04 sweep each product over every pair of named types and the whole
+multivector. At 6D they sweep a vector with each type. The compiler takes about 0.05 MiB for each
+term that a form emits. At cga6d every pair takes 18 minutes and 6 106 MiB to build and run. A
+vector with each type there takes 2 minutes and 1 196 MiB. Measured as the peak resident size of
+each build under Nim 2.4.0, 2026-10-29.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
@@ -923,6 +988,20 @@ that the first families of a stack lack falls to a font face that the page ships
 `ₙ`, `ₖ` and `ᵀ` in code, which no family of the mono stack holds, at a width that is not one
 column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `koch drive`,
 which judges every page that `drive` renders (below).
+
+**Each family of one font face is declared over the weights 400 to 700** (Article X.8). Commit
+Mono, Noto Sans Math and Noto Sans Symbols 2 each ship one file, at weight 400. Headings, table
+heads and strong text ask them for 600 and 700. Over its declared range, the browser draws the file
+as it is, and never a bold of its own. So bold code and bold maths draw their regular glyphs, at
+the width that they had. `pga_visualiser` declares the same files over a range in the same way.
+
+- Rejected: a bold file of Commit Mono. The pages ship the six font faces of `pga_visualiser`, and
+  maths and symbols have no bold file at all.
+
+The collector keeps the characters beyond ASCII alone, so `koch drive` cannot see a bold that the
+browser synthesises over ASCII, as in bold code. So `test_rga4d.nim` holds each family of the shell
+to a font face of weight 600 or more, whatever text the family draws. Verified on 2026-10-28 in
+Chromium, where bold code keeps its width and draws 32 % less ink than the bold of the browser.
 
 **A proposal can carry a figure.** A paragraph of one image alone, as
 `![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
@@ -1358,12 +1437,11 @@ That commit is the head of the library on 2026-10-19, as the standing instructio
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
-**The compiler is pinned by commit**, `27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is
-the same pin that `pga_visualiser` carries. The library spells seven operators with
-characters that no Nim release lexes. One cached build therefore serves both projects. Atlas
-writes `"objects": {}` for a repository without a nimble file, so the resolved commit is
-patched into `atlas.lock` by hand. The stored copies in the lock of the nimble file and of
-`nim.cfg` are kept byte-identical to the committed files, which the static pass checks.
+**The compiler is pinned by release**, Nim 2.4.0. It is the first release whose lexer holds the
+seven operators that the library spells, which nim-lang/Nim#26074 added. Nim 2.2.14 holds none of
+them. Atlas writes `"objects": {}` for a repository without a nimble file, so the resolved commit is
+patched into `atlas.lock` by hand. The stored copies in the lock of the nimble file and of `nim.cfg`
+are kept byte-identical to the committed files, which the static pass checks.
 
 **`package-lock.json` pins the Node tools, and git ignores their checkout.** The project commits
 `package.json` and `package-lock.json` with the versions that `pga_visualiser` pins.
@@ -1455,8 +1533,8 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   tolerance absorbs some of that, and the rest is why timing never guards.
 - Movement is modelled from the bytes that the code names, and never measured as cache
   traffic.
-- The inspector reads text patterns of this compiler commit. Another commit could spell the
-  same C differently. The suite that holds the reader to the nimcache of the test binary is
+- The inspector reads text patterns of Nim 2.4.0. Another release could spell the same C
+  differently. The suite that holds the reader to the nimcache of the test binary is
   what would say so. A loop whose bound is a variable counts once.
 - 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
   compared. The Architect ruled on 2026-10-06 that they stay unmeasured while the library holds

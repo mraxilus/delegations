@@ -198,7 +198,7 @@ below misreads moved objects that this rule reads right, as Evidence counts.
 
 ### `inline` on `^∘`
 
-The C of `^∘` at `cga5d` grows from 91 to 1,485 lines. The guide of the language inlines a large
+The C of `^∘` at `cga5d` grows from 284 to 1807 lines. The guide of the language inlines a large
 body only where a measurement shows the gain (`STYLE.md`, section 2). No pair of runs here shows
 one, as Evidence states, so `^∘` drops `inline`.
 
@@ -421,12 +421,12 @@ between moved points in RGA, and the drift of a moved round point from radius 0 
 
 ### Speed
 
-At `cga5d` the adds of `^∘` rise from 7 to 38, its calls from 1 to 163, and its error checks from
-1 to 66. Six earlier evaluations of the inline form, on 2026-10-11 and 2026-10-12, gave 66.59 to
-91.17 ns at `cga5d`. They ran from commit a712559b to commit 09e9579a. So the time of the change
-varies by up to about 40% between evaluations. The form here, without `inline`, ran in 89.87 ns,
-inside that range, so no pair of runs separates a gain of `inline` from noise. Its ratio lies
-above their ×6.98 to ×8.78, since pin ran in 7.43 ns here and in 8.56 to 9.02 ns there.
+At `cga5d` the adds of `^∘` rise from 7 to 38, its calls from 65 to 291, and its error checks
+from 1 to 66. Six earlier evaluations of the inline form, on 2026-10-11 and 2026-10-12, gave 66.59
+to 91.17 ns at `cga5d`, at ×6.98 to ×8.78 of pin. They ran from commit a712559b to commit
+09e9579a. So the time of the change varies by up to about 40% between evaluations. The form here,
+without `inline`, ran under Nim 2.4.0 in 117.42 ns, against 13.88 ns of pin, so at ×8.50. That
+ratio lies inside their range, so no pair of runs separates a gain of `inline` from noise.
 
 ### Lengyel's sources
 

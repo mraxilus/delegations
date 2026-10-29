@@ -44,8 +44,8 @@ read, the sign is exact when every term of the operand has the same grade.
   no check runs, and such an operand gets a value that means nothing. Each caller of `partner`
   in `pga.nim` keeps its signature, so no caller changes.
 - **Two calls.** The chain still calls two functions. Its first step writes a local declared
-  `noinit`, since the compiler fills the temporary of a call with zeros. So the partner keeps
-  one zero fill and two error checks, for one intermediate and two calls.
+  `noinit`, since the compiler fills the temporary of a call to a `noinit` callee with zeros. So
+  the partner keeps two error checks and two calls, and its one local takes no zero fill.
 - **No table of three operands.** The partner is cubic, so no one table of two operands holds it.
   A table of three operands would, and the emitter reads none.
 
@@ -71,7 +71,8 @@ read, the sign is exact when every term of the operand has the same grade.
 ## Evidence
 
 At cga5d the 324 multiplies of the partner are the bound of its chain: 162 for each folded table.
-Its error checks fall from 271 to 2, and its lines of C from 2710 to 83.
+Its error checks fall from 109 to 2, and its lines of C from 2530 to 78.
 
-P01 and P08 alone run the partner at ×0.66 to ×0.70 of pin at cga5d, and ×0.53 to ×0.60 at
-cga4d. So the fold gives the rest of the gain on the partner.
+P01 and P08 alone run the partner at ×0.65 to ×0.73 of pin at cga5d, over the kinds of its
+operand. With this proposal it runs at ×0.36 to ×0.38. So the fold gives the rest of the gain on
+the partner.

@@ -23,8 +23,15 @@
 ##     read off. Terathon Math Library (MIT, Eric Lengyel) was read to cross-check layout;
 ##     nothing is copied from it.
 ##   Each operation's doc states multiply and add counts of its form, i.e. what optimal
-##     code spends. No function calls another, so none fills result or checks error flag;
-##     suite `Internal: Inspector` holds every reference function to that.
+##     code spends; suite `Internal: Inspector` reads them back from emitted C.
+##   No function calls another, and no form binds object: under `--panics:off` call of Nim
+##     function fills its result and checks error flag after it, and Nim 2.4 zero-fills object
+##     that `let` binds to result of template holding `let`; hand code spends neither.
+##   Each form building object reads its operands into scalars, named as table above names
+##     components, then writes its result from them alone. Result arrives by pointer, which gcc
+##     must take as possible alias of operand; each read before first write lets gcc vectorise,
+##     as hand code returning by value lets it. Suite `Internal: Inspector` holds every
+##     reference function to no fill, no copy and no check.
 ##   Cost: only round-object rows exist; flats are results of carriers, never operands.
 
 {.experimental: "strictFuncs".}
@@ -58,27 +65,38 @@ type
 
 func wedge*(a, b: PointRound): Dipole {.inline.} =
   ## Join round points into dipole, i.e. 𝐚 ∧ 𝐛; 12 mul, 6 sub.
+  let
+    (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+    (bˣ, bʸ, bʷ, bᵘ) = (b.x, b.y, b.w, b.u)
   Dipole(
-    g: LineCarrier(x: a.y * b.w - a.w * b.y, y: a.w * b.x - a.x * b.w, w: a.x * b.y - a.y * b.x),
-    p: PointFlat(x: a.u * b.x - a.x * b.u, y: a.u * b.y - a.y * b.u, w: a.u * b.w - a.w * b.u),
+    g: LineCarrier(x: aʸ * bʷ - aʷ * bʸ, y: aʷ * bˣ - aˣ * bʷ, w: aˣ * bʸ - aʸ * bˣ),
+    p: PointFlat(x: aᵘ * bˣ - aˣ * bᵘ, y: aᵘ * bʸ - aʸ * bᵘ, w: aᵘ * bʷ - aʷ * bᵘ),
   )
 
 func wedge*(d: Dipole, a: PointRound): Circle {.inline.} =
   ## Join dipole and round point into circle, i.e. 𝐝 ∧ 𝐚; 12 mul, 8 add.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
+    (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
   Circle(
-    u: -(a.x * d.g.x) - a.y * d.g.y - a.w * d.g.w,
-    x: a.u * d.g.x + a.w * d.p.y - a.y * d.p.w,
-    y: a.u * d.g.y - a.w * d.p.x + a.x * d.p.w,
-    w: a.u * d.g.w - a.x * d.p.y + a.y * d.p.x,
+    u: -(aˣ * dᵍˣ) - aʸ * dᵍʸ - aʷ * dᵍʷ,
+    x: aᵘ * dᵍˣ + aʷ * dᵖʸ - aʸ * dᵖʷ,
+    y: aᵘ * dᵍʸ - aʷ * dᵖˣ + aˣ * dᵖʷ,
+    w: aᵘ * dᵍʷ - aˣ * dᵖʸ + aʸ * dᵖˣ,
   )
 
 func wedge*(a: PointRound, d: Dipole): Circle {.inline.} =
   ## Join round point and dipole, i.e. 𝐚 ∧ 𝐝 = 𝐝 ∧ 𝐚 since grades 1 and 2 commute; 12 mul, 8 add.
+  let
+    (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   Circle(
-    u: -(d.g.x * a.x) - d.g.y * a.y - d.g.w * a.w,
-    x: d.g.x * a.u + d.p.y * a.w - d.p.w * a.y,
-    y: d.g.y * a.u - d.p.x * a.w + d.p.w * a.x,
-    w: d.g.w * a.u - d.p.y * a.x + d.p.x * a.y,
+    u: -(dᵍˣ * aˣ) - dᵍʸ * aʸ - dᵍʷ * aʷ,
+    x: dᵍˣ * aᵘ + dᵖʸ * aʷ - dᵖʷ * aʸ,
+    y: dᵍʸ * aᵘ - dᵖˣ * aʷ + dᵖʷ * aˣ,
+    w: dᵍʷ * aᵘ - dᵖʸ * aˣ + dᵖˣ * aʸ,
   )
 
 func wedge*(c: Circle, a: PointRound): Antiscalar {.inline.} =
@@ -98,27 +116,38 @@ func wedge*(d, f: Dipole): Antiscalar {.inline.} =
 
 func wedgeAnti*(c, o: Circle): Dipole {.inline.} =
   ## Meet circles in dipole, i.e. 𝐜 ∨ 𝐨; 12 mul, 6 sub.
+  let
+    (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+    (oᵘ, oˣ, oʸ, oʷ) = (o.u, o.x, o.y, o.w)
   Dipole(
-    g: LineCarrier(x: c.x * o.u - c.u * o.x, y: c.y * o.u - c.u * o.y, w: c.w * o.u - c.u * o.w),
-    p: PointFlat(x: c.w * o.y - c.y * o.w, y: c.x * o.w - c.w * o.x, w: c.y * o.x - c.x * o.y),
+    g: LineCarrier(x: cˣ * oᵘ - cᵘ * oˣ, y: cʸ * oᵘ - cᵘ * oʸ, w: cʷ * oᵘ - cᵘ * oʷ),
+    p: PointFlat(x: cʷ * oʸ - cʸ * oʷ, y: cˣ * oʷ - cʷ * oˣ, w: cʸ * oˣ - cˣ * oʸ),
   )
 
 func wedgeAnti*(c: Circle, d: Dipole): PointRound {.inline.} =
   ## Meet circle and dipole in round point, i.e. 𝐜 ∨ 𝐝; 12 mul, 8 add.
+  let
+    (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   PointRound(
-    x: c.u * d.p.x + c.w * d.g.y - c.y * d.g.w,
-    y: c.u * d.p.y - c.w * d.g.x + c.x * d.g.w,
-    w: c.u * d.p.w - c.x * d.g.y + c.y * d.g.x,
-    u: -(c.x * d.p.x) - c.y * d.p.y - c.w * d.p.w,
+    x: cᵘ * dᵖˣ + cʷ * dᵍʸ - cʸ * dᵍʷ,
+    y: cᵘ * dᵖʸ - cʷ * dᵍˣ + cˣ * dᵍʷ,
+    w: cᵘ * dᵖʷ - cˣ * dᵍʸ + cʸ * dᵍˣ,
+    u: -(cˣ * dᵖˣ) - cʸ * dᵖʸ - cʷ * dᵖʷ,
   )
 
 func wedgeAnti*(d: Dipole, c: Circle): PointRound {.inline.} =
   ## Meet dipole and circle, i.e. 𝐝 ∨ 𝐜 = 𝐜 ∨ 𝐝 since antigrades 2 and 1 commute; 12 mul, 8 add.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
+    (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
   PointRound(
-    x: d.p.x * c.u + d.g.y * c.w - d.g.w * c.y,
-    y: d.p.y * c.u - d.g.x * c.w + d.g.w * c.x,
-    w: d.p.w * c.u - d.g.y * c.x + d.g.x * c.y,
-    u: -(d.p.x * c.x) - d.p.y * c.y - d.p.w * c.w,
+    x: dᵖˣ * cᵘ + dᵍʸ * cʷ - dᵍʷ * cʸ,
+    y: dᵖʸ * cᵘ - dᵍˣ * cʷ + dᵍʷ * cˣ,
+    w: dᵖʷ * cᵘ - dᵍʸ * cˣ + dᵍˣ * cʸ,
+    u: -(dᵖˣ * cˣ) - dᵖʸ * cʸ - dᵖʷ * cʷ,
   )
 
 func wedgeAnti*(d, f: Dipole): float {.inline.} =
@@ -170,33 +199,43 @@ func dotAnti*(c, o: Circle): Antiscalar {.inline.} =
 
 func complementRight*(a: PointRound): Circle {.inline.} =
   ## Get right complement 𝐚̅, i.e. same components read as circle; 0 mul.
-  Circle(u: a.u, x: a.x, y: a.y, w: a.w)
+  let (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+  Circle(u: aᵘ, x: aˣ, y: aʸ, w: aʷ)
 
 func complementLeft*(a: PointRound): Circle {.inline.} =
   ## Get left complement 𝐚̲, i.e. components negated and read as circle; 0 mul.
-  Circle(u: -a.u, x: -a.x, y: -a.y, w: -a.w)
+  let (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+  Circle(u: -aᵘ, x: -aˣ, y: -aʸ, w: -aʷ)
 
 func complementRight*(d: Dipole): Dipole {.inline.} =
   ## Get right complement 𝐝̅, i.e. carrier and flat parts swapped and negated; 0 mul.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   Dipole(
-    g: LineCarrier(x: -d.p.x, y: -d.p.y, w: -d.p.w),
-    p: PointFlat(x: -d.g.x, y: -d.g.y, w: -d.g.w),
+    g: LineCarrier(x: -dᵖˣ, y: -dᵖʸ, w: -dᵖʷ),
+    p: PointFlat(x: -dᵍˣ, y: -dᵍʸ, w: -dᵍʷ),
   )
 
 func complementLeft*(d: Dipole): Dipole {.inline.} =
   ## Get left complement 𝐝̲, equal to right one at grade 2 here; 0 mul.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   Dipole(
-    g: LineCarrier(x: -d.p.x, y: -d.p.y, w: -d.p.w),
-    p: PointFlat(x: -d.g.x, y: -d.g.y, w: -d.g.w),
+    g: LineCarrier(x: -dᵖˣ, y: -dᵖʸ, w: -dᵖʷ),
+    p: PointFlat(x: -dᵍˣ, y: -dᵍʸ, w: -dᵍʷ),
   )
 
 func complementRight*(c: Circle): PointRound {.inline.} =
   ## Get right complement 𝐜̅, i.e. components negated and read as round point; 0 mul.
-  PointRound(x: -c.x, y: -c.y, w: -c.w, u: -c.u)
+  let (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+  PointRound(x: -cˣ, y: -cʸ, w: -cʷ, u: -cᵘ)
 
 func complementLeft*(c: Circle): PointRound {.inline.} =
   ## Get left complement 𝐜̲, i.e. same components read as round point; 0 mul.
-  PointRound(x: c.x, y: c.y, w: c.w, u: c.u)
+  let (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+  PointRound(x: cˣ, y: cʸ, w: cʷ, u: cᵘ)
 
 
 
@@ -204,33 +243,43 @@ func complementLeft*(c: Circle): PointRound {.inline.} =
 
 func reverse*(a: PointRound): PointRound {.inline.} =
   ## Get reverse 𝐚̃, i.e. round point unchanged at grade 1; 0 mul.
-  PointRound(x: a.x, y: a.y, w: a.w, u: a.u)
+  let (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+  PointRound(x: aˣ, y: aʸ, w: aʷ, u: aᵘ)
 
 func reverse*(d: Dipole): Dipole {.inline.} =
   ## Get reverse 𝐝̃, i.e. dipole negated at grade 2; 0 mul.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   Dipole(
-    g: LineCarrier(x: -d.g.x, y: -d.g.y, w: -d.g.w),
-    p: PointFlat(x: -d.p.x, y: -d.p.y, w: -d.p.w),
+    g: LineCarrier(x: -dᵍˣ, y: -dᵍʸ, w: -dᵍʷ),
+    p: PointFlat(x: -dᵖˣ, y: -dᵖʸ, w: -dᵖʷ),
   )
 
 func reverse*(c: Circle): Circle {.inline.} =
   ## Get reverse 𝐜̃, i.e. circle negated at grade 3; 0 mul.
-  Circle(u: -c.u, x: -c.x, y: -c.y, w: -c.w)
+  let (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+  Circle(u: -cᵘ, x: -cˣ, y: -cʸ, w: -cʷ)
 
 func reverseAnti*(a: PointRound): PointRound {.inline.} =
   ## Get antireverse 𝐚̰, i.e. round point negated at antigrade 3; 0 mul.
-  PointRound(x: -a.x, y: -a.y, w: -a.w, u: -a.u)
+  let (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+  PointRound(x: -aˣ, y: -aʸ, w: -aʷ, u: -aᵘ)
 
 func reverseAnti*(d: Dipole): Dipole {.inline.} =
   ## Get antireverse 𝐝̰, i.e. dipole negated at antigrade 2; 0 mul.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   Dipole(
-    g: LineCarrier(x: -d.g.x, y: -d.g.y, w: -d.g.w),
-    p: PointFlat(x: -d.p.x, y: -d.p.y, w: -d.p.w),
+    g: LineCarrier(x: -dᵍˣ, y: -dᵍʸ, w: -dᵍʷ),
+    p: PointFlat(x: -dᵖˣ, y: -dᵖʸ, w: -dᵖʷ),
   )
 
 func reverseAnti*(c: Circle): Circle {.inline.} =
   ## Get antireverse 𝐜̰, i.e. circle unchanged at antigrade 1; 0 mul.
-  Circle(u: c.u, x: c.x, y: c.y, w: c.w)
+  let (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+  Circle(u: cᵘ, x: cˣ, y: cʸ, w: cʷ)
 
 
 
@@ -238,33 +287,43 @@ func reverseAnti*(c: Circle): Circle {.inline.} =
 
 func dualBulk*(a: PointRound): Circle {.inline.} =
   ## Get bulk dual 𝐚★; 0 mul.
-  Circle(u: -a.w, x: a.x, y: a.y, w: -a.u)
+  let (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+  Circle(u: -aʷ, x: aˣ, y: aʸ, w: -aᵘ)
 
 func dualWeight*(a: PointRound): Circle {.inline.} =
   ## Get weight dual 𝐚☆; 0 mul.
-  Circle(u: a.w, x: -a.x, y: -a.y, w: a.u)
+  let (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+  Circle(u: aʷ, x: -aˣ, y: -aʸ, w: aᵘ)
 
 func dualBulk*(d: Dipole): Dipole {.inline.} =
   ## Get bulk dual 𝐝★; 0 mul.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   Dipole(
-    g: LineCarrier(x: d.g.y, y: -d.g.x, w: d.p.w),
-    p: PointFlat(x: -d.p.y, y: d.p.x, w: -d.g.w),
+    g: LineCarrier(x: dᵍʸ, y: -dᵍˣ, w: dᵖʷ),
+    p: PointFlat(x: -dᵖʸ, y: dᵖˣ, w: -dᵍʷ),
   )
 
 func dualWeight*(d: Dipole): Dipole {.inline.} =
   ## Get weight dual 𝐝☆; 0 mul.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   Dipole(
-    g: LineCarrier(x: -d.g.y, y: d.g.x, w: -d.p.w),
-    p: PointFlat(x: d.p.y, y: -d.p.x, w: d.g.w),
+    g: LineCarrier(x: -dᵍʸ, y: dᵍˣ, w: -dᵖʷ),
+    p: PointFlat(x: dᵖʸ, y: -dᵖˣ, w: dᵍʷ),
   )
 
 func dualBulk*(c: Circle): PointRound {.inline.} =
   ## Get bulk dual 𝐜★; 0 mul.
-  PointRound(x: c.x, y: c.y, w: -c.u, u: -c.w)
+  let (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+  PointRound(x: cˣ, y: cʸ, w: -cᵘ, u: -cʷ)
 
 func dualWeight*(c: Circle): PointRound {.inline.} =
   ## Get weight dual 𝐜☆; 0 mul.
-  PointRound(x: -c.x, y: -c.y, w: c.u, u: c.w)
+  let (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+  PointRound(x: -cˣ, y: -cʸ, w: cᵘ, u: cʷ)
 
 
 
@@ -272,15 +331,18 @@ func dualWeight*(c: Circle): PointRound {.inline.} =
 
 func bulk*(a: PointRound): PointRound {.inline.} =
   ## Get round bulk 𝐚∙, i.e. position alone; 0 mul.
-  PointRound(x: a.x, y: a.y, w: 0.0, u: 0.0)
+  let (aˣ, aʸ) = (a.x, a.y)
+  PointRound(x: aˣ, y: aʸ, w: 0.0, u: 0.0)
 
 func weight*(a: PointRound): PointRound {.inline.} =
   ## Get round weight 𝐚∘, i.e. weight alone; 0 mul.
-  PointRound(x: 0.0, y: 0.0, w: a.w, u: 0.0)
+  let aʷ = a.w
+  PointRound(x: 0.0, y: 0.0, w: aʷ, u: 0.0)
 
 func bulkFlat*(a: PointRound): PointRound {.inline.} =
   ## Get flat bulk 𝐚■, i.e. component on infinity alone; 0 mul.
-  PointRound(x: 0.0, y: 0.0, w: 0.0, u: a.u)
+  let aᵘ = a.u
+  PointRound(x: 0.0, y: 0.0, w: 0.0, u: aᵘ)
 
 func weightFlat*(a: PointRound): PointRound {.inline.} =
   ## Get flat weight 𝐚□, zero since no component holds both origin and infinity; 0 mul.
@@ -288,19 +350,23 @@ func weightFlat*(a: PointRound): PointRound {.inline.} =
 
 func bulk*(d: Dipole): Dipole {.inline.} =
   ## Get round bulk 𝐝∙, i.e. carrier position alone; 0 mul.
-  Dipole(g: LineCarrier(x: 0.0, y: 0.0, w: d.g.w), p: PointFlat(x: 0.0, y: 0.0, w: 0.0))
+  let dᵍʷ = d.g.w
+  Dipole(g: LineCarrier(x: 0.0, y: 0.0, w: dᵍʷ), p: PointFlat(x: 0.0, y: 0.0, w: 0.0))
 
 func weight*(d: Dipole): Dipole {.inline.} =
   ## Get round weight 𝐝∘, i.e. carrier normal alone; 0 mul.
-  Dipole(g: LineCarrier(x: d.g.x, y: d.g.y, w: 0.0), p: PointFlat(x: 0.0, y: 0.0, w: 0.0))
+  let (dᵍˣ, dᵍʸ) = (d.g.x, d.g.y)
+  Dipole(g: LineCarrier(x: dᵍˣ, y: dᵍʸ, w: 0.0), p: PointFlat(x: 0.0, y: 0.0, w: 0.0))
 
 func bulkFlat*(d: Dipole): Dipole {.inline.} =
   ## Get flat bulk 𝐝■, i.e. flat position alone; 0 mul.
-  Dipole(g: LineCarrier(x: 0.0, y: 0.0, w: 0.0), p: PointFlat(x: d.p.x, y: d.p.y, w: 0.0))
+  let (dᵖˣ, dᵖʸ) = (d.p.x, d.p.y)
+  Dipole(g: LineCarrier(x: 0.0, y: 0.0, w: 0.0), p: PointFlat(x: dᵖˣ, y: dᵖʸ, w: 0.0))
 
 func weightFlat*(d: Dipole): Dipole {.inline.} =
   ## Get flat weight 𝐝□, i.e. flat weight alone; 0 mul.
-  Dipole(g: LineCarrier(x: 0.0, y: 0.0, w: 0.0), p: PointFlat(x: 0.0, y: 0.0, w: d.p.w))
+  let dᵖʷ = d.p.w
+  Dipole(g: LineCarrier(x: 0.0, y: 0.0, w: 0.0), p: PointFlat(x: 0.0, y: 0.0, w: dᵖʷ))
 
 func bulk*(c: Circle): Circle {.inline.} =
   ## Get round bulk 𝐜∙, zero since every component holds origin or infinity; 0 mul.
@@ -308,15 +374,18 @@ func bulk*(c: Circle): Circle {.inline.} =
 
 func weight*(c: Circle): Circle {.inline.} =
   ## Get round weight 𝐜∘, i.e. carrier weight alone; 0 mul.
-  Circle(u: c.u, x: 0.0, y: 0.0, w: 0.0)
+  let cᵘ = c.u
+  Circle(u: cᵘ, x: 0.0, y: 0.0, w: 0.0)
 
 func bulkFlat*(c: Circle): Circle {.inline.} =
   ## Get flat bulk 𝐜■, i.e. flat position alone; 0 mul.
-  Circle(u: 0.0, x: 0.0, y: 0.0, w: c.w)
+  let cʷ = c.w
+  Circle(u: 0.0, x: 0.0, y: 0.0, w: cʷ)
 
 func weightFlat*(c: Circle): Circle {.inline.} =
   ## Get flat weight 𝐜□, i.e. flat normal alone; 0 mul.
-  Circle(u: 0.0, x: c.x, y: c.y, w: 0.0)
+  let (cˣ, cʸ) = (c.x, c.y)
+  Circle(u: 0.0, x: cˣ, y: cʸ, w: 0.0)
 
 
 
@@ -328,11 +397,15 @@ func attitude*(a: PointRound): float {.inline.} =
 
 func attitude*(d: Dipole): PointRound {.inline.} =
   ## Get attitude of dipole, i.e. its direction and flat weight as round point; 0 mul.
-  PointRound(x: d.g.y, y: -d.g.x, w: 0.0, u: -d.p.w)
+  let
+    (dᵍˣ, dᵍʸ) = (d.g.x, d.g.y)
+    dᵖʷ = d.p.w
+  PointRound(x: dᵍʸ, y: -dᵍˣ, w: 0.0, u: -dᵖʷ)
 
 func attitude*(c: Circle): Dipole {.inline.} =
   ## Get attitude of circle, i.e. its carrier weight and flat normal as dipole; 0 mul.
-  Dipole(g: LineCarrier(x: 0.0, y: 0.0, w: -c.u), p: PointFlat(x: -c.y, y: c.x, w: 0.0))
+  let (cᵘ, cˣ, cʸ) = (c.u, c.x, c.y)
+  Dipole(g: LineCarrier(x: 0.0, y: 0.0, w: -cᵘ), p: PointFlat(x: -cʸ, y: cˣ, w: 0.0))
 
 
 
@@ -340,11 +413,13 @@ func attitude*(c: Circle): Dipole {.inline.} =
 
 func carrier*(a: PointRound): PointFlat {.inline.} =
   ## Get carrier of round point, i.e. 𝐚 ∧ 𝐞₄, flat point at its position; 0 mul.
-  PointFlat(x: -a.x, y: -a.y, w: -a.w)
+  let (aˣ, aʸ, aʷ) = (a.x, a.y, a.w)
+  PointFlat(x: -aˣ, y: -aʸ, w: -aʷ)
 
 func carrier*(d: Dipole): LineFlat {.inline.} =
   ## Get carrier of dipole, i.e. 𝐝 ∧ 𝐞₄, line through both its points; 0 mul.
-  LineFlat(x: d.g.x, y: d.g.y, w: d.g.w)
+  let (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+  LineFlat(x: dᵍˣ, y: dᵍʸ, w: dᵍʷ)
 
 func carrier*(c: Circle): Antiscalar {.inline.} =
   ## Get carrier of circle, i.e. 𝐜 ∧ 𝐞₄, whole plane scaled by carrier weight; 0 mul.
@@ -356,11 +431,15 @@ func carrierCo*(a: PointRound): Antiscalar {.inline.} =
 
 func carrierCo*(d: Dipole): LineFlat {.inline.} =
   ## Get cocarrier of dipole, i.e. 𝐝☆ ∧ 𝐞₄, line through center normal to carrier; 0 mul.
-  LineFlat(x: -d.g.y, y: d.g.x, w: -d.p.w)
+  let
+    (dᵍˣ, dᵍʸ) = (d.g.x, d.g.y)
+    dᵖʷ = d.p.w
+  LineFlat(x: -dᵍʸ, y: dᵍˣ, w: -dᵖʷ)
 
 func carrierCo*(c: Circle): PointFlat {.inline.} =
   ## Get cocarrier of circle, i.e. 𝐜☆ ∧ 𝐞₄, flat point at its center; 0 mul.
-  PointFlat(x: c.x, y: c.y, w: -c.u)
+  let (cᵘ, cˣ, cʸ) = (c.u, c.x, c.y)
+  PointFlat(x: cˣ, y: cʸ, w: -cᵘ)
 
 
 
@@ -368,20 +447,25 @@ func carrierCo*(c: Circle): PointFlat {.inline.} =
 
 func center*(a: PointRound): PointRound {.inline.} =
   ## Get center of round point, i.e. 𝐚⊞ ∨ 𝐚, same point scaled by −w; 4 mul.
-  PointRound(x: -(a.w * a.x), y: -(a.w * a.y), w: -(a.w * a.w), u: -(a.w * a.u))
+  let (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+  PointRound(x: -(aʷ * aˣ), y: -(aʷ * aʸ), w: -(aʷ * aʷ), u: -(aʷ * aᵘ))
 
 func center*(d: Dipole): PointRound {.inline.} =
   ## Get center of dipole as round point with its radius; 9 mul, 5 add.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   PointRound(
-    x: -(d.g.w * d.g.x) - d.g.y * d.p.w,
-    y: d.g.x * d.p.w - d.g.w * d.g.y,
-    w: d.g.x * d.g.x + d.g.y * d.g.y,
-    u: d.p.w * d.p.w + d.g.y * d.p.x - d.g.x * d.p.y,
+    x: -(dᵍʷ * dᵍˣ) - dᵍʸ * dᵖʷ,
+    y: dᵍˣ * dᵖʷ - dᵍʷ * dᵍʸ,
+    w: dᵍˣ * dᵍˣ + dᵍʸ * dᵍʸ,
+    u: dᵖʷ * dᵖʷ + dᵍʸ * dᵖˣ - dᵍˣ * dᵖʸ,
   )
 
 func center*(c: Circle): PointRound {.inline.} =
   ## Get center of circle as round point with its radius; 6 mul, 2 add.
-  PointRound(x: c.u * c.x, y: c.u * c.y, w: -(c.u * c.u), u: c.u * c.w - c.x * c.x - c.y * c.y)
+  let (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+  PointRound(x: cᵘ * cˣ, y: cᵘ * cʸ, w: -(cᵘ * cᵘ), u: cᵘ * cʷ - cˣ * cˣ - cʸ * cʸ)
 
 
 
@@ -389,20 +473,25 @@ func center*(c: Circle): PointRound {.inline.} =
 
 func container*(a: PointRound): Circle {.inline.} =
   ## Get container of round point, i.e. 𝐚 ∧ (𝐚⊟)☆, circle of its radius; 6 mul, 2 add.
-  Circle(u: -(a.w * a.w), x: a.w * a.x, y: a.w * a.y, w: a.u * a.w - a.x * a.x - a.y * a.y)
+  let (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+  Circle(u: -(aʷ * aʷ), x: aʷ * aˣ, y: aʷ * aʸ, w: aᵘ * aʷ - aˣ * aˣ - aʸ * aʸ)
 
 func container*(d: Dipole): Circle {.inline.} =
   ## Get container of dipole, i.e. circle on both its points about its center; 9 mul, 5 add.
+  let
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
   Circle(
-    u: d.g.x * d.g.x + d.g.y * d.g.y,
-    x: d.g.w * d.g.x + d.g.y * d.p.w,
-    y: d.g.w * d.g.y - d.g.x * d.p.w,
-    w: d.g.w * d.g.w + d.g.x * d.p.y - d.g.y * d.p.x,
+    u: dᵍˣ * dᵍˣ + dᵍʸ * dᵍʸ,
+    x: dᵍʷ * dᵍˣ + dᵍʸ * dᵖʷ,
+    y: dᵍʷ * dᵍʸ - dᵍˣ * dᵖʷ,
+    w: dᵍʷ * dᵍʷ + dᵍˣ * dᵖʸ - dᵍʸ * dᵖˣ,
   )
 
 func container*(c: Circle): Circle {.inline.} =
   ## Get container of circle, i.e. same circle scaled by −u; 4 mul.
-  Circle(u: -(c.u * c.u), x: -(c.u * c.x), y: -(c.u * c.y), w: -(c.u * c.w))
+  let (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+  Circle(u: -(cᵘ * cᵘ), x: -(cᵘ * cˣ), y: -(cᵘ * cʸ), w: -(cᵘ * cʷ))
 
 
 
@@ -410,23 +499,29 @@ func container*(c: Circle): Circle {.inline.} =
 
 func partner*(a: PointRound): PointRound {.inline.} =
   ## Get partner of round point, i.e. same point with squared radius negated; 8 mul, 2 add.
-  let w2 = a.w * a.w
-  PointRound(x: a.x * w2, y: a.y * w2, w: a.w * w2, u: (a.x * a.x + a.y * a.y - a.u * a.w) * a.w)
+  let
+    (aˣ, aʸ, aʷ, aᵘ) = (a.x, a.y, a.w, a.u)
+    w2 = aʷ * aʷ
+  PointRound(x: aˣ * w2, y: aʸ * w2, w: aʷ * w2, u: (aˣ * aˣ + aʸ * aʸ - aᵘ * aʷ) * aʷ)
 
 func partner*(d: Dipole): Dipole {.inline.} =
   ## Get partner of dipole; 15 mul, 6 add.
   ##   Carrier and flat weight scale by ‖carrier normal‖²; flat position takes
   ##   f = gʷ² − pʷ² + gˣpʸ − gʸpˣ along normal and gʷpʷ across it.
   let
-    s = d.g.x * d.g.x + d.g.y * d.g.y
-    f = d.g.w * d.g.w - d.p.w * d.p.w + d.g.x * d.p.y - d.g.y * d.p.x
-    h = d.g.w * d.p.w
+    (dᵍˣ, dᵍʸ, dᵍʷ) = (d.g.x, d.g.y, d.g.w)
+    (dᵖˣ, dᵖʸ, dᵖʷ) = (d.p.x, d.p.y, d.p.w)
+    s = dᵍˣ * dᵍˣ + dᵍʸ * dᵍʸ
+    f = dᵍʷ * dᵍʷ - dᵖʷ * dᵖʷ + dᵍˣ * dᵖʸ - dᵍʸ * dᵖˣ
+    h = dᵍʷ * dᵖʷ
   Dipole(
-    g: LineCarrier(x: d.g.x * s, y: d.g.y * s, w: d.g.w * s),
-    p: PointFlat(x: d.g.y * f - d.g.x * h, y: -(d.g.x * f) - d.g.y * h, w: d.p.w * s),
+    g: LineCarrier(x: dᵍˣ * s, y: dᵍʸ * s, w: dᵍʷ * s),
+    p: PointFlat(x: dᵍʸ * f - dᵍˣ * h, y: -(dᵍˣ * f) - dᵍʸ * h, w: dᵖʷ * s),
   )
 
 func partner*(c: Circle): Circle {.inline.} =
   ## Get partner of circle, i.e. same circle with squared radius negated; 8 mul, 2 add.
-  let u2 = c.u * c.u
-  Circle(u: c.u * u2, x: c.x * u2, y: c.y * u2, w: (c.x * c.x + c.y * c.y - c.u * c.w) * c.u)
+  let
+    (cᵘ, cˣ, cʸ, cʷ) = (c.u, c.x, c.y, c.w)
+    u2 = cᵘ * cᵘ
+  Circle(u: cᵘ * u2, x: cˣ * u2, y: cʸ * u2, w: (cˣ * cˣ + cʸ * cʸ - cᵘ * cʷ) * cᵘ)
