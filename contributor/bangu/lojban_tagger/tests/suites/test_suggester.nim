@@ -130,6 +130,8 @@ const
   FORM_GIVEN = "datnyvei"  ## Form 4.12 prefers for `TEXT_GIVEN`, which binary prints.
   TEXT_GIVEN_LONG = "lotconrotybanbalbapybembedbejbesybefybevbixybimbolbogbotmlatu"
     ## Text reading as tag of 18 words in 61 bytes, which binary rendered without bound.
+    ##   Sibling of `TEXT_GIVEN_LONG` in `test_suggestions.nim` (II.9): each suite runs alone, and
+    ##     import of one by other would run its tests too, so copy is forced.
   PIECE_PAGE = "Alice was beginning to get very tired. "  ## Text large page repeats.
   SAMPLES_REPLAY = 200  ## Random replays wiring law reads, seeded.
   FLOOR_REPLAYED = 180
