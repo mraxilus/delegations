@@ -111,6 +111,14 @@
 ##     Rejected: `std/hashes`, whose values change between versions; `std/sha1`, deprecated.
 ##     Cost: each recording of service holds whole request body, its system text and word list
 ##       included, beside reply, where stamp alone would name it.
+##   Refusal of recording ends in what faulty piece holds, and request of page holds whole URL,
+##     so echo shows URL each line names by scheme, host, port and path alone (`dropSecrets`):
+##     token in user part, query or fragment never reaches report, as test "refusal of malformed
+##     page recording shows no user part, query or fragment of its URL" of `test_exchanges.nim`
+##     holds over each piece and fault. Body of reply is echoed as held, as page or service
+##     wrote it.
+##     Cost: line holding `?` or `#` outside URL, as label or JSON of service request may, is
+##       echoed cut there.
 ##   Label and header values are lines of file: client joins folded header lines by line break,
 ##     so `send` unfolds each value, as RFC 7230 section 3.2.4 asks of recipient, and `toText`
 ##     unfolds label; status takes one to three digits, as `send` gives 0 to 599. So every reply
@@ -160,7 +168,9 @@ type
       recording*: Recording  ## Recording file holds.
     of false:
       line*: int  ## Line, counted from one, reader refused.
-      problem*: string  ## What is wrong, ending in what faulty piece holds, made printable.
+      problem*: string
+        ## What is wrong, ending in what faulty piece holds, made printable; URL each line names,
+        ##   body of reply aside, by scheme, host, port and path alone.
 
   Cursor = object  ## Define position of reader in recording text, with line it is on.
     text: string  ## Whole text.
@@ -491,25 +501,38 @@ func readField(cursor: var Cursor, name: string): Option[string] =
 
 func readRecording*(text: string): Recorded =
   ## Read recording file; refuse at first malformed line, naming it, as `readIndex` does.
+  ##   Echo shows URL each line names by scheme, host, port and path alone (`dropSecrets`), body
+  ##     of reply aside, so token of page URL, which request holds whole, never reaches report.
   var cursor = Cursor(text: text, line: 1)
+
+  func dropSecretsLines(echoed: string): string =
+    ## Show URL each line of text names by scheme, host, port and path alone (`dropSecrets`).
+    echoed.split('\n').mapIt(it.dropSecrets).join("\n")
 
   func refuse(cursor: Cursor, shape: string): Recorded =
     ## Build outcome refusing line piece read last on its own line: shape it should have, then
     ##   line it holds made printable, running to end of text where no line break closes it,
     ##   which shape then names; empty where text ends where piece opens.
+    ##   Line is any line where pieces before it are missing, URL line of request among them, so
+    ##     each drops secrets of URL it names (`dropSecretsLines`).
     let
       close = cursor.text.find('\n', cursor.at_piece)
       stop = if close < 0: cursor.text.len else: close
       broken = if close < 0 and stop > cursor.at_piece: ", then line break" else: ""
-      held = cursor.text[cursor.at_piece..<stop].toPrintable(RUNES_ANSWER_SHOWN)
+      held = cursor.text[cursor.at_piece..<stop].dropSecretsLines.toPrintable(RUNES_ANSWER_SHOWN)
     Recorded(is_read: false, line: cursor.line_piece, problem: shape & broken & "; got `" & held &
         "`.")
 
-  func refuseBlock(cursor: Cursor, shape: string): Recorded =
+  func refuseBlock(cursor: Cursor, shape: string, should_drop_secrets = false): Recorded =
     ## Build outcome refusing block read last on line it opens on: shape it should have, then
-    ##   bytes left from where it opens, made printable.
-    let left = cursor.text[cursor.at_piece .. ^1].toPrintable(RUNES_ANSWER_SHOWN)
-    Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" & left & "`.")
+    ##   bytes left from where it opens, made printable; each line drops secrets of URL it names
+    ##   (`dropSecretsLines`) where `should_drop_secrets`, as request needs, and body, which page
+    ##   or service wrote, keeps as held.
+    let
+      left = cursor.text[cursor.at_piece .. ^1]
+      kept = if should_drop_secrets: left.dropSecretsLines else: left
+    Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" &
+        kept.toPrintable(RUNES_ANSWER_SHOWN) & "`.")
 
   let header = cursor.readLine
   if header.isNone or header.get != HEADER_RECORDING:
@@ -524,7 +547,8 @@ func readRecording*(text: string): Recorded =
     return cursor.refuse("Line should be `request <bytes>`")
   let request = cursor.readBlock(count_request.get.parseInt)
   if request.isNone:
-    return cursor.refuseBlock("Request should hold bytes its line counts, then line break")
+    return cursor.refuseBlock("Request should hold bytes its line counts, then line break",
+        should_drop_secrets = true)
   recording.request = request.get
   let status = cursor.readField("status")
   if status.isNone or not status.get.allIt(it in Digits) or status.get.len notin 1..3:
@@ -550,7 +574,8 @@ func readRecording*(text: string): Recorded =
   recording.reply.body = bytes.get
   if cursor.at != text.len:  # Byte after body stands on line of cursor, opening no piece.
     return Recorded(is_read: false, line: cursor.line, problem: "Recording should end after " &
-        "body; got `" & text[cursor.at .. ^1].toPrintable(RUNES_ANSWER_SHOWN) & "`.")
+        "body; got `" & text[cursor.at .. ^1].dropSecretsLines.toPrintable(RUNES_ANSWER_SHOWN) &
+        "`.")
   Recorded(is_read: true, recording: recording)
 
 
