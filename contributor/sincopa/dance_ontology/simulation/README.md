@@ -28,7 +28,8 @@ the band stops the walk once the couple are not face to face.
 
 Where the walk gives short, the turn is planned. The plan chooses every joint of both arms at each
 moment, and keeps every capsule clear and every joint in its range. The engine then stands every
-moment of the plan, and judges it as it judges a still (`rigid.gives`).
+moment of the plan, and judges it as it judges a still (`rigid.gives`). Each sweep that the rig
+viewer plays is planned too, at the band of its hold, also where the walk turns further.
 
 `PROVENANCE.md` records the design and the reason for each part of it. See Body rig, Rigid body
 engine, Joints that give, Walk and lift, Stance and strain, and Planned turn.
@@ -123,6 +124,7 @@ it cannot choose them.
 ## The rig viewer
 
 The rig viewer plays the sweeps that `nim r tools/build.nim rig` records to `design/rig.json`.
+Each sweep is the planned way of its hold (`PROVENANCE.md`, Planned sweep).
 `design/rig_page.nim` writes it to `build/design/rig.html`. It is a page that the project stands
 behind, and its published title is `Dance Ontology Simulation`. Its address is in `../README.md`,
 with every other page the project publishes.
