@@ -225,6 +225,21 @@ const
   SCHEMES_REDIRECT = [("http", true), ("https", true), ("http", false), ("ftp", false)]
     ## Scheme of redirect URL beside whether it loops: loop by http and by https; else location
     ##   refused, falling from https to http, or naming ftp.
+  OPENINGS_PORT = ["http://127.0.0.1:", "https://example.org:", "HTTP://[::1]:"]
+    ## Openings of URL argument before its port: each scheme, in either case, and each kind of host.
+  PORTS_URL = [
+    ("", true), ("0", false), ("1", true), ("00080", true), ("65535", true), ("65536", false),
+    ("65616", false), ("70000", false), ("99999", false), ("109821", false), ("000080", false),
+    ("8a", false), ("-1", false),
+  ]
+    ## Ports of URL argument at bounds of one to five digits from 1 to 65535, beside whether
+    ##   `isURL` takes each: none, zero, five digits with zeros leading, past 65535, case as found,
+    ##   six digits, no digits. Bounds of `PORTS_PROXY` in `test_exchanges.nim`, since neither
+    ##   suite imports other (II.9).
+  SAMPLES_PORTS = 100  ## Random URL arguments port law reads, seeded.
+  FLOOR_PORTS_TAKEN = 15  ## Fewest random URL arguments whose port is taken; 22 read at seed `0`.
+  FLOOR_PORTS_REFUSED = 60
+    ## Fewest random URL arguments whose port is refused; 78 read at seed `0`.
 
 
 
@@ -481,6 +496,12 @@ func noteWritten(path: string): string =
   "Reply written to `" & path & "`."
 
 
+func problemPort(url: string): string =
+  ## Render problem binary gives for one argument shaped as URL whose port `isURL` refuses, naming
+  ##   `url`, which caller gives by scheme, host, port and path alone.
+  "URL should name port of one to five digits from 1 to 65535, or none; got `" & url & "`."
+
+
 func toSuggestion(failure: Failure, detail: string): Suggestion =
   ## Build suggestion failed for reason, detail made printable as binary makes it.
   Suggestion(is_suggested: false, failure: failure, detail: detail.toPrintable(RUNES_SHOWN))
@@ -660,6 +681,19 @@ proc poolBlank(): seq[string] =
     var text = ""
     for _ in 1..rand(1..3): text.add Rune(if rand(3) < 3: blanks.sample else: codes.sample).toUTF8
     result.add text
+
+
+proc poolPorts(): seq[(string, string)] =
+  ## Draw `SAMPLES_PORTS` random URL arguments into pool allocated once, each beside its port:
+  ##   opening of `OPENINGS_PORT`, then number up to 999,999, under 70,000 half time, after up to
+  ##   two zeros, as `poolPorts` of `test_exchanges.nim` draws port (II.9); caller seeds first.
+  result = newSeqOfCap[(string, string)](SAMPLES_PORTS)
+  for _ in 1..SAMPLES_PORTS:
+    let
+      opening = OPENINGS_PORT.sample
+      number = if rand(1) == 0: rand(70_000) else: rand(999_999)
+      port = "0".repeat(rand(2)) & $number
+    result.add (opening & port & "/page", port)
 
 
 func isFlagTaken(flag: string): bool =
@@ -1864,6 +1898,67 @@ suite "Internal: Suggester":
       check binary.run([], @["--replay:" & directory_case] & arguments) ==
           toOutcome(toSuggestionRecording("missing at " & shown), passage, settings.model,
           [])  # passage after `--` read as text, flag of mode among it too
+
+
+  test "one argument shaped as URL whose port `isURL` refuses exits 2 naming URL, then usage":
+    # Recheck claims completeness-4 and regressions-app-1, 2026-10-29: argument went as passage of
+    #   paid request, and tag of its text printed with exit 0; page was never asked.
+    randomize(0)
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      live = settings.toEnvironment
+      directory_case = directory / "ports"  # never made where run is refused
+      missing = directory / "ports_missing"  # never made, so recording of each request misses
+      every = @[@[], @["--"], @["--record:" & directory_case], @["--replay:" & directory_case]]
+      pool = poolPorts()
+    server.routes = @[
+      ("/ok", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
+      (PATH_SERVICE, toReplyMessages(example("alice").answer, settings.model)),
+    ]
+    for url in ["http://127.0.0.1:109821/ok", urlLoopback(server.port + 65_536, "/ok")]:
+      for flags in every:
+        for environment in [live, live & @[(KEY_SERVICE, "bogus")]]:  # credential, then bad service
+          check binary.run(environment, flags & @[url]) == Outcome(report: problemPort(url) & "\n" &
+              USAGE, code: 2)  # case as found, then port that wraps to port of server; no setting
+    check server.heard.len == 0  # neither page nor service asked, so nothing paid for
+    check not dirExists(directory_case)  # nothing written
+    check binary.run([], ["https://alice:SECRET-PASSWORD@example.org:99999/page?access_token=" &
+        "SECRET-TOKEN#SECRET-FRAGMENT"]) == Outcome(report: problemPort(
+        "https://example.org:99999/page") & "\n" & USAGE, code: 2)  # URL by parts `toPassage` keeps
+    var
+      cases: seq[(string, bool)]
+      count_taken, count_refused = 0
+    for (port, is_taken) in PORTS_URL:
+      for opening in OPENINGS_PORT: cases.add (opening & port & "/page", is_taken)
+    for (url, port) in served(pool):
+      let is_taken = port.len <= 5 and port.parseInt in 1..65_535  # pool draws digits alone
+      if is_taken: inc count_taken else: inc count_refused
+      cases.add (url, is_taken)
+    for (url, is_taken) in cases:
+      let outcome = binary.run([], ["--replay:" & missing, url])
+      if is_taken:
+        check outcome == toOutcome(toSuggestionRecording("missing at " & pathShown(missing,
+            "GET " & url)), [])  # page asked: recording of its first hop misses
+        continue
+      check outcome == Outcome(report: problemPort(url) & "\n" & USAGE,
+          code: 2)  # RFC 6335 6: port of 16 bits, 0 reserved; argument never passage
+    check count_taken >= FLOOR_PORTS_TAKEN  # random URLs taken are common
+    check count_refused >= FLOOR_PORTS_REFUSED  # random URLs refused are common
+    for (arguments, input) in [
+      (@["http://127.0.0.1:109821/ok notes"], ""),  # one argument holding space
+      (@["http://127.0.0.1:109821/ok", "notes"], ""),  # two arguments
+      (@["https:///ok"], ""),  # no host, so no shape of URL, as before
+      (@["-"], "http://127.0.0.1:109821/ok"),  # text of input, which goes as text given
+    ]:
+      let
+        passage = (if input.len > 0: input else: arguments.join(" ")).toPassage
+        shown = pathShown(missing, requestService(Service.Claude.toSettings, passage))
+      check binary.run([], @["--replay:" & missing] & arguments, input = input) == toOutcome(
+          toSuggestionRecording("missing at " & shown), passage, Service.Claude.toSettings.model,
+          [])  # text shaped otherwise goes as passage, as before
+    check not dirExists(missing)  # replay makes nothing
+    stopServer(server)
 
 
   test "text holding no visible character exits 2 with usage, as exported `isBlank` reads it":
