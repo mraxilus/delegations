@@ -52,7 +52,7 @@ const
   DIGEST* = ".sha256"
     ## Suffix of digest nim-lang.org publishes beside each tarball, in `sha256sum` format,
     ## i.e. digest, two spaces, file name. Read from site rather than assumed: same
-    ## sidecar exists for 2.2.4 and 2.2.12, and no `.asc` is published for either.
+    ## sidecar exists for 2.2.4, 2.2.12 and 2.4.0, and no `.asc` is published for any.
   SOURCE* = "https://github.com/nim-lang/Nim"  ## Repository built from when no tarball serves pin.
   PLATFORMS* = [
     ("linux", "amd64", "linux_x64"),
