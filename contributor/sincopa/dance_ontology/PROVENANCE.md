@@ -1962,10 +1962,9 @@ Cost: these laws read no way of a sweep that the viewer does not play. Those are
 The ways of R-r and R-l reflect those of L-l and L-r, and the negative way of L-r.R-l reflects its
 positive way (Mirror twins). So the law of the edge reads 7460 fewer arm-moments, and the law of the
 hands reads 733 fewer moments. Counted 2026-10-20 at `2c6c9b62`. No floor holds how far the plan
-carries a way that turns negative, or a sweep held low or high (`TURNS_PLANNED`). The laws of
-`tests/test_rigid.nim` read both ways of the single holds held above, walked alone
-(`simulation/answers.json`). The report prints how far the walk carries each way, and no law reads
-its numbers.
+carries a way that turns negative (`TURNS_PLANNED`). The laws of `tests/test_rigid.nim` read both
+ways of the single holds held above, walked alone (`simulation/answers.json`). The report prints
+how far the walk carries each way, and no law reads its numbers.
 
 ## Against the floor
 
@@ -2389,8 +2388,8 @@ report turns the same hold. Measured 2026-10-25 in `design/rig.json` and `simula
 
 The cross-name chain held above stands by style 13 and its mirror, and the same-name chain by style
 4 and its mirror (`TURNS_PLANNED`). `tools/build.nim floors` planned each hold held above both ways
-on 2026-10-12. The negative way of each reached as far as its positive way. Each way held above that
-the rig keeps is a row of `TURNS_PLANNED`.
+on 2026-10-12. The negative way of each reached as far as its positive way. Each way that the rig
+keeps, held above, high or low, is a row of `TURNS_PLANNED`.
 
 **Held low and high, the plan carries three of the four chains further than the walk.** Held low,
 it carries them to 0.865 and 0.74 of a turn, where the walk turns them to 0.80 and 0.48. Held high,
@@ -2434,16 +2433,17 @@ joined hand held low is carried from 1.023 to 1.361 m, and held high from 1.400 
 moment of every sweep too (Body rig). So does the law of the hands over the crown, from a quarter
 turn away (Walk and lift).
 
-Verified by `suites/test_asks.nim` too. Every way held above that the rig keeps holds as far as the
-plan carries it (`TURNS_PLANNED`), less half the rounding of the rig. Those are the four ways that
-turn positive, and the law reads no other recording (Rig viewer). The law reads the furthest moment
-that each way holds.
+Verified by `suites/test_asks.nim` too. Every way that the rig keeps holds as far as the plan
+carries it (`TURNS_PLANNED`), less half the rounding of the rig. Those are the eight ways that turn
+positive: four held above, two held high and two held low. The law reads no other recording (Rig
+viewer), and it reads the furthest moment that each way holds.
 
-Red first, on the recordings of `bc656d30`: 2 of the 4 ways of the rig fell short. The cross-name
+Red first, on the recordings of `bc656d30`: 2 of the 4 ways held above fell short. The cross-name
 chain held to 1.24, and the same-name chain to +1.78.
 
-Cost: no floor holds a sweep held low or high, because `tools/build.nim floors` plans the sweeps
-above alone. So a change that carries one of those chains less far passes every law.
+Red first for the ways held low and high, on a copy of the rig recording of `fd756cfb`. The copy
+keeps the first half of the moments of each such way. On it the law names all four ways short of
+their plans, and no other way. Read 2026-10-29 by a probe outside the tree.
 
 Verified by `suites/test_asks.nim` too: every sweep of the rig starts at rest, and steps no more
 than one moment from there to its end. So no way leaves out a moment between rest and where it ends.
@@ -2455,11 +2455,14 @@ A copy of the rig recording of `cd9ec9a8` has the moments from 0.80 to 1.20 of a
 2026-10-12.
 
 `tools/build.nim floors` measures each floor again (`design/floors`). It plans each sweep of the rig
-held above, the way that the rig keeps, which turns positive. It prints the row of
-`TURNS_PLANNED` for each sweep, keyed by its card, and the style and start of its path. Its rows
-come in the order of `design/rig.SHOWN`, and the table holds the values that it printed on
-2026-10-12. On 2026-10-20 it printed the same rows, styles and starts again. It took 7 min 7 s, and
-25 min 39 s of user time, on four cores.
+at the band of its hold, the way that the rig keeps, which turns positive. It prints the row of
+`TURNS_PLANNED` for each sweep, keyed by its card and its level, and the style and start of its
+path. Its rows come in the order of `design/rig.SHOWN`.
+
+The table holds the values that `floors` printed on 2026-10-12 for the sweeps held above, and on
+2026-10-29 for those held low and high. On 2026-10-20 it printed the same rows, styles and starts
+again. On 2026-10-29 it printed the same rows and styles for the sweeps above. That run took 16 min
+18 s, and 57 min 10 s of user time, on four cores, for all eight sweeps.
 
 Cost: the law reads each floor as a figure, and does not plan again. A change that carries a chain
 less far fails the law. A change that carries it further passes, and its floor stays short until
