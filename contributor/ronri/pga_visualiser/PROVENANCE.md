@@ -4532,16 +4532,22 @@ commit of pga it builds against, and whether that is head. The pin stands at hea
 `295bafc5e97e8ee94943c6f4c7a92f215a74e5e7`, which costs two things, and the instruction is to pay
 both rather than trail behind.
 
-**The compiler is pinned by commit, and not by release.** Head spells its operators in prefix and
-compound form (`☆m`, `m ∧☆ n`), which needs seven Unicode operator characters that Nim gained in
-pull request 26074. That was merged to `devel`, and carried by no release. So the pin is `requires
-"nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"`, which `toolchain.nim` accepts beside dotted
-versions, and which koch fetches and builds once for each machine.
+**The compiler is pinned to release 2.4.0, the first release that lexes the operators of head.**
+Head spells its operators in prefix and compound form (`☆m`, `m ∧☆ n`). That needs seven Unicode
+operator characters, `⟑ ⟇ ⩓ ⩔ ■ □ ☆`, which Nim gained in pull request 26074. So the pin is
+`requires "nim == 2.4.0"`. Koch fetches its published tarball, and checks it against the digest
+published beside it (`GUIDE.md`, Toolchain).
 
-Rejected: a `devel` label, a moving pin that records nothing verified. Rejected: a wait for a
-release, which is months of standing behind the library that this project exists to exercise. The
-pin moves to a release once one carries 26074. The lexer change reaches the own source of this
-project: `-☆(m)` lexes as the single operator `-☆`, and is spelled `-(☆m)`.
+Rejected: a pin by commit on `devel`. Each machine and each runner then clones and builds the
+compiler, in minutes where a tarball takes seconds. `CONTRIBUTOR.md`, Toolchain, asks for a release
+whenever one will do. Rejected: a `devel` label, a moving pin that records nothing verified.
+
+**The release reaches the own source of this project twice.** The lexer reads `-☆(m)` as the single
+operator `-☆`, so it is spelled `-(☆m)`. The compile-time evaluator refuses a `cstring` constant
+converted from a string that a call returns, as "a value that refers to invalid memory". So
+`TEXT_SCENE_EMPTY` in `panel.nim` folds the call with `static` first, and stays a C string that each
+frame reads without a conversion. Verified by a run: without `static`, 2.4.0 refuses
+`panel.nim(89, 43)`, and `27763495b` builds it.
 
 **Four projections are withdrawn at head, and `projections.nim` stands in until they return.**
 `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` are declared
@@ -4560,24 +4566,31 @@ the imports to restore.
 Rejected: a pin held one commit back, which leaves the project behind its own dependency. Rejected:
 a reshape of the call sites, which lets the library's build state decide what the visualiser offers.
 
-**Two Atlas defects stand, and the workaround is by hand.** `atlas pin` writes `"objects": {}` for a
+**One Atlas defect stands, and the workaround is by hand.** `atlas pin` writes `"items": {}` for a
 repository that carries no nimble file, so the resolved commit is patched into `atlas.lock` by hand.
-`atlas` also calls the nimble file "broken" because it cannot parse a commit where it expects a
-version, which is cosmetic. The stored nimble of the lock must equal the committed one exactly, or
-`rep` reverts the pin silently (repository issue 25). The static pass refuses the difference, so the
-hand-patch is checked rather than trusted.
+The stored nimble of the lock must equal the committed one exactly, or `rep` reverts the pin
+silently (repository issue 25). The static pass refuses the difference, so the hand-patch is checked
+rather than trusted.
 
 *Checked.* Verified by a run on the pinned commit, through `koch test`: every suite on the C
 backend, on JS, and at reduced capacities. It ran at the same case counts that the previous pin
 produced, which says the stand-ins behave as the own ones of the library did. Verified: with
 `dependencies/` deleted, `atlas --noexec rep` clones and checks out `295bafc`, `atlas changed` exits
-0, and the nimble file is byte-identical afterwards. Verified by a run that the guard fires.
-`pga.nim` patched to give `projectOrthogonal` a body refuses the build at `projections.nim(40, 10)`,
-and names the module to delete and the four imports to restore.
+0, and the nimble file is byte-identical afterwards. Verified by a run on 2.4.0 that the guard
+fires. `pga.nim` patched to give `projectOrthogonal` a body refuses the build at
+`projections.nim(40, 10)`, and names the module to delete and the four imports to restore.
 
-Verified: the pinned compiler reports `git hash: 27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which
-`toolchain.runningCompiler` reads. Assumed: that no release carries 26074. 2.2.12, 2.4.0 and 2.6.0
-were asked and none does, which dates the claim rather than proves it.
+Verified: the pinned compiler reports `Nim Compiler Version 2.4.0`, which `compilers.isServedBy` of
+knoller compares with the pin. Its `git hash:` is `14991af742d0833503741fd9a0918133d1bcf8a4`, tag
+`v2.4.0`, which holds commit `27763495b` of pull request 26074, 269 commits back. Tag `v2.2.14`, the
+latest release of 2.2, does not hold that commit. Verified by a run: 2.4.0 reads `☆m` and `-☆(m)` as
+operators, and 2.2.14 refuses `☆m` as an undeclared identifier. Verified by a run on 2.4.0, through
+`koch test`: every suite passes on C, on JS and at reduced capacities. Measured on 2026-10-29, the
+JS suite alone takes 162 s and 168 s on 2.4.0, and 170 s and 163 s on `27763495b`.
+
+Verified on a copy of the project: `atlas pin` writes `"items": {}`, and changes nothing else in the
+lock, `nimVersion` included. It warns `broken nimble file: nim` for a pin by commit, and nothing for
+2.4.0.
 
 ## Testing
 
