@@ -20,6 +20,7 @@
 ##   | isAuthority         | authority (3.2): userinfo `@`, host (3.2.2), `:` port       |
 ##   | readPort            | port (3.2.3), split past userinfo and host (3.2.2)          |
 ##   | isPort              | port (3.2.3), 1 to 65535 as RFC 6335 section 6 ranges it    |
+##   | isPortFaulty        | port (3.2.3) failing alone, userinfo and host split         |
 ##   | lowercaseScheme     | scheme compared without case (3.1), lowercased (6.2.2.1)    |
 ##   | resolve             | T: reference R resolved against Base (5.2.2), strictly      |
 ##   | merge               | merge (5.2.3)                                               |
@@ -204,6 +205,9 @@ const
   PROBLEM_CONTEXT = "TLS context should exist for https URL; got ``."
     ## Problem `send` gives for https URL with no context, whose host it cannot pin.
   PORT_CURL = "1080"  ## Port curl assumes where proxy string specifies none, as `proxy` gives.
+  RULE_PORT* = "name port of one to five digits from 1 to 65535, or none"
+    ## Rule each problem of port states, as `isPort` holds it: of proxy here, and of URL argument
+    ##   and endpoint `app/suggester.nim` refuses where `isPortFaulty` holds.
 
 
 func `$`*(credential: Credential): string {.error:
@@ -236,6 +240,7 @@ func readCredential*(name, value: string; service: Service): Credentialed =
 func isPort(text: string): bool =
   ## Test text is port client reaches as named: one to five digits from 1 to 65535, as RFC 6335
   ##   section 6 ranges it; client reads larger number modulo 65536, so `65616` would reach 80.
+  ##   `RULE_PORT` words it for problems, so change to either checks other.
   text.len in 1..5 and text.allIt(it in Digits) and text.parseInt in 1..65_535
 
 
@@ -309,15 +314,32 @@ func toText(reference: Reference): string =
   if reference.fragment.isSome: result.add "#" & reference.fragment.get
 
 
-func isURL*(text: string): bool =
-  ## Test text is one http or https URL with host, authority `isAuthority` takes, so port of
-  ##   `isPort` or none, and no whitespace, which `suggester` fetches.
+func isShapedURL*(text: string): bool =
+  ## Test text is shaped as URL `isURL` takes, authority aside: one token, scheme `http` or
+  ##   `https` in any case, then `//` and host `std/uri` reads.
+  ##   Exported for `app/suggester.nim`, which takes such text as page, never as passage, and
+  ##     refuses it where `isURL` does.
   if text.len == 0 or text.anyIt(it in Whitespace): return false
-  let
-    uri = text.parseUri
-    authority = text.toReference.authority
-  uri.scheme.toLowerAscii in ["http", "https"] and uri.hostname.len > 0 and
-      authority.isSome and authority.get.isAuthority
+  let uri = text.parseUri
+  uri.scheme.toLowerAscii in ["http", "https"] and uri.hostname.len > 0
+
+
+func isURL*(text: string): bool =
+  ## Test text is one http or https URL with host and no whitespace (`isShapedURL`), and
+  ##   authority `isAuthority` takes, so port of `isPort` or none, which `suggester` fetches.
+  if not text.isShapedURL: return false
+  let authority = text.toReference.authority
+  authority.isSome and authority.get.isAuthority
+
+
+func isPortFaulty*(text: string): bool =
+  ## Test `isURL` refuses shaped text (`isShapedURL`) for its port alone: user part and host split
+  ##   as RFC 3986 section 3.2 splits them (`readPort`), and port after them fails `isPort`, so
+  ##   problem states `RULE_PORT` only where port is what fails.
+  ##   Exported for `app/suggester.nim`, which words refusal of URL argument and endpoint by it.
+  if not text.isShapedURL: return false
+  let port = text.toReference.authority.get("").readPort
+  port.isSome and port.get.len > 1 and not port.get[1 .. ^1].isPort
 
 
 func isLoopback*(host: string): bool =
@@ -714,8 +736,8 @@ proc send*(
       return Sent(is_replied: false, problem: "Proxy should percent-encode `/`, `?` and `#` " &
           "in user part; got ``.")  # User part ran past authority, so host and port hold it.
     if proxied.port.len > 0 and not proxied.port.isPort and port.isSome:
-      return Sent(is_replied: false, problem: "Proxy should name port of one to five digits " &
-          "from 1 to 65535, or none; got `" & port.get[1 .. ^1] & "`.")
+      return Sent(is_replied: false, problem: "Proxy should " & RULE_PORT & "; got `" &
+          port.get[1 .. ^1] & "`.")
     if not authority.isAuthority:  # Port `std/uri` joins from two colons would reach other port.
       return Sent(is_replied: false, problem: "Proxy should name host and port as RFC 3986 " &
           "section 3.2 splits them; got `" & authority[authority.rfind('@')+1 .. ^1] & "`.")

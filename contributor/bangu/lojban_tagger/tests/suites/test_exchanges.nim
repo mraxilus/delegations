@@ -18,6 +18,9 @@
 ##   Port of URL is held by table of its bounds and by random ports with zeros before them,
 ##     through `isURL`, `isEndpoint` and `redirect`; scheme of URL and of proxy takes every
 ##     spelling of `http` and `https` in any case.
+##     Each user part, host and port of authority split law, with each other, holds shaped URL
+##       port faulty where user part and host split and port alone fails; URL `std/uri` reads no
+##       host of is shaped by no reading, so guard skips it, counted against floor.
 ##   Proxy URL is held through `send`, port by table of its bounds and by random ports; each
 ##     opening, host, port and user part with each other is refused naming first part failing of
 ##     host, scheme, port and user part, which https URL refuses; user part is spelled from
@@ -179,14 +182,28 @@ const
     ##   unopened, doubled, and inside name.
   PORTS_AUTHORITY = [
     ("", true), (":", true), (":80", true), (":8080", true), (":80:90", false), ("::80", false),
-    (":6:5535", false), (":80:", false), (":1:2:3:4:5", false), (":8a", false),
+    (":6:5535", false), (":80:", false), (":1:2:3:4:5", false), (":8a", false), (":0", false),
+    (":65536", false), (":000080", false),
   ]
     ## Ports of authority, beside whether `isURL` takes each: none, empty (RFC 3986 section
     ##   3.2.3), and two named; colons that `std/uri` joins into ports 8090, 80, 65535, 80 and
-    ##   12345; and letter.
-  COUNT_AUTHORITIES = 840
+    ##   12345; letter; zero and past 65535, which RFC 6335 section 6 refuses; and six digits.
+  COUNT_AUTHORITIES = 1_092
     ## Authorities split law reads: each of `USERS_AUTHORITY`, `HOSTS_AUTHORITY` and
     ##   `PORTS_AUTHORITY` with each other.
+  FLOOR_SHAPED = 900
+    ## Fewest authorities of split law whose URL `std/uri` reads host of, so shaped; 923 read, as
+    ##   `[]` and `::1]` name none but after user part holding `[`.
+  TEXTS_SHAPED = [
+    ("https://example.org:0/page", true, true), ("HTTP://example.org:99999/", true, true),
+    ("https://example.org/page", true, false), ("", false, false),
+    ("ftp://example.org:0/", false, false), ("http:example.org:0", false, false),
+    ("//example.org:0/", false, false), ("example.org:0", false, false),
+    ("http://exa mple.org:0/", false, false), ("http://:0/", false, false),
+  ]
+    ## Texts beside whether each is shaped as URL, and port faulty: faulty port under scheme in
+    ##   either case; URL `isURL` takes; empty, other scheme, no `//`, no scheme, whitespace, and
+    ##   no host before port.
   FLOOR_CHANGED = 400  ## Fewest requests holding byte to change; 449 read at seed `0`.
   FLOOR_READ = 350  ## Fewest values read as credential, over every service; 446 read at seed `0`.
   FLOOR_REFUSED = 600  ## Fewest values refused, over every service; 754 read at seed `0`.
@@ -405,7 +422,7 @@ const
     ##   `PORTS_VALUE` and `CLOSINGS_VALUE` with each other.
   PORT_CURL = "1080"
     ## Port curl assumes where proxy string specifies none (curl manual, option `--proxy`).
-  COUNT_VALUES_SPLIT = 3_360
+  COUNT_VALUES_SPLIT = 4_368
     ## Proxy values split law reads: each authority `COUNT_AUTHORITIES` counts, with no scheme and
     ##   with `http://`, and with each of `CLOSINGS_VALUE`.
 
@@ -1364,6 +1381,31 @@ suite "Internal: Exchange":
           check named & $"http://127.0.0.1/a".redirect(Reply(status: 302, location: url)).isSome ==
               named & $expected  # domain: redirect target split same way
     check count == COUNT_AUTHORITIES  # each user part, host and port with each other
+
+
+  test "shaped URL is port faulty where `isURL` refuses its port alone, user part and host split":
+    for (text, is_shaped, is_faulty) in TEXTS_SHAPED:
+      let named = text & ": "
+      check named & $text.isShapedURL == named & $is_shaped  # one token, http or https, `//`, host
+      check named & $text.isPortFaulty == named & $is_faulty  # port alone fails, text shaped
+    var (count, count_shaped) = (0, 0)
+    for (user_part, is_user) in USERS_AUTHORITY:
+      for (host, is_host) in HOSTS_AUTHORITY:
+        for (port, is_port) in PORTS_AUTHORITY:
+          let
+            url = "https://" & user_part & host & port & "/page"
+            named = url & ": "
+          inc count
+          check named & $(url.isURL and not url.isShapedURL) ==
+              named & "false"  # domain: URL `isURL` takes is shaped
+          if not url.isShapedURL:
+            check named & $url.isPortFaulty == named & "false"  # domain: unshaped, never faulty
+            continue
+          inc count_shaped
+          check named & $url.isPortFaulty ==
+              named & $(is_user and is_host and not is_port)  # domain: RFC 3986 3.2, port alone
+    check count == COUNT_AUTHORITIES  # each user part, host and port with each other
+    check count_shaped >= FLOOR_SHAPED  # guard leaves enough URLs `std/uri` reads host of
 
 
   test "loopback host is `localhost`, `127.0.0.0/8` or `::1`, in any case":
