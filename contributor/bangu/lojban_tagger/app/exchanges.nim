@@ -40,6 +40,11 @@
 ##     URL, on context `send` may lack; client reads `socks5` as http proxy, and only `socks5h`
 ##     as SOCKS, so one kind of proxy stays, which suite drives.
 ##     Cost: proxy reachable only by https or SOCKS is refused, naming its scheme.
+##   `send` lowercases scheme of URL and of proxy URL before client sees either, and `redirect`
+##     scheme of its target, as RFC 3986 section 3.1 compares scheme without case: client compares
+##     it with case, so `HTTPS` through proxy would open no tunnel and send request, bearer
+##     included, to proxy in clear.
+##     Cost: URL client sends differs from URL caller gave where scheme holds capital.
 ##   `redirect` resolves location as RFC 3986 section 5.2 resolves reference, read strictly:
 ##     reference holding scheme keeps it, so `http:g` names no host and gives no redirect.
 ##     Cost: location `http:/page` that browser takes as relative is no redirect here.
@@ -295,12 +300,20 @@ func toText(reference: Reference): string =
   if reference.fragment.isSome: result.add "#" & reference.fragment.get
 
 
+func lowercaseScheme(url: string): string =
+  ## Lowercase scheme of URL, split as RFC 3986 appendix `B` splits it, since section 3.1 compares
+  ##   scheme without case and client of `std/httpclient` compares it with case.
+  let at = url.find({':', '/', '?', '#'})
+  if at > 0 and url[at] == ':': url[0..<at].toLowerAscii & url[at .. ^1]
+  else: url
+
+
 func redirect*(url: string, reply: Reply): Option[string] =
   ## Resolve URL redirect names, as RFC 3986 section 5.2 resolves location against `url`;
   ##   `none` where status is no redirect, target is no http or https URL with host, holds
-  ##   whitespace or control character, or https falls to http.
+  ##   whitespace or control character, or https falls to http; scheme of target lowercased.
   if reply.status notin STATUSES_REDIRECT or reply.location.len == 0: return none(string)
-  let target = reply.location.strip.toReference.resolve(url.toReference).toText
+  let target = reply.location.strip.toReference.resolve(url.toReference).toText.lowercaseScheme
   if not target.isURL or target.find(Whitespace + CHARACTERS_CONTROL) >= 0: return none(string)
   let is_falling = url.parseUri.scheme.toLowerAscii == "https" and
       target.parseUri.scheme.toLowerAscii == "http"
@@ -500,7 +513,8 @@ proc send*(
   ##   redirect; read body until `bytes_max`; end when `deadline` completes first.
   ##   URL holding whitespace or control character is refused, naming byte, and nothing is sent.
   ##   Deadline finished already sends nothing, since client still connecting would send later.
-  ##   Proxy URL whose scheme is other than `http`, in any case, sends nothing.
+  ##   Proxy URL whose scheme is other than `http`, in any case, sends nothing; client sees
+  ##     scheme of URL and of proxy URL lowercased.
   ##   https URL pins its host on `context`, so certificate naming other host is refused; no
   ##     context, or host TLS cannot pin, sends nothing.
   ##   Agent, encoding and bearer are its own, whatever caller headers name.
@@ -523,15 +537,16 @@ proc send*(
     let scheme = proxy_url.get.parseUri.scheme
     if scheme.toLowerAscii != "http":
       return Sent(is_replied: false, problem: "Proxy should be `http://`; got `" & scheme & "`.")
+  let url_sent = url.lowercaseScheme
   when defined(ssl):
-    let uri = url.parseUri
-    if uri.scheme.toLowerAscii == "https":
+    let uri = url_sent.parseUri
+    if uri.scheme == "https":
       if context.isNil:
         return Sent(is_replied: false, problem: PROBLEM_CONTEXT)
       if not context.pinHost(uri.hostname):
         return Sent(is_replied: false, problem: "Host should be name or address TLS can pin; " &
             "got `" & uri.hostname & "`.")
-  let proxy_used = if proxy_url.isSome: newProxy(proxy_url.get) else: nil
+  let proxy_used = if proxy_url.isSome: newProxy(proxy_url.get.lowercaseScheme) else: nil
   when defined(ssl):
     let client = newAsyncHttpClient(
       userAgent = USER_AGENT,
@@ -546,7 +561,7 @@ proc send*(
   fields["user-agent"] = USER_AGENT
   fields["accept-encoding"] = "identity"
   if credential.isSome: fields["authorization"] = "Bearer " & string(credential.get)
-  let replying = client.exchange(url, body, fields, bytes_max)
+  let replying = client.exchange(url_sent, body, fields, bytes_max)
   await race(replying, deadline)
   client.close()
   if not replying.finished: return Sent(is_replied: false, problem: "deadline passed")
