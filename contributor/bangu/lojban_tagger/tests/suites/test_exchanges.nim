@@ -2176,7 +2176,7 @@ suite "Internal: Send":
       let
         listener = listenRaw()
         port = int(listener.getLocalAddr[1])
-        reading = listener.readHead
+        reading = listener.readHeads
       for url in [
         "https://127.0.0.1:" & $port & "/v1", "HTTPS://127.0.0.1:" & $port & "/v1",
         "https://localhost:" & $port & "/v1",
@@ -2199,9 +2199,10 @@ suite "Internal: Send":
         )
         check sent.outcome == problemHost("")  # empty pin checks no name, so tunnel would pass
       let control = sendLoopback(urlLoopback(port, "/control"), "")
+      listener.close()  # every connection came before control ended, so heads end with it
       check control.is_replied  # listener answers
-      check (waitFor reading).lines[0] == "GET /control HTTP/1.1"  # first connection is control's
-      listener.close()
+      check (waitFor reading).mapIt(if it.lines.len > 0: it.lines[0] else: "") ==
+          @["GET /control HTTP/1.1"]  # control's alone reached listener
 
 
   test "each refusal of input `send` makes ends in value refused, in backticks, empty where none":
