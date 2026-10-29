@@ -40,7 +40,8 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[
-  asyncdispatch, asynchttpserver, asyncnet, options, random, sequtils, strutils, unittest, uri,
+  asyncdispatch, asynchttpserver, asyncnet, net, options, os, osproc, random, sequtils, streams,
+  strutils, tempfiles, unittest, uri,
 ]
 
 import ../../app/exchanges
@@ -103,6 +104,24 @@ type
     problems: seq[string]  ## Problem of each send once deadline completed; `unfinished` where none.
     count_called: int  ## Callbacks caller put on deadline that ran.
     is_awaited: bool  ## Coroutine of caller awaiting deadline ended.
+
+  Leaf {.pure.} = enum  ## Define leaf certificate test root signs, by hosts it names.
+    Both  ## Names `localhost` and `127.0.0.1`.
+    Name  ## Names `localhost` alone.
+    Address  ## Names `127.0.0.1` alone.
+    Wrong  ## Names `wrong.example` alone, as leaf review found accepted.
+
+  Authority = object  ## Define test root and leaves it signs, made at run time in fresh directory.
+    directory: string  ## Directory holding keys and certificates; suite removes it at end.
+    problem: string  ## Command that failed, with its output; empty where every one ran.
+    client: SslContext  ## Context `send` takes: verifies peer against test root alone.
+    servers: array[Leaf, SslContext]  ## Context of server presenting each leaf.
+
+  Secured = object  ## Define what each side saw of one request sent with credential over TLS.
+    port: int  ## Port server listened on, which URL names.
+    sent: Sent  ## Outcome `send` gave.
+    head: Head  ## Request server read; no line where handshake was refused.
+    connect: seq[string]  ## Head proxy read where tunnel carried request; else none.
 
 
 const
@@ -206,6 +225,25 @@ const
     ## References of one to three `SEGMENTS_DOT`: relative or absolute, with or without query and
     ##   fragment, but none empty and none opening with `//`, which names authority.
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
+  LUT_HOSTS_BY_LEAF: array[Leaf, seq[string]] = [
+    @["localhost", "127.0.0.1"], @["localhost"], @["127.0.0.1"], @["wrong.example"],
+  ]
+    ## Hosts each leaf names as subject alternative names: address as `IP`, name as `DNS`.
+  HOSTS_SECURED = ["localhost", "127.0.0.1"]  ## Hosts TLS requests here name: name, then address.
+  COUNT_SECURED = 256
+    ## Sends TLS law makes: each of eight cases of leaf and host after each, two sends to pair,
+    ##   directly and through tunnel.
+  CONFIG_OPENSSL = "[req]\ndistinguished_name = name\n[name]\n"
+    ## Configuration `openssl req` reads: bare but for what it demands, so no default of machine
+    ##   adds extension.
+  EXTENSIONS_LEAF = "basicConstraints = critical,CA:FALSE\n" &
+      "keyUsage = critical,digitalSignature\nextendedKeyUsage = serverAuth\n"
+    ## Extensions each leaf holds beside its names: no authority, and server of TLS alone.
+  ANSWER_TUNNEL = "HTTP/1.1 200 Connection established\r\n\r\n"  ## Answer tunnel gives `CONNECT`.
+  BYTES_RELAY = 4_096  ## Most bytes tunnel copies at once.
+  PROBLEM_VERIFY = "certificate verify failed"  ## Text OpenSSL gives where peer fails check.
+  PROBLEM_CONTEXT = "TLS context should exist for https URL; got none."
+    ## Problem `send` gives for https URL with no context.
 
 
 func lineFirst(piece: Piece): int =
@@ -395,6 +433,28 @@ func problemURL(code, at: int): string =
       "`."
 
 
+func problemHost(host: string): string =
+  ## Build problem `send` gives for https URL whose host TLS cannot pin.
+  "Host should be name or address TLS can pin; got `" & host & "`."
+
+
+func outcome(sent: Sent): string =
+  ## Read outcome of `send` as text: problem it gave, or `replied`, so check names either.
+  if sent.is_replied: "replied" else: sent.problem
+
+
+func casesSecured(): seq[tuple[leaf: Leaf, host: string, should_tunnel: bool]] =
+  ## Build each leaf with each host of `HOSTS_SECURED`, every case after every case, directly
+  ##   then through tunnel, so each ordered pair stands next to each other once in each way.
+  var cases: seq[(Leaf, string)]
+  for leaf in Leaf:
+    for host in HOSTS_SECURED: cases.add (leaf, host)
+  for should_tunnel in [false, true]:
+    for (leaf_before, host_before) in cases:
+      for (leaf, host) in cases:
+        result.add @[(leaf_before, host_before, should_tunnel), (leaf, host, should_tunnel)]
+
+
 func values(head: Head, name: string): seq[string] =
   ## Read value of each header line naming `name`, compared without case, as `send` writes it.
   for i in 1..<head.lines.len:
@@ -414,27 +474,74 @@ func toChunked(bytes: string): string =
   result.add "0\r\n\r\n"
 
 
-proc listenRaw(): AsyncSocket =
-  ## Open listener of `std/asyncnet` on `127.0.0.1` at port system chooses.
-  result = newAsyncSocket()
+proc listenRaw(is_buffered = true): AsyncSocket =
+  ## Open listener of `std/asyncnet` on `127.0.0.1` at port system chooses; connection it accepts
+  ##   unbuffered gives each read what arrived, where buffered one waits for every byte asked.
+  result = newAsyncSocket(buffered = is_buffered)
   result.setSockOpt(OptReuseAddr, true)
   result.bindAddr(Port(0), "127.0.0.1")
   result.listen()
 
 
-proc readHead(listener: AsyncSocket, answer: string = ANSWER_RAW): Future[Head] {.async.} =
-  ## Accept one connection, read its request byte for byte, give it `answer`, then close.
+proc readHead(
+  listener: AsyncSocket, answer: string = ANSWER_RAW, context: SslContext = nil
+): Future[Head] {.async.} =
+  ## Accept one connection, as server of TLS where `context` is given, read its request byte for
+  ##   byte, give it `answer`, then close; connection ending before any line, as refused
+  ##   handshake ends it, gets no answer.
   let client = await listener.accept()
+  when defined(ssl):
+    if not context.isNil: context.wrapConnectedSocket(client, handshakeAsServer)
   var head: Head
   while true:
     let line = await client.recvLine()
     if line in ["", "\r\n"]: break
     head.lines.add line
-  let lengths = head.values("content-length")
-  if lengths.len > 0: head.body = await client.recv(lengths[0].parseInt)
-  await client.send(answer)
+  if head.lines.len > 0:
+    let lengths = head.values("content-length")
+    if lengths.len > 0: head.body = await client.recv(lengths[0].parseInt)
+    await client.send(answer)
   client.close()
   return head
+
+
+proc relay(source, sink: AsyncSocket) {.async.} =
+  ## Copy bytes from source to sink until source ends, or either side fails as tunnel closes it.
+  while true:
+    var data = ""
+    try:
+      data = await source.recv(BYTES_RELAY)
+      if data.len > 0: await sink.send(data)
+    except CatchableError:
+      return
+    if data.len == 0: return
+
+
+proc tunnel(listener: AsyncSocket): Future[seq[string]] {.async.} =
+  ## Accept one connection of unbuffered listener and read its head; for `CONNECT`, connect to
+  ##   `127.0.0.1` at port it names, whatever host it names, answer `200`, and relay bytes both
+  ##   ways until either way ends; give head read.
+  let client = await listener.accept()
+  var lines: seq[string]
+  while true:
+    let line = await client.recvLine()
+    if line in ["", "\r\n"]: break
+    lines.add line
+  if lines.len == 0 or not lines[0].startsWith("CONNECT "):
+    client.close()
+    return lines
+  let
+    port = lines[0].split(' ')[1].rsplit(':', maxsplit = 1)[^1].parseInt
+    upstream = await asyncnet.dial("127.0.0.1", Port(port), buffered = false)
+    ended = newFuture[void]("ended")
+  await client.send(ANSWER_TUNNEL)
+  for relaying in [relay(client, upstream), relay(upstream, client)]:
+    relaying.addCallback proc() =
+      if not ended.finished: ended.complete()
+  await ended
+  client.close()
+  upstream.close()
+  return lines
 
 
 proc answer(server: Server, request: Request) {.async.} =
@@ -552,6 +659,99 @@ proc sendLoopback(
     newFuture[void]("deadline"),
   )
   if not result.is_replied: checkpoint "Problem: " & result.problem
+
+
+when defined(ssl):
+  proc makeAuthority(): Authority =
+    ## Make test root and each leaf it signs, by `openssl` in fresh directory at run time, so no
+    ##   key is committed: keys on curve P-256, each certificate valid one day; first command
+    ##   that fails names problem, and no context is made.
+
+    proc run(directory: string, arguments: seq[string]): string =
+      ## Run `openssl` in directory with arguments as list, so no shell reads them; command and
+      ##   output where it fails, else empty.
+      try:
+        let process = startProcess(
+          "openssl",
+          workingDir = directory,
+          args = arguments,
+          options = {poStdErrToStdOut, poUsePath},
+        )
+        let
+          output = process.outputStream.readAll
+          code = process.waitForExit
+        process.close()
+        if code != 0: result = "openssl " & arguments.join(" ") & ": " & output
+      except OSError as error:
+        result = "Command `openssl` should run; got `" & error.msg & "`."
+
+    result.directory = createTempDir("lojban_tagger_tls_", "")
+    writeFile(result.directory / "openssl.cnf", CONFIG_OPENSSL)
+    var commands = @[
+      @["genpkey", "-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:prime256v1", "-out",
+          "root.key"],
+      @["req", "-config", "openssl.cnf", "-x509", "-new", "-key", "root.key", "-sha256",
+          "-days", "1", "-subj", "/CN=lojban_tagger test root", "-addext",
+          "basicConstraints=critical,CA:TRUE", "-addext", "keyUsage=critical,keyCertSign",
+          "-out", "root.crt"],
+    ]
+    for leaf in Leaf:
+      let
+        name = $leaf
+        names = LUT_HOSTS_BY_LEAF[leaf].mapIt((if it.isIpAddress: "IP:" else: "DNS:") & it)
+      writeFile(result.directory / (name & ".ext"),
+          "subjectAltName = " & names.join(",") & "\n" & EXTENSIONS_LEAF)
+      commands.add @["genpkey", "-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:prime256v1",
+          "-out", name & ".key"]
+      commands.add @["req", "-config", "openssl.cnf", "-new", "-key", name & ".key", "-subj",
+          "/CN=lojban_tagger test leaf", "-out", name & ".csr"]
+      commands.add @["x509", "-req", "-in", name & ".csr", "-CA", "root.crt", "-CAkey",
+          "root.key", "-set_serial", $(ord(leaf) + 2), "-days", "1", "-sha256", "-extfile",
+          name & ".ext", "-out", name & ".crt"]
+    for command in commands:
+      result.problem = run(result.directory, command)
+      if result.problem.len > 0: return
+    result.client = newContext(verifyMode = CVerifyPeer, caFile = result.directory / "root.crt")
+    for leaf in Leaf:
+      result.servers[leaf] = newContext(
+        verifyMode = CVerifyNone,
+        certFile = result.directory / ($leaf & ".crt"),
+        keyFile = result.directory / ($leaf & ".key"),
+      )
+
+
+  proc sendSecured(authority: Authority, leaf: Leaf, host: string, should_tunnel = false): Secured =
+    ## Send request with credential to server presenting `leaf` at `https://<host>:<port>`,
+    ##   directly or through tunnel of `CONNECT` proxy, by context every call shares; drive loop
+    ##   until server and tunnel end.
+    let listener = listenRaw()
+    result.port = int(listener.getLocalAddr[1])
+    let
+      url = "https://" & host & ":" & $result.port & "/v1/messages"
+      reading = listener.readHead(context = authority.servers[leaf])
+    var
+      proxy: AsyncSocket
+      tunnelling: Future[seq[string]]
+      proxy_url = none(string)
+    if should_tunnel:
+      proxy = listenRaw(is_buffered = false)
+      tunnelling = proxy.tunnel
+      proxy_url = some(urlLoopback(int(proxy.getLocalAddr[1]), ""))
+    result.sent = waitFor send(
+      url,
+      "{}",
+      @[],
+      CREDENTIAL_GIVEN,
+      proxy_url,
+      authority.client,
+      BYTES_CAP,
+      newFuture[void]("deadline"),
+    )
+    result.head = waitFor reading
+    if should_tunnel:
+      result.connect = waitFor tunnelling
+      proxy.close()
+    listener.close()
 
 
 
@@ -972,6 +1172,10 @@ suite "Internal: Exchange":
 
 
 suite "Internal: Send":
+  when defined(ssl):
+    let authority = makeAuthority()
+
+
   test "request arrives as built, naming agent, identity and one bearer where credential is given":
     randomize(0)
     let
@@ -1277,5 +1481,76 @@ suite "Internal: Send":
     stopServer(server)
 
 
-  test "https goes through context and tunnel of proxy given":
-    skip()  # Article IX.9, gap: stub builds without `-d:ssl`, and no root signs loopback server
+  test "TLS refuses leaf naming other host before request leaves, directly and through tunnel":
+    # Regression, found in review: client sets host for SNI alone, so leaf naming `wrong.example`
+    #   alone received bearer at `https://localhost:P/v1/messages`, and so did proxy ending tunnel
+    #   for `api.example.test` with that leaf.
+    when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
+    else:
+      check authority.problem == ""  # `openssl` made root and leaves
+      if authority.problem.len == 0:
+        for (host, should_tunnel) in [("localhost", false), ("api.example.test", true)]:
+          let found = authority.sendSecured(Leaf.Wrong, host, should_tunnel)
+          check PROBLEM_VERIFY in
+              found.sent.outcome  # case as found: review finding security-1, 2026-10-29
+          check found.head.lines.len == 0  # case as found: server read no byte, credential least
+        check casesSecured().len == COUNT_SECURED  # every ordered pair of cases, in each way
+        for (leaf, host, should_tunnel) in casesSecured():
+          let
+            secured = authority.sendSecured(leaf, host, should_tunnel)
+            is_named = host in LUT_HOSTS_BY_LEAF[leaf]
+            named = $leaf & " " & host & (if should_tunnel: " tunnelled: " else: ": ")
+          check named & $secured.sent.is_replied ==
+              named & $is_named  # domain: RFC 9110 4.3.4, leaf names host, whatever send before
+          if is_named:
+            check named & $secured.head.values("authorization") ==
+                named & $(@["Bearer " & CREDENTIAL_SUITE])  # domain: bearer reaches host named
+          else:
+            check named & $(PROBLEM_VERIFY in secured.sent.outcome) ==
+                named & "true"  # domain: refused by check of certificate, never otherwise
+            check named & $secured.head.lines.len ==
+                named & "0"  # domain: server read no byte of request
+          if not should_tunnel: continue
+          let target = host & ":" & $secured.port
+          check named & $secured.connect.filterIt(it.startsWith("CONNECT ")) ==
+              named & $(@["CONNECT " & target & " HTTP/1.1"])  # domain: RFC 9110 9.3.6, tunnel
+          check named & $secured.connect.anyIt(CREDENTIAL_SUITE in it) ==
+              named & "false"  # domain: proxy never sees credential
+
+
+  test "https URL with no context, or with host TLS cannot pin, is refused, and nothing goes out":
+    when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
+    else:
+      check authority.problem == ""  # `openssl` made root and leaves
+      let
+        listener = listenRaw()
+        port = int(listener.getLocalAddr[1])
+        reading = listener.readHead
+      for url in [
+        "https://127.0.0.1:" & $port & "/v1", "HTTPS://127.0.0.1:" & $port & "/v1",
+        "https://localhost:" & $port & "/v1",
+      ]:
+        for proxy_url in [none(string), some(urlLoopback(port, ""))]:
+          let
+            sent = sendLoopback(url, "{}", credential = CREDENTIAL_GIVEN, proxy_url = proxy_url)
+            named = url & " " & $proxy_url & ": "
+          check named & sent.outcome == named & PROBLEM_CONTEXT  # pin needs context
+      for proxy_url in [none(string), some(urlLoopback(port, ""))]:
+        let sent = waitFor send(
+          "https:///v1/messages",
+          "{}",
+          @[],
+          CREDENTIAL_GIVEN,
+          proxy_url,
+          authority.client,
+          BYTES_CAP,
+          newFuture[void]("deadline"),
+        )
+        check sent.outcome == problemHost("")  # empty pin checks no name, so tunnel would pass
+      let control = sendLoopback(urlLoopback(port, "/control"), "")
+      check control.is_replied  # listener answers
+      check (waitFor reading).lines[0] == "GET /control HTTP/1.1"  # first connection is control's
+      listener.close()
+
+  when defined(ssl):
+    removeDir(authority.directory)
