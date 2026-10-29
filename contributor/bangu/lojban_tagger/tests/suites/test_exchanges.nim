@@ -636,12 +636,11 @@ proc stopServer(server: Server) =
   waitFor server.accepting
 
 
-proc portClosed(): int =
-  ## Bind server on `127.0.0.1` to port system chooses, then close it, so port refuses connection.
-  let listener = newAsyncHttpServer()
-  listener.listen(Port(0), "127.0.0.1")
-  result = int(listener.getPort)
-  listener.close()
+proc socketRefusing(): AsyncSocket =
+  ## Bind socket on `127.0.0.1` at port system chooses, never listening and never reused, so its
+  ##   port refuses each connection, and no other socket takes port, until caller closes it.
+  result = newAsyncSocket()
+  result.bindAddr(Port(0), "127.0.0.1")
 
 
 proc awaitDeadline(deadline: Future[void]) {.async.} =
@@ -1596,15 +1595,18 @@ suite "Internal: Send":
 
 
   test "closed port gives problem of one line, holding no credential":
-    let sent = sendLoopback(
-      urlLoopback(portClosed(), "/v1/messages"),
-      "{\"a\":1}",
-      credential = CREDENTIAL_GIVEN,
-    )
+    let
+      refusing = socketRefusing()
+      sent = sendLoopback(
+        urlLoopback(int(refusing.getLocalAddr[1]), "/v1/messages"),
+        "{\"a\":1}",
+        credential = CREDENTIAL_GIVEN,
+      )
     check not sent.is_replied  # no reply
     if not sent.is_replied:
       check sent.problem.len > 0 and '\n' notin sent.problem  # first line of error alone
       check CREDENTIAL_SUITE notin sent.problem  # credential never in problem
+    refusing.close()
 
 
   test "folded header comes back on one line, and recording of reply reads back as sent":
