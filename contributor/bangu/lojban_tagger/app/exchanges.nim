@@ -255,6 +255,8 @@ func proxy*(url: string, environment: openArray[(string, string)]): Option[strin
 func toReference(text: string): Reference =
   ## Split text into five components of reference, as regular expression of RFC 3986 appendix
   ##   `B` splits it; empty query or fragment stays apart from none.
+  ##   Sibling of `dropSecrets` of `src/lojban_tagger/suggestions.nim`, which splits URL by same
+  ##     expression; that pure module cannot import this one, which imports it (Article II.9).
   var rest = text
   let at_scheme = rest.find({':', '/', '?', '#'})
   if at_scheme > 0 and rest[at_scheme] == ':':
