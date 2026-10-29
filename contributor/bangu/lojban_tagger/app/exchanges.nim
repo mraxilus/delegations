@@ -47,6 +47,8 @@
 ##       curl reads `alice:secret@proxy:3128`; host and port stand after last `@` of authority,
 ##       so problem echoes no user part or password.
 ##     Cost: proxy reachable only by https or SOCKS is refused, naming its scheme.
+##     Cost: `socks5h` proxy is refused though client speaks it: `newConnection` of
+##       `std/httpclient` opens SOCKS 5 handshake to it, which names host for proxy to resolve.
 ##   `send` lowercases scheme of URL and of proxy URL before client sees either, and `redirect`
 ##     scheme of its target, as RFC 3986 section 3.1 compares scheme without case: client compares
 ##     it with case, so `HTTPS` through proxy would open no tunnel and send request, bearer
