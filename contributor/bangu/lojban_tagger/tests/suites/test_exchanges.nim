@@ -1550,6 +1550,8 @@ suite "Internal: Exchange":
     check found == some("http://proxy.example:1080")  # case as found: was `http://proxy.example`
     check found.isSome and found.get.parseUri.port == PORT_CURL  # case as found: client read ``
     var count = 0
+    # One loop for each axis of value: opening, user part, host, port and closing. Split would
+    #   hide its shape (Article X.4).
     for opening in OPENINGS_VALUE:
       for user_part in USERS_VALUE:
         for host in HOSTS_VALUE:
@@ -1564,9 +1566,9 @@ suite "Internal: Exchange":
                 named = value & ": "
               inc count
               check named & $chosen == named & $some(expected)  # domain: curl manual, `--proxy`
-              if chosen.isSome:
-                check named & chosen.get.parseUri.port ==
-                    named & port_dialed  # domain: port client dials, as it reads value
+              if chosen.isNone: continue
+              check named & chosen.get.parseUri.port ==
+                  named & port_dialed  # domain: port client dials, as it reads value
     check count == COUNT_VALUES  # each opening, user part, host, port and closing with each other
 
 
