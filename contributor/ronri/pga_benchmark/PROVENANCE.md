@@ -945,10 +945,11 @@ zero in the library, at each type and pair that they sweep. Where a map drops th
 table, the laws fail at rga4d. Where a squared norm reads half its table, they fail at cga5d and
 hold at rga4d, whose metric is diagonal.
 
-Up to 4D the laws of P04 sweep each product over every pair of named types and the whole
-multivector. At 5D and 6D they sweep a vector with each type. The compiler takes about 0.3 MiB
-for each term that a form emits. Every pair at rga5d emits some 20 000 terms, and its build peaks
-at 7 158 MiB.
+Up to 5D the laws of P04 sweep each product over every pair of named types and the whole
+multivector. At 6D they sweep a vector with each type. The compiler takes about 0.05 MiB for each
+term that a form emits. At cga6d every pair takes 18 minutes and 6 106 MiB to build and run. A
+vector with each type there takes 2 minutes and 1 196 MiB. Measured as the peak resident size of
+each build under Nim 2.4.0, 2026-10-29.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
