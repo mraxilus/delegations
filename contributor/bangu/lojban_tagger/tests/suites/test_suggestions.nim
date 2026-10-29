@@ -2403,7 +2403,7 @@ suite "Internal: Page":
           bytes.dropSecretsReference.repairReference.text  # RFC 3986 appendix `B`, then repair
 
 
-  test "URL of passage keeps scheme, host, port and path alone, so no secret leaves for service":
+  test "URL of passage keeps scheme, host, port and path, so user part, query and fragment stay":
     let
       found = toPassage("x", "http://127.0.0.1:8080/shared/doc?access_token=SECRET-CAPABILITY-123")
       signed = readPage(
@@ -2426,17 +2426,36 @@ suite "Internal: Page":
       for user in ["", "alice@", "alice:SECRET-PASSWORD@", "a@b:SECRET-PASSWORD@"]:
         for host in ["example.org", "127.0.0.1", "[::1]"]:
           for port in ["", ":8080"]:
-            for path in ["", "/", "/shared/doc", "/a@b", "/caf\xE9"]:
+            for path in ["", "/", "/shared/doc", "/a@b", "/caf\xE9", "/s/PATH-TOKEN/doc"]:
               for query in ["", "?", "?access_token=SECRET-TOKEN", "?a=/b@c"]:
-                for fragment in ["", "#", "#SECRET-FRAGMENT", "#/a?b@c"]:  # 3,840 URLs, exhaustive
+                for fragment in ["", "#", "#SECRET-FRAGMENT", "#/a?b@c"]:  # 4,608 URLs, exhaustive
                   let
                     url = scheme & user & host & port & path & query & fragment
                     passage = toPassage("x", url)
+                    (element, report) = (passage.toElement, failed.toReport(passage, MODEL_SUITE))
+                    is_path_token = "PATH-TOKEN" in path
                   if passage.url != repairReference(scheme & host & port & path).text or
-                      "SECRET" in passage.toElement or
-                      "SECRET" in failed.toReport(passage, MODEL_SUITE):
+                      "SECRET" in element or "SECRET" in report or
+                      ("PATH-TOKEN" in element) != is_path_token or
+                      ("PATH-TOKEN" in report) != is_path_token:
                     wrong.add url
     check wrong == newSeq[string]()  # RFC 3986 appendix `B`: user part, query, fragment dropped
+
+
+  test "URL of passage keeps token held in path, and pages its query alone names read as one":
+    let
+      shared = toPassage("x", "https://example.org/s/PATH-TOKEN/notes.txt?dl=0")
+      lojban = toPassage("x", "https://example.org/w/index.php?title=Lojban")
+      esperanto = toPassage("x", "https://example.org/w/index.php?title=Esperanto")
+      failed = Suggestion(is_suggested: false, failure: Failure.Long, detail: "7")
+    check shared.url == "https://example.org/s/PATH-TOKEN/notes.txt"  # cost of `dropSecrets`
+    for service in Service:  # 3 services, exhaustive
+      let body = initSettings(service, some(EFFORT_DEFAULT)).toBody(shared)
+      check "PATH-TOKEN" in body  # recheck claim regressions-src-2, 2026-10-29: reaches service
+    check "PATH-TOKEN" in failed.toReport(shared, MODEL_SUITE)  # and report, as `toPassage` says
+    check lojban.url == esperanto.url  # recheck claim rules-3, 2026-10-29: one URL for two pages
+    check failed.toReport(lojban, MODEL_SUITE) ==
+        failed.toReport(esperanto, MODEL_SUITE)  # report names neither page apart
 
 
   test "page refusals by table: status, encoding, type, charset, no text":
