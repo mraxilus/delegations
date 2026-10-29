@@ -11,7 +11,8 @@
 ##     file with each fault that piece admits; file is written by suite, never by `toText`, and
 ##     each expected line is counted from pieces before it.
 ##     Each file holds line too: faulty line itself, as `readIndex` names it; problem ends in what
-##     piece holds, line made printable or bytes left of block, as `readIndex` echoes line.
+##     piece holds made printable, as `readIndex` echoes line: its line, running to end of text
+##     where no line break closes it, which problem then names, or bytes left from block.
 ##   Port of URL is held by table of its bounds and by random ports with zeros before them,
 ##     through `isURL`, `isEndpoint` and `redirect`; scheme of URL and of proxy takes every
 ##     spelling of `http` and `https` in any case.
@@ -373,15 +374,20 @@ func lineFirst(piece: Piece): int =
 
 
 func problemExpected(piece: Piece, text: string): string =
-  ## Build problem reader gives at piece of text: what piece should be, then what it holds, as
-  ##   line made printable, empty where text ends before line break, or as bytes left of block.
+  ## Build problem reader gives at piece of text: what piece should be, then what it holds made
+  ##   printable and cut at `RUNES_ANSWER_SHOWN`: line, running to end of text where no line
+  ##   break closes it, which problem then names; or bytes left from where block opens.
   var opening = 0
   for _ in 1..<lineFirst(piece): opening = text.find('\n', opening) + 1
   if piece in PIECES_BLOCK:
-    return LUT_PROBLEM_BY_PIECE[piece] & "; got `" & $(text.len - opening) & "` bytes left."
-  let close = text.find('\n', opening)
-  LUT_PROBLEM_BY_PIECE[piece] & "; got `" &
-      (if close < 0: "" else: text[opening..<close].toPrintable(80)) & "`."
+    return LUT_PROBLEM_BY_PIECE[piece] & "; got `" &
+        text[opening .. ^1].toPrintable(RUNES_ANSWER_SHOWN) & "`."
+  let
+    close = text.find('\n', opening)
+    stop = if close < 0: text.len else: close
+    broken = if close < 0 and stop > opening: ", then line break" else: ""
+  LUT_PROBLEM_BY_PIECE[piece] & broken & "; got `" &
+      text[opening..<stop].toPrintable(RUNES_ANSWER_SHOWN) & "`."
 
 
 func casesMalformed(): seq[Malformed] =
@@ -1065,6 +1071,19 @@ suite "Internal: Exchange":
         "`Label secret-looking text`."  # case as found: review finding rules-3, 2026-10-29
     check not returned.is_read and returned.problem == "Line should be `status <code>`, one " &
         "to three digits; got `status 200\\u{D}`."  # case as found: carriage return shown
+    # Regression, found in recheck claims completeness-5, regressions-app-6 and rules-1,
+    #   2026-10-29: line piece that text ended before its line break echoed empty, though it held
+    #   text, and block echoed count of bytes left, so neither showed faulty bytes.
+    let
+      opened = readRecording(HEADER_RECORDING)
+      cut = readRecording(PIECES_BASE[Piece.Header..Piece.RequestBytes].join & "status 200")
+      counted = readRecording(HEADER_RECORDING & "\nlabel x\nrequest 12\nGET /page\n")
+    check opened.problem == "Recording should open with `" & HEADER_RECORDING & "`, then line " &
+        "break; got `" & HEADER_RECORDING & "`."  # case as found: got ``, completeness-5
+    check cut.problem == "Line should be `status <code>`, one to three digits, then line " &
+        "break; got `status 200`."  # case as found: got ``, regressions-app-6
+    check counted.problem == "Request should hold bytes its line counts, then line break; " &
+        "got `GET /page\\u{A}`."  # case as found: got `10` bytes left, rules-1
     let cases = casesMalformed()
     var (pieces, faults) = (default(set[Piece]), default(set[Fault]))
     for malformed in cases:
