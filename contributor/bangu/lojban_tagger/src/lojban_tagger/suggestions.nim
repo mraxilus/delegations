@@ -68,7 +68,7 @@ type
 
   Passage* = object  ## Define text one suggestion is for: text given, or text of page.
     text*: string  ## Text model reads: well-formed UTF-8, at most `BYTES_PASSAGE_MAX` bytes.
-    url*: string  ## Final URL of page text came from; empty for text given.
+    url*: string  ## Final URL of page text came from, repaired as text is; empty for text given.
     count_bytes*: int  ## Bytes of text after repair, before cut.
     count_repaired*: int  ## Ill-formed UTF-8 subparts, each replaced by U+FFFD.
     is_cut*: bool  ## Text held more than `BYTES_PASSAGE_MAX`; model reads its start alone.
@@ -333,12 +333,13 @@ func dropMark(text: string): string =
 func toPassage*(text: string, url = "", is_page_cut = false): Passage =
   ## Build passage: byte order mark dropped, ill-formed UTF-8 repaired and counted, text cut at
   ##   `BYTES_PASSAGE_MAX` on character boundary.
+  ##   URL is repaired as text is, uncounted, so request body holding it stays UTF-8.
   let
     bytes = text.dropMark
     (repaired, count_repaired) = repairEncoding(bytes)
   result = Passage(
     text: cut(repaired, BYTES_PASSAGE_MAX),
-    url: url,
+    url: repairEncoding(url).text,
     count_bytes: repaired.len,
     count_repaired: count_repaired,
     is_page_cut: is_page_cut,
