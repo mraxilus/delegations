@@ -163,6 +163,11 @@ const
   ]
     ## References reader keeps as written: unknown name, case other than HTML gives, no `;`, no
     ##   digit, digit of other base, nine digits, sign, space, and `&` alone.
+  SPACES_COLLAPSED = [0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x20, 0xA0]
+    ## Code points page text collapses as space: ASCII whitespace of HTML, line tabulation, and
+    ##   no-break space, project choice.
+  TEMPLATES_SPACE = ["<p>a@b</p>", "<p>@a</p>", "<p>a@@b</p>", "a@<p>b@</p>c", "<li>@</li>"]
+    ## Markup each space is written into, at `@`: inside words, at edges, doubled, around block.
   MARKS_BIDIRECTIONAL = [
     0x061C, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068,
     0x2069,
@@ -1353,6 +1358,25 @@ suite "Internal: Page":
     check readMarkup("&lt;p&gt;x&lt;/p&gt;") == "<p>x</p>"  # decoded text opens no element
 
 
+  test "space written as reference collapses as space written raw does":
+    check readMarkup("<p>a&#10;b</p>") == "a b"  # case as found in suite review: `&#10;` broke line
+    for code in SPACES_COLLAPSED:  # 7 spaces, exhaustive
+      let hexadecimal = code.toHex(2)
+      for reference in ["&#" & $code & ";", "&#x" & hexadecimal.toLowerAscii & ";",
+          "&#X" & hexadecimal & ";", "&#000" & $code & ";"]:
+        for markup in TEMPLATES_SPACE:  # 5 places, exhaustive
+          check readMarkup(markup.replace("@", reference)) ==
+              readMarkup(markup.replace("@", code.encode))  # reference stands for its character
+
+
+  test "numeric references 128 to 159 read through windows-1252, as HTML maps them":
+    check readMarkup("a&#150;b") == "a\u2013b"  # case as found in suite review: read as C1 control
+    for code in 0x80..0x9F:  # 32 numbers, exhaustive
+      for reference in ["&#" & $code & ";", "&#x" & code.toHex(2) & ";"]:
+        check readReference(reference, 0) == (LUT_TEXT_BY_POINTER[code-0x80],
+            reference.len)  # HTML numeric reference end state, table of index-windows-1252
+
+
   test "repair keeps first sequence or replaces its lead alone, by Table 3-7, for every pair":
     var wrong: seq[(int, int)]
     for first in 0..255:
@@ -1515,6 +1539,23 @@ suite "Internal: Page":
       Reply(status: 200, content_type: "text/plain", body: "x", is_cut: true),
     )
     check cut.is_read and cut.passage.is_page_cut  # page cut reaches passage
+
+
+  test "byte order mark is no text, so page reads as page without it":
+    let marked = readPage(URL_SUITE, Reply(status: 200, body: "\xEF\xBB\xBF<p>Hello</p>"))
+    check marked.is_read and marked.passage.text == "Hello"  # case as found in suite review
+    for content_type in ["", "text/html", "application/xhtml+xml", "text/plain"]:
+      for body in ["<p>Hello</p>", " \n<p>a</p><p>b</p>", "plain <b>x</b>", "a <p>",
+          "<!DOCTYPE html><title>t</title>", "x\xFFy", ""]:
+        let
+          plain = readPage(URL_SUITE, Reply(status: 200, content_type: content_type, body: body))
+          paged = readPage(URL_SUITE, Reply(status: 200, content_type: content_type,
+              body: "\xEF\xBB\xBF" & body))
+        check paged.is_read == plain.is_read  # WHATWG Encoding Standard, decode: mark dropped
+        if paged.is_read and plain.is_read:
+          check paged.passage == plain.passage  # mark changes no text, count or type read
+        elif not paged.is_read and not plain.is_read:
+          check paged.detail == plain.detail  # mark changes no refusal
 
 
   test "sample page of worked examples reads as text its paragraph gives":
