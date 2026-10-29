@@ -357,16 +357,36 @@ func dropMark(text: string): string =
   if text.startsWith("\xEF\xBB\xBF"): text[3 .. ^1] else: text
 
 
+func dropSecrets(url: string): string =
+  ## Keep scheme, host, port and path of URL alone: user part, query and fragment dropped, since
+  ##   signed or capability URL holds its secret there.
+  ##   Parts are those regular expression of RFC 3986 appendix `B` splits. Sibling of `toReference`
+  ##     of `app/exchanges.nim`, which imports this pure module, so this one cannot import it.
+  ##   User part ends at last `@` of authority, as URL Standard of WHATWG reads it, so none stays.
+  let
+    stop = url.find({'?', '#'})
+    kept = if stop < 0: url else: url[0..<stop]
+    at_scheme = kept.find({':', '/'})
+    start = (if at_scheme > 0 and kept[at_scheme] == ':': at_scheme + 1 else: 0) + 2
+  if not kept.continuesWith("//", start - 2): return kept
+  var finish = kept.find('/', start)
+  if finish < 0: finish = kept.len
+  let at_user = kept.rfind('@', start, finish - 1)
+  if at_user < 0: kept else: kept[0..<start] & kept[at_user+1 .. ^1]
+
+
 func toPassage*(text: string, url = "", is_page_cut = false): Passage =
   ## Build passage: byte order mark dropped, ill-formed UTF-8 repaired and counted, text cut at
   ##   `BYTES_PASSAGE_MAX` on character boundary.
+  ##   URL keeps scheme, host, port and path alone (`dropSecrets`), so token of signed or
+  ##     capability URL reaches neither service nor report; recording of page keeps whole URL.
   ##   URL is repaired as text is, uncounted, so request body holding it stays UTF-8.
   let
     bytes = text.dropMark
     (repaired, count_repaired) = repairEncoding(bytes)
   result = Passage(
     text: cut(repaired, BYTES_PASSAGE_MAX),
-    url: repairEncoding(url).text,
+    url: repairEncoding(url.dropSecrets).text,
     count_bytes: repaired.len,
     count_repaired: count_repaired,
     is_page_cut: is_page_cut,
