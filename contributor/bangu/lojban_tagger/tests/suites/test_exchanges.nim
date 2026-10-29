@@ -140,7 +140,7 @@ type
 
   Authority = object  ## Define test root and leaves it signs, made at run time in fresh directory.
     directory: string  ## Directory holding keys and certificates; suite removes it at end.
-    problem: string  ## Command that failed, with its output; empty where every one ran.
+    problem: string  ## Command that failed, its exit code and output; empty where every one ran.
     client: SslContext  ## Context `send` takes: verifies peer against test root alone.
     servers: array[Leaf, SslContext]  ## Context of server presenting each leaf.
 
@@ -893,8 +893,8 @@ when defined(ssl):
     ##   that fails names problem, and no context is made.
 
     proc run(directory: string, arguments: seq[string]): string =
-      ## Run `openssl` in directory with arguments as list, so no shell reads them; command and
-      ##   output where it fails, else empty.
+      ## Run `openssl` in directory with arguments as list, so no shell reads them; command, exit
+      ##   code and output, each in backticks, where it fails, else empty.
       try:
         let process = startProcess(
           "openssl",
@@ -906,7 +906,9 @@ when defined(ssl):
           output = process.outputStream.readAll
           code = process.waitForExit
         process.close()
-        if code != 0: result = "openssl " & arguments.join(" ") & ": " & output
+        if code != 0:
+          result = "Command `openssl " & arguments.join(" ") & "` should exit 0; got `" & $code &
+              "` with output `" & output.strip & "`."
       except OSError as error:
         result = "Command `openssl` should run; got `" & error.msg & "`."
 
