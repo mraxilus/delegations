@@ -143,7 +143,7 @@ type
       recording*: Recording  ## Recording file holds.
     of false:
       line*: int  ## Line, counted from one, reader refused.
-      problem*: string  ## What is wrong, ending in offending text.
+      problem*: string  ## What is wrong, ending in what faulty piece holds, made printable.
 
   Cursor = object  ## Define position of reader in recording text, with line it is on.
     text: string  ## Whole text.
@@ -464,20 +464,21 @@ func readRecording*(text: string): Recorded =
 
   func refuse(cursor: Cursor, shape: string): Recorded =
     ## Build outcome refusing line piece read last on its own line: shape it should have, then
-    ##   line it holds made printable, empty where text ends before line break.
+    ##   line it holds made printable, running to end of text where no line break closes it,
+    ##   which shape then names; empty where text ends where piece opens.
     let
       close = cursor.text.find('\n', cursor.at_piece)
-      held =
-        if close < 0: ""
-        else: cursor.text[cursor.at_piece..<close].toPrintable(RUNES_ANSWER_SHOWN)
-    Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" & held & "`.")
+      stop = if close < 0: cursor.text.len else: close
+      broken = if close < 0 and stop > cursor.at_piece: ", then line break" else: ""
+      held = cursor.text[cursor.at_piece..<stop].toPrintable(RUNES_ANSWER_SHOWN)
+    Recorded(is_read: false, line: cursor.line_piece, problem: shape & broken & "; got `" & held &
+        "`.")
 
   func refuseBlock(cursor: Cursor, shape: string): Recorded =
     ## Build outcome refusing block read last on line it opens on: shape it should have, then
-    ##   bytes left from where it opens.
-    let left = cursor.text.len - cursor.at_piece
-    Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" & $left &
-        "` bytes left.")
+    ##   bytes left from where it opens, made printable.
+    let left = cursor.text[cursor.at_piece .. ^1].toPrintable(RUNES_ANSWER_SHOWN)
+    Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" & left & "`.")
 
   let header = cursor.readLine
   if header.isNone or header.get != HEADER_RECORDING:
