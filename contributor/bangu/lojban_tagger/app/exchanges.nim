@@ -49,6 +49,11 @@
 ##     Cost: proxy reachable only by https or SOCKS is refused, naming its scheme.
 ##     Cost: `socks5h` proxy is refused though client speaks it: `newConnection` of
 ##       `std/httpclient` opens SOCKS 5 handshake to it, which names host for proxy to resolve.
+##   Proxy URL holding user or password is refused for https URL before client exists: client
+##     writes `Proxy-Authorization` on each request it builds, request inside tunnel included,
+##     so service and page would read login of proxy. Http URL keeps it, as proxy itself reads
+##     that request. Problem names host of proxy, never byte of user part.
+##     Cost: proxy needing login cannot reach https.
 ##   `send` lowercases scheme of URL and of proxy URL before client sees either, and `redirect`
 ##     scheme of its target, as RFC 3986 section 3.1 compares scheme without case: client compares
 ##     it with case, so `HTTPS` through proxy would open no tunnel and send request, bearer
@@ -564,6 +569,8 @@ proc send*(
   ##   Proxy URL naming no host after `//`, scheme other than `http` in any case, or port other
   ##     than `isPort` takes sends nothing, problem naming first such part and no user part;
   ##     client sees scheme of URL and of proxy URL lowercased.
+  ##   Proxy URL holding user or password sends nothing for https URL, since client repeats its
+  ##     login inside tunnel; problem names host of proxy, never user part.
   ##   https URL pins its host on `context`, so certificate naming other host is refused; no
   ##     context, or host TLS cannot pin, sends nothing.
   ##   Agent, encoding and bearer are its own, whatever caller headers name.
@@ -582,6 +589,9 @@ proc send*(
     return Sent(is_replied: false, problem: "URL should hold no whitespace or control " &
         "character; got byte `" & $ord(url[at]) & "` at `" & $at & "`.")
   if deadline.finished: return Sent(is_replied: false, problem: "deadline passed")
+  let
+    url_sent = url.lowercaseScheme
+    uri = url_sent.parseUri
   if proxy_url.isSome:
     let proxied = proxy_url.get.parseUri
     if proxied.opaque or proxied.hostname.len == 0:
@@ -592,9 +602,11 @@ proc send*(
     if proxied.port.len > 0 and not proxied.port.isPort:
       return Sent(is_replied: false, problem: "Proxy should name port of one to five digits " &
           "from 1 to 65535, or none; got `" & proxied.port & "`.")
-  let url_sent = url.lowercaseScheme
+    if uri.scheme == "https" and (proxied.username.len > 0 or proxied.password.len > 0):
+      return Sent(is_replied: false, problem: "Proxy should hold no user part for https URL, " &
+          "since client repeats `Proxy-Authorization` inside tunnel; got user part for `" &
+          proxied.hostname & "`.")
   when defined(ssl):
-    let uri = url_sent.parseUri
     if uri.scheme == "https":
       if context.isNil:
         return Sent(is_replied: false, problem: PROBLEM_CONTEXT)
