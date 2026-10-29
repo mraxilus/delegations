@@ -426,10 +426,10 @@ proc stopServer(server: Server) =
   waitFor server.accepting
 
 
-proc socketRefusing(): AsyncSocket =
+proc bindRefusing(): AsyncSocket =
   ## Bind socket on `127.0.0.1` at port system chooses, never listening and never reused, so its
   ##   port refuses each connection, and no other socket takes port, until caller closes it.
-  ##   Sibling of `socketRefusing` in `test_exchanges.nim` (II.9).
+  ##   Sibling of `bindRefusing` in `test_exchanges.nim`, which binds same refusing socket (II.9).
   result = newAsyncSocket()
   result.bindAddr(Port(0), "127.0.0.1")
 
@@ -1301,7 +1301,7 @@ suite "Internal: Suggester":
 
   test "record sends again OpenRouter reply of 200 holding error, and never replays it":
     let
-      refusing = socketRefusing()  # held until test ends, so no other socket takes its port
+      refusing = bindRefusing()  # held until test ends, so no other socket takes its port
       settings = Service.OpenRouter.toSettings(int(refusing.getLocalAddr[1]))
       directory_case = directory / "inside"
       text = "mi ciska lo xatra"
@@ -1356,7 +1356,7 @@ suite "Internal: Suggester":
 
   test "refused connection exits 1 with `Network`, and record writes nothing":
     let
-      refusing = socketRefusing()  # held until test ends, so no other socket takes its port
+      refusing = bindRefusing()  # held until test ends, so no other socket takes its port
       port = int(refusing.getLocalAddr[1])
       directory_case = directory / "refused"
       opening = noteCredential(KEY_CREDENTIAL) & "\nService or page should answer; got `"
@@ -2195,7 +2195,7 @@ suite "Internal: Suggester":
         LABEL_SUITE)])  # page refused
     covered.incl Failure.Page
     let
-      refusing = socketRefusing()  # held until refused run ends, so no other socket takes port
+      refusing = bindRefusing()  # held until refused run ends, so no other socket takes port
       url_closed = urlLoopback(int(refusing.getLocalAddr[1]), PATH_SERVICE)
       refused = binary.run([(KEY_ENDPOINT, url_closed), (KEY_CREDENTIAL, CREDENTIAL_SUITE)], [text])
     refusing.close()
