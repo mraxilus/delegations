@@ -2143,7 +2143,8 @@ suite "Internal: Send":
         problemProxyPort(wrapped)  # case as found: review finding logic-8, 2026-10-29
     check server.targets.len == 0  # case as found: was reached at port it wraps onto
     for port in [
-      "0", "65536", $(server.port + 2 * 65_536), "0" & $server.port, "00" & $server.port,
+      "0", "65536", $(server.port + 2 * 65_536),
+      align($server.port, 6, '0'), align($server.port, 7, '0'),  # zeros lead past five digits
     ]:
       let sent = sendLoopback(
         "http://example.org/page",
@@ -2159,7 +2160,7 @@ suite "Internal: Send":
         "",
         proxy_url = some("http://" & user & ":" & password & "@127.0.0.1:" & $server.port),
       )
-    check control.outcome == "replied"  # port of five digits taken, user part beside it
+    check control.outcome == "replied"  # port as system chose it taken, user part beside it
     check server.targets == @["http://example.org/page"]  # domain: refused proxy reached nothing
     check server.count_connections == 1  # domain: no connection but control's
     stopServer(server)
