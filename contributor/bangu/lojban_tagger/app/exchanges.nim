@@ -167,11 +167,19 @@ func readCredential*(name, value: string; service: Service): Credentialed =
   Credentialed(is_read: true, credential: Credential(trimmed), name: name)
 
 
+func isPort(text: string): bool =
+  ## Test text is port client reaches as named: one to five digits from 1 to 65535, as RFC 6335
+  ##   section 6 ranges it; client reads larger number modulo 65536, so `65616` would reach 80.
+  text.len in 1..5 and text.allIt(it in Digits) and text.parseInt in 1..65_535
+
+
 func isURL*(text: string): bool =
-  ## Test text is one http or https URL with host and no whitespace, which `suggester` fetches.
+  ## Test text is one http or https URL with host, port of `isPort` or none, and no whitespace,
+  ##   which `suggester` fetches.
   if text.len == 0 or text.anyIt(it in Whitespace): return false
   let uri = text.parseUri
-  uri.scheme.toLowerAscii in ["http", "https"] and uri.hostname.len > 0
+  uri.scheme.toLowerAscii in ["http", "https"] and uri.hostname.len > 0 and
+      (uri.port.len == 0 or uri.port.isPort)
 
 
 func isLoopback*(host: string): bool =
