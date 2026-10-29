@@ -30,6 +30,10 @@
 ##     whole request is stored and compared. Sibling of `stamp` in
 ##     `curator/audit/src/provenance.nim`, which project does not import (Article II.9).
 ##     Rejected: `std/hashes`, whose values change between versions; `std/sha1`, deprecated.
+##   Label and header values are lines of file: client joins folded header lines by line break,
+##     so `send` unfolds each value, as RFC 7230 section 3.2.4 asks of recipient, and `toText`
+##     unfolds label; status takes one to three digits, as `send` gives 0 to 599. So every reply
+##     `send` gives records, and replay reads it back.
 ##   Proxy follows curl: `https_proxy` then `HTTPS_PROXY` for https, `http_proxy` alone for
 ##     http, `no_proxy` then `NO_PROXY` for bypass; loopback always goes direct.
 ##     Cost: bypass entry of address range is never matched, so such host goes through proxy.
@@ -198,11 +202,25 @@ func stamp*(request: string): string =
 
 #[ Recordings ]#
 
+func unfold(text: string): string =
+  ## Unfold text onto one line: each line break, with spaces and tabs after it, becomes one space,
+  ##   as RFC 7230 section 3.2.4 replaces obs-fold of header value.
+  var is_folding = false
+  for character in text:
+    if character == '\n':
+      result.add ' '
+      is_folding = true
+    elif not is_folding or character notin {' ', '\t'}:
+      result.add character
+      is_folding = false
+
+
 func toText*(recording: Recording): string =
-  ## Render recording as file text; request and body carry byte counts, so any bytes read back.
+  ## Render recording as file text; request and body carry byte counts, so any bytes read back;
+  ##   label is unfolded onto its one line.
   let reply = recording.reply
   HEADER_RECORDING & "\n" &
-      "label " & recording.label & "\n" &
+      "label " & recording.label.unfold & "\n" &
       "request " & $recording.request.len & "\n" & recording.request & "\n" &
       "status " & $reply.status & "\n" &
       "content-type " & reply.content_type & "\n" &
@@ -263,8 +281,8 @@ func readRecording*(text: string): Recorded =
   if request.isNone: return cursor.refuse("Request should hold bytes its line counts.")
   recording.request = request.get
   let status = cursor.readField("status")
-  if status.isNone or not status.get.allIt(it in Digits) or status.get.len notin 3..3:
-    return cursor.refuse("Line should be `status <code>`, three digits.")
+  if status.isNone or not status.get.allIt(it in Digits) or status.get.len notin 1..3:
+    return cursor.refuse("Line should be `status <code>`, one to three digits.")
   recording.reply.status = status.get.parseInt
   for (name, field) in [("content-type", 0), ("content-encoding", 1), ("location", 2)]:
     let value = cursor.readField(name)
@@ -305,16 +323,16 @@ proc readBody(response: AsyncResponse, bytes_max: int): Future[(string, bool)] {
 
 proc exchange(client: AsyncHttpClient; url, body: string; fields: HttpHeaders; bytes_max: int):
     Future[Reply] {.async.} =
-  ## Send request, then read reply: status, headers kept, body up to `bytes_max`.
+  ## Send request, then read reply: status, headers kept and unfolded, body up to `bytes_max`.
   let
     method_request = if body.len > 0: HttpPost else: HttpGet
     response = await client.request(url, httpMethod = method_request, body = body, headers = fields)
     (bytes, is_cut) = await response.readBody(bytes_max)
   return Reply(
     status: int(response.code),
-    content_type: response.headers.getOrDefault("content-type").toString,
-    content_encoding: response.headers.getOrDefault("content-encoding").toString,
-    location: response.headers.getOrDefault("location").toString,
+    content_type: response.headers.getOrDefault("content-type").toString.unfold,
+    content_encoding: response.headers.getOrDefault("content-encoding").toString.unfold,
+    location: response.headers.getOrDefault("location").toString.unfold,
     body: bytes,
     is_cut: is_cut,
   )
