@@ -1338,8 +1338,10 @@ suite "Internal: Reply":
     var page = Reply(status: 200, content_type: "text/plain", content_encoding: "Identity",
         body: "x")
     check readPage(URL_SUITE, page).is_read  # case as found in suite review: refused
-    check readReply(Service.Claude, Reply(status: 200, content_encoding: "IDENTITY",
-        body: lut_body_by_service[Service.Claude])).tagRead ==
+    check readReply(
+      Service.Claude,
+      Reply(status: 200, content_encoding: "IDENTITY", body: lut_body_by_service[Service.Claude]),
+    ).tagRead ==
         some(tanru("ciska"))  # case as found in suite review: refused
     for coding in "identity".casings:  # 256 casings, exhaustive
       page.content_encoding = coding
@@ -1352,8 +1354,10 @@ suite "Internal: Reply":
       let paged = readPage(URL_SUITE, page)
       check not paged.is_read and paged.detail == "content encoding " & coding  # named as given
       for service in Service:  # 3 services, exhaustive
-        check readReply(service, Reply(status: 200, content_encoding: coding,
-            body: lut_body_by_service[service])).failureRead ==
+        check readReply(
+          service,
+          Reply(status: 200, content_encoding: coding, body: lut_body_by_service[service]),
+        ).failureRead ==
             some((Failure.Malformed, "content encoding " & coding))  # named as given
 
 
@@ -1650,8 +1654,10 @@ suite "Internal: Page":
           "<!DOCTYPE html><title>t</title>", "x\xFFy", ""]:
         let
           plain = readPage(URL_SUITE, Reply(status: 200, content_type: content_type, body: body))
-          paged = readPage(URL_SUITE, Reply(status: 200, content_type: content_type,
-              body: "\xEF\xBB\xBF" & body))
+          paged = readPage(
+            URL_SUITE,
+            Reply(status: 200, content_type: content_type, body: "\xEF\xBB\xBF" & body),
+          )
         check paged.is_read == plain.is_read  # WHATWG Encoding Standard, decode: mark dropped
         if paged.is_read and plain.is_read:
           check paged.passage == plain.passage  # mark changes no text, count or type read

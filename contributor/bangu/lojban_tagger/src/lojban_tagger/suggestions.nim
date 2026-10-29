@@ -382,7 +382,7 @@ func readReference(markup: string, at: int): tuple[text: string, size: int] =
   ("&", 1)
 
 
-func findClosingRaw(markup, name: string, at: int): int =
+func findClosingRaw(markup, name: string; at: int): int =
   ## Find own closing element of raw text `name` from `at`: `</`, name in any case, then
   ##   character of `CHARACTERS_ENDING_NAME`; `markup.len` where none, so raw text runs to end.
   var candidate = markup.find("</", at)
