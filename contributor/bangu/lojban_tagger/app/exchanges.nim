@@ -18,11 +18,15 @@
 ##     its headers across hosts, so credential could reach other host, and it would keep one
 ##     proxy for every hop. `suggester` follows page redirects itself, choosing proxy again.
 ##   URL holding whitespace or control character is refused by `send` before client exists, and
-##     by `redirect` as target: line break would split request line, and client asserts it holds
-##     none, so its `AssertionDefect` would escape `send`.
+##     by `redirect` as target: such byte would split or corrupt request line, and client checks
+##     line break alone, by assertion.
 ##   Deadline is future caller passes, so suite completes it itself and reads no clock; body
 ##     is read from stream up to its cap, so huge page never fills memory.
 ##     Cost: name lookup blocks before deadline exists; through proxy, only proxy host resolves.
+##     `send` races deadline by `addCallback`, so other waiters on it keep their callbacks.
+##     Cost: `or` that caller puts on deadline after `send` clears callback of `send`.
+##     Cost: deadline that completes while client connects ends `send`, yet request goes out once
+##     connection opens: client cancels nothing, and closes no socket it has not opened.
 ##   Credential goes as Bearer on service request alone, never on page; its `$` is poisoned,
 ##     so no report or recording can render it.
 ##   Recording is text its own reader types, as index file is: request and body carry byte
@@ -351,10 +355,22 @@ proc send*(
   ## Send one request, GET or POST where body holds text, through fresh client following no
   ##   redirect; read body until `bytes_max`; end when `deadline` completes first.
   ##   URL holding whitespace or control character is refused, naming byte, and nothing is sent.
+  ##   Deadline finished already sends nothing, since client still connecting would send later.
+
+  proc race(a, b: FutureBase): Future[void] =
+    ## Complete future once `a` or `b` finishes, by `addCallback`, which keeps callbacks others
+    ##   put on either; `or` of `std/asyncdispatch` sets `callback=`, which clears them.
+    let raced = newFuture[void]("race")
+    for future in [a, b]:
+      future.addCallback proc() =
+        if not raced.finished: raced.complete()
+    raced
+
   let at = url.find(Whitespace + CHARACTERS_CONTROL)
   if at >= 0:
     return Sent(is_replied: false, problem: "URL should hold no whitespace or control " &
         "character; got byte `" & $ord(url[at]) & "` at `" & $at & "`.")
+  if deadline.finished: return Sent(is_replied: false, problem: "deadline passed")
   let proxy_used = if proxy_url.isSome: newProxy(proxy_url.get) else: nil
   when defined(ssl):
     let client = newAsyncHttpClient(
@@ -370,10 +386,7 @@ proc send*(
   fields["accept-encoding"] = "identity"
   if credential.isSome: fields["authorization"] = "Bearer " & string(credential.get)
   let replying = client.exchange(url, body, fields, bytes_max)
-  try:
-    await replying or deadline
-  except CatchableError:
-    discard
+  await race(replying, deadline)
   client.close()
   if not replying.finished: return Sent(is_replied: false, problem: "deadline passed")
   if replying.failed:
