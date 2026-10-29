@@ -76,6 +76,7 @@ type
     text: string  ## Whole text.
     at: int  ## Byte read next.
     line: int  ## Line of `at`, counted from one.
+    line_piece: int  ## Line piece read last opens on, so refusal names faulty line itself.
 
 
 const
@@ -213,6 +214,7 @@ func toText*(recording: Recording): string =
 
 func readLine(cursor: var Cursor): Option[string] =
   ## Read line at cursor, its break consumed; `none` where text ends first.
+  cursor.line_piece = cursor.line
   let close = cursor.text.find('\n', cursor.at)
   if close < 0: return none(string)
   result = some(cursor.text[cursor.at..<close])
@@ -222,6 +224,7 @@ func readLine(cursor: var Cursor): Option[string] =
 
 func readBlock(cursor: var Cursor, count: int): Option[string] =
   ## Read `count` bytes at cursor and line break after them; `none` where text holds fewer.
+  cursor.line_piece = cursor.line
   if count < 0 or cursor.at + count >= cursor.text.len or cursor.text[cursor.at+count] != '\n':
     return none(string)
   result = some(cursor.text[cursor.at..<cursor.at+count])
@@ -241,8 +244,8 @@ func readRecording*(text: string): Recorded =
   var cursor = Cursor(text: text, line: 1)
 
   func refuse(cursor: Cursor, problem: string): Recorded =
-    ## Build outcome refusing recording at line of cursor.
-    Recorded(is_read: false, line: cursor.line, problem: problem)
+    ## Build outcome refusing recording at line piece read last opens on: faulty line itself.
+    Recorded(is_read: false, line: cursor.line_piece, problem: problem)
 
   let header = cursor.readLine
   if header.isNone or header.get != HEADER_RECORDING:
@@ -280,7 +283,8 @@ func readRecording*(text: string): Recorded =
   let bytes = cursor.readBlock(words[1].parseInt)
   if bytes.isNone: return cursor.refuse("Body should hold bytes its line counts.")
   recording.reply.body = bytes.get
-  if cursor.at != text.len: return cursor.refuse("Recording should end after body.")
+  if cursor.at != text.len:  # Byte after body stands on line of cursor, opening no piece.
+    return Recorded(is_read: false, line: cursor.line, problem: "Recording should end after body.")
   Recorded(is_read: true, recording: recording)
 
 
