@@ -46,6 +46,7 @@
 ##     Cost: owner of directory, and members of group that may write it, are trusted.
 ##   Recording file past its request, cap of its body and `BYTES_FIELDS_MAX` is refused before it
 ##     is read, and body past its cap once read, so replay holds no more than send would.
+##     Recording that stands but cannot be read is refused with `Recording`, never traceback.
 ##   Record mode replays service reply by how `readReply` reads it, never by status alone: tag,
 ##     and failure of answer service bills, replay, so no answer is paid twice; reply reading as
 ##     `Status` goes out again, as OpenRouter answers 200 holding provider error, which it does
@@ -294,6 +295,7 @@ proc exchange(
   ##   Directory every user may write is refused before any read or send; recording file past
   ##     request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body past
   ##     `bytes_max` is refused once read.
+  ##   Recording that stands but cannot be read is refused, naming first line of error.
 
   func refuse(detail: string): Exchanged =
     ## Build outcome refusing recording, detail made printable.
@@ -318,9 +320,14 @@ proc exchange(
 
   # Replay recording of same request within its caps, as mode and `isReplayed` choose.
   if command.mode != Mode.Live and fileExists(path):
-    if getFileSize(path) > bytes_file_max:
-      return refuse(path & " larger than " & $bytes_file_max & " bytes")
-    let recorded = readFile(path).readRecording
+    var text = ""
+    try:
+      if getFileSize(path) > bytes_file_max:
+        return refuse(path & " larger than " & $bytes_file_max & " bytes")
+      text = readFile(path)
+    except CatchableError as error:
+      return refuse(path & " unreadable: " & error.msg.splitLines[0])
+    let recorded = text.readRecording
     if not recorded.is_read:
       return refuse(path & ":" & $recorded.line & ": " & recorded.problem)
     if recorded.recording.request != request: return refuse(path & " holds other request")
