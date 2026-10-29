@@ -223,6 +223,10 @@ const
   ELEMENTS_RAW = ["iframe", "noscript", "script", "style"]
     ## Elements whose content is raw text, and no text of page: HTML tokenizer reads no markup
     ##   inside them until own closing element.
+    ##   Cost: `title` and `textarea` read as markup, where HTML tokenizer reads their content as
+    ##     text, decoding references alone (RCDATA state): tag or comment inside them drops, and
+    ##     raw element opened inside them runs to own closing element, dropping rest of page
+    ##     where none follows (open question in PROVENANCE).
   ELEMENTS_SKIPPED = ["math", "object", "svg", "template"]
     ## Elements whose content is markup, and no text of page.
   SPACES_MARKUP = {'\t', '\n', '\f', '\r', ' '}
