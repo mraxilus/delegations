@@ -35,9 +35,17 @@
 ##   Page redirects are followed here, at most `COUNT_REDIRECTS_MAX`, choosing proxy again for
 ##     each hop; https never falls to http, and URL seen twice ends loop. Service redirect is
 ##     never followed, so credential stays with its endpoint.
-##   Record mode makes its directory before it sends, so directory it cannot make refuses run
-##     with `Recording`, and nothing is paid for; recording it cannot write after reply is named
-##     in note, and tag still prints. Cost: failed send leaves empty directory behind.
+##   Record mode makes its directory before it reads or sends, so directory it cannot make refuses
+##     run with `Recording`, and nothing is paid for; recording it cannot write after reply is
+##     named in note, and tag still prints. Cost: failed send leaves empty directory behind.
+##   Recordings hold passage, page and reply, so they stay private: record mode makes each
+##     directory it makes with mode `0700`, and writes each recording with mode `0600` to new
+##     sibling, refusing file or link there, before rename.
+##   Record and replay refuse directory every user may write, as `/tmp`, before any read or send,
+##     since other user could plant link where recording goes.
+##     Cost: owner of directory, and members of group that may write it, are trusted.
+##   Recording file past its request, cap of its body and `BYTES_FIELDS_MAX` is refused before it
+##     is read, and body past its cap once read, so replay holds no more than send would.
 ##   Record mode replays service reply by how `readReply` reads it, never by status alone: tag,
 ##     and failure of answer service bills, replay, so no answer is paid twice; reply reading as
 ##     `Status` goes out again, as OpenRouter answers 200 holding provider error, which it does
@@ -50,6 +58,7 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[asyncdispatch, net, options, os, sequtils, strutils, times]
+from std/posix import close, mkdir, O_CREAT, O_EXCL, open, O_WRONLY
 
 import ../src/lojban_tagger/[suggestions, tags]
 import ./exchanges
@@ -115,6 +124,9 @@ const
   MS_DEADLINE_PAGE = 30_000  ## Milliseconds one page hop may take, whole.
   MS_DEADLINE_SERVICE = 600_000
     ## Milliseconds service request may take, whole; long answer without streaming needs it.
+  BYTES_FIELDS_MAX = 65_536
+    ## Most bytes recording file holds past its request and cap of its body: format line, label
+    ##   and fields, i.e. 64 KiB; larger file is refused before it is read.
 
 
 
@@ -230,6 +242,41 @@ func isReplayed(reply: Reply, service: Option[Service]): bool =
   suggestion.is_suggested or suggestion.failure != Failure.Status
 
 
+proc isShared(directory: string): bool =
+  ## Test every user may write directory, as `/tmp` lets them, so other user could plant link
+  ##   where recording goes; false where no directory stands at path.
+  try:
+    dirExists(directory) and fpOthersWrite in getFilePermissions(directory)
+  except OSError:
+    false
+
+
+proc createDirectoryPrivate(directory: string) =
+  ## Make directory, and each parent missing, with mode `0700`, so no other user lists or reads
+  ##   recordings; directory standing keeps its mode. `OSError` where one cannot be made.
+  if directory.len == 0 or dirExists(directory): return
+  createDirectoryPrivate(directory.parentDir)
+  if mkdir(directory.cstring, 0o700) == 0: return
+  let error = osLastError()  # Before `dirExists`, whose failed `stat` would set its own.
+  if not dirExists(directory): raiseOSError(error, directory)
+
+
+proc writePrivate(path, text: string) =
+  ## Write text to file made new at path with mode `0600`, so no other user reads it; file or
+  ##   link standing at path is refused, as `O_EXCL` refuses it. `OSError` or `IOError` where
+  ##   write fails.
+  let handle = open(path.cstring, O_WRONLY or O_CREAT or O_EXCL, cint(0o600))
+  if handle < 0: raiseOSError(osLastError(), path)
+  var file: File
+  if not file.open(FileHandle(handle), fmWrite):
+    discard close(handle)
+    raiseOSError(osLastError(), path)
+  try:
+    file.write(text)
+  finally:
+    file.close()
+
+
 proc exchange(
   request, url, body: string;
   headers: seq[(string, string)];
@@ -242,30 +289,50 @@ proc exchange(
   ## Answer one exchange by mode: replay recording, or send, and write recording in record mode.
   ##   `service` names wire format of service exchange, whose reply record mode reads before it
   ##     replays it (`isReplayed`); `none` for page hop.
-  ##   Record mode makes directory before sending, refusing where it cannot; write failing after
-  ##     reply is named in note, and reply is kept.
-  let path = command.directory / (request.stamp & ".recording")
+  ##   Record mode makes directory before reading or sending, mode `0700` where it makes it,
+  ##     refusing where it cannot; write failing after reply is named in note, and reply is kept.
+  ##   Directory every user may write is refused before any read or send; recording file past
+  ##     request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body past
+  ##     `bytes_max` is refused once read.
+
+  func refuse(detail: string): Exchanged =
+    ## Build outcome refusing recording, detail made printable.
+    Exchanged(
+      is_replied: false,
+      failure: Failure.Recording,
+      detail: detail.toPrintable(RUNES_SHOWN),
+    )
+
+  let
+    path = command.directory / (request.stamp & ".recording")
+    bytes_file_max = request.len + bytes_max + BYTES_FIELDS_MAX
+
+  # Make directory of record mode, private where made, then refuse directory every user writes.
+  if command.mode == Mode.Record:
+    try:
+      createDirectoryPrivate(command.directory)
+    except CatchableError as error:
+      return refuse(path & " unwritable: " & error.msg.splitLines[0])
+  if command.mode != Mode.Live and command.directory.isShared:
+    return refuse(command.directory & " writable by every user")
+
+  # Replay recording of same request within its caps, as mode and `isReplayed` choose.
   if command.mode != Mode.Live and fileExists(path):
+    if getFileSize(path) > bytes_file_max:
+      return refuse(path & " larger than " & $bytes_file_max & " bytes")
     let recorded = readFile(path).readRecording
     if not recorded.is_read:
-      return Exchanged(is_replied: false, failure: Failure.Recording,
-          detail: (path & ":" & $recorded.line & ": " & recorded.problem).toPrintable(RUNES_SHOWN))
-    if recorded.recording.request != request:
-      return Exchanged(is_replied: false, failure: Failure.Recording,
-          detail: (path & " holds other request").toPrintable(RUNES_SHOWN))
+      return refuse(path & ":" & $recorded.line & ": " & recorded.problem)
+    if recorded.recording.request != request: return refuse(path & " holds other request")
+    if recorded.recording.reply.body.len > bytes_max:
+      return refuse(path & " holds body over " & $bytes_max & " bytes")
     if command.mode == Mode.Replay or recorded.recording.reply.isReplayed(service):
       let label = recorded.recording.label.toPrintable(RUNES_SHOWN)
       return Exchanged(is_replied: true, reply: recorded.recording.reply,
           note: "Reply replayed from `" & path & "`: " & label & ".")
-  if command.mode == Mode.Replay:
-    return Exchanged(is_replied: false, failure: Failure.Recording,
-        detail: (path & " missing").toPrintable(RUNES_SHOWN))
-  if command.mode == Mode.Record:
-    try:
-      createDir(command.directory)
-    except CatchableError as error:
-      return Exchanged(is_replied: false, failure: Failure.Recording,
-          detail: (path & " unwritable: " & error.msg.splitLines[0]).toPrintable(RUNES_SHOWN))
+  if command.mode == Mode.Replay: return refuse(path & " missing")
+
+  # Send within deadline, through proxy environment names.
   when defined(ssl):
     if context.isNil and url.toLowerAscii.startsWith("https:"):
       try:
@@ -280,6 +347,8 @@ proc exchange(
   if not sent.is_replied:
     return Exchanged(is_replied: false, failure: Failure.Network,
         detail: sent.problem.toPrintable(RUNES_SHOWN))
+
+  # Write reply in record mode: new sibling of mode `0600`, then rename over recording.
   var note = ""
   if command.mode == Mode.Record:
     let recording = Recording(
@@ -288,7 +357,8 @@ proc exchange(
       reply: sent.reply,
     )
     try:
-      writeFile(path & ".writing", recording.toText)
+      discard tryRemoveFile(path & ".writing")  # Sibling left by run that ended before rename.
+      writePrivate(path & ".writing", recording.toText)
       moveFile(path & ".writing", path)
       note = "Reply written to `" & path & "`."
     except CatchableError as error:
