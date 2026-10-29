@@ -92,7 +92,7 @@ type
     Malformed  ## Reply holds no answer of schema; detail says what is missing.
     Word  ## Word of answer is no gismu or cmavo of list, or is past its cap; detail is word.
     Cmavo  ## Answer ends in cmavo, which 4.11 step 2 forbids; detail is tanru.
-    Long  ## Answer holds more than `COUNT_WORDS_MAX` words; detail is count.
+    Long  ## Answer or text given holds more than `COUNT_WORDS_MAX` words; detail is count.
     Readback  ## Rendered lujvo reads back as no tag or other tag, as `brod` does; detail is lujvo.
 
   Suggestion* = object  ## Define outcome of asking for tag: tag checked against lists, or failure.
@@ -111,13 +111,14 @@ type
 
 const
   COUNT_WORDS_MAX* = 6
-    ## Most words answer may hold: `$` scores every choice of rafsi, about 4x per word. Worst
-    ##   case, 6 words of `bloti`, takes 2,151 µs release, 14,697 µs debug; 7 words take 8,241
-    ##   and 68,105 µs (measured 2026-10-29). Schema of Claude takes no `maxItems`, so reader
-    ##   holds cap.
+    ## Most words answer or text given as tag may hold: `$` scores every choice of rafsi, about
+    ##   4x per word. Worst case, 6 words of `bloti`, takes 2,151 µs release, 14,697 µs debug;
+    ##   7 words take 8,241 and 68,105 µs (measured 2026-10-29). Schema of Claude takes no
+    ##   `maxItems`, so reader holds cap.
   BYTES_ELEMENT_MAX* = 64
     ## Most bytes of one word of answer, and of text shortcut reads as tag; lujvo of 6 words is
     ##   shorter, and time of `readTag` grows faster than length (516 letters: 0.9 ms, measured).
+    ##   Cap of bytes caps no words: 64 bytes hold lujvo of 18, so shortcut counts words too.
   BYTES_PASSAGE_MAX* = 65_536  ## Most bytes of text model reads, i.e. 64 KiB; cut is reported.
   BYTES_PAGE_MAX* = 4_194_304  ## Most bytes of page read, i.e. 4 MiB; rest unread, and reported.
   BYTES_REPLY_MAX* = 1_048_576  ## Most bytes of service reply read, i.e. 1 MiB; more is malformed.
@@ -414,12 +415,18 @@ func toPassage*(text: string, url = "", is_page_cut = false): Passage =
   result.is_cut = result.text.len < repaired.len
 
 
-func readTagGiven*(text: string): Option[Tag] =
+func readTagGiven*(text: string): Option[Suggestion] =
   ## Read text given as tag where it holds `BYTES_ELEMENT_MAX` bytes or fewer and reads as one;
   ##   `none` sends it to service, as Lojban prose, English and cmavo alone go.
-  if text.len > BYTES_ELEMENT_MAX: return none(Tag)
+  ##   Tag past `COUNT_WORDS_MAX` words fails as `Long`, named by count before `$` renders it,
+  ##     since 64 bytes hold lujvo of 18 words; gloss and model stay empty, as no service is asked.
+  if text.len > BYTES_ELEMENT_MAX: return none(Suggestion)
   let reading = text.readTag
-  if reading.is_tag: some(reading.tag) else: none(Tag)
+  if not reading.is_tag: return none(Suggestion)
+  let count = reading.tag.words.len
+  if count > COUNT_WORDS_MAX:
+    return some(Suggestion(is_suggested: false, failure: Failure.Long, detail: $count))
+  some(Suggestion(is_suggested: true, tag: reading.tag))
 
 
 
@@ -976,8 +983,7 @@ func explain*(suggestion: Suggestion): string =
     else: explainReading("Answer should name gismu or cmavo of list", detail)
   of Failure.Cmavo: "Answer should end in gismu, as CLL 4.11 step 2 ends tanru; got `" &
       detail & "`."
-  of Failure.Long: "Answer should hold at most " & $COUNT_WORDS_MAX & " words; got `" & detail &
-      "`."
+  of Failure.Long: "Tag should hold at most " & $COUNT_WORDS_MAX & " words; got `" & detail & "`."
   of Failure.Readback: explainReading("Form should read back as its tag", detail)
 
 

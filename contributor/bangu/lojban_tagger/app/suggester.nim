@@ -289,9 +289,12 @@ proc main(): int =
   let command = parsed.get
   if not command.is_url:
     let given = command.argument.readTagGiven
+    if given.isSome and not given.get.is_suggested:
+      stderr.writeLine given.get.explain
+      return 1
     if given.isSome:
-      stdout.write $given.get & "\n"
-      stderr.write toReportGiven(command.argument, given.get)
+      stdout.write $given.get.tag & "\n"
+      stderr.write toReportGiven(command.argument, given.get.tag)
       return 0
   let configured = readSettings(
     getEnv(KEY_SERVICE),
