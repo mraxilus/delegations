@@ -458,6 +458,25 @@ func toSuggestion(failure: Failure, detail: string): Suggestion =
   Suggestion(is_suggested: false, failure: failure, detail: detail.toPrintable(RUNES_SHOWN))
 
 
+func toSuggestionRecording(detail: string): Suggestion =
+  ## Build suggestion refused with `Recording`, detail as binary renders it: never cut whole.
+  Suggestion(is_suggested: false, failure: Failure.Recording, detail: detail)
+
+
+func pathShown(directory, request: string): string =
+  ## Render path of recording of request as refusal shows it: directory made printable and cut
+  ##   alone, then name holding stamp, whole.
+  directory.toPrintable(RUNES_SHOWN) / (request.stamp & ".recording")
+
+
+func detailMalformed(recorded: Recorded, directory, request: string): string =
+  ## Render detail of malformed recording: problem reader names, period dropped, then its line
+  ##   and path shown.
+  var problem = recorded.problem
+  problem.removeSuffix('.')
+  problem & " at line " & $recorded.line & " of " & pathShown(directory, request)
+
+
 func toOutcome(
   suggestion: Suggestion, passage: Passage, model: string, notes: openArray[string]
 ): Outcome =
@@ -470,12 +489,14 @@ func toOutcome(
   )
 
 
-func toOutcome(failure: Failure, detail: string, notes: openArray[string]): Outcome =
+func toOutcome(suggestion: Suggestion, notes: openArray[string]): Outcome =
   ## Build outcome of page that gave no passage: each note, then explanation; exit 1.
-  Outcome(
-    report: notes.mapIt(it & "\n").join & toSuggestion(failure, detail).explain & "\n",
-    code: 1,
-  )
+  Outcome(report: notes.mapIt(it & "\n").join & suggestion.explain & "\n", code: 1)
+
+
+func toOutcome(failure: Failure, detail: string, notes: openArray[string]): Outcome =
+  ## Build outcome of page that gave no passage, detail made printable as binary makes it.
+  toSuggestion(failure, detail).toOutcome(notes)
 
 
 func toOutcomeGiven(text: string): Outcome =
@@ -744,8 +765,8 @@ suite "Internal: Suggester":
       inc count_asked
       let
         passage = text.toPassage
-        path = pathRecording(directory_case, "POST " & settings.toBody(passage))
-      check outcome == toOutcome(toSuggestion(Failure.Recording, path & " missing"), passage,
+        shown = pathShown(directory_case, "POST " & settings.toBody(passage))
+      check outcome == toOutcome(toSuggestionRecording("missing at " & shown), passage,
           settings.model, [])  # sent to service, whose recording is missing
     check count_given >= FLOOR_GIVEN  # texts reading as tag are common
     check count_asked >= FLOOR_ASKED  # texts sent to service are common
@@ -783,22 +804,22 @@ suite "Internal: Suggester":
       (text, page) = (example("lojban"), example("page"))
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
-      path_text = pathRecording(directory_case, "POST " & settings.toBody(passage))
-      path_page = pathRecording(directory_case, "GET " & page.argument)
+      shown_text = pathShown(directory_case, "POST " & settings.toBody(passage))
+      shown_page = pathShown(directory_case, "GET " & page.argument)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-        toOutcome(toSuggestion(Failure.Recording, path_text & " missing"), passage,
-        settings.model, [])  # stamp of service request named
+        toOutcome(toSuggestionRecording("missing at " & shown_text), passage, settings.model,
+        [])  # problem, then stamp of service request named
     check binary.run([], ["--replay:" & directory_case, page.argument]) ==
-        toOutcome(Failure.Recording, path_page & " missing", [])  # stamp of first hop named
+        toOutcome(toSuggestionRecording("missing at " & shown_page), [])  # stamp of first hop
     check not dirExists(directory_case)  # replay makes nothing
     let
       directory_hops = directory / "hops"
       hops = page.toRecordings(Service.Claude)[0 ..< ^1]
       passage_hops = page.toPassage
-      path_service = pathRecording(directory_hops, "POST " & settings.toBody(passage_hops))
+      shown_service = pathShown(directory_hops, "POST " & settings.toBody(passage_hops))
     writeRecordings(directory_hops, hops)
     check binary.run([], ["--replay:" & directory_hops, page.argument]) ==
-        toOutcome(toSuggestion(Failure.Recording, path_service & " missing"), passage_hops,
+        toOutcome(toSuggestionRecording("missing at " & shown_service), passage_hops,
         settings.model, hops.mapIt(noteReplayed(pathRecording(directory_hops, it.request),
         it.label)))  # each hop replayed, then stamp of service request named
 
@@ -825,12 +846,51 @@ suite "Internal: Suggester":
       check not recorded.is_read  # file malformed
       if recorded.is_read: continue
       check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-          toOutcome(toSuggestion(Failure.Recording, path & ":" & $recorded.line & ": " &
-          recorded.problem), passage, settings.model, [])  # path, line and problem of reader
+          toOutcome(toSuggestionRecording(detailMalformed(recorded, directory_case, request)),
+          passage, settings.model, [])  # problem of reader, then line and path
     writeFile(path, Recording(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-        toOutcome(toSuggestion(Failure.Recording, path & " holds other request"), passage,
-        settings.model, [])  # stamp alone never matches, whole request does
+        toOutcome(toSuggestionRecording("other request at " & pathShown(directory_case,
+        request)), passage, settings.model, [])  # stamp alone never matches, whole request does
+
+
+  test "refusal of recording names problem, then path whose directory alone is cut":
+    # Review finding logic-10, 2026-10-29: detail was path then problem, cut whole at
+    #   `RUNES_SHOWN`, so long directory hid stamp and problem.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      text = example("lojban")
+      passage = text.argument.toPassage
+      request = "POST " & settings.toBody(passage)
+      reply = toReplyMessages(text.answer, settings.model)
+      long = directory / "long" / "d".repeat(99) / "e".repeat(99) / "f".repeat(99)
+      name = request.stamp & ".recording"
+      below = long / "file" / "below"  # file in way of directory record makes
+      replay = ["--replay:" & long, text.argument]
+    server.routes = @[(PATH_SERVICE, reply)]
+    check long.len >= 300  # directory name of 300 characters, past `RUNES_SHOWN`
+    let missing = binary.run([], replay)
+    check missing == toOutcome(toSuggestionRecording("missing at " & pathShown(long, request)),
+        passage, settings.model, [])  # `--replay:<long directory> 'mi ciska lo xatra'`
+    createDir(long)
+    writeFile(long / name, Recording(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
+    let other = binary.run([], replay)
+    check other == toOutcome(toSuggestionRecording("other request at " & pathShown(long,
+        request)), passage, settings.model, [])  # other request, then path
+    writeFile(long / name, "")
+    let malformed = binary.run([], replay)
+    check malformed == toOutcome(toSuggestionRecording(detailMalformed("".readRecording, long,
+        request)), passage, settings.model, [])  # problem of reader, then line and path
+    writeFile(below.parentDir, "")
+    let unwritable = binary.run(settings.toEnvironment, ["--record:" & below, text.argument])
+    check unwritable.report.readFramed(noteCredential(KEY_CREDENTIAL) &
+        "\nRecording should hold this request; got `unwritable: ", " at " &
+        pathShown(below, request) & "`.\n").isSome  # error of system, then path
+    for outcome in [missing, other, malformed, unwritable]:
+      check outcome.code == 1 and name in outcome.report  # stamp named whole, past cut
+    check server.heard.len == 0  # nothing sent
+    stopServer(server)
 
 
   test "replay note names label made printable and cut, as report names other outside text":
@@ -1075,8 +1135,9 @@ suite "Internal: Suggester":
       text = example("lojban")
       url = urlLoopback(server.port, "/page")
       file = directory / "unmade" / "file"
-      opening = noteCredential(KEY_CREDENTIAL) & "\nRecording should hold this request; got `"
-      path_found = pathRecording(file, "POST " & settings.toBody("mi ciska".toPassage))
+      opening = noteCredential(KEY_CREDENTIAL) &
+          "\nRecording should hold this request; got `unwritable: "
+      shown_found = pathShown(file, "POST " & settings.toBody("mi ciska".toPassage))
     server.routes = @[
       (PATH_SERVICE, toReplyMessages(text.answer, settings.model)),
       ("/page", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
@@ -1085,7 +1146,7 @@ suite "Internal: Suggester":
     writeFile(file, "")  # `touch F`
     let
       found = binary.run(environment, ["--record:" & file, "mi ciska"])  # `--record:F 'mi ciska'`
-      error_found = found.report.readFramed(opening & path_found & " unwritable: ", "`.\n")
+      error_found = found.report.readFramed(opening, " at " & shown_found & "`.\n")
     check found.code == 1 and found.output == "" and error_found.isSome  # as found in review
     check server.heard.len == 0  # nothing sent, so nothing paid for
     for directory_record in [file, file / "below"]:  # file, then directory below file
@@ -1095,10 +1156,10 @@ suite "Internal: Suggester":
       ]:
         let
           outcome = binary.run(environment, ["--record:" & directory_record, argument])
-          error = outcome.report.readFramed(opening & pathRecording(directory_record, request) &
-              " unwritable: ", "`.\n")
+          error = outcome.report.readFramed(opening, " at " &
+              pathShown(directory_record, request) & "`.\n")
         check outcome.code == 1 and outcome.output == ""  # no tag
-        check error.isSome and error.get.len > 0 and '\n' notin error.get  # path, then error
+        check error.isSome and error.get.len > 0 and '\n' notin error.get  # error, then path
     check server.heard.len == 0  # nothing sent for any directory, text or page
     check readFile(file) == ""  # file in way left as it was
     stopServer(server)
@@ -1193,7 +1254,8 @@ suite "Internal: Suggester":
       reply = toReplyMessages(text.answer, settings.model)
       url = urlLoopback(server.port, "/page")
       shared = directory / "shared"
-      refused = toSuggestion(Failure.Recording, shared & " writable by every user")
+      refused = toSuggestionRecording("writable by every user at " &
+          shared.toPrintable(RUNES_SHOWN))
     server.routes = @[
       (PATH_SERVICE, reply),
       ("/page", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
@@ -1206,8 +1268,8 @@ suite "Internal: Suggester":
     ]:
       check binary.run(settings.toEnvironment, flags & @[text.argument]) == toOutcome(refused,
           passage, settings.model, notes)  # refused, though recording of request stands there
-      check binary.run(settings.toEnvironment, flags & @[url]) == toOutcome(Failure.Recording,
-          refused.detail, notes)  # page refused before its first hop
+      check binary.run(settings.toEnvironment, flags & @[url]) ==
+          toOutcome(refused, notes)  # page refused before its first hop
     check server.heard.len == 0  # nothing sent
     check walkDir(shared).toSeq.len == 1  # nothing written beside recording standing
     stopServer(server)
@@ -1223,6 +1285,7 @@ suite "Internal: Suggester":
       request = "POST " & settings.toBody(passage)
       directory_case = directory / "caps"
       path = pathRecording(directory_case, request)
+      shown = pathShown(directory_case, request)
       bytes_file_max = request.len + BYTES_REPLY_MAX + BYTES_FIELDS_MAX
       whole = Recording(label: LABEL_SUITE, request: request,
           reply: toReplyMessages(text.answer, settings.model)).toText
@@ -1230,19 +1293,21 @@ suite "Internal: Suggester":
     createDir(directory_case)
     for size in [bytes_file_max + 1, bytes_file_max + BYTES_REPLY_MAX]:
       writeFile(path, whole & "x".repeat(size - whole.len))  # read whole, it would be malformed
-      check binary.run([], replay) == toOutcome(toSuggestion(Failure.Recording, path &
-          " larger than " & $bytes_file_max & " bytes"), passage, settings.model,
+      check binary.run([], replay) == toOutcome(toSuggestionRecording("larger than " &
+          $bytes_file_max & " bytes at " & shown), passage, settings.model,
           [])  # refused by size alone
     for count in [BYTES_REPLY_MAX + 1, BYTES_REPLY_MAX + 1_000]:
       let body = Reply(status: 200, content_type: "application/json", body: "x".repeat(count))
       writeFile(path, Recording(label: LABEL_SUITE, request: request, reply: body).toText)
       check getFileSize(path) <= bytes_file_max  # file within its cap, so body is read
-      check binary.run([], replay) == toOutcome(toSuggestion(Failure.Recording, path &
-          " holds body over " & $BYTES_REPLY_MAX & " bytes"), passage, settings.model,
+      check binary.run([], replay) == toOutcome(toSuggestionRecording("body over " &
+          $BYTES_REPLY_MAX & " bytes at " & shown), passage, settings.model,
           [])  # body past cap of reply never replayed
-    writeFile(path, whole & "x".repeat(bytes_file_max - whole.len))
-    check binary.run([], replay).report.startsWith("Recording should hold this request; got `" &
-        path & ":")  # file at its cap is read, and reader refuses what follows body
+    let at_cap = whole & "x".repeat(bytes_file_max - whole.len)
+    writeFile(path, at_cap)
+    check binary.run([], replay) == toOutcome(toSuggestionRecording(detailMalformed(
+        at_cap.readRecording, directory_case, request)), passage, settings.model,
+        [])  # file at its cap is read, and reader refuses what follows body
 
 
   test "recording that stands but cannot be read exits 1 with `Recording`, never traceback":
@@ -1253,8 +1318,9 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings(server.port)
       text = example("lojban")
       directory_case = directory / "unreadable"
-      path = pathRecording(directory_case, "POST " & settings.toBody(text.argument.toPassage))
-      opening = "Recording should hold this request; got `" & path & " unreadable: "
+      request = "POST " & settings.toBody(text.argument.toPassage)
+      path = pathRecording(directory_case, request)
+      opening = "Recording should hold this request; got `unreadable: "
     server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
     createDir(directory_case)
     createSymlink("/proc/self/mem", path)
@@ -1264,7 +1330,8 @@ suite "Internal: Suggester":
     ]:
       let
         outcome = binary.run(settings.toEnvironment, flags & @[text.argument])
-        error = outcome.report.readFramed(notes & opening, "`.\n")
+        error = outcome.report.readFramed(notes & opening, " at " &
+            pathShown(directory_case, request) & "`.\n")
       check outcome.code == 1 and outcome.output == ""  # no tag
       check error.isSome and error.get.len > 0 and
           '\n' notin error.get  # review finding logic-5, 2026-10-29: first line of error alone
@@ -1570,9 +1637,9 @@ suite "Internal: Suggester":
     ]:
       let
         passage = text.toPassage
-        path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+        shown = pathShown(directory_case, "POST " & settings.toBody(passage))
       check binary.run([], @["--replay:" & directory_case] & arguments) ==
-          toOutcome(toSuggestion(Failure.Recording, path & " missing"), passage, settings.model,
+          toOutcome(toSuggestionRecording("missing at " & shown), passage, settings.model,
           [])  # passage after `--` read as text, flag of mode among it too
 
 
@@ -1599,10 +1666,10 @@ suite "Internal: Suggester":
       inc count_visible
       let
         passage = text.toPassage
-        path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+        shown = pathShown(directory_case, "POST " & settings.toBody(passage))
         expected =
           if text.readTagGiven.isSome: text.toOutcomeGiven
-          else: toOutcome(toSuggestion(Failure.Recording, path & " missing"), passage,
+          else: toOutcome(toSuggestionRecording("missing at " & shown), passage,
               settings.model, [])
       check outcome == expected  # text holding visible character asks shortcut, then service
     check count_blank >= FLOOR_BLANK  # blank texts are common
@@ -1636,9 +1703,9 @@ suite "Internal: Suggester":
     for text in ["https://example.org/alice", "a".repeat(BYTES_PAGE_MAX)]:  # URL, text at cap
       let
         passage = text.toPassage
-        path = pathRecording(missing, "POST " & settings.toBody(passage))
+        shown = pathShown(missing, "POST " & settings.toBody(passage))
       check binary.run([], ["--replay:" & missing, "-"], input = text) == toOutcome(
-          toSuggestion(Failure.Recording, path & " missing"), passage, settings.model,
+          toSuggestionRecording("missing at " & shown), passage, settings.model,
           [])  # text whole, never page fetched
     check binary.run(live, ["-"], input = "a".repeat(BYTES_PAGE_MAX + 1)) ==
         Outcome(report: over, code: 2)  # one byte past cap refused, with cap named
@@ -1685,9 +1752,10 @@ suite "Internal: Suggester":
       covered.incl suggestion.failure
     let
       directory_none = directory / "failures" / "none"  # never made
-      path_none = pathRecording(directory_none, request)
-    check binary.run([], ["--replay:" & directory_none, text]) == toOutcome(toSuggestion(
-        Failure.Recording, path_none & " missing"), passage, settings.model, [])  # missing
+      shown_none = pathShown(directory_none, request)
+    check binary.run([], ["--replay:" & directory_none, text]) == toOutcome(
+        toSuggestionRecording("missing at " & shown_none), passage, settings.model,
+        [])  # missing
     covered.incl Failure.Recording
     let
       url = "https://example.org/gone"
