@@ -66,6 +66,10 @@ const
   FLOOR_READBACK = 450  ## Fewest random tanru whose form reads back; 473 read at seed `0`.
   FLOOR_SHARED = 20  ## Fewest random tanru with shared `brod` before head; 27 read at seed `0`.
   FLOOR_CMAVO = 220  ## Fewest random tanru holding cmavo; 254 read at seed `0`.
+  SAMPLES_HYPHENED = 200
+    ## Random words at `BYTES_ELEMENT_MAX` bytes whose every joint 4.11 hyphenates, seeded.
+  FLOOR_REASON_LONG = 100
+    ## Fewest random words whose reason `RUNES_SHOWN` would cut; 128 read at seed `0`.
   SAMPLES_PASSAGE = 300  ## Random passages request laws read under each service, seeded.
   SAMPLES_REPLY = 1000  ## Random replies reading laws read under each service, seeded.
   FLOOR_SUGGESTED = 45
@@ -167,6 +171,13 @@ const
       if not entry.word.isGismu: continue
       for one in entry.rafsi:
         if one.form.get == Form.Cvc: rafsi.add (Word(i), one)
+    rafsi
+  RAFSI_FINAL = block:
+    ## Every CCV and CVV rafsi of list: short rafsi 4.11 lets end lujvo, steps 1 and 2.
+    var rafsi: seq[string]
+    for entry in LIST_GISMU:
+      for one in entry.rafsi:
+        if one.form.get in {Form.Ccv, Form.Cvv}: rafsi.add one
     rafsi
   ROWS_WELL_FORMED = [
     (first: 0x00..0x7F, second: 0x00..0xFF, length: 1),
@@ -976,6 +987,25 @@ proc poolLujvo(): seq[(seq[Word], string)] =
       result.add (words, if count == 1: $head else: joinRafsi(rafsi & @[$head]))
 
 
+proc poolHyphened(): seq[string] =
+  ## Draw `SAMPLES_HYPHENED` words into pool allocated once: CVC rafsi joined with no hyphen, each
+  ##   after first opening with consonant one before closes, so 4.11 step 4b puts `y` at every
+  ##   joint, while room stays for one more and final; then final of `RAFSI_FINAL` filling cap,
+  ##   opening with that consonant too where one fits; caller seeds first.
+  result = newSeqOfCap[string](SAMPLES_HYPHENED)
+  for _ in 1..SAMPLES_HYPHENED:
+    var word = RAFSI_CVC.sample[1]
+    while word.len + 3 + 4 <= BYTES_ELEMENT_MAX:  # CVC rafsi, then final of up to four letters
+      let next = RAFSI_CVC.filterIt(it[1][0] == word[^1])
+      if next.len == 0: break
+      word.add next.sample[1]
+    let
+      fitting = RAFSI_FINAL.filterIt(word.len + it.len <= BYTES_ELEMENT_MAX)
+      doubled = fitting.filterIt(it[0] == word[^1])
+    word.add (if doubled.len > 0: doubled else: fitting).sample
+    result.add word
+
+
 proc poolPassages(): seq[Passage] =
   ## Draw `SAMPLES_PASSAGE` passages into pool allocated once, from fragments of
   ##   `FRAGMENTS_PASSAGE`, with URL and page cut drawn too; caller seeds first.
@@ -1188,7 +1218,7 @@ suite "Internal: Answer":
     let found = "\x01".repeat(13)  # case as found in suite review: 13 bytes judged past cap
     check readAnswer(toAnswer([found]), MODEL_SUITE).explain ==
         "Answer should name gismu or cmavo of list. " &
-        found.readTag.explain.toPrintableReference(RUNES_SHOWN)  # judged by bytes as answered
+        found.readTag.explain.toPrintableReference(high(int))  # judged by bytes as answered
     check readAnswer(toAnswer(["café"]), MODEL_SUITE).explain == "Answer should name " &
         "gismu or cmavo of list. Tag should hold Lojban letters alone; got `é` in " &
         "`café`."  # review finding logic-6, 2026-10-29: named byte `C3` alone
@@ -1206,13 +1236,41 @@ suite "Internal: Answer":
               "Word of answer should hold at most 64 bytes; got `" & detail & "`."
             else:
               "Answer should name gismu or cmavo of list. " &
-                  element.readTag.explain.toPrintableReference(RUNES_SHOWN)
+                  element.readTag.explain.toPrintableReference(high(int))
         check suggestion.failureRead == some((Failure.Word, detail))  # word named, printable
         check suggestion.explain == explained  # judged and explained as answered, cap included
         check suggestion.explain.isPrintable  # whole characters, none report escapes
     check readAnswer(toAnswer(["brodi", "ciska"]), MODEL_SUITE).explain == "Form should read " &
         "back as its tag. Rafsi should name one gismu; got `brod`, which several share, in " &
         "`brodyci'a`."  # form `$` wrote is explained as read too, unchanged
+
+
+  test "reason of word or form within caps is kept whole, so explanation ends in its value":
+    let found = "bab".repeat(20) & "ba'i"  # case as found: form 4.11 gives holds 84 letters
+    check found.len == BYTES_ELEMENT_MAX  # at cap, so reader reads it
+    let explained = readAnswer(toAnswer([found]), MODEL_SUITE).explain
+    check explained == "Answer should name gismu or cmavo of list. " &
+        found.readTag.explain  # recheck claim regressions-src-1, 2026-10-29: ended in `…`
+    check explained.endsWith("`.")  # IV.4, message ends in its value, never in cut
+    randomize(0)
+    let (pool_tanru, pool_hyphened) = (poolTanru(), poolHyphened())
+    var (count_long, count_readback) = (0, 0)
+    for word in served(pool_hyphened):  # `SAMPLES_HYPHENED` words, seeded
+      let
+        reason = word.readTag.explain.toPrintableReference(high(int))
+        explained = readAnswer(toAnswer([word]), MODEL_SUITE).explain
+      check explained == "Answer should name gismu or cmavo of list. " &
+          reason  # reason of reader kept whole, made printable
+      check explained.endsWith("`.")  # IV.4, message ends in its value
+      if reason != word.readTag.explain.toPrintableReference(RUNES_SHOWN): inc count_long
+    for words in served(pool_tanru):  # `SAMPLES_TANRU` tanru, seeded
+      let suggestion = readAnswer(words.toAnswer, MODEL_SUITE)
+      if suggestion.is_suggested: continue
+      check suggestion.failure == Failure.Readback and
+          suggestion.explain.endsWith("`.")  # IV.4, form refused ends in its value
+      inc count_readback
+    check count_long >= FLOOR_REASON_LONG  # corpus reaches reasons display cap would cut
+    check count_readback >= FLOOR_SHARED  # corpus reaches forms refused on reading back
 
 
   test "count of words: none is Malformed, one to six pass, seven and eight are Long":
