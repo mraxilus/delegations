@@ -268,6 +268,13 @@ const
     ##   that name itself behind one dot and two, name of other leaves, and address.
   COUNT_DOTTED = 64
     ## Sends dot law makes: each of `HOSTS_DOTTED` with each leaf, directly and through tunnel.
+  HOSTS_CLOSED = [
+    ("localhost.", "localhost"), ("wrong.example.", "wrong.example"), ("localhost..", ""),
+    ("wrong.example..", ""),
+  ]
+    ## Names closing with dot, beside name pin should hold: one dot dropped, as certificate names
+    ##   host without it; of two, one kept, so no leaf names it.
+  COUNT_CLOSED = 16  ## Sends closing law makes: each of `HOSTS_CLOSED` with each leaf.
   COUNT_SECURED = 256
     ## Sends TLS law makes: each of eight cases of leaf and host after each, two sends to pair,
     ##   directly and through tunnel.
@@ -2054,6 +2061,42 @@ suite "Internal: Send":
             check named & $secured.head.lines.len == named & "0"  # domain: server read no byte
             check named & $secured.connect.len == named & "0"  # domain: proxy read nothing
       check count == COUNT_DOTTED  # each host opening with dot, each leaf, each way
+
+
+  test "name closing with dot pins without that dot, as certificate names host without it":
+    # Regression, found in recheck claim regressions-app-3, 2026-10-29: pin kept dot closing
+    #   absolute name, so OpenSSL refused leaf naming same host without it, which curl takes.
+    #   Name closing with dot resolves nowhere here, so law drives tunnel alone, which names host
+    #     to proxy as written.
+    when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
+    else:
+      check authority.problem == ""  # `openssl` made root and leaves
+      let found = authority.sendSecured(Leaf.Name, "localhost.", should_tunnel = true)
+      check found.sent.outcome == "replied"  # case as found: was `certificate verify failed`
+      check found.head.values("authorization") ==
+          @["Bearer " & CREDENTIAL_SUITE]  # case as found: bearer reaches host leaf names
+      var count = 0
+      for (host, pinned) in HOSTS_CLOSED:
+        for leaf in Leaf:
+          let
+            secured = authority.sendSecured(leaf, host, should_tunnel = true)
+            is_named = pinned in LUT_HOSTS_BY_LEAF[leaf]
+            named = $leaf & " " & host & ": "
+          inc count
+          check named & $secured.sent.is_replied ==
+              named & $is_named  # domain: RFC 5280 4.2.1.6, name of certificate closes no dot
+          if is_named:
+            check named & $secured.head.values("authorization") ==
+                named & $(@["Bearer " & CREDENTIAL_SUITE])  # domain: bearer reaches host named
+          else:
+            check named & $(PROBLEM_VERIFY in secured.sent.outcome) ==
+                named & "true"  # domain: refused by check of certificate, never otherwise
+            check named & $secured.head.lines.len ==
+                named & "0"  # domain: server read no byte of request
+          let target = host & ":" & $secured.port
+          check named & $secured.connect.filterIt(it.startsWith("CONNECT ")) ==
+              named & $(@["CONNECT " & target & " HTTP/1.1"])  # domain: tunnel keeps dot of name
+      check count == COUNT_CLOSED  # each name closing with dot, each leaf
 
 
   test "https URL with no context, or with host TLS cannot pin, is refused, and nothing goes out":
