@@ -104,6 +104,9 @@ type
     of false:
       failure*: Failure  ## Why no tag.
       detail*: string  ## Offending value, made printable.
+      reason*: string = ""
+        ## Why reader refuses word or form as read, i.e. `explain` of its reading (`commands.nim`),
+        ##   made printable when failure is made; empty for value read as tag, and other failures.
       is_past_cap*: bool = false
         ## Word held over `BYTES_ELEMENT_MAX` bytes, so reader never read it; set when failure is
         ##   made, since escapes lengthen detail.
@@ -816,12 +819,14 @@ func toJSON(text: string): Option[JsonNode] =
       result = none(JsonNode)
 
 
-func fail(failure: Failure, detail: string, is_past_cap = false): Suggestion =
-  ## Build suggestion that failed, detail made printable; `is_past_cap` marks word never read.
+func fail(failure: Failure, detail: string, reason = "", is_past_cap = false): Suggestion =
+  ## Build suggestion that failed, detail and reason made printable; `is_past_cap` marks word
+  ##   never read.
   Suggestion(
     is_suggested: false,
     failure: failure,
     detail: detail.toPrintable(RUNES_SHOWN),
+    reason: reason.toPrintable(RUNES_SHOWN),
     is_past_cap: is_past_cap,
   )
 
@@ -829,6 +834,7 @@ func fail(failure: Failure, detail: string, is_past_cap = false): Suggestion =
 func readAnswer(text, model: string): Suggestion =
   ## Read answer of schema as tag: count, each word through `readTag`, tanru through
   ##   `readTanru`, form read back; gloss and model made printable.
+  ##   Word or form refused keeps reason of reader as read here, so `explain` reads none again.
   let parsed = text.toJSON
   if parsed.isNone or parsed.get.kind != JObject:
     return fail(Failure.Malformed, "answer is no JSON object: " &
@@ -850,7 +856,7 @@ func readAnswer(text, model: string): Suggestion =
       continue
     let listed = reading.text.word
     if reading.refusal == Refusal.Cmavo and listed.isSome: words.add listed.get
-    else: return fail(Failure.Word, element)
+    else: return fail(Failure.Word, element, reading.explain)
   if words.len > COUNT_WORDS_MAX: return fail(Failure.Long, $words.len)
   let
     tanru = words.mapIt($it).join("+")
@@ -859,7 +865,8 @@ func readAnswer(text, model: string): Suggestion =
   let
     form = $tag.get
     back = form.readTag
-  if not back.is_tag or back.tag != tag.get: return fail(Failure.Readback, form)
+  if not back.is_tag: return fail(Failure.Readback, form, back.explain)
+  if back.tag != tag.get: return fail(Failure.Readback, form)
   Suggestion(
     is_suggested: true,
     tag: tag.get,
@@ -958,14 +965,14 @@ func readReply*(service: Service, reply: Reply): Suggestion =
 
 func explain*(suggestion: Suggestion): string =
   ## Render why no tag was suggested, ending in offending value; `Word` and `Readback` end in
-  ##   `explain` of their reading (`commands.nim`), so refusal wording stays in one place.
+  ##   `reason`, `explain` of reading made when failure was (`commands.nim`), so refusal wording
+  ##   stays in one place, and explain reads no value again: escapes of detail never reach reader.
   ##   Word past cap is named by cap, as `readAnswer` decided when it failed, never by detail.
-  ##   Detail reading as tag has no refusal, so its wording ends in detail alone; never raises.
+  ##   Failure with no reason ends in detail alone; never raises.
 
-  func explainReading(heading, detail: string): string =
-    ## Render heading, then why reader refuses detail; heading alone where detail reads as tag.
-    let reading = detail.readTag
-    if reading.is_tag: heading & "; got `" & detail & "`." else: heading & ". " & reading.explain
+  func explainReason(heading, reason, detail: string): string =
+    ## Render heading, then reason; heading and detail where no reason was kept.
+    if reason.len > 0: heading & ". " & reason else: heading & "; got `" & detail & "`."
 
   let detail = suggestion.detail
   case suggestion.failure
@@ -980,11 +987,11 @@ func explain*(suggestion: Suggestion): string =
   of Failure.Word:
     if suggestion.is_past_cap:
       "Word of answer should hold at most " & $BYTES_ELEMENT_MAX & " bytes; got `" & detail & "`."
-    else: explainReading("Answer should name gismu or cmavo of list", detail)
+    else: explainReason("Answer should name gismu or cmavo of list", suggestion.reason, detail)
   of Failure.Cmavo: "Answer should end in gismu, as CLL 4.11 step 2 ends tanru; got `" &
       detail & "`."
   of Failure.Long: "Tag should hold at most " & $COUNT_WORDS_MAX & " words; got `" & detail & "`."
-  of Failure.Readback: explainReading("Form should read back as its tag", detail)
+  of Failure.Readback: explainReason("Form should read back as its tag", suggestion.reason, detail)
 
 
 func toReport*(suggestion: Suggestion, passage: Passage, model_asked: string): string =
