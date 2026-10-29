@@ -768,9 +768,9 @@ func prescan(head: string): string =
   ##   4: comment skipped to `-->`, its own dashes counting; other tag read past its attributes;
   ##   `<!`, `</` and `<?` skipped to `>`; empty where no meta names one, or where bytes run out.
   ##   Meta inside raw text is read too, as prescan knows no element.
-  # TODO: Read UTF-16 declaration, step 2, and XML encoding prescan falls back on where bytes
-  #   run out: UTF-16 page with neither mark nor header now reads as UTF-8, NULs and all, and
-  #   page naming encoding in `<?xml` declaration alone reads as UTF-8.
+  ##   Cost: UTF-16 declaration of step 2, and XML encoding prescan falls back on where bytes run
+  ##     out, are not read: UTF-16 page with neither mark nor header reads as UTF-8, NULs and all,
+  ##     and page naming encoding in `<?xml` declaration alone reads as UTF-8.
   var at = 0
   while at < head.len:
     let start = at + 1 + ord(head.continuesWith("</", at))  # Name of tag, past `/` of closing.
