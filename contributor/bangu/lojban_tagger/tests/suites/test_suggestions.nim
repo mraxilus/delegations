@@ -369,6 +369,11 @@ func tagGiven(text: string): Option[Tag] =
   if given.isSome: given.get.tagRead else: none(Tag)
 
 
+func textField(field: Option[JsonNode]): string =
+  ## Read string field holds; empty where field is absent, null or no string.
+  if field.isSome: field.get.getStr else: ""
+
+
 func isStemShared(words: openArray[string]): bool =
   ## Test `$` must write shared `brod`: `brodi`, `brodo` or `brodu` stands before head.
   for i in 0..<words.high:
@@ -1388,6 +1393,50 @@ suite "Internal: Reply":
     check joined.is_suggested and joined.model == "claude-opus-4-8"  # model served is named
     check readReply(Service.Claude, Reply(status: 200, content_encoding: "identity",
         body: answer.body)).tagRead == some(tanru("ciska"))  # identity is no encoding
+
+
+  test "refusal names category, then recommended model, then explanation, each where given":
+    # Read refusal as example of refusals and fallback page gives it, at
+    #   https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback
+    let
+      cyber = "This request was declined because it could enable cyber harm."
+      found = toReply(
+        %*{
+          "id": "msg_01XFUDYJgAACzvnptvVoYEL", "type": "message", "role": "assistant",
+          "model": "claude-fable-5", "content": [], "stop_reason": "refusal",
+          "stop_details": {"type": "refusal", "category": "cyber", "explanation": cyber},
+          "usage": {"input_tokens": 412, "output_tokens": 0},
+        },
+      )
+    check readReply(Service.Claude, found).failureRead ==
+        some((Failure.Declined, "cyber: " & cyber))  # review finding wire-6, 2026-10-29
+
+    # Compose detail of every refusal, each field absent, null or given.
+    let fields = [
+      ("category", "bio"), ("recommended_model", "claude-opus-4-8"),
+      ("explanation", "This request was declined because it could enable biological harm."),
+    ]
+    for category in [none(JsonNode), some(newJNull()), some(%fields[0][1])]:
+      for model in [none(JsonNode), some(newJNull()), some(%fields[1][1])]:
+        for explanation in [none(JsonNode), some(newJNull()), some(%fields[2][1])]:  # 27, all
+          let details = %*{"type": "refusal"}
+          for (key, field) in [(fields[0][0], category), (fields[1][0], model),
+              (fields[2][0], explanation)]:
+            if field.isSome: details[key] = field.get
+          let
+            reply = toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": details})
+            expected =
+                (if category.textField.len > 0: category.textField else: "none") &
+                (if model.textField.len > 0: ", recommended model " & model.textField else: "") &
+                (if explanation.textField.len > 0: ": " & explanation.textField else: "")
+          check readReply(Service.Claude, reply).failureRead ==
+              some((Failure.Declined, expected))  # refusals and fallback page, `stop_details`
+    let
+      long = "Declined \x1B[2J" & "x".repeat(RUNES_SHOWN)
+      reply_long = toReply(%*{"content": [], "stop_reason": "refusal",
+          "stop_details": {"category": "bio", "explanation": long}})
+    check readReply(Service.Claude, reply_long).failureRead == some((Failure.Declined,
+        ("bio: " & long).toPrintableReference(RUNES_SHOWN)))  # displayed: printable and cut
 
 
   test "each row of reply table of chat completion gives its result":
