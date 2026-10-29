@@ -20,7 +20,8 @@
 ##   Leading argument opening with `-` is flag; flag usage does not take exits 2 before any
 ##     setting, credential or socket, so mistyped flag never goes out as passage of paid request.
 ##     Cost: text opening with `-` needs `--` before it.
-##   Text given that reads as tag already asks no service, so it needs no credential.
+##   Text given that reads as tag already asks no service, so it needs no credential; text given
+##     holding no visible character (`isBlank`) exits 2, as page holding none gives no text.
 ##   Service, endpoint, model, effort and credential come from environment on each run, as
 ##     index path does for `tagger`: credential exists only at run time, and rest must agree
 ##     with it (Article II.2). Credential is read from `LOJBAN_TAGGER_API_KEY`, then from usual
@@ -121,6 +122,8 @@ func readCommand(arguments: openArray[string]): Option[Command] =
   ##     is usage error, so mistyped flag never goes out as passage of paid request.
   ##   Without `--`, passage holds no flag of mode, and opens with `-` only where `-` is all of
   ##     it, so flag is never read as text.
+  ##   Passage holding no visible character (`isBlank`) is usage error, as page holding none
+  ##     gives no text, so empty passage never goes out.
   var
     command = Command(mode: Mode.Live)
     at = 0
@@ -143,7 +146,7 @@ func readCommand(arguments: openArray[string]): Option[Command] =
       rest.anyIt(it.startsWith(FLAG_RECORD) or it.startsWith(FLAG_REPLAY))):
     return none(Command)
   command.argument = rest.join(" ")
-  if command.argument.strip.len == 0: return none(Command)
+  if command.argument.isBlank: return none(Command)
   command.is_url = rest.len == 1 and rest[0].isURL
   some(command)
 
