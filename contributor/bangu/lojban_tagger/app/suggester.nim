@@ -14,7 +14,8 @@
 ##   | --replay:<directory>      | read every exchange from recordings; send nothing      |
 ##   | --                        | end flags, so passage may open with `-`                |
 ##   |---------------------------|--------------------------------------------------------|
-##   Exit: 0 tag printed, 1 no tag and failure named, 2 usage or settings error, nothing sent.
+##   Exit: 0 tag printed, 1 no tag and failure named, 2 usage, input or settings error, nothing
+##     sent.
 ##
 ##   Standard output gets tag alone, so `tagger tag <name> "$(suggester ...)"` composes both
 ##     tools; report goes to standard error.
@@ -31,13 +32,13 @@
 ##     agree with it (Article II.2). Credential is read from `LOJBAN_TAGGER_API_KEY`, then from
 ##     usual name of service; report names variable, never value. `ANTHROPIC_BASE_URL` is never
 ##     read.
+##   Usual name of service is read only where endpoint has host of default endpoint of service,
+##     compared without case: key exported for other tools never goes to other host, which
+##     reads `LOJBAN_TAGGER_API_KEY` alone, as `chat` does.
 ##   `LOJBAN_TAGGER_WORKSPACE` names workspace `claude` sends as `anthropic-workspace-id`, which
 ##     key scoped to no workspace needs on every request; ID of `wrkspc_` and visible ASCII
 ##     alone, at most `BYTES_WORKSPACE_MAX` bytes, so no line break reaches header. Other service
 ##     refuses any value. It stays out of stamp, so recording replays under any workspace.
-##   Usual name of service is read only where endpoint has host of default endpoint of service,
-##     compared without case: key exported for other tools never goes to other host, which
-##     reads `LOJBAN_TAGGER_API_KEY` alone, as `chat` does.
 ##   Second binary, not verb of `tagger`: `-d:ssl` loads libssl when program starts, so every
 ##     verb of `tagger` would need it; Architect chose second binary.
 ##   Page redirects are followed here, at most `COUNT_REDIRECTS_MAX`, choosing proxy again for
@@ -46,6 +47,11 @@
 ##   Record mode makes its directory before it reads or sends, so directory it cannot make refuses
 ##     run with `Recording`, and nothing is paid for; recording it cannot write after reply is
 ##     named in note, and tag still prints. Cost: failed send leaves empty directory behind.
+##   Record mode replays service reply by how `readReply` reads it, never by status alone: tag,
+##     and failure of answer service bills, replay, so no answer is paid twice; reply reading as
+##     `Status` goes out again, as OpenRouter answers 200 holding provider error, which it does
+##     not bill and which passes.
+##     Cost: recorded reply is read twice, once to choose and once to report.
 ##   Recordings hold passage, page and reply, so they stay private: record mode makes each
 ##     directory it makes with mode `0700`, and writes each recording with mode `0600` to new
 ##     sibling, refusing file or link there, before rename.
@@ -58,11 +64,8 @@
 ##   Request of service exchange, which stamp names and recording keeps, is `POST` and endpoint,
 ##     line break, then body, so recording replays for its endpoint alone; request of page hop
 ##     is `GET` and URL. Credential stays out, so recording replays under any credential.
-##   Record mode replays service reply by how `readReply` reads it, never by status alone: tag,
-##     and failure of answer service bills, replay, so no answer is paid twice; reply reading as
-##     `Status` goes out again, as OpenRouter answers 200 holding provider error, which it does
-##     not bill and which passes.
-##     Cost: recorded reply is read twice, once to choose and once to report.
+##   Refusal of recording names problem first, then path, whose directory alone is made
+##     printable and cut, so long directory hides neither problem nor stamp.
 
 {.experimental: "strictFuncs".}
 

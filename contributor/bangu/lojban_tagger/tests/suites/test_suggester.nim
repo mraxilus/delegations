@@ -9,12 +9,18 @@
 ##   Environment reaches binary as shell prefix, never through `putEnv`: each run blanks every
 ##     variable binary reads, usual name of each credential and every proxy variable, so
 ##     environment of host never reaches run, and names sink at `ANTHROPIC_BASE_URL`, which no
-##     run may reach. Standard output and error go to files, so tag and report are read apart.
-##   Expected outcome comes from pure pipeline: `toPassage` or `readPage`, `toBody`, `stamp`,
-##     `readReply`, `toReport` and `explain`; so suite holds wiring, `test_suggestions.nim` holds
-##     each step, and `test_exchanges.nim` holds transport. Problems of settings and credential
-##     are written out in full: `readSettings` and `findCredential` are private to binary, so
-##     suite holds their wording.
+##     run may reach. Standard output and error go to files, so tag and report are read apart;
+##     standard input comes from file, so run reading it meets end, never pipe left open.
+##   `SSL_CERT_FILE` and `SSL_CERT_DIR` pass from host on purpose: `newContext` reads them for
+##     trusted roots, which tunnel test needs, and prefix can set either empty, never unset it,
+##     while empty one names no root, so context fails.
+##     Cost: verdict of tunnel test rests on roots of host, as every https request does.
+##   Expected outcome comes from pure pipeline: `toPassage` or `readPage`, `toBody` within
+##     `requestService`, `stamp`, `readReply`, `toReport` and `explain`; so suite holds wiring,
+##     `test_suggestions.nim` holds each step, and `test_exchanges.nim` holds transport. Problems
+##     of settings and credential, and details of refused recordings (`pathShown`,
+##     `detailMalformed`), are written out in full: `readSettings`, `findCredential` and
+##     `exchange` are private to binary, so suite holds their wording.
 ##   Servers are raw listeners of `std/asyncnet` on `127.0.0.1`, at port system chooses: each
 ##     reads request byte for byte, since `std/asynchttpserver` keeps last of repeated header
 ##     lines, answers reply its target routes to, then closes connection. Suite drives them by
@@ -29,12 +35,14 @@
 ##     as report names other outside text.
 ##   Record makes its directory before it sends, refusing where it cannot, so nothing is paid
 ##     for; recording it cannot write after reply is named in note, and reply is read still.
-##     Error text is system's, so checks read its frame: path named, then one line of error.
-##     Cost: write refused by permission stays undriven, since suite may run as root, whom no
-##     permission refuses; file or directory in way of recording stands in for it.
+##     Error text is system's, so checks read its frame: problem, one line of error, then path.
+##     Cost: write or read refused by permission stays undriven, since suite may run as root,
+##     whom no permission refuses; file or directory in way of recording stands in for write,
+##     and link to `/proc/self/mem`, whose read fails even for root, stands in for read.
+##   Modes of directories and recordings record makes are read back as set, whatever umask of
+##     host, since binary names mode where it makes each.
 ##   Cost: no root signs loopback server, so TLS past tunnel request and name lookup stay
-##     undriven, and tunnel test needs trusted roots of host, as every https request does;
-##     deadline reads real clock, so its placeholder skips (Article IX.9).
+##     undriven; deadline reads real clock, so its placeholder skips (Article IX.9).
 
 {.experimental: "strictFuncs".}
 
