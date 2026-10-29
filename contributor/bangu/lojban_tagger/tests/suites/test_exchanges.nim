@@ -2191,6 +2191,9 @@ suite "Internal: Send":
 
 
   test "https URL with no context, or with host TLS cannot pin, is refused, and nothing goes out":
+    # Regression, found while fixing review finding security-1, 2026-10-29: https URL with no
+    #   context made client wrap socket on nil context, so program ended with `SIGSEGV` in
+    #   `wrapSocket`.
     when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
     else:
       check authority.problem == ""  # `openssl` made root and leaves
@@ -2198,15 +2201,21 @@ suite "Internal: Send":
         listener = listenRaw()
         port = int(listener.getLocalAddr[1])
         reading = listener.readHeads
-      for url in [
-        "https://127.0.0.1:" & $port & "/v1", "HTTPS://127.0.0.1:" & $port & "/v1",
-        "https://localhost:" & $port & "/v1",
-      ]:
-        for proxy_url in [none(string), some(urlLoopback(port, ""))]:
-          let
-            sent = sendLoopback(url, "{}", credential = CREDENTIAL_GIVEN, proxy_url = proxy_url)
-            named = url & " " & $proxy_url & ": "
-          check named & sent.outcome == named & PROBLEM_CONTEXT  # pin needs context
+        found = sendLoopback(
+          "https://127.0.0.1:" & $port & "/v1",
+          "{}",
+          credential = CREDENTIAL_GIVEN,
+        )
+      check found.outcome == PROBLEM_CONTEXT  # case as found: program ended with `SIGSEGV`
+      for spelled in spellingsCase("https"):
+        for host in HOSTS_SECURED:
+          for proxy_url in [none(string), some(urlLoopback(port, ""))]:
+            let
+              url = spelled & "://" & host & ":" & $port & "/v1"
+              sent = sendLoopback(url, "{}", credential = CREDENTIAL_GIVEN, proxy_url = proxy_url)
+              named = url & " " & $proxy_url & ": "
+            check named & sent.outcome ==
+                named & PROBLEM_CONTEXT  # domain: pin needs context, scheme in any case
       for proxy_url in [none(string), some(urlLoopback(port, ""))]:
         let sent = waitFor send(
           "https:///v1/messages",
