@@ -384,6 +384,7 @@ const
   ]
     ## Ports of proxy URL at bounds of one to five digits from 1 to 65535, beside whether `send`
     ##   takes each: none, zero, five digits with zeros leading, past 65535, six digits, no digits.
+    ##   Sibling of `PORTS_URL` in `test_suggester.nim`, since neither suite imports other (II.9).
   COUNT_PROXIES = 432
     ## Proxy URLs leak law sends: each of `OPENINGS_PROXY`, `HOSTS_PROXY`, `PORTS_PROXY` and
     ##   `USERS_PROXY` with each other.
@@ -680,6 +681,7 @@ proc poolPaths(): seq[string] =
 proc poolPorts(): seq[string] =
   ## Draw `SAMPLES_PORTS` random ports into pool allocated once: number up to 999,999, under
   ##   70,000 half time, after up to two zeros; caller seeds first.
+  ##   Sibling of `poolPorts` in `test_suggester.nim`, which draws port same way (II.9).
   result = newSeqOfCap[string](SAMPLES_PORTS)
   for _ in 1..SAMPLES_PORTS:
     let number = if rand(1) == 0: rand(70_000) else: rand(999_999)
