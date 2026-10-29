@@ -394,16 +394,24 @@ func toPrefix(environment: openArray[(string, string)]): string =
 
 
 proc run(
-  binary: Binary, environment: openArray[(string, string)], arguments: openArray[string]
+  binary: Binary,
+  environment: openArray[(string, string)],
+  arguments: openArray[string],
+  input = "",
+  path_input = "",
 ): Outcome =
-  ## Run binary under environment, sink named at `KEY_BASE`, streams to files; drive servers by
+  ## Run binary under environment, sink named at `KEY_BASE`, standard input read from file
+  ##   holding `input`, or from `path_input` where named, streams to files; drive servers by
   ##   `poll` until child exits.
+  ##   Standard input is always file, so run reading it meets end, never pipe left open.
+  let path_read = if path_input.len > 0: path_input else: binary.path.parentDir / "input"
+  if path_input.len == 0: writeFile(path_read, input)
   let
     path_output = binary.path.parentDir / "output"
     path_report = binary.path.parentDir / "report"
     command = toPrefix(@[(KEY_BASE, urlLoopback(binary.sink.port, ""))] & @environment) & " " &
-        (@[binary.path] & @arguments).map(quoteShell).join(" ") & " >" &
-        quoteShell(path_output) & " 2>" & quoteShell(path_report)
+        (@[binary.path] & @arguments).map(quoteShell).join(" ") & " <" &
+        quoteShell(path_read) & " >" & quoteShell(path_output) & " 2>" & quoteShell(path_report)
     child = startProcess(command, options = {poEvalCommand})
   while child.running: poll(MS_POLL)
   result = Outcome(
@@ -1480,6 +1488,52 @@ suite "Internal: Suggester":
       check outcome == expected  # text holding visible character asks shortcut, then service
     check count_blank >= FLOOR_BLANK  # blank texts are common
     check count_visible >= FLOOR_VISIBLE  # texts holding visible character are common
+    stopServer(server)
+
+
+  test "`-` reads passage from standard input up to `BYTES_PAGE_MAX` bytes, as text given goes":
+    # Review finding security-5, 2026-10-29: passage went on command line, which `ps` shows.
+    let
+      server = startServer()
+      live = Service.Claude.toSettings(server.port).toEnvironment
+      settings = Service.Claude.toSettings
+      directory_case = directory / "reading"
+      missing = directory_case / "missing"  # never made, so recording of each request misses
+      over = "Text on standard input should hold at most " & $BYTES_PAGE_MAX &
+          " bytes; got more than `" & $BYTES_PAGE_MAX & "`.\n"
+    for example in EXAMPLES:
+      if example.hops.len > 0: continue  # page of URL, never text of input
+      for service in [Service.Claude, Service.OpenRouter]:
+        let directory_example = directory_case / (example.name & "_" & $service)
+        writeRecordings(directory_example, example.toRecordings(service))
+        let given = binary.run([(KEY_SERVICE, $service)], ["--replay:" & directory_example,
+            example.argument])
+        check given.code == 0  # recording of text given as argument replays
+        for flags in [@["-"], @["--", "-"]]:
+          check binary.run([(KEY_SERVICE, $service)], @["--replay:" & directory_example] & flags,
+              input = example.argument) == given  # same stamp, so same recording and report
+    check binary.run([(KEY_SERVICE, "bogus")], ["-"], input = TEXT_GIVEN) ==
+        TEXT_GIVEN.toOutcomeGiven  # shortcut reads text of input too, reading no setting
+    for text in ["https://example.org/alice", "a".repeat(BYTES_PAGE_MAX)]:  # URL, text at cap
+      let
+        passage = text.toPassage
+        path = pathRecording(missing, "POST " & settings.toBody(passage))
+      check binary.run([], ["--replay:" & missing, "-"], input = text) == toOutcome(
+          toSuggestion(Failure.Recording, path & " missing"), passage, settings.model,
+          [])  # text whole, never page fetched
+    check binary.run(live, ["-"], input = "a".repeat(BYTES_PAGE_MAX + 1)) ==
+        Outcome(report: over, code: 2)  # one byte past cap refused, with cap named
+    for text in ["", "\n", "\xEF\xBB\xBF"]:
+      check binary.run(live, ["-"], input = text) == Outcome(report: USAGE,
+          code: 2)  # blank input refused as blank text given
+    let
+      opening = "Text on standard input should be readable; got `"
+      unread = binary.run(live, ["-"], path_input = directory)
+      error = unread.report.readFramed(opening, "`.\n")
+    check unread.code == 2 and unread.output == ""  # input refused, nothing printed
+    check error.isSome and error.get.len > 0 and '\n' notin error.get  # first line of error
+    check server.heard.len == 0  # nothing sent past cap, blank or unread
+    check not dirExists(missing)  # nothing written
     stopServer(server)
 
 
