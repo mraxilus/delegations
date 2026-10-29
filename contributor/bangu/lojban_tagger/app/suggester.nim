@@ -44,6 +44,8 @@
 ##     refuses any value. It stays out of stamp, so recording replays under any workspace.
 ##   Second binary, not verb of `tagger`: `-d:ssl` loads libssl when program starts, so every
 ##     verb of `tagger` would need it; Architect chose second binary.
+##     Cost: second build and binary to ship, and tag from service runs two programs, as
+##       `tagger tag <name> "$(suggester ...)"` composes them.
 ##   Page redirects are followed here, at most `COUNT_REDIRECTS_MAX`, choosing proxy again for
 ##     each hop; https never falls to http, and URL seen twice ends loop. Service redirect is
 ##     never followed, so credential stays with its endpoint.
