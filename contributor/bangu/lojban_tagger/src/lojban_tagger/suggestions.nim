@@ -291,6 +291,19 @@ func repairEncoding(bytes: string): tuple[text: string, count_repaired: int] =
     i = j
 
 
+func dropSequenceCut(bytes: string): string =
+  ## Drop sequence cut short where bytes end: lead within last three bytes, then fewer bytes than
+  ##   its row of Table 3-7 needs, each in bounds; any other ending stays, for repair to count.
+  for at in countdown(bytes.high, max(0, bytes.len - 3)):
+    let (count_more, low, high) = uint8(bytes[at]).sequence
+    if count_more == 0 and uint8(bytes[at]) in 0x80'u8..0xBF'u8: continue  # Continuation.
+    let count_after = bytes.high - at
+    if count_more <= count_after or (count_after > 0 and uint8(bytes[at+1]) notin low..high):
+      return bytes
+    return bytes[0..<at]
+  bytes
+
+
 func toBytes(code: int): string =
   ## Encode code point as UTF-8; U+FFFD where it is surrogate or past U+10FFFF.
   if code in 0xD800..0xDFFF or code > 0x10FFFF or code < 0: return REPLACEMENT
@@ -559,10 +572,13 @@ func sniffMark(bytes: string): tuple[label, mark: string] =
   ("", "")
 
 
-func decode(body, label: string): Option[string] =
+func decode(body, label: string; is_cut = false): Option[string] =
   ## Decode body by charset label: UTF-8 group as is, windows-1252 group by table; `none` for
   ##   any other label.
-  if label in LABELS_UNICODE: return some(body)
+  ##   Body cap cut has no end of queue, so UTF-8 decoder of WHATWG Encoding Standard 8.1.1,
+  ##     which errs on short sequence at end of queue alone, waits on sequence cap cut short:
+  ##     it is dropped (`dropSequenceCut`), never repaired or counted.
+  if label in LABELS_UNICODE: return some(if is_cut: body.dropSequenceCut else: body)
   if label notin LABELS_LATIN: return none(string)
   var text = newStringOfCap(body.len)
   for character in body:
@@ -605,7 +621,7 @@ func readPage*(url: string, reply: Reply): Paged =
     label =
       if sniffed.label.len > 0: sniffed.label
       else: readCharset(reply.content_type, body, is_markup)
-    decoded = decode(body, label)
+    decoded = decode(body, label, is_cut = reply.is_cut)
   if decoded.isNone: return refusePage("charset " & label)
   let passage = toPassage(
     if is_markup: decoded.get.readMarkup else: decoded.get, url, reply.is_cut
