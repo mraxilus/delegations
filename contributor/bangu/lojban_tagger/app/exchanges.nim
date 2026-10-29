@@ -659,6 +659,10 @@ proc send*(
     if proxied.port.len > 0 and not proxied.port.isPort:
       return Sent(is_replied: false, problem: "Proxy should name port of one to five digits " &
           "from 1 to 65535, or none; got `" & proxied.port & "`.")
+    let authority = proxy_url.get.toReference.authority.get("")
+    if not authority.isAuthority:  # Port `std/uri` joins from two colons would reach other port.
+      return Sent(is_replied: false, problem: "Proxy should name host and port as RFC 3986 " &
+          "section 3.2 splits them; got `" & authority[authority.rfind('@')+1 .. ^1] & "`.")
     if uri.scheme == "https" and (proxied.username.len > 0 or proxied.password.len > 0):
       return Sent(is_replied: false, problem: "Proxy should hold no user part for https URL, " &
           "since client repeats `Proxy-Authorization` inside tunnel; got user part for `" &
