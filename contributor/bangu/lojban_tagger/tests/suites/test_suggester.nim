@@ -379,12 +379,12 @@ proc stopServer(server: Server) =
   waitFor server.accepting
 
 
-proc portClosed(): int =
-  ## Bind listener on `127.0.0.1` at port system chooses, then close it, so port refuses.
-  let socket = newAsyncSocket()
-  socket.bindAddr(Port(0), "127.0.0.1")
-  result = int(socket.getLocalAddr[1])
-  socket.close()
+proc socketRefusing(): AsyncSocket =
+  ## Bind socket on `127.0.0.1` at port system chooses, never listening and never reused, so its
+  ##   port refuses each connection, and no other socket takes port, until caller closes it.
+  ##   Sibling of `socketRefusing` in `test_exchanges.nim` (II.9).
+  result = newAsyncSocket()
+  result.bindAddr(Port(0), "127.0.0.1")
 
 
 
@@ -1191,8 +1191,8 @@ suite "Internal: Suggester":
 
   test "record sends again OpenRouter reply of 200 holding error, and never replays it":
     let
-      port = portClosed()
-      settings = Service.OpenRouter.toSettings(port)
+      refusing = socketRefusing()  # held until test ends, so no other socket takes its port
+      settings = Service.OpenRouter.toSettings(int(refusing.getLocalAddr[1]))
       directory_case = directory / "inside"
       text = "mi ciska lo xatra"
       request = requestService(settings, text.toPassage)
@@ -1205,6 +1205,7 @@ suite "Internal: Suggester":
     check "replayed" notin outcome.report  # request went out again, to port that refuses
     check readFile(pathRecording(directory_case, request)).readRecording.recording.reply ==
         reply  # recording kept, since no reply came to write over it
+    refusing.close()
 
 
   test "record replays page hop of 2xx or 3xx, and sends other hop again, as before":
@@ -1244,7 +1245,8 @@ suite "Internal: Suggester":
 
   test "refused connection exits 1 with `Network`, and record writes nothing":
     let
-      port = portClosed()
+      refusing = socketRefusing()  # held until test ends, so no other socket takes its port
+      port = int(refusing.getLocalAddr[1])
       directory_case = directory / "refused"
       opening = noteCredential(KEY_CREDENTIAL) & "\nService or page should answer; got `"
     for argument in [example("lojban").argument, urlLoopback(port, "/page")]:
@@ -1262,6 +1264,7 @@ suite "Internal: Suggester":
         check CREDENTIAL_SUITE notin detail  # credential never in error
     check dirExists(directory_case)  # record makes directory before it sends
     check walkDir(directory_case).toSeq.len == 0  # failed transport writes nothing
+    refusing.close()
 
 
   test "record refuses directory it cannot make before it sends, naming recording":
@@ -1925,8 +1928,10 @@ suite "Internal: Suggester":
         url.readPage(gone).detail, [noteReplayed(path_page, LABEL_SUITE)])  # page refused
     covered.incl Failure.Page
     let
-      url_closed = urlLoopback(portClosed(), PATH_SERVICE)
+      refusing = socketRefusing()  # held until refused run ends, so no other socket takes port
+      url_closed = urlLoopback(int(refusing.getLocalAddr[1]), PATH_SERVICE)
       refused = binary.run([(KEY_ENDPOINT, url_closed), (KEY_CREDENTIAL, CREDENTIAL_SUITE)], [text])
+    refusing.close()
     check refused.code == 1 and refused.output == ""  # no tag
     check refused.report.startsWith(noteCredential(KEY_CREDENTIAL) &
         "\nService or page should answer; got `")  # connection refused, named
