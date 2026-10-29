@@ -143,7 +143,9 @@ func readLujvo(text: string): Reading =
 
 func readTag*(text: string): Reading =
   ## Read text as tag: gismu of list, or lujvo whose rafsi stand for listed words, last gismu.
-  ##   Character refused is named whole, so report of UTF-8 text stays UTF-8.
+  ##   Character refused is named whole, so report of UTF-8 text stays UTF-8; held by test
+  ##     "Character outside letters is named whole, so report of UTF-8 stays UTF-8" of
+  ##     `test_tags.nim`.
   let letters = text.strip.toLowerAscii.replace(",", "")
   if letters.len == 0: return refuse(letters, Refusal.Empty)
   for at in 0..<letters.len:

@@ -55,6 +55,9 @@
 ##       pages their query alone names read as one URL to model and in report.
 ##   Every module here is pure: `app/suggester.nim` reads environment, sends requests and
 ##     writes files, so suites drive each step without network (Article IX.5).
+##     Each routine is `func`, so `strictFuncs` refuses I/O, clock and global state, as compiler
+##       checks; no read of environment, which `func` admits, intended; `toJSON` casts, as its
+##       doc says.
 ##     Cost: wiring is held by `test_suggester.nim` alone, which builds binary and drives it.
 ##   Answer and text given as tag are capped at `COUNT_WORDS_MAX` words, since `$` scores every
 ##     choice of rafsi; each word at `BYTES_ELEMENT_MAX` bytes, since `readTag` time grows
@@ -80,6 +83,8 @@
 ##     Cost: passing failure, as overload or limit of rate, ends run; next run pays again for
 ##       prompt where cache lapsed.
 ##   Markup is read in one linear pass with no recursion, so nesting cannot overflow stack.
+##     Nesting held by test "100,000 nested elements read in one pass" of `test_suggestions.nim`;
+##       linear time expected, unmeasured: no test holds it.
 ##     Rejected: `std/htmlparser`, deprecated in Nim 2.2, recursive, and keeping script text.
 ##     Cost: 23 named references decoded, so `&eacute;` stays as written.
 ##   Cost: replies of 2xx are read in documented shapes alone until live reply is recorded.
@@ -596,6 +601,8 @@ func findCloseTag(markup: string, at: int): int =
 func readMarkup(markup: string): string =
   ## Read markup as text in one pass: comments, declarations and skipped elements dropped,
   ##   block edges as line breaks, references decoded, spaces collapsed, empty lines dropped.
+  ##   Pass holds no recursion, held by test "100,000 nested elements read in one pass" of
+  ##     `test_suggestions.nim`; its linear time expected, unmeasured.
   ##   Tag ends at first `>` outside quoted value; quote opens value alone (`findCloseTag`).
   ##   Comment ends as HTML tokenizer ends it, `<!-->` and `--!>` among ends (`findCloseComment`).
   ##   Space reference stands for collapses as written one does, so block edges alone break line.
@@ -837,7 +844,7 @@ func isIdentity(coding: string): bool =
 
 func readPage*(url: string, reply: Reply): Paged =
   ## Read page as passage: status 2xx, encoding identity, type text or markup, charset of UTF-8
-  ##   or windows-1252 group; markup read as text in one pass.
+  ##   or windows-1252 group; markup read as text (`readMarkup`).
   ##   Byte order mark names encoding before any label, as decode of WHATWG Encoding Standard
   ##     6.1 and encoding sniffing of HTML 13.2.3.2, step 1, read it: UTF-8 mark wins over header
   ##     and meta; UTF-16 mark is refused, since UTF-16 is never decoded.
