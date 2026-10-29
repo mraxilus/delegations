@@ -137,6 +137,19 @@ const
     "utf-16be", "utf-16le", "utf-7", "windows-1251", "x-user-defined",
   ]
     ## Labels of other encodings, or of none, which reader refuses.
+  LABELS_GROUP_SIXTEEN = [
+    "csunicode", "iso-10646-ucs-2", "ucs-2", "unicode", "unicodefeff", "unicodefffe", "utf-16",
+    "utf-16be", "utf-16le",
+  ]
+    ## Labels WHATWG Encoding Standard gives UTF-16BE and UTF-16LE, 4.2; reader decodes neither.
+  MARKS_BYTE_ORDER = [
+    (mark: "", label: ""), (mark: "\xEF\xBB\xBF", label: "utf-8"),
+    (mark: "\xFE\xFF", label: "utf-16be"), (mark: "\xFF\xFE", label: "utf-16le"),
+  ]
+    ## Byte order marks with encoding each names, by table of BOM sniff, WHATWG Encoding Standard,
+    ##   6.1; no mark first, naming none.
+  SPACES_ASCII = ["", " ", "\t", "\n", "\f", "\r", " \t"]
+    ## Runs of ASCII whitespace of HTML around `=` after `charset`: none, each one alone, and two.
   LUT_TEXT_BY_NAME = [
     ("amp", "&"), ("apos", "'"), ("bull", "\u2022"), ("copy", "\u00A9"), ("deg", "\u00B0"),
     ("gt", ">"), ("hellip", "\u2026"), ("laquo", "\u00AB"), ("ldquo", "\u201C"),
@@ -1536,6 +1549,107 @@ suite "Internal: Page":
           body: "<meta charset=\"windows-1252\"><p>\x93caf\xE9\x94</p>"),
     )
     check paged.is_read and paged.passage.text == "\u201Ccaf\u00E9\u201D"  # label of meta read
+
+
+  test "byte order mark names encoding before any label, and mark of UTF-16 is refused":
+    let
+      little = readPage(
+        URL_SUITE,
+        Reply(status: 200, content_type: "text/html",
+            body: "\xFF\xFE<\x00h\x00t\x00m\x00l\x00>\x00"),
+      )
+      big = readPage(
+        URL_SUITE,
+        Reply(status: 200, content_type: "text/plain", body: "\xFE\xFF\x00H\x00e\x00l\x00l\x00o"),
+      )
+      labelled = readPage(
+        URL_SUITE,
+        Reply(status: 200,
+            content_type: "text/plain; charset=windows-1252", body: "\xEF\xBB\xBFcaf\xC3\xA9"),
+      )
+    check not little.is_read and
+        little.detail == "charset utf-16"  # review finding logic-7, 2026-10-29: NULs were sent
+    check not big.is_read and
+        big.detail == "charset utf-16"  # review finding logic-7, 2026-10-29: NULs were sent
+    check labelled.is_read and labelled.passage.text ==
+        "caf\u00E9"  # review finding logic-7, 2026-10-29: read `caf\u00C3\u00A9`
+    let labels = deduplicate(
+      @[""] & @LABELS_GROUP_UNICODE & @LABELS_GROUP_WINDOWS & @LABELS_OTHER & @LABELS_GROUP_SIXTEEN,
+    )
+    var wrong: seq[(string, string, string, string)]
+    for (mark, marked) in MARKS_BYTE_ORDER:  # 3 marks and none, exhaustive
+      for header in labels:  # each label and none, exhaustive
+        for meta in labels:
+          for kind in ["", "text/html", "application/xhtml+xml", "text/plain"]:
+
+            # Read label as encoding sniffing of HTML, 13.2.3.2, reads it: mark, header, prescan.
+            let
+              opening = if meta.len > 0: "<meta charset=\"" & meta & "\">" else: ""
+              is_markup = kind != "text/plain"
+              label =
+                if marked.len > 0: marked
+                elif header.len > 0: header
+                elif is_markup and meta in LABELS_GROUP_SIXTEEN: "utf-8"
+                elif is_markup and meta.len > 0: meta
+                else: "utf-8"
+              word =
+                if label in LABELS_GROUP_UNICODE: "caf\u00E9"
+                elif label in LABELS_GROUP_WINDOWS: "caf\u00C3\u00A9"
+                else: ""
+
+            # Hold page to label: UTF-16 refused, other unread labels refused, else word decoded.
+            let
+              paged = readPage(URL_SUITE, Reply(
+                status: 200,
+                content_type: kind & (if header.len > 0: "; charset=" & header else: ""),
+                body: mark & opening & "<p>caf\xC3\xA9</p>",
+              ))
+              is_held =
+                if marked in LABELS_GROUP_SIXTEEN:
+                  not paged.is_read and paged.detail == "charset utf-16"
+                elif word.len == 0: not paged.is_read and paged.detail == "charset " & label
+                elif is_markup: paged.is_read and paged.passage.text == word
+                else: paged.is_read and paged.passage.text == opening & "<p>" & word & "</p>"
+            if not is_held: wrong.add (mark, header, meta, kind)
+    check wrong == newSeq[(string, string, string, string)]()  # WHATWG 6.1, decode: mark first
+
+
+  test "meta naming UTF-16 reads as UTF-8, and spaces may stand around `=` after charset":
+    let
+      sixteen = readPage(
+        URL_SUITE,
+        Reply(status: 200, content_type: "text/html",
+            body: "<meta charset=\"utf-16\"><p>caf\xC3\xA9</p>"),
+      )
+      spaced = readPage(
+        URL_SUITE,
+        Reply(status: 200, content_type: "text/html",
+            body: "<meta charset = \"windows-1252\"><p>caf\xE9</p>"),
+      )
+    check sixteen.is_read and
+        sixteen.passage.text == "caf\u00E9"  # review finding logic-7, 2026-10-29: refused
+    check spaced.is_read and
+        spaced.passage.text == "caf\u00E9"  # review finding logic-7, 2026-10-29: read `caf\uFFFD`
+    for label in LABELS_GROUP_SIXTEEN:  # 9 labels, exhaustive
+      for markup in ["<meta charset=\"" & label & "\">",
+          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=" & label & "\">"]:
+        check readCharset("text/html", markup, true) ==
+            "utf-8"  # HTML 13.2.3.2, prescan, step 14: UTF-16BE/LE set to UTF-8
+      check readCharset("text/html; charset=" & label, "", true) ==
+          label  # header label kept, so decode refuses it
+    for before in SPACES_ASCII:
+      for after in SPACES_ASCII:  # 7 runs before `=` by 7 after, exhaustive
+        let assignment = "charset" & before & "=" & after
+        for (content_type, body) in [
+          ("text/html; " & assignment & "windows-1252", ""),
+          ("text/html", "<meta " & assignment & "\"windows-1252\">"),
+          ("text/html", "<meta http-equiv=\"Content-Type\" content=\"text/html; " & assignment &
+              "windows-1252\">"),
+        ]:
+          check readCharset(content_type, body, true) ==
+              "windows-1252"  # HTML 2.5.3, steps 3 and 5: spaces after `charset` and `=` skipped
+    check readCharset("text/html; charset x; charset=latin1", "", true) ==
+        "latin1"  # HTML 2.5.3, step 4: `charset` with no `=` after it is passed by
 
 
   test "cut keeps longest prefix within cap on character boundary":
