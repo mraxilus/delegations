@@ -669,10 +669,12 @@ proc send*(
     if proxied.scheme.toLowerAscii != "http":
       return Sent(is_replied: false, problem: "Proxy should be `http://`; got `" &
           proxied.scheme & "`.")
-    if proxied.port.len > 0 and not proxied.port.isPort:
+    let
+      authority = proxy_url.get.toReference.authority.get("")
+      port = authority.readPort  # Port as written; none where host refused, which check names.
+    if proxied.port.len > 0 and not proxied.port.isPort and port.isSome:
       return Sent(is_replied: false, problem: "Proxy should name port of one to five digits " &
-          "from 1 to 65535, or none; got `" & proxied.port & "`.")
-    let authority = proxy_url.get.toReference.authority.get("")
+          "from 1 to 65535, or none; got `" & port.get[1 .. ^1] & "`.")
     if not authority.isAuthority:  # Port `std/uri` joins from two colons would reach other port.
       return Sent(is_replied: false, problem: "Proxy should name host and port as RFC 3986 " &
           "section 3.2 splits them; got `" & authority[authority.rfind('@')+1 .. ^1] & "`.")
