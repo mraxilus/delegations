@@ -13,10 +13,13 @@
 ##   |---------------------|-------------------------------------------------------------|
 ##
 ##   |---------------------|-------------------------------------------------------------|
-##   | Code                | RFC 3986, which `redirect` follows                          |
+##   | Code                | RFC 3986, which `isURL`, `send` and `redirect` follow       |
 ##   |---------------------|-------------------------------------------------------------|
 ##   | Reference           | R: scheme, authority, path, query, fragment                 |
 ##   | toReference         | parse of R by regular expression of appendix `B`            |
+##   | isAuthority         | authority (3.2): userinfo `@`, host (3.2.2), `:` port       |
+##   | isPort              | port (3.2.3), 1 to 65535 as RFC 6335 section 6 ranges it    |
+##   | lowercaseScheme     | scheme compared without case (3.1), lowercased (6.2.2.1)    |
 ##   | resolve             | T: reference R resolved against Base (5.2.2), strictly      |
 ##   | merge               | merge (5.2.3)                                               |
 ##   | removeDotSegments   | remove_dot_segments (5.2.4)                                 |
@@ -26,6 +29,9 @@
 ##   Every routine but `send` and what it calls to reach socket and TLS context (`pinHost`,
 ##     `exchange`, `readBody` and bindings of OpenSSL) is pure, so suites hold each choice by
 ##     table; suite drives `send` over loopback.
+##     Each pure routine is `func`, so compiler refuses its write, I/O and global state under
+##       `strictFuncs`, enabled below; `func` still admits read of environment, which none
+##       makes, as intended: `proxy` takes environment as parameter.
 ##   `send` makes fresh client for each request and follows no redirect: client loop would keep
 ##     its headers across hosts, so credential could reach other host, and it would keep one
 ##     proxy for every hop. `suggester` follows page redirects itself, choosing proxy again.
@@ -34,10 +40,12 @@
 ##   `send` pins host of https URL on its context before client exists, since async client of
 ##     `std/httpclient` names host for SNI alone and checks no certificate against it: name pins
 ##     as name, address as address, other kind cleared, so trusted leaf naming other host is
-##     refused before any byte of request leaves. Empty host is refused, since empty pin checks
-##     no name, and so is host opening with dot, since OpenSSL reads such name as any subdomain
-##     of rest, which would take leaf naming other host. Absolute name pins without dot that
-##     closes it, as certificate names host without it, and curl pins it; SNI and tunnel keep it.
+##     refused before any byte of request leaves, as test "TLS refuses leaf naming other host
+##     before request leaves, directly and through tunnel" of `test_exchanges.nim` holds over
+##     each leaf and host. Empty host is refused, since empty pin checks no name, and so is host
+##     opening with dot, since OpenSSL reads such name as any subdomain of rest, which would take
+##     leaf naming other host. Absolute name pins without dot that closes it, as certificate
+##     names host without it, and curl pins it; SNI and tunnel keep it.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
 ##   Proxy URL should be `http://`, in any case, with host, and port `isPort` takes or none, else
@@ -69,6 +77,12 @@
 ##   URL holding whitespace or control character is refused by `send` before client exists, and
 ##     by `redirect` as target: such byte would split or corrupt request line, and client checks
 ##     line break alone, by assertion.
+##   `isURL` takes URL alone whose authority splits as RFC 3986 section 3.2 splits it
+##     (`isAuthority`), and `isEndpoint` and `redirect` follow it: client of `std/uri` joins
+##     digits after each colon into one port, and drops each bracket of host, so
+##     `127.0.0.1:80:90` would reach port 8090, which URL never names.
+##     Cost: IPvFuture and zone of IPv6 address are refused, as URL Standard of WHATWG refuses
+##       them.
 ##   Deadline is future caller passes, so suite completes it itself and reads no clock; body
 ##     is read from stream up to its cap, so huge body never fills memory.
 ##     Cost: head of reply has no byte cap: client counts header names against `headerLimit`,
@@ -94,6 +108,8 @@
 ##     whole request is stored and compared. Sibling of `stamp` in
 ##     `curator/audit/src/provenance.nim`, which project does not import (Article II.9).
 ##     Rejected: `std/hashes`, whose values change between versions; `std/sha1`, deprecated.
+##     Cost: each recording of service holds whole request body, its system text and word list
+##       included, beside reply, where stamp alone would name it.
 ##   Label and header values are lines of file: client joins folded header lines by line break,
 ##     so `send` unfolds each value, as RFC 7230 section 3.2.4 asks of recipient, and `toText`
 ##     unfolds label; status takes one to three digits, as `send` gives 0 to 599. So every reply
