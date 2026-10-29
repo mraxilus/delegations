@@ -24,8 +24,10 @@
 ##     lines, and status `099`. Futures are driven by `waitFor` and `poll`; test
 ##     completes deadline itself once server holds request, so no test reads clock (Article
 ##     IX.12).
-##     Test waits on future of its own beside `send`, never on deadline: `or` of
+##     Test waits on future of its own beside `send`, never by `or` on deadline: `or` of
 ##     `std/asyncdispatch` replaces callbacks of futures it waits on, so it would unhook `send`.
+##     Waiters that keep callbacks, `addCallback` and `await`, share deadline with sends, and
+##     every one wakes; deadline finished before `send` leaves server with no connection.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
 ##   Cost: stub builds without `-d:ssl`, so TLS and tunnel through proxy stay untested, and every
@@ -94,6 +96,12 @@ type
     targets: seq[string]  ## Target of each request read, as its request line names it.
     count_connections: int  ## Connections accepted.
     accepting: Future[void]  ## Loop accepting connections; ends once listener closes.
+
+  Shared = object  ## Define how sends sharing one deadline, and other waiters on it, ended.
+    is_held: bool  ## Each server held its request while no send had ended.
+    problems: seq[string]  ## Problem of each send once deadline completed; `unfinished` where none.
+    count_called: int  ## Callbacks caller put on deadline that ran.
+    is_awaited: bool  ## Coroutine of caller awaiting deadline ended.
 
 
 const
@@ -458,6 +466,49 @@ proc portClosed(): int =
   listener.listen(Port(0), "127.0.0.1")
   result = int(listener.getPort)
   listener.close()
+
+
+proc awaitDeadline(deadline: Future[void]) {.async.} =
+  ## Await deadline, as coroutine of caller beside `send` does.
+  await deadline
+
+
+proc sendSharing(count: int): Shared =
+  ## Hold `count` sends, each at server of its own, sharing one deadline with waiters of caller:
+  ##   callback put on it before sends, callback put on it after them, and coroutine awaiting it;
+  ##   then complete deadline, and run callbacks it queues once.
+  let deadline = newFuture[void]("deadline")
+  var
+    servers: seq[Server]
+    sendings: seq[Future[Sent]]
+    count_called = 0
+  deadline.addCallback proc() = inc count_called
+  for _ in 1..count:
+    servers.add startServer()
+    sendings.add send(
+      urlLoopback(servers[^1].port, "/held"),
+      "{}",
+      @[],
+      CREDENTIAL_GIVEN,
+      none(string),
+      nil,
+      BYTES_CAP,
+      deadline,
+    )
+  deadline.addCallback proc() = inc count_called
+  let awaiting = awaitDeadline(deadline)
+  while not (servers.allIt(it.held.finished) or sendings.anyIt(it.finished)): poll()
+  result.is_held = servers.allIt(it.held.finished) and not sendings.anyIt(it.finished)
+  deadline.complete()
+  poll()  # run callbacks completed deadline queued
+  for sending in sendings:
+    result.problems.add(
+      if not sending.finished: "unfinished"
+      elif sending.read.is_replied: "replied"
+      else: sending.read.problem
+    )
+  (result.count_called, result.is_awaited) = (count_called, awaiting.finished)
+  for server in servers: stopServer(server)
 
 
 proc sendLoopback(
@@ -1001,6 +1052,60 @@ suite "Internal: Send":
     if sending.finished:
       let sent = sending.read
       check not sent.is_replied and sent.problem == "deadline passed"  # named, never reply
+    stopServer(server)
+
+
+  test "deadline shared with other waiters ends each send, and wakes each other waiter":
+    # Regression, found in review: `or` in `send` cleared callbacks put on deadline before it,
+    #   so of two sends sharing one deadline, first never ended.
+    let found = sendSharing(2)
+    check found.is_held  # case as found: two requests held
+    check found.problems == @["deadline passed", "deadline passed"]  # case as found: both end
+    for count in 1..3:
+      let shared = sendSharing(count)
+      check shared.is_held  # each request held until deadline
+      check shared.problems == newSeqWith(count, "deadline passed")  # domain: each send ends
+      check shared.count_called == 2  # domain: callbacks before and after sends both ran
+      check shared.is_awaited  # domain: coroutine awaiting deadline ended
+
+
+  test "deadline finished before send sends nothing, whether completed or failed":
+    # Regression, found in review: `send` gave `deadline passed`, yet its request went out later
+    #   on same loop, since closing client still connecting closes nothing.
+    let
+      server = startServer()
+      deadline_early = newFuture[void]("deadline")
+    deadline_early.complete()
+    let early = waitFor send(
+      urlLoopback(server.port, "/early"),
+      "",
+      @[],
+      none(Credential),
+      none(string),
+      nil,
+      BYTES_CAP,
+      deadline_early,
+    )
+    check not early.is_replied and early.problem == "deadline passed"  # case as found
+    for is_failed in [false, true]:
+      for (body, credential) in [("", none(Credential)), ("{}", CREDENTIAL_GIVEN)]:
+        let deadline = newFuture[void]("deadline")
+        if is_failed: deadline.fail(newException(IOError, "deadline failed"))
+        else: deadline.complete()
+        let sent = waitFor send(
+          urlLoopback(server.port, "/early"),
+          body,
+          @[],
+          credential,
+          none(string),
+          nil,
+          BYTES_CAP,
+          deadline,
+        )
+        check not sent.is_replied and sent.problem == "deadline passed"  # domain: named
+    let control = sendLoopback(urlLoopback(server.port, "/control"), "")
+    check control.is_replied and server.targets == @["/control"]  # domain: nothing went out
+    check server.count_connections == 1  # domain: no connection but control's
     stopServer(server)
 
 
