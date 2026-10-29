@@ -260,6 +260,14 @@ const
   ]
     ## Hosts each leaf names as subject alternative names: address as `IP`, name as `DNS`.
   HOSTS_SECURED = ["localhost", "127.0.0.1"]  ## Hosts TLS requests here name: name, then address.
+  HOSTS_DOTTED = [
+    ".", "..", ".example", ".EXAMPLE", ".wrong.example", "..wrong.example", ".localhost",
+    ".127.0.0.1",
+  ]
+    ## Hosts opening with dot: dot alone, two, parent of name leaf `Wrong` holds in two cases,
+    ##   that name itself behind one dot and two, name of other leaves, and address.
+  COUNT_DOTTED = 64
+    ## Sends dot law makes: each of `HOSTS_DOTTED` with each leaf, directly and through tunnel.
   COUNT_SECURED = 256
     ## Sends TLS law makes: each of eight cases of leaf and host after each, two sends to pair,
     ##   directly and through tunnel.
@@ -2019,6 +2027,33 @@ suite "Internal: Send":
               named & $(@["CONNECT " & target & " HTTP/1.1"])  # domain: RFC 9110 9.3.6, tunnel
           check named & $secured.connect.anyIt(CREDENTIAL_SUITE in it) ==
               named & "false"  # domain: proxy never sees credential
+
+
+  test "host opening with dot is refused before any connection, as OpenSSL reads any subdomain":
+    # Regression, found in recheck claim regressions-app-2, 2026-10-29: OpenSSL reads pinned
+    #   name opening with `.` as any subdomain of rest, so leaf naming `api.example.test` alone
+    #   received bearer at `https://.example.test`, through proxy that routes such name.
+    when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
+    else:
+      check authority.problem == ""  # `openssl` made root and leaves
+      let found = authority.sendSecured(Leaf.Wrong, ".example", should_tunnel = true)
+      check found.sent.outcome ==
+          problemHost(".example")  # case as found, in shape of suite: was `replied`
+      check found.head.lines.len == 0  # case as found: leaf naming `wrong.example` read bearer
+      check found.connect.len == 0  # case as found: tunnel opened for `.example`
+      var count = 0
+      for host in HOSTS_DOTTED:
+        for leaf in Leaf:
+          for should_tunnel in [false, true]:
+            let
+              secured = authority.sendSecured(leaf, host, should_tunnel = should_tunnel)
+              named = $leaf & " " & host & (if should_tunnel: " tunnelled: " else: ": ")
+            inc count
+            check named & secured.sent.outcome ==
+                named & problemHost(host)  # domain: refused, whatever leaf names
+            check named & $secured.head.lines.len == named & "0"  # domain: server read no byte
+            check named & $secured.connect.len == named & "0"  # domain: proxy read nothing
+      check count == COUNT_DOTTED  # each host opening with dot, each leaf, each way
 
 
   test "https URL with no context, or with host TLS cannot pin, is refused, and nothing goes out":
