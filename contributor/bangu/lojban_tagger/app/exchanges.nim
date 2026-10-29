@@ -36,7 +36,8 @@
 ##     as name, address as address, other kind cleared, so trusted leaf naming other host is
 ##     refused before any byte of request leaves. Empty host is refused, since empty pin checks
 ##     no name, and so is host opening with dot, since OpenSSL reads such name as any subdomain
-##     of rest, which would take leaf naming other host.
+##     of rest, which would take leaf naming other host. Absolute name pins without dot that
+##     closes it, as certificate names host without it, and curl pins it; SNI and tunnel keep it.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
 ##   Proxy URL should be `http://`, in any case, with host, and port `isPort` takes or none, else
@@ -522,13 +523,16 @@ when defined(ssl):
     ##   whose pin checks nothing, opens with dot, which OpenSSL reads as any subdomain of rest,
     ##   or where OpenSSL refuses it.
     ##   Host `parseUri` gives holds no brackets, so IPv6 address reads as address.
+    ##   Name closing with dot pins without that one dot, as certificate names host without it;
+    ##     dot alone opens with dot too, so no pin is ever empty.
     if host.len == 0 or host.startsWith('.'): return false
     let parameters = SSL_CTX_get0_param(context.context)
     if host.isIpAddress:
       X509_VERIFY_PARAM_set1_ip_asc(parameters, host.cstring) == 1 and
           X509_VERIFY_PARAM_set1_host(parameters, nil, 0) == 1
     else:
-      X509_VERIFY_PARAM_set1_host(parameters, host.cstring, csize_t(host.len)) == 1 and
+      let name = if host.len > 1 and host.endsWith('.'): host[0 ..< ^1] else: host
+      X509_VERIFY_PARAM_set1_host(parameters, name.cstring, csize_t(name.len)) == 1 and
           X509_VERIFY_PARAM_set1_ip(parameters, nil, 0) == 1
 
 
