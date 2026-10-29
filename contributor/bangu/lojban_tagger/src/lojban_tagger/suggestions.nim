@@ -984,7 +984,7 @@ func explain*(suggestion: Suggestion): string =
   of Failure.Network: "Service or page should answer; got `" & detail & "`."
   of Failure.Recording: "Recording should hold this request; got `" & detail & "`."
   of Failure.Page: "Page should give text; got `" & detail & "`."
-  of Failure.Status: "Service should answer with status 2xx; got `" & detail & "`."
+  of Failure.Status: "Service should answer without error; got `" & detail & "`."
   of Failure.Declined: "Model should answer, not decline; got `" & detail & "`."
   of Failure.Truncated: "Answer should end before its limit; lower effort or shorten " &
       "passage; got `" & detail & "`."
