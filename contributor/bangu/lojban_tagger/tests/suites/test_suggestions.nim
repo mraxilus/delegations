@@ -8,7 +8,9 @@
 ##     alone are captures, taken 2026-10-28.
 ##   Tables of authorities are data here, written apart from library: Table 3-7 of Unicode
 ##     Standard, index-windows-1252 and labels of WHATWG Encoding Standard, named references of
-##     HTML, fields of each request body; project choices among them say so.
+##     HTML, fields of each request body, models asking fallback with page of each; project
+##     choices among them say so. Body of `chat` is one: standard fields of Chat Completions as
+##     OpenRouter reference gives them, since no OpenAI page was read.
 ##   Random markup trees are written as markup, and reference walk reads text from tree itself,
 ##     so reader is held to tree, never to second parser of markup.
 ##   `Network`, `Recording` and `Page` arise in `app/suggester.nim` alone, so suite holds their
@@ -94,6 +96,29 @@ const
   BETA_FALLBACK_SERVER = "server-side-fallback-2026-07-01"
     ## Beta header `fallbacks: "default"` takes, as refusals and fallback page of Messages API
     ##   gives it.
+  URL_REFUSALS = "https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback"
+    ## Refusals and fallback page: models it covers, and Claude Haiku 5.5 with no server-side
+    ##   fallback.
+  URL_MIGRATION = "https://platform.claude.com/docs/en/about-claude/models/migration-guide"
+    ## Migration guide: "There is no server-side fallback for Claude Haiku 5.5".
+  URL_BETA = "https://platform.claude.com/docs/en/api/beta/messages"
+    ## Beta Messages reference: on model with no fallback, `"default"` runs requested model alone.
+  ROWS_FALLBACK = [
+    (model: "claude-fable-5-1", is_fallback: true, page: URL_REFUSALS),
+    (model: "claude-mythos-5-1", is_fallback: true, page: URL_REFUSALS),
+    (model: "claude-fable-5", is_fallback: true, page: URL_REFUSALS),
+    (model: "claude-opus-5-5", is_fallback: true, page: URL_REFUSALS),
+    (model: "claude-opus-5", is_fallback: true, page: URL_REFUSALS),
+    (model: "claude-sonnet-5-5", is_fallback: true, page: URL_REFUSALS),
+    (model: "claude-haiku-5-5", is_fallback: false, page: URL_REFUSALS & " " & URL_MIGRATION),
+    (model: "claude-sonnet-5", is_fallback: true, page: URL_BETA),
+    (model: "claude-opus-4-8", is_fallback: true, page: URL_BETA),
+    (model: "claude-opus-4-6", is_fallback: true, page: URL_BETA),
+    (model: MODEL_SUITE, is_fallback: true, page: "project choice, as `URL_BETA` allows"),
+  ]
+    ## Whether body under `claude` asks fallback of each model, with page each row cites: every
+    ##   model refusals page covers asks but Claude Haiku 5.5, which has no fallback; other models
+    ##   ask too, as beta reference runs `"default"` on requested model alone there.
   TOKENS_ANSWER = 16_000  ## Most tokens of answer each body asks, thinking included.
   NAME_SCHEMA_ANSWER = "lojban_tag"  ## Name chat completion gives schema of answer.
   PATTERN_LETTERS = "^['abcdefgijklmnoprstuvxyz]+$"
@@ -424,8 +449,10 @@ func initSettings(service: Service, effort: Option[Effort]): Settings =
 
 
 func toBodyDocumented(settings: Settings, element: string): JsonNode =
-  ## Build body each service documents for settings and user turn, keys in order sent: Messages
-  ##   API reference, and chat completion of OpenRouter and of OpenAI.
+  ## Build body each service takes for settings and user turn, keys in order sent: Messages API
+  ##   reference, and chat completion of OpenRouter; fallback by `ROWS_FALLBACK`.
+  ##   Body of `chat` is project choice: standard fields of Chat Completions as OpenRouter
+  ##     reference documents them, since no OpenAI page was read (intended).
   let schema = %*{
     "type": "object",
     "properties": {
@@ -447,7 +474,8 @@ func toBodyDocumented(settings: Settings, element: string): JsonNode =
     result["output_config"] = newJObject()
     if settings.effort.isSome: result["output_config"]["effort"] = %($settings.effort.get)
     result["output_config"]["format"] = %*{"type": "json_schema", "schema": schema}
-    if settings.model in MODELS_FALLBACK: result["fallbacks"] = %"default"
+    if ROWS_FALLBACK.anyIt(it.model == settings.model and it.is_fallback):
+      result["fallbacks"] = %"default"
     result["system"] = %*[
       {"type": "text", "text": PROMPT_SYSTEM, "cache_control": {"type": "ephemeral"}},
     ]
@@ -1227,7 +1255,7 @@ suite "Internal: Answer":
 
 
 suite "Internal: Request":
-  test "body is same bytes twice, documented fields in order, no sampling, user turn last":
+  test "body is same bytes twice, fields of each body in order, no sampling, user turn last":
     let passage = toPassage("Alice & her sister <sat> \"by\" the bank", URL_SUITE)
     var efforts = @[none(Effort)]
     for effort in Effort: efforts.add some(effort)
@@ -1239,7 +1267,7 @@ suite "Internal: Request":
           parsed = parseJson(body)
         check body == settings.toBody(passage)  # same bytes for same passage
         check $parsed == body  # compact, keys in order sent
-        check body == $settings.toBodyDocumented(passage.toElement)  # documented fields, in order
+        check body == $settings.toBodyDocumented(passage.toElement)  # fields of each, in order
         check parsed.keysNested.allIt(it notin KEYS_FORBIDDEN)  # no sampling field, no stream
         check parsed["messages"].getElems[^1]["role"].getStr == "user"  # no prefill; user turn last
 
@@ -1299,24 +1327,28 @@ suite "Internal: Request":
             allIt(it notin {'&', '<', '>', '"'})  # every reference is one of four
 
 
-  test "headers by table, credential never among them; fallback only for models taking it":
+  test "headers by table, credential never among them; fallback for each model but those without":
+    let found = Settings(service: Service.Claude, endpoint: URL_SUITE, model: "claude-fable-5",
+        effort: some(EFFORT_DEFAULT))
+    check parseJson(found.toBody(toPassage("x"))){"fallbacks"}.getStr ==
+        "default"  # review finding wire-5, 2026-10-29: model of refusals page example asked none
     for service in Service:  # 3 services, exhaustive
-      for model in @MODELS_FALLBACK & @["claude-haiku-5-5", "claude-opus-4-8", "Claude-Opus-5-5",
-          "anthropic/claude-opus-5.5", ""]:
+      for row in ROWS_FALLBACK:  # 11 models, each with page it cites, exhaustive
         let
-          settings = Settings(service: service, endpoint: URL_SUITE, model: model,
+          settings = Settings(service: service, endpoint: URL_SUITE, model: row.model,
               effort: some(EFFORT_DEFAULT))
           headers = settings.toHeaders
-          is_fallback = service == Service.Claude and model in MODELS_FALLBACK
+          is_fallback = service == Service.Claude and row.is_fallback
           body = parseJson(settings.toBody(toPassage("x")))
         var expected: seq[(string, string)]
         if is_fallback: expected.add ("anthropic-beta", BETA_FALLBACK_SERVER)
         if service == Service.Claude: expected.add ("anthropic-version", VERSION_MESSAGES)
         expected.add ("content-type", "application/json")
-        check headers == expected  # Messages API overview; chat completion takes type alone
+        check (row.model, headers) == (row.model, expected)  # Messages API overview, page of row
         check headers.mapIt(it[0]) == headers.mapIt(it[0]).sorted  # sorted by name
         check headers.allIt(it[0] notin ["authorization", "x-api-key"])  # `send` adds credential
-        check body.hasKey("fallbacks") == is_fallback  # fallback asked where model takes it
+        check (row.model, body.hasKey("fallbacks"), body{"fallbacks"}.getStr) == (row.model,
+            is_fallback, if is_fallback: "default" else: "")  # page of row, `ROWS_FALLBACK`
 
 
 
