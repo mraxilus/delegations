@@ -1,0 +1,1165 @@
+## Drive built `suggester` through real recordings, environment, streams and loopback servers:
+##   suite compiles `app/suggester.nim`, then drives binary it built, so verdict holds for that
+##   build (IX.5-6).
+##   CLL covers no service, so suite is `Internal:`, tests named by behaviour (Article IX.10).
+##   Binary builds with `-d:ssl`, as it ships, but without `-d:release`, so checks of debug build
+##     stay on: sibling of `compileSuggester` in `tools/build.nim` (II.9). Binary, recordings and
+##     compiler cache live in fresh directory under `getTempDir`, named by fixed prefix and
+##     process, and removed at end. Cost: compile adds seconds to every run of suite.
+##   Environment reaches binary as shell prefix, never through `putEnv`: each run blanks every
+##     variable binary reads, usual name of each credential and every proxy variable, so
+##     environment of host never reaches run, and names sink at `ANTHROPIC_BASE_URL`, which no
+##     run may reach. Standard output and error go to files, so tag and report are read apart.
+##   Expected outcome comes from pure pipeline: `toPassage` or `readPage`, `toBody`, `stamp`,
+##     `readReply`, `toReport` and `explain`; so suite holds wiring, `test_suggestions.nim` holds
+##     each step, and `test_exchanges.nim` holds transport. Problems of settings and credential
+##     are written out in full: `readSettings` and `findCredential` are private to binary, so
+##     suite holds their wording.
+##   Servers are raw listeners of `std/asyncnet` on `127.0.0.1`, at port system chooses: each
+##     reads request byte for byte, since `std/asynchttpserver` keeps last of repeated header
+##     lines, answers reply its target routes to, then closes connection. Suite drives them by
+##     `poll` while child runs, and exit of child ends wait, so no verdict reads clock (Article
+##     IX.12).
+##   Replies are documented shapes of `tools/examples.nim`, or shapes built here after them;
+##     none is captured.
+##   Random passages, settings and replies, and random texts given, are drawn into pools
+##     allocated once, after one seeding per test, and served by `served`.
+##   Corpus holds no label of control byte or bidirectional mark: replay note prints label as
+##     file holds it, though report makes other outside text printable; should note do so too?
+##   Corpus holds no directory of recordings binary cannot make or write: binary raises there,
+##     after service answered; should it name failure, and keep reply it paid for?
+##   Cost: no root signs loopback server, so TLS past tunnel request and name lookup stay
+##     undriven, and tunnel test needs trusted roots of host, as every https request does;
+##     deadline reads real clock, so its placeholder skips (Article IX.9).
+
+{.experimental: "strictFuncs".}
+
+when compileOption("profiler"):
+  import std/nimprof
+
+import std/[
+  asyncdispatch, asyncnet, json, options, os, osproc, random, sequtils, strutils, unittest,
+]
+
+import ../../app/exchanges
+from ../../app/suggester {.all.} import COUNT_REDIRECTS_MAX, RUNES_SHOWN, USAGE
+import ../../src/lojban_tagger/[suggestions, tags]
+import ../../tools/examples
+
+
+type
+  Outcome = object  ## Define what one run of `suggester` prints and exits with.
+    output: string  ## Standard output.
+    report: string  ## Standard error.
+    code: int  ## Exit code.
+
+  Heard = object  ## Define one request server read, byte for byte.
+    lines: seq[string]  ## Request line, then each header line, line breaks dropped.
+    body: string  ## Body, as many bytes as `content-length` names.
+
+  Server = ref object  ## Define loopback server answering by target, shared with its loop.
+    socket: AsyncSocket  ## Listener on `127.0.0.1`.
+    port: int  ## Port system chose.
+    routes: seq[(string, Reply)]  ## Reply of each target request line names; other is missing.
+    heard: seq[Heard]  ## Each request read, in order.
+    accepting: Future[void]  ## Loop accepting clients; ends once listener closes.
+
+  Binary = object  ## Define built `suggester`, beside sink each run names at `KEY_BASE`.
+    path: string  ## Binary built.
+    sink: Server  ## Server no run may reach.
+
+  Sample = object  ## Define one random replay: text given, settings and environment, recording.
+    arguments: seq[string]  ## Text given, as arguments binary joins by one space.
+    settings: Settings  ## Settings binary should read from environment.
+    environment: seq[(string, string)]  ## Variables naming settings.
+    reply: Reply  ## Reply recording holds.
+    label: string  ## Label recording holds, printable.
+
+
+const
+  PREFIX_DIRECTORY = "lojban_tagger_suite_suggester_"  ## Opening of temporary directory name.
+  NIM = getCurrentCompilerExe()  ## Compiler building suite, which builds `suggester` too.
+  PATH_APP = currentSourcePath().parentDir.parentDir.parentDir / "app" / "suggester.nim"
+    ## Source of `suggester`, found from this file.
+  KEY_SERVICE = "LOJBAN_TAGGER_SERVICE"  ## Environment name binary reads service from.
+  KEY_ENDPOINT = "LOJBAN_TAGGER_ENDPOINT"  ## Environment name binary reads endpoint from.
+  KEY_MODEL = "LOJBAN_TAGGER_MODEL"  ## Environment name binary reads model from.
+  KEY_EFFORT = "LOJBAN_TAGGER_EFFORT"  ## Environment name binary reads effort from.
+  KEY_CREDENTIAL = "LOJBAN_TAGGER_API_KEY"  ## Environment name binary reads credential from first.
+  KEY_BASE = "ANTHROPIC_BASE_URL"  ## Environment name agent reads endpoint from; binary never does.
+  LUT_KEY_CREDENTIAL_BY_SERVICE: array[Service, string] =
+    ["ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", ""]
+    ## Usual name of credential of each service, which binary reads second; `chat` has none.
+  NAMES_CREDENTIAL = @[KEY_CREDENTIAL] & @LUT_KEY_CREDENTIAL_BY_SERVICE.filterIt(it.len > 0)
+    ## Variables binary reads credential from, under any service.
+  NAMES_PROXY = ["HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"]
+    ## Proxy variables, in both cases curl and host set.
+  NAMES_BLANK = @[KEY_EFFORT, KEY_ENDPOINT, KEY_MODEL, KEY_SERVICE] & NAMES_CREDENTIAL &
+      @NAMES_PROXY
+    ## Variables each run blanks where test gives no value: each binary reads, and every proxy.
+  MS_POLL = 5
+    ## Most milliseconds `poll` waits for event while child runs; exit of child ends loop, so no
+    ##   verdict reads time.
+  CREDENTIAL_SUITE = "credential-for-suite"  ## Credential live and record runs carry.
+  MODEL_SUITE = "model-of-suite"  ## Model runs name where service has none, or default moves.
+  MODEL_SERVED = "model-served"  ## Model reply names where it is not model asked.
+  GLOSS_SUITE = "gloss of suite"  ## Gloss answers give where test names none.
+  LABEL_SUITE = "documented shape, built in suite"  ## Label of recordings suite builds itself.
+  PATH_SERVICE = "/v1/messages"  ## Path fake service answers at.
+  STATUS_MISSING = 404  ## Status server answers where no route names target.
+  TEXT_GIVEN = "datnyvreji"  ## Text reading as tag already, i.e. `datni+vreji`.
+  FORM_GIVEN = "datnyvei"  ## Form 4.12 prefers for `TEXT_GIVEN`, which binary prints.
+  PIECE_PAGE = "Alice was beginning to get very tired. "  ## Text large page repeats.
+  SAMPLES_REPLAY = 200  ## Random replays wiring law reads, seeded.
+  FLOOR_REPLAYED = 180  ## Fewest random replays whose text reads as no tag; 200 read at seed `0`.
+  FLOOR_SUGGESTED = 24  ## Fewest random replays printing tag; 32 read at seed `0`.
+  FLOOR_REFUSED = 140  ## Fewest random replays refused; 168 read at seed `0`.
+  FLOOR_CUT = 8  ## Fewest random replays whose passage is cut; 14 read at seed `0`.
+  SAMPLES_GIVEN = 200  ## Random texts given shortcut law reads, seeded.
+  FLOOR_GIVEN = 100  ## Fewest random texts read as tag; 128 read at seed `0`.
+  FLOOR_ASKED = 55  ## Fewest random texts sent to service; 72 read at seed `0`.
+  WORDS_PASSAGE = [
+    "Alice", "was", "tired", "mi", "ciska", "<passage>", "</passage>", "&amp;", "\"sister\"",
+    "it's", "line\nbreak", "tab\there", "caf\xC3\xA9", "\xE2\x80\xA6", "\xC4\x89u", "\xFF",
+    "\xE2\x80", "\xED\xA0\x80", "\x01", "\x7F", "\xE2\x80\xAE",
+  ]
+    ## Words random passages draw: markup, quotes, line breaks, multibyte, ill-formed bytes,
+    ##   control and bidirectional marks, Lojban; no zero byte, which no argument carries.
+  PIECE_LONG = "Alice \xC3\xA9 "  ## Text long passage repeats: ASCII, then two bytes of one rune.
+  COUNT_LONG_MIN = BYTES_PASSAGE_MAX div PIECE_LONG.len + 1
+    ## Fewest pieces long passage holds, so it outgrows `BYTES_PASSAGE_MAX`.
+  COUNT_LONG_EXTRA = 400  ## Most pieces long passage holds past `COUNT_LONG_MIN`.
+  WORDS_ANSWER = [
+    "cukta", "datni", "vreji", "ciska", "xatra", "pixra", "tatpi", "brodi", "se", "nu", "na'e",
+    "datnyvei", "Ciska", " ci,ska ", "datna", "qwzx", "lo",
+  ]
+    ## Words random answers draw: gismu, cmavo, lujvo, folded spellings, and words reader refuses.
+  GLOSSES = [GLOSS_SUITE, "  gloss \t spaced  ", "gloss \xE2\x80\xAE reversed"]
+    ## Glosses random answers give: plain, spaced, and holding bidirectional mark.
+  STATUSES_ERROR = [400, 401, 413, 429, 500, 529]  ## Statuses random error replies take.
+  LUT_REASON_DECLINED_BY_SERVICE: array[Service, string] =
+    ["refusal", "content_filter", "content_filter"]
+    ## Stop reason of reply declining in wire format of each service.
+  LUT_REASON_TRUNCATED_BY_SERVICE: array[Service, string] = ["max_tokens", "length", "length"]
+    ## Stop reason of reply stopped at limit in wire format of each service.
+  BODIES_MALFORMED = ["", "not json", "[]", "{\"tanru\": [\"ciska\"]"]
+    ## Bodies of 2xx reply reading as no reply of either wire format.
+  LABELS = [LABEL_MESSAGES, LABEL_CHAT, LABEL_SUITE, "recorded 2026-10-29"]
+    ## Labels random recordings carry, printable alone.
+  GISMU_GIVEN = ["cukta", "datni", "gerku", "pixra", "tatpi", "vreji", "xatra"]
+    ## Gismu random texts given join into tag.
+  TEXTS_ASKED = [
+    "se", "lo", "file", "Lojban", "mi ciska lo xatra", "datni+vreji", "datni vreji", "datna",
+    "cihska", "qwzx",
+  ]
+    ## Texts reading as no tag: cmavo alone, English, Lojban prose, tanru joined by `+` or by
+    ##   space, unlisted word, unknown letter.
+
+
+
+#[ Replies ]#
+
+func example(name: string): Example =
+  ## Find worked example of `tools/examples.nim` by name.
+  EXAMPLES[EXAMPLES.mapIt(it.name).find(name)]
+
+
+func urlLoopback(port: int, path: string): string =
+  ## Build URL of path on `127.0.0.1` at port.
+  "http://127.0.0.1:" & $port & path
+
+
+func toSettings(service: Service, port: int): Settings =
+  ## Build default settings of service sending to fake service at port; `chat`, which has no
+  ##   model by default, names `MODEL_SUITE`.
+  result = service.toSettings
+  result.endpoint = urlLoopback(port, PATH_SERVICE)
+  if service == Service.Chat: result.model = MODEL_SUITE
+
+
+func toEnvironment(settings: Settings): seq[(string, string)] =
+  ## Name settings in environment as binary reads them, beside credential of suite.
+  result = @[
+    (KEY_SERVICE, $settings.service),
+    (KEY_ENDPOINT, settings.endpoint),
+    (KEY_MODEL, settings.model),
+    (KEY_CREDENTIAL, CREDENTIAL_SUITE),
+  ]
+  if settings.effort.isSome: result.add (KEY_EFFORT, $settings.effort.get)
+
+
+func toAnswer(words: openArray[string], gloss: string = GLOSS_SUITE): string =
+  ## Render answer of schema naming words, as model gives it.
+  $ %*{"tanru": words, "gloss": gloss}
+
+
+func toReplyAnswer(service: Service; answer, model: string): Reply =
+  ## Wrap answer in reply of wire format of service, as worked examples do.
+  if service == Service.Claude: toReplyMessages(answer, model) else: toReplyChat(answer, model)
+
+
+func toReplyError(service: Service, status: int): Reply =
+  ## Build error reply in wire format of service: envelope of Messages API or of chat completion.
+  let body =
+    if service == Service.Claude:
+      %*{"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
+    else: %*{"error": {"message": "Provider returned error", "code": status}}
+  Reply(status: status, content_type: "application/json", body: $body)
+
+
+func toReplyStopped(service: Service; reason, model: string): Reply =
+  ## Build 2xx reply in wire format of service stopping for reason, holding no answer.
+  let body =
+    if service == Service.Claude:
+      %*{
+        "id": "msg_suite", "type": "message", "role": "assistant", "model": model, "content": [],
+        "stop_reason": reason, "stop_sequence": nil, "stop_details": {"category": "cyber"},
+      }
+    else:
+      %*{
+        "id": "gen-suite", "object": "chat.completion", "model": model,
+        "choices": [{
+          "index": 0, "finish_reason": reason,
+          "message": {"role": "assistant", "content": nil, "refusal": nil},
+        }],
+      }
+  Reply(status: 200, content_type: "application/json", body: $body)
+
+
+
+#[ Servers ]#
+
+func toMessage(reply: Reply): string =
+  ## Render reply as server writes it: status line with no reason, each header reply holds,
+  ##   length, close, then whole body.
+  result = "HTTP/1.1 " & $reply.status & " \r\n"
+  for (name, value) in [
+    ("content-type", reply.content_type),
+    ("content-encoding", reply.content_encoding),
+    ("location", reply.location),
+  ]:
+    if value.len > 0: result.add name & ": " & value & "\r\n"
+  result.add "content-length: " & $reply.body.len & "\r\nconnection: close\r\n\r\n" & reply.body
+
+
+func values(heard: Heard, name: string): seq[string] =
+  ## Read value of each header line naming `name`, compared without case.
+  for i in 1..<heard.lines.len:
+    let at = heard.lines[i].find(": ")
+    if at > 0 and heard.lines[i][0..<at].toLowerAscii == name.toLowerAscii:
+      result.add heard.lines[i][at+2 .. ^1]
+
+
+func target(heard: Heard): string =
+  ## Read target request line names: path, absolute URL sent through proxy, or host of tunnel.
+  let words = heard.lines[0].split(' ')
+  if words.len > 1: words[1] else: ""
+
+
+proc answerClient(server: Server, client: AsyncSocket) {.async.} =
+  ## Read one request of client, keep it, and answer reply its target routes to.
+  var heard: Heard
+  while true:
+    let line = await client.recvLine()
+    if line in ["", "\r\n"]: break
+    heard.lines.add line
+  if heard.lines.len == 0: return
+  let lengths = heard.values("content-length")
+  if lengths.len > 0: heard.body = await client.recv(lengths[0].parseInt)
+  server.heard.add heard
+  var reply = Reply(status: STATUS_MISSING)
+  for (target, routed) in server.routes:
+    if target == heard.target: reply = routed
+  await client.send(reply.toMessage)
+
+
+proc acceptClients(server: Server) {.async.} =
+  ## Accept clients until listener closes, answering each in turn, then closing it.
+  while true:
+    var client: AsyncSocket
+    try:
+      client = await server.socket.accept()
+    except CatchableError:
+      return  # listener closed
+    try:
+      await server.answerClient(client)
+    except CatchableError:
+      discard  # client gone mid answer; its run, not server, holds verdict
+    client.close()
+
+
+proc startServer(routes: seq[(string, Reply)] = @[]): Server =
+  ## Start server on `127.0.0.1` at port system chooses, answering routes until `stopServer`.
+  result = Server(socket: newAsyncSocket(), routes: routes)
+  result.socket.setSockOpt(OptReuseAddr, true)
+  result.socket.bindAddr(Port(0), "127.0.0.1")
+  result.socket.listen()
+  result.port = int(result.socket.getLocalAddr[1])
+  result.accepting = result.acceptClients
+
+
+proc stopServer(server: Server) =
+  ## Close listener, then drive loop until loop accepting clients ends.
+  server.socket.close()
+  waitFor server.accepting
+
+
+proc portClosed(): int =
+  ## Bind listener on `127.0.0.1` at port system chooses, then close it, so port refuses.
+  let socket = newAsyncSocket()
+  socket.bindAddr(Port(0), "127.0.0.1")
+  result = int(socket.getLocalAddr[1])
+  socket.close()
+
+
+
+#[ Runs ]#
+
+func toPrefix(environment: openArray[(string, string)]): string =
+  ## Render shell prefix: each name of `NAMES_BLANK` blank unless environment gives it value,
+  ##   then each other name environment gives; later value of one name wins.
+  var assignments = NAMES_BLANK.mapIt((it, ""))
+  for (name, value) in environment:
+    let at = assignments.mapIt(it[0]).find(name)
+    if at < 0: assignments.add (name, value)
+    else: assignments[at][1] = value
+  assignments.mapIt(it[0] & "=" & quoteShell(it[1])).join(" ")
+
+
+proc run(
+  binary: Binary, environment: openArray[(string, string)], arguments: openArray[string]
+): Outcome =
+  ## Run binary under environment, sink named at `KEY_BASE`, streams to files; drive servers by
+  ##   `poll` until child exits.
+  let
+    path_output = binary.path.parentDir / "output"
+    path_report = binary.path.parentDir / "report"
+    command = toPrefix(@[(KEY_BASE, urlLoopback(binary.sink.port, ""))] & @environment) & " " &
+        (@[binary.path] & @arguments).map(quoteShell).join(" ") & " >" &
+        quoteShell(path_output) & " 2>" & quoteShell(path_report)
+    child = startProcess(command, options = {poEvalCommand})
+  while child.running: poll(MS_POLL)
+  result = Outcome(
+    output: readFile(path_output),
+    report: readFile(path_report),
+    code: child.waitForExit,
+  )
+  child.close()
+
+
+func pathRecording(directory, request: string): string =
+  ## Build path binary keeps recording of request at: stamp of request, in directory.
+  directory / (request.stamp & ".recording")
+
+
+proc writeRecordings(directory: string, recordings: openArray[Recording]) =
+  ## Write each recording under stamp of its request, as binary names it, making directory.
+  createDir(directory)
+  for recording in recordings:
+    writeFile(pathRecording(directory, recording.request), recording.toText)
+
+
+func noteCredential(name: string): string =
+  ## Render note naming variable credential was read from.
+  "Credential read from `" & name & "`."
+
+
+func noteReplayed(path, label: string): string =
+  ## Render note naming recording replayed, then its label.
+  "Reply replayed from `" & path & "`: " & label & "."
+
+
+func noteWritten(path: string): string =
+  ## Render note naming recording written.
+  "Reply written to `" & path & "`."
+
+
+func toSuggestion(failure: Failure, detail: string): Suggestion =
+  ## Build suggestion failed for reason, detail made printable as binary makes it.
+  Suggestion(is_suggested: false, failure: failure, detail: detail.toPrintable(RUNES_SHOWN))
+
+
+func toOutcome(
+  suggestion: Suggestion, passage: Passage, model: string, notes: openArray[string]
+): Outcome =
+  ## Build outcome pure pipeline gives once passage exists: each note, then report of
+  ##   suggestion; tag alone on output and exit 0, or nothing and exit 1.
+  Outcome(
+    output: if suggestion.is_suggested: $suggestion.tag & "\n" else: "",
+    report: notes.mapIt(it & "\n").join & suggestion.toReport(passage, model),
+    code: if suggestion.is_suggested: 0 else: 1,
+  )
+
+
+func toOutcome(failure: Failure, detail: string, notes: openArray[string]): Outcome =
+  ## Build outcome of page that gave no passage: each note, then explanation; exit 1.
+  Outcome(
+    report: notes.mapIt(it & "\n").join & toSuggestion(failure, detail).explain & "\n",
+    code: 1,
+  )
+
+
+func toOutcomeGiven(text: string): Outcome =
+  ## Build outcome of text reading as tag already: form alone on output, report naming tanru.
+  let tag = text.readTagGiven.get
+  Outcome(output: $tag & "\n", report: toReportGiven(text, tag), code: 0)
+
+
+func isDate(text: string): bool =
+  ## Test text is date as `yyyy-MM-dd` writes it: four digits, two, then two, joined by `-`.
+  text.len == 10 and text[4] == '-' and text[7] == '-' and
+      (text[0..3] & text[5..6] & text[8..9]).allIt(it in Digits)
+
+
+
+#[ Samples ]#
+
+proc argumentsRandom(): seq[string] =
+  ## Draw text given as one to four arguments of one to six words of `WORDS_PASSAGE` each; one
+  ##   time in twenty, one argument past `BYTES_PASSAGE_MAX`, so passage is cut.
+  if rand(19) == 0: return @[PIECE_LONG.repeat(COUNT_LONG_MIN + rand(COUNT_LONG_EXTRA))]
+  for _ in 1..rand(1..4):
+    var words: seq[string]
+    for _ in 1..rand(1..6): words.add WORDS_PASSAGE.sample
+    result.add words.join(" ")
+
+
+proc replyRandom(service: Service, model: string): Reply =
+  ## Draw reply in wire format of service: answer of one to seven words of `WORDS_ANSWER`, by
+  ##   model asked or other, most often; else error status, refusal, stop at limit, body of no
+  ##   reply, or answer cut or coded.
+  let served = if rand(3) == 0: MODEL_SERVED else: model
+  var words: seq[string]
+  for _ in 1..rand(1 .. COUNT_WORDS_MAX + 1): words.add WORDS_ANSWER.sample
+  result = toReplyAnswer(service, toAnswer(words, GLOSSES.sample), served)
+  case rand(9)
+  of 5: result = toReplyError(service, STATUSES_ERROR.sample)
+  of 6: result = toReplyStopped(service, LUT_REASON_DECLINED_BY_SERVICE[service], served)
+  of 7: result = toReplyStopped(service, LUT_REASON_TRUNCATED_BY_SERVICE[service], served)
+  of 8: result = Reply(status: 200, content_type: "application/json", body: BODIES_MALFORMED.sample)
+  of 9:
+    if rand(1) == 0: result.is_cut = true
+    else: result.content_encoding = "gzip"
+  else: discard
+
+
+proc sampleRandom(endpoint: string): Sample =
+  ## Draw random replay: arguments; service, naming endpoint, model and effort one time in two
+  ##   each, and `chat` naming endpoint and model always; reply in its wire format; label.
+  let service = rand(Service)
+  result = Sample(
+    arguments: argumentsRandom(),
+    settings: service.toSettings,
+    environment: @[(KEY_SERVICE, $service)],
+  )
+  if service == Service.Chat or rand(1) == 0:
+    result.settings.endpoint = endpoint
+    result.environment.add (KEY_ENDPOINT, endpoint)
+  if service == Service.Chat or rand(1) == 0:
+    result.settings.model = MODEL_SUITE
+    result.environment.add (KEY_MODEL, MODEL_SUITE)
+  if rand(1) == 0:
+    let effort = rand(Effort)
+    result.settings.effort = some(effort)
+    result.environment.add (KEY_EFFORT, $effort)
+  result.reply = replyRandom(service, result.settings.model)
+  result.label = LABELS.sample
+
+
+proc textGivenRandom(): string =
+  ## Draw text given: tag of one to three gismu of `GISMU_GIVEN` in form `$` renders, its case,
+  ##   commas or whitespace changed, or padded past `BYTES_ELEMENT_MAX`, one time in eight each;
+  ##   else, one time in four, text of `TEXTS_ASKED`.
+  if rand(3) == 0: return TEXTS_ASKED.sample
+  var words: seq[string]
+  for _ in 1..rand(1..3): words.add GISMU_GIVEN.sample
+  result = $readTanru(words.join("+")).get
+  case rand(7)
+  of 0: result = result.toUpperAscii
+  of 1: result.insert(",", rand(result.len))
+  of 2: result = " " & result & "\t"
+  of 3: result.add " ".repeat(BYTES_ELEMENT_MAX)
+  else: discard
+
+
+proc poolSamples(endpoint: string): seq[Sample] =
+  ## Draw `SAMPLES_REPLAY` random replays into pool allocated once; caller seeds first.
+  result = newSeqOfCap[Sample](SAMPLES_REPLAY)
+  for _ in 1..SAMPLES_REPLAY: result.add sampleRandom(endpoint)
+
+
+proc poolGiven(): seq[string] =
+  ## Draw `SAMPLES_GIVEN` random texts given into pool allocated once; caller seeds first.
+  result = newSeqOfCap[string](SAMPLES_GIVEN)
+  for _ in 1..SAMPLES_GIVEN: result.add textGivenRandom()
+
+
+iterator served[T](pool: seq[T]): lent T =
+  ## Serve each sample of pool in order, with no copy.
+  for i in 0..<pool.len: yield pool[i]
+
+
+
+suite "Internal: Suggester":
+  let
+    directory = getTempDir() / (PREFIX_DIRECTORY & $getCurrentProcessId())
+    binary = Binary(path: directory / "suggester", sink: startServer())
+  removeDir(directory)
+  createDir(directory)
+  let (output_compile, code_compile) = execCmdEx(
+    quoteShell(NIM) & " c --hints:off -d:ssl --nimcache:" & quoteShell(directory / "cache") &
+    " -o:" & quoteShell(binary.path) & " " & quoteShell(PATH_APP),
+  )
+
+
+  test "binary builds from `app/suggester.nim` with TLS, as it ships":
+    checkpoint output_compile
+    check code_compile == 0  # one command rebuilds, then drives (IX.6)
+    check fileExists(binary.path)  # binary written where asked
+
+
+  test "replay of each worked example prints what pure pipeline gives, under both services":
+    for example in EXAMPLES:
+      for service in [Service.Claude, Service.OpenRouter]:
+        let
+          directory_case = directory / "examples" / (example.name & "_" & $service)
+          recordings = example.toRecordings(service)
+          expected = toOutcome(
+            service.readReply(recordings[^1].reply),
+            example.toPassage,
+            service.toSettings.model,
+            recordings.mapIt(noteReplayed(pathRecording(directory_case, it.request), it.label)),
+          )
+        writeRecordings(directory_case, recordings)
+        var argument_lists = @[@[example.argument]]
+        if example.hops.len == 0: argument_lists.add example.argument.split(' ')
+        for arguments in argument_lists:
+          let
+            replay = @["--replay:" & directory_case]
+            outcome = binary.run([(KEY_SERVICE, $service)], replay & arguments)
+          check outcome == expected  # output, report and exit of pure pipeline, notes first
+          check outcome.output == $readTanru(example.tanru).get & "\n"  # tanru example documents
+
+
+  test "replay of random passage, settings and reply prints what pure pipeline gives":
+    randomize(0)
+    let
+      directory_case = directory / "random"
+      replay = @["--replay:" & directory_case]
+      endpoint = startServer()
+      pool = poolSamples(urlLoopback(endpoint.port, PATH_SERVICE))
+    createDir(directory_case)
+    var (passed, count_suggested, count_refused, count_cut) = (0, 0, 0, 0)
+    for sample in served(pool):
+      let text = sample.arguments.join(" ")
+      if text.readTagGiven.isSome: continue  # text reading as tag asks nothing; law below
+      inc passed
+      let
+        passage = text.toPassage
+        request = "POST " & sample.settings.toBody(passage)
+        path = pathRecording(directory_case, request)
+        suggestion = sample.settings.service.readReply(sample.reply)
+      writeFile(path, Recording(label: sample.label, request: request, reply: sample.reply).toText)
+      let outcome = binary.run(sample.environment, replay & sample.arguments)
+      check outcome == toOutcome(suggestion, passage, sample.settings.model,
+          [noteReplayed(path, sample.label)])  # settings read from environment, reply as read
+      if suggestion.is_suggested: inc count_suggested else: inc count_refused
+      if passage.is_cut: inc count_cut
+    check endpoint.heard.len == 0  # replay opens no socket
+    check passed >= FLOOR_REPLAYED  # guard leaves enough texts sent to service
+    check count_suggested >= FLOOR_SUGGESTED  # replies printing tag are common
+    check count_refused >= FLOOR_REFUSED  # replies refused are common
+    check count_cut >= FLOOR_CUT  # passages past `BYTES_PASSAGE_MAX` occur
+    stopServer(endpoint)
+
+
+  test "text reading as tag prints its form and asks nothing, in every mode":
+    let
+      endpoint = startServer()
+      directory_case = directory / "given"
+      url_endpoint = urlLoopback(endpoint.port, PATH_SERVICE)
+      live = @[(KEY_ENDPOINT, url_endpoint), (KEY_CREDENTIAL, CREDENTIAL_SUITE)]
+      expected = Outcome(
+        output: FORM_GIVEN & "\n",
+        report: toReportGiven(TEXT_GIVEN, readTag(TEXT_GIVEN).tag),
+        code: 0,
+      )
+    for flags in [@[], @["--record:" & directory_case], @["--replay:" & directory_case]]:
+      for environment in [
+        newSeq[(string, string)](),  # no credential, which live run would need
+        @[(KEY_SERVICE, "bogus")],  # service no run accepts
+        live,  # credential and endpoint server counting each request
+      ]:
+        check binary.run(environment, flags & @[TEXT_GIVEN]) == expected  # form, and tanru named
+    check endpoint.heard.len == 0  # no service asked
+    check not dirExists(directory_case)  # no recording read or written
+    stopServer(endpoint)
+
+
+  test "text prints form exactly where `readTagGiven` reads it as tag, and asks service else":
+    randomize(0)
+    let
+      directory_case = directory / "asked"  # never made, so recording of each request misses
+      settings = Service.Claude.toSettings
+      pool = poolGiven()
+    var (count_given, count_asked) = (0, 0)
+    for text in served(pool):
+      let outcome = binary.run([], ["--replay:" & directory_case, text])
+      if text.readTagGiven.isSome:
+        inc count_given
+        check outcome == text.toOutcomeGiven  # form alone, no service asked
+        continue
+      inc count_asked
+      let
+        passage = text.toPassage
+        path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+      check outcome == toOutcome(toSuggestion(Failure.Recording, path & " missing"), passage,
+          settings.model, [])  # sent to service, whose recording is missing
+    check count_given >= FLOOR_GIVEN  # texts reading as tag are common
+    check count_asked >= FLOOR_ASKED  # texts sent to service are common
+
+
+  test "replay reads no credential and opens no socket, so endpoint and proxy hear nothing":
+    let (endpoint, proxy) = (startServer(), startServer())
+    for example in EXAMPLES:
+      for service in [Service.Claude, Service.OpenRouter]:
+        let directory_case = directory / "unread" / (example.name & "_" & $service)
+        writeRecordings(directory_case, example.toRecordings(service))
+        let outcome = binary.run(
+          [
+            (KEY_SERVICE, $service),
+            (KEY_ENDPOINT, urlLoopback(endpoint.port, PATH_SERVICE)),
+            (KEY_CREDENTIAL, "sk-ant-\rrefused"),
+            (LUT_KEY_CREDENTIAL_BY_SERVICE[service], "sk-or-\rrefused"),
+            ("https_proxy", urlLoopback(proxy.port, "")),
+            ("http_proxy", urlLoopback(proxy.port, "")),
+          ],
+          ["--replay:" & directory_case, example.argument],
+        )
+        check outcome.code == 0  # tag printed, though live run refuses both credentials
+        check outcome.output == $readTanru(example.tanru).get & "\n"  # tag of recordings
+        check "Credential" notin outcome.report  # no credential read, so none named
+    check endpoint.heard.len == 0  # no socket to endpoint
+    check proxy.heard.len == 0  # nor to proxy, for page or service
+    stopServer(endpoint)
+    stopServer(proxy)
+
+
+  test "missing recording exits 1 naming file under stamp of request":
+    let
+      directory_case = directory / "missing"  # never made
+      (text, page) = (example("lojban"), example("page"))
+      settings = Service.Claude.toSettings
+      passage = text.argument.toPassage
+      path_text = pathRecording(directory_case, "POST " & settings.toBody(passage))
+      path_page = pathRecording(directory_case, "GET " & page.argument)
+    check binary.run([], ["--replay:" & directory_case, text.argument]) ==
+        toOutcome(toSuggestion(Failure.Recording, path_text & " missing"), passage,
+        settings.model, [])  # stamp of service request named
+    check binary.run([], ["--replay:" & directory_case, page.argument]) ==
+        toOutcome(Failure.Recording, path_page & " missing", [])  # stamp of first hop named
+    check not dirExists(directory_case)  # replay makes nothing
+    let
+      directory_hops = directory / "hops"
+      hops = page.toRecordings(Service.Claude)[0 ..< ^1]
+      passage_hops = page.toPassage
+      path_service = pathRecording(directory_hops, "POST " & settings.toBody(passage_hops))
+    writeRecordings(directory_hops, hops)
+    check binary.run([], ["--replay:" & directory_hops, page.argument]) ==
+        toOutcome(toSuggestion(Failure.Recording, path_service & " missing"), passage_hops,
+        settings.model, hops.mapIt(noteReplayed(pathRecording(directory_hops, it.request),
+        it.label)))  # each hop replayed, then stamp of service request named
+
+
+  test "recording malformed or holding other request exits 1 naming file and line":
+    let
+      directory_case = directory / "malformed"
+      text = example("lojban")
+      settings = Service.Claude.toSettings
+      passage = text.argument.toPassage
+      request = "POST " & settings.toBody(passage)
+      path = pathRecording(directory_case, request)
+      reply = toReplyMessages(text.answer, settings.model)
+      whole = Recording(label: LABEL_SUITE, request: request, reply: reply).toText
+    createDir(directory_case)
+    for malformed in [
+      "",
+      "lojban_tagger recording 2\n" & whole.split('\n', 1)[1],
+      whole[0 ..< ^2],
+      whole & "\n",
+    ]:
+      writeFile(path, malformed)
+      let recorded = malformed.readRecording
+      check not recorded.is_read  # file malformed
+      if recorded.is_read: continue
+      check binary.run([], ["--replay:" & directory_case, text.argument]) ==
+          toOutcome(toSuggestion(Failure.Recording, path & ":" & $recorded.line & ": " &
+          recorded.problem), passage, settings.model, [])  # path, line and problem of reader
+    writeFile(path, Recording(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
+    check binary.run([], ["--replay:" & directory_case, text.argument]) ==
+        toOutcome(toSuggestion(Failure.Recording, path & " holds other request"), passage,
+        settings.model, [])  # stamp alone never matches, whole request does
+
+
+  test "record sends request service expects, writes reply, then replays it with no request":
+    let text = example("lojban")
+    for service in Service:
+      let
+        server = startServer()
+        settings = service.toSettings(server.port)
+        environment = settings.toEnvironment
+        directory_case = directory / "record" / $service
+        passage = text.argument.toPassage
+        body = settings.toBody(passage)
+        path = pathRecording(directory_case, "POST " & body)
+        reply = toReplyAnswer(service, text.answer, settings.model)
+        suggestion = service.readReply(reply)
+      server.routes = @[(PATH_SERVICE, reply)]
+      let written = binary.run(environment, ["--record:" & directory_case, text.argument])
+      check written == toOutcome(suggestion, passage, settings.model,
+          [noteCredential(KEY_CREDENTIAL), noteWritten(path)])  # tag, and file written named
+      check server.heard.len == 1  # one request sent
+      if server.heard.len == 1:
+        let heard = server.heard[0]
+        check heard.lines[0] == "POST " & PATH_SERVICE & " HTTP/1.1"  # to endpoint named
+        check heard.body == body  # body bytes of `toBody`
+        check settings.toHeaders.allIt(heard.values(it[0]) == @[it[1]])  # each header, once
+        check heard.lines.countIt(it.toLowerAscii.startsWith("anthropic-")) ==
+            settings.toHeaders.countIt(it[0].startsWith("anthropic-"))  # Anthropic's own alone
+        check service != Service.Claude or (heard.values("anthropic-version").len == 1 and
+            heard.values("anthropic-beta").len == 1)  # version, and beta of fallback model
+        check heard.values("authorization") == @["Bearer " & CREDENTIAL_SUITE]  # once, as Bearer
+        check heard.values("accept-encoding") == @["identity"]  # no coding reader cannot read
+        check heard.values("user-agent") == @[USER_AGENT]  # agent of tool
+      let recorded = readFile(path).readRecording
+      check recorded.is_read  # file binary wrote reads back
+      if not recorded.is_read: continue
+      let label = recorded.recording.label
+      check recorded.recording.request == "POST " & body  # whole request, no credential
+      check recorded.recording.reply == reply  # reply as served
+      check label.startsWith("recorded ") and label["recorded ".len .. ^1].isDate  # date of run
+      check walkDir(directory_case).toSeq.len == 1  # recording alone, sibling renamed over it
+      let again = binary.run(environment, ["--record:" & directory_case, text.argument])
+      check again == toOutcome(suggestion, passage, settings.model,
+          [noteCredential(KEY_CREDENTIAL), noteReplayed(path, label)])  # recording replayed
+      check server.heard.len == 1  # 2xx kept, so never paid twice
+      let replayed = binary.run(environment, ["--replay:" & directory_case, text.argument])
+      check replayed == toOutcome(suggestion, passage, settings.model,
+          [noteReplayed(path, label)])  # same tag, credential unread
+      check server.heard.len == 1  # replay sends nothing
+      for outcome in [written, again, replayed]:
+        check CREDENTIAL_SUITE notin outcome.output & outcome.report  # credential in no stream
+      for file in walkDirRec(directory_case):
+        check CREDENTIAL_SUITE notin readFile(file)  # nor in any file
+      stopServer(server)
+
+
+  test "credential comes from `LOJBAN_TAGGER_API_KEY` first, then usual name of service":
+    let text = example("lojban")
+    for (service, environment, name, value) in [
+      (Service.Claude, @[(KEY_CREDENTIAL, "first"), ("ANTHROPIC_API_KEY", "second")],
+          KEY_CREDENTIAL, "first"),
+      (Service.Claude, @[("ANTHROPIC_API_KEY", "second")], "ANTHROPIC_API_KEY", "second"),
+      (Service.Claude, @[(KEY_CREDENTIAL, " \t"), ("ANTHROPIC_API_KEY", "second")],
+          "ANTHROPIC_API_KEY", "second"),  # blank value reads as unset
+      (Service.Claude, @[(KEY_CREDENTIAL, " first\t")], KEY_CREDENTIAL, "first"),  # trimmed
+      (Service.OpenRouter, @[(KEY_CREDENTIAL, "first"), ("OPENROUTER_API_KEY", "second")],
+          KEY_CREDENTIAL, "first"),
+      (Service.OpenRouter, @[("OPENROUTER_API_KEY", "second"), ("ANTHROPIC_API_KEY", "other")],
+          "OPENROUTER_API_KEY", "second"),  # usual name of service, never of other
+      (Service.Chat, @[(KEY_CREDENTIAL, "first"), ("ANTHROPIC_API_KEY", "other")],
+          KEY_CREDENTIAL, "first"),
+    ]:
+      let
+        server = startServer()
+        settings = service.toSettings(server.port)
+        reply = toReplyAnswer(service, text.answer, settings.model)
+      server.routes = @[(PATH_SERVICE, reply)]
+      let
+        named = settings.toEnvironment.filterIt(it[0] notin NAMES_CREDENTIAL) & environment
+        outcome = binary.run(named, [text.argument])
+      check outcome == toOutcome(service.readReply(reply), text.argument.toPassage,
+          settings.model, [noteCredential(name)])  # variable named, never value
+      check server.heard.mapIt(it.values("authorization")) ==
+          @[@["Bearer " & value]]  # value of first variable set, trimmed, as Bearer
+      stopServer(server)
+
+
+  test "record writes reply of any status, replays 2xx and 3xx alone, and replay replays any":
+    let
+      server = startServer()
+      text = example("lojban")
+      settings = Service.Claude.toSettings(server.port)
+      passage = text.argument.toPassage
+    for reply in [
+      toReplyError(Service.Claude, 401),
+      toReplyError(Service.Claude, 529),
+      Reply(status: 307, location: "/elsewhere"),
+      toReplyMessages(text.answer, settings.model),
+    ]:
+      server.routes = @[(PATH_SERVICE, reply)]
+      let
+        directory_case = directory / "statuses" / $reply.status
+        record = @["--record:" & directory_case, text.argument]
+        path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+        suggestion = Service.Claude.readReply(reply)
+        is_kept = reply.status in 200..399
+        count_before = server.heard.len
+        first = binary.run(settings.toEnvironment, record)
+        recorded = readFile(path).readRecording
+      check first == toOutcome(suggestion, passage, settings.model,
+          [noteCredential(KEY_CREDENTIAL), noteWritten(path)])  # sent and written, any status
+      check recorded.is_read and recorded.recording.reply == reply  # reply as served
+      if not recorded.is_read: continue
+      let second = binary.run(settings.toEnvironment, record)
+      check second == toOutcome(suggestion, passage, settings.model, [
+        noteCredential(KEY_CREDENTIAL),
+        if is_kept: noteReplayed(path, recorded.recording.label) else: noteWritten(path),
+      ])  # 2xx and 3xx replayed, rest sent and written again
+      check server.heard.len - count_before == (if is_kept: 1 else: 2)  # sent again unless kept
+      let label = readFile(path).readRecording.recording.label
+      check binary.run([], ["--replay:" & directory_case, text.argument]) ==
+          toOutcome(suggestion, passage, settings.model, [noteReplayed(path, label)])  # any
+      check server.heard.len - count_before == (if is_kept: 1 else: 2)  # replay sends nothing
+    stopServer(server)
+
+
+  test "refused connection exits 1 with `Network`, and record writes nothing":
+    let
+      port = portClosed()
+      directory_case = directory / "refused"
+      opening = noteCredential(KEY_CREDENTIAL) & "\nService or page should answer; got `"
+    for argument in [example("lojban").argument, urlLoopback(port, "/page")]:
+      for flags in [@[], @["--record:" & directory_case]]:
+        let outcome = binary.run(
+          [(KEY_ENDPOINT, urlLoopback(port, PATH_SERVICE)), (KEY_CREDENTIAL, CREDENTIAL_SUITE)],
+          flags & @[argument],
+        )
+        check outcome.code == 1 and outcome.output == ""  # no tag
+        check outcome.report.startsWith(opening) and outcome.report.endsWith("`.\n")  # named
+        if not outcome.report.startsWith(opening) or outcome.report.len < opening.len + 3:
+          continue
+        let detail = outcome.report[opening.len ..< ^3]
+        check detail.len > 0 and '\n' notin detail  # first line of error alone
+        check CREDENTIAL_SUITE notin detail  # credential never in error
+    check not dirExists(directory_case)  # failed transport writes nothing
+
+
+  test "page over loopback follows redirect, reads markup, and cuts page past its cap":
+    let
+      page = example("page")
+      reply_page = page.hops[^1][1]  # markup of windows-1252: script, style, comment, references
+      large = PIECE_PAGE.repeat(BYTES_PAGE_MAX div PIECE_PAGE.len + 1)[0..BYTES_PAGE_MAX]
+      reply_exact = Reply(status: 200, content_type: "text/plain", body: large[0 ..< ^1])
+      reply_large = Reply(status: 200, content_type: "text/plain", body: large)
+      server = startServer(
+        @[
+          ("/moved", Reply(status: 302, location: "/page")),
+          ("/page", reply_page),
+          ("/exact", reply_exact),
+          ("/large", reply_large),
+        ],
+      )
+      settings = Service.Claude.toSettings(server.port)
+      reply_service = toReplyMessages(page.answer, settings.model)
+      suggestion = Service.Claude.readReply(reply_service)
+    server.routes.add (PATH_SERVICE, reply_service)
+    for (start, final, reply_read) in [
+      ("/moved", "/page", reply_page),
+      ("/exact", "/exact", reply_exact),  # page of `BYTES_PAGE_MAX` bytes kept whole
+      ("/large", "/large", Reply(
+        status: 200,
+        content_type: "text/plain",
+        body: reply_exact.body,
+        is_cut: true,
+      )),  # one byte more cut, and rest unread
+    ]:
+      let paged = urlLoopback(server.port, final).readPage(reply_read)
+      check paged.is_read  # page gives passage
+      if not paged.is_read: continue
+      let
+        count_before = server.heard.len
+        outcome = binary.run(settings.toEnvironment, [urlLoopback(server.port, start)])
+        heard = server.heard[count_before .. ^1]
+      check outcome == toOutcome(suggestion, paged.passage, settings.model,
+          [noteCredential(KEY_CREDENTIAL)])  # tag of passage page gives, cut lines first
+      check heard.mapIt(it.target) == (if start == final: @[final] else: @[start, final]) &
+          @[PATH_SERVICE]  # each hop once, then service
+      check heard.len > 0 and heard[^1].body == settings.toBody(paged.passage)  # text of page
+      check heard[0 ..< ^1].allIt(it.values("authorization").len == 0)  # page gets no credential
+    let
+      directory_case = directory / "page"
+      url_moved = urlLoopback(server.port, "/moved")
+      url_page = urlLoopback(server.port, "/page")
+      passage = url_page.readPage(reply_page).passage
+      requests = @["GET " & url_moved, "GET " & url_page, "POST " & settings.toBody(passage)]
+      paths = requests.mapIt(pathRecording(directory_case, it))
+    check binary.run(settings.toEnvironment, ["--record:" & directory_case, url_moved]) ==
+        toOutcome(suggestion, passage, settings.model,
+        @[noteCredential(KEY_CREDENTIAL)] & paths.mapIt(noteWritten(it)))  # each hop written
+    stopServer(server)  # replay needs no server
+    let recordings = paths.mapIt(readFile(it).readRecording)
+    check recordings.allIt(it.is_read)  # each file reads back
+    if recordings.allIt(it.is_read):
+      check recordings.mapIt(it.recording.request) == requests  # each hop, then service
+      check recordings.mapIt(it.recording.reply) ==
+          @[Reply(status: 302, location: "/page"), reply_page, reply_service]  # as served
+      check binary.run([], ["--replay:" & directory_case, url_moved]) ==
+          toOutcome(suggestion, passage, settings.model, (0..2).mapIt(noteReplayed(paths[it],
+          recordings[it].recording.label)))  # same tag, read from files alone
+
+
+  test "page refused by status, type, coding, charset or text exits 1 with `Page`, naming it":
+    let
+      server = startServer()
+      environment = Service.Claude.toSettings(server.port).toEnvironment
+      credential = noteCredential(KEY_CREDENTIAL)
+    for (path, reply) in [
+      ("/gone", Reply(status: 404, content_type: "text/html", body: "<p>gone</p>")),
+      ("/failed", Reply(status: 500)),
+      ("/unchanged", Reply(status: 304)),  # no redirect, so status refused
+      ("/pdf", Reply(status: 200, content_type: "application/pdf", body: "%PDF-1.7")),
+      ("/zipped", Reply(
+        status: 200,
+        content_type: "text/html",
+        content_encoding: "gzip",
+        body: "\x1F\x8B\x08\x00",
+      )),
+      ("/japanese", Reply(status: 200, content_type: "text/plain; charset=shift_jis", body: "x")),
+      ("/script", Reply(status: 200, content_type: "text/html", body: "<script>a()</script>")),
+    ]:
+      server.routes = @[(path, reply), (PATH_SERVICE, toReplyError(Service.Claude, 500))]
+      let
+        url = urlLoopback(server.port, path)
+        paged = url.readPage(reply)
+        count_before = server.heard.len
+      check not paged.is_read  # pure reader refuses page
+      if paged.is_read: continue
+      check binary.run(environment, [url]) ==
+          toOutcome(Failure.Page, paged.detail, [credential])  # named by what refused it
+      check server.heard[count_before .. ^1].mapIt(it.target) == @[path]  # page alone, no service
+    for location in ["", "ftp://example.org/file"]:
+      server.routes = @[("/moved", Reply(status: 302, location: location))]
+      check binary.run(environment, [urlLoopback(server.port, "/moved")]) ==
+          toOutcome(Failure.Page, "redirect to " & location, [credential])  # no http target
+    stopServer(server)
+
+
+  test "redirect chain reads page within `COUNT_REDIRECTS_MAX` hops, and refuses one hop more":
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      reply_page = Reply(status: 200, content_type: "text/plain", body: example("alice").argument)
+      reply_service = toReplyMessages(example("alice").answer, settings.model)
+      credential = noteCredential(KEY_CREDENTIAL)
+    for count in 0 .. COUNT_REDIRECTS_MAX + 1:
+      let chain = (0..count).mapIt("/chain/" & $count & "/" & $it)
+      server.routes = (0..<count).mapIt((chain[it], Reply(status: 302, location: chain[it+1]))) &
+          @[(chain[^1], reply_page), (PATH_SERVICE, reply_service)]
+      let
+        count_before = server.heard.len
+        outcome = binary.run(settings.toEnvironment, [urlLoopback(server.port, chain[0])])
+        targets = server.heard[count_before .. ^1].mapIt(it.target)
+      if count <= COUNT_REDIRECTS_MAX:
+        let passage = urlLoopback(server.port, chain[^1]).readPage(reply_page).passage
+        check outcome == toOutcome(Service.Claude.readReply(reply_service), passage,
+            settings.model, [credential])  # page read after each redirect
+        check targets == chain & @[PATH_SERVICE]  # each hop once, then service
+      else:
+        check outcome == toOutcome(Failure.Page, "more than " & $COUNT_REDIRECTS_MAX &
+            " redirects", [credential])  # one redirect past cap refused
+        check targets == chain[0..COUNT_REDIRECTS_MAX]  # hop past cap never requested
+    stopServer(server)
+
+
+  test "redirect loop exits 1 with `Page`, naming URL seen again, each URL requested once":
+    let
+      server = startServer()
+      environment = Service.Claude.toSettings(server.port).toEnvironment
+    for length in 1 .. COUNT_REDIRECTS_MAX + 1:
+      for back in 0..<length:
+        let loop = (0..<length).mapIt("/loop/" & $length & "/" & $back & "/" & $it)
+        server.routes = (0..<length).mapIt((loop[it], Reply(
+          status: 302,
+          location: if it + 1 < length: loop[it+1] else: loop[back],
+        )))
+        let
+          count_before = server.heard.len
+          outcome = binary.run(environment, [urlLoopback(server.port, loop[0])])
+        check outcome == toOutcome(Failure.Page, "redirect loop at " &
+            urlLoopback(server.port, loop[back]), [noteCredential(KEY_CREDENTIAL)])  # URL seen
+        check server.heard[count_before .. ^1].mapIt(it.target) == loop  # each URL once
+    stopServer(server)
+
+
+  test "request off loopback goes through proxy environment names, and credential never with it":
+    let
+      page = Reply(status: 200, content_type: "text/plain", body: example("alice").argument)
+      url = "http://example.org/alice"
+      proxy = startServer(@[(url, page)])
+      service = startServer()
+      settings = Service.Claude.toSettings(service.port)
+      reply = toReplyMessages(example("alice").answer, settings.model)
+      url_proxy = urlLoopback(proxy.port, "")
+      proxies = @[("http_proxy", url_proxy), ("https_proxy", url_proxy)]
+    service.routes = @[(PATH_SERVICE, reply)]
+    check binary.run(settings.toEnvironment & proxies, [url]) ==
+        toOutcome(Service.Claude.readReply(reply), url.readPage(page).passage, settings.model,
+        [noteCredential(KEY_CREDENTIAL)])  # page read through proxy
+    check proxy.heard.mapIt(it.target) == @[url]  # absolute form, as proxy reads it
+    check service.heard.len == 1  # service on loopback goes direct
+    let
+      endpoint = "https://api.example.org" & PATH_SERVICE
+      tunnelled = binary.run(settings.toEnvironment & proxies & @[(KEY_ENDPOINT, endpoint)],
+          [example("lojban").argument])
+    check tunnelled.code == 1 and tunnelled.output == ""  # proxy refused tunnel
+    check tunnelled.report.startsWith(noteCredential(KEY_CREDENTIAL) &
+        "\nService or page should answer; got `")  # refusal named as `Network`
+    check proxy.heard.mapIt(it.target) == @[url, "api.example.org:443"]  # tunnel, never direct
+    check proxy.heard.allIt(it.lines.allIt(CREDENTIAL_SUITE notin it))  # credential never seen
+    check service.heard.len == 1  # nothing else reached service
+    stopServer(proxy)
+    stopServer(service)
+
+
+  test "settings refused exit 2 naming variable, and send or write nothing":
+    let
+      server = startServer()
+      endpoint = urlLoopback(server.port, PATH_SERVICE)
+      directory_case = directory / "settings"
+      every = @[@[], @["--record:" & directory_case], @["--replay:" & directory_case]]
+      sending = every[0..1]
+      chat = @[(KEY_SERVICE, "chat"), (KEY_ENDPOINT, endpoint), (KEY_MODEL, MODEL_SUITE)]
+    for (modes, environment, problem) in [
+      (every, @[(KEY_SERVICE, "bogus")], "Service should be `claude`, `openrouter` or `chat`; " &
+          "got `bogus` for `LOJBAN_TAGGER_SERVICE`."),
+      (every, @[(KEY_SERVICE, "Claude")], "Service should be `claude`, `openrouter` or " &
+          "`chat`; got `Claude` for `LOJBAN_TAGGER_SERVICE`."),  # spelled as enum, no fold
+      (every, @[(KEY_EFFORT, "extreme")], "Effort should be `low`, `medium`, `high`, `xhigh` " &
+          "or `max`; got `extreme` for `LOJBAN_TAGGER_EFFORT`."),
+      (every, @[(KEY_ENDPOINT, "http://api.example.org/v1")], "Endpoint should be https, or " &
+          "http to loopback host; got `http://api.example.org/v1` for `LOJBAN_TAGGER_ENDPOINT`."),
+      (every, @[(KEY_ENDPOINT, "api.example.org/v1")], "Endpoint should be https, or http to " &
+          "loopback host; got `api.example.org/v1` for `LOJBAN_TAGGER_ENDPOINT`."),  # no URL
+      (every, @[(KEY_SERVICE, "chat")], "Endpoint should be named for service `chat`; got `` " &
+          "for `LOJBAN_TAGGER_ENDPOINT`."),
+      (every, chat[0..1], "Model should be named for service `chat`; got `` for " &
+          "`LOJBAN_TAGGER_MODEL`."),
+      (sending, @[(KEY_ENDPOINT, endpoint), (KEY_CREDENTIAL, "sk-ant-sec\rret")],
+          "Credential should hold visible ASCII alone; got byte `13` at `10` for " &
+          "`LOJBAN_TAGGER_API_KEY`."),  # carriage return would split header
+      (sending, @[(KEY_ENDPOINT, endpoint), (KEY_CREDENTIAL, "sk-or-secret")],
+          "Credential should be issued by service `claude`; got opening `sk-or-` for " &
+          "`LOJBAN_TAGGER_API_KEY`."),
+      (sending, @[(KEY_ENDPOINT, endpoint), ("ANTHROPIC_API_KEY", "sk-or-secret")],
+          "Credential should be issued by service `claude`; got opening `sk-or-` for " &
+          "`ANTHROPIC_API_KEY`."),
+      (sending, @[(KEY_SERVICE, "openrouter"), (KEY_ENDPOINT, endpoint),
+          ("OPENROUTER_API_KEY", "sk-ant-secret")], "Credential should be issued by service " &
+          "`openrouter`; got opening `sk-ant-` for `OPENROUTER_API_KEY`."),
+      (sending, @[(KEY_ENDPOINT, endpoint)], "Credential should be set in " &
+          "`LOJBAN_TAGGER_API_KEY` or `ANTHROPIC_API_KEY`; got none."),
+      (sending, @[(KEY_SERVICE, "openrouter"), (KEY_ENDPOINT, endpoint), ("ANTHROPIC_API_KEY",
+          "sk-ant-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY` or " &
+          "`OPENROUTER_API_KEY`; got none."),  # usual name of other service unread
+      (sending, chat & @[("ANTHROPIC_API_KEY", "sk-ant-secret"), ("OPENROUTER_API_KEY",
+          "sk-or-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY`; got none."),
+    ]:
+      for flags in modes:
+        let outcome = binary.run(environment, flags & @[example("lojban").argument])
+        check outcome == Outcome(report: problem & "\n", code: 2)  # problem alone, nothing printed
+        check environment.allIt(it[0] notin NAMES_CREDENTIAL or
+            it[1] notin outcome.report)  # value of credential never named
+    check server.heard.len == 0  # nothing sent
+    check not dirExists(directory_case)  # nothing written
+    stopServer(server)
+
+
+  test "usage error exits 2, prints usage, and sends or writes nothing":
+    let
+      server = startServer()
+      directory_case = directory / "usage"
+      environment = Service.Claude.toSettings(server.port).toEnvironment
+    for arguments in [
+      newSeq[string](),
+      @["--record:"],
+      @["--replay:"],
+      @["--record:", TEXT_GIVEN],  # flag of empty directory, though text reads as tag
+      @["--replay:", "mi ciska"],
+      @["--record:" & directory_case],  # no passage
+      @["--replay:" & directory_case],
+      @["mi ciska", "--record:" & directory_case],  # flag after first argument
+      @["--replay:" & directory_case, "--replay:" & directory_case, "mi ciska"],
+      @["--record:" & directory_case, "mi", "--replay:" & directory_case],
+      @[""],  # blank passage
+      @[" ", "\t"],
+      @["--record:" & directory_case, "\n"],
+    ]:
+      check binary.run(environment, arguments) == Outcome(report: USAGE, code: 2)  # usage alone
+    check server.heard.len == 0  # nothing sent
+    check not dirExists(directory_case)  # nothing written
+    stopServer(server)
+
+
+  test "each failure exits 1, prints nothing, and reports what pure pipeline names":
+    let
+      text = example("lojban").argument
+      settings = Service.Claude.toSettings
+      passage = text.toPassage
+      request = "POST " & settings.toBody(passage)
+    var covered: set[Failure]
+    for reply in [
+      toReplyError(Service.Claude, 529),
+      toReplyStopped(Service.Claude, "refusal", settings.model),
+      toReplyStopped(Service.Claude, "max_tokens", settings.model),
+      Reply(status: 200, content_type: "application/json", body: "not json"),
+      toReplyMessages(toAnswer(["datna"]), settings.model),
+      toReplyMessages(toAnswer(["ciska", "se"]), settings.model),
+      toReplyMessages(newSeqWith(COUNT_WORDS_MAX + 1, "ciska").toAnswer, settings.model),
+      toReplyMessages(toAnswer(["brodi", "ciska"]), settings.model),
+    ]:
+      let suggestion = Service.Claude.readReply(reply)
+      check not suggestion.is_suggested  # reply reads as failure
+      if suggestion.is_suggested: continue
+      let directory_case = directory / "failures" / $suggestion.failure
+      writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
+          reply: reply)])
+      check binary.run([], ["--replay:" & directory_case, text]) == toOutcome(suggestion,
+          passage, settings.model, [noteReplayed(pathRecording(directory_case, request),
+          LABEL_SUITE)])  # explained after note, nothing printed, exit 1
+      covered.incl suggestion.failure
+    let
+      directory_none = directory / "failures" / "none"  # never made
+      path_none = pathRecording(directory_none, request)
+    check binary.run([], ["--replay:" & directory_none, text]) == toOutcome(toSuggestion(
+        Failure.Recording, path_none & " missing"), passage, settings.model, [])  # missing
+    covered.incl Failure.Recording
+    let
+      url = "https://example.org/gone"
+      gone = Reply(status: 404, content_type: "text/html", body: "<p>gone</p>")
+      directory_page = directory / "failures" / "page"
+      path_page = pathRecording(directory_page, "GET " & url)
+    writeRecordings(directory_page, [Recording(label: LABEL_SUITE, request: "GET " & url,
+        reply: gone)])
+    check binary.run([], ["--replay:" & directory_page, url]) == toOutcome(Failure.Page,
+        url.readPage(gone).detail, [noteReplayed(path_page, LABEL_SUITE)])  # page refused
+    covered.incl Failure.Page
+    let
+      url_closed = urlLoopback(portClosed(), PATH_SERVICE)
+      refused = binary.run([(KEY_ENDPOINT, url_closed), (KEY_CREDENTIAL, CREDENTIAL_SUITE)], [text])
+    check refused.code == 1 and refused.output == ""  # no tag
+    check refused.report.startsWith(noteCredential(KEY_CREDENTIAL) &
+        "\nService or page should answer; got `")  # connection refused, named
+    covered.incl Failure.Network
+    check covered == {Failure.low..Failure.high}  # every failure, exhaustive
+
+
+  test "no run reaches `ANTHROPIC_BASE_URL`, which host sets for agent and binary never reads":
+    check binary.sink.heard.len == 0  # sink heard nothing, over every run of suite
+
+
+  test "binary ends stalled exchange at its deadline":
+    skip()  # IX.9 gap: deadline reads real clock (IX.12); `test_exchanges.nim` holds `send` to it
+
+  stopServer(binary.sink)
+  removeDir(directory)
