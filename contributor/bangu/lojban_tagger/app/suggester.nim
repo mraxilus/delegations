@@ -23,9 +23,11 @@
 ##     came first; flag usage does not take exits 2 before any setting, credential or socket, so
 ##     mistyped flag never goes out as passage of paid request.
 ##     Cost: text holding word opening with `-`, but `-` alone, needs `--` before it.
-##   One argument shaped as http or https URL, one token naming host, is page, never text: port
-##     `isURL` refuses exits 2 naming URL, before any setting, so mistyped port never goes out as
-##     passage of paid request. Cost: such text goes as passage only through `-`.
+##   One argument shaped as http or https URL, one token naming host (`isShapedURL`), is page,
+##     never text: one `isURL` refuses exits 2 naming URL, before any setting, so mistyped port or
+##     host never goes out as passage of paid request. Problem names port rule where port alone
+##     fails (`isPortFaulty`), else rule of authority, as RFC 3986 section 3.2 splits it.
+##     Cost: such text goes as passage only through `-`.
 ##   Text given that reads as tag already asks no service, so it needs no credential; text given
 ##     whose passage holds no visible character (`isBlank`) once cut at `BYTES_PASSAGE_MAX`, as
 ##     model reads it, exits 2, as page holding none gives no text.
@@ -160,8 +162,10 @@ type
 const
   USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-\n"
     ## Text printed on usage error.
-  RULE_PORT = "name port of one to five digits from 1 to 65535, or none"
-    ## Rule problem of URL argument and of endpoint states where port alone fails `isURL`.
+  RULE_AUTHORITY = "name host and port as RFC 3986 section 3.2 splits them"
+    ## Rule problem of URL argument and of endpoint states where `isURL` refuses authority past
+    ##   its port alone, i.e. where `isPortFaulty` holds not; proxy problem of `send` in
+    ##   `exchanges.nim` words same rule.
   FLAG_RECORD = "--record:"  ## Prefix of flag naming directory record mode writes.
   FLAG_REPLAY = "--replay:"  ## Prefix of flag naming directory replay mode reads.
   KEY_SERVICE = "LOJBAN_TAGGER_SERVICE"  ## Environment name of service.
@@ -190,16 +194,6 @@ const
 
 #[ Arguments ]#
 
-func isPortRefused(text: string): bool =
-  ## Test text is shaped as http or https URL, one token naming host, whose port `isURL` refuses:
-  ##   zero, past 65535, or of other than one to five digits.
-  ##   Shape is that `isURL` of `exchanges.nim` tests, port aside, so fix to either checks other
-  ##     (II.9).
-  if text.isURL or text.anyIt(it in Whitespace): return false
-  let uri = text.parseUri
-  uri.scheme.toLowerAscii in ["http", "https"] and uri.hostname.len > 0
-
-
 func readCommand(arguments: openArray[string]): Commanded =
   ## Read mode and passage from arguments; usage error where usage is wrong.
   ##   Leading arguments opening with `-` are flags: one `--record:<directory>` or
@@ -211,9 +205,10 @@ func readCommand(arguments: openArray[string]): Commanded =
   ##   Passage holding no visible character (`isBlank`) once cut at `BYTES_PASSAGE_MAX`
   ##     (`toPassage`), as model reads it, is usage error, as page holding none gives no text, so
   ##     empty passage never goes out.
-  ##   One argument shaped as URL whose port `isURL` refuses (`isPortRefused`) is usage error
-  ##     naming URL by scheme, host, port and path alone (`dropSecrets`), never passage, so
-  ##     mistyped port never goes out as paid request.
+  ##   One argument shaped as URL (`isShapedURL`) that `isURL` refuses is usage error naming URL
+  ##     by scheme, host, port and path alone (`dropSecrets`), never passage, so mistyped port or
+  ##     host never goes out as paid request; problem states `RULE_PORT` where port alone fails
+  ##     (`isPortFaulty`), else `RULE_AUTHORITY`.
   var
     command = Command(mode: Mode.Live)
     at = 0
@@ -237,8 +232,9 @@ func readCommand(arguments: openArray[string]): Commanded =
     return Commanded(is_read: false)
   command.argument = rest.join(" ")
   if command.argument.toPassage.text.isBlank: return Commanded(is_read: false)
-  if rest.len == 1 and rest[0].isPortRefused:
-    return Commanded(is_read: false, problem: "URL should " & RULE_PORT & "; got `" &
+  if rest.len == 1 and rest[0].isShapedURL and not rest[0].isURL:
+    let rule = if rest[0].isPortFaulty: RULE_PORT else: RULE_AUTHORITY
+    return Commanded(is_read: false, problem: "URL should " & rule & "; got `" &
         rest[0].dropSecrets.toPrintable(RUNES_SHOWN) & "`.")
   command.is_url = rest.len == 1 and rest[0].isURL
   command.is_input = rest == @["-"]
@@ -256,8 +252,9 @@ proc readInput(): Option[string] =
 
 func readSettings(service, endpoint, model, effort, workspace: string): Configured =
   ## Read settings from environment values; empty value takes default of service.
-  ##   Endpoint refused names its fault: port where port alone fails `isURL` (`isPortRefused`),
-  ##     else shape of URL; scheme, https or http to loopback host, only where URL is well formed.
+  ##   Endpoint refused names its fault: shape of URL where `isShapedURL` refuses it; `RULE_PORT`
+  ##     where port alone fails `isURL` (`isPortFaulty`), else `RULE_AUTHORITY`; scheme, https or
+  ##     http to loopback host, only where URL is well formed.
   ##   Workspace is for `claude` alone: `OPENING_WORKSPACE`, then visible ASCII alone, so no line
   ##     break splits header, at most `BYTES_WORKSPACE_MAX` bytes; empty names none.
 
@@ -277,8 +274,9 @@ func readSettings(service, endpoint, model, effort, workspace: string): Configur
     return refuse("Endpoint should be named for service `" & $chosen & "`", KEY_ENDPOINT)
   if not endpoint_used.isURL:
     let rule =
-      if endpoint_used.isPortRefused: RULE_PORT
-      else: "be http or https URL with host and no whitespace"
+      if not endpoint_used.isShapedURL: "be http or https URL with host and no whitespace"
+      elif endpoint_used.isPortFaulty: RULE_PORT
+      else: RULE_AUTHORITY
     return Configured(is_valid: false, problem: "Endpoint should " & rule & "; got `" &
         endpoint_used.toPrintable(RUNES_SHOWN) & "` for `" & KEY_ENDPOINT & "`.")
   if not endpoint_used.isEndpoint:
