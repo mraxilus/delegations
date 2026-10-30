@@ -159,6 +159,14 @@ const
     ##   spaces and marks up to ideographic space; no zero, which no argument carries.
   CODES_HIGH = [0xFEFF, 0xFFFD, 0x1F600]
     ## Code points past low run random texts draw too: byte order mark, replacement, emoji.
+  PADS_BLANK = [" ", "\xC2\xA0", "\xE3\x80\x80"]
+    ## Blank characters of one, two and three bytes padding text up to cut of passage: space,
+    ##   NBSP and ideographic space.
+  TAILS_VISIBLE = ["c", "\xC3\xA9", "\xE2\x82\xAC", "\xF0\x9F\x98\x80"]
+    ## Visible characters of one to four bytes standing after pad: before cut, across it, past it.
+  OFFSETS_CUT = -4..4
+    ## Bytes each pad reaches past `BYTES_PASSAGE_MAX`, rounded down to whole characters; with
+    ##   3 pads, 4 tails and 2 routes, 216 runs, exhaustive over alignments of tail to cut.
   BYTES_FIELDS_MAX = 65_536
     ## Bytes recording file may hold past its request and cap of its body, as binary sets it.
   WORDS_PASSAGE = [
@@ -2262,6 +2270,45 @@ suite "Internal: Suggester":
       check outcome == expected  # text holding visible character asks shortcut, then service
     check count_blank >= FLOOR_BLANK  # blank texts are common
     check count_visible >= FLOOR_VISIBLE  # texts holding visible character are common
+    stopServer(server)
+
+
+  test "text blank up to its cut at `BYTES_PASSAGE_MAX` exits 2 with usage, on argument or input":
+    # Recheck claim completeness-4, 2026-10-29: `suggester - <f`, `f` holding 70,000 spaces then
+    #   `mi ciska lo xatra`, sent `<passage cut="true">` of 65,536 spaces, paid, and printed tag.
+    let
+      server = startServer()
+      live = Service.Claude.toSettings(server.port).toEnvironment
+      directory_case = directory / "blank_cut"  # never made, so recording of each request misses
+      settings = Service.Claude.toSettings
+    for (arguments, input) in [
+      (@["-"], " ".repeat(70_000) & "mi ciska lo xatra\n"),  # case as found, on input
+      (@[" ".repeat(70_000) & "mi ciska lo xatra"], ""),  # same text as argument
+      (@["\xC2\xA0".repeat(33_000) & "mi ciska lo xatra"], ""),  # NBSP up to cut, as found
+    ]:
+      for environment in [live, @[(KEY_SERVICE, "bogus")]]:  # credential, then bad service
+        check binary.run(environment, arguments, input = input) == Outcome(report: USAGE,
+            code: 2)  # visible text past cut alone, which model never reads
+    check server.heard.len == 0  # nothing sent
+    var count_blank, count_visible = 0
+    for pad in PADS_BLANK:
+      for offset in OFFSETS_CUT:
+        for tail in TAILS_VISIBLE:
+          let text = pad.repeat((BYTES_PASSAGE_MAX + offset) div pad.len) & tail
+          for (arguments, input) in [(@[text], ""), (@["-"], text)]:  # argument, then input
+            let
+              passage = text.toPassage
+              outcome = binary.run([], @["--replay:" & directory_case] & arguments, input = input)
+            if passage.text.isBlank:
+              inc count_blank
+              check outcome == Outcome(report: USAGE, code: 2)  # tail cut, or across cut
+              continue
+            inc count_visible
+            check outcome == toOutcome(toSuggestionRecording("missing at " & pathShown(
+                directory_case, requestService(settings, passage))), passage, settings.model,
+                [])  # tail within cut goes out, cut named
+    check count_blank > 0 and count_visible > 0  # each side of law reached
+    check not dirExists(directory_case)  # replay makes nothing
     stopServer(server)
 
 
