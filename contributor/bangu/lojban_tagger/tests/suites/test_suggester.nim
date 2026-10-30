@@ -2203,6 +2203,44 @@ suite "Internal: Suggester":
     stopServer(service)
 
 
+  test "page redirect chooses proxy again for each hop, through proxy to loopback and back":
+    # Recheck claim records-10, 2026-10-29: record said each hop chooses proxy again, and no test
+    #   held it, so build choosing proxy once, for URL given, passed every suite.
+    # `0.0.0.0` is no loopback host by name, so proxy serves it; kernel reaches it on loopback,
+    #   so build choosing no proxy for it meets server of suite, never host off loopback.
+    let
+      direct = startServer()
+      proxy = startServer()
+      settings = Service.Claude.toSettings(direct.port)
+      page = Reply(status: 200, content_type: "text/plain", body: example("alice").argument)
+      reply = toReplyMessages(example("alice").answer, settings.model)
+      suggestion = Service.Claude.readReply(reply)
+      url_proxy = urlLoopback(proxy.port, "")
+      proxies = @[("http_proxy", url_proxy), ("https_proxy", url_proxy)]
+      environment = settings.toEnvironment & proxies
+      proxied = "http://example.org/start"
+      landing = urlLoopback(direct.port, "/page")
+      back = "http://0.0.0.0:" & $direct.port & "/back"
+    proxy.routes = @[(proxied, Reply(status: 302, location: landing)), (back, page)]
+    direct.routes = @[
+      ("/page", page),
+      ("/start", Reply(status: 302, location: back)),
+      (PATH_SERVICE, reply),
+    ]
+    check binary.run(environment, [proxied]) == toOutcome(suggestion, landing.readPage(
+        page).passage, settings.model, [noteCredential(KEY_CREDENTIAL)])  # page read
+    check proxy.heard.mapIt(it.target) == @[proxied]  # first hop through proxy, absolute form
+    check direct.heard.mapIt(it.target) == @["/page", PATH_SERVICE]  # loopback hop direct
+    let (count_proxy, count_direct) = (proxy.heard.len, direct.heard.len)
+    check binary.run(environment, [urlLoopback(direct.port, "/start")]) == toOutcome(suggestion,
+        back.readPage(page).passage, settings.model, [noteCredential(KEY_CREDENTIAL)])  # read
+    check direct.heard[count_direct .. ^1].mapIt(it.target) ==
+        @["/start", PATH_SERVICE]  # loopback hop direct, then service
+    check proxy.heard[count_proxy .. ^1].mapIt(it.target) == @[back]  # next hop through proxy
+    stopServer(direct)
+    stopServer(proxy)
+
+
   test "settings refused exit 2 naming variable, and send or write nothing":
     let
       server = startServer()
