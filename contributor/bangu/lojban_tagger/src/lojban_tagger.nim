@@ -26,6 +26,8 @@
 ##     [LIST_GISMU, COUNT_WORDS_MAX] -> PROMPT_SYSTEM
 ##   Lists are data that `nim r tools/build.nim lists` renders; `Word` is range over entries of
 ##     gismu list, so its bound follows list with no number written twice (Article II.5).
+##   `Reference`, `toReference` and its `toText` stay off surface: `suggestions` exports them for
+##     `app/exchanges.nim` alone, which imports that module itself (Article I.6).
 
 {.experimental: "strictFuncs".}
 
@@ -37,5 +39,5 @@ import ./lojban_tagger/[
   tags,
 ]
 
-export clusters, commands, dictionary, english, entries, forms, index, lujvo, search,
-  suggestions, tags
+export clusters, commands, dictionary, english, entries, forms, index, lujvo, search, tags
+export suggestions except Reference, toReference, toText

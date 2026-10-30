@@ -22,6 +22,10 @@
 ##   | sequence           | row of Table 3-7 that lead byte opens                          |
 ##   | dropSequenceCut    | UTF-8 decoder, WHATWG Encoding Standard 8.1.1, end of queue    |
 ##   | isBlank            | `White_Space` and Cc of Unicode, common default-ignorables     |
+##   | Reference          | R of RFC 3986 section 5.2: scheme, authority, path, query,     |
+##   |                    | fragment                                                       |
+##   | toReference        | parse of R by regular expression of RFC 3986 appendix `B`      |
+##   | toText             | component recomposition, RFC 3986 section 5.3                  |
 ##   | dropSecrets        | components that RFC 3986 appendix `B` splits                   |
 ##   | sniffMark          | BOM sniff, WHATWG Encoding Standard 6.1                        |
 ##   | decode, LABELS_*   | labels of WHATWG Encoding Standard                             |
@@ -133,6 +137,13 @@ type
     location*: string  ## `Location`; empty where absent.
     body*: string  ## Body bytes as served, up to cap.
     is_cut*: bool  ## Body held more than cap, so rest stayed unread.
+
+  Reference* = object  ## Define reference as five components, i.e. R of RFC 3986 section 5.2.
+    scheme*: Option[string]  ## Scheme, before `:`; `none` where reference holds none.
+    authority*: Option[string]  ## Authority, after `//`; `none` where reference holds none.
+    path*: string  ## Path; empty where reference holds none.
+    query*: Option[string]  ## Query, after `?`; `none` where reference holds none.
+    fragment*: Option[string]  ## Fragment, after `#`; `none` where reference holds none.
 
   Passage* = object  ## Define text one suggestion is for: text given, or text of page.
     text*: string  ## Text model reads: well-formed UTF-8, at most `BYTES_PASSAGE_MAX` bytes.
@@ -465,26 +476,57 @@ func dropMark(text: string): string =
   if text.startsWith("\xEF\xBB\xBF"): text[3 .. ^1] else: text
 
 
+func toReference*(text: string): Reference =
+  ## Split text into five components of reference, as regular expression of RFC 3986 appendix
+  ##   `B` splits it; empty query or fragment stays apart from none.
+  ##   Exported for `app/exchanges.nim`, which checks, resolves and recomposes URL by it, so URL
+  ##     splits in one place.
+  var rest = text
+  let at_scheme = rest.find({':', '/', '?', '#'})
+  if at_scheme > 0 and rest[at_scheme] == ':':
+    result.scheme = some(rest[0..<at_scheme])
+    rest = rest[at_scheme+1 .. ^1]
+  if rest.startsWith("//"):
+    var stop = rest.find({'/', '?', '#'}, 2)
+    if stop < 0: stop = rest.len
+    result.authority = some(rest[2..<stop])
+    rest = rest[stop .. ^1]
+  let at_fragment = rest.find('#')
+  if at_fragment >= 0:
+    result.fragment = some(rest[at_fragment+1 .. ^1])
+    rest = rest[0..<at_fragment]
+  let at_query = rest.find('?')
+  if at_query >= 0:
+    result.query = some(rest[at_query+1 .. ^1])
+    rest = rest[0..<at_query]
+  result.path = rest
+
+
+func toText*(reference: Reference): string =
+  ## Recompose reference from its components, i.e. section 5.3 of RFC 3986.
+  ##   Exported for `app/exchanges.nim`, as `toReference` is.
+  if reference.scheme.isSome: result.add reference.scheme.get & ":"
+  if reference.authority.isSome: result.add "//" & reference.authority.get
+  result.add reference.path
+  if reference.query.isSome: result.add "?" & reference.query.get
+  if reference.fragment.isSome: result.add "#" & reference.fragment.get
+
+
 func dropSecrets*(url: string): string =
   ## Keep scheme, host, port and path of URL alone: user part, query and fragment dropped, since
   ##   signed URL, and capability URL holding its token as parameter, hold secret there.
   ##   Cost: token capability URL holds in path, as share link or webhook does, is kept; pages
   ##     their query alone names, as `index.php?title=…`, read as one URL.
-  ##   Parts are those regular expression of RFC 3986 appendix `B` splits. Sibling of `toReference`
-  ##     of `app/exchanges.nim`, which imports this pure module, so this one cannot import it.
+  ##   Parts are those `toReference` splits, by regular expression of RFC 3986 appendix `B`.
   ##   User part ends at last `@` of authority, as URL Standard of WHATWG reads it, so none stays.
   ##   Exported for `app/suggester.nim`, which trims URL that redirect detail names by it, as
   ##     passage URL is trimmed.
-  let
-    stop = url.find({'?', '#'})
-    kept = if stop < 0: url else: url[0..<stop]
-    at_scheme = kept.find({':', '/'})
-    start = (if at_scheme > 0 and kept[at_scheme] == ':': at_scheme + 1 else: 0) + 2
-  if not kept.continuesWith("//", start - 2): return kept
-  var finish = kept.find('/', start)
-  if finish < 0: finish = kept.len
-  let at_user = kept.rfind('@', start, finish - 1)
-  if at_user < 0: kept else: kept[0..<start] & kept[at_user+1 .. ^1]
+  var reference = url.toReference
+  if reference.authority.isSome:
+    let authority = reference.authority.get
+    reference.authority = some(authority[authority.rfind('@')+1 .. ^1])
+  (reference.query, reference.fragment) = (none(string), none(string))
+  reference.toText
 
 
 func toPassage*(text: string, url = "", is_page_cut = false): Passage =

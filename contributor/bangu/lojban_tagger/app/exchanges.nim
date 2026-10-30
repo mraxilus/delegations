@@ -16,8 +16,6 @@
 ##   |---------------------|-------------------------------------------------------------|
 ##   | Code                | RFC 3986, which `isURL`, `send` and `redirect` follow       |
 ##   |---------------------|-------------------------------------------------------------|
-##   | Reference           | R: scheme, authority, path, query, fragment                 |
-##   | toReference         | parse of R by regular expression of appendix `B`            |
 ##   | isAuthority         | authority (3.2): userinfo `@`, host (3.2.2), `:` port       |
 ##   | readPort            | port (3.2.3), split past userinfo and host (3.2.2)          |
 ##   | isPort              | port (3.2.3), 1 to 65535 as RFC 6335 section 6 ranges it    |
@@ -26,8 +24,9 @@
 ##   | resolve             | T: reference R resolved against Base (5.2.2), strictly      |
 ##   | merge               | merge (5.2.3)                                               |
 ##   | removeDotSegments   | remove_dot_segments (5.2.4)                                 |
-##   | toText              | component recomposition (5.3)                               |
 ##   |---------------------|-------------------------------------------------------------|
+##   Reference R, its parse by appendix `B` (`toReference`) and its recomposition (`toText`, 5.3)
+##     stand in `suggestions.nim`, which `dropSecrets` splits by too.
 ##
 ##   Every routine but `send` and what it calls to reach socket and TLS context (`pinHost`,
 ##     `exchange`, `readBody` and bindings of OpenSSL) is pure, so suites hold each choice by
@@ -192,13 +191,6 @@ type
     line_piece: int  ## Line piece read last opens on, so refusal names faulty line itself.
     at_piece: int  ## Byte piece read last opens at, so refusal echoes what piece holds.
 
-  Reference = object  ## Define reference as five components, i.e. R of RFC 3986 section 5.2.
-    scheme: Option[string]  ## Scheme, before `:`; `none` where reference holds none.
-    authority: Option[string]  ## Authority, after `//`; `none` where reference holds none.
-    path: string  ## Path; empty where reference holds none.
-    query: Option[string]  ## Query, after `?`; `none` where reference holds none.
-    fragment: Option[string]  ## Fragment, after `#`; `none` where reference holds none.
-
 
 const
   HEADER_RECORDING* = "lojban_tagger recording 1"  ## First line of recording file: format, version.
@@ -282,41 +274,6 @@ func isAuthority(text: string): bool =
   ##     would reach 8090.
   let port = text.readPort
   port.isSome and (port.get.len <= 1 or port.get[1 .. ^1].isPort)
-
-
-func toReference(text: string): Reference =
-  ## Split text into five components of reference, as regular expression of RFC 3986 appendix
-  ##   `B` splits it; empty query or fragment stays apart from none.
-  ##   Sibling of `dropSecrets` of `src/lojban_tagger/suggestions.nim`, which splits URL by same
-  ##     expression; that pure module cannot import this one, which imports it (Article II.9).
-  var rest = text
-  let at_scheme = rest.find({':', '/', '?', '#'})
-  if at_scheme > 0 and rest[at_scheme] == ':':
-    result.scheme = some(rest[0..<at_scheme])
-    rest = rest[at_scheme+1 .. ^1]
-  if rest.startsWith("//"):
-    var stop = rest.find({'/', '?', '#'}, 2)
-    if stop < 0: stop = rest.len
-    result.authority = some(rest[2..<stop])
-    rest = rest[stop .. ^1]
-  let at_fragment = rest.find('#')
-  if at_fragment >= 0:
-    result.fragment = some(rest[at_fragment+1 .. ^1])
-    rest = rest[0..<at_fragment]
-  let at_query = rest.find('?')
-  if at_query >= 0:
-    result.query = some(rest[at_query+1 .. ^1])
-    rest = rest[0..<at_query]
-  result.path = rest
-
-
-func toText(reference: Reference): string =
-  ## Recompose reference from its components, i.e. section 5.3 of RFC 3986.
-  if reference.scheme.isSome: result.add reference.scheme.get & ":"
-  if reference.authority.isSome: result.add "//" & reference.authority.get
-  result.add reference.path
-  if reference.query.isSome: result.add "?" & reference.query.get
-  if reference.fragment.isSome: result.add "#" & reference.fragment.get
 
 
 func isShapedURL*(text: string): bool =
