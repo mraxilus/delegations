@@ -1528,7 +1528,7 @@ suite "Internal: Suggester":
     refusing.close()
 
 
-  test "record replays page hop of 2xx or 3xx, and sends other hop again, as before":
+  test "record replays page hop of 2xx or 3xx, and sends other hop again":
     let
       server = startServer()
       settings = Service.Claude.toSettings(server.port)
@@ -2458,7 +2458,7 @@ suite "Internal: Suggester":
     for (arguments, input) in [
       (@["http://127.0.0.1:109821/ok notes"], ""),  # one argument holding space
       (@["http://127.0.0.1:109821/ok", "notes"], ""),  # two arguments
-      (@["https:///ok"], ""),  # no host, so no shape of URL, as before
+      (@["https:///ok"], ""),  # no host, so no shape of URL
       (@["-"], "http://127.0.0.1:109821/ok"),  # text of input, which goes as text given
     ]:
       let
@@ -2466,7 +2466,7 @@ suite "Internal: Suggester":
         shown = pathShown(missing, requestService(Service.Claude.toSettings, passage))
       check binary.run([], @["--replay:" & missing] & arguments, input = input) == toOutcome(
           toSuggestionRecording("missing at " & shown), passage, Service.Claude.toSettings.model,
-          [])  # text shaped otherwise goes as passage, as before
+          [])  # text shaped otherwise goes as passage
     check not dirExists(missing)  # replay makes nothing
     stopServer(server)
 
