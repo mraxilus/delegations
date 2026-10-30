@@ -53,13 +53,14 @@ when compileOption("profiler"):
 import std/[
   asyncdispatch, asyncnet, json, options, os, osproc, random, sequtils, strutils, unittest, uri,
 ]
-from std/posix import chmod, Mode
+from std/posix import chmod, Mode, umask
 from std/unicode import Rune, toUTF8
 
 import ../../app/exchanges
 from ../../app/suggester {.all.} import COUNT_REDIRECTS_MAX, USAGE
 import ../../src/lojban_tagger/[suggestions, tags]
 import ../../tools/examples
+from ../../tools/examples {.all.} import DIRECTORY_EXAMPLES
 
 
 type
@@ -513,26 +514,28 @@ func toPrefix(environment: openArray[(string, string)]): string =
   assignments.mapIt(it[0] & "=" & quoteShell(it[1])).join(" ")
 
 
-proc run(
+proc runLine(
   binary: Binary,
   environment: openArray[(string, string)],
-  arguments: openArray[string],
+  line: string,
   input = "",
   path_input = "",
+  folder = "",
 ): Outcome =
-  ## Run binary under environment, sink named at `KEY_BASE`, standard input read from file
-  ##   holding `input`, or from `path_input` where named, streams to files; drive servers by
-  ##   `poll` until child exits.
+  ## Run shell line in folder, or where suite runs where empty, under environment, sink named at
+  ##   `KEY_BASE`, standard input read from file holding `input`, or from `path_input` where
+  ##   named, streams to files; drive servers by `poll` until child exits.
   ##   Standard input is always file, so run reading it meets end, never pipe left open.
+  ##   Assignment line opens with wins over prefix, as later assignment of shell does.
   let path_read = if path_input.len > 0: path_input else: binary.path.parentDir / "input"
   if path_input.len == 0: writeFile(path_read, input)
   let
     path_output = binary.path.parentDir / "output"
     path_report = binary.path.parentDir / "report"
     command = toPrefix(@[(KEY_BASE, urlLoopback(binary.sink.port, ""))] & @environment) & " " &
-        (@[binary.path] & @arguments).map(quoteShell).join(" ") & " <" &
-        quoteShell(path_read) & " >" & quoteShell(path_output) & " 2>" & quoteShell(path_report)
-    child = startProcess(command, options = {poEvalCommand})
+        line & " <" & quoteShell(path_read) & " >" & quoteShell(path_output) & " 2>" &
+        quoteShell(path_report)
+    child = startProcess(command, workingDir = folder, options = {poEvalCommand})
   while child.running: poll(MS_POLL)
   result = Outcome(
     output: readFile(path_output),
@@ -540,6 +543,18 @@ proc run(
     code: child.waitForExit,
   )
   child.close()
+
+
+proc run(
+  binary: Binary,
+  environment: openArray[(string, string)],
+  arguments: openArray[string],
+  input = "",
+  path_input = "",
+): Outcome =
+  ## Run binary with arguments as `runLine` runs line.
+  binary.runLine(environment, (@[binary.path] & @arguments).map(quoteShell).join(" "), input,
+      path_input)
 
 
 func requestService(settings: Settings, passage: Passage): string =
@@ -855,6 +870,30 @@ suite "Internal: Suggester":
             outcome = binary.run([(KEY_SERVICE, $service)], replay & arguments)
           check outcome == expected  # output, report and exit of pure pipeline, notes first
           check outcome.output == $readTanru(example.tanru).get & "\n"  # tanru example documents
+
+
+  test "command `examples` prints replays each worked example under any workspace, umask `000` too":
+    # Recheck claims regressions-cli-2 and regressions-cli-3, 2026-10-29: where shell exported
+    #   workspace, each printed command of `openrouter` exited 2, ``Workspace should be named for
+    #   service `claude` alone; got `wrkspc_01AbCdEf` …``; under umask `000`, each printed command
+    #   exited 1, ``Recording should hold this request; got `writable by every user at
+    #   build/examples`.``.
+    let
+      folder = directory / "tool"  # Project folder tool runs in, holding `binaries/suggester`.
+      previous = umask(Mode(0o000))  # Umask leaving every mode open, so directory made is shared.
+    writeExamples(folder / DIRECTORY_EXAMPLES)
+    discard umask(previous)
+    check getFilePermissions(folder / DIRECTORY_EXAMPLES) == {fpUserRead, fpUserWrite, fpUserExec,
+        fpGroupRead, fpGroupExec, fpOthersRead, fpOthersExec}  # 0755 whatever umask, so not shared
+    createDir(folder / "binaries")
+    createSymlink(binary.path, folder / "binaries" / "suggester")
+    for example in EXAMPLES:
+      for service in [Service.Claude, Service.OpenRouter]:
+        let recordings = example.toRecordings(service)
+        check binary.runLine([(KEY_WORKSPACE, "wrkspc_01AbCdEf")], example.toCommand(service),
+            folder = folder) == toOutcome(service.readReply(recordings[^1].reply),
+            example.toPassage, service.toSettings.model, recordings.mapIt(noteReplayed(
+            DIRECTORY_EXAMPLES, it.request, it.label)))  # replayed, though shell sets workspace
 
 
   test "replay of random passage, settings and reply prints what pure pipeline gives":
