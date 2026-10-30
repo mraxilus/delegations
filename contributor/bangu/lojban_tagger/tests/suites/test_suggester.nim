@@ -269,9 +269,25 @@ const
       "or none; got "
     ## Opening of problem binary gives where port of endpoint is refused, whatever its scheme.
   PROBLEM_ENDPOINT_URL = "Endpoint should be http or https URL with host and no whitespace; got "
-    ## Opening of problem binary gives where endpoint is no URL, port aside.
+    ## Opening of problem binary gives where endpoint is not shaped as URL, authority aside.
+  PROBLEM_ENDPOINT_AUTHORITY = "Endpoint should name host and port as RFC 3986 section 3.2 " &
+      "splits them; got "
+    ## Opening of problem binary gives where authority of endpoint fails past its port alone.
   PROBLEM_ENDPOINT_SCHEME = "Endpoint should be https, or http to loopback host; got "
     ## Opening of problem binary gives where endpoint is URL that may not carry credential.
+  USERS_AUTHORITY = [("", true), ("alice@", true), ("user[1]@", false)]
+    ## User parts of authority beside whether RFC 3986 section 3.2 splits them: none, name, and
+    ##   name holding bracket, as recheck found.
+  HOSTS_AUTHORITY = [
+    ("example.org", true), ("127.0.0.1", true), ("[::1]", true), ("[example.org]", false),
+    ("[127.0.0.1]", false), ("[v1.fe]", false), ("[::1%25lo]", false), ("exa]mple.org", false),
+    ("[::1", false),
+  ]
+    ## Hosts of authority beside whether `isURL` takes them: name, IPv4 and IPv6 address; brackets
+    ##   holding name or IPv4 address, IPvFuture, zone, stray bracket, and bracket left open.
+  PORTS_AUTHORITY = [("", true), (":8080", true), (":99999", false), (":80:90", false)]
+    ## Ports of authority beside whether `isURL` takes them: none, taken, past 65535, and two
+    ##   colons `std/uri` joins; bounds of each port stand in `PORTS_URL`.
 
 
 
@@ -578,6 +594,12 @@ func noteLarger(directory, request: string, bytes_file_max: int): string =
   ##   `bytes_file_max`, which replay refuses.
   "Reply should be written to `" & pathShown(directory, request) & "`; got `larger than " &
       $bytes_file_max & " bytes`."
+
+
+func problemAuthority(url: string): string =
+  ## Render problem binary gives for one argument shaped as URL whose authority `isURL` refuses
+  ##   past its port alone, naming `url`, which caller gives by scheme, host, port and path alone.
+  "URL should name host and port as RFC 3986 section 3.2 splits them; got `" & url & "`."
 
 
 func problemPort(url: string): string =
@@ -2371,6 +2393,60 @@ suite "Internal: Suggester":
           [])  # text shaped otherwise goes as passage, as before
     check not dirExists(missing)  # replay makes nothing
     stopServer(server)
+
+
+  test "URL argument and endpoint refused for host or user part name authority, never port":
+    # Recheck claims regressions-cli-6 and completeness-5, 2026-10-29: argument
+    #   `http://user[1]@example.org/page` gave ``URL should name port of one to five digits from 1
+    #   to 65535, or none; got `http://example.org/page`.``, and endpoint
+    #   `https://[api.anthropic.com]/v1/messages` same rule, though neither names port.
+    let
+      text = example("lojban")
+      passage = text.argument.toPassage
+      missing = directory / "authorities_missing"  # never made, so recording of each request misses
+    for (url, echoed) in [
+      ("http://user[1]@example.org/page", "http://example.org/page"),  # user part dropped, as now
+      ("http://[example.org]/page", "http://[example.org]/page"),
+    ]:
+      check binary.run([], [url]) == Outcome(report: problemAuthority(echoed) & "\n" & USAGE,
+          code: 2)  # cases as found, of argument
+    for endpoint in ["https://[api.anthropic.com]/v1/messages",
+        "https://[fe80::1%25eth0]:8443/v1/messages"]:
+      check binary.run([(KEY_ENDPOINT, endpoint)], [text.argument]) == Outcome(report:
+          PROBLEM_ENDPOINT_AUTHORITY & "`" & endpoint & "` for `" & KEY_ENDPOINT & "`.\n",
+          code: 2)  # cases as found, of endpoint
+    var count_taken, count_port, count_authority = 0
+    for (user, is_user) in USERS_AUTHORITY:
+      for (host, is_host) in HOSTS_AUTHORITY:
+        for (port, is_port) in PORTS_AUTHORITY:  # 108 authorities, exhaustive
+          var settings = Service.Claude.toSettings
+          settings.endpoint = "https://" & user & host & port & "/v1/messages"
+          let
+            url = "http://" & user & host & port & "/page"
+            argued = binary.run([], ["--replay:" & missing, url])
+            configured = binary.run([(KEY_ENDPOINT, settings.endpoint)],
+                ["--replay:" & missing, text.argument])
+            named = "`" & settings.endpoint & "` for `" & KEY_ENDPOINT & "`.\n"
+          if is_user and is_host and is_port:
+            inc count_taken
+            check argued == toOutcome(toSuggestionRecording("missing at " & pathShown(missing,
+                "GET " & url)), [])  # page asked: recording of its first hop misses
+            check configured == toOutcome(toSuggestionRecording("missing at " & pathShown(
+                missing, requestService(settings, passage))), passage, settings.model,
+                [])  # endpoint taken, so replay asks recording of its request
+          elif is_user and is_host:
+            inc count_port
+            check argued == Outcome(report: problemPort(url.dropSecrets) & "\n" & USAGE,
+                code: 2)  # port alone fails (`isPortFaulty`)
+            check configured == Outcome(report: PROBLEM_ENDPOINT_PORT & named, code: 2)  # same
+          else:
+            inc count_authority
+            check argued == Outcome(report: problemAuthority(url.dropSecrets) & "\n" & USAGE,
+                code: 2)  # RFC 3986 3.2: user part or host fails, whatever port
+            check configured == Outcome(report: PROBLEM_ENDPOINT_AUTHORITY & named,
+                code: 2)  # same, for endpoint
+    check count_taken == 12 and count_port == 12 and count_authority == 84  # each side reached
+    check not dirExists(missing)  # replay makes nothing
 
 
   test "text holding no visible character exits 2 with usage, as exported `isBlank` reads it":
