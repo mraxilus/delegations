@@ -70,6 +70,10 @@
 ##   Record and replay refuse directory every user may write, as `/tmp`, before any read or send,
 ##     since other user could plant link where recording goes.
 ##     Cost: owner of directory, and members of group that may write it, are trusted.
+##   Recording is read only where file stands at its path itself: link there, as clone or archive
+##     keeps it, is refused before read, never followed, so no file outside directory is read,
+##     nor its first line echoed.
+##     Cost: recording kept as link on purpose is refused.
 ##   Recording file past its request, cap of its body and `BYTES_FIELDS_MAX` is refused before it
 ##     is read, and body past its cap once read, so replay holds no more than send would.
 ##     Recording that stands but cannot be read is refused with `Recording`, never traceback.
@@ -381,9 +385,10 @@ proc exchange(
   ##     replays it (`isReplayed`); `none` for page hop.
   ##   Record mode makes directory before reading or sending, mode `0700` where it makes it,
   ##     refusing where it cannot; write failing after reply is named in note, and reply is kept.
-  ##   Directory every user may write is refused before any read or send; recording file past
-  ##     request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body past
-  ##     `bytes_max` is refused once read.
+  ##   Directory every user may write is refused before any read or send; link or other than
+  ##     file at path of recording is refused before it is read, never followed; recording file
+  ##     past request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body
+  ##     past `bytes_max` is refused once read.
   ##   Recording that stands but cannot be read is refused, naming first line of error.
   ##   Refusal names problem in words of tool first, then path, so long directory never hides
   ##     either: outside text, directory and error, is made printable and cut alone, and name
@@ -417,6 +422,8 @@ proc exchange(
   if command.mode != Mode.Live and fileExists(path):
     var text = ""
     try:
+      if getFileInfo(path, followSymlink = false).kind != pcFile:
+        return refuse("link or other than file at " & shown)
       if getFileSize(path) > bytes_file_max:
         return refuse("larger than " & $bytes_file_max & " bytes at " & shown)
       text = readFile(path)
