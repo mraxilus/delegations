@@ -145,7 +145,8 @@ const
   FLOOR_ASKED = 55  ## Fewest random texts sent to service; 72 read at seed `0`.
   SAMPLES_FLAGS = 100  ## Random flags usage law reads, seeded.
   FLOOR_FLAGS = 80
-    ## Fewest random flags refused, past guard of flags usage takes; 97 read at seed `0`.
+    ## Fewest random flags refused, past guard of flags usage takes; 99 read at seed `0`.
+  FLOOR_FLAGS_AFTER = 40  ## Fewest random flags after first word of text; 60 read at seed `0`.
   PIECES_FLAG = ["-", "h", "help", "record", "replay", ":", "=", " ", "dir", "R", "\xC3\xA9", "\t"]
     ## Pieces random flag joins after its `-`: dashes, names of help and of modes, their
     ##   separators and wrong ones, directory, capital, multibyte and whitespace.
@@ -714,13 +715,20 @@ proc flagRandom(): string =
   for _ in 1..rand(1..4): result.add PIECES_FLAG.sample
 
 
-proc poolFlags(directory: string): seq[seq[string]] =
-  ## Draw `SAMPLES_FLAGS` random argument lists into pool allocated once: random flag, after
-  ##   flag of replay into directory one time in two, then text; caller seeds first.
-  result = newSeqOfCap[seq[string]](SAMPLES_FLAGS)
+proc poolFlags(directory: string): seq[(seq[string], string, bool)] =
+  ## Draw `SAMPLES_FLAGS` random argument lists into pool allocated once, each beside its random
+  ##   flag and whether that flag leads text: flag of replay into directory one time in two, then
+  ##   words `mi` and `ciska`, random flag before them, between them or after them; caller seeds
+  ##   first.
+  result = newSeqOfCap[(seq[string], string, bool)](SAMPLES_FLAGS)
   for _ in 1..SAMPLES_FLAGS:
-    let leading = if rand(1) == 0: @["--replay:" & directory] else: @[]
-    result.add leading & @[flagRandom(), "mi ciska"]
+    let
+      leading = if rand(1) == 0: @["--replay:" & directory] else: @[]
+      flag = flagRandom()
+      at = rand(2)
+    var words = @["mi", "ciska"]
+    words.insert(flag, at)
+    result.add (leading & words, flag, at == 0)
 
 
 proc poolBlank(): seq[string] =
@@ -751,7 +759,8 @@ proc poolPorts(): seq[(string, string)] =
 
 
 func isFlagTaken(flag: string): bool =
-  ## Test usage takes flag: `--`, or mode naming nonempty directory; `-` alone is passage.
+  ## Test usage takes flag leading text: `--`, or mode naming nonempty directory; `-` alone is
+  ##   passage. Flag after first word of text is never taken.
   flag == "--" or ((flag.startsWith("--record:") or flag.startsWith("--replay:")) and
       flag.len > "--record:".len)
 
@@ -2045,7 +2054,7 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "flag before passage other than mode, `--` or `-` exits 2 with usage, sending nothing":
+  test "flag before text but mode or `--`, and any after it, exits 2 with usage, sending nothing":
     randomize(0)
     let
       server = startServer()
@@ -2061,12 +2070,27 @@ suite "Internal: Suggester":
       for environment in [live, live & @[(KEY_SERVICE, "bogus")]]:  # credential, then bad service
         check binary.run(environment, arguments) == Outcome(report: USAGE,
             code: 2)  # review finding logic-3, 2026-10-29: each sent paid request with credential
-    var passed = 0
-    for arguments in served(pool):
-      if arguments[^2].isFlagTaken: continue  # random flag usage takes; tests above and below
+    # Recheck claim completeness-2, 2026-10-29: each flag below, after text, went out in passage of
+    #   paid request with credential, as `mi ciska lo xatra --replay=…`, and tag printed, exit 0.
+    for arguments in [
+      @["mi ciska lo xatra", "--replay=" & directory_case],
+      @["mi ciska lo xatra", "--replay", directory_case],
+      @["mi ciska lo xatra", "--help"],
+      @["mi ciska lo xatra", "-h"],
+    ]:
+      for environment in [live, live & @[(KEY_SERVICE, "bogus")]]:  # credential, then bad service
+        check binary.run(environment, arguments) == Outcome(report: USAGE,
+            code: 2)  # case as found: flag after text read before any setting
+    var passed, count_after = 0
+    for (arguments, flag, is_leading) in served(pool):
+      if is_leading and flag.isFlagTaken:
+        continue  # random flag usage takes before text; tests above and below
       inc passed
-      check binary.run(live, arguments) == Outcome(report: USAGE, code: 2)  # any other flag
+      if not is_leading: inc count_after
+      check binary.run(live, arguments) == Outcome(report: USAGE,
+          code: 2)  # any other flag before text, and any flag after its first word
     check passed >= FLOOR_FLAGS  # guard leaves enough flags refused
+    check count_after >= FLOOR_FLAGS_AFTER  # flags after first word of text are common
     check server.heard.len == 0  # nothing sent, though credential and endpoint are set
     check not dirExists(directory_case)  # nothing written
     stopServer(server)
