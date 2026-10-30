@@ -81,13 +81,13 @@ every user of the machine can read the command line of a process.
 
 The model names the words of a tanru from the word lists. The tool checks each word against
 the lists, and builds the lujvo that CLL 4.12 prefers. It refuses an answer that does not read
-back as the same tag. A text that already reads as a tag of at most six words asks no service,
-and needs no key.
+back as the same tag. A text of at most 64 bytes that reads as a tag of at most six words asks
+no service, and needs no key.
 
 Usage: `suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-`
 
-An argument that starts with `-` and is no flag is a usage error, so a mistyped flag never sends
-a paid request. Put `--` before a text that starts with `-`.
+Before `--`, a word that starts with `-` and is no flag is a usage error, wherever it stands. So
+a mistyped flag never sends a paid request. Put `--` before a text that holds such a word.
 
 | Variable | Default | Effect |
 |---|---|---|
@@ -107,18 +107,18 @@ Get a Claude key at `https://platform.claude.com/settings/keys`, and scope it to
 when you create it. Otherwise, set `LOJBAN_TAGGER_WORKSPACE` to the ID of the workspace, which
 starts with `wrkspc_`. Get an OpenRouter key at `https://openrouter.ai/settings/keys`.
 
-The tool reads `https_proxy`, `HTTPS_PROXY`, `http_proxy` and `no_proxy` as curl reads them, and
-a proxy with no port takes port 1080. A proxy must start with `http://`. For an https URL, the
-proxy must hold no user name or password. The client would also send them to the host behind
-the proxy.
+The tool reads `https_proxy`, `HTTPS_PROXY`, `http_proxy`, `no_proxy` and `NO_PROXY` as curl
+reads them, and a proxy with no port takes port 1080. A proxy with no scheme takes `http://`, and
+a proxy with a scheme must use `http://`. For an https URL, the proxy must hold no user name or
+password. The client would also send them to the host behind the proxy.
 
 - `--record:<directory>` writes each reply to a file. A later run replays a page reply of 2xx or
-  3xx, and a service reply that reads as an answer. So the same request never pays twice. It
-  sends other requests again, such as an error that the service reports.
+  3xx, and a service reply that holds an answer of the model. It sends other requests again, such
+  as a refusal or an error that the service reports.
 - `--replay:<directory>` reads every reply from files. It needs no key and no network.
 - A recording holds the text and the reply, so the tool makes the directory with mode 0700, and
   writes each file with mode 0600. It refuses a directory that every user may write, such as
-  `/tmp`.
+  `/tmp`, and a link at the path of a recording.
 - A recording holds its endpoint too, so it replays only for that endpoint.
 - `nim r tools/build.nim examples` writes worked examples to `build/examples/`, and prints the
   command that replays each one. Their replies are documented shapes, not live replies.
