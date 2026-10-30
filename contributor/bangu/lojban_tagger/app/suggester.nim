@@ -71,6 +71,10 @@
 ##     sibling, refusing file or link there, before rename.
 ##   Record and replay refuse directory every user may write, as `/tmp`, before any read or send,
 ##     since other user could plant link where recording goes.
+##     Path of recording joins directory and name as written, and each parent made is directory
+##       cut at its last `/`, never normalized, so kernel resolves what that check stats, where
+##       `joinPath` and `parentDir` drop `<link>/..` lexically.
+##       Cost: path named keeps `.` and `..` as written.
 ##     Cost: owner of directory, and members of group that may write it, are trusted.
 ##   Recording is read only where file stands at its path itself: link there, as clone or archive
 ##     keeps it, is refused before read, never followed, so no file outside directory is read,
@@ -354,8 +358,11 @@ proc isShared(directory: string): bool =
 proc createDirectoryPrivate(directory: string) =
   ## Make directory, and each parent missing, with mode `0700`, so no other user lists or reads
   ##   recordings; directory standing keeps its mode. `OSError` where one cannot be made.
+  ##   Parent is directory cut at its last `/`, never normalized as `parentDir` normalizes it, so
+  ##     kernel resolves each parent as it resolves directory, `..` after link included.
   if directory.len == 0 or dirExists(directory): return
-  createDirectoryPrivate(directory.parentDir)
+  let trimmed = directory.strip(leading = false, chars = {'/'})
+  createDirectoryPrivate(trimmed[0 ..< max(trimmed.rfind('/'), 0)])
   if mkdir(cstring(directory), 0o700) == 0: return
   let error = osLastError()  # Before `dirExists`, whose failed `stat` would set its own.
   if not dirExists(directory): raiseOSError(error, directory)
@@ -409,11 +416,16 @@ proc exchange(
     ## Render first line of error, made printable and cut, as outside text.
     error.msg.splitLines[0].toPrintable(RUNES_SHOWN)
 
+  func joinVerbatim(directory, name: string): string =
+    ## Join directory and name with one `/` between them, `..` and `.` kept as written, so kernel
+    ##   resolves directory `isShared` stats; `joinPath` drops `<link>/..` lexically.
+    if directory.endsWith('/'): directory & name else: directory & "/" & name
+
   let
     name = request.stamp & ".recording"
-    path = command.directory / name
+    path = command.directory.joinVerbatim(name)
     shown_directory = command.directory.toPrintable(RUNES_SHOWN)
-    shown = shown_directory / name
+    shown = shown_directory.joinVerbatim(name)
     bytes_file_max = request.len + bytes_max + BYTES_FIELDS_MAX
 
   # Make directory of record mode, private where made, then refuse directory every user writes.
