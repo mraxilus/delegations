@@ -532,15 +532,21 @@ func requestService(settings: Settings, passage: Passage): string =
   "POST " & settings.endpoint & "\n" & settings.toBody(passage)
 
 
+func joinVerbatim(directory, name: string): string =
+  ## Join directory and name as binary joins path of recording: one `/` between them, `..` and `.`
+  ##   kept as written, never dropped as `joinPath` drops them, so kernel resolves directory.
+  if directory.endsWith('/'): directory & name else: directory & "/" & name
+
+
 func pathRecording(directory, request: string): string =
   ## Build path binary keeps recording of request at: stamp of request, in directory.
-  directory / (request.stamp & ".recording")
+  directory.joinVerbatim(request.stamp & ".recording")
 
 
 func pathShown(directory, request: string): string =
   ## Render path of recording of request as refusal and note show it: directory made printable
   ##   and cut alone, then name holding stamp, whole.
-  directory.toPrintable(RUNES_SHOWN) / (request.stamp & ".recording")
+  directory.toPrintable(RUNES_SHOWN).joinVerbatim(request.stamp & ".recording")
 
 
 proc writeRecordings(directory: string, recordings: openArray[Recording]) =
@@ -1635,6 +1641,69 @@ suite "Internal: Suggester":
           toOutcome(refused, notes)  # page refused before its first hop
     check server.heard.len == 0  # nothing sent
     check walkDir(shared).toSeq.len == 1  # nothing written beside recording standing
+    stopServer(server)
+
+
+  test "recording and its parents are reached as kernel resolves directory, never lexically":
+    # Recheck claim regressions-cli-5, 2026-10-29: `joinPath` dropped `<link>/..` lexically, so
+    #   `--record:shared/s/..` passed check of directory every user may write, which stats target
+    #   of link, then wrote ``Reply written to `…/shared/179607a355e3d42c.recording`.`` in `shared`.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      text = example("lojban")
+      passage = text.argument.toPassage
+      request = requestService(settings, passage)
+      name = request.stamp & ".recording"
+      reply = toReplyMessages(text.answer, settings.model)
+      suggestion = Service.Claude.readReply(reply)
+      planted = toReplyMessages(toAnswer(["mlatu", "ciska"]), settings.model)
+      tree = directory / "kernel"
+      shared = tree / "shared"
+      spelled = shared & "/s/.."  # `s` links to `private/inner`, so kernel resolves `private`
+      mode_private = {fpUserRead, fpUserWrite, fpUserExec}
+    server.routes = @[(PATH_SERVICE, reply)]
+    createDir(tree / "private" / "inner")
+    setFilePermissions(tree / "private", mode_private)
+    writeRecordings(shared, [Recording(label: LABEL_SUITE, request: request, reply: planted)])
+    check chmod(cstring(shared), Mode(0o1777)) == 0  # mode of `/tmp`
+    createSymlink(tree / "private" / "inner", shared / "s")
+    check binary.run(settings.toEnvironment, ["--replay:" & spelled, text.argument]) ==
+        toOutcome(toSuggestionRecording("missing at " & pathShown(spelled, request)), passage,
+        settings.model, [])  # case as found: recording planted in `shared` never replays
+    check binary.run(settings.toEnvironment, ["--record:" & spelled, text.argument]) ==
+        toOutcome(suggestion, passage, settings.model, [noteCredential(KEY_CREDENTIAL),
+        noteWritten(spelled, request)])  # case as found: written where kernel resolves it
+    check fileExists(tree / "private" / name)  # in directory check of sharing stats
+    check readFile(shared / name).readRecording.recording.reply == planted  # `shared` untouched
+    for i, (spelling, target) in [
+      ("l/..", "p"),  # link, then `..`, as found
+      ("l/../m", "p/m"),  # directory made below where kernel resolves `l/..`
+      ("l/../m/n", "p/m/n"),  # each parent made there too
+      ("./l/..", "p"),
+      ("l/./..", "p"),
+      ("l//..", "p"),
+      ("p/q/..", "p"),  # no link, so lexical and kernel agree
+      ("p/", "p"),
+    ]:  # each way to spell directory past link that `joinPath` and `parentDir` read otherwise
+      let
+        base = tree / "spellings" / $i
+        directory_case = base & "/" & spelling
+        record = ["--record:" & directory_case, text.argument]
+      createDir(base / "p" / "q")
+      createSymlink(base / "p" / "q", base / "l")
+      check binary.run(settings.toEnvironment, record) == toOutcome(suggestion, passage,
+          settings.model, [noteCredential(KEY_CREDENTIAL), noteWritten(directory_case,
+          request)])  # written, path named as spelled
+      check toSeq(walkDirRec(base)).filterIt(it.endsWith(".recording")) ==
+          @[base / target / name]  # where kernel resolves directory, and nowhere else
+      if not fileExists(base / target / name): continue
+      if target != "p":
+        check getFilePermissions(base / target) == mode_private  # made `0700` where resolved
+      let label = readFile(base / target / name).readRecording.recording.label
+      check binary.run(settings.toEnvironment, ["--replay:" & directory_case, text.argument]) ==
+          toOutcome(suggestion, passage, settings.model, [noteReplayed(directory_case, request,
+          label)])  # read back from there
     stopServer(server)
 
 
