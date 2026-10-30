@@ -165,9 +165,9 @@ func toRecordings*(example: Example, service: Service): seq[Recording] =
     reply =
       if service == Service.Claude: toReplyMessages(example.answer, settings.model)
       else: toReplyChat(example.answer, settings.model)
-  result.add Recording(  # Request as sibling `requestService` of `app/suggester.nim` builds it.
+  result.add Recording(
     label: if service == Service.Claude: LABEL_MESSAGES else: LABEL_CHAT,
-    request: "POST " & settings.endpoint & "\n" & settings.toBody(example.toPassage),
+    request: settings.requestService(settings.toBody(example.toPassage)),
     reply: reply,
   )
 

@@ -89,8 +89,9 @@
 ##     unrecorded, so each record run sends it again.
 ##     Recording that stands but cannot be read is refused with `Recording`, never traceback.
 ##   Request of service exchange, which stamp names and recording keeps, is `POST` and endpoint,
-##     line break, then body, so recording replays for its endpoint alone; request of page hop
-##     is `GET` and URL. Credential stays out, so recording replays under any credential.
+##     line break, then body (`requestService` of `exchanges.nim`, which `tools/examples.nim`
+##     builds by too), so recording replays for its endpoint alone; request of page hop is `GET`
+##     and URL. Credential stays out, so recording replays under any credential.
 ##   Refusal and note of recording name path whose directory alone is made printable and cut;
 ##     refusal names problem first, so long directory hides neither problem nor stamp.
 
@@ -498,13 +499,6 @@ proc exchange(
         discard tryRemoveFile(path & ".writing")
         note = "Reply should be written to `" & shown & "`; got `" & error.toLine & "`."
   Exchanged(is_replied: true, reply: sent.reply, note: note)
-
-
-func requestService(settings: Settings, body: string): string =
-  ## Build request of service exchange, which stamp names and recording keeps: `POST` and
-  ##   endpoint, line break, then body, so recording replays for its endpoint alone.
-  ##   Sibling of `toRecordings` in `tools/examples.nim`, which builds same request (II.9).
-  "POST " & settings.endpoint & "\n" & body
 
 
 proc fetch(url: string, command: Command, context: var SslContext): Fetched =

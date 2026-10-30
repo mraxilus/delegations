@@ -495,7 +495,7 @@ func stamp*(request: string): string =
 func requestService*(settings: Settings, body: string): string =
   ## Build request of service exchange, which stamp names and recording keeps: `POST` and
   ##   endpoint, line break, then body, so recording replays for its endpoint alone.
-  ##   Sibling of `toRecordings` in `tools/examples.nim`, which builds same request (II.9).
+  ##   Exported for `app/suggester.nim` and `tools/examples.nim`, so each builds same request.
   "POST " & settings.endpoint & "\n" & body
 
 
