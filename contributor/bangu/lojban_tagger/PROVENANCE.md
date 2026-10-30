@@ -299,17 +299,18 @@ accepts. `claude` and `openrouter` mark the text for the cache, and `chat` cache
 definitions too, at five times the size. Verified by `suites/test_suggestions.nim`.
 
 **The passage is data inside one element.** Its `&`, `<`, `>` and `"` are escaped, so it can
-never close the element. The URL in the element keeps its scheme, host, port and path alone. So
-a user part, a query or a fragment stays on this machine. Cost: a token that a URL holds in its
-path, as a share link does, reaches the service and the report. Verified by
+never close the element. The URL in the element keeps its scheme, host, port and path, so no user
+part, query or fragment reaches the service or the report. Cost: a token that a URL holds in its
+path, as a share link does, reaches the service and the report. Cost: the page request itself
+sends the whole URL to the page host, and to any http proxy. Verified by
 `suites/test_suggestions.nim`.
 
-**A text that reads as a tag asks no service, and a tag holds at most six words.** Such a text
-is printed as its tag, and no key is read. `$` scores every choice of rafsi, so its time grows
-about 3.2 times for each word. A tag of more words fails as `Long` before `$` runs, whether a
-text or an answer holds it. Cost: `tagger read` and `tagger tag` have no such cap, so a lujvo of
-13 words takes 2.5 s there. Verified by `suites/test_suggestions.nim` and
-`suites/test_suggester.nim`.
+**A text of at most 64 bytes that reads as a tag asks no service.** The tool prints it as its tag
+and reads no key, and a longer text goes to the service as a passage. `$` scores every choice of
+rafsi, so its time grows about 4 times for each word of `bloti`, `condi` or `rotsu` (Figures). A
+tag of more than six words fails as `Long` before `$` runs, whether a text or an answer holds it.
+Cost: `tagger read` and `tagger tag` have no such cap, so a lujvo of 18 words fills memory there.
+Verified by `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
 
 **The tool speaks the wire format of each of three services.**
 
@@ -328,36 +329,47 @@ billed beside the fallback request. Verified by `suites/test_suggestions.nim`, w
 the page for each row.
 
 **`openrouter` names one session, and `claude` can name a workspace.** A fixed `session_id` keeps
-the cached system text on one endpoint of OpenRouter, as its documentation says, and no hit of
-the cache is measured. Without it, the passage would route each request apart. A Claude key
+the cached system text on one endpoint of OpenRouter, where the passage alone would route each
+request apart. Its documentation says so, and no run measured a hit of the cache. A Claude key
 that no workspace scopes needs `anthropic-workspace-id`, which `LOJBAN_TAGGER_WORKSPACE` gives.
 The workspace goes in a header, never in the body, so the recording replays under any
 workspace. Verified by `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
 
 **There is no retry.** The key is for sparing use, so a refused answer goes to the user, who may
-run again. Every cut and every repair is named to the user and to the model. Cost: a failure
-that passes, such as an overload, still needs a second run.
+run again. The report names every cut and every repair of the text, and the passage element
+tells the model of each cut. Cost: a failure that passes, such as an overload, still needs a
+second run. Verified by `suites/test_suggestions.nim`.
 
 **The tool reads pages with its own reader, in one pass.** Script, style, iframe and noscript are
-raw text to their own end tag, and a comment ends as the HTML tokenizer ends it. A page with no
-visible character is refused, so it is never sent. Cost: only 23 named references are decoded,
-so `&eacute;` stays as written. Rejected: `std/htmlparser`, which Nim 2.2 deprecates, and which
-recurses and keeps script text. Verified by `suites/test_suggestions.nim`.
+raw text to their own end tag, and a comment ends as the HTML tokenizer ends it. The reader
+refuses a page with no visible character, so the tool never sends it. Cost: only 23 named
+references are decoded, so `&eacute;` stays as written. Rejected: `std/htmlparser`, which Nim
+2.2 deprecates, and which recurses and keeps script text. Verified by
+`suites/test_suggestions.nim`.
 
 **The encoding comes from the bytes before any label.** A byte order mark wins over each label,
-and a page of UTF-16 is refused. Otherwise the header names the label, or a meta element does,
-as the prescan of HTML 13.2.3.2 reads it. The tool decodes the UTF-8 group and the windows-1252
-group of labels, as the WHATWG Encoding Standard names them. A page cut at its cap drops the
-character that the cut split, and never counts it as ill-formed. Verified by
-`suites/test_suggestions.nim`.
+and a page whose mark or header names UTF-16 is refused. Otherwise the header names the label,
+or a meta element does, as steps 1, 3 and 4 of the prescan of HTML 13.2.3.2 read it. Cost: the
+prescan reads no UTF-16 declaration and no XML encoding, so a UTF-16 page with no mark or header
+reads as UTF-8. Cost: a meta value that names no encoding is taken, where HTML reads on to the
+next meta. Verified by `suites/test_suggestions.nim`.
+
+**The tool decodes two groups of labels.** It decodes the UTF-8 group and the windows-1252 group,
+as the WHATWG Encoding Standard names them. A page cut at its cap drops the character that the
+cut split, and never counts it as ill-formed. Verified by `suites/test_suggestions.nim`.
 
 ## Transport
 
 **Each request gets a new client that follows no redirect.** A client loop keeps its headers
-across hosts, so the key could reach another host. `suggester` follows a page redirect itself,
-at most five times, and chooses the proxy again for each hop. A redirect from https to http is
-refused, and so is a loop. Cost: each hop makes a new connection and a new TLS handshake.
-Verified by `suites/test_exchanges.nim` and `suites/test_suggester.nim`.
+across hosts, so the key could reach another host. `suggester` follows each page redirect
+itself:
+
+- at most five times, with the proxy chosen again for each hop;
+- never in a loop, and never from https to http.
+
+Cost: each hop makes a new connection and a new TLS handshake. Cost: a page can redirect to a
+loopback or private address, whose text then goes to the service. Verified by
+`suites/test_exchanges.nim` and `suites/test_suggester.nim`.
 
 **TLS checks the chain and the name of the host.** The context checks the chain against the roots
 of the machine, or the roots that `SSL_CERT_FILE` names. The async client of Nim checks no name,
@@ -367,28 +379,31 @@ tunnel to the host carries the same pin. Cost: sends that share a context run on
 `openssl` makes for each run.
 
 **The key goes as Bearer to the endpoint alone.** It is a distinct type whose `$` stops the
-compile, so no report or recording can hold it. `send` writes it into the service request alone,
-never into a page request. The documentation of Anthropic gives `Authorization: Bearer` first,
-and calls `x-api-key` legacy. An endpoint must be https, or http to a loopback host, and
-`ANTHROPIC_BASE_URL` is never read. Verified by `suites/test_exchanges.nim`.
+compile, so no report or recording can hold it. `suggester` passes it with the service request
+alone, never with a page request. The documentation of Anthropic gives `Authorization: Bearer`
+first, and calls `x-api-key` legacy. An endpoint must be https, or http to a loopback host, and
+`ANTHROPIC_BASE_URL` is never read. Verified by `suites/test_exchanges.nim` and
+`suites/test_suggester.nim`.
 
 **The deadline is a future, and the body has a cap.** The caller passes the deadline, so the
 suites complete it and read no clock. The body is read from the stream up to its cap: 4 MiB for
 a page, and 1 MiB for a reply. Cost: the head of a reply has no cap in bytes. Cost: a request
 with no streaming waits while the model thinks, so a dropped connection loses a paid answer.
-Verified by `suites/test_exchanges.nim`.
+Verified by `suites/test_exchanges.nim` and `suites/test_suggester.nim`.
 
 **The proxy follows the rules of curl.** An https URL takes `https_proxy`, then `HTTPS_PROXY`,
 and an http URL takes `http_proxy` alone. A loopback host goes direct, and so does a host that
-`no_proxy` names. A value with no scheme takes `http://`, and a value with no port takes 1080,
-as curl assumes. Cost: a bypass entry for a range of addresses never matches. Verified by
-`suites/test_exchanges.nim`.
+`no_proxy` or `NO_PROXY` names. A value with no scheme takes `http://`, and a value whose host
+names no port takes 1080, as curl assumes. Cost: a bypass entry for a range of addresses never
+matches. Verified by `suites/test_exchanges.nim`.
 
 **A proxy must be `http://`, and for an https URL it must hold no user part.** The client of
 `std/httpclient` speaks TLS to no proxy that this tool can pin. It also repeats
 `Proxy-Authorization` on the request inside the tunnel, so a proxy login would reach the service
-and each https page. Cost: a proxy that needs a login cannot reach an https URL, and a proxy of
-`socks5h` is refused, though the client speaks it. Verified by `suites/test_exchanges.nim`.
+and each https page. A proxy whose user part runs past `/`, `?` or `#` is refused, since its
+password would read as host or port. Cost: a proxy that needs a login cannot reach an https URL,
+and a proxy of `socks5h` is refused, though the client speaks it. Verified by
+`suites/test_exchanges.nim`.
 
 **A URL is checked as RFC 3986 splits it, before the client reads it.** A scheme in capitals is
 made lowercase, because the client compares the scheme with case. The authority is split as
@@ -401,8 +416,9 @@ port. A URL that holds whitespace or a control character is refused. Verified by
 
 **A recording is text of its own format, as the index is.** It holds a label, the request, and
 the reply. The request and the body carry byte counts, so any bytes read back. Each refusal
-names the faulty line and ends in what that line holds. The format waits on the ruling of #761
-about Protocol Buffers. Verified by `suites/test_exchanges.nim`.
+names the faulty line, and ends in what that line holds, with each URL cut to its scheme, host,
+port and path. The format waits on the ruling of #761 about Protocol Buffers. Verified by
+`suites/test_exchanges.nim`.
 
 **The stamp, FNV-1a 64 of the request, names the file.** The request is the method and the URL
 of a page, or the method, the endpoint and the body of a service request. FNV-1a resists no
@@ -410,21 +426,24 @@ collision, so the file holds the whole request, and a replay compares it. The he
 stay out of the request. Rejected: `std/hashes`, whose values change between versions of Nim.
 Verified by `suites/test_exchanges.nim` and `suites/test_suggester.nim`.
 
-**Three modes reach each exchange.** A live run sends each exchange and writes nothing.
-`--record:<directory>` replays a page reply of 2xx or 3xx, and a service reply that reads as an
-answer. It sends the rest again, such as an error that the service reports in a reply of 200,
-and writes each reply. `--replay:<directory>` reads every exchange from files, and needs no key
-and no network. Verified by `suites/test_suggester.nim`.
+**Three modes reach each exchange, and a live run writes nothing.** `--record:<directory>`
+replays a page reply of 2xx or 3xx, and a service reply that holds an answer of the model. It
+sends the rest again, such as a refusal or an error in a reply of 200, and writes each reply.
+Cost: a refusal in a billed category is paid again on the next record run. `--replay:<directory>`
+reads every exchange from files, and needs no key and no network. Verified by
+`suites/test_suggester.nim`.
 
 **Recordings stay private and bounded.** A recording holds the text and the reply, so record
 mode makes its directory with mode 0700 and writes each file with mode 0600. Both modes refuse a
-directory that every user may write, because another user could put a link there. A file larger
-than its request, its cap and 65,536 bytes is refused before it is read. Cost: members of a group
-that may write the directory are trusted. Verified by `suites/test_suggester.nim`.
+link at the path of a recording, and a directory that every user may write, where another user
+could put one. A file larger than its request, its cap and 65,536 bytes is refused before it is
+read, and record mode writes none. Cost: members of a group that may write the directory are
+trusted. Verified by `suites/test_suggester.nim`.
 
 **The worked examples are documented shapes, not live replies.** The verb `examples` of
-`tools/build.nim` writes them, and each label says so. A reply that a live run records replaces
-them once a key exists. Verified by `suites/test_suggester.nim`, which replays each one.
+`tools/build.nim` writes them, and each label says so. Record mode replays them, because each
+reply holds an answer, so a live reply needs a run under `--record:` into another directory.
+Verified by `suites/test_suggester.nim`, which replays each one.
 
 ## Command line
 
@@ -446,11 +465,12 @@ standard output alone, so `tagger tag <name> "$(suggester ...)"` joins the two p
 second build and a second binary to ship. Verified by `suites/test_suggester.nim`, which builds
 the binary and drives it.
 
-**A flag that `suggester` does not know is a usage error, so it never sends a paid request.** Exit
-2 names a usage or settings error, and nothing goes out. Exit 1 names a failure, and exit 0
-prints a tag. A text with no visible character, and a URL whose port is outside 1 to 65535, exit
-2 before any setting is read. The argument `-` reads the text from standard input, up to 4 MiB,
-so the text stays out of the list of processes. Verified by `suites/test_suggester.nim`.
+**A flag that `suggester` does not know is a usage error, so it never sends a paid request.**
+Before `--`, each word that starts with `-` reads as a flag, wherever it stands. Exit 2 names a
+usage or settings error and sends nothing, exit 1 names a failure, and exit 0 prints a tag. A
+blank passage exits 2 before any setting is read, and so does a URL whose host or port RFC 3986
+refuses. The argument `-` reads the text from standard input, up to 4 MiB, so the text stays out
+of the list of processes. Verified by `suites/test_suggester.nim`.
 
 **The key comes from the environment alone.** `LOJBAN_TAGGER_API_KEY` is read first, and where it
 is unset, `claude` reads `ANTHROPIC_API_KEY` and `openrouter` reads `OPENROUTER_API_KEY`, as the
@@ -478,7 +498,7 @@ package carries no pin, so its version is what the machine has, as OpenSSL 3.0.1
 ## Figures
 
 Each figure below comes from an Intel Xeon at 2.10 GHz with four cores, and Nim 2.2.12. The
-figures of `tagger` are from 2026-10-25, and those of `suggester` are from 2026-10-29.
+figures of `tagger` are from 2026-10-25, and each figure of `suggester` names its date.
 
 - **Compile of the English index.** Each part of each lujvo line is found by binary search. The
   front end of `nim check app/tagger.nim` took 2.4 s and 2.9 s over two runs. A copy that maps
@@ -486,18 +506,23 @@ figures of `tagger` are from 2026-10-25, and those of `suggester` are from 2026-
   10,000,000 iterations, so that form is a trap, not a slower choice.
 - **Release build.** `nim c -f -d:release app/tagger.nim` took between 5.6 s and 6.5 s over three
   runs.
-- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 9.2 s
-  and 9.4 s over two runs, and the binary holds 2,451,936 bytes.
+- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 9.5 s
+  and 8.8 s over two runs on 2026-10-30, and the binary holds 2,456,960 bytes.
 - **Suites.** `nim c -r -d:ssl -d:testing tests/test_suites.nim` compiled and ran every suite in
-  62.2 s and 63.4 s, over two runs from an empty cache. The suite of `suggester` builds its own
-  binary inside that time.
+  68.5 s and 69.6 s, over two runs from an empty cache on 2026-10-30. The suite of `suggester`
+  builds its own binary inside that time.
 - **Render of a tag.** `$` of six words of `bloti` took 2,151 µs in release and 14,697 µs in
-  debug, the best of three runs each. Seven words took 8,241 µs and 68,105 µs. Each word of
-  `bloti`, `condi` and `rotsu` has four choices of rafsi, the most that a probe of the list found.
-- **Render of a long lujvo.** A probe of the review timed `$` in release at 0.79 s for 12 words
-  and 2.47 s for 13 words, in one run each.
-- **Reading of a long word.** `readTag` of a text of 516 letters took 0.9 ms in release, in one
-  run.
+  debug, the best of three runs each, on 2026-10-29. Seven words took 8,241 µs and 68,105 µs.
+  Each word of `bloti`, `condi` and `rotsu` has four choices of rafsi, the most that a probe of
+  the list found.
+- **Render of a long lujvo.** Each tag takes the first words of the reading of `TEXT_GIVEN_LONG`
+  in `suites/test_suggestions.nim`, closed by `mlatu`, its last word. In release over two runs on
+  2026-10-30, `$` took 0.22 s and 0.30 s for 11 words. For 12 words it took 0.64 s and 0.76 s.
+- **Reading of a long word.** `readTag` of `cizy` 128 times, then `ci'a`, which make 516 letters,
+  took 694 µs and 977 µs in release over two runs on 2026-10-30.
+- **Dot segments of a redirect.** For a location of 128 KiB of `/a` segments, `redirect` took 2 ms
+  and 3 ms in release over two runs on 2026-10-30. A walk that slices its input took 4,828 ms and
+  4,501 ms on the same input.
 - Search and reading are unmeasured. The tool reads and writes the whole index for each command.
 
 ## Open questions
@@ -507,12 +532,12 @@ figures of `tagger` are from 2026-10-25, and those of `suggester` are from 2026-
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a tag
   that holds one of them before its head renders with `brod`, and does not read back.
-- **Live replies.** No reply of 2xx from a service has been read. The readers follow the
-  documented shapes, and three replies of 401 to requests without a key, from 2026-10-28. A run
-  under `--record:` replaces the worked examples once a key exists.
+- **Live replies.** No run read a reply of 2xx from a service. The readers follow the documented
+  shapes, and three replies of 401 to requests without a key, from 2026-10-28. A run under
+  `--record:` into its own directory records live replies once a key exists.
 - **The cost of the system text.** Its count of tokens and the hits of the cache are
   unmeasured. So is the quality of the answers at effort `low` against `medium`.
 - **Fallback and the format of the answer.** It is unverified whether `fallbacks: "default"`
   keeps the format, the effort and the thinking on the fallback model.
-- **Servers of plain `chat`.** No server of plain Chat Completions has been tried.
+- **Servers of plain `chat`.** No run tried a server of plain Chat Completions.
 - **Title and textarea.** The reader reads their content as markup, where HTML reads it as text.
