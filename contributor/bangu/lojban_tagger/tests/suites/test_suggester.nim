@@ -187,6 +187,12 @@ const
     ## Bodies of 2xx reply reading as no reply of either wire format.
   BODY_ERROR_INSIDE = """{"error":{"code":502,"message":"provider down"}}"""
     ## Body of 200 OpenRouter gives where provider fails after it accepts request, as review found.
+  BODY_FLAGGED = "{\"error\":{\"code\":403,\"message\":\"Flagged\",\"metadata\":" &
+      "{\"error_type\":\"content_policy_violation\"}}}"
+    ## Body of moderation envelope OpenRouter gives, by status 403 or inside 200, as recheck found.
+  BODY_GATEWAY = "<html><body><h1>Gateway maintenance</h1></body></html>"
+    ## Body of page gateway gives in place of service, holding no JSON object, as recheck found.
+  BODY_CODED = "\x1F\x8B\x08"  ## Opening bytes of gzip, which error of gateway may come coded in.
   LABEL_FOUND = "evil \e[31mred\e[0m \u202Eabc"
     ## Label suite review found printed raw: escape sequences, then right-to-left override.
   LABEL_CONTROLS = block:
@@ -327,10 +333,37 @@ func toReplyStopped(service: Service; reason, model: string): Reply =
   Reply(status: 200, content_type: "application/json", body: $body)
 
 
+func toReplyRefused(service: Service, model: string): Reply =
+  ## Build 200 reply in wire format of service refusing in words: stop details naming category,
+  ##   model to retry and explanation for `claude`, as recheck found it; refusal text of message
+  ##   for chat formats.
+  let body =
+    if service == Service.Claude:
+      %*{
+        "id": "msg_suite", "type": "message", "role": "assistant", "model": model, "content": [],
+        "stop_reason": "refusal", "stop_sequence": nil,
+        "stop_details": {
+          "type": "refusal", "category": "cyber", "recommended_model": "claude-opus-4-8",
+          "explanation": "This request was declined because it could enable cyber harm.",
+        },
+      }
+    else:
+      %*{
+        "id": "gen-suite", "object": "chat.completion", "model": model,
+        "choices": [{
+          "index": 0, "finish_reason": "stop",
+          "message": {"role": "assistant", "content": nil, "refusal": "I cannot help with that."},
+        }],
+      }
+  Reply(status: 200, content_type: "application/json", body: $body)
+
+
 func toReplies(service: Service, model: string): seq[Reply] =
   ## Build reply of each outcome `readReply` gives, in wire format of service: tag, error by status,
   ##   error inside 2xx, choice ending in error, redirect, refusal, stop at limit, body of no reply,
-  ##   and answer naming unlisted word, ending in cmavo, past cap, or failing readback.
+  ##   and answer naming unlisted word, ending in cmavo, past cap, or failing readback; then each
+  ##   shape recheck found replayed: refusal in words, page of gateway, moderation envelope by
+  ##   status and inside 200, and error coded in gzip.
   @[
     toReplyAnswer(service, toAnswer(["xatra", "ciska"]), model),
     toReplyError(service, 401),
@@ -345,6 +378,11 @@ func toReplies(service: Service, model: string): seq[Reply] =
     toReplyAnswer(service, toAnswer(["ciska", "se"]), model),
     toReplyAnswer(service, newSeqWith(COUNT_WORDS_MAX + 1, "ciska").toAnswer, model),
     toReplyAnswer(service, toAnswer(["brodi", "ciska"]), model),
+    toReplyRefused(service, model),
+    Reply(status: 200, content_type: "text/html", body: BODY_GATEWAY),
+    Reply(status: 403, content_type: "application/json", body: BODY_FLAGGED),
+    Reply(status: 200, content_type: "application/json", body: BODY_FLAGGED),
+    Reply(status: 502, content_type: "text/html", content_encoding: "gzip", body: BODY_CODED),
   ]
 
 
@@ -1249,9 +1287,11 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "record writes reply of any status, replays tag or paid failure alone, and replay any":
+  test "record writes reply of any status, replays answer model produced alone, and replay any":
     # Review findings wire-1 and logic-4, 2026-10-29: record replayed service reply by status
     #   alone, so error inside 2xx, which service bills not, was replayed on every later run.
+    # Recheck claims completeness-1 and regressions-cli-1, 2026-10-29: record replayed each reply
+    #   but one reading as `Status`, so refusal and body of no JSON object stayed pinned too.
     let text = example("lojban")
     var
       covered: set[Failure]
@@ -1269,7 +1309,7 @@ suite "Internal: Suggester":
           request = requestService(settings, passage)
           path = pathRecording(directory_case, request)
           suggestion = service.readReply(reply)
-          is_kept = suggestion.is_suggested or suggestion.failure != Failure.Status
+          is_kept = service.isAnswered(reply)
           count_before = server.heard.len
           first = binary.run(settings.toEnvironment, record)
           recorded = readFile(path).readRecording
@@ -1282,9 +1322,9 @@ suite "Internal: Suggester":
           noteCredential(KEY_CREDENTIAL),
           if is_kept: noteReplayed(directory_case, request, recorded.recording.label)
           else: noteWritten(directory_case, request),
-        ])  # tag and paid failure replayed; `Status` sent and written again (`Mode.Record`)
+        ])  # answer replayed (`isAnswered`); rest sent and written again (`Mode.Record`)
         check server.heard.len - count_before ==
-            (if is_kept: 1 else: 2)  # sent again where reply reads as `Status` alone
+            (if is_kept: 1 else: 2)  # sent again where reply holds no answer
         let
           label = readFile(path).readRecording.recording.label
           replay = ["--replay:" & directory_case, text.argument]
@@ -1297,6 +1337,48 @@ suite "Internal: Suggester":
       stopServer(server)
     check covered == {Failure.Status..Failure.high}  # each failure `readReply` gives, exhaustive
     check count_kept > 0 and count_sent > 0  # both sides of law reached
+
+
+  test "record sends again refusal, gateway page and error past cap or coded, never replaying them":
+    # Recheck claims completeness-1 and regressions-cli-1, 2026-10-29: second record run of each
+    #   reply below printed `Reply replayed from …: recorded 2026-10-29.` and its failure, and
+    #   service heard one request over both runs, though none holds answer model produced.
+    let
+      server = startServer()
+      text = example("lojban")
+      passage = text.argument.toPassage
+      refused = toReplyRefused(Service.Claude, LUT_MODEL_BY_SERVICE[Service.Claude])
+      gateway = Reply(status: 200, content_type: "text/html", body: BODY_GATEWAY)
+      flagged = Reply(status: 403, content_type: "application/json", body: BODY_FLAGGED)
+      inside = Reply(status: 200, content_type: "application/json", body: BODY_FLAGGED)
+      past = Reply(status: 503, content_type: "text/html", body: "x".repeat(BYTES_REPLY_MAX + 1))
+      cut = Reply(status: 503, content_type: "text/html", body: "x".repeat(BYTES_REPLY_MAX),
+          is_cut: true)
+      coded = Reply(status: 502, content_type: "text/html", content_encoding: "gzip",
+          body: BODY_CODED)
+    for i, (service, served, read) in [
+      (Service.Claude, refused, refused),  # refusal naming model to retry, not billed
+      (Service.Claude, gateway, gateway),  # page of gateway, no JSON object
+      (Service.OpenRouter, flagged, flagged),  # moderation envelope by status
+      (Service.OpenRouter, inside, inside),  # same envelope inside 200
+      (Service.Chat, past, cut),  # 503 past cap of reply, read cut
+      (Service.Chat, coded, coded),  # 502 coded in gzip, though request asked identity
+    ]:
+      server.routes = @[(PATH_SERVICE, served)]
+      let
+        settings = service.toSettings(server.port)
+        directory_case = directory / "unanswered" / $i
+        record = @["--record:" & directory_case, text.argument]
+        expected = toOutcome(service.readReply(read), passage, settings.model, [
+          noteCredential(KEY_CREDENTIAL),
+          noteWritten(directory_case, requestService(settings, passage)),
+        ])
+        count_before = server.heard.len
+      check binary.run(settings.toEnvironment, record) == expected  # sent, and reply written
+      check binary.run(settings.toEnvironment, record) ==
+          expected  # sent and written again, never replayed
+      check server.heard.len - count_before == 2  # service asked on each run
+    stopServer(server)
 
 
   test "record sends again OpenRouter reply of 200 holding error, and never replays it":
