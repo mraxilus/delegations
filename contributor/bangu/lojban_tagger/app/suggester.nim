@@ -378,7 +378,7 @@ proc createDirectoryPrivate(directory: string) =
   ##     kernel resolves each parent as it resolves directory, `..` after link included.
   if directory.len == 0 or dirExists(directory): return
   let trimmed = directory.strip(leading = false, chars = {'/'})
-  createDirectoryPrivate(trimmed[0 ..< max(trimmed.rfind('/'), 0)])
+  createDirectoryPrivate(trimmed[0..<max(trimmed.rfind('/'), 0)])
   if mkdir(cstring(directory), 0o700) == 0: return
   let error = osLastError()  # Before `dirExists`, whose failed `stat` would set its own.
   if not dirExists(directory): raiseOSError(error, directory)

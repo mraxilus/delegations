@@ -616,7 +616,7 @@ func noteWritten(directory, request: string): string =
   "Reply written to `" & pathShown(directory, request) & "`."
 
 
-func noteLarger(directory, request: string, bytes_file_max: int): string =
+func noteLarger(directory, request: string; bytes_file_max: int): string =
   ## Render note naming recording of request left unwritten, since its file would pass
   ##   `bytes_file_max`, which replay refuses.
   "Reply should be written to `" & pathShown(directory, request) & "`; got `larger than " &
@@ -1300,8 +1300,14 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
       missing = directory / "workspaces_missing"  # never made, so recording of request misses
-      taken = toOutcome(toSuggestionRecording("missing at " & pathShown(missing,
-          requestService(settings, passage))), passage, settings.model, [])
+      taken = toOutcome(
+        toSuggestionRecording(
+          "missing at " & pathShown(missing, requestService(settings, passage)),
+        ),
+        passage,
+        settings.model,
+        [],
+      )
     var count_taken, count_refused = 0
     for code in 1..255:  # environment carries no zero byte
       let
@@ -1502,10 +1508,15 @@ suite "Internal: Suggester":
         settings = service.toSettings(server.port)
         directory_case = directory / "unanswered" / $i
         record = @["--record:" & directory_case, text.argument]
-        expected = toOutcome(service.readReply(read), passage, settings.model, [
-          noteCredential(KEY_CREDENTIAL),
-          noteWritten(directory_case, requestService(settings, passage)),
-        ])
+        expected = toOutcome(
+          service.readReply(read),
+          passage,
+          settings.model,
+          [
+            noteCredential(KEY_CREDENTIAL),
+            noteWritten(directory_case, requestService(settings, passage)),
+          ],
+        )
         count_before = server.heard.len
       check binary.run(settings.toEnvironment, record) == expected  # sent, and reply written
       check binary.run(settings.toEnvironment, record) ==
@@ -1796,7 +1807,7 @@ suite "Internal: Suggester":
       check binary.run(settings.toEnvironment, record) == toOutcome(suggestion, passage,
           settings.model, [noteCredential(KEY_CREDENTIAL), noteWritten(directory_case,
           request)])  # written, path named as spelled
-      check toSeq(walkDirRec(base)).filterIt(it.endsWith(".recording")) ==
+      check walkDirRec(base).toSeq.filterIt(it.endsWith(".recording")) ==
           @[base / target / name]  # where kernel resolves directory, and nowhere else
       if not fileExists(base / target / name): continue
       if target != "p":
@@ -1893,8 +1904,11 @@ suite "Internal: Suggester":
         request = "GET " & url
         directory_case = directory / "larger" / $i
         bytes_file_max = request.len + BYTES_PAGE_MAX + BYTES_FIELDS_MAX
-        base = Recording(label: LABEL_DATED, request: request, reply: Reply(status: 200,
-            content_type: opening, body: large[0 ..< ^1], is_cut: true)).toText.len
+        base = Recording(
+          label: LABEL_DATED,
+          request: request,
+          reply: Reply(status: 200, content_type: opening, body: large[0 ..< ^1], is_cut: true),
+        ).toText.len
         count_padding = if i < 3: bytes_file_max + padding - base else: padding
         typed = opening & "b".repeat(count_padding)
         read = Reply(status: 200, content_type: typed, body: large[0 ..< ^1], is_cut: true)
@@ -1991,8 +2005,10 @@ suite "Internal: Suggester":
     createDir(outside)
     writeFile(outside / "netrc", "machine api.example.org login alice password SECRET-NETRC\n")
     writeFile(outside / "credentials", "https://alice:ghp_SECRET-TOKEN@github.com\n")
-    writeFile(outside / "recording", Recording(label: LABEL_SUITE, request: request,
-        reply: reply).toText)
+    writeFile(
+      outside / "recording",
+      Recording(label: LABEL_SUITE, request: request, reply: reply).toText,
+    )
     createSymlink(outside / "netrc", outside / "chained")
     for target in [
       outside / "netrc",  # case as found: login of user, outside directory
