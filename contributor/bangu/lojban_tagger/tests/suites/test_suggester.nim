@@ -59,7 +59,7 @@ from std/posix import chmod, Mode, umask
 from std/unicode import Rune, toUTF8
 
 import ../../app/exchanges
-from ../../app/suggester {.all.} import COUNT_REDIRECTS_MAX, USAGE
+from ../../app/suggester {.all.} import BYTES_FIELDS_MAX, COUNT_REDIRECTS_MAX, USAGE
 import ../../src/lojban_tagger/[suggestions, tags]
 import ../../tools/examples
 from ../../tools/examples {.all.} import DIRECTORY_EXAMPLES
@@ -173,8 +173,6 @@ const
   OFFSETS_CUT = -4..4
     ## Bytes each pad reaches past `BYTES_PASSAGE_MAX`, rounded down to whole characters; with
     ##   3 pads, 4 tails and 2 routes, 216 runs, exhaustive over alignments of tail to cut.
-  BYTES_FIELDS_MAX = 65_536
-    ## Bytes recording file may hold past its request and cap of its body, as binary sets it.
   WORDS_PASSAGE = [
     "Alice", "was", "tired", "mi", "ciska", "<passage>", "</passage>", "&amp;", "\"sister\"",
     "it's", "line\nbreak", "tab\there", "caf\xC3\xA9", "\xE2\x80\xA6", "\xC4\x89u", "\xFF",
