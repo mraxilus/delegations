@@ -165,16 +165,30 @@ func toRecordings*(example: Example, service: Service): seq[Recording] =
 
 #[ Entry ]#
 
-proc main(): int =
-  ## Write recordings of every example under `claude` and `openrouter`; print each command.
-  createDir(DIRECTORY_EXAMPLES)
+func toCommand*(example: Example, service: Service): string =
+  ## Render shell command replaying example under service from `DIRECTORY_EXAMPLES`, which
+  ##   project folder runs: service named, and endpoint, model and effort set empty.
+  "LOJBAN_TAGGER_SERVICE=" & $service & " LOJBAN_TAGGER_ENDPOINT= " &
+      "LOJBAN_TAGGER_MODEL= LOJBAN_TAGGER_EFFORT= binaries/suggester --replay:" &
+      DIRECTORY_EXAMPLES & " " & example.argument.quoteShell
+
+
+proc writeExamples*(directory: string) =
+  ## Write recordings of every example under `claude` and `openrouter` into directory, made
+  ##   with each parent where missing.
+  createDir(directory)
   for example in EXAMPLES:
     for service in [Service.Claude, Service.OpenRouter]:
       for recording in example.toRecordings(service):
-        writeFile(DIRECTORY_EXAMPLES / (recording.request.stamp & ".recording"), recording.toText)
-      echo "LOJBAN_TAGGER_SERVICE=" & $service & " LOJBAN_TAGGER_ENDPOINT= " &
-          "LOJBAN_TAGGER_MODEL= LOJBAN_TAGGER_EFFORT= binaries/suggester --replay:" &
-          DIRECTORY_EXAMPLES & " " & example.argument.quoteShell
+        writeFile(directory / (recording.request.stamp & ".recording"), recording.toText)
+
+
+proc main(): int =
+  ## Write recordings of every example under `claude` and `openrouter`; print each command.
+  writeExamples(DIRECTORY_EXAMPLES)
+  for example in EXAMPLES:
+    for service in [Service.Claude, Service.OpenRouter]:
+      echo example.toCommand(service)
   0
 
 
