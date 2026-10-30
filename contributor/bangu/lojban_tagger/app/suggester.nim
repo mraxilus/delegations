@@ -9,8 +9,8 @@
 ##   | suggester <text>...       | ask service for tag of text; print tag                 |
 ##   | suggester <url>           | fetch page, then ask service for tag of its text       |
 ##   | suggester -               | read text of standard input, as text given goes        |
-##   | --record:<directory>      | replay page of 2xx or 3xx, and service reply reading   |
-##   |                           | as tag or paid failure; send rest; write each reply    |
+##   | --record:<directory>      | replay page of 2xx or 3xx, and service reply holding   |
+##   |                           | answer model produced; send rest; write each reply     |
 ##   | --replay:<directory>      | read every exchange from recordings; send nothing      |
 ##   | --                        | end flags, so passage may open with `-`                |
 ##   |---------------------------|--------------------------------------------------------|
@@ -55,10 +55,13 @@
 ##   Record mode makes its directory before it reads or sends, so directory it cannot make refuses
 ##     run with `Recording`, and nothing is paid for; recording it cannot write after reply is
 ##     named in note, and tag still prints. Cost: failed send leaves empty directory behind.
-##   Record mode replays service reply by how `readReply` reads it, never by status alone: tag,
-##     and failure of answer service bills, replay, so no answer is paid twice; reply reading as
-##     `Status` goes out again, as OpenRouter answers 200 holding provider error, which it does
-##     not bill and which passes.
+##   Record mode replays service reply holding answer model produced (`isAnswered`), never by
+##     status alone: tag, and failure of answer itself, replay, so no answer is paid twice;
+##     refusal, error by status or inside 2xx, redirect, and body cut, coded or holding no JSON
+##     object go out again, as OpenRouter answers 200 holding provider error, which it does not
+##     bill and which passes, and as refusal names model to retry where fallback was skipped.
+##     Cost: refusal service bills, in category `bio`, `frontier_llm` or `reasoning_extraction`,
+##       or after partial output, is paid again on each record run.
 ##     Cost: recorded reply is read twice, once to choose and once to report.
 ##   Recordings hold passage, page and reply, so they stay private: record mode makes each
 ##     directory it makes with mode `0700`, and writes each recording with mode `0600` to new
@@ -91,8 +94,8 @@ type
   Mode {.pure.} = enum  ## Define how run reaches each exchange.
     Live  ## Send every exchange; write nothing.
     Record
-      ## Replay recording of same request: page hop of 2xx or 3xx, or service reply reading as
-      ##   tag or failure of answer service bills; send rest, and write each reply.
+      ## Replay recording of same request: page hop of 2xx or 3xx, or service reply holding
+      ##   answer model produced (`isAnswered`); send rest, and write each reply.
     Replay  ## Read every exchange from recordings; send nothing, read no credential.
 
   Command = object  ## Define what arguments ask.
@@ -320,12 +323,11 @@ proc findCredential(settings: Settings): Credentialed =
 
 
 func isReplayed(reply: Reply, service: Option[Service]): bool =
-  ## Test record mode replays recorded reply: page hop of 2xx or 3xx; reply of `service` reading
-  ##   as tag or as failure of answer service bills, never as `Status`, so error by status, error
-  ##   inside 2xx and redirect go out again.
+  ## Test record mode replays recorded reply: page hop of 2xx or 3xx; reply of `service` holding
+  ##   answer model produced (`isAnswered`), so refusal, error by status or inside 2xx, redirect,
+  ##   and body cut, coded or holding no JSON object go out again.
   if service.isNone: return reply.status in 200..399
-  let suggestion = service.get.readReply(reply)
-  suggestion.is_suggested or suggestion.failure != Failure.Status
+  service.get.isAnswered(reply)
 
 
 proc isShared(directory: string): bool =
