@@ -78,6 +78,9 @@
 ##     Cost: recording kept as link on purpose is refused.
 ##   Recording file past its request, cap of its body and `BYTES_FIELDS_MAX` is refused before it
 ##     is read, and body past its cap once read, so replay holds no more than send would.
+##     Record writes no file past those caps, naming it in note, so no run writes file later run
+##     refuses. Cost: reply whose head passes `BYTES_FIELDS_MAX`, less lines of format, goes
+##     unrecorded, so each record run sends it again.
 ##     Recording that stands but cannot be read is refused with `Recording`, never traceback.
 ##   Request of service exchange, which stamp names and recording keeps, is `POST` and endpoint,
 ##     line break, then body, so recording replays for its endpoint alone; request of page hop
@@ -387,7 +390,8 @@ proc exchange(
   ##   `service` names wire format of service exchange, whose reply record mode reads before it
   ##     replays it (`isReplayed`); `none` for page hop.
   ##   Record mode makes directory before reading or sending, mode `0700` where it makes it,
-  ##     refusing where it cannot; write failing after reply is named in note, and reply is kept.
+  ##     refusing where it cannot; write failing after reply is named in note, and reply is kept,
+  ##     as is reply whose file would pass caps below, which note names unwritten.
   ##   Directory every user may write is refused before any read or send; link or other than
   ##     file at path of recording is refused before it is read, never followed; recording file
   ##     past request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body
@@ -462,22 +466,27 @@ proc exchange(
     return Exchanged(is_replied: false, failure: Failure.Network,
         detail: sent.problem.toPrintable(RUNES_SHOWN))
 
-  # Write reply in record mode: new sibling of mode `0600`, then rename over recording.
+  # Write reply in record mode: new sibling of mode `0600`, then rename over recording; file past
+  #   caps replay reads is never written, so no run writes file later run refuses.
   var note = ""
   if command.mode == Mode.Record:
-    let recording = Recording(
+    let text = Recording(
       label: "recorded " & now().utc.format("yyyy-MM-dd"),
       request: request,
       reply: sent.reply,
-    )
-    try:
-      discard tryRemoveFile(path & ".writing")  # Sibling left by run that ended before rename.
-      writePrivate(path & ".writing", recording.toText)
-      moveFile(path & ".writing", path)
-      note = "Reply written to `" & shown & "`."
-    except CatchableError as error:
-      discard tryRemoveFile(path & ".writing")
-      note = "Reply should be written to `" & shown & "`; got `" & error.toLine & "`."
+    ).toText
+    if text.len > bytes_file_max:
+      note = "Reply should be written to `" & shown & "`; got `larger than " & $bytes_file_max &
+          " bytes`."
+    else:
+      try:
+        discard tryRemoveFile(path & ".writing")  # Sibling left by run that ended before rename.
+        writePrivate(path & ".writing", text)
+        moveFile(path & ".writing", path)
+        note = "Reply written to `" & shown & "`."
+      except CatchableError as error:
+        discard tryRemoveFile(path & ".writing")
+        note = "Reply should be written to `" & shown & "`; got `" & error.toLine & "`."
   Exchanged(is_replied: true, reply: sent.reply, note: note)
 
 
