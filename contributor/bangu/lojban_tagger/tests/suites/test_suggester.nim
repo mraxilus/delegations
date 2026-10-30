@@ -1287,6 +1287,32 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
+  test "workspace takes `wrkspc_` then visible ASCII alone, over every byte from 1 to 255":
+    # Sibling of test "byte outside visible ASCII is refused where it stands, and whitespace at
+    #   ends trimmed" of `test_exchanges.nim`, which holds same bytes in credential (II.9).
+    let
+      text = example("lojban")
+      settings = Service.Claude.toSettings
+      passage = text.argument.toPassage
+      missing = directory / "workspaces_missing"  # never made, so recording of request misses
+      taken = toOutcome(toSuggestionRecording("missing at " & pathShown(missing,
+          requestService(settings, passage))), passage, settings.model, [])
+    var count_taken, count_refused = 0
+    for code in 1..255:  # environment carries no zero byte
+      let
+        workspace = "wrkspc_a" & char(code) & "b"
+        outcome = binary.run([(KEY_WORKSPACE, workspace)], ["--replay:" & missing, text.argument])
+      if char(code) in {'!'..'~'}:
+        inc count_taken
+        check outcome == taken  # workspace stays out of stamp, so request misses as any does
+        continue
+      inc count_refused
+      check outcome == Outcome(report: PROBLEM_WORKSPACE & "`" & workspace.toPrintable(
+          RUNES_SHOWN) & "` for `" & KEY_WORKSPACE & "`.\n", code: 2)  # no line break in header
+    check count_taken == 94 and count_refused == 161  # `!` to `~`, then every other byte
+    check not dirExists(missing)  # replay makes nothing
+
+
   test "credential comes from `LOJBAN_TAGGER_API_KEY` first, then usual name of service":
     let
       text = example("lojban")
