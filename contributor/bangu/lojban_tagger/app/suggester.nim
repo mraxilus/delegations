@@ -19,9 +19,10 @@
 ##
 ##   Standard output gets tag alone, so `tagger tag <name> "$(suggester ...)"` composes both
 ##     tools; report goes to standard error.
-##   Leading argument opening with `-` is flag; flag usage does not take exits 2 before any
-##     setting, credential or socket, so mistyped flag never goes out as passage of paid request.
-##     Cost: text opening with `-` needs `--` before it.
+##   Argument opening with `-`, but `-` alone, is flag before text and after it, unless `--`
+##     came first; flag usage does not take exits 2 before any setting, credential or socket, so
+##     mistyped flag never goes out as passage of paid request.
+##     Cost: text holding word opening with `-`, but `-` alone, needs `--` before it.
 ##   One argument shaped as http or https URL, one token naming host, is page, never text: port
 ##     `isURL` refuses exits 2 naming URL, before any setting, so mistyped port never goes out as
 ##     passage of paid request. Cost: such text goes as passage only through `-`.
@@ -191,8 +192,9 @@ func readCommand(arguments: openArray[string]): Commanded =
   ##   Leading arguments opening with `-` are flags: one `--record:<directory>` or
   ##     `--replay:<directory>`, directory nonempty, then `--`, which ends flags; any other flag
   ##     is usage error, so mistyped flag never goes out as passage of paid request.
-  ##   Without `--`, passage holds no flag of mode, and opens with `-` only where `-` is all of
-  ##     it, so flag is never read as text.
+  ##   Without `--`, no argument of passage but `-` alone opens with `-`, so flag after text,
+  ##     mistyped or not, is usage error too, never read as text; passage opens with `-` only
+  ##     where `-` is all of it.
   ##   Passage holding no visible character (`isBlank`) is usage error, as page holding none
   ##     gives no text, so empty passage never goes out.
   ##   One argument shaped as URL whose port `isURL` refuses (`isPortRefused`) is usage error
@@ -217,7 +219,7 @@ func readCommand(arguments: openArray[string]): Commanded =
   let rest = @arguments[at .. ^1]
   if rest.len == 0: return Commanded(is_read: false)
   if not is_ended and ((rest[0] == "-" and rest.len > 1) or
-      rest.anyIt(it.startsWith(FLAG_RECORD) or it.startsWith(FLAG_REPLAY))):
+      rest.anyIt(it.len > 1 and it.startsWith('-'))):
     return Commanded(is_read: false)
   command.argument = rest.join(" ")
   if command.argument.isBlank: return Commanded(is_read: false)
