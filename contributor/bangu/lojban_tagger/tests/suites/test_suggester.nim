@@ -36,9 +36,10 @@
 ##   Record makes its directory before it sends, refusing where it cannot, so nothing is paid
 ##     for; recording it cannot write after reply is named in note, and reply is read still.
 ##     Error text is system's, so checks read its frame: problem, one line of error, then path.
-##     Cost: write or read refused by permission stays undriven, since suite may run as root,
-##     whom no permission refuses; file or directory in way of recording stands in for write,
-##     and link to `/proc/self/mem`, whose read fails even for root, stands in for read.
+##     Cost: write refused by permission stays undriven, since suite may run as root, whom no
+##     permission refuses, so file or directory in way of recording stands in for it; read of
+##     recording of mode `0000` is driven where suite runs as other user, and skips under root
+##     (IX.9), since link, which `/proc/self/mem` could stand in by, is refused before read.
 ##   Modes of directories and recordings record makes are read back as set, whatever umask of
 ##     host, since binary names mode where it makes each.
 ##   Cost: no root signs loopback server, so TLS past tunnel request and name lookup stay
@@ -1657,8 +1658,8 @@ suite "Internal: Suggester":
 
 
   test "recording that stands but cannot be read exits 1 with `Recording`, never traceback":
-    # Link at path of recording to `/proc/self/mem`: `fileExists` and size take it, and read at
-    #   offset 0 fails with `EIO` even for root, whom no permission refuses, as suite may run.
+    # Recording of mode `0000` at its path: `fileExists` takes it, and open fails for user other
+    #   than root; suite reading it as well runs as root, whom no permission refuses, so skips.
     let
       server = startServer()
       settings = Service.Claude.toSettings(server.port)
@@ -1669,19 +1670,74 @@ suite "Internal: Suggester":
       opening = "Recording should hold this request; got `unreadable: "
     server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
     createDir(directory_case)
-    createSymlink("/proc/self/mem", path)
-    for (flags, notes) in [
-      (@["--replay:" & directory_case], ""),
-      (@["--record:" & directory_case], noteCredential(KEY_CREDENTIAL) & "\n"),
-    ]:
-      let
-        outcome = binary.run(settings.toEnvironment, flags & @[text.argument])
-        error = outcome.report.readFramed(notes & opening, " at " &
-            pathShown(directory_case, request) & "`.\n")
-      check outcome.code == 1 and outcome.output == ""  # no tag
-      check error.isSome and error.get.len > 0 and
-          '\n' notin error.get  # review finding logic-5, 2026-10-29: first line of error alone
+    writeFile(path, "")
+    setFilePermissions(path, {})
+    var is_readable = true  # Suite reads recording itself, as root does.
+    try:
+      discard readFile(path)
+    except IOError:
+      is_readable = false
+    if is_readable: skip()  # IX.9: suite runs as root, whom no permission refuses
+    else:
+      for (flags, notes) in [
+        (@["--replay:" & directory_case], ""),
+        (@["--record:" & directory_case], noteCredential(KEY_CREDENTIAL) & "\n"),
+      ]:
+        let
+          outcome = binary.run(settings.toEnvironment, flags & @[text.argument])
+          error = outcome.report.readFramed(notes & opening, " at " &
+              pathShown(directory_case, request) & "`.\n")
+        check outcome.code == 1 and outcome.output == ""  # no tag
+        check error.isSome and error.get.len > 0 and
+            '\n' notin error.get  # review finding logic-5, 2026-10-29: first line of error alone
     check server.heard.len == 0  # recording standing is refused, never sent around
+    stopServer(server)
+
+
+  test "link at path of recording is refused, naming it, before any read or send":
+    # Recheck claim completeness-3, 2026-10-29: replay and record followed link, as clone keeps
+    #   it, to file outside directory, and refusal echoed its first line, as ``got `machine
+    #   api.example.com login me password S3cretPassw0rd-from-netrc` at line 1 of …``.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      text = example("lojban")
+      passage = text.argument.toPassage
+      request = requestService(settings, passage)
+      reply = toReplyMessages(text.answer, settings.model)
+      directory_case = directory / "linked"
+      outside = directory / "outside"
+      path = pathRecording(directory_case, request)
+      refused = toSuggestionRecording("link or other than file at " &
+          pathShown(directory_case, request))
+    server.routes = @[(PATH_SERVICE, reply)]
+    createDir(directory_case)
+    createDir(outside)
+    writeFile(outside / "netrc", "machine api.example.org login alice password SECRET-NETRC\n")
+    writeFile(outside / "credentials", "https://alice:ghp_SECRET-TOKEN@github.com\n")
+    writeFile(outside / "recording", Recording(label: LABEL_SUITE, request: request,
+        reply: reply).toText)
+    createSymlink(outside / "netrc", outside / "chained")
+    for target in [
+      outside / "netrc",  # case as found: login of user, outside directory
+      outside / "credentials",  # case as found: token git keeps, in URL
+      "../outside/netrc",  # relative link out of directory
+      outside / "chained",  # link to link
+      outside / "recording",  # recording of this very request, standing outside
+      "/proc/self/environ",  # environment of run, which `stat` reads as file
+    ]:
+      removeFile(path)
+      createSymlink(target, path)
+      for (flags, notes) in [
+        (@["--replay:" & directory_case], newSeq[string]()),
+        (@["--record:" & directory_case], @[noteCredential(KEY_CREDENTIAL)]),
+      ]:
+        let outcome = binary.run(settings.toEnvironment, flags & @[text.argument])
+        check outcome == toOutcome(refused, passage, settings.model,
+            notes)  # link named, never followed, whatever its target holds
+        check "SECRET" notin outcome.report  # no byte of target reaches report
+    check server.heard.len == 0  # nothing sent around link
+    check symlinkExists(path)  # link left standing, never written over
     stopServer(server)
 
 
