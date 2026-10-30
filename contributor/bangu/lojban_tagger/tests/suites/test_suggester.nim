@@ -125,6 +125,7 @@ const
   MODEL_SERVED = "model-served"  ## Model reply names where it is not model asked.
   GLOSS_SUITE = "gloss of suite"  ## Gloss answers give where test names none.
   LABEL_SUITE = "documented shape, built in suite"  ## Label of recordings suite builds itself.
+  LABEL_DATED = "recorded yyyy-MM-dd"  ## Label as long as one record writes, sizing file it writes.
   PATH_SERVICE = "/v1/messages"  ## Path fake service answers at.
   STATUS_MISSING = 404  ## Status server answers where no route names target.
   TEXT_GIVEN = "datnyvreji"  ## Text reading as tag already, i.e. `datni+vreji`.
@@ -564,6 +565,13 @@ func noteReplayed(directory, request, label: string): string =
 func noteWritten(directory, request: string): string =
   ## Render note naming recording of request written, at path shown.
   "Reply written to `" & pathShown(directory, request) & "`."
+
+
+func noteLarger(directory, request: string, bytes_file_max: int): string =
+  ## Render note naming recording of request left unwritten, since its file would pass
+  ##   `bytes_file_max`, which replay refuses.
+  "Reply should be written to `" & pathShown(directory, request) & "`; got `larger than " &
+      $bytes_file_max & " bytes`."
 
 
 func problemPort(url: string): string =
@@ -1663,6 +1671,62 @@ suite "Internal: Suggester":
     check binary.run([], replay) == toOutcome(toSuggestionRecording(detailMalformed(
         at_cap.readRecording, directory_case, request)), passage, settings.model,
         [])  # file at its cap is read, and reader refuses what follows body
+
+
+  test "record writes no recording replay would refuse by size, naming it in note, and sends again":
+    # Recheck claim regressions-cli-4, 2026-10-29: page past `BYTES_PAGE_MAX`, typed by 70,000
+    #   bytes, was written as recording of 4,264,502 bytes, and each later run refused it, as ``got
+    #   `larger than 4259874 bytes at …``, sending nothing, until file was removed.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      large = PIECE_PAGE.repeat(BYTES_PAGE_MAX div PIECE_PAGE.len + 1)[0..BYTES_PAGE_MAX]
+      reply_service = toReplyMessages(example("alice").answer, settings.model)
+      suggestion = Service.Claude.readReply(reply_service)
+      opening = "text/plain; charset=utf-8; x="
+    var count_written, count_unwritten = 0
+    for i, padding in [-1, 0, 1, 70_000]:  # file below cap, at it, past it; type as found
+      let
+        url = urlLoopback(server.port, "/large/" & $i)
+        request = "GET " & url
+        directory_case = directory / "larger" / $i
+        bytes_file_max = request.len + BYTES_PAGE_MAX + BYTES_FIELDS_MAX
+        base = Recording(label: LABEL_DATED, request: request, reply: Reply(status: 200,
+            content_type: opening, body: large[0 ..< ^1], is_cut: true)).toText.len
+        count_padding = if i < 3: bytes_file_max + padding - base else: padding
+        typed = opening & "b".repeat(count_padding)
+        read = Reply(status: 200, content_type: typed, body: large[0 ..< ^1], is_cut: true)
+        is_written = base + count_padding <= bytes_file_max  # file record would write, as `toText`
+        passage = url.readPage(read).passage
+        request_service = requestService(settings, passage)
+        path = pathRecording(directory_case, request)
+        record = ["--record:" & directory_case, url]
+        note_page =
+          if is_written: noteWritten(directory_case, request)
+          else: noteLarger(directory_case, request, bytes_file_max)
+        count_before = server.heard.len
+      server.routes = @[("/large/" & $i, Reply(status: 200, content_type: typed, body: large)),
+          (PATH_SERVICE, reply_service)]
+      check binary.run(settings.toEnvironment, record) == toOutcome(suggestion, passage,
+          settings.model, [noteCredential(KEY_CREDENTIAL), note_page, noteWritten(directory_case,
+          request_service)])  # page written within cap, else named unwritten; tag printed
+      check fileExists(path) == is_written  # file past cap of replay never written
+      let
+        path_service = pathRecording(directory_case, request_service)
+        label_page = if fileExists(path): readFile(path).readRecording.recording.label else: ""
+        label_service = readFile(path_service).readRecording.recording.label
+        notes = [
+          noteCredential(KEY_CREDENTIAL),
+          if is_written: noteReplayed(directory_case, request, label_page) else: note_page,
+          noteReplayed(directory_case, request_service, label_service),
+        ]
+      check binary.run(settings.toEnvironment, record) == toOutcome(suggestion, passage,
+          settings.model, notes)  # page replayed within cap, else sent again; service replayed
+      check server.heard.len - count_before ==
+          (if is_written: 2 else: 3)  # page and service once each; page again where unwritten
+      if is_written: inc count_written else: inc count_unwritten
+    check count_written == 2 and count_unwritten == 2  # file below cap and at it; past it, as found
+    stopServer(server)
 
 
   test "recording that stands but cannot be read exits 1 with `Recording`, never traceback":
