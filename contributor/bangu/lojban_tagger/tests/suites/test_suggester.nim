@@ -173,6 +173,11 @@ const
   OFFSETS_CUT = -4..4
     ## Bytes each pad reaches past `BYTES_PASSAGE_MAX`, rounded down to whole characters; with
     ##   3 pads, 4 tails and 2 routes, 216 runs, exhaustive over alignments of tail to cut.
+  BYTES_SPARSE = 8_589_934_592
+    ## Bytes of sparse recording and input, i.e. 8 GiB, past every cap; sparse, so disk holds none.
+  KIB_ADDRESS_MAX = 1_048_576
+    ## Cap of address space of run holding memory bounds, in KiB, i.e. 1 GiB: 64 MiB served
+    ##   binary measured 2026-10-30, debug build on x86-64; read whole, sparse file passes it.
   WORDS_PASSAGE = [
     "Alice", "was", "tired", "mi", "ciska", "<passage>", "</passage>", "&amp;", "\"sister\"",
     "it's", "line\nbreak", "tab\there", "caf\xC3\xA9", "\xE2\x80\xA6", "\xC4\x89u", "\xFF",
@@ -1836,6 +1841,38 @@ suite "Internal: Suggester":
     check binary.run([], replay) == toOutcome(toSuggestionRecording(detailMalformed(
         at_cap.readRecording, directory_case, request)), passage, settings.model,
         [])  # file at its cap is read, and reader refuses what follows body
+
+
+  test "recording and input past their caps are refused unread, under cap of address space":
+    # Recheck claim rules-11, 2026-10-29: binary reading whole recording before its size, or
+    #   whole input before its cap, passed every test, though docs claim neither fills memory;
+    #   replaying 256 MiB, it held 262 MiB where binary holds 12 MiB.
+    # Run under `ulimit -v`, so binary reading either whole runs out of memory, never of time.
+    let
+      settings = Service.Claude.toSettings
+      text = example("lojban")
+      passage = text.argument.toPassage
+      request = requestService(settings, passage)
+      directory_case = directory / "sparse"
+      path = pathRecording(directory_case, request)
+      input = directory / "sparse_input"
+      limited = "sh -c " & quoteShell("ulimit -v " & $KIB_ADDRESS_MAX & " && exec \"$0\" \"$@\"") &
+          " " & quoteShell(binary.path)  # Prefix reaches binary through `sh`, which `exec` keeps.
+    createDir(directory_case)
+    for sparse in [path, input]:
+      var file = open(sparse, fmWrite)
+      file.setFilePos(BYTES_SPARSE - 1)
+      file.write('\0')
+      file.close()
+    check binary.runLine([], limited & " " & quoteShell("--replay:" & directory_case) & " " &
+        quoteShell(text.argument)) == toOutcome(toSuggestionRecording("larger than " &
+        $(request.len + BYTES_REPLY_MAX + BYTES_FIELDS_MAX) & " bytes at " & pathShown(
+        directory_case, request)), passage, settings.model, [])  # size read, file never
+    check binary.runLine([], limited & " -", path_input = input) == Outcome(report: "Text on " &
+        "standard input should hold at most " & $BYTES_PAGE_MAX & " bytes; got more than `" &
+        $BYTES_PAGE_MAX & "`.\n", code: 2)  # cap read, rest never
+    removeFile(path)  # Sparse files hold no disk, yet copy of directory would read them.
+    removeFile(input)
 
 
   test "record writes no recording replay would refuse by size, naming it in note, and sends again":
