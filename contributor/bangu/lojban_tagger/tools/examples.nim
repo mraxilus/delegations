@@ -21,6 +21,11 @@
 ##     suite holds that.
 ##   Data person writes is typed Nim, as committed lists are; recording files are written at
 ##     run time and never committed.
+##   Command printed names service and sets every other variable of settings `suggester` reads
+##     empty, workspace included, so no setting shell exports changes replay; directory of
+##     examples takes mode `0755` whatever umask, since `suggester` refuses directory every user
+##     may write. Suite holds both, running each command printed under umask `000`.
+##     Cost: mode set on that directory by hand is set again on each run.
 
 {.experimental: "strictFuncs".}
 
@@ -52,6 +57,11 @@ const
   LABEL_PAGE* = "sample page written for project, at reserved domain `example.org`"
     ## Origin of each page hop here.
   DIRECTORY_EXAMPLES = "build" / "examples"  ## Directory examples go to; git ignores it.
+  MODE_EXAMPLES = {
+    fpUserRead, fpUserWrite, fpUserExec, fpGroupRead, fpGroupExec, fpOthersRead, fpOthersExec,
+  }
+    ## Mode of directory of examples, i.e. `0755`, whatever umask: `suggester` refuses directory
+    ##   every user may write.
   TEXT_ALICE = "Alice was beginning to get very tired of sitting by her sister on the bank, " &
       "and of having nothing to do: once or twice she had peeped into the book her sister " &
       "was reading, but it had no pictures or conversations in it, " &
@@ -167,16 +177,18 @@ func toRecordings*(example: Example, service: Service): seq[Recording] =
 
 func toCommand*(example: Example, service: Service): string =
   ## Render shell command replaying example under service from `DIRECTORY_EXAMPLES`, which
-  ##   project folder runs: service named, and endpoint, model and effort set empty.
+  ##   project folder runs: service named, and endpoint, model, effort and workspace set empty,
+  ##   so no setting shell exports reaches run.
   "LOJBAN_TAGGER_SERVICE=" & $service & " LOJBAN_TAGGER_ENDPOINT= " &
-      "LOJBAN_TAGGER_MODEL= LOJBAN_TAGGER_EFFORT= binaries/suggester --replay:" &
-      DIRECTORY_EXAMPLES & " " & example.argument.quoteShell
+      "LOJBAN_TAGGER_MODEL= LOJBAN_TAGGER_EFFORT= LOJBAN_TAGGER_WORKSPACE= " &
+      "binaries/suggester --replay:" & DIRECTORY_EXAMPLES & " " & example.argument.quoteShell
 
 
 proc writeExamples*(directory: string) =
   ## Write recordings of every example under `claude` and `openrouter` into directory, made
-  ##   with each parent where missing.
+  ##   with each parent where missing, and given `MODE_EXAMPLES` whatever umask.
   createDir(directory)
+  setFilePermissions(directory, MODE_EXAMPLES)
   for example in EXAMPLES:
     for service in [Service.Claude, Service.OpenRouter]:
       for recording in example.toRecordings(service):
