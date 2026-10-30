@@ -51,14 +51,18 @@
 ##     names host without it, and curl pins it; SNI and tunnel keep it.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
-##   Proxy URL should be `http://`, in any case, with host, and port `isPort` takes or none, else
-##     `send` refuses it before client exists, naming part: https proxy takes TLS of its own,
-##     which no pin covers, and client opens it even for http URL, on context `send` may lack;
-##     client reads `socks5` as http proxy, and only `socks5h` as SOCKS, so one kind of proxy
-##     stays, which suite drives; client reads port modulo 65536, as it reads port of URL.
+##   Proxy URL should be `http://`, in any case, with host, port `isPort` takes or none, and
+##     authority `isAuthority` takes, else `send` refuses it before client exists, naming part:
+##     https proxy takes TLS of its own, which no pin covers, and client opens it even for http
+##     URL, on context `send` may lack; client reads `socks5` as http proxy, and only `socks5h`
+##     as SOCKS, so one kind of proxy stays, which suite drives; client reads port modulo 65536,
+##     as it reads port of URL, and splits authority as `isURL` below says it would.
 ##     Host is checked first: text naming none after `//` may hold user where scheme stands, as
 ##       curl reads `alice:secret@proxy:3128`; host and port stand after last `@` of authority,
 ##       so problem echoes no user part or password.
+##     Port problem names port as RFC 3986 section 3.2 splits it from host (`readPort`), never
+##       as `std/uri` joins it, which value never holds; where no port splits from host, as for
+##       IPvFuture, authority problem names value past its user part.
 ##     User part holding `/`, `?` or `#` unencoded ends authority there, so its bytes stand where
 ##       host and port do, and client would dial user as host: proxy holding `@` past authority
 ##       is refused after its scheme, echoing nothing.
@@ -86,11 +90,11 @@
 ##     by `redirect` as target: such byte would split or corrupt request line, and client checks
 ##     line break alone, by assertion.
 ##   `isURL` takes URL alone whose authority splits as RFC 3986 section 3.2 splits it
-##     (`isAuthority`), and `isEndpoint` and `redirect` follow it: client of `std/uri` joins
-##     digits after each colon into one port, and drops each bracket of host, so
-##     `127.0.0.1:80:90` would reach port 8090, which URL never names.
+##     (`isAuthority`), and `isEndpoint`, `redirect` and proxy check of `send` follow it: client
+##     of `std/uri` joins digits after each colon into one port, and drops each bracket of host,
+##     so `127.0.0.1:80:90` would reach port 8090, which URL never names.
 ##     Cost: IPvFuture and zone of IPv6 address are refused, as URL Standard of WHATWG refuses
-##       them.
+##       them; so is proxy at either, or at name in brackets.
 ##   Deadline is future caller passes, so suite completes it itself and reads no clock; body
 ##     is read from stream up to its cap, so huge body never fills memory.
 ##     Cost: head of reply has no byte cap: client counts header names against `headerLimit`,
@@ -715,13 +719,18 @@ proc send*(
   ##   redirect; read body until `bytes_max`; end when `deadline` completes first.
   ##   URL holding whitespace or control character is refused, naming byte, and nothing is sent.
   ##   Deadline finished already sends nothing, since client still connecting would send later.
-  ##   Proxy URL naming no host after `//`, scheme other than `http` in any case, or port other
-  ##     than `isPort` takes sends nothing, problem naming first such part and no user part;
-  ##     client sees scheme of URL and of proxy URL lowercased.
-  ##   Proxy URL holding `@` past authority, which user part holding `/`, `?` or `#` unencoded
-  ##     leaves there, sends nothing, problem echoing none of it.
-  ##   Proxy URL holding user or password sends nothing for https URL, since client repeats its
-  ##     login inside tunnel; problem names host of proxy, never user part.
+  ##   Proxy URL sends nothing where any part below fails, problem naming first part failing, in
+  ##     this order, and no byte of user part:
+  ##     host, none after `//`, problem echoing nothing;
+  ##     scheme, other than `http` in any case;
+  ##     `@` past authority, which user part holding `/`, `?` or `#` unencoded leaves there,
+  ##       problem echoing nothing;
+  ##     port `std/uri` reads, other than `isPort` takes where port splits from host, problem
+  ##       naming port as RFC 3986 section 3.2 splits it (`readPort`), never as joined;
+  ##     authority `isAuthority` refuses, problem naming it past user part;
+  ##     user part, for https URL alone, since client repeats its login inside tunnel, problem
+  ##       naming host of proxy.
+  ##   Client sees scheme of URL and of proxy URL lowercased.
   ##   https URL pins its host on `context`, so certificate naming other host is refused; no
   ##     context, or host TLS cannot pin, sends nothing.
   ##   Agent, encoding and bearer are its own, whatever caller headers name.
