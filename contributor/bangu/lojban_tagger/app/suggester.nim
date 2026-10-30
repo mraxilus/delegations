@@ -27,7 +27,9 @@
 ##     `isURL` refuses exits 2 naming URL, before any setting, so mistyped port never goes out as
 ##     passage of paid request. Cost: such text goes as passage only through `-`.
 ##   Text given that reads as tag already asks no service, so it needs no credential; text given
-##     holding no visible character (`isBlank`) exits 2, as page holding none gives no text.
+##     whose passage holds no visible character (`isBlank`) once cut at `BYTES_PASSAGE_MAX`, as
+##     model reads it, exits 2, as page holding none gives no text.
+##     Cost: text is read into passage twice, once to test it and once to send it.
 ##   `-` reads passage from standard input, so it never stands on command line, which `ps` shows
 ##     every user; at most `BYTES_PAGE_MAX` bytes, as page, else exit 2. Text read goes as text
 ##     given: shortcut, passage, request; URL it holds is text, never fetched.
@@ -199,8 +201,9 @@ func readCommand(arguments: openArray[string]): Commanded =
   ##   Without `--`, no argument of passage but `-` alone opens with `-`, so flag after text,
   ##     mistyped or not, is usage error too, never read as text; passage opens with `-` only
   ##     where `-` is all of it.
-  ##   Passage holding no visible character (`isBlank`) is usage error, as page holding none
-  ##     gives no text, so empty passage never goes out.
+  ##   Passage holding no visible character (`isBlank`) once cut at `BYTES_PASSAGE_MAX`
+  ##     (`toPassage`), as model reads it, is usage error, as page holding none gives no text, so
+  ##     empty passage never goes out.
   ##   One argument shaped as URL whose port `isURL` refuses (`isPortRefused`) is usage error
   ##     naming URL by scheme, host, port and path alone (`dropSecrets`), never passage, so
   ##     mistyped port never goes out as paid request.
@@ -226,7 +229,7 @@ func readCommand(arguments: openArray[string]): Commanded =
       rest.anyIt(it.len > 1 and it.startsWith('-'))):
     return Commanded(is_read: false)
   command.argument = rest.join(" ")
-  if command.argument.isBlank: return Commanded(is_read: false)
+  if command.argument.toPassage.text.isBlank: return Commanded(is_read: false)
   if rest.len == 1 and rest[0].isPortRefused:
     return Commanded(is_read: false, problem: "URL should " & RULE_PORT & "; got `" &
         rest[0].dropSecrets.toPrintable(RUNES_SHOWN) & "`.")
@@ -546,7 +549,7 @@ proc main(): int =
       stderr.writeLine "Text on standard input should be readable; got `" &
           error.msg.splitLines[0].toPrintable(RUNES_SHOWN) & "`."
       return 2
-    if command.argument.isBlank:
+    if command.argument.toPassage.text.isBlank:
       stderr.write USAGE
       return 2
 
