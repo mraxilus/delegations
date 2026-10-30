@@ -8,9 +8,11 @@
 ##     process, and removed at end. Cost: compile adds seconds to every run of suite.
 ##   Environment reaches binary as shell prefix, never through `putEnv`: each run blanks every
 ##     variable binary reads, usual name of each credential and every proxy variable, so
-##     environment of host never reaches run, and names sink at `ANTHROPIC_BASE_URL`, which no
-##     run may reach. Standard output and error go to files, so tag and report are read apart;
-##     standard input comes from file, so run reading it meets end, never pipe left open.
+##     environment of host never reaches run. It names sink at `ANTHROPIC_BASE_URL`, which binary
+##     never reads, and as proxy of each scheme, unless test names its own, so request that
+##     fails to replay meets sink on loopback, never host off it; no run may reach sink.
+##     Standard output and error go to files, so tag and report are read apart; standard input
+##     comes from file, so run reading it meets end, never pipe left open.
 ##   `SSL_CERT_FILE` and `SSL_CERT_DIR` pass from host on purpose: `newContext` reads them for
 ##     trusted roots, which tunnel test needs, and prefix can set either empty, never unset it,
 ##     while empty one names no root, so context fails.
@@ -82,7 +84,9 @@ type
 
   Binary = object  ## Define built `suggester`, beside sink each run names at `KEY_BASE`.
     path: string  ## Binary built.
-    sink: Server  ## Server no run may reach.
+    sink: Server
+      ## Server no run may reach, named at `KEY_BASE` and as proxy where test names none, so
+      ##   request off loopback meets it.
 
   Sample = object  ## Define one random replay: text given, settings and environment, recording.
     arguments: seq[string]  ## Text given, as arguments binary joins by one space.
@@ -523,18 +527,23 @@ proc runLine(
   folder = "",
 ): Outcome =
   ## Run shell line in folder, or where suite runs where empty, under environment, sink named at
-  ##   `KEY_BASE`, standard input read from file holding `input`, or from `path_input` where
-  ##   named, streams to files; drive servers by `poll` until child exits.
+  ##   `KEY_BASE` and as proxy of each scheme, standard input read from file holding `input`, or
+  ##   from `path_input` where named, streams to files; drive servers by `poll` until child exits.
   ##   Standard input is always file, so run reading it meets end, never pipe left open.
-  ##   Assignment line opens with wins over prefix, as later assignment of shell does.
+  ##   Environment of test and assignment line opens with win over sink, as later assignment of
+  ##     shell does, so test naming its own proxy reaches it.
+  ##   Sink as proxy meets request that regression lets past replay or refusal, as of default
+  ##     endpoint with recording missed, on loopback at once: no third-party host hears it, and
+  ##     no wait rests on network.
   let path_read = if path_input.len > 0: path_input else: binary.path.parentDir / "input"
   if path_input.len == 0: writeFile(path_read, input)
   let
+    sink = urlLoopback(binary.sink.port, "")
     path_output = binary.path.parentDir / "output"
     path_report = binary.path.parentDir / "report"
-    command = toPrefix(@[(KEY_BASE, urlLoopback(binary.sink.port, ""))] & @environment) & " " &
-        line & " <" & quoteShell(path_read) & " >" & quoteShell(path_output) & " 2>" &
-        quoteShell(path_report)
+    named = @[(KEY_BASE, sink), ("HTTPS_PROXY", sink), ("https_proxy", sink), ("http_proxy", sink)]
+    command = toPrefix(named & @environment) & " " & line & " <" & quoteShell(path_read) & " >" &
+        quoteShell(path_output) & " 2>" & quoteShell(path_report)
     child = startProcess(command, workingDir = folder, options = {poEvalCommand})
   while child.running: poll(MS_POLL)
   result = Outcome(
@@ -2663,7 +2672,10 @@ suite "Internal: Suggester":
     check covered == {Failure.low..Failure.high}  # every failure, exhaustive
 
 
-  test "no run reaches `ANTHROPIC_BASE_URL`, which host sets for agent and binary never reads":
+  test "no run reaches sink, which `ANTHROPIC_BASE_URL` and each proxy name where test names none":
+    # Recheck claim tests-1, 2026-10-29: with request of service built as `POST` and body alone,
+    #   each run of default endpoint missed its recording and sent request off loopback, as to
+    #   `api.anthropic.com` with Bearer `credential-for-suite`, and red rested on third party.
     check binary.sink.heard.len == 0  # sink heard nothing, over every run of suite
 
 
