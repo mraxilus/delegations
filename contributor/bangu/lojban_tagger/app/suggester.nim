@@ -32,9 +32,13 @@
 ##     whose passage holds no visible character (`isBlank`) once cut at `BYTES_PASSAGE_MAX`, as
 ##     model reads it, exits 2, as page holding none gives no text.
 ##     Cost: text is read into passage twice, once to test it and once to send it.
+##     Cost: text of rarer default-ignorables alone, as U+180E, is not blank (`RANGES_BLANK`), so
+##       it goes out.
 ##   `-` reads passage from standard input, so it never stands on command line, which `ps` shows
 ##     every user; at most `BYTES_PAGE_MAX` bytes, as page, else exit 2. Text read goes as text
 ##     given: shortcut, passage, request; URL it holds is text, never fetched.
+##     Cost: page is fetched only from argument, so its URL stands on command line, token of its
+##       query included; URL given to `-` is tagged as text.
 ##   Service, endpoint, model, effort, workspace and credential come from environment on each
 ##     run, as index path does for `tagger`: credential exists only at run time, and rest must
 ##     agree with it (Article II.2). Credential is read from `LOJBAN_TAGGER_API_KEY`, then from
@@ -71,6 +75,7 @@
 ##   Recordings hold passage, page and reply, so they stay private: record mode makes each
 ##     directory it makes with mode `0700`, and writes each recording with mode `0600` to new
 ##     sibling, refusing file or link there, before rename.
+##     Cost: no other user, group included, reads recording; sharing one takes copy or `chmod`.
 ##   Record and replay refuse directory every user may write, as `/tmp`, before any read or send,
 ##     since other user could plant link where recording goes.
 ##     Path of recording joins directory and name as written, and each parent made is directory
@@ -84,16 +89,26 @@
 ##     Cost: recording kept as link on purpose is refused.
 ##   Recording file past its request, cap of its body and `BYTES_FIELDS_MAX` is refused before it
 ##     is read, and body past its cap once read, so replay holds no more than send would.
+##     Caps held by test "recording past its caps is refused: file before it is read, and body
+##       past its cap" of `test_suggester.nim`; memory, by test "recording and input past their
+##       caps are refused unread, under cap of address space" there.
 ##     Record writes no file past those caps, naming it in note, so no run writes file later run
 ##     refuses. Cost: reply whose head passes `BYTES_FIELDS_MAX`, less lines of format, goes
 ##     unrecorded, so each record run sends it again.
-##     Recording that stands but cannot be read is refused with `Recording`, never traceback.
+##     Recording that stands but cannot be read is refused with `Recording`, never traceback, as
+##       test "recording that stands but cannot be read exits 1 with `Recording`, never
+##       traceback" of `test_suggester.nim` holds where suite runs as user other than root.
+##     Cost: recording past its caps, or unreadable, fails record run too, sending nothing, until
+##       removed by hand.
 ##   Request of service exchange, which stamp names and recording keeps, is `POST` and endpoint,
 ##     line break, then body (`requestService` of `exchanges.nim`, which `tools/examples.nim`
 ##     builds by too), so recording replays for its endpoint alone; request of page hop is `GET`
 ##     and URL. Credential stays out, so recording replays under any credential.
+##     Cost: endpoint is kept as written, so same endpoint spelled otherwise, in case, by `:443` or
+##       closing dot, misses its recording, and record mode pays again.
 ##   Refusal and note of recording name path whose directory alone is made printable and cut;
 ##     refusal names problem first, so long directory hides neither problem nor stamp.
+##     Cost: path named is not whole where directory passes `RUNES_SHOWN` characters.
 
 {.experimental: "strictFuncs".}
 
@@ -245,6 +260,8 @@ func readCommand(arguments: openArray[string]): Commanded =
 proc readInput(): Option[string] =
   ## Read passage from standard input, at most `BYTES_PAGE_MAX` bytes, as page is read; `none`
   ##   where input holds more, so huge input never fills memory; `IOError` where it cannot be read.
+  ##   Memory held by test "recording and input past their caps are refused unread, under cap of
+  ##     address space" of `test_suggester.nim`.
   ##   Cost: buffer of cap is allocated, whatever input holds.
   var text = newString(BYTES_PAGE_MAX + 1)
   text.setLen stdin.readBuffer(text[0].addr, text.len)
