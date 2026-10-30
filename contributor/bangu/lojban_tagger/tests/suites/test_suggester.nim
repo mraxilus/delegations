@@ -1335,6 +1335,8 @@ suite "Internal: Suggester":
   test "usual name of credential is read for host of default endpoint of service alone":
     # Review finding security-6, 2026-10-29: key in `ANTHROPIC_API_KEY` went as Bearer to
     #   endpoint of any host, where `LOJBAN_TAGGER_API_KEY` was unset.
+    # Review finding rules-3, 2026-10-29: problem of credential unset ended `got none.`, where
+    #   IV.4 echoes empty value as empty backticks.
     let
       server = startServer()
       text = example("lojban")
@@ -1867,6 +1869,8 @@ suite "Internal: Suggester":
 
 
   test "recording that stands but cannot be read exits 1 with `Recording`, never traceback":
+    # Review finding logic-5, 2026-10-29: run ended in traceback ``Error: unhandled exception:
+    #   errno: 5 `Input/output error` [IOError]``, exit 1, naming no `Recording`.
     # Recording of mode `0000` at its path: `fileExists` takes it, and open fails for user other
     #   than root; suite reading it as well runs as root, whom no permission refuses, so skips.
     let
@@ -2233,7 +2237,7 @@ suite "Internal: Suggester":
           "Credential should be issued by service `openrouter`; got opening `sk-ant-` for " &
           "`OPENROUTER_API_KEY`."),
       (sending, @[], "Credential should be set in `LOJBAN_TAGGER_API_KEY` or " &
-          "`ANTHROPIC_API_KEY`; got ``."),
+          "`ANTHROPIC_API_KEY`; got ``."),  # review finding rules-3, 2026-10-29: was `got none.`
       (sending, @[(KEY_SERVICE, "openrouter"), ("ANTHROPIC_API_KEY", "sk-ant-secret")],
           "Credential should be set in `LOJBAN_TAGGER_API_KEY` or `OPENROUTER_API_KEY`; got " &
           "``."),  # usual name of other service unread
