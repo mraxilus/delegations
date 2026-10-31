@@ -67,22 +67,31 @@ data directory of the user.
 
 ## Suggest
 
-`suggester` asks a language model service for one tag of a text, or of the page at a URL. It
-prints the tag alone, so `tagger tag` can take it:
+`suggester` asks a language model service for the tags of a text, or of the page at a URL. Each
+tag is a gismu that a person might search by to find the text again, even a person who forgets
+its title. The model decides how many tags a text needs, and puts the most likely search first.
+The tool reads at most 32 tags, and prints each gismu on its own line:
 
 ```sh
-tagger tag notes/plan.md "$(binaries/suggester - < notes/plan.md)"
+tagger tag notes/plan.md $(binaries/suggester - < notes/plan.md)
 page=https://www.gutenberg.org/ebooks/11
-tagger tag "$page" "$(binaries/suggester "$page")"
+tagger tag "$page" $(binaries/suggester "$page")
 ```
+
+The command substitution has no quotes, so the shell splits the lines into words. A gismu has
+five letters, so no space and no glob character can enter. If you want fewer tags, cut the list,
+for example with `binaries/suggester "$page" | head -n 10`.
 
 The argument `-` reads the text from standard input. Use it for a long or private text, because
 every user of the machine can read the command line of a process.
 
-The model names the words of a tanru from the word lists. The tool checks each word against
-the lists, and builds the lujvo that CLL 4.12 prefers. It refuses an answer that does not read
-back as the same tag. A text of at most 64 bytes that reads as a tag of at most six words asks
-no service, and needs no key.
+The tool checks each tag against the gismu list. It drops a tag that is no gismu of the list,
+such as a lujvo, a cmavo or an unknown word. It also drops a gismu that an earlier tag gave. The
+report names each dropped tag by its position, and the tool keeps the rest. If the tool keeps no
+gismu, it exits 1.
+
+A text of at most 64 bytes that reads as a tag of at most six words asks no service, and needs no
+key. The tool then prints the gismu of that tag, and leaves out its cmavo.
 
 Usage: `suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-`
 
@@ -130,5 +139,7 @@ The project publishes no page.
 ## Status
 
 The parser, the index, the search and the command line work, and the suites hold them to CLL.
-`suggester` works on recorded replies, and has read no live reply yet. Nothing here has been
-read line by line by a human.
+`suggester` works on recorded replies. On 2026-10-31, it read a live page,
+`https://www.gutenberg.org/ebooks/11`, through the HTTP proxy of a sandbox with TLS. A loopback
+stand-in for the Messages API took its request. It has read no live reply of a service yet.
+Nothing here has been read line by line by a human.
