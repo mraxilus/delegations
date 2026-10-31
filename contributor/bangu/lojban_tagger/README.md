@@ -85,10 +85,10 @@ for example with `binaries/suggester "$page" | head -n 10`.
 The argument `-` reads the text from standard input. Use it for a long or private text, because
 every user of the machine can read the command line of a process.
 
-The tool checks each tag against the gismu list. It drops a tag that is no gismu of the list,
-such as a lujvo, a cmavo or an unknown word. It also drops a gismu that an earlier tag gave. The
-report names each dropped tag by its position, and the tool keeps the rest. If the tool keeps no
-gismu, it exits 1.
+The model answers with a list. The tool checks each element of that list against the gismu list.
+It drops an element that is not one of those gismu, such as a lujvo, a cmavo or an unknown word.
+It also drops a gismu that an earlier element gave. The report names each dropped element by its
+position, and the tool keeps the rest. If the tool keeps no gismu, it exits 1.
 
 A text of at most 64 bytes that reads as a tag of at most six words asks no service, and needs no
 key. The tool then prints the gismu of that tag, and leaves out its cmavo.
