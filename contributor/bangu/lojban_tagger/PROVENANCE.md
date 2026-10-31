@@ -286,17 +286,78 @@ not mean. Rejected: a rank by each meaning that holds a cmavo. Verified by
 
 ## Suggestion
 
-**A service suggests a tanru, and the tool makes the tag.** `suggestions.nim` reads each word of
-the answer through `readTag`, the tanru through `readTanru`, and the form through `$`. So 4.11
-and 4.12 stay in `tags.nim` and `lujvo.nim` (Article II.1). The form must read back as the same
-tag, so the tool never prints a tag that `tagger tag` refuses. `brod` is the one form that fails,
-as Open questions says. Verified by `suites/test_suggestions.nim`.
+**The tool suggests each gismu that a search might use.** One tag for each text, such as
+`selmacygu'e` for Alice's Adventures in Wonderland, finds that text by one tanru alone. So the
+Architect ruled that the tool suggests each tag that a person might use to find a work, or other
+content, in a database. That person may not remember its title or its names, and a word of form,
+such as book, counts. Verified by `suites/test_suggestions.nim`, which holds the prompt.
 
-**The system text holds the word lists, and it is the same bytes on every request.** It gives
-each word that the reader takes, with its keyword and its hint, so the model sees what the reader
-accepts. `claude` and `openrouter` mark the text for the cache, and `chat` caches nothing. Cost:
-24,918 bytes go with each request, and the cache helps only within its lifetime. Rejected: the
-definitions too, at five times the size. Verified by `suites/test_suggestions.nim`.
+**The model decides how many gismu a text needs, up to 32.** The Architect chose this over a hard
+cap of ten tags, and over a threshold in an embedding space. The prompt states 32 as a cap and not
+as a target, and asks for the most likely search first. The tool reads the first 32 tags of an
+answer, and the report counts the rest, which the tool never reads. A user who wants fewer tags
+cuts the ordered output, for example with `head -n 10`. Verified by `suites/test_suggestions.nim`,
+which holds the prompt, and reads each count of tags from 0 to 64.
+
+**A tag is one gismu, because the search matches gismu across tags.** The Architect ruled that
+the tool suggests gismu alone, while `tagger` still reads lujvo in tags and in search. An entity
+meets a term where each gismu of one meaning of the term stands in any of its tags
+(`search.nim`). So gismu tags, each apart, meet an English word whose meaning holds several gismu.
+The prompt asks for each gismu of such an idea, and the reader drops each lujvo and each cmavo.
+
+Verified by hand with `binaries/tagger find` on 2026-10-31, over one thing with the tags `cukta`,
+`nixli`, `ractu`, `kevna`, `nobli`, `traji`, `turni` and `mlatu`. The terms `book`, `girl`, `cat`
+and `rabbit` find it. So do `queen` and `king`, through the meanings `nobli+traji+turni` and
+`nobli+traji`. Open questions names the terms that find nothing.
+
+**The schema asks for a list of tags, each a gismu with its gloss.** A pattern of five letters,
+built from the letters of `tags.nim`, holds each gismu. The schema has no `maxItems`, because
+structured outputs of Claude refuse an array constraint past `minItems` of 0 or 1 with status 400.
+The same page lists a simple pattern with a quantifier, such as `{5}`, as supported. Verified by
+reading `https://platform.claude.com/docs/en/build-with-claude/structured-outputs`, JSON Schema
+limitations, on 2026-10-31.
+
+Cost: a model that reaches for a lujvo or a cmavo must give five letters. So it may give an
+unlisted word, which the reader drops, or a listed gismu of another sense, which the reader keeps.
+How often either occurs is unmeasured.
+
+Each object of the schema is closed, because Claude and the strict mode of OpenAI both need it.
+Each property is required, because the strict mode of OpenAI needs it, and `openrouter` and `chat`
+ask for that mode. Claude itself allows optional properties. Verified by reading the page above and
+`https://developers.openai.com/api/docs/guides/structured-outputs` on 2026-10-31. One schema
+serves all three services, which `suites/test_suggestions.nim` holds.
+
+**A tag that is no gismu of the list drops alone.** The report names the tag by its position and
+by its reason, and the tool keeps the rest of the answer. A word that the reader refuses keeps
+the reason of the reader. A cmavo, a lujvo and an item that is no object of the schema drop with
+a reason of their own. A gismu that an earlier tag kept drops as `Duplicate`, so each gismu
+prints once.
+
+Rejected: a refusal of the whole answer. The tool makes no retry, and the key is for sparing use,
+so one bad tag would then waste a paid answer. A reply that fails as a whole still fails as one.
+Its status, a refusal, a cut, or an answer with no tags can each cause that. Verified by
+`suites/test_suggestions.nim`, over each kind of dropped tag at each position among kept gismu,
+and over every sequence of up to three dropped tags.
+
+**The output holds one gismu to a line, in the order of the answer.** The README passes the
+output to `tagger tag` with no quotes, so the shell splits the lines into words. A gismu has five
+letters, so no space and no glob character can enter. The report goes to standard error. It
+names each refusal, then the count of tags that the tool did not read, then each gismu with its
+gloss. Each string that the model controls is made printable before it reaches the report.
+
+Where the tool keeps a gismu, the report names the model once, and the model asked where the two
+differ. The tool exits 0 where it keeps a gismu, and 1 where it keeps none. Verified by
+`suites/test_suggester.nim`, which builds the binary and drives it.
+
+**The system text holds the gismu list, and it is the same bytes on every request.** It gives
+each gismu of the list, with its keyword and its hint, so the model sees what the reader accepts.
+It holds no cmavo, because no tag may be one. `claude` and `openrouter` mark the text for the
+cache, and `chat` caches nothing. Rejected: the definitions too, at five times the size. Verified
+by `suites/test_suggestions.nim`.
+
+Cost: the text goes with each request, and the cache helps only within its lifetime. It is 23,699
+bytes, against 24,918 bytes for the list with cmavo at `bf9c82d8`, by one command on 2026-10-31:
+`nim r --hints:off --path:src --eval:'import lojban_tagger/suggestions; echo PROMPT_SYSTEM.len'`.
 
 **The passage is data inside one element.** Its `&`, `<`, `>` and `"` are escaped, so it can
 never close the element. The URL in the element keeps its scheme, host, port and path, so no user
@@ -305,19 +366,22 @@ path, as a share link does, reaches the service and the report. Cost: the page r
 sends the whole URL to the page host, and to any http proxy. Verified by
 `suites/test_suggestions.nim`.
 
-**A text of at most 64 bytes that reads as a tag asks no service.** The tool prints it as its tag
-and reads no key, and a longer text goes to the service as a passage. `$` scores every choice of
-rafsi, so its time grows about 4 times for each word of `bloti`, `condi` or `rotsu` (Figures). A
-tag of more than six words fails as `Long` before `$` runs, whether a text or an answer holds it.
-Cost: `tagger read` and `tagger tag` have no such cap, so a lujvo of 18 words fills memory there.
-Verified by `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
+**A text of at most 64 bytes that reads as a tag asks no service.** The tool prints the gismu of
+that tag, each once and in order, leaves out its cmavo, and reads no key. A longer text goes to
+the service as a passage. A tag of more than six words fails as `Long`. No step of the shortcut
+grows with the words, so this cap bounds no cost, and Open questions asks about it. Verified by
+`suites/test_suggestions.nim` and `suites/test_suggester.nim`.
+
+Cost: `tagger read` and `tagger tag` have no cap of words. `$` scores every choice of rafsi, so
+its time grows about 4 times for each word of `bloti`, `condi` or `rotsu` (Figures). So a lujvo of
+18 words fills memory there.
 
 **The tool speaks the wire format of each of three services.**
 
 - `claude` speaks the Messages API of Anthropic.
 - `openrouter` speaks Chat Completions with the routing and cache fields of OpenRouter.
 - `chat` speaks Chat Completions with standard fields alone, for any compatible server. Its
-  body is a project choice, because no page of OpenAI was read.
+  body is a project choice, because no OpenAI reference of Chat Completions was read.
 
 The settings come from the environment on each run, as the index path does for `tagger`.
 Verified by `suites/test_suggestions.nim`, against documented shapes alone.
@@ -335,8 +399,9 @@ that no workspace scopes needs `anthropic-workspace-id`, which `LOJBAN_TAGGER_WO
 The workspace goes in a header, never in the body, so the recording replays under any
 workspace. Verified by `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
 
-**There is no retry.** The key is for sparing use, so a refused answer goes to the user, who may
-run again. The report names every cut and every repair of the text, and the passage element
+**There is no retry.** The key is for sparing use. So a reply that fails as a whole goes to the
+user, who may run again, and a tag that fails drops alone. The report names every cut and every
+repair of the text, and the passage element
 tells the model of each cut. Cost: a failure that passes, such as an overload, still needs a
 second run. Verified by `suites/test_suggestions.nim`.
 
@@ -460,15 +525,17 @@ of XDG. An absent file reads as an empty index, so the first `tag` makes it.
 
 **The suggestion is a second binary, `suggester`, and not a verb.** `-d:ssl` loads libssl when a
 program starts, so each verb of `tagger` would need it. The Architect chose the second binary in
-the conversation of this delivery, and the pull request records the ruling. The tag goes to
-standard output alone, so `tagger tag <name> "$(suggester ...)"` joins the two programs. Cost: a
-second build and a second binary to ship. Verified by `suites/test_suggester.nim`, which builds
-the binary and drives it.
+the conversation of this delivery, and the pull request records the ruling. Each gismu goes to
+standard output on a line of its own, so `tagger tag <name> $(suggester ...)` joins the two
+programs. Cost: a second build and a second binary to ship. Verified by
+`suites/test_suggester.nim`, which builds the binary and drives it.
 
 **A flag that `suggester` does not know is a usage error, so it never sends a paid request.**
 Before `--`, each word that starts with `-` reads as a flag, wherever it stands. Exit 2 names a
-usage or settings error and sends nothing, exit 1 names a failure, and exit 0 prints a tag. A
-blank passage exits 2 before any setting is read, and so does a URL whose host or port RFC 3986
+usage or settings error and sends nothing. Exit 1 names each failure where no gismu is kept, and
+exit 0 prints one gismu or more.
+
+A blank passage exits 2 before any setting is read, and so does a URL whose host or port RFC 3986
 refuses. The argument `-` reads the text from standard input, up to 4 MiB, so the text stays out
 of the list of processes. Verified by `suites/test_suggester.nim`.
 
@@ -529,6 +596,16 @@ figures of `tagger` are from 2026-10-25, and each figure of `suggester` names it
 
 - **Stemming.** `files` finds nothing that `file` finds. A stemmer would widen the English, at the
   cost of a rule that no standard of the project gives.
+- **Gaps of the English search.** Verified by hand with `binaries/tagger find` on 2026-10-31,
+  over the thing with the tags that Suggestion names. `hole` leads only to lujvo meanings, such as
+  `batke+kevna`, and never to `kevna` alone, so it does not find that thing. `grin`, `fantasy`,
+  `novel`, `hatter` and `Cheshire` lead to nothing, because English reads only keywords, hints and
+  lujvo glosses. A query finds a thing only where each of its terms does, so one term that finds
+  nothing makes the whole query find nothing. `cheshire cat` shows a term that reads as nothing,
+  and `rabbit hole` shows a term whose meanings are in no tag of the thing.
+- **The cap of six words on text given.** No step of the shortcut grows with the words, so the cap
+  bounds no cost. It refuses a lujvo of seven words or more, whose gismu the tool could print. To
+  lift it would change no other path.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a tag
   that holds one of them before its head renders with `brod`, and does not read back.
