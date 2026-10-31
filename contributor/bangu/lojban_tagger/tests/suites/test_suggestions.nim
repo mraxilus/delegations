@@ -1925,7 +1925,7 @@ suite "Internal: Answer":
       ("[".repeat(COUNT_NESTED), "answer is no JSON object: " & "[".repeat(80) & "\u2026"),
     ]:
       check readAnswer(text, MODEL_SUITE).refusalsRead ==
-          @[(none(int), Failure.Malformed, detail)]  # schema of section 3, cut at 80 characters
+          @[(none(int), Failure.Malformed, detail)]  # schema of `toSchema`, cut at 80 characters
     for (text, detail) in [
       ("{\"tags\":[\"ciska\"]}", "\"ciska\""),
       ("{\"tags\":[7]}", "7"),

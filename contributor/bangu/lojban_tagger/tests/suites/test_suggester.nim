@@ -1688,7 +1688,7 @@ suite "Internal: Suggester":
         outcome = binary.run(environment, ["--record:" & directory_case, text.argument])
         error = outcome.report.readFramed(opening & pathShown(directory_case, request) &
             "`; got `", "`.\n" & expected.report)
-      check outcome.output == expected.output and outcome.code == expected.code  # tag kept
+      check outcome.output == expected.output and outcome.code == expected.code  # gismu kept
       check error.isSome and error.get.len > 0 and '\n' notin error.get  # path, then error
       check server.heard.len == count_before + 1  # sent once, and read
       check walkDir(directory_case).toSeq.mapIt(it.path) == @[blocked]  # nothing left beside
@@ -1708,7 +1708,7 @@ suite "Internal: Suggester":
         opening & pathShown(directory_case, request_page) & "`; got `",
         "`.\n" & expected_page.report,
       )
-    check outcome_page.output == expected_page.output and outcome_page.code == 0  # tag kept
+    check outcome_page.output == expected_page.output and outcome_page.code == 0  # gismu kept
     check error_page.isSome and error_page.get.len > 0 and
         '\n' notin error_page.get  # page hop named, service request written after it
     stopServer(server)
@@ -1730,7 +1730,7 @@ suite "Internal: Suggester":
     createDir(standing)
     setFilePermissions(standing, mode_standing)
     check binary.run(settings.toEnvironment, ["--record:" & directory_case,
-        text.argument]).code == 0  # tag printed, recording written
+        text.argument]).code == 0  # gismu printed, recording written
     check getFilePermissions(standing) == mode_standing  # directory standing keeps its mode
     for made in [standing / "made", directory_case]:
       check getFilePermissions(made) == {fpUserRead, fpUserWrite, fpUserExec}  # 0700 where made
@@ -1941,7 +1941,7 @@ suite "Internal: Suggester":
           (PATH_SERVICE, reply_service)]
       check binary.run(settings.toEnvironment, record) == toOutcome(answer, passage,
           settings.model, [noteCredential(KEY_CREDENTIAL), note_page, noteWritten(directory_case,
-          request_service)])  # page written within cap, else named unwritten; tag printed
+          request_service)])  # page written within cap, else named unwritten; gismu printed
       check fileExists(path) == is_written  # file past cap of replay never written
       let
         path_service = pathRecording(directory_case, request_service)
@@ -2086,7 +2086,7 @@ suite "Internal: Suggester":
         outcome = binary.run(settings.toEnvironment, [urlLoopback(server.port, start)])
         heard = server.heard[count_before .. ^1]
       check outcome == toOutcome(answer, paged.passage, settings.model,
-          [noteCredential(KEY_CREDENTIAL)])  # tag of passage page gives, cut lines first
+          [noteCredential(KEY_CREDENTIAL)])  # gismu of passage page gives, cut lines first
       check heard.mapIt(it.target) == (if start == final: @[final] else: @[start, final]) &
           @[PATH_SERVICE]  # each hop once, then service
       check heard.len > 0 and heard[^1].body == settings.toBody(paged.passage)  # text of page
@@ -2110,7 +2110,7 @@ suite "Internal: Suggester":
           @[Reply(status: 302, location: "/page"), reply_page, reply_service]  # as served
       check binary.run(settings.toEnvironment, ["--replay:" & directory_case, url_moved]) ==
           toOutcome(answer, passage, settings.model, (0..2).mapIt(noteReplayed(directory_case,
-          requests[it], recordings[it].recording.label)))  # same tag, read from files alone
+          requests[it], recordings[it].recording.label)))  # same gismu, read from files alone
 
 
   test "page refused by status, type, coding, charset or text exits 1 with `Page`, naming it":
