@@ -8,11 +8,15 @@
 ##     source of word.
 ##   Tags form unbounded domain, so laws run over seeded random tags of one to four gismu, drawn
 ##     from every gismu of list, and over each entry of list exhaustively (Article IX.3).
+##   Round trip runs again over seeded tags of one to six words, cmavo among them, since
+##     `tagger show` and `tagger find` print every tag through `$`.
 ##   Reference for lowest score enumerates every rafsi 4.11 steps 1 and 2 allow, shared `brod`
 ##     included, and keeps spellings that read back; rendering is held to their minimum.
 ##     Cost: at most `4^n` joins and readings per tag of `n` gismu; whole suite runs in about
-##     0.6 s at 1000 samples, debug build (measured).
-##   Corpus does not cover yet: tags of five gismu or more, and tags holding cmavo.
+##     0.6 s at 1000 samples, and in about 0.75 s with `SAMPLES_CMAVO` tags too, debug build
+##     (measured, five runs each, 2026-10-31).
+##   Corpus does not cover yet: tags of seven words or more, and lowest score of tags of five
+##     words or more or holding cmavo.
 
 {.experimental: "strictFuncs".}
 
@@ -20,8 +24,9 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[options, random, sequtils, strutils, unittest]
+from std/unicode import Rune, toUTF8, validateUtf8
 
-import ../../src/lojban_tagger/[dictionary, forms, lujvo, tags]
+import ../../src/lojban_tagger/[commands, dictionary, forms, lujvo, tags]
 import ../../src/lojban_tagger/lists/gismu
 
 
@@ -35,6 +40,17 @@ const
     ## at seed `0`; three quarters expected.
   FLOOR_FINAL_CMAVO = 25
     ## Least CVV and CCV rafsi of cmavo, which could end word, that final law reads: 30 of list.
+  SAMPLES_CMAVO = 500
+    ## Random tags of one to `COUNT_WORDS_CMAVO_MAX` words, cmavo among them, that second round
+    ## trip law draws, seeded.
+  COUNT_WORDS_CMAVO_MAX = 6
+    ## Most words of such tag: `$` grows about 4 times each word (PROVENANCE.md, Figures), so
+    ## six keeps suite fast.
+  FLOOR_ROUND_CMAVO = 450
+    ## Least of them free of `brodi`, `brodo` and `brodu` before last word: 473 read at seed `0`.
+  FLOOR_CMAVO = 220  ## Least of them holding cmavo: 254 read at seed `0`.
+  FLOOR_SHARED = 20
+    ## Least of them holding `brodi`, `brodo` or `brodu` before last word: 27 read at seed `0`.
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"  ## Letters and symbols of 3.1, in its order.
   GISMU_STEM_SHARED = ["brodi", "brodo", "brodu"]
     ## Gismu holding no short rafsi, so only non-final rafsi is `brod`, which `broda` and `brode`
@@ -67,6 +83,19 @@ const
     for i, entry in LIST_GISMU:
       if not entry.word.isGismu: words.add Word(i)
     words
+  CHARACTERS_FOREIGN = [
+    "\u0080", "é", "ĉ", "ʼ", "߿", "ࠀ", "’", "日", "�",
+    "￿", "\u{10000}", "\u{1D44E}", "\u{1F600}", "\u{10FFFF}",
+  ]
+    ## Characters outside letters, by bytes of UTF-8 each takes, Table 3-6 of Unicode Standard:
+    ##   two (`é`, `ĉ`, modifier apostrophe, both ends of range), three (curly apostrophe,
+    ##   ideograph, U+FFFD, both ends), four (mathematical italic, emoji, both ends).
+    ##   Structured corpus alone, never whole domain: `SAMPLES_FOREIGN` seeded draws read rest.
+  SAMPLES_FOREIGN = 1000
+    ## Random draws past ASCII Letter law reads, seeded: bytes of UTF-8 drawn first, two to four,
+    ##   then code point of that length, so each row of Table 3-6 is read often.
+  FLOOR_FOREIGN = 950
+    ## Fewest random draws that are scalar values, surrogates aside; 986 read at seed `0`.
 
 
 func tanru(text: string): Tag =
@@ -144,6 +173,32 @@ let TAGS = drawTags()  ## Random tags every law reads, drawn once.
 iterator tagsRandom(): lent Tag =
   ## Serve each random tag of pool, with no copy.
   for i in 0 ..< TAGS.len: yield TAGS[i]
+
+
+proc drawTagsCmavo(): seq[Tag] =
+  ## Draw `SAMPLES_CMAVO` tags of one to `COUNT_WORDS_CMAVO_MAX` words, seeded: last word gismu,
+  ##   each word before it cmavo one time in three, else `brodi`, `brodo` or `brodu` one time in
+  ##   twenty-five, else gismu; each from every word of its kind in list.
+  randomize(0)
+  for _ in 1 .. SAMPLES_CMAVO:
+    let count = rand(1 .. COUNT_WORDS_CMAVO_MAX)
+    var words = newSeqOfCap[Word](count)
+    for i in 1 .. count:
+      words.add(
+        if i == count: WORDS_GISMU[rand(WORDS_GISMU.high)]
+        elif rand(2) == 0: WORDS_CMAVO[rand(WORDS_CMAVO.high)]
+        elif rand(24) == 0: GISMU_STEM_SHARED[rand(GISMU_STEM_SHARED.high)].word.get
+        else: WORDS_GISMU[rand(WORDS_GISMU.high)]
+      )
+    result.add Tag(words: words)
+
+
+let TAGS_CMAVO = drawTagsCmavo()  ## Random tags second round trip law reads, drawn once.
+
+
+iterator tagsCmavo(): lent Tag =
+  ## Serve each random tag of second pool, cmavo among its words, with no copy.
+  for i in 0 ..< TAGS_CMAVO.len: yield TAGS_CMAVO[i]
 
 
 
@@ -273,6 +328,32 @@ suite "Internal: Reading":
     check "datni+vreji".refusalRead == some((Refusal.Letter, "+"))  # tanru is no spelling
 
 
+  test "Character outside letters is named whole, so report of UTF-8 stays UTF-8":
+    check "café".refusalRead ==
+        some((Refusal.Letter, "é"))  # review finding logic-6, 2026-10-29: named byte `C3`
+    check "ci’a".refusalRead ==
+        some((Refusal.Letter, "’"))  # review finding logic-6, 2026-10-29: named byte `E2`
+    for character in CHARACTERS_FOREIGN:  # 14 characters, both ends of each byte length
+      for text in [character & "brivla", "bri" & character & "vla", "brivla" & character]:
+        check text.refusalRead == some((Refusal.Letter, character))  # lead and continuation
+        check text.readTag.explain.validateUtf8 == -1  # report well-formed, at each position
+    randomize(0)
+    var count_scalar = 0
+    for _ in 1..SAMPLES_FOREIGN:  # `SAMPLES_FOREIGN` draws, seeded
+      let code =
+        case rand(2..4)
+        of 2: rand(0x80..0x7FF)
+        of 3: rand(0x800..0xFFFF)
+        else: rand(0x10000..0x10FFFF)
+      if code in 0xD800..0xDFFF: continue  # Surrogate is no scalar value.
+      inc count_scalar
+      let character = Rune(code).toUTF8
+      for text in [character & "brivla", "bri" & character & "vla", "brivla" & character]:
+        check text.refusalRead == some((Refusal.Letter, character))  # whole, at any plane
+        check text.readTag.explain.validateUtf8 == -1  # report well-formed, at each position
+    check count_scalar >= FLOOR_FOREIGN  # guard keeps most draws
+
+
   test "Cmavo alone, or lujvo ending in cmavo, is refused as Cmavo, naming it":
     check "se".refusalRead == some((Refusal.Cmavo, "se"))  # cmavo of list is no brivla
     check "zbadoi".refusalRead ==
@@ -367,6 +448,21 @@ suite "Internal: Laws":
       check $tag == "brodyzba"  # `brod` alone stands before last gismu
       check ($tag).refusalRead == some((Refusal.Ambiguous, "brod"))  # cannot read back
       check ($tanru("zbasu+" & word)).tagRead == some(tanru("zbasu+" & word))  # final is whole
+
+
+  test "Rendered tag of up to six words, cmavo among them, reads back as itself, brod aside":
+    var (count_round, count_cmavo, count_shared) = (0, 0, 0)
+    for tag in tagsCmavo():  # `SAMPLES_CMAVO` tags, seeded
+      if tag.words.anyIt(it.kind == Kind.Cmavo): inc count_cmavo
+      if tag.isStemShared:
+        check ($tag).refusalRead == some((Refusal.Ambiguous, "brod"))  # only rafsi `$` may write
+        inc count_shared
+        continue
+      check ($tag).tagRead == some(tag)  # 4.12, form reads back as tag; ruling: cmavo tags
+      inc count_round
+    check count_round >= FLOOR_ROUND_CMAVO  # guard kept most samples
+    check count_cmavo >= FLOOR_CMAVO  # corpus holds cmavo often
+    check count_shared >= FLOOR_SHARED  # corpus reaches `brod` often enough
 
 
   test "Every gismu renders and reads back in head and in final position":

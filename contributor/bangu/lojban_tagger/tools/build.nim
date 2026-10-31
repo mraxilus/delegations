@@ -1,15 +1,20 @@
 ## Answer every verb of this project: `nim r tools/build.nim <command>`, from project directory.
 ##
-##   |---------|----------------------------------------------------------------------------|
-##   | Command | Effect                                                                     |
-##   |---------|----------------------------------------------------------------------------|
-##   | lists   | read `gismu.txt` and `lujvo.txt` lojban-common installs, check each digest |
-##   |         | against its pin, and write both typed modules under `src/lojban_tagger/`   |
-##   | head    | read both lists again and compare digest and rendered module with what is  |
-##   |         | committed; exit 1 where either differs, i.e. Debian moved list             |
-##   | tagger  | compile `app/tagger.nim`, in release mode, to `binaries/tagger`            |
-##   | system  | print packages `lists` and `head` need, one per line                       |
-##   |---------|----------------------------------------------------------------------------|
+##   |-----------|--------------------------------------------------------------------------|
+##   | Command   | Effect                                                                   |
+##   |-----------|--------------------------------------------------------------------------|
+##   | lists     | read `gismu.txt` and `lujvo.txt` lojban-common installs, check each      |
+##   |           | digest against its pin, and write both typed modules under `src/`        |
+##   | head      | read both lists again and compare digest and rendered module with what   |
+##   |           | is committed; exit 1 where either differs, i.e. Debian moved list        |
+##   | tagger    | compile `app/tagger.nim`, in release mode, to `binaries/tagger`          |
+##   | suggester | compile `app/suggester.nim`, in release mode with TLS, to                |
+##   |           | `binaries/suggester`                                                     |
+##   | examples  | write worked examples of `suggester` as recordings under                 |
+##   |           | `build/examples/`, and print command replaying each                      |
+##   | system    | print packages verbs, `suggester` and suites need, one per line:         |
+##   |           | `openssl` command among them, which `test_exchanges` runs                |
+##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
 ##
 ##   `head` is verb CONTRIBUTOR.md gives check against outside reference that moves: package
@@ -17,6 +22,10 @@
 ##   Rejected: reading lists at compile time from package directory, which would make every
 ##     build need package; CI `test` job installs none, and list changes seldom, so committed
 ##     copy serves every build and `head` watches upstream.
+##   `head` holds no check of language model service: CI gives project jobs no secret, and live
+##     call would cost money every day.
+##   `examples` runs as its own program, so driver imports nothing new, and `koch list-packages`,
+##     which compiles driver, costs what it did.
 ##   Cost: driver runs from project directory, since every path here is relative to it.
 
 {.experimental: "strictFuncs".}
@@ -30,14 +39,19 @@ import ./lists
 
 
 const
-  USAGE = "Usage: nim r tools/build.nim <lists|head|tagger|system>\n"
+  USAGE = "Usage: nim r tools/build.nim <lists|head|tagger|suggester|examples|system>\n"
     ## Text printed on usage error.
   PATH_TAGGER = "binaries" / "tagger"  ## Binary `tagger` compiles to; root `.gitignore` covers it.
+  PATH_SUGGESTER = "binaries" / "suggester"  ## Binary `suggester` compiles to; git ignores it.
   SYSTEM = [
     ("lojban-common", "word lists of Logical Language Group, which `lists` and `head` read"),
     ("coreutils", "`sha256sum`, which `lists` and `head` check each list's digest with"),
+    ("libssl3", "TLS of `std/httpclient` under `-d:ssl`; `suggester` loads it when it starts"),
+    ("ca-certificates", "roots `suggester` checks services and pages against"),
+    ("openssl", "command `test_exchanges` makes test root and leaves with, at run time"),
   ]
-    ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
+    ## Packages verbs, `suggester` and suites need, each with reason (Article II.8); `system`
+    ##   prints names alone.
 
 
 
@@ -98,6 +112,15 @@ proc compileTagger(): int =
   if result == 0: echo PATH_TAGGER
 
 
+proc compileSuggester(): int =
+  ## Compile `suggester` in release mode with TLS; exit code of compiler. Sibling of compile
+  ##   command in `tests/suites/test_suggester.nim`, which builds without release (II.9).
+  let command = "nim c --hints:off -d:release -d:ssl -o:" & quoteShell(PATH_SUGGESTER) &
+      " app/suggester.nim"
+  result = execCmd(command)
+  if result == 0: echo PATH_SUGGESTER
+
+
 proc main(): int =
   ## Dispatch command named as first argument.
   if paramCount() != 1:
@@ -107,6 +130,8 @@ proc main(): int =
   of "lists": writeLists()
   of "head": compareLists()
   of "tagger": compileTagger()
+  of "suggester": compileSuggester()
+  of "examples": execCmd("nim r --hints:off tools/examples.nim")
   of "system":
     for (name, _) in SYSTEM: echo name
     0

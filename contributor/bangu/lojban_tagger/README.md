@@ -40,12 +40,17 @@ The project commits them as typed Nim modules under `src/lojban_tagger/lists/`.
 nim r koch check                                  # from repository root: every check
 nim r koch test contributor/bangu/lojban_tagger   # this project alone
 nim r tools/build.nim tagger                      # from project root: build binaries/tagger
+nim r tools/build.nim suggester                   # build binaries/suggester, with TLS
+nim r tools/build.nim examples                    # write worked examples of suggester
 nim r tools/build.nim lists                       # write both lists again from lojban-common
 nim r tools/build.nim head                        # compare committed lists with lojban-common
 ```
 
-The build and the tests need only the compiler that `lojban_tagger.nimble` pins. The verbs
-`lists` and `head` also need the Debian package `lojban-common`, which `system` declares.
+The build needs the compiler that `lojban_tagger.nimble` pins, and `libssl3`, because
+`suggester` and the suites compile with TLS. The suites also run the command `openssl`, which
+makes a test root for each run. `suggester` needs `ca-certificates` when it runs. The verbs
+`lists` and `head` also need the Debian package `lojban-common`. The verb `system` declares all
+of them.
 
 ## Use
 
@@ -60,6 +65,73 @@ data directory of the user.
 - `show [<name>]` prints things with their tags.
 - `read <word>...` explains a word: its rafsi, its gismu, its preferred form and its English.
 
+## Suggest
+
+`suggester` asks a language model service for the tags of a text, or of the page at a URL. Each
+tag is a gismu that a person might search by to find the text again, even a person who forgets
+its title. The model decides how many tags a text needs, and puts the most likely search first.
+The tool reads at most 32 tags, and prints each gismu on its own line:
+
+```sh
+tagger tag notes/plan.md $(binaries/suggester - < notes/plan.md)
+page=https://www.gutenberg.org/ebooks/11
+tagger tag "$page" $(binaries/suggester "$page")
+```
+
+The command substitution has no quotes, so the shell splits the lines into words. A gismu has
+five letters, so no space and no glob character can enter. If you want fewer tags, cut the list,
+for example with `binaries/suggester "$page" | head -n 10`.
+
+The argument `-` reads the text from standard input. Use it for a long or private text, because
+every user of the machine can read the command line of a process.
+
+The tool checks each tag against the gismu list. It drops a tag that is no gismu of the list,
+such as a lujvo, a cmavo or an unknown word. It also drops a gismu that an earlier tag gave. The
+report names each dropped tag by its position, and the tool keeps the rest. If the tool keeps no
+gismu, it exits 1.
+
+A text of at most 64 bytes that reads as a tag of at most six words asks no service, and needs no
+key. The tool then prints the gismu of that tag, and leaves out its cmavo.
+
+Usage: `suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-`
+
+Before `--`, a word that starts with `-` and is no flag is a usage error, wherever it stands. So
+a mistyped flag never sends a paid request. Put `--` before a text that holds such a word.
+
+| Variable | Default | Effect |
+|---|---|---|
+| `LOJBAN_TAGGER_SERVICE` | `claude` | `claude`, `openrouter`, or `chat` for another server |
+| `LOJBAN_TAGGER_ENDPOINT` | the URL of the service | `chat` needs one |
+| `LOJBAN_TAGGER_MODEL` | `claude-opus-5-5`, or `anthropic/claude-opus-5.5` | `chat` needs one |
+| `LOJBAN_TAGGER_EFFORT` | `medium`, none for `chat` | `low`, `medium`, `high`, `xhigh` or `max` |
+| `LOJBAN_TAGGER_API_KEY` | none | The key, read first |
+| `LOJBAN_TAGGER_WORKSPACE` | none | Workspace ID for a key that no workspace scopes |
+
+Where `LOJBAN_TAGGER_API_KEY` is unset, `claude` reads `ANTHROPIC_API_KEY`, and `openrouter`
+reads `OPENROUTER_API_KEY`. Each reads that name only for the host of its default endpoint. So a
+key that you set for other tools never goes to another host. The report names the variable that
+it read, and never the key. Put the key in the environment, never on the command line.
+
+Get a Claude key at `https://platform.claude.com/settings/keys`, and scope it to one workspace
+when you create it. Otherwise, set `LOJBAN_TAGGER_WORKSPACE` to the ID of the workspace, which
+starts with `wrkspc_`. Get an OpenRouter key at `https://openrouter.ai/settings/keys`.
+
+The tool reads `https_proxy`, `HTTPS_PROXY`, `http_proxy`, `no_proxy` and `NO_PROXY` as curl
+reads them, and a proxy with no port takes port 1080. A proxy with no scheme takes `http://`, and
+a proxy with a scheme must use `http://`. For an https URL, the proxy must hold no user name or
+password. The client would also send them to the host behind the proxy.
+
+- `--record:<directory>` writes each reply to a file. A later run replays a page reply of 2xx or
+  3xx, and a service reply that holds an answer of the model. It sends other requests again, such
+  as a refusal or an error that the service reports.
+- `--replay:<directory>` reads every reply from files. It needs no key and no network.
+- A recording holds the text and the reply, so the tool makes the directory with mode 0700, and
+  writes each file with mode 0600. It refuses a directory that every user may write, such as
+  `/tmp`, and a link at the path of a recording.
+- A recording holds its endpoint too, so it replays only for that endpoint.
+- `nim r tools/build.nim examples` writes worked examples to `build/examples/`, and prints the
+  command that replays each one. Their replies are documented shapes, not live replies.
+
 ## Pages
 
 The project publishes no page.
@@ -67,4 +139,7 @@ The project publishes no page.
 ## Status
 
 The parser, the index, the search and the command line work, and the suites hold them to CLL.
+`suggester` works on recorded replies. On 2026-10-31, it read a live page,
+`https://www.gutenberg.org/ebooks/11`, through the HTTP proxy of a sandbox with TLS. A loopback
+stand-in for the Messages API took its request. It has read no live reply of a service yet.
 Nothing here has been read line by line by a human.

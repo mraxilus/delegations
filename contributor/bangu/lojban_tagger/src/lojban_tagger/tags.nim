@@ -42,7 +42,7 @@ type
 
   Refusal* {.pure.} = enum  ## Define why text is no tag.
     Empty  ## Text holds nothing but spaces.
-    Letter  ## Character outside Lojban letters; detail is that character.
+    Letter  ## Character outside Lojban letters; detail is that character, whole.
     Cmavo  ## Word is cmavo, or lujvo holds no gismu or ends in cmavo; detail names it.
     Unlisted  ## Gismu shape, but list holds no such gismu; detail is word.
     Rafsi  ## Rafsi no list assigns; detail is rafsi.
@@ -104,6 +104,20 @@ func refuse(text: string, refusal: Refusal, detail = ""): Reading =
   Reading(text: text, is_tag: false, refusal: refusal, detail: detail)
 
 
+func character(text: string, at: int): string =
+  ## Read character opening at byte `at`: lead byte, then each continuation byte it announces,
+  ##   by bit distribution of Table 3-6 of Unicode Standard; byte alone where none follows.
+  let size =
+    case uint8(text[at])
+    of 0xC0'u8..0xDF'u8: 2
+    of 0xE0'u8..0xEF'u8: 3
+    of 0xF0'u8..0xF7'u8: 4
+    else: 1
+  var finish = at + 1
+  while finish < min(text.len, at + size) and (uint8(text[finish]) and 0xC0) == 0x80: inc finish
+  text[at..<finish]
+
+
 func readLujvo(text: string): Reading =
   ## Read text as lujvo whose rafsi all stand for listed words, last one gismu.
   let splits = text.splitLujvo
@@ -129,10 +143,13 @@ func readLujvo(text: string): Reading =
 
 func readTag*(text: string): Reading =
   ## Read text as tag: gismu of list, or lujvo whose rafsi stand for listed words, last gismu.
+  ##   Character refused is named whole, so report of UTF-8 text stays UTF-8; held by test
+  ##     "Character outside letters is named whole, so report of UTF-8 stays UTF-8" of
+  ##     `test_tags.nim`.
   let letters = text.strip.toLowerAscii.replace(",", "")
   if letters.len == 0: return refuse(letters, Refusal.Empty)
-  for character in letters:
-    if character notin LETTERS: return refuse(letters, Refusal.Letter, $character)
+  for at in 0..<letters.len:
+    if letters[at] notin LETTERS: return refuse(letters, Refusal.Letter, letters.character(at))
   let listed = letters.word
   if listed.isSome:
     if listed.get.kind == Kind.Cmavo: return refuse(letters, Refusal.Cmavo, letters)
