@@ -11,7 +11,7 @@
 ##     environment of host never reaches run. It names sink at `ANTHROPIC_BASE_URL`, which binary
 ##     never reads, and as proxy of each scheme, unless test names its own, so request that
 ##     fails to replay meets sink on loopback, never host off it; no run may reach sink.
-##     Standard output and error go to files, so tag and report are read apart; standard input
+##     Standard output and error go to files, so gismu and report are read apart; standard input
 ##     comes from file, so run reading it meets end, never pipe left open.
 ##   `SSL_CERT_FILE` and `SSL_CERT_DIR` pass from host on purpose: `newContext` reads them for
 ##     trusted roots, which tunnel test needs, and prefix can set either empty, never unset it,
@@ -60,7 +60,7 @@ from std/unicode import Rune, toUTF8
 
 import ../../app/exchanges
 from ../../app/suggester {.all.} import BYTES_FIELDS_MAX, COUNT_REDIRECTS_MAX, USAGE
-import ../../src/lojban_tagger/[suggestions, tags]
+import ../../src/lojban_tagger/[dictionary, suggestions, tags]
 import ../../tools/examples
 from ../../tools/examples {.all.} import DIRECTORY_EXAMPLES
 
@@ -134,7 +134,7 @@ const
   PATH_SERVICE = "/v1/messages"  ## Path fake service answers at.
   STATUS_MISSING = 404  ## Status server answers where no route names target.
   TEXT_GIVEN = "datnyvreji"  ## Text reading as tag already, i.e. `datni+vreji`.
-  FORM_GIVEN = "datnyvei"  ## Form 4.12 prefers for `TEXT_GIVEN`, which binary prints.
+  OUTPUT_GIVEN = "datni\nvreji\n"  ## Gismu binary prints for `TEXT_GIVEN`, one to line.
   TEXT_GIVEN_LONG = "lotconrotybanbalbapybembedbejbesybefybevbixybimbolbogbotmlatu"
     ## Text reading as tag of 18 words in 61 bytes, which binary rendered without bound.
     ##   Sibling of `TEXT_GIVEN_LONG` in `test_suggestions.nim` (II.9): each suite runs alone, and
@@ -144,9 +144,9 @@ const
   FLOOR_REPLAYED = 180
     ## Fewest random replays whose text reads as no tag and holds visible character; 199 read at
     ##   seed `0`.
-  FLOOR_SUGGESTED = 24  ## Fewest random replays printing tag; 32 read at seed `0`.
-  FLOOR_REFUSED = 140  ## Fewest random replays refused; 167 read at seed `0`.
-  FLOOR_CUT = 8  ## Fewest random replays whose passage is cut; 14 read at seed `0`.
+  FLOOR_SUGGESTED = 70  ## Fewest random replays printing gismu; 92 read at seed `0`.
+  FLOOR_REFUSED = 90  ## Fewest random replays keeping none; 107 read at seed `0`.
+  FLOOR_CUT = 8  ## Fewest random replays whose passage is cut; 12 read at seed `0`.
   SAMPLES_GIVEN = 200  ## Random texts given shortcut law reads, seeded.
   FLOOR_GIVEN = 100  ## Fewest random texts read as tag; 128 read at seed `0`.
   FLOOR_ASKED = 55  ## Fewest random texts sent to service; 72 read at seed `0`.
@@ -202,7 +202,7 @@ const
     ## Stop reason of reply declining in wire format of each service.
   LUT_REASON_TRUNCATED_BY_SERVICE: array[Service, string] = ["max_tokens", "length", "length"]
     ## Stop reason of reply stopped at limit in wire format of each service.
-  BODIES_MALFORMED = ["", "not json", "[]", "{\"tanru\": [\"ciska\"]"]
+  BODIES_MALFORMED = ["", "not json", "[]", "{\"tags\": [{\"gismu\": \"ciska\"}"]
     ## Bodies of 2xx reply reading as no reply of either wire format.
   BODY_ERROR_INSIDE = """{"error":{"code":502,"message":"provider down"}}"""
     ## Body of 200 OpenRouter gives where provider fails after it accepts request, as review found.
@@ -331,8 +331,8 @@ func toEnvironment(settings: Settings): seq[(string, string)] =
 
 
 func toAnswer(words: openArray[string], gloss: string = GLOSS_SUITE): string =
-  ## Render answer of schema naming words, as model gives it.
-  $ %*{"tanru": words, "gloss": gloss}
+  ## Render answer of schema naming each word as gismu of one tag, in order, as model gives it.
+  $ %*{"tags": words.mapIt(%*{"gismu": it, "gloss": gloss})}
 
 
 func toReplyAnswer(service: Service; answer, model: string): Reply =
@@ -394,11 +394,12 @@ func toReplyRefused(service: Service, model: string): Reply =
 
 
 func toReplies(service: Service, model: string): seq[Reply] =
-  ## Build reply of each outcome `readReply` gives, in wire format of service: tag, error by status,
-  ##   error inside 2xx, choice ending in error, redirect, refusal, stop at limit, body of no reply,
-  ##   and answer naming unlisted word, ending in cmavo, past cap, or failing readback; then each
-  ##   shape recheck found replayed: refusal in words, page of gateway, moderation envelope by
-  ##   status and inside 200, and error coded in gzip.
+  ## Build reply of each outcome `readReply` gives, in wire format of service: gismu kept, error by
+  ##   status, error inside 2xx, choice ending in error, redirect, refusal, stop at limit, body of
+  ##   no reply, and answer whose every tag is dropped, whose cmavo is dropped beside gismu kept,
+  ##   whose gismu repeats past cap, or whose tag is no object; then each shape recheck found
+  ##   replayed: refusal in words, page of gateway, moderation envelope by status and inside 200,
+  ##   and error coded in gzip.
   @[
     toReplyAnswer(service, toAnswer(["xatra", "ciska"]), model),
     toReplyError(service, 401),
@@ -411,8 +412,8 @@ func toReplies(service: Service, model: string): seq[Reply] =
     Reply(status: 200, content_type: "application/json", body: "not json"),
     toReplyAnswer(service, toAnswer(["datna"]), model),
     toReplyAnswer(service, toAnswer(["ciska", "se"]), model),
-    toReplyAnswer(service, newSeqWith(COUNT_WORDS_MAX + 1, "ciska").toAnswer, model),
-    toReplyAnswer(service, toAnswer(["brodi", "ciska"]), model),
+    toReplyAnswer(service, newSeqWith(COUNT_TAGS_MAX + 1, "ciska").toAnswer, model),
+    toReplyAnswer(service, "{\"tags\":[7]}", model),
     toReplyRefused(service, model),
     Reply(status: 200, content_type: "text/html", body: BODY_GATEWAY),
     Reply(status: 403, content_type: "application/json", body: BODY_FLAGGED),
@@ -654,15 +655,23 @@ func detailMalformed(recorded: Recorded; directory, request: string): string =
 
 
 func toOutcome(
+  answer: Answer, passage: Passage, model: string, notes: openArray[string]
+): Outcome =
+  ## Build outcome pure pipeline gives once passage exists: each note, then report of answer;
+  ##   each gismu kept on its own line and exit 0, or nothing and exit 1.
+  let kept = answer.suggestions.gismu
+  Outcome(
+    output: kept.mapIt($it & "\n").join,
+    report: notes.mapIt(it & "\n").join & answer.toReport(passage, model),
+    code: if kept.len > 0: 0 else: 1,
+  )
+
+
+func toOutcome(
   suggestion: Suggestion, passage: Passage, model: string, notes: openArray[string]
 ): Outcome =
-  ## Build outcome pure pipeline gives once passage exists: each note, then report of
-  ##   suggestion; tag alone on output and exit 0, or nothing and exit 1.
-  Outcome(
-    output: if suggestion.is_suggested: $suggestion.tag & "\n" else: "",
-    report: notes.mapIt(it & "\n").join & suggestion.toReport(passage, model),
-    code: if suggestion.is_suggested: 0 else: 1,
-  )
+  ## Build outcome of run failing whole once passage exists, as answer holding that refusal alone.
+  Answer(suggestions: @[suggestion]).toOutcome(passage, model, notes)
 
 
 func toOutcome(suggestion: Suggestion, notes: openArray[string]): Outcome =
@@ -676,11 +685,15 @@ func toOutcome(failure: Failure, detail: string, notes: openArray[string]): Outc
 
 
 func toOutcomeGiven(text: string): Outcome =
-  ## Build outcome of text reading as tag already: form alone on output, report naming tanru;
-  ##   failure explained alone, exit 1.
+  ## Build outcome of text reading as tag already: each gismu of tag once on its own line, report
+  ##   naming tanru; failure explained alone, exit 1.
   let given = text.readTagGiven.get
   if not given.is_suggested: return Outcome(report: given.explain & "\n", code: 1)
-  Outcome(output: $given.tag & "\n", report: toReportGiven(text, given.tag), code: 0)
+  Outcome(
+    output: [given].gismu.mapIt($it & "\n").join,
+    report: toReportGiven(text, given.tag),
+    code: 0,
+  )
 
 
 func isDate(text: string): bool =
@@ -711,12 +724,13 @@ proc argumentsRandom(): seq[string] =
 
 
 proc replyRandom(service: Service, model: string): Reply =
-  ## Draw reply in wire format of service: answer of one to seven words of `WORDS_ANSWER`, by
-  ##   model asked or other, most often; else error status, refusal, stop at limit, body of no
-  ##   reply, or answer cut or coded.
+  ## Draw reply in wire format of service: answer of one to seven tags of `WORDS_ANSWER`, or one
+  ##   time in ten past `COUNT_TAGS_MAX`, by model asked or other, most often; else error status,
+  ##   refusal, stop at limit, body of no reply, or answer cut or coded.
   let served = if rand(3) == 0: MODEL_SERVED else: model
   var words: seq[string]
-  for _ in 1..rand(1 .. COUNT_WORDS_MAX + 1): words.add WORDS_ANSWER.sample
+  let count = if rand(9) == 0: rand(COUNT_TAGS_MAX + 1 .. COUNT_TAGS_MAX + 4) else: rand(1..7)
+  for _ in 1..count: words.add WORDS_ANSWER.sample
   result = toReplyAnswer(service, toAnswer(words, GLOSSES.sample), served)
   case rand(9)
   of 5: result = toReplyError(service, STATUSES_ERROR.sample)
@@ -881,7 +895,7 @@ suite "Internal: Suggester":
             replay = @["--replay:" & directory_case]
             outcome = binary.run([(KEY_SERVICE, $service)], replay & arguments)
           check outcome == expected  # output, report and exit of pure pipeline, notes first
-          check outcome.output == $readTanru(example.tanru).get & "\n"  # tanru example documents
+          check outcome.output == example.tags.mapIt(it.gismu & "\n").join  # gismu, one to line
 
 
   test "command `examples` prints replays each worked example under any workspace, umask `000` too":
@@ -926,29 +940,29 @@ suite "Internal: Suggester":
         passage = text.toPassage
         request = requestService(sample.settings, passage)
         path = pathRecording(directory_case, request)
-        suggestion = sample.settings.service.readReply(sample.reply)
+        answer = sample.settings.service.readReply(sample.reply)
       writeFile(path, Recording(label: sample.label, request: request, reply: sample.reply).toText)
       let outcome = binary.run(sample.environment, replay & sample.arguments)
-      check outcome == toOutcome(suggestion, passage, sample.settings.model,
+      check outcome == toOutcome(answer, passage, sample.settings.model,
           [noteReplayed(directory_case, request, sample.label)])  # settings from environment
-      if suggestion.is_suggested: inc count_suggested else: inc count_refused
+      if answer.suggestions.gismu.len > 0: inc count_suggested else: inc count_refused
       if passage.is_cut: inc count_cut
     check endpoint.heard.len == 0  # replay opens no socket
     check passed >= FLOOR_REPLAYED  # guard leaves enough texts sent to service
-    check count_suggested >= FLOOR_SUGGESTED  # replies printing tag are common
-    check count_refused >= FLOOR_REFUSED  # replies refused are common
+    check count_suggested >= FLOOR_SUGGESTED  # replies printing gismu are common
+    check count_refused >= FLOOR_REFUSED  # replies keeping none are common
     check count_cut >= FLOOR_CUT  # passages past `BYTES_PASSAGE_MAX` occur
     stopServer(endpoint)
 
 
-  test "text reading as tag prints its form and asks nothing, in every mode":
+  test "text reading as tag prints its gismu and asks nothing, in every mode":
     let
       endpoint = startServer()
       directory_case = directory / "given"
       url_endpoint = urlLoopback(endpoint.port, PATH_SERVICE)
       live = @[(KEY_ENDPOINT, url_endpoint), (KEY_CREDENTIAL, CREDENTIAL_SUITE)]
       expected = Outcome(
-        output: FORM_GIVEN & "\n",
+        output: OUTPUT_GIVEN,
         report: toReportGiven(TEXT_GIVEN, readTag(TEXT_GIVEN).tag),
         code: 0,
       )
@@ -958,7 +972,7 @@ suite "Internal: Suggester":
         @[(KEY_SERVICE, "bogus")],  # service no run accepts
         live,  # credential and endpoint server counting each request
       ]:
-        check binary.run(environment, flags & @[TEXT_GIVEN]) == expected  # form, and tanru named
+        check binary.run(environment, flags & @[TEXT_GIVEN]) == expected  # gismu, tanru named
     check endpoint.heard.len == 0  # no service asked
     check not dirExists(directory_case)  # no recording read or written
     stopServer(endpoint)
@@ -970,7 +984,7 @@ suite "Internal: Suggester":
         expected  # review finding logic-1, 2026-10-29: memory grew without bound; service unread
 
 
-  test "text prints form exactly where `readTagGiven` reads it as tag, and asks service else":
+  test "text prints gismu exactly where `readTagGiven` reads it as tag, and asks service else":
     randomize(0)
     let
       directory_case = directory / "asked"  # never made, so recording of each request misses
@@ -981,7 +995,7 @@ suite "Internal: Suggester":
       let outcome = binary.run([], ["--replay:" & directory_case, text])
       if text.readTagGiven.isSome:
         inc count_given
-        check outcome == text.toOutcomeGiven  # form alone, no service asked
+        check outcome == text.toOutcomeGiven  # gismu alone, no service asked
         continue
       inc count_asked
       let
@@ -1015,8 +1029,8 @@ suite "Internal: Suggester":
           ],
           ["--replay:" & directory_case, example.argument],
         )
-        check outcome.code == 0  # tag printed, though live run refuses both credentials
-        check outcome.output == $readTanru(example.tanru).get & "\n"  # tag of recordings
+        check outcome.code == 0  # gismu printed, though live run refuses both credentials
+        check outcome.output == example.tags.mapIt(it.gismu & "\n").join  # gismu of recordings
         check "Credential" notin outcome.report  # no credential read, so none named
     check endpoint.heard.len == 0  # no socket to endpoint
     check proxy.heard.len == 0  # nor to proxy, for page or service
@@ -1129,21 +1143,21 @@ suite "Internal: Suggester":
       passage = text.argument.toPassage
       request = requestService(settings, passage)
       reply = toReplyMessages(text.answer, settings.model)
-      suggestion = Service.Claude.readReply(reply)
+      answer = Service.Claude.readReply(reply)
       long = directory / "noted" / ("\e[31m" & "d".repeat(99)) / "e".repeat(99) / "f".repeat(99)
       name = request.stamp & ".recording"
       record = ["--record:" & long, text.argument]
     server.routes = @[(PATH_SERVICE, reply)]
     check long.len >= 300  # directory of 300 characters, past `RUNES_SHOWN`, holding escape
     let written = binary.run(settings.toEnvironment, record)
-    check written == toOutcome(suggestion, passage, settings.model, [
+    check written == toOutcome(answer, passage, settings.model, [
       noteCredential(KEY_CREDENTIAL),
       noteWritten(long, request),
     ])  # written: directory made printable and cut, then name holding stamp
     let
       label = readFile(long / name).readRecording.recording.label
       replayed = binary.run(settings.toEnvironment, ["--replay:" & long, text.argument])
-    check replayed == toOutcome(suggestion, passage, settings.model,
+    check replayed == toOutcome(answer, passage, settings.model,
         [noteReplayed(long, request, label)])  # replayed, path shown as written
     removeFile(long / name)
     createDir(long / name)  # directory in way of recording, so rename fails after reply
@@ -1151,10 +1165,10 @@ suite "Internal: Suggester":
       unwritten = binary.run(settings.toEnvironment, record)
       error = unwritten.report.readFramed(noteCredential(KEY_CREDENTIAL) &
           "\nReply should be written to `" & pathShown(long, request) & "`; got `", "`.\n" &
-          suggestion.toReport(passage, settings.model))
+          answer.toReport(passage, settings.model))
     check error.isSome and error.get.len > 0 and '\n' notin error.get  # path shown, then error
     for outcome in [written, replayed, unwritten]:
-      check outcome.code == 0 and name in outcome.report  # tag kept; stamp named whole, past cut
+      check outcome.code == 0 and name in outcome.report  # gismu kept; stamp named whole, past cut
       check outcome.report.allIt(it notin CHARACTERS_CONTROL)  # escape of directory never raw
     check server.heard.len == 2  # record sent twice, replay never
     stopServer(server)
@@ -1197,18 +1211,18 @@ suite "Internal: Suggester":
       request = requestService(settings, passage)
       path = pathRecording(directory_case, request)
       reply = toReplyMessages(text.answer, settings.model)
-      suggestion = Service.Claude.readReply(reply)
+      answer = Service.Claude.readReply(reply)
       replay = ["--replay:" & directory_case, text.argument]
     createDir(directory_case)
     writeFile(path, Recording(label: LABEL_FOUND, request: request, reply: reply).toText)
     let found = binary.run([], replay)  # `--replay:D 'mi ciska lo xatra'`, label `LABEL_FOUND`
     check found.report == "Reply replayed from `" & pathShown(directory_case, request) &
         "`: evil \\u{1B}[31mred\\u{1B}[0m \\u{202E}abc.\n" &
-        suggestion.toReport(passage, settings.model)  # case as found in suite review
+        answer.toReport(passage, settings.model)  # case as found in suite review
     for label in @LABELS_UNPRINTABLE & @["\xC3\xA9".repeat(RUNES_SHOWN)]:  # label at cap kept whole
       writeFile(path, Recording(label: label, request: request, reply: reply).toText)
       let outcome = binary.run([], replay)
-      check outcome == toOutcome(suggestion, passage, settings.model,
+      check outcome == toOutcome(answer, passage, settings.model,
           [noteReplayed(directory_case, request, label)])  # label as `toPrintable` makes it
       check outcome.report.allIt(it notin CHARACTERS_CONTROL)  # no control reaches terminal
 
@@ -1226,11 +1240,11 @@ suite "Internal: Suggester":
         request = requestService(settings, passage)
         path = pathRecording(directory_case, request)
         reply = toReplyAnswer(service, text.answer, settings.model)
-        suggestion = service.readReply(reply)
+        answer = service.readReply(reply)
       server.routes = @[(PATH_SERVICE, reply)]
       let written = binary.run(environment, ["--record:" & directory_case, text.argument])
-      check written == toOutcome(suggestion, passage, settings.model, [noteCredential(
-          KEY_CREDENTIAL), noteWritten(directory_case, request)])  # tag, and file written named
+      check written == toOutcome(answer, passage, settings.model, [noteCredential(
+          KEY_CREDENTIAL), noteWritten(directory_case, request)])  # gismu, and file written named
       check server.heard.len == 1  # one request sent
       if server.heard.len == 1:
         let heard = server.heard[0]
@@ -1253,12 +1267,12 @@ suite "Internal: Suggester":
       check label.startsWith("recorded ") and label["recorded ".len .. ^1].isDate  # date of run
       check walkDir(directory_case).toSeq.len == 1  # recording alone, sibling renamed over it
       let again = binary.run(environment, ["--record:" & directory_case, text.argument])
-      check again == toOutcome(suggestion, passage, settings.model, [noteCredential(
+      check again == toOutcome(answer, passage, settings.model, [noteCredential(
           KEY_CREDENTIAL), noteReplayed(directory_case, request, label)])  # recording replayed
       check server.heard.len == 1  # 2xx kept, so never paid twice
       let replayed = binary.run(environment, ["--replay:" & directory_case, text.argument])
-      check replayed == toOutcome(suggestion, passage, settings.model,
-          [noteReplayed(directory_case, request, label)])  # same tag, credential unread
+      check replayed == toOutcome(answer, passage, settings.model,
+          [noteReplayed(directory_case, request, label)])  # same gismu, credential unread
       check server.heard.len == 1  # replay sends nothing
       for outcome in [written, again, replayed]:
         check CREDENTIAL_SUITE notin outcome.output & outcome.report  # credential in no stream
@@ -1281,7 +1295,7 @@ suite "Internal: Suggester":
         count_before = server.heard.len
         outcome = binary.run(settings.toEnvironment & @[(KEY_WORKSPACE, workspace)],
             [text.argument])
-      check outcome.code == 0  # tag printed
+      check outcome.code == 0  # gismu printed
       check server.heard.len == count_before + 1  # one request sent
       if server.heard.len != count_before + 1: continue
       let heard = server.heard[^1]
@@ -1447,17 +1461,17 @@ suite "Internal: Suggester":
           record = @["--record:" & directory_case, text.argument]
           request = requestService(settings, passage)
           path = pathRecording(directory_case, request)
-          suggestion = service.readReply(reply)
+          answer = service.readReply(reply)
           is_kept = service.isAnswered(reply)
           count_before = server.heard.len
           first = binary.run(settings.toEnvironment, record)
           recorded = readFile(path).readRecording
-        check first == toOutcome(suggestion, passage, settings.model, [noteCredential(
+        check first == toOutcome(answer, passage, settings.model, [noteCredential(
             KEY_CREDENTIAL), noteWritten(directory_case, request)])  # sent and written, any status
         check recorded.is_read and recorded.recording.reply == reply  # reply as served
         if not recorded.is_read: continue
         let second = binary.run(settings.toEnvironment, record)
-        check second == toOutcome(suggestion, passage, settings.model, [
+        check second == toOutcome(answer, passage, settings.model, [
           noteCredential(KEY_CREDENTIAL),
           if is_kept: noteReplayed(directory_case, request, recorded.recording.label)
           else: noteWritten(directory_case, request),
@@ -1468,13 +1482,15 @@ suite "Internal: Suggester":
           label = readFile(path).readRecording.recording.label
           replay = ["--replay:" & directory_case, text.argument]
           replayed = binary.run(settings.toEnvironment, replay)
-        check replayed == toOutcome(suggestion, passage, settings.model,
+        check replayed == toOutcome(answer, passage, settings.model,
             [noteReplayed(directory_case, request, label)])  # any reply replayed, credential unread
         check server.heard.len - count_before == (if is_kept: 1 else: 2)  # replay sends nothing
-        if not suggestion.is_suggested: covered.incl suggestion.failure
+        for suggestion in answer.suggestions:
+          if not suggestion.is_suggested: covered.incl suggestion.failure
         if is_kept: inc count_kept else: inc count_sent
       stopServer(server)
-    check covered == {Failure.Status..Failure.high}  # each failure `readReply` gives, exhaustive
+    check covered ==
+        {Failure.Status..Failure.Duplicate}  # each failure `readReply` gives, exhaustive
     check count_kept > 0 and count_sent > 0  # both sides of law reached
 
 
@@ -1535,7 +1551,7 @@ suite "Internal: Suggester":
       reply = Reply(status: 200, content_type: "application/json", body: BODY_ERROR_INSIDE)
     writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request, reply: reply)])
     let outcome = binary.run(settings.toEnvironment, ["--record:" & directory_case, text])
-    check outcome.code == 1 and outcome.output == ""  # no tag
+    check outcome.code == 1 and outcome.output == ""  # no gismu
     check outcome.report.startsWith(noteCredential(KEY_CREDENTIAL) &
         "\nService or page should answer; got `")  # review finding wire-1, 2026-10-29: `Network`
     check "replayed" notin outcome.report  # request went out again, to port that refuses
@@ -1592,7 +1608,7 @@ suite "Internal: Suggester":
           [(KEY_ENDPOINT, urlLoopback(port, PATH_SERVICE)), (KEY_CREDENTIAL, CREDENTIAL_SUITE)],
           flags & @[argument],
         )
-        check outcome.code == 1 and outcome.output == ""  # no tag
+        check outcome.code == 1 and outcome.output == ""  # no gismu
         check outcome.report.startsWith(opening) and outcome.report.endsWith("`.\n")  # named
         if not outcome.report.startsWith(opening) or outcome.report.len < opening.len + 3:
           continue
@@ -1636,7 +1652,7 @@ suite "Internal: Suggester":
           outcome = binary.run(environment, ["--record:" & directory_record, argument])
           error = outcome.report.readFramed(opening, " at " &
               pathShown(directory_record, request) & "`.\n")
-        check outcome.code == 1 and outcome.output == ""  # no tag
+        check outcome.code == 1 and outcome.output == ""  # no gismu
         check error.isSome and error.get.len > 0 and '\n' notin error.get  # error, then path
     check server.heard.len == 0  # nothing sent for any directory, text or page
     check readFile(file) == ""  # file in way left as it was
@@ -1768,7 +1784,7 @@ suite "Internal: Suggester":
       request = requestService(settings, passage)
       name = request.stamp & ".recording"
       reply = toReplyMessages(text.answer, settings.model)
-      suggestion = Service.Claude.readReply(reply)
+      answer = Service.Claude.readReply(reply)
       planted = toReplyMessages(toAnswer(["mlatu", "ciska"]), settings.model)
       tree = directory / "kernel"
       shared = tree / "shared"
@@ -1784,7 +1800,7 @@ suite "Internal: Suggester":
         toOutcome(toSuggestionRecording("missing at " & pathShown(spelled, request)), passage,
         settings.model, [])  # case as found: recording planted in `shared` never replays
     check binary.run(settings.toEnvironment, ["--record:" & spelled, text.argument]) ==
-        toOutcome(suggestion, passage, settings.model, [noteCredential(KEY_CREDENTIAL),
+        toOutcome(answer, passage, settings.model, [noteCredential(KEY_CREDENTIAL),
         noteWritten(spelled, request)])  # case as found: written where kernel resolves it
     check fileExists(tree / "private" / name)  # in directory check of sharing stats
     check readFile(shared / name).readRecording.recording.reply == planted  # `shared` untouched
@@ -1804,7 +1820,7 @@ suite "Internal: Suggester":
         record = ["--record:" & directory_case, text.argument]
       createDir(base / "p" / "q")
       createSymlink(base / "p" / "q", base / "l")
-      check binary.run(settings.toEnvironment, record) == toOutcome(suggestion, passage,
+      check binary.run(settings.toEnvironment, record) == toOutcome(answer, passage,
           settings.model, [noteCredential(KEY_CREDENTIAL), noteWritten(directory_case,
           request)])  # written, path named as spelled
       check walkDirRec(base).toSeq.filterIt(it.endsWith(".recording")) ==
@@ -1814,7 +1830,7 @@ suite "Internal: Suggester":
         check getFilePermissions(base / target) == mode_private  # made `0700` where resolved
       let label = readFile(base / target / name).readRecording.recording.label
       check binary.run(settings.toEnvironment, ["--replay:" & directory_case, text.argument]) ==
-          toOutcome(suggestion, passage, settings.model, [noteReplayed(directory_case, request,
+          toOutcome(answer, passage, settings.model, [noteReplayed(directory_case, request,
           label)])  # read back from there
     stopServer(server)
 
@@ -1895,7 +1911,7 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings(server.port)
       large = PIECE_PAGE.repeat(BYTES_PAGE_MAX div PIECE_PAGE.len + 1)[0..BYTES_PAGE_MAX]
       reply_service = toReplyMessages(example("alice").answer, settings.model)
-      suggestion = Service.Claude.readReply(reply_service)
+      answer = Service.Claude.readReply(reply_service)
       opening = "text/plain; charset=utf-8; x="
     var count_written, count_unwritten = 0
     for i, padding in [-1, 0, 1, 70_000]:  # file below cap, at it, past it; type as found
@@ -1923,7 +1939,7 @@ suite "Internal: Suggester":
         count_before = server.heard.len
       server.routes = @[("/large/" & $i, Reply(status: 200, content_type: typed, body: large)),
           (PATH_SERVICE, reply_service)]
-      check binary.run(settings.toEnvironment, record) == toOutcome(suggestion, passage,
+      check binary.run(settings.toEnvironment, record) == toOutcome(answer, passage,
           settings.model, [noteCredential(KEY_CREDENTIAL), note_page, noteWritten(directory_case,
           request_service)])  # page written within cap, else named unwritten; tag printed
       check fileExists(path) == is_written  # file past cap of replay never written
@@ -1936,7 +1952,7 @@ suite "Internal: Suggester":
           if is_written: noteReplayed(directory_case, request, label_page) else: note_page,
           noteReplayed(directory_case, request_service, label_service),
         ]
-      check binary.run(settings.toEnvironment, record) == toOutcome(suggestion, passage,
+      check binary.run(settings.toEnvironment, record) == toOutcome(answer, passage,
           settings.model, notes)  # page replayed within cap, else sent again; service replayed
       check server.heard.len - count_before ==
           (if is_written: 2 else: 3)  # page and service once each; page again where unwritten
@@ -1977,7 +1993,7 @@ suite "Internal: Suggester":
           outcome = binary.run(settings.toEnvironment, flags & @[text.argument])
           error = outcome.report.readFramed(notes & opening, " at " &
               pathShown(directory_case, request) & "`.\n")
-        check outcome.code == 1 and outcome.output == ""  # no tag
+        check outcome.code == 1 and outcome.output == ""  # no gismu
         check error.isSome and error.get.len > 0 and
             '\n' notin error.get  # review finding logic-5, 2026-10-29: first line of error alone
     check server.heard.len == 0  # recording standing is refused, never sent around
@@ -2050,7 +2066,7 @@ suite "Internal: Suggester":
       )
       settings = Service.Claude.toSettings(server.port)
       reply_service = toReplyMessages(page.answer, settings.model)
-      suggestion = Service.Claude.readReply(reply_service)
+      answer = Service.Claude.readReply(reply_service)
     server.routes.add (PATH_SERVICE, reply_service)
     for (start, final, reply_read) in [
       ("/moved", "/page", reply_page),
@@ -2069,7 +2085,7 @@ suite "Internal: Suggester":
         count_before = server.heard.len
         outcome = binary.run(settings.toEnvironment, [urlLoopback(server.port, start)])
         heard = server.heard[count_before .. ^1]
-      check outcome == toOutcome(suggestion, paged.passage, settings.model,
+      check outcome == toOutcome(answer, paged.passage, settings.model,
           [noteCredential(KEY_CREDENTIAL)])  # tag of passage page gives, cut lines first
       check heard.mapIt(it.target) == (if start == final: @[final] else: @[start, final]) &
           @[PATH_SERVICE]  # each hop once, then service
@@ -2083,7 +2099,7 @@ suite "Internal: Suggester":
       requests = @["GET " & url_moved, "GET " & url_page, requestService(settings, passage)]
       paths = requests.mapIt(pathRecording(directory_case, it))
     check binary.run(settings.toEnvironment, ["--record:" & directory_case, url_moved]) ==
-        toOutcome(suggestion, passage, settings.model, @[noteCredential(KEY_CREDENTIAL)] &
+        toOutcome(answer, passage, settings.model, @[noteCredential(KEY_CREDENTIAL)] &
         requests.mapIt(noteWritten(directory_case, it)))  # each hop written
     stopServer(server)  # replay needs no server
     let recordings = paths.mapIt(readFile(it).readRecording)
@@ -2093,7 +2109,7 @@ suite "Internal: Suggester":
       check recordings.mapIt(it.recording.reply) ==
           @[Reply(status: 302, location: "/page"), reply_page, reply_service]  # as served
       check binary.run(settings.toEnvironment, ["--replay:" & directory_case, url_moved]) ==
-          toOutcome(suggestion, passage, settings.model, (0..2).mapIt(noteReplayed(directory_case,
+          toOutcome(answer, passage, settings.model, (0..2).mapIt(noteReplayed(directory_case,
           requests[it], recordings[it].recording.label)))  # same tag, read from files alone
 
 
@@ -2267,7 +2283,7 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings(direct.port)
       page = Reply(status: 200, content_type: "text/plain", body: example("alice").argument)
       reply = toReplyMessages(example("alice").answer, settings.model)
-      suggestion = Service.Claude.readReply(reply)
+      answer = Service.Claude.readReply(reply)
       url_proxy = urlLoopback(proxy.port, "")
       proxies = @[("http_proxy", url_proxy), ("https_proxy", url_proxy)]
       environment = settings.toEnvironment & proxies
@@ -2280,12 +2296,12 @@ suite "Internal: Suggester":
       ("/start", Reply(status: 302, location: back)),
       (PATH_SERVICE, reply),
     ]
-    check binary.run(environment, [proxied]) == toOutcome(suggestion, landing.readPage(
+    check binary.run(environment, [proxied]) == toOutcome(answer, landing.readPage(
         page).passage, settings.model, [noteCredential(KEY_CREDENTIAL)])  # page read
     check proxy.heard.mapIt(it.target) == @[proxied]  # first hop through proxy, absolute form
     check direct.heard.mapIt(it.target) == @["/page", PATH_SERVICE]  # loopback hop direct
     let (count_proxy, count_direct) = (proxy.heard.len, direct.heard.len)
-    check binary.run(environment, [urlLoopback(direct.port, "/start")]) == toOutcome(suggestion,
+    check binary.run(environment, [urlLoopback(direct.port, "/start")]) == toOutcome(answer,
         back.readPage(page).passage, settings.model, [noteCredential(KEY_CREDENTIAL)])  # read
     check direct.heard[count_direct .. ^1].mapIt(it.target) ==
         @["/start", PATH_SERVICE]  # loopback hop direct, then service
@@ -2735,33 +2751,85 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "each failure exits 1, prints nothing, and reports what pure pipeline names":
+  test "answer prints each gismu kept on its own line, in order, exiting 0; none kept exits 1":
+    let
+      text = example("lojban").argument
+      settings = Service.Claude.toSettings
+      passage = text.toPassage
+      request = requestService(settings, passage)
+    for i, (words, output) in [
+      (@["cukta", "ractu", "nixli"], "cukta\nractu\nnixli\n"),  # each kept, in order of answer
+      (@["cukta", "datnyvreji", "se", "ractu"], "cukta\nractu\n"),  # lujvo and cmavo dropped
+      (@["Cukta", "cukta"], "cukta\n"),  # folded as reader folds, and printed once
+      (newSeqWith(COUNT_TAGS_MAX + 2, "ciska"), "ciska\n"),  # past cap, rest counted unread
+      (@["datna", "se"], ""),  # none kept
+    ]:
+      let
+        reply = toReplyMessages(words.toAnswer, settings.model)
+        directory_case = directory / "printed" / $i
+      writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
+          reply: reply)])
+      let outcome = binary.run([], ["--replay:" & directory_case, text])
+      check outcome.output == output  # one gismu to line, and nothing else
+      check outcome.code == (if output.len > 0: 0 else: 1)  # 0 where any gismu is kept, else 1
+      check outcome == toOutcome(Service.Claude.readReply(reply), passage, settings.model,
+          [noteReplayed(directory_case, request, LABEL_SUITE)])  # report as pipeline renders it
+
+
+  test "text given reading as lujvo prints each of its gismu once, cmavo left out, asking none":
+    for (text, output) in [
+      ("datnyvreji", "datni\nvreji\n"),  # each gismu, in order
+      ("selci'a", "ciska\n"),  # cmavo left out
+      ("kemdatnyvei", "datni\nvreji\n"),  # cmavo that only groups left out too
+      ("ckucukta", "cukta\n"),  # gismu twice, printed once
+    ]:
+      let outcome = binary.run([(KEY_SERVICE, "bogus")], [text])
+      check outcome.output == output  # gismu of tag, one to line
+      check outcome == text.toOutcomeGiven  # report names tanru, exit 0, no setting read
+
+
+  test "each failure reports as pipeline names; one leaving no gismu exits 1, printing nothing":
     let
       text = example("lojban").argument
       settings = Service.Claude.toSettings
       passage = text.toPassage
       request = requestService(settings, passage)
     var covered: set[Failure]
-    for reply in [
+    for i, reply in [
       toReplyError(Service.Claude, 529),
       toReplyStopped(Service.Claude, "refusal", settings.model),
       toReplyStopped(Service.Claude, "max_tokens", settings.model),
       Reply(status: 200, content_type: "application/json", body: "not json"),
       toReplyMessages(toAnswer(["datna"]), settings.model),
-      toReplyMessages(toAnswer(["ciska", "se"]), settings.model),
-      toReplyMessages(newSeqWith(COUNT_WORDS_MAX + 1, "ciska").toAnswer, settings.model),
-      toReplyMessages(toAnswer(["brodi", "ciska"]), settings.model),
+      toReplyMessages("{\"tags\":[7]}", settings.model),
     ]:
-      let suggestion = Service.Claude.readReply(reply)
-      check not suggestion.is_suggested  # reply reads as failure
-      if suggestion.is_suggested: continue
-      let directory_case = directory / "failures" / $suggestion.failure
+      let answer = Service.Claude.readReply(reply)
+      check answer.suggestions.gismu.len == 0  # reply keeps no gismu
+      if answer.suggestions.len == 0 or answer.suggestions[0].is_suggested: continue
+      let directory_case = directory / "failures" / $i
       writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
           reply: reply)])
-      check binary.run([], ["--replay:" & directory_case, text]) == toOutcome(suggestion,
+      check binary.run([], ["--replay:" & directory_case, text]) == toOutcome(answer,
           passage, settings.model, [noteReplayed(directory_case, request,
           LABEL_SUITE)])  # explained after note, nothing printed, exit 1
-      covered.incl suggestion.failure
+      covered.incl answer.suggestions[0].failure
+    let
+      repeated = toReplyMessages(toAnswer(["ciska", "Ciska"]), settings.model)
+      directory_repeated = directory / "failures" / "repeated"
+    writeRecordings(directory_repeated, [Recording(label: LABEL_SUITE, request: request,
+        reply: repeated)])
+    let outcome_repeated = binary.run([], ["--replay:" & directory_repeated, text])
+    check outcome_repeated == toOutcome(Service.Claude.readReply(repeated), passage,
+        settings.model, [noteReplayed(directory_repeated, request,
+        LABEL_SUITE)])  # repeat named after note
+    check outcome_repeated.code == 0 and
+        outcome_repeated.output == "ciska\n"  # `Duplicate` comes after gismu kept, so exit 0
+    check "Tag 2 should name gismu no earlier tag kept; got `Ciska`.\n" in
+        outcome_repeated.report  # binary names repeat as `Duplicate`, by position
+    covered.incl Failure.Duplicate
+    check binary.run([(KEY_SERVICE, "bogus")], [TEXT_GIVEN_LONG]) == Outcome(report: toSuggestion(
+        Failure.Long, "18").explain & "\n", code: 1)  # text given past cap of words
+    covered.incl Failure.Long
     let
       directory_none = directory / "failures" / "none"  # never made
       shown_none = pathShown(directory_none, request)
@@ -2784,7 +2852,7 @@ suite "Internal: Suggester":
       url_closed = urlLoopback(int(refusing.getLocalAddr[1]), PATH_SERVICE)
       refused = binary.run([(KEY_ENDPOINT, url_closed), (KEY_CREDENTIAL, CREDENTIAL_SUITE)], [text])
     refusing.close()
-    check refused.code == 1 and refused.output == ""  # no tag
+    check refused.code == 1 and refused.output == ""  # no gismu
     check refused.report.startsWith(noteCredential(KEY_CREDENTIAL) &
         "\nService or page should answer; got `")  # connection refused, named
     covered.incl Failure.Network

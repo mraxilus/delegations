@@ -1,4 +1,4 @@
-## Run `suggester`: read passage, ask service or recording, print tag checked against lists.
+## Run `suggester`: read passage, ask service or recording, print gismu checked against lists.
 ##   `nim r tools/build.nim suggester` compiles it to `binaries/suggester`, with TLS; steps are
 ##   in `suggestions.nim` and transport in `exchanges.nim`, which this file wires to
 ##   environment, sockets, files and streams.
@@ -6,19 +6,20 @@
 ##   |---------------------------|--------------------------------------------------------|
 ##   | Usage                     | Effect                                                 |
 ##   |---------------------------|--------------------------------------------------------|
-##   | suggester <text>...       | ask service for tag of text; print tag                 |
-##   | suggester <url>           | fetch page, then ask service for tag of its text       |
+##   | suggester <text>...       | ask service for tags of text; print each gismu         |
+##   | suggester <url>           | fetch page, then ask service for tags of its text      |
 ##   | suggester -               | read text of standard input, as text given goes        |
 ##   | --record:<directory>      | replay page of 2xx or 3xx, and service reply holding   |
 ##   |                           | answer model produced; send rest; write each reply     |
 ##   | --replay:<directory>      | read every exchange from recordings; send nothing      |
 ##   | --                        | end flags, so passage may open with `-`                |
 ##   |---------------------------|--------------------------------------------------------|
-##   Exit: 0 tag printed, 1 no tag and failure named, 2 usage, input or settings error, nothing
-##     sent.
+##   Exit: 0 gismu printed, 1 none kept and each failure named, 2 usage, input or settings error,
+##     nothing sent.
 ##
-##   Standard output gets tag alone, so `tagger tag <name> "$(suggester ...)"` composes both
-##     tools; report goes to standard error.
+##   Standard output gets each gismu kept, one to line, in order of answer, so
+##     `tagger tag <name> $(suggester ...)`, unquoted, takes each as tag: gismu holds five letters,
+##     so no glob or space enters split; report goes to standard error.
 ##   Argument opening with `-`, but `-` alone, is flag before text and after it, unless `--`
 ##     came first; flag usage does not take exits 2 before any setting, credential or socket, so
 ##     mistyped flag never goes out as passage of paid request.
@@ -28,9 +29,10 @@
 ##     host never goes out as passage of paid request. Problem names port rule where port alone
 ##     fails (`isPortFaulty`), else rule of authority, as RFC 3986 section 3.2 splits it.
 ##     Cost: such text goes as passage only through `-`.
-##   Text given that reads as tag already asks no service, so it needs no credential; text given
-##     whose passage holds no visible character (`isBlank`) once cut at `BYTES_PASSAGE_MAX`, as
-##     model reads it, exits 2, as page holding none gives no text.
+##   Text given that reads as tag already asks no service, so it needs no credential, and prints
+##     gismu of that tag, each once, cmavo left out; text given whose passage holds no visible
+##     character (`isBlank`) once cut at `BYTES_PASSAGE_MAX`, as model reads it, exits 2, as page
+##     holding none gives no text.
 ##     Cost: text is read into passage twice, once to test it and once to send it.
 ##     Cost: text of rarer default-ignorables alone, as U+180E, is not blank (`RANGES_BLANK`), so
 ##       it goes out.
@@ -53,8 +55,8 @@
 ##     refuses any value. It stays out of stamp, so recording replays under any workspace.
 ##   Second binary, not verb of `tagger`: `-d:ssl` loads libssl when program starts, so every
 ##     verb of `tagger` would need it; Architect chose second binary.
-##     Cost: second build and binary to ship, and tag from service runs two programs, as
-##       `tagger tag <name> "$(suggester ...)"` composes them.
+##     Cost: second build and binary to ship, and tags from service run two programs, as
+##       `tagger tag <name> $(suggester ...)` composes them.
 ##   Page redirects are followed here, at most `COUNT_REDIRECTS_MAX`, choosing proxy again for
 ##     each hop; https never falls to http, and URL seen twice ends loop. Service redirect is
 ##     never followed, so credential stays with its endpoint.
@@ -63,9 +65,9 @@
 ##       which page may give, never reaches report. Cost: token held in path is named.
 ##   Record mode makes its directory before it reads or sends, so directory it cannot make refuses
 ##     run with `Recording`, and nothing is paid for; recording it cannot write after reply is
-##     named in note, and tag still prints. Cost: failed send leaves empty directory behind.
+##     named in note, and gismu still print. Cost: failed send leaves empty directory behind.
 ##   Record mode replays service reply holding answer model produced (`isAnswered`), never by
-##     status alone: tag, and failure of answer itself, replay, so no answer is paid twice;
+##     status alone: tags, and failure of answer itself, replay, so no answer is paid twice;
 ##     refusal, error by status or inside 2xx, redirect, and body cut, coded or holding no JSON
 ##     object go out again, as OpenRouter answers 200 holding provider error, which it does not
 ##     bill and which passes, and as refusal names model to retry where fallback was skipped.
@@ -118,7 +120,7 @@ when compileOption("profiler"):
 import std/[asyncdispatch, net, options, os, sequtils, strutils, times, uri]
 from std/posix import close, mkdir, O_CREAT, O_EXCL, open, O_WRONLY
 
-import ../src/lojban_tagger/[suggestions, tags]
+import ../src/lojban_tagger/[dictionary, suggestions]
 import ./exchanges
 
 
@@ -557,8 +559,8 @@ proc fetch(url: string, command: Command, context: var SslContext): Fetched =
 #[ Entry ]#
 
 proc main(): int =
-  ## Read arguments and environment, build passage, ask service or recording, print tag and
-  ##   report.
+  ## Read arguments and environment, build passage, ask service or recording, print each gismu
+  ##   kept and report.
   let parsed = commandLineParams().readCommand
   if not parsed.is_read:
     if parsed.problem.len > 0: stderr.writeLine parsed.problem
@@ -583,14 +585,15 @@ proc main(): int =
       stderr.write USAGE
       return 2
 
-  # Answer text given as tag at once; else read settings and credential, then ask service.
+  # Answer text given as tag at once, by its gismu; else read settings and credential, then ask
+  #   service.
   if not command.is_url:
     let given = command.argument.readTagGiven
     if given.isSome and not given.get.is_suggested:
       stderr.writeLine given.get.explain
       return 1
     if given.isSome:
-      stdout.write $given.get.tag & "\n"
+      for w in [given.get].gismu: stdout.write $w & "\n"
       stderr.write toReportGiven(command.argument, given.get.tag)
       return 0
   let configured = readSettings(
@@ -635,15 +638,18 @@ proc main(): int =
     exchanged = exchange(settings.requestService(body), settings.endpoint, body,
         settings.toHeaders, credential, some(settings.service), BYTES_REPLY_MAX,
         MS_DEADLINE_SERVICE, command, context)
-    suggestion =
+    answer =
       if exchanged.is_replied: settings.service.readReply(exchanged.reply)
-      else: Suggestion(is_suggested: false, failure: exchanged.failure, detail: exchanged.detail)
+      else:
+        Answer(suggestions: @[
+          Suggestion(is_suggested: false, failure: exchanged.failure, detail: exchanged.detail),
+        ])
+    kept = answer.suggestions.gismu
   if exchanged.is_replied and exchanged.note.len > 0: notes.add exchanged.note
   for note in notes: stderr.writeLine note
-  stderr.write suggestion.toReport(passage, settings.model)
-  if not suggestion.is_suggested: return 1
-  stdout.write $suggestion.tag & "\n"
-  0
+  stderr.write answer.toReport(passage, settings.model)
+  for w in kept: stdout.write $w & "\n"
+  if kept.len > 0: 0 else: 1
 
 
 when isMainModule:

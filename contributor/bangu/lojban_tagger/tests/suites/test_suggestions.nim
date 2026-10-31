@@ -1,8 +1,8 @@
-## Hold `suggestions.nim` to its laws: answer becomes tag only as lists allow it, request bodies
-##   stay stable and fence passage, replies of both wire formats read to tag or named failure,
+## Hold `suggestions.nim` to its laws: answer gives gismu only as lists allow them, request bodies
+##   stay stable and fence passage, replies of both wire formats read to gismu or named failure,
 ##   pages read to text, and every report stays printable.
 ##   CLL covers no service, so suites are `Internal:`, tests named by behaviour (Article IX.10);
-##     `Chapter 4` holds what answer takes from 4.11 to 4.13 through `readTanru` and `$`.
+##     `Chapter 4` holds pattern of schema to shape of gismu, 4.4.
 ##   Replies are documented shapes with illustrative values, each citing its published page:
 ##     Message object of Messages API, chat completion of OpenRouter; two keyless 401 bodies
 ##     alone are captures, taken 2026-10-28.
@@ -10,7 +10,7 @@
 ##     Standard, index-windows-1252 and labels of WHATWG Encoding Standard, named references of
 ##     HTML, fields of each request body, models asking fallback with page of each; project
 ##     choices among them say so. Body of `chat` is one: standard fields of Chat Completions as
-##     OpenRouter reference gives them, since no OpenAI page was read.
+##     OpenRouter reference gives them, since no OpenAI reference of Chat Completions was read.
 ##   Random markup trees are written as markup, and reference walk reads text from tree itself,
 ##     so reader is held to tree, never to second parser of markup.
 ##   `Network`, `Recording` and `Page` arise in `app/suggester.nim` alone, so suite holds their
@@ -62,28 +62,28 @@ type
 
 
 const
-  SAMPLES_TANRU = 500  ## Random tanru 4.12 law reads, seeded.
-  FLOOR_READBACK = 450  ## Fewest random tanru whose form reads back; 473 read at seed `0`.
-  FLOOR_SHARED = 20  ## Fewest random tanru with shared `brod` before head; 27 read at seed `0`.
-  FLOOR_CMAVO = 220  ## Fewest random tanru holding cmavo; 254 read at seed `0`.
+  SAMPLES_GISMU = 500  ## Random lists of distinct gismu order law reads, seeded.
   SAMPLES_HYPHENED = 200
     ## Random words at `BYTES_ELEMENT_MAX` bytes whose every joint 4.11 hyphenates, seeded.
   FLOOR_REASON_LONG = 100
-    ## Fewest random words whose reason `RUNES_SHOWN` would cut; 128 read at seed `0`.
+    ## Fewest random words whose reason `RUNES_SHOWN` would cut; 131 read at seed `0`.
   SAMPLES_PASSAGE = 300  ## Random passages request laws read under each service, seeded.
   SAMPLES_REPLY = 1000  ## Random replies reading laws read under each service, seeded.
-  FLOOR_SUGGESTED = 45
-    ## Fewest random replies reading as tag under each service; 56 read under `claude`, 81 under
+  FLOOR_SUGGESTED = 110
+    ## Fewest random replies keeping gismu under each service; 136 read under `claude`, 162 under
     ##   others, at seed `0`.
   FLOOR_ANSWERED = 400
-    ## Fewest replies of `repliesKnown` and random ones holding answer under each service; 446
-    ##   read under `claude`, 807 under others, at seed `0`.
+    ## Fewest replies of `repliesKnown` and random ones holding answer under each service; 443
+    ##   read under `claude`, 820 under others, at seed `0`.
   SAMPLES_GIVEN = 20  ## Random lujvo of each count of words shortcut law reads, seeded.
   COUNT_WORDS_GIVEN_MAX = 18
     ## Most words shortcut law joins into one lujvo: as many as `TEXT_GIVEN_LONG` holds.
   FLOOR_GIVEN_LONG = 200
     ## Fewest random lujvo past `COUNT_WORDS_MAX` words within `BYTES_ELEMENT_MAX` bytes; 238 of
     ##   240 read at seed `0`.
+  FLOOR_GIVEN_GISMU = 100
+    ## Fewest random lujvo within `COUNT_WORDS_MAX` words that shortcut reads as tag; 120 of 120
+    ##   read at seed `0`.
   TEXT_GIVEN_LONG = "lotconrotybanbalbapybembedbejbesybefybevbixybimbolbogbotmlatu"
     ## Text reading as tag of 18 words in 61 bytes, which shortcut rendered without bound.
     ##   Sibling of `TEXT_GIVEN_LONG` in `test_suggester.nim` (II.9): each suite runs alone, and
@@ -150,9 +150,18 @@ const
     ##   Model of suite, empty one, capitalised one and one with provider prefix are inputs suite
     ##     owns, so no page names them; each asks, project choice.
   TOKENS_ANSWER = 16_000  ## Most tokens of answer each body asks, thinking included.
-  NAME_SCHEMA_ANSWER = "lojban_tag"  ## Name chat completion gives schema of answer.
-  PATTERN_LETTERS = "^['abcdefgijklmnoprstuvxyz]+$"
-    ## Pattern of word schema gives: letters of CLL 3.1, apostrophe first in byte order.
+  NAME_SCHEMA_ANSWER = "lojban_tags"  ## Name chat completion gives schema of answer.
+  PATTERN_GISMU_SUITE = "^[abcdefgijklmnoprstuvxz]{5}$"
+    ## Pattern of gismu schema gives: five letters, as CVC/CV and CCVCV hold them (CLL 4.4), each
+    ##   consonant of CLL 3.1 or vowel but `y`, in byte order.
+  URL_STRUCTURED = "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
+    ## Structured outputs page of Claude: JSON Schema limitations, read 2026-10-31.
+  KEYWORDS_REFUSED = [
+    "exclusiveMaximum", "exclusiveMinimum", "maxItems", "maximum", "maxLength", "minimum",
+    "minLength", "multipleOf", "uniqueItems",
+  ]
+    ## Keywords structured outputs of Claude refuse with 400, as `URL_STRUCTURED` gives them:
+    ##   numerical constraints, string constraints, and array constraints past `minItems` of 0 or 1.
   KEYS_FORBIDDEN = ["stream", "temperature", "top_k", "top_p"]
     ## Keys no body sends: sampling fields are 400 under `2026-10-21`, and reader reads no stream.
   CAPTURE_MESSAGES = "{\"type\":\"error\",\"error\":{\"type\":\"authentication_error\"," &
@@ -171,9 +180,23 @@ const
   ]
     ## Openings of `Malformed` detail naming reply around answer, never answer model gave: cap,
     ##   coding, body, stop or finish reason, choice.
-  GISMU_STEM_SHARED = ["brodi", "brodo", "brodu"]
-    ## Gismu holding no short rafsi, so only rafsi `$` writes for them before head is `brod`,
-    ##   which several share.
+  GISMU_KEPT = ["cukta", "ractu", "nixli"]  ## Gismu suite keeps around each tag it drops.
+  ANSWER_FAILED = Answer(
+    suggestions: @[Suggestion(is_suggested: false, failure: Failure.Status, detail: "529")],
+  )
+    ## Answer of reply failing whole, as after any failed run: report of it names passage facts.
+  TAGS_DROPPED = [
+    (item: """{"gismu":"cihska","gloss":"g"}""", failure: Failure.Word, detail: "cihska"),
+    (item: """{"gismu":"datna","gloss":"g"}""", failure: Failure.Word, detail: "datna"),
+    (item: """{"gismu":"se","gloss":"g"}""", failure: Failure.Word, detail: "se"),
+    (item: """{"gismu":"datnyvreji","gloss":"g"}""", failure: Failure.Word, detail: "datnyvreji"),
+    (item: "7", failure: Failure.Malformed, detail: "7"),
+    (item: """{"gismu":["cukta"],"gloss":"g"}""", failure: Failure.Malformed,
+        detail: """{"gismu":["cukta"],"gloss":"g"}"""),
+  ]
+    ## Tags answer may hold that are no gismu of list, each with failure and detail it drops as:
+    ##   word reader refuses, by letter and as unlisted; cmavo of list; lujvo; item no object; and
+    ##   item whose `gismu` is no string.
   WORDS_GISMU = block:
     ## Every gismu of list, by index; cmavo carrying rafsi left out.
     var words: seq[Word]
@@ -366,15 +389,15 @@ const
     ## URLs random passages come from: none, plain, holding every character element escapes in
     ##   query, which passage drops, and in path, which it keeps, and holding ill-formed UTF-8.
   KEYS_WIRE = [
-    "category", "choices", "code", "content", "error", "error_type", "finish_reason", "gloss",
-    "message", "metadata", "model", "recommended_model", "refusal", "stop_details",
-    "stop_reason", "tanru", "text", "type",
+    "category", "choices", "code", "content", "error", "error_type", "finish_reason", "gismu",
+    "gloss", "message", "metadata", "model", "recommended_model", "refusal", "stop_details",
+    "stop_reason", "tags", "text", "type",
   ]
     ## Keys random JSON draws: every key reader reads in either wire format.
   STRINGS_WIRE = [
     "", "end_turn", "refusal", "max_tokens", "text", "stop", "length", "content_filter",
     "error", "tool_calls", "content_policy_violation", "ciska", "se", "\x01\xFF",
-    "{\"tanru\":[\"ciska\"],\"gloss\":\"g\"}", "{\"tanru\":[\"se\"]}",
+    "{\"tags\":[{\"gismu\":\"ciska\",\"gloss\":\"g\"}]}", "{\"tags\":[{\"gismu\":\"se\"}]}",
   ]
     ## Strings random JSON draws: values reader branches on, words, and answers.
   WORDS_ANSWER = [
@@ -450,35 +473,59 @@ func tanru(text: string): Tag =
 
 
 func toAnswer(words: openArray[string], gloss: string = GLOSS_SUITE): string =
-  ## Render answer of schema naming words, as service sends it.
-  $ %*{"tanru": words, "gloss": gloss}
+  ## Render answer of schema naming each word as gismu of one tag, in order, as service sends it.
+  $ %*{"tags": words.mapIt(%*{"gismu": it, "gloss": gloss})}
 
 
-func tagRead(suggestion: Suggestion): Option[Tag] =
-  ## Read tag of suggestion; `none` where it failed.
-  if suggestion.is_suggested: some(suggestion.tag) else: none(Tag)
+func toAnswerItems(items: openArray[string]): string =
+  ## Render answer whose tags are items written as JSON, in order, as service sends it.
+  "{\"tags\":[" & items.join(",") & "]}"
+
+
+func keptRead(answer: Answer): seq[string] =
+  ## Read gismu of each tag answer keeps, in order.
+  for suggestion in answer.suggestions:
+    if suggestion.is_suggested: result.add suggestion.tag.toTanru
+
+
+func refusalsRead(answer: Answer): seq[(Option[int], Failure, string)] =
+  ## Read each refusal of answer, in order: position of tag it names, failure, and detail.
+  for suggestion in answer.suggestions:
+    if not suggestion.is_suggested:
+      result.add (suggestion.position, suggestion.failure, suggestion.detail)
 
 
 func failureRead(suggestion: Suggestion): Option[(Failure, string)] =
-  ## Read failure of suggestion with its detail; `none` where tag was suggested.
+  ## Read failure of suggestion with its detail; `none` where gismu was kept.
   if suggestion.is_suggested: none((Failure, string))
   else: some((suggestion.failure, suggestion.detail))
 
 
-func isAnswerRead(suggestion: Suggestion): bool =
-  ## Test reader read answer model gave: tag, or failure of answer itself, never of reply around
-  ##   it: no `Status`, no `Declined`, no `Malformed` opening with one of `DETAILS_REPLY`.
-  if suggestion.is_suggested: return true
-  case suggestion.failure
-  of Failure.Truncated, Failure.Word, Failure.Cmavo, Failure.Long, Failure.Readback: true
-  of Failure.Malformed: not DETAILS_REPLY.anyIt(suggestion.detail.startsWith(it))
+func failureRead(answer: Answer): Option[(Failure, string)] =
+  ## Read first refusal of answer with its detail, whatever tag it names; `none` where answer
+  ##   refuses nothing.
+  for suggestion in answer.suggestions:
+    if not suggestion.is_suggested: return suggestion.failureRead
+  none((Failure, string))
+
+
+func isAnswerRead(answer: Answer): bool =
+  ## Test reader read answer model gave: tags, kept or dropped, or failure of answer itself, never
+  ##   of reply around it: no `Status`, no `Declined`, no `Malformed` opening with one of
+  ##   `DETAILS_REPLY`. Reply failing whole holds one refusal alone, naming no tag.
+  if answer.suggestions.anyIt(it.is_suggested or it.position.isSome): return true
+  if answer.suggestions.len != 1: return false
+  let whole = answer.suggestions[0]
+  case whole.failure
+  of Failure.Truncated, Failure.Word, Failure.Duplicate, Failure.Long: true
+  of Failure.Malformed: not DETAILS_REPLY.anyIt(whole.detail.startsWith(it))
   of Failure.Network, Failure.Recording, Failure.Page, Failure.Status, Failure.Declined: false
 
 
 func tagGiven(text: string): Option[Tag] =
   ## Read tag shortcut takes from text given; `none` where text goes to service, or fails.
   let given = text.readTagGiven
-  if given.isSome: given.get.tagRead else: none(Tag)
+  if given.isSome and given.get.is_suggested: some(given.get.tag) else: none(Tag)
 
 
 func textField(field: Option[JsonNode]): string =
@@ -486,19 +533,53 @@ func textField(field: Option[JsonNode]): string =
   if field.isSome: field.get.getStr else: ""
 
 
-func isStemShared(words: openArray[string]): bool =
-  ## Test `$` must write shared `brod`: `brodi`, `brodo` or `brodu` stands before head.
-  for i in 0..<words.high:
-    if words[i] in GISMU_STEM_SHARED: return true
-  false
+func isMatched(text, pattern: string): bool =
+  ## Test text matches pattern of shape `^[<letters>]{<count>}$`, read from pattern itself: as
+  ##   many characters as count, each one of letters.
+  let
+    close = pattern.find(']')
+    letters = pattern[2..<close]
+    count = pattern[close+2 .. ^3].parseInt
+  text.len == count and text.allIt(it in letters)
 
 
-func isHeld(tag: Tag): bool =
-  ## Test tag holds what suggestion promises: one to `COUNT_WORDS_MAX` words, last one gismu,
-  ##   form reading back as same tag.
-  if tag.words.len notin 1..COUNT_WORDS_MAX or tag.words[^1].kind != Kind.Gismu: return false
-  let back = readTag($tag)
-  back.is_tag and back.tag == tag
+func isHeld(answer: Answer): bool =
+  ## Test answer holds what suggestion promises: at most `COUNT_TAGS_MAX` tags read; each kept
+  ##   tag one listed gismu, kept once; each refusal naming tag at its own position, or none
+  ##   where it stands alone for reply failing whole.
+  if answer.suggestions.len > COUNT_TAGS_MAX: return false
+  var kept: seq[Word]
+  for i, suggestion in answer.suggestions:
+    if not suggestion.is_suggested:
+      if suggestion.position.isSome and suggestion.position.get != i + 1: return false
+      if suggestion.position.isNone and answer.suggestions.len > 1: return false
+      continue
+    let words = suggestion.tag.words
+    if words.len != 1 or words[0].kind != Kind.Gismu or words[0] in kept: return false
+    kept.add words[0]
+  true
+
+
+func keywordsSchema(node: JsonNode): seq[(string, JsonNode)] =
+  ## List each keyword of each schema node holds, at any depth, with its value: keys of object
+  ##   under `properties` name properties, so walk takes their schemas, never them as keywords.
+  if node.kind != JObject: return
+  for key, value in node.pairs:
+    result.add (key, value)
+    case key
+    of "properties":
+      for _, schema in value.pairs: result.add schema.keywordsSchema
+    of "items": result.add value.keywordsSchema
+    else: discard
+
+
+func objectsSchema(node: JsonNode): seq[JsonNode] =
+  ## List each schema of type object node holds, at any depth, itself included.
+  if node.kind != JObject: return
+  if node{"type"}.getStr == "object": result.add node
+  if node{"properties"} != nil and node["properties"].kind == JObject:
+    for _, schema in node["properties"].pairs: result.add schema.objectsSchema
+  if node{"items"} != nil: result.add node["items"].objectsSchema
 
 
 func toReply(node: JsonNode, status = 200): Reply =
@@ -539,15 +620,26 @@ func toBodyDocumented(settings: Settings, element: string): JsonNode =
   ## Build body each service takes for settings and user turn, keys in order sent: Messages API
   ##   reference, and chat completion of OpenRouter; fallback by `ROWS_FALLBACK`.
   ##   Body of `chat` is project choice: standard fields of Chat Completions as OpenRouter
-  ##     reference documents them, since no OpenAI page was read (intended).
+  ##     reference documents them, since no OpenAI reference of Chat Completions was read
+  ##     (intended).
   let schema = %*{
     "type": "object",
     "properties": {
-      "tanru": {"type": "array", "items": {"type": "string", "pattern": PATTERN_LETTERS},
-          "minItems": 1},
-      "gloss": {"type": "string"},
+      "tags": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "properties": {
+            "gismu": {"type": "string", "pattern": PATTERN_GISMU_SUITE},
+            "gloss": {"type": "string"},
+          },
+          "required": ["gismu", "gloss"],
+          "additionalProperties": false,
+        },
+      },
     },
-    "required": ["tanru", "gloss"],
+    "required": ["tags"],
     "additionalProperties": false,
   }
   let format = %*{
@@ -646,12 +738,12 @@ func dropSecretsReference(url: string): string =
   result.add url[at..<stop]
 
 
-proc readGuarded(service: Service, reply: Reply): Option[Suggestion] =
+proc readGuarded(service: Service, reply: Reply): Option[Answer] =
   ## Read reply, catching any exception, defect included; `none` where reading raised.
   try:
     some(readReply(service, reply))
   except Exception:
-    none(Suggestion)
+    none(Answer)
 
 
 proc isAnsweredGuarded(service: Service, reply: Reply): Option[bool] =
@@ -1183,8 +1275,8 @@ func bodiesError(): array[3, string] =
 
 
 func rowsMessages(): seq[(Reply, (Failure, string))] =
-  ## List reply table of Messages API: each reply with failure and detail it reads as under
-  ##   `claude`, so every failure reply alone can name is reached.
+  ## List reply table of Messages API: each reply with first failure and detail it reads as
+  ##   under `claude`, so every failure reply alone can name is reached, tag of answer included.
   let answer = bodyAnswer(Service.Claude)
   @[
     (Reply(status: 200, body: answer, is_cut: true),
@@ -1225,12 +1317,9 @@ func rowsMessages(): seq[(Reply, (Failure, string))] =
     (toMessage(%*[{"type": "text", "text": "I cannot help."}]),
         (Failure.Malformed, "answer is no JSON object: I cannot help.")),
     (toMessage(%*[{"type": "text", "text": toAnswer(["datna"])}]), (Failure.Word, "datna")),
-    (toMessage(%*[{"type": "text", "text": toAnswer(["ciska", "se"])}]),
-        (Failure.Cmavo, "ciska+se")),
-    (toMessage(%*[{"type": "text", "text": newSeqWith(7, "ciska").toAnswer}]),
-        (Failure.Long, "7")),
-    (toMessage(%*[{"type": "text", "text": toAnswer(["brodi", "ciska"])}]),
-        (Failure.Readback, "brodyci'a")),
+    (toMessage(%*[{"type": "text", "text": toAnswer(["ciska", "ciska"])}]),
+        (Failure.Duplicate, "ciska")),
+    (toMessage(%*[{"type": "text", "text": toAnswerItems(["7"])}]), (Failure.Malformed, "7")),
   ]
 
 
@@ -1258,8 +1347,9 @@ func rowsRefusal(): seq[(Reply, string)] =
 
 
 func rowsCompletion(): seq[(Reply, (Failure, string))] =
-  ## List reply table of chat completion: each reply with failure and detail it reads as under
-  ##   either chat format, so every failure reply alone can name is reached.
+  ## List reply table of chat completion: each reply with first failure and detail it reads as
+  ##   under either chat format, so every failure reply alone can name is reached, tag of answer
+  ##   included.
   @[
     (Reply(status: 200, body: "{}", is_cut: true),
         (Failure.Malformed, "reply over 1048576 bytes")),
@@ -1306,11 +1396,9 @@ func rowsCompletion(): seq[(Reply, (Failure, string))] =
     (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["datna"])}}),
         (Failure.Word, "datna")),
     (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["ciska",
-        "se"])}}), (Failure.Cmavo, "ciska+se")),
-    (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(
-        newSeqWith(8, "ciska"))}}), (Failure.Long, "8")),
-    (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["brodo",
-        "ciska"])}}), (Failure.Readback, "brodyci'a")),
+        "Ciska"])}}), (Failure.Duplicate, "Ciska")),
+    (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswerItems(
+        ["{\"gloss\":\"x\"}"])}}), (Failure.Malformed, "{\"gloss\":\"x\"}")),
   ]
 
 
@@ -1403,21 +1491,16 @@ func repliesKnown(): seq[Reply] =
 
 #[ Pools ]#
 
-proc poolTanru(): seq[seq[string]] =
-  ## Draw `SAMPLES_TANRU` tanru into pool allocated once: one to `COUNT_WORDS_MAX` words, head
-  ##   gismu, each word before it cmavo one time in three, else shared `brod` gismu one time in
-  ##   twenty-five; caller seeds first.
-  result = newSeqOfCap[seq[string]](SAMPLES_TANRU)
-  for _ in 1..SAMPLES_TANRU:
-    let count = rand(1..COUNT_WORDS_MAX)
+proc poolGismu(): seq[seq[string]] =
+  ## Draw `SAMPLES_GISMU` lists of distinct gismu into pool allocated once: one to
+  ##   `COUNT_TAGS_MAX` gismu of list, each drawn again where list holds it; caller seeds first.
+  result = newSeqOfCap[seq[string]](SAMPLES_GISMU)
+  for _ in 1..SAMPLES_GISMU:
     var words: seq[string]
-    for i in 1..count:
-      words.add (
-        if i == count: $WORDS_GISMU.sample
-        elif rand(2) == 0: $WORDS_CMAVO.sample
-        elif rand(24) == 0: GISMU_STEM_SHARED.sample
-        else: $WORDS_GISMU.sample
-      )
+    for _ in 1..rand(1..COUNT_TAGS_MAX):
+      var word = $WORDS_GISMU.sample
+      while word in words: word = $WORDS_GISMU.sample
+      words.add word
     result.add words
 
 
@@ -1561,18 +1644,23 @@ proc jsonRandom(depth: int): JsonNode =
 
 
 proc answerRandom(): string =
-  ## Draw answer of schema: tanru of zero to eight words, gismu alone half time, else words of
-  ##   `WORDS_ANSWER` with one in ten no string; gloss of any kind one time in four.
+  ## Draw answer of schema: zero to eight tags, or one time in ten past `COUNT_TAGS_MAX`; gismu of
+  ##   list alone half time, else words of `WORDS_ANSWER`, with one tag in ten no object and one
+  ##   gismu in ten no string; gloss of any kind one time in four.
   let
-    words = newJArray()
+    tags = newJArray()
     is_gismu = rand(1) == 0
-  for _ in 1..rand(0..8):
-    words.add (
+    count = if rand(9) == 0: rand(COUNT_TAGS_MAX + 1 .. COUNT_TAGS_MAX + 8) else: rand(0..8)
+  for _ in 1..count:
+    if rand(9) == 0:
+      tags.add jsonRandom(1)
+      continue
+    let gismu =
       if is_gismu: newJString($WORDS_GISMU.sample)
       elif rand(9) == 0: newJInt(rand(9))
       else: newJString(WORDS_ANSWER.sample)
-    )
-  $ %*{"tanru": words, "gloss": (if rand(3) == 0: jsonRandom(1) else: %GLOSS_SUITE)}
+    tags.add %*{"gismu": gismu, "gloss": (if rand(3) == 0: jsonRandom(1) else: %GLOSS_SUITE)}
+  $ %*{"tags": tags}
 
 
 proc replyRandom(): Reply =
@@ -1612,51 +1700,11 @@ iterator served[T](pool: seq[T]): lent T =
 
 
 suite "Chapter 4":
-  test "Section 4.11":
-    let ciska = "ciska".word.get
-    check WORDS_CMAVO.len == COUNT_CMAVO  # every cmavo of list carrying rafsi
-    for w in WORDS_CMAVO:  # 94 cmavo, exhaustive
-      let text = $w
-      check readAnswer(toAnswer([text]), MODEL_SUITE).failureRead ==
-          some((Failure.Cmavo, text))  # 4.11 step 2, tanru ends in gismu; cmavo alone ends none
-      check readAnswer(toAnswer(["ciska", text]), MODEL_SUITE).failureRead ==
-          some((Failure.Cmavo, "ciska+" & text))  # 4.11 step 2, cmavo may not end tanru
-      check readAnswer(toAnswer([text, "ciska"]), MODEL_SUITE).tagRead ==
-          some(Tag(words: @[w, ciska]))  # 4.11 step 2, cmavo before gismu it changes stands
-    let explained = readAnswer(toAnswer(["ciska", "se"]), MODEL_SUITE).explain
-    check explained ==
-        "Answer should end in gismu, as CLL 4.11 step 2 ends tanru; got `ciska+se`."  # 4.11
-
-
-  test "Section 4.12-13":
-    for (words, form) in [
-      (@["gerku", "zdani"], "gerzda"),
-      (@["bloti", "klesi"], "blolei"),
-      (@["logji", "bangu", "girzu"], "lojbaugri"),
-      (@["nakni", "ke", "cinse", "ctuca"], "nakykemcinctu"),
-    ]:  # every lujvo 4.13 scores, exhaustive
-      check readAnswer(words.toAnswer, MODEL_SUITE).tagRead.map(`$`) ==
-          some(form)  # 4.13, form scoring lowest is printed
-    randomize(0)
-    let pool = poolTanru()
-    var (count_readback, count_shared, count_cmavo) = (0, 0, 0)
-    for words in served(pool):  # `SAMPLES_TANRU` tanru, seeded
-      let
-        tag = words.join("+").tanru
-        suggestion = readAnswer(words.toAnswer, MODEL_SUITE)
-      if words.anyIt(it.word.get.kind == Kind.Cmavo): inc count_cmavo
-      if words.isStemShared:
-        check suggestion.failureRead == some((Failure.Readback, $tag))  # 4.12 form holds `brod`
-        check not ($tag).readTag.is_tag and
-            ($tag).readTag.refusal == Refusal.Ambiguous  # `brod` names several gismu (4.6)
-        inc count_shared
-        continue
-      check suggestion.tagRead == some(tag)  # 4.5, lujvo stands for tanru of its words
-      check readTag($tag).is_tag and readTag($tag).tag == tag  # 4.12, form reads back as tag
-      inc count_readback
-    check count_readback >= FLOOR_READBACK  # guard keeps most tanru
-    check count_shared >= FLOOR_SHARED  # corpus reaches shared stem often enough
-    check count_cmavo >= FLOOR_CMAVO  # corpus holds cmavo often
+  test "Section 4.4":
+    check PATTERN_GISMU == PATTERN_GISMU_SUITE  # five letters, `LETTERS` less `y` and apostrophe
+    check WORDS_GISMU.len == COUNT_GISMU  # every gismu of list
+    for w in WORDS_GISMU:  # 1342 gismu, exhaustive
+      check ($w).isMatched(PATTERN_GISMU_SUITE)  # 4.4, gismu is CVC/CV or CCVCV
 
 
 
@@ -1664,124 +1712,178 @@ suite "Internal: Answer":
   test "each gismu of list alone suggests itself":
     check WORDS_GISMU.len == COUNT_GISMU  # every gismu of list
     for w in WORDS_GISMU:  # 1342 gismu, exhaustive
-      check readAnswer(toAnswer([$w]), MODEL_SUITE).tagRead ==
-          some(Tag(words: @[w]))  # listed gismu is its own tag
-    let suggestion = readAnswer(toAnswer(["ciska"], "writing"), MODEL_SUITE)
-    check suggestion.is_suggested and suggestion.gloss == "writing"  # gloss as model gave it
-    check suggestion.is_suggested and suggestion.model == MODEL_SUITE  # model reply names
+      check readAnswer(toAnswer([$w]), MODEL_SUITE).keptRead == @[$w]  # listed gismu is own tag
+    let answer = readAnswer(toAnswer(["ciska"], "writing"), MODEL_SUITE)
+    check answer.suggestions[0].is_suggested and
+        answer.suggestions[0].gloss == "writing"  # gloss as model gave it
+    check answer.keptRead == @["ciska"] and answer.model == MODEL_SUITE  # model reply names
 
 
   test "word is folded as reader folds it: case, commas, spaces at ends":
     for text in ["Ciska", "CISKA", "ci,ska", ",ciska,", " ciska ", "\tciska\n", "Ci,Ska "]:
-      check readAnswer(toAnswer([text]), MODEL_SUITE).tagRead ==
-          some(tanru("ciska"))  # folding of `tags.nim`, project choice
-    check readAnswer(toAnswer(["Se", "CI,SKA"]), MODEL_SUITE).tagRead ==
-        some(tanru("se+ciska"))  # cmavo folds too
+      check readAnswer(toAnswer([text]), MODEL_SUITE).keptRead ==
+          @["ciska"]  # folding of `tags.nim`, project choice
+    let folded = readAnswer(toAnswer(["Se", "CI,SKA"]), MODEL_SUITE)
+    check folded.refusalsRead == @[(some(1), Failure.Word, "Se")]  # cmavo folds too, no gismu
+    check folded.suggestions[0].explain ==
+        "Tag 1 should be one gismu of list; got `Se`."  # folds to listed cmavo; no reader reason
+    check folded.keptRead == @["ciska"]  # gismu after it folds and stays
 
 
-  test "lujvo element stands for its tanru, counted after expansion":
-    check readAnswer(toAnswer(["datnyvreji"]), MODEL_SUITE).tagRead ==
-        some(tanru("datni+vreji"))  # CLL 4.5, lujvo stands for its tanru
-    check readAnswer(toAnswer(["datnyvei", "ciska"]), MODEL_SUITE).tagRead ==
-        some(tanru("datni+vreji+ciska"))  # expansion keeps order of words
-    check readAnswer(toAnswer(["selci'a"]), MODEL_SUITE).tagRead ==
-        some(tanru("se+ciska"))  # ruling: lujvo keeps cmavo it holds
-    check readAnswer(toAnswer(["datnyvei", "ciska", "ciska", "ciska", "ciska"]),
-        MODEL_SUITE).tagRead ==
-        some(tanru("datni+vreji+ciska+ciska+ciska+ciska"))  # six words after expansion pass
-    check readAnswer(toAnswer(["datnyvei", "ciska", "ciska", "ciska", "ciska", "ciska"]),
-        MODEL_SUITE).failureRead == some((Failure.Long, "7"))  # seven after expansion are Long
+  test "several gismu are kept in order of answer, each with its gloss":
+    randomize(0)
+    let pool = poolGismu()
+    for words in served(pool):  # `SAMPLES_GISMU` lists of 1 to 32 distinct gismu, seeded
+      let answer = readAnswer(toAnswer(words), MODEL_SUITE)
+      check answer.keptRead == words  # every gismu kept, in order of answer
+      check answer.suggestions.allIt(it.is_suggested and it.gloss == GLOSS_SUITE)  # each glossed
+      check answer.count_cut == 0  # within cap, none cut
+    let glossed = readAnswer($ %*{"tags": [{"gismu": "cukta", "gloss": "book"},
+        {"gismu": "ractu", "gloss": "rabbit"}]}, MODEL_SUITE)
+    check glossed.suggestions.mapIt(it.gloss) == @["book", "rabbit"]  # gloss of each tag own
+
+
+  test "tag that is no gismu of list is dropped alone, named by position, and rest kept":
+    for (item, failure, detail) in TAGS_DROPPED:  # 6 kinds of tag that is no gismu, exhaustive
+      for at in 0..GISMU_KEPT.len:  # each position among gismu kept, exhaustive
+        var items = GISMU_KEPT.mapIt("{\"gismu\":\"" & it & "\",\"gloss\":\"g\"}")
+        items.insert(item, at)
+        let
+          answer = readAnswer(items.toAnswerItems, MODEL_SUITE)
+          heading = "Tag " & $(at + 1)
+          is_refused = failure == Failure.Word and not detail.readTag.is_tag and
+              detail.word.isNone  # Reader refuses word, and list holds no such cmavo.
+          explained =
+            if failure == Failure.Malformed:
+              heading & " should be object holding string `gismu`; got `" & detail & "`."
+            elif is_refused: heading & " should be one gismu of list. " & detail.readTag.explain
+            else: heading & " should be one gismu of list; got `" & detail & "`."
+        check answer.keptRead == @GISMU_KEPT  # rest kept, in order
+        check answer.refusalsRead == @[(some(at + 1), failure, detail)]  # dropped, at position
+        check answer.suggestions[at].explain == explained  # named by position, with reason
+        check answer.suggestions.gismu.mapIt($it) == @GISMU_KEPT  # printed: rest alone
+    for at in 1..GISMU_KEPT.len:  # each position after gismu it repeats, exhaustive
+      var words = @GISMU_KEPT
+      words.insert(GISMU_KEPT[0].toUpperAscii, at)  # Folded, so equal once read.
+      let answer = readAnswer(words.toAnswer, MODEL_SUITE)
+      check answer.keptRead == @GISMU_KEPT  # first kept, repeat dropped
+      check answer.refusalsRead == @[(some(at + 1), Failure.Duplicate,
+          GISMU_KEPT[0].toUpperAscii)]  # dropped as `Duplicate`, at its position
+      check answer.suggestions[at].explain == "Tag " & $(at + 1) & " should name gismu no " &
+          "earlier tag kept; got `" & GISMU_KEPT[0].toUpperAscii & "`."  # named as answered
+
+
+  test "every cmavo of list is dropped as no gismu of list, gismu around it kept":
+    check WORDS_CMAVO.len == COUNT_CMAVO  # every cmavo of list carrying rafsi
+    for w in WORDS_CMAVO:  # 94 cmavo, exhaustive
+      let answer = readAnswer(toAnswer(["cukta", $w, "ractu"]), MODEL_SUITE)
+      check answer.keptRead == @["cukta", "ractu"]  # gismu around cmavo kept
+      check answer.refusalsRead == @[(some(2), Failure.Word, $w)]  # cmavo dropped at position
+      check answer.suggestions[1].explain ==
+          "Tag 2 should be one gismu of list; got `" & $w & "`."  # listed, yet no gismu
+
+
+  test "every tag refused gives no gismu, and names each refusal in order":
+    var count_sequences = 0
+    for length in 1..3:  # one to three tags
+      var total = 1
+      for _ in 1..length: total *= TAGS_DROPPED.len
+      for code in 0..<total:  # every sequence of kinds of `TAGS_DROPPED`, exhaustive
+        var (rest, kinds) = (code, newSeq[int]())
+        for _ in 1..length:
+          kinds.add rest mod TAGS_DROPPED.len
+          rest = rest div TAGS_DROPPED.len
+        let
+          answer = readAnswer(kinds.mapIt(TAGS_DROPPED[it].item).toAnswerItems, MODEL_SUITE)
+          expected = toSeq(0..<length).mapIt(
+              (some(it + 1), TAGS_DROPPED[kinds[it]].failure, TAGS_DROPPED[kinds[it]].detail))
+        check answer.keptRead.len == 0  # no gismu kept
+        check answer.suggestions.gismu.len == 0  # nothing to print, so run exits 1
+        check answer.refusalsRead == expected  # each refusal, in order, none `Duplicate`
+        inc count_sequences
+    check count_sequences == 258  # 6 + 36 + 216 sequences of kinds
 
 
   test "unlisted word, letter outside lists, word of no shape and long element give Word":
     for element in ["datna", "cihska", "lo", "qwzx", "zbadoi", "ciska+se", "two words", ""]:
-      let suggestion = readAnswer(toAnswer([element, "ciska"]), MODEL_SUITE)
-      check suggestion.failureRead == some((Failure.Word, element))  # element named as given
-      check suggestion.explain == "Answer should name gismu or cmavo of list. " &
+      let answer = readAnswer(toAnswer([element, "ciska"]), MODEL_SUITE)
+      check answer.failureRead == some((Failure.Word, element))  # element named as given
+      check answer.suggestions[0].explain == "Tag 1 should be one gismu of list. " &
           element.readTag.explain  # reason of reader, worded once in `commands.nim`
     let (edge, long) = ("a".repeat(BYTES_ELEMENT_MAX), "a".repeat(BYTES_ELEMENT_MAX + 1))
-    check readAnswer(toAnswer([edge]), MODEL_SUITE).explain ==
-        "Answer should name gismu or cmavo of list. " & edge.readTag.explain  # cap reaches reader
+    check readAnswer(toAnswer([edge]), MODEL_SUITE).suggestions[0].explain ==
+        "Tag 1 should be one gismu of list. " & edge.readTag.explain  # cap reaches reader
     let refused = readAnswer(toAnswer([long]), MODEL_SUITE)
     check refused.failureRead == some((Failure.Word, long))  # past cap, element named
-    check refused.explain == "Word of answer should hold at most 64 bytes; got `" & long &
+    check refused.suggestions[0].explain == "Tag 1 should hold at most 64 bytes; got `" & long &
         "`."  # reader never runs past cap
 
 
   test "explain judges and explains word as answered, never by detail that escapes change":
     let found = "\x01".repeat(13)  # case as found in suite review: 13 bytes judged past cap
-    check readAnswer(toAnswer([found]), MODEL_SUITE).explain ==
-        "Answer should name gismu or cmavo of list. " &
+    check readAnswer(toAnswer([found]), MODEL_SUITE).suggestions[0].explain ==
+        "Tag 1 should be one gismu of list. " &
         found.readTag.explain.toPrintableReference(high(int))  # judged by bytes as answered
-    check readAnswer(toAnswer(["café"]), MODEL_SUITE).explain == "Answer should name " &
-        "gismu or cmavo of list. Tag should hold Lojban letters alone; got `é` in " &
+    check readAnswer(toAnswer(["café"]), MODEL_SUITE).suggestions[0].explain == "Tag 1 " &
+        "should be one gismu of list. Tag should hold Lojban letters alone; got `é` in " &
         "`café`."  # review finding logic-6, 2026-10-29: named byte `C3` alone
-    check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).explain == "Answer should name " &
-        "gismu or cmavo of list. Tag should hold Lojban letters alone; got `\\u{1}` in " &
+    check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).suggestions[0].explain == "Tag 1 " &
+        "should be one gismu of list. Tag should hold Lojban letters alone; got `\\u{1}` in " &
         "`ci\\u{1}ska`."  # review finding logic-6, 2026-10-29: named `\`, never answered
     for filler in FILLERS_WORD:  # 8 characters, one of each kind it names, not every character
       for count in 1 .. BYTES_ELEMENT_MAX + 1:  # each length to cap and past it, exhaustive
         let
           element = filler.repeat(count)
-          suggestion = readAnswer(toAnswer([element]), MODEL_SUITE)
+          answer = readAnswer(toAnswer([element]), MODEL_SUITE)
           detail = element.toPrintableReference(RUNES_SHOWN)
           explained =
             if element.len > BYTES_ELEMENT_MAX:
-              "Word of answer should hold at most 64 bytes; got `" & detail & "`."
+              "Tag 1 should hold at most 64 bytes; got `" & detail & "`."
             else:
-              "Answer should name gismu or cmavo of list. " &
+              "Tag 1 should be one gismu of list. " &
                   element.readTag.explain.toPrintableReference(high(int))
-        check suggestion.failureRead == some((Failure.Word, detail))  # word named, printable
-        check suggestion.explain == explained  # judged and explained as answered, cap included
-        check suggestion.explain.isPrintable  # whole characters, none report escapes
-    check readAnswer(toAnswer(["brodi", "ciska"]), MODEL_SUITE).explain == "Form should read " &
-        "back as its tag. Rafsi should name one gismu; got `brod`, which several share, in " &
-        "`brodyci'a`."  # form `$` wrote is explained as read too, unchanged
+        check answer.failureRead == some((Failure.Word, detail))  # word named, printable
+        check answer.suggestions[0].explain == explained  # judged and explained as answered
+        check answer.suggestions[0].explain.isPrintable  # whole characters, none report escapes
 
 
-  test "reason of word or form within caps is kept whole, so explanation ends in its value":
+  test "reason of word within cap is kept whole, so explanation ends in its value":
     let found = "bab".repeat(20) & "ba'i"  # case as found: form 4.11 gives holds 84 letters
     check found.len == BYTES_ELEMENT_MAX  # at cap, so reader reads it
-    let explained = readAnswer(toAnswer([found]), MODEL_SUITE).explain
-    check explained == "Answer should name gismu or cmavo of list. " &
+    let explained = readAnswer(toAnswer([found]), MODEL_SUITE).suggestions[0].explain
+    check explained == "Tag 1 should be one gismu of list. " &
         found.readTag.explain  # recheck claim regressions-src-1, 2026-10-29: ended in `…`
     check explained.endsWith("`.")  # IV.4, message ends in its value, never in cut
     randomize(0)
-    let (pool_tanru, pool_hyphened) = (poolTanru(), poolHyphened())
-    var (count_long, count_readback) = (0, 0)
-    for word in served(pool_hyphened):  # `SAMPLES_HYPHENED` words, seeded
+    let pool = poolHyphened()
+    var count_long = 0
+    for word in served(pool):  # `SAMPLES_HYPHENED` words, seeded
       let
         reason = word.readTag.explain.toPrintableReference(high(int))
-        explained = readAnswer(toAnswer([word]), MODEL_SUITE).explain
-      check explained == "Answer should name gismu or cmavo of list. " &
+        explained = readAnswer(toAnswer([word]), MODEL_SUITE).suggestions[0].explain
+      check explained == "Tag 1 should be one gismu of list. " &
           reason  # reason of reader kept whole, made printable
       check explained.endsWith("`.")  # IV.4, message ends in its value
       if reason != word.readTag.explain.toPrintableReference(RUNES_SHOWN): inc count_long
-    for words in served(pool_tanru):  # `SAMPLES_TANRU` tanru, seeded
-      let suggestion = readAnswer(words.toAnswer, MODEL_SUITE)
-      if suggestion.is_suggested: continue
-      check suggestion.failure == Failure.Readback and
-          suggestion.explain.endsWith("`.")  # IV.4, form refused ends in its value
-      inc count_readback
     check count_long >= FLOOR_REASON_LONG  # corpus reaches reasons display cap would cut
-    check count_readback >= FLOOR_SHARED  # corpus reaches forms refused on reading back
 
 
-  test "count of words: none is Malformed, one to six pass, seven and eight are Long":
-    let ciska = "ciska".word.get
-    for count in 0 .. COUNT_WORDS_MAX + 2:  # 0 to 8, exhaustive
+  test "count of tags: none is Malformed, first `COUNT_TAGS_MAX` read, rest counted unread":
+    for count in 0 .. 2 * COUNT_TAGS_MAX:  # 0 to 64, exhaustive
       let
-        listed = readAnswer(newSeqWith(count, "ciska").toAnswer, MODEL_SUITE)
+        words = WORDS_GISMU[0..<count].mapIt($it)
+        listed = readAnswer(words.toAnswer, MODEL_SUITE)
         unlisted = readAnswer(newSeqWith(count, "datna").toAnswer, MODEL_SUITE)
+        read = min(count, COUNT_TAGS_MAX)
       if count == 0:
-        check listed.failureRead == some((Failure.Malformed, "answer holds empty tanru"))  # none
+        check listed.failureRead == some((Failure.Malformed, "answer holds empty tags"))  # none
         check unlisted.failureRead == listed.failureRead  # nothing to read
-      elif count <= COUNT_WORDS_MAX:
-        check listed.tagRead == some(Tag(words: newSeqWith(count, ciska)))  # within cap
-        check unlisted.failureRead == some((Failure.Word, "datna"))  # each word then read
-      else:
-        check listed.failureRead == some((Failure.Long, $count))  # past cap, count named
-        check unlisted.failureRead == listed.failureRead  # count read before any word
+        continue
+      check listed.keptRead == words[0..<read]  # first tags read, in order
+      check listed.count_cut == count - read  # rest counted, never read
+      check unlisted.refusalsRead ==
+          toSeq(1..read).mapIt((some(it), Failure.Word, "datna"))  # each read, none past cap
+      check unlisted.count_cut == listed.count_cut  # count read before any word
 
 
   test "gloss collapses its spaces and is made printable, as model is":
@@ -1793,17 +1895,18 @@ suite "Internal: Answer":
       ("bad \xFF byte", "bad \uFFFD byte"),
       ("x".repeat(RUNES_SHOWN + 1), "x".repeat(RUNES_SHOWN) & "\u2026"),
     ]:
-      let suggestion = readAnswer(toAnswer(["ciska"], raw), MODEL_SUITE)
+      let suggestion = readAnswer(toAnswer(["ciska"], raw), MODEL_SUITE).suggestions[0]
       check suggestion.is_suggested and suggestion.gloss == gloss  # collapsed, then printable
-    for answer in ["{\"tanru\":[\"ciska\"]}", "{\"tanru\":[\"ciska\"],\"gloss\":7}"]:
-      let suggestion = readAnswer(answer, MODEL_SUITE)
+    for answer in ["{\"tags\":[{\"gismu\":\"ciska\"}]}",
+        "{\"tags\":[{\"gismu\":\"ciska\",\"gloss\":7}]}"]:
+      let suggestion = readAnswer(answer, MODEL_SUITE).suggestions[0]
       check suggestion.is_suggested and suggestion.gloss == ""  # gloss never changes tag
     let named = readAnswer(toAnswer(["ciska"]), "claude\x1B[2J")
-    check named.is_suggested and named.model == "claude\\u{1B}[2J"  # model made printable
+    check named.keptRead == @["ciska"] and named.model == "claude\\u{1B}[2J"  # model printable
     randomize(0)
     let pool = poolPrintable()
     for (text, _) in served(pool):  # `SAMPLES_BYTES` texts, seeded
-      let suggestion = readAnswer(toAnswer(["ciska"], text), MODEL_SUITE)
+      let suggestion = readAnswer(toAnswer(["ciska"], text), MODEL_SUITE).suggestions[0]
       check suggestion.is_suggested and suggestion.gloss.isPrintable  # no control or mark
       check suggestion.is_suggested and suggestion.gloss == suggestion.gloss.strip and
           "  " notin suggestion.gloss  # spaces collapsed
@@ -1814,17 +1917,26 @@ suite "Internal: Answer":
       ("ciska", "answer is no JSON object: ciska"),
       ("[\"ciska\"]", "answer is no JSON object: [\"ciska\"]"),
       ("", "answer is no JSON object: "),
-      ("{\"gloss\":\"x\"}", "answer holds no tanru array"),
-      ("{\"tanru\":\"ciska\"}", "answer holds no tanru array"),
-      ("{\"tanru\":null}", "answer holds no tanru array"),
-      ("{\"tanru\":[]}", "answer holds empty tanru"),
-      ("{\"tanru\":[\"se\",7]}", "tanru holds no string: 7"),
-      ("{\"tanru\":[[\"ciska\"]]}", "tanru holds no string: [\"ciska\"]"),
+      ("{\"gloss\":\"x\"}", "answer holds no tags array"),
+      ("{\"tags\":\"ciska\"}", "answer holds no tags array"),
+      ("{\"tags\":null}", "answer holds no tags array"),
+      ("{\"tags\":[]}", "answer holds empty tags"),
       ("x".repeat(100), "answer is no JSON object: " & "x".repeat(80) & "\u2026"),
       ("[".repeat(COUNT_NESTED), "answer is no JSON object: " & "[".repeat(80) & "\u2026"),
     ]:
-      check readAnswer(text, MODEL_SUITE).failureRead ==
-          some((Failure.Malformed, detail))  # schema of section 3, cut at 80 characters
+      check readAnswer(text, MODEL_SUITE).refusalsRead ==
+          @[(none(int), Failure.Malformed, detail)]  # schema of section 3, cut at 80 characters
+    for (text, detail) in [
+      ("{\"tags\":[\"ciska\"]}", "\"ciska\""),
+      ("{\"tags\":[7]}", "7"),
+      ("{\"tags\":[[\"ciska\"]]}", "[\"ciska\"]"),
+      ("{\"tags\":[{\"gloss\":\"x\"}]}", "{\"gloss\":\"x\"}"),
+      ("{\"tags\":[{\"gismu\":7}]}", "{\"gismu\":7}"),
+      ("{\"tags\":[{\"gismu\":null}]}", "{\"gismu\":null}"),
+      ("{\"tags\":[[\"" & "x".repeat(100) & "\"]]}", "[\"" & "x".repeat(78) & "…"),
+    ]:
+      check readAnswer(text, MODEL_SUITE).refusalsRead ==
+          @[(some(1), Failure.Malformed, detail)]  # tag holds no string `gismu`; cut at 80
 
 
 
@@ -1846,22 +1958,54 @@ suite "Internal: Request":
         check parsed["messages"].getElems[^1]["role"].getStr == "user"  # no prefill; user turn last
 
 
-  test "schema admits every word of list, and system text lists each with keyword and hint":
-    for entry in LIST_GISMU:  # 1436 words, exhaustive
-      check entry.word.allIt(it in tags.LETTERS)  # pattern of schema admits word
+  test "system text lists each gismu with keyword and hint, no cmavo, and states rulings and cap":
+    for w in WORDS_GISMU:  # 1342 gismu, exhaustive
+      let entry = w.entry
       var line = entry.word & ": " & entry.keyword
       if entry.hint.len > 0: line.add "; " & entry.hint
       check ("\n" & line & "\n") in PROMPT_SYSTEM  # system text grounds model in list
-    check PATTERN_WORD == PATTERN_LETTERS  # letters of CLL 3.1, from `LETTERS`
-    let
-      gismu = PROMPT_SYSTEM.find("\nGismu, one to a line")
-      cmavo = PROMPT_SYSTEM.find("\nCmavo that carry rafsi, one to a line")
-    check gismu > 0 and cmavo > gismu  # gismu listed, then cmavo
+    let gismu = PROMPT_SYSTEM.find("\nGismu, one to a line")
+    check gismu > 0 and "Cmavo that carry rafsi" notin PROMPT_SYSTEM  # one heading: gismu
     for w in WORDS_GISMU:
-      check PROMPT_SYSTEM.find("\n" & $w & ": ") in gismu..cmavo  # gismu under its heading
-    for w in WORDS_CMAVO:
-      check PROMPT_SYSTEM.find("\n" & $w & ": ") > cmavo  # cmavo under its heading
-    check ("1 to " & $COUNT_WORDS_MAX & " words") in PROMPT_SYSTEM  # cap prompt states
+      check PROMPT_SYSTEM.find("\n" & $w & ": ") > gismu  # gismu under its heading
+    for w in WORDS_CMAVO:  # 94 cmavo, exhaustive
+      check ("\n" & $w & ": ") notin PROMPT_SYSTEM  # no cmavo, which no tag may be
+      check not ($w).isMatched(PATTERN_GISMU)  # schema admits no cmavo of list
+    check ("Never give more than " & $COUNT_TAGS_MAX & " tags.") in
+        PROMPT_SYSTEM  # cap prompt states
+    check "You decide how many" in PROMPT_SYSTEM  # cap, never target: model decides
+    let prose = PROMPT_SYSTEM[0 ..< gismu].replace('\n', ' ')  # instructions, lines joined
+    check ("search by to find this passage again, even one who forgets its title or the " &
+        "names in it") in prose  # ruling: each tag person might search by, title forgotten
+    check "what the passage is, such as a book, a film or an article" in
+        prose  # ruling: word of form, as book, counts
+    check "the most likely search first" in prose  # ruling: model orders, so cut keeps likeliest
+    check ("Where the passage names or describes a work that you know well, tag what you know " &
+        "of that work as well") in prose  # ruling: what person knows of work counts
+    check "A tag holds no name, so give the gismu of what a name names" in
+        prose  # tag is gismu, never name
+    check "Where one idea needs two or more gismu, give each of them" in
+        prose  # ruling: gismu alone, so idea of several tags each, as search meets them
+
+
+  test "schema holds no keyword structured outputs of Claude refuse, and is same in each body":
+    let schema = toSchema()
+    for (keyword, value) in schema.keywordsSchema:  # every keyword, at every depth
+      check keyword notin KEYWORDS_REFUSED  # `URL_STRUCTURED`: 400 for each
+      if keyword == "minItems": check value.getInt in 0..1  # `URL_STRUCTURED`: 0 or 1 alone
+    let objects = schema.objectsSchema
+    check objects.len == 2  # answer, and each tag
+    for node in objects:
+      check node{"additionalProperties"} == %false  # `URL_STRUCTURED`: object closed, else 400
+      check node["required"].getElems.mapIt(it.getStr).sorted ==
+          toSeq(node["properties"].keys).sorted  # every property required, as strict mode needs
+    for service in Service:  # 3 services, exhaustive
+      let
+        body = parseJson(initSettings(service, some(EFFORT_DEFAULT)).toBody(toPassage("x")))
+        found =
+          if service == Service.Claude: body["output_config"]["format"]["schema"]
+          else: body["response_format"]["json_schema"]["schema"]
+      check found == schema  # one schema, under every service
 
 
   test "every byte before user turn is same for every passage, so service caches it":
@@ -1976,7 +2120,7 @@ suite "Internal: Reply":
       check readReply(Service.Claude, reply).failureRead ==
           some(failure)  # Messages API reference: Message object, errors
       covered.incl failure[0]
-    check covered == {Failure.Status..Failure.Readback}  # every failure reply alone can name
+    check covered == {Failure.Status..Failure.Duplicate}  # every failure reply alone can name
     let joined = readReply(
       Service.Claude,
       toMessage(
@@ -1985,19 +2129,19 @@ suite "Internal: Reply":
           {"type": "redacted_thinking", "data": "x"},
           {"type": "fallback", "from": {"model": "claude-opus-5-5"},
               "to": {"model": "claude-opus-4-8"}},
-          {"type": "unforeseen", "text": "{\"tanru\":[\"datna\"]}"},
-          {"type": "text", "text": "{\"tanru\":[\"pixra\","},
-          {"type": "text", "text": "\"cukta\"],\"gloss\":\"picture book\"}"},
+          {"type": "unforeseen", "text": "{\"tags\":[{\"gismu\":\"datna\"}]}"},
+          {"type": "text", "text": "{\"tags\":[{\"gismu\":\"pixra\",\"gloss\":\"picture\"},"},
+          {"type": "text", "text": "{\"gismu\":\"cukta\",\"gloss\":\"book\"}]}"},
         ],
         "claude-opus-4-8",
       ),
     )
-    check joined.tagRead == some(tanru("pixra+cukta"))  # text blocks joined, others skipped
-    check joined.is_suggested and joined.model == "claude-opus-4-8"  # model served is named
+    check joined.keptRead == @["pixra", "cukta"]  # text blocks joined, others skipped
+    check joined.refusalsRead.len == 0 and joined.model == "claude-opus-4-8"  # model served named
     check readReply(
       Service.Claude,
       Reply(status: 200, content_encoding: "identity", body: bodyAnswer(Service.Claude)),
-    ).tagRead == some(tanru("ciska"))  # identity is no encoding
+    ).keptRead == @["ciska"]  # identity is no encoding
 
 
   test "refusal names category, then recommended model, then explanation, each where given":
@@ -2039,7 +2183,7 @@ suite "Internal: Reply":
         check readReply(service, reply).failureRead ==
             some(failure)  # chat completion of OpenRouter: errors, choices, finish reasons
         covered.incl failure[0]
-      check covered == {Failure.Status..Failure.Readback}  # every failure reply alone can name
+      check covered == {Failure.Status..Failure.Duplicate}  # every failure reply alone can name
       let answered = readReply(
         service,
         toCompletion(
@@ -2048,8 +2192,9 @@ suite "Internal: Reply":
           "anthropic/claude-opus-4.8",
         ),
       )
-      check answered.tagRead == some(tanru("pixra+cukta"))  # content of first choice is answer
-      check answered.is_suggested and answered.model == "anthropic/claude-opus-4.8"  # model named
+      check answered.keptRead == @["pixra", "cukta"]  # content of first choice is answer
+      check answered.refusalsRead.len == 0 and
+          answered.model == "anthropic/claude-opus-4.8"  # model named
 
 
   test "no status gives tag with error envelope, empty body or markup body":
@@ -2078,13 +2223,13 @@ suite "Internal: Reply":
     )
     # Regression, found in review (logic-4, 2026-10-29): explain said status should be 2xx,
     #   though OpenRouter answered 200 and put error inside body.
-    check found.explain == "Service should answer without error; got `429 " &
+    check found.suggestions[0].explain == "Service should answer without error; got `429 " &
         "rate_limit_exceeded: Rate limit exceeded`."  # case as found
     var count_inside = 0
     for service in Service:  # 3 services, exhaustive
       for status in 100..599:  # 500 statuses, exhaustive
         for body in bodiesError():  # error of each format, and of choice
-          let suggestion = readReply(service, Reply(status: status, body: body))
+          let suggestion = readReply(service, Reply(status: status, body: body)).suggestions[0]
           if suggestion.is_suggested or suggestion.failure != Failure.Status: continue
           check suggestion.explain == "Service should answer without error; got `" &
               suggestion.detail & "`."  # error named, status claimed never
@@ -2092,7 +2237,7 @@ suite "Internal: Reply":
     check count_inside == 600  # chat formats read each error in 2xx: 2 services, 3 bodies, 100
 
 
-  test "random bodies with random statuses never raise, and any tag keeps its promise":
+  test "random bodies with random statuses never raise, and any gismu keeps its promise":
     randomize(0)
     let pool = poolReplies()
     for service in Service:  # 3 services, exhaustive
@@ -2101,14 +2246,14 @@ suite "Internal: Reply":
         let read = readGuarded(service, reply)
         check read.isSome  # reader never raises, defect included
         if read.isNone: continue
-        let suggestion = read.get
-        if suggestion.is_suggested:
-          check suggestion.tag.isHeld  # every word listed, head gismu, form reads back
-          inc count_suggested
-          continue
-        check suggestion.failure in Failure.Status..Failure.Readback  # reply names no transport
-        check suggestion.detail.isPrintable  # detail made printable
-        check suggestion.explainGuarded.isSome  # explain never raises
+        let answer = read.get
+        check answer.isHeld  # each gismu listed, kept once; each refusal at its own position
+        if answer.keptRead.len > 0: inc count_suggested
+        for suggestion in answer.suggestions:
+          if suggestion.is_suggested: continue
+          check suggestion.failure in Failure.Status..Failure.Duplicate  # reply names no transport
+          check suggestion.detail.isPrintable  # detail made printable
+          check suggestion.explainGuarded.isSome  # explain never raises
       check count_suggested >= FLOOR_SUGGESTED  # corpus reaches answers that read
 
 
@@ -2131,17 +2276,17 @@ suite "Internal: Reply":
             some((Failure.Status, detail))  # chat completion, errors
 
 
-  test "each worked example reads to its tanru under every service":
+  test "each worked example reads to its gismu under every service":
     for example in EXAMPLES:  # 3 examples, exhaustive
-      let gloss = parseJson(example.answer)["gloss"].getStr
+      let (gismu, glosses) = (example.tags.mapIt(it.gismu), example.tags.mapIt(it.gloss))
       for service in [Service.Claude, Service.OpenRouter]:
-        let suggestion = readReply(service, example.toRecordings(service)[^1].reply)
-        check suggestion.tagRead == some(tanru(example.tanru))  # recording replays to tanru
-        check suggestion.is_suggested and suggestion.gloss == gloss  # gloss as answer gives
-        check suggestion.is_suggested and
-            suggestion.model == LUT_MODEL_BY_SERVICE[service]  # model of service named
-      check readReply(Service.Chat, toReplyChat(example.answer, MODEL_SUITE)).tagRead ==
-          some(tanru(example.tanru))  # `chat` reads chat completion as `openrouter` does
+        let answer = readReply(service, example.toRecordings(service)[^1].reply)
+        check answer.keptRead == gismu  # recording replays to gismu, in order
+        check answer.suggestions.allIt(it.is_suggested) and
+            answer.suggestions.mapIt(it.gloss) == glosses  # gloss as answer gives
+        check answer.model == LUT_MODEL_BY_SERVICE[service]  # model of service named
+      check readReply(Service.Chat, toReplyChat(example.answer, MODEL_SUITE)).keptRead ==
+          gismu  # `chat` reads chat completion as `openrouter` does
 
 
   test "content coding is read without case, so every casing of identity is no coding":
@@ -2153,14 +2298,14 @@ suite "Internal: Reply":
     check readReply(
       Service.Claude,
       Reply(status: 200, content_encoding: "IDENTITY", body: lut_body_by_service[Service.Claude]),
-    ).tagRead ==
-        some(tanru("ciska"))  # case as found in suite review: refused
+    ).keptRead ==
+        @["ciska"]  # case as found in suite review: refused
     for coding in "identity".casings:  # 256 casings, exhaustive
       page.content_encoding = coding
       check readPage(URL_SUITE, page).is_read  # RFC 9110 8.4.1, codings are case-insensitive
       for service in Service:  # 3 services, exhaustive
         check readReply(service, Reply(status: 200, content_encoding: coding,
-            body: lut_body_by_service[service])).tagRead == some(tanru("ciska"))  # 8.4.1
+            body: lut_body_by_service[service])).keptRead == @["ciska"]  # 8.4.1
     for coding in CODINGS_OTHER:
       page.content_encoding = coding
       let paged = readPage(URL_SUITE, page)
@@ -2173,7 +2318,7 @@ suite "Internal: Reply":
             some((Failure.Malformed, "content encoding " & coding))  # named as given
 
 
-  test "reply holds answer exactly where reader reads tag or failure of answer itself":
+  test "reply holds answer exactly where reader reads tags or failure of answer itself":
     let
       refusal = toReply(
         %*{
@@ -2212,7 +2357,7 @@ suite "Internal: Reply":
         check outcome.isSome  # never raises, defect included
         if outcome.isNone: continue
         check outcome.get ==
-            readReply(service, reply).isAnswerRead  # doc of `isAnswered`: tag or failure of answer
+            readReply(service, reply).isAnswerRead  # doc of `isAnswered`: tags or failure of answer
         if outcome.get: inc count_answered
       check count_answered >= FLOOR_ANSWERED  # corpus reaches answers under each service
 
@@ -2612,7 +2757,7 @@ suite "Internal: Page":
         "X-Amz-Credential=AKIAPROBE",
         Reply(status: 200, content_type: "text/plain", body: "x"),
       )
-      failed = Suggestion(is_suggested: false, failure: Failure.Long, detail: "7")
+      failed = ANSWER_FAILED
     check found.url ==
         "http://127.0.0.1:8080/shared/doc"  # review finding security-7, 2026-10-29: token sent
     check signed.is_read and signed.passage.url ==
@@ -2648,7 +2793,7 @@ suite "Internal: Page":
       shared = toPassage("x", "https://example.org/s/PATH-TOKEN/notes.txt?dl=0")
       lojban = toPassage("x", "https://example.org/w/index.php?title=Lojban")
       esperanto = toPassage("x", "https://example.org/w/index.php?title=Esperanto")
-      failed = Suggestion(is_suggested: false, failure: Failure.Long, detail: "7")
+      failed = ANSWER_FAILED
     check shared.url == "https://example.org/s/PATH-TOKEN/notes.txt"  # cost of `dropSecrets`
     for service in Service:  # 3 services, exhaustive
       let body = initSettings(service, some(EFFORT_DEFAULT)).toBody(shared)
@@ -2783,7 +2928,7 @@ suite "Internal: Page":
         URL_SUITE,
         Reply(status: 200, content_type: "text/html", body: found, is_cut: true),
       )
-      failed = Suggestion(is_suggested: false, failure: Failure.Long, detail: "7")
+      failed = ANSWER_FAILED
     check found[^1] == '\xC3'  # cap ends page inside last `é`, after its lead
     check paged.is_read and
         paged.passage.count_repaired == 0  # review finding logic-12, 2026-10-29: counted `1`
@@ -2857,30 +3002,41 @@ suite "Internal: Report":
 
 
   test "each failure explains itself, ending in its detail in backticks":
-    let found = Suggestion(is_suggested: false, failure: Failure.Readback, detail: "ciska")
-    check found.explainGuarded ==
-        some("Form should read back as its tag; got `ciska`.")  # case as found in suite review
-    for failure in Failure:  # 11 members, exhaustive
-      for detail in ["", "x", "two words", "datna", "brodyci'a", "ciska+se", "7", "ciska",
-          "datnyvreji", "selci'a"]:
-        let explained =
-          Suggestion(is_suggested: false, failure: failure, detail: detail).explainGuarded
-        check explained.isSome  # explain never raises, detail reading as tag included
-        if explained.isNone: continue
-        check explained.get.endsWith("`" & detail & "`.")  # IV.4, message ends in its value
-        check explained.get[0] in {'A'..'Z'}  # sentence
+    for failure in Failure:  # 10 members, exhaustive
+      for position in [none(int), some(1), some(COUNT_TAGS_MAX)]:  # whole, first and last tag
+        for detail in ["", "x", "two words", "datna", "brodyci'a", "ciska+se", "7", "ciska",
+            "datnyvreji", "selci'a"]:
+          let explained = Suggestion(
+            is_suggested: false, failure: failure, detail: detail, position: position,
+          ).explainGuarded
+          check explained.isSome  # explain never raises, detail reading as tag included
+          if explained.isNone: continue
+          check explained.get.endsWith("`" & detail & "`.")  # IV.4, message ends in its value
+          check explained.get[0] in {'A'..'Z'}  # sentence
     check Suggestion(is_suggested: false, failure: Failure.Truncated,
         detail: "max_tokens").explain == "Answer should end before its limit; lower effort or " &
         "shorten passage; got `max_tokens`."  # remedy named
 
 
-  test "report names page, page cut, repair and passage cut where each applies, then outcome":
+  test "report names page, cuts and repair, then each tag dropped, tags cut, gismu kept, model":
     let
-      suggested = Suggestion(is_suggested: true, tag: tanru("datni+vreji"), gloss: "data file",
-          model: "served-model")
-      gismu = Suggestion(is_suggested: true, tag: tanru("ciska"), gloss: "writing",
-          model: "served-model")
-      failed = Suggestion(is_suggested: false, failure: Failure.Long, detail: "7")
+      dropped = Suggestion(is_suggested: false, failure: Failure.Word, detail: "datna",
+          position: some(2), reason: "datna".readTag.explain)
+      suggested = Answer(
+        suggestions: @[
+          Suggestion(is_suggested: true, tag: tanru("cukta"), gloss: "book"),
+          dropped,
+          Suggestion(is_suggested: true, tag: tanru("ractu"), gloss: "rabbit"),
+        ],
+        count_cut: 3,
+        model: "served-model",
+      )
+      gismu = Answer(
+        suggestions: @[Suggestion(is_suggested: true, tag: tanru("ciska"), gloss: "writing")],
+        model: "served-model",
+      )
+      refused = Answer(suggestions: @[dropped], model: "served-model")
+      failed = ANSWER_FAILED
     for flags in 0..15:  # 16 combinations of four facts, exhaustive
       let passage = Passage(
         text: "x",
@@ -2896,17 +3052,22 @@ suite "Internal: Report":
       if (flags and 4) != 0:
         lines.add "Passage held `3` ill-formed UTF-8 subparts; each became U+FFFD.\n"
       if (flags and 8) != 0: lines.add "Passage held `70000` bytes; model read first `65536`.\n"
+      let kept = lines & "Tag 2 should be one gismu of list. Gismu should be in gismu list; " &
+          "got `datna`.\nAnswer held `3` tags past first `32`; tool never read them.\n" &
+          "Service suggests `cukta`, glossed `book`.\nService suggests `ractu`, glossed " &
+          "`rabbit`.\n"
       check failed.toReport(passage, "served-model") ==
-          lines & failed.explain & "\n"  # facts first, then failure
-      check suggested.toReport(passage, "served-model") == lines & "Service suggests tag " &
-          "`datni+vreji`, i.e. `datnyvei`, glossed `data file` by `served-model`.\n"  # tag, form
-      check suggested.toReport(passage, "asked-model") == lines & "Service suggests tag " &
-          "`datni+vreji`, i.e. `datnyvei`, glossed `data file` by `served-model`, where " &
-          "`asked-model` was asked.\n"  # served model differing is named
-      check gismu.toReport(passage, "served-model") == lines & "Service suggests tag " &
-          "`ciska`, glossed `writing` by `served-model`.\n"  # gismu is its own form
+          lines & failed.suggestions[0].explain & "\n"  # facts first, then failure
+      check suggested.toReport(passage, "served-model") == kept &
+          "Answer came from `served-model`.\n"  # drops, cut, each gismu, model once
+      check suggested.toReport(passage, "asked-model") == kept & "Answer came from " &
+          "`served-model`, where `asked-model` was asked.\n"  # served model differing is named
+      check gismu.toReport(passage, "served-model") == lines & "Service suggests `ciska`, " &
+          "glossed `writing`.\nAnswer came from `served-model`.\n"  # one gismu, model once
+      check refused.toReport(passage, "served-model") ==
+          lines & dropped.explain & "\n"  # none kept, so drop alone, and no model named
     check failed.toReport(toPassage("x", "https://example.org/\x1B[2J"), "m") ==
-        "Page came from `https://example.org/\\u{1B}[2J`.\n" & failed.explain &
+        "Page came from `https://example.org/\\u{1B}[2J`.\n" & failed.suggestions[0].explain &
         "\n"  # URL made printable
 
 
@@ -2916,7 +3077,8 @@ suite "Internal: Report":
     check tagGiven("ciska") == some(tanru("ciska"))  # gismu is tag
     let given = readTagGiven("datnyvreji")
     check given.isSome and given.get.is_suggested and given.get.gloss == "" and
-        given.get.model == ""  # no service asked, so none glosses or is named
+        "came from" notin toReportGiven("datnyvreji",
+        given.get.tag)  # no service asked, so none glosses or is named
     for text in ["mi nelci lo nu tcidu lo cukta", "Lojban", "se", "lo", "", "datni+vreji",
         "picture book"]:
       check readTagGiven(text).isNone  # prose, English, cmavo alone, tanru go to service
@@ -2927,7 +3089,7 @@ suite "Internal: Report":
         "`datni+vreji` already, so no service is asked.\n"  # text given, trimmed, and its tanru
 
 
-  test "text given as tag past `COUNT_WORDS_MAX` words is Long, named by count, never rendered":
+  test "text given as tag past `COUNT_WORDS_MAX` words is Long, named by count":
     let found = readTagGiven(TEXT_GIVEN_LONG)
     check found.isSome and found.get.failureRead ==
         some((Failure.Long, "18"))  # review finding logic-1, 2026-10-29: rendered without bound
@@ -2942,8 +3104,34 @@ suite "Internal: Report":
         check given.isNone  # past cap of bytes, sent to service unread
       elif words.len > COUNT_WORDS_MAX:
         check given.isSome and given.get.failureRead ==
-            some((Failure.Long, $words.len))  # count named; `$`, 4x per word, never runs
+            some((Failure.Long, $words.len))  # count named; cap is project choice (open question)
         inc count_long
       else:
-        check given.isSome and given.get.tagRead == some(Tag(words: words))  # within cap, tag
+        check given.isSome and given.get.is_suggested and
+            given.get.tag == Tag(words: words)  # within cap, tag
     check count_long >= FLOOR_GIVEN_LONG  # corpus reaches lujvo past cap often
+
+
+  test "gismu printed are each gismu kept, in order, each once, cmavo left out, as given gives":
+    for (text, gismu) in [
+      ("datnyvreji", @["datni", "vreji"]),  # each gismu of lujvo, in order
+      ("selci'a", @["ciska"]),  # cmavo left out
+      ("kemdatnyvei", @["datni", "vreji"]),  # cmavo that only groups left out too
+      ("ckucukta", @["cukta"]),  # gismu twice, printed once
+      ("ciska", @["ciska"]),  # gismu alone
+    ]:
+      let given = readTagGiven(text)
+      check given.isSome and [given.get].gismu.mapIt($it) == gismu  # what shortcut prints
+    let long = readTagGiven(TEXT_GIVEN_LONG)
+    check long.isSome and [long.get].gismu.len == 0  # refused, so nothing printed
+    check readAnswer(toAnswer(["cukta", "datna", "ractu"]), MODEL_SUITE).suggestions.gismu.mapIt(
+        $it) == @["cukta", "ractu"]  # answer prints gismu it keeps, in order
+    randomize(0)
+    let pool = poolLujvo()
+    var count_given = 0
+    for (words, text) in served(pool):  # `SAMPLES_GIVEN` lujvo of each count, 1 to 18, seeded
+      let given = readTagGiven(text)
+      if given.isNone or not given.get.is_suggested: continue
+      check [given.get].gismu == words.deduplicate  # each gismu of tag, in order, each once
+      inc count_given
+    check count_given >= FLOOR_GIVEN_GISMU  # guard keeps every lujvo within cap

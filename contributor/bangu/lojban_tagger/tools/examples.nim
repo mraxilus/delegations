@@ -43,8 +43,9 @@ type
     name*: string  ## Short name of example.
     argument*: string  ## Text or URL `suggester` reads.
     hops*: seq[(string, Reply)]  ## Each page URL with its reply, in order; empty for text.
-    answer*: string  ## Answer of model, JSON of schema; documented shape, values illustrative.
-    tanru*: string  ## Tanru answer names, words joined by `+`.
+    tags*: seq[tuple[gismu, gloss: string]]
+      ## Tags answer names, most likely search first, each gismu with its gloss: documented shape,
+      ##   values illustrative; `suggester` prints each gismu, one to line.
 
 
 const
@@ -82,15 +83,18 @@ const
       name: "alice",
       argument: TEXT_ALICE,
       hops: @[],
-      answer: """{"tanru":["pixra","cukta"],"gloss":"picture book"}""",
-      tanru: "pixra+cukta",
+      tags: @[
+        ("cukta", "book"), ("nixli", "girl"), ("ractu", "rabbit she follows"),
+        ("kevna", "rabbit hole"), ("mensi", "sister"), ("mlatu", "grinning cat"),
+        ("nobli", "queen, as noble"), ("traji", "queen, as highest"), ("turni", "queen, as ruler"),
+        ("pixra", "picture"), ("tatpi", "tired"),
+      ],
     ),
     Example(
       name: "lojban",
       argument: "mi ciska lo xatra",
       hops: @[],
-      answer: """{"tanru":["xatra","ciska"],"gloss":"letter writing"}""",
-      tanru: "xatra+ciska",
+      tags: @[("xatra", "letter"), ("ciska", "writing")],
     ),
     Example(
       name: "page", argument: "https://example.org/alice",
@@ -100,14 +104,26 @@ const
           status: 200, content_type: "text/html", body: MARKUP_PAGE,
         )),
       ],
-      answer: """{"tanru":["tatpi","cukta"],"gloss":"tired of book"}""", tanru: "tatpi+cukta",
+      tags: @[
+        ("cukta", "book"), ("ractu", "rabbit"), ("kevna", "rabbit hole"), ("nixli", "girl"),
+        ("mensi", "sister"), ("tatpi", "tired"),
+      ],
     ),
   ]
-    ## Worked examples, each replayed under `claude` and `openrouter`.
+    ## Worked examples, each replayed under `claude` and `openrouter`: tags of text and page of
+    ##   Alice name what passage holds and what model knows of book, as prompt asks, most likely
+    ##   search first.
 
 
 
 #[ Recordings ]#
+
+func answer*(example: Example): string =
+  ## Render answer of schema naming tags of example, in order, as model gives it.
+  let tags = newJArray()
+  for (gismu, gloss) in example.tags: tags.add %*{"gismu": gismu, "gloss": gloss}
+  $ %*{"tags": tags}
+
 
 func toReplyMessages*(answer, model: string): Reply =
   ## Wrap answer in Message object ending `end_turn`, as `LABEL_MESSAGES` documents it.
