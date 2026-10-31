@@ -1986,6 +1986,11 @@ suite "Internal: Request":
         prose  # tag is gismu, never name
     check "Where one idea needs two or more gismu, give each of them" in
         prose  # ruling: gismu alone, so idea of several tags each, as search meets them
+    check "so that a person can find it again by search" in prose  # ruling: tags serve search
+    check "A tag is one gismu, a root word of Lojban: never a lujvo, a cmavo or a name" in
+        prose  # ruling: suggester gives gismu alone, while tagger still reads lujvo
+    check ("Give every gismu that a person might plausibly search by, and stop where the next " &
+        "one would be a guess") in prose  # ruling: each gismu search might use; model stops
 
 
   test "schema holds no keyword structured outputs of Claude refuse, and is same in each body":
