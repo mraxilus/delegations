@@ -294,14 +294,14 @@ such as book, counts. Verified by `suites/test_suggestions.nim`, which holds the
 
 **The model decides how many gismu a text needs, up to 32.** The Architect chose this over a hard
 cap of ten tags, and over a threshold in an embedding space. The prompt states 32 as a cap and not
-as a target, and asks for the most likely search first. The tool reads the first 32 tags of an
-answer, and the report counts the rest, which the tool never reads. A user who wants fewer tags
+as a target, and asks for the most likely search first. The tool reads the first 32 elements of
+an answer, and the report counts the rest, which the tool never reads. A user who wants fewer tags
 cuts the ordered output, for example with `head -n 10`. Verified by `suites/test_suggestions.nim`,
-which holds the prompt, and reads each count of tags from 0 to 64.
+which holds the prompt, and reads each count of elements from 0 to 64.
 
-**A tag is one gismu, because the search matches gismu across tags.** The Architect ruled that
-the tool suggests gismu alone, while `tagger` still reads lujvo in tags and in search. An entity
-meets a term where each gismu of one meaning of the term stands in any of its tags
+**A suggested tag is one gismu, because the search matches gismu across tags.** The Architect
+ruled that the tool suggests gismu alone, while `tagger` still reads lujvo in tags and in search.
+An entity meets a term where each gismu of one meaning of the term stands in any of its tags
 (`search.nim`). So gismu tags, each apart, meet an English word whose meaning holds several gismu.
 The prompt asks for each gismu of such an idea, and the reader drops each lujvo and each cmavo.
 
@@ -327,22 +327,22 @@ ask for that mode. Claude itself allows optional properties. Verified by reading
 `https://developers.openai.com/api/docs/guides/structured-outputs` on 2026-10-31. One schema
 serves all three services, which `suites/test_suggestions.nim` holds.
 
-**A tag that is no gismu of the list drops alone.** The report names the tag by its position and
-by its reason, and the tool keeps the rest of the answer. A word that the reader refuses keeps
-the reason of the reader. A cmavo, a lujvo and an item that is no object of the schema drop with
-a reason of their own. A gismu that an earlier tag kept drops as `Duplicate`, so each gismu
-prints once.
+**An element of the answer that is no gismu of the list drops alone.** The report names the
+element by its position and by its reason, and the tool keeps the rest of the answer. A word that
+the reader refuses keeps the reason of the reader. A cmavo, a lujvo and an element that is no
+object of the schema drop with a reason of their own. A gismu that an earlier element kept drops
+as `Duplicate`, so each gismu prints once.
 
 Rejected: a refusal of the whole answer. The tool makes no retry, and the key is for sparing use,
-so one bad tag would then waste a paid answer. A reply that fails as a whole still fails as one.
-Its status, a refusal, a cut, or an answer with no tags can each cause that. Verified by
-`suites/test_suggestions.nim`, over each kind of dropped tag at each position among kept gismu,
-and over every sequence of up to three dropped tags.
+so one bad element would then waste a paid answer. A reply that fails as a whole still fails as
+one. Its status, a refusal, a cut, or an answer with no elements can each cause that. Verified by
+`suites/test_suggestions.nim`, over each kind of dropped element at each position among kept
+gismu, and over every sequence of up to three dropped elements.
 
 **The output holds one gismu to a line, in the order of the answer.** The README passes the
 output to `tagger tag` with no quotes, so the shell splits the lines into words. A gismu has five
 letters, so no space and no glob character can enter. The report goes to standard error. It
-names each refusal, then the count of tags that the tool did not read, then each gismu with its
+names each refusal, then the count of elements that the tool did not read, then each gismu with its
 gloss. Each string that the model controls is made printable before it reaches the report.
 
 Where the tool keeps a gismu, the report names the model once, and the model asked where the two
@@ -368,9 +368,12 @@ sends the whole URL to the page host, and to any http proxy. Verified by
 
 **A text of at most 64 bytes that reads as a tag asks no service.** The tool prints the gismu of
 that tag, each once and in order, leaves out its cmavo, and reads no key. A longer text goes to
-the service as a passage. A tag of more than six words fails as `Long`. No step of the shortcut
-grows with the words, so this cap bounds no cost, and Open questions asks about it. Verified by
+the service as a passage. A tag of more than six words fails as `Long`. Verified by
 `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
+
+Cost: the tool counts the words after `readTag`, so the cap of six words saves none of the time
+of the reading. It saves only the time to list and print the gismu and the report, about 1 µs
+(Figures), and Open questions asks about it.
 
 Cost: `tagger read` and `tagger tag` have no cap of words. `$` scores every choice of rafsi, so
 its time grows about 4 times for each word of `bloti`, `condi` or `rotsu` (Figures). So a lujvo of
@@ -400,10 +403,10 @@ The workspace goes in a header, never in the body, so the recording replays unde
 workspace. Verified by `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
 
 **There is no retry.** The key is for sparing use. So a reply that fails as a whole goes to the
-user, who may run again, and a tag that fails drops alone. The report names every cut and every
-repair of the text, and the passage element
-tells the model of each cut. Cost: a failure that passes, such as an overload, still needs a
-second run. Verified by `suites/test_suggestions.nim`.
+user, who may run again, and a bad element of the answer drops alone. The report names every cut
+and every repair of the text, and the passage element tells the model of each cut. Cost: a
+failure that passes, such as an overload, still needs a second run. Verified by
+`suites/test_suggestions.nim`.
 
 **The tool reads pages with its own reader, in one pass.** Script, style, iframe and noscript are
 raw text to their own end tag, and a comment ends as the HTML tokenizer ends it. The reader
@@ -573,11 +576,19 @@ figures of `tagger` are from 2026-10-25, and each figure of `suggester` names it
   10,000,000 iterations, so that form is a trap, not a slower choice.
 - **Release build.** `nim c -f -d:release app/tagger.nim` took between 5.6 s and 6.5 s over three
   runs.
-- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 9.5 s
-  and 8.8 s over two runs on 2026-10-30, and the binary holds 2,456,960 bytes.
+- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 10.1 s
+  and 9.9 s over two runs on 2026-10-31, and the binary holds 2,445,816 bytes. In the same
+  session, `bf9c82d8`, before the tool suggested gismu alone, took 9.9 s and 10.0 s, and its
+  binary held 2,456,968 bytes.
 - **Suites.** `nim c -r -d:ssl -d:testing tests/test_suites.nim` compiled and ran every suite in
-  68.5 s and 69.6 s, over two runs from an empty cache on 2026-10-30. The suite of `suggester`
-  builds its own binary inside that time.
+  81.7 s and 79.6 s, over two runs from an empty cache on 2026-10-31. In the same session, the
+  suites of `bf9c82d8` took 83.0 s and 79.5 s. The suite of `suggester` builds its own binary
+  inside that time.
+- **Text given as tag.** A probe drew 200 random lujvo for each count of words, as `poolLujvo` of
+  `suites/test_suggestions.nim` draws them, with seed 0. In release over two runs on 2026-10-31,
+  `readTagGiven` took 7.5 µs and 7.2 µs for six words, and 30.0 µs and 28.5 µs for 18. To list
+  and print the gismu and the report took 0.73 µs and 0.74 µs for six words, and 1.84 µs twice
+  for 18.
 - **Render of a tag.** `$` of six words of `bloti` took 2,151 µs in release and 14,697 µs in
   debug, the best of three runs each, on 2026-10-29. Seven words took 8,241 µs and 68,105 µs.
   Each word of `bloti`, `condi` and `rotsu` has four choices of rafsi, the most that a probe of
@@ -603,9 +614,9 @@ figures of `tagger` are from 2026-10-25, and each figure of `suggester` names it
   lujvo glosses. A query finds a thing only where each of its terms does, so one term that finds
   nothing makes the whole query find nothing. `cheshire cat` shows a term that reads as nothing,
   and `rabbit hole` shows a term whose meanings are in no tag of the thing.
-- **The cap of six words on text given.** No step of the shortcut grows with the words, so the cap
-  bounds no cost. It refuses a lujvo of seven words or more, whose gismu the tool could print. To
-  lift it would change no other path.
+- **The cap of six words on text given.** The tool counts the words after `readTag`, so the cap
+  saves about 1 µs at most (Figures). It refuses a lujvo of seven words or more, whose gismu the
+  tool could print. To lift it would change no other path.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a tag
   that holds one of them before its head renders with `brod`, and does not read back.
