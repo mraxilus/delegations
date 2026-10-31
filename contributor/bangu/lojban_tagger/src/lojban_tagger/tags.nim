@@ -27,7 +27,9 @@
 ##     so rendered tag reads back as itself; `brodi`, `brodo` and `brodu` have none, so their
 ##     lujvo render with `brod` and read as `Refusal.Ambiguous` (open question in PROVENANCE).
 ##   Cost: `$` scores every choice of rafsi, at most four per gismu, so `4^n` joins for tag of
-##     `n` gismu; tags are short, so cost is small (unmeasured).
+##     `n` gismu: time grows about fourfold for each word of four choices (measured, Figures of
+##     PROVENANCE), and `readTag` caps no words, so `tagger read` of lujvo of 18 words fills
+##     memory.
 
 {.experimental: "strictFuncs".}
 

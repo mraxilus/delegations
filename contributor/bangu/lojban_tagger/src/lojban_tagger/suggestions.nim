@@ -48,8 +48,8 @@
 ##     decides how many, at most `COUNT_TAGS_MAX`; and tool suggests gismu alone, while `tagger`
 ##     reads lujvo still. Search matches each gismu of term in any tag (`search.nim`), so gismu
 ##     tagged apart meet term whose meaning holds several, as `queen` meets `nobli+traji+turni`.
-##     Cost: term leading to lujvo meanings alone, as `hole` to `batke+kevna`, never finds
-##       gismu tagged alone (open question in PROVENANCE).
+##     Cost: term whose every meaning holds two gismu or more, as `hole` (`batke+kevna` and
+##       others), never finds one of them tagged alone (open question in PROVENANCE).
 ##   Each tag goes through `readTag`, and must read as one gismu of list: lujvo, cmavo and word
 ##     reader refuses are dropped, each named by its position, and rest of answer kept, so tool
 ##     never prints word `tagger tag` refuses or reads as other than one gismu. Gismu that earlier
@@ -88,8 +88,9 @@
 ##   Each tag of answer, and text given as tag, is capped at `BYTES_ELEMENT_MAX` bytes, since
 ##     `readTag` time grows faster than length; text given is capped at `COUNT_WORDS_MAX` words
 ##     too, since bytes cap no words: 64 bytes hold lujvo of 18.
-##     Cost: lujvo of more words given as text fails as `Long`, though no step here grows with
-##       words, so word cap bounds no cost; project choice (open question in PROVENANCE).
+##     Cost: lujvo of more words given as text fails as `Long`, though count follows `readTag`,
+##       so word cap saves none of its time, only listing and printing of gismu, about 1 µs
+##       (measured, PROVENANCE, Figures); project choice (open question in PROVENANCE).
 ##   Failure keeps reason of reader whole, made printable as word is read, so `explain` reads no
 ##     value again: escape of detail never reaches reader. Reader bounds reason, so display cap
 ##     never cuts it.
@@ -235,8 +236,8 @@ const
     ##   named, never read: schema of Claude takes no `maxItems`, so reader holds cap.
   COUNT_WORDS_MAX* = 6
     ## Most words text given as tag may hold, else shortcut refuses it as `Long`, named by count;
-    ##   project choice, bounding no cost, since no step of shortcut grows with words (open
-    ##   question in PROVENANCE.md).
+    ##   project choice: count follows `readTag`, so cap bounds only listing and printing of
+    ##   gismu, about 1 µs (measured, PROVENANCE.md, Figures; open question there).
   BYTES_ELEMENT_MAX* = 64
     ## Most bytes of one tag of answer, and of text shortcut reads as tag: time of `readTag` grows
     ##   faster than length (figures in PROVENANCE.md, Figures). Cap of bytes caps no words: 64
@@ -1338,7 +1339,7 @@ func explain*(suggestion: Suggestion): string {.raises: [].} =
   ##   `Word` ends in `reason`, `explain` of reading (`commands.nim`) kept when failure was made,
   ##     so refusal wording stays in one place, and explain reads no value again: escapes of
   ##     detail never reach reader.
-  ##   Word past cap is named by cap, as `readAnswer` decided when it failed, never by detail.
+  ##   Word past cap is named by cap, as `readTagAnswer` decided when it failed, never by detail.
   ##   Failure with no reason ends in detail alone.
   ##   Never raises: `{.raises: [].}` holds exceptions; defects held by test "each failure
   ##     explains itself, ending in its detail in backticks" of `test_suggestions.nim`.
