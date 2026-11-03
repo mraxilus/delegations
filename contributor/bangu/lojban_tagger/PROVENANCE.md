@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-24 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | accad3975965e766 |
+| Rules   | 978b1f64679710e6 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a contributor project, from the brief of the Architect. A tag is a gismu or a lujvo that
