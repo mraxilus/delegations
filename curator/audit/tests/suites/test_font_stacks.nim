@@ -228,6 +228,21 @@ suite "Font stacks":
       .synthesisedFound.len == 0  # font face of system draws, finding of its own
 
 
+  test "run of ASCII is judged for its bold, and character beyond ASCII alone for its font face":
+    # Case held: pages of pga_benchmark drew 267 runs of ASCII in bold browser synthesised, and
+    #   verdict saw none, since collector wrote runs past ASCII alone (#750). Architect ruled
+    #   that collector writes every run, ASCII included (D1 b of #751).
+    let code = [ord('a'), ord('{'), ord('~')]
+    check page("Mono", 700, code, [rule("Mono", "400", sans)]).toFound(directory)
+      .synthesisedFound == @[("p", "mono", 700, 400)]  # bold code, as found
+    check page("Mono", 700, code, [rule("Mono", "700", sans)]).toFound(directory)
+      .synthesisedFound.len == 0  # bold page ships
+    # Rule judges font face of system past ASCII alone: last ASCII character passes, first
+    #   one past it is finding, where font face page ships lacks both.
+    check page("Mono", 400, @code & @[0x7F, 0x80, E_ACUTE], [rule("Mono", "400", math)])
+      .toFound(directory).charactersFound == @[0x80, E_ACUTE]
+
+
   removeDir(directory)
 
 
