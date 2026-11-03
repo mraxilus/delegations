@@ -37,7 +37,7 @@ func constructRafsiByForm(): array[Form, seq[string]] {.compileTime.} =
     if not entry.word.isGismu: continue
     let
       stem = entry.word[0 .. 3]
-      # VM of pin 2.4.0 moves `stem` into `add` before index, so stub fails to compile without it.
+      # VM of pin 2.4.0 moves `stem` into `add` before index; stub fails to compile without `form`.
       form = stem.form.get
     if result[form].len == 0 or result[form][^1] != stem:
       result[form].add stem
