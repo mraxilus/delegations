@@ -31,7 +31,7 @@ is **true**, but `let s = Step(MODULUS)` fails to build, because the conversion 
 So `compiles` cannot hold the poison for a constant at the bound. The test uses the literal
 16, which `compiles` rejects, and it pins the false positive as a check of its own. That
 check fails once the compiler agrees with its own build. Verified by `test_modulus_4.nim` on Nim
-2.2.12.
+2.2.12 and on Nim 2.4.0.
 
 ## Operations
 
@@ -53,7 +53,7 @@ alone. Verified by `test_modulus_4.nim` and `test_modulus_5.nim`, and
 ## Toolchain
 
 **The compiler is pinned exactly, at the version this project was verified on**:
-`requires "nim == 2.2.12"` in `probe.nimble`. It is an exact pin rather than a lower bound.
+`requires "nim == 2.4.0"` in `probe.nimble`. It is an exact pin rather than a lower bound.
 No single compiler serves every project here, and a range cannot say which one a suite passed
 on. The pin moves with `curator/audit`, which holds the version that builds koch. CI installs
 it for this project alone, in its own job.

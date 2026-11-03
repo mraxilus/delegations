@@ -13,9 +13,12 @@ Origin: a curator project, from the brief of the Architect. It runs each test fi
 configuration of its testament header, and all the runs go in parallel. There is no vendored
 source.
 
-The reference for each rule of testament is its source at the pin of this project, Nim 2.2.12.
+The reference for each rule of testament is its source at the pin of this project, Nim 2.4.0.
 The header comes from `testament/specs.nim`, and the command and the verdict come from
-`testament/testament.nim`.
+`testament/testament.nim`. Testament takes `--ic`, which is off by default, and which adds
+`--ic:on` to the command of each C and C++ run. Assayer takes no such option, so it builds the
+command that testament builds by default. Read in `testament/testament.nim` of Nim 2.4.0,
+2026-10-29.
 
 ## Package
 
@@ -106,8 +109,8 @@ its cache again. Verified by `suites/test_plans.nim`.
 A file outside the working directory takes its name and a hash of its absolute path, so no
 folder climbs out of `nimcache/assayer`. Verified by `suites/test_plans.nim`.
 
-- Rejected: one cache for each file and backend, as testament has it. Testament runs the
-  configurations one after another, so no two write the cache at the same time. Here they do.
+- Rejected: one cache for each file and backend. Configurations that run at the same time would
+  write it together. Testament 2.4.0 keys its cache on the configuration too.
 - Rejected: a temporary folder for each start of assayer, which loses each cache at the end.
 - Cost: the program lands in the folder of its run, and not beside the test file. A test that
   reads files beside its own program (`getAppDir`) reads the cache instead. No test here does,
@@ -116,7 +119,7 @@ folder climbs out of `nimcache/assayer`. Verified by `suites/test_plans.nim`.
 **A JavaScript run goes under Node.js, as testament runs it.** The command is
 `node --unhandled-rejections=strict` and the script. If no Node.js is on PATH, the run is
 refused before its compile. Verified by `suites/test_plans.nim`. Assayer looks for `nodejs`
-first, then `node`, in the order of `compiler/nodejs.nim` of Nim 2.2.12, and no test holds
+first, then `node`, in the order of `compiler/nodejs.nim` of Nim 2.4.0, and no test holds
 that order.
 
 ## Runs
@@ -132,16 +135,17 @@ than the runs. Verified by `suites/test_runs.nim`.
 **Each command starts and closes under one lock.** The pipe of a child process carries no
 close-on-exec flag. So a child that another thread starts at the same time inherits the write end
 of that pipe, and the reader waits for both children. The input of each child closes under the
-lock for the same reason. Read in `std/osproc` of Nim 2.2.12 on 2026-10-10.
+lock for the same reason. Read in `std/osproc` of Nim 2.2.12 on 2026-10-10, and of Nim 2.4.0
+on 2026-10-29.
 
 With stderr joined to stdout, `close` of `std/osproc` frees one descriptor twice. A pipe that
 another thread opens between the two would lose its descriptor, so each process closes under the
-lock too. Read in `std/osproc` of Nim 2.2.12 on 2026-10-10.
+lock too. Read in `std/osproc` of Nim 2.2.12 on 2026-10-10, and of Nim 2.4.0 on 2026-10-29.
 
 **No command takes a working folder of its own.** On POSIX, the spawn of `std/osproc` gives a
 working folder by a change of the folder of the whole process. Every other thread would see that
 change. So each path that a run holds is absolute, and each command runs from the working folder
-of assayer. Read in `std/osproc` of Nim 2.2.12 on 2026-10-10.
+of assayer. Read in `std/osproc` of Nim 2.2.12 on 2026-10-10, and of Nim 2.4.0 on 2026-10-29.
 
 **Each output is read to its end before the exit is waited on.** So a pipe never fills and
 stops its child. Stderr joins stdout, as in testament. Verified by `suites/test_runs.nim`, where
@@ -264,7 +268,7 @@ Both start from an empty cache, on one file that lists the 8 configurations. Ass
 
 ## Toolchain
 
-**The compiler is pinned exactly at 2.2.12, the pin of knoller**: `requires "nim == 2.2.12"` in
+**The compiler is pinned exactly at 2.4.0, the pin of knoller**: `requires "nim == 2.4.0"` in
 `assayer.nimble`. Assayer imports knoller by its path, so the two pins move together.
 
 ## Rules audits
