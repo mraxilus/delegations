@@ -49,7 +49,7 @@ A predicate word of Lojban: a gismu, a lujvo or a borrowing. It ends in a vowel,
 consonant pair in its first five letters.
 _Avoid_: predicate, content word
 
-### Tagging
+### Tagger
 
 **Tag**:
 The words of one tanru that an entity carries, read from a gismu or a lujvo. Its last word is a
