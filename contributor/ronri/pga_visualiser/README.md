@@ -35,9 +35,8 @@ nim r tools/build.nim driven                     # this project: drive the deskt
 nim r tools/build.nim system                     # this project: what to install first
 ```
 
-It builds on **Nim at commit `27763495b`**, and not on a release. Nothing has to be installed,
-because koch resolves the pin (`GUIDE.md`, Toolchain). See Dependencies and vendoring in
-`PROVENANCE.md` for why a release will not serve.
+It builds on **Nim 2.4.0**. Nothing has to be installed, because koch resolves the pin (`GUIDE.md`,
+Toolchain). See Dependencies and vendoring in `PROVENANCE.md` for why no earlier release will serve.
 
 System packages are declared in `tools/build.nim`, and printed by its `system` verb. So this README
 names no list that could drift from the one the build reads (issue 60):
