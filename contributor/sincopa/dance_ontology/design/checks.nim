@@ -1316,10 +1316,10 @@ proc checkHandTurns*(built: Parts) =
     most_of_it = 0.5  ## What most of it is, as share.
   # This chain's swans stand Face-to-back, where arm over at first crossing runs straight
   # (Architect, 2026-10-06, issue #375).
-  doAssert windShare(holds_its_bend, overArm(holds_its_bend)) > most_of_it,
+  doAssert windShare(holds_its_bend, overArm(holds_its_bend), true) > most_of_it,
     &"The straight connection gives up its bend too early; at " &
     &"{decimal(holds_its_bend, 2)} turns it carries only " &
-    &"`{decimal(windShare(holds_its_bend, overArm(holds_its_bend)), 2)}`."
+    &"`{decimal(windShare(holds_its_bend, overArm(holds_its_bend), true), 2)}`."
   # And what that bend is for: diamond keeps its two crossings all way to
   # swan, where third joins them.  Pair that crosses once is one arm laid
   # over other rather than going round it, and no such state lies between
@@ -1358,7 +1358,7 @@ proc checkHandTurns*(built: Parts) =
     &"stretch."
   told.add &"and the diamond opens into the swan rather than coming apart " &
       &"on the way: the straight connection still carries " &
-      &"{decimal(windShare(holds_its_bend, overArm(holds_its_bend)), 2)} " &
+      &"{decimal(windShare(holds_its_bend, overArm(holds_its_bend), true), 2)} " &
       &"of its swing at {decimal(holds_its_bend, 2)} turns, nowhere over " &
       &"that stretch do the two cross fewer than {fewest} times, and the " &
       &"third crossing arrives once and stays -- at " &
@@ -1375,18 +1375,18 @@ proc checkHandTurns*(built: Parts) =
   for step in countup(100, 150, 1):
     let
       wind = -float(step) / 100.0
-      carried = windShare(wind, other(overArm(wind)))
+      carried = windShare(wind, other(overArm(wind)), true)
     if carried < tightest_snake.share: tightest_snake = (carried, wind)
   doAssert tightest_snake.share < 1.0,
     &"Snake never pulls in before it opens; got `" &
     &"{decimal(tightest_snake.share, 2)}` at its tightest."
-  doAssert windShare(-1.5, other(overArm(-1.5))) > 1.0,
+  doAssert windShare(-1.5, other(overArm(-1.5)), true) > 1.0,
     &"Snake never opens out into its loops; got " &
-    &"`{decimal(windShare(-1.5, other(overArm(-1.5))), 2)}` at swan."
+    &"`{decimal(windShare(-1.5, other(overArm(-1.5)), true), 2)}` at swan."
   told.add &"the snake draws in to " &
       &"{decimal(tightest_snake.share, 2)} of one connection's swing by " &
       &"{decimal(abs(tightest_snake.at), 2)} of a turn and opens out to " &
-      &"{decimal(windShare(-1.5, other(overArm(-1.5))), 2)} at the swan, which is " &
+      &"{decimal(windShare(-1.5, other(overArm(-1.5)), true), 2)} at the swan, which is " &
       &"the order that keeps the third crossing clear of the hands"
 
   var
@@ -1676,7 +1676,7 @@ proc checkHandTurns*(built: Parts) =
             axisPair(put[i]).across,
             degToRad(windMeasured(put[i], HAND_TO_HAND, arm).phi),
             degToRad(spun[arm]),
-            share = windShare(spun[arm] / 360, arm),
+            share = windShare(spun[arm] / 360, arm, true),
           )
         # Drawing reads wind off Left connection to say which arm is on
         # top, so check reads it off same one and asks `divesPair` for
