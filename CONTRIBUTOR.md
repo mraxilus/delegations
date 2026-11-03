@@ -361,8 +361,10 @@ each build that turns a record into binary.
 - **The readers check no length and no checksum.** A file cut between two fields still reads,
   as fewer objects. So a file that a person keeps starts with a fixed tag that names its format,
   then the length and a checksum of its message. The reader checks all three before it decodes.
-- **JSON stays only where a tool forces it**: npm, `tsc`, Atlas, Claude Code hooks, GitHub
-  Actions and `gh`.
+- **JSON stays only where a tool or an outside service forces it**: npm, `tsc`, Atlas, Claude
+  Code hooks, GitHub Actions and `gh`. A service forces it where its API speaks JSON alone, and
+  data on its wire takes the form that the service gives. No `JsonNode` leaves the module that
+  speaks to the service, so the compiler checks each field past that module.
 
 ## Pages and assets
 
