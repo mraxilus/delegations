@@ -624,7 +624,7 @@ proc main(): int =
     notes.add fetched.notes
     if not fetched.is_read:
       for note in notes: stderr.writeLine note
-      stderr.writeLine Outcome(
+      stderr.writeLine Verdict(
         is_kept: false,
         failure: fetched.failure,
         detail: fetched.detail,
@@ -641,10 +641,10 @@ proc main(): int =
     answer =
       if exchanged.is_replied: settings.service.readReply(exchanged.reply)
       else:
-        Answer(outcomes: @[
-          Outcome(is_kept: false, failure: exchanged.failure, detail: exchanged.detail),
+        Answer(verdicts: @[
+          Verdict(is_kept: false, failure: exchanged.failure, detail: exchanged.detail),
         ])
-    kept = answer.outcomes.gismu
+    kept = answer.verdicts.gismu
   if exchanged.is_replied and exchanged.note.len > 0: notes.add exchanged.note
   for note in notes: stderr.writeLine note
   stderr.write answer.toReport(passage, settings.model)

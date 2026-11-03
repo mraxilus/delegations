@@ -639,14 +639,14 @@ func problemPort(url: string): string =
   "URL should name port of one to five digits from 1 to 65535, or none; got `" & url & "`."
 
 
-func toOutcome(failure: Failure, detail: string): Outcome =
-  ## Build outcome failing for reason, detail made printable as binary makes it.
-  Outcome(is_kept: false, failure: failure, detail: detail.toPrintable(RUNES_SHOWN))
+func toVerdict(failure: Failure, detail: string): Verdict =
+  ## Build verdict failing for reason, detail made printable as binary makes it.
+  Verdict(is_kept: false, failure: failure, detail: detail.toPrintable(RUNES_SHOWN))
 
 
-func toOutcomeReplay(detail: string): Outcome =
-  ## Build outcome refused with `Replay`, detail as binary renders it: never cut whole.
-  Outcome(is_kept: false, failure: Failure.Replay, detail: detail)
+func toVerdictReplay(detail: string): Verdict =
+  ## Build verdict refused with `Replay`, detail as binary renders it: never cut whole.
+  Verdict(is_kept: false, failure: Failure.Replay, detail: detail)
 
 
 func detailMalformed(recorded: Recorded; directory, request: string): string =
@@ -660,7 +660,7 @@ func detailMalformed(recorded: Recorded; directory, request: string): string =
 func toExited(answer: Answer, passage: Passage, model: string, notes: openArray[string]): Exited =
   ## Build `Exited` pure pipeline gives once passage exists: each note, then report of answer;
   ##   each gismu kept on its own line and exit 0, or nothing and exit 1.
-  let kept = answer.outcomes.gismu
+  let kept = answer.verdicts.gismu
   Exited(
     output: kept.mapIt($it & "\n").join,
     report: notes.mapIt(it & "\n").join & answer.toReport(passage, model),
@@ -668,19 +668,19 @@ func toExited(answer: Answer, passage: Passage, model: string, notes: openArray[
   )
 
 
-func toExited(outcome: Outcome, passage: Passage, model: string, notes: openArray[string]): Exited =
+func toExited(verdict: Verdict, passage: Passage, model: string, notes: openArray[string]): Exited =
   ## Build `Exited` of run failing whole once passage exists, as answer holding that refusal alone.
-  Answer(outcomes: @[outcome]).toExited(passage, model, notes)
+  Answer(verdicts: @[verdict]).toExited(passage, model, notes)
 
 
-func toExited(outcome: Outcome, notes: openArray[string]): Exited =
+func toExited(verdict: Verdict, notes: openArray[string]): Exited =
   ## Build `Exited` of page that gave no passage: each note, then explanation; exit 1.
-  Exited(report: notes.mapIt(it & "\n").join & outcome.explain & "\n", code: 1)
+  Exited(report: notes.mapIt(it & "\n").join & verdict.explain & "\n", code: 1)
 
 
 func toExited(failure: Failure, detail: string, notes: openArray[string]): Exited =
   ## Build `Exited` of page that gave no passage, detail made printable as binary makes it.
-  toOutcome(failure, detail).toExited(notes)
+  toVerdict(failure, detail).toExited(notes)
 
 
 func toExitedGiven(text: string): Exited =
@@ -952,7 +952,7 @@ suite "Internal: Suggester":
       let exited = binary.run(sample.environment, replay & sample.arguments)
       check exited == toExited(answer, passage, sample.settings.model,
           [noteReplayed(directory_case, request, sample.label)])  # settings from environment
-      if answer.outcomes.gismu.len > 0: inc count_suggested else: inc count_refused
+      if answer.verdicts.gismu.len > 0: inc count_suggested else: inc count_refused
       if passage.is_cut: inc count_cut
     check endpoint.heard.len == 0  # replay opens no socket
     check passed >= FLOOR_REPLAYED  # guard leaves enough texts sent to service
@@ -986,7 +986,7 @@ suite "Internal: Suggester":
 
 
   test "text reading as tag past `COUNT_WORDS_MAX` words exits 1 with `Long`, reading no setting":
-    let expected = Exited(report: toOutcome(Failure.Long, "18").explain & "\n", code: 1)
+    let expected = Exited(report: toVerdict(Failure.Long, "18").explain & "\n", code: 1)
     check binary.run([(KEY_SERVICE, "bogus")], [TEXT_GIVEN_LONG]) ==
         expected  # review finding logic-1, 2026-10-29: memory grew without bound; service unread
 
@@ -1008,7 +1008,7 @@ suite "Internal: Suggester":
       let
         passage = text.toPassage
         shown = pathShown(directory_case, requestService(settings, passage))
-      check exited == toExited(toOutcomeReplay("missing at " & shown), passage,
+      check exited == toExited(toVerdictReplay("missing at " & shown), passage,
           settings.model, [])  # sent to service, whose exchange is missing
     check count_given >= FLOOR_GIVEN  # texts reading as tag are common
     check count_asked >= FLOOR_ASKED  # texts sent to service are common
@@ -1054,10 +1054,10 @@ suite "Internal: Suggester":
       shown_text = pathShown(directory_case, requestService(settings, passage))
       shown_page = pathShown(directory_case, "GET " & page.argument)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-        toExited(toOutcomeReplay("missing at " & shown_text), passage, settings.model,
+        toExited(toVerdictReplay("missing at " & shown_text), passage, settings.model,
         [])  # problem, then stamp of service request named
     check binary.run([], ["--replay:" & directory_case, page.argument]) ==
-        toExited(toOutcomeReplay("missing at " & shown_page), [])  # stamp of first hop
+        toExited(toVerdictReplay("missing at " & shown_page), [])  # stamp of first hop
     check not dirExists(directory_case)  # replay makes nothing
     let
       directory_hops = directory / "hops"
@@ -1066,7 +1066,7 @@ suite "Internal: Suggester":
       shown_service = pathShown(directory_hops, requestService(settings, passage_hops))
     writeExchanges(directory_hops, hops)
     check binary.run([], ["--replay:" & directory_hops, page.argument]) ==
-        toExited(toOutcomeReplay("missing at " & shown_service), passage_hops,
+        toExited(toVerdictReplay("missing at " & shown_service), passage_hops,
         settings.model, hops.mapIt(noteReplayed(directory_hops, it.request,
         it.label)))  # each hop replayed, then stamp of service request named
 
@@ -1093,11 +1093,11 @@ suite "Internal: Suggester":
       check not recorded.is_read  # file malformed
       if recorded.is_read: continue
       check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-          toExited(detailMalformed(recorded, directory_case, request).toOutcomeReplay,
+          toExited(detailMalformed(recorded, directory_case, request).toVerdictReplay,
           passage, settings.model, [])  # problem of reader, then line and path
     writeFile(path, Exchange(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-        toExited(toOutcomeReplay("other request at " & pathShown(directory_case,
+        toExited(toVerdictReplay("other request at " & pathShown(directory_case,
         request)), passage, settings.model, [])  # stamp alone never matches, whole request does
 
 
@@ -1118,16 +1118,16 @@ suite "Internal: Suggester":
     server.routes = @[(PATH_SERVICE, reply)]
     check long.len >= 300  # directory name of 300 characters, past `RUNES_SHOWN`
     let missing = binary.run(settings.toEnvironment, replay)
-    check missing == toExited(toOutcomeReplay("missing at " & pathShown(long, request)),
+    check missing == toExited(toVerdictReplay("missing at " & pathShown(long, request)),
         passage, settings.model, [])  # `--replay:<long directory> 'mi ciska lo xatra'`
     createDir(long)
     writeFile(long / name, Exchange(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
     let other = binary.run(settings.toEnvironment, replay)
-    check other == toExited(toOutcomeReplay("other request at " & pathShown(long,
+    check other == toExited(toVerdictReplay("other request at " & pathShown(long,
         request)), passage, settings.model, [])  # other request, then path
     writeFile(long / name, "")
     let malformed = binary.run(settings.toEnvironment, replay)
-    check malformed == toExited(toOutcomeReplay(detailMalformed("".readExchange, long,
+    check malformed == toExited(toVerdictReplay(detailMalformed("".readExchange, long,
         request)), passage, settings.model, [])  # problem of reader, then line and path
     writeFile(below.parentDir, "")
     let unwritable = binary.run(settings.toEnvironment, ["--record:" & below, text.argument])
@@ -1203,7 +1203,7 @@ suite "Internal: Suggester":
       check binary.run(settings_a.toEnvironment, replay) == toExited(service.readReply(reply),
           passage, settings_a.model, [noteReplayed(directory_service, request_a,
           LABEL_SUITE)])  # endpoint exchange was made for replays it
-      check binary.run(settings_b.toEnvironment, replay) == toExited(toOutcomeReplay(
+      check binary.run(settings_b.toEnvironment, replay) == toExited(toVerdictReplay(
           "missing at " & pathShown(directory_service, requestService(settings_b, passage))),
           passage, settings_b.model, [])  # other endpoint misses it, under its own stamp
 
@@ -1321,7 +1321,7 @@ suite "Internal: Suggester":
       passage = text.argument.toPassage
       missing = directory / "workspaces_missing"  # never made, so exchange of request misses
       taken = toExited(
-        toOutcomeReplay(
+        toVerdictReplay(
           "missing at " & pathShown(missing, requestService(settings, passage)),
         ),
         passage,
@@ -1491,8 +1491,8 @@ suite "Internal: Suggester":
         check replayed == toExited(answer, passage, settings.model,
             [noteReplayed(directory_case, request, label)])  # any reply replayed, credential unread
         check server.heard.len - count_before == (if is_replayed: 1 else: 2)  # replay sends nothing
-        for outcome in answer.outcomes:
-          if not outcome.is_kept: covered.incl outcome.failure
+        for verdict in answer.verdicts:
+          if not verdict.is_kept: covered.incl verdict.failure
         if is_replayed: inc count_replayed else: inc count_sent
       stopServer(server)
     check covered ==
@@ -1757,7 +1757,7 @@ suite "Internal: Suggester":
       reply = toReplyMessages(text.answer, settings.model)
       url = urlLoopback(server.port, "/page")
       shared = directory / "shared"
-      refused = toOutcomeReplay("writable by every user at " & shared.toPrintable(RUNES_SHOWN))
+      refused = toVerdictReplay("writable by every user at " & shared.toPrintable(RUNES_SHOWN))
     server.routes = @[
       (PATH_SERVICE, reply),
       ("/page", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
@@ -1802,7 +1802,7 @@ suite "Internal: Suggester":
     check chmod(cstring(shared), Mode(0o1777)) == 0  # mode of `/tmp`
     createSymlink(tree / "private" / "inner", shared / "s")
     check binary.run(settings.toEnvironment, ["--replay:" & spelled, text.argument]) ==
-        toExited(toOutcomeReplay("missing at " & pathShown(spelled, request)), passage,
+        toExited(toVerdictReplay("missing at " & pathShown(spelled, request)), passage,
         settings.model, [])  # case as found: exchange planted in `shared` never replays
     check binary.run(settings.toEnvironment, ["--record:" & spelled, text.argument]) ==
         toExited(answer, passage, settings.model, [noteCredential(KEY_CREDENTIAL),
@@ -1858,19 +1858,19 @@ suite "Internal: Suggester":
     createDir(directory_case)
     for size in [bytes_file_max + 1, bytes_file_max + BYTES_REPLY_MAX]:
       writeFile(path, whole & "x".repeat(size - whole.len))  # read whole, it would be malformed
-      check binary.run([], replay) == toExited(toOutcomeReplay("larger than " &
+      check binary.run([], replay) == toExited(toVerdictReplay("larger than " &
           $bytes_file_max & " bytes at " & shown), passage, settings.model,
           [])  # refused by size alone
     for count in [BYTES_REPLY_MAX + 1, BYTES_REPLY_MAX + 1_000]:
       let body = Reply(status: 200, content_type: "application/json", body: "x".repeat(count))
       writeFile(path, Exchange(label: LABEL_SUITE, request: request, reply: body).toText)
       check getFileSize(path) <= bytes_file_max  # file within its cap, so body is read
-      check binary.run([], replay) == toExited(toOutcomeReplay("body over " &
+      check binary.run([], replay) == toExited(toVerdictReplay("body over " &
           $BYTES_REPLY_MAX & " bytes at " & shown), passage, settings.model,
           [])  # body past cap of reply never replayed
     let at_cap = whole & "x".repeat(bytes_file_max - whole.len)
     writeFile(path, at_cap)
-    check binary.run([], replay) == toExited(toOutcomeReplay(detailMalformed(
+    check binary.run([], replay) == toExited(toVerdictReplay(detailMalformed(
         at_cap.readExchange, directory_case, request)), passage, settings.model,
         [])  # file at its cap is read, and reader refuses what follows body
 
@@ -1897,7 +1897,7 @@ suite "Internal: Suggester":
       file.write('\0')
       file.close()
     check binary.runLine([], limited & " " & quoteShell("--replay:" & directory_case) & " " &
-        quoteShell(text.argument)) == toExited(toOutcomeReplay("larger than " &
+        quoteShell(text.argument)) == toExited(toVerdictReplay("larger than " &
         $(request.len + BYTES_REPLY_MAX + BYTES_FIELDS_MAX) & " bytes at " & pathShown(
         directory_case, request)), passage, settings.model, [])  # size read, file never
     check binary.runLine([], limited & " -", path_input = input) == Exited(report: "Text on " &
@@ -2019,7 +2019,7 @@ suite "Internal: Suggester":
       directory_case = directory / "linked"
       outside = directory / "outside"
       path = pathExchange(directory_case, request)
-      refused = toOutcomeReplay("link or other than file at " & pathShown(directory_case, request))
+      refused = toVerdictReplay("link or other than file at " & pathShown(directory_case, request))
     server.routes = @[(PATH_SERVICE, reply)]
     createDir(directory_case)
     createDir(outside)
@@ -2425,7 +2425,7 @@ suite "Internal: Suggester":
               code: 2)  # URL well formed, so http to host off loopback is fault
         else:
           inc count_taken
-          check exited == toExited(toOutcomeReplay("missing at " & pathShown(missing,
+          check exited == toExited(toVerdictReplay("missing at " & pathShown(missing,
               requestService(settings, passage))), passage, settings.model,
               [])  # endpoint taken, so replay asks exchange of its request
     check count_port > 0 and count_scheme > 0 and count_taken > 0  # each side of law reached
@@ -2517,7 +2517,7 @@ suite "Internal: Suggester":
         passage = text.toPassage
         shown = pathShown(directory_case, requestService(settings, passage))
       check binary.run([], @["--replay:" & directory_case] & arguments) ==
-          toExited(toOutcomeReplay("missing at " & shown), passage, settings.model,
+          toExited(toVerdictReplay("missing at " & shown), passage, settings.model,
           [])  # passage after `--` read as text, flag of mode among it too
 
 
@@ -2559,7 +2559,7 @@ suite "Internal: Suggester":
     for (url, is_taken) in cases:
       let exited = binary.run([], ["--replay:" & missing, url])
       if is_taken:
-        check exited == toExited(toOutcomeReplay("missing at " & pathShown(missing,
+        check exited == toExited(toVerdictReplay("missing at " & pathShown(missing,
             "GET " & url)), [])  # page asked: exchange of its first hop misses
         continue
       check exited == Exited(report: problemPort(url) & "\n" & USAGE,
@@ -2576,7 +2576,7 @@ suite "Internal: Suggester":
         passage = (if input.len > 0: input else: arguments.join(" ")).toPassage
         shown = pathShown(missing, requestService(Service.Claude.toSettings, passage))
       check binary.run([], @["--replay:" & missing] & arguments, input = input) == toExited(
-          toOutcomeReplay("missing at " & shown), passage, Service.Claude.toSettings.model,
+          toVerdictReplay("missing at " & shown), passage, Service.Claude.toSettings.model,
           [])  # text shaped otherwise goes as passage
     check not dirExists(missing)  # replay makes nothing
     stopServer(server)
@@ -2616,9 +2616,9 @@ suite "Internal: Suggester":
             named = "`" & settings.endpoint & "` for `" & KEY_ENDPOINT & "`.\n"
           if is_user and is_host and is_port:
             inc count_taken
-            check argued == toExited(toOutcomeReplay("missing at " & pathShown(missing,
+            check argued == toExited(toVerdictReplay("missing at " & pathShown(missing,
                 "GET " & url)), [])  # page asked: exchange of its first hop misses
-            check configured == toExited(toOutcomeReplay("missing at " & pathShown(
+            check configured == toExited(toVerdictReplay("missing at " & pathShown(
                 missing, requestService(settings, passage))), passage, settings.model,
                 [])  # endpoint taken, so replay asks exchange of its request
           elif is_user and is_host:
@@ -2662,7 +2662,7 @@ suite "Internal: Suggester":
         shown = pathShown(directory_case, requestService(settings, passage))
         expected =
           if text.readTagGiven.isSome: text.toExitedGiven
-          else: toExited(toOutcomeReplay("missing at " & shown), passage, settings.model, [])
+          else: toExited(toVerdictReplay("missing at " & shown), passage, settings.model, [])
       check exited == expected  # text holding visible character asks shortcut, then service
     check count_blank >= FLOOR_BLANK  # blank texts are common
     check count_visible >= FLOOR_VISIBLE  # texts holding visible character are common
@@ -2700,7 +2700,7 @@ suite "Internal: Suggester":
               check exited == Exited(report: USAGE, code: 2)  # tail cut, or across cut
               continue
             inc count_visible
-            check exited == toExited(toOutcomeReplay("missing at " & pathShown(
+            check exited == toExited(toVerdictReplay("missing at " & pathShown(
                 directory_case, requestService(settings, passage))), passage, settings.model,
                 [])  # tail within cut goes out, cut named
     check count_blank > 0 and count_visible > 0  # each side of law reached
@@ -2737,7 +2737,7 @@ suite "Internal: Suggester":
         passage = text.toPassage
         shown = pathShown(missing, requestService(settings, passage))
       check binary.run([], ["--replay:" & missing, "-"], input = text) == toExited(
-          toOutcomeReplay("missing at " & shown), passage, settings.model,
+          toVerdictReplay("missing at " & shown), passage, settings.model,
           [])  # text whole, never page fetched
     check binary.run(live, ["-"], input = "a".repeat(BYTES_PAGE_MAX + 1)) ==
         Exited(report: over, code: 2)  # one byte past cap refused, with cap named
@@ -2808,15 +2808,15 @@ suite "Internal: Suggester":
       toReplyMessages("{\"tags\":[7]}", settings.model),
     ]:
       let answer = Service.Claude.readReply(reply)
-      check answer.outcomes.gismu.len == 0  # reply keeps no gismu
-      if answer.outcomes.len == 0 or answer.outcomes[0].is_kept: continue
+      check answer.verdicts.gismu.len == 0  # reply keeps no gismu
+      if answer.verdicts.len == 0 or answer.verdicts[0].is_kept: continue
       let directory_case = directory / "failures" / $i
       writeExchanges(directory_case, [Exchange(label: LABEL_SUITE, request: request,
           reply: reply)])
       check binary.run([], ["--replay:" & directory_case, text]) == toExited(answer,
           passage, settings.model, [noteReplayed(directory_case, request,
           LABEL_SUITE)])  # explained after note, nothing printed, exit 1
-      covered.incl answer.outcomes[0].failure
+      covered.incl answer.verdicts[0].failure
     let
       repeated = toReplyMessages(toAnswer(["ciska", "Ciska"]), settings.model)
       directory_repeated = directory / "failures" / "repeated"
@@ -2831,14 +2831,14 @@ suite "Internal: Suggester":
     check "Element 2 should name gismu no earlier tag kept; got `Ciska`.\n" in
         exited_repeated.report  # binary names repeat as `Duplicate`, by position
     covered.incl Failure.Duplicate
-    check binary.run([(KEY_SERVICE, "bogus")], [TEXT_GIVEN_LONG]) == Exited(report: toOutcome(
+    check binary.run([(KEY_SERVICE, "bogus")], [TEXT_GIVEN_LONG]) == Exited(report: toVerdict(
         Failure.Long, "18").explain & "\n", code: 1)  # text given past cap of words
     covered.incl Failure.Long
     let
       directory_none = directory / "failures" / "none"  # never made
       shown_none = pathShown(directory_none, request)
     check binary.run([], ["--replay:" & directory_none, text]) == toExited(
-        toOutcomeReplay("missing at " & shown_none), passage, settings.model,
+        toVerdictReplay("missing at " & shown_none), passage, settings.model,
         [])  # missing
     covered.incl Failure.Replay
     let

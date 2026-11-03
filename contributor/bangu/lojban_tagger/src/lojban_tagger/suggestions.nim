@@ -13,7 +13,7 @@
 ##   | readReply          | read reply into answer: each tag checked, or failure named     |
 ##   | isAnswered         | reply holds completion model produced, which record replays    |
 ##   | Answer             | each tag read in order, elements past cap counted, model named |
-##   | Outcome            | gismu of one tag checked against lists, or why none            |
+##   | Verdict            | gismu of one tag checked against lists, or why none            |
 ##   | gismu              | gismu kept, in order, each once: what `suggester` prints       |
 ##   |--------------------|----------------------------------------------------------------|
 ##
@@ -197,8 +197,8 @@ type
     Duplicate  ## Element names gismu earlier tag kept; detail is word.
     Long  ## Text given as tag holds more than `COUNT_WORDS_MAX` words; detail is count.
 
-  Outcome* = object
-    ## Define outcome of one tag: gismu checked against lists, or why none; one refused alone
+  Verdict* = object
+    ## Define verdict on one tag: gismu checked against lists, or why none; one refused alone
     ##   stands for reply, page, exchange or text given failing whole.
     case is_kept*: bool  ## Tag was checked against lists and kept.
     of true:
@@ -220,9 +220,9 @@ type
         ##   made, since escapes lengthen detail.
 
   Answer* = object
-    ## Define outcome of asking for tags: one outcome per tag read, in order, elements past cap
+    ## Define outcome of asking for tags: one verdict per tag read, in order, elements past cap
     ##   counted, and model named once.
-    outcomes*: seq[Outcome]
+    verdicts*: seq[Verdict]
       ## One per tag read, in order of answer: gismu kept, or refused naming its position; one
       ##   refused alone, naming none, where reply, page or exchange fails whole.
     count_cut*: int  ## Elements answer held past `COUNT_TAGS_MAX`, never read.
@@ -599,19 +599,19 @@ func toPassage*(text: string, url = "", is_page_cut = false): Passage =
   result.is_cut = result.text.len < repaired.len
 
 
-func readTagGiven*(text: string): Option[Outcome] =
+func readTagGiven*(text: string): Option[Verdict] =
   ## Read text given as tag where it holds `BYTES_ELEMENT_MAX` bytes or fewer and reads as one;
   ##   `none` sends it to service, as lojban prose, English and cmavo alone go.
   ##   Tag past `COUNT_WORDS_MAX` words fails as `Long`, named by count, since 64 bytes hold lujvo
   ##     of 18 words; tag within it is kept whole, so `gismu` gives each of its gismu once, cmavo
   ##     left out. Gloss stays empty, as no service is asked.
-  if text.len > BYTES_ELEMENT_MAX: return none(Outcome)
+  if text.len > BYTES_ELEMENT_MAX: return none(Verdict)
   let reading = text.readTag
-  if not reading.is_tag: return none(Outcome)
+  if not reading.is_tag: return none(Verdict)
   let count = reading.tag.words.len
   if count > COUNT_WORDS_MAX:
-    return some(Outcome(is_kept: false, failure: Failure.Long, detail: $count))
-  some(Outcome(is_kept: true, tag: reading.tag))
+    return some(Verdict(is_kept: false, failure: Failure.Long, detail: $count))
+  some(Verdict(is_kept: true, tag: reading.tag))
 
 
 
@@ -1121,12 +1121,12 @@ func toJSON(text: string): Option[JsonNode] =
 
 func fail(
   failure: Failure, detail: string, reason = "", position = none(int), is_past_cap = false
-): Outcome =
-  ## Build outcome that failed, detail made printable within `RUNES_SHOWN`, reason made
+): Verdict =
+  ## Build verdict that failed, detail made printable within `RUNES_SHOWN`, reason made
   ##   printable whole; `position` names element of answer, and `is_past_cap` marks word never read.
   ##   Reader bounds reason, since word reaches it at `BYTES_ELEMENT_MAX` bytes at most. Cap of
   ##     its bytes cuts nothing, since repair never makes more characters than bytes.
-  Outcome(
+  Verdict(
     is_kept: false,
     failure: failure,
     detail: detail.toPrintable(RUNES_SHOWN),
@@ -1137,11 +1137,11 @@ func fail(
 
 
 func failWhole(failure: Failure, detail: string): Answer =
-  ## Build answer of reply failing whole: one outcome that failed, naming no element.
-  Answer(outcomes: @[fail(failure, detail)])
+  ## Build answer of reply failing whole: one verdict that failed, naming no element.
+  Answer(verdicts: @[fail(failure, detail)])
 
 
-func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Outcome =
+func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Verdict =
   ## Read tag at `position` of answer as one gismu of list: object holding string `gismu`, word
   ##   within its cap, read through `readTag` as one listed gismu no earlier tag kept; gloss made
   ##   printable, empty where no string.
@@ -1159,7 +1159,7 @@ func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Outcom
   if not reading.is_tag or reading.tag.words.len > 1:
     return fail(Failure.Word, element, position = at)  # Cmavo of list, or lujvo.
   if reading.tag.words[0] in kept: return fail(Failure.Duplicate, element, position = at)
-  Outcome(
+  Verdict(
     is_kept: true,
     tag: reading.tag,
     gloss: item{"gloss"}.getStr.splitWhitespace.join(" ").toPrintable(RUNES_SHOWN),
@@ -1185,9 +1185,9 @@ func readAnswer(text, model: string): Answer =
   )
   var kept: seq[Word]
   for i in 0..<min(items.len, COUNT_TAGS_MAX):
-    let outcome = items[i].readTagAnswer(i + 1, kept)
-    if outcome.is_kept: kept.add outcome.tag.words[0]
-    result.outcomes.add outcome
+    let verdict = items[i].readTagAnswer(i + 1, kept)
+    if verdict.is_kept: kept.add verdict.tag.words[0]
+    result.verdicts.add verdict
 
 
 func readError(status: int, node: JsonNode): Answer =
@@ -1282,13 +1282,13 @@ func readReply*(service: Service, reply: Reply): Answer {.raises: [].} =
   of Service.OpenRouter, Service.Chat: readChat(reply.status, parsed)
 
 
-func gismu*(outcomes: openArray[Outcome]): seq[Word] =
+func gismu*(verdicts: openArray[Verdict]): seq[Word] =
   ## Read gismu of each tag kept, in order, each once, cmavo left out: what `suggester` prints,
   ##   one to line; empty where none is kept, so run exits 1.
   ##   Tag of answer holds one gismu, and text given whole tag, so one rule serves both.
-  for outcome in outcomes:
-    if not outcome.is_kept: continue
-    for w in outcome.tag.gismu:
+  for verdict in verdicts:
+    if not verdict.is_kept: continue
+    for w in verdict.tag.gismu:
       if w notin result: result.add w
 
 
@@ -1333,7 +1333,7 @@ func isAnswered*(service: Service, reply: Reply): bool {.raises: [].} =
 
 #[ Report ]#
 
-func explain*(outcome: Outcome): string {.raises: [].} =
+func explain*(verdict: Verdict): string {.raises: [].} =
   ## Render why no gismu was kept, ending in offending value: element of answer named by position,
   ##   or reply, page, exchange or text given failing whole.
   ##   `Word` ends in `reason`, `explain` of reading (`commands.nim`) kept when failure was made,
@@ -1349,9 +1349,9 @@ func explain*(outcome: Outcome): string {.raises: [].} =
     if reason.len > 0: heading & ". " & reason else: heading & "; got `" & detail & "`."
 
   let
-    detail = outcome.detail
-    label = if outcome.position.isSome: "Element " & $outcome.position.get else: "Element"
-  case outcome.failure
+    detail = verdict.detail
+    label = if verdict.position.isSome: "Element " & $verdict.position.get else: "Element"
+  case verdict.failure
   of Failure.Network: "Service or page should answer; got `" & detail & "`."
   of Failure.Replay: "Exchange should hold this request; got `" & detail & "`."
   of Failure.Page: "Page should give text; got `" & detail & "`."
@@ -1360,12 +1360,12 @@ func explain*(outcome: Outcome): string {.raises: [].} =
   of Failure.Truncated: "Answer should end before its limit; lower effort or shorten " &
       "passage; got `" & detail & "`."
   of Failure.Malformed:
-    if outcome.position.isNone: "Reply should hold answer of schema; got `" & detail & "`."
+    if verdict.position.isNone: "Reply should hold answer of schema; got `" & detail & "`."
     else: label & " should be object holding string `gismu`; got `" & detail & "`."
   of Failure.Word:
-    if outcome.is_past_cap:
+    if verdict.is_past_cap:
       label & " should hold at most " & $BYTES_ELEMENT_MAX & " bytes; got `" & detail & "`."
-    else: explainReason(label & " should be one gismu of list", outcome.reason, detail)
+    else: explainReason(label & " should be one gismu of list", verdict.reason, detail)
   of Failure.Duplicate: label & " should name gismu no earlier tag kept; got `" & detail & "`."
   of Failure.Long: "Tag should hold at most " & $COUNT_WORDS_MAX & " words; got `" & detail & "`."
 
@@ -1384,15 +1384,15 @@ func toReport*(answer: Answer, passage: Passage, model_asked: string): string =
   if passage.is_cut:
     result.add "Passage held `" & $passage.count_bytes & "` bytes; model read first `" &
         $BYTES_PASSAGE_MAX & "`.\n"
-  for outcome in answer.outcomes:
-    if not outcome.is_kept: result.add outcome.explain & "\n"
+  for verdict in answer.verdicts:
+    if not verdict.is_kept: result.add verdict.explain & "\n"
   if answer.count_cut > 0:
     result.add "Answer held `" & $answer.count_cut & "` elements past first `" & $COUNT_TAGS_MAX &
         "`; tool never read them.\n"
   var found_kept = false
-  for outcome in answer.outcomes:
-    if not outcome.is_kept: continue
-    result.add "Service suggests `" & outcome.tag.toTanru & "`, glossed `" & outcome.gloss &
+  for verdict in answer.verdicts:
+    if not verdict.is_kept: continue
+    result.add "Service suggests `" & verdict.tag.toTanru & "`, glossed `" & verdict.gloss &
         "`.\n"
     found_kept = true
   if not found_kept: return

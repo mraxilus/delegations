@@ -25,8 +25,7 @@ when compileOption("profiler"):
 
 import std/[algorithm, json, options, random, sequtils, strutils, sugar, unittest]
 
-from ../../src/lojban_tagger/commands import explain  # Alone: its own `Outcome` would clash.
-import ../../src/lojban_tagger/[dictionary, forms, lujvo, suggestions {.all.}, tags]
+import ../../src/lojban_tagger/[commands, dictionary, forms, lujvo, suggestions {.all.}, tags]
 import ../../src/lojban_tagger/lists/gismu
 import ../../tools/examples
 
@@ -183,7 +182,7 @@ const
     ##   coding, body, stop or finish reason, choice.
   GISMU_KEPT = ["cukta", "ractu", "nixli"]  ## Gismu suite keeps around each tag it drops.
   ANSWER_FAILED = Answer(
-    outcomes: @[Outcome(is_kept: false, failure: Failure.Status, detail: "529")],
+    verdicts: @[Verdict(is_kept: false, failure: Failure.Status, detail: "529")],
   )
     ## Answer of reply failing whole, as after any failed run: report of it names passage facts.
   TAGS_DROPPED = [
@@ -485,28 +484,28 @@ func toAnswerItems(items: openArray[string]): string =
 
 func keptRead(answer: Answer): seq[string] =
   ## Read gismu of each tag answer keeps, in order.
-  for outcome in answer.outcomes:
-    if outcome.is_kept: result.add outcome.tag.toTanru
+  for verdict in answer.verdicts:
+    if verdict.is_kept: result.add verdict.tag.toTanru
 
 
 func refusalsRead(answer: Answer): seq[(Option[int], Failure, string)] =
   ## Read each refusal of answer, in order: position of tag it names, failure, and detail.
-  for outcome in answer.outcomes:
-    if not outcome.is_kept:
-      result.add (outcome.position, outcome.failure, outcome.detail)
+  for verdict in answer.verdicts:
+    if not verdict.is_kept:
+      result.add (verdict.position, verdict.failure, verdict.detail)
 
 
-func failureRead(outcome: Outcome): Option[(Failure, string)] =
-  ## Read failure of outcome with its detail; `none` where gismu was kept.
-  if outcome.is_kept: none((Failure, string))
-  else: some((outcome.failure, outcome.detail))
+func failureRead(verdict: Verdict): Option[(Failure, string)] =
+  ## Read failure of verdict with its detail; `none` where gismu was kept.
+  if verdict.is_kept: none((Failure, string))
+  else: some((verdict.failure, verdict.detail))
 
 
 func failureRead(answer: Answer): Option[(Failure, string)] =
   ## Read first refusal of answer with its detail, whatever tag it names; `none` where answer
   ##   refuses nothing.
-  for outcome in answer.outcomes:
-    if not outcome.is_kept: return outcome.failureRead
+  for verdict in answer.verdicts:
+    if not verdict.is_kept: return verdict.failureRead
   none((Failure, string))
 
 
@@ -514,9 +513,9 @@ func isAnswerRead(answer: Answer): bool =
   ## Test reader read answer model gave: tags, kept or dropped, or failure of answer itself, never
   ##   of reply around it: no `Status`, no `Declined`, no `Malformed` opening with one of
   ##   `DETAILS_REPLY`. Reply failing whole holds one refusal alone, naming no tag.
-  if answer.outcomes.anyIt(it.is_kept or it.position.isSome): return true
-  if answer.outcomes.len != 1: return false
-  let whole = answer.outcomes[0]
+  if answer.verdicts.anyIt(it.is_kept or it.position.isSome): return true
+  if answer.verdicts.len != 1: return false
+  let whole = answer.verdicts[0]
   case whole.failure
   of Failure.Truncated, Failure.Word, Failure.Duplicate, Failure.Long: true
   of Failure.Malformed: not DETAILS_REPLY.anyIt(whole.detail.startsWith(it))
@@ -548,14 +547,14 @@ func isHeld(answer: Answer): bool =
   ## Test answer holds what reader promises: at most `COUNT_TAGS_MAX` tags read; each kept
   ##   tag one listed gismu, kept once; each refusal naming tag at its own position, or none
   ##   where it stands alone for reply failing whole.
-  if answer.outcomes.len > COUNT_TAGS_MAX: return false
+  if answer.verdicts.len > COUNT_TAGS_MAX: return false
   var kept: seq[Word]
-  for i, outcome in answer.outcomes:
-    if not outcome.is_kept:
-      if outcome.position.isSome and outcome.position.get != i + 1: return false
-      if outcome.position.isNone and answer.outcomes.len > 1: return false
+  for i, verdict in answer.verdicts:
+    if not verdict.is_kept:
+      if verdict.position.isSome and verdict.position.get != i + 1: return false
+      if verdict.position.isNone and answer.verdicts.len > 1: return false
       continue
-    let words = outcome.tag.words
+    let words = verdict.tag.words
     if words.len != 1 or words[0].kind != Kind.Gismu or words[0] in kept: return false
     kept.add words[0]
   true
@@ -764,10 +763,10 @@ func casings(text: string): seq[string] =
     result.add cased
 
 
-proc explainGuarded(outcome: Outcome): Option[string] =
-  ## Explain outcome, catching any exception, defect included; `none` where explaining raised.
+proc explainGuarded(verdict: Verdict): Option[string] =
+  ## Explain verdict, catching any exception, defect included; `none` where explaining raised.
   try:
-    some(outcome.explain)
+    some(verdict.explain)
   except Exception:
     none(string)
 
@@ -1715,8 +1714,8 @@ suite "Internal: Answer":
     for w in WORDS_GISMU:  # 1342 gismu, exhaustive
       check readAnswer(toAnswer([$w]), MODEL_SUITE).keptRead == @[$w]  # listed gismu is own tag
     let answer = readAnswer(toAnswer(["ciska"], "writing"), MODEL_SUITE)
-    check answer.outcomes[0].is_kept and
-        answer.outcomes[0].gloss == "writing"  # gloss as model gave it
+    check answer.verdicts[0].is_kept and
+        answer.verdicts[0].gloss == "writing"  # gloss as model gave it
     check answer.keptRead == @["ciska"] and answer.model == MODEL_SUITE  # model reply names
 
 
@@ -1726,7 +1725,7 @@ suite "Internal: Answer":
           @["ciska"]  # folding of `tags.nim`, project choice
     let folded = readAnswer(toAnswer(["Se", "CI,SKA"]), MODEL_SUITE)
     check folded.refusalsRead == @[(some(1), Failure.Word, "Se")]  # cmavo folds too, no gismu
-    check folded.outcomes[0].explain == "Element 1 should be one gismu of list; " &
+    check folded.verdicts[0].explain == "Element 1 should be one gismu of list; " &
         "got `Se`."  # folds to listed cmavo; no reader reason
     check folded.keptRead == @["ciska"]  # gismu after it folds and stays
 
@@ -1737,11 +1736,11 @@ suite "Internal: Answer":
     for words in served(pool):  # `SAMPLES_GISMU` lists of 1 to 32 distinct gismu, seeded
       let answer = readAnswer(toAnswer(words), MODEL_SUITE)
       check answer.keptRead == words  # every gismu kept, in order of answer
-      check answer.outcomes.allIt(it.is_kept and it.gloss == GLOSS_SUITE)  # each glossed
+      check answer.verdicts.allIt(it.is_kept and it.gloss == GLOSS_SUITE)  # each glossed
       check answer.count_cut == 0  # within cap, none cut
     let glossed = readAnswer($ %*{"tags": [{"gismu": "cukta", "gloss": "book"},
         {"gismu": "ractu", "gloss": "rabbit"}]}, MODEL_SUITE)
-    check glossed.outcomes.mapIt(it.gloss) == @["book", "rabbit"]  # gloss of each tag own
+    check glossed.verdicts.mapIt(it.gloss) == @["book", "rabbit"]  # gloss of each tag own
 
 
   test "tag that is no gismu of list is dropped alone, named by position, and rest kept":
@@ -1761,8 +1760,8 @@ suite "Internal: Answer":
             else: heading & " should be one gismu of list; got `" & detail & "`."
         check answer.keptRead == @GISMU_KEPT  # rest kept, in order
         check answer.refusalsRead == @[(some(at + 1), failure, detail)]  # dropped, at position
-        check answer.outcomes[at].explain == explained  # named by position, with reason
-        check answer.outcomes.gismu.mapIt($it) == @GISMU_KEPT  # printed: rest alone
+        check answer.verdicts[at].explain == explained  # named by position, with reason
+        check answer.verdicts.gismu.mapIt($it) == @GISMU_KEPT  # printed: rest alone
     for at in 1..GISMU_KEPT.len:  # each position after gismu it repeats, exhaustive
       var words = @GISMU_KEPT
       words.insert(GISMU_KEPT[0].toUpperAscii, at)  # Folded, so equal once read.
@@ -1770,7 +1769,7 @@ suite "Internal: Answer":
       check answer.keptRead == @GISMU_KEPT  # first kept, repeat dropped
       check answer.refusalsRead == @[(some(at + 1), Failure.Duplicate,
           GISMU_KEPT[0].toUpperAscii)]  # dropped as `Duplicate`, at its position
-      check answer.outcomes[at].explain == "Element " & $(at + 1) & " should name gismu no " &
+      check answer.verdicts[at].explain == "Element " & $(at + 1) & " should name gismu no " &
           "earlier tag kept; got `" & GISMU_KEPT[0].toUpperAscii & "`."  # named as answered
 
 
@@ -1780,7 +1779,7 @@ suite "Internal: Answer":
       let answer = readAnswer(toAnswer(["cukta", $w, "ractu"]), MODEL_SUITE)
       check answer.keptRead == @["cukta", "ractu"]  # gismu around cmavo kept
       check answer.refusalsRead == @[(some(2), Failure.Word, $w)]  # cmavo dropped at position
-      check answer.outcomes[1].explain ==
+      check answer.verdicts[1].explain ==
           "Element 2 should be one gismu of list; got `" & $w & "`."  # listed, yet no gismu
 
 
@@ -1799,7 +1798,7 @@ suite "Internal: Answer":
           expected = toSeq(0..<length).mapIt(
               (some(it + 1), TAGS_DROPPED[kinds[it]].failure, TAGS_DROPPED[kinds[it]].detail))
         check answer.keptRead.len == 0  # no gismu kept
-        check answer.outcomes.gismu.len == 0  # nothing to print, so run exits 1
+        check answer.verdicts.gismu.len == 0  # nothing to print, so run exits 1
         check answer.refusalsRead == expected  # each refusal, in order, none `Duplicate`
         inc count_sequences
     check count_sequences == 258  # 6 + 36 + 216 sequences of kinds
@@ -1809,26 +1808,26 @@ suite "Internal: Answer":
     for element in ["datna", "cihska", "lo", "qwzx", "zbadoi", "ciska+se", "two words", ""]:
       let answer = readAnswer(toAnswer([element, "ciska"]), MODEL_SUITE)
       check answer.failureRead == some((Failure.Word, element))  # element named as given
-      check answer.outcomes[0].explain == "Element 1 should be one gismu of list. " &
+      check answer.verdicts[0].explain == "Element 1 should be one gismu of list. " &
           element.readTag.explain  # reason of reader, worded once in `commands.nim`
     let (edge, long) = ("a".repeat(BYTES_ELEMENT_MAX), "a".repeat(BYTES_ELEMENT_MAX + 1))
-    check readAnswer(toAnswer([edge]), MODEL_SUITE).outcomes[0].explain ==
+    check readAnswer(toAnswer([edge]), MODEL_SUITE).verdicts[0].explain ==
         "Element 1 should be one gismu of list. " & edge.readTag.explain  # cap reaches reader
     let refused = readAnswer(toAnswer([long]), MODEL_SUITE)
     check refused.failureRead == some((Failure.Word, long))  # past cap, element named
-    check refused.outcomes[0].explain == "Element 1 should hold at most 64 bytes; got `" & long &
+    check refused.verdicts[0].explain == "Element 1 should hold at most 64 bytes; got `" & long &
         "`."  # reader never runs past cap
 
 
   test "explain judges and explains word as answered, never by detail that escapes change":
     let found = "\x01".repeat(13)  # case as found in suite review: 13 bytes judged past cap
-    check readAnswer(toAnswer([found]), MODEL_SUITE).outcomes[0].explain ==
+    check readAnswer(toAnswer([found]), MODEL_SUITE).verdicts[0].explain ==
         "Element 1 should be one gismu of list. " &
         found.readTag.explain.toPrintableReference(high(int))  # judged by bytes as answered
-    check readAnswer(toAnswer(["café"]), MODEL_SUITE).outcomes[0].explain == "Element 1 " &
+    check readAnswer(toAnswer(["café"]), MODEL_SUITE).verdicts[0].explain == "Element 1 " &
         "should be one gismu of list. Tag should hold lojban letters alone; got `é` in " &
         "`café`."  # review finding logic-6, 2026-10-29: named byte `C3` alone
-    check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).outcomes[0].explain == "Element 1 " &
+    check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).verdicts[0].explain == "Element 1 " &
         "should be one gismu of list. Tag should hold lojban letters alone; got `\\u{1}` in " &
         "`ci\\u{1}ska`."  # review finding logic-6, 2026-10-29: named `\`, never answered
     for filler in FILLERS_WORD:  # 8 characters, one of each kind it names, not every character
@@ -1844,14 +1843,14 @@ suite "Internal: Answer":
               "Element 1 should be one gismu of list. " &
                   element.readTag.explain.toPrintableReference(high(int))
         check answer.failureRead == some((Failure.Word, detail))  # word named, printable
-        check answer.outcomes[0].explain == explained  # judged and explained as answered
-        check answer.outcomes[0].explain.isPrintable  # whole characters, none report escapes
+        check answer.verdicts[0].explain == explained  # judged and explained as answered
+        check answer.verdicts[0].explain.isPrintable  # whole characters, none report escapes
 
 
   test "reason of word within cap is kept whole, so explanation ends in its value":
     let found = "bab".repeat(20) & "ba'i"  # case as found: form 4.11 gives holds 84 letters
     check found.len == BYTES_ELEMENT_MAX  # at cap, so reader reads it
-    let explained = readAnswer(toAnswer([found]), MODEL_SUITE).outcomes[0].explain
+    let explained = readAnswer(toAnswer([found]), MODEL_SUITE).verdicts[0].explain
     check explained == "Element 1 should be one gismu of list. " &
         found.readTag.explain  # recheck claim regressions-src-1, 2026-10-29: ended in `…`
     check explained.endsWith("`.")  # IV.4, message ends in its value, never in cut
@@ -1861,7 +1860,7 @@ suite "Internal: Answer":
     for word in served(pool):  # `SAMPLES_HYPHENED` words, seeded
       let
         reason = word.readTag.explain.toPrintableReference(high(int))
-        explained = readAnswer(toAnswer([word]), MODEL_SUITE).outcomes[0].explain
+        explained = readAnswer(toAnswer([word]), MODEL_SUITE).verdicts[0].explain
       check explained == "Element 1 should be one gismu of list. " &
           reason  # reason of reader kept whole, made printable
       check explained.endsWith("`.")  # IV.4, message ends in its value
@@ -1896,21 +1895,21 @@ suite "Internal: Answer":
       ("bad \xFF byte", "bad \uFFFD byte"),
       ("x".repeat(RUNES_SHOWN + 1), "x".repeat(RUNES_SHOWN) & "\u2026"),
     ]:
-      let outcome = readAnswer(toAnswer(["ciska"], raw), MODEL_SUITE).outcomes[0]
-      check outcome.is_kept and outcome.gloss == gloss  # collapsed, then printable
+      let verdict = readAnswer(toAnswer(["ciska"], raw), MODEL_SUITE).verdicts[0]
+      check verdict.is_kept and verdict.gloss == gloss  # collapsed, then printable
     for answer in ["{\"tags\":[{\"gismu\":\"ciska\"}]}",
         "{\"tags\":[{\"gismu\":\"ciska\",\"gloss\":7}]}"]:
-      let outcome = readAnswer(answer, MODEL_SUITE).outcomes[0]
-      check outcome.is_kept and outcome.gloss == ""  # gloss never changes tag
+      let verdict = readAnswer(answer, MODEL_SUITE).verdicts[0]
+      check verdict.is_kept and verdict.gloss == ""  # gloss never changes tag
     let named = readAnswer(toAnswer(["ciska"]), "claude\x1B[2J")
     check named.keptRead == @["ciska"] and named.model == "claude\\u{1B}[2J"  # model printable
     randomize(0)
     let pool = poolPrintable()
     for (text, _) in served(pool):  # `SAMPLES_BYTES` texts, seeded
-      let outcome = readAnswer(toAnswer(["ciska"], text), MODEL_SUITE).outcomes[0]
-      check outcome.is_kept and outcome.gloss.isPrintable  # no control or mark
-      check outcome.is_kept and outcome.gloss == outcome.gloss.strip and
-          "  " notin outcome.gloss  # spaces collapsed
+      let verdict = readAnswer(toAnswer(["ciska"], text), MODEL_SUITE).verdicts[0]
+      check verdict.is_kept and verdict.gloss.isPrintable  # no control or mark
+      check verdict.is_kept and verdict.gloss == verdict.gloss.strip and
+          "  " notin verdict.gloss  # spaces collapsed
 
 
   test "answer of other shape is Malformed, naming what is missing":
@@ -2229,16 +2228,16 @@ suite "Internal: Reply":
     )
     # Regression, found in review (logic-4, 2026-10-29): explain said status should be 2xx,
     #   though OpenRouter answered 200 and put error inside body.
-    check found.outcomes[0].explain == "Service should answer without error; got `429 " &
+    check found.verdicts[0].explain == "Service should answer without error; got `429 " &
         "rate_limit_exceeded: Rate limit exceeded`."  # case as found
     var count_inside = 0
     for service in Service:  # 3 services, exhaustive
       for status in 100..599:  # 500 statuses, exhaustive
         for body in bodiesError():  # error of each format, and of choice
-          let outcome = readReply(service, Reply(status: status, body: body)).outcomes[0]
-          if outcome.is_kept or outcome.failure != Failure.Status: continue
-          check outcome.explain == "Service should answer without error; got `" &
-              outcome.detail & "`."  # error named, status claimed never
+          let verdict = readReply(service, Reply(status: status, body: body)).verdicts[0]
+          if verdict.is_kept or verdict.failure != Failure.Status: continue
+          check verdict.explain == "Service should answer without error; got `" &
+              verdict.detail & "`."  # error named, status claimed never
           if status in 200..299: inc count_inside
     check count_inside == 600  # chat formats read each error in 2xx: 2 services, 3 bodies, 100
 
@@ -2255,11 +2254,11 @@ suite "Internal: Reply":
         let answer = read.get
         check answer.isHeld  # each gismu listed, kept once; each refusal at its own position
         if answer.keptRead.len > 0: inc count_suggested
-        for outcome in answer.outcomes:
-          if outcome.is_kept: continue
-          check outcome.failure in Failure.Status..Failure.Duplicate  # reply names no transport
-          check outcome.detail.isPrintable  # detail made printable
-          check outcome.explainGuarded.isSome  # explain never raises
+        for verdict in answer.verdicts:
+          if verdict.is_kept: continue
+          check verdict.failure in Failure.Status..Failure.Duplicate  # reply names no transport
+          check verdict.detail.isPrintable  # detail made printable
+          check verdict.explainGuarded.isSome  # explain never raises
       check count_suggested >= FLOOR_SUGGESTED  # corpus reaches answers that read
 
 
@@ -2288,8 +2287,8 @@ suite "Internal: Reply":
       for service in [Service.Claude, Service.OpenRouter]:
         let answer = readReply(service, example.toExchanges(service)[^1].reply)
         check answer.keptRead == gismu  # exchange replays to gismu, in order
-        check answer.outcomes.allIt(it.is_kept) and
-            answer.outcomes.mapIt(it.gloss) == glosses  # gloss as answer gives
+        check answer.verdicts.allIt(it.is_kept) and
+            answer.verdicts.mapIt(it.gloss) == glosses  # gloss as answer gives
         check answer.model == LUT_MODEL_BY_SERVICE[service]  # model of service named
       check readReply(Service.Chat, toReplyChat(example.answer, MODEL_SUITE)).keptRead ==
           gismu  # `chat` reads chat completion as `openrouter` does
@@ -3013,26 +3012,26 @@ suite "Internal: Report":
       for position in [none(int), some(1), some(COUNT_TAGS_MAX)]:  # whole, first and last tag
         for detail in ["", "x", "two words", "datna", "brodyci'a", "ciska+se", "7", "ciska",
             "datnyvreji", "selci'a"]:
-          let explained = Outcome(
+          let explained = Verdict(
             is_kept: false, failure: failure, detail: detail, position: position,
           ).explainGuarded
           check explained.isSome  # explain never raises, detail reading as tag included
           if explained.isNone: continue
           check explained.get.endsWith("`" & detail & "`.")  # IV.4, message ends in its value
           check explained.get[0] in {'A'..'Z'}  # sentence
-    check Outcome(is_kept: false, failure: Failure.Truncated,
+    check Verdict(is_kept: false, failure: Failure.Truncated,
         detail: "max_tokens").explain == "Answer should end before its limit; lower effort or " &
         "shorten passage; got `max_tokens`."  # remedy named
 
 
   test "each failure naming position names element of answer, never tag":
-    let found = Outcome(is_kept: false, failure: Failure.Word, detail: "Se", position: some(1))
+    let found = Verdict(is_kept: false, failure: Failure.Word, detail: "Se", position: some(1))
     check found.explain == "Element 1 should be one gismu of list; " &
         "got `Se`."  # ruling D6 of Architect, 2026-11-03: was `Tag 1 should be one gismu of list`
     for failure in Failure:  # 10 members, exhaustive
       for position in 1..COUNT_TAGS_MAX:  # each position reader reads, exhaustive
         for is_past_cap in [false, true]:  # word read, and word past cap
-          let explained = Outcome(is_kept: false, failure: failure, detail: "x",
+          let explained = Verdict(is_kept: false, failure: failure, detail: "x",
               position: some(position), is_past_cap: is_past_cap).explain
           check ("Tag " & $position) notin explained  # element never named as tag
           if failure notin {Failure.Malformed, Failure.Word, Failure.Duplicate}: continue
@@ -3048,10 +3047,10 @@ suite "Internal: Report":
       for failure in Failure:  # 10 members, exhaustive
         for position in [none(int), some(1)]:  # whole, and element of answer
           let answer = Answer(
-            outcomes: @[
-              Outcome(is_kept: false, failure: failure, detail: "x", position: position,
+            verdicts: @[
+              Verdict(is_kept: false, failure: failure, detail: "x", position: position,
                   reason: reason),
-              Outcome(is_kept: true, tag: tanru("ciska"), gloss: "g"),
+              Verdict(is_kept: true, tag: tanru("ciska"), gloss: "g"),
             ],
             count_cut: 1,
             model: "m",
@@ -3069,22 +3068,22 @@ suite "Internal: Report":
 
   test "report names page, cuts and repair, then elements dropped and cut, gismu kept, model":
     let
-      dropped = Outcome(is_kept: false, failure: Failure.Word, detail: "datna",
+      dropped = Verdict(is_kept: false, failure: Failure.Word, detail: "datna",
           position: some(2), reason: "datna".readTag.explain)
       suggested = Answer(
-        outcomes: @[
-          Outcome(is_kept: true, tag: tanru("cukta"), gloss: "book"),
+        verdicts: @[
+          Verdict(is_kept: true, tag: tanru("cukta"), gloss: "book"),
           dropped,
-          Outcome(is_kept: true, tag: tanru("ractu"), gloss: "rabbit"),
+          Verdict(is_kept: true, tag: tanru("ractu"), gloss: "rabbit"),
         ],
         count_cut: 3,
         model: "served-model",
       )
       gismu = Answer(
-        outcomes: @[Outcome(is_kept: true, tag: tanru("ciska"), gloss: "writing")],
+        verdicts: @[Verdict(is_kept: true, tag: tanru("ciska"), gloss: "writing")],
         model: "served-model",
       )
-      refused = Answer(outcomes: @[dropped], model: "served-model")
+      refused = Answer(verdicts: @[dropped], model: "served-model")
       failed = ANSWER_FAILED
     for flags in 0..15:  # 16 combinations of four facts, exhaustive
       let passage = Passage(
@@ -3106,7 +3105,7 @@ suite "Internal: Report":
           "Service suggests `cukta`, glossed `book`.\nService suggests `ractu`, glossed " &
           "`rabbit`.\n"
       check failed.toReport(passage, "served-model") ==
-          lines & failed.outcomes[0].explain & "\n"  # facts first, then failure
+          lines & failed.verdicts[0].explain & "\n"  # facts first, then failure
       check suggested.toReport(passage, "served-model") == kept &
           "Answer came from `served-model`.\n"  # drops, cut, each gismu, model once
       check suggested.toReport(passage, "asked-model") == kept & "Answer came from " &
@@ -3116,7 +3115,7 @@ suite "Internal: Report":
       check refused.toReport(passage, "served-model") ==
           lines & dropped.explain & "\n"  # none kept, so drop alone, and no model named
     check failed.toReport(toPassage("x", "https://example.org/\x1B[2J"), "m") ==
-        "Page came from `https://example.org/\\u{1B}[2J`.\n" & failed.outcomes[0].explain &
+        "Page came from `https://example.org/\\u{1B}[2J`.\n" & failed.verdicts[0].explain &
         "\n"  # URL made printable
 
 
@@ -3173,7 +3172,7 @@ suite "Internal: Report":
       check given.isSome and [given.get].gismu.mapIt($it) == gismu  # what shortcut prints
     let long = readTagGiven(TEXT_GIVEN_LONG)
     check long.isSome and [long.get].gismu.len == 0  # refused, so nothing printed
-    check readAnswer(toAnswer(["cukta", "datna", "ractu"]), MODEL_SUITE).outcomes.gismu.mapIt(
+    check readAnswer(toAnswer(["cukta", "datna", "ractu"]), MODEL_SUITE).verdicts.gismu.mapIt(
         $it) == @["cukta", "ractu"]  # answer prints gismu it keeps, in order
     randomize(0)
     let pool = poolLujvo()

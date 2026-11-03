@@ -28,8 +28,6 @@
 ##     gismu list, so its bound follows list with no number written twice (Article II.5).
 ##   `Reference`, `toReference` and its `toText` stay off surface: `suggestions` exports them for
 ##     `app/exchanges.nim` alone, which imports that module itself (Article I.6).
-##   Cost: `commands` and `suggestions` each export type `Outcome`, so caller of umbrella naming
-##     either type qualifies it by module, as `suggestions.Outcome`.
 
 {.experimental: "strictFuncs".}
 
