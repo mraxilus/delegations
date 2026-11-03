@@ -1726,8 +1726,8 @@ suite "Internal: Answer":
           @["ciska"]  # folding of `tags.nim`, project choice
     let folded = readAnswer(toAnswer(["Se", "CI,SKA"]), MODEL_SUITE)
     check folded.refusalsRead == @[(some(1), Failure.Word, "Se")]  # cmavo folds too, no gismu
-    check folded.outcomes[0].explain ==
-        "Tag 1 should be one gismu of list; got `Se`."  # folds to listed cmavo; no reader reason
+    check folded.outcomes[0].explain == "Element 1 should be one gismu of list; " &
+        "got `Se`."  # folds to listed cmavo; no reader reason
     check folded.keptRead == @["ciska"]  # gismu after it folds and stays
 
 
@@ -1751,7 +1751,7 @@ suite "Internal: Answer":
         items.insert(item, at)
         let
           answer = readAnswer(items.toAnswerItems, MODEL_SUITE)
-          heading = "Tag " & $(at + 1)
+          heading = "Element " & $(at + 1)
           is_refused = failure == Failure.Word and not detail.readTag.is_tag and
               detail.word.isNone  # Reader refuses word, and list holds no such cmavo.
           explained =
@@ -1770,7 +1770,7 @@ suite "Internal: Answer":
       check answer.keptRead == @GISMU_KEPT  # first kept, repeat dropped
       check answer.refusalsRead == @[(some(at + 1), Failure.Duplicate,
           GISMU_KEPT[0].toUpperAscii)]  # dropped as `Duplicate`, at its position
-      check answer.outcomes[at].explain == "Tag " & $(at + 1) & " should name gismu no " &
+      check answer.outcomes[at].explain == "Element " & $(at + 1) & " should name gismu no " &
           "earlier tag kept; got `" & GISMU_KEPT[0].toUpperAscii & "`."  # named as answered
 
 
@@ -1781,7 +1781,7 @@ suite "Internal: Answer":
       check answer.keptRead == @["cukta", "ractu"]  # gismu around cmavo kept
       check answer.refusalsRead == @[(some(2), Failure.Word, $w)]  # cmavo dropped at position
       check answer.outcomes[1].explain ==
-          "Tag 2 should be one gismu of list; got `" & $w & "`."  # listed, yet no gismu
+          "Element 2 should be one gismu of list; got `" & $w & "`."  # listed, yet no gismu
 
 
   test "every tag refused gives no gismu, and names each refusal in order":
@@ -1809,26 +1809,26 @@ suite "Internal: Answer":
     for element in ["datna", "cihska", "lo", "qwzx", "zbadoi", "ciska+se", "two words", ""]:
       let answer = readAnswer(toAnswer([element, "ciska"]), MODEL_SUITE)
       check answer.failureRead == some((Failure.Word, element))  # element named as given
-      check answer.outcomes[0].explain == "Tag 1 should be one gismu of list. " &
+      check answer.outcomes[0].explain == "Element 1 should be one gismu of list. " &
           element.readTag.explain  # reason of reader, worded once in `commands.nim`
     let (edge, long) = ("a".repeat(BYTES_ELEMENT_MAX), "a".repeat(BYTES_ELEMENT_MAX + 1))
     check readAnswer(toAnswer([edge]), MODEL_SUITE).outcomes[0].explain ==
-        "Tag 1 should be one gismu of list. " & edge.readTag.explain  # cap reaches reader
+        "Element 1 should be one gismu of list. " & edge.readTag.explain  # cap reaches reader
     let refused = readAnswer(toAnswer([long]), MODEL_SUITE)
     check refused.failureRead == some((Failure.Word, long))  # past cap, element named
-    check refused.outcomes[0].explain == "Tag 1 should hold at most 64 bytes; got `" & long &
+    check refused.outcomes[0].explain == "Element 1 should hold at most 64 bytes; got `" & long &
         "`."  # reader never runs past cap
 
 
   test "explain judges and explains word as answered, never by detail that escapes change":
     let found = "\x01".repeat(13)  # case as found in suite review: 13 bytes judged past cap
     check readAnswer(toAnswer([found]), MODEL_SUITE).outcomes[0].explain ==
-        "Tag 1 should be one gismu of list. " &
+        "Element 1 should be one gismu of list. " &
         found.readTag.explain.toPrintableReference(high(int))  # judged by bytes as answered
-    check readAnswer(toAnswer(["café"]), MODEL_SUITE).outcomes[0].explain == "Tag 1 " &
+    check readAnswer(toAnswer(["café"]), MODEL_SUITE).outcomes[0].explain == "Element 1 " &
         "should be one gismu of list. Tag should hold Lojban letters alone; got `é` in " &
         "`café`."  # review finding logic-6, 2026-10-29: named byte `C3` alone
-    check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).outcomes[0].explain == "Tag 1 " &
+    check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).outcomes[0].explain == "Element 1 " &
         "should be one gismu of list. Tag should hold Lojban letters alone; got `\\u{1}` in " &
         "`ci\\u{1}ska`."  # review finding logic-6, 2026-10-29: named `\`, never answered
     for filler in FILLERS_WORD:  # 8 characters, one of each kind it names, not every character
@@ -1839,9 +1839,9 @@ suite "Internal: Answer":
           detail = element.toPrintableReference(RUNES_SHOWN)
           explained =
             if element.len > BYTES_ELEMENT_MAX:
-              "Tag 1 should hold at most 64 bytes; got `" & detail & "`."
+              "Element 1 should hold at most 64 bytes; got `" & detail & "`."
             else:
-              "Tag 1 should be one gismu of list. " &
+              "Element 1 should be one gismu of list. " &
                   element.readTag.explain.toPrintableReference(high(int))
         check answer.failureRead == some((Failure.Word, detail))  # word named, printable
         check answer.outcomes[0].explain == explained  # judged and explained as answered
@@ -1852,7 +1852,7 @@ suite "Internal: Answer":
     let found = "bab".repeat(20) & "ba'i"  # case as found: form 4.11 gives holds 84 letters
     check found.len == BYTES_ELEMENT_MAX  # at cap, so reader reads it
     let explained = readAnswer(toAnswer([found]), MODEL_SUITE).outcomes[0].explain
-    check explained == "Tag 1 should be one gismu of list. " &
+    check explained == "Element 1 should be one gismu of list. " &
         found.readTag.explain  # recheck claim regressions-src-1, 2026-10-29: ended in `…`
     check explained.endsWith("`.")  # IV.4, message ends in its value, never in cut
     randomize(0)
@@ -1862,7 +1862,7 @@ suite "Internal: Answer":
       let
         reason = word.readTag.explain.toPrintableReference(high(int))
         explained = readAnswer(toAnswer([word]), MODEL_SUITE).outcomes[0].explain
-      check explained == "Tag 1 should be one gismu of list. " &
+      check explained == "Element 1 should be one gismu of list. " &
           reason  # reason of reader kept whole, made printable
       check explained.endsWith("`.")  # IV.4, message ends in its value
       if reason != word.readTag.explain.toPrintableReference(RUNES_SHOWN): inc count_long
@@ -3024,7 +3024,21 @@ suite "Internal: Report":
         "shorten passage; got `max_tokens`."  # remedy named
 
 
-  test "report names page, cuts and repair, then each tag dropped, tags cut, gismu kept, model":
+  test "each failure naming position names element of answer, never tag":
+    let found = Outcome(is_kept: false, failure: Failure.Word, detail: "Se", position: some(1))
+    check found.explain == "Element 1 should be one gismu of list; " &
+        "got `Se`."  # ruling D6 of Architect, 2026-11-03: was `Tag 1 should be one gismu of list`
+    for failure in Failure:  # 10 members, exhaustive
+      for position in 1..COUNT_TAGS_MAX:  # each position reader reads, exhaustive
+        for is_past_cap in [false, true]:  # word read, and word past cap
+          let explained = Outcome(is_kept: false, failure: failure, detail: "x",
+              position: some(position), is_past_cap: is_past_cap).explain
+          check ("Tag " & $position) notin explained  # element never named as tag
+          if failure notin {Failure.Malformed, Failure.Word, Failure.Duplicate}: continue
+          check explained.startsWith("Element " & $position & " should ")  # named by position
+
+
+  test "report names page, cuts and repair, then elements dropped and cut, gismu kept, model":
     let
       dropped = Outcome(is_kept: false, failure: Failure.Word, detail: "datna",
           position: some(2), reason: "datna".readTag.explain)
@@ -3058,8 +3072,8 @@ suite "Internal: Report":
       if (flags and 4) != 0:
         lines.add "Passage held `3` ill-formed UTF-8 subparts; each became U+FFFD.\n"
       if (flags and 8) != 0: lines.add "Passage held `70000` bytes; model read first `65536`.\n"
-      let kept = lines & "Tag 2 should be one gismu of list. Gismu should be in gismu list; " &
-          "got `datna`.\nAnswer held `3` tags past first `32`; tool never read them.\n" &
+      let kept = lines & "Element 2 should be one gismu of list. Gismu should be in gismu list; " &
+          "got `datna`.\nAnswer held `3` elements past first `32`; tool never read them.\n" &
           "Service suggests `cukta`, glossed `book`.\nService suggests `ractu`, glossed " &
           "`rabbit`.\n"
       check failed.toReport(passage, "served-model") ==

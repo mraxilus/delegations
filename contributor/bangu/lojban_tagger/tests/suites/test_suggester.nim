@@ -2818,7 +2818,7 @@ suite "Internal: Suggester":
         LABEL_SUITE)])  # repeat named after note
     check exited_repeated.code == 0 and
         exited_repeated.output == "ciska\n"  # `Duplicate` comes after gismu kept, so exit 0
-    check "Tag 2 should name gismu no earlier tag kept; got `Ciska`.\n" in
+    check "Element 2 should name gismu no earlier tag kept; got `Ciska`.\n" in
         exited_repeated.report  # binary names repeat as `Duplicate`, by position
     covered.incl Failure.Duplicate
     check binary.run([(KEY_SERVICE, "bogus")], [TEXT_GIVEN_LONG]) == Exited(report: toOutcome(
