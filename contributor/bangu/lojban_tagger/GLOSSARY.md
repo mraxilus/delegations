@@ -82,7 +82,8 @@ at a URL, repaired and cut to a fixed size.
 _Avoid_: source, input, document
 
 **Service**:
-A language model service that answers one wire format at one endpoint.
+A language model service, which the tool names by the wire format that it answers. Its endpoint
+does not change which service it is.
 _Avoid_: provider, backend, vendor
 
 **Exchange**:
