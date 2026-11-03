@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 50ecd726ec1a5108 |
+| Rules   | 0e17644a127757fb |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -138,6 +138,15 @@ the hook glue of the curator: the command that Claude Code runs, and the scripts
 as hooks. It never enters a project, by the ruling of the Architect (CONTRIBUTOR.md, The
 language is Nim). Verified by `suites/test_layout.nim`.
 
+**Protocol Buffers is admitted by rule, and not by gate.** Its schema is the form of data that
+one program writes and another reads, as the Architect ruled on #761. No Nim serves a schema
+that both Nim and a page read, so no header argues for it. A schema takes the `//` syntax. A
+record in text format takes `#` at line start or after whitespace, outside quotes, as YAML does.
+Verified by `suites/test_kinds.nim`, which holds both rows, and by `suites/test_comments.nim`.
+
+- Cost: text format also opens a comment at a `#` that follows a value with no space. The
+  scanner reads that `#` as text, so that comment goes unchecked.
+
 ## Comment extraction
 
 **A hand-written scanner for each comment syntax, and one accumulator for each line.**
@@ -145,9 +154,9 @@ language is Nim). Verified by `suites/test_layout.nim`.
 - Nim: line, doc and nesting block comments, plain, triple and generalized raw strings, char
   literals, and numeric suffix quotes.
 - Configuration: `#`, unless `\#`.
-- YAML: `#` at line start, or after whitespace, outside quotes.
+- YAML and protobuf text format: `#` at line start, or after whitespace, outside quotes.
 - Ignore files: a leading `#` only.
-- TypeScript: `//`, `/* */`, its string forms, and doc stars stripped.
+- TypeScript and protobuf schemas: `//`, `/* */`, the string forms, and doc stars stripped.
 - Markup: `<!-- -->`, which may span lines.
 
 Whitespace runs collapse, so texts compare stably.
@@ -567,11 +576,32 @@ repository issue 671.
 - **Weight matching follows CSS Fonts 4 over the bounds that the rules declare.** Inside 400 to
   500, it looks upward to 500, then downward, then upward past 500. Below 400 it looks downward
   first, and above 500 upward first.
+- **Text that asks for 600 or more, from a family with lighter font faces alone, draws in a bold
+  that the browser synthesises.** The Architect ruled this finding on 2026-10-24 (D1 a of #730).
+  Each engine thickens the glyphs of the lighter font face its own way, so no file of the page
+  holds what it draws. CSS Fonts 4 names no bound (2.2.2), and Chromium (`kBoldThreshold`) and
+  Firefox (`SupportsBold`) both set 600. The family that draws the character is judged, once for
+  each element.
+- **Each collector writes every run, ASCII included, so that a bold over ASCII is seen.** The
+  Architect ruled this on 2026-11-03 (D1 b of #751). The pages of pga_benchmark held 267 runs of
+  ASCII that asked a font face of 400 for 600 or 700. The verdict saw none of them. The check of
+  characters still judges past ASCII alone, as the rule asks, so ASCII reaches the bold alone.
+  Verified by `suites/test_font_stacks.nim`, which holds ASCII at both checks.
+- **Above 500 the match looks upward first.** So a weight of 600 or more matches a lighter set
+  only where the family holds nothing of 600 or more. Rejected: a finding for each weight that no
+  set holds, as 700 against a set at 600. The browser draws that set with no bold of its own, and
+  a heading asks for 700 by default.
 - **`font_files.nim` reads the `cmap` of each file**, and the suite of the store reads through it
   too. So the store and the pages read font faces through one reader. It also renders each
   codepoint that a finding names, for `coverage.nim` as well.
-- Cost: the weight alone is matched, and `font-style` and `font-stretch` are unread. A character
-  is resolved alone, while a browser picks a font face for each cluster.
+- Cost: the weight alone is matched, and `font-style` and `font-stretch` are unread. So an
+  oblique that the browser synthesises for italic passes. A character is resolved alone, while a
+  browser picks a font face for each cluster.
+- Cost: a collector writes no `font-synthesis`, so a page that turns synthesis off still gets
+  the finding for a bold. Its text then draws lighter than it asks.
+- Cost: no place of the control page holds ASCII. So a collector that writes runs past ASCII
+  alone passes, and hides the bold of ASCII text. The collectors of dance_ontology and
+  pga_benchmark write so, and each has an issue to port.
 - Cost: text that a script writes only once a reader acts stands in no place of the control
   page, and the collectors differ there. `coverage.nim` holds such text where a source writes
   it, against every font face that the project ships.
@@ -595,6 +625,10 @@ repository issue 671.
 - Verified by a run on font faces of the store, 2026-10-22. Noto Sans and Noto Sans Math drew
   "é", "→" and "∧" down one stack. "é" after `Inter` was reported, and so was an emoji in a
   stack of Noto Sans alone.
+- Verified by a run of the resolver over the `written.json` that the drive of each project with
+  pages wrote on `main` at `9b6c445d`, 2026-10-24. It reported Noto Sans Math at 600 and 700 in
+  pga_benchmark, and Commit Mono at 600 and 700 in the ruler of pga_visualiser. dance_ontology
+  gave no finding.
 
 ## Branch scope
 
@@ -973,6 +1007,112 @@ second case.
 **If it is ever built, the curator writes it and contributors only read it.** A shared tree
 that a contributor may write is a scope boundary the branch grammar cannot check.
 
+## Data formats
+
+**Data takes its form from who writes it and who reads it, as the Architect ruled on #755.**
+Data that a person writes is a typed Nim module. Data that one program writes and another reads
+is Protocol Buffers, as the Architect ruled on #761. Its committed schema carries the versions
+of the format. A record that the repository commits is in text format, and each build turns it
+into binary. `CONTRIBUTOR.md`, Data, states the rule.
+
+- Rejected: a Nim module that the writing program emits, for a committed record. The Architect
+  ruled against it, because it leaves us to keep our own code for reading and for versions.
+- Measured for that option, 2026-10-25: `design/rig.json` of dance_ontology, 1.36 MB, compiled
+  as a typed constant in 3.2 s at 203 MiB peak. As JSON read through `staticRead`, it took 2.9 s
+  at 82 MiB.
+- Rejected: a committed binary, because binaries are never committed. A review of one shows
+  only that the files differ.
+- Rejected: FlatBuffers. Its Nim code has five faults at release 25.12.19, which took seven
+  edits to mend, each still on upstream `master` of 2026-10-21. A table inside a table crashed
+  the reader, and a value equal to zero read back as the default of the schema. Found
+  2026-10-25 on records of this repository, and replicated by the suites of commit `eded0523`.
+- Its runtime has no verifier, crashes on an enum value that its enum lacks, and does not
+  compile to JavaScript. Measured 2026-10-25 with Nim 2.2.12. A patched `flatc` would be ours
+  to keep (#761).
+- Rejected: Cap'n Proto. Its Nim library `capnp.nim` has had no commit since 2021-01-05, and its
+  README says that it is not actively maintained. With its dependency `collections.nim`, it
+  fails to compile, with 65 errors from `nim check`. Measured 2026-10-25 with Nim 2.2.12.
+- Assumed, not verified: no tool compares two versions of a schema of Cap'n Proto, as
+  `buf breaking` does for protobuf.
+- Rejected: Avro and Thrift, which have no library in the registry of Nim. CBOR, MessagePack and
+  BSON have libraries, but no schema. Dhall and CUE each need a foreign toolchain, and KDL and
+  TOML each need a new kind and a dependency.
+
+**Nim reads and writes protobuf through `protobuf_serialization` of Status, at 0.6.2.** Its
+`import_proto3` turns a schema into plain Nim types at compile time, so no generated code is
+committed. A page reads the same schema through `protobufjs` 8.8.1. Its `dist/protobuf.min.js`
+is one script of 104,182 B, so a page needs no bundler. Measured 2026-10-25 on the scene file of
+pga_visualiser, written as a schema at its versions 3, 7 and 8.
+
+- Nested and repeated messages read back whole. Nim and JavaScript each read the bytes that the
+  other wrote.
+- A reader of version 7 reads a file of version 3, with the new field absent. A reader of
+  version 3 reads a file of version 7, and skips the field that it lacks.
+- A cut file is refused, in Nim with `SerializationError`, and in JavaScript with an error.
+- Cost: a file cut between two top-level fields reads as fewer objects in both readers, with no
+  error. So a file that a person keeps holds a tag of its format, a length and a checksum.
+- Cost: the reader of Nim reads an enum value that its enum lacks as zero, with no error, where
+  JavaScript keeps the number. So value zero of each enum means unknown.
+- Cost: proto3 gives no default except zero. So a field with another default is `optional`, and
+  the code gives the default.
+- Cost: the library marks itself experimental. It fails 33 cases of the official conformance
+  suite, as its `tests/conformance/failure_list.txt` of 2026-10-18 lists. Two are required
+  cases of proto3, both on unknown fields when a message is written again.
+- Cost: its CI runs the C and C++ backends alone, as its `.github/workflows/ci.yml` states. On
+  the JavaScript backend it fails to compile, on `memfiles`, measured 2026-10-25 with Nim
+  2.2.12. So a page reads through `protobufjs`.
+
+**A committed record is text format, and the build of each project encodes it with `protoc`.**
+`protoc --encode` refuses a misspelt field, an unknown enum value and a wrong type, and names
+each. Measured 2026-10-25 with `protoc` 3.21.12, the version that Ubuntu 24.04 offers, and with
+the newer one of `grpcio-tools` 1.84.1. Both wrote the same bytes.
+
+- Rejected: `buf convert`, which drops a misspelt field of text format, with no error. It
+  refuses a bad enum value and a wrong type. Measured 2026-10-25 with `buf` 1.75.0.
+- Rejected: JSON for a record. `buf convert` reads it leniently: it drops a misspelt key, and
+  reads a bad enum value as zero. Measured 2026-10-25 with `buf` 1.75.0.
+
+**`check-schemas` holds each folder of changed schemas to the version that base shipped.** It
+runs `buf breaking` with category `WIRE_JSON`, which guards the bytes and the JSON text, and
+never the layout of files. It refuses a renumbered enum value, and a deleted, retyped or renamed
+field or value. A field or value added under a new number passes. One deleted with its number
+and name reserved passes too. The shipped version is the schema at the tip of base.
+
+- Rule `FIELD_SAME_CARDINALITY` also refuses a field that gains or loses `optional`. The bytes
+  stay, but `optional` decides whether an absent field reads as zero or as absent. So each
+  older file changes meaning. `WIRE_JSON` alone passes both directions, measured 2026-10-25
+  with `buf` 1.75.0.
+
+- The tip of base holds the newest version that anyone may have written files under, so the
+  branch must still read it.
+- Each folder that holds a changed schema is one module, read at the tip of base and at `HEAD`.
+  So an import between schemas of one folder resolves on both sides, and a message moved between
+  them is no deletion.
+- Verified by `suites/test_schemas.nim`, over the scene file of pga_visualiser written as a
+  schema. Its version 6 dropped `Algebra` and moved every later hue, and the check refuses that.
+  Each edit that breaks is held to the message of its own rule.
+- Rejected: `protoc`, which compiles a schema and holds none to an older version.
+- Rejected: category `FILE` of `buf`, which refuses a message moved to another file, though no
+  byte changes. Measured 2026-10-25 with `buf` 1.75.0.
+- Cost: an import resolves in the folder of its schema, as both readers resolve it. A schema
+  that imports from another folder fails to compile in the check.
+- Cost: a message deleted whole passes, because bytes carry no name of a message. A field of its
+  type, where one exists, is deleted too, and the check holds that deletion.
+- Cost: a folder new on the branch, or gone from base, passes, because nothing shipped holds it.
+
+**`buf` 1.75.0 comes from the registry of npm, checked against its SHA-512.** npm serves the
+binary of each platform as a tarball, and publishes its digest beside it. `bufbuild.nim` pins
+the version and the digest. The tarball is checked before it is unpacked, and the binary moves
+into the store whole.
+
+- The binary is the repository's, as the store of assets is, because one check serves every
+  schema. It lives in `~/.cache/koch/buf`, named by its version.
+- Verified by `suites/test_bufbuild.nim`. The pinned binary reports its version, and a binary
+  already in the store is read with no fetch.
+- Cost: the tarball is 33 MB, and the binary is 47 MB.
+- Cost: Linux on x86-64 alone. Any other machine gets a finding that names what to add.
+- Cost: no test fetches a tarball whose digest differs, because its address is a constant.
+
 ## Ledger
 
 **The ledger reads what GitHub records about rules that no check reaches.** `ledger.yml` runs
@@ -1152,16 +1292,17 @@ second copy drifts. `check.yml` must state it, and a commit pin is one finding, 
 workflows state a version. Verified by `suites/test_toolchain.nim` over both paths.
 
 **A pin moves on evidence, and the evidence is a run rather than a release note.** Nim assigns
-no CVE, so no release in the 2.2 series carries one. So the reason to move is what the release
-notes carry. Between 2.2.6 and 2.2.12 they fix a SIGSEGV under ARC, ORC and refc, and a use
-after free. They also fix an overlapping `copyMem`, and overflow checks that could be escaped.
-The curator projects pin 2.2.12 for that reason.
+no CVE, so no release carries one. So the reason to move is what the release notes carry, or a
+ruling. The curator projects pin 2.4.0, the stable release, as the Architect asked on
+2026-10-29. Its notes add a check of the host name of a certificate to `std/asyncnet`, and to
+`std/net` on Windows. No curator project opens a socket, so that check reaches none of them.
 
-- Verified by `nim r koch test` over `curator/audit` and `curator/probe` on 2.2.12,
-  2026-09-09: every suite passes.
-- Trap from 2.2.8 on: a `func` whose implicit `float` result is read by `+=` before it is ever
+- Verified by `nim r koch test` over `curator/knoller`, `curator/audit`, `curator/assayer` and
+  `curator/probe` on 2.4.0, 2026-10-29: every suite passes.
+- Trap from 2.2.8 to 2.2.12: a `func` whose implicit `float` result is read by `+=` before it is
   assigned gets an int register for it. To write `result = 0.0` first avoids it. The
-  `PROVENANCE.md` of `dance_ontology` holds the diagnosis.
+  `PROVENANCE.md` of `dance_ontology` holds the diagnosis. 2.4.0 reads that `result` as a float,
+  verified by hand, 2026-10-29.
 - Cost: the modules of koch compile under every pin in the tree, because the job of every
   project installs its own. The matrix proves that, and not this paragraph.
 
@@ -1915,9 +2056,9 @@ lines after the last pragma that opens the module, with a blank line on each sid
   stub of STYLE.md §6 as it is written instead.
 - Both lines of a split import trace to the line of the form on one line. So a later fixer
   reports at its line in the file as given.
-- Verified by hand with 2.2.12, 2026-10-08: `--profiler:on` builds and runs
-  `curator/probe/tests/test_modulus_4.nim`, whose import stands on two lines, and the run writes
-  `profile_results.txt`.
+- Verified by hand with 2.2.12, 2026-10-08, and with 2.4.0, 2026-10-29. `--profiler:on` builds
+  and runs `curator/probe/tests/test_modulus_4.nim`, whose import stands on two lines. The run
+  writes `profile_results.txt`.
 - Verified by `suites/test_idioms.nim` here and in knoller.
 
 **Four rules that the static pass already holds gain a fixer.**
@@ -2033,7 +2174,8 @@ of knoller, under Content fixes.
 
 - The pin is that of the project that holds the file, and that of `curator/audit` for a file at
   the root. `proversPin` of knoller serves it, through a `Toolchains` of its own.
-  So the `ronri` projects read with their commit pin, whose glyph operators 2.2.12 lexes as names.
+  So each project reads with the grammar of its own pin. 2.2.12 lexes as names the glyph
+  operators that 2.4.0 and the commit pin of the `ronri` projects lex as operators.
 - Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
   one line `warning: needless-parentheses: <message>`, and the exit code stays.
 - An entry that asked nothing read only sources that hold an answer, and an answer never changes
@@ -2320,6 +2462,26 @@ heading is present, and else the last line.
 - Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
   by a change of label or draft alone is not asked for a sign-off.
 
+**A sign-off follows a read of the open issues on its role, in the turn that signs off.** The
+Architect ruled this check on 2026-10-24 (D2 a of #742). A request can arrive while a delegate
+works, and the reads at the start see none of it. `stop` takes the
+role from the role line of the sign-off. The coordinator reads `architect` instead, since no
+item carries its role. The check reads every turn, as the check of `#N` does, because a sign-off
+can close a turn that posted nothing.
+
+- A read is a call of `mcp__github__list_issues` whose `labels` hold the role, or none, and
+  whose `state` is not closed. That tool returns both states where none is given. A shell read
+  counts through `gh issue list`, and through a `gh api` list of issues with its query. `stop`
+  reads their filters as `gh` reads them, and each of them lists open issues alone by default.
+- A refusal asks for the read, and no diff. What waits in the queue can change the sign-off, so
+  the delegate takes it first, and names it in one line.
+- Rejected: a ledger report of a request that no comment of its role answered. That report lands
+  in the queue that went unread, and up to a day late.
+- Cost: the hook sees that a read happened, and never that the delegate took what it showed.
+- Cost: a read through any other tool, as a search, counts for nothing.
+- Verified by `suites/test_hooks.nim`: the case as found, each form of read, a closed state and
+  another label, the coordinator, and the reason of a refusal.
+
 **`stop` names each `#N` of the closing message that stands outside a link and outside code.**
 Each issue and pull request goes by a short description and its number, as one link (`GUIDE.md`,
 Output contract). The Architect ruled this check on 2026-10-04. It reads every turn, and not only
@@ -2461,6 +2623,11 @@ mistake is easy to make and impossible to see afterwards.
   skipped, and the gate passes on a skipped dependency. The gate passes on `skipped`, and fails
   on `failure` or `cancelled`.
 
+**`check-schemas` holds each folder of schemas that the change touched.** It runs on pull
+requests and on pushes to `main`, each against its own base. The weekly run skips it, because
+that run names no base. `koch` fetches `buf` only where a folder needs it. The gate reads its
+verdict.
+
 **`test-windows` runs the suites of knoller on Windows, whenever `list-projects` names knoller.**
 Knoller runs on Windows and koch does not. So the job compiles and runs the suite file itself,
 with the options of its testament header, on the pin of `curator/audit`. The gate reads its
@@ -2520,6 +2687,11 @@ the runner rather than by a curator who reads.
 - A routine opens with any keyword of a routine, `method` among them (`ROUTINES`). Verified by
   `suites/test_checker.nim`: an exported routine of each keyword reads, and its `*` drops where
   its own module calls it.
+- A line that opens inside a multi-line string literal is data, and declares no routine. A
+  module may quote Nim source in such a literal, and a collector that reads lines alone takes
+  that source for routines. `linesQuoted` marks such lines from the tokens of knoller, for the
+  collector and for the fixer of dead exports. Verified by `suites/test_checker.nim`, for each
+  keyword.
 - **Missing suite**: a check module without `tests/suites/test_<module>.nim`.
 - **Verb mismatch**: one set named three times. The names are the verbs that koch dispatches,
   the verbs that its usage lists, and the rows of the checks table in CURATOR.md. Usage lists
@@ -2677,6 +2849,10 @@ expire with the job they measured.
 
 **Apt archives are not cached.** A cache saves the download and not the install: 2.8 s of the
 same 357 s job, 0.8%, for a root-owned directory and one key.
+
+**`buf` is not cached on the runner.** A cold fetch of its tarball, checked and unpacked, took
+1.4 s, twice, measured 2026-10-25 in a cloud container through `bufbuildIn`. That is small
+beside any job that runs it, as the download of apt archives is. Unverified on the runner.
 
 ## The shared allowance
 

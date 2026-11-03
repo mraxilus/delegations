@@ -618,10 +618,10 @@ function buildObjectRow(handle: number | null) {
     field_ink.className = 'field';
     field_ink.appendChild(labelElement(Wording.NameRowInk));
     const picker_ink = document.createElement('select');
-    // Only categorical slots are offerable; `nimInkChoosableSlots` decides which those.
+    // Only categorical inks are offerable; `nimInkIndicesChoosable` decides which those.
     //   are, so no palette rule lives out here. Its entries stay whole-palette ordinals,
     //   same ones `nimObjectInk` reports and `nimInkName`/`nimInkColor` accept.
-    for (const ink of nimInkChoosableSlots()) {
+    for (const ink of nimInkIndicesChoosable()) {
       const option = document.createElement('option');
       option.value = String(ink);
       option.textContent = nimInkName(ink);

@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, unittest]
+import std/[options, sequtils, unittest]
 import ../../src/[comments, kinds]
 
 
@@ -67,6 +67,17 @@ suite "Article VI":
     check texts("let s = `//${x}`; // yes\n", Syntax.Slash) == @["yes"]  # template literal
     check texts("/**\n * Doc line\n * more\n */\n", Syntax.Slash) == @["Doc line", "more"]  # stars
     check texts("let c = 'it\\'s'; // yes\n", Syntax.Slash) == @["yes"]  # escaped quote
+
+
+  test "VI.5 protobuf schema and its text format comment forms":
+    # Schema documents declaration with `//` line above it; record comments with `#`.
+    const schema = "// Scene file.\nmessage Object {\n  string label = 3 [json_name = \"a//b\"];" &
+      "  // shown\n  double radius = 4;  /* world units */\n}\n"
+    check texts(schema, classify("scene.proto").get.rule.syntax) ==
+      @["Scene file.", "shown", "world units"]  # line, line after string, block
+    const record = "# Tour scene.\nobjects { label: \"a # b\"  # shown\n}\n"
+    check texts(record, classify("tour.txtpb").get.rule.syntax) ==
+      @["Tour scene.", "shown"]  # line, line after string holding `#`
 
 
   test "VI.5 markup comments span lines and repeat":

@@ -14,7 +14,7 @@ import { focusCanvas } from './gestures';
 import { driveBulkUndo, driveFieldsHeld, driveHoverWhileMoving } from './acts';
 import { driveKeys, driveKeysChorded } from './keys';
 import { driveEscape } from './escape';
-import { driveMenuHung, driveMoreAtPointer } from './menus';
+import { driveMenuHung, driveMenuHungCopies, driveMoreAtPointer } from './menus';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
@@ -77,7 +77,9 @@ import {
   driveAllowance, driveKinds, driveMoving, driveSceneryBound, driveSceneryEvery,
 } from './scenery';
 import { driveGround } from './ground';
+import { driveBufferCovered } from './buffer';
 import { driveAntialias, driveBlankRefused } from './canvas';
+import { driveContextPaths } from './context';
 import {
   driveBuiltStill, driveCopiesStill, driveFrameWork, driveLoopRuns, driveStanceReadOnce,
   watchFrames,
@@ -223,7 +225,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   // Sweeps viewport and puts it back; kept beside other chrome checks rather than among
   //   drawer's, since what it reads is row above drawer and not drawer itself.
   await driveChipRowFits(page);
-  // After help, so tab strip exists to be asked which face it is drawn in.
+  // After help, so tab strip exists to be asked which font face it is drawn in.
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
   await driveTypeLigatures(page);
@@ -263,6 +265,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveKeysChorded(page);
   await driveEscape(page);
   await driveMenuHung(page);
+  await driveMenuHungCopies(page);
   await driveMoreAtPointer(page);
   await driveBulkUndo(page);
   await driveFieldsHeld(page);
@@ -413,6 +416,10 @@ async function main(): Promise<void> {
   await driveCoarse(browser);
   // Page of its own, since host it stands in has to be there before page's script runs.
   await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
+  // Pages of their own, since what each browser refuses has to stand before page's script runs.
+  await driveContextPaths(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
+  // Page of its own too, since limit it runs under has to be there before page's script runs.
+  await driveBufferCovered(browser, `file://${PATH_PAGE}`);
   // Last, so control page is read once page itself was.
   await writeFontFaces(browser);
 

@@ -1336,8 +1336,8 @@ proc elbowDown(couple: Couple) =
   for who in Body:
     for arm in Arm:
       # Held arm alone: free arm hangs, and fixed newton metre about its near
-      # vertical line twisted it forty degrees and swung it forward twenty,
-      # forearm pointing at partner.
+      # vertical line twists it 29 degrees and swings it forward 2, past twist of
+      # 15 free couple at rest allows (`test_rigid`).  Measured 2026-11-03.
       if not couple.isHeld(who, arm): continue
       let
         arm_rig = couple.who[who].arm[arm]
@@ -1997,10 +1997,10 @@ const
   FACING* = 0.05  ## Of way up (`up`), within which couple count as facing and
                  ## hands are asked into torso band: wound whole turn, couple
                  ## come back within float of face to face, not to it.
-  OVER* = 0.05  ## Metres joined hand may sit over torso band's top facing: wound
-                 ## arms press hands up against lift's forty newtons, and same-name
-                 ## chain come round to face to face sat at 1.37 to 1.39 m against
-                 ## 1.35, mid torso by any reading and hold at no other height.
+  OVER* = 0.05  ## Metres joined hand may sit over torso band's top facing,
+                 ## assumed.  Plans held low carry joined hand to 1.361 m, 11 mm
+                 ## over 1.35; same-name chain come round to face to face carries
+                 ## its first hand at 1.04 m, report's kept readings 2026-11-03.
   SAG* = 0.03  ## Metres joined hand may sit under its band's edge, once
                  ## risen, lift being spring against comfort and not wall.
 

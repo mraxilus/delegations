@@ -8,7 +8,7 @@
 ## Dear ImGui and its SDL3 and OpenGL 3 backends are compiled straight into binary.
 ##   No prebuilt library has to be found at link time.
 ##   Sources are expected at `PATH_IMGUI`; see `dependencies.list`.
-## Built-in font carries no mathematical operators, so TrueType face is loaded over it.
+## Built-in font carries no mathematical operators, so TrueType font face is loaded over it.
 ##   Where file is absent built-in font stands and notation degrades to boxes;
 ##   `isFontLoaded` reports which happened.
 ##
@@ -54,10 +54,10 @@ const
 
 
 
-#[ Face Roles ]#
+#[ Font Face Roles ]#
 
-type FaceRole* {.pure, size: sizeof(cint).} = enum  ## Define role whose face sets text.
-  ## Ordinal is what `guiFaceHasGlyph` reads, so order here is order there.
+type RoleFontFace* {.pure, size: sizeof(cint).} = enum  ## Define role whose font face sets text.
+  ## Ordinal is what `guiFontFaceHasGlyph` reads, so order here is order there.
   Interface,  ## Every text no other role takes.
   Label,  ## Selected object's name, over scene.
   Title,  ## Every panel heading.
@@ -80,26 +80,28 @@ proc init*(
   size_label: cfloat;
   path_font_title, path_font_mono: cstring;
 ): bool {.sideEffect, importc: "guiInit".}
-  ## Start Dear ImGui over SDL3 window and OpenGL context, loading six faces.
-  ##   Fourth face, `path_font_label` at `size_label`, sets selected object's name label;
-  ##   heavier than UI text. Missing file leaves label in UI face.
+  ## Start Dear ImGui over SDL3 window and OpenGL context, loading six font faces.
+  ##   Fourth font face, `path_font_label` at `size_label`, sets selected object's name label;
+  ##   heavier than UI text. Missing file leaves label in UI font face.
   ##   Fifth sets every heading and sixth sets notation and figures -- title and mono roles,
-  ##   which page draws too. Missing file leaves that role in UI face rather than unset.
+  ##   which page draws too. Missing file leaves that role in UI font face rather than unset.
 
 proc shutdown*() {.sideEffect, importc: "guiShutdown".}
   ## Tear Dear ImGui and both its backends down.
 
 proc isFontLoaded*(): bool {.sideEffect, importc: "guiFontLoaded".}
-  ## Report whether requested faces were accepted rather than default font.
+  ## Report whether requested font faces were accepted rather than default font.
 
 proc isFontTitleLoaded*(): bool {.sideEffect, importc: "guiFontTitleLoaded".}
-  ## Report whether headings have title face of their own rather than interface face.
+  ## Report whether headings have title font face of their own rather than interface font face.
 
 proc isFontMonoLoaded*(): bool {.sideEffect, importc: "guiFontMonoLoaded".}
-  ## Report whether notation has mono face of its own rather than interface face.
+  ## Report whether notation has mono font face of its own rather than interface font face.
 
-proc hasGlyph*(role: FaceRole, codepoint: uint32): bool {.sideEffect, importc: "guiFaceHasGlyph".}
-  ## Report whether `role`'s face draws `codepoint` from glyph of its own, never `.notdef`.
+proc hasGlyph*(
+  role: RoleFontFace, codepoint: uint32
+): bool {.sideEffect, importc: "guiFontFaceHasGlyph".}
+  ## Report whether `role`'s font face draws `codepoint` from glyph of its own, never `.notdef`.
 
 proc processEvent*(event: ptr Event): bool {.discardable, sideEffect, importc: "guiProcessEvent".}
   ## Hand SDL event to Dear ImGui, reporting whether it wanted it.
@@ -281,13 +283,13 @@ proc tabEnd*() {.sideEffect, importc: "guiTabEnd".}
   ## End tab begun by `tabBegin`.
 
 proc monoPush*() {.sideEffect, importc: "guiMonoPush".}
-  ## Set text written until `monoPop` in mono face: notation, figures, message line.
+  ## Set text written until `monoPop` in mono font face: notation, figures, message line.
   ##   Pair rather than mono twin of every text proc: three of them write such text, and
   ##   caller says role once around block instead.
-  ##   No-op where mono face was not loaded, so absent face degrades rather than raising.
+  ##   No-op where mono font face was not loaded, so absent font face degrades rather than raising.
 
 proc monoPop*() {.sideEffect, importc: "guiMonoPop".}
-  ## Stop setting text in mono face, returning to interface face.
+  ## Stop setting text in mono font face, returning to interface font face.
 
 proc separator*() {.sideEffect, importc: "guiSeparator".}
   ## Draw horizontal rule.
@@ -420,7 +422,7 @@ proc overlayText*(centre_x, centre_y, red, green, blue, alpha: cfloat; text: cst
   ## Write text centred on `centre_x`/`centre_y`, measured against font loaded.
 
 proc labelWidth*(text: cstring): cfloat {.sideEffect, importc: "guiLabelWidth".}
-  ## Measure name label as `overlayLabel` draws it, in label's face.
+  ## Measure name label as `overlayLabel` draws it, in label's font face.
   ##   For pushing it beside line by its own box.
 
 proc overlayLabel*(

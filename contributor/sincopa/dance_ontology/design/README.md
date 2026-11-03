@@ -13,7 +13,8 @@ and confirmed. `CONFIRMED` in `reference_page.nim` names each confirmed cell.
 
 - `reference.html` lays out each frame state the project draws, card by card, for the Architect to
   rule on.
-- `rig.html` plays the sweeps and stills that the body simulation recorded.
+- `rig.html` plays the sweeps and stills that the body simulation recorded. Each sweep is planned
+  at the band of its hold.
 
 `../README.md` gives the address where each page is published.
 
@@ -387,7 +388,7 @@ design/
   asks.nim               what each card of the Reference asks of the body simulation
   modelled.nim           which cards the simulation reaches: modelled.json
   floors.nim             how far the plan carries each rig sweep over the crown, printed
-  rig.nim                the sweeps and stills the viewer plays: rig.json
+  rig.nim                the planned sweeps and the stills the viewer plays: rig.json
   rig_page.nim           rig.html
   rig_view.nim           the viewer, which draws what the engine collides
   watch.nim              the stills the C cards show, as watched: watched-fixtures.json

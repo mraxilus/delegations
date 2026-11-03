@@ -95,13 +95,11 @@ when IS_CONFORMAL:
 
 ## Evidence
 
-Each of the five operators takes ×0.17 to ×0.49 of its time at pin, for one operand of kind
-General. The partner takes ×0.66 to ×0.70 of pin at cga5d, and ×0.53 to ×0.60 at cga4d.
+Each of the five operators takes ×0.19 to ×0.38 of its time at pin, for one operand of kind
+General. The partner takes ×0.65 to ×0.73 of pin at cga5d, over the kinds of its operand.
 
 P01 alone changes no library function, so the gain belongs to this proposal. Its evaluation of
-the same date times these operators at ×0.97 to ×1.02 of pin. The exceptions are the support at
-×1.10 and the antisupport at ×1.66 at rga3d. That run timed every measurand at rga3d at a median
-of ×1.10, so both are noise of the machine.
+the same date times these operators at ×0.86 to ×0.99 of pin, which is noise of the machine.
 
 `laws.nim` holds each operator equal to the chain that pin spells, on 256 seeded dense samples.
 It spells each chain through operators that this proposal leaves alone. So it spells the center

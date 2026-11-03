@@ -238,14 +238,13 @@ suite "Mesh":
     discard MESHES_SCENE.tessellateObject(placed, Ink.Rose.colour, scale_far)
     let vertex = MESHES_SCENE.points.vertices[0]
     check float(vertex.x) == 0.25 and float(vertex.y) == 0.5 and float(vertex.z) == -0.125
-    # Line's support is nearest world origin: on line through `at` along x, that is `at`
-    #   less its x.
+    # Line's halves meet at its point nearest pivot, which hand-built extent leaves at view
+    #   origin: on line through `at` along x, that is `at` less its offset along x.
     placed = placeObject(line)
-    let support = placed.at.toView(origin)
     discard MESHES_SCENE.tessellateObject(placed, Ink.Rose.colour, scale_far)
     let ribbon = MESHES_SCENE.ribbons.records[0]
     check float(ribbon.tail_y) == 0.5 and float(ribbon.tail_z) == -0.125
-    check float(ribbon.tail_x) == float32(support.x)
+    check float(ribbon.tail_x) == 0.0
     placed = placeObject(plane, some(at))
     discard MESHES_SCENE.tessellateObject(placed, Ink.Rose.colour, scale_far)
     check float(MESHES_SCENE.discs.records[0].centre_y) == 0.5
@@ -1621,7 +1620,7 @@ suite "Mesh":
   test "the categorical run is contiguous, so a picker can walk it as one block":
     # Colour picker offers `COUNT_INK_CATEGORICAL` entries starting at.
     #   `LUT_NAME_BY_INK[INK_CATEGORICAL_FIRST]`, which is only correct while every
-    #   categorical slot follows every structural one, with no gaps.
+    #   categorical ink follows every structural one, with no gaps.
     check COUNT_INK_CATEGORICAL == 5
     check inkCategorical(0) == INK_CATEGORICAL_FIRST
     check inkCategorical(COUNT_INK_CATEGORICAL - 1) == Ink.high
@@ -1629,7 +1628,7 @@ suite "Mesh":
       check categoricalIndex(inkCategorical(index)) == index
 
 
-  test "a colour picker offers every categorical slot and no structural one":
+  test "a colour picker offers every categorical ink and no structural one":
     var offered: seq[string]
     for index in 0..<COUNT_INK_CATEGORICAL: offered.add($inkCategorical(index))
     check offered == @["Rose", "Copper", "Olive", "Jade", "Cobalt"]

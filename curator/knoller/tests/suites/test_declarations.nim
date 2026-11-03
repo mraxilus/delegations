@@ -246,9 +246,9 @@ suite "Declarations":
 
 
   test "value over lines takes doc after `=` ending its first line, else at its close":
-    # `nim jsondoc` of Nim 2.2.12 reads doc of value over lines there alone, and of `case` value
-    #   on line below last branch. Nim parses no doc below `=` ending first line, nor after `=`
-    #   of named argument or `:` of field inside open bracket.
+    # `nim jsondoc` of Nim 2.2.12 and 2.4.0 reads doc of value over lines there alone, and of
+    #   `case` value on line below last branch. Nim parses no doc below `=` ending first line,
+    #   nor after `=` of named argument or `:` of field inside open bracket.
     let
       field = "const P = Pair(a:\n  1, b: 2)\n"
       argument = "const Q = foo(a =\n  2, b = 3)\n"
@@ -270,8 +270,8 @@ suite "Declarations":
 
 
   test "value opening `block` on its first line stays for hand, as no comment gives it doc":
-    # `nim jsondoc` of Nim 2.2.12 reads none after `block:`, first in body or after its last
-    #   line; doc below body at its indent leaves last value unused.
+    # `nim jsondoc` of Nim 2.2.12 and 2.4.0 reads none after `block:`, first in body or after its
+    #   last line; doc below body at its indent leaves last value unused.
     let blocked = "const V = block:\n  1\nconst W = block outer:\n  2\n"
     check checkDocsMissing("a.nim", blocked).mapIt((it.line, it.message)) == @[
       (1, "Value opening `block` takes doc after `=`, with `block` on next line; got `const V`."),

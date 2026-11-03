@@ -131,7 +131,7 @@ _Avoid_: binding, glue, interop, api
 
 **Page**:
 The one self-contained file the build assembles out of the shell, the bridge, the scripts
-and the faces.
+and the font faces.
 _Avoid_: bundle, artefact, output, document
 
 **Panel**:

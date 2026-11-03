@@ -30,7 +30,7 @@ itself fails where two blocks of a card touch, and a control page of the project
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table from metric and 𝟙 |
 | [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, now P04 and P09 |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
-| [P04 Exact kinds][exact-kinds] | proposal | product returns exactly bases it reaches |
+| [P04 Exact kinds][exact-kinds] | proposal | operator returns exactly bases it reaches |
 | [P05 Multivector align][multivector-align] | proposal | multivector aligned to one cache line |
 | [P06 Float width][float-width] | proposal | width of each float as a build option |
 | [P07 Part scale][part-scale] | proposal | each part compared at its own scale |
@@ -112,13 +112,12 @@ binary. `drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to
 Chromium executable, and `drive` uses that one instead. `types` and `drive` need node and npm on
 `PATH`, and `nim r tools/build.nim system` names every system package.
 
-The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches and builds it
-once for each machine (`GUIDE.md`, Toolchain). The record says which characters of `pga` need
-it.
+The pin is **Nim 2.4.0**, the first release that lexes each character of `pga`. Koch fetches it
+once for each machine (`GUIDE.md`, Toolchain).
 
 Run each verb of `tools/build.nim` with the `bin/` of the pin first on `PATH`, as koch does
-(`GUIDE.md`, Toolchain). The page `docket` holds a script that `nim js` emits, and a release of
-Nim emits another script. Then `drive` finds that the page changed since it was published.
+(`GUIDE.md`, Toolchain). The page `docket` holds a script that `nim js` emits, and another release
+of Nim emits another script. Then `drive` finds that the page changed since it was published.
 
 ## Layout
 

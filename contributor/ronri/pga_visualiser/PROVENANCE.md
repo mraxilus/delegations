@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 50ecd726ec1a5108 |
+| Rules   | 0e17644a127757fb |
 | Pruned  | 49b8f1c6ca50b0bb20472edd1cc819a6d7222045 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -49,10 +49,12 @@ button, or seen this on real GPU hardware.** Every figure here was software-rend
 names one sense of an older word, and the other senses keep that word. An explicit list spares them,
 rather than a rule.
 
-`handle` names the address of an object, and `slot` still names an `Ink` palette position and a
-timing array position. `pivot` names the orbit centre. `target` still names the object a press
-points at, the DOM event target, a render target and a plain goal. `budget` names real allowances of
-time, pixels and segments. The frame-rate lines are `mark`s, because nothing is held to them.
+`handle` names the address of an object, and `slot` names a place in a pool or a timing ring. A
+palette index names a position in the palette, and an `Ink` names the entry there. `face` alone
+names a face of a mesh and the verb, and a font face is always named in full. `pivot` names the
+orbit centre, and `budget` names real allowances of time, pixels and segments. `target` still names
+the object a press points at, the DOM event target, a render target and a plain goal. The
+frame-rate lines are `mark`s, because nothing is held to them.
 
 **Three names could not be taken, and each says why in place.** `object` is reserved in Nim, so the
 code-position `item` took a role instead. It is `one` where an object is reached through the
@@ -88,7 +90,7 @@ compile, rather than fails to match.
 TypeScript: 44 static text nodes against 6 from scripts. A script sets each tooltip. To set each
 label from a script would empty 44 elements, invent 44 ids, and blank the page until scripts ran.
 
-`tools/build.nim` rewrites `shell.html` on the way out for `@SCRIPT@` and `@EMBED:<face>@`, and
+`tools/build.nim` rewrites `shell.html` on the way out for `@SCRIPT@` and `@EMBED:<font face>@`, and
 `@WORD:<key>@` joins that pass. The real text is in the committed markup, and reads at first paint
 and with scripts refused. A token that names a key the catalogue does not carry stops the build.
 
@@ -166,7 +168,8 @@ and this file does not:
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `built`, `pool` | what scene costs, repaired faults, each frame built, drawer |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
-| `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
+| `message`, `style` | outcome fade, declared CSS |
+| `type`, `canvas` | font faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
 | `surface` | no backdrop filter on the page, and the fill of every surface |
 | `veil` | the veil of a plane over every spot its pick finds it at |
@@ -499,12 +502,33 @@ their verdicts agree.
 ## Browser front-end
 
 **The page is one self-contained file.** It opens from `file://`, or from an artefact host that
-reaches no font host and no script host. So every face is inlined as base64, and `tools/build.nim
-web` concatenates every script into `pages/shell.html` at its `@SCRIPT@` token. `pages/shell.html`
-stays whole markup, rather than ends mid-`<script>`, because a committed page that cannot parse
-alone is a page that no checker can read. The page declares its own doctype, charset and viewport,
-because a copy opened from file has nothing else to declare them. Without them that copy rendered in
-quirks mode, and decoded its text as Windows-1252.
+reaches no font host and no script host. So every font face is inlined as base64, and
+`tools/build.nim web` concatenates every script into `pages/shell.html` at its `@SCRIPT@` token.
+`pages/shell.html` stays whole markup, rather than ends mid-`<script>`, because a committed page
+that cannot parse alone is a page that no checker can read. The page declares its own doctype,
+charset and viewport, because a copy opened from file has nothing else to declare them. Without them
+that copy rendered in quirks mode, and decoded its text as Windows-1252.
+
+**The page draws through WebGL2 where the browser offers it, and through WebGL1 where it does not.**
+WebGL2 makes per-fragment depth and instancing core, where WebGL1 offers them as extensions. The
+Architect's phone offered WebGL1 without `EXT_frag_depth`, and WebGL2 with `gl_FragDepth`
+(repository issue 743). So on WebGL1 that phone kept linear depth, and the fault of the far field
+with it. The page asks for `webgl2` first, and falls back to `webgl`, so a browser without WebGL2
+still draws. The Architect ruled this order, D8 a, 2026-10-25.
+
+**One source serves both dialects.** Each shader is written once, in GLSL ES 1.00. Under WebGL2 a
+prelude opens it with `#version 300 es`, and maps `attribute`, `varying`, `gl_FragColor` and
+`gl_FragDepthEXT` onto their names in 3.00. A source asks for per-fragment depth through
+`DEPTH_FRAGMENT`, which each prelude defines where that depth exists. Rejected: a second copy of
+each of the nine sources in 3.00, which the sibling rule would hold in step by hand. Rejected:
+WebGL2 alone, which leaves a browser without it with no picture.
+
+Verified by driven check: `driveContextPaths` draws the opening scene through WebGL2, through
+WebGL1, and through WebGL1 without `EXT_frag_depth`. A stand-in browser refuses what each path
+lacks, on a page of its own. Once the picture stands still, WebGL2 and WebGL1 with the extension
+draw it the same to the pixel, and WebGL1 without it draws its own. Verified by a break on purpose:
+on `main`, which asks for WebGL1 alone, the first of these fails. **Unverified**: the Architect's
+phone.
 
 **Scripts share one global scope, rather than import each other.** TypeScript 7 removed `outFile`,
 so the compiler does not bundle, and the page cannot resolve ES imports without a server. Files
@@ -632,9 +656,30 @@ host saves only the extensions on its list, and `.pgascene` is not one. Loading 
 entry of a zip that ends `.pgascene` or `.rgascene`, stored or deflated. Rejected: a JSON scene, a
 second format to read.
 
+**The drawing buffer stays inside the viewport limit of the GL.** The GL clamps a viewport to
+`MAX_VIEWPORT_DIMS`, and a browser can keep a buffer wider than that, as one Firefox does. The scene
+then fills the viewport alone, and draws narrower than its canvas, with a bare band at the right
+(repository issue 725). So `ratioPixel` lowers the device pixel ratio, after its cap of 2.5, until
+the buffer fits that limit on both axes. One ratio serves both axes, so each pixel stays square, and
+the least diameter of a point follows it. Rejected: a viewport set from `drawingBufferWidth`, which
+the GL clamps the same way.
+
+Verified by a probe in the Architect's Firefox 152 on Windows, 2026-10-25. At a pixel ratio of 2, a
+canvas 2,472 px wide kept a buffer of 4,944 by 4,092 under a limit of 4,096. The field filled 4,096
+columns, 0.83 of the width, and left the rest bare. In a second reading, the canvas was 2,816 px
+wide, and the field stopped at 0.73. That Firefox reads back the viewport as asked, so only the
+picture shows the clamp. Rejected: a cap at `MAX_RENDERBUFFER_SIZE` too, which it reports as 2,048
+while it draws a buffer of 4,944.
+
+Verified by driven check: `driveBufferCovered` stands in a viewport limit of 3,300 below a buffer of
+4,000 by 1,750. The page then asks 3,300 by 1,444, and its viewport covers all of it. Verified by a
+break on purpose: without the lowered ratio, the viewport covers 3,300 of 4,000 columns. Chromium
+with SwiftShader cuts a buffer asked at 10,000 to 8,192, its viewport limit, so it shows no band
+unaided. **Unverified**: the page with this fix, in that Firefox.
+
 *Checked.* Verified by a cold run. `clean` removes `build`, `binaries` and `nimcache`. Then `drive`
-fetches every face, builds both front-ends, and drives them with no step run by hand, as the runner
-does. A second run fetches nothing.
+fetches every font face, builds both front-ends, and drives them with no step run by hand, as the
+runner does. A second run fetches nothing.
 
 Verified by type-checker: every script is clean under the three flags above, with no `any` and no
 non-null assertion. Verified by driven check: `driveTypeRoles`, `driveTypeDrawn` and
@@ -644,31 +689,31 @@ Verified by driven check against a stand-in host: a scene saves as a zip and loa
 saves as itself. A declined save offers no link. Verified by `unzip -t`: the zip is sound.
 **Untested**: the real host. **Unverified**: no human has driven this page.
 
-## Faces
+## Font faces
 
-**`drive` fetches faces, and `web` refuses without them**, because a caller who reaches for `web`
-directly is building, rather than being given.
+**`drive` fetches font faces, and `web` refuses without them**, because a caller who reaches for
+`web` directly is building, rather than being given.
 
-**Faces come from the store of the repository, and which faces is this project's.** `koch
+**Font faces come from the store of the repository, and which font faces is this project's.** `koch
 fetch-assets` holds any file fetched at build time: the names, the digests and the fetch, in
-`curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
+`curator/audit/src/assets.nim`. The `assets` verb of this project copies the font faces of both
 front-ends out of it (repository issues 116 and 124). It writes `build/fonts/store.list`, one line
-for each face, naming the store entry it was copied from. `web` compares its input against that
+for each font face, naming the store entry it was copied from. `web` compares its input against that
 entry before it embeds. Verified by a break of it, twice: `store.list` moved away, and one byte
-appended to a copied face.
+appended to a copied font face.
 
 The page takes Commit Mono as the Latin `woff2` of `@fontsource`. It takes Noto Sans at 400 and 600,
 Noto Sans Math, Noto Sans Symbols 2 and Noto Serif, as TrueType from their own releases. The desktop
-takes its own list, `FACES_DESKTOP`, and the two lists share files. Commit Mono is `otf` there,
+takes its own list, `FONT_FACES_DESKTOP`, and the two lists share files. Commit Mono is `otf` there,
 which is what its author publishes, and `stb_truetype` reads its CFF outlines. All are under the SIL
 Open Font License 1.1.
 
-**Three faces, three roles, and nothing else picks between them.** The standard of the Architect is
-Noto Serif for titles, Noto Sans for body, and Commit Mono for code and monospace. The page draws
-them through `--serif`, `--sans` and `--mono`, and the desktop through `guiHeader` and `guiMonoPush`
-with `guiMonoPop`. Material 3 puts text inside components in the label role, so the help tab strip
-and the toggle chips stay sans. The serif takes the headings that name a section, and the name of
-the application itself.
+**Three font faces, three roles, and nothing else picks between them.** The standard of the
+Architect is Noto Serif for titles, Noto Sans for body, and Commit Mono for code and monospace. The
+page draws them through `--serif`, `--sans` and `--mono`, and the desktop through `guiHeader` and
+`guiMonoPush` with `guiMonoPop`. Material 3 puts text inside components in the label role, so the
+help tab strip and the toggle chips stay sans. The serif takes the headings that name a section, and
+the name of the application itself.
 
 **Commit Mono splits its ligatures across two switches, and the page needs both.** The distributed
 `woff2` carries `calt`, which browsers apply unasked, and which most ligatures ride on. The opt-in
@@ -679,26 +724,27 @@ sets are `ss01` to `ss05`, which the arrows and comparisons come from. So the st
 No combination moves a column. Noto Sans Math publishes an `ss01` that the mono stack falls through
 to, and the operators render the same either way.
 
-**Each Noto face of the page ships whole** (Article X.8, as the Architect ruled it on 2026-10-03). A
-Latin subset leaves each character past its range to a face of the viewer's system. `ˍ` and `˷` of
-the notation are two (repository issue 411). The cost is weight: the built page is 7,830,702 bytes,
-against 4,271,072 with the subsets. Measured on 2026-10-03 with `ls -l build/rga_visualiser.html`,
-at `main` and at this change. Rejected: a Noto Sans subset cut for the two accents, which no store
-row hosts without a release.
+**Each Noto font face of the page ships whole** (Article X.8, as the Architect ruled it on
+2026-10-03). A Latin subset leaves each character past its range to a font face of the viewer's
+system. `ˍ` and `˷` of the notation are two (repository issue 411). The cost is weight: the built
+page is 7,830,702 bytes, against 4,271,072 with the subsets. Measured on 2026-10-03 with
+`ls -l build/rga_visualiser.html`, at `main` and at this change. Rejected: a Noto Sans subset cut
+for the two accents, which no store row hosts without a release.
 
-**The maths and symbol faces each take a family of their own, after the text faces in every stack.**
-Within one family, the faces that declare one weight form a set. The engine picks one set for the
-weight asked, and asks only its faces. The order of a stack is then the precedence, as merge order
-is in the desktop atlas. Rejected: those faces under "Noto Sans UI", whose set at 400 to 600 wins
-both weights from the text faces. Liberation Sans then draws 1,156 glyphs of the open drawer.
+**The maths and symbol font faces each take a family of their own, after the text font faces in
+every stack.** Within one family, the font faces that declare one weight form a set. The engine
+picks one set for the weight asked, and asks only its font faces. The order of a stack is then the
+precedence, as merge order is in the desktop atlas. Rejected: those font faces under "Noto Sans UI",
+whose set at 400 to 600 wins both weights from the text font faces. Liberation Sans then draws 1,156
+glyphs of the open drawer.
 
 Rejected: each of them declared again at 400 and at 600, which embeds each file twice, 1,744,560
 bytes more on a page of 7,718,414.
 
-**The maths and symbol faces are declared over 400 to 600.** Each ships one weight. Declared at 400
-alone, they still draw at 600, but the browser synthesises their bold. Such a weight is a font face
-that nothing ships (Article X.8). Cost: regular operators beside semibold letters, which the desktop
-label also draws.
+**The maths and symbol font faces are declared over 400 to 600.** Each ships one weight. Declared at
+400 alone, they still draw at 600, but the browser synthesises their bold. Such a weight is a font
+face that nothing ships (Article X.8). Cost: regular operators beside semibold letters, which the
+desktop label also draws.
 
 Verified by a run, 2026-10-23, in the Chromium that Playwright pins, with the range cut to 400.
 `CSS.getPlatformFontsForNode` still names Noto Sans Math and Noto Sans Symbols 2 for operators at
@@ -712,10 +758,11 @@ browser synthesises (Article X.8). The collector asks each stack at each weight 
 `curator/audit/src/font_stacks.nim` at `e6c9d9c0` over `written.json`. It reads two findings on
 `main` at `9b6c445d`, and none here.
 
-**Each face is held to its own load status**, by `driveTypeRoles`, because `document.fonts.check`
-answers true where no face matches at all. Verified by a run, 2026-10-07, in Chrome for Testing 153:
-all six faces load. A read of `CSS.getPlatformFontsForNode` over every element of the open drawer
-finds no glyph from a face of the system. Noto Sans draws 946 glyphs and its semibold 204.
+**Each font face is held to its own load status**, by `driveTypeRoles`, because
+`document.fonts.check` answers true where no font face matches at all. Verified by a run,
+2026-10-07, in Chrome for Testing 153: all six font faces load. A read of
+`CSS.getPlatformFontsForNode` over every element of the open drawer finds no glyph from a font face
+of the system. Noto Sans draws 946 glyphs and its semibold 204.
 
 **Each element is read in the stack that the browser resolves for it, and `koch drive` judges it**
 (`CONTRIBUTOR.md`, Pages and assets). `readFontFaces` reads the computed `font-family` and
@@ -727,10 +774,10 @@ that a font face of the system draws.
 
 **Text that a script writes later is one run for each stack in use, and for each stack that a rule
 declares.** `nimCodepointsShown` gives the catalogue, the help, the notation and the units, as
-`--drive-faces` reads them. The strings of the scripts and the text on the page join them. There is
-one such run at each weight that an element resolves to, that a rule declares, and that a font face
-declares. Each is named by the element or the rule of its stack, and by its weight, as `text written
-later in rule .later-panel at 600`.
+`--drive-font-faces` reads them. The strings of the scripts and the text on the page join them.
+There is one such run at each weight that an element resolves to, that a rule declares, and that a
+font face declares. Each is named by the element or the rule of its stack, and by its weight, as
+`text written later in rule .later-panel at 600`.
 
 **The collector reads the declared stacks through the CSSOM, and the browser resolves each one.** It
 walks every rule of every sheet, into `@media`, `@supports`, `@layer`, nested rules and imported
@@ -744,10 +791,10 @@ Rejected: `var()` read from the custom properties of the root, which misses a va
 under `@media` declares.
 
 So each stack in use, and each stack that a rule declares, must map every character that the page
-can write. That is why every stack names the maths and symbol families after its own faces. The cost
-is that a stack for titles alone must map the operators too. A checkbox and a file field show no
-text that the page writes, so they are not a stack in use. Both resolve to Arial, and the button of
-a file field shows the words of the browser.
+can write. That is why every stack names the maths and symbol families after its own font faces. The
+cost is that a stack for titles alone must map the operators too. A checkbox and a file field show
+no text that the page writes, so they are not a stack in use. Both resolve to Arial, and the button
+of a file field shows the words of the browser.
 
 The collector reads each `@font-face` rule through the CSSOM, and writes the bytes of its `data:`
 source to a file named by their SHA-256. So `koch drive` reads the bytes that a viewer receives. The
@@ -792,16 +839,16 @@ pins: no finding, and the control page gives each numeral. Verified by breaks on
 With the maths and symbols under "Noto Sans UI" at 400 to 600, `koch drive` gives 894 findings. They
 name the Latin text of each element in the sans stack, as `button#button-add` drawing U+0061. For
 Latin in that stack, `CSS.getPlatformFontsForNode` names a font face of the system. Verified by a
-run, 2026-10-03: the other page checks pass with the whole faces.
+run, 2026-10-03: the other page checks pass with the whole font faces.
 
 **The serif ships at 600 alone, because every title is set at 600.** A weight that nothing ships is
-a face that the browser of the reader invents (Article X.8). The check reads pixels, and not width,
-which cannot part the two faces. The heading shot as the page has it, and again with the interface
-face forced onto it, must make two pictures.
+a font face that the browser of the reader invents (Article X.8). The check reads pixels, and not
+width, which cannot part the two font faces. The heading shot as the page has it, and again with the
+interface font face forced onto it, must make two pictures.
 
 **The desktop draws the same three roles.** `NotoSerif-SemiBold` matches the 600 of the page, and
 `CommitMonoV142-400Regular` sets notation. The supplementary ranges are merged into the mono and
-interface faces, because those rows carry wedges. Commit Mono comes from the repository of its
+interface font faces, because those rows carry wedges. Commit Mono comes from the repository of its
 author, because `@fontsource` ships no TrueType. **Ligatures cannot reach the desktop**, because
 Dear ImGui shapes no text, so no GSUB feature fires.
 
@@ -932,13 +979,13 @@ Software GL reports no multisampled visual, so thin lines alias.
 
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
-`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
-`--drive-edit`, `--drive-wheel`, `--drive-bulk`, `--drive-fields`, `--drive-hover`, and
-`--drive-help:<tab>`, one for each tab. Each pushes real events through the queue of SDL, but
-`--drive-edit`, `--drive-bulk` and `--drive-fields` call the procs that the buttons and fields call
-(Desktop front-end). `driven` runs all of them and reports every failure, and not the first. It
-asks the binary which help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home
-(Article I.4). `drive` chains it, here and on the runner (repository issue 91).
+`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`,
+`--drive-font-faces`, `--drive-edit`, `--drive-wheel`, `--drive-bulk`, `--drive-fields`,
+`--drive-hover`, and `--drive-help:<tab>`, one for each tab. Each pushes real events through the
+queue of SDL, but `--drive-edit`, `--drive-bulk` and `--drive-fields` call the procs that the
+buttons and fields call (Desktop front-end). `driven` runs all of them and reports every failure,
+and not the first. It asks the binary which help tabs exist (`--help-tabs`), so `help.HelpPath`
+stays their one home (Article I.4). `drive` chains it, here and on the runner (repository issue 91).
 
 **A run that reaches a window of Dear ImGui names that window on its motion.** The SDL3 backend of
 Dear ImGui drops motion that names no window of its own. `--drive-select` and `--drive-wheel` name
@@ -952,9 +999,9 @@ it, so Dear ImGui reads the pointer over the menu as it reads a hand. Verified b
 - undo takes a construction back, and returns the view to where it built from;
 - the choice menu does not swallow the drag after it;
 - every help tab opens with rows in it;
-- a run whose face is missing still does its scripted work;
-- every type role is drawn in a face of its own;
-- every codepoint that each role sets has a glyph in the face of that role;
+- a run whose font face is missing still does its scripted work;
+- every type role is drawn in a font face of its own;
+- every codepoint that each role sets has a glyph in the font face of that role;
 - a scene filled to capacity leaves what follows its list on the window;
 - the menu opens and offers the demo at every size that `orrery` has;
 - an edit opened far out and saved unchanged keeps every coefficient and its radius to the bit;
@@ -963,40 +1010,40 @@ it, so Dear ImGui reads the pointer over the menu as it reads a hand. Verified b
 - typed values past the bounds of the view section land inside them, as on the page;
 - hover follows an ease under a still pointer, and drops while a held key moves the camera.
 
-**An absent face is a finding, and never an abort.** Dear ImGui asserts inside `AddFontFromFileTTF`
-where it cannot open a path, and an assertion is SIGABRT rather than a report. `faceAt` resolves
-each face to empty where the file is not there. It says which face is missing, which variable names
-it, and which verb fetches it. The interface draws in what is left.
+**An absent font face is a finding, and never an abort.** Dear ImGui asserts inside
+`AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a report.
+`fontFaceAt` resolves each font face to empty where the file is not there. It says which font face
+is missing, which variable names it, and which verb fetches it. The interface draws in what is left.
 
-Locations come from the environment first, with one `PGA_FONT…` name for each face, and fall back to
-the faces that this build ships. `driven` drives the case by a run of `--drive-keys` with `PGA_FONT`
-naming a path that no machine carries.
+Locations come from the environment first, with one `PGA_FONT…` name for each font face, and fall
+back to the font faces that this build ships. `driven` drives the case by a run of `--drive-keys`
+with `PGA_FONT` naming a path that no machine carries.
 
-**This half ships the faces that it draws with** (Article X.8; repository issue 93).
-`DIRECTORY_FACES` is relative to the binary through `getAppDir()`, so no source names the layout of
-any machine. The faces come from the release repository of the Noto project. A tag and a digest pin
-each family, because the families move on their own: `NotoSans-v2.013`, `NotoSansMath-v2.539` and
-`NotoSansSymbols2-v2.006`. A read of each `cmap` against the ranges that `gui_shim.cpp` declares
-gives the coverage: math holds 1,773 of the 1,952 wanted. The faces cost about 2.5 MB fetched into
-`build/fonts`, because `stb_truetype` reads uncompressed faces.
+**This half ships the font faces that it draws with** (Article X.8; repository issue 93).
+`DIRECTORY_FONT_FACES` is relative to the binary through `getAppDir()`, so no source names the
+layout of any machine. The font faces come from the release repository of the Noto project. A tag
+and a digest pin each family, because the families move on their own: `NotoSans-v2.013`,
+`NotoSansMath-v2.539` and `NotoSansSymbols2-v2.006`. A read of each `cmap` against the ranges that
+`gui_shim.cpp` declares gives the coverage: math holds 1,773 of the 1,952 wanted. The font faces
+cost about 2.5 MB fetched into `build/fonts`, because `stb_truetype` reads uncompressed font faces.
 
-**Every codepoint that the build writes is asked of the face that sets it** (Article X.8).
-`shown.codepointsShown` gathers the text from where it is composed, for `--drive-faces` and for the
-page alike. That is the wording catalogue, help, the notation of each operation, the basis names,
-the wheel and the units. It adds printable ASCII, since a reader names objects in it. `gui.hasGlyph`
-loads each codepoint through the face of each role, as drawing does, and reports each one that would
-draw as `.notdef`. The title role is asked for the panel headings alone, because nothing is merged
-into its face.
+**Every codepoint that the build writes is asked of the font face that sets it** (Article X.8).
+`shown.codepointsShown` gathers the text from where it is composed, for `--drive-font-faces` and for
+the page alike. That is the wording catalogue, help, the notation of each operation, the basis
+names, the wheel and the units. It adds printable ASCII, since a reader names objects in it.
+`gui.hasGlyph` loads each codepoint through the font face of each role, as drawing does, and reports
+each one that would draw as `.notdef`. The title role is asked for the panel headings alone, because
+nothing is merged into its font face.
 
 **Merge order is precedence, and the range lists bind only the legacy path.** From Dear ImGui 1.92,
 a renderer that keeps textures of its own loads each glyph on demand. It takes the glyph from the
-first merged face whose `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`). So the
-check does not read each `cmap` against the range lists, which asks what drawing does not ask.
+first merged font face whose `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`). So
+the check does not read each `cmap` against the range lists, which asks what drawing does not ask.
 
-**The mono role merges the interface face last.** Commit Mono, Noto Sans Math and Noto Sans Symbols
-2 carry no glyph for `ˍ` (U+02CD) or `˷` (U+02F7). Those are the postfix accents of left complement
-and antireverse, and Noto Sans carries both. It comes last, so it supplies only what the three faces
-before it lack. The cost is that its two accents are proportional in a mono line.
+**The mono role merges the interface font face last.** Commit Mono, Noto Sans Math and Noto Sans
+Symbols 2 carry no glyph for `ˍ` (U+02CD) or `˷` (U+02F7). Those are the postfix accents of left
+complement and antireverse, and Noto Sans carries both. It comes last, so it supplies only what the
+three font faces before it lack. The cost is that its two accents are proportional in a mono line.
 
 **A scripted run keeps its own clock.** Each frame drawn advances it by `SECONDS_FRAME_DRIVEN`,
 1/120 s, one frame at the least workable rate (Diagnostics). The opening scene is born at zero.
@@ -1020,10 +1067,10 @@ rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0094, elevation
 `FAIL  a drag from one object onto another opens its choice menu`, and the verb names
 `drive-drag`, with exit 1.
 
-Verified by a run, 2026-10-02: without Noto Sans merged into the mono role, `--drive-faces` reports
-`FAIL every codepoint the Mono face sets has a glyph` with `missing U+02CD, U+02F7`. With it, all
-four roles pass. Verified by a read of each face's `cmap`, 2026-10-02, with a scratch reader: Noto
-Sans holds both codepoints, and the other three faces hold neither.
+Verified by a run, 2026-10-02: without Noto Sans merged into the mono role, `--drive-font-faces`
+reports `FAIL every codepoint the Mono font face sets has a glyph` with `missing U+02CD, U+02F7`.
+With it, all four roles pass. Verified by a read of each font face's `cmap`, 2026-10-02, with a
+scratch reader. Noto Sans holds both codepoints, and the other three font faces hold neither.
 
 Verified by looking, 2026-10-02, at the operations tab that this command draws. Both accents draw as
 `�` without the merge, and as accents with it:
@@ -1186,9 +1233,9 @@ that `objects` hands out. Nor are the coordinates that `camera` reads for its be
 that `framing` and `picking` read. `camera` reads its carried direction through
 `boundary.directionFrom`, so that crossing counts.
 
-**The arrow of each label comes from the maths face, so the label sets its own line height.** The
-line box of that face stands taller than the box of the text face. With the line height of the text
-face, the two crossing rows stand 5 px above the others.
+**The arrow of each label comes from the maths font face, so the label sets its own line height.**
+The line box of that font face stands taller than the box of the text font face. With the line
+height of the text font face, the two crossing rows stand 5 px above the others.
 
 | Front-end and scene | `euclidean → algebra` | `algebra → euclidean` |
 |---------------------|-----------------------|-----------------------|
@@ -1536,9 +1583,9 @@ deuteranopia. So `Cobalt` is derived lighter and bluer (`#5b90c7`), which reopen
 yellow-green at CVD ΔE 0.4, and two blues at normal-vision ΔE 5.6. The axis hues flank the reserved
 arc on both sides, and leave one warm arc and one cool arc, 162° in total. Five hues are what fits.
 
-**A structural slot is never offered as the colour of an object.** `mesh` names the boundary once,
+**A structural ink is never offered as the colour of an object.** `mesh` names the boundary once,
 in `INK_CATEGORICAL_FIRST`, `COUNT_INK_CATEGORICAL`, `inkCategorical` and `categoricalIndex`, and
-both pickers and `inkCycled` derive from it. The structural slots are declared first and the
+both pickers and `inkCycled` derive from it. The structural inks are declared first and the
 categorical run last, so the run is one block, which a `static: doAssert` on the count holds.
 
 The floors below were derived under the `check_palette` of the prototype, which measured them on
@@ -1597,10 +1644,10 @@ weight, so that sign survives. `depthAgainst` is linear in its point. A meet pas
 therefore reports its depth **negated** on every plane met from behind its normal. Such a plane
 picks at 0 of 462 sampled pixels, while the ground plane hides the fault.
 
-**Line.** Two segments meet on the line at its support, and each runs out to one of the two
-vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is a property of the
-*eye*, which forces this shape. An end anchored at a fixed reach from the support stops short of it,
-by about 6.7° for a support 40 units out.
+**Line.** Two segments meet on the line at its point nearest the pivot. Each runs out to one of the
+two vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is a property of
+the *eye*, which forces this shape. An end anchored at a fixed reach from the support stops short of
+it, by about 6.7° for a support 40 units out.
 
 Each segment lies in the plane through the eye that contains the line. The pair therefore draws over
 the true projection of the line, within 1e-16 of screen skew. That skew holds only while the
@@ -1608,6 +1655,13 @@ near-plane crossing is stepped from the end that it stands nearer (Records and s
 from the far end, the two halves part on screen. The far ends sit off the line along the view ray,
 so occlusion is approximate there. `picking` tests both halves through `clipToEyeSide`, a near-plane
 clip written by hand, because this reach puts an endpoint behind the eye.
+
+**The halves meet where the line passes nearest the pivot, and not at its support.** The image is
+the same from any point of the line, so the point only sets what a float32 record holds.
+`DrawScale.pivot` carries the pivot about the view origin, and `picking` and `isLineShownCentrally`
+test the same halves. Rejected: the support, which a line picked far off has 4.7e6 units behind the
+eye. A record stepped from there loses the line where it passes the eye, 1e-8 off. On the page that
+line then ran about 30° off its own image.
 
 **Horizon objects are drawn as sky.** A horizon point is a fixed star at `eye +
 radius_horizon*heading`. A horizon line is a great circle about the eye. A horizon plane is a
@@ -1883,8 +1937,8 @@ field on the camera is dropped by `home`, and by every path that replaces the ca
 
 **Depth is logarithmic, and written for each fragment.** Every fragment shader on both front-ends
 writes `camera.depthClip` of its own view depth, which is `log2(D / near) / log2(far / near)` scaled
-to clip depth. It writes through `EXT_frag_depth` or through the `gl_FragDepth` of GL 3.3, so
-resolution is a fixed fraction of distance at every distance.
+to clip depth. It writes through the `gl_FragDepth` of WebGL2 and of GL 3.3, or through
+`EXT_frag_depth` on WebGL1. So resolution is a fixed fraction of distance at every distance.
 
 Rejected: linear depth with the near plane raised to hold the ratio at 100,000, which spends nearly
 every step inside the first orbit distances. An Android GPU then dropped the whole star field from
@@ -2085,6 +2139,11 @@ It is the middle of the object, with no drawn radius taken off. A camera at the 
 then reads its radius rather than zero. A near clip of one four-hundredth of that still holds the
 whole planet. It is never the depth of the pointer, which would move the furniture and the depth
 mapping at every pointer move of a still camera.
+
+**A line stands where it passes nearest the pivot**, as it is drawn (Geometry and drawing).
+`reachNear` reads that point in components, as it reads every place. Rejected: its support, the
+point nearest the world origin. A line picked far off has it 4.7e6 units behind the eye. The next
+object ahead then sets the near clip at 21.3 units, and cuts away the line 2.4e-7 ahead.
 
 **It is read once for each frame, and never for each overlay call.** `reachNear` walks every
 placement of the frame, and `ensureViewOverlay` runs many times over one frame: the anchor, each
@@ -2292,8 +2351,9 @@ cut. The drawn line stands 0.466 px off exact either way, and the written depth 
 
 **The widening runs in the vertex shader on both front-ends.** One `RibbonRecord` of fifteen floats
 crosses the wire for each segment, or sixteen with the `fog` flag, where six CPU vertices cost 42
-floats. An instanced draw expands it: GL 3.3 core on the desktop, and `ANGLE_instanced_arrays` on
-WebGL1. Each vertex derives the across as `cross(head − tail, eye − tail)`.
+floats. An instanced draw expands it: GL 3.3 core on the desktop, WebGL2 core on the page, and
+`ANGLE_instanced_arrays` on WebGL1. Each vertex derives the across as `cross(head − tail, eye −
+tail)`.
 
 **Chain of custody.** The GLSL ships, and `mesh.expandRibbon` is its reference in Nim,
 sibling-marked with both shader sources. The suite holds the reference to the algebra. The near clip
@@ -2516,6 +2576,14 @@ bound. What the library costs is the library's (Render paths). The check names t
 copy by the function that calls `nimCopy`, from the stack. Over 3 frames at 5,038 objects it reads
 9,639 copies of the project and 30,663 of the library, 13,434 a frame in all. With each object
 placed whole by `placeObject`, a counter that is not kept read 64,232 a frame, on 2026-10-05.
+
+**The hang of the selection menu writes its place field by field too** (Interaction model). The
+page hangs the menu on each frame that it shows, and an object built into the result of the hang
+costs one `nimCopy`. `driveMenuHungCopies` hangs a small menu and one larger than the view, from 25
+anchors past, near and between the edges of the canvas. It counts the outermost `nimCopy` calls,
+and fails at one. Rejected: a bound in `driveCopiesStill`, which passes fewer copies than the scene
+has objects. Verified by a read of the emitted code, 2026-10-24: no `nimCopy` stands in
+`pointMenuHung`.
 
 **A read of a geometry builds no multivector.** On the JavaScript backend, `geometryAt` is a
 template whose expansion ends in a `block`. Rejected: a `lent` func there, which builds its default
@@ -3047,11 +3115,11 @@ front-end centres its own text.
   **The halo is the backdrop colour, not the marker white.** A halo blends with the background to
   knock the surroundings out of the letters. A contrasting halo dominates them instead (Peterson,
   *Cartographer's Toolkit*; Dawson, *About label halos*). It is `WIDTH_MARKER_LABEL_HALO` 2 px of
-  `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` 0.85, on a 16 px face at weight 600.
+  `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` 0.85, on a 16 px font face at weight 600.
 
-  The desktop sets the label in `FACE_FONT_LABEL`, with the math and symbol faces merged in, so `G =
-  L ∧ c` keeps its wedge. It has no stroked text, so it draws the label at eight one-pixel offsets
-  in the halo colour. The browser stages one SVG `<text>` for each selected handle, with
+  The desktop sets the label in `FONT_FACE_LABEL`, with the math and symbol font faces merged in, so
+  `G = L ∧ c` keeps its wedge. It has no stroked text, so it draws the label at eight one-pixel
+  offsets in the halo colour. The browser stages one SVG `<text>` for each selected handle, with
   `paint-order: stroke`.
 
 **The loop of a plane lies on the plane.** It is traced from the frame of the plane, about the
@@ -3077,6 +3145,18 @@ The worst case of a marker lies along orientation, so a sweep of camera *distanc
 against its own length. The two vanishing points sit at screen distances in a ratio of 314. Rails
 are shortened **after the projection**.
 
+**Each rail is cut to the view before it is sized and drawn** (`cutToView`). With the eye far off a
+line, the cut of a rail at the near plane projects up to 1e17 px out. Uncut, a browser clamps that
+coordinate and draws the rail at 45° where the line runs at 59° (repository issue 767). The cut
+reads its fractions from the end nearer the middle of the view. A fraction read from the far end
+loses whole pixels to rounding.
+
+**Where the support stands behind the eye, the rails start where the line enters the view.** The
+depth of the support then clamps to the near plane, so a gap stated there reads as no pixel in view.
+The rails also run to a shared head that is not on the line, so from a support that far back they
+shed their offset. So `markerRails` finds the point of the line under the entry of its image
+(`placeAtScreen`), and states the gap at its depth.
+
 **The frame of the horizon plane is an expanding circle that becomes the screen edge.** At each
 angle the radius is `progress × half-diagonal`, or the distance to the inset edge, whichever is
 smaller. It runs over `SEGMENTS_MARKER_FRAME` 64 even steps, with `CORNERS_MARKER_FRAME` 4 corner
@@ -3098,6 +3178,7 @@ measured 0.14999999999997 against 0.15.
 - the points of the loop on the plane (1.1e-15 on the antiscalar);
 - each kind reading at most its fixed points out of the algebra, with a pulse and without;
 - the straightness of the rails, and their widest reading over an orientation sweep;
+- the rails of a line whose support stands 4.7e6 units behind the eye, in view and 14.5 px apart;
 - the 68 points of the frame at 296.8 px flat at half progress;
 - a matured hold taken once;
 - a line's label over two orbits of 1,257 steps each, with no isolated step;
@@ -3740,9 +3821,10 @@ scene. Reading is written once against `VERSION_SCENE`. The difference of each p
 one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain one step at a time.
 
 Version 3 costs sizes, with `upgradedFrom3` filling `RADIUS_OBJECT_DEFAULT`. The chain refuses a
-radius that is zero, negative or NaN, as it refuses an unknown palette slot. Version 1 costs colours
-alone: its ordinals name a palette that no longer exists, folded by the same cycle that `inkCycled`
-walks. It is bounded by `ORDINAL_INK_HIGH_V1` 14, so a byte that version 1 never wrote is refused.
+radius that is zero, negative or NaN, as it refuses an unknown palette index. Version 1 costs
+colours alone: its ordinals name a palette that no longer exists, folded by the same cycle that
+`inkCycled` walks. It is bounded by `ORDINAL_INK_HIGH_V1` 14, so a byte that version 1 never wrote
+is refused.
 
 **A wrong hue is recoverable, and a refused scene is not.** `loadScene` parses into a staging scene,
 and replaces the caller's only on complete success. It is native-only.
@@ -3979,9 +4061,9 @@ written `` m.`∧ ☆`n ``.
 
 *Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
 every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
-parenthesised on the page. Verified by driven check on the desktop: `--drive-faces` asks each face
-for every codepoint of the notation (Desktop driven checks). On the page, `koch drive` judges what
-`readFontFaces` reads (Faces).
+parenthesised on the page. Verified by driven check on the desktop: `--drive-font-faces` asks each
+font face for every codepoint of the notation (Desktop driven checks). On the page, `koch drive`
+judges what `readFontFaces` reads (Font faces).
 
 ## Naming and number formatting
 
@@ -4211,8 +4293,9 @@ Verified by driven check:
 
 **A pointer pick centres its object, and comes in to it.** A click or a tap on a point or a line
 records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The destination is
-`stanceApproaching`, which puts the pivot on the own anchor of the object. Every pick therefore
-centres, whether a pointer made it or the objects list did.
+`stanceApproaching`, which puts the pivot on the object itself. That is its own anchor, or for a
+line the point nearest the eye. Every pick therefore centres, whether a pointer made it or the
+objects list did.
 
 The camera slides and never turns, so the angles and roll survive. `stanceRepivoted` carries the
 pivot onto the object, and `stanceDollied` sets the reach. Rejected: the object held under the pixel
@@ -4233,11 +4316,11 @@ units. The pivot lands on it there, and it reads in front (Camera aiming, Pickin
 keeps it mid-frame however far out it stands, and however far off the pick starts. The destination
 is held about the place of the star itself, and the ease lands on it exactly (Origins).
 
-**An object behind the reader is left to the frame rule.** To centre one would slide the camera back
-past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers none there,
-and `stanceFor` takes it by its own bound. Ahead is judged against the reach of the object from the
-eye, as a pick judges a hit (Picking). Verified by `suites.nim`: a pointer pick of a small object up
-close comes in to it, and one behind does not.
+**A point or a plane behind the reader is left to the frame rule.** To centre one would slide the
+camera back past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers
+none there, and `stanceFor` takes it by its own bound. Ahead is judged against the reach of the
+object from the eye, as a pick judges a hit (Picking). Verified by `suites.nim`: a pointer pick of a
+small object up close comes in to it, and one behind does not.
 
 **A dot picked alone never lands nearer than its fit**, by the ruling of #535. The fit is the depth
 that a pointer pick of the dot comes in to. The wheel over empty sky can take the separation to
@@ -4246,16 +4329,41 @@ about 20 px across. `stanceFitted` dollies the destination of the frame rule out
 as a new goal lands. A separation past the fit stays, and so does a stance set after the pick.
 
 A point seen at its size has no fit, so the working scale of the reader stays. The fit is capped at
-the reach of the dot, so the eye never moves further off than the dot stands. A group, a line and a
-plane keep the frame rule alone. `stanceFitted` reads the dot by its reach from the eye. Rejected:
-its depth along the sight, which reads every dot behind the eye as seen at its size. Rejected: a fit
-for every point, which takes a point at working scale out to 19.3 units.
+the reach of the dot, so the eye never moves further off than the dot stands. A group and a plane
+keep the frame rule alone, and a line its own rule below. `stanceFitted` reads the dot by its reach
+from the eye. Rejected: its depth along the sight, which reads every dot behind the eye as seen at
+its size. Rejected: a fit for every point, which takes a point at working scale out to 19.3 units.
 
 Verified by `suites.nim`: a point picked from the list never lands nearer than its fit, and one
 further out stays. Verified by a Playwright script that is not kept, in the Chromium of Playwright
 under SwiftShader, on 2026-10-05. After 175 notches over empty sky in the demo of 5,038 objects, a
 tick of HD 222237b settles at 2.414e-7 units. The star then draws 7.7 px across in a canvas 771 px
 tall, against 19.9 px at 9.38e-8 without the floor.
+
+**A line picked alone comes to its point nearest the eye, and never to its support**, by the ruling
+of #767. The support is the point of the line nearest the world origin. From a far star, the support
+of `sol ∧ earth` is the centre of Sol, and a pivot there puts the eye inside it. The pivot goes to
+the orthogonal projection of the eye onto the line (`framing.positionOnLineNearest`), by pointer and
+by list alike. The separation stays where the line stands further off than that, and else the eye
+comes in to the reach of the line. That point stands beside the eye as often as ahead, so a line is
+exempt from the check that refuses an object behind the reader.
+
+**The eye is read once, at the pick.** The slide keeps the sight, so after it the point of the line
+nearest the eye stands further along the line. An eye read at each offer would carry the camera
+along the line without end. The same line offered again, as when it is rewritten or shown again,
+projects the pivot instead and keeps the distance. A pivot on the line projects to itself, so
+nothing moves. A pick is a pointer pick, or a change of `Selection.revision` since the last offer,
+which `CameraTween.revision_offered` holds.
+
+The projection is held in world coordinates, as the scene stores the line. A probe that is not kept
+measured it on 2026-10-25, in exact rational arithmetic. From a star 4.7e6 units out, the pivot
+lands 4.4e-11 off the line. That is a fifth of a pixel at the orbit distance, in a frame 900 px
+high. The frame reads the line from the same point, for its near clip and its drawn halves (Free
+flight, Geometry and drawing).
+
+Rejected: the eye read at each offer. For a line moved across itself in 20 frames, the pivot slides
+9.89 units along it, and the distance loses 51%. Rejected: the frame rule, which centres a lone line
+on its support.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -4267,6 +4375,12 @@ tall, against 19.9 px at 9.38e-8 without the floor.
 - their pivot stands on it to a millionth of the separation, and an orbit keeps it there;
 - the arrival distance equals the fit, and the reach to the object equals it too;
 - a near point and a line keep the orbit distance, and one behind the reader is refused;
+- a line picked alone from 4.7e6 units out, by pointer and by list, lands its pivot on its point
+  nearest the eye to 1e-6;
+- a line moved across itself for 20 frames carries the pivot straight across, and the distance
+  stays, to 1e-9;
+- a line picked far off keeps the near clip short of the pivot, with a point 8,000 units ahead;
+- both its drawn halves pass within a pixel of the middle, and a cursor 200 px off picks it;
 - the arrival of the plane from 12 units and from 1.
 
 That sweep, on the C build on 2026-10-17, reads the worst pivot 1.7e-8 of the separation off. A
@@ -4532,16 +4646,22 @@ commit of pga it builds against, and whether that is head. The pin stands at hea
 `295bafc5e97e8ee94943c6f4c7a92f215a74e5e7`, which costs two things, and the instruction is to pay
 both rather than trail behind.
 
-**The compiler is pinned by commit, and not by release.** Head spells its operators in prefix and
-compound form (`☆m`, `m ∧☆ n`), which needs seven Unicode operator characters that Nim gained in
-pull request 26074. That was merged to `devel`, and carried by no release. So the pin is `requires
-"nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"`, which `toolchain.nim` accepts beside dotted
-versions, and which koch fetches and builds once for each machine.
+**The compiler is pinned to release 2.4.0, the first release that lexes the operators of head.**
+Head spells its operators in prefix and compound form (`☆m`, `m ∧☆ n`). That needs seven Unicode
+operator characters, `⟑ ⟇ ⩓ ⩔ ■ □ ☆`, which Nim gained in pull request 26074. So the pin is
+`requires "nim == 2.4.0"`. Koch fetches its published tarball, and checks it against the digest
+published beside it (`GUIDE.md`, Toolchain).
 
-Rejected: a `devel` label, a moving pin that records nothing verified. Rejected: a wait for a
-release, which is months of standing behind the library that this project exists to exercise. The
-pin moves to a release once one carries 26074. The lexer change reaches the own source of this
-project: `-☆(m)` lexes as the single operator `-☆`, and is spelled `-(☆m)`.
+Rejected: a pin by commit on `devel`. Each machine and each runner then clones and builds the
+compiler, in minutes where a tarball takes seconds. `CONTRIBUTOR.md`, Toolchain, asks for a release
+whenever one will do. Rejected: a `devel` label, a moving pin that records nothing verified.
+
+**The release reaches the own source of this project twice.** The lexer reads `-☆(m)` as the single
+operator `-☆`, so it is spelled `-(☆m)`. The compile-time evaluator refuses a `cstring` constant
+converted from a string that a call returns, as "a value that refers to invalid memory". So
+`TEXT_SCENE_EMPTY` in `panel.nim` folds the call with `static` first, and stays a C string that each
+frame reads without a conversion. Verified by a run: without `static`, 2.4.0 refuses
+`panel.nim(89, 43)`, and `27763495b` builds it.
 
 **Four projections are withdrawn at head, and `projections.nim` stands in until they return.**
 `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` are declared
@@ -4560,24 +4680,31 @@ the imports to restore.
 Rejected: a pin held one commit back, which leaves the project behind its own dependency. Rejected:
 a reshape of the call sites, which lets the library's build state decide what the visualiser offers.
 
-**Two Atlas defects stand, and the workaround is by hand.** `atlas pin` writes `"objects": {}` for a
+**One Atlas defect stands, and the workaround is by hand.** `atlas pin` writes `"items": {}` for a
 repository that carries no nimble file, so the resolved commit is patched into `atlas.lock` by hand.
-`atlas` also calls the nimble file "broken" because it cannot parse a commit where it expects a
-version, which is cosmetic. The stored nimble of the lock must equal the committed one exactly, or
-`rep` reverts the pin silently (repository issue 25). The static pass refuses the difference, so the
-hand-patch is checked rather than trusted.
+The stored nimble of the lock must equal the committed one exactly, or `rep` reverts the pin
+silently (repository issue 25). The static pass refuses the difference, so the hand-patch is checked
+rather than trusted.
 
 *Checked.* Verified by a run on the pinned commit, through `koch test`: every suite on the C
 backend, on JS, and at reduced capacities. It ran at the same case counts that the previous pin
 produced, which says the stand-ins behave as the own ones of the library did. Verified: with
 `dependencies/` deleted, `atlas --noexec rep` clones and checks out `295bafc`, `atlas changed` exits
-0, and the nimble file is byte-identical afterwards. Verified by a run that the guard fires.
-`pga.nim` patched to give `projectOrthogonal` a body refuses the build at `projections.nim(40, 10)`,
-and names the module to delete and the four imports to restore.
+0, and the nimble file is byte-identical afterwards. Verified by a run on 2.4.0 that the guard
+fires. `pga.nim` patched to give `projectOrthogonal` a body refuses the build at
+`projections.nim(40, 10)`, and names the module to delete and the four imports to restore.
 
-Verified: the pinned compiler reports `git hash: 27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which
-`toolchain.runningCompiler` reads. Assumed: that no release carries 26074. 2.2.12, 2.4.0 and 2.6.0
-were asked and none does, which dates the claim rather than proves it.
+Verified: the pinned compiler reports `Nim Compiler Version 2.4.0`, which `compilers.isServedBy` of
+knoller compares with the pin. Its `git hash:` is `14991af742d0833503741fd9a0918133d1bcf8a4`, tag
+`v2.4.0`, which holds commit `27763495b` of pull request 26074, 269 commits back. Tag `v2.2.14`, the
+latest release of 2.2, does not hold that commit. Verified by a run: 2.4.0 reads `☆m` and `-☆(m)` as
+operators, and 2.2.14 refuses `☆m` as an undeclared identifier. Verified by a run on 2.4.0, through
+`koch test`: every suite passes on C, on JS and at reduced capacities. Measured on 2026-10-29, the
+JS suite alone takes 162 s and 168 s on 2.4.0, and 170 s and 163 s on `27763495b`.
+
+Verified on a copy of the project: `atlas pin` writes `"items": {}`, and changes nothing else in the
+lock, `nimVersion` included. It warns `broken nimble file: nim` for a pin by commit, and nothing for
+2.4.0.
 
 ## Testing
 
@@ -4626,8 +4753,8 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - The conformal metric (`IS_CONFORMAL`) is unfinished in the library, and this build is rigid 4D.
 - A scene file is little-endian by rule, but only a little-endian host has ever written or read one,
   so the byte-swapping path is unexercised.
-- A page whose WebGL lacks `EXT_frag_depth` keeps linear depth. It keeps the fault of the far field
-  with it, and the disc of every plane at the depth of its centre.
+- A page on WebGL1 without `EXT_frag_depth` keeps linear depth. It keeps the fault of the far
+  field with it, and the disc of every plane at the depth of its centre.
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
 - Far from the world origin, storage steps: by 17 to 35 m two million units out, as at HD 222237 b
   of the demo. A stance that history restores, and the aim of several objects, step with it

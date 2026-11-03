@@ -361,6 +361,7 @@ alone.
 | `check-scope` | changed paths | branch grammar; project paths inside scope |
 | `check-commits` | commits since base | subject and scope; test before fix; body; record apart |
 | `check-drift` | paths base gained | branch carries base's charter and checker |
+| `check-schemas` | schemas changed, and base | each against the version base shipped |
 | `check-role` | a pull request's body and labels | opening line and label are the branch's role |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |

@@ -30,8 +30,8 @@
 ##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
 ##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
 ##   |          | stamped                                                               |
-##   | floors   | instrument run, not build: how far plan carries each rig sweep over   |
-##   |          | crown, printed as rows of floors law of planned sweep reads           |
+##   | floors   | instrument run, not build: how far plan carries each rig sweep at its |
+##   |          | band, printed as rows of floors law of planned sweep reads            |
 ##   | shot     | screenshot helper, for node and Playwright                            |
 ##   | clean    | remove binaries, build, nimcache, testresults and testament binaries  |
 ##   |----------|-----------------------------------------------------------------------|
@@ -50,8 +50,8 @@
 ##   Cost: `types` and `drive` need node and npm, and `drive` needs Chromium, which it fetches
 ##     through Playwright unless `DANCE_CHROMIUM` names one.
 ##   Cost: `types` compiles this driver, and so project code it imports, on koch's compiler
-##     (`curator/audit/src/plan.nim`, `runJobsType`). That holds while project's pin is koch's,
-##     2.2.12 both; pin that moves first splits driver.
+##     (`curator/audit/src/plan.nim`, `runJobsType`): 2.2.12, where project pins 2.4.0.  So
+##     driver and project code it imports compile on both, until koch's pin moves.
 
 {.experimental: "strictFuncs".}
 
@@ -387,10 +387,10 @@ proc answers() =
 
 
 proc floors() =
-  ## Print how far plan carries each rig sweep over crown (`design/floors`): floors law of
-  ## planned sweep holds rig's recording to (`tests/suites/test_asks.TURNS_PLANNED`).
-  ##   Instrument run, not build: it writes nothing, and plans every style of each rig sweep over
-  ##     crown, which costs minutes.  Run where planner or engine moves, and paste rows it prints.
+  ## Print how far plan carries each rig sweep, at band of its hold (`design/floors`): floors
+  ## law of planned sweep holds rig's recording to (`tests/suites/test_asks.TURNS_PLANNED`).
+  ##   Instrument run, not build: it writes nothing, and plans every style of each rig sweep,
+  ##     which costs minutes.  Run where planner or engine moves, and paste rows it prints.
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/floors.nim"])
 
 

@@ -649,13 +649,13 @@ suite "Scene":
 
 
   # Where versions 2 to 5 wrote `Rose`: one past today's, palette then holding retired.
-  #   structural slot `Algebra` at ordinal 7 before every hue; see `scene.upgradedFrom5`.
+  #   structural ink `Algebra` at ordinal 7 before every hue; see `scene.upgradedFrom5`.
   const
     ordinal_ink_rose_v5 = ord(Ink.Rose) + 1
     ordinal_ink_algebra_v5 = 7
 
   proc savedWith(ordinal: int, radius = RADIUS_OBJECT_DEFAULT): ObjectSaved =
-    ## Build object differing from its neighbours only in palette slot and radius.
+    ## Build object differing from its neighbours only in palette index and radius.
     ##   Two fields version boundaries have ever changed and kept; radius defaults, since
     ##   most cases care about palette alone.
     ObjectSaved(
@@ -717,9 +717,9 @@ suite "Scene":
     check VERSION_SCENE > VERSION_SCENE_SHINE_LAST
 
 
-  test "a version-5 hue past the retired debug slot moves one down, and the slot is refused":
+  test "a version-5 hue past the retired debug ink moves one down, and that ink is refused":
     # Version 6 dropped structural `Algebra` from palette; ordinals past it shift, ones.
-    #   before it stand, and byte naming slot no build ever assigned is corrupt.
+    #   before it stand, and byte naming ink no build ever assigned is corrupt.
     for ordinal in 0..<ordinal_ink_algebra_v5:
       check objectUpgraded(savedWith(ordinal), 5'u8).get.ink_ordinal == ordinal
     check objectUpgraded(savedWith(ordinal_ink_algebra_v5), 5'u8).isNone
@@ -735,7 +735,7 @@ suite "Scene":
     #   fields come through untouched -- and must not be folded by version-1 step.
     #   Compared field by field rather than through `==`, which `Multivector` makes
     #   compile error on purpose; geometry is checked with approximate operator.
-    # Palette ordinals are version 5's, one past today's beyond retired slot, so.
+    # Palette ordinals are version 5's, one past today's beyond retired ink, so.
     #   both walks land on same hue only where they start from what each wrote.
     for ordinal in ord(Ink.low) .. ord(Ink.high) + 1:
       if ordinal == ordinal_ink_algebra_v5: continue
@@ -756,7 +756,7 @@ suite "Scene":
     # Version 1 had no `Invalid` and three more hues, so every ordinal it could hold is.
     #   walked here rather than only two ends.
     for ordinal in 0..<ORDINAL_INK_CATEGORICAL_V1:
-      # Structural slots are unmoved to this day.
+      # Structural inks are unmoved to this day.
       let carried = objectUpgraded(savedWith(ordinal), 1'u8)
       check carried.isSome
       check carried.get.ink_ordinal == ordinal
@@ -769,7 +769,7 @@ suite "Scene":
       check ink != Ink.Invalid
       check ink in inkCategorical(0)..inkCategorical(COUNT_INK_CATEGORICAL - 1)
     # Deliberately *not* pinned to fixed shift from version 1's own start. Structural.
-    #   slot reserved since -- `Invalid`, then `Algebra` -- moves every hue along by one
+    #   ink reserved since -- `Invalid`, then `Algebra` -- moves every hue along by one
     #   more while leaving fold correct, so such assertion fails on legitimate
     #   palette change and catches no real fault. Where each hue lands is stated above,
     #   through `inkCycled`, which is what fold actually promises.
@@ -1064,7 +1064,7 @@ suite "Scene":
       discard scene.addObject(POINTS[9], "replaced", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_v1.rgascene"
       writeFile(path, encodeSceneFile(1'u8, @[
-        (4, true, "grid-hued", POINTS[0]),  # Structural slot, unmoved between palettes.
+        (4, true, "grid-hued", POINTS[0]),  # Structural ink, unmoved between palettes.
         (7, true, "was rose", POINTS[1]),  # First categorical hue of old palette.
         (11, false, "was cobalt", POINTS[2]),
         (13, true, "was magenta", POINTS[3]),  # Retired; folds onto hue that survives.
@@ -1085,10 +1085,10 @@ suite "Scene":
       check not scene[2].isVisible
 
 
-    test "a version-2 file's hues come down past the retired debug slot, nothing folded":
+    test "a version-2 file's hues come down past the retired debug ink, nothing folded":
       # Version 2 and 3 differ only in what object *sequence* promises, so version-2.
       #   file's ordinals must not be folded through version-1 rule; they are version
-      #   5's, one past today's beyond retired `Algebra` slot, and `upgradedFrom5` alone
+      #   5's, one past today's beyond retired `Algebra` ink, and `upgradedFrom5` alone
       #   takes them down.
       var scene = initScene()
       let path = getTempDir() / "visualiser_suite_scene_v2.rgascene"
