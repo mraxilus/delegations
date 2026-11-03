@@ -1,4 +1,4 @@
-## Tag anything with Lojban gismu and lujvo, and find it again by gismu or by English.
+## Tag anything with lojban gismu and lujvo, and find it again by gismu or by English.
 ##   Umbrella module: re-exports surface of each module, in order reader learns subject.
 ##
 ##   |--------------|------------------------------------------------------|-------------|
@@ -12,7 +12,7 @@
 ##   | tags         | text read as tag, reduced to gismu of its tanru      | 4.5         |
 ##   | english      | English leading to gismu, by keywords and glosses    |             |
 ##   | index        | tagged entities, and file holding them               |             |
-##   | search       | terms read as Lojban or English, and entities found  |             |
+##   | search       | terms read as lojban or English, and entities found  |             |
 ##   | commands     | verbs of `tagger`, as pure functions                 |             |
 ##   | suggestions  | gismu model suggests for passage, checked by lists   |             |
 ##   |--------------|------------------------------------------------------|-------------|

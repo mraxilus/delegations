@@ -1,4 +1,4 @@
-## Classify Lojban letters and judge consonant clusters, as CLL chapter 3 defines them.
+## Classify lojban letters and judge consonant clusters, as CLL chapter 3 defines them.
 ##
 ##   |--------------------------|--------------------------------------------|---------|
 ##   | Code                     | CLL                                        | Section |

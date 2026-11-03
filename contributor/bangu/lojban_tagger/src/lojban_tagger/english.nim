@@ -11,7 +11,7 @@
 ##
 ##   English leads to meaning three ways, each built at compile time (Article II.2):
 ##     keyword and hint of gismu lead to that gismu;
-##     gloss of lujvo line in Lojban notation leads to gismu its parts name;
+##     gloss of lujvo line in lojban notation leads to gismu its parts name;
 ##     gloss of lujvo line in English notation leads to gismu reader finds in its word, since
 ##     those parts are English keywords, never gismu (`entries.nim`).
 ##   Meaning keeps cmavo of its tanru, as tag does (`tags.nim`), and search matches it on its
@@ -70,7 +70,7 @@ func textEnglish*(meaning: Meaning): string =
 
 
 func wordsLujvo*(entry: EntryLujvo): seq[Word] =
-  ## Read words of tanru of lujvo line: parts named in Lojban, or word read where parts are
+  ## Read words of tanru of lujvo line: parts named in lojban, or word read where parts are
   ##   English. Empty where any part is unlisted, last part is cmavo, or word reads as no tag.
   case entry.notation
   of Notation.Lojban:

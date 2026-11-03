@@ -44,7 +44,7 @@ type
 
   Refusal* {.pure.} = enum  ## Define why text is no tag.
     Empty  ## Text holds nothing but spaces.
-    Letter  ## Character outside Lojban letters; detail is that character, whole.
+    Letter  ## Character outside lojban letters; detail is that character, whole.
     Cmavo  ## Word is cmavo, or lujvo holds no gismu or ends in cmavo; detail names it.
     Unlisted  ## Gismu shape, but list holds no such gismu; detail is word.
     Rafsi  ## Rafsi no list assigns; detail is rafsi.
