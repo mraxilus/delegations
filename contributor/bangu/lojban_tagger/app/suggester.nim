@@ -36,7 +36,7 @@
 ##     Cost: text is read into passage twice, once to test it and once to send it.
 ##     Cost: text of rarer default-ignorables alone, as U+180E, is not blank (`RANGES_BLANK`), so
 ##       it goes out.
-##   `-` reads passage from standard input, so it never stands on command line, which `ps` shows
+##   `-` reads text from standard input, so it never stands on command line, which `ps` shows
 ##     every user; at most `BYTES_PAGE_MAX` bytes, as page, else exit 2. Text read goes as text
 ##     given: shortcut, passage, request; URL it holds is text, never fetched.
 ##     Cost: page is fetched only from argument, so its URL stands on command line, token of its
@@ -137,7 +137,7 @@ type
     directory: string  ## Directory of exchange files; empty for live run.
     argument: string  ## Text given, joined by one space, or URL; text of input once read.
     is_url: bool  ## Argument is one http or https URL, so page is fetched.
-    is_input: bool  ## Argument is `-` alone, so passage is read from standard input.
+    is_input: bool  ## Argument is `-` alone, so text is read from standard input.
 
   Commanded = object  ## Define outcome of reading arguments: command, or usage error.
     case is_read: bool  ## Arguments read as command usage takes.
@@ -213,7 +213,7 @@ const
 #[ Arguments ]#
 
 func readCommand(arguments: openArray[string]): Commanded =
-  ## Read mode and passage from arguments; usage error where usage is wrong.
+  ## Read mode and text given, URL or `-` from arguments; usage error where usage is wrong.
   ##   Leading arguments opening with `-` are flags: one `--record:<directory>` or
   ##     `--replay:<directory>`, directory nonempty, then `--`, which ends flags; any other flag
   ##     is usage error, so mistyped flag never goes out as passage of paid request.
@@ -230,7 +230,7 @@ func readCommand(arguments: openArray[string]): Commanded =
   var
     command = Command(mode: Mode.Live)
     at = 0
-    is_ended = false  # `--` read, so rest is passage, whatever it holds.
+    is_ended = false  # `--` read, so rest is text, whatever it holds.
   while at < arguments.len and arguments[at].startsWith('-') and arguments[at] != "-":
     let flag = arguments[at]
     inc at
@@ -260,7 +260,7 @@ func readCommand(arguments: openArray[string]): Commanded =
 
 
 proc readInput(): Option[string] =
-  ## Read passage from standard input, at most `BYTES_PAGE_MAX` bytes, as page is read; `none`
+  ## Read text from standard input, at most `BYTES_PAGE_MAX` bytes, as page is read; `none`
   ##   where input holds more, so huge input never fills memory; `IOError` where it cannot be read.
   ##   Memory held by test "exchange and input past their caps are refused unread, under cap of
   ##     address space" of `test_suggester.nim`.
@@ -568,7 +568,7 @@ proc main(): int =
     return 2
   var command = parsed.command
 
-  # Read passage of standard input, capped as page, before any setting; it goes as text given.
+  # Read text of standard input, capped as page, before any setting; it goes as text given.
   if command.is_input:
     try:
       let text = readInput()

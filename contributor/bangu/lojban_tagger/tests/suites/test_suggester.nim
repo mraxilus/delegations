@@ -2441,7 +2441,7 @@ suite "Internal: Suggester":
       @[""],  # blank passage
       @[" ", "\t"],
       @["--record:" & directory_case, "\n"],
-      @["-", "mi ciska"],  # `-` opens passage of standard input alone, so text after it is flag
+      @["-", "mi ciska"],  # `-` alone reads standard input, so text after it is flag
       @["--record:" & directory_case, "-", "mi"],
     ]:
       check binary.run(environment, arguments) == Exited(report: USAGE, code: 2)  # usage alone
@@ -2698,7 +2698,7 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "`-` reads passage from standard input up to `BYTES_PAGE_MAX` bytes, as text given goes":
+  test "`-` reads text from standard input up to `BYTES_PAGE_MAX` bytes, as text given goes":
     # Review finding security-5, 2026-10-29: passage went on command line, which `ps` shows.
     let
       server = startServer()
