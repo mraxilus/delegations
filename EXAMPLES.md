@@ -134,8 +134,7 @@ Constructed. The first row holds acronyms that a layman meets at school, on the 
 data, and the root glossary lists them. The second row holds the names of the algebras, which
 the root glossary defines under the conventions of Lengyel. The third row holds acronyms of a
 field that no glossary defines, so a name spells them out. The path line follows the reference
-at `3121342`, the commit that the lock of `pga_benchmark` holds, and changes when that lock
-moves. The test file carries its word before its name.
+library at `3121342`. The test file carries its word before its name.
 
 ## VI.7 and VIII.1: A claim names its register
 

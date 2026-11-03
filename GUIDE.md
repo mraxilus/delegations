@@ -213,8 +213,7 @@ Every later delegate:
 
 A correctness check moves time itself (Article IX.12). Install the clock of Playwright, paused,
 before the page loads. Timers, animation frames and `performance.now` then move only when the
-check moves them. Three things stay on real time, and `pga_visualiser` sets each one in
-`tools/drive/clock.ts`:
+check moves them. Three things stay on real time, and the drive sets each one:
 
 - **The rendering step.** Resize, scroll and observer events fire on real frames. So wait for
   one real rendering step before each simulated frame.
