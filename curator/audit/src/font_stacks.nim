@@ -1,6 +1,7 @@
 ## Judge font faces each page of project draws, for `koch drive` (Article X.8; CONTRIBUTOR.md,
-##   Pages and assets): each character page draws past ASCII is resolved down font stack of
-##   its element, against font faces page ships.
+##   Pages and assets): each character page draws is resolved down font stack of its element,
+##   against font faces page ships. Character past ASCII is judged for font face drawing it,
+##   and every character for bold browser synthesises.
 ##   Verdict is curator's, never project's: project's collector writes what browser computed,
 ##     and judge of project's own could let finding through. Three copies of resolver had
 ##     drifted and disagreed (repository issue 671), so one serves every project.
@@ -24,8 +25,9 @@
 ##     each numeral control page lacks.
 ##
 ##   Input, `written.json`, maps each page to three lists:
-##     `runs`: each string page draws past ASCII, as `element`, `stack` (computed `font-family`),
-##       `weight` (computed `font-weight`) and `codepoints`;
+##     `runs`: each string page draws, ASCII included, as `element`, `stack` (computed
+##       `font-family`), `weight` (computed `font-weight`) and `codepoints`; ASCII is written as
+##       Architect ruled (D1 b of #751), since most bold browser synthesises falls on it;
 ##     `declared`: each `@font-face` rule, as `family`, `weight` (keyword, number, or range of
 ##       two), `range` (`unicode-range` as rule writes it) and `file`, which path relative to
 ##       folder of `written.json` names where it is not absolute;
@@ -55,8 +57,8 @@
 ##     them. Italic that page ships is later step, and so is oblique browser synthesises.
 ##   Cost: collector writes no `font-synthesis`, so page turning synthesis off still gets finding
 ##     for bold; its text then draws lighter than it asks.
-##   Cost: bold is judged only in runs collector writes. Collector writing runs past ASCII alone
-##     hides bold of ASCII text, which only collector writing every character shows.
+##   Cost: bold is judged only in runs collector writes, and no place of control page holds
+##     ASCII. So collector writing runs past ASCII alone passes, and hides bold of ASCII text.
 ##   Cost: character is resolved alone, as `cmap` maps it. Browser picks font face per cluster,
 ##     so combining mark whose base font face lacks it can draw from font face this does not name.
 ##   Cost: text script writes only once reader acts stands in no place of control page.
@@ -86,6 +88,9 @@ const
   WEIGHT_SYNTHESIS = 600
     ## Weight asked from which browser synthesises bold, where set matched is lighter: Chromium's
     ##   `kBoldThreshold`, and bold of `SupportsBold` in Firefox.
+  LAST_ASCII = 0x7F
+    ## Last codepoint of ASCII; rule judges font face of system past it alone (CONTRIBUTOR.md,
+    ##   Pages and assets), while bold is judged on every character.
   DIRECTORY_FONT_FACES* = "build" / "font-faces"
     ## Folder of project, from its root, holding control page, `written.json` and `found.json`.
   FILE_CONTROL* = "control.html"  ## Control page, written before project's `drive`.
@@ -272,7 +277,8 @@ proc toFound*(written: JsonNode, directory: string): JsonNode =
             "element": element, "family": bold.get.family, "weight": weight,
             "matched": bold.get.matched,
           }
-        if (element, codepoint) in reported or font_faces.isDrawn(families, weight, codepoint):
+        if codepoint <= LAST_ASCII or (element, codepoint) in reported or
+            font_faces.isDrawn(families, weight, codepoint):
           continue
         reported.incl (element, codepoint)
         characters.add %*{"element": element, "codepoint": codepoint}
