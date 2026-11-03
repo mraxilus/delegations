@@ -575,8 +575,8 @@ repository issue 671.
   each element.
 - **Each collector writes every run, ASCII included, so that a bold over ASCII is seen.** The
   Architect ruled this on 2026-11-03 (D1 b of #751). The pages of pga_benchmark held 267 runs of
-  ASCII that asked a font face of 400 for 600 or 700, and the verdict saw none of them. The check
-  of characters still judges past ASCII alone, as the rule asks, so ASCII reaches the bold alone.
+  ASCII that asked a font face of 400 for 600 or 700. The verdict saw none of them. The check of
+  characters still judges past ASCII alone, as the rule asks, so ASCII reaches the bold alone.
   Verified by `suites/test_font_stacks.nim`, which holds ASCII at both checks.
 - **Above 500 the match looks upward first.** So a weight of 600 or more matches a lighter set
   only where the family holds nothing of 600 or more. Rejected: a finding for each weight that no
