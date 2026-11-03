@@ -1,9 +1,9 @@
-## Drive built `suggester` through real recordings, environment, streams and loopback servers:
+## Drive built `suggester` through real exchanges, environment, streams and loopback servers:
 ##   suite compiles `app/suggester.nim`, then drives binary it built, so verdict holds for that
 ##   build (IX.5-6).
 ##   CLL covers no service, so suite is `Internal:`, tests named by behaviour (Article IX.10).
 ##   Binary builds with `-d:ssl`, as it ships, but without `-d:release`, so checks of debug build
-##     stay on: sibling of `compileSuggester` in `tools/build.nim` (II.9). Binary, recordings and
+##     stay on: sibling of `compileSuggester` in `tools/build.nim` (II.9). Binary, exchanges and
 ##     compiler cache live in fresh directory under `getTempDir`, named by fixed prefix and
 ##     process, and removed at end. Cost: compile adds seconds to every run of suite.
 ##   Environment reaches binary as shell prefix, never through `putEnv`: each run blanks every
@@ -20,7 +20,7 @@
 ##   Expected `Exited` comes from pure pipeline: `toPassage` or `readPage`, `toBody` within
 ##     `requestService`, `stamp`, `readReply`, `toReport` and `explain`; so suite holds wiring,
 ##     `test_suggestions.nim` holds each step, and `test_exchanges.nim` holds transport. Problems
-##     of settings and credential, and details of refused recordings (`pathShown`,
+##     of settings and credential, and details of refused exchanges (`pathShown`,
 ##     `detailMalformed`), are written out in full: `readSettings`, `findCredential` and
 ##     `exchange` are private to binary, so suite holds their wording.
 ##   Servers are raw listeners of `std/asyncnet` on `127.0.0.1`, at port system chooses: each
@@ -32,17 +32,17 @@
 ##     none is captured.
 ##   Random passages, settings and replies, and random texts given, are drawn into pools
 ##     allocated once, after one seeding per test, and served by `served`.
-##   Labels of recordings suite writes hold control bytes, bidirectional marks, ill-formed UTF-8
+##   Labels of exchanges suite writes hold control bytes, bidirectional marks, ill-formed UTF-8
 ##     and more than `RUNES_SHOWN` characters: replay note names label made printable and cut,
 ##     as report names other outside text.
 ##   Record makes its directory before it sends, refusing where it cannot, so nothing is paid
-##     for; recording it cannot write after reply is named in note, and reply is read still.
+##     for; exchange file it cannot write after reply is named in note, and reply is read still.
 ##     Error text is system's, so checks read its frame: problem, one line of error, then path.
 ##     Cost: write refused by permission stays undriven, since suite may run as root, whom no
-##     permission refuses, so file or directory in way of recording stands in for it; read of
-##     recording of mode `0000` is driven where suite runs as other user, and skips under root
+##     permission refuses, so file or directory in way of exchange file stands in for it; read of
+##     exchange file of mode `0000` is driven where suite runs as other user, and skips under root
 ##     (IX.9), since link, which `/proc/self/mem` could stand in by, is refused before read.
-##   Modes of directories and recordings record makes are read back as set, whatever umask of
+##   Modes of directories and exchange files record makes are read back as set, whatever umask of
 ##     host, since binary names mode where it makes each.
 ##   Cost: no root signs loopback server, so TLS past tunnel request and name lookup stay
 ##     undriven; deadline reads real clock, so its placeholder skips (Article IX.9).
@@ -88,12 +88,12 @@ type
       ## Server no run may reach, named at `KEY_BASE` and as proxy where test names none, so
       ##   request off loopback meets it.
 
-  Sample = object  ## Define one random replay: text given, settings and environment, recording.
+  Sample = object  ## Define one random replay: text given, settings and environment, exchange.
     arguments: seq[string]  ## Text given, as arguments binary joins by one space.
     settings: Settings  ## Settings binary should read from environment.
     environment: seq[(string, string)]  ## Variables naming settings.
-    reply: Reply  ## Reply recording holds.
-    label: string  ## Label recording holds, of `LABELS`.
+    reply: Reply  ## Reply exchange holds.
+    label: string  ## Label exchange holds, of `LABELS`.
 
 
 const
@@ -129,7 +129,7 @@ const
   MODEL_SUITE = "model-of-suite"  ## Model runs name where service has none, or default moves.
   MODEL_SERVED = "model-served"  ## Model reply names where it is not model asked.
   GLOSS_SUITE = "gloss of suite"  ## Gloss answers give where test names none.
-  LABEL_SUITE = "documented shape, built in suite"  ## Label of recordings suite builds itself.
+  LABEL_SUITE = "documented shape, built in suite"  ## Label of exchanges suite builds itself.
   LABEL_DATED = "recorded yyyy-MM-dd"  ## Label as long as one record writes, sizing file it writes.
   PATH_SERVICE = "/v1/messages"  ## Path fake service answers at.
   STATUS_MISSING = 404  ## Status server answers where no route names target.
@@ -174,7 +174,7 @@ const
     ## Bytes each pad reaches past `BYTES_PASSAGE_MAX`, rounded down to whole characters; with
     ##   3 pads, 4 tails and 2 routes, 216 runs, exhaustive over alignments of tail to cut.
   BYTES_SPARSE = 8_589_934_592
-    ## Bytes of sparse recording and input, i.e. 8 GiB, past every cap; sparse, so disk holds none.
+    ## Bytes of sparse exchange and input, i.e. 8 GiB, past every cap; sparse, so disk holds none.
   KIB_ADDRESS_MAX = 1_048_576
     ## Cap of address space of run holding memory bounds, in KiB, i.e. 1 GiB: 64 MiB served
     ##   binary measured 2026-10-30, debug build on x86-64; read whole, sparse file passes it.
@@ -232,7 +232,7 @@ const
     ##   ill-formed UTF-8, and one character past `RUNES_SHOWN`.
   LABELS = @[LABEL_MESSAGES, LABEL_CHAT, LABEL_SUITE, "recorded 2026-10-29", ""] &
       @LABELS_UNPRINTABLE
-    ## Labels random recordings carry: documented shapes, date, empty, and each unprintable.
+    ## Labels random exchanges carry: documented shapes, date, empty, and each unprintable.
   CHARACTERS_CONTROL = {'\x00'..'\x09', '\x0B'..'\x1F', '\x7F'}
     ## Bytes of C0 but line feed, and `DEL`, which act on terminal; no report holds one.
   GISMU_GIVEN = ["cukta", "datni", "gerku", "pixra", "tatpi", "vreji", "xatra"]
@@ -537,7 +537,7 @@ proc runLine(
   ##   Environment of test and assignment line opens with win over sink, as later assignment of
   ##     shell does, so test naming its own proxy reaches it.
   ##   Sink as proxy meets request that regression lets past replay or refusal, as of default
-  ##     endpoint with recording missed, on loopback at once: no third-party host hears it, and
+  ##     endpoint with exchange missed, on loopback at once: no third-party host hears it, and
   ##     no wait rests on network.
   let path_read = if path_input.len > 0: path_input else: binary.path.parentDir / "input"
   if path_input.len == 0: writeFile(path_read, input)
@@ -572,32 +572,33 @@ proc run(
 
 func requestService(settings: Settings, passage: Passage): string =
   ## Build request of service exchange as binary stamps and keeps it: method and endpoint, then
-  ##   body on next line, so recording replays for its endpoint alone.
+  ##   body on next line, so exchange replays for its endpoint alone.
   "POST " & settings.endpoint & "\n" & settings.toBody(passage)
 
 
 func joinVerbatim(directory, name: string): string =
-  ## Join directory and name as binary joins path of recording: one `/` between them, `..` and `.`
-  ##   kept as written, never dropped as `joinPath` drops them, so kernel resolves directory.
+  ## Join directory and name as binary joins path of exchange file: one `/` between them, `..`
+  ##   and `.` kept as written, never dropped as `joinPath` drops them, so kernel resolves
+  ##   directory.
   if directory.endsWith('/'): directory & name else: directory & "/" & name
 
 
-func pathRecording(directory, request: string): string =
-  ## Build path binary keeps recording of request at: stamp of request, in directory.
-  directory.joinVerbatim(request.stamp & ".recording")
+func pathExchange(directory, request: string): string =
+  ## Build path binary keeps exchange file of request at: stamp of request, in directory.
+  directory.joinVerbatim(request.stamp & ".exchange")
 
 
 func pathShown(directory, request: string): string =
-  ## Render path of recording of request as refusal and note show it: directory made printable
+  ## Render path of exchange of request as refusal and note show it: directory made printable
   ##   and cut alone, then name holding stamp, whole.
-  directory.toPrintable(RUNES_SHOWN).joinVerbatim(request.stamp & ".recording")
+  directory.toPrintable(RUNES_SHOWN).joinVerbatim(request.stamp & ".exchange")
 
 
-proc writeRecordings(directory: string, recordings: openArray[Recording]) =
-  ## Write each recording under stamp of its request, as binary names it, making directory.
+proc writeExchanges(directory: string, exchanges: openArray[Exchange]) =
+  ## Write each exchange under stamp of its request, as binary names it, making directory.
   createDir(directory)
-  for recording in recordings:
-    writeFile(pathRecording(directory, recording.request), recording.toText)
+  for exchange in exchanges:
+    writeFile(pathExchange(directory, exchange.request), exchange.toText)
 
 
 func noteCredential(name: string): string =
@@ -606,19 +607,19 @@ func noteCredential(name: string): string =
 
 
 func noteReplayed(directory, request, label: string): string =
-  ## Render note naming recording of request replayed, at path shown, then its label made
+  ## Render note naming exchange of request replayed, at path shown, then its label made
   ##   printable and cut, as report makes outside text.
   "Reply replayed from `" & pathShown(directory, request) & "`: " &
       label.toPrintable(RUNES_SHOWN) & "."
 
 
 func noteWritten(directory, request: string): string =
-  ## Render note naming recording of request written, at path shown.
+  ## Render note naming exchange of request written, at path shown.
   "Reply written to `" & pathShown(directory, request) & "`."
 
 
 func noteLarger(directory, request: string; bytes_file_max: int): string =
-  ## Render note naming recording of request left unwritten, since its file would pass
+  ## Render note naming exchange of request left unwritten, since its file would pass
   ##   `bytes_file_max`, which replay refuses.
   "Reply should be written to `" & pathShown(directory, request) & "`; got `larger than " &
       $bytes_file_max & " bytes`."
@@ -641,13 +642,13 @@ func toOutcome(failure: Failure, detail: string): Outcome =
   Outcome(is_kept: false, failure: failure, detail: detail.toPrintable(RUNES_SHOWN))
 
 
-func toOutcomeRecording(detail: string): Outcome =
-  ## Build outcome refused with `Recording`, detail as binary renders it: never cut whole.
-  Outcome(is_kept: false, failure: Failure.Recording, detail: detail)
+func toOutcomeReplay(detail: string): Outcome =
+  ## Build outcome refused with `Replay`, detail as binary renders it: never cut whole.
+  Outcome(is_kept: false, failure: Failure.Replay, detail: detail)
 
 
 func detailMalformed(recorded: Recorded; directory, request: string): string =
-  ## Render detail of malformed recording: problem reader names, period dropped, then its line
+  ## Render detail of malformed exchange: problem reader names, period dropped, then its line
   ##   and path shown.
   var problem = recorded.problem
   problem.removeSuffix('.')
@@ -876,14 +877,14 @@ suite "Internal: Suggester":
       for service in [Service.Claude, Service.OpenRouter]:
         let
           directory_case = directory / "examples" / (example.name & "_" & $service)
-          recordings = example.toRecordings(service)
+          exchanges = example.toExchanges(service)
           expected = toExited(
-            service.readReply(recordings[^1].reply),
+            service.readReply(exchanges[^1].reply),
             example.toPassage,
             service.toSettings.model,
-            recordings.mapIt(noteReplayed(directory_case, it.request, it.label)),
+            exchanges.mapIt(noteReplayed(directory_case, it.request, it.label)),
           )
-        writeRecordings(directory_case, recordings)
+        writeExchanges(directory_case, exchanges)
         var argument_lists = @[@[example.argument]]
         if example.hops.len == 0: argument_lists.add example.argument.split(' ')
         for arguments in argument_lists:
@@ -911,10 +912,10 @@ suite "Internal: Suggester":
     createSymlink(binary.path, folder / "binaries" / "suggester")
     for example in EXAMPLES:
       for service in [Service.Claude, Service.OpenRouter]:
-        let recordings = example.toRecordings(service)
+        let exchanges = example.toExchanges(service)
         check binary.runLine([(KEY_WORKSPACE, "wrkspc_01AbCdEf")], example.toCommand(service),
-            folder = folder) == toExited(service.readReply(recordings[^1].reply),
-            example.toPassage, service.toSettings.model, recordings.mapIt(noteReplayed(
+            folder = folder) == toExited(service.readReply(exchanges[^1].reply),
+            example.toPassage, service.toSettings.model, exchanges.mapIt(noteReplayed(
             DIRECTORY_EXAMPLES, it.request, it.label)))  # replayed, though shell sets workspace
 
 
@@ -935,9 +936,9 @@ suite "Internal: Suggester":
       let
         passage = text.toPassage
         request = requestService(sample.settings, passage)
-        path = pathRecording(directory_case, request)
+        path = pathExchange(directory_case, request)
         answer = sample.settings.service.readReply(sample.reply)
-      writeFile(path, Recording(label: sample.label, request: request, reply: sample.reply).toText)
+      writeFile(path, Exchange(label: sample.label, request: request, reply: sample.reply).toText)
       let exited = binary.run(sample.environment, replay & sample.arguments)
       check exited == toExited(answer, passage, sample.settings.model,
           [noteReplayed(directory_case, request, sample.label)])  # settings from environment
@@ -970,7 +971,7 @@ suite "Internal: Suggester":
       ]:
         check binary.run(environment, flags & @[TEXT_GIVEN]) == expected  # gismu, tanru named
     check endpoint.heard.len == 0  # no service asked
-    check not dirExists(directory_case)  # no recording read or written
+    check not dirExists(directory_case)  # no exchange read or written
     stopServer(endpoint)
 
 
@@ -983,7 +984,7 @@ suite "Internal: Suggester":
   test "text prints gismu exactly where `readTagGiven` reads it as tag, and asks service else":
     randomize(0)
     let
-      directory_case = directory / "asked"  # never made, so recording of each request misses
+      directory_case = directory / "asked"  # never made, so exchange of each request misses
       settings = Service.Claude.toSettings
       pool = poolGiven()
     var (count_given, count_asked) = (0, 0)
@@ -997,8 +998,8 @@ suite "Internal: Suggester":
       let
         passage = text.toPassage
         shown = pathShown(directory_case, requestService(settings, passage))
-      check exited == toExited(toOutcomeRecording("missing at " & shown), passage,
-          settings.model, [])  # sent to service, whose recording is missing
+      check exited == toExited(toOutcomeReplay("missing at " & shown), passage,
+          settings.model, [])  # sent to service, whose exchange is missing
     check count_given >= FLOOR_GIVEN  # texts reading as tag are common
     check count_asked >= FLOOR_ASKED  # texts sent to service are common
 
@@ -1010,10 +1011,10 @@ suite "Internal: Suggester":
         let directory_case = directory / "unread" / (example.name & "_" & $service)
         var
           settings = service.toSettings
-          recordings = example.toRecordings(service)
+          exchanges = example.toExchanges(service)
         settings.endpoint = urlLoopback(endpoint.port, PATH_SERVICE)
-        recordings[^1].request = requestService(settings, example.toPassage)  # endpoint named
-        writeRecordings(directory_case, recordings)
+        exchanges[^1].request = requestService(settings, example.toPassage)  # endpoint named
+        writeExchanges(directory_case, exchanges)
         let exited = binary.run(
           [
             (KEY_SERVICE, $service),
@@ -1026,7 +1027,7 @@ suite "Internal: Suggester":
           ["--replay:" & directory_case, example.argument],
         )
         check exited.code == 0  # gismu printed, though live run refuses both credentials
-        check exited.output == example.tags.mapIt(it.gismu & "\n").join  # gismu of recordings
+        check exited.output == example.tags.mapIt(it.gismu & "\n").join  # gismu of exchanges
         check "Credential" notin exited.report  # no credential read, so none named
     check endpoint.heard.len == 0  # no socket to endpoint
     check proxy.heard.len == 0  # nor to proxy, for page or service
@@ -1034,7 +1035,7 @@ suite "Internal: Suggester":
     stopServer(proxy)
 
 
-  test "missing recording exits 1 naming file under stamp of request":
+  test "missing exchange exits 1 naming file under stamp of request":
     let
       directory_case = directory / "missing"  # never made
       (text, page) = (example("lojban"), example("page"))
@@ -1043,54 +1044,54 @@ suite "Internal: Suggester":
       shown_text = pathShown(directory_case, requestService(settings, passage))
       shown_page = pathShown(directory_case, "GET " & page.argument)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-        toExited(toOutcomeRecording("missing at " & shown_text), passage, settings.model,
+        toExited(toOutcomeReplay("missing at " & shown_text), passage, settings.model,
         [])  # problem, then stamp of service request named
     check binary.run([], ["--replay:" & directory_case, page.argument]) ==
-        toExited(toOutcomeRecording("missing at " & shown_page), [])  # stamp of first hop
+        toExited(toOutcomeReplay("missing at " & shown_page), [])  # stamp of first hop
     check not dirExists(directory_case)  # replay makes nothing
     let
       directory_hops = directory / "hops"
-      hops = page.toRecordings(Service.Claude)[0 ..< ^1]
+      hops = page.toExchanges(Service.Claude)[0 ..< ^1]
       passage_hops = page.toPassage
       shown_service = pathShown(directory_hops, requestService(settings, passage_hops))
-    writeRecordings(directory_hops, hops)
+    writeExchanges(directory_hops, hops)
     check binary.run([], ["--replay:" & directory_hops, page.argument]) ==
-        toExited(toOutcomeRecording("missing at " & shown_service), passage_hops,
+        toExited(toOutcomeReplay("missing at " & shown_service), passage_hops,
         settings.model, hops.mapIt(noteReplayed(directory_hops, it.request,
         it.label)))  # each hop replayed, then stamp of service request named
 
 
-  test "recording malformed or holding other request exits 1 naming file and line":
+  test "exchange malformed or holding other request exits 1 naming file and line":
     let
       directory_case = directory / "malformed"
       text = example("lojban")
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
       request = requestService(settings, passage)
-      path = pathRecording(directory_case, request)
+      path = pathExchange(directory_case, request)
       reply = toReplyMessages(text.answer, settings.model)
-      whole = Recording(label: LABEL_SUITE, request: request, reply: reply).toText
+      whole = Exchange(label: LABEL_SUITE, request: request, reply: reply).toText
     createDir(directory_case)
     for malformed in [
       "",
-      "lojban_tagger recording 2\n" & whole.split('\n', 1)[1],
+      "lojban_tagger exchange 2\n" & whole.split('\n', 1)[1],
       whole[0 ..< ^2],
       whole & "\n",
     ]:
       writeFile(path, malformed)
-      let recorded = malformed.readRecording
+      let recorded = malformed.readExchange
       check not recorded.is_read  # file malformed
       if recorded.is_read: continue
       check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-          toExited(detailMalformed(recorded, directory_case, request).toOutcomeRecording,
+          toExited(detailMalformed(recorded, directory_case, request).toOutcomeReplay,
           passage, settings.model, [])  # problem of reader, then line and path
-    writeFile(path, Recording(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
+    writeFile(path, Exchange(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-        toExited(toOutcomeRecording("other request at " & pathShown(directory_case,
+        toExited(toOutcomeReplay("other request at " & pathShown(directory_case,
         request)), passage, settings.model, [])  # stamp alone never matches, whole request does
 
 
-  test "refusal of recording names problem, then path whose directory alone is cut":
+  test "refusal of exchange names problem, then path whose directory alone is cut":
     # Review finding logic-10, 2026-10-29: detail was path then problem, cut whole at
     #   `RUNES_SHOWN`, so long directory hid stamp and problem.
     let
@@ -1101,27 +1102,27 @@ suite "Internal: Suggester":
       request = requestService(settings, passage)
       reply = toReplyMessages(text.answer, settings.model)
       long = directory / "long" / "d".repeat(99) / "e".repeat(99) / "f".repeat(99)
-      name = request.stamp & ".recording"
+      name = request.stamp & ".exchange"
       below = long / "file" / "below"  # file in way of directory record makes
       replay = ["--replay:" & long, text.argument]
     server.routes = @[(PATH_SERVICE, reply)]
     check long.len >= 300  # directory name of 300 characters, past `RUNES_SHOWN`
     let missing = binary.run(settings.toEnvironment, replay)
-    check missing == toExited(toOutcomeRecording("missing at " & pathShown(long, request)),
+    check missing == toExited(toOutcomeReplay("missing at " & pathShown(long, request)),
         passage, settings.model, [])  # `--replay:<long directory> 'mi ciska lo xatra'`
     createDir(long)
-    writeFile(long / name, Recording(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
+    writeFile(long / name, Exchange(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
     let other = binary.run(settings.toEnvironment, replay)
-    check other == toExited(toOutcomeRecording("other request at " & pathShown(long,
+    check other == toExited(toOutcomeReplay("other request at " & pathShown(long,
         request)), passage, settings.model, [])  # other request, then path
     writeFile(long / name, "")
     let malformed = binary.run(settings.toEnvironment, replay)
-    check malformed == toExited(toOutcomeRecording(detailMalformed("".readRecording, long,
+    check malformed == toExited(toOutcomeReplay(detailMalformed("".readExchange, long,
         request)), passage, settings.model, [])  # problem of reader, then line and path
     writeFile(below.parentDir, "")
     let unwritable = binary.run(settings.toEnvironment, ["--record:" & below, text.argument])
     check unwritable.report.readFramed(noteCredential(KEY_CREDENTIAL) &
-        "\nRecording should hold this request; got `unwritable: ", " at " &
+        "\nExchange should hold this request; got `unwritable: ", " at " &
         pathShown(below, request) & "`.\n").isSome  # error of system, then path
     for exited in [missing, other, malformed, unwritable]:
       check exited.code == 1 and name in exited.report  # stamp named whole, past cut
@@ -1129,9 +1130,9 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "note of recording names path whose directory alone is made printable and cut":
+  test "note of exchange names path whose directory alone is made printable and cut":
     # Report of second suggester ladders, 2026-10-29: notes of replay, of write and of failed write
-    #   named path whole and raw, unlike refusal of recording.
+    #   named path whole and raw, unlike refusal of exchange.
     let
       server = startServer()
       settings = Service.Claude.toSettings(server.port)
@@ -1141,7 +1142,7 @@ suite "Internal: Suggester":
       reply = toReplyMessages(text.answer, settings.model)
       answer = Service.Claude.readReply(reply)
       long = directory / "noted" / ("\e[31m" & "d".repeat(99)) / "e".repeat(99) / "f".repeat(99)
-      name = request.stamp & ".recording"
+      name = request.stamp & ".exchange"
       record = ["--record:" & long, text.argument]
     server.routes = @[(PATH_SERVICE, reply)]
     check long.len >= 300  # directory of 300 characters, past `RUNES_SHOWN`, holding escape
@@ -1151,12 +1152,12 @@ suite "Internal: Suggester":
       noteWritten(long, request),
     ])  # written: directory made printable and cut, then name holding stamp
     let
-      label = readFile(long / name).readRecording.recording.label
+      label = readFile(long / name).readExchange.exchange.label
       replayed = binary.run(settings.toEnvironment, ["--replay:" & long, text.argument])
     check replayed == toExited(answer, passage, settings.model,
         [noteReplayed(long, request, label)])  # replayed, path shown as written
     removeFile(long / name)
-    createDir(long / name)  # directory in way of recording, so rename fails after reply
+    createDir(long / name)  # directory in way of exchange file, so rename fails after reply
     let
       unwritten = binary.run(settings.toEnvironment, record)
       error = unwritten.report.readFramed(noteCredential(KEY_CREDENTIAL) &
@@ -1170,7 +1171,7 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "recording replays for endpoint it was made for alone, as its request names endpoint":
+  test "exchange replays for endpoint it was made for alone, as its request names endpoint":
     # Review finding logic-9, 2026-10-29: request stamped and kept was `POST` and body alone, so
     #   reply recorded from one server replayed as reply of other.
     let
@@ -1187,12 +1188,12 @@ suite "Internal: Suggester":
         reply = toReplyAnswer(service, text.answer, settings_a.model)
         directory_service = directory_case / $service
         replay = ["--replay:" & directory_service, text.argument]
-      writeRecordings(directory_service, [Recording(label: LABEL_SUITE, request: request_a,
+      writeExchanges(directory_service, [Exchange(label: LABEL_SUITE, request: request_a,
           reply: reply)])
       check binary.run(settings_a.toEnvironment, replay) == toExited(service.readReply(reply),
           passage, settings_a.model, [noteReplayed(directory_service, request_a,
-          LABEL_SUITE)])  # endpoint recording was made for replays it
-      check binary.run(settings_b.toEnvironment, replay) == toExited(toOutcomeRecording(
+          LABEL_SUITE)])  # endpoint exchange was made for replays it
+      check binary.run(settings_b.toEnvironment, replay) == toExited(toOutcomeReplay(
           "missing at " & pathShown(directory_service, requestService(settings_b, passage))),
           passage, settings_b.model, [])  # other endpoint misses it, under its own stamp
 
@@ -1205,18 +1206,18 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
       request = requestService(settings, passage)
-      path = pathRecording(directory_case, request)
+      path = pathExchange(directory_case, request)
       reply = toReplyMessages(text.answer, settings.model)
       answer = Service.Claude.readReply(reply)
       replay = ["--replay:" & directory_case, text.argument]
     createDir(directory_case)
-    writeFile(path, Recording(label: LABEL_FOUND, request: request, reply: reply).toText)
+    writeFile(path, Exchange(label: LABEL_FOUND, request: request, reply: reply).toText)
     let found = binary.run([], replay)  # `--replay:D 'mi ciska lo xatra'`, label `LABEL_FOUND`
     check found.report == "Reply replayed from `" & pathShown(directory_case, request) &
         "`: evil \\u{1B}[31mred\\u{1B}[0m \\u{202E}abc.\n" &
         answer.toReport(passage, settings.model)  # case as found in suite review
     for label in @LABELS_UNPRINTABLE & @["\xC3\xA9".repeat(RUNES_SHOWN)]:  # label at cap kept whole
-      writeFile(path, Recording(label: label, request: request, reply: reply).toText)
+      writeFile(path, Exchange(label: label, request: request, reply: reply).toText)
       let exited = binary.run([], replay)
       check exited == toExited(answer, passage, settings.model,
           [noteReplayed(directory_case, request, label)])  # label as `toPrintable` makes it
@@ -1234,7 +1235,7 @@ suite "Internal: Suggester":
         passage = text.argument.toPassage
         body = settings.toBody(passage)
         request = requestService(settings, passage)
-        path = pathRecording(directory_case, request)
+        path = pathExchange(directory_case, request)
         reply = toReplyAnswer(service, text.answer, settings.model)
         answer = service.readReply(reply)
       server.routes = @[(PATH_SERVICE, reply)]
@@ -1254,17 +1255,17 @@ suite "Internal: Suggester":
         check heard.values("authorization") == @["Bearer " & CREDENTIAL_SUITE]  # once, as Bearer
         check heard.values("accept-encoding") == @["identity"]  # no coding reader cannot read
         check heard.values("user-agent") == @[USER_AGENT]  # agent of tool
-      let recorded = readFile(path).readRecording
+      let recorded = readFile(path).readExchange
       check recorded.is_read  # file binary wrote reads back
       if not recorded.is_read: continue
-      let label = recorded.recording.label
-      check recorded.recording.request == request  # endpoint and body, no credential
-      check recorded.recording.reply == reply  # reply as served
+      let label = recorded.exchange.label
+      check recorded.exchange.request == request  # endpoint and body, no credential
+      check recorded.exchange.reply == reply  # reply as served
       check label.startsWith("recorded ") and label["recorded ".len .. ^1].isDate  # date of run
-      check walkDir(directory_case).toSeq.len == 1  # recording alone, sibling renamed over it
+      check walkDir(directory_case).toSeq.len == 1  # exchange alone, sibling renamed over it
       let again = binary.run(environment, ["--record:" & directory_case, text.argument])
       check again == toExited(answer, passage, settings.model, [noteCredential(
-          KEY_CREDENTIAL), noteReplayed(directory_case, request, label)])  # recording replayed
+          KEY_CREDENTIAL), noteReplayed(directory_case, request, label)])  # exchange replayed
       check server.heard.len == 1  # 2xx kept, so never paid twice
       let replayed = binary.run(environment, ["--replay:" & directory_case, text.argument])
       check replayed == toExited(answer, passage, settings.model,
@@ -1308,9 +1309,9 @@ suite "Internal: Suggester":
       text = example("lojban")
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
-      missing = directory / "workspaces_missing"  # never made, so recording of request misses
+      missing = directory / "workspaces_missing"  # never made, so exchange of request misses
       taken = toExited(
-        toOutcomeRecording(
+        toOutcomeReplay(
           "missing at " & pathShown(missing, requestService(settings, passage)),
         ),
         passage,
@@ -1369,13 +1370,13 @@ suite "Internal: Suggester":
         request = requestService(settings, passage)
         reply = toReplyAnswer(service, text.answer, settings.model)
         directory_case = directory / "usual" / $service / name
-      writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
+      writeExchanges(directory_case, [Exchange(label: LABEL_SUITE, request: request,
           reply: reply)])
       check binary.run(@[(KEY_SERVICE, $service)] & environment, ["--record:" & directory_case,
           text.argument]) == toExited(service.readReply(reply), passage, settings.model, [
         noteCredential(name),
         noteReplayed(directory_case, request, LABEL_SUITE),
-      ])  # usual name read for default endpoint; recording replays, so nothing is sent
+      ])  # usual name read for default endpoint; exchange replays, so nothing is sent
 
 
   test "usual name of credential is read for host of default endpoint of service alone":
@@ -1414,7 +1415,7 @@ suite "Internal: Suggester":
           reply = toReplyAnswer(service, text.answer, settings.model)
           directory_case = directory / "hosts" / $service / endpoint.stamp
           is_usual = endpoint.parseUri.hostname.toLowerAscii == host
-        writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
+        writeExchanges(directory_case, [Exchange(label: LABEL_SUITE, request: request,
             reply: reply)])
         let exited = binary.run(
           [(KEY_SERVICE, $service), (KEY_ENDPOINT, endpoint), (usual, CREDENTIAL_SUITE)],
@@ -1455,26 +1456,26 @@ suite "Internal: Suggester":
           directory_case = directory / "statuses" / $service / $i
           record = @["--record:" & directory_case, text.argument]
           request = requestService(settings, passage)
-          path = pathRecording(directory_case, request)
+          path = pathExchange(directory_case, request)
           answer = service.readReply(reply)
           is_replayed = service.isAnswered(reply)
           count_before = server.heard.len
           first = binary.run(settings.toEnvironment, record)
-          recorded = readFile(path).readRecording
+          recorded = readFile(path).readExchange
         check first == toExited(answer, passage, settings.model, [noteCredential(
             KEY_CREDENTIAL), noteWritten(directory_case, request)])  # sent and written, any status
-        check recorded.is_read and recorded.recording.reply == reply  # reply as served
+        check recorded.is_read and recorded.exchange.reply == reply  # reply as served
         if not recorded.is_read: continue
         let second = binary.run(settings.toEnvironment, record)
         check second == toExited(answer, passage, settings.model, [
           noteCredential(KEY_CREDENTIAL),
-          if is_replayed: noteReplayed(directory_case, request, recorded.recording.label)
+          if is_replayed: noteReplayed(directory_case, request, recorded.exchange.label)
           else: noteWritten(directory_case, request),
         ])  # answer replayed (`isAnswered`); rest sent and written again (`Mode.Record`)
         check server.heard.len - count_before ==
             (if is_replayed: 1 else: 2)  # sent again where reply holds no answer
         let
-          label = readFile(path).readRecording.recording.label
+          label = readFile(path).readExchange.exchange.label
           replay = ["--replay:" & directory_case, text.argument]
           replayed = binary.run(settings.toEnvironment, replay)
         check replayed == toExited(answer, passage, settings.model,
@@ -1544,14 +1545,14 @@ suite "Internal: Suggester":
       text = "mi ciska lo xatra"
       request = requestService(settings, text.toPassage)
       reply = Reply(status: 200, content_type: "application/json", body: BODY_ERROR_INSIDE)
-    writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request, reply: reply)])
+    writeExchanges(directory_case, [Exchange(label: LABEL_SUITE, request: request, reply: reply)])
     let exited = binary.run(settings.toEnvironment, ["--record:" & directory_case, text])
     check exited.code == 1 and exited.output == ""  # no gismu
     check exited.report.startsWith(noteCredential(KEY_CREDENTIAL) &
         "\nService or page should answer; got `")  # review finding wire-1, 2026-10-29: `Network`
     check "replayed" notin exited.report  # request went out again, to port that refuses
-    check readFile(pathRecording(directory_case, request)).readRecording.recording.reply ==
-        reply  # recording kept, since no reply came to write over it
+    check readFile(pathExchange(directory_case, request)).readExchange.exchange.reply ==
+        reply  # exchange kept, since no reply came to write over it
     refusing.close()
 
 
@@ -1580,7 +1581,7 @@ suite "Internal: Suggester":
           if is_replayed: noteReplayed(directory_case, "GET " & url, LABEL_PAGE)
           else: noteWritten(directory_case, "GET " & url)
         count_before = server.heard.len
-      writeRecordings(directory_case, [Recording(label: LABEL_PAGE, request: "GET " & url,
+      writeExchanges(directory_case, [Exchange(label: LABEL_PAGE, request: "GET " & url,
           reply: recorded)])
       let
         exited = binary.run(settings.toEnvironment, ["--record:" & directory_case, url])
@@ -1615,7 +1616,7 @@ suite "Internal: Suggester":
     refusing.close()
 
 
-  test "record refuses directory it cannot make before it sends, naming recording":
+  test "record refuses directory it cannot make before it sends, naming exchange file":
     # Regression, found in suite review: record made directory only after reply, then raised.
     let
       server = startServer()
@@ -1625,7 +1626,7 @@ suite "Internal: Suggester":
       url = urlLoopback(server.port, "/page")
       file = directory / "unmade" / "file"
       opening = noteCredential(KEY_CREDENTIAL) &
-          "\nRecording should hold this request; got `unwritable: "
+          "\nExchange should hold this request; got `unwritable: "
       shown_found = pathShown(file, requestService(settings, "mi ciska".toPassage))
     server.routes = @[
       (PATH_SERVICE, toReplyMessages(text.answer, settings.model)),
@@ -1654,9 +1655,9 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "record keeps reply whose recording it cannot write, naming path and error in note":
-    # Regression, found in suite review: record raised where it could not write recording, after
-    #   service answered, so tag paid for was lost.
+  test "record keeps reply whose exchange file it cannot write, naming path and error in note":
+    # Regression, found in suite review: record raised where it could not write exchange file,
+    #   after service answered, so tag paid for was lost.
     let
       server = startServer()
       settings = Service.Claude.toSettings(server.port)
@@ -1666,10 +1667,10 @@ suite "Internal: Suggester":
       answer = toReplyMessages(text.answer, settings.model)
       directory_case = directory / "unwritten"
       request = requestService(settings, passage)
-      path = pathRecording(directory_case, request)
+      path = pathExchange(directory_case, request)
       opening = noteCredential(KEY_CREDENTIAL) & "\nReply should be written to `"
     for (blocked, reply) in [
-      (path, answer),  # directory at `<stamp>.recording`, so rename fails: as found in suite review
+      (path, answer),  # directory at `<stamp>.exchange`, so rename fails: as found in suite review
       (path, toReplyError(Service.Claude, 529)),  # reply giving no tag
       (path & ".writing", answer),  # directory at sibling, so write fails before rename
       (path & ".writing", toReplyError(Service.Claude, 529)),
@@ -1696,7 +1697,7 @@ suite "Internal: Suggester":
           [noteWritten(directory_case, requestService(settings, passage_page))])
     server.routes = @[("/page", page), (PATH_SERVICE, answer)]
     removeDir(directory_case)
-    createDir(pathRecording(directory_case, request_page))
+    createDir(pathExchange(directory_case, request_page))
     let
       exited_page = binary.run(environment, ["--record:" & directory_case, url])
       error_page = exited_page.report.readFramed(
@@ -1709,28 +1710,28 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "record makes each directory it makes with mode 0700, and each recording with 0600":
-    # Review finding security-5, 2026-10-29: under umask `0022`, directory and recording, which
-    #   hold passage, page and reply, were readable by every user.
+  test "record makes each directory it makes with mode 0700, and each exchange file with 0600":
+    # Review finding security-5, 2026-10-29: under umask `0022`, directory and exchange file,
+    #   which hold passage, page and reply, were readable by every user.
     let
       server = startServer()
       settings = Service.Claude.toSettings(server.port)
       text = example("lojban")
       standing = directory / "private"  # made by suite with mode 0755, so record keeps it
       directory_case = standing / "made" / "below"
-      path = pathRecording(directory_case, requestService(settings, text.argument.toPassage))
+      path = pathExchange(directory_case, requestService(settings, text.argument.toPassage))
       mode_standing = {fpUserRead, fpUserWrite, fpUserExec, fpGroupRead, fpGroupExec,
           fpOthersRead, fpOthersExec}
     server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
     createDir(standing)
     setFilePermissions(standing, mode_standing)
     check binary.run(settings.toEnvironment, ["--record:" & directory_case,
-        text.argument]).code == 0  # gismu printed, recording written
+        text.argument]).code == 0  # gismu printed, exchange written
     check getFilePermissions(standing) == mode_standing  # directory standing keeps its mode
     for made in [standing / "made", directory_case]:
       check getFilePermissions(made) == {fpUserRead, fpUserWrite, fpUserExec}  # 0700 where made
-    check getFilePermissions(path) == {fpUserRead, fpUserWrite}  # recording 0600
-    check walkDir(directory_case).toSeq.mapIt(it.path) == @[path]  # recording alone, renamed
+    check getFilePermissions(path) == {fpUserRead, fpUserWrite}  # exchange file 0600
+    check walkDir(directory_case).toSeq.mapIt(it.path) == @[path]  # exchange alone, renamed
     stopServer(server)
 
 
@@ -1746,27 +1747,27 @@ suite "Internal: Suggester":
       reply = toReplyMessages(text.answer, settings.model)
       url = urlLoopback(server.port, "/page")
       shared = directory / "shared"
-      refused = toOutcomeRecording("writable by every user at " & shared.toPrintable(RUNES_SHOWN))
+      refused = toOutcomeReplay("writable by every user at " & shared.toPrintable(RUNES_SHOWN))
     server.routes = @[
       (PATH_SERVICE, reply),
       ("/page", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
     ]
-    writeRecordings(shared, [Recording(label: LABEL_SUITE, request: request, reply: reply)])
+    writeExchanges(shared, [Exchange(label: LABEL_SUITE, request: request, reply: reply)])
     check chmod(cstring(shared), Mode(0o1777)) == 0  # mode of `/tmp`
     for (flags, notes) in [
       (@["--record:" & shared], @[noteCredential(KEY_CREDENTIAL)]),
       (@["--replay:" & shared], @[]),
     ]:
       check binary.run(settings.toEnvironment, flags & @[text.argument]) == toExited(refused,
-          passage, settings.model, notes)  # refused, though recording of request stands there
+          passage, settings.model, notes)  # refused, though exchange of request stands there
       check binary.run(settings.toEnvironment, flags & @[url]) ==
           toExited(refused, notes)  # page refused before its first hop
     check server.heard.len == 0  # nothing sent
-    check walkDir(shared).toSeq.len == 1  # nothing written beside recording standing
+    check walkDir(shared).toSeq.len == 1  # nothing written beside exchange file standing
     stopServer(server)
 
 
-  test "recording and its parents are reached as kernel resolves directory, never lexically":
+  test "exchange file and its parents are reached as kernel resolves directory, never lexically":
     # Recheck claim regressions-cli-5, 2026-10-29: `joinPath` dropped `<link>/..` lexically, so
     #   `--record:shared/s/..` passed check of directory every user may write, which stats target
     #   of link, then wrote ``Reply written to `…/shared/179607a355e3d42c.recording`.`` in `shared`.
@@ -1776,7 +1777,7 @@ suite "Internal: Suggester":
       text = example("lojban")
       passage = text.argument.toPassage
       request = requestService(settings, passage)
-      name = request.stamp & ".recording"
+      name = request.stamp & ".exchange"
       reply = toReplyMessages(text.answer, settings.model)
       answer = Service.Claude.readReply(reply)
       planted = toReplyMessages(toAnswer(["mlatu", "ciska"]), settings.model)
@@ -1787,17 +1788,17 @@ suite "Internal: Suggester":
     server.routes = @[(PATH_SERVICE, reply)]
     createDir(tree / "private" / "inner")
     setFilePermissions(tree / "private", mode_private)
-    writeRecordings(shared, [Recording(label: LABEL_SUITE, request: request, reply: planted)])
+    writeExchanges(shared, [Exchange(label: LABEL_SUITE, request: request, reply: planted)])
     check chmod(cstring(shared), Mode(0o1777)) == 0  # mode of `/tmp`
     createSymlink(tree / "private" / "inner", shared / "s")
     check binary.run(settings.toEnvironment, ["--replay:" & spelled, text.argument]) ==
-        toExited(toOutcomeRecording("missing at " & pathShown(spelled, request)), passage,
-        settings.model, [])  # case as found: recording planted in `shared` never replays
+        toExited(toOutcomeReplay("missing at " & pathShown(spelled, request)), passage,
+        settings.model, [])  # case as found: exchange planted in `shared` never replays
     check binary.run(settings.toEnvironment, ["--record:" & spelled, text.argument]) ==
         toExited(answer, passage, settings.model, [noteCredential(KEY_CREDENTIAL),
         noteWritten(spelled, request)])  # case as found: written where kernel resolves it
     check fileExists(tree / "private" / name)  # in directory check of sharing stats
-    check readFile(shared / name).readRecording.recording.reply == planted  # `shared` untouched
+    check readFile(shared / name).readExchange.exchange.reply == planted  # `shared` untouched
     for i, (spelling, target) in [
       ("l/..", "p"),  # link, then `..`, as found
       ("l/../m", "p/m"),  # directory made below where kernel resolves `l/..`
@@ -1817,20 +1818,20 @@ suite "Internal: Suggester":
       check binary.run(settings.toEnvironment, record) == toExited(answer, passage,
           settings.model, [noteCredential(KEY_CREDENTIAL), noteWritten(directory_case,
           request)])  # written, path named as spelled
-      check walkDirRec(base).toSeq.filterIt(it.endsWith(".recording")) ==
+      check walkDirRec(base).toSeq.filterIt(it.endsWith(".exchange")) ==
           @[base / target / name]  # where kernel resolves directory, and nowhere else
       if not fileExists(base / target / name): continue
       if target != "p":
         check getFilePermissions(base / target) == mode_private  # made `0700` where resolved
-      let label = readFile(base / target / name).readRecording.recording.label
+      let label = readFile(base / target / name).readExchange.exchange.label
       check binary.run(settings.toEnvironment, ["--replay:" & directory_case, text.argument]) ==
           toExited(answer, passage, settings.model, [noteReplayed(directory_case, request,
           label)])  # read back from there
     stopServer(server)
 
 
-  test "recording past its caps is refused: file before it is read, and body past its cap":
-    # Review finding security-4, 2026-10-29: replay read recording of any size, and replayed
+  test "exchange past its caps is refused: file before it is read, and body past its cap":
+    # Review finding security-4, 2026-10-29: replay read exchange file of any size, and replayed
     #   body past cap of reply.
     let
       text = example("lojban")
@@ -1838,34 +1839,34 @@ suite "Internal: Suggester":
       passage = text.argument.toPassage
       request = requestService(settings, passage)
       directory_case = directory / "caps"
-      path = pathRecording(directory_case, request)
+      path = pathExchange(directory_case, request)
       shown = pathShown(directory_case, request)
       bytes_file_max = request.len + BYTES_REPLY_MAX + BYTES_FIELDS_MAX
-      whole = Recording(label: LABEL_SUITE, request: request,
+      whole = Exchange(label: LABEL_SUITE, request: request,
           reply: toReplyMessages(text.answer, settings.model)).toText
       replay = ["--replay:" & directory_case, text.argument]
     createDir(directory_case)
     for size in [bytes_file_max + 1, bytes_file_max + BYTES_REPLY_MAX]:
       writeFile(path, whole & "x".repeat(size - whole.len))  # read whole, it would be malformed
-      check binary.run([], replay) == toExited(toOutcomeRecording("larger than " &
+      check binary.run([], replay) == toExited(toOutcomeReplay("larger than " &
           $bytes_file_max & " bytes at " & shown), passage, settings.model,
           [])  # refused by size alone
     for count in [BYTES_REPLY_MAX + 1, BYTES_REPLY_MAX + 1_000]:
       let body = Reply(status: 200, content_type: "application/json", body: "x".repeat(count))
-      writeFile(path, Recording(label: LABEL_SUITE, request: request, reply: body).toText)
+      writeFile(path, Exchange(label: LABEL_SUITE, request: request, reply: body).toText)
       check getFileSize(path) <= bytes_file_max  # file within its cap, so body is read
-      check binary.run([], replay) == toExited(toOutcomeRecording("body over " &
+      check binary.run([], replay) == toExited(toOutcomeReplay("body over " &
           $BYTES_REPLY_MAX & " bytes at " & shown), passage, settings.model,
           [])  # body past cap of reply never replayed
     let at_cap = whole & "x".repeat(bytes_file_max - whole.len)
     writeFile(path, at_cap)
-    check binary.run([], replay) == toExited(toOutcomeRecording(detailMalformed(
-        at_cap.readRecording, directory_case, request)), passage, settings.model,
+    check binary.run([], replay) == toExited(toOutcomeReplay(detailMalformed(
+        at_cap.readExchange, directory_case, request)), passage, settings.model,
         [])  # file at its cap is read, and reader refuses what follows body
 
 
-  test "recording and input past their caps are refused unread, under cap of address space":
-    # Recheck claim rules-11, 2026-10-29: binary reading whole recording before its size, or
+  test "exchange and input past their caps are refused unread, under cap of address space":
+    # Recheck claim rules-11, 2026-10-29: binary reading whole exchange file before its size, or
     #   whole input before its cap, passed every test, though docs claim neither fills memory;
     #   replaying 256 MiB, it held 262 MiB where binary holds 12 MiB.
     # Run under `ulimit -v`, so binary reading either whole runs out of memory, never of time.
@@ -1875,7 +1876,7 @@ suite "Internal: Suggester":
       passage = text.argument.toPassage
       request = requestService(settings, passage)
       directory_case = directory / "sparse"
-      path = pathRecording(directory_case, request)
+      path = pathExchange(directory_case, request)
       input = directory / "sparse_input"
       limited = "sh -c " & quoteShell("ulimit -v " & $KIB_ADDRESS_MAX & " && exec \"$0\" \"$@\"") &
           " " & quoteShell(binary.path)  # Prefix reaches binary through `sh`, which `exec` keeps.
@@ -1886,7 +1887,7 @@ suite "Internal: Suggester":
       file.write('\0')
       file.close()
     check binary.runLine([], limited & " " & quoteShell("--replay:" & directory_case) & " " &
-        quoteShell(text.argument)) == toExited(toOutcomeRecording("larger than " &
+        quoteShell(text.argument)) == toExited(toOutcomeReplay("larger than " &
         $(request.len + BYTES_REPLY_MAX + BYTES_FIELDS_MAX) & " bytes at " & pathShown(
         directory_case, request)), passage, settings.model, [])  # size read, file never
     check binary.runLine([], limited & " -", path_input = input) == Exited(report: "Text on " &
@@ -1896,9 +1897,9 @@ suite "Internal: Suggester":
     removeFile(input)
 
 
-  test "record writes no recording replay would refuse by size, naming it in note, and sends again":
+  test "record writes no exchange replay would refuse by size, naming it in note, and sends again":
     # Recheck claim regressions-cli-4, 2026-10-29: page past `BYTES_PAGE_MAX`, typed by 70,000
-    #   bytes, was written as recording of 4,264,502 bytes, and each later run refused it, as ``got
+    #   bytes, was written as exchange of 4,264,502 bytes, and each later run refused it, as ``got
     #   `larger than 4259874 bytes at …``, sending nothing, until file was removed.
     let
       server = startServer()
@@ -1914,7 +1915,7 @@ suite "Internal: Suggester":
         request = "GET " & url
         directory_case = directory / "larger" / $i
         bytes_file_max = request.len + BYTES_PAGE_MAX + BYTES_FIELDS_MAX
-        base = Recording(
+        base = Exchange(
           label: LABEL_DATED,
           request: request,
           reply: Reply(status: 200, content_type: opening, body: large[0 ..< ^1], is_cut: true),
@@ -1925,7 +1926,7 @@ suite "Internal: Suggester":
         is_written = base + count_padding <= bytes_file_max  # file record would write, as `toText`
         passage = url.readPage(read).passage
         request_service = requestService(settings, passage)
-        path = pathRecording(directory_case, request)
+        path = pathExchange(directory_case, request)
         record = ["--record:" & directory_case, url]
         note_page =
           if is_written: noteWritten(directory_case, request)
@@ -1938,9 +1939,9 @@ suite "Internal: Suggester":
           request_service)])  # page written within cap, else named unwritten; gismu printed
       check fileExists(path) == is_written  # file past cap of replay never written
       let
-        path_service = pathRecording(directory_case, request_service)
-        label_page = if fileExists(path): readFile(path).readRecording.recording.label else: ""
-        label_service = readFile(path_service).readRecording.recording.label
+        path_service = pathExchange(directory_case, request_service)
+        label_page = if fileExists(path): readFile(path).readExchange.exchange.label else: ""
+        label_service = readFile(path_service).readExchange.exchange.label
         notes = [
           noteCredential(KEY_CREDENTIAL),
           if is_written: noteReplayed(directory_case, request, label_page) else: note_page,
@@ -1955,10 +1956,10 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
-  test "recording that stands but cannot be read exits 1 with `Recording`, never traceback":
+  test "exchange file that stands but cannot be read exits 1 with `Replay`, never traceback":
     # Review finding logic-5, 2026-10-29: run ended in traceback ``Error: unhandled exception:
-    #   errno: 5 `Input/output error` [IOError]``, exit 1, naming no `Recording`.
-    # Recording of mode `0000` at its path: `fileExists` takes it, and open fails for user other
+    #   errno: 5 `Input/output error` [IOError]``, exit 1, naming no `Replay`.
+    # Exchange file of mode `0000` at its path: `fileExists` takes it, and open fails for user other
     #   than root; suite reading it as well runs as root, whom no permission refuses, so skips.
     let
       server = startServer()
@@ -1966,13 +1967,13 @@ suite "Internal: Suggester":
       text = example("lojban")
       directory_case = directory / "unreadable"
       request = requestService(settings, text.argument.toPassage)
-      path = pathRecording(directory_case, request)
-      opening = "Recording should hold this request; got `unreadable: "
+      path = pathExchange(directory_case, request)
+      opening = "Exchange should hold this request; got `unreadable: "
     server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
     createDir(directory_case)
     writeFile(path, "")
     setFilePermissions(path, {})
-    var is_readable = true  # Suite reads recording itself, as root does.
+    var is_readable = true  # Suite reads exchange file itself, as root does.
     try:
       discard readFile(path)
     except IOError:
@@ -1990,11 +1991,11 @@ suite "Internal: Suggester":
         check exited.code == 1 and exited.output == ""  # no gismu
         check error.isSome and error.get.len > 0 and
             '\n' notin error.get  # review finding logic-5, 2026-10-29: first line of error alone
-    check server.heard.len == 0  # recording standing is refused, never sent around
+    check server.heard.len == 0  # exchange file standing is refused, never sent around
     stopServer(server)
 
 
-  test "link at path of recording is refused, naming it, before any read or send":
+  test "link at path of exchange file is refused, naming it, before any read or send":
     # Recheck claim completeness-3, 2026-10-29: replay and record followed link, as clone keeps
     #   it, to file outside directory, and refusal echoed its first line, as ``got `machine
     #   api.example.com login me password S3cretPassw0rd-from-netrc` at line 1 of …``.
@@ -2007,17 +2008,16 @@ suite "Internal: Suggester":
       reply = toReplyMessages(text.answer, settings.model)
       directory_case = directory / "linked"
       outside = directory / "outside"
-      path = pathRecording(directory_case, request)
-      refused = toOutcomeRecording("link or other than file at " &
-          pathShown(directory_case, request))
+      path = pathExchange(directory_case, request)
+      refused = toOutcomeReplay("link or other than file at " & pathShown(directory_case, request))
     server.routes = @[(PATH_SERVICE, reply)]
     createDir(directory_case)
     createDir(outside)
     writeFile(outside / "netrc", "machine api.example.org login alice password SECRET-NETRC\n")
     writeFile(outside / "credentials", "https://alice:ghp_SECRET-TOKEN@github.com\n")
     writeFile(
-      outside / "recording",
-      Recording(label: LABEL_SUITE, request: request, reply: reply).toText,
+      outside / "exchange",
+      Exchange(label: LABEL_SUITE, request: request, reply: reply).toText,
     )
     createSymlink(outside / "netrc", outside / "chained")
     for target in [
@@ -2025,7 +2025,7 @@ suite "Internal: Suggester":
       outside / "credentials",  # case as found: token git keeps, in URL
       "../outside/netrc",  # relative link out of directory
       outside / "chained",  # link to link
-      outside / "recording",  # recording of this very request, standing outside
+      outside / "exchange",  # exchange of this very request, standing outside
       "/proc/self/environ",  # environment of run, which `stat` reads as file
     ]:
       removeFile(path)
@@ -2091,20 +2091,20 @@ suite "Internal: Suggester":
       url_page = urlLoopback(server.port, "/page")
       passage = url_page.readPage(reply_page).passage
       requests = @["GET " & url_moved, "GET " & url_page, requestService(settings, passage)]
-      paths = requests.mapIt(pathRecording(directory_case, it))
+      paths = requests.mapIt(pathExchange(directory_case, it))
     check binary.run(settings.toEnvironment, ["--record:" & directory_case, url_moved]) ==
         toExited(answer, passage, settings.model, @[noteCredential(KEY_CREDENTIAL)] &
         requests.mapIt(noteWritten(directory_case, it)))  # each hop written
     stopServer(server)  # replay needs no server
-    let recordings = paths.mapIt(readFile(it).readRecording)
-    check recordings.allIt(it.is_read)  # each file reads back
-    if recordings.allIt(it.is_read):
-      check recordings.mapIt(it.recording.request) == requests  # each hop, then service
-      check recordings.mapIt(it.recording.reply) ==
+    let exchanges = paths.mapIt(readFile(it).readExchange)
+    check exchanges.allIt(it.is_read)  # each file reads back
+    if exchanges.allIt(it.is_read):
+      check exchanges.mapIt(it.exchange.request) == requests  # each hop, then service
+      check exchanges.mapIt(it.exchange.reply) ==
           @[Reply(status: 302, location: "/page"), reply_page, reply_service]  # as served
       check binary.run(settings.toEnvironment, ["--replay:" & directory_case, url_moved]) ==
           toExited(answer, passage, settings.model, (0..2).mapIt(noteReplayed(directory_case,
-          requests[it], recordings[it].recording.label)))  # same gismu, read from files alone
+          requests[it], exchanges[it].exchange.label)))  # same gismu, read from files alone
 
 
   test "page refused by status, type, coding, charset or text exits 1 with `Page`, naming it":
@@ -2212,7 +2212,7 @@ suite "Internal: Suggester":
           "redirect loop at " & urlLoopback(server.port, trimmed), [noteCredential(
           KEY_CREDENTIAL)])  # cases as found: token user gave, then token page gave in redirect
     stopServer(server)
-    writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: "GET " & start,
+    writeExchanges(directory_case, [Exchange(label: LABEL_SUITE, request: "GET " & start,
         reply: Reply(status: 302, location: presigned))])
     check binary.run([], ["--replay:" & directory_case, start]) == toExited(Failure.Page,
         "redirect to http://127.0.0.1:8080/bucket/obj", [noteReplayed(directory_case,
@@ -2227,7 +2227,7 @@ suite "Internal: Suggester":
               start_case = if is_loop: url else: "https://example.org/start/" & $count
               opening = if is_loop: "redirect loop at " else: "redirect to "
             inc count
-            writeRecordings(directory_case, [Recording(label: LABEL_SUITE,
+            writeExchanges(directory_case, [Exchange(label: LABEL_SUITE,
                 request: "GET " & start_case, reply: Reply(status: 302, location: url))])
             let exited = binary.run([], ["--replay:" & directory_case, start_case])
             check exited == toExited(Failure.Page, opening & scheme & "://example.org:8080/page",
@@ -2393,7 +2393,7 @@ suite "Internal: Suggester":
     let
       text = example("lojban")
       passage = text.argument.toPassage
-      missing = directory / "endpoints_missing"  # never made, so recording of each request misses
+      missing = directory / "endpoints_missing"  # never made, so exchange of each request misses
     var count_port, count_scheme, count_taken = 0
     for (opening, is_carrying) in OPENINGS_ENDPOINT:
       for (port, is_taken) in PORTS_URL:  # 65 endpoints, exhaustive
@@ -2415,9 +2415,9 @@ suite "Internal: Suggester":
               code: 2)  # URL well formed, so http to host off loopback is fault
         else:
           inc count_taken
-          check exited == toExited(toOutcomeRecording("missing at " & pathShown(missing,
+          check exited == toExited(toOutcomeReplay("missing at " & pathShown(missing,
               requestService(settings, passage))), passage, settings.model,
-              [])  # endpoint taken, so replay asks recording of its request
+              [])  # endpoint taken, so replay asks exchange of its request
     check count_port > 0 and count_scheme > 0 and count_taken > 0  # each side of law reached
     check not dirExists(missing)  # replay makes nothing
 
@@ -2494,7 +2494,7 @@ suite "Internal: Suggester":
 
   test "`--` ends flags, so passage after it may open with `-`":
     let
-      directory_case = directory / "dashes"  # never made, so recording of each request misses
+      directory_case = directory / "dashes"  # never made, so exchange of each request misses
       settings = Service.Claude.toSettings
     for (arguments, text) in [
       (@["--", "-ish"], "-ish"),
@@ -2507,7 +2507,7 @@ suite "Internal: Suggester":
         passage = text.toPassage
         shown = pathShown(directory_case, requestService(settings, passage))
       check binary.run([], @["--replay:" & directory_case] & arguments) ==
-          toExited(toOutcomeRecording("missing at " & shown), passage, settings.model,
+          toExited(toOutcomeReplay("missing at " & shown), passage, settings.model,
           [])  # passage after `--` read as text, flag of mode among it too
 
 
@@ -2520,7 +2520,7 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings(server.port)
       live = settings.toEnvironment
       directory_case = directory / "ports"  # never made where run is refused
-      missing = directory / "ports_missing"  # never made, so recording of each request misses
+      missing = directory / "ports_missing"  # never made, so exchange of each request misses
       every = @[@[], @["--"], @["--record:" & directory_case], @["--replay:" & directory_case]]
       pool = poolPorts()
     server.routes = @[
@@ -2549,8 +2549,8 @@ suite "Internal: Suggester":
     for (url, is_taken) in cases:
       let exited = binary.run([], ["--replay:" & missing, url])
       if is_taken:
-        check exited == toExited(toOutcomeRecording("missing at " & pathShown(missing,
-            "GET " & url)), [])  # page asked: recording of its first hop misses
+        check exited == toExited(toOutcomeReplay("missing at " & pathShown(missing,
+            "GET " & url)), [])  # page asked: exchange of its first hop misses
         continue
       check exited == Exited(report: problemPort(url) & "\n" & USAGE,
           code: 2)  # RFC 6335 6: port of 16 bits, 0 reserved; argument never passage
@@ -2566,7 +2566,7 @@ suite "Internal: Suggester":
         passage = (if input.len > 0: input else: arguments.join(" ")).toPassage
         shown = pathShown(missing, requestService(Service.Claude.toSettings, passage))
       check binary.run([], @["--replay:" & missing] & arguments, input = input) == toExited(
-          toOutcomeRecording("missing at " & shown), passage, Service.Claude.toSettings.model,
+          toOutcomeReplay("missing at " & shown), passage, Service.Claude.toSettings.model,
           [])  # text shaped otherwise goes as passage
     check not dirExists(missing)  # replay makes nothing
     stopServer(server)
@@ -2580,7 +2580,7 @@ suite "Internal: Suggester":
     let
       text = example("lojban")
       passage = text.argument.toPassage
-      missing = directory / "authorities_missing"  # never made, so recording of each request misses
+      missing = directory / "authorities_missing"  # never made, so exchange of each request misses
     for (url, echoed) in [
       ("http://user[1]@example.org/page", "http://example.org/page"),  # user part dropped, as now
       ("http://[example.org]/page", "http://[example.org]/page"),
@@ -2606,11 +2606,11 @@ suite "Internal: Suggester":
             named = "`" & settings.endpoint & "` for `" & KEY_ENDPOINT & "`.\n"
           if is_user and is_host and is_port:
             inc count_taken
-            check argued == toExited(toOutcomeRecording("missing at " & pathShown(missing,
-                "GET " & url)), [])  # page asked: recording of its first hop misses
-            check configured == toExited(toOutcomeRecording("missing at " & pathShown(
+            check argued == toExited(toOutcomeReplay("missing at " & pathShown(missing,
+                "GET " & url)), [])  # page asked: exchange of its first hop misses
+            check configured == toExited(toOutcomeReplay("missing at " & pathShown(
                 missing, requestService(settings, passage))), passage, settings.model,
-                [])  # endpoint taken, so replay asks recording of its request
+                [])  # endpoint taken, so replay asks exchange of its request
           elif is_user and is_host:
             inc count_port
             check argued == Exited(report: problemPort(url.dropSecrets) & "\n" & USAGE,
@@ -2631,7 +2631,7 @@ suite "Internal: Suggester":
     let
       server = startServer()
       live = Service.Claude.toSettings(server.port).toEnvironment
-      directory_case = directory / "blank"  # never made, so recording of each request misses
+      directory_case = directory / "blank"  # never made, so exchange of each request misses
       settings = Service.Claude.toSettings
       pool = poolBlank()
     for text in ["\xEF\xBB\xBF", "\xC2\xA0"]:  # `suggester $'\xEF\xBB\xBF'`, then lone NBSP
@@ -2652,7 +2652,7 @@ suite "Internal: Suggester":
         shown = pathShown(directory_case, requestService(settings, passage))
         expected =
           if text.readTagGiven.isSome: text.toExitedGiven
-          else: toExited(toOutcomeRecording("missing at " & shown), passage, settings.model, [])
+          else: toExited(toOutcomeReplay("missing at " & shown), passage, settings.model, [])
       check exited == expected  # text holding visible character asks shortcut, then service
     check count_blank >= FLOOR_BLANK  # blank texts are common
     check count_visible >= FLOOR_VISIBLE  # texts holding visible character are common
@@ -2665,7 +2665,7 @@ suite "Internal: Suggester":
     let
       server = startServer()
       live = Service.Claude.toSettings(server.port).toEnvironment
-      directory_case = directory / "blank_cut"  # never made, so recording of each request misses
+      directory_case = directory / "blank_cut"  # never made, so exchange of each request misses
       settings = Service.Claude.toSettings
     for (arguments, input) in [
       (@["-"], " ".repeat(70_000) & "mi ciska lo xatra\n"),  # case as found, on input
@@ -2690,7 +2690,7 @@ suite "Internal: Suggester":
               check exited == Exited(report: USAGE, code: 2)  # tail cut, or across cut
               continue
             inc count_visible
-            check exited == toExited(toOutcomeRecording("missing at " & pathShown(
+            check exited == toExited(toOutcomeReplay("missing at " & pathShown(
                 directory_case, requestService(settings, passage))), passage, settings.model,
                 [])  # tail within cut goes out, cut named
     check count_blank > 0 and count_visible > 0  # each side of law reached
@@ -2705,21 +2705,21 @@ suite "Internal: Suggester":
       live = Service.Claude.toSettings(server.port).toEnvironment
       settings = Service.Claude.toSettings
       directory_case = directory / "reading"
-      missing = directory_case / "missing"  # never made, so recording of each request misses
+      missing = directory_case / "missing"  # never made, so exchange of each request misses
       over = "Text on standard input should hold at most " & $BYTES_PAGE_MAX &
           " bytes; got more than `" & $BYTES_PAGE_MAX & "`.\n"
     for example in EXAMPLES:
       if example.hops.len > 0: continue  # page of URL, never text of input
       for service in [Service.Claude, Service.OpenRouter]:
         let directory_example = directory_case / (example.name & "_" & $service)
-        writeRecordings(directory_example, example.toRecordings(service))
+        writeExchanges(directory_example, example.toExchanges(service))
         let
           replay = @["--replay:" & directory_example]
           given = binary.run([(KEY_SERVICE, $service)], replay & @[example.argument])
-        check given.code == 0  # recording of text given as argument replays
+        check given.code == 0  # exchange of text given as argument replays
         for flags in [@["-"], @["--", "-"]]:
           check binary.run([(KEY_SERVICE, $service)], replay & flags, input = example.argument) ==
-              given  # same stamp, so same recording and report
+              given  # same stamp, so same exchange and report
     check binary.run([(KEY_SERVICE, "bogus")], ["-"], input = TEXT_GIVEN) ==
         TEXT_GIVEN.toExitedGiven  # shortcut reads text of input too, reading no setting
     for text in ["https://example.org/alice", "a".repeat(BYTES_PAGE_MAX)]:  # URL, text at cap
@@ -2727,7 +2727,7 @@ suite "Internal: Suggester":
         passage = text.toPassage
         shown = pathShown(missing, requestService(settings, passage))
       check binary.run([], ["--replay:" & missing, "-"], input = text) == toExited(
-          toOutcomeRecording("missing at " & shown), passage, settings.model,
+          toOutcomeReplay("missing at " & shown), passage, settings.model,
           [])  # text whole, never page fetched
     check binary.run(live, ["-"], input = "a".repeat(BYTES_PAGE_MAX + 1)) ==
         Exited(report: over, code: 2)  # one byte past cap refused, with cap named
@@ -2761,7 +2761,7 @@ suite "Internal: Suggester":
       let
         reply = toReplyMessages(words.toAnswer, settings.model)
         directory_case = directory / "printed" / $i
-      writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
+      writeExchanges(directory_case, [Exchange(label: LABEL_SUITE, request: request,
           reply: reply)])
       let exited = binary.run([], ["--replay:" & directory_case, text])
       check exited.output == output  # one gismu to line, and nothing else
@@ -2801,7 +2801,7 @@ suite "Internal: Suggester":
       check answer.outcomes.gismu.len == 0  # reply keeps no gismu
       if answer.outcomes.len == 0 or answer.outcomes[0].is_kept: continue
       let directory_case = directory / "failures" / $i
-      writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
+      writeExchanges(directory_case, [Exchange(label: LABEL_SUITE, request: request,
           reply: reply)])
       check binary.run([], ["--replay:" & directory_case, text]) == toExited(answer,
           passage, settings.model, [noteReplayed(directory_case, request,
@@ -2810,7 +2810,7 @@ suite "Internal: Suggester":
     let
       repeated = toReplyMessages(toAnswer(["ciska", "Ciska"]), settings.model)
       directory_repeated = directory / "failures" / "repeated"
-    writeRecordings(directory_repeated, [Recording(label: LABEL_SUITE, request: request,
+    writeExchanges(directory_repeated, [Exchange(label: LABEL_SUITE, request: request,
         reply: repeated)])
     let exited_repeated = binary.run([], ["--replay:" & directory_repeated, text])
     check exited_repeated == toExited(Service.Claude.readReply(repeated), passage,
@@ -2828,14 +2828,14 @@ suite "Internal: Suggester":
       directory_none = directory / "failures" / "none"  # never made
       shown_none = pathShown(directory_none, request)
     check binary.run([], ["--replay:" & directory_none, text]) == toExited(
-        toOutcomeRecording("missing at " & shown_none), passage, settings.model,
+        toOutcomeReplay("missing at " & shown_none), passage, settings.model,
         [])  # missing
-    covered.incl Failure.Recording
+    covered.incl Failure.Replay
     let
       url = "https://example.org/gone"
       gone = Reply(status: 404, content_type: "text/html", body: "<p>gone</p>")
       directory_page = directory / "failures" / "page"
-    writeRecordings(directory_page, [Recording(label: LABEL_SUITE, request: "GET " & url,
+    writeExchanges(directory_page, [Exchange(label: LABEL_SUITE, request: "GET " & url,
         reply: gone)])
     check binary.run([], ["--replay:" & directory_page, url]) == toExited(Failure.Page,
         url.readPage(gone).detail, [noteReplayed(directory_page, "GET " & url,
@@ -2855,7 +2855,7 @@ suite "Internal: Suggester":
 
   test "no run reaches sink, which `ANTHROPIC_BASE_URL` and each proxy name where test names none":
     # Recheck claim tests-1, 2026-10-29: with request of service built as `POST` and body alone,
-    #   each run of default endpoint missed its recording and sent request off loopback, as to
+    #   each run of default endpoint missed its exchange and sent request off loopback, as to
     #   `api.anthropic.com` with Bearer `credential-for-suite`, and red rested on third party.
     check binary.sink.heard.len == 0  # sink heard nothing, over every run of suite
 

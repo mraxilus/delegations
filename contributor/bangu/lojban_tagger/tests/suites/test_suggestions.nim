@@ -13,7 +13,7 @@
 ##     OpenRouter reference gives them, since no OpenAI reference of Chat Completions was read.
 ##   Random markup trees are written as markup, and reference walk reads text from tree itself,
 ##     so reader is held to tree, never to second parser of markup.
-##   `Network`, `Recording` and `Page` arise in `app/suggester.nim` alone, so suite holds their
+##   `Network`, `Replay` and `Page` arise in `app/suggester.nim` alone, so suite holds their
 ##     wording, never how they arise.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
@@ -520,7 +520,7 @@ func isAnswerRead(answer: Answer): bool =
   case whole.failure
   of Failure.Truncated, Failure.Word, Failure.Duplicate, Failure.Long: true
   of Failure.Malformed: not DETAILS_REPLY.anyIt(whole.detail.startsWith(it))
-  of Failure.Network, Failure.Recording, Failure.Page, Failure.Status, Failure.Declined: false
+  of Failure.Network, Failure.Replay, Failure.Page, Failure.Status, Failure.Declined: false
 
 
 func tagGiven(text: string): Option[Tag] =
@@ -1484,7 +1484,7 @@ func repliesKnown(): seq[Reply] =
   result.add Reply(status: 401, body: CAPTURE_CHAT)
   for example in EXAMPLES:
     for service in [Service.Claude, Service.OpenRouter]:
-      result.add example.toRecordings(service)[^1].reply
+      result.add example.toExchanges(service)[^1].reply
     result.add toReplyChat(example.answer, MODEL_SUITE)
   result.add repliesFields()
 
@@ -2286,8 +2286,8 @@ suite "Internal: Reply":
     for example in EXAMPLES:  # 3 examples, exhaustive
       let (gismu, glosses) = (example.tags.mapIt(it.gismu), example.tags.mapIt(it.gloss))
       for service in [Service.Claude, Service.OpenRouter]:
-        let answer = readReply(service, example.toRecordings(service)[^1].reply)
-        check answer.keptRead == gismu  # recording replays to gismu, in order
+        let answer = readReply(service, example.toExchanges(service)[^1].reply)
+        check answer.keptRead == gismu  # exchange replays to gismu, in order
         check answer.outcomes.allIt(it.is_kept) and
             answer.outcomes.mapIt(it.gloss) == glosses  # gloss as answer gives
         check answer.model == LUT_MODEL_BY_SERVICE[service]  # model of service named

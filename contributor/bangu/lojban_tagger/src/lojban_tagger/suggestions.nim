@@ -73,7 +73,7 @@
 ##     escaped, so it can never close element; system text calls it data.
 ##     Cost: model reads each of those four as character reference, never as itself.
 ##   Page URL reaches service and report as scheme, host, port and path alone (`dropSecrets`),
-##     so token in user part, query or fragment reaches neither service nor report; recording
+##     so token in user part, query or fragment reaches neither service nor report; exchange
 ##     keeps whole URL.
 ##     Cost: token held in path, as share link or webhook holds it, reaches service and report;
 ##       pages their query alone names read as one URL to model and in report.
@@ -106,7 +106,7 @@
 ##     Cost: requests of one account go to that endpoint while it answers, never spread.
 ##   Workspace goes in header of `claude` alone, never in body, so stamp of request holds
 ##     none, as it holds no credential.
-##     Cost: recording replays under any workspace, as under any credential.
+##     Cost: exchange replays under any workspace, as under any credential.
 ##   No retry: tag refused is dropped and named, and reply refused whole is named to user, who
 ##     may run again; key is for sparing use.
 ##     Cost: passing failure, as overload or limit of rate, ends run; next run pays again for
@@ -185,7 +185,7 @@ type
 
   Failure* {.pure.} = enum  ## Define why reply, or one tag of its answer, gives no gismu.
     Network  ## Connection, name, proxy, TLS or deadline failed; detail is first line of error.
-    Recording  ## Recording missing, malformed or holding other request; detail names file.
+    Replay  ## Exchange missing, malformed or holding other request; detail names file.
     Page  ## Page gives no text: status, type, encoding or charset; detail names it.
     Status  ## Service answered error, by status or inside 2xx; detail: status, type, message.
     Declined  ## Model or classifier declined; detail is category and explanation, or refusal text.
@@ -272,7 +272,7 @@ const
     ##     https://openrouter.ai/docs/guides/best-practices/prompt-caching
   RUNES_SHOWN* = 200  ## Most characters of outside text report shows.
   RUNES_ANSWER_SHOWN* = 80
-    ## Most characters of malformed answer, or of faulty line of recording, report shows.
+    ## Most characters of malformed answer, or of faulty line of exchange file, report shows.
   ELEMENTS_RAW = ["iframe", "noscript", "script", "style"]
     ## Elements whose content is raw text, and no text of page: HTML tokenizer reads no markup
     ##   inside them until own closing element.
@@ -582,7 +582,7 @@ func toPassage*(text: string, url = "", is_page_cut = false): Passage =
   ## Build passage: byte order mark dropped, ill-formed UTF-8 repaired and counted, text cut at
   ##   `BYTES_PASSAGE_MAX` on character boundary.
   ##   URL keeps scheme, host, port and path alone (`dropSecrets`), so token in user part, query
-  ##     or fragment reaches neither service nor report; recording of page keeps whole URL.
+  ##     or fragment reaches neither service nor report; exchange of page keeps whole URL.
   ##     Cost: token held in path reaches service and report; pages their query alone names read
   ##       as one URL to model and in report.
   ##   URL is repaired as text is, uncounted, so request body holding it stays UTF-8.
@@ -1353,7 +1353,7 @@ func explain*(outcome: Outcome): string {.raises: [].} =
     tag = if outcome.position.isSome: "Tag " & $outcome.position.get else: "Tag"
   case outcome.failure
   of Failure.Network: "Service or page should answer; got `" & detail & "`."
-  of Failure.Recording: "Recording should hold this request; got `" & detail & "`."
+  of Failure.Replay: "Exchange should hold this request; got `" & detail & "`."
   of Failure.Page: "Page should give text; got `" & detail & "`."
   of Failure.Status: "Service should answer without error; got `" & detail & "`."
   of Failure.Declined: "Model should answer, not decline; got `" & detail & "`."

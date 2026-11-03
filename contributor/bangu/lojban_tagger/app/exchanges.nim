@@ -1,4 +1,4 @@
-## Send one exchange to service or page, and keep it as recording: transport of `suggester`.
+## Send one exchange to service or page, and keep it as file: transport of `suggester`.
 ##
 ##   |---------------------|-------------------------------------------------------------|
 ##   | Code                | Meaning                                                     |
@@ -8,8 +8,8 @@
 ##   | proxy, isBypassed   | proxy for URL, read from environment as curl reads it       |
 ##   | redirect            | URL redirect names; none where it falls to http             |
 ##   | send                | send one request within deadline, body read up to cap       |
-##   | Recording           | one exchange as file keeps it: label, request, reply        |
-##   | stamp               | FNV-1a 64 of request, which names recording file            |
+##   | Exchange            | one exchange as file keeps it: label, request, reply        |
+##   | stamp               | FNV-1a 64 of request, which names exchange file             |
 ##   | requestService      | request of service exchange: `POST`, endpoint, then body    |
 ##   |---------------------|-------------------------------------------------------------|
 ##
@@ -110,21 +110,21 @@
 ##     record mode writes nothing, so next run pays again; streaming, which keeps bytes moving,
 ##     is documented remedy, not taken.
 ##   Credential goes as Bearer on service request alone, never on page; its `$` is poisoned,
-##     so no report or recording can render it. Bearer is how authentication guide of Anthropic
+##     so no report or exchange file can render it. Bearer is how authentication guide of Anthropic
 ##     sends API key, and `x-api-key` its legacy header
 ##     (https://platform.claude.com/docs/en/manage-claude/authentication, read 2026-10-29).
 ##     Cost: service reading key from `x-api-key` alone answers 401.
-##   Recording is text its own reader types, as index file is: request and body carry byte
+##   Exchange file is text its own reader types, as index file is: request and body carry byte
 ##     counts, so any bytes read back. Stamp is FNV-1a 64, which resists no collision, so
 ##     whole request is stored and compared. Sibling of `stamp` in
 ##     `curator/audit/src/provenance.nim`, which project does not import (Article II.9).
 ##     Rejected: `std/hashes`, whose values change between versions; `std/sha1`, deprecated.
-##     Cost: each recording of service holds whole request body, its system text and word list
+##     Cost: each exchange file of service holds whole request body, its system text and word list
 ##       included, beside reply, where stamp alone would name it.
-##   Refusal of recording ends in what faulty piece holds, and request of page holds whole URL,
+##   Refusal of exchange file ends in what faulty piece holds, and request of page holds whole URL,
 ##     so echo shows URL each line names by scheme, host, port and path alone (`dropSecrets`):
 ##     token in user part, query or fragment never reaches report, as test "refusal of malformed
-##     page recording shows no user part, query or fragment of its URL" of `test_exchanges.nim`
+##     page exchange shows no user part, query or fragment of its URL" of `test_exchanges.nim`
 ##     holds over each piece and fault. Body of reply is echoed as held, as page or service
 ##     wrote it.
 ##     Cost: line holding `?` or `#` outside URL, as label or JSON of service request may, is
@@ -167,24 +167,24 @@ type
     of false:
       problem*: string  ## `deadline passed`, URL refused, or first line of error; no credential.
 
-  Recording* = object  ## Define one exchange as file keeps it: origin, request and reply.
+  Exchange* = object  ## Define one exchange as file keeps it: origin, request and reply.
     label*: string  ## Origin: `recorded <date>`, or documented shape of reply.
     request*: string
       ## `GET <url>` of page, or `POST <endpoint>`, line break, then body of service, so
-      ##   recording replays for its endpoint alone; no credential.
+      ##   exchange replays for its endpoint alone; no credential.
     reply*: Reply  ## Reply as read.
 
-  Recorded* = object  ## Define outcome of reading recording file.
-    case is_read*: bool  ## File reads as recording.
+  Recorded* = object  ## Define outcome of reading exchange file.
+    case is_read*: bool  ## File reads as exchange.
     of true:
-      recording*: Recording  ## Recording file holds.
+      exchange*: Exchange  ## Exchange file holds.
     of false:
       line*: int  ## Line, counted from one, reader refused.
       problem*: string
         ## What is wrong, ending in what faulty piece holds, made printable; URL each line names,
         ##   body of reply aside, by scheme, host, port and path alone.
 
-  Cursor = object  ## Define position of reader in recording text, with line it is on.
+  Cursor = object  ## Define position of reader in exchange text, with line it is on.
     text: string  ## Whole text.
     at: int  ## Byte read next.
     line: int  ## Line of `at`, counted from one.
@@ -193,7 +193,7 @@ type
 
 
 const
-  HEADER_RECORDING* = "lojban_tagger recording 1"  ## First line of recording file: format, version.
+  HEADER_EXCHANGE* = "lojban_tagger exchange 1"  ## First line of exchange file: format, version.
   USER_AGENT* = "lojban_tagger"  ## Agent every request names.
   STATUSES_REDIRECT* = [301, 302, 303, 307, 308]  ## Statuses `redirect` follows, as client does.
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
@@ -209,7 +209,7 @@ const
 
 func `$`*(credential: Credential): string {.error:
     "Credential renders nowhere; `send` alone writes it, into `authorization` of request.".}
-  ## Refuse to render credential, so no report, recording or error can hold it.
+  ## Refuse to render credential, so no report, exchange file or error can hold it.
 
 
 
@@ -443,21 +443,21 @@ func redirect*(url: string, reply: Reply): Option[string] =
 
 
 func stamp*(request: string): string =
-  ## Stamp request by FNV-1a 64, as 16 lowercase hex digits; names recording file.
+  ## Stamp request by FNV-1a 64, as 16 lowercase hex digits; names exchange file.
   var hash = 0xcbf29ce484222325'u64
   for character in request: hash = (hash xor uint64(ord(character))) * 0x100000001b3'u64
   hash.toHex.toLowerAscii
 
 
 func requestService*(settings: Settings, body: string): string =
-  ## Build request of service exchange, which stamp names and recording keeps: `POST` and
-  ##   endpoint, line break, then body, so recording replays for its endpoint alone.
+  ## Build request of service exchange, which stamp names and exchange keeps: `POST` and
+  ##   endpoint, line break, then body, so exchange replays for its endpoint alone.
   ##   Exported for `app/suggester.nim` and `tools/examples.nim`, so each builds same request.
   "POST " & settings.endpoint & "\n" & body
 
 
 
-#[ Recordings ]#
+#[ Exchange Files ]#
 
 func unfold(text: string): string =
   ## Unfold text onto one line: each line break, with spaces and tabs after it, becomes one space,
@@ -472,13 +472,13 @@ func unfold(text: string): string =
       is_folding = false
 
 
-func toText*(recording: Recording): string =
-  ## Render recording as file text; request and body carry byte counts, so any bytes read back;
+func toText*(exchange: Exchange): string =
+  ## Render exchange as file text; request and body carry byte counts, so any bytes read back;
   ##   label is unfolded onto its one line.
-  let reply = recording.reply
-  HEADER_RECORDING & "\n" &
-      "label " & recording.label.unfold & "\n" &
-      "request " & $recording.request.len & "\n" & recording.request & "\n" &
+  let reply = exchange.reply
+  HEADER_EXCHANGE & "\n" &
+      "label " & exchange.label.unfold & "\n" &
+      "request " & $exchange.request.len & "\n" & exchange.request & "\n" &
       "status " & $reply.status & "\n" &
       "content-type " & reply.content_type & "\n" &
       "content-encoding " & reply.content_encoding & "\n" &
@@ -514,8 +514,8 @@ func readField(cursor: var Cursor, name: string): Option[string] =
   some(line.get[name.len+1 .. ^1])
 
 
-func readRecording*(text: string): Recorded =
-  ## Read recording file; refuse at first malformed line, naming it, as `readIndex` does.
+func readExchange*(text: string): Recorded =
+  ## Read exchange file; refuse at first malformed line, naming it, as `readIndex` does.
   ##   Echo shows URL each line names by scheme, host, port and path alone (`dropSecrets`), body
   ##     of reply aside, so token of page URL, which request holds whole, never reaches report.
   var cursor = Cursor(text: text, line: 1)
@@ -550,12 +550,12 @@ func readRecording*(text: string): Recorded =
         kept.toPrintable(RUNES_ANSWER_SHOWN) & "`.")
 
   let header = cursor.readLine
-  if header.isNone or header.get != HEADER_RECORDING:
-    return cursor.refuse("Recording should open with `" & HEADER_RECORDING & "`")
-  var recording: Recording
+  if header.isNone or header.get != HEADER_EXCHANGE:
+    return cursor.refuse("Exchange should open with `" & HEADER_EXCHANGE & "`")
+  var exchange: Exchange
   let label = cursor.readField("label")
   if label.isNone: return cursor.refuse("Line should be `label <text>`")
-  recording.label = label.get
+  exchange.label = label.get
   let count_request = cursor.readField("request")
   if count_request.isNone or not count_request.get.allIt(it in Digits) or
       count_request.get.len notin 1..9:
@@ -564,34 +564,34 @@ func readRecording*(text: string): Recorded =
   if request.isNone:
     return cursor.refuseBlock("Request should hold bytes its line counts, then line break",
         should_drop_secrets = true)
-  recording.request = request.get
+  exchange.request = request.get
   let status = cursor.readField("status")
   if status.isNone or not status.get.allIt(it in Digits) or status.get.len notin 1..3:
     return cursor.refuse("Line should be `status <code>`, one to three digits")
-  recording.reply.status = status.get.parseInt
+  exchange.reply.status = status.get.parseInt
   for (name, field) in [("content-type", 0), ("content-encoding", 1), ("location", 2)]:
     let value = cursor.readField(name)
     if value.isNone: return cursor.refuse("Line should be `" & name & " <value>`")
     case field
-    of 0: recording.reply.content_type = value.get
-    of 1: recording.reply.content_encoding = value.get
-    else: recording.reply.location = value.get
+    of 0: exchange.reply.content_type = value.get
+    of 1: exchange.reply.content_encoding = value.get
+    else: exchange.reply.location = value.get
   let
     body = cursor.readField("body")
     words = if body.isSome: body.get.split(' ') else: @[]
   if words.len != 2 or words[0] notin ["whole", "cut"] or not words[1].allIt(it in Digits) or
       words[1].len notin 1..9:
     return cursor.refuse("Line should be `body <whole|cut> <bytes>`")
-  recording.reply.is_cut = words[0] == "cut"
+  exchange.reply.is_cut = words[0] == "cut"
   let bytes = cursor.readBlock(words[1].parseInt)
   if bytes.isNone:
     return cursor.refuseBlock("Body should hold bytes its line counts, then line break")
-  recording.reply.body = bytes.get
+  exchange.reply.body = bytes.get
   if cursor.at != text.len:  # Byte after body stands on line of cursor, opening no piece.
-    return Recorded(is_read: false, line: cursor.line, problem: "Recording should end after " &
+    return Recorded(is_read: false, line: cursor.line, problem: "Exchange should end after " &
         "body; got `" & text[cursor.at .. ^1].dropSecretsLines.toPrintable(RUNES_ANSWER_SHOWN) &
         "`.")
-  Recorded(is_read: true, recording: recording)
+  Recorded(is_read: true, exchange: exchange)
 
 
 

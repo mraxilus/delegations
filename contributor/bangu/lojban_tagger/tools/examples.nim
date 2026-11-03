@@ -1,4 +1,4 @@
-## Write worked examples of `suggester` as recordings it replays with no credential:
+## Write worked examples of `suggester` as exchange files it replays with no credential:
 ##   `nim r tools/build.nim examples` writes them under `build/examples/`, which git ignores,
 ##   and prints command replaying each.
 ##
@@ -12,14 +12,14 @@
 ##   |---------|-----------------------------------------------------------------------|
 ##
 ##   Every reply of service here is documented shape with illustrative values, never reply
-##     captured from service; label of each recording says so, and replay report prints label.
+##     captured from service; label of each exchange says so, and replay report prints label.
 ##     Reply captured live replaces it once credential exists (open question in PROVENANCE).
 ##   Page sample holds what reader must handle: redirect, `<meta>` charset of windows-1252,
 ##     bytes `93` and `94`, title, script, style, comment and character references.
-##   Recordings hold requests this build sends under default settings of each service, endpoint
+##   Exchanges hold requests this build sends under default settings of each service, endpoint
 ##     included, so they replay only while endpoint, prompt, schema and passage reading stay;
 ##     suite holds that.
-##   Data person writes is typed Nim, as committed lists are; recording files are written at
+##   Data person writes is typed Nim, as committed lists are; exchange files are written at
 ##     run time and never committed.
 ##   Command printed names service and sets every other variable of settings `suggester` reads
 ##     empty, workspace included, so no setting shell exports changes replay; directory of
@@ -116,7 +116,7 @@ const
 
 
 
-#[ Recordings ]#
+#[ Exchanges ]#
 
 func answer*(example: Example): string =
   ## Render answer of schema naming tags of example, in order, as model gives it.
@@ -171,17 +171,17 @@ func toPassage*(example: Example): Passage =
   url.readPage(reply).passage
 
 
-func toRecordings*(example: Example, service: Service): seq[Recording] =
-  ## Build recordings replaying example under default settings of service: each page hop,
+func toExchanges*(example: Example, service: Service): seq[Exchange] =
+  ## Build exchanges replaying example under default settings of service: each page hop,
   ##   then service exchange answering documented answer.
   for (url, reply) in example.hops:
-    result.add Recording(label: LABEL_PAGE, request: "GET " & url, reply: reply)
+    result.add Exchange(label: LABEL_PAGE, request: "GET " & url, reply: reply)
   let
     settings = service.toSettings
     reply =
       if service == Service.Claude: toReplyMessages(example.answer, settings.model)
       else: toReplyChat(example.answer, settings.model)
-  result.add Recording(
+  result.add Exchange(
     label: if service == Service.Claude: LABEL_MESSAGES else: LABEL_CHAT,
     request: settings.requestService(settings.toBody(example.toPassage)),
     reply: reply,
@@ -201,18 +201,18 @@ func toCommand*(example: Example, service: Service): string =
 
 
 proc writeExamples*(directory: string) =
-  ## Write recordings of every example under `claude` and `openrouter` into directory, made
+  ## Write exchange files of every example under `claude` and `openrouter` into directory, made
   ##   with each parent where missing, and given `MODE_EXAMPLES` whatever umask.
   createDir(directory)
   setFilePermissions(directory, MODE_EXAMPLES)
   for example in EXAMPLES:
     for service in [Service.Claude, Service.OpenRouter]:
-      for recording in example.toRecordings(service):
-        writeFile(directory / (recording.request.stamp & ".recording"), recording.toText)
+      for exchange in example.toExchanges(service):
+        writeFile(directory / (exchange.request.stamp & ".exchange"), exchange.toText)
 
 
 proc main(): int =
-  ## Write recordings of every example under `claude` and `openrouter`; print each command.
+  ## Write exchange files of every example under `claude` and `openrouter`; print each command.
   writeExamples(DIRECTORY_EXAMPLES)
   for example in EXAMPLES:
     for service in [Service.Claude, Service.OpenRouter]:

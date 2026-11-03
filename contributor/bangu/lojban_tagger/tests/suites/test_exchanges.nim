@@ -1,19 +1,19 @@
-## Hold transport of `exchanges.nim` to its laws: stamp, recording file, URL tests, proxy,
+## Hold transport of `exchanges.nim` to its laws: stamp, exchange file, URL tests, proxy,
 ##   redirect and credential by table and sample, and `send` over loopback, TLS included.
 ##   CLL covers no transport, so suites are `Internal:`, tests named by behaviour (Article IX.10).
 ##   Stamp meets published vectors of FNV-1a 64, and one law of its arithmetic: each step maps
 ##     state one to one, so requests of one length that differ in one byte never share stamp.
-##   Random recordings hold request and body of any bytes, line breaks often and last often, and
-##     file text of other recording; label holds lines of any byte, joined by line breaks, and
+##   Random exchanges hold request and body of any bytes, line breaks often and last often, and
+##     file text of other exchange; label holds lines of any byte, joined by line breaks, and
 ##     reads back on one line; header values hold no line break, since `send` unfolds each folded
 ##     one; every status of one to three digits reads back.
-##   Malformed files take one recording whose request and body span lines, each piece of its
+##   Malformed files take one exchange whose request and body span lines, each piece of its
 ##     file with each fault that piece admits; file is written by suite, never by `toText`, and
 ##     each expected line is counted from pieces before it.
 ##     Each file holds line too: faulty line itself, as `readIndex` names it; problem ends in what
 ##     piece holds made printable, as `readIndex` echoes line: its line, running to end of text
 ##     where no line break closes it, which problem then names, or bytes left from block.
-##     Page recordings whose URL holds user part, query or fragment take same faults; problem
+##     Page exchanges whose URL holds user part, query or fragment take same faults; problem
 ##       shows URL as `dropSecrets` keeps it, words of secrets spelled so any leaking shows.
 ##   Port of URL is held by table of its bounds and by random ports with zeros before them,
 ##     through `isURL`, `isEndpoint` and `redirect`; scheme of URL and of proxy takes every
@@ -87,7 +87,7 @@ import ../../src/lojban_tagger/suggestions
 
 
 type
-  Piece {.pure.} = enum  ## Define piece of recording file, in order file holds them.
+  Piece {.pure.} = enum  ## Define piece of exchange file, in order file holds them.
     Header  ## First line: format and version.
     Label  ## Line `label <text>`.
     Request  ## Line `request <bytes>`.
@@ -99,7 +99,7 @@ type
     Body  ## Line `body <whole|cut> <bytes>`.
     BodyBytes  ## Body, then line break.
 
-  Fault {.pure.} = enum  ## Define how one piece of recording file goes wrong.
+  Fault {.pure.} = enum  ## Define how one piece of exchange file goes wrong.
     Missing  ## Text ends before piece.
     Unbroken  ## Text ends before line break closing piece.
     Renamed  ## First letter of piece capitalised.
@@ -164,7 +164,7 @@ type
 
 const
   SAMPLES_STAMPS = 500  ## Random requests each stamp law is checked over.
-  SAMPLES_RECORDINGS = 300  ## Random recordings round trip is checked over.
+  SAMPLES_EXCHANGES = 300  ## Random exchanges round trip is checked over.
   SAMPLES_CREDENTIALS = 400  ## Random values credential law is checked over, under each service.
   SAMPLES_BODIES = 20  ## Random bodies `send` is checked to carry byte for byte.
   SAMPLES_PORTS = 1_000  ## Random ports URL tests are checked over.
@@ -224,20 +224,20 @@ const
   DIGITS_STAMP = {'0'..'9', 'a'..'f'}  ## Digits stamp is written in.
   TEXT_PASSAGE = "Alice <b>&amp;</b> \"her sister\"\non bank\xE2\x80\xA6"
     ## Passage service requests here carry: markup, quotes, line break and multibyte.
-  RECORDING_BASE = Recording(
+  EXCHANGE_BASE = Exchange(
     label: "documented shape",
     request: "POST {\"a\":\n1}",
     reply: Reply(status: 200, content_type: "application/json", body: "{\n}"),
   )
-    ## Recording malformed files start from; request and body span two lines each.
+    ## Exchange malformed files start from; request and body span two lines each.
   PIECES_BASE: array[Piece, string] = [
-    HEADER_RECORDING & "\n", "label documented shape\n", "request 13\n", "POST {\"a\":\n1}\n",
+    HEADER_EXCHANGE & "\n", "label documented shape\n", "request 13\n", "POST {\"a\":\n1}\n",
     "status 200\n", "content-type application/json\n", "content-encoding \n", "location \n",
     "body whole 3\n", "{\n}\n",
   ]
-    ## File of `RECORDING_BASE`, piece by piece, as format names them.
+    ## File of `EXCHANGE_BASE`, piece by piece, as format names them.
   LUT_PROBLEM_BY_PIECE: array[Piece, string] = [
-    "Recording should open with `" & HEADER_RECORDING & "`", "Line should be `label <text>`",
+    "Exchange should open with `" & HEADER_EXCHANGE & "`", "Line should be `label <text>`",
     "Line should be `request <bytes>`",
     "Request should hold bytes its line counts, then line break",
     "Line should be `status <code>`, one to three digits",
@@ -248,7 +248,7 @@ const
     ## What reader says each piece should be; `problemExpected` adds what piece holds.
   PIECES_BLOCK = {Piece.RequestBytes, Piece.BodyBytes}
     ## Pieces holding block of bytes, whose problem names bytes left rather than line.
-  PROBLEM_END = "Recording should end after body"
+  PROBLEM_END = "Exchange should end after body"
     ## What reader says at byte after body; problem adds text after body.
   FAULTS_LINE = {Fault.Missing, Fault.Unbroken, Fault.Renamed, Fault.Doubled, Fault.Dropped}
     ## Faults every line piece admits.
@@ -264,7 +264,7 @@ const
     ## Faults each piece admits: header holds no field name to unspace, and label and header
     ##   values take any text, so no value of theirs is refused.
   LUT_VALUES_BY_PIECE: array[Piece, seq[string]] = [
-    @["lojban_tagger recording 2"], @[], @["", "x", "-1", "1 3", "1234567890"], @[],
+    @["lojban_tagger exchange 2"], @[], @["", "x", "-1", "1 3", "1234567890"], @[],
     @["", "+20", "2000", "2x0", "-20"], @[], @[], @[],
     @[
       "whole", "cut", "part 3", "whole x", "whole -3", "whole  3", "whole 3 3",
@@ -283,7 +283,7 @@ const
     ("https://alice:hunter2@TOKEN@docs.example.org/", "https://docs.example.org/"),
     ("HTTP://alice:hunter2@example.org:8080/a?TOKEN#FRAGMENT", "HTTP://example.org:8080/a"),
   ]
-    ## URLs of page recordings malformed files hold, beside URL reader shows of each: scheme,
+    ## URLs of page exchanges malformed files hold, beside URL reader shows of each: scheme,
     ##   host, port and path, as `dropSecrets` keeps them; none to drop, query, fragment, user,
     ##   user and password, password holding `@`, and each with port and scheme in capitals.
   SECRETS_PAGE = ["alice", "hunter2", "TOKEN", "FRAGMENT"]
@@ -462,11 +462,11 @@ func problemExpected(piece: Piece, text: string, pieces: array[Piece, string]): 
 
 
 func piecesPage(url: string): array[Piece, string] =
-  ## Build file of page recording of `GET <url>`, piece by piece, as format names them: status
-  ##   200, and body spanning two lines, as body of `RECORDING_BASE` does.
+  ## Build file of page exchange of `GET <url>`, piece by piece, as format names them: status
+  ##   200, and body spanning two lines, as body of `EXCHANGE_BASE` does.
   let request = "GET " & url
   [
-    HEADER_RECORDING & "\n", "label recorded 2026-10-29\n", "request " & $request.len & "\n",
+    HEADER_EXCHANGE & "\n", "label recorded 2026-10-29\n", "request " & $request.len & "\n",
     request & "\n", "status 200\n", "content-type text/html\n", "content-encoding \n",
     "location \n", "body whole 8\n", "<p>\n</p>\n",
   ]
@@ -592,22 +592,22 @@ proc labelRandom(): string =
 
 
 proc bytesRandom(): string =
-  ## Draw bytes of request or body: empty, line breaks alone, file text of recording, or up to
+  ## Draw bytes of request or body: empty, line breaks alone, file text of exchange, or up to
   ##   `BYTES_SAMPLE_MAX` of any byte, line break one time in eight and last one time in four.
   case rand(7)
   of 0: return ""
   of 1: return "\n".repeat(rand(1..3))
-  of 2: return RECORDING_BASE.toText
+  of 2: return EXCHANGE_BASE.toText
   else: discard
   result = newString(rand(1..BYTES_SAMPLE_MAX))
   for character in result.mitems: character = (if rand(7) == 0: '\n' else: char(rand(255)))
   if rand(3) == 0: result[^1] = '\n'
 
 
-proc recordingRandom(): Recording =
-  ## Draw recording: label of `labelRandom`, header values of any byte but line break, status of
+proc exchangeRandom(): Exchange =
+  ## Draw exchange: label of `labelRandom`, header values of any byte but line break, status of
   ##   one to three digits, request and body of any bytes, cut half time.
-  Recording(
+  Exchange(
     label: labelRandom(),
     request: bytesRandom(),
     reply: Reply(
@@ -647,10 +647,10 @@ proc poolStamps(): seq[Stamped] =
     result.add sample
 
 
-proc poolRecordings(): seq[Recording] =
-  ## Draw `SAMPLES_RECORDINGS` random recordings into pool allocated once; caller seeds first.
-  result = newSeqOfCap[Recording](SAMPLES_RECORDINGS)
-  for _ in 1..SAMPLES_RECORDINGS: result.add recordingRandom()
+proc poolExchanges(): seq[Exchange] =
+  ## Draw `SAMPLES_EXCHANGES` random exchanges into pool allocated once; caller seeds first.
+  result = newSeqOfCap[Exchange](SAMPLES_EXCHANGES)
+  for _ in 1..SAMPLES_EXCHANGES: result.add exchangeRandom()
 
 
 proc poolValues(): seq[string] =
@@ -1234,54 +1234,53 @@ suite "Internal: Exchange":
     check passed >= FLOOR_CHANGED  # guard leaves enough requests holding byte to change
 
 
-  test "recording reads back as written, request and body of any bytes, label on one line":
+  test "exchange reads back as written, request and body of any bytes, label on one line":
     # Regression, found in review: `toText` wrote label holding line break, and status of two
-    #   digits, each of which `readRecording` refused.
+    #   digits, each of which `readExchange` refused.
     let
-      folded = Recording(label: "a\nb", reply: Reply(status: 200)).toText.readRecording
-      short = Recording(reply: Reply(status: 99)).toText.readRecording
-    check folded.is_read and folded.recording.label == "a b"  # case as found: one line
-    check short.is_read and short.recording.reply.status == 99  # case as found: two digits
+      folded = Exchange(label: "a\nb", reply: Reply(status: 200)).toText.readExchange
+      short = Exchange(reply: Reply(status: 99)).toText.readExchange
+    check folded.is_read and folded.exchange.label == "a b"  # case as found: one line
+    check short.is_read and short.exchange.reply.status == 99  # case as found: two digits
     randomize(0)
-    let pool = poolRecordings()
+    let pool = poolExchanges()
     var count_folded = 0
-    for recording in served(pool):
+    for exchange in served(pool):
       let
-        text = recording.toText
-        recorded = text.readRecording
-      check text.startsWith(HEADER_RECORDING & "\n")  # format and version open file
-      check recorded.is_read  # domain: file of any recording reads
+        text = exchange.toText
+        recorded = text.readExchange
+      check text.startsWith(HEADER_EXCHANGE & "\n")  # format and version open file
+      check recorded.is_read  # domain: file of any exchange reads
       if not recorded.is_read:
         checkpoint $recorded.line & ": " & recorded.problem
         continue
-      let back = recorded.recording
-      check back.request == recording.request  # domain: request back, byte for byte
-      check back.reply == recording.reply  # domain: reply back, byte for byte
+      let back = recorded.exchange
+      check back.request == exchange.request  # domain: request back, byte for byte
+      check back.reply == exchange.reply  # domain: reply back, byte for byte
       check '\n' notin back.label and back.toText == text  # domain: label as written, one line
-      if '\n' in recording.label: inc count_folded
-      else: check back.label == recording.label  # domain: label of one line back as it was
+      if '\n' in exchange.label: inc count_folded
+      else: check back.label == exchange.label  # domain: label of one line back as it was
     check count_folded >= FLOOR_FOLDED  # guard leaves enough labels holding line break
     for status in 0..999:
       let
-        recorded = Recording(reply: Reply(status: status)).toText.readRecording
+        recorded = Exchange(reply: Reply(status: status)).toText.readExchange
         named = $status & ": "
       check named & $recorded.is_read == named & "true"  # domain: one to three digits read
       if recorded.is_read:
-        check recorded.recording.reply.status == status  # domain: status back as written
+        check recorded.exchange.reply.status == status  # domain: status back as written
 
 
-  test "malformed recording is refused naming its first faulty piece, each piece with each fault":
-    check RECORDING_BASE.toText == PIECES_BASE.join  # file holds pieces in order format names
-    check RECORDING_BASE.toText.readRecording.is_read  # whole file reads, so fault alone refuses
+  test "malformed exchange is refused naming its first faulty piece, each piece with each fault":
+    check EXCHANGE_BASE.toText == PIECES_BASE.join  # file holds pieces in order format names
+    check EXCHANGE_BASE.toText.readExchange.is_read  # whole file reads, so fault alone refuses
     # Regression, found in review: reader named line after faulty line it had read whole.
-    check readRecording("lojban_tagger recording 1\nLabel x\n").line == 2  # case as found: was 3
-    check readRecording("Lojban_tagger recording 1\n").line == 1  # case as found: was 2
+    check readExchange("lojban_tagger exchange 1\nLabel x\n").line == 2  # case as found: was 3
+    check readExchange("Lojban_tagger exchange 1\n").line == 1  # case as found: was 2
     # Regression, found in review: refusal named shape alone, so edited line, and carriage
     #   return after status, stayed hidden.
     let
-      labelled = readRecording(HEADER_RECORDING & "\nLabel secret-looking text\n")
-      returned = readRecording(PIECES_BASE[Piece.Header..Piece.RequestBytes].join &
-          "status 200\r\n")
+      labelled = readExchange(HEADER_EXCHANGE & "\nLabel secret-looking text\n")
+      returned = readExchange(PIECES_BASE[Piece.Header..Piece.RequestBytes].join & "status 200\r\n")
     check not labelled.is_read and labelled.problem == "Line should be `label <text>`; got " &
         "`Label secret-looking text`."  # case as found: review finding rules-3, 2026-10-29
     check not returned.is_read and returned.problem == "Line should be `status <code>`, one " &
@@ -1290,11 +1289,11 @@ suite "Internal: Exchange":
     #   2026-10-29: line piece that text ended before its line break echoed empty, though it held
     #   text, and block echoed count of bytes left, so neither showed faulty bytes.
     let
-      opened = readRecording(HEADER_RECORDING)
-      cut = readRecording(PIECES_BASE[Piece.Header..Piece.RequestBytes].join & "status 200")
-      counted = readRecording(HEADER_RECORDING & "\nlabel x\nrequest 12\nGET /page\n")
-    check opened.problem == "Recording should open with `" & HEADER_RECORDING & "`, then line " &
-        "break; got `" & HEADER_RECORDING & "`."  # case as found: got ``, completeness-5
+      opened = readExchange(HEADER_EXCHANGE)
+      cut = readExchange(PIECES_BASE[Piece.Header..Piece.RequestBytes].join & "status 200")
+      counted = readExchange(HEADER_EXCHANGE & "\nlabel x\nrequest 12\nGET /page\n")
+    check opened.problem == "Exchange should open with `" & HEADER_EXCHANGE & "`, then line " &
+        "break; got `" & HEADER_EXCHANGE & "`."  # case as found: got ``, completeness-5
     check cut.problem == "Line should be `status <code>`, one to three digits, then line " &
         "break; got `status 200`."  # case as found: got ``, regressions-app-6
     check counted.problem == "Request should hold bytes its line counts, then line break; " &
@@ -1303,7 +1302,7 @@ suite "Internal: Exchange":
     var (pieces, faults) = (default(set[Piece]), default(set[Fault]))
     for malformed in cases:
       let
-        recorded = malformed.text.readRecording
+        recorded = malformed.text.readExchange
         named = $malformed.piece & " " & $malformed.fault & ": "
       check not recorded.is_read  # refused
       if recorded.is_read: continue
@@ -1315,13 +1314,13 @@ suite "Internal: Exchange":
     check pieces == {Piece.low..Piece.high} and faults == {Fault.low..Fault.high}  # exhaustive
 
 
-  test "refusal of malformed page recording shows no user part, query or fragment of its URL":
+  test "refusal of malformed page exchange shows no user part, query or fragment of its URL":
     # Regression, found in recheck claim regressions-lib-1, 2026-10-29: refusal of request block
-    #   echoed bytes left from where block opens, and page recording keeps whole URL, so request
+    #   echoed bytes left from where block opens, and page exchange keeps whole URL, so request
     #   counted one byte long gave `GET https://docs.example.org/report?token=SECRET-7f3a91c2…`.
     let
       pieces = piecesPage("https://docs.example.org/report?token=SECRET-7f3a91c2")
-      found = readRecording(pieces[Piece.Header..Piece.Label].join & "request 58\n" &
+      found = readExchange(pieces[Piece.Header..Piece.Label].join & "request 58\n" &
           pieces[Piece.RequestBytes..Piece.BodyBytes].join)
     check found.problem == "Request should hold bytes its line counts, then line break; got " &
         "`GET https://docs.example.org/report\\u{A}status 200\\u{A}content-type text/html\\u{A}" &
@@ -1331,7 +1330,7 @@ suite "Internal: Exchange":
       let pieces = piecesPage(url)
       for malformed in casesMalformed(pieces, url, url_shown):
         let
-          recorded = malformed.text.readRecording
+          recorded = malformed.text.readExchange
           named = url & " " & $malformed.piece & " " & $malformed.fault & ": "
         inc count
         check named & recorded.problem ==
@@ -1344,7 +1343,7 @@ suite "Internal: Exchange":
         (pieces.join & pieces.join, "after body"),
       ]:
         let
-          recorded = text.readRecording
+          recorded = text.readExchange
           named = url & " " & place & ": "
         inc count
         check named & $recorded.is_read == named & "false"  # URL line stands at place, refused
@@ -2419,9 +2418,9 @@ suite "Internal: Send":
     refusing.close()
 
 
-  test "folded header comes back on one line, and recording of reply reads back as sent":
+  test "folded header comes back on one line, and exchange of reply reads back as sent":
     # Regression, found in review: folded `content-type` and status `099` gave reply whose
-    #   recording `readRecording` refused, so replay refused file record mode wrote.
+    #   exchange `readExchange` refused, so replay refused file record mode wrote.
     let
       listener = listenRaw()
       url = urlLoopback(int(listener.getLocalAddr[1]), "/odd")
@@ -2431,9 +2430,9 @@ suite "Internal: Send":
     check odd.is_replied and odd.reply == REPLY_ODD  # case as found: one line, status 99
     if odd.is_replied:
       let
-        recording = Recording(label: "recorded", request: "GET " & url, reply: odd.reply)
-        recorded = recording.toText.readRecording
-      check recorded.is_read and recorded.recording == recording  # case as found: reads back
+        exchange = Exchange(label: "recorded", request: "GET " & url, reply: odd.reply)
+        recorded = exchange.toText.readExchange
+      check recorded.is_read and recorded.exchange == exchange  # case as found: reads back
     for fold in FOLDS:
       for count in 1..3:
         let

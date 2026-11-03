@@ -10,7 +10,7 @@
 ##   | tagger    | compile `app/tagger.nim`, in release mode, to `binaries/tagger`          |
 ##   | suggester | compile `app/suggester.nim`, in release mode with TLS, to                |
 ##   |           | `binaries/suggester`                                                     |
-##   | examples  | write worked examples of `suggester` as recordings under                 |
+##   | examples  | write worked examples of `suggester` as exchange files under             |
 ##   |           | `build/examples/`, and print command replaying each                      |
 ##   | system    | print packages verbs, `suggester` and suites need, one per line:         |
 ##   |           | `openssl` command among them, which `test_exchanges` runs                |

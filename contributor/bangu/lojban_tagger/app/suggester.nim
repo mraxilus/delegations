@@ -1,4 +1,4 @@
-## Run `suggester`: read passage, ask service or recording, print gismu checked against lists.
+## Run `suggester`: read passage, ask service or exchange, print gismu checked against lists.
 ##   `nim r tools/build.nim suggester` compiles it to `binaries/suggester`, with TLS; steps are
 ##   in `suggestions.nim` and transport in `exchanges.nim`, which this file wires to
 ##   environment, sockets, files and streams.
@@ -11,7 +11,7 @@
 ##   | suggester -               | read text of standard input, as text given goes        |
 ##   | --record:<directory>      | replay page of 2xx or 3xx, and service reply holding   |
 ##   |                           | answer model produced; send rest; write each reply     |
-##   | --replay:<directory>      | read every exchange from recordings; send nothing      |
+##   | --replay:<directory>      | read every exchange from files; send nothing           |
 ##   | --                        | end flags, so passage may open with `-`                |
 ##   |---------------------------|--------------------------------------------------------|
 ##   Exit: 0 gismu printed, 1 none kept and each failure named, 2 usage, input or settings error,
@@ -52,7 +52,7 @@
 ##   `LOJBAN_TAGGER_WORKSPACE` names workspace `claude` sends as `anthropic-workspace-id`, which
 ##     key scoped to no workspace needs on every request; ID of `wrkspc_` and visible ASCII
 ##     alone, at most `BYTES_WORKSPACE_MAX` bytes, so no line break reaches header. Other service
-##     refuses any value. It stays out of stamp, so recording replays under any workspace.
+##     refuses any value. It stays out of stamp, so exchange replays under any workspace.
 ##   Second binary, not verb of `tagger`: `-d:ssl` loads libssl when program starts, so every
 ##     verb of `tagger` would need it; Architect chose second binary.
 ##     Cost: second build and binary to ship, and tags from service run two programs, as
@@ -64,7 +64,7 @@
 ##       (`dropSecrets`), as report names page URL, so token in user part, query or fragment,
 ##       which page may give, never reaches report. Cost: token held in path is named.
 ##   Record mode makes its directory before it reads or sends, so directory it cannot make refuses
-##     run with `Recording`, and nothing is paid for; recording it cannot write after reply is
+##     run with `Replay`, and nothing is paid for; exchange file it cannot write after reply is
 ##     named in note, and gismu still print. Cost: failed send leaves empty directory behind.
 ##   Record mode replays service reply holding answer model produced (`isAnswered`), never by
 ##     status alone: tags, and failure of answer itself, replay, so no answer is paid twice;
@@ -74,41 +74,41 @@
 ##     Cost: refusal service bills, in category `bio`, `frontier_llm` or `reasoning_extraction`,
 ##       or after partial output, is paid again on each record run.
 ##     Cost: recorded reply is read twice, once to choose and once to report.
-##   Recordings hold passage, page and reply, so they stay private: record mode makes each
-##     directory it makes with mode `0700`, and writes each recording with mode `0600` to new
+##   Exchange files hold passage, page and reply, so they stay private: record mode makes each
+##     directory it makes with mode `0700`, and writes each exchange file with mode `0600` to new
 ##     sibling, refusing file or link there, before rename.
-##     Cost: no other user, group included, reads recording; sharing one takes copy or `chmod`.
+##     Cost: no other user, group included, reads exchange file; sharing one takes copy or `chmod`.
 ##   Record and replay refuse directory every user may write, as `/tmp`, before any read or send,
-##     since other user could plant link where recording goes.
-##     Path of recording joins directory and name as written, and each parent made is directory
-##       cut at its last `/`, never normalized, so kernel resolves what that check stats, where
-##       `joinPath` and `parentDir` drop `<link>/..` lexically.
+##     since other user could plant link where exchange file goes.
+##     Path of exchange file joins directory and name as written, and each parent made is
+##       directory cut at its last `/`, never normalized, so kernel resolves what that check
+##       stats, where `joinPath` and `parentDir` drop `<link>/..` lexically.
 ##       Cost: path named keeps `.` and `..` as written.
 ##     Cost: owner of directory, and members of group that may write it, are trusted.
-##   Recording is read only where file stands at its path itself: link there, as clone or archive
+##   Exchange file is read only where it stands at its path itself: link there, as clone or archive
 ##     keeps it, is refused before read, never followed, so no file outside directory is read,
 ##     nor its first line echoed.
-##     Cost: recording kept as link on purpose is refused.
-##   Recording file past its request, cap of its body and `BYTES_FIELDS_MAX` is refused before it
+##     Cost: exchange file kept as link on purpose is refused.
+##   Exchange file past its request, cap of its body and `BYTES_FIELDS_MAX` is refused before it
 ##     is read, and body past its cap once read, so replay holds no more than send would.
-##     Caps held by test "recording past its caps is refused: file before it is read, and body
-##       past its cap" of `test_suggester.nim`; memory, by test "recording and input past their
+##     Caps held by test "exchange past its caps is refused: file before it is read, and body
+##       past its cap" of `test_suggester.nim`; memory, by test "exchange and input past their
 ##       caps are refused unread, under cap of address space" there.
 ##     Record writes no file past those caps, naming it in note, so no run writes file later run
 ##     refuses. Cost: reply whose head passes `BYTES_FIELDS_MAX`, less lines of format, goes
 ##     unrecorded, so each record run sends it again.
-##     Recording that stands but cannot be read is refused with `Recording`, never traceback, as
-##       test "recording that stands but cannot be read exits 1 with `Recording`, never
+##     Exchange file that stands but cannot be read is refused with `Replay`, never traceback, as
+##       test "exchange file that stands but cannot be read exits 1 with `Replay`, never
 ##       traceback" of `test_suggester.nim` holds where suite runs as user other than root.
-##     Cost: recording past its caps, or unreadable, fails record run too, sending nothing, until
-##       removed by hand.
-##   Request of service exchange, which stamp names and recording keeps, is `POST` and endpoint,
+##     Cost: exchange file past its caps, or unreadable, fails record run too, sending nothing,
+##       until removed by hand.
+##   Request of service exchange, which stamp names and exchange file keeps, is `POST` and endpoint,
 ##     line break, then body (`requestService` of `exchanges.nim`, which `tools/examples.nim`
-##     builds by too), so recording replays for its endpoint alone; request of page hop is `GET`
-##     and URL. Credential stays out, so recording replays under any credential.
+##     builds by too), so exchange replays for its endpoint alone; request of page hop is `GET`
+##     and URL. Credential stays out, so exchange replays under any credential.
 ##     Cost: endpoint is kept as written, so same endpoint spelled otherwise, in case, by `:443` or
-##       closing dot, misses its recording, and record mode pays again.
-##   Refusal and note of recording name path whose directory alone is made printable and cut;
+##       closing dot, misses its exchange, and record mode pays again.
+##   Refusal and note of exchange name path whose directory alone is made printable and cut;
 ##     refusal names problem first, so long directory hides neither problem nor stamp.
 ##     Cost: path named is not whole where directory passes `RUNES_SHOWN` characters.
 
@@ -128,13 +128,13 @@ type
   Mode {.pure.} = enum  ## Define how run reaches each exchange.
     Live  ## Send every exchange; write nothing.
     Record
-      ## Replay recording of same request: page hop of 2xx or 3xx, or service reply holding
+      ## Replay exchange of same request: page hop of 2xx or 3xx, or service reply holding
       ##   answer model produced (`isAnswered`); send rest, and write each reply.
-    Replay  ## Read every exchange from recordings; send nothing, read no credential.
+    Replay  ## Read every exchange from its file; send nothing, read no credential.
 
   Command = object  ## Define what arguments ask.
     mode: Mode  ## How run reaches exchanges.
-    directory: string  ## Directory of recordings; empty for live run.
+    directory: string  ## Directory of exchange files; empty for live run.
     argument: string  ## Text given, joined by one space, or URL; text of input once read.
     is_url: bool  ## Argument is one http or https URL, so page is fetched.
     is_input: bool  ## Argument is `-` alone, so passage is read from standard input.
@@ -159,12 +159,12 @@ type
     of true:
       reply: Reply  ## Reply sent or replayed.
       note: string
-        ## Report line naming recording replayed, written or unwritten, at path refusal names;
+        ## Report line naming exchange file replayed, written or unwritten, at path refusal names;
         ##   empty if live.
     of false:
-      failure: Failure  ## `Network` or `Recording`.
+      failure: Failure  ## `Network` or `Replay`.
       detail: string
-        ## Offending value, made printable; for `Recording`, problem, then path whose directory
+        ## Offending value, made printable; for `Replay`, problem, then path whose directory
         ##   alone is cut.
 
   Fetched = object  ## Define outcome of fetching page: passage, or failure; notes of each hop.
@@ -173,7 +173,7 @@ type
     of true:
       passage: Passage  ## Passage final page gives.
     of false:
-      failure: Failure  ## `Network`, `Recording` or `Page`.
+      failure: Failure  ## `Network`, `Replay` or `Page`.
       detail: string  ## Offending value, made printable.
 
 
@@ -205,7 +205,7 @@ const
   MS_DEADLINE_SERVICE = 600_000
     ## Milliseconds service request may take, whole; long answer without streaming needs it.
   BYTES_FIELDS_MAX = 65_536
-    ## Most bytes recording file holds past its request and cap of its body: format line, label
+    ## Most bytes exchange file holds past its request and cap of its body: format line, label
     ##   and fields, i.e. 64 KiB; larger file is refused before it is read.
 
 
@@ -262,7 +262,7 @@ func readCommand(arguments: openArray[string]): Commanded =
 proc readInput(): Option[string] =
   ## Read passage from standard input, at most `BYTES_PAGE_MAX` bytes, as page is read; `none`
   ##   where input holds more, so huge input never fills memory; `IOError` where it cannot be read.
-  ##   Memory held by test "recording and input past their caps are refused unread, under cap of
+  ##   Memory held by test "exchange and input past their caps are refused unread, under cap of
   ##     address space" of `test_suggester.nim`.
   ##   Cost: buffer of cap is allocated, whatever input holds.
   var text = newString(BYTES_PAGE_MAX + 1)
@@ -366,7 +366,7 @@ func isReplayed(reply: Reply, service: Option[Service]): bool =
 
 proc isShared(directory: string): bool =
   ## Test every user may write directory, as `/tmp` lets them, so other user could plant link
-  ##   where recording goes; false where no directory stands at path.
+  ##   where exchange file goes; false where no directory stands at path.
   try:
     dirExists(directory) and fpOthersWrite in getFilePermissions(directory)
   except OSError:
@@ -375,7 +375,7 @@ proc isShared(directory: string): bool =
 
 proc createDirectoryPrivate(directory: string) =
   ## Make directory, and each parent missing, with mode `0700`, so no other user lists or reads
-  ##   recordings; directory standing keeps its mode. `OSError` where one cannot be made.
+  ##   exchange files; directory standing keeps its mode. `OSError` where one cannot be made.
   ##   Parent is directory cut at its last `/`, never normalized as `parentDir` normalizes it, so
   ##     kernel resolves each parent as it resolves directory, `..` after link included.
   if directory.len == 0 or dirExists(directory): return
@@ -411,24 +411,24 @@ proc exchange(
   command: Command;
   context: var SslContext;
 ): Exchanged =
-  ## Answer one exchange by mode: replay recording, or send, and write recording in record mode.
+  ## Answer one exchange by mode: replay its file, or send, and write its file in record mode.
   ##   `service` names wire format of service exchange, whose reply record mode reads before it
   ##     replays it (`isReplayed`); `none` for page hop.
   ##   Record mode makes directory before reading or sending, mode `0700` where it makes it,
   ##     refusing where it cannot; write failing after reply is named in note, and reply is kept,
   ##     as is reply whose file would pass caps below, which note names unwritten.
   ##   Directory every user may write is refused before any read or send; link or other than
-  ##     file at path of recording is refused before it is read, never followed; recording file
+  ##     file at path of exchange is refused before it is read, never followed; exchange file
   ##     past request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body
   ##     past `bytes_max` is refused once read.
-  ##   Recording that stands but cannot be read is refused, naming first line of error.
+  ##   Exchange file that stands but cannot be read is refused, naming first line of error.
   ##   Refusal names problem in words of tool first, then path, so long directory never hides
   ##     either: outside text, directory and error, is made printable and cut alone, and name
   ##     holding stamp stays whole. Note names path as refusal does.
 
   func refuse(detail: string): Exchanged =
-    ## Build outcome refusing recording; caller made each outside part of detail printable.
-    Exchanged(is_replied: false, failure: Failure.Recording, detail: detail)
+    ## Build outcome refusing exchange; caller made each outside part of detail printable.
+    Exchanged(is_replied: false, failure: Failure.Replay, detail: detail)
 
   func toLine(error: ref Exception): string =
     ## Render first line of error, made printable and cut, as outside text.
@@ -440,7 +440,7 @@ proc exchange(
     if directory.endsWith('/'): directory & name else: directory & "/" & name
 
   let
-    name = request.stamp & ".recording"
+    name = request.stamp & ".exchange"
     path = command.directory.joinVerbatim(name)
     shown_directory = command.directory.toPrintable(RUNES_SHOWN)
     shown = shown_directory.joinVerbatim(name)
@@ -455,7 +455,7 @@ proc exchange(
   if command.mode != Mode.Live and command.directory.isShared:
     return refuse("writable by every user at " & shown_directory)
 
-  # Replay recording of same request within its caps, as mode and `isReplayed` choose.
+  # Replay exchange of same request within its caps, as mode and `isReplayed` choose.
   if command.mode != Mode.Live and fileExists(path):
     var text = ""
     try:
@@ -466,17 +466,17 @@ proc exchange(
       text = readFile(path)
     except CatchableError as error:
       return refuse("unreadable: " & error.toLine & " at " & shown)
-    let recorded = text.readRecording
+    let recorded = text.readExchange
     if not recorded.is_read:
       var problem = recorded.problem  # Words of reader, piece it echoes made printable and cut.
       problem.removeSuffix('.')
       return refuse(problem & " at line " & $recorded.line & " of " & shown)
-    if recorded.recording.request != request: return refuse("other request at " & shown)
-    if recorded.recording.reply.body.len > bytes_max:
+    if recorded.exchange.request != request: return refuse("other request at " & shown)
+    if recorded.exchange.reply.body.len > bytes_max:
       return refuse("body over " & $bytes_max & " bytes at " & shown)
-    if command.mode == Mode.Replay or recorded.recording.reply.isReplayed(service):
-      let label = recorded.recording.label.toPrintable(RUNES_SHOWN)
-      return Exchanged(is_replied: true, reply: recorded.recording.reply,
+    if command.mode == Mode.Replay or recorded.exchange.reply.isReplayed(service):
+      let label = recorded.exchange.label.toPrintable(RUNES_SHOWN)
+      return Exchanged(is_replied: true, reply: recorded.exchange.reply,
           note: "Reply replayed from `" & shown & "`: " & label & ".")
   if command.mode == Mode.Replay: return refuse("missing at " & shown)
 
@@ -496,11 +496,11 @@ proc exchange(
     return Exchanged(is_replied: false, failure: Failure.Network,
         detail: sent.problem.toPrintable(RUNES_SHOWN))
 
-  # Write reply in record mode: new sibling of mode `0600`, then rename over recording; file past
-  #   caps replay reads is never written, so no run writes file later run refuses.
+  # Write reply in record mode: new sibling of mode `0600`, then rename over exchange file; file
+  #   past caps replay reads is never written, so no run writes file later run refuses.
   var note = ""
   if command.mode == Mode.Record:
-    let text = Recording(
+    let text = Exchange(
       label: "recorded " & now().utc.format("yyyy-MM-dd"),
       request: request,
       reply: sent.reply,
@@ -559,7 +559,7 @@ proc fetch(url: string, command: Command, context: var SslContext): Fetched =
 #[ Entry ]#
 
 proc main(): int =
-  ## Read arguments and environment, build passage, ask service or recording, print each gismu
+  ## Read arguments and environment, build passage, ask service or exchange, print each gismu
   ##   kept and report.
   let parsed = commandLineParams().readCommand
   if not parsed.is_read:
