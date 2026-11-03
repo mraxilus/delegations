@@ -311,6 +311,17 @@ project needs the standard library alone, so it carries no lock. The verbs `list
 need `lojban-common` and `sha256sum`, which the verb `system` declares. A system package carries
 no pin, so their version is what the machine has.
 
+**`constructRafsiByForm` of `test_lujvo.nim` reads the form of each 4-letter rafsi before `add`,
+for Nim 2.4.0.** The compile-time virtual machine (VM) of 2.4.0 evaluates the element of `add`
+before its destination. It also moves a local, `let` or `var`, at its last use (#786). So
+`result[stem.form.get].add stem` would move `stem` first, and then read the form of an empty
+string.
+
+Rejected: the index read inside the call of `add`, which stops the compile of the stub under 2.4.0
+and passes under the pin. Cost: no test holds the order, because the pin reads the index first.
+Verified by hand with Nim 2.2.12 and 2.4.0, 2026-11-03: the suites pass under both, and both build
+the same table.
+
 ## Figures
 
 Each figure below comes from an Intel Xeon at 2.10 GHz with four cores, Nim 2.2.12, on
