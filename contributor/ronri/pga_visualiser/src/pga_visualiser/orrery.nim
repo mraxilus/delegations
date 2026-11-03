@@ -281,11 +281,11 @@ const LUT_INK_BY_ROLE*: array[Role, Ink] = [
   ##   Hue per cluster meant sun, planets, moons and comets all one colour.
   ##     Reader could see which system dot belonged to, which position already said, and
   ##     not moon from comet, which nothing else says.
-  ##   `mesh.Ink` offers five assignable slots.
+  ##   `mesh.Ink` offers five assignable inks.
   ##     Four go to kinds of *body* and fifth to everything derived: line and disc are
   ##     told apart by shape, while two dots need hue.
   ##   Which body gets which was settled by `tools/check_palette`.
-  ##     `Olive` is darkest slot and on *body* disappears, so it goes on derived side,
+  ##     `Olive` is darkest ink and on *body* disappears, so it goes on derived side,
   ##     forcing bodies onto `Rose`, `Copper`, `Jade`, `Cobalt`.
   ##     `Jade`/`Cobalt` is palette's one declared exception (3.7 under tritanopia), so it
   ##     goes on planet and comet, which stand apart on screen, not planet and moon,

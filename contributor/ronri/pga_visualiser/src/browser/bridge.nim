@@ -8,7 +8,7 @@
 ##   ImGui are desktop's presentation over same CPU-side geometry.
 ## Full parity with desktop.
 ##   Add point, apply any catalogue operation to two picked operands, drag from one object
-##   onto another to derive third, edit any object's label, palette slot, visibility or
+##   onto another to derive third, edit any object's label, palette index, visibility or
 ##   raw coefficients, remove object, save or load scene, and orbit/pan/dolly camera by
 ##   drag or typed numbers.
 ##   Entire surface `panel.nim` lays out for Dear ImGui, offered as exported procs
@@ -377,7 +377,7 @@ var
     ## Written by `nimPreviewOperation`, dropped by `nimClearPreview`.
 
 const INK_PREVIEW = Ink.Guide
-  ## Tint preview in this palette slot, muted, reusing `Ink.Guide`'s "construction helper" role.
+  ## Tint preview in this ink, muted, reusing `Ink.Guide`'s "construction helper" role.
 
 
 func toRgbSeq(c: Rgba): seq[float32] = @[c.red, c.green, c.blue]
@@ -654,7 +654,7 @@ proc nimObjectLabel(handle: cint): cstring {.exportc.} =
 
 
 proc nimObjectInk(handle: cint): cint {.exportc.} = cint(SCENE_PAGE.inkAt(int(handle)))
-  ## Report object's palette slot, by handle.
+  ## Report object's palette index, by handle.
 
 proc nimObjectVisible(handle: cint): bool {.exportc.} = SCENE_PAGE.isVisible(int(handle))
   ## Report object's visibility, by handle.
@@ -712,14 +712,14 @@ proc nimDefaultLabel(): cstring {.exportc.} = cstring(&"m{SCENE_PAGE.len}")
   ##   For pre-filling edit session.
 
 proc nimDefaultInk(): cint {.exportc.} = cint(SCENE_PAGE.inkNext)
-  ## Report palette slot freshly composed object starts out carrying.
+  ## Report palette index freshly composed object starts out carrying.
   ##   Cycled as every construction path cycles it.
 
 proc nimAddObject(
   coefficients: seq[float], label: cstring, ink_ordinal: cint, radius: cfloat, now: cfloat
 ): cint {.exportc.} =
   ## Commit composing edit session as fresh scene object.
-  ##   Takes label, palette slot and radius session staged; all are editable before
+  ##   Takes label, palette index and radius session staged; all are editable before
   ##   commit, unlike every other construction path.
   ##   Builds `geometry` coefficient by coefficient rather than reusing `nimSceneAddRaw`.
   ##     That one skips `HISTORY_PAGE.record`, stamps `BORNS` to 0.0 and never touches
@@ -829,7 +829,7 @@ proc nimSetLabel(handle: cint, text: cstring) {.exportc.} =
 
 
 proc nimSetInk(handle: cint, ink_ordinal: cint) {.exportc.} =
-  ## Rewrite object's palette slot, by handle.
+  ## Rewrite object's palette index, by handle.
   SCENE_PAGE.setInk(int(handle), Ink(ink_ordinal))
   HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
@@ -913,10 +913,10 @@ proc nimBasisName(index: cint): cstring {.exportc.} = cstring(LUT_NAME_BY_BASIS[
 proc nimBasisGrade(index: cint): cint {.exportc.} = cint(ord(Basis(index).grade))
   ## Report Nth basis element's grade, for grouping coefficient grid.
 
-proc nimInkChoosableSlots(): seq[int] {.exportc.} =
-  ## List palette slots colour picker may offer, as whole-palette ordinals.
+proc nimInkIndicesChoosable(): seq[int] {.exportc.} =
+  ## List palette indices colour picker may offer, as whole-palette ordinals.
   ##   For `nimInkName` and `nimInkColor`.
-  ##   Structural slots left out: object wearing backdrop, world axis or selection outline
+  ##   Structural inks left out: object wearing backdrop, world axis or selection outline
   ##   is invisible or reads as something it is not.
   for index in 0..<COUNT_INK_CATEGORICAL: result.add(ord(inkCategorical(index)))
 
@@ -934,7 +934,7 @@ proc nimInkColor(index: cint): seq[float32] {.exportc.} = Ink(index).colour.toRg
 
 
 proc nimInkBackdrop(): cint {.exportc.} = cint(ord(Ink.Backdrop))
-  ## Report backdrop's palette slot, for label halo drawn in scene's own ground colour.
+  ## Report backdrop's palette index, for label halo drawn in scene's own ground colour.
 
 proc nimBackdropColor(): seq[float32] {.exportc.} = Ink.Backdrop.colour.toRgbSeq
   ## Report canvas backdrop's colour, as `[r, g, b]` triple.
@@ -1064,8 +1064,8 @@ proc nimPointCorners(): seq[float32] {.exportc.} = pointCorners()
   ## Report point quad's static corner buffer; see `mesh.pointCorners`.
 
 proc nimCodepointsShown(): seq[cint] {.exportc.} =
-  ## Report every codepoint build itself writes, with printable ASCII, for page's faces check.
-  ##   Same gathering desktop's `--drive-faces` asks of its atlas; see `shown`.
+  ## Report every codepoint build itself writes, with printable ASCII, for page's font faces check.
+  ##   Same gathering desktop's `--drive-font-faces` asks of its atlas; see `shown`.
   for codepoint in codepointsShown(): result.add cint(codepoint)
 
 
@@ -1168,7 +1168,7 @@ proc nimOverlayMetrics(): seq[float32] {.exportc.} =
   ##   In that order, as `[overlay_line_width, selected_alpha, hover_alpha, label_height,
   ##   halo_width, halo_alpha]`.
   ##   Browser's SVG overlay then strokes markers and drag rubber-band at weights
-  ##   desktop's `main.drawMarker` does, sizes name label's face to
+  ##   desktop's `main.drawMarker` does, sizes name label's font face to
   ##   `marker.HEIGHT_MARKER_LABEL` and its halo to `WIDTH_MARKER_LABEL_HALO` at
   ##   `ALPHA_MARKER_LABEL_HALO`.
   ##   Marker's size is not here: depends on shape marked, and comes back from

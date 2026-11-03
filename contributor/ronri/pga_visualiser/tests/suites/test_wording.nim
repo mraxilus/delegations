@@ -146,8 +146,8 @@ suite "Wording":
 
 
   test "every codepoint the build writes is gathered once, in order, with printable ASCII":
-    # Both front-ends ask their faces for this gathering, so codepoint missing here is
-    #   asked of no face at all.
+    # Both front-ends ask their font faces for this gathering, so codepoint missing here is
+    #   asked of no font face at all.
     let codepoints = codepointsShown()
     for i in 1..<codepoints.len: check codepoints[i-1] < codepoints[i]
     for codepoint in 0x20..0x7E: check codepoint in codepoints

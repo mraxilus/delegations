@@ -1,8 +1,8 @@
 ## Gather every text this build writes itself, and every codepoint those texts hold.
 ##
-## One gathering for both front-ends, so face that covers one covers other.
-##   Desktop's `--drive-faces` asks atlas of each role for these codepoints, and page's drive
-##   asks `cmap` of each face it embeds for same ones (Article X.8).
+## One gathering for both front-ends, so font face that covers one covers other.
+##   Desktop's `--drive-font-faces` asks atlas of each role for these codepoints, and page's drive
+##   asks `cmap` of each font face it embeds for same ones (Article X.8).
 ##   Read from where each text is composed -- catalogue, help, notation, basis names, wheel
 ##   and units -- rather than listed here, so row added there is asked about untouched.
 ##   Names reader types are reader's own, and only printable ASCII among them is promised.

@@ -132,7 +132,7 @@ const
   PIXELS_MENU_CORNER_FURTHEST* = 103.9
     ## Record furthest any wedge's outer corner sits from menu centre, measured.
     ##   Not derivable here: wedge is as wide as its label, and only render path knows what
-    ##   its face laid that out as.
+    ##   its font face laid that out as.
     ##     Read off drawn rects in browser build; all four labels are fixed, so one number.
     ##   Kept beside constant it justifies, so wider label or longer reach surfaces as number
     ##   no longer clearing `PIXELS_MENU_DISENGAGE`, not as menu closing on wedge.
