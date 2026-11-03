@@ -573,6 +573,11 @@ repository issue 671.
   holds what it draws. CSS Fonts 4 names no bound (2.2.2), and Chromium (`kBoldThreshold`) and
   Firefox (`SupportsBold`) both set 600. The family that draws the character is judged, once for
   each element.
+- **Each collector writes every run, ASCII included, so that a bold over ASCII is seen.** The
+  Architect ruled this on 2026-11-03 (D1 b of #751). The pages of pga_benchmark held 267 runs of
+  ASCII that asked a font face of 400 for 600 or 700, and the verdict saw none of them. The check
+  of characters still judges past ASCII alone, as the rule asks, so ASCII reaches the bold alone.
+  Verified by `suites/test_font_stacks.nim`, which holds ASCII at both checks.
 - **Above 500 the match looks upward first.** So a weight of 600 or more matches a lighter set
   only where the family holds nothing of 600 or more. Rejected: a finding for each weight that no
   set holds, as 700 against a set at 600. The browser draws that set with no bold of its own, and
@@ -585,8 +590,9 @@ repository issue 671.
   browser picks a font face for each cluster.
 - Cost: a collector writes no `font-synthesis`, so a page that turns synthesis off still gets
   the finding for a bold. Its text then draws lighter than it asks.
-- Cost: a bold is judged only in the runs that a collector writes. A collector that writes runs
-  past ASCII alone hides the bold of ASCII text.
+- Cost: no place of the control page holds ASCII. So a collector that writes runs past ASCII
+  alone passes, and hides the bold of ASCII text. The collectors of dance_ontology and
+  pga_benchmark write so, and each has an issue to port.
 - Cost: text that a script writes only once a reader acts stands in no place of the control
   page, and the collectors differ there. `coverage.nim` holds such text where a source writes
   it, against every font face that the project ships.
