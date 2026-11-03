@@ -832,6 +832,19 @@ and not to the shape. So a moving hand is drawn once and carried by a transform,
 the hatch travels with the mark. Verified by `checkSingleTurns` and `checkHandTurns`, which check
 that a hatched mark moves nothing of its own.
 
+**The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The
+simulation reports in their words, through `simulation/words.nim`, and that is not a check. Rule 37
+says what a lock is, and bends the arm of a high lock to the shoulder of the same arm. Rule 38 says
+a wrap crosses the other arm of its dancer. The drawing does not show that crossing yet, because
+rule 22 keeps a settled reach away from that hand.
+
+Rule 39 makes modifiers belong to each arm, for either dancer. The drawing holds one level and one
+modifier for each connection. Rule 40 is the one filled rotation row of the sheet.
+`simulation/verdicts.md` gives what the simulation finds for Left to left held low, turned from face
+to face.
+
+## Rules of the chain
+
 **The holds of two hands walk a chain of seven frame states, a half turn apart (rules 28, 30 and
 31).**
 The seven are swan, diamond, cross, neutral, cross, diamond and swan. The chain has ends, and is not
@@ -862,19 +875,14 @@ move.
 
 **Past a whole turn, one connection runs straight and the other goes round it (rule 31).** That is
 the swan. `route.windShare` gives the swing of the straight one to the snake. So at a turn and a
-half, one reach is the plain chord between its hands. The snake is on top at the first crossing, so
-it dives once, and the straight one dives twice (Architect, #375). Verified by `checkHandTurns`.
+half, one reach is the plain chord between its hands.
 
-**The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The
-simulation reports in their words, through `simulation/words.nim`, and that is not a check. Rule 37
-says what a lock is, and bends the arm of a high lock to the shoulder of the same arm. Rule 38 says
-a wrap crosses the other arm of its dancer. The drawing does not show that crossing yet, because
-rule 22 keeps a settled reach away from that hand.
-
-Rule 39 makes modifiers belong to each arm, for either dancer. The drawing holds one level and one
-modifier for each connection. Rule 40 is the one filled rotation row of the sheet.
-`simulation/verdicts.md` gives what the simulation finds for Left to left held low, turned from face
-to face.
+**The facing at a swan sets its loop, and the loop sets which connection runs straight (Architect,
+2026-10-06, #375).** Face-to-face, the snake is on top at the first crossing, so it dives once and
+loops down under the straight one. Face-to-back, the snake is under at the first crossing, so it
+dives twice and loops up over the straight one. So the same-name chain keeps the arm under straight,
+and the cross-name chain keeps the arm over straight (`route.straightArm`). Verified by
+`checkHandTurns`, on both chains.
 
 ## The frame picture
 
@@ -3371,12 +3379,12 @@ which the VM evaluates today. That is latent, and not urgent.
   hands at the edge of the band, wraps the arms of the follow round the head instead.
 - **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 1.00,
   and D01 and D07 0.80, in `design/rig.json` (Planned turn).
-- **The swans wrap the connection that the card draws straight.** The card draws the connection over
-  at the first crossing as the snake, and the other one straight (`route.straightArm`). Seen from
-  above in `design/rig.json`, the connection that C01 draws straight runs 3.11 times its line
-  between the shoulders, and the other 1.60. In D01 they run 2.16 and 1.69, and C07 and D07 are
-  their mirror images. Measured 2026-10-11 by a probe outside the tree, which reads D01 at 2.12 and
-  1.52 on the recording before the edge.
+- **The swans that stand face to face coil the connection that the rulings keep straight.** D01
+  keeps the pair of the lead's left hand straight (#375), and the card draws it so. Seen from above
+  in `design/rig.json`, that pair runs 2.26 times the line between the shoulders, and the other
+  1.62. Its writhe is -0.45, and that of the other -0.14. D07 is its mirror image, and C01 and C07,
+  which stand Face-to-back, coil the pair that the card loops. Measured 2026-11-03 by a probe
+  outside the tree.
 - **The figures of a palm grip are derived, and not measured.** No study measures how far two palms
   tilt or turn against each other (Body rig).
 - **A relaxed wrist rests at 16 degrees of extension, and the law of a free couple at rest holds it
