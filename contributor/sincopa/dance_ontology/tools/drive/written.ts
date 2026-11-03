@@ -8,7 +8,7 @@
 //     inlined as `data:` source (`design/font_faces.nim`), so its bytes are written once into
 //     `files/` beside `written.json`, named by their SHA-256. They are bytes viewer receives, out
 //     of page itself rather than out of store.
-//   Every page read has entry, empty or not, so page that draws nothing past ASCII reads as read.
+//   Every page read has entry, empty or not, so page that draws nothing reads as read.
 
 import { createHash } from 'node:crypto';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
