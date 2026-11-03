@@ -353,18 +353,25 @@ each build that turns a record into binary.
   The reader of Nim reads a value that its enum lacks as zero, and a page reads it as a bare
   number. So the code refuses zero, and a page also refuses a number that its enum lacks.
 - **A message that the repository does not hold is binary.** It is a file that a person saves,
-  or a file that one verb writes for another under `build/`. A record that the repository
-  commits is text format, in a `.txtpb` file. Your build turns it into binary with
-  `protoc --encode`, because binaries are never committed. `protoc` refuses a misspelt field and
-  an unknown enum value, so declare `protobuf-compiler` in your `system` verb. Do not use
-  `buf convert`, which drops a misspelt field and gives no error.
+  or a file that one verb writes for another under `build/`. Binaries are never committed.
+- **A record that the repository commits is text format, in a `.txtpb` file.** The verb that
+  writes it writes binary through the Nim library, and `protoc --decode` turns that into text.
+  A build or a suite has `protoc --encode` write the binary into a file under `build/` at
+  compile time, then reads the file with `staticRead`. `STYLE.md` §4 gives the idiom, which
+  checks the exit code of `protoc`. Declare `protobuf-compiler` in your `system` verb, and never
+  use `buf convert`, which drops a misspelt field and gives no error.
 - **The readers check no length and no checksum.** A file cut between two fields still reads,
   as fewer objects. So a file that a person keeps starts with a fixed tag that names its format,
   then the length and a checksum of its message. The reader checks all three before it decodes.
+- **A format moves to this rule when its shape next changes.** A new format follows the rule
+  at once. An existing format in JSON, or in a form of its own, moves in the pull request that
+  next changes its shape. From then on, `koch check-schemas` holds each change of it. A port with
+  no change of shape buys no check of versions, so nothing moves before then.
 - **JSON stays only where a tool or an outside service forces it**: npm, `tsc`, Atlas, Claude
-  Code hooks, GitHub Actions and `gh`. A service forces it where its API speaks JSON alone, and
-  data on its wire takes the form that the service gives. No `JsonNode` leaves the module that
-  speaks to the service, so the compiler checks each field past that module.
+  Code hooks, GitHub Actions and `gh`. It also stays in a format whose shape has not changed
+  since this rule. A service forces it where its API speaks JSON alone, and data on its wire
+  takes the form that the service gives. No `JsonNode` leaves the module that speaks to the
+  service, so the compiler checks each field past that module.
 
 ## Pages and assets
 
