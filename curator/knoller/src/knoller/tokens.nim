@@ -10,9 +10,9 @@
 ##   - `*` before lone `:` is operator alone, as in `x*: int`;
 ##   - string after identifier character is raw (`r"…"`, generalized `fmt"…"`), so `\` escapes
 ##     nothing there; long string ends at last quote of run of three or more.
-##   Glyphs are those of pinned compiler admitting most: 2.4.0 and commit pin of `ronri`
-##     projects, whose lexers read same set, add `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to glyphs of 2.2.12, and no
-##     project on 2.2.12 spells them in code.
+##   Glyphs are largest set pinned compiler reads, that of 2.4.0: adds `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to glyphs
+##     of 2.2.12, and commit `27763495` reads same set. Cost: code on pin reading fewer that
+##     spells one in name scans otherwise here; none on 2.2.12 did (checked 2026-10-29).
 ##
 ##   Cost: scanner, never parser. Token kind is what lexer tells apart, so whether `(` opens call,
 ##     tuple or parameters is read by each rule from tokens around it.
@@ -54,7 +54,7 @@ const
     "±", "×", "∘", "∙", "∧", "∨", "∩", "∪", "⊓", "⊔", "⊕", "⊖", "⊗", "⊘", "⊙", "⊛", "⊞", "⊟", "⊠",
     "⊡", "■", "□", "★", "☆", "⟇", "⟑", "⩓", "⩔",
   ]
-    ## Unicode glyphs operator is built from (`unicodeOprLen`), commit pin's set.
+    ## Unicode glyphs operator is built from (`unicodeOprLen`), set of 2.4.0.
   NEGATION_AFTER = {' ', '\t', '\n', '\r', ',', ';', '(', '[', '{'}
     ## Characters before `-` that make `-<digit>` number (`UnaryMinusWhitelist`).
   KEYWORDS = [

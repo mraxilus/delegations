@@ -3,8 +3,8 @@
 ##   copy lock holds.
 ##   Fixtures copy those of `curator/audit/tests/suites/test_fixes.nim`, which drives same chain
 ##     through `koch fix`; fix to one is finished only when other is checked.
-##   Parser of compiler is stub (`stubs.nim`), answering what chain asks as commit pin of `ronri`
-##     projects does, so needless parentheses go as `koch fix` removes them.
+##   Parser of compiler is stub (`stubs.nim`), answering what chain asks as commit `27763495`
+##     answered, so needless parentheses go as `koch fix` removes them.
 ##   Cases of repair that widens its line are lines of tree as they stood before `koch fix` ran:
 ##     `picking.nim`, `gif.nim` and `tools/build.nim` of `rga_visualiser`, `verdicts.nim` of
 ##     `dance_ontology` and `test_camera_aim.nim` of `rga_visualiser`.

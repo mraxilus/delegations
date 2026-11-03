@@ -92,7 +92,7 @@ suite "Proofs":
     check provenBy(["let x = (a) + b)\n"]) == @[newSeq[int]()]  # unreadable
     check provenBy(["let c = ☆(m) ∧ 𝐞ₙ\n"]) == @[@[11]]  # `☆` prefix, so `☆m` reads same
     # Cost: wrong compiler can prove what right one refuses. 2.2.12 reads `■m` as one name, and
-    #   proves this group (by hand, 2026-10-29); 2.4.0, as commit pin, reads `■m.x` as `■(m.x)`,
+    #   proves this group (by hand, 2026-10-29); 2.4.0, as `27763495`, reads `■m.x` as `■(m.x)`,
     #   so it stays, as held here. So `koch fix` passes pin.
     check provenBy(["let x = (■m).x + y\n"]) == @[newSeq[int]()]
 

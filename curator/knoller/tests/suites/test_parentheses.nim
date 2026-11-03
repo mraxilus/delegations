@@ -1,7 +1,7 @@
 ## Replicate rule of `parentheses.nim` header: parentheses around prefix term or plain operand
 ##   beside binary operator, and around plain operand after prefix operator, go where parser
 ##   proves it; every other group stays, and fix changes nothing second time.
-##   Parser is stub (`stubs.nim`), answering as commit pin of `ronri` projects does.
+##   Parser is stub (`stubs.nim`), answering as commit `27763495` answered.
 
 {.experimental: "strictFuncs".}
 

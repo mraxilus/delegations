@@ -16,16 +16,15 @@
 ##     (`Fix.asked`), caller runs prover and holds answers in `Proofs`, chain runs again.
 ##
 ##   Rejected: parser of compiler linked into knoller: it reads each project with grammar of one
-##     compiler, and projects here pin several; 2.2.12 lexes as names glyphs that 2.4.0 and commit
-##     pin lex as operators.
+##     compiler, while each project may pin another; 2.2.12 lexes as names glyphs that 2.4.0
+##     lexes as operators.
 ##   Cost: one compile of probe for each round of asking, about 0.5 s on this container
 ##     (measured 2026-10-05, both pins); caller asks again only where answer moves source.
 ##   Cost: compiler that does not run answers none, so rule removes nothing; caller prints why.
-##   Cost: wrong compiler can prove what right one refuses. Glyph operators of 2.4.0 and of
-##     commit pin of `ronri` projects lex as names under 2.2.12, so 2.2.12 keeps `☆(m) ∧ n`,
-##     since `☆(m)` reads as call there, but proves `(■m).x + y`, which 2.4.0 and commit pin
-##     read as `■(m.x) + y`. So `koch fix` passes pin of each project, and command line reads pin
-##     of nearest nimble file, so `ronri` code takes its commit pin with no option.
+##   Cost: wrong compiler can prove what right one refuses. Glyph operators of 2.4.0 lex as names
+##     under 2.2.12, so 2.2.12 keeps `☆(m) ∧ n`, since `☆(m)` reads as call there, but proves
+##     `(■m).x + y`, which 2.4.0 reads as `■(m.x) + y`. So `koch fix` passes pin of each project,
+##     and command line reads pin of nearest nimble file, so code takes its own pin with no option.
 
 {.experimental: "strictFuncs".}
 
