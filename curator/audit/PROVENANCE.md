@@ -1072,6 +1072,37 @@ the newer one of `grpcio-tools` 1.84.1. Both wrote the same bytes.
 - Rejected: JSON for a record. `buf convert` reads it leniently: it drops a misspelt key, and
   reads a bad enum value as zero. Measured 2026-10-25 with `buf` 1.75.0.
 
+**A verb writes a record through `protoc --decode`, and a suite reads it through a file that
+`protoc --encode` writes.** The Architect ruled this on 2026-11-03 (D2 a of #793). The Nim
+library reads and writes binary alone, with no text format, so `protoc` turns binary to text and
+back. A build or a suite has `protoc` write the binary under `build/` at compile time, and reads
+that file with `staticRead`. `STYLE.md` §4 gives the idiom.
+
+- `staticExec` never carries the binary itself: it returned 7,973 of 8,003 B of `protoc`'s
+  output. Written to a file and read with `staticRead`, the same bytes came back whole. Measured
+  2026-11-03 with Nim 2.4.0 and `protoc` 3.21.12.
+- The idiom checks the exit code of `protoc`. So a refused record stops the compile with the
+  message of `protoc`, and no older file under `build/` is read. Measured 2026-11-03 on a record
+  with a misspelt field.
+- Rejected: a verb of the project that `koch test` runs first, to encode each record into
+  `build/`. It changes `koch`, and a suite run by hand would read binary that no verb renewed.
+- Cost: each machine that builds or tests a project with records needs `protoc`. The project
+  declares `protobuf-compiler`, and the job `test` installs what a project declares.
+- Cost: `protoc` prints one value to a line. 1,000 doubles take 1,000 lines and 17,337 B as text,
+  against 8,003 B as binary. Measured 2026-11-03 with `protoc` 3.21.12.
+
+**An existing format moves to the rule when its shape next changes.** The Architect ruled this
+on 2026-11-03 (D1 b of #793). The check of versions protects a format at the change that would
+break it, and the port happens in that same pull request. A new format follows the rule at once.
+
+- Rejected: a port of each project now. A survey of `main` at `0f8a94ad` found what it would
+  take. pga_benchmark reads JSON in about 20 modules of its model of measurement. dance_ontology
+  keeps a rig of 286,093 numbers. Its stamps hash the source of their writers, so it would record
+  again, at 3 to 6 hours a run.
+- Cost: JSON stays in each format whose shape has not changed, with no check of versions. The
+  scene file of pga_visualiser keeps its own form, with no length and no checksum, until then.
+- Cost: no check sees the shape of a JSON format, so review holds that a change of shape ports.
+
 **`check-schemas` holds each folder of changed schemas to the version that base shipped.** It
 runs `buf breaking` with category `WIRE_JSON`, which guards the bytes and the JSON text, and
 never the layout of files. It refuses a renumbered enum value, and a deleted, retyped or renamed
