@@ -17,7 +17,7 @@
 ##     or on line below, one level in; `case` value on line below its last branch. Doc never
 ##     joins first line inside string or bracket opening there, nor stands below `=` closing it,
 ##     where Nim parses none. Value opening `block` on its first line stays for hand, since no
-##     comment there gives doc `nim doc` reads (`nim jsondoc` of Nim 2.2.12).
+##     comment there gives doc `nim doc` reads (`nim jsondoc` of Nim 2.2.12 and 2.4.0).
 ##   Doc holding other TODO holds design note (VIII.3), never text: fixer moves note above
 ##     declaration as `#` comment, and doc takes `## TODO: Document.`. Doc of several lines
 ##     opening with note stays for hand, since its outline may elaborate note or text.
@@ -25,8 +25,8 @@
 ##     inside `quote do:`, whose generator carries docs through parameter, and doc on line above
 ##     at declaration's indent, which stands out of place rather than missing. Stack is run of
 ##     routines on one line each, at one indent, group comment right above it, `#` and never doc.
-##   Forward declaration takes doc of its routine, since `nim doc` reads doc there and drops
-##     doc of definition (read in `nim doc` of Nim 2.2.12); fixer leaves its move for hand.
+##   Forward declaration takes doc of its routine, since `nim doc` reads doc there and drops doc
+##     of definition (read in `nim doc` of Nim 2.2.12 and 2.4.0); fixer leaves its move for hand.
 ##   Doc position: one-line doc of type, field, binding and enum member stands on declaration's
 ##     own line, two spaces before `##`, where joined line fits `LINE_MAX`; otherwise on next
 ##     line, one level in. Doc of two or more lines stays where it is.
@@ -47,7 +47,7 @@
 ##   Cost: scanner, never parser (`tokens.nim`); declaration it cannot place surely stays.
 ##   Cost: doc opening line right below declaration's counts though value runs on past it, as
 ##     first line in `block:` or inside bracket, where `nim doc` reads none (`nim jsondoc` of
-##     Nim 2.2.12).
+##     Nim 2.2.12 and 2.4.0).
 ##   Cost: routine on one line reads as forward where its body after `= ` is shorter than
 ##     `BODY_FORWARD_MAX`, so short helper standing under group comment passes too.
 ##   Cost: forward declaration reads by name alone: routine without body where any overload of

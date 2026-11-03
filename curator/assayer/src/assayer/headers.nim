@@ -1,5 +1,5 @@
 ## Read testament header of test file: `action`, `cmd`, `matrix` and `targets`, as testament reads
-##   them (`testament/specs.nim`, Nim 2.2.12); every other key is refusal.
+##   them (`testament/specs.nim`, Nim 2.4.0); every other key is refusal.
 ##   Header is text between `discard """` and next `"""` (`textHeader`). Opening counts only where
 ##     no space stands before it, so indented one is code, and only by line `LINE_OPENING_MAX`.
 ##     Second opening anywhere in file is refusal, and so is opening never closed.
