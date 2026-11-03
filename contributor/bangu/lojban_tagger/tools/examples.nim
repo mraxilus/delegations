@@ -21,6 +21,10 @@
 ##     suite holds that.
 ##   Data person writes is typed Nim, as committed lists are; exchange files are written at
 ##     run time and never committed.
+##     Name, argument and tags take `{.requiresInit.}`, so example lacking one fails compile:
+##       suites find example by name, `suggester` reads argument, and answer of no tags fails
+##       whole. Hops stay unmarked, empty by right for text given.
+##       Cost: `mapIt` over examples fails compile, as `entries.nim` says of entries.
 ##   Command printed names service and sets every other variable of settings `suggester` reads
 ##     empty, workspace included, so no setting shell exports changes replay; directory of
 ##     examples takes mode `0755` whatever umask, since `suggester` refuses directory every user
@@ -40,10 +44,10 @@ import ../src/lojban_tagger/suggestions
 
 type
   Example* = object  ## Define one worked example: what `suggester` reads, pages, answer.
-    name*: string  ## Short name of example.
-    argument*: string  ## Text or URL `suggester` reads.
+    name* {.requiresInit.}: string  ## Short name of example.
+    argument* {.requiresInit.}: string  ## Text or URL `suggester` reads.
     hops*: seq[(string, Reply)]  ## Each page URL with its reply, in order; empty for text.
-    tags*: seq[tuple[gismu, gloss: string]]
+    tags* {.requiresInit.}: seq[tuple[gismu, gloss: string]]
       ## Tags answer names, most likely search first, each gismu with its gloss: documented shape,
       ##   values illustrative; `suggester` prints each gismu, one to line.
 

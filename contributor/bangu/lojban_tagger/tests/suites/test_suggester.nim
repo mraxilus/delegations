@@ -303,7 +303,9 @@ const
 
 func example(name: string): Example =
   ## Find worked example of `tools/examples.nim` by name.
-  EXAMPLES[EXAMPLES.mapIt(it.name).find(name)]
+  for one in EXAMPLES:
+    if one.name == name: return one
+  raise newException(KeyError, "Worked example should be in `EXAMPLES`; got `" & name & "`.")
 
 
 func urlLoopback(port: int, path: string): string =
@@ -917,6 +919,14 @@ suite "Internal: Suggester":
             folder = folder) == toExited(service.readReply(exchanges[^1].reply),
             example.toPassage, service.toSettings.model, exchanges.mapIt(noteReplayed(
             DIRECTORY_EXAMPLES, it.request, it.label)))  # replayed, though shell sets workspace
+
+
+  test "worked example lacking name, argument or tags does not compile, as rule of data asks":
+    check compiles(Example(name: "x", argument: "x",
+        tags: @[("cukta", "book")]))  # control: hops empty by right for text, so unmarked
+    check not compiles(Example(argument: "x", tags: @[("cukta", "book")]))  # no name
+    check not compiles(Example(name: "x", tags: @[("cukta", "book")]))  # no argument
+    check not compiles(Example(name: "x", argument: "x"))  # no tags, so no answer to replay
 
 
   test "replay of random passage, settings and reply prints what pure pipeline gives":

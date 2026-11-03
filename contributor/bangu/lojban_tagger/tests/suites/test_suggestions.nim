@@ -23,7 +23,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, json, options, random, sequtils, strutils, unittest]
+import std/[algorithm, json, options, random, sequtils, strutils, sugar, unittest]
 
 from ../../src/lojban_tagger/commands import explain  # Alone: its own `Outcome` would clash.
 import ../../src/lojban_tagger/[dictionary, forms, lujvo, suggestions {.all.}, tags]
@@ -2976,8 +2976,9 @@ suite "Internal: Page":
 
   test "sample page of worked examples reads as text its paragraph gives":
     let
-      page = EXAMPLES.filterIt(it.name == "page")[0]
-      alice = EXAMPLES.filterIt(it.name == "alice")[0]
+      names = collect(for one in EXAMPLES: one.name)
+      page = EXAMPLES[names.find("page")]
+      alice = EXAMPLES[names.find("alice")]
       (url, reply) = page.hops[^1]
       paged = url.readPage(reply)
     check paged.is_read and paged.passage.text == "Alice & her sister\nDown the Rabbit-Hole\n" &

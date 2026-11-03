@@ -70,7 +70,9 @@ func intersection(a, b: seq[Meaning]): seq[Meaning] =
 
 func indexLujvo(word: string): int =
   ## Find line of lujvo list spelling `word`; suite names listed words alone.
-  LIST_LUJVO.mapIt(it.word).find(word)
+  for i, entry in LIST_LUJVO:
+    if entry.word == word: return i
+  raise newException(KeyError, "Lujvo should be in `LIST_LUJVO`; got `" & word & "`.")
 
 
 func normalEnglish(text: string): string =
