@@ -70,7 +70,7 @@ data directory of the user.
 `suggester` asks a language model service for the tags of a text, or of the page at a URL. Each
 tag is a gismu that a person might search by to find the text again, even a person who forgets
 its title. The model decides how many tags a text needs, and puts the most likely search first.
-The tool reads at most 32 tags, and prints each gismu on its own line:
+The tool reads at most the first 32 elements of the answer, and prints each gismu on its own line:
 
 ```sh
 tagger tag notes/plan.md $(binaries/suggester - < notes/plan.md)
