@@ -643,9 +643,8 @@ figures of `tagger` are from 2026-10-25, and each figure of `suggester` names it
   over the thing with the tags that Suggestion names. `hole` leads only to lujvo meanings, such as
   `batke+kevna`, and never to `kevna` alone, so it does not find that thing. `grin`, `fantasy`,
   `novel`, `hatter` and `Cheshire` lead to nothing, because English reads only keywords, hints and
-  lujvo glosses. A query finds a thing only where each of its terms does, so one term that finds
-  nothing makes the whole query find nothing. `cheshire cat` shows a term that reads as nothing,
-  and `rabbit hole` shows a term whose meanings are in no tag of the thing.
+  lujvo glosses. A query finds a thing only where each of its terms does. The Architect ruled that
+  the rank by terms met replaces this condition (D5 c on #779), and #792 queues that rank.
 - **The cap of six words on text given.** The tool counts the words after `readTag`, so the cap
   saves about 1 µs at most (Figures). It refuses a lujvo of seven words or more, whose gismu the
   tool could print. To lift it would change no other path.
