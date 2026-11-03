@@ -1,6 +1,6 @@
 # lojban_tagger
 
-A system that tags anything with Lojban words and finds it again. A tag is a gismu or a lujvo.
+A system that tags anything with lojban words and finds it again. A tag is a gismu or a lujvo.
 The parser reduces each tag to the words of its tanru, and a search matches on its gismu. So a
 search for one gismu finds every thing whose tag holds that gismu, alone or inside a lujvo. A
 search for a lujvo with a cmavo, such as `selci'a`, lists first each thing whose tag holds it,
