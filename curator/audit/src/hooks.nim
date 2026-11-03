@@ -8,9 +8,10 @@
 ##     curator branch leaves to contributor (duty 3); `body` holds post before it lands to role
 ##     line, footer, Simplified Technical English counts, issue title and label, and pull
 ##     request headings; `stop` refuses end of turn that pushed or posted and closes with
-##     neither sign-off block nor working line, and end of any turn whose message names `#N`
-##     outside link or cites charter reference with no description; `start` prints role, read
-##     order, carried list and drift; `push` and `msg` serve git hooks.
+##     neither sign-off block nor working line, end of any turn whose message names `#N`
+##     outside link or cites charter reference with no description, and sign-off from turn
+##     that read no open issue of its role; `start` prints role, read order, carried list and
+##     drift; `push` and `msg` serve git hooks.
 ##   `gh api` in Bash posts as GitHub tools do, so `bash` reads each `gh api` write, maps it to
 ##     tool whose rules it shares, and holds its body as `body` holds tool's; `stop` counts it as
 ##     post. Hook runs before command, so body comes from literal text or file already written:
@@ -43,7 +44,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, sequtils, strutils]
+import std/[json, options, os, sequtils, strutils, uri]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 
 
@@ -65,6 +66,8 @@ type
     name*: string  ## Tool name, such as `Bash` or `mcp__github__issue_write`.
     command*: string  ## Bash command text; empty for other tools.
     has_body*: bool  ## Input carried `body`, so GitHub write posted text.
+    labels*: seq[string]  ## Input `labels`, which list of issues filters on.
+    state*: string  ## Input `state`, lowercase, which list of issues filters on; empty where none.
 
   Turn* = object  ## Define what transcript says about turn since last message of person.
     calls*: seq[Call]  ## Tool calls in order.
@@ -101,6 +104,11 @@ const
     "mcp__github__update_issue_comment", "mcp__github__add_comment_to_pending_review",
   ]
     ## GitHub tools that post; turn calling one ends with sign-off.
+  TOOLS_QUEUE = ["mcp__github__list_issues"]
+    ## GitHub tools that list issues by label and state; one such read precedes each sign-off.
+  LABEL_QUEUE_COORDINATOR = "architect"
+    ## Label whose open items are queue of coordinator, since no item carries its role
+    ##   (COORDINATOR.md, section `The queue`).
   LUT_TOOL_BY_ENDPOINT = [
     ("POST issues", "mcp__github__issue_write"),
     ("PATCH issues/*", "mcp__github__issue_write"),
@@ -1126,15 +1134,111 @@ func checkEndTurn*(message, branch: string): seq[Finding] =
   )]
 
 
-func reasonStop*(found: openArray[Finding]): string =
+func filtersList(words: openArray[Word]): tuple[labels: seq[string], state: string] =
+  ## Read label and state filters of `gh issue list`, from words after `list`.
+  ##   Flag takes value as next word, after `=`, or glued to short form, as `gh` reads it;
+  ##     labels split on comma.
+  var i = 0
+  while i < words.len:
+    var (flag, value) = (words[i].text, "")
+    inc i
+    if flag.startsWith("--") and '=' in flag:
+      (flag, value) = (flag.split('=', 1)[0], flag.split('=', 1)[1])
+    elif flag in ["--label", "-l", "--state", "-s"]:
+      if i < words.len: value = words[i].text
+      inc i
+    elif flag.len > 2 and flag[0 .. 1] in ["-l", "-s"]:
+      (flag, value) = (flag[0 .. 1], flag[2 .. ^1])
+    case flag
+    of "--label", "-l": result.labels.add value.split(',')
+    of "--state", "-s": result.state = value.toLowerAscii
+    else: discard
+
+
+func isQueueRead(call: Call, label: string): bool =
+  ## Decide whether call lists open issues labelled `label`, or open issues of every label.
+  ##   `mcp__github__list_issues` returns both states where input names none; `gh issue list`
+  ##     and `gh api` list of `issues` return open issues alone where none is named.
+  ##   Cost: read through any other tool, as search, or as `gh api` field `-f labels=`, counts
+  ##     for nothing.
+  if call.name in TOOLS_QUEUE:
+    return call.state != "closed" and (call.labels.len == 0 or label in call.labels)
+  if call.name != "Bash": return false
+
+  # Read each `gh issue list` of shell text.
+  for words in call.command.wordsShell:
+    for i in 0 ..< words.len - 2:
+      let name = words[i].text
+      if not (name == "gh" or name.endsWith("/gh")): continue
+      if words[i + 1].text != "issue" or words[i + 2].text notin ["list", "ls"]: break
+      let (labels, state) = words.toOpenArray(i + 3, words.high).filtersList
+      if state != "closed" and (labels.len == 0 or label in labels): return true
+      break
+
+  # Read each `gh api` list of issues of one repository, its filters in query.
+  for request in call.command.requests(""):
+    let parts = request.endpoint.split('?', 1)
+    if request.action != "GET" or "repos" notin parts[0].split('/') or
+        not parts[0].strip(chars = {'/'}).endsWith("/issues"):
+      continue
+    var (labels, state) = (newSeq[string](), "")
+    for pair in (if parts.len > 1: parts[1] else: "").split('&'):
+      let (key, value) = (pair.split('=', 1)[0], pair.split('=', 1)[^1].decodeUrl)
+      if key == "labels": labels.add value.split(',')
+      elif key == "state": state = value.toLowerAscii
+    if state != "closed" and (labels.len == 0 or label in labels): return true
+  false
+
+
+func roleSignoff(message: string): string =
+  ## Read role string of last sign-off of message: its role line, up to first comma; empty
+  ##   where message holds no sign-off, or block no role line.
+  let lines = message.splitLines
+  var at = -1
+  for i, line in lines:
+    if line.strip == HEADING_SIGNOFF: at = i
+  if at < 0: return ""
+  for line in lines[at + 1 .. ^1]:
+    if line.startsWith(LABELS_SIGNOFF[Part.Role]):
+      return line[LABELS_SIGNOFF[Part.Role].len .. ^1].split(',')[0].strip
+  ""
+
+
+func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
+  ## Report sign-off from turn that read no open issue of its role (GUIDE.md, Output contract).
+  ##   Request can arrive while delegate works, and reads at start see none of it (#742).
+  ##   Role comes from role line of sign-off; line naming no role string asks nothing here, as
+  ##     `checkSignoff` reads its shape. Coordinator reads label `architect` in its place.
+  ##   Cost: hook sees that read happened, and never that delegate took what it showed.
+  let role = message.roleSignoff
+  if not role.isStringRole: return
+  let label = if role == COORDINATOR: LABEL_QUEUE_COORDINATOR else: role
+  if calls.anyIt(it.isQueueRead(label)): return
+  @[finding(
+    "", 0, "Sign-off follows read of open issues labelled `" & label & "` in its turn, " &
+      "through `mcp__github__list_issues` or `gh issue list`, since request can arrive while " &
+      "delegate works (GUIDE.md, Output contract); got none."
+  )]
+
+
+func reasonStop*(found, unread: openArray[Finding]): string =
   ## Render why `stop` hook refuses message ending turn, one finding to line.
   ##   Message is on screen once hook reads it, so delegate replies with diff of each error
   ##     alone; whole message sent again reads twice (D1 of #570), and so does each line of it.
   ##   Reply passes unread, since `stop_hook_active` is set, so its `-` line refuses nothing.
-  "Mend message that ends this turn (GUIDE.md, Output contract). Reply with a diff of each " &
-    "error alone: one `diff` block, each wrong phrase after `-`, that phrase mended after `+`. " &
-    "Message stands above it, so never send it, a line of it, or its sign-off again:\n" &
-    found.mapIt(it.message).join("\n")
+  ##   Unread queue takes read in place of diff: what waits there can change sign-off, so
+  ##     delegate takes it first and replies with one line naming it (#742).
+  var parts: seq[string]
+  if found.len > 0:
+    parts.add "Mend message that ends this turn (GUIDE.md, Output contract). Reply with a " &
+      "diff of each error alone: one `diff` block, each wrong phrase after `-`, that phrase " &
+      "mended after `+`. Message stands above it, so never send it, a line of it, or its " &
+      "sign-off again:\n" & found.mapIt(it.message).join("\n")
+  if unread.len > 0:
+    parts.add "Read queue before this sign-off stands (GUIDE.md, Output contract): list open " &
+      "issues that line below names, take first what waits there, and reply with one line " &
+      "naming it, and no diff:\n" & unread.mapIt(it.message).join("\n")
+  parts.join("\n")
 
 
 func pathMark*(root, directory_git: string): string =
@@ -1259,6 +1363,8 @@ proc parseTurn*(transcript: string): Turn =
           name: item{"name"}.getStr,
           command: item{"input", "command"}.getStr,
           has_body: item{"input", "body"} != nil,
+          labels: item{"input", "labels"}.getElems.mapIt(it.getStr),
+          state: item{"input", "state"}.getStr.toLowerAscii,
         )
       of "text": text.add item{"text"}.getStr
       else: discard
