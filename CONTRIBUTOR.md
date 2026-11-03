@@ -354,7 +354,9 @@ judges its own pages. `koch drive` gives it in three steps:
    `build/font-faces/control.html` in the project.
 2. The `drive` verb reads each page that the project builds, and the control page, with one
    collector. It writes `build/font-faces/written.json`, in the shape that `font_stacks.nim` in
-   `curator/audit/src/` gives. The control page is page `control`.
+   `curator/audit/src/` gives. Its runs hold every string that a page draws, ASCII included,
+   since most bold that the browser synthesises falls on ASCII. The control page is page
+   `control`.
 3. `koch drive` resolves the font stack of each element against the `cmap` of each font face
    that the page ships. It writes `build/font-faces/found.json`, and gives the verdict.
 
