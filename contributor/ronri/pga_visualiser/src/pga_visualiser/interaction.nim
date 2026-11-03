@@ -132,7 +132,7 @@ const
   PIXELS_MENU_CORNER_FURTHEST* = 103.9
     ## Record furthest any wedge's outer corner sits from menu centre, measured.
     ##   Not derivable here: wedge is as wide as its label, and only render path knows what
-    ##   its face laid that out as.
+    ##   its font face laid that out as.
     ##     Read off drawn rects in browser build; all four labels are fixed, so one number.
     ##   Kept beside constant it justifies, so wider label or longer reach surfaces as number
     ##   no longer clearing `PIXELS_MENU_DISENGAGE`, not as menu closing on wedge.
@@ -592,13 +592,13 @@ func pointMenuHung*(
   ##   Centred `PIXELS_LIFT_MENU_SELECTION` above object it follows; both front-ends hang it here.
   ##   Near edge, moved only as far as keeps whole menu `PIXELS_MARGIN_MENU_SELECTION` inside
   ##   view. Lower bound wins, so menu larger than view keeps its left and top edges inside.
+  ##   Written field by field, never assigned whole: page hangs menu every frame it shows, and
+  ##   object built into `result` is copy on JS backend (read in emitted JS).
   let
     margin = PIXELS_MARGIN_MENU_SELECTION
     half = width_menu / 2
-  ScreenPosition(
-    x: max(margin + half, min(width - margin - half, anchor.x)),
-    y: max(margin + height_menu, min(height - margin, anchor.y - PIXELS_LIFT_MENU_SELECTION)),
-  )
+  result.x = max(margin + half, min(width - margin - half, anchor.x))
+  result.y = max(margin + height_menu, min(height - margin, anchor.y - PIXELS_LIFT_MENU_SELECTION))
 
 
 func toDrag*(choice: DragChoice): Option[DragOperation] =

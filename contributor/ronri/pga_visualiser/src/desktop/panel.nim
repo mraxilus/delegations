@@ -86,9 +86,11 @@ const
   ROWS_OBJECTS_LEAST = 6
     ## Floor on bounded list's height, for window too short to give it more.
     ##   Region smaller than this shows less than one object and scrolls by fractions.
-  TEXT_SCENE_EMPTY: cstring = emptyMessage()
+  TEXT_SCENE_EMPTY: cstring = static(emptyMessage())
     ## Refuse apply for want of operand, in words page refuses it in.
     ##   Folded at compile time: section redraws this every frame scene is empty.
+    ##   `static` folds call to literal before conversion: Nim 2.4.0 refuses `cstring` into
+    ##     string its compile-time evaluator built ("refers to invalid memory").
   MARGIN_MESSAGE = 60.0'f32
     ## Drop outcome this far below window's top, centred across it.
     ##   Same `max(60px, safe-area-inset-top)` page pins its own toast at, and far enough
@@ -1705,8 +1707,8 @@ proc layoutMenu(
   ##   Same `☰`, same three groups, same order as browser's `.top-menu`: save, load, demo.
   ##   Browser hides these because its chip row is one line on phone; desktop follows it so
   ##   reader meeting both meets one arrangement rather than two (repository issue 136).
-  ##   `☰` is U+2630, same character browser's button carries. Interface face merges symbol
-  ##   range it is in, so it draws here without any face being pushed.
+  ##   `☰` is U+2630, same character browser's button carries. Interface font face merges symbol
+  ##   range it is in, so it draws here without any font face being pushed.
   ##   Paths sit above groups rather than beside their buttons: both groups read them, and
   ##   browser has no such field only because its own save and load go through download and
   ##   file picker rather than through file system.

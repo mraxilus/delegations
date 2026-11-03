@@ -1442,9 +1442,10 @@ hanging below the line from shoulder to wrist. That is put back as one newton me
 Nothing else that weight does is put back, so it neither loads the rise nor pulls a hand down.
 
 A free arm gets none of it, and rests with its elbow near straight (`HANG_BEND`, assumed). Rejected:
-`ELBOW_DOWN` on a free arm. It twists a hanging arm forty degrees and swings it twenty forward. The
-engine spring gives twist next to nothing, because an arm is thin about its own length. The forearm
-then points at the partner, so the arms of a free couple cross.
+`ELBOW_DOWN` on a free arm. It twists each hanging arm 29 degrees, where the law of a free couple at
+rest allows 15. It swings the arm 2 degrees forward, and the hand hangs 22 mm further off plumb. The
+engine spring gives twist next to nothing, because an arm is thin about its own length. Measured
+2026-11-03 by a probe outside the tree, against a twist of 0 without it.
 
 Verified by `test_rigid.nim`. A free couple at rest hang every arm near plumb, elbow near straight,
 and untwisted. No arm is within its own thickness of the other's. Red first.
@@ -1562,8 +1563,9 @@ down onto the head through the second half of every whole turn.
 
 Facing, a hand over the crown is a hold at some other height, as a hand under its band is
 (`FACING`). It has five centimetres of slack over the top of the `Torso` band (`OVER`, assumed).
-Wound arms press the hands up against the forty newtons of the lift. The same-name chain come
-round to face to face sat at 1.37 to 1.39 m, against 1.35.
+Wound arms press the hands up against the forty newtons of the lift. Held low, the plans carry the
+joined hands up to 1.361 m, 11 mm over 1.35 (Body rig). The same-name chain come round to face to
+face carries its first hand at 1.04 m. Read 2026-11-03 from the kept readings of the report.
 
 Asked at a lower level, the hands rise from where they settled, over the first quarter turn of
 twist. That rise is whole from the rest for a hold that rests Face-to-back.

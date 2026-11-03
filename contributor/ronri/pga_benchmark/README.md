@@ -112,13 +112,12 @@ binary. `drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to
 Chromium executable, and `drive` uses that one instead. `types` and `drive` need node and npm on
 `PATH`, and `nim r tools/build.nim system` names every system package.
 
-The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches and builds it
-once for each machine (`GUIDE.md`, Toolchain). The record says which characters of `pga` need
-it.
+The pin is **Nim 2.4.0**, the first release that lexes each character of `pga`. Koch fetches it
+once for each machine (`GUIDE.md`, Toolchain).
 
 Run each verb of `tools/build.nim` with the `bin/` of the pin first on `PATH`, as koch does
-(`GUIDE.md`, Toolchain). The page `docket` holds a script that `nim js` emits, and a release of
-Nim emits another script. Then `drive` finds that the page changed since it was published.
+(`GUIDE.md`, Toolchain). The page `docket` holds a script that `nim js` emits, and another release
+of Nim emits another script. Then `drive` finds that the page changed since it was published.
 
 ## Layout
 

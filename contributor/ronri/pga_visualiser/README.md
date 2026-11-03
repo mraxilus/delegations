@@ -27,7 +27,7 @@ and the sandwich that are built on them.
 ```sh
 nim r koch check                                 # repository root: every check a pull request runs
 nim r koch test contributor/ronri/pga_visualiser  # this project alone, three configurations
-nim r tools/build.nim assets                     # this project: fetch every face, once
+nim r tools/build.nim assets                     # this project: fetch every font face, once
 nim r tools/build.nim web                        # this project: build/pga_visualiser.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
 nim r tools/build.nim desktop                    # this project: binaries/pga_visualiser
@@ -35,9 +35,8 @@ nim r tools/build.nim driven                     # this project: drive the deskt
 nim r tools/build.nim system                     # this project: what to install first
 ```
 
-It builds on **Nim at commit `27763495b`**, and not on a release. Nothing has to be installed,
-because koch resolves the pin (`GUIDE.md`, Toolchain). See Dependencies and vendoring in
-`PROVENANCE.md` for why a release will not serve.
+It builds on **Nim 2.4.0**. Nothing has to be installed, because koch resolves the pin (`GUIDE.md`,
+Toolchain). See Dependencies and vendoring in `PROVENANCE.md` for why no earlier release will serve.
 
 System packages are declared in `tools/build.nim`, and printed by its `system` verb. So this README
 names no list that could drift from the one the build reads (issue 60):
@@ -83,16 +82,16 @@ self-contained `build/pga_visualiser.html` that opens from `file://`.
 That needs Node and npm alongside Nim. `npm ci` restores the pinned dev dependencies into
 `node_modules/`, which is never committed.
 
-`assets` copies every face that the two front-ends draw with out of the shared asset store of
-the repository. Those are the faces the page embeds, and the faces the desktop binary loads.
-`koch fetch-assets` fills that store, and checks it against `curator/audit/src/assets.nim`.
-Which faces this project wants is in `tools/build.nim`, and what bytes each one is belongs to
+`assets` copies every font face that the two front-ends draw with out of the shared asset store of
+the repository. Those are the font faces the page embeds, and the font faces the desktop binary
+loads. `koch fetch-assets` fills that store, and checks it against `curator/audit/src/assets.nim`.
+Which font faces this project wants is in `tools/build.nim`, and what bytes each one is belongs to
 the store.
 
 Both front-ends draw three roles from three families. **Noto Serif** takes titles, **Noto Sans**
 takes body and controls, and **Commit Mono** takes code and any text whose columns carry meaning.
 
-Two Noto faces supply the operators and symbols that neither of the other two carries. They are
+Two Noto font faces supply the operators and symbols that neither of the other two carries. They are
 merged by unicode-range in the page, and into one atlas on the desktop.
 
 Commit Mono splits its ligatures. Most ride on `calt` and draw unasked. The arrows and comparisons
@@ -162,8 +161,8 @@ The page has been built and looked at, and its type surface is checked. A Playwr
 its checks over held keys, the wheel, mouse pan and touch. See Driven checks in `PROVENANCE.md`.
 
 The desktop application has been built, and one frame of it looked at. Its own scripted runs are
-driven headless under Xvfb, and all pass. One of them is driven with no face installed at all, and
-one with the scene filled to capacity. SDL3 arrives as a source build rather than a package, and
+driven headless under Xvfb, and all pass. One of them is driven with no font face installed at all,
+and one with the scene filled to capacity. SDL3 arrives as a source build rather than a package, and
 `drive` fetches and builds it rather than skips the runs that need it.
 
 Unreviewed by a human. Nothing here has been read line by line. No human has driven either

@@ -54,7 +54,8 @@ export async function driveBufferCovered(browser: Browser, url: string): Promise
   await advanceFrames(page, 2);
   const measures = await page.evaluate((): Measures | null => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement | null;
-    const context = canvas?.getContext('webgl') ?? null;
+    // Either version: page asks for WebGL2 first, and canvas answers only kind it holds.
+    const context = canvas?.getContext('webgl2') ?? canvas?.getContext('webgl') ?? null;
     if (canvas === null || context === null) return null;
     const viewport = context.getParameter(context.VIEWPORT) as Int32Array;
     return {

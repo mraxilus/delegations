@@ -32,10 +32,15 @@ const canvas = elementById<HTMLCanvasElement>('gl');
 const OPTIONS_CONTEXT: WebGLContextAttributes = {
   antialias: window.should_antialias ?? true, alpha: false,
 };
-const context_webgl = (canvas.getContext('webgl', OPTIONS_CONTEXT)
+// **WebGL2 first, WebGL1 after.** Per-fragment depth and instancing are core in WebGL2, and
+//   extensions in WebGL1, where phone's WebGL1 lacked `EXT_frag_depth` (#743). WebGL1 stays,
+//   for browser that offers no WebGL2.
+const context_two = canvas.getContext('webgl2', OPTIONS_CONTEXT);
+const context_webgl = context_two ?? (canvas.getContext('webgl', OPTIONS_CONTEXT)
   || canvas.getContext('experimental-webgl', OPTIONS_CONTEXT)) as WebGLRenderingContext | null;
 if (context_webgl === null) throw new Error('WebGL unavailable; page cannot draw.');
-const gl: WebGLRenderingContext = context_webgl;
+// Every call both versions share goes through WebGL1's surface, which WebGL2 carries whole.
+const gl = context_webgl as WebGLRenderingContext;
 
 // Fan one point record into camera-facing quad at its own radius.
 //   Sibling copy of `mesh.radiusDrawnAt` and of GLSL 3.30 source in `renderer.nim`;
@@ -91,7 +96,6 @@ const SOURCE_VERTEX_POINT = `
 //   toward world's up, turned into camera's basis by vertex stage, over `uAmbient` floor.
 //   Sibling of GLSL 3.30 source in `renderer.nim`.
 const SOURCE_FRAGMENT_POINT = `
-  #extension GL_EXT_frag_depth : enable
   precision mediump float;
   varying highp float vDepth;
   uniform highp float uDepthNear;
@@ -104,7 +108,7 @@ const SOURCE_FRAGMENT_POINT = `
   void main() {
     float reach = length(vCorner);
     if (reach > 1.0) discard;
-  #ifdef GL_EXT_frag_depth
+  #ifdef DEPTH_FRAGMENT
     gl_FragDepthEXT = 0.5*log2(vDepth/uDepthNear)*uDepthLog;
   #endif
     float edge = clamp((1.0 - reach)*vRadiusPixels, 0.0, 1.0);
@@ -115,14 +119,13 @@ const SOURCE_FRAGMENT_POINT = `
 `;
 // Plain colour pass-through, every veil program's fragment stage.
 const SOURCE_FRAGMENT = `
-  #extension GL_EXT_frag_depth : enable
   precision mediump float;
   varying highp float vDepth;
   uniform highp float uDepthNear;
   uniform highp float uDepthLog;
   varying vec4 vColor;
   void main() {
-  #ifdef GL_EXT_frag_depth
+  #ifdef DEPTH_FRAGMENT
     gl_FragDepthEXT = 0.5*log2(vDepth/uDepthNear)*uDepthLog;
   #endif
     gl_FragColor = vColor;
@@ -135,7 +138,7 @@ const SOURCE_FRAGMENT = `
 function compileShader(type: GLenum, src: string): WebGLShader {
   const shader = gl.createShader(type);
   if (shader === null) throw new Error('Shader not created.');
-  gl.shaderSource(shader, src);
+  gl.shaderSource(shader, preludeOf(type) + src);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     throw new Error(gl.getShaderInfoLog(shader) ?? 'Shader failed to compile.');
@@ -154,13 +157,29 @@ function createdBuffer(): WebGLBuffer {
   if (made === null) throw new Error('Buffer not created.');
   return made;
 }
-// Ask for per-fragment depth before any shader compiles, so `#extension` in each fragment
-//   source finds it. Without it depth stays what clip position gives, linear in projective
+// **One source, two dialects.** Each source is written in GLSL ES 1.00, and prelude maps its
+//   words onto 3.00 under WebGL2. `DEPTH_FRAGMENT` stands for per-fragment depth, core in
+//   3.00 and `EXT_frag_depth` in 1.00; sources never name extension's own macro, since names
+//   that open `GL_` are driver's, and define none in 3.00.
+//   Without per-fragment depth, depth stays what clip position gives, linear in projective
 //   depth, and far field's fault returns; see `camera.depthClip`.
 //   Clip position itself is never rewritten with logarithm: clipper interpolates clip
 //   coordinates linearly, so fan corner behind eye, mapped far past far plane, had its
 //   triangle cut beside its centre and plane's disc ended at hard chord under camera.
-gl.getExtension('EXT_frag_depth');
+const PRELUDE_VERTEX_TWO = '#version 300 es\n#define attribute in\n#define varying out\n';
+const PRELUDE_FRAGMENT_TWO = '#version 300 es\n#define varying in\n#define DEPTH_FRAGMENT 1\n'
+  + '#define gl_FragDepthEXT gl_FragDepth\nout highp vec4 colour_fragment;\n'
+  + '#define gl_FragColor colour_fragment\n';
+const PRELUDE_FRAGMENT_ONE = '#extension GL_EXT_frag_depth : enable\n'
+  + '#ifdef GL_EXT_frag_depth\n#define DEPTH_FRAGMENT 1\n#endif\n';
+function preludeOf(type: GLenum): string {
+  if (context_two !== null) {
+    return type === gl.VERTEX_SHADER ? PRELUDE_VERTEX_TWO : PRELUDE_FRAGMENT_TWO;
+  }
+  return type === gl.VERTEX_SHADER ? '' : PRELUDE_FRAGMENT_ONE;
+}
+// Asked before any shader compiles, so WebGL1's `#extension` finds it.
+if (context_two === null) gl.getExtension('EXT_frag_depth');
 const program = createdProgram();
 gl.attachShader(program, compileShader(gl.VERTEX_SHADER, SOURCE_VERTEX_POINT));
 gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, SOURCE_FRAGMENT_POINT));
@@ -312,7 +331,6 @@ const SOURCE_VERTEX_RIBBON = `
 //   which is what lets lattice line be one record instead of chain of fade pieces.
 //   Record with fog zero passes through untouched, which is every scene ribbon.
 const SOURCE_FRAGMENT_RIBBON = `
-  #extension GL_EXT_frag_depth : enable
   precision mediump float;
   varying highp float vDepth;
   uniform highp float uDepthNear;
@@ -324,7 +342,7 @@ const SOURCE_FRAGMENT_RIBBON = `
   uniform highp float uFogFull;
   uniform highp float uFogGone;
   void main() {
-  #ifdef GL_EXT_frag_depth
+  #ifdef DEPTH_FRAGMENT
     gl_FragDepthEXT = 0.5*log2(vDepth/uDepthNear)*uDepthLog;
   #endif
     highp float fade = 1.0 - clamp(
@@ -340,14 +358,31 @@ gl.linkProgram(program_ribbon);
 if (!gl.getProgramParameter(program_ribbon, gl.LINK_STATUS)) {
   throw new Error(gl.getProgramInfoLog(program_ribbon) ?? 'Program failed to link.');
 }
-// Require instancing, extension on WebGL1 and universally shipped.
+// Require instancing, core in WebGL2, and extension on WebGL1 that every WebGL1 ships.
 //   Context without it gets same loud failure context without WebGL gets, not silent
 //   picture with no lines.
-const extension_instanced = gl.getExtension('ANGLE_instanced_arrays');
-if (extension_instanced === null) {
-  throw new Error('ANGLE_instanced_arrays is unavailable');
+interface Instancing {
+  divisor(index: GLuint, divisor: GLuint): void;
+  draw(mode: GLenum, first: GLint, count: GLsizei, instances: GLsizei): void;
 }
-const instanced: ANGLE_instanced_arrays = extension_instanced;
+function instancingFound(): Instancing {
+  if (context_two !== null) {
+    const two = context_two;
+    return {
+      divisor: (index, divisor) => two.vertexAttribDivisor(index, divisor),
+      draw: (mode, first, count, instances) =>
+        two.drawArraysInstanced(mode, first, count, instances),
+    };
+  }
+  const extension = gl.getExtension('ANGLE_instanced_arrays');
+  if (extension === null) throw new Error('ANGLE_instanced_arrays is unavailable');
+  return {
+    divisor: (index, divisor) => extension.vertexAttribDivisorANGLE(index, divisor),
+    draw: (mode, first, count, instances) =>
+      extension.drawArraysInstancedANGLE(mode, first, count, instances),
+  };
+}
+const instanced = instancingFound();
 const ribbon_attributes = {
   corner: gl.getAttribLocation(program_ribbon, 'aCorner'),
   tail: gl.getAttribLocation(program_ribbon, 'aTail'),
@@ -393,7 +428,7 @@ gl.bufferData(gl.ARRAY_BUFFER,
 //   axes at once, padded by 0.002, `mesh.MARGIN_BOX_RIM`.
 //   Floor then rises to vanishing line, below which no ray meets plane in front of eye.
 //   Corner is box's middle plus corner scaled by half extents, turned back, so quad is box.
-//   Depth is fragment's own; without `EXT_frag_depth` disc rests at its centre's
+//   Depth is fragment's own; on WebGL1 without `EXT_frag_depth` disc rests at its centre's
 //   logarithmic depth.
 //   Not fan of corners on plane itself: clipper's sliver of corner behind eye grazes to nothing.
 const SOURCE_VERTEX_DISC = `
@@ -482,7 +517,6 @@ const SOURCE_VERTEX_DISC = `
 //   it is view depth. Discarded where ray runs along plane, meets it behind eye, or lands
 //   past rim. Nearer than near plane is still drawn, at buffer's floor.
 const SOURCE_FRAGMENT_DISC = `
-  #extension GL_EXT_frag_depth : enable
   #ifdef GL_FRAGMENT_PRECISION_HIGH
   precision highp float;
   #else
@@ -512,7 +546,7 @@ const SOURCE_FRAGMENT_DISC = `
     float first = dot(hit, vArmFirst)/dot(vArmFirst, vArmFirst);
     float second = dot(hit, vArmSecond)/dot(vArmSecond, vArmSecond);
     if (first*first + second*second > 1.0) discard;
-  #ifdef GL_EXT_frag_depth
+  #ifdef DEPTH_FRAGMENT
     gl_FragDepthEXT = clamp(0.5*log2(max(depth, uDepthNear)/uDepthNear)*uDepthLog, 0.0, 1.0);
   #endif
     gl_FragColor = vColor;
@@ -775,7 +809,7 @@ function drawRibbons(
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer_ribbon_corners);
   gl.enableVertexAttribArray(ribbon_attributes.corner);
   gl.vertexAttribPointer(ribbon_attributes.corner, 2, gl.FLOAT, false, 8, 0);
-  instanced.vertexAttribDivisorANGLE(ribbon_attributes.corner, 0);
+  instanced.divisor(ribbon_attributes.corner, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, handle_buffer);
   const base = first * STRIDE_RIBBON;
   for (const [attribute, floats, offset] of ATTRIBUTE_LAYOUT([
@@ -785,14 +819,14 @@ function drawRibbons(
   ])) {
     gl.enableVertexAttribArray(attribute);
     gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, STRIDE_RIBBON, base + offset);
-    instanced.vertexAttribDivisorANGLE(attribute, 1);
+    instanced.divisor(attribute, 1);
   }
-  instanced.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, span);
+  instanced.draw(gl.TRIANGLES, 0, 6, span);
   // Divisors are context state, not program state: left at one they would corrupt.
   //   plain program's reads of these same attribute indices next draw.
   for (const attribute of [ribbon_attributes.tail, ribbon_attributes.head, ribbon_attributes.width,
     ribbon_attributes.fog, ribbon_attributes.tint_tail, ribbon_attributes.tint_head]) {
-    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    instanced.divisor(attribute, 0);
     gl.disableVertexAttribArray(attribute);
   }
 }
@@ -814,7 +848,7 @@ function drawRings(count: number, count_over: number, is_overlay: boolean) {
   ])) {
     gl.enableVertexAttribArray(attribute);
     gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, 24, offset);
-    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    instanced.divisor(attribute, 0);
   }
   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.ring);
   const base = first * STRIDE_RING;
@@ -826,13 +860,13 @@ function drawRings(count: number, count_over: number, is_overlay: boolean) {
   for (const [attribute, floats, offset] of records) {
     gl.enableVertexAttribArray(attribute);
     gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, STRIDE_RING, base + offset);
-    instanced.vertexAttribDivisorANGLE(attribute, 1);
+    instanced.divisor(attribute, 1);
   }
-  instanced.drawArraysInstancedANGLE(gl.TRIANGLES, 0, COUNT_CORNERS_RING, span);
+  instanced.draw(gl.TRIANGLES, 0, COUNT_CORNERS_RING, span);
   // Divisors are context state, not program state: left at one they would corrupt.
   //   plain program's reads of these same attribute indices next draw.
   for (const [attribute] of records) {
-    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    instanced.divisor(attribute, 0);
     gl.disableVertexAttribArray(attribute);
   }
   for (const attribute of [ring_attributes.arc, ring_attributes.corner]) {
@@ -854,17 +888,17 @@ function drawVeilInstances(
   gl.enableVertexAttribArray(corner_attribute);
   gl.vertexAttribPointer(corner_attribute, floats_corner, gl.FLOAT, false,
     floats_corner * 4, 0);
-  instanced.vertexAttribDivisorANGLE(corner_attribute, 0);
+  instanced.divisor(corner_attribute, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, handle_records);
   const base = first * stride;
   for (const [attribute, floats, offset] of record_attributes) {
     gl.enableVertexAttribArray(attribute);
     gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, stride, base + offset);
-    instanced.vertexAttribDivisorANGLE(attribute, 1);
+    instanced.divisor(attribute, 1);
   }
-  instanced.drawArraysInstancedANGLE(gl.TRIANGLES, 0, count_corners, count);
+  instanced.draw(gl.TRIANGLES, 0, count_corners, count);
   for (const [attribute] of record_attributes) {
-    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    instanced.divisor(attribute, 0);
     gl.disableVertexAttribArray(attribute);
   }
 }
@@ -916,7 +950,7 @@ function drawPoints(count: number, count_over: number, is_overlay: boolean) {
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer_point_corners);
   gl.enableVertexAttribArray(point_attributes.corner);
   gl.vertexAttribPointer(point_attributes.corner, 2, gl.FLOAT, false, 8, 0);
-  instanced.vertexAttribDivisorANGLE(point_attributes.corner, 0);
+  instanced.divisor(point_attributes.corner, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.point);
   const base = first * STRIDE_POINT;
   const records: Array<[number, number, number]> = [
@@ -926,11 +960,11 @@ function drawPoints(count: number, count_over: number, is_overlay: boolean) {
   for (const [attribute, floats, offset] of records) {
     gl.enableVertexAttribArray(attribute);
     gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, STRIDE_POINT, base + offset);
-    instanced.vertexAttribDivisorANGLE(attribute, 1);
+    instanced.divisor(attribute, 1);
   }
-  instanced.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP, 0, COUNT_CORNERS_POINT, span);
+  instanced.draw(gl.TRIANGLE_STRIP, 0, COUNT_CORNERS_POINT, span);
   for (const [attribute] of records) {
-    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    instanced.divisor(attribute, 0);
     gl.disableVertexAttribArray(attribute);
   }
   gl.disableVertexAttribArray(point_attributes.corner);

@@ -22,10 +22,10 @@ import pga
 const
   SAMPLES = 256  ## Seeded samples each law is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
-  DIMENSIONS_SWEPT = 4
+  DIMENSIONS_SWEPT = 5
     ## Highest dimension laws hold each product at every pair of types at; past it, vector pairs
-    ##   with each type, either side. Compiler takes about 0.3 MiB per term that form emits, and
-    ##   every pair at rga5d emits some 20 000 terms, whose build peaks at 7 158 MiB.
+    ##   with each type, either side. Every pair at cga6d builds and runs in 18 minutes, peaking
+    ##   at 6 106 MiB; vector pairs there take 2 minutes and 1 196 MiB.
   ALIGNMENTS_NAMED = [(3, 8), (4, 32), (5, 8), (6, 16), (8, 64), (10, 16), (16, 64)]
     ## Count of coefficients of each named basis-set type, rga3d to cga5d, aligned at 64 bits.
   OPERATORS_MAPS = ["∙", "∘", "/", "\\", "~", "~∘", "★", "☆", "⊖", "|∙²", "|∘²"]
