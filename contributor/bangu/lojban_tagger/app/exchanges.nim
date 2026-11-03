@@ -121,6 +121,8 @@
 ##     Rejected: `std/hashes`, whose values change between versions; `std/sha1`, deprecated.
 ##     Cost: each exchange file of service holds whole request body, its system text and word list
 ##       included, beside reply, where stamp alone would name it.
+##     Cost: `tools/examples.nim` writes it and `suggester` reads it, so rule of data asks for
+##       Protocol Buffers (CONTRIBUTOR.md, Data); ruling D3 on #779 keeps text until #789 ports it.
 ##   Refusal of exchange file ends in what faulty piece holds, and request of page holds whole URL,
 ##     so echo shows URL each line names by scheme, host, port and path alone (`dropSecrets`):
 ##     token in user part, query or fragment never reaches report, as test "refusal of malformed
