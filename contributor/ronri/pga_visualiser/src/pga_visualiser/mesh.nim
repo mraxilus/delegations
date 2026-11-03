@@ -516,16 +516,22 @@ func radiansPerPixel*(scale: DrawScale): float =
   2.0 * scale.tangentHalfView / float(max(scale.heightPixels, 1))
 
 
+func worldPerPixelAtDepth*(depth: float, scale: DrawScale): float =
+  ## Measure how much world distance one screen pixel spans at `depth` along sight axis.
+  ##   For caller already holding depth: marker states rails' gap where line enters view.
+  ##   Clamped at near plane: depth goes negative behind eye, and negative half-width
+  ##   folds ribbon over on itself.
+  2.0 * max(depth, scale.depthNear) * scale.tangentHalfView / float(max(scale.heightPixels, 1))
+
+
 func worldPerPixelAt*(place: Position, scale: DrawScale): float =
   ## Measure how much world distance one screen pixel spans at `place`'s depth.
   ##   Turns width or clearance stated in pixels into world offset, wherever anchored.
   ##     Every ribbon's half-width and every marker's clearance come through here.
   ##   Depth along sight axis, not distance from eye: perspective divides by former, and
   ##   two differ by cosine of off-axis angle, over percent even near middle of frame.
-  ##   Clamped at near plane: depth goes negative behind eye, and negative half-width
-  ##   folds ribbon over on itself.
-  let depth = max(dot(place - scale.eye, scale.forward), scale.depthNear)
-  2.0 * depth * scale.tangentHalfView / float(max(scale.heightPixels, 1))
+  ##   Clamped at near plane, as `worldPerPixelAtDepth` is.
+  worldPerPixelAtDepth(dot(place - scale.eye, scale.forward), scale)
 
 
 const
