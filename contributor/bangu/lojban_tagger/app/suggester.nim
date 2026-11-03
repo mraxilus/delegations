@@ -589,7 +589,7 @@ proc main(): int =
   #   service.
   if not command.is_url:
     let given = command.argument.readTagGiven
-    if given.isSome and not given.get.is_suggested:
+    if given.isSome and not given.get.is_kept:
       stderr.writeLine given.get.explain
       return 1
     if given.isSome:
@@ -624,8 +624,8 @@ proc main(): int =
     notes.add fetched.notes
     if not fetched.is_read:
       for note in notes: stderr.writeLine note
-      stderr.writeLine Suggestion(
-        is_suggested: false,
+      stderr.writeLine Outcome(
+        is_kept: false,
         failure: fetched.failure,
         detail: fetched.detail,
       ).explain
@@ -641,10 +641,10 @@ proc main(): int =
     answer =
       if exchanged.is_replied: settings.service.readReply(exchanged.reply)
       else:
-        Answer(suggestions: @[
-          Suggestion(is_suggested: false, failure: exchanged.failure, detail: exchanged.detail),
+        Answer(outcomes: @[
+          Outcome(is_kept: false, failure: exchanged.failure, detail: exchanged.detail),
         ])
-    kept = answer.suggestions.gismu
+    kept = answer.outcomes.gismu
   if exchanged.is_replied and exchanged.note.len > 0: notes.add exchanged.note
   for note in notes: stderr.writeLine note
   stderr.write answer.toReport(passage, settings.model)

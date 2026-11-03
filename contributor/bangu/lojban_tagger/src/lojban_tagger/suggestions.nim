@@ -13,7 +13,7 @@
 ##   | readReply          | read reply into answer: each tag checked, or failure named     |
 ##   | isAnswered         | reply holds completion model produced, which record replays    |
 ##   | Answer             | each tag read, in order, tags past cap counted, model named    |
-##   | Suggestion         | gismu of one tag checked against lists, or why none            |
+##   | Outcome            | gismu of one tag checked against lists, or why none            |
 ##   | gismu              | gismu kept, in order, each once: what `suggester` prints       |
 ##   |--------------------|----------------------------------------------------------------|
 ##
@@ -197,10 +197,10 @@ type
     Duplicate  ## Tag names gismu earlier tag kept; detail is word.
     Long  ## Text given as tag holds more than `COUNT_WORDS_MAX` words; detail is count.
 
-  Suggestion* = object
+  Outcome* = object
     ## Define outcome of one tag: gismu checked against lists, or why none; one refused alone
     ##   stands for reply, page, exchange or text given failing whole.
-    case is_suggested*: bool  ## Tag was suggested and checked.
+    case is_kept*: bool  ## Tag was checked against lists and kept.
     of true:
       tag*: Tag
         ## Tag kept: one gismu where answer names it, whole tag where text given reads as one;
@@ -220,9 +220,9 @@ type
         ##   made, since escapes lengthen detail.
 
   Answer* = object
-    ## Define outcome of asking for tags: one suggestion per tag read, in order, tags past cap
+    ## Define outcome of asking for tags: one outcome per tag read, in order, tags past cap
     ##   counted, and model named once.
-    suggestions*: seq[Suggestion]
+    outcomes*: seq[Outcome]
       ## One per tag read, in order of answer: gismu kept, or refused naming its position; one
       ##   refused alone, naming none, where reply, page or exchange fails whole.
     count_cut*: int  ## Tags answer held past `COUNT_TAGS_MAX`, never read.
@@ -599,19 +599,19 @@ func toPassage*(text: string, url = "", is_page_cut = false): Passage =
   result.is_cut = result.text.len < repaired.len
 
 
-func readTagGiven*(text: string): Option[Suggestion] =
+func readTagGiven*(text: string): Option[Outcome] =
   ## Read text given as tag where it holds `BYTES_ELEMENT_MAX` bytes or fewer and reads as one;
   ##   `none` sends it to service, as Lojban prose, English and cmavo alone go.
   ##   Tag past `COUNT_WORDS_MAX` words fails as `Long`, named by count, since 64 bytes hold lujvo
   ##     of 18 words; tag within it is kept whole, so `gismu` gives each of its gismu once, cmavo
   ##     left out. Gloss stays empty, as no service is asked.
-  if text.len > BYTES_ELEMENT_MAX: return none(Suggestion)
+  if text.len > BYTES_ELEMENT_MAX: return none(Outcome)
   let reading = text.readTag
-  if not reading.is_tag: return none(Suggestion)
+  if not reading.is_tag: return none(Outcome)
   let count = reading.tag.words.len
   if count > COUNT_WORDS_MAX:
-    return some(Suggestion(is_suggested: false, failure: Failure.Long, detail: $count))
-  some(Suggestion(is_suggested: true, tag: reading.tag))
+    return some(Outcome(is_kept: false, failure: Failure.Long, detail: $count))
+  some(Outcome(is_kept: true, tag: reading.tag))
 
 
 
@@ -1121,13 +1121,13 @@ func toJSON(text: string): Option[JsonNode] =
 
 func fail(
   failure: Failure, detail: string, reason = "", position = none(int), is_past_cap = false
-): Suggestion =
-  ## Build suggestion that failed, detail made printable within `RUNES_SHOWN`, reason made
+): Outcome =
+  ## Build outcome that failed, detail made printable within `RUNES_SHOWN`, reason made
   ##   printable whole; `position` names tag of answer, and `is_past_cap` marks word never read.
   ##   Reader bounds reason, since word reaches it at `BYTES_ELEMENT_MAX` bytes at most. Cap of
   ##     its bytes cuts nothing, since repair never makes more characters than bytes.
-  Suggestion(
-    is_suggested: false,
+  Outcome(
+    is_kept: false,
     failure: failure,
     detail: detail.toPrintable(RUNES_SHOWN),
     position: position,
@@ -1137,11 +1137,11 @@ func fail(
 
 
 func failWhole(failure: Failure, detail: string): Answer =
-  ## Build answer of reply failing whole: one suggestion that failed, naming no tag.
-  Answer(suggestions: @[fail(failure, detail)])
+  ## Build answer of reply failing whole: one outcome that failed, naming no tag.
+  Answer(outcomes: @[fail(failure, detail)])
 
 
-func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Suggestion =
+func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Outcome =
   ## Read tag at `position` of answer as one gismu of list: object holding string `gismu`, word
   ##   within its cap, read through `readTag` as one listed gismu no earlier tag kept; gloss made
   ##   printable, empty where no string.
@@ -1159,8 +1159,8 @@ func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Sugges
   if not reading.is_tag or reading.tag.words.len > 1:
     return fail(Failure.Word, element, position = at)  # Cmavo of list, or lujvo.
   if reading.tag.words[0] in kept: return fail(Failure.Duplicate, element, position = at)
-  Suggestion(
-    is_suggested: true,
+  Outcome(
+    is_kept: true,
     tag: reading.tag,
     gloss: item{"gloss"}.getStr.splitWhitespace.join(" ").toPrintable(RUNES_SHOWN),
   )
@@ -1185,9 +1185,9 @@ func readAnswer(text, model: string): Answer =
   )
   var kept: seq[Word]
   for i in 0..<min(items.len, COUNT_TAGS_MAX):
-    let suggestion = items[i].readTagAnswer(i + 1, kept)
-    if suggestion.is_suggested: kept.add suggestion.tag.words[0]
-    result.suggestions.add suggestion
+    let outcome = items[i].readTagAnswer(i + 1, kept)
+    if outcome.is_kept: kept.add outcome.tag.words[0]
+    result.outcomes.add outcome
 
 
 func readError(status: int, node: JsonNode): Answer =
@@ -1282,13 +1282,13 @@ func readReply*(service: Service, reply: Reply): Answer {.raises: [].} =
   of Service.OpenRouter, Service.Chat: readChat(reply.status, parsed)
 
 
-func gismu*(suggestions: openArray[Suggestion]): seq[Word] =
+func gismu*(outcomes: openArray[Outcome]): seq[Word] =
   ## Read gismu of each tag kept, in order, each once, cmavo left out: what `suggester` prints,
   ##   one to line; empty where none is kept, so run exits 1.
   ##   Tag of answer holds one gismu, and text given whole tag, so one rule serves both.
-  for suggestion in suggestions:
-    if not suggestion.is_suggested: continue
-    for w in suggestion.tag.gismu:
+  for outcome in outcomes:
+    if not outcome.is_kept: continue
+    for w in outcome.tag.gismu:
       if w notin result: result.add w
 
 
@@ -1333,7 +1333,7 @@ func isAnswered*(service: Service, reply: Reply): bool {.raises: [].} =
 
 #[ Report ]#
 
-func explain*(suggestion: Suggestion): string {.raises: [].} =
+func explain*(outcome: Outcome): string {.raises: [].} =
   ## Render why no gismu was kept, ending in offending value: tag of answer named by position, or
   ##   reply, page, exchange or text given failing whole.
   ##   `Word` ends in `reason`, `explain` of reading (`commands.nim`) kept when failure was made,
@@ -1349,9 +1349,9 @@ func explain*(suggestion: Suggestion): string {.raises: [].} =
     if reason.len > 0: heading & ". " & reason else: heading & "; got `" & detail & "`."
 
   let
-    detail = suggestion.detail
-    tag = if suggestion.position.isSome: "Tag " & $suggestion.position.get else: "Tag"
-  case suggestion.failure
+    detail = outcome.detail
+    tag = if outcome.position.isSome: "Tag " & $outcome.position.get else: "Tag"
+  case outcome.failure
   of Failure.Network: "Service or page should answer; got `" & detail & "`."
   of Failure.Recording: "Recording should hold this request; got `" & detail & "`."
   of Failure.Page: "Page should give text; got `" & detail & "`."
@@ -1360,12 +1360,12 @@ func explain*(suggestion: Suggestion): string {.raises: [].} =
   of Failure.Truncated: "Answer should end before its limit; lower effort or shorten " &
       "passage; got `" & detail & "`."
   of Failure.Malformed:
-    if suggestion.position.isNone: "Reply should hold answer of schema; got `" & detail & "`."
+    if outcome.position.isNone: "Reply should hold answer of schema; got `" & detail & "`."
     else: tag & " should be object holding string `gismu`; got `" & detail & "`."
   of Failure.Word:
-    if suggestion.is_past_cap:
+    if outcome.is_past_cap:
       tag & " should hold at most " & $BYTES_ELEMENT_MAX & " bytes; got `" & detail & "`."
-    else: explainReason(tag & " should be one gismu of list", suggestion.reason, detail)
+    else: explainReason(tag & " should be one gismu of list", outcome.reason, detail)
   of Failure.Duplicate: tag & " should name gismu no earlier tag kept; got `" & detail & "`."
   of Failure.Long: "Tag should hold at most " & $COUNT_WORDS_MAX & " words; got `" & detail & "`."
 
@@ -1384,18 +1384,18 @@ func toReport*(answer: Answer, passage: Passage, model_asked: string): string =
   if passage.is_cut:
     result.add "Passage held `" & $passage.count_bytes & "` bytes; model read first `" &
         $BYTES_PASSAGE_MAX & "`.\n"
-  for suggestion in answer.suggestions:
-    if not suggestion.is_suggested: result.add suggestion.explain & "\n"
+  for outcome in answer.outcomes:
+    if not outcome.is_kept: result.add outcome.explain & "\n"
   if answer.count_cut > 0:
     result.add "Answer held `" & $answer.count_cut & "` tags past first `" & $COUNT_TAGS_MAX &
         "`; tool never read them.\n"
-  var is_kept = false
-  for suggestion in answer.suggestions:
-    if not suggestion.is_suggested: continue
-    result.add "Service suggests `" & suggestion.tag.toTanru & "`, glossed `" & suggestion.gloss &
+  var found_kept = false
+  for outcome in answer.outcomes:
+    if not outcome.is_kept: continue
+    result.add "Service suggests `" & outcome.tag.toTanru & "`, glossed `" & outcome.gloss &
         "`.\n"
-    is_kept = true
-  if not is_kept: return
+    found_kept = true
+  if not found_kept: return
   result.add "Answer came from `" & answer.model & "`"
   if answer.model != model_asked.toPrintable(RUNES_SHOWN):
     result.add ", where `" & model_asked.toPrintable(RUNES_SHOWN) & "` was asked"
