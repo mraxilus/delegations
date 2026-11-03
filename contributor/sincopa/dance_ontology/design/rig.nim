@@ -7,9 +7,9 @@
 ##     `pages` run would pay for it.  `rig_page` folds it into page, which is
 ##     published as single document and so may leave nothing to fetch.  Its jobs share one
 ##     queue with modelled's (`design/record`).
-##   Sweep over crown that walk stops short of all it asks, by whatever stopped it, is planned
-##     way where that holds further (`seen.shown`), and says so (`planned`): it keeps no moment
-##     that gave, and its last moment stands.
+##   Each sweep is planned way, at band of its hold, however far walk would carry it
+##     (`seen.shown`), and says so (`planned`): it keeps no moment that gave, and its last moment
+##     stands.
 ##   What is constant through sweep is written once -- radius and owner of each
 ##     capsule, and each joint's two ends -- and only what moves is written per
 ##     moment.  Straight transcription ran to four megabytes; this is fifth of
@@ -68,7 +68,7 @@ const SHOWN: seq[Cut] = @[
   ## Eight sweeps worth watching: four holds above, and two chains at each lower level,
   ## where floor and engine still argue.  Above is where sections `B` to `G` are drawn,
   ## and where section `A`, which draws no level, is asked.
-  ##   Reached by `design/floors`, which plans each sweep over crown, and by
+  ##   Reached by `design/floors`, which plans each at band of its hold, and by
   ##     `tests/suites/test_asks`, which counts them.
 
 const

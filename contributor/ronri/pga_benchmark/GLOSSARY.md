@@ -212,8 +212,13 @@ _Avoid_: configuration, config, target, signature
 **Basis-set type**:
 A type that holds the coefficients of one set of bases alone, dense in basis order, as
 `MultivectorOf[B]` of the library does. A named one is an alias of a set, such as
-`Multivector2`. An exact one holds the bases that a product reaches.
+`Multivector2`. An exact one holds the bases that an operator reaches.
 _Avoid_: kind, exact kind, named kind
+
+**Basis-set form**:
+An operator of the library on basis-set types, which returns the exact basis-set type of the
+bases that its table reaches.
+_Avoid_: exact form, typed operator, generic product
 
 **Comparison tolerance**:
 The bound under which `=~` counts two coefficients equal and `grade` counts one as zero. It is
