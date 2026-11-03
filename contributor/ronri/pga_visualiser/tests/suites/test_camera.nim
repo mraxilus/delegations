@@ -496,16 +496,16 @@ suite "Camera":
     for handle in 0..<scene.bound:
       if scene.isAlive(handle):
         placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
-    let eye = camera.eye
+    let (eye, pivot) = (camera.eye, camera.pivot)
     # Nearest ahead answers, and one behind is passed over however near it stands.
     #   Eye stands one unit out at +x, so depths are five and thirty one.
-    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 5.0
+    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 5.0
     # Hidden objects are not drawn, so they set no scale.
     scene.setVisible(0, false)
-    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 31.0
+    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 31.0
     # Nothing ahead at all reads zero, which hands scale back to separation.
     scene.setVisible(2, false)
-    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 0.0
+    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 0.0
 
 
   test "a moved camera carries the view origin to its eye, and a still one leaves it standing":

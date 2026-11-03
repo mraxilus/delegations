@@ -665,13 +665,15 @@ proc pickWalk(
 
     of Case.LineThrough:
       if is_points_only: continue
-      # Test both halves `tessellate.addLine` draws, support out to each vanishing point.
+      # Test both halves `tessellate` draws, from line's point nearest pivot out to each
+      #   vanishing point.
       #   Which half is on screen changes as camera orbits.
       var distance_nearest = Inf
-      let support = place.at.toView(scale.origin)
+      let meeting =
+        positionOnLineNearest(place.at.toView(scale.origin), place.toward, scale.pivot)
       for reach in [scale.radiusHorizon, -scale.radiusHorizon]:
         let clipped = clipToEyeSide(
-          support,
+          meeting,
           pointFrom(add(scale.eye_point, wedge(reach, place.toward.toMultivector))),
           scale.plane_near,
         )
@@ -1177,15 +1179,16 @@ func isLineShownCentrally(
       height,
     )
 
-  # Test both halves `tessellate.addLine` draws, clipped to eye side as `pickNearest` clips.
+  # Test both halves `tessellate` draws, clipped to eye side as `pickNearest` clips.
   #   Half can sit behind eye while other half fills frame.
-  #   Support is world's, read about view origin as frame is.
+  #   Support is world's, read about view origin as frame is; halves meet at line's point
+  #   nearest pivot, as drawn.
   let (anchor, axis) = (positionAnchor(m), direction(m))
   if anchor.isNone or axis.isNone: return false
-  let support = anchor.get.toView(scale.origin)
+  let meeting = positionOnLineNearest(anchor.get.toView(scale.origin), axis.get, scale.pivot)
   for reach in [scale.radiusHorizon, -scale.radiusHorizon]:
     let clipped = clipToEyeSide(
-      support,
+      meeting,
       pointFrom(add(scale.eye_point, wedge(reach, axis.get.toMultivector))),
       scale.plane_near,
     )

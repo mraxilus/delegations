@@ -335,6 +335,9 @@ type
       ## Ease then carries pivot alone, by each frame's own share of its path, and way
       ## round and distance stay reader's.
     is_adopting*: bool  ## Whether next offer takes its aim as delivered; see `adoptNext`.
+    revision_offered*: int  ## `Selection.revision` last offer was made for.
+      ## Revision changed since is pick, by list as by pointer, and `framing.offerAim`
+      ## reads eye for line only then; same selection offered again reads pivot.
 
 
 
@@ -1124,6 +1127,7 @@ func drawExtentFor*(
       extent_furniture: extentFurnitureFor(camera.scaleLocal * FACTOR_CLIP_FAR),
       origin: camera.origin_view,
       eye: eye,
+      pivot: eye + camera.distance * frame.forward,
       radius_horizon: radiusHorizonFor(far),
       forward: frame.forward,
       axis_right: frame.axis_right,
