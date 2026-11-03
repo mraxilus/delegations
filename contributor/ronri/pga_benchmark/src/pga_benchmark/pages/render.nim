@@ -17,15 +17,19 @@
 ##     Harness reads it for layout alone, so it stays out of `written.json`: it is no page project
 ##     ships, and `koch drive` would judge it as one.
 ##   Fixture lives under `tests/`, since suites read it as `drive` does.
+##   Written file is held here too: each page must write every character of bar it draws, and
+##     some string must mix ASCII with characters past it. Collector keeping characters past ASCII
+##     alone fails both, and `koch drive` judges runs collector writes alone (D1 b of #751).
 ##   Harness names element with id as `<tag>#<id>`, then its classes (`tools/drive/layout.ts`), so
 ##     control's card `crowded` is `details#crowded.card`; misnamed one reads as blind, so drive
 ##     holds naming too.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os]
+import std/[json, options, os, sets]
 
 import ../[guard, markdown]
+from ./shell import VIEWS
 
 
 type CardControl* = object  ## Define one card of control page.
@@ -117,4 +121,41 @@ func checkCrowded*(
     result.add Finding(
       path: path_control,
       message: element & ": Check is blind, since control raised no crowded pair here; got none.",
+    )
+
+
+func checkWritten*(
+  written: JsonNode; pages: openArray[string]; directory, path_written: string
+): seq[Finding] =
+  ## Turn each page whose strings lack character of bar into finding at its page, and file where
+  ##   no string mixes ASCII with characters past it into finding at file.
+  ##   Bar of every page draws title of home and of each view (`VIEWS`), all ASCII.
+  ##   Document maps page name to its `runs`, each with `codepoints`; page absent wrote nothing.
+  var bar: seq[int]
+  for (_, title) in VIEWS:
+    for character in title:
+      if character != ' ' and ord(character) notin bar: bar.add ord(character)
+  var is_mixed = false
+  for page in pages:
+    var drawn: HashSet[int]
+    for run in written{page, "runs"}.getElems:
+      var is_ascii, is_past = false
+      for codepoint in run{"codepoints"}.getElems:
+        drawn.incl codepoint.getInt
+        if codepoint.getInt <= 0x7F: is_ascii = true else: is_past = true
+      if is_ascii and is_past: is_mixed = true
+    var unwritten = ""
+    for codepoint in bar:
+      if codepoint notin drawn: unwritten.add chr(codepoint)
+    if unwritten.len > 0:
+      result.add Finding(
+        path: directory / page & ".html",
+        message: "Collector writes every string page draws, ASCII included (D1 b of #751); " &
+            "got `" & unwritten & "` of bar unwritten.",
+      )
+  if pages.len > 0 and not is_mixed:
+    result.add Finding(
+      path: path_written,
+      message: "Collector writes each character of string, ASCII beside characters past it " &
+          "(D1 b of #751); got no string that mixes them.",
     )
