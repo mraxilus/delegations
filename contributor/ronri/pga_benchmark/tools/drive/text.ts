@@ -57,7 +57,7 @@ export interface Collected {
   count_elements: number;
 }
 
-/** Collect every run beyond ASCII page draws, every `@font-face` rule it declares, and every
+/** Collect every run page draws, ASCII included, every `@font-face` rule it declares, and every
  *  font face browser refused. */
 export async function collect(page: Page): Promise<Collected> {
   return await page.evaluate(async () => {
@@ -93,23 +93,20 @@ export async function collect(page: Page): Promise<Collected> {
       }
       return text;
     };
-    // Keep codepoints beyond ASCII that text draws, once each.
-    const beyondAscii = (text: string): number[] => {
+    // Keep codepoints text draws, once each, ASCII included: most bold browser synthesises
+    //   falls on ASCII, and verdict judges runs collector writes alone (D1 b of #751).
+    const drawn = (text: string): number[] => {
       const codepoints = new Set<number>();
-      for (const character of text) {
-        const codepoint = character.codePointAt(0) ?? 0;
-        if (codepoint > 0x7F) codepoints.add(codepoint);
-      }
+      for (const character of text) codepoints.add(character.codePointAt(0) ?? 0);
       return [...codepoints];
     };
     // Record text element draws under one pseudo-element, styled as that one is.
-    //   Style is read only past ASCII test: case of ASCII letter is ASCII letter.
     const add = (element: Element, pseudo: string, text: string, style_pseudo = pseudo):
         void => {
-      if (beyondAscii(text).length === 0) return;
+      if (text.length === 0) return;
       const style = getComputedStyle(element, style_pseudo || null);
       const transform = style.textTransform;
-      const codepoints = beyondAscii(
+      const codepoints = drawn(
         transform === 'uppercase' ? text.toUpperCase() :
           transform === 'lowercase' ? text.toLowerCase() :
           transform === 'capitalize' ? text + text.toUpperCase() : text,
