@@ -882,7 +882,7 @@ half, one reach is the plain chord between its hands.
 loops down under the straight one. Face-to-back, the snake is under at the first crossing, so it
 dives twice and loops up over the straight one. So the same-name chain keeps the arm under straight,
 and the cross-name chain keeps the arm over straight (`route.straightArm`). Verified by
-`checkHandTurns`, on both chains.
+`checkHandTurns`, on both chains. The swans that the rig stands follow the same rule (Planned swan).
 
 ## The frame picture
 
@@ -2208,18 +2208,18 @@ its reason (`CARDS_REFUSED` in `suites/test_asks.nim`):
 the last two steps of G04 and G06, and on no other cell. Read by a probe outside the tree on the
 copy of the Reference that the suites write, 2026-10-12.
 
-The plan of D07 that `design/rig.json` keeps puts the couple 0.60 m apart. It holds its two joins
-0.23 m from each other, at 1.25 m and 1.28 m, in the upper third of the `Torso` band. Measured on
-2026-10-11.
+The plan of D07 that `design/rig.json` keeps puts the couple 0.52 m apart. It holds its two joins
+0.17 m from each other, at 1.26 m and 1.30 m, in the upper third of the `Torso` band. Measured on
+2026-11-03.
 
-**Two planned stills stand at an end, and none is at ease.** Strain is nought at ease and one at an
+**No planned still stands at an end, and none is at ease.** Strain is nought at ease and one at an
 end. In the easiest plan that holds, D03, A11, C02 and C06 read 0.01. D06 reads 0.50, D01 and D07
-0.80, and C01 and C07 1.00. Measured on 2026-10-11 from `design/rig.json`.
+0.68, and C01 and C07 0.70. Measured on 2026-11-03 from `design/rig.json`.
 
-Each of those strains is a waist. In C01 and C07, both dancers turn the chest 40.0 degrees against
-the hips, which is the end of the waist. In D01 and D07, the waist of the follow turns 37.0 degrees
-and that of the lead 32.9. In D06 the waist of the follow turns 32.5. Read off the facings in
-`design/rig.json` on 2026-10-11, by a probe outside the tree.
+The strain of D06 is a waist: the follow turns the chest 32.5 degrees against the hips. Read off the
+facings in `design/rig.json` on 2026-10-11, by a probe outside the tree. The strain of each swan is
+a wrist of the follow. It is the left in C01 and the right in D01, and mirrored in C07 and D07. Read
+on 2026-11-03 by a probe outside the tree that plans each swan as the recording does (Planned swan).
 
 Rejected: to let the arms settle toward ease at the end of the turn, a leap at a time. With the
 engine sprung after the plan, that took C01 from 0.56 to 0.53 and left D07 as it was.
@@ -2258,6 +2258,53 @@ turns, which put a point 1.25 m off the plan.
 the six cards that the edge refuses. It also holds that each refused card stays unmodelled, so a
 change that models one lifts its refusal. 225 of 231 cards are modelled, measured 2026-10-12.
 
+## Planned swan
+
+**A swan is planned to wind one pair round the other, which runs straight through it, as its card
+draws.** The card draws three crossings round a straight connection (rule 31). The facing at the
+swan sets which pair runs straight (Rules of the chain). So a still of a swan holds only where it
+crosses three times in plan (`walk.keepsStraight`). Its straight pair must also wind on itself less
+than the other, and run no further in plan.
+
+How far a pair winds on itself is its writhe (`vector.writhe`), read from shoulder to shoulder
+through the join of the lead. A hoop round a straight line winds, and a line in one plane winds
+nowhere. How far a pair runs in plan is in lengths of the straight line between its shoulders
+(`vector.runInPlan`). Verified by `test_read.nim`, suite "Internal: How far one connection winds
+and runs", over 1000 seeded polylines for each law.
+
+**Left to itself, the planner hands the hoop to the other pair at each half turn.** At the wind of
+C01 and D01, its last half turn gives the hoop to the left pair of the lead in both chains. That is
+the ruled hoop of C01, which stands Face-to-back, and the wrong one for D01, which stands
+Face-to-face. So every plan that held D01 wound the left pair, at writhe -0.51 to -0.75, where the
+right pair wound -0.08 to -0.19. Every plan that held C01 crossed twice in plan. Measured
+2026-11-03 over the 32 plans of each still, by a probe outside the tree.
+
+So past a whole turn, the planner draws the hoop round the pair that runs straight (`plan.HOOP`).
+It weighs how far the straight pair winds past the hoop, less 0.3 of a turn, squared, at weight 100.
+The mirror path draws the hoop round its own straight pair, which is the other arm. The law of the
+planner's cost holds this term to the plain cost, to the last bit (Planner's cost).
+
+| Swan | Strain | Crossings in plan | Straight pair: writhe, run | Hoop: writhe, run |
+| --- | --- | --- | --- | --- |
+| C01, before | 1.00 | 2 | +0.01, 1.60 | -0.45, 3.36 |
+| C01 | 0.70 | 3 | +0.03, 1.92 | -0.33, 3.42 |
+| D01, before | 0.80 | 3 | -0.54, 2.19 | -0.19, 1.69 |
+| D01 | 0.68 | 3 | -0.11, 1.96 | -0.70, 2.52 |
+
+C07 is the mirror image of C01, and D07 that of D01. Read from `design/rig.json` by the law in
+`test_asks.nim`, "every swan crosses three times round pair that runs straight, as card draws".
+
+Rejected, each measured over the 32 plans of D01 on 2026-11-03:
+
+- A pull of the straight pair toward a straight line in plan, at weights 5 and 20. The couple stood
+  0.84 to 1.14 m apart, and both pairs straightened. The left pair still wound more.
+- A pull of the grip of the hoop to 10 cm under the grip of the straight pair, at weights 20 and
+  200. The grips moved, and the left pair still made the hoop.
+- A pull of the straight pair to run shorter in plan than the hoop, at weights 5 to 200. The right
+  pair ran further without winding, or wound with the left arm over at the crossing of the lead, or
+  crossed five times.
+- The pull of this section from a half turn, at weight 20. No plan reached the swan.
+
 ## Planner's cost
 
 **The planner weighs a step of one freedom by what that step moves, and the cost is the same to the
@@ -2277,7 +2324,8 @@ same order.
 
 Verified by `test_plan.nim`, suite "Internal: Planner's cost". At 96 seeded poses, each step and a
 long step of each freedom and back cost the plain cost to the last bit. Each of seven breaks made on
-purpose failed it.
+purpose failed it. Its holds of two hands name a straight pair, and its winds run to a turn and a
+half. So it weighs the hoop of a swan too (Planned swan).
 
 The paths of D03 and A11, in six styles and both mirror paths, are those of the plain cost, to the
 bit. No law holds them. Verified on 2026-10-04 by a probe outside the tree, which prints every bit
@@ -3375,16 +3423,13 @@ which the VM evaluates today. That is latent, and not urgent.
 - The model reaches the four swans by a planned turn, and each one waits for the Architect to hold
   it against their own body.
 - The drawing of the Reference itself puts both joins at one point, with the right-over-left
-  connection under. The planned D07 holds its two joins 0.23 m apart. The carried walk, with its
+  connection under. The planned D07 holds its two joins 0.17 m apart. The carried walk, with its
   hands at the edge of the band, wraps the arms of the follow round the head instead.
-- **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 1.00,
-  and D01 and D07 0.80, in `design/rig.json` (Planned turn).
-- **The swans that stand face to face coil the connection that the rulings keep straight.** D01
-  keeps the pair of the lead's left hand straight (#375), and the card draws it so. Seen from above
-  in `design/rig.json`, that pair runs 2.26 times the line between the shoulders, and the other
-  1.62. Its writhe is -0.45, and that of the other -0.14. D07 is its mirror image, and C01 and C07,
-  which stand Face-to-back, coil the pair that the card loops. Measured 2026-11-03 by a probe
-  outside the tree.
+- **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 0.70,
+  and D01 and D07 0.68, in `design/rig.json` (Planned swan).
+- **D06 crosses four times in plan, where its card draws two.** The left upper arm of the follow
+  crosses the right arm of the lead near the shoulders, with the couple 0.36 m apart. No law holds
+  the crossings of a position other than a swan. Measured 2026-11-03 from `design/rig.json`.
 - **The figures of a palm grip are derived, and not measured.** No study measures how far two palms
   tilt or turn against each other (Body rig).
 - **A relaxed wrist rests at 16 degrees of extension, and the law of a free couple at rest holds it
