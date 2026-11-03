@@ -2713,6 +2713,18 @@ A character beyond ASCII that a font face of the system draws on a page is a fin
 names the page, the element and the codepoint. A font face that the browser does not load is a
 finding too. So is a numeral of the control page that the collector does not read.
 
+**The collector writes each string that a page draws, ASCII included (Architect, D1 b of issue
+751).** `koch drive` judges a character beyond ASCII for its font face, and every character for a
+bold that the browser synthesises. A run gets that bold where it asks a family for a weight of 600
+or more, and the family matches a lighter face. Most bold text on these pages is ASCII, so a
+collector that writes characters beyond ASCII alone hides it. A codepoint below the space is a
+control character, as the line feed of markup is, and draws no glyph, so it is not written.
+
+Verified by `nim r koch drive contributor/sincopa/dance_ontology` on 2026-11-03, with no finding.
+The three pages write 73, 2842 and 1077 strings, and 632 of them ask for 600 or more. No run gets a
+synthesised bold. Noto Serif and Noto Sans ship a face of 600, and Commit Mono one of 700. No bold
+run draws from Noto Sans Math, which ships 400 alone.
+
 The harness is TypeScript under `tools/drive/`. TypeScript is admitted for the host API of a test
 driver. It checks each expression that runs inside the page against the types of the DOM. The
 harness resolves nothing and judges nothing. `koch drive` reads the `cmap` of each font face,
@@ -2761,6 +2773,12 @@ read of `placeholder` taken out of the collector, `koch drive` fails, and names 
 placeholder of a field. With the two font faces of Commit Mono taken out of `FONT_FACES`, it fails
 with ten findings. Each one names the page, the element and the codepoint, as `button#next` of
 `design-rig` draws `U+2192`.
+
+A third break, made by hand on 2026-11-03 and then reverted, shows that the check sees bold. With
+the 600 face of Noto Sans taken out of `FONT_FACES`, `koch drive` fails with 26 findings. One is
+`section#chain > p.lede > b` of `design-reference`, which asks Noto Sans for 700 and draws from the
+face of 400. The same break gives no finding where the collector writes characters beyond ASCII
+alone.
 
 Cost: a page is read at one viewport, in the state it opens on. Text that a script writes only after
 the reader acts, as the Explorer writes the moves of a frame, is not read. The `⇄` that the Explorer
