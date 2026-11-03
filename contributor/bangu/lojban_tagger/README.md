@@ -125,10 +125,10 @@ password. The client would also send them to the host behind the proxy.
   3xx, and a service reply that holds an answer of the model. It sends other requests again, such
   as a refusal or an error that the service reports.
 - `--replay:<directory>` reads every reply from files. It needs no key and no network.
-- A recording holds the text and the reply, so the tool makes the directory with mode 0700, and
-  writes each file with mode 0600. It refuses a directory that every user may write, such as
-  `/tmp`, and a link at the path of a recording.
-- A recording holds its endpoint too, so it replays only for that endpoint.
+- An exchange file holds the text and the reply, so the tool makes the directory with mode 0700,
+  and writes each file with mode 0600. It refuses a directory that every user may write, such as
+  `/tmp`, and a link at the path of an exchange file.
+- An exchange holds its endpoint too, so it replays only for that endpoint.
 - `nim r tools/build.nim examples` writes worked examples to `build/examples/`, and prints the
   command that replays each one. Their replies are documented shapes, not live replies.
 
