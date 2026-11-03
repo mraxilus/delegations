@@ -11,7 +11,7 @@
 
 Origin: a contributor project, from the brief of the Architect. A tag is a gismu or a lujvo that
 describes a thing which somebody tags. A search finds every tagged thing by a gismu, or by an
-English word that leads to one. The system uses only the compound and parsable nature of Lojban.
+English word that leads to one. The system uses only the compound and parsable nature of lojban.
 
 The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, first edition, 1997,
 from the Logical Language Group. The text used is the edition at `lojban.github.io/cll`, which is
@@ -19,6 +19,12 @@ the first edition with errata. Chapter 3 gives the consonant clusters, and chapt
 shapes of words and the algorithm that makes a lujvo. Chapters 5, 7, 9, 12 and 15 tell which words
 the cmavo SE, NAhE, NA, NU, `ke`, `ke'e`, `bo`, `kei` and `co` bind. The suites carry the names of
 those chapters, and each assertion cites its section or example.
+
+The Architect ruled that the project writes the name of the language in lowercase, as lojban.
+In lojban, a capital letter marks irregular stress (CLL 3.9), and the name has none. A title
+keeps its capital, as The Complete Lojban Language does. So do the word lists, the notice of the
+group, and a name in code such as `Notation.Lojban`, whose case Article V sets. Verified by
+`suites/test_suggestions.nim`, for each line of the report and of the system text.
 
 ## Clusters and forms
 
@@ -112,7 +118,7 @@ a run of spaces, so its pieces join back into the field exactly. The definitions
 with the installed file where `lojban-common` is present.
 
 **The lujvo list writes a tanru in two notations, and the converter keeps both.** Most lines name
-the parts in Lojban, after a colon. Other lines name them by English keywords of gismu, after
+the parts in lojban, after a colon. Other lines name them by English keywords of gismu, after
 `#`, as `ci'erkei#system+play`. For those lines, the English index reads the gismu from the word
 itself. Lines of other shapes are left out, and the rendered header counts them. The phrase in
 place of a word, the line with no gloss, and the comma inside a tanru are such shapes.
@@ -242,7 +248,7 @@ edit. The Architect ruled that the index stays text, which a person reads and an
 the tab (#768). The ruling on the format of data names FlatBuffers for data that one program
 writes and another reads (#755). One program writes and reads this index.
 
-**A term becomes sets of gismu, and an entity matches where it holds one set whole.** A Lojban
+**A term becomes sets of gismu, and an entity matches where it holds one set whole.** A lojban
 term gives one set, the gismu of its tanru. An English term gives one set for each meaning that it
 leads to. Every term of a query must match. So `vreji` finds a thing tagged `datnyvei`, and
 `datnyvei` finds what `datni` and `vreji` tag together.
@@ -250,7 +256,7 @@ leads to. Every term of a query must match. So `vreji` finds a thing tagged `dat
 Cost: order and relation are lost, so
 `patfu mamta` and `mampa'u` find each other. Verified by `suites/test_search.nim`.
 
-**A Lojban term that holds a cmavo ranks first each entity with a tag that holds its tanru units
+**A lojban term that holds a cmavo ranks first each entity with a tag that holds its tanru units
 unbroken.** The Architect ruled that a search for `selci'a` lists first each thing with a tag that
 holds `se` right before `ciska`, wherever the pair stands. The net result of the cmavo around the
 pair decides, and a longer term ranks by an unbroken run too. A search for `ciska` gives no
@@ -277,7 +283,7 @@ leaves its grouping out. Lujvo makers often leave `ke` out (4.10, 12.11), so the
 the run. Cost: the term `selci'avei` ranks a tag of `vreta se ciska vreji`, where `vreta` groups
 with `se ciska` first (5.3). Verified by `suites/test_search.nim`.
 
-**An English term ranks nothing, because the ruling on the rank names a term typed in Lojban.**
+**An English term ranks nothing, because the ruling on the rank names a term typed in lojban.**
 The Architect ruled so (#768), since an English word can lead to several meanings. So `writing`
 leads to several meanings, among them a writing desk and a joke, and only the joke,
 `xajmi+se+finti`, holds a cmavo. A rank by that meaning would put jokes first, which the user may
