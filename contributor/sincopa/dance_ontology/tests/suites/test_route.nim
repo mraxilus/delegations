@@ -170,10 +170,9 @@ const
     ## Three corners: three-four-five triangle's two short sides.
   WALKED = polylineLength(SQUARE)
     ## Taken in compiler's virtual machine, which is what this suite is for.
-    ##   Scene table is built as `const` (`draw/scene.nim`), so length runs there;
-    ##     Nim 2.2.8 onward gives float `result` int register where nothing assigns
-    ##     it before first `+=`, and crashes compiler.  This `const` is what
-    ##     notices, since ordinary call at run time never touches that path.
+    ##   Scene table is built as `const` (`draw/scene.nim`), so length runs there,
+    ##     on path ordinary call at run time never touches.  Nim 2.2.8 to 2.2.12
+    ##     crashed there on float `result` nothing assigned first (issue 106).
 
 
 

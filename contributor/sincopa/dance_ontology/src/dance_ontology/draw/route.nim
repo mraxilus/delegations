@@ -275,12 +275,6 @@ func taut*(ends: Ends, way: WayRound): Option[tuple[points: seq[Point], length: 
 
 func polylineLength*(points: seq[Point]): float =
   ## Get drawn length of run.
-  ##   `result` is given nought before it is added to, which reads redundant
-  ##     and is not: scene table is `const`, so this runs in compiler's
-  ##     virtual machine, and Nim 2.2.8 onward hands float `result` int
-  ##     register where nothing assigned it first, then crashes compiler
-  ##     reading it (`tests/suites/test_route.nim` holds line in place).
-  result = 0.0
   for i in 0..<points.high:
     result += distance(points[i], points[i+1])
 
