@@ -89,8 +89,21 @@ The header of each rendered module does both.
 
 **The lists are committed as typed Nim, and a converter renders them.** `nim r tools/build.nim
 lists` reads both files, checks the SHA-256 of each against a pin in `tools/lists.nim`, and
-writes `src/lojban_tagger/lists/gismu.nim` and `lujvo.nim`. The compiler checks each field
-against the types of `entries.nim`.
+writes `src/lojban_tagger/lists/gismu.nim` and `lujvo.nim`. Each is a module of typed constants,
+and its header names that verb, as the rule of data asks (CONTRIBUTOR.md, Data). The compiler
+checks each field against the types of `entries.nim`.
+
+**A field that every line holds takes `{.requiresInit.}`, so an entry that lacks one does not
+compile.** The marked fields are the word, keyword and definition of a gismu, and the word,
+notation, parts and gloss of a lujvo. The rafsi and the hint are empty by right, so they stay
+unmarked. The zero value of the notation is `Lojban`, so an entry with no notation would claim
+the notation of lojban for an English line. Verified by `suites/test_lists.nim`, which holds that
+an entry without each marked field does not compile.
+
+Cost: `mapIt` declares `var it`, so it does not compile over an entry, and the suites read fields
+by `collect` or a loop. Each seq of entries gives the warnings `UnsafeSetLen` and `UnsafeDefault`
+of Nim 2.2.12. `newSeq` of entries also gives `ProveInit`, which Nim says will become an error, so
+the suites use `newSeqOfCap`. Verified by hand with `nim check` of the stub on 2026-11-03.
 
 Rejected: the text files as they are, because the checker
 reads no `.txt`. Rejected: JSON, which the Architect asked to stop using by default, and which
@@ -243,10 +256,10 @@ would drop the rest of the index on its next write.
 Adding no tag changes nothing, so no entity is ever left without a tag. Verified by
 `suites/test_index.nim`.
 
-Rejected: FlatBuffers, which needs a committed schema, and whose buffer a person cannot read or
-edit. The Architect ruled that the index stays text, which a person reads and any tool splits at
-the tab (#768). The ruling on the format of data names FlatBuffers for data that one program
-writes and another reads (#755). One program writes and reads this index.
+The rule of data gives Protocol Buffers to data that one program writes and another reads
+(CONTRIBUTOR.md, Data). Only `tagger` writes and reads the index. So the Architect ruled that it
+stays text, which a person reads and any tool splits at the tab (D1 on #768). Rejected: Protocol
+Buffers, whose binary a person cannot read or edit.
 
 **A term becomes sets of gismu, and an entity matches where it holds one set whole.** A lojban
 term gives one set, the gismu of its tanru. An English term gives one set for each meaning that it
@@ -395,6 +408,10 @@ its time grows about 4 times for each word of `bloti`, `condi` or `rotsu` (Figur
 The settings come from the environment on each run, as the index path does for `tagger`.
 Verified by `suites/test_suggestions.nim`, against documented shapes alone.
 
+**JSON appears only on the wire of each service, which forces it.** An exchange file holds those
+bytes unchanged. The rule of data keeps JSON only where a tool forces it, and names no wire of an
+outside service. The issue #795 asks the curator to name that case.
+
 **`claude` asks for a fallback model on refusal.** The body sends `fallbacks: "default"` and its
 beta for each model but `claude-haiku-5-5`. The documentation says that a model with no fallback
 runs alone, and that `claude-haiku-5-5` takes none. Cost: a refusal in a billed category is
@@ -488,11 +505,15 @@ port. A URL that holds whitespace or a control character is refused. Verified by
 
 ## Record and replay
 
-**An exchange file is text of its own format, as the index is.** It holds a label, the request, and
-the reply. The request and the body carry byte counts, so any bytes read back. Each refusal
-names the faulty line, and ends in what that line holds, with each URL cut to its scheme, host,
-port and path. The format waits on the ruling of #761 about Protocol Buffers. Verified by
-`suites/test_exchanges.nim`.
+**An exchange file is text of its own format until #789 ports it to Protocol Buffers.** It holds
+a label, the request, and the reply. The request and the body carry byte counts, so any bytes
+read back. Each refusal names the faulty line, and ends in what that line holds, with each URL cut
+to its scheme, host, port and path. Verified by `suites/test_exchanges.nim`.
+
+The rule of data gives Protocol Buffers to data that one program writes and another reads
+(CONTRIBUTOR.md, Data). `tools/examples.nim` writes exchange files, and `suggester` reads them.
+The Architect ruled that exchange files follow the charter, and that a later pull request ports
+them, which #789 queues (D3 on #779).
 
 **The stamp, FNV-1a 64 of the request, names the file.** The request is the method and the URL
 of a page, or the method, the endpoint and the body of a service request. FNV-1a resists no
@@ -518,6 +539,11 @@ trusted. Verified by `suites/test_suggester.nim`.
 `tools/build.nim` writes them, and each label says so. Record mode replays them, because each
 reply holds an answer, so a live reply needs a run under `--record:` into another directory.
 Verified by `suites/test_suggester.nim`, which replays each one.
+
+The examples are typed constants in `tools/examples.nim`, as the rule of data asks of data that a
+person writes. The name, the argument and the tags of an example take `{.requiresInit.}`, so an
+example that lacks one does not compile. The hops stay unmarked, because a text given has none.
+Verified by `suites/test_suggester.nim`.
 
 ## Command line
 
