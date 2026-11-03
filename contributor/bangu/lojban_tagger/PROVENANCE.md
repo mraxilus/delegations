@@ -399,7 +399,7 @@ the page for each row.
 the cached system text on one endpoint of OpenRouter, where the passage alone would route each
 request apart. Its documentation says so, and no run measured a hit of the cache. A Claude key
 that no workspace scopes needs `anthropic-workspace-id`, which `LOJBAN_TAGGER_WORKSPACE` gives.
-The workspace goes in a header, never in the body, so the recording replays under any
+The workspace goes in a header, never in the body, so the exchange replays under any
 workspace. Verified by `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
 
 **There is no retry.** The key is for sparing use. So a reply that fails as a whole goes to the
@@ -447,7 +447,7 @@ tunnel to the host carries the same pin. Cost: sends that share a context run on
 `openssl` makes for each run.
 
 **The key goes as Bearer to the endpoint alone.** It is a distinct type whose `$` stops the
-compile, so no report or recording can hold it. `suggester` passes it with the service request
+compile, so no report or exchange file can hold it. `suggester` passes it with the service request
 alone, never with a page request. The documentation of Anthropic gives `Authorization: Bearer`
 first, and calls `x-api-key` legacy. An endpoint must be https, or http to a loopback host, and
 `ANTHROPIC_BASE_URL` is never read. Verified by `suites/test_exchanges.nim` and
@@ -480,9 +480,9 @@ each colon into one port and reads a port modulo 65536, so either fault would re
 port. A URL that holds whitespace or a control character is refused. Verified by
 `suites/test_exchanges.nim`.
 
-## Recordings
+## Record and replay
 
-**A recording is text of its own format, as the index is.** It holds a label, the request, and
+**An exchange file is text of its own format, as the index is.** It holds a label, the request, and
 the reply. The request and the body carry byte counts, so any bytes read back. Each refusal
 names the faulty line, and ends in what that line holds, with each URL cut to its scheme, host,
 port and path. The format waits on the ruling of #761 about Protocol Buffers. Verified by
@@ -501,11 +501,11 @@ Cost: a refusal in a billed category is paid again on the next record run. `--re
 reads every exchange from files, and needs no key and no network. Verified by
 `suites/test_suggester.nim`.
 
-**Recordings stay private and bounded.** A recording holds the text and the reply, so record
-mode makes its directory with mode 0700 and writes each file with mode 0600. Both modes refuse a
-link at the path of a recording, and a directory that every user may write, where another user
-could put one. A file larger than its request, its cap and 65,536 bytes is refused before it is
-read, and record mode writes none. Cost: members of a group that may write the directory are
+**Exchange files stay private and bounded.** An exchange file holds the text and the reply, so
+record mode makes its directory with mode 0700 and writes each file with mode 0600. Both modes
+refuse a link at the path of an exchange file, and a directory that every user may write, where
+others could put one. A file larger than its request, its cap and 65,536 bytes is refused before
+it is read, and record mode writes none. Cost: members of a group that may write the directory are
 trusted. Verified by `suites/test_suggester.nim`.
 
 **The worked examples are documented shapes, not live replies.** The verb `examples` of
@@ -526,7 +526,7 @@ runs at one time race, and the last rename wins. Verified by `suites/test_comman
 wins, then the variable `LOJBAN_TAGGER_INDEX`, then `lojban_tagger/index` under the data directory
 of XDG. An absent file reads as an empty index, so the first `tag` makes it.
 
-**The suggestion is a second binary, `suggester`, and not a verb.** `-d:ssl` loads libssl when a
+**`suggester` is a second binary, and not a verb of `tagger`.** `-d:ssl` loads libssl when a
 program starts, so each verb of `tagger` would need it. The Architect chose the second binary in
 the conversation of this delivery, and the pull request records the ruling. Each gismu goes to
 standard output on a line of its own, so `tagger tag <name> $(suggester ...)` joins the two
