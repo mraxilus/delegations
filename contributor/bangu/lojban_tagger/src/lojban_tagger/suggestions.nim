@@ -12,7 +12,7 @@
 ##   | Reply              | reply as read: status, headers kept, body up to its cap        |
 ##   | readReply          | read reply into answer: each tag checked, or failure named     |
 ##   | isAnswered         | reply holds completion model produced, which record replays    |
-##   | Answer             | each tag read, in order, tags past cap counted, model named    |
+##   | Answer             | each tag read in order, elements past cap counted, model named |
 ##   | Outcome            | gismu of one tag checked against lists, or why none            |
 ##   | gismu              | gismu kept, in order, each once: what `suggester` prints       |
 ##   |--------------------|----------------------------------------------------------------|
@@ -54,16 +54,16 @@
 ##     reader refuses are dropped, each named by its position, and rest of answer kept, so tool
 ##     never prints word `tagger tag` refuses or reads as other than one gismu. Gismu that earlier
 ##     tag kept is dropped as `Duplicate`, so each prints once.
-##     Cost: tag dropped is paid for, as whole answer is.
+##     Cost: element dropped is paid for, as whole answer is.
 ##   Schema gives each gismu as five letters gismu may hold (`PATTERN_GISMU`), so service that
 ##     holds schema samples no word of other shape; reader checks each still, since server of
 ##     `chat` may hold none.
 ##     Cost: model reaching for lujvo or cmavo must give five letters, so may give unlisted word
 ##       or listed gismu of other sense; reader drops first, never second (unmeasured).
-##   Answer is read to `COUNT_TAGS_MAX` tags, which prompt states as cap, never target; tags past
-##     it are counted and named, never read. Schema holds no `maxItems`, which structured outputs
-##     of Claude refuse with 400, so reader holds cap.
-##     Cost: tags past cap are paid for and dropped.
+##   Answer is read to `COUNT_TAGS_MAX` tags, which prompt states as cap, never target; elements
+##     past it are counted and named, never read. Schema holds no `maxItems`, which structured
+##     outputs of Claude refuse with 400, so reader holds cap.
+##     Cost: elements past cap are paid for and dropped.
 ##   System text holds every gismu of list, with keyword and hint, so model sees words reader
 ##     accepts; it is same bytes on every request, so service caches it.
 ##     Rejected: definitions too, at five times size.
@@ -107,8 +107,8 @@
 ##   Workspace goes in header of `claude` alone, never in body, so stamp of request holds
 ##     none, as it holds no credential.
 ##     Cost: exchange replays under any workspace, as under any credential.
-##   No retry: tag refused is dropped and named, and reply refused whole is named to user, who
-##     may run again; key is for sparing use.
+##   No retry: element refused is dropped and named, and reply refused whole is named to user,
+##     who may run again; key is for sparing use.
 ##     Cost: passing failure, as overload or limit of rate, ends run; next run pays again for
 ##       prompt where cache lapsed.
 ##   Markup is read in one linear pass with no recursion, so nesting cannot overflow stack.
@@ -183,7 +183,7 @@ type
     of false:
       detail*: string  ## Why page gives none, ending in offending value, made printable.
 
-  Failure* {.pure.} = enum  ## Define why reply, or one tag of its answer, gives no gismu.
+  Failure* {.pure.} = enum  ## Define why reply, or one element of its answer, gives no gismu.
     Network  ## Connection, name, proxy, TLS or deadline failed; detail is first line of error.
     Replay  ## Exchange missing, malformed or holding other request; detail names file.
     Page  ## Page gives no text: status, type, encoding or charset; detail names it.
@@ -191,10 +191,10 @@ type
     Declined  ## Model or classifier declined; detail is category and explanation, or refusal text.
     Truncated  ## Answer stopped at token or context limit; detail is stop reason.
     Malformed
-      ## Reply holds no answer of schema, detail saying what is missing; or tag is no object
-      ##   holding string `gismu`, detail being tag as JSON.
-    Word  ## Tag is no gismu of list, or is past its cap; detail is word.
-    Duplicate  ## Tag names gismu earlier tag kept; detail is word.
+      ## Reply holds no answer of schema, detail saying what is missing; or element is no object
+      ##   holding string `gismu`, detail being element as JSON.
+    Word  ## Element is no gismu of list, or is past its cap; detail is word.
+    Duplicate  ## Element names gismu earlier tag kept; detail is word.
     Long  ## Text given as tag holds more than `COUNT_WORDS_MAX` words; detail is count.
 
   Outcome* = object
@@ -210,8 +210,8 @@ type
       failure*: Failure  ## Why no gismu.
       detail*: string  ## Offending value, made printable.
       position*: Option[int] = none(int)
-        ## Position of tag in answer, counted from 1, so refusal names its tag alone; `none` where
-        ##   reply, page, exchange or text given fails whole.
+        ## Position of element in answer, counted from 1, so refusal names its element alone;
+        ##   `none` where reply, page, exchange or text given fails whole.
       reason*: string = ""
         ## Why reader refuses word as read, i.e. `explain` of its reading (`commands.nim`), made
         ##   printable whole when failure is made; empty for word reader reads, and other failures.
@@ -220,20 +220,20 @@ type
         ##   made, since escapes lengthen detail.
 
   Answer* = object
-    ## Define outcome of asking for tags: one outcome per tag read, in order, tags past cap
+    ## Define outcome of asking for tags: one outcome per tag read, in order, elements past cap
     ##   counted, and model named once.
     outcomes*: seq[Outcome]
       ## One per tag read, in order of answer: gismu kept, or refused naming its position; one
       ##   refused alone, naming none, where reply, page or exchange fails whole.
-    count_cut*: int  ## Tags answer held past `COUNT_TAGS_MAX`, never read.
+    count_cut*: int  ## Elements answer held past `COUNT_TAGS_MAX`, never read.
     model*: string  ## Model reply names, made printable; empty where no answer was read.
 
 
 const
   COUNT_TAGS_MAX* = 32
     ## Most tags of answer tool reads, which prompt states as cap, never target: model decides
-    ##   how many, most likely search first, and Architect chose 32. Tags past it are counted and
-    ##   named, never read: schema of Claude takes no `maxItems`, so reader holds cap.
+    ##   how many, most likely search first, and Architect chose 32. Elements past it are counted
+    ##   and named, never read: schema of Claude takes no `maxItems`, so reader holds cap.
   COUNT_WORDS_MAX* = 6
     ## Most words text given as tag may hold, else shortcut refuses it as `Long`, named by count;
     ##   project choice: count follows `readTag`, so cap bounds only listing and printing of
@@ -1123,7 +1123,7 @@ func fail(
   failure: Failure, detail: string, reason = "", position = none(int), is_past_cap = false
 ): Outcome =
   ## Build outcome that failed, detail made printable within `RUNES_SHOWN`, reason made
-  ##   printable whole; `position` names tag of answer, and `is_past_cap` marks word never read.
+  ##   printable whole; `position` names element of answer, and `is_past_cap` marks word never read.
   ##   Reader bounds reason, since word reaches it at `BYTES_ELEMENT_MAX` bytes at most. Cap of
   ##     its bytes cuts nothing, since repair never makes more characters than bytes.
   Outcome(
@@ -1137,7 +1137,7 @@ func fail(
 
 
 func failWhole(failure: Failure, detail: string): Answer =
-  ## Build answer of reply failing whole: one outcome that failed, naming no tag.
+  ## Build answer of reply failing whole: one outcome that failed, naming no element.
   Answer(outcomes: @[fail(failure, detail)])
 
 
@@ -1168,8 +1168,8 @@ func readTagAnswer(item: JsonNode, position: int, kept: openArray[Word]): Outcom
 
 func readAnswer(text, model: string): Answer =
   ## Read answer of schema: first `COUNT_TAGS_MAX` tags in order, each through `readTagAnswer`;
-  ##   tags past cap counted, never read; model made printable.
-  ##   Tag refused is dropped alone, naming its position, so rest of answer is kept.
+  ##   elements past cap counted, never read; model made printable.
+  ##   Element refused is dropped alone, naming its position, so rest of answer is kept.
   let parsed = text.toJSON
   if parsed.isNone or parsed.get.kind != JObject:
     return failWhole(Failure.Malformed, "answer is no JSON object: " &
@@ -1334,8 +1334,8 @@ func isAnswered*(service: Service, reply: Reply): bool {.raises: [].} =
 #[ Report ]#
 
 func explain*(outcome: Outcome): string {.raises: [].} =
-  ## Render why no gismu was kept, ending in offending value: tag of answer named by position, or
-  ##   reply, page, exchange or text given failing whole.
+  ## Render why no gismu was kept, ending in offending value: element of answer named by position,
+  ##   or reply, page, exchange or text given failing whole.
   ##   `Word` ends in `reason`, `explain` of reading (`commands.nim`) kept when failure was made,
   ##     so refusal wording stays in one place, and explain reads no value again: escapes of
   ##     detail never reach reader.
@@ -1350,7 +1350,7 @@ func explain*(outcome: Outcome): string {.raises: [].} =
 
   let
     detail = outcome.detail
-    tag = if outcome.position.isSome: "Tag " & $outcome.position.get else: "Tag"
+    label = if outcome.position.isSome: "Element " & $outcome.position.get else: "Element"
   case outcome.failure
   of Failure.Network: "Service or page should answer; got `" & detail & "`."
   of Failure.Replay: "Exchange should hold this request; got `" & detail & "`."
@@ -1361,19 +1361,19 @@ func explain*(outcome: Outcome): string {.raises: [].} =
       "passage; got `" & detail & "`."
   of Failure.Malformed:
     if outcome.position.isNone: "Reply should hold answer of schema; got `" & detail & "`."
-    else: tag & " should be object holding string `gismu`; got `" & detail & "`."
+    else: label & " should be object holding string `gismu`; got `" & detail & "`."
   of Failure.Word:
     if outcome.is_past_cap:
-      tag & " should hold at most " & $BYTES_ELEMENT_MAX & " bytes; got `" & detail & "`."
-    else: explainReason(tag & " should be one gismu of list", outcome.reason, detail)
-  of Failure.Duplicate: tag & " should name gismu no earlier tag kept; got `" & detail & "`."
+      label & " should hold at most " & $BYTES_ELEMENT_MAX & " bytes; got `" & detail & "`."
+    else: explainReason(label & " should be one gismu of list", outcome.reason, detail)
+  of Failure.Duplicate: label & " should name gismu no earlier tag kept; got `" & detail & "`."
   of Failure.Long: "Tag should hold at most " & $COUNT_WORDS_MAX & " words; got `" & detail & "`."
 
 
 func toReport*(answer: Answer, passage: Passage, model_asked: string): string =
-  ## Render report: page, page cut, repair and passage cut first; then each tag dropped, tags past
-  ##   cap, each gismu kept with its gloss, and model, named once where any gismu is kept; served
-  ##   model differing from `model_asked` is named.
+  ## Render report: page, page cut, repair and passage cut first; then each element dropped,
+  ##   elements past cap, each gismu kept with its gloss, and model, named once where any gismu is
+  ##   kept; served model differing from `model_asked` is named.
   if passage.url.len > 0:
     result.add "Page came from `" & passage.url.toPrintable(RUNES_SHOWN) & "`.\n"
   if passage.is_page_cut:
@@ -1387,7 +1387,7 @@ func toReport*(answer: Answer, passage: Passage, model_asked: string): string =
   for outcome in answer.outcomes:
     if not outcome.is_kept: result.add outcome.explain & "\n"
   if answer.count_cut > 0:
-    result.add "Answer held `" & $answer.count_cut & "` tags past first `" & $COUNT_TAGS_MAX &
+    result.add "Answer held `" & $answer.count_cut & "` elements past first `" & $COUNT_TAGS_MAX &
         "`; tool never read them.\n"
   var found_kept = false
   for outcome in answer.outcomes:
