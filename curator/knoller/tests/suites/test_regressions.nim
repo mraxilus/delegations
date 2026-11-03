@@ -1,9 +1,8 @@
 ## Hold each case that review of PGA library and delegate reports found, end to end: source as
 ##   found, comment naming where it came from, run through whole chain as `koch fix` runs it
 ##   (`formatted`), to exact output; second run writes nothing.
-##   Parser of compiler proves needless parentheses. Case in ASCII asks 2.4.0, which builds this
-##     suite; case of glyph operators, as code of `ronri` projects spells them, asks stub of
-##     `stubs.nim`, which gives verdict commit pin of those projects gives (checked 2026-10-05).
+##   Parser of compiler building this suite, 2.4.0, proves needless parentheses in each case,
+##     glyph cases too: on each, commit `27763495` gave same verdict (checked 2026-10-05).
 ##   Lines quoted are as found; `strictFuncs` and enclosing suite, routine or block around them
 ##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller.
 ##   Each case keeps its domain test in suite of its rule; this suite adds end-to-end form.
@@ -12,7 +11,6 @@
 
 import std/[os, strutils, unittest]
 import ../../src/knoller/[chain, command, proofs, reports]
-import ./stubs
 
 
 const
@@ -332,7 +330,7 @@ suite "Regressions":
       "(|∙ ⊖(𝐦 ∧ 𝐧)) div (|∙ (⊖𝐦 ∧ ⊖𝐧))", "|∙ ⊖(𝐦 ∧ 𝐧) div |∙(⊖𝐦 ∧ ⊖𝐧)",
     ).replace(
       "(|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))", "|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)",
-    ), proverStub  # `|∙⊖` would lex one operator, so space stays; stub as commit pin
+    )  # `|∙⊖` would lex one operator, so space stays
     # `- -x` of #521; `--` one token
     holds HEAD & "let x = - -y  ## Value.\n", HEAD & "let x = - -y  ## Value.\n"
     # `-1` would lex one literal (#521)
@@ -392,7 +390,7 @@ suite "Regressions":
 
 
   test "9. parentheses go where parser proves it, three kinds, and stay where it does not":
-    holds WEDGES, WEDGES.replace("■(𝐧) + □(𝐧)", "■𝐧 + □𝐧"), proverStub  # after prefix
+    holds WEDGES, WEDGES.replace("■(𝐧) + □(𝐧)", "■𝐧 + □𝐧")  # after prefix
     holds MASK, MASK.replace("2'u^(DIMENSIONS)", "2'u^DIMENSIONS")  # beside binary operator
     holds LINKS, LINKS  # `@PAIRS[task.pair][0]` reads `(@PAIRS)[task.pair][0]` (#539)
     holds SIGILS, SIGILS.replace("@(x)  ##", "@x  ##")  # bare operand alone goes
@@ -401,8 +399,8 @@ suite "Regressions":
     ).replace("toBasisFlags(flags)", "flags.toBasisFlags")  # `1'u shl (i-1)` group stays
     # literal `-1` (ruling 11)
     holds HEAD & "let x = b + -(1)  ## Value.\n", HEAD & "let x = b + -(1)  ## Value.\n"
-    holds COMPLEMENTS, COMPLEMENTS, proverStub  # `\/` would lex one operator
-    holds NORMALIZED, NORMALIZED.replace("𝐬/𝑡", "𝐬 / 𝑡"), proverStub  # `^(|𝐦)` stays
+    holds COMPLEMENTS, COMPLEMENTS  # `\/` would lex one operator
+    holds NORMALIZED, NORMALIZED.replace("𝐬/𝑡", "𝐬 / 𝑡")  # `^(|𝐦)` stays
     # callee of command
     holds HEAD & "let z = a - (-b) -1  ## Value.\n", HEAD & "let z = a - (-b) -1  ## Value.\n"
 
@@ -410,7 +408,7 @@ suite "Regressions":
   test "10. power operator is tight, and exponent that would merge takes parentheses (ruling 12)":
     holds POWERS, HEAD & "let\n  p = -1^k  ## Sign.\n  q = -1^(a * b)  ## Sign.\n" &
       "  r = a^(-b)  ## Power.\n"
-    holds ANTISCALAR, ANTISCALAR, proverStub  # `float(-1^(int(b.grade) * int(b.gradeAnti)))`
+    holds ANTISCALAR, ANTISCALAR  # `float(-1^(int(b.grade) * int(b.gradeAnti)))`
 
 
   test "11. each report prints at its line in file as given (#521)":

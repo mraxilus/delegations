@@ -30,7 +30,7 @@ const
   GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet S = @(x) + @(x[0])  ## Sequences.\n"
     ## Nim source holding group parser proves needless, and group it refuses.
   NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.4.0, whose parser answers.
-  COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Commit pin of `ronri` projects.
+  COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Full commit of Nim, as pin names it.
   UNSERVED = "Parser proved no removal, since no compiler serves pin; got `"
     ## Opening of warning of pin no compiler serves, as `proversPin` writes it.
   UNSETTLED =

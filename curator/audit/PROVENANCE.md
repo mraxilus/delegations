@@ -196,11 +196,11 @@ record goes one row short at the next project. The records of that project then 
 the audit stays green over prose it never read. The derivation answers from the path, so the
 next project is governed from its first line.
 
-**A README below a project directory is outside the set.** `dance_ontology` keeps prose under
-`sim/` and `design/` in its own register. With `design/README.md`, `sim/README.md` and
-`sim/verdicts.md` added to `PATHS_ENGLISH`, `nim r koch check-files` reports 192 findings, measured
-2026-09-23. Curator duty 3 forbids a check that reddens a project which cannot see it yet.
-Cost: that prose holds Article VI.8 by reading alone.
+**A README below a project directory is outside the set.** On 2026-09-23, `dance_ontology` kept
+prose under `sim/` and `design/` in its own register. With `design/README.md`, `sim/README.md` and
+`sim/verdicts.md` added to `PATHS_ENGLISH`, `nim r koch check-files` reported 192 findings then.
+Curator duty 3 forbids a check that reddens a project which cannot see it yet. Cost: that prose
+holds Article VI.8 by reading alone.
 
 **A path joins the set only where its prose already passes.** A widening that reddens a project
 breaks duty 3, so its findings are measured before the change. A widening costs one finding for
@@ -208,9 +208,9 @@ every line of prose written between a rewrite and the widening that follows it. 
 is taken as soon as it is free.
 
 **A quotation is skipped whole.** Quoted text comes from outside this repository, and a
-delegate may not rewrite it. A finding on it could never be fixed. The `PROVENANCE.md` of
-`pga_visualiser` quotes the acknowledgement that the NASA Exoplanet Archive asks for word for
-word, and it is longer than 25 words.
+delegate may not rewrite it. A finding on it could never be fixed. A record may quote, word for
+word, the acknowledgement that a source such as the NASA Exoplanet Archive asks for. Such a quote
+can pass 25 words.
 
 - Rejected: an allowlist of exact sentences, which is the grandfathering that curator duty 3
   forbids.
@@ -224,8 +224,8 @@ word, and it is longer than 25 words.
   That path is `gaps.md`, which a generator writes and no delegate may rewrite by hand.
 - Verified by `suites/test_english.nim`: the derived arms. A project and a domain that do not exist
   yet are governed. A domain outside the registry is not, and neither is a README below a project
-  directory. That last arm is the one that would redden `dance_ontology`, so it has its own
-  assertion. One more assertion holds that a derived path is read, and not merely listed.
+  directory. That last arm is the one that reddened `dance_ontology` on 2026-09-23, so it has
+  its own assertion. One more assertion holds that a derived path is read, and not merely listed.
 
 ## Form
 
@@ -397,8 +397,8 @@ such log, so the `check-files` job fetches every commit.
 carries its records to a new path, and a `Pruned` row may name a commit from before the move. So
 koch reads the plain log first, and `git log --follow` only where the plain log misses the commit.
 
-- Rejected: `--follow` alone. It drops a merge commit that changed the record on both sides, and
-  the true row of `pga_benchmark` names such a commit.
+- Rejected: `--follow` alone. It drops a merge commit that changed the record on both sides. A
+  true row can name such a commit, as one row of `pga_benchmark` did.
 - Cost: git pairs a deleted file with a similar new file as a rename. So a record written anew in
   the place of another inherits the history of the other.
 - Cost: a second log for each row that the plain log misses.
@@ -601,7 +601,7 @@ repository issue 671.
   the finding for a bold. Its text then draws lighter than it asks.
 - Cost: no place of the control page holds ASCII. So a collector that writes runs past ASCII
   alone passes, and hides the bold of ASCII text. The collectors of dance_ontology and
-  pga_benchmark write so, and each has an issue to port.
+  pga_benchmark wrote so when this rule merged, 2026-11-03, and each took an issue to port.
 - Cost: text that a script writes only once a reader acts stands in no place of the control
   page, and the collectors differ there. `coverage.nim` holds such text where a source writes
   it, against every font face that the project ships.
@@ -1288,8 +1288,8 @@ label would show a stale queue.
 **Each project pins its own compiler, and there is no Nim for the whole repository.**
 `requires "nim == <version>"` sits in the nimble file of the project. It is read through the
 `requireLiterals` scan of knoller (`pins.nim`), which `dependencies.nim` imports too, so
-requirements are parsed in one place. No single version serves every project, because
-`pga_visualiser` and `pga_benchmark` pin a compiler commit that no release carries.
+requirements are parsed in one place. No single version need serve every project, because a
+project may pin a compiler commit that no release carries.
 
 - Rejected: one pin for the repository, which cannot hold a commit pin and a release pin at
   once. Rejected: `>=`, which cannot express an upper bound, and cannot say which compiler a
@@ -1331,9 +1331,9 @@ ruling. The curator projects pin 2.4.0, the stable release, as the Architect ask
 - Verified by `nim r koch test` over `curator/knoller`, `curator/audit`, `curator/assayer` and
   `curator/probe` on 2.4.0, 2026-10-29: every suite passes.
 - Trap from 2.2.8 to 2.2.12: a `func` whose implicit `float` result is read by `+=` before it is
-  assigned gets an int register for it. To write `result = 0.0` first avoids it. The
-  `PROVENANCE.md` of `dance_ontology` holds the diagnosis. 2.4.0 reads that `result` as a float,
-  verified by hand, 2026-10-29.
+  assigned gets an int register for it. To write `result = 0.0` first avoids it.
+  `dance_ontology` diagnosed it in its record. 2.4.0 reads that `result` as a float, verified by
+  hand, 2026-10-29.
 - Cost: the modules of koch compile under every pin in the tree, because the job of every
   project installs its own. The matrix proves that, and not this paragraph.
 
@@ -1571,9 +1571,9 @@ The stub leaves out `-d:nimUnittestAbortOnError:on`, so every failure shows in o
   and the other suites still run. The exit is 1.
 
 `git ls-files '*/tests/t*.nim' '*/tests/suites/t*.nim'` counts the suites. No count is written
-here, because a written count goes stale. The suites of `dance_ontology` dominate every
-whole-tree run. Verified by hand, 2026-09-08: `nim r koch test` over every project passes with
-0 findings. Each project ran on the compiler that it pins, with one pin alone on `PATH`.
+here, because a written count goes stale. Verified by hand, 2026-09-08: `nim r koch test` over
+every project passes with 0 findings, and the suites of `dance_ontology` took most of that run.
+Each project ran on the compiler that it pins, with one pin alone on `PATH`.
 
 **Trap: `koch check` selects suites from committed paths.** `pathsChanged` reads
 `git diff <base>...HEAD`, so a change that is not committed selects no project. `koch check` then
@@ -1628,11 +1628,13 @@ passed by in silence, which is why CONTRIBUTOR.md names `drive`, `head` and `sys
 
 **It is a matrix, each project on its own pin, where `check-types` is one plain job.** `drive`
 calls `web`, which runs `nim js` over `bridge.nim`, and that compiles project code and
-everything it imports. So `pga_visualiser` on the compiler of koch fails inside
-`multivectors.nim` of `pga`, whose syntax only the pinned commit can lex. The type check rests
-on a verb that compiles no project code, and `drive` breaks that condition. So `koch drive` is
-planned like `test`, and `list-projects --drive` filters what `list-projects` already selected.
-It inherits the scoping, `--all` and `--recent` from there.
+everything it imports. So a project whose code only its own pin can compile fails on the
+compiler of koch. `pga_visualiser` failed so inside `multivectors.nim` of `pga`, while it pinned
+a commit whose syntax no release could lex.
+
+The type check rests on a verb that compiles no project code, and `drive` breaks that condition.
+So `koch drive` is planned like `test`, and `list-projects --drive` filters what `list-projects`
+already selected. It inherits the scoping, `--all` and `--recent` from there.
 
 - Rejected: one plain job on the compiler of koch, as `check-types` runs.
 
@@ -1866,8 +1868,8 @@ reads as one that holds a comment, and stays as written.
 **A nimble file whose copy sits in `atlas.lock` stays as written.** A rewrite would leave the
 copy in the lock stale, and Atlas reads that as a change of package. `koch fix` prints each such
 file with its reason, and no layout check reads it. The lock names its copy in
-`nimbleFile.filename`. On the tree, the nimble files of `pga_benchmark` and `pga_visualiser` are
-locked. Verified by `suites/test_fixes.nim`.
+`nimbleFile.filename`. The nimble files of `pga_benchmark` and `pga_visualiser` were locked so
+when this rule was written. Verified by `suites/test_fixes.nim`.
 
 **`koch fix` writes Nim files alone.** A fixer applies a style guide, and STYLE.md is the guide
 of Nim alone. So `fixSource` runs only on a kind that carries `has_guide`: Nim, NimScript and
@@ -2029,11 +2031,11 @@ No fixer of the chain writes a range out of the form of X.9. Verified by `suites
 source in that form goes through every fixer unwritten. A split call, a joined call and a wrapped
 signature keep each range.
 
-**Two generated data files of `rga_visualiser` hold most of its call findings.** They are
-`starfield.nim` and `neighbourhood.nim`, contributor code that a generator writes. They hold
-11,583 of its 12,134 call rewrites: 11,252 and 331. A curator branch cannot fence them, because
-it never writes contributor code (CURATOR.md, duty 3). So their project fences them, or fixes
-them, on its own branch.
+**Two generated data files of `rga_visualiser` held most of its call findings, 2026-10-02.**
+They were `starfield.nim` and `neighbourhood.nim`, contributor code that a generator writes. They
+held 11,583 of its 12,134 call rewrites: 11,252 and 331. A curator branch cannot fence them,
+because it never writes contributor code (CURATOR.md, duty 3). So their project fences them, or
+fixes them, on its own branch.
 
 **The whole-tree proof: no fix changes what code means.** Verified by hand, 2026-10-02, with a
 scratch program over `fixEntries`, `auditTree` and the parser of the compiler. The program fixed
@@ -2206,7 +2208,7 @@ of knoller, under Content fixes.
 - The pin is that of the project that holds the file, and that of `curator/audit` for a file at
   the root. `proversPin` of knoller serves it, through a `Toolchains` of its own.
   So each project reads with the grammar of its own pin. 2.2.12 lexes as names the glyph
-  operators that 2.4.0 and the commit pin of the `ronri` projects lex as operators.
+  operators that 2.4.0 lexes as operators.
 - Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
   one line `warning: needless-parentheses: <message>`, and the exit code stays.
 - An entry that asked nothing read only sources that hold an answer, and an answer never changes
@@ -2245,15 +2247,15 @@ less those that its comments hold, go to the same check. So each kind reports in
 
 **A timer is unread, because one name is both clocks.** Inside a page under the clock of
 Playwright, `setTimeout` and `performance.now` are simulated reads. A check over them would
-report every correctness drive of `pga_visualiser`, where each `setTimeout` sits inside
-`evaluateOver` or `page.evaluate`. So the check holds the narrow half, and the rule holds the
+report each drive that runs `setTimeout` inside a page, as every correctness drive of
+`pga_visualiser` did on 2026-10-01. So the check holds the narrow half, and the rule holds the
 rest by reading.
 
 - Nim names compare as the compiler compares them, so `sleep_async` is `sleepAsync`. Nim
   source is read with comments and strings blanked, so the suite of the check holds its
   fixtures as strings and reports nothing.
-- `sleep` of TypeScript is the drive's own helper. In `pga_visualiser` it wraps `setTimeout`
-  inside a page on the simulated clock, so it is unread.
+- `sleep` of TypeScript is a helper of a drive. It wraps `setTimeout` inside a page on the
+  simulated clock, as that of `pga_visualiser` did on 2026-10-01. So it is unread.
 - Verified by hand with `nim r koch check-files` on 2026-10-01: no finding in any project. A
   planted `sleep(10)` in a Nim suite and a planted `waitForTimeout(100)` in a TypeScript drive
   each read as one finding.
