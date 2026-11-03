@@ -8,9 +8,9 @@
     "sizeof_multivector": 128
   },
   "taken": {
-    "date": "2026-10-21",
+    "date": "2026-10-28",
     "machine": "linux amd64, 4 cores",
-    "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
+    "nim": "14991af742d0833503741fd9a0918133d1bcf8a4",
     "pga": "3d9696edbaaa5dca655c3024174bd46fd156d7c6",
     "flags": "-d:release",
     "flags_machine": [
@@ -25,184 +25,184 @@
   },
   "measurands": {
     "wedge": {
-      "instructions": 293,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_anti": {
-      "instructions": 289,
-      "bytes_read": 648,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_dot": {
-      "instructions": 784,
-      "bytes_read": 2416,
-      "bytes_written": 528,
+      "instructions": 770,
+      "bytes_read": 3592,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_dot_anti": {
-      "instructions": 813,
-      "bytes_read": 2424,
-      "bytes_written": 544,
+      "instructions": 777,
+      "bytes_read": 3600,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dot": {
-      "instructions": 94,
-      "bytes_read": 416,
-      "bytes_written": 264,
+      "instructions": 65,
+      "bytes_read": 264,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dot_anti": {
-      "instructions": 89,
-      "bytes_read": 320,
-      "bytes_written": 264,
+      "instructions": 60,
+      "bytes_read": 280,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "contract_bulk": {
-      "instructions": 289,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "contract_weight": {
-      "instructions": 289,
-      "bytes_read": 728,
-      "bytes_written": 256,
+      "instructions": 251,
+      "bytes_read": 1312,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "expand_bulk": {
-      "instructions": 309,
-      "bytes_read": 680,
-      "bytes_written": 256,
+      "instructions": 251,
+      "bytes_read": 1312,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "expand_weight": {
-      "instructions": 296,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 251,
+      "bytes_read": 1312,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "add": {
-      "instructions": 82,
-      "bytes_read": 417,
-      "bytes_written": 392,
+      "instructions": 42,
+      "bytes_read": 264,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "subtract": {
-      "instructions": 82,
-      "bytes_read": 417,
-      "bytes_written": 392,
+      "instructions": 42,
+      "bytes_read": 264,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "project_central": {
-      "instructions": 610,
-      "bytes_read": 2217,
-      "bytes_written": 728,
+      "instructions": 547,
+      "bytes_read": 1281,
+      "bytes_written": 424,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "project_central_anti": {
-      "instructions": 576,
-      "bytes_read": 2153,
-      "bytes_written": 704,
+      "instructions": 529,
+      "bytes_read": 1265,
+      "bytes_written": 328,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "project_orthogonal": {
-      "instructions": 590,
-      "bytes_read": 2201,
-      "bytes_written": 728,
+      "instructions": 549,
+      "bytes_read": 1329,
+      "bytes_written": 424,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "project_orthogonal_anti": {
-      "instructions": 583,
-      "bytes_read": 2185,
-      "bytes_written": 712,
+      "instructions": 532,
+      "bytes_read": 1369,
+      "bytes_written": 312,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "scale": {
-      "instructions": 75,
-      "bytes_read": 289,
-      "bytes_written": 392,
+      "instructions": 30,
+      "bytes_read": 136,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "bulk": {
-      "instructions": 49,
-      "bytes_read": 176,
-      "bytes_written": 272,
+      "instructions": 20,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "weight": {
-      "instructions": 52,
-      "bytes_read": 160,
-      "bytes_written": 296,
+      "instructions": 22,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "complement_right": {
-      "instructions": 41,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "complement_left": {
-      "instructions": 32,
-      "bytes_read": 152,
+      "instructions": 45,
+      "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "reverse": {
-      "instructions": 27,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "reverse_anti": {
-      "instructions": 40,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dual_bulk": {
-      "instructions": 40,
+      "instructions": 43,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dual_weight": {
-      "instructions": 38,
+      "instructions": 43,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "negate": {
-      "instructions": 76,
-      "bytes_read": 297,
-      "bytes_written": 392,
+      "instructions": 31,
+      "bytes_read": 144,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
@@ -221,16 +221,16 @@
       "is_copy_apart": false
     },
     "norm_bulk_squared": {
-      "instructions": 58,
-      "bytes_read": 192,
-      "bytes_written": 264,
+      "instructions": 29,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "norm_weight_squared": {
-      "instructions": 52,
-      "bytes_read": 80,
-      "bytes_written": 264,
+      "instructions": 23,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
@@ -242,44 +242,44 @@
       "is_copy_apart": false
     },
     "normalize_bulk": {
-      "instructions": 96,
-      "bytes_read": 337,
-      "bytes_written": 392,
+      "instructions": 56,
+      "bytes_read": 185,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "normalize_weight": {
-      "instructions": 96,
-      "bytes_read": 337,
-      "bytes_written": 392,
+      "instructions": 56,
+      "bytes_read": 185,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "unitize": {
-      "instructions": 96,
-      "bytes_read": 337,
-      "bytes_written": 392,
+      "instructions": 56,
+      "bytes_read": 185,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "attitude": {
-      "instructions": 62,
-      "bytes_read": 224,
-      "bytes_written": 304,
+      "instructions": 31,
+      "bytes_read": 80,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "select_grade": {
-      "instructions": 116,
-      "bytes_read": 211,
-      "bytes_written": 448,
+      "instructions": 64,
+      "bytes_read": 42,
+      "bytes_written": 168,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "select_grade_anti": {
-      "instructions": 125,
-      "bytes_read": 227,
-      "bytes_written": 464,
+      "instructions": 76,
+      "bytes_read": 59,
+      "bytes_written": 184,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
@@ -291,16 +291,16 @@
       "is_copy_apart": false
     },
     "bulk_flat": {
-      "instructions": 51,
-      "bytes_read": 144,
-      "bytes_written": 296,
+      "instructions": 18,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "weight_flat": {
-      "instructions": 50,
-      "bytes_read": 144,
-      "bytes_written": 288,
+      "instructions": 20,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
@@ -319,16 +319,16 @@
       "is_copy_apart": false
     },
     "norm_bulk_flat_squared": {
-      "instructions": 58,
-      "bytes_read": 192,
-      "bytes_written": 264,
+      "instructions": 29,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "norm_weight_flat_squared": {
-      "instructions": 52,
-      "bytes_read": 80,
-      "bytes_written": 264,
+      "instructions": 23,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
@@ -340,506 +340,506 @@
       "is_copy_apart": false
     },
     "norm_radius_squared": {
-      "instructions": 84,
-      "bytes_read": 192,
-      "bytes_written": 264,
+      "instructions": 54,
+      "bytes_read": 152,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "carrier": {
-      "instructions": 61,
-      "bytes_read": 152,
-      "bytes_written": 320,
+      "instructions": 29,
+      "bytes_read": 80,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "carrier_co": {
-      "instructions": 247,
-      "bytes_read": 401,
-      "bytes_written": 616,
+      "instructions": 197,
+      "bytes_read": 233,
+      "bytes_written": 336,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "center": {
-      "instructions": 570,
-      "bytes_read": 994,
-      "bytes_written": 1072,
+      "instructions": 482,
+      "bytes_read": 1050,
+      "bytes_written": 616,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "container": {
-      "instructions": 381,
-      "bytes_read": 721,
-      "bytes_written": 880,
+      "instructions": 321,
+      "bytes_read": 769,
+      "bytes_written": 456,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "partner": {
-      "instructions": 1033,
-      "bytes_read": 2356,
-      "bytes_written": 1945,
+      "instructions": 949,
+      "bytes_read": 2350,
+      "bytes_written": 1361,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_round_point_round_point": {
-      "instructions": 293,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_dipole_round_point": {
-      "instructions": 293,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_round_point_dipole": {
-      "instructions": 293,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_circle_round_point": {
-      "instructions": 293,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_round_point_circle": {
-      "instructions": 293,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_dipole_dipole": {
-      "instructions": 293,
-      "bytes_read": 656,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_anti_circle_circle": {
-      "instructions": 289,
-      "bytes_read": 648,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_anti_circle_dipole": {
-      "instructions": 289,
-      "bytes_read": 648,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_anti_dipole_circle": {
-      "instructions": 289,
-      "bytes_read": 648,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_anti_dipole_dipole": {
-      "instructions": 289,
-      "bytes_read": 648,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_anti_circle_round_point": {
-      "instructions": 289,
-      "bytes_read": 648,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "wedge_anti_round_point_circle": {
-      "instructions": 289,
-      "bytes_read": 648,
-      "bytes_written": 256,
+      "instructions": 245,
+      "bytes_read": 1304,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dot_round_point_round_point": {
-      "instructions": 94,
-      "bytes_read": 416,
-      "bytes_written": 264,
+      "instructions": 65,
+      "bytes_read": 264,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dot_dipole_dipole": {
-      "instructions": 94,
-      "bytes_read": 416,
-      "bytes_written": 264,
+      "instructions": 65,
+      "bytes_read": 264,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dot_circle_circle": {
-      "instructions": 94,
-      "bytes_read": 416,
-      "bytes_written": 264,
+      "instructions": 65,
+      "bytes_read": 264,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dot_anti_round_point_round_point": {
-      "instructions": 89,
-      "bytes_read": 320,
-      "bytes_written": 264,
+      "instructions": 60,
+      "bytes_read": 280,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dot_anti_dipole_dipole": {
-      "instructions": 89,
-      "bytes_read": 320,
-      "bytes_written": 264,
+      "instructions": 60,
+      "bytes_read": 280,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dot_anti_circle_circle": {
-      "instructions": 89,
-      "bytes_read": 320,
-      "bytes_written": 264,
+      "instructions": 60,
+      "bytes_read": 280,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "complement_right_round_point": {
-      "instructions": 41,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "complement_left_round_point": {
-      "instructions": 32,
-      "bytes_read": 152,
+      "instructions": 45,
+      "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "reverse_round_point": {
-      "instructions": 27,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "reverse_anti_round_point": {
-      "instructions": 40,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dual_bulk_round_point": {
-      "instructions": 40,
+      "instructions": 43,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dual_weight_round_point": {
-      "instructions": 38,
+      "instructions": 43,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "bulk_round_point": {
-      "instructions": 49,
-      "bytes_read": 176,
-      "bytes_written": 272,
+      "instructions": 20,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "weight_round_point": {
-      "instructions": 52,
-      "bytes_read": 160,
-      "bytes_written": 296,
+      "instructions": 22,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "bulk_flat_round_point": {
-      "instructions": 51,
-      "bytes_read": 144,
-      "bytes_written": 296,
+      "instructions": 18,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "weight_flat_round_point": {
-      "instructions": 50,
-      "bytes_read": 144,
-      "bytes_written": 288,
+      "instructions": 20,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "attitude_round_point": {
-      "instructions": 62,
-      "bytes_read": 224,
-      "bytes_written": 304,
+      "instructions": 31,
+      "bytes_read": 80,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "carrier_round_point": {
-      "instructions": 61,
-      "bytes_read": 152,
-      "bytes_written": 320,
+      "instructions": 29,
+      "bytes_read": 80,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "carrier_co_round_point": {
-      "instructions": 247,
-      "bytes_read": 401,
-      "bytes_written": 616,
+      "instructions": 197,
+      "bytes_read": 233,
+      "bytes_written": 336,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "center_round_point": {
-      "instructions": 570,
-      "bytes_read": 994,
-      "bytes_written": 1072,
+      "instructions": 482,
+      "bytes_read": 1050,
+      "bytes_written": 616,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "container_round_point": {
-      "instructions": 381,
-      "bytes_read": 721,
-      "bytes_written": 880,
+      "instructions": 321,
+      "bytes_read": 769,
+      "bytes_written": 456,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "partner_round_point": {
-      "instructions": 1033,
-      "bytes_read": 2356,
-      "bytes_written": 1945,
+      "instructions": 949,
+      "bytes_read": 2350,
+      "bytes_written": 1361,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "complement_right_dipole": {
-      "instructions": 41,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "complement_left_dipole": {
-      "instructions": 32,
-      "bytes_read": 152,
+      "instructions": 45,
+      "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "reverse_dipole": {
-      "instructions": 27,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "reverse_anti_dipole": {
-      "instructions": 40,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dual_bulk_dipole": {
-      "instructions": 40,
+      "instructions": 43,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dual_weight_dipole": {
-      "instructions": 38,
+      "instructions": 43,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "bulk_dipole": {
-      "instructions": 49,
-      "bytes_read": 176,
-      "bytes_written": 272,
+      "instructions": 20,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "weight_dipole": {
-      "instructions": 52,
-      "bytes_read": 160,
-      "bytes_written": 296,
+      "instructions": 22,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "bulk_flat_dipole": {
-      "instructions": 51,
-      "bytes_read": 144,
-      "bytes_written": 296,
+      "instructions": 18,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "weight_flat_dipole": {
-      "instructions": 50,
-      "bytes_read": 144,
-      "bytes_written": 288,
+      "instructions": 20,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "attitude_dipole": {
-      "instructions": 62,
-      "bytes_read": 224,
-      "bytes_written": 304,
+      "instructions": 31,
+      "bytes_read": 80,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "carrier_dipole": {
-      "instructions": 61,
-      "bytes_read": 152,
-      "bytes_written": 320,
+      "instructions": 29,
+      "bytes_read": 80,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "carrier_co_dipole": {
-      "instructions": 247,
-      "bytes_read": 401,
-      "bytes_written": 616,
+      "instructions": 197,
+      "bytes_read": 233,
+      "bytes_written": 336,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "center_dipole": {
-      "instructions": 570,
-      "bytes_read": 994,
-      "bytes_written": 1072,
+      "instructions": 482,
+      "bytes_read": 1050,
+      "bytes_written": 616,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "container_dipole": {
-      "instructions": 381,
-      "bytes_read": 721,
-      "bytes_written": 880,
+      "instructions": 321,
+      "bytes_read": 769,
+      "bytes_written": 456,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "partner_dipole": {
-      "instructions": 1065,
-      "bytes_read": 2408,
-      "bytes_written": 1961,
+      "instructions": 987,
+      "bytes_read": 2404,
+      "bytes_written": 1377,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "complement_right_circle": {
-      "instructions": 41,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "complement_left_circle": {
-      "instructions": 32,
-      "bytes_read": 152,
+      "instructions": 45,
+      "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "reverse_circle": {
-      "instructions": 27,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "reverse_anti_circle": {
-      "instructions": 40,
+      "instructions": 45,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dual_bulk_circle": {
-      "instructions": 40,
+      "instructions": 43,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "dual_weight_circle": {
-      "instructions": 38,
+      "instructions": 43,
       "bytes_read": 144,
       "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "bulk_circle": {
-      "instructions": 49,
-      "bytes_read": 176,
-      "bytes_written": 272,
+      "instructions": 20,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "weight_circle": {
-      "instructions": 52,
-      "bytes_read": 160,
-      "bytes_written": 296,
+      "instructions": 22,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "bulk_flat_circle": {
-      "instructions": 51,
-      "bytes_read": 144,
-      "bytes_written": 296,
+      "instructions": 18,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "weight_flat_circle": {
-      "instructions": 50,
-      "bytes_read": 144,
-      "bytes_written": 288,
+      "instructions": 20,
+      "bytes_read": 40,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "attitude_circle": {
-      "instructions": 62,
-      "bytes_read": 224,
-      "bytes_written": 304,
+      "instructions": 31,
+      "bytes_read": 80,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "carrier_circle": {
-      "instructions": 61,
-      "bytes_read": 152,
-      "bytes_written": 320,
+      "instructions": 29,
+      "bytes_read": 80,
+      "bytes_written": 128,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "carrier_co_circle": {
-      "instructions": 247,
-      "bytes_read": 401,
-      "bytes_written": 616,
+      "instructions": 197,
+      "bytes_read": 233,
+      "bytes_written": 336,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "center_circle": {
-      "instructions": 570,
-      "bytes_read": 994,
-      "bytes_written": 1072,
+      "instructions": 482,
+      "bytes_read": 1050,
+      "bytes_written": 616,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "container_circle": {
-      "instructions": 381,
-      "bytes_read": 721,
-      "bytes_written": 880,
+      "instructions": 321,
+      "bytes_read": 769,
+      "bytes_written": 456,
       "is_shared_reached": false,
       "is_copy_apart": false
     },
     "partner_circle": {
-      "instructions": 1072,
-      "bytes_read": 2359,
-      "bytes_written": 1945,
+      "instructions": 988,
+      "bytes_read": 2353,
+      "bytes_written": 1361,
       "is_shared_reached": false,
       "is_copy_apart": false
     }

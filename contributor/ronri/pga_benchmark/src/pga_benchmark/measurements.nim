@@ -9,10 +9,10 @@
 ##   Result elements start uninitialised (`noinit`): array filled with zeros would let C compiler
 ##     drop each zero store that inlined operation repeats, and so time fewer stores than any
 ##     caller pays.
-##   Result of three floats or fewer returns by value, so loop binds it before storing it.
-##     Assigned straight into its element, it passes through temporary that call site zero-fills,
-##     and in large function compiler keeps that fill as out-of-line `rep stos`, about 11 ns per
-##     object that no caller of normal size pays. Suite `Internal: Inspector` holds it.
+##   Result of three floats or fewer returns by value, and loop binds it before storing it.
+##     Stored straight, under Nim 2.3.1 it passed through temporary that call site zero-filled
+##     out of line in large function, about 11 ns per object; Nim 2.4.0 stores it in place.
+##     Binding holds loop free of that fill under either. Suite `Internal: Inspector` holds it.
 ##   Each measurand times in procedure of its own per implementation, as caller's function
 ##     would call it. In one function holding every loop, error check after each call drains
 ##     compiler's estimate of reaching code below it to zero from second measurand on; code
