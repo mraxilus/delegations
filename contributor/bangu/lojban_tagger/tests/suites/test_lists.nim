@@ -169,7 +169,7 @@ const
     ## Entry of each sample line, fields read off by hand from columns of `entries.nim`.
 
   LINE_BAARMOA = "ba'armo'a:barna+morna:pattern of marks:$morna1 $morna2 $=barna1 $morna3 $barna2"
-    ## Line 1 of `lujvo.txt`: tanru in Lojban.
+    ## Line 1 of `lujvo.txt`: tanru in lojban.
   LINE_BADGAI =
       "badgai#defend+cover: protective cover/ shield:$bandu1 $=gacri1 $bandu2 $=gacri1 " &
       "$bandu3"
@@ -177,7 +177,7 @@ const
   LINE_DATNYVEI =
       "datnyvei:datni+vreji:file (incl. computers):$vreji1 $vreji2 $=datni2 $vreji3 " &
       "$vreji4 [ = manner of encoding]"
-    ## Line 634 of `lujvo.txt`: `datnyvei`, tanru in Lojban.
+    ## Line 634 of `lujvo.txt`: `datnyvei`, tanru in lojban.
   LINE_FEBJICLA = "febjicla#boil+stir:roil:roil:$jicla1 $jicla2 $=febvi1"
     ## Line 841 of `lujvo.txt`: English, gloss given twice; first kept.
   LINE_CIMNALSRA = "cimnalsra:foldi::cilmo+na'e+srasu foldi marsh"
@@ -436,7 +436,7 @@ suite "Internal: Lists":
       check entry.word.len > 0 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # word is letters
       check entry.parts.len >= 2 and entry.parts.allIt(it.len > 0)  # tanru of two parts or more
       if entry.notation == Notation.Lojban:
-        check entry.parts.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # Lojban parts are letters
+        check entry.parts.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # lojban parts are letters
       check entry.gloss.len > 0 and entry.gloss == entry.gloss.strip  # gloss present, trimmed
       check not entry.gloss.startsWith("$")  # place structure is no gloss
 

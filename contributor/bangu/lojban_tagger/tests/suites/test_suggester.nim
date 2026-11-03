@@ -184,7 +184,7 @@ const
     "\xE2\x80", "\xED\xA0\x80", "\x01", "\x7F", "\xE2\x80\xAE",
   ]
     ## Words random passages draw: markup, quotes, line breaks, multibyte, ill-formed bytes,
-    ##   control and bidirectional marks, Lojban; no zero byte, which no argument carries.
+    ##   control and bidirectional marks, lojban; no zero byte, which no argument carries.
   PIECE_LONG = "Alice \xC3\xA9 "  ## Text long passage repeats: ASCII, then two bytes of one rune.
   COUNT_LONG_MIN = BYTES_PASSAGE_MAX div PIECE_LONG.len + 1
     ## Fewest pieces long passage holds, so it outgrows `BYTES_PASSAGE_MAX`.
@@ -238,10 +238,10 @@ const
   GISMU_GIVEN = ["cukta", "datni", "gerku", "pixra", "tatpi", "vreji", "xatra"]
     ## Gismu random texts given join into tag.
   TEXTS_ASKED = [
-    "se", "lo", "file", "Lojban", "mi ciska lo xatra", "datni+vreji", "datni vreji", "datna",
+    "se", "lo", "file", "lojban", "mi ciska lo xatra", "datni+vreji", "datni vreji", "datna",
     "cihska", "qwzx",
   ]
-    ## Texts reading as no tag: cmavo alone, English, Lojban prose, tanru joined by `+` or by
+    ## Texts reading as no tag: cmavo alone, English, lojban prose, tanru joined by `+` or by
     ##   space, unlisted word, unknown letter.
   USERS_REDIRECT = ["", "alice@", "alice:SECRET-PASSWORD@"]
     ## User parts redirect URLs hold: none, name alone, and name with password.

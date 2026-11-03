@@ -1826,10 +1826,10 @@ suite "Internal: Answer":
         "Element 1 should be one gismu of list. " &
         found.readTag.explain.toPrintableReference(high(int))  # judged by bytes as answered
     check readAnswer(toAnswer(["café"]), MODEL_SUITE).outcomes[0].explain == "Element 1 " &
-        "should be one gismu of list. Tag should hold Lojban letters alone; got `é` in " &
+        "should be one gismu of list. Tag should hold lojban letters alone; got `é` in " &
         "`café`."  # review finding logic-6, 2026-10-29: named byte `C3` alone
     check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).outcomes[0].explain == "Element 1 " &
-        "should be one gismu of list. Tag should hold Lojban letters alone; got `\\u{1}` in " &
+        "should be one gismu of list. Tag should hold lojban letters alone; got `\\u{1}` in " &
         "`ci\\u{1}ska`."  # review finding logic-6, 2026-10-29: named `\`, never answered
     for filler in FILLERS_WORD:  # 8 characters, one of each kind it names, not every character
       for count in 1 .. BYTES_ELEMENT_MAX + 1:  # each length to cap and past it, exhaustive
@@ -1988,7 +1988,7 @@ suite "Internal: Request":
     check "Where one idea needs two or more gismu, give each of them" in
         prose  # ruling: gismu alone, so idea of several tags each, as search meets them
     check "so that a person can find it again by search" in prose  # ruling: tags serve search
-    check "A tag is one gismu, a root word of Lojban: never a lujvo, a cmavo or a name" in
+    check "A tag is one gismu, a root word of lojban: never a lujvo, a cmavo or a name" in
         prose  # ruling: suggester gives gismu alone, while tagger still reads lujvo
     check ("Give every gismu that a person might plausibly search by, and stop where the next " &
         "one would be a guess") in prose  # ruling: each gismu search might use; model stops
@@ -2797,7 +2797,7 @@ suite "Internal: Page":
   test "URL of passage keeps token held in path, and pages its query alone names read as one":
     let
       shared = toPassage("x", "https://example.org/s/PATH-TOKEN/notes.txt?dl=0")
-      lojban = toPassage("x", "https://example.org/w/index.php?title=Lojban")
+      lojban = toPassage("x", "https://example.org/w/index.php?title=lojban")
       esperanto = toPassage("x", "https://example.org/w/index.php?title=Esperanto")
       failed = ANSWER_FAILED
     check shared.url == "https://example.org/s/PATH-TOKEN/notes.txt"  # cost of `dropSecrets`
@@ -3038,6 +3038,34 @@ suite "Internal: Report":
           check explained.startsWith("Element " & $position & " should ")  # named by position
 
 
+  test "report and system text write lojban in lowercase, outside list data":
+    let passage = Passage(text: "x", url: URL_SUITE, count_bytes: 70_000, count_repaired: 1,
+        is_cut: true, is_page_cut: true)
+    for refusal in Refusal:  # 8 members, exhaustive
+      let reason = Reading(is_tag: false, text: "x", refusal: refusal, detail: "x").explain
+      check "Lojban" notin reason  # ruling of Architect, 2026-11-03: reader wrote `Lojban letters`
+      for failure in Failure:  # 10 members, exhaustive
+        for position in [none(int), some(1)]:  # whole, and element of answer
+          let answer = Answer(
+            outcomes: @[
+              Outcome(is_kept: false, failure: failure, detail: "x", position: position,
+                  reason: reason),
+              Outcome(is_kept: true, tag: tanru("ciska"), gloss: "g"),
+            ],
+            count_cut: 1,
+            model: "m",
+          )
+          check "Lojban" notin answer.toReport(passage, "asked")  # every line report writes
+    check "Lojban" notin toReportGiven("x", tanru("ciska"))  # report of text given
+    var listed: seq[string]
+    for w in WORDS_GISMU:  # 1342 gismu, exhaustive
+      let entry = w.entry
+      listed.add entry.word & ": " & entry.keyword
+      if entry.hint.len > 0: listed[^1].add "; " & entry.hint
+    for line in PROMPT_SYSTEM.splitLines:  # every line; system text wrote `root word of Lojban`
+      check "Lojban" notin line or line in listed  # capital in list data alone: keyword of `lojbo`
+
+
   test "report names page, cuts and repair, then elements dropped and cut, gismu kept, model":
     let
       dropped = Outcome(is_kept: false, failure: Failure.Word, detail: "datna",
@@ -3099,7 +3127,7 @@ suite "Internal: Report":
     check given.isSome and given.get.is_kept and given.get.gloss == "" and
         "came from" notin toReportGiven("datnyvreji",
         given.get.tag)  # no service asked, so none glosses or is named
-    for text in ["mi nelci lo nu tcidu lo cukta", "Lojban", "se", "lo", "", "datni+vreji",
+    for text in ["mi nelci lo nu tcidu lo cukta", "lojban", "se", "lo", "", "datni+vreji",
         "picture book"]:
       check readTagGiven(text).isNone  # prose, English, cmavo alone, tanru go to service
     let padded = " ".repeat(BYTES_ELEMENT_MAX - 5) & "ciska"
