@@ -507,9 +507,8 @@ suite "Internal: Every upper arm the simulation recorded, against shoulder's edg
     ##   Red before its fix, read 2026-10-20 on `design/rig.json` of `a98d9938`: 678 of 2720
     ##     arm-moments past edge by more than give, 781 past it at all, every quoted moment
     ##     among them.
-    ##   Rig's sweeps record moment they stop at (`seen.shownAsked`), so sweep judge stops at edge
-    ##     records arm past give, and fails here.  Design allows that stop and this law does
-    ##     not; none stops so on 2026-10-11, and Architect rules which holds.
+    ##   Rig's sweeps are planned, and keep no moment that gave (`seen.shownAsked`), so none
+    ##     records arm judge stopped at edge.
     let
       rig = parseFile(KEPT_RIG)
       moments = armMomentsRig(rig)

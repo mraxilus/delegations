@@ -2766,6 +2766,22 @@ suiteInProc "Internal: Pages":
     check gaps.len == 0  # Article X.8: stack falls to font face page ships, never to system
 
 
+  test "every family shell ships reaches weight 600, so browser synthesises no bold":
+    const shell_html = staticRead("../pages/shell.html")
+    var heaviest: Table[string, int]  # heaviest weight font faces of each family cover
+    for rule in shell_html.split("@font-face")[1..^1]:
+      let
+        family = rule.split('"')[1]
+        at = rule.find("font-weight: ") + "font-weight: ".len
+        weights = rule[at..<rule.find(';', at)].splitWhitespace.mapIt(it.parseInt)
+      heaviest[family] = max(heaviest.getOrDefault(family), weights.max)
+    var light: seq[string]
+    for family, weight in heaviest.pairs:
+      if weight < 600: light.add family & " at " & $weight
+    checkpoint "light: " & light.join(", ")
+    check light.len == 0  # Article X.8: bold asked of lighter set is bold browser synthesises
+
+
   test "docket rows carry identifiers docket file allots":
     let
       sheet = Sheet(

@@ -1,9 +1,12 @@
 ## Hold laws of basis-set types, as library carrying this change exports them (`exact-kinds`).
 ##   Evaluation compiles this against library with change applied, at each algebra its claim
 ##     names, and exit code is verdict: every law below holds, or program stops on assertion.
-##   Each product of basis-set types equals library's product on whole multivectors, and its type
-##     holds exactly bases its table reaches. Each named basis-set type holds its coefficients
-##     unpadded, aligned to `alignment` of its count.
+##   Each form of basis-set types equals operator of library on whole multivectors, at each named
+##     type and at pairs of types that `DIMENSIONS_SWEPT` sets. Where form stops compile, operator
+##     of library gives zero there, so form loses no value. Its type holds exactly bases its table
+##     reaches, and each named alias returns that type.
+##   Each named basis-set type holds its coefficients unpadded, aligned to `alignment` of its
+##     count.
 ##   Samples narrow multivector of library to each type, so laws reach no private field.
 
 {.experimental: "strictFuncs".}
@@ -11,7 +14,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[macros, random, strformat, strutils]
+import std/[algorithm, macros, random, sequtils, strformat, strutils, tables]
 
 import pga
 
@@ -19,8 +22,35 @@ import pga
 const
   SAMPLES = 256  ## Seeded samples each law is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
+  DIMENSIONS_SWEPT = 4
+    ## Highest dimension laws hold each product at every pair of types at; past it, vector pairs
+    ##   with each type, either side. Compiler takes about 0.3 MiB per term that form emits, and
+    ##   every pair at rga5d emits some 20 000 terms, whose build peaks at 7 158 MiB.
   ALIGNMENTS_NAMED = [(3, 8), (4, 32), (5, 8), (6, 16), (8, 64), (10, 16), (16, 64)]
     ## Count of coefficients of each named basis-set type, rga3d to cga5d, aligned at 64 bits.
+  OPERATORS_MAPS = ["∙", "∘", "/", "\\", "~", "~∘", "★", "☆", "⊖", "|∙²", "|∘²"]
+    ## Operators of one operand that every algebra builds from one table, squared norms last.
+  OPERATORS_MAPS_CONFORMAL = ["■", "□", "⊟", "|■²", "|□²", "|⊘²"]
+    ## Operators of one operand that conformal metric adds.
+  OPERATORS_PRODUCTS = ["∧", "∨", "⟑", "⟇", "∙", "∘", "∧★", "∧☆", "∨★", "∨☆"]
+    ## Operators of two operands that every algebra builds from one table.
+  ALIASES_MAPS = [
+    ("complementLeft", "\\"), ("complementRight", "/"), ("dualBulk", "★"), ("dualWeight", "☆"),
+    ("reverse", "~"), ("reverseAnti", "~∘"), ("attitude", "⊖"),
+  ]  ## Alias of each map of every algebra, beside its operator.
+  ALIASES_MAPS_METRIC =
+    when IS_RIGID: @[("bulk", "∙"), ("weight", "∘")]
+    else:
+      @[
+        ("bulkRound", "∙"), ("weightRound", "∘"), ("bulkFlat", "■"), ("weightFlat", "□"),
+        ("carrier", "⊟"),
+      ]
+    ## Alias of each map that metric names.
+  ALIASES_PRODUCTS = [
+    ("dot", "∙"), ("dotAnti", "∘"), ("wedge", "∧"), ("wedgeAnti", "∨"), ("wedgeDot", "⟑"),
+    ("wedgeDotAnti", "⟇"), ("contractBulk", "∨★"), ("contractWeight", "∨☆"),
+    ("expandBulk", "∧★"), ("expandWeight", "∧☆"),
+  ]  ## Alias of each product, beside its operator.
 
 
 
@@ -54,6 +84,115 @@ macro defineChecksLayout(): untyped =
         `name` & " must hold its coefficients unpadded; got `" & $sizeof(`alias`) & "`."
       doAssert alignof(`alias`) == `aligned`,
         `name` & " must align to alignment of its count; got `" & $alignof(`alias`) & "`."
+
+
+func namesTyped(): seq[string] {.compileTime.} =
+  ## Name each named basis-set type: each grade, then each parity.
+  for grade in Grade.low..Grade.high: result.add "Multivector" & $int(grade)
+  result.add ["MultivectorEven", "MultivectorOdd"]
+
+
+func emitHold(
+  operator: string, names: seq[string], held, stopped: NimNode
+): NimNode {.compileTime.} =
+  ## Emit law of one form at one type or pair: equal to library where it compiles, else zero.
+  let
+    symbol = nnkAccQuoted.newTree(ident(operator))
+    label = operator & " of " & names.join(" and ")
+    (message_held, message_zero) = (
+      newLit("Form must equal operator of library at " & label & "."),
+      newLit("Form that stops compile must be zero in library at " & label & "."),
+    )
+    (kind_m, kind_n) = (ident(names[0]), ident(names[^1]))
+    key = if names.len == 1: operator & "𝐦" else: "𝐦 " & operator & " 𝐧"
+  if names.len == 1:
+    return quote do:
+      when compiles(`symbol`(sample(`kind_m`))):
+        `held`.inc `key`
+        for _ in 1..SAMPLES:
+          let m = sample(`kind_m`)
+          doAssert `symbol`(m).toMultivector =~ `symbol`(m.toMultivector), `message_held`
+      else:
+        `stopped`.inc `key`
+        for _ in 1..SAMPLES:
+          let m = sample(`kind_m`)
+          doAssert `symbol`(m.toMultivector) =~ Coefficient(0), `message_zero`
+  quote do:
+    when compiles(`symbol`(sample(`kind_m`), sample(`kind_n`))):
+      `held`.inc `key`
+      for _ in 1..SAMPLES:
+        let (m, n) = (sample(`kind_m`), sample(`kind_n`))
+        doAssert `symbol`(m, n).toMultivector =~ `symbol`(m.toMultivector, n.toMultivector),
+          `message_held`
+    else:
+      `stopped`.inc `key`
+      for _ in 1..SAMPLES:
+        let (m, n) = (sample(`kind_m`), sample(`kind_n`))
+        doAssert `symbol`(m.toMultivector, n.toMultivector) =~ Coefficient(0), `message_zero`
+
+
+macro holdForms(held, stopped: CountTable[string]): untyped =
+  ## Hold each form to operator of library, at each named type and at pairs of named types and
+  ##   whole multivector; count, by operator, instances that compile and ones that stop.
+  ##   Pairs are every pair up to `DIMENSIONS_SWEPT`, and vector with each type past it.
+  ##   Two whole multivectors keep operator of library, so no pair holds them both.
+  result = newStmtList()
+  let
+    names = namesTyped()
+    maps = @OPERATORS_MAPS & (if IS_CONFORMAL: @OPERATORS_MAPS_CONFORMAL else: @[])
+  for operator in maps:
+    for name in names: result.add emitHold(operator, @[name], held, stopped)
+  for operator in OPERATORS_PRODUCTS:
+    for left in names & "Multivector":
+      for right in names & "Multivector":
+        if left == right and left == "Multivector": continue
+        if DIMENSIONS > DIMENSIONS_SWEPT and "Multivector1" notin [left, right]: continue
+        result.add emitHold(operator, @[left, right], held, stopped)
+
+
+macro holdAliases(): untyped =
+  ## Hold each alias of form to its operator, in value and type, at each named type where
+  ##   operator compiles; product pairs vector with each named type.
+  result = newStmtList()
+  let names = namesTyped()
+  for (alias, operator) in @ALIASES_MAPS & ALIASES_MAPS_METRIC:
+    let (name, symbol) = (ident(alias), nnkAccQuoted.newTree(ident(operator)))
+    for kind in names.mapIt(ident(it)):
+      result.add quote do:
+        when compiles(`symbol`(sample(`kind`))):
+          let m = sample(`kind`)
+          doAssert typeof(`name`(m)) is typeof(`symbol`(m)),
+            `alias` & " must return type of its operator."
+          doAssert `name`(m).toMultivector =~ `symbol`(m).toMultivector,
+            `alias` & " must forward to its operator."
+  for (alias, operator) in ALIASES_PRODUCTS:
+    let (name, symbol) = (ident(alias), nnkAccQuoted.newTree(ident(operator)))
+    for kind in names.mapIt(ident(it)):
+      result.add quote do:
+        when compiles(`symbol`(sample(Multivector1), sample(`kind`))):
+          let (m, n) = (sample(Multivector1), sample(`kind`))
+          doAssert typeof(`name`(m, n)) is typeof(`symbol`(m, n)),
+            `alias` & " must return type of its operator."
+          doAssert `name`(m, n).toMultivector =~ `symbol`(m, n).toMultivector,
+            `alias` & " must forward to its operator."
+
+
+macro holdTypesGraded(): untyped =
+  ## Hold type of each map whose reach follows from grade: reverse and antireverse keep each
+  ##   named type, and each complement takes grade k to grade N - k.
+  result = newStmtList()
+  for name in namesTyped():
+    let kind = ident(name)
+    result.add quote do:
+      doAssert typeof(~sample(`kind`)) is `kind`, "Reverse must keep type of " & `name` & "."
+      doAssert typeof(~∘sample(`kind`)) is `kind`, "Antireverse must keep type of " & `name` & "."
+  for grade in Grade.low..Grade.high:
+    let
+      kind = ident("Multivector" & $int(grade))
+      complement = ident("Multivector" & $(int(Grade.high) - int(grade)))
+    result.add quote do:
+      doAssert typeof(/sample(`kind`)) is `complement`, "Right complement must take k to N - k."
+      doAssert typeof(\sample(`kind`)) is `complement`, "Left complement must take k to N - k."
 
 
 proc holdAlignment() =
@@ -104,6 +243,8 @@ proc main(): int =
     (when compiles(∙bivector): sizeof(∙bivector) else: 0), ", ∘ vector ", sizeof(∘p),
     ", ∙ whole ", sizeof(∙m), ", sandwich ", sizeof((even ⟇ p) ⟇ even), ", library ",
     sizeof(Multivector)
+  echo "exact-kinds: bytes of ‖p‖∙² ", sizeof(`|∙²`(p)), ", / p ", sizeof(/p), ", ★ p ",
+    sizeof(★p), ", ☆ p ", sizeof(☆p), ", p ⟑ q ", sizeof(p ⟑ q)
   # Bivectors hold no bulk at rga2d, where grade 2 is antiscalar, nor at cga3d.
   when compiles(∙bivector):
     doAssert bases(typeof(∙bivector)) < bases(Multivector2),
@@ -115,6 +256,20 @@ proc main(): int =
   doAssert not compiles(p[Basis.scalar]),
     "Static basis outside bases of type must stop compile, so product reads fixed indexes alone."
   doAssert wedge(p, q).toMultivector =~ (p ∧ q).toMultivector, "Alias must forward to operator."
+  doAssert `|∙²`(p) is Multivector0, "Bulk squared norm of vector must be one scalar."
+  doAssert sizeof(`|∙²`(p)) == sizeof(Coefficient) and sizeof(`|∘²`(p)) == sizeof(Coefficient),
+    "Squared norm of vector must write one coefficient, never whole multivector."
+  doAssert `|∙²`(m) is Multivector, "Squared norm of whole multivector must stay library's."
+  when IS_RIGID:
+    doAssert not compiles(★top), "Bulk dual of antiscalar is zero, so it must stop compile."
+  holdTypesGraded()
+  holdAliases()
+  var held, stopped: CountTable[string]
+  holdForms(held, stopped)
+  echo "exact-kinds: forms hold at ", toSeq(held.values).foldl(a + b), " types and pairs; ",
+    toSeq(stopped.values).foldl(a + b, 0), " stop compile, each zero in library"
+  echo "exact-kinds: stops by operator ",
+    toSeq(stopped.keys).sorted.mapIt(it & " " & $stopped[it]).join(", ")
   for _ in 1..SAMPLES:
     let
       (a, b, c) = (sample(Multivector1), sample(Multivector2), sample(Multivector1))

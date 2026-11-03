@@ -161,7 +161,7 @@ suite "Internal: Commands":
     let selcia = run(["find", "selci'a"], written)
     check selcia.output == "letter\tveirselci'a\n"  # tag holding `se ciska` inside longer tanru
     check selcia.report == "`selci'a` reads as tag `se+ciska`, matched by its gismu; things " &
-        "whose tag holds `se+ciska` unchanged come first.\n"  # report names unit that ranks
+        "whose tag holds `se+ciska` unchanged come first.\n"  # report names tanru unit that ranks
     let cancel = run(["find", "selselci'a"], written)
     check cancel.output == selcia.output  # `selselci'a` finds what its gismu find
     check cancel.report == "`selselci'a` reads as tag `se+se+ciska`, matched by its gismu; its " &

@@ -30,7 +30,7 @@ itself fails where two blocks of a card touch, and a control page of the project
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table from metric and 𝟙 |
 | [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, now P04 and P09 |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
-| [P04 Exact kinds][exact-kinds] | proposal | product returns exactly bases it reaches |
+| [P04 Exact kinds][exact-kinds] | proposal | operator returns exactly bases it reaches |
 | [P05 Multivector align][multivector-align] | proposal | multivector aligned to one cache line |
 | [P06 Float width][float-width] | proposal | width of each float as a build option |
 | [P07 Part scale][part-scale] | proposal | each part compared at its own scale |
