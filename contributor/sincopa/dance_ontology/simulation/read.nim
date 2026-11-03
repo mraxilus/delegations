@@ -91,6 +91,14 @@ func polyline*(arms: Arms, i: int): array[7, Vector] =
     arm_b = arms[i][1]
   [arm_a.shoulder, arm_a.elbow, arm_a.wrist, arm_a.join, arm_b.wrist, arm_b.elbow, arm_b.shoulder]
 
+func writhe*(arms: Arms, i: int): float = writhe(polyline(arms, i))
+  ## Turns one connection winds on itself, shoulder to shoulder (`vector.writhe`): swan's hoop
+  ## winds, and pair that runs straight through it barely does.
+
+func runInPlan*(arms: Arms, i: int): float = runInPlan(polyline(arms, i))
+  ## How far one connection runs in plan, in lengths of straight line between its shoulders
+  ## there (`vector.runInPlan`).
+
 
 const ON_LINE = 1e-9
   ## Metres within which point counts as lying on segment's line in plan: below

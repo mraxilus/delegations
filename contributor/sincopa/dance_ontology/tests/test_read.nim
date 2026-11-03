@@ -14,7 +14,8 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[atomics, cpuinfo, math, options, random, strformat, tables, typedthreads, unittest]
+import std/[algorithm, atomics, cpuinfo, math, options, random, strformat, tables, typedthreads,
+            unittest]
 
 import ../simulation/[body, hold, limb, read, rig, rigid, vector]
 import ./fixtures
@@ -33,6 +34,11 @@ const
     ##   Margin, not 8: engine is chaotic, and same walks built into another binary differ
     ##     (`test_rigid.nim`, suite "Internal: Couple stand for sweep").
   TRIALS_JITTER = 1000  ## Jittered copies of each knife-edge pose reader reads, seeded.
+  SEED_MEASURES = 375  ## Seed of polylines measures are read over: issue that rules swan.
+  SAMPLES_MEASURES = 1000  ## Polylines each law of measures reads.
+  FLAT = 1e-6
+    ## Turns polyline in one plane may read: arc-sine's noise near its ends, at most 2e-8 over
+    ##   2000 arcs, measured 2026-11-03.
 
 func nearestOn(line: array[7, Vector], point: Vector): tuple[offset, z: float] =
   ## How far `point` lies off polyline in plan, and how high polyline is there.
@@ -306,3 +312,61 @@ suite "Internal: Two hands":
       check seen_at.whose == otherArm(at.whose)
       if at.dof == Dof.Twist and at.whose == links[0].ends[0]: inc swept
     check swept > 0
+
+
+suite "Internal: How far one connection winds and runs":
+  ## Swan is one connection making hoop and other passing straight through it (issue 375).
+  ##   Reader tells which is which by how far each winds on itself (`vector.writhe`) and runs
+  ##   in plan (`vector.runInPlan`), so each measure is held to what it claims, over seeded
+  ##   polylines of seven points, as connection is.
+
+  test "polyline in one plane that crosses itself nowhere winds nowhere":
+    ## Arc of circle short of whole turn, in plane tilted at random, crosses itself nowhere.
+    var seeded = initRand(SEED_MEASURES)
+    for _ in 0..<SAMPLES_MEASURES:
+      let
+        normal = unit((seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0)))
+        across = perpendicular(normal)
+        along = cross(normal, across)
+        centre: Vector = (seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0))
+        radius = seeded.rand(0.1..1.0)
+        start = seeded.rand(0.0..2.0 * PI)
+        span = seeded.rand(0.2..1.8 * PI)
+      var points: array[7, Vector]
+      for k in 0..6:
+        let angle = start + span * float(k) / 6.0
+        points[k] = centre + across * (radius * cos(angle)) + along * (radius * sin(angle))
+      checkpoint &"arc of {span} radians, radius {radius}: writhe {writhe(points)}"
+      check abs(writhe(points)) < FLAT
+
+  test "every polyline winds other way round in mirror, by as much":
+    var seeded = initRand(SEED_MEASURES)
+    for _ in 0..<SAMPLES_MEASURES:
+      var points, seen: array[7, Vector]
+      for k in 0..6:
+        points[k] = (seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0))
+        seen[k] = mirrored(points[k])
+      checkpoint &"writhe {writhe(points)}, in mirror {writhe(seen)}"
+      check abs(writhe(seen) + writhe(points)) < 1e-12
+
+  test "polyline runs one length in plan along straight line, and more off it":
+    ## Points in order along line between its ends, at any height, run it once; points
+    ##   anywhere else run further, and never less.
+    var seeded = initRand(SEED_MEASURES)
+    for _ in 0..<SAMPLES_MEASURES:
+      let
+        first: Vector = (seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0))
+        last: Vector = (seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0))
+      var
+        stops = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+        straight, bent: array[7, Vector]
+      for k in 1..5: stops[k] = seeded.rand(0.0..1.0)
+      stops.sort()
+      for k in 0..6:
+        straight[k] = first + (last - first) * stops[k]
+        straight[k].z = seeded.rand(-1.0..1.0)
+        bent[k] = (if k in [0, 6]: straight[k]
+                   else: (seeded.rand(-1.0..1.0), seeded.rand(-1.0..1.0), straight[k].z))
+      checkpoint &"straight runs {runInPlan(straight)}, bent {runInPlan(bent)}"
+      check abs(runInPlan(straight) - 1.0) < 1e-9
+      check runInPlan(bent) >= 1.0 - 1e-9
