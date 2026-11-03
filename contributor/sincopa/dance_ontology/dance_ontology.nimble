@@ -9,4 +9,4 @@ description = "Executable ontology of partner dance frames, with drawings, the E
 license = "Prosperity-3.0.0"
 srcDir = "src"
 
-requires "nim == 2.2.12"
+requires "nim == 2.4.0"
