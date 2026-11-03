@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | a8dcbc2397bee590 |
+| Rules   | 0e17644a127757fb |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -576,11 +576,32 @@ repository issue 671.
 - **Weight matching follows CSS Fonts 4 over the bounds that the rules declare.** Inside 400 to
   500, it looks upward to 500, then downward, then upward past 500. Below 400 it looks downward
   first, and above 500 upward first.
+- **Text that asks for 600 or more, from a family with lighter font faces alone, draws in a bold
+  that the browser synthesises.** The Architect ruled this finding on 2026-10-24 (D1 a of #730).
+  Each engine thickens the glyphs of the lighter font face its own way, so no file of the page
+  holds what it draws. CSS Fonts 4 names no bound (2.2.2), and Chromium (`kBoldThreshold`) and
+  Firefox (`SupportsBold`) both set 600. The family that draws the character is judged, once for
+  each element.
+- **Each collector writes every run, ASCII included, so that a bold over ASCII is seen.** The
+  Architect ruled this on 2026-11-03 (D1 b of #751). The pages of pga_benchmark held 267 runs of
+  ASCII that asked a font face of 400 for 600 or 700. The verdict saw none of them. The check of
+  characters still judges past ASCII alone, as the rule asks, so ASCII reaches the bold alone.
+  Verified by `suites/test_font_stacks.nim`, which holds ASCII at both checks.
+- **Above 500 the match looks upward first.** So a weight of 600 or more matches a lighter set
+  only where the family holds nothing of 600 or more. Rejected: a finding for each weight that no
+  set holds, as 700 against a set at 600. The browser draws that set with no bold of its own, and
+  a heading asks for 700 by default.
 - **`font_files.nim` reads the `cmap` of each file**, and the suite of the store reads through it
   too. So the store and the pages read font faces through one reader. It also renders each
   codepoint that a finding names, for `coverage.nim` as well.
-- Cost: the weight alone is matched, and `font-style` and `font-stretch` are unread. A character
-  is resolved alone, while a browser picks a font face for each cluster.
+- Cost: the weight alone is matched, and `font-style` and `font-stretch` are unread. So an
+  oblique that the browser synthesises for italic passes. A character is resolved alone, while a
+  browser picks a font face for each cluster.
+- Cost: a collector writes no `font-synthesis`, so a page that turns synthesis off still gets
+  the finding for a bold. Its text then draws lighter than it asks.
+- Cost: no place of the control page holds ASCII. So a collector that writes runs past ASCII
+  alone passes, and hides the bold of ASCII text. The collectors of dance_ontology and
+  pga_benchmark write so, and each has an issue to port.
 - Cost: text that a script writes only once a reader acts stands in no place of the control
   page, and the collectors differ there. `coverage.nim` holds such text where a source writes
   it, against every font face that the project ships.
@@ -604,6 +625,10 @@ repository issue 671.
 - Verified by a run on font faces of the store, 2026-10-22. Noto Sans and Noto Sans Math drew
   "é", "→" and "∧" down one stack. "é" after `Inter` was reported, and so was an emoji in a
   stack of Noto Sans alone.
+- Verified by a run of the resolver over the `written.json` that the drive of each project with
+  pages wrote on `main` at `9b6c445d`, 2026-10-24. It reported Noto Sans Math at 600 and 700 in
+  pga_benchmark, and Commit Mono at 600 and 700 in the ruler of pga_visualiser. dance_ontology
+  gave no finding.
 
 ## Branch scope
 

@@ -394,14 +394,18 @@ judges its own pages. `koch drive` gives it in three steps:
    `build/font-faces/control.html` in the project.
 2. The `drive` verb reads each page that the project builds, and the control page, with one
    collector. It writes `build/font-faces/written.json`, in the shape that `font_stacks.nim` in
-   `curator/audit/src/` gives. The control page is page `control`.
+   `curator/audit/src/` gives. Its runs hold every string that a page draws, ASCII included,
+   since most bold that the browser synthesises falls on ASCII. The control page is page
+   `control`.
 3. `koch drive` resolves the font stack of each element against the `cmap` of each font face
    that the page ships. It writes `build/font-faces/found.json`, and gives the verdict.
 
 The verdict fails where a font face of the system draws a character beyond ASCII. Its finding
-names the page, the element and the codepoint. It also fails where a font face does not load.
-The control page holds a numeral in each kind of place where text stands, and the verdict fails
-where the collector misses one. So each run proves the collector too.
+names the page, the element and the codepoint. It also fails where a font face does not load. It
+fails where text asks for 600 or more from a family with lighter font faces alone, since the
+browser then synthesises a bold. The control page holds a numeral in each kind of place where
+text stands, and the verdict fails where the collector misses one. So each run proves the
+collector too.
 
 The project keeps no reader of `cmap` and no judge of font faces. Its `system` verb declares
 `libbrotli1` where its pages ship `woff2`, because `koch drive` reads `woff2` through it.
