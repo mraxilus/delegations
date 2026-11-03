@@ -933,6 +933,11 @@ takes none. A prefix operator is glued to its operand.
 - An export marker is a `*` glued after a name that a declaration places. That name opens its
   line, follows a declaration keyword, or follows a comma after a marked name. A name inside an
   expression declares nothing, so `PI*(a + b)` multiplies.
+- A glued `*` before `:` or `,` is a marker wherever its name stands. A binary `*` takes an
+  operand after it, and neither token opens one. So `case is_read*: bool` and the field of a
+  branch, `of true: fixer*: Fixer`, keep their form. Verified by `suites/test_spacing.nim`, and by
+  `koch fix --dry-run` on `src/knoller/reports.nim` on 2026-11-03, which reports no spacing on
+  its lines 93 to 96.
 - Cost: a name that opens a line of a wrapped expression reads as declared, so `a*(b)` at the
   start of such a line stays.
 - Cost: the spaces that align the columns of a table go, unless a fence holds them.
