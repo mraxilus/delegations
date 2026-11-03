@@ -1038,6 +1038,15 @@ into binary. `CONTRIBUTOR.md`, Data, states the rule.
   BSON have libraries, but no schema. Dhall and CUE each need a foreign toolchain, and KDL and
   TOML each need a new kind and a dependency.
 
+**JSON stays on the wire of an outside service that speaks it alone, as the Architect ruled on
+#795.** A schema in this repository binds neither the service nor its replies, so Protocol
+Buffers protect nothing there. The module that speaks to such a service exports no `JsonNode`.
+So the compiler checks each field past that module, as it does for each other format.
+
+- Rejected: Protocol Buffers on that wire, which no such service reads.
+- Rejected: a converter between Protocol Buffers and JSON at the edge. The bytes on the wire stay
+  JSON, so it adds code and protects nothing.
+
 **Nim reads and writes protobuf through `protobuf_serialization` of Status, at 0.6.2.** Its
 `import_proto3` turns a schema into plain Nim types at compile time, so no generated code is
 committed. A page reads the same schema through `protobufjs` 8.8.1. Its `dist/protobuf.min.js`
