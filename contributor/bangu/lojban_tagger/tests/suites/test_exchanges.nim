@@ -349,6 +349,7 @@ const
     ## Names closing with dot, beside name pin should hold: one dot dropped, as certificate names
     ##   host without it; of two, one kept, so no leaf names it.
   COUNT_CLOSED = 16  ## Sends closing law makes: each of `HOSTS_CLOSED` with each leaf.
+  COUNT_ADDRESS_CLOSED = 8  ## Sends address law makes: each leaf, directly and through tunnel.
   COUNT_SECURED = 256
     ## Sends TLS law makes: each of eight cases of leaf and host after each, two sends to pair,
     ##   directly and through tunnel.
@@ -2584,6 +2585,30 @@ suite "Internal: Send":
           check named & $secured.connect.filterIt(it.startsWith("CONNECT ")) ==
               named & $(@["CONNECT " & target & " HTTP/1.1"])  # domain: tunnel drops one dot
       check count == COUNT_CLOSED  # each name closing with dot, each leaf
+
+
+  test "address closing with dot is refused before any byte leaves, as client dials address":
+    # Regression, found in review of #779, 2026-11-04: pin read `127.0.0.1.` as name, but
+    #   client dialled address `127.0.0.1`, so leaf `Address` naming it was refused with
+    #   `certificate verify failed`, and leaf naming `DNS:127.0.0.1` alone passed Nim 2.2.12.
+    when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
+    else:
+      check authority.problem == ""  # `openssl` made root and leaves
+      let found = authority.sendSecured(Leaf.Address, "127.0.0.1.")
+      check found.sent.outcome ==
+          problemHost("127.0.0.1.")  # case as found: was `certificate verify failed`
+      var count = 0
+      for leaf in Leaf:
+        for should_tunnel in [false, true]:
+          let
+            secured = authority.sendSecured(leaf, "127.0.0.1.", should_tunnel = should_tunnel)
+            named = $leaf & (if should_tunnel: " tunnelled: " else: ": ")
+          inc count
+          check named & secured.sent.outcome ==
+              named & problemHost("127.0.0.1.")  # domain: refused, whatever leaf names
+          check named & $secured.head.lines.len == named & "0"  # domain: server read no byte
+          check named & $secured.connect.len == named & "0"  # domain: proxy read nothing
+      check count == COUNT_ADDRESS_CLOSED  # each leaf, each way
 
 
   test "https URL with no context, or with host TLS cannot pin, is refused, and nothing goes out":
