@@ -3322,22 +3322,21 @@ On 2.4.0, every test file passes, and 2.4.0 warns of nothing that 2.2.12 does no
 that it builds is byte for byte what 2.2.12 builds. Only the scripts that the compiler writes for
 the Explorer and the rig viewer differ. Verified 2026-10-29.
 
-**A float `result` gets a value before `+=`.** From Nim 2.2.8 to 2.2.12, the VM gives an unassigned
-float `result` an int register, and then reads `floatVal` from that register. The compiler then
-stops with `field 'floatVal' is not accessible for type 'TFullReg' using 'kind = rkInt'`. The crash
-occurs only at compile time, and only where the VM reaches the function. That is `polylineLength` in
-`draw/route.nim`, through `const SCENES = buildScenes()` in `draw/scene.nim`. So `result = 0.0`
-comes first there, with a comment, because the line reads redundant and is not.
+**A float `result` needs no value before `+=`.** From Nim 2.2.8 to 2.2.12, the VM gives an
+unassigned float `result` an int register, and then reads `floatVal` from that register. The
+compiler then stops with `field 'floatVal' is not accessible for type 'TFullReg' using 'kind =
+rkInt'`. The crash occurs only at compile time, and only where the VM reaches the function. That is
+`polylineLength` in `draw/route.nim`, through `const SCENES = buildScenes()` in `draw/scene.nim`.
 
 Five lines reproduce the crash on 2.2.12 with nothing from this project, verified 2026-09-10 (issue
-106). The same five lines run on 2.4.0 and print 3.0, verified 2026-10-29. The line stays while koch
-compiles the driver on 2.2.12, because the driver imports the module that holds `SCENES`. Without
-the line, that build stops with the crash, and the build on 2.4.0 passes, verified 2026-10-29.
+106). The same five lines run on 2.4.0 and print 3.0, verified 2026-10-29. Since 2026-11-03, koch
+and the runner build on 2.4.0 too (pull request 775), so no step compiles this project on 2.2.12.
+So `polylineLength` adds to its `result` with no line before it, verified by `koch check` on
+2026-11-03.
 
-So the type step holds the line now. `suites/test_route.nim` takes a run length in a `const`, but it
-runs on 2.4.0, where the line is not needed. `result +=` on a float survives in `limb.comfort`,
-`plan.comfort`, `plan.cramped`, `plan.gripBroken`, `plan.violation` and `checks.inkLength`, none of
-which the VM evaluates today. That is latent, and not urgent.
+`suites/test_route.nim` still takes a run length in a `const`, so the VM computes one on each run of
+the suites. `result +=` on a float in `limb.comfort`, `plan.comfort`, `plan.cramped`,
+`plan.gripBroken`, `plan.violation` and `checks.inkLength` is safe for the same reason.
 
 ## Open questions
 
