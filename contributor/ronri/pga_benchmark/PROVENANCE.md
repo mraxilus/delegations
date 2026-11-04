@@ -998,10 +998,20 @@ the width that they had. `pga_visualiser` declares the same files over a range i
 - Rejected: a bold file of Commit Mono. The pages ship the six font faces of `pga_visualiser`, and
   maths and symbols have no bold file at all.
 
-The collector keeps the characters beyond ASCII alone, so `koch drive` cannot see a bold that the
-browser synthesises over ASCII, as in bold code. So `test_rga4d.nim` holds each family of the shell
-to a font face of weight 600 or more, whatever text the family draws. Verified on 2026-10-28 in
-Chromium, where bold code keeps its width and draws 32 % less ink than the bold of the browser.
+The collector writes every string that a page draws, ASCII included, as the Architect ruled (D1 b
+of #751). Most bold that the browser synthesises falls on ASCII, as in bold code, and `koch drive`
+judges only the strings that the collector writes. On the pages of 2026-11-03 the collector writes
+54 478 strings in place of 7 220, and 18.4 MB in place of 2.0 MB. Of those strings, 5 626 ask for
+a weight of 600 or more, and the verdict finds no bold that the browser synthesises.
+
+`drive` holds the collector to this, on what it writes for each page it ships. Each page must write
+every character of the bar it draws, whose titles are ASCII. Some string must also mix ASCII with
+characters past it. A collector that keeps the characters past ASCII alone fails both, on every
+page. Verified by `test_rga4d.nim`, suites `Internal: Render` and `Internal: Driver`.
+
+`test_rga4d.nim` still holds each family of the shell to a font face of weight 600 or more,
+whatever text the family draws. Verified on 2026-10-28 in Chromium, where bold code keeps its width
+and draws 32 % less ink than the bold of the browser.
 
 **A proposal can carry a figure.** A paragraph of one image alone, as
 `![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
@@ -1141,11 +1151,13 @@ one run wrote six files, and their names equal those of the six files of the sto
 place.** Before it runs `drive`, it writes a control page to `build/font-faces/control.html`. The
 collector reads that page as it reads every other page, and the harness writes it as page `control`.
 Once `drive` passes, `koch drive` resolves the stack of each string against the font faces of its
-page. It writes `build/font-faces/found.json`, and fails where a font face of the system draws a
-character beyond ASCII. It also fails where a font face does not load, or where the collector misses
-a numeral of the control page.
+page.
 
-The suite of the resolver, `test_font_stacks.nim` in `curator/audit`, holds each of the three.
+It writes `build/font-faces/found.json`, and fails where a font face of the system draws a
+character beyond ASCII. It also fails where a string asks a family for a bold that no font face of
+the family holds. It fails too where a font face does not load, or where the collector misses a
+numeral of the control page. The suite of the resolver, `test_font_stacks.nim` in `curator/audit`,
+holds each of the four.
 
 The project keeps no reader of `cmap` and no judge of font faces. The costs of the resolver are in
 the header of `font_stacks.nim`. `koch drive` leaves its control page in `build/font-faces/`, so a

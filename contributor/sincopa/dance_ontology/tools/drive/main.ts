@@ -39,7 +39,7 @@ async function pageWritten(browser: Browser, path: string): Promise<Written> {
   const counted = new Set(written.runs.flatMap((run) => run.codepoints));
   console.log(
     `Read ${basename(path, '.html')}: ${written.count_elements} elements, ` +
-      `${written.runs.length} strings beyond ASCII, ${counted.size} distinct characters, ` +
+      `${written.runs.length} strings, ${counted.size} distinct characters, ` +
       `${written.declared.length} font faces.`,
   );
   return written;

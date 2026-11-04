@@ -807,7 +807,8 @@ proc renderedChecked(
       path: PATH_HARNESS,
       message: "Render of pages failed, as harness printed above; got exit `" & $code & "`.",
     )]
-  checkCrowded(readDocument(PATH_CROWDED), crowdedExpected(cards), CONTROL, BUILD_HOSTED)
+  checkCrowded(readDocument(PATH_CROWDED), crowdedExpected(cards), CONTROL, BUILD_HOSTED) &
+    checkWritten(readDocument(PATH_WRITTEN), toSeq(built.keys), BUILD_HOSTED, PATH_WRITTEN)
 
 
 proc publishedAt(name, url: string) =

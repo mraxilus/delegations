@@ -31,6 +31,7 @@ import ./suites/[
   test_camera,
   test_camera_aim,
   test_declarations,
+  test_head,
   test_help,
   test_history,
   test_image,

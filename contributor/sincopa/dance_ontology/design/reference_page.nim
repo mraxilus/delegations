@@ -90,14 +90,15 @@ const
           "B08", "B09", "B10", "B11", "B12", "B13", "B14",
           "B15", "B16", "B17", "B18", "B19", "B20", "B21",
           "B22", "B23", "B24", "B25", "B26", "B27", "B28",
-          "C01", "C02", "C03", "C04", "C05", "C06", "C07",
+          "C02", "C03", "C04", "C05", "C06",
           "D01", "D02", "D03", "D04", "D05", "D06", "D07",
           "E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08",
           "E09", "E10", "E11", "E12", "E13", "E14", "E15", "E16",
           "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24",
-          "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32",
-          "F01", "F02"]
+          "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32"]
     ## Ids Architect has kept: drawn right.  Added as they are ruled on.
+    ##   Card that later ruling redraws leaves until Architect looks again: C01, C07, F01
+    ##     and F02 draw swans of cross-name chain, whose loop goes up (issue #375).
   DROPPED: seq[string] = @[]  ## Ids Architect has ruled out.
   CONFIRMED*: seq[string] = @[]
     ## Ids whose simulation still Architect has confirmed against their own body, on

@@ -227,7 +227,7 @@ func keeperTwin(ask: StillAsk, links: seq[Link], turns: float): string =
         other.links == links and other.turns == turns and
         other.isRestAway == ask.isRestAway and other.head == ask.head and
         other.is_either_way == ask.is_either_way and other.who == ask.who and
-        other.over == mirrored(ask.over):
+        other.over == mirrored(ask.over) and other.straight == mirrored(ask.straight):
       return other.key
   ask.key
 
@@ -255,6 +255,7 @@ proc recorded*(job: Job): tuple[note, text: string] =
       is_either_way = ask.is_either_way,
       who = ask.who,
       over = (if twin.is_reflected: mirrored(ask.over) else: ask.over),
+      straight = (if twin.is_reflected: mirrored(ask.straight) else: ask.straight),
     )
     result.note =
       if recording.stills.len > 0:

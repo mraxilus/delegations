@@ -1535,6 +1535,18 @@ ran that suite and passed.
 command answers what a machine needs before any of this runs. To name a project keeps the
 meaning for each job that the runner asks for.
 
+**The jobs `test` and `drive` each install what their project declares.** A suite can load a
+library or run a command that the `system` verb declares. The suites of lojban_tagger load
+`libssl3` and run `openssl` on the branch of its suggester (#780). They passed only because the
+image of the runner held both. A project that declares nothing installs nothing, so the jobs of
+`curator/audit` and `curator/knoller` keep their time.
+
+- Cost: a job whose project declares packages spends an `apt-get update` and an install. The
+  same step took 1 m 47 s in `drive`, measured 2026-09-08, and that figure includes the compile
+  of koch, which `test` shares with `koch test`.
+- Unverified on the runner for `test` until a job of a project that declares packages runs it.
+  The lines are the ones that `drive` runs.
+
 Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
 that a machine installs, and `compilers.nim` of knoller resolves each pin itself. npm is absent
 because it belongs to the project that carries a node manifest, and `restoreNode` reports its

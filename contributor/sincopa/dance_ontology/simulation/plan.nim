@@ -63,6 +63,9 @@ type
     is_away*: bool
     turner*: Body  ## Dancer whose facing carries wind: one at centre of turn.
     band*: Band  ## Height hold is asked at: crown rises from torso band, torso and neck stay.
+    straight*: Option[Arm]
+      ## Lead's arm whose connection swan runs straight through other's hoop, or none: past
+      ##   whole turn, plan draws hoop round it (`total`).
     lower*, upper*: float  ## Band joined hands are held to, metres.
     shapes: seq[Shape]
     pairs: seq[(int, int)]
@@ -74,6 +77,13 @@ const
   ELBOW_ROOM = ELBOWS_APART + 0.01  ## Metres plan keeps right elbow right of left: judge's own,
                                    ## and room under it.
   ROOMY = 0.04  ## Metres plan would sooner keep from arms and band's edges, where it can.
+  HOOP = 100.0
+    ## Weight drawing swan's hoop round connection that runs straight, past whole turn.
+    ##   Left to itself, planner hands hoop to other pair each half turn, and its last half turn
+    ##     gives it to same pair in both chains: right for Face-to-back C01, wrong for
+    ##     Face-to-face D01 (`PROVENANCE.md`, Rules of chain).
+  HOOP_ROOM = 0.3  ## Turns of writhe hoop is drawn to keep over straight pair.
+  HOOP_FROM = 1.0  ## Turns of wind past which plan draws hoop: swan is wound beyond whole turn.
   FACE_WINDOW = 0.1  ## Of way up within which plan holds hands at torso band: twice judge's
                     ## `rigid.FACING`, so engine following plan has hands down when judged.
 
@@ -623,8 +633,19 @@ type Weighing = object
   last*, bias*: Plan
   weight*, holding*: float  ## On violation, and on staying near `last`.
 
+func straightOver(problem: Problem, placed: Placed): float =
+  ## Turns connection that runs straight winds on itself past hoop's own, either way: below
+  ##   nought where hoop winds more, as swan's does (`vector.writhe`).
+  ##   Each read shoulder to shoulder through lead's join, as reader reads it (`read.polyline`).
+  for link in problem.links:
+    let
+      a = placed.arms[armIndex(link.ends[0].body, link.ends[0].arm)]
+      b = placed.arms[armIndex(link.ends[1].body, link.ends[1].arm)]
+      coil = abs(writhe([a.shoulder, a.elbow, a.wrist, a.join, b.wrist, b.elbow, b.shoulder]))
+    result += (if link.ends[0].arm == problem.straight.get: coil else: -coil)
+
 func total(r: Reckoning, rig: Rig, weighing: Weighing, plan: Plan): float =
-  ## Weigh pose: comfort, weighted violation, stay near last, bias, slack and gather.
+  ## Weigh pose: comfort, weighted violation, stay near last, bias, slack, gather and hoop.
   let problem = weighing.problem
   result = comfort(r.eases, r.waists) +
       weighing.weight * violation(rig, problem, r.placed.arms, r.gaps, r.margins, r.leaps)
@@ -638,6 +659,8 @@ func total(r: Reckoning, rig: Rig, weighing: Weighing, plan: Plan): float =
       first = r.placed.arms[armIndex(one.body, one.arm)].join
       second = r.placed.arms[armIndex(two.body, two.arm)].join
     result += problem.style.gather * distance(first, second)^2
+  if problem.straight.isSome and abs(weighing.wind) > HOOP_FROM:
+    result += HOOP * max(0.0, problem.straightOver(r.placed) + HOOP_ROOM)^2
 
 func firstMoved(freedom: int): int =
   ## First link of its arm that arm freedom moves: collarbone moves girdle on, shoulder
@@ -1091,12 +1114,15 @@ proc planPath*(
   turns: float,
   style: Style,
   turner = Body.Two,
+  straight = none(Arm),
 ): Path =
   ## Plan couple from rest to `turns` of wind, `turner` turning, moment by moment, as far as
   ## plan keeps everything, joined hands at `band` (`bandAt`).  Stuck, it backs off, nudges
-  ## arms at standing wind and tries again.
+  ## arms at standing wind and tries again.  Swan's straight pair, where named, draws hoop
+  ## round it past whole turn (`Problem.straight`).
   var problem = initProblem(rig, band, links, is_away, turner)
   problem.style = style
+  problem.straight = straight
   let rest = planRest(rig, problem)
   if rest.broken >= KEPT: return
   let direction = (if turns >= 0.0: 1.0 else: -1.0)

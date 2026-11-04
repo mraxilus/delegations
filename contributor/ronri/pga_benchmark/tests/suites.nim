@@ -3337,6 +3337,21 @@ suiteInProc "Internal: Render":
     check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
 
 
+  test "page whose strings lack ASCII of its bar is finding, as #784 found the collector":
+    let
+      bar = VIEWS.mapIt(it[1]).join  # titles bar of every page draws, all ASCII
+      whole = %*{"home": {"runs": [
+        {"codepoints": bar.mapIt(ord(it))}, {"codepoints": [ord('a'), 0x2227]}]}}
+      past = %*{"home": {"runs": [{"codepoints": [0x2227]}, {"codepoints": [0x2228]}]}}
+    check checkWritten(whole, ["home"], "h", "f/written.json").len == 0  # every string written
+    let found = checkWritten(past, ["home"], "h", "f/written.json").mapIt(it.render)
+    check found.len == 2  # ASCII string unwritten, and mixed string written past ASCII alone
+    check found[0].startsWith("h/home.html:0: Collector writes every string page draws")
+    check found[1].startsWith("f/written.json:0: Collector writes each character of string")
+    check checkWritten(newJObject(), ["docket"], "h", "f/written.json").len == 2  # page wrote none
+    check checkWritten(newJObject(), [], "h", "f/written.json").len == 0  # no page, nothing held
+
+
   test "harness reads control of layout for layout alone, and of font faces for text alone":
     let pages = ["h/docket.html", "h/home.html"]
     check argumentsHarness(
@@ -3460,6 +3475,7 @@ suiteInProc "Internal: Driver":
       body = verbs[start..<verbs.find("\n\n\n", start)]
     check "argumentsHarness(PATH_WRITTEN, PATH_CROWDED," in body  # held by `Internal: Render`
     check "checkCrowded(readDocument(PATH_CROWDED)" in body  # judge reads file harness writes
+    check "checkWritten(readDocument(PATH_WRITTEN)" in body  # and holds file it writes for koch
 
 
   test "header table names files verbs write":
