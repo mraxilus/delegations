@@ -392,8 +392,8 @@ the service as a passage. A tag of more than six words fails as `Long`. Verified
 `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
 
 Cost: the tool counts the words after `readTag`, so the cap of six words saves none of the time
-of the reading. It saves only the time to list and print the gismu and the report, about 1 µs
-(Figures), and Open questions asks about it.
+of the reading. It saves only the time to list and print the gismu and the report, about 1 µs on
+Nim 2.2.12 (Figures). Open questions asks about it.
 
 Cost: `tagger read` and `tagger tag` have no cap of words. `$` scores every choice of rafsi, so
 its time grows about 4 times for each word of `bloti`, `condi` or `rotsu` (Figures). So a lujvo of
@@ -472,17 +472,36 @@ proxy, the tunnel to the host carries the same pin. Cost: sends that share a con
 time, as `suggester` runs them. Verified by `suites/test_exchanges.nim`, against a test root that
 `openssl` makes for each run.
 
+The async client of Nim 2.4.0 checks the name too, after the handshake. It reads the common name
+of the subject even where the leaf holds DNS names, which RFC 6125 section 6.4.4 forbids. So it
+takes a leaf whose common name alone names the host, and the pin refuses that leaf. Verified by
+hand with Nim 2.4.0, 2026-11-04, for `localhost` and a leaf that names `wrong.example` by DNS. Its
+common name is `localhost`, so the client alone takes it, and the pin refuses it.
+
 **An https host loses one closing dot before the client dials it.** A certificate names a host
 without the dot that closes an absolute name, and curl pins the name without it too. The async
 client of Nim 2.4.0 checks the certificate against the host that it dials, after the handshake.
-So `pinHost` and the dial both take the name without one closing dot. Of two closing dots, one
-stays, and no leaf names that host. Verified by `suites/test_exchanges.nim`, over each name that
-closes with one dot or two, and each leaf.
+So `pinHost` and `send` both drop one closing dot from the name. Of two closing dots, one stays,
+and no leaf names that host. Verified by `suites/test_exchanges.nim`, over each name that closes
+with one dot or two through a tunnel, and over `localhost.` directly, with each leaf.
 
-Cost: the tunnel and `Host` name the absolute name without its dot, where curl keeps it. Verified
-by hand with Nim 2.4.0, 2026-11-04: a URL of `localhost.` gives a `Host` of `localhost` and the
-port. Verified by hand with curl 8.5.0, 2026-11-04: it takes a leaf that names `localhost` for
-`localhost.`, and its tunnel and `Host` keep the dot.
+An address that closes with a dot, as `127.0.0.1.` does, is refused before any connection. The
+client would dial the address, while the pin would hold a name. Verified by
+`suites/test_exchanges.nim`, over each leaf, directly and through a tunnel.
+
+Cost: the lookup, the tunnel and `Host` take the absolute name without its dot, so the name is
+relative. The hosts file matches it, and DNS tries the search list first where the name holds
+fewer dots than `ndots`. Through a proxy, the resolver of the proxy reads the name so. So `send`
+can reach a host that curl does not reach, because curl resolves the name with its dot. The pin
+still refuses each leaf that names another host. Rejected: a dial with the dot and a check
+without it, as the client gives one host to the lookup, the tunnel and the check.
+
+Verified by hand with Nim 2.4.0 and curl 8.5.0, 2026-11-04, with a trace of each DNS query. For
+`https://intranet./` and the search list `corp.example.test`, `send` asks for
+`intranet.corp.example.test` first, and curl asks for `intranet.` alone. A URL of `localhost.`
+reaches loopback with a `Host` of `localhost` and the port, and curl cannot resolve `localhost.`.
+Through a tunnel, curl takes a leaf that names `localhost` for `localhost.`, and its tunnel and
+`Host` keep the dot.
 
 **The key goes as Bearer to the endpoint alone.** It is a distinct type whose `$` stops the
 compile, so no report or exchange file can hold it. `suggester` passes it with the service request
@@ -502,6 +521,10 @@ and an http URL takes `http_proxy` alone. A loopback host goes direct, and so do
 `no_proxy` or `NO_PROXY` names. A value with no scheme takes `http://`, and a value whose host
 names no port takes 1080, as curl assumes. Cost: a bypass entry for a range of addresses never
 matches. Verified by `suites/test_exchanges.nim`.
+
+The choice reads the host without one closing dot, as the pin and the dial read it. So
+`localhost.` goes direct, and the bypass entry `example.org` names `api.example.org.`, as curl
+reads it. Verified by `suites/test_exchanges.nim`.
 
 **A proxy must be `http://`, and for an https URL it must hold no user part.** The client of
 `std/httpclient` speaks TLS to no proxy that this tool can pin. It also repeats
@@ -637,9 +660,9 @@ the compile of the stub at `constructRafsiByForm`, with `UnpackDefect`. Verified
 
 Each figure below comes from an Intel Xeon at 2.10 GHz with four cores. The runs of each pair of
 compilers alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine.
-The figures of `tagger` and of the suites without TLS are from 2026-11-03, at `5b6b694a`, which
-holds no `suggester`. The release build of `suggester` and the suites are from 2026-11-04, at
-`4ea040ed`. Each other figure names its date, and comes from Nim 2.2.12.
+The figures of `tagger` are from 2026-11-03, at `5b6b694a`, which holds no `suggester`. The
+release build of `suggester` and the suites are from 2026-11-04, at `4ea040ed`. Each other figure
+names its date, and comes from Nim 2.2.12.
 
 - **Compile of the English index.** Each part of each lujvo line is found by binary search. The
   front end of `nim check app/tagger.nim` took 4.4 s and 4.1 s on 2.4.0, against 2.1 s and 2.5 s
@@ -648,9 +671,6 @@ holds no `suggester`. The release build of `suggester` and the suites are from 2
   trap, not a slower choice.
 - **Release build.** `nim c -f -d:release app/tagger.nim` took between 6.3 s and 6.7 s on 2.4.0,
   against between 4.7 s and 5.1 s on 2.2.12, over three runs each.
-- **Suites without TLS.** `nim c -r -d:testing tests/test_suites.nim` compiled and ran every suite
-  in 25.5 s and 24.1 s on 2.4.0, against 20.9 s and 20.5 s on 2.2.12. Each compiler ran it twice
-  from an empty cache.
 - **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 10.7 s
   and 10.5 s on 2.4.0, against 7.8 s and 7.8 s on 2.2.12. The binary holds 2,515,656 bytes on
   2.4.0, against 2,445,752 bytes on 2.2.12.
@@ -687,8 +707,8 @@ holds no `suggester`. The release build of `suggester` and the suites are from 2
   lujvo glosses. A query finds a thing only where each of its terms does. The Architect ruled that
   the rank by terms met replaces this condition (D5 c on #779), and #792 queues that rank.
 - **The cap of six words on text given.** The tool counts the words after `readTag`, so the cap
-  saves about 1 µs at most (Figures). It refuses a lujvo of seven words or more, whose gismu the
-  tool could print. To lift it would change no other path.
+  saves about 1 µs at most on Nim 2.2.12 (Figures). It refuses a lujvo of seven words or more,
+  whose gismu the tool could print. To lift it would change no other path.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a tag
   that holds one of them before its head renders with `brod`, and does not read back.
