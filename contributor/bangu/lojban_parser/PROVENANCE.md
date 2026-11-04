@@ -9,11 +9,10 @@
 | Rules   | 01a086eda78015fd |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-Origin: a contributor project, split from `lojban_tagger` at the request of the Architect. The
-Architect asked for a project with one task alone: a complete parser of lojban, which reads any
-valid lojban word or prose. The Architect also asked that the tagger use this parser, which
-stands apart from it. This first version takes the parsing part of the tagger, and it holds no
-grammar of prose yet.
+Origin: a contributor project, from the brief of the Architect and the parsing part of
+`lojban_tagger`. The brief gives the project one task alone: a complete parser of lojban, which
+reads any valid lojban word or prose. It also has the tagger read lojban through this parser,
+which stands apart from it. The project reads lojban words, and holds no grammar of prose.
 
 Until #809 moves the tagger onto this parser, `lojban_tagger` keeps its own copy of each module
 here. The header of each copied module names its sibling there, as Article II.9 asks, and
@@ -120,9 +119,10 @@ error, so the suites use `newSeqOfCap`. Verified by hand on both compilers, 2026
 `nim check` of the stub, and with a probe of `mapIt` and `newSeq` over an entry.
 
 Rejected: the text files as they are, because the checker reads no `.txt`. Rejected: JSON, which
-checks no field, and which the Architect asked to stop using by default. Rejected: a read of the
-package at compile time, because the CI job `test` installs no package. The Architect ruled for
-`lojban_tagger` that the lists change seldom, so a commit is right, and the same holds here.
+checks no field, and which `CONTRIBUTOR.md`, Data, keeps only where a tool or a service forces
+it. Rejected: a read of the package at compile time, because the CI job `test` installs no
+package. The Architect ruled for `lojban_tagger` that the lists change seldom, so a commit is
+right, and the same holds here.
 
 **The daily `head` verb watches the source.** It renders both modules again from the installed
 package, and compares the digests and the text with the committed modules. Where Debian moves a
@@ -168,7 +168,7 @@ or cmavo of the list reads as itself, as a tanru of one word. Verified by
 `suites/test_tanru.nim`.
 
 The reader holds no policy of the tagger. Whether a cmavo alone can be a tag, and which words a
-search matches on, are choices of `lojban_tagger`, and they stay there.
+search matches on, are choices of `lojban_tagger`, which holds them.
 
 **The reader reads canonical form alone: lowercase letters and the apostrophe, as they are
 written.** It refuses each other character as `Refusal.Letter`, a space at either end included.
@@ -271,10 +271,10 @@ CLL 12.12 gives `jai` the rafsi `jax`, which the list does not hold. A static ch
 that CLL covers carries the name of a chapter. The name of each other suite opens with
 `Internal:`, so the run shows where the authority stops.
 
-The suites are those of `lojban_tagger` that hold the parser. The tests of tag policy and of
-search stay in that project. The tests of `tags.nim` that hold the reader are in
-`suites/test_tanru.nim`, and the tests of the fold are in `suites/test_tanru_units.nim`. Each
-assertion keeps its citation of CLL.
+`suites/test_tanru.nim` holds the reader, and `suites/test_tanru_units.nim` holds the fold. Each
+suite copies a suite of `lojban_tagger`, or part of one, and its header names that sibling
+(II.9). The tests of tag policy and of search are in `lojban_tagger` alone. Each assertion cites
+its source: a section of CLL, or the article of the charter that a guard holds.
 
 ## Toolchain
 
@@ -327,9 +327,9 @@ the load of the machine.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names.
   The reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a
   tanru that holds one of them before its last word renders with `brod`, and does not read back.
-- **What the parser does not read yet.** It reads no prose: no bridi, no sumti, and no selbri
-  past the tanru units of one word. It reads no name, which CLL calls cmevla, and no borrowing,
-  which CLL calls fu'ivla. It reads no cmavo that the gismu list leaves out, such as `lo`, since
-  that list holds only cmavo with rafsi. It reads no text with commas, capitals or periods
+- **What the parser does not read.** It reads no prose: no bridi, no sumti, and no selbri past
+  the tanru units of one word. It reads no name, which CLL calls cmene (4.8), and no borrowing,
+  which CLL calls fu'ivla (4.7). It reads no cmavo that the gismu list leaves out, such as `lo`,
+  since that list holds only cmavo with rafsi. It reads no text with commas, capitals or periods
   (3.3, 3.9). The fold keeps no grouping that no cmavo binds, and no number with its MOI, which
   prose needs.
