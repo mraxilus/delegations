@@ -40,18 +40,22 @@
 ##     Cost: each hop and service request opens new connection, and new TLS handshake for
 ##     https; no connection is reused.
 ##   `send` pins host of https URL on its context before client exists, since async client of
-##     `std/httpclient` names host for SNI alone and checks no certificate against it: name pins
-##     as name, address as address, other kind cleared, so trusted leaf naming other host is
-##     refused before any byte of request leaves, as test "TLS refuses leaf naming other host
-##     before request leaves, directly and through tunnel" of `test_exchanges.nim` holds over
-##     each leaf and host. Empty host is refused, since empty pin checks no name, and so is host
-##     opening with dot, since OpenSSL reads such name as any subdomain of rest, which would take
-##     leaf naming other host. Absolute name pins without dot that closes it, as certificate
-##     names host without it, and curl pins it; client takes host without that dot too, since
-##     async client of Nim 2.4.0, unlike that of 2.2.12, checks certificate against host it
-##     dials, tunnels to and names for SNI. Address closing with dot is refused, since client
-##     would dial address where pin holds name.
-##     Cost: tunnel and `Host` name absolute name without its dot, where curl keeps it.
+##     `std/httpclient` checks no name on Nim 2.2.12, and on 2.4.0 reads common name of subject
+##     even where leaf holds DNS names (`X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT`), which RFC 6125
+##     section 6.4.4 forbids: name pins as name, address as address, other kind cleared, so
+##     trusted leaf naming other host is refused before any byte of request leaves, as test "TLS
+##     refuses leaf naming other host before request leaves, directly and through tunnel" of
+##     `test_exchanges.nim` holds over each leaf and host. Empty host is refused, since empty pin
+##     checks no name, and so is host opening with dot, since OpenSSL reads such name as any
+##     subdomain of rest, which would take leaf naming other host. Absolute name pins without
+##     dot that closes it, as certificate names host without it, and curl pins it; client takes
+##     host without that dot too, since async client of Nim 2.4.0, unlike that of 2.2.12, checks
+##     certificate against host it dials, tunnels to and names for SNI. Address closing with dot
+##     is refused, since client would dial address where pin holds name.
+##     Cost: lookup, tunnel and `Host` take absolute name without its dot, so resolver, that of
+##       proxy through tunnel, reads it as relative: hosts file matches it, and DNS tries search
+##       list first where it holds fewer dots than `ndots`; so `send` can reach host curl never
+##       dials, as curl resolves name with dot. Pin still refuses leaf naming other host.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
 ##   Proxy URL should be `http://`, in any case, with host, port `isPort` takes or none, and
@@ -706,6 +710,7 @@ proc send*(
   ##     user part, for https URL alone, since client repeats its login inside tunnel, problem
   ##       naming host of proxy.
   ##   Client sees scheme of URL and of proxy URL lowercased.
+  ##   Client sees host of https URL without one dot closing it, as pin holds it.
   ##   https URL pins its host on `context`, so certificate naming other host is refused; no
   ##     context, or host TLS cannot pin, sends nothing.
   ##   Agent, encoding and bearer are its own, whatever caller headers name.
