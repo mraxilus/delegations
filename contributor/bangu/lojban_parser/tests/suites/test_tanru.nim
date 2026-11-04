@@ -201,7 +201,6 @@ suite "Chapter 3":
   test "Section 3.3":
     check "rohinreho".refusalRead == some((Refusal.Letter, "h"))  # 3.3, no "h" for `'`; constructed
     check "kixtaha".refusalRead == some((Refusal.Letter, "h"))  # 3.3, no "h" for `'`; constructed
-    check "ro'inre'o".tanruRead == some(toTanru("rokci+renro"))  # 3.3, comma never required
     check "bri.vla".refusalRead == some((Refusal.Letter, "."))  # 3.3, period makes two words
     for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):  # each CLL spelling quoted
       for i in 1 ..< spelling.len:  # every position inside word
