@@ -132,13 +132,12 @@
 ##     Cost: `tools/examples.nim` writes it and `suggester` reads it, so rule of data asks for
 ##       Protocol Buffers (CONTRIBUTOR.md, Data); ruling D3 on #779 keeps text until #789 ports it.
 ##   Refusal of exchange file ends in what faulty piece holds, and request of page holds whole URL,
-##     so echo shows URL each line names by scheme, host, port and path alone (`dropSecrets`):
-##     token in user part, query or fragment never reaches report, as test "refusal of malformed
-##     page exchange shows no user part, query or fragment of its URL" of `test_exchanges.nim`
-##     holds over each piece and fault. Body of reply is echoed as held, as page or service
-##     wrote it.
-##     Cost: line holding `?` or `#` outside URL, as label or JSON of service request may, is
-##       echoed cut there.
+##     so echo shows each URL it names by scheme, host, port and path alone, wherever it stands
+##     (`dropSecretsText`): token in user part, query or fragment never reaches report, as test
+##     "refusal of malformed page exchange shows no user part, query or fragment of its URL" of
+##     `test_exchanges.nim` holds over each piece and fault. Body of reply is echoed as held, as
+##     page or service wrote it.
+##     Cost: query of reference with no `//`, as of `mailto:`, is echoed whole.
 ##   Label and header values are lines of file: client joins folded header lines by line break,
 ##     so `send` unfolds each value, as RFC 7230 section 3.2.4 asks of recipient, and `toText`
 ##     unfolds label; status takes one to three digits, as `send` gives 0 to 599. So every reply
@@ -534,38 +533,52 @@ func readField(cursor: var Cursor, name: string): Option[string] =
   some(line.get[name.len+1 .. ^1])
 
 
+func dropSecretsText(text: string): string =
+  ## Show each URL text names by scheme, host, port and path alone (`dropSecrets`), and every
+  ##   other byte as held: authority of URL opens at each `//`, and URL runs on to whitespace,
+  ##   control character or end of text, wherever it stands in line.
+  ##   `dropSecrets` of whole line splits it as one URL, so `:`, `/`, `?` or `#` standing before
+  ##     URL, as in binary bytes of message, would leave its user part whole.
+  var at = 0
+  while at < text.len:
+    let opening = text.find("//", at)
+    if opening < 0: break
+    var stop = opening + 2
+    while stop < text.len and text[stop] notin Whitespace + CHARACTERS_CONTROL: inc stop
+    result.add text[at..<opening] & text[opening..<stop].dropSecrets
+    at = stop
+  result.add text[at .. ^1]
+
+
 func readExchange*(text: string): Recorded =
   ## Read exchange file; refuse at first malformed line, naming it, as `readIndex` does.
-  ##   Echo shows URL each line names by scheme, host, port and path alone (`dropSecrets`), body
-  ##     of reply aside, so token of page URL, which request holds whole, never reaches report.
+  ##   Echo shows each URL it names by scheme, host, port and path alone, wherever it stands
+  ##     (`dropSecretsText`), body of reply aside, so token of page URL, which request holds
+  ##     whole, never reaches report.
   var cursor = Cursor(text: text, line: 1)
-
-  func dropSecretsLines(echoed: string): string =
-    ## Show URL each line of text names by scheme, host, port and path alone (`dropSecrets`).
-    echoed.split('\n').mapIt(it.dropSecrets).join("\n")
 
   func refuse(cursor: Cursor, shape: string): Recorded =
     ## Build outcome refusing line piece read last on its own line: shape it should have, then
     ##   line it holds made printable, running to end of text where no line break closes it,
     ##   which shape then names; empty where text ends where piece opens.
     ##   Line is any line where pieces before it are missing, URL line of request among them, so
-    ##     each drops secrets of URL it names (`dropSecretsLines`).
+    ##     each drops secrets of URL it names (`dropSecretsText`).
     let
       close = cursor.text.find('\n', cursor.at_piece)
       stop = if close < 0: cursor.text.len else: close
       broken = if close < 0 and stop > cursor.at_piece: ", then line break" else: ""
-      held = cursor.text[cursor.at_piece..<stop].dropSecretsLines.toPrintable(RUNES_ANSWER_SHOWN)
+      held = cursor.text[cursor.at_piece..<stop].dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN)
     Recorded(is_read: false, line: cursor.line_piece, problem: shape & broken & "; got `" & held &
         "`.")
 
   func refuseBlock(cursor: Cursor, shape: string, should_drop_secrets = false): Recorded =
     ## Build outcome refusing block read last on line it opens on: shape it should have, then
-    ##   bytes left from where it opens, made printable; each line drops secrets of URL it names
-    ##   (`dropSecretsLines`) where `should_drop_secrets`, as request needs, and body, which page
+    ##   bytes left from where it opens, made printable; each URL drops its secrets
+    ##   (`dropSecretsText`) where `should_drop_secrets`, as request needs, and body, which page
     ##   or service wrote, keeps as held.
     let
       left = cursor.text[cursor.at_piece .. ^1]
-      kept = if should_drop_secrets: left.dropSecretsLines else: left
+      kept = if should_drop_secrets: left.dropSecretsText else: left
     Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" &
         kept.toPrintable(RUNES_ANSWER_SHOWN) & "`.")
 
@@ -609,7 +622,7 @@ func readExchange*(text: string): Recorded =
   exchange.reply.body = bytes.get
   if cursor.at != text.len:  # Byte after body stands on line of cursor, opening no piece.
     return Recorded(is_read: false, line: cursor.line, problem: "Exchange should end after " &
-        "body; got `" & text[cursor.at .. ^1].dropSecretsLines.toPrintable(RUNES_ANSWER_SHOWN) &
+        "body; got `" & text[cursor.at .. ^1].dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN) &
         "`.")
   Recorded(is_read: true, exchange: exchange)
 
