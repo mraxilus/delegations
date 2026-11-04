@@ -1,0 +1,11 @@
+# Package description read by Atlas and nimble; requirements live here (Article II.8).
+#   Standard library only: lojban is what project exists to understand, so it is derived here
+#   from CLL, never imported (II.8).
+
+version = "0.1.0"
+author = "Emmanuel M. Smith"
+description = "Parse lojban words, as CLL defines them."
+license = "Prosperity-3.0.0"
+srcDir = "src"
+
+requires "nim == 2.4.0"
