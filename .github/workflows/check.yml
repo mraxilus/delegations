@@ -3,7 +3,8 @@
 #   `list-projects` names projects one change asks to compile, and again those of them
 #   carrying driven checks. `check-files` runs whole-tree checks, which cost about second and
 #   so stay unscoped. `check-scope` and `check-commits` read branch. `test` is one matrix job
-#   per named project, each installing that project's own pin. `drive` is second matrix over
+#   per named project, each installing that project's own pin and system packages, since
+#   suites load what project declares (issue 780). `drive` is second matrix over
 #   subset of same list, building each page and driving it through real events.
 #   `check-types` type-checks scripts of every changed project carrying node manifest beside
 #   its lock. `check-drift` refuses branch predating base's charter or checker.
@@ -20,7 +21,7 @@
 #   `drive` is matrix where `check-types` is one job, and difference is what each compiles.
 #   Type check derives declarations by reading source as text, so koch's compiler serves it;
 #   driven check builds page through JS backend, which compiles project code, so it needs
-#   that project's pin exactly as `test` does. Its system packages come from project's
+#   that project's pin exactly as `test` does. System packages of both come from project's
 #   declaration read through `koch list-packages`, never from names written here (CONTRIBUTOR.md,
 #   System dependencies).
 #   Matrix runs in parallel, so wall time is slowest changed project, never sum of all.
@@ -143,6 +144,17 @@ jobs:
           sh build_all.sh
       - if: matrix.kind == 'commit'
         run: echo "$RUNNER_TEMP/nim-commit/bin" >> "$GITHUB_PATH"
+
+      # Packages come from project's own declaration, as in `drive`; project declaring none
+      #   installs none, so curator projects keep their time.
+      - env:
+          PROJECT: ${{ matrix.dir }}
+        run: |
+          PACKAGES="$(nim r koch list-packages "$PROJECT")"
+          if [ -n "$PACKAGES" ]; then
+            sudo apt-get update -qq
+            echo "$PACKAGES" | xargs sudo apt-get install -y --no-install-recommends
+          fi
 
       # Atlas checkouts: `koch test` restores them from lock on every run, and lock names
       #   exact commit each time, so cache keyed on that lock returns same tree it would

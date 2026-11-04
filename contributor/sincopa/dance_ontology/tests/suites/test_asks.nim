@@ -18,7 +18,7 @@ from ../../simulation/rigid {.all.} import RAISE
 from ../../simulation/walk import mirrored, MOST, stands, STEP, STYLES, twinAnswering
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
-from ../../src/dance_ontology/draw/route import overArm
+from ../../src/dance_ontology/draw/route import isSwanFaceToBack, overArm, straightArm
 import ../../src/dance_ontology/frame
 
 
@@ -580,6 +580,35 @@ suite "Internal: Simulation against Reference":
       for crossing in found:
         if crossing.along + crossing.across < first.along + first.across: first = crossing
       check ask.links[first.over].ends[0].arm == arm
+
+
+  test "every swan crosses three times round pair that runs straight, as card draws":
+    ## Swan is one connection making hoop and other passing straight through it (Architect,
+    ##   2026-10-05, issue 375): three crossings held round straight line (rule 31,
+    ##   `design/checks`).  Facing at swan sets which pair is straight (`route.straightArm`).
+    ##   Straight pair winds on itself less than hoop (`read.writhe`), and runs no further in
+    ##   plan (`read.runInPlan`).
+    ##   Red as planned before, measured 2026-11-03.  C01 and C07 crossed twice.  D01 and D07
+    ##     wound pair card keeps straight: D01 wound lead's left pair -0.54 and ran it 2.19
+    ##     lengths, where right wound -0.19 and ran 1.69.
+    var swans = 0
+    for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
+      for i in [STEPS.low, STEPS.high]:
+        let
+          key = &"{tag}{i + 1:02}"
+          ask = ask_by_key[key]
+          straight = straightArm(STEPS[i], isSwanFaceToBack(arms)).toArm
+          stood = toArms(recorded[key], ask.links)
+          pole = (if ask.links[0].ends[0].arm == straight: 0 else: 1)
+          hoop = 1 - pole
+        checkpoint &"`{key}` crosses `{crossings(stood).len}` times.  Lead's {straight} pair " &
+            &"winds `{writhe(stood, pole)}` and runs `{runInPlan(stood, pole)}`; other winds " &
+            &"`{writhe(stood, hoop)}` and runs `{runInPlan(stood, hoop)}`."
+        check crossings(stood).len == 3
+        check abs(writhe(stood, pole)) < abs(writhe(stood, hoop))
+        check runInPlan(stood, pole) <= runInPlan(stood, hoop)
+        inc swans
+    check swans == 4
 
 
   test "every still stands easiest pose that held, and its search tried every pose short of ease":

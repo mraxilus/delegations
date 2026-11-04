@@ -189,6 +189,16 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   writeFile(path, Protobuf.encode(scene))
   ```
 
+- Read a committed `.txtpb` record through a file that `protoc` writes under `build/`. Check the
+  exit code of `protoc`, so a refused record stops the compile, and no older file is read. Never
+  let `staticExec` carry the binary itself, because it loses bytes of it:
+
+  ```nim
+  const encoded = gorgeEx("protoc --encode=Scene scene.proto < tour.txtpb > ../build/tour.binpb")
+  static: doAssert encoded.exitCode == 0, "Record is refused; got `" & encoded.output & "`."
+  const TOUR = staticRead("../build/tour.binpb")
+  ```
+
 ## 5. Signatures, imports, calls
 
 - A doc comment is `##`, so an empty doc is `## TODO: Document.` (VI.1). A doc takes one

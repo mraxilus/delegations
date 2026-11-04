@@ -343,9 +343,11 @@ const RULES* = [
   ##       hands and other carries all of it.  Handed *over* and not
   ##       merely given up, or loops would be too shallow to read as
   ##       thing going round.
-  ##     And snake is one on top at first crossing, so by alternation it
-  ##       dives once and straight one dives twice (`route.straightArm`):
-  ##       Architect's reading, 2026-09-07, ruled again 2026-10-05 (#375).
+  ##     Face-to-face, snake is one on top at first crossing, so by
+  ##       alternation it dives once and straight one twice: its loop goes
+  ##       down.  Face-to-back, snake is one under, so it dives twice and
+  ##       its loop goes up over straight one (`route.straightArm`): rulings
+  ##       of 2026-10-05 and 2026-10-06 (#375).
   ##   Rule 32 corrects rule 20, and says what orbit is for good:
   ##     walker keeps **whatever side of them faced centre facing it**,
   ##     so they turn as far as they travel.

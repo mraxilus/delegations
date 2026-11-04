@@ -49,7 +49,7 @@ suite "Internal: Capacity":
     check fromKey("-r.").get.rest.capacity == 2
 
 
-  test "a pair of connections binds at half a turn":
+  test "held low, a pair of connections binds at half a turn":
     check fromKey("rl.").get.rest.capacity == 1
     check fromKey("lrL").get.rest.capacity == 1
 
@@ -124,8 +124,9 @@ suite "Internal: What the arm can carry":
 
 
   test "a frame state stands only where both blocks allow it":
+    # Low and high alone: above, hold alone binds, and suite `Above` holds where.
     for target in FRAMES:
-      for level in Level:
+      for level in [Level.Low, Level.High]:
         var state = target.rest
         state.level = [level, level]
         for twist in -4..4:
@@ -154,6 +155,34 @@ suite "Internal: What the arm can carry":
     let apart = fromKey("--.").get.rest
     for twist in -6..6:
       check apart.isHolding(twist)
+
+
+func isHoldingAbove(state: FrameState): bool =
+  ## Tell whether some arm holds, and every arm that holds is carried above.
+  state.frame.countHolds > 0 and
+    [Side.Left, Side.Right].allIt(state.frame.hold[it].isNone or state.level[it] == Level.Above)
+
+
+func isOneHandAbove(state: FrameState): bool =
+  ## Tell whether one hand holds, carried above.
+  state.frame.countHolds == 1 and state.isHoldingAbove
+
+
+func heldAbove(target: Frame): FrameState =
+  ## Get frame at rest, each arm that holds carried above.
+  result = target.rest
+  for side in Side:
+    if target.hold[side].isSome:
+      result.level[side] = Level.Above
+
+
+func written(state: FrameState): FrameState =
+  ## Get frame state as model writes it: its frame at its heights, turned by its twist.
+  ##   One arrangement has one frame state, so mirror twin is compared as model writes it:
+  ##     neutral of same-name pair above is one frame state, reached from either cross.
+  var rested = state
+  rested.twist = 0
+  rested.turn(rotates(Dancer.Follow, state.twist)).get
 
 
 func reflect(state: FrameState): FrameState =
@@ -191,15 +220,14 @@ suite "Internal: Modifiers":
   test "an arm over the head is around nothing, and blocks on nothing":
     # It is on axis couple turns about, so there is nothing for it to be
     # across front of or behind line of.  That is why it does not run
-    # out -- and why case where it blocks anyway is thing model is
-    # waiting to be told rather than thing it has decided.
+    # out.  Pair held above stops at swan all same, and that is block of
+    # its hold, not of its arm (suite `Above`).
     for what in Blocker:
       check around(what, Level.Above).isNone
     for twist in -6..6:
       check blockerArm(twist, Level.Above).isNone
       check armCapacity(blockerArm(twist, Level.Above), Level.Above) ==
           UNBOUNDED_TURNS
-    check not IS_ABOVE_BLOCKING
 
 
   test "only an arm that holds below the head names a modifier":
@@ -227,10 +255,84 @@ suite "Internal: Modifiers":
     # above at one turn anticlockwise named `above lock`, where its twin named none.
     let states = frameStates()
     for stood in states:
-      let twin = stood.reflect
+      let twin = stood.reflect.written
       checkpoint stood.key & " against " & twin.key
       check twin in states
       check stood.armName == twin.armName
+
+
+
+suite "Internal: Above":
+  test "a single hand held above turns without end, either way":
+    # Rule 16, read through rule 17: held above, it can turn for ever.
+    #   Red with one full turn on one connection, measured 2026-11-03 (issue #698, D-5):
+    #     one-and-a-half turns refused on every single hand.
+    for target in FRAMES:
+      if target.countHolds != 1:
+        continue
+      let stood = target.heldAbove
+      checkpoint stood.key
+      for twist in -6..6:
+        check stood.isHolding(twist)
+      for offer in turnsOffered(stood):
+        check offer.refused.isNone
+
+
+  test "a single hand held above keeps its orientation alone, so a whole turn lands where it began":
+    # Hand turns in grip and stores nothing, so how far it has turned is not part of its
+    # state (rule 16; `design/rules.nim`, rule 27).  Two frame states: rest, and half turn
+    # from it, either way.
+    for target in FRAMES:
+      if target.countHolds != 1:
+        continue
+      let stood = target.heldAbove
+      checkpoint stood.key
+      for who in Dancer:
+        for way in [1, -1]:
+          check stood.turn(rotates(who, 2 * way)) == some(stood)
+          check stood.turn(rotates(who, 3 * way)) == stood.turn(rotates(who, way))
+      check stood.turn(rotates(Dancer.Follow, 1)) == stood.turn(rotates(Dancer.Follow, -1))
+      check frameStates().countIt(it.frame == target and it.level == stood.level) == 2
+
+
+  test "a pair held above stands on its chain: seven frame states, swan to swan":
+    # Rules 28, 30 and 31, and glossary's `Chain`: swan, diamond, cross, neutral, cross,
+    #   diamond, swan, half turn apart, with ends.
+    #   Red with half turn on two connections, measured 2026-11-03 (issue #698, D-5): three
+    #     frame states for hand to hand, and three for each frame of same-name pair.
+    for keys in [@["rl."], @["lrL", "lrR"]]:
+      checkpoint $keys
+      check frameStates().countIt(it.frame.key in keys and
+          it.level == [Level.Above, Level.Above]) == 7
+    let hand = fromKey("rl.").get.heldAbove
+    for twist in -3..3:
+      check hand.isHolding(twist)
+    for twist in [-4, 4]:
+      check not hand.isHolding(twist)
+
+
+  test "the same-name pair rests at neutral Face-to-back, so each of its frames stands at a cross":
+    # Rule 31: both patterns are one chain, half turn apart, and glossary's `Rest` is
+    #   where hold stands at neutral.  Face-to-face, same-name pair crosses once, one arm
+    #   over other: cross either side of neutral.  Whole turn passes it from one cross to
+    #   other, through neutral, with no cut.
+    #   Left over right on clockwise side, as Reference names chain (`design/parts.chainFor`).
+    let
+      left_over = fromKey("lrL").get.heldAbove
+      right_over = fromKey("lrR").get.heldAbove
+      neutral = left_over.turn(rotates(Dancer.Follow, -1))
+    check neutral.isSome
+    check neutral == right_over.turn(rotates(Dancer.Follow, 1))
+    check left_over.turn(rotates(Dancer.Follow, -2)) == some(right_over)
+    check right_over.turn(rotates(Dancer.Follow, 2)) == some(left_over)
+    # Wound on past each cross to its diamond and its swan, and no further; back past
+    # neutral to other diamond.
+    for (stood, way) in [(left_over, 1), (right_over, -1)]:
+      checkpoint stood.key
+      check stood.turn(rotates(Dancer.Follow, way)).isSome
+      check stood.turn(rotates(Dancer.Follow, 2 * way)).isSome
+      check stood.turn(rotates(Dancer.Follow, 3 * way)).isNone
+      check stood.turn(rotates(Dancer.Follow, -3 * way)).isSome
 
 
 
@@ -267,6 +369,16 @@ suite "Internal: What there is":
     check keys.deduplicate.len == keys.len
 
 
+  test "a key is refused where model writes its frame state another way":
+    # One arrangement has one key.  Each refused key, then key model writes for it.
+    check fromFrameStateKey("l-.:AL:2").isNone  # single hand above keeps no turn: `l-.:AL:0`
+    check fromFrameStateKey("l-.:AL:-1").isNone  # nor which way: `l-.:AL:1`
+    check fromFrameStateKey("lrR:AA:1").isNone  # neutral of same-name pair: `lrL:AA:-1`
+    check fromFrameStateKey("lrL:AA:-2").isNone  # other cross: `lrR:AA:0`
+    for key in ["l-.:AL:0", "l-.:AL:1", "lrL:AA:-1", "lrR:AA:0"]:
+      check fromFrameStateKey(key).isSome
+
+
   test "a key is refused where a letter spells no level":
     # Red with every letter but `H` read back as low (issue #698), so `l-.:XL:0` read as
     # `Left to left` at rest.  Letters that keys write are read off keys themselves.
@@ -294,14 +406,21 @@ suite "Internal: What there is":
     # care which of them moved: lead turning one way and follow turning
     # other leave couple in same frame state.  So half of workbook's
     # twelve sheets are other half read backwards.
+    #   Single hand above keeps orientation alone (rule 16), so its six land in two
+    #     places: half turn away, and back where it began.
     for stood in frameStates():
       let offers = turnsOffered(stood)
       check offers.len == 12
+      for offer in offers:
+        if offer.who == Dancer.Lead:
+          check offers.anyIt(it.who == Dancer.Follow and it.amount == -offer.amount and
+              it.to == offer.to)
       var landings: seq[FrameState] = @[]
       for offer in offers:
         if offer.to notin landings:
           landings.add offer.to
-      check landings.len == 6
+      checkpoint stood.key
+      check landings.len == (if stood.isOneHandAbove: 2 else: 6)
     let lone = fromKey("l-.").get.rest
     for size in 1..MOST_TURN:
       check lone.turn(rotates(Dancer.Lead, size)) ==
@@ -321,6 +440,10 @@ suite "Internal: What there is":
     for stood in frameStates():
       for offer in turnsOffered(stood):
         if offer.refused.isNone:
+          continue
+        if stood.isHoldingAbove:
+          # Arm above runs out of nothing, so what refuses is hold, at swan (suite `Above`).
+          check offer.refused == some(Refusal.Hold)
           continue
         let over = offer.to.twist
         case offer.refused.get

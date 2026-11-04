@@ -35,9 +35,12 @@ func constructRafsiByForm(): array[Form, seq[string]] {.compileTime.} =
   for entry in LIST_GISMU:
     for one in entry.rafsi: result[one.form.get].add one
     if not entry.word.isGismu: continue
-    let stem = entry.word[0 .. 3]
-    if result[stem.form.get].len == 0 or result[stem.form.get][^1] != stem:
-      result[stem.form.get].add stem
+    let
+      stem = entry.word[0 .. 3]
+      # VM of pin 2.4.0 moves `stem` into `add` before index; stub fails to compile without `form`.
+      form = stem.form.get
+    if result[form].len == 0 or result[form][^1] != stem:
+      result[form].add stem
     result[entry.word.form.get].add entry.word
 
 

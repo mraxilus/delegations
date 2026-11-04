@@ -285,6 +285,11 @@ It is a proposal. The contributor and the Architect settle it, and a contributor
 with reasons why you are wrong has answered in full. A finding you cannot support with
 evidence from their tree is a hunch, so keep it, or go and get the evidence.
 
+A file that the curator owns gives the date of each fact that it states about another project.
+A project changes its pin, its lock or its code, and no curator file learns of it. So a curator
+line states the rule that holds for every project, and names a compiler by its version or its
+commit.
+
 ## Say which role you are
 
 `CONTRIBUTOR.md`, Say which role you are, binds you, and `GLOSSARY.md`, Role, holds the set

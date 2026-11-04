@@ -486,7 +486,7 @@ func pairAt*(holds: Holds; wind, phase: float): array[Arm, seq[Point]] =
       axisPair(put).across,
       degToRad(windMeasured(put, holds, arm).phi),
       2 * PI * wind,
-      share = windShare(wind, arm),
+      share = windShare(wind, arm, holds.isSwanFaceToBack),
     )
 
 

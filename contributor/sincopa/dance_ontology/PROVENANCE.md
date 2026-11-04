@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0e17644a127757fb |
+| Rules   | 01a086eda78015fd |
 | Pruned  | f07b7566aac6619f19090f8341936158bf0e9800 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -262,10 +262,22 @@ two blocks, blockers, wraps and locks. It also holds the measured fact that a lo
 a turn, where everything else holds a whole one. `axle.nim` draws its frame states as one line,
 placed by the twist itself.
 
-The views do not show it. 148 frame states render as 17 distinct pictures, because level, contact
+**Above, the rules give the turn, and the model follows them (rules 16, 17, 28, 30 and 31).** A
+single hand held above turns without end. Its hand turns in the grip and stores nothing, so the
+model keeps its orientation alone: rest, or a half turn from it. A pair held above stands on its
+chain of seven frame states, from swan to swan, counted from the neutral of its hold. Face-to-face,
+the same-name pair crosses once, so each of its two frames stands at a cross. A whole turn passes
+it from one cross to the other, through neutral, with no cut.
+
+Each arrangement has one frame state and one key (`canonical`). The neutral of the same-name pair
+is written from left over right, the side on which the Reference names it. Low and high keep the
+counts that they had before the rules reached them, and D3 of issue 796 asks how far they turn.
+Verified by `suites/test_rotation.nim`, suite "Internal: Above", and by `suites/test_axle.nim`.
+
+The views do not show it. 141 frame states render as 17 distinct pictures, because level, contact
 and twist beyond its parity have no marks, but for one frame. `Left-to-right and Right-to-left`
-draws half a turn of twist one way apart from half a turn the other way. Measured by hand on
-2026-10-02, with `renderFrame` over `frameStates()`. An Explorer whose picture cannot tell two
+draws half a turn of twist one way apart from half a turn the other way. Measured on 2026-11-03,
+with `renderFrame` over `frameStates()`. An Explorer whose picture cannot tell two
 states apart cannot check them. The capacity constants are witnessed by the simulation
 (`simulation/verdicts.md`), which is evidence, and not authority.
 
@@ -832,6 +844,19 @@ and not to the shape. So a moving hand is drawn once and carried by a transform,
 the hatch travels with the mark. Verified by `checkSingleTurns` and `checkHandTurns`, which check
 that a hatched mark moves nothing of its own.
 
+**The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The
+simulation reports in their words, through `simulation/words.nim`, and that is not a check. Rule 37
+says what a lock is, and bends the arm of a high lock to the shoulder of the same arm. Rule 38 says
+a wrap crosses the other arm of its dancer. The drawing does not show that crossing yet, because
+rule 22 keeps a settled reach away from that hand.
+
+Rule 39 makes modifiers belong to each arm, for either dancer. The drawing holds one level and one
+modifier for each connection. Rule 40 is the one filled rotation row of the sheet.
+`simulation/verdicts.md` gives what the simulation finds for Left to left held low, turned from face
+to face.
+
+## Rules of the chain
+
 **The holds of two hands walk a chain of seven frame states, a half turn apart (rules 28, 30 and
 31).**
 The seven are swan, diamond, cross, neutral, cross, diamond and swan. The chain has ends, and is not
@@ -862,19 +887,14 @@ move.
 
 **Past a whole turn, one connection runs straight and the other goes round it (rule 31).** That is
 the swan. `route.windShare` gives the swing of the straight one to the snake. So at a turn and a
-half, one reach is the plain chord between its hands. The snake is on top at the first crossing, so
-it dives once, and the straight one dives twice (Architect, #375). Verified by `checkHandTurns`.
+half, one reach is the plain chord between its hands.
 
-**The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The
-simulation reports in their words, through `simulation/words.nim`, and that is not a check. Rule 37
-says what a lock is, and bends the arm of a high lock to the shoulder of the same arm. Rule 38 says
-a wrap crosses the other arm of its dancer. The drawing does not show that crossing yet, because
-rule 22 keeps a settled reach away from that hand.
-
-Rule 39 makes modifiers belong to each arm, for either dancer. The drawing holds one level and one
-modifier for each connection. Rule 40 is the one filled rotation row of the sheet.
-`simulation/verdicts.md` gives what the simulation finds for Left to left held low, turned from face
-to face.
+**The facing at a swan sets its loop, and the loop sets which connection runs straight (Architect,
+2026-10-06, #375).** Face-to-face, the snake is on top at the first crossing, so it dives once and
+loops down under the straight one. Face-to-back, the snake is under at the first crossing, so it
+dives twice and loops up over the straight one. So the same-name chain keeps the arm under straight,
+and the cross-name chain keeps the arm over straight (`route.straightArm`). Verified by
+`checkHandTurns`, on both chains. The swans that the rig stands follow the same rule (Planned swan).
 
 ## The frame picture
 
@@ -2200,18 +2220,18 @@ its reason (`CARDS_REFUSED` in `suites/test_asks.nim`):
 the last two steps of G04 and G06, and on no other cell. Read by a probe outside the tree on the
 copy of the Reference that the suites write, 2026-10-12.
 
-The plan of D07 that `design/rig.json` keeps puts the couple 0.60 m apart. It holds its two joins
-0.23 m from each other, at 1.25 m and 1.28 m, in the upper third of the `Torso` band. Measured on
-2026-10-11.
+The plan of D07 that `design/rig.json` keeps puts the couple 0.52 m apart. It holds its two joins
+0.17 m from each other, at 1.26 m and 1.30 m, in the upper third of the `Torso` band. Measured on
+2026-11-03.
 
-**Two planned stills stand at an end, and none is at ease.** Strain is nought at ease and one at an
+**No planned still stands at an end, and none is at ease.** Strain is nought at ease and one at an
 end. In the easiest plan that holds, D03, A11, C02 and C06 read 0.01. D06 reads 0.50, D01 and D07
-0.80, and C01 and C07 1.00. Measured on 2026-10-11 from `design/rig.json`.
+0.68, and C01 and C07 0.70. Measured on 2026-11-03 from `design/rig.json`.
 
-Each of those strains is a waist. In C01 and C07, both dancers turn the chest 40.0 degrees against
-the hips, which is the end of the waist. In D01 and D07, the waist of the follow turns 37.0 degrees
-and that of the lead 32.9. In D06 the waist of the follow turns 32.5. Read off the facings in
-`design/rig.json` on 2026-10-11, by a probe outside the tree.
+The strain of D06 is a waist: the follow turns the chest 32.5 degrees against the hips. Read off the
+facings in `design/rig.json` on 2026-10-11, by a probe outside the tree. The strain of each swan is
+a wrist of the follow. It is the left in C01 and the right in D01, and mirrored in C07 and D07. Read
+on 2026-11-03 by a probe outside the tree that plans each swan as the recording does (Planned swan).
 
 Rejected: to let the arms settle toward ease at the end of the turn, a leap at a time. With the
 engine sprung after the plan, that took C01 from 0.56 to 0.53 and left D07 as it was.
@@ -2250,6 +2270,53 @@ turns, which put a point 1.25 m off the plan.
 the six cards that the edge refuses. It also holds that each refused card stays unmodelled, so a
 change that models one lifts its refusal. 225 of 231 cards are modelled, measured 2026-10-12.
 
+## Planned swan
+
+**A swan is planned to wind one pair round the other, which runs straight through it, as its card
+draws.** The card draws three crossings round a straight connection (rule 31). The facing at the
+swan sets which pair runs straight (Rules of the chain). So a still of a swan holds only where it
+crosses three times in plan (`walk.keepsStraight`). Its straight pair must also wind on itself less
+than the other, and run no further in plan.
+
+How far a pair winds on itself is its writhe (`vector.writhe`), read from shoulder to shoulder
+through the join of the lead. A hoop round a straight line winds, and a line in one plane winds
+nowhere. How far a pair runs in plan is in lengths of the straight line between its shoulders
+(`vector.runInPlan`). Verified by `test_read.nim`, suite "Internal: How far one connection winds
+and runs", over 1000 seeded polylines for each law.
+
+**Left to itself, the planner hands the hoop to the other pair at each half turn.** At the wind of
+C01 and D01, its last half turn gives the hoop to the left pair of the lead in both chains. That is
+the ruled hoop of C01, which stands Face-to-back, and the wrong one for D01, which stands
+Face-to-face. So every plan that held D01 wound the left pair, at writhe -0.51 to -0.75, where the
+right pair wound -0.08 to -0.19. Every plan that held C01 crossed twice in plan. Measured
+2026-11-03 over the 32 plans of each still, by a probe outside the tree.
+
+So past a whole turn, the planner draws the hoop round the pair that runs straight (`plan.HOOP`).
+It weighs how far the straight pair winds past the hoop, less 0.3 of a turn, squared, at weight 100.
+The mirror path draws the hoop round its own straight pair, which is the other arm. The law of the
+planner's cost holds this term to the plain cost, to the last bit (Planner's cost).
+
+| Swan | Strain | Crossings in plan | Straight pair: writhe, run | Hoop: writhe, run |
+| --- | --- | --- | --- | --- |
+| C01, before | 1.00 | 2 | +0.01, 1.60 | -0.45, 3.36 |
+| C01 | 0.70 | 3 | +0.03, 1.92 | -0.33, 3.42 |
+| D01, before | 0.80 | 3 | -0.54, 2.19 | -0.19, 1.69 |
+| D01 | 0.68 | 3 | -0.11, 1.96 | -0.70, 2.52 |
+
+C07 is the mirror image of C01, and D07 that of D01. Read from `design/rig.json` by the law in
+`test_asks.nim`, "every swan crosses three times round pair that runs straight, as card draws".
+
+Rejected, each measured over the 32 plans of D01 on 2026-11-03:
+
+- A pull of the straight pair toward a straight line in plan, at weights 5 and 20. The couple stood
+  0.84 to 1.14 m apart, and both pairs straightened. The left pair still wound more.
+- A pull of the grip of the hoop to 10 cm under the grip of the straight pair, at weights 20 and
+  200. The grips moved, and the left pair still made the hoop.
+- A pull of the straight pair to run shorter in plan than the hoop, at weights 5 to 200. The right
+  pair ran further without winding, or wound with the left arm over at the crossing of the lead, or
+  crossed five times.
+- The pull of this section from a half turn, at weight 20. No plan reached the swan.
+
 ## Planner's cost
 
 **The planner weighs a step of one freedom by what that step moves, and the cost is the same to the
@@ -2269,7 +2336,8 @@ same order.
 
 Verified by `test_plan.nim`, suite "Internal: Planner's cost". At 96 seeded poses, each step and a
 long step of each freedom and back cost the plain cost to the last bit. Each of seven breaks made on
-purpose failed it.
+purpose failed it. Its holds of two hands name a straight pair, and its winds run to a turn and a
+half. So it weighs the hoop of a swan too (Planned swan).
 
 The paths of D03 and A11, in six styles and both mirror paths, are those of the plain cost, to the
 bit. No law holds them. Verified on 2026-10-04 by a probe outside the tree, which prints every bit
@@ -2713,6 +2781,18 @@ A character beyond ASCII that a font face of the system draws on a page is a fin
 names the page, the element and the codepoint. A font face that the browser does not load is a
 finding too. So is a numeral of the control page that the collector does not read.
 
+**The collector writes each string that a page draws, ASCII included (Architect, D1 b of issue
+751).** `koch drive` judges a character beyond ASCII for its font face, and every character for a
+bold that the browser synthesises. A run gets that bold where it asks a family for a weight of 600
+or more, and the family matches a lighter face. Most bold text on these pages is ASCII, so a
+collector that writes characters beyond ASCII alone hides it. A codepoint below the space is a
+control character, as the line feed of markup is, and draws no glyph, so it is not written.
+
+Verified by `nim r koch drive contributor/sincopa/dance_ontology` on 2026-11-03, with no finding.
+The three pages write 73, 2842 and 1077 strings, and 632 of them ask for 600 or more. No run gets a
+synthesised bold. Noto Serif and Noto Sans ship a face of 600, and Commit Mono one of 700. No bold
+run draws from Noto Sans Math, which ships 400 alone.
+
 The harness is TypeScript under `tools/drive/`. TypeScript is admitted for the host API of a test
 driver. It checks each expression that runs inside the page against the types of the DOM. The
 harness resolves nothing and judges nothing. `koch drive` reads the `cmap` of each font face,
@@ -2761,6 +2841,12 @@ read of `placeholder` taken out of the collector, `koch drive` fails, and names 
 placeholder of a field. With the two font faces of Commit Mono taken out of `FONT_FACES`, it fails
 with ten findings. Each one names the page, the element and the codepoint, as `button#next` of
 `design-rig` draws `U+2192`.
+
+A third break, made by hand on 2026-11-03 and then reverted, shows that the check sees bold. With
+the 600 face of Noto Sans taken out of `FONT_FACES`, `koch drive` fails with 26 findings. One is
+`section#chain > p.lede > b` of `design-reference`, which asks Noto Sans for 700 and draws from the
+face of 400. The same break gives no finding where the collector writes characters beyond ASCII
+alone.
 
 Cost: a page is read at one viewport, in the state it opens on. Text that a script writes only after
 the reader acts, as the Explorer writes the moves of a frame, is not read. The `⇄` that the Explorer
@@ -3322,22 +3408,21 @@ On 2.4.0, every test file passes, and 2.4.0 warns of nothing that 2.2.12 does no
 that it builds is byte for byte what 2.2.12 builds. Only the scripts that the compiler writes for
 the Explorer and the rig viewer differ. Verified 2026-10-29.
 
-**A float `result` gets a value before `+=`.** From Nim 2.2.8 to 2.2.12, the VM gives an unassigned
-float `result` an int register, and then reads `floatVal` from that register. The compiler then
-stops with `field 'floatVal' is not accessible for type 'TFullReg' using 'kind = rkInt'`. The crash
-occurs only at compile time, and only where the VM reaches the function. That is `polylineLength` in
-`draw/route.nim`, through `const SCENES = buildScenes()` in `draw/scene.nim`. So `result = 0.0`
-comes first there, with a comment, because the line reads redundant and is not.
+**A float `result` needs no value before `+=`.** From Nim 2.2.8 to 2.2.12, the VM gives an
+unassigned float `result` an int register, and then reads `floatVal` from that register. The
+compiler then stops with `field 'floatVal' is not accessible for type 'TFullReg' using 'kind =
+rkInt'`. The crash occurs only at compile time, and only where the VM reaches the function. That is
+`polylineLength` in `draw/route.nim`, through `const SCENES = buildScenes()` in `draw/scene.nim`.
 
 Five lines reproduce the crash on 2.2.12 with nothing from this project, verified 2026-09-10 (issue
-106). The same five lines run on 2.4.0 and print 3.0, verified 2026-10-29. The line stays while koch
-compiles the driver on 2.2.12, because the driver imports the module that holds `SCENES`. Without
-the line, that build stops with the crash, and the build on 2.4.0 passes, verified 2026-10-29.
+106). The same five lines run on 2.4.0 and print 3.0, verified 2026-10-29. Since 2026-11-03, koch
+and the runner build on 2.4.0 too (pull request 775), so no step compiles this project on 2.2.12.
+So `polylineLength` adds to its `result` with no line before it, verified by `koch check` on
+2026-11-03.
 
-So the type step holds the line now. `suites/test_route.nim` takes a run length in a `const`, but it
-runs on 2.4.0, where the line is not needed. `result +=` on a float survives in `limb.comfort`,
-`plan.comfort`, `plan.cramped`, `plan.gripBroken`, `plan.violation` and `checks.inkLength`, none of
-which the VM evaluates today. That is latent, and not urgent.
+`suites/test_route.nim` still takes a run length in a `const`, so the VM computes one on each run of
+the suites. `result +=` on a float in `limb.comfort`, `plan.comfort`, `plan.cramped`,
+`plan.gripBroken`, `plan.violation` and `checks.inkLength` is safe for the same reason.
 
 ## Open questions
 
@@ -3367,16 +3452,13 @@ which the VM evaluates today. That is latent, and not urgent.
 - The model reaches the four swans by a planned turn, and each one waits for the Architect to hold
   it against their own body.
 - The drawing of the Reference itself puts both joins at one point, with the right-over-left
-  connection under. The planned D07 holds its two joins 0.23 m apart. The carried walk, with its
+  connection under. The planned D07 holds its two joins 0.17 m apart. The carried walk, with its
   hands at the edge of the band, wraps the arms of the follow round the head instead.
-- **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 1.00,
-  and D01 and D07 0.80, in `design/rig.json` (Planned turn).
-- **The swans wrap the connection that the card draws straight.** The card draws the connection over
-  at the first crossing as the snake, and the other one straight (`route.straightArm`). Seen from
-  above in `design/rig.json`, the connection that C01 draws straight runs 3.11 times its line
-  between the shoulders, and the other 1.60. In D01 they run 2.16 and 1.69, and C07 and D07 are
-  their mirror images. Measured 2026-10-11 by a probe outside the tree, which reads D01 at 2.12 and
-  1.52 on the recording before the edge.
+- **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 0.70,
+  and D01 and D07 0.68, in `design/rig.json` (Planned swan).
+- **D06 crosses four times in plan, where its card draws two.** The left upper arm of the follow
+  crosses the right arm of the lead near the shoulders, with the couple 0.36 m apart. No law holds
+  the crossings of a position other than a swan. Measured 2026-11-03 from `design/rig.json`.
 - **The figures of a palm grip are derived, and not measured.** No study measures how far two palms
   tilt or turn against each other (Body rig).
 - **A relaxed wrist rests at 16 degrees of extension, and the law of a free couple at rest holds it

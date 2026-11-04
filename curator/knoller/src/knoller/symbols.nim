@@ -19,8 +19,8 @@
 ##   Answer of file: symbol each site resolves to (`def`), and global declarations named exactly
 ##     as each name asked (`globalSymbols`, read whole and filtered by Nim's own identity).
 ##   Site of included file asks `dus`, whose answer opens on same definition, then lists uses:
-##     `def` there recompiles includer for each site (commit pin's `nimsuggest`, include query),
-##     where `dus` recompiles only what is dirty. Measured 2026-10-04 on this container, 20
+##     `def` there recompiles includer for each site (`nimsuggest` of commit `27763495`, include
+##     query), where `dus` recompiles only what is dirty. Measured 2026-10-04 on this container, 20
 ##     sites of shared suite of `rga_visualiser`: `def` 345 s, `dus` 50 s. Site of entry keeps
 ##     `def`, since `dus` there would list every use of common symbol such as `float`. Cost:
 ##     included file pays that list, in output and never in compile.
@@ -39,11 +39,11 @@
 ##     where it names variable, so such path reaches run changed.
 ##
 ##   Rejected: compiler as library inside knoller, which compiles compiler into every build of it
-##     and binds it to one pin, where ronri projects lex glyphs only their commit pin knows.
+##     and binds it to one pin, while two pins can lex one glyph apart.
 ##     Rejected: `nim check --def` for each site, one compile of project per site. `nimsuggest`
 ##     ships with every toolchain knoller serves, so it costs no build.
 ##   Cost: one compile per entry, about 2 s for module of curator and 5 to 9 s for front-end or
-##     suite of `rga_visualiser` (measured 2026-10-02 on this container, 2.2.12 and commit pin).
+##     suite of `rga_visualiser` (measured 2026-10-02 on this container, 2.2.12 and `27763495`).
 ##     Callers ask only files holding candidate, which their prefilter keeps few.
 ##   Cost: checkout project's lock restores, and native library, are needed to compile; file
 ##     lacking either stays unresolved.

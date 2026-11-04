@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0e17644a127757fb |
+| Rules   | 01a086eda78015fd |
 | Pruned  | 49b8f1c6ca50b0bb20472edd1cc819a6d7222045 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -4642,9 +4642,31 @@ it, because CI runs `check-files`, `fetch-deps` and `test`, and never the build 
 **This project tracks the head of pga, and says so when it cannot.** The standing instruction of the
 Architect is to take the latest pga. Where the latest does not work, pin the most recent commit that
 does, record which and why, and move forward when it works again. Every pull request states which
-commit of pga it builds against, and whether that is head. The pin stands at head,
+commit of pga it builds against, and whether that is head. The pin stands at
 `295bafc5e97e8ee94943c6f4c7a92f215a74e5e7`, which costs two things, and the instruction is to pay
 both rather than trail behind.
+
+**The pin waits behind head `3d9696e` for a fix in the library.** At `3d9696e`, the generic `+`
+copies its constant set of bases at each call on the JS backend. So a frame of the page makes more
+copies there than at the pin. The library-head pull request (#702) moves the pin, and posts the
+patches that fix it in the library. The pin moves to the head that holds them, and not to
+`3d9696e`.
+
+**The `head` verb holds the pin to the head, and only a daily run reads it.** `nim r tools/build.nim
+head` compares the directory of the library at the pin with the same directory at the head of
+`replications`. It compares trees and not commits, because a commit elsewhere in that repository
+changes nothing here. A finding exits 1, and `head.yml` then keeps one issue open for this project
+while the pin lags. No merge waits on the verb, because its verdict moves with the library.
+
+**So each new head of the library reaches the issue once.** The finding names the head, and the
+issue gains a comment only where the finding changes. So the day the library takes its fix, a
+comment names the fixed head. The pin then moves straight to that head, once every check passes
+there.
+
+`tools/head.nim` holds the comparison as pure functions, so the suite reads it on both backends. The
+build driver holds git and the network, and it compiles no project code. Rejected: a comparison of
+commits, which opens an issue for each commit to another directory of `replications`. Rejected: the
+verb in `check.yml`, where each merge would wait on a library that moves without a commit here.
 
 **The compiler is pinned to release 2.4.0, the first release that lexes the operators of head.**
 Head spells its operators in prefix and compound form (`☆m`, `m ∧☆ n`). That needs seven Unicode
@@ -4663,7 +4685,7 @@ converted from a string that a call returns, as "a value that refers to invalid 
 frame reads without a conversion. Verified by a run: without `static`, 2.4.0 refuses
 `panel.nim(89, 43)`, and `27763495b` builds it.
 
-**Four projections are withdrawn at head, and `projections.nim` stands in until they return.**
+**Four projections are withdrawn at the pin, and `projections.nim` stands in until they return.**
 `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` are declared
 `{.error.}` while the library rebuilds them as compound operators (`∨∧★`, `∧∨★`, `∨∧☆`, `∧∨☆`). This
 project calls two of them at eight sites, so head alone does not compile here. Each stand-in is a
@@ -4705,6 +4727,10 @@ JS suite alone takes 162 s and 168 s on 2.4.0, and 170 s and 163 s on `27763495b
 Verified on a copy of the project: `atlas pin` writes `"items": {}`, and changes nothing else in the
 lock, `nimVersion` included. It warns `broken nimble file: nim` for a pin by commit, and nothing for
 2.4.0.
+
+Verified by a run of the `head` verb on 2026-11-03. At the pin, its finding names head `3d9696e`
+and pin `295bafc`, and it exits 1. With the remote of the checkout set to a clone whose head holds
+both patches, the finding names that head, `ef44aa7`, in place of `3d9696e`.
 
 ## Testing
 

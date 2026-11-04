@@ -54,6 +54,8 @@
 ##     i.e. `*` glued after name that declaration places, before anything but operand. Name
 ##     opening its line, following declaration keyword, or following comma on line whose first
 ##     name is marked, is so placed; name inside expression is not, so `PI*(a + b)` multiplies.
+##     `*` before `:` or `,` marks wherever name stands, as `case is_read*: bool` and
+##     `of true: fixer*: Fixer`, since neither opens operand that binary `*` takes.
 ##
 ##   Cost: name opening continuation line reads as declared, so `a*(b)` opening line stays.
 ##   Cost: asymmetric spacing stays, and reading holds it; its fix is choice of meaning.
@@ -153,12 +155,14 @@ func tokensPath*(tokens: openArray[Token], partners: openArray[int], source: str
 
 func isMarkerExport(tokens: openArray[Token], k: int, lasts: openArray[int], source: string): bool =
   ## Decide whether `*` at `k` stands where export marker may: glued after name that opens its
-  ##   line, follows declaration keyword, or follows comma after name so marked.
+  ##   line, follows declaration keyword, or follows comma after name so marked; or before `:`
+  ##   or `,`, which opens no operand, as on `case` field and field of branch.
   ##   Name inside expression declares nothing, so `*` after it multiplies.
   if tokens[k].spelling(source) != "*" or k == 0: return false
   let name = tokens[k - 1]
   if name.kind notin {KindToken.Word, KindToken.Quoted} or name.after != tokens[k].first:
     return false
+  if k < tokens.high and tokens[k + 1].spelling(source) in [":", ","]: return true
   if k == 1 or lasts[k - 2] < name.line: return true
   let before = tokens[k - 2].spelling(source)
   if before in KEYWORDS_DECLARATION: return true

@@ -8,4 +8,4 @@ description = "Tag anything with lojban gismu and lujvo, and find it again by gi
 license = "Prosperity-3.0.0"
 srcDir = "src"
 
-requires "nim == 2.2.12"
+requires "nim == 2.4.0"

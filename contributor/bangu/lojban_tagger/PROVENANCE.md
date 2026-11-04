@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-24 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0e17644a127757fb |
+| Rules   | 01a086eda78015fd |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a contributor project, from the brief of the Architect. A tag is a gismu or a lujvo that
@@ -590,24 +590,52 @@ drives TLS against a test root that `openssl` makes for each run.
 
 ## Toolchain
 
-**The compiler is pinned exactly**: `requires "nim == 2.2.12"` in `lojban_tagger.nimble`. The
-project needs the standard library alone, so it carries no lock. The verbs `lists` and `head` also
-need `lojban-common` and `sha256sum`, which the verb `system` declares. `suggester` and the stub
-compile with `-d:ssl`, so each needs `libssl3` when it starts. `suggester` checks hosts against
-`ca-certificates`, and the transport suite runs `openssl`, which `system` declares too. A system
-package carries no pin, so its version is what the machine has, as OpenSSL 3.0.13 is here.
+**The compiler is pinned exactly**: `requires "nim == 2.4.0"` in `lojban_tagger.nimble`, as every
+project of the repository pins it (D1 a on #775). The project needs the standard library alone,
+so it carries no lock. The verbs `lists` and `head` also need `lojban-common` and `sha256sum`,
+which the verb `system` declares. `suggester` and the stub compile with `-d:ssl`, so each needs
+`libssl3` when it starts. `suggester` checks hosts against `ca-certificates`, and the transport
+suite runs `openssl`, which `system` declares too. A system package carries no pin, so its version
+is what the machine has, as OpenSSL 3.0.13 is here.
+
+Nim 2.4.0 adds a check of the host name of a certificate to `std/asyncnet`. The async client of
+`std/httpclient` then checks the certificate against the host that it dials. `suggester` opens its
+sockets through that client, so `send` dials an https host without its one closing dot, as
+`pinHost` holds it (Transport). Verified by `suites/test_exchanges.nim`, which holds the host that
+the tunnel names. Verified by hand with Nim 2.4.0, 2026-11-04: where the client dials
+`localhost.`, it refuses a leaf that names `localhost`.
+
+**`constructRafsiByForm` of `test_lujvo.nim` reads the form of each 4-letter rafsi before `add`.**
+The compile-time virtual machine (VM) of the pin evaluates the element of `add` before its
+destination. It also moves a local, `let` or `var`, at its last use (#786). So
+`result[stem.form.get].add stem` would move `stem` first, and then read the form of an empty
+string.
+
+Rejected: the form of `stem` read inside the call of `add`, which stops the compile of the stub.
+The form of an empty string is `none`, and `get` of `none` stops the compile on the pin, so that
+compile holds the order. Cost: an index that gives a value for an empty string can build a wrong
+table with no error (#786). Verified by hand with Nim 2.4.0, 2026-11-03: the rejected call stops
+the compile of the stub at `constructRafsiByForm`, with `UnpackDefect`. Verified by hand with Nim
+2.2.12 and 2.4.0, 2026-11-03: the suites pass under both, and both build the same table.
 
 ## Figures
 
-Each figure below comes from an Intel Xeon at 2.10 GHz with four cores, and Nim 2.2.12. The
-figures of `tagger` are from 2026-10-25, and each figure of `suggester` names its date.
+Each figure below comes from an Intel Xeon at 2.10 GHz with four cores. The runs of each pair of
+compilers alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine.
+The figures of `tagger` and of the suites without TLS are from 2026-11-03, at `5b6b694a`, which
+holds no `suggester`. Each other figure names its date, and a figure that names no compiler comes
+from Nim 2.2.12.
 
 - **Compile of the English index.** Each part of each lujvo line is found by binary search. The
-  front end of `nim check app/tagger.nim` took 2.4 s and 2.9 s over two runs. A copy that maps
-  the whole list again for each part never finishes. The compile-time VM stops it at its limit of
-  10,000,000 iterations, so that form is a trap, not a slower choice.
-- **Release build.** `nim c -f -d:release app/tagger.nim` took between 5.6 s and 6.5 s over three
-  runs.
+  front end of `nim check app/tagger.nim` took 4.4 s and 4.1 s on 2.4.0, against 2.1 s and 2.5 s
+  on 2.2.12. A copy that maps the whole list again for each part never finishes on either
+  compiler. The compile-time VM stops it at its limit of 10,000,000 iterations, so that form is a
+  trap, not a slower choice.
+- **Release build.** `nim c -f -d:release app/tagger.nim` took between 6.3 s and 6.7 s on 2.4.0,
+  against between 4.7 s and 5.1 s on 2.2.12, over three runs each.
+- **Suites without TLS.** `nim c -r -d:testing tests/test_suites.nim` compiled and ran every suite
+  in 25.5 s and 24.1 s on 2.4.0, against 20.9 s and 20.5 s on 2.2.12. Each compiler ran it twice
+  from an empty cache.
 - **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 10.1 s
   and 9.9 s over two runs on 2026-10-31, and the binary holds 2,445,816 bytes. In the same
   session, `bf9c82d8`, before the tool suggested gismu alone, took 9.9 s and 10.0 s, and its

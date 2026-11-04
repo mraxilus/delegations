@@ -559,7 +559,8 @@ proc stood*(
 
 
 func mirrored*(over: Option[Arm]): Option[Arm] =
-  ## Lead's arm card lays over, seen in mirror: each arm is other arm there, and none is none.
+  ## Lead's arm card names, over or straight, seen in mirror: each arm is other arm there, and
+  ## none is none.
   if over.isSome: some(otherArm(over.get)) else: over
 
 proc laysOver(couple: Couple, over: Arm): bool =
@@ -574,6 +575,21 @@ proc laysOver(couple: Couple, over: Arm): bool =
     if crossing.along + crossing.across < first.along + first.across: first = crossing
   couple.links[first.over].ends[0].arm == over
 
+const CROSSINGS_SWAN = 3  ## Crossings swan's card draws round straight line (rule 31).
+
+proc keepsStraight(couple: Couple, straight: Arm): bool =
+  ## Whether couple stand swan as its card draws it: three crossings, held round connection of
+  ## lead's arm `straight`, which winds on itself less than other and runs no further in plan
+  ## (`read.writhe`, `read.runInPlan`).
+  var arms: Arms
+  for i in 0..<couple.links.len: arms.add couple.poseLink(i).arms
+  if crossings(arms).len != CROSSINGS_SWAN: return false
+  let
+    pole = (if couple.links[0].ends[0].arm == straight: 0 else: 1)
+    hoop = 1 - pole
+  abs(writhe(arms, pole)) < abs(writhe(arms, hoop)) and
+      runInPlan(arms, pole) <= runInPlan(arms, hoop)
+
 proc standsAt(
   rig: Rig,
   band: Band,
@@ -584,24 +600,27 @@ proc standsAt(
   apart: float,
   who: Body,
   over = none(Arm),
+  straight = none(Arm),
 ): Stood =
   ## Whether pose holds at this facing from this one distance, and how it sits.
   ##   Card that draws crossing (`over`) holds only where pose lays its connection over: pose
   ##     that crosses nothing, or crosses other way, is another position than one card draws.
+  ##   Swan (`straight`) holds only where pose winds hoop round pair card draws straight.
   let (is_holding, couple) = stood(rig, band, links, turns, is_away, head, apart, who)
-  result = Stood(is_holding: is_holding and (over.isNone or couple.laysOver(over.get)),
+  result = Stood(is_holding: is_holding and (over.isNone or couple.laysOver(over.get)) and
+                     (straight.isNone or couple.keepsStraight(straight.get)),
                  apart: apart, turns: turns, strain: couple.strainWorst)
   couple.free()
 
 type StandAsk = tuple[rig: Rig, band: Band, links: seq[Link], turns: float, is_away: bool,
-                       head: Body, apart: float, who: Body, over: Option[Arm]]
+                       head: Body, apart: float, who: Body, over, straight: Option[Arm]]
   ## One still stood at one distance, by every argument it is stood with.
 
 proc stoodFor(ask: StandAsk): Stood {.gcsafe, nimcall.} =
   ## Stand one ask, as `standsAt` stands it.
   {.cast(gcsafe).}:
     standsAt(ask.rig, ask.band, ask.links, ask.turns, ask.is_away, ask.head, ask.apart, ask.who,
-             ask.over)
+             ask.over, ask.straight)
 
 proc standingSearched(
   rig: Rig,
@@ -612,7 +631,7 @@ proc standingSearched(
   head: Body,
   is_either_way: bool,
   who: Body,
-  over: Option[Arm],
+  over, straight: Option[Arm],
 ): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to
   ## ease, of every distance couple may stand at.
@@ -641,7 +660,7 @@ proc standingSearched(
     asks: seq[StandAsk]
   for far in stands(rig):
     for way in (if is_either_way: @[turns, -turns] else: @[turns]):
-      asks.add (rig, band, links, way, is_away, head, far, who, over)
+      asks.add (rig, band, links, way, is_away, head, far, who, over, straight)
   var first = 0
   while first < asks.len:
     let batch = asks.batchFrom(first)
@@ -663,6 +682,7 @@ proc standing*(
   is_either_way = false,
   who = Body.Two,
   over = none(Arm),
+  straight = none(Arm),
 ): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to ease, of
   ## every distance couple may stand at (`standingSearched`).
@@ -670,11 +690,12 @@ proc standing*(
   let twin = twinAnswering(links, turns, is_away)
   if twin.is_reflected:
     return reflected(standing(rig, band, twin.links, twin.turns, is_away, head, is_either_way,
-                              who, mirrored(over)))
+                              who, mirrored(over), mirrored(straight)))
   kept(
     STANDS,
-    key(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over),
-    standingSearched(rig, band, links, turns, is_away, head, is_either_way, who, over),
+    key(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over,
+        $straight),
+    standingSearched(rig, band, links, turns, is_away, head, is_either_way, who, over, straight),
   )
 
 proc isHoldingAt*(
@@ -688,16 +709,19 @@ proc isHoldingAt*(
   is_either_way = false,
   who = Body.Two,
   over = none(Arm),
+  straight = none(Arm),
 ): bool =
   ## Whether any pose holds at this facing, `who` turning, from any distance couple may
   ## stand at.  Twin's answer answers mirror image (`twinAnswering`).
   let twin = twinAnswering(links, turns, is_away)
   if twin.is_reflected:
     return isHoldingAt(rig, band, twin.links, twin.turns, is_away, head, apart, is_either_way,
-                       who, mirrored(over))
+                       who, mirrored(over), mirrored(straight))
   if apart > 0.0:
-    return standsAt(rig, band, links, turns, is_away, head, apart, who, over).is_holding
-  standing(rig, band, links, turns, is_away, head, is_either_way, who, over).is_holding
+    return standsAt(rig, band, links, turns, is_away, head, apart, who, over,
+                    straight).is_holding
+  standing(rig, band, links, turns, is_away, head, is_either_way, who, over,
+           straight).is_holding
 
 proc isReachingSearched(
   rig: Rig; band: Band; links: seq[Link]; turns: float; is_away: bool; who, head: Body
@@ -1065,31 +1089,36 @@ proc followed*(
   said
 
 func keyOfPlan(
-  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body,
+  straight: Option[Arm],
 ): string =
   ## Key of one path: every argument `planPath` reads, style field by field.
   key(rig, links, $band, $is_away, bits(wind), $turner, bits(style.gather), bits(style.leap),
       bits(style.stay), $style.seed, bits(style.margin), bits(style.room),
-      bits(style.clearance), bits(style.slack))
+      bits(style.clearance), bits(style.slack), $straight)
 
 proc planned(
-  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body,
+  straight: Option[Arm],
 ): Path =
   ## Path `planPath` plans for these arguments, planned once in run whichever job asks it.
-  kept(PLANS, keyOfPlan(rig, band, links, is_away, wind, style, turner),
-       planPath(rig, band, links, is_away, wind, style, turner))
+  kept(PLANS, keyOfPlan(rig, band, links, is_away, wind, style, turner, straight),
+       planPath(rig, band, links, is_away, wind, style, turner, straight))
 
 proc pathsFor(
-  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body,
+  straight = none(Arm),
 ): seq[Path] =
   ## Way this style plans wind, and where hold is its own mirror image, same style's plan
   ## of other way seen in mirror: rig is same either side, planner's starts are not.
-  result.add planned(rig, band, links, is_away, wind, style, turner)
+  ##   Mirror's plan draws swan's hoop round mirror's own straight pair: other arm.
+  result.add planned(rig, band, links, is_away, wind, style, turner, straight)
   if isMirrorSame(links):
-    result.add mirrored(planned(rig, band, links, is_away, -wind, style, turner))
+    result.add mirrored(planned(rig, band, links, is_away, -wind, style, turner,
+                                mirrored(straight)))
 
 type PlanAsk = tuple[rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float,
-                     style: Style, turner: Body]
+                     style: Style, turner: Body, straight: Option[Arm]]
   ## One path planned card may ask for, by every argument `planPath` reads.
 
 proc plannedIfFree(ask: PlanAsk): bool {.gcsafe, nimcall.} =
@@ -1098,11 +1127,12 @@ proc plannedIfFree(ask: PlanAsk): bool {.gcsafe, nimcall.} =
   ##     waits for it, and this thread plans another meanwhile.
   {.cast(gcsafe).}:
     let key = keyOfPlan(ask.rig, ask.band, ask.links, ask.is_away, ask.wind, ask.style,
-                        ask.turner)
+                        ask.turner, ask.straight)
     if not PLANS.claimed(key): return false
     var path: Path
     try:
-      path = planPath(ask.rig, ask.band, ask.links, ask.is_away, ask.wind, ask.style, ask.turner)
+      path = planPath(ask.rig, ask.band, ask.links, ask.is_away, ask.wind, ask.style, ask.turner,
+                      ask.straight)
     except CatchableError:
       PLANS.forget(key)
       return false
@@ -1110,7 +1140,8 @@ proc plannedIfFree(ask: PlanAsk): bool {.gcsafe, nimcall.} =
     true
 
 proc planAhead(
-  rig: Rig, band: Band, links: seq[Link], is_away: bool, winds: seq[float], turner: Body
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, winds: seq[float], turner: Body,
+  straight = none(Arm),
 ) =
   ## Plan every path that these winds ask in every style, on every core at once, where
   ## answers are kept; card then folds them in its own order, as one thread would.
@@ -1120,8 +1151,9 @@ proc planAhead(
   var asks: seq[PlanAsk]
   for wind in winds:
     for style in STYLES:
-      asks.add (rig, band, links, is_away, wind, style, turner)
-      if isMirrorSame(links): asks.add (rig, band, links, is_away, -wind, style, turner)
+      asks.add (rig, band, links, is_away, wind, style, turner, straight)
+      if isMirrorSame(links):
+        asks.add (rig, band, links, is_away, -wind, style, turner, mirrored(straight))
   discard onEveryCore(asks, plannedIfFree)
 
 type PlannedStill* = object
@@ -1143,10 +1175,13 @@ proc plannedStill*(
   who = Body.Two,
   should_seek_ease = false,
   over = none(Arm),
+  straight = none(Arm),
 ): PlannedStill =
   ## Planned way of winding to this facing, `who` turning, that holds and stands there,
   ## styles and ways in fixed order; caller frees couple of one that holds.
-  ##   Card that draws crossing holds only where pose lays its connection over (`standsAt`).
+  ##   Card that draws crossing holds only where pose lays its connection over, and swan only
+  ##     where it winds hoop round pair card draws straight (`standsAt`): plan draws that hoop
+  ##     past whole turn (`plan.Problem.straight`).
   ##   First that holds answers whether any does (`isPlannedHolding`).  Where
   ##     `should_seek_ease`, every plan is tried and one nearest to ease is kept, as
   ##     `standing` keeps distance: first that held stood C06 with follow's waist at its
@@ -1154,15 +1189,16 @@ proc plannedStill*(
   ##   Plan at ease ends search, since nothing betters it; earlier of two equal plans is
   ##     kept.
   let ways = (if is_either_way: @[turns, -turns] else: @[turns])
-  planAhead(rig, band, links, is_away, ways, who)
+  planAhead(rig, band, links, is_away, ways, who, straight)
   for way in ways:
     for style in STYLES:
-      for path in pathsFor(rig, band, links, is_away, way, style, who):
+      for path in pathsFor(rig, band, links, is_away, way, style, who, straight):
         if not path.is_reached:
           result.tried.add none(float)
           continue
         let (said, couple) = replay(rig, band, links, is_away, head, path, should_stand = true)
-        if not said.is_holding or (over.isSome and not couple.laysOver(over.get)):
+        if not said.is_holding or (over.isSome and not couple.laysOver(over.get)) or
+            (straight.isSome and not couple.keepsStraight(straight.get)):
           result.tried.add none(float)
           couple.free()
           continue
@@ -1189,22 +1225,24 @@ proc isPlannedHolding*(
   is_either_way = false,
   who = Body.Two,
   over = none(Arm),
+  straight = none(Arm),
 ): bool =
   ## Whether some planned way of winding to this facing holds, and stands there.  Twin's
   ## answer answers mirror image (`twinAnswering`).
   let twin = twinAnswering(links, turns, is_away)
   if twin.is_reflected:
     return isPlannedHolding(rig, band, twin.links, twin.turns, is_away, head, is_either_way, who,
-                            mirrored(over))
+                            mirrored(over), mirrored(straight))
 
   proc asked(): bool =
     let found = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who,
-                             over = over)
+                             over = over, straight = straight)
     if found.is_holding: found.couple.free()
     found.is_holding
 
   kept(PLANNED_HOLDS,
-       key(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over),
+       key(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over,
+           $straight),
        asked())
 
 proc isPlannedReaching*(
