@@ -2550,8 +2550,11 @@ suite "Internal: Send":
   test "name closing with dot pins without that dot, as certificate names host without it":
     # Regression, found in recheck claim regressions-app-3, 2026-10-29: pin kept dot closing
     #   absolute name, so OpenSSL refused leaf naming same host without it, which curl takes.
-    #   Name closing with dot resolves nowhere here, so law drives tunnel alone, which names host
-    #     to proxy as written.
+    # Regression, found in check of #786, 2026-11-03: under Nim 2.4.0, client checked
+    #   certificate against `localhost.` and refused it, giving `SSL Certificate check failed.`
+    #   in place of `replied`.
+    #   Law drives tunnel, whose `CONNECT` names host client dials: without that dot, as pin
+    #     holds it.
     when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
     else:
       check authority.problem == ""  # `openssl` made root and leaves
@@ -2577,9 +2580,9 @@ suite "Internal: Send":
                 named & "true"  # domain: refused by check of certificate, never otherwise
             check named & $secured.head.lines.len ==
                 named & "0"  # domain: server read no byte of request
-          let target = host & ":" & $secured.port
+          let target = host[0 ..< ^1] & ":" & $secured.port
           check named & $secured.connect.filterIt(it.startsWith("CONNECT ")) ==
-              named & $(@["CONNECT " & target & " HTTP/1.1"])  # domain: tunnel keeps dot of name
+              named & $(@["CONNECT " & target & " HTTP/1.1"])  # domain: tunnel drops one dot
       check count == COUNT_CLOSED  # each name closing with dot, each leaf
 
 
