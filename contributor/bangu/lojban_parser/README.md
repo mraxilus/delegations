@@ -1,7 +1,7 @@
 # lojban_parser
 
-This project is a parser of lojban. It reads lojban words now, and it will read all lojban text
-as the project grows. It reads a gismu, a cmavo or a lujvo as the words of its tanru, and it
+This project is a parser of lojban. Its scope is every valid lojban text, and it reads lojban
+words. It reads a gismu, a cmavo or a lujvo as the words of its tanru, and it
 refuses any other text with a reason. It renders a tanru back as the lujvo form that CLL
 prefers. It also tells which cmavo bind each tanru unit.
 
@@ -26,7 +26,7 @@ edition, 1997, from the Logical Language Group. The text is the first edition wi
 the shapes of words, the rafsi, and the algorithms that join and score a lujvo. Chapters 5, 7, 9,
 12 and 15 tell which words each cmavo binds.
 
-The suites carry the names of those chapters, and each assertion cites its section. The name of a
+The suites carry the names of those chapters, and each assertion cites its source. The name of a
 suite that CLL does not cover opens with `Internal:`.
 
 The word lists come from the Logical Language Group, which placed them in the public domain. The
@@ -54,8 +54,7 @@ The project publishes no page.
 
 The parser reads words: each gismu and cmavo of the gismu list, and each lujvo of their rafsi.
 It renders a tanru as a lujvo, and folds a tanru into tanru units. The suites hold each part to
-CLL. The grammar of prose is to come, and so are names, borrowings, and text with commas and
-capitals.
+CLL. It reads no prose, no cmene and no fu'ivla, and no text with a comma or a capital.
 
 The project `lojban_tagger` keeps its own copy of these modules until #809 moves it onto this
 parser. Nothing here has been read line by line by a human.
