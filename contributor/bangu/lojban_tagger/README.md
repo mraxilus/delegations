@@ -48,9 +48,13 @@ nim r tools/build.nim head                        # compare committed lists with
 
 The build needs the compiler that `lojban_tagger.nimble` pins, and `libssl3`, because
 `suggester` and the suites compile with TLS. The suites also run the command `openssl`, which
-makes a test root for each run. `suggester` needs `ca-certificates` when it runs. The verbs
-`lists` and `head` also need the Debian package `lojban-common`. The verb `system` declares all
-of them.
+makes a test root for each run, and they need `protoc` to compile. `suggester` needs
+`ca-certificates` when it runs. The verbs `lists` and `head` also need the Debian package
+`lojban-common`. The verb `system` declares all of them.
+
+`suggester`, the verb `examples` and the suites also need the Nim package
+`protobuf_serialization`, which `atlas.lock` pins. `nim r koch test` restores it under
+`dependencies/` before it runs the suites.
 
 ## Use
 
@@ -131,6 +135,23 @@ password. The client would also send them to the host behind the proxy.
 - An exchange holds its endpoint too, so it replays only for that endpoint.
 - `nim r tools/build.nim examples` writes worked examples to `build/examples/`, and prints the
   command that replays each one. Their replies are documented shapes, not live replies.
+
+### Exchange files
+
+An exchange file holds one request and its reply. It starts with a frame of 33 bytes: the line
+`lojban_tagger exchange 2`, then the length and the CRC-32C of the message, in four bytes each.
+The message follows, in the Protocol Buffers format that `app/exchanges.proto` gives. The tool
+checks the frame before it reads the message, so it refuses a file that is cut or changed.
+
+To read a file, give its message to `protoc`. Run this command from the folder of the project:
+
+```sh
+tail -c +34 build/examples/390a130dbd59a40f.exchange |
+  protoc --decode=lojban_tagger.Exchange app/exchanges.proto
+```
+
+The command prints the first hop of the example `page` as text. `app/exchanges_example.txtpb`
+holds the same text. `head -n 1` prints the line that names the format.
 
 ## Pages
 
