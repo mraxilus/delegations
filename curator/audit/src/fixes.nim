@@ -13,8 +13,8 @@
 ##     sources (`answered`), holds answers by path in `Context`, and fixes again each entry
 ##     that asked, at most `ASKS_MAX` times. Pin is that of project holding file, driver's for
 ##     root file, served as `resolve` of knoller serves it, so each project reads with grammar
-##     of its pin: 2.2.12 lexes as names glyphs that 2.4.0 and commit pin of `ronri` lex as
-##     operators. Pin nothing serves proves nothing, and run prints why.
+##     of its pin: 2.2.12 lexes as names glyphs that 2.4.0 lexes as operators. Pin nothing
+##     serves proves nothing, and run prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
 ##     from what `initContext` reads: rename of abbreviation (V.6), and to case of name's kind
 ##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
