@@ -32,6 +32,14 @@
 ##     partner has no twist left to give.
 ##   And it is what wound arm ends up on, which is what vocabulary's `wrap`
 ##     and `lock` name.
+##
+## Above, rules say how far couple turn, so nothing there is measured.
+##   Single hand held above turns for ever (rule 16, read through rule 17): hand
+##     turns in grip and stores nothing, so it keeps its orientation alone.
+##   Pair held above stands on its chain (rules 28, 30 and 31): seven frame states
+##     half turn apart, from swan to swan, counted from neutral of its hold.
+##   Low and high keep counts they had before rules reached them; how far they turn
+##     waits on Architect (issue #796, D3).
 
 {.experimental: "strictFuncs".}
 
@@ -123,8 +131,13 @@ const
     ##     Cost of saturation constant: reader must learn that one value of
     ##       axis means never.  Accepted -- alternative wraps every
     ##       comparison in unwrap for no prevented mistake.
-  CAPACITY_SINGLE* = 2  ## Hold one full turn on one hand-to-hand connection.
-  CAPACITY_PAIR* = 1  ## Hold half turn on two hand-to-hand connections.
+  CAPACITY_SINGLE* = 2  ## Hold one full turn on one hand-to-hand connection, low or high.
+  CAPACITY_PAIR* = 1  ## Hold half turn on two hand-to-hand connections, low or high.
+  CHAIN_END* = 3
+    ## Hold turn and half either way of neutral on two connections above: swan, end of chain.
+    ##   Glossary's `Chain` is seven frame states half turn apart, with ends and never cycle:
+    ##     swan, diamond, cross, neutral, cross, diamond, swan (rules 28, 30 and 31).
+    ##   Block of hold, not of arm: arm above runs out of nothing (`armCapacity`).
   CAPACITY_CONTACT* = 0  ## Hold nothing while hand rests on partner's body.
   CAPACITY_WRAP_LOW* = 1
     ## Hold half turn while arm is wrapped low.  Measured, not derived.
@@ -141,15 +154,6 @@ const
     ##   Jointed-arm simulation is witness, not derivation: `simulation/verdicts.md` prints
     ##     its answers in `The floor's claim` and `Both hands held`.  Where row disagrees
     ##     with floor, ruling is Architect's.
-  IS_ABOVE_BLOCKING* = false
-    ## Whether arm over head blocks turn.  It does in some cases and nobody
-    ## has said which, so model turns freely there.
-    ##   For single connection, jointed-arm simulation finds hand held over follow's head
-    ##     turns with follow, and holds through two-and-a-half turns either way
-    ##     (`simulation/verdicts.md`).  Two connections above are another matter: report
-    ##     gives where each pair blocks (`Both hands held`), and rule 13's swan is their
-    ##     asserted block, so flag stays flag.  Where row disagrees with floor, ruling is
-    ##     Architect's.
 
 
 
@@ -224,9 +228,8 @@ func armCapacity*(blocker: Option[Blocker], level: Level): HalfTurns =
   ##     Which of them binds is what tells wrap from lock -- see `blocker`.
   ##   Arm above head is on axis couple turns about, so it has nothing to
   ##     wind round and nothing to run out of.
-  ##     One case has it blocking anyway, and this does not know it yet,
-  ##       which is why `IS_ABOVE_BLOCKING` says so out loud rather than being
-  ##       quietly absent.
+  ##     Pair held above stops all same, at swan: that is block of its hold
+  ##       (`capacity`), and not of arm.
   if level == Level.Above:
     return UNBOUNDED_TURNS
   if blocker == some(Blocker.Wrap) and level == Level.Low:
@@ -235,8 +238,47 @@ func armCapacity*(blocker: Option[Blocker], level: Level): HalfTurns =
     CAPACITY_ARM
 
 
+func isHeldAbove*(state: FrameState): bool =
+  ## Tell whether some arm holds, and every arm that holds is carried above: where rules,
+  ##   and not measurement, say how far couple turn.
+  if state.frame.countHolds == 0:
+    return false
+  for side in Side:
+    if state.frame.hold[side].isSome and state.level[side] != Level.Above:
+      return false
+  true
+
+
+func isKeepingTwist*(state: FrameState): bool =
+  ## Tell whether frame state keeps how far couple have turned.
+  ##   Single hand held above does not: it turns in grip and stores nothing, so its
+  ##     orientation is all of its state (rule 16; `design/rules.nim`, rule 27).
+  not (state.frame.countHolds == 1 and state.isHeldAbove)
+
+
+func offsetNeutral*(target: Frame): HalfTurns =
+  ## Get half turns frame stands from neutral of its hold, partners Face-to-face.
+  ##   Hand to hand runs parallel Face-to-face, so it rests there: nought.  Same-name pair
+  ##     crosses once Face-to-face, one arm over other, so frame stands at cross and its
+  ##     rest is Face-to-back (rule 31; glossary's `Rest`).
+  ##   Left over right on clockwise side of neutral, as Reference names chain
+  ##     (`design/parts.chainFor`), and its mirror twin on other side.
+  if not target.isOverlapping: 0
+  elif target.over == some(Side.Left): 1
+  else: -1
+
+
+func fromNeutral*(state: FrameState, twist: HalfTurns): HalfTurns =
+  ## Get how far twist stands from neutral, as hold's block counts it (`capacity`).
+  ##   Pair held above counts from neutral of its chain (`offsetNeutral`).  Every other
+  ##     hold counts from its frame, as it was measured (issue #796, D3).
+  if state.isHeldAbove and state.frame.countHolds == 2: twist + state.frame.offsetNeutral
+  else: twist
+
+
 func capacity*(state: FrameState): HalfTurns =
-  ## Get how much twist frame state can store before couple must change it.
+  ## Get how far from neutral frame state can stand before couple must change it
+  ## (`fromNeutral`).
   ##
   ## Hand on follow's body gives no turn away: it is already around them.
   ## This is what closed position is, and it is why follow's turn out of it
@@ -244,12 +286,13 @@ func capacity*(state: FrameState): HalfTurns =
   ## connection is roomiest, because both dancers can share turn between
   ## their two arms.  Pair binds at half that, which is why wrap is led from
   ## two hands and lock from one.
+  ##   Above, rules say it: single hand turns for ever, and pair stops at swan.
   if state.contact.isSome:
     return CAPACITY_CONTACT
   case state.frame.countHolds
   of 0: UNBOUNDED_TURNS  # Nothing joins bodies, so nothing limits turn.
-  of 1: CAPACITY_SINGLE
-  else: CAPACITY_PAIR
+  of 1: (if state.isHeldAbove: UNBOUNDED_TURNS else: CAPACITY_SINGLE)
+  else: (if state.isHeldAbove: CHAIN_END else: CAPACITY_PAIR)
 
 
 func blocker*(twist: HalfTurns): Option[Blocker] =
@@ -370,7 +413,23 @@ func isHolding*(state: FrameState, twist: HalfTurns): bool =
   ##   On hold that has been measured neither block is slack: arm's is what
   ##     makes full turn into lock rather than wrap, and hold's is what
   ##     refuses one-and-a-half.
-  abs(twist) <= state.capacity and abs(twist) <= state.armsCapacity(twist)
+  abs(state.fromNeutral(twist)) <= state.capacity and abs(twist) <= state.armsCapacity(twist)
+
+
+func canonical*(state: FrameState): FrameState =
+  ## Write frame state as model writes its arrangement, so no arrangement has two.
+  ##   Single hand held above keeps orientation alone: half turn or none (`isKeepingTwist`).
+  ##   Same-name pair held above stands on one chain from either of its frames.  Each
+  ##     frame state is written from frame on its own side of neutral, and neutral from
+  ##     left over right (`offsetNeutral`).  So whole turn from one cross lands on other.
+  ##   Every other frame state is written as it stands.
+  result = state
+  if not state.isKeepingTwist:
+    result.twist = floorMod(state.twist, 2)
+  elif state.isHeldAbove and state.frame.isOverlapping:
+    let away = state.fromNeutral(state.twist)
+    result.frame.over = some(if away >= 0: Side.Left else: Side.Right)
+    result.twist = away - result.frame.offsetNeutral
 
 
 func turn*(state: FrameState, motion: Turn): Option[FrameState] =
@@ -384,7 +443,7 @@ func turn*(state: FrameState, motion: Turn): Option[FrameState] =
     return none(FrameState)
   var turned = state
   turned.twist = reached
-  some(turned)
+  some(turned.canonical)
 
 
 
@@ -419,6 +478,8 @@ func frameStates*(): seq[FrameState] =
   ## rotation views are built on it as frame views are built on that.  Hand
   ## resting on body is left out: it gives whole turn away, so it adds no
   ## frame state that turning can reach.
+  ##   Each arrangement once, as model writes it (`canonical`): frame states of
+  ##     same-name pair above come from both its frames.
   # One loop for each axis of data: frame, left level, right level, twist.
   # Split would hide its shape.
   for target in FRAMES:
@@ -434,7 +495,9 @@ func frameStates*(): seq[FrameState] =
             continue
           var stood = held
           stood.twist = twist
-          result.add stood
+          stood = stood.canonical
+          if stood notin result:
+            result.add stood
 
 
 func refusal*(state: FrameState, twist: HalfTurns): Option[Refusal] =
@@ -443,7 +506,7 @@ func refusal*(state: FrameState, twist: HalfTurns): Option[Refusal] =
   ## Hold is named first where both would refuse, because it is one that
   ## dancer can do something about: letting hand go changes hold, and
   ## nothing changes how far arm reaches.
-  if abs(twist) > state.capacity:
+  if abs(state.fromNeutral(twist)) > state.capacity:
     some(Refusal.Hold)
   elif abs(twist) > state.armsCapacity(twist):
     some(Refusal.Arm)
@@ -476,7 +539,9 @@ func turnsOffered*(state: FrameState): seq[Offer] =
           reached = state.stored(motion)
         var landing = state
         landing.twist = reached
-        result.add Offer(who: who, amount: amount, to: landing, refused: state.refusal(reached))
+        result.add Offer(
+          who: who, amount: amount, to: landing.canonical, refused: state.refusal(reached),
+        )
 
 
 
@@ -507,6 +572,13 @@ func turnName*(amount: HalfTurns): string =
   if amount == 0:
     return "no turn"
   TURN_NAMES[min(abs(amount), TURN_NAMES.high)] & " " & wayName(wayTurn(amount))
+
+
+func turnNameKept*(state: FrameState, amount: HalfTurns): string =
+  ## Name turn as frame state keeps it: by size and way, or for hold that keeps orientation
+  ##   alone, by size alone, since either way reaches it (`isKeepingTwist`).
+  if state.isKeepingTwist or amount == 0: turnName(amount)
+  else: TURN_NAMES[min(abs(amount), TURN_NAMES.high)]
 
 
 func aboutName*(about: About): string =
@@ -553,7 +625,7 @@ func describe*(state: FrameState): string =
   ## Name frame state: frame it is held in, and what turning has done to it.
   if state.twist == 0:
     return state.frame.describe
-  result = state.frame.describe & ", " & turnName(state.twist)
+  result = state.frame.describe & ", " & state.turnNameKept(state.twist)
   let arms = state.armName
   if arms.len > 0:
     result.add ", " & arms
@@ -584,6 +656,7 @@ func fromFrameStateKey*(key: string): Option[FrameState] =
   ## it so two cannot drift before they are needed.
   ##   Letter that `LUT_LETTER_BY_LEVEL` holds for no level is refused, not read as
   ##     some level.
+  ##   Key of arrangement model writes under other key is refused too (`canonical`).
   func level(letter: char): Option[Level] =
     ## Read one letter of key as level, where it spells one.
     for candidate in Level:
@@ -612,4 +685,6 @@ func fromFrameStateKey*(key: string): Option[FrameState] =
   if not stood.isHolding(twist):
     return none(FrameState)
   stood.twist = twist
+  if stood.canonical != stood:
+    return none(FrameState)
   some(stood)

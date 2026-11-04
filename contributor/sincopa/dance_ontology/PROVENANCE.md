@@ -262,10 +262,22 @@ two blocks, blockers, wraps and locks. It also holds the measured fact that a lo
 a turn, where everything else holds a whole one. `axle.nim` draws its frame states as one line,
 placed by the twist itself.
 
-The views do not show it. 148 frame states render as 17 distinct pictures, because level, contact
+**Above, the rules give the turn, and the model follows them (rules 16, 17, 28, 30 and 31).** A
+single hand held above turns without end. Its hand turns in the grip and stores nothing, so the
+model keeps its orientation alone: rest, or a half turn from it. A pair held above stands on its
+chain of seven frame states, from swan to swan, counted from the neutral of its hold. Face-to-face,
+the same-name pair crosses once, so each of its two frames stands at a cross. A whole turn passes
+it from one cross to the other, through neutral, with no cut.
+
+Each arrangement has one frame state and one key (`canonical`). The neutral of the same-name pair
+is written from left over right, the side on which the Reference names it. Low and high keep the
+counts that they had before the rules reached them, and D3 of issue 796 asks how far they turn.
+Verified by `suites/test_rotation.nim`, suite "Internal: Above", and by `suites/test_axle.nim`.
+
+The views do not show it. 141 frame states render as 17 distinct pictures, because level, contact
 and twist beyond its parity have no marks, but for one frame. `Left-to-right and Right-to-left`
-draws half a turn of twist one way apart from half a turn the other way. Measured by hand on
-2026-10-02, with `renderFrame` over `frameStates()`. An Explorer whose picture cannot tell two
+draws half a turn of twist one way apart from half a turn the other way. Measured on 2026-11-03,
+with `renderFrame` over `frameStates()`. An Explorer whose picture cannot tell two
 states apart cannot check them. The capacity constants are witnessed by the simulation
 (`simulation/verdicts.md`), which is evidence, and not authority.
 
