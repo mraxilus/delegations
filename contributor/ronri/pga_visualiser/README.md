@@ -32,6 +32,7 @@ nim r tools/build.nim web                        # this project: build/pga_visua
 nim r tools/build.nim drive                      # this project: drive both front-ends
 nim r tools/build.nim desktop                    # this project: binaries/pga_visualiser
 nim r tools/build.nim driven                     # this project: drive the desktop alone
+nim r tools/build.nim head                       # this project: is the library pin its head?
 nim r tools/build.nim system                     # this project: what to install first
 ```
 
@@ -68,9 +69,10 @@ nim r tools/build.nim desktop
 
 Atlas restores the `pga` library from `atlas.lock` into `dependencies/`, and it is never
 committed. `nim r koch fetch-deps contributor/ronri/pga_visualiser` restores it alone. It is
-pinned at `295bafc`, which is the head of that library.
+pinned at `295bafc`, behind the head of that library. The `head` verb says whether the pin is the
+head, and a workflow runs that verb each day.
 
-Four projection operations are withdrawn at head while the library rebuilds them.
+Four projection operations are withdrawn at the pin while the library rebuilds them.
 `src/pga_visualiser/projections.nim` stands in for them until they return. See Dependencies and
 vendoring in `PROVENANCE.md`. The algebra that every target builds against is four dimensions with a
 rigid metric. It is set once in `nim.cfg`, so no entry point repeats it.
@@ -124,7 +126,7 @@ src/browser/bridge.nim        every value the page draws, compiled through the J
 src/browser/*.ts              DOM, WebGL and event wiring alone; gated file kind
 pages/shell.html              committed markup, with tokens the build fills
 tools/build.nim               the build driver: declare, types, web, drive, desktop,
-                              driven, assets, system, clean
+                              driven, assets, head, system, clean
 tools/drive/                  the Playwright harness the drive verb runs
 tests/suites.nim              every law, over one seeded pool of objects
 tests/suites/                 one module for each suite, and the pool they share
