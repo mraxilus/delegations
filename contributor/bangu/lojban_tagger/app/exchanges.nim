@@ -144,6 +144,9 @@
 ##     port, or empty one, takes port 1080, as curl assumes, where client would dial 80; port is
 ##     read as RFC 3986 section 3.2 splits it (`readPort`), since `parseUri` reads every colon
 ##     after unclosed `[` into host, and value from which no port splits stays as written.
+##     Host is read without its one closing dot, as pin and dial read it, and as curl reads it
+##       against bypass list: `localhost.` is loopback, and entry `example.org` names
+##       `api.example.org.`.
 ##     Cost: bypass entry of address range is never matched, so such host goes through proxy.
 
 {.experimental: "strictFuncs".}
@@ -310,6 +313,11 @@ func isPortFaulty*(text: string): bool =
   port.isSome and port.get.len > 1 and not port.get[1 .. ^1].isPort
 
 
+func dropDotClosing(host: string): string =
+  ## Drop one dot closing name, as certificate names host without it; dot alone stays.
+  if host.len > 1 and host.endsWith('.'): host[0 ..< ^1] else: host
+
+
 func isLoopback*(host: string): bool =
   ## Test host is `localhost`, IPv4 address in `127.0.0.0/8`, or `::1`.
   let lowered = host.toLowerAscii
@@ -352,9 +360,11 @@ func proxy*(url: string, environment: openArray[(string, string)]): Option[strin
   ##   section 3.2 splits it (`readPort`), as curl assumes 1080 where proxy names no port, and
   ##   client would dial 80.
   ##   Authority from which no port splits is kept as written, so refusal of `send` names it.
-  let uri = url.parseUri
-  if uri.hostname.isLoopback: return none(string)
-  if uri.hostname.isBypassed(environment.lookup(["no_proxy", "NO_PROXY"])): return none(string)
+  let
+    uri = url.parseUri
+    host = uri.hostname.dropDotClosing  # As pin and dial read it, and curl reads bypass list.
+  if host.isLoopback: return none(string)
+  if host.isBypassed(environment.lookup(["no_proxy", "NO_PROXY"])): return none(string)
   let value =
     case uri.scheme.toLowerAscii
     of "https": environment.lookup(["https_proxy", "HTTPS_PROXY"])
@@ -602,11 +612,6 @@ func readExchange*(text: string): Recorded =
 
 
 #[ Sending ]#
-
-func dropDotClosing(host: string): string =
-  ## Drop one dot closing name, as certificate names host without it; dot alone stays.
-  if host.len > 1 and host.endsWith('.'): host[0 ..< ^1] else: host
-
 
 when defined(ssl):
   proc SSL_CTX_get0_param(context: SslCtx): pointer {.cdecl, importc, dynlib: DLLSSLName.}
