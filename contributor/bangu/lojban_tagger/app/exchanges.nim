@@ -9,6 +9,9 @@
 ##   | redirect            | URL redirect names; none where it falls to http             |
 ##   | send                | send one request within deadline, body read up to cap       |
 ##   | Exchange            | one exchange as file keeps it: label, request, reply        |
+##   | toBytes             | bytes of exchange file: frame, then message of schema       |
+##   | readExchange        | exchange file read, or refused naming part that fails       |
+##   | checksum            | CRC-32C of message, which frame of exchange file holds      |
 ##   | stamp               | FNV-1a 64 of request, which names exchange file             |
 ##   | requestService      | request of service exchange: `POST`, endpoint, then body    |
 ##   |---------------------|-------------------------------------------------------------|
@@ -122,26 +125,50 @@
 ##     sends API key, and `x-api-key` its legacy header
 ##     (https://platform.claude.com/docs/en/manage-claude/authentication, read 2026-10-29).
 ##     Cost: service reading key from `x-api-key` alone answers 401.
-##   Exchange file is text its own reader types, as index file is: request and body carry byte
-##     counts, so any bytes read back. Stamp is FNV-1a 64, which resists no collision, so
-##     whole request is stored and compared. Sibling of `stamp` in
-##     `curator/audit/src/provenance.nim`, which project does not import (Article II.9).
+##   Exchange file is frame, then message of `exchanges.proto`, whose types `exchanges_schema.nim`
+##     declares; `protobuf_serialization` writes and reads message, since data one program writes
+##     and another reads is Protocol Buffers (CONTRIBUTOR.md, Data). Decoder reads message cut
+##     between two fields as fewer fields, so frame opens file, and reader checks it whole before
+##     any byte decodes: `OPENING_EXCHANGE`, then length and checksum of message, four bytes
+##     each, least significant first, as protobuf lays out `fixed32`.
+##     Opening names format and version, and closes with line break: `head -n 1` prints it, and
+##       transfer rewriting line ends is refused there, naming carriage return.
+##     Length takes four bytes, as protobuf caps message at 2 GiB.
+##     Checksum is CRC-32C, Castagnoli polynomial of RFC 3720 section 12.1: it detects every run
+##       of up to 32 bits changed within message, and every odd count of bits, since `x + 1`
+##       divides its polynomial of 18 terms; test "each run of up to 32 bits, and each odd count
+##       of bits, changed within message is refused" of `test_exchanges.nim` holds both.
+##       Rejected: CRC-32 of IEEE 802.3, polynomial of 15 terms, which no `x + 1` divides, so odd
+##       count goes unguarded; SHA-256, which `sha256sum` checks by hand but standard library
+##       lacks, and whose strength buys nothing, since checksum carries no key; FNV-1a 64 of
+##       `stamp`, hash for names guaranteeing change of one byte alone, which would tie checksum
+##       to name of file.
+##     Cost: 33 bytes of frame on each file; person reads file through `protoc`, past frame.
+##   Message holds what `Exchange` holds, field for field. Label is `string`, which protobuf
+##     holds as well-formed UTF-8 alone, so `toBytes` repairs it by Table 3-7 of Unicode Standard,
+##     and reader refuses label that rule would repair, as `protoc` does: decoder of Nim takes
+##     surrogate and code point past U+10FFFF. Request and every field of reply are `bytes`, so
+##     any bytes read back; status reads from 0 to 999, three digits of status line, within which
+##     `send` gives 0 to 599.
+##     Field of newer version is skipped, as decoder skips unknown field, so older reader reads
+##       newer file.
+##     Cost: label of ill-formed bytes reads back repaired; record mode writes ASCII alone.
+##   Stamp is FNV-1a 64, which resists no collision, so whole request is stored and compared.
+##     Sibling of `stamp` in `curator/audit/src/provenance.nim`, which project does not import
+##     (Article II.9).
 ##     Rejected: `std/hashes`, whose values change between versions; `std/sha1`, deprecated.
 ##     Cost: each exchange file of service holds whole request body, its system text and word list
 ##       included, beside reply, where stamp alone would name it.
-##     Cost: `tools/examples.nim` writes it and `suggester` reads it, so rule of data asks for
-##       Protocol Buffers (CONTRIBUTOR.md, Data); ruling D3 on #779 keeps text until #789 ports it.
-##   Refusal of exchange file ends in what faulty piece holds, and request of page holds whole URL,
-##     so echo shows each URL it names by scheme, host, port and path alone, wherever it stands
-##     (`dropSecretsText`): token in user part, query or fragment never reaches report, as test
-##     "refusal of malformed page exchange shows no user part, query or fragment of its URL" of
-##     `test_exchanges.nim` holds over each piece and fault. Body of reply is echoed as held, as
-##     page or service wrote it.
+##   Refusal of exchange file names part that fails, ending in value refused: first line of file
+##     at opening, count of bytes, checksum, error of decoder, label or status, never bytes of
+##     request or body. First line and label show each URL they name by scheme, host, port and
+##     path alone, wherever it stands (`dropSecretsText`): token in user part, query or fragment
+##     never reaches report, as test "refusal of malformed page exchange shows no user part, query
+##     or fragment of its URL" of `test_exchanges.nim` holds over each part and fault.
 ##     Cost: query of reference with no `//`, as of `mailto:`, is echoed whole.
-##   Label and header values are lines of file: client joins folded header lines by line break,
-##     so `send` unfolds each value, as RFC 7230 section 3.2.4 asks of recipient, and `toText`
-##     unfolds label; status takes one to three digits, as `send` gives 0 to 599. So every reply
-##     `send` gives records, and replay reads it back.
+##   Client joins folded header lines by line break, so `send` unfolds each value, as RFC 7230
+##     section 3.2.4 asks of recipient. So every reply `send` gives records, and replay reads it
+##     back.
 ##   Proxy follows curl: `https_proxy` then `HTTPS_PROXY` for https, `http_proxy` alone for
 ##     http, `no_proxy` then `NO_PROXY` for bypass; loopback always goes direct. Value naming no
 ##     port, or empty one, takes port 1080, as curl assumes, where client would dial 80; port is
@@ -158,7 +185,10 @@ import std/[asyncdispatch, httpclient, net, options, sequtils, strutils, uri]
 when defined(ssl):
   import std/openssl  # Names of libraries TLS of `std/net` loads, which host pin binds against.
 
+import protobuf_serialization
+
 import ../src/lojban_tagger/suggestions
+from ./exchanges_schema import nil
 
 
 type
@@ -191,21 +221,34 @@ type
     of true:
       exchange*: Exchange  ## Exchange file holds.
     of false:
-      line*: int  ## Line, counted from one, reader refused.
       problem*: string
-        ## What is wrong, ending in what faulty piece holds, made printable; URL each line names,
-        ##   body of reply aside, by scheme, host, port and path alone.
-
-  Cursor = object  ## Define position of reader in exchange text, with line it is on.
-    text: string  ## Whole text.
-    at: int  ## Byte read next.
-    line: int  ## Line of `at`, counted from one.
-    line_piece: int  ## Line piece read last opens on, so refusal names faulty line itself.
-    at_piece: int  ## Byte piece read last opens at, so refusal echoes what piece holds.
+        ## Part that fails, ending in value refused, made printable; text echoed from file shows
+        ##   each URL it names by scheme, host, port and path alone, wherever it stands.
 
 
 const
-  HEADER_EXCHANGE* = "lojban_tagger exchange 1"  ## First line of exchange file: format, version.
+  OPENING_EXCHANGE = "lojban_tagger exchange 2\n"
+    ## Opening of exchange file: format and version, then line break; version 1, text in format
+    ##   of its own, is refused here.
+  AT_LENGTH = OPENING_EXCHANGE.len  ## Byte length of message opens at, past opening.
+  AT_CHECKSUM = AT_LENGTH + 4  ## Byte checksum of message opens at, past length.
+  AT_MESSAGE = AT_CHECKSUM + 4  ## Byte message opens at, past checksum, i.e. bytes of frame.
+  POLYNOMIAL_CHECKSUM = 0x82F6_3B78'u32
+    ## Polynomial of CRC-32C, i.e. `0x1EDC6F41` of RFC 3720 section 12.1, bits reversed, as
+    ##   checksum reads lowest bit of each byte first.
+  LUT_REMAINDER_BY_BYTE = block:
+    ## Remainder of each byte, lowest bit first, divided by `POLYNOMIAL_CHECKSUM`, i.e. table that
+    ##   steps CRC-32C one byte at time.
+    var lut: array[byte, uint32]
+    for b in byte.low..byte.high:
+      var remainder = uint32(b)
+      for _ in 1..8:
+        remainder = (remainder shr 1) xor (if (remainder and 1) == 1: POLYNOMIAL_CHECKSUM else: 0)
+      lut[b] = remainder
+    lut
+  STATUSES_KEPT = 0..999
+    ## Statuses exchange file keeps: three digits, as status line spells them; `send` gives 0 to
+    ##   599.
   USER_AGENT* = "lojban_tagger"  ## Agent every request names.
   STATUSES_REDIRECT* = [301, 302, 303, 307, 308]  ## Statuses `redirect` follows, as client does.
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
@@ -478,59 +521,78 @@ func requestService*(settings: Settings, body: string): string =
 
 #[ Exchange Files ]#
 
-func unfold(text: string): string =
-  ## Unfold text onto one line: each line break, with spaces and tabs after it, becomes one space,
-  ##   as RFC 7230 section 3.2.4 replaces obs-fold of header value.
-  var is_folding = false
-  for character in text:
-    if character == '\n':
-      result.add ' '
-      is_folding = true
-    elif not is_folding or character notin {' ', '\t'}:
-      result.add character
-      is_folding = false
+func toFixed(value: uint32): string =
+  ## Render value as four bytes, least significant first, as protobuf lays out `fixed32`.
+  for shift in [0, 8, 16, 24]: result.add char((value shr shift) and 0xFF)
 
 
-func toText*(exchange: Exchange): string =
-  ## Render exchange as file text; request and body carry byte counts, so any bytes read back;
-  ##   label is unfolded onto its one line.
+func readFixed(bytes: string, at: int): uint32 =
+  ## Read four bytes from `at`, least significant first, as `toFixed` lays them out.
+  for i in countdown(3, 0): result = (result shl 8) or uint32(ord(bytes[at+i]))
+
+
+func checksum(message: openArray[char]): uint32 =
+  ## Compute CRC-32C of message, i.e. checksum of RFC 3720 section 12.1, which frame of exchange
+  ##   file holds: register opens with every bit set, steps one byte at time by
+  ##   `LUT_REMAINDER_BY_BYTE`, and closes inverted.
+  var register = 0xFFFF_FFFF'u32
+  for character in message:
+    register = LUT_REMAINDER_BY_BYTE[byte(register and 0xFF) xor byte(character)] xor
+        (register shr 8)
+  not register
+
+
+func toField(text: string): seq[byte] =
+  ## Copy text into `bytes` field of message, byte for byte.
+  @(text.toOpenArrayByte(0, text.high))
+
+
+func toText(field: openArray[byte]): string =
+  ## Copy `bytes` field of message, or message as encoded, into text, byte for byte.
+  result = newString(field.len)
+  for i, b in field: result[i] = char(b)
+
+
+func toMessage(exchange: Exchange): exchanges_schema.Exchange =
+  ## Build message of schema from exchange: label repaired to well-formed UTF-8, as `string` of
+  ##   protobuf holds it, and every other field byte for byte.
   let reply = exchange.reply
-  HEADER_EXCHANGE & "\n" &
-      "label " & exchange.label.unfold & "\n" &
-      "request " & $exchange.request.len & "\n" & exchange.request & "\n" &
-      "status " & $reply.status & "\n" &
-      "content-type " & reply.content_type & "\n" &
-      "content-encoding " & reply.content_encoding & "\n" &
-      "location " & reply.location & "\n" &
-      "body " & (if reply.is_cut: "cut" else: "whole") & " " & $reply.body.len & "\n" &
-      reply.body & "\n"
+  exchanges_schema.Exchange(
+    label: repairEncoding(exchange.label).text,
+    request: exchange.request.toField,
+    reply: exchanges_schema.Reply(
+      status: int32(reply.status),
+      content_type: reply.content_type.toField,
+      content_encoding: reply.content_encoding.toField,
+      location: reply.location.toField,
+      body: reply.body.toField,
+      is_cut: reply.is_cut,
+    ),
+  )
 
 
-func readLine(cursor: var Cursor): Option[string] =
-  ## Read line at cursor, its break consumed; `none` where text ends first.
-  (cursor.line_piece, cursor.at_piece) = (cursor.line, cursor.at)
-  let close = cursor.text.find('\n', cursor.at)
-  if close < 0: return none(string)
-  result = some(cursor.text[cursor.at..<close])
-  cursor.at = close + 1
-  inc cursor.line
+func toExchange(message: exchanges_schema.Exchange): Exchange =
+  ## Build exchange from message of schema, every field byte for byte.
+  let reply = message.reply
+  Exchange(
+    label: message.label,
+    request: message.request.toText,
+    reply: Reply(
+      status: int(reply.status),
+      content_type: reply.content_type.toText,
+      content_encoding: reply.content_encoding.toText,
+      location: reply.location.toText,
+      body: reply.body.toText,
+      is_cut: reply.is_cut,
+    ),
+  )
 
 
-func readBlock(cursor: var Cursor, count: int): Option[string] =
-  ## Read `count` bytes at cursor and line break after them; `none` where text holds fewer.
-  (cursor.line_piece, cursor.at_piece) = (cursor.line, cursor.at)
-  if count < 0 or cursor.at + count >= cursor.text.len or cursor.text[cursor.at+count] != '\n':
-    return none(string)
-  result = some(cursor.text[cursor.at..<cursor.at+count])
-  cursor.line += result.get.count('\n') + 1
-  cursor.at += count + 1
-
-
-func readField(cursor: var Cursor, name: string): Option[string] =
-  ## Read line `<name> <value>`, value possibly empty; `none` where line is other.
-  let line = cursor.readLine
-  if line.isNone or not line.get.startsWith(name & " "): return none(string)
-  some(line.get[name.len+1 .. ^1])
+func toBytes*(exchange: Exchange): string =
+  ## Render exchange as bytes of its file: opening, length and checksum of message, then message
+  ##   of `exchanges.proto`; label repaired to well-formed UTF-8, every other field byte for byte.
+  let message = Protobuf.encode(exchange.toMessage).toText
+  OPENING_EXCHANGE & uint32(message.len).toFixed & message.checksum.toFixed & message
 
 
 func dropSecretsText(text: string): string =
@@ -550,81 +612,52 @@ func dropSecretsText(text: string): string =
   result.add text[at .. ^1]
 
 
-func readExchange*(text: string): Recorded =
-  ## Read exchange file; refuse at first malformed line, naming it, as `readIndex` does.
-  ##   Echo shows each URL it names by scheme, host, port and path alone, wherever it stands
-  ##     (`dropSecretsText`), body of reply aside, so token of page URL, which request holds
-  ##     whole, never reaches report.
-  var cursor = Cursor(text: text, line: 1)
+func readExchange*(bytes: string): Recorded =
+  ## Read exchange file; refuse at first part that fails, naming it: opening, length and checksum
+  ##   of frame, before any byte decodes, then message, label and status.
+  ##   Echo of opening and of label shows each URL it names by scheme, host, port and path alone
+  ##     (`dropSecretsText`), so token of page URL never reaches report; every other echo is
+  ##     count, checksum or error of decoder, never byte of request or body.
 
-  func refuse(cursor: Cursor, shape: string): Recorded =
-    ## Build outcome refusing line piece read last on its own line: shape it should have, then
-    ##   line it holds made printable, running to end of text where no line break closes it,
-    ##   which shape then names; empty where text ends where piece opens.
-    ##   Line is any line where pieces before it are missing, URL line of request among them, so
-    ##     each drops secrets of URL it names (`dropSecretsText`).
-    let
-      close = cursor.text.find('\n', cursor.at_piece)
-      stop = if close < 0: cursor.text.len else: close
-      broken = if close < 0 and stop > cursor.at_piece: ", then line break" else: ""
-      held = cursor.text[cursor.at_piece..<stop].dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN)
-    Recorded(is_read: false, line: cursor.line_piece, problem: shape & broken & "; got `" & held &
-        "`.")
+  func refuse(problem: string): Recorded =
+    ## Build outcome refusing file for problem.
+    Recorded(is_read: false, problem: problem)
 
-  func refuseBlock(cursor: Cursor, shape: string, should_drop_secrets = false): Recorded =
-    ## Build outcome refusing block read last on line it opens on: shape it should have, then
-    ##   bytes left from where it opens, made printable; each URL drops its secrets
-    ##   (`dropSecretsText`) where `should_drop_secrets`, as request needs, and body, which page
-    ##   or service wrote, keeps as held.
-    let
-      left = cursor.text[cursor.at_piece .. ^1]
-      kept = if should_drop_secrets: left.dropSecretsText else: left
-    Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" &
-        kept.toPrintable(RUNES_ANSWER_SHOWN) & "`.")
+  func toEcho(text: string): string =
+    ## Show text as refusal echoes it: each URL by scheme, host, port and path alone
+    ##   (`dropSecretsText`), then made printable and cut.
+    text.dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN)
 
-  let header = cursor.readLine
-  if header.isNone or header.get != HEADER_EXCHANGE:
-    return cursor.refuse("Exchange should open with `" & HEADER_EXCHANGE & "`")
-  var exchange: Exchange
-  let label = cursor.readField("label")
-  if label.isNone: return cursor.refuse("Line should be `label <text>`")
-  exchange.label = label.get
-  let count_request = cursor.readField("request")
-  if count_request.isNone or not count_request.get.allIt(it in Digits) or
-      count_request.get.len notin 1..9:
-    return cursor.refuse("Line should be `request <bytes>`")
-  let request = cursor.readBlock(count_request.get.parseInt)
-  if request.isNone:
-    return cursor.refuseBlock("Request should hold bytes its line counts, then line break",
-        should_drop_secrets = true)
-  exchange.request = request.get
-  let status = cursor.readField("status")
-  if status.isNone or not status.get.allIt(it in Digits) or status.get.len notin 1..3:
-    return cursor.refuse("Line should be `status <code>`, one to three digits")
-  exchange.reply.status = status.get.parseInt
-  for (name, field) in [("content-type", 0), ("content-encoding", 1), ("location", 2)]:
-    let value = cursor.readField(name)
-    if value.isNone: return cursor.refuse("Line should be `" & name & " <value>`")
-    case field
-    of 0: exchange.reply.content_type = value.get
-    of 1: exchange.reply.content_encoding = value.get
-    else: exchange.reply.location = value.get
+  # Check opening, then length and checksum of message, so no message cut or changed decodes.
+  if not bytes.startsWith(OPENING_EXCHANGE):
+    let close = bytes.find('\n')
+    return refuse("Exchange should open with `" & OPENING_EXCHANGE.toEcho & "`; got `" &
+        bytes[0 .. (if close < 0: bytes.high else: close)].toEcho & "`.")
+  if bytes.len < AT_MESSAGE:
+    return refuse("Exchange should hold 8 bytes of length and checksum after opening; got `" &
+        $(bytes.len - AT_LENGTH) & "`.")
+  let length = bytes.readFixed(AT_LENGTH)
+  if int64(length) != int64(bytes.len - AT_MESSAGE):
+    return refuse("Message should hold `" & $length & "` bytes, as its length counts; got `" &
+        $(bytes.len - AT_MESSAGE) & "`.")
   let
-    body = cursor.readField("body")
-    words = if body.isSome: body.get.split(' ') else: @[]
-  if words.len != 2 or words[0] notin ["whole", "cut"] or not words[1].allIt(it in Digits) or
-      words[1].len notin 1..9:
-    return cursor.refuse("Line should be `body <whole|cut> <bytes>`")
-  exchange.reply.is_cut = words[0] == "cut"
-  let bytes = cursor.readBlock(words[1].parseInt)
-  if bytes.isNone:
-    return cursor.refuseBlock("Body should hold bytes its line counts, then line break")
-  exchange.reply.body = bytes.get
-  if cursor.at != text.len:  # Byte after body stands on line of cursor, opening no piece.
-    return Recorded(is_read: false, line: cursor.line, problem: "Exchange should end after " &
-        "body; got `" & text[cursor.at .. ^1].dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN) &
-        "`.")
-  Recorded(is_read: true, exchange: exchange)
+    named = bytes.readFixed(AT_CHECKSUM)
+    held = checksum(bytes.toOpenArray(AT_MESSAGE, bytes.high))
+  if held != named:
+    return refuse("Message should hold checksum `" & named.toHex.toLowerAscii & "` its frame " &
+        "names; got `" & held.toHex.toLowerAscii & "`.")
+
+  # Decode message, then refuse label `protoc` refuses and status no status line spells.
+  let message =
+    try: Protobuf.decode(bytes.toOpenArray(AT_MESSAGE, bytes.high), exchanges_schema.Exchange)
+    except SerializationError as error:
+      return refuse("Message should decode as `lojban_tagger.Exchange`; got `" &
+          error.msg.splitLines[0].toPrintable(RUNES_ANSWER_SHOWN) & "`.")
+  if repairEncoding(message.label).count_repaired > 0:
+    return refuse("Label should be well-formed UTF-8; got `" & message.label.toEcho & "`.")
+  if int(message.reply.status) notin STATUSES_KEPT:
+    return refuse("Status should be from 0 to 999; got `" & $message.reply.status & "`.")
+  Recorded(is_read: true, exchange: message.toExchange)
 
 
 
@@ -666,6 +699,19 @@ when defined(ssl):
     else:
       X509_VERIFY_PARAM_set1_host(parameters, name.cstring, csize_t(name.len)) == 1 and
           X509_VERIFY_PARAM_set1_ip(parameters, nil, 0) == 1
+
+
+func unfold(text: string): string =
+  ## Unfold text onto one line: each line break, with spaces and tabs after it, becomes one space,
+  ##   as RFC 7230 section 3.2.4 replaces obs-fold of header value.
+  var is_folding = false
+  for character in text:
+    if character == '\n':
+      result.add ' '
+      is_folding = true
+    elif not is_folding or character notin {' ', '\t'}:
+      result.add character
+      is_folding = false
 
 
 proc readBody(response: AsyncResponse, bytes_max: int): Future[(string, bool)] {.async.} =

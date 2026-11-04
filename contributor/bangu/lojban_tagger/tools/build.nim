@@ -13,7 +13,7 @@
 ##   | examples  | write worked examples of `suggester` as exchange files under             |
 ##   |           | `build/examples/`, and print command replaying each                      |
 ##   | system    | print packages verbs, `suggester` and suites need, one per line:         |
-##   |           | `openssl` command among them, which `test_exchanges` runs                |
+##   |           | `openssl` and `protoc` commands among them, which `test_exchanges` runs  |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
 ##
@@ -49,6 +49,7 @@ const
     ("libssl3", "TLS of `std/httpclient` under `-d:ssl`; `suggester` loads it when it starts"),
     ("ca-certificates", "roots `suggester` checks services and pages against"),
     ("openssl", "command `test_exchanges` makes test root and leaves with, at run time"),
+    ("protobuf-compiler", "`protoc`, which `test_exchanges` encodes committed record with"),
   ]
     ## Packages verbs, `suggester` and suites need, each with reason (Article II.8); `system`
     ##   prints names alone.

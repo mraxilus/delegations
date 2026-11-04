@@ -21,6 +21,9 @@
 ##     suite holds that.
 ##   Data person writes is typed Nim, as committed lists are; exchange files are written at
 ##     run time and never committed.
+##     First hop of `page` is committed as `app/exchanges_example.txtpb`, in text format that
+##       `protoc --decode` makes from file this verb writes (README); `test_exchanges.nim` holds
+##       writer to bytes `protoc --encode` makes of it.
 ##     Name, argument and tags take `{.requiresInit.}`, so example lacking one fails compile:
 ##       suites find example by name, `suggester` reads argument, and answer of no tags fails
 ##       whole. Hops stay unmarked, empty by right for text given.
@@ -212,7 +215,7 @@ proc writeExamples*(directory: string) =
   for example in EXAMPLES:
     for service in [Service.Claude, Service.OpenRouter]:
       for exchange in example.toExchanges(service):
-        writeFile(directory / (exchange.request.stamp & ".exchange"), exchange.toText)
+        writeFile(directory / (exchange.request.stamp & ".exchange"), exchange.toBytes)
 
 
 proc main(): int =

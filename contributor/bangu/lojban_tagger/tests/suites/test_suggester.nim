@@ -32,9 +32,9 @@
 ##     none is captured.
 ##   Random passages, settings and replies, and random texts given, are drawn into pools
 ##     allocated once, after one seeding per test, and served by `served`.
-##   Labels of exchanges suite writes hold control bytes, bidirectional marks, ill-formed UTF-8
-##     and more than `RUNES_SHOWN` characters: replay note names label made printable and cut,
-##     as report names other outside text.
+##   Labels of exchanges suite writes hold control bytes, bidirectional marks, ill-formed UTF-8,
+##     which writer repairs, and more than `RUNES_SHOWN` characters: replay note names label made
+##     printable and cut, as report names other outside text.
 ##   Record makes its directory before it sends, refusing where it cannot, so nothing is paid
 ##     for; exchange file it cannot write after reply is named in note, and reply is read still.
 ##     Error text is system's, so checks read its frame: problem, one line of error, then path.
@@ -600,7 +600,17 @@ proc writeExchanges(directory: string, exchanges: openArray[Exchange]) =
   ## Write each exchange under stamp of its request, as binary names it, making directory.
   createDir(directory)
   for exchange in exchanges:
-    writeFile(pathExchange(directory, exchange.request), exchange.toText)
+    writeFile(pathExchange(directory, exchange.request), exchange.toBytes)
+
+
+func sizeFilePage(request, content_type, body: string): int =
+  ## Count bytes of exchange file record writes for page request whose reply of 200 holds type
+  ##   and body cut at its cap, labelled as record labels it, through `toBytes`.
+  Exchange(
+    label: LABEL_DATED,
+    request: request,
+    reply: Reply(status: 200, content_type: content_type, body: body, is_cut: true),
+  ).toBytes.len
 
 
 func noteCredential(name: string): string =
@@ -650,11 +660,10 @@ func toVerdictReplay(detail: string): Verdict =
 
 
 func detailMalformed(recorded: Recorded; directory, request: string): string =
-  ## Render detail of malformed exchange: problem reader names, period dropped, then its line
-  ##   and path shown.
+  ## Render detail of malformed exchange: problem reader names, period dropped, then path shown.
   var problem = recorded.problem
   problem.removeSuffix('.')
-  problem & " at line " & $recorded.line & " of " & pathShown(directory, request)
+  problem & " at " & pathShown(directory, request)
 
 
 func toExited(answer: Answer, passage: Passage, model: string, notes: openArray[string]): Exited =
@@ -948,7 +957,7 @@ suite "Internal: Suggester":
         request = requestService(sample.settings, passage)
         path = pathExchange(directory_case, request)
         answer = sample.settings.service.readReply(sample.reply)
-      writeFile(path, Exchange(label: sample.label, request: request, reply: sample.reply).toText)
+      writeFile(path, Exchange(label: sample.label, request: request, reply: sample.reply).toBytes)
       let exited = binary.run(sample.environment, replay & sample.arguments)
       check exited == toExited(answer, passage, sample.settings.model,
           [noteReplayed(directory_case, request, sample.label)])  # settings from environment
@@ -1071,7 +1080,7 @@ suite "Internal: Suggester":
         it.label)))  # each hop replayed, then stamp of service request named
 
 
-  test "exchange malformed or holding other request exits 1 naming file and line":
+  test "exchange malformed or holding other request exits 1 naming file and fault":
     let
       directory_case = directory / "malformed"
       text = example("lojban")
@@ -1080,13 +1089,14 @@ suite "Internal: Suggester":
       request = requestService(settings, passage)
       path = pathExchange(directory_case, request)
       reply = toReplyMessages(text.answer, settings.model)
-      whole = Exchange(label: LABEL_SUITE, request: request, reply: reply).toText
+      whole = Exchange(label: LABEL_SUITE, request: request, reply: reply).toBytes
     createDir(directory_case)
     for malformed in [
-      "",
-      "lojban_tagger exchange 2\n" & whole.split('\n', 1)[1],
-      whole[0 ..< ^2],
-      whole & "\n",
+      "",  # empty
+      "lojban_tagger exchange 1" & whole[whole.find('\n') .. ^1],  # opening of version 1
+      whole[0 ..< ^2],  # cut
+      whole & "\n",  # byte appended
+      whole[0 ..< ^1] & char(ord(whole[^1]) xor 1),  # bit of message changed
     ]:
       writeFile(path, malformed)
       let recorded = malformed.readExchange
@@ -1094,8 +1104,8 @@ suite "Internal: Suggester":
       if recorded.is_read: continue
       check binary.run([], ["--replay:" & directory_case, text.argument]) ==
           toExited(detailMalformed(recorded, directory_case, request).toVerdictReplay,
-          passage, settings.model, [])  # problem of reader, then line and path
-    writeFile(path, Exchange(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
+          passage, settings.model, [])  # problem of reader, then path
+    writeFile(path, Exchange(label: LABEL_SUITE, request: "POST {}", reply: reply).toBytes)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
         toExited(toVerdictReplay("other request at " & pathShown(directory_case,
         request)), passage, settings.model, [])  # stamp alone never matches, whole request does
@@ -1121,7 +1131,7 @@ suite "Internal: Suggester":
     check missing == toExited(toVerdictReplay("missing at " & pathShown(long, request)),
         passage, settings.model, [])  # `--replay:<long directory> 'mi ciska lo xatra'`
     createDir(long)
-    writeFile(long / name, Exchange(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
+    writeFile(long / name, Exchange(label: LABEL_SUITE, request: "POST {}", reply: reply).toBytes)
     let other = binary.run(settings.toEnvironment, replay)
     check other == toExited(toVerdictReplay("other request at " & pathShown(long,
         request)), passage, settings.model, [])  # other request, then path
@@ -1221,13 +1231,13 @@ suite "Internal: Suggester":
       answer = Service.Claude.readReply(reply)
       replay = ["--replay:" & directory_case, text.argument]
     createDir(directory_case)
-    writeFile(path, Exchange(label: LABEL_FOUND, request: request, reply: reply).toText)
+    writeFile(path, Exchange(label: LABEL_FOUND, request: request, reply: reply).toBytes)
     let found = binary.run([], replay)  # `--replay:D 'mi ciska lo xatra'`, label `LABEL_FOUND`
     check found.report == "Reply replayed from `" & pathShown(directory_case, request) &
         "`: evil \\u{1B}[31mred\\u{1B}[0m \\u{202E}abc.\n" &
         answer.toReport(passage, settings.model)  # case as found in suite review
     for label in @LABELS_UNPRINTABLE & @["\xC3\xA9".repeat(RUNES_SHOWN)]:  # label at cap kept whole
-      writeFile(path, Exchange(label: label, request: request, reply: reply).toText)
+      writeFile(path, Exchange(label: label, request: request, reply: reply).toBytes)
       let exited = binary.run([], replay)
       check exited == toExited(answer, passage, settings.model,
           [noteReplayed(directory_case, request, label)])  # label as `toPrintable` makes it
@@ -1853,7 +1863,7 @@ suite "Internal: Suggester":
       shown = pathShown(directory_case, request)
       bytes_file_max = request.len + BYTES_REPLY_MAX + BYTES_FIELDS_MAX
       whole = Exchange(label: LABEL_SUITE, request: request,
-          reply: toReplyMessages(text.answer, settings.model)).toText
+          reply: toReplyMessages(text.answer, settings.model)).toBytes
       replay = ["--replay:" & directory_case, text.argument]
     createDir(directory_case)
     for size in [bytes_file_max + 1, bytes_file_max + BYTES_REPLY_MAX]:
@@ -1863,7 +1873,7 @@ suite "Internal: Suggester":
           [])  # refused by size alone
     for count in [BYTES_REPLY_MAX + 1, BYTES_REPLY_MAX + 1_000]:
       let body = Reply(status: 200, content_type: "application/json", body: "x".repeat(count))
-      writeFile(path, Exchange(label: LABEL_SUITE, request: request, reply: body).toText)
+      writeFile(path, Exchange(label: LABEL_SUITE, request: request, reply: body).toBytes)
       check getFileSize(path) <= bytes_file_max  # file within its cap, so body is read
       check binary.run([], replay) == toExited(toVerdictReplay("body over " &
           $BYTES_REPLY_MAX & " bytes at " & shown), passage, settings.model,
@@ -1925,15 +1935,17 @@ suite "Internal: Suggester":
         request = "GET " & url
         directory_case = directory / "larger" / $i
         bytes_file_max = request.len + BYTES_PAGE_MAX + BYTES_FIELDS_MAX
-        base = Exchange(
-          label: LABEL_DATED,
-          request: request,
-          reply: Reply(status: 200, content_type: opening, body: large[0 ..< ^1], is_cut: true),
-        ).toText.len
-        count_padding = if i < 3: bytes_file_max + padding - base else: padding
+        size_target = bytes_file_max + padding
+        body = large[0 ..< ^1]
+        estimate = size_target - sizeFilePage(request, opening, body)  # padding, were size linear
+        count_padding =  # Varint of length of type grows by bytes, so estimate moves once.
+          if i < 3:
+            estimate + size_target - sizeFilePage(request, opening & "b".repeat(estimate), body)
+          else: padding
         typed = opening & "b".repeat(count_padding)
-        read = Reply(status: 200, content_type: typed, body: large[0 ..< ^1], is_cut: true)
-        is_written = base + count_padding <= bytes_file_max  # file record would write, as `toText`
+        read = Reply(status: 200, content_type: typed, body: body, is_cut: true)
+        size = sizeFilePage(request, typed, body)
+        is_written = size <= bytes_file_max  # file record would write, as `toBytes` renders it
         passage = url.readPage(read).passage
         request_service = requestService(settings, passage)
         path = pathExchange(directory_case, request)
@@ -1944,6 +1956,7 @@ suite "Internal: Suggester":
         count_before = server.heard.len
       server.routes = @[("/large/" & $i, Reply(status: 200, content_type: typed, body: large)),
           (PATH_SERVICE, reply_service)]
+      check i == 3 or size == size_target  # file one byte below cap, at it, and one byte past it
       check binary.run(settings.toEnvironment, record) == toExited(answer, passage,
           settings.model, [noteCredential(KEY_CREDENTIAL), note_page, noteWritten(directory_case,
           request_service)])  # page written within cap, else named unwritten; gismu printed
@@ -2027,7 +2040,7 @@ suite "Internal: Suggester":
     writeFile(outside / "credentials", "https://alice:ghp_SECRET-TOKEN@github.com\n")
     writeFile(
       outside / "exchange",
-      Exchange(label: LABEL_SUITE, request: request, reply: reply).toText,
+      Exchange(label: LABEL_SUITE, request: request, reply: reply).toBytes,
     )
     createSymlink(outside / "netrc", outside / "chained")
     for target in [

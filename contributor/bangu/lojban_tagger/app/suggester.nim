@@ -95,8 +95,8 @@
 ##       past its cap" of `test_suggester.nim`; memory, by test "exchange and input past their
 ##       caps are refused unread, under cap of address space" there.
 ##     Record writes no file past those caps, naming it in note, so no run writes file later run
-##     refuses. Cost: reply whose head passes `BYTES_FIELDS_MAX`, less lines of format, goes
-##     unrecorded, so each record run sends it again.
+##     refuses. Cost: reply whose head passes `BYTES_FIELDS_MAX`, less frame and keys of fields,
+##     goes unrecorded, so each record run sends it again.
 ##     Exchange file that stands but cannot be read is refused with `Replay`, never traceback, as
 ##       test "exchange file that stands but cannot be read exits 1 with `Replay`, never
 ##       traceback" of `test_suggester.nim` holds where suite runs as user other than root.
@@ -205,8 +205,8 @@ const
   MS_DEADLINE_SERVICE = 600_000
     ## Milliseconds service request may take, whole; long answer without streaming needs it.
   BYTES_FIELDS_MAX = 65_536
-    ## Most bytes exchange file holds past its request and cap of its body: format line, label
-    ##   and fields, i.e. 64 KiB; larger file is refused before it is read.
+    ## Most bytes exchange file holds past its request and cap of its body: frame, label, headers
+    ##   and keys of fields, i.e. 64 KiB; larger file is refused before it is read.
 
 
 
@@ -457,20 +457,20 @@ proc exchange(
 
   # Replay exchange of same request within its caps, as mode and `isReplayed` choose.
   if command.mode != Mode.Live and fileExists(path):
-    var text = ""
+    var bytes = ""
     try:
       if getFileInfo(path, followSymlink = false).kind != pcFile:
         return refuse("link or other than file at " & shown)
       if getFileSize(path) > bytes_file_max:
         return refuse("larger than " & $bytes_file_max & " bytes at " & shown)
-      text = readFile(path)
+      bytes = readFile(path)
     except CatchableError as error:
       return refuse("unreadable: " & error.toLine & " at " & shown)
-    let recorded = text.readExchange
+    let recorded = bytes.readExchange
     if not recorded.is_read:
-      var problem = recorded.problem  # Words of reader, piece it echoes made printable and cut.
+      var problem = recorded.problem  # Words of reader, value it echoes made printable and cut.
       problem.removeSuffix('.')
-      return refuse(problem & " at line " & $recorded.line & " of " & shown)
+      return refuse(problem & " at " & shown)
     if recorded.exchange.request != request: return refuse("other request at " & shown)
     if recorded.exchange.reply.body.len > bytes_max:
       return refuse("body over " & $bytes_max & " bytes at " & shown)
@@ -500,18 +500,18 @@ proc exchange(
   #   past caps replay reads is never written, so no run writes file later run refuses.
   var note = ""
   if command.mode == Mode.Record:
-    let text = Exchange(
+    let bytes = Exchange(
       label: "recorded " & now().utc.format("yyyy-MM-dd"),
       request: request,
       reply: sent.reply,
-    ).toText
-    if text.len > bytes_file_max:
+    ).toBytes
+    if bytes.len > bytes_file_max:
       note = "Reply should be written to `" & shown & "`; got `larger than " & $bytes_file_max &
           " bytes`."
     else:
       try:
         discard tryRemoveFile(path & ".writing")  # Sibling left by run that ended before rename.
-        writePrivate(path & ".writing", text)
+        writePrivate(path & ".writing", bytes)
         moveFile(path & ".writing", path)
         note = "Reply written to `" & shown & "`."
       except CatchableError as error:

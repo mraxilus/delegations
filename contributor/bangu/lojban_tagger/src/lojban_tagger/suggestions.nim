@@ -419,9 +419,11 @@ func sequence(lead: uint8): tuple[count_more: int, low, high: uint8] =
   else: (0, 0'u8, 0'u8)
 
 
-func repairEncoding(bytes: string): tuple[text: string, count_repaired: int] =
+func repairEncoding*(bytes: string): tuple[text: string, count_repaired: int] =
   ## Replace each maximal ill-formed subpart with U+FFFD, by Table 3-7 of Unicode Standard,
   ##   chapter 3; count replacements.
+  ##   Exported for `app/exchanges.nim`, which repairs label of exchange file by it, and refuses
+  ##     label it would repair, as `string` of protobuf holds well-formed UTF-8 alone.
   result.text = newStringOfCap(bytes.len)
   var i = 0
   while i < bytes.len:

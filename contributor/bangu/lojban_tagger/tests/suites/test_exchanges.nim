@@ -3,16 +3,26 @@
 ##   CLL covers no transport, so suites are `Internal:`, tests named by behaviour (Article IX.10).
 ##   Stamp meets published vectors of FNV-1a 64, and one law of its arithmetic: each step maps
 ##     state one to one, so requests of one length that differ in one byte never share stamp.
-##   Random exchanges hold request and body of any bytes, line breaks often and last often, and
-##     file text of other exchange; label holds lines of any byte, joined by line breaks, and
-##     reads back on one line; header values hold no line break, since `send` unfolds each folded
-##     one; every status of one to three digits reads back.
-##   Malformed files take one exchange whose request and body span lines, each piece of its
-##     file with each fault that piece admits; file is written by suite, never by `toText`, and
-##     each expected line is counted from pieces before it.
-##     Each file holds line too: faulty line itself, as `readIndex` names it; problem ends in what
-##     piece holds made printable, as `readIndex` echoes line: its line, running to end of text
-##     where no line break closes it, which problem then names, or bytes left from block.
+##   Random exchanges hold label, request and reply of any bytes, line breaks often and last
+##     often, and bytes of other exchange file; label reads back as `repairEncoding` makes it,
+##     every other field byte for byte; every status of one to three digits reads back.
+##   Checksum meets vectors of RFC 3720 appendix B.4 and check value of CRC-32C, and reference
+##     written apart here, bit by bit, over random bytes.
+##   Frame meets reference written apart here (`frameReference`), and writer meets `protoc`:
+##     suite encodes committed worked example `app/exchanges_example.txtpb` with `protoc
+##     --encode` at compile time into `build/`, then reads binary with `staticRead`, as STYLE.md
+##     section 4 gives; writer gives those bytes, and reader reads them back.
+##     Cost: suite needs `protoc` to compile, which `system` of `tools/build.nim` declares.
+##     Trap: `nim check` runs no `gorgeEx`, which gives empty output and exit code 0 there, so
+##       check reads binary that last compile left in `build/`, and fails to open it before any.
+##   Faulty files take worked example, each byte of it, and random exchanges: each cut, bytes
+##     appended, each change of one bit and of one byte, and runs of up to 32 bits and odd counts
+##     of bits changed within message; each is refused naming part fault falls in, whose problem
+##     suite builds apart.
+##   Messages frame takes hold each fault of decoder, label ill-formed in each way Table 3-7 of
+##     Unicode Standard names, and status past three digits; each is refused naming it, as
+##     `protoc` refuses it, random messages read or refuse, never raising, and field of newer
+##     version is skipped.
 ##     Page exchanges whose URL holds user part, query or fragment take same faults; problem
 ##       shows URL as `dropSecrets` keeps it, words of secrets spelled so any leaking shows.
 ##   Port of URL is held by table of its bounds and by random ports with zeros before them,
@@ -77,47 +87,24 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[
-  asyncdispatch, asynchttpserver, asyncnet, base64, net, options, os, osproc, random, sequtils,
-  streams, strutils, tempfiles, unittest, uri,
+  asyncdispatch, asynchttpserver, asyncnet, base64, bitops, net, options, os, osproc, random,
+  sequtils, streams, strutils, tempfiles, unittest, uri,
 ]
 
 import ../../app/exchanges
-from ../../app/exchanges {.all.} import removeDotSegments
+from ../../app/exchanges {.all.} import
+  AT_CHECKSUM, AT_LENGTH, AT_MESSAGE, checksum, dropSecretsText, OPENING_EXCHANGE,
+  removeDotSegments
 import ../../src/lojban_tagger/suggestions
+import ../../tools/examples
 
 
 type
-  Piece {.pure.} = enum  ## Define piece of exchange file, in order file holds them.
-    Header  ## First line: format and version.
-    Label  ## Line `label <text>`.
-    Request  ## Line `request <bytes>`.
-    RequestBytes  ## Request, then line break.
-    Status  ## Line `status <code>`.
-    ContentType  ## Line `content-type <value>`.
-    ContentEncoding  ## Line `content-encoding <value>`.
-    Location  ## Line `location <value>`.
-    Body  ## Line `body <whole|cut> <bytes>`.
-    BodyBytes  ## Body, then line break.
-
-  Fault {.pure.} = enum  ## Define how one piece of exchange file goes wrong.
-    Missing  ## Text ends before piece.
-    Unbroken  ## Text ends before line break closing piece.
-    Renamed  ## First letter of piece capitalised.
-    Unspaced  ## Space after field name dropped, as editor trimming line end drops it.
-    Doubled  ## Piece stands twice, so copy stands where next piece should.
-    Dropped  ## Piece left out, so next piece stands where it should.
-    Valued  ## Value field refuses.
-    Short  ## Count names one byte more than block holds.
-    Long  ## Count names one byte fewer than block holds.
-    Trailing  ## Byte follows last piece.
-
-  Malformed = object  ## Define one malformed file, with line and problem reader should give.
-    piece: Piece  ## Piece holding fault.
-    fault: Fault  ## Fault of piece.
-    at: Piece  ## Piece reader should refuse at: piece itself, or next where copy stands there.
-    text: string  ## File text.
-    line: int  ## Line reader should refuse at, counted from one.
-    problem: string  ## Problem reader should give.
+  Part {.pure.} = enum  ## Define part of exchange file, in order file holds them.
+    Opening  ## Opening: format and version, then line break.
+    Length  ## Length of message, four bytes, least significant first.
+    Checksum  ## CRC-32C of message, four bytes, least significant first.
+    Message  ## Message of `exchanges.proto`.
 
   Stamped = object  ## Define one random request, beside copy holding one byte changed.
     request: string  ## Request.
@@ -211,7 +198,14 @@ const
   FLOOR_CHANGED = 400  ## Fewest requests holding byte to change; 449 read at seed `0`.
   FLOOR_READ = 350  ## Fewest values read as credential, over every service; 446 read at seed `0`.
   FLOOR_REFUSED = 600  ## Fewest values refused, over every service; 754 read at seed `0`.
-  FLOOR_FOLDED = 150  ## Fewest random labels holding line break; 197 read at seed `0`.
+  FLOOR_KEPT = 160
+    ## Fewest random labels well-formed, so read back as written; 196 read at seed `0`.
+  FLOOR_REPAIRED = 80
+    ## Fewest random labels ill-formed, so read back repaired; 104 read at seed `0`.
+  FLOOR_MESSAGE = 270
+    ## Fewest random exchanges whose message holds bit to change; 300 read at seed `0`.
+  FLOOR_DECODED = 25  ## Fewest random messages read; 36 read at seed `0`.
+  FLOOR_UNDECODED = 850  ## Fewest random messages refused; 964 read at seed `0`.
   BYTES_SAMPLE_MAX = 4_096  ## Most bytes of random request or body.
   BYTES_CAP = 10_000  ## Cap `send` reads body up to here.
   BYTES_CHUNK = 1_000
@@ -229,51 +223,64 @@ const
     request: "POST {\"a\":\n1}",
     reply: Reply(status: 200, content_type: "application/json", body: "{\n}"),
   )
-    ## Exchange malformed files start from; request and body span two lines each.
-  PIECES_BASE: array[Piece, string] = [
-    HEADER_EXCHANGE & "\n", "label documented shape\n", "request 13\n", "POST {\"a\":\n1}\n",
-    "status 200\n", "content-type application/json\n", "content-encoding \n", "location \n",
-    "body whole 3\n", "{\n}\n",
+    ## Exchange whose file random request and body hold; request and body span two lines each.
+  RUNES_LABEL = [
+    "a", "Z", " ", "\n", "\t", "\xC3\xA9", "\xE2\x80\xA6", "\xEF\xBF\xBD", "\xF0\x9F\x98\x80",
+    "\xF4\x8F\xBF\xBF",
   ]
-    ## File of `EXCHANGE_BASE`, piece by piece, as format names them.
-  LUT_PROBLEM_BY_PIECE: array[Piece, string] = [
-    "Exchange should open with `" & HEADER_EXCHANGE & "`", "Line should be `label <text>`",
-    "Line should be `request <bytes>`",
-    "Request should hold bytes its line counts, then line break",
-    "Line should be `status <code>`, one to three digits",
-    "Line should be `content-type <value>`", "Line should be `content-encoding <value>`",
-    "Line should be `location <value>`", "Line should be `body <whole|cut> <bytes>`",
-    "Body should hold bytes its line counts, then line break",
+    ## Characters well-formed random labels join: ASCII, line break and tab, then runes of two,
+    ##   three and four bytes, U+FFFD and U+10FFFF among them.
+  SAMPLES_BYTES = 300  ## Random bytes checksum meets its reference over.
+  SAMPLES_MESSAGES = 1_000  ## Random messages framed, which reader reads or refuses, never raising.
+  BYTES_MESSAGE_MAX = 48  ## Most bytes of random message.
+  KEYS_MESSAGE = ['\x08', '\x0A', '\x10', '\x12', '\x18', '\x1A']
+    ## Keys random messages draw: fields 1, 2 and 3, each of wire type varint and of length, so
+    ##   each key meets field of its wire type and of other.
+  POLYNOMIAL_CASTAGNOLI = 0x1EDC_6F41'u32
+    ## Polynomial of CRC-32C as RFC 3720 section 12.1 gives it, `x^32` left out.
+  POLYNOMIAL_REFERENCE = 0x82F6_3B78'u32
+    ## `POLYNOMIAL_CASTAGNOLI`, bits reversed, as reference divides lowest bit first; written
+    ##   apart from `exchanges.nim`.
+  COMMAND_READ = "\x01\xC0\x00\x00" & "\x00".repeat(12) & "\x14\x00\x00\x00\x00\x00\x04\x00" &
+      "\x00\x00\x00\x14\x00\x00\x00\x18\x28\x00\x00\x00" & "\x00".repeat(4) &
+      "\x02\x00\x00\x00" & "\x00".repeat(4)
+    ## SCSI Read (10) command PDU of RFC 3720 appendix B.4, 48 bytes.
+  CASES_DECODER = [
+    ("\x0A\x05abc", "Missing bytes: 5"), ("\x1A\x02\x08", "Missing bytes: 2"),
+    ("\x0F", "Invalid wire type 7"), ("\x1A\x01\x0F", "Invalid wire type 7"),
+    ("\x0B", "Unsupported wire type 3"), ("\x0C", "Unsupported wire type 4"),
+    ("\x00", "Invalid field number: 0"), ("\x08", "Cannot read varint from stream"),
+    ("\x0A\x80", "Cannot read varint from stream"),
   ]
-    ## What reader says each piece should be; `problemExpected` adds what piece holds.
-  PIECES_BLOCK = {Piece.RequestBytes, Piece.BodyBytes}
-    ## Pieces holding block of bytes, whose problem names bytes left rather than line.
-  PROBLEM_END = "Exchange should end after body"
-    ## What reader says at byte after body; problem adds text after body.
-  FAULTS_LINE = {Fault.Missing, Fault.Unbroken, Fault.Renamed, Fault.Doubled, Fault.Dropped}
-    ## Faults every line piece admits.
-  FAULTS_BLOCK = {Fault.Missing, Fault.Unbroken, Fault.Short, Fault.Long}
-    ## Faults every block piece admits.
-  LUT_FAULTS_BY_PIECE: array[Piece, set[Fault]] = [
-    FAULTS_LINE + {Fault.Valued}, FAULTS_LINE + {Fault.Unspaced},
-    FAULTS_LINE + {Fault.Unspaced, Fault.Valued}, FAULTS_BLOCK,
-    FAULTS_LINE + {Fault.Unspaced, Fault.Valued}, FAULTS_LINE + {Fault.Unspaced},
-    FAULTS_LINE + {Fault.Unspaced}, FAULTS_LINE + {Fault.Unspaced},
-    FAULTS_LINE + {Fault.Unspaced, Fault.Valued}, FAULTS_BLOCK + {Fault.Trailing},
+    ## Messages decoder refuses, beside error it gives: length past end of message, and of reply
+    ##   inside it; wire type no field takes, there and inside reply; group opening and closing,
+    ##   which proto3 holds none of; field number zero; varint cut after its key, and inside
+    ##   length.
+  LABELS_DECODER = ["\x80", "\xC0\xAF", "\xE2\x82", "\xFF", "\xFF".repeat(11)]
+    ## Labels decoder of Nim refuses as ill-formed UTF-8: continuation alone, overlong of two
+    ##   bytes, sequence cut, byte no sequence opens, and run of it.
+  LABELS_READER = [
+    "\xE0\x80\xAF", "\xF0\x80\x80\xAF", "\xED\xA0\x80", "\xF4\x90\x80\x80", "\xF5\x80\x80\x80",
   ]
-    ## Faults each piece admits: header holds no field name to unspace, and label and header
-    ##   values take any text, so no value of theirs is refused.
-  LUT_VALUES_BY_PIECE: array[Piece, seq[string]] = [
-    @["lojban_tagger exchange 2"], @[], @["", "x", "-1", "1 3", "1234567890"], @[],
-    @["", "+20", "2000", "2x0", "-20"], @[], @[], @[],
-    @[
-      "whole", "cut", "part 3", "whole x", "whole -3", "whole  3", "whole 3 3",
-      "whole 1234567890",
-    ],
-    @[],
-  ]
-    ## Values each piece refuses: whole line of header, else value after name of field.
-  COUNT_MALFORMED = 75  ## Malformed files: every piece with every fault and value it admits.
+    ## Labels decoder of Nim takes, which Table 3-7 of Unicode Standard refuses, as `protoc` does:
+    ##   overlong of three and of four bytes, surrogate, code point past U+10FFFF, and lead past
+    ##   `F4`.
+  STATUSES_PAST = [-1, 1_000, int(int32.high), int(int32.low)]
+    ## Statuses past three digits reader refuses: below zero, one past 999, and bounds of `int32`.
+  PATH_PROJECT = currentSourcePath().parentDir.parentDir.parentDir
+    ## Folder of project, found from this file.
+  PATH_EXAMPLE = PATH_PROJECT / "app" / "exchanges_example.txtpb"
+    ## Committed worked example: first hop of example `page`, in text format.
+  PATH_EXAMPLE_ENCODED = PATH_PROJECT / "build" / "exchanges_example.binpb"
+    ## Binary `protoc --encode` writes of worked example, under `build/` of project, which git
+    ##   ignores.
+  ENCODED_EXAMPLE = gorgeEx("mkdir -p " & quoteShell(PATH_EXAMPLE_ENCODED.parentDir) &
+      " && protoc --proto_path=" & quoteShell(PATH_EXAMPLE.parentDir) &
+      " --encode=lojban_tagger.Exchange " &
+      quoteShell(PATH_EXAMPLE.parentDir / "exchanges.proto") & " < " & quoteShell(PATH_EXAMPLE) &
+      " > " & quoteShell(PATH_EXAMPLE_ENCODED))
+    ## Output and exit code of `protoc --encode` of worked example, run at compile time, as STYLE.md
+    ##   section 4 gives; never binary itself, which `staticExec` cuts.
   URLS_PAGE = [
     ("https://docs.example.org/report", "https://docs.example.org/report"),
     ("https://docs.example.org/report?token=TOKEN", "https://docs.example.org/report"),
@@ -288,10 +295,9 @@ const
     ##   user and password, password holding `@`, and each with port and scheme in capitals.
   SECRETS_PAGE = ["alice", "hunter2", "TOKEN", "FRAGMENT"]
     ## Words user part, query and fragment of `URLS_PAGE` are spelled from; no problem holds one.
-  COUNT_MALFORMED_PAGES = 546
-    ## Malformed page files: each of `URLS_PAGE` with each piece, fault and value
-    ##   `COUNT_MALFORMED` counts, and with its URL line where header and label stand, both
-    ##   missing, and with copy of file after body.
+  LABELS_PAGE = ["recorded 2026-10-29", ""]
+    ## Labels of page exchanges secret law writes: as record mode writes one, and none, so message
+    ##   opens with request, which first line of file then holds where opening runs on.
   ANSWER_RAW = "HTTP/1.1 201 Created\r\ncontent-type: text/plain; charset=utf-8\r\n" &
       "content-encoding: identity\r\nlocation: /next\r\ncontent-length: 5\r\n" &
       "connection: close\r\n\r\nhello"
@@ -439,92 +445,155 @@ const
     ##   with `http://`, and with each of `CLOSINGS_VALUE`.
 
 
-func lineFirst(piece: Piece, pieces: array[Piece, string]): int =
-  ## Count first line of piece in `pieces`, from one.
-  result = 1
-  for before in Piece:
-    if before < piece: result += pieces[before].count('\n')
+static:
+  doAssert ENCODED_EXAMPLE.exitCode == 0,
+      "Worked example is refused; got `" & ENCODED_EXAMPLE.output & "`."
+
+const MESSAGE_EXAMPLE = staticRead(PATH_EXAMPLE_ENCODED)
+  ## Message worked example holds, as `protoc` encodes it: bytes writer and reader are held to.
 
 
-func problemExpected(piece: Piece, text: string, pieces: array[Piece, string]): string =
-  ## Build problem reader gives at piece of text, file of `pieces` with one fault: what piece
-  ##   should be, then what it holds made printable and cut at `RUNES_ANSWER_SHOWN`: line, running
-  ##   to end of text where no line break closes it, which problem then names; or bytes left from
-  ##   where block opens.
-  var opening = 0
-  for _ in 1..<lineFirst(piece, pieces): opening = text.find('\n', opening) + 1
-  if piece in PIECES_BLOCK:
-    return LUT_PROBLEM_BY_PIECE[piece] & "; got `" &
-        text[opening .. ^1].toPrintable(RUNES_ANSWER_SHOWN) & "`."
-  let
-    close = text.find('\n', opening)
-    stop = if close < 0: text.len else: close
-    broken = if close < 0 and stop > opening: ", then line break" else: ""
-  LUT_PROBLEM_BY_PIECE[piece] & broken & "; got `" &
-      text[opening..<stop].toPrintable(RUNES_ANSWER_SHOWN) & "`."
+func example(name: string): Example =
+  ## Find worked example of `tools/examples.nim` by name.
+  ##   Sibling of `example` in `test_suggester.nim`, since neither suite imports other (II.9).
+  for one in EXAMPLES:
+    if one.name == name: return one
+  raise newException(KeyError, "Worked example should be in `EXAMPLES`; got `" & name & "`.")
 
 
-func piecesPage(url: string): array[Piece, string] =
-  ## Build file of page exchange of `GET <url>`, piece by piece, as format names them: status
-  ##   200, and body spanning two lines, as body of `EXCHANGE_BASE` does.
-  let request = "GET " & url
-  [
-    HEADER_EXCHANGE & "\n", "label recorded 2026-10-29\n", "request " & $request.len & "\n",
-    request & "\n", "status 200\n", "content-type text/html\n", "content-encoding \n",
-    "location \n", "body whole 8\n", "<p>\n</p>\n",
-  ]
+func bytesCounted(first, last: int): string =
+  ## Build bytes from `first` to `last`, counting up or down by one.
+  if first <= last:
+    for code in first..last: result.add char(code)
+  else:
+    for code in countdown(first, last): result.add char(code)
 
 
-func casesMalformed(pieces: array[Piece, string], url = "", url_shown = ""): seq[Malformed] =
-  ## Build each of `pieces` with each fault, and each value, `LUT_FAULTS_BY_PIECE` and
-  ##   `LUT_VALUES_BY_PIECE` give it; reader should refuse at piece, or at next one where copy
-  ##   stands in its place.
-  ##   Problem echoes `url_shown` wherever text holds `url`: page URL request holds, and URL
-  ##     reader shows of it, user part, query and fragment dropped.
-  for piece in Piece:
-    var before, after: string
-    for other in Piece:
-      if other < piece: before.add pieces[other]
-      elif other > piece: after.add pieces[other]
-    let
-      own = pieces[piece]
-      space = own.find(' ')
-    for fault in LUT_FAULTS_BY_PIECE[piece]:
-      var (texts, at) = (newSeq[string](), piece)
-      case fault
-      of Fault.Missing: texts.add before
-      of Fault.Unbroken: texts.add before & own[0 ..< ^1]
-      of Fault.Renamed: texts.add before & own.capitalizeAscii & after
-      of Fault.Unspaced: texts.add before & own[0..<space] & own[space+1 .. ^1] & after
-      of Fault.Doubled:
-        texts.add before & own & own & after
-        at = succ(piece)
-      of Fault.Dropped: texts.add before & after
-      of Fault.Valued:
-        let name = if piece == Piece.Header: "" else: own[0..space]
-        for value in LUT_VALUES_BY_PIECE[piece]: texts.add before & name & value & "\n" & after
-      of Fault.Short, Fault.Long:
-        let
-          line_count = pieces[pred(piece)]
-          opening = before[0 ..< ^line_count.len] & line_count[0..line_count.rfind(' ')]
-          count = own.len - 1 + (if fault == Fault.Short: 1 else: -1)
-        texts.add opening & $count & "\n" & own & after
-      of Fault.Trailing: texts.add before & own & "x"
-      for text in texts:
-        let
-          shown = if url.len > 0: text.replace(url, url_shown) else: text
-          (line, problem) =
-            if fault == Fault.Trailing:
-              (lineFirst(piece, pieces) + own.count('\n'), PROBLEM_END & "; got `x`.")
-            else: (lineFirst(at, pieces), problemExpected(at, shown, pieces))
-        result.add Malformed(
-          piece: piece,
-          fault: fault,
-          at: at,
-          text: text,
-          line: line,
-          problem: problem,
-        )
+func checksumReference(bytes: string): uint32 =
+  ## Compute CRC-32C bit by bit, dividing by `POLYNOMIAL_REFERENCE` lowest bit first, as RFC 3720
+  ##   section 12.1 defines it: reference sharing no table with `checksum`.
+  var register = 0xFFFF_FFFF'u32
+  for character in bytes:
+    register = register xor uint32(ord(character))
+    for _ in 1..8:
+      register = (register shr 1) xor (if (register and 1) == 1: POLYNOMIAL_REFERENCE else: 0)
+  not register
+
+
+func toFixedReference(value: uint32): string =
+  ## Render value as four bytes, least significant first; written apart from `toFixed`.
+  for shift in countup(0, 24, 8): result.add char((value shr shift) and 0xFF)
+
+
+func readFixedReference(bytes: string, at: int): uint32 =
+  ## Read four bytes from `at`, least significant first; written apart from `readFixed`.
+  for i in 0..3: result = result or (uint32(ord(bytes[at+i])) shl (8 * i))
+
+
+func frameReference(message: string): string =
+  ## Frame message as exchange file holds it, built apart from `toBytes`: opening, length, and
+  ##   checksum of `checksumReference`, then message.
+  OPENING_EXCHANGE & toFixedReference(uint32(message.len)) &
+      toFixedReference(checksumReference(message)) & message
+
+
+func toVarint(value: uint64): string =
+  ## Render value as varint of protobuf: seven bits to byte, lowest first, high bit set on each
+  ##   byte but last.
+  var rest = value
+  while rest >= 0x80:
+    result.add char((rest and 0x7F) or 0x80)
+    rest = rest shr 7
+  result.add char(rest)
+
+
+func toFieldBytes(number: int, bytes: string): string =
+  ## Render field of wire type 2, length: key, length, then bytes.
+  toVarint(uint64(number shl 3 or 2)) & toVarint(uint64(bytes.len)) & bytes
+
+
+func toFieldVarint(number: int, value: int64): string =
+  ## Render field of wire type 0, varint: key, then value; negative one takes ten bytes, as
+  ##   protobuf writes `int32`.
+  toVarint(uint64(number shl 3)) & toVarint(cast[uint64](value))
+
+
+func part(at: int): Part =
+  ## Read part of exchange file holding byte `at`.
+  if at < AT_LENGTH: Part.Opening
+  elif at < AT_CHECKSUM: Part.Length
+  elif at < AT_MESSAGE: Part.Checksum
+  else: Part.Message
+
+
+func flipBit(bytes: string, at: int): string =
+  ## Change bit `at` of bytes, counted from lowest bit of first byte, as CRC-32C reads them.
+  result = bytes
+  result[at div 8] = char(ord(result[at div 8]) xor (1 shl (at mod 8)))
+
+
+func toEcho(text: string): string =
+  ## Show text as reader echoes it: each URL by scheme, host, port and path alone, wherever it
+  ##   stands (`dropSecretsText`), then made printable and cut at `RUNES_ANSWER_SHOWN`.
+  text.dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN)
+
+
+func problemOpening(bytes: string): string =
+  ## Build problem reader gives for file opening otherwise: first line file holds, line break
+  ##   included, as `toEcho` shows it.
+  let close = bytes.find('\n')
+  "Exchange should open with `lojban_tagger exchange 2\\u{A}`; got `" &
+      bytes[0 .. (if close < 0: bytes.high else: close)].toEcho & "`."
+
+
+func problemFrame(count: int): string =
+  ## Build problem reader gives for file holding `count` bytes after opening, fewer than frame.
+  "Exchange should hold 8 bytes of length and checksum after opening; got `" & $count & "`."
+
+
+func problemLength(named: uint32, held: int): string =
+  ## Build problem reader gives for message holding `held` bytes where length names other count.
+  "Message should hold `" & $named & "` bytes, as its length counts; got `" & $held & "`."
+
+
+func problemChecksum(named, held: uint32): string =
+  ## Build problem reader gives for message whose CRC-32C is `held` where frame names other.
+  "Message should hold checksum `" & named.toHex.toLowerAscii & "` its frame names; got `" &
+      held.toHex.toLowerAscii & "`."
+
+
+func problemMessage(error: string): string =
+  ## Build problem reader gives for message decoder refuses, naming its error.
+  "Message should decode as `lojban_tagger.Exchange`; got `" & error & "`."
+
+
+func problemLabel(label: string): string =
+  ## Build problem reader gives for label ill-formed by Table 3-7, as `toEcho` shows it.
+  "Label should be well-formed UTF-8; got `" & label.toEcho & "`."
+
+
+func problemStatus(status: int): string =
+  ## Build problem reader gives for status past three digits.
+  "Status should be from 0 to 999; got `" & $status & "`."
+
+
+func problemCut(bytes: string, count: int): string =
+  ## Build problem reader gives for first `count` bytes of whole file `bytes`: opening where cut
+  ##   falls before line break closing it, frame before message, else length.
+  if count < AT_LENGTH: problemOpening(bytes[0..<count])
+  elif count < AT_MESSAGE: problemFrame(count - AT_LENGTH)
+  else: problemLength(bytes.readFixedReference(AT_LENGTH), count - AT_MESSAGE)
+
+
+func problemChanged(bytes: string, at: int): string =
+  ## Build problem reader gives for file whose byte `at` alone changed, by part holding it;
+  ##   change within message shows as checksum message no longer holds.
+  case part(at)
+  of Part.Opening: problemOpening(bytes)
+  of Part.Length: problemLength(bytes.readFixedReference(AT_LENGTH), bytes.len - AT_MESSAGE)
+  of Part.Checksum, Part.Message:
+    problemChecksum(bytes.readFixedReference(AT_CHECKSUM),
+        checksumReference(bytes[AT_MESSAGE .. ^1]))
 
 
 func referencesDotted(): seq[string] =
@@ -575,32 +644,27 @@ func removeDotSegmentsReference(path: string): string =
       input = input[stop .. ^1]
 
 
-proc lineRandom(length_max: int): string =
-  ## Draw bytes of one line: empty one time in four, else any byte but line break.
+proc textRandom(length_max: int): string =
+  ## Draw bytes of header value: empty one time in four, else up to `length_max` of any byte.
   if rand(3) == 0: return ""
   result = newString(rand(1..length_max))
-  for character in result.mitems:
-    let code = rand(254)
-    character = char(if code >= ord('\n'): code + 1 else: code)
+  for character in result.mitems: character = char(rand(255))
 
 
 proc labelRandom(): string =
-  ## Draw label: one to three lines of `lineRandom`, each line break followed by up to two spaces
-  ##   or tabs, as folded header holds them.
-  result = lineRandom(40)
-  for _ in 1..rand(2):
-    result.add '\n'
-    for _ in 1..rand(2): result.add [' ', '\t'].sample
-    result.add lineRandom(40)
+  ## Draw label: well-formed one time in two, up to twenty of `RUNES_LABEL`, line breaks among
+  ##   them; else bytes of `textRandom`, mostly ill-formed.
+  if rand(1) == 0: return textRandom(40)
+  for _ in 1..rand(20): result.add RUNES_LABEL.sample
 
 
 proc bytesRandom(): string =
-  ## Draw bytes of request or body: empty, line breaks alone, file text of exchange, or up to
-  ##   `BYTES_SAMPLE_MAX` of any byte, line break one time in eight and last one time in four.
+  ## Draw bytes of request or body: empty, line breaks alone, bytes of other exchange file, or up
+  ##   to `BYTES_SAMPLE_MAX` of any byte, line break one time in eight and last one time in four.
   case rand(7)
   of 0: return ""
   of 1: return "\n".repeat(rand(1..3))
-  of 2: return EXCHANGE_BASE.toText
+  of 2: return EXCHANGE_BASE.toBytes
   else: discard
   result = newString(rand(1..BYTES_SAMPLE_MAX))
   for character in result.mitems: character = (if rand(7) == 0: '\n' else: char(rand(255)))
@@ -608,20 +672,27 @@ proc bytesRandom(): string =
 
 
 proc exchangeRandom(): Exchange =
-  ## Draw exchange: label of `labelRandom`, header values of any byte but line break, status of
-  ##   one to three digits, request and body of any bytes, cut half time.
+  ## Draw exchange: label of `labelRandom`, header values of `textRandom`, status of one to three
+  ##   digits, request and body of any bytes, cut half time.
   Exchange(
     label: labelRandom(),
     request: bytesRandom(),
     reply: Reply(
       status: rand(0..999),
-      content_type: lineRandom(80),
-      content_encoding: lineRandom(16),
-      location: lineRandom(200),
+      content_type: textRandom(80),
+      content_encoding: textRandom(16),
+      location: textRandom(200),
       body: bytesRandom(),
       is_cut: rand(1) == 0,
     ),
   )
+
+
+proc messageRandom(): string =
+  ## Draw message: up to `BYTES_MESSAGE_MAX` bytes, each key of `KEYS_MESSAGE` one time in two,
+  ##   else any byte.
+  for _ in 1..rand(BYTES_MESSAGE_MAX):
+    result.add (if rand(1) == 0: KEYS_MESSAGE.sample else: char(rand(255)))
 
 
 proc valueRandom(): string =
@@ -654,6 +725,19 @@ proc poolExchanges(): seq[Exchange] =
   ## Draw `SAMPLES_EXCHANGES` random exchanges into pool allocated once; caller seeds first.
   result = newSeqOfCap[Exchange](SAMPLES_EXCHANGES)
   for _ in 1..SAMPLES_EXCHANGES: result.add exchangeRandom()
+
+
+proc poolBytes(): seq[string] =
+  ## Draw `SAMPLES_BYTES` random bytes of `bytesRandom` into pool allocated once; caller seeds
+  ##   first.
+  result = newSeqOfCap[string](SAMPLES_BYTES)
+  for _ in 1..SAMPLES_BYTES: result.add bytesRandom()
+
+
+proc poolMessages(): seq[string] =
+  ## Draw `SAMPLES_MESSAGES` random messages into pool allocated once; caller seeds first.
+  result = newSeqOfCap[string](SAMPLES_MESSAGES)
+  for _ in 1..SAMPLES_MESSAGES: result.add messageRandom()
 
 
 proc poolValues(): seq[string] =
@@ -1237,84 +1321,240 @@ suite "Internal: Exchange":
     check passed >= FLOOR_CHANGED  # guard leaves enough requests holding byte to change
 
 
-  test "exchange reads back as written, request and body of any bytes, label on one line":
-    # Regression, found in review: `toText` wrote label holding line break, and status of two
-    #   digits, each of which `readExchange` refused.
+  test "checksum gives CRC-32C vectors of RFC 3720 appendix B.4, and meets reference bit by bit":
+    check checksum("123456789") == 0xE306_9283'u32  # check value of CRC-32C
+    check checksum("\x00".repeat(32)) == 0x8A91_36AA'u32  # B.4: 32 bytes of zeroes
+    check checksum("\xFF".repeat(32)) == 0x62A8_AB43'u32  # B.4: 32 bytes of ones
+    check checksum(bytesCounted(0x00, 0x1F)) == 0x46DD_794E'u32  # B.4: incrementing 00..1f
+    check checksum(bytesCounted(0x1F, 0x00)) == 0x113F_DB5C'u32  # B.4: decrementing 1f..00
+    check checksum(COMMAND_READ) == 0xD996_3A56'u32  # B.4: SCSI Read (10) command PDU
+    check checksum("") == 0'u32  # empty message: register inverted, then inverted back
+    check reverseBits(POLYNOMIAL_CASTAGNOLI) == POLYNOMIAL_REFERENCE  # 12.1: bits reversed
+    randomize(0)
+    let pool = poolBytes()
+    for bytes in served(pool):
+      check checksum(bytes) == checksumReference(bytes)  # domain: table steps as division does
+
+
+  test "each run of up to 32 bits, and each odd count of bits, changed within message is refused":
+    check (countSetBits(POLYNOMIAL_CASTAGNOLI) + 1) mod 2 == 0  # 18 terms, so `x + 1` divides
+    randomize(0)
+    let pool = poolExchanges()
+    var passed = 0
+    for exchange in served(pool):
+      let
+        bytes = exchange.toBytes
+        count_bits = 8 * (bytes.len - AT_MESSAGE)
+        held = checksumReference(bytes[AT_MESSAGE .. ^1])
+      if count_bits == 0: continue  # message empty, so it holds no bit to change
+      inc passed
+
+      # Change run: up to 32 bits from first changed to last, any between them.
+      let
+        start = 8 * AT_MESSAGE + rand(count_bits - 1)
+        span = rand(1..min(32, 8 * bytes.len - start))
+      var run = bytes.flipBit(start)
+      if span > 1: run = run.flipBit(start + span - 1)
+      for offset in 1 ..< span - 1:
+        if rand(1) == 0: run = run.flipBit(start + offset)
+      check checksumReference(run[AT_MESSAGE .. ^1]) != held  # domain: every run up to 32 bits
+      check run.readExchange.problem == problemChanged(run, AT_MESSAGE)  # refused at checksum
+
+      # Change odd count of bits, one to seven, anywhere in message.
+      var positions: seq[int]
+      let count_odd = [1, 3, 5, 7].sample
+      while positions.len < count_odd:
+        let position = 8 * AT_MESSAGE + rand(count_bits - 1)
+        if position notin positions: positions.add position
+      var odd = bytes
+      for position in positions: odd = odd.flipBit(position)
+      check checksumReference(odd[AT_MESSAGE .. ^1]) != held  # domain: every odd count of bits
+      check odd.readExchange.problem == problemChanged(odd, AT_MESSAGE)  # refused at checksum
+    check passed >= FLOOR_MESSAGE  # guard leaves enough messages holding bit to change
+
+
+  test "exchange reads back as written: request and reply of any bytes, label well-formed":
+    # Cases of regression of text format, found in review: label holding line break, and status
+    #   of two digits, which text reader refused; message of schema holds both as written.
     let
-      folded = Exchange(label: "a\nb", reply: Reply(status: 200)).toText.readExchange
-      short = Exchange(reply: Reply(status: 99)).toText.readExchange
-    check folded.is_read and folded.exchange.label == "a b"  # case as found: one line
+      folded = Exchange(label: "a\nb", reply: Reply(status: 200)).toBytes.readExchange
+      short = Exchange(reply: Reply(status: 99)).toBytes.readExchange
+    check folded.is_read and folded.exchange.label == "a\nb"  # case as found: line break kept
     check short.is_read and short.exchange.reply.status == 99  # case as found: two digits
     randomize(0)
     let pool = poolExchanges()
-    var count_folded = 0
+    var count_kept, count_repaired = 0
     for exchange in served(pool):
       let
-        text = exchange.toText
-        recorded = text.readExchange
-      check text.startsWith(HEADER_EXCHANGE & "\n")  # format and version open file
+        bytes = exchange.toBytes
+        recorded = bytes.readExchange
+        message = bytes[AT_MESSAGE .. ^1]
+      check bytes.startsWith(OPENING_EXCHANGE)  # opening names format and version
+      check bytes.readFixedReference(AT_LENGTH) == uint32(message.len)  # length counts message
+      check bytes.readFixedReference(AT_CHECKSUM) == checksumReference(message)  # its CRC-32C
       check recorded.is_read  # domain: file of any exchange reads
       if not recorded.is_read:
-        checkpoint $recorded.line & ": " & recorded.problem
+        checkpoint recorded.problem
         continue
       let back = recorded.exchange
       check back.request == exchange.request  # domain: request back, byte for byte
       check back.reply == exchange.reply  # domain: reply back, byte for byte
-      check '\n' notin back.label and back.toText == text  # domain: label as written, one line
-      if '\n' in exchange.label: inc count_folded
-      else: check back.label == exchange.label  # domain: label of one line back as it was
-    check count_folded >= FLOOR_FOLDED  # guard leaves enough labels holding line break
+      check back.label == repairEncoding(exchange.label).text  # domain: label well-formed
+      check back.toBytes == bytes  # domain: file written again holds same bytes
+      if back.label == exchange.label: inc count_kept else: inc count_repaired
+    check count_kept >= FLOOR_KEPT  # guard leaves enough labels well-formed, read as written
+    check count_repaired >= FLOOR_REPAIRED  # and enough ill-formed, read back repaired
     for status in 0..999:
       let
-        recorded = Exchange(reply: Reply(status: status)).toText.readExchange
+        recorded = Exchange(reply: Reply(status: status)).toBytes.readExchange
         named = $status & ": "
       check named & $recorded.is_read == named & "true"  # domain: one to three digits read
       if recorded.is_read:
         check recorded.exchange.reply.status == status  # domain: status back as written
 
 
-  test "malformed exchange is refused naming its first faulty piece, each piece with each fault":
-    check EXCHANGE_BASE.toText == PIECES_BASE.join  # file holds pieces in order format names
-    check EXCHANGE_BASE.toText.readExchange.is_read  # whole file reads, so fault alone refuses
-    # Regression, found in review: reader named line after faulty line it had read whole.
-    check readExchange("lojban_tagger exchange 1\nLabel x\n").line == 2  # case as found: was 3
-    check readExchange("Lojban_tagger exchange 1\n").line == 1  # case as found: was 2
-    # Regression, found in review: refusal named shape alone, so edited line, and carriage
-    #   return after status, stayed hidden.
+  test "writer gives bytes `protoc` encodes of committed example, and reader reads them back":
     let
-      labelled = readExchange(HEADER_EXCHANGE & "\nLabel secret-looking text\n")
-      returned = readExchange(PIECES_BASE[Piece.Header..Piece.RequestBytes].join & "status 200\r\n")
-    check not labelled.is_read and labelled.problem == "Line should be `label <text>`; got " &
-        "`Label secret-looking text`."  # case as found: review finding rules-3, 2026-10-29
-    check not returned.is_read and returned.problem == "Line should be `status <code>`, one " &
-        "to three digits; got `status 200\\u{D}`."  # case as found: carriage return shown
-    # Regression, found in recheck claims completeness-5, regressions-app-6 and rules-1,
-    #   2026-10-29: line piece that text ended before its line break echoed empty, though it held
-    #   text, and block echoed count of bytes left, so neither showed faulty bytes.
+      hop = example("page").toExchanges(Service.Claude)[0]  # first hop: redirect of page
+      written = hop.toBytes
+      recorded = frameReference(MESSAGE_EXAMPLE).readExchange
+    check written[AT_MESSAGE .. ^1] == MESSAGE_EXAMPLE  # writer encodes message as `protoc` does
+    check written == frameReference(MESSAGE_EXAMPLE)  # frame as reference lays it out
+    check recorded.is_read and recorded.exchange == hop  # reader reads bytes of `protoc` back
+
+
+  test "file opening otherwise is refused, echoing its first line: version 1, line ends rewritten":
     let
-      opened = readExchange(HEADER_EXCHANGE)
-      cut = readExchange(PIECES_BASE[Piece.Header..Piece.RequestBytes].join & "status 200")
-      counted = readExchange(HEADER_EXCHANGE & "\nlabel x\nrequest 12\nGET /page\n")
-    check opened.problem == "Exchange should open with `" & HEADER_EXCHANGE & "`, then line " &
-        "break; got `" & HEADER_EXCHANGE & "`."  # case as found: got ``, completeness-5
-    check cut.problem == "Line should be `status <code>`, one to three digits, then line " &
-        "break; got `status 200`."  # case as found: got ``, regressions-app-6
-    check counted.problem == "Request should hold bytes its line counts, then line break; " &
-        "got `GET /page\\u{A}`."  # case as found: got `10` bytes left, rules-1
-    let cases = casesMalformed(PIECES_BASE)
-    var (pieces, faults) = (default(set[Piece]), default(set[Fault]))
-    for malformed in cases:
+      file = frameReference(MESSAGE_EXAMPLE)
+      older = "lojban_tagger exchange 1\nlabel recorded 2026-10-29\nrequest 7\nGET /a\n"
+    check "".readExchange.problem == "Exchange should open with `lojban_tagger exchange " &
+        "2\\u{A}`; got ``."  # empty file, value visible as empty
+    check older.readExchange.problem == "Exchange should open with `lojban_tagger exchange " &
+        "2\\u{A}`; got `lojban_tagger exchange 1\\u{A}`."  # text format of version 1: first line
+    check file.replace("\n", "\r\n").readExchange.problem == "Exchange should open with " &
+        "`lojban_tagger exchange 2\\u{A}`; got `lojban_tagger exchange 2\\u{D}\\u{A}`."  # line ends
+    for text in ["{\"label\": \"x\"}", "Lojban_tagger exchange 2\n", "lojban_tagger exchange 2"]:
+      check text.readExchange.problem == problemOpening(text)  # JSON, capital, no line break
+
+
+  test "each cut of exchange file, and bytes appended, are refused naming part where file ends":
+    let
+      file = frameReference(MESSAGE_EXAMPLE)
+      length = uint32(file.len - AT_MESSAGE)
+    var parts: set[Part]
+    for count in 0..<file.len:
+      let named = $count & ": "
+      check named & file[0..<count].readExchange.problem ==
+          named & problemCut(file, count)  # domain: every cut of file, in part it ends in
+      parts.incl part(count)
+    check parts == {Part.low..Part.high}  # cut in each part
+    for appended in ["\x00", "\n", "x", "\xFF".repeat(4), file]:
+      check (file & appended).readExchange.problem ==
+          problemLength(length, file.len - AT_MESSAGE + appended.len)  # length counts fewer
+    randomize(0)
+    let pool = poolExchanges()
+    for exchange in served(pool):
       let
-        recorded = malformed.text.readExchange
-        named = $malformed.piece & " " & $malformed.fault & ": "
-      check not recorded.is_read  # refused
-      if recorded.is_read: continue
-      check named & recorded.problem == named & malformed.problem  # what faulty line should be
-      check named & $recorded.line == named & $malformed.line  # domain: faulty line, from one
-      pieces.incl malformed.piece
-      faults.incl malformed.fault
-    check cases.len == COUNT_MALFORMED  # every piece with every fault and value it admits
-    check pieces == {Piece.low..Piece.high} and faults == {Fault.low..Fault.high}  # exhaustive
+        bytes = exchange.toBytes
+        count = rand(bytes.len - 1)
+        appended = textRandom(8) & "x"
+      check bytes[0..<count].readExchange.problem == problemCut(bytes, count)  # domain: cut
+      check (bytes & appended).readExchange.problem == problemLength(bytes.readFixedReference(
+          AT_LENGTH), bytes.len - AT_MESSAGE + appended.len)  # domain: bytes appended
+
+
+  test "each change of one bit and of one byte of exchange file is refused, naming its part":
+    let file = frameReference(MESSAGE_EXAMPLE)
+    var parts: set[Part]
+    for at in 0 ..< 8 * file.len:
+      let
+        changed = file.flipBit(at)
+        named = $at & ": "
+      check named & changed.readExchange.problem ==
+          named & problemChanged(changed, at div 8)  # domain: every bit of file
+      parts.incl part(at div 8)
+    for at in 0..<file.len:
+      for code in 0..255:
+        if code == ord(file[at]): continue
+        var changed = file
+        changed[at] = char(code)
+        let named = $at & " " & $code & ": "
+        check named & changed.readExchange.problem ==
+            named & problemChanged(changed, at)  # domain: every byte, each other value
+    check parts == {Part.low..Part.high}  # change in each part
+    randomize(0)
+    let pool = poolExchanges()
+    for exchange in served(pool):
+      let
+        bytes = exchange.toBytes
+        at = rand(8 * bytes.len - 1)
+        changed = bytes.flipBit(at)
+      check changed.readExchange.problem == problemChanged(changed, at div 8)  # domain: bit
+
+
+  test "message frame takes is refused for each fault of decoder, label `protoc` refuses, status":
+    for (message, error) in CASES_DECODER:
+      let named = message.toHex & ": "
+      check named & frameReference(message).readExchange.problem ==
+          named & problemMessage(error)  # fault of decoder, named by its error
+    for label in LABELS_DECODER:
+      let named = label.toHex & ": "
+      check named & frameReference(toFieldBytes(1, label)).readExchange.problem ==
+          named & problemMessage("String not valid UTF-8")  # ill-formed, decoder refuses
+    for label in LABELS_READER:
+      let named = label.toHex & ": "
+      check named & frameReference(toFieldBytes(1, label)).readExchange.problem ==
+          named & problemLabel(label)  # ill-formed by Table 3-7, which decoder takes
+    for label in ["", "\xEF\xBF\xBD", "\xF4\x8F\xBF\xBF", "\xED\x9F\xBF", "\xEE\x80\x80"]:
+      let recorded = frameReference(toFieldBytes(1, label)).readExchange
+      check recorded.is_read and recorded.exchange.label == label  # well-formed, at each bound
+    for status in STATUSES_PAST:
+      check frameReference(toFieldBytes(3, toFieldVarint(1, status))).readExchange.problem ==
+          problemStatus(status)  # past three digits
+    let nines = frameReference(toFieldBytes(3, toFieldVarint(1, 999))).readExchange
+    check nines.is_read and nines.exchange.reply.status == 999  # three digits at bound
+
+
+  test "message holding field of newer version reads, field skipped, as older reader reads newer":
+    let
+      hop = example("page").toExchanges(Service.Claude)[0]
+      newer = MESSAGE_EXAMPLE & toFieldVarint(4, 1) & toFieldBytes(9, "x") &
+          toFieldBytes(3, toFieldVarint(7, 1))  # fields 4 and 9 of exchange, 7 of reply
+      mismatched = toFieldVarint(1, 1) & MESSAGE_EXAMPLE  # label as varint, as `protoc` skips it
+    for message in [newer, mismatched]:
+      let recorded = frameReference(message).readExchange
+      check recorded.is_read and recorded.exchange == hop  # unknown field skipped, rest read
+
+
+  test "random message frame takes is read or refused, never raising":
+    randomize(0)
+    let pool = poolMessages()
+    var count_read, count_refused = 0
+    for message in served(pool):
+      let recorded = frameReference(message).readExchange
+      if recorded.is_read:
+        inc count_read
+        continue
+      inc count_refused
+      check recorded.problem.endsWith("`.")  # domain: problem ends in value refused
+    check count_read >= FLOOR_DECODED  # guard leaves enough messages read
+    check count_refused >= FLOOR_UNDECODED  # and enough refused
+
+
+  test "echo shows each URL text names by scheme, host, port and path alone, wherever it stands":
+    for (url, shown) in URLS_PAGE:
+      for (before, after) in [
+        ("", ""), ("GET ", "\n"), ("a/b?c#d ", " e/f?g#h"), ("\x12\x2A", "\x1A\x05"),
+        ("x:y ", "\tz"), ("https://a.example/ ", ""),
+      ]:
+        let
+          shown_text = dropSecretsText(before & url & after)
+          named = (before & url & after).escape & ": "
+        check named & shown_text == named & before & shown & after  # domain: URL wherever it stands
+        check named & $SECRETS_PAGE.filterIt(it in shown_text) ==
+            named & "@[]"  # domain: no byte of user part, query or fragment
+        check dropSecretsText(shown_text) == shown_text  # domain: idempotent
+    check dropSecretsText("a/b?c#d e:f") == "a/b?c#d e:f"  # text naming no URL, kept as held
 
 
   test "refusal of malformed page exchange shows no user part, query or fragment of its URL":
@@ -1322,37 +1562,36 @@ suite "Internal: Exchange":
     #   echoed bytes left from where block opens, and page exchange keeps whole URL, so request
     #   counted one byte long gave `GET https://docs.example.org/report?token=SECRET-7f3a91c2…`.
     let
-      pieces = piecesPage("https://docs.example.org/report?token=SECRET-7f3a91c2")
-      found = readExchange(pieces[Piece.Header..Piece.Label].join & "request 58\n" &
-          pieces[Piece.RequestBytes..Piece.BodyBytes].join)
-    check found.problem == "Request should hold bytes its line counts, then line break; got " &
-        "`GET https://docs.example.org/report\\u{A}status 200\\u{A}content-type text/html\\u{A}" &
-        "content-en…`."  # case as found: echoed `?token=SECRET-7f3a91c2`
-    var count = 0
-    for (url, url_shown) in URLS_PAGE:
-      let pieces = piecesPage(url)
-      for malformed in casesMalformed(pieces, url, url_shown):
-        let
-          recorded = malformed.text.readExchange
-          named = url & " " & $malformed.piece & " " & $malformed.fault & ": "
-        inc count
-        check named & recorded.problem ==
-            named & malformed.problem  # domain: echo holds URL as `dropSecrets` keeps it
-        check named & $SECRETS_PAGE.filterIt(it in recorded.problem) ==
-            named & "@[]"  # domain: no byte of user part, query or fragment
-      for (text, place) in [
-        (pieces[Piece.RequestBytes..Piece.BodyBytes].join, "header"),
-        (pieces[Piece.Header] & pieces[Piece.RequestBytes..Piece.BodyBytes].join, "label"),
-        (pieces.join & pieces.join, "after body"),
-      ]:
-        let
-          recorded = text.readExchange
-          named = url & " " & place & ": "
-        inc count
-        check named & $recorded.is_read == named & "false"  # URL line stands at place, refused
-        check named & $SECRETS_PAGE.filterIt(it in recorded.problem) ==
-            named & "@[]"  # domain: no byte of user part, query or fragment, whatever line shows
-    check count == COUNT_MALFORMED_PAGES  # each URL with every piece, fault and value, and places
+      reply = Reply(status: 200, content_type: "text/html", body: "<p>\n</p>")
+      found = Exchange(
+        label: "recorded 2026-10-29",
+        request: "GET https://docs.example.org/report?token=SECRET-7f3a91c2",
+        reply: reply,
+      ).toBytes
+      lengthened = found[0..<AT_LENGTH] & toFixedReference(uint32(found.len - AT_MESSAGE + 1)) &
+          found[AT_CHECKSUM .. ^1]
+    check lengthened.readExchange.problem == problemLength(uint32(found.len - AT_MESSAGE + 1),
+        found.len - AT_MESSAGE)  # case as found: counts alone, never byte of request
+    for (url, shown) in URLS_PAGE:
+      check ("GET " & url & "\n").readExchange.problem == "Exchange should open with " &
+          "`lojban_tagger exchange 2\\u{A}`; got `GET " & shown & "\\u{A}`."  # request line first
+      check frameReference(toFieldBytes(1, url & " \xED\xA0\x80")).readExchange.problem ==
+          "Label should be well-formed UTF-8; got `" & shown & " \xEF\xBF\xBD\xEF\xBF\xBD" &
+          "\xEF\xBF\xBD`."  # label naming URL, ill-formed
+      for label in LABELS_PAGE:
+        let bytes = Exchange(label: label, request: "GET " & url, reply: reply).toBytes
+        var (problems, parts) = (newSeq[string](), default(set[Part]))
+        for count in 0..<bytes.len: problems.add bytes[0..<count].readExchange.problem
+        for at in 0 ..< 8 * bytes.len:
+          problems.add bytes.flipBit(at).readExchange.problem
+          parts.incl part(at div 8)
+        problems.add ("GET " & url & "\n" & bytes).readExchange.problem
+        problems.add frameReference(toFieldBytes(1, url & " \xED\xA0\x80")).readExchange.problem
+        let named = url & " `" & label & "`: "
+        check parts == {Part.low..Part.high}  # change in each part
+        for problem in problems:
+          check named & $SECRETS_PAGE.filterIt(it in problem) ==
+              named & "@[]"  # domain: no byte of user part, query or fragment, whatever fails
 
 
   test "refusal shows no user part, query or fragment of URL standing after other text in line":
@@ -2469,7 +2708,7 @@ suite "Internal: Send":
     if odd.is_replied:
       let
         exchange = Exchange(label: "recorded", request: "GET " & url, reply: odd.reply)
-        recorded = exchange.toText.readExchange
+        recorded = exchange.toBytes.readExchange
       check recorded.is_read and recorded.exchange == exchange  # case as found: reads back
     for fold in FOLDS:
       for count in 1..3:

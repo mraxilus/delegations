@@ -1,0 +1,34 @@
+// Schema of exchange file of `suggester`: message `exchanges.nim` writes and reads.
+//   File holds frame, then one `Exchange`: opening `lojban_tagger exchange 2` and line break,
+//     then length and CRC-32C of message, four bytes each, least significant first; reader
+//     checks all three before it decodes (`exchanges.nim`).
+//   Field numbers carry versions of format: field joins under new number, and leaves only with
+//     its number and name reserved (CONTRIBUTOR.md, Data).
+//   No field is `optional`: each defaults to zero, empty or false, as reply lacking header holds
+//     it. No enum: `is_cut` takes two values, which `bool` carries with no unknown one.
+//   Text tool writes is `string`, so well-formed UTF-8; bytes page, service or URL gave are
+//     `bytes`, kept as they came.
+
+syntax = "proto3";
+
+package lojban_tagger;
+
+// Define one request to service or page, and its reply, as exchange file keeps it.
+message Exchange {
+  // Origin: `recorded <date>`, or documented shape of reply; repaired to UTF-8 when written.
+  string label = 1;
+  // `GET <url>` of page, or `POST <endpoint>`, line break, then body of service; no credential.
+  bytes request = 2;
+  // Reply as read.
+  Reply reply = 3;
+}
+
+// Define one reply as read: status, headers kept, body up to its cap.
+message Reply {
+  int32 status = 1;  // Status code, from 0 to 999.
+  bytes content_type = 2;  // `Content-Type`; empty where absent.
+  bytes content_encoding = 3;  // `Content-Encoding`; empty where absent.
+  bytes location = 4;  // `Location`; empty where absent.
+  bytes body = 5;  // Body bytes as served, up to cap.
+  bool is_cut = 6;  // Body held more than cap, so rest stayed unread.
+}
