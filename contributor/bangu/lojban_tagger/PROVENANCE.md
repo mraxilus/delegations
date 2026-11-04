@@ -543,15 +543,108 @@ port. A URL that holds whitespace or a control character is refused. Verified by
 
 ## Record and replay
 
-**An exchange file is text of its own format until #789 ports it to Protocol Buffers.** It holds
-a label, the request, and the reply. The request and the body carry byte counts, so any bytes
-read back. Each refusal names the faulty line, and ends in what that line holds, with each URL cut
-to its scheme, host, port and path. Verified by `suites/test_exchanges.nim`.
+**An exchange file is a frame, then one message of Protocol Buffers.** The rule of data gives
+Protocol Buffers to data that one program writes and another reads (CONTRIBUTOR.md, Data).
+`tools/examples.nim` and `suggester` write exchange files, and `suggester` reads them. The schema
+is `app/exchanges.proto`, beside `app/exchanges.nim`, which owns the format. Nim writes and reads
+the message only through the types that `import_proto3` of `protobuf_serialization` generates.
+Verified by `suites/test_exchanges.nim`.
 
-The rule of data gives Protocol Buffers to data that one program writes and another reads
-(CONTRIBUTOR.md, Data). `tools/examples.nim` writes exchange files, and `suggester` reads them.
-The Architect ruled that exchange files follow the charter, and that a later pull request ports
-them, which #789 queues (D3 on #779).
+The generator names each type after its message, and leaves out the package. So its `Exchange`
+and `Reply` would clash with `Exchange` of `exchanges.nim` and `Reply` of `suggestions.nim`. The
+types live in `app/exchanges_schema.nim`, which `exchanges.nim` imports with `from
+./exchanges_schema import nil`. `toMessage` and `toExchange` convert each field between the two
+types.
+
+**The reader checks the frame before any byte of the message decodes.** A decoder of Protocol
+Buffers reads a message that is cut between two fields as a message with fewer fields. So the
+frame holds three parts, and the reader refuses the file at the first part that fails:
+
+1. The opening `lojban_tagger exchange 2` and a line break, which name the format and its version.
+2. The length of the message, in four bytes.
+3. The CRC-32C of the message, in four bytes.
+
+Both numbers put the least significant byte first, as Protocol Buffers writes `fixed32`. The
+message starts after these 33 bytes. Verified by `suites/test_exchanges.nim`, against a frame that
+the suite builds apart, over each cut and each changed bit or byte.
+
+The opening ends with a line break, so `head -n 1` prints it. A transfer that rewrites line ends
+also changes the opening, so the reader refuses the file there and shows the carriage return. The
+text format of version 1 opens with `lojban_tagger exchange 1`, so the reader refuses it at the
+opening too. Verified by `suites/test_exchanges.nim`.
+
+**The checksum is CRC-32C, the cyclic redundancy check of RFC 3720, section 12.1.** It detects
+each run of up to 32 changed bits in the message. Its polynomial has 18 terms, so `x + 1` divides
+it, and it detects each change of an odd count of bits too. The suite holds both laws over random
+files, and the vectors of appendix B.4 of RFC 3720. Verified by `suites/test_exchanges.nim`.
+Verified by hand with `gsutil hash -c` on 2026-11-04, for the vectors and the worked example.
+
+Rejected: CRC-32 of IEEE 802.3, whose polynomial has 15 terms, so `x + 1` does not divide it. So
+it gives no promise to detect each change of an odd count of bits. Verified by hand with Nim 2.4.0
+on 2026-11-04, which counted the terms of both polynomials.
+
+Rejected: SHA-256, which `sha256sum` checks by hand. The standard library has no SHA-256, and the
+checksum carries no key, so its strength buys nothing here. Rejected: FNV-1a 64 of `stamp`, a
+hash for names. It detects each change of one byte, but it makes no promise for a longer run. It
+would also tie the checksum to the name of the file.
+
+Cost: each file holds 33 bytes of frame, and a person reads it through `protoc`, past the frame.
+
+**The message holds each field of `Exchange`.** The label is a `string`, and Protocol Buffers
+holds a `string` as well-formed UTF-8 alone. `protoc` refuses a message whose `string` is
+ill-formed. So `toBytes` repairs the label by Table 3-7 of the Unicode Standard, and the reader
+refuses a label that this rule would repair. The decoder of `protobuf_serialization` takes a
+surrogate and a code point past U+10FFFF, so the reader checks the label itself. Verified by
+`suites/test_exchanges.nim`, over each kind of ill-formed label.
+
+Verified by hand with `protoc` 3.21.12 on 2026-11-04. It refuses each of those labels, and takes
+U+FFFD and U+10FFFF.
+
+The request and each field of the reply are `bytes`, so any bytes read back. The status reads
+from 0 to 999, the three digits of a status line, and `send` gives 0 to 599. No field is
+`optional`, since each field defaults to zero, empty or false. No enum exists, since `is_cut`
+takes two values, which a `bool` carries. Verified by `suites/test_exchanges.nim`.
+
+A field of a newer version is unknown to an older reader, so the decoder skips it. So an older
+reader reads a newer file, as the field numbers carry the versions of the format. Verified by
+`suites/test_exchanges.nim`.
+
+Cost: a label of ill-formed bytes reads back repaired. Record mode writes `recorded <date>`,
+which holds ASCII alone.
+
+**The writer agrees with `protoc` byte for byte.** `app/exchanges_example.txtpb` holds the first
+hop of the worked example `page` in text format. `protoc --decode` printed it from the file that
+`nim r tools/build.nim examples` writes. `test_exchanges.nim` encodes that file with `protoc
+--encode` into `build/` when it compiles, and checks the exit code of `protoc`. It then reads the
+bytes with `staticRead`, as STYLE.md section 4 gives.
+
+The writer gives the same bytes, and the reader reads them back as the exchange of the example.
+Verified by `suites/test_exchanges.nim`.
+
+Cost: `nim check` runs no `gorgeEx`, which then gives an empty output and exit code 0. So a check
+reads the binary that the last compile left in `build/`, and fails before any compile ran.
+Verified by hand with Nim 2.4.0 on 2026-11-04, with a command that exits 3.
+
+**A person reads an exchange file through `protoc`, past its frame.** From the folder of the
+project, this command prints the first hop of the example `page`:
+
+```sh
+tail -c +34 build/examples/390a130dbd59a40f.exchange |
+  protoc --decode=lojban_tagger.Exchange app/exchanges.proto
+```
+
+Verified by hand with `protoc` 3.21.12 on 2026-11-04, for each file that `examples` writes.
+
+**Each refusal names the part that fails, and ends in the value that it refuses.** That value is
+the first line of the file, a count of bytes, a checksum, an error of the decoder, a label or a
+status. It is never a byte of the request or the body. The first line and the label show each URL
+that they name by scheme, host, port and path alone, wherever it stands (`dropSecretsText`). So
+no user part, query or fragment reaches the report.
+
+Verified by `suites/test_exchanges.nim`, over each cut and each changed bit of page files whose
+URL holds secrets. One of those files has no label, so its message opens with the request. A
+changed line break of the opening then shows the URL after binary bytes. Cost: the query of a
+reference with no `//`, as of `mailto:`, shows whole.
 
 **The stamp, FNV-1a 64 of the request, names the file.** The request is the method and the URL
 of a page, or the method, the endpoint and the body of a service request. FNV-1a resists no
@@ -623,18 +716,56 @@ never the value. Verified by `suites/test_suggester.nim`.
 **One stub runs every suite as one program.** `tests/test_suites.nim` imports each file of
 `tests/suites/`, in the shape that STYLE.md section 6 gives. Each suite still runs alone. Suites
 that CLL covers carry the names of its chapters. The others open with `Internal:`, so the run
-shows where the authority stops. The stub compiles with `-d:ssl`, because the transport suite
-drives TLS against a test root that `openssl` makes for each run.
+shows where the authority stops.
+
+The stub compiles with `-d:ssl`, because the transport suite drives TLS against a test root that
+`openssl` makes for each run. The stub also needs `protoc` to compile, because the suite of
+exchanges encodes the worked example with it.
 
 ## Toolchain
 
 **The compiler is pinned exactly**: `requires "nim == 2.4.0"` in `lojban_tagger.nimble`, as every
-project of the repository pins it (D1 a on #775). The project needs the standard library alone,
-so it carries no lock. The verbs `lists` and `head` also need `lojban-common` and `sha256sum`,
-which the verb `system` declares. `suggester` and the stub compile with `-d:ssl`, so each needs
-`libssl3` when it starts. `suggester` checks hosts against `ca-certificates`, and the transport
-suite runs `openssl`, which `system` declares too. A system package carries no pin, so its version
-is what the machine has, as OpenSSL 3.0.13 is here.
+project of the repository pins it (D1 a on #775). The verbs `lists` and `head` also need
+`lojban-common` and `sha256sum`, which the verb `system` declares. `suggester` and the stub
+compile with `-d:ssl`, so each needs `libssl3` when it starts. `suggester` checks hosts against
+`ca-certificates`, and the transport suite runs `openssl`, which `system` declares too. The suite
+of exchanges runs `protoc` of `protobuf-compiler` when it compiles, and `system` declares it.
+
+A system package carries no pin, so its version is what the machine has. Here, OpenSSL is 3.0.13,
+and `protoc` is 3.21.12.
+
+**One package reads and writes exchange files, and Atlas pins it.** The project derives the
+morphology of lojban, which it exists to understand (Article II.8). Protocol Buffers are an
+external concern, and the rule of data names `protobuf_serialization`. Atlas pins it in
+`atlas.lock` with the six packages that it needs, and restores them under `dependencies/`, which
+git never keeps (Article XI.3). Each version below is the one that the nimble file of its package
+declares:
+
+- `protobuf_serialization` 0.6.2, at `a671c6d497c7028ed7390b2d5a80c7b62138c586` of
+  `https://github.com/status-im/nim-protobuf-serialization`, under Apache-2.0 or MIT.
+- `faststreams` 0.6.0, at `5bdef9939b483435a61aa91a6422c1a9852127b4` of
+  `https://github.com/status-im/nim-faststreams`, under Apache-2.0 or MIT.
+- `serialization` 0.5.5, at `937a65c19fc49a5f79e2ecd89094d367b6ca0e1b` of
+  `https://github.com/status-im/nim-serialization`, under Apache-2.0 or MIT.
+- `stew` 0.6.5, at `29c11c7264289cc4c423f0e0662effbc5fdc6f61` of
+  `https://github.com/status-im/nim-stew`, under Apache-2.0 or MIT.
+- `results` 0.5.1, at `df8113dda4c2d74d460a8fa98252b0b771bf1f27` of
+  `https://github.com/arnetheduck/nim-results`, under Apache-2.0 or MIT.
+- `unittest2` 0.3.0, at `19701632b4f287b3012a5e435a9d829b0f66c605` of
+  `https://github.com/status-im/nim-unittest2`, under MIT.
+- `npeg` 1.3.0, at `409f6796d0e880b3f0222c964d1da7de6e450811` of `https://github.com/zevv/npeg`,
+  under MIT.
+
+Status Research & Development GmbH holds the copyright of the first five packages. Zahary
+Karadjov and Ștefan Talpalaru hold that of `unittest2`, and Ico Doornekamp holds that of `npeg`.
+Each licence asks that each copy keeps its notice. The repository holds no copy, so it gives no
+notice here. A binary that ships, such as `binaries/suggester`, holds compiled code of these
+packages, so it must carry their notices. Verified by hand with Atlas 0.14.7 on 2026-11-04:
+`atlas changed` exits 0 against the lock, and the licence of each checkout says the above.
+
+The lock keeps each line of the nimble file as a JSON string, with its indent and its escaped
+quotes. So each line of the nimble file stays within 91 characters, and its copy fits the width
+of 100 columns.
 
 Nim 2.4.0 adds a check of the host name of a certificate to `std/asyncnet`. The async client of
 `std/httpclient` then checks the certificate against the host that it dials. `suggester` opens its
@@ -661,8 +792,9 @@ the compile of the stub at `constructRafsiByForm`, with `UnpackDefect`. Verified
 Each figure below comes from an Intel Xeon at 2.10 GHz with four cores. The runs of each pair of
 compilers alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine.
 The figures of `tagger` are from 2026-11-03, at `5b6b694a`, which holds no `suggester`. The
-release build of `suggester` and the suites are from 2026-11-04, at `4ea040ed`. Each other figure
-names its date, and comes from Nim 2.2.12.
+release build of `suggester` and the suites are from 2026-11-04, at `76f9c5a7`. Each of them
+names the same runs at `c1ba9c19` too, before the port of exchange files to Protocol Buffers.
+Each other figure names its date, and comes from Nim 2.2.12.
 
 - **Compile of the English index.** Each part of each lujvo line is found by binary search. The
   front end of `nim check app/tagger.nim` took 4.4 s and 4.1 s on 2.4.0, against 2.1 s and 2.5 s
@@ -671,12 +803,16 @@ names its date, and comes from Nim 2.2.12.
   trap, not a slower choice.
 - **Release build.** `nim c -f -d:release app/tagger.nim` took between 6.3 s and 6.7 s on 2.4.0,
   against between 4.7 s and 5.1 s on 2.2.12, over three runs each.
-- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 10.7 s
-  and 10.5 s on 2.4.0, against 7.8 s and 7.8 s on 2.2.12. The binary holds 2,515,656 bytes on
-  2.4.0, against 2,445,752 bytes on 2.2.12.
+- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 12.1 s
+  and 12.6 s on 2.4.0, against 10.2 s and 11.5 s on 2.2.12, from an empty cache. The binary holds
+  2,586,584 bytes on 2.4.0, against 2,516,680 bytes on 2.2.12. At `c1ba9c19`, the build took
+  12.3 s and 10.4 s on 2.4.0, against 8.8 s and 8.5 s on 2.2.12. Its binary held 2,515,600 bytes
+  on 2.4.0, against 2,445,752 bytes on 2.2.12. So the port adds 70,984 bytes on 2.4.0, and
+  70,928 bytes on 2.2.12.
 - **Suites.** `nim c -r -d:ssl -d:testing tests/test_suites.nim` compiled and ran every suite in
-  75.8 s and 74.0 s on 2.4.0, against 68.1 s and 65.6 s on 2.2.12. Each compiler ran it twice
-  from an empty cache. The suite of `suggester` builds its own binary inside that time.
+  88.7 s and 86.7 s on 2.4.0, against 86.0 s and 78.8 s on 2.2.12. Each compiler ran it twice
+  from an empty cache. The suite of `suggester` builds its own binary inside that time. At
+  `c1ba9c19`, the same runs took 88.3 s and 81.7 s on 2.4.0, against 75.8 s and 74.7 s on 2.2.12.
 - **Text given as tag.** A probe drew 200 random lujvo for each count of words, as `poolLujvo` of
   `suites/test_suggestions.nim` draws them, with seed 0. In release over two runs on 2026-10-31,
   `readTagGiven` took 7.5 µs and 7.2 µs for six words, and 30.0 µs and 28.5 µs for 18. To list
