@@ -11,7 +11,7 @@
 ##   |---------------------|-------------------------------------------------------------|
 ##
 ##   Copied as part of `lojban_tagger/src/lojban_tagger/tanru_units.nim` until #809 drops it
-##     (II.9); its `positions` and `isHoldingUnchanged`, which search reads, stay there alone.
+##     (II.9); its `positions` and `isHoldingUnchanged`, which search reads, have no copy here.
 ##   Cmavo binding next tanru unit: SE, as SE binds only following brivla or "equivalent unit"
 ##     (CLL 9.4); NAhE, close-binding on individual brivla (15.4); NU, whose rafsi modify next
 ##     tanru unit alone, as SE and NAhE rafsi do (12.12). Grammar puts SE and NAhE on one
