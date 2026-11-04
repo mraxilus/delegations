@@ -1355,6 +1355,21 @@ suite "Internal: Exchange":
     check count == COUNT_MALFORMED_PAGES  # each URL with every piece, fault and value, and places
 
 
+  test "refusal shows no user part, query or fragment of URL standing after other text in line":
+    # Regression, found in port of exchange files, 2026-11-04: echo dropped secrets of each line
+    #   as of one URL, so URL after `:` or `/` of its line kept its user part, as file opening
+    #   `a/b https://alice:hunter2@docs.example.org/report` echoed `alice:hunter2` whole.
+    let found = readExchange("a/b https://alice:hunter2@docs.example.org/report\n")
+    check not found.is_read and "hunter2" notin found.problem  # case as found: password shown
+    for (url, _) in URLS_PAGE:
+      for before in ["a/b ", "x:y ", "q?r ", "f#g ", "\x12\x2F\x3A"]:
+        let
+          problem = readExchange(before & url & "\nrest\n").problem
+          named = (before & url).escape & ": "
+        check named & $SECRETS_PAGE.filterIt(it in problem) ==
+            named & "@[]"  # domain: no byte of user part, query or fragment, after any text
+
+
   test "URL is one http or https URL with host and no whitespace":
     for (text, expected) in [
       ("http://example.org", true),
