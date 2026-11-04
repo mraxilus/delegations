@@ -102,8 +102,9 @@ an entry without each marked field does not compile.
 
 Cost: `mapIt` declares `var it`, so it does not compile over an entry, and the suites read fields
 by `collect` or a loop. Each seq of entries gives the warnings `UnsafeSetLen` and `UnsafeDefault`
-of Nim 2.2.12. `newSeq` of entries also gives `ProveInit`, which Nim says will become an error, so
-the suites use `newSeqOfCap`. Verified by hand with `nim check` of the stub on 2026-11-03.
+of Nim 2.2.12 and 2.4.0. `newSeq` of entries also gives `ProveInit`, which Nim says will become an
+error, so the suites use `newSeqOfCap`. Verified by hand with `nim check` of the stub on
+2026-11-03, and with a probe of `mapIt` and `newSeq` on both compilers on 2026-11-04.
 
 Rejected: the text files as they are, because the checker
 reads no `.txt`. Rejected: JSON, which the Architect asked to stop using by default, and which
@@ -409,8 +410,10 @@ The settings come from the environment on each run, as the index path does for `
 Verified by `suites/test_suggestions.nim`, against documented shapes alone.
 
 **JSON appears only on the wire of each service, which forces it.** An exchange file holds those
-bytes unchanged. The rule of data keeps JSON only where a tool forces it, and names no wire of an
-outside service. The issue #795 asks the curator to name that case.
+bytes unchanged. The rule of data keeps JSON on the wire of an outside service that speaks it alone
+(CONTRIBUTOR.md, Data). No exported routine takes or returns a `JsonNode`, so the compiler checks
+each field past `suggestions.nim`, which reads each reply. Verified by hand with `grep` over the
+source of the project, 2026-11-04.
 
 **`claude` asks for a fallback model on refusal.** The body sends `fallbacks: "default"` and its
 beta for each model but `claude-haiku-5-5`. The documentation says that a model with no fallback
@@ -463,11 +466,23 @@ loopback or private address, whose text then goes to the service. Verified by
 `suites/test_exchanges.nim` and `suites/test_suggester.nim`.
 
 **TLS checks the chain and the name of the host.** The context checks the chain against the roots
-of the machine, or the roots that `SSL_CERT_FILE` names. The async client of Nim checks no name,
-so `send` pins the host of the URL on the context before each request. Through a proxy, the
-tunnel to the host carries the same pin. Cost: sends that share a context run one at a time, as
-`suggester` runs them. Verified by `suites/test_exchanges.nim`, against a test root that
+of the machine, or the roots that `SSL_CERT_FILE` names. `send` pins the host of the URL on the
+context before each request, so the handshake refuses a leaf that names another host. Through a
+proxy, the tunnel to the host carries the same pin. Cost: sends that share a context run one at a
+time, as `suggester` runs them. Verified by `suites/test_exchanges.nim`, against a test root that
 `openssl` makes for each run.
+
+**An https host loses one closing dot before the client dials it.** A certificate names a host
+without the dot that closes an absolute name, and curl pins the name without it too. The async
+client of Nim 2.4.0 checks the certificate against the host that it dials, after the handshake.
+So `pinHost` and the dial both take the name without one closing dot. Of two closing dots, one
+stays, and no leaf names that host. Verified by `suites/test_exchanges.nim`, over each name that
+closes with one dot or two, and each leaf.
+
+Cost: the tunnel and `Host` name the absolute name without its dot, where curl keeps it. Verified
+by hand with Nim 2.4.0, 2026-11-04: a URL of `localhost.` gives a `Host` of `localhost` and the
+port. Verified by hand with curl 8.5.0, 2026-11-04: it takes a leaf that names `localhost` for
+`localhost.`, and its tunnel and `Host` keep the dot.
 
 **The key goes as Bearer to the endpoint alone.** It is a distinct type whose `$` stops the
 compile, so no report or exchange file can hold it. `suggester` passes it with the service request
@@ -623,8 +638,8 @@ the compile of the stub at `constructRafsiByForm`, with `UnpackDefect`. Verified
 Each figure below comes from an Intel Xeon at 2.10 GHz with four cores. The runs of each pair of
 compilers alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine.
 The figures of `tagger` and of the suites without TLS are from 2026-11-03, at `5b6b694a`, which
-holds no `suggester`. Each other figure names its date, and a figure that names no compiler comes
-from Nim 2.2.12.
+holds no `suggester`. The release build of `suggester` and the suites are from 2026-11-04, at
+`4ea040ed`. Each other figure names its date, and comes from Nim 2.2.12.
 
 - **Compile of the English index.** Each part of each lujvo line is found by binary search. The
   front end of `nim check app/tagger.nim` took 4.4 s and 4.1 s on 2.4.0, against 2.1 s and 2.5 s
@@ -636,14 +651,12 @@ from Nim 2.2.12.
 - **Suites without TLS.** `nim c -r -d:testing tests/test_suites.nim` compiled and ran every suite
   in 25.5 s and 24.1 s on 2.4.0, against 20.9 s and 20.5 s on 2.2.12. Each compiler ran it twice
   from an empty cache.
-- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 10.1 s
-  and 9.9 s over two runs on 2026-10-31, and the binary holds 2,445,816 bytes. In the same
-  session, `bf9c82d8`, before the tool suggested gismu alone, took 9.9 s and 10.0 s, and its
-  binary held 2,456,968 bytes.
+- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 10.7 s
+  and 10.5 s on 2.4.0, against 7.8 s and 7.8 s on 2.2.12. The binary holds 2,515,656 bytes on
+  2.4.0, against 2,445,752 bytes on 2.2.12.
 - **Suites.** `nim c -r -d:ssl -d:testing tests/test_suites.nim` compiled and ran every suite in
-  81.7 s and 79.6 s, over two runs from an empty cache on 2026-10-31. In the same session, the
-  suites of `bf9c82d8` took 83.0 s and 79.5 s. The suite of `suggester` builds its own binary
-  inside that time.
+  75.8 s and 74.0 s on 2.4.0, against 68.1 s and 65.6 s on 2.2.12. Each compiler ran it twice
+  from an empty cache. The suite of `suggester` builds its own binary inside that time.
 - **Text given as tag.** A probe drew 200 random lujvo for each count of words, as `poolLujvo` of
   `suites/test_suggestions.nim` draws them, with seed 0. In release over two runs on 2026-10-31,
   `readTagGiven` took 7.5 µs and 7.2 µs for six words, and 30.0 µs and 28.5 µs for 18. To list
