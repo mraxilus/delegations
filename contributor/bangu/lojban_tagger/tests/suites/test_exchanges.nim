@@ -1545,6 +1545,26 @@ suite "Internal: Exchange":
       check url.proxy(environment) == expected  # variable as curl picks it, bypass, then scheme
 
 
+  test "proxy choice reads host without its one closing dot, as dial does and curl bypass does":
+    # Regression, found in review of #779, 2026-11-04: `https://localhost./v1` went through
+    #   proxy, whose tunnel then named `localhost`, though loopback always goes direct.
+    let
+      proxied = ("https_proxy", "http://lower.example:3128")
+      plain = ("http_proxy", "http://plain.example:3128")
+      bypass = ("no_proxy", "example.org")
+    check "https://localhost./v1".proxy(@[proxied]) ==
+        none(string)  # case as found: was `some("http://lower.example:3128")`
+    for scheme in ["https", "http"]:
+      for host in ["localhost.", "LocalHost.", "127.0.0.1.", "api.example.org.", "example.org."]:
+        let url = scheme & "://" & host & "/v1"
+        check url & " " & $url.proxy(@[proxied, plain, bypass]) ==
+            url & " none(string)"  # domain: loopback and bypass read host without dot
+      for host in ["localhost..", "api.example.org..", "other.org."]:
+        let url = scheme & "://" & host & "/v1"
+        check url & " " & $url.proxy(@[proxied, plain, bypass]).isSome ==
+            url & " true"  # domain: one dot alone dropped, and other host still proxied
+
+
   test "proxy value naming no port takes 1080, as curl assumes, whatever else value holds":
     # Regression, found in recheck of transport, 2026-10-29: header says proxy follows curl, which
     #   assumes port 1080 where value names none, yet client dialed 80 for such value.
