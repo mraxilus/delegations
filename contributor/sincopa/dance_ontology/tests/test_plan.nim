@@ -93,6 +93,8 @@ proc plainCost(weighing: Weighing, plan: Plan): float =
     let (one, two) = (problem.links[0].ends[0], problem.links[1].ends[0])
     result += problem.style.gather * distance(placed.arms[armIndex(one.body, one.arm)].join,
                                               placed.arms[armIndex(two.body, two.arm)].join)^2
+  if problem.straight.isSome and abs(weighing.wind) > HOOP_FROM:
+    result += HOOP * max(0.0, problem.straightOver(placed) + HOOP_ROOM)^2
 
 
 
@@ -485,6 +487,8 @@ suite "Internal: Planner's cost":
     ##     threshold, with mask or leaps not put back after step, with arm placed one link
     ##     too late, with waist's ease not reckoned in body's step, and with trunk's pairs
     ##     left out of body's step, measured 2026-10-04.
+    ##   Two-hand holds name swan's straight pair, and wind runs to swan's turn and half, so
+    ##     hoop is weighed past whole turn too (`plan.Problem.straight`).
     var generator = initRand(20261004)
     const same_name = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
                         Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
@@ -493,12 +497,13 @@ suite "Internal: Planner's cost":
         for style in [STYLES[0], STYLES[13]]:
           var problem = initProblem(HUMAN, Band.Crown, links, is_away)
           problem.style = style
+          if links.len == 2: problem.straight = some(Arm.Left)
           (problem.lower, problem.upper) = bandAt(HUMAN, Band.Crown, 0.3, 1.0, is_away, style.room)
           let
             bounds = initBounds(HUMAN, style.margin, links)
             moving = movedPairs(HUMAN, problem)
           for sample in 0 ..< SAMPLES div 8:
-            let wind = generator.rand(-1.0..1.0)
+            let wind = generator.rand(-1.5..1.5)
             var weighing = Weighing(problem: problem, wind: wind,
                                     last: randomPlan(HUMAN, generator),
                                     weight: [1e3, 1e5, 1e7][sample mod 3],

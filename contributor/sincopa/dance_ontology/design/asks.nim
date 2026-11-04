@@ -15,7 +15,7 @@ import ../simulation/[body, hold]
 import ../src/dance_ontology/[diagram, frame]
 import ../src/dance_ontology/draw/terms
 from ../src/dance_ontology/draw/pose import About
-from ../src/dance_ontology/draw/route import overArm
+from ../src/dance_ontology/draw/route import isSwanFaceToBack, overArm, straightArm
 from ../src/dance_ontology/rotation import HalfTurns
 import ./parts
 
@@ -32,6 +32,9 @@ type StillAsk* = object  ## One still card, as simulation is asked it.
                   ## card that draws same picture turned either way fixes neither.
   over*: Option[body.Arm]  ## Lead's arm card lays over at lead's crossing, or none: still
                            ## holds only where pose lays it so (`walk.standsAt`).
+  straight*: Option[body.Arm]
+    ## Lead's arm swan's card draws straight through other's hoop, or none: still holds only
+    ##   where pose winds hoop so, and plan draws it there (`walk.standsAt`, `plan`).
 
 
 func toBodySimulation*(who: terms.Dancer): Body =
@@ -183,7 +186,8 @@ func stillAsks*(): seq[StillAsk] =
           over: none(body.Arm),
         )
   # `C` and `D`: two chains, seven positions each, half turn apart.  Each wound position names
-  # lead's arm on top at first crossing by its wind (`route.overArm`).
+  # lead's arm on top at first crossing by its wind (`route.overArm`).  Swan, each end of
+  # chain, names arm it draws straight too, as its facing sets it (`route.straightArm`).
   for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
     for i, wind in STEPS:
       result.add StillAsk(
@@ -194,4 +198,7 @@ func stillAsks*(): seq[StillAsk] =
         who: Body.Two,
         head: Body.Two,
         over: (if wind == 0.0: none(body.Arm) else: some(overArm(wind).toArm)),
+        straight: (if i in [STEPS.low, STEPS.high]:
+                     some(straightArm(wind, isSwanFaceToBack(arms)).toArm)
+                   else: none(body.Arm)),
       )
