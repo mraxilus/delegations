@@ -141,18 +141,25 @@ func overArm*(turns: float): Arm =
   if turns >= 0: Arm.Left else: Arm.Right
 
 
-func straightArm*(turns: float): Arm =
+func isSwanFaceToBack*(holds: Holds): bool =
+  ## Tell whether pair's swans stand Face-to-back (rule 31).
+  ##   Hand to hand, each lead hand in follow's hand of other name, rests Face-to-face, so its
+  ##     swan, turn and half from rest, faces partners same way.  Same-name pair rests
+  ##     Face-to-back, so its swan stands Face-to-face.  Hold of one hand has no swan.
+  holds[Arm.Left] == some(Arm.Right) and holds[Arm.Right] == some(Arm.Left)
+
+
+func straightArm*(turns: float, is_face_to_back: bool): Arm =
   ## Get which connection runs straight through middle of swan while
   ## other snakes round it (rule 31).
-  ##   Snake is arm that is **over** at first crossing, so straight one
-  ##     is other: Architect's reading, 2026-09-07.  Position is named for
-  ##     that same arm, so `Right over Left swan` has Right going round
-  ##     and Right on top at lead's own crossover.
-  ##   This file argued opposite until then -- that one on top dives only
-  ##     once and so stays visibly straight, while one diving twice has
-  ##     no centre left to be surrounded by anything.  Both draw, and
-  ##     drawing cannot tell which is danced, so ruling settles it.
-  other(overArm(turns))
+  ##   Loop sets which one, and facing at swan sets loop (Architect, 2026-10-06, issue
+  ##     #375).  Face-to-face, pair over at first crossing loops down round arm under, so
+  ##     arm under runs straight, as ruled 2026-10-05.  Face-to-back, pair under loops up
+  ##     round arm over, so arm over runs straight.
+  ##   Position is named for arm on top at lead's own crossover either way, so
+  ##     `Right over Left swan` has Right on top there; which of two goes round is facing's.
+  ##   Both shapes draw, and drawing cannot tell which is danced, so ruling settles it.
+  if is_face_to_back: overArm(turns) else: other(overArm(turns))
 
 
 func wayThrough*(turns: float): float =
@@ -167,7 +174,7 @@ func swanning*(turns: float): float =
   pow(wayThrough(turns), SWAN_EASE)
 
 
-func windShare*(turns: float, arm: Arm): float =
+func windShare*(turns: float, arm: Arm, is_face_to_back: bool): float =
   ## Measure how much of wound pair's swing this connection carries
   ## (rule 31).
   ##   Evenly to whole turn, so frame, cross and diamond are drawn
@@ -180,8 +187,9 @@ func windShare*(turns: float, arm: Arm): float =
   ##     pulls in against it first, then opens out into loops that go
   ##     *round* it -- and it is that order, in from tight and out only
   ##     at end, that keeps third crossing clear of hands all way along.
+  ##   Which of two is straight is facing at swan's (`straightArm`).
   let u = wayThrough(turns)
-  if arm == straightArm(turns): 1 - pow(u, SWAN_EASE)
+  if arm == straightArm(turns, is_face_to_back): 1 - pow(u, SWAN_EASE)
   else: 1 + (SWAN_DRAW_IN - 1) * pow(u, SWAN_DRAWS_AT) +
       (SWAN_SWING - SWAN_DRAW_IN) * pow(u, SWAN_OPENS_AT)
 

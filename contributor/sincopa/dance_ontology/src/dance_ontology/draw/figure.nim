@@ -269,7 +269,7 @@ func renderParts*(
             axisPair(put).across,
             degToRad(windMeasured(put, holds, arm).phi),
             2 * PI * twist[arm],
-            share = windShare(twist[arm], arm),
+            share = windShare(twist[arm], arm, holds.isSwanFaceToBack),
           )
         elif should_clear_marks:
           clearedReach(ends.a, ends.b, clearingMarks(put, ends.a, ends.b))
@@ -673,7 +673,7 @@ func animatedPoses*(
             axisPair(poses[i]).across,
             degToRad(windMeasured(poses[i], holds, arm).phi),
             degToRad(winds[arm][i]),
-            share = windShare(winds[arm][i] / 360, arm),
+            share = windShare(winds[arm][i] / 360, arm, holds.isSwanFaceToBack),
           )
       else:
         routes[arm] = frames.mapIt(straightReach(it.a, it.b))
