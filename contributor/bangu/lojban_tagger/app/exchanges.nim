@@ -47,7 +47,10 @@
 ##     each leaf and host. Empty host is refused, since empty pin checks no name, and so is host
 ##     opening with dot, since OpenSSL reads such name as any subdomain of rest, which would take
 ##     leaf naming other host. Absolute name pins without dot that closes it, as certificate
-##     names host without it, and curl pins it; SNI and tunnel keep it.
+##     names host without it, and curl pins it; client takes host without that dot too, since
+##     async client of Nim 2.4.0, unlike that of 2.2.12, checks certificate against host it
+##     dials, tunnels to and names for SNI.
+##     Cost: tunnel and `Host` name absolute name without its dot, where curl keeps it.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
 ##   Proxy URL should be `http://`, in any case, with host, port `isPort` takes or none, and
@@ -599,6 +602,11 @@ func readExchange*(text: string): Recorded =
 
 #[ Sending ]#
 
+func dropDotClosing(host: string): string =
+  ## Drop one dot closing name, as certificate names host without it; dot alone stays.
+  if host.len > 1 and host.endsWith('.'): host[0 ..< ^1] else: host
+
+
 when defined(ssl):
   proc SSL_CTX_get0_param(context: SslCtx): pointer {.cdecl, importc, dynlib: DLLSSLName.}
     ## Read verification parameters of context, which each connection it opens copies.
@@ -630,7 +638,7 @@ when defined(ssl):
       X509_VERIFY_PARAM_set1_ip_asc(parameters, host.cstring) == 1 and
           X509_VERIFY_PARAM_set1_host(parameters, nil, 0) == 1
     else:
-      let name = if host.len > 1 and host.endsWith('.'): host[0 ..< ^1] else: host
+      let name = host.dropDotClosing
       X509_VERIFY_PARAM_set1_host(parameters, name.cstring, csize_t(name.len)) == 1 and
           X509_VERIFY_PARAM_set1_ip(parameters, nil, 0) == 1
 
@@ -647,7 +655,7 @@ proc readBody(response: AsyncResponse, bytes_max: int): Future[(string, bool)] {
     body.add data
 
 
-proc exchange(client: AsyncHttpClient; url, body: string; fields: HttpHeaders; bytes_max: int):
+proc exchange(client: AsyncHttpClient, url: Uri, body: string, fields: HttpHeaders, bytes_max: int):
     Future[Reply] {.async.} =
   ## Send request, then read reply: status, headers kept and unfolded, body up to `bytes_max`.
   let
@@ -742,6 +750,8 @@ proc send*(
       if not context.pinHost(uri.hostname):
         return Sent(is_replied: false, problem: "Host should be name or address TLS can pin; " &
             "got `" & uri.hostname & "`.")
+  var target = uri  # Host client dials, tunnels, names for SNI and, from Nim 2.4.0, checks.
+  if uri.scheme == "https": target.hostname = uri.hostname.dropDotClosing  # As pin holds it.
   let proxy_used = if proxy_url.isSome: newProxy(proxy_url.get.lowercaseScheme) else: nil
   when defined(ssl):
     let client = newAsyncHttpClient(
@@ -757,7 +767,7 @@ proc send*(
   fields["user-agent"] = USER_AGENT
   fields["accept-encoding"] = "identity"
   if credential.isSome: fields["authorization"] = "Bearer " & string(credential.get)
-  let replying = client.exchange(url_sent, body, fields, bytes_max)
+  let replying = client.exchange(target, body, fields, bytes_max)
   await race(replying, deadline)
   client.close()
   if not replying.finished: return Sent(is_replied: false, problem: "deadline passed")
