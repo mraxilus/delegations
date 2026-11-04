@@ -49,7 +49,8 @@
 ##     leaf naming other host. Absolute name pins without dot that closes it, as certificate
 ##     names host without it, and curl pins it; client takes host without that dot too, since
 ##     async client of Nim 2.4.0, unlike that of 2.2.12, checks certificate against host it
-##     dials, tunnels to and names for SNI.
+##     dials, tunnels to and names for SNI. Address closing with dot is refused, since client
+##     would dial address where pin holds name.
 ##     Cost: tunnel and `Host` name absolute name without its dot, where curl keeps it.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
@@ -631,14 +632,16 @@ when defined(ssl):
     ##   or where OpenSSL refuses it.
     ##   Host `parseUri` gives holds no brackets, so IPv6 address reads as address.
     ##   Name closing with dot pins without that one dot, as certificate names host without it;
-    ##     dot alone opens with dot too, so no pin is ever empty.
+    ##     dot alone opens with dot too, so no pin is ever empty. Address closing with dot is
+    ##     refused: client dials address once dot drops, where name would pin.
     if host.len == 0 or host.startsWith('.'): return false
+    let name = host.dropDotClosing
+    if name != host and name.isIpAddress: return false
     let parameters = SSL_CTX_get0_param(context.context)
     if host.isIpAddress:
       X509_VERIFY_PARAM_set1_ip_asc(parameters, host.cstring) == 1 and
           X509_VERIFY_PARAM_set1_host(parameters, nil, 0) == 1
     else:
-      let name = host.dropDotClosing
       X509_VERIFY_PARAM_set1_host(parameters, name.cstring, csize_t(name.len)) == 1 and
           X509_VERIFY_PARAM_set1_ip(parameters, nil, 0) == 1
 
