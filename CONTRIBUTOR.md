@@ -367,8 +367,11 @@ each build that turns a record into binary.
   at once. An existing format in JSON, or in a form of its own, moves in the pull request that
   next changes its shape. From then on, `koch check-schemas` holds each change of it. A port with
   no change of shape buys no check of versions, so nothing moves before then.
-- **JSON stays only where a tool forces it**: npm, `tsc`, Atlas, Claude Code hooks, GitHub
-  Actions and `gh`. It also stays in a format whose shape has not changed since this rule.
+- **JSON stays only where a tool or an outside service forces it**: npm, `tsc`, Atlas, Claude
+  Code hooks, GitHub Actions and `gh`. It also stays in a format whose shape has not changed
+  since this rule. A service forces it where its API speaks JSON alone, and data on its wire
+  takes the form that the service gives. No `JsonNode` leaves the module that speaks to the
+  service, so the compiler checks each field past that module.
 
 ## Pages and assets
 
