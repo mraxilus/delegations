@@ -1,4 +1,5 @@
 ## Replicate lujvo of CLL chapters 3, 4 and 7 against `lujvo.nim`: join, split and score.
+##   Copied as `lojban_tagger/tests/suites/test_lujvo.nim` until #809 drops it (II.9).
 ##   Each lujvo CLL spells is joined from its rafsi and split back into those rafsi alone, so
 ##     one vector holds both directions; where CLL gives word without rafsi, split is inferred,
 ##     and comment says so.

@@ -1,6 +1,7 @@
 ## Hold converter of `tools/lists.nim` to its laws: each field read from its columns or fields,
 ##   odd lujvo line left out and counted, rendered module kept to 100 columns and read back, and
 ##   committed modules equal to committed lists rendered again.
+##   Copied as `lojban_tagger/tests/suites/test_lists.nim` until #809 drops it (II.9).
 ##   CLL covers no word list file, so suite is `Internal:`, tests named by behaviour (IX.10).
 ##   Sample lines are copied byte for byte from `gismu.txt` and `lujvo.txt` that `DIGEST_GISMU`
 ##     and `DIGEST_LUJVO` pin, carriage return removed as `readSource` removes it; doc of each

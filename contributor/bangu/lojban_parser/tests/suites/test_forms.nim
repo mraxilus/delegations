@@ -1,4 +1,5 @@
 ## Replicate shapes of brivla, gismu and rafsi of CLL chapter 4 against `forms.nim`.
+##   Copied as `lojban_tagger/tests/suites/test_forms.nim` until #809 drops it (II.9).
 ##   Every string of up to four letters over alphabet of 3.1, foreign letters added, is
 ##     enumerated, and so is every string of CVC/CV or CCVCV letters; other strings of five are
 ##     sampled, seeded, as one-letter mutations of listed gismu (Article IX.3).
