@@ -348,7 +348,9 @@ const
   ]
     ## Names closing with dot, beside name pin should hold: one dot dropped, as certificate names
     ##   host without it; of two, one kept, so no leaf names it.
-  COUNT_CLOSED = 16  ## Sends closing law makes: each of `HOSTS_CLOSED` with each leaf.
+  COUNT_CLOSED = 20
+    ## Sends closing law makes: each of `HOSTS_CLOSED` with each leaf through tunnel, and
+    ##   `localhost.` with each leaf directly.
   COUNT_ADDRESS_CLOSED = 8  ## Sends address law makes: each leaf, directly and through tunnel.
   COUNT_SECURED = 256
     ## Sends TLS law makes: each of eight cases of leaf and host after each, two sends to pair,
@@ -2604,7 +2606,22 @@ suite "Internal: Send":
           let target = host[0 ..< ^1] & ":" & $secured.port
           check named & $secured.connect.filterIt(it.startsWith("CONNECT ")) ==
               named & $(@["CONNECT " & target & " HTTP/1.1"])  # domain: tunnel drops one dot
-      check count == COUNT_CLOSED  # each name closing with dot, each leaf
+      for leaf in Leaf:  # Direct: dial resolves `localhost`, as hosts file names it
+        let
+          secured = authority.sendSecured(leaf, "localhost.")
+          is_named = "localhost" in LUT_HOSTS_BY_LEAF[leaf]
+          named = $leaf & " localhost. directly: "
+        inc count
+        check named & $secured.sent.is_replied ==
+            named & $is_named  # domain: dial drops one dot, as tunnel does
+        if is_named:
+          check named & $secured.head.values("host") ==
+              named & $(@["localhost:" & $secured.port])  # domain: `Host` drops it too
+      let plain = authority.sendSecured(Leaf.Name, "localhost.", should_tunnel = true,
+          scheme = "http")
+      check plain.connect.len > 0 and plain.connect[0] == "POST http://localhost.:" &
+          $plain.port & "/v1/messages HTTP/1.1"  # domain: http URL keeps host as written
+      check count == COUNT_CLOSED  # each name closing with dot, each leaf, each way
 
 
   test "address closing with dot is refused before any byte leaves, as client dials address":
