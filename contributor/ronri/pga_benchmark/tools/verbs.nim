@@ -35,8 +35,8 @@ import ../src/pga_benchmark/pages/[
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
-  Candidate, Toolchain, algebrasEvaluated, digestCache, digestEdits, binaryPristine,
-  suitesPristine, readLibrary, runEvaluation
+  RUNS_EVALUATION, Candidate, Toolchain, algebrasEvaluated, digestCache, digestEdits,
+  binaryPristine, suitesPristine, readLibrary, runEvaluation
 
 
 const
@@ -115,7 +115,6 @@ const
     ## What harness read of each page, in shape `koch drive` resolves.
   PATH_CONTROL = "tests" / "fixtures" / "control_render.json"
     ## Fixture control page of layout is built from; under `tests/`, as `render.nim` says why.
-  RUNS_EVALUATION = 5  ## Timed runs of each binary per evaluation, alternating.
   RUNS_BENCH = 5
     ## Timed runs of each algebra's bench, and of each swept dimension, alternating algebras, so
     ##   drift lands on all alike.
