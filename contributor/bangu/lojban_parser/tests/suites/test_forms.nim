@@ -24,7 +24,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, options, random, sequtils, strutils, tables, unittest]
+import std/[algorithm, options, random, sequtils, sets, strutils, tables, unittest]
 
 import ../../src/lojban_parser/[clusters, forms]
 import ../../src/lojban_parser/lists/gismu
@@ -36,7 +36,15 @@ const
   ORDER_VOWELS = "aeiou"  ## Five vowels V stands for, `y` excluded (4.1 rule 1).
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"  ## Letters of 3.1, apostrophe, comma and period.
   LETTERS_FOREIGN = "ABhqw"  ## Capitals, and `h`, `q`, `w` that 3.1 omits.
-  DIPHTHONGS = ["ai", "ei", "oi", "au"]  ## Vowel pairs VV stands for unbroken (4.1 rule 2).
+  DIPHTHONGS_NOTATION = ["ai", "ei", "oi", "au"]
+    ## Vowel pairs VV stands for unbroken (4.1 rule 2), restated apart from `forms.nim`.
+  GLIDES_ON = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
+    ## Ten on-glides of 3.4 table, which 4.2 adds for cmavo of VV form, restated.
+  ALPHABET_CMAVO = "'abceiouy"
+    ## Letters cmavo law enumerates over: five vowels, `y`, apostrophe, and two consonants, since
+    ##   4.2 treats every consonant alike.
+  LENGTH_CMAVO = 6  ## Longest string cmavo law enumerates, long enough for `ku'a'e` of 4.2.
+  FLOOR_CMAVO_SIMPLE = 590  ## Least lines of `cmavo.txt` holding one cmavo: 598 read.
   ROWS_SAKLI = [
     (Form.Cvc, "123", "sak"),
     (Form.Cvc, "124", "sal"),
@@ -88,7 +96,7 @@ func formRestated(text: string): Option[Form] =
   case text.notation
   of "CVC": some(Form.Cvc)
   of "CCV": (if is_initial: some(Form.Ccv) else: none(Form))
-  of "CVV": (if text[1..2] in DIPHTHONGS: some(Form.Cvv) else: none(Form))
+  of "CVV": (if text[1..2] in DIPHTHONGS_NOTATION: some(Form.Cvv) else: none(Form))
   of "CV'V": some(Form.Cvv)
   of "CVCC": (if is_medial: some(Form.Cvcc) else: none(Form))
   of "CCVC": (if is_initial: some(Form.Ccvc) else: none(Form))
@@ -218,6 +226,31 @@ proc drawMutated(words: seq[string]): seq[string] =
   for _ in 1..SAMPLES_MUTATION: result.add mutate(sample(words))
 
 
+func runsVowel(first: openArray[string], length_max: int): seq[string] =
+  ## Join vowel runs up to `length_max` letters: one nucleus of `first`, then each vowel or
+  ##   diphthong of 4.1 after apostrophe, built forward apart from `isCmavo`, which reads back.
+  var frontier = @first.filterIt(it.len <= length_max)
+  while frontier.len > 0:
+    result.add frontier
+    var longer: seq[string]
+    for run in frontier:
+      for nucleus in @ORDER_VOWELS.mapIt($it) & @DIPHTHONGS_NOTATION:
+        if run.len + 1 + nucleus.len <= length_max: longer.add run & "'" & nucleus
+    frontier = longer
+
+
+func cmavoGenerated(length_max: int): HashSet[string] =
+  ## Build every cmavo of 4.2 up to `length_max` letters over `ALPHABET_CMAVO`, part by part.
+  let nuclei = @ORDER_VOWELS.mapIt($it) & @DIPHTHONGS_NOTATION
+  for run in runsVowel(nuclei & @GLIDES_ON, length_max): result.incl run  # V, VV, on-glide
+  for consonant in ALPHABET_CMAVO:
+    if consonant notin ORDER_CONSONANTS: continue
+    for run in runsVowel(nuclei, length_max - 1): result.incl consonant & run  # CV, CVV
+    result.incl consonant & "y"  # letteral `Cy` (4.2, 17.2)
+  result.incl "y"  # cmavo `.y.` (4.2)
+  result.incl "y'y"  # letteral of apostrophe (17.2)
+
+
 iterator samples[T](pool: seq[T]): lent T =
   ## Serve each sample of preallocated pool, with no copy.
   for i in 0..<pool.len: yield pool[i]
@@ -246,6 +279,45 @@ suite "Chapter 4":
     for text in pool.samples:  # `SAMPLES_LONG` strings, seeded
       check text.form.isNone  # 4.4, gismu "always have five letters"
 
+
+  test "Section 4.2":
+    for text in ["a", "e", "i", "o", "u"]: check text.isCmavo  # 4.2, V-form; pause unwritten (3.3)
+    for text in ["ba", "ce", "di", "fo", "gu"]: check text.isCmavo  # 4.2, CV-form
+    for text in ["au", "ei", "ia", "o'u", "u'e"]: check text.isCmavo  # 4.2, VV-form
+    for text in ["ki'a", "pei", "mi'o", "coi", "cu'u"]: check text.isCmavo  # 4.2, CVV-form
+    check "y".isCmavo  # 4.2, cmavo `.y.`, pauses unwritten
+    for text in ["ku'a'e", "sau'e", "bai'ai"]: check text.isCmavo  # 4.2, experimental
+    check "ki'e'u'e".isCmavo  # 4.2, Example 2.4, "single cmavo", four vowels
+    for text in GLIDES_ON: check text.isCmavo  # 4.2, "ten additional diphthongs"
+    check sorted(DIPHTHONGS_CMAVO) == sorted(GLIDES_ON)  # 4.2, same ten as 3.4 table
+    for text in ["by", "cy", "dy", "zy", "y'y"]: check text.isCmavo  # 17.2, single cmavo of BY
+    check not "iseci'i".isCmavo  # 4.2, Example 2.1, compound `.i se ci'i`
+    check not "punaijecanai".isCmavo  # 4.2, Example 2.2, compound
+    check not "ki'e.u'e".isCmavo  # 4.2, Example 2.3, compound, pause before `.u'e`
+    check not "cy.ibu.abu".isCmavo  # 4.2, Example 2.5, compound
+    check not "da'amei".isCmavo  # 4.3, "must be compound cmavo"
+    check not "bla".isCmavo and not "klama".isCmavo  # 4.2, consonant pair marks no cmavo
+    check not "cia".isCmavo  # 3.4, on-glides only in words standing alone; constructed
+    check not "".isCmavo and not "'a".isCmavo and not "a'".isCmavo  # 3.3, apostrophe joins vowels
+    let generated = cmavoGenerated(LENGTH_CMAVO)
+    var count_cmavo = 0
+    for length in 0..LENGTH_CMAVO:
+      for text in texts(newSeqWith(length, ALPHABET_CMAVO)):  # 597871 strings, exhaustive
+        check text.isCmavo == (text in generated)  # 4.2, forms built part by part agree
+        if text.isCmavo: inc count_cmavo
+    check count_cmavo == generated.len  # conservation: every form built is one string read
+
+
+  test "Section 4.2 over cmavo list":
+    let lines = readLinesCmavo()
+    if lines.isNone: skip()  # `cmavo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      var count_simple = 0
+      for line in lines.get:  # every line of list, exhaustive
+        let bare = line.word.replace(".", "")  # 3.3, period writes pause, which form leaves out
+        check bare.isCmavo == not line.is_compound  # 4.2, one cmavo of form, else compound
+        if not line.is_compound: inc count_simple
+      check count_simple >= FLOOR_CMAVO_SIMPLE  # Article IX.3, guard leaves enough cmavo
 
   test "Section 4.3":
     check isBrivla("bisycla")  # 4.3, `sc` counted through `y`
@@ -331,7 +403,7 @@ suite "Chapter 4":
         if found.isSome: inc counts[found.get]
     check counts[Form.Ccv] == 48 * 5  # 4.6, CCV "only if" permissible initial pair
     check counts[Form.Ccvc] == 48 * 5 * 17  # 4.6, CCVC over 48 initial pairs of 4.1 rule 4
-    check sorted(DIPHTHONGS_RAFSI) == sorted(DIPHTHONGS)  # 4.6, "ai", "ei", "oi", "au"
+    check sorted(forms.DIPHTHONGS) == sorted(DIPHTHONGS_NOTATION)  # 4.6, "ai", "ei", "oi", "au"
     for (labelled, pattern, rafsi) in ROWS_SAKLI:
       check rafsiPattern("sakli", pattern) == rafsi  # 4.6, table for `sakli`
       check rafsi.form == some(labelled)  # 4.6, table for `sakli`

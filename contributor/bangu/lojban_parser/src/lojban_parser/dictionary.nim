@@ -4,7 +4,7 @@
 ##   | Code                     | Meaning                                                 |
 ##   |--------------------------|---------------------------------------------------------|
 ##   | Word                     | index of entry in `LIST_GISMU`: gismu, or cmavo         |
-##   | Kind                     | gismu (five letters, 4.4) or cmavo carrying rafsi       |
+##   | kind(w)                  | class of word: gismu (4.4), or cmavo carrying rafsi     |
 ##   | word(text)               | entry spelled `text`                                    |
 ##   | wordRafsi(text)          | word short rafsi `text` stands for (4.6)                |
 ##   | wordsStem(text)          | gismu whose 4-letter rafsi is `text` (4.6)              |
@@ -31,9 +31,6 @@ const COUNT_ENTRIES = LIST_GISMU.len  ## Number of entries in gismu list.
 type
   Word* = distinct range[0 .. COUNT_ENTRIES - 1]  ## Define index of entry in gismu list.
 
-  Kind* {.pure.} = enum  ## Define kind of listed word.
-    Gismu, Cmavo
-
 
 func `==`*(a, b: Word): bool {.borrow.}
   ## Compare words by index.
@@ -51,7 +48,7 @@ func `$`*(w: Word): string = LIST_GISMU[int(w)].word
   ## Render word as list spells it.
 
 func kind*(w: Word): Kind =
-  ## Read kind of word: gismu where it has shape of 4.4, cmavo otherwise.
+  ## Read class of word by its form: gismu where it has shape of 4.4, cmavo otherwise.
   if LIST_GISMU[int(w)].word.isGismu: Kind.Gismu else: Kind.Cmavo
 
 

@@ -5,9 +5,9 @@
 ##   |-----------|--------------------------------------------------------------------------|
 ##   | lists     | read `gismu.txt` lojban-common installs, check its digest against its    |
 ##   |           | pin, and write typed module under `src/`                                 |
-##   | head      | read `gismu.txt` and `lujvo.txt` again, compare each digest with its pin |
-##   |           | and rendered module with what is committed; exit 1 where any differs,    |
-##   |           | i.e. Debian moved list                                                   |
+##   | head      | read `gismu.txt`, `lujvo.txt` and `cmavo.txt` again, compare each digest |
+##   |           | with its pin, and rendered gismu module with what is committed; exit 1   |
+##   |           | where any differs, i.e. Debian moved list                                |
 ##   | system    | print packages `lists`, `head` and suites need, one per line             |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
@@ -16,7 +16,8 @@
 ##     render lujvo list too, until #809 (II.9).
 ##   `head` is verb CONTRIBUTOR.md gives check against outside reference that moves: package
 ##     can carry new list with no commit here, and no merge waits on it. It reads `lujvo.txt`
-##     for digest alone, since suites read that file as outside text and render nothing of it.
+##     and `cmavo.txt` for digest alone, since suites read them as outside texts and render
+##     nothing of them.
 ##   Rejected: reading lists at compile time from package directory, which would make every
 ##     build need package; committed gismu list serves every build, and `head` watches upstream.
 ##   Cost: driver runs from project directory, since every path here is relative to it.
@@ -62,14 +63,16 @@ proc writeLists(): int =
 
 
 proc compareLists(): int =
-  ## Compare both digests, and rendered gismu module with committed one; 1 where any differs.
+  ## Compare each digest, and rendered gismu module with committed one; 1 where any differs.
   let
     gismu = readSource("gismu.txt")
     lujvo = readSource("lujvo.txt")
+    cmavo = readSource("cmavo.txt")
     rendered = toModuleGismu(gismu.text.toEntriesGismu, gismu.digest)
   var count_differing = refuseDigests([
     ("gismu.txt", gismu.digest, DIGEST_GISMU),
     ("lujvo.txt", lujvo.digest, DIGEST_LUJVO),
+    ("cmavo.txt", cmavo.digest, DIGEST_CMAVO),
   ])
   if not fileExists(PATH_GISMU) or readFile(PATH_GISMU) != rendered:
     stderr.writeLine "Committed list differs from list rendered again; run `lists`; got `" &

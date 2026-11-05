@@ -10,6 +10,8 @@
 ##     letters alone; parts are kept in lojban notation alone, where each is letters, since
 ##     keywords name gismu by English, which parser does not hold.
 ##     Cost: line writing phrase for word, as `datkypi'u gairki'e`, stands in no domain.
+##   `cmavo.txt` writes cmavo in columns 1 to 11, period of pause kept (3.3), and selma'o in
+##     columns 12 to 20; `*` there marks compound, which reads as several cmavo.
 
 {.experimental: "strictFuncs".}
 
@@ -22,6 +24,10 @@ type
   LineLujvo* = object  ## Define one line of `lujvo.txt` whose word is lojban letters.
     word*: string  ## Lujvo as line spells it.
     parts*: seq[string]  ## Parts of tanru in lojban notation, in order; empty in English one.
+
+  LineCmavo* = object  ## Define one line of `cmavo.txt`: cmavo, or compound of several.
+    word*: string  ## Cmavo as line writes it, period of pause included.
+    is_compound*: bool  ## Selma'o column marks several cmavo written as one word (4.2).
 
 
 const LETTERS_LOJBAN = {'a' .. 'z', '\''}  ## Characters word of kept line holds.
@@ -53,3 +59,19 @@ proc readLinesLujvo*(): Option[seq[LineLujvo]] =
   let source = readSource("lujvo.txt")
   if source.digest != DIGEST_LUJVO: return
   some(source.text.toLinesLujvo)
+
+
+func toLinesCmavo*(text: string): seq[LineCmavo] =
+  ## Read every line of `cmavo.txt` after its header, in order of file.
+  for line in text.splitLines[1 .. ^1]:
+    if line.strip.len == 0: continue
+    let selmaho = line[min(11, line.len) ..< min(20, line.len)]
+    result.add LineCmavo(word: line[0 ..< min(11, line.len)].strip, is_compound: '*' in selmaho)
+
+
+proc readLinesCmavo*(): Option[seq[LineCmavo]] =
+  ## Read installed `cmavo.txt`; `none` where absent, or where digest left `DIGEST_CMAVO`.
+  if not fileExists(getEnv(KEY_LISTS, DIRECTORY_LISTS) / "cmavo.txt"): return
+  let source = readSource("cmavo.txt")
+  if source.digest != DIGEST_CMAVO: return
+  some(source.text.toLinesCmavo)

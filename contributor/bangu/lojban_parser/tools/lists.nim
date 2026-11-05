@@ -1,5 +1,5 @@
 ## Convert gismu list of Logical Language Group into typed Nim module project commits, and pin
-##   lujvo list suites read as outside text.
+##   lujvo and cmavo lists suites read as outside texts.
 ##   Reads `gismu.txt` as Debian package `lojban-common` installs it, and renders
 ##   `src/lojban_parser/lists/gismu.nim`; `build.nim` runs it.
 ##
@@ -11,7 +11,8 @@
 ##     under 100 columns; no field needs wrapping.
 ##   `lujvo.txt` is rendered nowhere: lujvo list gives meaning, never validity, so it stays with
 ##     `lojban_tagger`. Suites read installed file as outside text, pinned here by digest, and
-##     skip where it is absent or moved (Article IX.9).
+##     skip where it is absent or moved (Article IX.9). `cmavo.txt` is pinned so too, until #813
+##     renders word and selma'o of each cmavo.
 ##   Each source is pinned by SHA-256: Debian moving list makes `lists` refuse and `head`
 ##     report, never silent rewrite of committed list or silent read of other text.
 ##   Rendering is deterministic, so `head` compares rendered text byte for byte with what is
@@ -39,6 +40,9 @@ const
     ## SHA-256 of `gismu.txt` of `lojban-common` 1.5+dfsg.1-4, header dated 9/26/94.
   DIGEST_LUJVO* = "23c182f3534f4e33efbb4a3d92cd943427d5a6fdf3b061b07cd6bbc3d0e6b0cc"
     ## SHA-256 of `lujvo.txt` of `lojban-common` 1.5+dfsg.1-4; outside text suites read.
+  DIGEST_CMAVO* = "544414d61f3ff35dd2cf4e4f79f3c86bf9bb0568eb3403f57288057e16796402"
+    ## SHA-256 of `cmavo.txt` of `lojban-common` 1.5+dfsg.1-4, header dated 26 August 2002;
+    ##   outside text suites read.
   PATH_GISMU* = "src/lojban_parser/lists/gismu.nim"  ## Module gismu list renders to.
   NOTICE = [
     "Derived from material Logical Language Group placed in public domain; facts of",

@@ -58,7 +58,7 @@
 
 import std/[algorithm, options, sequtils]
 
-import ./[dictionary, tanru]
+import ./[dictionary, forms, tanru]
 
 
 type
