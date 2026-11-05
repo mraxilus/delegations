@@ -2722,9 +2722,31 @@ suiteInProc "Internal: Pages":
 
 
   test "spread is assumed until quiet evaluations give enough ratios":
-    let quiet = %*{"algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
+    let quiet = %*{"taken": {"runs": RUNS_EVALUATION},
+        "algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
     check spread([quiet]).count == 0  # too few ratios: spread assumed
     check spread([quiet]).low < 1.0 and spread([quiet]).high > 1.0  # around no change
+
+
+  test "spread reads evaluations over runs in use alone, and holds 99% of their ratios":
+    var
+      times = newJObject()  # 400 ratios, evenly from ×0.90 to ×1.10
+      times_few = newJObject()  # 100 ratios, each ×1.00
+    for i in 0 ..< 400: times["m" & $i] = %*[1.0, 1.0, 0.9 + 0.2 * float(i) / 399.0]
+    for i in 0 ..< 100: times_few["m" & $i] = %*[1.0, 1.0, 1.0]
+    let
+      current = %*{"taken": {"runs": RUNS_EVALUATION},
+          "algebras": {"rga4d": {"functions": {}, "times": times}}}
+      older = %*{"taken": {"runs": 5}, "algebras": {"cga5d": {"functions": {},
+          "times": {"a": [1.0, 1.0, 0.5], "b": [1.0, 1.0, 2.0]}}}}
+      few = %*{"taken": {"runs": RUNS_EVALUATION},
+          "algebras": {"rga4d": {"functions": {}, "times": times_few}}}
+      read = spread([current, older])
+    check read.count == 400  # evaluation over five runs left out
+    check read.low == times["m2"][2].getFloat and read.high == times["m397"][2].getFloat
+      # 99%: two ratios of 400 cut from each end
+    check "99% of 400 time ratios" in textSpread(read)
+    check spread([few]).count == 0  # 100 ratios cut none from each end: spread assumed
 
 
   test "every grid in shell and docket bounds its columns, so wide content scrolls in place":
