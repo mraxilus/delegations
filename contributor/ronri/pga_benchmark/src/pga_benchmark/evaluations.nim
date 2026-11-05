@@ -53,8 +53,9 @@ type
 
 
 const
-  RUNS_EVALUATION* = 5
+  RUNS_EVALUATION* = 41
     ## Timed runs of each binary per evaluation, alternating; ratio is median of paired ratios.
+    ##   Enough that run machine slows as whole seldom moves median (`Internal: Evaluations`).
   ENTRY_BENCH = "src/pga_benchmark/bench.nim"  ## Entry reaching every measurand.
   ENTRY_LIBRARY* = "import pga\n"
     ## Text of entry build claim compiles: library alone, so no module of harness sets peak.
