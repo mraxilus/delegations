@@ -1,5 +1,6 @@
 ## Replicate shapes of brivla, gismu and rafsi of CLL chapter 4 against `forms.nim`.
-##   Copied as `lojban_tagger/tests/suites/test_forms.nim` until #809 drops it (II.9).
+##   Sibling `lojban_tagger/tests/suites/test_forms.nim` holds earlier copy, over committed lujvo
+##     list and without cmavo forms, until #809 drops it (II.9).
 ##   Every string of up to four letters over alphabet of 3.1, foreign letters added, is
 ##     enumerated, and so is every string of CVC/CV or CCVCV letters; other strings of five are
 ##     sampled, seeded, as one-letter mutations of listed gismu (Article IX.3).
@@ -16,7 +17,7 @@
 ##     neither C nor V of 4.1, so no form holds it. Internal suite holds choice CLL does not
 ##     make: form reads canonical letters alone, and reader of `tanru.nim` refuses comma before
 ##     any form is asked.
-##   Cost: enumeration reads about million strings; suite alone runs in less than two seconds
+##   Cost: enumeration reads about 1.6 million strings; suite alone runs in about two seconds
 ##     on unoptimised build (measured, PROVENANCE.md, Figures).
 
 {.experimental: "strictFuncs".}

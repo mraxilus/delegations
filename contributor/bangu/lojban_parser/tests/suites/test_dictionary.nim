@@ -1,5 +1,6 @@
 ## Replicate rafsi and gismu CLL chapter 4 names against lookups of `dictionary.nim`.
-##   Copied as `lojban_tagger/tests/suites/test_dictionary.nim` until #809 drops it (II.9).
+##   Sibling `lojban_tagger/tests/suites/test_dictionary.nim` holds earlier copy, which reads
+##     English definitions, until #809 drops it (II.9).
 ##   Every entry, every short rafsi, and every string of short or 4-letter rafsi form is looked
 ##     up, so each lookup is held over its whole domain (Article IX.3); spellings outside list
 ##     are sampled, seeded, as one-letter mutations of listed words.
