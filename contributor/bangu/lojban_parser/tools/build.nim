@@ -3,10 +3,10 @@
 ##   |-----------|--------------------------------------------------------------------------|
 ##   | Command   | Effect                                                                   |
 ##   |-----------|--------------------------------------------------------------------------|
-##   | lists     | read `gismu.txt` lojban-common installs, check its digest against its    |
-##   |           | pin, and write typed module under `src/`                                 |
+##   | lists     | read `gismu.txt` and `cmavo.txt` lojban-common installs, check each      |
+##   |           | digest against its pin, and write both typed modules under `src/`        |
 ##   | head      | read `gismu.txt`, `lujvo.txt` and `cmavo.txt` again, compare each digest |
-##   |           | with its pin, and rendered gismu module with what is committed; exit 1   |
+##   |           | with its pin, and both rendered modules with what is committed; exit 1   |
 ##   |           | where any differs, i.e. Debian moved list                                |
 ##   | system    | print packages `lists`, `head` and suites need, one per line             |
 ##   |-----------|--------------------------------------------------------------------------|
@@ -16,10 +16,9 @@
 ##     render lujvo list too, until #809 (II.9).
 ##   `head` is verb CONTRIBUTOR.md gives check against outside reference that moves: package
 ##     can carry new list with no commit here, and no merge waits on it. It reads `lujvo.txt`
-##     and `cmavo.txt` for digest alone, since suites read them as outside texts and render
-##     nothing of them.
+##     for digest alone, since suites read it as outside text and render nothing of it.
 ##   Rejected: reading lists at compile time from package directory, which would make every
-##     build need package; committed gismu list serves every build, and `head` watches upstream.
+##     build need package; committed lists serve every build, and `head` watches upstream.
 ##   Cost: driver runs from project directory, since every path here is relative to it.
 
 {.experimental: "strictFuncs".}
@@ -54,29 +53,41 @@ proc refuseDigests(sources: openArray[(string, string, string)]): int =
 
 
 proc writeLists(): int =
-  ## Write gismu module where its digest matches its pin.
-  let gismu = readSource("gismu.txt")
-  if refuseDigests([("gismu.txt", gismu.digest, DIGEST_GISMU)]) > 0: return 1
+  ## Write both modules where both digests match their pins.
+  let
+    gismu = readSource("gismu.txt")
+    cmavo = readSource("cmavo.txt")
+  if refuseDigests([
+    ("gismu.txt", gismu.digest, DIGEST_GISMU),
+    ("cmavo.txt", cmavo.digest, DIGEST_CMAVO),
+  ]) > 0:
+    return 1
   createDir(PATH_GISMU.parentDir)
   writeFile(PATH_GISMU, toModuleGismu(gismu.text.toEntriesGismu, gismu.digest))
+  writeFile(PATH_CMAVO, toModuleCmavo(cmavo.text.toEntriesCmavo, cmavo.digest))
   echo PATH_GISMU
+  echo PATH_CMAVO
 
 
 proc compareLists(): int =
-  ## Compare each digest, and rendered gismu module with committed one; 1 where any differs.
+  ## Compare each digest, and both rendered modules with committed ones; 1 where any differs.
   let
     gismu = readSource("gismu.txt")
     lujvo = readSource("lujvo.txt")
     cmavo = readSource("cmavo.txt")
-    rendered = toModuleGismu(gismu.text.toEntriesGismu, gismu.digest)
+    rendered = [
+      (PATH_GISMU, toModuleGismu(gismu.text.toEntriesGismu, gismu.digest)),
+      (PATH_CMAVO, toModuleCmavo(cmavo.text.toEntriesCmavo, cmavo.digest)),
+    ]
   var count_differing = refuseDigests([
     ("gismu.txt", gismu.digest, DIGEST_GISMU),
     ("lujvo.txt", lujvo.digest, DIGEST_LUJVO),
     ("cmavo.txt", cmavo.digest, DIGEST_CMAVO),
   ])
-  if not fileExists(PATH_GISMU) or readFile(PATH_GISMU) != rendered:
+  for (path, text) in rendered:
+    if fileExists(path) and readFile(path) == text: continue
     stderr.writeLine "Committed list differs from list rendered again; run `lists`; got `" &
-        PATH_GISMU & "`."
+        path & "`."
     inc count_differing
   if count_differing > 0: 1 else: 0
 
