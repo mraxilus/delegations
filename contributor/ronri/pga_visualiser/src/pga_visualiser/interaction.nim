@@ -923,10 +923,10 @@ proc dollyAt*(
 ) =
   ## Zoom camera by `factor`, in whichever way its state reads; see `dollyAtCursor`.
   ##   Two states, as `driveHeld` has.
-  ##     Free flight comes in to object under pointer, at whatever depth it stands,
-  ##     floored at that object's drawn radius. Over nothing it does nothing: wheel refers
-  ##     to object, and with none there it has nothing to come in to (repository issue
-  ##     535).
+  ##     Free flight comes in to object nearest eye within fingertip's reach of pointer, at
+  ##     whatever depth it stands, floored at that object's drawn radius; see
+  ##     `picking.Rank.Eye`. Over nothing it does nothing: wheel refers to object, and with
+  ##     none there it has nothing to come in to (repository issue 535).
   ##       Not pointer's ray at separation, which each notch over empty sky scales toward floor.
   ##     Selection dollies about pivot, which stands on what is picked, wherever pointer
   ##     stands, so orbit stays on it; see `dollyAbout`.
@@ -988,9 +988,9 @@ proc dollyAtCursor*(
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
   ##   One statement of what wheel notch does, so both front-ends zoom same way.
-  ##   `picking.anchorZoomAt` decides what "over" means: object under cursor, and nothing
-  ##   else.
-  ##   Falls back to plain `dolly` where none answers, cursor on empty sky above horizon.
+  ##   `picking.anchorZoomAt` decides what "over" means: in free flight object nearest eye
+  ##   within fingertip's reach, with selection object nearest cursor, and nothing else.
+  ##   Over nothing, free flight does nothing; see `dollyAt`.
   ##   Where anchor is point or line, pivot then follows its depth along sight line; see
   ##   `camera.repivotToDepth` and `picking.AnchorZoom`.
   dollyAt(camera, scene, factor, scale, view_projection, width, height, interaction.cursor,
@@ -1482,8 +1482,9 @@ proc gripFingers*(
   reach_selection = 0.0;
 ): GripFingers =
   ## Take what each of two fingers holds, as second lands (repository issue 592).
-  ##   Place under finger at depth of object there, as wheel's anchor reads it: at any depth
-  ##   in free flight, inside selection's band with selection.
+  ##   Place under finger at depth of object there, as wheel's anchor reads it: nearest eye
+  ##   within fingertip's reach in free flight, nearest finger inside selection's band with
+  ##   selection.
   ##   Over nothing, selection holds point on sphere about pivot, as left drag's orbit does.
   ##   Free flight holds place at depth of other finger's object; where neither finger
   ##   stands on one, at depth of object shown nearest fingers' middle near pivot's depth,
