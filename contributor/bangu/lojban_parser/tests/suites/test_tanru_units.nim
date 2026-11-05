@@ -1,9 +1,11 @@
 ## Replicate what cmavo bind in CLL chapters 5, 7, 9, 12 and 15 against `tanru_units.nim`: which
 ##   word each cmavo binds, how conversions compose, and where lujvo leaves `ke` out.
-##   Copied as part of `lojban_tagger/tests/suites/test_tanru_units.nim` until #809 drops it (II.9).
+##   Sibling: part of `lojban_tagger/tests/suites/test_tanru_units.nim` holds earlier copy, over
+##     listed words alone, until #809 drops it (II.9).
 ##   Each assertion folds example CLL gives, or tanru of `ciska`, `vreji` and `gunka` where
-##     section gives none holding SE. Tanru is read as text, so no rafsi choice enters; where
-##     CLL gives lujvo, its words are those reader gives it.
+##     section gives none holding SE. Tanru is built from listed words joined by `+`, as suite
+##     writes it, so no rafsi choice enters; where CLL gives lujvo, its words are those reader
+##     gives it.
 ##   Laws enumerate small domains whole: every chain of SE up to `LENGTH_CHAIN`, every chain of
 ##     binding cmavo up to `LENGTH_GROUPED` before group of one, every tanru over `ALPHABET` up
 ##     to `LENGTH_TANRU` words; counts are named beside each claim.
@@ -17,7 +19,7 @@ when compileOption("profiler"):
 
 import std/[options, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[dictionary, tanru, tanru_units]
+import ../../src/lojban_parser/[dictionary, forms, tanru, tanru_units]
 
 
 const
@@ -38,14 +40,19 @@ const
     ## NU cmavo that list gives rafsi (11.13).
 
 
+func toTanru(text: string): Tanru =
+  ## Build tanru of listed words joined by `+`, as suite writes tanru.
+  Tanru(parts: text.split('+').mapIt(it.word.get.toPart))
+
+
 func folded(text: string): seq[TanruUnit] =
   ## Fold tanru text, words joined by `+`, into tanru units.
-  readTanru(text).get.tanruUnits
+  text.toTanru.tanruUnits
 
 
 func tanruUnit(text: string, links: seq[Link] = @[]): TanruUnit =
   ## Build tanru unit of word `text` bound by `links`, outer first.
-  TanruUnit(word: text.word.get, links: links)
+  TanruUnit(part: text.word.get.toPart, links: links)
 
 
 func conversion(places: Places): Link =
@@ -278,11 +285,27 @@ suite "Internal: Laws":
       for head in ["ciska", "vreji"]:
         inc count
         let
-          words = readTanru((prefix & head).join("+")).get.words
-          folding = words.tanruUnits
-        check folding.filterIt(it.word.kind == Kind.Gismu).mapIt(it.word) ==
-            words.filterIt(it.kind == Kind.Gismu)  # fold drops and moves no gismu
+          parts = toTanru((prefix & head).join("+")).parts
+          folding = parts.tanruUnits
+        check folding.filterIt(it.part.word.kind == Kind.Gismu).mapIt(it.part) ==
+            parts.filterIt(it.word.kind == Kind.Gismu)  # fold drops and moves no gismu
         check folding.allIt(it.links.allIt(it.operator.isNone or
             it.operator.get.kind == Kind.Cmavo))  # only cmavo bind
-        check folding[^1].word == head.word.get  # tanru ends in its head (4.11 step 2)
+        check folding[^1].part == head.word.get.toPart  # tanru ends in its head (4.11 step 2)
     check count == COUNT_TANRU  # every tanru over alphabet checked
+
+
+  test "part no list names binds nothing, and stands as tanru unit of its own":
+    let
+      se = "se".word.get.toPart
+      clo = Part(is_listed: false, letters: "clo")  # rafsi no list assigns; constructed
+      zbasu = "zbasu".word.get.toPart
+    check not clo.isBinding  # binding cmavo are words of list
+    check @[se, clo, zbasu].tanruUnits == @[
+      TanruUnit(part: clo, links: @[LINK_SE]),
+      TanruUnit(part: zbasu),
+    ]  # 9.4, `se` binds next tanru unit, whatever names it
+    check @[clo, se, zbasu].tanruUnits == @[
+      TanruUnit(part: clo),
+      TanruUnit(part: zbasu, links: @[LINK_SE]),
+    ]  # part no list names binds nothing

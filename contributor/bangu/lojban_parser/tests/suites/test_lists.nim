@@ -1,20 +1,17 @@
-## Hold converter of `tools/lists.nim` to its laws: each field read from its columns or fields,
-##   odd lujvo line left out and counted, rendered module kept to 100 columns and read back, and
-##   committed modules equal to committed lists rendered again.
-##   Copied as `lojban_tagger/tests/suites/test_lists.nim` until #809 drops it (II.9).
+## Hold converter of `tools/lists.nim` to its laws: word and rafsi read from their columns,
+##   rendered module kept to 100 columns and read back, and committed module equal to committed
+##   list rendered again. Hold reader of outside texts (`texts_outside.nim`) to lines it reads.
+##   Sibling `lojban_tagger/tests/suites/test_lists.nim` holds earlier copy, which holds English
+##     fields and lujvo converter too, until #809 drops it (II.9).
 ##   CLL covers no word list file, so suite is `Internal:`, tests named by behaviour (IX.10).
 ##   Sample lines are copied byte for byte from `gismu.txt` and `lujvo.txt` that `DIGEST_GISMU`
 ##     and `DIGEST_LUJVO` pin, carriage return removed as `readSource` removes it; doc of each
-##     names its line. CI installs no `lojban-common`, so no law needs it: one test compares
-##     with installed gismu list and one with lujvo list where present, and each skips with
-##     reason where absent (IX.9).
-##   Random entries hold words of one to twenty characters, `"` among them, one space apart;
-##     spaced texts hold runs of one to five spaces, at either end too.
-##     Corpus holds no backslash, which `toLiteral` leaves unescaped since lists hold none, and
-##     no word too long for any line, which no wrap at spaces can split (Article IX.4).
-##   Regression test of wrapping draws its spaced texts inside its loop, after one seeding.
-##   Other samples are drawn into pools allocated once, after one seeding per test, and served by
-##     `served`.
+##     names its line. One test compares committed list with installed gismu list; it skips
+##     with reason where `lojban-common` is absent or moved from its pin (IX.9). `system`
+##     declares package, so CI installs it.
+##   Random entries hold word of one to five letters and up to three rafsi of three or four, all
+##     drawn from lojban letters and apostrophe, as committed entries hold (Article IX.4).
+##   Samples are drawn into pool allocated once, after one seeding, and served by `served`.
 
 {.experimental: "strictFuncs".}
 
@@ -24,21 +21,19 @@ when compileOption("profiler"):
 import std/[options, os, random, sequtils, strutils, sugar, unittest]
 
 import ../../src/lojban_parser/entries
-import ../../src/lojban_parser/lists/[gismu, lujvo]
+import ../../src/lojban_parser/lists/gismu
 import ../../tools/lists
+import ./texts_outside
 
 
 const
   SEED = 1997  ## Seed of every random draw, year of CLL first edition.
   SAMPLES = 200  ## Random entries, and random orders of lines, each law is checked over.
   WIDTH = 100  ## Column limit of Article X.1, which rendered lines keep.
-  COUNT_LINES_LUJVO = 3846  ## Lines of `lujvo.txt` that `DIGEST_LUJVO` pins, none blank.
-  CHARACTERS_TEXT = "abcdefxyz0123'/()[]$;\""  ## Characters random words are spelled from.
-  LETTERS_LOJBAN = {'a'..'z', '\''}  ## Characters word of either list holds.
+  LETTERS_LOJBAN = {'a'..'z', '\''}  ## Characters word and rafsi of list hold.
+  LETTERS_RANDOM = "abcdefgijklmnoprstuvxyz'"  ## Characters random words and rafsi draw from.
   TEXT_MODULE_GISMU = staticRead("../../src/lojban_parser/lists/gismu.nim")
     ## Committed module of gismu list, as text.
-  TEXT_MODULE_LUJVO = staticRead("../../src/lojban_parser/lists/lujvo.nim")
-    ## Committed module of lujvo list, as text.
 
   LINE_HEADER =
       " 01436 Lojban                  gismu list  9/26/94        01436 Draft dictionary " &
@@ -90,85 +85,16 @@ const
     ## Sample lines of `gismu.txt` after header, in its order.
   TEXT_GISMU = LINE_HEADER & "\n" & LINES_GISMU.join("\n") & "\n"
     ## Sample of `gismu.txt`: header, then each sample line.
-  LINE_COA =
-      " co'a          co'a initiative                                interval event con" &
-      "tour: at the starting point of ...; initiative                   >|<    |      -" &
-      "         [beginning (= co'a(r)-)]; (cf. cfari, krasi, clira)"
-    ## Line 219 of `gismu.txt`: `co'a`, definition holding run of spaces.
-  LINE_COU =
-      " co'u          co'u cessative                                 interval event con" &
-      "tour: at the ending point of ... even if not done; cessative      |  >< |      -" &
-      "         [ending (= co'u(r)-)]; (cf. sisti, fanmo)"
-    ## Line 221 of `gismu.txt`: `co'u`, definition holding run of spaces.
-  LINE_SIRJI =
-      " sirji sir          straight                                  x1 is straight/dir" &
-      "ect/line segment/interval between x2 and x3; (adjective:)  x1 is linear        6" &
-      "f  13    (cf. korcu, linji, kruvi, kuspe)"
-    ## Line 1083 of `gismu.txt`: `sirji`, definition holding run of spaces.
-  LINE_ZAO =
-      " za'o          za'o superfective                              interval event con" &
-      "tour: continuing too long after natural end of ...; superfective  |     ---->  a" &
-      "t   0    (cf. dukse)"
-    ## Line 1397 of `gismu.txt`: `za'o`, definition holding run of spaces.
-  TEXT_SPACED = LINE_HEADER & "\n" & [LINE_COA, LINE_COU, LINE_SIRJI, LINE_ZAO].join("\n") & "\n"
-    ## Sample of `gismu.txt` whose definitions hold runs of spaces, header first.
   EXPECTED_GISMU = [
-    EntryGismu(
-      word: "bacru",
-      rafsi: @["ba'u"],
-      keyword: "utter",
-      hint: "",
-      definition: "x1 utters verbally/says/phonates/speaks [vocally makes sound] x2",
-    ),
-    EntryGismu(
-      word: "bakfu",
-      rafsi: @["baf"],
-      keyword: "bundle",
-      hint: "'pack'",
-      definition: "x1 is a bundle/package/cluster/clump/pack [shape/form] containing x2, " &
-          "held together by x3",
-    ),
-    EntryGismu(
-      word: "bi",
-      rafsi: @["biv"],
-      keyword: "8",
-      hint: "",
-      definition: "digit/number: 8 (digit)",
-    ),
-    EntryGismu(
-      word: "bloti",
-      rafsi: @["lot", "blo", "lo'i"],
-      keyword: "boat",
-      hint: "",
-      definition: "x1 is a boat/ship/vessel [vehicle] for carrying x2, propelled by x3",
-    ),
-    EntryGismu(
-      word: "cukta",
-      rafsi: @["cku"],
-      keyword: "book",
-      hint: "",
-      definition: "x1 is a book containing work x2 by author x3 for audience x4 preserved " &
-          "in medium x5",
-    ),
-    EntryGismu(
-      word: "datni",
-      rafsi: @[],
-      keyword: "data",
-      hint: "",
-      definition: "x1 (du'u) [fact/measurement] is data/information/statistic(s) about x2 " &
-          "gathered by method x3",
-    ),
-    EntryGismu(
-      word: "vreji",
-      rafsi: @["rej", "vei"],
-      keyword: "record",
-      hint: "",
-      definition: "x1 is a record of x2 (data/facts/du'u) about x3 (object/event) preserved " &
-          "in medium x4",
-    ),
+    EntryGismu(word: "bacru", rafsi: @["ba'u"]),
+    EntryGismu(word: "bakfu", rafsi: @["baf"]),
+    EntryGismu(word: "bi", rafsi: @["biv"]),
+    EntryGismu(word: "bloti", rafsi: @["lot", "blo", "lo'i"]),
+    EntryGismu(word: "cukta", rafsi: @["cku"]),
+    EntryGismu(word: "datni", rafsi: @[]),
+    EntryGismu(word: "vreji", rafsi: @["rej", "vei"]),
   ]
     ## Entry of each sample line, fields read off by hand from columns of `entries.nim`.
-
   LINE_BAARMOA = "ba'armo'a:barna+morna:pattern of marks:$morna1 $morna2 $=barna1 $morna3 $barna2"
     ## Line 1 of `lujvo.txt`: tanru in lojban.
   LINE_BADGAI =
@@ -205,47 +131,27 @@ const
       "nalsutydzukepkla:na'e+sutra+cadzu+,+klama:to go without walking fast:$klama1 " &
       "$klama2 $klama3 $klama4 $klama5"
     ## Line 2008 of `lujvo.txt`: `,` among parts.
-  LINES_LUJVO_KEPT = [LINE_BAARMOA, LINE_BADGAI, LINE_DATNYVEI, LINE_FEBJICLA]
-    ## Sample lines of `lujvo.txt` converter keeps.
-  LINES_LUJVO_LEFT = [
-    LINE_CIMNALSRA,
-    LINE_SEZYPEVDUA,
-    LINE_JGETERJOE,
-    LINE_CIERSMITAI,
-    LINE_PEVYSOASELTAI,
-    LINE_DATKYPIU,
-    LINE_JAIRTAI,
-    LINE_BLOTI_ZERLEA,
-    LINE_NALSUTYDZUKEPKLA,
+  LINES_LUJVO = [
+    LINE_BAARMOA, LINE_BADGAI, LINE_DATNYVEI, LINE_FEBJICLA, LINE_CIMNALSRA, LINE_SEZYPEVDUA,
+    LINE_JGETERJOE, LINE_CIERSMITAI, LINE_PEVYSOASELTAI, LINE_DATKYPIU, LINE_JAIRTAI,
+    LINE_BLOTI_ZERLEA, LINE_NALSUTYDZUKEPKLA,
   ]
-    ## Sample lines of `lujvo.txt` converter leaves out, one of each odd shape.
+    ## Sample lines of `lujvo.txt`, one of each shape outside text reader meets.
   EXPECTED_LUJVO = [
-    EntryLujvo(
-      word: "ba'armo'a",
-      notation: Notation.Lojban,
-      parts: @["barna", "morna"],
-      gloss: "pattern of marks",
-    ),
-    EntryLujvo(
-      word: "badgai",
-      notation: Notation.English,
-      parts: @["defend", "cover"],
-      gloss: "protective cover/ shield",
-    ),
-    EntryLujvo(
-      word: "datnyvei",
-      notation: Notation.Lojban,
-      parts: @["datni", "vreji"],
-      gloss: "file (incl. computers)",
-    ),
-    EntryLujvo(
-      word: "febjicla",
-      notation: Notation.English,
-      parts: @["boil", "stir"],
-      gloss: "roil",
-    ),
+    LineLujvo(word: "ba'armo'a", is_english: false, parts: @["barna", "morna"]),
+    LineLujvo(word: "badgai", is_english: true, parts: @["defend", "cover"]),
+    LineLujvo(word: "datnyvei", is_english: false, parts: @["datni", "vreji"]),
+    LineLujvo(word: "febjicla", is_english: true, parts: @["boil", "stir"]),
+    LineLujvo(word: "cimnalsra", is_english: false, parts: @[]),
+    LineLujvo(word: "sezypevdu'a", is_english: false, parts: @[]),
+    LineLujvo(word: "jgeterjo'e", is_english: true, parts: @["knot", "3rd-place-of", "joined"]),
+    LineLujvo(word: "ci'ersmitai", is_english: true, parts: @["system", "similar", "shape"]),
+    LineLujvo(word: "pevyso'aseltai", is_english: true, parts: @[]),
+    LineLujvo(word: "jairtai", is_english: false, parts: @[]),
+    LineLujvo(word: "nalsutydzukepkla", is_english: false, parts: @[]),
   ]
-    ## Entry of each line kept, fields read off by hand.
+    ## Line read from each sample line whose word is letters, read off by hand: parts where line
+    ##   writes two or more, lojban ones in letters alone.
 
 
 func entryGismu(word: string): Option[EntryGismu] =
@@ -254,82 +160,33 @@ func entryGismu(word: string): Option[EntryGismu] =
     if entry.word == word: return some(entry)
 
 
-func entryLujvo(word: string): Option[EntryLujvo] =
-  ## Find first committed entry of lujvo list spelled `word`.
-  for entry in LIST_LUJVO:
-    if entry.word == word: return some(entry)
-
-
-func textsField(module, head: string): seq[string] =
-  ## Read back each string field `head` opens in rendered module: pieces joined, escapes undone.
-  var
-    text = ""
-    is_inside = false
+func entriesRendered(module: string): seq[EntryGismu] =
+  ## Read back word and rafsi of each entry line rendered module holds, apart from converter.
   for line in module.splitLines:
-    if line.startsWith(head): (is_inside, text) = (true, "")
-    if not is_inside: continue
-    text.add line[line.find('"')+1..<line.rfind('"')].replace("\\\"", "\"")
-    if line.endsWith(" &"): continue
-    result.add text
-    is_inside = false
+    if not line.startsWith("  EntryGismu("): continue
+    let
+      quoted = line.split('"')
+      word = quoted[1]
+      rafsi = collect(for i in countup(3, quoted.high - 1, 2): quoted[i])
+    result.add EntryGismu(word: word, rafsi: rafsi)
 
 
-proc textRandom(count: int): string =
-  ## Draw text of `count` words, one to twenty characters each, one space apart.
-  var words: seq[string]
-  for _ in 1..count:
-    var word = ""
-    for _ in 1..rand(1..20): word.add CHARACTERS_TEXT.sample
-    words.add word
-  words.join(" ")
+proc textRandom(lengths: Slice[int]): string =
+  ## Draw text of lojban letters and apostrophe, its length in `lengths`.
+  for _ in 1..rand(lengths): result.add LETTERS_RANDOM.sample
 
 
-proc textSpaced(count: int): string =
-  ## Draw text of `count` words, one to five spaces apart, with spaces at either end sometimes.
-  for n in 0 ..< count:
-    if n > 0 or rand(3) == 0: result.add repeat(' ', rand(1..5))
-    for _ in 1..rand(1..20): result.add CHARACTERS_TEXT.sample
-  if rand(3) == 0: result.add repeat(' ', rand(1..5))
-
-
-proc entryGismuRandom(): EntryGismu =
-  ## Draw gismu entry whose fields are random text, definition long enough to wrap often.
-  EntryGismu(
-    word: textRandom(1),
-    rafsi: @[],
-    keyword: textRandom(rand(1..4)),
-    hint: textRandom(rand(0..4)),
-    definition: textRandom(rand(1..30)),
-  )
-
-
-proc entryLujvoRandom(): EntryLujvo =
-  ## Draw lujvo entry of two or three random parts, gloss long enough to wrap often.
-  EntryLujvo(
-    word: textRandom(1),
-    notation: (if rand(1) == 0: Notation.Lojban else: Notation.English),
-    parts: textRandom(rand(2..3)).split(' '),
-    gloss: textRandom(rand(1..30)),
-  )
-
-
-proc poolOrders(): seq[seq[string]] =
-  ## Draw `SAMPLES` shuffled orders of sample lines of `lujvo.txt`, two blank lines among them,
-  ##   into pool allocated once; caller seeds first.
-  result = newSeqOfCap[seq[string]](SAMPLES)
+proc poolEntries(): seq[seq[EntryGismu]] =
+  ## Draw `SAMPLES` cases of one to three random entries into pool allocated once; caller seeds.
+  result = newSeqOfCap[seq[EntryGismu]](SAMPLES)
   for _ in 1..SAMPLES:
-    var lines = @LINES_LUJVO_KEPT & @LINES_LUJVO_LEFT & @["", "  "]
-    lines.shuffle
-    result.add lines
-
-
-proc poolEntries(): seq[(seq[EntryGismu], seq[EntryLujvo])] =
-  ## Draw `SAMPLES` cases of two random gismu entries and two random lujvo entries into pool
-  ##   allocated once; caller seeds first.
-  result = newSeqOfCap[(seq[EntryGismu], seq[EntryLujvo])](SAMPLES)
-  for _ in 1..SAMPLES:
-    let gismu = @[entryGismuRandom(), entryGismuRandom()]
-    result.add (gismu, @[entryLujvoRandom(), entryLujvoRandom()])
+    var entries = newSeqOfCap[EntryGismu](3)
+    for _ in 1..rand(1..3):
+      entries.add EntryGismu(
+        word: textRandom(1..5),
+        rafsi: collect(for _ in 1..rand(0..3): textRandom(3..4)),
+      )
+    result.add entries
 
 
 iterator served[T](pool: seq[T]): lent T =
@@ -339,11 +196,11 @@ iterator served[T](pool: seq[T]): lent T =
 
 
 suite "Internal: Lists":
-  test "gismu converter reads each field from its columns, header skipped":
+  test "gismu converter reads word and rafsi from their columns, header skipped":
     let entries = TEXT_GISMU.toEntriesGismu
     check entries.len == EXPECTED_GISMU.len  # header skipped, one entry for each line after
     for i, expected in EXPECTED_GISMU:
-      check entries[i] == expected  # every field from its columns of `entries.nim`, trimmed
+      check entries[i] == expected  # word and rafsi from columns of `entries.nim`, trimmed
       check entryGismu(expected.word) == some(expected)  # sample agrees with committed list
     for mask in 0..<(1 shl LINES_GISMU.len):  # every subset of sample lines, exhaustive
       var (lines, expected) = (@[LINE_HEADER], newSeqOfCap[EntryGismu](LINES_GISMU.len))
@@ -358,149 +215,53 @@ suite "Internal: Lists":
     check LINE_HEADER[1..5].parseInt == LIST_GISMU.len  # committed list holds count header gives
 
 
-  test "lujvo converter keeps line of either notation, tanru split at `+`":
-    for i, line in LINES_LUJVO_KEPT:
-      let converted = line.toEntriesLujvo
-      check converted.entries == @[EXPECTED_LUJVO[i]]  # word, notation, parts, gloss
-      check converted.count_left == 0  # line kept is never counted as left
-      check entryLujvo(EXPECTED_LUJVO[i].word) == some(EXPECTED_LUJVO[i])  # agrees with list
-
-
-  test "lujvo converter leaves each odd shape out, and counts it":
-    for line in LINES_LUJVO_LEFT:
-      let converted = line.toEntriesLujvo
-      check converted.entries.len == 0 and converted.count_left == 1  # left out, counted once
-    check toEntriesLujvo("\n  \n").count_left == 0  # blank line is no line of other shape
-    randomize(SEED)
-    let pool = poolOrders()
-    for lines in served(pool):
-      let
-        converted = lines.join("\n").toEntriesLujvo
-        kept = lines.filterIt(it in LINES_LUJVO_KEPT)
-        expected = collect(newSeqOfCap(kept.len)):
-          for line in kept: EXPECTED_LUJVO[LINES_LUJVO_KEPT.find(line)]
-      check converted.entries == expected  # order
-      check converted.count_left == LINES_LUJVO_LEFT.len  # each odd line counted once
-      check converted.entries.len + converted.count_left ==
-          lines.countIt(it.strip.len > 0)  # conservation: every nonblank line kept or counted
-
-
-  test "rendered module keeps 100 columns, and reads back each string":
-    let
-      count_left = COUNT_LINES_LUJVO - LIST_LUJVO.len
-      module_gismu = toModuleGismu(LIST_GISMU, DIGEST_GISMU)
-      module_lujvo = toModuleLujvo(LIST_LUJVO, count_left, DIGEST_LUJVO)
-    check (module_gismu & module_lujvo).splitLines.allIt(it.len <= WIDTH)  # X.1, bytes bound
-    check module_gismu.textsField("    definition: ") ==
-        collect(for entry in LIST_GISMU: entry.definition)  # helper reads back what renderer writes
-    check module_lujvo.textsField("    gloss: ") ==
-        collect(for entry in LIST_LUJVO: entry.gloss)  # read back
+  test "rendered module keeps 100 columns, and reads back each word and rafsi":
+    let module_gismu = toModuleGismu(LIST_GISMU, DIGEST_GISMU)
+    check module_gismu.splitLines.allIt(it.len <= WIDTH)  # X.1, bytes bound
+    check module_gismu.entriesRendered == @LIST_GISMU  # helper reads back what renderer writes
     randomize(SEED)
     let pool = poolEntries()
-    for (entries_gismu, entries_lujvo) in served(pool):
-      let
-        rendered_gismu = toModuleGismu(entries_gismu, DIGEST_GISMU)
-        rendered_lujvo = toModuleLujvo(entries_lujvo, 0, DIGEST_LUJVO)
-      check (rendered_gismu & rendered_lujvo).splitLines.allIt(it.len <= WIDTH)  # X.1
-      for (head, texts) in [
-        ("    word: ", collect(for entry in entries_gismu: entry.word)),
-        ("    keyword: ", collect(for entry in entries_gismu: entry.keyword)),
-        ("    hint: ", collect(for entry in entries_gismu: entry.hint)),
-        ("    definition: ", collect(for entry in entries_gismu: entry.definition)),
-      ]:
-        check rendered_gismu.textsField(head) == texts  # round trip through wrapped literal
-      check rendered_lujvo.textsField("    word: ") ==
-          collect(for entry in entries_lujvo: entry.word)  # one line
-      check rendered_lujvo.textsField("    gloss: ") ==
-          collect(for entry in entries_lujvo: entry.gloss)  # wrapped
+    for entries in served(pool):  # `SAMPLES` cases, seeded
+      let rendered = toModuleGismu(entries, DIGEST_GISMU)
+      check rendered.splitLines.allIt(it.len <= WIDTH)  # X.1, one entry to line fits
+      check rendered.entriesRendered == entries  # round trip through rendered literal
 
 
-  test "committed modules are committed lists rendered again":
+  test "committed module is committed list rendered again":
     check toModuleGismu(LIST_GISMU, DIGEST_GISMU) == TEXT_MODULE_GISMU  # render of parse
-    check toModuleLujvo(LIST_LUJVO, COUNT_LINES_LUJVO - LIST_LUJVO.len, DIGEST_LUJVO) ==
-        TEXT_MODULE_LUJVO  # render of parse, lines left counted by conservation
 
 
-  test "entry lacking field every line of list holds does not compile, as rule of data asks":
-    check compiles(EntryGismu(word: "cukta", keyword: "book",
-        definition: "x1 is book"))  # control: rafsi and hint empty by right, so unmarked
-    check not compiles(EntryGismu(keyword: "book", definition: "x1 is book"))  # no word
-    check not compiles(EntryGismu(word: "cukta", definition: "x1 is book"))  # no keyword
-    check not compiles(EntryGismu(word: "cukta", keyword: "book"))  # no definition
-    check compiles(EntryLujvo(word: "datnyvei", notation: Notation.Lojban,
-        parts: @["datni", "vreji"], gloss: "file"))  # control: every field named
-    check not compiles(EntryLujvo(notation: Notation.Lojban, parts: @["datni", "vreji"],
-        gloss: "file"))  # no word
-    check not compiles(EntryLujvo(word: "datnyvei", parts: @["datni", "vreji"],
-        gloss: "file"))  # no notation, whose zero value `Lojban` would stand in silence
-    check not compiles(EntryLujvo(word: "datnyvei", notation: Notation.Lojban,
-        gloss: "file"))  # no parts
-    check not compiles(EntryLujvo(word: "datnyvei", notation: Notation.Lojban,
-        parts: @["datni", "vreji"]))  # no gloss
+  test "entry lacking word does not compile, as rule of data asks":
+    check compiles(EntryGismu(word: "cukta"))  # control: rafsi empty by right, so unmarked
+    check not compiles(EntryGismu(rafsi: @["cku"]))  # no word
 
 
-  test "committed headers name pinned digests, split as rendered":
-    for (module, digest) in [(TEXT_MODULE_GISMU, DIGEST_GISMU), (TEXT_MODULE_LUJVO, DIGEST_LUJVO)]:
+  test "committed header names pinned digest, split as rendered":
+    for digest in [DIGEST_GISMU, DIGEST_LUJVO]:
       check digest.len == 64 and digest.allCharsInSet({'0'..'9', 'a'..'f'})  # SHA-256 in hex
-      let halves = "SHA-256 `" & digest[0..31] & "`\n##   `" & digest[32 .. ^1] & "`;"
-      check halves in module  # digest split in halves over two header lines
-    check ("##     " & $(COUNT_LINES_LUJVO - LIST_LUJVO.len) & " lines of other shapes left out") in
-        TEXT_MODULE_LUJVO  # count of lines left, as `toModuleLujvo` writes it
+    let halves = "SHA-256 `" & DIGEST_GISMU[0..31] & "`\n##   `" & DIGEST_GISMU[32 .. ^1] & "`;"
+    check halves in TEXT_MODULE_GISMU  # digest split in halves over two header lines
 
 
-  test "every committed entry fits columns, and shapes converter keeps":
+  test "every committed entry fits columns":
     for entry in LIST_GISMU:  # every entry, exhaustive
       check entry.word.len in 1..5 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # columns 2-6
       check entry.rafsi.len <= 3 and entry.rafsi.allIt(it.len in 3..4)  # three slots, 3-4 wide
-      check entry.keyword.len in 1..20 and entry.hint.len <= 20  # columns 21-40 and 42-61
-      check entry.definition.len in 1..96  # columns 63-158
-      for field in [entry.word, entry.keyword, entry.hint, entry.definition]:
-        check field == field.strip  # spaces at field ends trimmed
-    for entry in LIST_LUJVO:  # every entry, exhaustive
-      check entry.word.len > 0 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # word is letters
-      check entry.parts.len >= 2 and entry.parts.allIt(it.len > 0)  # tanru of two parts or more
-      if entry.notation == Notation.Lojban:
-        check entry.parts.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # lojban parts are letters
-      check entry.gloss.len > 0 and entry.gloss == entry.gloss.strip  # gloss present, trimmed
-      check not entry.gloss.startsWith("$")  # place structure is no gloss
+      check entry.rafsi.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # rafsi are letters
+      check entry.word == entry.word.strip  # spaces at field ends trimmed
 
 
-  test "committed lujvo list is list converted from installed file":
-    if not fileExists(getEnv(KEY_LISTS, DIRECTORY_LISTS) / "lujvo.txt"):
-      skip()  # `lojban-common` absent, as in CI; `head` compares where present
-    else:
-      let source = readSource("lujvo.txt")
-      if source.digest != DIGEST_LUJVO:
-        skip()  # installed list moved from its pin, which `head` reports
-      else:
-        let converted = source.text.toEntriesLujvo
-        check converted.entries == @LIST_LUJVO  # committed list is converter's output
-        check converted.count_left == COUNT_LINES_LUJVO - LIST_LUJVO.len  # lines conserved
-
-
-  test "wrapped string keeps every space, runs included":
-    # Regression: `toLinesWrapped` split text by `splitWhitespace` and joined it with one space,
-    #   so committed definitions of `co'a`, `co'u`, `sirji` and `za'o` lost runs of spaces.
-    let entries = TEXT_SPACED.toEntriesGismu
-    check entries.len == 4  # four sample lines read
-    for entry in entries:
-      check entry.definition.contains("  ")  # sample holds run of spaces
-      check entryGismu(entry.word).get == entry  # case as found: committed entry equals source
-      check toModuleGismu([entry], DIGEST_GISMU).textsField("    definition: ") ==
-          @[entry.definition]  # case as found: wrapping keeps run
-    randomize(SEED)
-    for _ in 1..SAMPLES:  # domain: spaced text, long enough to wrap often
-      let
-        text = textSpaced(rand(1..30))
-        entry = EntryGismu(word: "x", rafsi: @[], keyword: "x", hint: "", definition: text)
-        rendered = toModuleGismu([entry], DIGEST_GISMU)
-      check rendered.textsField("    definition: ") == @[text]  # domain: every space kept
-      check rendered.splitLines.allIt(it.len <= WIDTH)  # X.1, wrapping still bounds lines
+  test "outside text reader keeps word of each line, and parts of either notation":
+    check toLinesLujvo(LINES_LUJVO.join("\n")) == @EXPECTED_LUJVO  # each shape, order kept
+    for line in [LINE_DATKYPIU, LINE_BLOTI_ZERLEA]:
+      check toLinesLujvo(line).len == 0  # phrase for word stands in no domain
+    check toLinesLujvo("\n  \n").len == 0  # blank line holds no word
+    check EXPECTED_LUJVO.len + 2 == LINES_LUJVO.len  # conservation: each line read or left out
 
 
   test "committed gismu list is list converted from installed file":
     if not fileExists(getEnv(KEY_LISTS, DIRECTORY_LISTS) / "gismu.txt"):
-      skip()  # `lojban-common` absent, as in CI; `head` compares where present
+      skip()  # `lojban-common` absent; `system` declares it, and `head` compares where present
     else:
       let source = readSource("gismu.txt")
       if source.digest != DIGEST_GISMU:

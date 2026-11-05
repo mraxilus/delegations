@@ -1,16 +1,20 @@
 ## Replicate word reading of CLL chapters 3 and 4 against `tanru.nim`, and hold laws CLL implies.
-##   Copied as part of `lojban_tagger/tests/suites/test_tags.nim` until #809 drops it (II.9).
+##   Sibling: part of `lojban_tagger/tests/suites/test_tags.nim` holds earlier copy, over listed
+##     words alone, until #809 drops it (II.9).
 ##   Spellings, tanru and scores are copied from CLL text, never from library output, so suite
 ##     checks reading rather than repeating it. 4.13 misstates V of `gerzda` as 3; total 5878 is
 ##     right, and is what suite holds. CLL lujvo given without rafsi split are marked split
 ##     inferred; word no source holds is marked constructed.
-##   Canonical form is project's choice (`tanru.nim` header), so `Internal: Reading` holds it:
-##     space, comma and capital refused. Comma and capital CLL writes inside word (3.3, 3.9) wait
-##     in placeholder test, skipped until reader reads them (Article IX.9).
+##   Rules judge, list names (#823): suite holds text that rules admit as read, listed or not,
+##     and each refusal to rule of CLL it names. Refusal that names gap, as mark of stream
+##     (#811) or cmene (#812), is held as gap, never as choice of project; comma and capital CLL
+##     writes inside word (3.3, 3.9) wait in placeholder test, skipped until #811 (IX.9).
 ##   Tanru form unbounded domain, so laws run over seeded random tanru of one to four gismu,
 ##     drawn from every gismu of list, and over each entry of list exhaustively (Article IX.3).
 ##   Round trip runs again over seeded tanru of one to six words, cmavo among them, since lujvo
 ##     hold rafsi of cmavo too (4.6).
+##   Words list holds not are drawn too: every string of gismu form, and seeded lujvo of rafsi
+##     whose letters fit each form, assigned or not (Article IX.4).
 ##   Reference for lowest score enumerates every rafsi 4.11 steps 1 and 2 allow, shared `brod`
 ##     included, and keeps spellings that read back; rendering is held to their minimum.
 ##     Cost: at most `4^n` joins and readings per tanru of `n` gismu.
@@ -22,18 +26,19 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[options, random, sequtils, unittest]
+import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
 import ../../src/lojban_parser/[dictionary, forms, lujvo, tanru]
 import ../../src/lojban_parser/lists/gismu
+import ./rafsi_random
 
 
 const
   SAMPLES = 1000  ## Random tanru laws draw, seeded.
-  FLOOR_ROUND = 950
-    ## Least samples free of `brodi`, `brodo` and `brodu` before last gismu: 997 read at seed
-    ## `0`; about one sample in three hundred holds one.
+  FLOOR_SHARED_ROUND = 2
+    ## Least samples holding `brodi`, `brodo` or `brodu` before last gismu, which read back with
+    ## part `brod`: 3 read at seed `0`; about one sample in three hundred holds one.
   FLOOR_LOWEST = 650
     ## Least samples of two gismu or more, free of those, that lowest score law reads: 719 read
     ## at seed `0`; three quarters expected.
@@ -45,11 +50,13 @@ const
   COUNT_WORDS_CMAVO_MAX = 6
     ## Most words of such tanru: `$` grows about 4 times each word (`tanru.nim` header), so six
     ## keeps suite fast.
-  FLOOR_ROUND_CMAVO = 450
-    ## Least of them free of `brodi`, `brodo` and `brodu` before last word: 473 read at seed `0`.
   FLOOR_CMAVO = 220  ## Least of them holding cmavo: 254 read at seed `0`.
   FLOOR_SHARED = 20
     ## Least of them holding `brodi`, `brodo` or `brodu` before last word: 27 read at seed `0`.
+  SAMPLES_FORMS = 2000  ## Random lujvo of rafsi drawn from letters of each form, seeded.
+  FLOOR_UNASSIGNED = 1700
+    ## Least of them holding rafsi list assigns to no word: 1743 read at seed `0`, since most
+    ## letters of each form name no word.
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"  ## Letters and symbols of 3.1, in its order.
   GISMU_STEM_SHARED = ["brodi", "brodo", "brodu"]
     ## Gismu holding no short rafsi, so only non-final rafsi is `brod`, which `broda` and `brode`
@@ -67,7 +74,8 @@ const
   ]
     ## Every chapter 4 spelling suite quotes that reads as word.
   SPELLINGS_CLL_REFUSED = ["patta'a", "mudsiclu", "ro'ire'o", "ro'irre'o"]
-    ## Every chapter 4 spelling suite quotes that reader refuses: hyphens 4.6 forbids.
+    ## Every chapter 4 spelling suite quotes that reader refuses: hyphens 4.6 forbids, or two
+    ##   cmavo run together.
   WORDS_GISMU = block:
     ## Every gismu of list, by index; cmavo carrying rafsi left out.
     var words: seq[Word]
@@ -93,17 +101,30 @@ const
     ##   then code point of that length, so each row of Table 3-6 is read often.
   FLOOR_FOREIGN = 950
     ## Fewest random draws that are scalar values, surrogates aside; 986 read at seed `0`.
+  ORDER_CONSONANTS = "bcdfgjklmnprstvxz"  ## Seventeen consonants C stands for (4.1 rule 3).
+  ORDER_VOWELS = "aeiou"  ## Five vowels V stands for, `y` excluded (4.1 rule 1).
 
 
 func toTanru(text: string): Tanru =
-  ## Read listed words joined by `+` as tanru; suite writes listed words alone.
-  text.readTanru.get
+  ## Build tanru of listed words joined by `+`, as suite writes tanru.
+  Tanru(parts: text.split('+').mapIt(it.word.get.toPart))
+
+
+func unlisted(letters: string): Part =
+  ## Build part naming no one word of list, by its letters.
+  Part(is_listed: false, letters: letters)
 
 
 func tanruRead(text: string): Option[Tanru] =
   ## Read text as word; tanru, or `none` where refused.
   let reading = text.readWord
   if reading.is_word: some(reading.tanru) else: none(Tanru)
+
+
+func kindRead(text: string): Option[Kind] =
+  ## Read class of text as word; `none` where refused.
+  let reading = text.readWord
+  if reading.is_word: some(reading.kind) else: none(Kind)
 
 
 func refusalRead(text: string): Option[(Refusal, string)] =
@@ -125,19 +146,27 @@ func spelled(pieces: openArray[Piece]): string =
 
 func isStemShared(tanru: Tanru): bool =
   ## Test `$` must write shared `brod`: tanru holds `brodi`, `brodo` or `brodu` before last word.
-  for i in 0 ..< tanru.words.high:
-    if $tanru.words[i] in GISMU_STEM_SHARED: return true
+  for i in 0 ..< tanru.parts.high:
+    if $tanru.parts[i] in GISMU_STEM_SHARED: return true
   false
+
+
+func withStemShared(tanru: Tanru): Tanru =
+  ## Read tanru as its rendering reads back: `brodi`, `brodo` and `brodu` before last word
+  ##   become part `brod`, which names no one gismu (4.4).
+  result = tanru
+  for i in 0 ..< result.parts.high:
+    if $result.parts[i] in GISMU_STEM_SHARED: result.parts[i] = unlisted("brod")
 
 
 func spellings(tanru: Tanru): seq[seq[string]] =
   ## List every rafsi sequence 4.11 steps 1 and 2 allow for tanru of two gismu or more.
   ##   Candidates are short rafsi, 4-letter rafsi and gismu itself, each where its form stands.
   result = @[newSeq[string]()]
-  for i, w in tanru.words:
+  for i, part in tanru.parts:
     let
-      entry = w.entry
-      forms_allowed = (if i == tanru.words.high: FORMS_FINAL else: FORMS_SHORT + FORMS_UNREDUCED)
+      entry = part.word.entry
+      forms_allowed = (if i == tanru.parts.high: FORMS_FINAL else: FORMS_SHORT + FORMS_UNREDUCED)
     var extended: seq[seq[string]]
     for chosen in result:
       for one in entry.rafsi & @[entry.word[0 .. 3], entry.word]:
@@ -145,11 +174,23 @@ func spellings(tanru: Tanru): seq[seq[string]] =
     result = extended
 
 
+func partNamed(rafsi: string): Part =
+  ## Find part rafsi names apart from reader: short rafsi by its table, 4-letter rafsi by stem
+  ##   of one gismu, 5-letter rafsi by word itself (4.6); else its letters.
+  let found =
+    case rafsi.form.get
+    of Form.Cvc, Form.Ccv, Form.Cvv: rafsi.wordRafsi
+    of Form.Cvcc, Form.Ccvc:
+      if rafsi.wordsStem.len == 1: some(rafsi.wordsStem[0]) else: none(Word)
+    of Form.Cvccv, Form.Ccvcv: rafsi.word
+  if found.isSome: found.get.toPart else: unlisted(rafsi)
+
+
 proc drawTanru(): seq[Tanru] =
   ## Draw `SAMPLES` tanru of one to four gismu, seeded, each gismu from every gismu of list.
   randomize(0)
   for _ in 1 .. SAMPLES:
-    result.add Tanru(words: newSeqWith(rand(1 .. 4), WORDS_GISMU[rand(WORDS_GISMU.high)]))
+    result.add Tanru(parts: newSeqWith(rand(1 .. 4), WORDS_GISMU[rand(WORDS_GISMU.high)].toPart))
 
 
 let TANRU_RANDOM = drawTanru()  ## Random tanru every law reads, drawn once.
@@ -167,15 +208,15 @@ proc drawTanruCmavo(): seq[Tanru] =
   randomize(0)
   for _ in 1 .. SAMPLES_CMAVO:
     let count = rand(1 .. COUNT_WORDS_CMAVO_MAX)
-    var words = newSeqOfCap[Word](count)
+    var parts = newSeqOfCap[Part](count)
     for i in 1 .. count:
-      words.add(
-        if i == count: WORDS_GISMU[rand(WORDS_GISMU.high)]
-        elif rand(2) == 0: WORDS_CMAVO[rand(WORDS_CMAVO.high)]
-        elif rand(24) == 0: GISMU_STEM_SHARED[rand(GISMU_STEM_SHARED.high)].word.get
-        else: WORDS_GISMU[rand(WORDS_GISMU.high)]
+      parts.add(
+        if i == count: WORDS_GISMU[rand(WORDS_GISMU.high)].toPart
+        elif rand(2) == 0: WORDS_CMAVO[rand(WORDS_CMAVO.high)].toPart
+        elif rand(24) == 0: GISMU_STEM_SHARED[rand(GISMU_STEM_SHARED.high)].word.get.toPart
+        else: WORDS_GISMU[rand(WORDS_GISMU.high)].toPart
       )
-    result.add Tanru(words: words)
+    result.add Tanru(parts: parts)
 
 
 let TANRU_CMAVO = drawTanruCmavo()  ## Random tanru second round trip law reads, drawn once.
@@ -186,6 +227,32 @@ iterator tanruCmavo(): lent Tanru =
   for i in 0 ..< TANRU_CMAVO.len: yield TANRU_CMAVO[i]
 
 
+iterator textsNotation(notation: string): string =
+  ## Yield every string of C and V notation of 4.1, last position fastest.
+  let positions = notation.mapIt(if it == 'C': ORDER_CONSONANTS else: ORDER_VOWELS)
+  var at = newSeq[int](positions.len)
+  while true:
+    var text = newStringOfCap(positions.len)
+    for i, letters in positions: text.add letters[at[i]]
+    yield text
+    var i = positions.high
+    while i >= 0:
+      inc at[i]
+      if at[i] < positions[i].len: break
+      at[i] = 0
+      dec i
+    if i < 0: break
+
+
+let SEQUENCES_FORMS = drawSequencesLetters(SAMPLES_FORMS, 2 .. 4, seed = 0)
+  ## Random rafsi sequences of forms law reads, drawn once from letters (`rafsi_random.nim`).
+
+
+iterator lujvoForms(): lent seq[string] =
+  ## Serve each random rafsi sequence of forms pool, with no copy.
+  for i in 0 ..< SEQUENCES_FORMS.len: yield SEQUENCES_FORMS[i]
+
+
 
 suite "Chapter 3":
   test "Section 3.1":
@@ -194,31 +261,67 @@ suite "Chapter 3":
     check tanru.LETTERS == alphabet - {',', '.'}  # 3.1 list; comma, period divide syllables (3.3)
     for c in 'a' .. 'z':
       check (c in tanru.LETTERS) == (c notin {'h', 'q', 'w'})  # 3.1, omitting "h", "q", and "w"
-    for c in char.low .. char.high:  # 256 bytes; comma and capitals held in `Internal: Reading`
-      if c in tanru.LETTERS or c in {',', 'A' .. 'Z'}: continue
+    for c in char.low .. char.high:  # 256 bytes; marks of stream held in `Internal: Reading`
+      if c in tanru.LETTERS or c in MARKS_STREAM: continue
       check ("bri" & c & "vla").refusalRead == some((Refusal.Letter, $c))  # 3.1, alphabet
 
 
   test "Section 3.3":
     check "rohinreho".refusalRead == some((Refusal.Letter, "h"))  # 3.3, no "h" for `'`; constructed
     check "kixtaha".refusalRead == some((Refusal.Letter, "h"))  # 3.3, no "h" for `'`; constructed
-    check "bri.vla".refusalRead == some((Refusal.Letter, "."))  # 3.3, period makes two words
+    check "bri.vla".refusalRead == some((Refusal.Stream, "."))  # 3.3, period makes two words
     for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):  # each CLL spelling quoted
       for i in 1 ..< spelling.len:  # every position inside word
         let (head, tail) = (spelling[0 ..< i], spelling[i .. ^1])
         check (head & "." & tail).refusalRead ==
-            some((Refusal.Letter, "."))  # 3.3, period embedded in word makes two words
+            some((Refusal.Stream, "."))  # 3.3, period embedded in word makes two words; gap #811
+    for text in ["'a", "a'", "zba'", "kla'ma", "bri''a"]:  # constructed
+      check text.refusalRead == some((Refusal.Apostrophe, ""))  # 3.3, apostrophe joins vowels
 
 
   test "Section 3.9":
-    skip()  # 3.3, 3.9, comma and capital inside word, as `sai,r,goi`; gap, canonical form alone
+    skip()  # 3.3, 3.9, comma and capital inside word, as `sai,r,goi`; gap, #811 reads them
 
 
 
 suite "Chapter 4":
+  test "Section 4.2":
+    for text in ["a", "e", "i", "o", "u", "ba", "ce", "di", "fo", "gu"]:
+      check text.kindRead == some(Kind.Cmavo)  # 4.2, V-form and CV-form; pause unwritten
+    for text in ["au", "ei", "ia", "o'u", "u'e", "ki'a", "pei", "mi'o", "coi", "cu'u"]:
+      check text.kindRead == some(Kind.Cmavo)  # 4.2, VV-form and CVV-form
+    for text in ["ku'a'e", "sau'e", "bai'ai", "ki'e'u'e"]:
+      check text.kindRead == some(Kind.Cmavo)  # 4.2, experimental, Example 2.4
+    check "y".kindRead == some(Kind.Cmavo) and "by".kindRead == some(Kind.Cmavo)  # 4.2, 17.2
+    check "lo".tanruRead == some(Tanru(parts: @[unlisted("lo")]))  # 4.2, no list gives `lo` rafsi
+    check "se".tanruRead == some(toTanru("se"))  # 4.2, cmavo gismu list holds, for its rafsi
+    for text in ["iseci'i", "punaijecanai", "da'amei"]:
+      check text.refusalRead == some((Refusal.Stream, ""))  # 4.2, Examples 2.1-2; 4.3, compound
+    check "ki'e.u'e".refusalRead == some((Refusal.Stream, "."))  # 4.2, Example 2.3, pause
+
+
+  test "Section 4.3":
+    check "lojban".refusalRead == some((Refusal.Cmene, ""))  # 4.3, "lojban." must be name; #812
+    check "da'amei".refusalRead == some((Refusal.Stream, ""))  # 4.3, "must be compound cmavo"
+    check "bisycla".kindRead.isSome  # 4.3, `sc` counted through `y`, so brivla; constructed
+    for text in ["zba", "brai"]:  # constructed
+      check text.refusalRead == some((Refusal.Shape, ""))  # 4.3, penultimate stress, two syllables
+    check "bridy".refusalRead == some((Refusal.Shape, ""))  # 4.3, brivla end in vowel; constructed
+
+
+  test "Section 4.4":
+    for text in ["creka", "lijda", "blanu", "mamta", "cukta", "patfu", "nanmu", "ninmu"]:
+      check text.kindRead == some(Kind.Gismu)  # 4.4, Examples 3.1-3.8
+      check text.tanruRead == some(toTanru(text))  # 4.4, listed gismu names itself
+    for text in ["kismu", "xismu", "gicmu", "gizmu", "gisnu"]:
+      check text.kindRead == some(Kind.Gismu)  # 4.4, form of gismu, though no list holds it
+      check text.tanruRead == some(Tanru(parts: @[unlisted(text)]))  # 4.4, no meaning given
+
+
   test "Section 4.5":
     for spelling in ["brivla", "brivalsi", "bridyvla", "bridyvalsi"]:
       check spelling.tanruRead == some(toTanru("bridi+valsi"))  # 4.5, four spellings, one lujvo
+      check spelling.kindRead == some(Kind.Lujvo)  # 4.5, lujvo
     check "mampa'u".tanruRead == some(toTanru("mamta+patfu"))  # 4.5, Example 5.7 from 5.4
     check "mampa'u".readWord.pieces.mapIt(it.rafsi) == @["mam", "pa'u"]  # 4.5, "mam-", "-pa'u"
     check "soirsai".tanruRead == some(toTanru("sonci+sanmi"))  # 4.5, Example 5.8
@@ -259,7 +362,7 @@ suite "Chapter 4":
     check "mudsiclu".refusalRead == some((Refusal.Hyphen, "mudysiclu"))  # 4.6, cannot form
     check "ro'inre'o".tanruRead == some(toTanru("rokci+renro"))  # 4.6, "n"-hyphen required
     check "rokre'o".tanruRead == some(toTanru("rokci+renro"))  # 4.6, same lujvo, no hyphen
-    check "ro'ire'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # 4.6, two cmavo
+    check "ro'ire'o".refusalRead == some((Refusal.Stream, ""))  # 4.6, "breaks up into two cmavo"
     check "ro'irre'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # 4.6, "rr" double
     check "labmau".tanruRead == some(toTanru("blabi+zmadu"))  # 4.6, "whiter"; split inferred
 
@@ -307,9 +410,9 @@ suite "Internal: Reading":
 
   test "Character outside letters is refused as Letter, naming character":
     check "hello".refusalRead == some((Refusal.Letter, "h"))  # first offending; constructed
-    check "bri vla".refusalRead == some((Refusal.Letter, " "))  # inner space
     check "bwa".refusalRead == some((Refusal.Letter, "w"))  # `w` outside letters; constructed
     check "datni+vreji".refusalRead == some((Refusal.Letter, "+"))  # tanru text is no spelling
+    check "brivlaH".refusalRead == some((Refusal.Letter, "H"))  # capital of no letter (3.1)
 
 
   test "Character outside letters is named whole, so detail of UTF-8 stays UTF-8":
@@ -338,41 +441,84 @@ suite "Internal: Reading":
     check count_scalar >= FLOOR_FOREIGN  # guard keeps most draws
 
 
-  test "Lujvo ending in rafsi of cmavo is refused as Cmavo, naming it":
-    check "zbadoi".refusalRead ==
-        some((Refusal.Cmavo, "doi (do)"))  # 4.11 step 2, rafsi of final gismu; constructed
-    check "zbadu'o".refusalRead ==
-        some((Refusal.Cmavo, "du'o (du)"))  # 4.11 step 2, rafsi of final gismu; constructed
+  test "Mark of stream is refused as Stream, gap #811 reads":
+    check " brivla".refusalRead == some((Refusal.Stream, " "))  # 3.3, space ends word; no trim
+    check "brivla\t".refusalRead == some((Refusal.Stream, "\t"))  # whitespace ends word
+    check "bri vla".refusalRead == some((Refusal.Stream, " "))  # two words
+    for c in MARKS_STREAM:  # every mark, whitespace among them, exhaustive
+      check ("bri" & c & "vla").refusalRead == some((Refusal.Stream, $c))  # 3.3, 3.9, gap #811
+    check "BRIVLA".refusalRead == some((Refusal.Stream, "B"))  # 3.9, capital marks stress
+    for c in tanru.LETTERS - {'\''}:  # capital of each letter, exhaustive
+      check ("bri" & c.toUpperAscii & "vla").refusalRead ==
+          some((Refusal.Stream, $c.toUpperAscii))  # 3.9, capital marks stress; gap, no fold
+    for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):  # each CLL spelling quoted
+      for i in 0 .. spelling.len:  # every position, both ends included
+        let text = spelling[0 ..< i] & "," & spelling[i .. ^1]
+        check text.refusalRead ==
+            some((Refusal.Stream, ","))  # 3.3, comma breaks syllable; gap, waits in 3.9
+
+
+  test "Cmavo run together, or into brivla, is refused as Stream, gap #811 reads":
+    check "ga'inai".refusalRead == some((Refusal.Stream, ""))  # 4.2, `ga'i nai`; Tatoeba
+    check "so'imei".refusalRead == some((Refusal.Stream, ""))  # 4.2, `so'i mei`; Tatoeba
+    check "lonubroda".refusalRead == some((Refusal.Stream, ""))  # pair past fifth; constructed
+    check "cia".refusalRead == some((Refusal.Stream, ""))  # 3.4 forbids it too; constructed
+
+
+  test "Word ending in consonant is refused as Cmene, gap #812 reads":
+    for text in ["lojban", "gerk", "xyz", "djan"]:  # `gerk`, `xyz` constructed
+      check text.refusalRead == some((Refusal.Cmene, ""))  # 4.3, cmene end in consonant (4.8)
+
+
+  test "Brivla neither gismu nor lujvo is refused as Fuhivla, gap #812 reads":
+    check "bongnanba".refusalRead == some((Refusal.Fuhivla, ""))  # 3.8, "possible borrowing"
+    check "natmyrgu'e".refusalRead == some((Refusal.Fuhivla, ""))  # `lujvo.txt`, fits no rafsi
+    check "brodrzba".refusalRead == some((Refusal.Fuhivla, ""))  # constructed
+
+
+  test "Lujvo ending in rafsi of cmavo reads, its last part that cmavo":
+    check "zbadoi".tanruRead == some(toTanru("zbasu+do"))  # 4.6, `doi` of `do`; constructed
+    check "zbadu'o".tanruRead == some(toTanru("zbasu+du"))  # 4.6, `du'o` of `du`; constructed
+    check "zbadoi".kindRead == some(Kind.Lujvo)  # 4.11 step 2 gives no rule letters can read
+    check "nunco'e".tanruRead == some(toTanru("nu+co'e"))  # `co'e` ends lujvo; Tatoeba
 
 
   test "Lujvo holding rafsi of cmavo reads as tanru keeping cmavo":
     let
-      se = "se".word.get
-      ciska = "ciska".word.get
+      se = "se".word.get.toPart
+      ciska = "ciska".word.get.toPart
       selcia = "selci'a".tanruRead
-    check selcia == some(Tanru(words: @[se, ciska]))  # 4.6, `sel` of cmavo `se`; constructed word
-    check selcia.get != Tanru(words: @[ciska])  # 9.4, `se` converts, so tanru keeps it
+    check selcia == some(Tanru(parts: @[se, ciska]))  # 4.6, `sel` of cmavo `se`; constructed word
+    check selcia.get != Tanru(parts: @[ciska])  # 9.4, `se` converts, so tanru keeps it
     check $selcia.get == "selci'a"  # 4.12, `sel` and `ci'a` score lowest; constructed word
-    check "nunkla".tanruRead.get.toText == "nu+klama"  # 12.12, `nunkla`
-    check "nunynau".tanruRead.get.toText == "nu+nanmu"  # 4.12, Example 12.2
+    check "nunkla".tanruRead == some(toTanru("nu+klama"))  # 12.12, `nunkla`
+    check "nunynau".tanruRead == some(toTanru("nu+nanmu"))  # 4.12, Example 12.2
     let kem = "nakykemcinctu".tanruRead
-    check kem.get.toText == "nakni+ke+cinse+ctuca"  # 4.13, tanru `nakni ke cinse ctuca`
+    check kem == some(toTanru("nakni+ke+cinse+ctuca"))  # 4.13, tanru `nakni ke cinse ctuca`
     check $kem.get == "nakykemcinctu"  # 4.13, shortest form, preferred by scoring
 
 
-  test "Gismu shape outside list is refused as Unlisted, naming word":
-    check "kukta".refusalRead == some((Refusal.Unlisted, "kukta"))  # unlisted; constructed
-    check "gerkukta".refusalRead == some((Refusal.Unlisted, "kukta"))  # final; constructed
+  test "Gismu shape outside list reads as gismu, its part keeping letters":
+    check "kukta".tanruRead == some(Tanru(parts: @[unlisted("kukta")]))  # 4.4; constructed
+    check "kukta".kindRead == some(Kind.Gismu)  # 4.4, five letters, CVC/CV
+    check "gerkukta".tanruRead ==
+        some(Tanru(parts: @["gerku".word.get.toPart, unlisted("kukta")]))  # final; constructed
 
 
-  test "Rafsi no list assigns is refused as Rafsi, naming rafsi":
-    check "clozba".refusalRead == some((Refusal.Rafsi, "clo"))  # CCV of none; constructed
-    check "kukfyzba".refusalRead == some((Refusal.Rafsi, "kukf"))  # 4-letter of none; constructed
+  test "Rafsi no list assigns reads, its part keeping letters":
+    check "clozba".tanruRead ==
+        some(Tanru(parts: @[unlisted("clo"), "zbasu".word.get.toPart]))  # CCV; constructed
+    check "kukfyzba".tanruRead ==
+        some(Tanru(parts: @[unlisted("kukf"), "zbasu".word.get.toPart]))  # 4-letter; constructed
+    check "ditybra".tanruRead ==
+        some(Tanru(parts: @[unlisted("dit"), "barda".word.get.toPart]))  # `dit`; Tatoeba
 
 
-  test "Shared 4-letter rafsi is refused as Ambiguous, naming rafsi":
-    check "brodyzba".refusalRead == some((Refusal.Ambiguous, "brod"))  # five share; constructed
-    check "brodyprenu".refusalRead == some((Refusal.Ambiguous, "brod"))  # five share; constructed
+  test "Shared 4-letter rafsi reads, its part naming no one gismu":
+    check "brodyzba".tanruRead ==
+        some(Tanru(parts: @[unlisted("brod"), "zbasu".word.get.toPart]))  # five share; constructed
+    check "brodyprenu".tanruRead ==
+        some(Tanru(parts: @[unlisted("brod"), "prenu".word.get.toPart]))  # five share; constructed
     check "rodzba".tanruRead == some(toTanru("broda+zbasu"))  # `rod` unshared; constructed
 
 
@@ -380,67 +526,51 @@ suite "Internal: Reading":
     check "patta'a".refusalRead == some((Refusal.Hyphen, "patyta'a"))  # missing `y`; CLL 4.6
     check "kitymatci".refusalRead == some((Refusal.Hyphen, "kitmatci"))  # surplus `y`; constructed
     check "kicmatci".refusalRead == some((Refusal.Hyphen, "kicymatci"))  # tosmabru `y`; constructed
-    check "ro'ire'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # missing `n`; CLL 4.6
+    check "ro'irre'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # `n`, not `r`; CLL 4.6
+    check "clozbas".refusalRead == some((Refusal.Cmene, ""))  # control: consonant ends; constructed
 
 
-  test "Text neither listed word nor lujvo by shape is refused as Shape":
-    for text in ["lo", "xyz", "zba", "ge'u", "gerk", "brodrzba"]:  # `xyz`, `brodrzba` constructed
-      check text.refusalRead == some((Refusal.Shape, ""))  # no rafsi split, no detail
+  test "Each class reads by its letters, whether list holds word or not":
+    for (text, kind, is_listed) in [
+      ("klama", Kind.Gismu, true), ("kukta", Kind.Gismu, false),
+      ("se", Kind.Cmavo, true), ("lo", Kind.Cmavo, false),
+      ("bridyvalsi", Kind.Lujvo, true), ("clozba", Kind.Lujvo, false),
+    ]:
+      let reading = text.readWord
+      check reading.is_word and reading.kind == kind  # 4.1, class follows letters
+      check reading.tanru.parts.allIt(it.is_listed) == is_listed  # list names, never judges
 
 
-  test "Text is read as written, so space, comma and capital are refused as Letter":
-    check " brivla".refusalRead == some((Refusal.Letter, " "))  # project choice, no trim
-    check "brivla\t".refusalRead == some((Refusal.Letter, "\t"))  # project choice, no trim
-    check "BRIVLA".refusalRead == some((Refusal.Letter, "B"))  # 3.1, capitals in names alone
-    for c in 'A' .. 'Z':  # 26 capitals, exhaustive
-      check ("bri" & c & "vla").refusalRead ==
-          some((Refusal.Letter, $c))  # 3.1, capitals in names alone; no fold, project choice
-    for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):  # each CLL spelling quoted
-      for i in 0 .. spelling.len:  # every position, both ends included
-        let text = spelling[0 ..< i] & "," & spelling[i .. ^1]
-        check text.refusalRead ==
-            some((Refusal.Letter, ","))  # project choice, canonical form; 3.3 waits in 3.9
-
-
-  test "Pieces spell text, hyphens included; listed word has none":
+  test "Pieces spell text, hyphens included; word read whole has none":
     for spelling in SPELLINGS_CLL:  # each CLL spelling quoted that reads, exhaustive
       let reading = spelling.readWord
       check reading.is_word and reading.pieces.spelled == spelling  # split, then spelled
-    check "gerku".readWord.pieces.len == 0  # gismu read whole
-    check "se".readWord.pieces.len == 0  # cmavo read whole
+    for text in ["gerku", "kukta", "se", "lo"]:
+      check text.readWord.pieces.len == 0  # gismu and cmavo read whole, listed or not
 
 
 
 suite "Internal: Laws":
-  test "Rendered tanru reads back as itself, shared brod aside":
-    var count_round = 0
+  test "Rendered tanru reads back as itself, shared brod as part brod":
+    var count_shared = 0
     for tanru in tanruRandom():  # `SAMPLES` tanru, seeded
-      let text = $tanru
-      if tanru.isStemShared:
-        check text.refusalRead == some((Refusal.Ambiguous, "brod"))  # only rafsi `$` may write
-        continue
-      check text.tanruRead == some(tanru)  # round trip, rendering then reading
-      check readTanru(tanru.toText) == some(tanru)  # round trip, tanru text then reading
-      inc count_round
-    check count_round >= FLOOR_ROUND  # guard kept most samples
+      if tanru.isStemShared: inc count_shared
+      check ($tanru).tanruRead == some(tanru.withStemShared)  # round trip; `brod` names none
+    check count_shared >= FLOOR_SHARED_ROUND  # guard reaches shared stem
     for word in GISMU_STEM_SHARED:
       let shared = toTanru(word & "+zbasu")
       check $shared == "brodyzba"  # `brod` alone stands before last gismu
-      check ($shared).refusalRead == some((Refusal.Ambiguous, "brod"))  # cannot read back
+      check ($shared).tanruRead ==
+          some(Tanru(parts: @[unlisted("brod"), "zbasu".word.get.toPart]))  # reads back as `brod`
       check ($toTanru("zbasu+" & word)).tanruRead == some(toTanru("zbasu+" & word))  # final whole
 
 
   test "Rendered tanru of up to six words, cmavo among them, reads back as itself, brod aside":
-    var (count_round, count_cmavo, count_shared) = (0, 0, 0)
+    var (count_cmavo, count_shared) = (0, 0)
     for tanru in tanruCmavo():  # `SAMPLES_CMAVO` tanru, seeded
-      if tanru.words.anyIt(it.kind == Kind.Cmavo): inc count_cmavo
-      if tanru.isStemShared:
-        check ($tanru).refusalRead == some((Refusal.Ambiguous, "brod"))  # only rafsi `$` may write
-        inc count_shared
-        continue
-      check ($tanru).tanruRead == some(tanru)  # 4.12, form reads back; rafsi of cmavo (4.6)
-      inc count_round
-    check count_round >= FLOOR_ROUND_CMAVO  # guard kept most samples
+      if tanru.parts.anyIt(it.word.kind == Kind.Cmavo): inc count_cmavo
+      if tanru.isStemShared: inc count_shared
+      check ($tanru).tanruRead == some(tanru.withStemShared)  # 4.12, form reads back (4.6)
     check count_cmavo >= FLOOR_CMAVO  # corpus holds cmavo often
     check count_shared >= FLOOR_SHARED  # corpus reaches `brod` often enough
 
@@ -448,19 +578,16 @@ suite "Internal: Laws":
   test "Every gismu renders and reads back in head and in final position":
     for w in WORDS_GISMU:  # 1342 gismu, exhaustive
       let
-        head = Tanru(words: @[w, "zdani".word.get])
-        final = Tanru(words: @["gerku".word.get, w])
-      if $w in GISMU_STEM_SHARED:
-        check ($head).refusalRead == some((Refusal.Ambiguous, "brod"))  # shared stem alone
-      else:
-        check ($head).tanruRead == some(head)  # round trip, gismu first
+        head = Tanru(parts: @[w.toPart, "zdani".word.get.toPart])
+        final = Tanru(parts: @["gerku".word.get.toPart, w.toPart])
+      check ($head).tanruRead == some(head.withStemShared)  # round trip, gismu first
       check ($final).tanruRead == some(final)  # round trip, gismu last
 
 
   test "Every short rafsi of list reads as its word, before gismu and after":
-    let zbasu = "zbasu".word.get
+    let zbasu = "zbasu".word.get.toPart
     for w in WORDS_GISMU:  # 1342 gismu, every short rafsi, exhaustive
-      let (head, final) = (Tanru(words: @[w, zbasu]), Tanru(words: @[zbasu, w]))
+      let (head, final) = (Tanru(parts: @[w.toPart, zbasu]), Tanru(parts: @[zbasu, w.toPart]))
       for one in w.entry.rafsi:
         check joinRafsi([one, "zbasu"]).tanruRead == some(head)  # rafsi names one gismu (CLL 4.6)
         if one.form.get in FORMS_FINAL:
@@ -469,10 +596,10 @@ suite "Internal: Laws":
     for w in WORDS_CMAVO:  # 94 cmavo, every rafsi, exhaustive
       for one in w.entry.rafsi:
         check joinRafsi([one, "zbasu"]).tanruRead ==
-            some(Tanru(words: @[w, zbasu]))  # 4.6, rafsi of cmavo stands for it, before gismu
+            some(Tanru(parts: @[w.toPart, zbasu]))  # 4.6, rafsi of cmavo stands for it, first
         if one.form.get notin FORMS_FINAL: continue
-        check joinRafsi(["zba", one]).refusalRead ==
-            some((Refusal.Cmavo, one & " (" & $w & ")"))  # 4.11 step 2, rafsi of final gismu
+        check joinRafsi(["zba", one]).tanruRead ==
+            some(Tanru(parts: @[zbasu, w.toPart]))  # 4.6, and last; list names it, letters judge
         inc count_final_cmavo
     check count_final_cmavo >= FLOOR_FINAL_CMAVO  # guard reaches cmavo rafsi that end words
 
@@ -480,7 +607,7 @@ suite "Internal: Laws":
   test "Rendering scores lowest of every spelling that reads back":
     var count_lowest = 0
     for tanru in tanruRandom():  # `SAMPLES` tanru, seeded
-      if tanru.words.len < 2 or tanru.isStemShared: continue
+      if tanru.parts.len < 2 or tanru.isStemShared: continue
       var
         lowest = high(int)
         found_rendering = false
@@ -498,17 +625,47 @@ suite "Internal: Laws":
   test "Every gismu of list reads as itself":
     for w in WORDS_GISMU:  # 1342 gismu, exhaustive
       let text = $w
-      check text.tanruRead == some(Tanru(words: @[w]))  # listed gismu is tanru of itself
-      check $Tanru(words: @[w]) == text  # gismu renders as itself
+      check text.tanruRead == some(Tanru(parts: @[w.toPart]))  # listed gismu is tanru of itself
+      check text.kindRead == some(Kind.Gismu)  # 4.4, form of gismu
+      check $Tanru(parts: @[w.toPart]) == text  # gismu renders as itself
       check text.readWord.pieces.len == 0  # read whole, no rafsi
 
 
   test "Every cmavo of list reads as itself":
     for w in WORDS_CMAVO:  # 94 cmavo, exhaustive
       let text = $w
-      check text.tanruRead == some(Tanru(words: @[w]))  # 4.2, cmavo is word of its own
-      check $Tanru(words: @[w]) == text  # cmavo renders as itself
-      check readTanru(text) == some(Tanru(words: @[w]))  # tanru text of one cmavo reads back
-    check readTanru("se+cusku").get.toText == "se+cusku"  # 4.6, tanru holds cmavo, as lujvo does
-    check readTanru("cusku+se").isNone  # 4.11 step 2, last rafsi from final gismu
-    check readTanru("datni++vreji").isNone  # empty part is no listed word
+      check text.tanruRead == some(Tanru(parts: @[w.toPart]))  # 4.2, cmavo is word of its own
+      check text.kindRead == some(Kind.Cmavo)  # 4.2, form of cmavo
+      check $Tanru(parts: @[w.toPart]) == text  # cmavo renders as itself
+    let se_cusku = toTanru("se+cusku")
+    check ($se_cusku).tanruRead == some(se_cusku)  # 4.6, tanru holds cmavo, as lujvo does
+    check $toTanru("cusku+se") == "cusku se"  # 4.11 step 2, no rafsi of `se` ends lujvo (5.1)
+
+
+  test "Every string of gismu form reads as gismu, named where list holds it":
+    var count_listed, count_unlisted = 0
+    for notation in ["CVCCV", "CCVCV"]:
+      for text in textsNotation(notation):  # 122825 strings of each notation, exhaustive
+        if not text.isGismu: continue
+        let listed = text.word
+        check text.kindRead == some(Kind.Gismu)  # 4.4, form alone makes gismu
+        check text.tanruRead == some(Tanru(parts: @[
+          if listed.isSome: listed.get.toPart else: unlisted(text)
+        ]))  # list names it, or part keeps letters
+        if listed.isSome: inc count_listed else: inc count_unlisted
+    check count_listed == WORDS_GISMU.len  # conservation: each listed gismu met once
+    check count_unlisted > 0  # domain reaches strings no list holds
+
+
+  test "Lujvo of rafsi drawn from letters reads by its forms, named where list assigns":
+    var count_unassigned = 0
+    for rafsi in lujvoForms():  # `SAMPLES_FORMS` sequences, seeded
+      let
+        text = joinRafsi(rafsi)
+        reading = text.readWord
+      check reading.is_word and reading.kind == Kind.Lujvo  # 4.11, forms and hyphens alone
+      if not reading.is_word: continue
+      check reading.pieces.mapIt(it.rafsi) == rafsi  # split inverts join, assigned or not
+      check reading.tanru.parts == rafsi.mapIt(it.partNamed)  # list names each part it can
+      if not reading.tanru.parts.allIt(it.is_listed): inc count_unassigned
+    check count_unassigned >= FLOOR_UNASSIGNED  # guard reaches rafsi no list assigns

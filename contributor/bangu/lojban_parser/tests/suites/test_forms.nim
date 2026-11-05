@@ -1,20 +1,23 @@
 ## Replicate shapes of brivla, gismu and rafsi of CLL chapter 4 against `forms.nim`.
-##   Copied as `lojban_tagger/tests/suites/test_forms.nim` until #809 drops it (II.9).
+##   Sibling `lojban_tagger/tests/suites/test_forms.nim` holds earlier copy, over committed lujvo
+##     list and without cmavo forms, until #809 drops it (II.9).
 ##   Every string of up to four letters over alphabet of 3.1, foreign letters added, is
 ##     enumerated, and so is every string of CVC/CV or CCVCV letters; other strings of five are
 ##     sampled, seeded, as one-letter mutations of listed gismu (Article IX.3).
 ##   Each test seeds generator once, draws its samples into pool, and iterator serves pool.
 ##   Forms are restated here from notation of 4.1, apart from `form`; pair judgements of
 ##     `clusters.nim` are reused, since `test_clusters.nim` replicates them.
-##   Where CLL speaks of every gismu, rafsi or lujvo, each entry of committed lists stands as
-##     domain, so list breaking claim of CLL fails here, by name.
+##   Where CLL speaks of every gismu or rafsi, each entry of committed list stands as domain,
+##     so list breaking claim of CLL fails here, by name. Where it speaks of every lujvo, each
+##     word of `lujvo.txt` stands as domain, read as outside text (`texts_outside.nim`); that
+##     test skips where file is absent or moved from its pin (IX.9).
 ##   Short rafsi outside 4.6 tables would be pinned as exceptions, not failed; list holds none.
 ##   String no source holds is marked `constructed` in its citation.
 ##   Comma stands in enumerated alphabet of chapter 4, since 3.1 lists it among symbols; it is
 ##     neither C nor V of 4.1, so no form holds it. Internal suite holds choice CLL does not
 ##     make: form reads canonical letters alone, and reader of `tanru.nim` refuses comma before
 ##     any form is asked.
-##   Cost: enumeration reads about million strings; suite alone runs in less than two seconds
+##   Cost: enumeration reads about 1.6 million strings; suite alone runs in about two seconds
 ##     on unoptimised build (measured, PROVENANCE.md, Figures).
 
 {.experimental: "strictFuncs".}
@@ -22,10 +25,11 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, options, random, sequtils, strutils, tables, unittest]
+import std/[algorithm, options, random, sequtils, sets, strutils, tables, unittest]
 
 import ../../src/lojban_parser/[clusters, forms]
-import ../../src/lojban_parser/lists/[gismu, lujvo]
+import ../../src/lojban_parser/lists/gismu
+import ./texts_outside
 
 
 const
@@ -33,7 +37,15 @@ const
   ORDER_VOWELS = "aeiou"  ## Five vowels V stands for, `y` excluded (4.1 rule 1).
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"  ## Letters of 3.1, apostrophe, comma and period.
   LETTERS_FOREIGN = "ABhqw"  ## Capitals, and `h`, `q`, `w` that 3.1 omits.
-  DIPHTHONGS = ["ai", "ei", "oi", "au"]  ## Vowel pairs VV stands for unbroken (4.1 rule 2).
+  DIPHTHONGS_NOTATION = ["ai", "ei", "oi", "au"]
+    ## Vowel pairs VV stands for unbroken (4.1 rule 2), restated apart from `forms.nim`.
+  GLIDES_ON = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
+    ## Ten on-glides of 3.4 table, which 4.2 adds for cmavo of VV form, restated.
+  ALPHABET_CMAVO = "'abceiouy"
+    ## Letters cmavo law enumerates over: five vowels, `y`, apostrophe, and two consonants, since
+    ##   4.2 treats every consonant alike.
+  LENGTH_CMAVO = 6  ## Longest string cmavo law enumerates, long enough for `ku'a'e` of 4.2.
+  FLOOR_CMAVO_SIMPLE = 590  ## Least lines of `cmavo.txt` holding one cmavo: 598 read.
   ROWS_SAKLI = [
     (Form.Cvc, "123", "sak"),
     (Form.Cvc, "124", "sal"),
@@ -62,7 +74,7 @@ const
     ## Least of those mutations keeping shape of gismu, so corpus holds both verdicts: half of
     ## 6160 read at seed 0.
   SAMPLES_INSERTION = 2000
-    ## Listed words of each kind, cmavo, gismu and lujvo, `y` or apostrophe is inserted into.
+    ## Words of each kind, cmavo, gismu and lujvo, `y` or apostrophe is inserted into.
   SAMPLES_LONG = 3000  ## Listed gismu lengthened past five letters, seeded.
 
 
@@ -85,7 +97,7 @@ func formRestated(text: string): Option[Form] =
   case text.notation
   of "CVC": some(Form.Cvc)
   of "CCV": (if is_initial: some(Form.Ccv) else: none(Form))
-  of "CVV": (if text[1..2] in DIPHTHONGS: some(Form.Cvv) else: none(Form))
+  of "CVV": (if text[1..2] in DIPHTHONGS_NOTATION: some(Form.Cvv) else: none(Form))
   of "CV'V": some(Form.Cvv)
   of "CVCC": (if is_medial: some(Form.Cvcc) else: none(Form))
   of "CCVC": (if is_initial: some(Form.Ccvc) else: none(Form))
@@ -173,11 +185,10 @@ func isBrivlaRestated(text: string): bool =
   counted[0..<min(counted.len, 5)].join.countPairs > 0
 
 
-func wordsListed(): (seq[string], seq[string], seq[string]) =
-  ## Split listed words into cmavo, gismu and lujvo, each in list order.
+func wordsListed(): (seq[string], seq[string]) =
+  ## Split listed words into cmavo and gismu, each in list order.
   for entry in LIST_GISMU:
     if entry.word.len == 5: result[1].add entry.word else: result[0].add entry.word
-  for entry in LIST_LUJVO: result[2].add entry.word
 
 
 proc mutate(text: string): string =
@@ -216,6 +227,31 @@ proc drawMutated(words: seq[string]): seq[string] =
   for _ in 1..SAMPLES_MUTATION: result.add mutate(sample(words))
 
 
+func runsVowel(first: openArray[string], length_max: int): seq[string] =
+  ## Join vowel runs up to `length_max` letters: one nucleus of `first`, then each vowel or
+  ##   diphthong of 4.1 after apostrophe, built forward apart from `isCmavo`, which reads back.
+  var frontier = @first.filterIt(it.len <= length_max)
+  while frontier.len > 0:
+    result.add frontier
+    var longer: seq[string]
+    for run in frontier:
+      for nucleus in @ORDER_VOWELS.mapIt($it) & @DIPHTHONGS_NOTATION:
+        if run.len + 1 + nucleus.len <= length_max: longer.add run & "'" & nucleus
+    frontier = longer
+
+
+func cmavoGenerated(length_max: int): HashSet[string] =
+  ## Build every cmavo of 4.2 up to `length_max` letters over `ALPHABET_CMAVO`, part by part.
+  let nuclei = @ORDER_VOWELS.mapIt($it) & @DIPHTHONGS_NOTATION
+  for run in runsVowel(nuclei & @GLIDES_ON, length_max): result.incl run  # V, VV, on-glide
+  for consonant in ALPHABET_CMAVO:
+    if consonant notin ORDER_CONSONANTS: continue
+    for run in runsVowel(nuclei, length_max - 1): result.incl consonant & run  # CV, CVV
+    result.incl consonant & "y"  # letteral `Cy` (4.2, 17.2)
+  result.incl "y"  # cmavo `.y.` (4.2)
+  result.incl "y'y"  # letteral of apostrophe (17.2)
+
+
 iterator samples[T](pool: seq[T]): lent T =
   ## Serve each sample of preallocated pool, with no copy.
   for i in 0..<pool.len: yield pool[i]
@@ -238,12 +274,51 @@ suite "Chapter 4":
     check "sa.i".form.isNone  # 3.3, period inside word makes two words; constructed
     check "sa'ai".form.isNone  # 4.4, no gismu contains "'"; constructed
     check "saklii".form.isNone  # 4.4, gismu "always have five letters"; constructed
-    let (_, words_gismu, _) = wordsListed()
+    let (_, words_gismu) = wordsListed()
     randomize(0)
     let pool = drawLengthened(words_gismu)
     for text in pool.samples:  # `SAMPLES_LONG` strings, seeded
       check text.form.isNone  # 4.4, gismu "always have five letters"
 
+
+  test "Section 4.2":
+    for text in ["a", "e", "i", "o", "u"]: check text.isCmavo  # 4.2, V-form; pause unwritten (3.3)
+    for text in ["ba", "ce", "di", "fo", "gu"]: check text.isCmavo  # 4.2, CV-form
+    for text in ["au", "ei", "ia", "o'u", "u'e"]: check text.isCmavo  # 4.2, VV-form
+    for text in ["ki'a", "pei", "mi'o", "coi", "cu'u"]: check text.isCmavo  # 4.2, CVV-form
+    check "y".isCmavo  # 4.2, cmavo `.y.`, pauses unwritten
+    for text in ["ku'a'e", "sau'e", "bai'ai"]: check text.isCmavo  # 4.2, experimental
+    check "ki'e'u'e".isCmavo  # 4.2, Example 2.4, "single cmavo", four vowels
+    for text in GLIDES_ON: check text.isCmavo  # 4.2, "ten additional diphthongs"
+    check sorted(DIPHTHONGS_CMAVO) == sorted(GLIDES_ON)  # 4.2, same ten as 3.4 table
+    for text in ["by", "cy", "dy", "zy", "y'y"]: check text.isCmavo  # 17.2, single cmavo of BY
+    check not "iseci'i".isCmavo  # 4.2, Example 2.1, compound `.i se ci'i`
+    check not "punaijecanai".isCmavo  # 4.2, Example 2.2, compound
+    check not "ki'e.u'e".isCmavo  # 4.2, Example 2.3, compound, pause before `.u'e`
+    check not "cy.ibu.abu".isCmavo  # 4.2, Example 2.5, compound
+    check not "da'amei".isCmavo  # 4.3, "must be compound cmavo"
+    check not "bla".isCmavo and not "klama".isCmavo  # 4.2, consonant pair marks no cmavo
+    check not "cia".isCmavo  # 3.4, on-glides only in words standing alone; constructed
+    check not "".isCmavo and not "'a".isCmavo and not "a'".isCmavo  # 3.3, apostrophe joins vowels
+    let generated = cmavoGenerated(LENGTH_CMAVO)
+    var count_cmavo = 0
+    for length in 0..LENGTH_CMAVO:
+      for text in texts(newSeqWith(length, ALPHABET_CMAVO)):  # 597871 strings, exhaustive
+        check text.isCmavo == (text in generated)  # 4.2, forms built part by part agree
+        if text.isCmavo: inc count_cmavo
+    check count_cmavo == generated.len  # conservation: every form built is one string read
+
+
+  test "Section 4.2 over cmavo list":
+    let lines = readLinesCmavo()
+    if lines.isNone: skip()  # `cmavo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      var count_simple = 0
+      for line in lines.get:  # every line of list, exhaustive
+        let bare = line.word.replace(".", "")  # 3.3, period writes pause, which form leaves out
+        check bare.isCmavo == not line.is_compound  # 4.2, one cmavo of form, else compound
+        if not line.is_compound: inc count_simple
+      check count_simple >= FLOOR_CMAVO_SIMPLE  # Article IX.3, guard leaves enough cmavo
 
   test "Section 4.3":
     check isBrivla("bisycla")  # 4.3, `sc` counted through `y`
@@ -257,16 +332,15 @@ suite "Chapter 4":
     for length in 1..7:
       for text in texts(newSeqWith(length, "bla'y")):  # 97655 strings, exhaustive
         check isBrivla(text) == isBrivlaRestated(text)  # 4.3, three properties, stress unwritten
-    let (words_cmavo, words_gismu, words_lujvo) = wordsListed()
+    let (words_cmavo, words_gismu) = wordsListed()
     for text in words_gismu: check isBrivla(text)  # 4.4, gismu meet rules for all brivla
-    for text in words_lujvo: check isBrivla(text)  # 4.6, lujvo as brivla holds cluster too
     for text in words_cmavo: check not isBrivla(text)  # 4.3, consonant pair marks off cmavo
-    for text in words_cmavo & words_gismu & words_lujvo:
+    for text in words_cmavo & words_gismu:
       let bare = text.multiReplace(("y", ""), ("'", ""))
       check isBrivla(bare) == isBrivla(text)  # 4.3, `y` and apostrophe "not counted"
       check not isBrivla(text & "n") and not isBrivla(text & ".")  # 4.3, final vowel
     randomize(0)
-    let pool = drawInserted([words_cmavo, words_gismu, words_lujvo])
+    let pool = drawInserted([words_cmavo, words_gismu])
     for (text, inserted) in pool.samples:  # `SAMPLES_INSERTION` of each kind, seeded
       check isBrivla(inserted) == isBrivla(text)  # 4.3, `y`, apostrophe uncounted
 
@@ -291,7 +365,7 @@ suite "Chapter 4":
       check text.form == expected  # 4.4, CCVCV, pair at beginning "permissible initial pair"
       if text.isGismu: inc count_ccvcv
     check count_ccvcv == 48 * 5 * 17 * 5  # 4.4, CCVCV over 48 initial pairs of 4.1 rule 4
-    let (words_cmavo, words_gismu, words_lujvo) = wordsListed()
+    let (words_cmavo, words_gismu) = wordsListed()
     check words_gismu.len in 1300..1400  # 4.4, "about 1350 gismu"
     var lut_words_by_stem: Table[string, seq[string]]
     for text in words_gismu:
@@ -309,8 +383,6 @@ suite "Chapter 4":
       if stem == "brod": check words == @["broda", "brode", "brodi", "brodo", "brodu"]  # 4.4
       else: check words.len == 1  # 4.4, no two other gismu differ only in final vowel
     check lut_words_by_stem.hasKey("brod")  # 4.4, five special brivla variables
-    for text in words_lujvo:
-      check not text.isGismu  # 4.4, "five letter length distinguishes gismu from lujvo"
     for text in words_cmavo:
       check not text.isGismu  # 4.3, consonant pair distinguishes brivla, gismu among them
     randomize(0)
@@ -332,7 +404,7 @@ suite "Chapter 4":
         if found.isSome: inc counts[found.get]
     check counts[Form.Ccv] == 48 * 5  # 4.6, CCV "only if" permissible initial pair
     check counts[Form.Ccvc] == 48 * 5 * 17  # 4.6, CCVC over 48 initial pairs of 4.1 rule 4
-    check sorted(DIPHTHONGS_RAFSI) == sorted(DIPHTHONGS)  # 4.6, "ai", "ei", "oi", "au"
+    check sorted(forms.DIPHTHONGS) == sorted(DIPHTHONGS_NOTATION)  # 4.6, "ai", "ei", "oi", "au"
     for (labelled, pattern, rafsi) in ROWS_SAKLI:
       check rafsiPattern("sakli", pattern) == rafsi  # 4.6, table for `sakli`
       check rafsi.form == some(labelled)  # 4.6, table for `sakli`
@@ -368,9 +440,6 @@ suite "Chapter 4":
     check exceptions_table == EXCEPTIONS_TABLE  # 4.6, short rafsi "that can possibly exist"
     check exceptions_letters == EXCEPTIONS_LETTERS  # 4.6, letters chosen from five of gismu
     check count_possible_most == 7  # 4.6, "at most seven possible short rafsi"
-    let (_, _, words_lujvo) = wordsListed()
-    for text in words_lujvo:
-      check text.len >= 6  # 4.6, "all lujvo have at least six letters"
     var vowels_paired: seq[string]
     for entry in LIST_GISMU:
       for one in entry.rafsi:
@@ -385,6 +454,24 @@ suite "Chapter 4":
     check not isBrivla("ro'ire'o")  # 4.6, "breaks up into two cmavo"
     check isBrivla("patyta'a") and isBrivla("mudysiclu")  # 4.6, `y` not counted, "this is why"
     check isBrivla("ro'inre'o") and isBrivla("rokre'o")  # 4.6, hyphenated and unhyphenated
+
+
+  test "Section 4.3-6 over lujvo list":
+    let lines = readLinesLujvo()
+    if lines.isNone: skip()  # `lujvo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      let words_lujvo = lines.get.mapIt(it.word)
+      for text in words_lujvo:  # every word of list, exhaustive
+        check isBrivla(text)  # 4.6, lujvo as brivla holds cluster too
+        check not text.isGismu  # 4.4, "five letter length distinguishes gismu from lujvo"
+        check text.len >= 6  # 4.6, "all lujvo have at least six letters"
+        let bare = text.multiReplace(("y", ""), ("'", ""))
+        check isBrivla(bare) == isBrivla(text)  # 4.3, `y` and apostrophe "not counted"
+        check not isBrivla(text & "n") and not isBrivla(text & ".")  # 4.3, final vowel
+      randomize(0)
+      let pool = drawInserted([words_lujvo])
+      for (text, inserted) in pool.samples:  # `SAMPLES_INSERTION` words, seeded
+        check isBrivla(inserted) == isBrivla(text)  # 4.3, `y`, apostrophe uncounted
 
 
   test "Section 4.11":
