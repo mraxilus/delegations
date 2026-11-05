@@ -77,7 +77,7 @@ type
     Cmene  ## Gap of #812: final consonant marks cmene (4.3, 4.8).
     Fuhivla  ## Gap of #812: brivla neither gismu nor lujvo, so fu'ivla (4.7), or no word.
     Stress  ## Capital marks no syllable word may stress, as brivla off penultimate (3.9); stream.
-    Comma  ## Comma at no syllable break: word edge, beside apostrophe, or in diphthong (3.3, 3.4).
+    Comma  ## Comma at no syllable break: by edge, apostrophe, no syllable, in diphthong (3.3, 3.4).
     Foreign  ## Gap of #814: text `zoi` and `la'o` quote is no lojban (4.9 rule 7), so stream stops.
 
   Reading* = object  ## Define outcome of reading text as word.

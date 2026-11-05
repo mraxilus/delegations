@@ -181,7 +181,7 @@ func readPieces(
     occurrences: var seq[Occurrence], spelling: Spelling, whole: Reading, is_period: bool
 ): Option[ReadingStream] =
   ## Read each word of one written word onto `occurrences`, cmavo of compound in order, with
-  ##   pause before it; refusal at first comma, capital or quotation no rule admits, else none.
+  ##   pause before it; refusal at first comma or capital no rule admits, or at quotation, gap.
   let pieces = (if whole.is_word: @[spelling.letters] else: spelling.letters.splitCompound)
   var lo = 0
   for piece in pieces:
