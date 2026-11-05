@@ -36,6 +36,7 @@ const
   FLOOR_TIED = 900
     ## Least runs refused as tie that names them: 1025 read at seed `2`, most of them CV cmavo
     ##   before CCVCV gismu, which also reads as CVCCV gismu before CV cmavo.
+  FLOOR_GLIDE_READ = 30  ## Least capitals law of on-glide reads as one brivla: 40 frames hold two.
   FLOOR_STRESS = 800
     ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
     ##   850 read at seed `0`.
@@ -43,7 +44,11 @@ const
   CONSONANTS_SYLLABIC = "lmnr"  ## Consonants that may make syllable alone (3.4).
   DIPHTHONGS_OFF = ["ai", "ei", "oi", "au"]  ## Diphthongs with off-glide, in every word (3.4).
   DIPHTHONGS_ON = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
-    ## Diphthongs with on-glide, in words standing alone, first (3.4, 4.2).
+    ## Diphthongs with on-glide, first in words standing alone, and in names and borrowings
+    ##   (3.4, 4.2).
+  FRAMES_GLIDE = ["br_", "kobr_", "spag_", "br_na", "kobr_na"]
+    ## Letters around on-glide `_`, which make one syllable, two, or three; constructed.
+  COUNT_GLIDE_CAPITALS = 100  ## Syllables of each on-glide in each frame: 10 times 1+2+2+2+3.
 
 
 
@@ -117,9 +122,10 @@ func isCommaAdmitted(word: string, at: int): bool =
       not (word[at - 1] in VOWELS_SYLLABLE and word[at] in VOWELS_SYLLABLE)
 
 
-func syllables(word: string): seq[Slice[int]] =
-  ## List vowels of each syllable of word, as 3.4 groups them: diphthong with off-glide, or
-  ##   with on-glide first in word opening with it, is one syllable; each other vowel is one.
+func syllables(word: string, is_borrowing = false): seq[Slice[int]] =
+  ## List vowels of each syllable of word, as 3.4 groups them from left (3.5): diphthong with
+  ##   off-glide is one syllable, and with on-glide where word opens with it, or anywhere in
+  ##   borrowing or name; each other vowel is one.
   var at = 0
   while at < word.len:
     if word[at] notin VOWELS_SYLLABLE:
@@ -127,7 +133,8 @@ func syllables(word: string): seq[Slice[int]] =
       continue
     let
       pair = word[at .. min(at + 1, word.high)]
-      size = (if pair in DIPHTHONGS_OFF or (at == 0 and pair in DIPHTHONGS_ON): 2 else: 1)
+      is_glide = pair in DIPHTHONGS_ON and (at == 0 or is_borrowing)
+      size = (if pair in DIPHTHONGS_OFF or is_glide: 2 else: 1)
     result.add at .. at + size - 1
     at += size
 
@@ -239,6 +246,8 @@ suite "Chapter 3":
     check "sai,r,goi".wordsRead == some(@["sairgoi"])  # 3.4, syllabic "r"; Example 3.21
     check "b,ridi".refusalRead == some((Refusal.Comma, 1))  # 3.4, "b" no syllable; constructed
     check "sai,R,goi".refusalRead == some((Refusal.Stress, 4))  # 3.4, syllabic never stressed
+    check "brUa".refusalRead ==
+        some((Refusal.Shape, 0))  # 3.4, diphthong one syllable, so no brivla (4.3); review of #811
 
 
   test "Section 3.5":
@@ -450,6 +459,25 @@ suite "Internal: Stream":
         if words.isNone: inc count_refused
     check count_read == WORDS_GISMU.len + WORDS_LUJVO.len  # IX.3, one stress reads in each
     check count_refused >= FLOOR_STRESS_REFUSED  # IX.3, guard keeps refusals in play
+
+
+  test "Capital on syllable of word holding on-glide reads one brivla on penultimate alone":
+    var count, count_read = 0
+    for pair in DIPHTHONGS_ON:
+      for frame in FRAMES_GLIDE:
+        let
+          word = frame.replace("_", pair)
+          spans = word.syllables(is_borrowing = true)
+        for k, span in spans:
+          let reading = word.capitalized(span).readStream
+          inc count
+          if not reading.is_read or reading.occurrences.len != 1: continue
+          if reading.occurrences[0].reading.kind notin {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}:
+            continue
+          check k == spans.len - 2  # 3.4, diphthong one syllable; 3.9, penultimate
+          inc count_read
+    check count == COUNT_GLIDE_CAPITALS  # IX.3, guard keeps each syllable of each frame
+    check count_read >= FLOOR_GLIDE_READ  # IX.3, guard keeps brivla in play
 
 
   test "Capital on any vowel of cmavo stresses that syllable, and capital on y is refused":
