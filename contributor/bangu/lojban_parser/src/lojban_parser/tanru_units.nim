@@ -15,8 +15,8 @@
 ##     which search reads, have no copy here.
 ##   Fold reads parts (`tanru.nim`): binding cmavo are words of list, so part no list names
 ##     binds nothing, and stands as tanru unit of its own.
-##   Each folded cmavo carries selma'o chapter 20 gives it, which static check holds, so fold
-##     and cmavo list never part.
+##   Each folded cmavo carries in cmavo list selma'o its role in fold names (SE, NU, NA, NAhE,
+##     KE, KEhE, KEI, BO, CO), which static check holds, so fold and cmavo list never part.
 ##   Cmavo binding next tanru unit: SE, as SE binds only following brivla or "equivalent unit"
 ##     (CLL 9.4); NAhE, close-binding on individual brivla (15.4); NU, whose rafsi modify next
 ##     tanru unit alone, as SE and NAhE rafsi do (12.12). Grammar puts SE and NAhE on one
@@ -117,7 +117,7 @@ static:
     for word in words:
       let found = ($word).selmaho
       doAssert found.isSome and found.get in expected,
-        "Folded word should carry selma'o chapter 20 gives it; got `" & $found & "` for `" &
+        "Folded word should carry selma'o its role in fold names; got `" & $found & "` for `" &
         $word & "`."
 
 

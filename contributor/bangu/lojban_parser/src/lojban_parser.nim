@@ -9,7 +9,7 @@
 ##   | lujvo        | joining rafsi, scoring lujvo, splitting it back      | 4.5, 4.11-2      |
 ##   | selmaho      | name of each selma'o, as chapter 20 lists them       | ch. 20           |
 ##   | entries      | entry of each list: word with rafsi, or selma'o      |                  |
-##   | dictionary   | words and rafsi of committed gismu list              | 4.6              |
+##   | dictionary   | words and rafsi of gismu list, selma'o of cmavo      | 4.6, ch. 20      |
 ##   | tanru        | word read by rules alone, as parts of its tanru      | 4.2-6, 4.11-2    |
 ##   | tanru_units  | cmavo binding each tanru unit, conversions composed  | ch. 5, 9, 12, 15 |
 ##   |--------------|------------------------------------------------------|------------------|
