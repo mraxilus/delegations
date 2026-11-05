@@ -445,6 +445,8 @@ suite "Internal: Reading":
     check " brivla".refusalRead == some((Refusal.Stream, " "))  # 3.3, space ends word; no trim
     check "brivla\t".refusalRead == some((Refusal.Stream, "\t"))  # whitespace ends word
     check "bri vla".refusalRead == some((Refusal.Stream, " "))  # two words
+    for c in MARKS_STREAM:  # every mark, whitespace among them, exhaustive
+      check ("bri" & c & "vla").refusalRead == some((Refusal.Stream, $c))  # 3.3, 3.9, gap #811
     check "BRIVLA".refusalRead == some((Refusal.Stream, "B"))  # 3.9, capital marks stress
     for c in tanru.LETTERS - {'\''}:  # capital of each letter, exhaustive
       check ("bri" & c.toUpperAscii & "vla").refusalRead ==

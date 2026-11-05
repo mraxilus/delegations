@@ -1,13 +1,14 @@
 ## Hold converter of `tools/lists.nim` to its laws: word and rafsi read from their columns,
 ##   rendered module kept to 100 columns and read back, and committed module equal to committed
-##   list rendered again.
+##   list rendered again. Hold reader of outside texts (`texts_outside.nim`) to lines it reads.
 ##   Sibling `lojban_tagger/tests/suites/test_lists.nim` holds earlier copy, which holds English
 ##     fields and lujvo converter too, until #809 drops it (II.9).
 ##   CLL covers no word list file, so suite is `Internal:`, tests named by behaviour (IX.10).
-##   Sample lines are copied byte for byte from `gismu.txt` that `DIGEST_GISMU` pins, carriage
-##     return removed as `readSource` removes it; doc of each names its line. One test compares
-##     committed list with installed gismu list; it skips with reason where `lojban-common` is
-##     absent or moved from its pin (IX.9). `system` declares package, so CI installs it.
+##   Sample lines are copied byte for byte from `gismu.txt` and `lujvo.txt` that `DIGEST_GISMU`
+##     and `DIGEST_LUJVO` pin, carriage return removed as `readSource` removes it; doc of each
+##     names its line. One test compares committed list with installed gismu list; it skips
+##     with reason where `lojban-common` is absent or moved from its pin (IX.9). `system`
+##     declares package, so CI installs it.
 ##   Random entries hold word of one to five letters and up to three rafsi of three or four, all
 ##     drawn from lojban letters and apostrophe, as committed entries hold (Article IX.4).
 ##   Samples are drawn into pool allocated once, after one seeding, and served by `served`.
@@ -22,6 +23,7 @@ import std/[options, os, random, sequtils, strutils, sugar, unittest]
 import ../../src/lojban_parser/entries
 import ../../src/lojban_parser/lists/gismu
 import ../../tools/lists
+import ./texts_outside
 
 
 const
@@ -93,6 +95,63 @@ const
     EntryGismu(word: "vreji", rafsi: @["rej", "vei"]),
   ]
     ## Entry of each sample line, fields read off by hand from columns of `entries.nim`.
+  LINE_BAARMOA = "ba'armo'a:barna+morna:pattern of marks:$morna1 $morna2 $=barna1 $morna3 $barna2"
+    ## Line 1 of `lujvo.txt`: tanru in lojban.
+  LINE_BADGAI =
+      "badgai#defend+cover: protective cover/ shield:$bandu1 $=gacri1 $bandu2 $=gacri1 " &
+      "$bandu3"
+    ## Line 14 of `lujvo.txt`: tanru in English keywords, after `#`.
+  LINE_DATNYVEI =
+      "datnyvei:datni+vreji:file (incl. computers):$vreji1 $vreji2 $=datni2 $vreji3 " &
+      "$vreji4 [ = manner of encoding]"
+    ## Line 634 of `lujvo.txt`: `datnyvei`, tanru in lojban.
+  LINE_FEBJICLA = "febjicla#boil+stir:roil:roil:$jicla1 $jicla2 $=febvi1"
+    ## Line 841 of `lujvo.txt`: English, gloss given twice; first kept.
+  LINE_CIMNALSRA = "cimnalsra:foldi::cilmo+na'e+srasu foldi marsh"
+    ## Line 360 of `lujvo.txt`: one part, gloss empty.
+  LINE_SEZYPEVDUA =
+      "sezypevdu'a:sevzi+[figurative::]+dunda to dedicate oneself to someone/something, to " &
+      "give oneself away"
+    ## Line 2848 of `lujvo.txt`: colons inside bracket, gloss empty.
+  LINE_JGETERJOE = "jgeterjo'e#knot+3rd-place-of+joined"
+    ## Line 1238 of `lujvo.txt`: `#` and no colon, so no gloss.
+  LINE_CIERSMITAI =
+      "ci'ersmitai#system+similar+shape:$tarmi1 $=simsa1 $tarmi2 $=simsa2 $ciste1 $=simsa3"
+    ## Line 322 of `lujvo.txt`: `#`, and place structure for gloss.
+  LINE_PEVYSOASELTAI =
+      "pevyso'aseltai#[figurative:]+egg+2nd-place-of+shape:egg-shaped:$tarmi2 $tarmi1"
+    ## Line 2261 of `lujvo.txt`: `#`, colon inside bracket.
+  LINE_DATKYPIU = "datkypi'u gairki'e:datka+pimlu gacri+kicne:eiderdown [quilt]"
+    ## Line 630 of `lujvo.txt`: phrase for word, space inside.
+  LINE_JAIRTAI = "jairtai:denmi:xance jgari+tarmi denmi xance:fist:$tarmi1 (omit $tarmi2 $=jgari3)"
+    ## Line 1091 of `lujvo.txt`: five fields, one part.
+  LINE_BLOTI_ZERLEA = "bloti zerle'a:bloti zekri+lebna:pirate:"
+    ## Line 150 of `lujvo.txt`: phrase for word, gloss closed by colon.
+  LINE_NALSUTYDZUKEPKLA =
+      "nalsutydzukepkla:na'e+sutra+cadzu+,+klama:to go without walking fast:$klama1 " &
+      "$klama2 $klama3 $klama4 $klama5"
+    ## Line 2008 of `lujvo.txt`: `,` among parts.
+  LINES_LUJVO = [
+    LINE_BAARMOA, LINE_BADGAI, LINE_DATNYVEI, LINE_FEBJICLA, LINE_CIMNALSRA, LINE_SEZYPEVDUA,
+    LINE_JGETERJOE, LINE_CIERSMITAI, LINE_PEVYSOASELTAI, LINE_DATKYPIU, LINE_JAIRTAI,
+    LINE_BLOTI_ZERLEA, LINE_NALSUTYDZUKEPKLA,
+  ]
+    ## Sample lines of `lujvo.txt`, one of each shape outside text reader meets.
+  EXPECTED_LUJVO = [
+    LineLujvo(word: "ba'armo'a", is_english: false, parts: @["barna", "morna"]),
+    LineLujvo(word: "badgai", is_english: true, parts: @["defend", "cover"]),
+    LineLujvo(word: "datnyvei", is_english: false, parts: @["datni", "vreji"]),
+    LineLujvo(word: "febjicla", is_english: true, parts: @["boil", "stir"]),
+    LineLujvo(word: "cimnalsra", is_english: false, parts: @[]),
+    LineLujvo(word: "sezypevdu'a", is_english: false, parts: @[]),
+    LineLujvo(word: "jgeterjo'e", is_english: true, parts: @["knot", "3rd-place-of", "joined"]),
+    LineLujvo(word: "ci'ersmitai", is_english: true, parts: @["system", "similar", "shape"]),
+    LineLujvo(word: "pevyso'aseltai", is_english: true, parts: @[]),
+    LineLujvo(word: "jairtai", is_english: false, parts: @[]),
+    LineLujvo(word: "nalsutydzukepkla", is_english: false, parts: @[]),
+  ]
+    ## Line read from each sample line whose word is letters, read off by hand: parts where line
+    ##   writes two or more, lojban ones in letters alone.
 
 
 func entryGismu(word: string): Option[EntryGismu] =
@@ -190,6 +249,14 @@ suite "Internal: Lists":
       check entry.rafsi.len <= 3 and entry.rafsi.allIt(it.len in 3..4)  # three slots, 3-4 wide
       check entry.rafsi.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # rafsi are letters
       check entry.word == entry.word.strip  # spaces at field ends trimmed
+
+
+  test "outside text reader keeps word of each line, and parts of either notation":
+    check toLinesLujvo(LINES_LUJVO.join("\n")) == @EXPECTED_LUJVO  # each shape, order kept
+    for line in [LINE_DATKYPIU, LINE_BLOTI_ZERLEA]:
+      check toLinesLujvo(line).len == 0  # phrase for word stands in no domain
+    check toLinesLujvo("\n  \n").len == 0  # blank line holds no word
+    check EXPECTED_LUJVO.len + 2 == LINES_LUJVO.len  # conservation: each line read or left out
 
 
   test "committed gismu list is list converted from installed file":

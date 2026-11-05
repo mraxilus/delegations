@@ -1,5 +1,6 @@
 ## Replicate lujvo of CLL chapters 3, 4 and 7 against `lujvo.nim`: join, split and score.
-##   Copied as `lojban_tagger/tests/suites/test_lujvo.nim` until #809 drops it (II.9).
+##   Sibling `lojban_tagger/tests/suites/test_lujvo.nim` holds earlier copy, over committed lujvo
+##     list, until #809 drops it (II.9).
 ##   Each lujvo CLL spells is joined from its rafsi and split back into those rafsi alone, so
 ##     one vector holds both directions; where CLL gives word without rafsi, split is inferred,
 ##     and comment says so.
@@ -25,7 +26,7 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[clusters, dictionary, forms, lujvo]
+import ../../src/lojban_parser/[clusters, dictionary, forms, lujvo, tanru]
 import ../../src/lojban_parser/lists/gismu
 import ./[rafsi_random, texts_outside]
 
@@ -56,6 +57,8 @@ const
   LENGTH_MIN = 2  ## Fewest rafsi of random sequence; lujvo has two or more (4.6).
   LENGTH_MAX = 5  ## Most rafsi of random sequence.
   ENTRIES_FLOOR_LOJBAN = 3000  ## Entries in lojban notation whose parts must all be listed.
+  ENTRIES_FLOOR_ENGLISH = 600
+    ## Lines in English notation, of two keywords or more, that law reads: 767 read.
   FORMS_MEDIAL = [Form.Cvc, Form.Ccv, Form.Cvv, Form.Cvcc, Form.Ccvc]
     ## Forms 4.11 step 1 allows before last rafsi: 3-letter or 4-letter.
   FORMS_LAST = [Form.Ccv, Form.Cvv, Form.Cvccv, Form.Ccvcv]
@@ -83,6 +86,13 @@ const
     "xavyvanbi",  # `xav` is rafsi of `xa`; list writes `re`
   ]
     ## Entries in lojban notation whose rafsi do not name listed parts in order, with reason.
+  EXCEPTIONS_ENGLISH = [
+    "maicpukai",  # CVV opening three-part lujvo lacks `r` of 4.11 step 4a
+    "natmyrgu'e",  # letter `r` after `natmy` fits no rafsi; `natmygu'e` would read
+    "tolmipygau",  # word holds `tol` of cmavo `to'e`; list leaves it out
+    "vikmau",  # list writes `2nd-place-of`, SE of 9.4, and word holds no rafsi of it
+  ]
+    ## Lines in English notation that read with other count of parts than of keywords, with reason.
   WORDS_CITED = [
     "cakyrespa", "cibylajyterkruca", "detyselylacri", "digyligykamju", "pucyteryrunta",
     "xasymabru", "kanydzu", "penydjuxa'a",
@@ -480,6 +490,7 @@ suite "Internal: Laws":
         count = 0
         failing: seq[string]
       for line in lines.get:
+        if line.is_english: continue
         let parts = line.parts.mapIt(it.word)
         if parts.len == 0 or not parts.allIt(it.isSome): continue
         inc count
@@ -491,6 +502,22 @@ suite "Internal: Laws":
         if not is_resolved: failing.add line.word
       check count >= ENTRIES_FLOOR_LOJBAN  # Article IX.3, guard leaves enough entries
       check failing.sorted == EXCEPTIONS_LOJBAN.sorted  # law: rafsi name parts in order
+
+
+  test "Corpus in English notation reads with one part for each keyword":
+    let lines = readLinesLujvo()
+    if lines.isNone: skip()  # `lujvo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      var
+        count = 0
+        failing: seq[string]
+      for line in lines.get:
+        if not line.is_english or line.parts.len == 0: continue
+        inc count
+        let reading = line.word.readWord
+        if not reading.is_word or reading.tanru.parts.len != line.parts.len: failing.add line.word
+      check count >= ENTRIES_FLOOR_ENGLISH  # Article IX.3, guard leaves enough lines
+      check failing.sorted == EXCEPTIONS_ENGLISH.sorted  # law: one part for each keyword
 
 
   test "Corpus spells each word suite cites from it":

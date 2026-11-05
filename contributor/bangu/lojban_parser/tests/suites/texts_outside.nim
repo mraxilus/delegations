@@ -7,8 +7,8 @@
 ##     installs it.
 ##   `lujvo.txt` writes tanru in two notations: `word:part+part:gloss` in lojban, and
 ##     `word#keyword+keyword:gloss` in English keywords. Line is kept where word is lojban
-##     letters alone; parts are kept in lojban notation alone, where each is letters, since
-##     keywords name gismu by English, which parser does not hold.
+##     letters alone, and its parts where it writes two or more, lojban parts in letters. Parser
+##     holds no English, so suite counts keywords of line, and never reads them.
 ##     Cost: line writing phrase for word, as `datkypi'u gairki'e`, stands in no domain.
 ##   `cmavo.txt` writes cmavo in columns 1 to 11, period of pause kept (3.3), and selma'o in
 ##     columns 12 to 20; `*` there marks compound, which reads as several cmavo.
@@ -23,7 +23,9 @@ import ../../tools/lists
 type
   LineLujvo* = object  ## Define one line of `lujvo.txt` whose word is lojban letters.
     word*: string  ## Lujvo as line spells it.
-    parts*: seq[string]  ## Parts of tanru in lojban notation, in order; empty in English one.
+    is_english*: bool  ## Line writes tanru in English keywords of gismu, after `#`.
+    parts*: seq[string]
+      ## Parts of tanru as line writes them, in order; empty where line writes fewer than two.
 
   LineCmavo* = object  ## Define one line of `cmavo.txt`: cmavo, or compound of several.
     word*: string  ## Cmavo as line writes it, period of pause included.
@@ -46,11 +48,13 @@ func toLinesLujvo*(text: string): seq[LineLujvo] =
       is_english = '#' in fields[0]
       word = fields[0].split('#', maxsplit = 1)[0]
     if not word.isLetters: continue
-    var parts: seq[string]
-    if not is_english and fields.len >= 2:
-      parts = fields[1].split('+')
-      if parts.len < 2 or not parts.allIt(it.isLetters): parts = @[]
-    result.add LineLujvo(word: word, parts: parts)
+    let written =
+      if is_english: fields[0].split('#', maxsplit = 1)[1]
+      elif fields.len >= 2: fields[1]
+      else: ""
+    var parts = written.split('+')
+    if parts.len < 2 or not parts.allIt(it.len > 0 and (is_english or it.isLetters)): parts = @[]
+    result.add LineLujvo(word: word, is_english: is_english, parts: parts)
 
 
 proc readLinesLujvo*(): Option[seq[LineLujvo]] =
