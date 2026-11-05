@@ -46,6 +46,9 @@ const
   DIPHTHONGS_ON = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
     ## Diphthongs with on-glide, first in words standing alone, and in names and borrowings
     ##   (3.4, 4.2).
+  DIPHTHONGS_NAME = ["iy", "uy"]  ## Diphthongs 3.4 keeps to names.
+  FRAMES_NAME = ["k_n", "dj_m", "m_tan", "s_lis"]
+    ## Letters of cmene around diphthong `_` of name, which make one syllable or two; constructed.
   FRAMES_GLIDE = ["br_", "kobr_", "spag_", "br_na", "kobr_na"]
     ## Letters around on-glide `_`, which make one syllable, two, or three; constructed.
   COUNT_GLIDE_CAPITALS = 100  ## Syllables of each on-glide in each frame: 10 times 1+2+2+2+3.
@@ -122,10 +125,10 @@ func isCommaAdmitted(word: string, at: int): bool =
       not (word[at - 1] in VOWELS_SYLLABLE and word[at] in VOWELS_SYLLABLE)
 
 
-func syllables(word: string, is_borrowing = false): seq[Slice[int]] =
+func syllables(word: string, is_borrowing = false, is_name = false): seq[Slice[int]] =
   ## List vowels of each syllable of word, as 3.4 groups them from left (3.5): diphthong with
   ##   off-glide is one syllable, and with on-glide where word opens with it, or anywhere in
-  ##   borrowing or name; each other vowel is one.
+  ##   borrowing or name; `iy` and `uy` in name alone; each other vowel is one.
   var at = 0
   while at < word.len:
     if word[at] notin VOWELS_SYLLABLE:
@@ -133,7 +136,9 @@ func syllables(word: string, is_borrowing = false): seq[Slice[int]] =
       continue
     let
       pair = word[at .. min(at + 1, word.high)]
-      is_glide = pair in DIPHTHONGS_ON and (at == 0 or is_borrowing)
+      is_glide =
+        (pair in DIPHTHONGS_ON and (at == 0 or is_borrowing or is_name)) or
+        (pair in DIPHTHONGS_NAME and is_name)
       size = (if pair in DIPHTHONGS_OFF or is_glide: 2 else: 1)
     result.add at .. at + size - 1
     at += size
@@ -248,6 +253,7 @@ suite "Chapter 3":
     check "sai,R,goi".refusalRead == some((Refusal.Stress, 4))  # 3.4, syllabic never stressed
     check "brUa".refusalRead ==
         some((Refusal.Shape, 0))  # 3.4, diphthong one syllable, so no brivla (4.3); review of #811
+    check "kUYn.".stressesRead == some(@[some(0)])  # 3.4, `uy` one syllable of name; review of #811
 
 
   test "Section 3.5":
@@ -478,6 +484,17 @@ suite "Internal: Stream":
           inc count_read
     check count == COUNT_GLIDE_CAPITALS  # IX.3, guard keeps each syllable of each frame
     check count_read >= FLOOR_GLIDE_READ  # IX.3, guard keeps brivla in play
+
+
+  test "Capital on each syllable of cmene holding iy or uy stresses that syllable":
+    var count = 0
+    for pair in DIPHTHONGS_NAME:
+      for frame in FRAMES_NAME:
+        let word = frame.replace("_", pair)
+        for k, span in word.syllables(is_name = true):
+          check word.capitalized(span).stressesRead == some(@[some(k)])  # 3.4; 3.9, any syllable
+          inc count
+    check count == 12  # IX.3, guard keeps each syllable of each frame: 2 times 1+1+2+2
 
 
   test "Capital on any vowel of cmavo stresses that syllable, and capital on y is refused":
