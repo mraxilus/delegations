@@ -18,14 +18,14 @@ bridyvalsi: Lujvo @[bridi, valsi], renders as brivla
 kukta: Gismu @[kukta], renders as kukta
 clozba: Lujvo @[clo, zbasu], renders as clozba
 mudsiclu: Hyphen mudysiclu
-lojban: Cmene
+lojban: Cmene @[lojban], renders as lojban
 ```
 
 The reader reads `bridyvalsi` as the tanru of `bridi` and `valsi`, and renders the lujvo of lowest
 score, `brivla`. It reads `kukta` as a gismu by its form, though no list holds it. It reads
 `clozba` as a lujvo, and keeps the letters `clo`, a rafsi that no list assigns. It refuses
-`mudsiclu`, because CLL 4.11 requires a `y` there, and it names the correct form. It refuses
-`lojban` as a cmene, which this parser does not read yet.
+`mudsiclu`, because CLL 4.11 requires a `y` there, and it names the correct form. It reads
+`lojban` as a cmene, because the word ends in a consonant (4.8).
 
 It also reads a stream of text into its words. Each word carries the pause before it, and the
 stress that a capital marks:
@@ -47,11 +47,33 @@ The period before `i` writes its pause. The capitals of `RE` stress a last sylla
 brivla, so CLL 4.9 needs a pause there. The text writes none, so the reader infers it, as CLL 3.3
 allows.
 
+A written word that holds several words splits into them, where one split needs the fewest
+pauses:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/strutils, lojban_parser
+for text in ["laplas.", "secusku", "mibroda", "miBROda"]:
+  let r = readStream(text)
+  if r.is_read:
+    var words: seq[string]
+    for o in r.occurrences: words.add o.text & " (" & $o.reading.kind & ")"
+    echo text, ": ", words.join(" ")
+  else: echo text, ": ", r.refusal, ", ", r.detail'
+laplas.: la (Cmavo) plas (Cmene)
+secusku: se (Cmavo) cusku (Gismu)
+mibroda: Split, mibro da, or mi broda
+miBROda: mi (Cmavo) broda (Gismu)
+```
+
+CLL 4.8 says that `laplas.` looks like the words `la plas.`. The letters of `mibroda` split two
+ways, and only stress tells them apart (3.9). So the reader refuses `mibroda`, and reads
+`miBROda`, whose capitals mark the stress of `broda`.
+
 ## Authority
 
-The project replicates The Complete Lojban Language (CLL), by John Woldemar Cowan, first
-edition, 1997, from the Logical Language Group. The text is the first edition with errata, at
-`lojban.github.io/cll`. Chapter 3 gives the letters, the marks of a stream, the consonant
+The project replicates The Complete Lojban Language (CLL), by John Woldemar Cowan, from the
+Logical Language Group. It follows version 1.1, generated 2016-08-26, which is the latest edition,
+at `lojban.org/publications/cll/`. Chapter 3 gives the letters, the marks of a stream, the consonant
 clusters, the syllables and the stress. Chapter 4 gives the classes and shapes of words, the
 rafsi, the algorithms that join and score a lujvo, and the pauses between words.
 Chapters 5, 7, 9, 12 and 15 tell which words each cmavo binds, and chapter 20 is the catalogue of
@@ -90,12 +112,13 @@ The project publishes no page.
 The parser reads words by the rules of CLL alone. It reads each gismu and each cmavo by its form,
 and each lujvo by its rafsi and hyphens, listed or not. It gives the selma'o of each cmavo that
 the cmavo list holds, and splits cmavo run together into each cmavo. It renders a tanru as a
-lujvo, and folds a tanru into tanru units. It reads a stream of text into its words, with its
-pauses, commas and capitals.
+lujvo, and folds a tanru into tanru units. It reads each fu'ivla and each cmene by the rules of
+CLL 4.7 and 4.8. It reads a stream of text into its words, with its pauses, commas and capitals,
+and it splits words that a text writes together.
 
-The suites hold each part to CLL. The parser reads no grammar of prose, no cmene and no fu'ivla,
-and no text that `zoi` or `la'o` quotes.
+The suites hold each part to CLL. The parser reads no grammar of prose, and no text that `zoi`
+or `la'o` quotes.
 
 The project `lojban_tagger` keeps an earlier copy of these modules until #809 moves it onto this
-parser. `selmaho.nim`, `lists/cmavo.nim` and `stream.nim` are new here, so it holds no copy of
-them. Nothing here has been read line by line by a human.
+parser. It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim` or `stream.nim`.
+Nothing here has been read line by line by a human.
