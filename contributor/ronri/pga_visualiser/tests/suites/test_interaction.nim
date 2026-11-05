@@ -2498,6 +2498,51 @@ suite "Interaction":
     check depth < 1.01 * grip.fingers[0].floor
 
 
+  test "pinches about a small planet come in to where it fills, past lines drawn through it":
+    # Case as found (repository issue 745, on its fix): on phone, pinch after pinch about
+    #   Earth stopped 0.08 off it. Each finger took line through Earth, which passed nearest
+    #   finger's ray just short of it, and line's floor was its radius, 0.08 unless chosen.
+    const
+      (wide, tall) = (412, 915)
+      radius = 4.0e-5
+    let aspect = float(wide) / float(tall)
+    var camera = cameraAround(ORIGIN, 0.5, Direction(x: 10, y: 4, z: 3))
+    let (_, frame) = camera.sight
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "planet", Ink.Cobalt, radius = radius)
+    # Each line runs out across frame and toward eye, so beside planet it stands nearer.
+    for side in [1.0, -1.0]:
+      let toward = ORIGIN + side * frame.axis_right - 0.3 * frame.forward
+      scene.addObject(ORIGIN.toMultivector ∧ toward.toMultivector, "line", Ink.Jade)
+    for _ in 1..10:
+      let
+        at = projectToScreen(
+          camera.initMatrixViewProjection(aspect), wide, tall, ORIGIN.toView(camera.originView)
+        )
+        landed = [ScreenPosition(x: at.x - 30.0, y: at.y), ScreenPosition(x: at.x + 30.0, y: at.y)]
+      var grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+      for step in 1..10:
+        grip.carryGrip(
+          camera, movedAbout(landed, 1.0 + 0.4 * float(step), 0.0, ScreenPosition()), wide, tall
+        )
+    let
+      filling = radius * float(tall) / (
+        tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
+      )
+      reach = norm(camera.sight[0] - ORIGIN.toView(camera.originView))
+    check reach >= filling * (1.0 - 1.0e-6)
+    check reach < 1.05 * filling
+
+
   test "two fingers pinched in over empty sky zoom out every time, about what is drawn there":
     # Fault: zoom out shrank objects from under fingers, so next pinch landed on sky, which
     #   grip held still, and no pinch after it moved anything. Pivot follows depth held, so

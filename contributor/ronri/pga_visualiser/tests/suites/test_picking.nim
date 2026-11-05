@@ -150,6 +150,47 @@ suite "Picking":
       check depthAlongSight(view_home, anchor_aside.get.at) > 1.0e6
 
 
+  test "a zoom takes a point over a line through it, and a near line over a far star":
+    # Fault (repository issue 745, on its fix): line through planet passed nearest finger's
+    #   ray just short of planet, so depth alone took line, and pinch about Earth stopped at
+    #   line's radius, 0.08 off it.
+    #   Objects at about one depth stand at one place, and there point beats line, as click
+    #   ranks them. Far star is not at that place, so near line still beats it.
+    let
+      camera = cameraFacingOrigin()
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+      scale = camera.drawExtentFor(height_pick, 0.0)
+      (eye, frame) = camera.sight
+    proc placeOff(pixels, depth: float): Position =
+      ## Place point `pixels` right of centre on screen, `depth` along sight.
+      eye + depth * camera.headingThrough(
+        frame, width_pick, height_pick, ScreenPosition(x: centre.x + pixels, y: centre.y)
+      )
+    # Line runs from planet out to 30 px right, 1 unit nearer eye: under pointer there,
+    #   it stands at depth 9, and planet beside it at 10.
+    var through = initScene()
+    let
+      planet = through.addObject(
+        placeOff(0.0, 10.0).toMultivector, "planet", Ink.Cobalt, radius = 0.001
+      )
+      beside = ScreenPosition(x: centre.x + 30.0, y: centre.y)
+    through.addObject(
+      placeOff(0.0, 10.0).toMultivector ∧ placeOff(30.0, 9.0).toMultivector, "line", Ink.Jade
+    )
+    check pickNearest(
+      through, camera, scale, view_projection, width_pick, height_pick, beside, rank = Rank.Eye
+    ) == some(planet)
+    # Line across pointer at depth 10, star 10 px off pointer at depth 1000.
+    var apart = initScene()
+    let line = apart.addObject(
+      placeOff(-200.0, 10.0).toMultivector ∧ placeOff(200.0, 10.0).toMultivector, "line", Ink.Jade
+    )
+    apart.addObject(placeOff(10.0, 1000.0).toMultivector, "star", Ink.Rose, radius = 0.001)
+    check pickNearest(
+      apart, camera, scale, view_projection, width_pick, height_pick, centre, rank = Rank.Eye
+    ) == some(line)
+
+
   test "a star is picked where it is drawn, however far out the horizon stands":
     # Fault: horizon past `1 / TOLERANCE_ABS` read star's place as none, and pick passed it
     #   over. Camera 1e8 out stands horizon 1.8e9 off eye.
