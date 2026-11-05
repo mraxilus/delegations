@@ -2261,7 +2261,8 @@ suiteInProc "Internal: Evaluations":
       share_slow = 0.37
         ## Share of runs of one binary 1.2 times its fastest or slower, as whole: 51 runs on
         ##   `linux amd64, 4 cores`, 2026-11-01.
-      bound = 2.5e-4  ## Chance per measurand: one in ten evaluations of some 250 measurands.
+      bound = 2.5e-4
+        ## Chance per measurand: one false median in some 16 evaluations of 246 measurands.
     let side = share_slow * (1.0 - share_slow)  # pair whose ratio leaves 1 upward, as downward
     var off = 0.0  # chance that more than half of pairs leave 1 on one side
     for k in RUNS_EVALUATION div 2 + 1 .. RUNS_EVALUATION:
