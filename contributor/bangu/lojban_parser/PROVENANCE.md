@@ -16,7 +16,7 @@ which stands apart from it. The project reads lojban words, and streams of them,
 CLL alone, and holds no grammar of prose.
 
 `lojban_tagger` keeps a copy of each module here until #809 moves the tagger onto this parser.
-`selmaho.nim`, `lists/cmavo.nim` and `stream.nim` are new here, so it keeps no copy of them.
+It holds no copy of `selmaho.nim`, `lists/cmavo.nim` or `stream.nim`.
 Where a module differs, the copy in `lojban_tagger` is earlier, and reads listed words alone. The
 header of each module names its sibling there, as Article II.9 asks, and `tools/lists.nim` names
 the sibling of the list that it renders. A fix to one copy is finished only when the other is
@@ -237,8 +237,12 @@ brivla, which CLL writes apart (3.3). Verified by `suites/test_tanru.nim`.
 **Each refusal names the rule of CLL that refuses the text, or the gap that holds it.** `Letter`
 names 3.1 and 3.3, `Apostrophe` names 3.3, `Shape` names 3.3, 4.2, 4.3 and 4.8, and `Hyphen`
 names 4.11. `Stream` names text that `readStream` reads: marks of a stream, and cmavo run
-together. A gap is text that CLL admits and that the reader does not read yet. `Cmene` and
-`Fuhivla` hold cmene and fu'ivla, for #812. Verified by `suites/test_tanru.nim`.
+together. A stream alone gives `Stress`, which names 3.9, and `Comma`, which names 3.3 and 3.4.
+Verified by `suites/test_tanru.nim` and `suites/test_stream.nim`.
+
+**A gap is text that CLL admits and that the reader does not read yet.** `Cmene` and `Fuhivla`
+hold cmene and fu'ivla, for #812, and `Foreign` the text that `zoi` and `la'o` quote, for #814.
+Verified by `suites/test_tanru.nim` and `suites/test_stream.nim`.
 
 Cost: a gap also holds text that no rule admits, as `mibroda`, which runs `mi` into `broda`. 4.7
 refuses it as a fu'ivla, and the issue of the gap tells the two apart. Verified by
@@ -307,7 +311,8 @@ Precedent: the parser of the Logical Language Group splits written text the same
 `lex.c` breaks up compound cmavo, and assumes that brivla and cmene stand alone. It says that
 this holds for written lojban, but not for a naive transcription of speech. The archive is
 `lojban.org/files/software/parser/parser.shar.gz`, with SHA-256
-`72a4883f2cbceff616eaf7d93dee86e4b20798ed4aad3c6a91f95dc6ba0077c5`. Verified by hand, 2026-11-05.
+`72a4883f2cbceff616eaf7d93dee86e4b20798ed4aad3c6a91f95dc6ba0077c5`. Verified by hand with `curl`,
+`sha256sum` and `zcat`, 2026-11-05.
 
 **The reader infers a pause where a rule needs one and the text writes none.** 3.3 calls the
 period an optional reminder of a mandatory pause, which correct text implies where the period is
@@ -328,6 +333,7 @@ text that `zoi` and `la'o` quote, which is not lojban. So the reader stops at ei
 `Foreign`, which #814 reads. Verified by `suites/test_stream.nim`, Section 4.9.
 
 Cost: `zo zoi` quotes the word `zoi`, but the reader stops there too, because #814 reads `zo`.
+Verified by `suites/test_stream.nim`, Section 4.9.
 
 **A comma breaks syllables, and changes no word.** 3.3 says that no two words differ in a comma
 alone, so the reader takes each comma out before it reads the word. A comma stands inside a word.
@@ -341,12 +347,16 @@ syllable (3.4), so the reader refuses such a comma in a cmavo, a gismu or a lujv
 
 Cost: a comma beside `l`, `m`, `n` or `r` may make that consonant syllabic, which 3.4 admits in
 principle, so the reader accepts it. #812 judges the commas of cmene and fu'ivla, where a comma
-can part two vowels (3.5).
+can part two vowels (3.5). Verified by `suites/test_stream.nim`, Section 3.4, and by the law over
+each position.
 
 **A capital marks stress, and nothing else.** 3.9 capitalizes the stressed syllable, or at least
 its vowel, and 4.8 calls this the only use of capitals. So the capitals of a word form one run,
 which touches one vowel or diphthong. The reader refuses any other capital as `Stress`, as the
 `M` of `Mi` that opens a sentence. Verified by `suites/test_stream.nim`, Sections 3.1 and 3.9.
+
+Cost: a text that capitalizes the first word of each sentence, as English does, is refused there.
+Verified by `suites/test_stream.nim`, Section 3.1.
 
 **A brivla stresses its penultimate syllable, and a cmavo any syllable or none.** `y` and a
 syllabic consonant are not counted, and `y` takes no stress (3.9). Verified by
@@ -354,7 +364,8 @@ syllabic consonant are not counted, and `y` takes no stress (3.9). Verified by
 and of each random lujvo.
 
 **Each refusal of a stream names the byte where it applies.** It names the first word or mark
-that no rule admits, so that a caller can point at it. Verified by `suites/test_stream.nim`.
+that the reader refuses, by a rule or as a gap. So a caller can point at it. Verified by
+`suites/test_stream.nim`.
 
 ## What cmavo bind
 
@@ -451,7 +462,7 @@ each form. So the suites of the reader and of lujvo share one way to draw them (
 
 `suites/test_tanru.nim` holds the reader, `suites/test_stream.nim` the reader of a stream, and
 `suites/test_tanru_units.nim` the fold. Each suite but `suites/test_selmaho.nim` and
-`suites/test_stream.nim`, which are new here, has a sibling in `lojban_tagger`. That
+`suites/test_stream.nim` has a sibling in `lojban_tagger`. That
 sibling holds an earlier copy, and the header of the suite names it (II.9). The tests of tag
 policy and of search are in `lojban_tagger` alone. Each assertion cites its source: a section of
 CLL, or the article of the charter that a guard holds.
