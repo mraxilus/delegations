@@ -262,13 +262,33 @@ The rule of data gives Protocol Buffers to data that one program writes and anot
 stays text, which a person reads and any tool splits at the tab (D1 on #768). Rejected: Protocol
 Buffers, whose binary a person cannot read or edit.
 
-**A term becomes sets of gismu, and an entity matches where it holds one set whole.** A lojban
-term gives one set, the gismu of its tanru. An English term gives one set for each meaning that it
-leads to. Every term of a query must match. So `vreji` finds a thing tagged `datnyvei`, and
-`datnyvei` finds what `datni` and `vreji` tag together.
+**A term becomes sets of gismu, and an entity meets the term where it holds one set whole.** A
+lojban term gives one set, the gismu of its tanru. An English term gives one set for each meaning
+that it leads to. So `vreji` finds a thing tagged `datnyvei`, and `datnyvei` finds what `datni`
+and `vreji` tag together.
 
-Cost: order and relation are lost, so
-`patfu mamta` and `mampa'u` find each other. Verified by `suites/test_search.nim`.
+Cost: order and relation are lost, so the tanru `patfu mamta` and the lujvo `mampa'u` find each
+other. Verified by `suites/test_search.nim`.
+
+**A query shows each entity that one of its terms finds, and the entities that meet the most
+terms come first.** The Architect ruled so (D5 c on #779). The entities that meet every term come
+first, then the entities that meet one term fewer, and so on down to one term. So a term that
+finds nothing does not empty the result. Over the tags of Alice's Adventures in Wonderland,
+`rabbit hole` and `cheshire cat` find the book, though `hole` and `cheshire` find nothing.
+
+The entities that meet every term are what the conjunction of the terms finds, in the same order.
+Verified by `suites/test_search.nim`, against an oracle of the conjunction that shares no code
+with `find`. Verified by `suites/test_commands.nim` for the book.
+
+Each term counts once for each time that the query names it. Verified by `suites/test_search.nim`.
+Cost: every term counts the same, so an entity that meets two wide terms comes before an entity
+that meets one narrow term. Cost: the search tests every entity against every term, with no stop
+at the first term that it fails (Figures).
+
+The report names each term that finds nothing in the index, because the output does not show it.
+In a query of several terms, the report of a term with a cmavo says where its rank applies. The
+output line of an entity does not say how many terms it meets, so its form stays the same for
+other tools. Verified by `suites/test_commands.nim`.
 
 **A lojban term that holds a cmavo ranks first each entity with a tag that holds its tanru units
 unbroken.** The Architect ruled that a search for `selci'a` lists first each thing with a tag that
@@ -279,8 +299,8 @@ tanru units hold those of the term in order, with nothing between them.
 
 So `selci'a`, `selci'avei` and `veirselci'a` rank for `selci'a`. `selselci'a`, `terselci'a` and
 `nalselci'a` do not, because their cmavo convert or negate `se ciska`. A term whose cmavo all fold
-away ranks nothing, as a gismu does. Each of the two tiers keeps the order of the index. Verified
-by `suites/test_search.nim`.
+away ranks nothing, as a gismu does. The rank orders the entities that meet the same number of
+terms. Each of its two tiers keeps the order of the index. Verified by `suites/test_search.nim`.
 
 A group that cmavo bind changes a run inside it in three ways, and then the run does not rank. A
 run that ends where the group ends holds its head, which a conversion converts (5.11) and an
@@ -791,9 +811,11 @@ the compile of the stub at `constructRafsiByForm`, with `UnpackDefect`. Verified
 
 Each figure below comes from an Intel Xeon at 2.10 GHz with four cores. The runs of each pair of
 compilers alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine.
+
 The figures of `tagger` are from 2026-11-03, at `5b6b694a`, which holds no `suggester`. The
 release build of `suggester` and the suites are from 2026-11-04, at `76f9c5a7`. Each of them
 names the same runs at `c1ba9c19` too, before the port of exchange files to Protocol Buffers.
+The figures of search are from 2026-11-05, at `b385c5e7`, against the conjunction at `5da0aaf1`.
 Each other figure names its date, and comes from Nim 2.2.12.
 
 - **Compile of the English index.** Each part of each lujvo line is found by binary search. The
@@ -830,7 +852,15 @@ Each other figure names its date, and comes from Nim 2.2.12.
 - **Dot segments of a redirect.** For a location of 128 KiB of `/a` segments, `redirect` took 2 ms
   and 3 ms in release over two runs on 2026-10-30. A walk that slices its input took 4,828 ms and
   4,501 ms on the same input.
-- Search and reading are unmeasured. The tool reads and writes the whole index for each command.
+- **Search.** A seeded probe outside the tree wrote an index of 10,000 entities, each with one to
+  eight random gismu. In release, `find` of three gismu took 4.57 ms on 2.4.0 and 5.00 ms on
+  2.2.12, and the conjunction took 4.27 ms and 4.36 ms. Each figure is the median of six rounds,
+  and each round keeps the least of 21 calls. A `find` that gathers the gismu of an entity for
+  each term took 12.10 ms and 13.06 ms.
+- **Search through `tagger`.** Over 21 runs on the same index, the least time of the whole
+  `tagger find` rose by at most 1.2 ms, from about 31 ms. Its median moved inside the spread of
+  the runs.
+- Reading is unmeasured. The tool reads and writes the whole index for each command.
 
 ## Open questions
 
@@ -840,8 +870,8 @@ Each other figure names its date, and comes from Nim 2.2.12.
   over the thing with the tags that Suggestion names. `hole` leads only to lujvo meanings, such as
   `batke+kevna`, and never to `kevna` alone, so it does not find that thing. `grin`, `fantasy`,
   `novel`, `hatter` and `Cheshire` lead to nothing, because English reads only keywords, hints and
-  lujvo glosses. A query finds a thing only where each of its terms does. The Architect ruled that
-  the rank by terms met replaces this condition (D5 c on #779), and #792 queues that rank.
+  lujvo glosses. A query that holds such a term still shows what its other terms find (Index and
+  search).
 - **The cap of six words on text given.** The tool counts the words after `readTag`, so the cap
   saves about 1 µs at most on Nim 2.2.12 (Figures). It refuses a lujvo of seven words or more,
   whose gismu the tool could print. To lift it would change no other path.
