@@ -81,6 +81,7 @@ const
   VOWELS_SYLLABLE = VOWELS + {'y'}  ## Letters each making syllable: five vowels, and `y` (3.4).
   KINDS_GLIDE = {Kind.Fuhivla, Kind.Cmene}
     ## Classes holding on-glide anywhere as diphthong, as borrowing and name (3.4).
+  DIPHTHONGS_NAME = ["iy", "uy"]  ## Diphthongs 3.4 keeps to names, `y` second.
 
 
 
@@ -135,7 +136,8 @@ func isBrivla*(text: string): bool =
 func nuclei*(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[int]] =
   ## Find nucleus of each syllable of word of class `kind`: vowel or `y` alone, or diphthong,
   ##   which is always one syllable (3.4); vowels pair from left (3.5). On-glide is diphthong
-  ##   anywhere in fu'ivla and cmene, and first in cmavo alone (3.4, 4.2).
+  ##   anywhere in fu'ivla and cmene, and first in cmavo alone; `iy` and `uy` in cmene alone
+  ##   (3.4, 4.2).
   ##   Comma before letter of `breaks` parts two vowels into two syllables (3.5).
   var at = 0
   while at < text.len:
@@ -144,7 +146,9 @@ func nuclei*(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[i
       continue
     let
       pair = text[at .. min(at + 1, text.high)]
-      is_glide = pair in DIPHTHONGS_CMAVO and (kind in KINDS_GLIDE or at == 0)
+      is_glide =
+        (pair in DIPHTHONGS_CMAVO and (kind in KINDS_GLIDE or at == 0)) or
+        (pair in DIPHTHONGS_NAME and kind == Kind.Cmene)
       is_parted = at + 1 in breaks
       size = (if (pair in DIPHTHONGS or is_glide) and not is_parted: 2 else: 1)
     result.add at .. at + size - 1
