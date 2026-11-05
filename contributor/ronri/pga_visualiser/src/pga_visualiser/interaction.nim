@@ -924,7 +924,7 @@ proc dollyAt*(
   ## Zoom camera by `factor`, in whichever way its state reads; see `dollyAtCursor`.
   ##   Two states, as `driveHeld` has.
   ##     Free flight comes in to object nearest eye within fingertip's reach of pointer, at
-  ##     whatever depth it stands, floored at that object's drawn radius; see
+  ##     whatever depth it stands, floored where point fills frame; see
   ##     `picking.Rank.Eye`. Over nothing it does nothing: wheel refers to object, and with
   ##     none there it has nothing to come in to (repository issue 535).
   ##       Not pointer's ray at separation, which each notch over empty sky scales toward floor.
