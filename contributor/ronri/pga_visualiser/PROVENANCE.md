@@ -2031,6 +2031,18 @@ there left a separation of 280,656, with 1 point drawn. Rejected: the 34 px of a
 reach, inside which that star stands alone. Rejected: the ground at `z = 0`, which the world does
 not have, and the level through the pivot, which names no place a reader points at.
 
+**At about one depth, a point beats a line and a line beats a plane**, as in a click
+(`picking.FACTOR_DEPTH_PLACE`). The nearest depth in reach names a place, and every object within
+twice that depth stands at it. A line through a planet stands at the place of the planet, and never
+parts from it as the eye comes in. Beside Earth, such a line passes nearest the ray of a finger at
+a point 4% nearer the eye than Earth.
+
+Rejected: depth alone, under which each finger about Earth took a line through it. The floor of
+that line then held the pinch 0.08 units off Earth (Free flight). Rejected: the rank of a click over
+the whole reach, under which a far star in reach beats a near line. Assumed: that twice the depth
+bounds one place. Beside Earth the line stands 4% nearer, and in the cases measured each far star
+stands over 100,000 times deeper.
+
 **One notch zooms the same on both front-ends** (`interaction.factorWheel`). Each notch scales the
 separation by `FACTOR_DOLLY_NOTCH` 1.12. The desktop reads whole notches from SDL. The page counts
 `PIXELS_NOTCH` 100 px, or `LINES_NOTCH` 3 lines, as one notch (`bridge.nimNotchesWheel`). Both
@@ -2086,6 +2098,8 @@ floor on flight at the fill of the point ahead, which stops it at each point of 
   click takes none;
 - a point 50 px off and 10 deep beats a star 10 px off and 1000 deep, which a click takes. A disc
   under the pointer beats both, and a point 100 px off gives no anchor;
+- a point beats a line through it whose part under the pointer stands 1 unit nearer, at depth 9
+  against 10. A line 10 deep beats a star 1000 deep;
 - a point picked alone is held at the fill from half of it, and left where it stands from 19.
 
 Verified by driven checks:
@@ -2177,9 +2191,13 @@ frame, as it reads the reach of the scene that frame measured.
 
 **The wheel in free flight comes in to the object it takes about the pointer, and does nothing
 without one** (Zoom). `travelToward` carries the eye along its line to that object and holds it on
-its pixel. The floor is the drawn radius of the object, so a run of notches stops at its surface.
-The floor of a point is where its sphere fills the frame. Rejected: the ray of the pointer at the
-scale of the separation where nothing stands there, which runs the separation down to its floor.
+its pixel. The floor of a point is where its sphere fills the frame. A line and a plane have no
+floor, because only a point is drawn at its radius. Rejected: the ray of the pointer at the scale of
+the separation where nothing stands there, which runs the separation down to its floor.
+
+Rejected: the radius as the floor of a line or a plane, 0.08 where nothing chose one. A line is
+drawn at a fixed width in pixels, and a plane at a fixed extent. The two lines through Earth then
+held a pinch 0.08 units off it, and a wheel stopped 0.08 off any line or plane.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2197,6 +2215,8 @@ scale of the separation where nothing stands there, which runs the separation do
 - the ship opens at the separation of the opening view, and `home` leaves its speed;
 - a held `w` with nothing selected lies along the sight, and keeps the separation;
 - a strafe leaves that separation alone;
+- 40 notches onto a lone line, and onto a lone plane, come within 0.0008 of it, past their radius
+  of 0.08;
 - the wheel over empty sky with nothing selected does nothing over 200 notches, and a spread of two
   fingers there keeps the separation;
 - free flight's wheel comes in to a point eight separations out, and the selection's dollies about
@@ -3281,8 +3301,9 @@ density, and the test of a plane is by area.
 
 **A click ranks by the pointer, and a zoom with nothing selected ranks by the eye**
 (`picking.Rank`). `Rank.Eye` takes the finite object nearest the eye: a point or a line within
-`RADIUS_CROWD_TOUCH` 72 px, or a plane under the pointer (Zoom). In both ranks, a disc that the
-cursor lies inside beats every object outside it. Horizon shapes stand nowhere to come in to, so
+`RADIUS_CROWD_TOUCH` 72 px, or a plane under the pointer (Zoom). Within twice the nearest depth, it
+ranks by kind as a click does. In both ranks, a disc that the cursor lies inside beats every object
+outside it. Horizon shapes stand nowhere to come in to, so
 `Rank.Eye` takes none.
 
 **Everything drawn is pickable, and the horizon is included.** The rank is point, finite line,
@@ -3654,8 +3675,9 @@ correction counts only where it cuts the misses by more than a billionth of them
 view by 1.3e-9 radians, on rounding alone.
 
 **The floor of each place is a depth along the sight**, the fill where the wheel stops at that
-object. Past it, the fingers slip. Rejected: a floor on the reach, which a place off the own ray of
-the object never came near. The eye then went on past the fill.
+object. Past it, the fingers slip. A place on a line or a plane has none (Free flight). Rejected: a
+floor on the reach, which a place off the own ray of the object never came near. The eye then went
+on past the fill.
 
 **Both fingers are read once for each frame.** The move of each finger arrives as its own
 `pointermove`. A solve read there chases the new place of one finger and the old place of the other.
@@ -3681,7 +3703,9 @@ lifts, so a third finger lifting back to two takes no old grip.
 - with a selection, the pivot moves less than 1e-9, and the gap and angle of both places hold within
   0.01 px and 1e-9;
 - with a selection, a fivefold pinch off the middle zooms out by more than 3;
-- a spread over one point stops the eye at its floor.
+- a spread over one point stops the eye at its floor;
+- ten pinches about a planet 4e-5 units in radius, with two lines through it, come to its fill.
+  With the radius of a line as its floor, they stop 0.0806 off it.
 
 Verified by driven checks, in Chromium on 2026-10-08:
 
