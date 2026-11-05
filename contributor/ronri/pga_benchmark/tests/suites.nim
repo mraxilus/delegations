@@ -8,7 +8,8 @@
 when compileOption("profiler"): import std/nimprof
 
 import std/[
-  algorithm, compilesettings, json, macros, options, os, sequtils, strutils, tables, unittest,
+  algorithm, compilesettings, json, macros, math, options, os, sequtils, strutils, tables,
+  unittest,
 ]
 from std/unicode import runeLen
 
@@ -21,8 +22,8 @@ import ../src/pga_benchmark/pages/[
   completion, docket, evaluation, home, listing, proposal, render, search, shell,
 ]
 from ../src/pga_benchmark/evaluations import
-  ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, compareNan, readLibrary,
-  compileCost, pairTimes
+  ENTRY_LIBRARY, RUNS_EVALUATION, algebrasEvaluated, digestEdits, functionsChanged, compareNan,
+  readLibrary, compileCost, pairTimes
 from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
 
@@ -2255,6 +2256,22 @@ suiteInProc "Internal: Evaluations":
     check times["a"][2].getFloat == 0.5  # ratio of each run, then median
 
 
+  test "runs of evaluation outvote whole runs that machine slows, at share measured 2026-11-01":
+    const
+      share_slow = 0.37
+        ## Share of runs of one binary 1.2 times its fastest or slower, as whole: 51 runs on
+        ##   `linux amd64, 4 cores`, 2026-11-01.
+      bound = 2.5e-4
+        ## Chance per measurand: one false median in some 16 evaluations of 246 measurands.
+    let side = share_slow * (1.0 - share_slow)  # pair whose ratio leaves 1 upward, as downward
+    var off = 0.0  # chance that more than half of pairs leave 1 on one side
+    for k in RUNS_EVALUATION div 2 + 1 .. RUNS_EVALUATION:
+      off += 2.0 * float(binom(RUNS_EVALUATION, k)) * pow(side, float(k)) *
+          pow(1.0 - side, float(RUNS_EVALUATION - k))
+    checkpoint "runs " & $RUNS_EVALUATION & ", chance " & $off
+    check off < bound  # median of paired ratios reads slow run as change, rarely
+
+
   test "NaN shares that moved are kept, and only those":
     let
       before = @[run([("norm", 1.0, 0.5), ("wedge", 1.0, 0.0)])]
@@ -2706,9 +2723,31 @@ suiteInProc "Internal: Pages":
 
 
   test "spread is assumed until quiet evaluations give enough ratios":
-    let quiet = %*{"algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
+    let quiet = %*{"taken": {"runs": RUNS_EVALUATION},
+        "algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
     check spread([quiet]).count == 0  # too few ratios: spread assumed
     check spread([quiet]).low < 1.0 and spread([quiet]).high > 1.0  # around no change
+
+
+  test "spread reads evaluations over runs in use alone, and holds 99% of their ratios":
+    var
+      times = newJObject()  # 400 ratios, evenly from ×0.90 to ×1.10
+      times_few = newJObject()  # 100 ratios, each ×1.00
+    for i in 0 ..< 400: times["m" & $i] = %*[1.0, 1.0, 0.9 + 0.2 * float(i) / 399.0]
+    for i in 0 ..< 100: times_few["m" & $i] = %*[1.0, 1.0, 1.0]
+    let
+      current = %*{"taken": {"runs": RUNS_EVALUATION},
+          "algebras": {"rga4d": {"functions": {}, "times": times}}}
+      older = %*{"taken": {"runs": 5}, "algebras": {"cga5d": {"functions": {},
+          "times": {"a": [1.0, 1.0, 0.5], "b": [1.0, 1.0, 2.0]}}}}
+      few = %*{"taken": {"runs": RUNS_EVALUATION},
+          "algebras": {"rga4d": {"functions": {}, "times": times_few}}}
+      read = spread([current, older])
+    check read.count == 400  # evaluation over five runs left out
+    check read.low == times["m2"][2].getFloat and read.high == times["m397"][2].getFloat
+      # 99%: two ratios of 400 cut from each end
+    check "99% of 400 time ratios" in textSpread(read)
+    check spread([few]).count == 0  # 100 ratios cut none from each end: spread assumed
 
 
   test "every grid in shell and docket bounds its columns, so wide content scrolls in place":

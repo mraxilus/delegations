@@ -895,8 +895,8 @@ MiB against 4.3 MiB without them, by `ls -l build` on 2026-10-04.
 (what the proposal depends on first, in the order of `dependencies`), and measures the copy
 against the pin. It runs the suites of the
 library, reads the static measurements of every function, and times each measurand. The
-binaries of the pin and of the copy run alternately, five times each, so drift of the machine
-lands on both.
+binaries of the pin and of the copy run alternately, 41 times each, so drift of the machine
+lands on both. The time ratio of a measurand is the median of the ratios of its pairs of runs.
 
 **An evaluation builds without dense forms**, under `-d:pga_benchmark.has_forms_dense=false`.
 A dense form reads tables by their names at pin, and a change may rename them, as
@@ -931,8 +931,34 @@ moves no count, so the range of its time ratios is the range of the machine. The
 the spread beside the figures it qualifies. They compute it from the committed evaluations
 each time they build, so the record states no figure of it.
 
-Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
-weak evidence alone. Counts are exact, and carry the verdicts.
+**The spread reads only the evaluations over the runs in use, and holds 99% of their ratios,**
+as the Architect chose. An evaluation over fewer runs reads a wider range of the machine, so it
+is left out. P06 keeps its evaluation over five runs, because its change is in the library at
+pin. At 99%, noise marks about one time in a hundred as moved, so a mark most likely means a
+change. The cost is reach: a change inside the range of the machine reads as unchanged.
+
+Rejected: the middle 90% of the same ratios. On the evaluations of 2026-11-05 it marks 292 of
+2 952 unchanged times as moved, and 99% marks 28. Rejected as well: every quiet evaluation,
+over any count of runs. The 451 ratios of P06 then set the low end of the spread, by accident.
+
+**An evaluation runs each binary 41 times,** so that a run the machine slows as a whole seldom
+moves the median. On `linux amd64, 4 cores` on 2026-11-01, 37% of 51 runs of one binary ran 1.2
+times their fastest or slower. A pair reads the copy slow when only the run of the copy is slow,
+with chance 0.37 × 0.63, and fast as often. The median is off when more than half of the pairs
+read one way. For one measurand, that chance is 17% at five runs and 1.9 in 10 000 at 41. Suite
+`Internal: Evaluations` holds it under 2.5 in 10 000.
+
+In those runs, two binaries ran with the same code in every timed function, by `objdump`. The
+median of five of their pairs, drawn at random, read ×0.69 to ×1.34 in 90% of draws. The median
+of 31 pairs read ×0.996 to ×1.003. On 2026-11-05, 5% of runs ran slow on a machine of the same
+name. There five pairs were off by ×1.77 at worst, and 31 pairs by ×1.02. Counts are exact, and
+carry the verdicts.
+
+The cost is some 30 s for each evaluation, since one run takes 0.10 s at rga4d and 0.34 s at
+cga5d.
+
+Rejected: the ratio of the fastest runs. It agrees with the median at 31 runs. But it reads the
+best run of each binary, and not the usual run.
 
 The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
 the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. A copy of P10 whose
@@ -1115,8 +1141,8 @@ of every publication, so the two copies of a URL cannot drift apart. Rejected: a
 hand, or by a script outside this project, because nothing held it to the files.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Pages`. Assembly fills every
-token. It covers the spread until evaluations give enough ratios, and the chip that names removed
-NaN results.
+token. It covers the spread until evaluations give enough ratios, the evaluations it reads and
+the share it holds. It covers the chip that names removed NaN results.
 
 The same suite covers the lower bound each docket row is measured against, and a general row timed
 against its dense form. It covers the median of run ratios with one tick for each run, and a
