@@ -6,8 +6,7 @@
 ##     right, and is what suite holds. CLL lujvo given without rafsi split are marked split
 ##     inferred; word no source holds is marked constructed.
 ##   Rules judge, list names (#823): suite holds text that rules admit as read, listed or not,
-##     and each refusal to rule of CLL it names. Refusal that names gap, as cmene (#812), is
-##     held as gap, never as choice of project. Mark of stream is held as `Stream`, which
+##     and each refusal to rule of CLL it names. Mark of stream is held as `Stream`, which
 ##     `readStream` reads, and `test_stream.nim` holds comma and capital CLL writes inside word
 ##     (3.3, 3.9).
 ##   Tanru form unbounded domain, so laws run over seeded random tanru of one to four gismu,
@@ -30,7 +29,7 @@ when compileOption("profiler"):
 import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
-import ../../src/lojban_parser/[dictionary, forms, lujvo, selmaho, tanru]
+import ../../src/lojban_parser/[dictionary, forms, fuhivla, lujvo, selmaho, tanru]
 import ../../src/lojban_parser/lists/gismu
 import ./rafsi_random
 
@@ -55,6 +54,10 @@ const
   FLOOR_SHARED = 20
     ## Least of them holding `brodi`, `brodo` or `brodu` before last word: 27 read at seed `0`.
   SAMPLES_FORMS = 2000  ## Random lujvo of rafsi drawn from letters of each form, seeded.
+  SAMPLES_LETTERS = 20000
+    ## Random strings of five to ten letters, consonant one time in two, that class law reads.
+  FLOOR_FUHIVLA = 1400  ## Least of them reading as fu'ivla: 1546 read at seed `0`.
+  FLOOR_CMENE = 4800  ## Least of them reading as cmene: 5043 read at seed `0`.
   FLOOR_UNASSIGNED = 1700
     ## Least of them holding rafsi list assigns to no word: 1743 read at seed `0`, since most
     ## letters of each form name no word.
@@ -288,7 +291,7 @@ suite "Chapter 4":
     for text in ["au", "ei", "ia", "o'u", "u'e", "ki'a", "pei", "mi'o", "coi", "cu'u"]:
       check text.kindRead == some(Kind.Cmavo)  # 4.2, VV-form and CVV-form
     for text in ["ku'a'e", "sau'e", "bai'ai", "ki'e'u'e"]:
-      check text.kindRead == some(Kind.Cmavo)  # 4.2, experimental, Example 2.4
+      check text.kindRead == some(Kind.Cmavo)  # 4.2, experimental, Example 4.4
     check "y".kindRead == some(Kind.Cmavo) and "by".kindRead == some(Kind.Cmavo)  # 4.2, 17.2
     check "lo".tanruRead == some(Tanru(parts: @[unlisted("lo")]))  # 4.2, no list gives `lo` rafsi
     check "se".tanruRead == some(toTanru("se"))  # 4.2, cmavo gismu list holds, for its rafsi
@@ -298,12 +301,12 @@ suite "Chapter 4":
     check "klama".readWord.selmaho.isNone  # 4.3, brivla has no selma'o
     check "kauzba".readWord.selmaho.isNone  # rafsi `kau` names `kampu`, not cmavo; constructed
     for text in ["iseci'i", "punaijecanai", "da'amei"]:
-      check text.refusalRead == some((Refusal.Stream, ""))  # 4.2, Examples 2.1-2; 4.3, compound
-    check "ki'e.u'e".refusalRead == some((Refusal.Stream, "."))  # 4.2, Example 2.3, pause
+      check text.refusalRead == some((Refusal.Stream, ""))  # 4.2, Examples 4.1-2; 4.3, compound
+    check "ki'e.u'e".refusalRead == some((Refusal.Stream, "."))  # 4.2, Example 4.3, pause
 
 
   test "Section 4.3":
-    check "lojban".refusalRead == some((Refusal.Cmene, ""))  # 4.3, "lojban." must be name; #812
+    check "lojban".kindRead == some(Kind.Cmene)  # 4.3, "lojban." must be name
     check "da'amei".refusalRead == some((Refusal.Stream, ""))  # 4.3, "must be compound cmavo"
     check "bisycla".kindRead.isSome  # 4.3, `sc` counted through `y`, so brivla; constructed
     for text in ["zba", "brai"]:  # constructed
@@ -313,7 +316,7 @@ suite "Chapter 4":
 
   test "Section 4.4":
     for text in ["creka", "lijda", "blanu", "mamta", "cukta", "patfu", "nanmu", "ninmu"]:
-      check text.kindRead == some(Kind.Gismu)  # 4.4, Examples 3.1-3.8
+      check text.kindRead == some(Kind.Gismu)  # 4.4, Examples 4.11-18
       check text.tanruRead == some(toTanru(text))  # 4.4, listed gismu names itself
     for text in ["kismu", "xismu", "gicmu", "gizmu", "gisnu"]:
       check text.kindRead == some(Kind.Gismu)  # 4.4, form of gismu, though no list holds it
@@ -324,13 +327,13 @@ suite "Chapter 4":
     for spelling in ["brivla", "brivalsi", "bridyvla", "bridyvalsi"]:
       check spelling.tanruRead == some(toTanru("bridi+valsi"))  # 4.5, four spellings, one lujvo
       check spelling.kindRead == some(Kind.Lujvo)  # 4.5, lujvo
-    check "mampa'u".tanruRead == some(toTanru("mamta+patfu"))  # 4.5, Example 5.7 from 5.4
+    check "mampa'u".tanruRead == some(toTanru("mamta+patfu"))  # 4.5, Example 4.25 from Example 4.22
     check "mampa'u".readWord.pieces.mapIt(it.rafsi) == @["mam", "pa'u"]  # 4.5, "mam-", "-pa'u"
-    check "soirsai".tanruRead == some(toTanru("sonci+sanmi"))  # 4.5, Example 5.8
-    check "soirsai".readWord.pieces.spelled == "soirsai"  # 4.5, Example 5.8, "r" between rafsi
-    check "soirsai".readWord.pieces[0].hyphen == Hyphen.R  # 4.5, Example 5.8, additional "r"
-    check "sampli".tanruRead == some(toTanru("skami+pilno"))  # 4.5, Example 5.5 from 5.1
-    check "bralo'i".tanruRead == some(toTanru("barda+bloti"))  # 4.5, Example 5.6 from 5.2
+    check "soirsai".tanruRead == some(toTanru("sonci+sanmi"))  # 4.5, Example 4.26
+    check "soirsai".readWord.pieces.spelled == "soirsai"  # 4.5, Example 4.26, "r" between rafsi
+    check "soirsai".readWord.pieces[0].hyphen == Hyphen.R  # 4.5, Example 4.26, additional "r"
+    check "sampli".tanruRead == some(toTanru("skami+pilno"))  # 4.5, Example 4.23 from Example 4.19
+    check "bralo'i".tanruRead == some(toTanru("barda+bloti"))  # 4.5, Example 4.24 from Example 4.20
     let (paternal, maternal) = (toTanru("patfu+mamta"), toTanru("mamta+patfu"))
     check ($paternal).tanruRead == some(paternal)  # 4.5, rafsi attached in order of tanru
     check ($maternal).tanruRead == some(maternal)  # 4.5, rafsi attached in order of tanru
@@ -347,17 +350,17 @@ suite "Chapter 4":
       ("vancysanmi", "vanci+sanmi"),
     ]:
       let pieces = spelling.readWord.pieces
-      check spelling.tanruRead == some(toTanru(text_tanru))  # 4.6, Example 6.1-5, unreduced
+      check spelling.tanruRead == some(toTanru(text_tanru))  # 4.6, Example 4.27-31, unreduced
       check pieces.allIt(it.form in FORMS_UNREDUCED + FORMS_GISMU)  # 4.6, long rafsi alone
     for (spelling, text_tanru) in [
       ("cumfri", "cumki+lifri"), ("klezba", "klesi+zbasu"), ("kixta'a", "krixa+tavla"),
       ("sniju'o", "sinxa+djuno"), ("mampa'u", "mamta+patfu"), ("lerste", "lerfu+liste"),
     ]:
       let pieces = spelling.readWord.pieces
-      check spelling.tanruRead == some(toTanru(text_tanru))  # 4.6, Example 6.6-11, fully reduced
+      check spelling.tanruRead == some(toTanru(text_tanru))  # 4.6, Example 4.32-37, fully reduced
       check pieces.allIt(it.form in FORMS_SHORT)  # 4.6, "made up solely of short rafsi"
-    check "mamtypatfu".tanruRead == "mampa'u".tanruRead  # 4.6, Example 6.10 reduces 6.1
-    check "lerfyliste".tanruRead == "lerste".tanruRead  # 4.6, Example 6.11 reduces 6.2
+    check "mamtypatfu".tanruRead == "mampa'u".tanruRead  # 4.6, Example 4.36 reduces Example 4.27
+    check "lerfyliste".tanruRead == "lerste".tanruRead  # 4.6, Example 4.37 reduces Example 4.28
     check "patyta'a".tanruRead == some(toTanru("pante+tavla"))  # 4.6, "must be patyta'a"
     check "patta'a".refusalRead == some((Refusal.Hyphen, "patyta'a"))  # 4.6, "tt" impermissible
     check "mudysiclu".tanruRead == some(toTanru("mudri+siclu"))  # 4.6, "mudysiclu must be used"
@@ -367,6 +370,52 @@ suite "Chapter 4":
     check "ro'ire'o".refusalRead == some((Refusal.Stream, ""))  # 4.6, "breaks up into two cmavo"
     check "ro'irre'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # 4.6, "rr" double
     check "labmau".tanruRead == some(toTanru("blabi+zmadu"))  # 4.6, "whiter"; split inferred
+
+
+  test "Section 4.7":
+    for text in ["spageti", "cidjrspageti", "djarspageti"]:
+      check text.kindRead == some(Kind.Fuhivla)  # 4.7, Example 4.46
+    for text in ["tricrxaceru", "ricrxaceru", "saktrxaceru"]:
+      check text.kindRead == some(Kind.Fuhivla)  # 4.7, Example 4.47, and "maple sugar"
+    for text in ["cirlrbri", "sincrkobra", "saskrkuarka", "lerfrdjamo", "lerldjamo"]:
+      check text.kindRead == some(Kind.Fuhivla)  # 4.7, Examples 4.48-51
+    for text in ["kulnrblgaria", "gugdrblgaria", "bangrblgaria", "bangrkorea", "kulnrkorea"]:
+      check text.kindRead == some(Kind.Fuhivla)  # 4.7, Examples 4.52-56
+    for text in ["kuarka", "integrale", "cmacrntegrale", "cmacrnintegrale", "dinjrnintegrale"]:
+      check text.kindRead == some(Kind.Fuhivla)  # 4.7, "valid Stage 4 fu'ivla", prefix method
+    check "tarmrnintegrale".kindRead == some(Kind.Fuhivla)  # 4.7, architectural "integral"
+    check "spraile".kindRead == some(Kind.Fuhivla)  # 4.7, "spraile is acceptable"
+    check "ktraile".refusalRead == some((Refusal.Cluster, "ktr"))  # 4.7, "but not ktraile"
+    check "trkaile".refusalRead == some((Refusal.Cluster, "trk"))  # 4.7, "or trkaile"
+    check "lerndjamo".refusalRead == some((Refusal.Cluster, "ndj"))  # 4.7, "forbidden cluster"
+    check "xaceru".refusalRead == some((Refusal.Stream, ""))  # 4.7, "looks like compound cmavo"
+    check "kobra".kindRead == some(Kind.Gismu)  # 4.7, `kobra` looks like gismu
+    check "slinku'i".refusalRead == some((Refusal.Slinkuhi, "baslinku'i"))  # 4.7, slinku'i test
+    check "mibroda".refusalRead == some((Refusal.Combination, "mi broda"))  # 4.7; constructed
+
+
+  test "Section 4.8":
+    for text in ["djim", "djein", "arnold", "pit", "katrinas", "katrin", "katis", "keit"]:
+      check text.kindRead == some(Kind.Cmene)  # 4.8, Examples 4.57-64
+    for text in ["djan", "braun", "djanbraun", "pav", "sol", "ralj", "nol"]:
+      check text.kindRead == some(Kind.Cmene)  # 4.8, Examples 4.65-70
+    for text in ["meris", "maris", "meiris", "merix", "marys"]:
+      check text.kindRead == some(Kind.Cmene)  # 4.8, "Mary" can be Lojbanized as these
+    for text in [
+      "smit", "djonz", "jan", "djon", "jon", "alis", "elis", "djansn", "uiliam", "tcarlz", "carl",
+      "dygol", "xainrix", "xuakin", "sfietlanys", "xructcof", "kricnas", "lex", "vauensas", "don",
+      "kicotes", "kixotes", "ki'otes", "maudzydyn", "fudjikos", "fujikos",
+    ]:
+      check text.kindRead == some(Kind.Cmene)  # 4.8, table of Lojbanized names
+    check "laplas".refusalRead == some((Refusal.Breakup, "la"))  # 4.8, "invalid name laplas."
+    check "ilanas".refusalRead == some((Refusal.Breakup, "la"))  # 4.8, as ".i la nas."
+    check "nederlants".kindRead == some(Kind.Cmene)  # 4.8, `la` after consonant, `nts` held
+    check "lars".refusalRead == some((Refusal.Breakup, "la"))  # 4.8, `la` first; constructed
+    check "djeimz".refusalRead == some((Refusal.Cluster, "mz"))  # 3.6, Example 3.8 forbids pair
+    check "djeimyz".kindRead == some(Kind.Cmene)  # 3.6, Example 3.8, "y can be inserted"
+    for text in ["rl", "brlgan"]:
+      check text.kindRead == some(Kind.Cmene)  # 3.4, syllabic consonants, "rl." and Example 3.6
+    check "c".refusalRead == some((Refusal.Shape, ""))  # 3.4, no syllable; constructed
 
 
   test "Section 4.12-13":
@@ -397,11 +446,11 @@ suite "Chapter 4":
     check "lojbangri".scoreRead == some(8827)  # 4.13, "8827 versus 8796"
     check "lojbaugri".scoreRead == some(8796)  # 4.13, "8827 versus 8796"
     check $toTanru("logji+bangu+girzu") == "lojbaugri"  # 4.13, latter has lower score
-    check "zbasai".scoreRead == some(5847)  # 4.12, Example 12.1
-    check ["nun", "nau"].toPieces.spelled == "nunynau"  # 4.12, Example 12.2, "nun + y + nau"
-    check lujvo.score(["nun", "nau"].toPieces) == 6967  # 4.12, Example 12.2
-    check "sairzbata'u".scoreRead == some(10385)  # 4.12, Example 12.3
-    check "zbazbasysarji".scoreRead == some(12976)  # 4.12, Example 12.4
+    check "zbasai".scoreRead == some(5847)  # 4.12, Example 4.71
+    check ["nun", "nau"].toPieces.spelled == "nunynau"  # 4.12, Example 4.72, "nun + y + nau"
+    check lujvo.score(["nun", "nau"].toPieces) == 6967  # 4.12, Example 4.72
+    check "sairzbata'u".scoreRead == some(10385)  # 4.12, Example 4.73
+    check "zbazbasysarji".scoreRead == some(12976)  # 4.12, Example 4.74
 
 
 
@@ -468,18 +517,19 @@ suite "Internal: Reading":
   test "Letters of no class, nor cmavo run together, are refused as Shape":
     check "lonubroda".refusalRead == some((Refusal.Shape, ""))  # 3.3, pair past fifth; constructed
     check "cia".refusalRead == some((Refusal.Shape, ""))  # 3.4, `ia` after consonant; constructed
-    check "ki'eu'e".refusalRead == some((Refusal.Shape, ""))  # 4.2, Example 2.3 writes period
+    check "ki'eu'e".refusalRead == some((Refusal.Shape, ""))  # 4.2, Example 4.3 writes period
 
 
-  test "Word ending in consonant is refused as Cmene, gap #812 reads":
+  test "Word ending in consonant reads as cmene where its letters admit one":
     for text in ["lojban", "gerk", "xyz", "djan"]:  # `gerk`, `xyz` constructed
-      check text.refusalRead == some((Refusal.Cmene, ""))  # 4.3, cmene end in consonant (4.8)
+      check text.kindRead == some(Kind.Cmene)  # 4.3, cmene end in consonant (4.8)
 
 
-  test "Brivla neither gismu nor lujvo is refused as Fuhivla, gap #812 reads":
-    check "bongnanba".refusalRead == some((Refusal.Fuhivla, ""))  # 3.8, "possible borrowing"
-    check "natmyrgu'e".refusalRead == some((Refusal.Fuhivla, ""))  # `lujvo.txt`, fits no rafsi
-    check "brodrzba".refusalRead == some((Refusal.Fuhivla, ""))  # constructed
+  test "Brivla neither gismu nor lujvo reads as fu'ivla where it meets each rule of 4.7":
+    check "bongnanba".kindRead == some(Kind.Fuhivla)  # 3.8, "possible borrowing"
+    check "brodrzba".kindRead == some(Kind.Fuhivla)  # 4.7, each rule met; constructed
+    check "ci'onmau".kindRead == some(Kind.Fuhivla)  # 4.7, though 4.11 gives `ci'ormau`; Tatoeba
+    check "natmyrgu'e".refusalRead == some((Refusal.Shape, ""))  # 4.7, no `y`; `lujvo.txt`
 
 
   test "Lujvo ending in rafsi of cmavo reads, its last part that cmavo":
@@ -498,7 +548,7 @@ suite "Internal: Reading":
     check selcia.get != Tanru(parts: @[ciska])  # 9.4, `se` converts, so tanru keeps it
     check $selcia.get == "selci'a"  # 4.12, `sel` and `ci'a` score lowest; constructed word
     check "nunkla".tanruRead == some(toTanru("nu+klama"))  # 12.12, `nunkla`
-    check "nunynau".tanruRead == some(toTanru("nu+nanmu"))  # 4.12, Example 12.2
+    check "nunynau".tanruRead == some(toTanru("nu+nanmu"))  # 4.12, Example 4.72
     let kem = "nakykemcinctu".tanruRead
     check kem == some(toTanru("nakni+ke+cinse+ctuca"))  # 4.13, tanru `nakni ke cinse ctuca`
     check $kem.get == "nakykemcinctu"  # 4.13, shortest form, preferred by scoring
@@ -533,7 +583,7 @@ suite "Internal: Reading":
     check "kitymatci".refusalRead == some((Refusal.Hyphen, "kitmatci"))  # surplus `y`; constructed
     check "kicmatci".refusalRead == some((Refusal.Hyphen, "kicymatci"))  # tosmabru `y`; constructed
     check "ro'irre'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # `n`, not `r`; CLL 4.6
-    check "clozbas".refusalRead == some((Refusal.Cmene, ""))  # control: consonant ends; constructed
+    check "clozbas".kindRead == some(Kind.Cmene)  # control: consonant ends; constructed
 
 
   test "Each class reads by its letters, whether list holds word or not":
@@ -675,3 +725,23 @@ suite "Internal: Laws":
       check reading.tanru.parts == rafsi.mapIt(it.partNamed)  # list names each part it can
       if not reading.tanru.parts.allIt(it.is_listed): inc count_unassigned
     check count_unassigned >= FLOOR_UNASSIGNED  # guard reaches rafsi no list assigns
+
+
+  test "No fu'ivla or cmene reads also as gismu, lujvo or cmavo":
+    var count_fuhivla, count_cmene = 0
+    randomize(0)
+    for _ in 1 .. SAMPLES_LETTERS:
+      var text = ""
+      for _ in 1 .. rand(5 .. 10):
+        text.add(if rand(1) == 0: "bcdfgjklmnprstvxz".sample else: "aeiou".sample)
+      let reading = text.readWord
+      if not reading.is_word or reading.kind notin {Kind.Fuhivla, Kind.Cmene}: continue
+      check not text.isGismu and text.splitLujvo.len == 0 and not text.isCmavo  # 4.7, 4.8
+      if reading.kind == Kind.Fuhivla:
+        check text.combination.isNone and text.slinkuhi.isNone  # 4.7, no words run together
+        inc count_fuhivla
+      else:
+        check text[^1] in "bcdfgjklmnprstvxz" and text.breakup.isNone  # 4.8, no `la`
+        inc count_cmene
+    check count_fuhivla >= FLOOR_FUHIVLA  # IX.3, guard keeps fu'ivla in play
+    check count_cmene >= FLOOR_CMENE  # IX.3, guard keeps cmene in play

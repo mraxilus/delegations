@@ -4,7 +4,8 @@
 ##   Laws run over seeded random streams of gismu, cmavo and lujvo, each drawn from every word of
 ##     its list or from lujvo `$` renders, and over positions of each word exhaustively
 ##     (Article IX.3). References restate each rule as CLL states it, apart from reader.
-##   Corpus does not cover yet: cmene and fu'ivla, gaps of #812, and quotation, gap of #814.
+##   Corpus does not cover yet: random streams holding cmene or fu'ivla, which suite holds by
+##     examples of CLL alone, and quotation, gap of #814.
 
 {.experimental: "strictFuncs".}
 
@@ -25,6 +26,16 @@ const
     ##   drawn at seed `1`.
   FLOOR_COMMA_REFUSED = 4000
     ## Least commas comma law reads as refused: 4224 read over same words.
+  FLOOR_STRESS_REFUSED = 3500
+    ## Least capitals off penultimate syllable of brivla that reader refuses, rather than
+    ##   reading other words: 3728 read over gismu list and lujvo drawn at seed `1`.
+  SAMPLES_JOINED = 4000
+    ## Random runs of two or three words written together, seeded; runs needing pause between
+    ##   words left out, since text written together writes none.
+  FLOOR_JOINED = 2200  ## Least runs read back as same words: 2411 read at seed `2`.
+  FLOOR_TIED = 900
+    ## Least runs refused as tie that names them: 1025 read at seed `2`, most of them CV cmavo
+    ##   before CCVCV gismu, which also reads as CVCCV gismu before CV cmavo.
   FLOOR_STRESS = 800
     ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
     ##   850 read at seed `0`.
@@ -217,15 +228,15 @@ suite "Chapter 3":
     check "mi klama i do klama".pausesRead ==
         some(@[Pause.Absent, Pause.Absent, Pause.Inferred, Pause.Absent, Pause.Absent])
           # 3.3, missing period inferred; constructed
-    check ".i,ai,i,ai,on.".refusalRead == some((Refusal.Cmene, 1))  # 3.3, Example 3.2; gap #812
-    check ".i'ai'i'ai'on.".refusalRead == some((Refusal.Cmene, 1))  # 3.3, Example 3.4; gap #812
+    check ".i,ai,i,ai,on.".wordsRead == some(@["iaiiaion"])  # 3.3, Example 3.2, one cmene
+    check ".i'ai'i'ai'on.".wordsRead == some(@["i'ai'i'ai'on"])  # 3.3, Example 3.4, one cmene
     check ",klama".refusalRead == some((Refusal.Comma, 0))  # 3.3, comma within word; constructed
     check "kla,,ma".refusalRead == some((Refusal.Comma, 3))  # 3.3, comma separates syllables
 
 
   test "Section 3.4":
     check "ka,i".refusalRead == some((Refusal.Comma, 2))  # 3.4, diphthong one syllable; constructed
-    check "sai,r,goi".wordsRead == some(@["sairgoi"])  # 3.4, syllabic "r"; Example 9.4
+    check "sai,r,goi".wordsRead == some(@["sairgoi"])  # 3.4, syllabic "r"; Example 3.21
     check "b,ridi".refusalRead == some((Refusal.Comma, 1))  # 3.4, "b" no syllable; constructed
     check "sai,R,goi".refusalRead == some((Refusal.Stress, 4))  # 3.4, syllabic never stressed
 
@@ -237,61 +248,62 @@ suite "Chapter 3":
       ("nin,mu", "ninmu"), ("fit,pri", "fitpri"), ("sair,goi", "sairgoi"),
       ("sai,r,goi", "sairgoi"), ("klez,ba", "klezba"), ("kle,zba", "klezba"),
     ]:
-      check text.wordsRead == some(@[word])  # 3.9, Examples 9.2-5
+      check text.wordsRead == some(@[word])  # 3.9, Examples 3.19-22
     for (text, word, nucleus) in [
       ("DI,ky,jvo", "dikyjvo", 0), ("BI,sy,dja", "bisydja", 0), ("BI,syd,ja", "bisydja", 0),
       ("da'UD,ja", "da'udja", 1), ("da'U,dja", "da'udja", 1),
     ]:
-      check text.wordsRead == some(@[word])  # 3.9, Examples 9.6, 9.11-12
+      check text.wordsRead == some(@[word])  # 3.9, Examples 3.23, 3.28-29
       check text.stressesRead == some(@[some(nucleus)])  # 3.9, penultimate, `y` not counted
     for text in ["e'u bridi", "e'u BRI,di", "E'u BRI,di"]:
-      check text.pausesRead == some(@[Pause.Inferred, Pause.Absent])  # 3.9, Example 9.13
-    check "e'U.BRI,di".pausesRead == some(@[Pause.Inferred, Pause.Written])  # 3.9, Example 9.13
-    check "e'U.BRI,di".stressesRead == some(@[some(1), some(0)])  # 3.9, Example 9.13
+      check text.pausesRead == some(@[Pause.Inferred, Pause.Absent])  # 3.9, Example 3.30
+    check "e'U.BRI,di".pausesRead == some(@[Pause.Inferred, Pause.Written])  # 3.9, Example 3.30
+    check "e'U.BRI,di".stressesRead == some(@[some(1), some(0)])  # 3.9, Example 3.30
     check "e'U BRI,di".pausesRead ==
-        some(@[Pause.Inferred, Pause.Inferred])  # 3.9, Example 9.13; period inferred (3.3)
+        some(@[Pause.Inferred, Pause.Inferred])  # 3.9, Example 3.30; period inferred (3.3)
     check "le re NObli PREnu".stressesRead ==
-        some(@[none(int), none(int), some(0), some(0)])  # 3.9, Example 9.14
+        some(@[none(int), none(int), some(0), some(0)])  # 3.9, Example 3.31
     check "le re no bliPREnu".wordsRead == some(@["le", "re", "no", "bliprenu"])  # 9.15
     check "le re no bliPREnu".stressesRead ==
-        some(@[none(int), none(int), none(int), some(1)])  # 3.9, Example 9.15
+        some(@[none(int), none(int), none(int), some(1)])  # 3.9, Example 3.32
     check "briDI".refusalRead == some((Refusal.Stress, 3))  # 3.9, penultimate; constructed
     check "dikYjvo".refusalRead == some((Refusal.Stress, 3))  # 3.9, "y" never stressed
     check "BrIdi".refusalRead == some((Refusal.Stress, 0))  # 3.9, one syllable; constructed
-    check ".ARM,strong.".refusalRead == some((Refusal.Cmene, 1))  # 3.9, Example 9.7; gap #812
+    check ".ARM,strong.".wordsRead == some(@["armstrong"])  # 3.9, Example 3.24
+    check ".ARM,strong.".stressesRead == some(@[some(0)])  # 3.9, Example 3.24, first syllable
 
 
 
 suite "Chapter 4":
   test "Section 4.2":
-    check ".iseci'i".wordsRead == some(@["i", "se", "ci'i"])  # 4.2, Example 2.1
+    check ".iseci'i".wordsRead == some(@["i", "se", "ci'i"])  # 4.2, Example 4.1
     check ".iseci'i".pausesRead ==
-        some(@[Pause.Written, Pause.Absent, Pause.Absent])  # 4.2, Example 2.1
+        some(@[Pause.Written, Pause.Absent, Pause.Absent])  # 4.2, Example 4.1
     check ".iseci'i".selmahoRead ==
         some(@[some(Selmaho.I), some(Selmaho.Se), some(Selmaho.Pa)])  # 20, each cmavo
-    check "punaijecanai".wordsRead == some(@["pu", "nai", "je", "ca", "nai"])  # 4.2, Example 2.2
-    check "ki'e.u'e".wordsRead == some(@["ki'e", "u'e"])  # 4.2, Example 2.3
+    check "punaijecanai".wordsRead == some(@["pu", "nai", "je", "ca", "nai"])  # 4.2, Example 4.2
+    check "ki'e.u'e".wordsRead == some(@["ki'e", "u'e"])  # 4.2, Example 4.3
     check "ki'e.u'e".pausesRead == some(@[Pause.Absent, Pause.Written])  # 4.2, pause kept
-    check "ki'e'u'e".wordsRead == some(@["ki'e'u'e"])  # 4.2, Example 2.4, experimental
-    check "cy.ibu.abu".wordsRead == some(@["cy", "i", "bu", "a", "bu"])  # 4.2, Example 2.5
+    check "ki'e'u'e".wordsRead == some(@["ki'e'u'e"])  # 4.2, Example 4.4, experimental
+    check "cy.ibu.abu".wordsRead == some(@["cy", "i", "bu", "a", "bu"])  # 4.2, Example 4.5
     check "cy.ibu.abu".pausesRead == some(@[
       Pause.Absent, Pause.Written, Pause.Absent, Pause.Written, Pause.Absent,
-    ])  # 4.2, Example 2.5, pauses required
-    check ".e'o ko ko kurji".wordsRead == some(@["e'o", "ko", "ko", "kurji"])  # 4.2, Example 2.6
+    ])  # 4.2, Example 4.5, pauses required
+    check ".e'o ko ko kurji".wordsRead == some(@["e'o", "ko", "ko", "kurji"])  # 4.2, Example 4.6
     check ".E'o ko ko KURji".stressesRead ==
-        some(@[some(0), none(int), none(int), some(0)])  # 4.2, Example 2.6
-    check "le re nanmu".wordsRead == some(@["le", "re", "nanmu"])  # 4.2, Example 2.7
+        some(@[some(0), none(int), none(int), some(0)])  # 4.2, Example 4.6
+    check "le re nanmu".wordsRead == some(@["le", "re", "nanmu"])  # 4.2, Example 4.7
     check "le RE. NANmu".pausesRead ==
-        some(@[Pause.Absent, Pause.Absent, Pause.Written])  # 4.2, Example 2.8
+        some(@[Pause.Absent, Pause.Absent, Pause.Written])  # 4.2, Example 4.8
     check "le RE NANmu".pausesRead ==
         some(@[Pause.Absent, Pause.Absent, Pause.Inferred])  # 4.2, stress demands pause (3.3)
     check "le RE LE nanmu".pausesRead == some(@[
       Pause.Absent, Pause.Absent, Pause.Inferred, Pause.Inferred,
     ])  # 4.2, stressed syllables meet; 4.9 rule 5; constructed
     check "LE re NANmu".pausesRead ==
-        some(@[Pause.Absent, Pause.Absent, Pause.Absent])  # 4.2, Example 2.9
+        some(@[Pause.Absent, Pause.Absent, Pause.Absent])  # 4.2, Example 4.9
     check "le re NANmu".stressesRead ==
-        some(@[none(int), none(int), some(0)])  # 4.2, Example 2.10
+        some(@[none(int), none(int), some(0)])  # 4.2, Example 4.10
     check "mi .y. klama".pausesRead ==
         some(@[Pause.Absent, Pause.Written, Pause.Written])  # 4.2, ".y." pauses before and after
     check "mi y klama".pausesRead ==
@@ -299,12 +311,20 @@ suite "Chapter 4":
 
 
   test "Section 4.8":
-    for (text, at) in [
-      ("djim.", 0), ("djein.", 0), (".arnold.", 1), ("pit.", 0), ("katrinas.", 0),
-      ("kat,r,in.", 0), ("katis.", 0), ("keit.", 0), ("djan.  djonz.", 0), ("djandjonz.", 0),
-      ("pav.", 0), ("sol.", 0), ("ralj.", 0), ("nol.", 0),
+    for (text, words) in [
+      ("djim.", @["djim"]), ("djein.", @["djein"]), (".arnold.", @["arnold"]),
+      ("pit.", @["pit"]), ("katrinas.", @["katrinas"]), ("kat,r,in.", @["katrin"]),
+      ("katis.", @["katis"]), ("keit.", @["keit"]), ("djan. braun.", @["djan", "braun"]),
+      ("djanbraun.", @["djanbraun"]), ("pav.", @["pav"]), ("sol.", @["sol"]),
+      ("ralj.", @["ralj"]), ("nol.", @["nol"]),
     ]:
-      check text.refusalRead == some((Refusal.Cmene, at))  # 4.8, Examples 8.1-14; gap #812
+      check text.wordsRead == some(words)  # 4.8, Examples 4.57-70
+    check "laplas.".wordsRead == some(@["la", "plas"])  # 4.8, "look like Lojban words la plas."
+    check "ilanas.".wordsRead == some(@["i", "la", "nas"])  # 4.8, "misunderstood as .i la nas."
+    check "NEderlants.".stressesRead == some(@[some(0)])  # 4.8, "cannot be misheard"
+    check ".eLIS.".stressesRead == some(@[some(1)])  # 4.8, table of names, "Elise"
+    check "lex. va,uensas.".wordsRead == some(@["lex", "vauensas"])  # 4.8, "Lech Walesa"
+    check "me la spagetis.".wordsRead == some(@["me", "la", "spagetis"])  # 4.7, Example 4.45
 
 
   test "Section 4.9":
@@ -314,6 +334,11 @@ suite "Chapter 4":
     check "cy klama".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # rule 6; constructed
     check "cy ky klama".pausesRead ==
         some(@[Pause.Absent, Pause.Absent, Pause.Inferred])  # rule 6, "Cy" follows; constructed
+    check "la djan cu klama".pausesRead == some(@[
+      Pause.Absent, Pause.Absent, Pause.Inferred, Pause.Absent,
+    ])  # rules 2 and 4, after `la` no pause; constructed
+    check "mi djan".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # rule 4; constructed
+    check "doi djan".pausesRead == some(@[Pause.Absent, Pause.Absent])  # rule 4, `doi`
     check "zoi gy. John .gy.".refusalRead == some((Refusal.Foreign, 0))  # rule 7; gap #814
     check "zo zoi".refusalRead == some((Refusal.Foreign, 3))  # rule 7; `zo` gap #814 reads
     check "mi cusku la'o gy. Mary .gy.".refusalRead ==
@@ -401,8 +426,8 @@ suite "Internal: Stream":
     check count_refused >= FLOOR_COMMA_REFUSED  # IX.3, guard keeps refusals in play
 
 
-  test "Capital on penultimate syllable of brivla reads, and on any other is refused":
-    var count = 0
+  test "Capital on penultimate syllable of brivla reads, and on any other never reads as it":
+    var count_read, count_refused = 0
     for word in concat(WORDS_GISMU, WORDS_LUJVO):  # every gismu, and each random lujvo
       let
         spans = word.syllables
@@ -411,10 +436,13 @@ suite "Internal: Stream":
         let text = word.capitalized(span)
         if k == counted[^2]:
           check text.stressesRead == some(@[some(k)])  # 3.9, penultimate, `y` not counted
-          inc count
-        else:
-          check text.refusalRead == some((Refusal.Stress, span.a))  # 3.9, false primary stress
-    check count == WORDS_GISMU.len + WORDS_LUJVO.len  # one stress reads in each brivla
+          inc count_read
+          continue
+        let words = text.wordsRead
+        check words != some(@[word])  # 3.9, false primary stress, "errors in word resolution"
+        if words.isNone: inc count_refused
+    check count_read == WORDS_GISMU.len + WORDS_LUJVO.len  # IX.3, one stress reads in each
+    check count_refused >= FLOOR_STRESS_REFUSED  # IX.3, guard keeps refusals in play
 
 
   test "Capital on any vowel of cmavo stresses that syllable, and capital on y is refused":
@@ -422,9 +450,32 @@ suite "Internal: Stream":
       for k, span in word.syllables:
         let text = word.capitalized(span)
         if word[span.a] == 'y':
-          check text.refusalRead == some((Refusal.Stress, span.a))  # 3.9, "y" never stressed
+          check text.stressesRead != some(@[some(k)])  # 3.9, "y" never stressed
         else:
           check text.stressesRead == some(@[some(k)])  # 3.9, cmavo any syllable
+
+
+  test "Words needing no pause, written together, read back as them, as one word, or as tie":
+    var count_joined, count_tied = 0
+    randomize(2)
+    for _ in 1 .. SAMPLES_JOINED:
+      var words: seq[string]
+      for i in 1 .. rand(2 .. 3):
+        words.add(if i == 1 or rand(1) == 0: WORDS_CMAVO.sample else: WORDS_GISMU.sample)
+      if toSeq(1 .. words.high).anyIt(isPauseNeeded(words[it - 1], words[it])): continue
+      let
+        text = words.join("")
+        reading = text.readStream
+      if reading.is_read:
+        let texts = reading.occurrences.mapIt(it.text)
+        check texts == words or texts == @[text]  # 4.1, one split; or one word, as `bai`
+        if texts == words: inc count_joined
+      else:
+        check reading.refusal == Refusal.Split  # 3.9, only stress tells them apart
+        check words.join(" ") in reading.detail.split(", or ")  # 4.1, tie names them
+        inc count_tied
+    check count_joined >= FLOOR_JOINED  # IX.3, guard keeps runs that read back
+    check count_tied >= FLOOR_TIED  # IX.3, guard keeps ties in play
 
 
   test "Stream of marks alone reads as no words":
@@ -433,6 +484,22 @@ suite "Internal: Stream":
 
 
   test "Refusal names byte where offending word opens":
-    check "mi klama lonubroda".refusalRead == some((Refusal.Shape, 9))  # 3.3; constructed
-    check "mi klama ki'eu'e".refusalRead == some((Refusal.Shape, 9))  # 4.2; constructed
-    check "mi klama djan".refusalRead == some((Refusal.Cmene, 9))  # gap #812; constructed
+    check "mi klama lonubroda".refusalRead == some((Refusal.Split, 9))  # 3.9; constructed
+    check "mi klama ktraile".refusalRead == some((Refusal.Cluster, 9))  # 4.7; constructed
+    check "mi klama c".refusalRead == some((Refusal.Shape, 9))  # 3.4, no syllable; constructed
+
+
+  test "Written word splits where one split needs fewest pauses, and tie is refused as Split":
+    check "secusku".wordsRead == some(@["se", "cusku"])  # 4.1, one split; Tatoeba
+    check "ki'eu'e".wordsRead == some(@["ki'e", "u'e"])  # 3.3, period of Example 4.3 inferred
+    check "ki'eu'e".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # 4.9 rule 3
+    check "cia".wordsRead == some(@["ci", "a"])  # 3.3, period inferred; constructed
+    check "tosmabru".wordsRead == some(@["to", "smabru"])  # 4.11 step 5, "will break up"
+    check "miBROda".wordsRead == some(@["mi", "broda"])  # 3.9, stress places brivla
+    check "MIbroda".wordsRead == some(@["mibro", "da"])  # 3.9, stress of gismu `mibro`
+    check "KLAmaku".wordsRead == some(@["klama", "ku"])  # 3.9, stress fits `klama` alone
+    check "klamaku".wordsRead == some(@["klamaku"])  # 4.7, one fu'ivla; constructed
+    check "mibroda".refusalRead == some((Refusal.Split, 0))  # 3.9, stress alone tells them apart
+    check "mibroda".readStream.detail == "mibro da, or mi broda"  # 3.9, two splits named
+    check "iai".refusalRead == some((Refusal.Split, 0))  # 4.9 rule 3, `.i.ai` or `.ia.i`
+    check "ka,i".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma is no pause; constructed

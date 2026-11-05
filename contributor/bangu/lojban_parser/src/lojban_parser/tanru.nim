@@ -17,14 +17,18 @@
 ##     its letters and has no meaning here, and `lojban_tagger` refuses it.
 ##   Class follows letters, as 4.1 to 4.8 sort them: final consonant marks cmene (4.8);
 ##     consonant pair in first five letters, `y` and apostrophe not counted, marks brivla (4.3),
-##     which is gismu by its five letters (4.4), else lujvo by its rafsi (4.6, 4.11); no pair at
-##     all marks cmavo (4.2), one, or several run together.
+##     which is gismu by its five letters (4.4), else lujvo by its rafsi (4.6, 4.11), else
+##     fu'ivla where it meets each rule of 4.7; no pair at all marks cmavo (4.2), one, or
+##     several run together.
+##   Brivla meeting each rule of fu'ivla reads as fu'ivla, though its letters split into rafsi
+##     whose hyphens 4.11 sets otherwise: 4.7 forbids fu'ivla to be lujvo, never to look like
+##     one. Else such brivla is refused as `Hyphen`, with form 4.11 gives.
 ##   Each refusal names rule of CLL. Where CLL admits text that reader does not read yet,
-##     refusal names gap and issue that reads it: `Cmene` and `Fuhivla` (#812), `Foreign` (#814).
+##     refusal names gap and issue that reads it: `Foreign` (#814).
 ##     `Stream` names text that `readStream` of `stream.nim` reads: marks of stream, or cmavo
 ##       run together (4.2).
-##     Cost: gap refuses some text that no rule admits either, as `cia`, which 3.4 forbids;
-##       issue of gap tells two apart.
+##     Cost: gap refuses some text that no rule admits either, as `zoi` with no quotation after
+##       it; issue of gap tells two apart.
 ##   Word reads as words of its tanru, never as its spelling: rafsi chosen do not change lujvo
 ##     (CLL 4.5), so `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tanru, and
 ##     `$` renders form 4.12 prefers. Order of words stays, since tanru is modifier then head
@@ -53,7 +57,7 @@
 
 import std/[options, sequtils, strutils]
 
-import ./[clusters, dictionary, forms, lujvo, selmaho]
+import ./[clusters, dictionary, forms, fuhivla, lujvo, selmaho]
 
 
 type
@@ -73,11 +77,14 @@ type
     Apostrophe  ## Apostrophe not between vowels, which alone it joins (3.3).
     Shape  ## Letters fit no class: no cmavo (4.2), brivla (4.3), cmene (4.8), nor compound.
     Hyphen  ## Rafsi fit lujvo, but hyphens differ from 4.11; detail is form 4.11 gives.
+    Cluster  ## Consonants cmene or fu'ivla may not hold (3.6, 3.7, 4.7); detail is them.
+    Breakup  ## `la` or `doi` cmene holds after no consonant, so it breaks up (4.8); detail is it.
+    Combination  ## Brivla joins cmavo, gismu and lujvo, so no fu'ivla (4.7); detail is words.
+    Slinkuhi  ## CV cmavo before brivla makes lujvo, so no fu'ivla (4.7); detail is that lujvo.
     Stream  ## Mark of stream (3.3, 3.9), or cmavo run together (4.2), which `readStream` reads.
-    Cmene  ## Gap of #812: final consonant marks cmene (4.3, 4.8).
-    Fuhivla  ## Gap of #812: brivla neither gismu nor lujvo, so fu'ivla (4.7), or no word.
     Stress  ## Capital marks no syllable word may stress, as brivla off penultimate (3.9); stream.
     Comma  ## Comma at no syllable break: by edge, apostrophe, no syllable, in diphthong (3.3, 3.4).
+    Split  ## Written word splits several ways, each with fewest pauses (3.3); detail is two.
     Foreign  ## Gap of #814: text `zoi` and `la'o` quote is no lojban (4.9 rule 7), so stream stops.
 
   Reading* = object  ## Define outcome of reading text as word.
@@ -166,14 +173,6 @@ func isPairHeld(text: string): bool =
   false
 
 
-func syllables(text: string): int =
-  ## Count syllables: each vowel, `y` included, is one, and diphthong of 4.1 joins two (3.4).
-  for i, letter in text:
-    if letter notin VOWELS_JOINED: continue
-    if i > 0 and text[i - 1 .. i] in DIPHTHONGS: continue
-    inc result
-
-
 func readWhole(text: string, kind: Kind): Reading =
   ## Read text as one word of its class: listed word where list holds it, else its letters.
   let
@@ -187,21 +186,54 @@ func readWhole(text: string, kind: Kind): Reading =
   )
 
 
+func readCmene(text: string): Reading =
+  ## Read text ending in consonant as cmene by rules of 4.8: syllable, permissible pairs, and
+  ##   no `la`, `lai` or `doi` after no consonant.
+  ##   Syllable stands on vowel, `y`, or consonant that may be syllabic, as `rl` of 3.4 does;
+  ##     lone `c` has none, so it is no word.
+  if not text.anyIt(it in VOWELS + {'y', 'l', 'm', 'n', 'r'}): return refuse(Refusal.Shape)  # 3.4
+  let pair = text.pairForbidden
+  if pair.isSome: return refuse(Refusal.Cluster, pair.get)
+  let sequence = text.breakup
+  if sequence.isSome: return refuse(Refusal.Breakup, sequence.get)
+  readWhole(text, Kind.Cmene)
+
+
+func refusalFuhivla(text: string): Option[Reading] =
+  ## Find first rule of 4.7 that brivla, neither gismu nor lujvo, breaks as fu'ivla; none where
+  ##   it meets each: no `y`, opening cluster of initial pairs, permissible pairs, no
+  ##   combination of words, and slinku'i test.
+  if 'y' in text: return some(refuse(Refusal.Shape))  # 4.7, fu'ivla cannot contain `y`
+  let opening = text.clusterOpeningForbidden
+  if opening.isSome: return some(refuse(Refusal.Cluster, opening.get))  # 4.7, initial pairs
+  let cluster = text.clusterForbidden
+  if cluster.isSome: return some(refuse(Refusal.Cluster, cluster.get))  # 4.7, pairs permissible
+  let words = text.combination
+  if words.isSome: return some(refuse(Refusal.Combination, words.get.join(" ")))  # 4.7
+  let joined = text.slinkuhi
+  if joined.isSome: return some(refuse(Refusal.Slinkuhi, joined.get))  # 4.7, slinku'i test
+  none(Reading)
+
+
 func readLujvo(text: string): Reading =
-  ## Read brivla as lujvo by forms of its rafsi and hyphens of 4.11; list names parts it can.
+  ## Read brivla as lujvo by forms of its rafsi and hyphens of 4.11, list naming parts it can;
+  ##   else as fu'ivla by rules of 4.7, or refuse it, as `Hyphen` where its letters split into
+  ##   rafsi whose hyphens 4.11 sets otherwise.
   let splits = text.splitLujvo
-  if splits.len == 0:
-    let segments = text.segmentLujvo
-    if segments.len == 0: return refuse(Refusal.Fuhivla)
-    return refuse(Refusal.Hyphen, joinRafsi(segments[0].mapIt(it.rafsi)))
-  let pieces = splits[0]
-  Reading(is_word: true, kind: Kind.Lujvo, tanru: Tanru(parts: pieces.mapIt(it.part)),
-      pieces: pieces)
+  if splits.len > 0:
+    let pieces = splits[0]
+    return Reading(is_word: true, kind: Kind.Lujvo, tanru: Tanru(parts: pieces.mapIt(it.part)),
+        pieces: pieces)
+  let refusal = text.refusalFuhivla
+  if refusal.isNone: return readWhole(text, Kind.Fuhivla)
+  let segments = text.segmentLujvo
+  if segments.len > 0: return refuse(Refusal.Hyphen, joinRafsi(segments[0].mapIt(it.rafsi)))
+  refusal.get
 
 
 func readWord*(text: string): Reading =
-  ## Read text as one word by rules of CLL alone: cmavo, gismu or lujvo, whether list holds it
-  ##   or not; text is read as written, in canonical form.
+  ## Read text as one word by rules of CLL alone: cmavo, gismu, lujvo, fu'ivla or cmene,
+  ##   whether list holds it or not; text is read as written, in canonical form.
   ##   Character refused is named whole, so detail of UTF-8 text stays UTF-8; held by test
   ##     "Character outside letters is named whole, so detail of UTF-8 stays UTF-8" of
   ##     `test_tanru.nim`.
@@ -215,7 +247,7 @@ func readWord*(text: string): Reading =
     if text[at] == '\'' and not is_joining: return refuse(Refusal.Apostrophe)
 
   # Sort class by letters, as 4.3 tells cmene, brivla and cmavo apart.
-  if text[^1].isConsonant: return refuse(Refusal.Cmene)
+  if text[^1].isConsonant: return readCmene(text)
   if text.isBrivla:
     if text.syllables < 2: return refuse(Refusal.Shape)  # 4.3, penultimate stress needs two
     if text.isGismu: return readWhole(text, Kind.Gismu)
@@ -225,8 +257,8 @@ func readWord*(text: string): Reading =
     if text.splitCompound.len > 0: return refuse(Refusal.Stream)  # 4.2, compound cmavo
     return refuse(Refusal.Shape)  # no cmavo of 4.2, nor cmavo run together, as `cia` (3.4)
 
-  # Pair past fifth letter, or `y` last: no class of 4.3. Cmavo run into brivla, as `lonubroda`,
-  #   is such text, since CLL writes them apart: no space only where period stands (3.3).
+  # Pair past fifth letter, or `y` last: no class of 4.3, as one word. `readStream` splits such
+  #   text where it is words run together, as `lonubroda`.
   refuse(Refusal.Shape)
 
 

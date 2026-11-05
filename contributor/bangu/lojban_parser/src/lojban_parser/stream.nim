@@ -11,38 +11,51 @@
 ##
 ##   Marks of stream (3.3, 3.9): whitespace and period divide words, and period writes pause;
 ##     comma breaks syllables inside word; capital marks stressed syllable.
-##   Words written together need period between them, cmavo run together aside: 3.3 needs no
-##     space only where period stands, and 4.2 joins cmavo alone into one written word. So text
-##     splits at whitespace and periods, `splitCompound` splits each compound, and `readWord`
-##     reads each word.
-##     Cost: cmavo run into brivla, as `lonubroda`, is refused as `Shape`, though sounds of
-##       stream split uniquely (4.1); CLL presents no algorithm for that split.
+##   Written word between marks reads as one word where it can, its commas and capitals
+##     admitted. Else reader splits it into words, as Architect ruled on #811: 4.1 says sounds
+##     of stream split one way alone, and 3.3 lets correct text leave period out.
+##     Split chosen needs fewest pauses that rules need and text does not write, so period left
+##       out is inferred only where letters read no other way: `secusku` reads as `se cusku`,
+##       never as `secusk. .u`.
+##     Several splits of fewest pauses tie, as `iai` for `.i.ai` or `.ia.i`, and reader refuses
+##       them as `Split`; written word with no split is refused as `readWord` refuses letters.
+##     Stress takes part, as in speech: capitals must fit each word, so `KLAmaku` reads as
+##       `klama ku`, and `klamaku` as one fu'ivla, stressed on its penultimate syllable.
+##     Commas take no part: "no two Lojban words differ solely because of" comma (3.3). So
+##       letters and capitals choose words, and each comma is then judged against them: it
+##       may stand between two words, but never where pause must stand, since comma "cannot
+##       be pronounced as pause" (3.3); so `ka,i` is `kai` with comma refused, never `ka .i`.
+##     Cmene stands last in written word: pause follows it (4.9 rule 2), and parts of name join
+##       into one word with no pause (4.8), so consonant inside written word goes on with name.
+##       So `bri` is no `br .i`, though `br` alone would read as cmene, as `rl` does (3.4).
+##     Cost: CLL presents no algorithm for split (4.1), so split is reader's, built from rules
+##       of 3.9, 4.2, 4.7, 4.8 and 4.9. It tries each word and each word before it, so time grows
+##       with cube of length of written word (expected); words written apart skip it.
 ##   Pause follows 4.9. Period writes it. Where rule needs pause that text does not write,
 ##     reader infers it, since 3.3 calls period optional reminder that correct text implies.
 ##     So no text is refused for unwritten pause, and each word carries pause before it.
-##     Rules read: 3, word opening with vowel or `y`; 5 and 4.2, stressed last syllable before
-##       brivla or before stressed first syllable; 6, `Cy` before word not `Cy`; and pause
-##       after `y` (4.2).
-##     Rules 2 and 4 hold cmene, which #812 reads, and rule 7 holds text that `zoi` and `la'o`
-##       quote, which #814 reads; reader refuses each as its gap.
+##     Rules read: 2, word ending in consonant; 3, word opening with vowel or `y`; 4, cmene
+##       after word other than `la`, `lai`, `la'i` or `doi`; 5 and 4.2, stressed last syllable
+##       before brivla or before stressed first syllable; 6, `Cy` before word not `Cy`; and
+##       pause after `y` (4.2). First word takes pause where rule 3 or 4 needs one.
+##     Rule 7 holds text that `zoi` and `la'o` quote, which #814 reads; reader refuses it as gap.
 ##   Comma is never required (3.3), so word reads without it. Comma breaks syllables, so each
 ##     stretch it bounds, up to next comma, apostrophe or edge of word, holds vowel, `y`, or
-##     consonant that may be syllabic (3.4). Between two vowels of word read here, comma would
-##     break diphthong, which is one syllable (3.4), so it is refused there.
+##     consonant that may be syllabic (3.4). In cmavo, gismu and lujvo, vowels side by side make
+##     diphthong, which is one syllable (3.4), so comma between them is refused; cmene and
+##     fu'ivla may part vowels with it (3.5, 4.7).
 ##     Cost: comma beside `l`, `m`, `n` or `r` may make it syllabic, which 3.4 admits in
-##       principle, so reader accepts it; #812 judges commas of cmene and fu'ivla.
+##       principle, so reader accepts it.
 ##   Capital marks stress (3.1, 3.9): capitals form one run touching one vowel or diphthong,
 ##     whole syllable or vowel alone, and consonants of run are not judged. Brivla stresses
-##     penultimate syllable, `y` and syllabic consonant not counted; cmavo any syllable or none;
-##     `y` never. Capital touching no vowel is refused, as sentence opening `Mi` is: 4.8 keeps
-##     capitals for stress alone.
+##     penultimate syllable, `y` and syllabic consonant not counted; cmavo and cmene any syllable
+##     or none; `y` never. Capital touching no vowel is refused, as sentence opening `Mi` is:
+##     4.8 keeps capitals for stress alone.
 ##   Place of each word and refusal is byte of stream where it opens, so caller can point at it.
-##   Cost: each word read once, and each cmavo of compound once more; time grows with length of
-##     stream (expected).
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strutils]
+import std/[algorithm, options, sequtils, strutils]
 
 import ./[clusters, forms, selmaho, tanru]
 
@@ -69,7 +82,7 @@ type
     of false:
       refusal*: Refusal  ## Rule refusing stream, or gap holding it.
       start*: int  ## Byte of stream where offending word or mark opens.
-      detail*: string  ## Offending character, or form 4.11 gives; empty otherwise.
+      detail*: string  ## Offending character, form 4.11 gives, or two splits; empty otherwise.
 
   Spelling = object  ## Define written word with its marks taken out.
     letters: string  ## Letters in canonical form.
@@ -78,12 +91,27 @@ type
     breaks: seq[int]  ## Index of letter each comma stands before, in order.
     commas: seq[int]  ## Byte of stream each comma stands at, in order of `breaks`.
 
+  Score = object  ## Define splits reaching word: fewest pauses, ties, and words before.
+    pauses: int  ## Fewest pauses of any split reaching word.
+    ties: int  ## Splits of fewest pauses reaching word, two standing for more.
+    befores: seq[int]  ## Start of word before, in each split of fewest pauses; none for first.
+
+  Split = object  ## Define split of written word into words with fewest pauses it needs.
+    splits: seq[seq[Occurrence]]  ## Up to two splits of fewest pauses, in order; pause unset.
+    count: int  ## Splits of fewest pauses: none, one, or two standing for two or more.
+
 
 const
   MARKS_BOUNDARY = Whitespace + {'.'}  ## Marks dividing words: whitespace, and period (3.3).
   CAPITALS = MARKS_STREAM - MARKS_BOUNDARY - {','}  ## Capital of each letter, marking stress.
   VOWELS_NUCLEUS = VOWELS + {'y'}  ## Letters making syllable: five vowels, and `y` (3.4, 3.9).
   CONSONANTS_SYLLABIC = {'l', 'm', 'n', 'r'}  ## Consonants that may make syllable alone (3.4).
+  KINDS_BRIVLA = {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}
+    ## Classes stressed on penultimate syllable alone (3.9, 4.7).
+  KINDS_DIPHTHONG = {Kind.Cmavo, Kind.Gismu, Kind.Lujvo}
+    ## Classes whose vowels side by side make diphthong, so comma may not part them (3.4).
+  KINDS_GLIDE = {Kind.Fuhivla, Kind.Cmene}
+    ## Classes holding on-glide anywhere as diphthong; cmavo holds it first alone (3.4, 4.2).
 
 
 func refuse(refusal: Refusal, start: int, detail = ""): ReadingStream =
@@ -91,9 +119,9 @@ func refuse(refusal: Refusal, start: int, detail = ""): ReadingStream =
   ReadingStream(is_read: false, refusal: refusal, start: start, detail: detail)
 
 
-func nuclei(text: string): seq[Slice[int]] =
-  ## Find nucleus of each syllable of word: vowel or `y` alone, or diphthong (3.4).
-  ##   On-glide is diphthong only first in word opening with it, as 4.2 keeps them to cmavo.
+func nuclei(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[int]] =
+  ## Find nucleus of each syllable of word of class `kind`: vowel or `y` alone, or diphthong.
+  ##   Comma before letter of `breaks` parts two vowels into two syllables (3.5).
   var at = 0
   while at < text.len:
     if text[at] notin VOWELS_NUCLEUS:
@@ -101,24 +129,25 @@ func nuclei(text: string): seq[Slice[int]] =
       continue
     let
       pair = text[at .. min(at + 1, text.high)]
-      size = (if pair in DIPHTHONGS or (at == 0 and pair in DIPHTHONGS_CMAVO): 2 else: 1)
+      is_glide = pair in DIPHTHONGS_CMAVO and (kind in KINDS_GLIDE or at == 0)
+      is_parted = at + 1 in breaks
+      size = (if (pair in DIPHTHONGS or is_glide) and not is_parted: 2 else: 1)
     result.add at .. at + size - 1
     at += size
 
 
-func isLetteral(text: string): bool = text.len == 2 and text[0].isConsonant and text[1] == 'y'
-  ## Test word is letteral `Cy`, which names consonant (4.2, 17.2).
+func isPauseNeeded(prior, next: Occurrence): bool =
+  ## Test rule of 4.9 needs pause between two words: rules by letters (`forms.nim`), and rule 5,
+  ##   stressed last syllable before brivla or before stressed first syllable (4.2).
+  if isPauseNeeded(prior.text, next.text): return true
+  if prior.stress != some(prior.text.nuclei(prior.reading.kind).high): return false
+  next.reading.kind in KINDS_BRIVLA or next.stress == some(0)  # rule 5; 4.2
 
 
-func isPauseNeeded(prior: openArray[Occurrence], next: Occurrence): bool =
-  ## Test rule of 4.9 needs pause before `next`, which follows last word of `prior`, if any.
-  if next.text[0] in VOWELS_NUCLEUS: return true  # rule 3; `y` too (4.2)
-  if prior.len == 0: return false
-  let last = prior[^1]
-  if last.text == "y": return true  # 4.2, `y` takes pause after it too
-  if last.text.isLetteral and not next.text.isLetteral: return true  # rule 6
-  if last.stress != some(last.text.nuclei.high): return false
-  next.reading.kind in {Kind.Gismu, Kind.Lujvo} or next.stress == some(0)  # rule 5; 4.2
+func isPauseNeededFirst(word: Occurrence): bool =
+  ## Test rule of 4.9 needs pause before word opening stream: rule 3, vowel or `y` first (4.2),
+  ##   or rule 4, cmene.
+  word.text[0] in VOWELS_NUCLEUS or word.reading.kind == Kind.Cmene
 
 
 func isStretchSyllabic(text: string, at, start, finish, step: int): bool =
@@ -164,12 +193,12 @@ func nucleusStressed(word: string, kind: Kind, capitals, breaks: openArray[int])
   if last - first + 1 != capitals.len: return  # 3.9, one syllable capitalized
   for b in breaks:
     if first < b and b <= last: return  # 3.3, comma breaks syllable inside run
-  let spans = word.nuclei
+  let spans = word.nuclei(kind, breaks)
   var touched: seq[int]
   for i, nucleus in spans:
     if nucleus.b >= first and nucleus.a <= last: touched.add i
   if touched.len != 1 or word[spans[touched[0]].a] == 'y': return  # 3.9, `y` never stressed
-  if kind in {Kind.Gismu, Kind.Lujvo}:
+  if kind in KINDS_BRIVLA:
     var counted: seq[int]
     for i, nucleus in spans:
       if word[nucleus.a] != 'y': counted.add i
@@ -177,48 +206,121 @@ func nucleusStressed(word: string, kind: Kind, capitals, breaks: openArray[int])
   some(touched[0])
 
 
-func readPieces(
-    occurrences: var seq[Occurrence], spelling: Spelling, whole: Reading, is_period: bool
-): Option[ReadingStream] =
-  ## Read each word of one written word onto `occurrences`, cmavo of compound in order, with
-  ##   pause before it; refusal at first comma or capital no rule admits, or at quotation, gap.
-  let pieces = (if whole.is_word: @[spelling.letters] else: spelling.letters.splitCompound)
-  var lo = 0
-  for piece in pieces:
+func occurrenceWritten(spelling: Spelling, span: Slice[int]): Option[Occurrence] =
+  ## Read letters of `span` as one word, with stress its capitals mark; none where no word
+  ##   reads, or where its capitals break rule of 3.9. Commas judge no word; pause left unset.
+  let
+    piece = spelling.letters[span]
+    reading = piece.readWord
+  if not reading.is_word: return
+
+  # Read stress capitals mark, commas inside breaking run, and refuse stress 3.9 does not admit.
+  var capitals, breaks: seq[int]
+  for b in spelling.breaks:
+    if b > span.a and b <= span.b: breaks.add b - span.a
+  for c in spelling.capitals:
+    if c in span: capitals.add c - span.a
+  var stress = none(int)
+  if capitals.len > 0:
+    stress = piece.nucleusStressed(reading.kind, capitals, breaks)
+    if stress.isNone: return
+  some(Occurrence(start: spelling.places[span.a], text: piece, stress: stress, reading: reading))
+
+
+func splitWritten(spelling: Spelling): Split =
+  ## Split written word into words with fewest pauses that rules need and text does not write
+  ##   (3.3, 4.9); count splits of fewest pauses, two standing for more.
+  ##   `words[j][i]` holds word of letters `j ..< i`, and `scores[j][i]` splits ending in it.
+  let n = spelling.letters.len
+  var
+    words = newSeqWith(n + 1, newSeq[Option[Occurrence]](n + 1))
+    scores = newSeqWith(n + 1, newSeq[Option[Score]](n + 1))
+
+  # Score each word by fewest pauses of splits reaching it, counting ties.
+  for i in 1 .. n:
+    for j in 0 ..< i:
+      let word = spelling.occurrenceWritten(j .. i - 1)
+      if word.isNone: continue
+      if word.get.reading.kind == Kind.Cmene and i < n: continue  # 4.8, cmene stands last
+      words[j][i] = word
+      if j == 0:
+        scores[j][i] = some(Score(pauses: 0, ties: 1))
+        continue
+      for k in 0 ..< j:
+        if scores[k][j].isNone: continue
+        let
+          score = scores[k][j].get
+          pauses = score.pauses + ord(isPauseNeeded(words[k][j].get, word.get))
+        if scores[j][i].isNone or pauses < scores[j][i].get.pauses:
+          scores[j][i] = some(Score(pauses: pauses, ties: score.ties, befores: @[k]))
+        elif pauses == scores[j][i].get.pauses:
+          scores[j][i].get.ties = min(2, scores[j][i].get.ties + score.ties)
+          scores[j][i].get.befores.add k
+
+  # Choose fewest pauses over words ending written word, and count ties.
+  var lasts: seq[int]
+  for j in 1 ..< n:
+    if scores[j][n].isNone: continue
+    let score = scores[j][n].get
+    if lasts.len == 0 or score.pauses < scores[lasts[0]][n].get.pauses:
+      lasts = @[j]
+      result.count = score.ties
+    elif score.pauses == scores[lasts[0]][n].get.pauses:
+      lasts.add j
+      result.count = min(2, result.count + score.ties)
+
+  # Read up to two splits of fewest pauses back, from last word, by each word before it.
+  var paths = lasts.mapIt(@[(it, n)])
+  while paths.len > 0 and result.splits.len < 2:
     let
-      hi = lo + piece.len
-      reading = (if whole.is_word: whole else: piece.readWord)
+      path = paths.pop
+      (start, finish) = path[^1]
+    if start == 0:
+      result.splits.add path.reversed.mapIt(words[it[0]][it[1]].get)
+      continue
+    for before in scores[start][finish].get.befores.reversed:
+      paths.add path & (before, start)
 
-    # Refuse comma inside diphthong, which is one syllable (3.4).
-    var capitals, breaks: seq[int]
-    for k, b in spelling.breaks:
-      if b <= lo or b >= hi: continue
-      if piece[b - lo - 1] in VOWELS_NUCLEUS and piece[b - lo] in VOWELS_NUCLEUS:
-        return some(refuse(Refusal.Comma, spelling.commas[k]))
-      breaks.add b - lo
 
-    # Read stress capitals mark, and refuse stress that 3.9 does not admit.
-    for c in spelling.capitals:
-      if c >= lo and c < hi: capitals.add c - lo
-    var stress = none(int)
-    if capitals.len > 0:
-      stress = piece.nucleusStressed(reading.kind, capitals, breaks)
-      if stress.isNone: return some(refuse(Refusal.Stress, spelling.places[lo + capitals[0]]))
+func refusalWritten(spelling: Spelling, start: int): ReadingStream =
+  ## Refuse written word that splits into no words, at byte `start`: as `readWord` refuses its
+  ##   letters, else at its first capital, which breaks rule of 3.9. Letters that split into
+  ##   cmavo split here too, so capital alone stops them.
+  let whole = spelling.letters.readWord
+  if not whole.is_word and whole.refusal != Refusal.Stream:
+    return refuse(whole.refusal, start, whole.detail)
+  doAssert spelling.capitals.len > 0, "Written word whose letters read should break 3.9 by capital."
+  refuse(Refusal.Stress, spelling.places[spelling.capitals[0]])  # 3.9
 
-    # Stop at quotation of text that is not lojban, gap of #814 (4.9 rule 7).
-    if reading.selmaho == some(Selmaho.Zoi):
-      return some(refuse(Refusal.Foreign, spelling.places[lo]))
 
-    # Add word, with pause that period writes or rule needs.
-    var occurrence =
-      Occurrence(start: spelling.places[lo], text: piece, stress: stress, reading: reading)
-    occurrence.pause =
-      if lo == 0 and is_period: Pause.Written
-      elif occurrences.isPauseNeeded(occurrence): Pause.Inferred
-      else: Pause.Absent
-    occurrences.add occurrence
+func refusalCommas(spelling: Spelling, words: openArray[Occurrence]): Option[ReadingStream] =
+  ## Find first comma that breaks rule against words written word holds, as refusal at its
+  ##   byte: comma inside diphthong of cmavo, gismu or lujvo (3.4), or where pause must stand
+  ##   between two words, since comma "cannot be pronounced as pause" (3.3).
+  var
+    lo = 0
+    k = 0
+  for i, word in words:
+    let hi = lo + word.text.len
+    while k < spelling.breaks.len and spelling.breaks[k] < hi:
+      let
+        b = spelling.breaks[k] - lo
+        is_broken =
+          if b == 0: isPauseNeeded(words[i - 1], word)
+          else: word.text[b - 1] in VOWELS_NUCLEUS and word.text[b] in VOWELS_NUCLEUS and
+              word.reading.kind in KINDS_DIPHTHONG
+      if is_broken: return some(refuse(Refusal.Comma, spelling.commas[k]))
+      inc k
     lo = hi
   none(ReadingStream)
+
+
+func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period: bool): Pause =
+  ## Name pause before word that follows `occurrences`: period writes it, or rule needs it.
+  if is_period: return Pause.Written
+  let is_needed =
+    if occurrences.len == 0: word.isPauseNeededFirst else: isPauseNeeded(occurrences[^1], word)
+  if is_needed: Pause.Inferred else: Pause.Absent
 
 
 func readStream*(text: string): ReadingStream =
@@ -241,13 +343,27 @@ func readStream*(text: string): ReadingStream =
     let refusal_marks = text.refusalMarks(start, at)
     if refusal_marks.isSome: return refusal_marks.get
 
-    # Read each word written word holds, or refuse it as `readWord` does.
+    # Read written word as one word where it can, else split it into words.
     let
       spelling = text.toSpelling(start, at)
-      whole = spelling.letters.readWord
-    if not whole.is_word and whole.refusal != Refusal.Stream:
-      return refuse(whole.refusal, start, whole.detail)
-    let refusal_pieces = occurrences.readPieces(spelling, whole, is_period)
-    if refusal_pieces.isSome: return refusal_pieces.get
+      whole = spelling.occurrenceWritten(0 .. spelling.letters.high)
+    var words: seq[Occurrence]
+    if whole.isSome: words = @[whole.get]
+    else:
+      let split = spelling.splitWritten
+      if split.count == 0: return spelling.refusalWritten(start)
+      if split.count > 1:
+        let detail = split.splits.mapIt(it.mapIt(it.text).join(" ")).join(", or ")
+        return refuse(Refusal.Split, start, detail)  # 3.3, no one split to infer
+      words = split.splits[0]
+    let refusal_commas = spelling.refusalCommas(words)
+    if refusal_commas.isSome: return refusal_commas.get
+
+    # Stop at quotation of text that is not lojban, gap of #814; add each word with its pause.
+    for i, word in words:
+      if word.reading.selmaho == some(Selmaho.Zoi): return refuse(Refusal.Foreign, word.start)
+      var occurrence = word
+      occurrence.pause = occurrences.pauseBefore(occurrence, is_period = i == 0 and is_period)
+      occurrences.add occurrence
     is_period = false
   ReadingStream(is_read: true, occurrences: occurrences)
