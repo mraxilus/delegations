@@ -17,8 +17,8 @@
 ##     neither C nor V of 4.1, so no form holds it. Internal suite holds choice CLL does not
 ##     make: form reads canonical letters alone, and reader of `tanru.nim` refuses comma before
 ##     any form is asked.
-##   Cost: enumeration reads about 1.6 million strings; suite alone runs in about two seconds
-##     on unoptimised build (measured, PROVENANCE.md, Figures).
+##   Cost: enumeration reads about 1.6 million strings; suite alone runs in 3.0 s to 4.0 s on
+##     unoptimised build (measured, PROVENANCE.md, Figures).
 
 {.experimental: "strictFuncs".}
 
