@@ -11,7 +11,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[options, random, sequtils, strutils, unittest]
+import std/[options, random, sequtils, strutils, tables, unittest]
 
 import ../../src/lojban_parser/[dictionary, forms, selmaho, stream, tanru]
 import ../../src/lojban_parser/lists/[cmavo, gismu]
@@ -21,9 +21,13 @@ const
   SAMPLES = 1000  ## Random streams laws draw, seeded; also random lujvo pool draws.
   COUNT_WORDS_MAX = 8  ## Most words of random stream.
   FLOOR_COMMA_READ = 11000
-    ## Least commas comma law reads as syllable breaks: 11592 read at seed `0`.
+    ## Least commas comma law reads as syllable breaks: 11592 read over both lists and lujvo
+    ##   drawn at seed `1`.
   FLOOR_COMMA_REFUSED = 4000
-    ## Least commas comma law reads as refused: 4224 read at seed `0`.
+    ## Least commas comma law reads as refused: 4224 read over same words.
+  FLOOR_STRESS = 800
+    ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
+    ##   850 read at seed `0`.
   VOWELS_SYLLABLE = "aeiouy"  ## Letters making syllable: vowels of 3.1, and `y` (3.4, 3.9).
   CONSONANTS_SYLLABIC = "lmnr"  ## Consonants that may make syllable alone (3.4).
   DIPHTHONGS_OFF = ["ai", "ei", "oi", "au"]  ## Diphthongs with off-glide, in every word (3.4).
@@ -140,6 +144,11 @@ let
     for entry in LIST_CMAVO:
       if entry.selmaho != Selmaho.Zoi: words.add entry.word
     words
+  LUT_SELMAHO_BY_CMAVO = block:
+    ## Selma'o cmavo list gives each cmavo, read from list apart from reader (chapter 20).
+    var lut: Table[string, Selmaho]
+    for entry in LIST_CMAVO: lut[entry.word] = entry.selmaho
+    lut
 
 
 proc drawLujvo(): seq[string] =
@@ -149,7 +158,15 @@ proc drawLujvo(): seq[string] =
     result.add $Tanru(parts: newSeqWith(rand(2 .. 3), INDEXES_GISMU.sample.toPart))
 
 
-let WORDS_LUJVO = drawLujvo()  ## Random lujvo laws read, drawn once.
+let
+  WORDS_LUJVO = drawLujvo()  ## Random lujvo laws read, drawn once.
+  LUT_KIND_BY_WORD = block:
+    ## Class of each word of every pool, as pool it comes from gives it: list or `$` (4.2-6).
+    var lut: Table[string, Kind]
+    for word in WORDS_GISMU: lut[word] = Kind.Gismu
+    for word in WORDS_CMAVO: lut[word] = Kind.Cmavo
+    for word in WORDS_LUJVO: lut[word] = Kind.Lujvo
+    lut
 
 
 proc drawStreams(): seq[seq[string]] =
@@ -268,6 +285,9 @@ suite "Chapter 4":
         some(@[Pause.Absent, Pause.Absent, Pause.Written])  # 4.2, Example 2.8
     check "le RE NANmu".pausesRead ==
         some(@[Pause.Absent, Pause.Absent, Pause.Inferred])  # 4.2, stress demands pause (3.3)
+    check "le RE LE nanmu".pausesRead == some(@[
+      Pause.Absent, Pause.Absent, Pause.Inferred, Pause.Inferred,
+    ])  # 4.2, stressed syllables meet; 4.9 rule 5; constructed
     check "LE re NANmu".pausesRead ==
         some(@[Pause.Absent, Pause.Absent, Pause.Absent])  # 4.2, Example 2.9
     check "le re NANmu".stressesRead ==
@@ -295,6 +315,7 @@ suite "Chapter 4":
     check "cy ky klama".pausesRead ==
         some(@[Pause.Absent, Pause.Absent, Pause.Inferred])  # rule 6, "Cy" follows; constructed
     check "zoi gy. John .gy.".refusalRead == some((Refusal.Foreign, 0))  # rule 7; gap #814
+    check "zo zoi".refusalRead == some((Refusal.Foreign, 3))  # rule 7; `zo` gap #814 reads
     check "mi cusku la'o gy. Mary .gy.".refusalRead ==
         some((Refusal.Foreign, 9))  # rule 7, gap #814; constructed
 
@@ -305,24 +326,27 @@ suite "Internal: Stream":
     var count = 0
     for words in STREAMS_RANDOM:
       let text = words.join(" ")
-      check text.wordsRead == some(words)  # round trip
+      check text.wordsRead == some(words)  # 3.3, space divides words; round trip
       var
         starts: seq[int]
         at = 0
       for word in words:
         starts.add at
         at += word.len + 1
-      check text.startsRead == some(starts)  # byte of each word
+      check text.startsRead == some(starts)  # 3.3, byte where each word opens
       let reading = text.readStream
       if not reading.is_read: continue
       for i, occurrence in reading.occurrences:
-        check occurrence.reading.kind == words[i].readWord.kind  # same reading as word alone
-        check occurrence.reading.tanru == words[i].readWord.tanru
+        check occurrence.reading.kind == LUT_KIND_BY_WORD[words[i]]  # 4.2-6, class of pool
+        if occurrence.reading.kind != Kind.Cmavo: continue
+        check occurrence.reading.selmaho ==
+            some(LUT_SELMAHO_BY_CMAVO[words[i]])  # 20, selma'o cmavo list gives
       inc count
-    check count == SAMPLES  # every stream reads
+    check count == SAMPLES  # IX.3, guard keeps every stream
 
 
   test "Period between words reads as space, and writes pause before each":
+    var count = 0
     for words in STREAMS_RANDOM:
       for joint in [".", " .", ". ", " . "]:
         let text = words.join(joint)
@@ -330,11 +354,36 @@ suite "Internal: Stream":
         let pauses = text.pausesRead
         if pauses.isNone: continue
         check pauses.get[1 .. ^1].allIt(it == Pause.Written)  # 3.3, period writes pause
+        inc count
+    check count == 4 * SAMPLES  # IX.3, guard keeps every stream of each joint
 
 
   test "Pause is inferred where rule of 4.9 needs one, and absent elsewhere":
     for words in STREAMS_RANDOM:
       check words.join(" ").pausesRead == some(words.pausesNeeded)  # 4.9 rules 3, 6; 4.2
+
+
+  test "Stressed last syllable takes pause before brivla, or before stressed first syllable":
+    var count = 0
+    for words in STREAMS_RANDOM:
+      var
+        written: seq[string]
+        is_stressed_last: seq[bool]
+      for word in words:
+        let is_marked =
+          LUT_KIND_BY_WORD[word] == Kind.Cmavo and word[word.syllables[^1].a] != 'y'
+        written.add(if is_marked: word.capitalized(word.syllables[^1]) else: word)
+        is_stressed_last.add is_marked
+      var pauses = words.pausesNeeded
+      for i in 1 .. words.high:
+        let
+          is_brivla = LUT_KIND_BY_WORD[words[i]] in {Kind.Gismu, Kind.Lujvo}
+          is_stressed_first = is_stressed_last[i] and words[i].syllables.len == 1
+        if not is_stressed_last[i - 1] or not (is_brivla or is_stressed_first): continue
+        if pauses[i] == Pause.Absent: inc count
+        pauses[i] = Pause.Inferred
+      check written.join(" ").pausesRead == some(pauses)  # 4.9 rule 5; 4.2, stresses meet
+    check count >= FLOOR_STRESS  # IX.3, guard keeps rule in play
 
 
   test "Comma breaking syllables changes no word, and other comma is refused at its byte":
@@ -348,8 +397,8 @@ suite "Internal: Stream":
         else:
           check text.refusalRead == some((Refusal.Comma, at))  # 3.3, 3.4
           inc count_refused
-    check count_read >= FLOOR_COMMA_READ  # guard keeps most draws
-    check count_refused >= FLOOR_COMMA_REFUSED
+    check count_read >= FLOOR_COMMA_READ  # IX.3, guard keeps most draws
+    check count_refused >= FLOOR_COMMA_REFUSED  # IX.3, guard keeps refusals in play
 
 
   test "Capital on penultimate syllable of brivla reads, and on any other is refused":
