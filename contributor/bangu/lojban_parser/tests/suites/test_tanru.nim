@@ -6,9 +6,10 @@
 ##     right, and is what suite holds. CLL lujvo given without rafsi split are marked split
 ##     inferred; word no source holds is marked constructed.
 ##   Rules judge, list names (#823): suite holds text that rules admit as read, listed or not,
-##     and each refusal to rule of CLL it names. Refusal that names gap, as mark of stream
-##     (#811) or cmene (#812), is held as gap, never as choice of project; comma and capital CLL
-##     writes inside word (3.3, 3.9) wait in placeholder test, skipped until #811 (IX.9).
+##     and each refusal to rule of CLL it names. Refusal that names gap, as cmene (#812), is
+##     held as gap, never as choice of project. Mark of stream is held as `Stream`, which
+##     `readStream` reads, and `test_stream.nim` holds comma and capital CLL writes inside word
+##     (3.3, 3.9).
 ##   Tanru form unbounded domain, so laws run over seeded random tanru of one to four gismu,
 ##     drawn from every gismu of list, and over each entry of list exhaustively (Article IX.3).
 ##   Round trip runs again over seeded tanru of one to six words, cmavo among them, since lujvo
@@ -274,13 +275,9 @@ suite "Chapter 3":
       for i in 1 ..< spelling.len:  # every position inside word
         let (head, tail) = (spelling[0 ..< i], spelling[i .. ^1])
         check (head & "." & tail).refusalRead ==
-            some((Refusal.Stream, "."))  # 3.3, period embedded in word makes two words; gap #811
+            some((Refusal.Stream, "."))  # 3.3, period embedded in word makes two words
     for text in ["'a", "a'", "zba'", "kla'ma", "bri''a"]:  # constructed
       check text.refusalRead == some((Refusal.Apostrophe, ""))  # 3.3, apostrophe joins vowels
-
-
-  test "Section 3.9":
-    skip()  # 3.3, 3.9, comma and capital inside word, as `sai,r,goi`; gap, #811 reads them
 
 
 
@@ -446,28 +443,32 @@ suite "Internal: Reading":
     check count_scalar >= FLOOR_FOREIGN  # guard keeps most draws
 
 
-  test "Mark of stream is refused as Stream, gap #811 reads":
+  test "Mark of stream is refused as Stream, which readStream reads":
     check " brivla".refusalRead == some((Refusal.Stream, " "))  # 3.3, space ends word; no trim
     check "brivla\t".refusalRead == some((Refusal.Stream, "\t"))  # whitespace ends word
     check "bri vla".refusalRead == some((Refusal.Stream, " "))  # two words
     for c in MARKS_STREAM:  # every mark, whitespace among them, exhaustive
-      check ("bri" & c & "vla").refusalRead == some((Refusal.Stream, $c))  # 3.3, 3.9, gap #811
+      check ("bri" & c & "vla").refusalRead == some((Refusal.Stream, $c))  # 3.3, 3.9
     check "BRIVLA".refusalRead == some((Refusal.Stream, "B"))  # 3.9, capital marks stress
     for c in tanru.LETTERS - {'\''}:  # capital of each letter, exhaustive
       check ("bri" & c.toUpperAscii & "vla").refusalRead ==
-          some((Refusal.Stream, $c.toUpperAscii))  # 3.9, capital marks stress; gap, no fold
+          some((Refusal.Stream, $c.toUpperAscii))  # 3.9, capital marks stress; no fold
     for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):  # each CLL spelling quoted
       for i in 0 .. spelling.len:  # every position, both ends included
         let text = spelling[0 ..< i] & "," & spelling[i .. ^1]
         check text.refusalRead ==
-            some((Refusal.Stream, ","))  # 3.3, comma breaks syllable; gap, waits in 3.9
+            some((Refusal.Stream, ","))  # 3.3, comma breaks syllable, which stream holds
 
 
-  test "Cmavo run together, or into brivla, is refused as Stream, gap #811 reads":
+  test "Cmavo run together is refused as Stream, which readStream splits":
     check "ga'inai".refusalRead == some((Refusal.Stream, ""))  # 4.2, `ga'i nai`; Tatoeba
     check "so'imei".refusalRead == some((Refusal.Stream, ""))  # 4.2, `so'i mei`; Tatoeba
-    check "lonubroda".refusalRead == some((Refusal.Stream, ""))  # pair past fifth; constructed
-    check "cia".refusalRead == some((Refusal.Stream, ""))  # 3.4 forbids it too; constructed
+
+
+  test "Letters of no class, nor cmavo run together, are refused as Shape":
+    check "lonubroda".refusalRead == some((Refusal.Shape, ""))  # 3.3, pair past fifth; constructed
+    check "cia".refusalRead == some((Refusal.Shape, ""))  # 3.4, `ia` after consonant; constructed
+    check "ki'eu'e".refusalRead == some((Refusal.Shape, ""))  # 4.2, Example 2.3 writes period
 
 
   test "Word ending in consonant is refused as Cmene, gap #812 reads":

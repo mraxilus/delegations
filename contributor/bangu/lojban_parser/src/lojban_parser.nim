@@ -1,4 +1,4 @@
-## Parse lojban words by rules of CLL alone: letters, cmavo, gismu, rafsi, lujvo, and tanru.
+## Parse lojban by rules of CLL alone: letters, cmavo, gismu, rafsi, lujvo, tanru, and stream.
 ##   Umbrella module: re-exports surface of each module, in order reader learns subject.
 ##
 ##   |--------------|------------------------------------------------------|------------------|
@@ -12,6 +12,7 @@
 ##   | dictionary   | words and rafsi of gismu list, selma'o of cmavo      | 4.6, ch. 20      |
 ##   | tanru        | word read by rules alone, as parts of its tanru      | 4.2-6, 4.11-2    |
 ##   | tanru_units  | cmavo binding each tanru unit, conversions composed  | ch. 5, 9, 12, 15 |
+##   | stream       | text read as its words, with pause and stress        | 3.3, 3.9, 4.9    |
 ##   |--------------|------------------------------------------------------|------------------|
 ##
 ##   Order of compile-time type bootstrapping:
@@ -23,6 +24,8 @@
 ##     Part -> Tanru
 ##     [Places, Word] -> Link
 ##     [Link, Part] -> TanruUnit
+##     [Pause, Reading] -> Occurrence
+##     Occurrence -> ReadingStream
 ##   Lists are data that `nim r tools/build.nim lists` renders; `Word` is range over entries of
 ##     gismu list, so its bound follows list with no number written twice (Article II.5).
 ##   Lists stay off surface: caller wanting every entry imports `lists/gismu` or `lists/cmavo`
@@ -35,6 +38,8 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import ./lojban_parser/[clusters, dictionary, entries, forms, lujvo, selmaho, tanru, tanru_units]
+import ./lojban_parser/[
+  clusters, dictionary, entries, forms, lujvo, selmaho, stream, tanru, tanru_units
+]
 
-export clusters, dictionary, entries, forms, lujvo, selmaho, tanru, tanru_units
+export clusters, dictionary, entries, forms, lujvo, selmaho, stream, tanru, tanru_units

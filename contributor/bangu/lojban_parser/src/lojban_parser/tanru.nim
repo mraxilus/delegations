@@ -20,7 +20,9 @@
 ##     which is gismu by its five letters (4.4), else lujvo by its rafsi (4.6, 4.11); no pair at
 ##     all marks cmavo (4.2), one, or several run together.
 ##   Each refusal names rule of CLL. Where CLL admits text that reader does not read yet,
-##     refusal names gap and issue that reads it: `Stream` (#811), `Cmene` and `Fuhivla` (#812).
+##     refusal names gap and issue that reads it: `Cmene` and `Fuhivla` (#812), `Foreign` (#814).
+##     `Stream` names text that `readStream` of `stream.nim` reads: marks of stream, or cmavo
+##       run together (4.2).
 ##     Cost: gap refuses some text that no rule admits either, as `cia`, which 3.4 forbids;
 ##       issue of gap tells two apart.
 ##   Word reads as words of its tanru, never as its spelling: rafsi chosen do not change lujvo
@@ -38,9 +40,8 @@
 ##   Split is first of `splitLujvo`; laws of `test_lujvo.nim` hold it unique over random rafsi
 ##     and over lujvo list.
 ##   Text is read as written, in canonical form: lowercase letters and apostrophe alone. Space,
-##     comma, period and capital are marks of stream (3.3, 3.9), which #811 reads.
-##     Cost: CLL text writing comma or capital inside word, as `sai,r,goi` and `DI,ky,jvo` of
-##       3.9, is refused as gap; test `Section 3.9` of `test_tanru.nim` waits for it, skipped.
+##     comma, period and capital are marks of stream (3.3, 3.9), which `readStream` takes out
+##     before it reads each word here, as it does for `sai,r,goi` and `DI,ky,jvo` of 3.9.
 ##   `h` never stands for apostrophe: 3.3 says letter `h` is not used for it, so `h` is refused.
 ##   `$` leaves out 4-letter rafsi several gismu share wherever gismu has other rafsi;
 ##     `brodi`, `brodo` and `brodu` have none, so their lujvo render with `brod`, and read back
@@ -66,15 +67,18 @@ type
   Tanru* = object  ## Define tanru: parts of one tanru, gismu and cmavo, in order.
     parts*: seq[Part]  ## Parts of tanru; one part alone for word read whole.
 
-  Refusal* {.pure.} = enum  ## Define why text is no word reader reads: rule of CLL, or gap.
+  Refusal* {.pure.} = enum  ## Define why reader refuses text, word or stream: rule of CLL, or gap.
     Empty  ## Text holds no character, so no word of any class (4.1).
     Letter  ## Character no lojban text holds (3.1, 3.3); detail is that character, whole.
     Apostrophe  ## Apostrophe not between vowels, which alone it joins (3.3).
-    Shape  ## Letters fit no class: no cmavo (4.2), brivla (4.3) or cmene (4.8).
+    Shape  ## Letters fit no class: no cmavo (4.2), brivla (4.3), cmene (4.8), nor compound.
     Hyphen  ## Rafsi fit lujvo, but hyphens differ from 4.11; detail is form 4.11 gives.
-    Stream  ## Gap of #811: mark of stream (3.3, 3.9), or several words run together (4.2).
+    Stream  ## Mark of stream (3.3, 3.9), or cmavo run together (4.2), which `readStream` reads.
     Cmene  ## Gap of #812: final consonant marks cmene (4.3, 4.8).
     Fuhivla  ## Gap of #812: brivla neither gismu nor lujvo, so fu'ivla (4.7), or no word.
+    Stress  ## Capital marks no syllable word may stress, as brivla off penultimate (3.9); stream.
+    Comma  ## Comma at no syllable break: word edge, beside apostrophe, or in diphthong (3.3, 3.4).
+    Foreign  ## Gap of #814: text `zoi` and `la'o` quote is no lojban (4.9 rule 7), so stream stops.
 
   Reading* = object  ## Define outcome of reading text as word.
     case is_word*: bool
@@ -141,7 +145,7 @@ func refuse(refusal: Refusal, detail = ""): Reading =
   Reading(is_word: false, refusal: refusal, detail: detail)
 
 
-func character(text: string, at: int): string =
+func character*(text: string, at: int): string =
   ## Read character opening at byte `at`: lead byte, then each continuation byte it announces,
   ##   by bit distribution of Table 3-6 of Unicode Standard; byte alone where none follows.
   let size =
@@ -218,9 +222,12 @@ func readWord*(text: string): Reading =
     return readLujvo(text)
   if not text.isPairHeld:
     if text.isCmavo: return readWhole(text, Kind.Cmavo)
-    return refuse(Refusal.Stream)  # 4.2, compound cmavo reads as each cmavo, which #811 does
-  if text[^1] == 'y': return refuse(Refusal.Shape)  # pair, yet `y` last: neither class of 4.3
-  refuse(Refusal.Stream)  # pair past fifth letter: cmavo run into brivla, which #811 splits
+    if text.splitCompound.len > 0: return refuse(Refusal.Stream)  # 4.2, compound cmavo
+    return refuse(Refusal.Shape)  # no cmavo of 4.2, nor cmavo run together, as `cia` (3.4)
+
+  # Pair past fifth letter, or `y` last: no class of 4.3. Cmavo run into brivla, as `lonubroda`,
+  #   is such text, since CLL writes them apart: no space only where period stands (3.3).
+  refuse(Refusal.Shape)
 
 
 
