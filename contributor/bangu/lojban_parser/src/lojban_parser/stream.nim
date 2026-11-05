@@ -110,30 +110,11 @@ const
     ## Classes stressed on penultimate syllable alone (3.9, 4.7).
   KINDS_DIPHTHONG = {Kind.Cmavo, Kind.Gismu, Kind.Lujvo}
     ## Classes whose vowels side by side make diphthong, so comma may not part them (3.4).
-  KINDS_GLIDE = {Kind.Fuhivla, Kind.Cmene}
-    ## Classes holding on-glide anywhere as diphthong; cmavo holds it first alone (3.4, 4.2).
 
 
 func refuse(refusal: Refusal, start: int, detail = ""): ReadingStream =
   ## Build reading that refuses stream at byte `start`.
   ReadingStream(is_read: false, refusal: refusal, start: start, detail: detail)
-
-
-func nuclei(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[int]] =
-  ## Find nucleus of each syllable of word of class `kind`: vowel or `y` alone, or diphthong.
-  ##   Comma before letter of `breaks` parts two vowels into two syllables (3.5).
-  var at = 0
-  while at < text.len:
-    if text[at] notin VOWELS_NUCLEUS:
-      inc at
-      continue
-    let
-      pair = text[at .. min(at + 1, text.high)]
-      is_glide = pair in DIPHTHONGS_CMAVO and (kind in KINDS_GLIDE or at == 0)
-      is_parted = at + 1 in breaks
-      size = (if (pair in DIPHTHONGS or is_glide) and not is_parted: 2 else: 1)
-    result.add at .. at + size - 1
-    at += size
 
 
 func isPauseNeeded(prior, next: Occurrence): bool =
