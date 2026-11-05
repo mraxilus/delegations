@@ -24,24 +24,33 @@
 ##     Cost: verb wanting one of those changes converter and both lists in one commit.
 ##   Rafsi keep order of their columns, which is CVC, CCV, then CVV slot; form is derived from
 ##     letters again where read (`forms.nim`), so order carries no meaning here.
+##   Fields every line holds take `{.requiresInit.}` (CONTRIBUTOR.md, Data), so constructor
+##     lacking one fails compile, naming entry: word, keyword and definition of gismu; word,
+##     notation, parts and gloss of lujvo. Rafsi and hint are empty by right, so stay unmarked.
+##     Notation needs it most: its zero value `Lojban` would read English line as lojban.
+##     Cost: `var` of entry needs value, and `mapIt` over entries fails compile, since it
+##       declares `var it`; suites read fields by loop or `collect`. Seq of entries warns
+##       `UnsafeSetLen` and `UnsafeDefault` where it grows, and `newSeq` of entries warns
+##       `ProveInit`, which Nim says becomes error, so suites build with `newSeqOfCap`.
 
 {.experimental: "strictFuncs".}
 
 
 type
   EntryGismu* = object  ## Define one line of gismu list: gismu, or cmavo carrying rafsi.
-    word*: string  ## Word itself; five letters for gismu, fewer for cmavo.
+    word* {.requiresInit.}: string  ## Word itself; five letters for gismu, fewer for cmavo.
     rafsi*: seq[string]  ## Short rafsi assigned to word, none to three.
-    keyword*: string  ## English gloss keyword.
+    keyword* {.requiresInit.}: string  ## English gloss keyword.
     hint*: string  ## Second English hint word, often empty.
-    definition*: string  ## Place structure in English, i.e. `x1 is ... x2`.
+    definition* {.requiresInit.}: string  ## Place structure in English, i.e. `x1 is ... x2`.
 
   Notation* {.pure.} = enum  ## Define how lujvo list writes tanru of one line.
     Lojban  ## `word:part+part:gloss`, parts gismu or cmavo.
     English  ## `word#keyword+keyword:gloss`, parts English keywords of gismu, or phrases.
 
   EntryLujvo* = object  ## Define one well-formed line of lujvo list.
-    word*: string  ## Lujvo as list spells it.
-    notation*: Notation  ## Language parts are written in.
-    parts*: seq[string]  ## Parts of tanru lujvo stands for, as list writes them, in order.
-    gloss*: string  ## English gloss.
+    word* {.requiresInit.}: string  ## Lujvo as list spells it.
+    notation* {.requiresInit.}: Notation  ## Language parts are written in.
+    parts* {.requiresInit.}: seq[string]
+      ## Parts of tanru lujvo stands for, as list writes them, in order.
+    gloss* {.requiresInit.}: string  ## English gloss.

@@ -61,7 +61,7 @@ const
     ## CVC rafsi before gismu whose pair 4.11 step 4b must read as impermissible; 5326 read.
   LENGTH_MIN = 2  ## Fewest rafsi of random sequence; lujvo has two or more (4.6).
   LENGTH_MAX = 5  ## Most rafsi of random sequence.
-  ENTRIES_FLOOR_LOJBAN = 3000  ## Entries in Lojban notation whose parts must all be listed.
+  ENTRIES_FLOOR_LOJBAN = 3000  ## Entries in lojban notation whose parts must all be listed.
   ENTRIES_FLOOR_ENGLISH = 600  ## Entries in English notation whose parts must all be keywords.
   FORMS_MEDIAL = [Form.Cvc, Form.Ccv, Form.Cvv, Form.Cvcc, Form.Ccvc]
     ## Forms 4.11 step 1 allows before last rafsi: 3-letter or 4-letter.
@@ -90,7 +90,7 @@ const
     "xavycte",  # `xav` is rafsi of `xa`; list writes `re`
     "xavyvanbi",  # `xav` is rafsi of `xa`; list writes `re`
   ]
-    ## Entries in Lojban notation whose rafsi do not name listed parts in order, with reason.
+    ## Entries in lojban notation whose rafsi do not name listed parts in order, with reason.
   EXCEPTIONS_ENGLISH = [
     "natmyrgu'e",  # letter `r` after `natmy` fits no rafsi; `natmygu'e` would read
     "tolmipygau",  # word holds `tol` of cmavo `to'e`; list leaves it out
@@ -479,7 +479,7 @@ suite "Internal: Laws":
     check failing.sorted == EXCEPTIONS_SPLIT.sorted  # law: entry splits once, pinned ones aside
 
 
-  test "Corpus in Lojban notation splits into listed parts":
+  test "Corpus in lojban notation splits into listed parts":
     var
       count = 0
       failing: seq[string]

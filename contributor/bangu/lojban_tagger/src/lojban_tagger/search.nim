@@ -1,7 +1,7 @@
-## Find tagged entities by terms, each read as Lojban tag or as English, reduced to gismu.
+## Find tagged entities by terms, each read as lojban tag or as English, reduced to gismu.
 ##
-##   Term reads as Lojban first (`tags.nim`), else as English (`dictionary.nim`). Either way it
-##     becomes alternatives: gismu sets, any one of which satisfies term. Lojban gives one
+##   Term reads as lojban first (`tags.nim`), else as English (`dictionary.nim`). Either way it
+##     becomes alternatives: gismu sets, any one of which satisfies term. Term in lojban gives one
 ##     alternative, gismu of its tanru; English gives one per meaning it leads to.
 ##   Entity satisfies term where every gismu of one alternative appears in any of its tags;
 ##     query is satisfied where every term is (conjunction). So `vreji` finds `datnyvei`, and
@@ -10,14 +10,14 @@
 ##     and lose recall Architect asked for ("all tagged entities come up").
 ##     Cost: order and relation of gismu are lost; `patfu mamta` and `mampa'u` hold one set,
 ##     so each finds other (CLL 4.5 calls tanru ambiguous for same reason).
-##   Matching reads gismu alone, so `selci'a` finds what `ciska` finds. Lojban term holding cmavo
+##   Matching reads gismu alone, so `selci'a` finds what `ciska` finds. Term in lojban holding cmavo
 ##     also ranks first each entity holding tag whose tanru units hold tanru units of term
 ##     unbroken, in order (`tanru_units.nim`). Architect ruled that search for `selci'a` lists
 ##     first each entity whose tag holds `se` right before `ciska`, wherever pair stands, as
 ##     `selci'a`, `selci'avei` and `veirselci'a` do; that net result of cmavo around pair
 ##     decides; that longer term ranks by unbroken run too; and that search for `ciska` gives
 ##     no priority. English term ranks nothing, as Architect ruled, since ruling on rank names
-##     term typed in Lojban: word may lead to several meanings, and one holding cmavo would rank
+##     term typed in lojban: word may lead to several meanings, and one holding cmavo would rank
 ##     what user may not mean, as `writing` would rank jokes by `xajmi se finti`.
 ##     Tanru units, not words: SE binds only following brivla or "equivalent unit" (CLL 9.4),
 ##     so `se ciska` is one tanru unit wherever it stands, and folding gives what cmavo around
@@ -32,7 +32,7 @@
 ##     `vreta se ciska vreji`, where left grouping (5.3) binds `vreta` to `se ciska` first.
 ##     Term whose cmavo all fold away, as `selselci'a`, ranks nothing, as gismu term does.
 ##     Cost: rank is two tiers, ranked then rest, each in order of index.
-##   Term reading as neither Lojban nor known English holds no alternative, so query finds
+##   Term reading as neither lojban nor known English holds no alternative, so query finds
 ##     nothing; caller reports term, so empty result says why.
 ##   Cost: every entity tested against every term; index of shell tool is read whole anyway,
 ##     so linear walk costs no more than reading it (unmeasured).
@@ -46,16 +46,16 @@ import ./[dictionary, english, index, tags, tanru_units]
 
 type
   Term* = object  ## Define one term of query, as read.
-    reading*: Reading  ## Term read as Lojban tag, refused or not.
-    meanings*: seq[Meaning]  ## Meanings term leads to as English; empty where Lojban read.
+    reading*: Reading  ## Term read as lojban tag, refused or not.
+    meanings*: seq[Meaning]  ## Meanings term leads to as English; empty where lojban read.
     alternatives*: seq[seq[Word]]  ## Gismu sets, any one of which satisfies term.
     specific*: seq[TanruUnit]
-      ## Tanru units of Lojban term holding cmavo, which rank entities first; empty where
+      ## Tanru units of lojban term holding cmavo, which rank entities first; empty where
       ##   term holds none, or where its cmavo all fold away.
 
 
 func readTerm*(text: string): Term =
-  ## Read term as Lojban tag, else as English.
+  ## Read term as lojban tag, else as English.
   result.reading = text.readTag
   if result.reading.is_tag:
     let

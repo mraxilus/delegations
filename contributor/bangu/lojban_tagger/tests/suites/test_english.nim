@@ -4,7 +4,7 @@
 ##   Examples are lines of lists as committed (`cukta`, `ci'erkei`); laws run exhaustively over
 ##     every meaning, every gismu and every lujvo line, and over pool of seeded meanings, each
 ##     with its tokens shuffled, that iterator serves (Article IX.3, STYLE.md §6).
-##   Words of lujvo line come two ways: parts named, and word read. For Lojban notation, laws
+##   Words of lujvo line come two ways: parts named, and word read. For lojban notation, laws
 ##     hold one way against other. English notation names no word, so meaning comes from reader
 ##     itself there, and reader is held to keywords its parts write instead.
 ##   Corpus does not cover yet: phrases of three words or more, and English no list holds.
@@ -29,7 +29,7 @@ const
     ## Least meanings whose English holds token, that completeness law reads: 4815 of 4838 read;
     ## 23 keywords hold digits or function words alone.
   FLOOR_READ_LOJBAN = 2950
-    ## Least lines of Lojban notation whose parts are listed words ending in gismu: 3038 of 3044
+    ## Least lines of lojban notation whose parts are listed words ending in gismu: 3038 of 3044
     ## read; rest name compound cmavo or English, as `LUJVO_READ_ODD` pins.
   FLOOR_READ_ENGLISH = 740  ## Least lines of English notation whose word reads: 755 of 758 read.
   FLOOR_MEANINGS_CMAVO = 600
@@ -37,14 +37,14 @@ const
   FLOOR_KEYWORD = 600
     ## Least lines of English notation whose words carry keywords parts write, case and hyphens
     ## aside: 631 of 755 that read. Rest write phrase for cmavo (`2nd-place-of` for `se`),
-    ## synonym (`old` for `slabu`), misspell, name gismu in Lojban, name rafsi of other gismu
+    ## synonym (`old` for `slabu`), misspell, name gismu in lojban, name rafsi of other gismu
     ## (`sakybasti` spells `sak` of `sakci`), or list other count of parts (`LUJVO_PARTS_ODD`).
   LUJVO_PARTS_ODD = ["tolmipygau", "vikmau"]
     ## Lines of English notation whose part count differs from word count; list data, not reader.
     ##   `tolmipygau` writes `secret` and `do` for `to'e`, `mipri` and `gasnu`.
     ##   `vikmau` writes `2nd-place-of`, `viscous` and `more` for `viknu` and `zmadu`.
   LUJVO_READ_ODD = ["dazmoipru", "mibma'o", "pavmoijbe", "zgijvexajmi"]
-    ## Lines of Lojban notation whose parts and word disagree on reading at all; list data.
+    ## Lines of lojban notation whose parts and word disagree on reading at all; list data.
     ##   `dazmoipru` and `pavmoijbe` name compound cmavo `da'amoi`, `pamoi`, which list lacks.
     ##   `mibma'o` names `me`, whose list rafsi is no `mib`; `zgijvexajmi` names English `and`.
   LUJVO_RAFSI_OLD = [
@@ -52,7 +52,7 @@ const
     "narmitsi'u", "narselfendi", "nildicka'ukezyjdika", "xavdei", "xavdo'i", "xavycte",
     "xavyvanbi",
   ]
-    ## Lines of Lojban notation whose word reads as other words than parts name; list data.
+    ## Lines of lojban notation whose word reads as other words than parts name; list data.
     ##   `mum`, `xav`, `nar` name `re`, `na'e` where list gives them to `mu`, `xa`, `na`.
     ##   `kamfe'idzeseltru` and `kamnakydzeseltru` list two parts in other order than spelled.
     ##   `nildicka'ukezyjdika` spells `kez`, rafsi of `kei`, which parts leave out.
@@ -70,7 +70,9 @@ func intersection(a, b: seq[Meaning]): seq[Meaning] =
 
 func indexLujvo(word: string): int =
   ## Find line of lujvo list spelling `word`; suite names listed words alone.
-  LIST_LUJVO.mapIt(it.word).find(word)
+  for i, entry in LIST_LUJVO:
+    if entry.word == word: return i
+  raise newException(KeyError, "Lujvo should be in `LIST_LUJVO`; got `" & word & "`.")
 
 
 func normalEnglish(text: string): string =
@@ -141,7 +143,7 @@ suite "Internal: English":
     check keywords.mapIt(it.words) == @[@[cukta]]  # one gismu carries keyword `book`
 
 
-  test "Gloss of Lojban notation leads to gismu its parts name":
+  test "Gloss of lojban notation leads to gismu its parts name":
     let found = "file".meanings.filterIt(it.words == tanru("datni+vreji"))
     check found.len == 1  # one line glosses `file` as `datni+vreji`
     check found[0].origin == Origin.Gloss  # gloss, not keyword
@@ -236,7 +238,7 @@ suite "Internal: English":
       check reading.is_tag and reading.tag.words == meaning.words  # reader agrees, faults aside
 
 
-  test "wordsLujvo of Lojban notation spells its parts, and agrees with reader":
+  test "wordsLujvo of lojban notation spells its parts, and agrees with reader":
     var
       count_read = 0
       odd_read, odd_rafsi: seq[string]

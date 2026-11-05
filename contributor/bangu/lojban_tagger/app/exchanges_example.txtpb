@@ -1,0 +1,13 @@
+# Worked example of exchange file: first hop of example `page`, redirect of sample page, which
+#   `nim r tools/build.nim examples` writes to `build/examples/390a130dbd59a40f.exchange`.
+#   Text format of its message, past 33 bytes of frame, as `protoc` prints it:
+#     `tail -c +34 <file> | protoc --decode=lojban_tagger.Exchange app/exchanges.proto`.
+#   `test_exchanges.nim` encodes this file with `protoc --encode` at compile time, and holds
+#     writer to those bytes, and reader to message they hold.
+
+label: "sample page written for project, at reserved domain `example.org`"
+request: "GET https://example.org/alice"
+reply {
+  status: 301
+  location: "/alice.html"
+}

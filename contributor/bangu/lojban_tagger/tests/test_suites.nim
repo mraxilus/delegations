@@ -1,6 +1,6 @@
 discard """
 action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestOutputLevel:PRINT_FAILURES $options $file"
+cmd: "nim c --hints:off -d:ssl -d:testing -d:nimUnittestOutputLevel:PRINT_FAILURES $options $file"
 """
 ## Run every suite under `suites/` as one program, so lists and standard library compile once.
 ##   Shape of `curator/audit/tests/test_suites.nim`, which STYLE.md §6 names as worked example;
@@ -10,6 +10,9 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestOutputLevel:PRINT_FAILURES $opt
 ##     clash, and each still runs alone: `nim r tests/suites/test_<module>.nim`.
 ##   Import list is read from directory at compile time, never written: suite added is run.
 ##   Abort define is left out, so every failing test reports in one run, not first alone.
+##   Stub builds with `-d:ssl`: `send` speaks TLS, so its suite drives TLS.
+##     Cost: libssl3 loads when stub starts, so every suite needs it; binary
+##     `test_suggester.nim` builds needs it already.
 ##   Cost: compile error in one suite stops every suite.
 
 {.warning[UnusedImport]: off.}  # suite runs for effect and exports nothing

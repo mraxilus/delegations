@@ -20,7 +20,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[options, os, random, sequtils, strutils, unittest]
+import std/[options, os, random, sequtils, strutils, sugar, unittest]
 
 import ../../src/lojban_tagger/entries
 import ../../src/lojban_tagger/lists/[gismu, lujvo]
@@ -169,7 +169,7 @@ const
     ## Entry of each sample line, fields read off by hand from columns of `entries.nim`.
 
   LINE_BAARMOA = "ba'armo'a:barna+morna:pattern of marks:$morna1 $morna2 $=barna1 $morna3 $barna2"
-    ## Line 1 of `lujvo.txt`: tanru in Lojban.
+    ## Line 1 of `lujvo.txt`: tanru in lojban.
   LINE_BADGAI =
       "badgai#defend+cover: protective cover/ shield:$bandu1 $=gacri1 $bandu2 $=gacri1 " &
       "$bandu3"
@@ -177,7 +177,7 @@ const
   LINE_DATNYVEI =
       "datnyvei:datni+vreji:file (incl. computers):$vreji1 $vreji2 $=datni2 $vreji3 " &
       "$vreji4 [ = manner of encoding]"
-    ## Line 634 of `lujvo.txt`: `datnyvei`, tanru in Lojban.
+    ## Line 634 of `lujvo.txt`: `datnyvei`, tanru in lojban.
   LINE_FEBJICLA = "febjicla#boil+stir:roil:roil:$jicla1 $jicla2 $=febvi1"
     ## Line 841 of `lujvo.txt`: English, gloss given twice; first kept.
   LINE_CIMNALSRA = "cimnalsra:foldi::cilmo+na'e+srasu foldi marsh"
@@ -345,7 +345,7 @@ suite "Internal: Lists":
       check entries[i] == expected  # every field from its columns of `entries.nim`, trimmed
       check entryGismu(expected.word) == some(expected)  # sample agrees with committed list
     for mask in 0..<(1 shl LINES_GISMU.len):  # every subset of sample lines, exhaustive
-      var (lines, expected) = (@[LINE_HEADER], newSeq[EntryGismu]())
+      var (lines, expected) = (@[LINE_HEADER], newSeqOfCap[EntryGismu](LINES_GISMU.len))
       for i, line in LINES_GISMU:
         if (mask and (1 shl i)) == 0: continue
         lines.add line
@@ -376,7 +376,9 @@ suite "Internal: Lists":
       let
         converted = lines.join("\n").toEntriesLujvo
         kept = lines.filterIt(it in LINES_LUJVO_KEPT)
-      check converted.entries == kept.mapIt(EXPECTED_LUJVO[LINES_LUJVO_KEPT.find(it)])  # order
+        expected = collect(newSeqOfCap(kept.len)):
+          for line in kept: EXPECTED_LUJVO[LINES_LUJVO_KEPT.find(line)]
+      check converted.entries == expected  # order
       check converted.count_left == LINES_LUJVO_LEFT.len  # each odd line counted once
       check converted.entries.len + converted.count_left ==
           lines.countIt(it.strip.len > 0)  # conservation: every nonblank line kept or counted
@@ -389,8 +391,9 @@ suite "Internal: Lists":
       module_lujvo = toModuleLujvo(LIST_LUJVO, count_left, DIGEST_LUJVO)
     check (module_gismu & module_lujvo).splitLines.allIt(it.len <= WIDTH)  # X.1, bytes bound
     check module_gismu.textsField("    definition: ") ==
-        LIST_GISMU.mapIt(it.definition)  # helper reads back what renderer writes
-    check module_lujvo.textsField("    gloss: ") == LIST_LUJVO.mapIt(it.gloss)  # read back
+        collect(for entry in LIST_GISMU: entry.definition)  # helper reads back what renderer writes
+    check module_lujvo.textsField("    gloss: ") ==
+        collect(for entry in LIST_LUJVO: entry.gloss)  # read back
     randomize(SEED)
     let pool = poolEntries()
     for (entries_gismu, entries_lujvo) in served(pool):
@@ -399,20 +402,40 @@ suite "Internal: Lists":
         rendered_lujvo = toModuleLujvo(entries_lujvo, 0, DIGEST_LUJVO)
       check (rendered_gismu & rendered_lujvo).splitLines.allIt(it.len <= WIDTH)  # X.1
       for (head, texts) in [
-        ("    word: ", entries_gismu.mapIt(it.word)),
-        ("    keyword: ", entries_gismu.mapIt(it.keyword)),
-        ("    hint: ", entries_gismu.mapIt(it.hint)),
-        ("    definition: ", entries_gismu.mapIt(it.definition)),
+        ("    word: ", collect(for entry in entries_gismu: entry.word)),
+        ("    keyword: ", collect(for entry in entries_gismu: entry.keyword)),
+        ("    hint: ", collect(for entry in entries_gismu: entry.hint)),
+        ("    definition: ", collect(for entry in entries_gismu: entry.definition)),
       ]:
         check rendered_gismu.textsField(head) == texts  # round trip through wrapped literal
-      check rendered_lujvo.textsField("    word: ") == entries_lujvo.mapIt(it.word)  # one line
-      check rendered_lujvo.textsField("    gloss: ") == entries_lujvo.mapIt(it.gloss)  # wrapped
+      check rendered_lujvo.textsField("    word: ") ==
+          collect(for entry in entries_lujvo: entry.word)  # one line
+      check rendered_lujvo.textsField("    gloss: ") ==
+          collect(for entry in entries_lujvo: entry.gloss)  # wrapped
 
 
   test "committed modules are committed lists rendered again":
     check toModuleGismu(LIST_GISMU, DIGEST_GISMU) == TEXT_MODULE_GISMU  # render of parse
     check toModuleLujvo(LIST_LUJVO, COUNT_LINES_LUJVO - LIST_LUJVO.len, DIGEST_LUJVO) ==
         TEXT_MODULE_LUJVO  # render of parse, lines left counted by conservation
+
+
+  test "entry lacking field every line of list holds does not compile, as rule of data asks":
+    check compiles(EntryGismu(word: "cukta", keyword: "book",
+        definition: "x1 is book"))  # control: rafsi and hint empty by right, so unmarked
+    check not compiles(EntryGismu(keyword: "book", definition: "x1 is book"))  # no word
+    check not compiles(EntryGismu(word: "cukta", definition: "x1 is book"))  # no keyword
+    check not compiles(EntryGismu(word: "cukta", keyword: "book"))  # no definition
+    check compiles(EntryLujvo(word: "datnyvei", notation: Notation.Lojban,
+        parts: @["datni", "vreji"], gloss: "file"))  # control: every field named
+    check not compiles(EntryLujvo(notation: Notation.Lojban, parts: @["datni", "vreji"],
+        gloss: "file"))  # no word
+    check not compiles(EntryLujvo(word: "datnyvei", parts: @["datni", "vreji"],
+        gloss: "file"))  # no notation, whose zero value `Lojban` would stand in silence
+    check not compiles(EntryLujvo(word: "datnyvei", notation: Notation.Lojban,
+        gloss: "file"))  # no parts
+    check not compiles(EntryLujvo(word: "datnyvei", notation: Notation.Lojban,
+        parts: @["datni", "vreji"]))  # no gloss
 
 
   test "committed headers name pinned digests, split as rendered":
@@ -436,7 +459,7 @@ suite "Internal: Lists":
       check entry.word.len > 0 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # word is letters
       check entry.parts.len >= 2 and entry.parts.allIt(it.len > 0)  # tanru of two parts or more
       if entry.notation == Notation.Lojban:
-        check entry.parts.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # Lojban parts are letters
+        check entry.parts.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # lojban parts are letters
       check entry.gloss.len > 0 and entry.gloss == entry.gloss.strip  # gloss present, trimmed
       check not entry.gloss.startsWith("$")  # place structure is no gloss
 

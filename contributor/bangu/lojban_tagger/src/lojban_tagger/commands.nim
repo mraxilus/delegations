@@ -49,7 +49,7 @@ func explain*(reading: Reading): string =
   let text = "`" & reading.text & "`"
   case reading.refusal
   of Refusal.Empty: "Tag should hold letters; got ``."
-  of Refusal.Letter: "Tag should hold Lojban letters alone; got `" & reading.detail & "` in " &
+  of Refusal.Letter: "Tag should hold lojban letters alone; got `" & reading.detail & "` in " &
       text & "."
   of Refusal.Cmavo: "Tag should end in gismu, as CLL 4.11 step 2 ends tanru; got cmavo `" &
       reading.detail & "` in " & text & "."

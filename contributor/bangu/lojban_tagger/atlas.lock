@@ -1,0 +1,92 @@
+{
+  "items": {
+    "nim-protobuf-serialization": {
+      "dir": "$deps/protobuf_serialization",
+      "url": "https://github.com/status-im/nim-protobuf-serialization",
+      "commit": "a671c6d497c7028ed7390b2d5a80c7b62138c586",
+      "version": ""
+    },
+    "nim-faststreams": {
+      "dir": "$deps/faststreams",
+      "url": "https://github.com/status-im/nim-faststreams",
+      "commit": "5bdef9939b483435a61aa91a6422c1a9852127b4",
+      "version": ""
+    },
+    "npeg": {
+      "dir": "$deps/npeg",
+      "url": "https://github.com/zevv/npeg",
+      "commit": "409f6796d0e880b3f0222c964d1da7de6e450811",
+      "version": ""
+    },
+    "nim-serialization": {
+      "dir": "$deps/serialization",
+      "url": "https://github.com/status-im/nim-serialization",
+      "commit": "937a65c19fc49a5f79e2ecd89094d367b6ca0e1b",
+      "version": ""
+    },
+    "nim-stew": {
+      "dir": "$deps/stew",
+      "url": "https://github.com/status-im/nim-stew",
+      "commit": "29c11c7264289cc4c423f0e0662effbc5fdc6f61",
+      "version": ""
+    },
+    "nim-unittest2": {
+      "dir": "$deps/unittest2",
+      "url": "https://github.com/status-im/nim-unittest2",
+      "commit": "19701632b4f287b3012a5e435a9d829b0f66c605",
+      "version": ""
+    },
+    "nim-results": {
+      "dir": "$deps/results",
+      "url": "https://github.com/arnetheduck/nim-results",
+      "commit": "df8113dda4c2d74d460a8fa98252b0b771bf1f27",
+      "version": ""
+    }
+  },
+  "nimcfg": [
+    "# Configure every build of this project: where packages Atlas restores sit, each under",
+    "#   `dependencies/`, which `atlas.lock` pins and git never keeps (Article XI.3).",
+    "#   `protobuf_serialization` reads and writes exchange files; rest are packages it needs.",
+    "#   `--noNimblePath` keeps packages nimble installed on machine out of every build.",
+    "",
+    "############# begin Atlas config section ##########",
+    "--noNimblePath",
+    "--path:\"dependencies/faststreams\"",
+    "--path:\"dependencies/npeg/src\"",
+    "--path:\"dependencies/protobuf_serialization\"",
+    "--path:\"dependencies/results\"",
+    "--path:\"dependencies/serialization\"",
+    "--path:\"dependencies/stew\"",
+    "--path:\"dependencies/unittest2\"",
+    "############# end Atlas config section   ##########",
+    ""
+  ],
+  "nimbleFile": {
+    "filename": "lojban_tagger.nimble",
+    "content": [
+      "# Package description read by Atlas and nimble; requirements live here (Article II.8).",
+      "#   Morphology of lojban is what project exists to understand, so it is derived from CLL,",
+      "#   never imported (II.8).",
+      "#   `protobuf_serialization` of Status reads and writes exchange files of `suggester`:",
+      "#   data one program writes and another reads is Protocol Buffers (CONTRIBUTOR.md, Data),",
+      "#   external concern, so package; `atlas.lock` pins it with each package it needs.",
+      "#   Trap: `atlas.lock` keeps each line as JSON string, indented, quote escaped, so line",
+      "#   stays within 91 characters, quote counting twice, and copy fits width (X.1).",
+      "",
+      "version = \"0.1.0\"",
+      "author = \"Emmanuel M. Smith\"",
+      "description = \"Tag anything with gismu and lujvo, and find it again by gismu or English.\"",
+      "license = \"Prosperity-3.0.0\"",
+      "srcDir = \"src\"",
+      "",
+      "requires \"nim == 2.4.0\"",
+      "requires \"https://github.com/status-im/nim-protobuf-serialization\"",
+      ""
+    ]
+  },
+  "hostOS": "linux",
+  "hostCPU": "amd64",
+  "nimVersion": "2.4.0",
+  "gccVersion": "13.3.0",
+  "clangVersion": ""
+}

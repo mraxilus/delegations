@@ -4,8 +4,8 @@
 ##
 ##   Columns of `gismu.txt` are fixed; `entries.nim` tables them, and every range here is
 ##     measured over every line of file: no character of any line falls between two fields.
-##   `lujvo.txt` is `:`-separated, in two shapes: tanru in Lojban after `:`, or in English
-##     keywords after `#`. Line is kept where word is Lojban letters, tanru has two parts or
+##   `lujvo.txt` is `:`-separated, in two shapes: tanru in lojban after `:`, or in English
+##     keywords after `#`. Line is kept where word is lojban letters, tanru has two parts or
 ##     more, and gloss is present. Other shapes (phrase for word, no gloss, `,` in tanru) are
 ##     left out, and module header counts them, so cut stays visible.
 ##   Each source is pinned by SHA-256: Debian moving list makes `lists` refuse and `head`
@@ -90,33 +90,33 @@ func toEntriesGismu*(text: string): seq[EntryGismu] =
 
 
 func isLetters(text: string): bool =
-  ## Test text is nonempty and holds Lojban letters and apostrophe alone.
+  ## Test text is nonempty and holds lojban letters and apostrophe alone.
   text.len > 0 and text.allCharsInSet(LETTERS_LOJBAN)
 
 
 func toEntryLujvo(line: string): Option[EntryLujvo] =
   ## Read one line of `lujvo.txt`; `none` where it has neither well-formed shape.
-  ##   `word:part+part:gloss:places` writes tanru in Lojban; `word#keyword+keyword:gloss:places`
+  ##   `word:part+part:gloss:places` writes tanru in lojban; `word#keyword+keyword:gloss:places`
   ##   writes it in English keywords. Gloss opening `$` is place structure, so no gloss.
   let fields = line.split(':', maxsplit = 3)
   if fields.len < 2 or ' ' in fields[0]: return none(EntryLujvo)
-  var entry: EntryLujvo
-  if '#' in fields[0]:
-    let head = fields[0].split('#', maxsplit = 1)
-    entry = EntryLujvo(
-      word: head[0],
-      notation: Notation.English,
-      parts: head[1].split('+'),
-      gloss: fields[1].strip,
-    )
-  elif fields.len >= 3:
-    entry = EntryLujvo(
-      word: fields[0],
-      notation: Notation.Lojban,
-      parts: fields[1].split('+'),
-      gloss: fields[2].strip,
-    )
-  else: return none(EntryLujvo)
+  let entry =
+    if '#' in fields[0]:
+      let head = fields[0].split('#', maxsplit = 1)
+      EntryLujvo(
+        word: head[0],
+        notation: Notation.English,
+        parts: head[1].split('+'),
+        gloss: fields[1].strip,
+      )
+    elif fields.len >= 3:
+      EntryLujvo(
+        word: fields[0],
+        notation: Notation.Lojban,
+        parts: fields[1].split('+'),
+        gloss: fields[2].strip,
+      )
+    else: return none(EntryLujvo)
   let is_parts_valid =
     case entry.notation
     of Notation.Lojban: entry.parts.allIt(it.isLetters)

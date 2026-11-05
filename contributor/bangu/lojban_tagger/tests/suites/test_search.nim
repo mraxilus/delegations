@@ -294,7 +294,7 @@ suite "Internal: Search":
     check index.find([readTerm("datni")]).names == @["apart", "data"]  # gismu alone finds more
 
 
-  test "Lojban term holding cmavo ranks its own tag first, as Architect ruled":
+  test "lojban term holding cmavo ranks its own tag first, as Architect ruled":
     let
       selcia = readTag("selci'a").tag
       (ciska, notci) = (readTag("ciska").tag, readTag("notci").tag)
@@ -325,10 +325,10 @@ suite "Internal: Search":
     check index.find([readTerm("writing")]).names ==
         @["a/desk", "b/humor", "c/joke"]  # ruling: English term ranks nothing
     check index.find([readTerm("xamselfi'i")]).names ==
-        @["c/joke", "b/humor"]  # same tanru typed in Lojban ranks its tag first
+        @["c/joke", "b/humor"]  # same tanru typed in lojban ranks its tag first
 
 
-  test "Lojban term holding cmavo ranks tag holding its tanru units unbroken, as Architect ruled":
+  test "lojban term holding cmavo ranks tag holding its tanru units unbroken, as Architect ruled":
     var index: Index
     for (name, text) in [
       ("a/jobs", "ci'arseljibri"),  # `ciska` then `se jibri`: both held, `se` not before `ciska`
@@ -368,7 +368,7 @@ suite "Internal: Search":
     ]  # ranked tier first, conjunction kept
 
 
-  test "Lojban term whose only cmavo binds nothing ranks tag holding its tanru units":
+  test "lojban term whose only cmavo binds nothing ranks tag holding its tanru units":
     let figure = readTag("pevrisnyjelca").tag
     var index: Index
     index.addTags("a/burn", [readTag("risnyjelca").tag])

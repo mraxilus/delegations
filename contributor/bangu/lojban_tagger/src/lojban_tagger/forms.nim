@@ -1,4 +1,4 @@
-## Classify shapes of Lojban words and rafsi, as CLL chapter 4 writes them in C and V.
+## Classify shapes of lojban words and rafsi, as CLL chapter 4 writes them in C and V.
 ##
 ##   |--------|----------|----------------------------------------------|-------------|
 ##   | Code   | CLL      | Meaning                                      | Section     |
