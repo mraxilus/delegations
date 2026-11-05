@@ -18,7 +18,6 @@ import std/[options, random, sequtils, strutils, unittest]
 
 import ../../src/lojban_parser/[dictionary, forms, selmaho, tanru]
 import ../../src/lojban_parser/lists/[cmavo, gismu]
-import ../../tools/lists
 import ./texts_outside
 
 
@@ -42,6 +41,7 @@ const
   FLOOR_UNLISTED = 3000
     ## Least of those mutations no list holds, so corpus keeps misses: 3649 read at seed `0`.
   COUNT_COMPOUNDS = 472  ## Lines of `cmavo.txt` writing compound as one word, which it pins.
+  COUNT_PHRASES = 21  ## Lines of `cmavo.txt` writing phrase of several words, which it pins.
 
 
 func selmahoScanned(text: string): Option[Selmaho] =
@@ -49,6 +49,13 @@ func selmahoScanned(text: string): Option[Selmaho] =
   for entry in LIST_CMAVO:
     if entry.word == text: return some(entry.selmaho)
   none(Selmaho)
+
+
+func nameColumn(column: string): string =
+  ## Cut name of selma'o from column of `cmavo.txt`, before subclass or mark, apart from converter.
+  for letter in column:
+    if letter in {'A' .. 'Z', 'h'}: result.add letter
+    else: break
 
 
 func toWord(name: string): string =
@@ -118,18 +125,18 @@ suite "Internal: Cmavo list":
         if not line.is_compound:
           inc count_simple
           let reading = line.word.replace(".", "").readWord
-          check reading.is_word and reading.selmaho ==
-              line.selmaho.nameSelmaho.toSelmaho  # 20, cmavo reads with selma'o line gives
+          check reading.is_word and reading.selmaho.map(`$`) ==
+              some(line.selmaho.nameColumn)  # 20, cmavo reads with selma'o line gives
         elif ' ' notin line.word:
           inc count_compound
           let pieces = line.word.splitCompound
           check pieces.len >= 2 and pieces.allIt(it.selmaho.isSome)  # 4.2, cmavo list holds
         else:
           inc count_phrase
-          for word in line.word.splitWhitespace:  # stream of words, as #811 reads
+          for word in line.word.splitWhitespace:  # stream of words, which #811 reads
             let pieces = word.splitCompound
             check pieces.allIt(it.selmaho.isSome) and
                 (pieces.len > 0 or word.readWord.is_word)  # cmavo of list, or brivla
       check count_simple == LIST_CMAVO.len  # conservation: each line of one cmavo committed
       check count_compound == COUNT_COMPOUNDS  # 4.2, each compound written as one word splits
-      check count_phrase > 0  # domain reaches phrases of several words
+      check count_phrase == COUNT_PHRASES  # conservation: each phrase read word by word

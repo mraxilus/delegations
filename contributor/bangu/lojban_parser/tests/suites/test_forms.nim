@@ -46,7 +46,7 @@ const
     ##   4.2 treats every consonant alike.
   LENGTH_CMAVO = 6  ## Longest string cmavo law enumerates, long enough for `ku'a'e` of 4.2.
   SAMPLES_COMPOUND = 2000  ## Random compounds of one to five listed cmavo, seeded.
-  FLOOR_COMPOUND = 1500  ## Least of them of two cmavo or more: four in five expected.
+  FLOOR_COMPOUND = 1500  ## Least of them of two cmavo or more: 1635 read at seed `0`.
   FLOOR_CMAVO_SIMPLE = 590  ## Least lines of `cmavo.txt` holding one cmavo: 598 read.
   ROWS_SAKLI = [
     (Form.Cvc, "123", "sak"),
