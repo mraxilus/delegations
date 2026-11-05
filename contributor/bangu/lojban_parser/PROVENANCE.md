@@ -26,7 +26,7 @@ Language Group. This project reads the first edition, 1997, with its errata, at
 `lojban.github.io/cll`. Its chapter 3 gives the letters, the diphthongs and the consonant
 clusters. Its chapter 4 gives the classes and shapes of words, the rafsi, and the algorithms that
 join and score a lujvo. Chapters 5, 7, 9, 12 and 15 tell which words a cmavo binds. 17.2 gives
-the letterals, and 21.2 gives the rule of a tanru unit.
+the letterals, chapter 20 is the catalogue of selma'o, and 21.2 gives the rule of a tanru unit.
 
 The name of the language is lowercase, as lojban, as the Architect ruled for `lojban_tagger`. In
 lojban, a capital letter marks irregular stress (CLL 3.9), and the name has none. A title keeps
@@ -43,9 +43,9 @@ meaning here. Verified by `suites/test_tanru.nim`.
 
 **The parser keeps only the data that those rules need.** 4.11 and 4.12 join and score the rafsi
 of each word of a tanru, so the gismu list keeps each word and its rafsi. `lojban_tagger` holds the
-English of the gismu list and the whole lujvo list, since it searches by them. The selma'o of
-each cmavo, which the grammar needs, waits for #813. The limits to single words and to gismu are
-choices of the tagger, which holds them.
+English of the gismu list and the whole lujvo list, since it searches by them. The cmavo list
+keeps the word and the selma'o of each cmavo, which the grammar needs. The limits to single words
+and to gismu are choices of the tagger, which holds them.
 
 ## Clusters and forms
 
@@ -78,6 +78,12 @@ The test over the cmavo list holds each line of one cmavo to a form of 4.2. It h
 that the list marks as a compound to none. Verified by `suites/test_forms.nim`, test
 `Section 4.2 over cmavo list`. Cost: 4.2 keeps a run of three vowels or more for experiment. Such a
 run reads as a cmavo that no list can hold.
+
+**A compound of cmavo splits before each consonant and at each period.** A cmavo holds one
+consonant at most, and that consonant comes first (4.2). A cmavo that opens with a vowel follows a
+pause, which a period writes (3.3). So `splitCompound` splits a compound in one way only, and each
+piece is a cmavo of 4.2, or the text is no compound. Verified by `suites/test_forms.nim`, over the
+examples of 4.2 and over seeded compounds of listed cmavo.
 
 ## Lujvo
 
@@ -120,15 +126,17 @@ this project.
 
 ## Word lists
 
-**The gismu list is that of the Logical Language Group, in the Debian package `lojban-common`,
-version 1.5+dfsg.1-4.** The file is `gismu.txt`, and its header dates the list 9/26/94. The group
-placed this material in the public domain. It asks that a derived work state how it was derived,
-and give the address of the group. The header of the rendered module does both.
+**The gismu list and the cmavo list are those of the Logical Language Group, in the Debian package
+`lojban-common`, version 1.5+dfsg.1-4.** The files are `gismu.txt`, whose header dates it
+9/26/94, and `cmavo.txt`, whose header dates it 26 August 2002. The group placed this material in
+the public domain. It asks that a derived work state how it was derived, and give the address of
+the group. The header of each rendered module does both.
 
-**A converter renders the list as typed Nim, and the project commits the result.** The verb
-`nim r tools/build.nim lists` reads `gismu.txt` and checks its SHA-256 against its pin in
-`tools/lists.nim`. Then it writes `src/lojban_parser/lists/gismu.nim`, a module of typed constants
-whose header names that verb, as the rule of data asks (CONTRIBUTOR.md, Data). The compiler checks
+**A converter renders each list as typed Nim, and the project commits the result.** The verb
+`nim r tools/build.nim lists` reads both files and checks the SHA-256 of each against its pin in
+`tools/lists.nim`. Then it writes `src/lojban_parser/lists/gismu.nim` and `cmavo.nim`. Each is a
+module of typed constants whose header names that verb, as the rule of data asks (CONTRIBUTOR.md,
+Data). The compiler checks
 each field against the types of `entries.nim`.
 
 **An entry keeps the word and its rafsi alone, one entry to a line.** The converter reads both by
@@ -138,8 +146,19 @@ wants a column left out changes the converter and the list in one commit. Verifi
 `suites/test_lists.nim`, which reads lines copied from `gismu.txt`, and which compares the
 committed list with the installed file where `lojban-common` is present.
 
-**The word takes `{.requiresInit.}`, so an entry without one does not compile.** The rafsi can be
-empty, so they stay unmarked. Verified by `suites/test_lists.nim`.
+**The cmavo list keeps the word and the selma'o of each line of one cmavo.** The converter reads
+the word in columns 1 to 11, without the period of a pause, and the selma'o in columns 12 to 20.
+It keeps the name of the selma'o, and drops the subclass that the list writes after it, as the
+`1` of `UI1`. That subclass groups cmavo for learners, and no rule of CLL reads it. The converter
+leaves out each line whose selma'o holds `*`: a compound reads as the cmavo it joins (4.2), and a
+phrase is several words. Verified by `suites/test_lists.nim`, over lines copied from `cmavo.txt`.
+
+Cost: the list holds no compound, so a caller that wants the selma'o of a compound reads the
+selma'o of each of its cmavo.
+
+**The word of each list and the selma'o take `{.requiresInit.}`, so an entry without one does not
+compile.** The zero value of the selma'o is `Selmaho.A`, which would stand in silence. The rafsi
+can be empty, so they stay unmarked. Verified by `suites/test_lists.nim`.
 
 Cost: `mapIt` declares `var it`, so it does not compile over an entry, and the suites read fields
 by `collect` or by a loop. A seq of entries gives the warnings `UnsafeSetLen` and `UnsafeDefault`
@@ -153,8 +172,10 @@ it. Rejected: a read of the package at compile time, because each build would th
 package. The Architect ruled for `lojban_tagger` that the lists change seldom, so a commit is
 right, and the same holds here.
 
-**The lujvo list and the cmavo list are outside texts.** The suites read `lujvo.txt` and
-`cmavo.txt` where `lojban-common` installs them, through `suites/texts_outside.nim`. The Architect
+**The lujvo list is an outside text, and so is the whole cmavo list.** The suites read
+`lujvo.txt` and `cmavo.txt` where `lojban-common` installs them, through
+`suites/texts_outside.nim`. The parser commits no part of the lujvo list, and the lines of one
+cmavo alone of the cmavo list. The Architect
 ruled on #819 that outside texts test the parser, pinned by digest and kept out of the repository.
 So `tools/lists.nim` pins each file by its SHA-256, and a test that reads one skips where the file
 is absent or moved. The verb `system` declares the package, so CI installs it.
@@ -166,10 +187,32 @@ stands in no domain. Verified by `suites/test_lists.nim`, over lines copied from
 by the floor of each notation in `suites/test_lujvo.nim`.
 
 **The daily `head` verb watches the sources.** It checks the digest of each pinned file, and
-renders the gismu module again to compare it with the committed one. Where Debian moves a pinned
+renders both modules again to compare each with the committed one. Where Debian moves a pinned
 file, `head` fails. Where it moves `gismu.txt`, `lists` refuses too, until somebody moves the pin.
 Verified by hand, 2026-11-05: `nim r tools/build.nim head` exits 0 against `lojban-common`
 1.5+dfsg.1-4.
+
+## Selma'o
+
+**`Selmaho` names each selma'o of the catalogue of chapter 20.** Chapter 20 names each selma'o by a
+representative cmavo, in capitals, with `h` for the apostrophe. A member is the Pascal case of that
+name, as `Form.Cvc` is of CVC, and `$` spells the name of CLL again. `h` is no letter of lojban
+(3.3), so each `h` of a member marks an apostrophe. The members keep the order of the catalogue,
+which is the byte order of the names. Verified by `suites/test_selmaho.nim`, against each name,
+its order and its representative cmavo.
+
+**A cmavo read whole carries its selma'o.** The reader gives the selma'o that the cmavo list gives
+the cmavo. A cmavo that no list holds, as the experimental `ku'a'e`, carries none. A part of a
+lujvo carries none either, since a rafsi can spell a cmavo, as `kau` of `kampu` spells the cmavo
+`kau`. Verified by `suites/test_tanru.nim`, Section 4.2, and by `suites/test_selmaho.nim`.
+
+**The lists and the catalogue agree.** Each selma'o of the catalogue holds a cmavo of the list.
+Each cmavo of the gismu list stands in the cmavo list, which a static check of `dictionary.nim`
+holds. Verified by `suites/test_selmaho.nim`.
+
+**Each line of `cmavo.txt` reads.** A line of one cmavo reads with the selma'o that it gives. A
+compound written as one word reads as cmavo that the list holds. A phrase reads word by word, each
+word a cmavo of the list or a brivla. Verified by `suites/test_selmaho.nim`.
 
 ## Tanru
 
@@ -247,6 +290,10 @@ to its brivla (15.4). A NU rafsi modifies the next tanru unit alone (12.12). Eac
 nothing, and stands as a tanru unit of its own where it does more than group. Verified by
 `suites/test_tanru_units.nim`.
 
+**Each folded cmavo carries the selma'o that chapter 20 gives it.** A static check in
+`tanru_units.nim` holds the cmavo of SE, NU, NA and NAhE, and `ke`, `ke'e`, `kei`, `bo` and `co`, to
+their selma'o. So the fold and the cmavo list never part.
+
 **A part that no list names binds nothing.** Each binding cmavo is a word of the list. So such a
 part stands as a tanru unit of its own, and a cmavo before it binds it. Verified by
 `suites/test_tanru_units.nim`.
@@ -311,9 +358,9 @@ unit of its own. Cost: `relpavmomci'a` folds `re`, `pa` and `moi` apart, althoug
 make the ordinal 21. Verified by `suites/test_tanru_units.nim`, in the suite
 `Internal: Convention`.
 
-JAI binds as SE does (5.11), but the list gives `jai` no rafsi, so no lujvo of the list holds it.
-CLL 12.12 gives `jai` the rafsi `jax`, which the list does not hold. A static check in
-`tanru_units.nim` stops the build where the list gains `jai`.
+JAI binds as SE does (5.11), but the gismu list gives `jai` no rafsi, so no lujvo of the list
+holds it. CLL 12.12 gives `jai` the rafsi `jax`, which the gismu list does not hold. A static
+check in `tanru_units.nim` stops the build where the gismu list gains `jai`.
 
 ## Tests
 
@@ -360,24 +407,23 @@ table on each.
 
 ## Figures
 
-Each figure comes from an Intel Xeon at 2.10 GHz with four cores, on 2026-11-05, at the code of
-`0b4cb338`. The runs of each pair alternate between Nim 2.2.12 and the pin, 2.4.0, so both share
-the load of the machine. A pair against `main` alternates `646bf514` with this code, on the pin.
+Each figure comes from an Intel Xeon at 2.80 GHz with four cores, on 2026-11-05, at the code of
+`ea540be9`. The runs of each pair alternate between Nim 2.2.12 and the pin, 2.4.0, so both share
+the load of the machine. A pair against `main` alternates `8fe8eb6d` with this code, on the pin.
+The spread of each figure is wide on this machine, so only a difference beyond it counts.
 
-- **Front end check of the umbrella.** `nim check --hints:off src/lojban_parser.nim` took 0.88 s,
-  0.89 s and 0.89 s on 2.4.0, against 0.68 s, 0.73 s and 0.71 s on 2.2.12. The spreads do not
-  meet, so 2.2.12 is faster by this measure, on this machine.
+- **Front end check of the umbrella.** `nim check --hints:off src/lojban_parser.nim` took 1.27 s,
+  1.42 s and 1.45 s on 2.4.0, against 2.35 s, 1.15 s and 1.23 s on 2.2.12. The spreads meet, so
+  neither compiler is faster by this measure.
 - **Suites from an empty cache.** `nim c -r --hints:off -d:testing tests/test_suites.nim`
-  compiled and ran every suite in 11.3 s and 11.3 s on 2.4.0, against 11.0 s and 11.0 s on
+  compiled and ran every suite in 18.9 s and 18.3 s on 2.4.0, against 17.3 s and 19.6 s on
   2.2.12. Each run started with an empty cache.
-- **Suites alone.** The built binary ran every suite in 6.5 s and 6.8 s on 2.4.0, against 6.6 s
-  and 6.7 s on 2.2.12. Against `main`, it ran in 6.6 s and 6.4 s, where `main` ran in 5.3 s and
-  5.2 s.
+- **Suites alone.** The built binary ran every suite in 10.6 s and 10.7 s on 2.4.0, against
+  10.9 s and 10.9 s on 2.2.12. `main` ran in 10.3 s and 12.5 s, so the cmavo list costs nothing
+  that this measure shows.
 - **Forms alone.** The suite of `test_forms.nim` builds alone, without optimisation. It ran in
-  2.03 s, 2.11 s and 2.14 s on 2.4.0, against 2.04 s, 2.02 s and 1.95 s on 2.2.12. Against `main`,
-  it ran in 2.08 s, 2.06 s and 2.21 s, where `main` ran in 1.41 s, 1.36 s and 1.42 s. The law of
-  4.2, over each string of up to six of its nine letters, gives most of the difference (expected,
-  unmeasured alone).
+  3.37 s, 3.41 s and 3.45 s on 2.4.0, against 3.98 s, 3.63 s and 3.01 s on 2.2.12. `main` ran in
+  3.71 s, 2.95 s and 2.97 s, so the spreads meet.
 - The time of `readWord` and of `$` is unmeasured here. `$` scores each choice of rafsi, so its
   time grows with the product of the choices of each word (expected).
 
@@ -391,7 +437,7 @@ the load of the machine. A pair against `main` alternates `646bf514` with this c
   split into rafsi by the hyphens of 4.11. 4.7 gives the tests of a fu'ivla, which #812 adds, and
   only those tests tell whether such a word is a fu'ivla.
 - **What the parser does not read.** It reads no prose: no bridi, no sumti, and no selbri past
-  the tanru units of one word. It reads no cmene (4.8) and no fu'ivla (4.7), which #812 adds. It
-  reads no cmavo run together and no marks of a stream (3.3, 3.9), which #811 adds. It gives no
-  selma'o, which #813 adds. The fold keeps no grouping that no cmavo binds, and no number with its
-  MOI, which prose needs.
+  the tanru units of one word. It reads no cmene (4.8) and no fu'ivla (4.7), which #812 adds.
+  `readWord` reads no cmavo run together, which `splitCompound` splits, and no marks of a stream
+  (3.3, 3.9). #811 reads both in a stream of text. The fold keeps no grouping that no cmavo
+  binds, and no number with its MOI, which prose needs.
