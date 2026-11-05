@@ -3,20 +3,22 @@
 ##   |-----------|--------------------------------------------------------------------------|
 ##   | Command   | Effect                                                                   |
 ##   |-----------|--------------------------------------------------------------------------|
-##   | lists     | read `gismu.txt` and `lujvo.txt` lojban-common installs, check each      |
-##   |           | digest against its pin, and write both typed modules under `src/`        |
-##   | head      | read both lists again and compare digest and rendered module with what   |
-##   |           | is committed; exit 1 where either differs, i.e. Debian moved list        |
-##   | system    | print packages `lists` and `head` need, one per line                     |
+##   | lists     | read `gismu.txt` lojban-common installs, check its digest against its    |
+##   |           | pin, and write typed module under `src/`                                 |
+##   | head      | read `gismu.txt` and `lujvo.txt` again, compare each digest with its pin |
+##   |           | and rendered module with what is committed; exit 1 where any differs,    |
+##   |           | i.e. Debian moved list                                                   |
+##   | system    | print packages `lists`, `head` and suites need, one per line             |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
 ##
-##   Verbs `lists` and `head` copied as part of `lojban_tagger/tools/build.nim` until #809 (II.9).
+##   Sibling `lojban_tagger/tools/build.nim` holds earlier copy of `lists` and `head`, which
+##     render lujvo list too, until #809 (II.9).
 ##   `head` is verb CONTRIBUTOR.md gives check against outside reference that moves: package
-##     can carry new list with no commit here, and no merge waits on it.
+##     can carry new list with no commit here, and no merge waits on it. It reads `lujvo.txt`
+##     for digest alone, since suites read that file as outside text and render nothing of it.
 ##   Rejected: reading lists at compile time from package directory, which would make every
-##     build need package; CI `test` job installs none, and list changes seldom, so committed
-##     copy serves every build and `head` watches upstream.
+##     build need package; committed gismu list serves every build, and `head` watches upstream.
 ##   Cost: driver runs from project directory, since every path here is relative to it.
 
 {.experimental: "strictFuncs".}
@@ -32,7 +34,7 @@ import ./lists
 const
   USAGE = "Usage: nim r tools/build.nim <lists|head|system>\n"  ## Text printed on usage error.
   SYSTEM = [
-    ("lojban-common", "word lists of Logical Language Group, which `lists` and `head` read"),
+    ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
     ("coreutils", "`sha256sum`, which `lists` and `head` check each list's digest with"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
@@ -41,25 +43,9 @@ const
 
 #[ Verbs ]#
 
-proc readLists(): tuple[gismu, lujvo: string, digests: array[2, string]] =
-  ## Read both lists and render both modules, with digest each source carries.
-  let
-    gismu = readSource("gismu.txt")
-    lujvo = readSource("lujvo.txt")
-    (entries, count_left) = lujvo.text.toEntriesLujvo
-  (
-    toModuleGismu(gismu.text.toEntriesGismu, gismu.digest),
-    toModuleLujvo(entries, count_left, lujvo.digest),
-    [gismu.digest, lujvo.digest],
-  )
-
-
-proc refuseDigests(digests: array[2, string]): int =
-  ## Report each list whose digest left its pin; count reports.
-  for (name, digest, pin) in [
-    ("gismu.txt", digests[0], DIGEST_GISMU),
-    ("lujvo.txt", digests[1], DIGEST_LUJVO),
-  ]:
+proc refuseDigests(sources: openArray[(string, string, string)]): int =
+  ## Report each list whose digest left its pin, given as name, digest and pin; count reports.
+  for (name, digest, pin) in sources:
     if digest == pin: continue
     stderr.writeLine "List moved from its pin in `tools/lists.nim`; read diff, then move pin; " &
         "got `" & digest & "` for `" & name & "`."
@@ -67,24 +53,27 @@ proc refuseDigests(digests: array[2, string]): int =
 
 
 proc writeLists(): int =
-  ## Write both modules where both digests match their pins.
-  let (gismu, lujvo, digests) = readLists()
-  if refuseDigests(digests) > 0: return 1
+  ## Write gismu module where its digest matches its pin.
+  let gismu = readSource("gismu.txt")
+  if refuseDigests([("gismu.txt", gismu.digest, DIGEST_GISMU)]) > 0: return 1
   createDir(PATH_GISMU.parentDir)
-  writeFile(PATH_GISMU, gismu)
-  writeFile(PATH_LUJVO, lujvo)
+  writeFile(PATH_GISMU, toModuleGismu(gismu.text.toEntriesGismu, gismu.digest))
   echo PATH_GISMU
-  echo PATH_LUJVO
 
 
 proc compareLists(): int =
-  ## Compare digests and rendered modules with committed modules; 1 where any differs.
-  let (gismu, lujvo, digests) = readLists()
-  var count_differing = refuseDigests(digests)
-  for (path, rendered) in [(PATH_GISMU, gismu), (PATH_LUJVO, lujvo)]:
-    if fileExists(path) and readFile(path) == rendered: continue
+  ## Compare both digests, and rendered gismu module with committed one; 1 where any differs.
+  let
+    gismu = readSource("gismu.txt")
+    lujvo = readSource("lujvo.txt")
+    rendered = toModuleGismu(gismu.text.toEntriesGismu, gismu.digest)
+  var count_differing = refuseDigests([
+    ("gismu.txt", gismu.digest, DIGEST_GISMU),
+    ("lujvo.txt", lujvo.digest, DIGEST_LUJVO),
+  ])
+  if not fileExists(PATH_GISMU) or readFile(PATH_GISMU) != rendered:
     stderr.writeLine "Committed list differs from list rendered again; run `lists`; got `" &
-        path & "`."
+        PATH_GISMU & "`."
     inc count_differing
   if count_differing > 0: 1 else: 0
 

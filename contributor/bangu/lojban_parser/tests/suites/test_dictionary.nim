@@ -26,6 +26,8 @@ const
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"  ## Seventeen consonants C stands for (4.1 rule 3).
   ORDER_VOWELS = "aeiou"  ## Five vowels V stands for, `y` excluded (4.1 rule 1).
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"  ## Letters of 3.1, apostrophe, comma and period.
+  DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## Cmavo of ten decimal digits, 0 to 9, as 18.2 lists them.
   RAFSI_BLACI = ["bac", "lac", "ba'i", "bai", "la'i", "lai", "bla"]
     ## Short rafsi 4.6 table lets `blaci` have, all assigned elsewhere.
   GISMU_ASSIGNABLE = ["broda", "brode", "brodi", "brodo", "brodu"]
@@ -229,18 +231,15 @@ suite "Chapter 4":
     check isAssigned("ro'i", "rokci")  # 4.6, `ro'inre'o`, split inferred
     check isAssigned("re'o", "renro")  # 4.6, `ro'inre'o`, split inferred
     check isAssigned("rok", "rokci")  # 4.6, `rokre'o`, split inferred
-    var count_digits = 0
-    for w in words():
-      let definition = w.entry.definition
-      if not (definition.startsWith("digit/number: ") and definition.endsWith(" (digit)")):
-        continue
-      inc count_digits
-      let text = $w
+    for text in DIGITS:  # ten digits 18.2 names, exhaustive
+      let found = word(text)
+      check found.isSome  # 4.6, each digit has CVC rafsi, so gismu list holds it
+      if found.isNone: continue
+      let w = found.get
       check w.kind == Kind.Cmavo and text.len == 2  # 4.6, digits "are all CV form cmavo"
       check text[0] in ORDER_CONSONANTS and text[1] in ORDER_VOWELS  # 4.6, "CV form cmavo"
       let rafsi_added = w.entry.rafsi.filterIt(it.form == some(Form.Cvc) and it.startsWith(text))
       check rafsi_added.len == 1  # 4.6, CVC rafsi is cmavo plus consonant
-    check count_digits == 10  # 4.6, "ten common numerical digits"
     var count_cmavo, count_cmavo_cvc, count_ccv_cvv, count_three, count_cvc_other = 0
     for w in words():
       let forms_held = w.entry.rafsi.mapIt(it.form.get)
@@ -335,11 +334,10 @@ suite "Internal: Dictionary":
     for w in words():
       let entry = w.entry
       check entry.word.len in 2..5  # cmavo of two to four letters, gismu of five
-      check entry.keyword.len > 0 and entry.definition.len > 0  # every entry glossed
       check entry.rafsi.len <= 3  # one rafsi slot per short form
       check entry.rafsi.allIt(it.form.get in FORMS_SHORT)  # slots hold short rafsi
       if w.kind == Kind.Cmavo: check entry.rafsi.len >= 1  # cmavo listed for its rafsi
-      check entry.word.strip == entry.word and entry.keyword.strip == entry.keyword  # trimmed
+      check entry.word.strip == entry.word  # trimmed
 
 
   test "Lookups agree with linear scan":

@@ -3,16 +3,17 @@
 ##   Each lujvo CLL spells is joined from its rafsi and split back into those rafsi alone, so
 ##     one vector holds both directions; where CLL gives word without rafsi, split is inferred,
 ##     and comment says so.
-##   CLL gives no example of `tosmabru` test (4.11 step 5); words of `LIST_LUJVO` that need it
-##     stand in, beside constructed words marked so.
+##   CLL gives no example of `tosmabru` test (4.11 step 5); words of `lujvo.txt` that need it
+##     stand in, beside constructed words marked so; one test holds that file spells each.
 ##   Forbidden triple at junction takes `y` by convention of `lujvo.nim`, which 4.11 does not
 ##     state; suite `Internal: Convention` names where it bites.
 ##   Removing required hyphen after short rafsi leaves no lujvo, and suite holds it. No such
 ##     law holds after 4-letter rafsi: dropping its `y` can leave other rafsi that 4.11 joins
 ##     with no hyphen, e.g. `kramliste` is `kra` + `mli` + `ste`, and 118 of 9996 such
 ##     junctions of pool split again (measured); so suite claims nothing there.
-##   Corpus laws pin each list entry that breaks them, with reason, so drift in list or in
-##     library fails by name.
+##   Corpus laws read `lujvo.txt` as outside text (`texts_outside.nim`), and skip where it is
+##     absent or moved (IX.9). They pin each line that breaks them, with reason, so drift in
+##     list or in library fails by name. Where list and CLL disagree, reason names side CLL holds.
 ##   Random laws read one pool of rafsi sequences, drawn once with seed `0`, so every law sees
 ##     same samples and no law draws again.
 ##   Cost: random rafsi come from gismu list alone; letters of rafsi form that list assigns to
@@ -25,9 +26,9 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[clusters, dictionary, entries, forms, lujvo, tanru]
+import ../../src/lojban_parser/[clusters, dictionary, forms, lujvo]
 import ../../src/lojban_parser/lists/gismu
-import ../../src/lojban_parser/lists/lujvo as list_lujvo
+import ./texts_outside
 
 
 func constructRafsiByForm(): array[Form, seq[string]] {.compileTime.} =
@@ -45,13 +46,6 @@ func constructRafsiByForm(): array[Form, seq[string]] {.compileTime.} =
     result[entry.word.form.get].add entry.word
 
 
-func constructKeywords(): seq[string] {.compileTime.} =
-  ## Build keyword of every gismu of list, lowercase and sorted, for binary search.
-  for entry in LIST_GISMU:
-    if entry.word.isGismu: result.add entry.keyword.toLowerAscii
-  result.sort
-
-
 const
   SAMPLES = 10000  ## Random rafsi sequences pool holds; each random law reads all (IX.4).
   SAMPLES_FLOOR_ADDED = SAMPLES div 2
@@ -63,14 +57,12 @@ const
   LENGTH_MIN = 2  ## Fewest rafsi of random sequence; lujvo has two or more (4.6).
   LENGTH_MAX = 5  ## Most rafsi of random sequence.
   ENTRIES_FLOOR_LOJBAN = 3000  ## Entries in lojban notation whose parts must all be listed.
-  ENTRIES_FLOOR_ENGLISH = 600  ## Entries in English notation whose parts must all be keywords.
   FORMS_MEDIAL = [Form.Cvc, Form.Ccv, Form.Cvv, Form.Cvcc, Form.Ccvc]
     ## Forms 4.11 step 1 allows before last rafsi: 3-letter or 4-letter.
   FORMS_LAST = [Form.Ccv, Form.Cvv, Form.Cvccv, Form.Ccvcv]
     ## Forms 4.11 step 2 allows last: CVV, CCV or 5-letter.
   TRIPLES_NAMED = ["ndj", "ndz", "ntc", "nts"]  ## Triples 3.7 forbids by name.
   LUT_RAFSI_BY_FORM = constructRafsiByForm()  ## Every rafsi of gismu list, by form.
-  KEYWORDS = constructKeywords()  ## Keyword of every gismu, lowercase, sorted.
   EXCEPTIONS_SPLIT = [
     "maicpukai",  # CVV opening three-part lujvo lacks `r` of 4.11 step 4a
     "natmyrgu'e",  # no segmentation at all: letter `r` after `natmy` fits no rafsi
@@ -92,11 +84,11 @@ const
     "xavyvanbi",  # `xav` is rafsi of `xa`; list writes `re`
   ]
     ## Entries in lojban notation whose rafsi do not name listed parts in order, with reason.
-  EXCEPTIONS_ENGLISH = [
-    "natmyrgu'e",  # letter `r` after `natmy` fits no rafsi; `natmygu'e` would read
-    "tolmipygau",  # word holds `tol` of cmavo `to'e`; list leaves it out
+  WORDS_CITED = [
+    "cakyrespa", "cibylajyterkruca", "detyselylacri", "digyligykamju", "pucyteryrunta",
+    "xasymabru", "kanydzu", "penydjuxa'a",
   ]
-    ## Entries in English notation that read as no tanru of listed keywords, with reason.
+    ## Words suite cites as written in `lujvo.txt`: step 5 of 4.11, and forbidden triples.
 
 
 func rafsiSplit(word: string): seq[seq[string]] =
@@ -131,16 +123,6 @@ func isStanding(piece: Piece, listed: Word): bool =
   of Form.Cvc, Form.Ccv, Form.Cvv: piece.rafsi.wordRafsi == some(listed)
   of Form.Cvcc, Form.Ccvc: listed in piece.rafsi.wordsStem
   of Form.Cvccv, Form.Ccvcv: piece.rafsi.word == some(listed)
-
-
-func isKeyword(part: string): bool =
-  ## Test English part equals keyword of some gismu, case aside.
-  KEYWORDS.binarySearch(part.toLowerAscii) >= 0
-
-
-func isListed(word: string): bool =
-  ## Test entry of `LIST_LUJVO` spells word.
-  LIST_LUJVO.anyIt(it.word == word)
 
 
 proc drawRafsi(): seq[seq[string]] =
@@ -291,8 +273,7 @@ suite "Chapter 4":
       (@["puc", "ter", "runta"], "pucyteryrunta"),
       (@["xas", "mabru"], "xasymabru"),
     ]:
-      check word.isListed  # `LIST_LUJVO` spells it
-      check isRoundTrip(rafsi, word)  # 4.11 step 5c, `y` at first joint; word of `LIST_LUJVO`
+      check isRoundTrip(rafsi, word)  # 4.11 step 5c, `y` at first joint; word of `lujvo.txt`
     check isRoundTrip(["tos", "mabru"], "tosymabru")  # 4.11 step 5c; constructed
     check isRoundTrip(["tos", "tos", "mabru"], "tosytosmabru")  # 4.11 step 5c, one `y`; constructed
     check isRoundTrip(["tos", "tod", "dru"], "tosytodydru")  # 4.11 step 5a, up to `y`; constructed
@@ -391,9 +372,8 @@ suite "Chapter 7":
 
 suite "Internal: Convention":
   test "Forbidden triple at junction takes y":
-    check "kanydzu".isListed and "penydjuxa'a".isListed  # `LIST_LUJVO` spells both
-    check isRoundTrip(["kan", "dzu"], "kanydzu")  # 3.7 forbids `ndz`; 4.11 step 4b silent
-    check isRoundTrip(["pen", "dju", "xa'a"], "penydjuxa'a")  # 3.7 forbids `ndj`; 4.11 silent
+    check isRoundTrip(["kan", "dzu"], "kanydzu")  # 3.7 forbids `ndz`; 4.11 4b silent; `lujvo.txt`
+    check isRoundTrip(["pen", "dju", "xa'a"], "penydjuxa'a")  # 3.7 forbids `ndj`; `lujvo.txt`
     check isRoundTrip(["ban", "tsa"], "banytsa")  # 3.7 forbids `nts`; 4.11 silent; constructed
     check rafsiSplit("kandzu").len == 0  # convention: literal 4.11 form breaks 3.7; constructed
     for triple in TRIPLES_NAMED:
@@ -474,43 +454,40 @@ suite "Internal: Laws":
 
 
   test "Corpus splits exactly once in either notation":
-    var failing: seq[string]
-    for line in LIST_LUJVO:  # every entry, both notations, exhaustive
-      if line.word.splitLujvo.len != 1: failing.add line.word
-    check failing.sorted == EXCEPTIONS_SPLIT.sorted  # law: entry splits once, pinned ones aside
+    let lines = readLinesLujvo()
+    if lines.isNone: skip()  # `lujvo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      var failing: seq[string]
+      for line in lines.get:  # every line whose word is letters, both notations, exhaustive
+        if line.word.splitLujvo.len != 1: failing.add line.word
+      check failing.sorted == EXCEPTIONS_SPLIT.sorted  # law: line splits once, pinned ones aside
 
 
   test "Corpus in lojban notation splits into listed parts":
-    var
-      count = 0
-      failing: seq[string]
-    for line in LIST_LUJVO:
-      if line.notation != Notation.Lojban: continue
-      let parts = line.parts.mapIt(it.word)
-      if not parts.allIt(it.isSome): continue
-      inc count
-      let splits = line.word.splitLujvo
-      var is_resolved = splits.len == 1 and splits[0].len == parts.len
-      if is_resolved:
-        for i, piece in splits[0]:
-          is_resolved = is_resolved and piece.isStanding(parts[i].get)
-      if not is_resolved: failing.add line.word
-    check count >= ENTRIES_FLOOR_LOJBAN  # Article IX.3, guard leaves enough entries
-    check failing.sorted == EXCEPTIONS_LOJBAN.sorted  # law: rafsi name parts in order
+    let lines = readLinesLujvo()
+    if lines.isNone: skip()  # `lujvo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      var
+        count = 0
+        failing: seq[string]
+      for line in lines.get:
+        let parts = line.parts.mapIt(it.word)
+        if parts.len == 0 or not parts.allIt(it.isSome): continue
+        inc count
+        let splits = line.word.splitLujvo
+        var is_resolved = splits.len == 1 and splits[0].len == parts.len
+        if is_resolved:
+          for i, piece in splits[0]:
+            is_resolved = is_resolved and piece.isStanding(parts[i].get)
+        if not is_resolved: failing.add line.word
+      check count >= ENTRIES_FLOOR_LOJBAN  # Article IX.3, guard leaves enough entries
+      check failing.sorted == EXCEPTIONS_LOJBAN.sorted  # law: rafsi name parts in order
 
 
-  test "Corpus in English notation reads as listed keywords":
-    var
-      count = 0
-      failing: seq[string]
-    for line in LIST_LUJVO:
-      if line.notation != Notation.English or not line.parts.allIt(it.isKeyword): continue
-      inc count
-      let reading = line.word.readWord
-      var is_read = reading.is_word and reading.tanru.words.len == line.parts.len
-      if is_read:
-        for i, found in reading.tanru.words:
-          is_read = is_read and cmpIgnoreCase(found.entry.keyword, line.parts[i]) == 0
-      if not is_read: failing.add line.word
-    check count >= ENTRIES_FLOOR_ENGLISH  # Article IX.3, guard leaves enough entries
-    check failing.sorted == EXCEPTIONS_ENGLISH.sorted  # law: tanru holds keywords list writes
+  test "Corpus spells each word suite cites from it":
+    let lines = readLinesLujvo()
+    if lines.isNone: skip()  # `lujvo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      let words = lines.get.mapIt(it.word)
+      for word in WORDS_CITED:
+        check word in words  # word cited as `lujvo.txt` stands in it

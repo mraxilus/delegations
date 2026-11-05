@@ -6,8 +6,10 @@
 ##   Each test seeds generator once, draws its samples into pool, and iterator serves pool.
 ##   Forms are restated here from notation of 4.1, apart from `form`; pair judgements of
 ##     `clusters.nim` are reused, since `test_clusters.nim` replicates them.
-##   Where CLL speaks of every gismu, rafsi or lujvo, each entry of committed lists stands as
-##     domain, so list breaking claim of CLL fails here, by name.
+##   Where CLL speaks of every gismu or rafsi, each entry of committed list stands as domain,
+##     so list breaking claim of CLL fails here, by name. Where it speaks of every lujvo, each
+##     word of `lujvo.txt` stands as domain, read as outside text (`texts_outside.nim`); that
+##     test skips where file is absent or moved from its pin (IX.9).
 ##   Short rafsi outside 4.6 tables would be pinned as exceptions, not failed; list holds none.
 ##   String no source holds is marked `constructed` in its citation.
 ##   Comma stands in enumerated alphabet of chapter 4, since 3.1 lists it among symbols; it is
@@ -25,7 +27,8 @@ when compileOption("profiler"):
 import std/[algorithm, options, random, sequtils, strutils, tables, unittest]
 
 import ../../src/lojban_parser/[clusters, forms]
-import ../../src/lojban_parser/lists/[gismu, lujvo]
+import ../../src/lojban_parser/lists/gismu
+import ./texts_outside
 
 
 const
@@ -62,7 +65,7 @@ const
     ## Least of those mutations keeping shape of gismu, so corpus holds both verdicts: half of
     ## 6160 read at seed 0.
   SAMPLES_INSERTION = 2000
-    ## Listed words of each kind, cmavo, gismu and lujvo, `y` or apostrophe is inserted into.
+    ## Words of each kind, cmavo, gismu and lujvo, `y` or apostrophe is inserted into.
   SAMPLES_LONG = 3000  ## Listed gismu lengthened past five letters, seeded.
 
 
@@ -173,11 +176,10 @@ func isBrivlaRestated(text: string): bool =
   counted[0..<min(counted.len, 5)].join.countPairs > 0
 
 
-func wordsListed(): (seq[string], seq[string], seq[string]) =
-  ## Split listed words into cmavo, gismu and lujvo, each in list order.
+func wordsListed(): (seq[string], seq[string]) =
+  ## Split listed words into cmavo and gismu, each in list order.
   for entry in LIST_GISMU:
     if entry.word.len == 5: result[1].add entry.word else: result[0].add entry.word
-  for entry in LIST_LUJVO: result[2].add entry.word
 
 
 proc mutate(text: string): string =
@@ -238,7 +240,7 @@ suite "Chapter 4":
     check "sa.i".form.isNone  # 3.3, period inside word makes two words; constructed
     check "sa'ai".form.isNone  # 4.4, no gismu contains "'"; constructed
     check "saklii".form.isNone  # 4.4, gismu "always have five letters"; constructed
-    let (_, words_gismu, _) = wordsListed()
+    let (_, words_gismu) = wordsListed()
     randomize(0)
     let pool = drawLengthened(words_gismu)
     for text in pool.samples:  # `SAMPLES_LONG` strings, seeded
@@ -257,16 +259,15 @@ suite "Chapter 4":
     for length in 1..7:
       for text in texts(newSeqWith(length, "bla'y")):  # 97655 strings, exhaustive
         check isBrivla(text) == isBrivlaRestated(text)  # 4.3, three properties, stress unwritten
-    let (words_cmavo, words_gismu, words_lujvo) = wordsListed()
+    let (words_cmavo, words_gismu) = wordsListed()
     for text in words_gismu: check isBrivla(text)  # 4.4, gismu meet rules for all brivla
-    for text in words_lujvo: check isBrivla(text)  # 4.6, lujvo as brivla holds cluster too
     for text in words_cmavo: check not isBrivla(text)  # 4.3, consonant pair marks off cmavo
-    for text in words_cmavo & words_gismu & words_lujvo:
+    for text in words_cmavo & words_gismu:
       let bare = text.multiReplace(("y", ""), ("'", ""))
       check isBrivla(bare) == isBrivla(text)  # 4.3, `y` and apostrophe "not counted"
       check not isBrivla(text & "n") and not isBrivla(text & ".")  # 4.3, final vowel
     randomize(0)
-    let pool = drawInserted([words_cmavo, words_gismu, words_lujvo])
+    let pool = drawInserted([words_cmavo, words_gismu])
     for (text, inserted) in pool.samples:  # `SAMPLES_INSERTION` of each kind, seeded
       check isBrivla(inserted) == isBrivla(text)  # 4.3, `y`, apostrophe uncounted
 
@@ -291,7 +292,7 @@ suite "Chapter 4":
       check text.form == expected  # 4.4, CCVCV, pair at beginning "permissible initial pair"
       if text.isGismu: inc count_ccvcv
     check count_ccvcv == 48 * 5 * 17 * 5  # 4.4, CCVCV over 48 initial pairs of 4.1 rule 4
-    let (words_cmavo, words_gismu, words_lujvo) = wordsListed()
+    let (words_cmavo, words_gismu) = wordsListed()
     check words_gismu.len in 1300..1400  # 4.4, "about 1350 gismu"
     var lut_words_by_stem: Table[string, seq[string]]
     for text in words_gismu:
@@ -309,8 +310,6 @@ suite "Chapter 4":
       if stem == "brod": check words == @["broda", "brode", "brodi", "brodo", "brodu"]  # 4.4
       else: check words.len == 1  # 4.4, no two other gismu differ only in final vowel
     check lut_words_by_stem.hasKey("brod")  # 4.4, five special brivla variables
-    for text in words_lujvo:
-      check not text.isGismu  # 4.4, "five letter length distinguishes gismu from lujvo"
     for text in words_cmavo:
       check not text.isGismu  # 4.3, consonant pair distinguishes brivla, gismu among them
     randomize(0)
@@ -368,9 +367,6 @@ suite "Chapter 4":
     check exceptions_table == EXCEPTIONS_TABLE  # 4.6, short rafsi "that can possibly exist"
     check exceptions_letters == EXCEPTIONS_LETTERS  # 4.6, letters chosen from five of gismu
     check count_possible_most == 7  # 4.6, "at most seven possible short rafsi"
-    let (_, _, words_lujvo) = wordsListed()
-    for text in words_lujvo:
-      check text.len >= 6  # 4.6, "all lujvo have at least six letters"
     var vowels_paired: seq[string]
     for entry in LIST_GISMU:
       for one in entry.rafsi:
@@ -385,6 +381,24 @@ suite "Chapter 4":
     check not isBrivla("ro'ire'o")  # 4.6, "breaks up into two cmavo"
     check isBrivla("patyta'a") and isBrivla("mudysiclu")  # 4.6, `y` not counted, "this is why"
     check isBrivla("ro'inre'o") and isBrivla("rokre'o")  # 4.6, hyphenated and unhyphenated
+
+
+  test "Section 4.3-6 over lujvo list":
+    let lines = readLinesLujvo()
+    if lines.isNone: skip()  # `lujvo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      let words_lujvo = lines.get.mapIt(it.word)
+      for text in words_lujvo:  # every word of list, exhaustive
+        check isBrivla(text)  # 4.6, lujvo as brivla holds cluster too
+        check not text.isGismu  # 4.4, "five letter length distinguishes gismu from lujvo"
+        check text.len >= 6  # 4.6, "all lujvo have at least six letters"
+        let bare = text.multiReplace(("y", ""), ("'", ""))
+        check isBrivla(bare) == isBrivla(text)  # 4.3, `y` and apostrophe "not counted"
+        check not isBrivla(text & "n") and not isBrivla(text & ".")  # 4.3, final vowel
+      randomize(0)
+      let pool = drawInserted([words_lujvo])
+      for (text, inserted) in pool.samples:  # `SAMPLES_INSERTION` words, seeded
+        check isBrivla(inserted) == isBrivla(text)  # 4.3, `y`, apostrophe uncounted
 
 
   test "Section 4.11":
