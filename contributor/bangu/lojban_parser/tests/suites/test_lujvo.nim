@@ -168,29 +168,29 @@ iterator rafsiLetters(): lent seq[string] =
 
 suite "Chapter 3":
   test "Section 3.8":
-    check isRoundTrip(["xap", "cke"], "xapcke")  # 3.8, Example 8.4; split inferred
-    check isRoundTrip(["pon", "ni'u"], "ponyni'u")  # 3.8, Example 8.5; split inferred
-    check isRoundTrip(["bong", "nanba"], "bongynanba")  # 3.8, Example 8.6; split inferred
-    check rafsiSplit("bongnanba").len == 0  # 3.8, Example 8.7, "possible borrowing"
+    check isRoundTrip(["xap", "cke"], "xapcke")  # 3.8, Example 3.12; split inferred
+    check isRoundTrip(["pon", "ni'u"], "ponyni'u")  # 3.8, Example 3.13; split inferred
+    check isRoundTrip(["bong", "nanba"], "bongynanba")  # 3.8, Example 3.14; split inferred
+    check rafsiSplit("bongnanba").len == 0  # 3.8, Example 3.15, "possible borrowing"
 
 
   test "Section 3.9":
-    check isRoundTrip(["fit", "pri"], "fitpri")  # 3.9, Example 9.3; split inferred
-    check isRoundTrip(["sai", "goi"], "sairgoi")  # 3.9, Example 9.4; split inferred
-    check toPieces(["sai", "goi"])[0].hyphen == Hyphen.R  # 3.9, Example 9.4, `rg`; split inferred
-    check isRoundTrip(["dik", "jvo"], "dikyjvo")  # 3.9, Example 9.6; split inferred
-    check isRoundTrip(["bis", "dja"], "bisydja")  # 3.9, Example 9.11, affixes `bis` and `dja`
-    check not isPairPermissible('s', 'd')  # 3.9, Example 9.11, "impermissible consonant pair"
-    check toPieces(["bis", "dja"])[0].hyphen == Hyphen.Y  # 3.9, Example 9.11, `y` is inserted
-    check isRoundTrip(["da'u", "dja"], "da'udja")  # 3.9, Example 9.12; split inferred
+    check isRoundTrip(["fit", "pri"], "fitpri")  # 3.9, Example 3.20; split inferred
+    check isRoundTrip(["sai", "goi"], "sairgoi")  # 3.9, Example 3.21; split inferred
+    check toPieces(["sai", "goi"])[0].hyphen == Hyphen.R  # 3.9, Example 3.21, `rg`; split inferred
+    check isRoundTrip(["dik", "jvo"], "dikyjvo")  # 3.9, Example 3.23; split inferred
+    check isRoundTrip(["bis", "dja"], "bisydja")  # 3.9, Example 3.28, affixes `bis` and `dja`
+    check not isPairPermissible('s', 'd')  # 3.9, Example 3.28, "impermissible consonant pair"
+    check toPieces(["bis", "dja"])[0].hyphen == Hyphen.Y  # 3.9, Example 3.28, `y` is inserted
+    check isRoundTrip(["da'u", "dja"], "da'udja")  # 3.9, Example 3.29; split inferred
 
 
 
 suite "Chapter 4":
   test "Section 4.5":
-    check isRoundTrip(["mam", "pa'u"], "mampa'u")  # 4.5, Example 5.7, `mam-` and `-pa'u`
-    check isRoundTrip(["soi", "sai"], "soirsai")  # 4.5, Example 5.8, additional `r`
-    check rafsiSplit("soisai").len == 0  # 4.5, Example 5.8, would break up into `soi sai`
+    check isRoundTrip(["mam", "pa'u"], "mampa'u")  # 4.5, Example 4.25, `mam-` and `-pa'u`
+    check isRoundTrip(["soi", "sai"], "soirsai")  # 4.5, Example 4.26, additional `r`
+    check rafsiSplit("soisai").len == 0  # 4.5, Example 4.26, would break up into `soi sai`
     for (rafsi, word) in [
       (@["bri", "vla"], "brivla"),
       (@["bri", "valsi"], "brivalsi"),
@@ -208,7 +208,7 @@ suite "Chapter 4":
       (@["prun", "plipe"], "prunyplipe"),
       (@["vanc", "sanmi"], "vancysanmi"),
     ]:
-      check isRoundTrip(rafsi, word)  # 4.6, Examples 6.1-5, unreduced lujvo; split inferred
+      check isRoundTrip(rafsi, word)  # 4.6, Examples 4.27-31, unreduced lujvo; split inferred
     for (rafsi, word) in [
       (@["cum", "fri"], "cumfri"),
       (@["kle", "zba"], "klezba"),
@@ -217,7 +217,7 @@ suite "Chapter 4":
       (@["mam", "pa'u"], "mampa'u"),
       (@["ler", "ste"], "lerste"),
     ]:
-      check isRoundTrip(rafsi, word)  # 4.6, Examples 6.6-11, fully reduced lujvo; split inferred
+      check isRoundTrip(rafsi, word)  # 4.6, Examples 4.32-37, fully reduced lujvo; split inferred
     check isRoundTrip(["pat", "ta'a"], "patyta'a")  # 4.6, must be `patyta'a`; split inferred
     check rafsiSplit("patta'a").len == 0  # 4.6, `tt` is not permissible consonant pair
     check isRoundTrip(["mud", "siclu"], "mudysiclu")  # 4.6, must be used; split inferred
@@ -261,7 +261,7 @@ suite "Chapter 4":
     check rafsiSplit("gerkuzdani").len == 0  # 4.11 step 1, 4.13 leaves `-gerku` out; constructed
     check isRoundTrip(["sai", "cli"], "saicli")  # 4.11 step 4a, no hyphen; split inferred
     check isRoundTrip(["ro'i", "re'o"], "ro'inre'o")  # 4.11 step 4a, `n` before `r`; split inferred
-    check isRoundTrip(["sai", "zba", "ta'u"], "sairzbata'u")  # 4.11 step 4a; rafsi of Example 12.3
+    check isRoundTrip(["sai", "zba", "ta'u"], "sairzbata'u")  # 4.11 step 4a; rafsi of Example 4.73
     for first in LUT_RAFSI_BY_FORM[Form.Cvv]:  # every CVV and CCV rafsi of list, exhaustive
       for second in LUT_RAFSI_BY_FORM[Form.Ccv]:
         check hyphensRafsi([first, second]) == @[Hyphen.None, Hyphen.None]  # 4.11 step 4a, two
@@ -305,14 +305,14 @@ suite "Chapter 4":
       ("nun", 5), ("ta'u", 6), ("zba", 7), ("sai", 8),
     ]:
       check rafsi.value == expected  # 4.12 step 4, table of rafsi values
-    check isRoundTrip(["zba", "sai"], "zbasai")  # 4.12, Example 12.1
-    check score(toPieces(["zba", "sai"])) == 5847  # 4.12, Example 12.1
-    check isRoundTrip(["nun", "nau"], "nunynau")  # 4.12, Example 12.2
-    check score(toPieces(["nun", "nau"])) == 6967  # 4.12, Example 12.2
-    check isRoundTrip(["sai", "zba", "ta'u"], "sairzbata'u")  # 4.12, Example 12.3
-    check score(toPieces(["sai", "zba", "ta'u"])) == 10385  # 4.12, Example 12.3
-    check isRoundTrip(["zba", "zbas", "sarji"], "zbazbasysarji")  # 4.12, Example 12.4
-    check score(toPieces(["zba", "zbas", "sarji"])) == 12976  # 4.12, Example 12.4
+    check isRoundTrip(["zba", "sai"], "zbasai")  # 4.12, Example 4.71
+    check score(toPieces(["zba", "sai"])) == 5847  # 4.12, Example 4.71
+    check isRoundTrip(["nun", "nau"], "nunynau")  # 4.12, Example 4.72
+    check score(toPieces(["nun", "nau"])) == 6967  # 4.12, Example 4.72
+    check isRoundTrip(["sai", "zba", "ta'u"], "sairzbata'u")  # 4.12, Example 4.73
+    check score(toPieces(["sai", "zba", "ta'u"])) == 10385  # 4.12, Example 4.73
+    check isRoundTrip(["zba", "zbas", "sarji"], "zbazbasysarji")  # 4.12, Example 4.74
+    check score(toPieces(["zba", "zbas", "sarji"])) == 12976  # 4.12, Example 4.74
 
 
   test "Section 4.13":
@@ -382,7 +382,8 @@ suite "Chapter 7":
   test "Section 7.15":
     check isRoundTrip(["don", "ta'a"], "donta'a")  # 7.15, `tavla be do`; split inferred
     check isRoundTrip(["don", "ma'o"], "donma'o")  # 7.15, `cmavo be zo do`; split inferred
-    check isRoundTrip(["fo'a", "sel", "sanga"], "fo'arselsanga")  # Example 15.3; split inferred
+    check isRoundTrip(["fo'a", "sel", "sanga"],
+        "fo'arselsanga")  # 7.15, Example 7.78; split inferred
     check isRoundTrip(["zil", "rel", "sel", "pinxe"], "zilrelselpinxe")  # 7.15; split inferred
     check isRoundTrip(["zil", "pav", "pinxe"], "zilpavypinxe")  # 7.15, x1 deleted; split inferred
 

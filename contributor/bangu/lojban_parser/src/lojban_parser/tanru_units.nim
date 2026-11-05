@@ -20,14 +20,14 @@
 ##   Cmavo binding next tanru unit: SE, as SE binds only following brivla or "equivalent unit"
 ##     (CLL 9.4); NAhE, close-binding on individual brivla (15.4); NU, whose rafsi modify next
 ##     tanru unit alone, as SE and NAhE rafsi do (12.12). Grammar puts SE and NAhE on one
-##     tanru unit (21.2, rule 152). JAI binds too, but list gives `jai` no rafsi, so no lujvo
+##     tanru unit (21.1, rule 152). JAI binds too, but list gives `jai` no rafsi, so no lujvo
 ##     holds it.
 ##   NA binds whole tanru: `na` applies to entire bridi, and not to part of selbri (15.2). So
 ##     odd count of `na`, wherever it stands, folds as one `na` before group of whole tanru, and
 ##     even count as none, since adjacent `na` cancel out (15.2).
 ##   Every other cmavo binds nothing, and stands as tanru unit of its own where it does not
 ##     only group: KOhA fills place of what follows (7.15), JA joins (5.6).
-##     Cost: number and MOI form one tanru unit (21.2, rule 152), yet each digit stands as
+##     Cost: number and MOI form one tanru unit (21.1, rule 152), yet each digit stands as
 ##     tanru unit of its own, so `relpavmomci'a` folds `re`, `pa` and `moi` apart.
 ##   Run of SE binding one tanru unit composes into one conversion, inner first (9.4):
 ##     `te se ciska` puts x3 of `ciska` first, and `se se ciska` is `ciska`, since two `se`
@@ -41,7 +41,7 @@
 ##     `kemdatnyvei` folds as `datnyvei`.
 ##     Cost: grouping that no cmavo binds is lost, so `datni ke vreji liste` folds as `datni
 ##     vreji liste`, which 5.3 groups otherwise.
-##   `kei` closes abstraction (21.2, rule 152): it reads as `ke'e` closing `ke` after its NU, so
+##   `kei` closes abstraction (21.1, rule 152): it reads as `ke'e` closing `ke` after its NU, so
 ##     `nu citka gasnu kei klama` abstracts two tanru units. After one tanru unit that group is
 ##     of one, as `kez` of `nunctikezgau` tells only what reader would guess (12.13).
 ##   No group holds `co`: `ke'e` goes in before it for each group open there (5.8).
@@ -72,7 +72,7 @@ type
   Link* = object  ## Define one step binding tanru unit: conversion composed, or other cmavo.
     places*: Places  ## Conversion composed; `PLACES_SAME` where `operator` binds instead.
     operator*: Option[Word]  ## NAhE, NA or NU cmavo binding tanru unit; none where link converts.
-  TanruUnit* = object  ## Define tanru unit: one word, and cmavo binding it (21.2, rule 152).
+  TanruUnit* = object  ## Define tanru unit: one word, and cmavo binding it (21.1, rule 152).
     part*: Part  ## Brivla, or cmavo binding nothing, as `ke`; part no list names binds nothing.
     links*: seq[Link]  ## Steps binding word, outer first; empty where nothing binds it.
 
@@ -95,7 +95,7 @@ const
   WORD_NA = "na".word.get  ## Cmavo denying entire bridi (15.2).
   WORD_KE = "ke".word.get  ## Cmavo opening group (5.5).
   WORD_KEHE = "ke'e".word.get  ## Cmavo closing group (5.5).
-  WORD_KEI = "kei".word.get  ## Cmavo closing abstraction (21.2, rule 152).
+  WORD_KEI = "kei".word.get  ## Cmavo closing abstraction (21.1, rule 152).
   WORD_BO = "bo".word.get  ## Cmavo that only groups, wherever it stands (5.3).
   WORD_CO = "co".word.get  ## Cmavo inverting tanru, which no group holds (5.8).
 
@@ -206,7 +206,7 @@ func withImplied(parts: openArray[Part]): seq[Part] =
   ## Insert `ke` and `ke'e` that lujvo leaves out. Odd count of `na` sets one `na ke` before
   ##   whole tanru, and even count none, as `na` applies to entire bridi and two cancel (15.2).
   ##   `ke` goes after first of two SE in row (12.11). `kei` reads as `ke'e` closing `ke` after
-  ##   nearest NU it may close (21.2, rule 152), and drops where no NU stands before it.
+  ##   nearest NU it may close (21.1, rule 152), and drops where no NU stands before it.
   let plain = parts.filterIt(not it.isWord(WORD_NA))
   if (parts.len - plain.len) mod 2 == 1: result.add [WORD_NA.toPart, WORD_KE.toPart]
   var abstractions: seq[int]
