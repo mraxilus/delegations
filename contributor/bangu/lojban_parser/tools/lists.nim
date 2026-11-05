@@ -100,7 +100,7 @@ func toEntriesGismu*(text: string): seq[EntryGismu] =
     result.add EntryGismu(word: line.field(2, 6), rafsi: rafsi)
 
 
-func nameSelmaho(text: string): string =
+func nameSelmaho*(text: string): string =
   ## Read name of selma'o, before any mark or subclass list writes after it: `UI` of `UI3a`.
   for letter in text:
     if letter notin {'A' .. 'Z', 'h'}: break

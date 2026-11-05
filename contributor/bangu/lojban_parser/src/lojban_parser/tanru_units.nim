@@ -15,6 +15,8 @@
 ##     which search reads, have no copy here.
 ##   Fold reads parts (`tanru.nim`): binding cmavo are words of list, so part no list names
 ##     binds nothing, and stands as tanru unit of its own.
+##   Each folded cmavo carries selma'o chapter 20 gives it, which static check holds, so fold
+##     and cmavo list never part.
 ##   Cmavo binding next tanru unit: SE, as SE binds only following brivla or "equivalent unit"
 ##     (CLL 9.4); NAhE, close-binding on individual brivla (15.4); NU, whose rafsi modify next
 ##     tanru unit alone, as SE and NAhE rafsi do (12.12). Grammar puts SE and NAhE on one
@@ -61,7 +63,7 @@
 
 import std/[algorithm, options, sequtils]
 
-import ./[dictionary, forms, tanru]
+import ./[dictionary, forms, selmaho, tanru]
 
 
 type
@@ -102,6 +104,21 @@ static:
     doAssert word.kind == Kind.Cmavo, "Folded word should be cmavo; got `" & $word & "`."
   doAssert "jai".word.isNone,
     "List should give `jai` no rafsi, as fold has no JAI (5.11); got entry `jai`."
+  for (words, expected) in [
+    (WORDS_CONVERSION, {Selmaho.Se}),
+    (WORDS_ABSTRACTION, {Selmaho.Nu}),
+    (WORDS_NEGATION, {Selmaho.Na, Selmaho.Nahe}),
+    (@[WORD_KE], {Selmaho.Ke}),
+    (@[WORD_KEHE], {Selmaho.Kehe}),
+    (@[WORD_KEI], {Selmaho.Kei}),
+    (@[WORD_BO], {Selmaho.Bo}),
+    (@[WORD_CO], {Selmaho.Co}),
+  ]:
+    for word in words:
+      let found = ($word).selmaho
+      doAssert found.isSome and found.get in expected,
+        "Folded word should carry selma'o chapter 20 gives it; got `" & $found & "` for `" &
+        $word & "`."
 
 
 

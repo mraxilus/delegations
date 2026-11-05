@@ -32,6 +32,9 @@
 ##     reads too: 4.11 step 2 takes last rafsi from final gismu, but which word rafsi names is
 ##     list's to say, never letters'.
 ##   Shared 4-letter rafsi names no one gismu (`brod`, 4.4), so its part keeps letters `brod`.
+##   Cmavo read whole carries its selma'o, which cmavo list gives (chapter 20); cmavo no list
+##     holds, as experimental `ku'a'e`, carries none. Part of lujvo carries none: rafsi can spell
+##     cmavo, as `kau` of `kampu` spells cmavo `kau`, and names no cmavo for it.
 ##   Split is first of `splitLujvo`; laws of `test_lujvo.nim` hold it unique over random rafsi
 ##     and over lujvo list.
 ##   Text is read as written, in canonical form: lowercase letters and apostrophe alone. Space,
@@ -49,7 +52,7 @@
 
 import std/[options, sequtils, strutils]
 
-import ./[clusters, dictionary, forms, lujvo]
+import ./[clusters, dictionary, forms, lujvo, selmaho]
 
 
 type
@@ -79,6 +82,8 @@ type
       kind*: Kind  ## Class of word by its letters (4.1).
       tanru*: Tanru  ## Tanru text reads as.
       pieces*: seq[Piece]  ## Rafsi as text spells them; empty for word read whole.
+      selmaho*: Option[Selmaho]
+        ## Selma'o cmavo list gives cmavo read whole (chapter 20); none otherwise.
     of false:
       refusal*: Refusal  ## Rule refusing text, or gap holding it.
       detail*: string  ## Offending character, or form 4.11 gives; empty where whole text offends.
@@ -170,7 +175,12 @@ func readWhole(text: string, kind: Kind): Reading =
   let
     listed = text.word
     part = if listed.isSome: listed.get.toPart else: Part(is_listed: false, letters: text)
-  Reading(is_word: true, kind: kind, tanru: Tanru(parts: @[part]))
+  Reading(
+    is_word: true,
+    kind: kind,
+    tanru: Tanru(parts: @[part]),
+    selmaho: (if kind == Kind.Cmavo: text.selmaho else: none(Selmaho)),
+  )
 
 
 func readLujvo(text: string): Reading =

@@ -1,4 +1,4 @@
-## Look up words and rafsi of committed gismu list, through tables built at compile time.
+## Look up words and rafsi of committed gismu list, and selma'o of committed cmavo list.
 ##
 ##   |--------------------------|---------------------------------------------------------|
 ##   | Code                     | Meaning                                                 |
@@ -8,22 +8,25 @@
 ##   | word(text)               | entry spelled `text`                                    |
 ##   | wordRafsi(text)          | word short rafsi `text` stands for (4.6)                |
 ##   | wordsStem(text)          | gismu whose 4-letter rafsi is `text` (4.6)              |
+##   | selmaho(text)            | selma'o of cmavo `text`, as chapter 20 names it        |
 ##   |--------------------------|---------------------------------------------------------|
 ##
 ##   Sibling `lojban_tagger/src/lojban_tagger/dictionary.nim` holds earlier copy, with own `Kind`,
 ##     until #809 drops it (II.9).
 ##   Every table is sorted constant built at compile time from list (Article II.2); runtime
 ##     holds flattened residue and binary search alone.
-##   Static checks hold what lookups rely on: list in byte order, each short rafsi naming one
-##     word. List that breaks either fails build, naming offender, rather than lookup erring.
+##   Static checks hold what lookups rely on: each list in byte order, each short rafsi naming
+##     one word, each cmavo once. List that breaks one fails build, naming offender, rather than
+##     lookup erring. So does cmavo of gismu list that cmavo list lacks, since every cmavo
+##     carrying rafsi has its selma'o.
 ##   `Word` ranges over entries, so bound follows list and no count is written (II.5).
 
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options]
 
-import ./[entries, forms]
-import ./lists/gismu
+import ./[entries, forms, selmaho]
+import ./lists/[cmavo, gismu]
 
 
 const COUNT_ENTRIES = LIST_GISMU.len  ## Number of entries in gismu list.
@@ -78,6 +81,9 @@ static:
   for i in 1 ..< RAFSI.len:
     doAssert RAFSI[i - 1][0] != RAFSI[i][0],
       "Short rafsi should stand for one word (CLL 4.6); got `" & RAFSI[i][0] & "`."
+  for i in 1 ..< LIST_CMAVO.len:
+    doAssert LIST_CMAVO[i - 1].word < LIST_CMAVO[i].word,
+      "Cmavo list should be in byte order, each cmavo once; got `" & LIST_CMAVO[i].word & "`."
 
 
 
@@ -103,3 +109,18 @@ func wordsStem*(text: string): seq[Word] =
   while at < STEMS.len and STEMS[at][0] == text:
     result.add STEMS[at][1]
     inc at
+
+
+func selmaho*(text: string): Option[Selmaho] =
+  ## Find selma'o of cmavo spelled `text` (chapter 20); `none` where cmavo list holds no such cmavo.
+  let at = LIST_CMAVO.lowerBound(text, proc (entry: EntryCmavo, key: string): int =
+    cmp(entry.word, key))
+  if at < LIST_CMAVO.len and LIST_CMAVO[at].word == text: some(LIST_CMAVO[at].selmaho)
+  else: none(Selmaho)
+
+
+static:
+  for entry in LIST_GISMU:
+    if entry.word.isGismu: continue
+    doAssert entry.word.selmaho.isSome,
+      "Cmavo carrying rafsi should be cmavo of cmavo list; got `" & entry.word & "`."

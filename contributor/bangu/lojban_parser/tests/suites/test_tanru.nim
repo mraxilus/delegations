@@ -29,7 +29,7 @@ when compileOption("profiler"):
 import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
-import ../../src/lojban_parser/[dictionary, forms, lujvo, tanru]
+import ../../src/lojban_parser/[dictionary, forms, lujvo, selmaho, tanru]
 import ../../src/lojban_parser/lists/gismu
 import ./rafsi_random
 
@@ -295,6 +295,11 @@ suite "Chapter 4":
     check "y".kindRead == some(Kind.Cmavo) and "by".kindRead == some(Kind.Cmavo)  # 4.2, 17.2
     check "lo".tanruRead == some(Tanru(parts: @[unlisted("lo")]))  # 4.2, no list gives `lo` rafsi
     check "se".tanruRead == some(toTanru("se"))  # 4.2, cmavo gismu list holds, for its rafsi
+    check "lo".readWord.selmaho == some(Selmaho.Le)  # 20, `lo` of LE, which cmavo list holds
+    check "se".readWord.selmaho == some(Selmaho.Se)  # 20, `se` of SE
+    check "ku'a'e".readWord.selmaho.isNone  # 4.2, experimental, so no list holds it
+    check "klama".readWord.selmaho.isNone  # 4.3, brivla has no selma'o
+    check "kauzba".readWord.selmaho.isNone  # rafsi `kau` names `kampu`, not cmavo; constructed
     for text in ["iseci'i", "punaijecanai", "da'amei"]:
       check text.refusalRead == some((Refusal.Stream, ""))  # 4.2, Examples 2.1-2; 4.3, compound
     check "ki'e.u'e".refusalRead == some((Refusal.Stream, "."))  # 4.2, Example 2.3, pause
