@@ -931,6 +931,16 @@ moves no count, so the range of its time ratios is the range of the machine. The
 the spread beside the figures it qualifies. They compute it from the committed evaluations
 each time they build, so the record states no figure of it.
 
+**The spread reads only the evaluations over the runs in use, and holds 99% of their ratios,**
+as the Architect chose. An evaluation over fewer runs reads a wider range of the machine, so it
+is left out. P06 keeps its evaluation over five runs, because its change is in the library at
+pin. At 99%, noise marks about one time in a hundred as moved, so a mark most likely means a
+change. The cost is reach: a change inside the range of the machine reads as unchanged.
+
+Rejected: the middle 90% of the same ratios. On the evaluations of 2026-11-05 it marks 292 of
+2 952 unchanged times as moved, and 99% marks 28. Rejected as well: every quiet evaluation,
+over any count of runs. The 451 ratios of P06 then set the low end of the spread, by accident.
+
 **An evaluation runs each binary 41 times,** so that a run the machine slows as a whole seldom
 moves the median. On `linux amd64, 4 cores` on 2026-11-01, 37% of 51 runs of one binary ran 1.2
 times their fastest or slower. A pair reads the copy slow when only the run of the copy is slow,
@@ -1131,8 +1141,8 @@ of every publication, so the two copies of a URL cannot drift apart. Rejected: a
 hand, or by a script outside this project, because nothing held it to the files.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Pages`. Assembly fills every
-token. It covers the spread until evaluations give enough ratios, and the chip that names removed
-NaN results.
+token. It covers the spread until evaluations give enough ratios, the evaluations it reads and
+the share it holds. It covers the chip that names removed NaN results.
 
 The same suite covers the lower bound each docket row is measured against, and a general row timed
 against its dense form. It covers the median of run ratios with one tick for each run, and a
