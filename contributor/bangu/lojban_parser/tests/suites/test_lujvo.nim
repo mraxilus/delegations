@@ -15,9 +15,8 @@
 ##     absent or moved (IX.9). They pin each line that breaks them, with reason, so drift in
 ##     list or in library fails by name. Where list and CLL disagree, reason names side CLL holds.
 ##   Random laws read one pool of rafsi sequences, drawn once with seed `0`, so every law sees
-##     same samples and no law draws again.
-##   Cost: random rafsi come from gismu list alone; letters of rafsi form that list assigns to
-##     no word are not covered yet, and placeholder test shows gap (Article IX.4, IX.9).
+##     same samples and no law draws again. Second pool spells each rafsi from letters of its
+##     form (`rafsi_random.nim`), so split is held past what list assigns too (Article IX.4).
 
 {.experimental: "strictFuncs".}
 
@@ -28,7 +27,7 @@ import std/[algorithm, options, random, sequtils, strutils, unittest]
 
 import ../../src/lojban_parser/[clusters, dictionary, forms, lujvo]
 import ../../src/lojban_parser/lists/gismu
-import ./texts_outside
+import ./[rafsi_random, texts_outside]
 
 
 func constructRafsiByForm(): array[Form, seq[string]] {.compileTime.} =
@@ -145,6 +144,15 @@ let SEQUENCES_RAFSI = drawRafsi()  ## Random rafsi sequences every random law re
 iterator rafsiRandom(): lent seq[string] =
   ## Serve each random rafsi sequence of pool, with no copy.
   for i in 0 ..< SEQUENCES_RAFSI.len: yield SEQUENCES_RAFSI[i]
+
+
+let SEQUENCES_LETTERS = drawSequencesLetters(SAMPLES, LENGTH_MIN .. LENGTH_MAX, seed = 0)
+  ## Random rafsi sequences spelled from letters of each form, assigned or not, drawn once.
+
+
+iterator rafsiLetters(): lent seq[string] =
+  ## Serve each rafsi sequence spelled from letters, with no copy.
+  for i in 0 ..< SEQUENCES_LETTERS.len: yield SEQUENCES_LETTERS[i]
 
 
 
@@ -408,7 +416,8 @@ suite "Internal: Laws":
 
 
   test "Split inverts join over rafsi form list assigns to no word":
-    skip()  # Article IX.4, gap: random rafsi come from gismu list alone
+    for rafsi in rafsiLetters():  # `SAMPLES` sequences, seeded, from letters of each form
+      check rafsiSplit(joinRafsi(rafsi)) == @[rafsi]  # law: split after join is identity, once
 
 
   test "Join makes brivla over random rafsi":

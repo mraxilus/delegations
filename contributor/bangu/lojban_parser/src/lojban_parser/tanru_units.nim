@@ -4,14 +4,17 @@
 ##   |---------------------|-------------------------------------------------------------|
 ##   | Code                | Meaning                                                     |
 ##   |---------------------|-------------------------------------------------------------|
-##   | TanruUnit           | one word, and cmavo binding it, outer first                 |
+##   | TanruUnit           | one part of tanru, and cmavo binding it, outer first        |
 ##   | Link                | one conversion composed, or one other cmavo binding word    |
 ##   | Places              | place of word standing at each position after conversion   |
-##   | tanruUnits          | fold words of tanru into tanru units                        |
+##   | tanruUnits          | fold parts of tanru into tanru units                        |
 ##   |---------------------|-------------------------------------------------------------|
 ##
-##   Copied as part of `lojban_tagger/src/lojban_tagger/tanru_units.nim` until #809 drops it
-##     (II.9); its `positions` and `isHoldingUnchanged`, which search reads, have no copy here.
+##   Sibling: part of `lojban_tagger/src/lojban_tagger/tanru_units.nim` holds earlier copy, folding
+##     listed words alone, until #809 drops it (II.9); its `positions` and `isHoldingUnchanged`,
+##     which search reads, have no copy here.
+##   Fold reads parts (`tanru.nim`): binding cmavo are words of list, so part no list names
+##     binds nothing, and stands as tanru unit of its own.
 ##   Cmavo binding next tanru unit: SE, as SE binds only following brivla or "equivalent unit"
 ##     (CLL 9.4); NAhE, close-binding on individual brivla (15.4); NU, whose rafsi modify next
 ##     tanru unit alone, as SE and NAhE rafsi do (12.12). Grammar puts SE and NAhE on one
@@ -68,7 +71,7 @@ type
     places*: Places  ## Conversion composed; `PLACES_SAME` where `operator` binds instead.
     operator*: Option[Word]  ## NAhE, NA or NU cmavo binding tanru unit; none where link converts.
   TanruUnit* = object  ## Define tanru unit: one word, and cmavo binding it (21.2, rule 152).
-    word*: Word  ## Brivla, or cmavo binding nothing, as `ke`.
+    part*: Part  ## Brivla, or cmavo binding nothing, as `ke`; part no list names binds nothing.
     links*: seq[Link]  ## Steps binding word, outer first; empty where nothing binds it.
 
 
@@ -104,15 +107,26 @@ static:
 
 #[ Folding ]#
 
+func isWord(part: Part, w: Word): bool = part.is_listed and part.word == w
+  ## Test part is listed word `w`.
+
+
 func swapping(word: Word): int =
   ## Read place SE cmavo swaps with x1; 0 where word is no SE cmavo.
   let at = WORDS_CONVERSION.find(word)
   if at < 0: 0 else: at + 2
 
 
-func isBinding*(word: Word): bool =
-  ## Test word is cmavo binding next tanru unit: SE, NAhE, NA or NU.
-  word in WORDS_CONVERSION or word in WORDS_OPERATOR
+func swapping(part: Part): int = (if part.is_listed: part.word.swapping else: 0)
+  ## Read place SE cmavo of part swaps with x1; 0 where part is no SE cmavo.
+
+func isAbstraction(part: Part): bool = part.is_listed and part.word in WORDS_ABSTRACTION
+  ## Test part is NU cmavo.
+
+
+func isBinding*(part: Part): bool =
+  ## Test part is cmavo binding next tanru unit: SE, NAhE, NA or NU; part no list names is none.
+  part.is_listed and (part.word in WORDS_CONVERSION or part.word in WORDS_OPERATOR)
 
 
 func toLinks*(chain: openArray[Word]): seq[Link] =
@@ -131,137 +145,137 @@ func toLinks*(chain: openArray[Word]): seq[Link] =
   result.reverse
 
 
-func ending(words: openArray[Word], start: int): int =
-  ## Find index of `ke'e` closing `ke` at `start`, or `words.len` where none does (5.5).
+func ending(parts: openArray[Part], start: int): int =
+  ## Find index of `ke'e` closing `ke` at `start`, or `parts.len` where none does (5.5).
   var depth = 0
-  for i in start + 1 ..< words.len:
-    if words[i] == WORD_KE: inc depth
-    elif words[i] == WORD_KEHE:
+  for i in start + 1 ..< parts.len:
+    if parts[i].isWord(WORD_KE): inc depth
+    elif parts[i].isWord(WORD_KEHE):
       if depth == 0: return i
       dec depth
-  words.len
+  parts.len
 
 
-func countItems(words: openArray[Word], start, stop: int): int =
-  ## Count tanru units group from `start` to `stop` holds at its own depth: each word binding
+func countItems(parts: openArray[Part], start, stop: int): int =
+  ## Count tanru units group from `start` to `stop` holds at its own depth: each part binding
   ##   nothing, and each nested group, counts once.
   var i = start
   while i < stop:
-    if words[i] == WORD_KE:
+    if parts[i].isWord(WORD_KE):
       inc result
-      i = words.ending(i) + 1
+      i = parts.ending(i) + 1
       continue
-    if not words[i].isBinding: inc result
+    if not parts[i].isBinding: inc result
     inc i
 
 
-func depthAt(words: openArray[Word], stop: int): int =
+func depthAt(parts: openArray[Part], stop: int): int =
   ## Count groups open just before index `stop`.
-  for word in words[0 ..< stop]:
-    if word == WORD_KE: inc result
-    elif word == WORD_KEHE and result > 0: dec result
+  for part in parts[0 ..< stop]:
+    if part.isWord(WORD_KE): inc result
+    elif part.isWord(WORD_KEHE) and result > 0: dec result
 
 
-func placeOpening(words: openArray[Word]): int =
+func placeOpening(parts: openArray[Part]): int =
   ## Find index after nearest run of binding cmavo, inside no group, with two tanru units or more
   ##   after it; -1 where none is.
-  for at in countdown(words.len, 1):
-    if not words[at - 1].isBinding or (at < words.len and words[at].isBinding): continue
-    if words.depthAt(at) == 0 and words.countItems(at, words.len) >= 2: return at
+  for at in countdown(parts.len, 1):
+    if not parts[at - 1].isBinding or (at < parts.len and parts[at].isBinding): continue
+    if parts.depthAt(at) == 0 and parts.countItems(at, parts.len) >= 2: return at
   -1
 
 
-func withImplied(words: openArray[Word]): seq[Word] =
+func withImplied(parts: openArray[Part]): seq[Part] =
   ## Insert `ke` and `ke'e` that lujvo leaves out. Odd count of `na` sets one `na ke` before
   ##   whole tanru, and even count none, as `na` applies to entire bridi and two cancel (15.2).
   ##   `ke` goes after first of two SE in row (12.11). `kei` reads as `ke'e` closing `ke` after
   ##   nearest NU it may close (21.2, rule 152), and drops where no NU stands before it.
-  let plain = words.filterIt(it != WORD_NA)
-  if (words.len - plain.len) mod 2 == 1: result.add [WORD_NA, WORD_KE]
+  let plain = parts.filterIt(not it.isWord(WORD_NA))
+  if (parts.len - plain.len) mod 2 == 1: result.add [WORD_NA.toPart, WORD_KE.toPart]
   var abstractions: seq[int]
-  for i, word in plain:
-    if word == WORD_KEI:
+  for i, part in plain:
+    if part.isWord(WORD_KEI):
       if abstractions.len > 0:
-        result.insert(WORD_KE, abstractions.pop + 1)
-        result.add WORD_KEHE
+        result.insert(WORD_KE.toPart, abstractions.pop + 1)
+        result.add WORD_KEHE.toPart
       continue
-    if word in WORDS_ABSTRACTION: abstractions.add result.len
-    result.add word
-    if i + 1 < plain.len and word.swapping > 0 and plain[i + 1].swapping > 0:
-      result.add WORD_KE
+    if part.isAbstraction: abstractions.add result.len
+    result.add part
+    if i + 1 < plain.len and part.swapping > 0 and plain[i + 1].swapping > 0:
+      result.add WORD_KE.toPart
 
 
-func withClosedBeforeCo(words: openArray[Word]): seq[Word] =
+func withClosedBeforeCo(parts: openArray[Part]): seq[Part] =
   ## Close each group open before `co` with `ke'e` there, since no group holds `co` (5.8).
   var depth = 0
-  for word in words:
-    if word == WORD_KE: inc depth
-    elif word == WORD_KEHE and depth > 0: dec depth
-    elif word == WORD_CO:
-      for _ in 1 .. depth: result.add WORD_KEHE
+  for part in parts:
+    if part.isWord(WORD_KE): inc depth
+    elif part.isWord(WORD_KEHE) and depth > 0: dec depth
+    elif part.isWord(WORD_CO):
+      for _ in 1 .. depth: result.add WORD_KEHE.toPart
       depth = 0
-    result.add word
+    result.add part
 
 
-func withLoneOpened(words: openArray[Word]): seq[Word] =
+func withLoneOpened(parts: openArray[Part]): seq[Part] =
   ## Open group for each `ke'e` closing nothing, with `ke` after nearest run of binding cmavo
   ##   that leaves two tanru units or more up to it, only place where `ke'e` means something (15.4);
   ##   drop `ke'e` where no such run is.
   var depth = 0
-  for word in words:
-    if word == WORD_KE: inc depth
-    elif word == WORD_KEHE:
+  for part in parts:
+    if part.isWord(WORD_KE): inc depth
+    elif part.isWord(WORD_KEHE):
       if depth > 0: dec depth
       else:
         let at = result.placeOpening
         if at < 0: continue
-        result.insert(WORD_KE, at)
-    result.add word
+        result.insert(WORD_KE.toPart, at)
+    result.add part
 
 
-func withoutGrouping(words: openArray[Word]): seq[Word] =
+func withoutGrouping(parts: openArray[Part]): seq[Part] =
   ## Drop cmavo that only group: `bo`; then, innermost first, `ke` and `ke'e` closing it around
   ##   group holding one tanru unit or bound by no cmavo; then `ke'e` closing nothing. Cmavo before
   ##   dropped `ke` then binds tanru unit after it directly (`se ke ciska` is `se ciska`).
-  result = words.filterIt(it != WORD_BO)
+  result = parts.filterIt(not it.isWord(WORD_BO))
   var i = result.high
   while i >= 0:
-    if result[i] == WORD_KE:
+    if result[i].isWord(WORD_KE):
       let stop = result.ending(i)
       if result.countItems(i + 1, stop) == 1 or i == 0 or not result[i - 1].isBinding:
         if stop < result.len: result.delete(stop)
         result.delete(i)
     dec i
-  var (kept, depth) = (newSeqOfCap[Word](result.len), 0)
-  for word in result:
-    if word == WORD_KE: inc depth
-    elif word == WORD_KEHE:
+  var (kept, depth) = (newSeqOfCap[Part](result.len), 0)
+  for part in result:
+    if part.isWord(WORD_KE): inc depth
+    elif part.isWord(WORD_KEHE):
       if depth == 0: continue
       dec depth
-    kept.add word
+    kept.add part
   result = kept
 
 
-func tanruUnits*(words: openArray[Word]): seq[TanruUnit] =
-  ## Fold words of tanru into tanru units: implied `ke` and `ke'e` inserted, cmavo that only group
-  ##   dropped, and cmavo binding each word folded into its links. Group whose cmavo fold to
+func tanruUnits*(parts: openArray[Part]): seq[TanruUnit] =
+  ## Fold parts of tanru into tanru units: implied `ke` and `ke'e` inserted, cmavo that only group
+  ##   dropped, and cmavo binding each part folded into its links. Group whose cmavo fold to
   ##   no link binds nothing, so its `ke` and `ke'e` drop too (12.11).
   var
     chain: seq[Word]
     dropping: seq[bool]
-  for word in words.withImplied.withClosedBeforeCo.withLoneOpened.withoutGrouping:
-    if word.isBinding:
-      chain.add word
+  for part in parts.withImplied.withClosedBeforeCo.withLoneOpened.withoutGrouping:
+    if part.isBinding:
+      chain.add part.word
       continue
     let links = chain.toLinks
     chain.setLen 0
-    if word == WORD_KE:
+    if part.isWord(WORD_KE):
       dropping.add links.len == 0
       if links.len == 0: continue
-    elif word == WORD_KEHE and dropping.len > 0:
+    elif part.isWord(WORD_KEHE) and dropping.len > 0:
       if dropping.pop: continue
-    result.add TanruUnit(word: word, links: links)
+    result.add TanruUnit(part: part, links: links)
 
 
-func tanruUnits*(tanru: Tanru): seq[TanruUnit] = tanru.words.tanruUnits
-  ## Fold words of tanru into tanru units.
+func tanruUnits*(tanru: Tanru): seq[TanruUnit] = tanru.parts.tanruUnits
+  ## Fold parts of tanru into tanru units.
