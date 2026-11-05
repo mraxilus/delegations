@@ -8,7 +8,8 @@
 when compileOption("profiler"): import std/nimprof
 
 import std/[
-  algorithm, compilesettings, json, macros, options, os, sequtils, strutils, tables, unittest,
+  algorithm, compilesettings, json, macros, math, options, os, sequtils, strutils, tables,
+  unittest,
 ]
 from std/unicode import runeLen
 
@@ -21,8 +22,8 @@ import ../src/pga_benchmark/pages/[
   completion, docket, evaluation, home, listing, proposal, render, search, shell,
 ]
 from ../src/pga_benchmark/evaluations import
-  ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, compareNan, readLibrary,
-  compileCost, pairTimes
+  ENTRY_LIBRARY, RUNS_EVALUATION, algebrasEvaluated, digestEdits, functionsChanged, compareNan,
+  readLibrary, compileCost, pairTimes
 from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
 
@@ -2253,6 +2254,21 @@ suiteInProc "Internal: Evaluations":
       times = pairTimes(before, after)
     check times["a"][0].getFloat == 11.0 and times["a"][1].getFloat == 5.5  # medians
     check times["a"][2].getFloat == 0.5  # ratio of each run, then median
+
+
+  test "runs of evaluation outvote whole runs that machine slows, at share measured 2026-11-01":
+    const
+      share_slow = 0.37
+        ## Share of runs of one binary 1.2 times its fastest or slower, as whole: 51 runs on
+        ##   `linux amd64, 4 cores`, 2026-11-01.
+      bound = 2.5e-4  ## Chance per measurand: one in ten evaluations of some 250 measurands.
+    let side = share_slow * (1.0 - share_slow)  # pair whose ratio leaves 1 upward, as downward
+    var off = 0.0  # chance that more than half of pairs leave 1 on one side
+    for k in RUNS_EVALUATION div 2 + 1 .. RUNS_EVALUATION:
+      off += 2.0 * float(binom(RUNS_EVALUATION, k)) * pow(side, float(k)) *
+          pow(1.0 - side, float(RUNS_EVALUATION - k))
+    checkpoint "runs " & $RUNS_EVALUATION & ", chance " & $off
+    check off < bound  # median of paired ratios reads slow run as change, rarely
 
 
   test "NaN shares that moved are kept, and only those":
