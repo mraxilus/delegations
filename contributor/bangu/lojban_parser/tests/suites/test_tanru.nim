@@ -410,11 +410,12 @@ suite "Chapter 4":
     check "laplas".refusalRead == some((Refusal.Breakup, "la"))  # 4.8, "invalid name laplas."
     check "ilanas".refusalRead == some((Refusal.Breakup, "la"))  # 4.8, as ".i la nas."
     check "nederlants".kindRead == some(Kind.Cmene)  # 4.8, `la` after consonant, `nts` held
+    check "djandjonz".kindRead == some(Kind.Cmene)  # 4.8, pairs alone; 1997 example 1.1 dropped
     check "lars".refusalRead == some((Refusal.Breakup, "la"))  # 4.8, `la` first; constructed
     check "djeimz".refusalRead == some((Refusal.Cluster, "mz"))  # 3.6, Example 3.8 forbids pair
     check "djeimyz".kindRead == some(Kind.Cmene)  # 3.6, Example 3.8, "y can be inserted"
     for text in ["rl", "brlgan"]:
-      check text.kindRead == some(Kind.Cmene)  # 3.4, syllabic consonants, "rl." and Example 3.6
+      check text.kindRead == some(Kind.Cmene)  # 3.4, syllabic consonants, "rl." and Example 3.5
     check "c".refusalRead == some((Refusal.Shape, ""))  # 3.4, no syllable; constructed
 
 

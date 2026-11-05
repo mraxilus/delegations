@@ -241,6 +241,12 @@ suite "Chapter 3":
     check "sai,R,goi".refusalRead == some((Refusal.Stress, 4))  # 3.4, syllabic never stressed
 
 
+  test "Section 3.5":
+    for text in ["meiin.", "mei,in.", "me,iin."]:
+      check text.wordsRead == some(@["meiin"])  # 3.5, Examples 3.6-7, comma makes no other word
+    check ".nu,IOrk.".stressesRead == some(@[some(1)])  # 3.5, comma parts `u` from `io`; Tatoeba
+
+
   test "Section 3.9":
     check "pu,je,nai,ca,je,ba".wordsRead == some(@["pu", "je", "nai", "ca", "je", "ba"])  # 9.1
     check "pujenaicajeba".wordsRead == "pu,je,nai,ca,je,ba".wordsRead  # 9.1; comma not required
@@ -341,6 +347,7 @@ suite "Chapter 4":
     check "doi djan".pausesRead == some(@[Pause.Absent, Pause.Absent])  # rule 4, `doi`
     check "zoi gy. John .gy.".refusalRead == some((Refusal.Foreign, 0))  # rule 7; gap #814
     check "zo zoi".refusalRead == some((Refusal.Foreign, 3))  # rule 7; `zo` gap #814 reads
+    check "mi zoi".refusalRead == some((Refusal.Foreign, 3))  # rule 7, no quotation; gap holds
     check "mi cusku la'o gy. Mary .gy.".refusalRead ==
         some((Refusal.Foreign, 9))  # rule 7, gap #814; constructed
 
