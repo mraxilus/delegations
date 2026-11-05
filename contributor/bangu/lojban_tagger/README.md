@@ -64,8 +64,10 @@ data directory of the user.
 
 - `tag <name> <word>...` adds tags to a thing. A path, a URL or a title is a name.
 - `untag <name> <word>...` removes tags.
-- `find <term>...` prints each thing that every term finds. A term is a gismu, a lujvo or an
-  English word.
+- `find <term>...` prints each thing that any term finds. The things that meet every term come
+  first, then the things that meet one term fewer, and so on. Things that meet the same number of
+  terms keep the rank of a lujvo with a cmavo, then the order of the index. A term is a gismu, a
+  lujvo or an English word. The report names each term that finds nothing.
 - `show [<name>]` prints things with their tags.
 - `read <word>...` explains a word: its rafsi, its gismu, its preferred form and its English.
 
