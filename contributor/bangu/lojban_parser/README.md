@@ -75,4 +75,5 @@ The suites hold each part to CLL. The parser reads no prose, no cmene and no fu'
 with a comma or a capital.
 
 The project `lojban_tagger` keeps an earlier copy of these modules until #809 moves it onto this
-parser. Nothing here has been read line by line by a human.
+parser. `selmaho.nim` and `lists/cmavo.nim` are new here, so it holds no copy of them. Nothing
+here has been read line by line by a human.

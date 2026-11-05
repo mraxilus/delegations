@@ -15,8 +15,9 @@ reads any valid lojban word or prose. It also has the tagger read lojban through
 which stands apart from it. The project reads lojban words by the rules of CLL alone, and holds
 no grammar of prose.
 
-`lojban_tagger` keeps a copy of each module here until #809 moves the tagger onto this parser.
-Where a module differs, the copy in `lojban_tagger` is earlier, and reads listed words alone. The
+`lojban_tagger` keeps a copy of each module here until #809 moves the tagger onto this parser,
+but of `selmaho.nim` and `lists/cmavo.nim`, which are new here. Where a module differs, the copy
+in `lojban_tagger` is earlier, and reads listed words alone. The
 header of each module names its sibling there, as Article II.9 asks, and `tools/lists.nim` names
 the sibling of the list that it renders. A fix to one copy is finished only when the other is
 checked.
@@ -188,7 +189,8 @@ by the floor of each notation in `suites/test_lujvo.nim`.
 
 **The daily `head` verb watches the sources.** It checks the digest of each pinned file, and
 renders both modules again to compare each with the committed one. Where Debian moves a pinned
-file, `head` fails. Where it moves `gismu.txt`, `lists` refuses too, until somebody moves the pin.
+file, `head` fails. Where it moves `gismu.txt` or `cmavo.txt`, `lists` refuses too, until somebody
+moves the pin.
 Verified by hand, 2026-11-05: `nim r tools/build.nim head` exits 0 against `lojban-common`
 1.5+dfsg.1-4.
 
@@ -212,7 +214,7 @@ holds. Verified by `suites/test_selmaho.nim`.
 
 **Each line of `cmavo.txt` reads.** A line of one cmavo reads with the selma'o that it gives. A
 compound written as one word reads as cmavo that the list holds. A phrase reads word by word, each
-word a cmavo of the list or a brivla. Verified by `suites/test_selmaho.nim`.
+word a cmavo of the list, alone or run together, or a brivla. Verified by `suites/test_selmaho.nim`.
 
 ## Tanru
 
@@ -290,9 +292,10 @@ to its brivla (15.4). A NU rafsi modifies the next tanru unit alone (12.12). Eac
 nothing, and stands as a tanru unit of its own where it does more than group. Verified by
 `suites/test_tanru_units.nim`.
 
-**Each folded cmavo carries the selma'o that chapter 20 gives it.** A static check in
-`tanru_units.nim` holds the cmavo of SE, NU, NA and NAhE, and `ke`, `ke'e`, `kei`, `bo` and `co`, to
-their selma'o. So the fold and the cmavo list never part.
+**Each folded cmavo carries the selma'o of its role in the fold, as the cmavo list gives it.** The
+cmavo of SE carry SE, those of NU carry NU, and those of NA and NAhE carry those two. `ke`,
+`ke'e`, `kei`, `bo` and `co` carry KE, KEhE, KEI, BO and CO. So the fold and the cmavo list never
+part. Verified by the static check of `tanru_units.nim`, which each build runs.
 
 **A part that no list names binds nothing.** Each binding cmavo is a word of the list. So such a
 part stands as a tanru unit of its own, and a cmavo before it binds it. Verified by
@@ -374,9 +377,10 @@ the outside texts by their pins. `suites/rafsi_random.nim` spells random rafsi f
 each form. So the suites of the reader and of lujvo share one way to draw them (II.9).
 
 `suites/test_tanru.nim` holds the reader, and `suites/test_tanru_units.nim` holds the fold. Each
-suite has a sibling in `lojban_tagger`, which holds an earlier copy, and its header names it
-(II.9). The tests of tag policy and of search are in `lojban_tagger` alone. Each assertion cites
-its source: a section of CLL, or the article of the charter that a guard holds.
+suite but `suites/test_selmaho.nim`, which is new here, has a sibling in `lojban_tagger`. That
+sibling holds an earlier copy, and the header of the suite names it (II.9). The tests of tag
+policy and of search are in `lojban_tagger` alone. Each assertion cites its source: a section of
+CLL, or the article of the charter that a guard holds.
 
 ## Toolchain
 
@@ -439,5 +443,5 @@ The spread of each figure is wide on this machine, so only a difference beyond i
 - **What the parser does not read.** It reads no prose: no bridi, no sumti, and no selbri past
   the tanru units of one word. It reads no cmene (4.8) and no fu'ivla (4.7), which #812 adds.
   `readWord` reads no cmavo run together, which `splitCompound` splits, and no marks of a stream
-  (3.3, 3.9). #811 reads both in a stream of text. The fold keeps no grouping that no cmavo
-  binds, and no number with its MOI, which prose needs.
+  (3.3, 3.9). #811 adds the reading of both in a stream of text. The fold keeps no grouping
+  that no cmavo binds, and no number with its MOI, which prose needs.
