@@ -3,13 +3,18 @@
 ##   Term reads as lojban first (`tags.nim`), else as English (`dictionary.nim`). Either way it
 ##     becomes alternatives: gismu sets, any one of which satisfies term. Term in lojban gives one
 ##     alternative, gismu of its tanru; English gives one per meaning it leads to.
-##   Entity satisfies term where every gismu of one alternative appears in any of its tags;
-##     query is satisfied where every term is (conjunction). So `vreji` finds `datnyvei`, and
-##     `datnyvei` finds what `datni` and `vreji` tag together.
+##   Entity satisfies term where every gismu of one alternative appears in any of its tags. So
+##     `vreji` finds `datnyvei`, and `datnyvei` finds what `datni` and `vreji` tag together.
 ##     Rejected: matching tags whole, which would make lujvo invisible to search for its gismu,
 ##     and lose recall Architect asked for ("all tagged entities come up").
-##     Cost: order and relation of gismu are lost; `patfu mamta` and `mampa'u` hold one set,
-##     so each finds other (CLL 4.5 calls tanru ambiguous for same reason).
+##     Cost: order and relation of gismu are lost; tanru `patfu mamta` and lujvo `mampa'u` hold
+##     one set, so each finds other (CLL 4.5 calls tanru ambiguous for same reason).
+##   Query finds each entity satisfying any of its terms, most terms first: entities satisfying
+##     every term, then those satisfying one fewer, down to one. Architect ruled so: term finding
+##     nothing, as English word no list holds, then empties no result. Entities satisfying every
+##     term come first as conjunction of terms finds them, in same order.
+##     Cost: terms count alike, so entity satisfying two broad terms comes before entity
+##     satisfying one narrow term; term query names twice counts twice.
 ##   Matching reads gismu alone, so `selci'a` finds what `ciska` finds. Term in lojban holding cmavo
 ##     also ranks first each entity holding tag whose tanru units hold tanru units of term
 ##     unbroken, in order (`tanru_units.nim`). Architect ruled that search for `selci'a` lists
@@ -31,11 +36,15 @@
 ##     often leave grouping out, and run is what they hold. So term `selci'avei` ranks tag
 ##     `vreta se ciska vreji`, where left grouping (5.3) binds `vreta` to `se ciska` first.
 ##     Term whose cmavo all fold away, as `selselci'a`, ranks nothing, as gismu term does.
-##     Cost: rank is two tiers, ranked then rest, each in order of index.
-##   Term reading as neither lojban nor known English holds no alternative, so query finds
-##     nothing; caller reports term, so empty result says why.
-##   Cost: every entity tested against every term; index of shell tool is read whole anyway,
-##     so linear walk costs no more than reading it (unmeasured).
+##     Cost: rank orders entities satisfying same count of terms, in two tiers, ranked then
+##     rest, each in order of index; ranked entity comes after every entity satisfying more.
+##   Term reading as neither lojban nor known English holds no alternative, so it satisfies no
+##     entity, and query shows what its other terms find; caller reports term, so report says
+##     why it adds nothing.
+##   Cost: every entity tested against every term, with no early exit at first term it fails;
+##     index of shell tool is read whole anyway, so walk is small part of command (measured,
+##     Figures of PROVENANCE). Gismu of entity are gathered once, never once for each term,
+##     which nearly triples walk for three terms (measured, same).
 
 {.experimental: "strictFuncs".}
 
@@ -76,10 +85,14 @@ func words*(entity: Entity): seq[Word] =
   result = result.deduplicate.sorted
 
 
+func isSatisfying(held: openArray[Word], term: Term): bool =
+  ## Test gismu `held`, as `words` gathers them, hold every gismu of some alternative of term.
+  term.alternatives.anyIt it.allIt(it in held)
+
+
 func isSatisfying*(entity: Entity, term: Term): bool =
   ## Test entity holds every gismu of some alternative of term.
-  let held = entity.words
-  term.alternatives.anyIt(it.allIt(it in held))
+  entity.words.isSatisfying(term)
 
 
 func isRanked*(entity: Entity, terms: openArray[Term]): bool =
@@ -91,12 +104,19 @@ func isRanked*(entity: Entity, terms: openArray[Term]): bool =
 
 
 func find*(index: Index, terms: openArray[Term]): seq[Entity] =
-  ## Find every entity satisfying every term: ranked ones first, then rest, each tier in order
-  ##   of index; none where no term given.
-  if terms.len == 0: return
-  var rest: seq[Entity]
+  ## Find every entity satisfying any term, in tiers: most terms satisfied first, then ranked
+  ##   before rest, each tier in order of index; none where no term given.
+
+  # Sort entities into tiers by count of terms satisfied, then by rank, in one walk of index;
+  #   gismu of each entity are gathered once, since every term reads them.
+  var tiers = newSeq[array[bool, seq[Entity]]](terms.len + 1)
   for entity in index.entities:
-    if not terms.allIt(entity.isSatisfying(it)): continue
-    if entity.isRanked(terms): result.add entity
-    else: rest.add entity
-  result.add rest
+    let
+      held = entity.words
+      count = terms.countIt(held.isSatisfying(it))
+    if count > 0: tiers[count][entity.isRanked(terms)].add entity
+
+  # Join tiers, most terms first, ranked tier before rest at each count.
+  for count in countdown(terms.len, 1):
+    result.add tiers[count][true]
+    result.add tiers[count][false]
