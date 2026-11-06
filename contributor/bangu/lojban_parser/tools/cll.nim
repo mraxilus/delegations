@@ -30,7 +30,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, os, osproc, parsexml, sequtils, strscans, strutils, xmlparser, xmltree]
-from std/unicode import runeLen
+
+import ./literals
 
 
 type
@@ -68,7 +69,6 @@ const
   TAG_SCRIPT_CLOSING = "</script>"  ## Tag closing script element of page.
   CLASS_ADDRESS = "__cf_email__"  ## Class of span server writes in place of email address.
   ATTRIBUTE_ADDRESS = "data-cfemail"  ## Attribute holding that address, encoded.
-  WIDTH = 100  ## Columns line of module may hold (Article X.1).
 
 
 
@@ -270,48 +270,20 @@ proc readBook*(directory: string): Book =
 
 #[ Rendering ]#
 
-func toLiteral(text: string): string =
-  ## Render text as Nim string literal; rows hold no quote and no backslash.
-  doAssert '"' notin text and '\\' notin text, "Row should hold no quote; got `" & text & "`."
-  "\"" & text & "\""
-
-
-func toPieces(text: string, width: int): seq[string] =
-  ## Split text at spaces into pieces, each fitting `width` as literal, spaces kept at ends.
-  var piece: string
-  for word in text.split(' '):
-    let next = (if piece.len == 0: word else: piece & " " & word)
-    if piece.len > 0 and next.len + 2 > width:
-      result.add piece & " "
-      piece = word
-    else: piece = next
-  result.add piece
-
-
-func linesRow(text: string, indent: int, closing: string): seq[string] =
-  ## Render one row as literal at `indent`, split by `&` where line would pass `WIDTH`.
-  let line = repeat(' ', indent) & text.toLiteral & closing
-  if line.runeLen <= WIDTH: return @[line]
-  let pieces = text.toPieces(WIDTH - indent - closing.len - 2)
-  for i, piece in pieces:
-    let tail = (if i < pieces.high: " &" else: closing)
-    result.add repeat(' ', indent) & piece.toLiteral & tail
-
-
 func linesExample(example: Example): seq[string] =
   ## Render one example as constructor: on one line where it fits, else one argument to line.
   let
     number = "number: \"" & $example.chapter & "." & $example.index & "\""
     rows = "rows: @[" & example.rows.mapIt(it.toLiteral).join(", ") & "]"
     line = "  ExampleCll(" & number & ", " & rows & "),"
-  if line.runeLen <= WIDTH: return @[line]
+  if line.isFit: return @[line]
   result.add "  ExampleCll("
   result.add "    " & number & ","
-  if ("    " & rows & ",").runeLen <= WIDTH:
+  if ("    " & rows & ",").isFit:
     result.add "    " & rows & ","
   else:
     result.add "    rows: @["
-    for row in example.rows: result.add row.linesRow(6, ",")
+    for row in example.rows: result.add row.linesLiteral(6, ",")
     result.add "    ],"
   result.add "  ),"
 
@@ -351,7 +323,7 @@ func linesQuoted(paragraph: string): seq[string] =
   ## Render paragraph as Markdown quotation, wrapped at spaces to fit `WIDTH`.
   var line = ">"
   for word in paragraph.split(' '):
-    if line.len > 1 and (line & " " & word).runeLen > WIDTH:
+    if line.len > 1 and not (line & " " & word).isFit:
       result.add line
       line = ">"
     line.add " " & word
