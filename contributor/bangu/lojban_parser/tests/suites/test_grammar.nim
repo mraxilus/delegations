@@ -292,3 +292,12 @@ suite "Internal: Grammar":
     check "mi poi".refusalRead == some((2, "relative-clause 122"))  # constructed
     check "lo nu".refusalRead == some((2, "tanru-unit-2 152"))  # nu waits for bridi; constructed
     check "mi klama ku".refusalRead == some((2, "bridi-tail 50"))  # ku closes no sumti; constructed
+
+
+  test "Rule 972 groups and/or of tense and CAhA inside NAhE and KI, as grammar.300 does":
+    check "mi na'e ka'e tavla".spansRead("simple-tense-modal") == @[1 .. 2]  # 973, constructed
+    check "mi to'e ca'a tavla".spansRead("simple-tense-modal") == @[1 .. 2]  # 973, constructed
+    check "mi na'e pu ki tavla".spansRead("simple-tense-modal") == @[1 .. 3]  # 977, constructed
+    check "mi na'e ki tavla".treeRead.isNone  # 973, NAhE takes tense or modal; constructed
+    check "mi ze'a pu ta'e tavla".spansRead("time") == @[1 .. 3]  # 1034, ZEhA PU; constructed
+    check "mi ta'e tavla".treeRead.isSome  # 1034, interval property alone; constructed
