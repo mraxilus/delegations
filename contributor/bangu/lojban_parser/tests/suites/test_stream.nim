@@ -32,10 +32,10 @@ const
   SAMPLES_JOINED = 4000
     ## Random runs of two or three words written together, seeded; runs needing pause between
     ##   words left out, since text written together writes none.
-  FLOOR_JOINED = 2200  ## Least runs read back as same words: 2411 read at seed `2`.
-  FLOOR_TIED = 900
-    ## Least runs refused as tie that names them: 1025 read at seed `2`; 432 of them hold
-    ##   fu'ivla in one split, and others split cmavo and gismu two ways, as `mibroda` does.
+  FLOOR_JOINED = 2500
+    ## Least runs whose stress fits each brivla that read back as same words: 2760 read at
+    ##   seed `2`.
+  FLOOR_JOINED_OTHER = 800  ## Least runs whose stress fits no brivla: 887 read at seed `2`.
   COUNT_COMMA_MARKED = 88
     ## Commas law of unmarked words reads: each place in each word of `WORDS_BORROWED` and
     ##   `WORDS_NAMED`, apostrophe aside.
@@ -50,9 +50,9 @@ const
   FLOOR_GLIDE_READ = 40
     ## Least capitals law of on-glide reads as one brivla: 40 read, on penultimate syllable of
     ##   each on-glide in four frames of two syllables or three.
-  FLOOR_STRESS_OTHER = 600
-    ## Least capitals off penultimate syllable of brivla read as other words: 630 read, as
-    ##   `djAcadyfanta` reads `djaca dy fanta`.
+  FLOOR_STRESS_OTHER = 200
+    ## Least capitals off penultimate syllable of brivla read as other words: 228 read, as
+    ##   `xlUsnipa` reads `xlusni pa`.
   FLOOR_STRESS = 800
     ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
     ##   850 read at seed `0`.
@@ -177,6 +177,22 @@ func penultimate(word: string, is_borrowing: bool): int =
   ## Index syllable brivla stresses among syllables of word: penultimate, `y` not counted (3.9).
   let spans = word.syllables(is_borrowing = is_borrowing)
   toSeq(0 .. spans.high).filterIt(word[spans[it].a] != 'y')[^2]
+
+
+func isStressFit(words: openArray[string], kinds: openArray[Kind]): bool =
+  ## Test stress of written word, on its own penultimate syllable alone, falls on penultimate of
+  ##   each brivla among words, by class of each (D3 a of #811); `y` not counted (3.9).
+  let
+    run = words.join("")
+    spans = run.syllables
+    counted = toSeq(0 .. spans.high).filterIt(run[spans[it].a] != 'y')
+  var lo = 0
+  for i, word in words:
+    if kinds[i] != Kind.Cmavo:
+      if counted.len < 2: return false
+      if word.syllables[word.penultimate(false)].a + lo != spans[counted[^2]].a: return false
+    lo += word.len
+  true
 
 
 func capitalized(word: string, span: Slice[int]): string =
@@ -632,8 +648,8 @@ suite "Internal: Stream":
           check text.stressesRead == some(@[some(k)])  # 3.9, cmavo any syllable
 
 
-  test "Words needing no pause, written together, read back as them, as one word, or as tie":
-    var count_joined, count_tied = 0
+  test "Words needing no pause, written together, read back as them where brivla stands last":
+    var count_joined, count_other = 0
     randomize(2)
     for _ in 1 .. SAMPLES_JOINED:
       var words: seq[string]
@@ -642,19 +658,24 @@ suite "Internal: Stream":
       if words.pausesNeeded[1 .. ^1].anyIt(it != Pause.Absent): continue
       let
         text = words.join("")
-        reading = text.readStream
-      if reading.is_read:
-        let
-          texts = reading.occurrences.mapIt(it.text)
-          is_whole = texts == @[text] and reading.occurrences[0].reading.kind == Kind.Fuhivla
-        check texts == words or is_whole  # 4.1, one split; or one fu'ivla, as `klamaku` (4.7)
-        if texts == words: inc count_joined
+        texts = text.wordsRead
+      if words.isStressFit(words.mapIt(LUT_KIND_BY_WORD[it])):
+        check texts == some(words) or texts == some(@[text])  # D3 a of #811; 4.1, one split
+        if texts == some(words): inc count_joined
       else:
-        check reading.refusal == Refusal.Split  # 3.9, only stress tells them apart
-        check words.join(" ") in reading.detail.split(", or ")  # 4.1, tie names them
-        inc count_tied
+        check texts != some(words)  # D3 a of #811, brivla before end needs capital
+        inc count_other
+
+      # Capital on each brivla marks each stress, so words read back as them.
+      var marked: seq[string]
+      for word in words:
+        if LUT_KIND_BY_WORD[word] == Kind.Cmavo:
+          marked.add word
+          continue
+        marked.add word.capitalized(word.syllables[word.penultimate(false)])
+      check marked.join("").wordsRead == some(words)  # D3 a of #811; 3.9, capitals mark stress
     check count_joined >= FLOOR_JOINED  # IX.3, guard keeps runs that read back
-    check count_tied >= FLOOR_TIED  # IX.3, guard keeps ties in play
+    check count_other >= FLOOR_JOINED_OTHER  # IX.3, guard keeps brivla before end in play
 
 
   test "Stream of marks alone reads as no words":
@@ -663,7 +684,7 @@ suite "Internal: Stream":
 
 
   test "Refusal names byte where offending word opens":
-    check "mi klama lonubroda".refusalRead == some((Refusal.Split, 9))  # 3.9; constructed
+    check "mi klama iai".refusalRead == some((Refusal.Split, 9))  # 4.9 rule 3, tie; constructed
     check "mi klama ktraile".refusalRead == some((Refusal.Cluster, 9))  # 4.7; constructed
     check "mi klama c".refusalRead == some((Refusal.Shape, 9))  # 3.4, no syllable; constructed
 
@@ -678,7 +699,8 @@ suite "Internal: Stream":
     check "MIbroda".wordsRead == some(@["mibro", "da"])  # 3.9, stress of gismu `mibro`
     check "KLAmaku".wordsRead == some(@["klama", "ku"])  # 3.9, stress fits `klama` alone
     check "klamaku".wordsRead == some(@["klamaku"])  # 4.7, one fu'ivla; constructed
-    check "mibroda".refusalRead == some((Refusal.Split, 0))  # 3.9, stress alone tells them apart
-    check "mibroda".readStream.detail == "mibro da, or mi broda"  # 3.9, two splits named
+    check "mibroda".wordsRead == some(@["mi", "broda"])  # D3 a of #811, penultimate of word alone
+    check "lonubroda".wordsRead == some(@["lo", "nu", "broda"])  # D3 a of #811
+    check ".esperanto".wordsRead == some(@["e", "speranto"])  # 4.1, Example 19.78 "breaks up"
     check "iai".refusalRead == some((Refusal.Split, 0))  # 4.9 rule 3, `.i.ai` or `.ia.i`
     check "ka,i".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma is no pause; constructed

@@ -214,6 +214,13 @@ func occurrenceWritten(
   if capitals.len > 0:
     stress = piece.nucleusStressed(reading.kind, capitals, breaks)
     if stress.isNone: return
+
+  # Written word with capitals marks each stress with them; one with none stresses its own
+  #   penultimate syllable alone (D3 a on #811). So brivla holds capital, or no vowel counted
+  #   for stress follows it in written word.
+  if reading.kind in KINDS_BRIVLA:
+    if spelling.capitals.len > 0 and stress.isNone: return
+    if spelling.capitals.len == 0 and spelling.letters[span.b + 1 .. ^1].anyIt(it in VOWELS): return
   some(Occurrence(
     start: spelling.places[span.a], text: piece, stress: stress, breaks: breaks, reading: reading,
   ))
