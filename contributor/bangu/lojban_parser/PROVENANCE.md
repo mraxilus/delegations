@@ -553,6 +553,11 @@ child spans all of its parent only along a unit edge, and each unit cycle is a s
 choice kept for a span never depends on a span still open. Verified by `suites/test_grammar.nim`,
 Section 18.16, whose Example 18.111 the choice lost before.
 
+**The last symbol of a production ends where its span ends.** So the choice tries that one bound
+for it, and no other. Rejected: each bound for each symbol, whose cost grew with the square of the
+span on a long text. Verified by hand with a probe built on the pin, 2026-11-06. Each tree and
+refusal of the CLL corpus, of Tatoeba and of five articles of the lojban Wikipedia is unchanged.
+
 **A refusal names the place where every derivation stops, and the rule that stops there.** The
 rule is that of the item that waits there, has read a terminal, and started last. So `mi klama le`
 is refused at its end, in `sumti-6 97`. Verified by `suites/test_grammar.nim`, in the suite
@@ -969,6 +974,13 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   was built on the pin with `nim c`, with no optimisation. It read the lines through `readStream`
   in 0.10 s and 0.14 s, and through `readText` in 3.97 s and 4.01 s. So the grammar takes most of
   the time of `readText`.
+- **Long text.** On 2026-11-06, a program built the same way read 86 paragraphs of three articles
+  of the lojban Wikipedia. It took 3.1 s at `e5b6e632`, and 9.2 s at `a6e61b33`, before the last
+  symbol of a production tried one bound. Its longest paragraph, 458 words, took 397 ms against
+  2,144 ms. The tree choice took nearly all of that time, and the fill of the sets 50 to 71 ms.
+- **Suites, last symbol.** On 2026-11-06, the stub ran every suite in 23.5 s and 22.5 s at
+  `e5b6e632`, against 23.7 s and 23.5 s at `a6e61b33`. The suite of the corpus ran in 5.6 s and
+  5.3 s, against 6.5 s and 6.1 s. The runs alternate, and the spread of the stub meets.
 
 ## Open questions
 
