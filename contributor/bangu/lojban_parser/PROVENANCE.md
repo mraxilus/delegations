@@ -524,6 +524,12 @@ grammar holds left recursion, as `rp-operand` through `rp-expression`, and empty
 ambiguous too, so recursive descent cannot read it. Verified by `suites/test_grammar.nim`,
 Section 18.16, which nests reverse Polish to the left and to the right.
 
+**Each Earley set indexes its items by the nonterminal that each one waits for.** So a completion
+walks only the items that wait for the nonterminal that it completes. Each set predicts each
+nonterminal once. Rejected: a walk of every item of the origin set at each completion, whose time
+grows with the square of the set. Verified by `suites/test_grammar.nim` and
+`suites/test_corpus.nim`, which hold the same trees and refusals. Figures gives the pair.
+
 Cost: CLL numbers its rules by a YACC grammar, which a deterministic parser reads, and version 1.1
 gives the EBNF alone. A text that such a parser stops on may still read here. Verified by hand:
 CLL 1.1 holds no YACC grammar, 2026-11-06.
@@ -841,14 +847,16 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   read the 17,495 sentences through `readText`. It took 31.8 s, 33.6 s and 32.3 s on the pin, so
   one sentence takes about 1.9 ms. It read 16,466 of them. The grammar refused 341, and 485 hold
   a cmavo that no list gives a selma'o.
-- **Corpus of CLL.** On 2026-11-06, on the pin, the stub built with `nim c -d:testing
-  -d:nimUnittestOutputLevel:PRINT_FAILURES tests/test_suites.nim` ran every suite in 43.8 s and
-  43.8 s at `1be21960`. At `fef0cbd0`, which holds no corpus, it ran them in 20.8 s and 20.7 s. The
-  runs alternate, and the parser is the same at both. So the suite of the corpus costs about 23 s.
-- **Corpus by stage.** On 2026-11-06, at `1be21960`, a program read each line of the corpus. It
+- **Indexed Earley sets.** On 2026-11-06, on the pin, the stub built with `nim c -d:testing
+  -d:nimUnittestOutputLevel:PRINT_FAILURES tests/test_suites.nim` ran every suite in 21.5 s and
+  21.6 s at `67b4773b`. At `487f618c`, whose completion walks each origin set whole, it ran them
+  in 43.9 s and 43.2 s. The runs alternate.
+- **Corpus of CLL.** On 2026-11-06, the suite of the corpus was built alone in the same way. It
+  ran in 5.8 s and 5.9 s at `67b4773b`, against 21.8 s and 21.8 s at `487f618c`.
+- **Corpus by stage.** On 2026-11-06, at `67b4773b`, a program read each line of the corpus. It
   was built on the pin with `nim c`, with no optimisation. It read the lines through `readStream`
-  in 0.11 s and 0.11 s, and through `readText` in 15.8 s and 16.1 s. So the grammar takes nearly
-  all of the time of `readText`.
+  in 0.10 s and 0.14 s, and through `readText` in 3.97 s and 4.01 s. So the grammar takes most of
+  the time of `readText`.
 
 ## Open questions
 
