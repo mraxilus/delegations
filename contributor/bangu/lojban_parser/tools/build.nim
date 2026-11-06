@@ -10,6 +10,9 @@
 ##   |           | where any differs, i.e. Debian moved list                                |
 ##   | cll       | read saved pages of CLL 1.1 from directory named after verb, check their |
 ##   |           | digest against its pin, and write examples and notice under `tests/cll/` |
+##   | tatoeba   | read export of Tatoeba named after verb, check its digest against its    |
+##   |           | pin, write fixed sample and notice under `tests/sample_tatoeba/`, and    |
+##   |           | print count of each verdict over whole export                            |
 ##   | system    | print packages verbs and suites need, one per line                       |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
@@ -28,18 +31,19 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/os
+import std/[algorithm, os, tables]
 
-import ./[cll, lists]
+import ./[cll, lists, tatoeba]
 
 
 const
   USAGE = "Usage: nim r tools/build.nim <lists|head|system>\n" &
-      "       nim r tools/build.nim cll <directory>\n"
+      "       nim r tools/build.nim cll <directory>\n" &
+      "       nim r tools/build.nim tatoeba <export>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
-    ("coreutils", "`sha256sum`, which `lists`, `head` and `cll` check each digest with"),
+    ("coreutils", "`sha256sum`, which `lists`, `head`, `cll` and `tatoeba` check digest with"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
 
@@ -107,10 +111,30 @@ proc writeCll(directory: string): int =
   echo PATH_NOTICE
 
 
+proc writeTatoeba(path: string): int =
+  ## Write fixed sample of Tatoeba and its notice where digest of export matches its pin, and
+  ##   print count of each verdict over whole export.
+  let (sentences, digest) = readSentences(path)
+  if refuseDigests([("export of Tatoeba", digest, DIGEST_TATOEBA)], "tatoeba.nim") > 0: return 1
+  let sample = sentences.toSample(digest)
+  createDir(PATH_SENTENCES.parentDir)
+  writeFile(PATH_SENTENCES, sample.toModuleSentences)
+  writeFile(PATH_NOTICE_TATOEBA, sample.toNotice)
+  echo PATH_SENTENCES
+  echo PATH_NOTICE_TATOEBA
+  echo "sentences ", sample.count_sentences, ", sample ", sample.sentences.len, ", features ",
+      sample.count_features
+  var verdicts: seq[(int, string)]
+  for verdict, count in sample.counts: verdicts.add (-count, verdict)
+  for (count, verdict) in verdicts.sorted:
+    echo -count, "\t", (if verdict.len == 0: "read" else: verdict)
+
+
 proc main(): int =
-  ## Dispatch command named as first argument; `cll` takes directory of pages as second.
+  ## Dispatch command named as first argument; `cll` and `tatoeba` take path as second.
   let arguments = commandLineParams()
   if arguments.len == 2 and arguments[0] == "cll": return writeCll(arguments[1])
+  if arguments.len == 2 and arguments[0] == "tatoeba": return writeTatoeba(arguments[1])
   if arguments.len != 1:
     stderr.write USAGE
     return 2
