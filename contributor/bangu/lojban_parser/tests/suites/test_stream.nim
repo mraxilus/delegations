@@ -40,6 +40,8 @@ const
     ## Commas law of marked words reads: each place in each word of `WORDS_BORROWED` and
     ##   `WORDS_NAMED`, with capital on each vowel or none, where text without comma reads.
   FLOOR_COMMA_KEPT = 280  ## Least of them that still read: 294 read, 5 where pause stands.
+  SAMPLES_COMMA_PAUSE = 2000  ## Random pairs of cmavo comma law at pause draws, seeded.
+  FLOOR_COMMA_PAUSE = 200  ## Least of them needing pause between them: 224 read at seed `4`.
   FLOOR_GLIDE_READ = 40
     ## Least capitals law of on-glide reads as one brivla: 40 read, on penultimate syllable of
     ##   each on-glide in four frames of two syllables or three.
@@ -268,6 +270,8 @@ suite "Chapter 3":
     check ".i'ai'i'ai'on.".wordsRead == some(@["i'ai'i'ai'on"])  # 3.3, Example 3.4, one cmene
     check ",klama".refusalRead == some((Refusal.Comma, 0))  # 3.3, comma within word; constructed
     check "kla,,ma".refusalRead == some((Refusal.Comma, 3))  # 3.3, comma separates syllables
+    check "y,ku".refusalRead == some((Refusal.Comma, 1))  # 3.3, pause after `y`; review of #811
+    check "ma,e".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma at pause; review of #811
     check "crarcIae".wordsRead == some(@["crarciae"])  # 3.9, `ia` penultimate; constructed
     check "crarcI,ae".refusalRead ==
         some((Refusal.Comma, 6))  # 3.3, comma changes no word, and parts stress off; review of #811
@@ -508,6 +512,18 @@ suite "Internal: Stream":
           if words.isSome: inc count_kept
     check count == COUNT_COMMA_MARKED  # IX.3, guard keeps each comma of each marked word
     check count_kept >= FLOOR_COMMA_KEPT  # IX.3, guard keeps commas that read in play
+
+
+  test "Comma between two cmavo that need pause is refused at comma":
+    var count = 0
+    randomize(4)
+    for _ in 1 .. SAMPLES_COMMA_PAUSE:
+      let words = @[WORDS_CMAVO.sample, WORDS_CMAVO.sample]
+      if words.pausesNeeded[1] == Pause.Absent or words.anyIt('.' in it): continue
+      check (words[0] & "," & words[1]).refusalRead ==
+          some((Refusal.Comma, words[0].len))  # 3.3, comma "cannot be pronounced as pause"
+      inc count
+    check count >= FLOOR_COMMA_PAUSE  # IX.3, guard keeps pauses in play
 
 
   test "Capital on penultimate syllable of brivla reads, and on any other never reads as it":
