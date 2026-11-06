@@ -115,6 +115,11 @@ selma'o of each cmavo. The
 suites also read the lujvo list and the whole cmavo list as outside texts, where the Debian
 package `lojban-common` installs them.
 
+The folder `tests/cll/` holds the lojban lines of each numbered example of CLL 1.1. A verb
+extracts them from the pages of the book, and the folder keeps the notice of the book. That notice
+permits a modified copy only under its own terms. So the folder is not under the licence of the
+repository.
+
 ## Build and test
 
 ```sh
@@ -122,12 +127,14 @@ nim r koch check                                  # from repository root: every 
 nim r koch test contributor/bangu/lojban_parser   # this project alone
 nim r tools/build.nim lists                       # from project root: write both lists again
 nim r tools/build.nim head                        # compare lists with lojban-common
+nim r tools/build.nim cll <directory>             # write examples of CLL again from saved pages
 nim r tools/build.nim system                      # print packages verbs and suites need
 ```
 
 The build needs the compiler that `lojban_parser.nimble` pins, and the standard library alone.
 The verbs `lists` and `head`, and the tests of outside texts, also need the Debian package
-`lojban-common`, and `sha256sum` of `coreutils`. The verb `system` declares both.
+`lojban-common`, and `sha256sum` of `coreutils`. The verb `system` declares both. The verb `cll`
+needs `sha256sum`, and the pages of CLL 1.1 saved in one directory, each under its own name.
 
 ## Pages
 
@@ -145,8 +152,13 @@ It reads a stream of text into its words, with its pauses, commas and capitals, 
 words that a text writes together. It reads prose by the grammar of 21.1, after quotation,
 erasure, `zei`, BAhE, `bu` and indicators act on the words.
 
-The suites hold each part to CLL. They quote only the examples of CLL that they cite, until the
-Architect rules on #815. The stress of words written together with no capital waits on #811.
+The suites hold each part to CLL. The parser reads each numbered example of CLL 1.1 that the
+book calls grammatical, with the lines that hold notation left out. The book shows ten examples in
+notation alone. It calls three examples wrong, and one more is an English sentence. Six write a
+mex alone, and each reads after `li`.
+
+Nine examples break a rule of 21.1. The parser follows 21.1 and refuses them, as the Architect
+ruled on #815. `PROVENANCE.md` names the rule that each one breaks.
 
 The project `lojban_tagger` keeps an earlier copy of these modules until #809 moves it onto this
 parser. It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim`, `stream.nim`,
