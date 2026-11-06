@@ -153,6 +153,6 @@ suite "Chapters 1-19":
     for (number, repair) in EXAMPLES_BROKEN:
       checkpoint "Example " & number
       check number.refusals.len > 0  # EXAMPLES_BROKEN, rule beside each number
-      check number.refusals.allIt(it == RefusalText.Grammar)  # EXAMPLES_BROKEN, D2 a
+      check number.refusals.allIt(it == RefusalText.Grammar)  # EXAMPLES_BROKEN, `D2 a`
       check not number.rows.isReadRows  # EXAMPLES_BROKEN, each row alone too
       check repair.isRead  # EXAMPLES_BROKEN, repaired as rule asks; constructed
