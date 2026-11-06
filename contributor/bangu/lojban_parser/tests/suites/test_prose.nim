@@ -230,3 +230,14 @@ suite "Internal: Prose":
           some(@[Selmaho.Zo.toTerminal])  # 19.10, "any Lojban word whatsoever"
       inc count
     check count >= 590  # IX.3, guard keeps cmavo of list: 598 hold one cmavo
+
+
+  test "Tie of stream is refused, though grammar reads one split alone":
+    let stream = "la .lauras. klama".readStream  # writer means name `lauras`; constructed
+    check not stream.is_read and
+        stream.detail == "lau ras, or la uras"  # 4.8, `la` opens no cmene, as of `laplas.`
+    check "la .lauras. klama".refusalRead ==
+        some((RefusalText.Stream, 4))  # `D4 a` of #811, grammar settles no tie
+    check "la la .uras. klama".terminalsRead.isSome  # 21.1, fragment of one sumti
+    check "la lau .ras. klama".refusalRead ==
+        some((RefusalText.Grammar, 8))  # 21.1 rule 987, LAU takes lerfu word
