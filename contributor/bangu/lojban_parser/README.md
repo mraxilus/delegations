@@ -52,7 +52,7 @@ pauses:
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/strutils, lojban_parser
-for text in ["laplas.", "secusku", "mibroda", "miBROda"]:
+for text in ["laplas.", "secusku", "mibroda", "MIbroda", ".esperanto"]:
   let r = readStream(text)
   if r.is_read:
     var words: seq[string]
@@ -61,13 +61,15 @@ for text in ["laplas.", "secusku", "mibroda", "miBROda"]:
   else: echo text, ": ", r.refusal, ", ", r.detail'
 laplas.: la (Cmavo) plas (Cmene)
 secusku: se (Cmavo) cusku (Gismu)
-mibroda: Split, mibro da, or mi broda
-miBROda: mi (Cmavo) broda (Gismu)
+mibroda: mi (Cmavo) broda (Gismu)
+MIbroda: mibro (Gismu) da (Cmavo)
+.esperanto: e (Cmavo) speranto (Lujvo)
 ```
 
-CLL 4.8 says that `laplas.` looks like the words `la plas.`. The letters of `mibroda` split two
-ways, and only stress tells them apart (3.9). So the reader refuses `mibroda`, and reads
-`miBROda`, whose capitals mark the stress of `broda`.
+CLL 4.8 says that `laplas.` looks like the words `la plas.`. A written word with no capital is
+stressed on its own penultimate syllable alone, as the Architect ruled on #811. So `mibroda`
+reads as `mi broda`, and `MIbroda`, whose capitals mark the stress of `mibro`, as `mibro da`.
+`.esperanto` reads as `e speranto`, as Example 19.78 of CLL says.
 
 ## Authority
 
