@@ -358,19 +358,22 @@ that tie are refused as `Split`, which names two of them. A written word with no
 as `readWord` refuses its letters. Verified by `suites/test_stream.nim`, in the suite
 `Internal: Stream`, and by a law over words written together.
 
-**Stress chooses among splits, as it does in speech.** Capitals must fit each word, so `KLAmaku`
-reads as `klama ku`, and `klamaku` as one fu'ivla. A CV cmavo before a CCVCV gismu has the letters
-of a CVCCV gismu before a CV cmavo. So `mibroda` reads as `mi broda` or `mibro da`, and only
-stress tells them apart (3.9). The reader refuses it as `Split`, and reads `miBROda` as `mi broda`.
-Verified by `suites/test_stream.nim`, in the suite `Internal: Stream`.
+**Stress chooses among splits, as it does in speech.** 3.9 requires primary stress on the
+penultimate syllable of each brivla. A written word with no capital is stressed on its own
+penultimate syllable alone, as the Architect ruled (`D3 a` on #811). One with capitals is stressed
+on each syllable that they mark. So each brivla of a split holds a capital, or ends the syllables
+of its written word that count for stress. Verified by `suites/test_stream.nim`, Section 3.9 and
+the suite `Internal: Stream`, and by a law over words written together.
 
-Cost: a gismu is any word of gismu form, as the Architect ruled on #823. So 1025 of the 3647 runs
-of the law tie, at seed 2. 432 of them hold a fu'ivla in one split, and the others split cmavo and
-gismu two ways, as `mibroda` does. 211 more read as one fu'ivla. A text that runs a cmavo into a
-gismu, and writes no capitals, is refused there. Verified by `suites/test_stream.nim`, by the law
-over words written together, which holds 900 ties at least.
+**So the stress of a written word chooses its split.** `mibroda` reads as `mi broda`, and
+`MIbroda` as `mibro da`. `KLAmaku` reads as `klama ku`, and `klamaku` as one fu'ivla.
+`.esperanto` reads as `e speranto`, as Example 19.78 says it "breaks up". Verified by
+`suites/test_stream.nim`, in the suite `Internal: Stream`.
 
-The counts are verified by hand with a probe of that law, 2026-11-06.
+Cost: a writer who means a brivla before other words must write its capital, as `MIbroda`. Runs
+whose stress fits no brivla read as other words, or are refused. Verified by
+`suites/test_stream.nim`, by the law over words written together, which holds 800 such runs at
+least.
 
 Precedent: the parser of the Logical Language Group splits compound cmavo, and assumes that brivla
 and cmene stand alone, in its file `lex.c`. It says that this holds for written lojban, but not
@@ -398,7 +401,7 @@ The rules that the reader applies are these:
 - A cmene takes a pause before it, unless `la`, `lai`, `la'i` or `doi` stands before it (4.9
   rule 4).
 - A stressed last syllable takes a pause after it, before a brivla or a stressed first syllable
-  (4.9 rule 5, 4.2).
+  (4.9 rule 5, 4.2). Its syllables are counted with the commas of its word, as its stress is.
 - `Cy` takes a pause before a word that is not `Cy` (4.9 rule 6), and `y` takes one after it
   (4.2).
 - The first word takes a pause where rule 3 or rule 4 needs one.
@@ -409,22 +412,25 @@ either, as the gap `Foreign`, which #814 reads. Verified by `suites/test_stream.
 Cost: `zo zoi` quotes the word `zoi`, but the reader stops there too, because #814 reads `zo`.
 Verified by `suites/test_stream.nim`, Section 4.9.
 
-**A comma changes no words.** 3.3 says that "no two Lojban words differ solely because of the
-presence or placement of a comma". So letters and capitals choose the words, with commas left out,
-and each comma is then judged against them. A comma that parts the stress off them is refused, as
-in `crarcI,ae`. Verified by `suites/test_stream.nim`, Section 3.3, and by a law over each position
-of each word of the lists and of each random lujvo. Verified also by a law over eight fu'ivla and
-six cmene.
+**A comma parts syllables, and the words chosen fit them.** 3.5 groups vowels by a comma, as
+Example 3.7 writes `me,iin.`, and 4.8 keeps a stress with capitals. So capitals stress the
+syllables that commas mark. `me,IIn.` is one cmene stressed on `ii`, and so is `.nu,IORK.` of
+Example 5.65, stressed on `io`. Each comma is then judged against the words chosen. Verified
+by `suites/test_stream.nim`, Section 3.5, and by a law over each grouping of seven names.
+
+**With no capital, a comma changes no word.** 3.3 says that "no two Lojban words differ solely
+because of the presence or placement of a comma". Without a capital, syllables choose no words,
+so a comma keeps the words or is refused. Verified by `suites/test_stream.nim`, Section 3.3, and
+by laws over each position of each word of the lists, and of fourteen fu'ivla and cmene.
+
+Cost: a comma under a capital may make a written word split. `crarcI,ae` reads `crarcia e`,
+where `crarcIae` reads `crarciae`, since the comma parts `ia`. Verified by
+`suites/test_stream.nim`, Section 3.3.
 
 **A comma marks no pause, so no split takes a pause where a comma stands.** 3.3 says that a comma
-"indicates that there must be no pause" between its syllables. Where letters and capitals read
-no words, a comma parts syllables before the words are chosen. 3.5 needs it so for a grouping of
-vowels. So `.nu,IORK.` of Example 5.65 is one cmene stressed on `io`, and `.nuIORK.` is
-`nu .iork.`. Verified by `suites/test_stream.nim`, Section 3.5, and by the law over eight fu'ivla
-and six cmene.
-
-Verified by hand with a probe over 601,956 texts, 2026-11-06. A comma changes their words only
-where the words without it take a pause at the comma.
+"indicates that there must be no pause" between its syllables. Where only such a split reads, the
+written word is refused as `Comma` at that comma. Verified by `suites/test_stream.nim`, Section
+3.3, and by a law over two cmavo that need a pause.
 
 **A comma breaks syllables inside a word.** Each stretch that it bounds holds a vowel, `y`, or a
 consonant that may be syllabic, as the `r` of `sai,r,goi` (3.4). A comma also parts two vowels into
@@ -629,8 +635,8 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   reads back with that part, and not with the gismu.
 - **The algorithm that splits a stream.** CLL 4.1 gives no algorithm, so the split is the
   reader's. It rests on the rules that CLL gives, and the laws hold it to them. CLL fixes no
-  choice among splits, whether or not they need the same pauses. The reader takes the split of
-  fewest pauses, and refuses a tie.
+  choice among splits whose stress fits, whether or not they need the same pauses. The reader
+  takes the split of fewest pauses, and refuses a tie, as `iai` for `.i.ai` or `.ia.i`.
 - **What the parser does not read.** It reads no prose: no bridi, no sumti, and no selbri past
   the tanru units of one word. A stream reads into its words. The reader stops at the text that
   `zoi` and `la'o` quote, which #814 reads with erasure, `zei` and `bu`. The fold keeps no
