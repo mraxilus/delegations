@@ -6,8 +6,8 @@
 ##   References: words CLL groups in prose and gloss, as spans of rule, and terminators 21.1
 ##     writes between slashes, listed here apart from grammar.
 ##   Corpus does not cover yet: every example of CLL, whose text its permission notice binds, so
-##     suite quotes examples it cites alone (#815); and quotation, erasure, `zei` and `bu`, gap
-##     of #814.
+##     suite quotes examples it cites alone (#815); `test_prose.nim` holds quotation, erasure,
+##     `zei` and `bu`, which act before grammar.
 
 {.experimental: "strictFuncs".}
 
