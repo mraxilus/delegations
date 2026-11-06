@@ -36,10 +36,14 @@ const
   FLOOR_TIED = 900
     ## Least runs refused as tie that names them: 1025 read at seed `2`; 432 of them hold
     ##   fu'ivla in one split, and others split cmavo and gismu two ways, as `mibroda` does.
-  COUNT_COMMA_MARKED = 371
-    ## Commas law of marked words reads: each place in each word of `WORDS_BORROWED` and
-    ##   `WORDS_NAMED`, with capital on each vowel or none, where text without comma reads.
-  FLOOR_COMMA_KEPT = 280  ## Least of them that still read: 294 read, 5 where pause stands.
+  COUNT_COMMA_MARKED = 88
+    ## Commas law of unmarked words reads: each place in each word of `WORDS_BORROWED` and
+    ##   `WORDS_NAMED`, apostrophe aside.
+  FLOOR_COMMA_KEPT = 65  ## Least of them that still read: 71 read.
+  WORDS_GROUPED = ["meiin", "iuain", "dauarnold", "meiris", "vauensas", "uiliam", "xuakin"]
+    ## Cmene whose vowels comma may group: Examples 3.6-7, two names review of #811 found, and
+    ##   Lojbanized names of 4.8.
+  COUNT_GROUPED = 36  ## Syllables of each grouping of each name law reads.
   SAMPLES_COMMA_PAUSE = 2000  ## Random pairs of cmavo comma law at pause draws, seeded.
   FLOOR_COMMA_PAUSE = 200  ## Least of them needing pause between them: 224 read at seed `4`.
   FLOOR_GLIDE_READ = 40
@@ -145,10 +149,13 @@ func isCommaAdmitted(word: string, at: int): bool =
       not (word[at - 1] in VOWELS_SYLLABLE and word[at] in VOWELS_SYLLABLE)
 
 
-func syllables(word: string, is_borrowing = false, is_name = false): seq[Slice[int]] =
+func syllables(
+    word: string, is_borrowing = false, is_name = false, breaks: openArray[int] = []
+): seq[Slice[int]] =
   ## List vowels of each syllable of word, as 3.4 groups them from left (3.5): diphthong with
   ##   off-glide is one syllable, and with on-glide where word opens with it, or anywhere in
-  ##   borrowing or name; `iy` and `uy` in name alone; each other vowel is one.
+  ##   borrowing or name; `iy` and `uy` in name alone; each other vowel is one. Comma before
+  ##   letter of `breaks` parts two vowels (3.5).
   var at = 0
   while at < word.len:
     if word[at] notin VOWELS_SYLLABLE:
@@ -159,7 +166,7 @@ func syllables(word: string, is_borrowing = false, is_name = false): seq[Slice[i
       is_glide =
         (pair in DIPHTHONGS_ON and (at == 0 or is_borrowing or is_name)) or
         (pair in DIPHTHONGS_NAME and is_name)
-      size = (if pair in DIPHTHONGS_OFF or is_glide: 2 else: 1)
+      size = (if (pair in DIPHTHONGS_OFF or is_glide) and at + 1 notin breaks: 2 else: 1)
     result.add at .. at + size - 1
     at += size
 
@@ -273,8 +280,8 @@ suite "Chapter 3":
     check "y,ku".refusalRead == some((Refusal.Comma, 1))  # 3.3, pause after `y`; review of #811
     check "ma,e".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma at pause; review of #811
     check "crarcIae".wordsRead == some(@["crarciae"])  # 3.9, `ia` penultimate; constructed
-    check "crarcI,ae".refusalRead ==
-        some((Refusal.Comma, 6))  # 3.3, comma changes no word, and parts stress off; review of #811
+    check "crarcI,ae".wordsRead ==
+        some(@["crarcia", "e"])  # 3.5, comma parts `ia`, so capital stresses `crarcia`; constructed
 
 
   test "Section 3.4":
@@ -291,6 +298,10 @@ suite "Chapter 3":
     for text in ["meiin.", "mei,in.", "me,iin."]:
       check text.wordsRead == some(@["meiin"])  # 3.5, Examples 3.6-7, comma makes no other word
     check ".nu,IOrk.".stressesRead == some(@[some(1)])  # 3.5, comma parts `u` from `io`; Tatoeba
+    check "me,IIn.".stressesRead ==
+        some(@[some(1)])  # 3.5, Example 3.7 with capitals of 4.8 on `ii`; review of #811
+    for text in [".i,UAin.", "da,UArnold."]:
+      check text.stressesRead == some(@[some(1)])  # 3.5, comma groups vowels; review of #811
 
 
   test "Section 3.9":
@@ -487,13 +498,12 @@ suite "Internal: Stream":
     check count_refused >= FLOOR_COMMA_REFUSED  # IX.3, guard keeps refusals in play
 
 
-  test "Comma changes no word text without it reads, but where those words need pause":
+  test "Without capital, comma changes no word text without it reads, but where pause stands":
     var count, count_kept = 0
     for word in @WORDS_BORROWED & @WORDS_NAMED:
-      for c in -1 .. word.high:
-        if c >= 0 and word[c] notin VOWELS_SYLLABLE: continue
+      block:
         let
-          marked = (if c < 0: word else: word.capitalized(c .. c))
+          marked = word
           bare = marked.readStream
         if not bare.is_read: continue
         var
@@ -510,8 +520,23 @@ suite "Internal: Stream":
           else: check words.isNone or words == texts  # 3.3, never "differ solely because of" comma
           inc count
           if words.isSome: inc count_kept
-    check count == COUNT_COMMA_MARKED  # IX.3, guard keeps each comma of each marked word
+    check count == COUNT_COMMA_MARKED  # IX.3, guard keeps each comma of each word
     check count_kept >= FLOOR_COMMA_KEPT  # IX.3, guard keeps commas that read in play
+
+
+  test "Comma grouping vowels of cmene, with capital on each syllable, reads that cmene so":
+    var count = 0
+    for word in WORDS_GROUPED:
+      for at in 1 ..< word.len:
+        if word[at - 1] notin VOWELS_SYLLABLE or word[at] notin VOWELS_SYLLABLE: continue
+        for k, span in word.syllables(is_name = true, breaks = [at]):
+          let
+            marked = word.capitalized(span)
+            text = marked[0 ..< at] & "," & marked[at .. ^1]
+          check text.wordsRead == some(@[word])  # 3.5, comma groups vowels of one name
+          check text.stressesRead == some(@[some(k)])  # 4.8, capital "to preserve" stress
+          inc count
+    check count == COUNT_GROUPED  # IX.3, guard keeps each syllable of each grouping
 
 
   test "Comma between two cmavo that need pause is refused at comma":
