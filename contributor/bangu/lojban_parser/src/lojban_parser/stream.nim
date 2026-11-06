@@ -355,34 +355,19 @@ func readStream*(text: string): ReadingStream =
     let refusal_marks = text.refusalMarks(start, at)
     if refusal_marks.isSome: return refusal_marks.get
 
-    # Choose words by letters and capitals, since no two words "differ solely because" of
-    #   comma (3.3); comma still stands where no pause stands. Commas part syllables only
-    #   where words read no other way, as comma fixes syllables capitals need (3.5).
-    let spelling = text.toSpelling(start, at)
-    var split = spelling.splitChosen(is_parting = false)
-    let is_bare = split.count > 0
-    if not is_bare: split = spelling.splitChosen(is_parting = true)
+    # Choose words that fit every mark: comma parts syllables, as 3.5 groups vowels by it, so
+    #   capitals stress syllables it marks; and no split takes pause where comma stands (3.3).
+    let
+      spelling = text.toSpelling(start, at)
+      split = spelling.splitChosen(is_parting = true)
     if split.count == 0: return spelling.refusalWritten(start)
     if split.count > 1:
       let detail = split.splits.mapIt(it.mapIt(it.text).join(" ")).join(", or ")
       return refuse(Refusal.Split, start, detail)  # 3.3, no one split to infer
-    var words = split.splits[0]
-    let refusal_commas = spelling.refusalCommas(words)
+    let
+      words = split.splits[0]
+      refusal_commas = spelling.refusalCommas(words)
     if refusal_commas.isSome: return refusal_commas.get
-
-    # Read stress of words chosen without commas again with them; comma parting stress off is
-    #   refused at its byte.
-    if is_bare:
-      var lo = 0
-      for i, word in words:
-        let
-          span = lo .. lo + word.text.len - 1
-          again = spelling.occurrenceWritten(span)
-        if again.isNone:
-          let k = toSeq(0 ..< spelling.breaks.len).filterIt(spelling.breaks[it] in span)[0]
-          return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, 3.9
-        words[i] = again.get
-        lo = span.b + 1
 
     # Stop at quotation of text that is not lojban, gap of #814; add each word with its pause.
     for i, word in words:
