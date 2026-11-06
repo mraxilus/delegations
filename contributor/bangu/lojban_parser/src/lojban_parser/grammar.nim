@@ -208,6 +208,7 @@ const
   ]
     ## Constructs grammar reads as one word, which `prose.nim` joins first (rules 1100, 1101).
   COUNT_RULES = 88  ## Formal rules 21.1 gives, rules 1100 and 1101 aside.
+  BOUND_LENGTH = 1 shl 20  ## Bound on least terminals of nonterminal, above any length found.
   DELIMITERS = {'[', ']', '(', ')', '|', '&', '#', '/'}  ## Marks of notation, `...` aside.
 
 
@@ -418,7 +419,6 @@ func constructGrammar(text: string): Grammar {.compileTime.} =
         is_changed = true
 
   # Find least terminals each nonterminal derives, until none lowers; bound keeps sum finite.
-  const BOUND_LENGTH = 1 shl 20
   result.lengths = newSeqWith(result.names.len, BOUND_LENGTH)
   is_changed = true
   while is_changed:
