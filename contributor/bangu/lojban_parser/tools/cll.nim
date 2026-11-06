@@ -124,8 +124,9 @@ func toText(node: XmlNode): string =
   text.toCollapsed
 
 
-func toPageXml(text: string): string =
+func toPageXml*(text: string): string =
   ## Cut each `script` element from page, since script of book holds `&` that XML forbids.
+  ##   `translations.nim` reaches it, to pin page without script server writes for each request.
   var at = 0
   while true:
     let opening = text.find("<script", at)
