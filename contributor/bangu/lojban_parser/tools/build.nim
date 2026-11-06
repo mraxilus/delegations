@@ -13,6 +13,9 @@
 ##   | tatoeba   | read export of Tatoeba named after verb, check its digest against its    |
 ##   |           | pin, write fixed sample and notice under `tests/sample_tatoeba/`, and    |
 ##   |           | print count of each verdict over whole export                            |
+##   | wikipedia | read answers of API of lojban Wikipedia from directory named after verb, |
+##   |           | check their digest against its pin, and write articles and notice under  |
+##   |           | `tests/articles_wikipedia/`                                              |
 ##   | system    | print packages verbs and suites need, one per line                       |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
@@ -31,19 +34,20 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, os, tables]
+import std/[algorithm, os, sequtils, tables]
 
-import ./[cll, lists, tatoeba]
+import ./[cll, lists, tatoeba, wikipedia]
 
 
 const
   USAGE = "Usage: nim r tools/build.nim <lists|head|system>\n" &
       "       nim r tools/build.nim cll <directory>\n" &
-      "       nim r tools/build.nim tatoeba <export>\n"
+      "       nim r tools/build.nim tatoeba <export>\n" &
+      "       nim r tools/build.nim wikipedia <directory>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
-    ("coreutils", "`sha256sum`, which `lists`, `head`, `cll` and `tatoeba` check digest with"),
+    ("coreutils", "`sha256sum`, which `lists`, `head` and three verbs of texts check digest with"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
 
@@ -130,11 +134,28 @@ proc writeTatoeba(path: string): int =
     echo -count, "\t", (if verdict.len == 0: "read" else: verdict)
 
 
+proc writeWikipedia(directory: string): int =
+  ## Write articles of Wikipedia and their notice where digest of answers matches its pin.
+  let
+    articles = readArticles(directory)
+    digests = [("answers of Wikipedia", articles.digest, DIGEST_WIKIPEDIA)]
+  if refuseDigests(digests, "wikipedia.nim") > 0: return 1
+  createDir(PATH_ARTICLES.parentDir)
+  writeFile(PATH_ARTICLES, articles.toModuleArticles)
+  writeFile(PATH_NOTICE_WIKIPEDIA, articles.toNotice)
+  echo PATH_ARTICLES
+  echo PATH_NOTICE_WIKIPEDIA
+  for article in articles.articles:
+    echo article.title, ": paragraphs ", article.paragraphs.len, ", read ",
+        article.paragraphs.countIt(it.verdict.len == 0)
+
+
 proc main(): int =
-  ## Dispatch command named as first argument; `cll` and `tatoeba` take path as second.
+  ## Dispatch command named as first argument; `cll`, `tatoeba` and `wikipedia` take path second.
   let arguments = commandLineParams()
   if arguments.len == 2 and arguments[0] == "cll": return writeCll(arguments[1])
   if arguments.len == 2 and arguments[0] == "tatoeba": return writeTatoeba(arguments[1])
+  if arguments.len == 2 and arguments[0] == "wikipedia": return writeWikipedia(arguments[1])
   if arguments.len != 1:
     stderr.write USAGE
     return 2
