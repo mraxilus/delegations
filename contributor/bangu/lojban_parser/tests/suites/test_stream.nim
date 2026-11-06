@@ -181,7 +181,7 @@ func penultimate(word: string, is_borrowing: bool): int =
 
 func isStressFit(words: openArray[string], kinds: openArray[Kind]): bool =
   ## Test stress of written word, on its own penultimate syllable alone, falls on penultimate of
-  ##   each brivla among words, by class of each (D3 a of #811); `y` not counted (3.9).
+  ##   each brivla among words, by class of each (`D3 a` of #811); `y` not counted (3.9).
   let
     run = words.join("")
     spans = run.syllables
@@ -660,10 +660,10 @@ suite "Internal: Stream":
         text = words.join("")
         texts = text.wordsRead
       if words.isStressFit(words.mapIt(LUT_KIND_BY_WORD[it])):
-        check texts == some(words) or texts == some(@[text])  # D3 a of #811; 4.1, one split
+        check texts == some(words) or texts == some(@[text])  # `D3 a` of #811; 4.1, one split
         if texts == some(words): inc count_joined
       else:
-        check texts != some(words)  # D3 a of #811, brivla before end needs capital
+        check texts != some(words)  # `D3 a` of #811, brivla before end needs capital
         inc count_other
 
       # Capital on each brivla marks each stress, so words read back as them.
@@ -673,7 +673,7 @@ suite "Internal: Stream":
           marked.add word
           continue
         marked.add word.capitalized(word.syllables[word.penultimate(false)])
-      check marked.join("").wordsRead == some(words)  # D3 a of #811; 3.9, capitals mark stress
+      check marked.join("").wordsRead == some(words)  # `D3 a` of #811; 3.9, capitals mark stress
     check count_joined >= FLOOR_JOINED  # IX.3, guard keeps runs that read back
     check count_other >= FLOOR_JOINED_OTHER  # IX.3, guard keeps brivla before end in play
 
@@ -699,8 +699,8 @@ suite "Internal: Stream":
     check "MIbroda".wordsRead == some(@["mibro", "da"])  # 3.9, stress of gismu `mibro`
     check "KLAmaku".wordsRead == some(@["klama", "ku"])  # 3.9, stress fits `klama` alone
     check "klamaku".wordsRead == some(@["klamaku"])  # 4.7, one fu'ivla; constructed
-    check "mibroda".wordsRead == some(@["mi", "broda"])  # D3 a of #811, penultimate of word alone
-    check "lonubroda".wordsRead == some(@["lo", "nu", "broda"])  # D3 a of #811
+    check "mibroda".wordsRead == some(@["mi", "broda"])  # `D3 a` of #811, penultimate of word alone
+    check "lonubroda".wordsRead == some(@["lo", "nu", "broda"])  # `D3 a` of #811
     check ".esperanto".wordsRead == some(@["e", "speranto"])  # 4.1, Example 19.78 "breaks up"
     check "iai".refusalRead == some((Refusal.Split, 0))  # 4.9 rule 3, `.i.ai` or `.ia.i`
     check "ka,i".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma is no pause; constructed

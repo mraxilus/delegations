@@ -19,16 +19,17 @@
 ##       as `lo se .i`.
 ##     Several splits of fewest pauses tie, as `iai` for `.i.ai` or `.ia.i`, and reader refuses
 ##       them as `Split`; written word with no split is refused as `readWord` refuses letters.
-##     Stress takes part, as in speech: capitals must fit each word, so `KLAmaku` reads as
-##       `klama ku`, and `klamaku` as one fu'ivla, stressed on its penultimate syllable.
-##     Comma changes no word: no two words "differ solely because of" comma (3.3). So letters
-##       and capitals choose words, comma left out, where they read. Comma marks "no pause
-##       between" syllables (3.3), so no split takes pause where it stands: `ka,i` is `kai`
-##       with comma refused, never `ka .i`. Each comma is then judged against words chosen,
-##       and one parting stress off them is refused, as `crarcI,ae` is.
-##       Only where words read no other way does comma part syllables, as grouping of vowels
-##       needs it (3.5): `.nu,IORK.` of Example 5.65 is one cmene stressed on `io`, and
-##       `.nuIORK.` is `nu .iork.`.
+##     Stress takes part, as in speech. Written word with no capital is stressed on its own
+##       penultimate syllable alone, and one with capitals on each syllable they mark, as
+##       Architect ruled (`D3 a` on #811). So each brivla holds capital, or ends syllables counted
+##       for stress: `mibroda` reads as `mi broda`, `MIbroda` as `mibro da`, `.esperanto` as
+##       `e speranto` (Example 19.78), and `klamaku` as one fu'ivla.
+##     Comma parts syllables, as 3.5 groups vowels by it, so capitals stress syllables it marks:
+##       `me,IIn.` is one cmene stressed on `ii`. Comma marks "no pause between" syllables
+##       (3.3), so no split takes pause where it stands: `ka,i` is `kai` with comma refused,
+##       never `ka .i`. Each comma is then judged against words chosen.
+##       Cost: comma under capital may make written word split, as `crarcI,ae` reads
+##         `crarcia e` where `crarcIae` reads `crarciae`; with no capital, comma changes no word.
 ##     Cmene stands last in written word: pause follows it (4.9 rule 2), and parts of name join
 ##       into one word with no pause (4.8), so consonant inside written word goes on with name.
 ##       So `bri` is no `br .i`, though `br` alone would read as cmene, as `rl` does (3.4); and
@@ -216,7 +217,7 @@ func occurrenceWritten(
     if stress.isNone: return
 
   # Written word with capitals marks each stress with them; one with none stresses its own
-  #   penultimate syllable alone (D3 a on #811). So brivla holds capital, or no vowel counted
+  #   penultimate syllable alone (`D3 a` on #811). So brivla holds capital, or no vowel counted
   #   for stress follows it in written word.
   if reading.kind in KINDS_BRIVLA:
     if spelling.capitals.len > 0 and stress.isNone: return
