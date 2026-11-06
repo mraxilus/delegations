@@ -4,8 +4,8 @@
 ##     joined, and text no source holds is marked constructed.
 ##   Laws run over cited examples, at each place between their words, and over each cmavo of
 ##     cmavo list (Article IX.3).
-##   Corpus does not cover yet: every example of CLL, which ruling `D1 a` of #815 commits with
-##     notice of CLL.
+##   `test_corpus.nim` reads every example of CLL 1.1 from extract under notice of CLL; suite
+##     here holds units and constructs rules of 19.16 give examples it quotes.
 
 {.experimental: "strictFuncs".}
 
