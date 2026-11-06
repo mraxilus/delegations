@@ -34,13 +34,18 @@ const
     ##   words left out, since text written together writes none.
   FLOOR_JOINED = 2200  ## Least runs read back as same words: 2411 read at seed `2`.
   FLOOR_TIED = 900
-    ## Least runs refused as tie that names them: 1025 read at seed `2`, most of them CV cmavo
-    ##   before CCVCV gismu, which also reads as CVCCV gismu before CV cmavo.
+    ## Least runs refused as tie that names them: 1025 read at seed `2`; 432 of them hold
+    ##   fu'ivla in one split, and others split cmavo and gismu two ways, as `mibroda` does.
   COUNT_COMMA_MARKED = 371
     ## Commas law of marked words reads: each place in each word of `WORDS_BORROWED` and
     ##   `WORDS_NAMED`, with capital on each vowel or none, where text without comma reads.
   FLOOR_COMMA_KEPT = 280  ## Least of them that still read: 294 read, 5 where pause stands.
-  FLOOR_GLIDE_READ = 30  ## Least capitals law of on-glide reads as one brivla: 40 frames hold two.
+  FLOOR_GLIDE_READ = 40
+    ## Least capitals law of on-glide reads as one brivla: 40 read, on penultimate syllable of
+    ##   each on-glide in four frames of two syllables or three.
+  FLOOR_STRESS_OTHER = 600
+    ## Least capitals off penultimate syllable of brivla read as other words: 630 read, as
+    ##   `djAcadyfanta` reads `djaca dy fanta`.
   FLOOR_STRESS = 800
     ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
     ##   850 read at seed `0`.
@@ -51,6 +56,7 @@ const
     ## Diphthongs with on-glide, first in words standing alone, and in names and borrowings
     ##   (3.4, 4.2).
   DIPHTHONGS_NAME = ["iy", "uy"]  ## Diphthongs 3.4 keeps to names.
+  KINDS_BRIVLA = {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}  ## Classes of brivla (4.3).
   WORDS_BORROWED = [
     "spageti", "kuarka", "integrale", "saskrkuarka", "bangrkorea", "zgiee", "crarciae",
     "gackioto",
@@ -154,6 +160,12 @@ func syllables(word: string, is_borrowing = false, is_name = false): seq[Slice[i
       size = (if pair in DIPHTHONGS_OFF or is_glide: 2 else: 1)
     result.add at .. at + size - 1
     at += size
+
+
+func penultimate(word: string, is_borrowing: bool): int =
+  ## Index syllable brivla stresses among syllables of word: penultimate, `y` not counted (3.9).
+  let spans = word.syllables(is_borrowing = is_borrowing)
+  toSeq(0 .. spans.high).filterIt(word[spans[it].a] != 'y')[^2]
 
 
 func capitalized(word: string, span: Slice[int]): string =
@@ -491,7 +503,7 @@ suite "Internal: Stream":
 
 
   test "Capital on penultimate syllable of brivla reads, and on any other never reads as it":
-    var count_read, count_refused = 0
+    var count_read, count_refused, count_other = 0
     for word in concat(WORDS_GISMU, WORDS_LUJVO):  # every gismu, and each random lujvo
       let
         spans = word.syllables
@@ -502,11 +514,24 @@ suite "Internal: Stream":
           check text.stressesRead == some(@[some(k)])  # 3.9, penultimate, `y` not counted
           inc count_read
           continue
-        let words = text.wordsRead
-        check words != some(@[word])  # 3.9, false primary stress, "errors in word resolution"
-        if words.isNone: inc count_refused
+        let reading = text.readStream
+        if not reading.is_read:
+          check (reading.refusal == Refusal.Stress and reading.start == span.a) or
+              reading.refusal == Refusal.Split  # 3.9, at capital; 4.1, or tie of other words
+          inc count_refused
+          continue
+        let texts = reading.occurrences.mapIt(it.text)
+        check texts != @[word]  # 3.9, false primary stress, "errors in word resolution"
+        check texts.join("") == word  # 4.1, other words split letters of word
+        for occurrence in reading.occurrences:
+          if occurrence.stress.isNone or occurrence.reading.kind notin KINDS_BRIVLA: continue
+          let is_borrowing = occurrence.reading.kind == Kind.Fuhivla
+          check occurrence.stress ==
+              some(occurrence.text.penultimate(is_borrowing))  # 3.9, capital fits brivla read
+        inc count_other
     check count_read == WORDS_GISMU.len + WORDS_LUJVO.len  # IX.3, one stress reads in each
     check count_refused >= FLOOR_STRESS_REFUSED  # IX.3, guard keeps refusals in play
+    check count_other >= FLOOR_STRESS_OTHER  # IX.3, guard keeps other words in play
 
 
   test "Capital on syllable of word holding on-glide reads one brivla on penultimate alone":
@@ -520,8 +545,7 @@ suite "Internal: Stream":
           let reading = word.capitalized(span).readStream
           inc count
           if not reading.is_read or reading.occurrences.len != 1: continue
-          if reading.occurrences[0].reading.kind notin {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}:
-            continue
+          if reading.occurrences[0].reading.kind notin KINDS_BRIVLA: continue
           check k == spans.len - 2  # 3.4, diphthong one syllable; 3.9, penultimate
           inc count_read
     check count == COUNT_GLIDE_CAPITALS  # IX.3, guard keeps each syllable of each frame
@@ -544,7 +568,7 @@ suite "Internal: Stream":
       for k, span in word.syllables:
         let text = word.capitalized(span)
         if word[span.a] == 'y':
-          check text.stressesRead != some(@[some(k)])  # 3.9, "y" never stressed
+          check text.refusalRead == some((Refusal.Stress, span.a))  # 3.9, "y" never stressed
         else:
           check text.stressesRead == some(@[some(k)])  # 3.9, cmavo any syllable
 
@@ -556,13 +580,15 @@ suite "Internal: Stream":
       var words: seq[string]
       for i in 1 .. rand(2 .. 3):
         words.add(if i == 1 or rand(1) == 0: WORDS_CMAVO.sample else: WORDS_GISMU.sample)
-      if toSeq(1 .. words.high).anyIt(isPauseNeeded(words[it - 1], words[it])): continue
+      if words.pausesNeeded[1 .. ^1].anyIt(it != Pause.Absent): continue
       let
         text = words.join("")
         reading = text.readStream
       if reading.is_read:
-        let texts = reading.occurrences.mapIt(it.text)
-        check texts == words or texts == @[text]  # 4.1, one split; or one word, as `bai`
+        let
+          texts = reading.occurrences.mapIt(it.text)
+          is_whole = texts == @[text] and reading.occurrences[0].reading.kind == Kind.Fuhivla
+        check texts == words or is_whole  # 4.1, one split; or one fu'ivla, as `klamaku` (4.7)
         if texts == words: inc count_joined
       else:
         check reading.refusal == Refusal.Split  # 3.9, only stress tells them apart
