@@ -43,7 +43,12 @@
 ##       after word other than `la`, `lai`, `la'i` or `doi`; 5 and 4.2, stressed last syllable
 ##       before brivla or before stressed first syllable; 6, `Cy` before word not `Cy`; and
 ##       pause after `y` (4.2). First word takes pause where rule 3 or 4 needs one.
-##     Rule 7 holds text that `zoi` and `la'o` quote, which #814 reads; reader refuses it as gap.
+##     Rule 7 sets pause on each side of text that `zoi` and `la'o` quote. Reader holds that
+##       text whole as one occurrence, `Foreign`, up to written word spelling delimiter again;
+##       text holding delimiter is refused as `Quotation`, since delimiter is "not found" in it
+##       (19.10), so `zoi gy. gyrations .gy.` is refused, as Example 19.50 is as written.
+##   Quotation `zo` makes, or `lo'u` up to `le'u`, quotes words, so `zoi` and `fa'o` inside it
+##     act on none (19.9, 19.10). Stream stops after `fa'o` no quotation holds (19.15).
 ##   Comma is never required (3.3), so word reads without it. Comma breaks syllables, so each
 ##     stretch it bounds, up to next comma, apostrophe or edge of word, holds vowel, `y`, or
 ##     consonant that may be syllabic (3.4). In cmavo, gismu and lujvo, vowels side by side make
@@ -85,7 +90,7 @@ type
     of true:
       occurrences*: seq[Occurrence]  ## Words of stream in order; empty for marks alone.
     of false:
-      refusal*: Refusal  ## Rule refusing stream, or gap holding it.
+      refusal*: Refusal  ## Rule refusing stream.
       start*: int  ## Byte of stream where offending word or mark opens.
       detail*: string  ## Offending character, form 4.11 gives, or two splits; empty otherwise.
 
@@ -316,20 +321,87 @@ func refusalCommas(spelling: Spelling, words: openArray[Occurrence]): Option[Rea
   none(ReadingStream)
 
 
+func isForeign(word: Occurrence): bool =
+  ## Test occurrence holds text that `zoi` or `la'o` quotes, which is no lojban (4.9 rule 7).
+  not word.reading.is_word and word.reading.refusal == Refusal.Foreign
+
+
 func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period: bool): Pause =
   ## Name pause before word that follows `occurrences`: period writes it, or rule needs it.
+  ##   Pause stands on each side of text quoted that is no lojban (4.9 rule 7).
   if is_period: return Pause.Written
   let is_needed =
-    if occurrences.len == 0: word.isPauseNeededFirst else: isPauseNeeded(occurrences[^1], word)
+    if occurrences.len == 0: word.isPauseNeededFirst
+    elif occurrences[^1].isForeign or word.isForeign: true
+    else: isPauseNeeded(occurrences[^1], word)
   if is_needed: Pause.Inferred else: Pause.Absent
+
+
+func wordsWritten(text: string, start, finish: int): ReadingStream =
+  ## Read written word of bytes `start ..< finish` as its words, pause left unset; refuse mark,
+  ##   letters or split no rule admits.
+  let refusal_marks = text.refusalMarks(start, finish)
+  if refusal_marks.isSome: return refusal_marks.get
+
+  # Choose words by letters and capitals, since no two words "differ solely because" of
+  #   comma (3.3); comma still stands where no pause stands. Commas part syllables only
+  #   where words read no other way, as comma fixes syllables capitals need (3.5).
+  let spelling = text.toSpelling(start, finish)
+  var split = spelling.splitChosen(is_parting = false)
+  let is_bare = split.count > 0
+  if not is_bare: split = spelling.splitChosen(is_parting = true)
+  if split.count == 0: return spelling.refusalWritten(start)
+  if split.count > 1:
+    let detail = split.splits.mapIt(it.mapIt(it.text).join(" ")).join(", or ")
+    return refuse(Refusal.Split, start, detail)  # 3.3, no one split to infer
+  var words = split.splits[0]
+  let refusal_commas = spelling.refusalCommas(words)
+  if refusal_commas.isSome: return refusal_commas.get
+
+  # Read stress of words chosen without commas again with them; comma parting stress off is
+  #   refused at its byte.
+  if is_bare:
+    var lo = 0
+    for i, word in words:
+      let
+        span = lo .. lo + word.text.len - 1
+        again = spelling.occurrenceWritten(span)
+      if again.isNone:
+        let k = toSeq(0 ..< spelling.breaks.len).filterIt(spelling.breaks[it] in span)[0]
+        return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, 3.9
+      words[i] = again.get
+      lo = span.b + 1
+  ReadingStream(is_read: true, occurrences: words)
+
+
+func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
+  ## Find bytes of text quoted from `start` up to next written word spelling `delimiter`, marks
+  ##   around it left out; none where no such word follows (19.10).
+  var at = start
+  while at < text.len:
+    if text[at] in MARKS_BOUNDARY:
+      inc at
+      continue
+    let first = at
+    while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
+    if text[first ..< at].toLowerAscii.replace(",", "") != delimiter: continue
+    var (a, b) = (start, first - 1)
+    while a <= b and text[a] in MARKS_BOUNDARY: inc a
+    while b >= a and text[b] in MARKS_BOUNDARY: dec b
+    return some(a .. b)
+  none(Slice[int])
 
 
 func readStream*(text: string): ReadingStream =
   ## Read text as its words by rules of CLL alone, each with pause before it and stress it
   ##   marks; refuse at first word or mark that no rule admits, naming its byte.
+  ##   Text `zoi` or `la'o` quotes stands as one occurrence, whole and as written; quotation
+  ##     `zo` makes, or `lo'u` up to `le'u`, quotes words, so their cmavo act on none (19.9).
+  ##   Stream stops after `fa'o` that no quotation holds, which ends parsable input (21.1).
   var
     occurrences: seq[Occurrence]
-    is_period = false
+    is_period, is_quoting, is_lohu = false
+    zoi, closing = none(int)  # quotation whose delimiter comes next; delimiter closing text
     at = 0
   while at < text.len:
     # Pass marks between words, noting period.
@@ -338,46 +410,59 @@ func readStream*(text: string): ReadingStream =
       inc at
       continue
 
-    # Take written word up to next mark between words, and refuse mark no rule admits.
+    # Take written word up to next mark between words, and read its words.
     let start = at
     while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
-    let refusal_marks = text.refusalMarks(start, at)
-    if refusal_marks.isSome: return refusal_marks.get
+    let written = text.wordsWritten(start, at)
+    if not written.is_read: return written
+    let words = written.occurrences
 
-    # Choose words by letters and capitals, since no two words "differ solely because" of
-    #   comma (3.3); comma still stands where no pause stands. Commas part syllables only
-    #   where words read no other way, as comma fixes syllables capitals need (3.5).
-    let spelling = text.toSpelling(start, at)
-    var split = spelling.splitChosen(is_parting = false)
-    let is_bare = split.count > 0
-    if not is_bare: split = spelling.splitChosen(is_parting = true)
-    if split.count == 0: return spelling.refusalWritten(start)
-    if split.count > 1:
-      let detail = split.splits.mapIt(it.mapIt(it.text).join(" ")).join(", or ")
-      return refuse(Refusal.Split, start, detail)  # 3.3, no one split to infer
-    var words = split.splits[0]
-    let refusal_commas = spelling.refusalCommas(words)
-    if refusal_commas.isSome: return refusal_commas.get
+    # Read delimiter closing text quoted: that written word alone, spelled as delimiter (19.10).
+    if closing.isSome:
+      if words.len != 1 or words[0].text != occurrences[closing.get].text:
+        return refuse(Refusal.Quotation, start)
+      var occurrence = words[0]
+      occurrence.pause = (if is_period: Pause.Written else: Pause.Inferred)  # 4.9 rule 7
+      occurrences.add occurrence
+      (closing, is_period) = (none(int), false)
+      continue
 
-    # Read stress of words chosen without commas again with them; comma parting stress off is
-    #   refused at its byte.
-    if is_bare:
-      var lo = 0
-      for i, word in words:
-        let
-          span = lo .. lo + word.text.len - 1
-          again = spelling.occurrenceWritten(span)
-        if again.isNone:
-          let k = toSeq(0 ..< spelling.breaks.len).filterIt(spelling.breaks[it] in span)[0]
-          return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, 3.9
-        words[i] = again.get
-        lo = span.b + 1
-
-    # Stop at quotation of text that is not lojban, gap of #814; add each word with its pause.
+    # Add each word with its pause, and follow quotation it opens or closes.
     for i, word in words:
-      if word.reading.selmaho == some(Selmaho.Zoi): return refuse(Refusal.Foreign, word.start)
       var occurrence = word
       occurrence.pause = occurrences.pauseBefore(occurrence, is_period = i == 0 and is_period)
       occurrences.add occurrence
+
+      # Delimiter ends its written word, and text it quotes runs to it again (19.10).
+      if zoi.isSome:
+        if i < words.high: return refuse(Refusal.Quotation, words[i + 1].start)
+        let span = text.quoted(at, word.text)
+        if span.isNone: return refuse(Refusal.Quotation, occurrences[zoi.get].start)
+        let quotation = text[span.get]
+        if word.text in quotation.toLowerAscii:
+          return refuse(Refusal.Quotation, span.get.a)  # 19.10, delimiter "not found" in text
+        occurrences.add Occurrence(
+          start: span.get.a, text: quotation, stress: none(int),
+          pause: (if '.' in text[at ..< span.get.a]: Pause.Written else: Pause.Inferred),
+          reading: Reading(is_word: false, refusal: Refusal.Foreign),
+        )
+        (zoi, closing, at) = (none(int), some(occurrences.high - 1), span.get.b + 1)
+        break
+
+      # Word after `zo` is quoted; `lo'u` quotes words up to `le'u`, but `zo le'u` (19.9).
+      if is_quoting:
+        is_quoting = false
+        continue
+      let selmaho = word.reading.selmaho
+      if is_lohu:
+        if selmaho == some(Selmaho.Zo): is_quoting = true
+        elif selmaho == some(Selmaho.Lehu): is_lohu = false
+        continue
+      if selmaho == some(Selmaho.Zo): is_quoting = true
+      elif selmaho == some(Selmaho.Lohu): is_lohu = true
+      elif selmaho == some(Selmaho.Zoi): zoi = some(occurrences.high)
+      elif selmaho == some(Selmaho.Faho):
+        return ReadingStream(is_read: true, occurrences: occurrences)  # 19.15, end of input
     is_period = false
+  if zoi.isSome: return refuse(Refusal.Quotation, occurrences[zoi.get].start)  # 19.10, no delimiter
   ReadingStream(is_read: true, occurrences: occurrences)
