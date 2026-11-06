@@ -36,6 +36,10 @@ const
   FLOOR_TIED = 900
     ## Least runs refused as tie that names them: 1025 read at seed `2`, most of them CV cmavo
     ##   before CCVCV gismu, which also reads as CVCCV gismu before CV cmavo.
+  COUNT_COMMA_MARKED = 371
+    ## Commas law of marked words reads: each place in each word of `WORDS_BORROWED` and
+    ##   `WORDS_NAMED`, with capital on each vowel or none, where text without comma reads.
+  FLOOR_COMMA_KEPT = 280  ## Least of them that still read: 294 read, 5 where pause stands.
   FLOOR_GLIDE_READ = 30  ## Least capitals law of on-glide reads as one brivla: 40 frames hold two.
   FLOOR_STRESS = 800
     ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
@@ -47,6 +51,14 @@ const
     ## Diphthongs with on-glide, first in words standing alone, and in names and borrowings
     ##   (3.4, 4.2).
   DIPHTHONGS_NAME = ["iy", "uy"]  ## Diphthongs 3.4 keeps to names.
+  WORDS_BORROWED = [
+    "spageti", "kuarka", "integrale", "saskrkuarka", "bangrkorea", "zgiee", "crarciae",
+    "gackioto",
+  ]
+    ## Fu'ivla commas and capitals mark: Examples 4.46, 4.50, 4.56, prefix method of 4.7, and
+    ##   three that review of #811 found, whose vowels side by side comma may part; constructed.
+  WORDS_NAMED = ["djim", "katrinas", "uiliam", "xuakin", "meiris", "vauensas"]
+    ## Cmene commas and capitals mark: Examples 4.57, 4.61, and Lojbanized names of 4.8.
   FRAMES_NAME = ["k_n", "dj_m", "m_tan", "s_lis"]
     ## Letters of cmene around diphthong `_` of name, which make one syllable or two; constructed.
   FRAMES_GLIDE = ["br_", "kobr_", "spag_", "br_na", "kobr_na"]
@@ -244,6 +256,9 @@ suite "Chapter 3":
     check ".i'ai'i'ai'on.".wordsRead == some(@["i'ai'i'ai'on"])  # 3.3, Example 3.4, one cmene
     check ",klama".refusalRead == some((Refusal.Comma, 0))  # 3.3, comma within word; constructed
     check "kla,,ma".refusalRead == some((Refusal.Comma, 3))  # 3.3, comma separates syllables
+    check "crarcIae".wordsRead == some(@["crarciae"])  # 3.9, `ia` penultimate; constructed
+    check "crarcI,ae".refusalRead ==
+        some((Refusal.Comma, 6))  # 3.3, comma changes no word, and parts stress off; review of #811
 
 
   test "Section 3.4":
@@ -446,6 +461,33 @@ suite "Internal: Stream":
           inc count_refused
     check count_read >= FLOOR_COMMA_READ  # IX.3, guard keeps most draws
     check count_refused >= FLOOR_COMMA_REFUSED  # IX.3, guard keeps refusals in play
+
+
+  test "Comma changes no word text without it reads, but where those words need pause":
+    var count, count_kept = 0
+    for word in @WORDS_BORROWED & @WORDS_NAMED:
+      for c in -1 .. word.high:
+        if c >= 0 and word[c] notin VOWELS_SYLLABLE: continue
+        let
+          marked = (if c < 0: word else: word.capitalized(c .. c))
+          bare = marked.readStream
+        if not bare.is_read: continue
+        var
+          pauses: seq[int]  # letter before which words read without comma take pause
+          lo = 0
+        for occurrence in bare.occurrences:
+          if lo > 0 and occurrence.pause != Pause.Absent: pauses.add lo
+          lo += occurrence.text.len
+        let texts = some(bare.occurrences.mapIt(it.text))
+        for at in 1 ..< word.len:
+          if '\'' in [word[at - 1], word[at]]: continue
+          let words = (marked[0 ..< at] & "," & marked[at .. ^1]).wordsRead
+          if at in pauses: check words != texts  # 3.3, comma marks "no pause between" syllables
+          else: check words.isNone or words == texts  # 3.3, never "differ solely because of" comma
+          inc count
+          if words.isSome: inc count_kept
+    check count == COUNT_COMMA_MARKED  # IX.3, guard keeps each comma of each marked word
+    check count_kept >= FLOOR_COMMA_KEPT  # IX.3, guard keeps commas that read in play
 
 
   test "Capital on penultimate syllable of brivla reads, and on any other never reads as it":
