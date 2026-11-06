@@ -611,6 +611,17 @@ and `Grammar` the rule of 21.1 that stops. `Selmaho` names a cmavo with no selma
 and `Construct` name a quotation, or a cmavo of 19.16, that the words cannot complete. Verified by
 `suites/test_prose.nim`.
 
+**The grammar settles no split that ties.** The stream gives the words before the grammar reads
+them. So a tie that the stream refuses refuses the text as `Stream`, though one tied split alone
+may read. The Architect ruled so (`D4 a` on #811). Verified by `suites/test_prose.nim`, in the
+suite `Internal: Prose`.
+
+The rules of chapter 4 split a stream by the letters, stress and pauses of its words (4.1). A
+split that the grammar chose could read as the writer did not mean. `la .lauras. klama` ties as
+`lau .ras.` or `la .uras.`, and only `la la .uras. klama` reads. That is a fragment of one sumti,
+where the text means a name, `lauras`, which 4.8 forbids. Verified by `suites/test_prose.nim`, in
+the suite `Internal: Prose`.
+
 ## What cmavo bind
 
 **A tanru folds into tanru units, and each tanru unit is one part with the cmavo that bind it.**
