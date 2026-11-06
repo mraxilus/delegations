@@ -145,11 +145,12 @@ nim r tools/build.nim system                      # print packages verbs and sui
 
 The build needs the compiler that `lojban_parser.nimble` pins, and the standard library alone.
 The verbs `lists` and `head`, and the tests of outside texts, also need the Debian package
-`lojban-common`, and `sha256sum` of `coreutils`. The verb `system` declares both. The verb `cll`
-needs `sha256sum`, and the pages of CLL 1.1 saved in one directory, each under its own name. The
-verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decompressed. The verb `wikipedia`
-needs `sha256sum` and the saved answers of the API of the Wikipedia. The verb `translations` needs
-`curl` and `sha256sum`, and the verb `system` declares both.
+`lojban-common`, and `sha256sum` of `coreutils`. The verb `system` declares both.
+
+The verb `cll` needs `sha256sum`, and the pages of CLL 1.1 saved in one directory, each under its
+own name. The verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decompressed. The verb
+`wikipedia` needs `sha256sum` and the saved answers of the API of the Wikipedia. The verb
+`translations` needs `curl` and `sha256sum`, and the verb `system` declares both.
 
 ## Pages
 
