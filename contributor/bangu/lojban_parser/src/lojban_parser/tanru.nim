@@ -249,7 +249,9 @@ func readWord*(text: string): Reading =
   # Sort class by letters, as 4.3 tells cmene, brivla and cmavo apart.
   if text[^1].isConsonant: return readCmene(text)
   if text.isBrivla:
-    if text.syllables < 2: return refuse(Refusal.Shape)  # 4.3, penultimate stress needs two
+    # 4.3, penultimate stress needs two syllables; counted as fu'ivla, since gismu and lujvo
+    #   hold no on-glide
+    if text.syllables(Kind.Fuhivla) < 2: return refuse(Refusal.Shape)
     if text.isGismu: return readWhole(text, Kind.Gismu)
     return readLujvo(text)
   if not text.isPairHeld:
@@ -258,7 +260,7 @@ func readWord*(text: string): Reading =
     return refuse(Refusal.Shape)  # no cmavo of 4.2, nor cmavo run together, as `cia` (3.4)
 
   # Pair past fifth letter, or `y` last: no class of 4.3, as one word. `readStream` splits such
-  #   text where it is words run together, as `lonubroda`.
+  #   text where it is words run together, as `lonubarda`.
   refuse(Refusal.Shape)
 
 

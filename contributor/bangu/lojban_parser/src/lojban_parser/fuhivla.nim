@@ -16,7 +16,8 @@ import ./[clusters, forms, lujvo]
 
 func isBrivlaJoinable(piece: string): bool =
   ## Test piece reads as one gismu or lujvo by form, which may end combination.
-  piece.isBrivla and piece.syllables >= 2 and (piece.isGismu or piece.splitLujvo.len > 0)
+  piece.isBrivla and piece.syllables(Kind.Lujvo) >= 2 and
+      (piece.isGismu or piece.splitLujvo.len > 0)
 
 
 func combination*(text: string): Option[seq[string]] =

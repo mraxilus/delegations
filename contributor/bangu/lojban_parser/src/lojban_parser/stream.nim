@@ -15,19 +15,24 @@
 ##     admitted. Else reader splits it into words, as Architect ruled on #811: 4.1 says sounds
 ##     of stream split one way alone, and 3.3 lets correct text leave period out.
 ##     Split chosen needs fewest pauses that rules need and text does not write, so period left
-##       out is inferred only where letters read no other way: `secusku` reads as `se cusku`,
-##       never as `secusk. .u`.
+##       out is inferred only where letters read no other way: `losei` reads as `lo sei`, never
+##       as `lo se .i`.
 ##     Several splits of fewest pauses tie, as `iai` for `.i.ai` or `.ia.i`, and reader refuses
 ##       them as `Split`; written word with no split is refused as `readWord` refuses letters.
 ##     Stress takes part, as in speech: capitals must fit each word, so `KLAmaku` reads as
 ##       `klama ku`, and `klamaku` as one fu'ivla, stressed on its penultimate syllable.
-##     Commas take no part: "no two Lojban words differ solely because of" comma (3.3). So
-##       letters and capitals choose words, and each comma is then judged against them: it
-##       may stand between two words, but never where pause must stand, since comma "cannot
-##       be pronounced as pause" (3.3); so `ka,i` is `kai` with comma refused, never `ka .i`.
+##     Comma changes no word: no two words "differ solely because of" comma (3.3). So letters
+##       and capitals choose words, comma left out, where they read. Comma marks "no pause
+##       between" syllables (3.3), so no split takes pause where it stands: `ka,i` is `kai`
+##       with comma refused, never `ka .i`. Each comma is then judged against words chosen,
+##       and one parting stress off them is refused, as `crarcI,ae` is.
+##       Only where words read no other way does comma part syllables, as grouping of vowels
+##       needs it (3.5): `.nu,IORK.` of Example 5.65 is one cmene stressed on `io`, and
+##       `.nuIORK.` is `nu .iork.`.
 ##     Cmene stands last in written word: pause follows it (4.9 rule 2), and parts of name join
 ##       into one word with no pause (4.8), so consonant inside written word goes on with name.
-##       So `bri` is no `br .i`, though `br` alone would read as cmene, as `rl` does (3.4).
+##       So `bri` is no `br .i`, though `br` alone would read as cmene, as `rl` does (3.4); and
+##       `secusku` is `se cusku`, never `secusk .u`.
 ##     Cost: CLL presents no algorithm for split (4.1), so split is reader's, built from rules
 ##       of 3.9, 4.2, 4.7, 4.8 and 4.9. It tries each word and each word before it, so time grows
 ##       with cube of length of written word (expected); words written apart skip it.
@@ -110,30 +115,11 @@ const
     ## Classes stressed on penultimate syllable alone (3.9, 4.7).
   KINDS_DIPHTHONG = {Kind.Cmavo, Kind.Gismu, Kind.Lujvo}
     ## Classes whose vowels side by side make diphthong, so comma may not part them (3.4).
-  KINDS_GLIDE = {Kind.Fuhivla, Kind.Cmene}
-    ## Classes holding on-glide anywhere as diphthong; cmavo holds it first alone (3.4, 4.2).
 
 
 func refuse(refusal: Refusal, start: int, detail = ""): ReadingStream =
   ## Build reading that refuses stream at byte `start`.
   ReadingStream(is_read: false, refusal: refusal, start: start, detail: detail)
-
-
-func nuclei(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[int]] =
-  ## Find nucleus of each syllable of word of class `kind`: vowel or `y` alone, or diphthong.
-  ##   Comma before letter of `breaks` parts two vowels into two syllables (3.5).
-  var at = 0
-  while at < text.len:
-    if text[at] notin VOWELS_NUCLEUS:
-      inc at
-      continue
-    let
-      pair = text[at .. min(at + 1, text.high)]
-      is_glide = pair in DIPHTHONGS_CMAVO and (kind in KINDS_GLIDE or at == 0)
-      is_parted = at + 1 in breaks
-      size = (if (pair in DIPHTHONGS or is_glide) and not is_parted: 2 else: 1)
-    result.add at .. at + size - 1
-    at += size
 
 
 func isPauseNeeded(prior, next: Occurrence): bool =
@@ -206,9 +192,12 @@ func nucleusStressed(word: string, kind: Kind, capitals, breaks: openArray[int])
   some(touched[0])
 
 
-func occurrenceWritten(spelling: Spelling, span: Slice[int]): Option[Occurrence] =
+func occurrenceWritten(
+    spelling: Spelling, span: Slice[int], is_parting = true
+): Option[Occurrence] =
   ## Read letters of `span` as one word, with stress its capitals mark; none where no word
-  ##   reads, or where its capitals break rule of 3.9. Commas judge no word; pause left unset.
+  ##   reads, or where its capitals break rule of 3.9. Commas part syllables where
+  ##   `is_parting`, and judge no word otherwise; pause left unset.
   let
     piece = spelling.letters[span]
     reading = piece.readWord
@@ -217,7 +206,7 @@ func occurrenceWritten(spelling: Spelling, span: Slice[int]): Option[Occurrence]
   # Read stress capitals mark, commas inside breaking run, and refuse stress 3.9 does not admit.
   var capitals, breaks: seq[int]
   for b in spelling.breaks:
-    if b > span.a and b <= span.b: breaks.add b - span.a
+    if is_parting and b > span.a and b <= span.b: breaks.add b - span.a
   for c in spelling.capitals:
     if c in span: capitals.add c - span.a
   var stress = none(int)
@@ -227,9 +216,10 @@ func occurrenceWritten(spelling: Spelling, span: Slice[int]): Option[Occurrence]
   some(Occurrence(start: spelling.places[span.a], text: piece, stress: stress, reading: reading))
 
 
-func splitWritten(spelling: Spelling): Split =
+func splitWritten(spelling: Spelling, is_parting: bool): Split =
   ## Split written word into words with fewest pauses that rules need and text does not write
-  ##   (3.3, 4.9); count splits of fewest pauses, two standing for more.
+  ##   (3.3, 4.9), and none where comma stands; count splits of fewest pauses, two standing for
+  ##   more. Commas part syllables where `is_parting`.
   ##   `words[j][i]` holds word of letters `j ..< i`, and `scores[j][i]` splits ending in it.
   let n = spelling.letters.len
   var
@@ -239,18 +229,21 @@ func splitWritten(spelling: Spelling): Split =
   # Score each word by fewest pauses of splits reaching it, counting ties.
   for i in 1 .. n:
     for j in 0 ..< i:
-      let word = spelling.occurrenceWritten(j .. i - 1)
+      let word = spelling.occurrenceWritten(j .. i - 1, is_parting)
       if word.isNone: continue
       if word.get.reading.kind == Kind.Cmene and i < n: continue  # 4.8, cmene stands last
       words[j][i] = word
       if j == 0:
         scores[j][i] = some(Score(pauses: 0, ties: 1))
         continue
+      let is_comma = j in spelling.breaks
       for k in 0 ..< j:
         if scores[k][j].isNone: continue
+        let is_needed = isPauseNeeded(words[k][j].get, word.get)
+        if is_needed and is_comma: continue  # 3.3, comma marks "no pause between" syllables
         let
           score = scores[k][j].get
-          pauses = score.pauses + ord(isPauseNeeded(words[k][j].get, word.get))
+          pauses = score.pauses + ord(is_needed)
         if scores[j][i].isNone or pauses < scores[j][i].get.pauses:
           scores[j][i] = some(Score(pauses: pauses, ties: score.ties, befores: @[k]))
         elif pauses == scores[j][i].get.pauses:
@@ -280,6 +273,14 @@ func splitWritten(spelling: Spelling): Split =
       continue
     for before in scores[start][finish].get.befores.reversed:
       paths.add path & (before, start)
+
+
+func splitChosen(spelling: Spelling, is_parting: bool): Split =
+  ## Choose words of written word: one word where letters read whole, else splits of fewest
+  ##   pauses; commas part syllables where `is_parting`.
+  let whole = spelling.occurrenceWritten(0 .. spelling.letters.high, is_parting)
+  if whole.isSome: return Split(splits: @[@[whole.get]], count: 1)
+  spelling.splitWritten(is_parting)
 
 
 func refusalWritten(spelling: Spelling, start: int): ReadingStream =
@@ -343,21 +344,34 @@ func readStream*(text: string): ReadingStream =
     let refusal_marks = text.refusalMarks(start, at)
     if refusal_marks.isSome: return refusal_marks.get
 
-    # Read written word as one word where it can, else split it into words.
-    let
-      spelling = text.toSpelling(start, at)
-      whole = spelling.occurrenceWritten(0 .. spelling.letters.high)
-    var words: seq[Occurrence]
-    if whole.isSome: words = @[whole.get]
-    else:
-      let split = spelling.splitWritten
-      if split.count == 0: return spelling.refusalWritten(start)
-      if split.count > 1:
-        let detail = split.splits.mapIt(it.mapIt(it.text).join(" ")).join(", or ")
-        return refuse(Refusal.Split, start, detail)  # 3.3, no one split to infer
-      words = split.splits[0]
+    # Choose words by letters and capitals, since no two words "differ solely because" of
+    #   comma (3.3); comma still stands where no pause stands. Commas part syllables only
+    #   where words read no other way, as comma fixes syllables capitals need (3.5).
+    let spelling = text.toSpelling(start, at)
+    var split = spelling.splitChosen(is_parting = false)
+    let is_bare = split.count > 0
+    if not is_bare: split = spelling.splitChosen(is_parting = true)
+    if split.count == 0: return spelling.refusalWritten(start)
+    if split.count > 1:
+      let detail = split.splits.mapIt(it.mapIt(it.text).join(" ")).join(", or ")
+      return refuse(Refusal.Split, start, detail)  # 3.3, no one split to infer
+    var words = split.splits[0]
     let refusal_commas = spelling.refusalCommas(words)
     if refusal_commas.isSome: return refusal_commas.get
+
+    # Read stress of words chosen without commas again with them; comma parting stress off is
+    #   refused at its byte.
+    if is_bare:
+      var lo = 0
+      for i, word in words:
+        let
+          span = lo .. lo + word.text.len - 1
+          again = spelling.occurrenceWritten(span)
+        if again.isNone:
+          let k = toSeq(0 ..< spelling.breaks.len).filterIt(spelling.breaks[it] in span)[0]
+          return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, 3.9
+        words[i] = again.get
+        lo = span.b + 1
 
     # Stop at quotation of text that is not lojban, gap of #814; add each word with its pause.
     for i, word in words:

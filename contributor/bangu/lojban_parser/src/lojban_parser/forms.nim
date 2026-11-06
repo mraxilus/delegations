@@ -14,8 +14,8 @@
 ##   |--------|----------|----------------------------------------------|-------------|
 ##
 ##   Sibling `lojban_tagger/src/lojban_tagger/forms.nim` holds earlier copy, without `Kind`,
-##     `isCmavo`, `splitCompound`, `syllables`, and rules of cmene, fu'ivla and pauses, until
-##     #809 drops it (II.9).
+##     `isCmavo`, `splitCompound`, `nuclei`, `syllables`, and rules of cmene, fu'ivla and
+##     pauses, until #809 drops it (II.9).
 ##   Notation of CLL is canonical spelling (Article III.1): C is consonant, V is vowel, `/`
 ##     marks medial pair that need only be permissible (3.6), adjacent CC at start must be
 ##     initial pair (3.7). Members are Pascal case of that notation (V.11).
@@ -66,7 +66,8 @@ const
   DIPHTHONGS* = ["ai", "ei", "oi", "au"]
     ## Vowel pairs VV stands for unbroken (4.1 rule 2): CVV rafsi (4.6) and cmavo (4.2) hold them.
   DIPHTHONGS_CMAVO* = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
-    ## Ten diphthongs 4.2 adds for cmavo of VV form: on-glides 3.4 keeps to words standing alone.
+    ## Ten diphthongs 4.2 adds for cmavo of VV form: on-glides 3.4 keeps to words standing alone,
+    ##   names and borrowings.
   FORMS_SHORT* = {Form.Cvc, Form.Ccv, Form.Cvv}  ## Three-letter rafsi, apostrophe aside (4.6).
   FORMS_UNREDUCED* = {Form.Cvcc, Form.Ccvc}  ## 4-letter rafsi, gismu less final vowel (4.6).
   FORMS_GISMU* = {Form.Cvccv, Form.Ccvcv}  ## Shapes of gismu, and of 5-letter rafsi (4.4).
@@ -78,6 +79,9 @@ const
     ## Letters cmene holds only after consonant, else it breaks up into words (4.8); `lai` and
     ##   `la'i` open with `la`, so ban on `la` holds them too.
   VOWELS_SYLLABLE = VOWELS + {'y'}  ## Letters each making syllable: five vowels, and `y` (3.4).
+  KINDS_GLIDE = {Kind.Fuhivla, Kind.Cmene}
+    ## Classes holding on-glide anywhere as diphthong, as borrowing and name (3.4).
+  DIPHTHONGS_NAME = ["iy", "uy"]  ## Diphthongs 3.4 keeps to names, `y` second.
 
 
 
@@ -129,12 +133,31 @@ func isBrivla*(text: string): bool =
   false
 
 
-func syllables*(text: string): int =
-  ## Count syllables: each vowel, `y` included, is one, and diphthong of 4.1 joins two (3.4).
-  for i, letter in text:
-    if letter notin VOWELS_SYLLABLE: continue
-    if i > 0 and text[i - 1 .. i] in DIPHTHONGS: continue
-    inc result
+func nuclei*(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[int]] =
+  ## Find nucleus of each syllable of word of class `kind`: vowel or `y` alone, or diphthong,
+  ##   which is always one syllable (3.4); vowels pair from left (3.5). On-glide is diphthong
+  ##   anywhere in fu'ivla and cmene, and first in cmavo alone; `iy` and `uy` in cmene alone
+  ##   (3.4, 4.2).
+  ##   Comma before letter of `breaks` parts two vowels into two syllables (3.5).
+  var at = 0
+  while at < text.len:
+    if text[at] notin VOWELS_SYLLABLE:
+      inc at
+      continue
+    let
+      pair = text[at .. min(at + 1, text.high)]
+      is_glide =
+        (pair in DIPHTHONGS_CMAVO and (kind in KINDS_GLIDE or at == 0)) or
+        (pair in DIPHTHONGS_NAME and kind == Kind.Cmene)
+      is_parted = at + 1 in breaks
+      size = (if (pair in DIPHTHONGS or is_glide) and not is_parted: 2 else: 1)
+    result.add at .. at + size - 1
+    at += size
+
+
+func syllables*(text: string, kind: Kind): int =
+  ## Count syllables of word of class `kind`: one to each nucleus, `y` included (3.4).
+  text.nuclei(kind).len
 
 
 func isCmavo*(text: string): bool =

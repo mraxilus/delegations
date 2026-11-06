@@ -30,7 +30,7 @@ import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
 import ../../src/lojban_parser/[dictionary, forms, fuhivla, lujvo, selmaho, tanru]
-import ../../src/lojban_parser/lists/gismu
+import ../../src/lojban_parser/lists/[cmavo, gismu]
 import ./rafsi_random
 
 
@@ -56,8 +56,16 @@ const
   SAMPLES_FORMS = 2000  ## Random lujvo of rafsi drawn from letters of each form, seeded.
   SAMPLES_LETTERS = 20000
     ## Random strings of five to ten letters, consonant one time in two, that class law reads.
-  FLOOR_FUHIVLA = 1400  ## Least of them reading as fu'ivla: 1546 read at seed `0`.
+  FLOOR_FUHIVLA = 1400  ## Least of them reading as fu'ivla: 1545 read at seed `0`.
   FLOOR_CMENE = 4800  ## Least of them reading as cmene: 5043 read at seed `0`.
+  SAMPLES_JOINED = 2000
+    ## Random joins of one or two listed cmavo, opening with consonant and `y` aside, before
+    ##   listed gismu of form CCVCV, seeded; no rule of 4.9 needs pause between them, and pair
+    ##   opening gismu falls in first five letters of join as brivla holds one (4.3).
+  FLOOR_JOINED = 140
+    ## Least of them refused as combination: 156 read at seed `3`; most others read lujvo of
+    ##   wrong hyphen, or pair past fifth letter.
+  CONSONANTS_LETTERS = "bcdfgjklmnprstvxz"  ## Seventeen consonants of 3.1.
   FLOOR_UNASSIGNED = 1700
     ## Least of them holding rafsi list assigns to no word: 1743 read at seed `0`, since most
     ## letters of each form name no word.
@@ -91,6 +99,13 @@ const
     var words: seq[Word]
     for i, entry in LIST_GISMU:
       if not entry.word.isGismu: words.add Word(i)
+    words
+  WORDS_CMAVO_JOINABLE = block:
+    ## Every cmavo of cmavo list opening with consonant and holding no `y`, which no rule of
+    ##   4.9 parts from word opening with consonant after it.
+    var words: seq[string]
+    for entry in LIST_CMAVO:
+      if entry.word[0] in CONSONANTS_LETTERS and 'y' notin entry.word: words.add entry.word
     words
   CHARACTERS_FOREIGN = [
     "\u0080", "é", "ĉ", "ʼ", "߿", "ࠀ", "’", "日", "�",
@@ -188,6 +203,33 @@ func partNamed(rafsi: string): Part =
       if rafsi.wordsStem.len == 1: some(rafsi.wordsStem[0]) else: none(Word)
     of Form.Cvccv, Form.Ccvcv: rafsi.word
   if found.isSome: found.get.toPart else: unlisted(rafsi)
+
+
+func isShapeBrivla(text: string): bool =
+  ## Test text has shape 4.3 gives brivla, apart from reader: vowel last, and consonant pair
+  ##   among first five letters, `y` and apostrophe left out.
+  var head = ""
+  for c in text:
+    if c notin {'y', '\''} and head.len < 5: head.add c
+  let is_pair = toSeq(1 ..< head.len).anyIt(
+    head[it - 1] in CONSONANTS_LETTERS and head[it] in CONSONANTS_LETTERS
+  )
+  text[^1] in "aeiou" and is_pair
+
+
+func isShapeGismu(text: string): bool =
+  ## Test text has shape of gismu by class of each letter alone: CVCCV or CCVCV (4.4).
+  var shape = ""
+  for c in text: shape.add(if c in "aeiou": 'V' else: 'C')
+  shape in ["CVCCV", "CCVCV"]
+
+
+func isBrokenUp(text: string): bool =
+  ## Test text holds `la` or `doi` opening it or after no consonant, which breaks cmene up (4.8).
+  for i in 0 ..< text.len:
+    if i > 0 and text[i - 1] in CONSONANTS_LETTERS: continue
+    if text.continuesWith("la", i) or text.continuesWith("doi", i): return true
+  false
 
 
 proc drawTanru(): seq[Tanru] =
@@ -728,7 +770,7 @@ suite "Internal: Laws":
     check count_unassigned >= FLOOR_UNASSIGNED  # guard reaches rafsi no list assigns
 
 
-  test "No fu'ivla or cmene reads also as gismu, lujvo or cmavo":
+  test "Fu'ivla and cmene read from letters keep shape 4.3, 4.7 and 4.8 give them":
     var count_fuhivla, count_cmene = 0
     randomize(0)
     for _ in 1 .. SAMPLES_LETTERS:
@@ -737,12 +779,27 @@ suite "Internal: Laws":
         text.add(if rand(1) == 0: "bcdfgjklmnprstvxz".sample else: "aeiou".sample)
       let reading = text.readWord
       if not reading.is_word or reading.kind notin {Kind.Fuhivla, Kind.Cmene}: continue
-      check not text.isGismu and text.splitLujvo.len == 0 and not text.isCmavo  # 4.7, 4.8
       if reading.kind == Kind.Fuhivla:
-        check text.combination.isNone and text.slinkuhi.isNone  # 4.7, no words run together
+        check text.isShapeBrivla  # 4.3, consonant pair in first five letters, vowel last
+        check not text.isShapeGismu  # 4.7, no gismu
         inc count_fuhivla
       else:
-        check text[^1] in "bcdfgjklmnprstvxz" and text.breakup.isNone  # 4.8, no `la`
+        check text[^1] in CONSONANTS_LETTERS  # 4.8, consonant last
+        check not text.isBrokenUp  # 4.8, no `la` or `doi` after no consonant
         inc count_cmene
     check count_fuhivla >= FLOOR_FUHIVLA  # IX.3, guard keeps fu'ivla in play
     check count_cmene >= FLOOR_CMENE  # IX.3, guard keeps cmene in play
+
+
+  test "Listed cmavo joined before listed gismu, needing no pause, never reads as fu'ivla":
+    var count = 0
+    let words_gismu = WORDS_GISMU.mapIt(it.entry.word).filterIt(it[1] in CONSONANTS_LETTERS)
+    randomize(3)
+    for _ in 1 .. SAMPLES_JOINED:
+      var text = ""
+      for _ in 1 .. rand(1 .. 2): text.add WORDS_CMAVO_JOINABLE.sample
+      text.add words_gismu[rand(words_gismu.high)]
+      let reading = text.readWord
+      check not (reading.is_word and reading.kind == Kind.Fuhivla)  # 4.7, no combination
+      if not reading.is_word and reading.refusal == Refusal.Combination: inc count
+    check count >= FLOOR_JOINED  # IX.3, guard keeps refusals of combination in play
