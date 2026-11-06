@@ -16,6 +16,8 @@
 ##   | wikipedia | read answers of API of lojban Wikipedia from directory named after verb, |
 ##   |           | check their digest against its pin, and write articles and notice under  |
 ##   |           | `tests/articles_wikipedia/`                                              |
+##   | translations | fetch Alice and Oz into `build/translations/`, check each digest     |
+##   |           | against its pin, and print count of each verdict of their paragraphs     |
 ##   | system    | print packages verbs and suites need, one per line                       |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
@@ -34,20 +36,21 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, os, sequtils, tables]
+import std/[algorithm, options, os, sequtils, tables]
 
-import ./[cll, lists, tatoeba, wikipedia]
+import ./[cll, lists, tatoeba, translations, wikipedia]
 
 
 const
-  USAGE = "Usage: nim r tools/build.nim <lists|head|system>\n" &
+  USAGE = "Usage: nim r tools/build.nim <lists|head|system|translations>\n" &
       "       nim r tools/build.nim cll <directory>\n" &
       "       nim r tools/build.nim tatoeba <export>\n" &
       "       nim r tools/build.nim wikipedia <directory>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
-    ("coreutils", "`sha256sum`, which `lists`, `head` and three verbs of texts check digest with"),
+    ("coreutils", "`sha256sum`, which `lists`, `head` and four verbs of texts check digest with"),
+    ("curl", "fetcher of pages, which verb `translations` fetches Alice and Oz with"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
 
@@ -150,6 +153,24 @@ proc writeWikipedia(directory: string): int =
         article.paragraphs.countIt(it.verdict.len == 0)
 
 
+proc writeTranslations(): int =
+  ## Fetch each translation, check its digest, and print count of each verdict of its paragraphs.
+  let root = getCurrentDir()
+  for translation in TRANSLATIONS:
+    let digest = translation.fetchTranslation(root)
+    if refuseDigests([(translation.name, digest, translation.digest)], "translations.nim") > 0:
+      result = 1
+      continue
+    let paragraphs = translation.readTranslation(root).get
+    var counts: CountTable[string]
+    for paragraph in paragraphs: counts.inc paragraph.reading.verdict
+    echo translation.name, ": paragraphs ", paragraphs.len, ", read ", counts[""]
+    var verdicts: seq[(int, string)]
+    for verdict, count in counts:
+      if verdict.len > 0: verdicts.add (-count, verdict)
+    for (count, verdict) in verdicts.sorted: echo -count, "\t", verdict
+
+
 proc main(): int =
   ## Dispatch command named as first argument; `cll`, `tatoeba` and `wikipedia` take path second.
   let arguments = commandLineParams()
@@ -162,6 +183,7 @@ proc main(): int =
   case arguments[0]
   of "lists": writeLists()
   of "head": compareLists()
+  of "translations": writeTranslations()
   of "system":
     for (name, _) in SYSTEM: echo name
     0
