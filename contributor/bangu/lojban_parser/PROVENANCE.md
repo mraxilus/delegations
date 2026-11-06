@@ -734,9 +734,9 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   included. So one sentence takes about 13 microseconds. It read 17,170 of them whole.
 - The time of `$` is unmeasured here. `$` scores each choice of rafsi, so its time grows with the
   product of the choices of each word (expected).
-- **Prose of Tatoeba.** At `063d7538`, on the same machine, a program built with `-d:release`
-  read the 17,495 sentences through `readText`. It took 32.9 s, 32.3 s and 32.5 s on the pin, so
-  one sentence takes about 1.9 ms. It read 16,462 of them. The grammar refused 340, and 485 hold
+- **Prose of Tatoeba.** At `0493ec4d`, on the same machine, a program built with `-d:release`
+  read the 17,495 sentences through `readText`. It took 31.8 s, 33.6 s and 32.3 s on the pin, so
+  one sentence takes about 1.9 ms. It read 16,466 of them. The grammar refused 341, and 485 hold
   a cmavo that no list gives a selma'o.
 
 ## Open questions
