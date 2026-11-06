@@ -1470,6 +1470,16 @@ func placeShownNearest(
       result = some((depth: depth, floor: min(scene.radiusAt(handle), depth)))
 
 
+func reachPinch*(fingers: array[2, ScreenPosition]): float =
+  ## Read how far, in pixels, each finger of pinch reaches for object it takes, nothing selected.
+  ##   Fingertip past middle of two fingers, and never less than two fingertips: pinch lands
+  ##   each finger beside object reader means, not on it, and fingertip's reach alone took
+  ##   star behind finger (repository issue 745). Past fingertip, only object within
+  ##   `picking.FACTOR_ANCHOR_DEPTH` of separation answers. Wheel keeps fingertip.
+  let gap = hypot(fingers[1].x - fingers[0].x, fingers[1].y - fingers[0].y)
+  RADIUS_CROWD_TOUCH + max(RADIUS_CROWD_TOUCH, 0.5 * gap)
+
+
 proc gripFingers*(
   camera: Camera;
   scene: Scene;
@@ -1483,7 +1493,7 @@ proc gripFingers*(
 ): GripFingers =
   ## Take what each of two fingers holds, as second lands (repository issue 592).
   ##   Place under finger at depth of object there, as wheel's anchor reads it: nearest eye
-  ##   within fingertip's reach in free flight, nearest finger inside selection's band with
+  ##   within `reachPinch` in free flight, nearest finger inside selection's band with
   ##   selection.
   ##   Over nothing, selection holds point on sphere about pivot, as left drag's orbit does.
   ##   Free flight holds place at depth of other finger's object; where neither finger
@@ -1501,6 +1511,7 @@ proc gripFingers*(
     middle_last: middle(fingers),
   )
   var anchors: array[2, Option[AnchorZoom]]
+  let reach_eye = reachPinch(fingers)
   for index, finger in fingers:
     anchors[index] = anchorZoomAt(
       scene,
@@ -1512,6 +1523,7 @@ proc gripFingers*(
       finger,
       placed,
       is_banded = has_selection,
+      reach_eye = reach_eye,
     )
   # Depth and floor fingers over nothing hold, in free flight.
   var open = none(tuple[depth, floor: float])
