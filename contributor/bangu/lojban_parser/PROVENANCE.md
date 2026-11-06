@@ -884,6 +884,81 @@ other sentences of it. One parser mistake came out of that reading, and rule 972
 | Stream Comma | 1 | 4225380 | 3.3 |
 
 
+## Articles of Wikipedia
+
+**`tests/articles_wikipedia/` holds three long articles of the lojban Wikipedia, with the verdict
+that the parser gives each paragraph.** The Architect ruled D5 c on #819: a folder holds long
+articles under CC BY-SA, and each run reads them. The folder is under CC BY-SA 4.0, and not under
+the licence of the repository. `tests/articles_wikipedia/NOTICE.md` names each change, and credits
+each article by its revision and its history.
+
+The articles are `cmaci`, `eliogabalus` and `lo jbobau`. They are the long articles of prose that
+the parser reads most of. Rejected: the pages of years, which write dates in digits and read none.
+Rejected: `toldi`, of which 9 of 55 paragraphs read. Verified by hand with a probe built on the
+pin, 2026-11-06, over the longest pages that the API lists.
+
+**The verb `nim r tools/build.nim wikipedia <directory>` writes both files from saved answers of the
+API.** Each answer is saved by `QUERY` of `tools/wikipedia.nim`, one file to a page, named by the
+number of the page. `DIGEST_WIKIPEDIA` pins the answers, as `DIGEST_CLL` pins pages, and a newer
+revision of an article moves it. Verified by hand, 2026-11-06: `sha256sum` over the answers, piped
+into `sha256sum`, gives `DIGEST_WIKIPEDIA`.
+
+**A paragraph is one line of the plain text, and the suite reads it as one text of 21.1.** So the
+suite reads connected text of several sentences, and the longest paragraph holds 458 words. A
+heading is left out. Cost: a line that continues the sentence of the line before it, as an item of
+a list does, reads alone. Verified by `suites/test_wikipedia.nim`, whose citation names the line
+that such a line reads with.
+
+**69 of the 86 paragraphs read, and each refused paragraph breaks a rule of CLL.** Ten write a
+digit, which is no letter of lojban (3.1). Three continue a line before them, as lines 2 and 3 of
+`cmaci` continue line 1. The others put `la` inside a cmene (4.8), take one word of a compound with
+`zei` (4.6), or put a capital on a consonant (3.9). Verified by `suites/test_wikipedia.nim`, which
+cites the rule beside each paragraph.
+
+## Translations
+
+**The suites read the translations of Alice and Oz where their pinned pages are present.** The
+Architect ruled D3 a on #819: each translation is pinned and kept out of the repository, since no
+translator stated a release. The Architect then ruled D5 c, that the suites read Alice and Oz
+where the pinned pages are present. The runner holds no page, so it skips both. Verified by
+`suites/test_translations.nim`, which skips each page that is absent.
+
+**The verb `nim r tools/build.nim translations` fetches each page with `curl` into
+`build/translations/`.** It checks the digest of each page against its pin in `TRANSLATIONS` of
+`tools/translations.nim`. The digest is of the page with each `script` element cut, since the
+server of Alice writes a script that differs at each request. Verified by hand, 2026-11-06: two
+fetches of Alice differ in that script alone.
+
+**A paragraph is the text of one `p` element, and reading drops each mark that CLL does not
+define.** The marks are guillemets, dashes, parentheses, the colon and the asterisk. They are also
+the marks of question and exclamation, the quote, and the accent or breve over a vowel. Capitals
+stay, since CLL 3.9 defines them as stress. The page of Oz holds Windows-1252, though its header
+declares UTF-8, and the reader converts it.
+
+Cost: the accent of Oz marks stress, and reading drops it, so each brivla reads with the stress
+that its form gives. Rejected: an accent read as a capital. Oz marks secondary stress too, as
+`jbìbì'o`, and CLL 3.9 forbids a false primary stress in a brivla.
+
+**Alice reads 783 of 856 paragraphs, and Oz 56 of 173.** A paragraph of Oz holds about 300 words,
+and up to 2,233, so one mistake refuses all of it. The suite holds both counts. Verified by
+`suites/test_translations.nim`, where the pages are present.
+
+**Each refusal of the translations breaks a rule of CLL, as the first place where it stops
+shows.** In Alice, a quotation often opens in one paragraph and closes in another. Other refusals
+put `.i ba bo` or `.i je` after a fragment (rule 10, as Example 14.27 does). Some put a free
+modifier after a lerfu word or number whose `boi` is elided (rules 97 and 300). Some put a tense
+in an order that rules 972 and 1030 forbid, or write a word in capitals (3.9).
+
+In Oz, many refusals put a brivla and a cmene together after `la` (rule 97). Others write `ni'o ba
+bo` (rule 2), `ku` after a cmene (rule 97), or a cmavo that CLL 1.1 does not define. The page also
+cuts some words where a cell of its table ends, as `zdà.i`, and some hyphens break 4.11. No
+refusal of either text is a mistake of the parser. Verified by hand, 2026-11-06, by the first stop
+of each refused paragraph.
+
+The final baseline YACC grammar also takes a free modifier after `boi` alone. Its elided `boi` is
+the branch `error` of `BOI_gap_461`, which holds no free modifier. Verified by hand, 2026-11-06,
+in `grammar.300`.
+
 ## Tests
 
 **One stub runs every suite as one program.** `tests/test_suites.nim` imports each file of
@@ -893,6 +968,8 @@ other suite opens with `Internal:`, so the run shows where the authority stops.
 
 `tests/cll/examples.nim` is data beside the suites, and `suites/test_corpus.nim` reads it.
 `tests/sample_tatoeba/sentences.nim` is data too, and `suites/test_tatoeba.nim` reads it.
+`tests/articles_wikipedia/articles.nim` is data, and `suites/test_wikipedia.nim` reads it.
+
 Helpers stand beside the suites, and the stub runs none of them. `suites/texts_outside.nim` reads
 the outside texts by their pins. `suites/rafsi_random.nim` spells random rafsi from the letters of
 each form. So the suites of the reader and of lujvo share one way to draw them (II.9).
@@ -909,9 +986,10 @@ CLL, or the article of the charter that a guard holds.
 **The compiler is pinned exactly**: `requires "nim == 2.4.0"` in `lojban_parser.nimble`, as each
 project of the repository pins it (D1 a on #775). The project needs the standard library alone,
 so it carries no lock. The verbs `lists` and `head`, and the tests of outside texts, also need
-`lojban-common` and `sha256sum`, which the verb `system` declares. The verbs `cll` and `tatoeba`
-need `sha256sum` too. A system package carries no
-pin, so its version is what the machine has.
+`lojban-common` and `sha256sum`, which the verb `system` declares. The verbs `cll`, `tatoeba` and
+`wikipedia` need `sha256sum` too. The verb `translations` needs `curl`, which `system` declares.
+
+A system package carries no pin, so its version is what the machine has.
 
 The stub passes on the pin and on Nim 2.2.12.
 Verified by hand with `nim c -r -d:testing tests/test_suites.nim` on both compilers, 2026-11-05.
@@ -963,7 +1041,10 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   17,495 sentences through `readText`. It took 10.2 s and 10.4 s on the pin, so one sentence
   takes about 0.6 ms. It read 16,469 of them.
 - **Sample of Tatoeba.** On 2026-11-06, at `6a44ab94`, the suite of the sample, built alone as
-  the stub is, ran in 2.7 s and 3.0 s. The stub ran every suite in 23.3 s and 23.7 s.
+  the stub is, ran in 2.7 s and 3.0 s.
+- **Long texts.** On 2026-11-06, at `8f14bfdd`, the suite of the articles of Wikipedia, built
+  alone, ran in 3.4 s and 3.6 s. The suite of the translations ran in 27.7 s and 27.8 s with both
+  pages present. Without them, as on the runner, the stub ran every suite in 27.0 s and 27.5 s.
 - **Indexed Earley sets.** On 2026-11-06, on the pin, the stub built with `nim c -d:testing
   -d:nimUnittestOutputLevel:PRINT_FAILURES tests/test_suites.nim` ran every suite in 21.5 s and
   21.6 s at `67b4773b`. At `487f618c`, whose completion walks each origin set whole, it ran them
