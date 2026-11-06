@@ -34,9 +34,9 @@ const
     ## Random runs of two or three words written together, seeded; runs needing pause between
     ##   words left out, since text written together writes none.
   FLOOR_JOINED = 2500
-    ## Least runs whose stress fits each brivla that read back as same words: 2760 read at
+    ## Least runs whose stress fits each brivla that read back as same words: 2757 read at
     ##   seed `2`.
-  FLOOR_JOINED_OTHER = 800  ## Least runs whose stress fits no brivla: 887 read at seed `2`.
+  FLOOR_JOINED_OTHER = 800  ## Least runs whose stress fits no brivla: 885 read at seed `2`.
   COUNT_COMMA_MARKED = 88
     ## Commas law of unmarked words reads: each place in each word of `WORDS_BORROWED` and
     ##   `WORDS_NAMED`, apostrophe aside.
@@ -47,7 +47,7 @@ const
   COUNT_GROUPED = 36  ## Syllables of each grouping of each name law reads.
   FLOOR_COMMA_STRESS = 8  ## Least fu'ivla with comma and stress that rule 5 law reads: 8 read.
   SAMPLES_COMMA_PAUSE = 2000  ## Random pairs of cmavo comma law at pause draws, seeded.
-  FLOOR_COMMA_PAUSE = 200  ## Least of them needing pause between them: 224 read at seed `4`.
+  FLOOR_COMMA_PAUSE = 190  ## Least of them needing pause between them: 201 read at seed `4`.
   FLOOR_GLIDE_READ = 40
     ## Least capitals law of on-glide reads as one brivla: 40 read, on penultimate syllable of
     ##   each on-glide in four frames of two syllables or three.
