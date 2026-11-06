@@ -284,9 +284,20 @@ func splitChosen(spelling: Spelling, is_parting: bool): Split =
 
 
 func refusalWritten(spelling: Spelling, start: int): ReadingStream =
-  ## Refuse written word that splits into no words, at byte `start`: as `readWord` refuses its
-  ##   letters, else at its first capital, which breaks rule of 3.9. Letters that split into
-  ##   cmavo split here too, so capital alone stops them.
+  ## Refuse written word that splits into no words, at byte `start`: at first comma where words
+  ##   its letters read take pause, since comma marks none (3.3); else as `readWord` refuses its
+  ##   letters; else at its first capital, which breaks rule of 3.9. Letters that split into
+  ##   cmavo split here too, so comma or capital alone stops them.
+  var bare = spelling
+  (bare.breaks, bare.commas) = (newSeq[int](), newSeq[int]())
+  let split = bare.splitChosen(is_parting = false)
+  if split.count > 0:
+    var lo = 0
+    for i, word in split.splits[0]:
+      let k = spelling.breaks.find(lo)
+      if i > 0 and k >= 0 and isPauseNeeded(split.splits[0][i - 1], word):
+        return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, comma "cannot be" pause
+      lo += word.text.len
   let whole = spelling.letters.readWord
   if not whole.is_word and whole.refusal != Refusal.Stream:
     return refuse(whole.refusal, start, whole.detail)
