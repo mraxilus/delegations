@@ -44,6 +44,7 @@ const
     ## Cmene whose vowels comma may group: Examples 3.6-7, two names review of #811 found, and
     ##   Lojbanized names of 4.8.
   COUNT_GROUPED = 36  ## Syllables of each grouping of each name law reads.
+  FLOOR_COMMA_STRESS = 8  ## Least fu'ivla with comma and stress that rule 5 law reads: 8 read.
   SAMPLES_COMMA_PAUSE = 2000  ## Random pairs of cmavo comma law at pause draws, seeded.
   FLOOR_COMMA_PAUSE = 200  ## Least of them needing pause between them: 224 read at seed `4`.
   FLOOR_GLIDE_READ = 40
@@ -410,6 +411,8 @@ suite "Chapter 4":
     ])  # rules 2 and 4, after `la` no pause; constructed
     check "mi djan".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # rule 4; constructed
     check "doi djan".pausesRead == some(@[Pause.Absent, Pause.Absent])  # rule 4, `doi`
+    check "ku,Arka broda".pausesRead ==
+        some(@[Pause.Absent, Pause.Absent])  # rule 5, comma makes `A` penultimate; review of #811
     check "zoi gy. John .gy.".refusalRead == some((Refusal.Foreign, 0))  # rule 7; gap #814
     check "zo zoi".refusalRead == some((Refusal.Foreign, 3))  # rule 7; `zo` gap #814 reads
     check "mi zoi".refusalRead == some((Refusal.Foreign, 3))  # rule 7, no quotation; gap holds
@@ -537,6 +540,23 @@ suite "Internal: Stream":
           check text.stressesRead == some(@[some(k)])  # 4.8, capital "to preserve" stress
           inc count
     check count == COUNT_GROUPED  # IX.3, guard keeps each syllable of each grouping
+
+
+  test "Stress comma leaves penultimate takes no pause before brivla after it":
+    var count = 0
+    for word in WORDS_BORROWED:
+      for at in 1 ..< word.len:
+        if word[at - 1] notin VOWELS_SYLLABLE or word[at] notin VOWELS_SYLLABLE: continue
+        let spans = word.syllables(is_borrowing = true, breaks = [at])
+        if spans.len < 2: continue
+        let
+          marked = word.capitalized(spans[^2])
+          text = marked[0 ..< at] & "," & marked[at .. ^1] & " broda"
+          pauses = text.pausesRead
+        if pauses.isNone: continue  # comma parts no syllable fu'ivla admits
+        check pauses.get[1] == Pause.Absent  # 4.9 rule 5 needs stressed last syllable
+        inc count
+    check count >= FLOOR_COMMA_STRESS  # IX.3, guard keeps stressed fu'ivla in play
 
 
   test "Comma between two cmavo that need pause is refused at comma":
