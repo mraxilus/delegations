@@ -1,8 +1,8 @@
 # lojban_parser
 
-This project is a parser of lojban. Its scope is every valid lojban text, and it reads lojban
-words, and streams of them. It judges each word by the rules of CLL alone, so a word reads whether
-a word list holds it or not. It reads a gismu, a cmavo or a lujvo as the parts of its tanru. It
+This project is a parser of lojban. Its scope is every valid lojban text, and it reads lojban words,
+streams of them, and prose. It judges each word by the rules of CLL alone, so a word reads whether a
+word list holds it or not. It reads a gismu, a cmavo or a lujvo as the parts of its tanru. It
 refuses any other text with the rule that refuses it.
 
 It renders a tanru back as the lujvo form that CLL prefers. It also tells which cmavo bind each
@@ -69,6 +69,29 @@ CLL 4.8 says that `laplas.` looks like the words `la plas.`. The letters of `mib
 ways, and only stress tells them apart (3.9). So the reader refuses `mibroda`, and reads
 `miBROda`, whose capitals mark the stress of `broda`.
 
+It reads prose by the formal grammar of CLL 21.1. Before the grammar, quotation, erasure and the
+other cmavo of 19.16 act on the words, so each terminal holds the words of one construct:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils], lojban_parser
+for text in ["mi klama le zarci", "ti gerku si mlatu",
+    "la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.", "mi klama le"]:
+  let r = readText(text)
+  if r.is_read: echo text, ": ", r.units.mapIt(it.words.mapIt(r.occurrences[it].text).join(" ") &
+    " (" & $it.terminal & ")").join(", ")
+  else: echo text, ": ", r.refusal, " at byte ", r.start, ", in ", r.rule'
+mi klama le zarci: mi (KOhA), klama (BRIVLA), le (LE), zarci (BRIVLA)
+ti gerku si mlatu: ti (KOhA), mlatu (BRIVLA)
+la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.: la'o dy Goethe dy (ZOI), cu (CU),
+  me (ME), la'o ly Homo sapiens ly (ZOI)
+mi klama le: Grammar at byte 11, in sumti-6 97
+```
+
+`si` erases `gerku`, as Example 19.75 says. The text that `la'o` quotes stands whole, in one
+terminal of selma'o ZOI (Example 19.57). The grammar stops `mi klama le` at its end, where the
+description of `le` waits for its selbri. `r.tree` holds the tree of the named rules of 21.1 over
+the terminals.
+
 ## Authority
 
 The project replicates The Complete Lojban Language (CLL), by John Woldemar Cowan, from the
@@ -77,7 +100,8 @@ at `lojban.org/publications/cll/`. Chapter 3 gives the letters, the marks of a s
 clusters, the syllables and the stress. Chapter 4 gives the classes and shapes of words, the
 rafsi, the algorithms that join and score a lujvo, and the pauses between words.
 Chapters 5, 7, 9, 12 and 15 tell which words each cmavo binds, and chapter 20 is the catalogue of
-selma'o.
+selma'o. Chapters 13, 17 and 19 give indicators, lerfu words, quotation and erasure, and 21.1 gives
+the formal grammar, which is in the public domain.
 
 The suites carry the names of those chapters, and each assertion cites its source. The name of a
 suite that CLL does not cover opens with `Internal:`.
@@ -113,12 +137,16 @@ The parser reads words by the rules of CLL alone. It reads each gismu and each c
 and each lujvo by its rafsi and hyphens, listed or not. It gives the selma'o of each cmavo that
 the cmavo list holds, and splits cmavo run together into each cmavo. It renders a tanru as a
 lujvo, and folds a tanru into tanru units. It reads each fu'ivla and each cmene by the rules of
-CLL 4.7 and 4.8. It reads a stream of text into its words, with its pauses, commas and capitals,
-and it splits words that a text writes together.
+CLL 4.7 and 4.8.
 
-The suites hold each part to CLL. The parser reads no grammar of prose, and no text that `zoi`
-or `la'o` quotes.
+It reads a stream of text into its words, with its pauses, commas and capitals, and it splits
+words that a text writes together. It reads prose by the grammar of 21.1, after quotation,
+erasure, `zei`, BAhE, `bu` and indicators act on the words.
+
+The suites hold each part to CLL. They quote only the examples of CLL that they cite, until the
+Architect rules on #815. The stress of words written together with no capital waits on #811.
 
 The project `lojban_tagger` keeps an earlier copy of these modules until #809 moves it onto this
-parser. It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim` or `stream.nim`.
+parser. It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim`, `stream.nim`,
+`grammar.nim` or `prose.nim`.
 Nothing here has been read line by line by a human.

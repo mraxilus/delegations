@@ -13,10 +13,12 @@ Origin: a contributor project, from the brief of the Architect and the parsing p
 `lojban_tagger`. The brief gives the project one task alone: a complete parser of lojban, which
 reads any valid lojban word or prose. It also has the tagger read lojban through this parser,
 which stands apart from it. The project reads lojban words, and streams of them, by the rules of
-CLL alone, and holds no grammar of prose.
+CLL alone. It reads prose by the formal grammar of 21.1, after the rules that act on words before
+that grammar (19.16).
 
 `lojban_tagger` keeps a copy of each module here until #809 moves the tagger onto this parser.
-It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim` or `stream.nim`.
+It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim`, `stream.nim`, `grammar.nim`
+or `prose.nim`.
 Where a module differs, the copy in `lojban_tagger` is earlier, and reads listed words alone. The
 header of each module names its sibling there, as Article II.9 asks, and `tools/lists.nim` names
 the sibling of the list that it renders. A fix to one copy is finished only when the other is
@@ -33,7 +35,8 @@ Its chapter 3 gives the letters, the marks of a stream, the diphthongs,
 the consonant clusters, the syllables and the stress. Its chapter 4 gives the classes and shapes
 of words, the rafsi, the algorithms that join and score a lujvo, and the pauses between words.
 Chapters 5, 7, 9, 12 and 15 tell which words a cmavo binds. 17.2 gives
-the letterals, chapter 20 is the catalogue of selma'o, and 21.1 gives the rule of a tanru unit.
+the letterals, chapter 20 is the catalogue of selma'o, and 21.1 gives the formal grammar. Chapters
+13, 17 and 19 give indicators, lerfu words, quotation and erasure, which act before that grammar.
 
 The name of the language is lowercase, as lojban, as the Architect ruled for `lojban_tagger`. In
 lojban, a capital letter marks irregular stress (CLL 3.9), and the name has none. A title keeps
@@ -285,18 +288,16 @@ where 4.11 gives the lujvo `ci'ormau`. A brivla that breaks a rule of fu'ivla, a
 rafsi, is refused as `Hyphen`, with the form that 4.11 gives. Verified by `suites/test_tanru.nim`,
 in the suite `Internal: Reading`.
 
-**Each refusal names the rule of CLL that refuses the text, or the gap that holds it.** `Letter`
+**Each refusal names the rule of CLL that refuses the text.** `Letter`
 names 3.1 and 3.3, `Apostrophe` names 3.3, `Shape` names 3.3, 4.2, 4.3 and 4.8, and `Hyphen`
 names 4.11. `Cluster` names 3.6, 3.7 and 4.7, `Breakup` names 4.8, and `Combination` and
 `Slinkuhi` name 4.7. `Stream` names text that `readStream` reads: marks of a stream, and cmavo run
-together. A stream alone gives `Stress` (3.9), `Comma` (3.3, 3.4) and `Split` (3.3). Verified by
-`suites/test_tanru.nim` and `suites/test_stream.nim`.
+together. A stream alone gives `Stress` (3.9), `Comma` (3.3, 3.4), `Split` (3.3) and
+`Quotation` (19.10). Verified by `suites/test_tanru.nim` and `suites/test_stream.nim`.
 
-**A gap is text that CLL admits and that the reader does not read yet.** `Foreign` holds the text
-that `zoi` and `la'o` quote, for #814. Verified by `suites/test_stream.nim`, Section 4.9.
-
-Cost: a gap also holds text that no rule admits, as `zoi` with no quotation after it. The issue
-of the gap tells the two apart. Verified by `suites/test_stream.nim`, Section 4.9.
+**`Foreign` refuses nothing.** It marks the text that `zoi` or `la'o` quotes, which is no lojban
+(4.9 rule 7). The stream holds that text whole as one occurrence. Verified by
+`suites/test_stream.nim`, Section 4.9.
 
 **A word reads as the words of its tanru, never as its spelling.** 4.5 says that the rafsi chosen
 do not change a lujvo. So `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tanru,
@@ -364,8 +365,8 @@ of a CVCCV gismu before a CV cmavo. So `mibroda` reads as `mi broda` or `mibro d
 stress tells them apart (3.9). The reader refuses it as `Split`, and reads `miBROda` as `mi broda`.
 Verified by `suites/test_stream.nim`, in the suite `Internal: Stream`.
 
-Cost: a gismu is any word of gismu form, as the Architect ruled on #823. So 1025 of the 3647 runs
-of the law tie, at seed 2. 432 of them hold a fu'ivla in one split, and the others split cmavo and
+Cost: a gismu is any word of gismu form, as the Architect ruled on #823. So 1034 of the 3642 runs
+of the law tie, at seed 2. 435 of them hold a fu'ivla in one split, and the others split cmavo and
 gismu two ways, as `mibroda` does. 211 more read as one fu'ivla. A text that runs a cmavo into a
 gismu, and writes no capitals, is refused there. Verified by `suites/test_stream.nim`, by the law
 over words written together, which holds 900 ties at least.
@@ -403,11 +404,22 @@ The rules that the reader applies are these:
   (4.2).
 - The first word takes a pause where rule 3 or rule 4 needs one.
 
-Rule 7 holds the text that `zoi` and `la'o` quote, which is not lojban. So the reader stops at
-either, as the gap `Foreign`, which #814 reads. Verified by `suites/test_stream.nim`, Section 4.9.
+**The text that `zoi` and `la'o` quote stands whole, as one occurrence.** The word after `zoi` is
+its delimiter, and the text runs up to that word written again (19.10). The delimiter ends its
+written word, and a pause stands on each side of the text (4.9 rule 7). The marks around the text
+are left out. Verified by `suites/test_stream.nim`, Section 4.9, and by
+`suites/test_prose.nim`, Section 19.10.
 
-Cost: `zo zoi` quotes the word `zoi`, but the reader stops there too, because #814 reads `zo`.
-Verified by `suites/test_stream.nim`, Section 4.9.
+**A delimiter that the text holds is refused as `Quotation`.** 19.10 says that the delimiter is
+"not found in the written text". So `zoi gy. gyrations .gy.` is refused, as Example 19.50 is "as
+written". `zoi` with no delimiter, or with text that never closes, is refused too. Verified by
+`suites/test_stream.nim`, Section 4.9.
+
+**A word that `zo` or `lo'u` quotes acts on nothing, and the stream stops after `fa'o`.** `zo`
+quotes the next word, whatever it is, and `lo'u` quotes words up to a `le'u` that no `zo` quotes
+(19.9, 19.10). So `zo zoi` quotes `zoi`, and `zoi` inside `lo'u` quotes no text. `fa'o` ends
+parsable input unless a quotation holds it (19.15, 21.1). Verified by `suites/test_stream.nim`,
+Section 4.9.
 
 **A comma changes no words.** 3.3 says that "no two Lojban words differ solely because of the
 presence or placement of a comma". So letters and capitals choose the words, with commas left out,
@@ -463,8 +475,104 @@ reads other words that the capital fits, as 3.9 warns. So `djAcadyfanta` reads `
 Verified by `suites/test_stream.nim`, by the law over each syllable of each gismu and lujvo.
 
 **Each refusal of a stream names the byte where it applies.** It names the first word or mark
-that the reader refuses, by a rule or as a gap. So a caller can point at it. Verified by
+that the reader refuses, by a rule. So a caller can point at it. Verified by
 `suites/test_stream.nim`.
+
+## Grammar
+
+**The grammar is data: the 88 formal rules of 21.1, as CLL writes them.** The Logical Language
+Group dedicates that text to the public domain, and CLL says that chapter 21 is in the public
+domain. Compile time turns each rule into productions, so no rule is written twice (II.9). Static
+checks hold 88 rules, each name defined, each rewrite applied once, and each unit cycle a
+self-loop. Verified by the compile of `grammar.nim`, which stops where a check fails.
+
+**The notation follows 21.1.** `|` is a choice, `[]` an option, `&` is and/or, `...` a repetition,
+and `()` a group. `#` stands for free modifiers, and `/X/` for a terminator that text may elide.
+`...` binds closer than `&`, and `&` closer than `|`. Verified by `suites/test_grammar.nim`, by
+46 examples of chapter 5.
+
+**Five constructs stand as one terminal, as rules 1100 and 1101 say they act before grammar.**
+`ZO any-word` stands as `ZO`, and `LOhU any-word ... LEhU` as `LOhU`. `ZOI any-word anything
+any-word` stands as `ZOI`, `any-word (ZEI any-word) ...` as `ZEI`, and `any-word BU` as `BU`.
+`prose.nim` joins their words before the grammar reads them. Verified by `suites/test_prose.nim`.
+
+**An Earley parser reads the terminals, and a text reads where any derivation holds it.** The
+grammar holds left recursion, as `rp-operand` through `rp-expression`, and empty options. It is
+ambiguous too, so recursive descent cannot read it. Verified by `suites/test_grammar.nim`,
+Section 18.16, which nests reverse Polish to the left and to the right.
+
+Cost: CLL numbers its rules by a YACC grammar, which a deterministic parser reads, and version 1.1
+gives the EBNF alone. A text that such a parser stops on may still read here. Verified by hand:
+CLL 1.1 holds no YACC grammar, 2026-11-06.
+
+**The tree is the derivation that closes the fewest rules before each terminal, from the first.**
+So the construct that the text opens last takes each word that it can. An elided `ke'e` closes at
+the end of the selbri (Example 5.36). A relative clause after `be` attaches to the last linked
+sumti, unless `be'o` closes it (Examples 5.73 and 5.74). A tie goes to the first choice of a rule.
+Verified by `suites/test_grammar.nim`, Sections 5.3 to 5.7.
+
+21.1 lets a terminator be elided "if no grammatical ambiguity results", and it orders no trees. So
+the choice follows the examples of CLL. A parser that reads left to right, and prefers to read a
+terminal over closing a rule, chooses the same tree. Verified by `suites/test_grammar.nim`, by the
+law that a terminator left out changes no tree.
+
+**A child of a production never spans more terminals than the symbols after it leave.** So a
+child spans all of its parent only along a unit edge, and each unit cycle is a self-loop. So the
+choice kept for a span never depends on a span still open. Verified by `suites/test_grammar.nim`,
+Section 18.16, whose Example 18.111 the choice lost before.
+
+**A refusal names the place where every derivation stops, and the rule that stops there.** The
+rule is that of the item that waits there, has read a terminal, and started last. So `mi klama le`
+is refused at its end, in `sumti-6 97`. Verified by `suites/test_grammar.nim`, in the suite
+`Internal: Grammar`.
+
+**Each word is one terminal.** A cmavo stands as its selma'o, a cmene as `CMENE`, and a gismu, a
+lujvo or a fu'ivla as `BRIVLA` (21.1). A cmavo that no list gives a selma'o stands as none, so
+prose refuses it. Verified by `suites/test_grammar.nim` and `suites/test_prose.nim`.
+
+## Prose
+
+**The rules of 19.16 act on the words in its order.** Quotation comes first, then `fa'o`, then
+erasure, then `zei` and BAhE, then `bu`, then indicators. CLL gives no full order. 19.16 says what
+each cmavo does not affect, and that order follows from it. Verified by `suites/test_prose.nim`.
+
+**Each quotation is one terminal.** `zo` and the word that it quotes are `ZO`, and `lo'u` up to
+`le'u` is `LOhU`. `zoi` or `la'o` with its delimiters and text is `ZOI` (19.9, 19.10).
+`lo'u` that quotes no word, or that never closes, is refused as `Quotation`. Verified by
+`suites/test_prose.nim`, Sections 6.14, 19.9 and 19.10.
+
+**Erasure acts on words.** `si` erases the word before it, and `su` each word before it. `sa`
+erases back to the last word of the selma'o of the word after it, that word included (19.13). A
+quotation counts as its words, so a `zo` quotation is two words and a `zoi` quotation four
+(Examples 19.77, 19.79). Verified by `suites/test_prose.nim`, Section 19.13. Verified also by a
+law over a word and `si` at each place between the words of each example with no erasure.
+
+**`sa` erases back to the start where no word of its selma'o stands.** So Example 19.81 erases
+the sentence before `.i`, as CLL says, though no `.i` opens the text. Verified by
+`suites/test_prose.nim`, Section 19.13.
+
+Cost: 21.1 rule 1101 and chapter 20 give `sa` the scope of an utterance, and `su` that of a text.
+The reader takes the words that 19.13 describes, as one speaker writes the whole text. Verified by
+`suites/test_prose.nim`, Section 19.13.
+
+**An erasure that leaves part of a quotation is refused.** The quotation is read before the
+erasure, and never again after it. 19.13 says that the parser rejects `zo .djan. si .djordj.`,
+and the reader refuses it as `Quotation`. Verified by `suites/test_prose.nim`, Section 19.13.
+
+**`zei` joins the word before it and the word after it into one terminal (4.6).** A chain of
+`zei` joins into one. Neither word may be a cmavo that 19.16 says `zei` does not affect.
+Verified by `suites/test_prose.nim`, Section 4.6.
+
+**BAhE marks the next word, `bu` makes a lerfu word, and an indicator marks the word before
+it.** BAhE gives its word nothing more (rule 1100), and one `bu` or more makes the word before it a
+lerfu word (17.4). UI or CAI takes a `nai` after it, and `y`, `da'o`, `fu'e` and `fu'o` mark too
+(13.9, 19.16). Indicators that open a text stand as terminals, which rule 0 reads. Verified by
+`suites/test_prose.nim`, Sections 13.1 to 13.10, 17.4 to 17.8, and 19.8.
+
+**A refusal of prose names its rule and its byte.** `Stream` carries the refusal of the stream,
+and `Grammar` the rule of 21.1 that stops. `Selmaho` names a cmavo with no selma'o. `Quotation`
+and `Construct` name a quotation, or a cmavo of 19.16, that the words cannot complete. Verified by
+`suites/test_prose.nim`.
 
 ## What cmavo bind
 
@@ -620,6 +728,10 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   included. So one sentence takes about 13 microseconds. It read 17,170 of them whole.
 - The time of `$` is unmeasured here. `$` scores each choice of rafsi, so its time grows with the
   product of the choices of each word (expected).
+- **Prose of Tatoeba.** At `063d7538`, on the same machine, a program built with `-d:release`
+  read the 17,495 sentences through `readText`. It took 32.9 s, 32.3 s and 32.5 s on the pin, so
+  one sentence takes about 1.9 ms. It read 16,462 of them. The grammar refused 340, and 485 hold
+  a cmavo that no list gives a selma'o.
 
 ## Open questions
 
@@ -631,7 +743,14 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   reader's. It rests on the rules that CLL gives, and the laws hold it to them. CLL fixes no
   choice among splits, whether or not they need the same pauses. The reader takes the split of
   fewest pauses, and refuses a tie.
-- **What the parser does not read.** It reads no prose: no bridi, no sumti, and no selbri past
-  the tanru units of one word. A stream reads into its words. The reader stops at the text that
-  `zoi` and `la'o` quote, which #814 reads with erasure, `zei` and `bu`. The fold keeps no
-  grouping that no cmavo binds, and no number with its MOI, which prose needs.
+- **The stress of a word written with no capital.** 3.9 requires primary stress on the
+  penultimate syllable of each brivla, and says nothing of words that run together. Example 19.78
+  reads `.esperanto` as `e speranto`, but the reader ties it with `espe ranto`. D3 of #811 asks
+  whether such a word stresses its own penultimate syllable alone.
+- **The corpus of CLL.** The permission notice of CLL binds each copy of its text, so the suites
+  quote the examples that they cite alone. D1 of #815 asks whether the repository holds them all.
+- **Scopes that CLL gives two ways.** 19.13 and 21.1 give `sa` and `su` different scopes. 13.9,
+  13.1 and 2.16 give an indicator that opens a text three scopes. 19.16 calls `fu'e` the same as
+  UI, where 21.1 rule 411 sets it before the indicators that it opens.
+- **The tree beyond the grammar.** The fold keeps no grouping that no cmavo binds, and no number
+  with its MOI. The tree of 21.1 holds both, and no module yet reads meaning from it.
