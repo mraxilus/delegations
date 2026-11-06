@@ -77,7 +77,8 @@ type
     pause*: Pause  ## Pause before word.
     stress*: Option[int]
       ## Nucleus capitals mark stressed, counted from zero over vowels, `y` and diphthongs of
-      ##   word; none where text marks none.
+      ##   word, commas parting them; none where text marks none.
+    breaks*: seq[int]  ## Index of letter of word each comma stands before, in order (3.3).
     reading*: Reading  ## Word as `readWord` reads `text`.
 
   ReadingStream* = object  ## Define outcome of reading stream as its words.
@@ -126,7 +127,7 @@ func isPauseNeeded(prior, next: Occurrence): bool =
   ## Test rule of 4.9 needs pause between two words: rules by letters (`forms.nim`), and rule 5,
   ##   stressed last syllable before brivla or before stressed first syllable (4.2).
   if isPauseNeeded(prior.text, next.text): return true
-  if prior.stress != some(prior.text.nuclei(prior.reading.kind).high): return false
+  if prior.stress != some(prior.text.nuclei(prior.reading.kind, prior.breaks).high): return false
   next.reading.kind in KINDS_BRIVLA or next.stress == some(0)  # rule 5; 4.2
 
 
@@ -213,7 +214,9 @@ func occurrenceWritten(
   if capitals.len > 0:
     stress = piece.nucleusStressed(reading.kind, capitals, breaks)
     if stress.isNone: return
-  some(Occurrence(start: spelling.places[span.a], text: piece, stress: stress, reading: reading))
+  some(Occurrence(
+    start: spelling.places[span.a], text: piece, stress: stress, breaks: breaks, reading: reading,
+  ))
 
 
 func splitWritten(spelling: Spelling, is_parting: bool): Split =
