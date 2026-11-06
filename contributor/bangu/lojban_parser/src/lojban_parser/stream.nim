@@ -364,8 +364,9 @@ func readStream*(text: string): ReadingStream =
     if is_bare:
       var lo = 0
       for i, word in words:
-        let span = lo .. lo + word.text.len - 1
-        let again = spelling.occurrenceWritten(span)
+        let
+          span = lo .. lo + word.text.len - 1
+          again = spelling.occurrenceWritten(span)
         if again.isNone:
           let k = toSeq(0 ..< spelling.breaks.len).filterIt(spelling.breaks[it] in span)[0]
           return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, 3.9
