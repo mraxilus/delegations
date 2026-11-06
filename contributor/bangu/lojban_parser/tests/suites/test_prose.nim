@@ -4,8 +4,8 @@
 ##     joined, and text no source holds is marked constructed.
 ##   Laws run over cited examples, at each place between their words, and over each cmavo of
 ##     cmavo list (Article IX.3).
-##   Corpus does not cover yet: Example 19.78, whose `.esperanto` reader ties (decision D3 of
-##     #811), and every example of CLL, whose text its permission notice binds (#815).
+##   Corpus does not cover yet: every example of CLL, which ruling `D1 a` of #815 commits with
+##     notice of CLL.
 
 {.experimental: "strictFuncs".}
 
@@ -183,7 +183,8 @@ suite "Chapter 19":
 
 
   test "Section 19.13, Example 19.78":
-    skip()  # CLL reads `.esperanto` as `e speranto`; reader ties it with `espe ranto` (#811 D3)
+    check "mi tavla fo la .esperanto si si .esperanton.".unitsRead ==
+        "mi tavla fo la .esperanton.".unitsRead  # Example 19.78, `.e speranto` erased as two words
 
 
   test "Section 19.15":
