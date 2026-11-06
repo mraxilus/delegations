@@ -13,11 +13,16 @@
 ##   Grammar is data: `EBNF` holds formal rules of 21.1 as book writes them, which Logical
 ##     Language Group dedicates to public domain; line opening with space goes on with rule
 ##     before it. Compile time turns each rule into productions, so no rule is written twice
-##     (II.9); static checks hold 88 rules, each name defined, and each rewrite below applied once.
+##     (II.9); static checks hold 88 rules, each name defined, and each rewrite and grouping below
+##     applied once.
 ##   Notation follows 21.1: `|` choice, `[]` option, `&` and/or, `...` repetition, `()` group,
 ##     `#` free modifiers, as `[free ...]`, and `/X/` terminator that text may elide.
 ##     `...` binds closer than `&`, and `&` closer than `|`; juxtaposition closer than `&`, as
 ##       `ZEhA [PU [NAI]]` stands between two `&` in rule 1030.
+##     21.1 leaves order of juxtaposition and `&` unstated. Final baseline YACC grammar, whose
+##       numbers 21.1 cross-references, takes other order in rule 972 alone: `&` of tense and
+##       CAhA stands inside `[NAhE]` and `[KI]`, so `GROUPINGS` writes its parentheses.
+##       Cost: `EBNF` stays text of book, and grouping is one line beside it.
 ##   Constructs that act on words before grammar, as rules 1100 and 1101 say, stand as one word:
 ##     `ZO any-word` as `ZO`, `LOhU any-word ... LEhU` as `LOhU`, `ZOI any-word anything any-word`
 ##     as `ZOI`, `any-word (ZEI any-word) ...` as `ZEI`, and `any-word BU` as `BU`; `prose.nim`
@@ -207,6 +212,14 @@ const
     ("any-word BU", "BU"),
   ]
     ## Constructs grammar reads as one word, which `prose.nim` joins first (rules 1100, 1101).
+  GROUPINGS = [
+    (
+      "[NAhE] (time [space] | space [time]) & CAhA [KI]",
+      "[NAhE] ((time [space] | space [time]) & CAhA) [KI]",
+    ),
+  ]
+    ## Groupings 21.1 leaves open, as final baseline YACC grammar `grammar.300` gives them: its
+    ##   rule 972 takes NAhE before tense or CAhA alone (973, 978), and KI after either (977).
   COUNT_RULES = 88  ## Formal rules 21.1 gives, rules 1100 and 1101 aside.
   BOUND_LENGTH = 1 shl 20  ## Bound on least terminals of nonterminal, above any length found.
   DELIMITERS = {'[', ']', '(', ')', '|', '&', '#', '/'}  ## Marks of notation, `...` aside.
@@ -241,13 +254,13 @@ func `$`*(terminal: Terminal): string =
 #[ Compiling ]#
 
 func toRules(text: string): seq[string] =
-  ## Join each rule of text with lines going on with it, and apply each rewrite once.
+  ## Join each rule of text with lines going on with it, and apply each rewrite and grouping once.
   for line in text.splitLines:
     if line.len == 0: continue
     if line[0] == ' ': result[^1].add " " & line.strip
     else: result.add line
   var joined = result.join("\n")
-  for (before, after) in REWRITES:
+  for (before, after) in @REWRITES & @GROUPINGS:
     doAssert joined.count(before) == 1, "Rewrite should apply once; got `" & before & "`."
     joined = joined.replace(before, after)
   joined.split("\n")
