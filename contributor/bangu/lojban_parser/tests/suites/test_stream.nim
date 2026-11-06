@@ -26,9 +26,10 @@ const
     ##   drawn at seed `1`.
   FLOOR_COMMA_REFUSED = 4000
     ## Least commas comma law reads as refused: 4221 read over same words.
-  FLOOR_STRESS_REFUSED = 3500
+  FLOOR_STRESS_REFUSED = 3900
     ## Least capitals off penultimate syllable of brivla that reader refuses, rather than
-    ##   reading other words: 3728 read over gismu list and lujvo drawn at seed `1`.
+    ##   reading other words: 4130 read over gismu list and lujvo drawn at seed `1`, where each
+    ##   other brivla needs capital (`D3 a` of #811).
   SAMPLES_JOINED = 4000
     ## Random runs of two or three words written together, seeded; runs needing pause between
     ##   words left out, since text written together writes none.
