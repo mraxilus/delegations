@@ -114,7 +114,7 @@ suite "Chapter 5":
     check folded("cadzu+se+klama") ==
         @[tanruUnit("cadzu"), tanruUnit("klama", @[LINK_SE])]  # 5.11, Example 5.114
     check folded("se+ke+cadzu+klama") ==
-        @[tanruUnit("ke", @[LINK_SE]), tanruUnit("cadzu"), tanruUnit("klama")]  # 5.11, 11.4
+        @[tanruUnit("ke", @[LINK_SE]), tanruUnit("cadzu"), tanruUnit("klama")]  # Example 5.112
 
 
 
@@ -137,7 +137,7 @@ suite "Chapter 9":
     check folded("se+te+se+klama") ==
         @[tanruUnit("klama", @[conversion([1, 3, 2, 4, 5])])]  # 9.4, "setese" swaps x2 and x3
     check folded("se+ke+blanu+zdani") ==
-        @[tanruUnit("ke", @[LINK_SE]), tanruUnit("blanu"), tanruUnit("zdani")]  # 9.4, 4.8
+        @[tanruUnit("ke", @[LINK_SE]), tanruUnit("blanu"), tanruUnit("zdani")]  # Example 9.25
     check folded("se+na'e+se+ciska") == @[
       tanruUnit("ciska", @[LINK_SE, operator("na'e"), LINK_SE]),
     ]  # 9.4, SE converts following tanru unit, here `na'e se ciska` (21.1, rule 152)

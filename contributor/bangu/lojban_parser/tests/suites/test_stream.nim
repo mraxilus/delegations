@@ -290,8 +290,10 @@ suite "Chapter 3":
 
 
   test "Section 3.9":
-    check "pu,je,nai,ca,je,ba".wordsRead == some(@["pu", "je", "nai", "ca", "je", "ba"])  # 9.1
-    check "pujenaicajeba".wordsRead == "pu,je,nai,ca,je,ba".wordsRead  # 9.1; comma not required
+    check "pu,je,nai,ca,je,ba".wordsRead ==
+        some(@["pu", "je", "nai", "ca", "je", "ba"])  # 3.9, Example 3.18
+    check "pujenaicajeba".wordsRead ==
+        "pu,je,nai,ca,je,ba".wordsRead  # 3.9, Example 3.18; comma not required
     for (text, word) in [
       ("nin,mu", "ninmu"), ("fit,pri", "fitpri"), ("sair,goi", "sairgoi"),
       ("sai,r,goi", "sairgoi"), ("klez,ba", "klezba"), ("kle,zba", "klezba"),
@@ -311,7 +313,8 @@ suite "Chapter 3":
         some(@[Pause.Inferred, Pause.Inferred])  # 3.9, Example 3.30; period inferred (3.3)
     check "le re NObli PREnu".stressesRead ==
         some(@[none(int), none(int), some(0), some(0)])  # 3.9, Example 3.31
-    check "le re no bliPREnu".wordsRead == some(@["le", "re", "no", "bliprenu"])  # 9.15
+    check "le re no bliPREnu".wordsRead ==
+        some(@["le", "re", "no", "bliprenu"])  # 3.9, Example 3.32
     check "le re no bliPREnu".stressesRead ==
         some(@[none(int), none(int), none(int), some(1)])  # 3.9, Example 3.32
     check "briDI".refusalRead == some((Refusal.Stress, 3))  # 3.9, penultimate; constructed
