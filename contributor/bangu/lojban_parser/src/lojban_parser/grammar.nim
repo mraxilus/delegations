@@ -167,6 +167,7 @@ type
     productions: seq[Production]
     heads: seq[seq[int]]  ## Productions of each nonterminal, in order of its choices.
     nullable: seq[bool]  ## Nonterminal derives empty sequence.
+    lengths: seq[int]  ## Least terminals each nonterminal derives.
     start: int  ## Index of `text`, rule 0.
 
   Builder = object  ## Define grammar under construction from tokens of one rule of `EBNF`.
@@ -416,6 +417,21 @@ func constructGrammar(text: string): Grammar {.compileTime.} =
         result.nullable[production.head] = true
         is_changed = true
 
+  # Find least terminals each nonterminal derives, until none lowers; bound keeps sum finite.
+  const BOUND_LENGTH = 1 shl 20
+  result.lengths = newSeqWith(result.names.len, BOUND_LENGTH)
+  is_changed = true
+  while is_changed:
+    is_changed = false
+    for production in result.productions:
+      var total = 0
+      for symbol in production.body:
+        let length = (if symbol.is_terminal: 1 else: result.lengths[symbol.code])
+        total = min(total + length, BOUND_LENGTH)
+      if total < result.lengths[production.head]:
+        result.lengths[production.head] = total
+        is_changed = true
+
   # Hold every unit cycle self-loop, as `choose` needs: symbol derives nonterminal alone where
   #   each other symbol of its production may derive nothing.
   var units = newSeq[seq[int]](result.names.len)
@@ -549,8 +565,10 @@ func offer(partials: var seq[Option[Choice]], i: int, candidate: Choice) =
 func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   ## Choose derivation of terminals `start ..< finish` from `head` that closes fewest nonterminals
   ##   at each place, from first; tie goes to first production, then to longer symbol.
-  ##   Choice is kept once found: unit cycle closes more and is never chosen, and every unit
-  ##     cycle is self-loop (`constructGrammar`), so no choice kept depends on span still open.
+  ##   Choice is kept once found. No symbol tries more terminals than symbols after it leave, so
+  ##     child spans all of span only where each other symbol may derive nothing: unit cycle,
+  ##     which is self-loop (`constructGrammar`). Unit cycle closes more and is never chosen, so
+  ##     no choice kept depends on span still open.
   let key = (head, start, finish)
   if key in chart.choices: return chart.choices[key]
   if chart.open.containsOrIncl(key): return none(Choice)
@@ -562,22 +580,28 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
     if span == 0 and body.anyIt(it.is_terminal or not GRAMMAR_EBNF.nullable[it.code]): continue
     if span > 0 and p notin chart.completions[finish].getOrDefault((head, start)): continue
 
-    # Match body left to right, keeping at each place partial that closes fewest there.
-    var partials = newSeq[Option[Choice]](span + 1)
+    # Match body left to right, keeping at each place partial that closes fewest there; each
+    #   symbol leaves terminals enough for symbols after it.
+    var
+      rests = newSeq[int](body.len + 1)  # least terminals symbols from each on derive
+      partials = newSeq[Option[Choice]](span + 1)
+    for k in countdown(body.high, 0):
+      let length = (if body[k].is_terminal: 1 else: GRAMMAR_EBNF.lengths[body[k].code])
+      rests[k] = rests[k + 1] + length
     partials[0] = some(Choice(closures: @[0], production: p))
-    for symbol in body:
+    for k, symbol in body:
       var nexts = newSeq[Option[Choice]](span + 1)
       for m in start .. finish:
         let partial = partials[m - start]
         if partial.isNone: continue
         if symbol.is_terminal:
-          if m < finish and int(chart.terminals[m]) == symbol.code:
+          if m + 1 + rests[k + 1] <= finish and int(chart.terminals[m]) == symbol.code:
             var next = partial.get
             next.closures.add 0
             next.bounds.add m + 1
             nexts.offer(m + 1 - start, next)
           continue
-        for bound in countdown(finish, m):
+        for bound in countdown(finish - rests[k + 1], m):
           let is_derived =
             (bound == m and GRAMMAR_EBNF.nullable[symbol.code]) or
             (symbol.code, m) in chart.completions[bound]
