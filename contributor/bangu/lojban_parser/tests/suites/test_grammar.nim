@@ -233,6 +233,24 @@ suite "Chapter 5":
 
 
 
+suite "Chapter 18":
+  test "Section 18.16":
+    check "li fu'a reboi ci su'i du li mu".treeRead.isSome  # Example 18.110
+    check "li fu'a reboi ci pi'i voboi mu pi'i su'i du li rexa".treeRead.isSome
+      # Example 18.111; tree choice lost it, which run over corpus of CLL found
+    for depth in 1 .. 5:
+      var (left, right) = (@["li", "fu'a", "pa"], @["li", "fu'a", "pa"])
+      for _ in 1 .. depth:
+        left.add @["re", "su'i"]
+        right.add "re"
+      for _ in 1 .. depth: right.add "su'i"
+      check left.join(" ").spansRead("rp-expression") ==
+          toSeq(countdown(depth, 1)).mapIt(2 .. 2 + 2 * it)  # 18.16, operator after operands
+      check right.join(" ").spansRead("rp-expression") ==
+          toSeq(0 ..< depth).mapIt(2 + it .. 2 + 2 * depth - it)  # 18.16, nested right
+
+
+
 suite "Internal: Grammar":
   test "Words of each tree, in order, are words of text, under rule text":
     var count = 0
