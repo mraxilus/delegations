@@ -4,7 +4,7 @@
 |---------|-------|
 | Harness | Claude Code |
 | Author  | Claude |
-| Date    | 2026-11-05 |
+| Date    | 2026-11-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 01a086eda78015fd |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
@@ -497,6 +497,23 @@ and `()` a group. `#` stands for free modifiers, and `/X/` for a terminator that
 `...` binds closer than `&`, and `&` closer than `|`. Verified by `suites/test_grammar.nim`, by
 46 examples of chapter 5.
 
+**A sequence binds closer than `&`, except in rule 972.** 21.1 does not say how a sequence and
+`&` group. The final baseline YACC grammar settles it, since 21.1 cross-references the numbers of
+that grammar. Its rule 1030 takes `ZEhA [PU [NAI]]` as one part, so a sequence binds closer.
+
+Its rule 972 takes the `&` of tense and CAhA inside `[NAhE]` and `[KI]`, so NAhE takes CAhA alone,
+as in `mi na'e ka'e tavla`. `GROUPINGS` of `grammar.nim` writes that grouping, applied once.
+Verified by `suites/test_grammar.nim`, in the suite `Internal: Grammar`.
+
+The final baseline is `grammar.300`, the third baseline of 10 January 1997, at
+`lojban.org/publications/formal-grammars/`. The Logical Language Group dedicates it to the public
+domain. CLL 1.1 does not print it. Verified by hand, 2026-11-06: rules 972 to 979 and 1030 to
+1036 of that file give each grouping above.
+
+Cost: `EBNF` stays the text of the book, and each grouping that 21.1 leaves open is a line beside
+it. Rejected: one order for every rule, because rule 1030 then refuses `ta'e` alone as a time,
+which the YACC grammar reads. Rejected: the 1993 grammar, version 2.33, which is a draft.
+
 **Five constructs stand as one terminal, as rules 1100 and 1101 say they act before grammar.**
 `ZO any-word` stands as `ZO`, and `LOhU any-word ... LEhU` as `LOhU`. `ZOI any-word anything
 any-word` stands as `ZOI`, `any-word (ZEI any-word) ...` as `ZEI`, and `any-word BU` as `BU`.
@@ -662,6 +679,90 @@ JAI binds as SE does (5.11), but the gismu list gives `jai` no rafsi, so no lujv
 holds it. CLL 12.12 gives `jai` the rafsi `jax`, which the gismu list does not hold. A static
 check in `tanru_units.nim` stops the build where the gismu list gains `jai`.
 
+## Corpus of CLL
+
+**`tests/cll/` holds the lojban lines of each numbered example of CLL 1.1, under the notice of the
+book.** The Architect ruled D1 a on #815, so the repository commits these lines in a folder of
+their own. `tests/cll/NOTICE.md` holds the copyright notice and the permission notice of the book,
+verbatim. It also says that the lines are extracted, and it names each modification, as the notice
+asks. Verified by hand, 2026-11-06: each paragraph that it quotes is the paragraph of the page,
+word for word, once the address is decoded.
+
+The notice permits a modified copy only under its own terms. So the folder is distributed under
+that notice, and not under the licence of the repository.
+
+**The verb `nim r tools/build.nim cll <directory>` writes both files from saved pages of the
+book.** The pages are those of `URL_CLL` in `tools/cll.nim`, one section to a page, each saved
+under its own name. The verb reads each page that holds an example, and the page of Section 1.8,
+which holds the notice. It checks one SHA-256 over those pages against `DIGEST_CLL`, so a page
+that the server changes makes the verb refuse. That digest is the SHA-256 of the output of
+`sha256sum` over the pages, given in order of name.
+
+`DIGEST_CLL` pins the pages that lojban.org served on 2026-11-05. Verified by hand, 2026-11-06:
+`sha256sum` over the pages that hold `<div class="example">`, and `section-copyright.html`, piped
+into `sha256sum`, gives `DIGEST_CLL`. Verified by hand with the verb, 2026-11-06: a page that
+differs by one comment makes it refuse, and it writes no file.
+
+**A line is lojban where the markup of the book gives it the class `jbo` or `jbophrase`.** The
+cells of a row of a table join with one space, and a paragraph is one line. A no-break space
+becomes a space, and the markup of the line goes. The text keeps its brackets and its notation, so
+the suite decides which lines it reads. Verified by hand with a separate extraction in Python 3,
+2026-11-06: it gives the same lines, line by line, for chapters 2 to 19. Verified by hand against
+its page, 2026-11-06: Example 1.1, the one example of chapter 1, is `mi klama le zarci`.
+
+Lines of the classes `pronunciation-jbo` and `compound-cmavo-jbo` stay out. The book judges each
+of them in prose, and `suites/test_stream.nim` and `suites/test_forms.nim` hold those judgments by
+hand, as chapters 3 and 4 give them. Verified by `suites/test_stream.nim` and
+`suites/test_forms.nim`, whose citations name each example.
+
+Cost: the verb reads each page as XML once it cuts each `script` element, whose code holds an `&`
+that XML forbids. A page that the server sends as HTML alone stops the verb, which names the page.
+Verified by hand with the verb, 2026-11-06, on a page that holds an unclosed `br`.
+The server also hides the email address of the notice in an encoded attribute, and the verb
+decodes it. Rejected: `std/htmlparser`, which Nim 2.4.0 deprecates in favour of a package.
+Rejected: a read of the pages by the suite, because each run would then need pages that the
+repository does not hold.
+
+**The suite reads each example that the book calls grammatical.** An example reads where its lines
+joined read, or each line alone. The markup does not say whether the lines of a table are one
+sentence. Each text reads with the words that square brackets mark, and without them (5.5).
+Verified by `suites/test_corpus.nim`, which asserts the count of examples that read.
+
+A line that holds notation stays out: a digit of a place variable, an ellipsis, a parenthesis, a
+colon after a speaker, or a hyphen. An example whose every line holds notation reads nothing.
+Verified by `suites/test_corpus.nim`, which asserts the count of examples and of lines that
+notation leaves out.
+
+**The suite refuses each example that the book calls wrong.** Example 4.4 is a cmavo "reserved for
+experimental purposes", and no list gives it a selma'o. Example 4.77 is "an illegal word in
+standard Lojban". Example 19.50 is "ungrammatical as written", because its delimiter stands inside
+the text that it quotes. Example 16.79 is an English sentence, which the markup marks as lojban.
+Verified by `suites/test_corpus.nim`.
+
+**Examples 18.77, 18.78, 18.105, 18.106, 18.108 and 18.109 write a mex alone, and each reads after
+`li`.** No rule of 21.1 reads a mex as a whole text, and the book shows each one as the operand of
+`li`. Verified by `suites/test_corpus.nim`.
+
+**Where an example breaks a rule of 21.1, the parser follows 21.1, as the Architect ruled D2 a on
+#815.** The parser refuses each example of the list, which gives the rule that each one breaks.
+Each reads once it is repaired as its rule asks. Verified by `suites/test_corpus.nim`, which holds
+each refusal and each repair.
+
+- **14.27**, rule 10 `paragraph`: a fragment takes a bare `.i`, and `.ije` joins statements
+  alone. With `.i` for `.ije`, it reads.
+- **14.123**, rule 81 `terms-1`: `pe'e` takes a joik or a jek, and never the ek `.e`. With `je`
+  for `.e`, it reads.
+- **14.131**, rule 85 `termset`: `nu'u` closes a termset only after `nu'i`. With `nu'i` before
+  the terms, it reads.
+- **14.133**, rule 85 `termset`: a termset joins its parts by gek and gik, and never by `fa'u`
+  after `nu'u`. With `pe'e fa'u` for `nu'u fa'u`, it reads.
+- **14.152 and 18.118**, rule 371 `operator-1`: a forethought operator takes `gu'e`, and never
+  `ge`. With `gu'e` for `ge`, each reads.
+- **17.38 and 18.123**, rule 97 `sumti-6`: a subscript after a lerfu string needs `boi` before
+  it. With `boi` before `xi`, each reads. Example 14.154 writes the text of 18.123 with `boi`.
+- **18.122**, rule 806 `joik`: `ke'i` stands on each side of the interval `bi'o`. With
+  `ke'i bi'o ke'i`, it reads.
+
 ## Tests
 
 **One stub runs every suite as one program.** `tests/test_suites.nim` imports each file of
@@ -669,6 +770,7 @@ check in `tanru_units.nim` stops the build where the gismu list gains `jai`.
 suite still runs alone. A suite that CLL covers carries the name of a chapter. The name of each
 other suite opens with `Internal:`, so the run shows where the authority stops.
 
+`tests/cll/examples.nim` is data beside the suites, and `suites/test_corpus.nim` reads it.
 Helpers stand beside the suites, and the stub runs none of them. `suites/texts_outside.nim` reads
 the outside texts by their pins. `suites/rafsi_random.nim` spells random rafsi from the letters of
 each form. So the suites of the reader and of lujvo share one way to draw them (II.9).
@@ -685,7 +787,8 @@ CLL, or the article of the charter that a guard holds.
 **The compiler is pinned exactly**: `requires "nim == 2.4.0"` in `lojban_parser.nimble`, as each
 project of the repository pins it (D1 a on #775). The project needs the standard library alone,
 so it carries no lock. The verbs `lists` and `head`, and the tests of outside texts, also need
-`lojban-common` and `sha256sum`, which the verb `system` declares. A system package carries no
+`lojban-common` and `sha256sum`, which the verb `system` declares. The verb `cll` needs
+`sha256sum` too. A system package carries no
 pin, so its version is what the machine has.
 
 The stub passes on the pin and on Nim 2.2.12.
@@ -709,8 +812,8 @@ table on each.
 
 ## Figures
 
-Each figure comes from an Intel Xeon at 2.10 GHz with four cores, on 2026-11-05, at the code of
-`bf40939a`. No figure covers the code after it. The runs of each
+Each figure comes from an Intel Xeon at 2.10 GHz with four cores. A figure is from 2026-11-05, at
+the code of `bf40939a`, unless it names another date and code. The runs of each
 pair alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine. A
 pair against the base alternates `40718874`, the head of #828, with this code, on the pin.
 
@@ -734,10 +837,18 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   included. So one sentence takes about 13 microseconds. It read 17,170 of them whole.
 - The time of `$` is unmeasured here. `$` scores each choice of rafsi, so its time grows with the
   product of the choices of each word (expected).
-- **Prose of Tatoeba.** At `0493ec4d`, on the same machine, a program built with `-d:release`
+- **Prose of Tatoeba.** On 2026-11-06, at `0493ec4d`, a program built with `-d:release`
   read the 17,495 sentences through `readText`. It took 31.8 s, 33.6 s and 32.3 s on the pin, so
   one sentence takes about 1.9 ms. It read 16,466 of them. The grammar refused 341, and 485 hold
   a cmavo that no list gives a selma'o.
+- **Corpus of CLL.** On 2026-11-06, on the pin, the stub built with `nim c -d:testing
+  -d:nimUnittestOutputLevel:PRINT_FAILURES tests/test_suites.nim` ran every suite in 43.8 s and
+  43.8 s at `1be21960`. At `fef0cbd0`, which holds no corpus, it ran them in 20.8 s and 20.7 s. The
+  runs alternate, and the parser is the same at both. So the suite of the corpus costs about 23 s.
+- **Corpus by stage.** On 2026-11-06, at `1be21960`, a program read each line of the corpus. It
+  was built on the pin with `nim c`, with no optimisation. It read the lines through `readStream`
+  in 0.11 s and 0.11 s, and through `readText` in 15.8 s and 16.1 s. So the grammar takes nearly
+  all of the time of `readText`.
 
 ## Open questions
 
@@ -749,8 +860,6 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   reader's. It rests on the rules that CLL gives, and the laws hold it to them. CLL fixes no
   choice among splits whose stress fits, whether or not they need the same pauses. The reader
   takes the split of fewest pauses, and refuses a tie, as `iai` for `.i.ai` or `.ia.i`.
-- **The corpus of CLL.** The suites quote the examples that they cite alone. The Architect ruled
-  D1 a on #815, so the repository is to hold every example of CLL, with the notice of CLL.
 - **Scopes that CLL gives two ways.** 19.13 and 21.1 give `sa` and `su` different scopes. 13.9,
   13.1 and 2.16 give an indicator that opens a text three scopes. 19.16 calls `fu'e` the same as
   UI, where 21.1 rule 411 sets it before the indicators that it opens.
