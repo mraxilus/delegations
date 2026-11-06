@@ -474,29 +474,49 @@ const GRAMMAR_EBNF = constructGrammar(EBNF)  ## Grammar of 21.1, compiled once.
 func fillSets(terminals: openArray[Terminal]): seq[seq[Item]] =
   ## Fill Earley sets: set `i` holds items each derivation reaches after `i` terminals.
   ##   Nonterminal deriving nothing is passed when predicted, as Aycock and Horspool do.
-  result = newSeq[seq[Item]](terminals.len + 1)
-  var seen = newSeq[HashSet[Item]](terminals.len + 1)
+  ##   Hot path, once for each text: set indexes its items by nonterminal each waits for, so
+  ##     completion walks those alone, and predicts each nonterminal once. Per set, index and
+  ##     marks hold one entry for each nonterminal; items grow with text, and each allocates.
+  ##   Body of production is alias, never `let`, which copies its seq at each item (read in
+  ##     emitted C); item, three integers, copies by value.
+
   template add(i: int, item: Item) =
-    if not seen[i].containsOrIncl(item): result[i].add item
+    ## Add item to set `i` once, indexed by nonterminal it waits for.
+    let added: Item = item
+    if not seen[i].containsOrIncl(added):
+      template bodyAdded: untyped = GRAMMAR_EBNF.productions[added.production].body
+        ## Alias body of production added.
+      if added.dot < bodyAdded.len and not bodyAdded[added.dot].is_terminal:
+        waiting[i][bodyAdded[added.dot].code].add result[i].len
+      result[i].add added
+
+  result = newSeq[seq[Item]](terminals.len + 1)
+  let count_nonterminals = GRAMMAR_EBNF.heads.len
+  var
+    seen = newSeq[HashSet[Item]](terminals.len + 1)
+    waiting = newSeq[seq[seq[int]]](terminals.len + 1)  # index of items by nonterminal awaited
+    predicted = newSeq[seq[bool]](terminals.len + 1)
+  for i in 0..terminals.len:
+    waiting[i] = newSeq[seq[int]](count_nonterminals)
+    predicted[i] = newSeq[bool](count_nonterminals)
   for p in GRAMMAR_EBNF.heads[GRAMMAR_EBNF.start]: add(0, (p, 0, 0))
-  for i in 0 .. terminals.len:
+  for i in 0..terminals.len:
     var k = 0
     while k < result[i].len:
-      let
-        item = result[i][k]
-        body = GRAMMAR_EBNF.productions[item.production].body
+      let item = result[i][k]
+      template body: untyped = GRAMMAR_EBNF.productions[item.production].body
+        ## Alias body of production of item.
       inc k
 
-      # Complete: advance each item waiting for nonterminal this item derives.
+      # Complete: advance each item waiting for nonterminal this item derives; list can grow
+      #   while walked, where item derives nothing, so walk goes by index.
       if item.dot == body.len:
         let head = GRAMMAR_EBNF.productions[item.production].head
-        for j in 0 ..< result[item.origin].len:
-          let
-            waiting = result[item.origin][j]
-            waiting_body = GRAMMAR_EBNF.productions[waiting.production].body
-          if waiting.dot < waiting_body.len and not waiting_body[waiting.dot].is_terminal and
-              waiting_body[waiting.dot].code == head:
-            add(i, (waiting.production, waiting.dot + 1, waiting.origin))
+        var j = 0
+        while j < waiting[item.origin][head].len:
+          let waiter = result[item.origin][waiting[item.origin][head][j]]
+          add(i, (waiter.production, waiter.dot + 1, waiter.origin))
+          inc j
         continue
 
       # Scan terminal, or predict nonterminal.
@@ -505,7 +525,9 @@ func fillSets(terminals: openArray[Terminal]): seq[seq[Item]] =
         if i < terminals.len and int(terminals[i]) == symbol.code:
           add(i + 1, (item.production, item.dot + 1, item.origin))
         continue
-      for p in GRAMMAR_EBNF.heads[symbol.code]: add(i, (p, 0, i))
+      if not predicted[i][symbol.code]:
+        predicted[i][symbol.code] = true
+        for p in GRAMMAR_EBNF.heads[symbol.code]: add(i, (p, 0, i))
       if GRAMMAR_EBNF.nullable[symbol.code]: add(i, (item.production, item.dot + 1, item.origin))
 
 
@@ -589,7 +611,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   let span = finish - start
   var best = none(Choice)
   for p in GRAMMAR_EBNF.heads[head]:
-    let body = GRAMMAR_EBNF.productions[p].body
+    template body: untyped = GRAMMAR_EBNF.productions[p].body
+      ## Alias body of production `p`, which `let` would copy.
     if span == 0 and body.anyIt(it.is_terminal or not GRAMMAR_EBNF.nullable[it.code]): continue
     if span > 0 and p notin chart.completions[finish].getOrDefault((head, start)): continue
 
@@ -605,7 +628,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
     for k, symbol in body:
       var nexts = newSeq[Option[Choice]](span + 1)
       for m in start .. finish:
-        let partial = partials[m - start]
+        template partial: untyped = partials[m - start]
+          ## Alias partial choice ending at `m`, which `let` would copy.
         if partial.isNone: continue
         if symbol.is_terminal:
           if m + 1 + rests[k + 1] <= finish and int(chart.terminals[m]) == symbol.code:
