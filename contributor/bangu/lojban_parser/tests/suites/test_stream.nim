@@ -32,20 +32,27 @@ const
   SAMPLES_JOINED = 4000
     ## Random runs of two or three words written together, seeded; runs needing pause between
     ##   words left out, since text written together writes none.
-  FLOOR_JOINED = 2200  ## Least runs read back as same words: 2397 read at seed `2`.
-  FLOOR_TIED = 900
-    ## Least runs refused as tie that names them: 1034 read at seed `2`; 435 of them hold
-    ##   fu'ivla in one split, and others split cmavo and gismu two ways, as `mibroda` does.
-  COUNT_COMMA_MARKED = 371
-    ## Commas law of marked words reads: each place in each word of `WORDS_BORROWED` and
-    ##   `WORDS_NAMED`, with capital on each vowel or none, where text without comma reads.
-  FLOOR_COMMA_KEPT = 280  ## Least of them that still read: 294 read, 5 where pause stands.
+  FLOOR_JOINED = 2500
+    ## Least runs whose stress fits each brivla that read back as same words: 2760 read at
+    ##   seed `2`.
+  FLOOR_JOINED_OTHER = 800  ## Least runs whose stress fits no brivla: 887 read at seed `2`.
+  COUNT_COMMA_MARKED = 88
+    ## Commas law of unmarked words reads: each place in each word of `WORDS_BORROWED` and
+    ##   `WORDS_NAMED`, apostrophe aside.
+  FLOOR_COMMA_KEPT = 65  ## Least of them that still read: 71 read.
+  WORDS_GROUPED = ["meiin", "iuain", "dauarnold", "meiris", "vauensas", "uiliam", "xuakin"]
+    ## Cmene whose vowels comma may group: Examples 3.6-7, two names review of #811 found, and
+    ##   Lojbanized names of 4.8.
+  COUNT_GROUPED = 36  ## Syllables of each grouping of each name law reads.
+  FLOOR_COMMA_STRESS = 8  ## Least fu'ivla with comma and stress that rule 5 law reads: 8 read.
+  SAMPLES_COMMA_PAUSE = 2000  ## Random pairs of cmavo comma law at pause draws, seeded.
+  FLOOR_COMMA_PAUSE = 200  ## Least of them needing pause between them: 224 read at seed `4`.
   FLOOR_GLIDE_READ = 40
     ## Least capitals law of on-glide reads as one brivla: 40 read, on penultimate syllable of
     ##   each on-glide in four frames of two syllables or three.
-  FLOOR_STRESS_OTHER = 600
-    ## Least capitals off penultimate syllable of brivla read as other words: 630 read, as
-    ##   `djAcadyfanta` reads `djaca dy fanta`.
+  FLOOR_STRESS_OTHER = 200
+    ## Least capitals off penultimate syllable of brivla read as other words: 228 read, as
+    ##   `xlUsnipa` reads `xlusni pa`.
   FLOOR_STRESS = 800
     ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
     ##   842 read at seed `0`.
@@ -69,6 +76,7 @@ const
     ## Letters of cmene around diphthong `_` of name, which make one syllable or two; constructed.
   FRAMES_GLIDE = ["br_", "kobr_", "spag_", "br_na", "kobr_na"]
     ## Letters around on-glide `_`, which make one syllable, two, or three; constructed.
+  COUNT_NAME_CAPITALS = 12  ## Syllables of each diphthong of name in each frame: 2 times 1+1+2+2.
   COUNT_GLIDE_CAPITALS = 100  ## Syllables of each on-glide in each frame: 10 times 1+2+2+2+3.
 
 
@@ -143,10 +151,13 @@ func isCommaAdmitted(word: string, at: int): bool =
       not (word[at - 1] in VOWELS_SYLLABLE and word[at] in VOWELS_SYLLABLE)
 
 
-func syllables(word: string, is_borrowing = false, is_name = false): seq[Slice[int]] =
+func syllables(
+    word: string, is_borrowing = false, is_name = false, breaks: openArray[int] = []
+): seq[Slice[int]] =
   ## List vowels of each syllable of word, as 3.4 groups them from left (3.5): diphthong with
   ##   off-glide is one syllable, and with on-glide where word opens with it, or anywhere in
-  ##   borrowing or name; `iy` and `uy` in name alone; each other vowel is one.
+  ##   borrowing or name; `iy` and `uy` in name alone; each other vowel is one. Comma before
+  ##   letter of `breaks` parts two vowels (3.5).
   var at = 0
   while at < word.len:
     if word[at] notin VOWELS_SYLLABLE:
@@ -157,7 +168,7 @@ func syllables(word: string, is_borrowing = false, is_name = false): seq[Slice[i
       is_glide =
         (pair in DIPHTHONGS_ON and (at == 0 or is_borrowing or is_name)) or
         (pair in DIPHTHONGS_NAME and is_name)
-      size = (if pair in DIPHTHONGS_OFF or is_glide: 2 else: 1)
+      size = (if (pair in DIPHTHONGS_OFF or is_glide) and at + 1 notin breaks: 2 else: 1)
     result.add at .. at + size - 1
     at += size
 
@@ -166,6 +177,22 @@ func penultimate(word: string, is_borrowing: bool): int =
   ## Index syllable brivla stresses among syllables of word: penultimate, `y` not counted (3.9).
   let spans = word.syllables(is_borrowing = is_borrowing)
   toSeq(0 .. spans.high).filterIt(word[spans[it].a] != 'y')[^2]
+
+
+func isStressFit(words: openArray[string], kinds: openArray[Kind]): bool =
+  ## Test stress of written word, on its own penultimate syllable alone, falls on penultimate of
+  ##   each brivla among words, by class of each (`D3 a` of #811); `y` not counted (3.9).
+  let
+    run = words.join("")
+    spans = run.syllables
+    counted = toSeq(0 .. spans.high).filterIt(run[spans[it].a] != 'y')
+  var lo = 0
+  for i, word in words:
+    if kinds[i] != Kind.Cmavo:
+      if counted.len < 2: return false
+      if word.syllables[word.penultimate(false)].a + lo != spans[counted[^2]].a: return false
+    lo += word.len
+  true
 
 
 func capitalized(word: string, span: Slice[int]): string =
@@ -269,9 +296,11 @@ suite "Chapter 3":
     check ".i'ai'i'ai'on.".wordsRead == some(@["i'ai'i'ai'on"])  # 3.3, Example 3.4, one cmene
     check ",klama".refusalRead == some((Refusal.Comma, 0))  # 3.3, comma within word; constructed
     check "kla,,ma".refusalRead == some((Refusal.Comma, 3))  # 3.3, comma separates syllables
+    check "y,ku".refusalRead == some((Refusal.Comma, 1))  # 3.3, pause after `y`; review of #811
+    check "ma,e".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma at pause; review of #811
     check "crarcIae".wordsRead == some(@["crarciae"])  # 3.9, `ia` penultimate; constructed
-    check "crarcI,ae".refusalRead ==
-        some((Refusal.Comma, 6))  # 3.3, comma changes no word, and parts stress off; review of #811
+    check "crarcI,ae".wordsRead ==
+        some(@["crarcia", "e"])  # 3.5, comma parts `ia`, so capital stresses `crarcia`; constructed
 
 
   test "Section 3.4":
@@ -288,6 +317,10 @@ suite "Chapter 3":
     for text in ["meiin.", "mei,in.", "me,iin."]:
       check text.wordsRead == some(@["meiin"])  # 3.5, Examples 3.6-7, comma makes no other word
     check ".nu,IOrk.".stressesRead == some(@[some(1)])  # 3.5, comma parts `u` from `io`; Tatoeba
+    check "me,IIn.".stressesRead ==
+        some(@[some(1)])  # 3.5, Example 3.7 with capitals of 4.8 on `ii`; review of #811
+    for text in [".i,UAin.", "da,UArnold."]:
+      check text.stressesRead == some(@[some(1)])  # 3.5, comma groups vowels; review of #811
 
 
   test "Section 3.9":
@@ -396,6 +429,8 @@ suite "Chapter 4":
     ])  # rules 2 and 4, after `la` no pause; constructed
     check "mi djan".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # rule 4; constructed
     check "doi djan".pausesRead == some(@[Pause.Absent, Pause.Absent])  # rule 4, `doi`
+    check "ku,Arka broda".pausesRead ==
+        some(@[Pause.Absent, Pause.Absent])  # rule 5, comma makes `A` penultimate; review of #811
     check "zoi gy. John .gy.".wordsRead ==
         some(@["zoi", "gy", "John", "gy"])  # rule 7, text quoted whole; 19.10
     check "zoi gy. John .gy.".pausesRead == some(@[
@@ -494,31 +529,63 @@ suite "Internal: Stream":
     check count_refused >= FLOOR_COMMA_REFUSED  # IX.3, guard keeps refusals in play
 
 
-  test "Comma changes no word text without it reads, but where those words need pause":
+  test "Without capital, comma changes no word that text without it reads":
     var count, count_kept = 0
     for word in @WORDS_BORROWED & @WORDS_NAMED:
-      for c in -1 .. word.high:
-        if c >= 0 and word[c] notin VOWELS_SYLLABLE: continue
-        let
-          marked = (if c < 0: word else: word.capitalized(c .. c))
-          bare = marked.readStream
-        if not bare.is_read: continue
-        var
-          pauses: seq[int]  # letter before which words read without comma take pause
-          lo = 0
-        for occurrence in bare.occurrences:
-          if lo > 0 and occurrence.pause != Pause.Absent: pauses.add lo
-          lo += occurrence.text.len
-        let texts = some(bare.occurrences.mapIt(it.text))
-        for at in 1 ..< word.len:
-          if '\'' in [word[at - 1], word[at]]: continue
-          let words = (marked[0 ..< at] & "," & marked[at .. ^1]).wordsRead
-          if at in pauses: check words != texts  # 3.3, comma marks "no pause between" syllables
-          else: check words.isNone or words == texts  # 3.3, never "differ solely because of" comma
-          inc count
-          if words.isSome: inc count_kept
-    check count == COUNT_COMMA_MARKED  # IX.3, guard keeps each comma of each marked word
+      let texts = word.wordsRead
+      if texts.isNone: continue
+      for at in 1 ..< word.len:
+        if '\'' in [word[at - 1], word[at]]: continue
+        let words = (word[0 ..< at] & "," & word[at .. ^1]).wordsRead
+        check words.isNone or words == texts  # 3.3, never "differ solely because of" comma
+        inc count
+        if words.isSome: inc count_kept
+    check count == COUNT_COMMA_MARKED  # IX.3, guard keeps each comma of each word
     check count_kept >= FLOOR_COMMA_KEPT  # IX.3, guard keeps commas that read in play
+
+
+  test "Comma grouping vowels of cmene, with capital on each syllable, reads that cmene so":
+    var count = 0
+    for word in WORDS_GROUPED:
+      for at in 1 ..< word.len:
+        if word[at - 1] notin VOWELS_SYLLABLE or word[at] notin VOWELS_SYLLABLE: continue
+        for k, span in word.syllables(is_name = true, breaks = [at]):
+          let
+            marked = word.capitalized(span)
+            text = marked[0 ..< at] & "," & marked[at .. ^1]
+          check text.wordsRead == some(@[word])  # 3.5, comma groups vowels of one name
+          check text.stressesRead == some(@[some(k)])  # 4.8, capital "to preserve" stress
+          inc count
+    check count == COUNT_GROUPED  # IX.3, guard keeps each syllable of each grouping
+
+
+  test "Stress comma leaves penultimate takes no pause before brivla after it":
+    var count = 0
+    for word in WORDS_BORROWED:
+      for at in 1 ..< word.len:
+        if word[at - 1] notin VOWELS_SYLLABLE or word[at] notin VOWELS_SYLLABLE: continue
+        let spans = word.syllables(is_borrowing = true, breaks = [at])
+        if spans.len < 2: continue
+        let
+          marked = word.capitalized(spans[^2])
+          text = marked[0 ..< at] & "," & marked[at .. ^1] & " broda"
+          pauses = text.pausesRead
+        if pauses.isNone: continue  # comma parts no syllable fu'ivla admits
+        check pauses.get[1] == Pause.Absent  # 4.9 rule 5 needs stressed last syllable
+        inc count
+    check count >= FLOOR_COMMA_STRESS  # IX.3, guard keeps stressed fu'ivla in play
+
+
+  test "Comma between two cmavo that need pause is refused at comma":
+    var count = 0
+    randomize(4)
+    for _ in 1 .. SAMPLES_COMMA_PAUSE:
+      let words = @[WORDS_CMAVO.sample, WORDS_CMAVO.sample]
+      if words.pausesNeeded[1] == Pause.Absent or words.anyIt('.' in it): continue
+      check (words[0] & "," & words[1]).refusalRead ==
+          some((Refusal.Comma, words[0].len))  # 3.3, comma "cannot be pronounced as pause"
+      inc count
+    check count >= FLOOR_COMMA_PAUSE  # IX.3, guard keeps pauses in play
 
 
   test "Capital on penultimate syllable of brivla reads, and on any other never reads as it":
@@ -579,7 +646,7 @@ suite "Internal: Stream":
         for k, span in word.syllables(is_name = true):
           check word.capitalized(span).stressesRead == some(@[some(k)])  # 3.4; 3.9, any syllable
           inc count
-    check count == 12  # IX.3, guard keeps each syllable of each frame: 2 times 1+1+2+2
+    check count == COUNT_NAME_CAPITALS  # IX.3, guard keeps each syllable of each frame
 
 
   test "Capital on any vowel of cmavo stresses that syllable, and capital on y is refused":
@@ -592,8 +659,8 @@ suite "Internal: Stream":
           check text.stressesRead == some(@[some(k)])  # 3.9, cmavo any syllable
 
 
-  test "Words needing no pause, written together, read back as them, as one word, or as tie":
-    var count_joined, count_tied = 0
+  test "Words needing no pause, written together, read back as them where brivla stands last":
+    var count_joined, count_other = 0
     randomize(2)
     for _ in 1 .. SAMPLES_JOINED:
       var words: seq[string]
@@ -602,19 +669,24 @@ suite "Internal: Stream":
       if words.pausesNeeded[1 .. ^1].anyIt(it != Pause.Absent): continue
       let
         text = words.join("")
-        reading = text.readStream
-      if reading.is_read:
-        let
-          texts = reading.occurrences.mapIt(it.text)
-          is_whole = texts == @[text] and reading.occurrences[0].reading.kind == Kind.Fuhivla
-        check texts == words or is_whole  # 4.1, one split; or one fu'ivla, as `klamaku` (4.7)
-        if texts == words: inc count_joined
+        texts = text.wordsRead
+      if words.isStressFit(words.mapIt(LUT_KIND_BY_WORD[it])):
+        check texts == some(words) or texts == some(@[text])  # `D3 a` of #811; 4.1, one split
+        if texts == some(words): inc count_joined
       else:
-        check reading.refusal == Refusal.Split  # 3.9, only stress tells them apart
-        check words.join(" ") in reading.detail.split(", or ")  # 4.1, tie names them
-        inc count_tied
+        check texts != some(words)  # `D3 a` of #811, brivla before end needs capital
+        inc count_other
+
+      # Capital on each brivla marks each stress, so words read back as them.
+      var marked: seq[string]
+      for word in words:
+        if LUT_KIND_BY_WORD[word] == Kind.Cmavo:
+          marked.add word
+          continue
+        marked.add word.capitalized(word.syllables[word.penultimate(false)])
+      check marked.join("").wordsRead == some(words)  # `D3 a` of #811; 3.9, capitals mark stress
     check count_joined >= FLOOR_JOINED  # IX.3, guard keeps runs that read back
-    check count_tied >= FLOOR_TIED  # IX.3, guard keeps ties in play
+    check count_other >= FLOOR_JOINED_OTHER  # IX.3, guard keeps brivla before end in play
 
 
   test "Stream of marks alone reads as no words":
@@ -623,7 +695,7 @@ suite "Internal: Stream":
 
 
   test "Refusal names byte where offending word opens":
-    check "mi klama lonubroda".refusalRead == some((Refusal.Split, 9))  # 3.9; constructed
+    check "mi klama iai".refusalRead == some((Refusal.Split, 9))  # 4.9 rule 3, tie; constructed
     check "mi klama ktraile".refusalRead == some((Refusal.Cluster, 9))  # 4.7; constructed
     check "mi klama c".refusalRead == some((Refusal.Shape, 9))  # 3.4, no syllable; constructed
 
@@ -638,7 +710,8 @@ suite "Internal: Stream":
     check "MIbroda".wordsRead == some(@["mibro", "da"])  # 3.9, stress of gismu `mibro`
     check "KLAmaku".wordsRead == some(@["klama", "ku"])  # 3.9, stress fits `klama` alone
     check "klamaku".wordsRead == some(@["klamaku"])  # 4.7, one fu'ivla; constructed
-    check "mibroda".refusalRead == some((Refusal.Split, 0))  # 3.9, stress alone tells them apart
-    check "mibroda".readStream.detail == "mibro da, or mi broda"  # 3.9, two splits named
+    check "mibroda".wordsRead == some(@["mi", "broda"])  # `D3 a` of #811, penultimate of word alone
+    check "lonubroda".wordsRead == some(@["lo", "nu", "broda"])  # `D3 a` of #811
+    check ".esperanto".wordsRead == some(@["e", "speranto"])  # 4.1, Example 19.78 "breaks up"
     check "iai".refusalRead == some((Refusal.Split, 0))  # 4.9 rule 3, `.i.ai` or `.ia.i`
     check "ka,i".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma is no pause; constructed

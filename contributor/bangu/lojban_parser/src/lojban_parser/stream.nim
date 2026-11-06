@@ -19,16 +19,17 @@
 ##       as `lo se .i`.
 ##     Several splits of fewest pauses tie, as `iai` for `.i.ai` or `.ia.i`, and reader refuses
 ##       them as `Split`; written word with no split is refused as `readWord` refuses letters.
-##     Stress takes part, as in speech: capitals must fit each word, so `KLAmaku` reads as
-##       `klama ku`, and `klamaku` as one fu'ivla, stressed on its penultimate syllable.
-##     Comma changes no word: no two words "differ solely because of" comma (3.3). So letters
-##       and capitals choose words, comma left out, where they read. Comma marks "no pause
-##       between" syllables (3.3), so no split takes pause where it stands: `ka,i` is `kai`
-##       with comma refused, never `ka .i`. Each comma is then judged against words chosen,
-##       and one parting stress off them is refused, as `crarcI,ae` is.
-##       Only where words read no other way does comma part syllables, as grouping of vowels
-##       needs it (3.5): `.nu,IORK.` of Example 5.65 is one cmene stressed on `io`, and
-##       `.nuIORK.` is `nu .iork.`.
+##     Stress takes part, as in speech. Written word with no capital is stressed on its own
+##       penultimate syllable alone, and one with capitals on each syllable they mark, as
+##       Architect ruled (`D3 a` on #811). So each brivla holds capital, or ends syllables counted
+##       for stress: `mibroda` reads as `mi broda`, `MIbroda` as `mibro da`, `.esperanto` as
+##       `e speranto` (Example 19.78), and `klamaku` as one fu'ivla.
+##     Comma parts syllables, as 3.5 groups vowels by it, so capitals stress syllables it marks:
+##       `me,IIn.` is one cmene stressed on `ii`. Comma marks "no pause between" syllables
+##       (3.3), so no split takes pause where it stands: `ka,i` is `kai` with comma refused,
+##       never `ka .i`. Each comma is then judged against words chosen.
+##       Cost: comma under capital may make written word split, as `crarcI,ae` reads
+##         `crarcia e` where `crarcIae` reads `crarciae`; with no capital, comma changes no word.
 ##     Cmene stands last in written word: pause follows it (4.9 rule 2), and parts of name join
 ##       into one word with no pause (4.8), so consonant inside written word goes on with name.
 ##       So `bri` is no `br .i`, though `br` alone would read as cmene, as `rl` does (3.4); and
@@ -82,7 +83,8 @@ type
     pause*: Pause  ## Pause before word.
     stress*: Option[int]
       ## Nucleus capitals mark stressed, counted from zero over vowels, `y` and diphthongs of
-      ##   word; none where text marks none.
+      ##   word, commas parting them; none where text marks none.
+    breaks*: seq[int]  ## Index of letter of word each comma stands before, in order (3.3).
     reading*: Reading  ## Word as `readWord` reads `text`.
 
   ReadingStream* = object  ## Define outcome of reading stream as its words.
@@ -131,7 +133,7 @@ func isPauseNeeded(prior, next: Occurrence): bool =
   ## Test rule of 4.9 needs pause between two words: rules by letters (`forms.nim`), and rule 5,
   ##   stressed last syllable before brivla or before stressed first syllable (4.2).
   if isPauseNeeded(prior.text, next.text): return true
-  if prior.stress != some(prior.text.nuclei(prior.reading.kind).high): return false
+  if prior.stress != some(prior.text.nuclei(prior.reading.kind, prior.breaks).high): return false
   next.reading.kind in KINDS_BRIVLA or next.stress == some(0)  # rule 5; 4.2
 
 
@@ -218,7 +220,16 @@ func occurrenceWritten(
   if capitals.len > 0:
     stress = piece.nucleusStressed(reading.kind, capitals, breaks)
     if stress.isNone: return
-  some(Occurrence(start: spelling.places[span.a], text: piece, stress: stress, reading: reading))
+
+  # Written word with capitals marks each stress with them; one with none stresses its own
+  #   penultimate syllable alone (`D3 a` on #811). So brivla holds capital, or no vowel counted
+  #   for stress follows it in written word.
+  if reading.kind in KINDS_BRIVLA:
+    if spelling.capitals.len > 0 and stress.isNone: return
+    if spelling.capitals.len == 0 and spelling.letters[span.b + 1 .. ^1].anyIt(it in VOWELS): return
+  some(Occurrence(
+    start: spelling.places[span.a], text: piece, stress: stress, breaks: breaks, reading: reading,
+  ))
 
 
 func splitWritten(spelling: Spelling, is_parting: bool): Split =
@@ -289,9 +300,20 @@ func splitChosen(spelling: Spelling, is_parting: bool): Split =
 
 
 func refusalWritten(spelling: Spelling, start: int): ReadingStream =
-  ## Refuse written word that splits into no words, at byte `start`: as `readWord` refuses its
-  ##   letters, else at its first capital, which breaks rule of 3.9. Letters that split into
-  ##   cmavo split here too, so capital alone stops them.
+  ## Refuse written word that splits into no words, at byte `start`: at first comma where words
+  ##   its letters read take pause, since comma marks none (3.3); else as `readWord` refuses its
+  ##   letters; else at its first capital, which breaks rule of 3.9. Letters that split into
+  ##   cmavo split here too, so comma or capital alone stops them.
+  var bare = spelling
+  (bare.breaks, bare.commas) = (newSeq[int](), newSeq[int]())
+  let split = bare.splitChosen(is_parting = false)
+  if split.count > 0:
+    var lo = 0
+    for i, word in split.splits[0]:
+      let k = spelling.breaks.find(lo)
+      if i > 0 and k >= 0 and isPauseNeeded(split.splits[0][i - 1], word):
+        return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, comma "cannot be" pause
+      lo += word.text.len
   let whole = spelling.letters.readWord
   if not whole.is_word and whole.refusal != Refusal.Stream:
     return refuse(whole.refusal, start, whole.detail)
@@ -343,35 +365,18 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   let refusal_marks = text.refusalMarks(start, finish)
   if refusal_marks.isSome: return refusal_marks.get
 
-  # Choose words by letters and capitals, since no two words "differ solely because" of
-  #   comma (3.3); comma still stands where no pause stands. Commas part syllables only
-  #   where words read no other way, as comma fixes syllables capitals need (3.5).
-  let spelling = text.toSpelling(start, finish)
-  var split = spelling.splitChosen(is_parting = false)
-  let is_bare = split.count > 0
-  if not is_bare: split = spelling.splitChosen(is_parting = true)
+  # Choose words that fit every mark: comma parts syllables, as 3.5 groups vowels by it, so
+  #   capitals stress syllables it marks; and no split takes pause where comma stands (3.3).
+  let
+    spelling = text.toSpelling(start, finish)
+    split = spelling.splitChosen(is_parting = true)
   if split.count == 0: return spelling.refusalWritten(start)
   if split.count > 1:
     let detail = split.splits.mapIt(it.mapIt(it.text).join(" ")).join(", or ")
     return refuse(Refusal.Split, start, detail)  # 3.3, no one split to infer
-  var words = split.splits[0]
-  let refusal_commas = spelling.refusalCommas(words)
+  let refusal_commas = spelling.refusalCommas(split.splits[0])
   if refusal_commas.isSome: return refusal_commas.get
-
-  # Read stress of words chosen without commas again with them; comma parting stress off is
-  #   refused at its byte.
-  if is_bare:
-    var lo = 0
-    for i, word in words:
-      let
-        span = lo .. lo + word.text.len - 1
-        again = spelling.occurrenceWritten(span)
-      if again.isNone:
-        let k = toSeq(0 ..< spelling.breaks.len).filterIt(spelling.breaks[it] in span)[0]
-        return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, 3.9
-      words[i] = again.get
-      lo = span.b + 1
-  ReadingStream(is_read: true, occurrences: words)
+  ReadingStream(is_read: true, occurrences: split.splits[0])
 
 
 func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
