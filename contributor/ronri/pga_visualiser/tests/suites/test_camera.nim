@@ -1131,6 +1131,44 @@ suite "Camera":
     check norm(camera.eye - planet) =~ filling
 
 
+  test "free flight's wheel onto a line or a plane comes in past its radius, as neither draws one":
+    # Fault: floor of line or plane was its radius, 0.08 where nothing chose one, though
+    #   line is drawn at fixed width and plane at fixed extent. Wheel stopped 0.08 off
+    #   empty place on either.
+    const (wide, tall) = (1440, 900)
+    let
+      opened = cameraAround(ORIGIN, 2.0, Direction(x: 1, y: -3, z: 2))
+      (_, frame) = opened.sight
+      right = ORIGIN + frame.axis_right
+      up = ORIGIN + frame.axis_up
+    var
+      lone_line = initScene()
+      lone_plane = initScene()
+    lone_line.addObject(ORIGIN.toMultivector ∧ right.toMultivector, "line", Ink.Jade)
+    lone_plane.addObject(
+      ORIGIN.toMultivector ∧ right.toMultivector ∧ up.toMultivector, "plane", Ink.Jade
+    )
+    check lone_line.radiusAt(0) == RADIUS_OBJECT_DEFAULT
+    check lone_plane.radiusAt(0) == RADIUS_OBJECT_DEFAULT
+    for scene in [lone_line, lone_plane]:
+      var
+        camera = opened
+        interaction = Interaction(is_enabled: true)
+      interaction.updateCursor(float(wide) / 2.0, float(tall) / 2.0)
+      for _ in 1..40:
+        interaction.dollyAtCursor(
+          camera,
+          scene,
+          0.5,
+          camera.drawExtentFor(tall, 0.0),
+          camera.initMatrixViewProjection(float(wide) / float(tall)),
+          wide,
+          tall,
+          has_selection = false,
+        )
+      check norm(camera.eye - ORIGIN) < 0.01 * RADIUS_OBJECT_DEFAULT
+
+
   test "free flight's wheel onto a point off the middle stops at the depth where it fills":
     # Fault: floor was reach from eye, and fill is depth along sight. Off middle, reach runs
     #   longer than depth, so wheel stopped nearer than fill. Selection's wheel dollies about

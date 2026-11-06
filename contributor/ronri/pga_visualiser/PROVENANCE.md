@@ -2010,12 +2010,38 @@ Assumed: that the desktop hands its five readers one read of the stance, which n
 
 ## Zoom
 
-**In free flight, the wheel zooms toward the object the pointer is over**, which is the map reading
-of a zoom. `picking.anchorZoomAt` answers that object alone, at any depth, since the wheel refers to
-the object under the pointer. Where none answers, the wheel does nothing, since it has nothing to
-come in to (repository issue 535). A pinch is no zoom of its own: its two fingers hold what each
-touched (Two fingers). Rejected: the ground at `z = 0`, which the world does not have, and the level
-through the pivot, which names no place a reader points at.
+**In free flight, the wheel zooms toward the object nearest the eye within a fingertip's reach of
+the pointer** (repository issue 745). That is the map reading of a zoom. Objects that crowd one spot
+on the screen part as the eye comes in, so the nearest is the one a reader reaches first.
+`picking.anchorZoomAt` asks the pick for `Rank.Eye` (Picking). Where none answers, the wheel does
+nothing, since it has nothing to come in to (repository issue 535). A pinch is no zoom of its own:
+its two fingers hold what each touched, by the same rank over a wider reach (Two fingers).
+
+**The object answers at any depth, because the solar system is not special** (repository issue
+745). Where only far stars stand within reach, the reader most likely means one of them, so the zoom
+comes in toward the nearest. At (1020, 180) from home, that is a star 2.04 million units out, 67 px
+off the pointer. Rejected: a limit of twice the nearest drawn depth ahead, under which a zoom toward
+Sol stopped 4.96 units from it. The nearest drawn object anywhere in the frame set that limit, and a
+zoom in also locked the wheel. Rejected: a limit of twice the separation, under which no star
+answers after key flight far out until a click selects one.
+
+Rejected: the object nearest the pointer, as a click takes it. At home in the largest demo, a star
+4.26 million units out stands 30 px from the middle, and Sol 53 px. Six wheel events of 400 px
+there left a separation of 280,656, with 1 point drawn. Rejected: the 34 px of a click as the
+reach, inside which that star stands alone. Rejected: the ground at `z = 0`, which the world does
+not have, and the level through the pivot, which names no place a reader points at.
+
+**At about one depth, a point beats a line and a line beats a plane**, as in a click
+(`picking.FACTOR_DEPTH_PLACE`). The nearest depth in reach names a place, and every object within
+twice that depth stands at it. A line through a planet stands at the place of the planet, and never
+parts from it as the eye comes in. Beside Earth, such a line passes nearest the ray of a finger at
+a point 4% nearer the eye than Earth.
+
+Rejected: depth alone, under which each finger about Earth took a line through it. The floor of
+that line then held the pinch 0.08 units off Earth (Free flight). Rejected: the rank of a click over
+the whole reach, under which a far star in reach beats a near line. Assumed: that twice the depth
+bounds one place. Beside Earth the line stands 4% nearer, and in the cases measured each far star
+stands over 100,000 times deeper.
 
 **One notch zooms the same on both front-ends** (`interaction.factorWheel`). Each notch scales the
 separation by `FACTOR_DOLLY_NOTCH` 1.12. The desktop reads whole notches from SDL. The page counts
@@ -2040,7 +2066,7 @@ key flight keeps the separation, so a band about it would refuse every object af
 
 **The zoom stops where a point fills the frame**, because nearer shows nothing more of it. There its
 sphere reaches every corner, and the point is backdrop (Picking). `picking.depthFilling` solves that
-depth, as the inverse of `isCoveringView`. Free flight floors at the point under the pointer, and a
+depth, as the inverse of `isCoveringView`. Free flight floors at the point it comes in to, and a
 selection at the point in the middle of the frame (`AnchorZoom.floor_reach`). `framing.holdFilled`
 holds the fill for a point picked alone under every other move: a drag, a key and a pinch.
 
@@ -2066,12 +2092,25 @@ floor on flight at the fill of the point ahead, which stops it at each point of 
 - 10 notches in, 20 out and 10 in again bring the distance back to where it began;
 - in free flight, 40 notches onto a point off the middle stop at its fill, with the point 0.5 px or
   less from the pointer;
+- with nothing selected, the zoom at the middle of the home view of the largest demo takes Sol, 19.3
+  deep. With the rank of a click, its anchor stands 4,259,970 deep;
+- at (1020, 180) from home, the zoom takes the star 2.04 million units out, where the rank of a
+  click takes none;
+- a point 50 px off and 10 deep beats a star 10 px off and 1000 deep, which a click takes. A disc
+  under the pointer beats both, and a point 100 px off gives no anchor;
+- a point beats a line through it whose part under the pointer stands 1 unit nearer, at depth 9
+  against 10. A line 10 deep beats a star 1000 deep;
 - a point picked alone is held at the fill from half of it, and left where it stands from 19.
 
 Verified by driven checks:
 
 - an object under the pointer drifts 0.000 px across a 3.2× zoom, against 1.957 px with the
   pivot-level anchor;
+- from home with nothing selected, six wheel events of 400 px at the middle carry the target 0.9
+  units. They leave 318 points drawn at a separation of 1.3. With the rank of a click, the target
+  goes 4,261,387 units out, with 1 point drawn at a separation of 280,656;
+- six wheel events of 400 px at (1020, 180) from home bring the eye 15.18 times nearer the star
+  beside the pointer. It stood 2.23 million units off, and with the rank of a click the eye stays;
 - a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - 40 notches onto a point picked alone stop at a depth of 0.115882196, against a fill of 0.115882251
   read through float32. Ten more notches move the eye 0;
@@ -2150,11 +2189,15 @@ placement of the frame, and `ensureViewOverlay` runs many times over one frame: 
 marker, each pulse and the hover ring. An overlay call between frames reads the figure of the last
 frame, as it reads the reach of the scene that frame measured.
 
-**The wheel in free flight comes in to the object under the pointer, and does nothing without one**
-(Zoom). `travelToward` carries the eye along its line to that object and holds it on its pixel. The
-floor is the drawn radius of the object, so a run of notches stops at its surface. The floor of a
-point is where its sphere fills the frame. Rejected: the ray of the pointer at the scale of the
-separation where nothing stands there, which runs the separation down to its floor.
+**The wheel in free flight comes in to the object it takes about the pointer, and does nothing
+without one** (Zoom). `travelToward` carries the eye along its line to that object and holds it on
+its pixel. The floor of a point is where its sphere fills the frame. A line and a plane have no
+floor, because only a point is drawn at its radius. Rejected: the ray of the pointer at the scale of
+the separation where nothing stands there, which runs the separation down to its floor.
+
+Rejected: the radius as the floor of a line or a plane, 0.08 where nothing chose one. A line is
+drawn at a fixed width in pixels, and a plane at a fixed extent. The two lines through Earth then
+held a pinch 0.08 units off it, and a wheel stopped 0.08 off any line or plane.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2172,6 +2215,8 @@ separation where nothing stands there, which runs the separation down to its flo
 - the ship opens at the separation of the opening view, and `home` leaves its speed;
 - a held `w` with nothing selected lies along the sight, and keeps the separation;
 - a strafe leaves that separation alone;
+- 40 notches onto a lone line, and onto a lone plane, come within 0.0008 of it, past their radius
+  of 0.08;
 - the wheel over empty sky with nothing selected does nothing over 200 notches, and a spread of two
   fingers there keeps the separation;
 - free flight's wheel comes in to a point eight separations out, and the selection's dollies about
@@ -3254,6 +3299,13 @@ distance, once the own radius of a shape is met. That priority is what makes gen
 `RADIUS_PICK_POINT` is 34 CSS px and `RADIUS_PICK_LINE` is 24, sized against a fingertip at phone
 density, and the test of a plane is by area.
 
+**A click ranks by the pointer, and a zoom with nothing selected ranks by the eye**
+(`picking.Rank`). `Rank.Eye` takes the finite object nearest the eye: a point or a line within
+`RADIUS_CROWD_TOUCH` 72 px, or a plane under the pointer (Zoom). A finger of a pinch reaches further
+(Two fingers). Within twice the nearest depth, it ranks by kind as a click does. In both ranks, a
+disc that the cursor lies inside beats every object outside it. Horizon shapes stand nowhere to come
+in to, so `Rank.Eye` takes none.
+
 **Everything drawn is pickable, and the horizon is included.** The rank is point, finite line,
 horizon line, finite plane, and horizon plane. The horizon line is tested against the great circle
 that it draws as. The horizon plane matches every ray, so it comes last. The extent goes through
@@ -3589,10 +3641,43 @@ about the pivot, so what the middle holds drifts toward the middle of the frame 
 out. Rejected: one solve of four unknowns against both places, which spends the turn on the gap,
 because a turn foreshortens what it carries.
 
-**A finger holds the place on its own ray, at the depth of the object under it.** That object is the
-one a tap there selects: at any depth with nothing selected, and inside the depth band with a
-selection. Rejected: the own point of the object, which the pick finds up to 34 px off the finger.
-Two fingers on one star then held one point, and no spread could zoom.
+**A finger holds the place on its own ray, at the depth of the object it takes.** With nothing
+selected, that object is the one nearest the eye within the reach of the finger, by the rank of the
+wheel (Zoom). With a selection, it is the one a tap there selects, inside the depth band. Rejected:
+the own point of the object, which can stand a full reach off the finger. Two fingers on one star
+then held one point, and no spread could zoom.
+
+Rejected: the object a tap selects, with nothing selected. Near Sol, a finger then often held a star
+millions of units out, and no move of the camera carries that star under its finger. A probe that is
+not kept pinched six times from home about Sol, on a page of 412 by 915, on 2026-11-04. The eye came
+from 261.6 units to 0.083 units from Sol, and to 3.90 units with the object a tap selects.
+
+**A finger of a pinch reaches a fingertip past the middle of the fingers, and never less than two
+fingertips** (`interaction.reachPinch`). Past one fingertip, it takes only an object within
+`FACTOR_ANCHOR_DEPTH` 2 of the separation. A pinch lands each finger beside what the reader means,
+and not on it. At home in the largest demo, on a frame of 412 by 915, the planets stand in one band
+across the frame.
+
+A probe that is not kept pinched at a grid of spots within 210 px of Sol, on 2026-11-06. There,
+fingers 60 px apart flew the eye out past 1,000 units at 60 of 165 spots, and at 21 with this reach.
+Each of those 21 stands more than 150 px off the band. Fingers 160 px apart flew out at 39 of 135
+spots, and at 6. Fingers 300 px apart held the depth of a star at 30 of 45 spots, and at none.
+
+Rejected: the 72 px of the wheel, under which a finger 90 px off that band takes a star behind it.
+The eye then flies out past the solar system. Rejected: the wide reach at any depth, under which a
+finger 100 px from a star 8 times deeper than the view takes it. One pinch in then carries the eye
+out 18.5 times, against 4.8. Rejected: a fixed reach of 150 px at any depth. Fingers 300 px apart
+then still held the depth of a star at 14 of 45 spots.
+
+Rejected: half the gap past one fingertip at any depth, which reaches 102 px with fingers 60 px
+apart. It flew out at 44 of 165 spots. Assumed: that the wheel keeps one fingertip, because a
+pointer lands where it is aimed. Assumed: that a reader who pinches toward a far star beside near
+objects first moves it clear of them.
+
+**A pinch in that holds the depth of a far star zooms out about it**, and carries the eye out past
+the solar system. A probe that is not kept pinched in 65 times from home, on 2026-11-06. Of those
+pinches, 18 carry the eye out more than 100 times its distance. With the 72 px of the wheel it is 44
+of 65, and on `main` at `8fe8eb6d` 47 of 65.
 
 **With nothing selected, a finger over nothing holds a place at a depth the view is about.** That
 depth is the depth of the object of the other finger, where that finger stands on one. Otherwise it
@@ -3617,8 +3702,9 @@ correction counts only where it cuts the misses by more than a billionth of them
 view by 1.3e-9 radians, on rounding alone.
 
 **The floor of each place is a depth along the sight**, the fill where the wheel stops at that
-object. Past it, the fingers slip. Rejected: a floor on the reach, which a place off the own ray of
-the object never came near. The eye then went on past the fill.
+object. Past it, the fingers slip. A place on a line or a plane has none (Free flight). Rejected: a
+floor on the reach, which a place off the own ray of the object never came near. The eye then went
+on past the fill.
 
 **Both fingers are read once for each frame.** The move of each finger arrives as its own
 `pointermove`. A solve read there chases the new place of one finger and the old place of the other.
@@ -3639,12 +3725,17 @@ lifts, so a third finger lifting back to two takes no old grip.
   slop;
 - places over nothing take the depth of the object shown nearest the fingers, near the pivot's
   depth;
-- a nearer star aside, and a deeper star under the middle of the fingers, do not set that depth;
+- a nearer star aside, and a deeper star under the middle of the fingers, do not set that depth.
+  The deeper star stands within the reach of a finger, and outside its band;
+- two fingers landed 103 px beside a near point, each 10 px from a star 10,000 times deeper, zoom
+  in to the point. With the 72 px of the wheel, they carry the eye 55,374 units out;
 - five pinches in over empty sky each zoom out by more than 4, about the point drawn there;
 - with a selection, the pivot moves less than 1e-9, and the gap and angle of both places hold within
   0.01 px and 1e-9;
 - with a selection, a fivefold pinch off the middle zooms out by more than 3;
-- a spread over one point stops the eye at its floor.
+- a spread over one point stops the eye at its floor;
+- ten pinches about a planet 4e-5 units in radius, with two lines through it, come to its fill.
+  With the radius of a line as its floor, they stop 0.0806 off it.
 
 Verified by driven checks, in Chromium on 2026-10-08:
 
@@ -4788,9 +4879,6 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - A pick made from afar reads the place of its object about the view origin where the camera stands.
   So the pivot lands a world step or so off the object. A probe that is not kept read 176 m at 4.7
   million units, where doubles step by 139 m, on 2026-10-05. A second pick from near read 0.000 m.
-- Far out in a dense field, each of two fingers holds the star that a tap there selects, at the own
-  depth of that star. 1.0e7 units out over Sol, fingers 40 px either side of it held stars 1.43e7
-  off. A spread of four then carried the eye past Sol (Two fingers).
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point that
   it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001. Float32 holds
   about 0.06 of a unit at 530,000 units, and the record stores the vanishing point in it. The near

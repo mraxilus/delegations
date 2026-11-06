@@ -56,6 +56,15 @@ const
     ##   Free flight takes object at any depth: wheel there refers to object under pointer,
     ##   and band about separation left it nothing to refer to once flight had moved on
     ##   while separation stood (repository issue 535).
+    ##   Of objects crowding pointer it takes one nearest eye; see `Rank.Eye`.
+    ##   Finger of pinch reaching past fingertip takes object only within it too; see
+    ##   `interaction.reachPinch`.
+  FACTOR_DEPTH_PLACE* = 2.0
+    ## Count object within this factor of nearest one's depth as standing at one place with it.
+    ##   Zoom with nothing selected ranks by kind there, as click does; see `Rank.Eye`.
+    ##   Line through planet passes nearest finger's ray short of it, by 4% of depth beside
+    ##   Earth: depth alone took line, and pinch about Earth stopped (repository issue 745).
+    ##   Objects factors apart part as zoom comes in, and nearest of them is reached first.
   FRACTION_FILLED_BACKDROP* = 0.9
     ## Take plane as backdrop where its disc covers this share of frame or more.
     ##   Plane nearly filling frame leaves bare glass only in slivers, which no reader aims
@@ -119,6 +128,21 @@ type
     x*, y*: float  ## Pixel coordinates.
     depth*: float  ## View-space depth; positive and smaller is nearer eye.
 
+  Rank* {.pure.} = enum  ## Define which object within reach of cursor pick takes.
+    ## Disc cursor lies inside beats every object it does not, in each; among such discs,
+    ##   nearest eye wins.
+    Pointer,  ## Nearest cursor in pixels, points over lines over planes: what click means.
+    Eye,  ## Nearest eye, of any kind within reach of cursor: what zoom means.
+      ## Reach is `RADIUS_CROWD_TOUCH` for wheel, and further for finger of pinch, which
+      ##   lands beside object reader means; past fingertip, only about depth view is about.
+      ##   See `interaction.reachPinch`.
+      ## Zoom comes in toward what it takes, and objects crowding one spot part as it does,
+      ##   so nearest of them is what reader reaches first (repository issue 745).
+      ## Objects within `FACTOR_DEPTH_PLACE` of nearest depth stand at one place, and there
+      ##   point beats line beats plane, as in `Pointer`: line through planet never parts
+      ##   from it.
+      ## Horizon shapes stand nowhere to come in to, so none is taken.
+
   PickReport* = object  ## Define what one pick found under cursor.
     handle*: Option[int]  ## Nearest object of winning rank; none where nothing is in reach.
     count_rivals*: int  ## How many objects of winner's rank or better stood within
@@ -149,12 +173,12 @@ type
     at*: Position  ## Point, about view origin, that keeps its pixel through zoom.
     floor_reach*: float  ## How near wheel may come to `at`.
       ## Point's is reach at which its depth fills frame (`depthFilling`): nearer shows
-      ## nothing more of it. Other object's is its drawn radius, so wheel stops at surface rather
-      ## than carrying eye through it; see `camera.travelToward`.
+      ## nothing more of it. Line's and plane's is none: line is drawn at fixed width and
+      ## plane at fixed extent, never at radius, so neither has surface to stop at.
     is_standing*: bool  ## Whether `at` is where point or line stands, not crossing of ray.
       ## What stands somewhere has surface to stop at, so selection's wheel floors at it;
-      ## see `interaction.dollyAbout`. Plane is crossing, met where ray happens to fall, and
-      ## its drawn radius spans its disc, so floor at it stops eye that far short of plane.
+      ## see `interaction.dollyAbout`. Plane is crossing, met where ray happens to fall, so
+      ## wheel stopped there would stop at nothing reader picked.
 
 
 func towards*(start, finish: ScreenPosition; fraction: float): ScreenPosition =
@@ -511,6 +535,11 @@ func add(hiders: var Hiders, hider: Hider) =
   inc hiders.count
 
 
+func isNearSeparation(depth: float; camera: Camera): bool =
+  ## Report whether depth along sight lies within `FACTOR_ANCHOR_DEPTH` of separation.
+  depth >= camera.distance / FACTOR_ANCHOR_DEPTH and depth <= camera.distance * FACTOR_ANCHOR_DEPTH
+
+
 proc pickWalk(
   scene: Scene;
   camera: Camera;
@@ -521,12 +550,19 @@ proc pickWalk(
   placed: openArray[Placement];
   hiders_known: Hiders;
   is_points_only: bool;
+  rank: Rank;
+  reach_eye: float;
 ): PickWalk =
   ## Walk every visible object once, ranking what stands within reach of cursor.
   ##   `pickAt`'s one pass; see it for rule. Points `hiders_known` hide are passed over,
   ##   as winner and as rival; discs under cursor met on way are gathered for caller.
   ##   `is_points_only` skips every other kind, for second pass whose winner is already
   ##   known to be point.
+  ##   `rank` says which object within reach wins; see `Rank`. `reach_eye` is how far, in
+  ##   pixels, `Rank.Eye` reaches from cursor; rivals are counted at `RADIUS_CROWD_TOUCH`.
+  ##     Past `RADIUS_CROWD_TOUCH` it takes only object within `FACTOR_ANCHOR_DEPTH` of
+  ##     separation: star there is none of what reader means, and held it carried pinch in out
+  ##     about it.
   ##   Exceeds 60-line default: three shape branches are irreducibly different geometry,
   ##   each minimal, sharing `eye`/`frame_camera`/`ray`/`scale` setup computed once.
 
@@ -552,20 +588,31 @@ proc pickWalk(
   #   Disc cursor lies inside beats every point it does not, and among those nearest eye
   #   wins; among rest, nearest cursor in pixels. Reach in pixels is for imprecision
   #   where nothing is under pointer.
-  var is_under_best = false
+  #   `Rank.Eye` ranks discs under cursor by depth alone, and holds rest apart by rank,
+  #   nearest eye of each, to settle once walk is over; see `FACTOR_DEPTH_PLACE`.
+  var
+    is_under_best = false
+    handles_nearest: array[5, Option[int]]  # Per rank, nearest eye; `Rank.Eye` alone.
+    depths_nearest = [Inf, Inf, Inf, Inf, Inf]
 
   template consider(priority: int; distance, depth: float; is_under: bool) =
-    let is_better =
-      if priority != priority_best: priority < priority_best
-      elif is_under != is_under_best: is_under
-      elif is_under: depth < depth_best
-      else: distance < distance_best
-    if is_better:
-      priority_best = priority
-      distance_best = distance
-      depth_best = depth
-      is_under_best = is_under
-      handle_best = some(handle)
+    if rank == Rank.Eye and not is_under:
+      if depth < depths_nearest[priority]:
+        depths_nearest[priority] = depth
+        handles_nearest[priority] = some(handle)
+    else:
+      let is_better =
+        if rank == Rank.Eye: depth < depth_best
+        elif priority != priority_best: priority < priority_best
+        elif is_under != is_under_best: is_under
+        elif is_under: depth < depth_best
+        else: distance < distance_best
+      if is_better:
+        priority_best = priority
+        distance_best = distance
+        depth_best = depth
+        is_under_best = is_under
+        handle_best = some(handle)
 
   # Ask once whether caller brought whole frame's placements; cannot change mid-walk.
   let is_placement_given = placed.len >= OBJECTS_MAX
@@ -607,7 +654,9 @@ proc pickWalk(
         distance = pixelsFromCursor(view_projection, width, height, at_view, cursor)
         radius_drawn = radiusPixelsAtDepth(scene.radiusAt(handle), depth, scale.scale)
         radius_pick = max(RADIUS_PICK_POINT, radius_drawn)
-      if distance > max(RADIUS_CROWD_TOUCH, radius_pick): continue
+        reach_here = (if depth.isNearSeparation(camera): reach_eye else: RADIUS_CROWD_TOUCH)
+        reach = (if rank == Rank.Eye: max(reach_here, radius_pick) else: radius_pick)
+      if distance > max(RADIUS_CROWD_TOUCH, reach): continue
       # Project only what is within reach, which is few; see `pixelsFromCursor`.
       let
         at = projectToScreen(view_projection, width, height, at_view)
@@ -615,10 +664,11 @@ proc pickWalk(
       if is_under: hiders.add(Hider(depth: depth, x: at.x, y: at.y, radius: radius_drawn))
       # Behind body wider than fingertip: neither winner nor rival.
       if hiders_known.cover(depth, at) >= RADIUS_PICK_POINT: continue
-      if distance <= radius_pick: consider(0, distance, depth, is_under)
-      crowd(0)
+      if distance <= reach: consider(0, distance, depth, is_under)
+      if distance <= max(RADIUS_CROWD_TOUCH, radius_pick): crowd(0)
 
     of Case.PointToward:
+      if rank == Rank.Eye: continue  # Stands nowhere to come in to; see `Rank.Eye`.
       # Pick direction point where its star is drawn.
       #   One part of point's anchor depending on eye, so not in placement. Matches
       #   `tessellate.anchorFor`.
@@ -637,7 +687,7 @@ proc pickWalk(
       crowd(0)
 
     of Case.LineAcross:
-      if is_points_only: continue
+      if is_points_only or rank == Rank.Eye: continue
       # Test against great circle it is drawn as, sampled as `tessellate.addGreatCircle` does.
       #   Hit then agrees with what is drawn.
       #   Stepped off same fixed table: which plane arms span is placement's answer, ring
@@ -684,7 +734,17 @@ proc pickWalk(
           head = projectToScreen(view_projection, width, height, position_head)
         if not (tail.isInFront and head.isInFront): continue
         distance_nearest = min(distance_nearest, distanceToSegment(cursor, tail, head))
-      if distance_nearest <= RADIUS_PICK_LINE: consider(1, distance_nearest, Inf, false)
+      if rank == Rank.Eye:
+        # Depth where sight ray passes nearest line, which is point zoom comes in to.
+        if distance_nearest <= reach_eye:
+          let found = positionOnObjectUnder(
+            place, geometry, ray, scale.plane_eye, scale.eye_point, scale.origin
+          )
+          if found.isSome:
+            let depth = depthAlongSight(view_projection, found.get)
+            if distance_nearest <= RADIUS_CROWD_TOUCH or depth.isNearSeparation(camera):
+              consider(1, distance_nearest, depth, false)
+      elif distance_nearest <= RADIUS_PICK_LINE: consider(1, distance_nearest, Inf, false)
       if distance_nearest <= RADIUS_CROWD_TOUCH: crowd(1)
 
     of Case.PlaneOn:
@@ -713,17 +773,33 @@ proc pickWalk(
         EXTENT_PLANE_F,
       )
       if hit.isSome:
-        consider(3, hit.get, Inf, false)
+        if rank == Rank.Eye:
+          # Depth where sight ray crosses plane, which is point zoom comes in to.
+          let found = positionOnObjectUnder(
+            place, geometry, ray, scale.plane_eye, scale.eye_point, scale.origin
+          )
+          if found.isSome: consider(3, hit.get, depthAlongSight(view_projection, found.get), false)
+        else:
+          consider(3, hit.get, Inf, false)
         crowd(3)
 
     of Case.PlaneEverywhere:
-      if is_points_only: continue
+      if is_points_only or rank == Rank.Eye: continue
       # Match whole sky last of all, with no distance to measure, so anything else wins.
       #   Asked of geometry, not kind: finite plane whose frame algebra cannot give lands
       #   on this kind, and it was never drawn.
       if geometry.isHorizon:
         consider(4, 0.0, Inf, false)
         crowd(4)
+
+  # Settle eye's rank where cursor lies inside no disc: nearest depth names place, and
+  #   rank decides among what stands there.
+  if rank == Rank.Eye and handle_best.isNone:
+    let nearest = min(depths_nearest)
+    for priority, depth in depths_nearest:
+      if depth < Inf and depth <= FACTOR_DEPTH_PLACE * nearest:
+        (priority_best, depth_best, handle_best) = (priority, depth, handles_nearest[priority])
+        break
 
   # Sum crowd of winner's rank and every better one; nothing picked, nothing counted.
   var count_rivals = 0
@@ -744,9 +820,12 @@ proc pickAt*(
   width, height: int;
   cursor: ScreenPosition;
   placed: openArray[Placement] = [];
+  rank = Rank.Pointer;
+  reach_eye = RADIUS_CROWD_TOUCH;
 ): PickReport =
   ## Find visible object nearest cursor and count its rivals.
   ##   Prefers points over lines over planes; see `PickReport`.
+  ##   `rank` of `Rank.Eye` takes object nearest eye within `reach_eye` instead, for zoom.
   ##   `placed` is frame's own placements, where caller has them.
   ##     `tessellate.placeObject` already answers what object is and where, and
   ##     front-end holding frame's answers (`bridge.PLACEMENTS`, `main.PLACEMENTS`) hands
@@ -790,6 +869,8 @@ proc pickAt*(
     placed,
     hiders_known = Hiders(),
     is_points_only = false,
+    rank = rank,
+    reach_eye = reach_eye,
   )
   if first.hiders.widest < RADIUS_PICK_POINT: return first.report
   pickWalk(
@@ -803,6 +884,8 @@ proc pickAt*(
     placed,
     hiders_known = first.hiders,
     is_points_only = true,
+    rank = rank,
+    reach_eye = reach_eye,
   ).report
 
 
@@ -814,10 +897,15 @@ proc pickNearest*(
   width, height: int;
   cursor: ScreenPosition;
   placed: openArray[Placement] = [];
+  rank = Rank.Pointer;
+  reach_eye = RADIUS_CROWD_TOUCH;
 ): Option[int] =
   ## Find visible object nearest cursor, preferring points over lines over planes.
-  ##   `pickAt`'s handle alone, for caller with no use for rival count.
-  pickAt(scene, camera, scale, view_projection, width, height, cursor, placed).handle
+  ##   `pickAt`'s handle alone, for caller with no use for rival count; `rank` and
+  ##   `reach_eye` as there.
+  pickAt(
+    scene, camera, scale, view_projection, width, height, cursor, placed, rank, reach_eye
+  ).handle
 
 
 func isCoveringView*(centre: Position; radius: float; scale: DrawExtent; width, height: int): bool =
@@ -935,8 +1023,7 @@ func isBackdropUnder*(
 
 func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
   ## Report whether anchor's depth is within `FACTOR_ANCHOR_DEPTH` of orbit distance.
-  let depth = depthAlong(scale.eye, scale.forward, anchor)
-  depth >= camera.distance / FACTOR_ANCHOR_DEPTH and depth <= camera.distance * FACTOR_ANCHOR_DEPTH
+  depthAlong(scale.eye, scale.forward, anchor).isNearSeparation(camera)
 
 
 func positionUnderPointerOn*(
@@ -981,6 +1068,7 @@ proc anchorZoomAt*(
   cursor: ScreenPosition;
   placed: openArray[Placement] = [];
   is_banded = true;
+  reach_eye = RADIUS_CROWD_TOUCH;
 ): Option[AnchorZoom] =
   ## Solve which object cursor is over, and where on that object cursor stands.
   ##   Object alone. World has no ground, and level through pivot names no place reader
@@ -991,6 +1079,9 @@ proc anchorZoomAt*(
   ##   None where nothing is under cursor, and, where `is_banded`, where what is stands
   ##   outside depth band; see `FACTOR_ANCHOR_DEPTH`. Selection's wheel bands, free
   ##   flight's does not.
+  ##   Free flight takes object nearest eye within `reach_eye` (`Rank.Eye`): far star
+  ##   beside near planet on screen loses to planet (repository issue 745). Selection's
+  ##   takes object nearest cursor, as click does.
   ##   `pickNearest` ranks horizon plane last and matches it everywhere, so sky is under
   ##   cursor almost always; `positionOnObjectUnder` refuses horizon shapes for exactly
   ##   that reason.
@@ -1006,6 +1097,8 @@ proc anchorZoomAt*(
     height,
     cursor,
     placed,
+    rank = (if is_banded: Rank.Pointer else: Rank.Eye),
+    reach_eye = reach_eye,
   )
   if handle.isNone: return
   let found = positionUnderPointerOn(
@@ -1021,23 +1114,21 @@ proc anchorZoomAt*(
   if found.isNone or (is_banded and not isAnchorNear(found.get, camera, scale)): return
   # Read kind off placement, frame's where caller brought them: hit stands only on finite
   #   point, line or plane.
+  let kind = placementAt(placed, scene, handle.get).kind
+  # Point alone is drawn at its radius, so line and plane have no surface to stop at.
+  #   Lines through Earth took pinch, and their radius, 0.08 unless chosen, held it 0.08 off.
+  if kind != Case.PointAt:
+    return some(AnchorZoom(at: found.get, floor_reach: 0.0, is_standing: kind != Case.PlaneOn))
   let
-    kind = placementAt(placed, scene, handle.get).kind
     radius = scene.radiusAt(handle.get)
     # Fill is depth along sight, and floor is reach: eye moving on its line to anchor
     #   scales both alike, so fill read as reach is fill times their ratio. Off middle,
     #   reach runs longer than depth.
     filling =
-      if kind != Case.PointAt: radius
-      else:
-        depthFilling(radius, scale, width, height) *
-            distanceBetween(scale.eye.toMultivector, found.get.toMultivector) /
-            depthAlong(scale.eye, scale.forward, found.get)
-  some(AnchorZoom(
-    at: found.get,
-    floor_reach: max(radius, filling),
-    is_standing: kind != Case.PlaneOn,
-  ))
+      depthFilling(radius, scale, width, height) *
+          distanceBetween(scale.eye.toMultivector, found.get.toMultivector) /
+          depthAlong(scale.eye, scale.forward, found.get)
+  some(AnchorZoom(at: found.get, floor_reach: max(radius, filling), is_standing: true))
 
 
 
