@@ -15,8 +15,8 @@
 ##     admitted. Else reader splits it into words, as Architect ruled on #811: 4.1 says sounds
 ##     of stream split one way alone, and 3.3 lets correct text leave period out.
 ##     Split chosen needs fewest pauses that rules need and text does not write, so period left
-##       out is inferred only where letters read no other way: `secusku` reads as `se cusku`,
-##       never as `secusk. .u`.
+##       out is inferred only where letters read no other way: `losei` reads as `lo sei`, never
+##       as `lo se .i`.
 ##     Several splits of fewest pauses tie, as `iai` for `.i.ai` or `.ia.i`, and reader refuses
 ##       them as `Split`; written word with no split is refused as `readWord` refuses letters.
 ##     Stress takes part, as in speech: capitals must fit each word, so `KLAmaku` reads as
@@ -31,7 +31,8 @@
 ##       `.nuIORK.` is `nu .iork.`.
 ##     Cmene stands last in written word: pause follows it (4.9 rule 2), and parts of name join
 ##       into one word with no pause (4.8), so consonant inside written word goes on with name.
-##       So `bri` is no `br .i`, though `br` alone would read as cmene, as `rl` does (3.4).
+##       So `bri` is no `br .i`, though `br` alone would read as cmene, as `rl` does (3.4); and
+##       `secusku` is `se cusku`, never `secusk .u`.
 ##     Cost: CLL presents no algorithm for split (4.1), so split is reader's, built from rules
 ##       of 3.9, 4.2, 4.7, 4.8 and 4.9. It tries each word and each word before it, so time grows
 ##       with cube of length of written word (expected); words written apart skip it.

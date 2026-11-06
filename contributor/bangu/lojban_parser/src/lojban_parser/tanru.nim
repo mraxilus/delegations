@@ -260,7 +260,7 @@ func readWord*(text: string): Reading =
     return refuse(Refusal.Shape)  # no cmavo of 4.2, nor cmavo run together, as `cia` (3.4)
 
   # Pair past fifth letter, or `y` last: no class of 4.3, as one word. `readStream` splits such
-  #   text where it is words run together, as `lonubroda`.
+  #   text where it is words run together, as `lonubarda`.
   refuse(Refusal.Shape)
 
 
