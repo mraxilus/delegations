@@ -11,7 +11,7 @@
 ##     parenthesis, colon after speaker, hyphen. Example whose every row holds it reads nothing.
 ##   Examples of mex alone, as Sections 18.10, 18.14 and 18.15 write operands, read after `li`.
 ##   Example breaking rule of 21.1 is refused, as ruling `D2 a` of #815 gives: rule wins over
-##     example. Each one reads once repaired as rule beside it asks, measured 2026-11-06.
+##     example. Each one reads once repaired as rule beside it asks, and suite holds repair.
 ##   Corpus does not cover yet: rows of pronunciation of chapter 3 and of compound cmavo of
 ##     chapter 4, which `test_stream.nim` and `test_forms.nim` hold by hand; trees, which
 ##     `test_grammar.nim` holds for chapter 5 and Section 18.16.
@@ -37,18 +37,28 @@ const
     ("19.50", RefusalText.Stream),  # 19.10, "ungrammatical as written": `gy` inside text
   ]
     ## Examples book calls wrong, or writes in English, with refusal each takes.
-  NUMBERS_BROKEN = [
-    "14.27",  # 14.6, rule 10: fragment takes bare `.i`; `.ije` joins statements alone
-    "14.123",  # 14.14, rule 81: `pe'e` takes joik or jek, never ek `.e`
-    "14.131",  # 14.15, rule 85: `nu'u` closes termset only after `nu'i`
-    "14.133",  # 14.15, rule 85: termset joins parts by gek and gik, never `fa'u` after `nu'u`
-    "14.152",  # 14.17, rule 371: forethought operator takes `gu'e`, never `ge`
-    "17.38",  # 17.11, rule 97: subscript after lerfu string needs `boi` before it
-    "18.118",  # 18.17, rule 371: as Example 14.152
-    "18.122",  # 18.17, rule 806: `ke'i` stands on each side of interval `bi'o`
-    "18.123",  # 18.17, rule 97: as Example 17.38
+  EXAMPLES_BROKEN = [
+    ("14.27", "la djan. .i la .alis. klama le zarci"),  # 14.6, rule 10: `.i` for `.ije`
+    (
+      "14.123",
+      "la djeimyz. ce'e la meris. pe'e je la djordj. ce'e la martas. prami",
+    ),  # 14.14, rule 81: `pe'e` takes joik or jek, so `je` for ek `.e`
+    (
+      "14.131",
+      "nu'i mi ce'e bau la lojban. pe'e joi do ce'e bau la gliban. nu'u casnu",
+    ),  # 14.15, rule 85: `nu'u` closes termset only after `nu'i`
+    (
+      "14.133",
+      "la djan. fa'u la frank. cusku nu'i bau la lojban. pe'e fa'u bai tu'a la djordj. nu'u",
+    ),  # 14.15, rule 85: termset joins no part by `fa'u` after `nu'u`; `pe'e fa'u` does
+    ("14.152", "li re gu'e su'i gi pi'i re du li vo"),  # 14.17, rule 371: `gu'e` for `ge`
+    ("17.38", "xy. boi xi ky."),  # 17.11, rule 97: subscript after lerfu string needs `boi`
+    ("18.118", "li re gu'e su'i gi pi'i re du li vo"),  # 18.17, rule 371, as Example 14.152
+    ("18.122", "li pimu su'i ni'upimu ke'i bi'o ke'i ma'upimu"),  # 18.17, rule 806: GAhO twice
+    ("18.123", "xy. boi xi vei by. ce'o dy. ve'o"),  # 18.17, rule 97, as Example 17.38
   ]
-    ## Examples breaking rule of 21.1, which grammar refuses (`D2 a`).
+    ## Examples breaking rule of 21.1, which grammar refuses (`D2 a`), each with its text
+    ##   repaired as rule beside it asks; repairs are constructed.
   NUMBERS_MEX = ["18.77", "18.78", "18.105", "18.106", "18.108", "18.109"]
     ## Examples writing mex alone, as operand: Sections 18.10, 18.14 and 18.15.
   COUNT_READ = 1592  ## Examples holding row free of notation, each read.
@@ -108,7 +118,7 @@ suite "Chapters 1-19":
     var
       unread: seq[string]
       count_read, count_notation, count_rows_notation = 0
-    let left = NUMBERS_WRONG.mapIt(it[0]) & @NUMBERS_BROKEN & @NUMBERS_MEX
+    let left = NUMBERS_WRONG.mapIt(it[0]) & EXAMPLES_BROKEN.mapIt(it[0]) & @NUMBERS_MEX
     for example in EXAMPLES_CLL:
       if example.number in left: continue
       let rows = example.rows.filterIt(not it.isNotation)
@@ -139,9 +149,10 @@ suite "Chapters 1-19":
       check not number.rows.isReadRows  # NUMBERS_WRONG, each row alone too
 
 
-  test "Each example breaking rule of 21.1 is refused by grammar, as ruling D2 a gives":
-    for number in NUMBERS_BROKEN:
+  test "Each example breaking rule of 21.1 is refused by grammar, and reads once repaired":
+    for (number, repair) in EXAMPLES_BROKEN:
       checkpoint "Example " & number
-      check number.refusals.len > 0  # NUMBERS_BROKEN, rule beside each number
-      check number.refusals.allIt(it == RefusalText.Grammar)  # NUMBERS_BROKEN, 21.1 wins
-      check not number.rows.isReadRows  # NUMBERS_BROKEN, each row alone too
+      check number.refusals.len > 0  # EXAMPLES_BROKEN, rule beside each number
+      check number.refusals.allIt(it == RefusalText.Grammar)  # EXAMPLES_BROKEN, D2 a
+      check not number.rows.isReadRows  # EXAMPLES_BROKEN, each row alone too
+      check repair.isRead  # EXAMPLES_BROKEN, repaired as rule asks; constructed
