@@ -361,6 +361,11 @@ suite "Chapter 4":
         some(@[Pause.Absent, Pause.Inferred, Pause.Inferred])  # 4.2, inferred (3.3); constructed
 
 
+  test "Section 4.7":
+    for (text, word) in [("bang,r,kore,a", "bangrkorea"), ("kuln,r,kore,a", "kulnrkorea")]:
+      check text.wordsRead == some(@[word])  # 4.7, Examples 4.55-56, comma parts `ea` of fu'ivla
+
+
   test "Section 4.8":
     for (text, words) in [
       ("djim.", @["djim"]), ("djein.", @["djein"]), (".arnold.", @["arnold"]),
