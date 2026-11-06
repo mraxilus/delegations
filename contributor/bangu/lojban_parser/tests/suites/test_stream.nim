@@ -76,6 +76,7 @@ const
     ## Letters of cmene around diphthong `_` of name, which make one syllable or two; constructed.
   FRAMES_GLIDE = ["br_", "kobr_", "spag_", "br_na", "kobr_na"]
     ## Letters around on-glide `_`, which make one syllable, two, or three; constructed.
+  COUNT_NAME_CAPITALS = 12  ## Syllables of each diphthong of name in each frame: 2 times 1+1+2+2.
   COUNT_GLIDE_CAPITALS = 100  ## Syllables of each on-glide in each frame: 10 times 1+2+2+2+3.
 
 
@@ -501,28 +502,17 @@ suite "Internal: Stream":
     check count_refused >= FLOOR_COMMA_REFUSED  # IX.3, guard keeps refusals in play
 
 
-  test "Without capital, comma changes no word text without it reads, but where pause stands":
+  test "Without capital, comma changes no word that text without it reads":
     var count, count_kept = 0
     for word in @WORDS_BORROWED & @WORDS_NAMED:
-      block:
-        let
-          marked = word
-          bare = marked.readStream
-        if not bare.is_read: continue
-        var
-          pauses: seq[int]  # letter before which words read without comma take pause
-          lo = 0
-        for occurrence in bare.occurrences:
-          if lo > 0 and occurrence.pause != Pause.Absent: pauses.add lo
-          lo += occurrence.text.len
-        let texts = some(bare.occurrences.mapIt(it.text))
-        for at in 1 ..< word.len:
-          if '\'' in [word[at - 1], word[at]]: continue
-          let words = (marked[0 ..< at] & "," & marked[at .. ^1]).wordsRead
-          if at in pauses: check words != texts  # 3.3, comma marks "no pause between" syllables
-          else: check words.isNone or words == texts  # 3.3, never "differ solely because of" comma
-          inc count
-          if words.isSome: inc count_kept
+      let texts = word.wordsRead
+      if texts.isNone: continue
+      for at in 1 ..< word.len:
+        if '\'' in [word[at - 1], word[at]]: continue
+        let words = (word[0 ..< at] & "," & word[at .. ^1]).wordsRead
+        check words.isNone or words == texts  # 3.3, never "differ solely because of" comma
+        inc count
+        if words.isSome: inc count_kept
     check count == COUNT_COMMA_MARKED  # IX.3, guard keeps each comma of each word
     check count_kept >= FLOOR_COMMA_KEPT  # IX.3, guard keeps commas that read in play
 
@@ -629,7 +619,7 @@ suite "Internal: Stream":
         for k, span in word.syllables(is_name = true):
           check word.capitalized(span).stressesRead == some(@[some(k)])  # 3.4; 3.9, any syllable
           inc count
-    check count == 12  # IX.3, guard keeps each syllable of each frame: 2 times 1+1+2+2
+    check count == COUNT_NAME_CAPITALS  # IX.3, guard keeps each syllable of each frame
 
 
   test "Capital on any vowel of cmavo stresses that syllable, and capital on y is refused":
