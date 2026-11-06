@@ -604,6 +604,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   ##     child spans all of span only where each other symbol may derive nothing: unit cycle,
   ##     which is self-loop (`constructGrammar`). Unit cycle closes more and is never chosen, so
   ##     no choice kept depends on span still open.
+  ##   Last symbol of body tries end of span alone, since no other bound reaches whole span;
+  ##     every other bound cost time that grew with square of span, on long text.
   let key = (head, start, finish)
   if key in chart.choices: return chart.choices[key]
   if chart.open.containsOrIncl(key): return none(Choice)
@@ -638,7 +640,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
             next.bounds.add m + 1
             nexts.offer(m + 1 - start, next)
           continue
-        for bound in countdown(finish - rests[k + 1], m):
+        let low = (if k == body.high: finish else: m)  # last symbol ends at end of span
+        for bound in countdown(finish - rests[k + 1], low):
           let is_derived =
             (bound == m and GRAMMAR_EBNF.nullable[symbol.code]) or
             (symbol.code, m) in chart.completions[bound]
