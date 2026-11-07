@@ -19,9 +19,13 @@
 ##
 ##   `head` is verb CONTRIBUTOR.md gives check against outside reference that moves: package
 ##     can carry new list with no commit here, and no merge waits on it.
+##   Sibling: `lists` and `head` of `lojban_parser/tools/build.nim` take same steps over lists of
+##     parser, and read same sources by same pins (`tools/lists.nim`). Each driver renders and
+##     watches lists of its own project, and no driver exports verb, so steps stand in both
+##     (II.9); fix to one is finished only when other is checked.
 ##   Rejected: reading lists at compile time from package directory, which would make every
-##     build need package; CI `test` job installs none, and list changes seldom, so committed
-##     copy serves every build and `head` watches upstream.
+##     build need package; list changes seldom, so committed copy serves every build and `head`
+##     watches upstream.
 ##   `head` holds no check of language model service: CI gives project jobs no secret, and live
 ##     call would cost money every day.
 ##   `examples` runs as its own program, so driver imports nothing new, and `koch list-packages`,

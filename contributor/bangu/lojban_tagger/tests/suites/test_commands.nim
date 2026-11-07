@@ -16,7 +16,9 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_tagger/[commands, dictionary, index, search, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ../../src/lojban_tagger/[commands, english, index, search, tags]
 
 
 const
@@ -58,7 +60,7 @@ func toIndex(rows: openArray[(string, seq[string])]): Index =
 
 func definition(text: string): string =
   ## Read keyword and definition of gismu as `read` prints them.
-  let entry = text.word.get.entry
+  let entry = text.word.get.english
   entry.keyword & "; " & entry.definition
 
 

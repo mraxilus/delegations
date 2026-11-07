@@ -26,7 +26,9 @@ when compileOption("profiler"):
 import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
-import ../../src/lojban_tagger/[commands, dictionary, forms, lujvo, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ../../src/lojban_tagger/[commands, tags]
 import ../../src/lojban_tagger/lists/gismu
 
 
@@ -51,7 +53,6 @@ const
   FLOOR_CMAVO = 220  ## Least of them holding cmavo: 254 read at seed `0`.
   FLOOR_SHARED = 20
     ## Least of them holding `brodi`, `brodo` or `brodu` before last word: 27 read at seed `0`.
-  ALPHABET = "',.abcdefgijklmnoprstuvxyz"  ## Letters and symbols of 3.1, in its order.
   GISMU_STEM_SHARED = ["brodi", "brodo", "brodu"]
     ## Gismu holding no short rafsi, so only non-final rafsi is `brod`, which `broda` and `brode`
     ## share.
@@ -204,13 +205,8 @@ iterator tagsCmavo(): lent Tag =
 
 suite "Chapter 3":
   test "Section 3.1":
-    var alphabet: set[char]
-    for c in ALPHABET: alphabet.incl c
-    check tags.LETTERS == alphabet - {',', '.'}  # 3.1 list; comma and period divide syllables (3.3)
-    for c in 'a' .. 'z':
-      check (c in tags.LETTERS) == (c notin {'h', 'q', 'w'})  # 3.1, omitting "h", "q", and "w"
     for c in char.low .. char.high:  # 256 bytes; inner comma in 3.3, ends and capitals internal
-      if c in tags.LETTERS or c in {',', 'A' .. 'Z'}: continue
+      if c in lojban_parser.LETTERS or c in {',', 'A' .. 'Z'}: continue
       check ("bri" & c & "vla").refusalRead == some((RefusalTag.Letter, $c))  # 3.1, alphabet
 
 

@@ -8,9 +8,17 @@
 ##   | readTag             | read text as tag, or refuse it with reason                  |
 ##   | RefusalTag          | why text is no tag                                          |
 ##   | `$`                 | lujvo form 4.12 scores lowest, or gismu itself              |
+##   | tanruUnits          | tag folded into tanru units, as `lojban_parser` folds tanru |
 ##   | toTanru, readTanru  | words joined by `+`, as lujvo list writes tanru             |
 ##   |---------------------|-------------------------------------------------------------|
 ##
+##   Reader of `lojban_parser` reads each word by rules of CLL alone, and so do its rendering and
+##     fold of tanru; this module holds policy of tag. Architect ruled that tagger alone restricts
+##     words: tag holds words of list, last one gismu.
+##   Text that reader refuses, or reads as no gismu nor lujvo, is no tag. Its refusal is `Hyphen`
+##     where its letters split into rafsi that 4.11 joins with other hyphens, as `ro'ire'o`,
+##     which 4.6 reads as two cmavo; `Shape` otherwise.
+##     Cost: class reader gives, as cmavo no list holds, cmene or fu'ivla, goes unnamed in report.
 ##   Tag is words of its tanru, never its spelling: rafsi chosen do not change lujvo (CLL 4.5),
 ##     so `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tag, and `$` renders form
 ##     4.12 prefers. Order of words stays, since tanru is modifier then head (4.5).
@@ -22,6 +30,8 @@
 ##   Text is trimmed, folded to lowercase, and stripped of commas before reading. Capital marks
 ##     irregular stress, which no brivla carries (3.1, 3.9); comma marks syllable break, and no
 ##     two words differ by comma alone (3.3). Folding is project's choice; CLL writes neither.
+##     Space and period are refused as `Letter`, since tag is one word, and reader would name
+##     them marks of stream (3.3).
 ##   `h` never stands for apostrophe: 3.3 says letter `h` is not used for it, so `h` is refused.
 ##   `$` rejects 4-letter rafsi several gismu share (`brod`) wherever gismu has other rafsi,
 ##     so rendered tag reads back as itself; `brodi`, `brodo` and `brodu` have none, so their
@@ -35,7 +45,7 @@
 
 import std/[options, sequtils, strutils]
 
-import ./[dictionary, forms, lujvo]
+import ../../../lojban_parser/src/lojban_parser
 
 
 type
@@ -45,12 +55,12 @@ type
   RefusalTag* {.pure.} = enum  ## Define why text is no tag.
     Empty  ## Text holds nothing but spaces.
     Letter  ## Character outside lojban letters; detail is that character, whole.
-    Cmavo  ## Word is cmavo, or lujvo holds no gismu or ends in cmavo; detail names it.
+    Cmavo  ## Word is cmavo of list, or lujvo holds no gismu or ends in cmavo; detail names it.
     Unlisted  ## Gismu shape, but list holds no such gismu; detail is word.
     Rafsi  ## Rafsi no list assigns; detail is rafsi.
     Ambiguous  ## 4-letter rafsi several gismu share; detail is rafsi.
     Hyphen  ## Rafsi known, hyphens differ from 4.11; detail is form 4.11 gives.
-    Shape  ## Neither gismu nor lujvo by shape.
+    Shape  ## Neither gismu nor lujvo: other class, or no word by rules of CLL.
 
   ReadingTag* = object  ## Define outcome of reading text as tag.
     text*: string  ## Text as read, trimmed, folded to lowercase, commas removed.
@@ -63,13 +73,6 @@ type
       detail*: string  ## Offending part, or form 4.11 gives.
 
 
-const LETTERS* = {
-  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u',
-  'v', 'x', 'y', 'z', '\'',
-}
-  ## Letters brivla may hold: vowels, `y`, seventeen consonants and apostrophe (CLL 3.1, 3.6).
-
-
 func `==`*(a, b: Tag): bool = a.words == b.words
   ## Compare tags by words of tanru, in order, cmavo included.
 
@@ -79,68 +82,34 @@ func gismu*(tag: Tag): seq[Word] = tag.words.filterIt(it.kind == Kind.Gismu)
 func isGismuAlone*(tag: Tag): bool = tag.words.allIt(it.kind == Kind.Gismu)
   ## Test tag holds gismu alone, i.e. no cmavo converts or groups them.
 
+func tanruUnits*(tag: Tag): seq[TanruUnit] = tag.words.mapIt(it.toPart).tanruUnits
+  ## Fold words of tag into tanru units, by fold of `lojban_parser`.
+
 
 
 #[ Reading ]#
-
-func resolve(piece: Piece): tuple[words: seq[Word], refusal: RefusalTag] =
-  ## Find word piece stands for; refusal names why none, or why several.
-  case piece.form
-  of Form.Cvc, Form.Ccv, Form.Cvv:
-    let found = piece.rafsi.wordRafsi
-    if found.isNone: return (@[], RefusalTag.Rafsi)
-    (@[found.get], RefusalTag.Empty)
-  of Form.Cvcc, Form.Ccvc:
-    let found = piece.rafsi.wordsStem
-    if found.len == 0: return (@[], RefusalTag.Rafsi)
-    if found.len > 1: return (found, RefusalTag.Ambiguous)
-    (found, RefusalTag.Empty)
-  of Form.Cvccv, Form.Ccvcv:
-    let found = piece.rafsi.word
-    if found.isNone: return (@[], RefusalTag.Unlisted)
-    (@[found.get], RefusalTag.Empty)
-
 
 func refuse(text: string, refusal: RefusalTag, detail = ""): ReadingTag =
   ## Build reading that refuses text.
   ReadingTag(text: text, is_tag: false, refusal: refusal, detail: detail)
 
 
-func character(text: string, at: int): string =
-  ## Read character opening at byte `at`: lead byte, then each continuation byte it announces,
-  ##   by bit distribution of Table 3-6 of Unicode Standard; byte alone where none follows.
-  let size =
-    case uint8(text[at])
-    of 0xC0'u8..0xDF'u8: 2
-    of 0xE0'u8..0xEF'u8: 3
-    of 0xF0'u8..0xF7'u8: 4
-    else: 1
-  var finish = at + 1
-  while finish < min(text.len, at + size) and (uint8(text[finish]) and 0xC0) == 0x80: inc finish
-  text[at..<finish]
+func refuseOther(text: string): ReadingTag =
+  ## Refuse text read as no gismu nor lujvo: as `Hyphen` where its letters split into rafsi that
+  ##   4.11 joins with other hyphens, naming form 4.11 gives, else as `Shape`.
+  let segments = text.segmentLujvo
+  if segments.len == 0: return refuse(text, RefusalTag.Shape)
+  refuse(text, RefusalTag.Hyphen, joinRafsi(segments[0].mapIt(it.rafsi)))
 
 
-func readLujvo(text: string): ReadingTag =
-  ## Read text as lujvo whose rafsi all stand for listed words, last one gismu.
-  let splits = text.splitLujvo
-  if splits.len == 0:
-    let segments = text.segmentLujvo
-    if segments.len == 0: return refuse(text, RefusalTag.Shape)
-    return refuse(text, RefusalTag.Hyphen, joinRafsi(segments[0].mapIt(it.rafsi)))
-  var first_refusal = (RefusalTag.Shape, "")
-  for pieces in splits:
-    var words: seq[Word]
-    for piece in pieces:
-      let (found, refusal) = piece.resolve
-      if refusal != RefusalTag.Empty:
-        if first_refusal[0] == RefusalTag.Shape: first_refusal = (refusal, piece.rafsi)
-        break
-      words.add found[0]
-    if words.len < pieces.len: continue
-    if words[^1].kind == Kind.Cmavo:  # 4.11 step 2: tanru ends in gismu; so tag holds one
-      return refuse(text, RefusalTag.Cmavo, pieces[^1].rafsi & " (" & $words[^1] & ")")
-    return ReadingTag(text: text, is_tag: true, tag: Tag(words: words), pieces: pieces)
-  refuse(text, first_refusal[0], first_refusal[1])
+func refusalUnnamed(piece: Piece): RefusalTag =
+  ## Name why list names no one word for rafsi of lujvo: short rafsi or 4-letter rafsi list assigns
+  ##   to none, 4-letter rafsi several gismu share, or gismu list lacks (4.6).
+  case piece.form
+  of Form.Cvc, Form.Ccv, Form.Cvv: RefusalTag.Rafsi
+  of Form.Cvcc, Form.Ccvc:
+    if piece.rafsi.wordsStem.len > 1: RefusalTag.Ambiguous else: RefusalTag.Rafsi
+  of Form.Cvccv, Form.Ccvcv: RefusalTag.Unlisted
 
 
 func readTag*(text: string): ReadingTag =
@@ -151,47 +120,43 @@ func readTag*(text: string): ReadingTag =
   let letters = text.strip.toLowerAscii.replace(",", "")
   if letters.len == 0: return refuse(letters, RefusalTag.Empty)
   for at in 0..<letters.len:
-    if letters[at] notin LETTERS: return refuse(letters, RefusalTag.Letter, letters.character(at))
-  let listed = letters.word
-  if listed.isSome:
-    if listed.get.kind == Kind.Cmavo: return refuse(letters, RefusalTag.Cmavo, letters)
-    return ReadingTag(text: letters, is_tag: true, tag: Tag(words: @[listed.get]))
-  if letters.isGismu: return refuse(letters, RefusalTag.Unlisted, letters)
-  readLujvo(letters)
+    if letters[at] notin lojban_parser.LETTERS:
+      return refuse(letters, RefusalTag.Letter, letters.character(at))
+  let reading = letters.readWord
+  if not reading.is_word:
+    if reading.refusal == Refusal.Hyphen:
+      return refuse(letters, RefusalTag.Hyphen, reading.detail)
+    return letters.refuseOther
+
+  # Hold words of list alone, last one gismu (4.11 step 2); else name what list lacks.
+  let parts = reading.tanru.parts
+  case reading.kind
+  of Kind.Gismu:
+    if not parts[0].is_listed: return refuse(letters, RefusalTag.Unlisted, letters)
+  of Kind.Cmavo:
+    if parts[0].is_listed: return refuse(letters, RefusalTag.Cmavo, letters)
+    return letters.refuseOther
+  of Kind.Lujvo:
+    for i, part in parts:
+      if not part.is_listed:
+        return refuse(letters, reading.pieces[i].refusalUnnamed, reading.pieces[i].rafsi)
+    if parts[^1].word.kind == Kind.Cmavo:
+      let detail = reading.pieces[^1].rafsi & " (" & $parts[^1].word & ")"
+      return refuse(letters, RefusalTag.Cmavo, detail)
+  of Kind.Fuhivla, Kind.Cmene: return letters.refuseOther
+  ReadingTag(
+    text: letters,
+    is_tag: true,
+    tag: Tag(words: parts.mapIt(it.word)),
+    pieces: reading.pieces,
+  )
 
 
 
 #[ Rendering ]#
 
-func choices(w: Word, is_final: bool): seq[string] =
-  ## List rafsi of word 4.11 allows at its position, steps 1 and 2; cmavo has short rafsi alone.
-  ##   4-letter rafsi several gismu share is left out where gismu has any other.
-  let entry = w.entry
-  if is_final:
-    for one in entry.rafsi:
-      if one.form.get in {Form.Ccv, Form.Cvv}: result.add one
-    if w.kind == Kind.Gismu: result.add entry.word
-    return
-  result = entry.rafsi
-  if w.kind != Kind.Gismu: return
-  let stem = entry.word[0 .. 3]
-  if stem.wordsStem.len == 1 or result.len == 0: result.add stem
-
-
-func `$`*(tag: Tag): string =
-  ## Render tag as gismu, or as lujvo form 4.12 scores lowest; first in order of choices on tie.
-  if tag.words.len == 1: return $tag.words[0]
-  var options = @[newSeq[string]()]
-  for i, w in tag.words:
-    var extended: seq[seq[string]]
-    for chosen in options:
-      for one in choices(w, is_final = i == tag.words.high): extended.add chosen & one
-    options = extended
-  var best = (score: high(int), word: "")
-  for rafsi in options:
-    let value = rafsi.toPieces.score
-    if value < best.score: best = (value, joinRafsi(rafsi))
-  best.word
+func `$`*(tag: Tag): string = $Tanru(parts: tag.words.mapIt(it.toPart))
+  ## Render tag as gismu, or as lujvo form 4.12 scores lowest, as `lojban_parser` renders tanru.
 
 
 func toTanru*(tag: Tag): string =

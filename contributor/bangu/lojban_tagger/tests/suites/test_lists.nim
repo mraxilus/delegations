@@ -4,9 +4,9 @@
 ##   CLL covers no word list file, so suite is `Internal:`, tests named by behaviour (IX.10).
 ##   Sample lines are copied byte for byte from `gismu.txt` and `lujvo.txt` that `DIGEST_GISMU`
 ##     and `DIGEST_LUJVO` pin, carriage return removed as `readSource` removes it; doc of each
-##     names its line. CI installs no `lojban-common`, so no law needs it: one test compares
-##     with installed gismu list and one with lujvo list where present, and each skips with
-##     reason where absent (IX.9).
+##     names its line. No law needs `lojban-common` installed, though CI installs it, as
+##     `system` names it: one test compares with installed gismu list and one with lujvo list
+##     where present, and each skips with reason where absent (IX.9).
 ##   Random entries hold words of one to twenty characters, `"` among them, one space apart;
 ##     spaced texts hold runs of one to five spaces, at either end too.
 ##     Corpus holds no backslash, which `toLiteral` leaves unescaped since lists hold none, and
@@ -112,54 +112,47 @@ const
   TEXT_SPACED = LINE_HEADER & "\n" & [LINE_COA, LINE_COU, LINE_SIRJI, LINE_ZAO].join("\n") & "\n"
     ## Sample of `gismu.txt` whose definitions hold runs of spaces, header first.
   EXPECTED_GISMU = [
-    EntryGismu(
+    EntryGismuEnglish(
       word: "bacru",
-      rafsi: @["ba'u"],
       keyword: "utter",
       hint: "",
       definition: "x1 utters verbally/says/phonates/speaks [vocally makes sound] x2",
     ),
-    EntryGismu(
+    EntryGismuEnglish(
       word: "bakfu",
-      rafsi: @["baf"],
       keyword: "bundle",
       hint: "'pack'",
       definition: "x1 is a bundle/package/cluster/clump/pack [shape/form] containing x2, " &
           "held together by x3",
     ),
-    EntryGismu(
+    EntryGismuEnglish(
       word: "bi",
-      rafsi: @["biv"],
       keyword: "8",
       hint: "",
       definition: "digit/number: 8 (digit)",
     ),
-    EntryGismu(
+    EntryGismuEnglish(
       word: "bloti",
-      rafsi: @["lot", "blo", "lo'i"],
       keyword: "boat",
       hint: "",
       definition: "x1 is a boat/ship/vessel [vehicle] for carrying x2, propelled by x3",
     ),
-    EntryGismu(
+    EntryGismuEnglish(
       word: "cukta",
-      rafsi: @["cku"],
       keyword: "book",
       hint: "",
       definition: "x1 is a book containing work x2 by author x3 for audience x4 preserved " &
           "in medium x5",
     ),
-    EntryGismu(
+    EntryGismuEnglish(
       word: "datni",
-      rafsi: @[],
       keyword: "data",
       hint: "",
       definition: "x1 (du'u) [fact/measurement] is data/information/statistic(s) about x2 " &
           "gathered by method x3",
     ),
-    EntryGismu(
+    EntryGismuEnglish(
       word: "vreji",
-      rafsi: @["rej", "vei"],
       keyword: "record",
       hint: "",
       definition: "x1 is a record of x2 (data/facts/du'u) about x3 (object/event) preserved " &
@@ -247,7 +240,7 @@ const
     ## Entry of each line kept, fields read off by hand.
 
 
-func entryGismu(word: string): Option[EntryGismu] =
+func entryGismu(word: string): Option[EntryGismuEnglish] =
   ## Find committed entry of gismu list spelled `word`.
   for entry in LIST_GISMU:
     if entry.word == word: return some(entry)
@@ -291,11 +284,10 @@ proc textSpaced(count: int): string =
   if rand(3) == 0: result.add repeat(' ', rand(1..5))
 
 
-proc entryGismuRandom(): EntryGismu =
+proc entryGismuRandom(): EntryGismuEnglish =
   ## Draw gismu entry whose fields are random text, definition long enough to wrap often.
-  EntryGismu(
+  EntryGismuEnglish(
     word: textRandom(1),
-    rafsi: @[],
     keyword: textRandom(rand(1..4)),
     hint: textRandom(rand(0..4)),
     definition: textRandom(rand(1..30)),
@@ -322,10 +314,10 @@ proc poolOrders(): seq[seq[string]] =
     result.add lines
 
 
-proc poolEntries(): seq[(seq[EntryGismu], seq[EntryLujvo])] =
+proc poolEntries(): seq[(seq[EntryGismuEnglish], seq[EntryLujvo])] =
   ## Draw `SAMPLES` cases of two random gismu entries and two random lujvo entries into pool
   ##   allocated once; caller seeds first.
-  result = newSeqOfCap[(seq[EntryGismu], seq[EntryLujvo])](SAMPLES)
+  result = newSeqOfCap[(seq[EntryGismuEnglish], seq[EntryLujvo])](SAMPLES)
   for _ in 1..SAMPLES:
     let gismu = @[entryGismuRandom(), entryGismuRandom()]
     result.add (gismu, @[entryLujvoRandom(), entryLujvoRandom()])
@@ -345,7 +337,7 @@ suite "Internal: Lists":
       check entries[i] == expected  # every field from its columns of `entries.nim`, trimmed
       check entryGismu(expected.word) == some(expected)  # sample agrees with committed list
     for mask in 0..<(1 shl LINES_GISMU.len):  # every subset of sample lines, exhaustive
-      var (lines, expected) = (@[LINE_HEADER], newSeqOfCap[EntryGismu](LINES_GISMU.len))
+      var (lines, expected) = (@[LINE_HEADER], newSeqOfCap[EntryGismuEnglish](LINES_GISMU.len))
       for i, line in LINES_GISMU:
         if (mask and (1 shl i)) == 0: continue
         lines.add line
@@ -421,11 +413,11 @@ suite "Internal: Lists":
 
 
   test "entry lacking field every line of list holds does not compile, as rule of data asks":
-    check compiles(EntryGismu(word: "cukta", keyword: "book",
-        definition: "x1 is book"))  # control: rafsi and hint empty by right, so unmarked
-    check not compiles(EntryGismu(keyword: "book", definition: "x1 is book"))  # no word
-    check not compiles(EntryGismu(word: "cukta", definition: "x1 is book"))  # no keyword
-    check not compiles(EntryGismu(word: "cukta", keyword: "book"))  # no definition
+    check compiles(EntryGismuEnglish(word: "cukta", keyword: "book",
+        definition: "x1 is book"))  # control: hint empty by right, so unmarked
+    check not compiles(EntryGismuEnglish(keyword: "book", definition: "x1 is book"))  # no word
+    check not compiles(EntryGismuEnglish(word: "cukta", definition: "x1 is book"))  # no keyword
+    check not compiles(EntryGismuEnglish(word: "cukta", keyword: "book"))  # no definition
     check compiles(EntryLujvo(word: "datnyvei", notation: Notation.Lojban,
         parts: @["datni", "vreji"], gloss: "file"))  # control: every field named
     check not compiles(EntryLujvo(notation: Notation.Lojban, parts: @["datni", "vreji"],
@@ -440,7 +432,6 @@ suite "Internal: Lists":
 
   test "committed headers name pinned digests, split as rendered":
     for (module, digest) in [(TEXT_MODULE_GISMU, DIGEST_GISMU), (TEXT_MODULE_LUJVO, DIGEST_LUJVO)]:
-      check digest.len == 64 and digest.allCharsInSet({'0'..'9', 'a'..'f'})  # SHA-256 in hex
       let halves = "SHA-256 `" & digest[0..31] & "`\n##   `" & digest[32 .. ^1] & "`;"
       check halves in module  # digest split in halves over two header lines
     check ("##     " & $(COUNT_LINES_LUJVO - LIST_LUJVO.len) & " lines of other shapes left out") in
@@ -450,7 +441,6 @@ suite "Internal: Lists":
   test "every committed entry fits columns, and shapes converter keeps":
     for entry in LIST_GISMU:  # every entry, exhaustive
       check entry.word.len in 1..5 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # columns 2-6
-      check entry.rafsi.len <= 3 and entry.rafsi.allIt(it.len in 3..4)  # three slots, 3-4 wide
       check entry.keyword.len in 1..20 and entry.hint.len <= 20  # columns 21-40 and 42-61
       check entry.definition.len in 1..96  # columns 63-158
       for field in [entry.word, entry.keyword, entry.hint, entry.definition]:
@@ -491,7 +481,7 @@ suite "Internal: Lists":
     for _ in 1..SAMPLES:  # domain: spaced text, long enough to wrap often
       let
         text = textSpaced(rand(1..30))
-        entry = EntryGismu(word: "x", rafsi: @[], keyword: "x", hint: "", definition: text)
+        entry = EntryGismuEnglish(word: "x", keyword: "x", hint: "", definition: text)
         rendered = toModuleGismu([entry], DIGEST_GISMU)
       check rendered.textsField("    definition: ") == @[text]  # domain: every space kept
       check rendered.splitLines.allIt(it.len <= WIDTH)  # X.1, wrapping still bounds lines

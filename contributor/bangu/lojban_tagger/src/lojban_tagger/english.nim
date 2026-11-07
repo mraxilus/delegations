@@ -3,12 +3,17 @@
 ##   |--------------------------|---------------------------------------------------------|
 ##   | Code                     | Meaning                                                 |
 ##   |--------------------------|---------------------------------------------------------|
+##   | english(w)               | keyword, hint and definition gismu list gives word      |
 ##   | Meaning                  | words of tanru English leads to, and origin             |
 ##   | MEANINGS                 | every meaning lists give                                |
 ##   | toTokens(english)        | lowercase content words of English                      |
 ##   | meanings(english)        | every meaning whose English holds each word given       |
 ##   |--------------------------|---------------------------------------------------------|
 ##
+##   English of gismu list stays here, and its words and rafsi stand in `lojban_parser`, as
+##     Architect ruled: English gives meaning, never validity. Both lists are cut from one
+##     `gismu.txt`, so entry `i` here is English of `Word(i)` there; static check holds it, entry
+##     for entry, so list moved on one side alone fails build.
 ##   English leads to meaning three ways, each built at compile time (Article II.2):
 ##     keyword and hint of gismu lead to that gismu;
 ##     gloss of lujvo line in lojban notation leads to gismu its parts name;
@@ -30,7 +35,9 @@
 
 import std/[algorithm, options, sequtils, strutils]
 
-import ./[dictionary, entries, forms, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ./[entries, tags]
 import ./lists/[gismu, lujvo]
 
 
@@ -53,6 +60,17 @@ const WORDS_FUNCTION* = [
 static:
   doAssert WORDS_FUNCTION.isSorted,
     "Function words should be sorted for binary search; got `" & $WORDS_FUNCTION & "`."
+  doAssert LIST_GISMU.len == int(high(Word)) + 1,
+    "English should be given for each word of gismu list of `lojban_parser`; got `" &
+    $LIST_GISMU.len & "` entries."
+  for i, entry in LIST_GISMU:
+    doAssert $Word(i) == entry.word,
+      "English should follow gismu list of `lojban_parser`, entry for entry; got `" & entry.word &
+      "`."
+
+
+func english*(w: Word): lent EntryGismuEnglish {.inline.} = LIST_GISMU[w.index]
+  ## Read English of word: keyword, hint and definition gismu list gives it.
 
 
 func toTokens*(english: string): seq[string] =

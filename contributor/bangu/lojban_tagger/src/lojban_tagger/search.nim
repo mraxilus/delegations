@@ -1,6 +1,6 @@
 ## Find tagged entities by terms, each read as lojban tag or as English, reduced to gismu.
 ##
-##   Term reads as lojban first (`tags.nim`), else as English (`dictionary.nim`). Either way it
+##   Term reads as lojban first (`tags.nim`), else as English (`english.nim`). Either way it
 ##     becomes alternatives: gismu sets, any one of which satisfies term. Term in lojban gives one
 ##     alternative, gismu of its tanru; English gives one per meaning it leads to.
 ##   Entity satisfies term where every gismu of one alternative appears in any of its tags. So
@@ -17,7 +17,7 @@
 ##     satisfying one narrow term; term query names twice counts twice.
 ##   Matching reads gismu alone, so `selci'a` finds what `ciska` finds. Term in lojban holding cmavo
 ##     also ranks first each entity holding tag whose tanru units hold tanru units of term
-##     unbroken, in order (`tanru_units.nim`). Architect ruled that search for `selci'a` lists
+##     unbroken, in order (`runs.nim`). Architect ruled that search for `selci'a` lists
 ##     first each entity whose tag holds `se` right before `ciska`, wherever pair stands, as
 ##     `selci'a`, `selci'avei` and `veirselci'a` do; that net result of cmavo around pair
 ##     decides; that longer term ranks by unbroken run too; and that search for `ciska` gives
@@ -50,7 +50,9 @@
 
 import std/[algorithm, sequtils]
 
-import ./[dictionary, english, index, tags, tanru_units]
+import ../../../lojban_parser/src/lojban_parser
+
+import ./[english, index, runs, tags]
 
 
 type
@@ -71,7 +73,7 @@ func readTerm*(text: string): Term =
       tag = result.reading.tag
       folded = tag.tanruUnits
     result.alternatives = @[tag.gismu.deduplicate.sorted]
-    if folded.anyIt(it.links.len > 0 or it.word.kind == Kind.Cmavo): result.specific = folded
+    if folded.anyIt(it.links.len > 0 or it.part.word.kind == Kind.Cmavo): result.specific = folded
     return
   result.meanings = text.meanings
   for meaning in result.meanings:

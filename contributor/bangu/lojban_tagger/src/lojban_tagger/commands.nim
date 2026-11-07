@@ -30,7 +30,9 @@
 
 import std/[options, sequtils, strutils]
 
-import ./[dictionary, english, index, lujvo, search, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ./[english, index, search, tags]
 
 
 type
@@ -124,7 +126,7 @@ func explainWord(text: string): string =
         $reading.tag & "`" & (if spelled.len > 0: ", spelled `" & spelled & "`" else: "") &
         ".\n"
     for w in reading.tag.words:
-      result.add "  " & $w & ": " & w.entry.keyword & "; " & w.entry.definition & "\n"
+      result.add "  " & $w & ": " & w.english.keyword & "; " & w.english.definition & "\n"
   let meanings = text.meanings
   if meanings.len > 0: result.add text.readTerm.describe
 
