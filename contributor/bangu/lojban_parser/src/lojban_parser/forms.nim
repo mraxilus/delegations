@@ -13,8 +13,8 @@
 ##   | Ccvcv  | CCVCV    | gismu, or its 5-letter rafsi, final alone    | 4.4, 4.6    |
 ##   |--------|----------|----------------------------------------------|-------------|
 ##
-##   Sibling `lojban_tagger/src/lojban_tagger/forms.nim` holds earlier copy, without `Kind` and
-##     `isCmavo`, until #809 drops it (II.9).
+##   Sibling `lojban_tagger/src/lojban_tagger/forms.nim` holds earlier copy, without `Kind`,
+##     `isCmavo` and `splitCompound`, until #809 drops it (II.9).
 ##   Notation of CLL is canonical spelling (Article III.1): C is consonant, V is vowel, `/`
 ##     marks medial pair that need only be permissible (3.6), adjacent CC at start must be
 ##     initial pair (3.7). Members are Pascal case of that notation (V.11).
@@ -30,6 +30,9 @@
 ##     letterals (4.2, 17.2).
 ##     Cost: run of three vowels or more is form 4.2 keeps for experiment, so it reads as cmavo
 ##       no list can hold.
+##   Compound cmavo splits before each consonant and at each period (4.2, 3.3): cmavo holds
+##     one consonant at most, first, and cmavo opening with vowel follows pause. So split is
+##     unique, and each piece is cmavo of 4.2 or compound is none.
 ##   Cost: every rafsi text classified again where read, rather than form stored beside it;
 ##     text is at most five letters, so cost is constant (unmeasured).
 
@@ -132,3 +135,20 @@ func isCmavo*(text: string): bool =
     if rest[at] != '\'': return false
     inc at
   false
+
+
+func splitCompound*(text: string): seq[string] =
+  ## Split cmavo run together into each cmavo, as 4.2 compounds them; empty where any piece is
+  ##   no cmavo of 4.2. One cmavo splits into itself.
+  ##   Piece ends before each consonant, since cmavo holds one consonant at most, first; and at
+  ##     each period, which writes pause before cmavo opening with vowel (3.3).
+  var piece = ""
+  for letter in text:
+    if letter == '.' or (letter.isConsonant and piece.len > 0):
+      if piece.len > 0: result.add piece
+      piece = ""
+      if letter == '.': continue
+    piece.add letter
+  if piece.len > 0: result.add piece
+  for one in result:
+    if not one.isCmavo: return @[]

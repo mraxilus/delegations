@@ -29,7 +29,8 @@ type
 
   LineCmavo* = object  ## Define one line of `cmavo.txt`: cmavo, or compound of several.
     word*: string  ## Cmavo as line writes it, period of pause included.
-    is_compound*: bool  ## Selma'o column marks several cmavo written as one word (4.2).
+    is_compound*: bool  ## Selma'o column marks several cmavo, or several words.
+    selmaho*: string  ## Selma'o column as line writes it, subclass and mark included.
 
 
 const LETTERS_LOJBAN = {'a' .. 'z', '\''}  ## Characters word of kept line holds.
@@ -70,7 +71,11 @@ func toLinesCmavo*(text: string): seq[LineCmavo] =
   for line in text.splitLines[1 .. ^1]:
     if line.strip.len == 0: continue
     let selmaho = line[min(11, line.len) ..< min(20, line.len)]
-    result.add LineCmavo(word: line[0 ..< min(11, line.len)].strip, is_compound: '*' in selmaho)
+    result.add LineCmavo(
+      word: line[0 ..< min(11, line.len)].strip,
+      is_compound: '*' in selmaho,
+      selmaho: selmaho.strip,
+    )
 
 
 proc readLinesCmavo*(): Option[seq[LineCmavo]] =

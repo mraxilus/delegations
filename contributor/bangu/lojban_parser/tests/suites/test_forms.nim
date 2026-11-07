@@ -17,8 +17,8 @@
 ##     neither C nor V of 4.1, so no form holds it. Internal suite holds choice CLL does not
 ##     make: form reads canonical letters alone, and reader of `tanru.nim` refuses comma before
 ##     any form is asked.
-##   Cost: enumeration reads about 1.6 million strings; suite alone runs in about two seconds
-##     on unoptimised build (measured, PROVENANCE.md, Figures).
+##   Cost: enumeration reads about 1.6 million strings; suite alone runs in 3.0 s to 4.0 s on
+##     unoptimised build (measured, PROVENANCE.md, Figures).
 
 {.experimental: "strictFuncs".}
 
@@ -28,7 +28,7 @@ when compileOption("profiler"):
 import std/[algorithm, options, random, sequtils, sets, strutils, tables, unittest]
 
 import ../../src/lojban_parser/[clusters, forms]
-import ../../src/lojban_parser/lists/gismu
+import ../../src/lojban_parser/lists/[cmavo, gismu]
 import ./texts_outside
 
 
@@ -45,6 +45,8 @@ const
     ## Letters cmavo law enumerates over: five vowels, `y`, apostrophe, and two consonants, since
     ##   4.2 treats every consonant alike.
   LENGTH_CMAVO = 6  ## Longest string cmavo law enumerates, long enough for `ku'a'e` of 4.2.
+  SAMPLES_COMPOUND = 2000  ## Random compounds of one to five listed cmavo, seeded.
+  FLOOR_COMPOUND = 1500  ## Least of them of two cmavo or more: 1635 read at seed `0`.
   FLOOR_CMAVO_SIMPLE = 590  ## Least lines of `cmavo.txt` holding one cmavo: 598 read.
   ROWS_SAKLI = [
     (Form.Cvc, "123", "sak"),
@@ -299,6 +301,15 @@ suite "Chapter 4":
     check not "da'amei".isCmavo  # 4.3, "must be compound cmavo"
     check not "bla".isCmavo and not "klama".isCmavo  # 4.2, consonant pair marks no cmavo
     check not "cia".isCmavo  # 3.4, on-glides only in words standing alone; constructed
+    check ".iseci'i".splitCompound == @["i", "se", "ci'i"]  # 4.2, Example 2.1, `.i se ci'i`
+    check "punaijecanai".splitCompound == @["pu", "nai", "je", "ca", "nai"]  # 4.2, Example 2.2
+    check "ki'e.u'e".splitCompound == @["ki'e", "u'e"]  # 4.2, Example 2.3, pause kept
+    check "ki'e'u'e".splitCompound == @["ki'e'u'e"]  # 4.2, Example 2.4, "single cmavo"
+    check "cy.ibu.abu".splitCompound == @["cy", "i", "bu", "a", "bu"]  # 4.2, Example 2.5
+    check "da'amei".splitCompound == @["da'a", "mei"]  # 4.3, "must be compound cmavo"
+    check "ro'ire'o".splitCompound == @["ro'i", "re'o"]  # 4.6, "breaks up into two cmavo"
+    check "klama".splitCompound.len == 0  # 4.2, consonant pair marks no compound
+    check "cia".splitCompound.len == 0  # 3.4, on-glide after consonant; constructed
     check not "".isCmavo and not "'a".isCmavo and not "a'".isCmavo  # 3.3, apostrophe joins vowels
     let generated = cmavoGenerated(LENGTH_CMAVO)
     var count_cmavo = 0
@@ -497,6 +508,21 @@ suite "Chapter 4":
 
 
 suite "Internal: Forms":
+  test "Compound of listed cmavo splits back into them":
+    randomize(0)
+    var count_long = 0
+    for _ in 1 .. SAMPLES_COMPOUND:  # `SAMPLES_COMPOUND` compounds, seeded
+      var (words, text) = (newSeq[string](), "")
+      for i in 1 .. rand(1 .. 5):
+        let word = LIST_CMAVO[rand(LIST_CMAVO.high)].word
+        if i > 1 and not word[0].isConsonant: text.add '.'  # 3.3, pause before vowel
+        text.add word
+        words.add word
+      check text.splitCompound == words  # 4.2, split is unique, every cmavo kept
+      if words.len >= 2: inc count_long
+    check count_long >= FLOOR_COMPOUND  # Article IX.3, guard reaches compounds of several
+
+
   test "Comma leaves no form":
     for entry in LIST_GISMU:
       for text in entry.rafsi & @[entry.word]:
