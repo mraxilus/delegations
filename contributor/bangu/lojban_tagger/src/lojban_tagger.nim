@@ -6,7 +6,6 @@
 ##   |--------------|------------------------------------------------------|-------------|
 ##   | entries      | English of gismu list, and each line of lujvo list   |             |
 ##   | tags         | text read as tag, reduced to gismu of its tanru      | 4.5         |
-##   | runs         | runs of tanru units that tag holds unchanged         | 5.11, 15.4  |
 ##   | english      | English leading to gismu, by keywords and glosses    |             |
 ##   | index        | tagged entities, and file holding them               |             |
 ##   | search       | terms read as lojban or English, and entities found  |             |
@@ -35,7 +34,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import ./lojban_tagger/[commands, english, entries, index, runs, search, suggestions, tags]
+import ./lojban_tagger/[commands, english, entries, index, search, suggestions, tags]
 
-export commands, english, entries, index, runs, search, tags
+export commands, english, entries, index, search, tags
 export suggestions except Reference, toReference, toText
