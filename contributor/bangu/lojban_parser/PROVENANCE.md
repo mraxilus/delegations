@@ -190,6 +190,9 @@ ruled on #819 that outside texts test the parser, pinned by digest and kept out 
 So `tools/lists.nim` pins each file by its SHA-256, and a test that reads one skips where the file
 is absent or moved. The verb `system` declares the package, so CI installs it.
 
+The sentences of Tatoeba are the one outside text that the repository holds, as Sample of Tatoeba
+gives.
+
 The suites read the word of each line of `lujvo.txt` that is lojban letters, and the parts of a
 line that writes two or more. A law counts the keywords of a line in English notation, and never
 reads them, since the parser holds no English. Cost: a line that writes a phrase for its word
@@ -785,6 +788,188 @@ each refusal and each repair.
 - **18.122**, rule 806 `joik`: `ke'i` stands on each side of the interval `bi'o`. With
   `ke'i bi'o ke'i`, it reads.
 
+## Sample of Tatoeba
+
+**`tests/sample_tatoeba/` holds a fixed sample of the lojban sentences of Tatoeba, with the verdict
+that the parser gives each.** The Architect ruled D1 a on #819, so the repository holds sentences
+of Tatoeba. The Architect then ruled D4 c there: the export only grows, so the sample is fixed. It
+is also diverse, so its sentences reach as many rules of CLL as they can.
+
+The folder is under CC BY 2.0 FR, the licence of Tatoeba, and not under the licence of the
+repository. `tests/sample_tatoeba/NOTICE.md` names each change, and credits Tatoeba and each
+owner of a sentence of the sample.
+
+**The verb `nim r tools/build.nim tatoeba <export>` writes both files from the export.** The
+export is `jbo_sentences_detailed.tsv.bz2` at `URL_TATOEBA` of `tools/tatoeba.nim`, decompressed.
+`DIGEST_TATOEBA` pins that file as Tatoeba served it on 2026-11-05, from the export of 2026-10-31.
+The verb reads each sentence through the parser once. It prints the count of each verdict over the
+whole export. Verified by hand with the verb, 2026-11-06: it writes both files byte for byte as
+committed.
+
+Cost: a newer export moves the pin, and the verb may then pick another sample. The sample stays
+fixed until somebody moves the pin and writes it again.
+
+**A feature is what the reading of a sentence shows.** One is the shape of each named rule of the
+tree. A shape is the rule with the labels of its children, and a run of one label collapses. Others
+are each terminal, each construct of 19.16 that holds several words, each kind of word, and each
+form of rafsi and hyphen. The marks of the stream count too: a pause, a stress, a comma and quoted
+text. A refused sentence shows one feature, its refusal with the rule where reading stops.
+
+Verified by `suites/test_tatoeba.nim`, which counts the features that the sample reaches.
+
+**The sample is a greedy cover of the features.** The sentence that adds the most features not yet
+reached comes first. A tie goes to the shorter text, then to the lower number. The cover stops
+where no sentence adds a feature.
+
+Cost: a greedy cover is not the least cover, which is NP-hard to find. Rejected: a seeded random
+sample, which ruling D4 c replaces. Rejected: the whole export on each push, which costs about
+57 s of a debug build.
+
+The sample holds 234 sentences, which reach 599 features. They reach 86 of the 88 named rules of
+21.1. No sentence of the export reaches `rp-expression` or `rp-operand`, and
+`suites/test_grammar.nim` holds both by Section 18.16. Verified by hand with the verb, 2026-11-06.
+
+**The suite holds each verdict of the sample.** A sentence that reads must read. A refused one must
+give the same refusal and rule, so a change of the parser that moves a verdict fails, and names the
+sentence. Each refused sentence of the sample is read against CLL 1.1, and `IDS_REFUSED` cites the
+rule that it breaks. Verified by `suites/test_tatoeba.nim`.
+
+**Each class of refusal over the whole export breaks a rule of CLL 1.1.** The verb gives these
+counts for the export of 2026-10-31, and 16,469 sentences read. A class is the refusal, with the
+rule where reading stops. The table names the sentence of the sample for each class, and the rule
+of CLL that it breaks. That rule can differ from the rule where reading stops.
+
+Verified by hand, 2026-11-06: each class was read against CLL, by its sentence of the sample and by
+other sentences of it. One parser mistake came out of that reading, and rule 972 now holds its fix.
+
+| Refusal | Count | Sentence | Rule broken |
+| --- | --- | --- | --- |
+| Selmaho | 485 | 2808680 | chapter 20 |
+| Stream Letter | 93 | 3843946 | 3.1 |
+| Grammar bridi-tail 50 | 48 | 2853152 | 152 |
+| Grammar sumti-6 97 | 47 | 2577894 | 97 |
+| Grammar selbri-4 134 | 36 | 2253980 | 134 |
+| Grammar terms-1 81 | 34 | 645284 | 97 |
+| Stream Stress | 29 | 5912012 | 3.9 |
+| Stream Shape | 28 | 4412245 | 4.1 |
+| Grammar tanru-unit-2 152 | 24 | 2864592 | 152 |
+| Stream Hyphen | 23 | 1484737 | 4.11 |
+| Grammar paragraphs 4 | 21 | 2793895 | 97 |
+| Grammar tail-terms 71 | 14 | 1576931 | 111 |
+| Grammar sumti-tail-1 112 | 13 | 5181396 | 152 |
+| Grammar simple-tense-modal 972 | 11 | 2626994 | 972 |
+| Grammar text 0 | 9 | 2119742 | 97 |
+| Stream Breakup | 9 | 1502454 | 4.8 |
+| Grammar sumti-4 94 | 8 | 4436842 | 807 |
+| Stream Cluster | 8 | 13820484 | 3.6 |
+| Grammar selbri 130 | 7 | 12406452 | 4.8 |
+| Grammar sentence 40 | 7 | 656510 | 972 |
+| Grammar sumti-5 95 | 7 | 5183488 | 383 |
+| Grammar guhek 808 | 5 | 2802254 | 972 |
+| Grammar sumti-tail 111 | 5 | 2063807 | 111 |
+| Grammar free 32 | 4 | 634760 | 4.8 |
+| Grammar gihek 818 | 4 | 2108189 | 131 |
+| Grammar selbri-1 131 | 4 | 8738058 | 40 |
+| Grammar selbri-2 132 | 4 | 4167581 | 112 |
+| Stream Quotation | 4 | 3807297 | 19.10 |
+| Grammar sumti 90 | 3 | 3083055 | 97 |
+| Stream Slinkuhi | 3 | 2159050 | 4.7 |
+| Stream Split | 3 | 4285480 | 3.3 |
+| Grammar gek 807 | 2 | 3989793 | 97 |
+| Grammar jek 805 | 2 | 2312326 | 131 |
+| Grammar mex 310 | 2 | 3855768 | 812 |
+| Grammar operand-3 385 | 2 | 3807272 | 385 |
+| Grammar relative-clause 122 | 2 | 8639562 | 122 |
+| Grammar selbri-5 135 | 2 | 4226728 | 135 |
+| Grammar stag 971 | 2 | 2803459 | 81 |
+| Stream Apostrophe | 2 | 5181743 | 3.3 |
+| Grammar ek 802 | 1 | 657753 | 131 |
+| Grammar gek-sentence 54 | 1 | 645249 | 972 |
+| Grammar interval 932 | 1 | 2688629 | 161 |
+| Grammar linkargs 160 | 1 | 8721221 | 160 |
+| Grammar selbri-6 136 | 1 | 2024281 | 97 |
+| Grammar statement-1 12 | 1 | 2988210 | 152 |
+| Grammar tense-modal 815 | 1 | 10789002 | 152 |
+| Grammar text-1 2 | 1 | 678056 | 1100 |
+| Grammar time 1030 | 1 | 2332321 | 50 |
+| Stream Comma | 1 | 4225380 | 3.3 |
+
+
+## Articles of Wikipedia
+
+**`tests/articles_wikipedia/` holds three long articles of the lojban Wikipedia, with the verdict
+that the parser gives each paragraph.** The Architect ruled D5 c on #819: a folder holds long
+articles under CC BY-SA, and each run reads them. The folder is under CC BY-SA 4.0, and not under
+the licence of the repository. `tests/articles_wikipedia/NOTICE.md` names each change, and credits
+each article by its revision and its history.
+
+The articles are `cmaci`, `eliogabalus` and `lo jbobau`. They are the long articles of prose that
+the parser reads most of. Rejected: the pages of years, which write dates in digits and read none.
+Rejected: `toldi`, of which 9 of 55 paragraphs read. Verified by hand with a probe built on the
+pin, 2026-11-06, over the longest pages that the API lists.
+
+**The verb `nim r tools/build.nim wikipedia <directory>` writes both files from saved answers of the
+API.** Each answer is saved by `QUERY` of `tools/wikipedia.nim`, one file to a page, named by the
+number of the page. `DIGEST_WIKIPEDIA` pins the answers, as `DIGEST_CLL` pins pages, and a newer
+revision of an article moves it. Verified by hand, 2026-11-06: `sha256sum` over the answers, piped
+into `sha256sum`, gives `DIGEST_WIKIPEDIA`.
+
+**A paragraph is one line of the plain text, and the suite reads it as one text of 21.1.** So the
+suite reads connected text of several sentences, and the longest paragraph holds 458 words. A
+heading is left out. Cost: a line that continues the sentence of the line before it, as an item of
+a list does, reads alone. Verified by `suites/test_wikipedia.nim`, whose citation names the line
+that such a line reads with.
+
+**69 of the 86 paragraphs read, and each refused paragraph breaks a rule of CLL.** Ten write a
+digit, which is no letter of lojban (3.1). Three continue a line before them, as lines 2 and 3 of
+`cmaci` continue line 1. The others put `la` inside a cmene (4.8), take one word of a compound with
+`zei` (4.6), or put a capital on a consonant (3.9). Verified by `suites/test_wikipedia.nim`, which
+cites the rule beside each paragraph.
+
+## Translations
+
+**The suites read the translations of Alice and Oz where their pinned pages are present.** The
+Architect ruled D3 a on #819: each translation is pinned and kept out of the repository, since no
+translator stated a release. The Architect then ruled D5 c, that the suites read Alice and Oz
+where the pinned pages are present. The runner holds no page, so it skips both. Verified by
+`suites/test_translations.nim`, which skips each page that is absent.
+
+**The verb `nim r tools/build.nim translations` fetches each page with `curl` into
+`build/translations/`.** It checks the digest of each page against its pin in `TRANSLATIONS` of
+`tools/translations.nim`. The digest is of the page with each `script` element cut, since the
+server of Alice writes a script that differs at each request. Verified by hand, 2026-11-06: two
+fetches of Alice differ in that script alone.
+
+**A paragraph is the text of one `p` element, and reading drops each mark that CLL does not
+define.** The marks are guillemets, dashes, parentheses, the colon and the asterisk. They are also
+the marks of question and exclamation, the quote, and the accent or breve over a vowel. Capitals
+stay, since CLL 3.9 defines them as stress. The page of Oz holds Windows-1252, though its header
+declares UTF-8, and the reader converts it.
+
+Cost: the accent of Oz marks stress, and reading drops it, so each brivla reads with the stress
+that its form gives. Rejected: an accent read as a capital. Oz marks secondary stress too, as
+`jbìbì'o`, and CLL 3.9 forbids a false primary stress in a brivla.
+
+**Alice reads 783 of 856 paragraphs, and Oz 56 of 173.** A paragraph of Oz holds about 300 words,
+and up to 2,233, so one mistake refuses all of it. The suite holds both counts. Verified by
+`suites/test_translations.nim`, where the pages are present.
+
+**Each refusal of the translations breaks a rule of CLL, as the first place where it stops
+shows.** In Alice, a quotation often opens in one paragraph and closes in another. Other refusals
+put `.i ba bo` or `.i je` after a fragment (rule 10, as Example 14.27 does). Some put a free
+modifier after a lerfu word or number whose `boi` is elided (rules 97 and 300). Some put a tense
+in an order that rules 972 and 1030 forbid, or write a word in capitals (3.9).
+
+In Oz, many refusals put a brivla and a cmene together after `la` (rule 97). Others write `ni'o ba
+bo` (rule 2), `ku` after a cmene (rule 97), or a cmavo that CLL 1.1 does not define. The page also
+cuts some words where a cell of its table ends, as `zdà.i`, and some hyphens break 4.11. No
+refusal of either text is a mistake of the parser. Verified by hand, 2026-11-06, by the first stop
+of each refused paragraph.
+
+The final baseline YACC grammar also takes a free modifier after `boi` alone. Its elided `boi` is
+the branch `error` of `BOI_gap_461`, which holds no free modifier. Verified by hand, 2026-11-06,
+in `grammar.300`.
+
 ## Tests
 
 **One stub runs every suite as one program.** `tests/test_suites.nim` imports each file of
@@ -793,6 +978,9 @@ suite still runs alone. A suite that CLL covers carries the name of a chapter. T
 other suite opens with `Internal:`, so the run shows where the authority stops.
 
 `tests/cll/examples.nim` is data beside the suites, and `suites/test_corpus.nim` reads it.
+`tests/sample_tatoeba/sentences.nim` is data too, and `suites/test_tatoeba.nim` reads it.
+`tests/articles_wikipedia/articles.nim` is data, and `suites/test_wikipedia.nim` reads it.
+
 Helpers stand beside the suites, and the stub runs none of them. `suites/texts_outside.nim` reads
 the outside texts by their pins. `suites/rafsi_random.nim` spells random rafsi from the letters of
 each form. So the suites of the reader and of lujvo share one way to draw them (II.9).
@@ -809,9 +997,10 @@ CLL, or the article of the charter that a guard holds.
 **The compiler is pinned exactly**: `requires "nim == 2.4.0"` in `lojban_parser.nimble`, as each
 project of the repository pins it (D1 a on #775). The project needs the standard library alone,
 so it carries no lock. The verbs `lists` and `head`, and the tests of outside texts, also need
-`lojban-common` and `sha256sum`, which the verb `system` declares. The verb `cll` needs
-`sha256sum` too. A system package carries no
-pin, so its version is what the machine has.
+`lojban-common` and `sha256sum`, which the verb `system` declares. The verbs `cll`, `tatoeba` and
+`wikipedia` need `sha256sum` too. The verb `translations` needs `curl`, which `system` declares.
+
+A system package carries no pin, so its version is what the machine has.
 
 The stub passes on the pin and on Nim 2.2.12.
 Verified by hand with `nim c -r -d:testing tests/test_suites.nim` on both compilers, 2026-11-05.
@@ -859,10 +1048,14 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   included. So one sentence takes about 13 microseconds. It read 17,170 of them whole.
 - The time of `$` is unmeasured here. `$` scores each choice of rafsi, so its time grows with the
   product of the choices of each word (expected).
-- **Prose of Tatoeba.** On 2026-11-06, at `0493ec4d`, a program built with `-d:release`
-  read the 17,495 sentences through `readText`. It took 31.8 s, 33.6 s and 32.3 s on the pin, so
-  one sentence takes about 1.9 ms. It read 16,466 of them. The grammar refused 341, and 485 hold
-  a cmavo that no list gives a selma'o.
+- **Prose of Tatoeba.** On 2026-11-06, at `6a44ab94`, a program built with `-d:release` read the
+  17,495 sentences through `readText`. It took 10.2 s and 10.4 s on the pin, so one sentence
+  takes about 0.6 ms. It read 16,469 of them.
+- **Sample of Tatoeba.** On 2026-11-06, at `6a44ab94`, the suite of the sample, built alone as
+  the stub is, ran in 2.7 s and 3.0 s.
+- **Long texts.** On 2026-11-06, at `8f14bfdd`, the suite of the articles of Wikipedia, built
+  alone, ran in 3.4 s and 3.6 s. The suite of the translations ran in 27.7 s and 27.8 s with both
+  pages present. Without them, as on the runner, the stub ran every suite in 27.0 s and 27.5 s.
 - **Indexed Earley sets.** On 2026-11-06, on the pin, the stub built with `nim c -d:testing
   -d:nimUnittestOutputLevel:PRINT_FAILURES tests/test_suites.nim` ran every suite in 21.5 s and
   21.6 s at `67b4773b`. At `487f618c`, whose completion walks each origin set whole, it ran them
