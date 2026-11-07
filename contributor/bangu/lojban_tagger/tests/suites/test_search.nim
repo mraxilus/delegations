@@ -484,6 +484,17 @@ suite "Internal: Search":
     ]  # ruling: both terms first, then `selci'a` alone, ranked tier first at each count
 
 
+  test "run across `co` ranks nothing, since fold keeps order written, though `co` inverts it":
+    var index: Index
+    for (name, text) in [
+      ("a/inverted", "selci'acolvei"),  # `se ciska co vreji`, i.e. `vreji se ciska` (5.8)
+      ("b/written", "veirselci'a"),  # `vreji se ciska`, as term writes it
+    ]:
+      index.addTags(name, [readTag(text).tag])
+    check index.find([readTerm("veirselci'a")]).names ==
+        @["b/written", "a/inverted"]  # cost: run read as written, so `co` inverts nothing (5.8)
+
+
   test "lojban term whose only cmavo binds nothing ranks tag holding its tanru units":
     let figure = readTag("pevrisnyjelca").tag
     var index: Index
