@@ -3041,8 +3041,8 @@ suite "Internal: Report":
   test "report and system text write lojban in lowercase, outside list data":
     let passage = Passage(text: "x", url: URL_SUITE, count_bytes: 70_000, count_repaired: 1,
         is_cut: true, is_page_cut: true)
-    for refusal in Refusal:  # 8 members, exhaustive
-      let reason = Reading(is_tag: false, text: "x", refusal: refusal, detail: "x").explain
+    for refusal in RefusalTag:  # 8 members, exhaustive
+      let reason = ReadingTag(is_tag: false, text: "x", refusal: refusal, detail: "x").explain
       check "Lojban" notin reason  # ruling of Architect, 2026-11-03: reader wrote `Lojban letters`
       for failure in Failure:  # 10 members, exhaustive
         for position in [none(int), some(1)]:  # whole, and element of answer

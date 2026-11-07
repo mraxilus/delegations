@@ -52,23 +52,23 @@ const
 
 #[ Rendering ]#
 
-func explain*(reading: Reading): string =
+func explain*(reading: ReadingTag): string =
   ## Render why text is no tag, ending in offending text.
   let text = "`" & reading.text & "`"
   case reading.refusal
-  of Refusal.Empty: "Tag should hold letters; got ``."
-  of Refusal.Letter: "Tag should hold lojban letters alone; got `" & reading.detail & "` in " &
+  of RefusalTag.Empty: "Tag should hold letters; got ``."
+  of RefusalTag.Letter: "Tag should hold lojban letters alone; got `" & reading.detail & "` in " &
       text & "."
-  of Refusal.Cmavo: "Tag should end in gismu, as CLL 4.11 step 2 ends tanru; got cmavo `" &
+  of RefusalTag.Cmavo: "Tag should end in gismu, as CLL 4.11 step 2 ends tanru; got cmavo `" &
       reading.detail & "` in " & text & "."
-  of Refusal.Unlisted: "Gismu should be in gismu list; got " & text & "."
-  of Refusal.Rafsi: "Rafsi should be assigned in gismu list; got `" & reading.detail &
+  of RefusalTag.Unlisted: "Gismu should be in gismu list; got " & text & "."
+  of RefusalTag.Rafsi: "Rafsi should be assigned in gismu list; got `" & reading.detail &
       "` in " & text & "."
-  of Refusal.Ambiguous: "Rafsi should name one gismu; got `" & reading.detail &
+  of RefusalTag.Ambiguous: "Rafsi should name one gismu; got `" & reading.detail &
       "`, which several share, in " & text & "."
-  of Refusal.Hyphen: "Hyphens should be those of CLL 4.11, i.e. `" & reading.detail &
+  of RefusalTag.Hyphen: "Hyphens should be those of CLL 4.11, i.e. `" & reading.detail &
       "`; got " & text & "."
-  of Refusal.Shape: "Text should be gismu or lujvo; got " & text & "."
+  of RefusalTag.Shape: "Text should be gismu or lujvo; got " & text & "."
 
 
 func toLine(entity: Entity): string =

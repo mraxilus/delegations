@@ -55,7 +55,7 @@ import ./[dictionary, english, index, tags, tanru_units]
 
 type
   Term* = object  ## Define one term of query, as read.
-    reading*: Reading  ## Term read as lojban tag, refused or not.
+    reading*: ReadingTag  ## Term read as lojban tag, refused or not.
     meanings*: seq[Meaning]  ## Meanings term leads to as English; empty where lojban read.
     alternatives*: seq[seq[Word]]  ## Gismu sets, any one of which satisfies term.
     specific*: seq[TanruUnit]

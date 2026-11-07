@@ -4,7 +4,7 @@
 ##     right, and is what suite holds. CLL lujvo given without rafsi split are marked split
 ##     inferred; word no source holds is marked constructed.
 ##   Folding capitals and stripping commas are project's choice (`tags.nim` header), and refusing
-##     rafsi of cmavo is Architect's brief, so `Internal: Reading` holds them; CLL there is only
+##     rafsi of cmavo is Architect's brief, so `Internal: ReadingTag` holds them; CLL there is only
 ##     source of word.
 ##   Tags form unbounded domain, so laws run over seeded random tags of one to four gismu, drawn
 ##     from every gismu of list, and over each entry of list exhaustively (Article IX.3).
@@ -109,10 +109,10 @@ func tagRead(text: string): Option[Tag] =
   if reading.is_tag: some(reading.tag) else: none(Tag)
 
 
-func refusalRead(text: string): Option[(Refusal, string)] =
+func refusalRead(text: string): Option[(RefusalTag, string)] =
   ## Read refusal of text with its detail; `none` where text is tag.
   let reading = text.readTag
-  if reading.is_tag: none((Refusal, string)) else: some((reading.refusal, reading.detail))
+  if reading.is_tag: none((RefusalTag, string)) else: some((reading.refusal, reading.detail))
 
 
 func scoreRead(text: string): Option[int] =
@@ -126,14 +126,14 @@ func spelled(pieces: openArray[Piece]): string =
   for piece in pieces: result.add piece.rafsi & LUT_LETTER_BY_HYPHEN[piece.hyphen]
 
 
-func isOutcomeSame(a, b: Reading): bool =
+func isOutcomeSame(a, b: ReadingTag): bool =
   ## Test readings agree in tag and pieces, or in refusal and detail; text aside.
   if a.is_tag != b.is_tag: return false
   if a.is_tag: a.tag == b.tag and a.pieces == b.pieces
   else: a.refusal == b.refusal and a.detail == b.detail
 
 
-func isReadingSame(a, b: Reading): bool =
+func isReadingSame(a, b: ReadingTag): bool =
   ## Test readings agree in text, and in outcome.
   a.text == b.text and isOutcomeSame(a, b)
 
@@ -211,21 +211,23 @@ suite "Chapter 3":
       check (c in tags.LETTERS) == (c notin {'h', 'q', 'w'})  # 3.1, omitting "h", "q", and "w"
     for c in char.low .. char.high:  # 256 bytes; inner comma in 3.3, ends and capitals internal
       if c in tags.LETTERS or c in {',', 'A' .. 'Z'}: continue
-      check ("bri" & c & "vla").refusalRead == some((Refusal.Letter, $c))  # 3.1, alphabet
+      check ("bri" & c & "vla").refusalRead == some((RefusalTag.Letter, $c))  # 3.1, alphabet
 
 
   test "Section 3.3":
-    check "rohinreho".refusalRead == some((Refusal.Letter, "h"))  # 3.3, no "h" for `'`; constructed
-    check "kixtaha".refusalRead == some((Refusal.Letter, "h"))  # 3.3, no "h" for `'`; constructed
+    check "rohinreho".refusalRead ==
+        some((RefusalTag.Letter, "h"))  # 3.3, no "h" for `'`; constructed
+    check "kixtaha".refusalRead ==
+        some((RefusalTag.Letter, "h"))  # 3.3, no "h" for `'`; constructed
     check "ro'i,n,re'o".tagRead == some(tanru("rokci+renro"))  # 3.3, comma never required
-    check "bri.vla".refusalRead == some((Refusal.Letter, "."))  # 3.3, period makes two words
+    check "bri.vla".refusalRead == some((RefusalTag.Letter, "."))  # 3.3, period makes two words
     for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):  # each CLL spelling quoted
       let plain = spelling.readTag
       for i in 1 ..< spelling.len:  # every position inside word
         let (head, tail) = (spelling[0 ..< i], spelling[i .. ^1])
         check isReadingSame((head & "," & tail).readTag, plain)  # 3.3, never differ by comma alone
         check (head & "." & tail).refusalRead ==
-            some((Refusal.Letter, "."))  # 3.3, period embedded in word makes two words
+            some((RefusalTag.Letter, "."))  # 3.3, period embedded in word makes two words
 
 
 
@@ -268,13 +270,13 @@ suite "Chapter 4":
     check "mamtypatfu".tagRead == "mampa'u".tagRead  # 4.6, Example 6.10 reduces 6.1
     check "lerfyliste".tagRead == "lerste".tagRead  # 4.6, Example 6.11 reduces 6.2
     check "patyta'a".tagRead == some(tanru("pante+tavla"))  # 4.6, "must be patyta'a"
-    check "patta'a".refusalRead == some((Refusal.Hyphen, "patyta'a"))  # 4.6, "tt" impermissible
+    check "patta'a".refusalRead == some((RefusalTag.Hyphen, "patyta'a"))  # 4.6, "tt" impermissible
     check "mudysiclu".tagRead == some(tanru("mudri+siclu"))  # 4.6, "mudysiclu must be used"
-    check "mudsiclu".refusalRead == some((Refusal.Hyphen, "mudysiclu"))  # 4.6, cannot form
+    check "mudsiclu".refusalRead == some((RefusalTag.Hyphen, "mudysiclu"))  # 4.6, cannot form
     check "ro'inre'o".tagRead == some(tanru("rokci+renro"))  # 4.6, "n"-hyphen required
     check "rokre'o".tagRead == some(tanru("rokci+renro"))  # 4.6, same lujvo, no hyphen
-    check "ro'ire'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # 4.6, two cmavo
-    check "ro'irre'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # 4.6, "rr" double
+    check "ro'ire'o".refusalRead == some((RefusalTag.Hyphen, "ro'inre'o"))  # 4.6, two cmavo
+    check "ro'irre'o".refusalRead == some((RefusalTag.Hyphen, "ro'inre'o"))  # 4.6, "rr" double
     check "labmau".tagRead == some(tanru("blabi+zmadu"))  # 4.6, "whiter"; split inferred
 
 
@@ -314,28 +316,28 @@ suite "Chapter 4":
 
 
 
-suite "Internal: Reading":
+suite "Internal: ReadingTag":
   test "Text holding nothing but spaces or commas is refused as Empty":
     for text in ["", "   ", "\t\n", ",", " , "]:
-      check text.refusalRead == some((Refusal.Empty, ""))  # degenerate input, no detail
+      check text.refusalRead == some((RefusalTag.Empty, ""))  # degenerate input, no detail
       check text.readTag.text == ""  # text as read, trimmed and stripped
 
 
   test "Character outside letters is refused as Letter, naming character":
-    check "hello".refusalRead == some((Refusal.Letter, "h"))  # first offending; constructed
-    check "bri vla".refusalRead == some((Refusal.Letter, " "))  # inner space never trimmed
-    check "bwa".refusalRead == some((Refusal.Letter, "w"))  # `w` outside letters; constructed
-    check "datni+vreji".refusalRead == some((Refusal.Letter, "+"))  # tanru is no spelling
+    check "hello".refusalRead == some((RefusalTag.Letter, "h"))  # first offending; constructed
+    check "bri vla".refusalRead == some((RefusalTag.Letter, " "))  # inner space never trimmed
+    check "bwa".refusalRead == some((RefusalTag.Letter, "w"))  # `w` outside letters; constructed
+    check "datni+vreji".refusalRead == some((RefusalTag.Letter, "+"))  # tanru is no spelling
 
 
   test "Character outside letters is named whole, so report of UTF-8 stays UTF-8":
     check "café".refusalRead ==
-        some((Refusal.Letter, "é"))  # review finding logic-6, 2026-10-29: named byte `C3`
+        some((RefusalTag.Letter, "é"))  # review finding logic-6, 2026-10-29: named byte `C3`
     check "ci’a".refusalRead ==
-        some((Refusal.Letter, "’"))  # review finding logic-6, 2026-10-29: named byte `E2`
+        some((RefusalTag.Letter, "’"))  # review finding logic-6, 2026-10-29: named byte `E2`
     for character in CHARACTERS_FOREIGN:  # 14 characters, both ends of each byte length
       for text in [character & "brivla", "bri" & character & "vla", "brivla" & character]:
-        check text.refusalRead == some((Refusal.Letter, character))  # lead and continuation
+        check text.refusalRead == some((RefusalTag.Letter, character))  # lead and continuation
         check text.readTag.explain.validateUtf8 == -1  # report well-formed, at each position
     randomize(0)
     var count_scalar = 0
@@ -349,17 +351,17 @@ suite "Internal: Reading":
       inc count_scalar
       let character = Rune(code).toUTF8
       for text in [character & "brivla", "bri" & character & "vla", "brivla" & character]:
-        check text.refusalRead == some((Refusal.Letter, character))  # whole, at any plane
+        check text.refusalRead == some((RefusalTag.Letter, character))  # whole, at any plane
         check text.readTag.explain.validateUtf8 == -1  # report well-formed, at each position
     check count_scalar >= FLOOR_FOREIGN  # guard keeps most draws
 
 
   test "Cmavo alone, or lujvo ending in cmavo, is refused as Cmavo, naming it":
-    check "se".refusalRead == some((Refusal.Cmavo, "se"))  # cmavo of list is no brivla
+    check "se".refusalRead == some((RefusalTag.Cmavo, "se"))  # cmavo of list is no brivla
     check "zbadoi".refusalRead ==
-        some((Refusal.Cmavo, "doi (do)"))  # 4.11 step 2, tanru ends in gismu; constructed
+        some((RefusalTag.Cmavo, "doi (do)"))  # 4.11 step 2, tanru ends in gismu; constructed
     check "zbadu'o".refusalRead ==
-        some((Refusal.Cmavo, "du'o (du)"))  # 4.11 step 2, tanru ends in gismu; constructed
+        some((RefusalTag.Cmavo, "du'o (du)"))  # 4.11 step 2, tanru ends in gismu; constructed
 
 
   test "Lujvo holding rafsi of cmavo is tag keeping cmavo, matched by its gismu":
@@ -380,31 +382,35 @@ suite "Internal: Reading":
 
 
   test "Gismu shape outside list is refused as Unlisted, naming word":
-    check "kukta".refusalRead == some((Refusal.Unlisted, "kukta"))  # unlisted; constructed
-    check "gerkukta".refusalRead == some((Refusal.Unlisted, "kukta"))  # final; constructed
+    check "kukta".refusalRead == some((RefusalTag.Unlisted, "kukta"))  # unlisted; constructed
+    check "gerkukta".refusalRead == some((RefusalTag.Unlisted, "kukta"))  # final; constructed
 
 
   test "Rafsi no list assigns is refused as Rafsi, naming rafsi":
-    check "clozba".refusalRead == some((Refusal.Rafsi, "clo"))  # CCV of none; constructed
-    check "kukfyzba".refusalRead == some((Refusal.Rafsi, "kukf"))  # 4-letter of none; constructed
+    check "clozba".refusalRead == some((RefusalTag.Rafsi, "clo"))  # CCV of none; constructed
+    check "kukfyzba".refusalRead ==
+        some((RefusalTag.Rafsi, "kukf"))  # 4-letter of none; constructed
 
 
   test "Shared 4-letter rafsi is refused as Ambiguous, naming rafsi":
-    check "brodyzba".refusalRead == some((Refusal.Ambiguous, "brod"))  # five share; constructed
-    check "brodyprenu".refusalRead == some((Refusal.Ambiguous, "brod"))  # five share; constructed
+    check "brodyzba".refusalRead == some((RefusalTag.Ambiguous, "brod"))  # five share; constructed
+    check "brodyprenu".refusalRead ==
+        some((RefusalTag.Ambiguous, "brod"))  # five share; constructed
     check "rodzba".tagRead == some(tanru("broda+zbasu"))  # `rod` unshared; constructed
 
 
   test "Hyphen 4.11 does not give is refused as Hyphen, naming form 4.11 gives":
-    check "patta'a".refusalRead == some((Refusal.Hyphen, "patyta'a"))  # missing `y`; CLL 4.6
-    check "kitymatci".refusalRead == some((Refusal.Hyphen, "kitmatci"))  # surplus `y`; constructed
-    check "kicmatci".refusalRead == some((Refusal.Hyphen, "kicymatci"))  # tosmabru `y`; constructed
-    check "ro'ire'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # missing `n`; CLL 4.6
+    check "patta'a".refusalRead == some((RefusalTag.Hyphen, "patyta'a"))  # missing `y`; CLL 4.6
+    check "kitymatci".refusalRead ==
+        some((RefusalTag.Hyphen, "kitmatci"))  # surplus `y`; constructed
+    check "kicmatci".refusalRead ==
+        some((RefusalTag.Hyphen, "kicymatci"))  # tosmabru `y`; constructed
+    check "ro'ire'o".refusalRead == some((RefusalTag.Hyphen, "ro'inre'o"))  # missing `n`; CLL 4.6
 
 
   test "Text neither gismu nor lujvo by shape is refused as Shape":
     for text in ["lo", "xyz", "zba", "ge'u", "gerk", "brodrzba"]:  # `xyz`, `brodrzba` constructed
-      check text.refusalRead == some((Refusal.Shape, ""))  # no rafsi split, no detail
+      check text.refusalRead == some((RefusalTag.Shape, ""))  # no rafsi split, no detail
 
 
   test "Text is trimmed, folded to lowercase, and stripped of commas":
@@ -437,7 +443,7 @@ suite "Internal: Laws":
     for tag in tagsRandom():  # `SAMPLES` tags, seeded
       let text = $tag
       if tag.isStemShared:
-        check text.refusalRead == some((Refusal.Ambiguous, "brod"))  # only rafsi `$` may write
+        check text.refusalRead == some((RefusalTag.Ambiguous, "brod"))  # only rafsi `$` may write
         continue
       check text.tagRead == some(tag)  # round trip, rendering then reading
       check readTanru(tag.toTanru) == some(tag)  # round trip, tanru then reading
@@ -446,7 +452,7 @@ suite "Internal: Laws":
     for word in GISMU_STEM_SHARED:
       let tag = tanru(word & "+zbasu")
       check $tag == "brodyzba"  # `brod` alone stands before last gismu
-      check ($tag).refusalRead == some((Refusal.Ambiguous, "brod"))  # cannot read back
+      check ($tag).refusalRead == some((RefusalTag.Ambiguous, "brod"))  # cannot read back
       check ($tanru("zbasu+" & word)).tagRead == some(tanru("zbasu+" & word))  # final is whole
 
 
@@ -455,7 +461,7 @@ suite "Internal: Laws":
     for tag in tagsCmavo():  # `SAMPLES_CMAVO` tags, seeded
       if tag.words.anyIt(it.kind == Kind.Cmavo): inc count_cmavo
       if tag.isStemShared:
-        check ($tag).refusalRead == some((Refusal.Ambiguous, "brod"))  # only rafsi `$` may write
+        check ($tag).refusalRead == some((RefusalTag.Ambiguous, "brod"))  # only rafsi `$` may write
         inc count_shared
         continue
       check ($tag).tagRead == some(tag)  # 4.12, form reads back as tag; ruling: cmavo tags
@@ -471,7 +477,7 @@ suite "Internal: Laws":
         head = Tag(words: @[w, "zdani".word.get])
         final = Tag(words: @["gerku".word.get, w])
       if $w in GISMU_STEM_SHARED:
-        check ($head).refusalRead == some((Refusal.Ambiguous, "brod"))  # shared stem alone
+        check ($head).refusalRead == some((RefusalTag.Ambiguous, "brod"))  # shared stem alone
       else:
         check ($head).tagRead == some(head)  # round trip, gismu first
       check ($final).tagRead == some(final)  # round trip, gismu last
@@ -492,7 +498,7 @@ suite "Internal: Laws":
             some(Tag(words: @[w, zbasu]))  # ruling: rafsi of cmavo tags, before gismu (4.6)
         if one.form.get notin FORMS_FINAL: continue
         check joinRafsi(["zba", one]).refusalRead ==
-            some((Refusal.Cmavo, one & " (" & $w & ")"))  # 4.11 step 2, tanru ends in gismu
+            some((RefusalTag.Cmavo, one & " (" & $w & ")"))  # 4.11 step 2, tanru ends in gismu
         inc count_final_cmavo
     check count_final_cmavo >= FLOOR_FINAL_CMAVO  # guard reaches cmavo rafsi that end words
 
@@ -526,7 +532,7 @@ suite "Internal: Laws":
 
   test "Every cmavo of list is refused as Cmavo":
     for w in WORDS_CMAVO:  # 94 cmavo, exhaustive
-      check ($w).refusalRead == some((Refusal.Cmavo, $w))  # cmavo named as itself
+      check ($w).refusalRead == some((RefusalTag.Cmavo, $w))  # cmavo named as itself
     check readTanru("se+cusku").get.toTanru == "se+cusku"  # ruling: tanru may hold cmavo
     check readTanru("cusku+se").isNone  # 4.11 step 2, tanru ends in gismu
     check readTanru("se").isNone  # cmavo alone is no tag
