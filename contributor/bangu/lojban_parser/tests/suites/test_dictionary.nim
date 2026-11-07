@@ -173,7 +173,7 @@ iterator samples[T](pool: seq[T]): lent T =
 suite "Chapter 4":
   test "Section 4.4":
     for text in ["creka", "lijda", "blanu", "mamta", "cukta", "patfu", "nanmu", "ninmu"]:
-      check word(text).isSome  # 4.4, Examples 3.1-3.8 as page labels them
+      check word(text).isSome  # 4.4, Examples 4.11-18
     check word("gismu").isSome  # 4.4, `gismu` is in set of gismu
     for text in ["kismu", "xismu", "gicmu", "gizmu", "gisnu"]:
       check word(text).isNone  # 4.4, these "cannot be"
@@ -214,18 +214,18 @@ suite "Chapter 4":
       check found.isSome and found.get.kind == Kind.Gismu  # 4.6, "assigned to other gismu"
     check word("mamta").get.entry.rafsi == @["mam"]  # 4.6, only `mam` "is assigned to it"
     check not isAssigned("mat", "mamta") and not isAssigned("ma'a", "mamta")  # 4.6, `mamta`
-    check isAssigned("cum", "cumki")  # 4.6, Example 6.6 `cumfri`, split inferred
-    check isAssigned("fri", "lifri")  # 4.6, Example 6.6 `cumfri`, split inferred
-    check isAssigned("kle", "klesi")  # 4.6, Example 6.7 `klezba`; 4.13 names `kle`
-    check isAssigned("zba", "zbasu")  # 4.6, Example 6.7 `klezba`, split inferred
-    check isAssigned("kix", "krixa")  # 4.6, Example 6.8 `kixta'a`, split inferred
-    check isAssigned("ta'a", "tavla")  # 4.6, Example 6.8 `kixta'a`, split inferred
-    check isAssigned("sni", "sinxa")  # 4.6, Example 6.9 `sniju'o`, split inferred
-    check isAssigned("ju'o", "djuno")  # 4.6, Example 6.9 `sniju'o`, split inferred
-    check isAssigned("mam", "mamta")  # 4.6, Example 6.10 `mampa'u`; `mam` "is assigned to it"
-    check isAssigned("pa'u", "patfu")  # 4.6, Example 6.10 `mampa'u`, split inferred
-    check isAssigned("ler", "lerfu")  # 4.6, Example 6.11 `lerste`, split inferred
-    check isAssigned("ste", "liste")  # 4.6, Example 6.11 `lerste`, split inferred
+    check isAssigned("cum", "cumki")  # 4.6, Example 4.32 `cumfri`, split inferred
+    check isAssigned("fri", "lifri")  # 4.6, Example 4.32 `cumfri`, split inferred
+    check isAssigned("kle", "klesi")  # 4.6, Example 4.33 `klezba`; 4.13 names `kle`
+    check isAssigned("zba", "zbasu")  # 4.6, Example 4.33 `klezba`, split inferred
+    check isAssigned("kix", "krixa")  # 4.6, Example 4.34 `kixta'a`, split inferred
+    check isAssigned("ta'a", "tavla")  # 4.6, Example 4.34 `kixta'a`, split inferred
+    check isAssigned("sni", "sinxa")  # 4.6, Example 4.35 `sniju'o`, split inferred
+    check isAssigned("ju'o", "djuno")  # 4.6, Example 4.35 `sniju'o`, split inferred
+    check isAssigned("mam", "mamta")  # 4.6, Example 4.36 `mampa'u`; `mam` "is assigned to it"
+    check isAssigned("pa'u", "patfu")  # 4.6, Example 4.36 `mampa'u`, split inferred
+    check isAssigned("ler", "lerfu")  # 4.6, Example 4.37 `lerste`, split inferred
+    check isAssigned("ste", "liste")  # 4.6, Example 4.37 `lerste`, split inferred
     check isAssigned("pat", "pante")  # 4.6, `patyta'a`, split inferred
     check isAssigned("mud", "mudri")  # 4.6, `mudysiclu`, split inferred
     check isAssigned("zul", "zunle") and isAssigned("jma", "jamfu")  # 4.6, `zuljma`, split inferred

@@ -290,22 +290,22 @@ suite "Chapter 4":
     for text in ["ki'a", "pei", "mi'o", "coi", "cu'u"]: check text.isCmavo  # 4.2, CVV-form
     check "y".isCmavo  # 4.2, cmavo `.y.`, pauses unwritten
     for text in ["ku'a'e", "sau'e", "bai'ai"]: check text.isCmavo  # 4.2, experimental
-    check "ki'e'u'e".isCmavo  # 4.2, Example 2.4, "single cmavo", four vowels
+    check "ki'e'u'e".isCmavo  # 4.2, Example 4.4, "single cmavo", four vowels
     for text in GLIDES_ON: check text.isCmavo  # 4.2, "ten additional diphthongs"
     check sorted(DIPHTHONGS_CMAVO) == sorted(GLIDES_ON)  # 4.2, same ten as 3.4 table
     for text in ["by", "cy", "dy", "zy", "y'y"]: check text.isCmavo  # 17.2, single cmavo of BY
-    check not "iseci'i".isCmavo  # 4.2, Example 2.1, compound `.i se ci'i`
-    check not "punaijecanai".isCmavo  # 4.2, Example 2.2, compound
-    check not "ki'e.u'e".isCmavo  # 4.2, Example 2.3, compound, pause before `.u'e`
-    check not "cy.ibu.abu".isCmavo  # 4.2, Example 2.5, compound
+    check not "iseci'i".isCmavo  # 4.2, Example 4.1, compound `.i se ci'i`
+    check not "punaijecanai".isCmavo  # 4.2, Example 4.2, compound
+    check not "ki'e.u'e".isCmavo  # 4.2, Example 4.3, compound, pause before `.u'e`
+    check not "cy.ibu.abu".isCmavo  # 4.2, Example 4.5, compound
     check not "da'amei".isCmavo  # 4.3, "must be compound cmavo"
     check not "bla".isCmavo and not "klama".isCmavo  # 4.2, consonant pair marks no cmavo
     check not "cia".isCmavo  # 3.4, on-glides only in words standing alone; constructed
-    check ".iseci'i".splitCompound == @["i", "se", "ci'i"]  # 4.2, Example 2.1, `.i se ci'i`
-    check "punaijecanai".splitCompound == @["pu", "nai", "je", "ca", "nai"]  # 4.2, Example 2.2
-    check "ki'e.u'e".splitCompound == @["ki'e", "u'e"]  # 4.2, Example 2.3, pause kept
-    check "ki'e'u'e".splitCompound == @["ki'e'u'e"]  # 4.2, Example 2.4, "single cmavo"
-    check "cy.ibu.abu".splitCompound == @["cy", "i", "bu", "a", "bu"]  # 4.2, Example 2.5
+    check ".iseci'i".splitCompound == @["i", "se", "ci'i"]  # 4.2, Example 4.1, `.i se ci'i`
+    check "punaijecanai".splitCompound == @["pu", "nai", "je", "ca", "nai"]  # 4.2, Example 4.2
+    check "ki'e.u'e".splitCompound == @["ki'e", "u'e"]  # 4.2, Example 4.3, pause kept
+    check "ki'e'u'e".splitCompound == @["ki'e'u'e"]  # 4.2, Example 4.4, "single cmavo"
+    check "cy.ibu.abu".splitCompound == @["cy", "i", "bu", "a", "bu"]  # 4.2, Example 4.5
     check "da'amei".splitCompound == @["da'a", "mei"]  # 4.3, "must be compound cmavo"
     check "ro'ire'o".splitCompound == @["ro'i", "re'o"]  # 4.6, "breaks up into two cmavo"
     check "klama".splitCompound.len == 0  # 4.2, consonant pair marks no compound
@@ -357,16 +357,16 @@ suite "Chapter 4":
 
 
   test "Section 4.4":
-    check "creka".form == some(Form.Ccvcv)  # 4.4, Example 3.1 as page labels it
-    check "lijda".form == some(Form.Cvccv)  # 4.4, Example 3.2 as page labels it
-    check "blanu".form == some(Form.Ccvcv)  # 4.4, Example 3.3 as page labels it
-    check "mamta".form == some(Form.Cvccv)  # 4.4, Example 3.4 as page labels it
-    check "cukta".form == some(Form.Cvccv)  # 4.4, Example 3.5 as page labels it
-    check "patfu".form == some(Form.Cvccv)  # 4.4, Example 3.6 as page labels it
-    check "nanmu".form == some(Form.Cvccv)  # 4.4, Example 3.7 as page labels it
-    check "ninmu".form == some(Form.Cvccv)  # 4.4, Example 3.8 as page labels it
+    check "creka".form == some(Form.Ccvcv)  # 4.4, Example 4.11
+    check "lijda".form == some(Form.Cvccv)  # 4.4, Example 4.12
+    check "blanu".form == some(Form.Ccvcv)  # 4.4, Example 4.13
+    check "mamta".form == some(Form.Cvccv)  # 4.4, Example 4.14
+    check "cukta".form == some(Form.Cvccv)  # 4.4, Example 4.15
+    check "patfu".form == some(Form.Cvccv)  # 4.4, Example 4.16
+    check "nanmu".form == some(Form.Cvccv)  # 4.4, Example 4.17
+    check "ninmu".form == some(Form.Cvccv)  # 4.4, Example 4.18
     for text in ["creka", "lijda", "blanu", "mamta", "cukta", "patfu", "nanmu", "ninmu"]:
-      check text.isGismu  # 4.4, Examples 3.1-3.8 as page labels them
+      check text.isGismu  # 4.4, Examples 4.11-18
     for text in texts(positionsNotation("CVCCV")):  # 122825 strings, exhaustive
       let expected = if isPairPermissible(text[2], text[3]): some(Form.Cvccv) else: none(Form)
       check text.form == expected  # 4.4, CVC/CV, medial pair need only be permissible

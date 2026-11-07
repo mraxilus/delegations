@@ -52,7 +52,7 @@ suite "Chapter 3":
     check not isPairPermissible('s', 'd')  # 3.6, "sd" is forbidden
     check isPairPermissible('f', 'l') and isPairPermissible('v', 'l')  # 3.6, "fl" and "vl"
     check isPairPermissible('l', 's') and isPairPermissible('l', 'z')  # 3.6, "ls" and "lz"
-    check not isPairPermissible('m', 'z')  # 3.6, Example 6.1, `y` breaks "mz" of "djeimyz"
+    check not isPairPermissible('m', 'z')  # 3.6, Example 3.8, `y` breaks "mz" of "djeimyz"
     check isPairPermissible('z', 'm')  # 3.6 rule 4 names "mz" alone, never "zm"
     check not isPairPermissible('a', 'b') and not isPairPermissible('\'', 'b')  # 3.6, consonants
 
