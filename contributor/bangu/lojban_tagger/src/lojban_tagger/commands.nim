@@ -5,7 +5,8 @@
 ##   |---------------------------|-------------------------------------------------------------|
 ##   | tag <name> <word>...      | tag entity with each word; refuse all where one is no tag   |
 ##   | untag <name> <word>...    | remove each tag; entity with none left leaves index         |
-##   | find <term>...            | print each entity satisfying every term; report each term   |
+##   | find <term>...            | print each entity satisfying any term, most terms first;    |
+##   |                           | report each term, and each finding nothing in index         |
 ##   | show [<name>]             | print every entity, or one, with its tags                   |
 ##   | read <word>...            | explain each word: rafsi, gismu, preferred form, English    |
 ##   |---------------------------|-------------------------------------------------------------|
@@ -16,7 +17,14 @@
 ##     too, for wiring (Article IX.5).
 ##   Entity prints as name, tab, then each tag in form 4.12 prefers, space apart: line any
 ##     other tool splits at tab.
+##     Cost: line says nothing of how many terms of `find` its entity satisfies.
 ##   Report goes to standard error: how each term read, and why each refusal.
+##     `find` names each term finding nothing in index, since such term empties no result
+##     (`search.nim`), so output alone cannot show it. Test reads entities found alone, since
+##     they hold every entity any term satisfies. Term reading as neither tag nor English says
+##     so on its own line already.
+##     Term of query of several ranks only among entities satisfying same count of terms, so
+##     its report says so.
 
 {.experimental: "strictFuncs".}
 
@@ -68,15 +76,17 @@ func toLine(entity: Entity): string =
   entity.name & "\t" & entity.tags.mapIt($it).join(" ") & "\n"
 
 
-func describe(term: Term): string =
+func describe(term: Term, is_alone = true): string =
   ## Render how term read: as tag with its gismu, as English with its meanings, or as nothing.
+  ##   Term not alone in query ranks only among entities satisfying same count of terms.
   let text = "`" & term.reading.text & "`"
   if term.reading.is_tag:
     let
       tanru = term.reading.tag.toTanru
       ranking =
-        if term.specific.len > 0: ", matched by its gismu; things whose tag holds `" & tanru &
-            "` unchanged come first"
+        if term.specific.len > 0:
+          ", matched by its gismu; things whose tag holds `" & tanru & "` unchanged come first" &
+              (if is_alone: "" else: " among things meeting same count of terms")
         elif not term.reading.tag.isGismuAlone:
           ", matched by its gismu; its cmavo only group or cancel, so nothing comes first"
         else: ""
@@ -85,7 +95,7 @@ func describe(term: Term): string =
     return text & " reads as neither tag nor English of lists, so finds nothing; " &
         term.reading.explain & "\n"
   var shown: seq[string]
-  for meaning in term.meanings[0 ..< min(term.meanings.len, COUNT_MEANINGS_SHOWN)]:
+  for meaning in term.meanings[0..<min(term.meanings.len, COUNT_MEANINGS_SHOWN)]:
     shown.add meaning.words.mapIt($it).join("+") & " (" & meaning.textEnglish & ")"
   let rest = term.meanings.len - shown.len
   text & " reads as English: " & shown.join(", ") &
@@ -138,9 +148,13 @@ func run*(arguments: openArray[string], index: Index): Outcome =
     if entity.isSome: result.output = entity.get.toLine
   of "find":
     if rest.len == 0: return Outcome(code: 2, report: USAGE, index: index)
-    let terms = rest.mapIt(it.readTerm)
-    for term in terms: result.report.add term.describe
-    let found = index.find(terms)
+    let
+      terms = rest.mapIt(it.readTerm)
+      found = index.find(terms)
+    for term in terms:
+      result.report.add term.describe(is_alone = terms.len == 1)
+      if term.alternatives.len > 0 and not found.anyIt(it.isSatisfying(term)):
+        result.report.add "`" & term.reading.text & "` finds nothing in index.\n"
     for entity in found: result.output.add entity.toLine
     result.code = (if found.len > 0: 0 else: 1)
   of "show":

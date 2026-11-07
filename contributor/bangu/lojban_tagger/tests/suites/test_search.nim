@@ -1,5 +1,6 @@
-## Hold search of `search.nim` to its laws: query is conjunction of its terms, more tags never
-##   lose entity, lujvo term finds what its gismu find together, English finds union of meanings.
+## Hold search of `search.nim` to its laws: query shows what any of its terms finds, most terms
+##   first, so entities satisfying every term lead as conjunction finds them; more tags never lose
+##   entity; lujvo term finds what its gismu find together; English finds union of meanings.
 ##   CLL covers no search, so suite is `Internal:`, tests named by behaviour (Article IX.10).
 ##   Random tags draw from twelve gismu of `POOL` alone, so entities share gismu and terms find
 ##     often; with every gismu of list, nearly every query would find nothing (Article IX.3).
@@ -15,11 +16,16 @@
 ##     of three words; to up to two more, tanru of three holding same cmavo and gismu apart. So
 ##     entity ranked by run in longer tanru alone, and entity holding both words yet unranked,
 ##     come often; floors hold both counts, and count where order moved.
-##   Ranking oracle compares tanru as text joined by `+`, so it shares no code with `positions`.
+##   Laws of tiers add same kind of tag, alone or inside tanru of three words, to one to three
+##     names of first pool, and its lujvo to query half time, so term holding cmavo ranks at
+##     each count of terms satisfied often; floors hold counts that make each law bite.
+##   Oracles share no code with what they check: conjunction reads gismu of tags itself, never
+##     through `find`, and ranking compares tanru as text joined by `+`, never through
+##     `positions`; text stands for tanru units only as corpus holds no `ke` and no SE after SE.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
 ##   Corpus holds no index of more than thirteen names: ten random, three tagged by meanings. No
-##     query holds more than six terms: three drawn, doubled where repetition is tested.
+##     query holds more than eight terms: four drawn, doubled where repetition is tested.
 
 {.experimental: "strictFuncs".}
 
@@ -34,7 +40,7 @@ import ../../src/lojban_tagger/[dictionary, english, index, search, tags, tanru_
 type
   Sample = object  ## Define one random case: index, query, and changes to make.
     index: Index  ## Index built through `addTags`.
-    terms: seq[Term]  ## Query, one to three terms.
+    terms: seq[Term]  ## Query, one to three terms, or four where `poolRanked` adds one.
     name: string  ## Name `tag` is added to.
     tag: Tag  ## Tag added: random, or holding every gismu query names as tag.
     lujvo: Tag  ## Random tag of two or three gismu, read back as lujvo.
@@ -44,14 +50,23 @@ type
 const
   SEED = 1997  ## Seed of every random draw, year of CLL first edition.
   SAMPLES = 400  ## Random cases each law is checked over.
-  FLOOR_GAINED = 85  ## Fewest cases where tag added makes query find more; 114 read at `SEED`.
-  FLOOR_LOST = 85  ## Fewest cases where tag removed makes query find less; 112 read at `SEED`.
+  FLOOR_GAINED = 85  ## Fewest cases where tag added changes what query shows; 167 read at `SEED`.
+  FLOOR_LOST = 85  ## Fewest cases where tag removed changes what query shows; 116 read at `SEED`.
   FLOOR_LUJVO = 380  ## Fewest cases whose lujvo reads back as its tag; 400 read at `SEED`.
   FLOOR_ENGLISH = 10000  ## Fewest terms of union law read as English; 10800 read at `SEED`.
   FLOOR_WIDER = 160  ## Fewest cases where union outgrows every meaning alone; 228 read at `SEED`.
   FLOOR_REORDERED = 180  ## Fewest cases where ranking moves entity; 244 read at `SEED`.
   FLOOR_INSIDE = 180  ## Fewest cases ranking entity by run in longer tanru; 240 read at `SEED`.
   FLOOR_APART = 155  ## Fewest cases leaving cmavo apart from head unranked; 208 read at `SEED`.
+  FLOOR_MIXED = 115
+    ## Fewest cases whose query shows entities of two counts of terms or more; 152 read at `SEED`.
+  FLOOR_RANKED = 80  ## Fewest cases where rank moves entity at some count; 106 read at `SEED`.
+  FLOOR_OUTRANKED = 60
+    ## Fewest cases where ranked entity follows entity satisfying more terms; 82 read at `SEED`.
+  FLOOR_FOLLOWED = 80
+    ## Fewest cases where entities satisfying fewer terms follow conjunction; 106 read at `SEED`.
+  FLOOR_KEPT = 125
+    ## Fewest cases where query shows entity, though conjunction finds none; 167 read at `SEED`.
   LENGTH_TANRU = 4  ## Longest tanru `positions` is checked over, every one of three words.
   LENGTH_RUN = 3  ## Longest run `positions` looks for, every one of three words.
   COUNT_HOLDING = 121 * 40  ## Pairs checked: 1+3+9+27+81 tanru, 1+3+9+27 runs.
@@ -157,6 +172,23 @@ proc poolUnion(wide: openArray[string]): seq[Sample] =
     result.add Sample(index: index, terms: @[term])
 
 
+proc poolRanked(english: openArray[string]): seq[Sample] =
+  ## Draw `SAMPLES` cases as `poolSamples` does, then tag one to three names with `se` or `te`
+  ##   before gismu of `POOL`, alone or inside tanru of three words, and add its lujvo to query
+  ##   half time; caller seeds first.
+  result = poolSamples(english)
+  for sample in result.mitems:
+    let converted = readTanru(["se", "te"].sample & "+" & POOL.sample).get
+    for _ in 1..rand(1..3):
+      let tanru =
+        case rand(2)
+        of 0: converted.toTanru
+        of 1: POOL.sample & "+" & converted.toTanru
+        else: converted.toTanru & "+" & POOL.sample
+      sample.index.addTags($rand(0..9), [readTanru(tanru).get])
+    if rand(1) == 0: sample.terms.insert(readTerm($converted), rand(sample.terms.len))
+
+
 iterator served[T](pool: seq[T]): lent T =
   ## Serve each sample of pool in order, with no copy.
   for i in 0..<pool.len: yield pool[i]
@@ -182,11 +214,53 @@ func termsGismu(words: openArray[Word]): seq[Term] =
   words.mapIt readTerm($it)
 
 
+func isSatisfyingAll(entity: Entity, terms: openArray[Term]): bool =
+  ## Test words of tags of entity hold every gismu of some gismu set of each term; oracle of
+  ##   conjunction, sharing no code with `isSatisfying`.
+  var held: seq[Word]
+  for tag in entity.tags: held.add tag.words
+  terms.allIt it.alternatives.anyIt(it.allIt(it in held))
+
+
+func isRankedText(entity: Entity, terms: openArray[Term]): bool =
+  ## Test tanru of some term read as tag holding cmavo stands unbroken in some tag of entity,
+  ##   compared as text; oracle of `isRanked` while no tag holds `ke` or SE after SE.
+  for term in terms:
+    if not term.reading.is_tag or term.reading.tag.isGismuAlone: continue
+    let run = term.reading.tag.toTanru
+    if entity.tags.anyIt(it.isHoldingText(run)): return true
+  false
+
+
+func findConjunction(index: Index, terms: openArray[Term]): seq[string] =
+  ## Find names of entities satisfying every term, ranked ones first, then rest, each tier in order
+  ##   of index; oracle of conjunction, sharing no code with `find`; none where no term given.
+  if terms.len == 0: return
+  var rest: seq[string]
+  for entity in index.entities:
+    if not entity.isSatisfyingAll(terms): continue
+    if entity.isRankedText(terms): result.add entity.name
+    else: rest.add entity.name
+  result.add rest
+
+
+func findUnion(index: Index, terms: openArray[Term]): seq[string] =
+  ## Find names some term finds alone: most terms finding them first, then ranked before rest,
+  ##   each tier in order of index; union of queries of one term, ordered by ranking oracle.
+  let found_each = terms.mapIt(index.find([it]).names)
+  for count in countdown(terms.len, 1):
+    for is_ranked in [true, false]:
+      for entity in index.entities:
+        if found_each.countIt(entity.name in it) == count and
+            entity.isRankedText(terms) == is_ranked:
+          result.add entity.name
+
+
 func union(index: Index, term: Term): tuple[found: seq[string], widest: int] =
   ## Find names any meaning of term finds by its gismu, in order of index, and most one finds.
   var names_union: seq[string]
   for meaning in term.meanings:
-    let found = index.find(termsGismu(meaning.words.filterIt(it.kind == Kind.Gismu))).names
+    let found = index.findConjunction(termsGismu(meaning.words.filterIt(it.kind == Kind.Gismu)))
     names_union.add found
     result.widest = max(result.widest, found.len)
   result.found = index.entities.names.filterIt(it in names_union)
@@ -205,6 +279,8 @@ suite "Internal: Search":
       let found_added = added.find(sample.terms).names
       check found.allIt(it in found_added)  # monotonic in tags added
       check found_added.allIt(it in found or it == sample.name)  # entity tagged alone joins
+      check found_added.filterIt(it != sample.name) ==
+          found.filterIt(it != sample.name)  # entity tagged alone moves, rest keep their order
       if found_added != found: inc count_gained
       if sample.index.entities.len == 0: continue
       let (name, tag) = sample.index.held(sample.pick)
@@ -213,21 +289,57 @@ suite "Internal: Search":
       let found_removed = removed.find(sample.terms).names
       check found_removed.allIt(it in found)  # monotonic in tags removed
       check found.allIt(it in found_removed or it == name)  # entity stripped alone leaves
+      check found_removed.filterIt(it != name) ==
+          found.filterIt(it != name)  # entity stripped alone moves, rest keep their order
       if found_removed != found: inc count_lost
     check count_gained >= FLOOR_GAINED  # tag added changes what query finds often
     check count_lost >= FLOOR_LOST  # tag removed changes what query finds often
 
 
-  test "query finds what each of its terms finds, in order of index":
+  test "query shows what any of its terms finds, most terms first, then ranked first":
     randomize(SEED)
-    let pool = poolSamples(englishPool())
+    let pool = poolRanked(englishPool())
+    var (count_mixed, count_ranked, count_outranked) = (0, 0, 0)
     for sample in served(pool):
-      let found = sample.index.find(sample.terms).names
-      var expected = sample.index.entities.names
-      for term in sample.terms: expected = expected.filterIt(it in sample.index.find([term]).names)
-      check found == expected  # conjunction, i.e. intersection of each term's entities
+      let
+        found = sample.index.find(sample.terms).names
+        repeated = sample.terms & sample.terms[0]
+      check found == sample.index.findUnion(sample.terms)  # ruling: union, most terms first
+      check sample.index.find(repeated).names ==
+          sample.index.findUnion(repeated)  # term query names twice counts twice
       check sample.index.find(sample.terms.reversed).names == found  # order of terms is free
       check sample.index.find(sample.terms & sample.terms).names == found  # repeat changes nothing
+      let found_each = sample.terms.mapIt(sample.index.find([it]).names)
+      var (counts, ranks) = (newSeq[int](), newSeq[bool]())
+      for name in found:
+        counts.add found_each.countIt(name in it)
+        ranks.add sample.index.entity(name).get.isRankedText(sample.terms)
+      if counts.deduplicate.len > 1: inc count_mixed
+      if (1..<found.len).anyIt(counts[it-1] == counts[it] and found[it-1] > found[it]):
+        inc count_ranked  # names of index sort, so only rank breaks their order at one count
+      let at_rest = ranks.find(false)
+      if at_rest >= 0 and ranks[at_rest .. ^1].anyIt(it): inc count_outranked
+    check count_mixed >= FLOOR_MIXED  # query shows entities of several counts often
+    check count_ranked >= FLOOR_RANKED  # rank moves entity at some count often
+    check count_outranked >= FLOOR_OUTRANKED  # count of terms outweighs rank often
+
+
+  test "entities satisfying every term come first, as conjunction of terms finds them":
+    randomize(SEED)
+    let pool = poolRanked(englishPool())
+    var (count_followed, count_kept) = (0, 0)
+    for sample in served(pool):
+      let
+        found = sample.index.find(sample.terms)
+        conjunction = sample.index.findConjunction(sample.terms)
+        leading = found.names[0..<min(found.len, conjunction.len)]
+      check leading == conjunction  # ruling: every term first, in order conjunction gives
+      check found[leading.len .. ^1].allIt(
+          not it.isSatisfyingAll(sample.terms))  # rest miss some term, so first tier is exact
+      if conjunction.len > 0 and found.len > conjunction.len: inc count_followed
+      if conjunction.len == 0 and found.len > 0: inc count_kept
+    check count_followed >= FLOOR_FOLLOWED  # entities satisfying fewer terms follow often
+    check count_kept >= FLOOR_KEPT  # ruling: query keeps what some term finds, often
 
 
   test "lujvo term finds what its gismu terms find together":
@@ -238,7 +350,7 @@ suite "Internal: Search":
       let term = readTerm($sample.lujvo)
       if not term.reading.is_tag or term.reading.tag != sample.lujvo: continue
       inc passed
-      let expected = sample.index.find(termsGismu(sample.lujvo.words)).names
+      let expected = sample.index.findConjunction(termsGismu(sample.lujvo.words))
       check sample.index.find([term]).names == expected  # lujvo reduces to conjunction of gismu
     check passed >= FLOOR_LUJVO  # guard leaves enough lujvo reading back as their tag
 
@@ -261,14 +373,15 @@ suite "Internal: Search":
     check count_wider >= FLOOR_WIDER  # union outgrows every meaning alone often
 
 
-  test "unknown English and empty query find nothing":
+  test "unknown English finds nothing yet empties no query, and empty query finds nothing":
     check readTerm(UNKNOWN).alternatives.len == 0  # neither tag nor English of lists
     check readTerm("the of").alternatives.len == 0  # function words alone lead nowhere
     randomize(SEED)
     let pool = poolSamples(englishPool())
     for sample in served(pool):
       check sample.index.find([readTerm(UNKNOWN)]).len == 0  # unknown term finds nothing
-      check sample.index.find(sample.terms & readTerm(UNKNOWN)).len == 0  # nor in conjunction
+      check sample.index.find(sample.terms & readTerm(UNKNOWN)).names ==
+          sample.index.find(sample.terms).names  # ruling: it empties no query, and moves nothing
       check sample.index.find(newSeq[Term]()).len == 0  # empty query finds nothing
 
 
@@ -290,7 +403,8 @@ suite "Internal: Search":
     index.addTags("data", [datni])
     index.addTags("record", [vreji])
     check index.find([readTerm("datnyvei")]).names == @["apart"]  # gismu held apart satisfy it
-    check index.find([readTerm("datni"), readTerm("vreji")]).names == @["apart"]  # same set
+    check index.find([readTerm("datni"), readTerm("vreji")]).names ==
+        @["apart", "data", "record"]  # ruling: both gismu first, as lujvo finds, then either
     check index.find([readTerm("datni")]).names == @["apart", "data"]  # gismu alone finds more
 
 
@@ -307,7 +421,7 @@ suite "Internal: Search":
     check index.find([readTerm("ciska")]).names ==
         @["a/writer", "m/notes", "z/letter"]  # ruling: gismu term ranks nothing
     check index.find([readTerm("selci'a"), readTerm("notci")]).names ==
-        @["z/letter", "m/notes"]  # ranked tier first, conjunction kept
+        @["z/letter", "m/notes", "a/writer"]  # ruling: both terms first, ranked tier first there
     check readTerm("selci'a").alternatives == readTerm("ciska").alternatives  # acts as `ciska`
     check readTerm("selci'a").specific == selcia.tanruUnits  # term keeps tanru units it ranks by
     check readTerm("ciska").specific.len == 0  # gismu term holds no tanru to rank by
@@ -364,8 +478,8 @@ suite "Internal: Search":
     ]  # ruling: tanru units of longer term stand unbroken; `k/converse` converts them whole (12.11)
     check index.find([readTerm("selci'a"), readTerm("vreji")]).names == @[
       "b/record", "e/minutes", "k/converse", "m/reclining", "d/apart", "f/grouped", "j/closed",
-      "n/head", "o/denied",
-    ]  # ranked tier first, conjunction kept
+      "n/head", "o/denied", "l/figure", "a/jobs", "c/plain", "g/cancel", "h/medium", "i/negated",
+    ]  # ruling: both terms first, then `selci'a` alone, ranked tier first at each count
 
 
   test "lojban term whose only cmavo binds nothing ranks tag holding its tanru units":

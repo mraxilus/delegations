@@ -16,7 +16,7 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_tagger/[commands, dictionary, index, tags]
+import ../../src/lojban_tagger/[commands, dictionary, index, search, tags]
 
 
 const
@@ -43,6 +43,12 @@ const
   ]
     ## Word reader refuses for each reason.
   TERMS = @WORDS & @WORDS_REFUSED & @["pixra", "gerku"]  ## Terms random queries draw.
+  TAGS_ALICE = [
+    "cukta", "nixli", "ractu", "kevna", "mlatu", "cisma", "nobli", "traji", "turni", "karda",
+    "tcati", "fenki", "mapku", "junla", "senva", "lisri", "verba", "xanri", "cizra", "smacu",
+    "pinxe", "citka", "banro", "pixra", "glico",
+  ]
+    ## Tags `tagger tag` gave Alice's Adventures in Wonderland in worked example of #779.
 
 
 func toIndex(rows: openArray[(string, seq[string])]): Index =
@@ -143,7 +149,7 @@ suite "Internal: Commands":
     check refused.code == 1 and refused.index == before  # one refused word stops all
 
 
-  test "find prints each entity satisfying every term, and reports each term":
+  test "find prints each entity satisfying any term, most terms first, and reports each term":
     let
       index = indexSample()
       vreji = run(["find", "vreji"], index)
@@ -152,7 +158,10 @@ suite "Internal: Commands":
     check vreji.report == "`vreji` reads as tag `vreji`.\n"  # term read as tag
     let datni = run(["find", "datni"], index)
     check datni.output == "cats\tmlatu datni\nnotes\tdatnyvei\n"  # every match, index order
-    check run(["find", "datni", "mlatu"], index).output == "cats\tmlatu datni\n"  # conjunction
+    check run(["find", "datni", "mlatu"], index).output ==
+        "cats\tmlatu datni\nnotes\tdatnyvei\n"  # ruling: both terms first, then one
+    check run(["find", "datni", "vreji"], index).output ==
+        "notes\tdatnyvei\ncats\tmlatu datni\n"  # ruling: more terms outweigh order of index
     let file = run(["find", "file"], index)
     check file.output == "notes\tdatnyvei\n"  # English leads to gismu of gloss
     check file.report.startsWith("`file` reads as English: datni+vreji (file")  # meaning named
@@ -162,6 +171,12 @@ suite "Internal: Commands":
     check selcia.output == "letter\tveirselci'a\n"  # tag holding `se ciska` inside longer tanru
     check selcia.report == "`selci'a` reads as tag `se+ciska`, matched by its gismu; things " &
         "whose tag holds `se+ciska` unchanged come first.\n"  # report names tanru unit that ranks
+    let selcia_vreji = run(["find", "selci'a", "vreji"], written)
+    check selcia_vreji.output ==
+        "letter\tveirselci'a\nnotes\tdatnyvei\n"  # ruling: both terms first, then `vreji` alone
+    check selcia_vreji.report.splitLines[0] == "`selci'a` reads as tag `se+ciska`, matched by " &
+        "its gismu; things whose tag holds `se+ciska` unchanged come first among things " &
+        "meeting same count of terms."  # rank orders each count of terms apart
     let cancel = run(["find", "selselci'a"], written)
     check cancel.output == selcia.output  # `selselci'a` finds what its gismu find
     check cancel.report == "`selselci'a` reads as tag `se+se+ciska`, matched by its gismu; its " &
@@ -171,19 +186,43 @@ suite "Internal: Commands":
         "comes first.\n"  # `ke` changes grouping, which rank does not read
     let none = run(["find", "gerku"], index)
     check none.code == 1 and none.output == ""  # nothing found exits 1, as `grep` does
+    check none.report == "`gerku` reads as tag `gerku`.\n" &
+        "`gerku` finds nothing in index.\n"  # report names term finding nothing
+    let partial = run(["find", "datni", "gerku"], index)
+    check partial.code == 0 and partial.output == datni.output  # ruling: `gerku` empties nothing
+    check partial.report == "`datni` reads as tag `datni`.\n`gerku` reads as tag `gerku`.\n" &
+        "`gerku` finds nothing in index.\n"  # ruling: report still names it
     let unknown = run(["find", "qwzx"], index)
     check unknown.code == 1  # unknown term finds nothing
     check unknown.report == "`qwzx` reads as neither tag nor English of lists, so finds " &
-        "nothing; " & readTag("qwzx").explain & "\n"  # report says why
+        "nothing; " & readTag("qwzx").explain & "\n"  # report says why, once
     randomize(SEED)
     let pool = poolQueries()
     for terms in served(pool):
       let found = run(@["find"] & terms, index)
       var lines = ""
-      for name in ["cats", "notes", "photo"]:
-        if found.output.contains(name & "\t"): lines.add run(["show", name], index).output
-      check found.output == lines  # each line found is line `show` prints for it
+      for entity in index.find(terms.mapIt(it.readTerm)):
+        lines.add run(["show", entity.name], index).output
+      check found.output == lines  # each entity `find` gives, in its order, as `show` prints it
       check found.code == (if found.output.len > 0: 0 else: 1)  # exit follows output
+
+
+  test "find shows book of Alice's Adventures in Wonderland, though one term finds nothing":
+    let
+      book = toIndex([("alice-in-wonderland", @TAGS_ALICE)])
+      line = run(["show", "alice-in-wonderland"], book).output
+      hole = run(["find", "rabbit", "hole"], book)
+    check run(["find", "hole"], book).code == 1  # `hole` leads to lujvo meanings alone
+    check hole.code == 0 and hole.output == line  # ruling: `rabbit` finds book, `hole` nothing
+    check hole.report.startsWith("`rabbit` reads as English: ractu (rabbit).\n" &
+        "`hole` reads as English: batke+kevna (key hole), ")  # each term read
+    check hole.report.endsWith("`hole` finds nothing in index.\n")  # report names `hole`
+    let cheshire = run(["find", "cheshire", "cat"], book)
+    check run(["find", "cheshire"], book).code == 1  # `cheshire` holds `h`, and lists lack it
+    check cheshire.code == 0 and cheshire.output == line  # ruling: `cat` finds book
+    check cheshire.report == "`cheshire` reads as neither tag nor English of lists, so finds " &
+        "nothing; " & readTag("cheshire").explain & "\n" &
+        "`cat` reads as English: mlatu (cat).\n"  # report names `cheshire`, and why
 
 
   test "show prints every entity, or one, or refuses name index lacks":
