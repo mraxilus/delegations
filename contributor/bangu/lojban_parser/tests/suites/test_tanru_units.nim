@@ -110,18 +110,18 @@ suite "Chapter 5":
 
   test "Section 5.11":
     check folded("se+cadzu+klama") ==
-        @[tanruUnit("cadzu", @[LINK_SE]), tanruUnit("klama")]  # 5.11, Example 11.5
+        @[tanruUnit("cadzu", @[LINK_SE]), tanruUnit("klama")]  # 5.11, Example 5.113
     check folded("cadzu+se+klama") ==
-        @[tanruUnit("cadzu"), tanruUnit("klama", @[LINK_SE])]  # 5.11, Example 11.6
+        @[tanruUnit("cadzu"), tanruUnit("klama", @[LINK_SE])]  # 5.11, Example 5.114
     check folded("se+ke+cadzu+klama") ==
-        @[tanruUnit("ke", @[LINK_SE]), tanruUnit("cadzu"), tanruUnit("klama")]  # 5.11, 11.4
+        @[tanruUnit("ke", @[LINK_SE]), tanruUnit("cadzu"), tanruUnit("klama")]  # Example 5.112
 
 
 
 suite "Chapter 7":
   test "Section 7.15":
     check "fo'arselsanga".readWord.tanru.tanruUnits ==
-        @[tanruUnit("fo'a"), tanruUnit("sanga", @[LINK_SE])]  # 7.15, Example 15.3
+        @[tanruUnit("fo'a"), tanruUnit("sanga", @[LINK_SE])]  # 7.15, Example 7.78
 
 
 
@@ -137,10 +137,10 @@ suite "Chapter 9":
     check folded("se+te+se+klama") ==
         @[tanruUnit("klama", @[conversion([1, 3, 2, 4, 5])])]  # 9.4, "setese" swaps x2 and x3
     check folded("se+ke+blanu+zdani") ==
-        @[tanruUnit("ke", @[LINK_SE]), tanruUnit("blanu"), tanruUnit("zdani")]  # 9.4, 4.8
+        @[tanruUnit("ke", @[LINK_SE]), tanruUnit("blanu"), tanruUnit("zdani")]  # Example 9.25
     check folded("se+na'e+se+ciska") == @[
       tanruUnit("ciska", @[LINK_SE, operator("na'e"), LINK_SE]),
-    ]  # 9.4, SE converts following tanru unit, here `na'e se ciska` (21.2, rule 152)
+    ]  # 9.4, SE converts following tanru unit, here `na'e se ciska` (21.1, rule 152)
 
 
 
@@ -180,7 +180,7 @@ suite "Chapter 12":
     check "nunctigaukezykla".readWord.tanru.tanruUnits == @[
       tanruUnit("ke", @[operator("nu")]), tanruUnit("citka"), tanruUnit("gasnu"),
       tanruUnit("ke'e"), tanruUnit("klama"),
-    ]  # 21.2, rule 152: `kei` closes abstraction, here of two tanru units
+    ]  # 21.1, rule 152: `kei` closes abstraction, here of two tanru units
 
 
 
@@ -237,15 +237,15 @@ suite "Internal: Convention":
         @[tanruUnit("co'a"), tanruUnit("ciska", @[LINK_SE])]  # 5.13, tense of bridi
 
 
-  test "`kei` with no NU before it drops, though 21.2 has it close abstraction alone":
+  test "`kei` with no NU before it drops, though 21.1 has it close abstraction alone":
     check folded("vreji+kei+ciska") ==
-        folded("vreji+ciska")  # 21.2, rule 152 ends NU with `kei`; none here, so `kei` drops
+        folded("vreji+ciska")  # 21.1, rule 152 ends NU with `kei`; none here, so `kei` drops
 
 
-  test "number and MOI fold apart, though 21.2 makes them one tanru unit":
+  test "number and MOI fold apart, though 21.1 makes them one tanru unit":
     check "relpavmomci'a".readWord.tanru.tanruUnits == @[
       tanruUnit("re"), tanruUnit("pa"), tanruUnit("moi"), tanruUnit("ciska"),
-    ]  # 21.2, rule 152 joins `re pa moi`; fold keeps each digit apart, at cost
+    ]  # 21.1, rule 152 joins `re pa moi`; fold keeps each digit apart, at cost
 
 
   test "group no cmavo binds drops, though 5.5 makes it one component":

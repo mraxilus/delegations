@@ -12,22 +12,28 @@
 Origin: a contributor project, from the brief of the Architect and the parsing part of
 `lojban_tagger`. The brief gives the project one task alone: a complete parser of lojban, which
 reads any valid lojban word or prose. It also has the tagger read lojban through this parser,
-which stands apart from it. The project reads lojban words by the rules of CLL alone, and holds
-no grammar of prose.
+which stands apart from it. The project reads lojban words, and streams of them, by the rules of
+CLL alone, and holds no grammar of prose.
 
-`lojban_tagger` keeps a copy of each module here until #809 moves the tagger onto this parser,
-but of `selmaho.nim` and `lists/cmavo.nim`, which are new here. Where a module differs, the copy
-in `lojban_tagger` is earlier, and reads listed words alone. The
+`lojban_tagger` keeps a copy of each module here until #809 moves the tagger onto this parser.
+It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim` or `stream.nim`.
+Where a module differs, the copy in `lojban_tagger` is earlier, and reads listed words alone. The
 header of each module names its sibling there, as Article II.9 asks, and `tools/lists.nim` names
 the sibling of the list that it renders. A fix to one copy is finished only when the other is
 checked.
 
 The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, from the Logical
-Language Group. This project reads the first edition, 1997, with its errata, at
-`lojban.github.io/cll`. Its chapter 3 gives the letters, the diphthongs and the consonant
-clusters. Its chapter 4 gives the classes and shapes of words, the rafsi, and the algorithms that
-join and score a lujvo. Chapters 5, 7, 9, 12 and 15 tell which words a cmavo binds. 17.2 gives
-the letterals, chapter 20 is the catalogue of selma'o, and 21.2 gives the rule of a tanru unit.
+Language Group. This project reads version 1.1, generated 2016-08-26, which is the latest edition
+of the group, as the Architect ruled on #811. Its text is at
+`lojban.org/publications/cll/cll_v1.1_xhtml-section-chunks/`. Version 1.1 is the first edition of
+1997 with its errata applied, and it keeps the sections of chapters 1 to 19. It numbers each
+example within its chapter, as Example 4.3, and 21.1 gives its one formal grammar, in EBNF.
+
+Its chapter 3 gives the letters, the marks of a stream, the diphthongs,
+the consonant clusters, the syllables and the stress. Its chapter 4 gives the classes and shapes
+of words, the rafsi, the algorithms that join and score a lujvo, and the pauses between words.
+Chapters 5, 7, 9, 12 and 15 tell which words a cmavo binds. 17.2 gives
+the letterals, chapter 20 is the catalogue of selma'o, and 21.1 gives the rule of a tanru unit.
 
 The name of the language is lowercase, as lojban, as the Architect ruled for `lojban_tagger`. In
 lojban, a capital letter marks irregular stress (CLL 3.9), and the name has none. A title keeps
@@ -220,23 +226,77 @@ word a cmavo of the list, alone or run together, or a brivla. Verified by `suite
 
 **The letters sort each word into its class, in the order of 4.3.** A final consonant marks a
 cmene (4.8). A consonant pair in the first five letters, `y` and the apostrophe not counted, marks
-a brivla (4.3). A brivla of gismu form is a gismu (4.4), and another brivla is a lujvo where its
-rafsi join as 4.11 joins them. A word with no consonant pair is one cmavo, or several run
-together (4.2). Verified by `suites/test_tanru.nim`.
+a brivla (4.3). A brivla of gismu form is a gismu (4.4). Another brivla is a lujvo where its rafsi
+join as 4.11 joins them, and else a fu'ivla where it meets each rule of 4.7. Verified by
+`suites/test_tanru.nim`.
+
+**A word with no consonant pair is one cmavo, or several run together (4.2).** Each piece that
+`splitCompound` cuts is then a cmavo. Other letters fit no class as one word, and the reader
+refuses them as `Shape`. `cia` holds `ia` after a consonant, which 3.4 forbids, and `lonubarda`
+runs cmavo into a brivla. `readStream` splits both, as Stream says. Verified by
+`suites/test_tanru.nim`.
 
 **A brivla has two syllables or more.** 4.3 stresses a brivla on its next to last syllable, so
 `zba` and `brai` are no brivla, and the reader refuses them as `Shape`. Each vowel is one syllable,
-`y` included, and each diphthong of 4.1 is one syllable (3.4). Verified by
-`suites/test_tanru.nim`, Section 4.3.
+`y` included, and a diphthong is always one syllable (3.4). Verified by `suites/test_tanru.nim`,
+Section 4.3.
+
+**Vowels pair into syllables from the left (3.5).** An on-glide, as `ua`, is a diphthong anywhere
+in a fu'ivla or a cmene, so `brua` is no brivla. `nuclei` of `forms.nim` finds the syllables of
+each word, both for this count and for the stress that a stream reads. Verified by
+`suites/test_stream.nim`, Section 3.4, and by a law over on-glides in five frames.
+
+**A cmene ends in a consonant, holds a syllable, and holds permissible pairs alone (4.8).** A
+syllable stands on a vowel, `y`, or a consonant that may be syllabic, as in `rl` of 3.4. A name
+may hold a triple anywhere, where its pairs are permissible (3.7). So `NEderlants` reads with the
+triple `nts`, and `djandjonz` with `ndj`. Verified by `suites/test_tanru.nim`, Section 4.8.
+
+**A cmene may not hold `la`, `lai` or `doi` after no consonant (4.8).** Else it breaks up into
+words, as `laplas` does. The reader refuses that as `Breakup`. Verified by
+`suites/test_tanru.nim`, Section 4.8.
+
+**`iy` and `uy` are diphthongs of a cmene alone (3.4).** So capitals on `uy` of `kUYn.` mark one
+syllable, which a cmene may stress. Verified by `suites/test_stream.nim`, Section 3.4, and by a law
+over four frames of cmene.
+
+**A fu'ivla meets each rule of 4.7.** It holds no `y`, and a cluster that opens it is made of
+initial pairs (3.7). Its pairs are permissible, and it holds no triple that 3.7 forbids, as
+`lerndjamo` holds `ndj`. It is no combination of cmavo, gismu and lujvo. No CV cmavo before it
+makes a lujvo, which 4.7 calls the slinku'i test. Verified by `suites/test_tanru.nim`, Section
+4.7, and by a law over random letters.
+
+**A combination counts where it sounds as the fu'ivla does.** A brivla stresses its penultimate
+syllable (3.9). So only a brivla that ends a combination stresses where the fu'ivla does, and the
+cmavo before it may take stress or none. So the reader looks for cmavo, then one gismu or lujvo,
+with no pause between any two. `mibroda` is such a combination, and `spageti` is none, though
+`spage` has the form of a gismu. Verified by `suites/test_tanru.nim`, Section 4.7, and by a law
+over listed cmavo joined before listed gismu.
+
+Cost: 4.7 forbids "any combination of cmavo, gismu, and lujvo". Read by its letters alone, with
+#823, that rule refuses `spageti`, which 4.7 gives as a fu'ivla. So the reader keeps the
+combination that stresses as the fu'ivla does. It reads `klamaku`, `klamabroda` and
+`ve'iglicoxebni` as fu'ivla, though `klama` and `ku` are listed words. 3.9 lets a secondary stress
+rise up to primary, so stress is a weak divider in speech. Verified by `suites/test_stream.nim`,
+in the suite `Internal: Stream`, and by the law over words written together.
+
+**A fu'ivla reads, though its letters split into rafsi whose hyphens 4.11 sets otherwise.** 4.7
+forbids a fu'ivla to be a lujvo, and not to look like one. So `ci'onmau` reads as a fu'ivla,
+where 4.11 gives the lujvo `ci'ormau`. A brivla that breaks a rule of fu'ivla, and splits into
+rafsi, is refused as `Hyphen`, with the form that 4.11 gives. Verified by `suites/test_tanru.nim`,
+in the suite `Internal: Reading`.
 
 **Each refusal names the rule of CLL that refuses the text, or the gap that holds it.** `Letter`
-names 3.1 and 3.3, `Apostrophe` names 3.3, `Shape` names 4.2, 4.3 and 4.8, and `Hyphen` names
-4.11. A gap is text that CLL admits and that the reader does not read yet. `Stream` holds marks of
-a stream and cmavo run together, for #811. `Cmene` and `Fuhivla` hold cmene and fu'ivla, for
-#812. Verified by `suites/test_tanru.nim`.
+names 3.1 and 3.3, `Apostrophe` names 3.3, `Shape` names 3.3, 4.2, 4.3 and 4.8, and `Hyphen`
+names 4.11. `Cluster` names 3.6, 3.7 and 4.7, `Breakup` names 4.8, and `Combination` and
+`Slinkuhi` name 4.7. `Stream` names text that `readStream` reads: marks of a stream, and cmavo run
+together. A stream alone gives `Stress` (3.9), `Comma` (3.3, 3.4) and `Split` (3.3). Verified by
+`suites/test_tanru.nim` and `suites/test_stream.nim`.
 
-Cost: a gap also holds text that no rule admits, as `cia`, which 3.4 forbids, and the issue of
-the gap tells the two apart. Verified by `suites/test_tanru.nim`.
+**A gap is text that CLL admits and that the reader does not read yet.** `Foreign` holds the text
+that `zoi` and `la'o` quote, for #814. Verified by `suites/test_stream.nim`, Section 4.9.
+
+Cost: a gap also holds text that no rule admits, as `zoi` with no quotation after it. The issue
+of the gap tells the two apart. Verified by `suites/test_stream.nim`, Section 4.9.
 
 **A word reads as the words of its tanru, never as its spelling.** 4.5 says that the rafsi chosen
 do not change a lujvo. So `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tanru,
@@ -261,16 +321,12 @@ gismu, but the list says which word a rafsi names, never the letters. Verified b
 letters `brod`. `brodyzba` reads as the parts `brod` and `zbasu`. Verified by
 `suites/test_tanru.nim`.
 
-**The reader reads canonical form alone: lowercase letters and the apostrophe, as they are
+**`readWord` reads canonical form alone: lowercase letters and the apostrophe, as they are
 written.** Whitespace, a comma, a period and the capital of a letter mark a stream (3.3,
-3.9). So the reader refuses each as the gap `Stream`, which #811 closes. A capital of no letter,
-as `H`, is refused as `Letter`. 3.3 says that the letter `h` does not stand
-for the apostrophe, so the reader refuses `h` as `Letter`. Verified by `suites/test_tanru.nim`, in
-Section 3.3 and in the suite `Internal: Reading`.
-
-Cost: CLL text that writes a comma or a capital inside a word is refused, as `sai,r,goi` and
-`DI,ky,jvo` of 3.9 are. The test `Section 3.9` of `suites/test_tanru.nim` is a placeholder that
-reports itself as skipped until #811 reads such text (Article IX.9).
+3.9). So `readWord` refuses each as `Stream`, and `readStream` takes them out before it reads
+each word, as Stream says. A capital of no letter, as `H`, is refused as `Letter`. 3.3 says that
+the letter `h` does not stand for the apostrophe, so the reader refuses `h` as `Letter`. Verified
+by `suites/test_tanru.nim`, in Section 3.3 and in the suite `Internal: Reading`.
 
 **A refusal says why.** The reader refuses with one reason from `Refusal`, and a detail. The detail
 is the offending character or the form that 4.11 gives, and it is empty where the whole text
@@ -283,10 +339,143 @@ Such a tanru ends in a cmavo with no CCV or CVV rafsi, as `cusku se`, or holds a
 rafsi. Verified by `suites/test_tanru.nim`. `lojban_tagger` holds the notation `+` of the
 lujvo list, with `readTanru` and `toText`, which read and write it.
 
+## Stream
+
+**A stream divides into words at whitespace and at periods.** 3.3 makes a period a pause, and a
+pause breaks up a word into two (4.9 rule 1). 3.3 needs no space between words where a period
+stands. Verified by `suites/test_stream.nim`, Section 3.3, and by the law that words joined by a
+period read as words joined by a space.
+
+**A written word reads as one word where its letters and capitals allow.** Else the reader splits
+it into words, as the Architect ruled on #811. 4.1 says that the sounds of a stream split one way
+alone, and 3.3 lets correct text leave a period out. Verified by `suites/test_stream.nim`, in the
+suite `Internal: Stream`.
+
+**The split chosen needs the fewest pauses that rules need and the text does not write.** So a
+period left out is inferred only where the letters read no other way. `losei` reads as
+`lo sei`, never as `lo se .i`, and `ki'eu'e` reads as `ki'e .u'e`. Splits of fewest pauses
+that tie are refused as `Split`, which names two of them. A written word with no split is refused
+as `readWord` refuses its letters. Verified by `suites/test_stream.nim`, in the suite
+`Internal: Stream`, and by a law over words written together.
+
+**Stress chooses among splits, as it does in speech.** 3.9 requires primary stress on the
+penultimate syllable of each brivla. A written word with no capital is stressed on its own
+penultimate syllable alone, as the Architect ruled (`D3 a` on #811). One with capitals is stressed
+on each syllable that they mark. So each brivla of a split holds a capital, or ends the syllables
+of its written word that count for stress. Verified by `suites/test_stream.nim`, Section 3.9 and
+the suite `Internal: Stream`, and by a law over words written together.
+
+**So the stress of a written word chooses its split.** `mibroda` reads as `mi broda`, and
+`MIbroda` as `mibro da`. `KLAmaku` reads as `klama ku`, and `klamaku` as one fu'ivla.
+`.esperanto` reads as `e speranto`, as Example 19.78 says it "breaks up". Verified by
+`suites/test_stream.nim`, in the suite `Internal: Stream`.
+
+Cost: a writer who means a brivla before other words must write its capital, as `MIbroda`. Runs
+whose stress fits no brivla read as other words, or are refused. Verified by
+`suites/test_stream.nim`, by the law over words written together, which holds 800 such runs at
+least.
+
+Precedent: the parser of the Logical Language Group splits compound cmavo, and assumes that brivla
+and cmene stand alone, in its file `lex.c`. It says that this holds for written lojban, but not
+for a naive transcription of speech. This reader reads that transcription too, as the Architect
+ruled. The archive is `lojban.org/files/software/parser/parser.shar.gz`, with SHA-256
+`72a4883f2cbceff616eaf7d93dee86e4b20798ed4aad3c6a91f95dc6ba0077c5`. Verified by hand with `curl`,
+`sha256sum` and `zcat`, 2026-11-05.
+
+**A cmene stands last in a written word.** A pause follows each cmene (4.9 rule 2), and the parts
+of a name join into one word with no pause (4.8). So a consonant inside a written word goes on
+with the name. `bri` is no `br .i`, though `br` alone would read as a cmene, and `secusku` is
+`se cusku`, never `secusk .u`. Verified by `suites/test_stream.nim`, Section 3.3, and in the suite
+`Internal: Stream`.
+
+**The reader infers a pause where a rule needs one and the text writes none.** 3.3 calls the
+period an optional reminder of a mandatory pause, which correct text implies where the period is
+missing. So the reader refuses no words for a pause that the text does not write. Each word
+carries the pause before it: written, inferred or absent. Verified by `suites/test_stream.nim`,
+Sections 3.3, 4.2 and 4.9, and by a law that states each rule again, apart from the reader.
+
+The rules that the reader applies are these:
+
+- A word that ends in a consonant takes a pause after it (4.9 rule 2).
+- A word that opens with a vowel, or with `y`, takes a pause before it (4.9 rule 3, 4.2).
+- A cmene takes a pause before it, unless `la`, `lai`, `la'i` or `doi` stands before it (4.9
+  rule 4).
+- A stressed last syllable takes a pause after it, before a brivla or a stressed first syllable
+  (4.9 rule 5, 4.2). Its syllables are counted with the commas of its word, as its stress is.
+- `Cy` takes a pause before a word that is not `Cy` (4.9 rule 6), and `y` takes one after it
+  (4.2).
+- The first word takes a pause where rule 3 or rule 4 needs one.
+
+Rule 7 holds the text that `zoi` and `la'o` quote, which is not lojban. So the reader stops at
+either, as the gap `Foreign`, which #814 reads. Verified by `suites/test_stream.nim`, Section 4.9.
+
+Cost: `zo zoi` quotes the word `zoi`, but the reader stops there too, because #814 reads `zo`.
+Verified by `suites/test_stream.nim`, Section 4.9.
+
+**A comma parts syllables, and the words chosen fit them.** 3.5 groups vowels by a comma, as
+Example 3.7 writes `me,iin.`, and 4.8 keeps a stress with capitals. So capitals stress the
+syllables that commas mark. `me,IIn.` is one cmene stressed on `ii`, and so is `.nu,IORK.` of
+Example 5.65, stressed on `io`. Each comma is then judged against the words chosen. Verified
+by `suites/test_stream.nim`, Section 3.5, and by a law over each grouping of seven names.
+
+**With no capital, a comma changes no word.** 3.3 says that "no two Lojban words differ solely
+because of the presence or placement of a comma". Without a capital, syllables choose no words,
+so a comma keeps the words or is refused. Verified by `suites/test_stream.nim`, Section 3.3, and
+by laws over each position of each word of the lists, and of fourteen fu'ivla and cmene.
+
+Cost: a comma under a capital may make a written word split. `crarcI,ae` reads `crarcia e`,
+where `crarcIae` reads `crarciae`, since the comma parts `ia`. Verified by
+`suites/test_stream.nim`, Section 3.3.
+
+**A comma marks no pause, so no split takes a pause where a comma stands.** 3.3 says that a comma
+"indicates that there must be no pause" between its syllables. Where only such a split reads, the
+written word is refused as `Comma` at that comma. Verified by `suites/test_stream.nim`, Section
+3.3, and by a law over two cmavo that need a pause.
+
+**A comma breaks syllables inside a word.** Each stretch that it bounds holds a vowel, `y`, or a
+consonant that may be syllabic, as the `r` of `sai,r,goi` (3.4). A comma also parts two vowels into
+two syllables, as `.nu,IOrk.` parts `u` from `io` (3.5). Verified by `suites/test_stream.nim`,
+Sections 3.3, 3.4 and 3.9, and by the same law.
+
+**A comma between two vowels of a cmavo, a gismu or a lujvo is refused.** In those classes two
+vowels side by side make a diphthong, which is one syllable (3.4). A cmene and a fu'ivla may part
+two vowels with a comma, as `kore,a` of Examples 4.55 and 4.56 does. Verified by
+`suites/test_stream.nim`, Sections 3.4 and 4.7, and by the law over each position.
+
+**A comma may stand between two words, but never where a pause must stand.** 3.3 says that a comma
+cannot be pronounced as a pause. So `ka,i` is `kai` with its comma refused, never `ka .i`.
+Verified by `suites/test_stream.nim`, in the suite `Internal: Stream`.
+
+Cost: a comma beside `l`, `m`, `n` or `r` may make that consonant syllabic, which 3.4 admits in
+principle, so the reader accepts it. Verified by `suites/test_stream.nim`, Section 3.4, and by the
+law over each position.
+
+**A capital marks stress, and nothing else.** 3.9 capitalizes the stressed syllable, or at least
+its vowel, and 4.8 calls this the only use of capitals. So the capitals of a word form one run,
+which touches one vowel or diphthong. The reader refuses any other capital as `Stress`, as the
+`M` of `Mi` that opens a sentence. Verified by `suites/test_stream.nim`, Sections 3.1 and 3.9.
+
+Cost: a text that capitalizes the first word of each sentence, as English does, is refused there.
+Verified by `suites/test_stream.nim`, Section 3.1.
+
+**A brivla stresses its penultimate syllable, and a cmavo or a cmene any syllable or none.** `y`
+and a syllabic consonant are not counted, and `y` takes no stress (3.9). A fu'ivla stresses as the
+other brivla do (4.7). Verified by `suites/test_stream.nim`, Section 3.9, and by laws over each
+syllable of each word of the lists and of each random lujvo. Verified also by the law over
+on-glides, whose frames read as fu'ivla.
+
+**A capital off the penultimate syllable never reads as that brivla.** The reader refuses it, or
+reads other words that the capital fits, as 3.9 warns. So `djAcadyfanta` reads `djaca dy fanta`.
+Verified by `suites/test_stream.nim`, by the law over each syllable of each gismu and lujvo.
+
+**Each refusal of a stream names the byte where it applies.** It names the first word or mark
+that the reader refuses, by a rule or as a gap. So a caller can point at it. Verified by
+`suites/test_stream.nim`.
+
 ## What cmavo bind
 
 **A tanru folds into tanru units, and each tanru unit is one part with the cmavo that bind it.**
-The grammar of CLL gives that name (21.2, rule 152), which the Architect selected for
+The grammar of CLL gives that name (21.1, rule 152), which the Architect selected for
 `lojban_tagger` (#768). SE binds the next brivla or "equivalent unit" (9.4), and NAhE binds close
 to its brivla (15.4). A NU rafsi modifies the next tanru unit alone (12.12). Each other cmavo binds
 nothing, and stands as a tanru unit of its own where it does more than group. Verified by
@@ -326,7 +515,7 @@ Cost: the fold loses a grouping that no cmavo binds. So `datni ke vreji liste` f
 `datni vreji liste`, although 5.3 groups the two apart. Verified by `suites/test_tanru_units.nim`,
 in the suite `Internal: Convention`.
 
-**`kei` closes an abstraction.** Rule 152 of 21.2 ends a NU with `kei`. So the fold reads `kei` as
+**`kei` closes an abstraction.** Rule 152 of 21.1 ends a NU with `kei`. So the fold reads `kei` as
 a `ke'e` that closes a `ke` after its NU, and `nu citka gasnu kei klama` abstracts two tanru
 units. After one tanru unit, the group holds only that tanru unit, as 12.13 says of
 `nunctikezgau`. Verified by `suites/test_tanru_units.nim`, Section 12.13. A `kei` with no NU
@@ -356,7 +545,7 @@ of the example, which the choice of gismu does not change. Verified by
 fold binds nothing to them. Cost: `pevyselci'a` folds as `pe'a` beside `se ciska`, although `pe'a`
 makes the whole lujvo figurative. Verified by `suites/test_tanru_units.nim`.
 
-Rule 152 of 21.2 makes a number and its MOI one tanru unit. The fold keeps each digit as a tanru
+Rule 152 of 21.1 makes a number and its MOI one tanru unit. The fold keeps each digit as a tanru
 unit of its own. Cost: `relpavmomci'a` folds `re`, `pa` and `moi` apart, although together they
 make the ordinal 21. Verified by `suites/test_tanru_units.nim`, in the suite
 `Internal: Convention`.
@@ -376,8 +565,9 @@ Helpers stand beside the suites, and the stub runs none of them. `suites/texts_o
 the outside texts by their pins. `suites/rafsi_random.nim` spells random rafsi from the letters of
 each form. So the suites of the reader and of lujvo share one way to draw them (II.9).
 
-`suites/test_tanru.nim` holds the reader, and `suites/test_tanru_units.nim` holds the fold. Each
-suite but `suites/test_selmaho.nim`, which is new here, has a sibling in `lojban_tagger`. That
+`suites/test_tanru.nim` holds the reader, `suites/test_stream.nim` the reader of a stream, and
+`suites/test_tanru_units.nim` the fold. Each suite but `suites/test_selmaho.nim` and
+`suites/test_stream.nim` has a sibling in `lojban_tagger`. That
 sibling holds an earlier copy, and the header of the suite names it (II.9). The tests of tag
 policy and of search are in `lojban_tagger` alone. Each assertion cites its source: a section of
 CLL, or the article of the charter that a guard holds.
@@ -390,7 +580,7 @@ so it carries no lock. The verbs `lists` and `head`, and the tests of outside te
 `lojban-common` and `sha256sum`, which the verb `system` declares. A system package carries no
 pin, so its version is what the machine has.
 
-The stub passes on the pin and on Nim 2.2.12, and each placeholder reports itself as skipped.
+The stub passes on the pin and on Nim 2.2.12.
 Verified by hand with `nim c -r -d:testing tests/test_suites.nim` on both compilers, 2026-11-05.
 
 **`constructRafsiByForm` of `suites/test_lujvo.nim` reads the form of each 4-letter rafsi
@@ -411,25 +601,31 @@ table on each.
 
 ## Figures
 
-Each figure comes from an Intel Xeon at 2.80 GHz with four cores, on 2026-11-05, at the code of
-`ea540be9`. The runs of each pair alternate between Nim 2.2.12 and the pin, 2.4.0, so both share
-the load of the machine. A pair against `main` alternates `8fe8eb6d` with this code, on the pin.
-The spread of each figure is wide on this machine, so only a difference beyond it counts.
+Each figure comes from an Intel Xeon at 2.10 GHz with four cores, on 2026-11-05, at the code of
+`bf40939a`. No figure covers the code after it. The runs of each
+pair alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine. A
+pair against the base alternates `40718874`, the head of #828, with this code, on the pin.
 
-- **Front end check of the umbrella.** `nim check --hints:off src/lojban_parser.nim` took 1.27 s,
-  1.42 s and 1.45 s on 2.4.0, against 2.35 s, 1.15 s and 1.23 s on 2.2.12. The spreads meet, so
-  neither compiler is faster by this measure.
+- **Front end check of the umbrella.** `nim check --hints:off src/lojban_parser.nim` took 0.95 s,
+  0.94 s and 0.93 s on 2.4.0, against 0.79 s, 0.77 s and 0.79 s on 2.2.12. So 2.2.12 is faster
+  by about 0.15 s by this measure.
 - **Suites from an empty cache.** `nim c -r --hints:off -d:testing tests/test_suites.nim`
-  compiled and ran every suite in 18.9 s and 18.3 s on 2.4.0, against 17.3 s and 19.6 s on
+  compiled and ran every suite in 17.6 s and 17.4 s on 2.4.0, against 17.8 s and 17.1 s on
   2.2.12. Each run started with an empty cache.
-- **Suites alone.** The built binary ran every suite in 10.6 s and 10.7 s on 2.4.0, against
-  10.9 s and 10.9 s on 2.2.12. `main` ran in 10.3 s and 12.5 s, so the cmavo list costs nothing
-  that this measure shows.
+- **Suites alone.** The built binary ran every suite in 11.0 s and 11.0 s on 2.4.0, against
+  11.0 s and 11.2 s on 2.2.12. The base ran in 6.5 s and 6.5 s, so this code costs about 4.5 s,
+  most of it the suite of the stream.
+- **Stream alone.** The suite of `test_stream.nim` builds alone, without optimisation. It ran in
+  4.2 s, 4.2 s and 4.0 s on 2.4.0, against 4.0 s, 4.0 s and 3.9 s on 2.2.12. Its laws read 4000
+  runs of words written together, and each position of each word of the lists.
 - **Forms alone.** The suite of `test_forms.nim` builds alone, without optimisation. It ran in
-  3.37 s, 3.41 s and 3.45 s on 2.4.0, against 3.98 s, 3.63 s and 3.01 s on 2.2.12. `main` ran in
-  3.71 s, 2.95 s and 2.97 s, so the spreads meet.
-- The time of `readWord` and of `$` is unmeasured here. `$` scores each choice of rafsi, so its
-  time grows with the product of the choices of each word (expected).
+  2.02 s, 2.02 s and 2.10 s on 2.4.0, against 2.03 s, 2.07 s and 2.13 s on 2.2.12. The base ran in
+  2.01 s, 2.02 s and 2.04 s, so the spreads meet.
+- **Tatoeba.** A program built with `-d:release` read the 17,495 sentences of the Tatoeba export
+  through `readStream`. It took 0.24 s, 0.22 s and 0.21 s on the pin, the read of the file
+  included. So one sentence takes about 13 microseconds. It read 17,170 of them whole.
+- The time of `$` is unmeasured here. `$` scores each choice of rafsi, so its time grows with the
+  product of the choices of each word (expected).
 
 ## Open questions
 
@@ -437,11 +633,11 @@ The spread of each figure is wide on this machine, so only a difference beyond i
   reader reads it as a part with the letters `brod`. `brodi`, `brodo` and `brodu` have no short
   rafsi, so a tanru that holds one of them before its last word renders with `brod`. It then
   reads back with that part, and not with the gismu.
-- **A word refused as `Hyphen` may be a fu'ivla.** The reader judges each brivla whose letters
-  split into rafsi by the hyphens of 4.11. 4.7 gives the tests of a fu'ivla, which #812 adds, and
-  only those tests tell whether such a word is a fu'ivla.
+- **The algorithm that splits a stream.** CLL 4.1 gives no algorithm, so the split is the
+  reader's. It rests on the rules that CLL gives, and the laws hold it to them. CLL fixes no
+  choice among splits whose stress fits, whether or not they need the same pauses. The reader
+  takes the split of fewest pauses, and refuses a tie, as `iai` for `.i.ai` or `.ia.i`.
 - **What the parser does not read.** It reads no prose: no bridi, no sumti, and no selbri past
-  the tanru units of one word. It reads no cmene (4.8) and no fu'ivla (4.7), which #812 adds.
-  `readWord` reads no cmavo run together, which `splitCompound` splits, and no marks of a stream
-  (3.3, 3.9). #811 adds the reading of both in a stream of text. The fold keeps no grouping
-  that no cmavo binds, and no number with its MOI, which prose needs.
+  the tanru units of one word. A stream reads into its words. The reader stops at the text that
+  `zoi` and `la'o` quote, which #814 reads with erasure, `zei` and `bu`. The fold keeps no
+  grouping that no cmavo binds, and no number with its MOI, which prose needs.
