@@ -120,6 +120,15 @@ extracts them from the pages of the book, and the folder keeps the notice of the
 permits a modified copy only under its own terms. So the folder is not under the licence of the
 repository.
 
+The folder `tests/sample_tatoeba/` holds a fixed sample of the lojban sentences of Tatoeba. Its
+sentences together reach as many rules of CLL as the export can reach. The folder is under the
+licence of Tatoeba, CC BY 2.0 FR, and its notice credits each owner of a sentence.
+
+The folder `tests/articles_wikipedia/` holds three long articles of the lojban Wikipedia, under
+CC BY-SA 4.0. The suites read each paragraph of them as one connected text. The translations of
+Alice and Oz stay out of the repository, and the suites read them where their pinned pages are
+present.
+
 ## Build and test
 
 ```sh
@@ -128,13 +137,20 @@ nim r koch test contributor/bangu/lojban_parser   # this project alone
 nim r tools/build.nim lists                       # from project root: write both lists again
 nim r tools/build.nim head                        # compare lists with lojban-common
 nim r tools/build.nim cll <directory>             # write examples of CLL again from saved pages
+nim r tools/build.nim tatoeba <export>            # write sample of Tatoeba again from its export
+nim r tools/build.nim wikipedia <directory>       # write articles of Wikipedia again from answers
+nim r tools/build.nim translations                # fetch Alice and Oz, which suites then read
 nim r tools/build.nim system                      # print packages verbs and suites need
 ```
 
 The build needs the compiler that `lojban_parser.nimble` pins, and the standard library alone.
 The verbs `lists` and `head`, and the tests of outside texts, also need the Debian package
-`lojban-common`, and `sha256sum` of `coreutils`. The verb `system` declares both. The verb `cll`
-needs `sha256sum`, and the pages of CLL 1.1 saved in one directory, each under its own name.
+`lojban-common`, and `sha256sum` of `coreutils`. The verb `system` declares both.
+
+The verb `cll` needs `sha256sum`, and the pages of CLL 1.1 saved in one directory, each under its
+own name. The verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decompressed. The verb
+`wikipedia` needs `sha256sum` and the saved answers of the API of the Wikipedia. The verb
+`translations` needs `curl` and `sha256sum`, and the verb `system` declares both.
 
 ## Pages
 
@@ -159,6 +175,14 @@ mex alone, and each reads after `li`.
 
 Nine examples break a rule of 21.1. The parser follows 21.1 and refuses them, as the Architect
 ruled on #815. `PROVENANCE.md` names the rule that each one breaks.
+
+The parser reads 16,469 of the 17,495 sentences of Tatoeba. Each class of the others breaks a rule
+of CLL 1.1, and `PROVENANCE.md` names each class with its rule and its count. The suites hold
+each verdict of the sample, and cite the rule that each refused sentence of it breaks.
+
+The parser reads 69 of the 86 paragraphs of the three articles, and the longest holds 458 words.
+It reads 783 of the 856 paragraphs of Alice, and 56 of the 173 longer paragraphs of Oz. Each
+refusal of these long texts breaks a rule of CLL, and none is a mistake of the parser.
 
 The project `lojban_tagger` keeps an earlier copy of these modules until #809 moves it onto this
 parser. It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim`, `stream.nim`,
