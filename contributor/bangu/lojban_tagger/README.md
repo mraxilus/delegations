@@ -2,6 +2,7 @@
 
 A system that tags anything with lojban words and finds it again. A tag is a gismu or a lujvo.
 The project `lojban_parser` reads each tag, and this project reduces it to the words of its tanru.
+
 A search matches on its gismu. So a search for one gismu finds every thing whose tag holds that
 gismu, alone or inside a lujvo. A search for a lujvo with a cmavo, such as `selci'a`, lists first
 each thing whose tag holds it, net of the cmavo around it. So `selci'avei` comes first, but
@@ -166,6 +167,7 @@ The project publishes no page.
 
 The tags, the index, the search and the command line work, and the suites hold them to CLL. They
 read each word through `lojban_parser`.
+
 `suggester` works on recorded replies. On 2026-10-31, it read a live page,
 `https://www.gutenberg.org/ebooks/11`, through the HTTP proxy of a sandbox with TLS. A loopback
 stand-in for the Messages API took its request. It has read no live reply of a service yet.
