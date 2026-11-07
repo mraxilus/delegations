@@ -8,7 +8,9 @@
 ##   | head      | read `gismu.txt`, `lujvo.txt` and `cmavo.txt` again, compare each digest |
 ##   |           | with its pin, and both rendered modules with what is committed; exit 1   |
 ##   |           | where any differs, i.e. Debian moved list                                |
-##   | system    | print packages `lists`, `head` and suites need, one per line             |
+##   | cll       | read saved pages of CLL 1.1 from directory named after verb, check their |
+##   |           | digest against its pin, and write examples and notice under `tests/cll/` |
+##   | system    | print packages verbs and suites need, one per line                       |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
 ##
@@ -28,14 +30,16 @@ when compileOption("profiler"):
 
 import std/os
 
-import ./lists
+import ./[cll, lists]
 
 
 const
-  USAGE = "Usage: nim r tools/build.nim <lists|head|system>\n"  ## Text printed on usage error.
+  USAGE = "Usage: nim r tools/build.nim <lists|head|system>\n" &
+      "       nim r tools/build.nim cll <directory>\n"
+    ## Text printed on usage error.
   SYSTEM = [
     ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
-    ("coreutils", "`sha256sum`, which `lists` and `head` check each list's digest with"),
+    ("coreutils", "`sha256sum`, which `lists`, `head` and `cll` check each digest with"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
 
@@ -43,12 +47,12 @@ const
 
 #[ Verbs ]#
 
-proc refuseDigests(sources: openArray[(string, string, string)]): int =
-  ## Report each list whose digest left its pin, given as name, digest and pin; count reports.
+proc refuseDigests(sources: openArray[(string, string, string)], module = "lists.nim"): int =
+  ## Report each source whose digest left its pin, given as name, digest and pin; count reports.
   for (name, digest, pin) in sources:
     if digest == pin: continue
-    stderr.writeLine "List moved from its pin in `tools/lists.nim`; read diff, then move pin; " &
-        "got `" & digest & "` for `" & name & "`."
+    stderr.writeLine "Source moved from its pin in `tools/" & module & "`; read diff, then " &
+        "move pin; got `" & digest & "` for `" & name & "`."
     inc result
 
 
@@ -92,12 +96,25 @@ proc compareLists(): int =
   if count_differing > 0: 1 else: 0
 
 
+proc writeCll(directory: string): int =
+  ## Write examples and notice of CLL 1.1 where digest of pages read matches its pin.
+  let book = readBook(directory)
+  if refuseDigests([("pages of CLL 1.1", book.digest, DIGEST_CLL)], "cll.nim") > 0: return 1
+  createDir(PATH_EXAMPLES.parentDir)
+  writeFile(PATH_EXAMPLES, book.toModuleExamples)
+  writeFile(PATH_NOTICE, book.toNotice)
+  echo PATH_EXAMPLES
+  echo PATH_NOTICE
+
+
 proc main(): int =
-  ## Dispatch command named as first argument.
-  if paramCount() != 1:
+  ## Dispatch command named as first argument; `cll` takes directory of pages as second.
+  let arguments = commandLineParams()
+  if arguments.len == 2 and arguments[0] == "cll": return writeCll(arguments[1])
+  if arguments.len != 1:
     stderr.write USAGE
     return 2
-  case paramStr(1)
+  case arguments[0]
   of "lists": writeLists()
   of "head": compareLists()
   of "system":

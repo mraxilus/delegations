@@ -6,7 +6,7 @@
 ##   | Part                | word of tanru: listed word, or letters naming none of list  |
 ##   | Tanru               | parts of one tanru, in order; word read whole for itself    |
 ##   | readWord            | read text as word by rules of CLL, or refuse it with reason |
-##   | Refusal             | rule of CLL refusing text, or gap reader does not read yet  |
+##   | Refusal             | rule of CLL refusing text, or mark of text `zoi` quotes     |
 ##   | `$`                 | lujvo form 4.12 scores lowest, or word itself               |
 ##   |---------------------|-------------------------------------------------------------|
 ##
@@ -23,12 +23,10 @@
 ##   Brivla meeting each rule of fu'ivla reads as fu'ivla, though its letters split into rafsi
 ##     whose hyphens 4.11 sets otherwise: 4.7 forbids fu'ivla to be lujvo, never to look like
 ##     one. Else such brivla is refused as `Hyphen`, with form 4.11 gives.
-##   Each refusal names rule of CLL. Where CLL admits text that reader does not read yet,
-##     refusal names gap and issue that reads it: `Foreign` (#814).
+##   Each refusal names rule of CLL. `Foreign` refuses nothing: it marks text that `zoi` or
+##     `la'o` quotes, which `readStream` holds whole as one occurrence (4.9 rule 7).
 ##     `Stream` names text that `readStream` of `stream.nim` reads: marks of stream, or cmavo
 ##       run together (4.2).
-##     Cost: gap refuses some text that no rule admits either, as `zoi` with no quotation after
-##       it; issue of gap tells two apart.
 ##   Word reads as words of its tanru, never as its spelling: rafsi chosen do not change lujvo
 ##     (CLL 4.5), so `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tanru, and
 ##     `$` renders form 4.12 prefers. Order of words stays, since tanru is modifier then head
@@ -71,7 +69,7 @@ type
   Tanru* = object  ## Define tanru: parts of one tanru, gismu and cmavo, in order.
     parts*: seq[Part]  ## Parts of tanru; one part alone for word read whole.
 
-  Refusal* {.pure.} = enum  ## Define why reader refuses text, word or stream: rule of CLL, or gap.
+  Refusal* {.pure.} = enum  ## Define why reader refuses text, word or stream, by rule of CLL.
     Empty  ## Text holds no character, so no word of any class (4.1).
     Letter  ## Character no lojban text holds (3.1, 3.3); detail is that character, whole.
     Apostrophe  ## Apostrophe not between vowels, which alone it joins (3.3).
@@ -85,7 +83,8 @@ type
     Stress  ## Capital marks no syllable word may stress, as brivla off penultimate (3.9); stream.
     Comma  ## Comma at no syllable break: by edge, apostrophe, no syllable, in diphthong (3.3, 3.4).
     Split  ## Written word splits several ways, each with fewest pauses (3.3); detail is two.
-    Foreign  ## Gap of #814: text `zoi` and `la'o` quote is no lojban (4.9 rule 7), so stream stops.
+    Quotation  ## `zoi` or `la'o` with no delimiter, or text it quotes never closing or holding it.
+    Foreign  ## No refusal: text `zoi` or `la'o` quotes, no lojban (4.9 rule 7), stream holds whole.
 
   Reading* = object  ## Define outcome of reading text as word.
     case is_word*: bool
@@ -96,7 +95,7 @@ type
       selmaho*: Option[Selmaho]
         ## Selma'o cmavo list gives cmavo read whole (chapter 20); none otherwise.
     of false:
-      refusal*: Refusal  ## Rule refusing text, or gap holding it.
+      refusal*: Refusal  ## Rule refusing text; `Foreign` for text `zoi` or `la'o` quotes.
       detail*: string  ## Offending character, or form 4.11 gives; empty where whole text offends.
 
 

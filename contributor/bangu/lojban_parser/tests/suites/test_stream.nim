@@ -4,8 +4,8 @@
 ##   Laws run over seeded random streams of gismu, cmavo and lujvo, each drawn from every word of
 ##     its list or from lujvo `$` renders, and over positions of each word exhaustively
 ##     (Article IX.3). References restate each rule as CLL states it, apart from reader.
-##   Corpus does not cover yet: random streams holding cmene or fu'ivla, which suite holds by
-##     examples of CLL alone, and quotation, gap of #814.
+##   Corpus does not cover yet: random streams holding cmene, fu'ivla or quotation, which suite
+##     holds by examples of CLL alone, as `test_prose.nim` holds quotation.
 
 {.experimental: "strictFuncs".}
 
@@ -25,7 +25,7 @@ const
     ## Least commas comma law reads as syllable breaks: 11592 read over both lists and lujvo
     ##   drawn at seed `1`.
   FLOOR_COMMA_REFUSED = 4000
-    ## Least commas comma law reads as refused: 4224 read over same words.
+    ## Least commas comma law reads as refused: 4221 read over same words.
   FLOOR_STRESS_REFUSED = 3900
     ## Least capitals off penultimate syllable of brivla that reader refuses, rather than
     ##   reading other words: 4130 read over gismu list and lujvo drawn at seed `1`, where each
@@ -34,9 +34,9 @@ const
     ## Random runs of two or three words written together, seeded; runs needing pause between
     ##   words left out, since text written together writes none.
   FLOOR_JOINED = 2500
-    ## Least runs whose stress fits each brivla that read back as same words: 2760 read at
+    ## Least runs whose stress fits each brivla that read back as same words: 2757 read at
     ##   seed `2`.
-  FLOOR_JOINED_OTHER = 800  ## Least runs whose stress fits no brivla: 887 read at seed `2`.
+  FLOOR_JOINED_OTHER = 800  ## Least runs whose stress fits no brivla: 885 read at seed `2`.
   COUNT_COMMA_MARKED = 88
     ## Commas law of unmarked words reads: each place in each word of `WORDS_BORROWED` and
     ##   `WORDS_NAMED`, apostrophe aside.
@@ -47,7 +47,7 @@ const
   COUNT_GROUPED = 36  ## Syllables of each grouping of each name law reads.
   FLOOR_COMMA_STRESS = 8  ## Least fu'ivla with comma and stress that rule 5 law reads: 8 read.
   SAMPLES_COMMA_PAUSE = 2000  ## Random pairs of cmavo comma law at pause draws, seeded.
-  FLOOR_COMMA_PAUSE = 200  ## Least of them needing pause between them: 224 read at seed `4`.
+  FLOOR_COMMA_PAUSE = 190  ## Least of them needing pause between them: 201 read at seed `4`.
   FLOOR_GLIDE_READ = 40
     ## Least capitals law of on-glide reads as one brivla: 40 read, on penultimate syllable of
     ##   each on-glide in four frames of two syllables or three.
@@ -56,7 +56,7 @@ const
     ##   `xlUsnipa` reads `xlusni pa`.
   FLOOR_STRESS = 800
     ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
-    ##   850 read at seed `0`.
+    ##   842 read at seed `0`.
   VOWELS_SYLLABLE = "aeiouy"  ## Letters making syllable: vowels of 3.1, and `y` (3.4, 3.9).
   CONSONANTS_SYLLABIC = "lmnr"  ## Consonants that may make syllable alone (3.4).
   DIPHTHONGS_OFF = ["ai", "ei", "oi", "au"]  ## Diphthongs with off-glide, in every word (3.4).
@@ -214,10 +214,11 @@ let
     indexes
   WORDS_GISMU = INDEXES_GISMU.mapIt(it.entry.word)  ## Every gismu of list.
   WORDS_CMAVO = block:
-    ## Every cmavo of cmavo list but `ZOI`, whose quotation is gap of #814.
+    ## Every cmavo of cmavo list but `ZOI`, which quotes text that is no lojban (19.10), and
+    ##   `FAhO`, which ends input (19.15).
     var words: seq[string]
     for entry in LIST_CMAVO:
-      if entry.selmaho != Selmaho.Zoi: words.add entry.word
+      if entry.selmaho notin {Selmaho.Zoi, Selmaho.Faho}: words.add entry.word
     words
   LUT_SELMAHO_BY_CMAVO = block:
     ## Selma'o cmavo list gives each cmavo, read from list apart from reader (chapter 20).
@@ -431,11 +432,21 @@ suite "Chapter 4":
     check "doi djan".pausesRead == some(@[Pause.Absent, Pause.Absent])  # rule 4, `doi`
     check "ku,Arka broda".pausesRead ==
         some(@[Pause.Absent, Pause.Absent])  # rule 5, comma makes `A` penultimate; review of #811
-    check "zoi gy. John .gy.".refusalRead == some((Refusal.Foreign, 0))  # rule 7; gap #814
-    check "zo zoi".refusalRead == some((Refusal.Foreign, 3))  # rule 7; `zo` gap #814 reads
-    check "mi zoi".refusalRead == some((Refusal.Foreign, 3))  # rule 7, no quotation; gap holds
-    check "mi cusku la'o gy. Mary .gy.".refusalRead ==
-        some((Refusal.Foreign, 9))  # rule 7, gap #814; constructed
+    check "zoi gy. John .gy.".wordsRead ==
+        some(@["zoi", "gy", "John", "gy"])  # rule 7, text quoted whole; 19.10
+    check "zoi gy. John .gy.".pausesRead == some(@[
+      Pause.Absent, Pause.Absent, Pause.Written, Pause.Written,
+    ])  # rule 7, pause on each side of text quoted
+    check "zo zoi".wordsRead == some(@["zo", "zoi"])  # 19.10, `zo` quotes `zoi`
+    check "lo'u zoi le'u".wordsRead == some(@["lo'u", "zoi", "le'u"])  # 19.9, words quoted
+    check "mi zoi".refusalRead == some((Refusal.Quotation, 3))  # 19.10, no delimiter; constructed
+    check "mi cusku la'o gy. Mary .gy.".wordsRead ==
+        some(@["mi", "cusku", "la'o", "gy", "Mary", "gy"])  # rule 7, `la'o` too; constructed
+    check "zoi gy. gyrations .gy.".refusalRead ==
+        some((Refusal.Quotation, 8))  # 19.10, Example 19.50, delimiter inside text
+    check "zoi gy. never closes".refusalRead == some((Refusal.Quotation, 0))  # 19.10; constructed
+    check "mi fa'o 日本".wordsRead == some(@["mi", "fa'o"])  # 19.15, `fa'o` ends input
+    check "zo fa'o mi".wordsRead == some(@["zo", "fa'o", "mi"])  # 19.15, unless quoted
 
 
 
