@@ -130,15 +130,20 @@ the scores of 4.12 and 4.13 exactly. One part of one score in CLL is wrong. 4.13
 V of 3, but the word has two vowels. The total of 5878 that CLL gives is right, and the suite holds
 that total. Verified by `suites/test_lujvo.nim`.
 
-**The score sums a part for each rafsi and a part for each joint.** 4.12 counts each letter,
-apostrophe, hyphen, rafsi and vowel alone, so `scoreRafsi` and `scoreJoint` give each part. Steps
-4a to 4c settle a joint from the two rafsi beside it. Step 5 reads the joints from left to right
-with one flag, which says whether the leading run of CVC rafsi is still open. Where step 5 puts
-`y` at the first joint, the joint that ends the run holds that part of the score.
+**The score sums a part for each rafsi and a part for each junction.** 4.12 counts each letter,
+apostrophe, hyphen, rafsi and vowel alone, so `scoreRafsi` and `scoreJunction` give each part.
+Steps 4a to 4c settle a junction from the two rafsi beside it. Step 5 reads the junctions from left
+to right with one flag, which says whether the leading run of CVC rafsi is still open. Where step 5
+puts `y` at the first junction, the junction that ends the run holds that part of the score.
 
-`hyphensRafsi` and `score` use the same parts, so each rule has one definition. Verified by
-`suites/test_lujvo.nim`, over seeded samples. In one of them, step 5 puts `y` at the first joint
-of about a third of the sequences.
+`hyphensRafsi` and `score` use the same parts, so each rule has one definition. The parts stay
+private, and `tanru.nim` and the suites import every symbol of `lujvo.nim` to reach them. So the
+umbrella exports no new name to the tagger (#832). Verified by `suites/test_lujvo.nim`, over seeded
+samples. In one of them, step 5 puts `y` at the first junction of about a third of the sequences.
+
+The parts give the hyphens and scores that the earlier code gave. Verified by hand, 2026-11-08,
+with a program that held a copy of the earlier `hyphensRafsi` and `score`. It found no difference
+over 95.6 million sequences: every pair of rafsi, runs of CVC rafsi, and seeded random sequences.
 
 **The split agrees with strict reference parsers.** On 41 words, the split finds one lujvo
 exactly where CLL makes one. The verdicts on those words are those of camxes, vlatai, the
@@ -326,6 +331,12 @@ holds the lowest score of the rest for each choice at each position, in each sta
 step 5. A walk from the first position takes the first choice that reaches that score. So a tie
 keeps the form that a search over every sequence of choices gives. Verified by
 `suites/test_tanru.nim`, against that search, over seeded samples and each lujvo of the lujvo list.
+
+The search alone, `searchLowest`, takes the options of each position. So the suite holds it to the
+search over every sequence on drawn lists of options. The order of the options breaks a tie in
+more than half of those lists. The state of the run decides in about one in a hundred. Three
+tanru that the suite constructs hold a tie at the first position, a tie past it, and the state.
+Verified by `suites/test_tanru.nim`.
 
 Rejected: a search over every sequence of choices, whose count grows about 3.2 times for each word
 (Figures, Render of tanru).
