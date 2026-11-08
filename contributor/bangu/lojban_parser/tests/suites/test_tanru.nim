@@ -790,6 +790,15 @@ suite "Internal: Laws":
       check count >= FLOOR_LUJVO_LIST  # guard keeps nearly every line
 
 
+  test "Tanru of 18 words renders, reads back, and scores no more than spelling it came from":
+    let reading = "lotconrotybanbalbapybembedbejbesybefybevbixybimbolbogbotmlatu".readWord
+    check reading.is_word and reading.tanru.parts.len == 18  # constructed in #782
+    if reading.is_word:
+      let rendered = $reading.tanru  # exhaustive search would score product of choices
+      check rendered.tanruRead == some(reading.tanru)  # 4.6, round trip
+      check rendered.scoreRead.get <= reading.pieces.score  # 4.12, text is one spelling of tanru
+
+
   test "Every gismu of list reads as itself":
     for w in WORDS_GISMU:  # 1342 gismu, exhaustive
       let text = $w
