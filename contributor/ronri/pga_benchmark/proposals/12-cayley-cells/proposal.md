@@ -102,6 +102,10 @@ tight: at each algebra, some cell of ⟑ and of ⟇ holds `TERMS_CELL` terms.
 A copy whose cell holds one term under the conformal metric stops the build at cga3d, where `add`
 names the full cell. A copy whose cell holds three terms there fails `laws.nim` at cga3d.
 
+At rga4d and cga5d, the timed binaries of pin and of this proposal were built from one path. Their
+C differs only in the header of the build, and in the number in the name of one instance of
+`formatValue`. So no operator emits other C.
+
 The packed form of the doc comment was built on 2026-11-08, under Nim 2.4.0 on
 `linux amd64, 4 cores`. It passes the suites at the nine algebras, and its 388 tables equal those
 at pin. At cga6d it builds `import pga` in ×0.97 of the time at pin and ×0.81 of the peak memory,
