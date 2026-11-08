@@ -179,16 +179,13 @@ proc writeTranslations(): int =
 proc writeJavascript(): int =
   ## Compile `PATH_BRIDGE`, with whole parser, to `PATH_SCRIPT`, and print path and size.
   ##   Compiler is one that compiled this driver, never other `nim` that PATH holds.
-  ##   `-d:release` and both traces off belong to script alone: suite of JavaScript build keeps
-  ##     its checks and traces, so failure there names its line.
+  ##   `-d:release` keeps every check, and drops traces of stack and line (`config/nim.cfg` of
+  ##     pin); `test_javascript.nim` compiles with it too, so suite holds build that ships.
   ##   Rejected: `-d:danger`, which drops every check of bounds and range from build caller runs.
   createDir(PATH_SCRIPT.parentDir)
   let process = startProcess(
     getCurrentCompilerExe(),
-    args = [
-      "js", "--hints:off", "-d:release", "--stackTrace:off", "--lineTrace:off",
-      "--out:" & PATH_SCRIPT, PATH_BRIDGE,
-    ],
+    args = ["js", "--hints:off", "-d:release", "--out:" & PATH_SCRIPT, PATH_BRIDGE],
     options = {poParentStreams},
   )
   let code = process.waitForExit
