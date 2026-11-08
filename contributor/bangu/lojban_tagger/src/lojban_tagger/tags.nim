@@ -36,10 +36,10 @@
 ##   `$` rejects 4-letter rafsi several gismu share (`brod`) wherever gismu has other rafsi,
 ##     so rendered tag reads back as itself; `brodi`, `brodo` and `brodu` have none, so their
 ##     lujvo render with `brod` and read as `RefusalTag.Ambiguous` (open question in PROVENANCE).
-##   Cost: `$` scores every choice of rafsi, at most four per gismu, so `4^n` joins for tag of
-##     `n` gismu: time grows about fourfold for each word of four choices (measured, Figures of
-##     PROVENANCE), and `readTag` caps no words, so `tagger read` of lujvo of 18 words fills
-##     memory.
+##   Cost: `$` is render of `lojban_parser`, which searches choices of rafsi by dynamic
+##     programming in time linear in words of tag (PROVENANCE of `lojban_parser`); lujvo of 18
+##     words that `test_suggestions.nim` holds renders in under 0.1 ms in release (measured,
+##     Figures of PROVENANCE). `readTag` caps no words.
 
 {.experimental: "strictFuncs".}
 
