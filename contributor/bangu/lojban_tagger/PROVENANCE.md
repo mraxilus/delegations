@@ -373,12 +373,13 @@ the service as a passage. A tag of more than six words fails as `Long`. Verified
 `suites/test_suggestions.nim` and `suites/test_suggester.nim`.
 
 Cost: the tool counts the words after `readTag`, so the cap of six words saves none of the time
-of the reading. It saves only the time to list and print the gismu and the report, about 1 µs on
-Nim 2.2.12 (Figures). Open questions asks about it.
+of the reading. It saves only the time to list and print the gismu and the report. For 18 words,
+that took 2.81 µs at most over four runs on Nim 2.2.12 (Figures). Open questions asks about it.
 
-Cost: `tagger read` and `tagger tag` have no cap of words. `$` scores every choice of rafsi, so
-its time grows about 4 times for each word of `bloti`, `condi` or `rotsu` (Figures). So a lujvo of
-18 words fills memory there.
+Cost: `tagger read` and `tagger tag` have no cap of words. `$` is the render of `lojban_parser`,
+which searches the choices of rafsi by dynamic programming. Its time grows linearly with the words
+of the tag (PROVENANCE of `lojban_parser`). The lujvo of 18 words in `TEXT_GIVEN_LONG` renders in
+under 0.1 ms in release (Figures).
 
 **The tool speaks the wire format of each of three services.**
 
@@ -767,58 +768,69 @@ Each figure below comes from an Intel Xeon at 2.10 GHz with four cores. The runs
 compilers alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine.
 The machine runs at two speeds, and a process can change speed while it runs. So a figure of one
 process can move by up to 1.6 times between runs. Measured on 2026-11-07, with each search call
-pinned by `taskset` to each of the four cores in turn.
+pinned by `taskset` to each of the four cores in turn. A figure that names no compiler comes from
+Nim 2.2.12, and one that names no build comes from a release build.
 
 Each figure names its commit and its date. The figures of 2026-11-07 come from copies of the tree
 outside it, and each reads the inputs of `4b5b9ff1`, byte for byte. Each one names its pair at
 `c753a1e4`, taken in the same rounds. At that commit, this project read lojban through its own
-copies of the modules of the parser. Where a figure names no compiler, it comes from Nim 2.2.12 in
-release.
+copies of the modules of the parser.
 
-- **Umbrella of the parser.** A probe that imports the umbrella and reads one word compiled in
-  2.23 s to 2.71 s from an empty cache, on Nim 2.4.0, 2026-11-07. A probe that imports four
-  modules of the parser alone compiled in 1.69 s to 1.97 s. Each took four runs, alternating.
-- **Compile of the English index.** Each part of each lujvo line is found by binary search. The
-  front end of `nim check app/tagger.nim` took 6.18 s and 6.61 s on 2.4.0, against 3.58 s and
-  3.70 s on 2.2.12, from an empty cache. At `c753a1e4`, it took 4.32 s and 4.96 s on 2.4.0, against
-  2.82 s and 3.30 s on 2.2.12.
+The figures of 2026-11-08 come from copies of the tree at `9165708d`, where the parser renders by
+dynamic programming. Each one names its pair at `6c4c4a0d`, the commit of `main` before it, taken
+in the same rounds. Their runs alternate between the two commits. This project is the same at both,
+byte for byte, and the source of the parser differs only in `lujvo.nim` and `tanru.nim`.
+
+- **Umbrella of the parser.** On 2026-11-08, a probe that imports the umbrella and reads one word
+  compiled in 2.79 s to 2.90 s on Nim 2.4.0, in debug. A probe that imports four modules of the
+  parser alone compiled in 2.02 s to 2.53 s. Each took four runs, alternating, from an empty cache.
+  At `6c4c4a0d`, they took 2.84 s to 3.27 s, and 2.12 s to 2.71 s.
+- **Compile of the English index.** Each part of each lujvo line is found by binary search. On
+  2026-11-08, `nim check app/tagger.nim` took 7.33 s and 6.89 s on 2.4.0, against 4.18 s and
+  4.40 s on 2.2.12, from an empty cache. At `6c4c4a0d`, it took 7.16 s and 6.50 s on 2.4.0, against
+  4.72 s and 3.92 s on 2.2.12.
   A copy that maps the whole list again for each part never finishes on either compiler. The
   compile-time VM stops it at its limit of 10,000,000 iterations, so that form is a trap, not a
   slower choice.
-- **Release build.** `nim c -f -d:release app/tagger.nim` took between 8.94 s and 10.41 s on 2.4.0,
-  against between 6.98 s and 7.47 s on 2.2.12, over three runs each. At `c753a1e4`, it took between
-  7.91 s and 8.59 s on 2.4.0, against between 5.74 s and 6.61 s on 2.2.12.
-- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 14.81 s
-  and 15.38 s on 2.4.0, against 12.43 s and 12.63 s on 2.2.12, from an empty cache. The binary
-  holds 2,172,080 bytes on 2.4.0, against 2,106,520 bytes on 2.2.12. At `c753a1e4`, the build took
-  14.40 s and 13.48 s on 2.4.0, against 11.92 s and 12.17 s on 2.2.12. Its binary held 2,586,592
-  bytes on 2.4.0, against 2,516,672 bytes on 2.2.12.
-- **Suites.** `nim c -r -d:ssl -d:testing tests/test_suites.nim` compiled and ran every suite in
-  95.75 s and 91.94 s on 2.4.0, against 81.61 s and 83.70 s on 2.2.12. Each compiler ran it twice
-  from an empty cache. The suite of `suggester` builds its own binary inside that time. At
-  `c753a1e4`, the same runs took 96.22 s and 93.04 s on 2.4.0, against 87.32 s and 88.96 s on
+- **Release build.** On 2026-11-08, `nim c -f -d:release app/tagger.nim` took between 9.75 s and
+  11.17 s on 2.4.0, against between 7.00 s and 7.57 s on 2.2.12, over three runs each. At
+  `6c4c4a0d`, it took between 9.74 s and 10.39 s on 2.4.0, against between 6.76 s and 7.82 s on
   2.2.12.
+- **Release build of `suggester`.** On 2026-11-08, `nim c -f -d:release -d:ssl app/suggester.nim`
+  took 15.36 s and 16.13 s on 2.4.0, against 13.40 s and 14.66 s on 2.2.12, from an empty cache.
+  The binary holds 2,172,608 bytes on 2.4.0, against 2,107,056 bytes on 2.2.12. At `6c4c4a0d`, the
+  build took 17.61 s and 17.33 s on 2.4.0, against 13.16 s and 19.85 s on 2.2.12. Its binary held
+  2,172,080 bytes on 2.4.0, against 2,106,520 bytes on 2.2.12.
+- **Suites.** On 2026-11-08, `nim c -r -d:ssl -d:testing tests/test_suites.nim` compiled and ran
+  every suite in 102.64 s and 100.06 s on 2.4.0, against 95.69 s and 87.42 s on 2.2.12. Each
+  compiler ran it twice from an empty cache. The suite of `suggester` builds its own binary inside
+  that time. At `6c4c4a0d`, the same runs took 94.54 s and 96.22 s on 2.4.0, against 83.98 s and
+  86.74 s on 2.2.12.
 - **Text given as tag.** A probe drew 200 random lujvo for each count of words, as `poolLujvo` of
   `suites/test_suggestions.nim` draws them with seed 0. It kept each lujvo of 64 bytes or fewer
-  that reads as a tag, and drew again for each that it dropped. Over two runs, `readTagGiven` took
-  6.74 µs and 8.74 µs for six words, and 31.00 µs and 25.76 µs for 18. At `c753a1e4`, it took
-  6.02 µs and 6.12 µs for six words, and 30.92 µs and 26.51 µs for 18.
+  that reads as a tag, and drew again for each that it dropped. On 2026-11-08, over two runs,
+  `readTagGiven` took 10.97 µs and 8.08 µs for six words, and 29.83 µs and 29.46 µs for 18. At
+  `6c4c4a0d`, it took 10.37 µs and 8.51 µs for six words, and 32.53 µs and 35.72 µs for 18.
 - **Report of text given.** Over the same lujvo, to list the gismu and write the report into a
-  string took 0.61 µs and 0.82 µs for six words. For 18 words it took 2.08 µs and 1.55 µs. At
-  `c753a1e4`, it took 0.60 µs and 0.85 µs for six words, and 2.41 µs and 2.21 µs for 18.
-- **Render of a tag.** `$` of six words of `bloti` took 1,715 µs in release and 21,093 µs in
-  debug, the best of three calls each. Seven words took 8,006 µs and 93,557 µs. Two more runs gave
-  2,677 µs and 2,798 µs for six words in release. At `c753a1e4`, the same took 1,888 µs and
-  14,423 µs, and 8,085 µs and 62,864 µs. Each word of `bloti`, `condi` and `rotsu` has four
-  choices of rafsi, the most that a probe of the list found.
+  string took 1.156 µs and 0.763 µs for six words. For 18 words it took 1.953 µs and 2.813 µs. At
+  `6c4c4a0d`, it took 1.159 µs and 1.399 µs for six words, and 1.880 µs and 1.715 µs for 18.
+- **Render of a tag.** On 2026-11-08, `$` of six words of `bloti` took 13.8 µs to 16.7 µs over
+  three runs. Each run kept the best of three calls. Seven words took 10.7 µs to 17.9 µs. At
+  `6c4c4a0d`, the same took 2.2 ms to 3.6 ms, and 9.7 ms to 15.5 ms. Each word of `bloti`, `condi`
+  and `rotsu` has four choices of rafsi, the most that a probe of the list found.
+- **Render of a tag in debug.** Over the same runs, a debug build took 103.9 µs to 163.7 µs for six
+  words, and 113.5 µs to 192.3 µs for seven. At `6c4c4a0d`, it took 17.9 ms to 25.1 ms, and
+  78.9 ms to 82.4 ms.
 - **Render of a long lujvo.** Each tag takes the first words of the reading of `TEXT_GIVEN_LONG`
-  in `suites/test_suggestions.nim`, closed by `mlatu`, its last word. Over two runs, `$` took
-  0.22 s and 0.23 s for 11 words, and 0.68 s and 0.94 s for 12 words. At `c753a1e4`, it took
-  0.27 s and 0.21 s, and 0.83 s and 0.63 s.
-- **Reading of a long word.** `readTag` of `cizy` 128 times, then `ci'a`, reads 516 letters. Over
-  two runs, it took 977 µs and 954 µs after the render of a long lujvo in the same process.
-  Alone in its process, it took 1,163 µs and 1,239 µs. At `c753a1e4`, it took 981 µs and 669 µs
-  after the render, and 1,207 µs and 6,140 µs alone.
+  in `suites/test_suggestions.nim`, closed by `mlatu`, its last word. On 2026-11-08, over two
+  runs, `$` took 32.0 µs and 30.8 µs for 11 words, then 21.8 µs and 21.3 µs for 12. Alone in its
+  process, the whole tag of 18 words took 57.5 µs and 64.9 µs. At `6c4c4a0d`, 11 words took
+  0.31 s and 0.26 s, and 12 words took 0.78 s and 0.78 s. There the kernel stopped the render of
+  18 words for lack of memory, after 28.90 s and 30.54 s, at 13.3 GiB resident.
+- **Reading of a long word.** `readTag` of `cizy` 128 times, then `ci'a`, reads 516 letters. On
+  2026-11-08, over two runs, it took 1,169 µs and 1,241 µs after the renders of 11 and 12 words in
+  the same process. Alone in its process, it took 1,827 µs and 1,773 µs. At `6c4c4a0d`, it took
+  1,212 µs and 712 µs after the renders, and 1,351 µs and 1,777 µs alone.
 - **Dot segments of a redirect.** For a location of 128 KiB of `/a` segments, `redirect` took 2 ms
   and 3 ms in release over two runs on 2026-10-30. A walk that slices its input took 4,828 ms and
   4,501 ms on the same input.
@@ -847,8 +859,9 @@ release.
   lujvo glosses. A query that holds such a term still shows what its other terms find (Index and
   search).
 - **The cap of six words on text given.** The tool counts the words after `readTag`, so the cap
-  saves about 1.5 µs at most on Nim 2.2.12 (Figures). It refuses a lujvo of seven words or more,
-  whose gismu the tool could print. To lift it would change no other path.
+  saves only the list and the report of the gismu. For 18 words, these took 2.81 µs at most over
+  four runs on Nim 2.2.12 (Figures). It refuses a lujvo of seven words or more, whose gismu the
+  tool could print. To lift it would change no other path.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a tag
   that holds one of them before its head renders with `brod`, and does not read back.
