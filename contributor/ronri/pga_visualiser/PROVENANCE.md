@@ -403,6 +403,23 @@ on that side in 1 to 7 of 30 frames, in 3 drives. Rejected: the peak of 30 frame
 scene, which read zero in 2 of those 29 drives. Verified by a run: with the emitting charge taken
 out of `timed`, the check reads time on no frame of 300, and fails.
 
+**The check that the build reports its phases reads the build on frames slowed to many steps of the
+clock** (`diagnostics.drivePhaseSums`). A build under one step of 100 µs reads zero with nothing at
+fault. So the check slows 30 frames by the ratio that brings the median wall time of the frames
+before to 2 ms. Its verdict asks the median build of those frames for half their median wall time,
+less one step. That share of one clock in the other cancels the speed of the machine, and no limit
+on time decides it (Article IX.12). The slowed frames then leave the sample of later checks.
+
+On a delegate on 2026-11-08, the build read 0.3 ms at least and 0.6 ms at the median, unslowed. It
+read zero in none of 160 frames. Slowed 3 times, the medians read 2.0 to 2.3 ms of build against
+2.1 to 2.4 ms of wall, in 3 runs. Single frames slip through the throttle unslowed, at 0.4 ms, so
+the verdict reads medians.
+
+**The page whose clock steps 1 ms runs the same check**, as a machine whose build falls under one
+step. Assumed: that this clock reads the build as the fine clock of a faster machine reads its own.
+Rejected: a build above zero in every frame, which read 18 to 24 of 32 frames consistent there, in
+3 runs. The slowed check read 62 of 62 there, at 1.0 ms of build against 1.0 ms of wall.
+
 **Every wait on the real page is a count of frames, and never a span of time.** `waitUntil` steps
 that page one frame at a time. `settleTurn` waits on the transitions that an element runs, as
 `getAnimations` lists them. No limit on time then decides a verdict (Article IX.12). Rejected: a
