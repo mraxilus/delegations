@@ -8,7 +8,7 @@
 import type { Page } from '@playwright/test';
 import { advance, waitUntil } from './clock';
 import { settleCamera } from './camera';
-import { FRAMES_PHASES_HEAVY_LEAST, readPhases, waitFrames } from './frame';
+import { FRAMES_PHASES_LEAST, readPhases, waitFrames } from './frame';
 import { report } from './report';
 import { MISSES_ACCOUNT_MAX } from './scenery';
 
@@ -189,16 +189,33 @@ export async function driveFullRefused(page: Page, errors: string[]): Promise<vo
 }
 
 
-/** How many frames with scene phase big enough to divide accounting is asked over. */
-const FRAMES_HEAVY_WANTED = 25;
+/** Scene phase that accounting's sample is slowed to, in milliseconds.
+ *
+ *  Lower bound below allows three milliseconds unaccounted, so it bites only past that; at
+ *  twice it, half of each frame's scene phase must be accounted for.
+ */
+const MILLISECONDS_SCENE_DIVIDED = 6.0;
+
+/** Frames orbit is read over, unslowed, to find machine's own typical scene phase. */
+const FRAMES_SPEED_READ = 30;
+
+/** Read middle value of readings, which one slow frame of preemption does not move. */
+function median(readings: number[]): number {
+  const sorted = [...readings].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)] ?? 0;
+}
 
 /** Orbit full scene on real clock, and assert its breakdown still accounts for it.
  *
  *  Breakdown only exists while it is being read, so check that it adds up has to run in that
  *  state: bridge times placing and emitting halves of every object, which at this size is real
  *  share of frame, so it is gathered only where drawer and diagnostics section are both open.
- *  Sampled by count of heavy frames, not by span of time: slow machine takes longer to reach
- *  that count and still reaches it, so sample size is same on every machine.
+ *  Sample is fixed count of frames, slowed to size where accounting's lower bound bites. Check
+ *  reads machine's own typical scene phase first, then throttles page's processor by ratio
+ *  that brings it to `MILLISECONDS_SCENE_DIVIDED`. Faster machine is slowed more, so none is
+ *  too fast for verdict, and slow one is not slowed at all. Every phase slows alike.
+ *    Unslowed, frames over 2 ms were tail of noise, which fast runner rarely reached; see
+ *    `PROVENANCE.md`.
  */
 export async function driveLoadedAccounting(page: Page): Promise<void> {
   await fillScene(page);
@@ -216,39 +233,47 @@ export async function driveLoadedAccounting(page: Page): Promise<void> {
       (section?.classList.contains('open') ?? false);
   }, null);
 
-  // Window accounting reads starts only now: fill is many committed edits back to back, which
-  //   is not ordinary picture this measures.
-  await page.evaluate(() => { window.__phase_frame = []; });
   // Orbit, so frames read are frames reader moves through full scene.
   await page.evaluate(() => document.getElementById('gl')?.focus());
   await page.keyboard.down('ArrowRight');
-  try {
-    await waitUntil(
-      page,
-      (wanted) => (window.__phase_frame ?? []).filter((one) => one.scene >= 2.0).length >= wanted,
-      FRAMES_HEAVY_WANTED,
-    );
-  } catch {
-    // Too few heavy frames is verdict below, which says how many came.
-  }
+  // Windows accounting reads start only now: fill is many committed edits back to back, which
+  //   is not ordinary picture this measures.
+  await page.evaluate(() => { window.__phase_frame = []; });
+  await waitUntil(
+    page, (wanted) => (window.__phase_frame ?? []).length >= wanted, FRAMES_SPEED_READ + 2,
+  );
+  const typical = median((await readPhases(page)).map((one) => one.scene));
+  // Clock steps 0.1 ms at least, so typical phase reads no less than that.
+  const rate = Math.max(1, Math.ceil(MILLISECONDS_SCENE_DIVIDED / Math.max(typical, 0.1)));
+  const devtools = await page.context().newCDPSession(page);
+  await devtools.send('Emulation.setCPUThrottlingRate', { rate });
+  await page.evaluate(() => { window.__phase_frame = []; });
+  await waitUntil(
+    page, (wanted) => (window.__phase_frame ?? []).length >= wanted, FRAMES_PHASES_LEAST + 2,
+  );
+  await devtools.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  await devtools.detach();
   await page.keyboard.up('ArrowRight');
   await waitFrames(page, 2);
 
-  // Same accounting as still scene, asked where numbers mean something: on fast container
-  //   opening scene's whole phase is under millisecond and every reading is quantised, so
-  //   lower bound is inert there. Under demo phase is order of magnitude larger.
-  const phases = await readPhases(page);
-  const heavy = phases.map((one) => ({
+  // Same accounting as still scene, asked where numbers mean something: unslowed, every
+  //   reading is quantised and lower bound is inert.
+  const sampled = (await readPhases(page)).slice(0, FRAMES_PHASES_LEAST).map((one) => ({
     scene: one.scene,
     parts: one.points + one.lines + one.planes + one.sky + one.preview + one.selected,
-  })).filter((one) => one.scene >= 2.0);
-  const sane = heavy.filter((one) =>
+  }));
+  const sane = sampled.filter((one) =>
     one.parts <= one.scene + 0.6 && one.parts >= one.scene - Math.max(3.0, 0.3 * one.scene));
+  const slowed = median(sampled.map((one) => one.scene));
+  // Throttle that took slows phase by about its rate, past where lower bound bites. Ratio of two
+  //   readings of one machine, so no limit on time decides verdict (Article IX.12), and throttle
+  //   that did not take fails rather than passing on inert bound.
   report(
     'and under it the same accounting still holds, on a phase big enough to divide',
-    heavy.length > FRAMES_PHASES_HEAVY_LEAST && sane.length >= heavy.length - MISSES_ACCOUNT_MAX,
-    `${sane.length} of ${heavy.length} frames over 2 ms account, worst scene phase ` +
-      `${Math.max(0, ...heavy.map((one) => one.scene)).toFixed(2)} ms`,
+    sampled.length >= FRAMES_PHASES_LEAST && slowed >= 0.5 * rate * typical &&
+      sane.length >= sampled.length - MISSES_ACCOUNT_MAX,
+    `${sane.length} of ${sampled.length} frames account, scene phase ${slowed.toFixed(2)} ms ` +
+      `slowed ${rate} times from ${typical.toFixed(2)} ms`,
   );
 }
 
