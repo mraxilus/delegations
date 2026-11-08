@@ -9,7 +9,10 @@
 
 import type { Page } from '@playwright/test';
 import { waitUntil } from './clock';
-import { FRAMES_PHASES_LEAST, readPhases, settleReading, watchFrames } from './frame';
+import {
+  countFrames, FRAMES_PHASES_LEAST, median, MILLISECONDS_STEP_CLOCK, rateToward, readPhases,
+  settleReading, underRate, watchFrames,
+} from './frame';
 import { report } from './report';
 
 /** Wait until drawer and diagnostics section stand as asked.
@@ -128,21 +131,50 @@ export async function driveHeapUnit(page: Page): Promise<void> {
   );
 }
 
+/** Wall time each frame of populated sample is slowed toward: many steps of clock. */
+const MILLISECONDS_WALL_READ = 2.0;
+
+/** Least share of wall time build reads at median of slowed sample; rest is call around it. */
+const SHARE_BUILD_LEAST = 0.5;
+
 /** Check bridge's own build steps: populated, summing within whole, agreeing with clock.
  *
  *  Bridge reports scenery, scene objects and flatten; those must sum to no more than whole
  *  they are steps of, and agree with wall clock held around call from outside. Bands are
- *  generous: `performance.now` is quantised, and this container is slow.
+ *  generous: `performance.now` is quantised.
+ *  Populated is read on frames slowed by ratio that brings machine's typical wall time to
+ *  `MILLISECONDS_WALL_READ`: fast machine builds under step of clock and reads zero, which
+ *  is no fault. Verdict is share of one clock in other over same frames, so speed cancels
+ *  and no limit on time decides it (Article IX.12). One step of clock is allowed for rounding.
  */
 export async function drivePhaseSums(page: Page, where = ''): Promise<void> {
-  const phases = await readPhases(page);
+  const drawn = await readPhases(page);
+  const rate = rateToward(median(drawn.map((one) => one.wall)), MILLISECONDS_WALL_READ);
+  const from = await countFrames(page);
+  await underRate(page, rate, () => waitUntil(
+    page, (wanted) => (window.__phase_frame ?? []).length >= wanted,
+    from + FRAMES_PHASES_LEAST + 2,
+  ));
+  // First two slowed frames straddle change of rate.
+  const slowed = (await readPhases(page, from + 2)).slice(0, FRAMES_PHASES_LEAST);
+  // Slowed frames are this check's own: later checks read frames as page draws them.
+  await page.evaluate((at) => {
+    if (window.__phase_frame) window.__phase_frame.length = at;
+    if (window.__work_frame) window.__work_frame.length = at;
+  }, from);
+
+  const phases = [...drawn, ...slowed];
   const sane = phases.filter((one) =>
-    one.build > 0 && one.scene >= 0 && one.furniture >= 0 && one.flatten >= 0 &&
+    one.build >= 0 && one.scene >= 0 && one.furniture >= 0 && one.flatten >= 0 &&
     one.furniture + one.scene + one.flatten <= one.build + 1.0 && one.build <= one.wall + 1.0);
+  const build = median(slowed.map((one) => one.build));
+  const wall = median(slowed.map((one) => one.wall));
   report(
     'the build reports its phases, and they add up' + where,
-    phases.length > FRAMES_PHASES_LEAST && sane.length === phases.length,
-    `${sane.length} of ${phases.length} frames consistent`,
+    drawn.length > FRAMES_PHASES_LEAST && slowed.length >= FRAMES_PHASES_LEAST &&
+      sane.length === phases.length && build >= SHARE_BUILD_LEAST * wall - MILLISECONDS_STEP_CLOCK,
+    `${sane.length} of ${phases.length} frames consistent, build ${build.toFixed(2)} of wall ` +
+      `${wall.toFixed(2)} ms at the median, slowed ${rate} times`,
   );
 }
 
