@@ -294,17 +294,58 @@ func `$`*(tanru: Tanru): string =
   ##   order of choices on tie.
   ##   Tanru with no lujvo form, as one ending in cmavo without CCV or CVV rafsi, renders its
   ##     parts one space apart, as CLL writes tanru (5.1).
+  ##   Search is dynamic programming over positions, so its time grows linearly with words:
+  ##     score of 4.12 sums part of each rafsi and of each joint, and joint reads two rafsi
+  ##     beside it and one flag, whether leading run of 4.11 step 5 is open (`lujvo.nim`).
+  ##   Table holds lowest score of rest for each choice at each position, in each state of
+  ##     run; walk from first position takes first choice reaching it, so tie keeps first in
+  ##     order, as scoring every sequence of choices does (`test_tanru.nim` holds both alike).
+  ##   Rejected: scoring every sequence of choices, whose count is product of choices of each
+  ##     word, about 3.2 times more for each word; 12 words took 483 ms, and 18 fill memory.
   if tanru.parts.len == 0: return ""
   if tanru.parts.len == 1: return $tanru.parts[0]
-  var options = @[newSeq[string]()]
+  let count = tanru.parts.len
+  var options = newSeq[seq[string]](count)
   for i, part in tanru.parts:
-    var extended: seq[seq[string]]
-    for chosen in options:
-      for one in choices(part, is_final = i == tanru.parts.high): extended.add chosen & one
-    options = extended
-  if options.len == 0: return tanru.parts.mapIt($it).join(" ")
-  var best = (score: high(int), word: "")
-  for rafsi in options:
-    let value = rafsi.toPieces.score
-    if value < best.score: best = (value, joinRafsi(rafsi))
-  best.word
+    options[i] = choices(part, is_final = i == count - 1)
+    if options[i].len == 0: return tanru.parts.mapIt($it).join(" ")
+
+  func step(options: seq[seq[string]]; at, c, d: int; is_open: bool): tuple[score: int,
+      is_open: bool] =
+    ## Score joint after choice `c` at `at`, and choice `d` after it, with state of run past it.
+    let
+      (before, after) = (options[at][c], options[at+1][d])
+      joint = scoreJoint(is_open, before, after, at, count)
+    (joint.score + scoreRafsi(after, after.form.get), joint.is_open)
+
+  # Score lowest rest from each choice and state of run, last position first.
+  var rest = newSeq[seq[array[bool, int]]](count)
+  rest[^1] = newSeq[array[bool, int]](options[^1].len)
+  for at in countdown(count - 2, 0):
+    rest[at] = newSeq[array[bool, int]](options[at].len)
+    for c in 0..<options[at].len:
+      for is_open in [false, true]:
+        var lowest = high(int)
+        for d in 0..<options[at+1].len:
+          let (score, next) = options.step(at, c, d, is_open)
+          lowest = min(lowest, score + rest[at+1][d][next])
+        rest[at][c][is_open] = lowest
+
+  # Walk from first position, taking first choice that reaches lowest score.
+  var (c, total) = (0, high(int))
+  for one in 0..<options[0].len:
+    let
+      first = options[0][one]
+      value = scoreRafsi(first, first.form.get) + rest[0][one][first.isRunOpen]
+    if value < total: (c, total) = (one, value)
+  var
+    is_open = options[0][c].isRunOpen
+    chosen = @[options[0][c]]
+  for at in 0 ..< count - 1:
+    for d in 0..<options[at+1].len:
+      let (score, next) = options.step(at, c, d, is_open)
+      if score + rest[at+1][d][next] == rest[at][c][is_open]:
+        (c, is_open) = (d, next)
+        break
+    chosen.add options[at+1][c]
+  joinRafsi(chosen)
