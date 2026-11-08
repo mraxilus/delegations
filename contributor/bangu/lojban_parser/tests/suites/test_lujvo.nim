@@ -61,6 +61,9 @@ const
     ## Forms 4.11 step 1 allows before last rafsi: 3-letter or 4-letter.
   FORMS_LAST = [Form.Ccv, Form.Cvv, Form.Cvccv, Form.Ccvcv]
     ## Forms 4.11 step 2 allows last: CVV, CCV or 5-letter.
+  SAMPLES_RUN = 4000  ## Random rafsi sequences opening with run step 5 of 4.11 reads, seeded.
+  FLOOR_RUN_BROKEN = 1100
+    ## Least of them where step 5 puts `y` at first joint: 1227 read at seed `0`.
   TRIPLES_NAMED = ["ndj", "ndz", "ntc", "nts"]  ## Triples 3.7 forbids by name.
   LUT_RAFSI_BY_FORM = constructRafsiByForm()  ## Every rafsi of gismu list, by form.
   EXCEPTIONS_SPLIT = [
@@ -161,6 +164,67 @@ let SEQUENCES_LETTERS = drawSequencesLetters(SAMPLES, LENGTH_MIN .. LENGTH_MAX, 
 iterator rafsiLetters(): lent seq[string] =
   ## Serve each rafsi sequence spelled from letters, with no copy.
   for i in 0 ..< SEQUENCES_LETTERS.len: yield SEQUENCES_LETTERS[i]
+
+
+func isOpeningInitial(first: char): bool =
+  ## Test some initial pair opens with consonant `first` (3.6); `l`, `n` and `r` open none.
+  for c in 'a'..'z':
+    if c.isConsonant and isPairInitial(first, c): return true
+  false
+
+
+proc drawSequencesRun(): seq[seq[string]] =
+  ## Draw `SAMPLES_RUN` rafsi sequences from letters, seeded, opening with run step 5 of 4.11
+  ##   reads: one to four CVC rafsi, then last rafsi, CVCCV ending in initial pair one time in
+  ##   two. Joint after CVC rafsi is forced to initial pair one time in two, where one opens
+  ##   with its last consonant, so each draw ends.
+  randomize(0)
+  result = newSeqOfCap[seq[string]](SAMPLES_RUN)
+  for _ in 1..SAMPLES_RUN:
+    var rafsi: seq[string]
+    for i in 0..<rand(1..4):
+      let is_forced = i > 0 and rand(1) == 0 and rafsi[^1][^1].isOpeningInitial
+      var one = drawRafsiLetters(Form.Cvc)
+      while is_forced and not isPairInitial(rafsi[^1][^1], one[0]):
+        one = drawRafsiLetters(Form.Cvc)
+      rafsi.add one
+    var last = drawRafsiLetters(FORMS_LAST.sample)
+    if rand(1) == 0:
+      let is_joined = rafsi[^1][^1].isOpeningInitial
+      last = drawRafsiLetters(Form.Cvccv)
+      while not isPairInitial(last[2], last[3]) or
+          (is_joined and not isPairInitial(rafsi[^1][^1], last[0])):
+        last = drawRafsiLetters(Form.Cvccv)
+    rafsi.add last
+    result.add rafsi
+
+
+let SEQUENCES_RUN = drawSequencesRun()  ## Random sequences opening with run of CVC, drawn once.
+
+
+iterator rafsiRun(): lent seq[string] =
+  ## Serve each rafsi sequence opening with run of CVC, with no copy.
+  for i in 0..<SEQUENCES_RUN.len: yield SEQUENCES_RUN[i]
+
+
+func scoreJoints(rafsi: openArray[string]): int =
+  ## Score rafsi joint by joint, as render of tanru searches: each rafsi, and each joint with
+  ##   flag of leading run, which step 5 of 4.11 reads.
+  var is_open = rafsi[0].isRunOpen
+  result = scoreRafsi(rafsi[0], rafsi[0].form.get)
+  for at in 0 ..< rafsi.len - 1:
+    let joint = scoreJoint(is_open, rafsi[at], rafsi[at+1], at, rafsi.len)
+    result += joint.score + scoreRafsi(rafsi[at+1], rafsi[at+1].form.get)
+    is_open = joint.is_open
+
+
+func isBrokenFirst(rafsi: openArray[string]): bool =
+  ## Test step 5 of 4.11 puts `y` at first joint: CVC first and `y` after it, where step 4b puts
+  ##   none, since pair is permissible and forms no forbidden triple.
+  let (a, b) = (rafsi[0][^1], rafsi[1][0])
+  rafsi[0].form.get == Form.Cvc and hyphensRafsi(rafsi)[0] == Hyphen.Y and
+      isPairPermissible(a, b) and
+      (not rafsi[1][1].isConsonant or isTriplePermissible(a, b, rafsi[1][1]))
 
 
 
@@ -469,6 +533,18 @@ suite "Internal: Laws":
       if is_removed: inc count_removed
     check count_added >= SAMPLES_FLOOR_ADDED  # Article IX.3, guard leaves enough samples
     check count_removed >= SAMPLES_FLOOR_REMOVED  # Article IX.3, guard leaves enough samples
+
+
+  test "Score sums part of each rafsi and each joint, y of step 5 at first joint included":
+    var count_broken = 0
+    for rafsi in rafsiRun():  # `SAMPLES_RUN` sequences opening with run of CVC, seeded
+      check rafsi.scoreJoints == rafsi.toPieces.score  # 4.12, joint by joint, 4.11 step 5
+      if rafsi.isBrokenFirst: inc count_broken
+    for rafsi in rafsiRandom():  # `SAMPLES` sequences of listed rafsi, seeded
+      check rafsi.scoreJoints == rafsi.toPieces.score  # 4.12, joint by joint
+    for rafsi in rafsiLetters():  # `SAMPLES` sequences from letters of each form, seeded
+      check rafsi.scoreJoints == rafsi.toPieces.score  # 4.12, joint by joint
+    check count_broken >= FLOOR_RUN_BROKEN  # guard reaches `y` step 5 puts at first joint
 
 
   test "Corpus splits exactly once in either notation":

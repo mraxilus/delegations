@@ -21,7 +21,7 @@ const
     ## Forms 4.11 step 2 allows last: CVV, CCV or 5-letter.
 
 
-proc drawRafsiLetters(shape: Form): string =
+proc drawRafsiLetters*(shape: Form): string =
   ## Draw rafsi of `shape` from C and V of its notation, whether list assigns it or not.
   while true:
     var text = ""
