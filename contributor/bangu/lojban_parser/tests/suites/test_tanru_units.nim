@@ -1,7 +1,5 @@
 ## Replicate what cmavo bind in CLL chapters 5, 7, 9, 12 and 15 against `tanru_units.nim`: which
 ##   word each cmavo binds, how conversions compose, and where lujvo leaves `ke` out.
-##   Sibling: part of `lojban_tagger/tests/suites/test_tanru_units.nim` holds earlier copy, over
-##     listed words alone, until #809 drops it (II.9).
 ##   Each assertion folds example CLL gives, or tanru of `ciska`, `vreji` and `gunka` where
 ##     section gives none holding SE. Tanru is built from listed words joined by `+`, as suite
 ##     writes it, so no rafsi choice enters; where CLL gives lujvo, its words are those reader

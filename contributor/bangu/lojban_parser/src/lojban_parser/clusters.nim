@@ -16,7 +16,6 @@
 ##   | isTriplePermissible      | medial consonant triple                    | 3.7     |
 ##   |--------------------------|--------------------------------------------|---------|
 ##
-##   Copied as `lojban_tagger/src/lojban_tagger/clusters.nim` until #809 drops it (II.9).
 ##   Rules are data, judgements derived: four rules of 3.6 build pair table at compile time,
 ##     so table cannot drift from rules; initial pairs are list CLL gives, since no rule
 ##     derives them.

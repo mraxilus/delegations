@@ -10,9 +10,9 @@
 ##   | tanruUnits          | fold parts of tanru into tanru units                        |
 ##   |---------------------|-------------------------------------------------------------|
 ##
-##   Sibling: part of `lojban_tagger/src/lojban_tagger/tanru_units.nim` holds earlier copy, folding
-##     listed words alone, until #809 drops it (II.9); its `positions` and `isHoldingUnchanged`,
-##     which search reads, have no copy here.
+##   Sibling: private `ending` walks parts before fold, as `ending` of
+##     `lojban_tagger/src/lojban_tagger/runs.nim` walks tanru units after it (II.9); fix to one is
+##     finished only when other is checked.
 ##   Fold reads parts (`tanru.nim`): binding cmavo are words of list, so part no list names
 ##     binds nothing, and stands as tanru unit of its own.
 ##   Each folded cmavo carries in cmavo list selma'o its role in fold names (SE, NU, NA, NAhE,

@@ -24,8 +24,9 @@
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
 ##
-##   Sibling `lojban_tagger/tools/build.nim` holds earlier copy of `lists` and `head`, which
-##     render lujvo list too, until #809 (II.9).
+##   Sibling: `lists` and `head` of `lojban_tagger/tools/build.nim` take same steps over lists of
+##     tagger, and read same sources by same pins (`tools/lists.nim`). No driver exports verb, so
+##     steps stand in both (II.9); fix to one is finished only when other is checked.
 ##   `head` is verb CONTRIBUTOR.md gives check against outside reference that moves: package
 ##     can carry new list with no commit here, and no merge waits on it. It reads `lujvo.txt`
 ##     for digest alone, since suites read it as outside text and render nothing of it.

@@ -213,7 +213,7 @@ The parser reads 69 of the 86 paragraphs of the three articles, and the longest 
 It reads 783 of the 856 paragraphs of Alice, and 56 of the 173 longer paragraphs of Oz. Each
 refusal of these long texts breaks a rule of CLL, and none is a mistake of the parser.
 
-The project `lojban_tagger` keeps an earlier copy of these modules until #809 moves it onto this
-parser. It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim`, `stream.nim`,
-`grammar.nim` or `prose.nim`.
+The project `lojban_tagger` reads lojban through this parser, and holds no copy of its modules.
+Its converter of the word lists imports the reader of the lists, and their pins, from
+`tools/lists.nim`.
 Nothing here has been read line by line by a human.

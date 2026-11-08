@@ -16,13 +16,16 @@ which stands apart from it. The project reads lojban words, and streams of them,
 CLL alone. It reads prose by the formal grammar of 21.1, after the rules that act on words before
 that grammar (19.16).
 
-`lojban_tagger` keeps a copy of each module here until #809 moves the tagger onto this parser.
-It holds no copy of `selmaho.nim`, `lists/cmavo.nim`, `fuhivla.nim`, `stream.nim`, `grammar.nim`
-or `prose.nim`.
-Where a module differs, the copy in `lojban_tagger` is earlier, and reads listed words alone. The
-header of each module names its sibling there, as Article II.9 asks, and `tools/lists.nim` names
-the sibling of the list that it renders. A fix to one copy is finished only when the other is
-checked.
+`lojban_tagger` reads lojban through the umbrella of this parser, and holds no copy of its
+modules. Three parts of the parser keep a sibling in the tagger, and the header of each names it,
+as Article II.9 asks. They are `tools/lists.nim`, the verbs `lists` and `head` of
+`tools/build.nim`, and the private `ending` of `tanru_units.nim`. A fix to one sibling is
+finished only when the other is checked.
+
+The converter of the tagger also imports six names of `tools/lists.nim`, which its header lists.
+Cost: a change to the umbrella or to those six names can break the tagger with no red run. A
+change to this project compiles no suite of the tagger, since the plan of `koch` selects the
+importers of knoller alone (#832). Verified by hand in `curator/audit/src/plan.nim`, 2026-11-08.
 
 The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, from the Logical
 Language Group. This project reads version 1.1, generated 2016-08-26, which is the latest edition
@@ -341,7 +344,7 @@ form that 4.11 gives, as `patyta'a` for `patta'a`. Verified by `suites/test_tanr
 **A tanru with no lujvo form renders as its parts, one space apart, as CLL writes a tanru (5.1).**
 Such a tanru ends in a cmavo with no CCV or CVV rafsi, as `cusku se`, or holds a cmavo with no
 rafsi. Verified by `suites/test_tanru.nim`. `lojban_tagger` holds the notation `+` of the
-lujvo list, with `readTanru` and `toText`, which read and write it.
+lujvo list, with `readTanru` and `toTanru` of its `tags.nim`, which read and write it.
 
 ## Stream
 
@@ -1032,11 +1035,9 @@ the outside texts by their pins. `suites/rafsi_random.nim` spells random rafsi f
 each form. So the suites of the reader and of lujvo share one way to draw them (II.9).
 
 `suites/test_tanru.nim` holds the reader, `suites/test_stream.nim` the reader of a stream, and
-`suites/test_tanru_units.nim` the fold. Each suite but `suites/test_selmaho.nim` and
-`suites/test_stream.nim` has a sibling in `lojban_tagger`. That
-sibling holds an earlier copy, and the header of the suite names it (II.9). The tests of tag
-policy and of search are in `lojban_tagger` alone. Each assertion cites its source: a section of
-CLL, or the article of the charter that a guard holds.
+`suites/test_tanru_units.nim` the fold. No suite here has a copy in `lojban_tagger`, whose suites
+hold the modules of the tagger alone, tag policy and search among them. Each assertion cites its
+source: a section of CLL, or the article of the charter that a guard holds.
 
 **The JavaScript build runs in a stub of its own.** `tests/test_javascript.nim` runs on the
 JavaScript target under node, since `std/jsffi` compiles on that target alone. It holds each

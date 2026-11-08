@@ -10,8 +10,6 @@
 ##   | `$`                 | lujvo form 4.12 scores lowest, or word itself               |
 ##   |---------------------|-------------------------------------------------------------|
 ##
-##   Sibling: part of `lojban_tagger/src/lojban_tagger/tags.nim` holds earlier copy, reading
-##     listed words alone, until #809 drops it (II.9).
 ##   Rules judge, list names (#823): text reads wherever rules of CLL admit it, whether list
 ##     holds it or not. List names word of each part it assigns rafsi; part no list names keeps
 ##     its letters and has no meaning here, and `lojban_tagger` refuses it.
