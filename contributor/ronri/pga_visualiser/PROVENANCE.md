@@ -176,11 +176,30 @@ and this file does not:
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
-`ceil(0.995n)` equals `n` for every `n` under 200, so a share demands every frame of the 49-frame
+`ceil(0.995n)` equals `n` for every `n` under 200, so a share demands every frame of the 30-frame
 sample of `loaded`. One definition is exported from `scenery` (repository issue 47). The scenery
 check takes the same allowance. Preemption inside its bracket and outside both halves missed one
 frame of 109, of 126 and of 127. Per-frame tolerances stay as they are, because a real accounting
 fault misses on every frame.
+
+**The accounting under the largest demo samples frames slowed to a size it can divide**
+(`loaded.driveLoadedAccounting`). It reads the median scene phase of 30 frames of orbit, and slows
+the page by the ratio that brings it to 6 ms (`Emulation.setCPUThrottlingRate`). A faster machine is
+slowed more, and every phase slows alike. The verdict asks the slowed phase for half the rate times
+the unslowed one. That ratio of two readings of one machine is no limit on time, which the rule on
+real-clock tests forbids (Article IX.12). The check scales by its own workload, so the objection of
+the speed checks to a reference workload does not hold here.
+
+The lower bound allows 3 ms unaccounted, so it bites only past that. In a probe that is not kept, on
+2026-11-08, the unslowed median read 1.3 ms, and 51 of 601 frames reached 2 ms. Slowed 5 times, 30
+of 30 frames account at 7.2 to 7.9 ms in six runs, where the bound bites. On a runner, slowed 4
+times from 1.5 ms, 30 of 30 frames account at 6.4 ms.
+
+Rejected: 25 frames over 2 ms unslowed, the tail of noise, where the lower bound bit on 2. A runner
+read 17 of the 21 needed in 1,875 frames, against 51 of 601 in the probe. Its worst read 2.8 ms.
+Assumed: that the runner was faster or quieter than a delegate, since that sample reads no median.
+Rejected: a longer wait, which answers variance with a timeout, and a fixed rate, which a machine
+fast enough falls under again.
 
 **Count the mechanism that the claim names.** The cadence check of the diagnostics section counts
 `askSlowPass`, the entry of the tick, where asks are `ceil(ticks/5)`. It does not count calls to
@@ -383,6 +402,23 @@ in 26. They peaked at 0.2 ms in 1, and at zero in 2. Under the largest demo, a d
 on that side in 1 to 7 of 30 frames, in 3 drives. Rejected: the peak of 30 frames of the opening
 scene, which read zero in 2 of those 29 drives. Verified by a run: with the emitting charge taken
 out of `timed`, the check reads time on no frame of 300, and fails.
+
+**The check that the build reports its phases reads the build on frames slowed to many steps of the
+clock** (`diagnostics.drivePhaseSums`). A build under one step of 100 µs reads zero with nothing at
+fault. So the check slows 30 frames by the ratio that brings the median wall time of the frames
+before to 2 ms. Its verdict asks the median build of those frames for half their median wall time,
+less one step. That share of one clock in the other cancels the speed of the machine, and no limit
+on time decides it (Article IX.12). The slowed frames then leave the sample of later checks.
+
+On a delegate on 2026-11-08, the build read 0.3 ms at least and 0.6 ms at the median, unslowed. It
+read zero in none of 160 frames. Slowed 3 times, the medians read 2.0 to 2.3 ms of build against
+2.1 to 2.4 ms of wall, in 3 runs. Single frames slip through the throttle unslowed, at 0.4 ms, so
+the verdict reads medians.
+
+**The page whose clock steps 1 ms runs the same check**, as a machine whose build falls under one
+step. Assumed: that this clock reads the build as the fine clock of a faster machine reads its own.
+Rejected: a build above zero in every frame, which read 18 to 24 of 32 frames consistent there, in
+3 runs. The slowed check read 62 of 62 there, at 1.0 ms of build against 1.0 ms of wall.
 
 **Every wait on the real page is a count of frames, and never a span of time.** `waitUntil` steps
 that page one frame at a time. `settleTurn` waits on the transitions that an element runs, as

@@ -18,6 +18,8 @@
 ##   |           | `tests/articles_wikipedia/`                                              |
 ##   | translations | fetch Alice and Oz into `build/translations/`, check each digest     |
 ##   |           | against its pin, and print count of each verdict of their paragraphs     |
+##   | javascript | compile whole parser to JavaScript, as `src/javascript/bridge.nim`      |
+##   |           | exposes it, into `build/lojban_parser.js`, and print its path and size   |
 ##   | system    | print packages verbs and suites need, one per line                       |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
@@ -37,13 +39,13 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, options, os, sequtils, tables]
+import std/[algorithm, options, os, osproc, sequtils, tables]
 
 import ./[cll, lists, tatoeba, translations, wikipedia]
 
 
 const
-  USAGE = "Usage: nim r tools/build.nim <lists|head|system|translations>\n" &
+  USAGE = "Usage: nim r tools/build.nim <lists|head|javascript|system|translations>\n" &
       "       nim r tools/build.nim cll <directory>\n" &
       "       nim r tools/build.nim tatoeba <export>\n" &
       "       nim r tools/build.nim wikipedia <directory>\n"
@@ -52,8 +54,11 @@ const
     ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
     ("coreutils", "`sha256sum`, which `lists`, `head` and four verbs of texts check digest with"),
     ("curl", "fetcher of pages, which verb `translations` fetches Alice and Oz with"),
+    ("nodejs", "runner of JavaScript, which testament runs `test_javascript.nim` under"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
+  PATH_BRIDGE = "src/javascript/bridge.nim"  ## Module exposing parser to JavaScript.
+  PATH_SCRIPT = "build/lojban_parser.js"  ## Script verb `javascript` writes from `PATH_BRIDGE`.
 
 
 
@@ -172,6 +177,27 @@ proc writeTranslations(): int =
     for (count, verdict) in verdicts.sorted: echo -count, "\t", verdict
 
 
+proc writeJavascript(): int =
+  ## Compile `PATH_BRIDGE`, with whole parser, to `PATH_SCRIPT`, and print path and size.
+  ##   Compiler is one that compiled this driver, never other `nim` that PATH holds.
+  ##   `-d:release` keeps every check, and drops traces of stack and line (`config/nim.cfg` of
+  ##     pin); `test_javascript.nim` compiles with it too, so suite holds build that ships.
+  ##   Rejected: `-d:danger`, which drops every check of bounds and range from build caller runs.
+  createDir(PATH_SCRIPT.parentDir)
+  let process = startProcess(
+    getCurrentCompilerExe(),
+    args = ["js", "--hints:off", "-d:release", "--out:" & PATH_SCRIPT, PATH_BRIDGE],
+    options = {poParentStreams},
+  )
+  let code = process.waitForExit
+  process.close
+  if code != 0:
+    stderr.writeLine "Compile to JavaScript failed; got exit `" & $code & "`."
+    return 1
+  echo PATH_SCRIPT
+  echo "bytes ", getFileSize(PATH_SCRIPT)
+
+
 proc main(): int =
   ## Dispatch command named as first argument; `cll`, `tatoeba` and `wikipedia` take path second.
   let arguments = commandLineParams()
@@ -185,6 +211,7 @@ proc main(): int =
   of "lists": writeLists()
   of "head": compareLists()
   of "translations": writeTranslations()
+  of "javascript": writeJavascript()
   of "system":
     for (name, _) in SYSTEM: echo name
     0
