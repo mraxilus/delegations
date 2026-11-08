@@ -8,7 +8,9 @@
 import type { Page } from '@playwright/test';
 import { advance, waitUntil } from './clock';
 import { settleCamera } from './camera';
-import { FRAMES_PHASES_LEAST, readPhases, waitFrames } from './frame';
+import {
+  FRAMES_PHASES_LEAST, median, rateToward, readPhases, underRate, waitFrames,
+} from './frame';
 import { report } from './report';
 import { MISSES_ACCOUNT_MAX } from './scenery';
 
@@ -199,12 +201,6 @@ const MILLISECONDS_SCENE_DIVIDED = 6.0;
 /** Frames orbit is read over, unslowed, to find machine's own typical scene phase. */
 const FRAMES_SPEED_READ = 30;
 
-/** Read middle value of readings, which one slow frame of preemption does not move. */
-function median(readings: number[]): number {
-  const sorted = [...readings].sort((a, b) => a - b);
-  return sorted[Math.floor(sorted.length / 2)] ?? 0;
-}
-
 /** Orbit full scene on real clock, and assert its breakdown still accounts for it.
  *
  *  Breakdown only exists while it is being read, so check that it adds up has to run in that
@@ -243,16 +239,13 @@ export async function driveLoadedAccounting(page: Page): Promise<void> {
     page, (wanted) => (window.__phase_frame ?? []).length >= wanted, FRAMES_SPEED_READ + 2,
   );
   const typical = median((await readPhases(page)).map((one) => one.scene));
-  // Clock steps 0.1 ms at least, so typical phase reads no less than that.
-  const rate = Math.max(1, Math.ceil(MILLISECONDS_SCENE_DIVIDED / Math.max(typical, 0.1)));
-  const devtools = await page.context().newCDPSession(page);
-  await devtools.send('Emulation.setCPUThrottlingRate', { rate });
-  await page.evaluate(() => { window.__phase_frame = []; });
-  await waitUntil(
-    page, (wanted) => (window.__phase_frame ?? []).length >= wanted, FRAMES_PHASES_LEAST + 2,
-  );
-  await devtools.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-  await devtools.detach();
+  const rate = rateToward(typical, MILLISECONDS_SCENE_DIVIDED);
+  await underRate(page, rate, async () => {
+    await page.evaluate(() => { window.__phase_frame = []; });
+    await waitUntil(
+      page, (wanted) => (window.__phase_frame ?? []).length >= wanted, FRAMES_PHASES_LEAST + 2,
+    );
+  });
   await page.keyboard.up('ArrowRight');
   await waitFrames(page, 2);
 
