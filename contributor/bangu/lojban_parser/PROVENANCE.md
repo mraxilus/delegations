@@ -980,8 +980,8 @@ holds each field of `ReadingText`, and each value of an enum as its name, as `KO
 
 **A refused text also carries `stream`, which `readStream` gives.** So a caller sees the words
 before a refusal of the grammar, or the refusal of the stream with its detail. The bridge reads the
-stream a second time for it. Figures, Corpus by stage, gives the stream about 3 percent of the time
-of `readText`. Verified by `test_javascript.nim`.
+stream a second time for it. On the JavaScript build, `readStream` reads the sample in about 1.4
+percent of the time of `readText` (Figures, JavaScript build). Verified by `test_javascript.nim`.
 
 **`start` counts the bytes of the text in UTF-8, as the parser reads them.** For a text of ASCII
 alone, a byte is also an index of the string of JavaScript. Beyond ASCII the two differ, so a page
@@ -992,17 +992,17 @@ that marks the place of a refusal converts the byte to an index first. Verified 
 it on `module.exports` where node loads the script as CommonJS. A page has no `module`, so the
 script reads it through `typeof`, which does not throw there. Verified by `test_javascript.nim`
 for node. Verified by hand in headless Chromium 153.0.8010.12 through Playwright, 2026-11-08. A
-`script` element loaded the script, and a call read one text and refused another with no error.
+`script` element loads the script, and a call reads one text and refuses another with no error.
 
 **The object holds values of JavaScript alone.** Rejected: a text of JSON, which the caller would
 parse again. A plain object is a value of the runtime of the caller, so no format of data goes
 between two programs (CONTRIBUTOR.md, Data).
 
 **The mirror reads each child of the tree, and each unit, by its index.** On the JavaScript
-backend, a loop over `items` copies each value, and the copy of a node copies its whole subtree.
-Rejected: that loop, with which `parseLojban` read the sample of Tatoeba in 12.6 s, against 11.4 s
-by index. Verified by hand with `grep -c nimCopy` over each routine of the mirror in the script,
-2026-11-08: none copies.
+backend, a loop over `items` of `node.children` or of `reading.units` copies each value. The copy
+of a node copies its whole subtree. Rejected: those loops, which took 12.6 s over the sample in one
+run, against 11.4 s and 11.5 s by index. Verified by hand with `grep -c nimCopy` over each routine
+of the mirror in the script, 2026-11-08: none copies.
 
 **The verb builds with `-d:release`, and the suite compiles with it too.** On the pin, the define
 keeps every check and drops the traces of stack and line (`config/nim.cfg`). So the suite holds
@@ -1011,9 +1011,10 @@ removes each check of bounds and range from the build that a caller runs. Cost: 
 names no line of Nim (expected). The verb takes the compiler that compiled the driver.
 
 **Cost: the script reads about 32 times slower than the native build, on the thread of its
-caller.** So a page waits while it reads. A text of the sample takes 19 ms at the median, and the
-longest, of 770 characters, takes 633 ms. Figures, JavaScript build, gives the method. The script
-holds 718,891 bytes at `aed7b3a2`, and the verb prints its size.
+caller.** So a page waits while it reads. A text of the sample takes 19 ms at the median, against
+0.56 ms and 0.57 ms native. The longest, of 771 bytes, takes 633 ms, against 21 ms and 28 ms
+native. Figures, JavaScript build, gives the method. At `5fa0c368`, the verb writes 718,891 bytes,
+and prints the size.
 
 ## Tests
 
@@ -1039,14 +1040,16 @@ CLL, or the article of the charter that a guard holds.
 
 **The JavaScript build runs in a stub of its own.** `tests/test_javascript.nim` runs on the
 JavaScript target under node, since `std/jsffi` compiles on that target alone. It holds each
-sentence of the sample of Tatoeba to the verdict that the native build gave it. So the script
-stays in step with the parser, since each run of the suites builds it again from the same code.
+sentence of the sample of Tatoeba to the verdict that the native build gave it. It compiles the
+bridge with `-d:release`, as the verb does. So the bridge stays in step with the parser, and no
+suite loads `build/lojban_parser.js` itself.
 
-Its command defines `nodejs`. Without the define, node exits 0 when a check fails, and testament
-reads a pass. So the stub stops its compile where the define is missing. Verified by hand with
-testament on the pin, 2026-11-08: a copy with one wrong expectation failed, and named the line of
-its check. A probe with one failing check exited 0 without the define, and the stub without it
-does not compile.
+**A failed check of the stub exits 1 only under the define `nodejs`.** Under node 22.23.4, a probe
+with a check that fails exits 0 without the define. Testament and the assayer pass the define for
+the JavaScript target, in `$options`, so the command of the stub names none. The stub stops its
+compile where the define is missing, so a compile by hand cannot pass in silence. Verified by hand
+with testament on the pin, 2026-11-08: a copy with one wrong expectation fails, and names the line
+of its check.
 
 ## Toolchain
 
@@ -1130,12 +1133,17 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
 - **Suites, last symbol.** On 2026-11-06, the stub ran every suite in 23.5 s and 22.5 s at
   `e5b6e632`, against 23.7 s and 23.5 s at `a6e61b33`. The suite of the corpus ran in 5.6 s and
   5.3 s, against 6.5 s and 6.1 s. The runs alternate, and the spread of the stub meets.
-- **JavaScript build.** On 2026-11-08, at `aed7b3a2`, three programs read the 234 sentences of the
-  sample of Tatoeba seven times each, and each figure is their median. A native
-  program built with `-d:release` read them through `readText` in 349 ms and 366 ms. The same
-  program, built with `nim js` and run under node 22.23.4, took 11.6 s and 11.7 s. `parseLojban`
-  of the script, with the mirror and the second read of the stream, took 11.4 s and 11.5 s. After
-  one pass over the sample, each text read once took 19 ms at the median and 633 ms at most.
+- **JavaScript build.** On 2026-11-08, at `5fa0c368`, on the pin, each program read the 234
+  sentences of the sample of Tatoeba seven times in one run. Each program ran twice, and each
+  figure is the median of one run. A native program built with `-d:release` read them through
+  `readText` in 349 ms and 366 ms. Built with `nim js` and run under node 22.23.4, the same
+  program took 11.6 s and 11.7 s. `parseLojban` of the script, with the mirror and the second read
+  of the stream, took 11.4 s and 11.5 s.
+- **JavaScript build, stream.** Built the same way, a program read the sample through
+  `readStream` in 163 ms and 166 ms.
+- **JavaScript build, one text.** After a first pass over the sample, the script read each text
+  once, in one run. It took 19 ms at the median, and 633 ms at most. The native build took 0.56 ms
+  and 0.57 ms at the median, and 21 ms and 28 ms at most, in two runs.
 
 ## Open questions
 
