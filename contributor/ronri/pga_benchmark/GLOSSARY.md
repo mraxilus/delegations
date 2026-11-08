@@ -138,8 +138,8 @@ time.
 _Avoid_: time band, slack, margin, noise band
 
 **Spread**:
-The range that holds 90% of the time ratios in evaluations that change no library function. A
-time ratio outside it counts as moved.
+The range that holds 99% of the time ratios in evaluations that use the current count of runs
+and change no library function. A time ratio outside it counts as moved.
 _Avoid_: noise band, noise floor, jitter
 
 **Docket**:

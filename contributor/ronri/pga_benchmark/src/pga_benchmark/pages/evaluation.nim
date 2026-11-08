@@ -17,7 +17,9 @@
 ##     over pin on one log axis; operations within spread and helpers moved are counted.
 ##   Spread is read from evaluations themselves: evaluation that changes no library function
 ##     moves no count, so range of its time ratios is range of machine, and page states it
-##     beside figures it qualifies.
+##     beside figures it qualifies. Only evaluations over runs in use count, since fewer runs
+##     read wider range; spread holds 99% of their ratios, so noise marks about one time in
+##     hundred as moved.
 ##
 ##   Cost: measurand counts as touched where its library function moved; measurand served by
 ##     composition of several functions is left out, as `pairTimes` leaves it out of median.
@@ -31,12 +33,14 @@ import std/[algorithm, json, math, options, sequtils, strutils, tables]
 
 import ../[changes, definitions, markdown]
 import ./shell
+from ../evaluations import RUNS_EVALUATION
 
 
 type
   Spread* = object
-    ## Define range that holds 90% of time ratios in evaluations that change no library function.
-    low*, high*: float  ## Fifth and ninety-fifth percentile of ratio, each measurand alone.
+    ## Define range that holds 99% of time ratios in evaluations over runs in use that change no
+    ##   library function.
+    low*, high*: float  ## Half and 99.5th percentile of ratio, each measurand alone.
     count*: int  ## Ratios spread is read from; zero where spread is assumed.
   KindLine {.pure.} = enum  ## Define what edit does to one line of diff.
     Kept, Removed, Added
@@ -69,20 +73,22 @@ func touched*(
 
 
 func spread*(evaluations: openArray[JsonNode]): Spread =
-  ## Read spread from evaluations that change no library function at any algebra.
+  ## Read spread from evaluations over runs in use that change no library function at any algebra.
+  ##   Evaluation over other count of runs reads other range of machine, so it is left out.
   var ratios: seq[float]
   for evaluation in evaluations:
+    if evaluation{"taken", "runs"}.getInt != RUNS_EVALUATION: continue
     var is_quiet = true
     for _, measured in evaluation{"algebras"}.pairs:
       if measured{"functions"}.len > 0: is_quiet = false
     if not is_quiet: continue
     for _, measured in evaluation{"algebras"}.pairs:
       for _, timing in measured{"times"}.pairs: ratios.add timing[2].getFloat
-  if ratios.len < 20: return SPREAD_ASSUMED
+  if ratios.len < 200: return SPREAD_ASSUMED  # 99% cuts at least one ratio from each end
   ratios.sort
   Spread(
-    low: ratios[ratios.len div 20],
-    high: ratios[ratios.len-1-ratios.len div 20],
+    low: ratios[ratios.len div 200],
+    high: ratios[ratios.len-1-ratios.len div 200],
     count: ratios.len,
   )
 
@@ -772,6 +778,5 @@ func textSpread*(spread: Spread): string =
         "That spread is assumed, since too few evaluations here change nothing."
   else:
     "Times outside ×" & spread.low.fixed & " to ×" & spread.high.fixed & " count as moved. " &
-        "That spread holds 90% of " & $spread.count &
-        " time ratios in evaluations that change no " &
-        "library function."
+        "That spread holds 99% of " & $spread.count & " time ratios in evaluations over " &
+        $RUNS_EVALUATION & " runs that change no library function."
