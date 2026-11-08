@@ -9,6 +9,9 @@
 ##   | joinRafsi         | lujvo-making algorithm, steps 3 to 5           | 4.11           |
 ##   | hyphensRafsi      | hyphen letters steps 4 and 5 install           | 4.11           |
 ##   | score             | lujvo scoring algorithm, lowest preferred      | 4.12           |
+##   | scoreRafsi        | part of score one rafsi adds                   | 4.12           |
+##   | scoreJoint        | part of score one joint adds, step 5 included  | 4.11, 4.12     |
+##   | isRunOpen         | first rafsi opens run step 5 tests             | 4.11 (5)       |
 ##   | splitLujvo        | inverse of `joinRafsi`                         | 4.5, 4.11      |
 ##   |-------------------|------------------------------------------------|----------------|
 ##
@@ -18,6 +21,9 @@
 ##     Rejected: checking each junction by local rule, which would restate algorithm twice.
 ##   Join follows 4.11 in right-to-left order that step 5 asks: steps 4a to 4c settle every
 ##     junction before tosmabru test reads them.
+##   Each junction is settled by two rafsi beside it (`hyphenJoint`), and tosmabru test reads
+##     junctions left to right with one flag, whether leading run is open (`carryRun`). So
+##     score sums over rafsi and joints, and render of tanru searches position by position.
 ##   Forbidden triples: 4.11 step 4b names impermissible pairs alone, and CLL is silent on
 ##     junction forming `ndj`, `ndz`, `ntc` or `nts`, which 3.7 forbids medially. Join puts
 ##     `y` there too, so no lujvo it makes breaks 3.7.
@@ -72,49 +78,64 @@ func isPositionValid(forms: openArray[Form]): bool =
   true
 
 
+func hyphenJoint(before, after: string; at, count: int): Hyphen =
+  ## Settle hyphen after rafsi `before` at index `at` of `count`, `after` next, by steps 4a to 4c
+  ##   of 4.11; step 5 may yet put `y` at first joint (`carryRun`).
+  let form_before = before.form.get
+
+  # Step 4a: CVV first takes `r`, or `n` before `r`, unless two rafsi end in CCV.
+  if at == 0 and form_before == Form.Cvv and (count > 2 or after.form.get != Form.Ccv):
+    return (if after[0] == 'r': Hyphen.N else: Hyphen.R)
+
+  # Step 4c: `y` after every 4-letter rafsi, whatever pair follows.
+  if form_before in FORMS_UNREDUCED: return Hyphen.Y
+
+  # Step 4b: `y` between consonants of impermissible pair; forbidden triple too (3.7).
+  let (a, b) = (before[^1], after[0])
+  if not (a.isConsonant and b.isConsonant): return Hyphen.None
+  let is_triple_forbidden = after[1].isConsonant and
+      not isTriplePermissible(a, b, after[1])  # Convention beyond 4.11; see header.
+  if not isPairPermissible(a, b) or is_triple_forbidden: Hyphen.Y else: Hyphen.None
+
+
+func isRunOpen*(first: string): bool =
+  ## Test leading run step 5 of 4.11 tests is open after first rafsi: CVC alone opens it.
+  first.form.get == Form.Cvc
+
+
+func carryRun(
+  is_open: bool; before, after: string; hyphen: Hyphen; at, count: int
+): tuple[is_open, is_breaking: bool] =
+  ## Carry step 5 of 4.11 across joint `at`, whose hyphen steps 4a to 4c settled: whether leading
+  ##   run stays open, and whether step 5 puts `y` at first joint here.
+  ##   Run stays open while each rafsi is CVC and each joint initial pair with no hyphen (5a).
+  ##   `y` after open run breaks it (5b); so does last rafsi of form CVCCV whose last two
+  ##     consonants make initial pair, joined to run by initial pair.
+  if not is_open: return (false, false)
+  if hyphen == Hyphen.Y: return (false, true)
+  let is_initial = hyphen == Hyphen.None and isPairInitial(before[^1], after[0])
+  if after.form.get == Form.Cvc: return (is_initial, false)
+  let is_gismu_breaking = at + 1 == count - 1 and after.form.get == Form.Cvccv and
+      isPairInitial(after[2], after[3])
+  (false, is_initial and is_gismu_breaking)
+
+
 func hyphensRafsi*(rafsi: openArray[string]): seq[Hyphen] =
   ## Settle hyphen after each rafsi but last, by steps 4 and 5 of 4.11.
   ##   Rafsi must fill positions steps 1 and 2 allow; `joinRafsi` asserts it.
-  let
-    count = rafsi.len
-    forms = rafsi.mapIt(it.form.get)
+  let count = rafsi.len
   result = newSeq[Hyphen](count)
 
-  # Step 4a: CVV first takes `r`, or `n` before `r`, unless two rafsi end in CCV.
-  if forms[0] == Form.Cvv and (count > 2 or forms[1] != Form.Ccv):
-    result[0] = (if rafsi[1][0] == 'r': Hyphen.N else: Hyphen.R)
+  # Steps 4a to 4c: hyphen of each joint, read from two rafsi beside it.
+  for at in 0 ..< count - 1: result[at] = hyphenJoint(rafsi[at], rafsi[at+1], at, count)
 
-  # Step 4b: `y` between consonants of impermissible pair; forbidden triple too (3.7).
-  for i in 0 ..< count - 1:
-    let (a, b) = (rafsi[i][^1], rafsi[i + 1][0])
-    if result[i] != Hyphen.None or not (a.isConsonant and b.isConsonant): continue
-    let is_triple_forbidden = rafsi[i + 1][1].isConsonant and
-        not isTriplePermissible(a, b, rafsi[i + 1][1])  # Convention beyond 4.11; see header.
-    if not isPairPermissible(a, b) or is_triple_forbidden: result[i] = Hyphen.Y
-
-  # Step 4c: `y` after every 4-letter rafsi.
-  for i in 0 ..< count - 1:
-    if forms[i] in FORMS_UNREDUCED: result[i] = Hyphen.Y
-
-  # Step 5: tosmabru test over leading run of CVC rafsi joined with no hyphen, then `X`.
-  var length_run = 0
-  while length_run < count - 1 and forms[length_run] == Form.Cvc and
-      (length_run == 0 or result[length_run - 1] == Hyphen.None):
-    inc length_run
-  if length_run == 0: return
-  let
-    x = rafsi[length_run]
-    is_attached_y = result[length_run - 1] == Hyphen.Y
-    is_gismu_breaking = length_run == count - 1 and forms[length_run] == Form.Cvccv and
-        isPairInitial(x[2], x[3])
-  if not (is_attached_y or is_gismu_breaking): return
-  var is_initial_all = true  # Step 5a: joints up to first `y`, or to end where none.
-  for j in 0 ..< length_run - 1:
-    is_initial_all = is_initial_all and isPairInitial(rafsi[j][^1], rafsi[j + 1][0])
-  if not is_attached_y:
-    is_initial_all = is_initial_all and isPairInitial(rafsi[length_run - 1][^1], x[0]) and
-        isPairInitial(x[2], x[3])
-  if is_initial_all: result[0] = Hyphen.Y  # Step 5c: `y` at first joint.
+  # Step 5: tosmabru test over leading run of CVC rafsi, joint by joint.
+  var is_open = rafsi[0].isRunOpen
+  for at in 0 ..< count - 1:
+    if not is_open: return
+    let carried = carryRun(is_open, rafsi[at], rafsi[at+1], result[at], at, count)
+    if carried.is_breaking: result[0] = Hyphen.Y  # Step 5c: `y` at first joint.
+    is_open = carried.is_open
 
 
 func joinRafsi*(rafsi: openArray[string]): string =
@@ -131,18 +152,37 @@ func joinRafsi*(rafsi: openArray[string]): string =
 
 #[ Scoring ]#
 
+func scoreRafsi*(rafsi: string, form: Form): int =
+  ## Score part of 4.12 rafsi of `form` adds, hyphen after it aside: `1000 L − 500 A − 10 R − V`.
+  let value = (if '\'' in rafsi: 6 else: LUT_VALUE_BY_FORM[form])
+  1000 * rafsi.len - 500 * rafsi.count('\'') - 10 * value - rafsi.countIt(it.isVowel)
+
+
+func scoreHyphen(hyphen: Hyphen): int =
+  ## Score part of 4.12 one hyphen adds, i.e. `1000 L + 100 H`.
+  1000 * LUT_LETTER_BY_HYPHEN[hyphen].len + (if hyphen == Hyphen.None: 0 else: 100)
+
+
+func scoreJoint*(
+  is_open: bool; before, after: string; at, count: int
+): tuple[score: int, is_open: bool] =
+  ## Score part of 4.12 joint `at` adds, between rafsi `before` and `after` of `count`, and tell
+  ##   whether leading run stays open past it (4.11 step 5).
+  ##   Where step 5 puts `y` at first joint, score holds it here: joint `at` is first, or first
+  ##     joint scored no hyphen, since open run holds none.
+  let
+    hyphen = hyphenJoint(before, after, at, count)
+    carried = carryRun(is_open, before, after, hyphen, at, count)
+    first = (if at == 0: hyphen else: Hyphen.None)  # hyphen first joint held before step 5
+    added = (if carried.is_breaking: scoreHyphen(Hyphen.Y) - scoreHyphen(first) else: 0)
+  (scoreHyphen(hyphen) + added, carried.is_open)
+
+
 func score*(pieces: openArray[Piece]): int =
   ## Score lujvo spelled by pieces, i.e. `1000 L − 500 A + 100 H − 10 R − V` of 4.12.
   ##   Lowest score is form dictionary prefers; ties have no preference in 4.12.
-  var (letters, apostrophes, hyphens, values, vowels) = (0, 0, 0, 0, 0)
-  for piece in pieces:
-    let spelled = piece.rafsi & LUT_LETTER_BY_HYPHEN[piece.hyphen]
-    letters += spelled.len
-    apostrophes += piece.rafsi.count('\'')
-    hyphens += (if piece.hyphen == Hyphen.None: 0 else: 1)
-    values += (if '\'' in piece.rafsi: 6 else: LUT_VALUE_BY_FORM[piece.form])
-    vowels += piece.rafsi.countIt(it.isVowel)
-  1000 * letters - 500 * apostrophes + 100 * hyphens - 10 * values - vowels
+  ##   Sum of part each rafsi adds and part each hyphen adds, since 4.12 counts each alone.
+  for piece in pieces: result += scoreRafsi(piece.rafsi, piece.form) + piece.hyphen.scoreHyphen
 
 
 func toPieces*(rafsi: openArray[string]): seq[Piece] =
