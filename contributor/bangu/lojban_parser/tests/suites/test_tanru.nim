@@ -27,9 +27,11 @@ when compileOption("profiler"):
 import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
-import ../../src/lojban_parser/[dictionary, forms, fuhivla, lujvo, selmaho, tanru]
+import ../../src/lojban_parser/[
+  clusters, dictionary, forms, fuhivla, lujvo, selmaho, tanru {.all.},
+]
 import ../../src/lojban_parser/lists/[cmavo, gismu]
-import ./rafsi_random
+import ./[rafsi_random, texts_outside]
 
 
 const
@@ -40,6 +42,11 @@ const
   FLOOR_LOWEST = 650
     ## Least samples of two gismu or more, free of those, that lowest score law reads: 719 read
     ## at seed `0`; three quarters expected.
+  FLOOR_SEARCH = 3400
+    ## Least drawn tanru that law of search holds `$` to: 3500 read at seeds of pools, every draw.
+  FLOOR_BROKEN = 3  ## Least of them where step 5 of 4.11 puts `y` at first joint: 4 at seeds.
+  FLOOR_LUJVO_LIST = 3700
+    ## Least lines of `lujvo.txt` reading as tanru of two words or more: 3820 read.
   FLOOR_FINAL_CMAVO = 25
     ## Least CVV and CCV rafsi of cmavo, which could end word, that final law reads: 30 of list.
   SAMPLES_CMAVO = 500
@@ -189,6 +196,38 @@ func spellings(tanru: Tanru): seq[seq[string]] =
       for one in entry.rafsi & @[entry.word[0 .. 3], entry.word]:
         if one.form.get in forms_allowed: extended.add chosen & one
     result = extended
+
+
+func renderExhaustive(tanru: Tanru): string =
+  ## Render tanru by scoring every sequence of choices `$` reads, first of lowest kept.
+  ##   Reference search law holds `$` to (IX.2): same choices, same order, same score of 4.12,
+  ##     and time exponential in words, so laws read it on short tanru alone.
+  if tanru.parts.len == 0: return ""
+  if tanru.parts.len == 1: return $tanru.parts[0]
+  var options = @[newSeq[string]()]
+  for i, part in tanru.parts:
+    var extended: seq[seq[string]]
+    for chosen in options:
+      for one in choices(part, is_final = i == tanru.parts.high): extended.add chosen & one
+    options = extended
+  if options.len == 0: return tanru.parts.mapIt($it).join(" ")
+  var best = (score: high(int), word: "")
+  for rafsi in options:
+    let value = rafsi.toPieces.score
+    if value < best.score: best = (value, joinRafsi(rafsi))
+  best.word
+
+
+func isBrokenFirst(text: string): bool =
+  ## Test word holds `y` step 5 of 4.11 puts at first joint: CVC first and `y` after it, where
+  ##   step 4b puts none, since pair is permissible and forms no forbidden triple.
+  let reading = text.readWord
+  if not reading.is_word or reading.pieces.len < 2: return false
+  let
+    (first, second) = (reading.pieces[0], reading.pieces[1])
+    (a, b) = (first.rafsi[^1], second.rafsi[0])
+  first.form == Form.Cvc and first.hyphen == Hyphen.Y and isPairPermissible(a, b) and
+      (not second.rafsi[1].isConsonant or isTriplePermissible(a, b, second.rafsi[1]))
 
 
 func partNamed(rafsi: string): Part =
@@ -717,6 +756,38 @@ suite "Internal: Laws":
       check ($tanru).scoreRead == some(lowest)  # minimum over spellings, ties free (CLL 4.12)
       inc count_lowest
     check count_lowest >= FLOOR_LOWEST  # guard kept most samples
+
+
+  test "Rendering gives form of exhaustive search, first of lowest on tie, over drawn tanru":
+    var (count, count_broken) = (0, 0)
+    for tanru in tanruRandom():  # `SAMPLES` tanru of gismu, seeded
+      check $tanru == tanru.renderExhaustive  # 4.12, against reference search (IX.2)
+      inc count
+    for tanru in tanruCmavo():  # `SAMPLES_CMAVO` tanru, cmavo among words, seeded
+      check $tanru == tanru.renderExhaustive  # 4.12, against reference search (IX.2)
+      inc count
+    for rafsi in lujvoForms():  # `SAMPLES_FORMS` sequences of letters, seeded
+      let reading = joinRafsi(rafsi).readWord
+      if not reading.is_word: continue
+      let rendered = $reading.tanru
+      check rendered == reading.tanru.renderExhaustive  # 4.12, parts no list names among them
+      if rendered.isBrokenFirst: inc count_broken
+      inc count
+    check count >= FLOOR_SEARCH  # guard keeps nearly every draw
+    check count_broken >= FLOOR_BROKEN  # guard reaches `y` of 4.11 step 5 at first joint
+
+
+  test "Rendering gives form of exhaustive search over each lujvo of lujvo list":
+    let lines = readLinesLujvo()
+    if lines.isNone: skip()  # `lujvo.txt` absent or moved from its pin (`texts_outside.nim`)
+    else:
+      var count = 0
+      for line in lines.get:  # every line whose word is letters, exhaustive
+        let reading = line.word.readWord
+        if not reading.is_word or reading.tanru.parts.len < 2: continue
+        check $reading.tanru == reading.tanru.renderExhaustive  # 4.12, reference search (IX.2)
+        inc count
+      check count >= FLOOR_LUJVO_LIST  # guard keeps nearly every line
 
 
   test "Every gismu of list reads as itself":

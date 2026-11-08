@@ -264,7 +264,7 @@ func readWord*(text: string): Reading =
 
 #[ Rendering ]#
 
-func choices(part: Part, is_final: bool): seq[string] =
+func choices(part: Part, is_final: bool): seq[string] {.used.} =  # Used in `test_tanru.nim`.
   ## List rafsi of part 4.11 allows at its position, steps 1 and 2; cmavo has short rafsi alone.
   ##   4-letter rafsi several gismu share is left out where gismu has any other.
   ##   Part no list names offers its letters where their form takes position, or 4-letter
