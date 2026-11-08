@@ -9,7 +9,7 @@
 
 import type { Page } from '@playwright/test';
 import { waitUntil } from './clock';
-import { FRAMES_PHASES_LEAST, readPhases, settleReading } from './frame';
+import { FRAMES_PHASES_LEAST, readPhases, settleReading, watchFrames } from './frame';
 import { report } from './report';
 
 /** Wait until drawer and diagnostics section stand as asked.
@@ -134,16 +134,29 @@ export async function driveHeapUnit(page: Page): Promise<void> {
  *  they are steps of, and agree with wall clock held around call from outside. Bands are
  *  generous: `performance.now` is quantised, and this container is slow.
  */
-export async function drivePhaseSums(page: Page): Promise<void> {
+export async function drivePhaseSums(page: Page, where = ''): Promise<void> {
   const phases = await readPhases(page);
   const sane = phases.filter((one) =>
     one.build > 0 && one.scene >= 0 && one.furniture >= 0 && one.flatten >= 0 &&
     one.furniture + one.scene + one.flatten <= one.build + 1.0 && one.build <= one.wall + 1.0);
   report(
-    'the build reports its phases, and they add up',
+    'the build reports its phases, and they add up' + where,
     phases.length > FRAMES_PHASES_LEAST && sane.length === phases.length,
     `${sane.length} of ${phases.length} frames consistent`,
   );
+}
+
+/** Check bridge's build steps under coarse clock, where build under one step reads zero.
+ *
+ *  Fine clock of machine many times faster reads its build as this clock reads build here,
+ *  so check that holds here holds there too.
+ */
+export async function drivePhaseSumsCoarse(page: Page): Promise<void> {
+  await watchFrames(page);
+  await waitUntil(
+    page, (wanted) => (window.__phase_frame ?? []).length >= wanted, FRAMES_PHASES_LEAST + 3,
+  );
+  await drivePhaseSums(page, ', under a clock that steps 1 ms');
 }
 
 /** Drive diagnostics tree open, and assert what each branch reveals.
