@@ -1,7 +1,7 @@
 discard """
 action: run
 targets: "js"
-cmd: "nim $target --hints:off -d:testing -d:nodejs -d:release $options $file"
+cmd: "nim $target --hints:off -d:testing -d:release $options $file"
 """
 ## Hold JavaScript build of parser, `src/javascript/bridge.nim`, to native build, on JS backend:
 ##   each sentence of fixed sample of Tatoeba takes verdict native build gave it at render, and
@@ -11,8 +11,9 @@ cmd: "nim $target --hints:off -d:testing -d:nodejs -d:release $options $file"
 ##   Verdict is refusal and rule, as `tools/tatoeba.nim` spells it; empty where sentence reads.
 ##   Runs apart from `test_suites.nim`, since bridge reaches JavaScript objects through
 ##     `std/jsffi`, which native build cannot compile.
-##   Define `nodejs` makes failed check exit 1; without it, node exits 0 whatever fails, and
-##     testament reads pass. So compile stops where define is missing.
+##   Define `nodejs` makes failed check exit 1; without it, node exits 0 whatever fails.
+##     Testament and assayer pass it for JS target through `$options`, so command names none;
+##     compile stops where it is missing, as in compile by hand, so no run passes in silence.
 ##   Command takes `-d:release`, as verb `javascript` builds script, so suite holds build that
 ##     ships (IX.6); failed check still names its line, which `check` fixes at compile time.
 ##   Abort define is left out, so every sentence whose verdict moved reports in one run.
