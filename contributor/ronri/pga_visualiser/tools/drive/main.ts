@@ -61,7 +61,7 @@ import { driveClassifiedOnce } from './classified';
 import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { driveSurfacesFilled } from './surface';
-import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
+import { driveHeapUnit, drivePhaseSums, drivePhaseSumsCoarse, driveTree } from './diagnostics';
 import { driveCrossingsCounted, driveShareAgrees, driveShareRefused } from './share';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
 import {
@@ -390,7 +390,7 @@ async function driveServed(browser: Browser): Promise<void> {
   await page.close();
 }
 
-/** Drive brackets of breakdown under clock that steps 1 ms, as Firefox's does.
+/** Drive brackets and phase sums of breakdown under clock that steps 1 ms, as Firefox's does.
  *
  *  Page of its own, since clock is cut before page's scripts run, and page reads its step once.
  */
@@ -400,6 +400,7 @@ async function driveCoarse(browser: Browser): Promise<void> {
   await page.goto(`file://${PATH_PAGE}`);
   await waitScene(page);
   await driveBracketsCoarse(page);
+  await drivePhaseSumsCoarse(page);
   await page.close();
 }
 

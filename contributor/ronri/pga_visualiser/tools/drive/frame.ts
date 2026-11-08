@@ -145,6 +145,40 @@ export async function readPhases(page: Page, from = 2): Promise<Phase[]> {
   return page.evaluate((given) => (window.__phase_frame ?? []).slice(given), from);
 }
 
+/** Least step of page's clock: Chromium coarsens `performance.now` to it off isolated page. */
+export const MILLISECONDS_STEP_CLOCK = 0.1;
+
+/** Read middle value of readings, which one slow frame of preemption does not move. */
+export function median(readings: number[]): number {
+  const sorted = [...readings].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)] ?? 0;
+}
+
+/** Whole factor that slows typical reading toward wanted size, and never speeds it.
+ *
+ *  Typical reading counts as one step of clock at least, since clock reads nothing shorter.
+ */
+export function rateToward(typical: number, wanted: number): number {
+  return Math.max(1, Math.ceil(wanted / Math.max(typical, MILLISECONDS_STEP_CLOCK)));
+}
+
+/** Slow page's processor by this factor while `run` runs, then set it back.
+ *
+ *  Chrome's own protocol slows processor as whole, so phases slow alike over sample, while
+ *  single frame can slip through unslowed. Check then reads machine at size its clock can
+ *  divide, whatever its speed.
+ */
+export async function underRate<T>(page: Page, rate: number, run: () => Promise<T>): Promise<T> {
+  const devtools = await page.context().newCDPSession(page);
+  await devtools.send('Emulation.setCPUThrottlingRate', { rate });
+  try {
+    return await run();
+  } finally {
+    await devtools.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    await devtools.detach();
+  }
+}
+
 /** How many frames have been collected, for section timing window of its own. */
 export async function countFrames(page: Page): Promise<number> {
   return page.evaluate(() => (window.__work_frame ?? []).length);
