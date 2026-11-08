@@ -16,8 +16,11 @@
 ##   Reference for lowest score enumerates every rafsi 4.11 steps 1 and 2 allow, shared `brod`
 ##     included, and keeps spellings that read back; rendering is held to their minimum.
 ##     Cost: at most `4^n` joins and readings per tanru of `n` gismu.
-##   Corpus does not cover yet: tanru of seven words or more, and lowest score of tanru of five
-##     words or more or holding cmavo.
+##   Reference search scores every sequence of choices `$` reads, first of lowest kept, and
+##     render keeps its form (IX.2). Search alone keeps its sequence over drawn lists of options,
+##     where tie and state of run of 4.11 step 5 decide often; both cost product of choices.
+##   Corpus does not cover yet: lowest score of tanru of ten words or more against reference
+##     search, which tanru of 18 words meets at each prefix up to `COUNT_PREFIX_MAX` alone.
 
 {.experimental: "strictFuncs".}
 
@@ -28,7 +31,7 @@ import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
 import ../../src/lojban_parser/[
-  clusters, dictionary, forms, fuhivla, lujvo, selmaho, tanru {.all.},
+  clusters, dictionary, forms, fuhivla, lujvo {.all.}, selmaho, tanru {.all.},
 ]
 import ../../src/lojban_parser/lists/[cmavo, gismu]
 import ./[rafsi_random, texts_outside]
@@ -47,13 +50,18 @@ const
   FLOOR_BROKEN = 3  ## Least of them where step 5 of 4.11 puts `y` at first joint: 4 at seeds.
   FLOOR_LUJVO_LIST = 3700
     ## Least lines of `lujvo.txt` reading as tanru of two words or more: 3820 read.
+  SAMPLES_OPTIONS = 5000  ## Random lists of options law of search draws, seeded.
+  FLOOR_TIE = 2500  ## Least of them where last of lowest differs from first: 2810 read at seed `0`.
+  FLOOR_STATE = 45
+    ## Least of them where search ignoring state of run chooses apart: 58 read at seed `0`.
+  COUNT_PREFIX_MAX = 9  ## Most words of prefix of long tanru held to reference search.
   FLOOR_FINAL_CMAVO = 25
     ## Least CVV and CCV rafsi of cmavo, which could end word, that final law reads: 30 of list.
   SAMPLES_CMAVO = 500
     ## Random tanru of one to `COUNT_WORDS_CMAVO_MAX` words, cmavo among them, that second round
     ## trip law draws, seeded.
   COUNT_WORDS_CMAVO_MAX = 6
-    ## Most words of such tanru: `$` grows about 4 times each word (`tanru.nim` header), so six
+    ## Most words of such tanru: reference search grows about 4 times each word, so six
     ## keeps suite fast.
   FLOOR_CMAVO = 220  ## Least of them holding cmavo: 254 read at seed `0`.
   FLOOR_SHARED = 20
@@ -198,24 +206,77 @@ func spellings(tanru: Tanru): seq[seq[string]] =
     result = extended
 
 
+func scoreStateless(rafsi: openArray[string]): int =
+  ## Score rafsi junction by junction with run of 4.11 step 5 always closed, as search that
+  ##   ignored state of run would; laws count where it chooses apart from score of 4.12.
+  result = scoreRafsi(rafsi[0], rafsi[0].form.get)
+  for at in 0 ..< rafsi.len - 1:
+    result += scoreJunction(false, rafsi[at], rafsi[at+1], at, rafsi.len).score +
+        scoreRafsi(rafsi[at+1], rafsi[at+1].form.get)
+
+
+func searchExhaustive(
+  options: seq[seq[string]], as_stateless = false
+): tuple[first, last: seq[string]] =
+  ## Choose rafsi of each position by scoring every sequence of options: first and last of
+  ##   lowest, so laws see where order of options breaks tie.
+  ##   Reference search laws hold `searchLowest` and `$` to (IX.2), with score of 4.12, or with
+  ##     score that ignores state of run where `as_stateless`; time is product of options.
+  var sequences = @[newSeq[string]()]
+  for at_options in options:
+    var extended: seq[seq[string]]
+    for chosen in sequences:
+      for one in at_options: extended.add chosen & one
+    sequences = extended
+  var lowest = high(int)
+  for rafsi in sequences:
+    let value = (if as_stateless: rafsi.scoreStateless else: rafsi.toPieces.score)
+    if value < lowest: (lowest, result.first) = (value, rafsi)
+    if value <= lowest: result.last = rafsi
+
+
+func choicesTanru(tanru: Tanru): seq[seq[string]] =
+  ## List choices `$` reads at each position of tanru, in its order.
+  for i, part in tanru.parts: result.add choices(part, is_final = i == tanru.parts.high)
+
+
 func renderExhaustive(tanru: Tanru): string =
   ## Render tanru by scoring every sequence of choices `$` reads, first of lowest kept.
   ##   Reference search law holds `$` to (IX.2): same choices, same order, same score of 4.12,
   ##     and time exponential in words, so laws read it on short tanru alone.
   if tanru.parts.len == 0: return ""
   if tanru.parts.len == 1: return $tanru.parts[0]
-  var options = @[newSeq[string]()]
-  for i, part in tanru.parts:
-    var extended: seq[seq[string]]
-    for chosen in options:
-      for one in choices(part, is_final = i == tanru.parts.high): extended.add chosen & one
-    options = extended
-  if options.len == 0: return tanru.parts.mapIt($it).join(" ")
-  var best = (score: high(int), word: "")
-  for rafsi in options:
-    let value = rafsi.toPieces.score
-    if value < best.score: best = (value, joinRafsi(rafsi))
-  best.word
+  let options = tanru.choicesTanru
+  if options.anyIt(it.len == 0): return tanru.parts.mapIt($it).join(" ")
+  joinRafsi(options.searchExhaustive.first)
+
+
+proc drawOptions(): seq[seq[seq[string]]] =
+  ## Draw `SAMPLES_OPTIONS` lists of options from letters, seeded: two to five positions of one
+  ##   to four rafsi, each of form 4.11 steps 1 and 2 allow there.
+  ##   Rafsi before last is CVC one time in two, so runs of step 5 open often; rafsi of one form
+  ##     score alike alone, so ties come often too.
+  randomize(0)
+  result = newSeqOfCap[seq[seq[string]]](SAMPLES_OPTIONS)
+  for _ in 1..SAMPLES_OPTIONS:
+    let count = rand(2..5)
+    var options = newSeq[seq[string]](count)
+    for at in 0..<count:
+      for _ in 1..rand(1..4):
+        let shape =
+          if at == count - 1: FORMS_AS_LAST.sample
+          elif rand(1) == 0: Form.Cvc
+          else: FORMS_BEFORE_LAST.sample
+        options[at].add drawRafsiLetters(shape)
+    result.add options
+
+
+let OPTIONS_DRAWN = drawOptions()  ## Random lists of options search law reads, drawn once.
+
+
+iterator optionsDrawn(): lent seq[seq[string]] =
+  ## Serve each random list of options, with no copy.
+  for i in 0..<OPTIONS_DRAWN.len: yield OPTIONS_DRAWN[i]
 
 
 func isBrokenFirst(text: string): bool =
@@ -794,9 +855,44 @@ suite "Internal: Laws":
     let reading = "lotconrotybanbalbapybembedbejbesybefybevbixybimbolbogbotmlatu".readWord
     check reading.is_word and reading.tanru.parts.len == 18  # constructed in #782
     if reading.is_word:
-      let rendered = $reading.tanru  # exhaustive search would score product of choices
+      let
+        parts = reading.tanru.parts
+        rendered = $reading.tanru
+        chosen = rendered.readWord.pieces.mapIt(it.rafsi)
       check rendered.tanruRead == some(reading.tanru)  # 4.6, round trip
       check rendered.scoreRead.get <= reading.pieces.score  # 4.12, text is one spelling of tanru
+      for count in 2..COUNT_PREFIX_MAX:  # each prefix reference search scores in time
+        let prefix = Tanru(parts: parts[0..<count-1] & parts[^1])
+        check $prefix == prefix.renderExhaustive  # 4.12, reference search (IX.2)
+      for at, part in parts:  # every choice at every position, exhaustive
+        for one in choices(part, is_final = at == parts.high):
+          var changed = chosen
+          changed[at] = one
+          check changed.toPieces.score >= chosen.toPieces.score  # 4.12, no one change scores lower
+
+
+  test "Search gives sequence of exhaustive search, first of lowest on tie, over drawn options":
+    var (count_tie, count_state) = (0, 0)
+    for options in optionsDrawn():  # `SAMPLES_OPTIONS` lists, seeded
+      let reference = options.searchExhaustive
+      check options.searchLowest == reference.first  # 4.12, reference search (IX.2)
+      if reference.last != reference.first: inc count_tie
+      if options.searchExhaustive(as_stateless = true).first != reference.first: inc count_state
+    check count_tie >= FLOOR_TIE  # guard reaches lists where order of options breaks tie
+    check count_state >= FLOOR_STATE  # guard reaches lists where state of 4.11 step 5 decides
+
+
+  test "Rendering keeps first of lowest where scores tie, and reads state of run of step 5":
+    let tie_first = toTanru("condi+zmadu")  # constructed; tie at first position
+    check "cnomau".scoreRead == "coizma".scoreRead  # 4.12, two spellings tie
+    check $tie_first == tie_first.renderExhaustive  # 4.12, first of lowest (IX.2)
+    let tie_later = toTanru("cevni+fenra+trixe+toldi")  # constructed; tie past first position
+    check "ceirferti'etoldi".scoreRead == "ceirfe'arixtoldi".scoreRead  # 4.12, two spellings tie
+    check $tie_later == tie_later.renderExhaustive  # 4.12, first of lowest (IX.2)
+    let run = toTanru("snuji+vitci+cidja")  # constructed; state of run decides
+    check run.choicesTanru.searchExhaustive(as_stateless = true).first !=
+        run.choicesTanru.searchLowest  # 4.11 step 5, search without state chooses apart
+    check $run == run.renderExhaustive  # 4.11 step 5, 4.12, reference search (IX.2)
 
 
   test "Every gismu of list reads as itself":

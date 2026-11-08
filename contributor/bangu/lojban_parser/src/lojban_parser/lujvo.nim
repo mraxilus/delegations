@@ -157,7 +157,7 @@ func joinRafsi*(rafsi: openArray[string]): string =
 
 #[ Scoring ]#
 
-func scoreRafsi(rafsi: string, form: Form): int {.used.} =  # Used in `tanru.nim`, `test_lujvo.nim`.
+func scoreRafsi(rafsi: string, form: Form): int {.used.} =  # Used in `tanru.nim` and suites.
   ## Score part of 4.12 rafsi of `form` adds, i.e. `1000 L − 500 A − 10 R − V`; hyphen aside.
   let value = (if '\'' in rafsi: 6 else: LUT_VALUE_BY_FORM[form])
   1000 * rafsi.len - 500 * rafsi.count('\'') - 10 * value - rafsi.countIt(it.isVowel)
@@ -170,7 +170,7 @@ func scoreHyphen(hyphen: Hyphen): int =
 
 func scoreJunction(
   is_open: bool; before, after: string; at, count: int
-): tuple[score: int, is_open: bool] {.used.} =  # Used in `tanru.nim` and `test_lujvo.nim`.
+): tuple[score: int, is_open: bool] {.used.} =  # Used in `tanru.nim` and suites.
   ## Score part of 4.12 junction `at` adds, between rafsi `before` and `after` of `count`, and
   ##   tell whether leading run stays open past it (4.11 step 5).
   ##   Where step 5 puts `y` at first junction, score holds it here: junction `at` is first, or
