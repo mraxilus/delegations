@@ -1004,11 +1004,11 @@ Rejected: that loop, with which `parseLojban` read the sample of Tatoeba in 12.6
 by index. Verified by hand with `grep -c nimCopy` over each routine of the mirror in the script,
 2026-11-08: none copies.
 
-**The verb builds with `-d:release`, and with no trace of stack or line.** The suite compiles the
-bridge with its checks and traces, so a failure there names its line. Rejected: `-d:danger`,
-which removes each check of bounds and range from the build that a caller runs. Cost: a fault in
-the script names no line of Nim (expected). The verb takes the compiler that compiled the driver,
-and not another `nim` on the path.
+**The verb builds with `-d:release`, and the suite compiles with it too.** On the pin, the define
+keeps every check and drops the traces of stack and line (`config/nim.cfg`). So the suite holds
+the build that ships, and a failed check still names its line. Rejected: `-d:danger`, which
+removes each check of bounds and range from the build that a caller runs. Cost: an exception
+names no line of Nim (expected). The verb takes the compiler that compiled the driver.
 
 **Cost: the script reads about 32 times slower than the native build, on the thread of its
 caller.** So a page waits while it reads. A text of the sample takes 19 ms at the median, and the
@@ -1043,8 +1043,10 @@ sentence of the sample of Tatoeba to the verdict that the native build gave it. 
 stays in step with the parser, since each run of the suites builds it again from the same code.
 
 Its command defines `nodejs`. Without the define, node exits 0 when a check fails, and testament
-reads a pass. Verified by hand with testament on the pin, 2026-11-08: a copy with one wrong
-expectation failed with the define. A probe with one failing check exited 0 without it.
+reads a pass. So the stub stops its compile where the define is missing. Verified by hand with
+testament on the pin, 2026-11-08: a copy with one wrong expectation failed, and named the line of
+its check. A probe with one failing check exited 0 without the define, and the stub without it
+does not compile.
 
 ## Toolchain
 
