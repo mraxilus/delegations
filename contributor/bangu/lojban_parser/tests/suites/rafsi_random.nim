@@ -15,13 +15,13 @@ import ../../src/lojban_parser/forms
 const
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"  ## Seventeen consonants C stands for (4.1 rule 3).
   ORDER_VOWELS = "aeiou"  ## Five vowels V stands for, `y` excluded (4.1 rule 1).
-  FORMS_BEFORE_LAST = [Form.Cvc, Form.Ccv, Form.Cvv, Form.Cvcc, Form.Ccvc]
+  FORMS_BEFORE_LAST* = [Form.Cvc, Form.Ccv, Form.Cvv, Form.Cvcc, Form.Ccvc]
     ## Forms 4.11 step 1 allows before last rafsi: 3-letter or 4-letter.
-  FORMS_AS_LAST = [Form.Ccv, Form.Cvv, Form.Cvccv, Form.Ccvcv]
+  FORMS_AS_LAST* = [Form.Ccv, Form.Cvv, Form.Cvccv, Form.Ccvcv]
     ## Forms 4.11 step 2 allows last: CVV, CCV or 5-letter.
 
 
-proc drawRafsiLetters(shape: Form): string =
+proc drawRafsiLetters*(shape: Form): string =
   ## Draw rafsi of `shape` from C and V of its notation, whether list assigns it or not.
   while true:
     var text = ""

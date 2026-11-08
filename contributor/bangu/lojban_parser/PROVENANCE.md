@@ -130,6 +130,21 @@ the scores of 4.12 and 4.13 exactly. One part of one score in CLL is wrong. 4.13
 V of 3, but the word has two vowels. The total of 5878 that CLL gives is right, and the suite holds
 that total. Verified by `suites/test_lujvo.nim`.
 
+**The score sums a part for each rafsi and a part for each junction.** 4.12 counts each letter,
+apostrophe, hyphen, rafsi and vowel alone, so `scoreRafsi` and `scoreJunction` give each part.
+Steps 4a to 4c settle a junction from the two rafsi beside it. Step 5 reads the junctions from left
+to right with one flag, which says whether the leading run of CVC rafsi is still open. Where step 5
+puts `y` at the first junction, the junction that ends the run holds that part of the score.
+
+`hyphensRafsi` and `score` use the same parts, so each rule has one definition. The parts stay
+private, and `tanru.nim` and the suites import every symbol of `lujvo.nim` to reach them. So the
+umbrella exports no new name to the tagger (#832). Verified by `suites/test_lujvo.nim`, over seeded
+samples. In one of them, step 5 puts `y` at the first junction of about a third of the sequences.
+
+The parts give the hyphens and scores that the earlier code gave. Verified by hand, 2026-11-08,
+with a program that held a copy of the earlier `hyphensRafsi` and `score`. It found no difference
+over 95.6 million sequences: every pair of rafsi, runs of CVC rafsi, and seeded random sequences.
+
 **The split agrees with strict reference parsers.** On 41 words, the split finds one lujvo
 exactly where CLL makes one. The verdicts on those words are those of camxes, vlatai, the
 `is_valid_lujvo` of jbofihe and latkerlo-jvotci, read on 2026-10-24 for `lojban_tagger`. Where
@@ -310,6 +325,21 @@ do not change a lujvo. So `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read
 `bridi valsi`. The order of the words stays, because a tanru is a modifier, then a head. `$`
 renders the form that 4.12 scores lowest, and on a tie the first in the order of choice. Verified
 by `suites/test_tanru.nim`.
+
+**The render searches by dynamic programming, in time linear in the words of the tanru.** A table
+holds the lowest score of the rest for each choice at each position, in each state of the run of
+step 5. A walk from the first position takes the first choice that reaches that score. So a tie
+keeps the form that a search over every sequence of choices gives. Verified by
+`suites/test_tanru.nim`, against that search, over seeded samples and each lujvo of the lujvo list.
+
+The search alone, `searchLowest`, takes the options of each position. So the suite holds it to the
+search over every sequence on drawn lists of options. The order of the options breaks a tie in
+more than half of those lists. The state of the run decides in about one in a hundred. Three
+tanru that the suite constructs hold a tie at the first position, a tie past it, and the state.
+Verified by `suites/test_tanru.nim`.
+
+Rejected: a search over every sequence of choices, whose count grows about 3.2 times for each word
+(Figures, Render of tanru).
 
 **A part of a tanru is a listed word, or the letters of a word that no list names.** A short rafsi
 names the word that the list assigns it. A 4-letter rafsi names the gismu that it is the stem of,
@@ -1107,8 +1137,13 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
 - **Tatoeba.** A program built with `-d:release` read the 17,495 sentences of the Tatoeba export
   through `readStream`. It took 0.24 s, 0.22 s and 0.21 s on the pin, the read of the file
   included. So one sentence takes about 13 microseconds. It read 17,170 of them whole.
-- The time of `$` is unmeasured here. `$` scores each choice of rafsi, so its time grows with the
-  product of the choices of each word (expected).
+- **Render of tanru.** On 2026-11-08, on the pin, a program built with `-d:release` rendered
+  prefixes of the tanru of 18 words that #782 names. Each figure is the median of three renders.
+  At `3f769b36`, the search over every sequence took 0.036 ms for 4 words and 4.0 ms for 8. It
+  took 45 ms for 10 and 483 ms for 12.
+- **Render of tanru, by table.** The same program at `954d51af` took 0.008 ms, 0.011 ms, 0.011 ms
+  and 0.013 ms for those prefixes, and 0.019 ms for all 18 words. Both searches gave one form for
+  each prefix that both rendered.
 - **Prose of Tatoeba.** On 2026-11-06, at `6a44ab94`, a program built with `-d:release` read the
   17,495 sentences through `readText`. It took 10.2 s and 10.4 s on the pin, so one sentence
   takes about 0.6 ms. It read 16,469 of them.

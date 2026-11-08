@@ -46,14 +46,14 @@
 ##   `$` leaves out 4-letter rafsi several gismu share wherever gismu has other rafsi;
 ##     `brodi`, `brodo` and `brodu` have none, so their lujvo render with `brod`, and read back
 ##     with part `brod` (open question in PROVENANCE).
-##   Cost: `$` scores every choice of rafsi, at most four per gismu, so `4^n` joins for tanru
-##     of `n` gismu, and time grows with them (expected); `readWord` caps no words.
+##   Cost: `$` searches choices of rafsi position by position, so its time grows linearly with
+##     words (measured, PROVENANCE.md, Figures); `readWord` caps no words.
 
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, strutils]
 
-import ./[clusters, dictionary, forms, fuhivla, lujvo, selmaho]
+import ./[clusters, dictionary, forms, fuhivla, lujvo {.all.}, selmaho]
 
 
 type
@@ -264,7 +264,7 @@ func readWord*(text: string): Reading =
 
 #[ Rendering ]#
 
-func choices(part: Part, is_final: bool): seq[string] =
+func choices(part: Part, is_final: bool): seq[string] {.used.} =  # Used in `test_tanru.nim`.
   ## List rafsi of part 4.11 allows at its position, steps 1 and 2; cmavo has short rafsi alone.
   ##   4-letter rafsi several gismu share is left out where gismu has any other.
   ##   Part no list names offers its letters where their form takes position, or 4-letter
@@ -289,22 +289,71 @@ func choices(part: Part, is_final: bool): seq[string] =
   if stem.wordsStem.len == 1 or result.len == 0: result.add stem
 
 
+func searchLowest(options: seq[seq[string]]): seq[string] {.used.} =  # Used in `test_tanru.nim`.
+  ## Choose rafsi from options of each position, two positions or more, whose sequence 4.12 scores
+  ##   lowest, first in order of options on tie.
+  ##   Dynamic programming over positions: score of 4.12 sums part of each rafsi and of each
+  ##     junction, and junction reads two rafsi beside it and one flag, whether leading run of
+  ##     4.11 step 5 is open (`lujvo.nim`). So time grows linearly with positions (measured,
+  ##     PROVENANCE.md, Figures).
+  ##   Table holds lowest score of rest for each option at each position, in each state of run;
+  ##     walk from first position takes first option reaching it, so tie keeps first in order,
+  ##     as scoring every sequence does (`test_tanru.nim` holds both alike).
+  ##   Rejected: scoring every sequence of options, whose count is their product; PROVENANCE.md,
+  ##     Figures, gives cost of each.
+
+  func step(
+    options: seq[seq[string]]; at, choice, choice_next: int; is_open: bool
+  ): tuple[score: int, is_open_next: bool] =
+    ## Score junction after option `choice` at `at` and option `choice_next` after it, with
+    ##   state of run past it.
+    let
+      (before, after) = (options[at][choice], options[at+1][choice_next])
+      junction = scoreJunction(is_open, before, after, at, options.len)
+    (junction.score + scoreRafsi(after, after.form.get), junction.is_open)
+
+  # Score lowest rest from each option and state of run, last position first.
+  let count = options.len
+  var rest = newSeq[seq[array[bool, int]]](count)
+  rest[^1] = newSeq[array[bool, int]](options[^1].len)
+  for at in countdown(count - 2, 0):
+    rest[at] = newSeq[array[bool, int]](options[at].len)
+    for choice in 0..<options[at].len:
+      for is_open in [false, true]:
+        var lowest = high(int)
+        for choice_next in 0..<options[at+1].len:
+          let (score, is_open_next) = options.step(at, choice, choice_next, is_open)
+          lowest = min(lowest, score + rest[at+1][choice_next][is_open_next])
+        rest[at][choice][is_open] = lowest
+
+  # Walk from first position, taking first option that reaches lowest score.
+  var (choice, total) = (0, high(int))
+  for candidate in 0..<options[0].len:
+    let
+      rafsi_first = options[0][candidate]
+      value = scoreRafsi(rafsi_first, rafsi_first.form.get) +
+          rest[0][candidate][rafsi_first.isRunOpen]
+    if value < total: (choice, total) = (candidate, value)
+  var is_open = options[0][choice].isRunOpen
+  result = @[options[0][choice]]
+  for at in 0 ..< count - 1:
+    for choice_next in 0..<options[at+1].len:
+      let (score, is_open_next) = options.step(at, choice, choice_next, is_open)
+      if score + rest[at+1][choice_next][is_open_next] == rest[at][choice][is_open]:
+        (choice, is_open) = (choice_next, is_open_next)
+        break
+    result.add options[at+1][choice]
+
+
 func `$`*(tanru: Tanru): string =
   ## Render tanru as word: part alone as itself, else lujvo form 4.12 scores lowest, first in
-  ##   order of choices on tie.
+  ##   order of choices on tie (`searchLowest`).
   ##   Tanru with no lujvo form, as one ending in cmavo without CCV or CVV rafsi, renders its
   ##     parts one space apart, as CLL writes tanru (5.1).
   if tanru.parts.len == 0: return ""
   if tanru.parts.len == 1: return $tanru.parts[0]
-  var options = @[newSeq[string]()]
+  var options = newSeq[seq[string]](tanru.parts.len)
   for i, part in tanru.parts:
-    var extended: seq[seq[string]]
-    for chosen in options:
-      for one in choices(part, is_final = i == tanru.parts.high): extended.add chosen & one
-    options = extended
-  if options.len == 0: return tanru.parts.mapIt($it).join(" ")
-  var best = (score: high(int), word: "")
-  for rafsi in options:
-    let value = rafsi.toPieces.score
-    if value < best.score: best = (value, joinRafsi(rafsi))
-  best.word
+    options[i] = choices(part, is_final = i == tanru.parts.high)
+    if options[i].len == 0: return tanru.parts.mapIt($it).join(" ")
+  joinRafsi(options.searchLowest)
