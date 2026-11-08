@@ -26,7 +26,7 @@ import ../src/javascript/bridge
 import ./sample_tatoeba/sentences
 
 
-let MODULE_NODE {.importc: "module", nodecl.}: JsObject
+let MODULE_NODE {.nodecl, importc: "module".}: JsObject
   ## Read module object node gives this suite, which it loads as script of CommonJS.
 
 
@@ -43,7 +43,7 @@ suite "Internal: JavaScript build":
   test "Each sentence of Tatoeba sample takes verdict native build gave it":
     var count = 0
     for sentence in SENTENCES_TATOEBA:
-      check parseLojban(sentence.text.cstring).verdict == sentence.verdict  # native at render
+      check parseLojban(cstring(sentence.text)).verdict == sentence.verdict  # native at render
       inc count
     check count == SENTENCES_TATOEBA.len  # IX.3, guard keeps every sentence
 
@@ -77,13 +77,13 @@ suite "Internal: JavaScript build":
   test "Byte of refusal counts text in UTF-8, apart from index of JavaScript string":
     let
       text = "la'o gy. Größe .gy. cu barda le zarc"  # 19.10, `la'o` quotes name; constructed
-      start = parseLojban(text.cstring).start.to(int)
+      start = parseLojban(cstring(text)).start.to(int)
     check start == text.find("zarc")  # byte where `zarc` opens, as Nim indexes text
     check start == 34
-    check text.cstring.toJs.indexOf("zarc".cstring).to(int) == 32  # `ö` and `ß` one unit each
+    check cstring(text).toJs.indexOf(cstring("zarc")).to(int) == 32  # `ö` and `ß` one unit each
 
 
   test "Script puts parseLojban on exports of module where node loads it":
     let exported = MODULE_NODE.exports.parseLojban
     check exported.jsTypeOf == "function"  # CommonJS, as node loads this suite
-    check exported.call(jsNull, "mi klama le zarci".cstring).is_read.to(bool)  # Example 2.1
+    check exported.call(jsNull, cstring("mi klama le zarci")).is_read.to(bool)  # Example 2.1

@@ -28,7 +28,7 @@ import std/[jsffi, options]
 import ../lojban_parser  # umbrella, for `$` of each type, as `KOhA` of `Selmaho`
 
 
-let MODULE_NODE {.importc: "module", nodecl.}: JsObject
+let MODULE_NODE {.nodecl, importc: "module".}: JsObject
   ## Read module object node gives each script of CommonJS it loads; browser gives none.
   ##   Boundary of JS target: `typeof` reads it, since bare name of undeclared global throws in
   ##     browser.
@@ -41,7 +41,7 @@ proc toObject(reading: Reading): JsObject =
   result.is_word = reading.is_word
   if reading.is_word:
     result.kind = cstring($reading.kind)
-    result.selmaho = (if reading.selmaho.isSome: toJs(cstring($reading.selmaho.get)) else: jsNull)
+    result.selmaho = (if reading.selmaho.isSome: cstring($reading.selmaho.get).toJs else: jsNull)
   else:
     result.refusal = cstring($reading.refusal)
     result.detail = cstring(reading.detail)
@@ -53,7 +53,7 @@ proc toObject(occurrence: Occurrence): JsObject =
   result.start = occurrence.start
   result.text = cstring(occurrence.text)
   result.pause = cstring($occurrence.pause)
-  result.stress = (if occurrence.stress.isSome: toJs(occurrence.stress.get) else: jsNull)
+  result.stress = (if occurrence.stress.isSome: occurrence.stress.get.toJs else: jsNull)
   result.breaks = occurrence.breaks
   result.reading = occurrence.reading.toObject
 
