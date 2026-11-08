@@ -3,8 +3,11 @@
 ##   Reads `gismu.txt` and `cmavo.txt` as Debian package `lojban-common` installs them, and
 ##   renders `src/lojban_parser/lists/gismu.nim` and `cmavo.nim`; `build.nim` runs it.
 ##
-##   Sibling `lojban_tagger/tools/lists.nim` holds earlier copy, which renders English fields and
-##     lujvo list too, until #809 drops it (II.9).
+##   Converter of `lojban_tagger/tools/lists.nim` imports `Source`, `readSource`, `KEY_LISTS`,
+##     `DIRECTORY_LISTS`, `DIGEST_GISMU` and `DIGEST_LUJVO` from here, so each has caller outside
+##     parser, and one pin serves both projects.
+##     Its private `field` is sibling of `field` here (II.9); fix to one is finished only when
+##       other is checked.
 ##   Columns of `gismu.txt` and `cmavo.txt` are fixed; `entries.nim` tables them, and every
 ##     range here is measured over every line of each file: no character of any line falls
 ##     between two fields.

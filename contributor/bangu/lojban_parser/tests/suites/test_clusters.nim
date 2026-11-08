@@ -1,5 +1,4 @@
 ## Replicate consonant clusters of CLL chapter 3 against `clusters.nim`.
-##   Copied as `lojban_tagger/tests/suites/test_clusters.nim` until #809 drops it (II.9).
 ##   Domain is seventeen consonants, so every pair and every triple is enumerated (Article IX.3).
 ##   Rules are restated here from CLL text, apart from tables `clusters.nim` derives, so suite
 ##     checks derivation rather than repeating it.

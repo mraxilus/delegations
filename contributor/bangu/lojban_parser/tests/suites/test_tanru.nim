@@ -1,6 +1,4 @@
 ## Replicate word reading of CLL chapters 3 and 4 against `tanru.nim`, and hold laws CLL implies.
-##   Sibling: part of `lojban_tagger/tests/suites/test_tags.nim` holds earlier copy, over listed
-##     words alone, until #809 drops it (II.9).
 ##   Spellings, tanru and scores are copied from CLL text, never from library output, so suite
 ##     checks reading rather than repeating it. 4.13 misstates V of `gerzda` as 3; total 5878 is
 ##     right, and is what suite holds. CLL lujvo given without rafsi split are marked split

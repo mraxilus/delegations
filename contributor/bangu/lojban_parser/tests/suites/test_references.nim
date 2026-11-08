@@ -1,5 +1,4 @@
 ## Hold `splitLujvo` to verdicts of reference parsers on 41 words probing hyphens of CLL 4.11.
-##   Copied as `lojban_tagger/tests/suites/test_references.nim` until #809 drops it (II.9).
 ##   Each check names CLL rule deciding its word, then tools agreeing with suite.
 ##   Verdicts read 2026-10-24 from camxes of ilmentufa master, vlatai 0.38, `is_valid_lujvo`
 ##     of jbofihe 0.43 master, and latkerlo-jvotci 2.4.0; citations write jbofihe for

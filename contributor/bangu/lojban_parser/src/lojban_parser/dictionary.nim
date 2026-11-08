@@ -11,8 +11,6 @@
 ##   | selmaho(text)            | selma'o of cmavo `text`, as chapter 20 names it        |
 ##   |--------------------------|---------------------------------------------------------|
 ##
-##   Sibling `lojban_tagger/src/lojban_tagger/dictionary.nim` holds earlier copy, with own `Kind`,
-##     until #809 drops it (II.9).
 ##   Every table is sorted constant built at compile time from list (Article II.2); runtime
 ##     holds flattened residue and binary search alone.
 ##   Static checks hold what lookups rely on: each list in byte order, each short rafsi naming

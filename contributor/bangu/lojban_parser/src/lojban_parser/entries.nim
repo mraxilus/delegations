@@ -12,8 +12,6 @@
 ##   | selmaho     | `cmavo.txt`           | 12 .. 20, name before subclass of list       |
 ##   |-------------|-----------------------|----------------------------------------------|
 ##
-##   Sibling `lojban_tagger/src/lojban_tagger/entries.nim` holds earlier copy, English fields
-##     and lujvo list included, until #809 drops it (II.9).
 ##   Lists are committed as typed Nim, not as text files: checker reads no `.txt`, and Nim
 ##     compiler checks each field against these types, which JSON would not.
 ##   Fields kept are those rules of CLL need alone: word and rafsi of gismu list, since 4.11

@@ -2,8 +2,6 @@
 ##   selma'o of cmavo list, read from their columns, rendered module kept to 100 columns and
 ##   read back, and committed module equal to committed list rendered again. Hold reader of
 ##   outside texts (`texts_outside.nim`) to lines it reads.
-##   Sibling `lojban_tagger/tests/suites/test_lists.nim` holds earlier copy, which holds English
-##     fields and lujvo converter too, until #809 drops it (II.9).
 ##   CLL covers no word list file, so suite is `Internal:`, tests named by behaviour (IX.10).
 ##   Sample lines are copied byte for byte from `gismu.txt`, `cmavo.txt` and `lujvo.txt` that
 ##     their digests pin, carriage return removed as `readSource` removes it; doc of each names

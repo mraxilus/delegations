@@ -13,9 +13,6 @@
 ##   | Ccvcv  | CCVCV    | gismu, or its 5-letter rafsi, final alone    | 4.4, 4.6    |
 ##   |--------|----------|----------------------------------------------|-------------|
 ##
-##   Sibling `lojban_tagger/src/lojban_tagger/forms.nim` holds earlier copy, without `Kind`,
-##     `isCmavo`, `splitCompound`, `nuclei`, `syllables`, and rules of cmene, fu'ivla and
-##     pauses, until #809 drops it (II.9).
 ##   Notation of CLL is canonical spelling (Article III.1): C is consonant, V is vowel, `/`
 ##     marks medial pair that need only be permissible (3.6), adjacent CC at start must be
 ##     initial pair (3.7). Members are Pascal case of that notation (V.11).

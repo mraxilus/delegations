@@ -12,7 +12,6 @@
 ##   | splitLujvo        | inverse of `joinRafsi`                         | 4.5, 4.11      |
 ##   |-------------------|------------------------------------------------|----------------|
 ##
-##   Copied as `lojban_tagger/src/lojban_tagger/lujvo.nim` until #809 drops it (II.9).
 ##   Split admits segmentation only where `joinRafsi` gives input back letter for letter, so
 ##     split then join is identity by construction. 4.11 forbids hyphen algorithm does not
 ##     require, so comparing with algorithm's own output is whole test of hyphens.
