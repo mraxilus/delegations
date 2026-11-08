@@ -10,7 +10,7 @@
 ##   | hyphensRafsi      | hyphen letters steps 4 and 5 install           | 4.11           |
 ##   | score             | lujvo scoring algorithm, lowest preferred      | 4.12           |
 ##   | scoreRafsi        | part of score one rafsi adds                   | 4.12           |
-##   | scoreJoint        | part of score one joint adds, step 5 included  | 4.11, 4.12     |
+##   | scoreJunction     | part one junction adds, step 5 included        | 4.11, 4.12     |
 ##   | isRunOpen         | first rafsi opens run step 5 tests             | 4.11 (5)       |
 ##   | splitLujvo        | inverse of `joinRafsi`                         | 4.5, 4.11      |
 ##   |-------------------|------------------------------------------------|----------------|
@@ -21,9 +21,13 @@
 ##     Rejected: checking each junction by local rule, which would restate algorithm twice.
 ##   Join follows 4.11 in right-to-left order that step 5 asks: steps 4a to 4c settle every
 ##     junction before tosmabru test reads them.
-##   Each junction is settled by two rafsi beside it (`hyphenJoint`), and tosmabru test reads
+##   Each junction is settled by two rafsi beside it (`hyphenJunction`), and tosmabru test reads
 ##     junctions left to right with one flag, whether leading run is open (`carryRun`). So
-##     score sums over rafsi and joints, and render of tanru searches position by position.
+##     score sums over rafsi and junctions, and render of tanru searches position by position.
+##     Cost: step 5 is read junction by junction, never as whole run, so `test_lujvo.nim` holds
+##       score of each lujvo to its sum over junctions.
+##   Parts of score and of step 5 stay private: `tanru.nim` and `test_lujvo.nim` reach them by
+##     import of all symbols, so surface umbrella exports stays as it was (#832).
 ##   Forbidden triples: 4.11 step 4b names impermissible pairs alone, and CLL is silent on
 ##     junction forming `ndj`, `ndz`, `ntc` or `nts`, which 3.7 forbids medially. Join puts
 ##     `y` there too, so no lujvo it makes breaks 3.7.
@@ -78,9 +82,9 @@ func isPositionValid(forms: openArray[Form]): bool =
   true
 
 
-func hyphenJoint(before, after: string; at, count: int): Hyphen =
+func hyphenJunction(before, after: string; at, count: int): Hyphen =
   ## Settle hyphen after rafsi `before` at index `at` of `count`, `after` next, by steps 4a to 4c
-  ##   of 4.11; step 5 may yet put `y` at first joint (`carryRun`).
+  ##   of 4.11; step 5 may yet put `y` at first junction (`carryRun`).
   let form_before = before.form.get
 
   # Step 4a: CVV first takes `r`, or `n` before `r`, unless two rafsi end in CCV.
@@ -98,7 +102,7 @@ func hyphenJoint(before, after: string; at, count: int): Hyphen =
   if not isPairPermissible(a, b) or is_triple_forbidden: Hyphen.Y else: Hyphen.None
 
 
-func isRunOpen*(first: string): bool =
+func isRunOpen(first: string): bool {.used.} =  # Used in `tanru.nim` and `test_lujvo.nim`.
   ## Test leading run step 5 of 4.11 tests is open after first rafsi: CVC alone opens it.
   first.form.get == Form.Cvc
 
@@ -106,11 +110,12 @@ func isRunOpen*(first: string): bool =
 func carryRun(
   is_open: bool; before, after: string; hyphen: Hyphen; at, count: int
 ): tuple[is_open, is_breaking: bool] =
-  ## Carry step 5 of 4.11 across joint `at`, whose hyphen steps 4a to 4c settled: whether leading
-  ##   run stays open, and whether step 5 puts `y` at first joint here.
-  ##   Run stays open while each rafsi is CVC and each joint initial pair with no hyphen (5a).
-  ##   `y` after open run breaks it (5b); so does last rafsi of form CVCCV whose last two
-  ##     consonants make initial pair, joined to run by initial pair.
+  ## Carry step 5 of 4.11 across junction `at`, whose hyphen steps 4a to 4c settled: whether
+  ##   leading run stays open, and whether step 5 puts `y` at first junction here.
+  ##   Joints step 5a reads run up to first `y`: run stays open while each rafsi is CVC joined
+  ##     with no hyphen, and closes at first joint no initial pair makes, which 5b needs.
+  ##   Where each joint is initial pair, `y` after run breaks word (5b), and so does last rafsi
+  ##     of form CVCCV whose last two consonants make initial pair; 5c puts `y` at first junction.
   if not is_open: return (false, false)
   if hyphen == Hyphen.Y: return (false, true)
   let is_initial = hyphen == Hyphen.None and isPairInitial(before[^1], after[0])
@@ -126,15 +131,15 @@ func hyphensRafsi*(rafsi: openArray[string]): seq[Hyphen] =
   let count = rafsi.len
   result = newSeq[Hyphen](count)
 
-  # Steps 4a to 4c: hyphen of each joint, read from two rafsi beside it.
-  for at in 0 ..< count - 1: result[at] = hyphenJoint(rafsi[at], rafsi[at+1], at, count)
+  # Steps 4a to 4c: hyphen of each junction, read from two rafsi beside it.
+  for at in 0 ..< count - 1: result[at] = hyphenJunction(rafsi[at], rafsi[at+1], at, count)
 
-  # Step 5: tosmabru test over leading run of CVC rafsi, joint by joint.
+  # Step 5: tosmabru test over leading run of CVC rafsi, junction by junction.
   var is_open = rafsi[0].isRunOpen
   for at in 0 ..< count - 1:
     if not is_open: return
     let carried = carryRun(is_open, rafsi[at], rafsi[at+1], result[at], at, count)
-    if carried.is_breaking: result[0] = Hyphen.Y  # Step 5c: `y` at first joint.
+    if carried.is_breaking: result[0] = Hyphen.Y  # Step 5c: `y` at first junction.
     is_open = carried.is_open
 
 
@@ -152,8 +157,8 @@ func joinRafsi*(rafsi: openArray[string]): string =
 
 #[ Scoring ]#
 
-func scoreRafsi*(rafsi: string, form: Form): int =
-  ## Score part of 4.12 rafsi of `form` adds, hyphen after it aside: `1000 L − 500 A − 10 R − V`.
+func scoreRafsi(rafsi: string, form: Form): int {.used.} =  # Used in `tanru.nim`, `test_lujvo.nim`.
+  ## Score part of 4.12 rafsi of `form` adds, i.e. `1000 L − 500 A − 10 R − V`; hyphen aside.
   let value = (if '\'' in rafsi: 6 else: LUT_VALUE_BY_FORM[form])
   1000 * rafsi.len - 500 * rafsi.count('\'') - 10 * value - rafsi.countIt(it.isVowel)
 
@@ -163,18 +168,18 @@ func scoreHyphen(hyphen: Hyphen): int =
   1000 * LUT_LETTER_BY_HYPHEN[hyphen].len + (if hyphen == Hyphen.None: 0 else: 100)
 
 
-func scoreJoint*(
+func scoreJunction(
   is_open: bool; before, after: string; at, count: int
-): tuple[score: int, is_open: bool] =
-  ## Score part of 4.12 joint `at` adds, between rafsi `before` and `after` of `count`, and tell
-  ##   whether leading run stays open past it (4.11 step 5).
-  ##   Where step 5 puts `y` at first joint, score holds it here: joint `at` is first, or first
-  ##     joint scored no hyphen, since open run holds none.
+): tuple[score: int, is_open: bool] {.used.} =  # Used in `tanru.nim` and `test_lujvo.nim`.
+  ## Score part of 4.12 junction `at` adds, between rafsi `before` and `after` of `count`, and
+  ##   tell whether leading run stays open past it (4.11 step 5).
+  ##   Where step 5 puts `y` at first junction, score holds it here: junction `at` is first, or
+  ##     first junction scored no hyphen, since open run holds none.
   let
-    hyphen = hyphenJoint(before, after, at, count)
+    hyphen = hyphenJunction(before, after, at, count)
     carried = carryRun(is_open, before, after, hyphen, at, count)
-    first = (if at == 0: hyphen else: Hyphen.None)  # hyphen first joint held before step 5
-    added = (if carried.is_breaking: scoreHyphen(Hyphen.Y) - scoreHyphen(first) else: 0)
+    hyphen_first = (if at == 0: hyphen else: Hyphen.None)  # Hyphen there before step 5.
+    added = (if carried.is_breaking: scoreHyphen(Hyphen.Y) - scoreHyphen(hyphen_first) else: 0)
   (scoreHyphen(hyphen) + added, carried.is_open)
 
 
