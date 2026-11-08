@@ -214,7 +214,7 @@ function median(readings: number[]): number {
  *  reads machine's own typical scene phase first, then throttles page's processor by ratio
  *  that brings it to `MILLISECONDS_SCENE_DIVIDED`. Faster machine is slowed more, so none is
  *  too fast for verdict, and slow one is not slowed at all. Every phase slows alike.
- *    Unslowed, frames over 2 ms were tail of noise, which fast runner rarely reached; see
+ *    Unslowed, frames over 2 ms were tail of noise, which some runners rarely reach; see
  *    `PROVENANCE.md`.
  */
 export async function driveLoadedAccounting(page: Page): Promise<void> {
