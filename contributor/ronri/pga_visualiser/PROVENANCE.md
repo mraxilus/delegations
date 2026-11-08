@@ -192,12 +192,14 @@ the speed checks to a reference workload does not hold here.
 
 The lower bound allows 3 ms unaccounted, so it bites only past that. In a probe that is not kept, on
 2026-11-08, the unslowed median read 1.3 ms, and 51 of 601 frames reached 2 ms. Slowed 5 times, 30
-of 30 frames account at 7.2 to 7.9 ms in six runs, where the bound bites.
+of 30 frames account at 7.2 to 7.9 ms in six runs, where the bound bites. On a runner, slowed 4
+times from 1.5 ms, 30 of 30 frames account at 6.4 ms.
 
 Rejected: 25 frames over 2 ms unslowed, the tail of noise, where the lower bound bit on 2. A runner
-1.5 times faster sees 2 ms where a delegate sees 3, which 5 of 601 frames reached. It read 17 of the
-21 needed in 1,875 frames. Rejected: a longer wait, which answers variance with a timeout, and a
-fixed rate, which a machine fast enough falls under again.
+read 17 of the 21 needed in 1,875 frames, against 51 of 601 in the probe. Its worst read 2.8 ms.
+Assumed: that the runner was faster or quieter than a delegate, since that sample reads no median.
+Rejected: a longer wait, which answers variance with a timeout, and a fixed rate, which a machine
+fast enough falls under again.
 
 **Count the mechanism that the claim names.** The cadence check of the diagnostics section counts
 `askSlowPass`, the entry of the tick, where asks are `ceil(ticks/5)`. It does not count calls to
