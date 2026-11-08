@@ -176,11 +176,28 @@ and this file does not:
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
-`ceil(0.995n)` equals `n` for every `n` under 200, so a share demands every frame of the 49-frame
+`ceil(0.995n)` equals `n` for every `n` under 200, so a share demands every frame of the 30-frame
 sample of `loaded`. One definition is exported from `scenery` (repository issue 47). The scenery
 check takes the same allowance. Preemption inside its bracket and outside both halves missed one
 frame of 109, of 126 and of 127. Per-frame tolerances stay as they are, because a real accounting
 fault misses on every frame.
+
+**The accounting under the largest demo samples frames slowed to a size it can divide**
+(`loaded.driveLoadedAccounting`). It reads the median scene phase of 30 frames of orbit, and slows
+the page by the ratio that brings it to 6 ms (`Emulation.setCPUThrottlingRate`). A faster machine is
+slowed more, and every phase slows alike. The verdict asks the slowed phase for half the rate times
+the unslowed one. That ratio of two readings of one machine is no limit on time, which the rule on
+real-clock tests forbids (Article IX.12). The check scales by its own workload, so the objection of
+the speed checks to a reference workload does not hold here.
+
+The lower bound allows 3 ms unaccounted, so it bites only past that. In a probe that is not kept, on
+2026-11-08, the unslowed median read 1.3 ms, and 51 of 601 frames reached 2 ms. Slowed 5 times, 30
+of 30 frames account at 7.2 to 7.9 ms in six runs, where the bound bites.
+
+Rejected: 25 frames over 2 ms unslowed, the tail of noise, where the lower bound bit on 2. A runner
+1.5 times faster sees 2 ms where a delegate sees 3, which 5 of 601 frames reached. It read 17 of the
+21 needed in 1,875 frames. Rejected: a longer wait, which answers variance with a timeout, and a
+fixed rate, which a machine fast enough falls under again.
 
 **Count the mechanism that the claim names.** The cadence check of the diagnostics section counts
 `askSlowPass`, the entry of the tick, where asks are `ceil(ticks/5)`. It does not count calls to
