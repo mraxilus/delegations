@@ -16,7 +16,9 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_tagger/[commands, dictionary, index, search, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ../../src/lojban_tagger/[commands, english, index, search, tags]
 
 
 const
@@ -32,14 +34,14 @@ const
   WORDS_REFUSED = ["bi", "qqqqq", "file", "qwzx"]
     ## Words reader refuses as tag, drawn one time in eight; English and unknown among them.
   REFUSED = [
-    (Refusal.Empty, " "),
-    (Refusal.Letter, "qqqqq"),
-    (Refusal.Cmavo, "bi"),
-    (Refusal.Unlisted, "datna"),
-    (Refusal.Rafsi, "belvreji"),
-    (Refusal.Ambiguous, "brodyzba"),
-    (Refusal.Hyphen, "zaizbasu"),
-    (Refusal.Shape, "xyz"),
+    (RefusalTag.Empty, " "),
+    (RefusalTag.Letter, "qqqqq"),
+    (RefusalTag.Cmavo, "bi"),
+    (RefusalTag.Unlisted, "datna"),
+    (RefusalTag.Rafsi, "belvreji"),
+    (RefusalTag.Ambiguous, "brodyzba"),
+    (RefusalTag.Hyphen, "zaizbasu"),
+    (RefusalTag.Shape, "xyz"),
   ]
     ## Word reader refuses for each reason.
   TERMS = @WORDS & @WORDS_REFUSED & @["pixra", "gerku"]  ## Terms random queries draw.
@@ -58,7 +60,7 @@ func toIndex(rows: openArray[(string, seq[string])]): Index =
 
 func definition(text: string): string =
   ## Read keyword and definition of gismu as `read` prints them.
-  let entry = text.word.get.entry
+  let entry = text.word.get.english
   entry.keyword & "; " & entry.definition
 
 
@@ -122,7 +124,7 @@ suite "Internal: Commands":
         readTag("qqqqq").explain & "\n" & readTag("bi").explain & "\n"  # each refusal, in turn
     check outcome.report.splitLines[1] ==
         "Tag should end in gismu, as CLL 4.11 step 2 ends tanru; got cmavo `bi` in `bi`."  # cmavo
-    var covered: set[Refusal]
+    var covered: set[RefusalTag]
     for (refusal, text) in REFUSED:
       let reading = readTag(text)
       check not reading.is_tag and reading.refusal == refusal  # sample refused for its reason
@@ -130,7 +132,7 @@ suite "Internal: Commands":
       covered.incl refusal
       check reading.explain.endsWith("`" & reading.text & "`.")  # explain ends in text read
       check run(["tag", "notes", text], before).report == reading.explain & "\n"  # verb says it
-    check covered == {Refusal.low..Refusal.high}  # every refusal, exhaustive
+    check covered == {RefusalTag.low..RefusalTag.high}  # every refusal, exhaustive
 
 
   test "untag removes each tag, and entity left with no tag leaves":

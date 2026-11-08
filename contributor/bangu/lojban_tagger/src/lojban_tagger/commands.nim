@@ -30,7 +30,9 @@
 
 import std/[options, sequtils, strutils]
 
-import ./[dictionary, english, index, lujvo, search, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ./[english, index, search, tags]
 
 
 type
@@ -52,23 +54,23 @@ const
 
 #[ Rendering ]#
 
-func explain*(reading: Reading): string =
+func explain*(reading: ReadingTag): string =
   ## Render why text is no tag, ending in offending text.
   let text = "`" & reading.text & "`"
   case reading.refusal
-  of Refusal.Empty: "Tag should hold letters; got ``."
-  of Refusal.Letter: "Tag should hold lojban letters alone; got `" & reading.detail & "` in " &
+  of RefusalTag.Empty: "Tag should hold letters; got ``."
+  of RefusalTag.Letter: "Tag should hold lojban letters alone; got `" & reading.detail & "` in " &
       text & "."
-  of Refusal.Cmavo: "Tag should end in gismu, as CLL 4.11 step 2 ends tanru; got cmavo `" &
+  of RefusalTag.Cmavo: "Tag should end in gismu, as CLL 4.11 step 2 ends tanru; got cmavo `" &
       reading.detail & "` in " & text & "."
-  of Refusal.Unlisted: "Gismu should be in gismu list; got " & text & "."
-  of Refusal.Rafsi: "Rafsi should be assigned in gismu list; got `" & reading.detail &
+  of RefusalTag.Unlisted: "Gismu should be in gismu list; got " & text & "."
+  of RefusalTag.Rafsi: "Rafsi should be assigned in gismu list; got `" & reading.detail &
       "` in " & text & "."
-  of Refusal.Ambiguous: "Rafsi should name one gismu; got `" & reading.detail &
+  of RefusalTag.Ambiguous: "Rafsi should name one gismu; got `" & reading.detail &
       "`, which several share, in " & text & "."
-  of Refusal.Hyphen: "Hyphens should be those of CLL 4.11, i.e. `" & reading.detail &
+  of RefusalTag.Hyphen: "Hyphens should be those of CLL 4.11, i.e. `" & reading.detail &
       "`; got " & text & "."
-  of Refusal.Shape: "Text should be gismu or lujvo; got " & text & "."
+  of RefusalTag.Shape: "Text should be gismu or lujvo; got " & text & "."
 
 
 func toLine(entity: Entity): string =
@@ -124,7 +126,7 @@ func explainWord(text: string): string =
         $reading.tag & "`" & (if spelled.len > 0: ", spelled `" & spelled & "`" else: "") &
         ".\n"
     for w in reading.tag.words:
-      result.add "  " & $w & ": " & w.entry.keyword & "; " & w.entry.definition & "\n"
+      result.add "  " & $w & ": " & w.english.keyword & "; " & w.english.definition & "\n"
   let meanings = text.meanings
   if meanings.len > 0: result.add text.readTerm.describe
 

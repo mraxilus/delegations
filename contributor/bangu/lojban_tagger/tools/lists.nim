@@ -1,4 +1,4 @@
-## Convert word lists of Logical Language Group into typed Nim modules project commits.
+## Convert English of gismu list, and lujvo list, into typed Nim modules project commits.
 ##   Reads `gismu.txt` and `lujvo.txt` as Debian package `lojban-common` installs them, and
 ##   renders `src/lojban_tagger/lists/gismu.nim` and `lujvo.nim`; `build.nim` runs it.
 ##
@@ -8,8 +8,13 @@
 ##     keywords after `#`. Line is kept where word is lojban letters, tanru has two parts or
 ##     more, and gloss is present. Other shapes (phrase for word, no gloss, `,` in tanru) are
 ##     left out, and module header counts them, so cut stays visible.
-##   Each source is pinned by SHA-256: Debian moving list makes `lists` refuse and `head`
-##     report, never silent rewrite of committed list.
+##   Reader of each source, key naming its directory, and SHA-256 pin of each file are those of
+##     `lojban_parser/tools/lists.nim`, re-exported for `build.nim` and suites: both projects
+##     read one `gismu.txt`, and English here follows parser's list entry for entry, so one pin
+##     serves both. Debian moving list makes `lists` refuse and `head` report, never silent
+##     rewrite of committed list.
+##     `field` stays here, as parser keeps its own private (II.9); fix to one is finished only
+##       when other is checked.
 ##   Rendering is deterministic and wraps each string under 100 columns after runs of spaces,
 ##     every space kept, so
 ##     `head` compares rendered text byte for byte with what is committed.
@@ -18,24 +23,17 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, osproc, sequtils, strutils]
+import std/[options, sequtils, strutils]
+
+from ../../lojban_parser/tools/lists import
+  DIGEST_GISMU, DIGEST_LUJVO, DIRECTORY_LISTS, KEY_LISTS, readSource, Source
 
 import ../src/lojban_tagger/entries
 
-
-type
-  Source* = object  ## Define one list file read: its bytes, and digest they hash to.
-    text*: string  ## Content with carriage returns removed.
-    digest*: string  ## SHA-256 of bytes as installed, lowercase hex.
+export DIGEST_GISMU, DIGEST_LUJVO, DIRECTORY_LISTS, KEY_LISTS, readSource, Source
 
 
 const
-  KEY_LISTS* = "LOJBAN_TAGGER_LISTS"  ## Environment name overriding where lists are read from.
-  DIRECTORY_LISTS* = "/usr/share/lojban"  ## Directory package `lojban-common` installs lists in.
-  DIGEST_GISMU* = "f2fc4cff4f265ad02717d56733b4627ffa78c616db78dcaa44caab694e1dd5b7"
-    ## SHA-256 of `gismu.txt` of `lojban-common` 1.5+dfsg.1-4, header dated 9/26/94.
-  DIGEST_LUJVO* = "23c182f3534f4e33efbb4a3d92cd943427d5a6fdf3b061b07cd6bbc3d0e6b0cc"
-    ## SHA-256 of `lujvo.txt` of `lojban-common` 1.5+dfsg.1-4.
   PATH_GISMU* = "src/lojban_tagger/lists/gismu.nim"  ## Module gismu list renders to.
   PATH_LUJVO* = "src/lojban_tagger/lists/lujvo.nim"  ## Module lujvo list renders to.
   WIDTH = 100  ## Column limit of Article X.1, which rendered lines keep.
@@ -53,36 +51,18 @@ const
 
 #[ Reading ]#
 
-proc readSource*(name: string): Source =
-  ## Read list file `name` from directory environment names, else from package's directory.
-  let
-    directory = getEnv(KEY_LISTS, DIRECTORY_LISTS)
-    path = directory / name
-  if not fileExists(path):
-    quit "List is missing; install `lojban-common` or set `" & KEY_LISTS & "`; got `" & path &
-        "`.", 1
-  let (output, code) = execCmdEx("sha256sum " & quoteShell(path))
-  if code != 0: quit "Digest could not be read; got `" & output.strip & "`.", 1
-  Source(text: readFile(path).replace("\r", ""), digest: output.splitWhitespace[0])
-
-
 func field(line: string, first, last: int): string =
   ## Read columns `first` .. `last`, counted from one as `entries.nim` tables them, trimmed.
   if line.len < first: return ""
   line[first - 1 .. min(last, line.len) - 1].strip
 
 
-func toEntriesGismu*(text: string): seq[EntryGismu] =
-  ## Read every entry of `gismu.txt`, header line skipped.
+func toEntriesGismu*(text: string): seq[EntryGismuEnglish] =
+  ## Read English of every entry of `gismu.txt`, header line skipped; rafsi left to parser.
   for line in text.splitLines[1 .. ^1]:
     if line.strip.len == 0: continue
-    var rafsi: seq[string]
-    for (first, last) in [(8, 10), (12, 14), (16, 19)]:
-      let one = line.field(first, last)
-      if one.len > 0: rafsi.add one
-    result.add EntryGismu(
+    result.add EntryGismuEnglish(
       word: line.field(2, 6),
-      rafsi: rafsi,
       keyword: line.field(21, 40),
       hint: line.field(42, 61),
       definition: line.field(63, 158),
@@ -194,21 +174,21 @@ func toHeader(purpose, source: string, digest: string, extra: openArray[string])
   result.add ""
 
 
-func toModuleGismu*(entries: openArray[EntryGismu], digest: string): string =
-  ## Render entries of gismu list as committed module text.
+func toModuleGismu*(entries: openArray[EntryGismuEnglish], digest: string): string =
+  ## Render English of entries of gismu list as committed module text.
   var lines = toHeader(
-    "Hold gismu list of Logical Language Group as typed entries, one per line of list.",
+    "Hold English of gismu list of Logical Language Group as typed entries, one per line.",
     "gismu.txt",
     digest,
-    ["Entries keep order of list: gismu and cmavo carrying rafsi, alphabetically."],
+    [
+      "Entries keep order of list: gismu and cmavo carrying rafsi, alphabetically.",
+      "Rafsi of each word stand in gismu list of `lojban_parser`, entry for entry.",
+    ],
   )
   lines.add "const LIST_GISMU* = ["
   for entry in entries:
-    var rafsi: seq[string]
-    for one in entry.rafsi: rafsi.add toLiteral(one)
-    lines.add "  EntryGismu("
+    lines.add "  EntryGismuEnglish("
     lines.add "    word: " & toLiteral(entry.word) & ","
-    lines.add "    rafsi: @[" & rafsi.join(", ") & "],"
     lines.add toLinesWrapped("    keyword: ", entry.keyword, ",")
     lines.add toLinesWrapped("    hint: ", entry.hint, ",")
     lines.add toLinesWrapped("    definition: ", entry.definition, ",")

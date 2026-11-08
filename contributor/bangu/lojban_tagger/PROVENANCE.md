@@ -15,10 +15,11 @@ English word that leads to one. The system uses only the compound and parsable n
 
 The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, first edition, 1997,
 from the Logical Language Group. The text used is the edition at `lojban.github.io/cll`, which is
-the first edition with errata. Chapter 3 gives the consonant clusters, and chapter 4 gives the
-shapes of words and the algorithm that makes a lujvo. Chapters 5, 7, 9, 12 and 15 tell which words
-the cmavo SE, NAhE, NA, NU, `ke`, `ke'e`, `bo`, `kei` and `co` bind. The suites carry the names of
-those chapters, and each assertion cites its section or example.
+the first edition with errata. This project reads each word through `lojban_parser`, which
+replicates chapters 3 and 4, and the fold of chapters 5, 7, 9, 12 and 15. This project replicates
+the tag of 4.5 and 4.11 itself. It also replicates what a group does to a run of tanru units in
+chapters 5, 12 and 15. The suites carry the names of those chapters, and each assertion cites its
+section or example.
 
 The Architect ruled that the project writes the name of the language in lowercase, as lojban.
 In lojban, a capital letter marks irregular stress (CLL 3.9), and the name has none. A title
@@ -26,58 +27,39 @@ keeps its capital, as The Complete Lojban Language does. So do the word lists, t
 group, and a name in code such as `Notation.Lojban`, whose case Article V sets. Verified by
 `suites/test_suggestions.nim`, for each line of the report and of the system text.
 
-## Clusters and forms
+## Reading through lojban_parser
 
-**The rules of CLL are data, and the judgements derive from them.** `clusters.nim` holds the four
-rules of 3.6 as sets, and builds the table of permissible pairs at compile time. The 48 initial
-pairs of 3.7 are a list, because no rule derives them. A static check holds that each initial
-pair is also a permissible pair, so the two sections can never disagree in the code. Verified by
-`suites/test_clusters.nim`, over every pair and every triple of the seventeen consonants.
+**This project reads lojban through `lojban_parser`, and holds no copy of its modules.**
+`lojban_parser` reads any lojban that the rules of CLL admit, as the Architect ruled. The letters,
+the forms and the lujvo stand there, with the words and rafsi of the gismu list. So do the reader
+of a word, its rendering and the fold of a tanru, each with its suite. This project holds the
+policy of a tag, the English of the gismu list, the whole lujvo list, and the runs that search
+ranks by. The Architect ruled that the tagger alone restricts words.
 
-**Forms use the notation of CLL as names.** `Form.Cvc`, `Form.Ccvcv` and the rest spell the C and
-V notation of 4.6, because Article III.1 makes canonical notation the spelling. A form judges
-letters alone and never asks the dictionary. So morphology and vocabulary stay separate, and
-each one is testable alone.
+**Each module that reads lojban imports the umbrella of the parser by relative path.**
+`curator/audit` imports knoller the same way. Both projects stand at one commit of this
+repository, so no package and no line of the lock pin the parser. Rejected: copies of the
+modules, which Article II.9 refuses where no constraint forces them. Rejected: an import of each
+module that the tagger needs, which compiles faster (Figures) but reaches past the umbrella that
+the parser presents.
 
-CV'V and the diphthong CVV share `Form.Cvv`, since both take every
-position that CVV takes. Only the score of 4.12 tells them apart, and it reads the apostrophe off
-the letters. Verified by `suites/test_forms.nim`.
+Cost: the umbrella compiles every module of the parser, the grammar among them, so each compile
+from an empty cache takes longer (Figures). Cost: a change to the parser compiles no suite of this
+project, because `koch` selects only the importers of knoller (#832). So a change there can break
+this project, and no run turns red until this project next changes. Verified by hand on
+2026-11-07 with `nim r koch list-projects`: a probe commit that changes one byte of a source of the
+parser plans `lojban_parser` alone.
 
-## Lujvo
+**This project names its own types apart from those of the parser.** The parser exports `Reading`
+and `Refusal` for one word, so the types of a tag take the qualifier `Tag`, as `ReadingTag` and
+`RefusalTag`. The parser also exports `EntryGismu` from a module named `entries`, as this project
+does, and no qualifier tells two modules of one name apart. So the English entry of the gismu
+list is `EntryGismuEnglish`.
 
-**The join is the algorithm of 4.11, and the split is its inverse.** `joinRafsi` applies steps 4a
-to 4c, then the tosmabru test of step 5. `splitLujvo` tries every segmentation that the forms
-allow, and keeps only those that `joinRafsi` joins back into the word, letter for letter. So a
-split followed by a join is the identity by construction. 4.11 says that a hyphen the algorithm
-does not require is illegal, so this comparison is the whole test of hyphens.
-
-Rejected: a check
-of each junction by local rules, which would state the algorithm twice. Verified by
-`suites/test_lujvo.nim`, over the vectors of 4.5, 4.6, 4.11, 4.12 and 4.13, and over a seeded
-sample of random rafsi sequences.
-
-**The tosmabru test reads its joints up to the first `y`.** The joints are the consonant pairs at
-the junctions of the leading CVC rafsi, and in the medial pair of a final CVCCV. Where all of them
-are initial pairs, one `y` goes after the first rafsi. No example of CLL exercises step 5, so the
-suite holds it to lujvo of the list that need it, such as `xasymabru` and `cibylajyterkruca`. A
-reading over the whole word fails on four of those words, so the list supports this reading.
-Verified by `suites/test_lujvo.nim`.
-
-**A junction that forms `ndj`, `ndz`, `ntc` or `nts` takes `y`.** 4.11 step 4b names only an
-impermissible pair, and CLL says nothing of these triples at a junction. 3.7 forbids them in
-every word but a name, and the list writes `kanydzu` and `penydjuxa'a`. The list holds no lujvo
-with one of these triples unbroken. Cost: the join holds one rule more than 4.11 states. Verified
-by `suites/test_lujvo.nim`, in the suite `Internal: Convention`.
-
-**The score is that of 4.12, and the lowest score is the preferred form.** The suite holds the
-scores of 4.12 and 4.13 exactly. CLL misstates one part of one score: 4.13 gives `gerzda` a V of 3,
-but the word has two vowels. The total that CLL gives, 5878, is right, and the suite holds the
-total. Verified by `suites/test_lujvo.nim`.
-
-**The split agrees with strict reference parsers.** On 41 words read by camxes, vlatai, the
-`is_valid_lujvo` of jbofihe and latkerlo-jvotci on 2026-10-24, the split finds one lujvo exactly
-where CLL makes one. Where the strict tools disagree, as on `saircli` and `branlatu`, this project
-follows CLL. Verified by `suites/test_references.nim`, which cites the deciding rule of each word.
+Nim reads `LETTERS` and the `Letters` of `std/strutils` as one name, so the code writes
+`lojban_parser.LETTERS`. Verified by hand with Nim 2.4.0, 2026-11-07: an `EntryGismu` of this
+project, and an unqualified `LETTERS`, each stop the compile as an ambiguous identifier. `Reading`
+and `Refusal` fall under the same rule (expected).
 
 ## Word lists
 
@@ -88,17 +70,17 @@ It asks that a derived work state the facts of its derivation and give the addre
 The header of each rendered module does both.
 
 **The lists are committed as typed Nim, and a converter renders them.** `nim r tools/build.nim
-lists` reads both files, checks the SHA-256 of each against a pin in `tools/lists.nim`, and
+lists` reads both files, checks the SHA-256 of each against a pin of `lojban_parser`, and
 writes `src/lojban_tagger/lists/gismu.nim` and `lujvo.nim`. Each is a module of typed constants,
 and its header names that verb, as the rule of data asks (CONTRIBUTOR.md, Data). The compiler
 checks each field against the types of `entries.nim`.
 
 **A field that every line holds takes `{.requiresInit.}`, so an entry that lacks one does not
 compile.** The marked fields are the word, keyword and definition of a gismu, and the word,
-notation, parts and gloss of a lujvo. The rafsi and the hint are empty by right, so they stay
-unmarked. The zero value of the notation is `Lojban`, so an entry with no notation would claim
-the notation of lojban for an English line. Verified by `suites/test_lists.nim`, which holds that
-an entry without each marked field does not compile.
+notation, parts and gloss of a lujvo. The hint is empty by right, so it stays unmarked. The zero
+value of the notation is `Lojban`, so an entry with no notation would claim the notation of
+lojban for an English line. Verified by `suites/test_lists.nim`, which holds that an entry
+without each marked field does not compile.
 
 Cost: `mapIt` declares `var it`, so it does not compile over an entry, and the suites read fields
 by `collect` or a loop. Each seq of entries gives the warnings `UnsafeSetLen` and `UnsafeDefault`
@@ -108,22 +90,33 @@ error, so the suites use `newSeqOfCap`. Verified by hand with `nim check` of the
 
 Rejected: the text files as they are, because the checker
 reads no `.txt`. Rejected: JSON, which the Architect asked to stop using by default, and which
-checks no field. Rejected: a read of the package at compile time, because the CI job `test`
-installs no package. The Architect ruled that the lists change seldom, so a commit is right.
+checks no field. Rejected: a read of the package at compile time, which would make every build
+need the package. The Architect ruled that the lists change seldom, so a commit is right.
 
 **A daily `head` verb watches the source.** It renders both modules again from the installed
 package, and compares the digests and the text with what is committed. Where Debian moves a list,
 `head` fails, and `lists` refuses until somebody moves the pin. Verified by hand on this machine,
-2026-10-24: `head` exits 0 against `lojban-common` 1.5+dfsg.1-4.
+2026-11-07: `head` exits 0 against `lojban-common` 1.5+dfsg.1-4.
 
 **The converter keeps the fields that tagging, search and `read` use.** From `gismu.txt` it keeps
-the word, the rafsi, the keyword, the hint and the definition, by fixed columns. The columns were
+the word, the keyword, the hint and the definition, by fixed columns. The columns were
 measured over every line, and no character falls between two fields. From `lujvo.txt` it keeps the
 word, the parts and the gloss. It drops the textbook lesson, the frequency, the notes and the
 place structures.
 
 Cost: a verb that wants one of those changes the converter and both lists in
 one commit. Verified by `suites/test_lists.nim`, on lines copied from both files.
+
+**The gismu list keeps the English of each word, and the parser keeps its rafsi.** The Architect
+ruled that the parser keeps the rafsi of each gismu and cmavo, and that the English stays here.
+Both converters keep each line of one `gismu.txt`, so entry `i` here is the English of `Word(i)`
+of the parser. The converter takes the reader of each source and both pins from
+`lojban_parser/tools/lists.nim`, so one pin serves both lists.
+
+A static check of `english.nim` holds both lists to one order, word for word. So a list that moves
+on one side alone stops the build. Verified by hand on 2026-11-07 with Nim 2.4.0, on a copy outside
+the tree. One changed word stops the compile at the check of each entry. One dropped entry stops it
+at the check of the count.
 
 **Rendering keeps every character of each field.** A string too long for one line is split after
 a run of spaces, so its pieces join back into the field exactly. The definitions of `co'a`,
@@ -152,81 +145,46 @@ renders the form that 4.12 scores lowest, and the first in order of choice on a 
 A cmavo alone is no tag. Neither is a lujvo that ends in a cmavo, because 4.11 step 2 ends a tanru
 in a gismu. A tag with no gismu would match every entity. Verified by `suites/test_tags.nim`.
 
-**The reader folds case and drops commas, and it refuses `h`.** A capital marks irregular stress,
-which no brivla carries (3.1, 3.9). A comma marks a syllable break, and no two words differ by a
-comma alone (3.3). 3.3 also says that the letter `h` does not stand for the apostrophe. The fold of
-case is a choice of this project, since CLL writes no capital in a brivla. Verified by
+**This project folds case and drops commas before the parser reads, and it refuses `h`.** A
+capital marks irregular stress, which no brivla carries (3.1, 3.9). A comma marks a syllable
+break, and no two words differ by a comma alone (3.3). 3.3 also says that the letter `h` does not
+stand for the apostrophe.
+
+The fold of case is a choice of this project, since CLL writes no capital in a brivla. A space or
+a period inside the text is refused as a letter, because a tag is one word. Verified by
 `suites/test_tags.nim`.
 
-**A refusal says why.** The reader refuses with one reason from `Refusal`, and a detail that ends
-in the offending text. Where the rafsi are known and only the hyphens are wrong, the detail is
-the form that 4.11 gives, as `patyta'a` for `patta'a`.
+**The reader of the parser reads each word, and a tag takes words of the list alone.** The reader
+reads by the rules of CLL alone, whether a list holds the word or not. This project then refuses
+a gismu that the list lacks as `Unlisted`, and a rafsi that no list assigns as `Rafsi`. It refuses
+the 4-letter rafsi that several gismu share as `Ambiguous`. It refuses a cmavo of the list, and a
+lujvo that ends in a cmavo, as `Cmavo`. Verified by `suites/test_tags.nim`.
+
+**A refusal says why.** Each refusal is one reason from `RefusalTag`, with a detail that ends in
+the offending text. The reader may refuse the text, or read it as no gismu nor lujvo. Then the
+refusal is `Hyphen` where its letters split into rafsi that 4.11 joins with other hyphens. The
+detail is then the form that 4.11 gives, as `patyta'a` for `patta'a`, and `ro'inre'o` for
+`ro'ire'o`, which 4.6 reads as two cmavo. Every other such text is refused as `Shape`.
+
+Cost: the class that the reader gives goes unnamed in the report, as for a cmavo that no list
+holds, a cmene or a fu'ivla. Verified by `suites/test_tags.nim` and `suites/test_commands.nim`.
 
 ## What cmavo bind
 
-**A tag folds into tanru units, and each tanru unit is one word with the cmavo that bind it.** The
-grammar of CLL gives that name (21.2, rule 152), and the Architect ruled that the project uses it
-(#768). SE binds the next brivla or "equivalent unit" (9.4), and NAhE binds close to its brivla
-(15.4). A NU rafsi modifies the next tanru unit alone (12.12). Every other cmavo binds nothing, and
-stands as a tanru unit of its own where it does not only group. Verified by
-`suites/test_tanru_units.nim`.
+**A tag folds into tanru units by the fold of `lojban_parser`.** A tanru unit is one word with the
+cmavo that bind it, as the grammar of CLL names it (21.2, rule 152). The Architect ruled that the
+project uses that name (#768). The provenance of the parser holds each rule of the fold, and the
+suite `test_tanru_units.nim` of `lojban_parser` holds them. Search ranks by these units (Index and
+search), so each cost of the fold shows in the rank:
 
-**`na` binds the whole tag.** 15.2 says that negation with `na` applies to an entire bridi, and
-not to just part of a selbri. So an odd count of `na`, wherever it stands, folds as one `na` before
-a group of the whole tag. An even count folds as none, because adjacent negations cancel out
-(15.2). Verified by `suites/test_tanru_units.nim`.
-
-**A run of SE that binds one tanru unit composes into one conversion.** The inner conversion applies
-first (9.4), so `te se ciska` puts the third place of `ciska` first. Two `se` cancel (12.11), so
-`se se ciska` folds to `ciska`. Other cmavo keep their order against the conversions. Verified by
-`suites/test_tanru_units.nim`, over every chain of up to four SE, and by `se na'e se ciska`.
-
-**A group of one tanru unit is that tanru unit.** `ke` opens a group, and `ke'e` or the end of the
-tag closes it (5.5). A cmavo before `ke` binds the whole group, as in `selkemdzukla` (12.11). So
-`se ke ciska` folds to `se ciska`, and `selkemci'avei` holds no tanru unit `se ciska`. Verified by
-`suites/test_tanru_units.nim`, over every chain of up to two of `se`, `te`, `na'e` and `nu`.
-
-**A cmavo that only groups drops.** The rank reads no grouping that no cmavo binds. So the `ke` and
-`ke'e` of a group that no cmavo binds drop, and `kemdatnyvei` folds as `datnyvei`. A group whose
-cmavo cancel binds nothing, so it drops too. `bo` only groups (5.3), and drops. Verified by
-`suites/test_tanru_units.nim`.
-
-**`kei` closes an abstraction.** Rule 152 of 21.2 ends a NU with `kei`. So the fold reads `kei` as
-a `ke'e` that closes a `ke` after its NU, and `nu citka gasnu kei klama` abstracts two tanru
-units. After one tanru unit, the group holds only that tanru unit, as 12.13 says of
-`nunctikezgau`. A `kei` with no NU before it drops. Verified by `suites/test_tanru_units.nim`.
-
-**No group holds `co`.** 5.8 puts a `ke'e` before `co` for each group that is open there. Cost:
-`co` inverts the order of a tanru (5.8), but the fold keeps the written order. So the rank does not
-see a run across `co`. Verified by `suites/test_tanru_units.nim`.
-
-**A lujvo leaves `ke` out in two places that CLL names.** Two SE in a row read as SE `ke` SE
-(12.11). So the first one converts the rest of the tag, up to a `ke'e` that closes it. A `ke'e`
-that closes nothing implies a `ke` after the nearest run of binding cmavo with two tanru units or
-more after it (15.4). With no such run, the `ke'e` only groups, and it drops. Verified by
-`suites/test_tanru_units.nim`.
-
-Cost: the fold reads every tag as a lujvo, so a tag read from tanru text follows 12.11 too. Cost: in
-a run of `na'e se` before such a group, both cmavo bind the group, where 15.4 names the negation
-alone.
-
-**CLL spells one example with a rafsi that the list gives to another gismu.** 15.4 writes
-`na'e ke sutra cadzu ke'e klama` as `nalsu'adzuke'ekla`. The list gives `su'a` to `stura`, and
-gives `sutra` only `sut`, so the reader reads that example as `stura`. The suite holds the shape of
-the example, which the choice of gismu does not change. Verified by `suites/test_tanru_units.nim`,
-Section 15.4.
-
-13.13 makes a lujvo with `pev` figurative as a whole, and 5.13 gives a tense the whole bridi. The
-fold binds nothing to them. Cost: `pevyselci'a` ranks for `selci'a`, although `pe'a` makes it
-figurative. Verified by `suites/test_tanru_units.nim` and `suites/test_search.nim`.
-
-Rule 152 of 21.2 makes a number and its MOI one tanru unit. The fold keeps each digit as a tanru
-unit of its own. Cost: the term `pavmomci'a` ranks the tag `relpavmomci'a`, whose number is 21,
-not 1. Verified by hand with `tagger find` on 2026-10-25. That such tags are rare is assumed.
-
-JAI binds as SE does (5.11), but the list gives `jai` no rafsi, so no tag holds it. CLL 12.12 gives
-`jai` the rafsi `jax`, which the list does not hold. A static check in `tanru_units.nim` fails the
-build where the list gains `jai`.
+- `co` inverts the order of a tanru (5.8), but the fold keeps the written order. So the rank does
+  not see a run across `co`. Verified by `suites/test_search.nim`.
+- The fold reads every tag as a lujvo, so a tag read from tanru text follows 12.11 too.
+- 13.13 makes a lujvo with `pev` figurative as a whole, and the fold binds nothing to `pe'a`. So
+  `pevyselci'a` ranks for `selci'a`. Verified by `suites/test_search.nim`.
+- Rule 152 of 21.2 makes a number and its MOI one tanru unit. The fold keeps each digit as a tanru
+  unit of its own. So the term `pavmomci'a` ranks the tag `relpavmomci'a`, whose number is
+  21, not 1. Verified by hand with `tagger find` on 2026-11-07. That such tags are rare is assumed.
 
 ## English
 
@@ -305,8 +263,11 @@ terms. Each of its two tiers keeps the order of the index. Verified by `suites/t
 A group that cmavo bind changes a run inside it in three ways, and then the run does not rank. A
 run that ends where the group ends holds its head, which a conversion converts (5.11) and an
 abstraction turns to an event (12.12). A negation denies every part of the group (15.4). A group
-that the run leaves open must end where the run ends. Verified by `suites/test_tanru_units.nim` and
-`suites/test_search.nim`.
+that the run leaves open must end where the run ends. Verified by
+`suites/test_runs.nim` and `suites/test_search.nim`.
+
+The runs read the role of each cmavo from its selma'o in the cmavo list of the parser. KE opens a
+group, KEhE closes it, and NA and NAhE deny. Verified by `suites/test_runs.nim`.
 
 So the term `selci'avei` does not rank `selselci'avei`, which 12.11 reads as the converse of
 `selci'avei`. The term `selci'a` does not rank `selkemveiselci'a` or `nalkemselci'avei`. A modifier
@@ -742,6 +703,12 @@ The stub compiles with `-d:ssl`, because the transport suite drives TLS against 
 `openssl` makes for each run. The stub also needs `protoc` to compile, because the suite of
 exchanges encodes the worked example with it.
 
+**Laws of form and split over the words of the lujvo list stand in the suites of the parser.** They
+read the installed `lujvo.txt`, which holds each word of the committed list, and skip by name where
+it is absent (IX.9). CI installs `lojban-common`, so CI runs them. Cost: without the package, a run
+holds the committed lujvo list to no rule of form. It holds each word only to the reader, in
+`suites/test_english.nim`.
+
 ## Toolchain
 
 **The compiler is pinned exactly**: `requires "nim == 2.4.0"` in `lojban_tagger.nimble`, as every
@@ -794,72 +761,79 @@ sockets through that client, so `send` dials an https host without its one closi
 the tunnel names. Verified by hand with Nim 2.4.0, 2026-11-04: where the client dials
 `localhost.`, it refuses a leaf that names `localhost`.
 
-**`constructRafsiByForm` of `test_lujvo.nim` reads the form of each 4-letter rafsi before `add`.**
-The compile-time virtual machine (VM) of the pin evaluates the element of `add` before its
-destination. It also moves a local, `let` or `var`, at its last use (#786). So
-`result[stem.form.get].add stem` would move `stem` first, and then read the form of an empty
-string.
-
-Rejected: the form of `stem` read inside the call of `add`, which stops the compile of the stub.
-The form of an empty string is `none`, and `get` of `none` stops the compile on the pin, so that
-compile holds the order. Cost: an index that gives a value for an empty string can build a wrong
-table with no error (#786). Verified by hand with Nim 2.4.0, 2026-11-03: the rejected call stops
-the compile of the stub at `constructRafsiByForm`, with `UnpackDefect`. Verified by hand with Nim
-2.2.12 and 2.4.0, 2026-11-03: the suites pass under both, and both build the same table.
-
 ## Figures
 
 Each figure below comes from an Intel Xeon at 2.10 GHz with four cores. The runs of each pair of
 compilers alternate between Nim 2.2.12 and the pin, 2.4.0, so both share the load of the machine.
+The machine runs at two speeds, and a process can change speed while it runs. So a figure of one
+process can move by up to 1.6 times between runs. Measured on 2026-11-07, with each search call
+pinned by `taskset` to each of the four cores in turn.
 
-The figures of `tagger` are from 2026-11-03, at `5b6b694a`, which holds no `suggester`. The
-release build of `suggester` and the suites are from 2026-11-04, at `76f9c5a7`. Each of them
-names the same runs at `c1ba9c19` too, before the port of exchange files to Protocol Buffers.
-The figures of search are from 2026-11-05, at `b385c5e7`, against the conjunction at `5da0aaf1`.
-Each other figure names its date, and comes from Nim 2.2.12.
+Each figure names its commit and its date. The figures of 2026-11-07 come from copies of the tree
+outside it, and each reads the inputs of `4b5b9ff1`, byte for byte. Each one names its pair at
+`c753a1e4`, taken in the same rounds. At that commit, this project read lojban through its own
+copies of the modules of the parser. Where a figure names no compiler, it comes from Nim 2.2.12 in
+release.
 
+- **Umbrella of the parser.** A probe that imports the umbrella and reads one word compiled in
+  2.23 s to 2.71 s from an empty cache, on Nim 2.4.0, 2026-11-07. A probe that imports four
+  modules of the parser alone compiled in 1.69 s to 1.97 s. Each took four runs, alternating.
 - **Compile of the English index.** Each part of each lujvo line is found by binary search. The
-  front end of `nim check app/tagger.nim` took 4.4 s and 4.1 s on 2.4.0, against 2.1 s and 2.5 s
-  on 2.2.12. A copy that maps the whole list again for each part never finishes on either
-  compiler. The compile-time VM stops it at its limit of 10,000,000 iterations, so that form is a
-  trap, not a slower choice.
-- **Release build.** `nim c -f -d:release app/tagger.nim` took between 6.3 s and 6.7 s on 2.4.0,
-  against between 4.7 s and 5.1 s on 2.2.12, over three runs each.
-- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 12.1 s
-  and 12.6 s on 2.4.0, against 10.2 s and 11.5 s on 2.2.12, from an empty cache. The binary holds
-  2,586,584 bytes on 2.4.0, against 2,516,680 bytes on 2.2.12. At `c1ba9c19`, the build took
-  12.3 s and 10.4 s on 2.4.0, against 8.8 s and 8.5 s on 2.2.12. Its binary held 2,515,600 bytes
-  on 2.4.0, against 2,445,752 bytes on 2.2.12. So the port adds 70,984 bytes on 2.4.0, and
-  70,928 bytes on 2.2.12.
+  front end of `nim check app/tagger.nim` took 6.18 s and 6.61 s on 2.4.0, against 3.58 s and
+  3.70 s on 2.2.12, from an empty cache. At `c753a1e4`, it took 4.32 s and 4.96 s on 2.4.0, against
+  2.82 s and 3.30 s on 2.2.12.
+  A copy that maps the whole list again for each part never finishes on either compiler. The
+  compile-time VM stops it at its limit of 10,000,000 iterations, so that form is a trap, not a
+  slower choice.
+- **Release build.** `nim c -f -d:release app/tagger.nim` took between 8.94 s and 10.41 s on 2.4.0,
+  against between 6.98 s and 7.47 s on 2.2.12, over three runs each. At `c753a1e4`, it took between
+  7.91 s and 8.59 s on 2.4.0, against between 5.74 s and 6.61 s on 2.2.12.
+- **Release build of `suggester`.** `nim c -f -d:release -d:ssl app/suggester.nim` took 14.81 s
+  and 15.38 s on 2.4.0, against 12.43 s and 12.63 s on 2.2.12, from an empty cache. The binary
+  holds 2,172,080 bytes on 2.4.0, against 2,106,520 bytes on 2.2.12. At `c753a1e4`, the build took
+  14.40 s and 13.48 s on 2.4.0, against 11.92 s and 12.17 s on 2.2.12. Its binary held 2,586,592
+  bytes on 2.4.0, against 2,516,672 bytes on 2.2.12.
 - **Suites.** `nim c -r -d:ssl -d:testing tests/test_suites.nim` compiled and ran every suite in
-  88.7 s and 86.7 s on 2.4.0, against 86.0 s and 78.8 s on 2.2.12. Each compiler ran it twice
+  95.75 s and 91.94 s on 2.4.0, against 81.61 s and 83.70 s on 2.2.12. Each compiler ran it twice
   from an empty cache. The suite of `suggester` builds its own binary inside that time. At
-  `c1ba9c19`, the same runs took 88.3 s and 81.7 s on 2.4.0, against 75.8 s and 74.7 s on 2.2.12.
+  `c753a1e4`, the same runs took 96.22 s and 93.04 s on 2.4.0, against 87.32 s and 88.96 s on
+  2.2.12.
 - **Text given as tag.** A probe drew 200 random lujvo for each count of words, as `poolLujvo` of
-  `suites/test_suggestions.nim` draws them, with seed 0. In release over two runs on 2026-10-31,
-  `readTagGiven` took 7.5 µs and 7.2 µs for six words, and 30.0 µs and 28.5 µs for 18. To list
-  and print the gismu and the report took 0.73 µs and 0.74 µs for six words, and 1.84 µs twice
-  for 18.
-- **Render of a tag.** `$` of six words of `bloti` took 2,151 µs in release and 14,697 µs in
-  debug, the best of three runs each, on 2026-10-29. Seven words took 8,241 µs and 68,105 µs.
-  Each word of `bloti`, `condi` and `rotsu` has four choices of rafsi, the most that a probe of
-  the list found.
+  `suites/test_suggestions.nim` draws them with seed 0. It kept each lujvo of 64 bytes or fewer
+  that reads as a tag, and drew again for each that it dropped. Over two runs, `readTagGiven` took
+  6.74 µs and 8.74 µs for six words, and 31.00 µs and 25.76 µs for 18. At `c753a1e4`, it took
+  6.02 µs and 6.12 µs for six words, and 30.92 µs and 26.51 µs for 18.
+- **Report of text given.** Over the same lujvo, to list the gismu and write the report into a
+  string took 0.61 µs and 0.82 µs for six words. For 18 words it took 2.08 µs and 1.55 µs. At
+  `c753a1e4`, it took 0.60 µs and 0.85 µs for six words, and 2.41 µs and 2.21 µs for 18.
+- **Render of a tag.** `$` of six words of `bloti` took 1,715 µs in release and 21,093 µs in
+  debug, the best of three calls each. Seven words took 8,006 µs and 93,557 µs. Two more runs gave
+  2,677 µs and 2,798 µs for six words in release. At `c753a1e4`, the same took 1,888 µs and
+  14,423 µs, and 8,085 µs and 62,864 µs. Each word of `bloti`, `condi` and `rotsu` has four
+  choices of rafsi, the most that a probe of the list found.
 - **Render of a long lujvo.** Each tag takes the first words of the reading of `TEXT_GIVEN_LONG`
-  in `suites/test_suggestions.nim`, closed by `mlatu`, its last word. In release over two runs on
-  2026-10-30, `$` took 0.22 s and 0.30 s for 11 words. For 12 words it took 0.64 s and 0.76 s.
-- **Reading of a long word.** `readTag` of `cizy` 128 times, then `ci'a`, which make 516 letters,
-  took 694 µs and 977 µs in release over two runs on 2026-10-30.
+  in `suites/test_suggestions.nim`, closed by `mlatu`, its last word. Over two runs, `$` took
+  0.22 s and 0.23 s for 11 words, and 0.68 s and 0.94 s for 12 words. At `c753a1e4`, it took
+  0.27 s and 0.21 s, and 0.83 s and 0.63 s.
+- **Reading of a long word.** `readTag` of `cizy` 128 times, then `ci'a`, reads 516 letters. Over
+  two runs, it took 977 µs and 954 µs after the render of a long lujvo in the same process.
+  Alone in its process, it took 1,163 µs and 1,239 µs. At `c753a1e4`, it took 981 µs and 669 µs
+  after the render, and 1,207 µs and 6,140 µs alone.
 - **Dot segments of a redirect.** For a location of 128 KiB of `/a` segments, `redirect` took 2 ms
   and 3 ms in release over two runs on 2026-10-30. A walk that slices its input took 4,828 ms and
   4,501 ms on the same input.
 - **Search.** A seeded probe outside the tree wrote an index of 10,000 entities, each with one to
-  eight random gismu. In release, `find` of three gismu took 4.57 ms on 2.4.0 and 5.00 ms on
-  2.2.12, and the conjunction took 4.27 ms and 4.36 ms. Each figure is the median of six rounds,
-  and each round keeps the least of 21 calls. A `find` that gathers the gismu of an entity for
-  each term took 12.10 ms and 13.06 ms.
-- **Search through `tagger`.** Over 21 runs on the same index, the least time of the whole
-  `tagger find` rose by at most 1.2 ms, from about 31 ms. Its median moved inside the spread of
-  the runs.
+  eight random gismu. Each figure is the third least of six rounds, and each round keeps the least
+  of 21 calls. On 2026-11-05 in release, `find` of three gismu at `b385c5e7` took 4.57 ms on 2.4.0
+  and 5.00 ms on 2.2.12. The conjunction at `5da0aaf1` took 4.27 ms and 4.36 ms. A `find` that
+  gathers the gismu of an entity for each term took 12.10 ms and 13.06 ms.
+- **Search on 2026-11-07.** Over the same index, `find` at `ac664f8e` took 4.39 ms and 4.41 ms on
+  2.2.12, in two sets. It took 4.23 ms and 4.21 ms on 2.4.0. At `c753a1e4`, it took 6.36 ms and
+  5.88 ms on 2.2.12, and 4.05 ms and 4.98 ms on 2.4.0. The two speeds of the machine spread these
+  figures wider than the two commits differ.
+- **Search through `tagger`.** On 2026-11-05, over 21 runs on the same index, the least time of the
+  whole `tagger find` was about 31 ms. At `b385c5e7` it rose by at most 1.2 ms against `5da0aaf1`.
+  Its median moved inside the spread of the runs.
 - Reading is unmeasured. The tool reads and writes the whole index for each command.
 
 ## Open questions
@@ -873,7 +847,7 @@ Each other figure names its date, and comes from Nim 2.2.12.
   lujvo glosses. A query that holds such a term still shows what its other terms find (Index and
   search).
 - **The cap of six words on text given.** The tool counts the words after `readTag`, so the cap
-  saves about 1 µs at most on Nim 2.2.12 (Figures). It refuses a lujvo of seven words or more,
+  saves about 1.5 µs at most on Nim 2.2.12 (Figures). It refuses a lujvo of seven words or more,
   whose gismu the tool could print. To lift it would change no other path.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a tag

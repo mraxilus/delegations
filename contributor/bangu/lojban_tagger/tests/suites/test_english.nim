@@ -16,7 +16,9 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_tagger/[dictionary, english, entries, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ../../src/lojban_tagger/[english, entries, tags]
 import ../../src/lojban_tagger/lists/[gismu, lujvo]
 
 
@@ -56,6 +58,15 @@ const
     ##   `mum`, `xav`, `nar` name `re`, `na'e` where list gives them to `mu`, `xa`, `na`.
     ##   `kamfe'idzeseltru` and `kamnakydzeseltru` list two parts in other order than spelled.
     ##   `nildicka'ukezyjdika` spells `kez`, rafsi of `kei`, which parts leave out.
+  FLOOR_PARTS_KEYWORDS = 600
+    ## Least lines of English notation whose parts are all keywords, which exact law reads.
+  LUJVO_KEYWORDS_ODD = ["natmyrgu'e", "tolmipygau"]
+    ## Lines of English notation whose parts are all keywords, yet whose word reads as no tag of
+    ##   those keywords in order; list data, not reader.
+    ##   `natmyrgu'e` holds `r` after `natmy`, which fits no rafsi; `natmygu'e` would read.
+    ##   `tolmipygau` holds `tol` of cmavo `to'e`, which its parts leave out.
+  DIGITS = ["bi", "ci", "mu", "no", "pa", "re", "so", "vo", "xa", "ze"]
+    ## Ten digits 4.6 counts, in order of list.
 
 
 func tanru(text: string): seq[Word] =
@@ -78,6 +89,21 @@ func indexLujvo(word: string): int =
 func normalEnglish(text: string): string =
   ## Fold English to lowercase, hyphen to space, so keyword and part of list compare.
   text.toLowerAscii.replace('-', ' ')
+
+
+func constructKeywords(): seq[string] {.compileTime.} =
+  ## Build keyword of every gismu of list, lowercase and sorted, for binary search.
+  for entry in LIST_GISMU:
+    if entry.word.isGismu: result.add entry.keyword.toLowerAscii
+  result.sort
+
+
+const KEYWORDS = constructKeywords()  ## Keyword of every gismu, lowercase, sorted.
+
+
+func isKeyword(part: string): bool =
+  ## Test English part equals keyword of some gismu, case aside.
+  KEYWORDS.binarySearch(part.toLowerAscii) >= 0
 
 
 proc drawMeanings(): seq[(Meaning, seq[string])] =
@@ -263,8 +289,33 @@ suite "Internal: English":
       if words.len == 0: continue
       check (words.len == line.parts.len) ==
           (line.word notin LUJVO_PARTS_ODD)  # one gismu per English part, list slips aside
-      if words.mapIt(it.entry.keyword.normalEnglish) == line.parts.mapIt(it.normalEnglish):
+      if words.mapIt(it.english.keyword.normalEnglish) == line.parts.mapIt(it.normalEnglish):
         inc count_keyword
       inc count_read
     check count_read >= FLOOR_READ_ENGLISH  # guard kept most lines
     check count_keyword >= FLOOR_KEYWORD  # reader finds gismu parts name by keyword
+
+
+  test "Corpus in English notation reads as listed keywords":
+    var
+      count = 0
+      failing: seq[string]
+    for line in LIST_LUJVO:  # every line, exhaustive
+      if line.notation != Notation.English or not line.parts.allIt(it.isKeyword): continue
+      inc count
+      let reading = line.word.readTag
+      var is_read = reading.is_tag and reading.tag.words.len == line.parts.len
+      if is_read:
+        for i, found in reading.tag.words:
+          is_read = is_read and cmpIgnoreCase(found.english.keyword, line.parts[i]) == 0
+      if not is_read: failing.add line.word
+    check count >= FLOOR_PARTS_KEYWORDS  # Article IX.3, guard leaves enough lines
+    check failing.sorted == LUJVO_KEYWORDS_ODD.sorted  # law: tag holds keywords list writes
+
+
+  test "Definitions name ten digits, as CLL 4.6 counts them":
+    var digits: seq[string]
+    for entry in LIST_GISMU:  # every entry, exhaustive
+      if entry.definition.startsWith("digit/number: ") and entry.definition.endsWith(" (digit)"):
+        digits.add entry.word
+    check digits == DIGITS  # 4.6, "ten common numerical digits"

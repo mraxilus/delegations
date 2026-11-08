@@ -60,7 +60,9 @@ from std/unicode import Rune, toUTF8
 
 import ../../app/exchanges
 from ../../app/suggester {.all.} import BYTES_FIELDS_MAX, COUNT_REDIRECTS_MAX, USAGE
-import ../../src/lojban_tagger/[dictionary, suggestions, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ../../src/lojban_tagger/[suggestions, tags]
 import ../../tools/examples
 from ../../tools/examples {.all.} import DIRECTORY_EXAMPLES
 

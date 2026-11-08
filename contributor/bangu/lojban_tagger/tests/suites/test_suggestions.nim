@@ -25,7 +25,9 @@ when compileOption("profiler"):
 
 import std/[algorithm, json, options, random, sequtils, strutils, sugar, unittest]
 
-import ../../src/lojban_tagger/[commands, dictionary, forms, lujvo, suggestions {.all.}, tags]
+import ../../../lojban_parser/src/lojban_parser
+
+import ../../src/lojban_tagger/[commands, english, suggestions {.all.}, tags]
 import ../../src/lojban_tagger/lists/gismu
 import ../../tools/examples
 
@@ -214,14 +216,14 @@ const
     var rafsi: seq[(Word, string)]
     for i, entry in LIST_GISMU:
       if not entry.word.isGismu: continue
-      for one in entry.rafsi:
+      for one in Word(i).entry.rafsi:
         if one.form.get == Form.Cvc: rafsi.add (Word(i), one)
     rafsi
   RAFSI_FINAL = block:
     ## Every CCV and CVV rafsi of list: short rafsi 4.11 lets end lujvo, steps 1 and 2.
     var rafsi: seq[string]
-    for entry in LIST_GISMU:
-      for one in entry.rafsi:
+    for i in 0 ..< LIST_GISMU.len:
+      for one in Word(i).entry.rafsi:
         if one.form.get in {Form.Ccv, Form.Cvv}: rafsi.add one
     rafsi
   ROWS_WELL_FORMED = [
@@ -1960,7 +1962,7 @@ suite "Internal: Request":
 
   test "system text lists each gismu with keyword and hint, no cmavo, and states rulings and cap":
     for w in WORDS_GISMU:  # 1342 gismu, exhaustive
-      let entry = w.entry
+      let entry = w.english
       var line = entry.word & ": " & entry.keyword
       if entry.hint.len > 0: line.add "; " & entry.hint
       check ("\n" & line & "\n") in PROMPT_SYSTEM  # system text grounds model in list
@@ -3041,8 +3043,8 @@ suite "Internal: Report":
   test "report and system text write lojban in lowercase, outside list data":
     let passage = Passage(text: "x", url: URL_SUITE, count_bytes: 70_000, count_repaired: 1,
         is_cut: true, is_page_cut: true)
-    for refusal in Refusal:  # 8 members, exhaustive
-      let reason = Reading(is_tag: false, text: "x", refusal: refusal, detail: "x").explain
+    for refusal in RefusalTag:  # 8 members, exhaustive
+      let reason = ReadingTag(is_tag: false, text: "x", refusal: refusal, detail: "x").explain
       check "Lojban" notin reason  # ruling of Architect, 2026-11-03: reader wrote `Lojban letters`
       for failure in Failure:  # 10 members, exhaustive
         for position in [none(int), some(1)]:  # whole, and element of answer
@@ -3059,7 +3061,7 @@ suite "Internal: Report":
     check "Lojban" notin toReportGiven("x", tanru("ciska"))  # report of text given
     var listed: seq[string]
     for w in WORDS_GISMU:  # 1342 gismu, exhaustive
-      let entry = w.entry
+      let entry = w.english
       listed.add entry.word & ": " & entry.keyword
       if entry.hint.len > 0: listed[^1].add "; " & entry.hint
     for line in PROMPT_SYSTEM.splitLines:  # every line; system text wrote `root word of Lojban`

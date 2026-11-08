@@ -1,11 +1,12 @@
 # lojban_tagger
 
 A system that tags anything with lojban words and finds it again. A tag is a gismu or a lujvo.
-The parser reduces each tag to the words of its tanru, and a search matches on its gismu. So a
-search for one gismu finds every thing whose tag holds that gismu, alone or inside a lujvo. A
-search for a lujvo with a cmavo, such as `selci'a`, lists first each thing whose tag holds it,
-net of the cmavo around it. So `selci'avei` comes first, but `selselci'a` does not, because its
-two `se` cancel.
+The project `lojban_parser` reads each tag, and this project reduces it to the words of its tanru.
+
+A search matches on its gismu. So a search for one gismu finds every thing whose tag holds that
+gismu, alone or inside a lujvo. A search for a lujvo with a cmavo, such as `selci'a`, lists first
+each thing whose tag holds it, net of the cmavo around it. So `selci'avei` comes first, but
+`selselci'a` does not, because its two `se` cancel.
 
 A search can also use an English word. The keywords of the gismu list and the glosses of the
 lujvo list lead that word to gismu.
@@ -25,14 +26,17 @@ In this example, four spaces stand for the tab that separates a name from its ta
 
 ## Authority
 
-The project replicates the morphology of The Complete Lojban Language (CLL), by John Woldemar
-Cowan, first edition, 1997. Chapter 3 gives the consonant clusters. Chapter 4 gives the shapes
-of words, the rafsi, and the algorithms that make and score a lujvo. Chapters 5, 7, 9, 12 and 15
-tell which words the cmavo of a tag bind. The suites carry the names of those chapters, and each
-assertion cites its section.
+The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, first edition, 1997.
+This project reads each word through the project `lojban_parser`, which replicates the morphology
+of chapters 3 and 4. It also folds a tanru by the rules of chapters 5, 7, 9, 12 and 15. This
+project replicates the tag of 4.5 and 4.11 itself. It also replicates how a group in chapters 5,
+12 and 15 changes a run of tanru units, which a search ranks by. The suites carry the names of
+those chapters, and each assertion cites its section.
 
 The word lists come from the Logical Language Group, which placed them in the public domain.
-The project commits them as typed Nim modules under `src/lojban_tagger/lists/`.
+This project commits the English of the gismu list, and the whole lujvo list, as typed Nim
+modules under `src/lojban_tagger/lists/`. The words and rafsi of the gismu list stand in
+`lojban_parser`, as the Architect ruled.
 
 ## Build and test
 
@@ -161,7 +165,9 @@ The project publishes no page.
 
 ## Status
 
-The parser, the index, the search and the command line work, and the suites hold them to CLL.
+The tags, the index, the search and the command line work, and the suites hold them to CLL. They
+read each word through `lojban_parser`.
+
 `suggester` works on recorded replies. On 2026-10-31, it read a live page,
 `https://www.gutenberg.org/ebooks/11`, through the HTTP proxy of a sandbox with TLS. A loopback
 stand-in for the Messages API took its request. It has read no live reply of a service yet.

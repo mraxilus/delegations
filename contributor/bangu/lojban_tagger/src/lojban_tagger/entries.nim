@@ -7,7 +7,6 @@
 ##   | Field       | Source                | Columns, or field of `:`-separated line      |
 ##   |-------------|-----------------------|----------------------------------------------|
 ##   | word        | `gismu.txt`           | 2 .. 6                                       |
-##   | rafsi       | `gismu.txt`           | 8 .. 10, 12 .. 14, 16 .. 19; empty slots out |
 ##   | keyword     | `gismu.txt`           | 21 .. 40                                     |
 ##   | hint        | `gismu.txt`           | 42 .. 61                                     |
 ##   | definition  | `gismu.txt`           | 63 .. 158                                    |
@@ -22,11 +21,14 @@
 ##   Fields kept are those tagging and search read, or `read` verb shows; textbook lesson,
 ##     frequency, notes and place structure of lujvo are left out.
 ##     Cost: verb wanting one of those changes converter and both lists in one commit.
-##   Rafsi keep order of their columns, which is CVC, CCV, then CVV slot; form is derived from
-##     letters again where read (`forms.nim`), so order carries no meaning here.
+##   Gismu list keeps word and English: rafsi of each word stand in gismu list of
+##     `lojban_parser`, which reads them by rules of CLL, and English gives meaning, never
+##     validity, so it stays here, as Architect ruled. Type takes qualifier `English`, since
+##     parser exports its own `EntryGismu` from module of this name, which no qualifier tells
+##     apart. Word stays beside English, so `english.nim` holds both lists to one order.
 ##   Fields every line holds take `{.requiresInit.}` (CONTRIBUTOR.md, Data), so constructor
 ##     lacking one fails compile, naming entry: word, keyword and definition of gismu; word,
-##     notation, parts and gloss of lujvo. Rafsi and hint are empty by right, so stay unmarked.
+##     notation, parts and gloss of lujvo. Hint is empty by right, so stays unmarked.
 ##     Notation needs it most: its zero value `Lojban` would read English line as lojban.
 ##     Cost: `var` of entry needs value, and `mapIt` over entries fails compile, since it
 ##       declares `var it`; suites read fields by loop or `collect`. Seq of entries warns
@@ -37,9 +39,9 @@
 
 
 type
-  EntryGismu* = object  ## Define one line of gismu list: gismu, or cmavo carrying rafsi.
+  EntryGismuEnglish* = object
+    ## Define English of one line of gismu list: gismu, or cmavo carrying rafsi.
     word* {.requiresInit.}: string  ## Word itself; five letters for gismu, fewer for cmavo.
-    rafsi*: seq[string]  ## Short rafsi assigned to word, none to three.
     keyword* {.requiresInit.}: string  ## English gloss keyword.
     hint*: string  ## Second English hint word, often empty.
     definition* {.requiresInit.}: string  ## Place structure in English, i.e. `x1 is ... x2`.
