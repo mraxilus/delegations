@@ -94,6 +94,27 @@ terminal of selma'o ZOI (Example 19.57). The grammar stops `mi klama le` at its 
 description of `le` waits for its selbri. `r.tree` holds the tree of the named rules of 21.1 over
 the terminals.
 
+The verb `javascript` compiles the reader of prose, with the whole parser, into one script of
+JavaScript. The script gives one function, `parseLojban`, which returns what `readText` gives as a
+plain object. After `nim r tools/build.nim javascript`, node reads the script:
+
+```text
+$ node -e 'const { parseLojban } = require("./build/lojban_parser.js")
+for (const text of ["mi klama le zarci", "mi klama le zarc"]) {
+  const r = parseLojban(text)
+  if (r.is_read) console.log(text + ":", r.occurrences.map((o) => o.text + " " +
+    (o.reading.selmaho ?? o.reading.kind)).join(", "), "| tree", r.tree.rule)
+  else console.log(text + ":", r.refusal, "at byte", r.start + ", in", r.rule + ", after",
+    r.stream.occurrences.map((o) => o.text).join(" "))
+}'
+mi klama le zarci: mi KOhA, klama Gismu, le LE, zarci Gismu | tree text
+mi klama le zarc: Grammar at byte 12, in sumti-6 97, after mi klama le zarc
+```
+
+A refused text also carries `stream`, which `readStream` gives, so the caller sees the words before
+the refusal. A page loads the same file with a `script` element, and calls `parseLojban` as a
+global.
+
 ## Authority
 
 The project replicates The Complete Lojban Language (CLL), by John Woldemar Cowan, from the
@@ -140,6 +161,7 @@ nim r tools/build.nim cll <directory>             # write examples of CLL again 
 nim r tools/build.nim tatoeba <export>            # write sample of Tatoeba again from its export
 nim r tools/build.nim wikipedia <directory>       # write articles of Wikipedia again from answers
 nim r tools/build.nim translations                # fetch Alice and Oz, which suites then read
+nim r tools/build.nim javascript                  # compile parser to build/lojban_parser.js
 nim r tools/build.nim system                      # print packages verbs and suites need
 ```
 
@@ -151,6 +173,10 @@ The verb `cll` needs `sha256sum`, and the pages of CLL 1.1 saved in one director
 own name. The verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decompressed. The verb
 `wikipedia` needs `sha256sum` and the saved answers of the API of the Wikipedia. The verb
 `translations` needs `curl` and `sha256sum`, and the verb `system` declares both.
+
+The suite `tests/test_javascript.nim` runs on the JavaScript target of the compiler, and needs
+node to run. The verb `system` declares node as the package `nodejs`. The verb `javascript` needs
+the compiler alone.
 
 ## Pages
 
@@ -167,6 +193,9 @@ CLL 4.7 and 4.8.
 It reads a stream of text into its words, with its pauses, commas and capitals, and it splits
 words that a text writes together. It reads prose by the grammar of 21.1, after quotation,
 erasure, `zei`, BAhE, `bu` and indicators act on the words.
+
+The verb `javascript` builds the reader of prose for a page or for node. A suite holds that build
+to the verdicts that the native build gives the sample of Tatoeba.
 
 The suites hold each part to CLL. The parser reads each numbered example of CLL 1.1 that the
 book calls grammatical, with the lines that hold notation left out. The book shows ten examples in
