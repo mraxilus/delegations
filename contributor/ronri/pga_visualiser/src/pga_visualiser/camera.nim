@@ -980,8 +980,8 @@ func travelToward*(camera: var Camera, factor: float, anchor: Position, floor_re
   ## Carry eye along its own line to `anchor`, scaling what separates them by `factor`.
   ##   Whatever stands at `anchor` keeps its pixel: sight direction never moves, and eye stays
   ##   on its line to `anchor`, so point on view ray is still on it afterwards.
-  ##   Floor is reach caller names, object's own drawn radius where object stands there,
-  ##   so wheel stops at its surface rather than carrying eye through it.
+  ##   Floor is reach caller names, where point stands there its fill, so wheel stops where
+  ##   nearer shows nothing more of it; see `picking.AnchorZoom`.
   ##     Floor never pushes eye out: it applies only where eye is already further out.
   ##   Separation from pivot is left to caller, which knows anchor's own depth.
   let

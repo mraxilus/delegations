@@ -2498,6 +2498,94 @@ suite "Interaction":
     check depth < 1.01 * grip.fingers[0].floor
 
 
+  test "pinches about a small planet come in to where it fills, past lines drawn through it":
+    # Case as found (repository issue 745, on its fix): on phone, pinch after pinch about
+    #   Earth stopped 0.08 off it. Each finger took line through Earth, which passed nearest
+    #   finger's ray just short of it, and line's floor was its radius, 0.08 unless chosen.
+    const
+      (wide, tall) = (412, 915)
+      radius = 4.0e-5
+    let aspect = float(wide) / float(tall)
+    var camera = cameraAround(ORIGIN, 0.5, Direction(x: 10, y: 4, z: 3))
+    let (_, frame) = camera.sight
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "planet", Ink.Cobalt, radius = radius)
+    # Each line runs out across frame and toward eye, so beside planet it stands nearer.
+    for side in [1.0, -1.0]:
+      let toward = ORIGIN + side * frame.axis_right - 0.3 * frame.forward
+      scene.addObject(ORIGIN.toMultivector ∧ toward.toMultivector, "line", Ink.Jade)
+    for _ in 1..10:
+      let
+        at = projectToScreen(
+          camera.initMatrixViewProjection(aspect), wide, tall, ORIGIN.toView(camera.originView)
+        )
+        landed = [ScreenPosition(x: at.x - 30.0, y: at.y), ScreenPosition(x: at.x + 30.0, y: at.y)]
+      var grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+      for step in 1..10:
+        grip.carryGrip(
+          camera, movedAbout(landed, 1.0 + 0.4 * float(step), 0.0, ScreenPosition()), wide, tall
+        )
+    let
+      filling = radius * float(tall) / (
+        tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
+      )
+      reach = norm(camera.sight[0] - ORIGIN.toView(camera.originView))
+    check reach >= filling * (1.0 - 1.0e-6)
+    check reach < 1.05 * filling
+
+
+  test "two fingers landed beside a near point, past a fingertip of it, zoom in to it":
+    # Case as found (repository issue 745, on its fix): on phone, pinch with fingers more
+    #   than 72 px off solar system took star behind each finger, and flew eye out past it.
+    #   Pinch lands each finger beside object reader means, so finger reaches two fingertips.
+    const (wide, tall) = (412, 915)
+    let
+      opened = cameraAround(ORIGIN, 10.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      (eye, frame) = opened.sight
+      middle = projectToScreen(opened.initMatrixViewProjection(aspect), wide, tall, ORIGIN)
+      landed = [
+        ScreenPosition(x: middle.x - 50.0, y: middle.y + 90.0),
+        ScreenPosition(x: middle.x + 50.0, y: middle.y + 90.0),
+      ]
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "near", Ink.Rose, radius = 0.001)
+    # Star 10 px beside each finger, 10,000 times deeper than near point; point 103 px off.
+    for finger in landed:
+      let heading = opened.headingThrough(
+        frame, wide, tall, ScreenPosition(x: finger.x + 10.0, y: finger.y)
+      )
+      scene.addObject((eye + 1.0e5 * heading).toMultivector, "star", Ink.Jade, radius = 0.001)
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+    for step in 1..10:
+      grip.carryGrip(
+        camera, movedAbout(landed, 1.0 + 0.15 * float(step), 0.0, ScreenPosition()), wide, tall
+      )
+    let reach = norm(camera.sight[0] - ORIGIN.toView(camera.originView))
+    check reach < 10.0
+    check reach > 1.0
+
+
   test "two fingers pinched in over empty sky zoom out every time, about what is drawn there":
     # Fault: zoom out shrank objects from under fingers, so next pinch landed on sky, which
     #   grip held still, and no pinch after it moved anything. Pivot follows depth held, so

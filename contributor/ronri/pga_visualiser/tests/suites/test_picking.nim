@@ -67,6 +67,130 @@ suite "Picking":
     check anchor_free.isSome and abs(anchor_free.get.at.z + 7.0 * eye.z) < 1.0e-6
 
 
+  test "a zoom with nothing selected takes the object nearest the eye within a fingertip's reach":
+    # Ruling on repository issue 745: objects crowding one spot part as zoom comes in, so
+    #   zoom takes nearest eye of them. Click still takes nearest pointer.
+    #   Star 10 pixels off pointer and 1000 units deep; point 50 pixels off and 10 deep.
+    let
+      camera = cameraFacingOrigin()
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+      scale = camera.drawExtentFor(height_pick, 0.0)
+      (eye, frame) = camera.sight
+    proc placeOff(pixels, depth: float): Position =
+      ## Place point `pixels` right of centre on screen, `depth` along sight.
+      eye + depth * camera.headingThrough(
+        frame, width_pick, height_pick, ScreenPosition(x: centre.x + pixels, y: centre.y)
+      )
+    var crowd = initScene()
+    let
+      star = crowd.addObject(placeOff(10.0, 1000.0).toMultivector, "star", Ink.Rose, radius = 0.001)
+      near = crowd.addObject(placeOff(50.0, 10.0).toMultivector, "near", Ink.Jade, radius = 0.001)
+    check pickNearest(
+      crowd, camera, scale, view_projection, width_pick, height_pick, centre
+    ) == some(star)
+    check pickNearest(
+      crowd, camera, scale, view_projection, width_pick, height_pick, centre, rank = Rank.Eye
+    ) == some(near)
+    let anchor_free = anchorZoomAt(
+      crowd, camera, scale, view_projection, width_pick, height_pick, centre, is_banded = false
+    )
+    check anchor_free.isSome
+    check norm(anchor_free.get.at - placeOff(50.0, 10.0).toView(scale.origin)) < 1.0e-9
+    # Disc pointer lies inside still beats nearer point beside it: that body is under pointer.
+    var under = initScene()
+    let planet =
+      under.addObject(placeOff(0.0, 100.0).toMultivector, "planet", Ink.Cobalt, radius = 5.0)
+    under.addObject(placeOff(50.0, 10.0).toMultivector, "near", Ink.Jade, radius = 0.001)
+    check pickNearest(
+      under, camera, scale, view_projection, width_pick, height_pick, centre, rank = Rank.Eye
+    ) == some(planet)
+    # Nothing within fingertip's reach: zoom has nothing to come in to.
+    var apart = initScene()
+    apart.addObject(placeOff(100.0, 10.0).toMultivector, "apart", Ink.Jade, radius = 0.001)
+    check anchorZoomAt(
+      apart, camera, scale, view_projection, width_pick, height_pick, centre, is_banded = false
+    ).isNone
+
+
+  test "a zoom from home in the largest demo takes Sol at the middle, and a lone far star aside":
+    # Case as found (repository issue 745): pointer at middle of 1200 by 900 frame at home.
+    #   Star 4.26 million units out stands 30 px off middle, Sol 53 px off and 19.3 deep.
+    #   At (1020, 180) only star 2.04 million units out stands within reach, and zoom takes
+    #   it: solar system is not special.
+    # Largest arrangement; reduced-capacity build cannot hold it and skips whole.
+    if OBJECTS_MAX < countObjects(ScaleOrrery.high):
+      skip()
+    else:
+      var catalogue = initScene()
+      addOrrery(catalogue, ScaleOrrery.high)
+      let
+        home = initCameraDefault(1200, 900)
+        view_home = home.initMatrixViewProjection(1200 / 900)
+        scale_home = home.drawExtentFor(900, 0.0)
+        middle = ScreenPosition(x: 600.0, y: 450.0, depth: 0.0)
+        taken = pickNearest(
+          catalogue, home, scale_home, view_home, 1200, 900, middle, rank = Rank.Eye
+        )
+        anchor_home = anchorZoomAt(
+          catalogue, home, scale_home, view_home, 1200, 900, middle, is_banded = false
+        )
+      check taken.isSome and catalogue.labelAt(taken.get).toText == "sol"
+      check anchor_home.isSome
+      check depthAlongSight(view_home, anchor_home.get.at) < home.distance + 1.0
+      let
+        aside = ScreenPosition(x: 1020.0, y: 180.0, depth: 0.0)
+        star = pickNearest(
+          catalogue, home, scale_home, view_home, 1200, 900, aside, rank = Rank.Eye
+        )
+        anchor_aside = anchorZoomAt(
+          catalogue, home, scale_home, view_home, 1200, 900, aside, is_banded = false
+        )
+      check star.isSome and catalogue.labelAt(star.get).toText == "L  763-63"
+      check anchor_aside.isSome
+      check depthAlongSight(view_home, anchor_aside.get.at) > 1.0e6
+
+
+  test "a zoom takes a point over a line through it, and a near line over a far star":
+    # Fault (repository issue 745, on its fix): line through planet passed nearest finger's
+    #   ray just short of planet, so depth alone took line, and pinch about Earth stopped at
+    #   line's radius, 0.08 off it.
+    #   Objects at about one depth stand at one place, and there point beats line, as click
+    #   ranks them. Far star is not at that place, so near line still beats it.
+    let
+      camera = cameraFacingOrigin()
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+      scale = camera.drawExtentFor(height_pick, 0.0)
+      (eye, frame) = camera.sight
+    proc placeOff(pixels, depth: float): Position =
+      ## Place point `pixels` right of centre on screen, `depth` along sight.
+      eye + depth * camera.headingThrough(
+        frame, width_pick, height_pick, ScreenPosition(x: centre.x + pixels, y: centre.y)
+      )
+    # Line runs from planet out to 30 px right, 1 unit nearer eye: under pointer there,
+    #   it stands at depth 9, and planet beside it at 10.
+    var through = initScene()
+    let
+      planet = through.addObject(
+        placeOff(0.0, 10.0).toMultivector, "planet", Ink.Cobalt, radius = 0.001
+      )
+      beside = ScreenPosition(x: centre.x + 30.0, y: centre.y)
+    through.addObject(
+      placeOff(0.0, 10.0).toMultivector ∧ placeOff(30.0, 9.0).toMultivector, "line", Ink.Jade
+    )
+    check pickNearest(
+      through, camera, scale, view_projection, width_pick, height_pick, beside, rank = Rank.Eye
+    ) == some(planet)
+    # Line across pointer at depth 10, star 10 px off pointer at depth 1000.
+    var apart = initScene()
+    let line = apart.addObject(
+      placeOff(-200.0, 10.0).toMultivector ∧ placeOff(200.0, 10.0).toMultivector, "line", Ink.Jade
+    )
+    apart.addObject(placeOff(10.0, 1000.0).toMultivector, "star", Ink.Rose, radius = 0.001)
+    check pickNearest(
+      apart, camera, scale, view_projection, width_pick, height_pick, centre, rank = Rank.Eye
+    ) == some(line)
+
+
   test "a star is picked where it is drawn, however far out the horizon stands":
     # Fault: horizon past `1 / TOLERANCE_ABS` read star's place as none, and pick passed it
     #   over. Camera 1e8 out stands horizon 1.8e9 off eye.

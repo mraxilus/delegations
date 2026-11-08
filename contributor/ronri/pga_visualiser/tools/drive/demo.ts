@@ -514,24 +514,49 @@ export async function driveLineCrossing(
 }
 
 
-/** Drive six wheel notches at centre and off centre, and assert what each keeps.
+/** Drive six wheel notches from home, at centre and off centre, and assert what each keeps.
  *
- *  Far clip used to sit at fixed multiple of orbit distance whatever scene held, so notches in
- *  at demo's centre left almost no points drawn; and zoom anchored on whatever star was under
- *  pointer, so notches off centre carried pivot several opening distances away. Off-centre
- *  spot sits right of middle, clear of drawer standing open on left.
+ *  Starts from home with nothing selected, so each run zooms from same view in free flight.
+ *    Focuses canvas first: Home is canvas's key, and `loadDemo` leaves focus on menu's button.
+ *  At centre, zoom takes object nearest eye within fingertip's reach, Sol at home, and not star
+ *    behind it nearer pointer (repository issue 745): target stays near home's, and far clip
+ *    still draws field behind.
+ *  Off centre, only star millions of units out stands within reach, and zoom comes in to it:
+ *    solar system is not special (repository issue 745). Spot sits right of middle, clear of
+ *    drawer standing open on left.
  */
 export async function driveZoomLoaded(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    nimSelectClear();
+    document.getElementById('gl')?.focus();
+  });
+  await page.keyboard.press('Home');
   await settleCamera(page);
-  const opened = await page.evaluate(
-    () => ({ distance: nimCameraDistance(), pivot: Array.from(nimCameraPivot()) }),
-  );
+  const opened = await page.evaluate(() => ({
+    distance: nimCameraDistance(), pivot: Array.from(nimCameraPivot()),
+    eye: Array.from(nimCameraEye()),
+  }));
   const box = await page.evaluate(() => {
     const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
     return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
   });
+  // Point drawn nearest off-centre spot, read at home before any notch.
+  //   Behind eye is drawn nowhere, though its pixel lands anywhere; third value says which.
+  const aside = await page.evaluate(({ x, y }) => {
+    let best = { label: '', pixels: Infinity, at: [] as number[] };
+    for (const one of nimSceneHandles()) {
+      if (nimObjectKindWord(one) !== 'point') continue;
+      const screen = nimAnchorScreen(one, window.innerWidth, window.innerHeight);
+      if (screen.length < 3 || screen[2] !== 1) continue;
+      const pixels = Math.hypot((screen[0] ?? 0) - x, (screen[1] ?? 0) - y);
+      if (pixels < best.pixels) {
+        best = { label: nimObjectLabel(one), pixels, at: Array.from(nimAnchorWorld(one)) };
+      }
+    }
+    return best;
+  }, { x: box.x + 0.85 * box.width, y: box.y + 0.2 * box.height });
   const zoomAt = async (across: number, down: number): Promise<{
-    distance: number; pivot: number[]; points: number;
+    distance: number; pivot: number[]; eye: number[]; points: number;
   }> => {
     await page.mouse.move(box.x + across * box.width, box.y + down * box.height);
     for (let i = 0; i < 6; i += 1) {
@@ -541,7 +566,7 @@ export async function driveZoomLoaded(page: Page): Promise<void> {
     await settleCamera(page);
     const after = await page.evaluate(() => ({
       distance: nimCameraDistance(), pivot: Array.from(nimCameraPivot()),
-      points: count_phase['points'] ?? 0,
+      eye: Array.from(nimCameraEye()), points: count_phase['points'] ?? 0,
     }));
     await page.evaluate(() => document.getElementById('gl')?.focus());
     await page.keyboard.press('Home');
@@ -551,19 +576,24 @@ export async function driveZoomLoaded(page: Page): Promise<void> {
 
   const centre = await zoomAt(0.5, 0.5);
   const corner = await zoomAt(0.85, 0.2);
-  const carried = Math.hypot(
-    ...corner.pivot.map((v, i) => v - (opened.pivot[i] ?? 0)),
+  const carriedTo = (after: { pivot: number[] }): number => Math.hypot(
+    ...after.pivot.map((v, i) => v - (opened.pivot[i] ?? 0)),
   );
   report(
-    'six notches in at the centre keep the field drawn behind the near stars',
-    centre.distance < 0.1 * opened.distance && centre.points >= 200,
-    `${centre.points} points drawn at distance ${centre.distance.toFixed(1)}, ` +
-      `from ${opened.distance.toFixed(1)}`,
+    'six notches in at the centre from home come to the object nearest the eye, field drawn',
+    carriedTo(centre) <= 1.0 * opened.distance && centre.distance < 0.1 * opened.distance &&
+      centre.points >= 200,
+    `target carried ${carriedTo(centre).toFixed(1)} units, ${centre.points} points drawn at ` +
+      `distance ${centre.distance.toFixed(1)}, from ${opened.distance.toFixed(1)}`,
   );
+  const offStar = (eye: number[]): number => Math.hypot(
+    ...eye.map((v, i) => v - (aside.at[i] ?? 0)),
+  );
+  const nearer = offStar(opened.eye) / offStar(corner.eye);
   report(
-    'six notches in off-centre keep the target within one opening distance',
-    carried <= 1.0 * opened.distance,
-    `target carried ${carried.toFixed(0)} units over an opening distance of ` +
-      `${opened.distance.toFixed(0)}`,
+    'six notches in off-centre come in to the star beside the pointer, however far it stands',
+    nearer > 10,
+    `eye ${nearer.toFixed(2)} times nearer ${aside.label}, ${aside.pixels.toFixed(1)} px off ` +
+      `the pointer and ${(offStar(opened.eye) / 1e6).toFixed(2)} million units from the eye`,
   );
 }
