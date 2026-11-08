@@ -12,7 +12,7 @@ cmd: "nim $target --hints:off -d:testing -d:nodejs $options $file"
 ##   Runs apart from `test_suites.nim`, since bridge reaches JavaScript objects through
 ##     `std/jsffi`, which native build cannot compile.
 ##   Define `nodejs` makes failed check exit 1; without it, node exits 0 whatever fails, and
-##     testament reads pass.
+##     testament reads pass. So compile stops where define is missing.
 ##   Abort define is left out, so every sentence whose verdict moved reports in one run.
 
 {.experimental: "strictFuncs".}
@@ -24,6 +24,11 @@ import std/[jsffi, strutils, unittest]
 
 import ../src/javascript/bridge
 import ./sample_tatoeba/sentences
+
+
+static: doAssert defined(nodejs), "Suite needs define `nodejs`, else failed check exits 0; " &
+    "got `" & $defined(nodejs) & "`."
+
 
 
 let MODULE_NODE {.nodecl, importc: "module".}: JsObject
