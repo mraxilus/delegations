@@ -17,6 +17,7 @@
 ##   | stream       | text read as its words, with pause and stress        | 3.3, 3.9, 4.9    |
 ##   | grammar      | words read by formal grammar into tree of its rules  | 21.1             |
 ##   | prose        | text: quotation, erasure, marks, then grammar        | 19.9-16, 21.1    |
+##   | nif          | tree of text as module of NIF data format            | 21.1             |
 ##   |--------------|------------------------------------------------------|------------------|
 ##
 ##   Order of compile-time type bootstrapping:
@@ -47,10 +48,10 @@ when compileOption("profiler"):
   import std/nimprof
 
 import ./lojban_parser/[
-  clusters, dictionary, entries, forms, fuhivla, grammar, lujvo, prose, selmaho, stream, tanru,
-  tanru_units,
+  clusters, dictionary, entries, forms, fuhivla, grammar, lujvo, nif, prose, selmaho, stream,
+  tanru, tanru_units,
 ]
 
 export
-  clusters, dictionary, entries, forms, fuhivla, grammar, lujvo, prose, selmaho, stream, tanru,
-  tanru_units
+  clusters, dictionary, entries, forms, fuhivla, grammar, lujvo, nif, prose, selmaho, stream,
+  tanru, tanru_units
