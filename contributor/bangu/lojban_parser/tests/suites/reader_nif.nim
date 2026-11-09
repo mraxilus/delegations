@@ -142,7 +142,7 @@ func readLiteral(reader: var Reader): string =
         (ord(c) >= ord(' ') and c notin CONTROLS):
       result.add c
       inc reader.at
-    else: reader.refuse("byte string literal holds")
+    else: reader.refuse("byte that string literal holds")
 
 
 func readNode(reader: var Reader): NodeNif =

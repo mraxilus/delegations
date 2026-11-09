@@ -47,7 +47,8 @@ const
     VERSION & "\n(a \"\\\\\")",  # Escape sequences, `\\` is no escape
     VERSION & "\n(a \"\\2d\")",  # Escape sequences, hex digits of upper case alone
     VERSION & "\n(a \"\x01\")",  # String literals, byte below 32 is no visible char
-    VERSION & "\n(a \"b)",  # String literals, `"` closes literal
+    VERSION & "\n(a \"b)",  # Control characters, `)` takes escape in string literal
+    VERSION & "\n(a \"b",  # String literals, `"` closes literal
     VERSION & "\n(a \"b\"",  # Compound nodes, `)` closes node
     VERSION & "\n(KOhA@2,5 0)",  # Line information, which writer writes none of
     VERSION & "\n(a \"b\"#c#)",  # Comments, which writer writes none of
