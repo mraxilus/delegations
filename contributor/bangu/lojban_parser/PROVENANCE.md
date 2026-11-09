@@ -591,6 +591,19 @@ for it, and no other. Rejected: each bound for each symbol, whose cost grew with
 span on a long text. Verified by hand with a probe built on the pin, 2026-11-06. Each tree and
 refusal of the CLL corpus, of Tatoeba and of five articles of the lojban Wikipedia is unchanged.
 
+**The nonterminal before the last symbol tries only a bound from which the last symbol ends the
+span.** A partial at any other bound never reaches the end. Rejected: each bound where that
+nonterminal completes, whose dead children each copied closures as long as their span. With an
+opener left open, that work grew faster than the text. Verified by hand with a probe built on the
+pin, 2026-11-09. Each tree of the CLL corpus, of Tatoeba and of Wikipedia is unchanged, as is each
+tree of four long texts that join the articles.
+
+**The node build adds each node in place.** A named rule adds one node that holds its children,
+and a helper adds its own nodes for the rule that holds it. So no node copies a subtree. Rejected:
+a build that returned the nodes of each child for its parent to copy. Its time grew with the square
+of the text, since rule 4 nests one level for each paragraph. Verified by `suites/test_grammar.nim`,
+which holds the trees of chapter 5 and of Section 18.16.
+
 **A refusal names the place where every derivation stops, and the rule that stops there.** The
 rule is that of the item that waits there, has read a terminal, and started last. So `mi klama le`
 is refused at its end, in `sumti-6 97`. Verified by `suites/test_grammar.nim`, in the suite
@@ -856,7 +869,7 @@ where no sentence adds a feature.
 
 Cost: a greedy cover is not the least cover, which is NP-hard to find. Rejected: a seeded random
 sample, which ruling D4 c replaces. Rejected: the whole export on each push, which costs about
-57 s of a debug build.
+36 s of a debug build.
 
 The sample holds 234 sentences, which reach 599 features. They reach 86 of the 88 named rules of
 21.1. No sentence of the export reaches `rp-expression` or `rp-operand`, and
@@ -1043,11 +1056,11 @@ the build that ships, and a failed check still names its line. Rejected: `-d:dan
 removes each check of bounds and range from the build that a caller runs. Cost: an exception
 names no line of Nim (expected). The verb takes the compiler that compiled the driver.
 
-**Cost: the script reads about 32 times slower than the native build, on the thread of its
-caller.** So a page waits while it reads. A text of the sample takes 19 ms at the median, against
-0.56 ms and 0.57 ms native. The longest, of 771 bytes, takes 633 ms, against 21 ms and 28 ms
-native. Figures, JavaScript build, gives the method. At `5fa0c368`, the verb writes 718,891 bytes,
-and prints the size.
+**Cost: the script reads about 37 times slower than the native build, on the thread of its
+caller.** So a page waits while it reads. A text of the sample takes 14 ms and 18 ms at the
+median, against 0.41 ms and 0.38 ms native. The longest takes 395 ms and 420 ms, against 11 ms and
+13 ms native. Figures, JavaScript build, gives the method. At `b5c522c7`, the verb writes 722,167
+bytes, and prints the size.
 
 ## Tests
 
@@ -1180,6 +1193,37 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
 - **JavaScript build, one text.** After a first pass over the sample, the script read each text
   once, in one run. It took 19 ms at the median, and 633 ms at most. The native build took 0.56 ms
   and 0.57 ms at the median, and 21 ms and 28 ms at most, in two runs.
+- **Dead bounds.** On 2026-11-09, on the pin, one program timed `readGrammar` on the terminals of
+  long texts. Each text joins readable paragraphs of the committed articles of Wikipedia with
+  `ni'o`. The program was built with `-d:release`, once at `9e5811c8` and once at `b5c522c7`, and
+  the runs alternate. Each figure is the median of three reads in one run. A text of 4,029
+  terminals took 0.856 s and 0.875 s before, against 0.365 s and 0.437 s after.
+- **Dead bounds, longer texts.** In the same runs, a text of 7,758 terminals took 1.976 s and
+  2.279 s, against 1.020 s and 1.014 s. The same 4,029 terminals as one paragraph took 4.696 s
+  and 4.817 s, against 0.389 s and 0.310 s. A text of 7,760 terminals whose `tu'e` stays open took
+  24.9 s and 26.4 s, against 2.39 s and 2.38 s, in one read each.
+- **Suites, dead bounds.** On 2026-11-09, with both pages of the translations present, the stub
+  ran every suite in 49.8 s and 51.4 s at `9e5811c8`. At `b5c522c7`, it ran them in 34.8 s and
+  35.3 s. Without the pages, as on the runner, it ran in 26.7 s and 27.2 s, against 23.6 s and
+  23.6 s. The suite of the corpus, built alone in the same way, ran in 5.1 s and 5.4 s, against
+  3.7 s and 3.7 s. The runs alternate.
+- **Corpus by stage, dead bounds.** On 2026-11-09, a program built on the pin with `nim c`, with
+  no optimisation, read each row of the corpus. It read them through `readStream` in 0.10 s and
+  0.12 s at `9e5811c8`, against 0.11 s and 0.10 s at `b5c522c7`. It read them through `readText`
+  in 3.49 s and 3.69 s, against 2.81 s and 2.88 s. The runs alternate.
+- **JavaScript build, dead bounds.** On 2026-11-09, on the pin, each program read the sample seven
+  times in one run, as JavaScript build gives. A native program built with `-d:release` took
+  355 ms and 278 ms at `9e5811c8`, against 216 ms and 234 ms at `b5c522c7`. `parseLojban` of the
+  script that the verb builds, under node 22.23.4, took 10.4 s and 10.7 s, against 8.0 s and
+  8.5 s. Each figure is the median pass of one run, and the runs alternate.
+- **JavaScript build, one text, dead bounds.** After those passes, the script read each text once
+  in each run. At the median it took 16.6 ms and 17.3 ms before, against 14.1 ms and 17.5 ms
+  after. At most it took 616 ms and 673 ms, against 395 ms and 420 ms. The native build took
+  0.54 ms and 0.54 ms at the median, against 0.41 ms and 0.38 ms. At most it took 19.8 ms and
+  18.7 ms, against 11.3 ms and 13.0 ms.
+- **Tatoeba, debug build.** On 2026-11-09, a program built on the pin with `nim c`, with no
+  optimisation, read the 17,495 sentences of the export through `readText`. It took 46.9 s and
+  45.5 s at `9e5811c8`, against 36.7 s and 36.1 s at `b5c522c7`. The runs alternate.
 
 ## Open questions
 
