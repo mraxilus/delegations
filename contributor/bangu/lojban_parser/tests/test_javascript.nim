@@ -6,6 +6,11 @@ cmd: "nim $target --hints:off -d:testing -d:release $options $file"
 ## Hold JavaScript build of parser, `src/javascript/bridge.nim`, to native build, on JS backend:
 ##   each sentence of fixed sample of Tatoeba takes verdict native build gave it at render, and
 ##   object of `parseLojban` mirrors `ReadingText` field for field.
+##   NIF of every fourth sentence of sample, where it reads, written on JS backend, reads back as
+##     model of format gives, by reader of native suite (`suites/reader_nif.nim`);
+##     `parseLojbanToNif` gives module of worked example native suite holds, byte for byte.
+##     Cost: reading takes about 70 ms each sentence on JS backend, so whole sample would add
+##       about 13 s; native suite reads every text of corpora.
 ##   Sample reaches 86 of 88 named rules of 21.1, and refuses 49 sentences at stream and grammar
 ##     alike, so one run holds most of parser under JavaScript (`sample_tatoeba/sentences.nim`).
 ##   Verdict is refusal and rule, as `tools/tatoeba.nim` spells it; empty where sentence reads.
@@ -26,7 +31,14 @@ when compileOption("profiler"):
 import std/[jsffi, strutils, unittest]
 
 import ../src/javascript/bridge
+import ../src/lojban_parser/[nif, prose]
 import ./sample_tatoeba/sentences
+import ./suites/reader_nif
+
+
+const
+  STRIDE_NIF = 4  ## Law of NIF reads every fourth sentence of sample.
+  COUNT_TREES_LEAST = 40  ## Sentences of that stride that read, of 59; law reads tree of each.
 
 
 static: doAssert defined(nodejs), "Suite needs define `nodejs`, else failed check exits 0; " &
@@ -91,7 +103,28 @@ suite "Internal: JavaScript build":
     check cstring(text).toJs.indexOf(cstring("zarc")).to(int) == 32  # `ö` and `ß` one unit each
 
 
-  test "Script puts parseLojban on exports of module where node loads it":
+  test "Script puts parseLojban and parseLojbanToNif on exports of module where node loads it":
     let exported = MODULE_NODE.exports.parseLojban
     check exported.jsTypeOf == "function"  # CommonJS, as node loads this suite
     check exported.call(jsNull, cstring("mi klama le zarci")).is_read.to(bool)  # Example 2.1
+    let written = MODULE_NODE.exports.parseLojbanToNif
+    check written.jsTypeOf == "function"  # CommonJS, as node loads this suite
+    let module = $written.call(jsNull, cstring(EXAMPLE_NIF.text)).to(cstring)
+    check module == EXAMPLE_NIF.module  # `test_nif.nim`, worked example byte for byte
+
+
+  test "NIF of every fourth sentence of sample that reads reads back as model of format gives":
+    var count = 0
+    for k in countup(0, SENTENCES_TATOEBA.high, STRIDE_NIF):
+      if SENTENCES_TATOEBA[k].verdict.len > 0: continue  # refusal holds no tree
+      let reading = SENTENCES_TATOEBA[k].text.readText
+      check reading.toNif.readModule == reading.toModule  # `test_nif.nim`, law of native build
+      inc count
+    check count >= COUNT_TREES_LEAST  # IX.3, guard keeps sentences that read
+
+
+  test "parseLojbanToNif gives module native build writes, and null where text is refused":
+    check $parseLojbanToNif(cstring(EXAMPLE_NIF.text)) == EXAMPLE_NIF.module  # `test_nif.nim`
+    check parseLojbanToNif("mi klama le zarc").isNil  # refusal holds no tree; constructed
+    let quoted = $parseLojbanToNif("la'o gy. Größe .gy.")  # 19.10, `la'o`; constructed
+    check "\"Größe\"" in quoted  # UTF-8 bytes from 128 through string of JavaScript, unescaped
