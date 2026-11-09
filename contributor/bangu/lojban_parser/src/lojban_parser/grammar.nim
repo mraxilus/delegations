@@ -597,6 +597,15 @@ func offer(partials: var seq[Option[Choice]], i: int, candidate: Choice) =
     partials[i] = some(candidate)
 
 
+func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
+  ## Test chart derives terminals `start ..< finish` from `symbol`: terminal reads one that
+  ##   matches it, and nonterminal completes over span, or derives nothing where span is empty.
+  if symbol.is_terminal:
+    return finish == start + 1 and int(chart.terminals[start]) == symbol.code
+  (start == finish and GRAMMAR_EBNF.nullable[symbol.code]) or
+    (symbol.code, start) in chart.completions[finish]
+
+
 func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   ## Choose derivation of terminals `start ..< finish` from `head` that closes fewest nonterminals
   ##   at each place, from first; tie goes to first production, then to longer symbol.
@@ -606,6 +615,9 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   ##     no choice kept depends on span still open.
   ##   Last symbol of body tries end of span alone, since no other bound reaches whole span;
   ##     every other bound cost time that grew with square of span, on long text.
+  ##   Nonterminal before last symbol tries only bound that last symbol ends span from: partial
+  ##     at other bound never reaches end. Each such dead child chose itself, and copied closures
+  ##     as long as its span; where opener stayed open, that cost grew faster than text (#849).
   let key = (head, start, finish)
   if key in chart.choices: return chart.choices[key]
   if chart.open.containsOrIncl(key): return none(Choice)
@@ -642,10 +654,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
           continue
         let low = (if k == body.high: finish else: m)  # last symbol ends at end of span
         for bound in countdown(finish - rests[k + 1], low):
-          let is_derived =
-            (bound == m and GRAMMAR_EBNF.nullable[symbol.code]) or
-            (symbol.code, m) in chart.completions[bound]
-          if not is_derived: continue
+          if not chart.isDerived(symbol, m, bound): continue
+          if k == body.high - 1 and not chart.isDerived(body[^1], bound, finish): continue  # dead
           let child = chart.choose(symbol.code, m, bound)
           if child.isNone: continue
           var next = partial.get
