@@ -94,8 +94,24 @@ terminal of selma'o ZOI (Example 19.57). The grammar stops `mi klama le` at its 
 description of `le` waits for its selbri. `r.tree` holds the tree of the named rules of 21.1 over
 the terminals.
 
+`toNif` writes that tree as text in the NIF data format, version 2027, which is the native format
+of Nim 3. So another program reads the tree with no part of this parser:
+
+```text
+$ nim r --hints:off --path:src --eval:'import lojban_parser
+stdout.write readText("co\x27o. djan.").toNif'
+(.nif27)
+(.lang "cll-21.1")
+(text 0 (free 32 (vocative 415 (COI 0 "co\27o")) (CMENE 6 "djan")) (text\2D1 2))
+```
+
+Each named rule is a node, which holds its number in 21.1 and then its nodes. Each terminal holds
+its class, as `COI` or `CMENE`, the byte where its first word opens, and the letters of each word.
+NIF holds `-` of a name and `'` of a word as escapes, so `text-1` is `text\2D1` and `co'o` is
+`co\27o`.
+
 The verb `javascript` compiles the reader of prose, with the whole parser, into one script of
-JavaScript. The script gives one function, `parseLojban`, which returns what `readText` gives as a
+JavaScript. The script gives the function `parseLojban`, which returns what `readText` gives as a
 plain object. After `nim r tools/build.nim javascript`, node reads the script:
 
 ```text
@@ -112,8 +128,20 @@ mi klama le zarc: Grammar at byte 12, in sumti-6 97, after mi klama le zarc
 ```
 
 A refused text also carries `stream`, which `readStream` gives, so the caller sees the words before
-the refusal. A page loads the same file with a `script` element, and calls `parseLojban` as a
-global.
+the refusal. The script also gives `parseLojbanToNif`, which returns the module that `toNif`
+writes, as a string, or null where the text is refused:
+
+```text
+$ node -e 'const { parseLojbanToNif } = require("./build/lojban_parser.js")
+process.stdout.write(parseLojbanToNif("co\x27o. djan."))
+console.log(parseLojbanToNif("mi klama le zarc"))'
+(.nif27)
+(.lang "cll-21.1")
+(text 0 (free 32 (vocative 415 (COI 0 "co\27o")) (CMENE 6 "djan")) (text\2D1 2))
+null
+```
+
+A page loads the same file with a `script` element, and calls both functions as globals.
 
 ## Authority
 
