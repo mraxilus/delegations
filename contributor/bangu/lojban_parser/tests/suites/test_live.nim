@@ -78,6 +78,15 @@ const
     ## Texts where words stream or rules refuse stand between `sa` and word after them, which
     ##   gives its marker (19.13); later word refuses that word too, so marker changes:
     ##   `si` erases word `zo` quotes, so `zo` is refused, or `ba'e` marks no word; constructed.
+  CUTS_CLOSER = [
+    (text: "to .i to toi to bu toi ba'e", cuts: @[1, 9, 18, 23, 24]),  # fuzz of live law found it
+    (text: "to mi .i to bu toi do", cuts: @[6, 12, 13, 19]),
+    (text: "lu mi .i lu bu li'u do", cuts: @[5, 11, 14, 20]),
+    (text: "tu'e mi .i tu'e bu tu'u do", cuts: @[6, 8, 9, 11, 14, 16, 18, 24]),
+  ]
+    ## Texts where opener waits, then text read again opens past it; `bu` then makes opener
+    ##   after it lerfu word, so closer closes first opener, past text read again; with cuts
+    ##   that cut it so, which search over random cuts found; constructed.
   LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
     "(tanru_unit_2 130 152 (BRIVLA 3 \"klama\")) (tail_terms 71)))\n"
     ## Line of node of `mi klama`, which examples open with.
@@ -280,6 +289,14 @@ suite "Internal: Live text":
       let live = text.readLive(text.cutsWords, is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_grown  # header of `live.nim`, tail grows as text so far gives it (19.13)
+
+
+  test "Closer reads back past text read again, where opener there opens no more":
+    for (text, cuts) in CUTS_CLOSER:
+      checkpoint text & " cut at " & $cuts
+      let live = text.readLive(cuts, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `live.nim`, closer of opener that waits (17.4)
 
 
   test "Parts lose nothing of tree: assembleText builds tree grammar gives, over corpora":
