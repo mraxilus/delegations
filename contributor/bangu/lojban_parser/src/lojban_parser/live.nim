@@ -307,7 +307,8 @@ func reach(reader: ReaderLive, region: ReadingParts, start: int): Option[int] =
   while j > 0 and reader.items[j - 1].start >= start: dec j
 
   # Closer of `tu'e`, `lu` or `to` that no opener of text opens closes opener of its kind that
-  #   waits, nearest first, as passes track them (`toParts`).
+  #   waits before text, nearest first, as passes track them (`toParts`); text read again reads
+  #   each opener in it again, which may open no more.
   var
     strays: array[OPENERS.len, int]  # closers of each kind that close no opener of text
     opened: seq[int]  # kind of each opener open in text, innermost last
@@ -324,7 +325,7 @@ func reach(reader: ReaderLive, region: ReadingParts, start: int): Option[int] =
       left = strays[k]
       n = reader.openers.high
     while left > 0 and n >= 0:
-      if reader.openers[n].selmaho == OPENERS[k]:
+      if reader.openers[n].selmaho == OPENERS[k] and reader.openers[n].start < start:
         back = back.earlier(reader.openers[n].start)
         dec left
       dec n
