@@ -4,7 +4,7 @@
 |---------|-------|
 | Harness | Claude Code |
 | Author  | Claude |
-| Date    | 2026-11-09 |
+| Date    | 2026-11-10 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 01a086eda78015fd |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
@@ -1029,8 +1029,8 @@ script reads it through `typeof`, which does not throw there. Verified by `test_
 for node.
 
 Verified by hand in headless Chromium 153.0.8010.12 through Playwright, 2026-11-08 and
-2026-11-09. A `script` element loads the script with no error. `parseLojban` reads one text and
-refuses another, and `parseLojbanToNif` gives the module of Example 2.57 and null.
+2026-11-10. A `script` element loads the script with no error. `parseLojban` reads one text and
+refuses another, and `parseLojbanToNif` gives the module of Example 6.98 and null.
 
 **The object holds values of JavaScript alone.** Rejected: a text of JSON, which the caller would
 parse again. A plain object is a value of the runtime of the caller, so no format of data goes
@@ -1051,7 +1051,7 @@ names no line of Nim (expected). The verb takes the compiler that compiled the d
 **Cost: the script reads about 32 times slower than the native build, on the thread of its
 caller.** So a page waits while it reads. A text of the sample takes 19 ms at the median, against
 0.56 ms and 0.57 ms native. The longest, of 771 bytes, takes 633 ms, against 21 ms and 28 ms
-native. Figures, JavaScript build, gives the method. At `90b19f20`, the verb writes 730,460 bytes,
+native. Figures, JavaScript build, gives the method. At `a66e60f0`, the verb writes 734,572 bytes,
 and prints the size.
 
 ## Text in NIF
@@ -1064,35 +1064,56 @@ JavaScript too. The spec is `doc/nif-spec.md` of `nim-lang/nifspec` at `a31513c6
 
 **The module opens with `(.nif27)`, with no byte before it, then `(.lang "cll-21.1")`.** The
 version directive is also the magic cookie of the format. The language says that each tag is a
-name that 21.1 writes: the name of a rule, or the class of a terminal. Verified by
-`suites/test_nif.nim`, which holds the module of Example 2.57 byte for byte.
+name that 21.1 writes, the name of a rule or the class of a terminal. Verified by
+`suites/test_nif.nim`, which holds the module of Example 6.98 byte for byte.
 
-**A named rule is a compound node, and so is a terminal.** The tag of a rule is its name, its
-first child is its number in 21.1, and its nodes follow in order. The tag of a terminal is its
-class, as `KOhA` or `BRIVLA`. Its first child is the byte where its first word opens, and the
-letters of each word follow as string literals. The order of the terminals gives the index of each
-unit, so no node holds one. Verified by `suites/test_nif.nim`, whose law reads each tree of the
-corpora back, and at least `COUNT_TREES_LEAST` of them.
+**A named rule is a compound node, and so is a terminal.** The tag of a rule is its name, then its
+number in 21.1, and its nodes follow in order. The tag of a terminal is its class, as `KOhA` or
+`BRIVLA`. Its first child is the byte where its first word opens, and the letters of each word
+follow as string literals. The order of the terminals gives the index of each unit, so no node
+holds one. Verified by `suites/test_nif.nim`, whose law rebuilds each tree of the corpora.
 
-**Each byte that NIF holds only as an escape takes the form `\xx`, in hex of upper case.** In a
-tag, each byte below 128 that is no letter, digit or `_` takes one, so `sumti-6` is `sumti\2D6`.
-In a string literal, each control character takes one, `'` of lojban among them, and so does each
-byte below space. `#`, `:` and the space stay, as the spec lets a string hold them, and a byte from
-128 stays. Verified by `suites/test_nif.nim`, which reads each tag of the grammar back, and quotes
-each control character.
+**A chain of rules is one node, which its two ends write.** In 21.1, a rule often holds the next
+rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a chain is one
+node: the number of the rule that opens it, then the tag and number of the rule that closes it. So
+`(sumti_6 80 97 ...)` is the chain from `terms`, rule 80, down to `sumti-6`, rule 97. Figures, Text
+in NIF, chains, gives the share of such rules in each tree. Verified by `suites/test_nif.nim`.
+
+**Two ends give one chain in 21.1.** Compile time walks each chain that 21.1 allows, and
+`LUT_CHAIN_BY_ENDS` of `grammar.nim` keys each by its two ends. The build stops where two chains
+join one pair of rules, or where a chain holds a cycle. So a reader rebuilds each rule between two
+ends, and the tree reads back whole. Verified by `suites/test_nif.nim`, which rebuilds each tree of
+the corpora, and holds the chain from `terms` to `sumti-6` to rules 80 to 97 of 21.1.
+
+**A tag writes `_` for `-`, and a word writes `h` for `'`.** No name of 21.1 holds `_`, so `_`
+reads back as `-`. Chapter 20 writes `h` as the capital of `'` in the names of selma'o, as in
+`KOhA`. Lojban writes no `h` of its own (3.3), and the stream refuses `h` outside a quotation, so
+`h` reads back as `'`. So no tag and no word needs an escape of NIF. Verified by
+`suites/test_nif.nim`, which writes each tag of the grammar, and finds no escape outside quoted
+text in the corpora.
+
+**Text that `zoi` or `la'o` quotes stays as it is.** It is the third string of a `ZOI` terminal,
+and it can hold `h`, `'` and each other byte. There, each control character of NIF and each byte
+below space takes the escape `\xx`, in hex of upper case. `#`, `:`, the space and each byte from
+128 stay, as the spec lets a string hold them. Verified by `suites/test_nif.nim`, which quotes each
+control character, and `h` and `'`.
+
+**Rejected: the escapes `\2D` of a tag and `\27` of a word, which the spec gives.** The Architect
+chose `_` and `h` in their place (#855). The reader of nimony at `2c5b3dca` takes a tag as its
+bytes, so it would leave `\2D` undecoded. Assumed from a read of `src/lib/nifreader.nim` of
+nimony at `2c5b3dca`, 2026-11-09, since this project runs no code of nimony.
+
+**Rejected: each rule of a chain as a node of its own.** The Architect chose the two ends (#855),
+and they lose nothing. With the escapes of `90b19f20`, the two ends take 30 percent of the bytes
+that the whole tree takes. Rejected: each number of a chain in its node, which needs no table of
+chains, at 43 percent. Figures, Text in NIF, chains, gives the measures.
 
 **The reader of the suites follows the grammar of the spec, and takes a subset of NIF.**
 `suites/reader_nif.nim` reads directives, compound nodes, tags, decimal integers, string literals
 and escapes. It refuses each other construct, such as line information and comments. So each
-module that it reads is NIF, and the law does not hold the writer to itself. Verified by
-`suites/test_nif.nim`, where the reader refuses each module of `MODULES_REFUSED`.
-
-**The reader of nimony gives a tag with its escapes.** At `2c5b3dca`, its branch for `(` marks no
-escape in the tag, so a caller that reads with it gets `sumti\2D6`, and decodes it. It decodes
-the escapes of a string literal. Rejected: `-` as it stands, which the spec forbids in an
-identifier. Rejected: `_` for `-`, which gives names that 21.1 does not write. Assumed from a read
-of `src/lib/nifreader.nim` of nimony at `2c5b3dca`, 2026-11-09, since this project runs no code of
-nimony.
+module that it reads is NIF, and the law does not hold the writer to itself. Its rebuild of each
+tree also holds that the format loses nothing. Verified by `suites/test_nif.nim`, where the reader
+refuses each module of `MODULES_REFUSED`.
 
 **Rejected: the line information of NIF for the byte of a word.** The spec writes it as a
 difference from the parent (Line information). The reader of nimony keeps 10 bits of a column, so
@@ -1103,9 +1124,11 @@ The corpora reach byte 2,159. Verified by hand, 2026-11-09, with a program built
 **Rejected: the library of nimony, which does not compile for JavaScript.** `nim js` stops on
 `nifcore.nim`, whose line 780 calls `dealloc`. Verified on #852, by the research that it gives.
 
-**The writer loops by index, since `items` copies each node on the JavaScript backend.** Verified
-by hand with `grep -c nimCopy` over each routine of the writer in the script, 2026-11-09.
-`addNode` and `escaped` copy nothing, and `toNif` copies its 28 bytes of directives once.
+**The writer loops by index, and walks a chain by recursion, since `items` and a binding copy
+each node on the JavaScript backend.** Verified by hand with `grep -c nimCopy` over each routine of
+the writer in the script, 2026-11-10. `addNode`, `addRule` and `escaped` copy nothing. `tag` and
+`letters` copy the string that `escaped` gives them, one tag or one word, and `toNif` copies its 28
+bytes of directives once. No routine copies a node.
 
 **NIF needs no exception to the rule on data between programs.** The Architect ruled that NIF is
 the native format of Nim 3, so data in NIF follows CONTRIBUTOR.md, Data (#852). A file in NIF
@@ -1114,15 +1137,15 @@ that this project commits would need its kind, since `curator/audit/src/kinds.ni
 
 **The script gives `parseLojbanToNif(text)`, which returns the module as a string.** It returns
 null where the text is refused, since a refusal holds no tree, and `parseLojban` gives the reason.
-Verified by `test_javascript.nim`, which holds the module of Example 2.57 byte for byte, and the
+Verified by `test_javascript.nim`, which holds the module of Example 6.98 byte for byte, and the
 null.
 
 **Cost: the law reads each text of the corpora a second time.** So the suite of NIF takes about
-12 s of a debug build, and its write and read back take about 0.7 s. The suites of the corpora
-read the same texts, and keep no reading to share. Rejected: one reading of each corpus, shared
-with `suites/test_corpus.nim`, `suites/test_tatoeba.nim` and `suites/test_wikipedia.nim`. It
-changes those suites, and `tools/tatoeba.nim`, which gives them verdicts from text alone. Figures,
-Text in NIF, gives the measures.
+12 s of a debug build, and its write, read back and rebuild take about 0.45 s. The suites of the
+corpora read the same texts, and keep no reading to share. Rejected: one reading of each corpus,
+shared with `suites/test_corpus.nim`, `suites/test_tatoeba.nim` and `suites/test_wikipedia.nim`.
+It changes those suites, and `tools/tatoeba.nim`, which gives them verdicts from text alone.
+Figures, Text in NIF, gives the measures.
 
 **Cost: on JavaScript, the law reads every fourth sentence of the sample.** A read takes about
 71 ms a sentence there, so the law over the whole sample would add about 13 s. The native suite
@@ -1262,29 +1285,37 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
 - **JavaScript build, one text.** After a first pass over the sample, the script read each text
   once, in one run. It took 19 ms at the median, and 633 ms at most. The native build took 0.56 ms
   and 0.57 ms at the median, and 21 ms and 28 ms at most, in two runs.
-- **Text in NIF.** On 2026-11-09, at `90b19f20`, on the pin, a program built with `-d:release`
+- **Text in NIF.** On 2026-11-09, at `a66e60f0`, on the pin, a program built with `-d:release`
   read each text of the corpora. Each figure is the median of three passes, in each of two runs.
-  `toNif` wrote 1,947,943 bytes for the 1,577 trees of CLL in 25.3 ms and 25.4 ms. `readText`
-  read them in 1,074 ms and 1,107 ms.
-- **Text in NIF, other corpora.** On 2026-11-09, at `90b19f20`, the same program wrote 475,553
-  bytes for the 185 trees of Tatoeba in 6.4 ms and 6.2 ms. `readText` read them in 400 ms and
-  377 ms. It wrote 724,092 bytes for the 69 trees of Wikipedia in 10.6 ms and 10.7 ms, against
-  807 ms and 751 ms.
-- **Text in NIF, debug build.** On 2026-11-09, at `90b19f20`, the suite of `test_nif.nim`, built
-  alone as the stub is, ran in 12.0 s and 12.4 s. In one run, a program built the same way read the
-  texts of the corpora in 11.7 s. It wrote NIF in 0.22 s, and read it back in 0.47 s.
+  `toNif` wrote 525,124 bytes for the 1,577 trees of CLL in 10.8 ms and 10.9 ms. `readText` read
+  them in 1,085 ms and 1,047 ms.
+- **Text in NIF, other corpora.** On 2026-11-09, at `a66e60f0`, the same program wrote 139,973
+  bytes for the 185 trees of Tatoeba in 4.0 ms and 3.6 ms. `readText` read them in 390 ms and
+  381 ms. It wrote 215,787 bytes for the 69 trees of Wikipedia in 6.6 ms and 6.7 ms, against
+  750 ms and 778 ms.
+- **Text in NIF, chains.** On 2026-11-09, at `90b19f20`, a program built with `-d:release` counted
+  the rule nodes of each tree of the corpora that hold one rule alone. They are 84 percent of
+  those of CLL, 82 percent of Tatoeba, 82 percent of Wikipedia, and 52 of the 58 of
+  `mi klama le zarci`. With the escapes of `90b19f20`, the whole tree took 3,147,588 bytes of NIF.
+  Each chain as all its numbers took 1,350,505 bytes, and each chain as its two ends 948,868.
+- **Text in NIF, debug build.** On 2026-11-09, at `a66e60f0`, the suite of `test_nif.nim`, built
+  alone as the stub is, ran in 12.1 s and 12.0 s. On 2026-11-10, in one run, a program built the
+  same way read the texts of the corpora in 11.2 s. It wrote NIF in 75 ms, and the law of the
+  suites, with its rebuild, took 375 ms.
 - **Suites, Text in NIF.** On 2026-11-09, the stub ran every suite without the pages, as on the
-  runner. It took 35.0 s and 35.0 s at `9e5811c8`, against 46.9 s and 47.3 s at `90b19f20`. With
-  both pages, it took 67.0 s and 67.3 s, against 79.3 s and 78.4 s. The runs alternate.
+  runner. It took 35.0 s and 34.5 s at `9e5811c8`, against 47.2 s and 46.6 s at `a66e60f0`. With
+  both pages, it took 66.2 s and 65.6 s, against 77.5 s and 77.6 s. The runs alternate.
 - **JavaScript build, Text in NIF.** On 2026-11-09, the suite of the JavaScript build ran in
-  13.4 s and 13.2 s at `9e5811c8`, against 16.2 s and 15.6 s at `90b19f20`. Built with
-  `nim js -d:release`, the script holds 718,112 bytes, against 730,460 bytes. Under node 22.23.4,
-  in one run, `parseLojbanToNif` read the sample in 13,027 ms, the median of seven passes. In the
-  same run, `parseLojban` read it in 13,053 ms.
-- **JavaScript build, law of NIF.** On 2026-11-09, at `90b19f20`, a program built with
+  13.5 s and 13.3 s at `9e5811c8`, against 16.1 s and 15.6 s at `a66e60f0`. Built with
+  `nim js -d:release`, the script holds 718,112 bytes, against 734,572 bytes.
+- **JavaScript build, each export.** On 2026-11-09, at `a66e60f0`, under node 22.23.4, each
+  export read the sample seven times in one run, and each figure is the median pass. With
+  `parseLojban` first, it took 13,068 ms, and `parseLojbanToNif` then took 14,032 ms. With
+  `parseLojbanToNif` first, it took 13,005 ms, and `parseLojban` then took 12,895 ms.
+- **JavaScript build, law of NIF.** On 2026-11-09, at `a66e60f0`, a program built with
   `nim js -d:release` and run under node read the 185 sentences of the sample that read. In one
-  run, `readText` took 13,207 ms, so about 71 ms a sentence. `toNif` took 30 ms, the reader of the
-  suites 83 ms, and the model of the format 31 ms.
+  run, `readText` took 13,215 ms, so about 71 ms a sentence. `toNif` took 15 ms, and the law of the
+  suites, with its rebuild, 605 ms.
 
 ## Open questions
 

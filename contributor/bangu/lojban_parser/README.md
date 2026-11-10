@@ -99,16 +99,22 @@ of Nim 3. So another program reads the tree with no part of this parser:
 
 ```text
 $ nim r --hints:off --path:src --eval:'import lojban_parser
-stdout.write readText("co\x27o. djan.").toNif'
+stdout.write readText("me\x27o vo").toNif'
 (.nif27)
 (.lang "cll-21.1")
-(text 0 (free 32 (vocative 415 (COI 0 "co\27o")) (CMENE 6 "djan")) (text\2D1 2))
+(sumti_6 0 97 (LI 0 "meho") (number 310 812 (PA 5 "vo")))
 ```
 
-Each named rule is a node, which holds its number in 21.1 and then its nodes. Each terminal holds
-its class, as `COI` or `CMENE`, the byte where its first word opens, and the letters of each word.
-NIF holds `-` of a name and `'` of a word as escapes, so `text-1` is `text\2D1` and `co'o` is
-`co\27o`.
+Each named rule is a node, which holds its number in 21.1 and then its nodes. In 21.1, a rule often
+holds the next rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a
+run of rules is one node. It holds the number of the rule that opens the run, then the number of the
+rule that closes it. So `(sumti_6 0 97 ...)` is the run from `text`, rule 0, down to `sumti-6`,
+rule 97. The two ends give one run in 21.1, and `LUT_CHAIN_BY_ENDS` gives each rule between them.
+
+Each terminal holds its class, as `LI` or `PA`, the byte where its first word opens, and the
+letters of each word. A tag writes `_` for `-`, and a word writes `h` for `'`, as chapter 20 writes
+the names of selma'o. Lojban writes no `h` of its own (3.3), so `meho` reads back as `me'o`. Only
+the text that `zoi` or `la'o` quotes can need an escape of NIF.
 
 The verb `javascript` compiles the reader of prose, with the whole parser, into one script of
 JavaScript. The script gives the function `parseLojban`, which returns what `readText` gives as a
@@ -133,11 +139,11 @@ writes, as a string, or null where the text is refused:
 
 ```text
 $ node -e 'const { parseLojbanToNif } = require("./build/lojban_parser.js")
-process.stdout.write(parseLojbanToNif("co\x27o. djan."))
+process.stdout.write(parseLojbanToNif("me\x27o vo"))
 console.log(parseLojbanToNif("mi klama le zarc"))'
 (.nif27)
 (.lang "cll-21.1")
-(text 0 (free 32 (vocative 415 (COI 0 "co\27o")) (CMENE 6 "djan")) (text\2D1 2))
+(sumti_6 0 97 (LI 0 "meho") (number 310 812 (PA 5 "vo")))
 null
 ```
 
