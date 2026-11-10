@@ -170,7 +170,7 @@ func covers(tree: Node, terminals: openArray[Terminal]): seq[Node] =
   if tree.stop.isNone: return
   let
     split = terminals.toParts(0, terminals.len)
-    is_parted = split.isSome and (split.get.parts.len > 1 or split.get.inner < terminals.len)
+    is_parted = split.parts.len > 1 or split.inner < terminals.len
   if not is_parted: return @[tree]
   for child in tree.children:
     if not child.is_terminal and child.stop.isSome: result.add child
