@@ -8,6 +8,9 @@
 ##   Grammar: each branch error node holds that heads `text` is tree its terminals give read
 ##     alone; each class `expects` names lets grammar read past place it stops, and each other
 ##     class does not.
+##   Cover of error node is least: no terminal it leaves out reads alone, and no two pieces
+##     side by side read as one `text`, since branch over them would leave fewer out, or take
+##     fewer pieces. Cover that ties stays unchecked: no law reads which cover tie gives.
 ##   Corpora: as `test_nif.nim` reads them (`corpora.nim`).
 
 {.experimental: "strictFuncs".}
@@ -17,7 +20,8 @@ when compileOption("profiler"):
 
 import std/[options, sequtils, unittest]
 
-import ../../src/lojban_parser/[grammar, nif, prose, selmaho, stream]
+import ../../src/lojban_parser/grammar {.all.}
+import ../../src/lojban_parser/[nif, prose, selmaho, stream]
 import ./[corpora, reader_nif]
 
 
@@ -34,10 +38,13 @@ type
 const
   COUNT_READ_LEAST = 1800  ## Texts of corpora that read, of 1,941; law reads each marked.
   COUNT_REFUSED_LEAST = 100  ## Texts of corpora `readText` refuses, of 1,941; 110 on adding marks.
+  COUNT_COVERS_LEAST = 90
+    ## Error nodes that hold branches, in texts refused of corpora and constructed; 94 on adding
+    ##   law of cover.
   COUNT_EXPECTED = 24
     ## Stops law of `expects` reads: first texts refused by grammar, of corpora then
     ##   constructed, whose stop takes at most `STOP_EXPECTED_MOST` terminals; 57 qualify.
-    ##   Law reads text there once for each of 125 classes, about 2 s of debug build.
+    ##   Law reads text there once for each of 124 classes, about 2 s of debug build.
   STOP_EXPECTED_MOST = 8  ## Terminals before stop, at most, for law of `expects`.
   TEXTS_CONSTRUCTED = [
     "mi 1987 klama", "mi hello klama", "Mi klama", "zoi gy. gyrations .gy. cu glico",
@@ -155,6 +162,18 @@ func addBranches(node: Node, branches: var seq[Node]) =
     child.addBranches(branches)
 
 
+func covers(tree: Node, terminals: openArray[Terminal]): seq[Node] =
+  ## Give each error node of tree that holds branches, and terminals between them: root of text
+  ##   of one part, else each error node of part that text cut into parts holds (`toParts`).
+  if tree.stop.isNone: return
+  let
+    split = terminals.toParts(0, terminals.len)
+    is_parted = split.isSome and (split.get.parts.len > 1 or split.get.inner < terminals.len)
+  if not is_parted: return @[tree]
+  for child in tree.children:
+    if not child.is_terminal and child.stop.isSome: result.add child
+
+
 func classes(): seq[Terminal] =
   ## Give each class of terminal grammar reads: each selma'o, then `BRIVLA` and `CMENE`.
   for selmaho in Selmaho: result.add selmaho.toTerminal
@@ -270,11 +289,32 @@ suite "Internal: Marks":
         # header of `nif.nim`, error node and unit `unread`
       check marked.isReadBack  # model of format, and tree rebuilt whole
 
+  test "Cover leaves out no terminal that reads alone, nor two pieces that read as one text":
+    var count = 0
+    for (key, text, strict, marked) in pool.refused:
+      checkpoint key & ": " & text
+      let terminals = marked.terminalsRead
+      for cover in terminals.readGrammarMarked.covers(terminals):
+        for k, piece in cover.children:
+          if piece.is_terminal:
+            check not terminals[piece.at .. piece.at].readGrammar.is_read
+              # header of `grammar.nim`, fewest terminals left out
+          if k == 0: continue
+          let span = cover.children[k - 1].leaves[0] .. piece.leaves[^1]
+          check not terminals[span].readGrammar.is_read
+            # header of `grammar.nim`, fewest pieces: two side by side read not as one `text`
+        inc count
+    check count >= COUNT_COVERS_LEAST  # IX.3, guard keeps covers in play
+
 
   test "Error node of text cut into parts holds tree of each part that reads alone":
-    let marked = "mi klama le .i do citka".readTextMarked
-    check marked.tree.stop.isSome and marked.tree.children.len == 2
-      # header of `grammar.nim`, text of two parts
-    check marked.tree.children[0].stop.isSome  # header of `grammar.nim`, part that reads not
-    check marked.tree.children[1].stop.isNone and marked.tree.children[1].number == 0
-      # header of `grammar.nim`, part that reads alone, as `text`
+    for text in ["mi klama le .i do citka", "mi klama le ni'o do citka"]:
+      checkpoint text
+      let tree = text.readTextMarked.tree
+      check tree.stop.isSome and tree.children.len == 2  # header of `grammar.nim`, two parts
+      check tree.children[0].stop.isSome  # header of `grammar.nim`, part that reads not
+      check tree.children[1].stop.isNone and tree.children[1].number == 0
+        # header of `grammar.nim`, part that reads alone, as `text`
+    let open = "lu mi klama le .i do citka".readTextMarked.tree
+    check open.stop.isSome and open.children.allIt(it.is_terminal or it.stop.isNone)
+      # header of `grammar.nim`, text where `lu` stays open is one part, holding branches
