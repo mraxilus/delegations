@@ -27,7 +27,8 @@
 ##     next piece makes `su'i` erases nothing. Text read opens at span of node: its first word,
 ##     past words of node before, so span holds each word erasure erased before node. Node
 ##     shares span before it where quotation holds word span would open at, or where its first
-##     word stands among words of node before, as word stream refuses between word and `bu`.
+##     word stands among words of node before, as word stream refuses between word and `bu`; or
+##     where rules refuse `zei` before it, which joins word after it once they read one (19.16).
 ##   Reach back, from text read again to node before it:
 ##     `si` that finds no word, back as many words as it erases; `bu` or `zei` that finds none,
 ##       to word before; `sa` that finds no marker, to node holding it, or to start (19.13).
@@ -192,11 +193,19 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
   ##   it may have erased; first opens at `first`. Child shares span of child before where its
   ##   first word stands among words of that child, as refused word between word and indicator
   ##   marking it; where quotation holds word span would open at (`toCleans`), which erasure
-  ##   erased; or where word before its first word is `sa` no unit holds, past each word stream
-  ##   or rules refuse, since first word rules read past `sa` gives its marker (19.13).
+  ##   erased; where word before its first word is `sa` no unit holds, past each word stream or
+  ##   rules refuse, since first word rules read past `sa` gives its marker (19.13); or where
+  ##   rules refuse `zei` before its first word, past each word stream or rules refuse or erasure
+  ##   erases, since `zei` joins word after it once rules read one there, as once they refuse
+  ##   quotation that opens there (19.16).
   func isRefused(unit: Unit): bool =
     ## Test rule of 19.16 refuses unit, so rules read on past its words.
     not unit.is_read and unit.refusal in {RefusalText.Quotation, RefusalText.Construct}
+
+  func isRefusedZei(unit: Unit, word: Occurrence): bool =
+    ## Test rules refuse word of unit as `zei`, which joins word after it once they read one.
+    not unit.is_read and unit.refusal == RefusalText.Construct and word.reading.is_word and
+      word.reading.selmaho == some(Selmaho.Zei)
 
   template units: untyped = region.reading.units
     ## Alias units of text read, which `let` would copy.
@@ -210,16 +219,25 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
   result = newSeq[int](leaves.len)
   var next = 0  # word past words of children before
   for k in 0 ..< leaves.len:
-    var before = (if leaves[k].len > 0: units[leaves[k][0]].words[0] else: next) - 1
+    let opening = (if leaves[k].len > 0: units[leaves[k][0]].words[0] else: next)  # first word
+    var
+      before = opening - 1  # word before it, past words stream or rules refuse
+      prior = opening - 1  # word before it, past words erasure erases too, save `zei` refused
     while before >= 0 and (not occurrences[before].reading.is_word or
         (holders[before] >= 0 and units[holders[before]].isRefused)):
       dec before
+    while prior >= 0 and (not occurrences[prior].reading.is_word or holders[prior] < 0 or
+        (units[holders[prior]].isRefused and
+          not units[holders[prior]].isRefusedZei(occurrences[prior]))):
+      dec prior
     let
       is_among = leaves[k].len > 0 and units[leaves[k][0]].words[0] < next
       is_marked = before >= 0 and holders[before] < 0 and
         occurrences[before].reading.selmaho == some(Selmaho.Sa)
+      is_after_zei = prior >= 0 and holders[prior] >= 0 and
+        units[holders[prior]].isRefusedZei(occurrences[prior])
     if k == 0: result[k] = first
-    elif is_among or is_marked or (next < occurrences.len and not cleans[next]):
+    elif is_among or is_marked or is_after_zei or (next < occurrences.len and not cleans[next]):
       result[k] = result[k - 1]
     elif next < occurrences.len: result[k] = occurrences[next].start
     else: result[k] = region.reading.size
