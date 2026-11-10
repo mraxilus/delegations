@@ -162,6 +162,20 @@ suite "Chapter 19":
     check "zo .bab. cmene la'e zo .bab.".terminalsRead.isSome  # Example 19.54
     check "la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.".terminalsRead.isSome  # 19.57
 
+    # `zo` ending text, in each part quotation gives word; tolerant reader of #859 found
+    #   `mi cusku zo` read, as if `zo` quoted word.
+    check "mi cusku zo".refusalRead ==
+        some((RefusalText.Quotation, 9))  # 19.10, `zo` quotes next word, and none follows
+    check "zo".refusalRead == some((RefusalText.Quotation, 0))  # 19.10, `zo` alone; constructed
+    check "mi klama si zo".refusalRead ==
+        some((RefusalText.Quotation, 12))  # 19.13, erasure before it; constructed
+    check "mi cusku zo zo".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["zo", "zo"]])  # 19.10, `zo` quoted; constructed
+    check "mi cusku zoi zo gy zo".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["zoi", "zo", "gy", "zo"]])  # 19.10, delimiter; constructed
+    check "lo'u mi zo".refusalRead ==
+        some((RefusalText.Quotation, 8))  # 19.9, inside `lo'u` that no `le'u` closes
+
 
   test "Section 19.13":
     check "ti gerku si mlatu".terminalsRead == "ti mlatu".terminalsRead  # Example 19.75
