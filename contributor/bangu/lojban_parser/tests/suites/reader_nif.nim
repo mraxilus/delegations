@@ -16,9 +16,9 @@
 ##   Token ends at whitespace, at parenthesis, or at end of module; byte after it, as `@` of
 ##     line information or `#` of comment, is refused.
 ##   Module of reading is model of format `nif.nim` gives in its header: directives, then each
-##     chain by its two ends, tag and number of each rule closing chain, and class, byte and words
-##     of each terminal; for reading that marks each error, error node and unit no terminal
-##     holds too. Writer gives text, and model gives nodes, so neither checks itself.
+##     chain by its two ends, tag and number of each rule closing chain, and class of each terminal
+##     with bytes and letters of each word; for reading that marks each error, error node and unit
+##     no terminal holds too. Writer gives text, and model gives nodes, so neither checks itself.
 ##   Rebuild reads module back into tree and terminals: each rule between two ends of chain from
 ##     `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag, `'` for `h` of word. So law holds that format loses
 ##     nothing of tree, not just that writer and model agree.
@@ -50,9 +50,12 @@ type
     text: string
     at: int
 
-  TerminalNif* = tuple[terminal: string, start: int, words: seq[string]]
-    ## Define terminal as module gives it back: class, byte where first word opens, letters; unit
-    ##   no terminal holds gives `unread`, then stage, then refusal of stream for stage `Stream`.
+  WordNif* = tuple[start, finish: int, letters: string]
+    ## Define word as module gives it back: byte where it opens, byte past it, and its letters.
+
+  TerminalNif* = tuple[terminal: string, words: seq[WordNif]]
+    ## Define terminal as module gives it back: class, then each word; unit no terminal holds
+    ##   gives `unread`, then stage, then refusal of stream for stage `Stream`.
 
 
 const
@@ -69,7 +72,7 @@ const
   EXAMPLE_NIF* = (
     text: "me'o vo",  # Example 6.98 of CLL 1.1
     module: "(.nif27)\n(.lang \"cll-21.1\")\n" &
-      "(sumti_6 0 97 (LI 0 \"meho\") (number 310 812 (PA 5 \"vo\")))\n",
+      "(sumti_6 0 97 (LI 0 4 \"meho\") (number 310 812 (PA 5 7 \"vo\")))\n",
   )
     ## Text, and module `nif.nim` writes for it, byte for byte: chain from `text` 0 to `sumti-6`
     ##   97 is one node, and so is chain from `mex` 310 to `number` 812; tag `sumti-6` takes `_`,
@@ -212,18 +215,15 @@ func byteStop(reading: ReadingMarked, at: int): int =
 func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): NodeNif =
   ## Give node of NIF that node of tree should read as: rule holding rule alone passes on to it,
   ##   as chain opening at `top`; rule closing chain gives tag, `top` where chain stands, its
-  ##   number, then its nodes; terminal gives class, byte where its first word opens, and letters.
+  ##   number, then its nodes; terminal gives class, then bytes and letters of each word.
   ##   Error node gives `error`, byte grammar stops at, rule and number, `expects` with classes,
-  ##     then its nodes, and closes chain above it; unit no terminal holds gives `unread`, byte,
-  ##     stage, refusal of stream for stage `Stream`, and letters.
+  ##     then its nodes, and closes chain above it; unit no terminal holds gives `unread`, stage,
+  ##     refusal of stream for stage `Stream`, then its words.
   if node.is_terminal:
     template unit: untyped = reading.units[node.at]
       ## Alias unit of terminal, which `let` would copy on JavaScript backend.
     result = NodeNif(
       kind: KindNif.Compound, text: (if unit.is_read: $unit.terminal else: "unread")
-    )
-    result.children.add NodeNif(
-      kind: KindNif.Number, number: reading.occurrences[unit.words[0]].start
     )
     if not unit.is_read:
       result.children.add NodeNif(kind: KindNif.Identifier, text: $unit.refusal)
@@ -231,9 +231,11 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
         let refusal = $reading.occurrences[unit.words[0]].reading.refusal
         result.children.add NodeNif(kind: KindNif.Identifier, text: refusal)
     for k in 0 ..< unit.words.len:
-      result.children.add NodeNif(
-        kind: KindNif.Literal, text: reading.occurrences[unit.words[k]].letters
-      )
+      template word: untyped = reading.occurrences[unit.words[k]]
+        ## Alias word of unit, which `let` would copy on JavaScript backend.
+      result.children.add NodeNif(kind: KindNif.Number, number: word.start)
+      result.children.add NodeNif(kind: KindNif.Number, number: word.finish)
+      result.children.add NodeNif(kind: KindNif.Literal, text: word.letters)
     return
   let is_chain = node.stop.isNone and node.children.len == 1 and
     not node.children[0].is_terminal and node.children[0].stop.isNone
@@ -288,26 +290,27 @@ func toTerminal(name: string): Terminal =
 
 func toTree(node: NodeNif, terminals: var seq[TerminalNif]): Node =
   ## Rebuild node of tree from node of NIF: each chain from its two ends by `LUT_CHAIN_BY_ENDS`,
-  ##   `-` for each `_` of tag; terminal adds class, byte and words to `terminals`, `'` for each
-  ##   `h` of word, and third string of `ZOI` as it is. Error node takes byte grammar stops at as
+  ##   `-` for each `_` of tag; terminal adds class and words to `terminals`, `'` for each `h` of
+  ##   word, and third string of `ZOI` as it is. Error node takes byte grammar stops at as
   ##   its place; unit `unread` adds `unread` and its identifiers, and keeps letters of stage
   ##   `Stream` as they are.
   if node.children.len > 0 and node.children[^1].kind == KindNif.Literal:
     var
       terminal = node.text
-      k = 1
+      k = 0
     while node.children[k].kind == KindNif.Identifier:
       terminal.add ' '
       terminal.add node.children[k].text
       inc k
     let is_kept = terminal.startsWith("unread Stream")
-    var words: seq[string]
-    for m in k ..< node.children.len:
+    var words: seq[WordNif]
+    for m in countup(k, node.children.high, 3):
       let
-        literal = node.children[m].text
-        is_quoted = node.text == "ZOI" and m == 3
-      words.add (if is_kept or is_quoted: literal else: literal.replace('h', '\''))
-    terminals.add (terminal: terminal, start: node.children[0].number, words: words)
+        literal = node.children[m + 2].text
+        is_quoted = node.text == "ZOI" and m == k + 6
+        letters = (if is_kept or is_quoted: literal else: literal.replace('h', '\''))
+      words.add (node.children[m].number, node.children[m + 1].number, letters)
+    terminals.add (terminal: terminal, words: words)
     return Node(is_terminal: true, at: terminals.high)
   if node.text == "error":
     var expected: seq[Terminal]
@@ -334,18 +337,21 @@ func toTree(node: NodeNif, terminals: var seq[TerminalNif]): Node =
 
 
 func toTerminals(reading: ReadingText | ReadingMarked): seq[TerminalNif] =
-  ## Give terminals reading holds: class, byte where first word opens, and letters of each word;
-  ##   unit no terminal holds gives `unread`, stage, and refusal of stream for stage `Stream`.
+  ## Give terminals reading holds: class, then bytes and letters of each word; unit no terminal
+  ##   holds gives `unread`, stage, and refusal of stream for stage `Stream`.
   for k in 0 ..< reading.units.len:
     template unit: untyped = reading.units[k]
       ## Alias unit, which `let` would copy on JavaScript backend.
     var
       terminal = (if unit.is_read: $unit.terminal else: "unread " & $unit.refusal)
-      words: seq[string]
+      words: seq[WordNif]
     if not unit.is_read and unit.refusal == RefusalText.Stream:
       terminal.add " " & $reading.occurrences[unit.words[0]].reading.refusal
-    for m in 0 ..< unit.words.len: words.add reading.occurrences[unit.words[m]].text
-    result.add (terminal: terminal, start: reading.occurrences[unit.words[0]].start, words: words)
+    for m in 0 ..< unit.words.len:
+      template word: untyped = reading.occurrences[unit.words[m]]
+        ## Alias word of unit, which `let` would copy on JavaScript backend.
+      words.add (word.start, word.finish, word.text)
+    result.add (terminal: terminal, words: words)
 
 
 func isSame(a, b: Node, reading: ReadingText | ReadingMarked): bool =

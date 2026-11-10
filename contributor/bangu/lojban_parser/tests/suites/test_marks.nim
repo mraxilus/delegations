@@ -61,35 +61,36 @@ const
   EXAMPLES_MARKED = [
     (
       text: "mi 1987 klama",
-      module: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (unread 3 Stream Letter \"1987\") " &
-        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 \"klama\")) (tail_terms 71)))",
+      module: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) " &
+        "(unread Stream Letter 3 7 \"1987\") (bridi_tail_3 50 53 " &
+        "(tanru_unit_2 130 152 (BRIVLA 8 13 \"klama\")) (tail_terms 71)))",
     ),  # written word stream refuses, between sumti and bridi tail around it
     (
       text: "mi xau klama",
-      module: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (unread 3 Selmaho \"xau\") " &
-        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 7 \"klama\")) (tail_terms 71)))",
+      module: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (unread Selmaho 3 6 \"xau\") " &
+        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 7 12 \"klama\")) (tail_terms 71)))",
     ),  # cmavo no list gives selma'o
     (
       text: "zei mi klama",
-      module: "(text 0 (unread 0 Construct \"zei\") (sentence 2 40 (sumti_6 80 97 " &
-        "(KOhA 4 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 7 \"klama\")) " &
+      module: "(text 0 (unread Construct 0 3 \"zei\") (sentence 2 40 (sumti_6 80 97 " &
+        "(KOhA 4 6 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 7 12 \"klama\")) " &
         "(tail_terms 71))))",
     ),  # `zei` joining no word before it, in root before all units read (4.6)
     (
       text: "mi cusku lo'u .i mi klama",
-      module: "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 " &
-        "50 53 (tanru_unit_2 130 152 (BRIVLA 3 \"cusku\")) (tail_terms 71))) " &
-        "(unread 9 Quotation \"lohu\") (I 15 \"i\") (sentence 11 40 (sumti_6 80 97 " &
-        "(KOhA 17 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 20 \"klama\")) " &
-        "(tail_terms 71))))",
+      module: "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 " &
+        "50 53 (tanru_unit_2 130 152 (BRIVLA 3 8 \"cusku\")) (tail_terms 71))) " &
+        "(unread Quotation 9 13 \"lohu\") (I 15 16 \"i\") (sentence 11 40 (sumti_6 80 97 " &
+        "(KOhA 17 19 \"mi\")) (bridi_tail_3 50 53 " &
+        "(tanru_unit_2 130 152 (BRIVLA 20 25 \"klama\")) (tail_terms 71))))",
     ),  # `lo'u` no `le'u` closes stands alone, and words after it read on (19.9, #859)
     (
       text: "mi klama le",
       module: "(error 11 sumti_6 97 (expects BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
         "GOhA GUhA JAI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU " &
         "SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) " &
-        "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-        "(tanru_unit_2 130 152 (BRIVLA 3 \"klama\")) (tail_terms 71))) (LE 9 \"le\"))",
+        "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+        "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71))) (LE 9 11 \"le\"))",
     ),  # text cut off after `le`: grammar stops at its end, in `sumti-6` 97, which waits
   ]
     ## Texts constructed, and root node of module `nif.nim` writes for each, byte for byte.

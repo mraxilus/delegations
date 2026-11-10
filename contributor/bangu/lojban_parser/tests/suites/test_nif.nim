@@ -41,7 +41,10 @@ const
       "zoi gy. a(b)c \"d\" \\e #f :g @h ~i [j] {k} .gy.",
       "\"a\\28b\\29c \\22d\\22 \\5Ce #f :g \\40h \\7Ei \\5Bj\\5D \\7Bk\\7D\"",
     ),  # 19.10, `zoi` quotes text of control bytes; constructed
-    ("la'o gy. Größe .gy.", "\"laho\" \"gy\" \"Größe\" \"gy\""),  # 19.10, `la'o` quotes name
+    (
+      "la'o gy. Größe .gy.",
+      "\"laho\" 5 7 \"gy\" 9 16 \"Größe\" 18 20 \"gy\"",
+    ),  # 19.10, `la'o` quotes name, whose bytes from 128 count in its span
     ("zoi gy. a\tb\nc .gy.", "\"a\\09b\\0Ac\""),  # 19.10, tab and line end inside; constructed
     ("zoi gy. h'a .gy.", "\"h\\27a\""),  # 19.10, quoted text keeps `h` and `'`; constructed
   ]

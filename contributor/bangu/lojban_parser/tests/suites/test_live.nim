@@ -113,31 +113,31 @@ const
     ## Texts where opener waits, then text read again opens past it; `bu` then makes opener
     ##   after it lerfu word, so closer closes first opener, past text read again; with cuts
     ##   that cut it so, which search over random cuts found; constructed.
-  LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-    "(tanru_unit_2 130 152 (BRIVLA 3 \"klama\")) (tail_terms 71)))\n"
+  LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+    "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71)))\n"
     ## Line of node of `mi klama`, which examples open with.
-  LINE_DO = "(text_1 0 2 (I 10 \"i\") (sumti_6 4 97 (KOhA 12 \"do\")))\n"
+  LINE_DO = "(text_1 0 2 (I 10 11 \"i\") (sumti_6 4 97 (KOhA 12 14 \"do\")))\n"
     ## Line of node of `.i do` after it, while sentence is open.
   LINE_SUHI = "(error 3 paragraphs 4 (expects A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
     "FAhA FEhE FIhO GA GAhO GOI GOhA GUhA I JAI JOI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME " &
     "MOhI NA NAhE NIhO NOI NU NUhA NUhI PA PEhE PU SE SEI SOI TAhE TEI TO VA VAU VEI VEhA " &
-    "VIhA VUhO XI ZAhO ZEI ZEhA ZI ZO ZOI ZOhU BRIVLA) (sumti_6 0 97 (KOhA 0 \"mi\")) " &
-    "(mex_operator 370 374 (VUhU 3 \"suhi\")) (sumti_6 0 97 (KOhA 8 \"do\")))\n"
+    "VIhA VUhO XI ZAhO ZEI ZEhA ZI ZO ZOI ZOhU BRIVLA) (sumti_6 0 97 (KOhA 0 2 \"mi\")) " &
+    "(mex_operator 370 374 (VUhU 3 7 \"suhi\")) (sumti_6 0 97 (KOhA 8 10 \"do\")))\n"
     ## Line of node of `mi su'i do`, which grammar stops in at `su'i`.
-  LINE_ZEI = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-    "(selbri_3 130 133 (tanru_unit_2 134 152 (BRIVLA 3 \"klama\")) (tanru_unit_2 134 152 " &
-    "(ZEI 10 \"i\" \"zei\" \"broda\"))) (tail_terms 71)))\n"
+  LINE_ZEI = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+    "(selbri_3 130 133 (tanru_unit_2 134 152 (BRIVLA 3 8 \"klama\")) (tanru_unit_2 134 152 " &
+    "(ZEI 10 11 \"i\" 12 15 \"zei\" 16 21 \"broda\"))) (tail_terms 71)))\n"
     ## Line of node of `mi klama .i zei broda`, one sentence.
   EXAMPLES_LIVE: seq[tuple[pieces: seq[string], changes: seq[Change]]] = @[
     (
       pieces: @["mi klama .i do ", "cad", "zu"],
       changes: @[
         (28, LINE_MI_KLAMA, LINE_DO),
-        (153, "", LINE_DO),
-        (153, "", LINE_DO),
+        (157, "", LINE_DO),
+        (157, "", LINE_DO),
         (
-          153, "(text_1 0 2 (I 10 \"i\") (sentence 4 40 (sumti_6 80 97 (KOhA 12 \"do\")) " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 15 \"cadzu\")) " &
+          157, "(text_1 0 2 (I 10 11 \"i\") (sentence 4 40 (sumti_6 80 97 (KOhA 12 14 \"do\")) " &
+            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 15 20 \"cadzu\")) " &
             "(tail_terms 71))))\n",
           "",
         ),
@@ -147,57 +147,61 @@ const
       pieces: @["mi klama .i do ", "si si si "],
       changes: @[
         (28, LINE_MI_KLAMA, LINE_DO),
-        (28, "", "(sumti_6 0 97 (KOhA 0 \"mi\"))\n"),
-        (28, "(sumti_6 0 97 (KOhA 0 \"mi\"))\n", ""),
+        (28, "", "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n"),
+        (28, "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n", ""),
       ],
     ),  # third `si` erases `klama`, so NIF cuts back to sentence that held it (19.13)
     (
       pieces: @["mi 1987 klama .i ", "su ko "],
       changes: @[
         (
-          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (unread 3 Stream Letter \"1987\") " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 \"klama\")) (tail_terms 71)))\n",
-          "(text_1 0 2 (I 15 \"i\"))\n",
+          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) " &
+            "(unread Stream Letter 3 7 \"1987\") (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 8 13 \"klama\")) (tail_terms 71)))\n",
+          "(text_1 0 2 (I 15 16 \"i\"))\n",
         ),
-        (28, "", "(sumti_6 0 97 (KOhA 20 \"ko\"))\n"),
-        (28, "(sumti_6 0 97 (KOhA 20 \"ko\"))\n", ""),
+        (28, "", "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n"),
+        (28, "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n", ""),
       ],
     ),  # `su` erases text before it, word stream refuses too, so NIF cuts back to directives
     (
       pieces: @["mi cusku lu do klama .i mi cadzu ", "li'u .i ko "],
       changes: @[
         (
-          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 3 \"cusku\")) (sumti_6 71 97 (LU 9 \"lu\") " &
-            "(sentence 0 40 (sumti_6 80 97 (KOhA 12 \"do\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 15 \"klama\")) (tail_terms 71))))))\n",
-          "(text_1 0 2 (I 22 \"i\") (sentence 4 40 (sumti_6 80 97 (KOhA 24 \"mi\")) " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 27 \"cadzu\")) " &
+          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 3 8 \"cusku\")) (sumti_6 71 97 (LU 9 11 \"lu\") " &
+            "(sentence 0 40 (sumti_6 80 97 (KOhA 12 14 \"do\")) (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 15 20 \"klama\")) (tail_terms 71))))))\n",
+          "(text_1 0 2 (I 22 23 \"i\") (sentence 4 40 (sumti_6 80 97 (KOhA 24 26 \"mi\")) " &
+            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 27 32 \"cadzu\")) " &
             "(tail_terms 71))))\n",
         ),
         (
-          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 3 \"cusku\")) (sumti_6 71 97 (LU 9 \"lu\") " &
-            "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 12 \"do\")) (bridi_tail_3 50 " &
-            "53 (tanru_unit_2 130 152 (BRIVLA 15 \"klama\")) (tail_terms 71))) (I 22 \"i\") " &
-            "(sentence 11 40 (sumti_6 80 97 (KOhA 24 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 27 \"cadzu\")) (tail_terms 71)))) " &
-            "(LIhU 33 \"lihu\"))))\n",
-          "(text_1 0 2 (I 39 \"i\") (sumti_6 4 97 (KOhA 41 \"ko\")))\n",
+          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 3 8 \"cusku\")) (sumti_6 71 97 (LU 9 11 \"lu\") " &
+            "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 12 14 \"do\")) " &
+            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 15 20 \"klama\")) " &
+            "(tail_terms 71))) (I 22 23 \"i\") " &
+            "(sentence 11 40 (sumti_6 80 97 (KOhA 24 26 \"mi\")) (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 27 32 \"cadzu\")) (tail_terms 71)))) " &
+            "(LIhU 33 37 \"lihu\"))))\n",
+          "(text_1 0 2 (I 39 40 \"i\") (sumti_6 4 97 (KOhA 41 43 \"ko\")))\n",
         ),
-        (466, "(text_1 0 2 (I 39 \"i\") (sumti_6 4 97 (KOhA 41 \"ko\")))\n", ""),
+        (491, "(text_1 0 2 (I 39 40 \"i\") (sumti_6 4 97 (KOhA 41 43 \"ko\")))\n", ""),
       ],
     ),  # `lu` waits, so sentences after it go out; `li'u` reads them again as quotation
     (
       pieces: @["mi su", "'i do "],
       changes: @[
-        (28, "", "(sumti_6 0 97 (KOhA 0 \"mi\"))\n"), (28, "", LINE_SUHI), (28, LINE_SUHI, ""),
+        (28, "", "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n"), (28, "", LINE_SUHI), (28, LINE_SUHI, ""),
       ],
     ),  # `su` that piece cuts is `su'i` once next piece ends it, so erases nothing
     (
       pieces: @["mi klama .i ", "zei broda "],
       changes: @[
-        (28, LINE_MI_KLAMA, "(text_1 0 2 (I 10 \"i\"))\n"), (28, "", LINE_ZEI), (28, LINE_ZEI, ""),
+        (28, LINE_MI_KLAMA, "(text_1 0 2 (I 10 11 \"i\"))\n"),
+        (28, "", LINE_ZEI),
+        (28, LINE_ZEI, ""),
       ],
     ),  # `zei` joins `.i` to word after it, so `.i` opens no sentence, and NIF cuts back (4.6)
   ]

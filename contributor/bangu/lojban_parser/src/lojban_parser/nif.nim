@@ -14,15 +14,20 @@
 ##     number of rule closing it, as `(sumti_6 80 97 ...)` from `terms` 80 down to `sumti-6` 97.
 ##     Two ends give one chain in 21.1 (`LUT_CHAIN_BY_ENDS`), so reader rebuilds each rule between
 ##     them, and tree reads back whole.
-##   Terminal is compound node: tag is its class, as `KOhA` or `BRIVLA`; then byte where its first
-##     word opens, then letters of each word as string literal. Order of terminals in tree gives
-##     index of each unit, so node holds none.
+##   Terminal is compound node: tag is its class, as `KOhA` or `BRIVLA`; then, for each word, byte
+##     where it opens, byte past its last letter, and its letters as string literal, as
+##     `(BU 15 17 "ta" 18 20 "bu")`. So each word ties to bytes of text it reads from. Order of
+##     terminals in tree gives index of each unit, so node holds none.
+##   Named rule writes no byte: it spans bytes of leaves under it, which reader takes from them.
+##     Cost: byte past each word adds 7% to modules of corpora (PROVENANCE.md, NIF); byte where
+##       word opens alone was rejected, since reader could not tell where word ends from letters
+##       alone, as comma and capital write bytes letters drop.
 ##   Reading that marks each error (`readTextMarked`, #859) writes two nodes more:
 ##     Error node: tag `error`, byte where grammar stops, tag and number of rule stopping
 ##       innermost there, then `(expects ...)` holding class of each terminal some derivation
 ##       reads there, then nodes it holds. Chain stops above it, as no chain of 21.1 holds it.
-##     Unit no terminal holds: tag `unread`, byte where its first word opens, stage refusing it as
-##       identifier, as `Selmaho`, then letters of each word. Stage `Stream` adds refusal of
+##     Unit no terminal holds: tag `unread`, stage refusing it as identifier, as `Selmaho`, then
+##       bytes and letters of each word, as terminal writes them. Stage `Stream` adds refusal of
 ##       stream, as `Letter`, and written word it refuses keeps its bytes, as text `zoi` quotes
 ##       does: no `h` for `'`, and `'` takes escape. Stage alone was rejected, since stream and
 ##       grammar of quotation both name refusal `Quotation`, so reader could not tell bytes from
@@ -137,8 +142,8 @@ func addRule(text: var string, node: Node, top: int, reading: ReadingText | Read
 
 func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked) =
   ## Add node of tree to text: chain of named rules opening at it, or terminal with its class,
-  ##   byte where it opens, and letters of each word; unit no terminal holds writes `unread`,
-  ##   and stage refusing it after its byte, with refusal of stream for stage `Stream`.
+  ##   then bytes and letters of each word; unit no terminal holds writes `unread`, then stage
+  ##   refusing it, with refusal of stream for stage `Stream`, before its words.
   if not node.is_terminal:
     text.addRule(node, node.number, reading)
     return
@@ -146,8 +151,6 @@ func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked)
     ## Alias unit of terminal, which `let` would copy on JavaScript backend.
   text.add '('
   text.add (if unit.is_read: ($unit.terminal).tag else: "unread")
-  text.add ' '
-  text.add $reading.occurrences[unit.words[0]].start
   if not unit.is_read:
     when reading is ReadingMarked:
       text.add ' '
@@ -158,8 +161,14 @@ func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked)
     else:
       doAssert false, "Reading that reads should hold no unit refused."
   for k in 0 ..< unit.words.len:
+    template word: untyped = reading.occurrences[unit.words[k]]
+      ## Alias word of unit, which `let` would copy on JavaScript backend.
+    text.add ' '
+    text.add $word.start
+    text.add ' '
+    text.add $word.finish
     text.add " \""
-    text.add reading.occurrences[unit.words[k]].letters
+    text.add word.letters
     text.add '"'
   text.add ')'
 
