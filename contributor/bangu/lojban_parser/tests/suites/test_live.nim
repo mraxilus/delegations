@@ -94,6 +94,16 @@ const
     ## Texts where words stream or rules refuse stand between `sa` and word after them, which
     ##   gives its marker (19.13); later word refuses that word too, so marker changes:
     ##   `si` erases word `zo` quotes, so `zo` is refused, or `ba'e` marks no word; constructed.
+  TEXTS_ZEI_REFUSED = [
+    "lo'u bu zei zoi lu nai ui si cu je",  # fuzz of live law found it: `zei` reads again not
+    "lo'u bu zei la'o lu nai ui si cu je",  # `la'o`
+    "lo'u bu zei zoi lu nai ui si klama do",  # `klama`
+    "lo'u bu bu zei zoi lu nai ui si cu je",  # two `bu`
+    "lo'u bu zei ui si zoi lu nai ui si cu je",  # erasure between `zei` and quotation
+  ]
+    ## Texts where rules refuse `bu` and `zei`, then quotation opens, inside words `lo'u` quotes,
+    ##   which waits as opener; `si` erases word quotation takes, so rules refuse quotation too,
+    ##   and `zei` joins `bu` to word after it (19.16); constructed.
   CUTS_CLOSER = [
     (text: "to .i to toi to bu toi ba'e", cuts: @[1, 9, 18, 23, 24]),  # fuzz of live law found it
     (text: "to mi .i to bu toi do", cuts: @[6, 12, 13, 19]),
@@ -321,6 +331,14 @@ suite "Internal: Live text":
       let live = text.readLive(text.cutsWords, is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_grown  # header of `live.nim`, tail grows as text so far gives it (19.13)
+
+
+  test "Zei that rules refuse reads again with quotation after it, once they refuse quotation":
+    for text in TEXTS_ZEI_REFUSED:
+      checkpoint text
+      let live = text.readLive(text.cutsWords, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `live.nim`, tail grows as text so far gives it (19.16)
 
 
   test "Closer reads back past text read again, where opener there opens no more":
