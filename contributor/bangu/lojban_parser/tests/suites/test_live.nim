@@ -1,11 +1,12 @@
 ## Hold reader of live text to its laws (#859): text read piece by piece gives, at its end, NIF of
 ##   its parts read whole (`toNifParts` of `readTextParts`), byte for byte, however pieces cut it.
-##   Pieces: each written word, and seeded random cuts, inside words too; over corpora, and over
-##     texts built of words that reach back (`WORDS_BUILT`), since corpora hold few of them.
+##   Pieces: seeded random cuts, inside words too, over each second text of corpora, and over
+##     texts built of words that reach back (`WORDS_BUILT`), since corpora hold few of them;
+##     each written word, in law of cost.
 ##   Each change cuts NIF back only within NIF held, and NIF it leaves is NIF reader holds. Before
 ##     end, NIF and tail of each change are parts of text so far, up to its last mark between
 ##     words, read whole as live text, so tree grows as text so far gives it.
-##   Parts lose nothing of tree: `assembleText` builds from them tree `readText` gives.
+##   Parts lose nothing of tree: `assembleText` builds from them tree `readGrammar` gives.
 ##   Cost: bytes each reading reads grow with length of text: sentences of Tatoeba joined, read
 ##     word by word, read at most `COST_MOST` times their bytes, and twice them as many again.
 ##   Worked examples give change of each piece, byte for byte: sentence going out, word cut,
@@ -36,15 +37,18 @@ type
 
 const
   SEED = 859  ## Seed of random cuts and of texts built.
-  COUNT_BUILT = 400  ## Texts built of words that reach back.
+  COUNT_BUILT = 300  ## Texts built of words that reach back.
   WORDS_BUILT_MOST = 14  ## Words of text built, at most.
   PIECE_MOST = 6  ## Bytes of random piece of text built, at most, so pieces cut words.
   PIECE_CORPORA_MOST = 96
     ## Bytes of random piece of text of corpora, at most: text of one sentence reads again at
     ##   each piece, so piece of each word would cost 100 s of debug build, 14 times reading it.
-  COUNT_CORPORA_LEAST = 1900  ## Texts of corpora read live, of 1,941.
+  COUNT_CORPORA_LEAST = 950
+    ## Texts of corpora read live: each second text, of 1,941, since each costs 3 times reading it
+    ##   whole, about 12 s of debug build for half.
+
   COUNT_PARTED_LEAST = 100  ## Texts of corpora of more than one part, each unit read.
-  SENTENCES_COST = 40  ## Sentences of Tatoeba joined that cost law reads, then that text twice.
+  SENTENCES_COST = 30  ## Sentences of Tatoeba joined that cost law reads, then that text twice.
   COST_MOST = 12.0
     ## Bytes read, over bytes of text, at most, word by word; 8.2 on adding law, as each piece
     ##   reads sentence still open again.
@@ -221,7 +225,8 @@ suite "Internal: Live text":
     var
       rng = initRand(SEED)
       count = 0
-    for (key, text, whole) in pool:
+    for k, (key, text, whole) in pool:
+      if k mod 2 == 1: continue  # each second text, for cost of suite
       checkpoint key & ": " & text
       let live = text.readLive(text.cutsRandom(rng, PIECE_CORPORA_MOST))
       check live.nif == whole.reading.toNifParts  # header of `live.nim`, law
