@@ -7,8 +7,9 @@ cmd: "nim $target --hints:off -d:testing -d:release $options $file"
 ##   each sentence of fixed sample of Tatoeba takes verdict native build gave it at render, and
 ##   object of `parseLojban` mirrors `ReadingText` field for field.
 ##   NIF of every fourth sentence of sample, where it reads, written on JS backend, reads back as
-##     model of format gives, by reader of native suite (`suites/reader_nif.nim`);
-##     `parseLojbanToNif` gives module of worked example native suite holds, byte for byte.
+##     model of format gives, and rebuilds its tree whole, by reader of native suite
+##     (`suites/reader_nif.nim`); `parseLojbanToNif` gives module of worked example native suite
+##     holds, byte for byte.
 ##     Cost: reading takes about 70 ms each sentence on JS backend, so whole sample would add
 ##       about 13 s; native suite reads every text of corpora.
 ##   Sample reaches 86 of 88 named rules of 21.1, and refuses 49 sentences at stream and grammar
@@ -113,12 +114,12 @@ suite "Internal: JavaScript build":
     check module == EXAMPLE_NIF.module  # `test_nif.nim`, worked example byte for byte
 
 
-  test "NIF of every fourth sentence of sample that reads reads back as model of format gives":
+  test "NIF of every fourth sentence of sample that reads reads back, and rebuilds tree whole":
     var count = 0
     for k in countup(0, SENTENCES_TATOEBA.high, STRIDE_NIF):
       if SENTENCES_TATOEBA[k].verdict.len > 0: continue  # refusal holds no tree
       let reading = SENTENCES_TATOEBA[k].text.readText
-      check reading.toNif.readModule == reading.toModule  # `test_nif.nim`, law of native build
+      check reading.isReadBack  # `test_nif.nim`, law of native build
       inc count
     check count >= COUNT_TREES_LEAST  # IX.3, guard keeps sentences that read
 
