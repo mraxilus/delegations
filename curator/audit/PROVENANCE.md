@@ -1011,9 +1011,9 @@ that a contributor may write is a scope boundary the branch grammar cannot check
 
 **Data takes its form from who writes it and who reads it, as the Architect ruled on #755.**
 Data that a person writes is a typed Nim module. Data that one program writes and another reads
-is Protocol Buffers, as the Architect ruled on #761. Its committed schema carries the versions
-of the format. A record that the repository commits is in text format, and each build turns it
-into binary. `CONTRIBUTOR.md`, Data, states the rule.
+is Protocol Buffers, as the Architect ruled on #761, or NIF. A committed schema of Protocol
+Buffers carries the versions of its format. A record that the repository commits is in text
+format, and each build turns it into binary. `CONTRIBUTOR.md`, Data, states the rule.
 
 - Rejected: a Nim module that the writing program emits, for a committed record. The Architect
   ruled against it, because it leaves us to keep our own code for reading and for versions.
@@ -1111,6 +1111,22 @@ break it, and the port happens in that same pull request. A new format follows t
 - Cost: JSON stays in each format whose shape has not changed, with no check of versions. The
   scene file of pga_visualiser keeps its own form, with no length and no checksum, until then.
 - Cost: no check sees the shape of a JSON format, so review holds that a change of shape ports.
+
+**NIF is a second format between programs, as the Architect ruled on #852 and again on
+2026-11-10.** NIF is the native format of Nim 3, so data in it needs no exception to the rule.
+Its specification calls it a format for the communication of compilers and for data exchange
+between languages. The root glossary names it at commit `a31513c6` of `nifspec`, version 2027
+(#856). No schema reads NIF, so a law of the suite of each format holds its writer and its reader
+to each other. The writer of `lojban_parser` holds such a law over its corpora (#855).
+
+- Verified by reading `doc/nif-spec.md` of `nim-lang/nifspec` at `a31513c6` on 2026-11-10. Its
+  title names the format, and its section Version 2027 gives the directive `(.nif27)`, which
+  opens a file and names its format to a tool. Its licence is MIT.
+- Cost: `buf breaking` holds no version of a NIF format. So a change of its shape passes every
+  check but the law of its own suite.
+- Cost: `kinds.nim` registers no `.nif`, so no NIF file is committed until a curator registers
+  that kind. The kind needs a reader of the comments of NIF, `#…#` after an atom or a tag, for
+  the rule of articles (VI.5).
 
 **`check-schemas` holds each folder of changed schemas to the version that base shipped.** It
 runs `buf breaking` with category `WIRE_JSON`, which guards the bytes and the JSON text, and
@@ -2961,3 +2977,6 @@ pull requests sat on both sides, so the subject of a call does not say which met
   command for each rename.
 - Whether the `test` job of `curator/audit` should restore the store, as the `drive` job does.
   Without it, each run fetches 5.7 MB of font faces before the suite holds the rows to their bytes.
+- Whether NIF replaces Protocol Buffers once every project moves to Nim 3, as the Architect
+  wondered on 2026-11-10. A law of each suite would then hold the versions of each format, where
+  `buf breaking` holds them now.
