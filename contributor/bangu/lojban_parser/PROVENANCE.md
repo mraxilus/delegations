@@ -1130,10 +1130,11 @@ the writer in the script, 2026-11-10. `addNode`, `addRule` and `escaped` copy no
 `letters` copy the string that `escaped` gives them, one tag or one word, and `toNif` copies its 28
 bytes of directives once. No routine copies a node.
 
-**NIF needs no exception to the rule on data between programs.** The Architect ruled that NIF is
-the native format of Nim 3, so data in NIF follows CONTRIBUTOR.md, Data (#852). A file in NIF
-that this project commits would need its kind, since `curator/audit/src/kinds.nim` registers no
-`.nif`. The project commits none.
+**The rule on data between programs admits NIF, and a law of the suite holds its shape**
+(CONTRIBUTOR.md, Data). The law writes each tree of the corpora and reads it back whole, so the
+writer and the reader agree. The module opens with the version directive, as that rule asks.
+`curator/audit/src/kinds.nim` registers no `.nif` yet, and the project commits no file in NIF.
+Verified by `suites/test_nif.nim`.
 
 **The script gives `parseLojbanToNif(text)`, which returns the module as a string.** It returns
 null where the text is refused, since a refusal holds no tree, and `parseLojban` gives the reason.
