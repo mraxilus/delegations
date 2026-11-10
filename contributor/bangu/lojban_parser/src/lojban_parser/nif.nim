@@ -25,8 +25,8 @@
 ##     byte of NIF and byte below space as `\xx`; `#`, `:`, space and byte from 128 as they are.
 ##   Rejected: escape `\2D` of tag and `\27` of word, which spec gives, and Architect declined
 ##     (#855). Reader of nimony at `2c5b3dca` takes tag as its bytes, so it leaves `\2D` undecoded.
-##   NIF needs no exception to rule on data between programs, as native format of Nim 3
-##     (CONTRIBUTOR.md, Data; #852).
+##   Rule on data between programs admits NIF, which law of suite holds (CONTRIBUTOR.md, Data):
+##     `test_nif.nim` writes each tree of corpora and reads it back whole.
 ##   Rejected: line information for byte of word, since NIF writes it as difference from parent,
 ##     and reader of nimony keeps 10 bits of column, so byte past 1,023 is cut (#852).
 ##   Rejected: library of nimony, which compiles not for JavaScript (#852).

@@ -17,7 +17,7 @@
 ##     CommonJS gives one, so browser and node load one file.
 ##   Rejected: text of JSON, which caller would parse. Plain object is value caller's own runtime
 ##     holds, so no format of data crosses between programs (CONTRIBUTOR.md, Data). NIF crosses,
-##     as native format of Nim 3, which needs no exception (#852).
+##     as that rule admits, and law of `test_nif.nim` holds it.
 ##   Cost: reading runs on thread of caller, so page waits while it reads; PROVENANCE.md,
 ##     JavaScript build, gives figures measured against native build.
 
