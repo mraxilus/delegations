@@ -18,6 +18,7 @@
 ##   | grammar      | words read by formal grammar into tree of its rules  | 21.1             |
 ##   | prose        | text: quotation, erasure, marks, then grammar        | 19.9-16, 21.1    |
 ##   | nif          | tree of text as module of NIF data format            | 21.1             |
+##   | live         | live text read piece by piece, cut back by cursor    | 19.13, 21.1      |
 ##   |--------------|------------------------------------------------------|------------------|
 ##
 ##   Order of compile-time type bootstrapping:
@@ -35,6 +36,9 @@
 ##     Node -> ReadingGrammar
 ##     [Occurrence, Terminal] -> Unit
 ##     [Unit, Node] -> ReadingText
+##     [Unit, Node] -> ReadingMarked
+##     [ReadingMarked, Terminal] -> ReadingParts
+##     [Selmaho, Terminal] -> ReaderLive
 ##   Lists are data that `nim r tools/build.nim lists` renders; `Word` is range over entries of
 ##     gismu list, so its bound follows list with no number written twice (Article II.5).
 ##   Lists stay off surface: caller wanting every entry imports `lists/gismu` or `lists/cmavo`
@@ -48,10 +52,10 @@ when compileOption("profiler"):
   import std/nimprof
 
 import ./lojban_parser/[
-  clusters, dictionary, entries, forms, fuhivla, grammar, lujvo, nif, prose, selmaho, stream,
-  tanru, tanru_units,
+  clusters, dictionary, entries, forms, fuhivla, grammar, live, lujvo, nif, prose, selmaho,
+  stream, tanru, tanru_units,
 ]
 
 export
-  clusters, dictionary, entries, forms, fuhivla, grammar, lujvo, nif, prose, selmaho, stream,
-  tanru, tanru_units
+  clusters, dictionary, entries, forms, fuhivla, grammar, live, lujvo, nif, prose, selmaho,
+  stream, tanru, tanru_units

@@ -57,7 +57,7 @@ const
   KEPT_STRING = {'#', ':'}  ## Control bytes string literal holds as they are (String literals).
   KEPT_IDENTIFIER = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
     ## Bytes below 128 that identifier holds as they are (Identifiers).
-  HEADER = "(.nif27)\n(.lang \"cll-21.1\")\n"
+  HEADER* = "(.nif27)\n(.lang \"cll-21.1\")\n"
     ## Directives module opens with: version, as magic cookie, then language of its tags.
 
 
@@ -90,7 +90,7 @@ func letters(occurrence: Occurrence): string =
   escaped(text, is_identifier = false)
 
 
-func byteAt(reading: ReadingMarked, at: int): int =
+func byteAt*(reading: ReadingMarked, at: int): int =
   ## Give byte where unit `at` opens; size of text, at count of units, where text ends.
   if at < reading.units.len: reading.occurrences[reading.units[at].words[0]].start
   else: reading.size
@@ -179,3 +179,19 @@ func toNif*(reading: ReadingMarked): string =
   result = HEADER
   result.addNode(reading.tree, reading)
   result.add '\n'
+
+
+func toNif*(node: Node, reading: ReadingMarked): string =
+  ## Write one node of tree of reading as NIF, as module writes it, with no directive: node of
+  ##   each part goes out on line of its own in live text (`live.nim`).
+  result.addNode(node, reading)
+
+
+func toNifParts*(reading: ReadingMarked): string =
+  ## Write module of NIF whose nodes are children of root of reading, each on line of its own:
+  ##   node of each part, and each unit refused between parts (`readTextParts`), as live text
+  ##   writes them.
+  result = HEADER
+  for k in 0 ..< reading.tree.children.len:
+    result.addNode(reading.tree.children[k], reading)
+    result.add '\n'

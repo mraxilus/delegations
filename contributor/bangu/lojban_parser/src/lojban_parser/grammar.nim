@@ -835,9 +835,9 @@ func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
 #[ Passes ]#
 
 const
-  OPENERS = [Selmaho.Tuhe, Selmaho.Lu, Selmaho.To]
+  OPENERS* = [Selmaho.Tuhe, Selmaho.Lu, Selmaho.To]
     ## Selma'o opening text inside text: statement-3, sumti-6 and free (rules 14, 97, 32).
-  CLOSERS = [Selmaho.Tuhu, Selmaho.Lihu, Selmaho.Toi]  ## Terminator of each opener, in its order.
+  CLOSERS* = [Selmaho.Tuhu, Selmaho.Lihu, Selmaho.Toi]  ## Terminator of each opener, in its order.
   JOINS = {Selmaho.Ja, Selmaho.Joi, Selmaho.Bihi, Selmaho.Gaho, Selmaho.Bo}
     ## Selma'o after `I`, past NA and SE, that joins statements: jek, joik or BO (rules 12, 13).
   TAGS = {
@@ -877,6 +877,14 @@ func isJoining(terminals: openArray[Terminal], at: int): bool =
   k = at + 1
   while k < terminals.len and terminals[k].isAmong(TAGS): inc k
   k > at + 1 and k < terminals.len and terminals[k] == Selmaho.Bo.toTerminal
+
+
+func isCutAt*(terminals: openArray[Terminal], at: int, before: Option[Terminal]): bool =
+  ## Test passes cut text before terminal `at`, where no opener is open: `NIhO` that follows none,
+  ##   as `before` gives terminal before it, or `I` that joins nothing (`toParts`).
+  let terminal = terminals[at]
+  (terminal == Selmaho.Niho.toTerminal and before != some(Selmaho.Niho.toTerminal)) or
+    (terminal == Selmaho.I.toTerminal and not terminals.isJoining(at))
 
 
 func isTracked(
@@ -921,13 +929,8 @@ func toParts(
     opened: seq[tuple[selmaho: Selmaho, at: int]]  # each opener open, innermost last
   for i in first ..< last:
     if opened.isTracked(terminals, i, ignored): continue
-    if opened.len == 0 and i > starts[^1]:
-      let
-        terminal = terminals[i]
-        is_paragraph = terminal == Selmaho.Niho.toTerminal and
-          terminals[i - 1] != Selmaho.Niho.toTerminal
-        is_group = terminal == Selmaho.I.toTerminal and not terminals.isJoining(i)
-      if is_paragraph or is_group: starts.add i
+    if opened.len == 0 and i > starts[^1] and terminals.isCutAt(i, some(terminals[i - 1])):
+      starts.add i
   let
     is_inner = opened.len > 0 and opened[0].selmaho == Selmaho.Tuhe
     inner = (if is_inner: opened[0].at + 1 else: last)
