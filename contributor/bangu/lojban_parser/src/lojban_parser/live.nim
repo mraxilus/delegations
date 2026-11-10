@@ -191,19 +191,29 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
   ##   child before it, so span holds each word erasure erased before child, which erasure in
   ##   it may have erased; first opens at `first`. Child shares span of child before where its
   ##   first word stands among words of that child, as refused word between word and indicator
-  ##   marking it; or where quotation holds word span would open at (`toCleans`), which erasure
-  ##   erased.
+  ##   marking it; where quotation holds word span would open at (`toCleans`), which erasure
+  ##   erased; or where word stream reads before its first word is `sa` no unit holds, whose
+  ##   marker that word gives, past each word stream refuses (19.13).
   template units: untyped = region.reading.units
     ## Alias units of text read, which `let` would copy.
   template occurrences: untyped = region.reading.occurrences
     ## Alias words of text read, which `let` would copy.
   let cleans = occurrences.toCleans
+  var is_helds = newSeq[bool](occurrences.len)  # some unit holds word
+  for u in 0 ..< units.len:
+    for w in units[u].words: is_helds[w] = true
   result = newSeq[int](leaves.len)
   var next = 0  # word past words of children before
   for k in 0 ..< leaves.len:
-    let is_among = leaves[k].len > 0 and units[leaves[k][0]].words[0] < next
+    var before = (if leaves[k].len > 0: units[leaves[k][0]].words[0] else: next) - 1
+    while before >= 0 and not occurrences[before].reading.is_word: dec before
+    let
+      is_among = leaves[k].len > 0 and units[leaves[k][0]].words[0] < next
+      is_marked = before >= 0 and not is_helds[before] and
+        occurrences[before].reading.selmaho == some(Selmaho.Sa)
     if k == 0: result[k] = first
-    elif is_among or (next < occurrences.len and not cleans[next]): result[k] = result[k - 1]
+    elif is_among or is_marked or (next < occurrences.len and not cleans[next]):
+      result[k] = result[k - 1]
     elif next < occurrences.len: result[k] = occurrences[next].start
     else: result[k] = region.reading.size
     for u in leaves[k]: next = max(next, units[u].words[^1] + 1)
