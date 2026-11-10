@@ -68,6 +68,14 @@ const
   ]
     ## Texts holding `lo'u` whose `le'u` erasure erases, then word stream reads otherwise inside
     ##   words `lo'u` quotes: `fa'o`, which ends input, or `zoi`, which quotes text; constructed.
+  TEXTS_LOHU_QUOTED = [
+    "zo lo'u si nai fa'o cu",  # fuzz of live law found it: `fa'o` read as word
+    "zo lo'u si .i zoi gy. ko .gy.",  # `zoi` read as word, as inside quotation
+    "zo lo'u si ui fa'o mi",  # indicator after `si`
+  ]
+    ## Texts where `zo` quotes `lo'u`, as stream reads it, and `si` erases that `lo'u`: rules then
+    ##   refuse `zo`, and `lo'u` stands alone, though stream reads no words it quotes; then word
+    ##   stream reads otherwise inside words `lo'u` quotes; constructed.
   TEXTS_SA_PARTED = [
     "ni'o .i sa 1987 zo .i si",  # fuzz of live law found it: `sa` reads again not
     "mi klama .i sa 1987 zo .i si do",  # word after it
@@ -281,6 +289,14 @@ suite "Internal: Live text":
       let live = text.readLive(text.cutsWords, is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_grown  # header of `prose.nim`, stream reads `le'u` erasure erases (19.9)
+
+
+  test "Lo'u that zo quotes in stream waits for none, though rules refuse zo":
+    for text in TEXTS_LOHU_QUOTED:
+      checkpoint text
+      let live = text.readLive(text.cutsWords, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `prose.nim`, stream reads `lo'u` that `zo` quotes (19.10)
 
 
   test "Sa reads again where word after it changes, past words stream or rules refuse":
