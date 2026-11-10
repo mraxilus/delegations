@@ -1089,7 +1089,7 @@ names no line of Nim (expected). The verb takes the compiler that compiled the d
 **Cost: the script reads about 37 times slower than the native build, on the thread of its
 caller.** So a page waits while it reads. A text of the sample takes 16 ms and 14 ms at the
 median, against 0.45 ms and 0.35 ms native. The longest takes 459 ms and 416 ms, against 11 ms and
-10 ms native. Figures, JavaScript build, gives the method. At `c48b3704`, the verb writes 790,253
+10 ms native. Figures, JavaScript build, gives the method. At `f941add6`, the verb writes 806,713
 bytes, and prints the size.
 
 ## Text in NIF
