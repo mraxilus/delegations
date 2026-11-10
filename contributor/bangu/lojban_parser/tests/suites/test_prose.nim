@@ -191,6 +191,18 @@ suite "Chapter 19":
     check "mi klama fa'o 日本".unitsRead == some(@[@["mi"], @["klama"]])  # 19.15, input ends
     check "zo fa'o cu cmavo".unitsRead.get[0] == @["zo", "fa'o"]  # 19.15, unless quoted
 
+    # `fa'o` ending text, in each part quotation gives word; tolerant reader of #859 found
+    #   `mi cusku zo fa'o` read as `zo` alone, which lost word quoted.
+    check "mi klama fa'o".unitsRead == some(@[@["mi"], @["klama"]])  # 19.15, plain: input ends
+    check "mi cusku zo fa'o".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["zo", "fa'o"]])  # 19.10, `zo` quotes any word; constructed
+    check "mi cusku zoi fa'o gy fa'o".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["zoi", "fa'o", "gy", "fa'o"]])  # 19.10, delimiter any word
+    check "mi cusku la'o fa'o gy fa'o".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["la'o", "fa'o", "gy", "fa'o"]])  # 19.10, `la'o` as `zoi`
+    check "mi cusku lo'u fa'o".refusalRead ==
+        some((RefusalText.Quotation, 14))  # 19.9, `le'u` closes it; byte of word quoted last
+
 
 
 suite "Internal: Prose":
