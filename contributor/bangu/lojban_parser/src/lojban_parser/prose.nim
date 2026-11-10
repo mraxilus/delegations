@@ -579,7 +579,7 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     var k = span.a
     while k > 0 and text[k - 1] in MARKS_BOUNDARY: dec k
     refused.add Occurrence(
-      start: span.a, text: text[span],
+      start: span.a, finish: span.b + 1, text: text[span],
       pause: (if '.' in text[k ..< span.a]: Pause.Written else: Pause.Absent),
       reading: Reading(is_word: false, refusal: stream.refusal, detail: stream.detail),
     )

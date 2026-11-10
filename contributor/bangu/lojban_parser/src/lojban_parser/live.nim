@@ -283,7 +283,8 @@ func readFrom(reader: var ReaderLive, start: int, is_final: bool): ReadingParts 
     is_lohu = reader.openers.anyIt(it.selmaho == Selmaho.Lohu and it.at < start)
   result = readTextParts(reader.text[start ..< last], is_live = not is_final, is_lohu)
   reader.count_read += last - start
-  for occurrence in result.reading.occurrences.mitems: occurrence.start += start
+  for occurrence in result.reading.occurrences.mitems:
+    (occurrence.start, occurrence.finish) = (occurrence.start + start, occurrence.finish + start)
   result.reading.size = ending
   for zoi in result.zois.mitems: zoi.start += start
   for lohu in result.lohus.mitems: lohu += start

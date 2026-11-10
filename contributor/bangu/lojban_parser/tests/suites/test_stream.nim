@@ -58,6 +58,12 @@ const
     ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
     ##   842 read at seed `0`.
   VOWELS_SYLLABLE = "aeiouy"  ## Letters making syllable: vowels of 3.1, and `y` (3.4, 3.9).
+  WRITTEN_SPANNED = [
+    "bar,da", "le,nu", "KLAmaku", "miBROda", "secusku", ".ui,ku", "zoi gy. a, b .gy.",
+    "la'o gy. X .gy. cu",
+  ]
+    ## Written words whose bytes law of spans reads: comma inside word and between two words of
+    ##   one written word, capital, split, and quotation holding comma and period; constructed.
   CONSONANTS_SYLLABIC = "lmnr"  ## Consonants that may make syllable alone (3.4).
   DIPHTHONGS_OFF = ["ai", "ei", "oi", "au"]  ## Diphthongs with off-glide, in every word (3.4).
   DIPHTHONGS_ON = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
@@ -106,6 +112,24 @@ func startsRead(text: string): Option[seq[int]] =
   ## Read stream, and list byte where each word opens; none where stream is refused.
   let reading = text.readStream
   if reading.is_read: some(reading.occurrences.mapIt(it.start)) else: none(seq[int])
+
+
+func isSpanned(text: string): bool =
+  ## Decide whether each word of stream ends past its last letter, before next word opens, and
+  ##   bytes it spans spell it: letters with each capital lowercased and each comma left out,
+  ##   or text quoted, as written. False where stream is refused.
+  let reading = text.readStream
+  if not reading.is_read: return false
+  for k, occurrence in reading.occurrences:
+    let
+      written = text[occurrence.start ..< occurrence.finish]
+      spelled =
+        if occurrence.reading.is_word: written.toLowerAscii.replace(",", "") else: written
+      is_before = k == reading.occurrences.high or
+        occurrence.finish <= reading.occurrences[k + 1].start
+    if spelled != occurrence.text or not is_before: return false
+    if occurrence.reading.is_word and text[occurrence.finish - 1] == ',': return false
+  true
 
 
 func selmahoRead(text: string): Option[seq[Option[Selmaho]]] =
@@ -472,6 +496,15 @@ suite "Internal: Stream":
             some(LUT_SELMAHO_BY_CMAVO[words[i]])  # 20, selma'o cmavo list gives
       inc count
     check count == SAMPLES  # IX.3, guard keeps every stream
+
+
+  test "Each word ends past its last letter, and bytes it spans spell it":
+    for words in STREAMS_RANDOM:
+      for joint in [" ", ".", " . "]:
+        check words.join(joint).isSpanned  # 3.3, marks divide words, and stand outside each
+    for text in WRITTEN_SPANNED:
+      checkpoint text
+      check text.isSpanned  # WRITTEN_SPANNED, comma and capital inside word, quotation
 
 
   test "Period between words reads as space, and writes pause before each":
