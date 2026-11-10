@@ -661,6 +661,15 @@ func offer(partials: var seq[Option[Choice]], i: int, candidate: Choice) =
     partials[i] = some(candidate)
 
 
+func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
+  ## Test chart derives terminals `start ..< finish` from `symbol`: terminal reads one that
+  ##   matches it, and nonterminal completes over span, or derives nothing where span is empty.
+  if symbol.is_terminal:
+    return finish == start + 1 and int(chart.terminals[start]) == symbol.code
+  (start == finish and GRAMMAR_EBNF.nullable[symbol.code]) or
+    (symbol.code, start) in chart.completions[finish]
+
+
 func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   ## Choose derivation of terminals `start ..< finish` from `head` that closes fewest nonterminals
   ##   at each place, from first; tie goes to first production, then to longer symbol.
@@ -670,6 +679,9 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   ##     no choice kept depends on span still open.
   ##   Last symbol of body tries end of span alone, since no other bound reaches whole span;
   ##     every other bound cost time that grew with square of span, on long text.
+  ##   Nonterminal before last symbol tries only bound that last symbol ends span from: partial
+  ##     at other bound never reaches end. Each such dead child chose itself, and copied closures
+  ##     as long as its span; where opener stayed open, that cost grew faster than text (#849).
   let key = (head, start, finish)
   if key in chart.choices: return chart.choices[key]
   if chart.open.containsOrIncl(key): return none(Choice)
@@ -706,10 +718,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
           continue
         let low = (if k == body.high: finish else: m)  # last symbol ends at end of span
         for bound in countdown(finish - rests[k + 1], low):
-          let is_derived =
-            (bound == m and GRAMMAR_EBNF.nullable[symbol.code]) or
-            (symbol.code, m) in chart.completions[bound]
-          if not is_derived: continue
+          if not chart.isDerived(symbol, m, bound): continue
+          if k == body.high - 1 and not chart.isDerived(body[^1], bound, finish): continue  # dead
           let child = chart.choose(symbol.code, m, bound)
           if child.isNone: continue
           var next = partial.get
@@ -726,24 +736,31 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   best
 
 
-func toNodes(chart: Chart, head, start, finish: int): seq[Node] =
-  ## Build nodes of choice of `head` over span: named rule makes one node, and helper gives its
-  ##   nodes to rule holding it.
+func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
+  ## Add nodes of choice of `head` over span to `nodes`: named rule adds one node holding its
+  ##   children, and helper adds its own nodes in place, for rule holding it.
+  ##   Named node takes its place before its children fill it, so build copies no subtree, on
+  ##     JavaScript too, whose `add` copies each value; nor closures of choice. Copy at each level
+  ##     cost time that grew with square of text, since rule 4 nests one level for each paragraph
+  ##     (#849).
   let
-    choice = chart.choices[(head, start, finish)].get
-    body = GRAMMAR_EBNF.productions[choice.production].body
-  var
-    children: seq[Node]
-    at = start
-  for k, symbol in body:
-    if symbol.is_terminal: children.add Node(is_terminal: true, at: at)
-    else: children.add chart.toNodes(symbol.code, at, choice.bounds[k])
-    at = choice.bounds[k]
-  if GRAMMAR_EBNF.numbers[head].isNone: return children
-  @[Node(
+    key = (head, start, finish)
+    production = chart.choices[key].get.production
+    bounds = chart.choices[key].get.bounds
+  template addChildren(into: var seq[Node]) =
+    ## Add node of each symbol of production to `into`, in order.
+    var at = start
+    for k, symbol in GRAMMAR_EBNF.productions[production].body:
+      if symbol.is_terminal: into.add Node(is_terminal: true, at: at)
+      else: chart.addNodes(symbol.code, at, bounds[k], into)
+      at = bounds[k]
+  if GRAMMAR_EBNF.numbers[head].isNone:
+    addChildren(nodes)
+    return
+  nodes.add Node(
     is_terminal: false, rule: GRAMMAR_EBNF.names[head], number: GRAMMAR_EBNF.numbers[head].get,
-    children: children,
-  )]
+  )
+  addChildren(nodes[^1].children)
 
 
 func readGrammar*(terminals: openArray[Terminal]): ReadingGrammar =
@@ -757,7 +774,10 @@ func readGrammar*(terminals: openArray[Terminal]): ReadingGrammar =
       is_text = production.head == GRAMMAR_EBNF.start and item.origin == 0
     if is_text and item.dot == production.body.len: is_whole = true
   if not is_whole: return sets.refusal
-  var chart = Chart(completions: sets.toCompletions, terminals: @terminals)
+  var
+    chart = Chart(completions: sets.toCompletions, terminals: @terminals)
+    nodes: seq[Node]
   doAssert chart.choose(GRAMMAR_EBNF.start, 0, terminals.len).isSome,
       "Text grammar reads should derive tree."
-  ReadingGrammar(is_read: true, tree: chart.toNodes(GRAMMAR_EBNF.start, 0, terminals.len)[0])
+  chart.addNodes(GRAMMAR_EBNF.start, 0, terminals.len, nodes)
+  ReadingGrammar(is_read: true, tree: nodes.pop)  # rule 0 is named, so one node
