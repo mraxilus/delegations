@@ -94,7 +94,9 @@ type
     of false:
       refusal*: Refusal  ## Rule refusing stream.
       start*: int  ## Byte of stream where offending word or mark opens.
-      detail*: string  ## Offending character, form 4.11 gives, or two splits; empty otherwise.
+      detail*: string
+        ## Offending character, form 4.11 gives, or two splits; delimiter of `zoi` that no word
+        ##   spelling it closes, which live text waits for; empty otherwise.
 
   Spelling = object  ## Define written word with its marks taken out.
     letters: string  ## Letters in canonical form.
@@ -442,7 +444,7 @@ func readStream*(text: string): ReadingStream =
       if zoi.isSome:
         if i < words.high: return refuse(Refusal.Quotation, words[i + 1].start)
         let span = text.quoted(at, word.text)
-        if span.isNone: return refuse(Refusal.Quotation, occurrences[zoi.get].start)
+        if span.isNone: return refuse(Refusal.Quotation, occurrences[zoi.get].start, word.text)
         let quotation = text[span.get]
         if word.text in quotation.toLowerAscii:
           return refuse(Refusal.Quotation, span.get.a)  # 19.10, delimiter "not found" in text
