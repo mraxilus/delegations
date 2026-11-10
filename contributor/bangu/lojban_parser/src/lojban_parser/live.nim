@@ -6,7 +6,7 @@
 ##   | Code           | Meaning                                                            |
 ##   |----------------|--------------------------------------------------------------------|
 ##   | ReaderLive     | text so far, NIF that went out, and openers that wait for closers  |
-##   | ChangeNif      | change piece makes to NIF: offset it cuts back to, nodes, and tail |
+##   | ChangeNif      | change piece makes to NIF: offset and byte it cuts to, nodes, tail |
 ##   | initReaderLive | reader of live text, whose NIF holds directives alone              |
 ##   | push           | read next piece of live text                                       |
 ##   | finish         | read end of live text, and give rest of its NIF                    |
@@ -20,7 +20,8 @@
 ##       (`assembleText`), so nothing of it is lost.
 ##     No piece reads whole text again: piece reads text from start of part still open. Word
 ##       that reaches back reads again from node where it lands, and NIF cuts back to offset
-##       where that node opens: cursor, as `ChangeNif` gives it.
+##       where that node opens: cursor, as `ChangeNif` gives it. Change gives byte of text where
+##       node opens too, so other program ties each node to text it reads, at each change.
 ##     Node of part still open goes out as tail, which next change replaces, so tree grows word
 ##       by word, as program that animates it may show.
 ##   Piece may cut word, so text read stops before last written word no mark ends: `su` that
@@ -72,6 +73,9 @@ import ./[grammar, nif, prose, selmaho, stream, tanru]
 type
   ChangeNif* = object  ## Define change one piece makes to NIF of live text.
     at*: int  ## Offset in NIF where change opens: NIF from it on drops, then `text` follows.
+    start*: int
+      ## Byte of text where change opens: each word of NIF before `at` ends at it or before, and
+      ##   each word of `text` and `tail` opens at it or past, so NIF ties to text it reads.
     text*: string  ## NIF of each node that goes out, each on line of its own.
     tail*: string
       ## NIF of each node still open, as text so far gives it, each on line of its own; next
@@ -114,6 +118,9 @@ type
     text: string
     nif: string  ## Directives, then line of each node that went out.
     tail: string  ## NIF of each node still open, as last change gives it.
+    start_tail: int
+      ## Byte where first word of tail opens, past each word that went out: change of piece that
+      ##   reads no word more opens there. End of text read, where tail holds no word.
     items: seq[ItemLive]  ## Each node that went out, in order.
     openers: seq[OpenerLive]  ## Each opener waiting, in order of byte.
     start: int  ## Byte where text not yet out opens.
@@ -544,6 +551,11 @@ func addItems(
   for m in count ..< order.len: change.tail.add children[order[m]].toNif(region.reading) & "\n"
   reader.tail = change.tail
   reader.start = (if count < order.len: spans[order[count]] else: region.reading.size)
+  reader.start_tail = region.reading.size
+  for m in count ..< order.len:
+    if leaves[order[m]].len > 0:
+      reader.start_tail = region.reading.byteAt(leaves[order[m]][0])
+      break
 
 
 func addOpeners(
@@ -635,7 +647,7 @@ func addRest(reader: var ReaderLive, first: int): ChangeNif =
   ## Put out each written word of text from byte `first` up to end of text read, past `fa'o`
   ##   that ends input, as unit of its own, which stream reads not (19.15); no text before it
   ##   reads again, since each node before `fa'o` went out once it read.
-  result = ChangeNif(at: reader.nif.len)
+  result = ChangeNif(at: reader.nif.len, start: first)
   var at = first
   while at < reader.ending:
     if reader.text[at] in MARKS_BOUNDARY:
@@ -652,6 +664,7 @@ func addRest(reader: var ReaderLive, first: int): ChangeNif =
     reader.items.add ItemLive(start: start, offset: reader.nif.len, held: -1, start_reading: start)
     reader.nif.add line
     result.text.add line
+  reader.start_tail = reader.ending
 
 
 func readChange(reader: var ReaderLive, at: int, is_final: bool): ChangeNif =
@@ -667,7 +680,7 @@ func readChange(reader: var ReaderLive, at: int, is_final: bool): ChangeNif =
     region = reader.readFrom(start, is_final)
   var leaves = newSeq[seq[int]](region.reading.tree.children.len)
   for k in 0 ..< leaves.len: region.reading.tree.children[k].addLeaves(leaves[k])
-  result.at = reader.cut(start)
+  (result.at, result.start) = (reader.cut(start), start)
   let spans = region.toSpans(leaves, start)
   reader.addItems(region, leaves, spans, start, is_final or region.faho.isSome, result)
   if is_final: return
@@ -697,7 +710,7 @@ func push*(reader: var ReaderLive, piece: string): ChangeNif =
   var ending = reader.text.len  # text read ends past last mark between words
   while ending > reader.ending and reader.text[ending - 1] notin MARKS_BOUNDARY: dec ending
   if ending == reader.ending:
-    return ChangeNif(at: reader.nif.len, tail: reader.tail)  # nothing more to read
+    return ChangeNif(at: reader.nif.len, start: reader.start_tail, tail: reader.tail)  # none new
   for n in 0 ..< reader.openers.len:
     template opener: untyped = reader.openers[n]
       ## Alias opener, which `let` would copy.
