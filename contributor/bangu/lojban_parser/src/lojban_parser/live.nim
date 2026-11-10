@@ -489,11 +489,11 @@ func addOpeners(
   ##     start. So does opener of quotation with word erasure erased before it: its closer may
   ##     quote word that erased it, or change marker of `sa` before it.
   func ownerAt(region: ReadingParts, owners: openArray[int], at: int): Option[int] =
-    ## Give byte where child holding unit refused that opens at byte `at` opens; none where `su`
-    ##   dropped that unit.
+    ## Give byte where child holding unit that holds word opening at byte `at` opens; none where
+    ##   `su` dropped that unit.
     for u in 0 ..< region.reading.units.len:
-      if not region.reading.units[u].is_read and region.reading.byteAt(u) == at:
-        return some(owners[u])
+      for w in region.reading.units[u].words:
+        if region.reading.occurrences[w].start == at: return some(owners[u])
     none(int)
 
   template units: untyped = region.reading.units

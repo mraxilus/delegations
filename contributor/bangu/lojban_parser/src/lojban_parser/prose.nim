@@ -110,11 +110,10 @@ type
     zois*: seq[tuple[start: int, delimiter: string]]
       ## Byte of written word of each `zoi` that no delimiter closes, with that delimiter.
     lohus*: seq[int]
-      ## Byte of each `lo'u` that stands alone, with no `le'u` after it as stream reads words it
-      ##   quotes; held where `su` after it drops its unit too. `lo'u` whose `le'u` erasure erases
-      ##   waits for none, since stream reads that `le'u`, so text after it reads as stream does.
-      ##   Nor does `lo'u` that `zo` quotes, as stream reads it, which rules read alone once they
-      ##   refuse `zo`.
+      ## Byte of each `lo'u` whose words stream reads to end of text: no `zo` quotes it, and no
+      ##   `le'u` closes it, as stream reads them, whatever unit rules give it; held where `su`
+      ##   after it drops its unit too. So text after it reads as stream reads it, inside words
+      ##   it quotes, though erasure erases its `le'u`, or rules read it as text `la'o` quotes.
     markers*: seq[Option[Terminal]]
       ## Marker of each `sa` that finds none, in any pass of rules of 19.16, so erases to start.
     su*: Option[int]  ## Byte of last `su`, which erases text before it (19.13); none where none.
@@ -634,18 +633,13 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     if terminal.isSome: units.add Unit(words: held, is_read: true, terminal: terminal.get)
     else: units.add Unit(words: held, is_read: false, refusal: RefusalText.Selmaho)
   units = units.sortedByIt(it.words[0])
+
+  # `lo'u` waits where stream reads words it quotes to end of text, whatever unit holds it.
   let roles_stream = words.toRoles(is_lohu)  # part each word takes as stream reads it
-  var streamed = newSeq[int](occurrences.len)  # index in `words` of each occurrence; -1 for none
-  for w in 0 ..< occurrences.len: streamed[w] = -1
-  for w in 0 ..< words.len: streamed[indexes[w]] = w
-  for k in 0 ..< units.len:
-    template unit: untyped = units[k]
-      ## Alias unit, which `let` would copy.
-    let is_lohu = not unit.is_read and unit.refusal == RefusalText.Quotation and
-      unit.words.len == 1 and occurrences[unit.words[0]].isSelmaho({Selmaho.Lohu}) and
-      streamed[unit.words[0]] >= 0 and roles_stream[streamed[unit.words[0]]] == Role.Lohu and
-      not occurrences.toOpenArray(unit.words[0] + 1, occurrences.high).isClosingLohu
-    if is_lohu: result.lohus.add occurrences[unit.words[0]].start  # `lo'u` waits for `le'u`
+  for w in 0 ..< words.len:
+    let is_waiting = roles_stream[w] == Role.Lohu and
+      not words.toOpenArray(w + 1, words.high).isClosingLohu
+    if is_waiting: result.lohus.add words[w].start
   if reach.su.isSome:
     let start = occurrences[indexes[alive[reach.su.get]]].start
     result.su = some(start)
