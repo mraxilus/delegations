@@ -72,10 +72,12 @@ const
     "ni'o .i sa 1987 zo .i si",  # fuzz of live law found it: `sa` reads again not
     "mi klama .i sa 1987 zo .i si do",  # word after it
     "ni'o .i sa 1987 1988 zo .i si",  # two words stream refuses
+    "ui lo sa bu ba'e le si",  # fuzz of live law found it: `bu`, then `ba'e`, refused
+    "ui lo sa zei ba'e le si",  # `zei`, then `ba'e`, refused
   ]
-    ## Texts where word stream refuses stands between `sa` and word after it, which gives its
-    ##   marker (19.13); `si` later erases word `zo` quotes, so `zo` is refused, and marker
-    ##   changes; constructed.
+    ## Texts where words stream or rules refuse stand between `sa` and word after them, which
+    ##   gives its marker (19.13); later word refuses that word too, so marker changes:
+    ##   `si` erases word `zo` quotes, so `zo` is refused, or `ba'e` marks no word; constructed.
   LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
     "(tanru_unit_2 130 152 (BRIVLA 3 \"klama\")) (tail_terms 71)))\n"
     ## Line of node of `mi klama`, which examples open with.
@@ -272,7 +274,7 @@ suite "Internal: Live text":
       check live.is_grown  # header of `prose.nim`, stream reads `le'u` erasure erases (19.9)
 
 
-  test "Sa reads again where word after it changes, past word stream refuses":
+  test "Sa reads again where word after it changes, past words stream or rules refuse":
     for text in TEXTS_SA_PARTED:
       checkpoint text
       let live = text.readLive(text.cutsWords, is_growing = true)
