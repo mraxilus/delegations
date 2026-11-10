@@ -1368,6 +1368,13 @@ from the first word that the rules read after it, so a change there changes what
 example is `ni'o .i sa 1987 zo .i si`. Verified by `suites/test_live.nim`, over texts that fuzz of
 the law found, and texts built like them.
 
+**A node shares the span before it where the rules refuse a `zei` before its first word.** The scan
+back passes each word that the stream or the rules refuse, or that erasure erases. That `zei` joins
+the word after it once the rules read one there (19.16). So once the rules refuse a quotation that
+waits after it, `zei` joins the word past that quotation. An example is
+`lo'u bu zei zoi lu nai ui si cu je`. Verified by `suites/test_live.nim`, over texts that fuzz of
+the law found, and texts built like them.
+
 **`su` cuts the NIF back to its directives (19.13).** It erases each unit before it, and a word
 that the stream refuses too, since it erases the whole text. No piece reads the text before it
 again. Verified by `suites/test_live.nim`, in a worked example.
