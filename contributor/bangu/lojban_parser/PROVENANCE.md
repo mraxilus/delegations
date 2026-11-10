@@ -1064,7 +1064,7 @@ names no line of Nim (expected). The verb takes the compiler that compiled the d
 **Cost: the script reads about 37 times slower than the native build, on the thread of its
 caller.** So a page waits while it reads. A text of the sample takes 14 ms and 18 ms at the
 median, against 0.41 ms and 0.38 ms native. The longest takes 395 ms and 420 ms, against 11 ms and
-13 ms native. Figures, JavaScript build, gives the method. At `b5c522c7`, the verb writes 722,167
+13 ms native. Figures, JavaScript build, gives the method. At `e464574f`, the verb writes 738,626
 bytes, and prints the size.
 
 ## Text in NIF
@@ -1161,9 +1161,11 @@ shared with `suites/test_corpus.nim`, `suites/test_tatoeba.nim` and `suites/test
 It changes those suites, and `tools/tatoeba.nim`, which gives them verdicts from text alone.
 Figures, Text in NIF, gives the measures.
 
-**Cost: on JavaScript, the law reads every fourth sentence of the sample.** A read takes about
-71 ms a sentence there, so the law over the whole sample would add about 13 s. The native suite
-reads every text of the corpora. Figures, JavaScript build, law of NIF, gives the measure.
+**Cost: on JavaScript, the law reads every fourth sentence of the sample.** At `a66e60f0`, before
+the dead bounds, a read took about 71 ms a sentence there. So the law over the whole sample would
+add about 13 s. The dead bounds make each read faster, and the stride stays until a measure of the
+whole sample says otherwise. The native suite reads every text of the corpora. Figures, JavaScript
+build, law of NIF, gives the measure.
 
 ## Tests
 
