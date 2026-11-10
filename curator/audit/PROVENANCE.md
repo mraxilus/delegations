@@ -1563,6 +1563,22 @@ image of the runner held both. A project that declares nothing installs nothing,
 - Unverified on the runner for `test` until a job of a project that declares packages runs it.
   The lines are the ones that `drive` runs.
 
+**The jobs `test` and `drive` run on `ubuntu-24.04`, the release that the machine baselines
+name.** They build and run the code of a project, so the toolchain of the image reaches what they
+measure. The machine baselines of pga_benchmark name gcc 13.3.0 and valgrind 3.22.0 of Ubuntu
+24.04, and the delegate containers run that release too. `ubuntu-latest` moved to Ubuntu 26.04,
+with gcc 15.2.0, between 2026-11-04 and 2026-11-09. On it, `koch drive` of pga_benchmark gave 8
+findings: `compiler_c` and `tracer` differ in each of four machine baselines (#848).
+
+- Verified from the logs of the runner. Image `ubuntu-24.04` 20261101.360.1 drove pga_benchmark
+  green on 2026-11-04, and image `ubuntu-26.04` 20261101.186.1 gave the 8 findings on
+  2026-11-09.
+- Rejected: new baselines taken on 26.04. A delegate container would then name another build
+  than the baselines, and its `koch check` would fail.
+- Cost: when GitHub retires the image of 24.04, the jobs, the containers and the baselines move
+  together, in one change.
+- Every other job runs koch alone, on its own pin, so it stays on `ubuntu-latest`.
+
 Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
 that a machine installs, and `compilers.nim` of knoller resolves each pin itself. npm is absent
 because it belongs to the project that carries a node manifest, and `restoreNode` reports its
@@ -1691,7 +1707,7 @@ the runner the fetch is 6.6 s cold, and the copy into `build/fonts` is milliseco
   nothing.
 
 **The browser that a declaration names is the browser that runs, and the snap serves.**
-`apt-get install chromium` on `ubuntu-latest` gives `/snap/bin/chromium`, a wrapper rather than
+`apt-get install chromium` on `ubuntu-24.04` gives `/snap/bin/chromium`, a wrapper rather than
 a plain binary, and Playwright launches it. Where a package does not serve the runner, the
 declaration of the project changes. A name is never substituted here in silence.
 
