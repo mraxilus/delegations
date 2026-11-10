@@ -1,6 +1,7 @@
 ## Hold reading that marks each error to its laws (#859): `readTextMarked` reads text as
 ##   `readText` does, and reads on past each error, marking it in tree and in NIF.
-##   Text `readText` reads gives same units, tree and NIF, over corpora.
+##   Text `readText` reads gives same units, tree and NIF, over corpora, past last `su`: text before
+##     it stands first in root, each with leaf of `su` after it, which `readText` reads not (19.13).
 ##   Text it refuses still gives tree: each unit stands in it once as leaf, in order; refusal of
 ##     `readText` is mark of its stage there; and NIF reads back whole (`reader_nif.nim`). Laws
 ##     run over corpora, and over texts constructed for each stage, since corpora refuse at
@@ -56,8 +57,15 @@ const
     "mi klama le", "mi klama le .i do citka", "lu mi klama le", "ge mi gi",
     "mi klama le zarci ku ku",  # grammar: text cut off, part, `lu` open, connective, terminator
     "si mi 1987 xau klama le",  # each stage at once
+    "si su mi klama", "mi 1987 su klama", "lu mi su do li'u",  # `su` ending text with error
   ]
     ## Texts constructed for each stage that refuses, and for each place grammar stops.
+  TEXTS_PARTED = [
+    "mi klama su do", "mi su", "su do", "mi su su do", "ba'e su mi", "mi ui su ui do",
+    "mi klama le su do", "lu mi su do", "lo'u mi su do le'u", "mi cusku zo su",
+  ]
+    ## Texts `readText` reads that `su` parts, with error before it, `su` quoted, or none;
+    ##   constructed, since corpora hold no `su` that parts text.
   EXAMPLES_MARKED = [
     (
       text: "mi 1987 klama",
@@ -92,6 +100,12 @@ const
         "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
         "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71))) (LE 9 11 \"le\"))",
     ),  # text cut off after `le`: grammar stops at its end, in `sumti-6` 97, which waits
+    (
+      text: "mi klama su do",
+      module: "(text 0 (sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+        "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71))) (unread Su 9 11 \"su\") " &
+        "(sumti_6 2 97 (KOhA 12 14 \"do\")))",
+    ),  # `su` ends text before it, which stays as it read, before text after it (ruling on #859)
   ]
     ## Texts constructed, and root node of module `nif.nim` writes for each, byte for byte.
 
@@ -117,8 +131,9 @@ func isMarking(marked: ReadingMarked, strict: ReadingText): bool =
   ## Decide whether refusal of `readText` is mark of its stage in marked reading: unit of
   ##   written word stream refuses holding its byte; unit of rule of 19.16 refusing it, where
   ##   stream refuses none; unit of selma'o holding its byte, where only selma'o refuses; error
-  ##   node at root with its rule, stopping at its byte, where every unit reads.
-  let refused = marked.units.filterIt(not it.is_read)
+  ##   node at root with its rule, stopping at its byte, where every unit reads. Unit of `su`
+  ##   is no refusal, so law reads it not.
+  let refused = marked.units.filterIt(not it.is_read and it.refusal != RefusalText.Su)
   case strict.refusal
   of RefusalText.Stream:
     refused.anyIt(it.refusal == RefusalText.Stream and marked.isHolding(it, strict.start))
@@ -136,6 +151,7 @@ func isMarking(marked: ReadingMarked, strict: ReadingText): bool =
         else: marked.size
     refused.len == 0 and tree.stop.isSome and tree.rule & " " & $tree.number == strict.rule and
       start == strict.start
+  of RefusalText.Su: false  # `readText` refuses no text for `su`
 
 
 func terminalsRead(marked: ReadingMarked): seq[Terminal] =
@@ -190,15 +206,30 @@ func isReadPast(terminals: openArray[Terminal], at: int): bool =
   reading.is_read or reading.at > at
 
 func isSame(marked: ReadingMarked, strict: ReadingText): bool =
-  ## Decide whether reading marked holds units, words and NIF of reading that reads.
-  marked.units.len == strict.units.len and
+  ## Decide whether reading marked holds each unit once, as leaf in order, and units, words and
+  ##   NIF of reading that reads past last `su`: root holds tree of each text before it first,
+  ##   each with leaf of `su` after it, which law cuts.
+  var
+    first = 0  # first unit past last `su`
+    cut = 0  # children of root up to leaf of last `su`
+  for k in 0 ..< marked.units.len:
+    if not marked.units[k].is_read and marked.units[k].refusal == RefusalText.Su: first = k + 1
+  for k in 0 ..< marked.tree.children.len:
+    template child: untyped = marked.tree.children[k]
+      ## Alias child of root, which `let` would copy.
+    if first > 0 and child.is_terminal and child.at == first - 1: cut = k + 1
+  var past = marked  # reading of text past last `su`
+  past.tree.children = marked.tree.children[cut .. ^1]
+  marked.tree.leaves == toSeq(0 ..< marked.units.len) and
+    marked.units.len - first == strict.units.len and
     toSeq(0 ..< strict.units.len).allIt(
-      marked.units[it].is_read and marked.units[it].words == strict.units[it].words and
-        marked.units[it].terminal == strict.units[it].terminal
+      marked.units[first + it].is_read and
+        marked.units[first + it].words == strict.units[it].words and
+        marked.units[first + it].terminal == strict.units[it].terminal
     ) and
     marked.occurrences.mapIt((it.start, it.text)) ==
       strict.occurrences.mapIt((it.start, it.text)) and
-    marked.toNif == strict.toNif
+    past.toNif == strict.toNif
 
 
 func readPool(): Pool =
@@ -220,9 +251,14 @@ func readPool(): Pool =
 suite "Internal: Marks":
   let pool = readPool()
 
-  test "Text readText reads gives same units, tree and NIF, over corpora":
+  test "Text readText reads gives same units, tree and NIF past last su, over corpora":
     check pool.differing == newSeq[string]()  # header of `prose.nim`, text that reads as before
     check pool.count_read >= COUNT_READ_LEAST  # IX.3, guard keeps texts that read
+    for text in TEXTS_PARTED:
+      checkpoint text
+      let strict = text.readText
+      check strict.is_read and text.readTextMarked.isSame(strict)
+        # header of `prose.nim`, `su` ends text before it, which marked reading keeps
 
 
   test "Text readText refuses gives tree of each unit once, in order, and its NIF reads back":

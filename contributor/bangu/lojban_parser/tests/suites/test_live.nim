@@ -10,7 +10,8 @@
 ##   Cost: bytes each reading reads grow with length of text: sentences of Tatoeba joined, read
 ##     word by word, read at most `COST_MOST` times their bytes, and twice them as many again.
 ##   Worked examples give change of each piece, byte for byte: sentence going out, word cut,
-##     `si` and `su` cutting back, closer reading quotation again, `zei` joining `.i`.
+##     `si` cutting back, `su` ending text with no cut back, or closing `lu` before it, closer
+##     reading quotation again, `le'u` quoting `su`, `zei` joining `.i`.
 
 {.experimental: "strictFuncs".}
 
@@ -113,6 +114,17 @@ const
     ## Texts where opener waits, then text read again opens past it; `bu` then makes opener
     ##   after it lerfu word, so closer closes first opener, past text read again; with cuts
     ##   that cut it so, which search over random cuts found; constructed.
+  TEXTS_SU = [
+    "mi su si do", "mi su sa do",  # erasure after `su` reaches no word before it (19.13)
+    "lu mi klama .i do su ko li'u",  # `lu` closes at `su`, so `li'u` after it closes none
+    "lo'u mi su do le'u .i ko",  # `le'u` quotes `su`
+    "ba'e zoi su li'u bu si cu .i su fa'o",  # `zoi` quotes `su`, and `ba'e` marks quotation
+    "zo su si si", "zo su si sa zarci",  # erasure quotes `su` again, as quotation reads whole
+    "lo'u su la'o le le'u sa le klama",  # `le'u` quotes `su`, and `la'o` reads as word
+  ]
+    ## Texts where `su` ends text before it, or where quotation quotes it once closed, which
+    ##   reach back past it; fuzz of live law found last four, of which last read wrong when `su`
+    ##   erased text before it.
   LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
     "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71)))\n"
     ## Line of node of `mi klama`, which examples open with.
@@ -160,10 +172,49 @@ const
             "(tanru_unit_2 130 152 (BRIVLA 8 13 \"klama\")) (tail_terms 71)))\n",
           "(text_1 0 2 (I 15 16 \"i\"))\n",
         ),
-        (28, "", "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n"),
-        (28, "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n", ""),
+        (
+          192, "(text_1 0 2 (I 15 16 \"i\"))\n(unread Su 17 19 \"su\")\n",
+          "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n",
+        ),
+        (242, "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n", ""),
       ],
-    ),  # `su` erases text before it, word stream refuses too, so NIF cuts back to directives
+    ),  # `su` ends text before it, which stays as it read: NIF cuts back nowhere (ruling on #859)
+    (
+      pieces: @["lu mi klama .i do ", "su ko "],
+      changes: @[
+        (
+          28, "(sumti_6 0 97 (LU 0 2 \"lu\") (sentence 0 40 (sumti_6 80 97 (KOhA 3 5 \"mi\")) " &
+            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 6 11 \"klama\")) " &
+            "(tail_terms 71))))\n",
+          "(text_1 0 2 (I 13 14 \"i\") (sumti_6 4 97 (KOhA 15 17 \"do\")))\n",
+        ),
+        (
+          28, "(sumti_6 0 97 (LU 0 2 \"lu\") (paragraph 0 10 (sentence 11 40 (sumti_6 80 97 " &
+            "(KOhA 3 5 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 " &
+            "(BRIVLA 6 11 \"klama\")) (tail_terms 71))) (I 13 14 \"i\") " &
+            "(sumti_6 20 97 (KOhA 15 17 \"do\"))))\n(unread Su 18 20 \"su\")\n",
+          "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n",
+        ),
+        (276, "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n", ""),
+      ],
+    ),  # `lu` waits till `su` ends its text, and closes there, as at end, so NIF cuts back to it
+    (
+      pieces: @["lo'u mi su do ", "le'u .i ko "],
+      changes: @[
+        (
+          28,
+          "(unread Quotation 0 4 \"lohu\")\n(sumti_6 0 97 (KOhA 5 7 \"mi\"))\n" &
+            "(unread Su 8 10 \"su\")\n",
+          "(sumti_6 0 97 (KOhA 11 13 \"do\"))\n",
+        ),
+        (
+          28,
+          "(sumti_6 0 97 (LOhU 0 4 \"lohu\" 5 7 \"mi\" 8 10 \"su\" 11 13 \"do\" 14 18 \"lehu\"))\n",
+          "(text_1 0 2 (I 20 21 \"i\") (sumti_6 4 97 (KOhA 22 24 \"ko\")))\n",
+        ),
+        (104, "(text_1 0 2 (I 20 21 \"i\") (sumti_6 4 97 (KOhA 22 24 \"ko\")))\n", ""),
+      ],
+    ),  # `lo'u` waits, so `su` after it ends text; `le'u` quotes `su` once it comes (19.9)
     (
       pieces: @["mi cusku lu do klama .i mi cadzu ", "li'u .i ko "],
       changes: @[
@@ -351,6 +402,14 @@ suite "Internal: Live text":
       let live = text.readLive(cuts, is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_grown  # header of `live.nim`, closer of opener that waits (17.4)
+
+
+  test "Su ends text before it, which stays, save where quotation quotes it once closed":
+    for text in TEXTS_SU:
+      checkpoint text
+      let live = text.readLive(text.cutsWords, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `live.nim`, `su` and quotation that quotes it (19.13)
 
 
   test "Parts lose nothing of tree: assembleText builds tree grammar gives, over corpora":
