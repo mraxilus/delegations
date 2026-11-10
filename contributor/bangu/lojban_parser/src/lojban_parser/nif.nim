@@ -32,6 +32,10 @@
 ##       does: no `h` for `'`, and `'` takes escape. Stage alone was rejected, since stream and
 ##       grammar of quotation both name refusal `Quotation`, so reader could not tell bytes from
 ##       word.
+##     Unit of stage `Su`, `Erasure` or `Faho` is no refusal, but words no terminal reads: `su`
+##       that ends text before it, words erasure erases with cmavo erasing them, and `fa'o` that
+##       ends input. Written word after `fa'o` takes stage `Stream` and refusal `Faho`, and keeps
+##       its bytes. So each byte of each word lies in one leaf (`isCovering` of suites).
 ##   Tag writes `_` for each `-`, and no name of 21.1 holds `_`. Word writes `h` for each `'`, as
 ##     chapter 20 writes capital of `'` in names of selma'o; lojban writes no `h` (3.3), and stream
 ##     refuses it outside quotation. So reader reads `_` as `-` and `h` as `'`, and neither tag nor
