@@ -1349,6 +1349,10 @@ back:
 
 Verified by `suites/test_live.nim`. Cost: the reach back reads from the node where it lands, once.
 
+**A closer counts only the openers that wait before the text read again.** Each opener inside that
+text reads again with it, and may open no more, as `to bu` is a lerfu word (17.4). Verified by
+`suites/test_live.nim`, over texts and cuts that a search over random cuts found.
+
 **The text read again opens at the span of a node.** The span opens at the first word past the
 words of the node before. So it holds each word that erasure erased before the node, and erasure
 read again finds those words. Rejected: a span that opens at the first word of its node, which lost
@@ -1358,6 +1362,12 @@ read again finds those words. Rejected: a span that opens at the first word of i
 So does a node whose first word stands among the words of the node before. An example is a word
 that the stream refuses between a word and its `bu`. Verified by `suites/test_live.nim`.
 
+**A node shares the span before it where a `sa` that no unit holds stands before its first word.**
+The scan back passes each word that the stream or the rules refuse. That `sa` takes its marker
+from the first word that the rules read after it, so a change there changes what it erases. An
+example is `ni'o .i sa 1987 zo .i si`. Verified by `suites/test_live.nim`, over texts that fuzz of
+the law found, and texts built like them.
+
 **`su` cuts the NIF back to its directives (19.13).** It erases each unit before it, and a word
 that the stream refuses too, since it erases the whole text. No piece reads the text before it
 again. Verified by `suites/test_live.nim`, in a worked example.
@@ -1366,6 +1376,12 @@ again. Verified by `suites/test_live.nim`, in a worked example.
 again from the start. So does erasure past the `su`, and a `su` that erases no more. An example is
 `zo su si`, once `sa` erases the `zo` (19.10). Cost: one read of the whole text for each closer of
 that kind. Verified by `suites/test_live.nim`, over the texts built.
+
+**Unverified: the law where `su` erases text that holds a quotation, which closes after the `su`.**
+Fuzz of the law found 3 texts of 30 words that break it, of 78,000 built. Each holds `su` after
+`lo'u`, `la'o` or `zoi`. A smaller text that breaks it is `lo'u su la'o le le'u sa le klama`.
+The branch `contributor/bangu/lojban_parser/spans` reads `su` as the end of a text, as the
+Architect chose on #859. The law holds there for each of the 3.
 
 **An opener that waits reads as a plain terminal, so the sentences after it go out at once.** Its
 closer reads them again, as the quotation or the text inside text. At the end, the text from the
@@ -1381,6 +1397,11 @@ over the texts built.
 `fa'o` there are words, as the stream reads them. There, `zoi` takes the three words after it as
 its quotation once they come, as `toRoles` gives it, so it waits as an opener. Verified by
 `suites/test_live.nim`, over the texts built.
+
+**`lo'u` waits only where no `le'u` follows it, as the stream reads the words that it quotes.**
+Erasure that erases its `le'u` leaves it alone, but the stream reads that `le'u`. So the text after
+it reads as plain text, where `fa'o` ends the input and `zoi` quotes text. Verified by
+`suites/test_live.nim`, over texts that fuzz of the law found, and texts built like them.
 
 **`fa'o` that ends the input stops each piece at it (19.15).** The delimiter of a `zoi` before it
 lifts the stop, since that `zoi` quotes the `fa'o`. The end reads past it. Verified by
@@ -1684,6 +1705,11 @@ Each figure comes from the machine that Figures names, on the pin, and names its
   at random into pieces of 1 to 9 bytes, from a seed. Each text of the corpora was cut in three
   ways: at each word, and twice at random, in pieces of 1 to 12 bytes. No NIF at the end differed
   from the NIF of the parts read whole. The law of the tail held over 30,000 texts built.
+- **Live text, law by hand, more `su` and `si`.** On 2026-11-10, at the code of `81e3759c`, programs
+  built with `-d:release` read 78,000 texts built of words that reach back. Of them, 60,000 held 1
+  to 14 words, cut at random into pieces of 1 to 6 bytes. The other 18,000 held 1 to 30 words, in
+  pieces of 1 to 9 bytes. Each law held at the end and for the tail of each piece, save in 3 texts
+  of 30 words. In each, `su` erases text that holds a quotation.
 - **Live text, suite.** On 2026-11-10, at `e6742c2e`, the suite of `test_live.nim`, built alone as
   the stub is, ran in 34.6 s and 35.6 s. It read 30 sentences of Tatoeba at 7.97 times their bytes,
   and twice them at 2.008 times as many. At `f8328a7d`, with each text of the corpora, 400 texts
