@@ -121,14 +121,15 @@ func isSelmaho(word: Occurrence, selmaho: set[Selmaho]): bool =
 func toRoles(words: openArray[Occurrence]): seq[Role] =
   ## Give part each word takes in quotation: `zo` quotes next word, `lo'u` words up to `le'u`
   ##   no `zo` quotes, and `zoi` its delimiter, text and delimiter, as `readStream` holds them.
+  ##   `zo` ending text quotes no word, and `quotations` refuses it (19.10).
   result = newSeq[Role](words.len)
   var
     i = 0
     is_lohu = false
   while i < words.len:
-    if words[i].isSelmaho({Selmaho.Zo}) and i + 1 < words.len:
+    if words[i].isSelmaho({Selmaho.Zo}):
       result[i] = (if is_lohu: Role.Inner else: Role.Zo)
-      result[i + 1] = (if is_lohu: Role.Inner else: Role.Quoted)
+      if i + 1 < words.len: result[i + 1] = (if is_lohu: Role.Inner else: Role.Quoted)
       i += 2
       continue
     if is_lohu:
