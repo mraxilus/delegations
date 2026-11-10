@@ -1428,7 +1428,7 @@ bytes.** A text of one sentence reads again at each piece. So a piece for each w
 100 s of a debug build, which is 14 times a read of the corpora whole. The texts built take pieces
 of up to 6 bytes, and the law of cost reads word by word.
 
-So the suite takes about 35 s of a debug build. Figures of marks and live text gives the measures.
+So the suite takes about 30 s of a debug build. Figures of marks and live text gives the measures.
 
 ## Tests
 
@@ -1722,10 +1722,13 @@ Each figure comes from the machine that Figures names, on the pin, and names its
 - **Live text, suite.** On 2026-11-10, at `e6742c2e`, the suite of `test_live.nim`, built alone as
   the stub is, ran in 34.6 s and 35.6 s. It read 30 sentences of Tatoeba at 7.97 times their bytes,
   and twice them at 2.008 times as many. At `f8328a7d`, with each text of the corpora, 400 texts
-  built and 40 sentences, it ran in 49.9 s and 53.2 s. The runs alternate.
+  built and 40 sentences, it ran in 49.9 s and 53.2 s. At `041ba600`, with each second text of
+  the corpora, 300 texts built and 30 sentences, it ran in 29.6 s and 29.1 s. The runs alternate.
 - **Suites, live text.** On 2026-11-10, the stub ran every suite without the pages, as on the
-  runner. It took 61.9 s and 59.9 s at `818ce274`, against 113.7 s and 110.7 s at `e6742c2e`. At
-  `e6742c2e` without the suite of live text, it took 64.3 s and 64.0 s. The runs alternate.
+  runner. No run held `build/translations/`, which the runner lacks too, so the suite of
+  translations skipped. It took 56.1 s and 55.2 s at `818ce274`, against 85.4 s and 85.5 s at
+  `041ba600`. At `e6742c2e` without the suite of live text, it took 64.3 s and 64.0 s, against
+  61.9 s and 59.9 s at `818ce274`. The runs alternate.
 
 ## Open questions
 
