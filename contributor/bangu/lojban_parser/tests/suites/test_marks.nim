@@ -36,6 +36,9 @@ type
     count_read: int  ## Texts of corpora that read.
     differing: seq[string]  ## Key of each text that reads whose reading marked differs.
     refused: seq[Refused]  ## Each text of corpora refused, then each text constructed.
+    uncovered: seq[string]
+      ## Key of each text of corpora whose words no tree of it covers, once and in order, as
+      ##   marked reading and reading of its parts give it (`isCovering`).
 
 
 const
@@ -71,6 +74,12 @@ const
     ## Texts `readText` reads that `su` parts, with error before it, `su` quoted, or none; then
     ##   texts holding words no stage reads; constructed, since corpora hold no `su` that parts
     ##   text.
+  TEXTS_COVERED = [
+    "le,nu mi klama", "mi KLAmaku", "zoi gy. a, b .gy. cu glico", "mi klama si si fa'omi do",
+    "mi 1987 ui", "ba'e mi si do", "lo'u mi su do", "zo su si si", "mi klama fa'o\t.ui\n",
+  ]
+    ## Texts of comma and capital, quotation holding marks, words no unit holds, and word between
+    ##   word and indicator that marks it, for law of cover; constructed.
   EXAMPLES_MARKED = [
     (
       text: "mi 1987 klama",
@@ -266,11 +275,13 @@ func isSame(marked: ReadingMarked, strict: ReadingText): bool =
 
 func readPool(): Pool =
   ## Read each text of corpora by both readers once, keeping each refused; then each text
-  ##   constructed, which `readText` refuses too.
+  ##   constructed, which `readText` refuses too. Law of cover reads each text of corpora too.
   for (key, text) in textsCorpora():
     let
       strict = text.readText
       marked = text.readTextMarked
+    if not (marked.isCovering(text) and readTextParts(text).reading.isCovering(text)):
+      result.uncovered.add key
     if strict.is_read:
       inc result.count_read
       if not marked.isSame(strict): result.differing.add key
@@ -291,6 +302,14 @@ suite "Internal: Marks":
       let strict = text.readText
       check strict.is_read and text.readTextMarked.isSame(strict)
         # header of `prose.nim`, `su` ends text before it, which marked reading keeps
+
+
+  test "Each byte of each word lies in one leaf, in order, and each other byte is mark":
+    check pool.uncovered == newSeq[string]()  # header of `nif.nim`, each word ties to bytes
+    for text in TEXTS_CONSTRUCTED.toSeq & TEXTS_PARTED.toSeq & TEXTS_COVERED.toSeq:
+      checkpoint text
+      check text.readTextMarked.isCovering(text)  # header of `prose.nim`, each word in leaf
+      check readTextParts(text).reading.isCovering(text)  # header of `prose.nim`, live text
 
 
   test "Text readText refuses gives tree of each unit once, in order, and its NIF reads back":

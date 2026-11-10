@@ -22,6 +22,9 @@
 ##   Rebuild reads module back into tree and terminals: each rule between two ends of chain from
 ##     `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag, `'` for `h` of word. So law holds that format loses
 ##     nothing of tree, not just that writer and model agree.
+##   Law of cover (`isCovering`) holds tree to bytes of text: each byte of each word lies in one
+##     leaf, leaves follow text, and each other byte is mark between words; suites of marks and
+##     of live text read it.
 ##   Suites of native and JavaScript builds read same reader, model and worked example, so each
 ##     is written once (II.9).
 ##   Refusal raises `ValueError`, naming byte and what NIF asks there.
@@ -368,6 +371,40 @@ func isSame(a, b: Node, reading: ReadingText | ReadingMarked): bool =
     else: return false
   for k in 0 ..< a.children.len:
     if not a.children[k].isSame(b.children[k], reading): return false
+  true
+
+
+func addLeaves(node: Node, leaves: var seq[int]) =
+  ## Add index of each leaf under node to `leaves`, in order of tree.
+  if node.is_terminal:
+    leaves.add node.at
+    return
+  for k in 0 ..< node.children.len: node.children[k].addLeaves(leaves)
+
+
+func isCovering*(marked: ReadingMarked, text: string): bool =
+  ## Decide whether each byte of each word of text lies in one leaf of tree, leaves follow order
+  ##   of text by their first byte, and each byte no leaf holds is mark between words, or comma
+  ##   between two words of one written word (3.3).
+  var
+    counts = newSeq[int](text.len)  # leaves holding each byte
+    last = -1  # first byte of leaf before
+  var leaves: seq[int]
+  marked.tree.addLeaves(leaves)
+  for u in leaves:
+    template unit: untyped = marked.units[u]
+      ## Alias unit, which `let` would copy.
+    let first = marked.occurrences[unit.words[0]].start
+    if first <= last: return false
+    last = first
+    for w in unit.words:
+      template word: untyped = marked.occurrences[w]
+        ## Alias word, which `let` would copy.
+      if word.start > word.finish or word.finish > text.len: return false  # empty text quoted
+      for b in word.start ..< word.finish: inc counts[b]
+  for b in 0 ..< text.len:
+    if counts[b] > 1: return false
+    if counts[b] == 0 and text[b] notin MARKS_BOUNDARY and text[b] != ',': return false
   true
 
 

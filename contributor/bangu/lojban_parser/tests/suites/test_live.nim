@@ -397,6 +397,7 @@ suite "Internal: Live text":
       check live.is_held  # header of `live.nim`, cursor cuts back within NIF held
       check live.is_grown  # header of `live.nim`, tail grows as text so far gives it
       check live.is_tied  # `ChangeNif` of `live.nim`, byte where change opens
+      check readTextParts(text).reading.isCovering(text)  # header of `nif.nim`, word in one leaf
 
 
   test "Lo'u whose le'u erasure erases waits for none, so text after it reads as stream reads it":
