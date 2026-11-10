@@ -622,12 +622,17 @@ of these, and the tree closes the fewest rules first, so they stay inside it. So
 its text part by part too. Verified by `suites/test_grammar.nim`, whose text of the article
 `lo jbobau` joined leaves the `tu'e` of its paragraph 23 open.
 
-**Where a `lu` or a `to` stays open, one pass reads the whole text.** A later word decides where
-such an opener closes: in `lu do klama .i mi klama cu xamgu`, the quote closes before `cu`. One
-pass also reads a text of one part, and a text where a part refuses, so it gives each refusal.
-Cost: a long text with such an opener, or with a long closed quote, reads in time that grows
-faster than its length. Verified by hand with a probe built on the pin, 2026-11-08. Of the 1,651
-texts of the corpora that read, 5 leave an opener open, each within 15 units of the end.
+**Where a `lu` or a `to` stays open, the part that holds it runs to the end of the text.** A later
+word decides where such an opener closes: in `lu do klama .i mi klama cu xamgu`, the quote closes
+before `cu`. So the passes cut before that part, and nowhere after it. One pass reads a text of one
+part, and a text where a part refuses, so it gives each refusal. Verified by
+`suites/test_grammar.nim`, over `mi klama .i lu do cadzu .i mi klama`.
+
+Cost: such a part, or a long closed quote, reads in time that grows faster than its length. A text
+refused reads its parts before that one pass. So `readText` takes about 2.4 times as long as
+before on an article of 4,159 bytes that leaves `lu` open at its end. Figures of marks and live
+text gives the measures. Of the 1,651 texts of the corpora that read, 5 leave an opener open, each
+within 15 units of the end. Verified by hand with a probe built on the pin, 2026-11-08.
 
 **A refusal names the place where every derivation stops, and the rule that stops there.** The
 rule is that of the item that waits there, has read a terminal, and started last. So `mi klama le`
@@ -1094,7 +1099,7 @@ names no line of Nim (expected). The verb takes the compiler that compiled the d
 **Cost: the script reads about 37 times slower than the native build, on the thread of its
 caller.** So a page waits while it reads. A text of the sample takes 16 ms and 14 ms at the
 median, against 0.45 ms and 0.35 ms native. The longest takes 459 ms and 416 ms, against 11 ms and
-10 ms native. Figures, JavaScript build, gives the method. At `7920484b`, the verb writes 838,476
+10 ms native. Figures, JavaScript build, gives the method. At `f8328a7d`, the verb writes 837,995
 bytes, and prints the size.
 
 ## Text in NIF
@@ -1218,10 +1223,15 @@ that word as spaces, so each refusal holds one written word. Verified by `suites
 where a unit holds the byte that `readText` refuses at.
 
 **Words that a rule of 19.16 refuses stand as one unit, and the rules read the words left.** A
-quotation that erasure leaves in part, or `lo'u` that no `le'u` closes, stands with its words as
-`Quotation`. `si` or `sa` with nothing to erase stands as `Construct`. So do `zei` that joins
-nothing, BAhE at the end, and `bu` after no word. Verified by `suites/test_marks.nim`, over texts
-constructed for each, since the corpora refuse at neither stage.
+quotation that erasure leaves in part stands with its words as `Quotation`. `si` or `sa` with
+nothing to erase stands as `Construct`. So do `zei` that joins nothing, BAhE at the end, and `bu`
+after no word. Verified by `suites/test_marks.nim`, over texts constructed for each, since the
+corpora refuse at neither stage.
+
+**`lo'u` that no `le'u` closes stands alone as `Quotation`.** So the words after it read on, as
+the words after `zoi` with no delimiter do. In live text, `lo'u` then holds no words of the hours
+after it. Verified by `suites/test_marks.nim`, which holds the module of `mi cusku lo'u .i mi
+klama` byte for byte.
 
 **A cmavo that no list gives a selma'o stands as a unit with the words that mark it.** So
 `ba'e xau` is one unit, as `Selmaho`. Verified by `suites/test_marks.nim`.
@@ -1234,9 +1244,10 @@ node names lets the grammar read past the stop, and each other class does not.
 
 **Reading starts again at each part.** A text that the passes cut into parts reads part by part.
 Its error node holds the tree of each part that reads alone, and the error node of each part that
-does not. So reading starts again at each `ni'o`, and at each `.i` that joins nothing. A text
-where `lu` or `to` stays open is one part. Verified by `suites/test_marks.nim`, over a cut at each,
-and over `lu` left open.
+does not. So reading starts again at each `ni'o`, and at each `.i` that joins nothing. Where
+`lu` or `to` stays open, the passes cut before the part that holds it, and that part runs to the
+end of the text. Verified by `suites/test_marks.nim`, over a cut at each, and by
+`suites/test_grammar.nim`, over `lu` left open after a cut.
 
 #859 asks for a new start at each start of a sentence or paragraph that is not ambiguous, where
 that is easy and consistent. Each cut of the passes is such a start.
@@ -1282,17 +1293,112 @@ the unit before it, which stops the walk that places leaves. Verified by hand, 2
 copies of the project in scratch.
 
 **Cost: for a text that reads, the marked reader does what `readText` does.** Over the corpora,
-it takes about 1.2 times as long as `readText`. Figures, Marks, gives the measures.
+it takes about 1.2 times as long as `readText`. Figures of marks and live text gives the measures.
 
 **Cost: on a text refused, the marked reader reads on to the end.** Each part refused reads in
 sets that predict each named rule. Over the 110 texts refused, it takes about 13 times as long as
-`readText`. A text where `lu` or `to` stays open is one part, so such sets span the whole text. On
-an article of 4,159 bytes, that took about 9 times as long as the refusal. Figures, Marks, gives
-the measures.
+`readText`. A part where `lu` or `to` stays open runs to the end of the text, so such sets span
+the rest of it. Figures of marks and live text gives the measures.
 
 **Cost: the suite of marks reads each text of the corpora by both readers.** So it takes about
 18 s of a debug build. The law of `expects` reads 24 stops, each once for each of 124 classes.
-Figures, Marks, gives the measures, and those of the stub of every suite.
+Figures of marks and live text gives the measures, and those of the stub of every suite.
+
+## Live text
+
+**The live reader reads a text piece by piece, and each sentence goes out as NIF once the next
+opens.** Each piece reads the text from the start of the part still open, as `readTextParts`
+gives the parts. The node of each part before it goes out on a line of its own, and so does each
+unit refused between parts. The rulings of the Architect on #859 give this design. Verified by
+`suites/test_live.nim`, over the worked examples.
+
+**At the end, the NIF of a text read piece by piece is the NIF of its parts read whole.** It is the
+same, byte for byte, wherever the pieces cut the text. Verified by `suites/test_live.nim`, over
+each second text of the corpora cut at random bytes, and over 300 texts built of words that reach
+back.
+Verified also by hand with programs built with `-d:release`, 2026-11-10. Figures of marks and live
+text gives the count of texts.
+
+**A cursor cuts the NIF back where a word reaches back.** Each change gives the offset that the
+NIF cuts back to, then the nodes that go out, then the tail. The offset stays inside the NIF that
+went out. Verified by `suites/test_live.nim`. Rejected: a window of words that `su` may erase,
+which the cursor makes needless, as the Architect ruled on #859.
+
+**The node of the part still open goes out as the tail, which the next change replaces.** Before
+the end, the NIF and the tail of each change are the parts of the text so far, read whole as live
+text. The text so far ends at its last mark between words. So the tree grows as the text so far
+gives it, and a program that animates the tree can show it grow. Verified by
+`suites/test_live.nim`, over the texts built.
+
+**The parts lose nothing of the tree.** `assembleText` builds, from the node of each part, the tree
+that one pass gives. Verified by `suites/test_live.nim`, over each text of the corpora that reads
+in more than one part.
+
+**A piece may cut a word, so each piece reads up to its last mark between words.** So `su` that
+the next piece makes `su'i` erases nothing. Verified by `suites/test_live.nim`, in a worked example.
+
+**A word that reaches back reads the text again from the node where it lands.** These words reach
+back:
+
+- `si` that finds no word, back as many words as it erases (19.13).
+- `bu` or `zei` that finds no word before it, back to the word before (4.6, 17.4).
+- `sa` that finds no marker, back to the node that holds the marker, or to the start (19.13).
+- The first unit read that opens no part, as `zei` that joins `.i` to the word after it.
+- An error node whose stop names the unit read after it, once that unit changes.
+- The closer of an opener that waits, back to the node that holds the opener.
+
+Verified by `suites/test_live.nim`. Cost: the reach back reads from the node where it lands, once.
+
+**The text read again opens at the span of a node.** The span opens at the first word past the
+words of the node before. So it holds each word that erasure erased before the node, and erasure
+read again finds those words. Rejected: a span that opens at the first word of its node, which lost
+`ku` in `ku lo'u si`, since `si` erased it. Verified by `suites/test_live.nim`.
+
+**A node shares the span before it where a quotation holds the word that its span would open at.**
+So does a node whose first word stands among the words of the node before. An example is a word
+that the stream refuses between a word and its `bu`. Verified by `suites/test_live.nim`.
+
+**`su` cuts the NIF back to its directives (19.13).** It erases each unit before it, and a word
+that the stream refuses too, since it erases the whole text. No piece reads the text before it
+again. Verified by `suites/test_live.nim`, in a worked example.
+
+**A quotation that waits before `su` may quote it once it closes.** So its closer reads the text
+again from the start. So does erasure past the `su`, and a `su` that erases no more. An example is
+`zo su si`, once `sa` erases the `zo` (19.10). Cost: one read of the whole text for each closer of
+that kind. Verified by `suites/test_live.nim`, over the texts built.
+
+**An opener that waits reads as a plain terminal, so the sentences after it go out at once.** Its
+closer reads them again, as the quotation or the text inside text. At the end, the text from the
+first opener that waits reads as the whole text does. There, `lu`, `to` and `tu'e` close, since
+21.1 lets their closer be elided. `zoi`, `la'o` and `lo'u` stand as errors. Verified by
+`suites/test_live.nim`, in a worked example of `lu`.
+
+**An opener of a quotation with a word before it that erasure erased reads again from the start
+of its text.** Its closer may quote the word that erased it. Verified by `suites/test_live.nim`,
+over the texts built.
+
+**The text after `lo'u` that waits reads inside the words that it quotes (19.9).** So `zoi` and
+`fa'o` there are words, as the stream reads them. There, `zoi` takes the three words after it as
+its quotation once they come, as `toRoles` gives it, so it waits as an opener. Verified by
+`suites/test_live.nim`, over the texts built.
+
+**`fa'o` that ends the input stops each piece at it (19.15).** The delimiter of a `zoi` before it
+lifts the stop, since that `zoi` quotes the `fa'o`. The end reads past it. Verified by
+`suites/test_live.nim`, over the texts built.
+
+**Cost: the bytes that each reading reads grow with the length of the text.** Each piece reads the
+part still open again, so the time grows with the length of the text times the length of a
+sentence. Over 30 sentences of Tatoeba joined, read word by word, the readings read 7.97 times the
+bytes of the text. Twice that text read 2.008 times as many bytes. Verified by
+`suites/test_live.nim`.
+Figures of marks and live text gives the measures.
+
+**Cost: the suite of live text reads each second text of the corpora, cut into pieces of up to 96
+bytes.** A text of one sentence reads again at each piece. So a piece for each word would cost about
+100 s of a debug build, which is 14 times a read of the corpora whole. The texts built take pieces
+of up to 6 bytes, and the law of cost reads word by word.
+
+So the suite takes about 35 s of a debug build. Figures of marks and live text gives the measures.
 
 ## Tests
 
@@ -1315,9 +1421,13 @@ NIF (II.9).
 `suites/corpora.nim` gives the texts of the corpora that the suites of NIF and of marks read, so
 the list is written once (II.9).
 
+**The suite of live text reads the corpora into one pool, once, as the suite of marks does.** Its
+laws over the corpora then read the pool. It also builds texts of words that reach back, from a
+seed, since the corpora hold few of them.
+
 **The suite of marks reads its texts into one pool, once by each reader.** Each law then reads the
 pool, as STYLE.md section 6 asks of a pool of samples. Rejected: a pass over the corpora for each
-law. Figures, Marks, gives the measures of both.
+law. Figures of marks and live text gives the measures of both.
 
 `suites/test_tanru.nim` holds the reader, `suites/test_stream.nim` the reader of a stream, and
 `suites/test_tanru_units.nim` the fold. No suite here has a copy in `lojban_tagger`, whose suites
@@ -1526,6 +1636,12 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   `nim js -d:release` and run under node read the 185 sentences of the sample that read. In one
   run, `readText` took 13,215 ms, so about 71 ms a sentence. `toNif` took 15 ms, and the law of the
   suites, with its rebuild, 605 ms.
+
+
+## Figures of marks and live text
+
+Each figure comes from the machine that Figures names, on the pin, and names its date and code.
+
 - **Marks, corpora.** On 2026-11-10, at `7920484b`, on the pin, a program built with `-d:release`
   read each of the 1,941 texts of the corpora. Each figure is the median of three passes, in each
   of two runs, and the runs alternate. `readText` took 1,193 ms and 1,187 ms, against 1,235 ms and
@@ -1537,9 +1653,12 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   `lo jbobau`, joined as `suites/test_grammar.nim` joins it, then `.i mi klama le`, 4,147 bytes in
   all. `readText` refused it at its end in 84 ms and 81 ms. `readTextMarked` read its 884 units,
   marked, in 132 ms and 134 ms.
-- **Marks, long text, `lu` open.** On 2026-11-10, at `7920484b`, the same build read that article
-  with `.i mi cusku lu mi klama le` after it, 4,159 bytes. `readText` refused it in 40 ms and
-  34 ms, and `readTextMarked` read its 887 units, marked, in 332 ms and 324 ms.
+- **Marks, long text, `lu` open.** On 2026-11-10, a program built with `-d:release` read that
+  article with `.i mi cusku lu mi klama le` after it, 4,159 bytes, as medians of three passes. At
+  `818ce274`, where one pass read a text with `lu` open, `readText` refused it in 35 ms and 35 ms.
+  `readTextMarked` read its 887 units, marked, in 406 ms and 364 ms. At `f8328a7d`, where the passes
+  cut before that part, `readText` took 85 ms and 86 ms, and `readTextMarked` 161 ms and 160 ms.
+  The runs alternate.
 - **Marks, suite.** On 2026-11-10, at `587486a9`, the suite of `test_marks.nim`, built alone as
   the stub is, ran in 18.1 s and 17.6 s. The rejected suite reads the corpora once for each of
   its five laws that read them. It ran in 72.6 s and 71.9 s at the same code. The runs alternate.
@@ -1550,6 +1669,28 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   ran once built. It took 12.3 s and 10.9 s at `df215592`, against 11.2 s and 11.5 s at `7920484b`.
   The runs alternate. Built with `nim js -d:release`, the script holds 806,713 bytes, against
   838,476 bytes.
+- **Live text, cost.** On 2026-11-10, at `f8328a7d`, on the pin, a program built with `-d:release`
+  read the sample of Tatoeba. It read its 234 sentences joined by `.i`, word by word. Each read is
+  set against a read of the whole text by `readTextParts`. Of 17,647 bytes, the whole took 1,077 ms,
+  and the live read 3,727 ms, which read 8.21 times the bytes of the text.
+- **Live text, longer texts.** The same build read that text twice, which took 2,643 ms whole
+  against 7,924 ms live, at 8.35 times its bytes. Four times took 5,760 ms against 16,353 ms, at
+  8.42 times. Eight times, 141,204 bytes, took 14,779 ms against 35,332 ms, at 8.46 times.
+- **Live text, pieces.** The same build read the text of 17,647 bytes with each byte a piece. The
+  whole took 1,290 ms, and the live read 4,315 ms, at 9.79 times the bytes. With pieces of 40
+  bytes, the whole took 1,273 ms, and the live read 1,493 ms, at 2.57 times.
+- **Live text, law by hand.** On 2026-11-10, at the code of `f8328a7d`, programs built with
+  `-d:release` read 160,000 texts built of words that reach back, of 1 to 30 words. Each was cut
+  at random into pieces of 1 to 9 bytes, from a seed. Each text of the corpora was cut in three
+  ways: at each word, and twice at random, in pieces of 1 to 12 bytes. No NIF at the end differed
+  from the NIF of the parts read whole. The law of the tail held over 30,000 texts built.
+- **Live text, suite.** On 2026-11-10, at `e6742c2e`, the suite of `test_live.nim`, built alone as
+  the stub is, ran in 34.6 s and 35.6 s. It read 30 sentences of Tatoeba at 7.97 times their bytes,
+  and twice them at 2.008 times as many. At `f8328a7d`, with each text of the corpora, 400 texts
+  built and 40 sentences, it ran in 49.9 s and 53.2 s. The runs alternate.
+- **Suites, live text.** On 2026-11-10, the stub ran every suite without the pages, as on the
+  runner. It took 61.9 s and 59.9 s at `818ce274`, against 113.7 s and 110.7 s at `e6742c2e`. At
+  `e6742c2e` without the suite of live text, it took 64.3 s and 64.0 s. The runs alternate.
 
 ## Open questions
 

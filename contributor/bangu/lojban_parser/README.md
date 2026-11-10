@@ -139,6 +139,40 @@ the sumti and the bridi tail. The text ends after `le`, so the grammar stops at 
 `sumti-6` 97, which waits for the selbri of `le`. The error node holds `mi klama`, which reads
 alone as a sentence, and then `le` alone. A text that reads gives the reading of `readText`.
 
+`initReaderLive` makes a reader of live text, which reads a text piece by piece as it arrives
+(#859). Each sentence goes out as NIF once the next one opens, and no piece reads the whole text
+again. A word that reaches back cuts the NIF back, as `si` and `su` do. Each change from `push`
+gives the offset that the NIF cuts back to, then the nodes that go out, then the tail. The tail is
+the node of the part still open, as the text so far gives it, and the next change replaces it:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+proc show(what: string, change: ChangeNif) =
+  echo what, ": cut back to ", change.at
+  for (kind, nif) in [("out ", change.text), ("tail", change.tail)]:
+    for line in nif.splitLines:
+      if line.len > 0: echo "  ", kind, " ", line.wrapWords(92, newLine = "\n       ")
+var reader = initReaderLive()
+for piece in ["mi klama .i do ", "si si si ", "ko "]:
+  show("push \"" & piece & "\"", reader.push(piece))
+show("finish", reader.finish)'
+push "mi klama .i do ": cut back to 28
+  out  (sentence 0 40 (sumti_6 80 97 (KOhA 0 "mi")) (bridi_tail_3 50 53 (tanru_unit_2 130 152
+       (BRIVLA 3 "klama")) (tail_terms 71)))
+  tail (text_1 0 2 (I 10 "i") (sumti_6 4 97 (KOhA 12 "do")))
+push "si si si ": cut back to 28
+  tail (sumti_6 0 97 (KOhA 0 "mi"))
+push "ko ": cut back to 28
+  tail (terms 0 80 (sumti_6 81 97 (KOhA 0 "mi")) (sumti_6 81 97 (KOhA 24 "ko")))
+finish: cut back to 28
+  out  (terms 0 80 (sumti_6 81 97 (KOhA 0 "mi")) (sumti_6 81 97 (KOhA 24 "ko")))
+```
+
+Offset 28 is the end of the two directives. The sentence `mi klama` goes out once `.i do` opens.
+The third `si` erases `klama`, so the NIF cuts back to the directives, and `mi` waits in the tail.
+`ko` then joins it. At the end, the NIF of a text read piece by piece is the NIF of its parts read
+whole. They are the same byte for byte, as `suites/test_live.nim` holds.
+
 The verb `javascript` compiles the reader of prose, with the whole parser, into one script of
 JavaScript. The script gives the function `parseLojban`, which returns what `readText` gives as a
 plain object. After `nim r tools/build.nim javascript`, node reads the script:
