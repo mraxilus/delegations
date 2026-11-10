@@ -28,6 +28,12 @@
 #   `nim r koch check` runs same checks locally before pull request opens; runner confirms,
 #   never discovers.
 #
+#   `test` and `drive` run on `ubuntu-24.04`, never `ubuntu-latest`: they build and run project
+#   code, so their toolchain is measured. Machine baselines of pga_benchmark name gcc 13.3.0
+#   and valgrind 3.22.0 of that release, and delegate containers run it too. `ubuntu-latest`
+#   moved to 26.04, with gcc 15.2.0, in 2026-11 (repository issue 848). Every other job runs
+#   koch alone on its own pin, so image moves nothing it reads.
+#
 #   `NIM_VERSION` builds koch and runs whole-tree checks. It is `curator/audit`'s pin, never
 #   second pin, and `toolchain.nim` fails audit when any workflow disagrees with it. Every
 #   project pins its own compiler: release version, which setup action installs, or full
@@ -112,7 +118,8 @@ jobs:
   test:
     needs: list-projects
     if: needs.list-projects.outputs.projects != '[]'
-    runs-on: ubuntu-latest
+    # Release whose toolchain machine baselines name; header says why.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -197,7 +204,8 @@ jobs:
   drive:
     needs: list-projects
     if: needs.list-projects.outputs.drive != '[]'
-    runs-on: ubuntu-latest
+    # Release whose toolchain machine baselines name; header says why.
+    runs-on: ubuntu-24.04
     # Whole suite drives real browser over thousands of objects under software rendering, so
     #   it is minutes rather than seconds. Ceiling is far above measured run and far below
     #   hang: job that stopped making progress should say so rather than hold runner.
