@@ -18,6 +18,8 @@ standard.
 - **Projective Geometric Algebra Illuminated**, Eric Lengyel, Terathon Software, 2024: `PGA`,
   `RGA` and `CGA`. They are the projective, rigid and conformal geometric algebras, as the wikis
   at `rigidgeometricalgebra.org` and `conformalgeometricalgebra.org` expand them.
+- **NIF data format**, nim-lang, version 2027, at commit `a31513c6` of `nifspec`, 2026: `NIF`,
+  from the title of `doc/nif-spec.md`. Nimony, the next compiler of Nim, holds its trees in it.
 - **Acronyms that a layman knows**, selected by the Architect: `3D`, `ID`, `JSON`, `URL`, `UI`,
   `RGB`, `RGBA`, `GIF`, `PNG`, `FOV`, `GL`, `GUI`, `DOM` and `fps`. Article V.9 keeps a layman
   as the test, and this list is the record of what passed it.
