@@ -116,6 +116,29 @@ letters of each word. A tag writes `_` for `-`, and a word writes `h` for `'`, a
 the names of selma'o. Lojban writes no `h` of its own (3.3), so `meho` reads back as `me'o`. Only
 the text that `zoi` or `la'o` quotes can need an escape of NIF.
 
+`readTextMarked` reads a text as `readText` does, and it reads on past each error. So another
+program can mend the text by its tree, and this parser decides no mend (#859). A word that a stage
+refuses stands as a unit with that stage, and the grammar reads the words around it. Where the
+grammar stops, an error node holds the byte and the rule that stops there. It also holds the class
+of each terminal that the grammar would read there:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+for line in readTextMarked("mi 1987 klama le").toNif.strip.splitLines: echo line.wrapWords(100)'
+(.nif27)
+(.lang "cll-21.1")
+(error 16 sumti_6 97 (expects BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI
+KOhA LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA
+VIhA XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 40 (sumti_6 80 97 (KOhA 0 "mi")) (unread 3
+Stream Letter "1987") (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 "klama")) (tail_terms
+71))) (LE 14 "le"))
+```
+
+The stream refuses the digits `1987`, so they stand as `(unread 3 Stream Letter "1987")`, between
+the sumti and the bridi tail. The text ends after `le`, so the grammar stops at byte 16, in
+`sumti-6` 97, which waits for the selbri of `le`. The error node holds `mi klama`, which reads
+alone as a sentence, and then `le` alone. A text that reads gives the reading of `readText`.
+
 The verb `javascript` compiles the reader of prose, with the whole parser, into one script of
 JavaScript. The script gives the function `parseLojban`, which returns what `readText` gives as a
 plain object. After `nim r tools/build.nim javascript`, node reads the script:

@@ -1,0 +1,280 @@
+## Hold reading that marks each error to its laws (#859): `readTextMarked` reads text as
+##   `readText` does, and reads on past each error, marking it in tree and in NIF.
+##   Text `readText` reads gives same units, tree and NIF, over corpora.
+##   Text it refuses still gives tree: each unit stands in it once as leaf, in order; refusal of
+##     `readText` is mark of its stage there; and NIF reads back whole (`reader_nif.nim`). Laws
+##     run over corpora, and over texts constructed for each stage, since corpora refuse at
+##     neither quotation nor construct.
+##   Grammar: each branch error node holds that heads `text` is tree its terminals give read
+##     alone; each class `expects` names lets grammar read past place it stops, and each other
+##     class does not.
+##   Corpora: as `test_nif.nim` reads them (`corpora.nim`).
+
+{.experimental: "strictFuncs".}
+
+when compileOption("profiler"):
+  import std/nimprof
+
+import std/[options, sequtils, unittest]
+
+import ../../src/lojban_parser/[grammar, nif, prose, selmaho, stream]
+import ./[corpora, reader_nif]
+
+
+type
+  Refused = tuple[key, text: string, strict: ReadingText, marked: ReadingMarked]
+    ## Define text `readText` refuses, with both readings of it.
+
+  Pool = object  ## Define texts suite reads, each read once by both readers.
+    count_read: int  ## Texts of corpora that read.
+    differing: seq[string]  ## Key of each text that reads whose reading marked differs.
+    refused: seq[Refused]  ## Each text of corpora refused, then each text constructed.
+
+
+const
+  COUNT_READ_LEAST = 1800  ## Texts of corpora that read, of 1,941; law reads each marked.
+  COUNT_REFUSED_LEAST = 100  ## Texts of corpora `readText` refuses, of 1,941; 110 on adding marks.
+  COUNT_EXPECTED = 24
+    ## Stops law of `expects` reads: first texts refused by grammar, of corpora then
+    ##   constructed, whose stop takes at most `STOP_EXPECTED_MOST` terminals; 57 qualify.
+    ##   Law reads text there once for each of 125 classes, about 2 s of debug build.
+  STOP_EXPECTED_MOST = 8  ## Terminals before stop, at most, for law of `expects`.
+  TEXTS_CONSTRUCTED = [
+    "mi 1987 klama", "mi hello klama", "Mi klama", "zoi gy. gyrations .gy. cu glico",
+    "la .lauras. klama",  # stream: letter, letter, stress, quotation, split
+    "mi xau klama", "ba'e xau klama",  # selma'o, with BAhE marking cmavo
+    "zei mi klama", "mi zei", "si mi klama", "mi klama sa", "bu mi", "mi klama ba'e",  # construct
+    "mi cusku lo'u mi klama", "mi cusku zo", "lo'u le'u",
+    "mi se cmene zo .djan. si .djordj.",  # quotation: never closed, empty, part erased (19.13)
+    "mi klama le", "mi klama le .i do citka", "lu mi klama le", "ge mi gi",
+    "mi klama le zarci ku ku",  # grammar: text cut off, part, `lu` open, connective, terminator
+    "si mi 1987 xau klama le",  # each stage at once
+  ]
+    ## Texts constructed for each stage that refuses, and for each place grammar stops.
+  EXAMPLES_MARKED = [
+    (
+      text: "mi 1987 klama",
+      module: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (unread 3 Stream Letter \"1987\") " &
+        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 \"klama\")) (tail_terms 71)))",
+    ),  # written word stream refuses, between sumti and bridi tail around it
+    (
+      text: "mi xau klama",
+      module: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (unread 3 Selmaho \"xau\") " &
+        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 7 \"klama\")) (tail_terms 71)))",
+    ),  # cmavo no list gives selma'o
+    (
+      text: "zei mi klama",
+      module: "(text 0 (unread 0 Construct \"zei\") (sentence 2 40 (sumti_6 80 97 " &
+        "(KOhA 4 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 7 \"klama\")) " &
+        "(tail_terms 71))))",
+    ),  # `zei` joining no word before it, in root before all units read (4.6)
+    (
+      text: "mi cusku lo'u mi klama",
+      module: "(text 0 (sentence 2 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
+        "(tanru_unit_2 130 152 (BRIVLA 3 \"cusku\")) (tail_terms 71))) " &
+        "(unread 9 Quotation \"lohu\" \"mi\" \"klama\"))",
+    ),  # `lo'u` no `le'u` closes, one unit with words it quotes, in root after all read (19.9)
+    (
+      text: "mi klama le",
+      module: "(error 11 sumti_6 97 (expects BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
+        "GOhA GUhA JAI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU " &
+        "SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) " &
+        "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
+        "(tanru_unit_2 130 152 (BRIVLA 3 \"klama\")) (tail_terms 71))) (LE 9 \"le\"))",
+    ),  # text cut off after `le`: grammar stops at its end, in `sumti-6` 97, which waits
+  ]
+    ## Texts constructed, and root node of module `nif.nim` writes for each, byte for byte.
+
+
+
+#[ Readers ]#
+
+func leaves(node: Node): seq[int] =
+  ## List index of each leaf under node, in order of tree.
+  if node.is_terminal: return @[node.at]
+  for child in node.children: result.add child.leaves
+
+
+func isHolding(marked: ReadingMarked, unit: Unit, start: int): bool =
+  ## Decide whether unit holds word whose bytes, as text writes them, hold byte `start`.
+  for k in unit.words:
+    let occurrence = marked.occurrences[k]
+    if occurrence.start <= start and start < occurrence.start + occurrence.text.len: return true
+  false
+
+
+func isMarking(marked: ReadingMarked, strict: ReadingText): bool =
+  ## Decide whether refusal of `readText` is mark of its stage in marked reading: unit of
+  ##   written word stream refuses holding its byte; unit of rule of 19.16 refusing it, where
+  ##   stream refuses none; unit of selma'o holding its byte, where only selma'o refuses; error
+  ##   node at root with its rule, stopping at its byte, where every unit reads.
+  let refused = marked.units.filterIt(not it.is_read)
+  case strict.refusal
+  of RefusalText.Stream:
+    refused.anyIt(it.refusal == RefusalText.Stream and marked.isHolding(it, strict.start))
+  of RefusalText.Construct, RefusalText.Quotation:
+    refused.allIt(it.refusal != RefusalText.Stream) and refused.anyIt(it.refusal == strict.refusal)
+  of RefusalText.Selmaho:
+    refused.allIt(it.refusal == RefusalText.Selmaho) and
+      refused.anyIt(marked.isHolding(it, strict.start))
+  of RefusalText.Grammar:
+    let
+      tree = marked.tree
+      at = (if tree.stop.isSome: tree.stop.get.at else: marked.units.len)
+      start =
+        if at < marked.units.len: marked.occurrences[marked.units[at].words[0]].start
+        else: marked.size
+    refused.len == 0 and tree.stop.isSome and tree.rule & " " & $tree.number == strict.rule and
+      start == strict.start
+
+
+func terminalsRead(marked: ReadingMarked): seq[Terminal] =
+  ## Give terminal of each unit grammar reads, in order.
+  for unit in marked.units:
+    if unit.is_read: result.add unit.terminal
+
+
+func isSameShifted(a, b: Node, by: int): bool =
+  ## Decide whether tree `a` is tree `b` with index of each terminal moved by `by`: same rules,
+  ##   numbers and places grammar stops at, in same order.
+  if a.is_terminal != b.is_terminal: return false
+  if a.is_terminal: return a.at == b.at + by
+  if a.rule != b.rule or a.number != b.number or a.children.len != b.children.len: return false
+  if a.stop.isSome != b.stop.isSome: return false
+  for k in 0 ..< a.children.len:
+    if not a.children[k].isSameShifted(b.children[k], by): return false
+  true
+
+
+func addBranches(node: Node, branches: var seq[Node]) =
+  ## Add each branch error node under `node` holds that heads `text`, which reads alone.
+  if node.is_terminal: return
+  for child in node.children:
+    if node.stop.isSome and not child.is_terminal and child.stop.isNone and child.number == 0:
+      branches.add child
+    child.addBranches(branches)
+
+
+func classes(): seq[Terminal] =
+  ## Give each class of terminal grammar reads: each selma'o, then `BRIVLA` and `CMENE`.
+  for selmaho in Selmaho: result.add selmaho.toTerminal
+  result.add TERMINAL_BRIVLA
+  result.add TERMINAL_CMENE
+
+
+func isReadPast(terminals: openArray[Terminal], at: int): bool =
+  ## Decide whether grammar reads terminals past place `at`: whole, or stopping after it.
+  let reading = terminals.readGrammar
+  reading.is_read or reading.at > at
+
+func isSame(marked: ReadingMarked, strict: ReadingText): bool =
+  ## Decide whether reading marked holds units, words and NIF of reading that reads.
+  marked.units.len == strict.units.len and
+    toSeq(0 ..< strict.units.len).allIt(
+      marked.units[it].is_read and marked.units[it].words == strict.units[it].words and
+        marked.units[it].terminal == strict.units[it].terminal
+    ) and
+    marked.occurrences.mapIt((it.start, it.text)) ==
+      strict.occurrences.mapIt((it.start, it.text)) and
+    marked.toNif == strict.toNif
+
+
+func readPool(): Pool =
+  ## Read each text of corpora by both readers once, keeping each refused; then each text
+  ##   constructed, which `readText` refuses too.
+  for (key, text) in textsCorpora():
+    let
+      strict = text.readText
+      marked = text.readTextMarked
+    if strict.is_read:
+      inc result.count_read
+      if not marked.isSame(strict): result.differing.add key
+    else: result.refused.add (key, text, strict, marked)
+  for text in TEXTS_CONSTRUCTED:
+    result.refused.add ("constructed", text, text.readText, text.readTextMarked)
+
+
+
+suite "Internal: Marks":
+  let pool = readPool()
+
+  test "Text readText reads gives same units, tree and NIF, over corpora":
+    check pool.differing == newSeq[string]()  # header of `prose.nim`, text that reads as before
+    check pool.count_read >= COUNT_READ_LEAST  # IX.3, guard keeps texts that read
+
+
+  test "Text readText refuses gives tree of each unit once, in order, and its NIF reads back":
+    var
+      broken: seq[string]
+      count = 0
+    for (key, text, strict, marked) in pool.refused:
+      checkpoint key & ": " & text
+      check not strict.is_read  # law reads only texts refused
+      if strict.is_read: continue
+      if key != "constructed": inc count
+      let
+        held = marked.units.mapIt(it.words).concat
+        is_whole = marked.tree.leaves == toSeq(0 ..< marked.units.len) and
+          toSeq(1 ..< marked.units.len).allIt(
+            marked.units[it - 1].words[0] < marked.units[it].words[0]
+          ) and held.deduplicate.len == held.len
+      if not (is_whole and marked.isMarking(strict) and marked.isReadBack): broken.add key
+    check broken == newSeq[string]()  # header of `prose.nim`, each unit in place, refusal marked
+    check count >= COUNT_REFUSED_LEAST  # IX.3, guard keeps texts refused
+
+
+  test "Each branch of error node that heads text is tree its terminals give read alone":
+    var count = 0
+    for (key, text, strict, marked) in pool.refused:
+      checkpoint key & ": " & text
+      let
+        terminals = marked.terminalsRead
+        tree = terminals.readGrammarMarked
+      check tree.leaves == toSeq(0 ..< terminals.len)  # header of `grammar.nim`, each terminal once
+      var branches: seq[Node]
+      tree.addBranches(branches)
+      for branch in branches:
+        let
+          span = branch.leaves
+          alone = terminals[span[0] .. span[^1]].readGrammar
+        check span == toSeq(span[0] .. span[^1])  # header of `grammar.nim`, branch of one span
+        check alone.is_read and alone.tree.isSameShifted(branch, -span[0])
+          # header of `grammar.nim`, branch is tree its words give alone
+        inc count
+    check count >= COUNT_REFUSED_LEAST  # IX.3, guard keeps branches in play
+
+
+  test "Each class expects names lets grammar read past its stop, and each other does not":
+    var count = 0
+    for (key, text, strict, marked) in pool.refused:
+      if count == COUNT_EXPECTED: break
+      let
+        terminals = marked.terminalsRead
+        tree = terminals.readGrammarMarked
+      if tree.stop.isNone or tree.stop.get.at > STOP_EXPECTED_MOST: continue
+      checkpoint key & ": " & text
+      let at = tree.stop.get.at
+      for class in classes():
+        let is_past = (terminals[0 ..< at] & class).isReadPast(at)
+        check is_past == tree.stop.get.expected.anyIt(it == class)
+          # header of `grammar.nim`, terminals some derivation reads where grammar stops
+      inc count
+    check count == COUNT_EXPECTED  # IX.3, guard keeps stops in play
+
+
+  test "Worked examples write as module suites hold, byte for byte, and read back":
+    for (text, module) in EXAMPLES_MARKED:
+      checkpoint text
+      let marked = text.readTextMarked
+      check marked.toNif == "(.nif27)\n(.lang \"cll-21.1\")\n" & module & "\n"
+        # header of `nif.nim`, error node and unit `unread`
+      check marked.isReadBack  # model of format, and tree rebuilt whole
+
+
+  test "Error node of text cut into parts holds tree of each part that reads alone":
+    let marked = "mi klama le .i do citka".readTextMarked
+    check marked.tree.stop.isSome and marked.tree.children.len == 2
+      # header of `grammar.nim`, text of two parts
+    check marked.tree.children[0].stop.isSome  # header of `grammar.nim`, part that reads not
+    check marked.tree.children[1].stop.isNone and marked.tree.children[1].number == 0
+      # header of `grammar.nim`, part that reads alone, as `text`

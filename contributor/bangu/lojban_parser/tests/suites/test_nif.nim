@@ -4,7 +4,7 @@
 ##   tree and terminals of reading whole from it.
 ##   Corpora: each example of CLL 1.1, rows joined and words square brackets mark kept; each
 ##     sentence of sample of Tatoeba; each paragraph of articles of Wikipedia (`corpora.nim`).
-##     Text refused holds no tree, so law skips it.
+##     Text refused holds no tree, so law skips it; `test_marks.nim` reads it back marked.
 ##   Suite of JavaScript build holds same law over every fourth sentence of sample, and same
 ##     worked example, with reader of this suite (`tests/test_javascript.nim`).
 ##   Corpora reach bytes from 128, byte of start past 1,023, and unit of several words; their
