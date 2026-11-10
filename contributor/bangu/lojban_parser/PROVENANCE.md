@@ -1398,10 +1398,12 @@ over the texts built.
 its quotation once they come, as `toRoles` gives it, so it waits as an opener. Verified by
 `suites/test_live.nim`, over the texts built.
 
-**`lo'u` waits only where no `le'u` follows it, as the stream reads the words that it quotes.**
-Erasure that erases its `le'u` leaves it alone, but the stream reads that `le'u`. So the text after
-it reads as plain text, where `fa'o` ends the input and `zoi` quotes text. Verified by
-`suites/test_live.nim`, over texts that fuzz of the law found, and texts built like them.
+**`lo'u` waits only where the stream opens the words that it quotes there.** No `zo` quotes it, and
+no `le'u` follows it. Erasure that erases its `le'u` leaves it alone, but the stream reads that
+`le'u`. The rules read a `lo'u` that `zo` quotes alone once they refuse that `zo`, but the stream
+reads it as the word that `zo` quotes. So in both, the text after it reads as plain text, where
+`fa'o` ends the input and `zoi` quotes text. Verified by `suites/test_live.nim`, over texts that
+fuzz of the law found, and texts built like them.
 
 **`fa'o` that ends the input stops each piece at it (19.15).** The delimiter of a `zoi` before it
 lifts the stop, since that `zoi` quotes the `fa'o`. The end reads past it. Verified by
