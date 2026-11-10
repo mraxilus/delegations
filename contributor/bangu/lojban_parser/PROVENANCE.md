@@ -646,8 +646,13 @@ each cmavo does not affect, and that order follows from it. Verified by `suites/
 
 **Each quotation is one terminal.** `zo` and the word that it quotes are `ZO`, and `lo'u` up to
 `le'u` is `LOhU`. `zoi` or `la'o` with its delimiters and text is `ZOI` (19.9, 19.10).
-`lo'u` that quotes no word, or that never closes, is refused as `Quotation`. Verified by
-`suites/test_prose.nim`, Sections 6.14, 19.9 and 19.10.
+`lo'u` that quotes no word, or that never closes, is refused as `Quotation`. So is `zo` that ends
+the text, since it quotes no word (19.10). Verified by `suites/test_prose.nim`, Sections 6.14, 19.9
+and 19.10.
+
+**`fa'o` ends the input only where no quotation holds it (19.15).** So `fa'o` that `zo` quotes,
+or that delimits `zoi` or `la'o`, stays in its unit at the end of a text too (19.10). Verified by
+`suites/test_prose.nim`, Section 19.15, in each part that a quotation gives a word.
 
 **Erasure acts on words.** `si` erases the word before it, and `su` each word before it. `sa`
 erases back to the last word of the selma'o of the word after it, that word included (19.13). A
@@ -1089,7 +1094,7 @@ names no line of Nim (expected). The verb takes the compiler that compiled the d
 **Cost: the script reads about 37 times slower than the native build, on the thread of its
 caller.** So a page waits while it reads. A text of the sample takes 16 ms and 14 ms at the
 median, against 0.45 ms and 0.35 ms native. The longest takes 459 ms and 416 ms, against 11 ms and
-10 ms native. Figures, JavaScript build, gives the method. At `f941add6`, the verb writes 806,713
+10 ms native. Figures, JavaScript build, gives the method. At `7920484b`, the verb writes 838,476
 bytes, and prints the size.
 
 ## Text in NIF
@@ -1147,11 +1152,11 @@ that the whole tree takes. Rejected: each number of a chain in its node, which n
 chains, at 43 percent. Figures, Text in NIF, chains, gives the measures.
 
 **The reader of the suites follows the grammar of the spec, and takes a subset of NIF.**
-`suites/reader_nif.nim` reads directives, compound nodes, tags, decimal integers, string literals
-and escapes. It refuses each other construct, such as line information and comments. So each
-module that it reads is NIF, and the law does not hold the writer to itself. Its rebuild of each
-tree also holds that the format loses nothing. Verified by `suites/test_nif.nim`, where the reader
-refuses each module of `MODULES_REFUSED`.
+`suites/reader_nif.nim` reads directives, compound nodes, tags, identifiers as atoms, decimal
+integers, string literals and escapes. It refuses each other construct, such as line information
+and comments. So each module that it reads is NIF, and the law does not hold the writer to itself.
+Its rebuild of each tree also holds that the format loses nothing. Verified by
+`suites/test_nif.nim`, where the reader refuses each module of `MODULES_REFUSED`.
 
 **Rejected: the line information of NIF for the byte of a word.** The spec writes it as a
 difference from the parent (Line information). The reader of nimony keeps 10 bits of a column, so
@@ -1192,6 +1197,103 @@ add about 13 s. The dead bounds make each read faster, and the stride stays unti
 whole sample says otherwise. The native suite reads every text of the corpora. Figures, JavaScript
 build, law of NIF, gives the measure.
 
+## Marks
+
+**`readTextMarked` reads a text as `readText` does, and it reads on past each error.** #859 holds
+the work. Another program reads the tree and mends the text. So this parser marks each error, and
+decides no mend, as rulings `D1 a` and `D2 a` of #859 give. Verified by `suites/test_marks.nim`.
+
+**A text that `readText` reads gives the same reading.** It gives the same units, the same tree
+and the same NIF. Verified by `suites/test_marks.nim`, over each of the 1,831 texts of the corpora
+that read.
+
+**A word that a stage refuses stands as a unit of its own, with that stage.** No terminal holds
+it, and the grammar reads the terminals of the other units. So the words that read keep their
+trees. Verified by `suites/test_marks.nim`: in each text refused, each unit is a leaf of the tree
+once, in order.
+
+**A written word that the stream refuses stands as an occurrence of its own, as written.** Its
+reading names the refusal of the stream. The stream then reads the text again, with the bytes of
+that word as spaces, so each refusal holds one written word. Verified by `suites/test_marks.nim`,
+where a unit holds the byte that `readText` refuses at.
+
+**Words that a rule of 19.16 refuses stand as one unit, and the rules read the words left.** A
+quotation that erasure leaves in part, or `lo'u` that no `le'u` closes, stands with its words as
+`Quotation`. `si` or `sa` with nothing to erase stands as `Construct`. So do `zei` that joins
+nothing, BAhE at the end, and `bu` after no word. Verified by `suites/test_marks.nim`, over texts
+constructed for each, since the corpora refuse at neither stage.
+
+**A cmavo that no list gives a selma'o stands as a unit with the words that mark it.** So
+`ba'e xau` is one unit, as `Selmaho`. Verified by `suites/test_marks.nim`.
+
+**An error node marks where the grammar stops.** The node takes the name and number of the rule
+that stops innermost there, as the refusal of `readGrammar` names it. It also holds the place where
+every derivation stops, and each terminal that some derivation reads there. Verified by
+`suites/test_marks.nim`, at the stop of the root of 24 texts refused. There, each class that the
+node names lets the grammar read past the stop, and each other class does not.
+
+**Reading starts again at each part.** A text that the passes cut into parts reads part by part.
+Its error node holds the tree of each part that reads alone, and the error node of each part that
+does not. So reading starts again at each `ni'o`, and at each `.i` that joins nothing. A text
+where `lu` or `to` stays open is one part. Verified by `suites/test_marks.nim`, over a cut at each,
+and over `lu` left open.
+
+#859 asks for a new start at each start of a sentence or paragraph that is not ambiguous, where
+that is easy and consistent. Each cut of the passes is such a start.
+
+**The error node of a part holds the largest branches that keep 21.1, and the terminals between
+them.** Earley sets that predict each named rule at each set give each branch, wherever the text
+broke a rule before it. Verified by `suites/test_marks.nim`, where each branch that heads `text` is
+the tree that its words give alone.
+
+**The cover leaves the fewest terminals out, then takes the fewest pieces.** Verified by
+`suites/test_marks.nim`: no terminal that a cover leaves out reads alone, and no two pieces side by
+side read as one text. A branch over either would leave fewer out, or take fewer pieces. A tie goes
+to the longest piece first. Assumed from a read of `islands`, since no law holds which cover a tie
+gives.
+
+**A branch takes the named rule of the least number that derives its span.** That is rule 0,
+`text`, where its words read alone, so the branch is the tree that they give alone. Rejected: the
+rule of the greatest number, as the innermost layer, since another derivation of the span can hold
+it. That rule reads `mi klama` as `sumti-tail` 111, with the possessor `mi`, where `sentence` 40
+stands. Verified by hand with a probe, 2026-11-10, and by a mutant that fails the suite.
+
+**A unit that no terminal holds stands as a leaf in the lowest node that holds both units around
+it, between them.** Before the first unit that reads, or after the last, it stands in the root at
+that end. No rule of 21.1 holds it, so its place claims no rule. Verified by
+`suites/test_marks.nim`.
+
+**NIF writes an error node as `(error byte rule number (expects classes) nodes)`.** The chain
+stops above it, since no chain of 21.1 holds it. A unit that no terminal holds writes
+`(unread byte stage letters)`, and the stage `Stream` adds the refusal of the stream. That written
+word keeps its bytes, as the text that `zoi` quotes does. Verified by `suites/test_marks.nim`,
+which holds five modules byte for byte, and reads back each module of the texts refused.
+
+**Rejected: the stage alone, or the refusal alone, in a unit that no terminal holds.** The stream
+and the reader of quotations both name a refusal `Quotation`. So a reader could not tell the bytes
+of a written word from a word where `h` stands for `'`. Verified by hand, 2026-11-10, from the
+enums `Refusal` of `tanru.nim` and `RefusalText` of `prose.nim`.
+
+**The laws fail where the code breaks.** Five mutants, each of one line, fail
+`suites/test_marks.nim`. In them, the writer gives the byte of a stop plus one, or the refusal
+leaves out `BRIVLA`. A branch takes the rule of the greatest number, or no branch takes one
+terminal, which fails the law of the cover alone. A refused leaf stands before the child that holds
+the unit before it, which stops the walk that places leaves. Verified by hand, 2026-11-10, on
+copies of the project in scratch.
+
+**Cost: for a text that reads, the marked reader does what `readText` does.** Over the corpora,
+it takes about 1.2 times as long as `readText`. Figures, Marks, gives the measures.
+
+**Cost: on a text refused, the marked reader reads on to the end.** Each part refused reads in
+sets that predict each named rule. Over the 110 texts refused, it takes about 13 times as long as
+`readText`. A text where `lu` or `to` stays open is one part, so such sets span the whole text. On
+an article of 4,159 bytes, that took about 9 times as long as the refusal. Figures, Marks, gives
+the measures.
+
+**Cost: the suite of marks reads each text of the corpora by both readers.** So it takes about
+18 s of a debug build. The law of `expects` reads 24 stops, each once for each of 124 classes.
+Figures, Marks, gives the measures, and those of the stub of every suite.
+
 ## Tests
 
 **One stub runs every suite as one program.** `tests/test_suites.nim` imports each file of
@@ -1209,6 +1311,13 @@ each form. So the suites of the reader and of lujvo share one way to draw them (
 `suites/reader_nif.nim` reads NIF by the grammar of its spec, and gives the module that each
 reading should read as. So the native suite and the suite of the JavaScript build hold one law of
 NIF (II.9).
+
+`suites/corpora.nim` gives the texts of the corpora that the suites of NIF and of marks read, so
+the list is written once (II.9).
+
+**The suite of marks reads its texts into one pool, once by each reader.** Each law then reads the
+pool, as STYLE.md section 6 asks of a pool of samples. Rejected: a pass over the corpora for each
+law. Figures, Marks, gives the measures of both.
 
 `suites/test_tanru.nim` holds the reader, `suites/test_stream.nim` the reader of a stream, and
 `suites/test_tanru_units.nim` the fold. No suite here has a copy in `lojban_tagger`, whose suites
@@ -1417,6 +1526,30 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   `nim js -d:release` and run under node read the 185 sentences of the sample that read. In one
   run, `readText` took 13,215 ms, so about 71 ms a sentence. `toNif` took 15 ms, and the law of the
   suites, with its rebuild, 605 ms.
+- **Marks, corpora.** On 2026-11-10, at `7920484b`, on the pin, a program built with `-d:release`
+  read each of the 1,941 texts of the corpora. Each figure is the median of three passes, in each
+  of two runs, and the runs alternate. `readText` took 1,193 ms and 1,187 ms, against 1,235 ms and
+  1,345 ms at `df215592`. `readTextMarked` took 1,399 ms and 1,426 ms.
+- **Marks, texts refused.** On 2026-11-10, at `7920484b`, the same build read the 110 texts of the
+  corpora that `readText` refuses, as medians of three passes. `readText` took 15.6 ms and 16.2 ms,
+  and `readTextMarked` took 196 ms and 218 ms. Its slowest text, of 634 bytes, took 23 ms and 27 ms.
+- **Marks, long text cut off.** On 2026-11-10, at `7920484b`, the same build read the article
+  `lo jbobau`, joined as `suites/test_grammar.nim` joins it, then `.i mi klama le`, 4,147 bytes in
+  all. `readText` refused it at its end in 84 ms and 81 ms. `readTextMarked` read its 884 units,
+  marked, in 132 ms and 134 ms.
+- **Marks, long text, `lu` open.** On 2026-11-10, at `7920484b`, the same build read that article
+  with `.i mi cusku lu mi klama le` after it, 4,159 bytes. `readText` refused it in 40 ms and
+  34 ms, and `readTextMarked` read its 887 units, marked, in 332 ms and 324 ms.
+- **Marks, suite.** On 2026-11-10, at `587486a9`, the suite of `test_marks.nim`, built alone as
+  the stub is, ran in 18.1 s and 17.6 s. The rejected suite reads the corpora once for each of
+  its five laws that read them. It ran in 72.6 s and 71.9 s at the same code. The runs alternate.
+- **Suites, marks.** On 2026-11-10, the stub ran every suite without the pages, as on the runner.
+  It took 37.3 s and 37.2 s at `df215592`, against 54.0 s and 54.5 s at `7920484b`. The runs
+  alternate.
+- **JavaScript build, marks.** On 2026-11-10, under node 22.23.4, the suite of the JavaScript build
+  ran once built. It took 12.3 s and 10.9 s at `df215592`, against 11.2 s and 11.5 s at `7920484b`.
+  The runs alternate. Built with `nim js -d:release`, the script holds 806,713 bytes, against
+  838,476 bytes.
 
 ## Open questions
 
