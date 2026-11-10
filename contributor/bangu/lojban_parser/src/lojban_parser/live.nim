@@ -46,6 +46,7 @@
 ##     `zoi`, `la'o` and `lo'u` stand as errors.
 ##   Text after `lo'u` that waits reads inside words it quotes, as stream reads them (19.9):
 ##     there `zoi` takes three words after it as quotation once they come (`toRoles`), so waits.
+##     `lo'u` whose `le'u` erasure erases waits for none, since stream reads that `le'u`.
 ##   `fa'o` that ends input (19.15) stops each piece reading past it, till delimiter of `zoi`
 ##     before it comes, which quotes it; end reads past it.
 ##   Laws: at end, NIF of text read piece by piece is NIF of its parts read whole; before end,
@@ -231,22 +232,6 @@ func isSpelled(text: string, first, last: int, delimiter: string): bool =
     let start = at
     while at < last and text[at] notin MARKS_BOUNDARY: inc at
     if text[start ..< at].toLowerAscii.replace(",", "") == delimiter: return true
-  false
-
-
-func isClosingLohu(occurrences: openArray[Occurrence]): bool =
-  ## Test words hold `le'u` that no `zo` quotes, which closes `lo'u` waiting before them, as
-  ##   stream reads words `lo'u` quotes (19.9).
-  var is_quoting = false
-  for k in 0 ..< occurrences.len:
-    template word: untyped = occurrences[k]
-      ## Alias word, which `let` would copy.
-    if not word.reading.is_word: continue
-    if is_quoting:
-      is_quoting = false
-      continue
-    if word.reading.selmaho == some(Selmaho.Zo): is_quoting = true
-    elif word.reading.selmaho == some(Selmaho.Lehu): return true
   false
 
 

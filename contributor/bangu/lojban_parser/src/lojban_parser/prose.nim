@@ -110,8 +110,9 @@ type
     zois*: seq[tuple[start: int, delimiter: string]]
       ## Byte of written word of each `zoi` that no delimiter closes, with that delimiter.
     lohus*: seq[int]
-      ## Byte of each `lo'u` that no `le'u` closes, which stands alone; held where `su` after it
-      ##   drops its unit too.
+      ## Byte of each `lo'u` that stands alone, with no `le'u` after it as stream reads words it
+      ##   quotes; held where `su` after it drops its unit too. `lo'u` whose `le'u` erasure erases
+      ##   waits for none, since stream reads that `le'u`, so text after it reads as stream does.
     markers*: seq[Option[Terminal]]
       ## Marker of each `sa` that finds none, in any pass of rules of 19.16, so erases to start.
     su*: Option[int]  ## Byte of last `su`, which erases text before it (19.13); none where none.
@@ -170,6 +171,22 @@ func isSelmaho(word: Occurrence, selmaho: set[Selmaho]): bool =
 
 
 #[ Quotation and erasure ]#
+
+func isClosingLohu*(words: openArray[Occurrence]): bool =
+  ## Test words hold `le'u` that no `zo` quotes, which closes `lo'u` before them, as stream reads
+  ##   words `lo'u` quotes (19.9).
+  var is_quoting = false
+  for k in 0 ..< words.len:
+    template word: untyped = words[k]
+      ## Alias word, which `let` would copy.
+    if not word.reading.is_word: continue
+    if is_quoting:
+      is_quoting = false
+      continue
+    if word.isSelmaho({Selmaho.Zo}): is_quoting = true
+    elif word.isSelmaho({Selmaho.Lehu}): return true
+  false
+
 
 func toRoles(words: openArray[Occurrence], is_lohu = false): seq[Role] =
   ## Give part each word takes in quotation: `zo` quotes next word, `lo'u` words up to `le'u`
@@ -619,7 +636,8 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     template unit: untyped = units[k]
       ## Alias unit, which `let` would copy.
     let is_lohu = not unit.is_read and unit.refusal == RefusalText.Quotation and
-      unit.words.len == 1 and occurrences[unit.words[0]].isSelmaho({Selmaho.Lohu})
+      unit.words.len == 1 and occurrences[unit.words[0]].isSelmaho({Selmaho.Lohu}) and
+      not occurrences.toOpenArray(unit.words[0] + 1, occurrences.high).isClosingLohu
     if is_lohu: result.lohus.add occurrences[unit.words[0]].start  # `lo'u` waits for `le'u`
   if reach.su.isSome:
     let start = occurrences[indexes[alive[reach.su.get]]].start
