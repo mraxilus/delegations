@@ -276,8 +276,8 @@ suite "Internal: Live text":
       once = text.readLive(text.cutsWords)
       both = twice.readLive(twice.cutsWords)
     check once.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
-    check once.count_read.float <= COST_MOST * text.len.float  # header of `live.nim`, cost
-    check both.count_read.float <= COST_TWICE_MOST * once.count_read.float
+    check float(once.count_read) <= COST_MOST * float(text.len)  # header of `live.nim`, cost
+    check float(both.count_read) <= COST_TWICE_MOST * float(once.count_read)
       # header of `live.nim`, cost grows with length of text, not with its square
 
 
