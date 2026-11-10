@@ -68,6 +68,14 @@ const
   ]
     ## Texts holding `lo'u` whose `le'u` erasure erases, then word stream reads otherwise inside
     ##   words `lo'u` quotes: `fa'o`, which ends input, or `zoi`, which quotes text; constructed.
+  TEXTS_SA_PARTED = [
+    "ni'o .i sa 1987 zo .i si",  # fuzz of live law found it: `sa` reads again not
+    "mi klama .i sa 1987 zo .i si do",  # word after it
+    "ni'o .i sa 1987 1988 zo .i si",  # two words stream refuses
+  ]
+    ## Texts where word stream refuses stands between `sa` and word after it, which gives its
+    ##   marker (19.13); `si` later erases word `zo` quotes, so `zo` is refused, and marker
+    ##   changes; constructed.
   LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
     "(tanru_unit_2 130 152 (BRIVLA 3 \"klama\")) (tail_terms 71)))\n"
     ## Line of node of `mi klama`, which examples open with.
@@ -262,6 +270,14 @@ suite "Internal: Live text":
       let live = text.readLive(text.cutsWords, is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_grown  # header of `prose.nim`, stream reads `le'u` erasure erases (19.9)
+
+
+  test "Sa reads again where word after it changes, past word stream refuses":
+    for text in TEXTS_SA_PARTED:
+      checkpoint text
+      let live = text.readLive(text.cutsWords, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `live.nim`, tail grows as text so far gives it (19.13)
 
 
   test "Parts lose nothing of tree: assembleText builds tree grammar gives, over corpora":
