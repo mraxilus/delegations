@@ -125,11 +125,25 @@ const
     ## Texts where `su` ends text before it, or where quotation quotes it once closed, which
     ##   reach back past it; fuzz of live law found last four, of which last read wrong when `su`
     ##   erased text before it.
+  CUTS_ENDED = [
+    (text: "tu'u si fa'o lo", cuts: toSeq(1 .. 14)),
+    (text: "gy ku xyz ba'e gy si fa'o zo sa 1987", cuts: @[2, 6, 7, 12, 17, 22, 25, 31, 33, 34]),
+    (
+      text: "cu sa'a sa'a li'u si fa'o ni'o 1987 .i",
+      cuts: @[4, 5, 8, 13, 19, 23, 25, 26, 31, 36],
+    ),
+  ]
+    ## Texts where words erasure erases stand before `fa'o`, whose node shares their span; with
+    ##   cuts fuzz of live law found, as unit of each word no unit held came in.
   LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
     "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71)))\n"
     ## Line of node of `mi klama`, which examples open with.
   LINE_DO = "(text_1 0 2 (I 10 11 \"i\") (sumti_6 4 97 (KOhA 12 14 \"do\")))\n"
     ## Line of node of `.i do` after it, while sentence is open.
+  LINE_ERASED = "(unread Erasure 3 8 \"klama\" 10 11 \"i\" 12 14 \"do\" 15 17 \"si\" " &
+    "18 20 \"si\" 21 23 \"si\")\n"
+    ## Line of words three `si` erase in `mi klama .i do si si si`, each `si` with them, as one
+    ##   unit.
   LINE_SUHI = "(error 3 paragraphs 4 (expects A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
     "FAhA FEhE FIhO GA GAhO GOI GOhA GUhA I JAI JOI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME " &
     "MOhI NA NAhE NIhO NOI NU NUhA NUhI PA PEhE PU SE SEI SOI TAhE TEI TO VA VAU VEI VEhA " &
@@ -159,8 +173,8 @@ const
       pieces: @["mi klama .i do ", "si si si "],
       changes: @[
         (28, LINE_MI_KLAMA, LINE_DO),
-        (28, "", "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n"),
-        (28, "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n", ""),
+        (28, "", "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n" & LINE_ERASED),
+        (28, "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n" & LINE_ERASED, ""),
       ],
     ),  # third `si` erases `klama`, so NIF cuts back to sentence that held it (19.13)
     (
@@ -410,6 +424,14 @@ suite "Internal: Live text":
       let live = text.readLive(text.cutsWords, is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_grown  # header of `live.nim`, `su` and quotation that quotes it (19.13)
+
+
+  test "Fa'o goes out once, and end reads it again from span of its node":
+    for (text, cuts) in CUTS_ENDED:
+      checkpoint text & " cut at " & $cuts
+      let live = text.readLive(cuts, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `live.nim`, `fa'o` that ends input (19.15)
 
 
   test "Parts lose nothing of tree: assembleText builds tree grammar gives, over corpora":

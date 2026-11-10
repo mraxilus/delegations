@@ -50,7 +50,11 @@
 ##     there `zoi` takes three words after it as quotation once they come (`toRoles`), so waits.
 ##     `lo'u` whose `le'u` erasure erases waits for none, since stream reads that `le'u`.
 ##   `fa'o` that ends input (19.15) stops each piece reading past it, till delimiter of `zoi`
-##     before it comes, which quotes it; end reads past it.
+##     before it comes, which quotes it. Each node goes out once `fa'o` reads, and each written
+##     word after it goes out as unit of its own once mark ends it, so no piece reads text again:
+##     cost stays linear past `fa'o`. End reads text from `fa'o` again, as whole text does.
+##   Words erasure erases stand as unit of their own (`prose.nim`), and node after it shares its
+##     span, so text read again from node reads them again, as erasure in it may have erased them.
 ##   Laws: at end, NIF of text read piece by piece is NIF of its parts read whole; before end,
 ##     NIF and tail of each change are parts of text so far, to its last mark, read whole as
 ##     live text (`test_live.nim`).
@@ -81,6 +85,9 @@ type
       ##   and of cmavo no list gives selma'o.
     last: Option[Terminal]  ## Terminal of unit read last, in it or in node before it.
     held: int  ## Index of last node, it or one before it, that holds unit read; -1 for none.
+    is_parted: bool
+      ## Part of its text went out, at it or before it: part of no unit, which text of no unit
+      ##   read gives, stands in it once.
     stop: Option[int]
       ## Byte of unit read after it, which stop of its error node names; none where no stop
       ##   names unit past its own.
@@ -137,6 +144,11 @@ func countRead*(reader: ReaderLive): int = reader.count_read
 func isSu(unit: Unit): bool =
   ## Test unit is `su`, which ends text before it.
   not unit.is_read and unit.refusal == RefusalText.Su
+
+
+func isErasure(unit: Unit): bool =
+  ## Test unit holds words erasure erases, and cmavo erasing them.
+  not unit.is_read and unit.refusal == RefusalText.Erasure
 
 
 func isWall(item: ItemLive): bool =
@@ -204,9 +216,10 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
   ##   it may have erased; first opens at `first`. Child shares span of child before where its
   ##   first word stands among words of that child, as refused word between word and indicator
   ##   marking it; where quotation holds word span would open at (`toCleans`), which erasure
-  ##   erased; where word before its first word is `sa` no unit holds, past each word stream or
-  ##   rules refuse, since first word rules read past `sa` gives its marker (19.13); or where
-  ##   rules refuse `zei` before its first word, past each word stream or rules refuse or erasure
+  ##   erased; where word before its first word is `sa` that erasure erased, past each word stream
+  ##   or rules refuse, since first word rules read past `sa` gives its marker (19.13); where
+  ##   child before is words erasure erased, which erasure in it may have erased; or where rules
+  ##   refuse `zei` before its first word, past each word stream or rules refuse or erasure
   ##   erases, since `zei` joins word after it once rules read one there, as once they refuse
   ##   quotation that opens there (19.16).
   func isRefused(unit: Unit): bool =
@@ -238,17 +251,21 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
         (holders[before] >= 0 and units[holders[before]].isRefused)):
       dec before
     while prior >= 0 and (not occurrences[prior].reading.is_word or holders[prior] < 0 or
-        (units[holders[prior]].isRefused and
+        units[holders[prior]].isErasure or (units[holders[prior]].isRefused and
           not units[holders[prior]].isRefusedZei(occurrences[prior]))):
       dec prior
     let
       is_among = leaves[k].len > 0 and units[leaves[k][0]].words[0] < next
-      is_marked = before >= 0 and holders[before] < 0 and
+      is_marked = before >= 0 and
+        (holders[before] < 0 or units[holders[before]].isErasure) and
         occurrences[before].reading.selmaho == some(Selmaho.Sa)
+      is_after_erasure = k > 0 and leaves[k - 1].len == 1 and
+        region.reading.tree.children[k - 1].is_terminal and units[leaves[k - 1][0]].isErasure
       is_after_zei = prior >= 0 and holders[prior] >= 0 and
         units[holders[prior]].isRefusedZei(occurrences[prior])
     if k == 0: result[k] = first
-    elif is_among or is_marked or is_after_zei or (next < occurrences.len and not cleans[next]):
+    elif is_among or is_marked or is_after_erasure or is_after_zei or
+        (next < occurrences.len and not cleans[next]):
       result[k] = result[k - 1]
     elif next < occurrences.len: result[k] = occurrences[next].start
     else: result[k] = region.reading.size
@@ -468,8 +485,8 @@ func addItems(
   ##   line of its own; last part, and units after it, go out as tail. End puts out each.
   ##   `su` ends text before it, so each node up to it goes out at once, and node after it
   ##     takes nothing of node before it.
-  ##   Part of no unit, of text of no unit read, goes out only where no node before holds unit
-  ##   read in its text, as whole text reads it: it stands last in first text, before first `su`.
+  ##   Part of no unit, of text of no unit read, goes out only where no part of its text went out
+  ##   before, as whole text reads it: it stands last in first text, before first `su`.
   template children: untyped = region.reading.tree.children
     ## Alias nodes of root of text read, which `let` would copy.
   template units: untyped = region.reading.units
@@ -479,12 +496,15 @@ func addItems(
   var
     first_su = children.len  # first leaf of `su` among children; count of them for none
     last_su = -1  # last leaf of `su` among children; -1 for none
+    first_ended = children.len  # first leaf past text: `fa'o` that ends input, and words after
   for k in 0 ..< children.len:
-    if children[k].is_terminal and units[children[k].at].isSu:
-      (first_su, last_su) = (min(first_su, k), k)
+    if not children[k].is_terminal: continue
+    if units[children[k].at].isSu: (first_su, last_su) = (min(first_su, k), k)
+    if region.faho.isSome and children[k].at >= region.faho.get:
+      first_ended = min(first_ended, k)
   let
-    hollow = first_su - 1  # child that may be part of no unit
-    is_hollow = reader.items.len > 0 and reader.items[^1].held >= 0 and hollow >= 0 and
+    hollow = min(first_su, first_ended) - 1  # child that may be part of no unit
+    is_hollow = reader.items.len > 0 and reader.items[^1].is_parted and hollow >= 0 and
       not children[hollow].is_terminal and leaves[hollow].len == 0
   var order: seq[int]  # children that go out, now or as tail, in order
   for k in 0 ..< children.len:
@@ -504,6 +524,8 @@ func addItems(
       item.is_quoted = region.reading.byteAt(children[k].at) in region.quoted
     elif reader.items.len > 0:
       (item.last, item.held) = (reader.items[^1].last, reader.items[^1].held)
+      item.is_parted = reader.items[^1].is_parted or not children[k].is_terminal
+    else: item.is_parted = not children[k].is_terminal
     var read_last = -1  # unit read last
     for u in leaves[k]:
       template unit: untyped = units[u]
@@ -558,7 +580,7 @@ func addOpeners(
   for w in 0 ..< occurrences.len:
     template word: untyped = occurrences[w]
       ## Alias word, which `let` would copy.
-    if holders[w] >= 0 or not word.reading.is_word: continue
+    if not word.reading.is_word or (holders[w] >= 0 and not units[holders[w]].isErasure): continue
     let
       selmaho = word.reading.selmaho
       is_erasing = selmaho.isSome and selmaho.get in {Selmaho.Si, Selmaho.Sa, Selmaho.Su}
@@ -599,27 +621,37 @@ func addOpeners(
     let
       is_quoting = reads.len == 2 and not occurrences[reads[1]].reading.is_word
       u = holders[w]
-      is_whole = u >= 0 and (not units[u].is_read or units[u].words.countIt(it > w) >= 3)
+      is_erased = u < 0 or units[u].isErasure
+      is_whole = not is_erased and (not units[u].is_read or units[u].words.countIt(it > w) >= 3)
     if is_quoting or is_whole: continue  # stream quotes text, or unit holds its three words
     added.add OpenerLive(
       selmaho: Selmaho.Zoi, at: word.start,
-      start: opening(word.start, if u >= 0: some(owners[u]) else: none(int)),
+      start: opening(word.start, if is_erased: none(int) else: some(owners[u])),
     )
   reader.openers.add added.sortedByIt(it.start)
 
 
-func faho(region: ReadingParts): Option[int] =
-  ## Give byte of `fa'o` no unit holds that stream of text read stops at, which ends input
-  ##   (19.15); none where stream reads to end.
-  template occurrences: untyped = region.reading.occurrences
-    ## Alias words of text read, which `let` would copy.
-  template units: untyped = region.reading.units
-    ## Alias units of text read, which `let` would copy.
-  if occurrences.len == 0 or not occurrences[^1].reading.is_word: return none(int)
-  if occurrences[^1].reading.selmaho != some(Selmaho.Faho): return none(int)
-  for u in 0 ..< units.len:
-    if units[u].words[^1] == occurrences.high: return none(int)  # quotation holds `fa'o`
-  some(occurrences[^1].start)
+func addRest(reader: var ReaderLive, first: int): ChangeNif =
+  ## Put out each written word of text from byte `first` up to end of text read, past `fa'o`
+  ##   that ends input, as unit of its own, which stream reads not (19.15); no text before it
+  ##   reads again, since each node before `fa'o` went out once it read.
+  result = ChangeNif(at: reader.nif.len)
+  var at = first
+  while at < reader.ending:
+    if reader.text[at] in MARKS_BOUNDARY:
+      inc at
+      continue
+    let start = at
+    while at < reader.ending and reader.text[at] notin MARKS_BOUNDARY: inc at
+    let
+      ended = ReadingMarked(
+        occurrences: @[reader.text.occurrenceEnded(start, at)],
+        units: @[Unit(words: @[0], is_read: false, refusal: RefusalText.Stream)],
+      )
+      line = Node(is_terminal: true, at: 0).toNif(ended) & "\n"
+    reader.items.add ItemLive(start: start, offset: reader.nif.len, held: -1, start_reading: start)
+    reader.nif.add line
+    result.text.add line
 
 
 func readChange(reader: var ReaderLive, at: int, is_final: bool): ChangeNif =
@@ -637,15 +669,21 @@ func readChange(reader: var ReaderLive, at: int, is_final: bool): ChangeNif =
   for k in 0 ..< leaves.len: region.reading.tree.children[k].addLeaves(leaves[k])
   result.at = reader.cut(start)
   let spans = region.toSpans(leaves, start)
-  reader.addItems(region, leaves, spans, start, is_final, result)
+  reader.addItems(region, leaves, spans, start, is_final or region.faho.isSome, result)
   if is_final: return
   reader.addOpeners(region, leaves, spans, start)
-  let faho = region.faho
-  if faho.isNone: return
-  var stop = faho.get
+  if region.faho.isNone: return
+  let faho = region.reading.byteAt(region.faho.get)
+  var stop = faho
   while stop < reader.text.len and reader.text[stop] notin MARKS_BOUNDARY: inc stop
   reader.stop = some(stop)
-  reader.start = min(reader.start, faho.get)  # each piece reads `fa'o` again
+  var k = 0  # child holding `fa'o`, whose span end reads again from
+  while k < spans.high:
+    template child: untyped = region.reading.tree.children[k]
+      ## Alias child of root, which `let` would copy.
+    if child.is_terminal and child.at == region.faho.get: break
+    inc k
+  reader.start = min(reader.start, spans[k])  # end reads `fa'o` again
 
 
 
@@ -667,7 +705,9 @@ func push*(reader: var ReaderLive, piece: string): ChangeNif =
     let is_closing = opener.selmaho == Selmaho.Zoi and opener.at < reader.stop.get and
       reader.text.isSpelled(max(reader.ending, opener.after), ending, opener.delimiter)
     if is_closing: reader.stop = none(int)  # `zoi` before `fa'o` quotes it once closed
+  let first = reader.ending  # text not read yet
   reader.ending = ending
+  if reader.stop.isSome: return reader.addRest(first)
   reader.readChange(reader.start, is_final = false)
 
 

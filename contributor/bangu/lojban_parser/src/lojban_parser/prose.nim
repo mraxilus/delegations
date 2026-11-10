@@ -18,7 +18,7 @@
 ##     `le'u` that no `zo` quotes (19.9); `readStream` holds text `zoi` and `la'o` quote. Each
 ##     stands as one terminal, as rewrites of `grammar.nim` give.
 ##   `fa'o` ends parsable input unless quoted (19.15, 21.1); `readStream` stops after it, and
-##     it stands in no unit.
+##     it stands in no terminal.
 ##   Erasure acts on words, each quotation counted by its words: `zo` quotation is two, `zoi`
 ##     quotation four (19.13, Examples 19.77, 19.79). `si` erases word before it. `sa` erases
 ##     back to and including last word of selma'o of word after it, or back to start of text
@@ -39,7 +39,8 @@
 ##     after it, `y`, `da'o`, `fu'e` and `fu'o`. Indicators opening text stand as terminals,
 ##     which rule 0 reads.
 ##   Refusal names byte where reading stops: word refused, or start of unit grammar stops at,
-##     or end of text.
+##     or end of input: `fa'o` that ends it, else byte past text. So text after `fa'o` moves no
+##     byte that reading names, as live text holds once `fa'o` reads.
 ##   Marks (#859): `readTextMarked` reads on past each error, so other program mends text by
 ##     its tree, whose words that read keep their trees; this parser decides no mend.
 ##     Words stage refuses stand as unit no terminal holds, with that stage, and grammar reads
@@ -47,6 +48,10 @@
 ##       refuses, as quotation erasure leaves in part, or `zei` joining nothing; and cmavo no
 ##       list gives selma'o, with words marking it. `lo'u` no `le'u` closes stands alone, and
 ##       words after it read on, as words after `zoi` with no delimiter do.
+##     Words no stage reads stand as unit too, so each byte of each word lies in one leaf: each
+##       run erasure erases, with `si` or `sa` erasing it, as unit of stage `Erasure`; `fa'o` that
+##       ends input as unit of stage `Faho`, and each written word after it as unit of stage
+##       `Stream`, refusal `Faho`, as written. Those stand last in root, past text.
 ##     Unit refused stands as leaf in lowest node holding both units read around it, between
 ##       them, or in root at end of text: no rule of 21.1 holds it, so its place is no claim of
 ##       rule it would take.
@@ -71,6 +76,8 @@ type
                ##   to act on (19.13, 4.6, 17.4).
     Grammar  ## Grammar of 21.1 refuses terminals; `rule` names rule stopping there.
     Su  ## No refusal: `su` ending text before it, which reading that marks each error keeps.
+    Erasure  ## No refusal: words erasure erases, and `si` or `sa` erasing them (19.13).
+    Faho  ## No refusal: `fa'o` ending input (19.15).
 
   Unit* = object
     ## Define words one terminal of grammar holds, one word or construct of 19.16; or words
@@ -82,8 +89,8 @@ type
     of false:
       refusal*: RefusalText
         ## Stage refusing words, which no terminal holds, and grammar reads around them
-        ##   (`readTextMarked`): stream, selma'o, quotation or construct; or `su`, which ends
-        ##   text before it.
+        ##   (`readTextMarked`): stream, selma'o, quotation or construct; or stage that leaves
+        ##   words out of every terminal: `su`, erasure, or `fa'o`.
 
   ReadingText* = object  ## Define outcome of reading prose.
     case is_read*: bool
@@ -123,6 +130,9 @@ type
     markers*: seq[Option[Terminal]]
       ## Marker of each `sa` before first `su` that finds none, in any pass of rules of 19.16,
       ##   so erases to start.
+    faho*: Option[int]
+      ## Unit of `fa'o` that ends input (19.15): it and each unit after it, of written word stream
+      ##   reads not, stand last in root, past text; none where none.
     quoted*: seq[int]
       ## Byte of each `su` that quotation holds in first pass of rules of 19.16, which erasure
       ##   left in part, so pass refused it: erasure after `su` that erases rest of it makes first
@@ -487,7 +497,10 @@ func readText*(text: string): ReadingText =
     terminals.add terminal.get
   let reading = terminals.readGrammar
   if not reading.is_read:
-    let start = (if reading.at < units.len: words[units[reading.at].words[0]].start else: text.len)
+    let start =
+      if reading.at < units.len: words[units[reading.at].words[0]].start
+      elif words.len < stream.occurrences.len: stream.occurrences[^1].start  # `fa'o` ends input
+      else: text.len
     return refuse(RefusalText.Grammar, start, reading.rule)
   ReadingText(is_read: true, occurrences: stream.occurrences, units: units, tree: reading.tree)
 
@@ -578,6 +591,18 @@ func placeRefused(tree: var Node, units: openArray[Unit], span: Slice[int]) =
     tree.insertAt(a.toOpenArray(0, depth - 1), a[depth] + 1, run.leaves)
 
 
+func occurrenceEnded*(text: string, first, last: int): Occurrence =
+  ## Give written word of bytes `first ..< last` of text, past `fa'o` that ends input, as
+  ##   occurrence stream reads not: bytes as written, and pause period writes before it (19.15).
+  var k = first
+  while k > 0 and text[k - 1] in MARKS_BOUNDARY: dec k
+  Occurrence(
+    start: first, finish: last, text: text[first ..< last],
+    pause: (if '.' in text[k ..< first]: Pause.Written else: Pause.Absent),
+    reading: Reading(is_word: false, refusal: Refusal.Faho),
+  )
+
+
 func readUnits(text: string, is_lohu = false): ReadingParts =
   ## Read text by stream and rules of 19.16 into units, in order of first word, reading on past
   ##   each error: words stage refuses stand as unit of their own (`readTextMarked`). Tree stays
@@ -659,7 +684,39 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
       if roles[alive[piece.head]] != Role.Plain: result.quoted.add words[alive[piece.head]].start
     elif terminal.isSome: units.add Unit(words: held, is_read: true, terminal: terminal.get)
     else: units.add Unit(words: held, is_read: false, refusal: RefusalText.Selmaho)
+
+  # Words no unit holds: each run erasure erases, with cmavo erasing it (19.13); then `fa'o` that
+  #   ends input, and each written word after it, which stream reads not (19.15).
+  var is_helds = newSeq[bool](occurrences.len)  # some unit holds word
+  for k in 0 ..< units.len:
+    for w in units[k].words: is_helds[w] = true
+  let ending = (if words.len < stream.occurrences.len: occurrences.high else: occurrences.len)
+  var w = 0
+  while w < ending:
+    if is_helds[w]:
+      inc w
+      continue
+    var run: seq[int]
+    while w < ending and not is_helds[w]:
+      run.add w
+      inc w
+    units.add Unit(words: run, is_read: false, refusal: RefusalText.Erasure)
+  if ending < occurrences.len:
+    units.add Unit(words: @[ending], is_read: false, refusal: RefusalText.Faho)
+    var at = occurrences[ending].finish
+    while at < text.len:
+      if text[at] in MARKS_BOUNDARY:
+        inc at
+        continue
+      let first = at
+      while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
+      units.add Unit(words: @[occurrences.len], is_read: false, refusal: RefusalText.Stream)
+      occurrences.add text.occurrenceEnded(first, at)
   units = units.sortedByIt(it.words[0])
+  if ending < occurrences.len:
+    var u = units.high
+    while units[u].words[0] != ending: dec u
+    result.faho = some(u)
 
   # `lo'u` waits where stream reads words it quotes to end of text, whatever unit holds it.
   let roles_stream = words.toRoles(is_lohu)  # part each word takes as stream reads it
@@ -690,12 +747,12 @@ func toTerminals(
       result.terminals.add units[k].terminal
 
 
-func readTree(reading: ReadingMarked, span: Slice[int]): Node =
+func readTree(reading: ReadingMarked, span: Slice[int], count: int): Node =
   ## Read units `span` of reading, one text that `su` parts, into tree that marks each error,
-  ##   with each unit refused in place: place where its grammar stops at its end is next unit.
+  ##   with each unit refused in place: place where its grammar stops at its end is unit `count`.
   let (read, terminals) = reading.units.toTerminals(span)
   result = terminals.readGrammarMarked
-  result.remap(read, span.b + 1)
+  result.remap(read, count)
   if read.len < span.len: result.placeRefused(reading.units, span)
 
 
@@ -711,14 +768,19 @@ func readTextMarked*(text: string): ReadingMarked =
   ##   `su` ends text before it, which reads alone, as text after it does: root of text after
   ##     last `su` holds tree of each text before it, each with leaf of `su` after it, before its
   ##     own nodes (ruling on #859). So tree `readText` gives is root past last `su`.
-  result = text.readUnits.reading
-  let texts = result.units.toTexts
+  ##   `fa'o` that ends input, and each written word after it, stand last in root, past text.
+  let parts = text.readUnits
+  result = parts.reading
+  let
+    ending = (if parts.faho.isSome: parts.faho.get else: result.units.len)
+    texts = result.units.toOpenArray(0, ending - 1).toTexts
   var before: seq[Node]  # tree of each text before last `su`, then leaf of `su` after it
   for k in 0 ..< texts.high:
-    before.add result.readTree(texts[k])
+    before.add result.readTree(texts[k], texts[k].b + 1)
     before.add Node(is_terminal: true, at: texts[k].b + 1)
-  result.tree = result.readTree(texts[^1])
+  result.tree = result.readTree(texts[^1], ending)
   result.tree.children.insert(before, 0)
+  for u in ending ..< result.units.len: result.tree.children.add Node(is_terminal: true, at: u)
 
 
 func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
@@ -734,15 +796,18 @@ func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
   template reading: untyped = result.reading
     ## Alias reading of parts.
   reading.tree = Node(is_terminal: false, rule: "text", number: 0)
-  let texts = reading.units.toTexts
+  let
+    ending = (if result.faho.isSome: result.faho.get else: reading.units.len)
+    texts = reading.units.toOpenArray(0, ending - 1).toTexts
   for k in 0 ..< texts.len:
     let
       is_last = k == texts.high
       (read, terminals) = reading.units.toTerminals(texts[k])
       (parts, open) = terminals.readGrammarParts(is_live and is_last)
     var tree = Node(is_terminal: false, rule: "text", number: 0, children: parts)
-    tree.remap(read, texts[k].b + 1)
+    tree.remap(read, if is_last: ending else: texts[k].b + 1)
     if read.len < texts[k].len: tree.placeRefused(reading.units, texts[k])
     for child in tree.children.mitems: reading.tree.children.add move(child)
     if is_last: result.open = open.mapIt(read[it])
     else: reading.tree.children.add Node(is_terminal: true, at: texts[k].b + 1)
+  for u in ending ..< reading.units.len: reading.tree.children.add Node(is_terminal: true, at: u)

@@ -1,7 +1,9 @@
 ## Hold reading that marks each error to its laws (#859): `readTextMarked` reads text as
 ##   `readText` does, and reads on past each error, marking it in tree and in NIF.
-##   Text `readText` reads gives same units, tree and NIF, over corpora, past last `su`: text before
-##     it stands first in root, each with leaf of `su` after it, which `readText` reads not (19.13).
+##   Text `readText` reads gives same units, tree and NIF, over corpora, past last `su`, and once
+##     each unit of words no stage reads is cut: text before `su` stands first in root, each with
+##     leaf of `su` after it; and words erasure erases, and `fa'o` with words after it, stand as
+##     units of their own, which `readText` reads not (19.13, 19.15).
 ##   Text it refuses still gives tree: each unit stands in it once as leaf, in order; refusal of
 ##     `readText` is mark of its stage there; and NIF reads back whole (`reader_nif.nim`). Laws
 ##     run over corpora, and over texts constructed for each stage, since corpora refuse at
@@ -22,7 +24,7 @@ when compileOption("profiler"):
 import std/[options, sequtils, unittest]
 
 import ../../src/lojban_parser/grammar {.all.}
-import ../../src/lojban_parser/[nif, prose, selmaho, stream]
+import ../../src/lojban_parser/[nif, prose, selmaho, stream, tanru]
 import ./[corpora, reader_nif]
 
 
@@ -63,9 +65,12 @@ const
   TEXTS_PARTED = [
     "mi klama su do", "mi su", "su do", "mi su su do", "ba'e su mi", "mi ui su ui do",
     "mi klama le su do", "lu mi su do", "lo'u mi su do le'u", "mi cusku zo su",
+    "mi klama si do", "do sa mi klama", "mi si su do si ko", "mi fa'o .i ko 1987",
+    "ba'e mi si do",  # erasure, and `fa'o` with words after it
   ]
-    ## Texts `readText` reads that `su` parts, with error before it, `su` quoted, or none;
-    ##   constructed, since corpora hold no `su` that parts text.
+    ## Texts `readText` reads that `su` parts, with error before it, `su` quoted, or none; then
+    ##   texts holding words no stage reads; constructed, since corpora hold no `su` that parts
+    ##   text.
   EXAMPLES_MARKED = [
     (
       text: "mi 1987 klama",
@@ -106,6 +111,12 @@ const
         "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71))) (unread Su 9 11 \"su\") " &
         "(sumti_6 2 97 (KOhA 12 14 \"do\")))",
     ),  # `su` ends text before it, which stays as it read, before text after it (ruling on #859)
+    (
+      text: "mi klama si do fa'o ko",
+      module: "(text 0 (terms 2 80 (sumti_6 81 97 (KOhA 0 2 \"mi\")) " &
+        "(unread Erasure 3 8 \"klama\" 9 11 \"si\") (sumti_6 81 97 (KOhA 12 14 \"do\"))) " &
+        "(unread Faho 15 19 \"faho\") (unread Stream Faho 20 22 \"ko\"))",
+    ),  # words `si` erases, with `si`; `fa'o` that ends input, and word after it, as written
   ]
     ## Texts constructed, and root node of module `nif.nim` writes for each, byte for byte.
 
@@ -117,6 +128,22 @@ func leaves(node: Node): seq[int] =
   ## List index of each leaf under node, in order of tree.
   if node.is_terminal: return @[node.at]
   for child in node.children: result.add child.leaves
+
+
+func isRead(marked: ReadingMarked, unit: Unit): bool =
+  ## Decide whether some stage reads unit, or refuses it: unit is no `su`, words erasure erases,
+  ##   `fa'o` that ends input, nor word after it.
+  if unit.is_read: return true
+  if unit.refusal in {RefusalText.Su, RefusalText.Erasure, RefusalText.Faho}: return false
+  unit.refusal != RefusalText.Stream or
+    marked.occurrences[unit.words[0]].reading.refusal != Refusal.Faho
+
+
+func dropUnread(node: var Node, marked: ReadingMarked) =
+  ## Cut each leaf of unit no stage reads from node, as `isRead` gives.
+  if node.is_terminal: return
+  node.children.keepItIf(not it.is_terminal or marked.isRead(marked.units[it.at]))
+  for child in node.children.mitems: child.dropUnread(marked)
 
 
 func isHolding(marked: ReadingMarked, unit: Unit, start: int): bool =
@@ -131,9 +158,9 @@ func isMarking(marked: ReadingMarked, strict: ReadingText): bool =
   ## Decide whether refusal of `readText` is mark of its stage in marked reading: unit of
   ##   written word stream refuses holding its byte; unit of rule of 19.16 refusing it, where
   ##   stream refuses none; unit of selma'o holding its byte, where only selma'o refuses; error
-  ##   node at root with its rule, stopping at its byte, where every unit reads. Unit of `su`
-  ##   is no refusal, so law reads it not.
-  let refused = marked.units.filterIt(not it.is_read and it.refusal != RefusalText.Su)
+  ##   node at root with its rule, stopping at its byte, where every unit reads. Unit no stage
+  ##   reads is no refusal, so law reads it not (`isRead`).
+  let refused = marked.units.filterIt(not it.is_read and marked.isRead(it))
   case strict.refusal
   of RefusalText.Stream:
     refused.anyIt(it.refusal == RefusalText.Stream and marked.isHolding(it, strict.start))
@@ -151,7 +178,8 @@ func isMarking(marked: ReadingMarked, strict: ReadingText): bool =
         else: marked.size
     refused.len == 0 and tree.stop.isSome and tree.rule & " " & $tree.number == strict.rule and
       start == strict.start
-  of RefusalText.Su: false  # `readText` refuses no text for `su`
+  of RefusalText.Su, RefusalText.Erasure, RefusalText.Faho: false
+    # `readText` refuses no text for stage that reads no words
 
 
 func terminalsRead(marked: ReadingMarked): seq[Terminal] =
@@ -208,7 +236,8 @@ func isReadPast(terminals: openArray[Terminal], at: int): bool =
 func isSame(marked: ReadingMarked, strict: ReadingText): bool =
   ## Decide whether reading marked holds each unit once, as leaf in order, and units, words and
   ##   NIF of reading that reads past last `su`: root holds tree of each text before it first,
-  ##   each with leaf of `su` after it, which law cuts.
+  ##   each with leaf of `su` after it, which law cuts; and law cuts each leaf of unit no stage
+  ##   reads, as words erasure erases, and `fa'o` with words after it.
   var
     first = 0  # first unit past last `su`
     cut = 0  # children of root up to leaf of last `su`
@@ -220,15 +249,18 @@ func isSame(marked: ReadingMarked, strict: ReadingText): bool =
     if first > 0 and child.is_terminal and child.at == first - 1: cut = k + 1
   var past = marked  # reading of text past last `su`
   past.tree.children = marked.tree.children[cut .. ^1]
-  marked.tree.leaves == toSeq(0 ..< marked.units.len) and
-    marked.units.len - first == strict.units.len and
+  past.tree.dropUnread(marked)
+  let
+    read = toSeq(first ..< marked.units.len).filterIt(marked.isRead(marked.units[it]))
+    words = marked.occurrences.filterIt(it.reading.is_word or it.reading.refusal != Refusal.Faho)
+  marked.tree.leaves == toSeq(0 ..< marked.units.len) and read.len == strict.units.len and
     toSeq(0 ..< strict.units.len).allIt(
-      marked.units[first + it].is_read and
-        marked.units[first + it].words == strict.units[it].words and
-        marked.units[first + it].terminal == strict.units[it].terminal
+      marked.units[read[it]].is_read and
+        marked.units[read[it]].words == strict.units[it].words and
+        marked.units[read[it]].terminal == strict.units[it].terminal
     ) and
-    marked.occurrences.mapIt((it.start, it.text)) ==
-      strict.occurrences.mapIt((it.start, it.text)) and
+    words.mapIt((it.start, it.finish, it.text)) ==
+      strict.occurrences.mapIt((it.start, it.finish, it.text)) and
     past.toNif == strict.toNif
 
 
