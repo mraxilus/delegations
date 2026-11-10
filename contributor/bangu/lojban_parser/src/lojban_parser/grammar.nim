@@ -985,8 +985,8 @@ func toNode(rule: (string, int), children: sink seq[Node]): Node =
 
 func readParts(terminals: openArray[Terminal], first, last: int, trees: var seq[Node]): bool =
   ## Read each part of text of terminals `first ..< last` alone, as passes cut it, into `trees`,
-  ##   then each part of text of `tu'e` left open; false where `lu` or `to` stays open, or where
-  ##   part refuses.
+  ##   then each part of text of `tu'e` left open; false where part refuses. Part holding `lu` or
+  ##   `to` left open runs to `last`, as `toParts` cuts it.
   let split = terminals.toParts(first, last)
   for part in split.parts:
     let tree = terminals.readPart(part)
@@ -1082,8 +1082,8 @@ func assemble(
 
 func buildText(terminals: openArray[Terminal], first, last: int): Option[Node] =
   ## Read text of terminals `first ..< last` part by part, and build tree one pass gives around
-  ##   their nodes (`assemble`); none where part refuses, where rule of passes breaks, or where
-  ##   `lu` or `to` stays open: one pass then reads whole text, and gives each refusal.
+  ##   their nodes (`assemble`); none where part refuses, or where rule of passes breaks: one
+  ##   pass then reads whole text, and gives each refusal.
   var
     trees: seq[Node]
     at = 0
@@ -1094,8 +1094,8 @@ func buildText(terminals: openArray[Terminal], first, last: int): Option[Node] =
 func assembleText*(terminals: openArray[Terminal], parts: openArray[Node]): Option[Node] =
   ## Build tree of text from tree of each of its parts, read alone, in order passes give them
   ##   (`readGrammarParts`); so parts lose nothing of tree `readGrammar` gives text they read.
-  ##   Text of one part, or where `lu` or `to` stays open, is that part; none where rule of
-  ##     passes breaks, and one pass alone reads text.
+  ##   Text of one part is that part; none where rule of passes breaks, and one pass alone reads
+  ##     text.
   let
     split = terminals.toParts(0, terminals.len)
     is_one = split.parts.len == 1 and split.inner == terminals.len
@@ -1203,8 +1203,8 @@ func markText(
 ): seq[Node] =
   ## Give pieces of text of terminals `first ..< last` as passes cut it (`toParts`): tree of
   ##   each part that reads alone, and error node of each that does not; then pieces of text of
-  ##   `tu'e` left open. Text where `lu` or `to` stays open is one part. Opener `ignored` holds
-  ##   reads as plain terminal.
+  ##   `tu'e` left open. Part holding `lu` or `to` left open runs to `last`. Opener `ignored`
+  ##   holds reads as plain terminal.
   let split = terminals.toParts(first, last, ignored)
   for part in split.parts: result.add terminals.markPart(part)
   if split.inner < last: result.add terminals.markText(split.inner, last, ignored)
