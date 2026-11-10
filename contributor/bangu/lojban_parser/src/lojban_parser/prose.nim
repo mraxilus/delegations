@@ -40,8 +40,9 @@
 ##     its tree, whose words that read keep their trees; this parser decides no mend.
 ##     Words stage refuses stand as unit no terminal holds, with that stage, and grammar reads
 ##       terminals around them: written word stream refuses, as written; words rule of 19.16
-##       refuses, as quotation left open, or `zei` joining nothing; and cmavo no list gives
-##       selma'o, with words marking it.
+##       refuses, as quotation erasure leaves in part, or `zei` joining nothing; and cmavo no
+##       list gives selma'o, with words marking it. `lo'u` no `le'u` closes stands alone, and
+##       words after it read on, as words after `zoi` with no delimiter do.
 ##     Unit refused stands as leaf in lowest node holding both units read around it, between
 ##       them, or in root at end of text: no rule of 21.1 holds it, so its place is no claim of
 ##       rule it would take.
@@ -213,7 +214,9 @@ func quotations(
 ): Option[seq[Piece]] =
   ## Group words kept into pieces: each quotation whole, as one terminal, and each other word
   ##   alone; none where erasure leaves part of quotation, or `lo'u` quotes no word (19.80).
-  ##   `offender` then names words of that quotation kept: erasure leaves its first words.
+  ##   `offender` then names words of that quotation kept: erasure leaves its first words. Of
+  ##     `lo'u` that no `le'u` closes, it names `lo'u` alone, so words after it read on, as words
+  ##     after `zoi` with no delimiter do: in live text, it holds no word of hours after it.
   var
     pieces: seq[Piece]
     p = 0
@@ -238,7 +241,7 @@ func quotations(
       while q < kept.len and roles[kept[q]] == Role.Inner and kept[q] == kept[q - 1] + 1: inc q
       let is_whole = q < kept.len and roles[kept[q]] == Role.Lehu and kept[q] == kept[q - 1] + 1
       if not is_whole or q == p + 1:
-        offender = kept[p ..< (if is_whole: q + 1 else: q)]
+        offender = (if is_whole: kept[p .. q] else: @[i])
         return none(seq[Piece])
       pieces.add Piece(words: kept[p .. q], head: i, terminal: some(Selmaho.Lohu.toTerminal))
       p = q + 1
