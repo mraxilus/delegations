@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 01a086eda78015fd |
+| Rules   | 00c5e626e221951e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1011,9 +1011,9 @@ that a contributor may write is a scope boundary the branch grammar cannot check
 
 **Data takes its form from who writes it and who reads it, as the Architect ruled on #755.**
 Data that a person writes is a typed Nim module. Data that one program writes and another reads
-is Protocol Buffers, as the Architect ruled on #761. Its committed schema carries the versions
-of the format. A record that the repository commits is in text format, and each build turns it
-into binary. `CONTRIBUTOR.md`, Data, states the rule.
+is Protocol Buffers, as the Architect ruled on #761, or NIF. A committed schema of Protocol
+Buffers carries the versions of its format. A record that the repository commits is in text
+format, and each build turns it into binary. `CONTRIBUTOR.md`, Data, states the rule.
 
 - Rejected: a Nim module that the writing program emits, for a committed record. The Architect
   ruled against it, because it leaves us to keep our own code for reading and for versions.
@@ -1111,6 +1111,22 @@ break it, and the port happens in that same pull request. A new format follows t
 - Cost: JSON stays in each format whose shape has not changed, with no check of versions. The
   scene file of pga_visualiser keeps its own form, with no length and no checksum, until then.
 - Cost: no check sees the shape of a JSON format, so review holds that a change of shape ports.
+
+**NIF is a second format between programs, as the Architect ruled on #852 and again on
+2026-11-10.** NIF is the native format of Nim 3, so data in it needs no exception to the rule.
+Its specification calls it a format for the communication of compilers and for data exchange
+between languages. The root glossary names it at commit `a31513c6` of `nifspec`, version 2027
+(#856). No schema reads NIF, so a law of the suite of each format holds its writer and its reader
+to each other. The writer of `lojban_parser` holds such a law over its corpora (#855).
+
+- Verified by reading `doc/nif-spec.md` of `nim-lang/nifspec` at `a31513c6` on 2026-11-10. Its
+  title names the format, and its section Version 2027 gives the directive `(.nif27)`, which
+  opens a file and names its format to a tool. Its licence is MIT.
+- Cost: `buf breaking` holds no version of a NIF format. So a change of its shape passes every
+  check but the law of its own suite.
+- Cost: `kinds.nim` registers no `.nif`, so no NIF file is committed until a curator registers
+  that kind. The kind needs a reader of the comments of NIF, `#…#` after an atom or a tag, for
+  the rule of articles (VI.5).
 
 **`check-schemas` holds each folder of changed schemas to the version that base shipped.** It
 runs `buf breaking` with category `WIRE_JSON`, which guards the bytes and the JSON text, and
@@ -1547,6 +1563,22 @@ image of the runner held both. A project that declares nothing installs nothing,
 - Unverified on the runner for `test` until a job of a project that declares packages runs it.
   The lines are the ones that `drive` runs.
 
+**The jobs `test` and `drive` run on `ubuntu-24.04`, the release that the machine baselines
+name.** They build and run the code of a project, so the toolchain of the image reaches what they
+measure. The machine baselines of pga_benchmark name gcc 13.3.0 and valgrind 3.22.0 of Ubuntu
+24.04, and the delegate containers run that release too. `ubuntu-latest` moved to Ubuntu 26.04,
+with gcc 15.2.0, between 2026-11-04 and 2026-11-09. On it, `koch drive` of pga_benchmark gave 8
+findings: `compiler_c` and `tracer` differ in each of four machine baselines (#848).
+
+- Verified from the logs of the runner. Image `ubuntu-24.04` 20261101.360.1 drove pga_benchmark
+  green on 2026-11-04, and image `ubuntu-26.04` 20261101.186.1 gave the 8 findings on
+  2026-11-09.
+- Rejected: new baselines taken on 26.04. A delegate container would then name another build
+  than the baselines, and its `koch check` would fail.
+- Cost: when GitHub retires the image of 24.04, the jobs, the containers and the baselines move
+  together, in one change.
+- Every other job runs koch alone, on its own pin, so it stays on `ubuntu-latest`.
+
 Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
 that a machine installs, and `compilers.nim` of knoller resolves each pin itself. npm is absent
 because it belongs to the project that carries a node manifest, and `restoreNode` reports its
@@ -1675,7 +1707,7 @@ the runner the fetch is 6.6 s cold, and the copy into `build/fonts` is milliseco
   nothing.
 
 **The browser that a declaration names is the browser that runs, and the snap serves.**
-`apt-get install chromium` on `ubuntu-latest` gives `/snap/bin/chromium`, a wrapper rather than
+`apt-get install chromium` on `ubuntu-24.04` gives `/snap/bin/chromium`, a wrapper rather than
 a plain binary, and Playwright launches it. Where a package does not serve the runner, the
 declaration of the project changes. A name is never substituted here in silence.
 
@@ -2961,3 +2993,6 @@ pull requests sat on both sides, so the subject of a call does not say which met
   command for each rename.
 - Whether the `test` job of `curator/audit` should restore the store, as the `drive` job does.
   Without it, each run fetches 5.7 MB of font faces before the suite holds the rows to their bytes.
+- Whether NIF replaces Protocol Buffers once every project moves to Nim 3, as the Architect
+  wondered on 2026-11-10. A law of each suite would then hold the versions of each format, where
+  `buf breaking` holds them now.

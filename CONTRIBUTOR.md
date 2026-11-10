@@ -326,19 +326,19 @@ API of a test driver.
 
 ## Data
 
-Data takes its form from who writes it and who reads it. The compiler, or the schema, then
-checks each field. The cost is a schema beside each format between programs, and `protoc` in
-each build that turns a record into binary.
+Data takes its form from who writes it and who reads it. The compiler, the schema, or a law of
+the suite then checks each field. The cost is a schema or a law beside each format between
+programs, and `protoc` in each build that turns a record into binary.
 
 - **Data that a person writes, or a fixed list that code reads, is a Nim module of typed
   constants.** A field whose absence is a mistake takes `{.requiresInit.}`. A verb renders a
   list that comes from outside, and the header of the module names that verb. `STYLE.md` §4
   gives the idiom.
-- **Data that one program writes and another reads is Protocol Buffers.** Its schema is a
-  committed `.proto` file, in the folder of the code that owns the format. Nim reads and writes
-  it through `import_proto3` of `protobuf_serialization`, which Atlas pins. A page reads it
-  through `protobufjs`, which loads the same schema. Both read one schema, so the writer and the
-  reader never disagree.
+- **Data that one program writes and another reads is Protocol Buffers, or the NIF data
+  format.** A schema of Protocol Buffers is a committed `.proto` file, in the folder of the code
+  that owns the format. Nim reads and writes it through `import_proto3` of
+  `protobuf_serialization`, which Atlas pins. A page reads it through `protobufjs`, which loads
+  the same schema. Both read one schema, so the writer and the reader never disagree.
 - **Keep the schemas of one format in one folder, and import them by file name.** Each reader
   finds an import in the folder of the schema that imports it. `koch check-schemas` reads each
   folder as one unit.
@@ -363,10 +363,17 @@ each build that turns a record into binary.
 - **The readers check no length and no checksum.** A file cut between two fields still reads,
   as fewer objects. So a file that a person keeps starts with a fixed tag that names its format,
   then the length and a checksum of its message. The reader checks all three before it decodes.
+- **A format in NIF holds its shape by a law of its suite, since no schema reads it.** NIF is
+  the native format of Nim 3, and the root glossary names its specification. A file opens with
+  the version directive, `(.nif27)`, which also names the format to a tool. A suite writes each
+  value of the format and reads it back whole, so the writer and the reader agree.
+  `koch check-schemas` reads no NIF. `kinds.nim` registers no `.nif` yet, so a project asks a
+  curator for that kind before it commits a NIF file.
 - **A format moves to this rule when its shape next changes.** A new format follows the rule
   at once. An existing format in JSON, or in a form of its own, moves in the pull request that
-  next changes its shape. From then on, `koch check-schemas` holds each change of it. A port with
-  no change of shape buys no check of versions, so nothing moves before then.
+  next changes its shape. From then on, `koch check-schemas` or the law of its suite holds each
+  change of it. A port with no change of shape buys no check of versions, so nothing moves
+  before then.
 - **JSON stays only where a tool or an outside service forces it**: npm, `tsc`, Atlas, Claude
   Code hooks, GitHub Actions and `gh`. It also stays in a format whose shape has not changed
   since this rule. A service forces it where its API speaks JSON alone, and data on its wire

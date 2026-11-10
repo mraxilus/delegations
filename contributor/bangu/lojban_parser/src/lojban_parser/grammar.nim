@@ -1,14 +1,15 @@
 ## Read terminals of lojban text by formal grammar of CLL 21.1, into tree of its named rules.
 ##
-##   |----------------|------------------------------------------------------------|
-##   | Code           | Meaning                                                    |
-##   |----------------|------------------------------------------------------------|
-##   | EBNF           | 88 formal rules of 21.1, as book writes them               |
-##   | Terminal       | class of word grammar reads: selma'o, `BRIVLA` or `CMENE`  |
-##   | Node           | named rule with what it holds, or one terminal             |
-##   | ReadingGrammar | tree of text, or place and rule where grammar stops        |
-##   | readGrammar    | read terminals by grammar of 21.1                          |
-##   |----------------|------------------------------------------------------------|
+##   |-------------------|------------------------------------------------------------|
+##   | Code              | Meaning                                                    |
+##   |-------------------|------------------------------------------------------------|
+##   | EBNF              | 88 formal rules of 21.1, as book writes them               |
+##   | Terminal          | class of word grammar reads: selma'o, `BRIVLA` or `CMENE`  |
+##   | Node              | named rule with what it holds, or one terminal             |
+##   | ReadingGrammar    | tree of text, or place and rule where grammar stops        |
+##   | readGrammar       | read terminals by grammar of 21.1                          |
+##   | LUT_CHAIN_BY_ENDS | rules between two rules, each node holding next alone      |
+##   |-------------------|------------------------------------------------------------|
 ##
 ##   Grammar is data: `EBNF` holds formal rules of 21.1 as book writes them, which Logical
 ##     Language Group dedicates to public domain; line opening with space goes on with rule
@@ -40,6 +41,10 @@
 ##       closures over each span it holds; sentences are short. Text has no bound on its length,
 ##       so parser holds `seq` and `Table` at runtime, as `stream` does (STYLE.md §4).
 ##   Refusal names place where every derivation stops, and named rule that stops innermost there.
+##   Chain is run of named rules in tree, each holding next rule alone, as `sumti` holds `sumti-1`
+##     where text gives no relative clause; layers of 21.1 make most of each tree such runs.
+##     Compile time finds each chain 21.1 allows, and holds that two ends give one chain, so tree
+##     writes chain by its ends alone and reads back whole (`nif.nim`).
 
 {.experimental: "strictFuncs".}
 
@@ -466,6 +471,65 @@ func constructGrammar(text: string): Grammar {.compileTime.} =
 
 
 const GRAMMAR_EBNF = constructGrammar(EBNF)  ## Grammar of 21.1, compiled once.
+
+
+func constructChains(grammar: Grammar): Table[(int, int), seq[tuple[rule: string, number: int]]]
+    {.compileTime.} =
+  ## Construct each chain of named rules, each node holding next alone, keyed by numbers of rule
+  ##   opening it and rule closing it; assert each pair of ends gives one chain, holding no cycle.
+  ##   Named rule holds rule alone where its production derives that rule and nothing else: each
+  ##     other symbol is helper deriving no node, since named rule is node even where empty.
+  let count = grammar.names.len
+  func isHelper(grammar: Grammar, code: int): bool = grammar.numbers[code].isNone
+
+  # Mark helpers deriving no node: nothing, through helpers alone.
+  var nodeless = newSeq[bool](count)
+  template isNodeless(symbol: Symbol): bool =
+    ## Decide whether symbol derives no node: helper marked so far.
+    not symbol.is_terminal and grammar.isHelper(symbol.code) and nodeless[symbol.code]
+  var is_changed = true
+  while is_changed:
+    is_changed = false
+    for production in grammar.productions:
+      if not grammar.isHelper(production.head) or nodeless[production.head]: continue
+      if production.body.allIt(it.isNodeless):
+        nodeless[production.head] = true
+        is_changed = true
+
+  # Find named rules each nonterminal derives alone, until none more is found.
+  var alone = newSeq[HashSet[int]](count)
+  is_changed = true
+  while is_changed:
+    is_changed = false
+    for production in grammar.productions:
+      for i, symbol in production.body:
+        if symbol.is_terminal: continue
+        let others = production.body[0 ..< i] & production.body[i + 1 .. ^1]
+        if not others.allIt(it.isNodeless): continue
+        let found =
+          if grammar.isHelper(symbol.code): alone[symbol.code] else: [symbol.code].toHashSet
+        for code in found:
+          if not alone[production.head].containsOrIncl(code): is_changed = true
+
+  # Walk each chain from each named rule, keyed by its two ends.
+  for top in 0 ..< count:
+    if grammar.isHelper(top): continue
+    var stack = @[@[top]]
+    while stack.len > 0:
+      let path = stack.pop
+      for next in alone[path[^1]].toSeq.sorted:
+        doAssert next notin path, "Chain should hold no cycle; got `" & grammar.names[next] & "`."
+        let key = (grammar.numbers[top].get, grammar.numbers[next].get)
+        doAssert key notin result, "Two ends should give one chain; got `" & grammar.names[top] &
+          "` to `" & grammar.names[next] & "`."
+        let chain = path & next
+        result[key] = chain.mapIt((rule: grammar.names[it], number: grammar.numbers[it].get))
+        stack.add chain
+
+
+const LUT_CHAIN_BY_ENDS* = GRAMMAR_EBNF.constructChains
+  ## Rules of each chain, each node holding next alone, by numbers of rule opening it and rule
+  ##   closing it: from `terms` 80 to `sumti-6` 97, each rule of 21.1 between them, in order.
 
 
 
