@@ -60,6 +60,14 @@ const
   ]
     ## Words texts built hold: words that reach back, open or close quotation or text inside
     ##   text, end input, or start with words that do; and plain words around them.
+  TEXTS_LOHU_ERASED = [
+    "lo'u cu le'u si mi .i fa'o zarci",  # fuzz of live law found it: `fa'o` read as word
+    "lo'u le'u si mi .i zoi gy. ko .gy.",  # `zoi` read as word, as inside quotation
+    "lo'u mi le'u sa le'u do .i fa'o ko",  # `sa` erases `le'u`
+    "lo'u zo le'u le'u si mi .i fa'o ko",  # `zo` quotes first `le'u`, and second closes
+  ]
+    ## Texts holding `lo'u` whose `le'u` erasure erases, then word stream reads otherwise inside
+    ##   words `lo'u` quotes: `fa'o`, which ends input, or `zoi`, which quotes text; constructed.
   LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
     "(tanru_unit_2 130 152 (BRIVLA 3 \"klama\")) (tail_terms 71)))\n"
     ## Line of node of `mi klama`, which examples open with.
@@ -246,6 +254,14 @@ suite "Internal: Live text":
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_held  # header of `live.nim`, cursor cuts back within NIF held
       check live.is_grown  # header of `live.nim`, tail grows as text so far gives it
+
+
+  test "Lo'u whose le'u erasure erases waits for none, so text after it reads as stream reads it":
+    for text in TEXTS_LOHU_ERASED:
+      checkpoint text
+      let live = text.readLive(text.cutsWords, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `prose.nim`, stream reads `le'u` erasure erases (19.9)
 
 
   test "Parts lose nothing of tree: assembleText builds tree grammar gives, over corpora":
