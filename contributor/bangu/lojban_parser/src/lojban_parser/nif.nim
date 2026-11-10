@@ -9,22 +9,29 @@
 ##
 ##   Module opens with directive `(.nif27)`, with no byte before it, then `(.lang "cll-21.1")`:
 ##     tags are names of rules of 21.1 and classes of terminals, as grammar spells them.
-##   Named rule is compound node: tag is its name, each byte identifier holds not written `\xx`,
-##     as `sumti\2D6`; first child is its number in 21.1, then nodes it holds, in order.
-##   Terminal is compound node: tag is its class, as `KOhA` or `BRIVLA`; then byte where its
-##     first word opens, then letters of each word as string literal. Order of terminals in tree
-##     gives index of each unit, so node holds none.
-##   Literal writes each control byte of NIF as `\xx`, `'` of lojban among them, and each byte
-##     below space; `#`, `:` and space stay, as spec lets string hold them. Byte from 128 stays.
-##   Tag keeps escape spec asks of identifier. Reader of nimony at `2c5b3dca` takes tag as its
-##     bytes, since its branch of `(` marks no escape (`nifreader.nim`), so caller reading with
-##     it gets `sumti\2D6` and decodes it.
+##   Named rule is compound node: tag is its name, then its number in 21.1, then nodes it holds.
+##   Chain of rules, each holding next alone, is one node: number of rule opening it, then tag and
+##     number of rule closing it, as `(sumti_6 80 97 ...)` from `terms` 80 down to `sumti-6` 97.
+##     Two ends give one chain in 21.1 (`LUT_CHAIN_BY_ENDS`), so reader rebuilds each rule between
+##     them, and tree reads back whole.
+##   Terminal is compound node: tag is its class, as `KOhA` or `BRIVLA`; then byte where its first
+##     word opens, then letters of each word as string literal. Order of terminals in tree gives
+##     index of each unit, so node holds none.
+##   Tag writes `_` for each `-`, and no name of 21.1 holds `_`. Word writes `h` for each `'`, as
+##     chapter 20 writes capital of `'` in names of selma'o; lojban writes no `h` (3.3), and stream
+##     refuses it outside quotation. So reader reads `_` as `-` and `h` as `'`, and neither tag nor
+##     word needs escape of NIF.
+##   Text that `zoi` or `la'o` quotes, third string of `ZOI` terminal, stays as it is: control
+##     byte of NIF and byte below space as `\xx`; `#`, `:`, space and byte from 128 as they are.
+##   Rejected: escape `\2D` of tag and `\27` of word, which spec gives, and Architect declined
+##     (#855). Reader of nimony at `2c5b3dca` takes tag as its bytes, so it leaves `\2D` undecoded.
 ##   NIF needs no exception to rule on data between programs, as native format of Nim 3
 ##     (CONTRIBUTOR.md, Data; #852).
 ##   Rejected: line information for byte of word, since NIF writes it as difference from parent,
 ##     and reader of nimony keeps 10 bits of column, so byte past 1,023 is cut (#852).
 ##   Rejected: library of nimony, which compiles not for JavaScript (#852).
-##   Writer loops by index, since `items` copies each node on JavaScript backend.
+##   Writer loops by index, and recurses down chain, since `items` and binding of node copy it on
+##     JavaScript backend.
 
 {.experimental: "strictFuncs".}
 
@@ -59,29 +66,58 @@ func escaped(text: string, is_identifier: bool): string =
       result.add toHex(ord(c), 2)
 
 
-func addNode(text: var string, node: Node, reading: ReadingText) =
-  ## Add node of tree to text: named rule with its number and nodes, or terminal with its class,
-  ##   byte where it opens, and letters of each word.
-  if node.is_terminal:
-    template unit: untyped = reading.units[node.at]
-      ## Alias unit of terminal, which `let` would copy on JavaScript backend.
-    text.add '('
-    text.add escaped($unit.terminal, is_identifier = true)
-    text.add ' '
-    text.add $reading.occurrences[unit.words[0]].start
-    for k in 0 ..< unit.words.len:
-      text.add " \""
-      text.add escaped(reading.occurrences[unit.words[k]].text, is_identifier = false)
-      text.add '"'
-    text.add ')'
+func tag(name: string): string =
+  ## Spell name of rule or class of terminal as tag: `_` for each `-`, and each other byte
+  ##   identifier holds not as it is escaped, which no name of grammar needs.
+  escaped(name.replace('-', '_'), is_identifier = true)
+
+
+func letters(occurrence: Occurrence): string =
+  ## Spell occurrence as string literal: word with `h` for each `'`, or text quotation holds as it
+  ##   is, each byte string literal holds not as it is escaped.
+  let text =
+    if occurrence.reading.is_word: occurrence.text.replace('\'', 'h') else: occurrence.text
+  escaped(text, is_identifier = false)
+
+
+func addNode(text: var string, node: Node, reading: ReadingText)
+
+
+func addRule(text: var string, node: Node, top: int, reading: ReadingText) =
+  ## Add named rule to text: rule holding rule alone passes on to it, as chain opening at `top`;
+  ##   rule closing chain writes its tag, `top` where chain stands, its number, then its nodes.
+  if node.children.len == 1 and not node.children[0].is_terminal:
+    text.addRule(node.children[0], top, reading)
     return
   text.add '('
-  text.add escaped(node.rule, is_identifier = true)
+  text.add node.rule.tag
+  if top != node.number:
+    text.add ' '
+    text.add $top
   text.add ' '
   text.add $node.number
   for k in 0 ..< node.children.len:
     text.add ' '
     text.addNode(node.children[k], reading)
+  text.add ')'
+
+
+func addNode(text: var string, node: Node, reading: ReadingText) =
+  ## Add node of tree to text: chain of named rules opening at it, or terminal with its class,
+  ##   byte where it opens, and letters of each word.
+  if not node.is_terminal:
+    text.addRule(node, node.number, reading)
+    return
+  template unit: untyped = reading.units[node.at]
+    ## Alias unit of terminal, which `let` would copy on JavaScript backend.
+  text.add '('
+  text.add ($unit.terminal).tag
+  text.add ' '
+  text.add $reading.occurrences[unit.words[0]].start
+  for k in 0 ..< unit.words.len:
+    text.add " \""
+    text.add reading.occurrences[unit.words[k]].letters
+    text.add '"'
   text.add ')'
 
 
