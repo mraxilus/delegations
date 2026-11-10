@@ -302,7 +302,8 @@ func readText*(text: string): ReadingText =
   let stream = text.readStream
   if not stream.is_read: return refuse(RefusalText.Stream, stream.start, $stream.refusal)
   var words = stream.occurrences
-  if words.len > 0 and words[^1].isSelmaho({Selmaho.Faho}): words.setLen(words.len - 1)  # 19.15
+  if words.len > 0 and words[^1].isSelmaho({Selmaho.Faho}) and words.toRoles[^1] == Role.Plain:
+    words.setLen(words.len - 1)  # 19.15, `fa'o` no quotation holds ends input
 
   # Read quotation, then erasure, then words it leaves.
   let
