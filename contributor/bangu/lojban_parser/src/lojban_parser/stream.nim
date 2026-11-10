@@ -399,15 +399,17 @@ func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
   none(Slice[int])
 
 
-func readStream*(text: string): ReadingStream =
+func readStream*(text: string, is_lohu = false): ReadingStream =
   ## Read text as its words by rules of CLL alone, each with pause before it and stress it
-  ##   marks; refuse at first word or mark that no rule admits, naming its byte.
+  ##   marks; refuse at first word or mark that no rule admits, naming its byte. With `is_lohu`,
+  ##   text opens inside words `lo'u` quotes, as live text reads it after `lo'u` that waits.
   ##   Text `zoi` or `la'o` quotes stands as one occurrence, whole and as written; quotation
   ##     `zo` makes, or `lo'u` up to `le'u`, quotes words, so their cmavo act on none (19.9).
   ##   Stream stops after `fa'o` that no quotation holds, which ends parsable input (21.1).
   var
     occurrences: seq[Occurrence]
-    is_period, is_quoting, is_lohu = false
+    is_period, is_quoting = false
+    is_lohu = is_lohu  # words `lo'u` quotes, up to `le'u`
     zoi, closing = none(int)  # quotation whose delimiter comes next; delimiter closing text
     at = 0
   while at < text.len:
