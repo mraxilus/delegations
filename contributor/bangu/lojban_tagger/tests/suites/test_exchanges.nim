@@ -548,7 +548,7 @@ func problemLineFormat(bytes: string): string =
 
 func problemFrame(count: int): string =
   ## Build problem reader gives for file holding `count` bytes after format line, fewer than frame.
-  "Exchange should hold 8 bytes of length and checksum after opening; got `" & $count & "`."
+  "Exchange should hold 8 bytes of length and checksum after format line; got `" & $count & "`."
 
 
 func problemLength(named: uint32, held: int): string =
