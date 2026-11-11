@@ -44,7 +44,7 @@ Two reads before any other work, one list to carry, and work to hand off.
 - **Answered issues still open.** Where the pull request that answers one has merged, **close
   the issue by hand**. Add a comment that names that pull request and what shipped. Do not
   rely on `Closes #N`, which fires only for a merge into the default branch. Where a ruling
-  in a comment answered the issue, close it by hand as well.
+  in a comment answered the issue, close it by hand as well. The skill `merged` points here.
 
 `GUIDE.md` holds the rest, under "The queue and the shared allowance".
 
@@ -498,7 +498,7 @@ follows the cascade of each element, so `drive` holds what the audit cannot.
   Your stamp then claims a charter that no longer exists, and a merge would redden `main`.
   Merge `origin/main`, read the diff of the charter, re-audit your project against each change,
   re-stamp, and push. Only the charter and the checker count, so another project's code that
-  moves underneath you will not stop you.
+  moves underneath you will not stop you. The skill `sync` points here.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed, and each figure carrying its pair. Nothing narrates. `GLOSSARY.md` holds every
   term that resolved.
