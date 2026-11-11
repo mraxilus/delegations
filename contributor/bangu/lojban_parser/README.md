@@ -207,38 +207,51 @@ the tail as one unit. `su` ends that text, so its nodes go out with `su`, and `k
 its own. At the end, a text read piece by piece gives the NIF of its parts read whole, byte for byte
 (`suites/test_live.nim`).
 
-The verb `javascript` compiles the reader of prose, with the whole parser, into one script of
-JavaScript. The script gives the function `parseLojban`, which returns what `readText` gives as a
-plain object. After `nim r tools/build.nim javascript`, node reads the script:
+The verb `javascript` compiles the parser into one script of JavaScript, `build/lojban_parser.js`.
+A page loads it with a `script` element, and calls three functions as globals:
+
+- `parseLojban(text)` returns what `readText` gives, as a plain object. A refused text also
+  carries `stream`, which `readStream` gives, so the caller sees the words before the refusal.
+- `parseLojbanToNif(text)` returns the module that `toNif` writes, as a string, or null where the
+  text is refused.
+- `parseLojbanLive()` returns a reader of live text. Its `push(piece)` and `finish()` each give a
+  promise of the change, `{at, start, text, tail}`, as `push` gives it in Nim. Its `nif()` gives a
+  promise of the NIF so far.
+
+The reader of live text reads in a worker where the page gives one, so the page never waits.
+Elsewhere it reads one sentence at each turn of the event loop. A page cuts the NIF it holds back
+to `at`, and adds `text`. `at` counts units of UTF-16, as a string of JavaScript indexes it.
+`start` counts bytes of the text, as each word of the NIF does.
+
+The verb `drive` holds the script to the native build in headless Chromium, which a backend of Nim
+serves, with no node. `LOJBAN_CHROMIUM` names the Chromium to drive. `koch drive` runs the verb,
+then judges the font faces of the control page, here with the warnings of the compiler left out:
 
 ```text
-$ node -e 'const { parseLojban } = require("./build/lojban_parser.js")
-for (const text of ["mi klama le zarci", "mi klama le zarc"]) {
-  const r = parseLojban(text)
-  if (r.is_read) console.log(text + ":", r.occurrences.map((o) => o.text + " " +
-    (o.reading.selmaho ?? o.reading.kind)).join(", "), "| tree", r.tree.rule)
-  else console.log(text + ":", r.refusal, "at byte", r.start + ", in", r.rule + ", after",
-    r.stream.occurrences.map((o) => o.text).join(" "))
-}'
-mi klama le zarci: mi KOhA, klama Gismu, le LE, zarci Gismu | tree text
-mi klama le zarc: Grammar at byte 12, in sumti-6 97, after mi klama le zarc
+$ nim r --hints:off koch drive contributor/bangu/lojban_parser
+== contributor/bangu/lojban_parser
+[Suite] Internal: JavaScript build
+  [OK] Each sentence of Tatoeba sample takes verdict native build gave it
+  [OK] Object of text that reads holds occurrences, units and tree
+  [OK] Object of text refused holds refusal, its byte and rule, and stream before it
+  [OK] Byte of refusal counts text in UTF-8, apart from index of JavaScript string
+  [OK] NIF of every fourth sentence of sample that reads reads back, and rebuilds tree whole
+  [OK] parseLojbanToNif gives module native build writes, and null where text is refused
+[Suite] Internal: Live text of script
+  [OK] Script defines its three functions as globals of page that loads it
+  [OK] Worker reads each text to NIF native build gives, and thread of page reads none
+  [OK] Thread of page reads each text, one sentence at each turn, to NIF native build gives
+  [OK] Page runs task of its own between two sentences that thread of page reads
+  [OK] Offset of change counts units of UTF-16, so slice cuts NIF where change opens
+[Suite] Internal: Live text of script, worker refused
+  [OK] Worker page refuses gives way to thread of page, which reads each text to native NIF
+build/font-faces/written.json
+0 finding(s).
 ```
 
-A refused text also carries `stream`, which `readStream` gives, so the caller sees the words before
-the refusal. The script also gives `parseLojbanToNif`, which returns the module that `toNif`
-writes, as a string, or null where the text is refused:
-
-```text
-$ node -e 'const { parseLojbanToNif } = require("./build/lojban_parser.js")
-process.stdout.write(parseLojbanToNif("me\x27o vo"))
-console.log(parseLojbanToNif("mi klama le zarc"))'
-(.nif27)
-(.lang "cll-21.1")
-(sumti_6 0 97 (LI 0 4 "meho") (number 310 812 (PA 5 7 "vo")))
-null
-```
-
-A page loads the same file with a `script` element, and calls both functions as globals.
+The suite of the script holds each verdict of the sample of Tatoeba. The suite of live text reads
+texts with words that reach back. Each text reads to the NIF that the native build gives, in the
+worker and on the thread of the page. The suite runs once more on a page that refuses each worker.
 
 ## Authority
 
@@ -287,6 +300,7 @@ nim r tools/build.nim tatoeba <export>            # write sample of Tatoeba agai
 nim r tools/build.nim wikipedia <directory>       # write articles of Wikipedia again from answers
 nim r tools/build.nim translations                # fetch Alice and Oz, which suites then read
 nim r tools/build.nim javascript                  # compile parser to build/lojban_parser.js
+nim r tools/build.nim drive                       # run suites of script in headless Chromium
 nim r tools/build.nim system                      # print packages verbs and suites need
 ```
 
@@ -299,9 +313,10 @@ own name. The verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decomp
 `wikipedia` needs `sha256sum` and the saved answers of the API of the Wikipedia. The verb
 `translations` needs `curl` and `sha256sum`, and the verb `system` declares both.
 
-The suite `tests/test_javascript.nim` runs on the JavaScript target of the compiler, and needs
-node to run. The verb `system` declares node as the package `nodejs`. The verb `javascript` needs
-the compiler alone.
+The verb `javascript` needs the compiler alone. The verb `drive` needs Chromium, the one that
+`LOJBAN_CHROMIUM` names. Else it takes the headless shell of Chrome for Testing that
+`koch fetch-assets` serves from the store of the repository. It unpacks that shell with `unzip`,
+which the verb `system` declares. No check needs node.
 
 ## Pages
 
@@ -321,8 +336,9 @@ erasure, `zei`, BAhE, `bu` and indicators act on the words.
 It reads on past each error, and it reads live text piece by piece, as the text arrives. Its NIF
 ties each word to the bytes it reads from, and each byte of each word lies in one leaf.
 
-The verb `javascript` builds the reader of prose for a page or for node. A suite holds that build
-to the verdicts that the native build gives the sample of Tatoeba.
+The verb `javascript` builds the reader of prose and the reader of live text for a page. The verb
+`drive` holds that build in headless Chromium to the native build. It holds the verdicts of the
+sample of Tatoeba, and the NIF of live text, in a worker and on the thread of the page.
 
 The suites hold each part to CLL. The parser reads each numbered example of CLL 1.1 that the
 book calls grammatical, with the lines that hold notation left out. The book shows ten examples in
