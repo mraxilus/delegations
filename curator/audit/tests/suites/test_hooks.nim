@@ -803,3 +803,14 @@ suite "Hooks":
     check "/merged" in both and "/triage" in both
     for plain in ["why is capnproto excluded?", "Is decide already a skill", "yes, build it"]:
       check contextPrompt(plain).len == 0
+
+
+  test "prompt reads no notice of harness, which opens with tag, as message of Architect":
+    # End of background task arrives as prompt that holds `<status>completed</status>`, whose
+    #   word `status` would name `/triage` on each such notice.
+    const notice = "<task-notification>\n<task-id>b1</task-id>\n<status>completed</status>\n" &
+      "<summary>Background command \"Wait for the run\" completed</summary>\n</task-notification>"
+    check contextPrompt(notice).len == 0
+    check contextPrompt("  \n<system-reminder>\nPR merged; update the list\n</system-reminder>")
+      .len == 0
+    check "/triage" in contextPrompt("status <- this one")  # message that opens with words
