@@ -54,8 +54,12 @@ const
     ## Text printed on usage error.
   SYSTEM = [
     ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
-    ("coreutils", "`sha256sum`, which `lists`, `head` and four verbs of texts check digest with"),
-    ("curl", "fetcher of pages, which verb `translations` fetches Alice and Oz with"),
+    ("coreutils",
+      "`sha256sum`, which `lists`, `head` and four verbs of texts check digest with, and " &
+      "`sleep`, which fake of Chromium of `test_drive.nim` blocks in"),
+    ("curl",
+      "fetcher of pages, which verb `translations` fetches Alice and Oz with, and fake of " &
+      "Chromium of `test_drive.nim` reports end of run with"),
     ("unzip", "unpacker of archive of Chromium, which store serves and verb `drive` drives"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
