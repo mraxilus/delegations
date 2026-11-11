@@ -129,10 +129,10 @@
 ##     declares; `protobuf_serialization` writes and reads message, since data one program writes
 ##     and another reads is Protocol Buffers (CONTRIBUTOR.md, Data). Decoder reads message cut
 ##     between two fields as fewer fields, so frame opens file, and reader checks it whole before
-##     any byte decodes: `OPENING_EXCHANGE`, then length and checksum of message, four bytes
+##     any byte decodes: `LINE_FORMAT_EXCHANGE`, then length and checksum of message, four bytes
 ##     each, least significant first, as protobuf lays out `fixed32`.
-##     Opening names format and version, and closes with line break: `head -n 1` prints it, and
-##       transfer rewriting line ends is refused there, naming carriage return.
+##     Format line names format and version, and closes with line break: `head -n 1` prints it,
+##       and transfer rewriting line ends is refused there, naming carriage return.
 ##     Length takes four bytes, as protobuf caps message at 2 GiB.
 ##     Checksum is CRC-32C, Castagnoli polynomial of RFC 3720 section 12.1: it detects every run
 ##       of up to 32 bits changed within message, and every odd count of bits, since `x + 1`
@@ -160,7 +160,7 @@
 ##     Cost: each exchange file of service holds whole request body, its system text and word list
 ##       included, beside reply, where stamp alone would name it.
 ##   Refusal of exchange file names part that fails, ending in value refused: first line of file
-##     at opening, count of bytes, checksum, error of decoder, label or status, never bytes of
+##     at format line, count of bytes, checksum, error of decoder, label or status, never bytes of
 ##     request or body. First line and label show each URL they name by scheme, host, port and
 ##     path alone, wherever it stands (`dropSecretsText`): token in user part, query or fragment
 ##     never reaches report, as test "refusal of malformed page exchange shows no user part, query
@@ -227,10 +227,10 @@ type
 
 
 const
-  OPENING_EXCHANGE = "lojban_tagger exchange 2\n"
-    ## Opening of exchange file: format and version, then line break; version 1, text in format
-    ##   of its own, is refused here.
-  AT_LENGTH = OPENING_EXCHANGE.len  ## Byte length of message opens at, past opening.
+  LINE_FORMAT_EXCHANGE = "lojban_tagger exchange 2\n"
+    ## Format line of exchange file: format and version, then line break; version 1, text in
+    ##   format of its own, is refused here.
+  AT_LENGTH = LINE_FORMAT_EXCHANGE.len  ## Byte length of message opens at, past format line.
   AT_CHECKSUM = AT_LENGTH + 4  ## Byte checksum of message opens at, past length.
   AT_MESSAGE = AT_CHECKSUM + 4  ## Byte message opens at, past checksum, i.e. bytes of frame.
   POLYNOMIAL_CHECKSUM = 0x82F6_3B78'u32
@@ -589,10 +589,11 @@ func toExchange(message: exchanges_schema.Exchange): Exchange =
 
 
 func toBytes*(exchange: Exchange): string =
-  ## Render exchange as bytes of its file: opening, length and checksum of message, then message
-  ##   of `exchanges.proto`; label repaired to well-formed UTF-8, every other field byte for byte.
+  ## Render exchange as bytes of its file: format line, length and checksum of message, then
+  ##   message of `exchanges.proto`; label repaired to well-formed UTF-8, every other field byte
+  ##   for byte.
   let message = Protobuf.encode(exchange.toMessage).toText
-  OPENING_EXCHANGE & uint32(message.len).toFixed & message.checksum.toFixed & message
+  LINE_FORMAT_EXCHANGE & uint32(message.len).toFixed & message.checksum.toFixed & message
 
 
 func dropSecretsText(text: string): string =
@@ -613,11 +614,11 @@ func dropSecretsText(text: string): string =
 
 
 func readExchange*(bytes: string): Recorded =
-  ## Read exchange file; refuse at first part that fails, naming it: opening, length and checksum
-  ##   of frame, before any byte decodes, then message, label and status.
-  ##   Echo of opening and of label shows each URL it names by scheme, host, port and path alone
-  ##     (`dropSecretsText`), so token of page URL never reaches report; every other echo is
-  ##     count, checksum or error of decoder, never byte of request or body.
+  ## Read exchange file; refuse at first part that fails, naming it: format line, length and
+  ##   checksum of frame, before any byte decodes, then message, label and status.
+  ##   Echo of format line and of label shows each URL it names by scheme, host, port and path
+  ##     alone (`dropSecretsText`), so token of page URL never reaches report; every other echo
+  ##     is count, checksum or error of decoder, never byte of request or body.
 
   func refuse(problem: string): Recorded =
     ## Build outcome refusing file for problem.
@@ -628,10 +629,10 @@ func readExchange*(bytes: string): Recorded =
     ##   (`dropSecretsText`), then made printable and cut.
     text.dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN)
 
-  # Check opening, then length and checksum of message, so no message cut or changed decodes.
-  if not bytes.startsWith(OPENING_EXCHANGE):
+  # Check format line, then length and checksum of message, so no message cut or changed decodes.
+  if not bytes.startsWith(LINE_FORMAT_EXCHANGE):
     let close = bytes.find('\n')
-    return refuse("Exchange should open with `" & OPENING_EXCHANGE.toEcho & "`; got `" &
+    return refuse("Exchange should open with `" & LINE_FORMAT_EXCHANGE.toEcho & "`; got `" &
         bytes[0 .. (if close < 0: bytes.high else: close)].toEcho & "`.")
   if bytes.len < AT_MESSAGE:
     return refuse("Exchange should hold 8 bytes of length and checksum after opening; got `" &
