@@ -13,8 +13,9 @@
 ##     refused, since refusal holds no tree, and `parseLojban` gives why.
 ##   `start` and `finish` count bytes of text in UTF-8, as parser reads it; for text of ASCII
 ##     alone, byte is index of JavaScript string too.
-##   Script defines both functions as globals, and puts them on `module.exports` where loader of
-##     CommonJS gives one, so browser and node load one file.
+##   Script defines each function as global of page that loads it, and `parseLojbanLive` too,
+##     which reads live text (`live_text.nim`). No node loads it (ruling on #859), so script puts
+##     nothing on `module.exports` of CommonJS, which no suite would hold.
 ##   Rejected: text of JSON, which caller would parse. Plain object is value caller's own runtime
 ##     holds, so no format of data crosses between programs (CONTRIBUTOR.md, Data). NIF crosses,
 ##     as that rule admits, and law of `test_nif.nim` holds it.
@@ -22,6 +23,7 @@
 ##     JavaScript build, gives figures measured against native build.
 
 {.experimental: "strictFuncs".}
+{.used.}  # suite that imports bridge for globals it defines alone uses no proc of it
 
 when compileOption("profiler"):
   import std/nimprof
@@ -29,12 +31,7 @@ when compileOption("profiler"):
 import std/[jsffi, options]
 
 import ../lojban_parser  # umbrella, for `$` of each type, as `KOhA` of `Selmaho`
-
-
-let MODULE_NODE {.nodecl, importc: "module".}: JsObject
-  ## Read module object node gives each script of CommonJS it loads; browser gives none.
-  ##   Boundary of JS target: `typeof` reads it, since bare name of undeclared global throws in
-  ##     browser.
+import ./live_text  # reader of live text, `parseLojbanLive`, in worker where page gives one
 
 
 
@@ -129,10 +126,3 @@ proc parseLojbanToNif*(text: cstring): cstring {.exportc.} =
   let reading = ($text).readText
   if not reading.is_read: return nil
   cstring(reading.toNif)
-
-
-
-# Export to loader of CommonJS where node gives one; browser keeps globals alone.
-if MODULE_NODE.jsTypeOf != "undefined":
-  MODULE_NODE.exports.parseLojban = parseLojban
-  MODULE_NODE.exports.parseLojbanToNif = parseLojbanToNif

@@ -20,9 +20,11 @@
 ##   |           | against its pin, and print count of each verdict of their paragraphs     |
 ##   | javascript | compile whole parser to JavaScript, as `src/javascript/bridge.nim`      |
 ##   |           | exposes it, into `build/lojban_parser.js`, and print its path and size   |
+##   | drive     | build script, run each suite of `tests/browser/` in headless Chromium,   |
+##   |           | and collect control page `koch drive` writes (`tools/browser.nim`)       |
 ##   | system    | print packages verbs and suites need, one per line                       |
 ##   |-----------|--------------------------------------------------------------------------|
-##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
+##   Exit: 0 done, 1 command failed, lists differ or suite failed, 2 usage error.
 ##
 ##   Sibling: `lists` and `head` of `lojban_tagger/tools/build.nim` take same steps over lists of
 ##     tagger, and read same sources by same pins (`tools/lists.nim`). No driver exports verb, so
@@ -39,26 +41,28 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, options, os, osproc, sequtils, tables]
+import std/[algorithm, options, os, sequtils, tables]
 
-import ./[cll, lists, tatoeba, translations, wikipedia]
+import ./[browser, cll, lists, tatoeba, translations, wikipedia]
 
 
 const
-  USAGE = "Usage: nim r tools/build.nim <lists|head|javascript|system|translations>\n" &
+  USAGE = "Usage: nim r tools/build.nim <lists|head|javascript|drive|system|translations>\n" &
       "       nim r tools/build.nim cll <directory>\n" &
       "       nim r tools/build.nim tatoeba <export>\n" &
       "       nim r tools/build.nim wikipedia <directory>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
-    ("coreutils", "`sha256sum`, which `lists`, `head` and four verbs of texts check digest with"),
-    ("curl", "fetcher of pages, which verb `translations` fetches Alice and Oz with"),
-    ("nodejs", "runner of JavaScript, which testament runs `test_javascript.nim` under"),
+    ("coreutils",
+      "`sha256sum`, which `lists`, `head` and four verbs of texts check digest with, and " &
+      "`sleep`, which fake of Chromium of `test_drive.nim` blocks in"),
+    ("curl",
+      "fetcher of pages, which verb `translations` fetches Alice and Oz with, and fake of " &
+      "Chromium of `test_drive.nim` reports end of run with"),
+    ("unzip", "unpacker of archive of Chromium, which store serves and verb `drive` drives"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
-  PATH_BRIDGE = "src/javascript/bridge.nim"  ## Module exposing parser to JavaScript.
-  PATH_SCRIPT = "build/lojban_parser.js"  ## Script verb `javascript` writes from `PATH_BRIDGE`.
 
 
 
@@ -181,37 +185,29 @@ proc writeJavascript(): int =
   ## Compile `PATH_BRIDGE`, with whole parser, to `PATH_SCRIPT`, and print path and size.
   ##   Compiler is one that compiled this driver, never other `nim` that PATH holds.
   ##   `-d:release` keeps every check, and drops traces of stack and line (`config/nim.cfg` of
-  ##     pin); `test_javascript.nim` compiles with it too, so suite holds build that ships.
+  ##     pin); suites of `tests/browser/` compile with it too, so they hold build that ships.
   ##   Rejected: `-d:danger`, which drops every check of bounds and range from build caller runs.
-  createDir(PATH_SCRIPT.parentDir)
-  let process = startProcess(
-    getCurrentCompilerExe(),
-    args = ["js", "--hints:off", "-d:release", "--out:" & PATH_SCRIPT, PATH_BRIDGE],
-    options = {poParentStreams},
-  )
-  let code = process.waitForExit
-  process.close
-  if code != 0:
-    stderr.writeLine "Compile to JavaScript failed; got exit `" & $code & "`."
-    return 1
+  if compileJs(PATH_BRIDGE, PATH_SCRIPT) != 0: return 1
   echo PATH_SCRIPT
   echo "bytes ", getFileSize(PATH_SCRIPT)
 
 
 proc main(): int =
   ## Dispatch command named as first argument; `cll`, `tatoeba` and `wikipedia` take path second.
-  let arguments = commandLineParams()
-  if arguments.len == 2 and arguments[0] == "cll": return writeCll(arguments[1])
-  if arguments.len == 2 and arguments[0] == "tatoeba": return writeTatoeba(arguments[1])
-  if arguments.len == 2 and arguments[0] == "wikipedia": return writeWikipedia(arguments[1])
-  if arguments.len != 1:
+  ##   Dispatch opens on `case paramStr(1)`, as koch reads it: koch learns `drive`, `head` and
+  ##   `system` from that dispatch alone (`test_driver.nim`).
+  if paramCount() == 2 and paramStr(1) == "cll": return writeCll(paramStr(2))
+  if paramCount() == 2 and paramStr(1) == "tatoeba": return writeTatoeba(paramStr(2))
+  if paramCount() == 2 and paramStr(1) == "wikipedia": return writeWikipedia(paramStr(2))
+  if paramCount() != 1:
     stderr.write USAGE
     return 2
-  case arguments[0]
+  case paramStr(1)
   of "lists": writeLists()
   of "head": compareLists()
   of "translations": writeTranslations()
   of "javascript": writeJavascript()
+  of "drive": runDrive()
   of "system":
     for (name, _) in SYSTEM: echo name
     0

@@ -12,6 +12,8 @@
 ##   | finish         | read end of live text, and give rest of its NIF                    |
 ##   | toNif          | NIF that went out so far                                           |
 ##   | countRead      | bytes each reading read, summed, which cost check reads            |
+##   | toSentences    | piece cut before each word that opens sentence, as stream reads it |
+##   | combine        | changes of pieces read in turn, joined into change of all of them  |
 ##   |----------------|--------------------------------------------------------------------|
 ##
 ##   Rulings of Architect on #859 give design:
@@ -732,3 +734,41 @@ func finish*(reader: var ReaderLive): ChangeNif =
   var start = reader.start
   for n in 0 ..< reader.openers.len: start = min(start, reader.openers[n].start)
   reader.readChange(start, is_final = true)
+
+
+
+#[ Turns ]#
+
+func toSentences*(piece: string): seq[string] =
+  ## Cut piece before each word of selma'o I or NIhO, which opens sentence or paragraph, as stream
+  ##   reads piece alone; pieces join to piece. So script reads one sentence at each turn of event
+  ##   loop, where page gives no worker (ruling on #859).
+  ##   Stream that refuses piece cuts it in words before refusal alone. Cut moves no NIF: text
+  ##     read piece by piece gives NIF of its parts, wherever pieces cut (law of `test_live.nim`).
+  var reading = piece.readStream
+  if not reading.is_read: reading = piece[0 ..< reading.start].readStream  # words before refusal
+  var last = 0
+  if reading.is_read:
+    for n in 0 ..< reading.occurrences.len:
+      template occurrence: untyped = reading.occurrences[n]
+        ## Alias word, which `let` would copy on JavaScript backend.
+      let is_opener = occurrence.reading.is_word and occurrence.reading.selmaho.isSome and
+        occurrence.reading.selmaho.get in {Selmaho.I, Selmaho.Niho}
+      if is_opener and occurrence.start > last:
+        result.add piece[last ..< occurrence.start]
+        last = occurrence.start
+  result.add piece[last .. ^1]
+
+
+func combine*(changes: openArray[ChangeNif], nif: string): ChangeNif =
+  ## Join changes that pieces read in turn made into change of all of them: least offset and byte
+  ##   any one opens at, NIF from that offset on, as `nif` holds it after last, and tail of last.
+  ##   Each change keeps NIF before its offset, so NIF before least offset stands as before
+  ##     first. Each word that change keeps ends at its byte, and each word it gives opens there or
+  ##     past, so least byte ties change of all as each ties its own.
+  doAssert changes.len > 0, "Changes should be one or more; got none."
+  result = ChangeNif(at: changes[0].at, start: changes[0].start, tail: changes[^1].tail)
+  for k in 1 ..< changes.len:
+    result.at = min(result.at, changes[k].at)
+    result.start = min(result.start, changes[k].start)
+  result.text = nif[result.at .. ^1]
