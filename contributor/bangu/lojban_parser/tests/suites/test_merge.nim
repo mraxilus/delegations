@@ -44,6 +44,9 @@ const
     "lu mi klama .i do cadzu",  # live cut after `lu` breaks rule of passes, so grammar reads whole
     "mi klama .i do cadzu si si si ko",  # erasure reaches into part before it (19.13)
     "le su mi klama",  # error of grammar before `su` drops
+    "xu'au su mi klama",  # selma'o reads after `su` erases, so cmavo no list gives drops
+    "zei su mi klama",  # `zei` reads after `su` erases, so error of it drops (19.16)
+    "ba'e su mi klama",  # BAhE reads after `su` erases, so error of it drops (19.16)
     "bu su mi klama",  # `bu` reads after `su` erases, so error of it drops (19.16)
     "lo'u mi le'u si su ko",  # `le'u` erasure erases closed `lo'u`, which `su` erases
     "ba'e zoi gy. a'h .gy. ui su ko",  # BAhE stands before `zoi`, so text quoted is fourth word
@@ -83,16 +86,24 @@ const
     ),  # `le` waits for sumti, past end of text
   ]
     ## Constructed texts one pass refuses, with node of module refused, byte, and reason.
-  MODULES_MALFORMED = [
-    "",  # no directive
-    HEADER & "(sentence 0 40",  # node never closed
-    HEADER & "(FOO 0 2 \"mi\")\n",  # class that names no selma'o
-    HEADER & "(sumti_6 1 2 (KOhA 0 2 \"mi\"))\n",  # two ends of no chain of 21.1
-    HEADER & "(sumti_6 (KOhA 0 2 \"mi\"))\n",  # rule with no number
-    HEADER & "(KOhA 0 2 \"mi\" 3)\n",  # word with no letters
-    HEADER & "(srera 0 sumti_6)\n",  # error node with no rule number
+  EXAMPLES_LIVE_REFUSED = [
+    (text: ".i lu le'u si gy li'u bu broda do le to .i broda", part: 0, start: 41),
+      # part after `to`, which waits for `toi`, reads alone
+    (text: "lu gy li'u zarci lo lu .i cadzu je bu", part: 0, start: 24),
+      # part after second `lu`, which waits for `li'u`, reads alone
   ]
-    ## Modules of NIF merge refuses, each with no shape `nif.nim` writes.
+    ## Texts built that one pass reads, whose parts cut as live text hold error node, with node
+    ##   of module refused and byte: of 30,000 texts built by seed of suite, these two.
+  MODULES_MALFORMED = [
+    ("", "should open with directives"),  # no directive
+    (HEADER & "(sentence 0 40", "NIF should hold"),  # node never closed
+    (HEADER & "(FOO 0 2 \"mi\")\n", "should name selma'o"),  # class that names no selma'o
+    (HEADER & "(sumti_6 1 2 (KOhA 0 2 \"mi\"))\n", "two ends of chain"),  # no chain of 21.1
+    (HEADER & "(sumti_6 (KOhA 0 2 \"mi\"))\n", "number of rule"),  # rule with no number
+    (HEADER & "(KOhA 0 \"mi\")\n", "bytes and letters"),  # word with no byte past it
+    (HEADER & "(srera 0 sumti_6)\n", "grammar of 21.1 stops"),  # error node, refused as one
+  ]
+    ## Modules of NIF merge refuses, each with no shape `nif.nim` writes, and what reason holds.
 
 
 
@@ -230,9 +241,29 @@ suite "Internal: Merge of parts":
       if whole.is_read: check whole.toNif.isWrittenBack
 
 
+  test "Live parts cut after opener that waits may hold error node, which merge names":
+    for (text, part, start) in EXAMPLES_LIVE_REFUSED:
+      checkpoint text
+      let whole = readText(text)
+      check whole.is_read
+      if not whole.is_read: continue
+      let merged = readTextParts(text).reading.toNifParts.mergeParts
+      check merged.is_merged and merged.nif == whole.toNif  # cut as text read whole cuts it
+      let
+        live = readTextParts(text, is_live = true).reading.toNifParts
+        refused = live.mergeParts
+      check not refused.is_merged  # header of `merge.nim`, live part holds error node
+      if refused.is_merged: continue
+      check refused.part == some(part) and refused.start == some(start)
+      check live.isHoldingError(refused.part)
+
+
   test "NIF that reads not, or holds shape writer gives not, is refused":
-    for module in MODULES_MALFORMED:
+    for (module, reason) in MODULES_MALFORMED:
       checkpoint module
       let merged = module.mergeParts  # raises not
       check not merged.is_merged  # header of `merge.nim`, rebuild refuses shape
-      if not merged.is_merged: check merged.reason.len > 0
+      if not merged.is_merged: check reason in merged.reason
+    var terminals: seq[TerminalNif]
+    expect ValueError:  # rebuild refuses error node of no shape writer gives
+      discard readModule(HEADER & "(srera 0 sumti_6)\n")[2].toTree(terminals)

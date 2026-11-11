@@ -7,7 +7,8 @@
 ##     typed piece by piece, kept open; edit that keeps no text before it, which starts new
 ##     reader. Case and each piece is file of one string, so no format stands between them.
 ##   Merge of each case draws tree native build merges its NIF so far to, or line naming part
-##     refused, as `drawnMerged` gives both builds; next change hides it, as stale.
+##     refused, as `drawnMerged` gives both builds; next change hides it, as stale. Suite wires
+##     controls as page does (`wiredControls`), and clicks button Merge.
 ##   Drawing page shows and drawing native build writes compare as same browser serialises both,
 ##     so no quirk of serialiser stands between them.
 ##   Page whose rule of content refuses each worker reads on its own thread, shows same drawing,
@@ -86,6 +87,7 @@ proc runSuite() {.async.} =
   report "[Suite] Internal: Page of live text" & (if is_refused: ", worker refused" else: "")
   let cases = readCases()
   var failures = countFailures()
+  wiredControls()
 
   template ended(name: string) =
     ## Report test as unittest spells it: failed where check failed since last test.
@@ -106,7 +108,7 @@ proc runSuite() {.async.} =
       is_hidden = DOCUMENT.getElementById(cstring("merged")).hidden.to(bool)
     expectThat drawing == $serialised(cstring(item.html)), "page draws as native build: " & claim
     expectThat status == item.status, "line names what native build names: " & claim
-    mergeShown()
+    discard DOCUMENT.getElementById(cstring("merge")).click()
     merges.add (
       $DOCUMENT.getElementById(cstring("merged-parts")).innerHTML.to(cstring),
       $DOCUMENT.getElementById(cstring("merged-status")).textContent.to(cstring), is_hidden,
@@ -126,8 +128,20 @@ proc runSuite() {.async.} =
   ended "Merge draws tree of completed parts as native build merges them, or names part refused"
 
   for k in 0 ..< cases.len:
-    expectThat merges[k].is_hidden, "change hides tree merged before it: " & cases[k].kind
-  ended "Each change hides tree merged before it, which no longer holds"
+    expectThat merges[k].is_hidden, "new reader hides tree merged before it: " & cases[k].kind
+  ended "New reader hides tree merged before it, which no longer holds"
+
+  var text_typed = ""
+  for item in cases:
+    if item.kind == "typed": text_typed = item.pieces.join("")
+  await typed(cstring(text_typed))
+  discard DOCUMENT.getElementById(cstring("merge")).click()
+  let is_shown = not DOCUMENT.getElementById(cstring("merged")).hidden.to(bool)
+  await typed(cstring(text_typed & " .i"))  # same reader takes word more, as it stays open
+  expectThat is_shown, "button shows tree merged"
+  expectThat DOCUMENT.getElementById(cstring("merged")).hidden.to(bool),
+    "change of same reader hides tree merged"
+  ended "Change of same reader hides tree merged, which no longer holds"
 
   let mode = $DOCUMENT.getElementById(cstring("mode")).textContent.to(cstring)
   expectThat mode == (if is_refused: MODE_PAGE else: MODE_WORKER), "line of mode; got " & mode

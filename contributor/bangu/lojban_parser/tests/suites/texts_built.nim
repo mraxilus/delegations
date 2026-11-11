@@ -1,7 +1,8 @@
 ## Build texts of words that reach back, at random, which suites of live text and of merge read,
 ##   since corpora hold few of them: words that erase, quote, open or close text inside text, or
 ##   end input, among plain words. So list is written once (II.9).
-##   Builder takes generator of suite, which seeds it, so each suite reads texts it read before.
+##   Builder takes generator of suite, which seeds it, so texts of each suite come from its own
+##     generator.
 
 {.experimental: "strictFuncs".}
 

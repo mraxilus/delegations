@@ -28,8 +28,10 @@
 ##     page reads complete before script runs.
 ##   Pause between words of stream is timer of page; suite of page streams with no pause.
 ##   Merge joins each part of NIF so far, tail left out, into tree of one pass (`drawnMerged` of
-##     `draw.nim`), and draws it under parts. It runs on thread of page, since it reads NIF
-##     alone, in time its length gives. Each change hides tree merged, which no longer holds.
+##     `draw.nim`), and draws it under parts. It runs on thread of page, since it reads NIF page
+##     holds. Each change hides tree merged, which no longer holds.
+##   Suite of page wires controls as page does (`wiredControls`), and clicks them, so it holds
+##     what button of page does.
 
 {.experimental: "strictFuncs".}
 
@@ -99,7 +101,7 @@ proc mergeHidden() =
   document.getElementById("merged").setAttribute("hidden", "")
 
 
-proc mergeShown*() =
+proc mergeShown() =
   ## Merge each part NIF so far holds, tail left out, and draw tree it gives under parts; where
   ##   merge refuses, line names part, byte and reason.
   let drawing = drawnMerged($STATE.nif)
@@ -233,14 +235,19 @@ proc chosen(sample: cstring): proc(event: Event) =
     discard readWhole(sample)
 
 
-proc wired() =
-  ## Wire field, samples, stream and merge, then read text page opens with, which build drew.
+proc wiredControls*() =
+  ## Wire field, samples, stream and merge to what page does with each.
   field().addEventListener("input", proc(event: Event) = discard typed(field().value))
   for button in document.querySelectorAll("[data-sample]"):
     button.addEventListener("click", chosen(button.getAttribute("data-sample")))
   document.getElementById("stream").addEventListener("click", proc(event: Event) =
     discard streamed(field().value, PAUSE_STREAM))
   document.getElementById("merge").addEventListener("click", proc(event: Event) = mergeShown())
+
+
+proc wired() =
+  ## Wire controls, then read text page opens with, which build drew.
+  wiredControls()
   discard readWhole(field().value)
 
 
