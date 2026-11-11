@@ -71,9 +71,10 @@ const
   PIECES_NAME = ["a", "b", " ", "/", "é"]  ## Pieces random name is spelled from.
   LINES_BAD = ["beta datni", "beta\tdatni\tvreji", "", "\tdatni"]  ## Bad lines cases insert.
   TEXTS_CANONICAL = [
-    HEADER & "\n",
-    HEADER & "\nnotes\tdatni\n",
-    HEADER & "\n a\tdatni+vreji cukta\nnotes/plan.md\tvreji datni datni+datni\né\tmlatu+zdani\n",
+    HEADER_INDEX & "\n",
+    HEADER_INDEX & "\nnotes\tdatni\n",
+    HEADER_INDEX & "\n a\tdatni+vreji cukta\nnotes/plan.md\tvreji datni datni+datni\n" &
+        "é\tmlatu+zdani\n",
   ]
     ## Canonical texts written by hand: empty index, one entity, names of space, path and `é`.
   WORDS_GISMU = block:
@@ -109,7 +110,7 @@ proc textCanonicalRandom(): string =
   ##   distinct, each with one to three distinct tags spelled as gismu joined by `+`.
   var names: seq[string]
   for _ in 1..rand(0..8): names.add nameRandom()
-  result = HEADER & "\n"
+  result = HEADER_INDEX & "\n"
   for name in names.deduplicate.sorted:
     var spellings: seq[string]
     for _ in 1..rand(1..3): spellings.add tagRandom().words.mapIt($it).join("+")
@@ -227,12 +228,12 @@ suite "Internal: Index":
     ]  # reader alone: tags in order written, writer never asked
     check read.entity(" a").get.tags ==
         @[readTanru("datni+vreji").get, readTanru("cukta").get]  # reader alone, first line
-    let unfinished = readIndex(HEADER & "\nnotes\tdatni")
+    let unfinished = readIndex(HEADER_INDEX & "\nnotes\tdatni")
     check unfinished.is_loaded and unfinished.index.names == @["notes"]  # final line feed optional
     for (text, canonical) in [  # non-canonical text: line feed missing, tag repeated, spaces
-      (HEADER, HEADER & "\n"),
-      (HEADER & "\nnotes\tdatni datni\n", HEADER & "\nnotes\tdatni\n"),
-      (HEADER & "\nnotes\t datni   vreji \n", HEADER & "\nnotes\tdatni vreji\n"),
+      (HEADER_INDEX, HEADER_INDEX & "\n"),
+      (HEADER_INDEX & "\nnotes\tdatni datni\n", HEADER_INDEX & "\nnotes\tdatni\n"),
+      (HEADER_INDEX & "\nnotes\t datni   vreji \n", HEADER_INDEX & "\nnotes\tdatni vreji\n"),
     ]:
       let loaded = text.readIndex
       check loaded.is_loaded and loaded.index.toText == canonical  # normalises to canonical
@@ -340,11 +341,11 @@ suite "Internal: Index":
     check readIndex("").isRefused(1, "")  # empty file holds no header
     check readIndex("lojban_tagger index 2\n").isRefused(1, "lojban_tagger index 2")  # version
     check readIndex("notes\tdatni\n").isRefused(1, "notes\tdatni")  # entity before header
-    check readIndex(" " & HEADER & "\n").isRefused(1, " " & HEADER)  # header read exactly
+    check readIndex(" " & HEADER_INDEX & "\n").isRefused(1, " " & HEADER_INDEX)  # exact header
 
 
   test "reader refuses bad line by its number, ending in text read":
-    let opening = HEADER & "\nalpha\tdatni\n"
+    let opening = HEADER_INDEX & "\nalpha\tdatni\n"
     check readIndex(opening & "beta datni\n").isRefused(3, "beta datni")  # tab missing
     check readIndex(opening & "beta\tdatni\tvreji\n").isRefused(3, "beta\tdatni\tvreji")  # 2 tabs
     check readIndex(opening & "\tdatni\n").isRefused(3, "\tdatni")  # empty name
