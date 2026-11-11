@@ -2328,7 +2328,8 @@ that holds it. The events, each one a verb argument:
   history. It holds a post made through `gh api` as `body` holds the post of a tool.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
-  label `coordinator`. It refuses a pull request body that leaves the template unfilled.
+  label `coordinator`. It refuses a pull request body that leaves the template unfilled. It
+  refuses a closing keyword before an issue outside a line of its own.
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
   nor the working line. It also refuses a sign-off out of shape. At the end of any turn, it
   refuses `#N` outside a link, and an article or a duty cited with no description.
@@ -2349,6 +2350,29 @@ anywhere, or one above the last line (D1 of #578).
   quoted one.
 - Cost: the footer of the proxy is read by its opening and its closing, so a change to its
   address reads as no footer. Then `body` asks for the plain one, and the proxy appends nothing.
+
+**A closing keyword stands before an issue only on a line of its own.** GitHub reads `close`,
+`fix` and `resolve`, in each of their forms, before an issue reference in any sentence. It reads
+no negation, so the sentence `does not close #859` in the body of #860 closed #859 on the merge.
+`body` refuses such a keyword in a pull request body or an issue body. It passes one only on a
+line whose whole text is the keyword and one reference, as `Closes #859`.
+
+The finding names the phrase and gives the mend: drop the keyword, or put the issue first, as
+`#859 stays open`.
+
+- The reference is `#N`, `<owner>/<repo>#N`, or a URL of an issue on `github.com`. The keyword is
+  a whole word in any case, with an optional colon. The whitespace after it may cross a line
+  break, because a body wraps its lines and GitHub reads across the break.
+- Code spans and fenced code are exempt, because GitHub links no reference there.
+- A comment and a review close nothing, so `body` reads their keywords as text.
+- Rejected: the same rule in `check-role`, which reads the body of each open pull request. It
+  could redden a pull request that is open now (duty 3), and the hook already reads each body
+  before it lands.
+- Verified by `suites/test_hooks.nim`, for the body of #860 as found. The suite also holds its
+  domain. That is each kind of reference, a colon, a line break, two references on a line, a
+  keyword inside a word, and code. It holds the line of its own that passes too.
+- Cost: a list item `- Closes #859` is refused, since its text is more than the keyword and the
+  reference. Cost: a commit message closes on a keyword too, and no hook reads it for this rule.
 
 **`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary
 checkout alone.** A subagent works in a worktree of its own, on a branch of its own
