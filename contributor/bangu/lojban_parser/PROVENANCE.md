@@ -1117,8 +1117,8 @@ version directive is also the magic cookie of the format. The language says that
 name that 21.1 writes, the name of a rule or the class of a terminal. Verified by
 `suites/test_nif.nim`, which holds the module of Example 6.98 byte for byte.
 
-**A named rule is a compound node, and so is a terminal.** The tag of a rule is its name, then its
-number in 21.1, and its nodes follow in order. The tag of a terminal is its class, as `KOhA` or
+**A named rule is a compound node, and so is a terminal.** The tag of a rule is its name, and its
+nodes follow in order. The tag of a terminal is its class, as `KOhA` or
 `BRIVLA`. The order of the terminals gives the index of each unit, so no node holds one. Verified
 by `suites/test_nif.nim`, whose law rebuilds each tree of the corpora.
 
@@ -1133,15 +1133,27 @@ about 7 percent to the modules of the corpora. Figures of marks and live text gi
 
 **A chain of rules is one node, which its two ends write.** In 21.1, a rule often holds the next
 rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a chain is one
-node: the number of the rule that opens it, then the tag and number of the rule that closes it. So
-`(sumti_6 80 97 ...)` is the chain from `terms`, rule 80, down to `sumti-6`, rule 97. Figures, Text
-in NIF, chains, gives the share of such rules in each tree. Verified by `suites/test_nif.nim`.
+node: the tag of the rule that closes it, then the number of the rule that opens it. So
+`(sumti_6 80 ...)` is the chain from `terms`, rule 80, down to `sumti-6`.
+
+A node that writes no number opens no chain, as `(tail_terms)`. Figures, Text in NIF, chains,
+gives the share of such rules in each tree. Verified by `suites/test_nif.nim`.
 
 **Two ends give one chain in 21.1.** Compile time walks each chain that 21.1 allows, and
 `LUT_CHAIN_BY_ENDS` of `grammar.nim` keys each by its two ends. The build stops where two chains
 join one pair of rules, or where a chain holds a cycle. So a reader rebuilds each rule between two
 ends, and the tree reads back whole. Verified by `suites/test_nif.nim`, which rebuilds each tree of
 the corpora, and holds the chain from `terms` to `sumti-6` to rules 80 to 97 of 21.1.
+
+**The name of a rule gives its number, so no node writes the number of the rule that closes it.**
+21.1 gives its 88 rules 88 names and 88 numbers. `LUT_NUMBER_BY_RULE` of `grammar.nim` holds each,
+and its build stops where a name or a number repeats. A copy of the number could disagree with the
+name, so that one node names two rules. The Architect ruled so (D1 a on #859). Figures, Text in
+NIF, closing numbers, gives the bytes that the copy took.
+
+Verified by `suites/test_nif.nim`, which holds both ends of each chain to their numbers, and
+rebuilds each tree of the corpora. The rebuild refuses a node that writes two numbers, and a name
+that 21.1 gives no rule (`suites/test_merge.nim`). The error node keeps the number of its rule.
 
 **A tag writes `_` for `-`, and a word writes `h` for `'`.** No name of 21.1 holds `_`, so `_`
 reads back as `-`. Chapter 20 writes `h` as the capital of `'` in the names of selma'o, as in
@@ -1162,9 +1174,9 @@ bytes, so it would leave `\2D` undecoded. Assumed from a read of `src/lib/nifrea
 nimony at `2c5b3dca`, 2026-11-09, since this project runs no code of nimony.
 
 **Rejected: each rule of a chain as a node of its own.** The Architect chose the two ends (#855),
-and they lose nothing. With the escapes of `90b19f20`, the two ends take 30 percent of the bytes
-that the whole tree takes. Rejected: each number of a chain in its node, which needs no table of
-chains, at 43 percent. Figures, Text in NIF, chains, gives the measures.
+and they lose nothing. With the escapes of `90b19f20`, the two ends, each by its number, took 30
+percent of the bytes that the whole tree takes. Rejected: each number of a chain in its node, which
+needs no table of chains, at 43 percent. Figures, Text in NIF, chains, gives the measures.
 
 **The reader of the suites follows the grammar of the spec, and takes a subset of NIF.**
 `suites/reader_nif.nim` reads directives, compound nodes, tags, identifiers as atoms, decimal
@@ -1748,9 +1760,9 @@ texts, and reads each sample.
 
 **The drawing is Nim, and the page runs it as JavaScript.** `src/browser/draw.nim` draws each part
 as one SVG, and `src/browser/page.nim` wires the field, the samples and the stream. Each box stands
-for a node of the NIF. A box of a chain names the rule nearest the words, then the outermost rule
-and the count, from `LUT_CHAIN_BY_ENDS`. An error node is a red box at the byte where the grammar
-stops, and a unit that no terminal holds is a dashed card.
+for a node of the NIF. A box of a chain names the rule nearest the words, as its tag gives it. Then
+it names the outermost rule, its number and the count, from `LUT_CHAIN_BY_ENDS`. An error node is
+a red box at the byte where the grammar stops, and a unit that no terminal holds is a dashed card.
 
 Each position is a whole pixel, so the native build and the build of JavaScript write the same
 text. Verified by `suites/test_draw.nim`, and by `drive`, which holds the page to the native drawing
@@ -2051,6 +2063,11 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   those of CLL, 82 percent of Tatoeba, 82 percent of Wikipedia, and 52 of the 58 of
   `mi klama le zarci`. With the escapes of `90b19f20`, the whole tree took 3,147,588 bytes of NIF.
   Each chain as all its numbers took 1,350,505 bytes, and each chain as its two ends 948,868.
+- **Text in NIF, closing numbers.** On 2026-11-11, a program built with `-d:release` wrote the
+  marked NIF of each of the 1,941 texts of the corpora. It took 958,775 bytes, against 1,061,997
+  at `ab120f79`, where each node writes the number of the rule that closes it. The 1,831 texts
+  that one pass reads take 852,642 bytes, against 947,004. So the copy took 9.7 and 10.0 percent.
+  Two runs of each gave the same bytes.
 - **Text in NIF, debug build.** On 2026-11-09, at `a66e60f0`, the suite of `test_nif.nim`, built
   alone as the stub is, ran in 12.1 s and 12.0 s. On 2026-11-10, in one run, a program built the
   same way read the texts of the corpora in 11.2 s. It wrote NIF in 75 ms, and the law of the

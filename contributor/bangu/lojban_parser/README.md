@@ -102,14 +102,20 @@ $ nim r --hints:off --path:src --eval:'import lojban_parser
 stdout.write readText("me\x27o vo").toNif'
 (.nif27)
 (.lang "cll-21.1")
-(sumti_6 0 97 (LI 0 4 "meho") (number 310 812 (PA 5 7 "vo")))
+(sumti_6 0 (LI 0 4 "meho") (number 310 (PA 5 7 "vo")))
 ```
 
-Each named rule is a node, which holds its number in 21.1 and then its nodes. In 21.1, a rule often
-holds the next rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a
-run of rules is one node. It holds the number of the rule that opens the run, then the number of the
-rule that closes it. So `(sumti_6 0 97 ...)` is the run from `text`, rule 0, down to `sumti-6`,
-rule 97. The two ends give one run in 21.1, and `LUT_CHAIN_BY_ENDS` gives each rule between them.
+Each named rule is a node, which holds its name and then its nodes. In 21.1, a rule often holds the
+next rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a run of
+rules is one node. Its tag names the rule that closes the run, and its number is that of the rule
+that opens it. So `(sumti_6 0 ...)` is the run from `text`, rule 0, down to `sumti-6`.
+
+The two ends give one run in 21.1, and `LUT_CHAIN_BY_ENDS` gives each rule between them. A node
+that holds no number opens no run.
+
+The name of a rule gives its number, since 21.1 gives each of its 88 rules one name and one number.
+So the node writes no number of the rule that closes the run (D1 a on #859), and
+`LUT_NUMBER_BY_RULE` gives it, as 97 for `sumti-6`.
 
 Each terminal holds its class, as `LI` or `PA`, then three things for each word. Those are the byte
 where it opens, the byte past it, and its letters. So `(LI 0 4 "meho")` ties `me'o` to bytes 0 to 3
@@ -132,9 +138,8 @@ for line in readTextMarked("mi 1987 klama le").toNif.strip.splitLines: echo line
 (.lang "cll-21.1")
 (srera 16 sumti_6 97 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA
 LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA
-XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (rivbi Stream
-Letter 3 7 "1987") (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 13 "klama")) (tail_terms
-71))) (LE 14 16 "le"))
+XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (rivbi Stream Letter 3 7
+"1987") (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 8 13 "klama")) (tail_terms))) (LE 14 16 "le"))
 ```
 
 CLL names none of these nodes, so each takes a gismu, as the Architect ruled on #859. The error
@@ -158,9 +163,9 @@ for line in readTextMarked("mi klama si do su ko fa\x27o 1234").toNif.strip.spli
   echo line.wrapWords(100)'
 (.nif27)
 (.lang "cll-21.1")
-(text 0 (terms 0 80 (sumti_6 81 97 (KOhA 0 2 "mi")) (rivbi Erasure 3 8 "klama" 9 11 "si") (sumti_6
-81 97 (KOhA 12 14 "do"))) (rivbi SU 15 17 "su") (sumti_6 2 97 (KOhA 18 20 "ko")) (rivbi FAhO 21 25
-"faho") (rivbi Stream FAhO 26 30 "1234"))
+(text (terms 0 (sumti_6 81 (KOhA 0 2 "mi")) (rivbi Erasure 3 8 "klama" 9 11 "si") (sumti_6 81 (KOhA
+12 14 "do"))) (rivbi SU 15 17 "su") (sumti_6 2 (KOhA 18 20 "ko")) (rivbi FAhO 21 25 "faho") (rivbi
+Stream FAhO 26 30 "1234"))
 ```
 
 `si` erases `klama`, so one unit holds both. The root of the text after the last `su` holds each
@@ -186,19 +191,19 @@ for piece in ["mi klama .i do ", "si si si ", "su ko "]:
   show("push \"" & piece & "\"", reader.push(piece))
 show("finish", reader.finish)'
 push "mi klama .i do ": cut back to 28, byte 0
-  out  (sentence 0 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (bridi_tail_3 50 53 (tanru_unit_2 130 152
-       (BRIVLA 3 8 "klama")) (tail_terms 71)))
-  tail (text_1 0 2 (I 10 11 "i") (sumti_6 4 97 (KOhA 12 14 "do")))
+  out  (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3 8
+       "klama")) (tail_terms)))
+  tail (text_1 0 (I 10 11 "i") (sumti_6 4 (KOhA 12 14 "do")))
 push "si si si ": cut back to 28, byte 0
-  tail (sumti_6 0 97 (KOhA 0 2 "mi"))
+  tail (sumti_6 0 (KOhA 0 2 "mi"))
   tail (rivbi Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
 push "su ko ": cut back to 28, byte 0
-  out  (sumti_6 0 97 (KOhA 0 2 "mi"))
+  out  (sumti_6 0 (KOhA 0 2 "mi"))
   out  (rivbi Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
   out  (rivbi SU 24 26 "su")
-  tail (sumti_6 0 97 (KOhA 27 29 "ko"))
-finish: cut back to 163, byte 27
-  out  (sumti_6 0 97 (KOhA 27 29 "ko"))
+  tail (sumti_6 0 (KOhA 27 29 "ko"))
+finish: cut back to 160, byte 27
+  out  (sumti_6 0 (KOhA 27 29 "ko"))
 ```
 
 Offset 28 is the end of the two directives. The sentence `mi klama` goes out once `.i do` opens.
@@ -220,23 +225,23 @@ for text in ["mi klama .i do cadzu ni\x27o ko sipna", "mi klama .i x .i ko sipna
   echo "whole: ", merged.is_whole
   for line in merged.nif.strip.splitLines[2 .. ^1]: echo line.wrapWords(100)'
 whole: true
-(paragraphs 0 4 (paragraph 10 (sentence 11 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (bridi_tail_3 50 53
-(tanru_unit_2 130 152 (BRIVLA 3 8 "klama")) (tail_terms 71))) (I 10 11 "i") (sentence 11 40 (sumti_6
-80 97 (KOhA 12 14 "do")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 15 20 "cadzu"))
-(tail_terms 71)))) (NIhO 21 25 "niho") (sentence 4 40 (sumti_6 80 97 (KOhA 26 28 "ko"))
-(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 29 34 "sipna")) (tail_terms 71))))
+(paragraphs 0 (paragraph (sentence 11 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2
+130 (BRIVLA 3 8 "klama")) (tail_terms))) (I 10 11 "i") (sentence 11 (sumti_6 80 (KOhA 12 14 "do"))
+(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 15 20 "cadzu")) (tail_terms)))) (NIhO 21 25 "niho")
+(sentence 4 (sumti_6 80 (KOhA 26 28 "ko")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 29 34
+"sipna")) (tail_terms))))
 whole: false
-(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (bridi_tail_3 50 53 (tanru_unit_2
-130 152 (BRIVLA 3 8 "klama")) (tail_terms 71))) (I 10 11 "i") (rivbi Stream Shape 12 13 "x") (I 15
-16 "i") (sentence 11 40 (sumti_6 80 97 (KOhA 17 19 "ko")) (bridi_tail_3 50 53 (tanru_unit_2 130 152
-(BRIVLA 20 25 "sipna")) (tail_terms 71))))
+(paragraph 0 (sentence 11 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3
+8 "klama")) (tail_terms))) (I 10 11 "i") (rivbi Stream Shape 12 13 "x") (I 15 16 "i") (sentence 11
+(sumti_6 80 (KOhA 17 19 "ko")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 20 25 "sipna"))
+(tail_terms))))
 whole: false
-(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 3 8
-"klama")) (tail_terms 71)))
+(sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3 8 "klama"))
+(tail_terms)))
 (srera 16 sumti_6 97 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA
 LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA
-XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (text_1 0 2 (I 10 11 "i")) (LE 12 14 "le"))
-(text_1 0 2 (I 16 17 "i") (sumti_6 4 97 (KOhA 18 20 "ko")))
+XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (text_1 0 (I 10 11 "i")) (LE 12 14 "le"))
+(text_1 0 (I 16 17 "i") (sumti_6 4 (KOhA 18 20 "ko")))
 ```
 
 The three parts of the first text join into two paragraphs, as rule 4 of 21.1 nests them. The
