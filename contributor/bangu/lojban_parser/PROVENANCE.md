@@ -1310,12 +1310,25 @@ it, between them.** Before the first unit that reads, or after the last, it stan
 that end. No rule of 21.1 holds it, so its place claims no rule. Verified by
 `suites/test_marks.nim`.
 
-**NIF writes an error node as `(error byte rule number (expects classes) nodes)`.** The chain
+**NIF writes an error node as `(srera byte rule number (nitcu classes) nodes)`.** The chain
 stops above it, since no chain of 21.1 holds it. A unit that no terminal holds writes
-`(unread stage words)`, each word as a terminal writes it, and the stage `Stream` adds the refusal
+`(rivbi stage words)`, each word as a terminal writes it, and the stage `Stream` adds the refusal
 of the stream. That written word keeps its bytes, as the text that `zoi` quotes does. Verified by
 `suites/test_marks.nim`, which holds seven modules byte for byte, and reads back each module of the
 texts refused.
+
+**Each tag of NIF takes the term that CLL gives, as CLL spells it.** The Architect ruled this on
+#859, and the tags of named rules keep the names of 21.1. A stage or a refusal takes a selma'o as
+chapter 20 names it, as `SU` and `FAhO`. A Lojban word goes in lower case, as `selmaho` and
+`slinkuhi`, and an English term stays as CLL writes it, as `Erasure` (19.13). Verified by
+`suites/test_marks.nim` and `suites/test_live.nim`, which hold modules byte for byte, and by the
+model of `suites/reader_nif.nim`, which spells each tag on its own.
+
+**Where CLL names nothing, a tag takes a gismu of the official list.** So the error node is
+`srera`, "x1 errs", and the classes that it holds are `nitcu`, "x1 needs x2". A unit that no
+terminal holds is `rivbi`, "x1 avoids x2", since the grammar reads around it. Rejected: Lojban
+names for the rules. CLL 1.1 gives a noun for 7 of the 88 alone, as `mekso` for `mex`, and a later
+CLL may give the rest. Rejected: the lujvo `naltcidu` for `rivbi`, which no official list holds.
 
 **Rejected: the stage alone, or the refusal alone, in a unit that no terminal holds.** The stream
 and the reader of quotations both name a refusal `Quotation`. So a reader could not tell the bytes
