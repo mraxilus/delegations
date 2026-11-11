@@ -774,3 +774,32 @@ suite "Hooks":
     discard root.git("commit -q -m 'chore(curator): source of knoller'")
     check runHook(root, toolchain, "path") == "built from b"
     check readFile(toolchain / "builds.log").countLines == built + 1  # knoller source moved key
+
+
+  test "each hook that sees moment of skill names that skill (D2 a of #870)":
+    # Description of skill leaves model to notice moment; hook sees it, so names skill.
+    let mended = checkNumbersBare("See #12.\n")
+    check reasonStop(mended, [], has_signoff = true).splitLines[^1] ==
+      "The skill /sign-off holds these steps."
+    check "/sign-off" notin reasonStop(mended, [])  # plain message holds no sign-off
+    check "/sync" in contextStart("curator/x", "", "## List", @[finding("", 0, "d")])
+    check "/sync" notin contextStart("curator/x", "", "## List", @[])
+    check contextStart(BRANCH, "## List\n\n1. one\n", "## List", @[]).endsWith(
+      "The skill /triage reports each item of this list that is not met.")
+    check "/propose-term" in contextEdit("contributor/ronri/pga_benchmark/GLOSSARY.md")
+    check "/propose-term" in contextEdit("GLOSSARY.md")
+    check "/record" in contextEdit("curator/audit/PROVENANCE.md")
+    check contextEdit("README.md").len == 0
+
+
+  test "prompt names skill whose moment message of Architect holds, and none otherwise":
+    for ruling in ["D1 a", "a", "D1 a, D2 b", "D1a", "D2 what does a mean?"]:
+      check "/rule" in contextPrompt(ruling)
+    for asking in ["status", "Recheck the status of everything", "tell me the merge order",
+        "check your duties", "Anything left on your plate?", "Update the list"]:
+      check "/triage" in contextPrompt(asking)
+    check "/merged" in contextPrompt("trackball merged")
+    let both = contextPrompt("Merged some, update the list")
+    check "/merged" in both and "/triage" in both
+    for plain in ["why is capnproto excluded?", "Is decide already a skill", "yes, build it"]:
+      check contextPrompt(plain).len == 0

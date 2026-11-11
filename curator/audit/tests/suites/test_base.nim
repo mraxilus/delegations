@@ -33,6 +33,7 @@ suite "Base":
     check found.len == 1  # one finding, however many paths
     check found[0].path.len == 0  # branch-level, no file to open
     check found[0].message.endsWith("got `CONTRIBUTOR.md, koch.nim`.")  # only what governs
+    check "as /sync says" in found[0].message  # check that sees drift names its skill
 
 
   test "each governing path is named once":
