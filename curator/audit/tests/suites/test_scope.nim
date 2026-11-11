@@ -96,27 +96,47 @@ suite "Scope":
     check checkScope("curator/audit/work", [alpha], [alpha]).len == 1  # curator project
 
 
-  test "curator branch holds finding in contributor project, and blocks on rest":
-    # Duty 3: check that reddens project waits for project to fix, and curator never fixes it.
+  test "finding inside project blocks only branch of role that owns it (D1 a of #871)":
+    # Check that reddens project lands at once, and project clears finding in its next pull
+    #   request; finding outside every project, or propagation, blocks each branch.
     let
       source = finding(CONTRIBUTOR & "/ronri/alpha/src/alpha.nim", 4, "Broke.")
       record = finding(CONTRIBUTOR & "/ronri/alpha/PROVENANCE.md", 9, "Count in prose.")
       stamp = finding(CONTRIBUTOR & "/ronri/alpha/PROVENANCE.md", 0, "Stale.", true)
       index = finding(CONTRIBUTOR & "/ronri/README.md", 1, "Broke.")
       own = finding(CURATOR & "/audit/src/scope.nim", 2, "Broke.")
+      other = finding(CURATOR & "/knoller/src/knoller.nim", 3, "Broke.")
       root = finding("koch.nim", 7, "Broke.")
       branch_level = finding("", 0, "Broke.")
-      found = @[source, record, stamp, index, own, root, branch_level]
-    for branch in ["curator/rules", "curator/audit/work"]:  # both curator roles
-      let (held, blocking) = splitHeld(branch, found)
-      check held == @[source, record]  # project's code and records alike
-      check blocking == @[stamp, index, own, root, branch_level]  # curator's, wherever it lands
+      found = @[source, record, stamp, index, own, other, root, branch_level]
 
-    # Contributor holds nothing: own project is its own, other project means red base.
-    for branch in ["contributor/ronri/alpha/work", "contributor/ronri/beta/work"]:
-      let (held, blocking) = splitHeld(branch, found)
-      check held.len == 0
-      check blocking == found
+    # Root curator owns each curator project, and holds contributor projects alone.
+    var (held, blocking) = splitHeld("curator/rules", found)
+    check held == @[source, record]  # project's code and records alike
+    check blocking == @[stamp, index, own, other, root, branch_level]
+
+    # Curator of one project holds other curator projects too.
+    (held, blocking) = splitHeld("curator/audit/work", found)
+    check held == @[source, record, other]
+    check blocking == @[stamp, index, own, root, branch_level]
+
+    # Contributor blocks on its own project, and holds every other one.
+    (held, blocking) = splitHeld("contributor/ronri/alpha/work", found)
+    check held == @[own, other]
+    check blocking == @[source, record, stamp, index, root, branch_level]
+    (held, blocking) = splitHeld("contributor/ronri/beta/work", found)
+    check held == @[source, record, own, other]
+    check blocking == @[stamp, index, root, branch_level]  # propagation stays curator's
+
+    # Main holds each project, so check that landed leaves it green.
+    (held, blocking) = splitHeld("main", found)
+    check held == @[source, record, own, other]
+    check blocking == @[stamp, index, root, branch_level]
+    for branch in [
+      "curator/rules", "curator/audit/work", "contributor/ronri/alpha/work",
+      "contributor/ronri/beta/work",
+    ]:  # main holds what any branch holds, so green branch merges into green main
+      check splitHeld(branch, found).held.allIt(it in held)
 
     # Branch outside grammar holds nothing, so its scope finding still blocks.
     check splitHeld("claude/setup", found).held.len == 0
