@@ -13,7 +13,7 @@
 ##     `POST /done` ends run with exit code, and `POST` of any other path posts file of that name.
 ##     So no format of data stands between page and backend (CONTRIBUTOR.md, Data).
 ##   Chromium is one `LOJBAN_CHROMIUM` names, full Chrome or its headless shell, else headless
-##     shell store of repository serves by digest (`browser.nim`, #864); page runs in profile of
+##     shell store of repository serves by digest (`browser.nim`); page runs in profile of
 ##     its own, which run removes.
 ##   Chromium leads group of its own, and run kills each process of group, then reaps each,
 ##     before it removes profile: processes of Chromium write profile after first one exits, as
