@@ -8,8 +8,8 @@
 ##     records of each project. Project or domain added later is read from its first line,
 ##     rather than when curator remembers to widen list.
 ##   Record nested below project directory is not governed yet. Widening to prose under
-##     `sim/` or `design/` reddens such project, so it lands as duty 3 says; record holds it
-##     as open question.
+##     `simulation/` or `design/` reddens such project, so it lands as duty 3 says; record
+##     holds it as open question.
 ##   Block is bullet, numbered item or run of plain lines, each read alone: list of six
 ##     bullets is six blocks rather than one paragraph of six sentences.
 ##   Quotation is skipped whole: quoted text comes from outside this repository, so delegate may
