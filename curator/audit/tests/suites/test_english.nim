@@ -90,8 +90,8 @@ suite "Article VI.8":
     check not isGoverned("contributor/nowhere/README.md")  # domain outside registry
 
 
-  test "prose below project directory keeps contributor's own register":
-    check not isGoverned("contributor/sincopa/dance_ontology/sim/README.md")  # duty 3
+  test "prose below project directory stays outside governed set":
+    check not isGoverned("contributor/sincopa/dance_ontology/sim/README.md")  # nested, not yet
     check not isGoverned("curator/audit/tests/README.md")
     check not isGoverned("contributor/ronri/pga_benchmark/gaps.md")  # generated
     check not isGoverned("LICENSE.md")

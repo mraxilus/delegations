@@ -361,6 +361,15 @@ proc runHook(root, event, input: string): int =
     2
 
 
+proc reportHeld(held: seq[Finding]) =
+  ## Print findings branch holds for their projects, which each clears in its next pull request
+  ##   (CURATOR.md, duty 3); nothing where none is held.
+  if held.len == 0: return
+  echo "Held for their projects (CURATOR.md, duty 3, and the skill /enact); each clears them " &
+    "in its next pull request:"
+  held.report
+
+
 proc run(options: Options): int =
   ## Execute command, print findings, return exit code.
   var found: seq[Finding]
@@ -380,15 +389,13 @@ proc run(options: Options): int =
     found.add checkHistory(branch, commitsBranch(options.root, base))
     found.add checkBase(pathsGained(options.root, base))
     found.add checkSchemas(options.root, base)
-    # Curator branch holds what reddens contributor project (duty 3), and blocks on rest.
+    # Finding inside project blocks only branch of role owning it (duty 3); rest blocks here.
     let (held, own) = splitHeld(branch, found)
+    held.reportHeld
     if own.len > 0:
-      found.report
+      own.report
       echo "Types, suites and drive not run; fix findings above, then run again."
       return 1
-    if held.len > 0:
-      echo "Held for their projects (CURATOR.md, duty 3); runner stays red until they fix:"
-      held.report
     found = own
     found.add runJobsType(options.root, tree, options.directoriesScoped(tree))
     let jobs = tree.jobs(pathsChanged(options.root, base))
@@ -405,10 +412,14 @@ proc run(options: Options): int =
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
-    if not options.isReadAll({Root}): return options.refused
+    if not options.isReadAll({Root, Branch}): return options.refused
     let tree = options.root.readTree
     found = tree.auditTree
     found.add findingsPruned(options.root, tree)
+    # Runner holds as hook does, so check that reddens project lands once rest is clean.
+    let (held, own) = splitHeld(options.branchOrDefault, found)
+    held.reportHeld
+    found = own
   of "check-types":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
