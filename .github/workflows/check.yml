@@ -3,7 +3,8 @@
 #   `list-projects` names projects one change asks to compile, and again those of them
 #   carrying driven checks. `check-files` runs whole-tree checks, which cost about second and
 #   so stay unscoped; it reads branch, and holds each finding inside project that branch's role
-#   does not own (CURATOR.md, duty 3). `check-scope` and `check-commits` read branch too.
+#   does not own (CURATOR.md, duty 3), except on line branch changed, which it reads against
+#   base. `check-scope` and `check-commits` read branch too.
 #   `test` is one matrix job per named project, each installing that project's own pin and
 #   system packages, since suites load what project declares (issue 780). `drive` is second
 #   matrix over subset of same list, building each page and driving it through real events.
@@ -108,6 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BRANCH: ${{ github.head_ref || github.ref_name }}  # pull request branch, else `main`
+      BASE: origin/${{ github.base_ref || 'main' }}  # lines branch changed are read against it
     steps:
       - uses: actions/checkout@v7
         with:

@@ -31,7 +31,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strutils]
+import std/[options, sets, strutils]
 import ./[domains, findings, layout, markdown]
 
 
@@ -111,9 +111,10 @@ const
     ## Two carry period, since token keeps period STE's own spelling holds.
 
 
-type Block* = object  ## Define one prose block and where it opens.
+type Block* = object  ## Define one prose block and lines it opens and closes on.
   text*: string  ## Words joined by single space, backticked spans collapsed.
   line*: int  ## Line block opens on, 1-based.
+  last*: int  ## Line block closes on, 1-based.
 
 
 func spansCollapsed*(text: string): string =
@@ -167,22 +168,34 @@ func blocks*(markdown: string): seq[Block] =
   ##   Spans collapse over whole block, since span wrapped over line end is still one name.
   var
     carried: seq[string]
-    opened = 0
+    (opened, closed) = (0, 0)
   let lines = markdown.fencedOut.matterOut.splitLines
   for i, line in lines:
     let s = line.strip.multiReplace(("<!--", " "), ("-->", " ")).strip
     if not line.isCarrying or s.len == 0:
       if carried.len > 0:
-        result.add Block(text: carried.gathered, line: opened)
+        result.add Block(text: carried.gathered, line: opened, last: closed)
         carried = @[]
       continue
     let marker = s.markerLen
     if marker > 0 and carried.len > 0:
-      result.add Block(text: carried.gathered, line: opened)
+      result.add Block(text: carried.gathered, line: opened, last: closed)
       carried = @[]
     if carried.len == 0: opened = i + 1
     carried.add s[marker .. ^1]
-  if carried.len > 0: result.add Block(text: carried.gathered, line: opened)
+    closed = i + 1
+  if carried.len > 0: result.add Block(text: carried.gathered, line: opened, last: closed)
+
+
+func linesOpening*(markdown: string, changed: HashSet[int]): HashSet[int] =
+  ## Widen changed lines by line each prose block opens on where one of them falls inside it,
+  ##   since English finding names line block opens on (`findingsEnglish`).
+  result = changed
+  for b in markdown.blocks:
+    for line in b.line .. b.last:
+      if line in changed:
+        result.incl b.line
+        break
 
 
 func isSentenceEnd*(word: string): bool =

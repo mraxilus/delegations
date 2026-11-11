@@ -24,6 +24,9 @@
 ##     owns its own. `main` holds each project, since some branch holds each, and green branch
 ##     must merge into green `main`. `koch check` and `check-files` read same split, on hook
 ##     and on runner alike.
+##   Finding on line branch changed blocks it wherever it lies, as Architect ruled on D1 of
+##     #876: curator writing into contributor record clears what it wrote, as before hold.
+##     Prose finding names line its block opens on, so changed line owns that line too.
 ##   Held means inside project, records included. Finding outside every project, as root file
 ##     or index above project, blocks each branch, and so does propagation finding (stale stamp,
 ##     standard moved to root), which stays curator's wherever it lands. Scope finding is
@@ -41,7 +44,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sets, strutils]
+import std/[options, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[dependencies, domains, findings, layout]
 
@@ -118,11 +121,12 @@ func prefixProject(path: string): string =
   else: ""
 
 
-func isHeld(branch: string, f: Finding): bool =
+func isHeld(branch: string, f: Finding, owned: Table[string, HashSet[int]]): bool =
   ## Tell whether branch holds finding for project it lies inside, which only branch of role
-  ##   owning that project must clear (duty 3).
+  ##   owning that project must clear (duty 3); finding on line branch changed is its own.
   let project = f.path.prefixProject
   if project.len == 0 or f.is_propagation or f.is_scope: return false
+  if f.line > 0 and f.line in owned.getOrDefault(f.path): return false
   if branch == MAIN: return true
   let parsed = branch.parseBranch
   if parsed.isNone: return false
@@ -131,8 +135,11 @@ func isHeld(branch: string, f: Finding): bool =
   of Role.CuratorProject, Role.Contributor: project != parsed.get.prefix
 
 
-func splitHeld*(branch: string, found: openArray[Finding]): tuple[held, own: seq[Finding]] =
-  ## Split findings into those branch holds for their projects and those it must fix.
+func splitHeld*(
+  branch: string, found: openArray[Finding], owned = initTable[string, HashSet[int]]()
+): tuple[held, own: seq[Finding]] =
+  ## Split findings into those branch holds for their projects and those it must fix; `owned`
+  ##   holds lines branch changed, by path (`tree.linesOwned`).
   for f in found:
-    if branch.isHeld(f): result.held.add f
+    if branch.isHeld(f, owned): result.held.add f
     else: result.own.add f
