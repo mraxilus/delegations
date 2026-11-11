@@ -2109,8 +2109,8 @@ Measured on an Intel Xeon at 2.10 GHz with four cores, on the pin, on 2026-11-11
   of a third suite, and three runs of a page more.
 - **Laws of the drawing.** `suites/test_draw.nim` reads 243 texts, each eighth of the 1,941 texts
   of the corpora.
-- **Page with the merge.** `build/lojban_parser.html` holds 4,385,005 bytes, against 4,319,737
-  bytes before it. Its script holds 1,573,376 bytes, against 1,508,777. `drive` took 43.6 s, with
+- **Page with the merge.** `build/lojban_parser.html` holds 4,385,103 bytes, against 4,319,737
+  bytes before it. Its script holds 1,573,474 bytes, against 1,508,777. `drive` took 44.0 s, with
   two tests more, against 41.1 s.
 - **Laws of the merge.** `suites/test_merge.nim` took 27.6 s of a debug build, with its compile
   left out. It reads each of the 1,941 texts of the corpora three ways, once, and 1,500 texts built.
