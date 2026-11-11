@@ -16,12 +16,15 @@
 ##
 ##   Cost: two-space indent unverified; indent width depends on syntax and stays with review.
 ##   Cost: `LICENSE.md` exempt from width; third-party text stays verbatim (XI.3 spirit).
+##   Cost: each `atlas.lock` exempt from width, as Architect ruled on D1 of #821; Atlas writes it,
+##     copying each nimble line behind six spaces with each quote escaped, so lock line runs nine
+##     runes past its source, and nimble file it copies holds width.
 ##   Cost: X.9 read in Nim syntax alone (Nim, NimScript, nimble); trailing comment of
 ##     TypeScript, C, C++, YAML, cfg and shell goes unread until each kind gets scanner.
 
 {.experimental: "strictFuncs".}
 
-import std/sequtils
+import std/[sequtils, strutils]
 import ../../knoller/src/knoller
 import ./[findings, kinds]
 
@@ -31,10 +34,15 @@ const WIDTH_EXEMPT = ["LICENSE.md"]
 
 
 
+func isWidthExempt(path: string): bool =
+  ## Decide whether width of path goes unchecked: root text kept verbatim, or lock Atlas writes.
+  path in WIDTH_EXEMPT or path == FILE_LOCK or path.endsWith("/" & FILE_LOCK)
+
+
 func checkForm*(path, source: string; rule: RuleKind): seq[Finding] =
   ## Report form violations of source under kind rule: knoller's form of text, width aside on
   ##   path exempt from it, then banners of Nim syntax, exactly.
-  let is_width_exempt = path in WIDTH_EXEMPT
+  let is_width_exempt = path.isWidthExempt
   result = checkForm(path, source).filterIt(
     not (is_width_exempt and it.rule == Rule.LineWidth),
   ).toFindings
