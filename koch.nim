@@ -291,13 +291,19 @@ proc runHook(root, event, input: string): int =
         tree = checkout.get.readTree
       var found = tree.auditTree
       found.add findingsPruned(checkout.get, tree)
-      let mine = found.filterIt(it.path == path)
-      if mine.len == 0: return 0
-      let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)
+      let
+        mine = found.filterIt(it.path == path)
+        skill = contextEdit(path)
+      if mine.len == 0 and skill.len == 0: return 0
+      var parts: seq[string]
+      if mine.len > 0:
+        let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)
+        parts.add "koch check-files reports " & $mine.len & " finding(s) in `" & path &
+          "`; fix before push:\n" & lines.join("\n")
+      if skill.len > 0: parts.add skill
       echo %*{"hookSpecificOutput": {
         "hookEventName": "PostToolUse",
-        "additionalContext": "koch check-files reports " & $mine.len & " finding(s) in `" &
-          path & "`; fix before push:\n" & lines.join("\n"),
+        "additionalContext": parts.join("\n"),
       }}
       0
     else:
@@ -310,8 +316,18 @@ proc runHook(root, event, input: string): int =
       if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch_root)
       let unread = checkSignoffRead(turn.text, turn.calls)
       if found.len == 0 and unread.len == 0: return 0
-      echo %*{"decision": "block", "reason": reasonStop(found, unread)}
+      let has_signoff = turn.text.splitLines.anyIt(it.strip == HEADING_SIGNOFF)
+      echo %*{"decision": "block", "reason": reasonStop(found, unread, has_signoff)}
       0
+  of "prompt":
+    # Line names skill of moment message holds; it adds context, and never blocks message.
+    let context = contextPrompt(input.parseJson{"prompt"}.getStr)
+    if context.len == 0: return 0
+    echo %*{"hookSpecificOutput": {
+      "hookEventName": "UserPromptSubmit",
+      "additionalContext": context,
+    }}
+    0
   of "start":
     var drift: seq[Finding]
     try:

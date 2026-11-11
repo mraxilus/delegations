@@ -96,8 +96,11 @@ suite "Audit":
       (listed.with(entry(script, source)), script),
       (listed.replaced(nimble, TEXT_NIMBLE & source), nimble),
     ]:
-      check tree.auditTree.mapIt((it.path, it.message)) ==
-          @[(path, "Acronym stays only where glossary lists it (V.9); got `XML` in `toXML`.")]
+      check tree.auditTree.mapIt((it.path, it.message)) == @[(
+        path,
+        "Acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
+          "spell it out; got `XML` in `toXML`.",
+      )]
     let unlisted = treeGood().with(entry(module, STRICT_FUNCS & "\n\n" & source))
     check unlisted.auditTree.mapIt(it.message).filterIt("Acronym" in it).len == 3  # none listed
 

@@ -283,6 +283,9 @@ Six moves throughout the work, and not at its end:
    written, and only then. The audit checks the shape of a glossary, and never whether its
    words were chosen. This rule holds by the reading of the Architect, and by nothing else.
 
+A name in code is no term. It follows the charter, and no delegate proposes it or asks the
+Architect for it. The skill `propose-term` points here.
+
 Where the process of Pocock would write an architecture decision record, this repository
 writes the decision into `PROVENANCE.md`, under its subsystem (Article VIII.6). There is no
 `docs/adr/`.
@@ -344,7 +347,16 @@ red. Read the answer back and stop. The change that the answer implies waits for
 that ask for it. Where the line is genuinely unclear, say what you would do, and ask before
 you do it.
 
+**Answer a request for status from a fresh read of the open items of your role.** Sort them
+as `COORDINATOR.md`, The queue, sorts them, and give each a link and what it waits for. Order
+the ready pull requests so that each merges clean: an earlier stacked branch goes first.
+Contributor work goes before a change to the charter, since that change moves the stamp of
+every open branch. Then name what you still owe. `/triage all` reads every open item of the
+repository.
+
 ### The sign-off
+
+The skill `sign-off` points here.
 
 **Sign off when you stop, and when a pull request goes ready.** You stop when nothing is left,
 or when nothing moves until someone else acts. A pull request that you mark ready waits on the
@@ -442,6 +454,11 @@ Write each decision so that the Architect can decide it from the block alone.
 - **Recommends** names one option, and why, in one sentence.
 - **Delay costs** says what waits while nobody decides.
 
+**A ruling is recorded before it is acted on.** A bare letter answers the only open decision.
+Where two are open, ask which one it answers. Where the words leave a choice open, ask again,
+and choose nothing. A ruling that binds every later delegate goes into the charter, through a
+curator. The skill `rule` points here.
+
 #### A decision explained
 
 **When the Architect types `/explain` after a sign-off that holds decisions, explain them one at
@@ -535,7 +552,7 @@ belongs to pga_visualiser and blocks nothing here.
 Instructions for a delegate who works on a project that keeps a `PROVENANCE.md`. The file
 records who made the work, from what, how far it has been checked, and why the design is the
 way it is. Whoever picks the project up next reads it, human or model. They rebuild it from
-the file and the source, without a repeat of your mistakes.
+the file and the source, without a repeat of your mistakes. The skill `record` points here.
 
 Header table for `PROVENANCE.md`:
 

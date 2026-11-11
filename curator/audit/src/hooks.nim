@@ -11,7 +11,11 @@
 ##     of turn that pushed or posted and closes with neither sign-off block nor working line,
 ##     end of any turn whose message names `#N` outside link or cites charter reference with no
 ##     description, and sign-off from turn that read no open issue of its role; `start` prints
-##     role, read order, carried list and drift; `push` and `msg` serve git hooks.
+##     role, read order, carried list and drift; `prompt` reads each message of Architect;
+##     `push` and `msg` serve git hooks.
+##   Hook that sees moment of skill names that skill, as Architect ruled on D2 of #870: `stop`
+##     names `/sign-off`, `start` names `/sync` and `/triage`, `edit` names `/propose-term` and
+##     `/record`, and `prompt` names `/rule`, `/triage` and `/merged`. Line is hint, never refusal.
 ##   `gh api` in Bash posts as GitHub tools do, so `bash` reads each `gh api` write, maps it to
 ##     tool whose rules it shares, and holds its body as `body` holds tool's; `stop` counts it as
 ##     post. Hook runs before command, so body comes from literal text or file already written:
@@ -46,6 +50,7 @@
 
 import std/[json, options, os, sequtils, strutils, uri]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
+from ./glossary import GLOSSARY_ROOT
 
 
 type
@@ -185,6 +190,30 @@ const
     ## File in git dir where `koch check` writes tree hash it passed on, which `pre-push`
     ##   reads; `pathMark` places it.
   WORD_ROLE = "Role:"  ## Word after bold marker in sign-off role line.
+  LINE_RULE* = "The skill /rule records this ruling before you act on it."
+    ## Line `prompt` adds where message of Architect rules on decision.
+  LINE_TRIAGE* = "The skill /triage reads every open item before you answer."
+    ## Line `prompt` adds where message asks where work stands, or what delegate owes.
+  LINE_MERGED* = "The skill /merged holds the steps after a merge."
+    ## Line `prompt` adds where message reports merge.
+  LINE_SIGNOFF* = "The skill /sign-off holds these steps."
+    ## Line `stop` adds where it refuses message that holds sign-off.
+  LINE_SYNC* = "The skill /sync holds the steps."  ## Close of drift line `start` prints.
+  LINE_CARRIED* = "The skill /triage reports each item of this list that is not met."
+    ## Line `start` prints under carried list.
+  LINE_GLOSSARY* = "A glossary takes only a term that the Architect selected; the skill " &
+    "/propose-term holds the steps."
+    ## Line `edit` adds after write to glossary.
+  LINE_RECORD* = "The skill /record holds the steps, and the agent record-reviewer reads " &
+    "the diff."
+    ## Line `edit` adds after write to record.
+  PHRASES_STATUS = [
+    "status", "merge order", "next step", "next steps", "priority list", "update the list",
+    "duties", "duty", "anything left",
+  ]
+    ## Phrases of message of Architect that asks where work stands, or what delegate owes.
+  WORD_MERGED = "merged"  ## Word of message of Architect that reports merge.
+  LETTERS_OPTION = {'a' .. 'd'}  ## Letters that name option of decision.
 
 
 func isStringRole*(s: string): bool =
@@ -1302,13 +1331,14 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
   )]
 
 
-func reasonStop*(found, unread: openArray[Finding]): string =
+func reasonStop*(found, unread: openArray[Finding]; has_signoff = false): string =
   ## Render why `stop` hook refuses message ending turn, one finding to line.
   ##   Message is on screen once hook reads it, so delegate replies with diff of each error
   ##     alone; whole message sent again reads twice (D1 of #570), and so does each line of it.
   ##   Reply passes unread, since `stop_hook_active` is set, so its `-` line refuses nothing.
   ##   Unread queue takes read in place of diff: what waits there can change sign-off, so
   ##     delegate takes it first and replies with one line naming it (#742).
+  ##   Refused message holding sign-off closes with line naming skill that holds its steps.
   var parts: seq[string]
   if found.len > 0:
     parts.add "Mend message that ends this turn (GUIDE.md, Output contract). Reply with a " &
@@ -1319,6 +1349,7 @@ func reasonStop*(found, unread: openArray[Finding]): string =
     parts.add "Read queue before this sign-off stands (GUIDE.md, Output contract): list open " &
       "issues that line below names, take first what waits there, and reply with one line " &
       "naming it, and no diff:\n" & unread.mapIt(it.message).join("\n")
+  if has_signoff: parts.add LINE_SIGNOFF
   parts.join("\n")
 
 
@@ -1390,13 +1421,53 @@ func contextStart*(branch, contributor, heading_carried: string; drift: seq[Find
       ", then GUIDE.md."
   if drift.len > 0:
     lines.add "Base gained charter or checker your branch lacks; merge `origin/main` and " &
-      "re-stamp (`check-drift`)."
+      "re-stamp (`check-drift`). " & LINE_SYNC
   lines.add "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` once done, " &
     "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
   lines.add ""
   lines.add heading_carried
   lines.add contributor.section(heading_carried).strip
+  lines.add ""
+  lines.add LINE_CARRIED
   lines.join("\n")
+
+
+func wordsPrompt(message: string): seq[string] =
+  ## Split message into lowercase words of letters and digits, so punctuation parts no phrase.
+  var word = ""
+  for c in message.toLowerAscii & " ":
+    if c in {'a' .. 'z', '0' .. '9'}: word.add c
+    elif word.len > 0:
+      result.add word
+      word = ""
+
+
+func isRuling(words: openArray[string]): bool =
+  ## Decide whether message rules on decision: it names `D<n>`, or is one option letter alone.
+  if words.len == 1 and words[0].len == 1 and words[0][0] in LETTERS_OPTION: return true
+  words.anyIt(it.len >= 2 and it[0] == 'd' and it[1] in Digits)
+
+
+func contextPrompt*(message: string): string =
+  ## Compose lines naming each skill whose moment message of Architect holds; empty where none.
+  ##   Phrase matches whole words, so `status` matches `status?` and never `statuses`.
+  ##   Line is hint and refuses nothing, so word that matches by chance costs one line read.
+  let
+    words = message.wordsPrompt
+    text = " " & words.join(" ") & " "
+  var lines: seq[string]
+  if words.isRuling: lines.add LINE_RULE
+  if " " & WORD_MERGED & " " in text: lines.add LINE_MERGED
+  if PHRASES_STATUS.anyIt(" " & it & " " in text): lines.add LINE_TRIAGE
+  lines.join("\n")
+
+
+func contextEdit*(path: string): string =
+  ## Compose line naming skill whose moment write to path is; empty for any other file.
+  let name = path.splitPath.tail
+  if name == GLOSSARY_ROOT: LINE_GLOSSARY
+  elif name == FILE_RECORD: LINE_RECORD
+  else: ""
 
 
 func isTurnWriting*(calls: openArray[Call]): bool =

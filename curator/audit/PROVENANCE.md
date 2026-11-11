@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | f1b6dac57440dd3d |
+| Rules   | 46b8902851be0997 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -2355,6 +2355,8 @@ that holds it. The events, each one a verb argument:
   refuses `#N` outside a link, and an article or a duty cited with no description.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
+- `prompt` reads each message of the Architect, and names the skill of its moment, as section
+  Skills says.
 
 **A post holds one footer, as its last line, and the footer of the proxy serves as that
 footer.** The GitHub proxy appends a footer that links the delegate to each post that ends in
@@ -2643,28 +2645,55 @@ has that form. So `(X.2, X.9)` after text passes whole, and a line or a bullet t
 
 ## Skills
 
-**A skill names an act that the Architect asks for, and points at the section of the charter
-that binds it.** Claude Code loads `.claude/skills/<name>/SKILL.md` when a person types
-`/<name>`, or when the model judges that the description of the skill fits the turn. A word
-that the Architect types in a reply holds no such pointer, and its meaning rests on the memory
-of the delegate. The skill `explain` asks for an explanation of each decision of a sign-off.
-Its name says the act, and its text says that the Architect rules after the explanation.
+**A skill holds the moment of an act, and points at the section of the charter that binds the
+act.** Claude Code loads `.claude/skills/<name>/SKILL.md` when a person types `/<name>`, or
+when the model judges that the description of the skill fits the turn. A rule that holds by
+reading alone then reaches the delegate at the moment that it applies. Each step lives in one
+place, as the Architect ruled on #870. So a skill keeps its moment, its pointers, and only the
+steps that no section holds.
 
-- The skill points at `GUIDE.md`, A decision explained, and repeats no paragraph of it, as
-  `steward` repeats none of the rules that it names. Copies reports a paragraph written twice.
-- `/explain all` puts every decision in one message, which the Architect also asks for. With no
-  argument, the skill keeps the order of the guide: `D1` alone, and the next after its ruling.
-- Rejected: the word `decide`, which a delegate reads as a request to decide.
-- Rejected: the bare word `explain` in `GUIDE.md` alone. The delegate must still recall it from
-  the guide at the moment of the reply.
+| Skill | Moment | Steps that no section holds |
+| --- | --- | --- |
+| `explain` | The Architect asks for the reasons of a decision | None |
+| `rule` | The Architect rules | One comment for each item |
+| `triage` | The Architect asks for status or duties | Merge order, proven by `git merge-tree` |
+| `sync` | `main` gained charter or checker | A Rules row in conflict takes either side |
+| `sign-off` | The turn stops | None |
+| `propose-term` | A concept needs a word | None |
+| `merged` | A pull request merged | Its worktree and branch removed |
+| `record` | A design changes | The diff goes to `record-reviewer` |
+| `steward` | The harness drives a pull request | None |
+
+**A hook that sees the moment of a skill names the skill, as the Architect ruled on D2 of
+#870.** A description leaves the model to notice the moment, and the hook sees it. The line
+is a hint, and it refuses nothing.
+
+- `prompt` reads each message of the Architect. A token `D<n>`, or one option letter alone,
+  names `rule`. A word of status, duty or merge order names `triage`, and `merged` names
+  `merged`.
+- `stop` names `sign-off` where it refuses a message that holds a sign-off.
+- `start` names `sync` in its drift line, and `triage` under the carried list.
+- `edit` names `propose-term` after a write to a glossary, and `record` after a write to a
+  record.
+- The drift finding names `sync`, and the finding of an acronym names `propose-term`.
+- Verified by `suites/test_hooks.nim`, `suites/test_base.nim` and `suites/test_names.nim`.
+
+- Rejected: the word `decide` for `explain`, which a delegate reads as a request to decide.
+- Rejected: a skill that copies the steps of its section. The copy drifts, since Copies catches
+  only a paragraph written twice, word for word.
+- Rejected: `queue` for `triage`, since the glossary gives that word to the open issues of one
+  role. `status` is a command of Claude Code itself.
+- Rejected: `duties` as a skill apart, which would read the same queue as `triage`.
 - Cost: a skill is no governing path, so a change to it re-stamps no Rules row. Reading holds
-  the skill to the section that it points at.
+  each skill to the section that it points at.
 - Cost: Claude Code ignores a key of the front matter that its documentation does not list, as
   it ignores `invokeAs` of `steward`.
-- The keys `name`, `description`, `when_to_use` and `argument-hint` are those that the Skills
-  page of Claude Code lists, read on 2026-11-11. The page says that Claude Code appends the
-  argument of `/explain D2` to a skill whose body names no `$ARGUMENTS`.
-- Unverified until a delegate starts on `main`, and Claude Code lists `explain` among its skills.
+- Cost: `prompt` runs before each message of the Architect, so each message costs one run of
+  the hook.
+- The keys of the front matter are those that the Skills page of Claude Code lists, read on
+  2026-11-11.
+- Verified by hand in Claude Code at `main`, 2026-11-11: it listed `explain` among its skills,
+  with its description and its moment.
 
 ## Watching main
 
