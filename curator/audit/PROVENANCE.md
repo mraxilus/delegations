@@ -218,8 +218,8 @@ can pass 25 words.
   That path is `gaps.md`, which a generator writes and no delegate may rewrite by hand.
 - Verified by `suites/test_english.nim`: the derived arms. A project and a domain that do not exist
   yet are governed. A domain outside the registry is not, and neither is a README below a project
-  directory. That last arm is the one that reddened `dance_ontology` on 2026-09-23, so it has
-  its own assertion. One more assertion holds that a derived path is read, and not merely listed.
+  directory. That arm has its own assertion, because `## Open questions` holds its widening. One
+  more assertion holds that a derived path is read, and not merely listed.
 
 ## Form
 
@@ -722,21 +722,23 @@ on the same merge ref is what holds a stale stamp there.
   `main`, with `main` as the first parent, it reports nothing.
 
 **A finding inside a project blocks only a branch of the role that owns that project.** The
-Architect ruled so (D1 a of #871), since a project at rest would otherwise hold a check that
-reddens it without end. So such a check lands once the rest of the tree is clean, and each
+Architect ruled so (D1 a of #871), since a project at rest would otherwise keep a check that
+reddens it waiting without end. So such a check lands once the rest of the tree is clean, and each
 project clears its findings when it next moves. `koch check` on the hook and `check-files` on
 the runner read the same split from the branch name. Each lists what it holds under one
 heading, and blocks on the rest.
 
 Held means any path deeper than `contributor/<domain>/<project>/` or `curator/<project>/`,
-records included. The root curator owns each curator project, a curator of one project owns
-that one, and a contributor owns its own. `main` holds each project, because some branch holds
-each one, and a branch that passes must merge into a `main` that passes. The indexes above a
-project and the root files are the curator's, so they block each branch. A finding that a rules
-change leaves for the curator carries a propagation flag at its source, and blocks in any
-project. A path outside the scope of the branch carries a scope flag, because it is the change
-of the branch itself, which no project clears. So it blocks wherever it lies, as `check-scope`
-does on the runner.
+records included. A branch owns each project whose code it may write. So the root curator owns
+each curator project, a curator of one project owns that one, and a contributor owns its own.
+`main` holds each project, because some branch holds each one, and a branch that passes must
+merge into a `main` that passes. The indexes above a project and the root files are the
+curator's, so they block each branch.
+
+Two flags block in any project, and each is set where its finding is made. A finding that a
+rules change leaves for the curator carries the propagation flag. A path outside the scope of the
+branch carries the scope flag, because it is the change of the branch itself, which no project
+clears. So it blocks wherever it lies, as `check-scope` does on the runner.
 
 - The propagation flag marks the stale stamp, and a standard that belongs in the root glossary.
 - Rejected: a check that waits until each project fixes. A project at rest, or put off without
@@ -761,10 +763,13 @@ does on the runner.
   further. On the runner, `check-scope`, `check-role` and `check-files` read the same name.
 - Cost: a new check that reports false findings in a project has them held too, so its branch
   merges green. Duty 3 still has the curator read each finding before the issues open.
-- Cost: a finding that a curator writes in a contributor record is held too, because a change
-  of a curator there does not count. The `edit` hook names it after an edit by a tool, and asks
-  for a fix of each finding in that file, held or not. Measured on 2026-11-11, 1 of the 200
-  latest commits on `main` had a curator change that prose past a Rules row, in 8 lines.
+- Cost: a finding that a curator writes in a contributor record is held too. The split reads
+  the path of a finding, and never the role that wrote it. The `edit` hook names it after an
+  edit by a tool, under its held line. Measured on 2026-11-11 with `git log --first-parent`, 1
+  of the 200 latest commits on `main` changed such prose past a Rules row: 4 lines, in #715.
+- Cost: a branch of the root curator blocks on each finding in every curator project, since it
+  owns them all. So a check from the branch of one curator project leaves its findings in
+  another to the next pull request of the root curator.
 - Verified by `suites/test_scope.nim`, which fails with either flag ignored, and by
   `suites/test_hooks.nim`, `suites/test_provenance.nim`, `suites/test_glossary.nim` and
   `suites/test_findings.nim`.
@@ -2374,7 +2379,8 @@ that holds it. The events, each one a verb argument:
 
 - `path` refuses a write outside the scope of the branch, before the write.
 - `edit` runs the static checks after a write, and returns the findings of that file as
-  context.
+  context. It splits them by the branch of the checkout, as `koch check` does, so a held
+  finding never stands under "fix before push".
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
   history. It holds a post made through `gh api` as `body` holds the post of a tool.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
@@ -3130,6 +3136,7 @@ pull requests sat on both sides, so the subject of a call does not say which met
   `buf breaking` holds them now.
 - Whether the English set should take each Markdown file below a project directory, except a
   generated one such as `gaps.md`. Article VI.8 governs that prose, and duty 3 lets such a
-  widening land once the rest of the tree is clean. Measured on 2026-09-23, `design/README.md`,
-  `sim/README.md` and `sim/verdicts.md` of `dance_ontology` gave 192 findings. Until a widening
-  lands, that prose holds Article VI.8 by reading alone.
+  widening land once the rest of the tree is clean. Measured on 2026-11-11, with
+  `design/README.md`, `simulation/README.md` and `simulation/verdicts.md` of `dance_ontology`
+  added to `PATHS_ENGLISH`, `nim r koch check-files` reported 5 findings, all in `verdicts.md`.
+  Until a widening lands, that prose holds Article VI.8 by reading alone.
