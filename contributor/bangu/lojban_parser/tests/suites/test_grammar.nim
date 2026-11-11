@@ -121,7 +121,7 @@ const
     "mi klama .i .i do klama", "ni'o .i mi klama", "mi klama .i je", "mi klama .ije .i do klama",
     "mi klama .i pu ba bo do klama", "mi klama .i pu mi klama .i ba do klama",
     ".ije mi klama .i do klama", "mi klama .i tu'e .i do klama .i mi cadzu", "mi klama .i tu'e .i",
-    "le .i mi klama", "mi klama le .i do klama",
+    "le .i mi klama", "mi klama le .i do klama", "mi klama .i lu do cadzu .i mi klama",
   ]
     ## Texts holding each place where passes cut or read whole: `.i` alone and `.i` that joins,
     ##   `ni'o`, and `tu'e`, `lu` and `to` open or closed; constructed.
@@ -179,11 +179,11 @@ func terminalsRead(text: string): Option[seq[Terminal]] =
 
 
 func partsRead(text: string): Option[seq[Slice[int]]] =
-  ## Read terminals of text, and give each part passes cut; none where passes read whole.
+  ## Read terminals of text, and give each part passes cut.
   let
     terminals = text.terminalsRead.get
     split = terminals.toParts(0, terminals.len)
-  if split.isNone: none(seq[Slice[int]]) else: some(split.get.parts)
+  some(split.parts)
 
 
 func isCutting(text: string): bool =
@@ -429,13 +429,14 @@ suite "Internal: Grammar":
     check TEXTS_PASSES[12].partsRead == some(@[0 .. 1, 2 .. 5])  # no BO after tag; constructed
     check TEXTS_PASSES[13].partsRead == some(@[0 .. 6])  # rule 12, jek past NA; constructed
     check TEXTS_PASSES[9].partsRead == some(@[0 .. 3, 4 .. 7])  # rule 4, NIhO ...; constructed
-    check TEXTS_PASSES[2].partsRead.isNone  # lu open, cu decides its end; constructed
-    check TEXTS_PASSES[3].partsRead.isNone  # to open, cu decides its end; constructed
+    check TEXTS_PASSES[2].partsRead == some(@[0 .. 10])  # lu open from start, one part to end
+    check TEXTS_PASSES[3].partsRead == some(@[0 .. 11])  # to open, no cut before it; constructed
+    check TEXTS_PASSES[^1].partsRead == some(@[0 .. 1, 2 .. 8])  # cut before lu open; constructed
     let terminals = TEXTS_PASSES[1].terminalsRead.get
-    check terminals.toParts(0, terminals.len) == some((@[0 .. 1, 2 .. 3], 4))  # tu'e open, rule 14
+    check terminals.toParts(0, terminals.len) == (@[0 .. 1, 2 .. 3], 4)  # tu'e open, rule 14
 
 
   test "Passes read text of article joined part by part, its open tu'e too":
     let terminals = textJoined().terminalsRead.get
-    check terminals.toParts(0, terminals.len).get.parts.len == COUNT_PARTS_JOINED  # #849
+    check terminals.toParts(0, terminals.len).parts.len == COUNT_PARTS_JOINED  # #849
     check terminals.buildText(0, terminals.len).isSome  # passes hold, and need no one pass

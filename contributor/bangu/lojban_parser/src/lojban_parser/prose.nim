@@ -40,8 +40,9 @@
 ##     its tree, whose words that read keep their trees; this parser decides no mend.
 ##     Words stage refuses stand as unit no terminal holds, with that stage, and grammar reads
 ##       terminals around them: written word stream refuses, as written; words rule of 19.16
-##       refuses, as quotation left open, or `zei` joining nothing; and cmavo no list gives
-##       selma'o, with words marking it.
+##       refuses, as quotation erasure leaves in part, or `zei` joining nothing; and cmavo no
+##       list gives selma'o, with words marking it. `lo'u` no `le'u` closes stands alone, and
+##       words after it read on, as words after `zoi` with no delimiter do.
 ##     Unit refused stands as leaf in lowest node holding both units read around it, between
 ##       them, or in root at end of text: no rule of 21.1 holds it, so its place is no claim of
 ##       rule it would take.
@@ -99,6 +100,24 @@ type
       ##   `units`, and place grammar stops at indexes them too, count of them where text ends.
     size*: int  ## Bytes of text, which names place where text ends.
 
+  ReadingParts* = object
+    ## Define reading of text as its parts, and what live text reads past them: erasure that
+    ##   reaches before text, and quotation that waits for its closer (`readTextParts`).
+    reading*: ReadingMarked
+      ## Reading whose root holds node of each part (`readGrammarParts`), and each unit refused
+      ##   between parts, in order; each part reads alone.
+    open*: seq[int]  ## Unit of each `tu'e`, `lu` or `to` that waits for its closer.
+    zois*: seq[tuple[start: int, delimiter: string]]
+      ## Byte of written word of each `zoi` that no delimiter closes, with that delimiter.
+    lohus*: seq[int]
+      ## Byte of each `lo'u` whose words stream reads to end of text: no `zo` quotes it, and no
+      ##   `le'u` closes it, as stream reads them, whatever unit rules give it; held where `su`
+      ##   after it drops its unit too. So text after it reads as stream reads it, inside words
+      ##   it quotes, though erasure erases its `le'u`, or rules read it as text `la'o` quotes.
+    markers*: seq[Option[Terminal]]
+      ## Marker of each `sa` that finds none, in any pass of rules of 19.16, so erases to start.
+    su*: Option[int]  ## Byte of last `su`, which erases text before it (19.13); none where none.
+
   Role {.pure.} = enum  ## Define part word takes in quotation, or none (19.9, 19.10).
     Plain  ## Word acting as itself.
     Zo  ## `zo` quoting next word.
@@ -115,6 +134,10 @@ type
     head: int  ## Occurrence whose terminal piece takes, for word alone.
     terminal: Option[Terminal]  ## Terminal of construct; none for word alone.
     is_plain: bool  ## Piece is one plain word, which construct may still act on.
+
+  Reach = object  ## Define what erasure reaches before start of words, which live text reads.
+    markers: seq[Option[Terminal]]  ## Marker of each `sa` that finds none, so erases to start.
+    su: Option[int]  ## Index of last `su`, which erases text before it; none where none.
 
 
 const
@@ -150,14 +173,31 @@ func isSelmaho(word: Occurrence, selmaho: set[Selmaho]): bool =
 
 #[ Quotation and erasure ]#
 
-func toRoles(words: openArray[Occurrence]): seq[Role] =
+func isClosingLohu*(words: openArray[Occurrence]): bool =
+  ## Test words hold `le'u` that no `zo` quotes, which closes `lo'u` before them, as stream reads
+  ##   words `lo'u` quotes (19.9).
+  var is_quoting = false
+  for k in 0 ..< words.len:
+    template word: untyped = words[k]
+      ## Alias word, which `let` would copy.
+    if not word.reading.is_word: continue
+    if is_quoting:
+      is_quoting = false
+      continue
+    if word.isSelmaho({Selmaho.Zo}): is_quoting = true
+    elif word.isSelmaho({Selmaho.Lehu}): return true
+  false
+
+
+func toRoles(words: openArray[Occurrence], is_lohu = false): seq[Role] =
   ## Give part each word takes in quotation: `zo` quotes next word, `lo'u` words up to `le'u`
   ##   no `zo` quotes, and `zoi` its delimiter, text and delimiter, as `readStream` holds them.
-  ##   `zo` ending text quotes no word, and `quotations` refuses it (19.10).
+  ##   `zo` ending text quotes no word, and `quotations` refuses it (19.10). With `is_lohu`,
+  ##   words open inside words `lo'u` quotes, as `readStream` reads them.
   result = newSeq[Role](words.len)
   var
     i = 0
-    is_lohu = false
+    is_lohu = is_lohu  # words `lo'u` quotes, up to `le'u`
   while i < words.len:
     if words[i].isSelmaho({Selmaho.Zo}):
       result[i] = (if is_lohu: Role.Inner else: Role.Zo)
@@ -177,12 +217,14 @@ func toRoles(words: openArray[Occurrence]): seq[Role] =
 
 
 func erased(
-    words: openArray[Occurrence], roles: openArray[Role], offender: var seq[int]
+    words: openArray[Occurrence], roles: openArray[Role], offender: var seq[int],
+    reach: var Reach,
 ): Option[seq[int]] =
   ## Keep words erasure leaves, by index (19.13): `si` erases word before it, `sa` back to last
   ##   word of selma'o of word after it or to start, `su` every word before it; cmavo
   ##   quotation holds erase nothing. None where `si` or `sa` has nothing to act on, which
-  ##   `offender` then names.
+  ##   `offender` then names. `reach` names each `sa` that erases to start, and last `su`.
+  reach = Reach()
   var kept: seq[int]
   for i, word in words:
     if roles[i] != Role.Plain or not word.isSelmaho({Selmaho.Si, Selmaho.Sa, Selmaho.Su}):
@@ -201,9 +243,11 @@ func erased(
       let
         marker = words[i + 1].reading.toTerminal
         last = toSeq(0 ..< kept.len).filterIt(words[kept[it]].reading.toTerminal == marker)
+      if last.len == 0: reach.markers.add marker
       kept.setLen(if last.len > 0: last[^1] else: 0)
     else:
       kept.setLen(0)
+      reach.su = some(i)
   some(kept)
 
 
@@ -213,7 +257,9 @@ func quotations(
 ): Option[seq[Piece]] =
   ## Group words kept into pieces: each quotation whole, as one terminal, and each other word
   ##   alone; none where erasure leaves part of quotation, or `lo'u` quotes no word (19.80).
-  ##   `offender` then names words of that quotation kept: erasure leaves its first words.
+  ##   `offender` then names words of that quotation kept: erasure leaves its first words. Of
+  ##     `lo'u` that no `le'u` closes, it names `lo'u` alone, so words after it read on, as words
+  ##     after `zoi` with no delimiter do: in live text, it holds no word of hours after it.
   var
     pieces: seq[Piece]
     p = 0
@@ -238,7 +284,7 @@ func quotations(
       while q < kept.len and roles[kept[q]] == Role.Inner and kept[q] == kept[q - 1] + 1: inc q
       let is_whole = q < kept.len and roles[kept[q]] == Role.Lehu and kept[q] == kept[q - 1] + 1
       if not is_whole or q == p + 1:
-        offender = kept[p ..< (if is_whole: q + 1 else: q)]
+        offender = (if is_whole: kept[p .. q] else: @[i])
         return none(seq[Piece])
       pieces.add Piece(words: kept[p .. q], head: i, terminal: some(Selmaho.Lohu.toTerminal))
       p = q + 1
@@ -357,24 +403,25 @@ func indicated(pieces: openArray[Piece], words: openArray[Occurrence]): seq[Piec
 
 #[ Reading ]#
 
-func toParsable(occurrences: openArray[Occurrence]): seq[Occurrence] =
+func toParsable(occurrences: openArray[Occurrence], is_lohu = false): seq[Occurrence] =
   ## Give words of parsable input: stream stops after `fa'o` no quotation holds, which stands
-  ##   in no unit (19.15).
+  ##   in no unit (19.15); with `is_lohu`, words open inside words `lo'u` quotes.
   result = @occurrences
   let is_ending = result.len > 0 and result[^1].isSelmaho({Selmaho.Faho}) and
-    result.toRoles[^1] == Role.Plain
+    result.toRoles(is_lohu)[^1] == Role.Plain
   if is_ending: result.setLen(result.len - 1)
 
 
 func toPieces(
-    words: openArray[Occurrence], refusal: var RefusalText, offender: var seq[int]
+    words: openArray[Occurrence], refusal: var RefusalText, offender: var seq[int],
+    reach: var Reach,
 ): Option[seq[Piece]] =
   ## Group words into pieces by rules of 19.16 that act on words: quotation, then erasure,
   ##   then `zei`, BAhE, `bu` and indicators; none where rule has nothing to act on, which
-  ##   `refusal` and `offender` then name.
+  ##   `refusal` and `offender` then name. `reach` gives what erasure reaches before words.
   let
     roles = words.toRoles
-    kept = words.erased(roles, offender)
+    kept = words.erased(roles, offender, reach)
   refusal = RefusalText.Construct
   if kept.isNone: return none(seq[Piece])
   let quoted = words.quotations(roles, kept.get, offender)
@@ -405,7 +452,8 @@ func readText*(text: string): ReadingText =
   var
     refusal: RefusalText
     offender: seq[int]
-  let pieces = words.toPieces(refusal, offender)
+    reach: Reach
+  let pieces = words.toPieces(refusal, offender, reach)
   if pieces.isNone: return refuse(refusal, (if words.len > 0: words[^1].start else: 0))
 
   # Hold each piece as terminal, and read terminals by grammar.
@@ -509,21 +557,23 @@ func placeRefused(tree: var Node, units: openArray[Unit]) =
     tree.insertAt(a.toOpenArray(0, depth - 1), a[depth] + 1, run.leaves)
 
 
-func readTextMarked*(text: string): ReadingMarked =
-  ## Read text as `readText` does, and read on past each error, marking it (#859): words stage
-  ##   refuses stand as unit of their own, which grammar reads around, and tree marks where
-  ##   grammar stops (`readGrammarMarked`). Text `readText` reads gives reading it gives.
-  ##   Stream: each written word stream refuses stands as occurrence, as written, and stream
-  ##     reads text again with its bytes blanked; so each refusal holds one written word.
-  ##   Rules of 19.16: words rule refuses stand as unit, and rules read words left again.
-  ##   Selma'o: piece of cmavo no list gives selma'o stands as unit, with words it holds.
-  ##   This parser decides no mend (ruling `D1 a` of #859); other program reads tree and mends.
+func readUnits(text: string, is_lohu = false): ReadingParts =
+  ## Read text by stream and rules of 19.16 into units, in order of first word, reading on past
+  ##   each error: words stage refuses stand as unit of their own (`readTextMarked`). Tree stays
+  ##   empty; reading gives what live text reads past units: erasure, and quotation that waits.
+  ##   `su` erases text before it (19.13): each unit before it drops, refused or not.
+  ##   With `is_lohu`, text opens inside words `lo'u` quotes (`readStream`).
+  template occurrences: untyped = result.reading.occurrences
+    ## Alias words of reading.
+  template units: untyped = result.reading.units
+    ## Alias units of reading.
+  result.reading.size = text.len
 
   # Stream: blank each written word stream refuses, which stands as occurrence of its own.
   var
     blanked = text
     refused: seq[Occurrence]
-    stream = blanked.readStream
+    stream = blanked.readStream(is_lohu)
   while not stream.is_read:
     let span = blanked.writtenAt(stream.start)
     var k = span.a
@@ -533,14 +583,14 @@ func readTextMarked*(text: string): ReadingMarked =
       pause: (if '.' in text[k ..< span.a]: Pause.Written else: Pause.Absent),
       reading: Reading(is_word: false, refusal: stream.refusal, detail: stream.detail),
     )
+    if stream.refusal == Refusal.Quotation and stream.detail.len > 0:
+      result.zois.add (span.a, stream.detail)  # `zoi` waits for its delimiter
     for i in span: blanked[i] = ' '
-    stream = blanked.readStream
+    stream = blanked.readStream(is_lohu)
   refused = refused.sortedByIt(it.start)
 
   # Words stream reads and words it refuses, in order of byte; each refused is unit of its own.
   var
-    occurrences: seq[Occurrence]
-    units: seq[Unit]
     indexes = newSeq[int](stream.occurrences.len)  # index in `occurrences` of each word read
     r = 0
   template addRefused() =
@@ -555,15 +605,18 @@ func readTextMarked*(text: string): ReadingMarked =
   while r < refused.len: addRefused()
 
   # Rules of 19.16: each set of words rule refuses stands as unit, and rules read words left.
-  let words = stream.occurrences.toParsable
+  let words = stream.occurrences.toParsable(is_lohu)
   var
     alive = toSeq(0 ..< words.len)  # index in `words` of each word rules read still
     pieces: seq[Piece]
+    reach: Reach
   while true:
     var
       refusal: RefusalText
       offender: seq[int]
-    let grouped = alive.mapIt(words[it]).toPieces(refusal, offender)
+    let grouped = alive.mapIt(words[it]).toPieces(refusal, offender, reach)
+    for marker in reach.markers:
+      if marker notin result.markers: result.markers.add marker  # `sa` refused later sought it
     if grouped.isSome:
       pieces = grouped.get
       break
@@ -581,15 +634,55 @@ func readTextMarked*(text: string): ReadingMarked =
     else: units.add Unit(words: held, is_read: false, refusal: RefusalText.Selmaho)
   units = units.sortedByIt(it.words[0])
 
-  # Grammar reads terminals, marking where it stops; then each unit refused takes its place.
-  var
-    read: seq[int]  # index in `units` of each unit grammar reads, in order
-    terminals: seq[Terminal]
+  # `lo'u` waits where stream reads words it quotes to end of text, whatever unit holds it.
+  let roles_stream = words.toRoles(is_lohu)  # part each word takes as stream reads it
+  for w in 0 ..< words.len:
+    let is_waiting = roles_stream[w] == Role.Lohu and
+      not words.toOpenArray(w + 1, words.high).isClosingLohu
+    if is_waiting: result.lohus.add words[w].start
+  if reach.su.isSome:
+    let start = occurrences[indexes[alive[reach.su.get]]].start
+    result.su = some(start)
+    units = units.filterIt(occurrences[it.words[0]].start > start)
+
+
+func toTerminals(units: openArray[Unit]): tuple[read: seq[int], terminals: seq[Terminal]] =
+  ## Give index of each unit grammar reads, in order, and terminal of each.
   for k in 0 ..< units.len:
     if units[k].is_read:
-      read.add k
-      terminals.add units[k].terminal
-  var tree = terminals.readGrammarMarked
-  tree.remap(read, units.len)
-  if read.len < units.len: tree.placeRefused(units)
-  ReadingMarked(occurrences: occurrences, units: units, tree: tree, size: text.len)
+      result.read.add k
+      result.terminals.add units[k].terminal
+
+
+func readTextMarked*(text: string): ReadingMarked =
+  ## Read text as `readText` does, and read on past each error, marking it (#859): words stage
+  ##   refuses stand as unit of their own, which grammar reads around, and tree marks where
+  ##   grammar stops (`readGrammarMarked`). Text `readText` reads gives reading it gives.
+  ##   Stream: each written word stream refuses stands as occurrence, as written, and stream
+  ##     reads text again with its bytes blanked; so each refusal holds one written word.
+  ##   Rules of 19.16: words rule refuses stand as unit, and rules read words left again.
+  ##   Selma'o: piece of cmavo no list gives selma'o stands as unit, with words it holds.
+  ##   This parser decides no mend (ruling `D1 a` of #859); other program reads tree and mends.
+  result = text.readUnits.reading
+  let (read, terminals) = result.units.toTerminals
+  result.tree = terminals.readGrammarMarked
+  result.tree.remap(read, result.units.len)
+  if read.len < result.units.len: result.tree.placeRefused(result.units)
+
+
+func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
+  ## Read text as `readTextMarked` does, into node of each part as passes cut it, each reading
+  ##   alone (`readGrammarParts`), so each sentence of live text goes out once it ends. Root
+  ##   holds them, with each unit refused between parts; `assembleText` builds tree of text.
+  ##   Live text (`is_live`) cuts after opener that waits for its closer (ruling on #859), and
+  ##     reads text after `lo'u` that waits inside words it quotes (`is_lohu`), as stream does.
+  result = text.readUnits(is_lohu)
+  template reading: untyped = result.reading
+    ## Alias reading of parts.
+  let
+    (read, terminals) = reading.units.toTerminals
+    (parts, open) = terminals.readGrammarParts(is_live)
+  reading.tree = Node(is_terminal: false, rule: "text", number: 0, children: parts)
+  reading.tree.remap(read, reading.units.len)
+  if read.len < reading.units.len: reading.tree.placeRefused(reading.units)
+  result.open = open.mapIt(read[it])

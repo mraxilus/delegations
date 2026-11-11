@@ -51,7 +51,7 @@ const
     "la .lauras. klama",  # stream: letter, letter, stress, quotation, split
     "mi xau klama", "ba'e xau klama",  # selma'o, with BAhE marking cmavo
     "zei mi klama", "mi zei", "si mi klama", "mi klama sa", "bu mi", "mi klama ba'e",  # construct
-    "mi cusku lo'u mi klama", "mi cusku zo", "lo'u le'u",
+    "mi cusku lo'u mi klama", "mi cusku lo'u .i mi klama", "mi cusku zo", "lo'u le'u",
     "mi se cmene zo .djan. si .djordj.",  # quotation: never closed, empty, part erased (19.13)
     "mi klama le", "mi klama le .i do citka", "lu mi klama le", "ge mi gi",
     "mi klama le zarci ku ku",  # grammar: text cut off, part, `lu` open, connective, terminator
@@ -76,11 +76,13 @@ const
         "(tail_terms 71))))",
     ),  # `zei` joining no word before it, in root before all units read (4.6)
     (
-      text: "mi cusku lo'u mi klama",
-      module: "(text 0 (sentence 2 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-        "(tanru_unit_2 130 152 (BRIVLA 3 \"cusku\")) (tail_terms 71))) " &
-        "(unread 9 Quotation \"lohu\" \"mi\" \"klama\"))",
-    ),  # `lo'u` no `le'u` closes, one unit with words it quotes, in root after all read (19.9)
+      text: "mi cusku lo'u .i mi klama",
+      module: "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 " &
+        "50 53 (tanru_unit_2 130 152 (BRIVLA 3 \"cusku\")) (tail_terms 71))) " &
+        "(unread 9 Quotation \"lohu\") (I 15 \"i\") (sentence 11 40 (sumti_6 80 97 " &
+        "(KOhA 17 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 20 \"klama\")) " &
+        "(tail_terms 71))))",
+    ),  # `lo'u` no `le'u` closes stands alone, and words after it read on (19.9, #859)
     (
       text: "mi klama le",
       module: "(error 11 sumti_6 97 (expects BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
@@ -168,7 +170,7 @@ func covers(tree: Node, terminals: openArray[Terminal]): seq[Node] =
   if tree.stop.isNone: return
   let
     split = terminals.toParts(0, terminals.len)
-    is_parted = split.isSome and (split.get.parts.len > 1 or split.get.inner < terminals.len)
+    is_parted = split.parts.len > 1 or split.inner < terminals.len
   if not is_parted: return @[tree]
   for child in tree.children:
     if not child.is_terminal and child.stop.isSome: result.add child
