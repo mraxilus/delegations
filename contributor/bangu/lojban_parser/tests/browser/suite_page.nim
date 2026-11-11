@@ -6,6 +6,8 @@
 ##     sample read whole, as its button reads it; text streamed word by word, then ended; text
 ##     typed piece by piece, kept open; edit that keeps no text before it, which starts new
 ##     reader. Case and each piece is file of one string, so no format stands between them.
+##   Merge of each case draws tree native build merges its NIF so far to, or line naming part
+##     refused, as `drawnMerged` gives both builds; next change hides it, as stale.
 ##   Drawing page shows and drawing native build writes compare as same browser serialises both,
 ##     so no quirk of serialiser stands between them.
 ##   Page whose rule of content refuses each worker reads on its own thread, shows same drawing,
@@ -37,6 +39,8 @@ type Case = object  ## Define case of page: how suite reads it, and what native 
   pieces: seq[string]  ## Text of case, piece by piece; whole text for `whole` and `stream`.
   html: string  ## Drawing native build gives.
   status: string  ## Line native build gives.
+  merged_html: string  ## Drawing of tree native build merges NIF so far to.
+  merged_status: string  ## Line of merge native build gives.
 
 
 let DOCUMENT {.nodecl, importc: "document".}: JsObject  ## Document of page; none in worker.
@@ -54,7 +58,8 @@ proc readCases(): seq[Case] =
   for k in 0 ..< count:
     let path = DIRECTORY_CASES & $k
     var item = Case(kind: readServed(path & ".kind"), html: readServed(path & ".html"),
-        status: readServed(path & ".status"))
+        status: readServed(path & ".status"), merged_html: readServed(path & ".merged.html"),
+        merged_status: readServed(path & ".merged.status"))
     for j in 0 ..< readServed(path & ".count.text").strip.parseInt:
       item.pieces.add readServed(path & "." & $j & ".piece")
     result.add item
@@ -88,7 +93,9 @@ proc runSuite() {.async.} =
     failures = countFailures()
 
   expectThat cases.len >= COUNT_CASES_LEAST, "backend serves " & $COUNT_CASES_LEAST & " cases"
-  var kinds: seq[string]
+  var
+    kinds: seq[string]
+    merges: seq[tuple[html, status: string, is_hidden: bool]]  # what page shows, case by case
   for item in cases:
     if item.kind notin kinds: kinds.add item.kind
     await item.readCase
@@ -96,10 +103,31 @@ proc runSuite() {.async.} =
       drawing = $DOCUMENT.getElementById(cstring("parts")).innerHTML.to(cstring)
       status = $DOCUMENT.getElementById(cstring("status")).textContent.to(cstring)
       claim = item.kind & " " & item.pieces.join("|")
+      is_hidden = DOCUMENT.getElementById(cstring("merged")).hidden.to(bool)
     expectThat drawing == $serialised(cstring(item.html)), "page draws as native build: " & claim
     expectThat status == item.status, "line names what native build names: " & claim
+    mergeShown()
+    merges.add (
+      $DOCUMENT.getElementById(cstring("merged-parts")).innerHTML.to(cstring),
+      $DOCUMENT.getElementById(cstring("merged-status")).textContent.to(cstring), is_hidden,
+    )
   expectThat kinds == @KINDS, "backend serves each kind of case"  # IX.3, guard keeps each kind
   ended "Page draws each case as native build draws its NIF: whole, streamed, typed and edited"
+
+  var count_merged, count_refused = 0
+  for k in 0 ..< cases.len:
+    let claim = cases[k].kind & " " & cases[k].pieces.join("|")
+    expectThat merges[k].html == $serialised(cstring(cases[k].merged_html)),
+      "merge draws tree native build merges to: " & claim
+    expectThat merges[k].status == cases[k].merged_status,
+      "line of merge names what native build names: " & claim
+    if cases[k].merged_status.startsWith("Merge refused"): inc count_refused else: inc count_merged
+  expectThat count_merged > 0 and count_refused > 0, "cases merge, and are refused"  # IX.3
+  ended "Merge draws tree of completed parts as native build merges them, or names part refused"
+
+  for k in 0 ..< cases.len:
+    expectThat merges[k].is_hidden, "change hides tree merged before it: " & cases[k].kind
+  ended "Each change hides tree merged before it, which no longer holds"
 
   let mode = $DOCUMENT.getElementById(cstring("mode")).textContent.to(cstring)
   expectThat mode == (if is_refused: MODE_PAGE else: MODE_WORKER), "line of mode; got " & mode

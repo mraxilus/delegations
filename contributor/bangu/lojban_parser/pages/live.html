@@ -54,6 +54,7 @@ code, .mono, textarea, .status, .eyebrow, .t, pre {
   font-variant-ligatures: common-ligatures contextual; }
 code, .mono { font-family: var(--mono); font-size: 0.92em; }
 header, section, figure { display: grid; gap: 10px; min-width: 0; margin: 0; }
+[hidden] { display: none; }
 .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--muted); }
 .lede, .hint, footer, .mode { color: var(--muted); }
@@ -78,6 +79,7 @@ button.stream { font-weight: 600; color: var(--accent); border-color: var(--acce
 .status { justify-self: start; font: 13px/1.4 var(--mono); padding: 4px 10px;
   border-radius: 12px; border: 1px solid var(--accent); color: var(--accent);
   background: var(--accent-wash); }
+.status.err { border-color: var(--fail); color: var(--fail); background: var(--fail-wash); }
 .parts { display: grid; gap: 12px; }
 .part { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule);
   border-radius: 10px; padding: 6px; }
@@ -124,10 +126,12 @@ pre .open { color: var(--open); }
       <textarea id="source" maxlength="2000" rows="2" spellcheck="false" autocomplete="off"
         autocapitalize="off">@SOURCE@</textarea>
       <span class="hint">A word added at the end goes to the same reader. Any other edit starts
-        a new reader. Stream sends the text again, one word at a time.</span>
+        a new reader. Stream sends the text again, one word at a time. Merge joins each completed
+        part into the one tree that one pass over the text gives.</span>
     </div>
     <div class="controls" aria-label="Samples">
       <button type="button" class="stream" id="stream">Stream</button>
+      <button type="button" class="stream" id="merge">Merge</button>
       <button type="button" data-sample="mi klama le zarci .i do cadzu">
         <span class="mono">mi klama le zarci .i do cadzu</span><span class="tag">reads</span>
       </button>
@@ -150,6 +154,11 @@ pre .open { color: var(--open); }
     <div class="parts" id="parts">@DIAGRAM@</div>
   </figure>
 
+  <section id="merged" aria-label="Tree of parts merged" hidden>
+    <p class="status" id="merged-status" role="status" aria-live="polite"></p>
+    <div class="parts" id="merged-parts"></div>
+  </section>
+
   <details open>
     <summary>NIF so far</summary>
     <pre id="nif">@NIF@</pre>
@@ -159,7 +168,9 @@ pre .open { color: var(--open); }
     alone: it names the rule nearest the words, then the outermost rule and the count. A red
     box is an error node, <code>srera</code>, at the byte where the grammar stops. A dashed card
     is a word that no terminal holds, <code>rivbi</code>. A part in amber is still open: the
-    next change replaces it. The parser is compiled from the Nim source of
+    next change replaces it. Merge drops each word that erasure or <code>fa'o</code> leaves out,
+    and each part before the last <code>su</code>, as one pass does; it names the part that holds an
+    error. The parser is compiled from the Nim source of
     <code>lojban_parser</code> to JavaScript, and it runs in your browser.</footer>
 </main>
 <script>@SCRIPT@</script>

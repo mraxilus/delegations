@@ -1,7 +1,7 @@
 ## Hold reader of live text to its laws (#859): text read piece by piece gives, at its end, NIF of
 ##   its parts read whole (`toNifParts` of `readTextParts`), byte for byte, however pieces cut it.
 ##   Pieces: seeded random cuts, inside words too, over each second text of corpora, and over
-##     texts built of words that reach back (`WORDS_BUILT`), since corpora hold few of them;
+##     texts built of words that reach back (`texts_built.nim`), since corpora hold few of them;
 ##     each written word, in law of cost.
 ##   Each change cuts NIF back only within NIF held, and NIF it leaves is NIF reader holds. Before
 ##     end, NIF and tail of each change are parts of text so far, up to its last mark between
@@ -27,7 +27,7 @@ import std/[options, random, sequtils, strutils, unittest]
 
 import ../../src/lojban_parser/[grammar, live, nif, prose, selmaho, stream]
 import ../sample_tatoeba/sentences
-import ./[corpora, reader_nif]
+import ./[corpora, reader_nif, texts_built]
 
 
 type
@@ -51,7 +51,6 @@ type
 const
   SEED = 859  ## Seed of random cuts and of texts built.
   COUNT_BUILT = 300  ## Texts built of words that reach back.
-  WORDS_BUILT_MOST = 14  ## Words of text built, at most.
   PIECE_MOST = 6  ## Bytes of random piece of text built, at most, so pieces cut words.
   PIECE_CORPORA_MOST = 96
     ## Bytes of random piece of text of corpora, at most: text of one sentence reads again at
@@ -72,13 +71,6 @@ const
     ## Bytes read, over bytes of text, at most, word by word; 8.2 on adding law, as each piece
     ##   reads sentence still open again.
   COST_TWICE_MOST = 2.2  ## Bytes twice text reads, over bytes text reads, at most.
-  WORDS_BUILT = [
-    "mi", "do", "ko", "klama", "cadzu", "zarci", "broda", "le", "lo", "ku", "cu", "je", "bo", "nai",
-    ".i", ".i", "ni'o", "si", "sa", "su", "zo", "lo'u", "le'u", "zoi", "gy", "la'o", "lu", "li'u",
-    "to", "toi", "tu'e", "tu'u", "zei", "bu", "ba'e", "ui", "fa'o", "sa'a", "su'i", "xyz", "1987",
-  ]
-    ## Words texts built hold: words that reach back, open or close quotation or text inside
-    ##   text, end input, or start with words that do; and plain words around them.
   TEXTS_LOHU_ERASED = [
     "lo'u cu le'u si mi .i fa'o zarci",  # fuzz of live law found it: `fa'o` read as word
     "lo'u le'u si mi .i zoi gy. ko .gy.",  # `zoi` read as word, as inside quotation
@@ -389,13 +381,6 @@ func cutsRandom(text: string, rng: var Rand, most: int): seq[int] =
   while at < text.len:
     result.add at
     at += rng.rand(1 .. most)
-
-
-func textBuilt(rng: var Rand): string =
-  ## Build text of words that reach back, at random.
-  var words: seq[string]
-  for k in 0 ..< rng.rand(1 .. WORDS_BUILT_MOST): words.add WORDS_BUILT[rng.rand(WORDS_BUILT.high)]
-  words.join(" ")
 
 
 func readPool(): seq[tuple[key, text: string, whole: ReadingParts]] =

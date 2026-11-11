@@ -2,13 +2,14 @@
 ##   of `parseLojbanLive`, which reads in worker where page gives one, and page applies each
 ##   change to NIF it holds, then draws NIF so far (`draw.nim`).
 ##
-##   |----------|---------------------------------------------------------------------------|
-##   | Code     | Meaning                                                                   |
-##   |----------|---------------------------------------------------------------------------|
-##   | typed    | give field text it holds: end it gained to same reader, else to new one   |
-##   | readWhole | read text with new reader, and end it, as sample does                    |
-##   | streamed | read text with new reader, one word at each piece, and end it             |
-##   |----------|---------------------------------------------------------------------------|
+##   |------------|-------------------------------------------------------------------------|
+##   | Code       | Meaning                                                                 |
+##   |------------|-------------------------------------------------------------------------|
+##   | typed      | give field text it holds: end it gained to same reader, else to new one |
+##   | readWhole  | read text with new reader, and end it, as sample does                   |
+##   | streamed   | read text with new reader, one word at each piece, and end it           |
+##   | mergeShown | draw tree each completed part merges to, or line naming part refused    |
+##   |------------|-------------------------------------------------------------------------|
 ##
 ##   Script is whole parser, as bridge exposes it, so worker it starts from its own text reads
 ##     there; in worker, no document stands, and nothing of page is wired.
@@ -26,6 +27,9 @@
 ##   Page holds drawing of its first text already, which build draws natively (verb `page`), so
 ##     page reads complete before script runs.
 ##   Pause between words of stream is timer of page; suite of page streams with no pause.
+##   Merge joins each part of NIF so far, tail left out, into tree of one pass (`drawnMerged` of
+##     `draw.nim`), and draws it under parts. It runs on thread of page, since it reads NIF
+##     alone, in time its length gives. Each change hides tree merged, which no longer holds.
 
 {.experimental: "strictFuncs".}
 
@@ -90,6 +94,22 @@ proc paused(milliseconds: int): Future[void] {.importjs:
 
 #[ Drawing ]#
 
+proc mergeHidden() =
+  ## Hide tree merged, since change makes it stale.
+  document.getElementById("merged").setAttribute("hidden", "")
+
+
+proc mergeShown*() =
+  ## Merge each part NIF so far holds, tail left out, and draw tree it gives under parts; where
+  ##   merge refuses, line names part, byte and reason.
+  let drawing = drawnMerged($STATE.nif)
+  document.getElementById("merged-parts").innerHTML = cstring(drawing.html)
+  let line = document.getElementById("merged-status")
+  line.textContent = cstring(drawing.status)
+  line.className = cstring(if drawing.is_refused: "status err" else: "status")
+  document.getElementById("merged").removeAttribute("hidden")
+
+
 proc shown() =
   ## Draw NIF so far into page, with line of status, mode of reader, and NIF itself, change
   ##   marked and parts still open apart.
@@ -137,6 +157,7 @@ proc started() =
   STATE.nif = cstring(HEADER)
   STATE.tail = ""
   STATE.at_last = cstring(HEADER).lengthUnits
+  mergeHidden()
 
 
 proc applied(change: JsObject, generation: int): bool =
@@ -146,6 +167,7 @@ proc applied(change: JsObject, generation: int): bool =
   STATE.nif = STATE.nif.cut(at) & change.text.to(cstring)
   STATE.tail = change.tail.to(cstring)
   STATE.at_last = at
+  mergeHidden()
   true
 
 
@@ -212,12 +234,13 @@ proc chosen(sample: cstring): proc(event: Event) =
 
 
 proc wired() =
-  ## Wire field, samples and stream, then read text page opens with, which build drew.
+  ## Wire field, samples, stream and merge, then read text page opens with, which build drew.
   field().addEventListener("input", proc(event: Event) = discard typed(field().value))
   for button in document.querySelectorAll("[data-sample]"):
     button.addEventListener("click", chosen(button.getAttribute("data-sample")))
   document.getElementById("stream").addEventListener("click", proc(event: Event) =
     discard streamed(field().value, PAUSE_STREAM))
+  document.getElementById("merge").addEventListener("click", proc(event: Event) = mergeShown())
   discard readWhole(field().value)
 
 

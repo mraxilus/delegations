@@ -2,12 +2,13 @@
 ##   project shows both (`pages/live.html`), and suites hold drawing natively and under
 ##   JavaScript.
 ##
-##   |---------|-------------------------------------------------------------------------|
-##   | Code    | Meaning                                                                 |
-##   |---------|-------------------------------------------------------------------------|
-##   | drawn   | SVG of each part of NIF so far and of its tail, with counts and line    |
-##   | laidOut | boxes and cards of one part, as `drawn` places them                     |
-##   |---------|-------------------------------------------------------------------------|
+##   |-------------|----------------------------------------------------------------------|
+##   | Code        | Meaning                                                              |
+##   |-------------|----------------------------------------------------------------------|
+##   | drawn       | SVG of each part of NIF so far and of its tail, with counts and line |
+##   | drawnMerged | SVG of tree each part of NIF so far merges to, or line of refusal    |
+##   | laidOut     | boxes and cards of one part, as `drawn` places them                  |
+##   |-------------|----------------------------------------------------------------------|
 ##
 ##   Drawing reads NIF alone, through `nif_read.nim`, as any other program reads it: page holds
 ##     NIF live reader gives, and draws it, so drawing shows what NIF carries, and no more.
@@ -26,14 +27,17 @@
 ##   Each word writes `'` for `h`, which NIF writes for `'`; text `zoi` quotes stays as it is.
 ##   Positions are whole pixels, and every number is integer, so build of Nim and build of
 ##     JavaScript write same text, which suites and `drive` hold.
+##   Merge draws tree one pass gives text each part of NIF so far reads, from that NIF alone
+##     (`merge.nim`): tail stays out, since next change replaces it. Refusal draws no part, and
+##     line names part refused, counted from 1 as label of its drawing, byte, and reason.
 ##   Classes of elements are styled by page; drawing names no colour.
 ##   Cost: long part makes wide drawing, which page scrolls.
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, tables, unicode]
+import std/[options, strutils, tables, unicode]
 
-import ../lojban_parser/[grammar, nif_read]
+import ../lojban_parser/[grammar, merge, nif_read]
 
 
 type
@@ -68,6 +72,7 @@ type
     count_errors*: int  ## Error nodes.
     count_unread*: int  ## Words of units no terminal holds.
     count_open*: int  ## Parts of tail, still open.
+    is_refused*: bool = false  ## Merge refused parts, so drawing holds none (`drawnMerged`).
 
 
 const
@@ -384,3 +389,19 @@ func drawn*(nif, tail: string): DrawingLive =
       counted(result.count_errors, "error", "errors") & " · " &
       counted(result.count_unread, "word unread", "words unread") &
       (if opened.len > 0: " · " & counted(opened.len, "part open", "parts open") else: "")
+
+
+func drawnMerged*(nif: string): DrawingLive =
+  ## Merge each part of NIF so far into tree of one pass (`merge.nim`), and draw it as one part;
+  ##   where merge refuses, draw none, and name part, byte and reason in line.
+  let merged = nif.mergeParts
+  if merged.is_merged:
+    result = drawn(merged.nif, "")
+    result.status = "Merged · one tree · " & counted(result.count_words, "word", "words") &
+        " · as one pass reads the text"
+    return
+  result.is_refused = true
+  result.status = "Merge refused"
+  if merged.part.isSome: result.status.add " · part " & $(merged.part.get + 1)
+  if merged.start.isSome: result.status.add " · byte " & $merged.start.get
+  result.status.add " · " & merged.reason

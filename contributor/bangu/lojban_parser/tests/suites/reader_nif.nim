@@ -5,9 +5,10 @@
 ##     chain by its two ends, tag and number of each rule closing chain, and class of each terminal
 ##     with bytes and letters of each word; for reading that marks each error, error node and unit
 ##     no terminal holds too. Writer gives text, and model gives nodes, so neither checks itself.
-##   Rebuild reads module back into tree and terminals: each rule between two ends of chain from
-##     `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag, `'` for `h` of word. So law holds that format loses
-##     nothing of tree, not just that writer and model agree.
+##   Rebuild reads module back into tree and terminals (`toTree` of `merge.nim`, which merge of
+##     parts reads NIF through too): each rule between two ends of chain from `LUT_CHAIN_BY_ENDS`,
+##     `-` for `_` of tag, `'` for `h` of word. So law holds that format loses nothing of tree, not
+##     just that writer and model agree.
 ##   Law of cover (`isCovering`) holds tree to bytes of text: each byte of each word lies in one
 ##     leaf, leaves follow text, and each other byte is mark between words; suites of marks and
 ##     of live text read it.
@@ -18,18 +19,9 @@
 
 import std/[options, sequtils, strutils, tables]
 
-import ../../src/lojban_parser/[grammar, nif, nif_read, prose, selmaho, stream, tanru]
+import ../../src/lojban_parser/[grammar, merge, nif, nif_read, prose, selmaho, stream, tanru]
 
-export nif_read
-
-
-type
-  WordNif* = tuple[start, finish: int, letters: string]
-    ## Define word as module gives it back: byte where it opens, byte past it, and its letters.
-
-  TerminalNif* = tuple[terminal: string, words: seq[WordNif]]
-    ## Define terminal as module gives it back: class, then each word; unit no terminal holds
-    ##   gives `rivbi`, then stage, then refusal of stream for stage `Stream`.
+export merge, nif_read
 
 
 const
@@ -145,63 +137,6 @@ func toModule*(reading: ReadingText | ReadingMarked): seq[NodeNif] =
 
 
 #[ Rebuild ]#
-
-func toTerminal(name: string): Terminal =
-  ## Read class of terminal back from its name, as `KOhA` or `BRIVLA`.
-  if name == $TERMINAL_BRIVLA: return TERMINAL_BRIVLA
-  if name == $TERMINAL_CMENE: return TERMINAL_CMENE
-  let selmaho = name.toSelmaho
-  doAssert selmaho.isSome, "Class of terminal should name selma'o; got `" & name & "`."
-  selmaho.get.toTerminal
-
-
-func toTree(node: NodeNif, terminals: var seq[TerminalNif]): Node =
-  ## Rebuild node of tree from node of NIF: each chain from its two ends by `LUT_CHAIN_BY_ENDS`,
-  ##   `-` for each `_` of tag; terminal adds class and words to `terminals`, `'` for each `h` of
-  ##   word, and third string of `ZOI` as it is. Error node takes byte grammar stops at as
-  ##   its place; unit `rivbi` adds `rivbi` and its identifiers, and keeps letters of stage
-  ##   `Stream` as they are.
-  if node.children.len > 0 and node.children[^1].kind == KindNif.Literal:
-    var
-      terminal = node.text
-      k = 0
-    while node.children[k].kind == KindNif.Identifier:
-      terminal.add ' '
-      terminal.add node.children[k].text
-      inc k
-    let is_kept = terminal.startsWith(TAG_UNREAD & " Stream")
-    var words: seq[WordNif]
-    for m in countup(k, node.children.high, 3):
-      let
-        literal = node.children[m + 2].text
-        is_quoted = node.text == "ZOI" and m == k + 6
-        letters = (if is_kept or is_quoted: literal else: literal.replace('h', '\''))
-      words.add (node.children[m].number, node.children[m + 1].number, letters)
-    terminals.add (terminal: terminal, words: words)
-    return Node(is_terminal: true, at: terminals.high)
-  if node.text == TAG_ERROR:
-    var expected: seq[Terminal]
-    for class in node.children[3].children: expected.add class.text.toTerminal
-    result = Node(
-      is_terminal: false, rule: node.children[1].text.replace('_', '-'),
-      number: node.children[2].number,
-      stop: some(Stop(at: node.children[0].number, expected: expected)),
-    )
-    for k in 4 ..< node.children.len: result.children.add node.children[k].toTree(terminals)
-    return
-  var count = 0
-  while count < node.children.len and node.children[count].kind == KindNif.Number: inc count
-  result = Node(
-    is_terminal: false, rule: node.text.replace('_', '-'), number: node.children[count - 1].number
-  )
-  for k in count ..< node.children.len: result.children.add node.children[k].toTree(terminals)
-  if count == 2:
-    let chain = LUT_CHAIN_BY_ENDS[(node.children[0].number, node.children[1].number)]
-    for k in countdown(chain.len - 2, 0):
-      result = Node(
-        is_terminal: false, rule: chain[k].rule, number: chain[k].number, children: @[result]
-      )
-
 
 func toTerminals(reading: ReadingText | ReadingMarked): seq[TerminalNif] =
   ## Give terminals reading holds: class, then bytes and letters of each word; unit no terminal

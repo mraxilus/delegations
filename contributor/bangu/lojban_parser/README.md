@@ -207,6 +207,33 @@ the tail as one unit. `su` ends that text, so its nodes go out with `su`, and `k
 its own. At the end, a text read piece by piece gives the NIF of its parts read whole, byte for byte
 (`suites/test_live.nim`).
 
+`mergeParts` merges the parts from their NIF alone, as a page or a fixer holds them. It gives the
+NIF that one pass gives, as the Architect chose (D1 b on #859). It drops each word that erasure
+erases, `fa'o` and each word after it, and each part up to the last `su`. Then it joins the trees of
+the parts, as one pass builds them. Where a part holds an error, it refuses, and it names the
+part, counted from 0 past the directives, the byte and the reason:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[options, strutils, wordwrap], lojban_parser
+for text in ["mi klama .i do cadzu ni\x27o ko sipna", "mi klama .i le"]:
+  let merged = readTextParts(text).reading.toNifParts.mergeParts
+  if merged.is_merged: echo merged.nif.strip.splitLines[^1].wrapWords(100)
+  else: echo "refused: part ", merged.part.get, ", byte ", merged.start.get, ", ", merged.reason'
+(paragraphs 0 4 (paragraph 10 (sentence 11 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (bridi_tail_3 50 53
+(tanru_unit_2 130 152 (BRIVLA 3 8 "klama")) (tail_terms 71))) (I 10 11 "i") (sentence 11 40 (sumti_6
+80 97 (KOhA 12 14 "do")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 15 20 "cadzu"))
+(tail_terms 71)))) (NIhO 21 25 "niho") (sentence 4 40 (sumti_6 80 97 (KOhA 26 28 "ko"))
+(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 29 34 "sipna")) (tail_terms 71))))
+refused: part 1, byte 14, grammar of 21.1 stops in rule `sumti-6 97`
+```
+
+The three parts of the first text join into two paragraphs, as rule 4 of 21.1 nests them. In the
+second text, `le` waits for its sumti past the end, so part 1 holds an error. An error before the
+last `su` refuses only where its stage reads before `su` erases (19.16). So the merge refuses
+`x su mi klama`, as the stream reads the whole text first, and it reads `le su mi klama`. The
+merge gives the NIF of one pass, byte for byte, and it refuses where one pass refuses
+(`suites/test_merge.nim`).
+
 The verb `javascript` compiles the parser into one script of JavaScript, `build/lojban_parser.js`.
 A page loads it with a `script` element, and calls three functions as globals:
 
@@ -328,7 +355,8 @@ which the verb `system` declares.
 [Lojban live tree](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) draws the tree of live text as
 a reader types it. A worker reads the text piece by piece, and the page draws each part from the
 NIF that the worker gives. A part still open shows in amber. A word that reaches back, as `si` or
-`li'u`, cuts the NIF back to where it lands.
+`li'u`, cuts the NIF back to where it lands. The button Merge joins each completed part into the one
+tree that one pass gives, by `mergeParts`, or names the part that holds an error.
 
 | built file, under `build/` | published at |
 | --- | --- |
@@ -350,7 +378,8 @@ It reads a stream of text into its words, with its pauses, commas and capitals, 
 words that a text writes together. It reads prose by the grammar of 21.1, after quotation,
 erasure, `zei`, BAhE, `bu` and indicators act on the words.
 It reads on past each error, and it reads live text piece by piece, as the text arrives. Its NIF
-ties each word to the bytes it reads from, and each byte of each word lies in one leaf.
+ties each word to the bytes it reads from, and each byte of each word lies in one leaf. It merges
+the parts of a text from their NIF alone into the NIF that one pass gives.
 
 The verb `javascript` builds the reader of prose and the reader of live text for a page. The verb
 `drive` holds that build in headless Chromium to the native build. It holds the verdicts of the

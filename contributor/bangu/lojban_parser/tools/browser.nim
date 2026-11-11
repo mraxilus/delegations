@@ -24,7 +24,8 @@
 ##   Cases of suite of page are each sample of shell, read whole; texts streamed; text typed piece
 ##     by piece, kept open; and edit that starts new reader. Drawing native build gives each is
 ##     `drawn` of NIF native live reader gives same pieces, which is NIF of text read whole once
-##     reader ends (`live.nim`, law).
+##     reader ends (`live.nim`, law). Merge of each is `drawnMerged` of its NIF so far, tail left
+##     out, as page merges it.
 ##   Each text, case, piece and drawing is file of one string, so no format stands between backend
 ##     and page.
 ##   Collector reads page of live text with no script, which page reads complete without, as build
@@ -137,14 +138,20 @@ func toPieces(text: string): seq[string] =
     at = stop
 
 
-proc writeCase(k: int, kind: string, pieces: seq[string], drawing: DrawingLive) =
-  ## Write one case of suite of page: kind, each piece, and drawing and line native build gives.
-  let path = DIRECTORY_CASES / $k
+proc writeCase(k: int, kind: string, pieces: seq[string], nif, tail: string) =
+  ## Write one case of suite of page: kind, each piece, and drawing and line native build gives
+  ##   NIF so far and tail; then drawing and line of tree NIF so far merges to.
+  let
+    path = DIRECTORY_CASES / $k
+    drawing = drawn(nif, tail)
+    merged = nif.drawnMerged
   writeFile(path & ".kind", kind)
   for j in 0 ..< pieces.len: writeFile(path & "." & $j & ".piece", pieces[j])
   writeFile(path & ".count.text", $pieces.len)
   writeFile(path & ".html", drawing.html)
   writeFile(path & ".status", drawing.status)
+  writeFile(path & ".merged.html", merged.html)
+  writeFile(path & ".merged.status", merged.status)
 
 
 proc writeCasesPage() =
@@ -154,10 +161,10 @@ proc writeCasesPage() =
   createDir(DIRECTORY_CASES)
   var k = 0
   for sample in readFile(PATH_SHELL).samples:
-    writeCase(k, "whole", @[sample], sample.drawnWhole)
+    writeCase(k, "whole", @[sample], readTextParts(sample).reading.toNifParts, "")
     inc k
   for text in STREAMED:
-    writeCase(k, "stream", @[text], text.drawnWhole)
+    writeCase(k, "stream", @[text], readTextParts(text).reading.toNifParts, "")
     inc k
   block:
     var
@@ -165,12 +172,12 @@ proc writeCasesPage() =
       change: ChangeNif
     let pieces = TYPED.toPieces
     for piece in pieces: change = reader.push(piece)
-    writeCase(k, "typed", pieces, drawn(reader.toNif, change.tail))
+    writeCase(k, "typed", pieces, reader.toNif, change.tail)
     inc k
   block:
     var reader = initReaderLive()
     let change = reader.push(EDITED[^1])
-    writeCase(k, "edit", @EDITED, drawn(reader.toNif, change.tail))
+    writeCase(k, "edit", @EDITED, reader.toNif, change.tail)
     inc k
   writeFile(DIRECTORY_CASES / "count.text", $k)
 
