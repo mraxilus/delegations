@@ -1592,13 +1592,14 @@ expression that runs in the page is checked Nim. `koch drive` judges what it wri
 the five numerals of the control page, and the verdict gives 0 findings.
 
 **Chromium is the one that `LOJBAN_CHROMIUM` names, else the headless shell of Chrome for
-Testing.** The store of the repository serves that shell by its digest, once the curator declares
-its row (#864). `unzip` unpacks it under `build/chromium/`. Version 153.0.8010.12 is the version
-that a delegate machine carries, as the headless shell of Playwright 1243. Cost: until that row
-lands, `drive` fails on the runner.
+Testing.** The store of the repository serves that shell by its digest, under a name that carries
+its version (`ARCHIVES` of `curator/audit/src/assets.nim`). `unzip` unpacks it under
+`build/chromium/`. Version 153.0.8010.12 is the version that a delegate machine carries, as the
+headless shell of Playwright 1243.
 
 Rejected: the Chrome and the Chromium of the image of the runner, which no pin holds. One commit
-could then drive another browser on another day (#864). Image 20261101.360.1 for Ubuntu 24.04
+could then drive another browser on another day. The Architect ruled that each delegate pins the
+browsers that its project drives (D1 a on #864). Image 20261101.360.1 for Ubuntu 24.04
 carries Google Chrome 156.0.8078.79 and Chromium 156.0.8078.0. Verified by the readme of that image
 in `actions/runner-images`, 2026-11-11.
 
