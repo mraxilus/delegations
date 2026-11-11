@@ -172,20 +172,21 @@ and the shared allowance. This section adds only what differs for a curator.
    pull request only through a new head: merge `main` into the branch.
 
 3. **A check that reddens a project.** A new or tightened check can report findings in a
-   project that your branch does not own. A finding inside a project blocks only a branch of
-   the role that owns that project, as the Architect ruled. The root curator owns each curator
-   project, so a finding there blocks each of its branches. So the check merges once the rest of
-   the tree is clean, and each project conforms in full when it next moves.
+   project that your branch does not own. As the Architect ruled, a finding inside a project
+   blocks a branch of the role that owns that project. It also blocks a branch that changes its
+   line, and no other. The root curator owns each curator project, so a finding there blocks
+   each of its branches. So the check merges once the rest of the tree is clean, and each
+   project conforms in full when it next moves.
 
    Open a review-finding issue on each project that the check reddens, and quote its findings.
-   Never grandfather a finding into the check, and never fix the project yourself. A finding
-   on a line that your branch changed is yours, wherever it lies, so fix it before the merge.
-   The skill `enact` points here.
+   Never grandfather a finding into the check. Never fix the project yourself, except on a line
+   that your branch changed: a finding there is yours, wherever it lies. The skill `enact`
+   points here.
 
-   `nim r koch check` and the runner both hold each such finding: they list it, and it fails no
-   other branch, and not `main`. A stale stamp and a standard moved to the root glossary are
-   propagation, so they stay yours in any project. Never push with `--no-verify`, and the
-   `bash` hook refuses it.
+   `nim r koch check` and the runner both hold each other such finding: they list it, and it
+   fails no other branch, and not `main`. A stale stamp and a standard moved to the root
+   glossary are propagation, so they stay yours in any project. Never push with `--no-verify`,
+   and the `bash` hook refuses it.
 
 4. **Regression.** Every mistake that slipped past the checks becomes a fixture-driven test,
    before the fix. It lives in the tests of the package that holds the check, `curator/audit/tests/`

@@ -502,8 +502,9 @@ follows the cascade of each element, so `drive` holds what the audit cannot.
   moves underneath you will not stop you. The skill `sync` points here.
 - **Your pull request clears each finding that a new check left in your project.** A curator
   lands a check once the rest of the tree is clean, and a review finding on your project quotes
-  what it found. Those findings fail no other branch, and they fail yours. So your next pull
-  request clears them all, and `nim r koch fix` repairs each one that has a fix.
+  what it found. Those findings fail your branch, and a branch that changes their lines, and
+  no other. So your next pull request clears them all, and `nim r koch fix` repairs each one
+  that has a fix.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed, and each figure carrying its pair. Nothing narrates. `GLOSSARY.md` holds every
   term that resolved.
