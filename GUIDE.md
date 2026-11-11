@@ -450,6 +450,7 @@ rules after them, so the explanation recommends and never rules. Start with `D1`
 decision a message of its own. Wait for its ruling before you explain the next one.
 `/explain D2` asks for one decision alone.
 
+`/explain all` asks for every decision in one message instead, each in the five parts below.
 Where the Architect asks about one decision in other words, explain it in the same shape. The
 block stays short for its three readers, and the explanation serves the Architect alone.
 
