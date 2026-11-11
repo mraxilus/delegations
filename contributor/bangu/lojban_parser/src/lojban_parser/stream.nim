@@ -79,6 +79,9 @@ type
 
   Occurrence* = object  ## Define word as stream holds it: place, letters, pause and stress.
     start*: int  ## Byte of stream where word opens.
+    finish*: int
+      ## Byte of stream past last letter of word, where it ends; past text, for text `zoi` or
+      ##   `la'o` quotes. Comma between two words of one written word stands outside both.
     text*: string  ## Letters of word in canonical form: lowercase, commas left out (3.3).
     pause*: Pause  ## Pause before word.
     stress*: Option[int]
@@ -230,7 +233,8 @@ func occurrenceWritten(
     if spelling.capitals.len > 0 and stress.isNone: return
     if spelling.capitals.len == 0 and spelling.letters[span.b + 1 .. ^1].anyIt(it in VOWELS): return
   some(Occurrence(
-    start: spelling.places[span.a], text: piece, stress: stress, breaks: breaks, reading: reading,
+    start: spelling.places[span.a], finish: spelling.places[span.b] + 1, text: piece,
+    stress: stress, breaks: breaks, reading: reading,
   ))
 
 
@@ -451,7 +455,7 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
         if word.text in quotation.toLowerAscii:
           return refuse(Refusal.Quotation, span.get.a)  # 19.10, delimiter "not found" in text
         occurrences.add Occurrence(
-          start: span.get.a, text: quotation, stress: none(int),
+          start: span.get.a, finish: span.get.b + 1, text: quotation, stress: none(int),
           pause: (if '.' in text[at ..< span.get.a]: Pause.Written else: Pause.Inferred),
           reading: Reading(is_word: false, refusal: Refusal.Foreign),
         )

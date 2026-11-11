@@ -6,11 +6,14 @@
 ##   Each change cuts NIF back only within NIF held, and NIF it leaves is NIF reader holds. Before
 ##     end, NIF and tail of each change are parts of text so far, up to its last mark between
 ##     words, read whole as live text, so tree grows as text so far gives it.
+##   Each change ties to text: each word of NIF it keeps ends at byte where it opens, or before,
+##     and each word of nodes it gives opens there, or past.
 ##   Parts lose nothing of tree: `assembleText` builds from them tree `readGrammar` gives.
 ##   Cost: bytes each reading reads grow with length of text: sentences of Tatoeba joined, read
 ##     word by word, read at most `COST_MOST` times their bytes, and twice them as many again.
 ##   Worked examples give change of each piece, byte for byte: sentence going out, word cut,
-##     `si` and `su` cutting back, closer reading quotation again, `zei` joining `.i`.
+##     `si` cutting back, `su` ending text with no cut back, or closing `lu` before it, closer
+##     reading quotation again, `le'u` quoting `su`, `zei` joining `.i`.
 
 {.experimental: "strictFuncs".}
 
@@ -21,17 +24,20 @@ import std/[options, random, sequtils, strutils, unittest]
 
 import ../../src/lojban_parser/[grammar, live, nif, prose, stream]
 import ../sample_tatoeba/sentences
-import ./corpora
+import ./[corpora, reader_nif]
 
 
 type
-  Change = tuple[at: int, text, tail: string]  ## Define change of NIF one piece gives.
+  Change = tuple[at, start: int, text, tail: string]  ## Define change of NIF one piece gives.
 
   ReadingLive = object  ## Define outcome of reading text piece by piece.
     nif: string  ## NIF held at end, as each change leaves it.
     changes: seq[Change]  ## Change of each piece, then of end.
     is_held: bool  ## Each change cuts NIF back within NIF held, which reader holds after it.
     is_grown: bool  ## Before end, NIF and tail of each change are parts of text so far.
+    is_tied: bool
+      ## Each word of NIF each change keeps ends at byte where change opens, or before; each word
+      ##   of nodes it gives opens there, or past.
     count_read: int  ## Bytes each reading read, summed.
 
 
@@ -113,32 +119,57 @@ const
     ## Texts where opener waits, then text read again opens past it; `bu` then makes opener
     ##   after it lerfu word, so closer closes first opener, past text read again; with cuts
     ##   that cut it so, which search over random cuts found; constructed.
-  LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-    "(tanru_unit_2 130 152 (BRIVLA 3 \"klama\")) (tail_terms 71)))\n"
+  TEXTS_SU = [
+    "mi su si do", "mi su sa do",  # erasure after `su` reaches no word before it (19.13)
+    "lu mi klama .i do su ko li'u",  # `lu` closes at `su`, so `li'u` after it closes none
+    "lo'u mi su do le'u .i ko",  # `le'u` quotes `su`
+    "ba'e zoi su li'u bu si cu .i su fa'o",  # `zoi` quotes `su`, and `ba'e` marks quotation
+    "zo su si si", "zo su si sa zarci",  # erasure quotes `su` again, as quotation reads whole
+    "lo'u su la'o le le'u sa le klama",  # `le'u` quotes `su`, and `la'o` reads as word
+  ]
+    ## Texts where `su` ends text before it, or where quotation quotes it once closed, which
+    ##   reach back past it; fuzz of live law found last four, of which last read wrong when `su`
+    ##   erased text before it.
+  CUTS_ENDED = [
+    (text: "tu'u si fa'o lo", cuts: toSeq(1 .. 14)),
+    (text: "gy ku xyz ba'e gy si fa'o zo sa 1987", cuts: @[2, 6, 7, 12, 17, 22, 25, 31, 33, 34]),
+    (
+      text: "cu sa'a sa'a li'u si fa'o ni'o 1987 .i",
+      cuts: @[4, 5, 8, 13, 19, 23, 25, 26, 31, 36],
+    ),
+  ]
+    ## Texts where words erasure erases stand before `fa'o`, whose node shares their span; with
+    ##   cuts fuzz of live law found, as unit of each word no unit held came in.
+  LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+    "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71)))\n"
     ## Line of node of `mi klama`, which examples open with.
-  LINE_DO = "(text_1 0 2 (I 10 \"i\") (sumti_6 4 97 (KOhA 12 \"do\")))\n"
+  LINE_DO = "(text_1 0 2 (I 10 11 \"i\") (sumti_6 4 97 (KOhA 12 14 \"do\")))\n"
     ## Line of node of `.i do` after it, while sentence is open.
-  LINE_SUHI = "(error 3 paragraphs 4 (expects A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
+  LINE_ERASED = "(rivbi Erasure 3 8 \"klama\" 10 11 \"i\" 12 14 \"do\" 15 17 \"si\" " &
+    "18 20 \"si\" 21 23 \"si\")\n"
+    ## Line of words three `si` erase in `mi klama .i do si si si`, each `si` with them, as one
+    ##   unit.
+  LINE_SUHI = "(srera 3 paragraphs 4 (nitcu A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
     "FAhA FEhE FIhO GA GAhO GOI GOhA GUhA I JAI JOI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME " &
     "MOhI NA NAhE NIhO NOI NU NUhA NUhI PA PEhE PU SE SEI SOI TAhE TEI TO VA VAU VEI VEhA " &
-    "VIhA VUhO XI ZAhO ZEI ZEhA ZI ZO ZOI ZOhU BRIVLA) (sumti_6 0 97 (KOhA 0 \"mi\")) " &
-    "(mex_operator 370 374 (VUhU 3 \"suhi\")) (sumti_6 0 97 (KOhA 8 \"do\")))\n"
+    "VIhA VUhO XI ZAhO ZEI ZEhA ZI ZO ZOI ZOhU BRIVLA) (sumti_6 0 97 (KOhA 0 2 \"mi\")) " &
+    "(mex_operator 370 374 (VUhU 3 7 \"suhi\")) (sumti_6 0 97 (KOhA 8 10 \"do\")))\n"
     ## Line of node of `mi su'i do`, which grammar stops in at `su'i`.
-  LINE_ZEI = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-    "(selbri_3 130 133 (tanru_unit_2 134 152 (BRIVLA 3 \"klama\")) (tanru_unit_2 134 152 " &
-    "(ZEI 10 \"i\" \"zei\" \"broda\"))) (tail_terms 71)))\n"
+  LINE_ZEI = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+    "(selbri_3 130 133 (tanru_unit_2 134 152 (BRIVLA 3 8 \"klama\")) (tanru_unit_2 134 152 " &
+    "(ZEI 10 11 \"i\" 12 15 \"zei\" 16 21 \"broda\"))) (tail_terms 71)))\n"
     ## Line of node of `mi klama .i zei broda`, one sentence.
   EXAMPLES_LIVE: seq[tuple[pieces: seq[string], changes: seq[Change]]] = @[
     (
       pieces: @["mi klama .i do ", "cad", "zu"],
       changes: @[
-        (28, LINE_MI_KLAMA, LINE_DO),
-        (153, "", LINE_DO),
-        (153, "", LINE_DO),
+        (28, 0, LINE_MI_KLAMA, LINE_DO),
+        (157, 10, "", LINE_DO),
+        (157, 10, "", LINE_DO),
         (
-          153, "(text_1 0 2 (I 10 \"i\") (sentence 4 40 (sumti_6 80 97 (KOhA 12 \"do\")) " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 15 \"cadzu\")) " &
-            "(tail_terms 71))))\n",
+          157, 10, "(text_1 0 2 (I 10 11 \"i\") (sentence 4 40 (sumti_6 80 97 " &
+            "(KOhA 12 14 \"do\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 " &
+            "(BRIVLA 15 20 \"cadzu\")) (tail_terms 71))))\n",
           "",
         ),
       ],
@@ -146,58 +177,103 @@ const
     (
       pieces: @["mi klama .i do ", "si si si "],
       changes: @[
-        (28, LINE_MI_KLAMA, LINE_DO),
-        (28, "", "(sumti_6 0 97 (KOhA 0 \"mi\"))\n"),
-        (28, "(sumti_6 0 97 (KOhA 0 \"mi\"))\n", ""),
+        (28, 0, LINE_MI_KLAMA, LINE_DO),
+        (28, 0, "", "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n" & LINE_ERASED),
+        (28, 0, "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n" & LINE_ERASED, ""),
       ],
     ),  # third `si` erases `klama`, so NIF cuts back to sentence that held it (19.13)
     (
       pieces: @["mi 1987 klama .i ", "su ko "],
       changes: @[
         (
-          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (unread 3 Stream Letter \"1987\") " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 \"klama\")) (tail_terms 71)))\n",
-          "(text_1 0 2 (I 15 \"i\"))\n",
+          28, 0, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) " &
+            "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 8 13 \"klama\")) (tail_terms 71)))\n",
+          "(text_1 0 2 (I 15 16 \"i\"))\n",
         ),
-        (28, "", "(sumti_6 0 97 (KOhA 20 \"ko\"))\n"),
-        (28, "(sumti_6 0 97 (KOhA 20 \"ko\"))\n", ""),
+        (
+          191, 15, "(text_1 0 2 (I 15 16 \"i\"))\n(rivbi SU 17 19 \"su\")\n",
+          "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n",
+        ),
+        (240, 20, "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n", ""),
       ],
-    ),  # `su` erases text before it, word stream refuses too, so NIF cuts back to directives
+    ),  # `su` ends text before it, which stays as it read: NIF cuts back nowhere (ruling on #859)
+    (
+      pieces: @["lu mi klama .i do ", "su ko "],
+      changes: @[
+        (
+          28, 0, "(sumti_6 0 97 (LU 0 2 \"lu\") (sentence 0 40 (sumti_6 80 97 (KOhA 3 5 \"mi\")) " &
+            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 6 11 \"klama\")) " &
+            "(tail_terms 71))))\n",
+          "(text_1 0 2 (I 13 14 \"i\") (sumti_6 4 97 (KOhA 15 17 \"do\")))\n",
+        ),
+        (
+          28, 0, "(sumti_6 0 97 (LU 0 2 \"lu\") (paragraph 0 10 (sentence 11 40 (sumti_6 80 97 " &
+            "(KOhA 3 5 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 " &
+            "(BRIVLA 6 11 \"klama\")) (tail_terms 71))) (I 13 14 \"i\") " &
+            "(sumti_6 20 97 (KOhA 15 17 \"do\"))))\n(rivbi SU 18 20 \"su\")\n",
+          "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n",
+        ),
+        (275, 21, "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n", ""),
+      ],
+    ),  # `lu` waits till `su` ends its text, and closes there, as at end, so NIF cuts back to it
+    (
+      pieces: @["lo'u mi su do ", "le'u .i ko "],
+      changes: @[
+        (
+          28, 0,
+          "(rivbi Quotation 0 4 \"lohu\")\n(sumti_6 0 97 (KOhA 5 7 \"mi\"))\n" &
+            "(rivbi SU 8 10 \"su\")\n",
+          "(sumti_6 0 97 (KOhA 11 13 \"do\"))\n",
+        ),
+        (
+          28, 0,
+          "(sumti_6 0 97 (LOhU 0 4 \"lohu\" 5 7 \"mi\" 8 10 \"su\" 11 13 \"do\" 14 18 \"lehu\"))\n",
+          "(text_1 0 2 (I 20 21 \"i\") (sumti_6 4 97 (KOhA 22 24 \"ko\")))\n",
+        ),
+        (104, 20, "(text_1 0 2 (I 20 21 \"i\") (sumti_6 4 97 (KOhA 22 24 \"ko\")))\n", ""),
+      ],
+    ),  # `lo'u` waits, so `su` after it ends text; `le'u` quotes `su` once it comes (19.9)
     (
       pieces: @["mi cusku lu do klama .i mi cadzu ", "li'u .i ko "],
       changes: @[
         (
-          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 3 \"cusku\")) (sumti_6 71 97 (LU 9 \"lu\") " &
-            "(sentence 0 40 (sumti_6 80 97 (KOhA 12 \"do\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 15 \"klama\")) (tail_terms 71))))))\n",
-          "(text_1 0 2 (I 22 \"i\") (sentence 4 40 (sumti_6 80 97 (KOhA 24 \"mi\")) " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 27 \"cadzu\")) " &
+          28, 0, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 3 8 \"cusku\")) (sumti_6 71 97 (LU 9 11 \"lu\") " &
+            "(sentence 0 40 (sumti_6 80 97 (KOhA 12 14 \"do\")) (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 15 20 \"klama\")) (tail_terms 71))))))\n",
+          "(text_1 0 2 (I 22 23 \"i\") (sentence 4 40 (sumti_6 80 97 (KOhA 24 26 \"mi\")) " &
+            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 27 32 \"cadzu\")) " &
             "(tail_terms 71))))\n",
         ),
         (
-          28, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 3 \"cusku\")) (sumti_6 71 97 (LU 9 \"lu\") " &
-            "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 12 \"do\")) (bridi_tail_3 50 " &
-            "53 (tanru_unit_2 130 152 (BRIVLA 15 \"klama\")) (tail_terms 71))) (I 22 \"i\") " &
-            "(sentence 11 40 (sumti_6 80 97 (KOhA 24 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 27 \"cadzu\")) (tail_terms 71)))) " &
-            "(LIhU 33 \"lihu\"))))\n",
-          "(text_1 0 2 (I 39 \"i\") (sumti_6 4 97 (KOhA 41 \"ko\")))\n",
+          28, 0, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 3 8 \"cusku\")) (sumti_6 71 97 (LU 9 11 \"lu\") " &
+            "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 12 14 \"do\")) " &
+            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 15 20 \"klama\")) " &
+            "(tail_terms 71))) (I 22 23 \"i\") " &
+            "(sentence 11 40 (sumti_6 80 97 (KOhA 24 26 \"mi\")) (bridi_tail_3 50 53 " &
+            "(tanru_unit_2 130 152 (BRIVLA 27 32 \"cadzu\")) (tail_terms 71)))) " &
+            "(LIhU 33 37 \"lihu\"))))\n",
+          "(text_1 0 2 (I 39 40 \"i\") (sumti_6 4 97 (KOhA 41 43 \"ko\")))\n",
         ),
-        (466, "(text_1 0 2 (I 39 \"i\") (sumti_6 4 97 (KOhA 41 \"ko\")))\n", ""),
+        (491, 39, "(text_1 0 2 (I 39 40 \"i\") (sumti_6 4 97 (KOhA 41 43 \"ko\")))\n", ""),
       ],
     ),  # `lu` waits, so sentences after it go out; `li'u` reads them again as quotation
     (
       pieces: @["mi su", "'i do "],
       changes: @[
-        (28, "", "(sumti_6 0 97 (KOhA 0 \"mi\"))\n"), (28, "", LINE_SUHI), (28, LINE_SUHI, ""),
+        (28, 0, "", "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n"),
+        (28, 0, "", LINE_SUHI),
+        (28, 0, LINE_SUHI, ""),
       ],
     ),  # `su` that piece cuts is `su'i` once next piece ends it, so erases nothing
     (
       pieces: @["mi klama .i ", "zei broda "],
       changes: @[
-        (28, LINE_MI_KLAMA, "(text_1 0 2 (I 10 \"i\"))\n"), (28, "", LINE_ZEI), (28, LINE_ZEI, ""),
+        (28, 0, LINE_MI_KLAMA, "(text_1 0 2 (I 10 11 \"i\"))\n"),
+        (28, 0, "", LINE_ZEI),
+        (28, 0, LINE_ZEI, ""),
       ],
     ),  # `zei` joins `.i` to word after it, so `.i` opens no sentence, and NIF cuts back (4.6)
   ]
@@ -207,20 +283,40 @@ const
 
 #[ Readers ]#
 
+func spansNif(nif: string): seq[tuple[start, finish: int]] =
+  ## Give byte where each word of each terminal of module opens, and byte past it, in order of
+  ##   module.
+  func addSpans(node: NodeNif, spans: var seq[tuple[start, finish: int]]) =
+    ## Add bytes of each word of each terminal under node to `spans`; directive holds none.
+    if node.kind != KindNif.Compound or node.text.startsWith("."): return
+    if node.children.len > 0 and node.children[^1].kind == KindNif.Literal:
+      var k = 0
+      while node.children[k].kind == KindNif.Identifier: inc k
+      for m in countup(k, node.children.high, 3):
+        spans.add (node.children[m].number, node.children[m + 1].number)
+      return
+    for child in node.children: child.addSpans(spans)
+
+  for node in nif.readModule: node.addSpans(result)
+
+
 func readLive(text: string, cuts: openArray[int], is_growing = false): ReadingLive =
   ## Read text piece by piece, cut at each byte of `cuts`, and hold NIF each change leaves.
   ##   With `is_growing`, test NIF and tail of each change before end against text so far.
   var
     reader = initReaderLive()
     last = 0
-  result = ReadingLive(nif: HEADER, is_held: true, is_grown: true)
+  result = ReadingLive(nif: HEADER, is_held: true, is_grown: true, is_tied: true)
   template apply(change: ChangeNif) =
-    ## Cut NIF held back as change gives, then add its nodes, and keep change.
+    ## Cut NIF held back as change gives, then add its nodes, and keep change; test that each word
+    ##   of NIF it keeps ends at byte it opens at, or before, and each word it gives opens there.
     result.is_held = result.is_held and change.at <= result.nif.len
     result.nif.setLen(min(change.at, result.nif.len))
+    result.is_tied = result.is_tied and result.nif.spansNif.allIt(it.finish <= change.start) and
+      (HEADER & change.text & change.tail).spansNif.allIt(it.start >= change.start)
     result.nif.add change.text
     result.is_held = result.is_held and result.nif == reader.toNif
-    result.changes.add (change.at, change.text, change.tail)
+    result.changes.add (change.at, change.start, change.text, change.tail)
   for k in 0 .. cuts.len:
     let
       at = (if k < cuts.len: cuts[k] else: text.len)
@@ -284,6 +380,7 @@ suite "Internal: Live text":
       let live = text.readLive(text.cutsRandom(rng, PIECE_CORPORA_MOST))
       check live.nif == whole.reading.toNifParts  # header of `live.nim`, law
       check live.is_held  # header of `live.nim`, cursor cuts back within NIF held
+      check live.is_tied  # `ChangeNif` of `live.nim`, byte where change opens
       inc count
     check count >= COUNT_CORPORA_LEAST  # IX.3, guard keeps texts of corpora
 
@@ -299,6 +396,8 @@ suite "Internal: Live text":
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_held  # header of `live.nim`, cursor cuts back within NIF held
       check live.is_grown  # header of `live.nim`, tail grows as text so far gives it
+      check live.is_tied  # `ChangeNif` of `live.nim`, byte where change opens
+      check readTextParts(text).reading.isCovering(text)  # header of `nif.nim`, word in one leaf
 
 
   test "Lo'u whose le'u erasure erases waits for none, so text after it reads as stream reads it":
@@ -347,6 +446,22 @@ suite "Internal: Live text":
       let live = text.readLive(cuts, is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
       check live.is_grown  # header of `live.nim`, closer of opener that waits (17.4)
+
+
+  test "Su ends text before it, which stays, save where quotation quotes it once closed":
+    for text in TEXTS_SU:
+      checkpoint text
+      let live = text.readLive(text.cutsWords, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `live.nim`, `su` and quotation that quotes it (19.13)
+
+
+  test "Fa'o goes out once, and end reads it again from span of its node":
+    for (text, cuts) in CUTS_ENDED:
+      checkpoint text & " cut at " & $cuts
+      let live = text.readLive(cuts, is_growing = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # header of `live.nim`, law
+      check live.is_grown  # header of `live.nim`, `fa'o` that ends input (19.15)
 
 
   test "Parts lose nothing of tree: assembleText builds tree grammar gives, over corpora":

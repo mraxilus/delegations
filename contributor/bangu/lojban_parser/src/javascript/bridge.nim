@@ -5,14 +5,14 @@
 ##     `is_read`; then `occurrences`, `units` and `tree` where text reads, else `refusal`, `start`
 ##     and `rule`, with `stream`, what `readStream` gives, so caller sees words before refusal, or
 ##     refusal of stream with its detail.
-##   Occurrence holds `start`, `text`, `pause`, `stress` (null where none), `breaks` and
-##     `reading`. Reading holds `is_word`, then `kind` and `selmaho` (null where none), else
+##   Occurrence holds `start`, `finish`, `text`, `pause`, `stress` (null where none), `breaks`
+##     and `reading`. Reading holds `is_word`, then `kind` and `selmaho` (null where none), else
 ##     `refusal` and `detail`. Unit holds `words` and `terminal`. Node holds `rule`, `number` and
 ##     `children`, or `at` alone for terminal.
 ##   NIF text is module `toNif` of `nif.nim` writes, as string of JavaScript; null where text is
 ##     refused, since refusal holds no tree, and `parseLojban` gives why.
-##   `start` counts bytes of text in UTF-8, as parser reads it; for text of ASCII alone, byte is
-##     index of JavaScript string too.
+##   `start` and `finish` count bytes of text in UTF-8, as parser reads it; for text of ASCII
+##     alone, byte is index of JavaScript string too.
 ##   Script defines both functions as globals, and puts them on `module.exports` where loader of
 ##     CommonJS gives one, so browser and node load one file.
 ##   Rejected: text of JSON, which caller would parse. Plain object is value caller's own runtime
@@ -54,6 +54,7 @@ proc toObject(occurrence: Occurrence): JsObject =
   ## Mirror one word of stream: place, letters, pause, stress, commas and reading.
   result = newJsObject()
   result.start = occurrence.start
+  result.finish = occurrence.finish
   result.text = cstring(occurrence.text)
   result.pause = cstring($occurrence.pause)
   result.stress = (if occurrence.stress.isSome: occurrence.stress.get.toJs else: jsNull)

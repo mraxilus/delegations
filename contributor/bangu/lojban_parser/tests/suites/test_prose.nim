@@ -216,6 +216,8 @@ suite "Chapter 19":
         some(@[@["mi"], @["cusku"], @["la'o", "fa'o", "gy", "fa'o"]])  # 19.10, `la'o` as `zoi`
     check "mi cusku lo'u fa'o".refusalRead ==
         some((RefusalText.Quotation, 14))  # 19.9, `le'u` closes it; byte of word quoted last
+    check "mi klama le fa'o ko".refusalRead ==
+        some((RefusalText.Grammar, 12))  # 19.15, grammar stops where input ends; constructed
 
 
 

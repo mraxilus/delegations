@@ -14,19 +14,34 @@
 ##     number of rule closing it, as `(sumti_6 80 97 ...)` from `terms` 80 down to `sumti-6` 97.
 ##     Two ends give one chain in 21.1 (`LUT_CHAIN_BY_ENDS`), so reader rebuilds each rule between
 ##     them, and tree reads back whole.
-##   Terminal is compound node: tag is its class, as `KOhA` or `BRIVLA`; then byte where its first
-##     word opens, then letters of each word as string literal. Order of terminals in tree gives
-##     index of each unit, so node holds none.
+##   Terminal is compound node: tag is its class, as `KOhA` or `BRIVLA`; then, for each word, byte
+##     where it opens, byte past its last letter, and its letters as string literal, as
+##     `(BU 15 17 "ta" 18 20 "bu")`. So each word ties to bytes of text it reads from. Order of
+##     terminals in tree gives index of each unit, so node holds none.
+##   Named rule writes no byte: it spans bytes of leaves under it, which reader takes from them.
+##     Cost: byte past each word adds 7% to modules of corpora (PROVENANCE.md, NIF); byte where
+##       word opens alone was rejected, since reader could not tell where word ends from letters
+##       alone, as comma inside word writes byte letters drop.
 ##   Reading that marks each error (`readTextMarked`, #859) writes two nodes more:
-##     Error node: tag `error`, byte where grammar stops, tag and number of rule stopping
-##       innermost there, then `(expects ...)` holding class of each terminal some derivation
+##     Error node: tag `srera`, byte where grammar stops, tag and number of rule stopping
+##       innermost there, then `(nitcu ...)` holding class of each terminal some derivation
 ##       reads there, then nodes it holds. Chain stops above it, as no chain of 21.1 holds it.
-##     Unit no terminal holds: tag `unread`, byte where its first word opens, stage refusing it as
-##       identifier, as `Selmaho`, then letters of each word. Stage `Stream` adds refusal of
+##     Unit no terminal holds: tag `rivbi`, stage refusing it as identifier, as `selmaho`, then
+##       bytes and letters of each word, as terminal writes them. Stage `Stream` adds refusal of
 ##       stream, as `Letter`, and written word it refuses keeps its bytes, as text `zoi` quotes
 ##       does: no `h` for `'`, and `'` takes escape. Stage alone was rejected, since stream and
 ##       grammar of quotation both name refusal `Quotation`, so reader could not tell bytes from
 ##       word.
+##     Unit of stage `SU`, `Erasure` or `FAhO` is no refusal, but words no terminal reads: `su`
+##       that ends text before it, words erasure erases with cmavo erasing them, and `fa'o` that
+##       ends input. Written word after `fa'o` takes stage `Stream` and refusal `FAhO`, and keeps
+##       its bytes. So each byte of each word lies in one leaf (`isCovering` of suites).
+##   Each tag of mark, stage and refusal takes term of CLL, as CLL spells it, where CLL gives one:
+##     selma'o as chapter 20 names it, as `SU`, lojban word in lower case, as `slinkuhi`, and
+##     English term as it stands, as `Erasure` of 19.13. Tag CLL gives no term for is gismu of
+##     official list: `srera` "errs", `nitcu` "needs" and `rivbi` "avoids" (rulings on #859).
+##     Rejected: lojban names of rules of 21.1, which CLL gives not, so tags of rules keep its
+##     names, till CLL gives lojban ones; and lujvo `naltcidu` for `rivbi`, which no list holds.
 ##   Tag writes `_` for each `-`, and no name of 21.1 holds `_`. Word writes `h` for each `'`, as
 ##     chapter 20 writes capital of `'` in names of selma'o; lojban writes no `h` (3.3), and stream
 ##     refuses it outside quotation. So reader reads `_` as `-` and `h` as `'`, and neither tag nor
@@ -47,7 +62,7 @@
 
 import std/[options, strutils]
 
-import ./[grammar, prose, stream]
+import ./[grammar, prose, selmaho, stream, tanru]
 
 
 const
@@ -59,6 +74,9 @@ const
     ## Bytes below 128 that identifier holds as they are (Identifiers).
   HEADER* = "(.nif27)\n(.lang \"cll-21.1\")\n"
     ## Directives module opens with: version, as magic cookie, then language of its tags.
+  TAG_ERROR = "srera"  ## Tag of error node: gismu "x1 errs in doing x2".
+  TAG_EXPECTS = "nitcu"  ## Tag of terminals grammar reads where it stops: gismu "x1 needs x2".
+  TAG_UNREAD = "rivbi"  ## Tag of unit no terminal holds: gismu "x1 avoids x2", as grammar does.
 
 
 func escaped(text: string, is_identifier: bool): string =
@@ -82,6 +100,25 @@ func tag(name: string): string =
   escaped(name.replace('-', '_'), is_identifier = true)
 
 
+func spelling(stage: RefusalText): string =
+  ## Spell stage as CLL spells its term: selma'o as chapter 20 names it, lojban word in lower
+  ##   case, and English term of CLL as it stands.
+  case stage
+  of RefusalText.Su: $Selmaho.Su
+  of RefusalText.Faho: $Selmaho.Faho
+  of RefusalText.Selmaho: "selmaho"
+  else: $stage
+
+
+func spelling(refusal: Refusal): string =
+  ## Spell refusal of stream as CLL spells its term: selma'o as chapter 20 names it, lojban word
+  ##   in lower case, and English term of CLL as it stands.
+  case refusal
+  of Refusal.Faho: $Selmaho.Faho
+  of Refusal.Slinkuhi: "slinkuhi"
+  else: $refusal
+
+
 func letters(occurrence: Occurrence): string =
   ## Spell occurrence as string literal: word with `h` for each `'`, or text quotation holds as it
   ##   is, each byte string literal holds not as it is escaped.
@@ -102,8 +139,8 @@ func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked)
 func addRule(text: var string, node: Node, top: int, reading: ReadingText | ReadingMarked) =
   ## Add named rule to text: rule holding rule alone passes on to it, as chain opening at `top`;
   ##   rule closing chain writes its tag, `top` where chain stands, its number, then its nodes.
-  ##   Error node closes chain above it, and writes tag `error`, byte where grammar stops, tag
-  ##     and number of rule stopping there, and `expects` with terminals read there.
+  ##   Error node closes chain above it, and writes tag `srera`, byte where grammar stops, tag
+  ##     and number of rule stopping there, and `nitcu` with terminals read there.
   let is_chain = node.stop.isNone and node.children.len == 1 and
     not node.children[0].is_terminal and node.children[0].stop.isNone
   if is_chain:
@@ -112,7 +149,8 @@ func addRule(text: var string, node: Node, top: int, reading: ReadingText | Read
   text.add '('
   if node.stop.isSome:
     when reading is ReadingMarked:
-      text.add "error "
+      text.add TAG_ERROR
+      text.add ' '
       text.add $reading.byteAt(node.stop.get.at)
       text.add ' '
     else:
@@ -124,7 +162,8 @@ func addRule(text: var string, node: Node, top: int, reading: ReadingText | Read
   text.add ' '
   text.add $node.number
   if node.stop.isSome:
-    text.add " (expects"
+    text.add " ("
+    text.add TAG_EXPECTS
     for k in 0 ..< node.stop.get.expected.len:
       text.add ' '
       text.add ($node.stop.get.expected[k]).tag
@@ -137,29 +176,33 @@ func addRule(text: var string, node: Node, top: int, reading: ReadingText | Read
 
 func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked) =
   ## Add node of tree to text: chain of named rules opening at it, or terminal with its class,
-  ##   byte where it opens, and letters of each word; unit no terminal holds writes `unread`,
-  ##   and stage refusing it after its byte, with refusal of stream for stage `Stream`.
+  ##   then bytes and letters of each word; unit no terminal holds writes `rivbi`, then stage
+  ##   refusing it, with refusal of stream for stage `Stream`, before its words.
   if not node.is_terminal:
     text.addRule(node, node.number, reading)
     return
   template unit: untyped = reading.units[node.at]
     ## Alias unit of terminal, which `let` would copy on JavaScript backend.
   text.add '('
-  text.add (if unit.is_read: ($unit.terminal).tag else: "unread")
-  text.add ' '
-  text.add $reading.occurrences[unit.words[0]].start
+  text.add (if unit.is_read: ($unit.terminal).tag else: TAG_UNREAD)
   if not unit.is_read:
     when reading is ReadingMarked:
       text.add ' '
-      text.add ($unit.refusal).tag
+      text.add unit.refusal.spelling.tag
       if unit.refusal == RefusalText.Stream:
         text.add ' '
-        text.add ($reading.occurrences[unit.words[0]].reading.refusal).tag
+        text.add reading.occurrences[unit.words[0]].reading.refusal.spelling.tag
     else:
       doAssert false, "Reading that reads should hold no unit refused."
   for k in 0 ..< unit.words.len:
+    template word: untyped = reading.occurrences[unit.words[k]]
+      ## Alias word of unit, which `let` would copy on JavaScript backend.
+    text.add ' '
+    text.add $word.start
+    text.add ' '
+    text.add $word.finish
     text.add " \""
-    text.add reading.occurrences[unit.words[k]].letters
+    text.add word.letters
     text.add '"'
   text.add ')'
 

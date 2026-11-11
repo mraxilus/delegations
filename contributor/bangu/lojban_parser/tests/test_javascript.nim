@@ -76,6 +76,8 @@ suite "Internal: JavaScript build":
     check reading.occurrences[0].reading.selmaho.to(cstring) == "KOhA"  # ch. 20, name as spelled
     check reading.occurrences[1].reading.kind.to(cstring) == "Gismu"  # 4.4, `klama`
     check reading.occurrences[1].stress == jsNull  # no capital marks stress
+    check reading.occurrences[1].start.to(int) == 3  # stream.nim, byte where `klama` opens
+    check reading.occurrences[1].finish.to(int) == 8  # stream.nim, byte past its last letter
     check reading.units.length.to(int) == 4  # one terminal per word
     check reading.units[1].terminal.to(cstring) == "BRIVLA"  # 21.1, terminal of brivla
     check reading.tree.rule.to(cstring) == "text"  # 21.1, rule 0 opens tree

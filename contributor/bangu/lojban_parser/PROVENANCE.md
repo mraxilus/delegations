@@ -659,11 +659,12 @@ and 19.10.
 or that delimits `zoi` or `la'o`, stays in its unit at the end of a text too (19.10). Verified by
 `suites/test_prose.nim`, Section 19.15, in each part that a quotation gives a word.
 
-**Erasure acts on words.** `si` erases the word before it, and `su` each word before it. `sa`
-erases back to the last word of the selma'o of the word after it, that word included (19.13). A
-quotation counts as its words, so a `zo` quotation is two words and a `zoi` quotation four
-(Examples 19.77, 19.79). Verified by `suites/test_prose.nim`, Section 19.13. Verified also by a
-law over a word and `si` at each place between the words of each example with no erasure.
+**Erasure acts on words.** `si` erases the word before it, and `su` each word before it, save in
+the reading that marks each error, as Marks gives. `sa` erases back to the last word of the
+selma'o of the word after it, that word included (19.13). A quotation counts as its words, so a
+`zo` quotation is two words and a `zoi` quotation four (Examples 19.77, 19.79). Verified by
+`suites/test_prose.nim`, Section 19.13. Verified also by a law over a word and `si` at each place
+between the words of each example with no erasure.
 
 **`sa` erases back to the start where no word of its selma'o stands.** So Example 19.81 erases
 the sentence before `.i`, as CLL says, though no `.i` opens the text. Verified by
@@ -1117,9 +1118,17 @@ name that 21.1 writes, the name of a rule or the class of a terminal. Verified b
 
 **A named rule is a compound node, and so is a terminal.** The tag of a rule is its name, then its
 number in 21.1, and its nodes follow in order. The tag of a terminal is its class, as `KOhA` or
-`BRIVLA`. Its first child is the byte where its first word opens, and the letters of each word
-follow as string literals. The order of the terminals gives the index of each unit, so no node
-holds one. Verified by `suites/test_nif.nim`, whose law rebuilds each tree of the corpora.
+`BRIVLA`. The order of the terminals gives the index of each unit, so no node holds one. Verified
+by `suites/test_nif.nim`, whose law rebuilds each tree of the corpora.
+
+**Each word of a terminal follows as three nodes: the byte where it opens, the byte past it, and
+its letters.** The letters stand as a string literal. So each word ties to the bytes of the text
+that it reads from. A named rule holds no byte, since its leaves give its span. Verified by
+`suites/test_nif.nim`, and by `suites/test_stream.nim`, where the bytes of each word spell it.
+
+**Rejected: the byte where a word opens alone.** A reader cannot tell from the letters where a word
+ends, since a comma inside a word writes a byte that the letters drop. The byte past each word adds
+about 7 percent to the modules of the corpora. Figures of marks and live text gives the measure.
 
 **A chain of rules is one node, which its two ends write.** In 21.1, a rule often holds the next
 rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a chain is one
@@ -1208,9 +1217,10 @@ build, law of NIF, gives the measure.
 the work. Another program reads the tree and mends the text. So this parser marks each error, and
 decides no mend, as rulings `D1 a` and `D2 a` of #859 give. Verified by `suites/test_marks.nim`.
 
-**A text that `readText` reads gives the same reading.** It gives the same units, the same tree
-and the same NIF. Verified by `suites/test_marks.nim`, over each of the 1,831 texts of the corpora
-that read.
+**A text that `readText` reads gives the same reading past the last `su`.** It gives the same
+units, the same tree and the same NIF there, once each leaf of a unit that no stage reads is cut.
+Verified by `suites/test_marks.nim`, over each of the 1,831 texts of the corpora that read, and
+over texts constructed with `su`, erasure and `fa'o`.
 
 **A word that a stage refuses stands as a unit of its own, with that stage.** No terminal holds
 it, and the grammar reads the terminals of the other units. So the words that read keep their
@@ -1235,6 +1245,32 @@ klama` byte for byte.
 
 **A cmavo that no list gives a selma'o stands as a unit with the words that mark it.** So
 `ba'e xau` is one unit, as `Selmaho`. Verified by `suites/test_marks.nim`.
+
+**`su` ends the text before it, which stays as it read.** The Architect chose this on #859, so live
+text cuts back nowhere at `su`. Each text that `su` parts reads alone, and `su` stands between them
+as a unit of stage `Su`. The root of the text after the last `su` holds the tree of each text
+before it first, each with the leaf of its `su`. A program that reads the text as CLL does drops
+each node up to the last `su`, and `readText` gives the text after it alone. Verified by
+`suites/test_marks.nim`, which holds the module of `mi klama su do` byte for byte.
+
+**Each word that no terminal holds stands as a unit, so each byte of each word lies in one leaf.**
+Each run of words that erasure erases stands with the `si` or `sa` that erases it, as `Erasure`.
+`fa'o` that ends the input stands as `Faho`, and each written word after it as `Stream`, with the
+refusal `Faho`, as written. The units of `fa'o` and after it stand last in the root, past the text.
+Each byte that no leaf holds is a mark between words, or a comma. Verified by
+`suites/test_marks.nim` and `suites/test_live.nim`, over the corpora and the texts constructed and
+built.
+
+**Rejected: a unit for each act of erasure.** In `mi klama si si`, the second `si` erases `mi`,
+across the words of the first. So the units of the two would overlap in the text, and a run of
+words that no unit holds keeps one span. Assumed from the rule of 19.13, since no code groups words
+by act.
+
+**The grammar stops at the end of the input where `fa'o` opens.** So the words after it move no
+byte of the tree, as live text needs once `fa'o` reads. `readText` gives that byte too, where its
+grammar stops at the end of the input. Verified by `suites/test_prose.nim`, Section 19.15, where
+`readText` refuses `mi klama le fa'o ko` at byte 12. Verified also by `suites/test_live.nim`, over
+texts that hold `fa'o`, where the laws of the tail and the tie hold at each piece.
 
 **An error node marks where the grammar stops.** The node takes the name and number of the rule
 that stops innermost there, as the refusal of `readGrammar` names it. It also holds the place where
@@ -1274,11 +1310,25 @@ it, between them.** Before the first unit that reads, or after the last, it stan
 that end. No rule of 21.1 holds it, so its place claims no rule. Verified by
 `suites/test_marks.nim`.
 
-**NIF writes an error node as `(error byte rule number (expects classes) nodes)`.** The chain
+**NIF writes an error node as `(srera byte rule number (nitcu classes) nodes)`.** The chain
 stops above it, since no chain of 21.1 holds it. A unit that no terminal holds writes
-`(unread byte stage letters)`, and the stage `Stream` adds the refusal of the stream. That written
-word keeps its bytes, as the text that `zoi` quotes does. Verified by `suites/test_marks.nim`,
-which holds five modules byte for byte, and reads back each module of the texts refused.
+`(rivbi stage words)`, each word as a terminal writes it, and the stage `Stream` adds the refusal
+of the stream. That written word keeps its bytes, as the text that `zoi` quotes does. Verified by
+`suites/test_marks.nim`, which holds seven modules byte for byte, and reads back each module of the
+texts refused.
+
+**Each tag of NIF takes the term that CLL gives, as CLL spells it.** The Architect ruled this on
+#859, and the tags of named rules keep the names of 21.1. A stage or a refusal takes a selma'o as
+chapter 20 names it, as `SU` and `FAhO`. A Lojban word goes in lower case, as `selmaho` and
+`slinkuhi`, and an English term stays as CLL writes it, as `Erasure` (19.13). Verified by
+`suites/test_marks.nim` and `suites/test_live.nim`, which hold modules byte for byte, and by the
+model of `suites/reader_nif.nim`, which spells each tag on its own.
+
+**Where CLL names nothing, a tag takes a gismu of the official list.** So the error node is
+`srera`, "x1 errs", and the classes that it holds are `nitcu`, "x1 needs x2". A unit that no
+terminal holds is `rivbi`, "x1 avoids x2", since the grammar reads around it. Rejected: Lojban
+names for the rules. CLL 1.1 gives a noun for 7 of the 88 alone, as `mekso` for `mex`, and a later
+CLL may give the rest. Rejected: the lujvo `naltcidu` for `rivbi`, which no official list holds.
 
 **Rejected: the stage alone, or the refusal alone, in a unit that no terminal holds.** The stream
 and the reader of quotations both name a refusal `Quotation`. So a reader could not tell the bytes
@@ -1300,9 +1350,10 @@ sets that predict each named rule. Over the 110 texts refused, it takes about 13
 `readText`. A part where `lu` or `to` stays open runs to the end of the text, so such sets span
 the rest of it. Figures of marks and live text gives the measures.
 
-**Cost: the suite of marks reads each text of the corpora by both readers.** So it takes about
-18 s of a debug build. The law of `expects` reads 24 stops, each once for each of 124 classes.
-Figures of marks and live text gives the measures, and those of the stub of every suite.
+**Cost: the suite of marks reads each text of the corpora by both readers, and by its parts.** The
+law of cover reads the parts. So the suite takes about 25 s of a debug build. The law of `expects`
+reads 24 stops, each once for each of 124 classes. Figures of marks and live text gives the
+measures, and those of the stub of every suite.
 
 ## Live text
 
@@ -1323,6 +1374,12 @@ text gives the count of texts.
 NIF cuts back to, then the nodes that go out, then the tail. The offset stays inside the NIF that
 went out. Verified by `suites/test_live.nim`. Rejected: a window of words that `su` may erase,
 which the cursor makes needless, as the Architect ruled on #859.
+
+**Each change gives the byte of the text where it opens, beside the offset of the NIF.** Each word
+of the NIF that it keeps ends there or before, and each word of the nodes that it gives opens there
+or past. So a program ties each node to the text that it reads, at each change. A change of a piece
+that reads no word more opens where the first word of the tail opens. Verified by
+`suites/test_live.nim`, over the corpora and the texts built.
 
 **The node of the part still open goes out as the tail, which the next change replaces.** Before
 the end, the NIF and the tail of each change are the parts of the text so far, read whole as live
@@ -1355,14 +1412,15 @@ text reads again with it, and may open no more, as `to bu` is a lerfu word (17.4
 
 **The text read again opens at the span of a node.** The span opens at the first word past the
 words of the node before. So it holds each word that erasure erased before the node, and erasure
-read again finds those words. Rejected: a span that opens at the first word of its node, which lost
+read again finds those words. Those words stand as a node of their own, and the node after it
+shares its span. Rejected: a span that opens at the first word of its node, which lost
 `ku` in `ku lo'u si`, since `si` erased it. Verified by `suites/test_live.nim`.
 
 **A node shares the span before it where a quotation holds the word that its span would open at.**
 So does a node whose first word stands among the words of the node before. An example is a word
 that the stream refuses between a word and its `bu`. Verified by `suites/test_live.nim`.
 
-**A node shares the span before it where a `sa` that no unit holds stands before its first word.**
+**A node shares the span before it where a `sa` of a unit `Erasure` stands before its first word.**
 The scan back passes each word that the stream or the rules refuse. That `sa` takes its marker
 from the first word that the rules read after it, so a change there changes what it erases. An
 example is `ni'o .i sa 1987 zo .i si`. Verified by `suites/test_live.nim`, over texts that fuzz of
@@ -1375,20 +1433,21 @@ waits after it, `zei` joins the word past that quotation. An example is
 `lo'u bu zei zoi lu nai ui si cu je`. Verified by `suites/test_live.nim`, over texts that fuzz of
 the law found, and texts built like them.
 
-**`su` cuts the NIF back to its directives (19.13).** It erases each unit before it, and a word
-that the stream refuses too, since it erases the whole text. No piece reads the text before it
-again. Verified by `suites/test_live.nim`, in a worked example.
+**`su` ends the text before it, which stays as it read, and goes out as a node of its own.** So
+the NIF cuts back nowhere at `su`, as the Architect chose on #859, and the text after it reads
+alone. An opener of the text before it that waits, `tu'e`, `lu` or `to`, closes at `su`, as at the
+end. So that text reads again from the opener. Verified by `suites/test_live.nim`, in worked
+examples, and over texts that fuzz of the law found.
 
-**A quotation that waits before `su` may quote it once it closes.** So its closer reads the text
-again from the start. So does erasure past the `su`, and a `su` that erases no more. An example is
-`zo su si`, once `sa` erases the `zo` (19.10). Cost: one read of the whole text for each closer of
-that kind. Verified by `suites/test_live.nim`, over the texts built.
+**Erasure after `su` reaches no node before it, save where a quotation held that `su` in the first
+pass of the rules.** There, erasure that erases the rest of the quotation makes the first pass
+read, and quotes `su` again, as `zo su si si` does (19.13). Verified by `suites/test_live.nim`,
+over texts that fuzz of the law found.
 
-**Unverified: the law where `su` erases text that holds a quotation, which closes after the `su`.**
-Fuzz of the law found 3 texts of 30 words that break it, of 78,000 built. Each holds `su` after
-`lo'u`, `la'o` or `zoi`. A smaller text that breaks it is `lo'u su la'o le le'u sa le klama`.
-The branch `contributor/bangu/lojban_parser/spans` reads `su` as the end of a text, as the
-Architect chose on #859. The law holds there for each of the 3.
+**A quotation that waits before `su` quotes it once it closes (19.9, 19.10).** Its closer reads
+the text again from where the reading that put out the `su` opened, since that `su` then ends no
+text. An example is `lo'u su la'o le le'u sa le klama`, where `le'u` quotes `su`. Verified by
+`suites/test_live.nim`, over texts that fuzz of the law found.
 
 **An opener that waits reads as a plain terminal, so the sentences after it go out at once.** Its
 closer reads them again, as the quotation or the text inside text. At the end, the text from the
@@ -1412,9 +1471,12 @@ The rules may read it as the text of `la'o`, but the stream reads on inside its 
 So the text after it reads as the stream reads it. Verified by `suites/test_live.nim`, over texts
 that fuzz of the law found, and texts built like them.
 
-**`fa'o` that ends the input stops each piece at it (19.15).** The delimiter of a `zoi` before it
-lifts the stop, since that `zoi` quotes the `fa'o`. The end reads past it. Verified by
-`suites/test_live.nim`, over the texts built.
+**`fa'o` that ends the input stops each piece at it (19.15).** Each node goes out once `fa'o`
+reads, and each written word after it goes out alone, once a mark ends it. So no piece reads
+the text again past `fa'o`, which no figure measures. The delimiter of a `zoi`
+before it lifts the stop, since that `zoi` quotes the `fa'o`. The end reads the text again from
+the node of `fa'o`. Verified by `suites/test_live.nim`, over the texts built, and over texts that
+fuzz of the law found.
 
 **Cost: the bytes that each reading reads grow with the length of the text.** Each piece reads the
 part still open again, so the time grows with the length of the text times the length of a
@@ -1428,7 +1490,7 @@ bytes.** A text of one sentence reads again at each piece. So a piece for each w
 100 s of a debug build, which is 14 times a read of the corpora whole. The texts built take pieces
 of up to 6 bytes, and the law of cost reads word by word.
 
-So the suite takes about 30 s of a debug build. Figures of marks and live text gives the measures.
+So the suite takes about 34 s of a debug build. Figures of marks and live text gives the measures.
 
 ## Tests
 
@@ -1456,7 +1518,8 @@ laws over the corpora then read the pool. It also builds texts of words that rea
 seed, since the corpora hold few of them.
 
 **The suite of marks reads its texts into one pool, once by each reader.** Each law then reads the
-pool, as STYLE.md section 6 asks of a pool of samples. Rejected: a pass over the corpora for each
+pool, as STYLE.md section 6 asks of a pool of samples. The law of cover reads the pool, and so does
+the suite of live text, from `suites/reader_nif.nim`. Rejected: a pass over the corpora for each
 law. Figures of marks and live text gives the measures of both.
 
 `suites/test_tanru.nim` holds the reader, `suites/test_stream.nim` the reader of a stream, and
@@ -1729,6 +1792,27 @@ Each figure comes from the machine that Figures names, on the pin, and names its
   translations skipped. It took 56.1 s and 55.2 s at `818ce274`, against 85.4 s and 85.5 s at
   `041ba600`. At `e6742c2e` without the suite of live text, it took 64.3 s and 64.0 s, against
   61.9 s and 59.9 s at `818ce274`. The runs alternate.
+- **Spans, NIF.** On 2026-11-10, at `1c8422a7`, a program built with `-d:release` read each of
+  the 1,941 texts of the corpora, marked. Their modules hold 1,062,315 bytes, against 988,328 bytes
+  at `041ba600`, where no word gives the byte past it. That byte, with its space, takes 71,291
+  bytes, 7.2 percent of the rest. The units hold 22,762 words, against 22,726. At `041ba600`, a
+  word that erasure erases stands in no unit.
+- **Spans, script.** At `1c8422a7`, built with `nim js -d:release`, the script holds 841,837
+  bytes, against 838,006 bytes at `041ba600`.
+- **Spans, live text.** On 2026-11-10, the build of Live text, cost, read the 234 sentences joined
+  by `.i`, word by word. At `1c8422a7`, the whole took 981 ms and 1,001 ms, against 1,049 ms and
+  1,016 ms at `041ba600`. The live read took 3,240 ms and 3,530 ms, against 3,351 ms and 3,312 ms,
+  at 8.21 times the bytes. Twice that text took 6,939 ms and 7,188 ms live, against 7,436 ms and
+  7,387 ms. The runs alternate.
+- **Spans, live text, pieces.** The same builds read that text with each byte a piece. Live, it
+  took 3,914 ms, 3,861 ms and 3,752 ms at `1c8422a7`, against 3,895 ms, 3,905 ms and 3,797 ms.
+  With pieces of 40 bytes, it took 1,490 ms, 1,275 ms and 1,446 ms, against 1,413 ms, 1,491 ms and
+  1,399 ms. The runs alternate.
+- **Spans, suites.** On 2026-11-10, the stub ran every suite without the pages, as on the runner,
+  with no `build/translations/`. It took 96.8 s and 98.7 s at `1c8422a7`, against 85.4 s and
+  85.5 s at `041ba600`. Built alone, the suite of live text took 33.9 s and 34.3 s, against 29.6 s
+  and 29.1 s. The suite of marks took 25.6 s and 25.3 s, against 17.2 s and 16.8 s. The runs
+  alternate.
 
 ## Open questions
 

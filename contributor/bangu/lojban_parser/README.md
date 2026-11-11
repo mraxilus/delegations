@@ -102,7 +102,7 @@ $ nim r --hints:off --path:src --eval:'import lojban_parser
 stdout.write readText("me\x27o vo").toNif'
 (.nif27)
 (.lang "cll-21.1")
-(sumti_6 0 97 (LI 0 "meho") (number 310 812 (PA 5 "vo")))
+(sumti_6 0 97 (LI 0 4 "meho") (number 310 812 (PA 5 7 "vo")))
 ```
 
 Each named rule is a node, which holds its number in 21.1 and then its nodes. In 21.1, a rule often
@@ -111,10 +111,13 @@ run of rules is one node. It holds the number of the rule that opens the run, th
 rule that closes it. So `(sumti_6 0 97 ...)` is the run from `text`, rule 0, down to `sumti-6`,
 rule 97. The two ends give one run in 21.1, and `LUT_CHAIN_BY_ENDS` gives each rule between them.
 
-Each terminal holds its class, as `LI` or `PA`, the byte where its first word opens, and the
-letters of each word. A tag writes `_` for `-`, and a word writes `h` for `'`, as chapter 20 writes
-the names of selma'o. Lojban writes no `h` of its own (3.3), so `meho` reads back as `me'o`. Only
-the text that `zoi` or `la'o` quotes can need an escape of NIF.
+Each terminal holds its class, as `LI` or `PA`, then three things for each word. Those are the byte
+where it opens, the byte past it, and its letters. So `(LI 0 4 "meho")` ties `me'o` to bytes 0 to 3
+of the text. A named rule holds no byte, since its leaves give its span.
+
+A tag writes `_` for `-`, and a word writes `h` for `'`, as chapter 20 writes the names of selma'o.
+Lojban writes no `h` of its own (3.3), so `meho` reads back as `me'o`. Only the text that `zoi` or
+`la'o` quotes can need an escape of NIF.
 
 `readTextMarked` reads a text as `readText` does, and it reads on past each error. So another
 program can mend the text by its tree, and this parser decides no mend (#859). A word that a stage
@@ -127,51 +130,82 @@ $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_p
 for line in readTextMarked("mi 1987 klama le").toNif.strip.splitLines: echo line.wrapWords(100)'
 (.nif27)
 (.lang "cll-21.1")
-(error 16 sumti_6 97 (expects BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI
-KOhA LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA
-VIhA XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 40 (sumti_6 80 97 (KOhA 0 "mi")) (unread 3
-Stream Letter "1987") (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 "klama")) (tail_terms
-71))) (LE 14 "le"))
+(srera 16 sumti_6 97 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA
+LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA
+XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (rivbi Stream
+Letter 3 7 "1987") (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 13 "klama")) (tail_terms
+71))) (LE 14 16 "le"))
 ```
 
-The stream refuses the digits `1987`, so they stand as `(unread 3 Stream Letter "1987")`, between
+CLL names none of these nodes, so each takes a gismu, as the Architect ruled on #859. The error
+node is `srera`, "x1 errs", and the classes that it holds are `nitcu`, "x1 needs x2". A unit that no
+terminal holds is `rivbi`, "x1 avoids x2", since the grammar reads around it.
+
+The stream refuses the digits `1987`, so they stand as `(rivbi Stream Letter 3 7 "1987")`, between
 the sumti and the bridi tail. The text ends after `le`, so the grammar stops at byte 16, in
 `sumti-6` 97, which waits for the selbri of `le`. The error node holds `mi klama`, which reads
 alone as a sentence, and then `le` alone. A text that reads gives the reading of `readText`.
 
+Each word that no terminal holds stands as a unit too, so each byte of each word lies in one leaf.
+Words that erasure erases stand with the `si` or `sa` that erases them, as stage `Erasure`. `su`
+ends the text before it, which stays as it read, and stands as stage `SU`, as the Architect chose
+on #859. `fa'o` that ends the input stands as stage `FAhO`, and each written word after it as stage
+`Stream`, with its bytes. Each stage takes the term of CLL, as CLL spells it:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+for line in readTextMarked("mi klama si do su ko fa\x27o 1234").toNif.strip.splitLines:
+  echo line.wrapWords(100)'
+(.nif27)
+(.lang "cll-21.1")
+(text 0 (terms 0 80 (sumti_6 81 97 (KOhA 0 2 "mi")) (rivbi Erasure 3 8 "klama" 9 11 "si") (sumti_6
+81 97 (KOhA 12 14 "do"))) (rivbi SU 15 17 "su") (sumti_6 2 97 (KOhA 18 20 "ko")) (rivbi FAhO 21 25
+"faho") (rivbi Stream FAhO 26 30 "1234"))
+```
+
+`si` erases `klama`, so one unit holds both. The root of the text after the last `su` holds each
+text before it first. So a program that reads the text as CLL does drops each node up to the last
+`su`, and `readText` gives the text `ko` alone.
+
 `initReaderLive` makes a reader of live text, which reads a text piece by piece as it arrives
 (#859). Each sentence goes out as NIF once the next one opens, and no piece reads the whole text
-again. A word that reaches back cuts the NIF back, as `si` and `su` do. Each change from `push`
-gives the offset that the NIF cuts back to, then the nodes that go out, then the tail. The tail is
-the node of the part still open, as the text so far gives it, and the next change replaces it:
+again. A word that reaches back cuts the NIF back, as `si` does. Each change from `push` gives the
+offset that the NIF cuts back to, and the byte of the text where the cut opens. Then it gives the
+nodes that go out, and the tail. The tail is the node of the part still open, as the text so far
+gives it, and the next change replaces it:
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
 proc show(what: string, change: ChangeNif) =
-  echo what, ": cut back to ", change.at
+  echo what, ": cut back to ", change.at, ", byte ", change.start
   for (kind, nif) in [("out ", change.text), ("tail", change.tail)]:
     for line in nif.splitLines:
       if line.len > 0: echo "  ", kind, " ", line.wrapWords(92, newLine = "\n       ")
 var reader = initReaderLive()
-for piece in ["mi klama .i do ", "si si si ", "ko "]:
+for piece in ["mi klama .i do ", "si si si ", "su ko "]:
   show("push \"" & piece & "\"", reader.push(piece))
 show("finish", reader.finish)'
-push "mi klama .i do ": cut back to 28
-  out  (sentence 0 40 (sumti_6 80 97 (KOhA 0 "mi")) (bridi_tail_3 50 53 (tanru_unit_2 130 152
-       (BRIVLA 3 "klama")) (tail_terms 71)))
-  tail (text_1 0 2 (I 10 "i") (sumti_6 4 97 (KOhA 12 "do")))
-push "si si si ": cut back to 28
-  tail (sumti_6 0 97 (KOhA 0 "mi"))
-push "ko ": cut back to 28
-  tail (terms 0 80 (sumti_6 81 97 (KOhA 0 "mi")) (sumti_6 81 97 (KOhA 24 "ko")))
-finish: cut back to 28
-  out  (terms 0 80 (sumti_6 81 97 (KOhA 0 "mi")) (sumti_6 81 97 (KOhA 24 "ko")))
+push "mi klama .i do ": cut back to 28, byte 0
+  out  (sentence 0 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (bridi_tail_3 50 53 (tanru_unit_2 130 152
+       (BRIVLA 3 8 "klama")) (tail_terms 71)))
+  tail (text_1 0 2 (I 10 11 "i") (sumti_6 4 97 (KOhA 12 14 "do")))
+push "si si si ": cut back to 28, byte 0
+  tail (sumti_6 0 97 (KOhA 0 2 "mi"))
+  tail (rivbi Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
+push "su ko ": cut back to 28, byte 0
+  out  (sumti_6 0 97 (KOhA 0 2 "mi"))
+  out  (rivbi Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
+  out  (rivbi SU 24 26 "su")
+  tail (sumti_6 0 97 (KOhA 27 29 "ko"))
+finish: cut back to 163, byte 27
+  out  (sumti_6 0 97 (KOhA 27 29 "ko"))
 ```
 
 Offset 28 is the end of the two directives. The sentence `mi klama` goes out once `.i do` opens.
-The third `si` erases `klama`, so the NIF cuts back to the directives, and `mi` waits in the tail.
-`ko` then joins it. At the end, the NIF of a text read piece by piece is the NIF of its parts read
-whole. They are the same byte for byte, as `suites/test_live.nim` holds.
+The three `si` erase `klama .i do`, so the NIF cuts back to the directives, and those words wait in
+the tail as one unit. `su` ends that text, so its nodes go out with `su`, and `ko` opens a text of
+its own. At the end, a text read piece by piece gives the NIF of its parts read whole, byte for byte
+(`suites/test_live.nim`).
 
 The verb `javascript` compiles the reader of prose, with the whole parser, into one script of
 JavaScript. The script gives the function `parseLojban`, which returns what `readText` gives as a
@@ -200,7 +234,7 @@ process.stdout.write(parseLojbanToNif("me\x27o vo"))
 console.log(parseLojbanToNif("mi klama le zarc"))'
 (.nif27)
 (.lang "cll-21.1")
-(sumti_6 0 97 (LI 0 "meho") (number 310 812 (PA 5 "vo")))
+(sumti_6 0 97 (LI 0 4 "meho") (number 310 812 (PA 5 7 "vo")))
 null
 ```
 
@@ -284,6 +318,8 @@ CLL 4.7 and 4.8.
 It reads a stream of text into its words, with its pauses, commas and capitals, and it splits
 words that a text writes together. It reads prose by the grammar of 21.1, after quotation,
 erasure, `zei`, BAhE, `bu` and indicators act on the words.
+It reads on past each error, and it reads live text piece by piece, as the text arrives. Its NIF
+ties each word to the bytes it reads from, and each byte of each word lies in one leaf.
 
 The verb `javascript` builds the reader of prose for a page or for node. A suite holds that build
 to the verdicts that the native build gives the sample of Tatoeba.
