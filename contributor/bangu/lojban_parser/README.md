@@ -114,8 +114,8 @@ The two ends give one run in 21.1, and `LUT_CHAIN_BY_ENDS` gives each rule betwe
 that holds no number opens no run.
 
 The name of a rule gives its number, since 21.1 gives each of its 88 rules one name and one number.
-So the node writes no number of the rule that closes the run (D1 a on #859), and
-`LUT_NUMBER_BY_RULE` gives it, as 97 for `sumti-6`.
+So the node writes no number of the rule that closes the run, as the Architect ruled on #859
+(comment 6805527878). `LUT_NUMBER_BY_RULE` gives that number, as 97 for `sumti-6`.
 
 Each terminal holds its class, as `LI` or `PA`, then three things for each word. Those are the byte
 where it opens, the byte past it, and its letters. So `(LI 0 4 "meho")` ties `me'o` to bytes 0 to 3

@@ -1129,7 +1129,8 @@ that it reads from. A named rule holds no byte, since its leaves give its span. 
 
 **Rejected: the byte where a word opens alone.** A reader cannot tell from the letters where a word
 ends, since a comma inside a word writes a byte that the letters drop. The byte past each word adds
-about 7 percent to the modules of the corpora. Figures of marks and live text gives the measure.
+about 8 percent to the modules of the corpora. Figures, Text in NIF, byte past each word, gives
+the measure.
 
 **A chain of rules is one node, which its two ends write.** In 21.1, a rule often holds the next
 rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a chain is one
@@ -1148,12 +1149,14 @@ the corpora, and holds the chain from `terms` to `sumti-6` to rules 80 to 97 of 
 **The name of a rule gives its number, so no node writes the number of the rule that closes it.**
 21.1 gives its 88 rules 88 names and 88 numbers. `LUT_NUMBER_BY_RULE` of `grammar.nim` holds each,
 and its build stops where a name or a number repeats. A copy of the number could disagree with the
-name, so that one node names two rules. The Architect ruled so (D1 a on #859). Figures, Text in
-NIF, closing numbers, gives the bytes that the copy took.
+name, so that one node names two rules. The Architect ruled so on #859, in comment 6805527878.
+Figures, Text in NIF, closing numbers, gives the bytes that the copy took.
 
 Verified by `suites/test_nif.nim`, which holds both ends of each chain to their numbers, and
 rebuilds each tree of the corpora. The rebuild refuses a node that writes two numbers, and a name
-that 21.1 gives no rule (`suites/test_merge.nim`). The error node keeps the number of its rule.
+that 21.1 gives no rule (`suites/test_merge.nim`). By hand, 2026-11-11, a build that gives
+`sumti-6` the number 95 of `sumti-5` stops at compile. The error node keeps the number of its rule,
+as Open questions says.
 
 **A tag writes `_` for `-`, and a word writes `h` for `'`.** No name of 21.1 holds `_`, so `_`
 reads back as `-`. Chapter 20 writes `h` as the capital of `'` in the names of selma'o, as in
@@ -1174,7 +1177,7 @@ bytes, so it would leave `\2D` undecoded. Assumed from a read of `src/lib/nifrea
 nimony at `2c5b3dca`, 2026-11-09, since this project runs no code of nimony.
 
 **Rejected: each rule of a chain as a node of its own.** The Architect chose the two ends (#855),
-and they lose nothing. With the escapes of `90b19f20`, the two ends, each by its number, took 30
+and they lose nothing. With the escapes of `90b19f20`, the two ends, each by its number, take 30
 percent of the bytes that the whole tree takes. Rejected: each number of a chain in its node, which
 needs no table of chains, at 43 percent. Figures, Text in NIF, chains, gives the measures.
 
@@ -2064,10 +2067,12 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   `mi klama le zarci`. With the escapes of `90b19f20`, the whole tree took 3,147,588 bytes of NIF.
   Each chain as all its numbers took 1,350,505 bytes, and each chain as its two ends 948,868.
 - **Text in NIF, closing numbers.** On 2026-11-11, a program built with `-d:release` wrote the
-  marked NIF of each of the 1,941 texts of the corpora. It took 958,775 bytes, against 1,061,997
-  at `ab120f79`, where each node writes the number of the rule that closes it. The 1,831 texts
-  that one pass reads take 852,642 bytes, against 947,004. So the copy took 9.7 and 10.0 percent.
-  Two runs of each gave the same bytes.
+  marked NIF of each of the 1,941 texts of the corpora. It took 958,775 bytes at `2123fd67`,
+  against 1,061,997 at `ab120f79`, where each node writes the number of the rule that closes it.
+  The 1,831 texts that one pass reads take 852,642 bytes, against 947,004. So the copy took 9.7
+  and 10.0 percent, and two runs of each gave the same bytes.
+- **Text in NIF, byte past each word.** At `2123fd67`, the byte past each word, with its space,
+  takes 71,291 bytes of the 958,775, 8.0 percent of the rest. Two runs gave the same bytes.
 - **Text in NIF, debug build.** On 2026-11-09, at `a66e60f0`, the suite of `test_nif.nim`, built
   alone as the stub is, ran in 12.1 s and 12.0 s. On 2026-11-10, in one run, a program built the
   same way read the texts of the corpora in 11.2 s. It wrote NIF in 75 ms, and the law of the
@@ -2213,6 +2218,10 @@ Measured on an Intel Xeon at 2.10 GHz with four cores, on the pin, on 2026-11-11
 
 ## Open questions
 
+- **The number of the rule where the grammar stops.** The error node writes that rule by its name
+  and its number, as `(srera 11 sumti_6 97 ...)`. The name gives the number there too, as it does
+  for the rule that closes a chain. D2 on #859 asks whether the node drops it, and the node keeps it
+  until the Architect rules.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader reads it as a part with the letters `brod`. `brodi`, `brodo` and `brodu` have no short
   rafsi, so a tanru that holds one of them before its last word renders with `brod`. It then
