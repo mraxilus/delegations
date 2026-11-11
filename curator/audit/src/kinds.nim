@@ -38,7 +38,7 @@
 ##     is forced, and its tooling needs JSON configuration.
 ##   Protobuf is schema of data one program writes and another reads (#761), so rule admits it
 ##     rather than gate: no Nim serves schema both Nim and browser read. ProtobufText is its text
-##     format, which committed record takes, and which build turns into bytes; its `#` comment
+##     format, which text format file takes, and which build turns into bytes; its `#` comment
 ##     opens line or follows whitespace, as YAML's does.
 ##   Cpp and C carry binding shim for library no Nim import expresses; `.hpp` is C++ header
 ##     and `.h` is C one, since name alone cannot tell them apart.
