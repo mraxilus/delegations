@@ -317,9 +317,11 @@ func toNifParts*(reading: ReadingMarked): string =
     result.add '\n'
 
 
-func toNif*(tree: Node, leaves: LeavesNif): string =
-  ## Write tree rebuilt from NIF as module of NIF, as reading writes it: directives, then root
-  ##   node, then line end; so merge of parts writes tree of one pass (`merge.nim`).
+func toNif*(trees: openArray[Node], leaves: LeavesNif): string =
+  ## Write each tree rebuilt from NIF as node of module, as reading writes it: directives, then
+  ##   each tree on line of its own; so merge of parts writes tree of one pass, or each tree it
+  ##   gives where error stays (`merge.nim`).
   result = HEADER
-  result.addNode(tree, leaves)
-  result.add '\n'
+  for k in 0 ..< trees.len:
+    result.addNode(trees[k], leaves)
+    result.add '\n'
