@@ -1509,22 +1509,23 @@ debug build. These two laws and the suite of the driver add it (Figures of live 
 
 **`mergeParts` merges the parts of a text from their NIF alone, and refuses no error.** A page or a
 fixer holds NIF, and no tree. So the rebuild stands in `src/lojban_parser/merge.nim`, and one call
-joins its steps, as the Architect ruled (D1 b on #859). Then the Architect ruled that the merge
-refuses no error, and merges each run of parts around it (#859).
+joins its steps, as the Architect ruled (D1 b on #859). The merge refuses no error, and it merges
+each run of parts around an error, as the Architect ruled on #859 too.
 
 Where one pass reads the text, the merge gives the NIF that `readText` writes, byte for byte, and
 `is_whole` holds. Where one pass refuses the text, `is_whole` does not hold. Verified by
 `suites/test_merge.nim`, 2026-11-11, over each text of the corpora, cut both ways, and over 1,500
 texts built.
 
-**The marked reading of one pass shows where each error stays.** The Architect allowed a merge
-across an error where that is valid. One pass reads on past each error (`readTextMarked`), so its
+**The marked reading of one pass shows where each error stays.** The ruling lets the merge cross
+an error where that is valid (#859). One pass reads on past each error (`readTextMarked`), so its
 tree shows which place is valid.
 
 - **A unit that a stage refuses stands where one pass puts it.** One pass reads around such a unit,
   and puts it in the lowest node that holds the units read around it (`placeRefused` of
   `prose.nim`). The merge puts it there too, so the unit parts no run. In
-  `mi klama .i x .i ko sipna`, `x` stands in the `paragraph` of the text.
+  `mi klama .i x .i ko sipna`, `x` stands in the `paragraph` of the text. In `mi su si do`, `si`
+  erases nothing, and stands before `do` in the root of its run.
 - **A part that holds an error node of the grammar stays as it is.** The marked reading of one pass
   keeps each part apart, under an error node at the root. The grammar does not say which rule the
   broken part fills. So each such part stays, and each run of parts between such parts merges.
@@ -1535,9 +1536,12 @@ one pass holds no word of is left out of it. That holds for 388 texts, each cut 
 
 Where the parts hold an error node, each such part stays, byte for byte. Each run between them gives
 the marked reading of its text read alone, where that text gives the same words. That holds for 937
-runs, each cut counted apart. By hand, 2026-11-11, a mutant that places no unit fails the suite. So
-do a mutant that merges across each error, and two that report `is_whole` past an error node or a
-unit refused.
+runs, each cut counted apart. The merge keeps each word of the parts, in order, with each dropped
+unit left out, so a run that lost a part would fail.
+
+By hand, 2026-11-11, a mutant that places no unit fails the suite. So do a mutant that merges across
+each error, and one that drops the first part of a run. So do two that report `is_whole` past an
+error node or a unit refused.
 
 **A run read alone may give other words, since a word may act across its start.** The text of a run
 read alone has the bytes before it blanked, and stops where the next node opens. There `si`, `sa`,
@@ -1559,7 +1563,8 @@ run again.
 
 The merge copies the tree that `assembleText` gives. A move of it out of its `Option` compiles to
 JavaScript that assigns to a call, and the page throws. Verified by `browser/suite_page.nim` in
-`drive`, which failed with the move, 2026-11-11. Cost: one copy of the tree of each run.
+`drive`. By hand, 2026-11-11, a build with the move fails it. Cost: one copy of the tree of each
+run.
 
 **Where the grammar stops past the last terminal of a run, its error node takes the run's end.**
 That is the byte where `fa'o` opens, for the last run where `fa'o` ends the input. Else it is the
@@ -1598,7 +1603,8 @@ fails the suite.
 
 **The merge refuses only NIF that reads not, or that holds a shape the writer gives not.** It names
 the node, counted from 0 past the directives, where a node holds that shape, and the reason. It
-raises no error. Verified by `suites/test_merge.nim`.
+raises no error. Verified by `suites/test_merge.nim`, where a module whose second node names no
+selma'o is refused at node 1. By hand, 2026-11-11, a mutant that names no node fails it.
 
 **Live parts may hold an error node where the text read whole holds none.** Live text cuts after an
 opener that waits for its closer, as `to` or `lu` (`live.nim`). A part read alone then stops where
@@ -1786,7 +1792,8 @@ the trees merged, which no longer hold. Verified by `browser/suite_page.nim` in 
 
 The line names one tree where the merge gives the tree of one pass. Else it counts the trees, the
 words, the errors and the words unread, as the line of the parts counts them. A red line names NIF
-that reads not, and its node, counted from 1 as the label of each drawing counts.
+that reads not, and its node, counted from 1 as the label of each drawing counts. Verified by
+`suites/test_draw.nim`. By hand, 2026-11-11, a mutant that counts the node from 0 fails it.
 
 The suite wires the controls as the page does, clicks Merge on each case, and holds what it draws to
 the native merge. Some cases merge to the tree of one pass, and the sample `mi klama le .i ko` keeps
@@ -2169,20 +2176,19 @@ Each figure comes from an Intel Xeon at 2.10 GHz with four cores, on the pin, on
 
 Measured on an Intel Xeon at 2.10 GHz with four cores, on the pin, on 2026-11-11.
 
-- **Page.** `build/lojban_parser.html` holds 4,403,554 bytes, against 4,385,176 at `b19c545c`,
-  where the merge refused each error, and 4,319,737 at `ad2d62a4`, before the merge. Its script
-  holds 1,591,925 bytes, against 1,573,547 at `b19c545c`, and against 1,145,239 bytes of the script
-  that `javascript` builds. It holds the page, the drawing and the merge. Its five font faces hold
-  2,795,916 bytes as base64.
+- **Page.** `build/lojban_parser.html` holds 4,403,554 bytes, against 4,319,737 at `ad2d62a4`,
+  before the merge. Its script holds 1,591,925 bytes, against 1,508,777 at `ad2d62a4`, and against
+  1,145,239 bytes of the script that `javascript` builds. It holds the page, the drawing and the
+  merge. Its five font faces hold 2,795,916 bytes as base64.
 - **Driven checks.** `nim r tools/build.nim drive` took 44.7 s, with the headless shell of Chromium
-  153.0.8010.12, against 46.2 s at `b19c545c`, 41.1 s at `ad2d62a4` and 31.3 s at `fe1d09d9`. That
-  time holds the build of the page, the compile of a third suite, and three runs of a page more. It
-  also holds the six tests of merge on the page.
+  153.0.8010.12, against 41.1 s at `ad2d62a4`, before the merge, and 31.3 s at `fe1d09d9`. That time
+  holds the build of the page, the compile of a third suite, and three runs of a page more. It also
+  holds the six tests of merge on the page.
 - **Laws of the drawing.** `suites/test_draw.nim` reads 243 texts, each eighth of the 1,941 texts
   of the corpora.
 - **Laws of the merge.** `suites/test_merge.nim` took 30.9 s to 31.2 s of a debug build, with its
-  compile left out, against 28.5 s at `b19c545c`. It reads each of the 1,941 texts of the corpora
-  three ways, once, and 1,500 texts built. Of the corpora, one pass reads 1,831, and 133 of them
+  compile left out. It reads each of the 1,941 texts of the corpora three ways, once, and 1,500
+  texts built. Of the corpora, one pass reads 1,831, and 133 of them
   have more than one part. Of the texts built, one pass reads 263, and 46 of them hold `su` that
   ends the text before it.
 - **Runs of the merge.** Of the texts that one pass refuses, with no `su`, each cut counted apart,
