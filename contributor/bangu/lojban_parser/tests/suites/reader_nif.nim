@@ -33,7 +33,7 @@
 
 import std/[options, sequtils, strutils, tables]
 
-import ../../src/lojban_parser/[grammar, nif, prose, selmaho, stream]
+import ../../src/lojban_parser/[grammar, nif, prose, selmaho, stream, tanru]
 
 
 type
@@ -58,7 +58,7 @@ type
 
   TerminalNif* = tuple[terminal: string, words: seq[WordNif]]
     ## Define terminal as module gives it back: class, then each word; unit no terminal holds
-    ##   gives `unread`, then stage, then refusal of stream for stage `Stream`.
+    ##   gives `rivbi`, then stage, then refusal of stream for stage `Stream`.
 
 
 const
@@ -68,6 +68,9 @@ const
   OPENERS_IDENTIFIER = {'a'..'z', 'A'..'Z', '_', '\x80'..'\xFF'}
     ## Bytes opening identifier, escape aside (IdentStart).
   DIGITS = {'0'..'9'}
+  TAG_ERROR = "srera"  ## Tag of error node, gismu of rulings on #859, as model gives it.
+  TAG_EXPECTS = "nitcu"  ## Tag of terminals grammar reads where it stops, as model gives it.
+  TAG_UNREAD = "rivbi"  ## Tag of unit no terminal holds, as model gives it.
   HEX = {'0'..'9', 'A'..'F'}  ## Digits of escape, upper case alone (Escape sequences).
   SHORTCUTS = [('n', '\n'), ('t', '\t'), ('r', '\r'), ('|', '\\'), ('^', '"')]
     ## Shortcut of escape, with byte it gives (Escape sequences).
@@ -209,6 +212,24 @@ func letters(occurrence: Occurrence): string =
   if occurrence.reading.is_word: occurrence.text.replace('\'', 'h') else: occurrence.text
 
 
+func spelled(stage: RefusalText): string =
+  ## Give tag stage should read as: selma'o as chapter 20 names it, lojban word in lower case,
+  ##   English term of CLL as it stands (rulings on #859).
+  case stage
+  of RefusalText.Su: "SU"
+  of RefusalText.Faho: "FAhO"
+  of RefusalText.Selmaho: "selmaho"
+  else: $stage
+
+
+func spelled(refusal: Refusal): string =
+  ## Give tag refusal of stream should read as, spelled as stage is.
+  case refusal
+  of Refusal.Faho: "FAhO"
+  of Refusal.Slinkuhi: "slinkuhi"
+  else: $refusal
+
+
 func byteStop(reading: ReadingMarked, at: int): int =
   ## Give byte grammar stops at, from unit `at`: byte where unit opens, or size of text at end.
   if at < reading.units.len: reading.occurrences[reading.units[at].words[0]].start
@@ -219,19 +240,19 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
   ## Give node of NIF that node of tree should read as: rule holding rule alone passes on to it,
   ##   as chain opening at `top`; rule closing chain gives tag, `top` where chain stands, its
   ##   number, then its nodes; terminal gives class, then bytes and letters of each word.
-  ##   Error node gives `error`, byte grammar stops at, rule and number, `expects` with classes,
-  ##     then its nodes, and closes chain above it; unit no terminal holds gives `unread`, stage,
+  ##   Error node gives `srera`, byte grammar stops at, rule and number, `nitcu` with classes,
+  ##     then its nodes, and closes chain above it; unit no terminal holds gives `rivbi`, stage,
   ##     refusal of stream for stage `Stream`, then its words.
   if node.is_terminal:
     template unit: untyped = reading.units[node.at]
       ## Alias unit of terminal, which `let` would copy on JavaScript backend.
     result = NodeNif(
-      kind: KindNif.Compound, text: (if unit.is_read: $unit.terminal else: "unread")
+      kind: KindNif.Compound, text: (if unit.is_read: $unit.terminal else: TAG_UNREAD)
     )
     if not unit.is_read:
-      result.children.add NodeNif(kind: KindNif.Identifier, text: $unit.refusal)
+      result.children.add NodeNif(kind: KindNif.Identifier, text: unit.refusal.spelled)
       if unit.refusal == RefusalText.Stream:
-        let refusal = $reading.occurrences[unit.words[0]].reading.refusal
+        let refusal = reading.occurrences[unit.words[0]].reading.refusal.spelled
         result.children.add NodeNif(kind: KindNif.Identifier, text: refusal)
     for k in 0 ..< unit.words.len:
       template word: untyped = reading.occurrences[unit.words[k]]
@@ -246,13 +267,13 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
   let tag = node.rule.replace('-', '_')
   if node.stop.isSome:
     when reading is ReadingMarked:
-      result = NodeNif(kind: KindNif.Compound, text: "error")
+      result = NodeNif(kind: KindNif.Compound, text: TAG_ERROR)
       result.children.add NodeNif(
         kind: KindNif.Number, number: reading.byteStop(node.stop.get.at)
       )
       result.children.add NodeNif(kind: KindNif.Identifier, text: tag)
       result.children.add NodeNif(kind: KindNif.Number, number: node.number)
-      var expects = NodeNif(kind: KindNif.Compound, text: "expects")
+      var expects = NodeNif(kind: KindNif.Compound, text: TAG_EXPECTS)
       for terminal in node.stop.get.expected:
         expects.children.add NodeNif(kind: KindNif.Identifier, text: $terminal)
       result.children.add expects
@@ -295,7 +316,7 @@ func toTree(node: NodeNif, terminals: var seq[TerminalNif]): Node =
   ## Rebuild node of tree from node of NIF: each chain from its two ends by `LUT_CHAIN_BY_ENDS`,
   ##   `-` for each `_` of tag; terminal adds class and words to `terminals`, `'` for each `h` of
   ##   word, and third string of `ZOI` as it is. Error node takes byte grammar stops at as
-  ##   its place; unit `unread` adds `unread` and its identifiers, and keeps letters of stage
+  ##   its place; unit `rivbi` adds `rivbi` and its identifiers, and keeps letters of stage
   ##   `Stream` as they are.
   if node.children.len > 0 and node.children[^1].kind == KindNif.Literal:
     var
@@ -305,7 +326,7 @@ func toTree(node: NodeNif, terminals: var seq[TerminalNif]): Node =
       terminal.add ' '
       terminal.add node.children[k].text
       inc k
-    let is_kept = terminal.startsWith("unread Stream")
+    let is_kept = terminal.startsWith(TAG_UNREAD & " Stream")
     var words: seq[WordNif]
     for m in countup(k, node.children.high, 3):
       let
@@ -315,7 +336,7 @@ func toTree(node: NodeNif, terminals: var seq[TerminalNif]): Node =
       words.add (node.children[m].number, node.children[m + 1].number, letters)
     terminals.add (terminal: terminal, words: words)
     return Node(is_terminal: true, at: terminals.high)
-  if node.text == "error":
+  if node.text == TAG_ERROR:
     var expected: seq[Terminal]
     for class in node.children[3].children: expected.add class.text.toTerminal
     result = Node(
@@ -341,15 +362,15 @@ func toTree(node: NodeNif, terminals: var seq[TerminalNif]): Node =
 
 func toTerminals(reading: ReadingText | ReadingMarked): seq[TerminalNif] =
   ## Give terminals reading holds: class, then bytes and letters of each word; unit no terminal
-  ##   holds gives `unread`, stage, and refusal of stream for stage `Stream`.
+  ##   holds gives `rivbi`, stage, and refusal of stream for stage `Stream`.
   for k in 0 ..< reading.units.len:
     template unit: untyped = reading.units[k]
       ## Alias unit, which `let` would copy on JavaScript backend.
     var
-      terminal = (if unit.is_read: $unit.terminal else: "unread " & $unit.refusal)
+      terminal = (if unit.is_read: $unit.terminal else: TAG_UNREAD & " " & unit.refusal.spelled)
       words: seq[WordNif]
     if not unit.is_read and unit.refusal == RefusalText.Stream:
-      terminal.add " " & $reading.occurrences[unit.words[0]].reading.refusal
+      terminal.add " " & reading.occurrences[unit.words[0]].reading.refusal.spelled
     for m in 0 ..< unit.words.len:
       template word: untyped = reading.occurrences[unit.words[m]]
         ## Alias word of unit, which `let` would copy on JavaScript backend.

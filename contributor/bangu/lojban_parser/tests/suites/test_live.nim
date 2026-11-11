@@ -145,11 +145,11 @@ const
     ## Line of node of `mi klama`, which examples open with.
   LINE_DO = "(text_1 0 2 (I 10 11 \"i\") (sumti_6 4 97 (KOhA 12 14 \"do\")))\n"
     ## Line of node of `.i do` after it, while sentence is open.
-  LINE_ERASED = "(unread Erasure 3 8 \"klama\" 10 11 \"i\" 12 14 \"do\" 15 17 \"si\" " &
+  LINE_ERASED = "(rivbi Erasure 3 8 \"klama\" 10 11 \"i\" 12 14 \"do\" 15 17 \"si\" " &
     "18 20 \"si\" 21 23 \"si\")\n"
     ## Line of words three `si` erase in `mi klama .i do si si si`, each `si` with them, as one
     ##   unit.
-  LINE_SUHI = "(error 3 paragraphs 4 (expects A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
+  LINE_SUHI = "(srera 3 paragraphs 4 (nitcu A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
     "FAhA FEhE FIhO GA GAhO GOI GOhA GUhA I JAI JOI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME " &
     "MOhI NA NAhE NIhO NOI NU NUhA NUhI PA PEhE PU SE SEI SOI TAhE TEI TO VA VAU VEI VEhA " &
     "VIhA VUhO XI ZAhO ZEI ZEhA ZI ZO ZOI ZOhU BRIVLA) (sumti_6 0 97 (KOhA 0 2 \"mi\")) " &
@@ -187,15 +187,15 @@ const
       changes: @[
         (
           28, 0, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) " &
-            "(unread Stream Letter 3 7 \"1987\") (bridi_tail_3 50 53 " &
+            "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 53 " &
             "(tanru_unit_2 130 152 (BRIVLA 8 13 \"klama\")) (tail_terms 71)))\n",
           "(text_1 0 2 (I 15 16 \"i\"))\n",
         ),
         (
-          192, 15, "(text_1 0 2 (I 15 16 \"i\"))\n(unread Su 17 19 \"su\")\n",
+          191, 15, "(text_1 0 2 (I 15 16 \"i\"))\n(rivbi SU 17 19 \"su\")\n",
           "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n",
         ),
-        (242, 20, "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n", ""),
+        (240, 20, "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n", ""),
       ],
     ),  # `su` ends text before it, which stays as it read: NIF cuts back nowhere (ruling on #859)
     (
@@ -211,10 +211,10 @@ const
           28, 0, "(sumti_6 0 97 (LU 0 2 \"lu\") (paragraph 0 10 (sentence 11 40 (sumti_6 80 97 " &
             "(KOhA 3 5 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 " &
             "(BRIVLA 6 11 \"klama\")) (tail_terms 71))) (I 13 14 \"i\") " &
-            "(sumti_6 20 97 (KOhA 15 17 \"do\"))))\n(unread Su 18 20 \"su\")\n",
+            "(sumti_6 20 97 (KOhA 15 17 \"do\"))))\n(rivbi SU 18 20 \"su\")\n",
           "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n",
         ),
-        (276, 21, "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n", ""),
+        (275, 21, "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n", ""),
       ],
     ),  # `lu` waits till `su` ends its text, and closes there, as at end, so NIF cuts back to it
     (
@@ -222,8 +222,8 @@ const
       changes: @[
         (
           28, 0,
-          "(unread Quotation 0 4 \"lohu\")\n(sumti_6 0 97 (KOhA 5 7 \"mi\"))\n" &
-            "(unread Su 8 10 \"su\")\n",
+          "(rivbi Quotation 0 4 \"lohu\")\n(sumti_6 0 97 (KOhA 5 7 \"mi\"))\n" &
+            "(rivbi SU 8 10 \"su\")\n",
           "(sumti_6 0 97 (KOhA 11 13 \"do\"))\n",
         ),
         (
