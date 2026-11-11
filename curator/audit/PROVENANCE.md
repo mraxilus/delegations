@@ -942,10 +942,10 @@ a copy from two different font faces.
   `NotoSans-Regular.ttf` is. It never says which font faces a target wants, and the targets differ:
   one draws maths and symbols, and the other italic serif. What stops being written twice is
   only what is identical, so the autonomy that CONTRIBUTOR.md argues for is untouched.
-- The store is the **only shared build input** of the repository. Compilers are pinned for each
-  project in nimble files, Atlas checkouts for each project, and npm for each project, all
-  deliberately. The bytes of a font face are not a toolchain. They are the same file for whoever
-  fetches them.
+- The store is the **first shared build input** of the repository, and the binary of `buf` is
+  the second. Compilers are pinned for each project in nimble files, Atlas checkouts for each
+  project, and npm for each project, all deliberately. The bytes of a font face, or of an
+  archive, are the same file for whoever fetches them.
 - **Keyed by digest, and never by name.** Two projects that ask for one font face share one entry
   by construction. A moved pin is a different entry rather than a stale one. `check.yml`
   gets the same property from a cache keyed on the file that holds the digests, one layer
@@ -994,6 +994,26 @@ a copy from two different font faces.
 - A row that looked like an absolute path would be copied as a font face by one build, and counted
   as served by the other. Neither project can check that. The store owns the shape of the row,
   so the store holds the law.
+
+**The store holds archives too, in a table of their own.** The Architect ruled on 2026-11-11 that
+`drive` of lojban_parser runs the headless shell of Chrome for Testing, pinned (D1 a of #864).
+Each delegate pins each browser that its project drives. An archive maps no codepoints, so its
+row is the name, the whole address and the digest. Its name carries its version, since each
+release keeps one upstream file name, `chrome-headless-shell-linux64.zip`. The project unpacks
+it under `build/`, so the store holds its bytes alone, and trusts them as it trusts a font face.
+
+- Verified on 2026-11-11. `koch fetch-assets` filled an empty store with the 119,809,080 bytes of
+  the archive in 4.8 s, under its digest, and served it warm in 0.13 s. Unpacked, it prints
+  `Google Chrome for Testing 153.0.8010.12`. The Playwright of a delegate container carries the
+  same version, as `chromium_headless_shell-1243`.
+- Rejected: the Chrome of the image of the runner, and the package `chromium` of Ubuntu, which
+  installs a snap. No pin holds either. Rejected: the Chromium that Playwright fetches, since it
+  comes through node, which the ruling on #859 takes away from lojban_parser.
+- Cost: the suite fetches no archive. So a wrong digest shows at the first fetch of its project,
+  which refuses the bytes. The digest of this row was read from the bytes by hand on 2026-11-11.
+- Cost: a cold store of a job that asks for the archive takes 119.8 MB more. `check.yml` caches
+  the store on the hash of `assets.nim`, so the new row starts a new entry of the cache.
+- Cost: each new release of the browser is a new row, with a new name and digest, by a curator.
 
 **A `/common/` tree is deferred.** The bar for admitting anything to one: the curator and at
 least two contributor projects use it, and each of them is named. A later refactor can then

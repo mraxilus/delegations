@@ -75,17 +75,17 @@ It reads prose by the formal grammar of CLL 21.1. Before the grammar, quotation,
 other cmavo of 19.16 act on the words, so each terminal holds the words of one construct:
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils], lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils, wordwrap], lojban_parser
 for text in ["mi klama le zarci", "ti gerku si mlatu",
-    "la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.", "mi klama le"]:
+    "la\x27o dy. Goethe .dy. cu me la\x27o ly. Homo sapiens .ly.", "mi klama le"]:
   let r = readText(text)
-  if r.is_read: echo text, ": ", r.units.mapIt(it.words.mapIt(r.occurrences[it].text).join(" ") &
-    " (" & $it.terminal & ")").join(", ")
+  if r.is_read: echo (text & ": " & r.units.mapIt(it.words.mapIt(r.occurrences[it].text).join(" ") &
+    " (" & $it.terminal & ")").join(", ")).wrapWords(100, newLine = "\n  ")
   else: echo text, ": ", r.refusal, " at byte ", r.start, ", in ", r.rule'
 mi klama le zarci: mi (KOhA), klama (BRIVLA), le (LE), zarci (BRIVLA)
 ti gerku si mlatu: ti (KOhA), mlatu (BRIVLA)
-la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.: la'o dy Goethe dy (ZOI), cu (CU),
-  me (ME), la'o ly Homo sapiens ly (ZOI)
+la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.: la'o dy Goethe dy (ZOI), cu (CU), me (ME),
+  la'o ly Homo sapiens ly (ZOI)
 mi klama le: Grammar at byte 11, in sumti-6 97
 ```
 
@@ -316,8 +316,8 @@ own name. The verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decomp
 
 The verb `javascript` needs the compiler alone. The verb `drive` needs Chromium, the one that
 `LOJBAN_CHROMIUM` names, full Chrome or its headless shell. Else it takes the headless shell of
-Chrome for Testing from the store, once the curator declares it there (#864). It unpacks that
-shell with `unzip`, which the verb `system` declares. No check needs node.
+Chrome for Testing 153.0.8010.12 from the store of the repository. It unpacks that shell with
+`unzip`, which the verb `system` declares. No check needs node.
 
 The verbs `page` and `drive` fetch the font faces of the page through `koch fetch-assets`, which
 needs `curl` and `sha256sum`. `koch drive` reads the `woff2` of Commit Mono through `libbrotli1`,

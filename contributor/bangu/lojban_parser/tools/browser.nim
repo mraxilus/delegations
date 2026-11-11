@@ -68,8 +68,9 @@ const
   DIRECTORY_FILES = "files"
     ## Folder beside `written.json` of each font face page declares, by digest of its bytes.
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"  ## Driver of repository, asked for Chromium.
-  FILE_CHROMIUM = "chrome-headless-shell-linux64.zip"
-    ## Headless shell of Chrome for Testing 153.0.8010.12, as store of repository names it (#864).
+  FILE_CHROMIUM = "chrome-headless-shell-linux64-153.0.8010.12.zip"
+    ## Headless shell of Chrome for Testing 153.0.8010.12, as store of repository names it, version
+    ##   in name (`ARCHIVES` of `curator/audit/src/assets.nim`).
   DIRECTORY_CHROMIUM = ROOT_SERVED / "chromium"  ## Folder Chromium of store unpacks into.
   PATH_CHROMIUM_UNPACKED = DIRECTORY_CHROMIUM / "chrome-headless-shell-linux64" /
     "chrome-headless-shell"
@@ -186,7 +187,7 @@ proc findChromium(): string =
     "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " & FILE_CHROMIUM)
   if code != 0:
     stderr.writeLine "Chromium should come from `" & VARIABLE_CHROMIUM & "`, or from store of " &
-      "repository, which `koch fetch-assets` serves as `" & FILE_CHROMIUM & "` (#864); got exit `" &
+      "repository, which `koch fetch-assets` serves as `" & FILE_CHROMIUM & "`; got exit `" &
       $code & "`: " & output.strip
     return ""
   removeDir(DIRECTORY_CHROMIUM)
