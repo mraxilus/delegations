@@ -190,14 +190,15 @@ proc writeJavascript(): int =
 
 proc main(): int =
   ## Dispatch command named as first argument; `cll`, `tatoeba` and `wikipedia` take path second.
-  let arguments = commandLineParams()
-  if arguments.len == 2 and arguments[0] == "cll": return writeCll(arguments[1])
-  if arguments.len == 2 and arguments[0] == "tatoeba": return writeTatoeba(arguments[1])
-  if arguments.len == 2 and arguments[0] == "wikipedia": return writeWikipedia(arguments[1])
-  if arguments.len != 1:
+  ##   Dispatch opens on `case paramStr(1)`, as koch reads it: koch learns `drive`, `head` and
+  ##   `system` from that dispatch alone (`test_driver.nim`).
+  if paramCount() == 2 and paramStr(1) == "cll": return writeCll(paramStr(2))
+  if paramCount() == 2 and paramStr(1) == "tatoeba": return writeTatoeba(paramStr(2))
+  if paramCount() == 2 and paramStr(1) == "wikipedia": return writeWikipedia(paramStr(2))
+  if paramCount() != 1:
     stderr.write USAGE
     return 2
-  case arguments[0]
+  case paramStr(1)
   of "lists": writeLists()
   of "head": compareLists()
   of "translations": writeTranslations()
