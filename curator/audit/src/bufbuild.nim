@@ -10,7 +10,7 @@
 ##     its SHA-512 beside it. Tarball is checked before it is unpacked, and binary moves in whole.
 ##
 ##   Rejected: `protoc`, which compiles schema and holds none to older version.
-##   Rejected: `buf convert` for committed record, which drops misspelt field silently;
+##   Rejected: `buf convert` for text format file, which drops misspelt field silently;
 ##     `protoc --encode` refuses it, so project declares `protobuf-compiler` instead.
 ##   Cost: Linux on x86-64 alone; other machine gets finding naming what to add.
 ##   Cost: about 33 MB fetched once per version, unpacked to 47 MB binary.

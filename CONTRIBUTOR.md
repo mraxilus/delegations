@@ -328,7 +328,7 @@ API of a test driver.
 
 Data takes its form from who writes it and who reads it. The compiler, the schema, or a law of
 the suite then checks each field. The cost is a schema or a law beside each format between
-programs, and `protoc` in each build that turns a record into binary.
+programs. It is also `protoc`, in each build that turns a text format file into binary.
 
 - **Data that a person writes, or a fixed list that code reads, is a Nim module of typed
   constants.** A field whose absence is a mistake takes `{.requiresInit.}`. A verb renders a
@@ -354,15 +354,16 @@ programs, and `protoc` in each build that turns a record into binary.
   number. So the code refuses zero, and a page also refuses a number that its enum lacks.
 - **A message that the repository does not hold is binary.** It is a file that a person saves,
   or a file that one verb writes for another under `build/`. Binaries are never committed.
-- **A record that the repository commits is text format, in a `.txtpb` file.** The verb that
+- **A message that the repository commits is a text format file, a `.txtpb`.** The verb that
   writes it writes binary through the Nim library, and `protoc --decode` turns that into text.
   A build or a suite has `protoc --encode` write the binary into a file under `build/` at
   compile time, then reads the file with `staticRead`. `STYLE.md` §4 gives the idiom, which
   checks the exit code of `protoc`. Declare `protobuf-compiler` in your `system` verb, and never
   use `buf convert`, which drops a misspelt field and gives no error.
 - **The readers check no length and no checksum.** A file cut between two fields still reads,
-  as fewer objects. So a file that a person keeps starts with a fixed tag that names its format,
-  then the length and a checksum of its message. The reader checks all three before it decodes.
+  as fewer objects. So a file that a person keeps starts with a format line, one line of text
+  that names the format and its version. The length and the checksum of its message follow it.
+  The reader checks all three before it decodes.
 - **A format in NIF holds its shape by a law of its suite, since no schema reads it.** NIF is
   the native format of Nim 3, and the root glossary names its specification. A file opens with
   the version directive, `(.nif27)`, which also names the format to a tool. A suite writes each
