@@ -2641,6 +2641,29 @@ has that form. So `(X.2, X.9)` after text passes whole, and a line or a bullet t
 - Verified by `suites/test_hooks.nim`, where each passing form stands beside a bare reference.
   Verified by hand through the hook built from the branch, 2026-10-04.
 
+## Skills
+
+**A skill names an act that the Architect asks for, and points at the section of the charter
+that binds it.** Claude Code loads `.claude/skills/<name>/SKILL.md` when a person types
+`/<name>`, or when the model judges that the description of the skill fits the turn. A word
+that the Architect types in a reply holds no such pointer, and its meaning rests on the memory
+of the delegate. The skill `explain` asks for an explanation of each decision of a sign-off.
+Its name says the act, and its text says that the Architect rules after the explanation.
+
+- The skill points at `GUIDE.md`, A decision explained, and repeats no paragraph of it, as
+  `steward` repeats none of the rules that it names. Copies reports a paragraph written twice.
+- Rejected: the word `decide`, which a delegate reads as a request to decide.
+- Rejected: the bare word `explain` in `GUIDE.md` alone. The delegate must still recall it from
+  the guide at the moment of the reply.
+- Cost: a skill is no governing path, so a change to it re-stamps no Rules row. Reading holds
+  the skill to the section that it points at.
+- Cost: Claude Code ignores a key of the front matter that its documentation does not list, as
+  it ignores `invokeAs` of `steward`.
+- The keys `name`, `description`, `when_to_use` and `argument-hint` are those that the Skills
+  page of Claude Code lists, read on 2026-11-11. The page says that Claude Code appends the
+  argument of `/explain D2` to a skill whose body names no `$ARGUMENTS`.
+- Unverified until a delegate starts on `main`, and Claude Code lists `explain` among its skills.
+
 ## Watching main
 
 **A red `main` opens its own issue, because a duty to remember to look fails in silence.**
