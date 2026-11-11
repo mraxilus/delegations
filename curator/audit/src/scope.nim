@@ -17,16 +17,16 @@
 ##     Move renames file, so line must follow in same branch, and no other branch can write it
 ##     (#631). Line is judged exactly (`isLockMoved`), so any other edit of lock stays finding.
 ##
-##   Held finding: finding inside project blocks only branch of role that owns that project, as
-##     Architect ruled on D1 of #871. So check that reddens project lands once rest is clean,
-##     and project clears finding in its next pull request (CURATOR.md, duty 3). Root curator
-##     owns each curator project; curator of one project owns that project alone; contributor
-##     owns its own. `main` holds each project, since some branch holds each, and green branch
-##     must merge into green `main`. `koch check` and `check-files` read same split, on hook
-##     and on runner alike.
-##   Finding on line branch changed blocks it wherever it lies, as Architect ruled on D1 of
-##     #876: curator writing into contributor record clears what it wrote, as before hold.
-##     Prose finding names line its block opens on, so changed line owns that line too.
+##   Held finding: finding inside project blocks only branch of role that owns that project, or
+##     branch that changed its line, as Architect ruled on D1 of #871 and of #876. So check
+##     that reddens project lands once rest is clean, and project clears finding in its next
+##     pull request (CURATOR.md, duty 3). Root curator owns each curator project; curator of
+##     one project owns that project alone; contributor owns its own. `main` holds each
+##     project, since some branch holds each, and green branch must merge into green `main`.
+##     `koch check` and `check-files` read same split, on hook and on runner alike.
+##   Finding on line branch changed blocks it wherever it lies: curator writing into
+##     contributor record clears what it wrote. Prose finding names line its block opens on,
+##     so changed line owns that line too.
 ##   Held means inside project, records included. Finding outside every project, as root file
 ##     or index above project, blocks each branch, and so does propagation finding (stale stamp,
 ##     standard moved to root), which stays curator's wherever it lands. Scope finding is
