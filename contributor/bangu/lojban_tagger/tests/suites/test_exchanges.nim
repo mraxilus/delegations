@@ -13,8 +13,8 @@
 ##     --encode` at compile time into `build/`, then reads binary with `staticRead`, as STYLE.md
 ##     section 4 gives; writer gives those bytes, and reader reads them back.
 ##     Cost: suite needs `protoc` to compile, which `system` of `tools/build.nim` declares.
-##     Trap: `nim check` runs no `gorgeEx`, which gives empty output and exit code 0 there, so
-##       check reads binary that last compile left in `build/`, and fails to open it before any.
+##     Under `nim check`, Nim runs no `gorgeEx`, so read takes guard `nimcheck` of that section,
+##       and reads nothing there, rather than binary that last compile left in `build/`.
 ##   Faulty files take worked example, each byte of it, and random exchanges: each cut, bytes
 ##     appended, each change of one bit and of one byte, and runs of up to 32 bits and odd counts
 ##     of bits changed within message; each is refused naming part fault falls in, whose problem
@@ -449,7 +449,7 @@ static:
   doAssert ENCODED_EXAMPLE.exitCode == 0,
       "Worked example is refused; got `" & ENCODED_EXAMPLE.output & "`."
 
-const MESSAGE_EXAMPLE = staticRead(PATH_EXAMPLE_ENCODED)
+const MESSAGE_EXAMPLE = when defined(nimcheck): "" else: staticRead(PATH_EXAMPLE_ENCODED)
   ## Message worked example holds, as `protoc` encodes it: bytes writer and reader are held to.
 
 
