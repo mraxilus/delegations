@@ -114,7 +114,7 @@ type
 
 
 const
-  MARKS_BOUNDARY = Whitespace + {'.'}  ## Marks dividing words: whitespace, and period (3.3).
+  MARKS_BOUNDARY* = Whitespace + {'.'}  ## Marks dividing words: whitespace, and period (3.3).
   CAPITALS = MARKS_STREAM - MARKS_BOUNDARY - {','}  ## Capital of each letter, marking stress.
   VOWELS_NUCLEUS = VOWELS + {'y'}  ## Letters making syllable: five vowels, and `y` (3.4, 3.9).
   CONSONANTS_SYLLABIC = {'l', 'm', 'n', 'r'}  ## Consonants that may make syllable alone (3.4).

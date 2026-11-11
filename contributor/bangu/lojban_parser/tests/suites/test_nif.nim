@@ -3,8 +3,8 @@
 ##   reads each tree back from its NIF text, over corpora, as model of format gives, and rebuilds
 ##   tree and terminals of reading whole from it.
 ##   Corpora: each example of CLL 1.1, rows joined and words square brackets mark kept; each
-##     sentence of sample of Tatoeba; each paragraph of articles of Wikipedia. Text refused
-##     holds no tree, so law skips it.
+##     sentence of sample of Tatoeba; each paragraph of articles of Wikipedia (`corpora.nim`).
+##     Text refused holds no tree, so law skips it; `test_marks.nim` reads it back marked.
 ##   Suite of JavaScript build holds same law over every fourth sentence of sample, and same
 ##     worked example, with reader of this suite (`tests/test_javascript.nim`).
 ##   Corpora reach bytes from 128, byte of start past 1,023, and unit of several words; their
@@ -22,10 +22,7 @@ import std/[importutils, options, sequtils, strutils, tables, unittest]
 import ../../src/lojban_parser/grammar {.all.}
 import ../../src/lojban_parser/nif {.all.}
 import ../../src/lojban_parser/[prose, selmaho]
-import ../articles_wikipedia/articles
-import ../cll/examples
-import ../sample_tatoeba/sentences
-import ./reader_nif
+import ./[corpora, reader_nif]
 
 
 const
@@ -72,18 +69,7 @@ const
 
 
 
-#[ Corpora ]#
-
-func textsCorpora(): seq[(string, string)] =
-  ## Give key and text of each text of corpora: rows of each example of CLL joined, words square
-  ##   brackets mark kept; each sentence of sample of Tatoeba; each paragraph of Wikipedia.
-  for example in EXAMPLES_CLL:
-    let text = example.rows.join(" ").multiReplace(("[", ""), ("]", ""))
-    result.add ("CLL " & example.number, text)
-  for sentence in SENTENCES_TATOEBA: result.add ("Tatoeba " & $sentence.id, sentence.text)
-  for paragraph in PARAGRAPHS_WIKIPEDIA:
-    result.add ("Wikipedia " & paragraph.article & " " & $paragraph.index, paragraph.text)
-
+#[ Names ]#
 
 func names(): seq[string] =
   ## Give each name writer may write as tag: name of each rule of 21.1, then each class of terminal.

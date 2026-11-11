@@ -17,6 +17,16 @@
 ##   Terminal is compound node: tag is its class, as `KOhA` or `BRIVLA`; then byte where its first
 ##     word opens, then letters of each word as string literal. Order of terminals in tree gives
 ##     index of each unit, so node holds none.
+##   Reading that marks each error (`readTextMarked`, #859) writes two nodes more:
+##     Error node: tag `error`, byte where grammar stops, tag and number of rule stopping
+##       innermost there, then `(expects ...)` holding class of each terminal some derivation
+##       reads there, then nodes it holds. Chain stops above it, as no chain of 21.1 holds it.
+##     Unit no terminal holds: tag `unread`, byte where its first word opens, stage refusing it as
+##       identifier, as `Selmaho`, then letters of each word. Stage `Stream` adds refusal of
+##       stream, as `Letter`, and written word it refuses keeps its bytes, as text `zoi` quotes
+##       does: no `h` for `'`, and `'` takes escape. Stage alone was rejected, since stream and
+##       grammar of quotation both name refusal `Quotation`, so reader could not tell bytes from
+##       word.
 ##   Tag writes `_` for each `-`, and no name of 21.1 holds `_`. Word writes `h` for each `'`, as
 ##     chapter 20 writes capital of `'` in names of selma'o; lojban writes no `h` (3.3), and stream
 ##     refuses it outside quotation. So reader reads `_` as `-` and `h` as `'`, and neither tag nor
@@ -35,7 +45,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/strutils
+import std/[options, strutils]
 
 import ./[grammar, prose, stream]
 
@@ -80,40 +90,73 @@ func letters(occurrence: Occurrence): string =
   escaped(text, is_identifier = false)
 
 
-func addNode(text: var string, node: Node, reading: ReadingText)
+func byteAt(reading: ReadingMarked, at: int): int =
+  ## Give byte where unit `at` opens; size of text, at count of units, where text ends.
+  if at < reading.units.len: reading.occurrences[reading.units[at].words[0]].start
+  else: reading.size
 
 
-func addRule(text: var string, node: Node, top: int, reading: ReadingText) =
+func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked)
+
+
+func addRule(text: var string, node: Node, top: int, reading: ReadingText | ReadingMarked) =
   ## Add named rule to text: rule holding rule alone passes on to it, as chain opening at `top`;
   ##   rule closing chain writes its tag, `top` where chain stands, its number, then its nodes.
-  if node.children.len == 1 and not node.children[0].is_terminal:
+  ##   Error node closes chain above it, and writes tag `error`, byte where grammar stops, tag
+  ##     and number of rule stopping there, and `expects` with terminals read there.
+  let is_chain = node.stop.isNone and node.children.len == 1 and
+    not node.children[0].is_terminal and node.children[0].stop.isNone
+  if is_chain:
     text.addRule(node.children[0], top, reading)
     return
   text.add '('
+  if node.stop.isSome:
+    when reading is ReadingMarked:
+      text.add "error "
+      text.add $reading.byteAt(node.stop.get.at)
+      text.add ' '
+    else:
+      doAssert false, "Reading that reads should hold no error node."
   text.add node.rule.tag
   if top != node.number:
     text.add ' '
     text.add $top
   text.add ' '
   text.add $node.number
+  if node.stop.isSome:
+    text.add " (expects"
+    for k in 0 ..< node.stop.get.expected.len:
+      text.add ' '
+      text.add ($node.stop.get.expected[k]).tag
+    text.add ')'
   for k in 0 ..< node.children.len:
     text.add ' '
     text.addNode(node.children[k], reading)
   text.add ')'
 
 
-func addNode(text: var string, node: Node, reading: ReadingText) =
+func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked) =
   ## Add node of tree to text: chain of named rules opening at it, or terminal with its class,
-  ##   byte where it opens, and letters of each word.
+  ##   byte where it opens, and letters of each word; unit no terminal holds writes `unread`,
+  ##   and stage refusing it after its byte, with refusal of stream for stage `Stream`.
   if not node.is_terminal:
     text.addRule(node, node.number, reading)
     return
   template unit: untyped = reading.units[node.at]
     ## Alias unit of terminal, which `let` would copy on JavaScript backend.
   text.add '('
-  text.add ($unit.terminal).tag
+  text.add (if unit.is_read: ($unit.terminal).tag else: "unread")
   text.add ' '
   text.add $reading.occurrences[unit.words[0]].start
+  if not unit.is_read:
+    when reading is ReadingMarked:
+      text.add ' '
+      text.add ($unit.refusal).tag
+      if unit.refusal == RefusalText.Stream:
+        text.add ' '
+        text.add ($reading.occurrences[unit.words[0]].reading.refusal).tag
+    else:
+      doAssert false, "Reading that reads should hold no unit refused."
   for k in 0 ..< unit.words.len:
     text.add " \""
     text.add reading.occurrences[unit.words[k]].letters
@@ -125,6 +168,14 @@ func toNif*(reading: ReadingText): string =
   ## Write tree of reading as module of NIF: directives, then node of rule `text`, then line end.
   doAssert reading.is_read, "Reading should read, since refusal holds no tree; got refusal `" &
     $reading.refusal & "`."
+  result = HEADER
+  result.addNode(reading.tree, reading)
+  result.add '\n'
+
+
+func toNif*(reading: ReadingMarked): string =
+  ## Write tree of reading that marks each error as module of NIF: directives, then root node,
+  ##   then line end. Text that reads writes as `readText` writes it.
   result = HEADER
   result.addNode(reading.tree, reading)
   result.add '\n'
