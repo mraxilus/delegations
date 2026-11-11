@@ -10,6 +10,8 @@
 ##       parts between them to marked reading of its text read alone, where that text gives same
 ##       words: word acting across start of run reads otherwise alone, as `si`, `sa`, `zei` or
 ##       `bu` reaching back past it, or quotation of `lo'u`, `la'o` or `zoi` crossing it.
+##     Text one pass refuses keeps each word of its parts, in order, with each unit one pass
+##       holds no word of left out; so no run loses part that law of runs would not see.
 ##   Domain: each text of corpora, and texts built of words that reach back (`texts_built.nim`),
 ##     since corpora hold few of them; each cut as text read whole cuts it, and as live text
 ##     cuts it. Text one pass refuses that holds `su` stands in worked examples alone, since
@@ -17,10 +19,11 @@
 ##   Live parts cut after opener that waits may differ from parts of text read whole: part read
 ##     alone stops where closer would come, so merge keeps it as part holding error node; or
 ##     parts join as another valid reading, closer left out. Laws read live parts as live text
-##     cuts them, save texts whose live parts break them (`TEXTS_LIVE_DIFFERING`).
+##     cuts them, save texts whose live parts break them (`EXAMPLES_LIVE`).
 ##   Worked examples give each drop and each place: `ni'o ni'o`, `tu'e`, `.ibo`, vocative, `si`,
 ##     `su`, `fa'o`; unit in place; run around error node; unit before last `su` that one pass
-##     refuses text for (19.16); and live parts that differ.
+##     refuses text for (19.16); and live parts that differ. Each pins how node holding error
+##     opens: byte grammar stops at, rule and number, or unit and its words.
 ##   Rebuild loses nothing: tree that each node of module rebuilds writes that node back, byte for
 ##     byte, marks among them (`toNif` of trees and leaves), over each text of domain, each cut,
 ##     and constructed texts.
@@ -103,42 +106,64 @@ const
   ]
     ## Constructed texts, and tree their parts merge to, byte for byte, as one pass gives it.
   EXAMPLES_KEPT = [
-    (text: "x su mi klama", first: "(rivbi Stream Shape 0 1 \"x\")", count: 2, errors: @[0]),
+    (text: "x su mi klama", count: 2, held: @[(0, "(rivbi Stream Shape 0 1 \"x\")")]),
       # stream reads whole text before `su` erases, so `x` stays in front
-    (text: "si su mi klama", first: "(rivbi Construct 0 2 \"si\")", count: 2, errors: @[0]),
+    (text: "si su mi klama", count: 2, held: @[(0, "(rivbi Construct 0 2 \"si\")")]),
       # `si` erasing nothing reads before `su` erases (19.13)
-    (text: "lo'u su ko", first: "(rivbi Quotation 0 4 \"lohu\")", count: 2, errors: @[0]),
+    (text: "lo'u su ko", count: 2, held: @[(0, "(rivbi Quotation 0 4 \"lohu\")")]),
       # `lo'u` no `le'u` closes quotes `su` (19.9)
-    (text: "mi klama .i le", first: "", count: 2, errors: @[1]),
+    (text: "mi su si do", count: 1, held: @[(0, "(text 0 (rivbi Construct 6 8 \"si\") (sumti_6 ")]),
+      # `si` erasing nothing past last `su` stands in run, before first unit read
+    (text: "mi klama .i le", count: 2, held: @[(1, "(srera 14 sumti_6 97 ")]),
       # `le` waits for sumti past end of text, so its part stays
-    (text: "mi klama .i do cadzu .i le .i ko sipna .i mi klama", first: "", count: 3, errors: @[1]),
+    (text: "mi klama .i do cadzu .i le .i ko sipna .i mi klama", count: 3,
+      held: @[(1, "(srera 28 sumti_6 97 ")]),
       # run on each side of part holding `le` merges
-    (text: "cadzu ni'o", first: "", count: 1, errors: @[0]),
+    (text: "cadzu ni'o", count: 1, held: @[(0, "(srera 10 paragraphs 4 ")]),
       # each part reads alone, and error node stands over both, as one pass marks it
-    (text: "ui cadzu ni'o do si", first: "(srera 19 ", count: 1, errors: @[0]),
+    (text: "ui cadzu ni'o do si", count: 1, held: @[(0, "(srera 19 paragraphs 4 ")]),
       # grammar stops past words erasure erases at end of text, as one pass marks it
-    (text: "cadzu ni'o fa'o xu", first: "(srera 11 ", count: 1, errors: @[0]),
+    (text: "cadzu ni'o fa'o xu", count: 1, held: @[(0, "(srera 11 paragraphs 4 ")]),
       # grammar stops where `fa'o` ends input, as one pass marks it (19.15)
   ]
-    ## Constructed texts one pass refuses, with first node merge gives where it is fixed, count of
-    ##   nodes, and index of each node holding error node or unit refused.
-  TEXTS_LIVE_DIFFERING = [
-    ".i lu le'u si gy li'u bu broda do le to .i broda",  # part after `to` stops where `toi` is due
-    "lu gy li'u zarci lo lu .i cadzu je bu",  # part after second `lu` stops where `li'u` is due
-    "tu'e to nai .i zo sa'a .i zoi bu",  # parts join as other reading, `toi` left out after `nai`
+    ## Constructed texts one pass refuses, with count of nodes merge gives, and each node holding
+    ##   error node or unit refused: its index, and how it opens.
+  EXAMPLES_LIVE = [
+    (
+      text: ".i lu le'u si gy li'u bu broda do le to .i broda", is_read: true, count: 2,
+      held: @[(0, "(srera 41 text 0 ")],
+    ),  # part after `to` stops where `toi` is due
+    (
+      text: "lu gy li'u zarci lo lu .i cadzu je bu", is_read: true, count: 2,
+      held: @[(0, "(srera 24 sumti_tail 111 ")],
+    ),  # part after second `lu` stops where `li'u` is due
+    (
+      text: "tu'e to nai .i zo sa'a .i zoi bu", is_read: false, count: 1,
+      held: @[(
+        0, "(text 0 (statement_3 2 14 (TUhE 0 4 \"tuhe\") (free 32 (TO 5 7 \"to\") " &
+          "(text 0 (NAI 8 11 \"nai\") (text_1 2)))",
+      )],
+    ),  # parts join as other reading, `toi` left out after `nai`
   ]
     ## Texts built whose live parts break laws that their parts as text read whole hold: of 30,000
-    ##   texts built by seed of suite, both cuts, these three, at 10,259, 19,141 and 25,354.
+    ##   texts built by seed of suite, both cuts, these three, at 10,259, 19,141 and 25,354. Each
+    ##   with whether one pass reads it, and nodes merge of its live parts gives, as above.
   MODULES_MALFORMED = [
-    ("", "should open with directives"),  # no directive
-    (HEADER & "(sentence 0 40", "NIF should hold"),  # node never closed
-    (HEADER & "(FOO 0 2 \"mi\")\n", "should name selma'o"),  # class that names no selma'o
-    (HEADER & "(sumti_6 1 2 (KOhA 0 2 \"mi\"))\n", "two ends of chain"),  # no chain of 21.1
-    (HEADER & "(sumti_6 (KOhA 0 2 \"mi\"))\n", "number of rule"),  # rule with no number
-    (HEADER & "(KOhA 0 \"mi\")\n", "bytes and letters"),  # word with no byte past it
-    (HEADER & "(srera 0 sumti_6)\n", "byte, rule, number"),  # error node with no rule number
+    ("", "should open with directives", -1),  # no directive
+    (HEADER & "(sentence 0 40", "NIF should hold", -1),  # node never closed
+    (HEADER & "(FOO 0 2 \"mi\")\n", "should name selma'o", 0),  # class that names no selma'o
+    (HEADER & "(sumti_6 1 2 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),  # no chain of 21.1
+    (HEADER & "(sumti_6 (KOhA 0 2 \"mi\"))\n", "number of rule", 0),  # rule with no number
+    (HEADER & "(KOhA 0 \"mi\")\n", "bytes and letters", 0),  # word with no byte past it
+    (HEADER & "(srera 0 sumti_6)\n", "byte, rule, number", 0),  # error node with no rule number
+    (
+      HEADER & "(sumti_6 0 97 (LI 0 4 \"meho\") (number 310 812 (PA 5 7 \"vo\")))\n" &
+        "(FOO 8 10 \"do\")\n",
+      "should name selma'o", 1,
+    ),  # second node names no selma'o
   ]
-    ## Modules of NIF merge refuses, each with no shape `nif.nim` writes, and what reason holds.
+    ## Modules of NIF merge refuses, each with no shape `nif.nim` writes: what reason holds, and
+    ##   node merge names, counted from 0 past directives, or -1 where it names none.
 
 
 
@@ -193,6 +218,34 @@ func words(nif: string): seq[TerminalNif] =
   ## Give terminals of each node of module, in order.
   let module = nif.readModule
   for k in 2 ..< module.len: discard module[k].toTree(result)
+
+
+func isLiveDiffering(text: string): bool =
+  ## Decide whether text is one whose live parts break laws (`EXAMPLES_LIVE`).
+  for example in EXAMPLES_LIVE:
+    if example.text == text: return true
+
+
+func isHolding(nif: string, count: int, held: openArray[(int, string)]): bool =
+  ## Decide whether module holds `count` nodes, and each node holding error node or unit refused
+  ##   stands at index `held` gives, opening as it gives.
+  let lines = nif.splitLines[2 .. ^2]
+  if lines.len != count: return false
+  var indexes: seq[int]
+  for k in 0 ..< lines.len:
+    if "(srera " in lines[k] or "(rivbi " in lines[k]: indexes.add k
+  if indexes.len != held.len: return false
+  for m in 0 ..< held.len:
+    if indexes[m] != held[m][0] or not lines[indexes[m]].startsWith(held[m][1]): return false
+  true
+
+
+func wordsKept(nif: string): seq[TerminalNif] =
+  ## Give terminals of each node of module, in order, with each unit one pass holds no word of
+  ##   left out, as merge drops it.
+  let module = nif.readModule
+  for k in 2 ..< module.len:
+    if not module[k].isDropped: discard module[k].stripped.toTree(result)
 
 
 func isWrittenBack(nif: string): bool =
@@ -259,7 +312,7 @@ suite "Internal: Merge of parts":
       if not item.whole.is_read: continue
       checkpoint item.text
       for parts in [item.parts, item.live]:
-        if parts != item.parts and item.text in TEXTS_LIVE_DIFFERING: continue
+        if parts != item.parts and item.text.isLiveDiffering: continue
         let merged = parts.mergeParts
         check merged.is_merged and merged.is_whole  # header of `merge.nim`, one tree, no error
         if merged.is_merged: check merged.nif == item.whole.toNif  # header, merge is one pass
@@ -283,10 +336,11 @@ suite "Internal: Merge of parts":
       if item.whole.is_read: continue
       checkpoint item.text
       for parts in [item.parts, item.live]:
-        if parts != item.parts and item.text in TEXTS_LIVE_DIFFERING: continue
+        if parts != item.parts and item.text.isLiveDiffering: continue
         let merged = parts.mergeParts
         check merged.is_merged and not merged.is_whole  # header of `merge.nim`, error stays
         if not merged.is_merged or "(rivbi SU " in item.parts: continue  # header, su in examples
+        check merged.nif.words == parts.wordsKept  # header of `merge.nim`, merge keeps each word
         let module = parts.readModule
         var shape: seq[string]  # each node merge should give: part holding error node, or run
         for m in 2 ..< module.len:
@@ -329,28 +383,22 @@ suite "Internal: Merge of parts":
 
 
   test "Worked examples keep each error, merging each run around it":
-    for (text, first, count, errors) in EXAMPLES_KEPT:
+    for (text, count, held) in EXAMPLES_KEPT:
       checkpoint text
       check not readText(text).is_read
       let merged = readTextParts(text).reading.toNifParts.mergeParts
       check merged.is_merged and not merged.is_whole
-      if not merged.is_merged: continue
-      let lines = merged.nif.splitLines[2 .. ^2]
-      check lines.len == count  # header of `merge.nim`, node of each run and each error
-      if first.len > 0 and lines.len > 0: check lines[0].startsWith(first)
-      var held: seq[int]  # node holding error node or unit refused
-      for k in 0 ..< lines.len:
-        if "(srera " in lines[k] or "(rivbi " in lines[k]: held.add k
-      check held == errors
+      if merged.is_merged: check merged.nif.isHolding(count, held)  # header, error in place
 
 
   test "Live parts that differ from parts of text read whole merge to their own trees":
-    for text in TEXTS_LIVE_DIFFERING:
+    for (text, is_read, count, held) in EXAMPLES_LIVE:
       checkpoint text
       let
         parts = readTextParts(text).reading.toNifParts
         live = readTextParts(text, is_live = true).reading.toNifParts
         whole = readText(text)
+      check whole.is_read == is_read
       check live != parts  # header, live part reads alone where closer is due
       let merged = parts.mergeParts
       check merged.is_merged
@@ -359,6 +407,7 @@ suite "Internal: Merge of parts":
       else: check merged.nif == text.marked
       let differing = live.mergeParts
       check differing.is_merged and not differing.is_whole and differing.nif != merged.nif
+      if differing.is_merged: check differing.nif.isHolding(count, held)  # header, own cut
 
 
   test "Tree each node of module rebuilds writes it back, byte for byte, marks among them":
@@ -370,7 +419,7 @@ suite "Internal: Merge of parts":
       check item.live.isWrittenBack
       if item.whole.is_read: check item.whole.toNif.isWrittenBack
     var constructed = @TEXTS_MERGED
-    for (text, first, count, errors) in EXAMPLES_KEPT: constructed.add text
+    for (text, count, held) in EXAMPLES_KEPT: constructed.add text
     for text in constructed:
       checkpoint text
       check readTextParts(text).reading.toNifParts.isWrittenBack  # header of `nif.nim`
@@ -379,11 +428,13 @@ suite "Internal: Merge of parts":
 
 
   test "NIF that reads not, or holds shape writer gives not, is refused":
-    for (module, reason) in MODULES_MALFORMED:
+    for (module, reason, part) in MODULES_MALFORMED:
       checkpoint module
       let merged = module.mergeParts  # raises not
       check not merged.is_merged  # header of `merge.nim`, rebuild refuses shape
-      if not merged.is_merged: check reason in merged.reason
+      if merged.is_merged: continue
+      check reason in merged.reason
+      check merged.part == (if part < 0: none(int) else: some(part))  # header, node refused
     var terminals: seq[TerminalNif]
     expect ValueError:  # rebuild refuses error node of no shape writer gives
       discard readModule(HEADER & "(srera 0 sumti_6)\n")[2].toTree(terminals)
