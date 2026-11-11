@@ -172,10 +172,10 @@ and the shared allowance. This section adds only what differs for a curator.
    pull request only through a new head: merge `main` into the branch.
 
 3. **A check that reddens a project.** A new or tightened check can report findings in a
-   project that your branch does not own. A finding inside a project blocks only the next pull
-   request of that project, from the role that owns it, as the Architect ruled. So the check
-   merges once the rest of the tree is clean, and each project conforms in full when it next
-   moves.
+   project that your branch does not own. A finding inside a project blocks only a branch of
+   the role that owns that project, as the Architect ruled. The root curator owns each curator
+   project, so a finding there blocks each of its branches. So the check merges once the rest of
+   the tree is clean, and each project conforms in full when it next moves.
 
    Open a review-finding issue on each project that the check reddens, and quote its findings.
    Never grandfather a finding into the check, and never fix the project yourself. The skill
