@@ -1152,6 +1152,9 @@ and its build stops where a name or a number repeats. A copy of the number could
 name, so that one node names two rules. The Architect ruled so on #859, in comment 6805527878.
 Figures, Text in NIF, closing numbers, gives the bytes that the copy took.
 
+Cost: the script of the page grows by 31,771 bytes, to 1,623,696, since its merge and its drawing
+read the table. The script that `javascript` builds grows by 827 bytes, since it holds neither.
+
 Verified by `suites/test_nif.nim`, which holds both ends of each chain to their numbers, and
 rebuilds each tree of the corpora. The rebuild refuses a node that writes two numbers, and a name
 that 21.1 gives no rule (`suites/test_merge.nim`). By hand, 2026-11-11, a build that gives
@@ -2198,10 +2201,10 @@ Each figure comes from an Intel Xeon at 2.10 GHz with four cores, on the pin, on
 
 Measured on an Intel Xeon at 2.10 GHz with four cores, on the pin, on 2026-11-11.
 
-- **Page.** `build/lojban_parser.html` holds 4,403,554 bytes, against 4,319,737 at `ad2d62a4`,
-  before the merge. Its script holds 1,591,925 bytes, against 1,508,777 at `ad2d62a4`, and against
-  1,145,239 bytes of the script that `javascript` builds. It holds the page, the drawing and the
-  merge. Its five font faces hold 2,795,916 bytes as base64.
+- **Page.** At `56bfadd7`, `build/lojban_parser.html` holds 4,435,252 bytes, against 4,319,737 at
+  `ad2d62a4`, before the merge. Its script holds 1,623,696 bytes, against 1,508,777 at `ad2d62a4`,
+  and against 1,146,066 bytes of the script that `javascript` builds. It holds the page, the drawing
+  and the merge. Its five font faces hold 2,795,916 bytes as base64.
 - **Driven checks.** `nim r tools/build.nim drive` took 44.7 s, with the headless shell of Chromium
   153.0.8010.12, against 41.1 s at `ad2d62a4`, before the merge, and 31.3 s at `fe1d09d9`. That time
   holds the build of the page, the compile of a third suite, and three runs of a page more. It also
