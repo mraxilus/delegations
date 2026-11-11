@@ -20,6 +20,8 @@
 ##   |           | against its pin, and print count of each verdict of their paragraphs     |
 ##   | javascript | compile whole parser to JavaScript, as `src/javascript/bridge.nim`      |
 ##   |           | exposes it, into `build/lojban_parser.js`, and print its path and size   |
+##   | page      | build page of live text from `pages/live.html` into `build/`, with font  |
+##   |           | faces store serves and script inline (`tools/page.nim`)                  |
 ##   | drive     | build script, run each suite of `tests/browser/` in headless Chromium,   |
 ##   |           | and collect control page `koch drive` writes (`tools/browser.nim`)       |
 ##   | system    | print packages verbs and suites need, one per line                       |
@@ -43,11 +45,11 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, os, sequtils, tables]
 
-import ./[browser, cll, lists, tatoeba, translations, wikipedia]
+import ./[browser, cll, lists, page, tatoeba, translations, wikipedia]
 
 
 const
-  USAGE = "Usage: nim r tools/build.nim <lists|head|javascript|drive|system|translations>\n" &
+  USAGE = "Usage: nim r tools/build.nim <lists|head|javascript|page|drive|system|translations>\n" &
       "       nim r tools/build.nim cll <directory>\n" &
       "       nim r tools/build.nim tatoeba <export>\n" &
       "       nim r tools/build.nim wikipedia <directory>\n"
@@ -61,6 +63,7 @@ const
       "fetcher of pages, which verb `translations` fetches Alice and Oz with, and fake of " &
       "Chromium of `test_drive.nim` reports end of run with"),
     ("unzip", "unpacker of archive of Chromium, which store serves and verb `drive` drives"),
+    ("libbrotli1", "decoder of `woff2`, which `koch drive` reads font faces of page through"),
   ]
     ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
 
@@ -207,6 +210,7 @@ proc main(): int =
   of "head": compareLists()
   of "translations": writeTranslations()
   of "javascript": writeJavascript()
+  of "page": writePage()
   of "drive": runDrive()
   of "system":
     for (name, _) in SYSTEM: echo name

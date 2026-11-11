@@ -300,7 +300,8 @@ nim r tools/build.nim tatoeba <export>            # write sample of Tatoeba agai
 nim r tools/build.nim wikipedia <directory>       # write articles of Wikipedia again from answers
 nim r tools/build.nim translations                # fetch Alice and Oz, which suites then read
 nim r tools/build.nim javascript                  # compile parser to build/lojban_parser.js
-nim r tools/build.nim drive                       # run suites of script in headless Chromium
+nim r tools/build.nim page                        # build page of live text, one file in build/
+nim r tools/build.nim drive                       # run suites of script and page in Chromium
 nim r tools/build.nim system                      # print packages verbs and suites need
 ```
 
@@ -318,9 +319,24 @@ The verb `javascript` needs the compiler alone. The verb `drive` needs Chromium,
 Chrome for Testing from the store, once the curator declares it there (#864). It unpacks that
 shell with `unzip`, which the verb `system` declares. No check needs node.
 
+The verbs `page` and `drive` fetch the font faces of the page through `koch fetch-assets`, which
+needs `curl` and `sha256sum`. `koch drive` reads the `woff2` of Commit Mono through `libbrotli1`,
+which the verb `system` declares.
+
 ## Pages
 
-The project publishes no page.
+[Lojban live tree](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) draws the tree of live text as
+a reader types it. A worker reads the text piece by piece, and the page draws each part from the
+NIF that the worker gives. A part still open shows in amber. A word that reaches back, as `si` or
+`li'u`, cuts the NIF back to where it lands.
+
+| built file, under `build/` | published at |
+| --- | --- |
+| lojban_parser.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
+
+The verb `page` builds it from `pages/live.html`. Publish it again from `build/lojban_parser.html`
+after any change that alters what the page shows. Put the URL in the pull request, and in the
+message that says the work is ready.
 
 ## Status
 

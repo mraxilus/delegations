@@ -1,0 +1,114 @@
+## Hold page of live text (`pages/live.html`) to native build, in headless Chromium that verb
+##   `drive` starts (`tools/drive.nim`): page built from same shell, with this suite as its script
+##   in place of `src/browser/page.nim`, which suite holds whole, since second script of Nim on
+##   page would replace procs of first (`tools/browser.nim`).
+##   Each case backend serves gives what page shows of it, against drawing native build gives:
+##     sample read whole, as its button reads it; text streamed word by word, then ended; text
+##     typed piece by piece, kept open; edit that keeps no text before it, which starts new
+##     reader. Case and each piece is file of one string, so no format stands between them.
+##   Drawing page shows and drawing native build writes compare as same browser serialises both,
+##     so no quirk of serialiser stands between them.
+##   Page whose rule of content refuses each worker reads on its own thread, shows same drawing,
+##     and says so in line of mode.
+##   Suite of promises reports each test as unittest spells it (`report.nim`), since unittest
+##     awaits none, then code of run.
+
+{.experimental: "strictFuncs".}
+
+import std/[asyncjs, jsffi, strutils]
+
+import ../../src/browser/page
+import ./report
+
+
+const
+  DIRECTORY_CASES = "/drive/page/"  ## Folder backend serves cases from.
+  COUNT_CASES_LEAST = 9  ## Cases backend serves, at least.
+  MODE_REFUSED = "refused"
+    ## Mode of page whose rule of content refuses each worker, as attribute `data-mode` of body.
+  MODE_WORKER = "A worker reads the text."  ## Line of mode where worker reads.
+  MODE_PAGE = "This page reads the text, since it gives no worker."
+    ## Line of mode where page refuses worker.
+  KINDS = ["whole", "stream", "typed", "edit"]  ## Kind of each case backend serves.
+
+
+type Case = object  ## Define case of page: how suite reads it, and what native build draws.
+  kind: string  ## Member of `KINDS`.
+  pieces: seq[string]  ## Text of case, piece by piece; whole text for `whole` and `stream`.
+  html: string  ## Drawing native build gives.
+  status: string  ## Line native build gives.
+
+
+let DOCUMENT {.nodecl, importc: "document".}: JsObject  ## Document of page; none in worker.
+
+
+proc serialised(html: cstring): cstring {.importjs:
+  "(function(markup) { var held = document.createElement('template'); " &
+  "held.innerHTML = markup; return held.innerHTML; })(#)".}
+  ## Give markup as browser serialises it. Boundary of JS target: element `template`.
+
+
+proc readCases(): seq[Case] =
+  ## Read each case backend serves, with each piece of it.
+  let count = readServed(DIRECTORY_CASES & "count.text").strip.parseInt
+  for k in 0 ..< count:
+    let path = DIRECTORY_CASES & $k
+    var item = Case(kind: readServed(path & ".kind"), html: readServed(path & ".html"),
+        status: readServed(path & ".status"))
+    for j in 0 ..< readServed(path & ".count.text").strip.parseInt:
+      item.pieces.add readServed(path & "." & $j & ".piece")
+    result.add item
+
+
+proc readCase(item: Case) {.async.} =
+  ## Read case as page reads it: by button, by stream with no pause, or typed piece by piece.
+  case item.kind
+  of "whole": await readWhole(cstring(item.pieces[0]))
+  of "stream": await streamed(cstring(item.pieces[0]), 0)
+  of "typed":
+    var text = ""
+    for piece in item.pieces:
+      text.add piece
+      await typed(cstring(text))
+  of "edit":
+    for piece in item.pieces: await typed(cstring(piece))
+  else: discard
+
+
+proc runSuite() {.async.} =
+  ## Run each test of suite in order, and report each, then code of run.
+  let is_refused = DOCUMENT.body.dataset.mode.to(cstring) == MODE_REFUSED
+  report "[Suite] Internal: Page of live text" & (if is_refused: ", worker refused" else: "")
+  let cases = readCases()
+  var failures = countFailures()
+
+  template ended(name: string) =
+    ## Report test as unittest spells it: failed where check failed since last test.
+    report "  [" & (if countFailures() > failures: "FAILED" else: "OK") & "] " & name
+    failures = countFailures()
+
+  expectThat cases.len >= COUNT_CASES_LEAST, "backend serves " & $COUNT_CASES_LEAST & " cases"
+  var kinds: seq[string]
+  for item in cases:
+    if item.kind notin kinds: kinds.add item.kind
+    await item.readCase
+    let
+      drawing = $DOCUMENT.getElementById(cstring("parts")).innerHTML.to(cstring)
+      status = $DOCUMENT.getElementById(cstring("status")).textContent.to(cstring)
+      claim = item.kind & " " & item.pieces.join("|")
+    expectThat drawing == $serialised(cstring(item.html)), "page draws as native build: " & claim
+    expectThat status == item.status, "line names what native build names: " & claim
+  expectThat kinds == @KINDS, "backend serves each kind of case"  # IX.3, guard keeps each kind
+  ended "Page draws each case as native build draws its NIF: whole, streamed, typed and edited"
+
+  let mode = $DOCUMENT.getElementById(cstring("mode")).textContent.to(cstring)
+  expectThat mode == (if is_refused: MODE_PAGE else: MODE_WORKER), "line of mode; got " & mode
+  ended "Line of mode names worker, or thread of page where page refuses worker"
+
+  reportEnd(if countFailures() > 0: 1 else: 0)
+
+
+# Run suite in page; in worker, which starts from this script, answer page alone (`live_text.nim`).
+if DOCUMENT.jsTypeOf != "undefined":
+  initReporter()
+  discard runSuite()

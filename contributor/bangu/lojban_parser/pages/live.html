@@ -1,0 +1,165 @@
+<!-- Shell of page that draws tree of live text: font faces, styles, field, samples, drawing
+     and NIF. Tokens: one embed per font face; text, line, drawing and NIF of first sample;
+     script. Verb `page` of `tools/build.nim` fills them, drawing first sample natively, so
+     page reads complete before its script runs.
+     No doctype, html, head or body tags: host wraps page in its own document at publish.
+     Field caps text at 2000 characters, twin of `LENGTH_MOST` in `src/browser/page.nim`. -->
+<title>Lojban live tree</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@font-face { font-family: "Noto Sans"; font-weight: 400;
+  src: url(@EMBED:NotoSans-Regular.ttf@) format("truetype"); }
+@font-face { font-family: "Noto Sans"; font-weight: 600;
+  src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
+@font-face { font-family: "Noto Serif"; font-weight: 600;
+  src: url(@EMBED:NotoSerif-SemiBold.ttf@) format("truetype"); }
+@font-face { font-family: "Commit Mono"; font-weight: 400;
+  src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2"); }
+@font-face { font-family: "Commit Mono"; font-weight: 700;
+  src: url(@EMBED:commit-mono-latin-700-normal.woff2@) format("woff2"); }
+
+/* Layout: one column; field and samples, then one drawing for each part, then NIF so far. */
+:root {
+  --bg: #f4f6f9; --surface: #ffffff; --ink: #1a2130; --muted: #5a6475; --rule: #ccd3de;
+  --accent: #2650c4; --accent-wash: #e5ebfa; --fail: #b3261e; --fail-wash: #fbe8e6;
+  --open: #8a5a00; --open-wash: #fdf3dc;
+  --serif: "Noto Serif", serif;
+  --sans: "Noto Sans", sans-serif;
+  --mono: "Commit Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #11141a; --surface: #181c24; --ink: #e4e8ef; --muted: #98a2b3; --rule: #2f3644;
+    --accent: #8aa8ff; --accent-wash: #1c2640; --fail: #ff8b73; --fail-wash: #3a1f1c;
+    --open: #f0c060; --open-wash: #3a3018;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11141a; --surface: #181c24; --ink: #e4e8ef; --muted: #98a2b3; --rule: #2f3644;
+  --accent: #8aa8ff; --accent-wash: #1c2640; --fail: #ff8b73; --fail-wash: #3a1f1c;
+  --open: #f0c060; --open-wash: #3a3018;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+.page { max-width: 1080px; margin: 0 auto; display: grid; gap: 24px; }
+h1 { font-family: var(--serif); font-weight: 600; font-size: 2rem; line-height: 1.15;
+  margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+code, .mono, textarea, .status, .eyebrow, .t, pre {
+  font-variant-ligatures: common-ligatures contextual; }
+code, .mono { font-family: var(--mono); font-size: 0.92em; }
+header, section, figure { display: grid; gap: 10px; min-width: 0; margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted); }
+.lede, .hint, footer, .mode { color: var(--muted); }
+.hint, footer, .mode { font-size: 13px; }
+.field { display: grid; gap: 8px; }
+.field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  flex-wrap: wrap; }
+label { font-weight: 600; }
+textarea { width: 100%; min-height: 3.4em; resize: vertical; font: 17px/1.5 var(--mono);
+  color: var(--ink); background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 10px; padding: 10px 12px; }
+textarea:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { display: inline-flex; align-items: baseline; gap: 8px; font: 13px/1.4 var(--sans);
+  color: var(--ink); background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button .tag { color: var(--muted); font-size: 12px; }
+button.stream { font-weight: 600; color: var(--accent); border-color: var(--accent);
+  background: var(--accent-wash); }
+.status { justify-self: start; font: 13px/1.4 var(--mono); padding: 4px 10px;
+  border-radius: 12px; border: 1px solid var(--accent); color: var(--accent);
+  background: var(--accent-wash); }
+.parts { display: grid; gap: 12px; }
+.part { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 10px; padding: 6px; }
+.part.open { border-style: dashed; border-color: var(--open); background: var(--open-wash); }
+.part svg { display: block; max-width: none; color: var(--muted); }
+details { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 10px 12px; }
+summary { font-weight: 600; cursor: pointer; }
+pre { font: 12.5px/1.5 var(--mono); margin: 10px 0 0; white-space: pre-wrap;
+  overflow-wrap: anywhere; color: var(--ink); }
+pre mark { background: var(--accent-wash); color: var(--ink); border-radius: 3px; }
+pre .open { color: var(--open); }
+
+/* Drawing of `src/browser/draw.nim`: it names classes alone, and these give each its look. */
+.t { fill: var(--ink); font-family: var(--mono); font-size: 11.5px; font-weight: 400; }
+.t.b { font-weight: 700; font-size: 12.5px; }
+.t.m { fill: var(--muted); }
+.t.s { font-size: 10.5px; }
+.t.err { fill: var(--fail); }
+.box { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 1; }
+.box.err { fill: var(--fail-wash); stroke: var(--fail); }
+.card { fill: var(--surface); stroke: var(--rule); stroke-width: 1; }
+.card.off { fill: var(--bg); stroke-dasharray: 4 3; }
+.card.err { fill: var(--fail-wash); stroke: var(--fail); }
+.edge { stroke: var(--muted); stroke-width: 1.2; fill: none; }
+.part.open .box { fill: var(--open-wash); stroke: var(--open); }
+</style>
+<main class="page">
+  <header>
+    <div class="eyebrow">lojban_parser · live text</div>
+    <h1>The tree of live text</h1>
+    <p class="lede">Type lojban, and the tree grows as each word arrives. A worker reads the
+      text as live text, piece by piece, and gives each change of its NIF. This page applies
+      each change, and draws each part from the NIF alone. A word that reaches back, as
+      <code>si</code> or <code>li'u</code>, cuts the NIF back to where it lands.</p>
+  </header>
+
+  <section aria-label="Input">
+    <div class="field">
+      <div class="field-head">
+        <label for="source">Lojban text</label>
+        <span class="mode" id="mode">The script has not run.</span>
+      </div>
+      <textarea id="source" maxlength="2000" rows="2" spellcheck="false" autocomplete="off"
+        autocapitalize="off">@SOURCE@</textarea>
+      <span class="hint">A word added at the end goes to the same reader. Any other edit starts
+        a new reader. Stream sends the text again, one word at a time.</span>
+    </div>
+    <div class="controls" aria-label="Samples">
+      <button type="button" class="stream" id="stream">Stream</button>
+      <button type="button" data-sample="mi klama le zarci .i do cadzu">
+        <span class="mono">mi klama le zarci .i do cadzu</span><span class="tag">reads</span>
+      </button>
+      <button type="button" data-sample="mi klama le .i ko">
+        <span class="mono">mi klama le .i ko</span><span class="tag">error</span></button>
+      <button type="button" data-sample="ti gerku si mlatu">
+        <span class="mono">ti gerku si mlatu</span><span class="tag">erasure</span></button>
+      <button type="button" data-sample="lu mi klama li'u cu xamgu">
+        <span class="mono">lu mi klama li'u cu xamgu</span><span class="tag">quotation</span>
+      </button>
+      <button type="button" data-sample="zoi gy. café .gy. melbi">
+        <span class="mono">zoi gy. café .gy. melbi</span><span class="tag">zoi</span></button>
+      <button type="button" data-sample="mi su do .i ko">
+        <span class="mono">mi su do .i ko</span><span class="tag">su</span></button>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite">@STATUS@</p>
+  </section>
+
+  <figure aria-label="Tree of each part">
+    <div class="parts" id="parts">@DIAGRAM@</div>
+  </figure>
+
+  <details open>
+    <summary>NIF so far</summary>
+    <pre id="nif">@NIF@</pre>
+  </details>
+
+  <footer>Each blue box is a rule of CLL 21.1, or a chain of rules that each hold the next
+    alone: it names the rule nearest the words, then the outermost rule and the count. A red
+    box is an error node, <code>srera</code>, at the byte where the grammar stops. A dashed card
+    is a word that no terminal holds, <code>rivbi</code>. A part in amber is still open: the
+    next change replaces it. The parser is compiled from the Nim source of
+    <code>lojban_parser</code> to JavaScript, and it runs in your browser.</footer>
+</main>
+<script>@SCRIPT@</script>
