@@ -36,6 +36,7 @@ func checkBase*(gained: openArray[string]): seq[Finding] =
   result.add finding(
     "",
     0,
-    "Branch predates rules or checker on base; merge base, re-audit, then push; got `" &
+    "Branch predates rules or checker on base; merge base, re-audit, then push, as /sync " &
+      "says; got `" &
       behind.join(", ") & "`.",
   )
