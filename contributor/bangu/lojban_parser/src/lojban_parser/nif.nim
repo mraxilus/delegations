@@ -21,7 +21,7 @@
 ##   Named rule writes no byte: it spans bytes of leaves under it, which reader takes from them.
 ##     Cost: byte past each word adds 7% to modules of corpora (PROVENANCE.md, NIF); byte where
 ##       word opens alone was rejected, since reader could not tell where word ends from letters
-##       alone, as comma and capital write bytes letters drop.
+##       alone, as comma inside word writes byte letters drop.
 ##   Reading that marks each error (`readTextMarked`, #859) writes two nodes more:
 ##     Error node: tag `error`, byte where grammar stops, tag and number of rule stopping
 ##       innermost there, then `(expects ...)` holding class of each terminal some derivation
