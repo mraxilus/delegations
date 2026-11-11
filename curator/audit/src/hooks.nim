@@ -5,7 +5,7 @@
 ##   Events, by verb argument: `path` refuses write outside branch scope; `edit` returns
 ##     static findings after write; `bash` refuses commit or push on `main` or outside grammar,
 ##     rewrite of pushed history, and push past pre-push hook, since `koch check` holds what
-##     curator branch leaves to contributor (duty 3); `body` holds post before it lands to role
+##     each project clears on its own branch (duty 3); `body` holds post before it lands to role
 ##     line, footer, Simplified Technical English counts, issue title and label, pull request
 ##     headings, and closing keyword before issue on line of its own alone; `stop` refuses end
 ##     of turn that pushed or posted and closes with neither sign-off block nor working line,
@@ -302,8 +302,8 @@ func checkBash*(branch, command: string; is_head_pushed: bool): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Never push past pre-push hook; `koch check` holds what reddens contributor project " &
-          "(CURATOR.md, duty 3); got `git push --no-verify`.",
+        "Never push past pre-push hook; `koch check` holds what each project clears on its own " &
+          "branch (CURATOR.md, duty 3); got `git push --no-verify`.",
       )
     if is_head_pushed and ((sub == "commit" and "--amend" in arguments) or sub == "rebase"):
       result.add finding(
@@ -1471,6 +1471,21 @@ func contextEdit*(path: string): string =
   if name == GLOSSARY_ROOT: LINE_GLOSSARY
   elif name == FILE_RECORD: LINE_RECORD
   else: ""
+
+
+func contextFindings*(path: string, held, own: openArray[Finding]): string =
+  ## Compose lines naming findings write left in path: own ones to fix before push, then held
+  ##   ones, which block no push and which their project clears (CURATOR.md, duty 3).
+  var parts: seq[string]
+  if own.len > 0:
+    parts.add "koch check-files reports " & $own.len & " finding(s) in `" & path &
+      "`; fix before push:"
+    parts.add own.mapIt(it.path & ":" & $it.line & ": " & it.message)
+  if held.len > 0:
+    parts.add "koch check-files holds " & $held.len & " finding(s) in `" & path &
+      "` for its project, which clears them in its next pull request (CURATOR.md, duty 3):"
+    parts.add held.mapIt(it.path & ":" & $it.line & ": " & it.message)
+  parts.join("\n")
 
 
 func isTurnWriting*(calls: openArray[Call]): bool =

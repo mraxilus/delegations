@@ -792,6 +792,24 @@ suite "Hooks":
     check contextEdit("README.md").len == 0
 
 
+  test "edit hook names held findings apart from those to fix before push":
+    # Case as found: curator edits contributor record where check that landed left finding;
+    #   held finding blocks no push, and duty 3 forbids curator to fix it.
+    let
+      path = "contributor/ronri/alpha/README.md"
+      own = finding(path, 3, "Own.")
+      held = finding(path, 5, "Held.")
+    check contextFindings(path, [held], [own]).splitLines == @[
+      "koch check-files reports 1 finding(s) in `" & path & "`; fix before push:",
+      path & ":3: Own.",
+      "koch check-files holds 1 finding(s) in `" & path & "` for its project, which clears " &
+        "them in its next pull request (CURATOR.md, duty 3):",
+      path & ":5: Held.",
+    ]
+    check "fix before push" notin contextFindings(path, [held], [])
+    check contextFindings(path, [], []).len == 0
+
+
   test "prompt names skill whose moment message of Architect holds, and none otherwise":
     for ruling in ["D1 a", "a", "D1 a, D2 b", "D1a", "D2 what does a mean?"]:
       check "/rule" in contextPrompt(ruling)
