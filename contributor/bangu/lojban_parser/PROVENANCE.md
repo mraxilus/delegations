@@ -1075,10 +1075,9 @@ alone, a byte is also an index of the string of JavaScript. Beyond ASCII the two
 that marks the place of a refusal converts the byte to an index first. Verified by
 `browser/suite_script.nim`, where `start` gives 34 and the index of JavaScript gives 32.
 
-**The script defines its three functions as globals of the page that loads it, and nothing more.**
-No node loads it, as the Architect ruled on #859, so it sets nothing on `module.exports`. A suite
-of node would be the only reader of that export. Verified by `browser/suite_live.nim`, in
-headless Chromium.
+**The script defines its three functions as globals of the page that loads it.** Rejected: an
+export on `module.exports`, which only node reads, and no node loads the script (#859). Verified by
+`browser/suite_live.nim`, in headless Chromium.
 
 **The object holds values of JavaScript alone.** Rejected: a text of JSON, which the caller would
 parse again. A plain object is a value of the runtime of the caller, so no format of data goes
@@ -1111,7 +1110,7 @@ the reader of live text too (Figures of live text in the script).
 the native format of Nim 3, so another program reads the tree with no part of this parser. The
 Architect chose it on #852, as a writer of this project with no dependency, which compiles for
 JavaScript too. The spec is `doc/nif-spec.md` of `nim-lang/nifspec` at `a31513c6`. Verified by
-`suites/test_nif.nim` and `tests/browser/suite_script.nim`.
+`suites/test_nif.nim` and `browser/suite_script.nim`.
 
 **The module opens with `(.nif27)`, with no byte before it, then `(.lang "cll-21.1")`.** The
 version directive is also the magic cookie of the format. The language says that each tag is a
@@ -1514,8 +1513,9 @@ Elsewhere the script reads one sentence at each turn of the event loop. The Arch
 #859. Verified by `browser/suite_live.nim`, which the verb `drive` runs in headless Chromium.
 
 **The worker is the script itself, under the name `lojban_parser live`.** It starts from the address
-that the page loaded the script from, else from the text of the script as a Blob. By that name, the
-script knows that it reads for the page, and not for a worker that the page gave work of its own.
+that the page loaded the script from, else from the text of the script as a Blob. The Blob is
+assumed, since no suite loads the script inline. By that name, the script knows that it reads for
+the page, and not for a worker that the page gave work of its own.
 Verified by `browser/suite_live.nim`: the worker reads each text, and the thread of the page
 reads no byte.
 
@@ -1535,8 +1535,9 @@ costs time linear in its length. A page cuts its NIF back to `at`, then adds `te
 NIF so far in each promise, which copies the whole NIF out of the worker for each piece.
 
 Word by word, the sample of Tatoeba joined by `.i` copies 1.8 MB as changes, and 363 MB as the NIF
-so far. At eight times that text, the two copy 15.5 MB and 24.0 GB.
-Verified by hand with a program built with `-d:release`, 2026-11-11.
+so far. At eight times that text, the two copy 15.5 MB and 24.0 GB. Verified by hand, 2026-11-11,
+with a program built with `-d:release`. It pushes each word, then sums the bytes of `text` and
+`tail` of each change, and of `toNif` and `tail` after it.
 
 **`at` counts units of UTF-16, and `start` counts bytes.** A page holds its NIF as a string of
 JavaScript, so `at` is an index of that string, and `slice` cuts there. `start` ties the change to
@@ -1553,19 +1554,23 @@ API runs under node, and the protocol of DevTools, which a page that reports its
 
 **A page reports through requests of its own, each one string.** `POST /log` adds a line, and
 `POST /done` ends the run with its code. A `POST` to any other path posts a file of that name. So
-no format of data stands between the page and the backend (CONTRIBUTOR.md, Data). A run that
-reports no end before 300 s fails, as a page that throws before its reporter loads. Verified by
+no format of data stands between the page and the backend (CONTRIBUTOR.md, Data). Verified by
 `nim r tools/build.nim drive`, 2026-11-11, which prints each line that each suite reports.
+
+**A run that reports no end before 300 s fails, as a page that throws before its reporter loads.**
+That ceiling is assumed, since no run reaches it.
 
 **Each suite runs on a page of its own, and holds the bridge.** Each script that Nim compiles
 defines its procs as globals. So a second script on a page replaces each proc of the first that
-shares its name. Beside a suite of its own, the shipped script stopped at a `FieldDefect`, in a turn
-on the thread of the page. Rejected: the shipped script and a suite on one page. Verified by hand in
-headless Chromium 153.0.8010.12, 2026-11-11.
+shares its name. Rejected: the shipped script and a suite on one page, whose procs replace those of
+the script and stop a read at a `FieldDefect`. Verified by hand in headless Chromium 153.0.8010.12,
+2026-11-11.
 
 **The reporter counts each test that fails, since unittest sets no exit code there.** On the
 JavaScript backend with no node, unittest cannot set the exit code of a run. So the reporter of
-`tests/browser/report.nim` counts each failed test, and ends the run with code 1.
+`tests/browser/report.nim` counts each failed test, and ends the run with code 1. Verified by hand,
+2026-11-11: a copy of `browser/suite_script.nim` with one wrong expectation fails at the line of
+its check, and `drive` exits 1.
 
 **The collector of what a page draws is Nim, and runs inside the page.** It ports the collector of
 `pga_benchmark`, `tools/drive/text.ts`, which read the page through Playwright. Here each
@@ -1907,9 +1912,9 @@ Each figure comes from the machine that Figures names, on the pin, and names its
 Each figure comes from an Intel Xeon at 2.10 GHz with four cores, on the pin, on 2026-11-11.
 
 - **Stub of the suites.** Each run built the debug stub with no `build/translations/`, as on the
-  runner. The runs alternate `9ee3a464` with `ff4fb895`, which holds the native code of this
-  branch. The stub took 88.1 s and 88.7 s, against 101.8 s and 99.1 s. The stub gained the two laws
-  of the sentence path, and the suite of the driver.
+  runner. The runs alternate `9ee3a464` with `ff4fb895`, which holds the two laws of the sentence
+  path and the suite of the driver. The stub took 101.8 s and 99.1 s at `ff4fb895`, against 88.1 s
+  and 88.7 s at `9ee3a464`.
 - **Script.** Built with `nim js -d:release`, the script holds 1,143,359 bytes at `ff4fb895`,
   against 841,869 bytes at `9ee3a464`, since it holds the reader of live text.
 - **Driven checks.** `nim r tools/build.nim drive` took 33.3 s, with the headless shell of
