@@ -142,6 +142,19 @@ suite "Scope":
     check splitHeld("claude/setup", found).held.len == 0
 
 
+  test "path outside branch scope blocks wherever it lies":
+    # Scope finding is branch's own change, which no project clears, as on runner's
+    #   `check-scope`; case as found: contributor branch writing into other project.
+    for (branch, path) in [
+      ("contributor/ronri/beta/work", CONTRIBUTOR & "/ronri/alpha/README.md"),
+      ("curator/audit/work", CURATOR & "/knoller/src/knoller.nim"),
+      ("curator/rules", CONTRIBUTOR & "/ronri/alpha/src/alpha.nim"),  # curator writing code
+    ]:
+      let found = checkScope(branch, [path])
+      check found.len == 1
+      check splitHeld(branch, found).held.len == 0
+
+
   test "curator move changes lock line naming nimble copy, and nothing else":
     # Case held: move of `rga_visualiser` to `pga_visualiser` renames nimble file after folder,
     #   while `atlas.lock` stored `"filename": "rga_visualiser.nimble"`, which `atlas rep` writes
