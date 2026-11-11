@@ -1413,7 +1413,7 @@ suite "Internal: Exchange":
         check recorded.exchange.reply.status == status  # domain: status back as written
 
 
-  test "writer gives bytes `protoc` encodes of committed example, and reader reads them back":
+  test "writer gives bytes `protoc` encodes of text format file, and reader reads them back":
     let
       hop = example("page").toExchanges(Service.Claude)[0]  # first hop: redirect of page
       written = hop.toBytes
@@ -1423,7 +1423,7 @@ suite "Internal: Exchange":
     check recorded.is_read and recorded.exchange == hop  # reader reads bytes of `protoc` back
 
 
-  test "file opening otherwise is refused, echoing its first line: version 1, line ends rewritten":
+  test "file is refused at its format line, echoing its first line: version 1, line ends rewritten":
     let
       file = frameReference(MESSAGE_EXAMPLE)
       older = "lojban_tagger exchange 1\nlabel recorded 2026-10-29\nrequest 7\nGET /a\n"

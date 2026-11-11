@@ -53,7 +53,7 @@ const
     ("libssl3", "TLS of `std/httpclient` under `-d:ssl`; `suggester` loads it when it starts"),
     ("ca-certificates", "roots `suggester` checks services and pages against"),
     ("openssl", "command `test_exchanges` makes test root and leaves with, at run time"),
-    ("protobuf-compiler", "`protoc`, which `test_exchanges` encodes committed record with"),
+    ("protobuf-compiler", "`protoc`, which `test_exchanges` encodes text format file with"),
   ]
     ## Packages verbs, `suggester` and suites need, each with reason (Article II.8); `system`
     ##   prints names alone.
