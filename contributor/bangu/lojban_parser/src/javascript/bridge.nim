@@ -29,6 +29,7 @@ when compileOption("profiler"):
 import std/[jsffi, options]
 
 import ../lojban_parser  # umbrella, for `$` of each type, as `KOhA` of `Selmaho`
+import ./live_text  # reader of live text, `parseLojbanLive`, in worker where page gives one
 
 
 let MODULE_NODE {.nodecl, importc: "module".}: JsObject
