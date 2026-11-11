@@ -2670,7 +2670,8 @@ is a hint, and it refuses nothing.
 
 - `prompt` reads each message of the Architect. A token `D<n>`, or one option letter alone,
   names `rule`. A word of status, duty or merge order names `triage`, and `merged` names
-  `merged`.
+  `merged`. A notice of the harness opens with a tag, as the end of a background task does.
+  It takes no line, since the Architect asked nothing in it.
 - `stop` names `sign-off` where it refuses a message that holds a sign-off.
 - `start` names `sync` in its drift line, and `triage` under the carried list.
 - `edit` names `propose-term` after a write to a glossary, and `record` after a write to a
