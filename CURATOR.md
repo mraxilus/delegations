@@ -178,8 +178,9 @@ and the shared allowance. This section adds only what differs for a curator.
    the tree is clean, and each project conforms in full when it next moves.
 
    Open a review-finding issue on each project that the check reddens, and quote its findings.
-   Never grandfather a finding into the check, and never fix the project yourself. The skill
-   `enact` points here.
+   Never grandfather a finding into the check, and never fix the project yourself. A finding
+   on a line that your branch changed is yours, wherever it lies, so fix it before the merge.
+   The skill `enact` points here.
 
    `nim r koch check` and the runner both hold each such finding: they list it, and it fails no
    other branch, and not `main`. A stale stamp and a standard moved to the root glossary are
