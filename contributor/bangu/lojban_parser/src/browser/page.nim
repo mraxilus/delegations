@@ -8,7 +8,7 @@
 ##   | typed      | give field text it holds: end it gained to same reader, else to new one |
 ##   | readWhole  | read text with new reader, and end it, as sample does                   |
 ##   | streamed   | read text with new reader, one word at each piece, and end it           |
-##   | mergeShown | draw tree each completed part merges to, or line naming part refused    |
+##   | mergeShown | draw each tree completed parts merge to, error in place, with its line  |
 ##   |------------|-------------------------------------------------------------------------|
 ##
 ##   Script is whole parser, as bridge exposes it, so worker it starts from its own text reads
