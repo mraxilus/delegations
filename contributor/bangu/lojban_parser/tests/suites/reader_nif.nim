@@ -2,13 +2,13 @@
 ##   suite is reader of what writer writes; reader of spec is `nif_read.nim` of library, which
 ##   page reads NIF through too.
 ##   Module of reading is model of format `nif.nim` gives in its header: directives, then each
-##     chain by its two ends, tag and number of each rule closing chain, and class of each terminal
+##     chain by tag of rule closing it and number of rule opening it, and class of each terminal
 ##     with bytes and letters of each word; for reading that marks each error, error node and unit
 ##     no terminal holds too. Writer gives text, and model gives nodes, so neither checks itself.
 ##   Rebuild reads module back into tree and terminals (`toTree` of `merge.nim`, which merge of
-##     parts reads NIF through too): each rule between two ends of chain from `LUT_CHAIN_BY_ENDS`,
-##     `-` for `_` of tag, `'` for `h` of word. So law holds that format loses nothing of tree, not
-##     just that writer and model agree.
+##     parts reads NIF through too): number of rule from its name, each rule between two ends of
+##     chain from `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag, `'` for `h` of word. So law holds that
+##     format loses nothing of tree, not just that writer and model agree.
 ##   Law of cover (`isCovering`) holds tree to bytes of text: each byte of each word lies in one
 ##     leaf, leaves follow text, and each other byte is mark between words; suites of marks and
 ##     of live text read it.
@@ -31,7 +31,7 @@ const
   EXAMPLE_NIF* = (
     text: "me'o vo",  # Example 6.98 of CLL 1.1
     module: "(.nif27)\n(.lang \"cll-21.1\")\n" &
-      "(sumti_6 0 97 (LI 0 4 \"meho\") (number 310 812 (PA 5 7 \"vo\")))\n",
+      "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n",
   )
     ## Text, and module `nif.nim` writes for it, byte for byte: chain from `text` 0 to `sumti-6`
     ##   97 is one node, and so is chain from `mex` 310 to `number` 812; tag `sumti-6` takes `_`,
@@ -73,9 +73,9 @@ func byteStop(reading: ReadingMarked, at: int): int =
 
 func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): NodeNif =
   ## Give node of NIF that node of tree should read as: rule holding rule alone passes on to it,
-  ##   as chain opening at `top`; rule closing chain gives tag, `top` where chain stands, its
-  ##   number, then its nodes; terminal gives class, then bytes and letters of each word.
-  ##   Error node gives `srera`, byte grammar stops at, rule and number, `nitcu` with classes,
+  ##   as chain opening at `top`; rule closing chain gives tag, then `top` where chain opens above
+  ##   it, then its nodes; terminal gives class, then bytes and letters of each word.
+  ##   Error node gives `srera`, byte grammar stops at, rule by name, `nitcu` with classes,
   ##     then its nodes, and closes chain above it; unit no terminal holds gives `rivbi`, stage,
   ##     refusal of stream for stage `Stream`, then its words.
   if node.is_terminal:
@@ -107,7 +107,6 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
         kind: KindNif.Number, number: reading.byteStop(node.stop.get.at)
       )
       result.children.add NodeNif(kind: KindNif.Identifier, text: tag)
-      result.children.add NodeNif(kind: KindNif.Number, number: node.number)
       var expects = NodeNif(kind: KindNif.Compound, text: TAG_EXPECTS)
       for terminal in node.stop.get.expected:
         expects.children.add NodeNif(kind: KindNif.Identifier, text: $terminal)
@@ -117,7 +116,6 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
   else:
     result = NodeNif(kind: KindNif.Compound, text: tag)
     if top != node.number: result.children.add NodeNif(kind: KindNif.Number, number: top)
-    result.children.add NodeNif(kind: KindNif.Number, number: node.number)
   for k in 0 ..< node.children.len:
     let top_child = (if node.children[k].is_terminal: 0 else: node.children[k].number)
     result.children.add node.children[k].toNodeNif(top_child, reading)

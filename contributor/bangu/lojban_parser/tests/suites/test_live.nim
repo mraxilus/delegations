@@ -145,36 +145,36 @@ const
   ]
     ## Texts where words erasure erases stand before `fa'o`, whose node shares their span; with
     ##   cuts fuzz of live law found, as unit of each word no unit held came in.
-  LINE_MI_KLAMA = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
-    "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71)))\n"
+  LINE_MI_KLAMA = "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &
+    "(tanru_unit_2 130 (BRIVLA 3 8 \"klama\")) (tail_terms)))\n"
     ## Line of node of `mi klama`, which examples open with.
-  LINE_DO = "(text_1 0 2 (I 10 11 \"i\") (sumti_6 4 97 (KOhA 12 14 \"do\")))\n"
+  LINE_DO = "(text_1 0 (I 10 11 \"i\") (sumti_6 4 (KOhA 12 14 \"do\")))\n"
     ## Line of node of `.i do` after it, while sentence is open.
   LINE_ERASED = "(rivbi Erasure 3 8 \"klama\" 10 11 \"i\" 12 14 \"do\" 15 17 \"si\" " &
     "18 20 \"si\" 21 23 \"si\")\n"
     ## Line of words three `si` erase in `mi klama .i do si si si`, each `si` with them, as one
     ##   unit.
-  LINE_SUHI = "(srera 3 paragraphs 4 (nitcu A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
+  LINE_SUHI = "(srera 3 paragraphs (nitcu A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
     "FAhA FEhE FIhO GA GAhO GOI GOhA GUhA I JAI JOI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME " &
     "MOhI NA NAhE NIhO NOI NU NUhA NUhI PA PEhE PU SE SEI SOI TAhE TEI TO VA VAU VEI VEhA " &
-    "VIhA VUhO XI ZAhO ZEI ZEhA ZI ZO ZOI ZOhU BRIVLA) (sumti_6 0 97 (KOhA 0 2 \"mi\")) " &
-    "(mex_operator 370 374 (VUhU 3 7 \"suhi\")) (sumti_6 0 97 (KOhA 8 10 \"do\")))\n"
+    "VIhA VUhO XI ZAhO ZEI ZEhA ZI ZO ZOI ZOhU BRIVLA) (sumti_6 0 (KOhA 0 2 \"mi\")) " &
+    "(mex_operator 370 (VUhU 3 7 \"suhi\")) (sumti_6 0 (KOhA 8 10 \"do\")))\n"
     ## Line of node of `mi su'i do`, which grammar stops in at `su'i`.
-  LINE_ZEI = "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
-    "(selbri_3 130 133 (tanru_unit_2 134 152 (BRIVLA 3 8 \"klama\")) (tanru_unit_2 134 152 " &
-    "(ZEI 10 11 \"i\" 12 15 \"zei\" 16 21 \"broda\"))) (tail_terms 71)))\n"
+  LINE_ZEI = "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &
+    "(selbri_3 130 (tanru_unit_2 134 (BRIVLA 3 8 \"klama\")) (tanru_unit_2 134 " &
+    "(ZEI 10 11 \"i\" 12 15 \"zei\" 16 21 \"broda\"))) (tail_terms)))\n"
     ## Line of node of `mi klama .i zei broda`, one sentence.
   EXAMPLES_LIVE: seq[tuple[pieces: seq[string], changes: seq[Change]]] = @[
     (
       pieces: @["mi klama .i do ", "cad", "zu"],
       changes: @[
         (28, 0, LINE_MI_KLAMA, LINE_DO),
-        (157, 10, "", LINE_DO),
-        (157, 10, "", LINE_DO),
+        (141, 10, "", LINE_DO),
+        (141, 10, "", LINE_DO),
         (
-          157, 10, "(text_1 0 2 (I 10 11 \"i\") (sentence 4 40 (sumti_6 80 97 " &
-            "(KOhA 12 14 \"do\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 " &
-            "(BRIVLA 15 20 \"cadzu\")) (tail_terms 71))))\n",
+          141, 10, "(text_1 0 (I 10 11 \"i\") (sentence 4 (sumti_6 80 " &
+            "(KOhA 12 14 \"do\")) (bridi_tail_3 50 (tanru_unit_2 130 " &
+            "(BRIVLA 15 20 \"cadzu\")) (tail_terms))))\n",
           "",
         ),
       ],
@@ -183,43 +183,43 @@ const
       pieces: @["mi klama .i do ", "si si si "],
       changes: @[
         (28, 0, LINE_MI_KLAMA, LINE_DO),
-        (28, 0, "", "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n" & LINE_ERASED),
-        (28, 0, "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n" & LINE_ERASED, ""),
+        (28, 0, "", "(sumti_6 0 (KOhA 0 2 \"mi\"))\n" & LINE_ERASED),
+        (28, 0, "(sumti_6 0 (KOhA 0 2 \"mi\"))\n" & LINE_ERASED, ""),
       ],
     ),  # third `si` erases `klama`, so NIF cuts back to sentence that held it (19.13)
     (
       pieces: @["mi 1987 klama .i ", "su ko "],
       changes: @[
         (
-          28, 0, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) " &
-            "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 8 13 \"klama\")) (tail_terms 71)))\n",
-          "(text_1 0 2 (I 15 16 \"i\"))\n",
+          28, 0, "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) " &
+            "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 " &
+            "(tanru_unit_2 130 (BRIVLA 8 13 \"klama\")) (tail_terms)))\n",
+          "(text_1 0 (I 15 16 \"i\"))\n",
         ),
         (
-          191, 15, "(text_1 0 2 (I 15 16 \"i\"))\n(rivbi SU 17 19 \"su\")\n",
-          "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n",
+          175, 15, "(text_1 0 (I 15 16 \"i\"))\n(rivbi SU 17 19 \"su\")\n",
+          "(sumti_6 0 (KOhA 20 22 \"ko\"))\n",
         ),
-        (240, 20, "(sumti_6 0 97 (KOhA 20 22 \"ko\"))\n", ""),
+        (222, 20, "(sumti_6 0 (KOhA 20 22 \"ko\"))\n", ""),
       ],
     ),  # `su` ends text before it, which stays as it read: NIF cuts back nowhere (ruling on #859)
     (
       pieces: @["lu mi klama .i do ", "su ko "],
       changes: @[
         (
-          28, 0, "(sumti_6 0 97 (LU 0 2 \"lu\") (sentence 0 40 (sumti_6 80 97 (KOhA 3 5 \"mi\")) " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 6 11 \"klama\")) " &
-            "(tail_terms 71))))\n",
-          "(text_1 0 2 (I 13 14 \"i\") (sumti_6 4 97 (KOhA 15 17 \"do\")))\n",
+          28, 0, "(sumti_6 0 (LU 0 2 \"lu\") (sentence 0 (sumti_6 80 (KOhA 3 5 \"mi\")) " &
+            "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 6 11 \"klama\")) " &
+            "(tail_terms))))\n",
+          "(text_1 0 (I 13 14 \"i\") (sumti_6 4 (KOhA 15 17 \"do\")))\n",
         ),
         (
-          28, 0, "(sumti_6 0 97 (LU 0 2 \"lu\") (paragraph 0 10 (sentence 11 40 (sumti_6 80 97 " &
-            "(KOhA 3 5 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 " &
-            "(BRIVLA 6 11 \"klama\")) (tail_terms 71))) (I 13 14 \"i\") " &
-            "(sumti_6 20 97 (KOhA 15 17 \"do\"))))\n(rivbi SU 18 20 \"su\")\n",
-          "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n",
+          28, 0, "(sumti_6 0 (LU 0 2 \"lu\") (paragraph 0 (sentence 11 (sumti_6 80 " &
+            "(KOhA 3 5 \"mi\")) (bridi_tail_3 50 (tanru_unit_2 130 " &
+            "(BRIVLA 6 11 \"klama\")) (tail_terms))) (I 13 14 \"i\") " &
+            "(sumti_6 20 (KOhA 15 17 \"do\"))))\n(rivbi SU 18 20 \"su\")\n",
+          "(sumti_6 0 (KOhA 21 23 \"ko\"))\n",
         ),
-        (275, 21, "(sumti_6 0 97 (KOhA 21 23 \"ko\"))\n", ""),
+        (250, 21, "(sumti_6 0 (KOhA 21 23 \"ko\"))\n", ""),
       ],
     ),  # `lu` waits till `su` ends its text, and closes there, as at end, so NIF cuts back to it
     (
@@ -227,48 +227,48 @@ const
       changes: @[
         (
           28, 0,
-          "(rivbi Quotation 0 4 \"lohu\")\n(sumti_6 0 97 (KOhA 5 7 \"mi\"))\n" &
+          "(rivbi Quotation 0 4 \"lohu\")\n(sumti_6 0 (KOhA 5 7 \"mi\"))\n" &
             "(rivbi SU 8 10 \"su\")\n",
-          "(sumti_6 0 97 (KOhA 11 13 \"do\"))\n",
+          "(sumti_6 0 (KOhA 11 13 \"do\"))\n",
         ),
         (
           28, 0,
-          "(sumti_6 0 97 (LOhU 0 4 \"lohu\" 5 7 \"mi\" 8 10 \"su\" 11 13 \"do\" 14 18 \"lehu\"))\n",
-          "(text_1 0 2 (I 20 21 \"i\") (sumti_6 4 97 (KOhA 22 24 \"ko\")))\n",
+          "(sumti_6 0 (LOhU 0 4 \"lohu\" 5 7 \"mi\" 8 10 \"su\" 11 13 \"do\" 14 18 \"lehu\"))\n",
+          "(text_1 0 (I 20 21 \"i\") (sumti_6 4 (KOhA 22 24 \"ko\")))\n",
         ),
-        (104, 20, "(text_1 0 2 (I 20 21 \"i\") (sumti_6 4 97 (KOhA 22 24 \"ko\")))\n", ""),
+        (101, 20, "(text_1 0 (I 20 21 \"i\") (sumti_6 4 (KOhA 22 24 \"ko\")))\n", ""),
       ],
     ),  # `lo'u` waits, so `su` after it ends text; `le'u` quotes `su` once it comes (19.9)
     (
       pieces: @["mi cusku lu do klama .i mi cadzu ", "li'u .i ko "],
       changes: @[
         (
-          28, 0, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 3 8 \"cusku\")) (sumti_6 71 97 (LU 9 11 \"lu\") " &
-            "(sentence 0 40 (sumti_6 80 97 (KOhA 12 14 \"do\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 15 20 \"klama\")) (tail_terms 71))))))\n",
-          "(text_1 0 2 (I 22 23 \"i\") (sentence 4 40 (sumti_6 80 97 (KOhA 24 26 \"mi\")) " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 27 32 \"cadzu\")) " &
-            "(tail_terms 71))))\n",
+          28, 0, "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &
+            "(tanru_unit_2 130 (BRIVLA 3 8 \"cusku\")) (sumti_6 71 (LU 9 11 \"lu\") " &
+            "(sentence 0 (sumti_6 80 (KOhA 12 14 \"do\")) (bridi_tail_3 50 " &
+            "(tanru_unit_2 130 (BRIVLA 15 20 \"klama\")) (tail_terms))))))\n",
+          "(text_1 0 (I 22 23 \"i\") (sentence 4 (sumti_6 80 (KOhA 24 26 \"mi\")) " &
+            "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 27 32 \"cadzu\")) " &
+            "(tail_terms))))\n",
         ),
         (
-          28, 0, "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 3 8 \"cusku\")) (sumti_6 71 97 (LU 9 11 \"lu\") " &
-            "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 12 14 \"do\")) " &
-            "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 15 20 \"klama\")) " &
-            "(tail_terms 71))) (I 22 23 \"i\") " &
-            "(sentence 11 40 (sumti_6 80 97 (KOhA 24 26 \"mi\")) (bridi_tail_3 50 53 " &
-            "(tanru_unit_2 130 152 (BRIVLA 27 32 \"cadzu\")) (tail_terms 71)))) " &
+          28, 0, "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &
+            "(tanru_unit_2 130 (BRIVLA 3 8 \"cusku\")) (sumti_6 71 (LU 9 11 \"lu\") " &
+            "(paragraph 0 (sentence 11 (sumti_6 80 (KOhA 12 14 \"do\")) " &
+            "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 15 20 \"klama\")) " &
+            "(tail_terms))) (I 22 23 \"i\") " &
+            "(sentence 11 (sumti_6 80 (KOhA 24 26 \"mi\")) (bridi_tail_3 50 " &
+            "(tanru_unit_2 130 (BRIVLA 27 32 \"cadzu\")) (tail_terms)))) " &
             "(LIhU 33 37 \"lihu\"))))\n",
-          "(text_1 0 2 (I 39 40 \"i\") (sumti_6 4 97 (KOhA 41 43 \"ko\")))\n",
+          "(text_1 0 (I 39 40 \"i\") (sumti_6 4 (KOhA 41 43 \"ko\")))\n",
         ),
-        (491, 39, "(text_1 0 2 (I 39 40 \"i\") (sumti_6 4 97 (KOhA 41 43 \"ko\")))\n", ""),
+        (440, 39, "(text_1 0 (I 39 40 \"i\") (sumti_6 4 (KOhA 41 43 \"ko\")))\n", ""),
       ],
     ),  # `lu` waits, so sentences after it go out; `li'u` reads them again as quotation
     (
       pieces: @["mi su", "'i do "],
       changes: @[
-        (28, 0, "", "(sumti_6 0 97 (KOhA 0 2 \"mi\"))\n"),
+        (28, 0, "", "(sumti_6 0 (KOhA 0 2 \"mi\"))\n"),
         (28, 0, "", LINE_SUHI),
         (28, 0, LINE_SUHI, ""),
       ],
@@ -276,7 +276,7 @@ const
     (
       pieces: @["mi klama .i ", "zei broda "],
       changes: @[
-        (28, 0, LINE_MI_KLAMA, "(text_1 0 2 (I 10 11 \"i\"))\n"),
+        (28, 0, LINE_MI_KLAMA, "(text_1 0 (I 10 11 \"i\"))\n"),
         (28, 0, "", LINE_ZEI),
         (28, 0, LINE_ZEI, ""),
       ],

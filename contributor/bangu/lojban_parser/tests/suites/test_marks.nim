@@ -83,47 +83,47 @@ const
   EXAMPLES_MARKED = [
     (
       text: "mi 1987 klama",
-      module: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) " &
-        "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 53 " &
-        "(tanru_unit_2 130 152 (BRIVLA 8 13 \"klama\")) (tail_terms 71)))",
+      module: "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) " &
+        "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 " &
+        "(tanru_unit_2 130 (BRIVLA 8 13 \"klama\")) (tail_terms)))",
     ),  # written word stream refuses, between sumti and bridi tail around it
     (
       text: "mi xau klama",
-      module: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (rivbi selmaho 3 6 \"xau\") " &
-        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 7 12 \"klama\")) (tail_terms 71)))",
+      module: "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (rivbi selmaho 3 6 \"xau\") " &
+        "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 7 12 \"klama\")) (tail_terms)))",
     ),  # cmavo no list gives selma'o
     (
       text: "zei mi klama",
-      module: "(text 0 (rivbi Construct 0 3 \"zei\") (sentence 2 40 (sumti_6 80 97 " &
-        "(KOhA 4 6 \"mi\")) (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 7 12 \"klama\")) " &
-        "(tail_terms 71))))",
+      module: "(text (rivbi Construct 0 3 \"zei\") (sentence 2 (sumti_6 80 " &
+        "(KOhA 4 6 \"mi\")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 7 12 \"klama\")) " &
+        "(tail_terms))))",
     ),  # `zei` joining no word before it, in root before all units read (4.6)
     (
       text: "mi cusku lo'u .i mi klama",
-      module: "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 " &
-        "50 53 (tanru_unit_2 130 152 (BRIVLA 3 8 \"cusku\")) (tail_terms 71))) " &
-        "(rivbi Quotation 9 13 \"lohu\") (I 15 16 \"i\") (sentence 11 40 (sumti_6 80 97 " &
-        "(KOhA 17 19 \"mi\")) (bridi_tail_3 50 53 " &
-        "(tanru_unit_2 130 152 (BRIVLA 20 25 \"klama\")) (tail_terms 71))))",
+      module: "(paragraph 0 (sentence 11 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 " &
+        "50 (tanru_unit_2 130 (BRIVLA 3 8 \"cusku\")) (tail_terms))) " &
+        "(rivbi Quotation 9 13 \"lohu\") (I 15 16 \"i\") (sentence 11 (sumti_6 80 " &
+        "(KOhA 17 19 \"mi\")) (bridi_tail_3 50 " &
+        "(tanru_unit_2 130 (BRIVLA 20 25 \"klama\")) (tail_terms))))",
     ),  # `lo'u` no `le'u` closes stands alone, and words after it read on (19.9, #859)
     (
       text: "mi klama le",
-      module: "(srera 11 sumti_6 97 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
+      module: "(srera 11 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
         "GOhA GUhA JAI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU " &
         "SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) " &
-        "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
-        "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71))) (LE 9 11 \"le\"))",
+        "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &
+        "(tanru_unit_2 130 (BRIVLA 3 8 \"klama\")) (tail_terms))) (LE 9 11 \"le\"))",
     ),  # text cut off after `le`: grammar stops at its end, in `sumti-6` 97, which waits
     (
       text: "mi klama su do",
-      module: "(text 0 (sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 53 " &
-        "(tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71))) (rivbi SU 9 11 \"su\") " &
-        "(sumti_6 2 97 (KOhA 12 14 \"do\")))",
+      module: "(text (sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &
+        "(tanru_unit_2 130 (BRIVLA 3 8 \"klama\")) (tail_terms))) (rivbi SU 9 11 \"su\") " &
+        "(sumti_6 2 (KOhA 12 14 \"do\")))",
     ),  # `su` ends text before it, which stays as it read, before text after it (ruling on #859)
     (
       text: "mi klama si do fa'o ko",
-      module: "(text 0 (terms 2 80 (sumti_6 81 97 (KOhA 0 2 \"mi\")) " &
-        "(rivbi Erasure 3 8 \"klama\" 9 11 \"si\") (sumti_6 81 97 (KOhA 12 14 \"do\"))) " &
+      module: "(text (terms 2 (sumti_6 81 (KOhA 0 2 \"mi\")) " &
+        "(rivbi Erasure 3 8 \"klama\" 9 11 \"si\") (sumti_6 81 (KOhA 12 14 \"do\"))) " &
         "(rivbi FAhO 15 19 \"faho\") (rivbi Stream FAhO 20 22 \"ko\"))",
     ),  # words `si` erases, with `si`; `fa'o` that ends input, and word after it, as written
   ]

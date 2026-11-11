@@ -1,17 +1,18 @@
 ## Read terminals of lojban text by formal grammar of CLL 21.1, into tree of its named rules.
 ##
-##   |-------------------|------------------------------------------------------------|
-##   | Code              | Meaning                                                    |
-##   |-------------------|------------------------------------------------------------|
-##   | EBNF              | 88 formal rules of 21.1, as book writes them               |
-##   | Terminal          | class of word grammar reads: selma'o, `BRIVLA` or `CMENE`  |
-##   | Node              | named rule with what it holds, or one terminal             |
-##   | Stop              | place grammar stops at, and terminals it would read there  |
-##   | ReadingGrammar    | tree of text, or place and rule where grammar stops        |
-##   | readGrammar       | read terminals by grammar of 21.1                          |
-##   | readGrammarMarked | read terminals into tree that marks where grammar stops    |
-##   | LUT_CHAIN_BY_ENDS | rules between two rules, each node holding next alone      |
-##   |-------------------|------------------------------------------------------------|
+##   |--------------------|-----------------------------------------------------------|
+##   | Code               | Meaning                                                   |
+##   |--------------------|-----------------------------------------------------------|
+##   | EBNF               | 88 formal rules of 21.1, as book writes them              |
+##   | Terminal           | class of word grammar reads: selma'o, `BRIVLA` or `CMENE` |
+##   | Node               | named rule with what it holds, or one terminal            |
+##   | Stop               | place grammar stops at, and terminals it would read there |
+##   | ReadingGrammar     | tree of text, or place and rule where grammar stops       |
+##   | readGrammar        | read terminals by grammar of 21.1                         |
+##   | readGrammarMarked  | read terminals into tree that marks where grammar stops   |
+##   | LUT_CHAIN_BY_ENDS  | rules between two rules, each node holding next alone     |
+##   | LUT_NUMBER_BY_RULE | number of each named rule of 21.1, by its name            |
+##   |--------------------|-----------------------------------------------------------|
 ##
 ##   Grammar is data: `EBNF` holds formal rules of 21.1 as book writes them, which Logical
 ##     Language Group dedicates to public domain; line opening with space goes on with rule
@@ -556,6 +557,26 @@ func constructChains(grammar: Grammar): Table[(int, int), seq[tuple[rule: string
 const LUT_CHAIN_BY_ENDS* = GRAMMAR_EBNF.constructChains
   ## Rules of each chain, each node holding next alone, by numbers of rule opening it and rule
   ##   closing it: from `terms` 80 to `sumti-6` 97, each rule of 21.1 between them, in order.
+
+
+func constructNumbers(grammar: Grammar): Table[string, int] {.compileTime.} =
+  ## Construct number of each named rule by its name; assert no two rules share name or number,
+  ##   so name gives number, and number gives name.
+  var named: Table[int, string]
+  for code in 0 ..< grammar.names.len:
+    if grammar.numbers[code].isNone: continue
+    let (name, number) = (grammar.names[code], grammar.numbers[code].get)
+    doAssert name notin result, "Name should name one rule; got `" & name & "`."
+    doAssert number notin named, "Number should number one rule; got `" & $number & "`."
+    result[name] = number
+    named[number] = name
+  doAssert result.len == COUNT_RULES, "Each rule should take number; got " & $result.len & "."
+
+
+const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
+  ## Number of each named rule of 21.1 by its name, as `sumti-6` 97: NIF writes name of rule
+  ##   closing each chain alone, and reader takes its number here (ruling on #859, comment
+  ##   6805527878).
 
 
 

@@ -135,6 +135,16 @@ suite "Internal: NIF":
     check LUT_CHAIN_BY_ENDS[(80, 97)] == @CHAIN_TERMS  # 21.1, rules 80 to 97, each holding next
 
 
+  test "Name of each rule gives its number, so NIF writes no number of rule closing chain":
+    check LUT_NUMBER_BY_RULE.len == COUNT_RULES  # 21.1, each rule named once
+    check toSeq(LUT_NUMBER_BY_RULE.values).deduplicate.len == COUNT_RULES  # 21.1, numbered once
+    check LUT_NUMBER_BY_RULE["sumti-6"] == 97  # 21.1, `sumti-6<97>`
+    for ends, chain in LUT_CHAIN_BY_ENDS:
+      checkpoint $ends
+      check LUT_NUMBER_BY_RULE[chain[^1].rule] == ends[1]  # header of `nif.nim`, name of end
+      check LUT_NUMBER_BY_RULE[chain[0].rule] == ends[0]
+
+
   test "Example 6.98 writes as module suites hold, byte for byte":
     let reading = EXAMPLE_NIF.text.readText
     check reading.toNif == EXAMPLE_NIF.module  # header of `nif.nim`, worked example
