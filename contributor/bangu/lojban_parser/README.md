@@ -75,17 +75,17 @@ It reads prose by the formal grammar of CLL 21.1. Before the grammar, quotation,
 other cmavo of 19.16 act on the words, so each terminal holds the words of one construct:
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils], lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils, wordwrap], lojban_parser
 for text in ["mi klama le zarci", "ti gerku si mlatu",
-    "la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.", "mi klama le"]:
+    "la\x27o dy. Goethe .dy. cu me la\x27o ly. Homo sapiens .ly.", "mi klama le"]:
   let r = readText(text)
-  if r.is_read: echo text, ": ", r.units.mapIt(it.words.mapIt(r.occurrences[it].text).join(" ") &
-    " (" & $it.terminal & ")").join(", ")
+  if r.is_read: echo (text & ": " & r.units.mapIt(it.words.mapIt(r.occurrences[it].text).join(" ") &
+    " (" & $it.terminal & ")").join(", ")).wrapWords(100, newLine = "\n  ")
   else: echo text, ": ", r.refusal, " at byte ", r.start, ", in ", r.rule'
 mi klama le zarci: mi (KOhA), klama (BRIVLA), le (LE), zarci (BRIVLA)
 ti gerku si mlatu: ti (KOhA), mlatu (BRIVLA)
-la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.: la'o dy Goethe dy (ZOI), cu (CU),
-  me (ME), la'o ly Homo sapiens ly (ZOI)
+la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.: la'o dy Goethe dy (ZOI), cu (CU), me (ME),
+  la'o ly Homo sapiens ly (ZOI)
 mi klama le: Grammar at byte 11, in sumti-6 97
 ```
 

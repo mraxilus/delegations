@@ -120,6 +120,32 @@ suite "Assets":
       check file.digestDeclared.len == 64  # X.8 binds Noto alone (Article X.8)
 
 
+  test "archive takes name carrying its version, and is fetched from whole address of release":
+    # Each release of headless shell keeps one upstream file name, so name store gives archive
+    #   carries version, and its address is whole rather than prefix plus name (issue 864).
+    const archive = "chrome-headless-shell-linux64-153.0.8010.12.zip"
+    check archive.digestDeclared ==
+      "a9da028861a0cf789ff25c2fed45f5f1aaf969ed9247835b6a7821a4f7af9d1d"
+    check archive.address == "https://storage.googleapis.com/chrome-for-testing-public/" &
+      "153.0.8010.12/linux64/chrome-headless-shell-linux64.zip"
+    check pathStore("/s", archive) == "/s" / archive.digestDeclared  # keyed by digest too
+    check archive & " " & archive.digestDeclared & "\n" in declaration()  # published row
+
+
+  test "every archive row is one name, one whole address and one digest, apart from font faces":
+    # Archive maps no codepoints, so it takes table of its own, and font face checks never
+    #   read it; one name still means one file across both tables.
+    var names: seq[string]
+    for (file, _, _, _) in ASSETS: names.add file
+    for (file, whole, digest) in ARCHIVES:
+      check file notin names  # nothing declared twice, in either table
+      names.add file
+      check whole.startsWith("https://")
+      check not whole.endsWith("/")  # whole address of one file, never prefix
+      check digest.len == 64
+      for c in digest: check c in {'0' .. '9', 'a' .. 'f'}
+
+
   test "asset nobody declared is finding naming what was asked for":
     let found = unknown("fraunces-latin-400-normal.woff2")
     check found.len == 1
@@ -131,7 +157,7 @@ suite "Assets":
     # Project holding law that its font faces are declared reads these rows, never `assets.nim`
     #   as text: published rows are contract such read stands in for.
     let rows = declaration().strip.splitLines
-    check rows.len == ASSETS.len  # every row, none extra
+    check rows.len == ASSETS.len + ARCHIVES.len  # every row of both tables, none extra
     for row in rows:
       let parts = row.split(' ')
       check parts.len == 2  # neither column holds space, so `split` is enough
