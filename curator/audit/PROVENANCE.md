@@ -2652,6 +2652,8 @@ Its name says the act, and its text says that the Architect rules after the expl
 
 - The skill points at `GUIDE.md`, A decision explained, and repeats no paragraph of it, as
   `steward` repeats none of the rules that it names. Copies reports a paragraph written twice.
+- `/explain all` puts every decision in one message, which the Architect also asks for. With no
+  argument, the skill keeps the order of the guide: `D1` alone, and the next after its ruling.
 - Rejected: the word `decide`, which a delegate reads as a request to decide.
 - Rejected: the bare word `explain` in `GUIDE.md` alone. The delegate must still recall it from
   the guide at the moment of the reply.
