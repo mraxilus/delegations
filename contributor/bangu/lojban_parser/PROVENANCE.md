@@ -1508,18 +1508,19 @@ debug build. These two laws and the suite of the driver add it (Figures of live 
 ## Merge of parts
 
 **`mergeParts` merges the parts of a text from their NIF alone into the NIF that one pass gives.**
-A page or a fixer holds NIF, and no tree. So the rebuild of the suites moves into
-`src/lojban_parser/merge.nim`, and one call joins its steps, as the Architect ruled (D1 b on #859).
-The merge gives the NIF that `readText` writes, byte for byte, where one pass reads the text, and
-refuses where one pass refuses. Verified by `suites/test_merge.nim`, 2026-11-11, over each text of
-the corpora. Its parts are cut as text read whole cuts them, and as live text cuts them.
+A page or a fixer holds NIF, and no tree. So the rebuild stands in `src/lojban_parser/merge.nim`,
+and one call joins its steps, as the Architect ruled (D1 b on #859). The merge gives the NIF that
+`readText` writes, byte for byte, where one pass reads the text, and refuses where one pass refuses.
+That holds where the parts are cut as text read whole cuts them, and live parts may refuse more, as
+below. Verified by `suites/test_merge.nim`, 2026-11-11, over each text of the corpora, cut both
+ways, and over 1,500 texts built.
 
 **The merge drops each word that one pass holds in no node.** The words that erasure erases stand
 as a unit of stage `Erasure`, wherever that unit stands in the tree. `fa'o` that ends the input
 stands as stage `FAhO`, and each written word after it as stage `Stream` with refusal `FAhO`. Each
-node of the root up to the last `su` stands in the text that `su` erases (19.13). Verified by the
-same suite over 1,500 texts built of words that reach back, and over worked examples of `si`, `su`
-and `fa'o`. By hand, 2026-11-11, a mutant that keeps any one of these fails the suite.
+node of the root up to the last `su` stands in the text that `su` erases (19.13). Verified by
+`suites/test_merge.nim` over 1,500 texts built of words that reach back, and over worked examples of
+`si`, `su` and `fa'o`. By hand, 2026-11-11, a mutant that keeps any one of these fails the suite.
 
 **An error before the last `su` refuses only where its stage reads before `su` erases.** One pass
 reads the stream of the whole text first, then quotation, then erasure, in which `su` erases
@@ -1527,15 +1528,16 @@ reads the stream of the whole text first, then quotation, then erasure, in which
 the text. So does `lo'u` that no `le'u` closes, since it quotes the `su` after it (19.9). An error
 of grammar, of selma'o, of `zei`, of BAhE or of `bu` drops with its part.
 
-Verified by worked examples: `x su mi klama` is refused, and `le su mi klama` reads. By hand,
-2026-11-11, a mutant that refuses each error before `su`, and one that refuses none, each fail the
-suite.
+Verified by worked examples of `suites/test_merge.nim`, where `x su mi klama` is refused. There
+`le su mi klama`, `xu'au su mi klama`, `zei su mi klama`, `ba'e su mi klama` and `bu su mi klama`
+each read. By hand, 2026-11-11, a mutant that refuses each error before `su`, and one that refuses
+none, each fail the suite.
 
 **The NIF tells a `lo'u` that no `le'u` closes from one whose `le'u` erasure erased.** Each stands
 as a unit of stage `Quotation` that holds `lo'u` alone. The second has a `le'u` after it, in the
 unit that erasure gives, which no `zo` quotes and no `ZOI` terminal holds. Verified by
-`lo'u mi le'u si su ko`, which reads, and `lo'u su ko`, which is refused. By hand, 2026-11-11, a
-mutant that reads no `le'u` after it fails the suite.
+`suites/test_merge.nim`, where `lo'u mi le'u si su ko` reads, and `lo'u su ko` is refused. By hand,
+2026-11-11, a mutant that reads no `le'u` after it fails the suite.
 
 **Where a node past the last `su` holds an error, the merge refuses, and names that node.** It gives
 the index of the node, counted from 0 past the directives, the byte where the error stands, and the
@@ -1545,14 +1547,16 @@ refused, and never raised. Verified by `suites/test_merge.nim`.
 **Live parts may hold an error node where the text read whole holds none.** Live text cuts after an
 opener that waits for its closer, as `to` or `lu` (`live.nim`). A part read alone then stops where
 the closer would come. The merge refuses there, as the ruling asks, and the law holds that the node
-it names holds that error node. Cost: of 30,000 texts built, 2 refuse so, with the parts cut as live
-text, and no text of the corpora does. Measured by hand with a build of `-d:release`, 2026-11-11.
+it names holds that error node. Verified by those 2 texts in `suites/test_merge.nim`. Cost: of
+30,000 texts built, 2 refuse so, by hand with `-d:release`, 2026-11-11, and no text of the corpora
+does.
 
 **The merge joins the trees of the parts as passes build them, through `assembleText`.** Where the
 rule of the passes breaks, the grammar reads the terminals whole, as `readGrammar` does. Live text
 cut after an opener that waits gives such parts, as `lu mi klama .i do cadzu` does. Verified by
 that text in `suites/test_merge.nim`. By hand, 2026-11-11, a mutant that refuses there fails the
-suite. Cost: that read grows with the length of the quotation, as one pass does.
+suite. Cost: that read takes each terminal past the last `su` again, as `readGrammar` does for one
+pass.
 
 **A tree that the merge rebuilds writes back through the writer of `nif.nim`.** Its leaves index
 the terminals that the NIF gave back, so the writer writes each node as a reading writes it. Each
@@ -1566,8 +1570,8 @@ writer and the rebuild find that word one way (`indexQuoted`). Verified by that 
 text of the corpora holds BAhE before `zoi`, so a constructed text alone holds the rule.
 
 **The texts built are written once, for the suites of live text and of the merge
-(`suites/texts_built.nim`).** Each suite seeds its own generator, so each reads the texts it read
-before (II.9).
+(`suites/texts_built.nim`).** Each suite seeds its own generator, and gives it to the builder, so
+the texts of each suite come from that generator (II.9).
 
 ## Live text in the script
 
@@ -1725,12 +1729,19 @@ findings.
 NIF so far, with the tail left out, since the next change replaces the tail. It draws the tree under
 the parts, or a red line that names the part refused, the byte and the reason. The line counts parts
 from 1, as the label of each drawing does. Each change hides the tree merged, which no longer
-holds. Verified by `browser/suite_page.nim` in `drive`, 2026-11-11, over each case, against the
-native merge, in a worker and on the thread of the page.
+holds. Verified by `browser/suite_page.nim` in `drive`, 2026-11-11, in a worker and on the thread of
+the page.
 
-The merge runs on the thread of the page, since it reads NIF alone, in time its length gives. By
-hand, 2026-11-11, a page that keeps the tree merged after a change fails that suite. Cost: the
-script defines no global for the merge, so a page that loads the script alone gives none.
+The suite wires the controls as the page does, clicks Merge on each case, and holds what it draws to
+the native merge. A new reader hides the tree merged, and so does a change of the same reader. By
+hand, 2026-11-11, a page that keeps the tree after a change of the same reader fails that suite. So
+does a page whose button does nothing.
+
+The merge runs on the thread of the page, since it reads the NIF that the page holds. Cost: 38
+sentences of Tatoeba joined, 1,991 bytes in 78 parts, merge and draw there in 118 ms to 183 ms. That
+was measured by hand in the headless shell, 2026-11-11.
+
+Cost: the script defines no global for the merge, so a page that loads the script alone gives none.
 
 **The page is published, and the README names its URL.** The verb `page` builds it into
 `build/lojban_parser.html`, one file. Cost: no check holds the published page to the build. So a
@@ -2101,18 +2112,17 @@ Each figure comes from an Intel Xeon at 2.10 GHz with four cores, on the pin, on
 
 Measured on an Intel Xeon at 2.10 GHz with four cores, on the pin, on 2026-11-11.
 
-- **Page.** `build/lojban_parser.html` holds 4,319,737 bytes. Its script holds 1,508,777 bytes,
-  against 1,143,359 bytes of the script that `javascript` builds, since it holds the page and the
-  drawing. Its five font faces hold 2,795,916 bytes as base64.
-- **Driven checks.** `nim r tools/build.nim drive` took 41.1 s, with the headless shell of Chromium
-  153.0.8010.12, against 31.3 s at `fe1d09d9`. That time holds the build of the page, the compile
-  of a third suite, and three runs of a page more.
+- **Page.** `build/lojban_parser.html` holds 4,385,176 bytes, against 4,319,737 at `ad2d62a4`,
+  before the merge. Its script holds 1,573,547 bytes, against 1,508,777 at `ad2d62a4`, and against
+  1,143,359 bytes of the script that `javascript` builds. It holds the page, the drawing and the
+  merge. Its five font faces hold 2,795,916 bytes as base64.
+- **Driven checks.** `nim r tools/build.nim drive` took 46.2 s, with the headless shell of Chromium
+  153.0.8010.12, against 41.1 s at `ad2d62a4` and 31.3 s at `fe1d09d9`. That time holds the build
+  of the page, the compile of a third suite, and three runs of a page more. It also holds the
+  six tests of merge on the page.
 - **Laws of the drawing.** `suites/test_draw.nim` reads 243 texts, each eighth of the 1,941 texts
   of the corpora.
-- **Page with the merge.** `build/lojban_parser.html` holds 4,385,103 bytes, against 4,319,737
-  bytes before it. Its script holds 1,573,474 bytes, against 1,508,777. `drive` took 44.0 s, with
-  two tests more, against 41.1 s.
-- **Laws of the merge.** `suites/test_merge.nim` took 27.6 s of a debug build, with its compile
+- **Laws of the merge.** `suites/test_merge.nim` took 28.5 s of a debug build, with its compile
   left out. It reads each of the 1,941 texts of the corpora three ways, once, and 1,500 texts built.
   Of the corpora, one pass reads 1,831, and 133 of them have more than one part. Of the texts built,
   one pass reads 263, and 46 of them hold `su` that ends the text before it.
