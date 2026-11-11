@@ -9,6 +9,9 @@
 ##   Each change ties to text: each word of NIF it keeps ends at byte where it opens, or before,
 ##     and each word of nodes it gives opens there, or past.
 ##   Parts lose nothing of tree: `assembleText` builds from them tree `readGrammar` gives.
+##   Piece cut into sentences (`toSentences`), each read in turn, gives in one change (`combine`)
+##     what piece read whole gives: NIF of its parts at end, NIF held and grown, and tie to text.
+##     Sentences join to piece, and each holds word of I or NIhO as its first word alone.
 ##   Cost: bytes each reading reads grow with length of text: sentences of Tatoeba joined, read
 ##     word by word, read at most `COST_MOST` times their bytes, and twice them as many again.
 ##   Worked examples give change of each piece, byte for byte: sentence going out, word cut,
@@ -22,7 +25,7 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[grammar, live, nif, prose, stream]
+import ../../src/lojban_parser/[grammar, live, nif, prose, selmaho, stream]
 import ../sample_tatoeba/sentences
 import ./[corpora, reader_nif]
 
@@ -38,6 +41,10 @@ type
     is_tied: bool
       ## Each word of NIF each change keeps ends at byte where change opens, or before; each word
       ##   of nodes it gives opens there, or past.
+    is_cut: bool
+      ## Sentences each piece is cut into join to it, and each that stream reads alone holds word
+      ##   of I or NIhO as its first word alone; true where pieces are read whole.
+    count_sentences: int  ## Sentences stream read alone, which `is_cut` holds.
     count_read: int  ## Bytes each reading read, summed.
 
 
@@ -54,6 +61,12 @@ const
     ##   whole, about 12 s of debug build for half.
 
   COUNT_PARTED_LEAST = 100  ## Texts of corpora of more than one part, each unit read.
+  COUNT_SENTENCES_CORPORA_LEAST = 450
+    ## Texts of corpora read sentence by sentence: each fourth, of 1,941, which law of each second
+    ##   text reads not, for cost of suite.
+  COUNT_SENTENCES_LEAST = 600
+    ## Sentences that stream reads alone, which law of cut holds, over texts built; 677 on adding
+    ##   law, since sentence alone may cut word, or open inside quotation.
   SENTENCES_COST = 30  ## Sentences of Tatoeba joined that cost law reads, then that text twice.
   COST_MOST = 12.0
     ## Bytes read, over bytes of text, at most, word by word; 8.2 on adding law, as each piece
@@ -300,13 +313,36 @@ func spansNif(nif: string): seq[tuple[start, finish: int]] =
   for node in nif.readModule: node.addSpans(result)
 
 
-func readLive(text: string, cuts: openArray[int], is_growing = false): ReadingLive =
+func isOpener(occurrence: Occurrence): bool =
+  ## Tell whether word opens sentence or paragraph: cmavo of selma'o I or NIhO.
+  occurrence.reading.is_word and occurrence.reading.selmaho.isSome and
+    occurrence.reading.selmaho.get in {Selmaho.I, Selmaho.Niho}
+
+
+func countCut(piece: string, sentences: openArray[string]): int =
+  ## Count sentences stream reads alone, where sentences join to piece and each such holds word of
+  ##   I or NIhO as its first word alone, save first, which may hold none; -1 where not.
+  if sentences.join != piece: return -1
+  for k in 0 ..< sentences.len:
+    let reading = sentences[k].readStream
+    if not reading.is_read or reading.occurrences.len == 0: continue  # sentence alone cuts word
+    for n in 0 ..< reading.occurrences.len:
+      if reading.occurrences[n].isOpener != (n == 0 and (k > 0 or reading.occurrences[0].isOpener)):
+        return -1
+    inc result
+
+
+func readLive(
+  text: string, cuts: openArray[int], is_growing = false, is_sentences = false
+): ReadingLive =
   ## Read text piece by piece, cut at each byte of `cuts`, and hold NIF each change leaves.
-  ##   With `is_growing`, test NIF and tail of each change before end against text so far.
+  ##   With `is_growing`, test NIF and tail of each change before end against text so far. With
+  ##   `is_sentences`, read each piece sentence by sentence, as script does on thread of page, and
+  ##   join changes of its sentences into change of piece.
   var
     reader = initReaderLive()
     last = 0
-  result = ReadingLive(nif: HEADER, is_held: true, is_grown: true, is_tied: true)
+  result = ReadingLive(nif: HEADER, is_held: true, is_grown: true, is_tied: true, is_cut: true)
   template apply(change: ChangeNif) =
     ## Cut NIF held back as change gives, then add its nodes, and keep change; test that each word
     ##   of NIF it keeps ends at byte it opens at, or before, and each word it gives opens there.
@@ -318,9 +354,17 @@ func readLive(text: string, cuts: openArray[int], is_growing = false): ReadingLi
     result.is_held = result.is_held and result.nif == reader.toNif
     result.changes.add (change.at, change.start, change.text, change.tail)
   for k in 0 .. cuts.len:
-    let
-      at = (if k < cuts.len: cuts[k] else: text.len)
-      change = reader.push(text[last ..< at])
+    let at = (if k < cuts.len: cuts[k] else: text.len)
+    var changes: seq[ChangeNif]
+    if is_sentences:
+      let
+        sentences = text[last ..< at].toSentences
+        count = text[last ..< at].countCut(sentences)
+      result.is_cut = result.is_cut and count >= 0
+      result.count_sentences += max(count, 0)
+      for n in 0 ..< sentences.len: changes.add reader.push(sentences[n])
+    else: changes.add reader.push(text[last ..< at])
+    let change = (if is_sentences: changes.combine(reader.toNif) else: changes[0])
     apply(change)
     last = at
     var ending = at  # text so far, up to its last mark between words
@@ -398,6 +442,41 @@ suite "Internal: Live text":
       check live.is_grown  # header of `live.nim`, tail grows as text so far gives it
       check live.is_tied  # `ChangeNif` of `live.nim`, byte where change opens
       check readTextParts(text).reading.isCovering(text)  # header of `nif.nim`, word in one leaf
+
+
+  test "Piece read sentence by sentence gives NIF that piece read whole gives, over corpora":
+    var
+      rng = initRand(SEED)
+      count = 0
+    for k, (key, text, whole) in pool:
+      if k mod 4 != 1: continue  # each fourth text, which law of each second text reads not
+      checkpoint key & ": " & text
+      let live = text.readLive(text.cutsRandom(rng, PIECE_CORPORA_MOST), is_sentences = true)
+      check live.nif == whole.reading.toNifParts  # `toSentences` of `live.nim`, cut moves no NIF
+      check live.is_held  # `combine` of `live.nim`, NIF before least offset stands
+      check live.is_tied  # `combine` of `live.nim`, least byte ties change of all
+      check live.is_cut  # `toSentences` of `live.nim`, sentence opens at I or NIhO alone
+      inc count
+    check count >= COUNT_SENTENCES_CORPORA_LEAST  # IX.3, guard keeps texts of corpora
+
+
+  test "Text built, read sentence by sentence, gives NIF of its parts read whole, and grows":
+    var
+      rng = initRand(SEED)
+      count = 0
+    for k in 0 ..< COUNT_BUILT:
+      let
+        text = rng.textBuilt
+        cuts = text.cutsRandom(rng, PIECE_MOST * 4)  # pieces of words, so pieces hold sentences
+      checkpoint text & " cut at " & $cuts
+      let live = text.readLive(cuts, is_growing = true, is_sentences = true)
+      check live.nif == readTextParts(text).reading.toNifParts  # `toSentences`, cut moves no NIF
+      check live.is_held  # `combine` of `live.nim`, NIF before least offset stands
+      check live.is_grown  # `combine` of `live.nim`, tail of last sentence is tail of piece
+      check live.is_tied  # `combine` of `live.nim`, least byte ties change of all
+      check live.is_cut  # `toSentences` of `live.nim`, sentence opens at I or NIhO alone
+      count += live.count_sentences
+    check count >= COUNT_SENTENCES_LEAST  # IX.3, guard keeps sentences stream reads alone
 
 
   test "Lo'u whose le'u erasure erases waits for none, so text after it reads as stream reads it":
