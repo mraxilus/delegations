@@ -189,14 +189,16 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   writeFile(path, Protobuf.encode(scene))
   ```
 
-- Read a committed `.txtpb` record through a file that `protoc` writes under `build/`. Check the
-  exit code of `protoc`, so a refused record stops the compile, and no older file is read. Never
-  let `staticExec` carry the binary itself, because it loses bytes of it:
+- Read a committed text format file through a file that `protoc` writes under `build/`. Check
+  the exit code of `protoc`, so a refused text format file stops the compile, and no older file
+  is read. Never let `staticExec` carry the binary itself, because it loses bytes of it. Under
+  `nim check`, Nim runs no command and gives empty output, so guard the read with `nimcheck`,
+  which `nim check` defines:
 
   ```nim
   const encoded = gorgeEx("protoc --encode=Scene scene.proto < tour.txtpb > ../build/tour.binpb")
-  static: doAssert encoded.exitCode == 0, "Record is refused; got `" & encoded.output & "`."
-  const TOUR = staticRead("../build/tour.binpb")
+  static: doAssert encoded.exitCode == 0, "Text format file refused; got `" & encoded.output & "`."
+  const TOUR = when defined(nimcheck): "" else: staticRead("../build/tour.binpb")
   ```
 
 ## 5. Signatures, imports, calls

@@ -1452,6 +1452,9 @@ func contextPrompt*(message: string): string =
   ## Compose lines naming each skill whose moment message of Architect holds; empty where none.
   ##   Phrase matches whole words, so `status` matches `status?` and never `statuses`.
   ##   Line is hint and refuses nothing, so word that matches by chance costs one line read.
+  ##   Notice of harness opens with tag, as `<task-notification>` does, and Architect asked
+  ##     nothing in it, so it takes no line.
+  if message.strip.startsWith('<'): return ""
   let
     words = message.wordsPrompt
     text = " " & words.join(" ") & " "

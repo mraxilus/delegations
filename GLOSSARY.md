@@ -196,3 +196,11 @@ _Avoid_: bucket, cell
 One weight and style of one font family, held in one file, as Noto Sans at weight 700. CSS
 declares one with `@font-face`.
 _Avoid_: face, font, typeface
+
+**Text format file**:
+A message of Protocol Buffers that the repository commits as text, in a `.txtpb` file.
+_Avoid_: record, committed worked example
+
+**Format line**:
+The one line of text that opens a file that a person keeps, and names its format and version.
+_Avoid_: tag, magic number, opening

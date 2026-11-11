@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 46b8902851be0997 |
+| Rules   | 673eb959e9ddd0e9 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -237,13 +237,20 @@ break at, prose always does, and minified markup is one run far past the bound.
 
 **Knoller holds these rules, and the audit runs them on every kind.** They read text alone, so
 knoller holds one copy of them (`checkForm` there), and its record gives them under Form. The
-audit keeps the exemption of `LICENSE.md` from width, which names a path of this repository. Each
-finding prints its article where its sentence ends, as `Line holds tab (X.1).` does.
+audit keeps the exemptions from width that name files of this repository: `LICENSE.md`, and each
+`atlas.lock`. Each finding prints its article where its sentence ends, as `Line holds tab (X.1).`
+does.
+
+- Each `atlas.lock` takes no width rule, as the Architect ruled (D1 a of #821). Atlas copies each
+  line of the nimble file into the lock as a JSON string, behind six spaces, with each quote
+  escaped. So a line of the lock runs nine runes past its source, and one more for each quote.
+  The nimble file holds its own lines to the width, so the lock adds no line that escapes it.
 
 - Rejected: a copy for Nim in knoller beside a copy for each other kind here. The rule would stand
   twice, and the two copies would drift.
 - Verified by `suites/test_form.nim`: each message prints as koch prints it, in Nim, Markdown,
-  YAML, HTML, SVG and cfg, and `LICENSE.md` alone takes no width rule.
+  YAML, HTML, SVG and cfg. `LICENSE.md` and each `atlas.lock` take no width rule, and a file
+  whose name only ends in `atlas.lock` still does.
 
 **The static pass holds X.2 exactly, as knoller reads it and `koch fix` writes it.** Lines split
 on LF only, so a CR survives. The syntax of a Nim banner marks its tier: `#[ Title ]#` is the
@@ -1035,7 +1042,7 @@ is Protocol Buffers, as the Architect ruled on #761, or NIF. A committed schema 
 Buffers carries the versions of its format. A record that the repository commits is in text
 format, and each build turns it into binary. `CONTRIBUTOR.md`, Data, states the rule.
 
-- Rejected: a Nim module that the writing program emits, for a committed record. The Architect
+- Rejected: a Nim module that the writing program emits, for a text format file. The Architect
   ruled against it, because it leaves us to keep our own code for reading and for versions.
 - Measured for that option, 2026-10-25: `design/rig.json` of dance_ontology, 1.36 MB, compiled
   as a typed constant in 3.2 s at 203 MiB peak. As JSON read through `staticRead`, it took 2.9 s
@@ -1079,7 +1086,10 @@ pga_visualiser, written as a schema at its versions 3, 7 and 8.
   version 3 reads a file of version 7, and skips the field that it lacks.
 - A cut file is refused, in Nim with `SerializationError`, and in JavaScript with an error.
 - Cost: a file cut between two top-level fields reads as fewer objects in both readers, with no
-  error. So a file that a person keeps holds a tag of its format, a length and a checksum.
+  error. So a file that a person keeps holds a format line, a length and a checksum. The format
+  line is one line of text that names the format and its version, as the Architect ruled (D2 a
+  of #821). So a person reads it with `head -n 1`, and a raw binary opening, as PNG has, fits no
+  file of this rule.
 - Cost: the reader of Nim reads an enum value that its enum lacks as zero, with no error, where
   JavaScript keeps the number. So value zero of each enum means unknown.
 - Cost: proto3 gives no default except zero. So a field with another default is `optional`, and
@@ -1091,18 +1101,19 @@ pga_visualiser, written as a schema at its versions 3, 7 and 8.
   the JavaScript backend it fails to compile, on `memfiles`, measured 2026-10-25 with Nim
   2.2.12. So a page reads through `protobufjs`.
 
-**A committed record is text format, and the build of each project encodes it with `protoc`.**
+**The repository commits a text format file, and the build of each project encodes it with
+`protoc`.** The glossary names it so, since a record is the three Markdown files of a project.
 `protoc --encode` refuses a misspelt field, an unknown enum value and a wrong type, and names
 each. Measured 2026-10-25 with `protoc` 3.21.12, the version that Ubuntu 24.04 offers, and with
 the newer one of `grpcio-tools` 1.84.1. Both wrote the same bytes.
 
 - Rejected: `buf convert`, which drops a misspelt field of text format, with no error. It
   refuses a bad enum value and a wrong type. Measured 2026-10-25 with `buf` 1.75.0.
-- Rejected: JSON for a record. `buf convert` reads it leniently: it drops a misspelt key, and
-  reads a bad enum value as zero. Measured 2026-10-25 with `buf` 1.75.0.
+- Rejected: JSON for a committed message. `buf convert` reads it leniently: it drops a misspelt
+  key, and reads a bad enum value as zero. Measured 2026-10-25 with `buf` 1.75.0.
 
-**A verb writes a record through `protoc --decode`, and a suite reads it through a file that
-`protoc --encode` writes.** The Architect ruled this on 2026-11-03 (D2 a of #793). The Nim
+**A verb writes a text format file through `protoc --decode`, and a suite reads it through a file
+that `protoc --encode` writes.** The Architect ruled this on 2026-11-03 (D2 a of #793). The Nim
 library reads and writes binary alone, with no text format, so `protoc` turns binary to text and
 back. A build or a suite has `protoc` write the binary under `build/` at compile time, and reads
 that file with `staticRead`. `STYLE.md` §4 gives the idiom.
@@ -1110,13 +1121,19 @@ that file with `staticRead`. `STYLE.md` §4 gives the idiom.
 - `staticExec` never carries the binary itself: it returned 7,973 of 8,003 B of `protoc`'s
   output. Written to a file and read with `staticRead`, the same bytes came back whole. Measured
   2026-11-03 with Nim 2.4.0 and `protoc` 3.21.12.
-- The idiom checks the exit code of `protoc`. So a refused record stops the compile with the
-  message of `protoc`, and no older file under `build/` is read. Measured 2026-11-03 on a record
-  with a misspelt field.
-- Rejected: a verb of the project that `koch test` runs first, to encode each record into
-  `build/`. It changes `koch`, and a suite run by hand would read binary that no verb renewed.
-- Cost: each machine that builds or tests a project with records needs `protoc`. The project
-  declares `protobuf-compiler`, and the job `test` installs what a project declares.
+- The idiom checks the exit code of `protoc`. So a refused text format file stops the compile
+  with the message of `protoc`, and no older file under `build/` is read. Measured 2026-11-03 on
+  a text format file with a misspelt field.
+- Under `nim check`, Nim runs no `gorgeEx`, and returns empty output with exit code 0
+  (`compiler/vmops.nim`, line 279, Nim 2.4.0). So the idiom guards its read with `nimcheck`,
+  which `nim check` defines (`compiler/main.nim`, line 95). Measured 2026-11-05: unguarded, it
+  read a stale file under `build/`, and failed where none stood. Guarded, it read nothing under
+  `nim check`, and the fresh bytes under `nim c`.
+- Rejected: a verb of the project that `koch test` runs first, to encode each text format file
+  into `build/`. It changes `koch`, and a suite run by hand would read binary that no verb
+  renewed.
+- Cost: each machine that builds or tests a project with text format files needs `protoc`. The
+  project declares `protobuf-compiler`, and the job `test` installs what a project declares.
 - Cost: `protoc` prints one value to a line. 1,000 doubles take 1,000 lines and 17,337 B as text,
   against 8,003 B as binary. Measured 2026-11-03 with `protoc` 3.21.12.
 
@@ -2670,7 +2687,8 @@ is a hint, and it refuses nothing.
 
 - `prompt` reads each message of the Architect. A token `D<n>`, or one option letter alone,
   names `rule`. A word of status, duty or merge order names `triage`, and `merged` names
-  `merged`.
+  `merged`. A notice of the harness opens with a tag, as the end of a background task does.
+  It takes no line, since the Architect asked nothing in it.
 - `stop` names `sign-off` where it refuses a message that holds a sign-off.
 - `start` names `sync` in its drift line, and `triage` under the carried list.
 - `edit` names `propose-term` after a write to a glossary, and `record` after a write to a
