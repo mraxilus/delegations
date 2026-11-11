@@ -734,9 +734,11 @@ that one, and a contributor owns its own. `main` holds each project, because som
 each one, and a branch that passes must merge into a `main` that passes. The indexes above a
 project and the root files are the curator's, so they block each branch. A finding that a rules
 change leaves for the curator carries a propagation flag at its source, and blocks in any
-project.
+project. A path outside the scope of the branch carries a scope flag, because it is the change
+of the branch itself, which no project clears. So it blocks wherever it lies, as `check-scope`
+does on the runner.
 
-- The flag marks the stale stamp, and a standard that belongs in the root glossary.
+- The propagation flag marks the stale stamp, and a standard that belongs in the root glossary.
 - Rejected: a check that waits until each project fixes. A project at rest, or put off without
   end, never fixes, so the check would wait forever.
 - Rejected: clear the findings file by file, in each pull request that changes a file. An
@@ -763,7 +765,7 @@ project.
   of a curator there does not count. The `edit` hook names it after an edit by a tool, and asks
   for a fix of each finding in that file, held or not. Measured on 2026-11-11, 1 of the 200
   latest commits on `main` had a curator change that prose past a Rules row, in 8 lines.
-- Verified by `suites/test_scope.nim`, which fails with the propagation flag ignored, and by
+- Verified by `suites/test_scope.nim`, which fails with either flag ignored, and by
   `suites/test_hooks.nim`, `suites/test_provenance.nim`, `suites/test_glossary.nim` and
   `suites/test_findings.nim`.
 
