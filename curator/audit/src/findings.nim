@@ -32,6 +32,7 @@ type Finding* = object  ## Define one rule violation located at path and line.
   line*: int  ## One-based line; `0` when finding concerns whole file.
   message*: string  ## Telegraphic statement, ending with echoed value where one exists.
   is_propagation*: bool  ## Curator's to fix wherever it lands: rules change carried out.
+  is_scope*: bool  ## Branch's own to fix wherever it lies: path outside its scope.
 
 
 const CITATIONS*: array[Rule, string] = [
@@ -102,9 +103,13 @@ const CITATIONS*: array[Rule, string] = [
   ## Article each rule of knoller holds, as its report cites it.
 
 
-func finding*(path: string, line: int, message: string, is_propagation = false): Finding =
+func finding*(
+  path: string, line: int, message: string, is_propagation = false, is_scope = false
+): Finding =
   ## Construct finding.
-  Finding(path: path, line: line, message: message, is_propagation: is_propagation)
+  Finding(
+    path: path, line: line, message: message, is_propagation: is_propagation, is_scope: is_scope
+  )
 
 
 func toFinding*(report: Report): Finding =
