@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
+import std/[sequtils, sets, strutils, tables, unittest]
 import ../../src/[domains, findings, scope]
 import ./fixtures
 
@@ -140,6 +140,21 @@ suite "Scope":
 
     # Branch outside grammar holds nothing, so its scope finding still blocks.
     check splitHeld("claude/setup", found).held.len == 0
+
+
+  test "finding on line branch changed blocks it wherever it lies (D1 a of #876)":
+    # Case as found: curator writes long sentence into contributor record, where check that
+    #   landed left finding on line curator did not change.
+    let
+      record = CONTRIBUTOR & "/ronri/alpha/README.md"
+      written = finding(record, 12, "Sentence must hold at most 25 words.")
+      landed = finding(record, 30, "Line exceeds 100 characters.")
+      whole = finding(record, 0, "File holds no heading.")  # whole file, on no line
+      owned = {record: [12].toHashSet}.toTable
+    let (held, own) = splitHeld("curator/rules", [written, landed, whole], owned)
+    check own == @[written]
+    check held == @[landed, whole]
+    check splitHeld("curator/rules", [written, landed]).held.len == 2  # branch changed nothing
 
 
   test "path outside branch scope blocks wherever it lies":
