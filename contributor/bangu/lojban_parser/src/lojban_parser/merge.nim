@@ -1,37 +1,40 @@
 ## Merge parts of text from their NIF into NIF one pass gives text they read, so program that
-##   holds NIF alone, as page or fixer, gives tree of one pass (ruling `D1 b` on #859).
+##   holds NIF alone, as page or fixer, gives tree of one pass (ruling `D1 b` on #859); where
+##   error stays, merge each run of parts around it, and refuse no error (ruling after it there).
 ##
-##   |------------|-----------------------------------------------------------------|
-##   | Code       | Meaning                                                         |
-##   |------------|-----------------------------------------------------------------|
-##   | toTerminal | class of terminal, read back from its name                      |
-##   | toTree     | node of tree rebuilt from node of NIF, with terminals it holds  |
-##   | MergeNif   | NIF one pass gives, or refusal: node of module, byte and reason |
-##   | mergeParts | NIF one pass gives text, from NIF of its parts                  |
-##   |------------|-----------------------------------------------------------------|
+##   |------------|------------------------------------------------------------------|
+##   | Code       | Meaning                                                          |
+##   |------------|------------------------------------------------------------------|
+##   | toTerminal | class of terminal, read back from its name                       |
+##   | toTree     | node of tree rebuilt from node of NIF, with terminals it holds   |
+##   | MergeNif   | module of trees merge gives, or refusal of NIF that reads not    |
+##   | mergeParts | NIF of trees one pass gives text, from NIF of its parts          |
+##   |------------|------------------------------------------------------------------|
 ##
 ##   Parts: each node of module past its directives, as `toNifParts` writes them, and as live
 ##     text gives them once each part goes out (`live.nim`).
 ##   Rebuild: each rule between two ends of chain from `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag,
-##     `'` for `h` of word, save third string of `ZOI` and written word stream refuses; error
-##     node takes byte grammar stops at as its place (`nif.nim`). Node of shape writer gives
-##     not raises `ValueError`.
+##     `'` for `h` of word, save text `zoi` quotes and written word stream refuses; error node
+##     takes byte grammar stops at as its place (`nif.nim`). Node of shape writer gives not
+##     raises `ValueError`, and merge refuses its module, naming node.
 ##   Drop, as one pass reads text (19.13, 19.15): each unit of stage `Erasure`, wherever it
 ##     stands; `fa'o` that ends input, and each written word after it; each node of root up to
-##     last `su`, which stands in root alone.
-##   Refusal names node of module, counted from 0 past directives, byte where error stands, and
-##     stage or rule:
-##     Node past last `su` that holds error node, or unit some stage refuses.
-##     Node before last `su` that holds unit stream or quotation refuses, or `si` or `sa`
-##       erasing nothing: 19.16 reads them before `su` erases, so one pass refuses them too.
-##       Error of grammar, selma'o, `zei`, BAhE or `bu` there drops, since those read after
-##       `su` erases (`prose.nim`).
-##   Merge: `assembleText` builds tree of text from trees of parts. Where rule of passes breaks,
-##     as parts give that live text cuts after opener that waits, grammar reads terminals whole,
-##     as `readGrammar` does. So merge gives NIF `readText` writes, byte for byte, and refuses
-##     where it refuses (`test_merge.nim`).
-##   Cost: rebuild and merge grow with length of NIF; grammar reads terminals whole only where
-##     rule of passes breaks.
+##     last `su`, which stands in root alone. Unit there that one pass refuses text for stays,
+##     each in front: unit stream refuses, `si` or `sa` erasing nothing, and `lo'u` no `le'u`
+##     closes, since 19.16 reads them before `su` erases. Unit `lo'u` holds alone tells `le'u`
+##     past it that no `zo` quotes, and no `ZOI` terminal holds, from none (19.9, 19.10).
+##   Merge: run of adjacent parts past last `su` that hold no error node merges to one tree, as
+##     one pass reads text of run: `assembleText` builds it from trees of parts, else grammar
+##     reads terminals whole, and where it stops, error node holds trees of parts, as marked
+##     reading of one pass gives them (`readGrammarMarked`). Unit some
+##     stage refuses stands in lowest node holding units read around it, as marked reading of
+##     one pass places it (`placeRefused` of `prose.nim`), so it parts no run.
+##   Part holding error node of grammar stays as it is, between runs: marked reading of one
+##     pass keeps each part apart under error node, so grammar gives it no place in tree.
+##   So merge gives NIF `readText` writes, byte for byte, where no error stays (`is_whole`),
+##     and tree of each run as one pass reads it where error stays (`test_merge.nim`).
+##   Cost: rebuild and merge grow with length of NIF; grammar reads terminals of run whole only
+##     where rule of passes breaks.
 ##   Merge loops by index, since `items` and binding of node copy it on JavaScript backend.
 
 {.experimental: "strictFuncs".}
@@ -42,18 +45,19 @@ import ./[dictionary, grammar, nif, nif_read, prose, selmaho, tanru]
 
 
 type
-  MergeNif* = object  ## Define outcome of merge of parts: NIF of one pass, or refusal.
+  MergeNif* = object  ## Define outcome of merge of parts: module of trees, or refusal of NIF.
     case is_merged*: bool
     of true:
-      nif*: string  ## Module of NIF one pass gives text parts read, as `readText` writes it.
+      nif*: string
+        ## Module of NIF of merge: each unit before last `su` one pass refuses text for, then
+        ##   tree of each run of parts that holds no error node, and each part that holds one,
+        ##   in order of text, each on line of its own.
+      is_whole*: bool
+        ## Module holds one tree, and no error node nor unit refused: NIF `readText` writes.
     of false:
       part*: Option[int]
-        ## Node of module refused, counted from 0 past directives; none where grammar refuses
-        ##   text whole, or NIF reads not.
-      start*: Option[int]  ## Byte of text where error stands; none where NIF reads not.
-      reason*: string  ## Stage or rule refusing it, or what NIF should hold.
-
-  ErrorNif = tuple[start: int, reason: string]  ## Define error node holds: byte, stage or rule.
+        ## Node of module refused, counted from 0 past directives; none where NIF reads not.
+      reason*: string  ## What NIF should hold.
 
 
 const
@@ -165,13 +169,89 @@ func isDropped(node: NodeNif): bool =
   )
 
 
+func isHoldingError(node: NodeNif): bool =
+  ## Decide whether node of NIF holds error node of grammar, at any depth.
+  if node.kind != KindNif.Compound: return false
+  if node.text == TAG_ERROR: return true
+  for k in 0 ..< node.children.len:
+    if node.children[k].isHoldingError: return true
+
+
+func reach(node: NodeNif): int =
+  ## Give byte past last word node of NIF holds, at any depth; 0 where it holds none.
+  if node.kind != KindNif.Compound: return 0
+  for k in 0 ..< node.children.len:
+    template child: untyped = node.children[k]
+      ## Alias node, which `let` would copy on JavaScript backend.
+    if child.kind == KindNif.Literal and k >= 1 and node.children[k - 1].kind == KindNif.Number:
+      result = max(result, node.children[k - 1].number)
+    elif child.kind == KindNif.Compound: result = max(result, child.reach)
+
+
+func isRefused(terminal: TerminalNif): bool =
+  ## Decide whether terminal NIF gave back is unit no terminal holds, which some stage refuses.
+  terminal.terminal.startsWith(TAG_UNREAD)
+
+
+func mergedRun(
+    trees: openArray[Node], span: Slice[int], terminals: openArray[TerminalNif], ending: int
+): Node =
+  ## Merge run of trees rebuilt from parts that hold no error node into one tree, as marked
+  ##   reading of one pass reads their text, whose terminals are `span`: grammar reads
+  ##   terminals that read, and each unit some stage refuses stands in lowest node holding
+  ##   units read around it (`placeRefused` of `prose.nim`). Where trees of parts build no
+  ##   tree, grammar reads terminals whole, and where it stops, error node holds trees of parts
+  ##   (`readGrammarMarked`); it stops at byte where its terminal opens, or at `ending`.
+  func indexed(node: Node, indexes: openArray[int], is_kept: openArray[bool]): Node =
+    ## Give node with each leaf `is_kept` refuses left out, and each other leaf at `indexes`.
+    if node.is_terminal: return Node(is_terminal: true, at: indexes[node.at])
+    result = Node(is_terminal: false, rule: node.rule, number: node.number, stop: node.stop)
+    for k in 0 ..< node.children.len:
+      template child: untyped = node.children[k]
+        ## Alias node, which `let` would copy on JavaScript backend.
+      if not child.is_terminal or is_kept[child.at]:
+        result.children.add child.indexed(indexes, is_kept)
+
+  func placed(node: var Node, globals: openArray[int], terminals: openArray[TerminalNif],
+      ending: int) =
+    ## Index each leaf of node among terminals by `globals`, and give each place grammar stops
+    ##   at as byte where its terminal opens, or `ending` past last terminal, as NIF writes it.
+    if node.is_terminal:
+      node.at = globals[node.at]
+      return
+    if node.stop.isSome:
+      let at = node.stop.get.at
+      node.stop.get.at =
+        if at < globals.len: terminals[globals[at]].words[0].start else: ending
+    for k in 0 ..< node.children.len: node.children[k].placed(globals, terminals, ending)
+
+  var
+    reads = newSeq[bool](terminals.len)  # terminal of grammar, by index
+    indexes = newSeq[int](terminals.len)  # index among terminals read, by index
+    globals: seq[int]  # index of each terminal read, in order
+    classes: seq[Terminal]
+  for g in span:
+    if terminals[g].isRefused: continue
+    (reads[g], indexes[g]) = (true, globals.len)
+    globals.add g
+    classes.add terminals[g].terminal.toTerminal
+  var parts: seq[Node]
+  for k in 0 ..< trees.len:
+    let is_unit = trees[k].is_terminal and not reads[trees[k].at]
+    if not is_unit: parts.add trees[k].indexed(indexes, reads)
+  let built = classes.assembleText(parts)
+  result = (if built.isSome: built.get else: classes.readGrammarMarked)  # copy: `move` breaks JS
+  result.placed(globals, terminals, ending)
+  result.placeRefused(reads, span)
+
+
 func mergeParts*(nif: string): MergeNif =
-  ## Give NIF one pass gives text, from NIF of its parts, as `toNifParts` writes it and live text
-  ##   gives it: drop each unit one pass holds no word of, and each node of root up to last `su`;
-  ##   refuse node holding error one pass refuses, naming it; then build tree of text from trees
-  ##   of parts, as passes do, or read its terminals whole where rule of passes breaks.
-  func refused(part, start: Option[int], reason: string): MergeNif =
-    MergeNif(is_merged: false, part: part, start: start, reason: reason)
+  ## Give NIF of trees one pass gives text, from NIF of its parts, as `toNifParts` writes it and
+  ##   live text gives it: drop each unit one pass holds no word of, and each node of root up to
+  ##   last `su`, save unit one pass refuses text for; merge each run of parts that holds no
+  ##   error node, as one pass reads it, and keep each part that holds one as it is.
+  func refused(part: Option[int], reason: string): MergeNif =
+    MergeNif(is_merged: false, part: part, reason: reason)
 
   func addCloser(node: NodeNif, closer: var Option[int], is_quoted_next: var bool) =
     ## Walk words node holds, in order of text, keeping in `closer` byte where last `le'u`
@@ -190,49 +270,33 @@ func mergeParts*(nif: string): MergeNif =
         closer = some(node.children[k - 2].number)
       is_quoted_next = is_quoting or literal.isCmavo(QUOTERS)
 
-  func firstError(node: NodeNif, is_erased: bool, closer: Option[int]): Option[ErrorNif] =
-    ## Give first error node holds, in order of NIF: error node, or unit some stage refuses.
-    ##   Where node stands in text `su` erases (`is_erased`), give unit stream refuses, `si` or
-    ##   `sa` erasing nothing, or `lo'u` no `le'u` closes, as no `le'u` past it that `closer`
-    ##   gives stands: stream reads `su` after it as word it quotes (19.9).
+  func addFatal(node: NodeNif, closer: Option[int], units: var seq[NodeNif]) =
+    ## Add each unit node holds that one pass refuses text for, though `su` past it erases it:
+    ##   unit stream refuses, `si` or `sa` erasing nothing, or `lo'u` no `le'u` closes, as no
+    ##   `le'u` past it that `closer` gives stands: stream reads `su` after it as word it quotes.
     if node.kind != KindNif.Compound or node.isDropped: return
-    var start = 0  # first byte node writes, which unit and error node write before its nodes
-    while start < node.children.len and node.children[start].kind != KindNif.Number: inc start
-    let byte_first = (if start < node.children.len: node.children[start].number else: 0)
-    if node.text == TAG_ERROR and not is_erased:
-      let rule = (
-        if node.children.len > 2: node.children[1].text.replace('_', '-') & " " &
-          $node.children[2].number
-        else: ""
-      )
-      return some((byte_first, "grammar of 21.1 stops in rule `" & rule & "`"))
-    if node.text == TAG_UNREAD:
-      if node.children.len == 0: return some((0, "unit should name its stage"))
-      var is_closed = false  # unit holds `le'u`, or `le'u` stands past it
-      for k in start ..< node.children.len:
-        template child: untyped = node.children[k]
-          ## Alias node, which `let` would copy on JavaScript backend.
-        if child.kind == KindNif.Literal and child.text.isCmavo({Selmaho.Lehu}): is_closed = true
-      is_closed = is_closed or (closer.isSome and closer.get > byte_first)
-      let
-        stage = node.children[0].text
-        is_first = start + 2 < node.children.len
-        is_eraser = is_first and node.children[start + 2].text.isCmavo(ERASERS)
-        is_lohu = is_first and node.children[start + 2].text.isCmavo({Selmaho.Lohu})
-        is_error = (
-          if is_erased:
-            stage == RefusalText.Stream.spelling or
-              (stage == RefusalText.Construct.spelling and is_eraser) or
-              (stage == RefusalText.Quotation.spelling and is_lohu and not is_closed)
-          else: true
-        )
-        refusal = (if node.children.len > 1 and stage == RefusalText.Stream.spelling:
-          ", as `" & node.children[1].text & "`" else: "")
-      if is_error: return some((byte_first, "stage `" & stage & "` refuses it" & refusal))
+    if node.text != TAG_UNREAD:
+      for k in 0 ..< node.children.len: node.children[k].addFatal(closer, units)
       return
-    for k in 0 ..< node.children.len:
-      result = node.children[k].firstError(is_erased, closer)
-      if result.isSome: return
+    if node.children.len == 0: return
+    var start = 0  # first byte unit writes, past its identifiers
+    while start < node.children.len and node.children[start].kind != KindNif.Number: inc start
+    var is_closed = false  # unit holds `le'u`, or `le'u` stands past it
+    for k in start ..< node.children.len:
+      template child: untyped = node.children[k]
+        ## Alias node, which `let` would copy on JavaScript backend.
+      if child.kind == KindNif.Literal and child.text.isCmavo({Selmaho.Lehu}): is_closed = true
+    if start < node.children.len:
+      is_closed = is_closed or (closer.isSome and closer.get > node.children[start].number)
+    let
+      stage = node.children[0].text
+      is_first = start + 2 < node.children.len
+      is_eraser = is_first and node.children[start + 2].text.isCmavo(ERASERS)
+      is_lohu = is_first and node.children[start + 2].text.isCmavo({Selmaho.Lohu})
+      is_fatal = stage == RefusalText.Stream.spelling or
+        (stage == RefusalText.Construct.spelling and is_eraser) or
+        (stage == RefusalText.Quotation.spelling and is_lohu and not is_closed)
+    if is_fatal: units.add node
 
   func kept(node: NodeNif): NodeNif =
     ## Give node with each unit one pass holds no word of left out, at any depth.
@@ -241,49 +305,71 @@ func mergeParts*(nif: string): MergeNif =
       if not node.children[k].isDropped: result.children.add node.children[k].kept
 
   if not nif.startsWith(HEADER):
-    return refused(none(int), none(int), "NIF should open with directives `nif.nim` writes")
+    return refused(none(int), "NIF should open with directives `nif.nim` writes")
   var module: seq[NodeNif]
   try: module = nif.readModule
-  except ValueError as error: return refused(none(int), none(int), error.msg)
+  except ValueError as error: return refused(none(int), error.msg)
 
-  # Last `su` of root: nodes before it stand in text it erases.
+  # Last `su` of root: nodes before it stand in text it erases, save unit one pass refuses.
   var
     su = DIRECTIVES - 1
     closer = none(int)
     is_quoted_next = false
+    fatal: seq[NodeNif]
   for k in DIRECTIVES ..< module.len:
     if module[k].isUnit(RefusalText.Su.spelling): su = k
     module[k].addCloser(closer, is_quoted_next)
-  for k in DIRECTIVES ..< module.len:
-    if k == su: continue
-    let error = module[k].firstError(is_erased = k < su, closer)
-    if error.isSome:
-      return refused(some(k - DIRECTIVES), some(error.get.start), error.get.reason)
+  for k in DIRECTIVES ..< su: module[k].addFatal(closer, fatal)
+  var faho = none(int)  # byte where `fa'o` that ends input opens
+  for k in su + 1 ..< module.len:
+    let is_faho = module[k].isUnit(RefusalText.Faho.spelling) and module[k].children.len > 1 and
+      module[k].children[1].kind == KindNif.Number
+    if is_faho and faho.isNone: faho = some(module[k].children[1].number)
 
-  # Rebuild each part past it, with units one pass holds no word of left out.
+  # Rebuild each unit kept before `su`, then each node past it, each class of terminal read.
   var
     terminals: seq[TerminalNif]
-    classes: seq[Terminal]
-    parts: seq[Node]
+    rebuilt: seq[tuple[tree: Node, span: Slice[int], has_error: bool, reach: int]]
+      # reach: byte past last word node holds, or unit dropped after it
+  for k in 0 ..< fatal.len:
+    let first = terminals.len
+    try: rebuilt.add (fatal[k].toTree(terminals), first ..< terminals.len, true, 0)
+    except ValueError as error: return refused(none(int), error.msg)
   for k in su + 1 ..< module.len:
-    if module[k].isDropped: continue
+    if module[k].isDropped:
+      if rebuilt.len > 0: rebuilt[^1].reach = max(rebuilt[^1].reach, module[k].reach)
+      continue
+    let
+      node = module[k].kept
+      first = terminals.len
     try:
-      parts.add module[k].kept.toTree(terminals)
-      for m in classes.len ..< terminals.len: classes.add terminals[m].terminal.toTerminal
-    except ValueError as error: return refused(some(k - DIRECTIVES), none(int), error.msg)
-
-  # Tree of text, from trees of parts, else from terminals read whole.
-  var tree = classes.assembleText(parts)
-  if tree.isNone:
-    var reading = classes.readGrammar
-    if not reading.is_read:
-      let start =
-        if reading.at < terminals.len: terminals[reading.at].words[0].start
-        elif terminals.len > 0: terminals[^1].words[^1].finish
-        else: 0
-      return refused(
-        none(int), some(start), "grammar of 21.1 refuses text whole, in rule `" &
-          reading.rule & "`",
+      rebuilt.add (
+        node.toTree(terminals), first ..< terminals.len, node.isHoldingError, module[k].reach
       )
-    tree = some(move(reading.tree))
-  MergeNif(is_merged: true, nif: tree.get.toNif(LeavesNif(terminals: terminals)))
+      for g in first ..< terminals.len:
+        if not terminals[g].isRefused: discard terminals[g].terminal.toTerminal
+    except ValueError as error: return refused(some(k - DIRECTIVES), error.msg)
+
+  # Merge each run of nodes that hold no error node; keep each that holds one as it is. Grammar
+  #   that stops past last terminal of run stops at `fa'o` past it, else past last word of run,
+  #   erased words among them, as marked reading stops where text ends.
+  var
+    trees: seq[Node]
+    run: seq[Node]
+    span = 0 ..< 0  # terminals of run
+    ending = 0  # byte past last word of run
+  for k in 0 .. rebuilt.len:
+    if k < rebuilt.len and not rebuilt[k].has_error:
+      if run.len == 0: (span, ending) = (rebuilt[k].span, 0)
+      span.b = rebuilt[k].span.b
+      ending = max(ending, rebuilt[k].reach)
+      run.add rebuilt[k].tree
+      continue
+    if run.len > 0:
+      if k == rebuilt.len and faho.isSome: ending = faho.get
+      trees.add run.mergedRun(span, terminals, ending)
+      run.setLen(0)
+    if k < rebuilt.len: trees.add rebuilt[k].tree
+  var is_whole = trees.len == 1 and trees[0].stop.isNone  # error node of run stands at root
+  for m in 0 ..< terminals.len: is_whole = is_whole and not terminals[m].isRefused
+  MergeNif(is_merged: true, nif: trees.toNif(LeavesNif(terminals: terminals)), is_whole: is_whole)

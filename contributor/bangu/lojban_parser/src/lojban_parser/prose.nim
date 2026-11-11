@@ -549,18 +549,19 @@ func insertAt(node: var Node, path: openArray[int], index: int, leaves: openArra
   node.children.insert(leaves, index)
 
 
-func placeRefused(tree: var Node, units: openArray[Unit], span: Slice[int]) =
-  ## Put leaf of each unit of `span` no terminal holds in lowest node holding both units read
-  ##   around it, between them; leaf before first unit read, or after last, stands in root at
-  ##   that end. Run of such units between two units read stands there together, in order.
-  ##   Tree holds units read of `span`: one text that `su` parts.
+func placeRefused*(tree: var Node, reads: openArray[bool], span: Slice[int]) =
+  ## Put leaf of each unit of `span` no terminal holds, whose `reads` is false, in lowest node
+  ##   holding both units read around it, between them; leaf before first unit read, or after
+  ##   last, stands in root at that end. Run of such units between two units read stands there
+  ##   together, in order. Tree holds units read of `span`: one text that `su` parts. Merge of
+  ##   parts places each unit so too (`merge.nim`).
   var
     runs: seq[tuple[before, after: Option[int], leaves: seq[Node]]]  # units read around run
-    wanted = newSeq[bool](units.len)
+    wanted = newSeq[bool](reads.len)
     last = none(int)  # unit read last
     is_open = false  # last run waits for unit read after it
   for k in span:
-    if units[k].is_read:
+    if reads[k]:
       if is_open:
         (runs[^1].after, wanted[k], is_open) = (some(k), true, false)
       last = some(k)
@@ -572,7 +573,7 @@ func placeRefused(tree: var Node, units: openArray[Unit], span: Slice[int]) =
     runs[^1].leaves.add Node(is_terminal: true, at: k)
   var
     path: seq[int]
-    paths = newSeq[seq[int]](units.len)
+    paths = newSeq[seq[int]](reads.len)
   tree.addPaths(path, wanted, paths)
 
   # From last run back, so path to each unit before it stays as it was.
@@ -753,7 +754,7 @@ func readTree(reading: ReadingMarked, span: Slice[int], count: int): Node =
   let (read, terminals) = reading.units.toTerminals(span)
   result = terminals.readGrammarMarked
   result.remap(read, count)
-  if read.len < span.len: result.placeRefused(reading.units, span)
+  if read.len < span.len: result.placeRefused(reading.units.mapIt(it.is_read), span)
 
 
 func readTextMarked*(text: string): ReadingMarked =
@@ -806,7 +807,7 @@ func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
       (parts, open) = terminals.readGrammarParts(is_live and is_last)
     var tree = Node(is_terminal: false, rule: "text", number: 0, children: parts)
     tree.remap(read, if is_last: ending else: texts[k].b + 1)
-    if read.len < texts[k].len: tree.placeRefused(reading.units, texts[k])
+    if read.len < texts[k].len: tree.placeRefused(reading.units.mapIt(it.is_read), texts[k])
     for child in tree.children.mitems: reading.tree.children.add move(child)
     if is_last: result.open = open.mapIt(read[it])
     else: reading.tree.children.add Node(is_terminal: true, at: texts[k].b + 1)

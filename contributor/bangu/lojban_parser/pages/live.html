@@ -127,7 +127,8 @@ pre .open { color: var(--open); }
         autocapitalize="off">@SOURCE@</textarea>
       <span class="hint">A word added at the end goes to the same reader. Any other edit starts
         a new reader. Stream sends the text again, one word at a time. Merge joins each completed
-        part into the one tree that one pass over the text gives.</span>
+        part into the tree that one pass over the text gives, and keeps each error in its
+        place.</span>
     </div>
     <div class="controls" aria-label="Samples">
       <button type="button" class="stream" id="stream">Stream</button>
@@ -169,8 +170,8 @@ pre .open { color: var(--open); }
     box is an error node, <code>srera</code>, at the byte where the grammar stops. A dashed card
     is a word that no terminal holds, <code>rivbi</code>. A part in amber is still open: the
     next change replaces it. Merge drops each word that erasure or <code>fa'o</code> leaves out,
-    and each part before the last <code>su</code>, as one pass does; it names the part that holds an
-    error. The parser is compiled from the Nim source of
+    and each part before the last <code>su</code>, as one pass does. It keeps each error in its
+    place, and joins the parts around it. The parser is compiled from the Nim source of
     <code>lojban_parser</code> to JavaScript, and it runs in your browser.</footer>
 </main>
 <script>@SCRIPT@</script>

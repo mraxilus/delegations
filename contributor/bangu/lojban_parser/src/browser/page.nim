@@ -8,7 +8,7 @@
 ##   | typed      | give field text it holds: end it gained to same reader, else to new one |
 ##   | readWhole  | read text with new reader, and end it, as sample does                   |
 ##   | streamed   | read text with new reader, one word at each piece, and end it           |
-##   | mergeShown | draw tree each completed part merges to, or line naming part refused    |
+##   | mergeShown | draw each tree completed parts merge to, error in place, with its line  |
 ##   |------------|-------------------------------------------------------------------------|
 ##
 ##   Script is whole parser, as bridge exposes it, so worker it starts from its own text reads
@@ -27,9 +27,10 @@
 ##   Page holds drawing of its first text already, which build draws natively (verb `page`), so
 ##     page reads complete before script runs.
 ##   Pause between words of stream is timer of page; suite of page streams with no pause.
-##   Merge joins each part of NIF so far, tail left out, into tree of one pass (`drawnMerged` of
-##     `draw.nim`), and draws it under parts. It runs on thread of page, since it reads NIF page
-##     holds. Each change hides tree merged, which no longer holds.
+##   Merge joins each part of NIF so far, tail left out, into tree of one pass, or into tree of
+##     each run of parts around error that stays (`drawnMerged` of `draw.nim`), and draws them
+##     under parts. It runs on thread of page, since it reads NIF page holds. Each change hides
+##     trees merged, which no longer hold.
 ##   Suite of page wires controls as page does (`wiredControls`), and clicks them, so it holds
 ##     what button of page does.
 
@@ -102,8 +103,8 @@ proc mergeHidden() =
 
 
 proc mergeShown() =
-  ## Merge each part NIF so far holds, tail left out, and draw tree it gives under parts; where
-  ##   merge refuses, line names part, byte and reason.
+  ## Merge each part NIF so far holds, tail left out, and draw each tree it gives under parts;
+  ##   where NIF reads not, line names node and reason.
   let drawing = drawnMerged($STATE.nif)
   document.getElementById("merged-parts").innerHTML = cstring(drawing.html)
   let line = document.getElementById("merged-status")

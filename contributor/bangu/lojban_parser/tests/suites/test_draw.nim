@@ -1,7 +1,7 @@
 ## Hold drawing of live text (`src/browser/draw.nim`) natively: card of each word in order of
 ##   text, boxes of one row apart, each edge clear of each box, whole pixels, error node and part
-##   still open as page shows them. Suite of page holds page to same drawing under JavaScript
-##   (`tests/browser/suite_page.nim`).
+##   still open as page shows them, and line of merge. Suite of page holds page to same drawing
+##   under JavaScript (`tests/browser/suite_page.nim`).
 ##   Laws read every eighth text of corpora, as native build reads each whole, and NIF it gives.
 
 {.experimental: "strictFuncs".}
@@ -25,6 +25,9 @@ const
     rule: "in sumti-6 97",
   )
     ## Text whose grammar stops at `.i`, byte 13, inside `sumti-6` 97, and what its box says.
+  MODULE_REFUSED = HEADER & "(sumti_6 0 97 (LI 0 4 \"meho\") (number 310 812 (PA 5 7 \"vo\")))\n" &
+    "(FOO 8 10 \"do\")\n"
+    ## Module whose second node names no selma'o, so merge refuses it and names that node.
 
 
 type ReadingDrawn = tuple[key: string, nif: string, parts: seq[NodeNif]]
@@ -178,6 +181,19 @@ suite "Internal: Drawing of live text":
     check places[^1].title.startsWith("needs ")
     check drawing.count_errors == 1
     check "class=\"box err\"" in drawing.html
+
+  test "Merge names one tree of one pass, else what trees hold, and refusal of NIF in red":
+    let
+      whole = drawnMerged(readTextParts("mi klama .i ko").reading.toNifParts)
+      kept = drawnMerged(readTextParts(EXAMPLE_ERROR.text).reading.toNifParts)
+      refused = drawnMerged(MODULE_REFUSED)
+    check whole.status == "Merged · one tree · 4 words · as one pass reads the text"
+    check not whole.is_refused and whole.count_parts == 1
+    check kept.status == "Merged · 2 trees · 5 words · 1 error · 0 words unread"
+    check not kept.is_refused and "class=\"box err\"" in kept.html
+    check refused.is_refused and refused.html.len == 0  # NIF that reads not draws no part
+    check refused.status.startsWith("Merge refused · part 2 · ")  # node counted from 1
+
 
   test "Part still open draws as open, and line counts it apart":
     var reader = initReaderLive()

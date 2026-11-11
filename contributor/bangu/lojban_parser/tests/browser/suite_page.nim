@@ -6,9 +6,10 @@
 ##     sample read whole, as its button reads it; text streamed word by word, then ended; text
 ##     typed piece by piece, kept open; edit that keeps no text before it, which starts new
 ##     reader. Case and each piece is file of one string, so no format stands between them.
-##   Merge of each case draws tree native build merges its NIF so far to, or line naming part
-##     refused, as `drawnMerged` gives both builds; next change hides it, as stale. Suite wires
-##     controls as page does (`wiredControls`), and clicks button Merge.
+##   Merge of each case draws each tree native build merges its NIF so far to, with its line, as
+##     `drawnMerged` gives both builds: one tree of one pass, or tree of each run around error
+##     that stays; next change hides them, as stale. Suite wires controls as page does
+##     (`wiredControls`), and clicks button Merge.
 ##   Drawing page shows and drawing native build writes compare as same browser serialises both,
 ##     so no quirk of serialiser stands between them.
 ##   Page whose rule of content refuses each worker reads on its own thread, shows same drawing,
@@ -116,16 +117,17 @@ proc runSuite() {.async.} =
   expectThat kinds == @KINDS, "backend serves each kind of case"  # IX.3, guard keeps each kind
   ended "Page draws each case as native build draws its NIF: whole, streamed, typed and edited"
 
-  var count_merged, count_refused = 0
+  var count_whole, count_kept = 0
   for k in 0 ..< cases.len:
     let claim = cases[k].kind & " " & cases[k].pieces.join("|")
     expectThat merges[k].html == $serialised(cstring(cases[k].merged_html)),
-      "merge draws tree native build merges to: " & claim
+      "merge draws trees native build merges to: " & claim
     expectThat merges[k].status == cases[k].merged_status,
       "line of merge names what native build names: " & claim
-    if cases[k].merged_status.startsWith("Merge refused"): inc count_refused else: inc count_merged
-  expectThat count_merged > 0 and count_refused > 0, "cases merge, and are refused"  # IX.3
-  ended "Merge draws tree of completed parts as native build merges them, or names part refused"
+    if cases[k].merged_status.startsWith("Merged · one tree"): inc count_whole
+    elif cases[k].merged_status.startsWith("Merged · "): inc count_kept
+  expectThat count_whole > 0 and count_kept > 0, "cases merge whole, and keep error"  # IX.3
+  ended "Merge draws trees of completed parts as native build merges them, error in place"
 
   for k in 0 ..< cases.len:
     expectThat merges[k].is_hidden, "new reader hides tree merged before it: " & cases[k].kind
