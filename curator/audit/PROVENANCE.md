@@ -196,16 +196,10 @@ record goes one row short at the next project. The records of that project then 
 the audit stays green over prose it never read. The derivation answers from the path, so the
 next project is governed from its first line.
 
-**A README below a project directory is outside the set.** On 2026-09-23, `dance_ontology` kept
-prose under `sim/` and `design/` in its own register. With `design/README.md`, `sim/README.md` and
-`sim/verdicts.md` added to `PATHS_ENGLISH`, `nim r koch check-files` reported 192 findings then.
-Curator duty 3 forbids a check that reddens a project which cannot see it yet. Cost: that prose
-holds Article VI.8 by reading alone.
-
-**A path joins the set only where its prose already passes.** A widening that reddens a project
-breaks duty 3, so its findings are measured before the change. A widening costs one finding for
-every line of prose written between a rewrite and the widening that follows it. So a widening
-is taken as soon as it is free.
+**A widening measures its findings before the change, so that each review-finding issue can
+quote them.** They are held for each project that the branch does not own, as duty 3 says. A
+widening costs one finding for every line of prose written between a rewrite and the widening
+that follows it. So a widening is taken while it is cheap.
 
 **A quotation is skipped whole.** Quoted text comes from outside this repository, and a
 delegate may not rewrite it. A finding on it could never be fixed. A record may quote, word for
@@ -678,7 +672,8 @@ contributor branch can write both sides of the move. Any other edit of a lock is
 Cost: a curator may reorder the files of a contributor without asking. Content cannot change
 and the move is visible in review, so the cost is disorder rather than damage.
 
-- Rejected: a move merged red, which leaves `main` red until the project renames its lock.
+- Rejected: a move that leaves the lock line stale. The next pull request of the project would
+  then clear a finding that the move made.
 - Rejected: an ignore line for the stray nimble copy, which hides a file from the audit.
 - Verified by `suites/test_scope.nim`: a moved path is exempt on the curator root alone, and a move
   never widens a project branch. The name line of a lock passes. Another name, a second edit, an
@@ -726,31 +721,48 @@ on the same merge ref is what holds a stale stamp there.
   `CONTRIBUTOR.md`, check sources and `koch.nim`. At a synthetic merge of that head into
   `main`, with `main` as the first parent, it reports nothing.
 
-**A curator branch holds each finding inside a contributor project, and blocks on the rest.**
-A check that reddens a project waits for that project to fix, and the curator never fixes it
-(`CURATOR.md`, duty 3). Such a branch can never be clean, so `koch check` lists those findings
-apart and runs types, suites and drive on the rest. It records the tree for the `pre-push`
-hook when the rest is clean. The runner reads the whole tree and holds nothing, so the pull
-request stays red until each project fixes, and the merge gate is unchanged.
+**A finding inside a project blocks only a branch of the role that owns that project.** The
+Architect ruled so (D1 a of #871), since a project at rest would otherwise hold a check that
+reddens it without end. So such a check lands once the rest of the tree is clean, and each
+project clears its findings when it next moves. `koch check` on the hook and `check-files` on
+the runner read the same split from the branch name. Each lists what it holds under one
+heading, and blocks on the rest.
 
-Held means any path deeper than `contributor/<domain>/<project>/`, records included, because
-duty 3 forbids the fix there too. The two indexes above a project are the curator's, so they
-block. A finding that a rules change leaves for the curator carries a propagation flag at its
-source, and blocks in any project. These are the stale stamp and a standard that belongs in the
-root glossary. A contributor branch holds nothing: a finding in its project is its own, and one
-in another project means that the base is red.
+Held means any path deeper than `contributor/<domain>/<project>/` or `curator/<project>/`,
+records included. The root curator owns each curator project, a curator of one project owns
+that one, and a contributor owns its own. `main` holds each project, because some branch holds
+each one, and a branch that passes must merge into a `main` that passes. The indexes above a
+project and the root files are the curator's, so they block each branch. A finding that a rules
+change leaves for the curator carries a propagation flag at its source, and blocks in any
+project.
 
+- The flag marks the stale stamp, and a standard that belongs in the root glossary.
+- Rejected: a check that waits until each project fixes. A project at rest, or put off without
+  end, never fixes, so the check would wait forever.
+- Rejected: clear the findings file by file, in each pull request that changes a file. An
+  active project then keeps old findings in each file that it never touches.
+- Rejected: a dormant mark that the Architect sets on each project at rest. It needs a ruling
+  for each project, and a list to keep true.
+- Rejected: `main` holds the contributor projects alone. A branch of one curator project holds
+  the others, so a check from it would merge green and leave `main` red.
 - Rejected: push past the hook with `--no-verify`, once for each branch. Every merge of the
-  base after that first push needs a second one, and a red head can never pass the hook.
-  The `bash` hook refuses `--no-verify` on a push.
+  base after that first push needs a second one. The `bash` hook refuses `--no-verify` on a
+  push.
 - Rejected: match the stale stamp by its message. The flag sits where the finding is made, so
   a reworded message cannot move it into the held set.
+- Cost: `main` can carry findings in a project at rest. koch lists them as held, and the review
+  finding of each project names them.
+- Cost: the first pull request of a project after a check lands clears each finding of it,
+  however small its own change. `koch fix` repairs each finding that has a fix.
 - Cost: the role is read from the branch name alone, because every delegate posts as one
   account. A contributor that names a branch `curator/...` gets past its own hook and no
   further. On the runner, `check-scope`, `check-role` and `check-files` read the same name.
-- Cost: a new check that reports false findings in contributor code has them held too, so
-  its branch still pushes. The draft stays red, and duty 3 still has the curator read each
-  finding before the issues open.
+- Cost: a new check that reports false findings in a project has them held too, so its branch
+  merges green. Duty 3 still has the curator read each finding before the issues open.
+- Cost: a finding that a curator writes in a contributor record is held too, because a change
+  of a curator there does not count. The `edit` hook names it after an edit by a tool, and asks
+  for a fix of each finding in that file, held or not. Measured on 2026-11-11, 1 of the 200
+  latest commits on `main` had a curator change that prose past a Rules row, in 8 lines.
 - Verified by `suites/test_scope.nim`, which fails with the propagation flag ignored, and by
   `suites/test_hooks.nim`, `suites/test_provenance.nim`, `suites/test_glossary.nim` and
   `suites/test_findings.nim`.
@@ -2002,8 +2014,8 @@ the input line of each output line. `chain` traces every later report through th
 **The layout checks are written, and the static pass does not run them yet.** Their fixers run,
 because a fixer reports nothing new. So each project clears its findings with
 `nim r koch fix contributor/<domain>/<project>` on its own branch, and never by hand. A check
-that reddens a project merges only after that project fixes (CURATOR.md, duty 3), so #380
-queues the wiring.
+that reddens a project lands once the rest of the tree is clean (CURATOR.md, duty 3). So the
+wiring waits only until the style rules are complete, as the Architect ruled on #443.
 
 **`checkFormatting` of knoller is the one list of checks that the next pull request wires.**
 `fixes.nim` reads it by kind. That pull request adds one call to its form for the tree in
@@ -2405,8 +2417,8 @@ The finding names the phrase and gives the mend: drop the keyword, or put the is
 - Code spans and fenced code are exempt, because GitHub links no reference there.
 - A comment and a review close nothing, so `body` reads their keywords as text.
 - Rejected: the same rule in `check-role`, which reads the body of each open pull request. It
-  could redden a pull request that is open now (duty 3), and the hook already reads each body
-  before it lands.
+  could redden each pull request that is open now, and the hook already reads each body before
+  it lands.
 - Verified by `suites/test_hooks.nim`, for the body of #860 as found. The suite also holds its
   domain. That is each kind of reference, a colon, a line break, two references on a line, a
   keyword inside a word, and code. It holds the line of its own that passes too.
@@ -2679,6 +2691,7 @@ steps that no section holds.
 | `propose-term` | A concept needs a word | None |
 | `merged` | A pull request merged | Its worktree and branch removed |
 | `record` | A design changes | The diff goes to `record-reviewer` |
+| `enact` | A new check reddens a project | None |
 | `steward` | The harness drives a pull request | None |
 
 **A hook that sees the moment of a skill names the skill, as the Architect ruled on D2 of
@@ -2694,6 +2707,7 @@ is a hint, and it refuses nothing.
 - `edit` names `propose-term` after a write to a glossary, and `record` after a write to a
   record.
 - The drift finding names `sync`, and the finding of an acronym names `propose-term`.
+- koch names `enact` in the heading of the findings that it holds.
 - Verified by `suites/test_hooks.nim`, `suites/test_base.nim` and `suites/test_names.nim`.
 
 - Rejected: the word `decide` for `explain`, which a delegate reads as a request to decide.
@@ -3112,3 +3126,8 @@ pull requests sat on both sides, so the subject of a call does not say which met
 - Whether NIF replaces Protocol Buffers once every project moves to Nim 3, as the Architect
   wondered on 2026-11-10. A law of each suite would then hold the versions of each format, where
   `buf breaking` holds them now.
+- Whether the English set should take each Markdown file below a project directory, except a
+  generated one such as `gaps.md`. Article VI.8 governs that prose, and duty 3 lets such a
+  widening land once the rest of the tree is clean. Measured on 2026-09-23, `design/README.md`,
+  `sim/README.md` and `sim/verdicts.md` of `dance_ontology` gave 192 findings. Until a widening
+  lands, that prose holds Article VI.8 by reading alone.
