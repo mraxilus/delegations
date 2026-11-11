@@ -27,8 +27,9 @@
 ##       word opens alone was rejected, since reader could not tell where word ends from letters
 ##       alone, as comma inside word writes byte letters drop.
 ##   Reading that marks each error (`readTextMarked`, #859) writes two nodes more:
-##     Error node: tag `srera`, byte where grammar stops, tag and number of rule stopping
-##       innermost there, then `(nitcu ...)` holding class of each terminal some derivation
+##     Error node: tag `srera`, byte where grammar stops, tag of rule stopping innermost there,
+##       as name of rule gives its number (ruling on #859, comment 6806614095), then
+##       `(nitcu ...)` holding class of each terminal some derivation
 ##       reads there, then nodes it holds. Chain stops above it, as no chain of 21.1 holds it.
 ##     Unit no terminal holds: tag `rivbi`, stage refusing it as identifier, as `selmaho`, then
 ##       bytes and letters of each word, as terminal writes them. Stage `Stream` adds refusal of
@@ -235,7 +236,7 @@ func addRule(
   ## Add named rule to text: rule holding rule alone passes on to it, as chain opening at `top`;
   ##   rule closing chain writes its tag, then `top` where chain opens above it, then its nodes.
   ##   Error node closes chain above it, and writes tag `srera`, byte where grammar stops, tag
-  ##     and number of rule stopping there, and `nitcu` with terminals read there.
+  ##     of rule stopping there, and `nitcu` with terminals read there.
   let is_chain = node.stop.isNone and node.children.len == 1 and
     not node.children[0].is_terminal and node.children[0].stop.isNone
   if is_chain:
@@ -251,10 +252,7 @@ func addRule(
     else:
       doAssert false, "Reading that reads should hold no error node."
   text.add node.rule.tag
-  if node.stop.isSome:  # error node keeps number of its rule
-    text.add ' '
-    text.add $node.number
-  elif top != node.number:
+  if node.stop.isNone and top != node.number:
     text.add ' '
     text.add $top
   if node.stop.isSome:

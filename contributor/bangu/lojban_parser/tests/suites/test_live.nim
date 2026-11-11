@@ -154,7 +154,7 @@ const
     "18 20 \"si\" 21 23 \"si\")\n"
     ## Line of words three `si` erase in `mi klama .i do si si si`, each `si` with them, as one
     ##   unit.
-  LINE_SUHI = "(srera 3 paragraphs 4 (nitcu A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
+  LINE_SUHI = "(srera 3 paragraphs (nitcu A BAI BIhI BU BY CAhA CEhE COI CU CUhE DOI FA " &
     "FAhA FEhE FIhO GA GAhO GOI GOhA GUhA I JAI JOI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME " &
     "MOhI NA NAhE NIhO NOI NU NUhA NUhI PA PEhE PU SE SEI SOI TAhE TEI TO VA VAU VEI VEhA " &
     "VIhA VUhO XI ZAhO ZEI ZEhA ZI ZO ZOI ZOhU BRIVLA) (sumti_6 0 (KOhA 0 2 \"mi\")) " &

@@ -114,16 +114,16 @@ const
       # `lo'u` no `le'u` closes quotes `su` (19.9)
     (text: "mi su si do", count: 1, held: @[(0, "(text (rivbi Construct 6 8 \"si\") (sumti_6 ")]),
       # `si` erasing nothing past last `su` stands in run, before first unit read
-    (text: "mi klama .i le", count: 2, held: @[(1, "(srera 14 sumti_6 97 ")]),
+    (text: "mi klama .i le", count: 2, held: @[(1, "(srera 14 sumti_6 ")]),
       # `le` waits for sumti past end of text, so its part stays
     (text: "mi klama .i do cadzu .i le .i ko sipna .i mi klama", count: 3,
-      held: @[(1, "(srera 28 sumti_6 97 ")]),
+      held: @[(1, "(srera 28 sumti_6 ")]),
       # run on each side of part holding `le` merges
-    (text: "cadzu ni'o", count: 1, held: @[(0, "(srera 10 paragraphs 4 ")]),
+    (text: "cadzu ni'o", count: 1, held: @[(0, "(srera 10 paragraphs ")]),
       # each part reads alone, and error node stands over both, as one pass marks it
-    (text: "ui cadzu ni'o do si", count: 1, held: @[(0, "(srera 19 paragraphs 4 ")]),
+    (text: "ui cadzu ni'o do si", count: 1, held: @[(0, "(srera 19 paragraphs ")]),
       # grammar stops past words erasure erases at end of text, as one pass marks it
-    (text: "cadzu ni'o fa'o xu", count: 1, held: @[(0, "(srera 11 paragraphs 4 ")]),
+    (text: "cadzu ni'o fa'o xu", count: 1, held: @[(0, "(srera 11 paragraphs ")]),
       # grammar stops where `fa'o` ends input, as one pass marks it (19.15)
   ]
     ## Constructed texts one pass refuses, with count of nodes merge gives, and each node holding
@@ -131,11 +131,11 @@ const
   EXAMPLES_LIVE = [
     (
       text: ".i lu le'u si gy li'u bu broda do le to .i broda", is_read: true, count: 2,
-      held: @[(0, "(srera 41 text 0 ")],
+      held: @[(0, "(srera 41 text ")],
     ),  # part after `to` stops where `toi` is due
     (
       text: "lu gy li'u zarci lo lu .i cadzu je bu", is_read: true, count: 2,
-      held: @[(0, "(srera 24 sumti_tail 111 ")],
+      held: @[(0, "(srera 24 sumti_tail ")],
     ),  # part after second `lu` stops where `li'u` is due
     (
       text: "tu'e to nai .i zo sa'a .i zoi bu", is_read: false, count: 1,
@@ -159,7 +159,10 @@ const
       # node of no chain, as NIF wrote it before, which may read as no other tree
     (HEADER & "(sumti_9 (KOhA 0 2 \"mi\"))\n", "name of rule of 21.1", 0),  # name no rule holds
     (HEADER & "(KOhA 0 \"mi\")\n", "bytes and letters", 0),  # word with no byte past it
-    (HEADER & "(srera 0 sumti_6)\n", "byte, rule, number", 0),  # error node with no rule number
+    (HEADER & "(srera 0 sumti_6)\n", "byte, rule and terminals", 0),  # error node of no nitcu
+    (HEADER & "(srera 0 sumti_6 97 (nitcu BRIVLA))\n", "byte, rule and terminals", 0),
+      # number of rule where grammar stops, which its name gives (#859, comment 6806614095)
+    (HEADER & "(srera 0 sumti_9 (nitcu BRIVLA))\n", "name of rule of 21.1", 0),  # no rule named so
     (
       HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
         "(FOO 8 10 \"do\")\n",

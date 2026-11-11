@@ -22,7 +22,7 @@ const
   EXAMPLE_ERROR = (
     text: "mi klama le .i ko",  # `le` opens sumti that no word closes (CLL 6.2)
     head: "srera · byte 13",
-    rule: "in sumti-6 97",
+    rule: "in sumti-6",
   )
     ## Text whose grammar stops at `.i`, byte 13, inside `sumti-6` 97, and what its box says.
   MODULE_REFUSED = HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &

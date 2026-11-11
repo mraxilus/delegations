@@ -108,7 +108,7 @@ const
     ),  # `lo'u` no `le'u` closes stands alone, and words after it read on (19.9, #859)
     (
       text: "mi klama le",
-      module: "(srera 11 sumti_6 97 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
+      module: "(srera 11 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
         "GOhA GUhA JAI KE KI KOhA LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU " &
         "SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) " &
         "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &

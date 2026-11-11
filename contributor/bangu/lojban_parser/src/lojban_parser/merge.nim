@@ -119,19 +119,20 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
     terminals.add (terminal: terminal, words: words)
     return Node(is_terminal: true, at: terminals.high)
   if node.text == TAG_ERROR:
-    let is_error = node.children.len > 3 and node.children[0].kind == KindNif.Number and
+    let is_error = node.children.len > 2 and node.children[0].kind == KindNif.Number and
       node.children[1].kind == KindNif.Identifier and
-      node.children[2].kind == KindNif.Number and node.children[3].text == TAG_EXPECTS
-    if not is_error: refuse("byte, rule, number and terminals read where grammar stops")
+      node.children[2].kind == KindNif.Compound and node.children[2].text == TAG_EXPECTS
+    if not is_error: refuse("byte, rule and terminals read where grammar stops")
+    let rule = node.children[1].text.replace('_', '-')
+    if rule notin LUT_NUMBER_BY_RULE: refuse("name of rule of 21.1")
     var expected: seq[Terminal]
-    for k in 0 ..< node.children[3].children.len:
-      expected.add node.children[3].children[k].text.toTerminal
+    for k in 0 ..< node.children[2].children.len:
+      expected.add node.children[2].children[k].text.toTerminal
     result = Node(
-      is_terminal: false, rule: node.children[1].text.replace('_', '-'),
-      number: node.children[2].number,
+      is_terminal: false, rule: rule, number: LUT_NUMBER_BY_RULE[rule],
       stop: some(Stop(at: node.children[0].number, expected: expected)),
     )
-    for k in 4 ..< node.children.len: result.children.add node.children[k].toTree(terminals)
+    for k in 3 ..< node.children.len: result.children.add node.children[k].toTree(terminals)
     return
   let rule = node.text.replace('_', '-')
   if rule notin LUT_NUMBER_BY_RULE: refuse("name of rule of 21.1")

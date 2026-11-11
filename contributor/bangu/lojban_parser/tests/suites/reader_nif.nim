@@ -75,7 +75,7 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
   ## Give node of NIF that node of tree should read as: rule holding rule alone passes on to it,
   ##   as chain opening at `top`; rule closing chain gives tag, then `top` where chain opens above
   ##   it, then its nodes; terminal gives class, then bytes and letters of each word.
-  ##   Error node gives `srera`, byte grammar stops at, rule and number, `nitcu` with classes,
+  ##   Error node gives `srera`, byte grammar stops at, rule by name, `nitcu` with classes,
   ##     then its nodes, and closes chain above it; unit no terminal holds gives `rivbi`, stage,
   ##     refusal of stream for stage `Stream`, then its words.
   if node.is_terminal:
@@ -107,7 +107,6 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
         kind: KindNif.Number, number: reading.byteStop(node.stop.get.at)
       )
       result.children.add NodeNif(kind: KindNif.Identifier, text: tag)
-      result.children.add NodeNif(kind: KindNif.Number, number: node.number)
       var expects = NodeNif(kind: KindNif.Compound, text: TAG_EXPECTS)
       for terminal in node.stop.get.expected:
         expects.children.add NodeNif(kind: KindNif.Identifier, text: $terminal)
