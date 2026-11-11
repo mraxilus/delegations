@@ -139,6 +139,22 @@ suite "Tree":
     check owned[readme] == [3, 4].toHashSet  # paragraph opens on 3
 
 
+  test "deletion owns lines beside it, and path holding space keeps its name":
+    # Case as found: blank line deleted between two paragraphs joins them into one block,
+    #   whose finding names line that block opens on.
+    let diff = ["diff --git a b.md a b.md", "--- a b.md\t", "+++ a b.md\t", "@@ -5 +4,0 @@", "-"]
+    check diff.join("\n").linesHunks.getOrDefault("a b.md") == [4, 5].toHashSet
+    let root = repoTemp()
+    defer: removeDir(root)
+    let readme = DIRECTORY_ALPHA & "/README.md"
+    root.writeInto(readme, "# Alpha\n\nOne.\nTwo.\n\nThree.\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(alpha): add readme'")
+    discard root.git("checkout -q -b curator/rules")
+    root.writeInto(readme, "# Alpha\n\nOne.\nTwo.\nThree.\n")  # blank line deleted
+    check 3 in linesOwned(root, root.readTree, "main").getOrDefault(readme)  # joined block
+
+
   test "git failure raises with output":
     expect IOError: discard fieldsGit("/nonexistent_delegations", ["status"])  # non-zero exit
     let root = repoTemp()
