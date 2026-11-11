@@ -106,7 +106,7 @@ proc runPage*(
   removeDir(profile)
   createDir(profile)
   let
-    address = "http://" & ADDRESS_LOOPBACK & ":" & $server.getPort.int & "/"
+    address = "http://" & ADDRESS_LOOPBACK & ":" & $int(server.getPort) & "/"
     process = startProcess(
       chromium, args = @FLAGS_CHROMIUM & @["--user-data-dir=" & profile, address],
       options = {poStdErrToStdOut},

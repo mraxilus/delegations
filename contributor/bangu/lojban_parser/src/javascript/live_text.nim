@@ -103,7 +103,7 @@ proc newChannel(): JsObject {.importjs: "new MessageChannel()".}
 func countUnits(text: string): int =
   ## Count units of UTF-16 text takes, as string of JavaScript indexes it: two for each rune past
   ##   U+FFFF, one for each other.
-  for rune in text.runes: result += (if rune.int32 > 0xFFFF: 2 else: 1)
+  for rune in text.runes: result += (if int32(rune) > 0xFFFF: 2 else: 1)
 
 
 func add(lines: var LinesNif, text: string) =

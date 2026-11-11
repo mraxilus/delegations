@@ -127,8 +127,8 @@ proc collect(): Future[JsObject] {.async.} =
       codepoints: seq[int]
       seen: HashSet[int]
     for rune in drawn.runes:  # each codepoint once, ASCII included (D1 b of #751)
-      if seen.containsOrIncl(rune.int): continue
-      codepoints.add rune.int
+      if seen.containsOrIncl(int(rune)): continue
+      codepoints.add int(rune)
     if codepoints.len == 0: return
     let run = newJsObject()
     run.element = cstring(element.described & pseudo)

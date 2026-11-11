@@ -135,7 +135,7 @@ proc runSuite() {.async.} =
   expectThat texts.len >= COUNT_TEXTS_LEAST, "backend serves " & $COUNT_TEXTS_LEAST & " texts"
   var is_wide = false  # some text holds rune past U+FFFF, which two units of UTF-16 spell
   for (text, native) in texts:
-    for rune in text.runes: is_wide = is_wide or rune.int32 > 0xFFFF
+    for rune in text.runes: is_wide = is_wide or int32(rune) > 0xFFFF
     let
       reader = parseLojbanLive(jsUndefined)
       live = await reader.readLive(text)
