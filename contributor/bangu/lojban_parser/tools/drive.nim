@@ -12,16 +12,25 @@
 ##   Page reports through requests of its own, each string of its own: `POST /log` adds line,
 ##     `POST /done` ends run with exit code, and `POST` of any other path posts file of that name.
 ##     So no format of data stands between page and backend (CONTRIBUTOR.md, Data).
-##   Chromium is one `LOJBAN_CHROMIUM` names, else `chrome-headless-shell` of Chrome for Testing,
-##     pinned by digest (`VERSION_CHROMIUM`); page runs in profile of its own, which run removes.
+##   Chromium is one `LOJBAN_CHROMIUM` names, full Chrome or its headless shell, else headless
+##     shell store of repository serves by digest (`browser.nim`, #864); page runs in profile of
+##     its own, which run removes.
+##   Chromium leads group of its own, and run kills each process of group, then reaps each,
+##     before it removes profile: processes of Chromium write profile after first one exits, as
+##     full Chrome writes `TransportSecurity` (`test_drive.nim`). Kill, since profile goes, and
+##     full Chrome may hang in shutdown `SIGTERM` asks. This process is subreaper (`prctl(2)`),
+##     so each orphan of Chromium comes to it, and each wait here is on death, never on time.
 ##   Run that reports no end before `TIMEOUT_PAGE` fails, as page that hangs or throws before its
 ##     reporter loads: ceiling far above measured run, and far below hang.
 ##   Rejected: Playwright, whose API runs under node (ruling on #859), and protocol of DevTools,
 ##     which page that reports through requests does not need.
+##   Cost: elsewhere than Linux, orphan of Chromium goes to init, so removal of profile may race
+##     with it.
 
 {.experimental: "strictFuncs".}
 
 import std/[asyncdispatch, asynchttpserver, os, osproc, strutils, tables, times]
+from std/posix import EINTR, Pid, SIGKILL, errno, kill, waitpid
 
 
 type RunPage* = object  ## Define what page reported in one run.
@@ -47,6 +56,14 @@ const
     ".text": "text/plain; charset=utf-8", ".woff2": "font/woff2", ".ttf": "font/ttf",
   }.toTable
     ## Type of content of each extension of file backend serves.
+
+
+when defined(linux):
+  let OPTION_SUBREAPER {.importc: "PR_SET_CHILD_SUBREAPER", header: "<sys/prctl.h>".}: cint
+    ## Option of `prctl` that makes this process reaper of each orphan of its descendants.
+  proc prctl(option: cint, value: culong): cint {.importc, header: "<sys/prctl.h>".}
+    ## Set attribute of this process. Boundary of C target: glibc declares it variadic, and
+    ##   `OPTION_SUBREAPER` reads one value alone, so call passes two arguments.
 
 
 
@@ -91,6 +108,17 @@ proc serve(
     except OSError: return
 
 
+proc endGroup(process: Process) =
+  ## Kill each process of group Chromium leads, then reap each, so none writes profile after.
+  ##   Reaping ends on `ECHILD`, once group holds no process; signal that interrupts it waits on.
+  let group = Pid(-process.processID)
+  discard kill(group, SIGKILL)
+  discard process.waitForExit()
+  var status: cint
+  while waitpid(group, status, 0) > 0 or errno == EINTR: discard
+  process.close()
+
+
 proc runPage*(
   chromium, page, root: string, headers: openArray[(string, string)] = []
 ): RunPage =
@@ -102,6 +130,8 @@ proc runPage*(
     server = newAsyncHttpServer()
     profile = root / "profile"
   run.code = -1
+  when defined(linux):
+    if prctl(OPTION_SUBREAPER, 1) != 0: raiseOSError(osLastError())
   server.listen(Port(0), ADDRESS_LOOPBACK)
   removeDir(profile)
   createDir(profile)
@@ -109,14 +139,12 @@ proc runPage*(
     address = "http://" & ADDRESS_LOOPBACK & ":" & $int(server.getPort) & "/"
     process = startProcess(
       chromium, args = @FLAGS_CHROMIUM & @["--user-data-dir=" & profile, address],
-      options = {poStdErrToStdOut},
+      options = {poStdErrToStdOut, poDaemon},  # `poDaemon` starts group of its own on POSIX
     )
     start = now()
   asyncCheck server.serve(run, page, root, @headers)
   while not run.is_done and now() - start < TIMEOUT_PAGE and process.running: poll(20)
-  process.terminate()
-  discard process.waitForExit()
-  process.close()
+  process.endGroup()
   server.close()
   removeDir(profile)
   if not run.is_done:
