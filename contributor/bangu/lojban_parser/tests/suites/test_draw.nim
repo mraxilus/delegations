@@ -172,7 +172,7 @@ suite "Internal: Drawing of live text":
       if node.kind != KindNif.Compound or node.text.startsWith("."): continue
       for place in node.laidOut.places:
         if place.kind == KindPlace.Rule: lines.add place.lines
-    check @["sumti-6", "… terms 80 (11)"] in lines  # header of `draw.nim`, ruling `D1 a` on #859
+    check @["sumti-6", "… terms 80 (11)"] in lines  # header of `draw.nim`, name alone
     check @["sentence", "… text 0 (9)"] in lines  # chain from `text` 0, nine rules
 
 

@@ -136,11 +136,12 @@ suite "Internal: NIF":
 
 
   test "Name of each rule gives its number, so NIF writes no number of rule closing chain":
-    check LUT_NUMBER_BY_RULE.len == COUNT_RULES  # 21.1, each rule named once, numbered once
+    check LUT_NUMBER_BY_RULE.len == COUNT_RULES  # 21.1, each rule named once
+    check toSeq(LUT_NUMBER_BY_RULE.values).deduplicate.len == COUNT_RULES  # 21.1, numbered once
     check LUT_NUMBER_BY_RULE["sumti-6"] == 97  # 21.1, `sumti-6<97>`
     for ends, chain in LUT_CHAIN_BY_ENDS:
       checkpoint $ends
-      check LUT_NUMBER_BY_RULE[chain[^1].rule] == ends[1]  # ruling `D1 a` on #859, name of end
+      check LUT_NUMBER_BY_RULE[chain[^1].rule] == ends[1]  # header of `nif.nim`, name of end
       check LUT_NUMBER_BY_RULE[chain[0].rule] == ends[0]
 
 

@@ -575,7 +575,8 @@ func constructNumbers(grammar: Grammar): Table[string, int] {.compileTime.} =
 
 const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
   ## Number of each named rule of 21.1 by its name, as `sumti-6` 97: NIF writes name of rule
-  ##   closing each chain alone, and reader takes its number here (ruling `D1 a` on #859).
+  ##   closing each chain alone, and reader takes its number here (ruling on #859, comment
+  ##   6805527878).
 
 
 

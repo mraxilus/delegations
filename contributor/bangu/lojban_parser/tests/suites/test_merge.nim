@@ -154,7 +154,9 @@ const
     (HEADER & "(FOO 0 2 \"mi\")\n", "should name selma'o", 0),  # class that names no selma'o
     (HEADER & "(sumti_6 1 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),  # no chain of 21.1
     (HEADER & "(sumti_6 80 97 (KOhA 0 2 \"mi\"))\n", "number of rule opening", 0),
-      # number of rule closing chain, which its name gives (ruling `D1 a` on #859)
+      # number of rule closing chain, which its name gives (ruling on #859, comment 6805527878)
+    (HEADER & "(sumti_6 97 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),
+      # node of no chain, as NIF wrote it before, which may read as no other tree
     (HEADER & "(sumti_9 (KOhA 0 2 \"mi\"))\n", "name of rule of 21.1", 0),  # name no rule holds
     (HEADER & "(KOhA 0 \"mi\")\n", "bytes and letters", 0),  # word with no byte past it
     (HEADER & "(srera 0 sumti_6)\n", "byte, rule, number", 0),  # error node with no rule number

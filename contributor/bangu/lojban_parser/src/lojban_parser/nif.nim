@@ -12,8 +12,8 @@
 ##   Module opens with directive `(.nif27)`, with no byte before it, then `(.lang "cll-21.1")`:
 ##     tags are names of rules of 21.1 and classes of terminals, as grammar spells them.
 ##   Named rule is compound node: tag is its name, then nodes it holds. Its number in 21.1 is no
-##     node, since its name gives it (`LUT_NUMBER_BY_RULE`, ruling `D1 a` on #859): copy of it
-##     would let node name two rules.
+##     node, since its name gives it (`LUT_NUMBER_BY_RULE`, ruling on #859, comment 6805527878):
+##     copy of it would let node name two rules.
 ##   Chain of rules, each holding next alone, is one node: tag of rule closing it, then number of
 ##     rule opening it, as `(sumti_6 80 ...)` from `terms` 80 down to `sumti-6` 97. Two ends give
 ##     one chain in 21.1 (`LUT_CHAIN_BY_ENDS`), so reader rebuilds each rule between them, and
