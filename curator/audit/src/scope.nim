@@ -17,14 +17,21 @@
 ##     Move renames file, so line must follow in same branch, and no other branch can write it
 ##     (#631). Line is judged exactly (`isLockMoved`), so any other edit of lock stays finding.
 ##
-##   Held finding: curator branch whose check or rule reddens contributor project waits for
-##     that project to fix (CURATOR.md, duty 3), and never fixes it itself. `koch check` holds
-##     such finding apart and blocks on rest, so pre-push hook passes without `--no-verify`;
-##     runner still reads whole tree, so pull request stays red until project fixes.
-##   Held means inside contributor project, records included, since duty 3 forbids fixing
-##     there too; propagation finding (stale stamp, standard moved to root) stays curator's.
-##   Contributor branch holds nothing: finding in its project is its own, and finding in
-##     another project means base is red, which no branch hides.
+##   Held finding: finding inside project blocks only branch of role that owns that project, or
+##     branch that changed its line, as Architect ruled on D1 of #871 and of #876. So check
+##     that reddens project lands once rest is clean, and project clears finding in its next
+##     pull request (CURATOR.md, duty 3). Root curator owns each curator project; curator of
+##     one project owns that project alone; contributor owns its own. `main` holds each
+##     project, since some branch holds each, and green branch must merge into green `main`.
+##     `koch check` and `check-files` read same split, on hook and on runner alike.
+##   Finding on line branch changed blocks it wherever it lies: curator writing into
+##     contributor record clears what it wrote. Prose finding names line its block opens on,
+##     so changed line owns that line too.
+##   Held means inside project, records included. Finding outside every project, as root file
+##     or index above project, blocks each branch, and so does propagation finding (stale stamp,
+##     standard moved to root), which stays curator's wherever it lands. Scope finding is
+##     branch's own change, which no project clears, so it blocks wherever it lies, as runner's
+##     `check-scope` does.
 ##   Cost: role comes from branch name alone, as every delegate posts as one account; name
 ##     claiming curator role gains nothing past hook, since `check-scope` and `check-role` read
 ##     same name on runner.
@@ -37,7 +44,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sets, strutils]
+import std/[options, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[dependencies, domains, findings, layout]
 
@@ -55,6 +62,7 @@ func checkPropagation(path: string): seq[Finding] =
     0,
     "Curator writes only " & FILES_PROJECT.join(", ") & " in contributor project; change " &
       "rule or check and let contributor apply it; got `" & path & "`.",
+    is_scope = true,
   )
 
 
@@ -100,21 +108,38 @@ func checkScope*(
     moved_set = moved.toHashSet
   for p in paths:
     if not p.startsWith(prefix):
-      result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.")
+      result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.", is_scope = true)
     elif is_root_curator and p.startsWith(CONTRIBUTOR & "/") and p notin moved_set:
       result.add checkPropagation(p)
 
 
-func isHeld(branch: string, f: Finding): bool =
-  ## Tell whether curator branch holds finding for contributor project to fix (duty 3).
+func prefixProject(path: string): string =
+  ## Read prefix of project that path lies inside, trailing `/`; empty outside every project.
+  let parts = path.split('/')
+  if parts.len > 3 and parts[0] == CONTRIBUTOR: parts[0 .. 2].join("/") & "/"
+  elif parts.len > 2 and parts[0] == CURATOR: parts[0 .. 1].join("/") & "/"
+  else: ""
+
+
+func isHeld(branch: string, f: Finding, owned: Table[string, HashSet[int]]): bool =
+  ## Tell whether branch holds finding for project it lies inside, which only branch of role
+  ##   owning that project must clear (duty 3); finding on line branch changed is its own.
+  let project = f.path.prefixProject
+  if project.len == 0 or f.is_propagation or f.is_scope: return false
+  if f.line > 0 and f.line in owned.getOrDefault(f.path): return false
+  if branch == MAIN: return true
   let parsed = branch.parseBranch
-  if parsed.isNone or parsed.get.role == Role.Contributor or f.is_propagation: return false
-  let parts = f.path.split('/')
-  parts.len > 3 and parts[0] == CONTRIBUTOR
+  if parsed.isNone: return false
+  case parsed.get.role
+  of Role.Curator: project.startsWith(CONTRIBUTOR & "/")
+  of Role.CuratorProject, Role.Contributor: project != parsed.get.prefix
 
 
-func splitHeld*(branch: string, found: openArray[Finding]): tuple[held, own: seq[Finding]] =
-  ## Split findings into those branch holds for their projects and those it must fix.
+func splitHeld*(
+  branch: string, found: openArray[Finding], owned = initTable[string, HashSet[int]]()
+): tuple[held, own: seq[Finding]] =
+  ## Split findings into those branch holds for their projects and those it must fix; `owned`
+  ##   holds lines branch changed, by path (`tree.linesOwned`).
   for f in found:
-    if branch.isHeld(f): result.held.add f
+    if branch.isHeld(f, owned): result.held.add f
     else: result.own.add f

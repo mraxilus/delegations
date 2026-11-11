@@ -1,7 +1,9 @@
 ## Enumerate repository through git and read registered files into `Tree`.
 ##   Git decides what exists: tracked plus untracked-unignored files, so build products
 ##   never reach checks and every file that would commit does. Paths arrive NUL-separated
-##   (`-z`), so no path is ever quoted, whatever it holds.
+##   (`-z`), so no path is quoted, whatever it holds. Patch that `linesOwned` reads is one
+##   exception: there git quotes path holding quote, backslash or control character, and such
+##   path owns no line.
 ##   Same door serves branch context: checkout holding directory, changed paths, paths base
 ##   gained, commit subjects since base, and oldest commit outside `--recent` window.
 ##
@@ -14,10 +16,10 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, sequtils, strutils]
+import std/[algorithm, options, os, sequtils, sets, strutils, tables]
 from ../../knoller/src/knoller/chain import FILE_LOCK
 from ../../knoller/src/knoller/command import runGit
-import ./[commits, kinds, layout, scope]
+import ./[commits, english, kinds, layout, scope]
 
 export layout.Entry, layout.Tree
 
@@ -71,6 +73,50 @@ proc readTree*(root: string): Tree =
 proc pathsChanged*(root, base: string): seq[string] =
   ## List paths differing between merge base of `base` and HEAD; renames show as two paths.
   fieldsGit(root, ["diff", "-z", "--name-only", "--no-renames", base & "...HEAD"])
+
+
+func linesHunks*(diff: string): Table[string, HashSet[int]] =
+  ## Read lines each hunk of `git diff -U0 --no-prefix` adds, by path after change; deleted file
+  ##   adds none, and hunk that only deletes owns line on each side of it, which may now join.
+  ##   Header of file runs from `diff --git` to its first hunk, so body line opening `+++` is
+  ##     content, never path. Git ends path holding space with tab, which is cut.
+  var
+    path = ""
+    is_header = false
+  for line in diff.splitLines:
+    if line.startsWith("diff --git "): (path, is_header) = ("", true)
+    elif is_header and line.startsWith("+++ "):
+      let named = line["+++ ".len .. ^1].strip(leading = false, chars = {'\t'})
+      path = if named == "/dev/null": "" else: named
+    elif line.startsWith("@@ "):
+      is_header = false
+      if path.len == 0: continue
+      let
+        span = line.split(' ')[2][1 .. ^1].split(',')  # `+start[,count]` of new side
+        start = span[0].parseInt
+        count = if span.len > 1: span[1].parseInt else: 1
+        lines =
+          if count == 0: toSeq(max(start, 1) .. start + 1)  # deletion: line on each side
+          else: toSeq(start ..< start + count)
+      for n in lines: result.mgetOrPut(path, initHashSet[int]()).incl n
+
+
+proc linesOwned*(root: string, tree: Tree, base: string): Table[string, HashSet[int]] =
+  ## Read lines branch changed since merge base of `base`, working tree included, each widened
+  ##   to opening of its prose block (`linesOpening`); exact rename changes no line.
+  ##   Working tree is read, as `readTree` reads it, so line of finding and of change agree.
+  ##   Cost: file git does not track yet owns no line, until it is added.
+  let
+    fork = fieldsGit(root, ["merge-base", base, "HEAD"])[0].strip
+    (output, failure, code) = runGit(root, [
+      "-c", "core.quotePath=false", "diff", "-U0", "--no-color", "--no-prefix",
+      "--find-renames", fork,
+    ])
+  if code != 0: raise newException(IOError, "git failed; got `" & failure.strip & "`.")
+  result = output.linesHunks
+  for entry in tree:
+    if entry.kind == some(Kind.Markdown) and entry.path in result:
+      result[entry.path] = linesOpening(entry.content, result[entry.path])
 
 
 proc revBefore*(root: string, days: int): string =

@@ -27,8 +27,8 @@
 ##     checks read none of it: rewrite would leave lock's copy stale, and Atlas reads that as
 ##     change of package.
 ##   `checkFormatting` holds every check whose findings these fixers clear and static pass
-##     does not run yet; pull request after projects run `koch fix` wires its tree form
-##     (CURATOR.md, duty 3), one line in `auditTree`; exact banners it holds, static pass reads
+##     does not run yet; pull request wiring its tree form, one line in `auditTree`, lands once
+##     rest of tree is clean (CURATOR.md, duty 3); exact banners it holds, static pass reads
 ##     already (`form.nim`), since no project breaks them.
 ##   Scope: every path fix would write goes through `scope.checkScope` for branch. One path
 ##     outside refuses every write, so run writes all it planned or nothing. Curator branch

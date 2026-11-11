@@ -48,7 +48,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, json, options, os, parseopt, sequtils, strutils]
+import std/[algorithm, json, options, os, parseopt, sequtils, sets, strutils, tables]
 import ./curator/audit/src/[
   assets,
   audit,
@@ -291,15 +291,18 @@ proc runHook(root, event, input: string): int =
         tree = checkout.get.readTree
       var found = tree.auditTree
       found.add findingsPruned(checkout.get, tree)
+      # Held finding blocks no push, so it is named apart, for its project (duty 3); base
+      #   unread leaves no line owned, and `koch check` still reads it before push.
+      let owned =
+        try: linesOwned(checkout.get, tree, "origin/" & MAIN)
+        except IOError: initTable[string, HashSet[int]]()
       let
-        mine = found.filterIt(it.path == path)
+        (held, own) = splitHeld(checkout.get.branch, found.filterIt(it.path == path), owned)
+        named = contextFindings(path, held, own)
         skill = contextEdit(path)
-      if mine.len == 0 and skill.len == 0: return 0
+      if named.len == 0 and skill.len == 0: return 0
       var parts: seq[string]
-      if mine.len > 0:
-        let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)
-        parts.add "koch check-files reports " & $mine.len & " finding(s) in `" & path &
-          "`; fix before push:\n" & lines.join("\n")
+      if named.len > 0: parts.add named
       if skill.len > 0: parts.add skill
       echo %*{"hookSpecificOutput": {
         "hookEventName": "PostToolUse",
@@ -361,6 +364,15 @@ proc runHook(root, event, input: string): int =
     2
 
 
+proc reportHeld(held: seq[Finding]) =
+  ## Print findings branch holds for their projects, which each clears in its next pull request
+  ##   (CURATOR.md, duty 3); nothing where none is held.
+  if held.len == 0: return
+  echo "Held for their projects (CURATOR.md, duty 3, and the skill /enact); each clears them " &
+    "in its next pull request:"
+  held.report
+
+
 proc run(options: Options): int =
   ## Execute command, print findings, return exit code.
   var found: seq[Finding]
@@ -380,15 +392,14 @@ proc run(options: Options): int =
     found.add checkHistory(branch, commitsBranch(options.root, base))
     found.add checkBase(pathsGained(options.root, base))
     found.add checkSchemas(options.root, base)
-    # Curator branch holds what reddens contributor project (duty 3), and blocks on rest.
-    let (held, own) = splitHeld(branch, found)
+    # Finding inside project blocks only branch of role owning it (duty 3), and finding on
+    #   line branch changed blocks it wherever it lies; rest blocks here.
+    let (held, own) = splitHeld(branch, found, linesOwned(options.root, tree, base))
+    held.reportHeld
     if own.len > 0:
-      found.report
+      own.report
       echo "Types, suites and drive not run; fix findings above, then run again."
       return 1
-    if held.len > 0:
-      echo "Held for their projects (CURATOR.md, duty 3); runner stays red until they fix:"
-      held.report
     found = own
     found.add runJobsType(options.root, tree, options.directoriesScoped(tree))
     let jobs = tree.jobs(pathsChanged(options.root, base))
@@ -405,10 +416,16 @@ proc run(options: Options): int =
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
-    if not options.isReadAll({Root}): return options.refused
+    if not options.isReadAll({Root, Branch, Base}): return options.refused
     let tree = options.root.readTree
     found = tree.auditTree
     found.add findingsPruned(options.root, tree)
+    # Runner holds as hook does, so check that reddens project lands once rest is clean.
+    let (held, own) = splitHeld(
+      options.branchOrDefault, found, linesOwned(options.root, tree, options.baseOrDefault)
+    )
+    held.reportHeld
+    found = own
   of "check-types":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
