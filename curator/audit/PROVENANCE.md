@@ -725,8 +725,8 @@ on the same merge ref is what holds a stale stamp there.
 Architect ruled so (D1 a of #871), since a project at rest would otherwise keep a check that
 reddens it waiting without end. So such a check lands once the rest of the tree is clean, and each
 project clears its findings when it next moves. `koch check` on the hook and `check-files` on
-the runner read the same split from the branch name. Each lists what it holds under one
-heading, and blocks on the rest.
+the runner read the same split, from the branch name and the lines that the branch changed.
+Each lists what it holds under one heading, and blocks on the rest.
 
 Held means any path deeper than `contributor/<domain>/<project>/` or `curator/<project>/`,
 records included. A branch owns each project whose code it may write. So the root curator owns
@@ -763,16 +763,37 @@ clears. So it blocks wherever it lies, as `check-scope` does on the runner.
   further. On the runner, `check-scope`, `check-role` and `check-files` read the same name.
 - Cost: a new check that reports false findings in a project has them held too, so its branch
   merges green. Duty 3 still has the curator read each finding before the issues open.
-- Cost: a finding that a curator writes in a contributor record is held too. The split reads
-  the path of a finding, and never the role that wrote it. The `edit` hook names it after an
-  edit by a tool, under its held line. Measured on 2026-11-11 with `git log --first-parent`, 1
-  of the 200 latest commits on `main` changed such prose past a Rules row: 4 lines, in #715.
 - Cost: a branch of the root curator blocks on each finding in every curator project, since it
   owns them all. So a check from the branch of one curator project leaves its findings in
   another to the next pull request of the root curator.
 - Verified by `suites/test_scope.nim`, which fails with either flag ignored, and by
   `suites/test_hooks.nim`, `suites/test_provenance.nim`, `suites/test_glossary.nim` and
   `suites/test_findings.nim`.
+
+**A finding on a line that the branch changed blocks that branch, wherever it lies.** The
+Architect ruled so (D1 a of #876). So each branch answers for the lines that it writes, as a
+curator does in a contributor record. A branch owns each line that it changed since its
+merge base, working tree included. An exact rename changes no line, so the move of a project
+owns none of its findings. A prose finding names the line that its block opens on, so a
+changed line inside a block owns that line too.
+
+- Rejected: hold such a finding as any other in the project. The contributor then clears a
+  finding that it did not write. Measured on 2026-11-11 with `git log --first-parent`, 9 of the
+  566 commits on `main` had a curator change contributor prose past a Rules row. The largest,
+  #204, gave 7,273 diff lines.
+- Rejected: block each finding in a file that the branch changed. A re-stamp changes every
+  record, so each project would conform at once, which D1 a of #871 rules out.
+- Rejected: block each finding that the base does not hold. A new check that lands with a
+  re-stamp would then block on every project, for the same reason.
+- Cost: a branch that changes any line of a block owns the line that the block opens on. So a
+  finding on that line blocks it, though another line may hold its cause.
+- Cost: a finding on line 0 concerns the whole file and lies on no line, so it stays held.
+- Cost: a file that git does not track owns no line until it is added. So the `edit` hook calls
+  its findings held, and `koch check` reads them once the file is committed.
+- Cost: `check-files` reads the base, from the history that its job fetches already. On `main`,
+  the base is the head itself, so the run owns no line.
+- Verified by `suites/test_scope.nim` for the case as found, by `suites/test_tree.nim` on a
+  throwaway repository, and by `suites/test_english.nim` for the blocks.
 
 ## Commits
 
@@ -2379,8 +2400,8 @@ that holds it. The events, each one a verb argument:
 
 - `path` refuses a write outside the scope of the branch, before the write.
 - `edit` runs the static checks after a write, and returns the findings of that file as
-  context. It splits them by the branch of the checkout, as `koch check` does, so a held
-  finding never stands under "fix before push".
+  context. It splits them by the branch of the checkout and the lines that the branch changed,
+  as `koch check` does. So a held finding never stands under "fix before push".
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
   history. It holds a post made through `gh api` as `body` holds the post of a tool.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
