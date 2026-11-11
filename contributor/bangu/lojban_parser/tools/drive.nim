@@ -45,6 +45,8 @@ const
   TIMEOUT_PAGE = initDuration(seconds = 300)
     ## Ceiling of one run; suites of browser run in about 20 s, and hang in none.
   ADDRESS_LOOPBACK = "127.0.0.1"  ## Address backend listens on, which no other machine reaches.
+  BODY_MOST = 1 shl 26
+    ## Bytes request of page holds at most: what collector posts holds each font face page ships.
   FLAGS_CHROMIUM = [
     "--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage", "--no-first-run",
     "--no-default-browser-check", "--disable-extensions", "--mute-audio",
@@ -127,7 +129,7 @@ proc runPage*(
   ##   passes.
   let
     run = new RunPage
-    server = newAsyncHttpServer()
+    server = newAsyncHttpServer(maxBody = BODY_MOST)
     profile = root / "profile"
   run.code = -1
   when defined(linux):

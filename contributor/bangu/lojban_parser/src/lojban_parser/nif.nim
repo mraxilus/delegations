@@ -1,11 +1,13 @@
 ## Write tree of text as module of NIF data format, version 2027 of `nim-lang/nifspec`, so that
 ##   other programs read it: Nim 3 holds its own trees in NIF (ruling `D1 c` of #852).
 ##
-##   |---------|-------------------------------------------------------------|
-##   | Code    | Meaning                                                     |
-##   |---------|-------------------------------------------------------------|
-##   | toNif   | module of NIF holding tree of reading, each word in place   |
-##   |---------|-------------------------------------------------------------|
+##   |-------------|-----------------------------------------------------------------------|
+##   | Code        | Meaning                                                               |
+##   |-------------|-----------------------------------------------------------------------|
+##   | TerminalNif | terminal as NIF writes it: class, then bytes and letters of words     |
+##   | LeavesNif   | terminals of tree rebuilt from NIF (`merge.nim`), which it indexes    |
+##   | toNif       | module of NIF holding tree of reading or tree rebuilt, words in place |
+##   |-------------|-----------------------------------------------------------------------|
 ##
 ##   Module opens with directive `(.nif27)`, with no byte before it, then `(.lang "cll-21.1")`:
 ##     tags are names of rules of 21.1 and classes of terminals, as grammar spells them.
@@ -57,12 +59,29 @@
 ##   Rejected: library of nimony, which compiles not for JavaScript (#852).
 ##   Writer loops by index, and recurses down chain, since `items` and binding of node copy it on
 ##     JavaScript backend.
+##   Tree rebuilt from NIF (`toTree` of `merge.nim`) writes as reading does: its leaves index
+##     terminals NIF gave back, whose words hold `'` for `h`, save text quotation and written
+##     word stream refuses; error node holds byte where grammar stops, as NIF gives it. So tree
+##     writes back to NIF it read from, byte for byte (`test_merge.nim`).
 
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils]
 
-import ./[grammar, prose, selmaho, stream, tanru]
+import ./[dictionary, grammar, prose, selmaho, stream, tanru]
+
+
+type
+  WordNif* = tuple[start, finish: int, letters: string]
+    ## Define word of terminal as NIF gives it back: byte where it opens, byte past it, and its
+    ##   letters, `'` for each `h` of word.
+
+  TerminalNif* = tuple[terminal: string, words: seq[WordNif]]
+    ## Define terminal as NIF gives it back: class, then each word; unit no terminal holds gives
+    ##   `rivbi`, then stage, then refusal of stream for stage `Stream`, each parted by space.
+
+  LeavesNif* = object  ## Define terminals of tree rebuilt from NIF, which each leaf indexes.
+    terminals*: seq[TerminalNif]
 
 
 const
@@ -74,9 +93,10 @@ const
     ## Bytes below 128 that identifier holds as they are (Identifiers).
   HEADER* = "(.nif27)\n(.lang \"cll-21.1\")\n"
     ## Directives module opens with: version, as magic cookie, then language of its tags.
-  TAG_ERROR = "srera"  ## Tag of error node: gismu "x1 errs in doing x2".
-  TAG_EXPECTS = "nitcu"  ## Tag of terminals grammar reads where it stops: gismu "x1 needs x2".
-  TAG_UNREAD = "rivbi"  ## Tag of unit no terminal holds: gismu "x1 avoids x2", as grammar does.
+  TAG_ERROR* = "srera"  ## Tag of error node: gismu "x1 errs in doing x2".
+  TAG_EXPECTS* = "nitcu"  ## Tag of terminals grammar reads where it stops: gismu "x1 needs x2".
+  TAG_UNREAD* = "rivbi"  ## Tag of unit no terminal holds: gismu "x1 avoids x2", as grammar does.
+  DISTANCE_QUOTED = 2  ## Words from cmavo of ZOI to text it quotes: delimiter stands between.
 
 
 func escaped(text: string, is_identifier: bool): string =
@@ -100,7 +120,7 @@ func tag(name: string): string =
   escaped(name.replace('-', '_'), is_identifier = true)
 
 
-func spelling(stage: RefusalText): string =
+func spelling*(stage: RefusalText): string =
   ## Spell stage as CLL spells its term: selma'o as chapter 20 names it, lojban word in lower
   ##   case, and English term of CLL as it stands.
   case stage
@@ -110,7 +130,7 @@ func spelling(stage: RefusalText): string =
   else: $stage
 
 
-func spelling(refusal: Refusal): string =
+func spelling*(refusal: Refusal): string =
   ## Spell refusal of stream as CLL spells its term: selma'o as chapter 20 names it, lojban word
   ##   in lower case, and English term of CLL as it stands.
   case refusal
@@ -127,60 +147,57 @@ func letters(occurrence: Occurrence): string =
   escaped(text, is_identifier = false)
 
 
+func indexQuoted*(letters: openArray[string]): int =
+  ## Give index of word of `ZOI` terminal that holds text `zoi` or `la'o` quotes, from letters of
+  ##   its words, `h` or `'` alike: second word past cmavo of ZOI, which each BAhE marking it
+  ##   stands before (rule 1100).
+  while result < letters.len and letters[result].replace('h', '\'').selmaho != some(Selmaho.Zoi):
+    inc result
+  result += DISTANCE_QUOTED
+
+
 func byteAt*(reading: ReadingMarked, at: int): int =
   ## Give byte where unit `at` opens; size of text, at count of units, where text ends.
   if at < reading.units.len: reading.occurrences[reading.units[at].words[0]].start
   else: reading.size
 
 
-func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked)
-
-
-func addRule(text: var string, node: Node, top: int, reading: ReadingText | ReadingMarked) =
-  ## Add named rule to text: rule holding rule alone passes on to it, as chain opening at `top`;
-  ##   rule closing chain writes its tag, `top` where chain stands, its number, then its nodes.
-  ##   Error node closes chain above it, and writes tag `srera`, byte where grammar stops, tag
-  ##     and number of rule stopping there, and `nitcu` with terminals read there.
-  let is_chain = node.stop.isNone and node.children.len == 1 and
-    not node.children[0].is_terminal and node.children[0].stop.isNone
-  if is_chain:
-    text.addRule(node.children[0], top, reading)
-    return
+func addLeaf(text: var string, terminal: TerminalNif) =
+  ## Add terminal NIF gave back to text, as reading writes it: class, or `rivbi` with its
+  ##   identifiers, then bytes and letters of each word, `h` for each `'`, save text quotation
+  ##   holds and written word stream refuses.
+  var letters: seq[string]
+  for k in 0 ..< terminal.words.len: letters.add terminal.words[k].letters
+  let
+    names = terminal.terminal.split(' ')
+    is_kept = names.len > 1 and names[0] == TAG_UNREAD and names[1] == RefusalText.Stream.spelling
+    quoted = (if names[0] == $Selmaho.Zoi: some(letters.indexQuoted) else: none(int))
   text.add '('
-  if node.stop.isSome:
-    when reading is ReadingMarked:
-      text.add TAG_ERROR
-      text.add ' '
-      text.add $reading.byteAt(node.stop.get.at)
-      text.add ' '
-    else:
-      doAssert false, "Reading that reads should hold no error node."
-  text.add node.rule.tag
-  if top != node.number:
+  text.add names[0].tag
+  for k in 1 ..< names.len:
     text.add ' '
-    text.add $top
-  text.add ' '
-  text.add $node.number
-  if node.stop.isSome:
-    text.add " ("
-    text.add TAG_EXPECTS
-    for k in 0 ..< node.stop.get.expected.len:
-      text.add ' '
-      text.add ($node.stop.get.expected[k]).tag
-    text.add ')'
-  for k in 0 ..< node.children.len:
+    text.add names[k].tag
+  for k in 0 ..< terminal.words.len:
+    template word: untyped = terminal.words[k]
+      ## Alias word, which `let` would copy on JavaScript backend.
+    let is_quoted = quoted == some(k)
     text.add ' '
-    text.addNode(node.children[k], reading)
+    text.add $word.start
+    text.add ' '
+    text.add $word.finish
+    text.add " \""
+    text.add escaped(
+      if is_kept or is_quoted: word.letters else: word.letters.replace('\'', 'h'),
+      is_identifier = false,
+    )
+    text.add '"'
   text.add ')'
 
 
-func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked) =
-  ## Add node of tree to text: chain of named rules opening at it, or terminal with its class,
-  ##   then bytes and letters of each word; unit no terminal holds writes `rivbi`, then stage
-  ##   refusing it, with refusal of stream for stage `Stream`, before its words.
-  if not node.is_terminal:
-    text.addRule(node, node.number, reading)
-    return
+func addUnit(text: var string, node: Node, reading: ReadingText | ReadingMarked) =
+  ## Add terminal of reading to text: class, then bytes and letters of each word; unit no
+  ##   terminal holds writes `rivbi`, then stage refusing it, with refusal of stream for stage
+  ##   `Stream`, before its words.
   template unit: untyped = reading.units[node.at]
     ## Alias unit of terminal, which `let` would copy on JavaScript backend.
   text.add '('
@@ -205,6 +222,66 @@ func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked)
     text.add word.letters
     text.add '"'
   text.add ')'
+
+
+func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked | LeavesNif)
+
+
+func addRule(
+    text: var string, node: Node, top: int, reading: ReadingText | ReadingMarked | LeavesNif
+) =
+  ## Add named rule to text: rule holding rule alone passes on to it, as chain opening at `top`;
+  ##   rule closing chain writes its tag, `top` where chain stands, its number, then its nodes.
+  ##   Error node closes chain above it, and writes tag `srera`, byte where grammar stops, tag
+  ##     and number of rule stopping there, and `nitcu` with terminals read there.
+  let is_chain = node.stop.isNone and node.children.len == 1 and
+    not node.children[0].is_terminal and node.children[0].stop.isNone
+  if is_chain:
+    text.addRule(node.children[0], top, reading)
+    return
+  text.add '('
+  if node.stop.isSome:
+    when reading is ReadingMarked or reading is LeavesNif:
+      text.add TAG_ERROR
+      text.add ' '
+      text.add $(when reading is LeavesNif: node.stop.get.at else: reading.byteAt(node.stop.get.at))
+      text.add ' '
+    else:
+      doAssert false, "Reading that reads should hold no error node."
+  text.add node.rule.tag
+  if top != node.number:
+    text.add ' '
+    text.add $top
+  text.add ' '
+  text.add $node.number
+  if node.stop.isSome:
+    text.add " ("
+    text.add TAG_EXPECTS
+    for k in 0 ..< node.stop.get.expected.len:
+      text.add ' '
+      text.add ($node.stop.get.expected[k]).tag
+    text.add ')'
+  for k in 0 ..< node.children.len:
+    text.add ' '
+    text.addNode(node.children[k], reading)
+  text.add ')'
+
+
+
+
+func addNode(text: var string, node: Node, reading: ReadingText | ReadingMarked | LeavesNif) =
+  ## Add node of tree to text: chain of named rules opening at it, or terminal with its class,
+  ##   then bytes and letters of each word; unit no terminal holds writes `rivbi`, then stage
+  ##   refusing it, with refusal of stream for stage `Stream`, before its words.
+  if not node.is_terminal:
+    text.addRule(node, node.number, reading)
+    return
+  when reading is LeavesNif:
+    text.addLeaf(reading.terminals[node.at])
+  else:
+    text.addUnit(node, reading)
+
+
 
 
 func toNif*(reading: ReadingText): string =
@@ -238,3 +315,11 @@ func toNifParts*(reading: ReadingMarked): string =
   for k in 0 ..< reading.tree.children.len:
     result.addNode(reading.tree.children[k], reading)
     result.add '\n'
+
+
+func toNif*(tree: Node, leaves: LeavesNif): string =
+  ## Write tree rebuilt from NIF as module of NIF, as reading writes it: directives, then root
+  ##   node, then line end; so merge of parts writes tree of one pass (`merge.nim`).
+  result = HEADER
+  result.addNode(tree, leaves)
+  result.add '\n'

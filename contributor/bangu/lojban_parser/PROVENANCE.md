@@ -1505,6 +1505,74 @@ ends at its byte, so the least byte ties the change of all. Verified by `suites/
 NIF held, the tail grown and the tie, over the same texts. Cost: the stub takes about 12 s more of a
 debug build. These two laws and the suite of the driver add it (Figures of live text in the script).
 
+## Merge of parts
+
+**`mergeParts` merges the parts of a text from their NIF alone into the NIF that one pass gives.**
+A page or a fixer holds NIF, and no tree. So the rebuild stands in `src/lojban_parser/merge.nim`,
+and one call joins its steps, as the Architect ruled (D1 b on #859). The merge gives the NIF that
+`readText` writes, byte for byte, where one pass reads the text, and refuses where one pass refuses.
+That holds where the parts are cut as text read whole cuts them, and live parts may refuse more, as
+below. Verified by `suites/test_merge.nim`, 2026-11-11, over each text of the corpora, cut both
+ways, and over 1,500 texts built.
+
+**The merge drops each word that one pass holds in no node.** The words that erasure erases stand
+as a unit of stage `Erasure`, wherever that unit stands in the tree. `fa'o` that ends the input
+stands as stage `FAhO`, and each written word after it as stage `Stream` with refusal `FAhO`. Each
+node of the root up to the last `su` stands in the text that `su` erases (19.13). Verified by
+`suites/test_merge.nim` over 1,500 texts built of words that reach back, and over worked examples of
+`si`, `su` and `fa'o`. By hand, 2026-11-11, a mutant that keeps any one of these fails the suite.
+
+**An error before the last `su` refuses only where its stage reads before `su` erases.** One pass
+reads the stream of the whole text first, then quotation, then erasure, in which `su` erases
+(19.16, `prose.nim`). So a word that the stream refuses, and `si` that erases nothing, each refuse
+the text. So does `lo'u` that no `le'u` closes, since it quotes the `su` after it (19.9). An error
+of grammar, of selma'o, of `zei`, of BAhE or of `bu` drops with its part.
+
+Verified by worked examples of `suites/test_merge.nim`, where `x su mi klama` is refused. There
+`le su mi klama`, `xu'au su mi klama`, `zei su mi klama`, `ba'e su mi klama` and `bu su mi klama`
+each read. By hand, 2026-11-11, a mutant that refuses each error before `su`, and one that refuses
+none, each fail the suite.
+
+**The NIF tells a `lo'u` that no `le'u` closes from one whose `le'u` erasure erased.** Each stands
+as a unit of stage `Quotation` that holds `lo'u` alone. The second has a `le'u` after it, in the
+unit that erasure gives, which no `zo` quotes and no `ZOI` terminal holds. Verified by
+`suites/test_merge.nim`, where `lo'u mi le'u si su ko` reads, and `lo'u su ko` is refused. By hand,
+2026-11-11, a mutant that reads no `le'u` after it fails the suite.
+
+**Where a node past the last `su` holds an error, the merge refuses, and names that node.** It gives
+the index of the node, counted from 0 past the directives, the byte where the error stands, and the
+stage or the rule. A module that the reader refuses, or that holds a shape the writer gives not, is
+refused, and never raised. Verified by `suites/test_merge.nim`.
+
+**Live parts may hold an error node where the text read whole holds none.** Live text cuts after an
+opener that waits for its closer, as `to` or `lu` (`live.nim`). A part read alone then stops where
+the closer would come. The merge refuses there, as the ruling asks, and the law holds that the node
+it names holds that error node. Verified by those 2 texts in `suites/test_merge.nim`. Cost: of
+30,000 texts built, 2 refuse so, by hand with `-d:release`, 2026-11-11, and no text of the corpora
+does.
+
+**The merge joins the trees of the parts as passes build them, through `assembleText`.** Where the
+rule of the passes breaks, the grammar reads the terminals whole, as `readGrammar` does. Live text
+cut after an opener that waits gives such parts, as `lu mi klama .i do cadzu` does. Verified by
+that text in `suites/test_merge.nim`. By hand, 2026-11-11, a mutant that refuses there fails the
+suite. Cost: that read takes each terminal past the last `su` again, as `readGrammar` does for one
+pass.
+
+**A tree that the merge rebuilds writes back through the writer of `nif.nim`.** Its leaves index
+the terminals that the NIF gave back, so the writer writes each node as a reading writes it. Each
+node of each module of the corpora writes back to its NIF, byte for byte, marks among them.
+Verified by `suites/test_merge.nim`.
+
+**The text that `zoi` quotes is the second word past the cmavo of ZOI.** BAhE that marks `zoi`
+stands first in its terminal (rule 1100), so `ba'e zoi gy. a'h .gy.` quotes its fourth word. The
+writer and the rebuild find that word one way (`indexQuoted`). Verified by that text in
+`suites/test_merge.nim`. By hand, 2026-11-11, a mutant that takes the third word fails it. Cost: no
+text of the corpora holds BAhE before `zoi`, so a constructed text alone holds the rule.
+
+**The texts built are written once, for the suites of live text and of the merge
+(`suites/texts_built.nim`).** Each suite seeds its own generator, and gives it to the builder, so
+the texts of each suite come from that generator (II.9).
+
 ## Live text in the script
 
 **`parseLojbanLive` gives a reader of live text, whose `push`, `finish` and `nif` each give a
@@ -1587,9 +1655,10 @@ its check, and `drive` exits 1.
 
 **The collector of what a page draws is Nim, and runs inside the page.** It ports the collector of
 `pga_benchmark`, `tools/drive/text.ts`, which read the page through Playwright. Here each
-expression that runs in the page is checked Nim. `koch drive` judges what it writes, through
-`font_stacks.nim` of the curator. Verified by `koch drive`, 2026-11-11: the collector reads each of
-the five numerals of the control page, and the verdict gives 0 findings.
+expression that runs in the page is checked Nim. It reads the page of live text with no script and
+the control page, and `koch drive` judges what it writes, through `font_stacks.nim` of the curator.
+Verified by `koch drive`, 2026-11-11: the collector reads each numeral of the control page and each
+run of the page. The verdict gives 0 findings.
 
 **Chromium is the one that `LOJBAN_CHROMIUM` names, else the headless shell of Chrome for
 Testing.** The store of the repository serves that shell by its digest, under a name that carries
@@ -1602,6 +1671,82 @@ could then drive another browser on another day. The Architect ruled that each d
 browsers that its project drives (D1 a on #864). Image 20261101.360.1 for Ubuntu 24.04
 carries Google Chrome 156.0.8078.79 and Chromium 156.0.8078.0. Verified by the readme of that image
 in `actions/runner-images`, 2026-11-11.
+
+## Page
+
+**The page `pages/live.html` draws the tree of live text, as a reader types it.** A worker reads
+the text with the reader of live text of the script. The page applies each change to the NIF it
+holds, and draws each part from that NIF alone. So the page shows what the NIF carries, and no
+more. The Architect ruled that the page is the visualiser of the tree, and the place where a person
+uses the tool (#859). Verified by `browser/suite_page.nim` in `drive`, 2026-11-11, in a worker and
+on the thread of the page.
+
+**Text that only gains at its end goes to the same reader, as live text arrives.** Any other edit
+starts a new reader with the whole text. A sample, a stream and the first text end their reader, so
+their parts close. Text typed stays open, as live text does, and each open part shows in amber.
+Verified by `browser/suite_page.nim`, which types a text word by word, edits a text, streams two
+texts, and reads each sample.
+
+**The drawing is Nim, and the page runs it as JavaScript.** `src/browser/draw.nim` draws each part
+as one SVG, and `src/browser/page.nim` wires the field, the samples and the stream. Each box stands
+for a node of the NIF. A box of a chain names the rule nearest the words, then the outermost rule
+and the count, from `LUT_CHAIN_BY_ENDS`. An error node is a red box at the byte where the grammar
+stops, and a unit that no terminal holds is a dashed card.
+
+Each position is a whole pixel, so the native build and the build of JavaScript write the same
+text. Verified by `suites/test_draw.nim`, and by `drive`, which holds the page to the native drawing
+of each case.
+
+**Each edge turns in the gap just under its box, so no edge enters a box.** Boxes of one row hold
+disjoint columns, and each box stands over its own columns. So a turn across meets no box, and a
+drop stands a column from each other box that it passes. Verified by `suites/test_draw.nim` over
+243 texts of the corpora. By hand, 2026-11-11, an edge that turns halfway down fails that law.
+
+**The page reads complete before its script runs.** The build draws the first sample natively into
+the page, with its line and its NIF. The script then reads the same text in a worker, and draws the
+same drawing. Verified by `drive`, whose collector reads the page with no script.
+
+**Drawing waits for the next frame, so the changes of one frame draw once.** Each change of a frame
+awaits that one drawing. `typed`, `readWhole` and `streamed` each give a promise that resolves once
+their last change draws. So the suite of the page waits on promises, and no check waits on time
+(IX.12). The pause between words of a stream is a timer of the page, and the suite streams with no
+pause. Cost: each frame draws each part again, so a long text draws in time linear in its length.
+
+**The page reads NIF through `src/lojban_parser/nif_read.nim`, the reader of the spec.** The suites
+read NIF through it too, so the writer is held to the spec, and never to itself. It imports nothing
+of `nif.nim`. Rejected: a drawing of the native tree, since the worker gives NIF alone, and the page
+would then read on its own thread.
+
+**The page ships its font faces, inlined, from the store of the repository (Article X.8).** It draws
+Noto Serif at 600 for the title, Noto Sans at 400 and 600, and Commit Mono at 400 and 700. Noto is
+TrueType of release 2.013, and Commit Mono is the Latin `woff2` of `@fontsource/commit-mono` 5.3.0,
+as `curator/audit/src/assets.nim` declares each. All are under the SIL Open Font License 1.1, as the
+record of `pga_visualiser` says. The collector writes the bytes of each font face that the page
+declares into a file of its own, named by its digest. Verified by `koch drive`, 2026-11-11, with 0
+findings.
+
+**The button Merge joins each completed part into the one tree that one pass gives.** It merges the
+NIF so far, with the tail left out, since the next change replaces the tail. It draws the tree under
+the parts, or a red line that names the part refused, the byte and the reason. The line counts parts
+from 1, as the label of each drawing does. Each change hides the tree merged, which no longer
+holds. Verified by `browser/suite_page.nim` in `drive`, 2026-11-11, in a worker and on the thread of
+the page.
+
+The suite wires the controls as the page does, clicks Merge on each case, and holds what it draws to
+the native merge. A new reader hides the tree merged, and so does a change of the same reader. By
+hand, 2026-11-11, a page that keeps the tree after a change of the same reader fails that suite. So
+does a page whose button does nothing.
+
+The merge runs on the thread of the page, since it reads the NIF that the page holds. Cost: 38
+sentences of Tatoeba joined, 1,991 bytes in 78 parts, merge and draw there in 118 ms to 183 ms. That
+was measured by hand in the headless shell, 2026-11-11.
+
+Cost: the script defines no global for the merge, so a page that loads the script alone gives none.
+
+**The page is published, and the README names its URL.** The verb `page` builds it into
+`build/lojban_parser.html`, one file. Cost: no check holds the published page to the build. So a
+change that moves the page is published again by hand (CONTRIBUTOR.md, Before you open a pull
+request).
 
 ## Tests
 
@@ -1650,6 +1795,15 @@ the bridge stays in step with the parser, and no suite loads `build/lojban_parse
 line gives koch no verb, so the runner installs no package of the project, and drives nothing. The
 suite holds each of the three verbs to the dispatch.
 
+**`suites/test_draw.nim` holds the drawing natively, over every eighth text of the corpora.** Each
+word draws one card, in order of its bytes, and boxes of one row stand a column apart. Each edge
+passes clear of each box, and each number is a whole pixel. An error node and a part still open
+draw as the page shows them.
+
+**`browser/suite_page.nim` holds the page to the native drawing of each case.** It runs inline in a
+page built from the shell, in place of the script of the page, which it holds whole. It runs once
+in a worker, and once where the page refuses each worker.
+
 **`suites/test_drive.nim` holds the backend to end each process that Chromium starts.** Its fake of
 Chromium is a script of shell. The fake leaves a process that writes the profile till it ends, and
 one two levels down that never ends. It reports the end of the run through `curl`. The suite holds
@@ -1668,6 +1822,10 @@ The verb `drive` needs Chromium (Driven checks), and `unzip` for the Chromium of
 
 `suites/test_drive.nim` needs `curl` and `sleep`, which `system` declares too. A system package
 carries no pin, so its version is what the machine has.
+
+The verb `page` needs `curl` and `sha256sum` too, since `koch fetch-assets` fetches and checks each
+font face through them. `koch drive` reads the `woff2` of Commit Mono through `libbrotli1`, which
+`system` declares.
 
 The stub passes on the pin and on Nim 2.2.12.
 Verified by hand with `nim c -r -d:testing tests/test_suites.nim` on both compilers, 2026-11-05.
@@ -1949,6 +2107,25 @@ Each figure comes from an Intel Xeon at 2.10 GHz with four cores, on the pin, on
   sample of Tatoeba, joined by `.i`, word by word. It read that text once, twice, four times and
   eight times. The changes copy 1,825,349, 3,751,562, 7,603,988 and 15,474,359 bytes. The NIF so far
   at each piece would copy 363,112,382, 1,471,861,190, 5,941,562,258 and 23,971,476,851 bytes.
+
+## Figures of the page
+
+Measured on an Intel Xeon at 2.10 GHz with four cores, on the pin, on 2026-11-11.
+
+- **Page.** `build/lojban_parser.html` holds 4,385,176 bytes, against 4,319,737 at `ad2d62a4`,
+  before the merge. Its script holds 1,573,547 bytes, against 1,508,777 at `ad2d62a4`, and against
+  1,143,359 bytes of the script that `javascript` builds. It holds the page, the drawing and the
+  merge. Its five font faces hold 2,795,916 bytes as base64.
+- **Driven checks.** `nim r tools/build.nim drive` took 46.2 s, with the headless shell of Chromium
+  153.0.8010.12, against 41.1 s at `ad2d62a4` and 31.3 s at `fe1d09d9`. That time holds the build
+  of the page, the compile of a third suite, and three runs of a page more. It also holds the
+  six tests of merge on the page.
+- **Laws of the drawing.** `suites/test_draw.nim` reads 243 texts, each eighth of the 1,941 texts
+  of the corpora.
+- **Laws of the merge.** `suites/test_merge.nim` took 28.5 s of a debug build, with its compile
+  left out. It reads each of the 1,941 texts of the corpora three ways, once, and 1,500 texts built.
+  Of the corpora, one pass reads 1,831, and 133 of them have more than one part. Of the texts built,
+  one pass reads 263, and 46 of them hold `su` that ends the text before it.
 
 ## Open questions
 

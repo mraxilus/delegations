@@ -1,80 +1,33 @@
-## Read module of NIF data format, version 2027, by grammar `doc/nif-spec.md` of
-##   `nim-lang/nifspec` writes at `a31513c6`, so suites hold `nif.nim` to spec, never to itself;
-##   give module each reading should read as, so law of suite is reader of what writer writes.
-##   Reader takes subset of NIF: directive, compound node, identifier as tag or as atom, integer
-##     of decimal digits, string literal, escape `\xx` and its five shortcuts, whitespace between
-##     them. Every other construct is refused, as symbol, char literal, empty node, line
-##     information and comment; writer writes none, so what reader takes is NIF, and no more.
-##   Grammar of spec this reader follows:
-##     IdentStart is letter, `_`, byte from 128, or escape; IdentChar adds digit (Identifiers).
-##     Escape is `\` with two hex digits of upper case, or one of `n t r | ^` (Escape sequences).
-##     String literal holds byte from 32 that is no control character, byte from 128, `#`, `:`,
-##       whitespace and escape, between `"` (String literals).
-##     Compound node is `(`, tag, nodes, `)`; directive is `(.name ...)` (Directives); node is
-##       atom or compound node, and identifier is atom (Atoms).
-##     Version directive opens module, with no byte before it (Version directive).
-##   Token ends at whitespace, at parenthesis, or at end of module; byte after it, as `@` of
-##     line information or `#` of comment, is refused.
+## Give module of NIF each reading should read as, and read module back into tree, so law of
+##   suite is reader of what writer writes; reader of spec is `nif_read.nim` of library, which
+##   page reads NIF through too.
 ##   Module of reading is model of format `nif.nim` gives in its header: directives, then each
 ##     chain by its two ends, tag and number of each rule closing chain, and class of each terminal
 ##     with bytes and letters of each word; for reading that marks each error, error node and unit
 ##     no terminal holds too. Writer gives text, and model gives nodes, so neither checks itself.
-##   Rebuild reads module back into tree and terminals: each rule between two ends of chain from
-##     `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag, `'` for `h` of word. So law holds that format loses
-##     nothing of tree, not just that writer and model agree.
+##   Rebuild reads module back into tree and terminals (`toTree` of `merge.nim`, which merge of
+##     parts reads NIF through too): each rule between two ends of chain from `LUT_CHAIN_BY_ENDS`,
+##     `-` for `_` of tag, `'` for `h` of word. So law holds that format loses nothing of tree, not
+##     just that writer and model agree.
 ##   Law of cover (`isCovering`) holds tree to bytes of text: each byte of each word lies in one
 ##     leaf, leaves follow text, and each other byte is mark between words; suites of marks and
 ##     of live text read it.
 ##   Suites of native and JavaScript builds read same reader, model and worked example, so each
 ##     is written once (II.9).
-##   Refusal raises `ValueError`, naming byte and what NIF asks there.
 
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, strutils, tables]
 
-import ../../src/lojban_parser/[grammar, nif, prose, selmaho, stream, tanru]
+import ../../src/lojban_parser/[grammar, merge, nif, nif_read, prose, selmaho, stream, tanru]
 
-
-type
-  KindNif* {.pure.} = enum  ## Define kind of node reader gives.
-    Compound  ## Compound node, `(tag child ...)`; directive too, whose tag opens with `.`.
-    Identifier  ## Identifier standing as atom, as `sumti_6` of error node.
-    Number  ## Integer, as `97`.
-    Literal  ## String literal, as `"mi"`.
-
-  NodeNif* = object  ## Define node of NIF as read, each escape decoded.
-    kind*: KindNif
-    text*: string  ## Tag of compound node, identifier, or bytes of string literal; else empty.
-    number*: int  ## Value of integer; zero otherwise.
-    children*: seq[NodeNif]  ## Nodes compound node holds, in order; empty otherwise.
-
-  Reader = object  ## Define module being read, and byte reader stands at.
-    text: string
-    at: int
-
-  WordNif* = tuple[start, finish: int, letters: string]
-    ## Define word as module gives it back: byte where it opens, byte past it, and its letters.
-
-  TerminalNif* = tuple[terminal: string, words: seq[WordNif]]
-    ## Define terminal as module gives it back: class, then each word; unit no terminal holds
-    ##   gives `rivbi`, then stage, then refusal of stream for stage `Stream`.
+export merge, nif_read
 
 
 const
-  WHITESPACE = {' ', '\t', '\n', '\r'}  ## Whitespace of NIF, which parts tokens (Whitespace).
-  CONTROLS = {'(', ')', '[', ']', '{', '}', '~', '#', '\'', '"', '\\', ':', '@'}
-    ## Control characters of NIF (Control characters).
-  OPENERS_IDENTIFIER = {'a'..'z', 'A'..'Z', '_', '\x80'..'\xFF'}
-    ## Bytes opening identifier, escape aside (IdentStart).
-  DIGITS = {'0'..'9'}
   TAG_ERROR = "srera"  ## Tag of error node, gismu of rulings on #859, as model gives it.
   TAG_EXPECTS = "nitcu"  ## Tag of terminals grammar reads where it stops, as model gives it.
   TAG_UNREAD = "rivbi"  ## Tag of unit no terminal holds, as model gives it.
-  HEX = {'0'..'9', 'A'..'F'}  ## Digits of escape, upper case alone (Escape sequences).
-  SHORTCUTS = [('n', '\n'), ('t', '\t'), ('r', '\r'), ('|', '\\'), ('^', '"')]
-    ## Shortcut of escape, with byte it gives (Escape sequences).
-  VERSION* = "(.nif27)"  ## Version directive, which opens module with no byte before it.
   EXAMPLE_NIF* = (
     text: "me'o vo",  # Example 6.98 of CLL 1.1
     module: "(.nif27)\n(.lang \"cll-21.1\")\n" &
@@ -83,124 +36,6 @@ const
     ## Text, and module `nif.nim` writes for it, byte for byte: chain from `text` 0 to `sumti-6`
     ##   97 is one node, and so is chain from `mex` 310 to `number` 812; tag `sumti-6` takes `_`,
     ##   and word `me'o` takes `h`.
-
-
-
-func refuse(reader: Reader, expected: string) {.noreturn.} =
-  ## Refuse module at byte reader stands at, naming what NIF asks there.
-  let found =
-    if reader.at < reader.text.len: "`" & reader.text[reader.at] & "`" else: "end of module"
-  raise newException(
-    ValueError, "NIF should hold " & expected & " at byte " & $reader.at & "; got " & found & "."
-  )
-
-
-func isAt(reader: Reader, bytes: set[char]): bool =
-  ## Decide whether reader stands at byte of set; false at end of module.
-  reader.at < reader.text.len and reader.text[reader.at] in bytes
-
-
-func skipWhitespace(reader: var Reader) =
-  ## Move reader past whitespace.
-  while reader.isAt(WHITESPACE): inc reader.at
-
-
-func endToken(reader: Reader) =
-  ## Refuse byte after token, unless whitespace, parenthesis, or end of module stands there.
-  if reader.at < reader.text.len and not reader.isAt(WHITESPACE + {'(', ')'}):
-    reader.refuse("end of token")
-
-
-func readEscape(reader: var Reader): char =
-  ## Read escape after its `\`: two hex digits of upper case, or shortcut.
-  if reader.isAt(HEX) and reader.at + 1 < reader.text.len and reader.text[reader.at + 1] in HEX:
-    result = char(parseHexInt(reader.text[reader.at .. reader.at + 1]))
-    reader.at += 2
-    return
-  for (shortcut, decoded) in SHORTCUTS:
-    if reader.isAt({shortcut}):
-      inc reader.at
-      return decoded
-  reader.refuse("escape of two hex digits, or shortcut")
-
-
-func readIdentifier(reader: var Reader): string =
-  ## Read identifier: opener or escape first, then digit among them (Identifiers).
-  while reader.at < reader.text.len:
-    let c = reader.text[reader.at]
-    if c == '\\':
-      inc reader.at
-      result.add reader.readEscape
-    elif c in OPENERS_IDENTIFIER or (c in DIGITS and result.len > 0):
-      result.add c
-      inc reader.at
-    else: break
-  if result.len == 0: reader.refuse("identifier")
-
-
-func readNumber(reader: var Reader): int =
-  ## Read integer of decimal digits, with `-` before it where negative (Numbers).
-  let start = reader.at
-  if reader.isAt({'-'}): inc reader.at
-  if not reader.isAt(DIGITS): reader.refuse("digit")
-  while reader.isAt(DIGITS): inc reader.at
-  parseInt(reader.text[start ..< reader.at])
-
-
-func readLiteral(reader: var Reader): string =
-  ## Read string literal after its `"`, up to `"` closing it (String literals).
-  while true:
-    if reader.at >= reader.text.len: reader.refuse("`\"` closing string literal")
-    let c = reader.text[reader.at]
-    if c == '"':
-      inc reader.at
-      return
-    if c == '\\':
-      inc reader.at
-      result.add reader.readEscape
-    elif c in WHITESPACE or c in {'#', ':'} or ord(c) >= 128 or
-        (ord(c) >= ord(' ') and c notin CONTROLS):
-      result.add c
-      inc reader.at
-    else: reader.refuse("byte that string literal holds")
-
-
-func readNode(reader: var Reader): NodeNif =
-  ## Read node: compound node with nodes it holds, identifier, integer, or string literal.
-  if reader.isAt({'('}):
-    inc reader.at
-    var tag = ""
-    if reader.isAt({'.'}):
-      inc reader.at
-      tag.add '.'
-    tag.add reader.readIdentifier
-    reader.endToken
-    result = NodeNif(kind: KindNif.Compound, text: tag)
-    while true:
-      reader.skipWhitespace
-      if reader.isAt({')'}): break
-      if reader.at >= reader.text.len: reader.refuse("`)` closing node")
-      result.children.add reader.readNode
-    inc reader.at
-  elif reader.isAt({'"'}):
-    inc reader.at
-    result = NodeNif(kind: KindNif.Literal, text: reader.readLiteral)
-  elif reader.isAt(DIGITS + {'-'}):
-    result = NodeNif(kind: KindNif.Number, number: reader.readNumber)
-  elif reader.isAt(OPENERS_IDENTIFIER + {'\\'}):
-    result = NodeNif(kind: KindNif.Identifier, text: reader.readIdentifier)
-  else: reader.refuse("node")
-  reader.endToken
-
-
-func readModule*(text: string): seq[NodeNif] =
-  ## Read module of NIF: version directive at its first byte, then nodes up to end (Modules).
-  var reader = Reader(text: text)
-  if not text.startsWith(VERSION): reader.refuse("version directive `" & VERSION & "`")
-  while true:
-    reader.skipWhitespace
-    if reader.at >= text.len: break
-    result.add reader.readNode
 
 
 
@@ -302,63 +137,6 @@ func toModule*(reading: ReadingText | ReadingMarked): seq[NodeNif] =
 
 
 #[ Rebuild ]#
-
-func toTerminal(name: string): Terminal =
-  ## Read class of terminal back from its name, as `KOhA` or `BRIVLA`.
-  if name == $TERMINAL_BRIVLA: return TERMINAL_BRIVLA
-  if name == $TERMINAL_CMENE: return TERMINAL_CMENE
-  let selmaho = name.toSelmaho
-  doAssert selmaho.isSome, "Class of terminal should name selma'o; got `" & name & "`."
-  selmaho.get.toTerminal
-
-
-func toTree(node: NodeNif, terminals: var seq[TerminalNif]): Node =
-  ## Rebuild node of tree from node of NIF: each chain from its two ends by `LUT_CHAIN_BY_ENDS`,
-  ##   `-` for each `_` of tag; terminal adds class and words to `terminals`, `'` for each `h` of
-  ##   word, and third string of `ZOI` as it is. Error node takes byte grammar stops at as
-  ##   its place; unit `rivbi` adds `rivbi` and its identifiers, and keeps letters of stage
-  ##   `Stream` as they are.
-  if node.children.len > 0 and node.children[^1].kind == KindNif.Literal:
-    var
-      terminal = node.text
-      k = 0
-    while node.children[k].kind == KindNif.Identifier:
-      terminal.add ' '
-      terminal.add node.children[k].text
-      inc k
-    let is_kept = terminal.startsWith(TAG_UNREAD & " Stream")
-    var words: seq[WordNif]
-    for m in countup(k, node.children.high, 3):
-      let
-        literal = node.children[m + 2].text
-        is_quoted = node.text == "ZOI" and m == k + 6
-        letters = (if is_kept or is_quoted: literal else: literal.replace('h', '\''))
-      words.add (node.children[m].number, node.children[m + 1].number, letters)
-    terminals.add (terminal: terminal, words: words)
-    return Node(is_terminal: true, at: terminals.high)
-  if node.text == TAG_ERROR:
-    var expected: seq[Terminal]
-    for class in node.children[3].children: expected.add class.text.toTerminal
-    result = Node(
-      is_terminal: false, rule: node.children[1].text.replace('_', '-'),
-      number: node.children[2].number,
-      stop: some(Stop(at: node.children[0].number, expected: expected)),
-    )
-    for k in 4 ..< node.children.len: result.children.add node.children[k].toTree(terminals)
-    return
-  var count = 0
-  while count < node.children.len and node.children[count].kind == KindNif.Number: inc count
-  result = Node(
-    is_terminal: false, rule: node.text.replace('_', '-'), number: node.children[count - 1].number
-  )
-  for k in count ..< node.children.len: result.children.add node.children[k].toTree(terminals)
-  if count == 2:
-    let chain = LUT_CHAIN_BY_ENDS[(node.children[0].number, node.children[1].number)]
-    for k in countdown(chain.len - 2, 0):
-      result = Node(
-        is_terminal: false, rule: chain[k].rule, number: chain[k].number, children: @[result]
-      )
-
 
 func toTerminals(reading: ReadingText | ReadingMarked): seq[TerminalNif] =
   ## Give terminals reading holds: class, then bytes and letters of each word; unit no terminal
