@@ -635,7 +635,7 @@ func readExchange*(bytes: string): Recorded =
     return refuse("Exchange should open with `" & LINE_FORMAT_EXCHANGE.toEcho & "`; got `" &
         bytes[0 .. (if close < 0: bytes.high else: close)].toEcho & "`.")
   if bytes.len < AT_MESSAGE:
-    return refuse("Exchange should hold 8 bytes of length and checksum after opening; got `" &
+    return refuse("Exchange should hold 8 bytes of length and checksum after format line; got `" &
         $(bytes.len - AT_LENGTH) & "`.")
   let length = bytes.readFixed(AT_LENGTH)
   if int64(length) != int64(bytes.len - AT_MESSAGE):
