@@ -114,16 +114,16 @@ const
       # `lo'u` no `le'u` closes quotes `su` (19.9)
     (text: "mi su si do", count: 1, held: @[(0, "(text (rivbi Construct 6 8 \"si\") (sumti_6 ")]),
       # `si` erasing nothing past last `su` stands in run, before first unit read
-    (text: "mi klama .i le", count: 2, held: @[(1, "(srera 14 sumti_6 ")]),
+    (text: "mi klama .i le", count: 2, held: @[(1, "(srera 14 sumti_6 (nitcu ")]),
       # `le` waits for sumti past end of text, so its part stays
     (text: "mi klama .i do cadzu .i le .i ko sipna .i mi klama", count: 3,
-      held: @[(1, "(srera 28 sumti_6 ")]),
+      held: @[(1, "(srera 28 sumti_6 (nitcu ")]),
       # run on each side of part holding `le` merges
-    (text: "cadzu ni'o", count: 1, held: @[(0, "(srera 10 paragraphs ")]),
+    (text: "cadzu ni'o", count: 1, held: @[(0, "(srera 10 paragraphs (nitcu ")]),
       # each part reads alone, and error node stands over both, as one pass marks it
-    (text: "ui cadzu ni'o do si", count: 1, held: @[(0, "(srera 19 paragraphs ")]),
+    (text: "ui cadzu ni'o do si", count: 1, held: @[(0, "(srera 19 paragraphs (nitcu ")]),
       # grammar stops past words erasure erases at end of text, as one pass marks it
-    (text: "cadzu ni'o fa'o xu", count: 1, held: @[(0, "(srera 11 paragraphs ")]),
+    (text: "cadzu ni'o fa'o xu", count: 1, held: @[(0, "(srera 11 paragraphs (nitcu ")]),
       # grammar stops where `fa'o` ends input, as one pass marks it (19.15)
   ]
     ## Constructed texts one pass refuses, with count of nodes merge gives, and each node holding
@@ -131,11 +131,11 @@ const
   EXAMPLES_LIVE = [
     (
       text: ".i lu le'u si gy li'u bu broda do le to .i broda", is_read: true, count: 2,
-      held: @[(0, "(srera 41 text ")],
+      held: @[(0, "(srera 41 text (nitcu ")],
     ),  # part after `to` stops where `toi` is due
     (
       text: "lu gy li'u zarci lo lu .i cadzu je bu", is_read: true, count: 2,
-      held: @[(0, "(srera 24 sumti_tail ")],
+      held: @[(0, "(srera 24 sumti_tail (nitcu ")],
     ),  # part after second `lu` stops where `li'u` is due
     (
       text: "tu'e to nai .i zo sa'a .i zoi bu", is_read: false, count: 1,
