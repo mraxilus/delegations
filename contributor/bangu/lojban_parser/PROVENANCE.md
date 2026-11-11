@@ -1291,9 +1291,9 @@ grammar stops at the end of the input. Verified by `suites/test_prose.nim`, Sect
 `readText` refuses `mi klama le fa'o ko` at byte 12. Verified also by `suites/test_live.nim`, over
 texts that hold `fa'o`, where the laws of the tail and the tie hold at each piece.
 
-**An error node marks where the grammar stops.** The node takes the name and number of the rule
-that stops innermost there, as the refusal of `readGrammar` names it. It also holds the place where
-every derivation stops, and each terminal that some derivation reads there. Verified by
+**An error node marks where the grammar stops.** In the tree, the node takes the name and number of
+the rule that stops innermost there, as the refusal of `readGrammar` names it. It also holds the
+place where every derivation stops, and each terminal that some derivation reads there. Verified by
 `suites/test_marks.nim`, at the stop of the root of 24 texts refused. There, each class that the
 node names lets the grammar read past the stop, and each other class does not.
 
@@ -1332,7 +1332,8 @@ that end. No rule of 21.1 holds it, so its place claims no rule. Verified by
 **NIF writes an error node as `(srera byte rule (nitcu classes) nodes)`.** The chain stops above
 it, since no chain of 21.1 holds it. The node names its rule alone, since the name gives its
 number, as the Architect ruled on #859, in comment 6806614095. The rebuild refuses an error node
-that writes that number, or names no rule of 21.1 (`suites/test_merge.nim`).
+that writes that number, or names no rule of 21.1 (`suites/test_merge.nim`). Verified by
+`suites/test_marks.nim`. Figures, Text in NIF, error nodes, gives the bytes that the number took.
 
 A unit that no terminal holds writes `(rivbi stage words)`, each word as a terminal writes it, and
 the stage `Stream` adds the refusal of the stream. That written word keeps its bytes, as the text
@@ -2077,9 +2078,9 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   against 1,061,997 at `ab120f79`, where each node writes the number of the rule that closes it.
   The 1,831 texts that one pass reads take 852,642 bytes, against 947,004. So the copy took 9.7
   and 10.0 percent, and two runs of each gave the same bytes.
-- **Text in NIF, error nodes.** At `e4d9d681`, where the error node writes no number of its rule
-  either, the marked NIF of the corpora takes 958,448 bytes. Its 99 error nodes, in 82 texts, held
-  327 bytes of such numbers. Two runs gave the same bytes.
+- **Text in NIF, error nodes.** On 2026-11-11, the program of Text in NIF, closing numbers, wrote
+  958,448 bytes at `e4d9d681`, against 958,775 at `923cbc10`. There, 99 error nodes in 82 texts
+  write 327 bytes of numbers of their rules. Two runs gave the same bytes.
 - **Text in NIF, byte past each word.** At `2123fd67`, the byte past each word, with its space,
   takes 71,291 bytes of the 958,775, 8.0 percent of the rest. Two runs gave the same bytes.
 - **Text in NIF, debug build.** On 2026-11-09, at `a66e60f0`, the suite of `test_nif.nim`, built
