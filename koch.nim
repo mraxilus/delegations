@@ -291,15 +291,14 @@ proc runHook(root, event, input: string): int =
         tree = checkout.get.readTree
       var found = tree.auditTree
       found.add findingsPruned(checkout.get, tree)
+      # Held finding blocks no push, so it is named apart, for its project (duty 3).
       let
-        mine = found.filterIt(it.path == path)
+        (held, own) = splitHeld(checkout.get.branch, found.filterIt(it.path == path))
+        named = contextFindings(path, held, own)
         skill = contextEdit(path)
-      if mine.len == 0 and skill.len == 0: return 0
+      if named.len == 0 and skill.len == 0: return 0
       var parts: seq[string]
-      if mine.len > 0:
-        let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)
-        parts.add "koch check-files reports " & $mine.len & " finding(s) in `" & path &
-          "`; fix before push:\n" & lines.join("\n")
+      if named.len > 0: parts.add named
       if skill.len > 0: parts.add skill
       echo %*{"hookSpecificOutput": {
         "hookEventName": "PostToolUse",
