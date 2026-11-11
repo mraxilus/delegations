@@ -26,7 +26,9 @@
 ##     and on runner alike.
 ##   Held means inside project, records included. Finding outside every project, as root file
 ##     or index above project, blocks each branch, and so does propagation finding (stale stamp,
-##     standard moved to root), which stays curator's wherever it lands.
+##     standard moved to root), which stays curator's wherever it lands. Scope finding is
+##     branch's own change, which no project clears, so it blocks wherever it lies, as runner's
+##     `check-scope` does.
 ##   Cost: role comes from branch name alone, as every delegate posts as one account; name
 ##     claiming curator role gains nothing past hook, since `check-scope` and `check-role` read
 ##     same name on runner.
@@ -57,6 +59,7 @@ func checkPropagation(path: string): seq[Finding] =
     0,
     "Curator writes only " & FILES_PROJECT.join(", ") & " in contributor project; change " &
       "rule or check and let contributor apply it; got `" & path & "`.",
+    is_scope = true,
   )
 
 
@@ -102,7 +105,7 @@ func checkScope*(
     moved_set = moved.toHashSet
   for p in paths:
     if not p.startsWith(prefix):
-      result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.")
+      result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.", is_scope = true)
     elif is_root_curator and p.startsWith(CONTRIBUTOR & "/") and p notin moved_set:
       result.add checkPropagation(p)
 
@@ -119,7 +122,7 @@ func isHeld(branch: string, f: Finding): bool =
   ## Tell whether branch holds finding for project it lies inside, which only branch of role
   ##   owning that project must clear (duty 3).
   let project = f.path.prefixProject
-  if project.len == 0 or f.is_propagation: return false
+  if project.len == 0 or f.is_propagation or f.is_scope: return false
   if branch == MAIN: return true
   let parsed = branch.parseBranch
   if parsed.isNone: return false
