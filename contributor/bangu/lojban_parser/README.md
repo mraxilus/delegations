@@ -130,23 +130,27 @@ $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_p
 for line in readTextMarked("mi 1987 klama le").toNif.strip.splitLines: echo line.wrapWords(100)'
 (.nif27)
 (.lang "cll-21.1")
-(error 16 sumti_6 97 (expects BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI
-KOhA LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA
-VIhA XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (unread
-Stream Letter 3 7 "1987") (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 13 "klama"))
-(tail_terms 71))) (LE 14 16 "le"))
+(srera 16 sumti_6 97 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA
+LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA
+XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 40 (sumti_6 80 97 (KOhA 0 2 "mi")) (rivbi Stream
+Letter 3 7 "1987") (bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 8 13 "klama")) (tail_terms
+71))) (LE 14 16 "le"))
 ```
 
-The stream refuses the digits `1987`, so they stand as `(unread Stream Letter 3 7 "1987")`, between
+CLL names none of these nodes, so each takes a gismu, as the Architect ruled on #859. The error
+node is `srera`, "x1 errs", and the classes that it holds are `nitcu`, "x1 needs x2". A unit that no
+terminal holds is `rivbi`, "x1 avoids x2", since the grammar reads around it.
+
+The stream refuses the digits `1987`, so they stand as `(rivbi Stream Letter 3 7 "1987")`, between
 the sumti and the bridi tail. The text ends after `le`, so the grammar stops at byte 16, in
 `sumti-6` 97, which waits for the selbri of `le`. The error node holds `mi klama`, which reads
 alone as a sentence, and then `le` alone. A text that reads gives the reading of `readText`.
 
 Each word that no terminal holds stands as a unit too, so each byte of each word lies in one leaf.
 Words that erasure erases stand with the `si` or `sa` that erases them, as stage `Erasure`. `su`
-ends the text before it, which stays as it read, and stands as stage `Su`, as the Architect chose
-on #859. `fa'o` that ends the input stands as stage `Faho`, and each written word after it as stage
-`Stream`, with its bytes:
+ends the text before it, which stays as it read, and stands as stage `SU`, as the Architect chose
+on #859. `fa'o` that ends the input stands as stage `FAhO`, and each written word after it as stage
+`Stream`, with its bytes. Each stage takes the term of CLL, as CLL spells it:
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
@@ -154,9 +158,9 @@ for line in readTextMarked("mi klama si do su ko fa\x27o 1234").toNif.strip.spli
   echo line.wrapWords(100)'
 (.nif27)
 (.lang "cll-21.1")
-(text 0 (terms 0 80 (sumti_6 81 97 (KOhA 0 2 "mi")) (unread Erasure 3 8 "klama" 9 11 "si") (sumti_6
-81 97 (KOhA 12 14 "do"))) (unread Su 15 17 "su") (sumti_6 2 97 (KOhA 18 20 "ko")) (unread Faho 21 25
-"faho") (unread Stream Faho 26 30 "1234"))
+(text 0 (terms 0 80 (sumti_6 81 97 (KOhA 0 2 "mi")) (rivbi Erasure 3 8 "klama" 9 11 "si") (sumti_6
+81 97 (KOhA 12 14 "do"))) (rivbi SU 15 17 "su") (sumti_6 2 97 (KOhA 18 20 "ko")) (rivbi FAhO 21 25
+"faho") (rivbi Stream FAhO 26 30 "1234"))
 ```
 
 `si` erases `klama`, so one unit holds both. The root of the text after the last `su` holds each
@@ -187,13 +191,13 @@ push "mi klama .i do ": cut back to 28, byte 0
   tail (text_1 0 2 (I 10 11 "i") (sumti_6 4 97 (KOhA 12 14 "do")))
 push "si si si ": cut back to 28, byte 0
   tail (sumti_6 0 97 (KOhA 0 2 "mi"))
-  tail (unread Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
+  tail (rivbi Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
 push "su ko ": cut back to 28, byte 0
   out  (sumti_6 0 97 (KOhA 0 2 "mi"))
-  out  (unread Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
-  out  (unread Su 24 26 "su")
+  out  (rivbi Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
+  out  (rivbi SU 24 26 "su")
   tail (sumti_6 0 97 (KOhA 27 29 "ko"))
-finish: cut back to 165, byte 27
+finish: cut back to 163, byte 27
   out  (sumti_6 0 97 (KOhA 27 29 "ko"))
 ```
 
