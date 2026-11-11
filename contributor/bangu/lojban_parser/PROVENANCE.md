@@ -1560,6 +1560,19 @@ no format of data stands between the page and the backend (CONTRIBUTOR.md, Data)
 **A run that reports no end before 300 s fails, as a page that throws before its reporter loads.**
 That ceiling is assumed, since no run reaches it.
 
+**A run ends each process of Chromium, and reaps each, before it removes the profile.** Chromium
+leads a group of its own. At the end of a run, the backend kills each process of that group, and
+waits for each to die. Processes of Chromium write the profile after the first one exits. Full
+Chrome for Testing 153.0.8010.12 wrote `Default/TransportSecurity` so, and the removal failed with
+`Directory not empty`. Verified by `suites/test_drive.nim`, which fails before the fix, and by
+`drive` in full Chrome and in its headless shell, 2026-11-11.
+
+The backend is the subreaper of its descendants (`prctl(2)`), so each orphan of Chromium comes to
+it. So each wait is on a death, and none is on time (IX.12). Rejected: `SIGTERM`, since the profile
+goes anyway. By hand, once, 2026-11-11, full Chrome on `about:blank` still ran a minute after it.
+Rejected: a removal tried again after a pause, whose verdict would hang on the speed of the
+machine. Cost: elsewhere than Linux, an orphan goes to init, so the removal may race with it.
+
 **Each suite runs on a page of its own, and holds the bridge.** Each script that Nim compiles
 defines its procs as globals. So a second script on a page replaces each proc of the first that
 shares its name. Rejected: the shipped script and a suite on one page, whose procs replace those of
@@ -1582,7 +1595,12 @@ the five numerals of the control page, and the verdict gives 0 findings.
 Testing.** The store of the repository serves that shell by its digest, once the curator declares
 its row (#864). `unzip` unpacks it under `build/chromium/`. Version 153.0.8010.12 is the version
 that a delegate machine carries, as the headless shell of Playwright 1243. Cost: until that row
-lands, the runner has no Chromium, so `drive` fails there.
+lands, `drive` fails on the runner.
+
+Rejected: the Chrome and the Chromium of the image of the runner, which no pin holds. One commit
+could then drive another browser on another day (#864). Image 20261101.360.1 for Ubuntu 24.04
+carries Google Chrome 156.0.8078.79 and Chromium 156.0.8078.0. Verified by the readme of that image
+in `actions/runner-images`, 2026-11-11.
 
 ## Tests
 
@@ -1623,14 +1641,19 @@ source: a section of CLL, or the article of the charter that a guard holds.
 `tests/browser/suite_script.nim` holds each sentence of the sample of Tatoeba to the verdict that
 the native build gave it. It also holds the law of NIF over every fourth sentence.
 `tests/browser/suite_live.nim` holds the reader of live text of the script to the NIF that the
-native build gives. Each compiles
-the bridge with `-d:release`, as the verb `javascript` does. So the bridge stays in step with the
-parser, and no suite loads `build/lojban_parser.js` itself.
+native build gives. Each compiles the bridge with `-d:release`, as the verb `javascript` does. So
+the bridge stays in step with the parser, and no suite loads `build/lojban_parser.js` itself.
 
 **`suites/test_driver.nim` reads the driver as koch reads it.** Koch learns `drive`, `head` and
 `system` from a dispatch that opens on `case paramStr(1)` alone. A dispatch that opens on any other
 line gives koch no verb, so the runner installs no package of the project, and drives nothing. The
 suite holds each of the three verbs to the dispatch.
+
+**`suites/test_drive.nim` holds the backend to end each process that Chromium starts.** Its fake of
+Chromium is a script of shell. The fake leaves a process that writes the profile till it ends, and
+one two levels down that never ends. It reports the end of the run through `curl`. The suite holds
+that no process of the fake lives once `runPage` returns, and that the profile is gone. So it needs
+`sh`, `curl` and `sleep`, and no browser.
 
 ## Toolchain
 
@@ -1642,7 +1665,8 @@ so it carries no lock. The verbs `lists` and `head`, and the tests of outside te
 The verb `drive` needs Chromium (Driven checks), and `unzip` for the Chromium of the store, which
 `system` declares.
 
-A system package carries no pin, so its version is what the machine has.
+`suites/test_drive.nim` needs `curl` and `sleep`, which `system` declares too. A system package
+carries no pin, so its version is what the machine has.
 
 The stub passes on the pin and on Nim 2.2.12.
 Verified by hand with `nim c -r -d:testing tests/test_suites.nim` on both compilers, 2026-11-05.

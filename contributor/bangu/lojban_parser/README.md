@@ -314,9 +314,9 @@ own name. The verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decomp
 `translations` needs `curl` and `sha256sum`, and the verb `system` declares both.
 
 The verb `javascript` needs the compiler alone. The verb `drive` needs Chromium, the one that
-`LOJBAN_CHROMIUM` names. Else it takes the headless shell of Chrome for Testing from the store,
-once the curator declares it there (#864). It unpacks that shell with `unzip`, which the verb
-`system` declares. No check needs node.
+`LOJBAN_CHROMIUM` names, full Chrome or its headless shell. Else it takes the headless shell of
+Chrome for Testing from the store, once the curator declares it there (#864). It unpacks that
+shell with `unzip`, which the verb `system` declares. No check needs node.
 
 ## Pages
 
