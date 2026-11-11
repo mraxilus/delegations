@@ -721,12 +721,13 @@ on the same merge ref is what holds a stale stamp there.
   `CONTRIBUTOR.md`, check sources and `koch.nim`. At a synthetic merge of that head into
   `main`, with `main` as the first parent, it reports nothing.
 
-**A finding inside a project blocks only a branch of the role that owns that project.** The
-Architect ruled so (D1 a of #871), since a project at rest would otherwise keep a check that
-reddens it waiting without end. So such a check lands once the rest of the tree is clean, and each
-project clears its findings when it next moves. `koch check` on the hook and `check-files` on
-the runner read the same split, from the branch name and the lines that the branch changed.
-Each lists what it holds under one heading, and blocks on the rest.
+**A finding inside a project blocks a branch of the role that owns that project, and no other
+branch that leaves its line alone.** The Architect ruled so (D1 a of #871), since a project at
+rest would otherwise keep a check that reddens it waiting without end. So such a check lands
+once the rest of the tree is clean, and each project clears its findings when it next moves.
+`koch check` on the hook and `check-files` on the runner read the same split, from the branch
+name and the lines that the branch changed. Each lists what it holds under one heading, and
+blocks on the rest.
 
 Held means any path deeper than `contributor/<domain>/<project>/` or `curator/<project>/`,
 records included. A branch owns each project whose code it may write. So the root curator owns
@@ -773,14 +774,17 @@ clears. So it blocks wherever it lies, as `check-scope` does on the runner.
 **A finding on a line that the branch changed blocks that branch, wherever it lies.** The
 Architect ruled so (D1 a of #876). So each branch answers for the lines that it writes, as a
 curator does in a contributor record. A branch owns each line that it changed since its
-merge base, working tree included. An exact rename changes no line, so the move of a project
-owns none of its findings. A prose finding names the line that its block opens on, so a
-changed line inside a block owns that line too.
+merge base, working tree included, because the checks read the working tree. An exact rename
+changes no line, so the move of a project owns none of its findings.
+
+A prose finding names the line that its block opens on, so a changed line inside a block owns
+that line too. A hunk that only deletes owns the line on each side of it. So two paragraphs that
+a deletion joins own the line that their block opens on.
 
 - Rejected: hold such a finding as any other in the project. The contributor then clears a
-  finding that it did not write. Measured on 2026-11-11 with `git log --first-parent`, 9 of the
-  566 commits on `main` had a curator change contributor prose past a Rules row. The largest,
-  #204, gave 7,273 diff lines.
+  finding that it did not write. Measured on 2026-11-11 with `git log --first-parent`, 26 of
+  the 566 commits on `main` were curator pull requests that changed contributor prose past a
+  Rules row. Of those, 25 came before 2026-10-04, and the largest, #204, gave 7,274 diff lines.
 - Rejected: block each finding in a file that the branch changed. A re-stamp changes every
   record, so each project would conform at once, which D1 a of #871 rules out.
 - Rejected: block each finding that the base does not hold. A new check that lands with a
@@ -792,6 +796,8 @@ changed line inside a block owns that line too.
   its findings held, and `koch check` reads them once the file is committed.
 - Cost: `check-files` reads the base, from the history that its job fetches already. On `main`,
   the base is the head itself, so the run owns no line.
+- Cost: git quotes a path in the patch where it holds a quote, a backslash or a control
+  character. Such a path owns no line, and on 2026-11-11 no tracked path held one.
 - Verified by `suites/test_scope.nim` for the case as found, by `suites/test_tree.nim` on a
   throwaway repository, and by `suites/test_english.nim` for the blocks.
 
