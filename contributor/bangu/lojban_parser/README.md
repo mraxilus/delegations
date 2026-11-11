@@ -136,9 +136,9 @@ $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_p
 for line in readTextMarked("mi 1987 klama le").toNif.strip.splitLines: echo line.wrapWords(100)'
 (.nif27)
 (.lang "cll-21.1")
-(srera 16 sumti_6 97 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA
-LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA
-XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (rivbi Stream Letter 3 7
+(srera 16 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA LA
+LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI
+ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (rivbi Stream Letter 3 7
 "1987") (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 8 13 "klama")) (tail_terms))) (LE 14 16 "le"))
 ```
 
@@ -148,8 +148,9 @@ terminal holds is `rivbi`, "x1 avoids x2", since the grammar reads around it.
 
 The stream refuses the digits `1987`, so they stand as `(rivbi Stream Letter 3 7 "1987")`, between
 the sumti and the bridi tail. The text ends after `le`, so the grammar stops at byte 16, in
-`sumti-6` 97, which waits for the selbri of `le`. The error node holds `mi klama`, which reads
-alone as a sentence, and then `le` alone. A text that reads gives the reading of `readText`.
+`sumti-6`, which waits for the selbri of `le`. The node names that rule alone, since its name gives
+its number, 97. The error node holds `mi klama`, which reads alone as a sentence, and then `le`
+alone. A text that reads gives the reading of `readText`.
 
 Each word that no terminal holds stands as a unit too, so each byte of each word lies in one leaf.
 Words that erasure erases stand with the `si` or `sa` that erases them, as stage `Erasure`. `su`
@@ -238,9 +239,9 @@ whole: false
 whole: false
 (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3 8 "klama"))
 (tail_terms)))
-(srera 16 sumti_6 97 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA
-LA LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA
-XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (text_1 0 (I 10 11 "i")) (LE 12 14 "le"))
+(srera 16 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA LA
+LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI
+ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (text_1 0 (I 10 11 "i")) (LE 12 14 "le"))
 (text_1 0 (I 16 17 "i") (sumti_6 4 (KOhA 18 20 "ko")))
 ```
 

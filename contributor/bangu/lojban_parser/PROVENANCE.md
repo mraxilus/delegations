@@ -1158,8 +1158,8 @@ read the table. The script that `javascript` builds grows by 827 bytes, since it
 Verified by `suites/test_nif.nim`, which holds both ends of each chain to their numbers, and
 rebuilds each tree of the corpora. The rebuild refuses a node that writes two numbers, and a name
 that 21.1 gives no rule (`suites/test_merge.nim`). By hand, 2026-11-11, a build that gives
-`sumti-6` the number 95 of `sumti-5` stops at compile. The error node keeps the number of its rule,
-as Open questions says.
+`sumti-6` the number 95 of `sumti-5` stops at compile. The error node names its rule the same way,
+as Marks says.
 
 **A tag writes `_` for `-`, and a word writes `h` for `'`.** No name of 21.1 holds `_`, so `_`
 reads back as `-`. Chapter 20 writes `h` as the capital of `'` in the names of selma'o, as in
@@ -1329,12 +1329,15 @@ it, between them.** Before the first unit that reads, or after the last, it stan
 that end. No rule of 21.1 holds it, so its place claims no rule. Verified by
 `suites/test_marks.nim`.
 
-**NIF writes an error node as `(srera byte rule number (nitcu classes) nodes)`.** The chain
-stops above it, since no chain of 21.1 holds it. A unit that no terminal holds writes
-`(rivbi stage words)`, each word as a terminal writes it, and the stage `Stream` adds the refusal
-of the stream. That written word keeps its bytes, as the text that `zoi` quotes does. Verified by
-`suites/test_marks.nim`, which holds seven modules byte for byte, and reads back each module of the
-texts refused.
+**NIF writes an error node as `(srera byte rule (nitcu classes) nodes)`.** The chain stops above
+it, since no chain of 21.1 holds it. The node names its rule alone, since the name gives its
+number, as the Architect ruled on #859, in comment 6806614095. The rebuild refuses an error node
+that writes that number, or names no rule of 21.1 (`suites/test_merge.nim`).
+
+A unit that no terminal holds writes `(rivbi stage words)`, each word as a terminal writes it, and
+the stage `Stream` adds the refusal of the stream. That written word keeps its bytes, as the text
+that `zoi` quotes does. Verified by `suites/test_marks.nim`, which holds seven modules byte for
+byte, and reads back each module of the texts refused.
 
 **Each tag of NIF takes the term that CLL gives, as CLL spells it.** The Architect ruled this on
 #859, and the tags of named rules keep the names of 21.1. A stage or a refusal takes a selma'o as
@@ -2074,6 +2077,9 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
   against 1,061,997 at `ab120f79`, where each node writes the number of the rule that closes it.
   The 1,831 texts that one pass reads take 852,642 bytes, against 947,004. So the copy took 9.7
   and 10.0 percent, and two runs of each gave the same bytes.
+- **Text in NIF, error nodes.** At `e4d9d681`, where the error node writes no number of its rule
+  either, the marked NIF of the corpora takes 958,448 bytes. Its 99 error nodes, in 82 texts, held
+  327 bytes of such numbers. Two runs gave the same bytes.
 - **Text in NIF, byte past each word.** At `2123fd67`, the byte past each word, with its space,
   takes 71,291 bytes of the 958,775, 8.0 percent of the rest. Two runs gave the same bytes.
 - **Text in NIF, debug build.** On 2026-11-09, at `a66e60f0`, the suite of `test_nif.nim`, built
@@ -2221,10 +2227,6 @@ Measured on an Intel Xeon at 2.10 GHz with four cores, on the pin, on 2026-11-11
 
 ## Open questions
 
-- **The number of the rule where the grammar stops.** The error node writes that rule by its name
-  and its number, as `(srera 11 sumti_6 97 ...)`. The name gives the number there too, as it does
-  for the rule that closes a chain. D2 on #859 asks whether the node drops it, and the node keeps it
-  until the Architect rules.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader reads it as a part with the letters `brod`. `brodi`, `brodo` and `brodu` have no short
   rafsi, so a tanru that holds one of them before its last word renders with `brod`. It then
