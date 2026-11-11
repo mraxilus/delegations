@@ -444,11 +444,14 @@ Write each decision so that the Architect can decide it from the block alone.
 
 #### A decision explained
 
-**When the Architect replies `decide` to a sign-off that holds decisions, explain them one at a
-time.** Start with `D1`, and give each decision a message of its own. Wait for its ruling before
-you explain the next one. `decide D2` asks for one decision alone. Where the Architect asks about
-one decision in other words, explain it in the same shape. The block stays short for its three
-readers, and the explanation serves the Architect alone.
+**When the Architect types `/explain` after a sign-off that holds decisions, explain them one at
+a time.** The skill `explain` points at this section. The Architect asks for the reasons and
+rules after them, so the explanation recommends and never rules. Start with `D1`, and give each
+decision a message of its own. Wait for its ruling before you explain the next one.
+`/explain D2` asks for one decision alone.
+
+Where the Architect asks about one decision in other words, explain it in the same shape. The
+block stays short for its three readers, and the explanation serves the Architect alone.
 
 Each explanation has five parts, in this order:
 
