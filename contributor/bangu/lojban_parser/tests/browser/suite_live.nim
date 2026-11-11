@@ -13,6 +13,8 @@
 ##     event loop takes in order of posting.
 ##   Offset of change counts units of UTF-16: text of `zoi` holding rune past U+FFFF, which two
 ##     units spell, reads to NIF native build gives, so `slice` cuts where change opens.
+##   On page whose rule of content refuses each worker, reader that asks for worker gives way to
+##     thread of page, which reads each text to NIF native build gives.
 ##   Suite of promises reports each test as unittest spells it (`report.nim`), since unittest
 ##     awaits none, then code of run.
 
@@ -32,6 +34,8 @@ const
   TEXT_TURNS = "mi klama .i do cadzu .i ko sipna "
     ## Piece of three sentences, which thread of page reads in three turns; constructed.
   COUNT_TURNS = 3  ## Sentences of `TEXT_TURNS`, each its own turn.
+  MODE_REFUSED = "refused"
+    ## Mode of page whose rule of content refuses each worker, as attribute `data-mode` of body.
 
 
 proc pushed(reader: JsObject, piece: cstring): Future[JsObject] {.importjs: "#.push(#)".}
@@ -100,8 +104,10 @@ proc readLive(reader: JsObject, text: string): Future[ReadingLive] {.async.} =
 
 
 proc runSuite() {.async.} =
-  ## Run each test of suite in order, and report each, then code of run.
-  report "[Suite] Internal: Live text of script"
+  ## Run each test of suite in order, and report each, then code of run. Page whose rule refuses
+  ##   each worker runs test of that page alone.
+  report "[Suite] Internal: Live text of script" &
+    (if DOCUMENT.body.dataset.mode.to(cstring) == MODE_REFUSED: ", worker refused" else: "")
   let texts = readTexts()
   var failures = countFailures()
 
@@ -109,6 +115,18 @@ proc runSuite() {.async.} =
     ## Report test as unittest spells it: failed where check failed since last test.
     report "  [" & (if countFailures() > failures: "FAILED" else: "OK") & "] " & name
     failures = countFailures()
+
+  if DOCUMENT.body.dataset.mode.to(cstring) == MODE_REFUSED:
+    for (text, native) in texts:
+      let
+        reader = parseLojbanLive(jsUndefined)  # asks for worker, which page refuses
+        live = await reader.readLive(text)
+      expectThat not reader.isWorker().to(bool), "thread of page reads: " & text  # gives way
+      expectThat live.nif == native, "NIF native build gives: " & text  # `live.nim`, law
+      expectThat live.is_asked, "NIF so far is NIF held and tail: " & text  # D1 c of #859
+    ended "Worker page refuses gives way to thread of page, which reads each text to native NIF"
+    reportEnd(if countFailures() > 0: 1 else: 0)
+    return
 
   for name in ["parseLojban", "parseLojbanToNif", "parseLojbanLive"]:
     expectThat typeOfGlobal(cstring(name)) == "function", name & " is global of page"  # bridge

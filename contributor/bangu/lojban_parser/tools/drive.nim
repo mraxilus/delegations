@@ -50,8 +50,11 @@ const
 
 
 
-proc answerRequest(run: ref RunPage, request: Request, page, root: string) {.async.} =
-  ## Answer one request of page: page at `/`, file of folder by path, or report of page.
+proc answerRequest(
+  run: ref RunPage, request: Request, page, root: string, headers: seq[(string, string)]
+) {.async.} =
+  ## Answer one request of page: page at `/`, with its headers, file of folder by path, or report
+  ##   of page.
   let path = request.url.path
   if request.reqMethod == HttpPost:
     case path
@@ -63,7 +66,9 @@ proc answerRequest(run: ref RunPage, request: Request, page, root: string) {.asy
     await request.respond(Http204, "")
     return
   if path == "/":
-    await request.respond(Http200, page, newHttpHeaders({"Content-Type": TYPES_CONTENT[".html"]}))
+    let fields = newHttpHeaders({"Content-Type": TYPES_CONTENT[".html"]})
+    for (name, value) in headers: fields[name] = value
+    await request.respond(Http200, page, fields)
     return
   let file = root / path.strip(leading = true, trailing = false, chars = {'/'})
   if ".." in path or not file.fileExists:
@@ -73,20 +78,25 @@ proc answerRequest(run: ref RunPage, request: Request, page, root: string) {.asy
   await request.respond(Http200, file.readFile, newHttpHeaders({"Content-Type": kind}))
 
 
-proc serve(server: AsyncHttpServer, run: ref RunPage, page, root: string) {.async.} =
+proc serve(
+  server: AsyncHttpServer, run: ref RunPage, page, root: string, headers: seq[(string, string)]
+) {.async.} =
   ## Answer each request of page as it comes, till page reports its end: accept waits on next
   ##   connection, so no wait of fixed time stands here (IX.12). Accept that waits when run
   ##   closes server fails, and ends serving, since page reported its end, or run passed ceiling.
   while not run.is_done:
     try:
       await server.acceptRequest(proc(request: Request) {.async.} =
-        await run.answerRequest(request, page, root))
+        await run.answerRequest(request, page, root, headers))
     except OSError: return
 
 
-proc runPage*(chromium, page, root: string): RunPage =
-  ## Serve page at `/` and each file under folder `root` by its path, start Chromium on page, and
-  ##   give what page reports once it reports its end, or once ceiling passes.
+proc runPage*(
+  chromium, page, root: string, headers: openArray[(string, string)] = []
+): RunPage =
+  ## Serve page at `/`, with `headers`, and each file under folder `root` by its path, start
+  ##   Chromium on page, and give what page reports once it reports its end, or once ceiling
+  ##   passes.
   let
     run = new RunPage
     server = newAsyncHttpServer()
@@ -102,7 +112,7 @@ proc runPage*(chromium, page, root: string): RunPage =
       options = {poStdErrToStdOut},
     )
     start = now()
-  asyncCheck server.serve(run, page, root)
+  asyncCheck server.serve(run, page, root, @headers)
   while not run.is_done and now() - start < TIMEOUT_PAGE and process.running: poll(20)
   process.terminate()
   discard process.waitForExit()

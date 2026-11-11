@@ -10,6 +10,8 @@
 ##   | runDrive  | build, then run each suite and collector in Chromium; exit 1 on failure   |
 ##   |-----------|---------------------------------------------------------------------------|
 ##
+##   Live suite runs again on page whose rule of content refuses each worker, so reader gives way
+##     to thread of page, as script does where page refuses worker.
 ##   Each suite runs on page of its own, which loads it alone, by its address: each holds bridge,
 ##     as shipped script does, since each script Nim compiles defines its procs as globals, and
 ##     second script on page replaces procs of first that share names. Worker of live suite
@@ -38,7 +40,12 @@ const
   ROOT_SERVED = "build"  ## Folder backend serves, by path of each file under it.
   DIRECTORY_DRIVE = ROOT_SERVED / "drive"  ## Folder of each script and text of suites.
   DIRECTORY_LIVE = DIRECTORY_DRIVE / "live"  ## Folder of texts of live suite, with NIF of each.
-  SUITES = ["suite_script", "suite_live"]  ## Suites of `tests/browser/`, each on page of its own.
+  MODE_REFUSED = "refused"  ## Mode of page whose rule of content refuses each worker.
+  POLICY_REFUSED = ("Content-Security-Policy", "worker-src 'none'")
+    ## Header of page of mode `MODE_REFUSED`, which refuses each worker, as rule of page may.
+  SUITES = [("suite_script", ""), ("suite_live", ""), ("suite_live", MODE_REFUSED)]
+    ## Suite of `tests/browser/`, each on page of its own, with mode page gives it: live suite runs
+    ##   twice, once where page refuses worker.
   PATH_COLLECTOR = "tools" / "drive" / "collector.nim"  ## Collector of what page draws.
   DIRECTORY_FONT_FACES = ROOT_SERVED / "font-faces"
     ## Folder `koch drive` reads; twin of `DIRECTORY_FONT_FACES` of `font_stacks.nim` of curator.
@@ -66,10 +73,10 @@ const
   ]
     ## Constructed texts of live suite, each with word that reaches back.
   SKELETON_PAGE = (
-    "<!doctype html><html><head><meta charset=\"utf-8\"><title>", "</title></head><body>",
-    "</body></html>",
+    "<!doctype html><html><head><meta charset=\"utf-8\"><title>",
+    "</title></head><body data-mode=\"", "\">", "</body></html>",
   )
-    ## Document each suite runs in: opening, then title, then script, then closing.
+    ## Document each suite runs in: opening, then title, then mode, then script, then closing.
 
 
 
@@ -127,12 +134,14 @@ proc findChromium(): string =
   PATH_CHROMIUM_UNPACKED
 
 
-proc runSuite(chromium, name: string): int =
-  ## Run one suite on page of its own, print each line it reports, and give 1 where it failed.
+proc runSuite(chromium, name, mode: string): int =
+  ## Run one suite on page of its own, in mode page gives it as attribute of body, print each line
+  ##   it reports, and give 1 where it failed.
   let
     script = "<script src=\"/drive/" & name & ".js\"></script>"
-    run = chromium.runPage(SKELETON_PAGE[0] & name & SKELETON_PAGE[1] & script &
-      SKELETON_PAGE[2], ROOT_SERVED)
+    headers = (if mode == MODE_REFUSED: @[POLICY_REFUSED] else: @[])
+    run = chromium.runPage(SKELETON_PAGE[0] & name & SKELETON_PAGE[1] & mode &
+      SKELETON_PAGE[2] & script & SKELETON_PAGE[3], ROOT_SERVED, headers)
   for line in run.lines: echo line
   if run.code != 0:
     stderr.writeLine "Suite `" & name & "` should pass in Chromium; got code `" & $run.code & "`."
@@ -168,7 +177,8 @@ proc runDrive*(): int =
   ## Build script, suites and collector, write texts of live suite, then run each suite and
   ##   collector in Chromium; give 1 where any build, suite or collector failed.
   if compileJs(PATH_BRIDGE, PATH_SCRIPT) != 0: return 1
-  for name in SUITES:
+  for (name, mode) in SUITES:
+    if mode.len > 0: continue  # suite run in other mode compiles once
     if compileJs("tests" / "browser" / name & ".nim", DIRECTORY_DRIVE / name & ".js",
         ["testing"]) != 0:
       return 1
@@ -176,5 +186,5 @@ proc runDrive*(): int =
   writeTextsLive()
   let chromium = findChromium()
   if chromium.len == 0: return 1
-  for name in SUITES: result = max(result, chromium.runSuite(name))
+  for (name, mode) in SUITES: result = max(result, chromium.runSuite(name, mode))
   result = max(result, chromium.collectControl)

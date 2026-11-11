@@ -59,6 +59,11 @@ proc readServed*(path: string): string =
   $request.responseText.to(cstring)
 
 
+method suiteStarted*(formatter: ReporterPage, suite_name: string) =
+  ## Report opening of suite, as console of unittest spells it.
+  report "[Suite] " & suite_name
+
+
 method testEnded*(formatter: ReporterPage, result: TestResult) =
   ## Report outcome of one test, as console of unittest spells it, and count it where it failed:
   ##   unittest sets no exit code on JS backend with no node, so failures give code of run.
