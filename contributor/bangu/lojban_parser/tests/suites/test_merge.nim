@@ -82,26 +82,26 @@ const
   EXAMPLES_MERGED = [
     (
       text: "ti gerku si mlatu",  # `si` erases `gerku` (19.13)
-      nif: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"ti\")) " &
-        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 12 17 \"mlatu\")) (tail_terms 71)))",
+      nif: "(sentence 0 (sumti_6 80 (KOhA 0 2 \"ti\")) " &
+        "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 12 17 \"mlatu\")) (tail_terms)))",
     ),
     (
       text: "mi su do .i ko",  # `su` ends text before it (19.13)
-      nif: "(paragraph 0 10 (sumti_6 20 97 (KOhA 6 8 \"do\")) (I 10 11 \"i\") " &
-        "(sumti_6 20 97 (KOhA 12 14 \"ko\")))",
+      nif: "(paragraph 0 (sumti_6 20 (KOhA 6 8 \"do\")) (I 10 11 \"i\") " &
+        "(sumti_6 20 (KOhA 12 14 \"ko\")))",
     ),
     (
       text: "mi klama fa'o xu",  # `fa'o` ends input (19.15)
-      nif: "(sentence 0 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) " &
-        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71)))",
+      nif: "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) " &
+        "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3 8 \"klama\")) (tail_terms)))",
     ),
     (
       text: "mi klama .i x .i ko sipna",  # stream refuses `x`, which stands in its paragraph
-      nif: "(paragraph 0 10 (sentence 11 40 (sumti_6 80 97 (KOhA 0 2 \"mi\")) " &
-        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 3 8 \"klama\")) (tail_terms 71))) " &
+      nif: "(paragraph 0 (sentence 11 (sumti_6 80 (KOhA 0 2 \"mi\")) " &
+        "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3 8 \"klama\")) (tail_terms))) " &
         "(I 10 11 \"i\") (rivbi Stream Shape 12 13 \"x\") (I 15 16 \"i\") " &
-        "(sentence 11 40 (sumti_6 80 97 (KOhA 17 19 \"ko\")) " &
-        "(bridi_tail_3 50 53 (tanru_unit_2 130 152 (BRIVLA 20 25 \"sipna\")) (tail_terms 71))))",
+        "(sentence 11 (sumti_6 80 (KOhA 17 19 \"ko\")) " &
+        "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 20 25 \"sipna\")) (tail_terms))))",
     ),
   ]
     ## Constructed texts, and tree their parts merge to, byte for byte, as one pass gives it.
@@ -112,7 +112,7 @@ const
       # `si` erasing nothing reads before `su` erases (19.13)
     (text: "lo'u su ko", count: 2, held: @[(0, "(rivbi Quotation 0 4 \"lohu\")")]),
       # `lo'u` no `le'u` closes quotes `su` (19.9)
-    (text: "mi su si do", count: 1, held: @[(0, "(text 0 (rivbi Construct 6 8 \"si\") (sumti_6 ")]),
+    (text: "mi su si do", count: 1, held: @[(0, "(text (rivbi Construct 6 8 \"si\") (sumti_6 ")]),
       # `si` erasing nothing past last `su` stands in run, before first unit read
     (text: "mi klama .i le", count: 2, held: @[(1, "(srera 14 sumti_6 97 ")]),
       # `le` waits for sumti past end of text, so its part stays
@@ -140,8 +140,8 @@ const
     (
       text: "tu'e to nai .i zo sa'a .i zoi bu", is_read: false, count: 1,
       held: @[(
-        0, "(text 0 (statement_3 2 14 (TUhE 0 4 \"tuhe\") (free 32 (TO 5 7 \"to\") " &
-          "(text 0 (NAI 8 11 \"nai\") (text_1 2)))",
+        0, "(text (statement_3 2 (TUhE 0 4 \"tuhe\") (free (TO 5 7 \"to\") " &
+          "(text (NAI 8 11 \"nai\") (text_1)))",
       )],
     ),  # parts join as other reading, `toi` left out after `nai`
   ]
@@ -150,14 +150,16 @@ const
     ##   with whether one pass reads it, and nodes merge of its live parts gives, as above.
   MODULES_MALFORMED = [
     ("", "should open with directives", -1),  # no directive
-    (HEADER & "(sentence 0 40", "NIF should hold", -1),  # node never closed
+    (HEADER & "(sentence 0", "NIF should hold", -1),  # node never closed
     (HEADER & "(FOO 0 2 \"mi\")\n", "should name selma'o", 0),  # class that names no selma'o
-    (HEADER & "(sumti_6 1 2 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),  # no chain of 21.1
-    (HEADER & "(sumti_6 (KOhA 0 2 \"mi\"))\n", "number of rule", 0),  # rule with no number
+    (HEADER & "(sumti_6 1 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),  # no chain of 21.1
+    (HEADER & "(sumti_6 80 97 (KOhA 0 2 \"mi\"))\n", "number of rule opening", 0),
+      # number of rule closing chain, which its name gives (ruling `D1 a` on #859)
+    (HEADER & "(sumti_9 (KOhA 0 2 \"mi\"))\n", "name of rule of 21.1", 0),  # name no rule holds
     (HEADER & "(KOhA 0 \"mi\")\n", "bytes and letters", 0),  # word with no byte past it
     (HEADER & "(srera 0 sumti_6)\n", "byte, rule, number", 0),  # error node with no rule number
     (
-      HEADER & "(sumti_6 0 97 (LI 0 4 \"meho\") (number 310 812 (PA 5 7 \"vo\")))\n" &
+      HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
         "(FOO 8 10 \"do\")\n",
       "should name selma'o", 1,
     ),  # second node names no selma'o

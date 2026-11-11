@@ -25,7 +25,7 @@ const
     rule: "in sumti-6 97",
   )
     ## Text whose grammar stops at `.i`, byte 13, inside `sumti-6` 97, and what its box says.
-  MODULE_REFUSED = HEADER & "(sumti_6 0 97 (LI 0 4 \"meho\") (number 310 812 (PA 5 7 \"vo\")))\n" &
+  MODULE_REFUSED = HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
     "(FOO 8 10 \"do\")\n"
     ## Module whose second node names no selma'o, so merge refuses it and names that node.
 
@@ -165,6 +165,16 @@ suite "Internal: Drawing of live text":
             value = svg[opening ..< svg.find('"', opening)]
           check value.allCharsInSet(Digits + {' ', ',', '-'})
           at = svg.find(attribute, opening)
+
+  test "Box names rule as its tag gives it, then outermost rule of chain, its number and count":
+    var lines: seq[seq[string]]
+    for node in readTextParts("mi klama").reading.toNifParts.readModule:
+      if node.kind != KindNif.Compound or node.text.startsWith("."): continue
+      for place in node.laidOut.places:
+        if place.kind == KindPlace.Rule: lines.add place.lines
+    check @["sumti-6", "… terms 80 (11)"] in lines  # header of `draw.nim`, ruling `D1 a` on #859
+    check @["sentence", "… text 0 (9)"] in lines  # chain from `text` 0, nine rules
+
 
   test "Error node draws box at byte grammar stops, naming its rule and what it needs":
     let

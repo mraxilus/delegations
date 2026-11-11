@@ -17,8 +17,9 @@
 ##     height over cards, so two boxes of one row hold disjoint words, and their centres stand
 ##     one column apart at least.
 ##   Box stands for node of NIF: chain of rules, each holding next alone, names rule nearest
-##     words, then outermost rule and count of chain (`LUT_CHAIN_BY_ENDS`), as node gives both
-##     ends. Rule that holds no word draws no box, since no column places it.
+##     words, as its tag gives it, then outermost rule, its number, and count of chain
+##     (`LUT_CHAIN_BY_ENDS`), as node gives number of rule opening chain. Rule that holds no word
+##     draws no box, since no column places it.
 ##   Error node (`srera`) is box of class `err`: byte where grammar stops, and rule stopping
 ##     there; title of box names each terminal grammar reads there (`nitcu`). Error node that
 ##     holds no word is card of its own at its byte.
@@ -181,15 +182,14 @@ func span(node: NodeNif): string =
 
 
 func labelRule(node: NodeNif): tuple[inner, outer: string] =
-  ## Name rule nearest words, then outermost rule and count of chain, where node is chain.
-  var numbers: seq[int]
-  for child in node.children:
-    if child.kind == KindNif.Number: numbers.add child.number
-    else: break
-  let inner = node.text.spoken & (if numbers.len > 0: " " & $numbers[^1] else: "")
-  if numbers.len < 2: return (inner, "")
-  let key = (numbers[0], numbers[1])
-  if key notin LUT_CHAIN_BY_ENDS: return (inner, "… " & $numbers[0])
+  ## Name rule nearest words, then outermost rule and count of chain, where node is chain: node
+  ##   gives number of rule opening it, and name of rule closing it gives that rule's number.
+  let inner = node.text.spoken
+  if node.children.len == 0 or node.children[0].kind != KindNif.Number: return (inner, "")
+  let top = node.children[0].number
+  if inner notin LUT_NUMBER_BY_RULE: return (inner, "… " & $top)
+  let key = (top, LUT_NUMBER_BY_RULE[inner])
+  if key notin LUT_CHAIN_BY_ENDS: return (inner, "… " & $top)
   let chain = LUT_CHAIN_BY_ENDS[key]
   (inner, "… " & chain[0].rule & " " & $chain[0].number & " (" & $chain.len & ")")
 

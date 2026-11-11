@@ -13,10 +13,11 @@
 ##
 ##   Parts: each node of module past its directives, as `toNifParts` writes them, and as live
 ##     text gives them once each part goes out (`live.nim`).
-##   Rebuild: each rule between two ends of chain from `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag,
-##     `'` for `h` of word, save text `zoi` quotes and written word stream refuses; error node
-##     takes byte grammar stops at as its place (`nif.nim`). Node of shape writer gives not
-##     raises `ValueError`, and merge refuses its module, naming node.
+##   Rebuild: number of each named rule from its name (`LUT_NUMBER_BY_RULE`), each rule between
+##     two ends of chain from `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag, `'` for `h` of word, save
+##     text `zoi` quotes and written word stream refuses; error node takes byte grammar stops at
+##     as its place (`nif.nim`). Node of shape writer gives not raises `ValueError`, and merge
+##     refuses its module, naming node.
 ##   Drop, as one pass reads text (19.13, 19.15): each unit of stage `Erasure`, wherever it
 ##     stands; `fa'o` that ends input, and each written word after it; each node of root up to
 ##     last `su`, which stands in root alone. Unit there that one pass refuses text for stays,
@@ -81,11 +82,12 @@ func toTerminal*(name: string): Terminal =
 
 
 func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
-  ## Rebuild node of tree from node of NIF: each chain from its two ends by `LUT_CHAIN_BY_ENDS`,
-  ##   `-` for each `_` of tag; terminal adds class and words to `terminals`, `'` for each `h` of
-  ##   word, and third string of `ZOI` as it is. Error node takes byte grammar stops at as its
-  ##   place; unit `rivbi` adds `rivbi` and its identifiers, and keeps letters of stage
-  ##   `Stream` as they are. `ValueError` where node holds no shape `nif.nim` writes.
+  ## Rebuild node of tree from node of NIF: number of named rule from its name, and each chain
+  ##   from its two ends by `LUT_CHAIN_BY_ENDS`, number of rule opening it and name of rule
+  ##   closing it, `-` for each `_` of tag; terminal adds class and words to `terminals`, `'`
+  ##   for each `h` of word, and third string of `ZOI` as it is. Error node takes byte grammar
+  ##   stops at as its place; unit `rivbi` adds `rivbi` and its identifiers, and keeps letters
+  ##   of stage `Stream` as they are. `ValueError` where node holds no shape `nif.nim` writes.
   template refuse(shape: string) =
     raise newException(ValueError, "Node `" & node.text & "` of NIF should hold " & shape & ".")
 
@@ -131,15 +133,15 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
     )
     for k in 4 ..< node.children.len: result.children.add node.children[k].toTree(terminals)
     return
+  let rule = node.text.replace('_', '-')
+  if rule notin LUT_NUMBER_BY_RULE: refuse("name of rule of 21.1")
   var count = 0
   while count < node.children.len and node.children[count].kind == KindNif.Number: inc count
-  if count < 1 or count > 2: refuse("number of rule, or two ends of chain")
-  result = Node(
-    is_terminal: false, rule: node.text.replace('_', '-'), number: node.children[count - 1].number
-  )
+  if count > 1: refuse("at most number of rule opening its chain")
+  result = Node(is_terminal: false, rule: rule, number: LUT_NUMBER_BY_RULE[rule])
   for k in count ..< node.children.len: result.children.add node.children[k].toTree(terminals)
-  if count == 2:
-    let ends = (node.children[0].number, node.children[1].number)
+  if count == 1:
+    let ends = (node.children[0].number, result.number)
     if ends notin LUT_CHAIN_BY_ENDS: refuse("two ends of chain of 21.1")
     let chain = LUT_CHAIN_BY_ENDS[ends]
     for k in countdown(chain.len - 2, 0):

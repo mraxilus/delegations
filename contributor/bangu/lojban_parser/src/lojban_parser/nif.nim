@@ -11,11 +11,13 @@
 ##
 ##   Module opens with directive `(.nif27)`, with no byte before it, then `(.lang "cll-21.1")`:
 ##     tags are names of rules of 21.1 and classes of terminals, as grammar spells them.
-##   Named rule is compound node: tag is its name, then its number in 21.1, then nodes it holds.
-##   Chain of rules, each holding next alone, is one node: number of rule opening it, then tag and
-##     number of rule closing it, as `(sumti_6 80 97 ...)` from `terms` 80 down to `sumti-6` 97.
-##     Two ends give one chain in 21.1 (`LUT_CHAIN_BY_ENDS`), so reader rebuilds each rule between
-##     them, and tree reads back whole.
+##   Named rule is compound node: tag is its name, then nodes it holds. Its number in 21.1 is no
+##     node, since its name gives it (`LUT_NUMBER_BY_RULE`, ruling `D1 a` on #859): copy of it
+##     would let node name two rules.
+##   Chain of rules, each holding next alone, is one node: tag of rule closing it, then number of
+##     rule opening it, as `(sumti_6 80 ...)` from `terms` 80 down to `sumti-6` 97. Two ends give
+##     one chain in 21.1 (`LUT_CHAIN_BY_ENDS`), so reader rebuilds each rule between them, and
+##     tree reads back whole. Node that writes no number opens no chain, as `(tail_terms)`.
 ##   Terminal is compound node: tag is its class, as `KOhA` or `BRIVLA`; then, for each word, byte
 ##     where it opens, byte past its last letter, and its letters as string literal, as
 ##     `(BU 15 17 "ta" 18 20 "bu")`. So each word ties to bytes of text it reads from. Order of
@@ -231,7 +233,7 @@ func addRule(
     text: var string, node: Node, top: int, reading: ReadingText | ReadingMarked | LeavesNif
 ) =
   ## Add named rule to text: rule holding rule alone passes on to it, as chain opening at `top`;
-  ##   rule closing chain writes its tag, `top` where chain stands, its number, then its nodes.
+  ##   rule closing chain writes its tag, then `top` where chain opens above it, then its nodes.
   ##   Error node closes chain above it, and writes tag `srera`, byte where grammar stops, tag
   ##     and number of rule stopping there, and `nitcu` with terminals read there.
   let is_chain = node.stop.isNone and node.children.len == 1 and
@@ -249,11 +251,12 @@ func addRule(
     else:
       doAssert false, "Reading that reads should hold no error node."
   text.add node.rule.tag
-  if top != node.number:
+  if node.stop.isSome:  # error node keeps number of its rule
+    text.add ' '
+    text.add $node.number
+  elif top != node.number:
     text.add ' '
     text.add $top
-  text.add ' '
-  text.add $node.number
   if node.stop.isSome:
     text.add " ("
     text.add TAG_EXPECTS
