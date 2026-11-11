@@ -38,8 +38,10 @@
 ##       choice follows examples of CLL; parser reading left to right that prefers to read
 ##       terminal over closing rule, as YACC does, chooses same tree.
 ##     Cost: Earley reads in cube of number of terminals at worst, and choice of tree compares
-##       closures over each span it holds; sentences are short. Text has no bound on its length,
-##       so parser holds `seq` and `Table` at runtime, as `stream` does (STYLE.md §4).
+##       closures over each span it holds. So text reads part by part, cut at `ni'o` and `.i`
+##       (`readGrammar`), and time grows with length of text where no `lu` or `to` stays open
+##       (#849). Text has no bound on its length, so parser holds `seq` and `Table` at runtime,
+##       as `stream` does (STYLE.md §4).
 ##   Refusal names place where every derivation stops, and named rule that stops innermost there.
 ##   Chain is run of named rules in tree, each holding next rule alone, as `sumti` holds `sumti-1`
 ##     where text gives no relative clause; layers of 21.1 make most of each tree such runs.
@@ -763,9 +765,9 @@ func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
   addChildren(nodes[^1].children)
 
 
-func readGrammar*(terminals: openArray[Terminal]): ReadingGrammar =
-  ## Read terminals of text by grammar of 21.1, into tree of its named rules; refuse at place
-  ##   where every derivation stops.
+func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
+  ## Read terminals of text by grammar of 21.1 in one pass, into tree of its named rules; refuse
+  ##   at place where every derivation stops.
   let sets = terminals.fillSets
   var is_whole = false
   for item in sets[^1]:
@@ -781,3 +783,221 @@ func readGrammar*(terminals: openArray[Terminal]): ReadingGrammar =
       "Text grammar reads should derive tree."
   chart.addNodes(GRAMMAR_EBNF.start, 0, terminals.len, nodes)
   ReadingGrammar(is_read: true, tree: nodes.pop)  # rule 0 is named, so one node
+
+
+
+#[ Passes ]#
+
+const
+  OPENERS = [Selmaho.Tuhe, Selmaho.Lu, Selmaho.To]
+    ## Selma'o opening text inside text: statement-3, sumti-6 and free (rules 14, 97, 32).
+  CLOSERS = [Selmaho.Tuhu, Selmaho.Lihu, Selmaho.Toi]  ## Terminator of each opener, in its order.
+  JOINS = {Selmaho.Ja, Selmaho.Joi, Selmaho.Bihi, Selmaho.Gaho, Selmaho.Bo}
+    ## Selma'o after `I`, past NA and SE, that joins statements: jek, joik or BO (rules 12, 13).
+  TAGS = {
+    Selmaho.Nahe, Selmaho.Se, Selmaho.Bai, Selmaho.Nai, Selmaho.Ki, Selmaho.Cuhe, Selmaho.Zi,
+    Selmaho.Pu, Selmaho.Zeha, Selmaho.Va, Selmaho.Faha, Selmaho.Mohi, Selmaho.Veha, Selmaho.Viha,
+    Selmaho.Fehe, Selmaho.Tahe, Selmaho.Roi, Selmaho.Zaho, Selmaho.Caha, Selmaho.Pa, Selmaho.Na,
+    Selmaho.Ja, Selmaho.Joi,
+  }
+    ## Selma'o of tag before BO of statement-2 (rule 13, stag); run of them up to BO joins.
+  RULE_TEXT_1 = ("text-1", 2)  ## Name and number of rule holding paragraphs of text.
+  RULE_PARAGRAPHS = ("paragraphs", 4)
+  RULE_PARAGRAPH = ("paragraph", 10)
+  RULE_STATEMENT_3 = ("statement-3", 14)
+  RULE_FREE = ("free", 32)
+
+
+type Split = tuple[parts: seq[Slice[int]], inner: int]
+  ## Define parts of text that each read alone, and start of text of `tu'e` left open, else end.
+
+
+func isAmong(terminal: Terminal, selmaho: set[Selmaho]): bool =
+  ## Test terminal is cmavo of one of `selmaho`.
+  int(terminal) <= ord(Selmaho.high) and Selmaho(int(terminal)) in selmaho
+
+
+func isRule(node: Node, rule: (string, int)): bool =
+  ## Test node is named rule `rule`, by name and number.
+  not node.is_terminal and node.rule == rule[0] and node.number == rule[1]
+
+
+func isJoining(terminals: openArray[Terminal], at: int): bool =
+  ## Test `I` at `at` joins statements: jek or joik after it, past NA and SE, or run of tag
+  ##   ending at BO (rules 12, 13); such `I` holds no paragraph of its own.
+  var k = at + 1
+  while k < terminals.len and terminals[k].isAmong({Selmaho.Na, Selmaho.Se}): inc k
+  if k < terminals.len and terminals[k].isAmong(JOINS): return true
+  k = at + 1
+  while k < terminals.len and terminals[k].isAmong(TAGS): inc k
+  k > at + 1 and k < terminals.len and terminals[k] == Selmaho.Bo.toTerminal
+
+
+func toParts(terminals: openArray[Terminal], first, last: int): Option[Split] =
+  ## Split terminals `first ..< last` into parts that each read alone: cut before `NIhO` that
+  ##   follows none, and before `I` that joins nothing, where no opener is open.
+  ##   `inner` opens text of `tu'e` that no `tu'u` closes, which runs to `last`; else it is
+  ##     `last`. None where `lu` or `to` stays open, since later word decides where it closes.
+  var
+    starts = @[first]
+    opened: seq[tuple[selmaho: Selmaho, at: int]]  # each opener open, innermost last
+  for i in first ..< last:
+    let terminal = terminals[i]
+    if terminal.isAmong({OPENERS[0], OPENERS[1], OPENERS[2]}):
+      opened.add (Selmaho(int(terminal)), i)
+    elif terminal.isAmong({CLOSERS[0], CLOSERS[1], CLOSERS[2]}):
+      let opener = OPENERS[CLOSERS.find(Selmaho(int(terminal)))]
+      var k = opened.high
+      while k >= 0 and opened[k].selmaho != opener: dec k
+      if k >= 0: opened.setLen(k)  # closer closes each opener inside its own too
+    elif opened.len == 0 and i > starts[^1]:
+      let
+        is_paragraph = terminal == Selmaho.Niho.toTerminal and
+          terminals[i - 1] != Selmaho.Niho.toTerminal
+        is_group = terminal == Selmaho.I.toTerminal and not terminals.isJoining(i)
+      if is_paragraph or is_group: starts.add i
+  if opened.anyIt(it.selmaho != Selmaho.Tuhe): return none(Split)
+  let inner = (if opened.len > 0: opened[0].at + 1 else: last)
+  var parts: seq[Slice[int]]
+  for k, start in starts:
+    parts.add start .. (if k < starts.high: starts[k + 1] else: inner) - 1
+  some((parts, inner))
+
+
+func shift(node: var Node, by: int) =
+  ## Move index of each terminal of tree by `by`: part read alone counts from its own start.
+  if node.is_terminal: node.at += by
+  else:
+    for child in node.children.mitems: child.shift(by)
+
+
+func readPart(terminals: openArray[Terminal], part: Slice[int]): Option[Node] =
+  ## Read terminals of part alone, as text, into tree whose indexes count from start of text.
+  var reading = terminals.toOpenArray(part.a, part.b).readWhole
+  if not reading.is_read: return none(Node)
+  var tree = move(reading.tree)
+  tree.shift(part.a)
+  some(tree)
+
+
+func isGroup(nodes: openArray[Node], terminals: openArray[Terminal], head: Selmaho): bool =
+  ## Test nodes are terminals of `head`, then free modifiers alone: `I #` of rule 10, or
+  ##   `NIhO ... #` of rule 4. Jek, joik, tag or BO there means statements join instead.
+  var k = 0
+  while k < nodes.len and nodes[k].is_terminal and terminals[nodes[k].at] == head.toTerminal: inc k
+  k > 0 and nodes.toOpenArray(k, nodes.high).allIt(it.isRule(RULE_FREE))
+
+
+func graftInner(node: var Node, at: int, inner: var Node): bool =
+  ## Put text-1 `inner` into statement-3 whose `tu'e` stands at `at`, down last child of each
+  ##   node, where text alone read empty text-1 after that `tu'e`.
+  if node.is_terminal: return false
+  if node.isRule(RULE_STATEMENT_3) and node.children.anyIt(it.is_terminal and it.at == at):
+    if not node.children[^1].isRule(RULE_TEXT_1) or node.children[^1].children.len > 0:
+      return false
+    node.children[^1] = move(inner)
+    return true
+  node.children.len > 0 and node.children[^1].graftInner(at, inner)
+
+
+func toNode(rule: (string, int), children: sink seq[Node]): Node =
+  ## Make node of named rule holding `children`.
+  Node(is_terminal: false, rule: rule[0], number: rule[1], children: children)
+
+
+func buildText(terminals: openArray[Terminal], first, last: int): Option[Node] =
+  ## Read text of terminals `first ..< last` part by part, and build tree one pass gives around
+  ##   their nodes: `text 0`, `text-1 2`, `paragraphs 4` and `paragraph 10` (rules 0 to 10).
+  ##   Part holds nodes of one rule each: tree of choice is fixed for span and rule, and closures
+  ##     of rules around part fall at its ends alike. Law holds this against one pass.
+  ##   None where part refuses, where rule of passes breaks, or where `lu` or `to` stays open;
+  ##     one pass then reads whole text, and gives each refusal.
+  let split = terminals.toParts(first, last)
+  if split.isNone: return none(Node)
+  var trees: seq[Node]
+  for part in split.get.parts:
+    let tree = terminals.readPart(part)
+    if tree.isNone: return none(Node)
+    trees.add tree.get  # copy, since `move` of `get` is no lvalue on JavaScript
+
+  # First part gives `text 0` and nodes of `text-1` before its paragraphs; each paragraph is
+  #   group of `NIhO` before it, and nodes of `paragraph` (rules 2, 4).
+  var
+    text = move(trees[0])
+    text_1 = text.children.pop  # rule 0 ends in text-1
+    paragraphs: seq[tuple[group, nodes: seq[Node]]]
+  if text_1.children.len > 0 and text_1.children[^1].isRule(RULE_PARAGRAPHS):
+    var first_paragraphs = text_1.children.pop
+    if first_paragraphs.children.len != 1: return none(Node)
+    paragraphs.add (newSeq[Node](), move(first_paragraphs.children[0].children))
+  for k in 1 ..< trees.len:
+    if trees[k].children.len != 1 or not trees[k].children[0].isRule(RULE_TEXT_1):
+      return none(Node)  # part opens with what only text opens with
+    var
+      part = move(trees[k].children[0])
+      nodes: seq[Node]
+      has_paragraph = false
+    if part.children.len > 0 and part.children[^1].isRule(RULE_PARAGRAPHS):
+      var part_paragraphs = part.children.pop
+      if part_paragraphs.children.len != 1: return none(Node)
+      nodes = move(part_paragraphs.children[0].children)
+      has_paragraph = true
+    let head = terminals[part.children[0].at]
+    if head == Selmaho.I.toTerminal:
+      if not part.children.isGroup(terminals, Selmaho.I): return none(Node)
+      if paragraphs.len == 0:
+        if text_1.children.anyIt(it.is_terminal and terminals[it.at] == Selmaho.Niho.toTerminal):
+          return none(Node)  # rule 2 opens with `I` or with `NIhO`, never both
+        for node in part.children.mitems: text_1.children.add move(node)
+        if has_paragraph: paragraphs.add (newSeq[Node](), move(nodes))
+      else:
+        for node in part.children.mitems: paragraphs[^1].nodes.add move(node)
+        for node in nodes.mitems: paragraphs[^1].nodes.add move(node)
+    elif head == Selmaho.Niho.toTerminal:
+      if not part.children.isGroup(terminals, Selmaho.Niho): return none(Node)
+      if paragraphs.len == 0:
+        if text_1.children.len > 0: return none(Node)  # rule 2 opens with one group
+        for node in part.children.mitems: text_1.children.add move(node)
+        if has_paragraph: paragraphs.add (newSeq[Node](), move(nodes))
+      else:
+        if not has_paragraph: return none(Node)  # rule 4 holds paragraph after `NIhO`
+        paragraphs.add (move(part.children), move(nodes))
+    else:
+      return none(Node)
+
+  # Text of `tu'e` left open runs to end: read it part by part too, and put it in place.
+  if split.get.inner < last:
+    var inner = terminals.buildText(split.get.inner, last)
+    if inner.isNone or paragraphs.len == 0: return none(Node)
+    if inner.get.children.len != 1 or not inner.get.children[0].isRule(RULE_TEXT_1):
+      return none(Node)  # text of `tu'e` is text-1, which opens with no prefix of text
+    var inner_text_1 = move(inner.get.children[0])
+    if paragraphs[^1].nodes.len == 0: return none(Node)
+    if not paragraphs[^1].nodes[^1].graftInner(split.get.inner - 1, inner_text_1):
+      return none(Node)
+
+  # Nest paragraphs from last, each holding group of next and rest after it (rule 4).
+  var rest: seq[Node]
+  for k in countdown(paragraphs.high, 0):
+    var children = @[RULE_PARAGRAPH.toNode(move(paragraphs[k].nodes))]
+    if rest.len > 0:
+      for node in paragraphs[k + 1].group.mitems: children.add move(node)
+      children.add rest.pop
+    rest.add RULE_PARAGRAPHS.toNode(children)
+  if rest.len > 0: text_1.children.add rest.pop
+  text.children.add text_1
+  some(text)
+
+
+func readGrammar*(terminals: openArray[Terminal]): ReadingGrammar =
+  ## Read terminals of text by grammar of 21.1, into tree of its named rules; refuse at place
+  ##   where every derivation stops.
+  ##   Reads text part by part, so time grows with length of text alone (#849). One pass over
+  ##     whole text reads where passes cannot, and gives each refusal.
+  ##   Text of one part reads in one pass at once, as passes would only read it so and build
+  ##     its tree again; where it refuses, passes would read it twice.
+  let split = terminals.toParts(0, terminals.len)
+  if split.isSome and (split.get.parts.len > 1 or split.get.inner < terminals.len):
+    let built = terminals.buildText(0, terminals.len)
+    if built.isSome: return ReadingGrammar(is_read: true, tree: built.get)
+  terminals.readWhole

@@ -8,6 +8,8 @@
 ##   `test_corpus.nim` reads every example of CLL 1.1 from extract under notice of CLL; suite
 ##     here holds trees of examples it quotes. `test_prose.nim` holds quotation, erasure, `zei`
 ##     and `bu`, which act before grammar.
+##   Law of passes holds `readGrammar`, which reads text part by part, to one pass over whole
+##     text, `readWhole`: over each text of corpora that cuts, and over article joined (#849).
 
 {.experimental: "strictFuncs".}
 
@@ -16,7 +18,10 @@ when compileOption("profiler"):
 
 import std/[options, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[grammar, selmaho, stream]
+import ../../src/lojban_parser/[grammar {.all.}, prose, selmaho, stream]
+import ../articles_wikipedia/articles
+import ../cll/examples
+import ../sample_tatoeba/sentences
 
 
 type
@@ -99,6 +104,33 @@ const
     Example(section: "5.16", number: "5.171", text: "melbi je ke cmalu je nixli je ckule [ke'e]"),
   ]
     ## Examples of each section of CLL chapter 5, version 1.1, rows of one sentence joined.
+  TEXTS_PASSES = [
+    "mi klama .i do cadzu .ije do bajra ni'o la .alis. cusku lu mi citka .i do pinxe li'u",
+    "mi klama .i tu'e do klama .i mi cadzu ni'o do cadzu",
+    "lu do klama .i mi klama cu xamgu .i do cadzu",
+    "mi to do klama .i do cadzu cu klama .i mi klama",
+    ".i .i mi klama", "ni'o mi klama .i do klama", "mi klama ni'o", ".i ni'o mi klama",
+    "mi klama .i", "ni'o ni'o mi klama ni'o ni'o do klama", "mi klama .ibabo do klama",
+    "mi klama .i ba bo do klama", "mi klama .i ba do klama", "mi klama .i na je do klama",
+    "ro da zo'u da klama .ije da cadzu .i da bajra", "tu'e mi klama .i do klama tu'u .i mi cadzu",
+    "tu'e doi djan mi klama .i do klama", "ba tu'e mi klama .i do cadzu",
+    "mi klama .i doi djan do cadzu", "mi klama ni'o doi djan do cadzu",
+    "mi klama .i do cadzu ni'o ni'o mi bajra .i",
+    "mi klama .i tu'e do klama .i tu'e mi cadzu .i do bajra",
+    "mi klama .i tu'e do klama .i lu mi cadzu", "mi klama .i tu'e ni'o do klama .i mi cadzu",
+    "mi klama .i .i do klama", "ni'o .i mi klama", "mi klama .i je", "mi klama .ije .i do klama",
+    "mi klama .i pu ba bo do klama", "mi klama .i pu mi klama .i ba do klama",
+    ".ije mi klama .i do klama", "mi klama .i tu'e .i do klama .i mi cadzu", "mi klama .i tu'e .i",
+    "le .i mi klama", "mi klama le .i do klama",
+  ]
+    ## Texts holding each place where passes cut or read whole: `.i` alone and `.i` that joins,
+    ##   `ni'o`, and `tu'e`, `lu` and `to` open or closed; constructed.
+  CUTTING = {Selmaho.I, Selmaho.Niho, Selmaho.Tuhe, Selmaho.Lu, Selmaho.To}
+    ## Selma'o where passes cut, or that opens text inside text; text holding none is one part.
+  COUNT_PASSES_LEAST = 300
+    ## Floor of texts law of passes reads: texts of corpora holding one of `CUTTING`, texts
+    ##   here, and text of article joined (IX.3).
+  COUNT_PARTS_JOINED = 64  ## Parts passes cut text of article joined into.
 
 
 
@@ -125,6 +157,55 @@ func treeRead(text: string): Option[Node] =
   ## Read text by grammar, and give its tree; none where grammar refuses it.
   let reading = text.readingRead
   if reading.is_read: some(reading.tree) else: none(Node)
+
+
+func terminalsStream(text: string): Option[seq[Terminal]] =
+  ## Give each word of stream of text as terminal; none where stream refuses or word holds no
+  ##   terminal.
+  let stream = text.readStream
+  if not stream.is_read: return none(seq[Terminal])
+  var terminals: seq[Terminal]
+  for occurrence in stream.occurrences:
+    let terminal = occurrence.reading.toTerminal
+    if terminal.isNone: return none(seq[Terminal])
+    terminals.add terminal.get
+  some(terminals)
+
+
+func terminalsRead(text: string): Option[seq[Terminal]] =
+  ## Give terminals of text as prose holds them where text reads; else each word of stream.
+  let reading = text.readText
+  if reading.is_read: some(reading.units.mapIt(it.terminal)) else: text.terminalsStream
+
+
+func partsRead(text: string): Option[seq[Slice[int]]] =
+  ## Read terminals of text, and give each part passes cut; none where passes read whole.
+  let
+    terminals = text.terminalsRead.get
+    split = terminals.toParts(0, terminals.len)
+  if split.isNone: none(seq[Slice[int]]) else: some(split.get.parts)
+
+
+func isCutting(text: string): bool =
+  ## Test stream of text holds word of `CUTTING`, read by its form alone, before any grammar.
+  let stream = text.readStream
+  stream.is_read and stream.occurrences.anyIt(
+    it.reading.toTerminal.isSome and it.reading.toTerminal.get.isAmong(CUTTING)
+  )
+
+
+func textJoined(): string =
+  ## Join each paragraph of article `lo jbobau` that reads after `ni'o`, mark of paragraph or
+  ##   sentence opening it left out, with `ni'o`. Its paragraph 23 ends in `tu'e`, and its
+  ##   paragraph 29, `tu'u` alone, reads no text, so `tu'e` stays open to end.
+  var paragraphs: seq[string]
+  for paragraph in PARAGRAPHS_WIKIPEDIA:
+    if paragraph.article != "lo jbobau" or paragraph.verdict.len > 0: continue
+    var text = paragraph.text
+    for mark in ["ni'o ", ".i ", "i "]:
+      if text.startsWith(mark): text = text[mark.len .. ^1]
+    if ("ni'o " & text).readText.is_read: paragraphs.add text
+  paragraphs.join(" ni'o ")
 
 
 func refusalRead(text: string): Option[(int, string)] =
@@ -159,6 +240,29 @@ func shape(node: Node, words: openArray[string], dropped: openArray[int]): strin
   if node.is_terminal: return (if node.at in dropped: "" else: words[node.at])
   let parts = node.children.mapIt(it.shape(words, dropped)).filterIt(it.len > 0)
   node.rule & "(" & parts.join(" ") & ")"
+
+
+func shape(node: Node): string =
+  ## Write tree as numbers of rules nesting indexes of terminals.
+  if node.is_terminal: return $node.at
+  $node.number & "(" & node.children.mapIt(it.shape).join(" ") & ")"
+
+
+func shape(reading: ReadingGrammar): string =
+  ## Write reading as text: tree as `shape` writes it, or place and rule of refusal.
+  if reading.is_read: reading.tree.shape else: "refused " & $reading.at & " " & reading.rule
+
+
+func shapesRead(text: string): Option[tuple[passes, whole: string]] =
+  ## Read text by passes and by one pass, and write each reading. Text that reads takes tree of
+  ##   passes from prose, which reads it so; else each word of stream is terminal.
+  let reading = text.readText
+  if reading.is_read:
+    let terminals = reading.units.mapIt(it.terminal)
+    return some((reading.tree.shape, terminals.readWhole.shape))
+  let terminals = text.terminalsStream
+  if terminals.isNone: return none(tuple[passes, whole: string])
+  some((terminals.get.readGrammar.shape, terminals.get.readWhole.shape))
 
 
 
@@ -301,3 +405,37 @@ suite "Internal: Grammar":
     check "mi na'e ki tavla".treeRead.isNone  # 973, NAhE takes tense or modal; constructed
     check "mi ze'a pu ta'e tavla".spansRead("time") == @[1 .. 3]  # 1034, ZEhA PU; constructed
     check "mi ta'e tavla".treeRead.isSome  # 1034, interval property alone; constructed
+
+
+  test "Passes give tree or refusal one pass gives, over corpora and text of article joined":
+    var texts = @TEXTS_PASSES
+    for example in EXAMPLES_CLL: texts.add example.rows.join(" ")
+    for sentence in SENTENCES_TATOEBA: texts.add sentence.text
+    for paragraph in PARAGRAPHS_WIKIPEDIA: texts.add paragraph.text
+    texts.add textJoined()
+    var count = 0
+    for text in texts:
+      if not text.isCutting: continue
+      let shapes = text.shapesRead
+      if shapes.isNone: continue
+      check shapes.get.passes == shapes.get.whole  # #849, one pass is reference
+      inc count
+    check count >= COUNT_PASSES_LEAST  # IX.3, guard keeps texts that cut
+
+
+  test "Passes cut before ni'o and before .i that joins nothing, where no opener is open":
+    check TEXTS_PASSES[0].partsRead == some(@[0 .. 1, 2 .. 8, 9 .. 19])  # .ije joins; constructed
+    check TEXTS_PASSES[11].partsRead == some(@[0 .. 6])  # rule 13, .i ba bo joins; constructed
+    check TEXTS_PASSES[12].partsRead == some(@[0 .. 1, 2 .. 5])  # no BO after tag; constructed
+    check TEXTS_PASSES[13].partsRead == some(@[0 .. 6])  # rule 12, jek past NA; constructed
+    check TEXTS_PASSES[9].partsRead == some(@[0 .. 3, 4 .. 7])  # rule 4, NIhO ...; constructed
+    check TEXTS_PASSES[2].partsRead.isNone  # lu open, cu decides its end; constructed
+    check TEXTS_PASSES[3].partsRead.isNone  # to open, cu decides its end; constructed
+    let terminals = TEXTS_PASSES[1].terminalsRead.get
+    check terminals.toParts(0, terminals.len) == some((@[0 .. 1, 2 .. 3], 4))  # tu'e open, rule 14
+
+
+  test "Passes read text of article joined part by part, its open tu'e too":
+    let terminals = textJoined().terminalsRead.get
+    check terminals.toParts(0, terminals.len).get.parts.len == COUNT_PARTS_JOINED  # #849
+    check terminals.buildText(0, terminals.len).isSome  # passes hold, and need no one pass

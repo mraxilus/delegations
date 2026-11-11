@@ -604,6 +604,31 @@ a build that returned the nodes of each child for its parent to copy. Its time g
 of the text, since rule 4 nests one level for each paragraph. Verified by `suites/test_grammar.nim`,
 which holds the trees of chapter 5 and of Section 18.16.
 
+**The grammar reads a text part by part, and builds the tree of one pass around the parts.** A
+part ends before each `ni'o` that follows no `ni'o`, and before each `.i` that joins nothing, where
+no `tu'e`, `lu` or `to` is open. Each part reads alone as a text, and its nodes go into the rules
+0, 2, 4 and 10 of the text. The choice of a tree is fixed for each span and rule. Each rule around
+a part closes at its ends alike, so each part takes the tree that one pass gives it.
+Verified by `suites/test_grammar.nim`, which holds the passes to one pass over the corpora.
+
+**An `.i` joins statements where a jek or a joik follows it, or a tag that ends at BO** (rules
+12 and 13). A jek or a joik may open with NA and SE. Such an `.i` ends no part. A part that a
+wrong cut makes opens with what only a text opens with. The passes then give up, and one pass
+reads the text. Verified by `suites/test_grammar.nim`, which holds each cut of constructed texts.
+
+**A `tu'e` that no `tu'u` closes takes the rest of the text that holds it.** In 21.1, only a form
+of `I` or `NIhO`, or the end of that text, can follow a `statement-3`. Its own `text-1` reads each
+of these, and the tree closes the fewest rules first, so they stay inside it. So the passes read
+its text part by part too. Verified by `suites/test_grammar.nim`, whose text of the article
+`lo jbobau` joined leaves the `tu'e` of its paragraph 23 open.
+
+**Where a `lu` or a `to` stays open, one pass reads the whole text.** A later word decides where
+such an opener closes: in `lu do klama .i mi klama cu xamgu`, the quote closes before `cu`. One
+pass also reads a text of one part, and a text where a part refuses, so it gives each refusal.
+Cost: a long text with such an opener, or with a long closed quote, reads in time that grows
+faster than its length. Verified by hand with a probe built on the pin, 2026-11-08. Of the 1,651
+texts of the corpora that read, 5 leave an opener open, each within 15 units of the end.
+
 **A refusal names the place where every derivation stops, and the rule that stops there.** The
 rule is that of the item that waits there, has read a terminal, and started last. So `mi klama le`
 is refused at its end, in `sumti-6 97`. Verified by `suites/test_grammar.nim`, in the suite
@@ -869,7 +894,7 @@ where no sentence adds a feature.
 
 Cost: a greedy cover is not the least cover, which is NP-hard to find. Rejected: a seeded random
 sample, which ruling D4 c replaces. Rejected: the whole export on each push, which costs about
-36 s of a debug build.
+38 s of a debug build.
 
 The sample holds 234 sentences, which reach 599 features. They reach 86 of the 88 named rules of
 21.1. No sentence of the export reaches `rp-expression` or `rp-operand`, and
@@ -1062,9 +1087,9 @@ removes each check of bounds and range from the build that a caller runs. Cost: 
 names no line of Nim (expected). The verb takes the compiler that compiled the driver.
 
 **Cost: the script reads about 37 times slower than the native build, on the thread of its
-caller.** So a page waits while it reads. A text of the sample takes 14 ms and 18 ms at the
-median, against 0.41 ms and 0.38 ms native. The longest takes 395 ms and 420 ms, against 11 ms and
-13 ms native. Figures, JavaScript build, gives the method. At `e464574f`, the verb writes 738,626
+caller.** So a page waits while it reads. A text of the sample takes 16 ms and 14 ms at the
+median, against 0.45 ms and 0.35 ms native. The longest takes 459 ms and 416 ms, against 11 ms and
+10 ms native. Figures, JavaScript build, gives the method. At `f941add6`, the verb writes 806,713
 bytes, and prints the size.
 
 ## Text in NIF
@@ -1332,6 +1357,35 @@ pair against the base alternates `40718874`, the head of #828, with this code, o
 - **Tatoeba, debug build.** On 2026-11-09, a program built on the pin with `nim c`, with no
   optimisation, read the 17,495 sentences of the export through `readText`. It took 46.9 s and
   45.5 s at `9e5811c8`, against 36.7 s and 36.1 s at `b5c522c7`. The runs alternate.
+- **Passes.** On 2026-11-09, on the pin, the program of Dead bounds timed `readGrammar` at
+  `53e9ea12`, by one pass, and at `c48b3704`, by the passes. The runs alternate, and each figure is
+  the median of three reads in one run. A text of 1,027 terminals took 0.085 s and 0.070 s before,
+  against 0.060 s and 0.062 s after. A text of 2,052 terminals took 0.239 s and 0.173 s, against
+  0.144 s and 0.138 s.
+- **Passes, longer texts.** In the same runs, a text of 4,029 terminals took 0.469 s and 0.447 s,
+  against 0.253 s and 0.271 s. A text of 7,758 terminals took 1.013 s and 1.096 s, against 0.430 s
+  and 0.505 s. The same 4,029 terminals as one paragraph took 0.350 s and 0.417 s, against 0.241 s
+  and 0.264 s. The text of 7,760 terminals whose `tu'e` stays open took 2.42 s and 2.61 s, against
+  0.52 s and 0.59 s, in one read each.
+- **Suites, passes.** On 2026-11-09, with both pages of the translations present, the stub ran
+  every suite in 36.7 s and 37.5 s at `53e9ea12`. At `c48b3704`, it ran them in 46.5 s and 48.4 s.
+  Without the pages, as on the runner, it ran in 24.8 s and 24.2 s, against 31.1 s and 31.5 s. The
+  suite of the grammar, built alone in the same way, ran in 0.47 s and 0.48 s, against 7.48 s and
+  7.86 s. The runs alternate.
+- **Corpus, passes.** In the same runs, the suite of the corpus ran in 3.8 s and 4.2 s, against
+  4.1 s and 3.8 s. The program of Corpus by stage read the rows through `readStream` in 0.11 s and
+  0.11 s, against 0.13 s and 0.10 s. It read them through `readText` in 3.18 s and 2.81 s, against
+  3.07 s and 3.15 s.
+- **JavaScript build, passes.** The native program of JavaScript build, dead bounds, took 230 ms
+  and 220 ms at `53e9ea12`, against 227 ms and 221 ms at `c48b3704`. `parseLojban` of
+  the script took 8.5 s and 8.4 s, against 8.5 s and 8.2 s. At the median, the script read one text
+  in 14.8 ms and 16.0 ms, against 15.7 ms and 14.0 ms. At most it took 371 ms and 411 ms, against
+  459 ms and 416 ms. The runs alternate.
+- **Native build, one text, passes.** In the same runs, the native program read one text in
+  0.41 ms and 0.39 ms at the median, against 0.45 ms and 0.35 ms. At most it took 10.9 ms and
+  10.1 ms, against 10.7 ms and 9.5 ms.
+- **Tatoeba, debug build, passes.** The program of Tatoeba, debug build read the export in 37.5 s
+  and 37.3 s at `53e9ea12`, against 38.7 s and 37.1 s at `c48b3704`. The runs alternate.
 - **Text in NIF.** On 2026-11-09, at `a66e60f0`, on the pin, a program built with `-d:release`
   read each text of the corpora. Each figure is the median of three passes, in each of two runs.
   `toNif` wrote 525,124 bytes for the 1,577 trees of CLL in 10.8 ms and 10.9 ms. `readText` read
