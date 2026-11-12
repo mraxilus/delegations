@@ -675,10 +675,10 @@ suite "Hooks":
 
 
   test "start context and turn writes":
-    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
+    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", "", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
     check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
-    check "outside grammar" in contextStart("claude/x", "", "## List", @[])
+    check "outside grammar" in contextStart("claude/x", "", "## List", "", @[])
     # Drift prints each finding of `check-drift`: sections changed and command that shows them,
     #   so start asks for new stamp only where finding does (#843).
     let
@@ -688,7 +688,7 @@ suite "Hooks":
         "Base changed sections; read `git diff a..origin/main -- GUIDE.md`; got `## Output " &
           "contract`.",
       )
-      drifted = contextStart("curator/x", "", "## List", @[drift])
+      drifted = contextStart("curator/x", "", "## List", "", @[drift])
     check "GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
     check "re-stamp" notin drifted
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])
@@ -793,9 +793,9 @@ suite "Hooks":
     check reasonStop(mended, [], has_signoff = true).splitLines[^1] ==
       "The skill /sign-off holds these steps."
     check "/sign-off" notin reasonStop(mended, [])  # plain message holds no sign-off
-    check "/sync" in contextStart("curator/x", "", "## List", @[finding("", 0, "d")])
-    check "/sync" notin contextStart("curator/x", "", "## List", @[])
-    check contextStart(BRANCH, "## List\n\n1. one\n", "## List", @[]).endsWith(
+    check "/sync" in contextStart("curator/x", "", "## List", "", @[finding("", 0, "d")])
+    check "/sync" notin contextStart("curator/x", "", "## List", "", @[])
+    check contextStart(BRANCH, "## List\n\n1. one\n", "## List", "", @[]).endsWith(
       "The skill /triage reports each item of this list that is not met.")
     check "/propose-term" in contextEdit("contributor/ronri/pga_benchmark/GLOSSARY.md")
     check "/propose-term" in contextEdit("GLOSSARY.md")

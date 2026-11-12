@@ -51,6 +51,7 @@
 import std/[json, options, os, sequtils, strutils, uri]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
+from ./toolchain import DIRECTORY_DRIVER
 
 
 type
@@ -1407,10 +1408,23 @@ func checkMessage*(
   result.add checkCommitRecord(subject, staged)
 
 
-func contextStart*(branch, contributor, heading_carried: string; drift: seq[Finding]): string =
+func pathRecord*(branch: string): string =
+  ## Read path of record branch works on: its project's, or audit's on curator root branch,
+  ##   whose work is checker and charter; empty outside grammar.
+  let parsed = branch.parseBranch
+  if parsed.isNone: return ""
+  case parsed.get.role
+  of Role.Curator: DIRECTORY_DRIVER & "/" & FILE_RECORD
+  of Role.CuratorProject, Role.Contributor: parsed.get.prefix & FILE_RECORD
+
+
+func contextStart*(
+  branch, contributor, heading_carried, record: string; drift: seq[Finding]
+): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, list.
   ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
   ##   that shows them, so start asks for new stamp only where finding does.
+  ##   Record is text of file `pathRecord` names; empty where branch has none yet.
   let parsed = branch.parseBranch
   var lines: seq[string]
   if parsed.isNone:
