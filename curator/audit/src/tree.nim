@@ -43,6 +43,8 @@ proc checkoutAt*(root, directory: string): Option[string] =
   ##   Worktree shares root's git store, so both name one common directory. Directory in no
   ##     repository, or git failing, reads as root, so failure still holds root's rule. Path not
   ##     yet written is read from nearest directory that exists.
+  ##   Root reads by its real path there too, as git names each other top, so file whose links
+  ##     `pathReal` resolved compares with it whichever way root is spelt (#883).
   var at = directory
   while at.len > 1 and not dirExists(at): at = at.parentDir
   const common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
@@ -50,7 +52,8 @@ proc checkoutAt*(root, directory: string): Option[string] =
     if fieldsGit(at, common)[0].strip != fieldsGit(root, common)[0].strip: return none(string)
     return some(fieldsGit(at, ["rev-parse", "--show-toplevel"])[0].strip)
   except IOError: discard
-  some(root)
+  try: some(expandFilename(root))
+  except OSError: some(root)
 
 
 proc listPaths*(root: string): seq[string] =
