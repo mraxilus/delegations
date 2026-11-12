@@ -16,8 +16,8 @@
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
 ##     so both pass it unread, as Architect approved on #847. Both read file through
 ##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
-##     resolves (#883). So path reads where Write tool puts file, since tool drops `..` as text
-##     before kernel reads link before it, as `pathWritten` does.
+##     resolves (#883). So path reads where Write tool puts file, since tool too drops `..` as
+##     text, before link ahead of it resolves.
 ##   Hook that sees moment of skill names that skill, as Architect ruled on D2 of #870: `stop`
 ##     names `/sign-off`, `start` names `/sync` and `/triage`, `edit` names `/propose-term` and
 ##     `/record`, and `prompt` names `/rule`, `/triage` and `/merged`. Line is hint, never refusal.

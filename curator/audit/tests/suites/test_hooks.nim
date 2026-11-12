@@ -164,7 +164,7 @@ suite "Hooks":
       check pathWritten(%*{"file_path": written}, "/w") == constitution
       check refused(root, %*{"file_path": written}) == refusals_scope
     check pathWritten(%*{"file_path": "sub/../CONSTITUTION.md"}, root) == constitution
-    # Write tool drops `..` as text before kernel reads link before it, so hook does too.
+    # Write tool drops `..` as text, before link ahead of it resolves, so hook does too.
     check pathWritten(%*{"file_path": scratch & "/root/../x.md"}, "/w").pathReal == scratch / "x.md"
     check fileWritten(root, root, %*{"file_path": scratch & "/root/../x.md"}).isNone
 
