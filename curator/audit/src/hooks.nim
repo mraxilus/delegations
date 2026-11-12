@@ -11,8 +11,8 @@
 ##     of turn that pushed or posted and closes with neither sign-off block nor working line,
 ##     end of any turn whose message names `#N` outside link or cites charter reference with no
 ##     description, and sign-off from turn that read no open issue of its role; `start` prints
-##     role, read order, carried list and drift; `prompt` reads each message of Architect;
-##     `push` and `msg` serve git hooks.
+##     role, read order, each finding of drift, headings of record branch works on, and carried
+##     list; `prompt` reads each message of Architect; `push` and `msg` serve git hooks.
 ##   Hook that sees moment of skill names that skill, as Architect ruled on D2 of #870: `stop`
 ##     names `/sign-off`, `start` names `/sync` and `/triage`, `edit` names `/propose-term` and
 ##     `/record`, and `prompt` names `/rule`, `/triage` and `/merged`. Line is hint, never refusal.
@@ -1421,10 +1421,13 @@ func pathRecord*(branch: string): string =
 func contextStart*(
   branch, contributor, heading_carried, record: string; drift: seq[Finding]
 ): string =
-  ## Compose text `start` adds to context: role, read order, grammar warning, drift, list.
+  ## Compose text `start` adds to context: role, read order, grammar warning, drift, headings
+  ##   of record, list.
   ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
   ##   that shows them, so start asks for new stamp only where finding does.
-  ##   Record is text of file `pathRecord` names; empty where branch has none yet.
+  ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
+  ##     reads its headings, then each section work touches, and Open questions (GUIDE.md); line
+  ##     each heading opens on lets it read that section alone.
   let parsed = branch.parseBranch
   var lines: seq[string]
   if parsed.isNone:
@@ -1441,6 +1444,15 @@ func contextStart*(
     for f in drift: lines.add "  " & f.render
   lines.add "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` once done, " &
     "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
+  if record.len > 0:
+    lines.add ""
+    lines.add "Record `" & branch.pathRecord & "`: read each section that your work touches, " &
+      "and Open questions, from line where its heading opens (GUIDE.md, How to build on a " &
+      "project)."
+    var line = 1
+    for part in record.sections:
+      if part.heading.len > 0: lines.add $line & ": " & part.heading
+      line += part.text.count('\n')
   lines.add ""
   lines.add heading_carried
   lines.add contributor.section(heading_carried).strip
