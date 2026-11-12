@@ -1569,6 +1569,27 @@ So rules propagation compiles nothing, while every stamp is still checked.
   every project in a repository younger than its window, and nothing over a window without a
   commit.
 
+**The source of a project selects each project that imports it by a relative path.** A change to
+the `src/` folder or the nimble file of a project selects each importer, and the importers of
+those, until none is added. An importer compiles the source that it imports, so a change there can
+break it. The plan reads each relative `import` and `from` of each Nim source, and resolves the
+path against the folder of that source. So a project that adds an import is selected from then
+on, with no list to keep.
+
+- Measured on 2026-11-12: `lojban_tagger` imports `lojban_parser`, and `curator/assayer` and
+  `curator/audit` import knoller. No other project imports another one.
+- Rejected: knoller alone, by the text of its path. A change to the parser then compiled no suite
+  of the tagger, and a break of the tagger reached `main` that way (#878).
+- Rejected: the importers of a project for each change to any of its code. No importer reads a
+  suite or a tool of the project, so that compiles more for no gain.
+- Cost: an importer turns red on a change to the surface of the project that it imports, until it
+  follows. So that project keeps the old name while its importer moves.
+- Cost: the plan reads the text of each import. So a path that a macro builds, or an `include` of
+  another project, selects no importer.
+- Verified by `suites/test_plan.nim`, for the case as found: a change to the parser selects the
+  tagger, and an importer of the tagger too. A suite or a record of the parser selects no
+  importer.
+
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
 The phase finished in about four minutes, against about nine summed. It fired **6 h 09 m after
@@ -1948,10 +1969,9 @@ before `; got `, or before the closing period. So `koch check` prints
   source before its nimble file, and an older branch keeps a stable key. Verified by
   `suites/test_hooks.nim`: a commit of the source of knoller alone builds the binary again.
 - A change to the source or the nimble file of knoller counts as checker for drift. It selects
-  for test knoller and each project whose source imports knoller by a relative path, audit
-  among them. The plan reads those imports from the source of each project, so a project that
-  adds one is selected from then on. A change to a suite of knoller selects knoller alone.
-  Verified by `suites/test_plan.nim` and `suites/test_base.nim`.
+  knoller for test, and each project that imports knoller, as the source of any project does
+  (Scoped checks). A change to a suite of knoller selects knoller alone. Verified by
+  `suites/test_plan.nim` and `suites/test_base.nim`.
 - Knoller pins the driver version, and `checkKnoller` reports a pin that differs. Verified by
   `suites/test_toolchain.nim`.
 - The rule on dead exports reads the modules and suites of knoller too. Verified by
