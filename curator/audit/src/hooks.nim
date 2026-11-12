@@ -13,6 +13,8 @@
 ##     description, and sign-off from turn that read no open issue of its role; `start` prints
 ##     role, read order, carried list and drift; `prompt` reads each message of Architect;
 ##     `push` and `msg` serve git hooks.
+##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
+##     so both pass it unread, as Architect approved on #847.
 ##   Hook that sees moment of skill names that skill, as Architect ruled on D2 of #870: `stop`
 ##     names `/sign-off`, `start` names `/sync` and `/triage`, `edit` names `/propose-term` and
 ##     `/record`, and `prompt` names `/rule`, `/triage` and `/merged`. Line is hint, never refusal.
@@ -235,6 +237,9 @@ func insideRoot*(root, path: string): string =
 
 func checkPathEdit*(branch, path: string): seq[Finding] =
   ## Report write outside scope branch names, before it happens.
+  ##   Path `insideRoot` hands on whole lies outside root, so it passes: no commit reaches it, and
+  ##     `check-scope` holds each path push carries.
+  if path.isAbsolute: return
   checkScope(branch, [path])
 
 
