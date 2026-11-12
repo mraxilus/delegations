@@ -360,16 +360,18 @@ each row to a rules document and a `## ` heading.
   Fences in GUIDE.md quote `## Standards`, `## Language` and `## Sign-off`, so a reader blind to
   fences would end Glossary process at the first of them. `section` of the checker reads the
   same cut, and matches a heading as the whole line.
-- CONSTITUTION.md, STYLE.md and EXAMPLES.md list none, so they digest as before.
+- CONSTITUTION.md, STYLE.md and EXAMPLES.md list none, so the stamp reads each of them whole.
 - Rejected: a list of the sections of content. A new or renamed heading of content would then
   move no stamp and give no finding.
-- Rejected: a move of the sections of content into a stamped file of their own. The review of
-  #843 counted 6 to 41 citations in contributor code that would then lose their target, and only
-  each contributor may edit that code.
+- Rejected: a move of the sections of content into a stamped file of their own. Contributor code
+  cites those sections by heading, so a move leaves each citation with no target, and only each
+  contributor may edit that code. Outside the three records,
+  `git grep -n -E '(CONTRIBUTOR|GUIDE)\.md' ba1986f98 -- contributor` gives 48 lines, and 36 of
+  them cite a section by its heading.
 - Rejected: `GUIDE.md` and `CONTRIBUTOR.md` out of the stamp whole. Their rules of content would
   then change with no audit of any project.
-- Cost: an edit of a mixed section, or of the opening above the first `##` heading, stamps every
-  project again, as before.
+- Cost: an edit of a mixed section, or of the opening above the first `##` heading, moves the
+  stamp of every project.
 - Verified by `suites/test_audit.nim`. An edit of each section of process moves no stamp, and
   neither does text past a heading that a fence quotes. A CRLF checkout stamps the same. An edit
   of the opening, of a section of content or of a mixed section moves it, and so does a new or
@@ -603,9 +605,10 @@ repository issue 671.
   reader of the live page finds it.
 - **A project that writes no `written.json` is a finding.** The rule asks each project with
   pages for that file, and a verdict over no file would pass pages that nobody read.
-- **A finding names the page, the element, and what failed there.** That is a character that a
-  font face of the system draws, a font face that does not load, or a weight. The collector
-  reads the control page as page `control`.
+- **A finding names the page, and what failed there.** For a character that a font face of the
+  system draws, it names the element and the character. For a font face that does not load, it
+  names that font face. For a bold that the browser synthesises, it names the element and the
+  weight. The collector reads the control page as page `control`.
 - **A family that the page does not ship ends the search.** A font face of that name on the
   machine of the viewer would draw the character, which Article X.8 forbids. Rejected: a step
   over such a family, which passes a page that such a viewer sees in the wrong font face.
@@ -840,8 +843,8 @@ is one finding more, which names its paths.
   a governing path. Cost: two reads of git for each rules document there.
 - The start hook prints each finding under one line of its own (Hooks on tool calls). So a
   delegate reads the same lines at the start, at resume and after a compaction.
-- Rejected: one finding that names each path. It names no section, so the reading of a change
-  rests on one sentence of `CONTRIBUTOR.md`. It also asks for a new stamp after any edit.
+- Rejected: one finding for all paths. It names no section, and asks for a new stamp after any
+  edit.
 - Rejected: a finding of several lines. A finding prints on one line (CURATOR.md, Checks
   reference).
 
@@ -866,8 +869,9 @@ on the same merge ref is what holds a stale stamp there.
 - Verified by hand with `nim r koch check-drift`, 2026-11-12. A scratch branch older than an edit
   of Output contract reported one finding at `GUIDE.md`. It named `## Output contract` and the
   command, and said that sections of process move no stamp.
-- Verified by hand, 2026-09-14: at a synthetic merge of a stale head into `main`, with `main` as
-  the first parent, the check reports nothing.
+- Verified by hand, 2026-11-12, with `main` of that scratch repository edited at Toolchain too.
+  A stale head reported one finding, which named both sections and asked for a new stamp. A
+  synthetic merge of that head into `main`, with `main` as the first parent, reported nothing.
 
 ## Commits
 
@@ -2513,8 +2517,8 @@ reads the sections that its work touches, and Open questions, rather than the wh
 (GUIDE.md, How to build on a project). The line lets it read one section alone. The headings
 come through `sections`, so a heading that a fence quotes opens nothing.
 
-- The record of pga_visualiser holds about 93,000 tokens over 47 sections, with its glossary
-  and README, as #843 measured. A task touches two or three of those sections.
+- At `ba1986f98`, the record of pga_visualiser holds 4,923 lines (`wc -l`) in 47 sections, as
+  `sections` cuts it. Assumed: a task touches two or three of those sections.
 - A branch whose record does not exist yet prints no record.
 - Rejected: a read in full below a size. That is one more number to keep, for little gain.
 - Verified by `suites/test_hooks.nim`, for each form of branch and for a heading in a fence.
@@ -2994,10 +2998,11 @@ commands, `check-files` and `test --all`, rather than one.
   fails whenever the pins differ.
 
 **`nim r koch check` is the local form of the jobs.** It fetches `origin/main`, then runs every
-job but `check-role` in one process. The static checks come first: the whole-tree pass, scope,
-commits, drift and schemas. A finding among them stops the run, except one that duty 3 holds
-apart. Then come the type check, the restores and suites of the planned projects, and the driven
-checks. Every pull request passes it before somebody opens it, and the runner confirms it.
+`check-` verb but `check-role`, then `test` and `drive`, in one process. The static checks come
+first: the whole-tree pass, scope, commits, drift and schemas. A finding among them stops the
+run, except one that duty 3 holds apart. Then come the type check, the restores and suites of
+the planned projects, and the driven checks. Every pull request passes it before somebody opens
+it, and the runner confirms it.
 
 - The static checks come first because they are cheap next to the jobs that compile and test
   (Figures). A finding among them sends the branch back before those run. Cost: a failure of a
@@ -3093,26 +3098,27 @@ compiled. Each "before" figure is `origin/main` at `8a05673`, on the same machin
 
 **The static pass costs about twelve seconds.** Warm `nim r koch check-files` took a median of
 11.85 s over five consecutive runs, from 11.46 s to 13.44 s. That was at `7ca14393a` on
-2026-11-12, on a machine of the same kind with Nim 2.4.0. The documents name no figure for it.
-They say that the static checks are cheap next to the jobs that compile and test, which is what
-the order of `koch check` rests on.
+2026-11-12, with Nim 2.4.0, on a four-core Intel Xeon 2.10 GHz container as above. The documents
+name no figure for it. They say that the static checks are cheap next to the jobs that compile
+and test, which is what the order of `koch check` rests on.
 
 - Cost: on that machine and date, `nim r koch test curator/audit` took 14.7 s warm, and 22.9 s
-  at its first run. So against the suites of the checker itself, the static pass costs about as
-  much. Against the suites and the driven checks of a contributor project below, it is cheap.
-- The dead-export rule became one pass at 2026-09-24. That pass then took 1.11 s, 1.15 s and
-  0.98 s, against 1.97 s, 1.96 s and 1.82 s before. Inside koch, the old dead-export rule took
-  1.1 s of a 2.07 s pass, because it scanned every source once for each export.
+  at its first run. So the static pass costs about as much as the suites of the checker itself.
+- The suites of `dance_ontology` and `pga_visualiser`, and each driven check, took minutes on
+  2026-09-24 (below). Assumed: they still take minutes, so the static pass is cheap next to them.
+- The dead-export rule reads each source once. Rejected: a scan of every source for each export,
+  which took 1.1 s of a 2.07 s static pass inside koch on 2026-09-24. With one read, the static
+  pass took 1.11 s, 1.15 s and 0.98 s that day. With the scan, it took 1.97 s, 1.96 s and 1.82 s.
 
-**A branch that changes the checker costs one project, and not every project.** Warm,
-`nim r koch check` takes 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the suite
-build of `curator/audit` removed first, it took 8.1 s. Before, with one comment added to a
+**A branch that changes the checker costs one project, and not every project.** On 2026-09-24,
+warm `nim r koch check` took 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the
+suite build of `curator/audit` removed first, it took 8.1 s. Before, with one comment added to a
 check module, it took 32.9 s and 32.6 s warm, and 49.2 s cold. `koch list-projects` holds one
 row on such a branch, so the figure covers the suites of `curator/audit` and the static pass.
 
-**The suites of `curator/audit` cost their compile, and almost nothing to run.** Each suite
-compiled alone in 0.8 s to 1.2 s warm, and the run of every suite binary took 2.1 s. Joined,
-`nim r koch test curator/audit` takes 3.8 s to 4.2 s warm, against 31.9 s before.
+**The suites of `curator/audit` cost their compile, and almost nothing to run.** On 2026-09-24,
+each suite compiled alone in 0.8 s to 1.2 s warm, and the run of every suite binary took 2.1 s.
+Joined, `nim r koch test curator/audit` took 3.8 s to 4.2 s warm, against 31.9 s before.
 
 These two are the pair for scoping. A change to records alone costs the static pass, and a
 change to one project adds the suites of that project. An unscoped run pays every project.
@@ -3278,4 +3284,4 @@ pull requests sat on both sides, so the subject of a call does not say which met
 - Whether drift should cover the root `GLOSSARY.md`. The acronym check reads its standards and
   terms as words that a name may take (`exemptions`), so it acts as a rule of content. Neither
   the stamp nor drift reads it, so a standard that `main` drops reaches no older branch before
-  the merge. The review of #843 named this and proposed no change.
+  the merge.
