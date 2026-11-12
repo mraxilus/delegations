@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, osproc, sequtils, strutils, tempfiles, unittest]
+import std/[json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
 import ../../src/[findings, hooks, tree]
 import ./fixtures
 
@@ -128,6 +128,62 @@ suite "Hooks":
     check checkPathEdit(BRANCH, other).len == 1  # inside repository, outside folder of branch
     check checkPathEdit("curator/audit/x", other).len == 1
     check checkPathEdit("claude/tool-named", own).len == 1  # branch outside grammar
+
+
+  test "write hook reads path in normal form, from each tool, through links (#883)":
+    # Case as found on #883: `<root>//CONSTITUTION.md` read as `/CONSTITUTION.md`, and `..` from
+    #   folder outside and link to root read as outside, so each passed; NotebookEdit names
+    #   `notebook_path`, so hook judged directory of call in its place.
+    proc refused(root: string, input: JsonNode, branch: string = BRANCH): seq[string] =
+      ## Read refusals of write, through steps `koch hook path` takes.
+      let
+        file = pathWritten(input, root).pathReal
+        checkout = checkoutAt(root, file.parentDir)
+      checkPathEdit(branch, insideRoot(checkout.get, file)).messages
+
+    # Lay out root, and scratch folder holding link to root and link to file inside it.
+    let
+      root = repoTemp()
+      scratch = createTempDir("delegations_", "_links")
+      constitution = root / "CONSTITUTION.md"
+      refusals_scope = @["Path outside branch scope `contributor/ronri/pga_benchmark/`."]
+    defer: removeDir(root)
+    defer: removeDir(scratch)
+    root.writeInto("CONSTITUTION.md", "# Constitution\n")
+    createSymlink(root, scratch / "root")
+    createSymlink(constitution, scratch / "rules.md")
+
+    # Normal form drops `.`, `..` and doubled slash; relative path resolves against directory.
+    for written in [
+      root & "/./CONSTITUTION.md",
+      root & "//CONSTITUTION.md",
+      root & "/contributor/ronri/pga_benchmark/../../../CONSTITUTION.md",
+      scratch & "/../" & root.lastPathPart & "/CONSTITUTION.md",
+    ]:
+      check pathWritten(%*{"file_path": written}, "/w") == constitution
+      check refused(root, %*{"file_path": written}) == refusals_scope
+    check pathWritten(%*{"file_path": "sub/../CONSTITUTION.md"}, root) == constitution
+
+    # Resolve link to place file system writes: link to directory for new file, link to file whole.
+    check pathReal(scratch / "root" / "new.md") == root / "new.md"
+    check pathReal(scratch / "root" / "CONSTITUTION.md") == constitution
+    check pathReal(scratch / "rules.md") == constitution
+    check pathReal(scratch / "x" / "y.md") == scratch / "x" / "y.md"  # nothing to resolve
+    check refused(root, %*{"file_path": scratch / "root" / "CONSTITUTION.md"}) == refusals_scope
+    check refused(root, %*{"file_path": scratch / "rules.md"}) == refusals_scope
+
+    # Read notebook NotebookEdit names, never directory of call.
+    let notebook = %*{"notebook_path": root / "notes.ipynb"}
+    check pathWritten(notebook, root) == root / "notes.ipynb"
+    check refused(root, notebook) == refusals_scope
+    check refused(root, %*{"notebook_path": root / "contributor/ronri/pga_benchmark/a.ipynb"})
+      .len == 0
+    check pathWritten(%*{"file_path": "a.md", "notebook_path": "b.ipynb"}, "/w") == "/w/a.md"
+
+    # Domain: path in normal form inside folder of branch passes, and curator stays out of code.
+    let code = root & "/./contributor/ronri/pga_benchmark/src/a.nim"
+    check refused(root, %*{"file_path": code}).len == 0
+    check refused(root, %*{"file_path": code}, "curator/x").len == 1  # records alone
 
 
   test "git commands read through shell operators and options":
