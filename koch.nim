@@ -245,6 +245,8 @@ proc runHook(root, event, input: string): int =
   ##     acting in other repository is that repository's, so these three pass it unread.
   ##   Directory in no repository reads as root (`checkoutAt`), so file there reaches `path`
   ##     and `edit`, and `insideRoot` hands it on whole; both pass it, since no commit reaches it.
+  ##   `path` and `edit` read file `pathWritten` names in normal form, and `pathReal` resolves
+  ##     its links, before `checkoutAt` and `insideRoot` see it.
   let branch_root = root.branch
   case event
   of "path", "bash", "body", "edit", "stop":
@@ -252,12 +254,12 @@ proc runHook(root, event, input: string): int =
       data = input.parseJson
       tool = data{"tool_name"}.getStr
       directory = data{"cwd"}.getStr(root)
-      written = data{"tool_input", "file_path"}.getStr
-      file = if written.isAbsolute: written else: directory / written
     case event
     of "path":
       if tool notin TOOLS_EDIT: return 0
-      let checkout = checkoutAt(root, file.parentDir)
+      let
+        file = pathWritten(data{"tool_input"}, directory).pathReal
+        checkout = checkoutAt(root, file.parentDir)
       if checkout.isNone: return 0
       refuse(checkPathEdit(checkout.get.branch, insideRoot(checkout.get, file)), 2)
     of "bash":
@@ -286,7 +288,9 @@ proc runHook(root, event, input: string): int =
         2,
       )
     of "edit":
-      let checkout = checkoutAt(root, file.parentDir)
+      let
+        file = pathWritten(data{"tool_input"}, directory).pathReal
+        checkout = checkoutAt(root, file.parentDir)
       if checkout.isNone: return 0
       let path = insideRoot(checkout.get, file)
       # File outside root holds no finding and no record, so `edit` names nothing and audits

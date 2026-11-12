@@ -2,19 +2,21 @@
 ##   Hook is mechanism and not rule: it calls koch verb and holds no rule of its own
 ##     (CURATOR.md, What no check can reach). Every finding here is one audit already states
 ##     for gate; this module reads hook's fact and names check holding it, so rule lives once.
-##   Events, by verb argument: `path` refuses write outside branch scope; `edit` returns
-##     static findings after write; `bash` refuses commit or push on `main` or outside grammar,
-##     rewrite of pushed history, and push past pre-push hook, since `koch check` holds what
-##     each project clears on its own branch (duty 3); `body` holds post before it lands to role
-##     line, footer, Simplified Technical English counts, issue title and label, pull request
-##     headings, and closing keyword before issue on line of its own alone; `stop` refuses end
-##     of turn that pushed or posted and closes with neither sign-off block nor working line,
-##     end of any turn whose message names `#N` outside link or cites charter reference with no
-##     description, and sign-off from turn that read no open issue of its role; `start` prints
-##     role, read order, carried list and drift; `prompt` reads each message of Architect;
-##     `push` and `msg` serve git hooks.
+##   Events, by verb argument: `path` refuses write inside repository and outside branch scope;
+##     `edit` returns static findings after write; `bash` refuses commit or push on `main` or
+##     outside grammar, rewrite of pushed history, and push past pre-push hook, since `koch check`
+##     holds what each project clears on its own branch (duty 3); `body` holds post before it
+##     lands to role line, footer, Simplified Technical English counts, issue title and label,
+##     pull request headings, and closing keyword before issue on line of its own alone; `stop`
+##     refuses end of turn that pushed or posted and closes with neither sign-off block nor
+##     working line, end of any turn whose message names `#N` outside link or cites charter
+##     reference with no description, and sign-off from turn that read no open issue of its
+##     role; `start` prints role, read order, carried list and drift; `prompt` reads each message
+##     of Architect; `push` and `msg` serve git hooks.
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
-##     so both pass it unread, as Architect approved on #847.
+##     so both pass it unread, as Architect approved on #847. Both read path `pathWritten` names
+##     in normal form, through each link `pathReal` resolves, so path reads where file system
+##     writes file (#883).
 ##   Hook that sees moment of skill names that skill, as Architect ruled on D2 of #870: `stop`
 ##     names `/sign-off`, `start` names `/sync` and `/triage`, `edit` names `/propose-term` and
 ##     `/record`, and `prompt` names `/rule`, `/triage` and `/merged`. Line is hint, never refusal.
@@ -235,10 +237,32 @@ func insideRoot*(root, path: string): string =
   if path.startsWith(prefix): path[prefix.len .. ^1] else: path
 
 
+func pathWritten*(tool_input: JsonNode, directory: string): string =
+  ## Read path write names, absolute and in normal form: `file_path`, else `notebook_path`
+  ##   NotebookEdit sends, resolved against directory call runs in.
+  ##   Normal form drops `.`, `..` and doubled slash, so `<root>//x` never reads as `/x`, and
+  ##     `..` from folder outside root never reads as outside.
+  let named = tool_input{"file_path"}.getStr(tool_input{"notebook_path"}.getStr)
+  normalizedPath(if named.isAbsolute: named else: directory / named)
+
+
+proc pathReal*(path: string): string =
+  ## Read path through each symbolic link in it, as file system writes it and as git names top
+  ##   of checkout; path stays as given where file system refuses read.
+  ##   Nearest part that exists resolves: file that exists resolves whole, new file its directory.
+  ##   Cost: one read of file system for each write. Link to file not yet written, and hard
+  ##     link, read where path names them.
+  var at = path
+  while at.len > 1 and not (fileExists(at) or dirExists(at)): at = at.parentDir
+  try: expandFilename(at) / path[at.len .. ^1].strip(trailing = false, chars = {'/'})
+  except OSError: path
+
+
 func checkPathEdit*(branch, path: string): seq[Finding] =
   ## Report write outside scope branch names, before it happens.
-  ##   Path `insideRoot` hands on whole lies outside root, so it passes: no commit reaches it, and
-  ##     `check-scope` holds each path push carries.
+  ##   Path `insideRoot` hands on whole lies outside root, so it passes, since no commit reaches
+  ##     it. `koch check` holds each path branch changed before push, and `check-scope` holds
+  ##     them on pull request.
   if path.isAbsolute: return
   checkScope(branch, [path])
 
