@@ -189,7 +189,8 @@ check can hold all of it. `GUIDE.md` carries the working subset of the other rul
 **The governed set is half data and half derivation.** `PATHS_ENGLISH` holds every root
 Markdown document except `LICENSE.md`, and the issue and pull request templates. No rule can
 derive those. Everything else comes from the layout. That is the README of each project root
-and of each registered domain, and each record directly inside a project directory.
+and of each registered domain, and each record directly inside a project directory. Any other
+file stays outside the set, as a file below a project directory does.
 
 **The derived half needs no row that somebody must remember.** A list with one row for each
 record goes one row short at the next project. The records of that project then go unread, and
@@ -602,6 +603,9 @@ repository issue 671.
   reader of the live page finds it.
 - **A project that writes no `written.json` is a finding.** The rule asks each project with
   pages for that file, and a verdict over no file would pass pages that nobody read.
+- **A finding names the page, the element, and what failed there.** That is a character that a
+  font face of the system draws, a font face that does not load, or a weight. The collector
+  reads the control page as page `control`.
 - **A family that the page does not ship ends the search.** A font face of that name on the
   machine of the viewer would draw the character, which Article X.8 forbids. Rejected: a step
   over such a family, which passes a page that such a viewer sees in the wrong font face.
@@ -1518,6 +1522,11 @@ hold one `Toolchains` of knoller, which resolves each pin once.
 So `nim r koch check` stays green as one command over a changed set that spans pins. These
 points hold here.
 
+- So a delegate need not install a compiler. GUIDE.md, Toolchain, says that, how to install one
+  by hand, and how to bump a pin, and this record says how koch serves it. Testament and Atlas
+  come from the toolchain that serves the pin, so a lock is never replayed against another
+  compiler. CI installs the pin of each project in a job of its own.
+
 - What stays in audit is the policy of this repository (CURATOR.md duty 8). That is
   `checkPin`, `checkDriver`, `checkKnoller` and `versionWorkflow`, with the constants of the
   driver and of the workflow. `missing` stays too, because it returns the `Finding` of audit, and
@@ -1909,6 +1918,16 @@ acronym rule of V.9 stays here (`checkAcronyms`, D2 of #572). An acronym is a ru
 capitals inside a camel or Pascal name. It passes only where the root or the project glossary
 lists it, as a symbol under `## Standards` or as a term.
 
+**Through knoller, the static pass holds the words of every name declared in Nim, and the rules
+of Article V that one file shows.** It reports a word from the table of coined abbreviations,
+each with its one full word, and a run of capitals that no glossary lists. It passes what the
+glossaries list under `## Standards`, their terms, and the jargon of V.6. It holds the first word
+of a routine (V.3), and the form of a lookup table (V.5). It holds the last word `Of` of a
+routine (V.3) and of a type (V.13). It holds a global that shares its word with a type (V.10),
+and a collection type named for its member and its form (V.6).
+
+- A binding of the name of a library is skipped, because the name is not ours. GUIDE.md, Names,
+  gives the working subset of Article V, and the rest of the article holds by reading.
 - `exemptions` reads those two glossaries for each path. The static pass gives their words to
   the acronym check, and to the check of abbreviations of knoller (V.6). The jargon list of V.6
   passes too.
@@ -2974,11 +2993,15 @@ commands, `check-files` and `test --all`, rather than one.
 - Rejected: one verb for the static pass and every suite on the compiler that `PATH` holds. It
   fails whenever the pins differ.
 
-**`nim r koch check` is the local form of the jobs.** It fetches `origin/main`. It then runs the
-whole-tree pass, and the restores and suites of the planned projects. It runs the type check,
-the driven checks, scope, commits and base, all in one process. Every pull request passes it
-before somebody opens it. The runner confirms, and it never discovers.
+**`nim r koch check` is the local form of the jobs.** It fetches `origin/main`, then runs every
+job but `check-role` in one process. The static checks come first: the whole-tree pass, scope,
+commits, drift and schemas. A finding among them stops the run, except one that duty 3 holds
+apart. Then come the type check, the restores and suites of the planned projects, and the driven
+checks. Every pull request passes it before somebody opens it, and the runner confirms it.
 
+- The static checks come first because they are cheap next to the jobs that compile and test
+  (Figures). A finding among them sends the branch back before those run. Cost: a failure of a
+  suite shows only after the static pass is clean.
 - Cost: one network fetch for each run, accepted so that the base is the one CI will use.
 - Cost: a branch whose change spans projects on several pins needs each pinned compiler, which
   resolution provides. A driven project also needs npm, a browser and its declared packages,
