@@ -50,16 +50,22 @@ this project, and no run turns red until this project next changes. Verified by 
 2026-11-07 with `nim r koch list-projects`: a probe commit that changes one byte of a source of the
 parser plans `lojban_parser` alone.
 
-**This project names its own types apart from those of the parser.** The parser exports `Reading`
-and `Refusal` for one word, so the types of a tag take the qualifier `Tag`, as `ReadingTag` and
-`RefusalTag`. The parser also exports `EntryGismu` from a module named `entries`, as this project
-does, and no qualifier tells two modules of one name apart. So the English entry of the gismu
-list is `EntryGismuEnglish`.
+**This project names its own types and constants apart from those of the parser.** The parser
+exports `Reading` and `Refusal` for one word, so the types of a tag take the qualifier `Tag`, as
+`ReadingTag` and `RefusalTag`. The parser also exports `EntryGismu` from a module named
+`entries`, as this project does, and no qualifier tells two modules of one name apart. So the
+English entry of the gismu list is `EntryGismuEnglish`. The parser exports `HEADER`, the
+directives that open its NIF, so the first line of an index file is `HEADER_INDEX`. Verified by
+`test_names.nim`, over each type, constant and variable that the umbrella of the parser exports.
 
-Nim reads `LETTERS` and the `Letters` of `std/strutils` as one name, so the code writes
-`lojban_parser.LETTERS`. Verified by hand with Nim 2.4.0, 2026-11-07: an `EntryGismu` of this
-project, and an unqualified `LETTERS`, each stop the compile as an ambiguous identifier. `Reading`
-and `Refusal` fall under the same rule (expected).
+Rejected: `index.HEADER` at each use, which leaves each later module that imports both to meet
+the clash. The lists of the parser stay off its umbrella, so the two `LIST_GISMU` meet only where
+a module imports both lists. Nim reads `LETTERS` and the `Letters` of `std/strutils` as one name,
+so the code writes `lojban_parser.LETTERS`. Verified by hand with Nim 2.4.0, 2026-11-07: an
+`EntryGismu` of this project, and an unqualified `LETTERS`, each stop the compile as an ambiguous
+identifier. At `831d902d`, a bare `HEADER` stops the compile of `suites/test_index.nim` the same
+way, verified by hand with Nim 2.4.0 on 2026-11-11. `Reading` and `Refusal` fall under the same
+rule (expected).
 
 ## Word lists
 

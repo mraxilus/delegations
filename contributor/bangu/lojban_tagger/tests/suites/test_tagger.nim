@@ -153,10 +153,11 @@ suite "Internal: Tagger":
   test "malformed index file exits 1, naming path, line and offending text":
     let path = directory / "malformed"
     for (text, line, problem) in [
-      ("lojban_tagger index 2\n", 1, "Header should read `" & HEADER &
+      ("lojban_tagger index 2\n", 1, "Header should read `" & HEADER_INDEX &
           "`; got `lojban_tagger index 2`."),
-      (HEADER & "\nnotes datni\n", 2, "Line should hold name, tab, then tags; got `notes datni`."),
-      (HEADER & "\nnotes\tdatnyvei\n", 2,
+      (HEADER_INDEX & "\nnotes datni\n", 2,
+          "Line should hold name, tab, then tags; got `notes datni`."),
+      (HEADER_INDEX & "\nnotes\tdatnyvei\n", 2,
           "Tag should be gismu of list joined by `+`; got `datnyvei`."),
     ]:
       writeFile(path, text)

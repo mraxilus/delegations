@@ -41,7 +41,8 @@ type
 
 
 const
-  HEADER* = "lojban_tagger index 1"  ## First line of every index file, naming format and version.
+  HEADER_INDEX* = "lojban_tagger index 1"
+    ## First line of every index file, naming format and version.
   CHARACTERS_FORBIDDEN* = {'\t', '\r', '\n'}  ## Characters name may not hold.
 
 
@@ -90,7 +91,7 @@ func removeTags*(index: var Index, name: string, tags: openArray[Tag]) =
 
 func toText*(index: Index): string =
   ## Render index as file text.
-  result = HEADER & "\n"
+  result = HEADER_INDEX & "\n"
   for entity in index.entities:
     result.add entity.name & "\t" & entity.tags.mapIt(it.toTanru).join(" ") & "\n"
 
@@ -98,8 +99,8 @@ func toText*(index: Index): string =
 func readIndex*(text: string): Loaded =
   ## Read file text as index; refuse at first bad line.
   let lines = text.splitLines
-  if lines.len == 0 or lines[0] != HEADER:
-    return Loaded(is_loaded: false, line: 1, problem: "Header should read `" & HEADER &
+  if lines.len == 0 or lines[0] != HEADER_INDEX:
+    return Loaded(is_loaded: false, line: 1, problem: "Header should read `" & HEADER_INDEX &
         "`; got `" & (if lines.len > 0: lines[0] else: "") & "`.")
   var index: Index
   for n in 1 ..< lines.len:
