@@ -2404,10 +2404,11 @@ rest by reading.
 The rule stays in the audit, once, and the hook reads the fact of its event and names the check
 that holds it. The events, each one a verb argument:
 
-- `path` refuses a write outside the scope of the branch, before the write.
-- `edit` runs the static checks after a write, and returns the findings of that file as
-  context. It splits them by the branch of the checkout and the lines that the branch changed,
-  as `koch check` does. So a held finding never stands under "fix before push".
+- `path` refuses a write inside the repository but outside the scope of the branch, before the
+  write.
+- `edit` runs the static checks after a write inside the repository, and returns the findings
+  of that file as context. It splits them by the branch of the checkout and the lines that the
+  branch changed, as `koch check` does. So a held finding never stands under "fix before push".
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
   history. It holds a post made through `gh api` as `body` holds the post of a tool.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
@@ -2476,13 +2477,38 @@ names, else the working directory of the call.
 - A call in another repository has no checkout here, so the three hooks pass it unread. That
   repository keeps its own branch, and a hook holds this repository alone. A directory in no
   repository, or a failure of git, reads as the primary checkout, so a failure still holds the
-  rule.
+  rule inside it.
 - Verified by `suites/test_tree.nim`, for the commit in a scratch repository of #380 as found.
   The suite also holds the root, a subdirectory, a path not yet written, a worktree and a
   directory in no repository. Fake inputs to the built koch use a detached checkout as the
   primary. They refuse a commit and a write there, and pass both in a scratch repository.
 - Cost: only the first git command of a shell line is read. A second one with another `-C`
   is held to the branch of the first.
+
+**`path` and `edit` judge only a file inside the repository.** A directory in no repository
+reads as the primary checkout, so a write there reaches both hooks. `insideRoot` then hands the
+file on whole, as an absolute path. `checkPathEdit` passes such a path, and `edit` returns
+before it reads the tree. A file outside the repository cannot reach a commit, and
+`check-scope` still holds the paths of each push. So a scratch file needs no shell, which no
+hook reads.
+
+- A branch outside the grammar still refuses each write inside the repository, and a scoped
+  branch still refuses each write outside its folder.
+- Rejected: a `checkoutAt` that reads a directory in no repository as no checkout. Git fails
+  there as it fails for any other reason, so a failure of git would pass a commit on `main`.
+- Cost: a path that reaches the repository through a symbolic link, or through `..` from
+  outside it, reads as outside. Both hooks then pass it, since git names the top of a checkout
+  by its real path, and `insideRoot` compares text. `check-scope` still refuses such a file at
+  the push.
+- Verified by `suites/test_hooks.nim`, for the scratch file of #847 as found. The suite also
+  holds its domain: each form of branch passes the file, and still judges a file inside the
+  repository.
+- Verified by hand on 2026-11-12, by fake inputs to the built koch, before and after, on a
+  contributor branch and on a detached head. Each passes a scratch file, and still refuses a
+  file inside the repository that its branch may not change.
+- Measured by hand on 2026-11-12, in a delegate container, with fake inputs to the built koch
+  over this repository. `edit` takes 0.01 s for a scratch file, in each of three runs. The audit
+  that it skips there takes from 12.5 s to 14.2 s, in three runs.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
