@@ -2,8 +2,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[findings, hooks]
+import std/[options, os, osproc, sequtils, strutils, tempfiles, unittest]
+import ../../src/[findings, hooks, tree]
 import ./fixtures
 
 
@@ -103,6 +103,31 @@ suite "Hooks":
     check checkPathEdit(BRANCH, "CONSTITUTION.md").len == 1  # outside project
     check checkPathEdit("curator/x", "contributor/ronri/pga_benchmark/src/a.nim").len == 1
     check checkPathEdit("curator/x", "contributor/ronri/pga_benchmark/GLOSSARY.md").len == 0
+
+
+  test "write outside repository passes, and scope of branch still holds inside it (#847)":
+    # Case as found: scratch file such as `/tmp/x/y.md` was refused as path outside folder of
+    #   branch, and every write on branch outside grammar. Directory in no repository reads as
+    #   root (`checkoutAt`), so `insideRoot` hands file on whole, as `koch hook path` reads it.
+    let
+      root = repoTemp()
+      scratch = createTempDir("delegations_", "_scratch")
+    defer: removeDir(root)
+    defer: removeDir(scratch)
+    let checkout = checkoutAt(root, scratch / "x")
+    check checkout == some(root)  # no repository, so root's branch judges
+    let outside = insideRoot(checkout.get, scratch / "x" / "y.md")
+    check outside == scratch / "x" / "y.md"  # handed on whole
+    # Domain: every branch form passes file no commit reaches, and judges each file inside.
+    for branch in [BRANCH, "curator/audit/x", "curator/x", "claude/tool-named", "main"]:
+      check checkPathEdit(branch, outside).messages == newSeq[string]()  # refusal names branch
+    let
+      own = insideRoot(root, root / "contributor/ronri/pga_benchmark/src/a.nim")
+      other = insideRoot(root, root / "CONSTITUTION.md")
+    check checkPathEdit(BRANCH, own).len == 0
+    check checkPathEdit(BRANCH, other).len == 1  # inside repository, outside folder of branch
+    check checkPathEdit("curator/audit/x", other).len == 1
+    check checkPathEdit("claude/tool-named", own).len == 1  # branch outside grammar
 
 
   test "git commands read through shell operators and options":
