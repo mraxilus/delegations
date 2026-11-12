@@ -5,7 +5,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, os, sequtils, strutils, tempfiles, unittest]
+import std/[algorithm, json, math, os, sequtils, strutils, tempfiles, unittest]
 import ./fixtures
 import ../../src/[assets, font_stacks]
 
@@ -53,13 +53,15 @@ func synthesisedFound(found: JsonNode): seq[(string, string, int, int)] =
   )
 
 
-func control(skipped: openArray[int] = []): JsonNode =
-  ## Render control page as collector writes it, each numeral in run of its own, but `skipped`.
+func control(skipped, dropped: openArray[int] = []): JsonNode =
+  ## Render control page as collector writes it, each place in run of its own, but `skipped`:
+  ##   ASCII digit of numeral's value, then numeral, but digit of each numeral in `dropped`.
   result = %*{"runs": [], "declared": [], "refused": []}
-  for (codepoint, place) in NUMERALS_CONTROL:
+  for index, (codepoint, place) in NUMERALS_CONTROL:
     if codepoint in skipped: continue
+    let codepoints = if codepoint in dropped: @[codepoint] else: @[ord('1') + index, codepoint]
     result["runs"].add %*{
-      "element": place, "stack": "serif", "weight": 400, "codepoints": [codepoint],
+      "element": place, "stack": "serif", "weight": 400, "codepoints": codepoints,
     }
 
 
@@ -247,13 +249,14 @@ suite "Font stacks":
 
 
 suite "Font faces judged":
-  test "control page holds each numeral in its own kind of place, in ASCII source":
+  test "control page holds ASCII digit beside each numeral in its kind of place, in ASCII source":
+    # Digit stands first, since CSS escape `\4E09` would read digit after it as hex.
     let html = pageControl()
-    check "<p id=\"paragraph\">&#x4E00;</p>" in html  # paragraph
-    check "placeholder=\"&#x4E8C;\"" in html  # placeholder of field
-    check "#before::before { content: \"\\4E09\"; }" in html  # `::before`
-    check ">&#x56DB;</text></svg>" in html  # SVG text
-    check "String.fromCodePoint(0x4E94)" in html  # script builds numeral five on load
+    check "<p id=\"paragraph\">1&#x4E00;</p>" in html  # paragraph
+    check "placeholder=\"2&#x4E8C;\"" in html  # placeholder of field
+    check "#before::before { content: \"3\\4E09\"; }" in html  # `::before`
+    check ">4&#x56DB;</text></svg>" in html  # SVG text
+    check "\"5\" + String.fromCodePoint(0x4E94)" in html  # script builds string five on load
     check html.count("4E94") == 1  # nowhere else, so it stands only once script runs
     check html.allIt(it.ord < 0x80)
     check NUMERALS_CONTROL.mapIt(it[0]) == @[0x4E00, 0x4E8C, 0x4E09, 0x56DB, 0x4E94]
@@ -359,6 +362,60 @@ suite "Font faces judged":
     check verdict.len == 1
     check "in SVG text uncollected" in verdict[0].message
     check verdict[0].path == PROJECT / DIRECTORY_FONT_FACES / FILE_WRITTEN
+    removeDir(root)
+
+
+  test "place whose run drops ASCII digit beside its numeral is finding naming place (#822)":
+    # Case as found: control page held numerals alone, and `found.json` holds no ASCII, so
+    #   collector writing runs past ASCII alone passed, and hid bold of ASCII text (#822).
+    #   Domain is each state of each place, i.e. whole, digit dropped or skipped: 3^5 states.
+    let
+      root = createTempDir("delegations_", "_font_faces")
+      folder = root / PROJECT / DIRECTORY_FONT_FACES
+    createDir(folder)
+    for state in 0 ..< 3^NUMERALS_CONTROL.len:
+      var skipped, dropped: seq[int]
+      for index, (codepoint, _) in NUMERALS_CONTROL:
+        case (state div 3^index) mod 3
+        of 1: dropped.add codepoint
+        of 2: skipped.add codepoint
+        else: discard
+      writeFile(folder / FILE_WRITTEN, $(%*{"control": control(skipped, dropped)}))
+      let messages = checkFontFaces(root, PROJECT).mapIt(it.message)
+      checkpoint "Skipped `" & skipped.mapIt(it.toHex(4)).join(" ") & "`, digit dropped at `" &
+          dropped.mapIt(it.toHex(4)).join(" ") & "`."
+      check messages.len == skipped.len + dropped.len  # one finding for each place at fault
+      for index, (codepoint, place) in NUMERALS_CONTROL:
+        let
+          uncollected = "`U+" & codepoint.toHex(4) & "` in " & place & " uncollected"
+          unwritten = "`U+" & toHex(ord('1') + index, 4) & "` in " & place & " unwritten"
+        check messages.countIt(uncollected in it) == ord(codepoint in skipped)
+        check messages.countIt(unwritten in it) == ord(codepoint in dropped)
+    removeDir(root)
+
+
+  test "digit counts in run of its numeral alone, and one such run serves its place":
+    # Digit elsewhere proves nothing of its place, as source of style and script holds digits.
+    let
+      root = createTempDir("delegations_", "_font_faces")
+      folder = root / PROJECT / DIRECTORY_FONT_FACES
+    createDir(folder)
+    var apart = control(dropped = [0x4E09])
+    apart["runs"].add %*{
+      "element": "`::before`", "stack": "serif", "weight": 400, "codepoints": [ord('3')],
+    }
+    writeFile(folder / FILE_WRITTEN, $(%*{"control": apart}))
+    let verdict = checkFontFaces(root, PROJECT)
+    check verdict.len == 1
+    check "`U+0033` in `::before` unwritten" in verdict[0].message
+
+    # Pass place whose run holds whole string, whatever run of numeral alone stands beside it.
+    var beside = control()
+    beside["runs"].add %*{
+      "element": "`::before`", "stack": "serif", "weight": 400, "codepoints": [0x4E09],
+    }
+    writeFile(folder / FILE_WRITTEN, $(%*{"control": beside}))
+    check checkFontFaces(root, PROJECT).len == 0
     removeDir(root)
 
 
