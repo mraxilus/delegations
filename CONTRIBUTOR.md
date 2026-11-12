@@ -411,10 +411,10 @@ judges its own.
 
 A page fails where a font face of the system draws a character beyond ASCII, or where a font
 face does not load. It also fails where text asks for 600 or more from a family with lighter
-font faces alone, since the browser then synthesises a bold. Each finding names the page and the
-element. The project keeps no reader of `cmap` and no judge of font faces. Its `system` verb
-declares `libbrotli1` where its pages ship `woff2`, because `koch drive` reads `woff2` through
-it.
+font faces alone, since the browser then synthesises a bold. Each finding names the page, and
+the element or the font face. The project keeps no reader of `cmap` and no judge of font faces.
+Its `system` verb declares `libbrotli1` where its pages ship `woff2`, because `koch drive` reads
+`woff2` through it.
 
 ## Tests are paramount
 
