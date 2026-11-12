@@ -2487,7 +2487,7 @@ names, else the working directory of the call.
 
 **`path` and `edit` judge only a file inside the repository.** A directory in no repository
 reads as the primary checkout, so a write there reaches both hooks. `insideRoot` then hands the
-file on whole, as an absolute path. `checkPathEdit` passes such a path, and `edit` returns
+file on whole, and `fileWritten` gives none for it. So `path` passes it, and `edit` returns
 before it reads the tree. A file outside the repository cannot reach a commit. `koch check`
 holds each path that the branch changed before the push, and `check-scope` holds them on the
 pull request.
@@ -2502,35 +2502,45 @@ reads each command, but it judges no path that the command writes.
 - Verified by `suites/test_hooks.nim`, for the scratch file of #847 as found. The suite also
   holds its domain: each form of branch passes the file, and judges a file inside the
   repository.
-- Verified by hand on 2026-11-12, by fake inputs to the built koch, before and after, on a
-  contributor branch and on a detached head. Each passes a scratch file, and refuses a file
-  inside the repository that its branch may not change.
+- Verified by hand on 2026-11-12, by fake inputs to the built koch on a contributor branch and
+  on a detached head. Each branch passes a scratch file, which `ba1986f98` refused.
 - Measured by hand on 2026-11-12, in a delegate container, with fake inputs to the built koch
   over this repository. `edit` takes 0.01 s for a scratch file, in each of three runs. The audit
   that it skips there takes from 12.5 s to 14.2 s, in three runs.
 
-**`path` and `edit` read the path that a write names in normal form, through its links.**
-`pathWritten` reads `file_path`, else the `notebook_path` that NotebookEdit sends. It drops `.`,
-`..` and a doubled slash, and resolves a relative path against the directory of the call.
-`pathReal` then resolves each symbolic link through the nearest part of the path that exists.
-So `<root>/./x`, `<root>//x`, `..` from any folder and a link to the root all read as the file
-that the file system writes. Git names the top of a checkout by its real path too, so
-`insideRoot` compares like with like.
+**`path` and `edit` read the path that a write names in normal form, through its links.** Both
+take these steps through `fileWritten`, which the suite calls too. `pathWritten` reads
+`file_path`, else the `notebook_path` that NotebookEdit sends. It drops `.`, `..` and a doubled
+slash, and resolves a relative path against the directory of the call. `pathReal` then resolves
+each symbolic link through the nearest part of the path that exists. `checkoutAt` gives the real
+path of the root, as git does, so `insideRoot` compares like with like.
 
+- Assumed: the Write tool and the Edit tool of Claude Code drop `..` as text before they write,
+  as `pathWritten` does. So `<root>/./x`, `<root>//x`, `..` from any folder and a link to the
+  root each read as the file that the tool writes. Verified by hand on 2026-11-12: with a link
+  `l` to `a/b`, the Write tool put `l/../t.txt` beside `l`, and not in `a`. The Edit tool changed
+  that same file, and the suite pins the reading.
+- Rejected: `..` read through the link before it, as the kernel reads it. The hook would then
+  judge a file that the Write tool never writes.
+- Rejected: a path compared as written. Then `<root>//x` reads as `/x`, outside the repository,
+  and `..` from a folder of the branch reaches each file of the repository.
 - Two forms read as outside: a symbolic link to a file not yet written, and a hard link.
   `koch check` refuses such a file before the push, and `check-scope` refuses it on the pull
   request.
-- Rejected: a path compared as written. Then `<root>//x` reads as `/x`, outside the repository,
-  and `..` from a folder of the branch reaches each file of the repository.
-- Cost: one read of the file system on each write, to resolve its links. Measured by hand on
-  2026-11-12, in two rounds of 50 runs. `koch hook path` takes from 13.1 ms to 13.7 ms with the
-  read, and from 13.3 ms to 13.5 ms without it. So the read costs less than the spread.
-- Verified by `suites/test_hooks.nim`, for the paths and the notebook of #883 as found. The suite
-  also holds its domain: a relative path, and a link to a directory and to a file. It holds a
-  path in normal form that a branch may change, and one that it may not.
+- Cost: a `stat` of each part that `pathReal` tries, then one `realpath`, on each write. Measured
+  by hand on 2026-11-12, on a delegate container with 4 processors, an Intel Xeon Processor at
+  2.10GHz. Each figure is the mean of 50 runs of the built `koch hook path`, in two rounds. A
+  scratch file outside the repository takes 9.0 ms and 9.9 ms at `3eee587bb`, and 7.4 ms and
+  7.9 ms at `18eafee60`. There `18eafee60` skips the git call for the branch. A new file inside
+  takes 14.3 ms and 13.7 ms, then 13.5 ms and 13.6 ms, so the reads cost less than the spread.
+- Verified by `suites/test_hooks.nim` and `suites/test_tree.nim`, for the paths, the notebook and
+  the root behind a link of #883 as found. They also hold a relative path, a link to a file, and
+  paths that a branch may and may not change.
 - Verified by hand on 2026-11-12, by fake inputs to the built koch on a contributor branch. It
-  refuses each form above, and a notebook at the top of the checkout. It passes a notebook in
-  the folder of the branch.
+  refuses `<root>/./x`, `<root>//x`, `..` from a folder inside or outside, a link to the root,
+  and a notebook at the top. It passes a notebook in the folder of the branch.
+- Verified by hand on 2026-11-12, by breaks in a scratch worktree at `18eafee60`. Each break of
+  a step fails one of the two suites by an assertion.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
