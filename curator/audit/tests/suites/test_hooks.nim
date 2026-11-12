@@ -700,6 +700,24 @@ suite "Hooks":
     check not isTurnWriting([Call(name: "Bash", command: issue & "labels -f 'labels[]=curator'")])
 
 
+  test "start prints headings of record branch works on, with line each opens on (#843)":
+    # Case as found: `GUIDE.md`, `How to build on a project`, asked delegate to read whole record,
+    #   and record of pga_visualiser holds about 93,000 tokens over 47 sections; task reads few.
+    check pathRecord(BRANCH) == "contributor/ronri/pga_benchmark/PROVENANCE.md"
+    check pathRecord("curator/probe/rings") == "curator/probe/PROVENANCE.md"
+    check pathRecord("curator/rules") == "curator/audit/PROVENANCE.md"  # checker is root work
+    check pathRecord("claude/x").len == 0  # outside grammar
+    let
+      record = "# Provenance\n\n| Field | Value |\n\n## Build\n\nText.\n\n```md\n## Quoted\n" &
+        "```\n\n## Open questions\n\n- One.\n"
+      text = contextStart(BRANCH, "## List\n\n1. one\n", "## List", record, @[])
+    check "Record `contributor/ronri/pga_benchmark/PROVENANCE.md`" in text
+    check "\n5: ## Build\n13: ## Open questions\n" in text  # each heading, line it opens on
+    check "## Quoted" notin text  # heading quoted in fence opens no section
+    check text.endsWith(LINE_CARRIED)  # carried list stays last
+    check "Record" notin contextStart(BRANCH, "## List\n", "## List", "", @[])  # none written
+
+
   test "transcript parse finds calls since last message of person":
     const transcript =
       "{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"do it\"}]}}\n" &
