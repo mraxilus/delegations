@@ -1,16 +1,12 @@
 # lojban_tagger
 
 A tagging and search system whose tags are lojban words. A parser reads each tag, and reduces it
-to the words of its tanru. The Architect selected each term and standard below before it was
-written.
+to the words of its tanru. The Architect selected each term below before it was written.
 
 ## Standards
 
-- **The Complete Lojban Language**, Logical Language Group, first edition 1997: `C` and `V`.
-  `C` is a consonant, and `V` is a vowel other than `y` (4.1). The forms are `CVC`, `CCV`,
-  `CVV`, `CVCC`, `CCVC`, `CVCCV` and `CCVCV` (4.4, 4.6). A `/` marks a medial pair that need
-  only be permissible, as in `CVC/CV`. The author is John Woldemar Cowan, and the same symbols
-  are free at `lojban.github.io/cll`.
+This project takes its symbols from The Complete Lojban Language, which the
+[root glossary](../../../GLOSSARY.md) names under Standards.
 
 ## Language
 

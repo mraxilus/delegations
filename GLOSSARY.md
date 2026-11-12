@@ -20,6 +20,11 @@ standard.
   at `rigidgeometricalgebra.org` and `conformalgeometricalgebra.org` expand them.
 - **NIF data format**, nim-lang, version 2027, at commit `a31513c6` of `nifspec`, 2026: `NIF`,
   from the title of `doc/nif-spec.md`. Nimony, the next compiler of Nim, holds its trees in it.
+- **The Complete Lojban Language**, Logical Language Group, first edition 1997: `C` and `V`.
+  `C` is a consonant, and `V` is a vowel other than `y` (4.1). The forms are `CVC`, `CCV`,
+  `CVV`, `CVCC`, `CCVC`, `CVCCV` and `CCVCV` (4.4, 4.6). A `/` marks a medial pair that need
+  only be permissible, as in `CVC/CV`. The author is John Woldemar Cowan, and the same symbols
+  are free at `lojban.github.io/cll`.
 - **Acronyms that a layman knows**, selected by the Architect: `3D`, `ID`, `JSON`, `URL`, `UI`,
   `RGB`, `RGBA`, `GIF`, `PNG`, `FOV`, `GL`, `GUI`, `DOM` and `fps`. Article V.9 keeps a layman
   as the test, and this list is the record of what passed it.

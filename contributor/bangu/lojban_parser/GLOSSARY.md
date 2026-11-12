@@ -5,9 +5,8 @@ them.
 
 ## Standards
 
-This project takes its symbols from CLL, which the glossary of
-[lojban_tagger](../lojban_tagger/GLOSSARY.md) names under Standards. A standard that two projects
-use belongs in the root glossary, so this glossary does not name it a second time.
+This project takes its symbols from CLL, which the [root glossary](../../../GLOSSARY.md) names
+under Standards.
 
 ## Language
 
