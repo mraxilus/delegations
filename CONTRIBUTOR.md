@@ -486,12 +486,12 @@ follows the cascade of each element, so `drive` holds what the audit cannot.
 ## Before you open a pull request
 
 - `nim r koch check` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs what CI runs. First come the checks that cost about a second, and
-  a finding there stops the run: `check-files`, `check-scope`, `check-commits` and
-  `check-drift`. Then come `check-types`, and the suites and driven checks of every project
-  whose code changed, which is yours. A pull request opened before it passes breaks the
-  process, whatever CI later says: the runner confirms, and it never discovers. Run it again
-  before every later push.
+  `origin/main`, then runs what CI runs, the static checks first, since they are cheap next to
+  the jobs that compile and test. A finding there stops the run: `check-files`, `check-scope`,
+  `check-commits` and `check-drift`. Then come `check-types`, and the suites and driven checks
+  of every project whose code changed, which is yours. A pull request opened before it passes
+  breaks the process, whatever CI later says: the runner confirms, and it never discovers. Run
+  it again before every later push.
 - **A change that touches only your three records compiles nothing**, and the static pass
   still checks every stamp. A change that a curator makes to the checker compiles the
   project of the checker, and never yours. The push to `main` and the weekly run compile what

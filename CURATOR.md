@@ -401,13 +401,13 @@ any other kind of file stays for a fix by hand.
 tree. Its body arrives from the event payload as `ROLE_BODY`, and its labels from the API as
 `ROLE_LABELS`. So only the runner can supply them.
 
-`check` runs the checks that cost about a second first, and a finding among them stops the
-run, except one that duty 3 holds apart.
+`check` runs the static checks first, because they are cheap next to the jobs that compile and
+test. A finding among them stops the run, except one that duty 3 holds apart.
 
-`check` costs minutes rather than the second that the static pass costs, whenever a changed
-project carries a `drive` verb. It then builds the page of that project and drives a real
-browser, exactly as the runner does. A change to `koch.nim`, to `koch.nim.cfg` or to
-`curator/audit/src/` selects `curator/audit` alone, because its suites are what read them.
+`check` costs minutes whenever a changed project carries a `drive` verb. It then builds the
+page of that project and drives a real browser, exactly as the runner does. A change to
+`koch.nim`, to `koch.nim.cfg` or to `curator/audit/src/` selects `curator/audit` alone,
+because its suites are what read them.
 A change to the source or the nimble file of `curator/knoller` selects `curator/audit` too.
 So a change to the checker never compiles a contributor project. Budget for the projects your
 branch touches, and for no others.
