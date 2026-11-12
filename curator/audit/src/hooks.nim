@@ -16,8 +16,8 @@
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
 ##     so both pass it unread, as Architect approved on #847. Both read file through
 ##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
-##     resolves (#883). So path reads where Write tool puts file, since tool too drops `..` as
-##     text, before link ahead of it resolves.
+##     resolves (#883). So path reads where write tool puts file, since each tool of
+##     `TOOLS_EDIT` too drops `..` as text, before link ahead of it resolves (assumed).
 ##   Hook that sees moment of skill names that skill, as Architect ruled on D2 of #870: `stop`
 ##     names `/sign-off`, `start` names `/sync` and `/triage`, `edit` names `/propose-term` and
 ##     `/record`, and `prompt` names `/rule`, `/triage` and `/merged`. Line is hint, never refusal.
@@ -253,9 +253,9 @@ proc pathReal*(path: string): string =
   ## Read path through each symbolic link in it, as file system writes it and as git names top
   ##   of checkout; path stays as given where file system refuses read.
   ##   Nearest part that exists resolves: file that exists resolves whole, new file its directory.
-  ##   Cost: `stat` of each part tried, then one `realpath`, for each write (PROVENANCE.md, Hooks
-  ##     on tool calls, has figures). Link to file not yet written, and hard link, read where
-  ##     path names them.
+  ##   Cost: up to two `stat` calls for each part tried, then one `realpath`, for each write
+  ##     (PROVENANCE.md, Paths of write hooks, has figures). Link to file not yet written,
+  ##     and hard link, read where path names them.
   var at = path
   while at.len > 1 and not (fileExists(at) or dirExists(at)): at = at.parentDir
   try: expandFilename(at) / path[at.len .. ^1].strip(trailing = false, chars = {'/'})
