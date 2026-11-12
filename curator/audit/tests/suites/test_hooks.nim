@@ -135,19 +135,20 @@ suite "Hooks":
     #   folder outside and link to root read as outside, so each passed; NotebookEdit names
     #   `notebook_path`, so hook judged directory of call in its place.
     proc refused(root: string, input: JsonNode, branch: string = BRANCH): seq[string] =
-      ## Read refusals of write, through steps `koch hook path` takes.
-      let
-        file = pathWritten(input, root).pathReal
-        checkout = checkoutAt(root, file.parentDir)
-      checkPathEdit(branch, insideRoot(checkout.get, file)).messages
+      ## Read refusals of write, through routine `koch hook path` and `koch hook edit` call.
+      let written = fileWritten(root, root, input)
+      if written.isNone: return
+      checkPathEdit(branch, written.get.path).messages
 
     # Lay out root, and scratch folder holding link to root and link to file inside it.
     let
       root = repoTemp()
+      other = repoTemp()
       scratch = createTempDir("delegations_", "_links")
       constitution = root / "CONSTITUTION.md"
       refusals_scope = @["Path outside branch scope `contributor/ronri/pga_benchmark/`."]
     defer: removeDir(root)
+    defer: removeDir(other)
     defer: removeDir(scratch)
     root.writeInto("CONSTITUTION.md", "# Constitution\n")
     createSymlink(root, scratch / "root")
@@ -163,6 +164,9 @@ suite "Hooks":
       check pathWritten(%*{"file_path": written}, "/w") == constitution
       check refused(root, %*{"file_path": written}) == refusals_scope
     check pathWritten(%*{"file_path": "sub/../CONSTITUTION.md"}, root) == constitution
+    # Write tool drops `..` as text before kernel reads link before it, so hook does too.
+    check pathWritten(%*{"file_path": scratch & "/root/../x.md"}, "/w").pathReal == scratch / "x.md"
+    check fileWritten(root, root, %*{"file_path": scratch & "/root/../x.md"}).isNone
 
     # Resolve link to place file system writes: link to directory for new file, link to file whole.
     check pathReal(scratch / "root" / "new.md") == root / "new.md"
@@ -179,6 +183,14 @@ suite "Hooks":
     check refused(root, %*{"notebook_path": root / "contributor/ronri/pga_benchmark/a.ipynb"})
       .len == 0
     check pathWritten(%*{"file_path": "a.md", "notebook_path": "b.ipynb"}, "/w") == "/w/a.md"
+
+    # Read checkout and path inside it, which `path` judges and `edit` audits; none outside.
+    let inside = some((checkout: root, path: "CONSTITUTION.md"))
+    check fileWritten(root, root, %*{"file_path": root & "//CONSTITUTION.md"}) == inside
+    check fileWritten(scratch / "root", root, %*{"file_path": constitution}) == inside
+    check fileWritten(root, root, %*{"file_path": scratch / "x" / "y.md"}).isNone  # no repository
+    check fileWritten(scratch / "root", root, %*{"file_path": scratch / "x.md"}).isNone
+    check fileWritten(root, root, %*{"file_path": other / "a.md"}).isNone  # other repository
 
     # Domain: path in normal form inside folder of branch passes, and curator stays out of code.
     let code = root & "/./contributor/ronri/pga_benchmark/src/a.nim"
