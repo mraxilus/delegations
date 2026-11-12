@@ -10,19 +10,24 @@
 ##     Control page is written to `build/font-faces/control.html`, before project's `drive`.
 ##     Project's `drive` reads each page it builds, and control page as page `control`, with
 ##       one collector, and writes `build/font-faces/written.json`.
-##     Once `drive` passes, that file resolves into `found.json` beside it, which is judged.
+##     Once `drive` passes, that file resolves into `found.json` beside it, and both are judged.
 ##   Project writing no `written.json` is finding: rule asks every project with pages for it,
 ##     and verdict over no file would pass pages nobody read.
 ##
-##   Control page holds Chinese numerals one to five, each in one kind of place text stands:
-##     paragraph, placeholder of field, `::before`, SVG text, and text script writes on load.
-##     No font face of store maps any of them, which suite holds to rows of `assets.nim`, so
-##     each is found wherever collector reads its place, and numeral missing names place
-##     collector skips. Script builds its numeral from codepoint, so no literal stands for
-##     reader of source alone.
+##   Control page holds numerals one to five, each as ASCII digit then Chinese numeral in one
+##     string, in one kind of place text stands: paragraph, placeholder of field, `::before`,
+##     SVG text, and text script writes on load.
+##     No font face of store maps any Chinese numeral, which suite holds to rows of
+##       `assets.nim`, so each is found wherever collector reads its place, and numeral missing
+##       names place collector skips.
+##     `characters` of `found.json` hold codepoints past ASCII alone, so digit never reaches
+##       them, and verdict reads runs of control page in `written.json` instead: run holding
+##       numeral holds its digit, or digit missing names place where collector drops ASCII.
+##       Digit elsewhere proves nothing of its place, as source of style and script holds digits.
+##     Script builds its string on load, so no literal of numeral stands for reader of source.
 ##   Verdict: finding for each character page other than control draws from font face of
-##     system, each run drawn in bold browser synthesises, each font face browser refused, and
-##     each numeral control page lacks.
+##     system, each run drawn in bold browser synthesises, each font face browser refused, each
+##     numeral control page lacks, and each digit run of its numeral lacks.
 ##
 ##   Input, `written.json`, maps each page to three lists:
 ##     `runs`: each string page draws, ASCII included, as `element`, `stack` (computed
@@ -57,8 +62,10 @@
 ##     them. Italic that page ships is later step, and so is oblique browser synthesises.
 ##   Cost: collector writes no `font-synthesis`, so page turning synthesis off still gets finding
 ##     for bold; its text then draws lighter than it asks.
-##   Cost: bold is judged only in runs collector writes, and no place of control page holds
-##     ASCII. So collector writing runs past ASCII alone passes, and hides bold of ASCII text.
+##   Cost: every string of control page mixes ASCII with numeral, so collector dropping string of
+##     ASCII alone, and keeping mixed string whole, passes, and hides bold of such text.
+##   Cost: collector writing one string as two runs gets finding at each place, though bold check
+##     would read both runs.
 ##   Cost: character is resolved alone, as `cmap` maps it. Browser picks font face per cluster,
 ##     so combining mark whose base font face lacks it can draw from font face this does not name.
 ##   Cost: text script writes only once reader acts stands in no place of control page.
@@ -104,26 +111,29 @@ const
     (0x56DB, "SVG text"),
     (0x4E94, "text script writes on load"),
   ]
-    ## Chinese numerals one to five, each with kind of place control page holds it in.
+    ## Chinese numerals one to five, each with kind of place control page holds it in, after ASCII
+    ##   digit of its value.
   TEMPLATE_CONTROL = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Control of font faces</title>
-<style>#before::before { content: "\$3"; }</style>
+<style>#before::before { content: "3\$3"; }</style>
 </head>
 <body>
-<p id="paragraph">&#x$1;</p>
-<input id="placeholder" placeholder="&#x$2;">
+<p id="paragraph">1&#x$1;</p>
+<input id="placeholder" placeholder="2&#x$2;">
 <p id="before"></p>
-<svg width="48" height="48"><text id="svg" x="0" y="32">&#x$4;</text></svg>
+<svg width="48" height="48"><text id="svg" x="0" y="32">4&#x$4;</text></svg>
 <p id="script"></p>
-<script>document.getElementById("script").textContent = String.fromCodePoint(0x$5);</script>
+<script>document.getElementById("script").textContent = "5" + String.fromCodePoint(0x$5);</script>
 </body>
 </html>
 """
-    ## Control page; `$n` stands for hex digits of numeral `n`. References and escapes keep
-    ##   source ASCII, and script builds its numeral, so it stands only once script runs.
+    ## Control page; `$n` stands for hex digits of numeral `n`, after ASCII digit `n` in one
+    ##   string. Digit stands first, since CSS escape `\4E09` would read digit after it as hex.
+    ##   References and escapes keep source ASCII, and script builds its string, so it stands only
+    ##   once script runs.
 
 
 func toFamilies(stack: string): seq[string] =
@@ -287,7 +297,8 @@ proc toFound*(written: JsonNode, directory: string): JsonNode =
 
 
 func pageControl*(): string =
-  ## Render control page, each numeral of `NUMERALS_CONTROL` in its kind of place.
+  ## Render control page, each numeral of `NUMERALS_CONTROL` after its ASCII digit, in its kind
+  ##   of place.
   TEMPLATE_CONTROL % NUMERALS_CONTROL.mapIt(it[0].toHex(4))
 
 
@@ -338,6 +349,23 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
       )
 
 
+func toVerdictDigits(written: JsonNode, path: string): seq[Finding] =
+  ## Judge runs `written` holds for control page: run holding numeral holds ASCII digit of its
+  ##   value too, which `found.json` never holds (header); each finding names `path`.
+  ##   Place collector skips is numeral `toVerdict` reports, so it takes no second finding here.
+  let runs = written{PAGE_CONTROL}{"runs"}.getElems.mapIt(
+    it{"codepoints"}.getElems.mapIt(it.getInt)
+  )
+  for index, (numeral, place) in NUMERALS_CONTROL:
+    let digit = ord('1') + index  # ASCII digit of numeral's value
+    if not runs.anyIt(numeral in it) or runs.anyIt(numeral in it and digit in it): continue
+    result.add finding(
+      path, 0,
+      "Collector writes each string page draws whole, ASCII included (CONTRIBUTOR.md, Pages " &
+        "and assets); got `" & digit.toNotation & "` in " & place & " unwritten.",
+    )
+
+
 proc writeControl*(root, project: string) =
   ## Write control page into folder of font faces of `project`, where its `drive` reads it.
   let folder = root / project / DIRECTORY_FONT_FACES
@@ -346,7 +374,7 @@ proc writeControl*(root, project: string) =
 
 
 proc checkFontFaces*(root, project: string): seq[Finding] =
-  ## Resolve `written.json` of `project`, write `found.json` beside it, and judge it; project
+  ## Resolve `written.json` of `project`, write `found.json` beside it, and judge both; project
   ##   writing none is finding (header).
   let
     folder = root / project / DIRECTORY_FONT_FACES
@@ -357,9 +385,10 @@ proc checkFontFaces*(root, project: string): seq[Finding] =
       "Drive of project with pages writes what its collector read, control page included " &
         "(CONTRIBUTOR.md, Pages and assets); got no file.",
     )]
-  var found: JsonNode
+  var written, found: JsonNode
   try:
-    found = parseFile(folder / FILE_WRITTEN).toFound(folder)
+    written = parseFile(folder / FILE_WRITTEN)
+    found = written.toFound(folder)
     writeFile(folder / FILE_FOUND, found.pretty & "\n")
   except IOError, OSError, ValueError, KeyError:
     return @[finding(
@@ -367,4 +396,4 @@ proc checkFontFaces*(root, project: string): seq[Finding] =
       "Written file resolves where each page holds runs, rules and refused font faces, and " &
         "each file of rule reads; got `" & getCurrentExceptionMsg() & "`.",
     )]
-  found.toVerdict(path)
+  found.toVerdict(path) & written.toVerdictDigits(path)
