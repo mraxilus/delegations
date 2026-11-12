@@ -1569,26 +1569,32 @@ So rules propagation compiles nothing, while every stamp is still checked.
   every project in a repository younger than its window, and nothing over a window without a
   commit.
 
-**The source of a project selects each project that imports it by a relative path.** A change to
-the `src/` folder or the nimble file of a project selects each importer, and the importers of
-those, until none is added. An importer compiles the source that it imports, so a change there can
-break it. The plan reads each relative `import` and `from` of each Nim source, and resolves the
-path against the folder of that source. So a project that adds an import is selected from then
-on, with no list to keep.
+**A change inside a folder that another project imports selects that importer.** An importer
+compiles what it imports, so a change there can break it. The folder is the first one below the
+project, as `src` or `tools`, since a module there can import any other module of that folder. A
+change to the nimble file of the project selects each of its importers too. That file names the pin
+and the packages that they compile with. The importers of an importer are selected in turn, until
+none is added.
 
-- Measured on 2026-11-12: `lojban_tagger` imports `lojban_parser`, and `curator/assayer` and
-  `curator/audit` import knoller. No other project imports another one.
-- Rejected: knoller alone, by the text of its path. A change to the parser then compiled no suite
-  of the tagger, and a break of the tagger reached `main` that way (#878).
-- Rejected: the importers of a project for each change to any of its code. No importer reads a
-  suite or a tool of the project, so that compiles more for no gain.
-- Cost: an importer turns red on a change to the surface of the project that it imports, until it
+The plan reads each relative `import` and `from` of each Nim source, and resolves the path against
+the folder of that source. A statement on several lines, behind a `when` guard, or with a quoted
+path counts. A comment, or a string outside such a statement, imports nothing. So a project that
+adds an import is selected from then on, with no list to keep.
+
+- Measured on 2026-11-12: `lojban_tagger` imports `src` and `tools` of `lojban_parser`, and
+  `curator/assayer` and `curator/audit` import `src` of knoller. No other project imports another
+  one.
+- Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
+- Rejected: `src` alone, since the tools of the tagger import the tools of the parser.
+- Rejected: the importers of a project for each change to any of its code. A suite of the parser is
+  no folder that an importer imports, so that compiles more for no gain.
+- Cost: an importer turns red on a change to the surface of the folder that it imports, until it
   follows. So that project keeps the old name while its importer moves.
 - Cost: the plan reads the text of each import. So a path that a macro builds, or an `include` of
   another project, selects no importer.
-- Verified by `suites/test_plan.nim`, for the case as found: a change to the parser selects the
-  tagger, and an importer of the tagger too. A suite or a record of the parser selects no
-  importer.
+- Verified by `suites/test_plan.nim`, for each case as found. A change to the source or the tools
+  of the parser selects the tagger, and an importer of the tagger too. Each form of import counts,
+  and a suite or a record of the parser selects no importer.
 
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
@@ -1969,8 +1975,8 @@ before `; got `, or before the closing period. So `koch check` prints
   source before its nimble file, and an older branch keeps a stable key. Verified by
   `suites/test_hooks.nim`: a commit of the source of knoller alone builds the binary again.
 - A change to the source or the nimble file of knoller counts as checker for drift. It selects
-  knoller for test, and each project that imports knoller, as the source of any project does
-  (Scoped checks). A change to a suite of knoller selects knoller alone. Verified by
+  knoller for test, and each project that imports knoller, as a folder that another project
+  imports does (Scoped checks). A change to a suite of knoller selects knoller alone. Verified by
   `suites/test_plan.nim` and `suites/test_base.nim`.
 - Knoller pins the driver version, and `checkKnoller` reports a pin that differs. Verified by
   `suites/test_toolchain.nim`.
