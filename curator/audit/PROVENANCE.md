@@ -563,10 +563,10 @@ repository issue 671.
   whole check inside koch, which would bring Node, a browser and every form of page into koch.
 - **The control page proves the collector on each run.** It holds the numerals one to five, each
   in one kind of place. These are a paragraph, the placeholder of a field, a `::before`, SVG text,
-  and text that a script writes on load. No font face of the store maps a Chinese numeral, so
-  each one that the collector reads is found. A numeral that is missing names the place that the
-  collector skips. The script builds its string on load, so only a reader of the live page finds
-  it.
+  and text that a script writes on load. No font face of the store maps any of the five
+  numerals, so each one that the collector reads is found. A numeral that is missing names the
+  place that the collector skips. The script builds its string on load, and the numeral from its
+  codepoint, so only a reader of the live page finds it.
 - **Each place holds the ASCII digit of its value, then its numeral, in one string.** So the
   `::before` holds `3三`. The `characters` of `found.json` hold codepoints past ASCII alone, and a
   digit never reaches them. The check of the digits reads the runs of the control page in
@@ -612,8 +612,10 @@ repository issue 671.
 - Cost: each string of the control page mixes ASCII with a numeral. So a collector that drops a
   string of ASCII alone, and keeps a mixed string whole, passes, and hides the bold of that text.
 - Cost: a collector that writes one string as two runs gets a finding at each place, though it
-  writes the ASCII. Each collector writes each string of the control page in one run, as its
-  source reads at `ba1986f9`, 2026-11-12.
+  writes the ASCII. No collector writes so in the drives verified below.
+- Cost: one run that holds the strings of several places serves each of them, in both checks of
+  the control page. The collector of pga_visualiser writes two such runs, for text written later,
+  and each holds all ten characters.
 - Cost: text that a script writes only once a reader acts stands in no place of the control
   page, and the collectors differ there. `coverage.nim` holds such text where a source writes
   it, against every font face that the project ships.
@@ -635,12 +637,10 @@ repository issue 671.
 - Verified by `suites/test_projects.nim`, which drives a project of its own through `runDriven`.
   The control page stands before the verb runs, no verdict follows a verb that failed, and a
   verb that writes no file is a finding. A verb that drops one digit gets one finding.
-- Verified by `koch drive` of pga_benchmark in Chromium 153.0.8010.12, 2026-11-12, at
-  `c1d60e79`. Its collector wrote each string of the control page in one run, as `3三` in the
-  `::before`. `found.json` held each numeral, and the verdict gave no finding.
-- Verified in Chromium, 2026-10-23, on a control page that held the numerals alone. A scratch
-  reader that reads as a collector does found each numeral in its place. With `::before` left
-  out, the verdict gave one finding, which names `::before`.
+- Verified by `koch drive` of each project with a collector, in Chromium 153.0.8010.12, on
+  2026-11-12 over the code of `6c894c01`. These are lojban_parser, dance_ontology,
+  pga_benchmark and pga_visualiser. Each collector wrote each string of the control page in one
+  run, as `3三` in the `::before`, and each verdict gave no finding.
 - Verified by a run on font faces of the store, 2026-10-22. Noto Sans and Noto Sans Math drew
   "é", "→" and "∧" down one stack. "é" after `Inter` was reported, and so was an emoji in a
   stack of Noto Sans alone.
