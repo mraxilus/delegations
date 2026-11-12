@@ -3275,3 +3275,7 @@ pull requests sat on both sides, so the subject of a call does not say which met
   `design/README.md`, `simulation/README.md` and `simulation/verdicts.md` of `dance_ontology`
   added to `PATHS_ENGLISH`, `nim r koch check-files` reported 5 findings, all in `verdicts.md`.
   Until a widening lands, that prose holds Article VI.8 by reading alone.
+- Whether drift should cover the root `GLOSSARY.md`. The acronym check reads its standards and
+  terms as words that a name may take (`exemptions`), so it acts as a rule of content. Neither
+  the stamp nor drift reads it, so a standard that `main` drops reaches no older branch before
+  the merge. The review of #843 named this and proposed no change.
