@@ -179,6 +179,31 @@ suite "Plan":
     check projectsTest(directories, ["koch.nim"], importers) == @[DIRECTORY_AUDIT]  # driver alone
 
 
+  test "source of project selects each project importing it by path, and their importers":
+    # Case as found (#832): lojban_tagger imports lojban_parser by relative path, and change to
+    #   parser compiled no suite of tagger, so break of tagger merged unseen (#878).
+    let
+      parser = CONTRIBUTOR & "/ronri/parser"
+      tagger = CONTRIBUTOR & "/ronri/tagger"
+      reader = CONTRIBUTOR & "/ronri/reader"
+      tree = @[
+        entry(parser & "/parser.nimble", TEXT_NIMBLE),
+        entry(parser & "/src/parser.nim", "import ./parser/[nif]\n"),
+        entry(tagger & "/tagger.nimble", TEXT_NIMBLE),
+        entry(tagger & "/src/tagger/runs.nim", "import std/strutils, ../../../parser/src/parser\n"),
+        entry(reader & "/reader.nimble", TEXT_NIMBLE),
+        entry(reader & "/src/reader.nim", "from ../../tagger/src/tagger/runs import nil\n"),
+      ]
+    check tree.jobs([parser & "/src/parser/nif.nim"]).mapIt(it.directory) ==
+      @[parser, reader, tagger]  # importer of importer too
+    check tree.jobs([parser & "/parser.nimble"]).mapIt(it.directory) ==
+      @[parser, reader, tagger]  # nimble file names pin
+    check tree.jobs([tagger & "/src/tagger/runs.nim"]).mapIt(it.directory) == @[reader, tagger]
+    check tree.jobs([parser & "/tests/suites/test_nif.nim"]).mapIt(it.directory) ==
+      @[parser]  # suite alone, which no importer reads
+    check tree.jobs([parser & "/PROVENANCE.md"]).len == 0  # record
+
+
   test "path inside no project selects nothing by itself":
     check projectsTest(DIRECTORIES, ["CONSTITUTION.md"]).len == 0  # rules reach projects by stamp
     check projectsTest(DIRECTORIES, ["README.md", "LICENSE.md"]).len == 0  # root prose
