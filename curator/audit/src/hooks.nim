@@ -1409,6 +1409,8 @@ func checkMessage*(
 
 func contextStart*(branch, contributor, heading_carried: string; drift: seq[Finding]): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, list.
+  ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
+  ##   that shows them, so start asks for new stamp only where finding does.
   let parsed = branch.parseBranch
   var lines: seq[string]
   if parsed.isNone:
@@ -1420,8 +1422,9 @@ func contextStart*(branch, contributor, heading_carried: string; drift: seq[Find
     lines.add "Read first: CONSTITUTION.md, STYLE.md, GLOSSARY.md, then " & prompt &
       ", then GUIDE.md."
   if drift.len > 0:
-    lines.add "Base gained charter or checker your branch lacks; merge `origin/main` and " &
-      "re-stamp (`check-drift`). " & LINE_SYNC
+    lines.add "Base changed charter or checker since this branch forked; read each change " &
+      "below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
+    for f in drift: lines.add "  " & f.render
   lines.add "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` once done, " &
     "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
   lines.add ""

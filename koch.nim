@@ -78,7 +78,7 @@ Verbs:
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
   check-commits  commits since base: subject form, scope, test before fix, body, record apart
-  check-drift    charter or checker that base gained and branch lacks
+  check-drift    each charter section and checker path base changed since branch forked
   check-schemas  each folder of protobuf schemas branch changed, against version base shipped
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
   hook           answer one hook event named as argument, from its JSON or refs on stdin

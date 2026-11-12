@@ -89,7 +89,7 @@ func stamp*(rules: openArray[string]): string =
   rules.digest.toHex(16).toLowerAscii
 
 
-func textStamped(path, source: string): string =
+func textStamped*(path, source: string): string =
   ## Read rules document as stamp digests it: every part but each section of process
   ##   `SECTIONS_PROCESS` lists for path.
   for part in source.sections:
