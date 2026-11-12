@@ -28,8 +28,8 @@
 ##     env: `ROLE_BODY` from event payload, and `ROLE_LABELS` from API as JSON array of label
 ##     names. That is why `check` leaves it out: local run has no pull request to read.
 ##
-##   `check` compiles only projects whose code changed, since static pass costs about second
-##     and suites cost minutes (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
+##   `check` compiles only projects whose code changed, since static pass is cheap next to
+##     suites that compile and test (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
 ##     and weekly run do same against their own base, so nothing compiles every project
 ##     (CURATOR.md duty 11). Matrix runs each on its own pin, as `check` does locally:
 ##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
@@ -381,8 +381,9 @@ proc run(options: Options): int =
   var found: seq[Finding]
   case options.command
   of "check":
-    # Checks costing about second run first, and any finding among them stops run before
-    #   types, suites and drive, which cost minutes and run again once finding is fixed.
+    # Static checks run first, since they are cheap next to types, suites and drive, which
+    #   compile and test; any finding among them stops run before those, which run again once
+    #   finding is fixed.
     #   Cost: suite failure shows only after static pass is clean.
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
