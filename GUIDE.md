@@ -196,8 +196,10 @@ network for every command, so a project with no packages carries no lock and ski
 
 Every later delegate:
 
-1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code. Take the code in the
-   order that the bootstrap diagram of the umbrella module gives.
+1. Read the headings of `PROVENANCE.md`, then each section that your work touches, and Open
+   questions. The start hook prints those headings, each with the line where it opens. Then
+   read `GLOSSARY.md`, then the code. Take the code in the order that the bootstrap diagram of
+   the umbrella module gives.
 2. `nim r koch test contributor/<domain>/<project>` must be green before you start.
 3. `Rules stamp stale` means that a rule of content changed after the last audit of this
    project. The curator re-audits every project in the same pull request as such a change, so

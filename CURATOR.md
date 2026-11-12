@@ -49,7 +49,10 @@ Every rule below serves it:
    you too, wherever this file does not say otherwise.
 3. `GUIDE.md`, the how-to that every role shares.
 4. This file to the end.
-5. `curator/audit/PROVENANCE.md` for the design of the checker as it is now.
+5. The headings of `curator/audit/PROVENANCE.md`, each section that your work touches, and Open
+   questions (`GUIDE.md`, How to build on a project). That record holds the design of the
+   checker as it is now. On a branch of one curator project, read the record of that project
+   the same way.
 
 ## Repository map
 

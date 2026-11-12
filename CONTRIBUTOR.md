@@ -16,9 +16,10 @@ merge, never touch `main`, and never write outside your project.
    toolchain, dependencies, the glossary, the record, and what to report. Every role reads it,
    and the stamp covers each of its sections except the sections of process.
 5. `contributor/<domain>/README.md` for the theme of the domain. Then your project's
-   `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, where they exist. `PROVENANCE.md`
-   describes the design as it is now, so read it before the code, and correct it where the
-   code disagrees.
+   `README.md` and `GLOSSARY.md`, where they exist. Then the headings of its `PROVENANCE.md`,
+   each section that your work touches, and Open questions (`GUIDE.md`, How to build on a
+   project). The record describes the design as it is now, so read it before the code, and
+   correct it where the code disagrees.
 6. `curator/probe/` is a complete worked example of the project shape: nimble file, source,
    matrix tests, provenance, glossary. `curator/audit/tests/` is a larger suite.
 
