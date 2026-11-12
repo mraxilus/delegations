@@ -107,8 +107,9 @@ each job carries the name of the koch verb that it runs:
   `fix` follows a `test` of the same scope, with nothing between them. A body is in sentence
   case, with one sentence to a line. `PROVENANCE.md` travels in a commit of its own, with no
   file beside it but Markdown.
-- `check-drift`: the branch carries the charter and the checker as `main` now holds them. A stamp
-  that a charter change falsified after the branch forked is then caught before the merge.
+- `check-drift`: the branch carries the charter and the checker as `main` now holds them. Its
+  finding names each section of the charter that changed after the branch forked. It asks for a
+  new stamp only where the stamp moved.
 - `summarize`: the gate that `check-files`, `test`, `check-types`, `drive` and `check-drift`
   report to, and one of the required checks. `check-scope` and `check-commits` are required
   checks of their own.

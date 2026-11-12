@@ -3,8 +3,8 @@
 How-to for every delegate: curator, contributor or coordinator. Nothing here binds on its own.
 What binds is in `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md`, and in
 `CURATOR.md` and `COORDINATOR.md`. A section here binds where one of those documents points at
-it. The stamp covers this file too, so a change here re-audits every project, as a change to
-the rules it carries should.
+it. The stamp covers each section of this file except the sections of process. So a change to a
+rule of content here re-audits every project, as it should.
 
 ## Simplified Technical English
 
@@ -199,9 +199,9 @@ Every later delegate:
 1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code. Take the code in the
    order that the bootstrap diagram of the umbrella module gives.
 2. `nim r koch test contributor/<domain>/<project>` must be green before you start.
-3. `Rules stamp stale` means that the charter changed after the last audit of this project.
-   The curator re-audits every project in the same pull request as a charter change, so this
-   appears only where your branch is older than one. `CONTRIBUTOR.md`, Before you open a
+3. `Rules stamp stale` means that a rule of content changed after the last audit of this
+   project. The curator re-audits every project in the same pull request as such a change, so
+   this appears only where your branch is older than one. `CONTRIBUTOR.md`, Before you open a
    pull request, gives the steps under `check-drift`. Paste the new stamp in a `docs` commit of its
    own.
 4. Work in small commits. Update `PROVENANCE.md` in the same delivery as each design change,
@@ -350,9 +350,9 @@ you do it.
 **Answer a request for status from a fresh read of the open items of your role.** Sort them
 as `COORDINATOR.md`, The queue, sorts them, and give each a link and what it waits for. Order
 the ready pull requests so that each merges clean: an earlier stacked branch goes first.
-Contributor work goes before a change to the charter, since that change moves the stamp of
-every open branch. Then name what you still owe. `/triage all` reads every open item of the
-repository.
+Contributor work goes before a change to the charter, since `check-drift` then fails every
+open branch until it merges that change. Then name what you still owe. `/triage all` reads every
+open item of the repository.
 
 ### The sign-off
 

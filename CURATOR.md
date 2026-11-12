@@ -63,8 +63,8 @@ Every rule below serves it:
 | `GLOSSARY.md` | The words of the repository itself | Architect selects, curator writes |
 | `CURATOR.md` | This file: opening prompt for curator delegates | curator |
 | `COORDINATOR.md` | Opening prompt for the coordinator delegate | curator |
-| `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
-| `GUIDE.md` | Shared how-to, and the rules the constitution points here, stamped | curator |
+| `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, content stamped | curator |
+| `GUIDE.md` | Shared how-to, and rules the constitution points here, content stamped | curator |
 | `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <verb>` | curator |
 | `.gitignore`, `.gitattributes` | Artifacts and checkouts out, LF endings | curator |
@@ -139,9 +139,14 @@ and the shared allowance. This section adds only what differs for a curator.
 ## Duties
 
 1. **Rules change.** `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md`, `GUIDE.md` and
-   `CONTRIBUTOR.md` form the charter, which is stamped into the `PROVENANCE.md` of every
-   project, in the `Rules` row. Change one, and the audit fails on every project until you
-   re-stamp.
+   `CONTRIBUTOR.md` form the charter. The stamp in the `Rules` row of each `PROVENANCE.md` reads
+   every section of the charter except the sections of process. `SECTIONS_PROCESS` in
+   `curator/audit/src/provenance.nim` lists those. Change a stamped section, and the audit
+   fails on every project until you re-stamp. An edit of a section of process moves no stamp,
+   and `check-drift` still names it to each older branch.
+
+   A new or renamed `##` heading stays stamped until you list it. List a section of process in
+   the pull request that writes it. A listed heading that its document lacks is a finding.
 
    Do all of this in the same pull request. Read the diff, and re-audit every project
    against each changed rule. Apply what the rule now demands in the records, which duty 11
@@ -255,7 +260,8 @@ and the shared allowance. This section adds only what differs for a curator.
 
     A rule written in two prompts is a copy that drifts, so write it once and point at it.
     `BYTES_PROMPT` guards runaway growth and nothing finer. Remember that `CONTRIBUTOR.md` is
-    stamped: any edit, even a typo, re-stamps every project (duty 1).
+    stamped apart from its sections of process. An edit of any other section, even a typo,
+    re-stamps every project (duty 1).
 
 11. **Never** write code inside a contributor project, create a contributor project, or
     resolve a contributor's open question by an edit to their project. Answer it by a change
@@ -349,8 +355,9 @@ open pull request stale on each merge, which costs more than it saves at this re
 merge rate.
 
 The `check-drift` check is the narrow form of the same rule. It reports only where the base
-gained a charter document or a checker, which is where staleness makes green false. It
-reaches the merge through the `summarize` gate.
+changed a charter document or the checker. A change of the checker or of a rule of content can
+make green false, and a change of process changes what a delegate does. It reaches the merge
+through the `summarize` gate.
 
 ## Checks reference
 
@@ -367,7 +374,7 @@ alone.
 | `check-types` | projects with `package.json` and lock | `npm ci`, then that project's `types` |
 | `check-scope` | changed paths | branch grammar; project paths inside scope |
 | `check-commits` | commits since base | subject and scope; test before fix; body; record apart |
-| `check-drift` | paths base gained | branch carries base's charter and checker |
+| `check-drift` | charter and checker base changed | each changed section of charter, and its diff |
 | `check-schemas` | schemas changed, and base | each against the version base shipped |
 | `check-role` | a pull request's body and labels | opening line and label are the branch's role |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
@@ -379,7 +386,7 @@ alone.
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
 | `list-packages` | koch, and projects with a `system` verb | prints OS packages to install |
 | `list-projects` | changed paths, pins | projects whose code changed, as JSON for the matrix |
-| `stamp` | charter documents | prints the stamp; `--write` sets every `Rules` row to it |
+| `stamp` | charter, except its process | prints the stamp; `--write` sets every `Rules` row to it |
 
 Every verb that takes projects reads the one named, else `--recent`, else `--all`, else the
 projects whose code changed. A verb refuses an option or an argument that it does not read.

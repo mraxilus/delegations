@@ -14,7 +14,7 @@ merge, never touch `main`, and never write outside your project.
 3. `GLOSSARY.md` at the root: the words of the repository itself, which this file uses.
 4. This file to the end, then `GUIDE.md`. The guide covers the English, the queue, the
    toolchain, dependencies, the glossary, the record, and what to report. Every role reads it,
-   and the stamp covers it.
+   and the stamp covers each of its sections except the sections of process.
 5. `contributor/<domain>/README.md` for the theme of the domain. Then your project's
    `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, where they exist. `PROVENANCE.md`
    describes the design as it is now, so read it before the code, and correct it where the
@@ -213,7 +213,7 @@ Before any code:
 
 1. Create `contributor/<domain>/<project>/`.
 2. Write `PROVENANCE.md` first. Open it with the header table in `GUIDE.md`. `Rules` is the
-   stamp of the charter, which `nim r koch stamp` prints at the repository root.
+   stamp of the rules for content, which `nim r koch stamp` prints at the repository root.
 3. Write `GLOSSARY.md`: a `# <project>` heading, one sentence on what the project is, then
    `## Standards`, then `## Language`. Add a term or a standard only after the Architect
    selects it, and never in advance.
@@ -495,11 +495,11 @@ follows the cascade of each element, so `drive` holds what the audit cannot.
   still checks every stamp. A change that a curator makes to the checker compiles the
   project of the checker, and never yours. The push to `main` and the weekly run compile what
   changed as well, so your suites run when your code moves.
-- **`check-drift` fails where the rules or the checker moved on `main` after you branched.**
-  Your stamp then claims a charter that no longer exists, and a merge would redden `main`.
-  Merge `origin/main`, read the diff of the charter, re-audit your project against each change,
-  re-stamp, and push. Only the charter and the checker count, so another project's code that
-  moves underneath you will not stop you. The skill `sync` points here.
+- **`check-drift` fails where the charter or the checker moved on `main` after you branched.**
+  Its finding names each section of the charter that changed, and the command that shows the
+  change. Read each change, then merge `origin/main`. Where the finding asks for it, re-audit
+  your project against each change and re-stamp before you push. Only the charter and the
+  checker count, so the code of another project will not stop you. The skill `sync` points here.
 - **Your pull request clears each finding that a new check left in your project.** A curator
   lands a check once the rest of the tree is clean, and a review finding on your project quotes
   what it found. Those findings fail your branch, and a branch that changes their lines, and
