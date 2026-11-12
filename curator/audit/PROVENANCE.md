@@ -341,8 +341,41 @@ curator-only edit touches no project.
   across Nim versions.
 - Cost: it is a change detector and not a signature, so a collision needs an adversary.
 - Verified by `suites/test_provenance.nim` for determinism, one-byte, order and boundary
-  sensitivity, and CRLF invariance. Verified by `suites/test_audit.nim`: one byte in any rules
-  document goes stale in every project, and one byte in CURATOR.md in none.
+  sensitivity, and CRLF invariance.
+
+**The stamp reads every section of the five documents except the sections of process, as the
+Architect ruled (D1 d of #843).** `SECTIONS_PROCESS` in `provenance.nim` lists them by document
+and heading line. A section of process says what a delegate does, and never what a project
+holds. So its edit binds no project, and moves no `Rules` row. `check-drift` still names it to
+each older branch, because a delegate forgets (Drift).
+
+The list names the process, and not the content, so it fails closed. A new or renamed heading
+stays stamped until a curator lists it. Boundaries and Glossary process stay stamped whole,
+because each holds rules of content beside its process. A listed heading that its document
+lacks is a finding at that document, so a rename leaves no dead row. A static assertion holds
+each row to a rules document and a `## ` heading.
+
+- The stamp cuts each document through `sections` in `markdown.nim`, which skips fenced code.
+  Fences in GUIDE.md quote `## Standards`, `## Language` and `## Sign-off`, so a reader blind to
+  fences would end Glossary process at the first of them. `section` of the checker reads the
+  same cut, and matches a heading as the whole line.
+- CONSTITUTION.md, STYLE.md and EXAMPLES.md list none, so they digest as before.
+- Rejected: a list of the sections of content. A new or renamed heading of content would then
+  move no stamp and give no finding.
+- Rejected: a move of the sections of content into a stamped file of their own. The review of
+  #843 counted 6 to 41 citations in contributor code that would then lose their target, and only
+  each contributor may edit that code.
+- Rejected: `GUIDE.md` and `CONTRIBUTOR.md` out of the stamp whole. Their rules of content would
+  then change with no audit of any project.
+- Cost: an edit of a mixed section, or of the opening above the first `##` heading, stamps every
+  project again, as before.
+- Verified by `suites/test_audit.nim`. An edit of each section of process moves no stamp, and
+  neither does text past a heading that a fence quotes. A CRLF checkout stamps the same. An edit
+  of the opening, of a section of content or of a mixed section moves it, and so does a new or
+  longer heading. A renamed heading is a finding at its document, and so is a document that is
+  gone. One byte in CURATOR.md goes stale in no project.
+- Verified by `suites/test_markdown.nim`: the parts of a document give it back byte for byte.
+  Verified by `suites/test_checker.nim`, for the reader of Glossary process as found.
 
 **`koch stamp --write` sets the `Rules` row of every provenance file itself.** `rewriteRowRules`
 rewrites the row in place, and finds it as `fieldsHeader` finds it, so what is written is what
@@ -692,35 +725,6 @@ such a name as NFD, so the same folder has different bytes there. A `static` ass
 Cost: a path written with the accented folder name does not parse, so an old link to one
 breaks.
 
-**A branch must carry the rules and the checker of its base before it may merge.**
-`check-drift` reads what the base gained since the branch forked. It reports a branch that
-predates a charter document or the checker. Without it, a branch green against the `main` it
-forked from can merge into a later `main`. Its stamp can then be one that a later rules change
-falsified.
-
-Only two kinds of path count. A charter document moves the stamp that every project claims,
-and the checker decides what the audit accepts. Everything else may differ freely.
-`check-drift` feeds the `summarize` gate that branch protection requires, so no setting
-changes.
-
-On the runner the job checks out the branch head, and never the merge ref that a pull request
-offers. The first parent of that ref is the tip of the base. So what it gained over the base is
-empty by construction, and the check would report nothing on every fresh run. `check-files`
-on the same merge ref is what holds a stale stamp there.
-
-- Rejected: the GitHub setting "require branches to be up to date". It is blanket, and makes
-  every open pull request stale on each merge. At this merge rate that costs more than it
-  saves: 48 pull requests merged in the week to 2026-09-23, and 16 in its last day.
-- Cost: a merge of a rules change reddens every open pull request until each one merges the
-  base. The blanket setting costs the same, and this fires only where the staleness is real.
-- Cost, the honest limit: this reads at pull request time, and never at merge time. So a
-  branch green at ten can merge at five past, after another one lands. Only a merge queue
-  closes that.
-- Verified by `suites/test_base.nim`. Verified by hand with `nim r koch check-drift`, recorded
-  2026-09-14. A branch a week behind `main` reports the finding at its head, which names
-  `CONTRIBUTOR.md`, check sources and `koch.nim`. At a synthetic merge of that head into
-  `main`, with `main` as the first parent, it reports nothing.
-
 **A finding inside a project blocks a branch of the role that owns that project, and no other
 branch that leaves its line alone.** The Architect ruled so (D1 a of #871), since a project at
 rest would otherwise keep a check that reddens it waiting without end. So such a check lands
@@ -800,6 +804,66 @@ a deletion joins own the line that their block opens on.
   character. Such a path owns no line, and on 2026-11-11 no tracked path held one.
 - Verified by `suites/test_scope.nim` for the case as found, by `suites/test_tree.nim` on a
   throwaway repository, and by `suites/test_english.nim` for the blocks.
+
+## Drift
+
+**A branch must carry the charter and the checker of its base before it may merge.**
+`check-drift` reads what the base gained since the branch forked. It reports a branch that
+predates a change of a charter document or of the checker. Without it, a branch green against
+the `main` it forked from can merge into a later `main`. Its stamp can then be one that a later
+change of a rule of content falsified.
+
+Only two kinds of path count. The checker decides what the audit accepts. A charter document
+holds rules of content, which move the stamp, and sections of process, which move none. A
+delegate forgets both, so each change of the charter reaches each older branch, as the
+Architect asked on #843. Everything else may differ freely. `check-drift` feeds the
+`summarize` gate that branch protection requires, so no setting changes.
+
+**The finding names each section that changed, and the command that shows the change.** Each
+charter document that the base changed is one finding at its path, in the one form of a
+finding. It names each changed `##` section by its heading line, in the order that the base
+holds them, then each section that the base dropped. It gives
+`git diff <fork>..<base> -- <document>`, so the delegate reads the change itself. The checker
+is one finding more, which names its paths.
+
+- The finding asks to re-audit and re-stamp only where the stamped text of that document moved
+  (`textStamped`). A change of process alone asks to read the change and merge.
+- A section that moved keeps its text, yet the stamp reads parts in order. So a move names each
+  section that changed place. A document that differs while no section does, as a heading
+  written twice can hide, names each of its headings. So a changed document never passes.
+- The opening above the first heading has no heading, so its first line names it.
+- `readDrift` reads the fork, and each rules document at both ends, only where the base gained
+  a governing path. Cost: two reads of git for each rules document there.
+- The start hook prints each finding under one line of its own (Hooks on tool calls). So a
+  delegate reads the same lines at the start, at resume and after a compaction.
+- Rejected: one finding that names each path. It names no section, so the reading of a change
+  rests on one sentence of `CONTRIBUTOR.md`. It also asks for a new stamp after any edit.
+- Rejected: a finding of several lines. A finding prints on one line (CURATOR.md, Checks
+  reference).
+
+On the runner the job checks out the branch head, and never the merge ref that a pull request
+offers. The first parent of that ref is the tip of the base. So what it gained over the base is
+empty by construction, and the check would report nothing on every fresh run. `check-files`
+on the same merge ref is what holds a stale stamp there.
+
+- Rejected: the GitHub setting "require branches to be up to date". It is blanket, and makes
+  every open pull request stale on each merge. At this merge rate that costs more than it
+  saves: 48 pull requests merged in the week to 2026-09-23, and 16 in its last day.
+- Cost: a merge of a change of the charter reddens every open pull request until each one
+  merges the base. An edit of process does so too, because the Architect chose a fresh reading
+  over a new step for the delegate (#843).
+- Cost, the honest limit: this reads at pull request time, and never at merge time. So a
+  branch green at ten can merge at five past, after another one lands. Only a merge queue
+  closes that.
+- Verified by `suites/test_base.nim`, for the case as found: a branch older than an edit of
+  GUIDE.md, Output contract. The suite also holds its domain, and drives `readDrift` through
+  real git on a throwaway repository. Verified by `suites/test_hooks.nim`: the start hook prints
+  each finding.
+- Verified by hand with `nim r koch check-drift`, 2026-11-12. A scratch branch older than an edit
+  of Output contract reported one finding at `GUIDE.md`. It named `## Output contract` and the
+  command, and said that sections of process move no stamp.
+- Verified by hand, 2026-09-14: at a synthetic merge of a stale head into `main`, with `main` as
+  the first parent, the check reports nothing.
 
 ## Commits
 
@@ -2417,10 +2481,24 @@ that holds it. The events, each one a verb argument:
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
   nor the working line. It also refuses a sign-off out of shape. At the end of any turn, it
   refuses `#N` outside a link, and an article or a duty cited with no description.
-- `start` prints the role, the read order, the carried list and the drift state, at the start
-  and after each compaction.
+- `start` prints the role, the read order, each finding of drift, the headings of the record
+  that the branch works on, and the carried list. It prints at the start, at resume and after
+  each compaction.
 - `prompt` reads each message of the Architect, and names the skill of its moment, as section
   Skills says.
+
+**`start` prints the headings of the record that the branch works on, each with the line where it
+opens.** A contributor branch and a branch of one curator project read the record of their
+project. `curator/<name>` reads the record of the audit (`pathRecord`). A delegate then
+reads the sections that its work touches, and Open questions, rather than the whole record
+(GUIDE.md, How to build on a project). The line lets it read one section alone. The headings
+come through `sections`, so a heading that a fence quotes opens nothing.
+
+- The record of pga_visualiser holds about 93,000 tokens over 47 sections, with its glossary
+  and README, as #843 measured. A task touches two or three of those sections.
+- A branch whose record does not exist yet prints no record.
+- Rejected: a read in full below a size. That is one more number to keep, for little gain.
+- Verified by `suites/test_hooks.nim`, for each form of branch and for a heading in a fence.
 
 **A post holds one footer, as its last line, and the footer of the proxy serves as that
 footer.** The GitHub proxy appends a footer that links the delegate to each post that ends in
