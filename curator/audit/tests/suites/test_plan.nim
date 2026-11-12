@@ -167,13 +167,13 @@ suite "Plan":
         entry(DIRECTORY_KNOLLER & "/src/knoller.nim", "import ./knoller/[pins]\n"),
         entry(DIRECTORY_PROBE & "/src/probe.nim", "## import ../../knoller/src/knoller\n"),
       ]
-      importers = tree.importersByProject(directories)
+      importers = tree.importersByFolder(directories)
       from_import = @[entry(DIRECTORY_PROBE & "/src/probe.nim",
           "from ../../knoller/src/knoller import NIM\n")]
     check importers ==
-      {DIRECTORY_KNOLLER: @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]}.toTable  # comment, own path none
-    check from_import.importersByProject([DIRECTORY_PROBE]) ==
-      {DIRECTORY_KNOLLER: @[DIRECTORY_PROBE]}.toTable  # `from` too
+      {FILES_KNOLLER[0]: @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]}.toTable  # comment, own path none
+    check from_import.importersByFolder([DIRECTORY_PROBE]) ==
+      {FILES_KNOLLER[0]: @[DIRECTORY_PROBE]}.toTable  # `from` too
     check projectsTest(directories, [FILES_KNOLLER[0] & "/knoller/pins.nim"], importers) ==
         @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # each importer, and knoller
     check projectsTest(directories, [FILES_KNOLLER[1]], importers) ==

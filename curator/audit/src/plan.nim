@@ -9,13 +9,12 @@
 ##     project and changes no behaviour, so it compiles nothing while static pass still
 ##     verifies every stamp; README describes project and runs nothing, by same reasoning.
 ##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
-##     check sources are that project's code and select it as any code does. Change to
-##     source or nimble file of project selects each project whose Nim source imports path
-##     inside it by relative path, then importers of those until none is added, since each
-##     compiles that source (`importersByProject`). Knoller is one such project, driver's
-##     among its importers; suites and records of project reach no importer. Case found:
-##     `lojban_tagger` imports `lojban_parser`, and change to parser compiled no suite of
-##     tagger, so break of tagger merged unseen (#832, #878). Nothing selects
+##     check sources are that project's code and select it as any code does. Change inside
+##     folder of project that Nim source of other project imports by relative path, as `src`
+##     or `tools`, or to its nimble file, selects that importer, then importers of those
+##     until none is added, since each compiles what it imports (`importersByFolder`).
+##     Knoller is one such project, driver's among its importers; folder no importer
+##     imports, as its suites, reaches none. Nothing selects
 ##     every project: push run on `main` plans against push's own base and weekly run
 ##     against its window, so each compiles what changed and nothing else (CURATOR.md duty
 ##     11). Contributor suite is contributor's to run, and static pass reads every project
@@ -79,20 +78,31 @@ func isCode(directory, path: string): bool =
   path[directory.len + 1 .. ^1] notin FILES_PROJECT
 
 
-func isSource(directory, path: string): bool =
-  ## Decide whether changed path is source or nimble file of project, which its importers
-  ##   compile; its suites, tools and records reach no importer.
-  path.startsWith(directory & "/src/") or
-      path == directory & "/" & directory.nameProject & EXTENSIONS[Dialect.Package]
+func isInside(folder, path: string): bool =
+  ## Decide whether changed path lies in folder importer imports, or is module folder names.
+  path.startsWith(folder & "/") or path == folder & EXTENSIONS[Dialect.Module]
+
+
+func pathNimble(directory: string): string =
+  ## Name nimble file of project, whose pin and packages its source compiles with.
+  directory & "/" & directory.nameProject & EXTENSIONS[Dialect.Package]
 
 
 func pathsImported(folder, source: string): seq[string] =
   ## Resolve each relative path that `import` or `from` of Nim source names against folder
-  ##   holding source; comment naming path imports nothing, and path climbing past root none.
+  ##   holding source, on one line or several, behind `when` guard or quoted; comment, or
+  ##   string outside such statement, imports nothing, and path climbing past root none.
+  var
+    depth = 0  # Brackets statement holds open.
+    is_open = false  # Statement runs on to next line.
   for line in source.splitLines:
-    let s = line.strip
-    if not (s.startsWith("import ") or s.startsWith("from ")): continue
-    for word in s.split('#')[0].split({' ', ',', '[', ']', '\t'}):
+    var s = line.split('#')[0].strip
+    if not is_open:
+      if s.startsWith("when ") and ':' in s: s = s[s.find(':') + 1 .. ^1].strip
+      if not (s == "import" or s.startsWith("import ") or s.startsWith("from ")): continue
+    depth += s.count('[') - s.count(']')
+    is_open = depth > 0 or s.endsWith(",") or s == "import"
+    for word in s.split({' ', ',', '[', ']', '\t', '"'}):
       if not (word.startsWith("./") or word.startsWith("../")): continue
       var
         parts = folder.split('/')
@@ -108,11 +118,12 @@ func pathsImported(folder, source: string): seq[string] =
       if is_inside and parts.len > 0: result.add parts.join("/")
 
 
-func importersByProject*(
+func importersByFolder*(
   tree: Tree, directories: openArray[string]
 ): Table[string, seq[string]] =
-  ## Map each project to those of directories whose Nim source imports path inside it by
-  ##   relative path, sorted; read from source, so project gains importer by its import alone.
+  ## Map each folder of project, as `src` or `tools`, to those of directories whose Nim source
+  ##   imports path inside it by relative path, sorted; read from source, so project gains
+  ##   importer by its import alone.
   for e in tree:
     if not e.path.endsWith(EXTENSIONS[Dialect.Module]): continue
     let importer = e.path.split('/').directoryProject
@@ -120,39 +131,47 @@ func importersByProject*(
     for path in pathsImported(e.path.rsplit('/', maxsplit = 1)[0], e.content):
       let imported = path.split('/').directoryProject
       if imported.len == 0 or imported == importer: continue
-      var found = result.getOrDefault(imported)
+      # First folder below project holds whatever import reaches through it.
+      let folder = imported & "/" & path[imported.len + 1 .. ^1].split('/')[0]
+      var found = result.getOrDefault(folder)
       if importer notin found:
         found.add importer
         found.sort
-        result[imported] = found
+        result[folder] = found
 
 
 func projectsTest*(
   directories, paths: openArray[string];
-  importers = {DIRECTORY_KNOLLER: @[DIRECTORY_DRIVER]}.toTable,
+  importers = {DIRECTORY_KNOLLER & "/src": @[DIRECTORY_DRIVER]}.toTable,
 ): seq[string] =
   ## Select projects one change asks to compile, sorted: each whose code changed, driver's
-  ##   project when driver's root files did, and each project importing one whose source
-  ##   changed, then importers of those until none is added.
+  ##   project when driver's root files did, and each project importing folder that changed,
+  ##   or folder of project whose nimble file did, then importers of those until none is added.
   ##   `importers` defaults to driver importing knoller alone; caller holding tree reads them
-  ##     from it (`importersByProject`).
+  ##     from it (`importersByFolder`).
   for directory in directories:
     for path in paths:
       if isCode(directory, path) or (directory == DIRECTORY_DRIVER and path in FILES_CHECKER):
         result.add directory
         break
 
-  # Importer compiles source it imports, so change to that source reaches it, and its own.
+  # Importer compiles folder it imports, by pin and packages that nimble file of its project
+  #   names, so change to either reaches it.
   var reached: seq[string]
-  for imported in importers.keys:
+  for folder, found in importers:
+    let project = folder.split('/').directoryProject
     for path in paths:
-      if isSource(imported, path):
-        reached.add imported
+      if isInside(folder, path) or path == project.pathNimble:
+        for importer in found:
+          if importer notin reached: reached.add importer
         break
+  # Importer of project reached compiles what that project compiles, so it is reached too.
   var i = 0
   while i < reached.len:
-    for importer in importers.getOrDefault(reached[i]):
-      if importer notin reached: reached.add importer
+    for folder, found in importers:
+      if folder.startsWith(reached[i] & "/"):
+        for importer in found:
+          if importer notin reached: reached.add importer
     inc i
   for directory in reached:
     if directory in directories and directory notin result: result.add directory
@@ -259,7 +278,7 @@ func jobsFor*(tree: Tree, directories: openArray[string]): seq[Job] =
 func jobs*(tree: Tree, paths: openArray[string]): seq[Job] =
   ## Build jobs for projects one change asks to compile.
   let directories = tree.directoriesProject
-  tree.jobsFor projectsTest(directories, paths, tree.importersByProject(directories))
+  tree.jobsFor projectsTest(directories, paths, tree.importersByFolder(directories))
 
 
 func jobsAll*(tree: Tree): seq[Job] =
