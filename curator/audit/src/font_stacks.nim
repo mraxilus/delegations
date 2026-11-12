@@ -17,7 +17,7 @@
 ##   Control page holds numerals one to five, each as ASCII digit then Chinese numeral in one
 ##     string, in one kind of place text stands: paragraph, placeholder of field, `::before`,
 ##     SVG text, and text script writes on load.
-##     No font face of store maps any Chinese numeral, which suite holds to rows of
+##     No font face of store maps any of five numerals, which suite holds to rows of
 ##       `assets.nim`, so each is found wherever collector reads its place, and numeral missing
 ##       names place collector skips.
 ##     `characters` of `found.json` hold codepoints past ASCII alone, so digit never reaches
