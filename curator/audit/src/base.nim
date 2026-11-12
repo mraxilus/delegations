@@ -18,8 +18,16 @@
 
 {.experimental: "strictFuncs".}
 
-import std/strutils
-import ./[findings, plan, provenance]
+import std/[sequtils, strutils]
+import ./[findings, plan, provenance, tree]
+
+
+type Drift* = object  ## Define what base changed since branch forked, as drift reads it.
+  fork*: string  ## Merge base, abbreviated, as command that shows change names it.
+  base*: string  ## Ref branch is compared with, such as `origin/main`.
+  gained*: seq[string]  ## Paths base changed since fork.
+  rules_fork*: array[RULES.len, string]  ## Each `RULES` document at fork; empty where none.
+  rules_base*: array[RULES.len, string]  ## Each `RULES` document at base; empty where none.
 
 
 func isGoverning*(path: string): bool =
@@ -27,10 +35,22 @@ func isGoverning*(path: string): bool =
   path in RULES or path.isChecker
 
 
-func checkBase*(gained: openArray[string]): seq[Finding] =
+proc readDrift*(root, base: string): Drift =
+  ## Read what base changed since branch forked: paths, then fork and each rules document at
+  ##   both ends where one path governs, since drift reads them for nothing else.
+  result = Drift(base: base, gained: pathsGained(root, base))
+  if not result.gained.anyIt(it.isGoverning): return
+  let fork = fieldsGit(root, ["merge-base", base, "HEAD"])[0].strip
+  result.fork = fieldsGit(root, ["rev-parse", "--short", fork])[0].strip
+  for k, rule in RULES:
+    result.rules_fork[k] = textAt(root, fork, rule)
+    result.rules_base[k] = textAt(root, base, rule)
+
+
+func checkBase*(drift: Drift): seq[Finding] =
   ## Report branch predating base's rules or checker, naming what it lacks.
   var behind: seq[string]
-  for path in gained:
+  for path in drift.gained:
     if path.isGoverning and path notin behind: behind.add path
   if behind.len == 0: return
   result.add finding(

@@ -335,7 +335,7 @@ proc runHook(root, event, input: string): int =
     var drift: seq[Finding]
     try:
       discard fieldsGit(root, ["fetch", "-q", "origin", MAIN])
-      drift = checkBase(pathsGained(root, "origin/" & MAIN))
+      drift = checkBase(readDrift(root, "origin/" & MAIN))
     except CatchableError: discard
     echo contextStart(
       branch_root,
@@ -390,7 +390,7 @@ proc run(options: Options): int =
     found.add findingsPruned(options.root, tree)
     found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
     found.add checkHistory(branch, commitsBranch(options.root, base))
-    found.add checkBase(pathsGained(options.root, base))
+    found.add checkBase(readDrift(options.root, base))
     found.add checkSchemas(options.root, base)
     # Finding inside project blocks only branch of role owning it (duty 3), and finding on
     #   line branch changed blocks it wherever it lies; rest blocks here.
@@ -445,7 +445,7 @@ proc run(options: Options): int =
     found = checkHistory(options.branchOrDefault, commits)
   of "check-drift":
     if not options.isReadAll({Root, Base}): return options.refused
-    found = checkBase(pathsGained(options.root, options.baseOrDefault))
+    found = checkBase(readDrift(options.root, options.baseOrDefault))
   of "check-schemas":
     if not options.isReadAll({Root, Base}): return options.refused
     found = checkSchemas(options.root, options.baseOrDefault)

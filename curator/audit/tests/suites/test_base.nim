@@ -25,11 +25,13 @@ suite "Base":
 
 
   test "branch predating rules or checker is one finding naming what it lacks":
-    check checkBase(newSeq[string]()).len == 0  # base gained nothing
-    check checkBase(["contributor/ronri/alpha/src/alpha.nim"]).len == 0  # other project's code
-    check checkBase(["CURATOR.md", "README.md"]).len == 0  # prose neither stamps nor checks
+    check checkBase(Drift()).len == 0  # base gained nothing
+    check checkBase(Drift(gained: @["contributor/ronri/alpha/src/alpha.nim"])).len == 0
+    check checkBase(Drift(gained: @["CURATOR.md", "README.md"])).len == 0  # prose stamps none
 
-    let found = checkBase(["CONTRIBUTOR.md", "contributor/ronri/alpha/x.nim", "koch.nim"])
+    let found = checkBase(
+      Drift(gained: @["CONTRIBUTOR.md", "contributor/ronri/alpha/x.nim", "koch.nim"])
+    )
     check found.len == 1  # one finding, however many paths
     check found[0].path.len == 0  # branch-level, no file to open
     check found[0].message.endsWith("got `CONTRIBUTOR.md, koch.nim`.")  # only what governs
@@ -37,7 +39,9 @@ suite "Base":
 
 
   test "each governing path is named once":
-    check checkBase(["koch.nim", "koch.nim.cfg"])[0].message.endsWith(
+    check checkBase(Drift(gained: @["koch.nim", "koch.nim.cfg"]))[0].message.endsWith(
       "got `koch.nim, koch.nim.cfg`.",
     )
-    check checkBase(["koch.nim", "koch.nim"])[0].message.endsWith("got `koch.nim`.")
+    check checkBase(Drift(gained: @["koch.nim", "koch.nim"]))[0].message.endsWith(
+      "got `koch.nim`.",
+    )
