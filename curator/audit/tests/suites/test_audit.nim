@@ -25,7 +25,7 @@ suite "Audit":
       stamp([TEXT_RULES[0], "", TEXT_RULES[2], TEXT_RULES[3], TEXT_RULES[4]])  # missing is empty
 
 
-  test "one change to any section of content goes stale in every project":
+  test "one change to stamped text goes stale in every project":
     let
       changed = treeGood().replaced("CONTRIBUTOR.md", TEXT_RULES[2] & "More.\n" & TEXT_PROCESS[2])
       stale = changed.auditTree.filterIt("stale" in it.message)
@@ -52,6 +52,7 @@ suite "Audit":
       ("GUIDE.md", 4, "Build."),
     ]:
       let edited = TEXT_RULES[k] & TEXT_PROCESS[k].replace(text, text & " Then more.")
+      check edited != TEXT_RULES[k] & TEXT_PROCESS[k]  # text stands in fixture, so edit lands
       check good.replaced(path, edited).stampRules == good.stampRules
     let
       quoted = "Sign off.\n\n```md\n## Sign-off\n```\n\nThen stop.\n"

@@ -688,8 +688,10 @@ suite "Hooks":
         "Base changed sections; read `git diff a..origin/main -- GUIDE.md`; got `## Output " &
           "contract`.",
       )
-      drifted = contextStart("curator/x", "", "## List", "", @[drift])
-    check "GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
+      checker = finding("", 0, "Branch predates checker on base; got `koch.nim`.")
+      drifted = contextStart("curator/x", "", "## List", "", @[drift, checker])
+    check "\n  GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
+    check "\n  Branch predates checker on base; got `koch.nim`.\n" in drifted  # each, not first
     check "re-stamp" notin drifted
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])
     check isTurnWriting([Call(name: "mcp__github__issue_write", has_body: true)])
