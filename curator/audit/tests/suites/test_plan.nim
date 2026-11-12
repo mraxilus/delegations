@@ -165,15 +165,15 @@ suite "Plan":
         entry(DIRECTORY_IMPORTING & "/src/assayer/command.nim",
             "import ../../../knoller/src/knoller/[compilers, pins]\n"),
         entry(DIRECTORY_KNOLLER & "/src/knoller.nim", "import ./knoller/[pins]\n"),
-        entry(DIRECTORY_PROBE & "/src/probe.nim", "## Names `knoller/src/knoller` in comment.\n"),
+        entry(DIRECTORY_PROBE & "/src/probe.nim", "## import ../../knoller/src/knoller\n"),
       ]
       importers = tree.importersByProject(directories)
       from_import = @[entry(DIRECTORY_PROBE & "/src/probe.nim",
           "from ../../knoller/src/knoller import NIM\n")]
-    check importers.getOrDefault(DIRECTORY_KNOLLER) ==
-      @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]  # comment and own path import none
-    check from_import.importersByProject([DIRECTORY_PROBE]).getOrDefault(DIRECTORY_KNOLLER) ==
-      @[DIRECTORY_PROBE]  # `from` too
+    check importers ==
+      {DIRECTORY_KNOLLER: @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]}.toTable  # comment, own path none
+    check from_import.importersByProject([DIRECTORY_PROBE]) ==
+      {DIRECTORY_KNOLLER: @[DIRECTORY_PROBE]}.toTable  # `from` too
     check projectsTest(directories, [FILES_KNOLLER[0] & "/knoller/pins.nim"], importers) ==
         @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # each importer, and knoller
     check projectsTest(directories, [FILES_KNOLLER[1]], importers) ==
@@ -204,6 +204,34 @@ suite "Plan":
     check tree.jobs([parser & "/tests/suites/test_nif.nim"]).mapIt(it.directory) ==
       @[parser]  # suite alone, which no importer reads
     check tree.jobs([parser & "/PROVENANCE.md"]).len == 0  # record
+
+
+  test "folder importer imports selects it, in each form of import, and comment none":
+    # Case as found: `tools/lists.nim` of lojban_tagger imports `tools/lists` of lojban_parser,
+    #   and its suite imports that tool, so change to that tool compiled no suite of tagger.
+    let
+      parser = CONTRIBUTOR & "/ronri/parser"
+      tagger = CONTRIBUTOR & "/ronri/tagger"
+      pinned = @[entry(parser & "/parser.nimble", TEXT_NIMBLE),
+          entry(tagger & "/tagger.nimble", TEXT_NIMBLE)]
+      tool = pinned & @[entry(tagger & "/tools/lists.nim", "import ../../parser/tools/lists\n")]
+    check tool.jobs([parser & "/tools/lists.nim"]).mapIt(it.directory) == @[parser, tagger]
+    check tool.jobs([parser & "/tests/test_lists.nim"]).mapIt(it.directory) ==
+      @[parser]  # folder no importer imports
+    for source in [
+      "import\n  std/strutils,\n  ../../parser/src/parser\n",  # statement on several lines
+      "import ../../parser/src/[\n  nif,\n  merge,\n]\n",  # list of modules in brackets
+      "when defined(js): import ../../parser/src/parser\n",  # behind guard
+      "import \"../../parser/src/parser\"\n",  # quoted path
+    ]:
+      let imported = pinned & @[entry(tagger & "/src/tagger.nim", source)]
+      check imported.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser, tagger]
+    for source in [
+      "# import ../../parser/src/parser\n",  # comment
+      "let path = \"../../parser/src/parser\"\n",  # string outside import
+    ]:
+      let named = pinned & @[entry(tagger & "/src/tagger.nim", source)]
+      check named.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser]
 
 
   test "path inside no project selects nothing by itself":
