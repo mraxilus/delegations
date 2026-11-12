@@ -230,11 +230,11 @@ and the shared allowance. This section adds only what differs for a curator.
    `toolchain.nim` fails the audit where it disagrees. A sibling imported by path is not a
    package, so it needs no lock. Its pin moves with the pin of `curator/audit`.
 
-   `GUIDE.md`, Toolchain, says how koch serves every other pin. What koch does not serve,
-   `nim r koch list-packages` prints: the packages of koch itself, and those that each project
-   declares through its `system` verb. Where a tool is absent, the check that needs it
-   reports a finding rather than a skip. A check that quietly does nothing reports green for
-   work it never did.
+   `curator/audit/PROVENANCE.md`, Toolchain, says how koch serves every other pin. What koch
+   does not serve, `nim r koch list-packages` prints: the packages of koch itself, and those
+   that each project declares through its `system` verb. Where a tool is absent, the check that
+   needs it reports a finding rather than a skip. A check that quietly does nothing reports
+   green for work it never did.
 
 9. **The weekly run and the ledger.** The weekly run of `check.yml` compiles the projects
    whose code merged inside `DAYS_RECENT` (`plan.nim`). Its window is named twice, as that
