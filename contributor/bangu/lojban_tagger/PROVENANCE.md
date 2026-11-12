@@ -542,7 +542,8 @@ types.
 Buffers reads a message that is cut between two fields as a message with fewer fields. So the
 frame holds three parts, and the reader refuses the file at the first part that fails:
 
-1. The opening `lojban_tagger exchange 2` and a line break, which name the format and its version.
+1. The format line, `lojban_tagger exchange 2` and a line break, which names the format and its
+   version.
 2. The length of the message, in four bytes.
 3. The CRC-32C of the message, in four bytes.
 
@@ -550,10 +551,10 @@ Both numbers put the least significant byte first, as Protocol Buffers writes `f
 message starts after these 33 bytes. Verified by `suites/test_exchanges.nim`, against a frame that
 the suite builds apart, over each cut and each changed bit or byte.
 
-The opening ends with a line break, so `head -n 1` prints it. A transfer that rewrites line ends
-also changes the opening, so the reader refuses the file there and shows the carriage return. The
-text format of version 1 opens with `lojban_tagger exchange 1`, so the reader refuses it at the
-opening too. Verified by `suites/test_exchanges.nim`.
+The format line ends with a line break, so `head -n 1` prints it. A transfer that rewrites line
+ends also changes the format line, so the reader refuses the file there and shows the carriage
+return. The text format of version 1 opens with `lojban_tagger exchange 1`, so the reader refuses
+it at the format line too. Verified by `suites/test_exchanges.nim`.
 
 **The checksum is CRC-32C, the cyclic redundancy check of RFC 3720, section 12.1.** It detects
 each run of up to 32 changed bits in the message. Its polynomial has 18 terms, so `x + 1` divides
@@ -594,18 +595,20 @@ reader reads a newer file, as the field numbers carry the versions of the format
 Cost: a label of ill-formed bytes reads back repaired. Record mode writes `recorded <date>`,
 which holds ASCII alone.
 
-**The writer agrees with `protoc` byte for byte.** `app/exchanges_example.txtpb` holds the first
-hop of the worked example `page` in text format. `protoc --decode` printed it from the file that
-`nim r tools/build.nim examples` writes. `test_exchanges.nim` encodes that file with `protoc
---encode` into `build/` when it compiles, and checks the exit code of `protoc`. It then reads the
-bytes with `staticRead`, as STYLE.md section 4 gives.
+**The writer agrees with `protoc` byte for byte.** `app/exchanges_example.txtpb` is a text format
+file, which holds the first hop of the worked example `page`. `protoc --decode` printed it from the
+file that `nim r tools/build.nim examples` writes. `test_exchanges.nim` encodes that file with
+`protoc --encode` into `build/` when it compiles, and checks the exit code of `protoc`. It then
+reads the bytes with `staticRead`, as STYLE.md section 4 gives.
 
 The writer gives the same bytes, and the reader reads them back as the exchange of the example.
 Verified by `suites/test_exchanges.nim`.
 
-Cost: `nim check` runs no `gorgeEx`, which then gives an empty output and exit code 0. So a check
-reads the binary that the last compile left in `build/`, and fails before any compile ran.
-Verified by hand with Nim 2.4.0 on 2026-11-04, with a command that exits 3.
+Under `nim check`, Nim runs no `gorgeEx`, which then gives an empty output and exit code 0.
+Verified by hand with Nim 2.4.0 on 2026-11-04, with a command that exits 3. So the read takes the
+guard `nimcheck`, as STYLE.md section 4 gives, and reads no binary there. Without the guard,
+`nim check` of the suite stops at the read where `build/` holds no file, and with the guard it
+exits 0. Verified by hand with Nim 2.4.0 on 2026-11-11.
 
 **A person reads an exchange file through `protoc`, past its frame.** From the folder of the
 project, this command prints the first hop of the example `page`:
@@ -625,7 +628,7 @@ no user part, query or fragment reaches the report.
 
 Verified by `suites/test_exchanges.nim`, over each cut and each changed bit of page files whose
 URL holds secrets. One of those files has no label, so its message opens with the request. A
-changed line break of the opening then shows the URL after binary bytes. Cost: the query of a
+changed line break of the format line then shows the URL after binary bytes. Cost: the query of a
 reference with no `//`, as of `mailto:`, shows whole.
 
 **The stamp, FNV-1a 64 of the request, names the file.** The request is the method and the URL
