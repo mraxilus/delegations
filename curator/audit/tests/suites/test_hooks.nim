@@ -679,7 +679,18 @@ suite "Hooks":
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
     check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
     check "outside grammar" in contextStart("claude/x", "", "## List", @[])
-    check "re-stamp" in contextStart("curator/x", "", "## List", @[finding("", 0, "d")])
+    # Drift prints each finding of `check-drift`: sections changed and command that shows them,
+    #   so start asks for new stamp only where finding does (#843).
+    let
+      drift = finding(
+        "GUIDE.md",
+        0,
+        "Base changed sections; read `git diff a..origin/main -- GUIDE.md`; got `## Output " &
+          "contract`.",
+      )
+      drifted = contextStart("curator/x", "", "## List", @[drift])
+    check "GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
+    check "re-stamp" notin drifted
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])
     check isTurnWriting([Call(name: "mcp__github__issue_write", has_body: true)])
     check not isTurnWriting([Call(name: "mcp__github__update_pull_request")])  # draft toggle
