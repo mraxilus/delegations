@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, os, sequtils, unittest]
+import std/[json, os, sequtils, tables, unittest]
 import ../../src/[domains, plan, projects, toolchain]
 import ./fixtures
 
@@ -167,11 +167,13 @@ suite "Plan":
         entry(DIRECTORY_KNOLLER & "/src/knoller.nim", "import ./knoller/[pins]\n"),
         entry(DIRECTORY_PROBE & "/src/probe.nim", "## Names `knoller/src/knoller` in comment.\n"),
       ]
-      importers = tree.directoriesImporting(directories)
+      importers = tree.importersByProject(directories)
       from_import = @[entry(DIRECTORY_PROBE & "/src/probe.nim",
           "from ../../knoller/src/knoller import NIM\n")]
-    check importers == @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]  # comment and own path import none
-    check from_import.directoriesImporting([DIRECTORY_PROBE]) == @[DIRECTORY_PROBE]  # `from` too
+    check importers.getOrDefault(DIRECTORY_KNOLLER) ==
+      @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]  # comment and own path import none
+    check from_import.importersByProject([DIRECTORY_PROBE]).getOrDefault(DIRECTORY_KNOLLER) ==
+      @[DIRECTORY_PROBE]  # `from` too
     check projectsTest(directories, [FILES_KNOLLER[0] & "/knoller/pins.nim"], importers) ==
         @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # each importer, and knoller
     check projectsTest(directories, [FILES_KNOLLER[1]], importers) ==
