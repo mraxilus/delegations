@@ -4,10 +4,11 @@
 conformal algebra by its round weight norm, and any other element by √|𝐮 ∘ 𝐮|.
 
 **What it is for.** At pin, conformal unitization leaves a flat point, a line or a plane unscaled,
-with no sign of it. Here every element of both algebras comes back with unit weight.
+with no sign of it. Here every element whose divisor is not 0 comes back with unit weight.
 
-**What it costs.** Conformal unitize is much slower than at pin, and the rigid algebras keep their
-cost. The test of a round object has edges at a huge sphere, a far transversion and 32 bits.
+**What it costs.** Conformal unitize is much slower than at pin. A rigid unitize costs one call
+more, ×1.05 to ×1.06 at rga4d. The test of a round object has edges at a huge sphere, a small
+sphere, a far plane, a far transversion and 32 bits.
 
 ## Problem
 
@@ -25,7 +26,7 @@ Take a plane 𝐠 of flat weight 1, a sphere 𝐬 of round weight 1, and the pen
 - A continuous divisor tends to 0 as t tends to 0, so it cannot give 1 at the plane.
 
 The jump is in the geometry, so no rule escapes it. The rigid formula cannot serve round objects
-either. The library's antidot splits as follows at `cga5d`:
+either. The library's antidot splits as follows at cga5d:
 
 ```
 𝐮 ∘ 𝐮 = ‖𝐮‖□² − ‖𝐮‖∙² + 2 (𝐮∘ · 𝐮■)
@@ -65,18 +66,18 @@ the code compiles, so no test at run time arises. Typing alone does not explain 
 This proposal coins a divisor W(𝐮), and a test at run time picks its branch:
 
 ```
-W(𝐮) = ‖𝐮‖∘ = √((𝐮 ∧ 𝐞∞) ∘ (𝐮 ∧ 𝐞∞))   where 𝐮 is a round object, in CGA
+W(𝐮) = ‖𝐮‖∘ = √((𝐮 ∧ 𝐞ₙ) ∘ (𝐮 ∧ 𝐞ₙ))   where 𝐮 is a round object, in CGA
 W(𝐮) = √|𝐮 ∘ 𝐮|                         for any other element, and every element in RGA
 unitize(𝐮) = 𝐮 ÷ W(𝐮), and 𝐮 as it is where W(𝐮) is 0
 ```
 
 - **Round object.** The element holds one grade, and its round weight is not negligible beside
   √|𝐮 ∘ 𝐮|. These are Lengyel's round point, dipole, circle and sphere.
-- **Its divisor.** ‖𝐮‖∘ is the weight norm of 𝐮 ∧ 𝐞∞, its carrier. Lengyel defines it so:
-  `RoundWeightNorm` in `ConformalAlgebra3D.wl` is the antidot norm of 𝐱 ∧ 𝐞₅, and his 𝐞₅ is the
-  𝐞∞ of the library. The book says that the round weight "is equivalent to the weight of the
-  carrier geometry for round objects" (page 197). So the branch divides by the root of `|∘²` of
-  pin, the sum of squares of the round weight.
+- **Its divisor.** ‖𝐮‖∘ is the weight norm of 𝐮 ∧ 𝐞ₙ, its carrier. Lengyel defines it so:
+  `RoundWeightNorm` in `ConformalAlgebra3D.wl` is the antidot norm of 𝐱 ∧ 𝐞₅, and his 𝐞₅ is the 𝐞ₙ
+  of the library, `Basis.infinity`. The book says that the round weight "is equivalent to the weight
+  of the carrier geometry for round objects" (page 197). So the branch divides by the root of `|∘²`
+  of pin, the sum of squares of the round weight.
 - **Other elements.** The divisor is Lengyel's rigid unitization, for any element. In RGA this is
   the rule at pin, so the rigid branch stays as it is.
 - **Zero.** Each test compares against zero at the scale of what it tests, as Article IV.5 asks.
@@ -158,56 +159,53 @@ reading holds at a probability of about 0.8.
 
 ## Alternatives
 
-### How to choose the branch
+| Option | Why it lost |
+| --- | --- |
+| Round where 𝐮 ∧ 𝐞ₙ ≠ 0 | A scalar, a Euclidean vector and a dual of a flat take divisor 0 |
+| √\|𝐮 ∘ 𝐮\| for every element | It divides a round point by 0 |
+| Flat weight for each element that is not round | It rescales a unit product of motion operators |
+| Round weight, or flat weight where it is 0 | It fails on the transversion and on moved flats |
+| Exact grade scan | It counts any residue as a second grade |
+| Grade test at pin, 1e-9 absolute | Residue grows with the coefficients, so far objects fail |
+| Round where the antiscalar part is 0 | Rounding leaves residue there in many moved objects |
+| Each part at its own scale alone | Residue falls in an empty part far from the origin |
+| Exact round weight test | It takes a plane sent through a sphere and back for a huge sphere |
+| `inline` on `^∘` | Its conformal body is large, and no run at cga5d shows a gain |
 
-- **Carrier is not zero, 𝐮 ∧ 𝐞∞ ≠ 0.** It reads the book's own split into a round part and a flat
-  part (page 197), and it agrees on every object. But it gives divisor 0 to a scalar, a Euclidean
-  vector and every dual of a flat. So an element and its dual can take different divisors. This
-  rule's test is the more natural choice, at a probability of about 0.8.
+- **Carrier.** The carrier test reads the book's own split into a round part and a flat part
+  (page 197), and it agrees on every object. But an element and its dual can then take different
+  divisors. This rule's test is the more natural choice, at a probability of about 0.8.
 - **√|𝐮 ∘ 𝐮| everywhere.** It is continuous, and every unit motion operator keeps it. But it
-  divides a round object by its weighted radius, and a round point by 0. P10,
-  `homogeneous-scalar`, takes the complex root of 𝐮 ∘ 𝐮 under the conformal metric, so its
-  prototype also gives a round point the divisor 0. Its `unitize` holds under the rigid metric
-  alone, and in the conformal algebras the library keeps `^∘` of this rule.
-- **Flat weight for any element other than a round object.** It agrees on every object. But it
-  rescales a product of unit transversions and translations, which is already unit.
-- **Round weight, or flat weight where it is 0.** It fails on the transversion, which has round
-  weight, and on every element moved near to flat.
-
-Under inversion or transversion, neither the carrier test nor this rule's test keeps its reading.
-Under motors and dilations, both keep it. No choice that this search examined is more algebraic.
-
-### How to read zero
-
-Rounding leaves residue in other grades, and in the round weight of a moved plane. Each option
-below misreads moved objects that this rule reads right, as Evidence counts.
-
-- **Exact grade scan.** It counts any residue as a second grade, so it reads almost no moved
-  object as round.
-- **Grade at pin, 1e-9 absolute.** Residue grows with the coefficients. At a deviation of 1e8
-  units a round point holds about 1e16 on 𝐞∞, so its residue passes an absolute 1e-9.
-- **Antiscalar part is zero.** It reads an object as round only where its 𝟙 coefficient is
-  exactly 0. Rounding leaves residue there in about a third to a half of the moved objects.
-- **Each part at its own scale alone.** It floors the scale of each part at 1. A sphere has no
-  round bulk, and a round point has no flat weight. So their residue falls in an empty part of
-  scale 1, and this test misreads them far from the origin. A circle uses all four parts. The
-  test of P07, which Costs describes, reads these objects right.
-- **Exact round weight test.** It takes a plane sent through a sphere and back for a huge sphere.
-  Terathon's `Sphere3D::Unitize` divides by −u, so it would probably do the same, at a
-  probability of 0.75 to 0.8.
-
-### `inline` on `^∘`
-
-The C of `^∘` at `cga5d` grows from 284 to 1807 lines. The guide of the language inlines a large
-body only where a measurement shows the gain (`STYLE.md`, section 2). No pair of runs here shows
-one, as Evidence states, so `^∘` drops `inline`.
+  divides a round object by its weighted radius. P10, `homogeneous-scalar`, takes the root of
+  𝐮 ∘ 𝐮 as a pair under the conformal metric, complex at cga4d and cga5d. So its radius norm
+  also gives a round point the divisor 0. Its division by the weight norm unitizes under the
+  rigid metric alone, and in the conformal algebras the library keeps `^∘` of this rule.
+- **Flat weight.** It agrees on every object. But a product of unit transversions and
+  translations is already unit, and this option rescales it.
+- **What the tests keep.** Under inversion or transversion, neither the carrier test nor this
+  rule's test keeps its reading. Under motors and dilations, both keep it. No choice that this
+  search examined is more algebraic.
+- **Zero.** Rounding leaves residue in other grades, and in the round weight of a moved plane.
+  Each zero test in the table misreads moved objects that this rule reads right, as Evidence
+  counts. At a deviation of 1e8 units a round point holds about 1e16 on 𝐞ₙ, so its residue passes
+  an absolute 1e-9.
+- **Parts.** The test of each part floors the scale of that part at 1. A sphere has no round
+  bulk, and a round point has no flat weight. So their residue falls in an empty part of scale 1.
+  A circle uses all four parts. The test of P07, which Costs describes, reads these objects right.
+- **Terathon.** `Sphere3D::Unitize` divides by −u, so it would probably take that plane for a
+  sphere too, at a probability of 0.75 to 0.8.
+- **`inline`.** The guide of the language inlines a large body only where a measurement shows
+  the gain (`STYLE.md`, section 2). No pair of runs at cga5d shows one, as Evidence states, so
+  `^∘` drops `inline`. At rga4d the call costs ×1.05 to ×1.06 on each unitize measurand, and
+  Open decisions holds that choice.
 
 ## Costs
 
 - **Speed.** In the conformal algebras the rule adds the antidot and a grade scan. The scan runs
   only where the round weight passes, and stops at a second grade. Most of the rest is calls and
   error checks, which the library's operators carry everywhere, and which the gap list holds as
-  design gaps. The rigid algebras keep their cost, since their branch is the rule at pin.
+  causes D02 and D05. The rigid branch is the rule at pin, and costs one call more, as the next
+  item gives: ×1.05 to ×1.06 at rga4d.
 - **One call.** Since `^∘` is not inline, each call to `unitize` or `normalizeWeight` calls it, in
   the rigid algebras too.
 - **Callers.** No caller changes its text, and in the library `^` and `^∘` reach callers through
@@ -218,8 +216,9 @@ one, as Evidence states, so `^∘` drops `inline`.
 
 ### What does not hold, for this rule or for Lengyel's
 
-- **It is not a norm.** The conformal antidot is indefinite: 𝐞₁ + 𝐞₄₅ gives 𝐮 ∘ 𝐮 = 0. The book
-  says "we are using the term 'norm' loosely here" (page 197).
+- **It is not a norm.** The conformal antidot is indefinite: 𝐞₁ + 𝐞₄₅ gives 𝐮 ∘ 𝐮 = 0. So that
+  element, of flat weight 1 and no round weight, has divisor 0, and comes back unscaled, as at
+  pin. The book says "we are using the term 'norm' loosely here" (page 197).
 - **It is not continuous at flats.** No rule that matches Lengyel is, as Problem shows. His
   `Sphere3D::Unitize` divides by −u, which is 0 for a plane.
 - **It does not commute with transversion or inversion.** These change the round weight. Hestenes
@@ -231,14 +230,23 @@ one, as Evidence states, so `^∘` drops `inline`.
 - **Radius.** A round object of radius r and round weight w has √|𝐮 ∘ 𝐮| = rw. So the test passes
   it as round while r is under 1e9 units, and unitizes a larger sphere as a plane. A huge sphere
   and a plane differ only by that size, so every scale has such a radius.
-- **Transversion.** At `cga5d`, a transversion with ½τ of 1e-9 or 1e-13 keeps divisor 1, and its
+- **Small sphere.** A plane sent through a sphere of radius under about 0.04 and back holds round
+  weight past the comparison tolerance. At cga3d, where two random points make the sphere,
+  `laws.nim` stops: the rule misreads 178 of 10 000 planes sent through a sphere and back. It
+  takes 64 of them for round, and those leave unitize with a flat weight of 1e7 to 1e9.
+- **Far plane.** A flat at distance d holds flat bulk near d times its flat weight, and rounding
+  leaves round weight in proportion to it. So some planes sent through a sphere and back take a
+  divisor off their flat weight by more than 1e-9. This starts at about 1e2 units at cga4d and 1e3
+  at cga5d. From about 1e3 units at cga4d and 1e6 at cga5d, the rule takes some of them for
+  spheres. At 1e8 it takes 6 784 of 10 000 at cga4d, and 4 842 at cga5d.
+- **Transversion.** At cga5d, a transversion with ½τ of 1e-9 or 1e-13 keeps divisor 1, and its
   round weight is then negligible too. One with τ = (2.1e9, −1.05e9, 0), so that |τ| = 2.35e9,
-  has its 𝟙 term under the grade tolerance. It divides by |τ| ÷ 2 = 1.17e9 in place of 1.
-  Terathon has no transversion, so no comparison with it tests this.
+  has its 𝟙 term under the comparison tolerance of the grade test. It divides by |τ| ÷ 2 = 1.17e9
+  in place of 1. Terathon has no transversion, so no comparison with it tests this.
 - **Motion moves the branch.** The grade test reads the largest coefficient, which a motion
-  changes. So a motion can move the branch of an element with residue near the tolerance. A round
-  point at the origin with residue 2e-9 on 𝟙 divides by 2e-9, and after a translation by 10, by 1.
-  That is a factor of 5e8.
+  changes. So a motion can move the branch of an element with residue near the comparison
+  tolerance. A round point at the origin with residue 2e-9 on 𝟙 divides by 2e-9, and after a
+  translation by 10, by 1. That is a factor of 5e8.
 - **Range.** Results hold while the squared coefficients stay inside the range of 64-bit floats,
   as at pin.
 - **32 bits.** The library sets the comparison tolerance to 1e-4 at 32 bits. A projection from that
@@ -259,7 +267,8 @@ one, as Evidence states, so `^∘` drops `inline`.
 
 ### What users do
 
-One rule holds in all four algebras, so a user need not know which algebra or kind is in hand.
+One rule serves the rigid and the conformal algebras, so a user need not know which algebra or
+kind is in hand.
 
 1. Compose motion and reflection operators freely, while the largest coefficient of each product
    stays under about 1e77.
@@ -283,15 +292,21 @@ One rule holds in all four algebras, so a user need not know which algebra or ki
 ## Open decisions
 
 - One zero test for `grade` and for `^∘` once P07 lands, or two tests as now. P07 holds the same
-  decision.
+  decision. The scale of a part of P07 is at least one. So with that `grade`, one test fails the
+  law of `laws.nim` that `^∘` is homogeneous, at λ = 1e-100. So one test needs a `grade` whose
+  scale has no floor.
 - Whether a grade test exists that no motor changes, and that keeps the results of this rule. The
   probability is about 0.6. That figure is an estimate, and nothing here measures it.
+- `^∘` without `inline`, as here, or with it. Without it, each rigid unitize at rga4d costs
+  ×1.05 to ×1.06. With it, each caller at cga5d can take in the 1 807 lines of C of `^∘`.
+- The table of norm operators gives 𝐦 ÷ W(𝐦) for `^∘` in its column Lengyel, as here, or
+  𝐦 ÷ ‖𝐦‖∘, as at pin. Lengyel gives no W(𝐦).
 
 ## Landing
 
-- **Change `conformal-norms`.** This change puts one test at the head of suite Chapter 4, and keeps
-  the placeholder test there. `conformal-norms` replaces that placeholder with its two tests. So
-  the two apply in either order, and their three tests in Chapter 4 then stand side by side.
+- **Change `conformal-norms`.** It puts its two tests before the placeholder at the end of suite
+  Chapter 4, and keeps that placeholder. This change adds no test to Chapter 4. The two quote
+  distinct lines, so they apply in either order.
 - **Float width.** The width of each float is a build option at pin. So `largest` in `^∘` and
   `distance_squared` in `toRoundPoint` are declared `Coefficient`.
 - **Norms.** Each norm returns `MultivectorScalars` at pin, which compares with no `Multivector`.
@@ -302,28 +317,35 @@ One rule holds in all four algebras, so a user need not know which algebra or ki
   reads the rule of P07 once both land.
 - **P10, `homogeneous-scalar`.** P10 keeps `unitize` as `^m`, which then calls `^∘` of this
   change.
-- **Change `algebra-hygiene`.** It renames `TOLERANCE_ABS`, which `^∘` names. So the second to land
-  carries the new name into `^∘`.
+- **Change `algebra-hygiene`.** It renames `TOLERANCE_ABS`, which `^∘`, `laws.nim` and
+  `limits.nim` name. So the second to land carries the new name into `^∘` and into both programs.
+- **Change `imports-narrow`.** It names each symbol that `pga/operators.nim` imports, and its list
+  lacks `TOLERANCE_ABS`, which `^∘` names. With both applied, the conformal build stops on
+  `undeclared identifier: 'TOLERANCE_ABS'`. So the second to land adds `TOLERANCE_ABS` to the
+  import from `./algebra` under `when IS_CONFORMAL:`.
 - **Changes `doc-comments` and `doc-comments-2`.** They edit docs next to `unitize` and `^` through
-  distinct quotes, so either order holds. `doc-comments` writes that `^` and `normalizeWeight`
-  cost no call. Once it and this change land, that doc says that each costs one call.
+  distinct quotes, so either order holds. `doc-comments` writes in the doc of `unitize` that `^`
+  and `normalizeWeight` cost no call, as `so neither costs call`. Without `inline` on `^∘`, each
+  costs one. So the second of `doc-comments` and this change to land replaces that text with
+  `so each costs one call to ^∘`.
 - **Sphere of the test of suite Internal.** It has radius one about a random center, through a
   point one unit along each axis and one unit back along the first. So no two of its points lie
-  close, as the Architect ruled on 2026-10-16. Random points can lie close, and at `cga3d` two
+  close, as the Architect ruled on 2026-10-16. Random points can lie close, and at cga3d two
   points 0.0037 apart sent a plane through and back to a flat weight of 0.999924. A run by hand on
-  2026-10-19 applied this change alone at pin, and the suites passed at `cga3d` to `cga6d`.
+  2026-10-19 applied this change alone at pin, and the suites passed at cga3d to cga6d.
 - **Runs by hand.** A run on 2026-10-19 applied P07 and this change to a copy of the library at
-  pin. The suites passed at `rga3d`, `rga4d`, `cga4d` and `cga5d`, at 64 and at 32 bits.
+  pin. The suites passed at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits.
 
 ## Evidence
 
 The Architect ruled for this rule on 2026-10-11, on the reanalysis against Lengyel that this page
 holds. Unless a note names another run, its figures come from `laws.nim` and `limits.nim`. These
-ran on this machine on 2026-10-11, at 64 bits, against the changed library.
+ran on `linux amd64, 4 cores` on 2026-10-11, at 64 bits, against the changed library.
 
 ### Laws
 
-`laws.nim` holds each law on 2,000 samples at each algebra.
+`laws.nim` holds each law on 2 000 samples at rga3d, rga4d, cga4d and cga5d, the four
+algebras of its claims. At cga3d it stops on a small sphere, as Costs gives.
 
 | Law | Worst error, CGA | Worst error, RGA |
 | --- | --- | --- |
@@ -336,14 +358,15 @@ ran on this machine on 2026-10-11, at 64 bits, against the changed library.
 | unitize(★𝐮) and unitize(☆𝐮) divide by W(𝐮) | 1.8e-13 | does not hold |
 
 - **Unit weight.** The rule divides by that weight, and 𝐯 ∘ 𝐯 is the 𝟙 part of 𝐯 ⟇ ~∘𝐯 for a
-  product. The kinds are each object kind, the motor and the flector, in all four algebras, and
-  the wiki's translation, rotation, transversion and dilation at `cga5d`. Products with
+  product. The kinds are each object kind, the motor and the flector, in the four algebras, and
+  the wiki's translation, rotation, transversion and dilation at cga5d. Products with
   𝐮 ∘ 𝐮 < 0 each unitize to |𝐮 ∘ 𝐮| = 1.
 - **Homogeneity.** Both divisors scale by |λ|, and both tests read ratios, so no branch changes.
-  In floating point, only a coefficient within rounding of the tolerance can cross it.
-- **Rigid motion.** A rigid motor maps 𝐞∞ to ±𝐞∞, so it keeps the weight of the carrier. The 𝟙
+  In floating point, only a coefficient within rounding of the comparison tolerance can cross it.
+- **Rigid motion.** A rigid motor maps 𝐞ₙ to ±𝐞ₙ, so it keeps the weight of the carrier. The 𝟙
   part of a product is cyclic, so a unit motion operator keeps 𝐮 ∘ 𝐮 as it is. Both hold where
-  the motion moves no coefficient across the grade tolerance, so that the branch stays.
+  the motion moves no coefficient across the comparison tolerance of the grade test, so that the
+  branch stays.
 - **Duality.** In CGA each dual maps every basis element to one basis element, up to sign, so the
   grade test reads the same. It keeps the round weight norm and negates 𝐮 ∘ 𝐮, so both divisors
   stay. In RGA a dual swaps bulk and weight.
@@ -353,9 +376,10 @@ ran on this machine on 2026-10-11, at 64 bits, against the changed library.
 ### Zero tests
 
 Each round object below moved by three products of reflections, and each cell counts the objects
-that a test read right, of 256.
+that a test read right, of 256. The row of P11 reads the divisor of `^` of the library. Each other
+row reads a copy of its test in `laws.nim`.
 
-| Test | `cga5d` at 1 | `cga5d` at 1e8 | `cga4d` at 1 | `cga4d` at 1e8 |
+| Test | cga5d at 1 | cga5d at 1e8 | cga4d at 1 | cga4d at 1e8 |
 | --- | --- | --- | --- | --- |
 | Exact grade scan | 0 | 0 | 2 | 2 |
 | Grade at pin, 1e-9 absolute | 256 | 0 | 256 | 2 |
@@ -363,29 +387,33 @@ that a test read right, of 256.
 | Each part at its own scale alone | 256 | 122 | 256 | 86 |
 | P11, 1e-9 of largest coefficient | 256 | 256 | 256 | 256 |
 
-- **Round weight.** Of 10,000 planes sent through a sphere and back, an exact test takes 9,933
-  for a huge sphere at `cga5d`, and 9,557 at `cga4d`. This rule misreads none.
-- **Motion.** Rotations about the origin alone moved the branch of 15,198 of 20,000 round points
-  with residue just past the tolerance.
+- **Round weight.** Each plane here passes through points at deviation 1. Of 10 000 sent through a
+  sphere and back, an exact test takes 9 933 for a huge sphere at cga5d, and 9 557 at cga4d. This
+  rule misreads none of them. Far planes and small spheres are edges, as Costs gives. Their counts
+  come from a run of `laws.nim` on `linux amd64, 4 cores` on 2026-11-14. The 64 planes that take the
+  round branch at cga3d come from a copy of `laws.nim` that counts in place of the assertion.
+- **Motion.** Rotations about the origin alone moved the branch of 15 198 of 20 000 round points
+  with residue just past the comparison tolerance.
 - **Against P07.** On the populations of P07 at 64 bits, the scan of `^∘` misread 157 elements at
-  `cga4d` and 132 at `cga5d`, read alone. The `grade` of P07 misread none there. A test split by
+  cga4d and 132 at cga5d, read alone. The `grade` of P07 misread none there. A test split by
   the round test of this rule, which P07 also measured, misread 71 and 140.
-- **At 32 bits.** A run by hand at `cga5d` on 2026-10-12 used a copy of the library with P06. It
+- **At 32 bits.** A run by hand at cga5d on 2026-10-12 used a copy of the library with P06. It
   unitized round objects at a deviation of 1e4 units, then moved them. The round test failed on
-  563 of 1,024 dipoles, 923 circles and 1,006 spheres, and on every dipole from 1e5. In 64-bit
-  arithmetic, with inputs rounded to 32 bits and the tolerance of 1e-4, the counts were the same.
-  So the edge comes from the tolerance, not from rounding.
-- **Far round points at 32 bits.** The same run failed 753 of 1,024 round points at 1e8, and none
+  563 of 1 024 dipoles, 923 circles and 1 006 spheres, and on every dipole from 1e5. In 64-bit
+  arithmetic, with inputs rounded to 32 bits and the comparison tolerance of 1e-4, the counts were
+  the same. So the edge comes from the comparison tolerance, not from rounding.
+- **Far round points at 32 bits.** The same run failed 753 of 1 024 round points at 1e8, and none
   at 64 bits. A 32-bit point that far out is a sphere of radius about √ε times its distance.
 
 ### Frames
 
-`limits.nim` holds the rule, with frames at 60 each second. Each move of the chains and of the
+`limits.nim` measures the limits of the rule, with frames at 60 each second. Its gates also hold at
+pin, since pin unitizes a round object by its round weight too. Each move of the chains and of the
 hour is a product of two reflections 0.01 apart, as animation steps are. In the depth rows, each
 product is of two random reflections, which grows far faster. The error is the change of distance
 between moved points in RGA, and the drift of a moved round point from radius 0 in CGA.
 
-| Measure | `rga4d` | `rga3d` | `cga5d` | `cga4d` |
+| Measure | rga4d | rga3d | cga5d | cga4d |
 | --- | --- | --- | --- | --- |
 | One frame, depth 256, against step by step | 1.5e-14 | 3.6e-14 | 1.3e-14 | 2.2e-14 |
 | Largest coefficient of that composed motion operator | 1.4e1 | 7.6 | 8.0e54 | 6.0e66 |
@@ -405,28 +433,33 @@ between moved points in RGA, and the drift of a moved round point from radius 0 
   and cancel to ±1. Past about 1e7 to 1e8, their rounding passes 1, so the rule divides by
   rounding. That holds the operator near 1e9, in range though not unit, and its points stay the
   same.
-- **Depth.** Each random product adds about 0.21 orders of magnitude at `cga5d` and 0.26 at
-  `cga4d`. At that rate a composed conformal operator passes 1e77 near depth 360 at `cga5d` and
-  about 300 at `cga4d`, which nothing here measures.
-- **Residue.** Over 1,000,000 moves, residue in other grades reached at most 2.1e-15 for rigid
-  moves, and 5.8e-12 for conformal moves unitized after each. Both lie under the grade tolerance,
-  so grade selection is not needed. It would set that residue to 0, and change no invariant
-  measured here, while the rule scales every coefficient alike and so removes none.
-- **Composing.** A composed operator touches the object once. After 1,000,000 moves, residue on
-  that path reached at most 9.4e-15 in all four algebras, and step by step, 2.1e-15 for rigid moves.
+- **Depth.** Each random product adds about 0.21 orders of magnitude at cga5d and 0.26 at
+  cga4d. At that rate a composed conformal operator passes 1e77 near depth 360 at cga5d and
+  about 300 at cga4d, which nothing here measures.
+- **Residue.** Over 1 000 000 moves, residue in other grades reached at most 2.1e-15 for rigid
+  moves, and 5.8e-12 for conformal moves unitized after each. Both lie under the comparison
+  tolerance of the grade test, so grade selection is not needed. It would set that residue to 0, and
+  change no invariant measured here, while the rule scales every coefficient alike and so removes
+  none.
+- **Composing.** A composed operator touches the object once. After 1 000 000 moves, residue on
+  that path reached at most 9.4e-15 in the four algebras, and step by step, 2.1e-15 for rigid
+  moves.
 - **Stored at 32 bits.** A rigid motor stored at 32 bits each frame drifts from its 64-bit twin by
   up to 1.2e-4 of the scene in six hours. That holds with a unitization each frame or without.
   `limits.nim` rounds the motor to 32 bits inside a 64-bit build, as 32-bit storage would, so
-  this needs no P06.
+  this needs no 32-bit build.
 
 ### Speed
 
-At `cga5d` the adds of `^∘` rise from 7 to 38, its calls from 65 to 291, and its error checks
-from 1 to 66. Six earlier evaluations of the inline form, on 2026-10-11 and 2026-10-12, gave 66.59
-to 91.17 ns at `cga5d`, at ×6.98 to ×8.78 of pin. They ran from commit a712559b to commit
-09e9579a. So the time of the change varies by up to about 40% between evaluations. The form here,
-without `inline`, ran under Nim 2.4.0 in 117.42 ns, against 13.88 ns of pin, so at ×8.50. That
-ratio lies inside their range, so no pair of runs separates a gain of `inline` from noise.
+At cga5d the adds of `^∘` rise from 7 to 38, its calls from 65 to 291, and its error checks from 1
+to 66. Its C grows from 284 to 1 807 lines. Six earlier evaluations of the inline form, on
+2026-10-11 and 2026-10-12, gave 66.59 to 91.17 ns at cga5d, at ×6.98 to ×8.78 of pin. They ran from
+commit a712559b to commit 09e9579a. So the time of the change varies by up to about 40% between
+evaluations.
+
+The form here, without `inline`, ran under Nim 2.4.0 in 86.05 ns, against 10.35 ns of pin, so at
+×8.15. That ratio lies inside their range, so no pair of runs at cga5d separates a gain of `inline`
+from noise. At rga4d each unitize measurand reads ×1.05 to ×1.06 without `inline`.
 
 ### Lengyel's sources
 
