@@ -31,12 +31,16 @@
 ##     `checkoutAt`, since git names checkout holding file.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
-##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, context, table,
-##     summary, state with where branch stands, decisions, next step. Each decision block reads
-##     as card, class says what blocks, and each ⚠️ row names role it waits on; coordinator,
-##     once trialed, lifts each block onto card unchanged. So shape check holds what Architect
-##     decides on: state word, class and place of each decision, two to four short options, and
-##     recommendation naming one.
+##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, context, rule line,
+##     work, summary, state with where branch stands, decisions, next step. Work holds one group
+##     for each pull request, its bold line linking it and giving its state, then table of two
+##     columns; table of work outside pull request closes it (#844). Phone shows first column
+##     alone, so first cell opens with state, number and claim, and second holds evidence or who
+##     acts, with tag of each carried rule. Each decision block reads as card, class says what
+##     blocks, and each ⚠️ row names role it waits on; coordinator, once trialed, lifts each
+##     block onto card unchanged. So shape check holds what Architect decides on: state word,
+##     class and place of each decision, two to four short options, and recommendation naming
+##     one.
 ##   Delegate signs off only when done, blocked or waiting, as Architect set (GUIDE.md, Output
 ##     contract). Turn that ends while work runs closes with working line instead, naming what
 ##     runs and what wakes delegate, so each state word marks stop and none means work goes on.
@@ -47,8 +51,8 @@
 ##   Cost: post whose body file same command writes, as by heredoc, is refused, so it takes two
 ##     calls: one writes file, next posts it.
 ##   Cost: mutation through `gh api graphql` reads as no post, so reading holds its body.
-##   Cost: sign-off check reads shape, never whether row or decision says anything; evidence
-##     cell of ✅ row must be non-empty and nothing more, and option need not be honest.
+##   Cost: sign-off check reads shape, never whether row or decision says anything; second cell
+##     of each row must be non-empty and nothing more, and option need not be honest.
 ##   Cost: `stop` cannot tell coordinator, which holds no branch, from delegate; where it runs
 ##     for coordinator, whose message is digest, turn that posted is asked once for sign-off,
 ##     and second stop passes.
@@ -64,7 +68,20 @@ from ./tree import checkoutAt
 
 type
   Part {.pure.} = enum  ## Define one part of sign-off block, in order block holds them.
-    Role, Context, Table, Summary, State, Decisions, Next
+    Role, Context, Work, Summary, State, Decisions, Next
+
+  Row = object  ## Define one row of table of sign-off, as its shape check reads it.
+    cells: seq[string]  ## Stripped cells; two where row keeps its shape.
+    state: int  ## Index in `MARKERS` of state first cell opens with; -1 where none.
+    first: int  ## Number after state; 0 where first cell gives none, or no claim after it.
+    last: int  ## Last number of fold, as `5` of `☑️ 1–5.`; `first` where row names one item.
+
+  Group = object  ## Define one group of sign-off: pull request and its table, or work outside one.
+    line: string  ## Bold line opening group; empty where table opens with none.
+    number: int  ## Pull request bold line links; 0 outside pull request; -1 where none reads.
+    state: string  ## Word after link, such as `draft`; empty where none reads.
+    header: string  ## First line of table under bold line; empty where none.
+    rows: seq[Row]  ## Rows under header, separator dropped.
 
   Decision = object  ## Define one decision block of sign-off, as its shape check reads it.
     number: int  ## `n` of `**D<n>.**`; zero where not digits.
@@ -158,13 +175,24 @@ const
     ## Openings of issue URL GitHub reads after closing keyword, before `<owner>/<repo>/issues/<N>`.
   CHARS_SLUG = IdentChars + {'.', '-'}  ## Characters of owner or repository name.
   HEADING_SIGNOFF* = "## Sign-off"  ## Heading of closing block (GUIDE.md, Output contract).
-  TABLE_SIGNOFF* = "| # | State | Item | Where | Evidence, or who acts |"
-    ## Header row of its table, exact.
+  TABLE_SIGNOFF* = "| Item | Evidence, or who acts |"
+    ## Header row of each table of sign-off, exact; first column reads alone on phone.
+  BREAK_SIGNOFF = "---"  ## Rule line opening work of sign-off, after its context.
   LABELS_SIGNOFF: array[Part, string] = [
-    "**Role:**", "**Context:**", TABLE_SIGNOFF, "**Summary:**", "**State:**", "**Decisions:**",
+    "**Role:**", "**Context:**", BREAK_SIGNOFF, "**Summary:**", "**State:**", "**Decisions:**",
     "**Next step:**",
   ]
     ## Parts of block, in order each must appear.
+  LABEL_OUTSIDE = "**Outside a pull request.**"
+    ## Bold line over table of work outside pull request, which closes work of each sign-off.
+  OPENING_PULL = "**["  ## Opening of bold line linking pull request of its group.
+  CLOSING_PULL = ".**"  ## Close of bold part of that line, before what pull request does.
+  SEGMENT_PULL = "/pull/"  ## Segment of address of pull request, before its number.
+  STATES_PULL = ["draft", "ready", "merged", "closed"]
+    ## Words bold line gives after link, as state of its pull request.
+  WORD_BRANCH = "branch"  ## Word role line gives before last part of branch.
+  OPENING_HEAD = ", at `"  ## Opening of where branch stands, after state word.
+  CLOSINGS_STATE = ["`, pushed", "`, not pushed"]  ## Closes of state line, after short head.
   BLOCKED = "blocked"  ## State word of delegate nothing moves for until Architect decides.
   STATES_SIGNOFF = ["done", "waiting", BLOCKED]
     ## Words `**State:**` opens with, before where branch stands; each one is stop.
@@ -188,11 +216,17 @@ const
   OUTSIDE = "outside"  ## Word ⚠️ row opens last cell with where no role acts.
   MARKER_WAIT = "⚠"  ## State marker of row another delegate or outside party acts on.
   MARKER_HOLD = "⏸"  ## State marker of row Architect acts on.
-  MARKERS* = ["☑", "✅", MARKER_WAIT, MARKER_HOLD, "⬜"]
-    ## State markers in sort order, variation selector stripped.
+  MARKER_UNNEEDED = "➖"  ## State marker of row naming each carried rule that concerns no item.
+  MARKERS* = ["☑", "✅", MARKER_WAIT, MARKER_HOLD, "⬜", MARKER_UNNEEDED]
+    ## State markers in sort order, variation selector stripped; first two mark row done.
+  STATES_DONE = 0 .. 1  ## Indices in `MARKERS` of states that mark row done, which fold holds.
   SELECTOR = "️"  ## Variation selector some markers carry; stripped before match.
-  TAG_CARRIED = "(carried "  ## Tag row carries for carried-list item.
-  CARRIED_MAX* = 6  ## Items on carried list (CONTRIBUTOR.md).
+  DASHES_FOLD = ["–", "-"]  ## Marks between first and last number of fold, as `☑️ 1–5.`.
+  DIGITS_NUMBER = 9  ## Digits number of row or pull request holds at most, so it parses.
+  TAG_CARRIED = "carried "  ## Opening of tag of carried rule in second cell, before its numbers.
+  JOINTS_TAG = [", and ", " and ", ", "]
+    ## Words between numbers of one tag, as in `carried 1, 2 and 4`; longest first.
+  CARRIED_MAX* = 6  ## Rules on carried list (CONTRIBUTOR.md).
   SUBJECT_MERGE = "Merge "  ## Opening of subject git writes for merge commit.
   HEADINGS_PULL* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
     ## Headings pull request template gives.
@@ -802,16 +836,49 @@ proc checkPosts*(branch, command, directory: string): seq[Finding] =
     result.add checkBody(request.tool, branch, title, body, labels, request.is_create)
 
 
+func numberAt(text: string, at: int): tuple[number, stop: int] =
+  ## Read number whose digits open at byte `at` of text, and index past them; `stop` is `at`
+  ##   where no digit opens there, or where digits run past `DIGITS_NUMBER`.
+  var stop = at
+  while stop < text.len and text[stop] in Digits: inc stop
+  if stop == at or stop - at > DIGITS_NUMBER: return (0, at)
+  (text[at ..< stop].parseInt, stop)
+
+
+func spanTag(cell: string, at: int): tuple[numbers: seq[int], stop: int] =
+  ## Read numbers of tag of carried rule opening at byte `at` of cell, as `carried 3 and 4`, and
+  ##   index past last one; none where no number follows, so word in prose opens no tag.
+  var i = at + TAG_CARRIED.len
+  while true:
+    let (number, stop) = cell.numberAt(i)
+    if stop == i: return
+    result.numbers.add number
+    result.stop = stop
+    i = -1  # Index of next number; none until joint before one reads.
+    for joint in JOINTS_TAG:
+      let next = stop + joint.len
+      if cell.continuesWith(joint, stop) and cell.numberAt(next).stop > next:
+        i = next
+        break
+    if i < 0: return
+
+
 func tagsCarried(cell: string): seq[int] =
-  ## Read every `(carried N)` of cell as N; `0` where N is not digit.
+  ## Read numbers of each tag of carried rule in cell, as `carried 5` or `carried 3 and 4`.
+  ##   Tag opens cell or follows character no word holds, so `uncarried 3` names none.
   var at = cell.find(TAG_CARRIED)
   while at >= 0:
-    let
-      rest = cell[at + TAG_CARRIED.len .. ^1]
-      close = rest.find(')')
-      number = if close > 0: rest[0 ..< close].strip else: ""
-    result.add(if number.len > 0 and number.allCharsInSet(Digits): number.parseInt else: 0)
+    if at == 0 or cell[at - 1] notin Letters: result.add cell.spanTag(at).numbers
     at = cell.find(TAG_CARRIED, at + 1)
+
+
+func actorRow(cell: string): string =
+  ## Read word second cell of row opens with, past tag of carried rule that opens it.
+  var text = cell
+  if text.startsWith(TAG_CARRIED):
+    let span = text.spanTag(0)
+    if span.numbers.len > 0: text = text[span.stop .. ^1].strip(chars = Whitespace + {',', ':'})
+  if text.len == 0: "" else: text.splitWhitespace[0].strip(chars = {',', ':'})
 
 
 func decisionsIn(lines: openArray[string]): seq[Decision] =
@@ -935,67 +1002,303 @@ func numbersDecision(cell: string): seq[int] =
       result.add word[1 .. ^1].parseInt
 
 
-func findingsRow(rows: seq[seq[string]], numbers: openArray[int]): seq[Finding] =
-  ## Report rows of sign-off table out of shape: cells, order, evidence, carried tags, who acts.
-  ##   ⚠️ row opens last cell with role that acts, or `outside`, so coordinator sees which
-  ##     delegate blocks which; ⏸️ row names decision it waits on, so its card carries it.
+func toRow(cells: seq[string]): Row =
+  ## Read row of table: state first cell opens with, then number or fold, period and claim.
+  ##   `first` stays 0 where any of them is missing, so shape check names first cell whole.
+  result = Row(cells: cells, state: -1)
+  if cells.len == 0: return
+  let text = cells[0].replace(SELECTOR, "")
+  for k, marker in MARKERS:
+    if not text.startsWith(marker): continue
+    result.state = k
+    var at = marker.len
+    while at < text.len and text[at] == ' ': inc at
+    let (first, after_first) = text.numberAt(at)
+    if after_first == at: return
+    var (last, stop) = (first, after_first)
+    for dash in DASHES_FOLD:
+      if text.continuesWith(dash, stop):
+        let fold = text.numberAt(stop + dash.len)
+        if fold.stop > stop + dash.len: (last, stop) = fold
+        break
+    if text.continuesWith(".", stop) and text[stop + 1 .. ^1].strip.len > 0:
+      (result.first, result.last) = (first, last)
+    return
+
+
+func toGroup(line: string): Group =
+  ## Read bold line opening group: work outside pull request, or link to pull request and state.
+  ##   Number stays -1 where line links no pull request, and state empty where no word follows
+  ##     link inside bold.
+  if line == LABEL_OUTSIDE: return Group(line: line, number: 0)
+  result = Group(line: line, number: -1)
+  let middle = line.find("](")
+  if not line.startsWith(OPENING_PULL) or middle < 0: return
+  let close = line.find(')', middle + 2)
+  if close < 0: return
+  let
+    address = line[middle + 2 ..< close]
+    at = address.find(SEGMENT_PULL)
+  if at < 0: return
+  let (number, stop) = address.numberAt(at + SEGMENT_PULL.len)
+  if stop == at + SEGMENT_PULL.len: return
+  result.number = number
+  let rest = line[close + 1 .. ^1]
+  if not rest.startsWith(", ") or CLOSING_PULL notin rest: return
+  var i = 2
+  while i < rest.len and rest[i] in Letters: inc i
+  result.state = rest[2 ..< i]
+
+
+func groupsIn(lines: openArray[string]): seq[Group] =
+  ## Read groups of work of sign-off in order: each bold line, then rows of its table.
+  ##   Table line before any bold line opens group with none, which shape check refuses; other
+  ##     line, as text of bold line wrapped onto next, is passed over.
+  for line in lines:
+    let s = line.strip
+    if s.startsWith(BOLD): result.add s.toGroup
+    elif s.startsWith("|"):
+      if result.len == 0: result.add Group(number: -1)
+      if result[^1].header.len == 0: result[^1].header = s
+      else:
+        for cells in s.rowsTable: result[^1].rows.add cells.toRow
+
+
+func partsAt(lines: openArray[string]): array[Part, int] =
+  ## Read line each part of sign-off opens on, each searched after part found before it; -1
+  ##   where none follows.
+  var pos = 0
+  for part, label in LABELS_SIGNOFF:
+    result[part] = -1
+    for j in pos ..< lines.len:
+      if lines[j].startsWith(label):
+        result[part] = j
+        break
+    if result[part] >= 0: pos = result[part] + 1
+
+
+func linesWork(lines: seq[string], starts: array[Part, int]): seq[string] =
+  ## Read lines of work of sign-off: after its rule line up to summary, or after context where
+  ##   rule line is missing, so its groups still read.
+  let opening = if starts[Part.Work] >= 0: starts[Part.Work] else: starts[Part.Context]
+  lines[opening + 1 ..< starts[Part.Summary]]
+
+
+func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
+  ## Report rows out of shape: cells, state, number, order, evidence, who acts, fold and tag.
+  ##   Rows number from 1 across tables, and sort by state inside each table. ⚠️ row opens
+  ##     second cell with role that acts, or `outside`, so coordinator sees which delegate
+  ##     blocks which; ⏸️ row names decision it waits on, so its card carries it.
+  ##   Table whose header is out of shape is named alone, since its rows cannot be read.
+  var is_readable = true
+  for g in groups:
+    if g.header == TABLE_SIGNOFF: continue
+    is_readable = false
+    result.add finding(
+      "",
+      0,
+      "Sign-off table opens with header `" & TABLE_SIGNOFF & "`; got `" &
+        (if g.header.len == 0: "none" else: g.header.shortened) & "`.",
+    )
+  if not is_readable: return
   var
-    last = 0
-    seen: seq[int]
-  for i, row in rows:
-    if row.len != 5:
-      result.add finding("", 0, "Sign-off row must hold five cells; got `" & $row.len & "`.")
-      continue
-    if row[0] != $(i + 1):
-      result.add finding("", 0, "Sign-off rows are numbered from 1 in order; got `" & row[0] & "`.")
-    let
-      marker = row[1].replace(SELECTOR, "")
-      state = MARKERS.find(marker)
-    if state < 0:
-      result.add finding("", 0, "Sign-off state must be one of ☑️ ✅ ⚠️ ⏸️ ⬜; got `" & row[1] & "`.")
-    elif state < last:
-      result.add finding(
-        "",
-        0,
-        "Sign-off states sort ☑️ ✅ ⚠️ ⏸️ ⬜; got `" & row[1] & "` after later state.",
-      )
-    else: last = state
-    if state == 1 and row[4].len == 0:
-      result.add finding(
-        "",
-        0,
-        "Sign-off ✅ row needs evidence; got empty cell in row `" & row[0] & "`.",
-      )
-    let actor = if row[4].len == 0: "" else: row[4].splitWhitespace[0].strip(chars = {',', ':'})
-    if marker == MARKER_WAIT and actor != OUTSIDE and not actor.isStringRole:
-      result.add finding(
-        "",
-        0,
-        "Sign-off ⚠️ row opens last cell with role string or `" & OUTSIDE & "`; got `" & actor &
-          "` in row `" & row[0] & "`.",
-      )
-    let named = row[4].numbersDecision
-    if marker == MARKER_HOLD and (named.len == 0 or named.anyIt(it notin numbers)):
-      result.add finding(
-        "",
-        0,
-        "Sign-off ⏸️ row names decision it waits on as `D<n>`; got `" & row[4] & "` in row `" &
-          row[0] & "`.",
-      )
-    for n in row[2].tagsCarried:
-      if n < 1 or n > CARRIED_MAX:
+    expected = 1  # Number next row takes.
+    unneeded = 0  # ➖ rows so far.
+  for g in groups:
+    var last = 0  # State of row before, in this table.
+    for row in g.rows:
+      if row.cells.len != 2:
         result.add finding(
           "",
           0,
-          "Carried tag names item 1 to " & $CARRIED_MAX & "; got `" & $n & "`.",
+          "Sign-off row holds two cells, `Item` and `Evidence, or who acts`; got `" &
+            $row.cells.len & "`.",
         )
-      elif n in seen:
-        result.add finding("", 0, "Carried item tagged twice; got `" & $n & "`.")
-      else: seen.add n
+        continue
+      if row.first == 0:
+        result.add finding(
+          "",
+          0,
+          "Sign-off row opens first cell with state, number and claim, as `✅ 3. A test covers " &
+            "each rafsi form`; got `" & row.cells[0].shortened & "`.",
+        )
+        continue
+      let
+        name = $row.first
+        marker = MARKERS[row.state]
+        evidence = row.cells[1]
+      if row.first != expected or row.last < row.first:
+        result.add finding(
+          "",
+          0,
+          "Sign-off rows are numbered from 1 in order across its tables; got `" & name & "`.",
+        )
+      expected = max(row.first, row.last) + 1
+      if row.state < last:
+        result.add finding(
+          "",
+          0,
+          "Sign-off states sort ☑️ ✅ ⚠️ ⏸️ ⬜ ➖ inside each table; got `" &
+            row.cells[0].splitWhitespace[0] & "` after later state.",
+        )
+      else: last = row.state
+      if row.last > row.first and row.state notin STATES_DONE:
+        result.add finding(
+          "",
+          0,
+          "Sign-off folds done rows alone, as `☑️ 1–5.`; got `" & row.cells[0].splitWhitespace[0] &
+            "` in row `" & name & "`.",
+        )
+      if evidence.len == 0:
+        result.add finding(
+          "",
+          0,
+          "Sign-off row holds evidence, or who acts, in its second cell; got empty cell in row `" &
+            name & "`.",
+        )
+      let actor = evidence.actorRow
+      if marker == MARKER_WAIT and actor != OUTSIDE and not actor.isStringRole:
+        result.add finding(
+          "",
+          0,
+          "Sign-off ⚠️ row opens second cell with role string or `" & OUTSIDE & "`, after any " &
+            "carried tag; got `" & actor & "` in row `" & name & "`.",
+        )
+      let named = evidence.numbersDecision
+      if marker == MARKER_HOLD and (named.len == 0 or named.anyIt(it notin numbers)):
+        result.add finding(
+          "",
+          0,
+          "Sign-off ⏸️ row names decision it waits on as `D<n>`; got `" & evidence & "` in row `" &
+            name & "`.",
+        )
+      if marker == MARKER_UNNEEDED:
+        inc unneeded
+        if g.number != 0:
+          result.add finding(
+            "",
+            0,
+            "Sign-off ➖ row stands in table `" & LABEL_OUTSIDE & "`; got it in row `" & name & "`.",
+          )
+        if evidence.tagsCarried.len == 0:
+          result.add finding(
+            "",
+            0,
+            "Sign-off ➖ row names each carried rule that concerns no item by its tag, as " &
+              "`carried 3 and 4`; got `" & evidence.shortened & "` in row `" & name & "`.",
+          )
+      for n in evidence.tagsCarried:
+        if n < 1 or n > CARRIED_MAX:
+          result.add finding(
+            "",
+            0,
+            "Carried tag names rule 1 to " & $CARRIED_MAX & "; got `" & $n & "`.",
+          )
+  if unneeded > 1:
+    result.add finding("", 0, "Sign-off holds one ➖ row; got `" & $unneeded & "`.")
+
+
+func findingsCarried(groups: seq[Group]): seq[Finding] =
+  ## Report carried rule that no row names, or that stands beside item and in ➖ row too.
+  ##   Rule may stand beside two items, as one rule can concern two pull requests. Table whose
+  ##     header is out of shape is unread, so no rule is reported for it.
+  if groups.anyIt(it.header != TABLE_SIGNOFF): return
+  var beside, unneeded: seq[int]
+  for g in groups:
+    for row in g.rows:
+      if row.cells.len != 2: continue
+      for n in row.cells[1].tagsCarried:
+        if row.state >= 0 and MARKERS[row.state] == MARKER_UNNEEDED: unneeded.add n
+        else: beside.add n
+  for n in unneeded:
+    if n in beside:
+      result.add finding(
+        "",
+        0,
+        "Carried rule stands beside item it concerns, or in ➖ row, and never in both; got `" &
+          $n & "`.",
+      )
+  let missing = toSeq(1 .. CARRIED_MAX).filterIt(it notin beside and it notin unneeded)
+  if missing.len > 0:
+    result.add finding(
+      "",
+      0,
+      "Sign-off names each carried rule beside item it concerns, or in ➖ row (CONTRIBUTOR.md, " &
+        "Carry the unchecked list in the open); got none for `" & missing.mapIt($it).join(", ") &
+        "`.",
+    )
+
+
+func findingsWork(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
+  ## Report work of sign-off out of shape: its groups, then rows and carried rules of its tables.
+  ##   Each pull request takes one group, whose bold line links it and gives its state, and work
+  ##     outside one takes last table, once, even where ➖ row is its only row (#844).
+  var
+    outside = 0  # Groups of work outside pull request, so far.
+    seen: seq[int]  # Pull requests that group links, so far.
+  for g in groups:
+    if g.line.len == 0:
+      result.add finding(
+        "",
+        0,
+        "Sign-off table follows bold line of its group (GUIDE.md, The table); got `" &
+          g.header.shortened & "`.",
+      )
+    elif g.number < 0 or (g.number > 0 and g.state.len == 0):
+      result.add finding(
+        "",
+        0,
+        "Sign-off group opens with bold line that links its pull request and gives its state, " &
+          "as `**[Lujvo search (#912)](url), draft.**`, or with `" & LABEL_OUTSIDE & "`; got `" &
+          g.line.shortened & "`.",
+      )
+    elif g.number > 0 and g.state notin STATES_PULL:
+      result.add finding(
+        "",
+        0,
+        "Pull request state on bold line is one of " & STATES_PULL.join(", ") & "; got `" &
+          g.state & "`.",
+      )
+    if g.number == 0: inc outside
+    elif outside > 0:
+      result.add finding(
+        "",
+        0,
+        "Sign-off puts table `" & LABEL_OUTSIDE & "` after each group of pull request; got `" &
+          g.line.shortened & "` after it.",
+      )
+    if g.number > 0:
+      if g.number in seen:
+        result.add finding(
+          "",
+          0,
+          "Sign-off holds one group for each pull request; got `#" & $g.number & "` twice.",
+        )
+      else: seen.add g.number
+  if outside != 1:
+    result.add finding(
+      "",
+      0,
+      "Sign-off holds table `" & LABEL_OUTSIDE & "` once, even where ➖ row is its only row; " &
+        "got `" & $outside & "`.",
+    )
+  result.add findingsRows(groups, numbers)
+  result.add findingsCarried(groups)
+
+
+func isStateRest(text: string): bool =
+  ## Decide whether text after state word gives where branch stands alone: short head, then
+  ##   `pushed` or `not pushed`, since bold line of each pull request gives its state and run.
+  if not text.startsWith(OPENING_HEAD): return false
+  let close = text.find('`', OPENING_HEAD.len)
+  close > OPENING_HEAD.len and text[OPENING_HEAD.len ..< close].allCharsInSet(HexDigits) and
+    text[close .. ^1] in CLOSINGS_STATE
 
 
 func checkSignoff*(message, branch: string): seq[Finding] =
   ## Report message that lacks sign-off block, or holds it out of shape.
+  ##   Missing rule line is named, and work still reads from line after context, so table of
+  ##     form before #844 is named for what it lacks.
   let lines = message.splitLines
   var at = -1
   for i, line in lines:
@@ -1004,38 +1307,44 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     return @[finding(
       "", 0, "Message holds no `" & HEADING_SIGNOFF & "` block (GUIDE.md, Output contract)."
     )]
-  let after = lines[at + 1 .. ^1]
+  let
+    after = lines[at + 1 .. ^1]
+    starts = after.partsAt
   for line in after:
     if line.startsWith("#"):
       result.add finding("", 0, "Nothing follows sign-off; got heading `" & line & "`.")
-  var
-    starts: array[Part, int]
-    pos = 0
   for part, label in LABELS_SIGNOFF:
-    starts[part] = -1
-    for j in pos ..< after.len:
-      if after[j].startsWith(label):
-        starts[part] = j
-        break
     if starts[part] < 0:
       result.add finding("", 0, "Sign-off lacks `" & label & "` in its order; got none.")
-    else: pos = starts[part] + 1
-  if starts.anyIt(it < 0): return
+  var readable = starts
+  readable[Part.Work] = 0  # Work reads after context where its rule line is missing.
+  if readable.anyIt(it < 0): return
 
   template rest(part: Part): string =
     after[starts[part]][LABELS_SIGNOFF[part].len .. ^1].strip
 
   let
-    text_role = Part.Role.rest.split(',')[0].strip
+    rest_role = Part.Role.rest
+    text_role = rest_role.split(',')[0].strip
     parsed = branch.parseBranch
-    word_state = Part.State.rest.split({',', ' '})[0]
+    rest_state = Part.State.rest
+    word_state = rest_state.split({',', ' '})[0]
     decisions = decisionsIn(after[starts[Part.Decisions] + 1 ..< starts[Part.Next]])
-  if parsed.isSome and text_role != parsed.get.nameRole:
-    result.add finding(
-      "",
-      0,
-      "Sign-off role must be `" & parsed.get.nameRole & "`; got `" & text_role & "`.",
-    )
+  if parsed.isSome:
+    let tail = ", " & WORD_BRANCH & " `" & parsed.get.name & "`"
+    if text_role != parsed.get.nameRole:
+      result.add finding(
+        "",
+        0,
+        "Sign-off role must be `" & parsed.get.nameRole & "`; got `" & text_role & "`.",
+      )
+    elif rest_role[text_role.len .. ^1] != tail:
+      result.add finding(
+        "",
+        0,
+        "Sign-off role line closes with word `" & WORD_BRANCH & "` and last part of branch, as `" &
+          tail & "`; got `" & rest_role[text_role.len .. ^1] & "`.",
+      )
   if word_state notin STATES_SIGNOFF:
     result.add finding(
       "",
@@ -1051,6 +1360,14 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       0,
       "Sign-off state is `" & BLOCKED & "` exactly when decision blocks; got `" & word_state & "`.",
     )
+  if word_state in STATES_SIGNOFF and not rest_state[word_state.len .. ^1].isStateRest:
+    result.add finding(
+      "",
+      0,
+      "Sign-off state line gives state word, short head and `pushed` or `not pushed` alone, as " &
+        "`blocked, at `3f2a9c1`, pushed`, and leaves pull request and run to its bold line; " &
+        "got `" & rest_state.shortened & "`.",
+    )
   if decisions.len == 0 and Part.Decisions.rest != DECISION_NONE:
     result.add finding(
       "",
@@ -1065,10 +1382,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       "Decisions label stands alone over its blocks; got `" & Part.Decisions.rest.shortened & "`.",
     )
   for i, d in decisions: result.add findingsDecision(d, i)
-  result.add findingsRow(
-    after[starts[Part.Table] + 1 ..< starts[Part.Summary]].join("\n").rowsTable,
-    decisions.mapIt(it.number),
-  )
+  result.add findingsWork(after.linesWork(starts).groupsIn, decisions.mapIt(it.number))
   var k = starts[Part.Next] + 1
   while k < after.len and after[k].strip.len > 0: inc k
   for line in after[k .. ^1]:
