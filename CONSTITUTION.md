@@ -347,7 +347,9 @@ CAYLEYS_WEDGE  # module constant
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
-    comment takes backticks, so that a reader and the checker take it as a name.
+    comment takes backticks, so that a reader and the checker take it as a name. A project of
+    `bangu` that the Architect approves follows its own language for capitals and periods in
+    its comments. The checker lists each such project.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
