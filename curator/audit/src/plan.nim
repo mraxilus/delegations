@@ -8,6 +8,8 @@
 ##     records, `FILES_PROJECT`: rules propagation rewrites provenance and glossary in every
 ##     project and changes no behaviour, so it compiles nothing while static pass still
 ##     verifies every stamp; README describes project and runs nothing, by same reasoning.
+##     Records of project whose prose stays in its own language are its code, since its suite
+##     holds that prose (`prose_own.nim`); so rules propagation compiles each such project.
 ##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
 ##     check sources are that project's code and select it as any code does. Change inside
 ##     folder of project that Nim source of other project imports by relative path, as `src`
@@ -34,7 +36,7 @@
 
 import std/[algorithm, json, options, sequtils, strutils, tables]
 import ../../knoller/src/knoller
-import ./[checker, compilers, dependencies, findings, layout, projects, toolchain, tree]
+import ./[checker, compilers, dependencies, findings, layout, projects, prose_own, toolchain, tree]
 
 
 const
@@ -73,9 +75,10 @@ func isChecker*(path: string): bool =
 func isCode(directory, path: string): bool =
   ## Decide whether changed path is code of project, i.e. inside it and not its record.
   ##   Records are `FILES_PROJECT`, same three `layout.nim` demands: README, provenance and
-  ##   glossary describe project and run nothing, so changing one compiles nothing.
+  ##   glossary describe project and run nothing, so changing one compiles nothing; record of
+  ##   project keeping its own prose is code, since its suite holds that prose (`isProseOwn`).
   if not path.startsWith(directory & "/"): return false
-  path[directory.len + 1 .. ^1] notin FILES_PROJECT
+  path[directory.len + 1 .. ^1] notin FILES_PROJECT or path.isProseOwn
 
 
 func isInside(folder, path: string): bool =
