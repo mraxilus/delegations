@@ -22,14 +22,19 @@ knoller [--check] [--nim:path] path...
 - Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
   an umbrella get the same rules from any directory. The output prints each path as you name it,
   and the files of a directory with `/`, on every platform.
+- Knoller reads the layout of a file below the folder of the nearest nimble file at or above it,
+  as testament and nimble do. A test file lies under `tests` of that folder. The umbrella is
+  `src/<name>.nim` beside `<name>.nimble`, whatever the folder is called. A file with no nimble
+  file above it takes no rule of tests, stubs or umbrella. Neither does a file in a directory that
+  holds more than one nimble file.
 - Knoller runs on Linux and Windows, and a runner holds each. Where git checks a file out with
   CRLF that a commit turns back into LF, knoller reads LF and writes CRLF back. Git for Windows
   does so by default. CRLF that a commit keeps stays a finding.
 - A stub is a file `tests/test_*.nim`, with or without a testament header. A file `t*.nim` in a
   testament category is a stub too, where a testament header opens it. That category is a folder
-  directly under `tests`, and the file can stand at any depth inside it. Testament reads a
-  category the same way. A file there that opens with no header is a suite, and no rule of a stub
-  reads it. The rules `stub-keys`, `stub-header` and `profiler-import` read a stub this way.
+  directly under `tests` of the package, and the file can stand at any depth inside it. Testament
+  reads a category the same way. A file there that opens with no header is a suite, and no rule of
+  a stub reads it. The rules `stub-keys`, `stub-header` and `profiler-import` read a stub this way.
 - Knoller writes only the files that change. With `--check`, it writes no file and reports each
   change that is due.
 - After the fix, every check reads the text that the fixers leave. Each finding there is `left`,
@@ -39,7 +44,10 @@ knoller [--check] [--nim:path] path...
 - Knoller reads no glossary, since a glossary belongs to a repository. So it runs no rule that
   needs one, and the acronym rule of V.9 stays with `koch`. The names check takes no word as exempt
   beyond the jargon of V.6. A caller such as `koch` adds the words that its glossaries list.
-- The check of fixed waits reads each file under a directory `tests` or `tools`, at any depth.
+- Knoller reads no file as drive code, so it reports no fixed wait alone. Which files are drive
+  code is a habit of a repository, so a caller such as `koch` names them. For the same reason the
+  semantic pass passes no define, such as `-d:testing`. A file compiles as the configuration of
+  its project compiles it.
 - Knoller passes over a nimble file whose copy `atlas.lock` holds, because a rewrite would leave
   that copy stale.
 - A group of needless parentheses goes only where the parser of the compiler reads the same tree
