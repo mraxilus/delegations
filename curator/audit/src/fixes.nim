@@ -32,6 +32,9 @@
 ##     of.
 ##   Knoller reads tests, stubs and umbrella from nimble file nearest each file, and its caller
 ##     finds that file; koch gives that of project holding it (`nimbleProject`).
+##   Knoller reads fixed waits where its caller says file is drive code, and koch says so of
+##     `tests/` and `tools/` of each project (`waits.isCodeDrive`), so fence warning counts them
+##     where static pass reads them.
 ##   `checkFormatting` holds every check whose findings these fixers clear and static pass
 ##     does not run yet; pull request wiring its tree form, one line in `auditTree`, lands once
 ##     rest of tree is clean (CURATOR.md, duty 3); exact banners it holds, static pass reads
@@ -51,6 +54,7 @@ import std/[options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[
   checker, findings, glossary, kinds, layout, names, plan, prose_own, scope, symbols, toolchain,
+  waits,
 ]
 
 
@@ -327,6 +331,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     proofs,
     should_drop_articles = not e.path.isProseOwn,
     nimble = e.path.nimbleProject,
+    is_drive = e.path.isCodeDrive,
   ).toFindings
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
