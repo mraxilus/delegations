@@ -218,6 +218,14 @@ suite "Command line":
       check outcome.lines == @["0 to fix."] and outcome.code == 0
 
 
+  test "command line sets no mode of articles, so it drops word reading as article anywhere":
+    # Mode of articles is caller's policy (`chain.nim`), and command line holds none, so `a` of
+    #   lojban, which joins two names as `or`, goes as English article does.
+    let outcome = outcome([("a.nims", "# la .alis. a la .bob. cu klama\n")], [], is_check = true)
+    check outcome.lines == @["a.nims:1: article-in-comment to fix", "1 to fix."]
+    check outcome.code == 1  # change due fails check
+
+
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":
     let
       fenced = "let A = 1  ## One.\n#!fix off\nlet B = 1+2  ## Sum.\n#!fix on\n"
