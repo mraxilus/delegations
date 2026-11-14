@@ -1781,7 +1781,7 @@ ta'i pa mulno se ciska .i no re spisa poi lamji cu se tcidu ta'i pa se ciska .i 
 pa jimca cu kuspe le gerna valsi .a le re spisa kei le gacri cu cliva lo mleca gerna valsi gi'a
 pilno lo mleca spisa .i va'o lo nu re gacri cu dunli kei le genturfa'i cu pamoi cuxna lo spisa poi
 traji lo ka clani .i di'u se sruma ki'u lo nu tcidu `islands` .i ki'u bo no flalu cu cipra lo du'u
-lo nu dunli cu dunda ma kau gacri
+lo nu dunli cu dunda ma kau poi gacri
 
 **lo jimca cu ponse lo javni poi se cmene gi'e ka'e tcidu lo se kuspe be le jimca gi'e ponse lo
 namcu poi mleca traji** .i va'o lo nu lo valsi pe le jimca cu se tcidu ta'i pa mulno se ciska kei le
@@ -2595,6 +2595,67 @@ ro lo nu ke'a zasti .i le fukpi cu zbasu ji'a pa pruce poi lo rirni be lo rirni 
 fukpi gi'e no roi sisti .i le fukpi cu cusku lo fanmo be le nu cipra sepi'o `curl` .i le cipra cu
 cipra lo du'u no pruce pe le fukpi cu jmive ba lo nu `runPage` cu xruti kei kei .e lo du'u le vreji
 na zasti .i se ki'u bo le cipra cu nitcu `sh` .e `curl` .e `sleep` gi'e nitcu no tcidu be lo papri
+
+## Prose in lojban
+
+**le ci vreji .e ro pinka pe le samtci .e le papri cu me lo lojbo se ciska poi le genturfa'i cu
+tcidu ke'a** .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #818 .gy. ta'i la'o gy. D1 a
+.gy. de'i li renorexa pi'e papa pi'e vo .i ji'a la'o gy. Architect .gy. cu jdice lo du'u le cipra cu
+tcidu ro prosa ca lo cfari ta'i la'o gy. D2 b .gy. .i ro nu sitna la'o gy. CLL .gy. cu stali .i zo
+zoi cu sitna le glico valsi pe la'o gy. CLL .gy. .i `test_prose_own.nim` cu tcidu ro se ciska sepi'o
+le genturfa'i gi'e fliba va'o ro srera .i le cipra cu cusku le datnyvei .e le linji .e le stuzi be
+ro srera Verified by `suites/test_prose_own.nim`.
+
+**le cipra cu tcidu le se ciska poi le re glico cipra pe la'o gy. curator .gy. cu tcidu ke'a va'o lo
+nu le vi se gunka na zvati le liste pe `curator/audit/src/prose_own.nim`** .i le liste cu vasru le
+cmene be le vi se gunka .i se ki'u bo `english.nim` cu tcidu no vreji pe le vi se gunka .i le cipra
+be lo gadri pe `knoller` cu tcidu no datnyvei pe le vi se gunka .i le cipra cu tcidu ro prosa pagbu
+pe ro vreji ta'i lo nu `blocks` pe `english.nim` cu tcidu .i ro prosa pagbu cu du pa liste cmima .a
+pa porsi be lo sampu linji .i lo stedu linji .e lo cartu .e lo nu sitna .e lo samtci poi se bitmu cu
+na se tcidu .i le datnyvei cu du lo datnyvei poi la'o gy. git .gy. cu ralte ke'a ku'o .e lo datnyvei
+poi la'o gy. git .gy. na ralte ke'a zi'e poi no javni be lo nu na jundi cu cmene ke'a
+Verified by `suites/test_prose_own.nim`. .i lo pinka poi le cipra cu tcidu ke'a cu mintu lo pinka
+poi `linesComment` pe `knoller` cu tcidu ke'a .i no linji pe le zeci datnyvei pe le samtci cu frica
+.i lo xance cipra be di'u cu pilno `linesComment` de'i li renorexa pi'e papa pi'e pavo
+
+**ro pinka cu se tcidu ta'i pa se ciska .i le pinka cu se pagbu lo lamji linji noi ro ke'a cu se
+krasi lo mintu sinxa bu'u lo mintu stuzi** .i lo linji poi vasru le sinxa po'o cu pagbu le pinka
+ji'a .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #818 .gy. ta'i la'o gy. D3 a .gy. ki'u
+lo nu pa lojbo jufra cu ka'e se fendi fi lo fanmo be pa linji .i ro pagbu be ro linji pe lo cartu
+poi zvati pa pinka cu se tcidu ta'i pa se ciska ki'u lo nu le cipra be lo gadri cu tcidu ji'a le
+linji .i lo liste sinxa poi krasi pa linji pe lo pinka cu na se tcidu
+Verified by `suites/test_prose_own.nim`.
+
+**ro samtci pagbu cu se tcidu ta'i pa cmene** .i le cipra cu sitna le samtci pagbu sepi'o zo la'o .e
+le pamoi valsi pe lo porsi be `gy` .e `ky` .e `ty` .e lo drata poi le samtci pagbu na vasru ke'a
+ta'i lo valsi .i se ki'u bo le gerna cu tcidu le samtci pagbu ta'i pa sumti ja'i le soze moi javni
+pe la'o gy. CLL 21.1 .gy. .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #818 .gy. ta'i la'o
+gy. D1 a .gy. de'i li renorexa pi'e papa pi'e re .i le cipra cu to'e curmi zo zo poi lidne pa samtci
+pagbu ki'u lo nu zo zo ka'e sitna zo la'o poi le cipra cu jmina ke'a .i lo judri jorne cu se tcidu
+ta'i lo se ciska pe vo'a .i lo sinxa be lo nu basna cu se vimcu
+Verified by `suites/test_prose_own.nim`.
+
+**lo datni pagbu poi lo cipra cu tcidu ke'a ta'i lo cmene cu na prosa gi'e stali ta'i lo nu lo cipra
+cu nitcu** .i `glossary.nim` cu tcidu ta'i lo cmene le linji be lo valsi be'o .e le linji poi se
+krasi `_Avoid_` ne'i le vlaste .i `provenance.nim` cu tcidu ta'i lo cmene lo sitna be lo cipra be'o
+poi se krasi zoi gy. Verified by .gy. gi'e cmene pa datnyvei poi se fanmo `.nim` ne'i pa linji .i le
+cipra cu tcidu lo prosa poi sruri ro le datni pagbu .i lo sitna poi se fendi fi lo fanmo be lo linji
+cu na datni pagbu `provenance.nim` .i se ki'u bo le cipra cu tcidu le sitna ta'i lo prosa
+Verified by `suites/test_prose_own.nim`.
+
+**ro pagbu poi no gerna valsi cu vasru ke'a cu srera .i ro stuzi poi le gerna cu sisti bu'u ke'a cu
+srera ji'a** .i ro srera cu zvati le pamoi lerfu pe le valsi pe vo'a .i ro valsi poi zo si .a zo sa
+.a zo su cu vimcu ke'a cu srera ji'a .i zo fa'o .e ro se lidne be zo fa'o cu srera ji'a .i lo prosa
+pe lo vreji cu vimcu no da gi'e fanmo no da .i se ki'u bo ro le valsi cu na se sitna .i ku'i le
+ciska be le valsi cu djica lo nu le valsi cu se sitna Verified by `suites/test_prose_own.nim`.
+
+jdima fa lo nu le cipra cu fukpi le javni be lo nu fendi lo prosa pagbu pe `english.nim` .e le tcidu
+be lo pinka .i se ki'u bo lo nu cikre pa le re datnyvei cu na mulno pu lo nu le drata datnyvei cu se
+cipra ja'i la'o gy. Article II.9 .gy. .i jdima fa lo nu le tcidu be lo pinka cu facki lo lerpoi .e
+lo lerfu .e lo cmene poi se sitna .e lo pinka pe la'o gy. Nim .gy. po'o .i jdima fa lo nu lo lojbo
+vreji cu clani zmadu lo glico vreji .i ca `b76ab376` le vreji cu vasru `3,127 lines` .i ca
+`5ce98690` le glico vreji cu vasru `2,243 lines` .i se to'e cuxna fa lo nu ro linji pe pa pinka cu
+se tcidu ta'i pa se ciska ki'u lo nu pa lojbo jufra cu ka'e se fendi fi lo fanmo be pa linji
 
 ## Toolchain
 

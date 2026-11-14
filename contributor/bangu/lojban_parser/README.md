@@ -485,6 +485,10 @@ le genturfa'i cu tcidu xaso lo bixa pagbu be le ci prosa .i lo traji be lo ka cl
 valsi .i le genturfa'i cu tcidu zebici lo bimuxa pagbu be la'o gy. Alice .gy. .e muxa lo pazeci
 clani pagbu be la'o gy. Oz .gy. .i ro le nu to'e curmi cu drani ja'i la'o gy. CLL .gy.
 
+le ci vreji .e ro pinka pe le samtci .e le papri cu me lo lojbo se ciska poi le genturfa'i cu tcidu
+ke'a .i `suites/test_prose_own.nim` cu tcidu ro le se ciska sepi'o le genturfa'i gi'e fliba va'o ro
+srera .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #818 .gy.
+
 `lojban_tagger` cu tcidu la lojban. sepi'o le genturfa'i .i `lojban_tagger` cu ralte no fukpi be lo
 pagbu be le genturfa'i .i lo samtci pe `lojban_tagger` poi galfi lo valsi liste cu cpacu lo tcidu be
 le liste be'o .e lo stodi be le liste be'o `tools/lists.nim` .i no prenu cu tcidu ro lo jufra pe le
