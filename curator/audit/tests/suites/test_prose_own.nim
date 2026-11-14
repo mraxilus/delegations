@@ -9,10 +9,8 @@ import ./fixtures
 
 
 const
-  DIRECTORY_PARSER = CONTRIBUTOR & "/bangu/lojban_parser"
-    ## Project list names, by ruling `D4 a` of #818.
   DIRECTORY_TAGGER = CONTRIBUTOR & "/bangu/lojban_tagger"
-    ## Project of same domain that list leaves out.
+    ## Project of same domain that list leaves out, beside `DIRECTORY_PARSER` it names.
   SUITE = "tests/suites/test_prose_own.nim"  ## Suite entry names, relative to its project.
 
 

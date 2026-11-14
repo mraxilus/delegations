@@ -29,8 +29,11 @@ suite "Audit":
     let
       changed = treeGood().replaced("CONTRIBUTOR.md", TEXT_RULES[2] & "More.\n")
       stale = changed.auditTree.filterIt("stale" in it.message)
-    check stale.mapIt(it.path).sorted ==
-      @[DIRECTORY_ALPHA & "/PROVENANCE.md", DIRECTORY_AUDIT & "/PROVENANCE.md"]  # every project
+    check stale.mapIt(it.path).sorted == @[
+      DIRECTORY_PARSER & "/PROVENANCE.md",
+      DIRECTORY_ALPHA & "/PROVENANCE.md",
+      DIRECTORY_AUDIT & "/PROVENANCE.md",
+    ]  # every project
     let curator_only = changed.replaced("CURATOR.md", "# Curator\n\nChanged.\n")
     check curator_only.auditTree.len == stale.len  # CURATOR.md is not stamped
 

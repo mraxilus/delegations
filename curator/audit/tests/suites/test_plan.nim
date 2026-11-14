@@ -192,7 +192,8 @@ suite "Plan":
     check selected.len == 1
     check selected[0].directory == DIRECTORY_ALPHA
     check selected[0].pin == PIN
-    check tree.jobsAll.len == DIRECTORIES.len  # `--all` names every project
+    check tree.jobsAll.mapIt(it.directory) ==
+      @[DIRECTORY_PARSER, DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # `--all` names every project
     let unpinned = tree.replaced(DIRECTORY_ALPHA & "/alpha.nimble", "requires \"nim >= 2.2.4\"\n")
     check unpinned.jobs([DIRECTORY_ALPHA & "/src/alpha.nim"]).len == 0  # nothing to install
 
