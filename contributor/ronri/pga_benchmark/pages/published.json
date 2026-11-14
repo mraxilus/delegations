@@ -1,7 +1,7 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "734ed90a5b6b7446"
+    "digest": "2229ded0e6cbbced"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
@@ -25,7 +25,7 @@
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "e7f6875807cc73ce"
+    "digest": "35bc37924a96d6e6"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
@@ -57,6 +57,10 @@
   },
   "home": {
     "url": "https://claude.ai/artifact/UVdybSYjYs3oHkt6bsR1sU",
-    "digest": "15d1d7ea70ae21a8"
+    "digest": "9c3f0360619d662c"
+  },
+  "cayley-cells": {
+    "url": "https://claude.ai/artifact/Jjeg6CQWsiY3s8b8D7KWmE",
+    "digest": "7796a19c24391d9b"
   }
 }
