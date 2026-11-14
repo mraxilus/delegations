@@ -9,7 +9,7 @@ import ./fixtures
 
 const
   DIRECTORIES = [DIRECTORY_ALPHA, DIRECTORY_AUDIT]
-    ## Project directories fixture tree holds, in sorted order selection returns them:
+    ## Unlisted project directories fixture tree holds, in sorted order selection returns them:
     ## `contributor` sorts before `curator`.
   DIRECTORY_IMPORTING = CURATOR & "/assayer"  ## Curator project importing knoller, besides driver.
   DIRECTORY_PROBE = CURATOR & "/probe"  ## Curator project importing no knoller.
@@ -28,7 +28,7 @@ suite "Plan":
       @[DIRECTORY_ALPHA]  # page
 
 
-  test "record change alone selects nothing, so rules propagation compiles no unlisted project":
+  test "record change of unlisted project selects nothing, so rules propagation compiles none":
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/PROVENANCE.md"]).len == 0  # stamp only
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/GLOSSARY.md"]).len == 0  # terms only
     # README runs nothing.

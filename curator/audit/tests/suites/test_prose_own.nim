@@ -3,7 +3,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
+import std/[os, sequtils, strutils, unittest]
 import ../../src/[domains, prose_own]
 import ./fixtures
 
@@ -61,3 +61,10 @@ suite "Article VI":
     var waiting = demanding
     waiting.should_demand_suite = false
     check tree.checkProjectsProseOwn([waiting]).len == 0  # suite not demanded yet
+
+
+  test "VI.5, VI.8 path finding at list names is path of this module":
+    # Finding on entry whose project tree lacks names `PATH_PROSE_OWN`; moved module would leave it
+    #   naming file that does not exist, and each test above would still pass.
+    let root = currentSourcePath().parentDir.parentDir.parentDir.parentDir.parentDir
+    check fileExists(root / PATH_PROSE_OWN)  # constant leads to this module
