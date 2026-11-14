@@ -6,6 +6,9 @@
 ##     too: some cell of ⟑ and of ⟇ holds `TERMS_CELL` terms, so smaller cell holds no table.
 ##   Under conformal metric 𝐞ₙ₋₁ ⟑ 𝐞ₙ = 𝐞ₙ₋₁ₙ − 𝟏 holds two terms; under rigid metric each
 ##     product of two bases holds one term or none.
+##   Second law holds order of rest where `delete` takes first of two terms. Derivation deletes
+##     last term alone, so no table runs that shift. Rigid cell holds one term, so law is
+##     conformal alone.
 
 {.experimental: "strictFuncs".}
 
@@ -19,3 +22,11 @@ static:
       for n in Basis: most = max(most, table[m][n].len)
     doAssert most == TERMS_CELL,
       "Most terms cell of " & name & " holds is " & $most & "; cell holds " & $TERMS_CELL & "."
+
+  when IS_CONFORMAL:
+    let (first, second) = (BasisSigned(basis: Basis.scalar), BasisSigned(basis: Basis.scalarAnti))
+    var cell = first.toBasesSigned
+    cell.add(second)
+    cell.delete(0)
+    doAssert cell == second.toBasesSigned,
+      "Delete of first term in cell loses second; got `" & $cell & "`."
