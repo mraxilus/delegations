@@ -1630,5 +1630,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   Emerald Rapids under SSE2, `/ m` and `★ m` at cga5d run ×1.10 and ×1.11 of the pin. The
   figures are in `proposals/05-multivector-align/proposal.md`.
 
+  Under P05 and under P04, an AVX2 build can stop where the pin runs. It stops on a multivector in
+  raw storage, which `alloc` aligns to 16 bytes. It also stops on one in a `seq` under `--mm:refc`,
+  whose data the pinned compiler does not align. So each of the two holds one more decision: the
+  alignment as now, at most 16 bytes, or the alignment as now under `defined(gcDestructors)` alone.
+
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
