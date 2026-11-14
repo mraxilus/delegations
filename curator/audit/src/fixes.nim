@@ -26,6 +26,10 @@
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`) is never written, and layout
 ##     checks read none of it: rewrite would leave lock's copy stale, and Atlas reads that as
 ##     change of package.
+##   File of project whose prose stays in its own language takes no fixer of articles, and its
+##     fence warning counts none (`prose_own.nim`). Knoller takes that as mode of each file
+##     (`should_drop_articles`), since list is policy of this repository, which knoller holds none
+##     of.
 ##   `checkFormatting` holds every check whose findings these fixers clear and static pass
 ##     does not run yet; pull request wiring its tree form, one line in `auditTree`, lands once
 ##     rest of tree is clean (CURATOR.md, duty 3); exact banners it holds, static pass reads
@@ -43,7 +47,9 @@
 
 import std/[options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
-import ./[checker, findings, glossary, kinds, layout, names, plan, scope, symbols, toolchain]
+import ./[
+  checker, findings, glossary, kinds, layout, names, plan, prose_own, scope, symbols, toolchain,
+]
 
 
 
@@ -282,7 +288,14 @@ func fixSource(
       result.fixed.add step.fixed
 
   # Run chain of knoller's fixers until source settles; unsettled source keeps edits above.
-  let fix = formatted(path, base, kind.dialect, context.proofs.getOrDefault(path))
+  #   Articles stay in file of project keeping its own prose (`isProseOwn`).
+  let fix = formatted(
+    path,
+    base,
+    kind.dialect,
+    context.proofs.getOrDefault(path),
+    should_drop_articles = not path.isProseOwn,
+  )
   result.source = fix.source
   result.asked = fix.asked
   result.fixed.add fix.fixed.toFindings
@@ -304,7 +317,13 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     result.left.add checkFence(e.path, fence).toFindings
     return
   let proofs = context.proofs.getOrDefault(e.path)
-  result.warned.add checkFenceHeld(e.path, e.content, e.kind.get.dialect, proofs).toFindings
+  result.warned.add checkFenceHeld(
+    e.path,
+    e.content,
+    e.kind.get.dialect,
+    proofs,
+    should_drop_articles = not e.path.isProseOwn,
+  ).toFindings
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:
