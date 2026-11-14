@@ -116,6 +116,9 @@ type
     text*: string  ## Text of last assistant message.
     signoffs_earlier*: seq[string]
       ## Text of each earlier message holding sign-off since last message of Architect, in order.
+    signoffs_before*: seq[seq[string]]
+      ## Text of each sign-off before that message, one list for each span between two messages
+      ##   of Architect, oldest first; empty until spans read.
 
   Word = object  ## Define one word of shell text, as shell passes it to command.
     text: string  ## Word with quotes and escapes taken out.
@@ -1517,10 +1520,11 @@ func findingsGroups(message, base: string; merged: openArray[int]): seq[Finding]
 
 
 func checkSignoffWindow*(
-  message, branch: string; earlier, subjects: openArray[string]
+  message, branch: string; earlier, subjects: openArray[string]; before: openArray[seq[string]] = []
 ): seq[Finding] =
   ## Report sign-off that drops or shrinks group of last sign-off that passed since message of
   ##   Architect, since latest sign-off covers all work since then (#844).
+  ##   Sign-offs `before` that message are read nothing yet, ahead of keeping open groups past it.
   ##   Earlier sign-off passed where its block keeps its shape and each group of one that passed
   ##     before it, so replay of those verdicts finds base, and no field of harness is read.
   ##   Merge shows in first-parent subject of `main` that koch hands in, at no cost to shared
