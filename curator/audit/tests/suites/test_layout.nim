@@ -23,7 +23,7 @@ suite "Layout":
   test "good tree passes and lists projects under both roots":
     check treeGood().checkLayout.len == 0  # fixture is smallest passing tree
     check treeGood().directoriesProject ==
-      @[DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # sorted project directories
+      @[DIRECTORY_PARSER, DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # sorted project directories
 
 
   test "root holds only listed entries":
@@ -45,7 +45,7 @@ suite "Layout":
     let tree = treeGood() & @[entry("contributor/nowhere/alpha/README.md", "# x\n")]
     check tree.messages == @["Domain folder outside registry; got `nowhere`."]  # named
     check tree.directoriesProject ==
-      @[DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # silent skip would hide project
+      @[DIRECTORY_PARSER, DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # silent skip would hide project
 
 
   test "unregistered kind is finding naming registry, under curator too":
@@ -98,7 +98,8 @@ suite "Layout":
       entry(DIRECTORY_ALPHA & "/tools/build.nim", "## Build pages.\n\ndiscard\n"),
     ]
     check deep.checkLayout.len == 0  # depth inside project is project's own business
-    check deep.directoriesProject == @[DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # nesting adds no project
+    check deep.directoriesProject ==
+      @[DIRECTORY_PARSER, DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # nesting adds no project
 
 
   test "nimble file is named after project and packages demand lock":

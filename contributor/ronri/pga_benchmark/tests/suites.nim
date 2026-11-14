@@ -2618,6 +2618,17 @@ suiteInProc "Internal: Search":
 
 
 
+type CellFixed = object
+  ## Fixture cell that holds its terms in place with their count, as P12 proposes.
+  terms: array[2, BasisSigned]
+  count: range[0..2]
+
+
+iterator items(cell: CellFixed): BasisSigned =
+  ## Yield each term of fixture cell, in order.
+  for i in 0..<cell.count: yield cell.terms[i]
+
+
 suiteInProc "Internal: Cells":
   test "table reads cell for cell, sign included, in both cell shapes":
     let wedge = cells(CAYLEYS_WEDGE.base)
@@ -2625,6 +2636,20 @@ suiteInProc "Internal: Cells":
     check wedge["E2,E1"] == %*[{"to": "E12", "neg": true}]  # antisymmetric
     check not wedge.hasKey("E1,E1")  # vector wedge itself vanishes
     check cells(CAYLEY_ATTITUDE).len > 0  # 1D table reads too
+
+
+  test "table reads cell that holds its terms in place with their count":
+    var table: array[Basis, CellFixed]
+    table[Basis.E1] = CellFixed(
+      terms: [BasisSigned(basis: Basis.E12), BasisSigned(basis: Basis.E1, is_negated: true)],
+      count: 2,
+    )
+    table[Basis.E2] =
+      CellFixed(terms: [BasisSigned(basis: Basis.E2), BasisSigned(basis: Basis.E1)], count: 1)
+    let read = cells(table)
+    check read["E1"] == %*[{"to": "E12", "neg": false}, {"to": "E1", "neg": true}]  # in order
+    check read["E2"] == %*[{"to": "E2", "neg": false}]  # term past count left out
+    check read.len == 2  # empty cells left out
 
 
 

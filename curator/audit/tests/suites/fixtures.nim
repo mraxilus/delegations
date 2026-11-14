@@ -1,6 +1,8 @@
 ## Build fixtures checker tests drive: synthetic trees, temporary git repositories.
 ##   Checker writes its own fixtures (Article IX.8): `treeGood` is smallest tree passing
 ##   every static check, so each negative test mutates one thing and names what broke.
+##   It holds each project list of own prose names (`prose_own.nim`), as it holds each domain
+##     `DOMAINS` names, since check of that list reports entry whose project tree lacks.
 ##
 ##   Cost: `treeGood` repeats layout rules as data; when layout grows, fixture grows with it,
 ##     and `taudit` proves they still agree.
@@ -9,7 +11,7 @@
 
 import std/[json, os, osproc, strutils, tempfiles]
 import ../../../knoller/src/knoller
-import ../../src/[domains, kinds, layout, markdown, provenance]
+import ../../src/[domains, kinds, layout, markdown, prose_own, provenance]
 
 
 func entry*(path, content: string): Entry =
@@ -61,6 +63,15 @@ const
     ##   stamps as `TEXT_RULES` alone; row added there without section here is finding of
     ##   good tree, which names its heading.
   DIRECTORY_ALPHA* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
+  DIRECTORY_PARSER* = CONTRIBUTOR & "/bangu/lojban_parser"
+    ## Project list of own prose names, which fixture tree holds for that list's sake.
+  DIRECTORY_TAGGER* = CONTRIBUTOR & "/bangu/lojban_tagger"
+    ## Project of same domain that list of own prose leaves out; fixture tree holds none of it.
+  PROSE_LOJBAN* =
+      "mi klama le zarci .i do klama le zdani .i le gerku cu viska le mlatu .i le mlatu\n" &
+      "cu bajra .i mi tavla do le zarci .i do ciska lo xatra mi .i le xatra cu cmalu\n"
+    ## Paragraph of record in lojban, 38 words: `.i` opens each sentence, and no stop closes one,
+    ## so English check reads one sentence.
   DIRECTORY_AUDIT* = CURATOR & "/audit"  ## Curator project in fixture tree.
 
 
@@ -121,6 +132,10 @@ func treeGood*(): Tree =
     )
   result.add entriesProject(DIRECTORY_AUDIT, stamp_now)
   result.add entriesProject(DIRECTORY_ALPHA, stamp_now)
+  for p in PROJECTS_PROSE_OWN:
+    result.add entriesProject(p.directory, stamp_now)
+    if p.should_demand_suite:
+      result.add entry(p.directory & "/" & p.suite, "## Hold prose.\n\n" & STRICT_FUNCS & "\n")
 
 
 func with*(tree: Tree, entries: varargs[Entry]): Tree =

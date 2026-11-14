@@ -283,6 +283,36 @@ suite "Chain":
     check nimblesLocked([("p/alpha/atlas.lock", "{}\n")]).len == 0  # lock holding no copy
 
 
+  test "comment caller keeps in its own language takes no fixer and no check of articles":
+    # Case: `a` of lojban joins two names as `or`, so comment reads as one holding article, and
+    #   fixer deleting it changes what comment says. Domain: each dialect, mode off and default,
+    #   in fixer, check and fence warning; every other rule still runs with mode off.
+    const
+      comment = "# la .alis. a la .bob. cu klama\n"  # Lojban, as written.
+      comment_dropped = "# la .alis. la .bob. cu klama\n"  # Lojban, once fixer of articles ran.
+    for dialect in Dialect:
+      let
+        path = "a" & EXTENSIONS[dialect]
+        source = comment & "let A = 1+2  ## Sum.\n"
+        kept = formatted(path, source, dialect, should_drop_articles = false)
+        rules = checkSource(path, source, dialect, should_drop_articles = false).mapIt(it.rule)
+      check comment in kept.source  # word of lojban stays
+      check "let A = 1 + 2  ## Sum.\n" in kept.source  # spacing still fixed
+      check comment_dropped in formatted(path, source, dialect).source  # default drops it
+      check Rule.ArticleInComment notin rules and Rule.SpacingExpression in rules
+      check Rule.ArticleInComment in checkSource(path, source, dialect).mapIt(it.rule)
+      let fenced = FENCE_OFF & "\n" & comment & "let A = 1+2  ## Sum.\n" & FENCE_ON & "\n"
+      check checkFenceHeld(path, fenced, dialect, should_drop_articles = false).mapIt(
+        it.message,
+      ) == @[
+        "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
+          "line 3; got lines `1` to `4`.",
+      ]  # fence counts no article
+      check checkFenceHeld(path, fenced, dialect)[0].message.contains(
+        "inside them article-in-comment breaks once at line 2 and expression-spacing",
+      )  # default counts it
+
+
 
 suite "Repair that widens its line":
   test "spacing past `LINE_MAX` splits call crossing it, arguments one level in":

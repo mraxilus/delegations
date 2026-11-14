@@ -4,6 +4,9 @@
 ##   its check whole, which reads comments as its fixer does; comments of every other syntax are
 ##   read here and passed to same check, so each kind reports in same words, with article
 ##   `toFinding` cites.
+##   File of project whose prose stays in its own language is read by none of this
+##     (`prose_own.nim`): word reading as English article is word of that language there, as `a`
+##     of lojban joins two names as `or`.
 ##
 ##   Cost: label `A` (as in "Appendix `A`") is flagged unless written in backticks.
 ##   Cost: only English articles; other languages' articles pass.
@@ -12,11 +15,12 @@
 
 import std/sequtils
 import ../../knoller/src/knoller
-import ./[comments, findings, kinds]
+import ./[comments, findings, kinds, prose_own]
 
 
 
 func checkProse*(path, source: string; syntax: Syntax): seq[Finding] =
-  ## Report every comment line holding article.
+  ## Report every comment line holding article, outside project keeping its own prose.
+  if path.isProseOwn: return
   if syntax == Syntax.Nim: return checkArticles(path, source).toFindings
   checkArticles(path, comments(source, syntax).mapIt((it.line, it.text))).toFindings
