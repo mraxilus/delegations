@@ -17,6 +17,7 @@ when compileOption("profiler"):
 import std/[algorithm, macros, random, sequtils, strformat, strutils, tables]
 
 import pga
+import pga/multivectors {.all.}  # Private `alignment`, which laws hold.
 
 
 const

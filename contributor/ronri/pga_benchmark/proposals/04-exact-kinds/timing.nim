@@ -1,5 +1,5 @@
 ## Time stand-ins of basis-set types as caller holding them in `seq` would (`exact-kinds`).
-##   Evaluation compiles this against library at pin, at each algebra its claim names; exit code
+##   Evaluation compiles this against changed library at each algebra its claim names; exit code
 ##     says it ran, and figures it prints are evidence that never gates.
 ##   Stand-ins hold 3 to 16 floats, counts that basis-set types reach from rga3d to cga5d, under
 ##     natural, 16-byte and 64-byte alignment, so cost of each layout reads beside its padding.
@@ -8,7 +8,7 @@
 ##   Stand-in is summed and negated through operator of its own, returned by value. Raw loop
 ##     over elements of `var seq` parameter stays scalar, since each store may alias `seq` itself,
 ##     and so it shows no cost of layout.
-##   `timeRounds` mirrors that of `timing.nim` in P05, P06 and P07; fix to one reaches each.
+##   `timeRounds` mirrors that of `timing.nim` in P05 and P06; fix to one reaches each.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
 ##
 ##   Cost: `seq` stands for caller's heap storage, since layout of that storage is what is
