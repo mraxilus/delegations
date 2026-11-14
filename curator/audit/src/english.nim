@@ -10,6 +10,8 @@
 ##   Record nested below project directory is not governed yet. Widening to prose under
 ##     `simulation/` or `design/` reddens such project, so it lands as duty 3 says; record
 ##     holds it as open question.
+##   Records of project whose prose stays in its own language are not governed: its own suite
+##     holds that prose (`prose_own.nim`). Every other check still reads them.
 ##   Block is bullet, numbered item or run of plain lines, each read alone: list of six
 ##     bullets is six blocks rather than one paragraph of six sentences.
 ##   Quotation is skipped whole: quoted text comes from outside this repository, so delegate may
@@ -32,7 +34,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sets, strutils]
-import ./[domains, findings, layout, markdown]
+import ./[domains, findings, layout, markdown, prose_own]
 
 
 const
@@ -243,13 +245,14 @@ func isGoverned*(path: string): bool =
   ##   Three arms beyond data above: README of project root, README of registered domain,
   ##     and record sitting directly in project directory. Each derives from layout, so
   ##     nothing has to be added by hand when project or domain arrives.
+  ##   Record of project whose prose stays in its own language is none of them (`isProseOwn`).
   if path in PATHS_ENGLISH: return true
   let parts = path.split('/')
   if parts[^1] == FILE_README:
     if parts.len == 2 and parts[0] in ROOTS: return true
     if parts.len == 3 and parts[0] == CONTRIBUTOR and parts[1].findDomain.isSome: return true
   let directory = parts.directoryProject
-  if directory.len == 0: return false
+  if directory.len == 0 or path.isProseOwn: return false
   for file in FILES_PROJECT:
     if path == directory & "/" & file: return true
   false
