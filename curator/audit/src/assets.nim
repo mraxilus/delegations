@@ -2,14 +2,19 @@
 ##   CONTRIBUTOR.md names class already: "binaries are never committed, and neither are fonts,
 ##   images or any file audit cannot read", each recorded with origin, version, licence and
 ##   checksum. Store is that class kept once rather than once per project.
-##   Font faces are only instances today, and rows say so by grouping and by one column: shape is
-##     file, address, digest, and codepoints file maps. First three are what any such file
-##     needs; fourth is font face's, and asset that is no font face makes it change. So does asset
-##     wanting field this row lacks -- unpacking, or variant set. Said here so next reader does
-##     not assume shape already answers either.
+##   Two shapes of row, each table of its own. Font face row is file, address prefix, digest,
+##     and codepoints file maps (`ASSETS`). Archive row is file, whole address and digest
+##     (`ARCHIVES`): it maps no codepoints, its project unpacks it under `build/`, and its name
+##     carries version, since each release keeps one upstream file name. First three columns are
+##     what any such file needs. Asset wanting field neither row holds, as variant set, makes
+##     third shape. Said here so next reader does not assume either shape answers it.
+##   Archive is tool, as headless shell of Chrome for Testing that `drive` of lojban_parser
+##     runs (repository issue 864). Its trust is store's: digest pinned here, bytes checked on
+##     fetch. Nim tarball differs, since its digest comes from upstream at fetch time (below).
 ##
 ##   Codepoints are data because coverage check (`coverage.nim`, Article X.8) reads no bytes:
-##     static pass runs in about second and fetches nothing, and store lies outside checkout.
+##     static pass fetches nothing, so it stays cheap next to jobs that compile and test, and
+##     store lies outside checkout.
 ##     `test_assets.nim` holds each row to `cmap` of its file's bytes, so new digest with old
 ##     ranges fails, printing ranges read for row to take.
 ##   Ranges are spelled as `fc-query --format='%{charset}'` prints them: hex bounds joined by
@@ -72,6 +77,8 @@ const
     ## Noto project's own release repository, serving whole TrueType font faces.
   COMMIT_MONO = "https://cdn.jsdelivr.net/gh/eigilnikolajsen/commit-mono"
     ## Commit Mono is nobody's Noto, so its TrueType comes from its author's repository.
+  CHROME_FOR_TESTING = "https://storage.googleapis.com/chrome-for-testing-public/"
+    ## Google's bucket of Chrome for Testing, each release under folder its version names.
   RANGES_COMMIT_MONO =
     "20-7e a0-17f 192 1fa-1ff 218-21b 237 2c6-2c7 2c9 2d8-2dd 300-301 308 30a 326 384-386 " &
     "388-38a 38c 38e-3a1 3a3-3ce 3d5 1e80-1e85 1ef2-1ef3 2010-201e 2020-2022 2026 2030 2032-2033 " &
@@ -188,15 +195,29 @@ const
       "0283fa3bbdb5cb2cb695946a60ea4aa2a0ceb872079304fe548188ab82ee58b2",
       RANGES_COMMIT_MONO),
   ]
-    ## Every file fetched at build time: its name, address prefix it is fetched from, digest of
-    ## its bytes, and codepoints its `cmap` maps to glyph. Font faces are all of them today; licence
-    ## of each is in PROVENANCE.md, where CONTRIBUTOR.md already asks for it, rather than in
-    ## column here.
+    ## Every font face fetched at build time: its name, address prefix it is fetched from, digest
+    ## of its bytes, and codepoints its `cmap` maps to glyph. Licence of each is in PROVENANCE.md,
+    ## where CONTRIBUTOR.md already asks for it, rather than in column here.
     ##   Each file any project pins stands here once: where several pin one file they share
     ##   its row and so its digest, and that agreement is what makes one table safe.
     ##   Version lives in address and bytes live in digest, so both move together or neither.
     ##   Codepoints follow bytes: suite reads them off bytes digest checks, so digest moved
     ##   without them fails suite.
+  ARCHIVES* = [
+    # Headless shell of Chrome for Testing, which `drive` of lojban_parser unpacks and runs.
+    #   Pinned, so runner and each delegate machine drive same bytes (repository issue 864).
+    ("chrome-headless-shell-linux64-153.0.8010.12.zip",
+      CHROME_FOR_TESTING & "153.0.8010.12/linux64/chrome-headless-shell-linux64.zip",
+      "a9da028861a0cf789ff25c2fed45f5f1aaf969ed9247835b6a7821a4f7af9d1d"),
+  ]
+    ## Every archive fetched at build time: name store gives it, whole address it is fetched
+    ## from, and digest of its bytes. Archive maps no codepoints, so it takes no font face row,
+    ## and no check of font faces reads it.
+    ##   Name carries version, since each release keeps one upstream file name; address is
+    ##   whole for that reason, where font face row appends its name to prefix.
+    ##   Project unpacks archive, so store holds its bytes alone, keyed by digest as every
+    ##   asset is. Suite fetches none, so its digest is held at first fetch, which refuses bytes
+    ##   of any other.
 
 
 func rootStore*(override: string): string =
@@ -206,14 +227,19 @@ func rootStore*(override: string): string =
 
 func address*(file: string): string =
   ## Read address asset is fetched from; empty when store declares no such asset.
+  ##   Font face appends its name to its prefix, and archive keeps whole address of its release.
   for (name, prefix, _, _) in ASSETS:
     if name == file: return prefix & name
+  for (name, whole, _) in ARCHIVES:
+    if name == file: return whole
   ""
 
 
 func digestDeclared*(file: string): string =
-  ## Read digest declared for asset; empty when store declares no such asset.
+  ## Read digest declared for asset of either table; empty when store declares no such asset.
   for (name, _, digest, _) in ASSETS:
+    if name == file: return digest
+  for (name, _, digest) in ARCHIVES:
     if name == file: return digest
   ""
 
@@ -238,7 +264,10 @@ func declaration*(): string =
   ##     checks bytes against. Neither column can hold space, so `split` reads row.
   ##   Row never reads as path, and suite holds it so: verb prints paths when files are named
   ##     and rows when none are, and both project builds tell those apart by shape alone.
+  ##   Rows of both tables, font faces first, since consumer asks by name and never by table.
   for (file, _, digest, _) in ASSETS:
+    result.add file & " " & digest & "\n"
+  for (file, _, digest) in ARCHIVES:
     result.add file & " " & digest & "\n"
 
 

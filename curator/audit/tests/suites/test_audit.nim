@@ -20,19 +20,76 @@ suite "Audit":
 
 
   test "rules stamp derives from tree contents in RULES order":
-    check treeGood().stampRules == stamp(TEXT_RULES)  # same digest as fixture
+    check treeGood().stampRules == stamp(TEXT_RULES)  # same digest as fixture, process left out
     check treeGood().without("STYLE.md").stampRules ==
       stamp([TEXT_RULES[0], "", TEXT_RULES[2], TEXT_RULES[3], TEXT_RULES[4]])  # missing is empty
 
 
-  test "one change to any rules document goes stale in every project":
+  test "one change to stamped text goes stale in every project":
     let
-      changed = treeGood().replaced("CONTRIBUTOR.md", TEXT_RULES[2] & "More.\n")
+      changed = treeGood().replaced("CONTRIBUTOR.md", TEXT_RULES[2] & "More.\n" & TEXT_PROCESS[2])
       stale = changed.auditTree.filterIt("stale" in it.message)
     check stale.mapIt(it.path).sorted ==
       @[DIRECTORY_ALPHA & "/PROVENANCE.md", DIRECTORY_AUDIT & "/PROVENANCE.md"]  # every project
     let curator_only = changed.replaced("CURATOR.md", "# Curator\n\nChanged.\n")
     check curator_only.auditTree.len == stale.len  # CURATOR.md is not stamped
+
+
+  test "edit of section of process moves no Rules row (D1 d of #843)":
+    # Case as found: edit of `GUIDE.md`, Output contract, as of sign-off, stamped every project
+    #   again and bound none of them.
+    let
+      good = treeGood()
+      guide = TEXT_RULES[4] & TEXT_PROCESS[4]
+      signoff = good.replaced("GUIDE.md", guide.replace("Sign off.", "Sign off, then stop."))
+    check signoff.stampRules == good.stampRules  # Output contract is process
+    check signoff.auditTree.len == 0  # no Rules row goes stale
+    # Domain: each section of process of both documents, and one heading quoted in fence.
+    for (path, k, text) in [
+      ("CONTRIBUTOR.md", 2, "Read."), ("CONTRIBUTOR.md", 2, "Begin."),
+      ("CONTRIBUTOR.md", 2, "Carry."), ("CONTRIBUTOR.md", 2, "Branch."),
+      ("CONTRIBUTOR.md", 2, "Check."), ("GUIDE.md", 4, "Wait."), ("GUIDE.md", 4, "Hand off."),
+      ("GUIDE.md", 4, "Build."),
+    ]:
+      let edited = TEXT_RULES[k] & TEXT_PROCESS[k].replace(text, text & " Then more.")
+      check edited != TEXT_RULES[k] & TEXT_PROCESS[k]  # text stands in fixture, so edit lands
+      check good.replaced(path, edited).stampRules == good.stampRules
+    let
+      quoted = "Sign off.\n\n```md\n## Sign-off\n```\n\nThen stop.\n"
+      fenced = TEXT_RULES[4] & TEXT_PROCESS[4].replace("Sign off.\n", quoted)
+    check good.replaced("GUIDE.md", fenced).stampRules == good.stampRules  # example opens none
+    check good.replaced("GUIDE.md", fenced.replace("Then stop.", "Then rest.")).stampRules ==
+      good.stampRules  # text past fence is still Output contract
+    let crlf = good.replaced("GUIDE.md", guide.replace("\n", "\r\n"))
+    check crlf.stampRules == good.stampRules  # CRLF checkout stamps same
+    check crlf.auditTree.allIt("Section of process" notin it.message)  # and finds each heading
+
+
+  test "opening, section of content and heading list does not name stay stamped":
+    # New or renamed heading stays stamped until list names it, so list fails closed; mixed
+    #   section, as Boundaries or Glossary process, is no row of it.
+    let
+      good = treeGood()
+      guide = TEXT_RULES[4] & TEXT_PROCESS[4]
+      mixed = good.replaced("GUIDE.md", guide & "## Glossary process\n\nFormat.\n")
+    check good.replaced("GUIDE.md", guide.replace("Steps.", "More steps.")).stampRules !=
+      good.stampRules  # opening
+    check mixed.stampRules != good.stampRules  # new heading
+    check mixed.replaced("GUIDE.md", guide & "## Glossary process\n\nFormat, then rules.\n")
+      .stampRules != mixed.stampRules  # mixed section
+    let longer = guide.replace("## Output contract", "## Output contract notes")
+    check good.replaced("GUIDE.md", longer).stampRules != good.stampRules  # heading read whole
+
+
+  test "listed heading its document lacks is finding, so list cannot rot":
+    let
+      good = treeGood()
+      renamed = TEXT_RULES[4] & TEXT_PROCESS[4].replace("## Output contract", "## Output contracts")
+      found = good.replaced("GUIDE.md", renamed).auditTree.filterIt(it.path == "GUIDE.md")
+    check found.len == 1 and found[0].message.endsWith("got `## Output contract`.")
+    check found.len == 1 and found[0].line == 0  # whole document
+    check good.without("GUIDE.md").auditTree
+      .anyIt(it.path == "GUIDE.md" and it.message.endsWith("got `## Output contract`."))
 
 
   test "top-level glossary shape reaches umbrella":
@@ -96,8 +153,11 @@ suite "Audit":
       (listed.with(entry(script, source)), script),
       (listed.replaced(nimble, TEXT_NIMBLE & source), nimble),
     ]:
-      check tree.auditTree.mapIt((it.path, it.message)) ==
-          @[(path, "Acronym stays only where glossary lists it (V.9); got `XML` in `toXML`.")]
+      check tree.auditTree.mapIt((it.path, it.message)) == @[(
+        path,
+        "Acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
+          "spell it out; got `XML` in `toXML`.",
+      )]
     let unlisted = treeGood().with(entry(module, STRICT_FUNCS & "\n\n" & source))
     check unlisted.auditTree.mapIt(it.message).filterIt("Acronym" in it).len == 3  # none listed
 

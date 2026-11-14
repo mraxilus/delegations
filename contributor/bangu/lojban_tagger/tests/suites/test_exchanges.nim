@@ -9,12 +9,12 @@
 ##   Checksum meets vectors of RFC 3720 appendix B.4 and check value of CRC-32C, and reference
 ##     written apart here, bit by bit, over random bytes.
 ##   Frame meets reference written apart here (`frameReference`), and writer meets `protoc`:
-##     suite encodes committed worked example `app/exchanges_example.txtpb` with `protoc
+##     suite encodes text format file `app/exchanges_example.txtpb` with `protoc
 ##     --encode` at compile time into `build/`, then reads binary with `staticRead`, as STYLE.md
 ##     section 4 gives; writer gives those bytes, and reader reads them back.
 ##     Cost: suite needs `protoc` to compile, which `system` of `tools/build.nim` declares.
-##     Trap: `nim check` runs no `gorgeEx`, which gives empty output and exit code 0 there, so
-##       check reads binary that last compile left in `build/`, and fails to open it before any.
+##     Under `nim check`, Nim runs no `gorgeEx`, so read takes guard `nimcheck` of that section,
+##       and reads nothing there, rather than binary that last compile left in `build/`.
 ##   Faulty files take worked example, each byte of it, and random exchanges: each cut, bytes
 ##     appended, each change of one bit and of one byte, and runs of up to 32 bits and odd counts
 ##     of bits changed within message; each is refused naming part fault falls in, whose problem
@@ -93,7 +93,7 @@ import std/[
 
 import ../../app/exchanges
 from ../../app/exchanges {.all.} import
-  AT_CHECKSUM, AT_LENGTH, AT_MESSAGE, checksum, dropSecretsText, OPENING_EXCHANGE,
+  AT_CHECKSUM, AT_LENGTH, AT_MESSAGE, checksum, dropSecretsText, LINE_FORMAT_EXCHANGE,
   removeDotSegments
 import ../../src/lojban_tagger/suggestions
 import ../../tools/examples
@@ -101,7 +101,7 @@ import ../../tools/examples
 
 type
   Part {.pure.} = enum  ## Define part of exchange file, in order file holds them.
-    Opening  ## Opening: format and version, then line break.
+    LineFormat  ## Format line: format and version, then line break.
     Length  ## Length of message, four bytes, least significant first.
     Checksum  ## CRC-32C of message, four bytes, least significant first.
     Message  ## Message of `exchanges.proto`.
@@ -270,7 +270,7 @@ const
   PATH_PROJECT = currentSourcePath().parentDir.parentDir.parentDir
     ## Folder of project, found from this file.
   PATH_EXAMPLE = PATH_PROJECT / "app" / "exchanges_example.txtpb"
-    ## Committed worked example: first hop of example `page`, in text format.
+    ## Text format file: first hop of example `page`.
   PATH_EXAMPLE_ENCODED = PATH_PROJECT / "build" / "exchanges_example.binpb"
     ## Binary `protoc --encode` writes of worked example, under `build/` of project, which git
     ##   ignores.
@@ -297,7 +297,7 @@ const
     ## Words user part, query and fragment of `URLS_PAGE` are spelled from; no problem holds one.
   LABELS_PAGE = ["recorded 2026-10-29", ""]
     ## Labels of page exchanges secret law writes: as record mode writes one, and none, so message
-    ##   opens with request, which first line of file then holds where opening runs on.
+    ##   opens with request, which first line of file then holds where format line runs on.
   ANSWER_RAW = "HTTP/1.1 201 Created\r\ncontent-type: text/plain; charset=utf-8\r\n" &
       "content-encoding: identity\r\nlocation: /next\r\ncontent-length: 5\r\n" &
       "connection: close\r\n\r\nhello"
@@ -447,9 +447,9 @@ const
 
 static:
   doAssert ENCODED_EXAMPLE.exitCode == 0,
-      "Worked example is refused; got `" & ENCODED_EXAMPLE.output & "`."
+      "Text format file refused; got `" & ENCODED_EXAMPLE.output & "`."
 
-const MESSAGE_EXAMPLE = staticRead(PATH_EXAMPLE_ENCODED)
+const MESSAGE_EXAMPLE = when defined(nimcheck): "" else: staticRead(PATH_EXAMPLE_ENCODED)
   ## Message worked example holds, as `protoc` encodes it: bytes writer and reader are held to.
 
 
@@ -491,9 +491,9 @@ func readFixedReference(bytes: string, at: int): uint32 =
 
 
 func frameReference(message: string): string =
-  ## Frame message as exchange file holds it, built apart from `toBytes`: opening, length, and
-  ##   checksum of `checksumReference`, then message.
-  OPENING_EXCHANGE & toFixedReference(uint32(message.len)) &
+  ## Frame message as exchange file holds it, built apart from `toBytes`: format line, length,
+  ##   and checksum of `checksumReference`, then message.
+  LINE_FORMAT_EXCHANGE & toFixedReference(uint32(message.len)) &
       toFixedReference(checksumReference(message)) & message
 
 
@@ -520,7 +520,7 @@ func toFieldVarint(number: int, value: int64): string =
 
 func part(at: int): Part =
   ## Read part of exchange file holding byte `at`.
-  if at < AT_LENGTH: Part.Opening
+  if at < AT_LENGTH: Part.LineFormat
   elif at < AT_CHECKSUM: Part.Length
   elif at < AT_MESSAGE: Part.Checksum
   else: Part.Message
@@ -538,17 +538,17 @@ func toEcho(text: string): string =
   text.dropSecretsText.toPrintable(RUNES_ANSWER_SHOWN)
 
 
-func problemOpening(bytes: string): string =
-  ## Build problem reader gives for file opening otherwise: first line file holds, line break
-  ##   included, as `toEcho` shows it.
+func problemLineFormat(bytes: string): string =
+  ## Build problem reader gives for file whose format line differs: first line file holds, line
+  ##   break included, as `toEcho` shows it.
   let close = bytes.find('\n')
   "Exchange should open with `lojban_tagger exchange 2\\u{A}`; got `" &
       bytes[0 .. (if close < 0: bytes.high else: close)].toEcho & "`."
 
 
 func problemFrame(count: int): string =
-  ## Build problem reader gives for file holding `count` bytes after opening, fewer than frame.
-  "Exchange should hold 8 bytes of length and checksum after opening; got `" & $count & "`."
+  ## Build problem reader gives for file holding `count` bytes after format line, fewer than frame.
+  "Exchange should hold 8 bytes of length and checksum after format line; got `" & $count & "`."
 
 
 func problemLength(named: uint32, held: int): string =
@@ -578,9 +578,9 @@ func problemStatus(status: int): string =
 
 
 func problemCut(bytes: string, count: int): string =
-  ## Build problem reader gives for first `count` bytes of whole file `bytes`: opening where cut
-  ##   falls before line break closing it, frame before message, else length.
-  if count < AT_LENGTH: problemOpening(bytes[0..<count])
+  ## Build problem reader gives for first `count` bytes of whole file `bytes`: format line where
+  ##   cut falls before line break closing it, frame before message, else length.
+  if count < AT_LENGTH: problemLineFormat(bytes[0..<count])
   elif count < AT_MESSAGE: problemFrame(count - AT_LENGTH)
   else: problemLength(bytes.readFixedReference(AT_LENGTH), count - AT_MESSAGE)
 
@@ -589,7 +589,7 @@ func problemChanged(bytes: string, at: int): string =
   ## Build problem reader gives for file whose byte `at` alone changed, by part holding it;
   ##   change within message shows as checksum message no longer holds.
   case part(at)
-  of Part.Opening: problemOpening(bytes)
+  of Part.LineFormat: problemLineFormat(bytes)
   of Part.Length: problemLength(bytes.readFixedReference(AT_LENGTH), bytes.len - AT_MESSAGE)
   of Part.Checksum, Part.Message:
     problemChecksum(bytes.readFixedReference(AT_CHECKSUM),
@@ -1389,7 +1389,7 @@ suite "Internal: Exchange":
         bytes = exchange.toBytes
         recorded = bytes.readExchange
         message = bytes[AT_MESSAGE .. ^1]
-      check bytes.startsWith(OPENING_EXCHANGE)  # opening names format and version
+      check bytes.startsWith(LINE_FORMAT_EXCHANGE)  # format line names format and version
       check bytes.readFixedReference(AT_LENGTH) == uint32(message.len)  # length counts message
       check bytes.readFixedReference(AT_CHECKSUM) == checksumReference(message)  # its CRC-32C
       check recorded.is_read  # domain: file of any exchange reads
@@ -1413,7 +1413,7 @@ suite "Internal: Exchange":
         check recorded.exchange.reply.status == status  # domain: status back as written
 
 
-  test "writer gives bytes `protoc` encodes of committed example, and reader reads them back":
+  test "writer gives bytes `protoc` encodes of text format file, and reader reads them back":
     let
       hop = example("page").toExchanges(Service.Claude)[0]  # first hop: redirect of page
       written = hop.toBytes
@@ -1423,7 +1423,7 @@ suite "Internal: Exchange":
     check recorded.is_read and recorded.exchange == hop  # reader reads bytes of `protoc` back
 
 
-  test "file opening otherwise is refused, echoing its first line: version 1, line ends rewritten":
+  test "file is refused at its format line, echoing its first line: version 1, line ends rewritten":
     let
       file = frameReference(MESSAGE_EXAMPLE)
       older = "lojban_tagger exchange 1\nlabel recorded 2026-10-29\nrequest 7\nGET /a\n"
@@ -1434,7 +1434,7 @@ suite "Internal: Exchange":
     check file.replace("\n", "\r\n").readExchange.problem == "Exchange should open with " &
         "`lojban_tagger exchange 2\\u{A}`; got `lojban_tagger exchange 2\\u{D}\\u{A}`."  # line ends
     for text in ["{\"label\": \"x\"}", "Lojban_tagger exchange 2\n", "lojban_tagger exchange 2"]:
-      check text.readExchange.problem == problemOpening(text)  # JSON, capital, no line break
+      check text.readExchange.problem == problemLineFormat(text)  # JSON, capital, no line break
 
 
   test "each cut of exchange file, and bytes appended, are refused naming part where file ends":

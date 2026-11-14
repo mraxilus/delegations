@@ -89,8 +89,9 @@
 ##     `readTag` time grows faster than length; text given is capped at `COUNT_WORDS_MAX` words
 ##     too, since bytes cap no words: 64 bytes hold lujvo of 18.
 ##     Cost: lujvo of more words given as text fails as `Long`, though count follows `readTag`,
-##       so word cap saves none of its time, only listing and printing of gismu and report,
-##       about 1 µs (measured, PROVENANCE, Figures); project choice (open question in PROVENANCE).
+##       so word cap saves none of its time, only listing and printing of gismu and report:
+##       2.81 µs at most for 18 words, over four runs (measured, PROVENANCE, Figures); project
+##       choice (open question in PROVENANCE).
 ##   Failure keeps reason of reader whole, made printable as word is read, so `explain` reads no
 ##     value again: escape of detail never reaches reader. Reader bounds reason, so display cap
 ##     never cuts it.
@@ -239,7 +240,8 @@ const
   COUNT_WORDS_MAX* = 6
     ## Most words text given as tag may hold, else shortcut refuses it as `Long`, named by count;
     ##   project choice: count follows `readTag`, so cap bounds only listing and printing of
-    ##   gismu and report, about 1 µs (measured, PROVENANCE.md, Figures; open question there).
+    ##   gismu and report, 2.81 µs at most for 18 words over four runs (measured, PROVENANCE.md,
+    ##   Figures; open question there).
   BYTES_ELEMENT_MAX* = 64
     ## Most bytes of one tag of answer, and of text shortcut reads as tag: time of `readTag` grows
     ##   faster than length (figures in PROVENANCE.md, Figures). Cap of bytes caps no words: 64

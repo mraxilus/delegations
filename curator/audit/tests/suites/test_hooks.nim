@@ -2,8 +2,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[findings, hooks]
+import std/[json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
+import ../../src/[findings, hooks, tree]
 import ./fixtures
 
 
@@ -74,6 +74,12 @@ func messages(found: seq[Finding]): seq[string] =
   found.mapIt(it.message)
 
 
+func closing(text: string): seq[string] =
+  ## Read messages `checkBody` gives pull request body holding text after role line.
+  checkBody("mcp__github__update_pull_request", BRANCH, "", ROLE & "\n\n" & text & "\n", [], false)
+    .messages
+
+
 func citedBare(message: string): seq[string] =
   ## Read reference each finding of `checkReferencesBare` names, in order.
   checkReferencesBare(message).mapIt(it.message.split('`')[1])
@@ -97,6 +103,99 @@ suite "Hooks":
     check checkPathEdit(BRANCH, "CONSTITUTION.md").len == 1  # outside project
     check checkPathEdit("curator/x", "contributor/ronri/pga_benchmark/src/a.nim").len == 1
     check checkPathEdit("curator/x", "contributor/ronri/pga_benchmark/GLOSSARY.md").len == 0
+
+
+  test "write outside repository passes, and scope of branch still holds inside it (#847)":
+    # Case as found: scratch file such as `/tmp/x/y.md` was refused as path outside folder of
+    #   branch, and every write on branch outside grammar. Directory in no repository reads as
+    #   root (`checkoutAt`), so `insideRoot` hands file on whole, as `koch hook path` reads it.
+    let
+      root = repoTemp()
+      scratch = createTempDir("delegations_", "_scratch")
+    defer: removeDir(root)
+    defer: removeDir(scratch)
+    let checkout = checkoutAt(root, scratch / "x")
+    check checkout == some(root)  # no repository, so root's branch judges
+    let outside = insideRoot(checkout.get, scratch / "x" / "y.md")
+    check outside == scratch / "x" / "y.md"  # handed on whole
+    # Domain: every branch form passes file no commit reaches, and judges each file inside.
+    for branch in [BRANCH, "curator/audit/x", "curator/x", "claude/tool-named", "main"]:
+      check checkPathEdit(branch, outside).messages == newSeq[string]()  # refusal names branch
+    let
+      own = insideRoot(root, root / "contributor/ronri/pga_benchmark/src/a.nim")
+      other = insideRoot(root, root / "CONSTITUTION.md")
+    check checkPathEdit(BRANCH, own).len == 0
+    check checkPathEdit(BRANCH, other).len == 1  # inside repository, outside folder of branch
+    check checkPathEdit("curator/audit/x", other).len == 1
+    check checkPathEdit("claude/tool-named", own).len == 1  # branch outside grammar
+
+
+  test "write hook reads path in normal form, from each tool, through links (#883)":
+    # Case as found on #883: `<root>//CONSTITUTION.md` read as `/CONSTITUTION.md`, and `..` from
+    #   folder outside and link to root read as outside, so each passed; NotebookEdit names
+    #   `notebook_path`, so hook judged directory of call in its place.
+    proc refused(root: string, input: JsonNode, branch: string = BRANCH): seq[string] =
+      ## Read refusals of write, through routine `koch hook path` and `koch hook edit` call.
+      let written = fileWritten(root, root, input)
+      if written.isNone: return
+      checkPathEdit(branch, written.get.path).messages
+
+    # Lay out root, and scratch folder holding link to root and link to file inside it.
+    let
+      root = repoTemp()
+      other = repoTemp()
+      scratch = createTempDir("delegations_", "_links")
+      constitution = root / "CONSTITUTION.md"
+      refusals_scope = @["Path outside branch scope `contributor/ronri/pga_benchmark/`."]
+    defer: removeDir(root)
+    defer: removeDir(other)
+    defer: removeDir(scratch)
+    root.writeInto("CONSTITUTION.md", "# Constitution\n")
+    createSymlink(root, scratch / "root")
+    createSymlink(constitution, scratch / "rules.md")
+
+    # Normal form drops `.`, `..` and doubled slash; relative path resolves against directory.
+    for written in [
+      root & "/./CONSTITUTION.md",
+      root & "//CONSTITUTION.md",
+      root & "/contributor/ronri/pga_benchmark/../../../CONSTITUTION.md",
+      scratch & "/../" & root.lastPathPart & "/CONSTITUTION.md",
+    ]:
+      check pathWritten(%*{"file_path": written}, "/w") == constitution
+      check refused(root, %*{"file_path": written}) == refusals_scope
+    check pathWritten(%*{"file_path": "sub/../CONSTITUTION.md"}, root) == constitution
+    # Write tool drops `..` as text, before link ahead of it resolves, so hook does too.
+    check pathWritten(%*{"file_path": scratch & "/root/../x.md"}, "/w").pathReal == scratch / "x.md"
+    check fileWritten(root, root, %*{"file_path": scratch & "/root/../x.md"}).isNone
+
+    # Resolve link to place file system writes: link to directory for new file, link to file whole.
+    check pathReal(scratch / "root" / "new.md") == root / "new.md"
+    check pathReal(scratch / "root" / "CONSTITUTION.md") == constitution
+    check pathReal(scratch / "rules.md") == constitution
+    check pathReal(scratch / "x" / "y.md") == scratch / "x" / "y.md"  # nothing to resolve
+    check refused(root, %*{"file_path": scratch / "root" / "CONSTITUTION.md"}) == refusals_scope
+    check refused(root, %*{"file_path": scratch / "rules.md"}) == refusals_scope
+
+    # Read notebook NotebookEdit names, never directory of call.
+    let notebook = %*{"notebook_path": root / "notes.ipynb"}
+    check pathWritten(notebook, root) == root / "notes.ipynb"
+    check refused(root, notebook) == refusals_scope
+    check refused(root, %*{"notebook_path": root / "contributor/ronri/pga_benchmark/a.ipynb"})
+      .len == 0
+    check pathWritten(%*{"file_path": "a.md", "notebook_path": "b.ipynb"}, "/w") == "/w/a.md"
+
+    # Read checkout and path inside it, which `path` judges and `edit` audits; none outside.
+    let inside = some((checkout: root, path: "CONSTITUTION.md"))
+    check fileWritten(root, root, %*{"file_path": root & "//CONSTITUTION.md"}) == inside
+    check fileWritten(scratch / "root", root, %*{"file_path": constitution}) == inside
+    check fileWritten(root, root, %*{"file_path": scratch / "x" / "y.md"}).isNone  # no repository
+    check fileWritten(scratch / "root", root, %*{"file_path": scratch / "x.md"}).isNone
+    check fileWritten(root, root, %*{"file_path": other / "a.md"}).isNone  # other repository
+
+    # Domain: path in normal form inside folder of branch passes, and curator stays out of code.
+    let code = root & "/./contributor/ronri/pga_benchmark/src/a.nim"
+    check refused(root, %*{"file_path": code}).len == 0
+    check refused(root, %*{"file_path": code}, "curator/x").len == 1  # records alone
 
 
   test "git commands read through shell operators and options":
@@ -209,6 +308,34 @@ suite "Hooks":
     let missing = head & "## Verification\n\nGreen.\n\n## Notes\n\nNone.\n"
     check checkBody("mcp__github__create_pull_request", BRANCH, "t", missing, [], true)
       .messages.anyIt("`## Record`" in it)
+
+
+  test "closing keyword stands before issue only on line of its own (#859)":
+    let found = closing("So this pull request does not close #859.")  # body of #860, as found
+    check found.len == 1
+    check found.anyIt("got `close #859`" in it and "#859 stays open" in it)
+    check closing("It fixes #12 in passing.").anyIt("got `fixes #12`" in it)
+    check closing("It resolves https://github.com/mraxilus/delegations/issues/7 too.")
+      .anyIt("got `resolves https://github.com/mraxilus/delegations/issues/7`" in it)
+    check closing("Closes #859").len == 0  # line of its own: GitHub closes, as meant
+    check closing("closes: #859").len == 0
+    check closing("Text.\n\n  Fixed #3  \n\nMore.").len == 0
+    check closing("So #859 stays open after this pull request merges.").len == 0
+    check closing("It Fixed: mraxilus/delegations#3 here.")
+      .anyIt("got `Fixed: mraxilus/delegations#3`" in it)
+    check closing("It does not close\n#859 at all.").len == 1  # GitHub reads across line break
+    check closing("Closes #859, closes #860").len == 2  # line holds two references
+    check closing("Closes #859 and more").len == 1
+    check closing("It enclosed #5 and prefixes #6.").len == 0  # keyword inside word
+    check closing("It closes the #5.").len == 0  # word between keyword and issue
+    check closing("Write `does not close #859` never.").len == 0  # code span
+    check closing("```text\nSo it does not close #859.\n```").len == 0  # fenced code
+    const foot = "\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_"
+    let fixes = ROLE & "\n\nIt fixes #12.\n" & foot
+    check checkBody("mcp__github__issue_write", BRANCH, "A claim", fixes, ["curator"], true)
+      .len == 1  # issue body as pull request body
+    check checkBody("mcp__github__add_issue_comment", BRANCH, "", fixes, [], false)
+      .len == 0  # comment closes nothing
 
 
   test "sign-off shape":
@@ -641,11 +768,24 @@ suite "Hooks":
 
 
   test "start context and turn writes":
-    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
+    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", "", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
     check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
-    check "outside grammar" in contextStart("claude/x", "", "## List", @[])
-    check "re-stamp" in contextStart("curator/x", "", "## List", @[finding("", 0, "d")])
+    check "outside grammar" in contextStart("claude/x", "", "## List", "", @[])
+    # Drift prints each finding of `check-drift`: sections changed and command that shows them,
+    #   so start asks for new stamp only where finding does (#843).
+    let
+      drift = finding(
+        "GUIDE.md",
+        0,
+        "Base changed sections; read `git diff a..origin/main -- GUIDE.md`; got `## Output " &
+          "contract`.",
+      )
+      checker = finding("", 0, "Branch predates checker on base; got `koch.nim`.")
+      drifted = contextStart("curator/x", "", "## List", "", @[drift, checker])
+    check "\n  GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
+    check "\n  Branch predates checker on base; got `koch.nim`.\n" in drifted  # each, not first
+    check "re-stamp" notin drifted
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])
     check isTurnWriting([Call(name: "mcp__github__issue_write", has_body: true)])
     check not isTurnWriting([Call(name: "mcp__github__update_pull_request")])  # draft toggle
@@ -653,6 +793,24 @@ suite "Hooks":
     const issue = "gh api repos/o/r/issues/7/"
     check isTurnWriting([Call(name: "Bash", command: issue & "comments -F body=@x.md")])  # post
     check not isTurnWriting([Call(name: "Bash", command: issue & "labels -f 'labels[]=curator'")])
+
+
+  test "start prints headings of record branch works on, with line each opens on (#843)":
+    # Case as found: `GUIDE.md`, `How to build on a project`, asked delegate to read whole record,
+    #   and record of pga_visualiser holds about 93,000 tokens over 47 sections; task reads few.
+    check pathRecord(BRANCH) == "contributor/ronri/pga_benchmark/PROVENANCE.md"
+    check pathRecord("curator/probe/rings") == "curator/probe/PROVENANCE.md"
+    check pathRecord("curator/rules") == "curator/audit/PROVENANCE.md"  # checker is root work
+    check pathRecord("claude/x").len == 0  # outside grammar
+    let
+      record = "# Provenance\n\n| Field | Value |\n\n## Build\n\nText.\n\n```md\n## Quoted\n" &
+        "```\n\n## Open questions\n\n- One.\n"
+      text = contextStart(BRANCH, "## List\n\n1. one\n", "## List", record, @[])
+    check "Record `contributor/ronri/pga_benchmark/PROVENANCE.md`" in text
+    check "\n5: ## Build\n13: ## Open questions\n" in text  # each heading, line it opens on
+    check "## Quoted" notin text  # heading quoted in fence opens no section
+    check text.endsWith(LINE_CARRIED)  # carried list stays last
+    check "Record" notin contextStart(BRANCH, "## List\n", "## List", "", @[])  # none written
 
 
   test "transcript parse finds calls since last message of person":
@@ -740,3 +898,61 @@ suite "Hooks":
     discard root.git("commit -q -m 'chore(curator): source of knoller'")
     check runHook(root, toolchain, "path") == "built from b"
     check readFile(toolchain / "builds.log").countLines == built + 1  # knoller source moved key
+
+
+  test "each hook that sees moment of skill names that skill (D2 a of #870)":
+    # Description of skill leaves model to notice moment; hook sees it, so names skill.
+    let mended = checkNumbersBare("See #12.\n")
+    check reasonStop(mended, [], has_signoff = true).splitLines[^1] ==
+      "The skill /sign-off holds these steps."
+    check "/sign-off" notin reasonStop(mended, [])  # plain message holds no sign-off
+    check "/sync" in contextStart("curator/x", "", "## List", "", @[finding("", 0, "d")])
+    check "/sync" notin contextStart("curator/x", "", "## List", "", @[])
+    check contextStart(BRANCH, "## List\n\n1. one\n", "## List", "", @[]).endsWith(
+      "The skill /triage reports each item of this list that is not met.")
+    check "/propose-term" in contextEdit("contributor/ronri/pga_benchmark/GLOSSARY.md")
+    check "/propose-term" in contextEdit("GLOSSARY.md")
+    check "/record" in contextEdit("curator/audit/PROVENANCE.md")
+    check contextEdit("README.md").len == 0
+
+
+  test "edit hook names held findings apart from those to fix before push":
+    # Case as found: curator edits contributor record where check that landed left finding;
+    #   held finding blocks no push, and duty 3 forbids curator to fix it.
+    let
+      path = "contributor/ronri/alpha/README.md"
+      own = finding(path, 3, "Own.")
+      held = finding(path, 5, "Held.")
+    check contextFindings(path, [held], [own]).splitLines == @[
+      "koch check-files reports 1 finding(s) in `" & path & "`; fix before push:",
+      path & ":3: Own.",
+      "koch check-files holds 1 finding(s) in `" & path & "` for its project, which clears " &
+        "them in its next pull request (CURATOR.md, duty 3):",
+      path & ":5: Held.",
+    ]
+    check "fix before push" notin contextFindings(path, [held], [])
+    check contextFindings(path, [], []).len == 0
+
+
+  test "prompt names skill whose moment message of Architect holds, and none otherwise":
+    for ruling in ["D1 a", "a", "D1 a, D2 b", "D1a", "D2 what does a mean?"]:
+      check "/rule" in contextPrompt(ruling)
+    for asking in ["status", "Recheck the status of everything", "tell me the merge order",
+        "check your duties", "Anything left on your plate?", "Update the list"]:
+      check "/triage" in contextPrompt(asking)
+    check "/merged" in contextPrompt("trackball merged")
+    let both = contextPrompt("Merged some, update the list")
+    check "/merged" in both and "/triage" in both
+    for plain in ["why is capnproto excluded?", "Is decide already a skill", "yes, build it"]:
+      check contextPrompt(plain).len == 0
+
+
+  test "prompt reads no notice of harness, which opens with tag, as message of Architect":
+    # End of background task arrives as prompt that holds `<status>completed</status>`, whose
+    #   word `status` would name `/triage` on each such notice.
+    const notice = "<task-notification>\n<task-id>b1</task-id>\n<status>completed</status>\n" &
+      "<summary>Background command \"Wait for the run\" completed</summary>\n</task-notification>"
+    check contextPrompt(notice).len == 0
+    check contextPrompt("  \n<system-reminder>\nPR merged; update the list\n</system-reminder>")
+      .len == 0
+    check "/triage" in contextPrompt("status <- this one")  # message that opens with words

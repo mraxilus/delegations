@@ -12,9 +12,9 @@
 ##     `tagger show` and `tagger find` print every tag through `$`.
 ##   Reference for lowest score enumerates every rafsi 4.11 steps 1 and 2 allow, shared `brod`
 ##     included, and keeps spellings that read back; rendering is held to their minimum.
-##     Cost: at most `4^n` joins and readings per tag of `n` gismu; whole suite runs in about
-##     0.6 s at 1000 samples, and in about 0.75 s with `SAMPLES_CMAVO` tags too, debug build
-##     (measured, five runs each, 2026-10-31).
+##     Cost: at most `4^n` joins and readings per tag of `n` gismu; whole suite runs in 0.64 s to
+##     0.78 s with `SAMPLES` and `SAMPLES_CMAVO` tags, debug build (measured, five runs on each
+##     of Nim 2.2.12 and 2.4.0, 2026-11-08).
 ##   Corpus does not cover yet: tags of seven words or more, and lowest score of tags of five
 ##     words or more or holding cmavo.
 
@@ -46,8 +46,10 @@ const
     ## Random tags of one to `COUNT_WORDS_CMAVO_MAX` words, cmavo among them, that second round
     ## trip law draws, seeded.
   COUNT_WORDS_CMAVO_MAX = 6
-    ## Most words of such tag: `$` grows about 4 times each word (PROVENANCE.md, Figures), so
-    ## six keeps suite fast.
+    ## Most words of such tag, at which floors below were read.
+    ##   Cost: law reaches no longer tag, though render grows linearly with its words
+    ##     (PROVENANCE of `lojban_parser`).
+    ##   TODO: Widen past six words, and read floors below again.
   FLOOR_ROUND_CMAVO = 450
     ## Least of them free of `brodi`, `brodo` and `brodu` before last word: 473 read at seed `0`.
   FLOOR_CMAVO = 220  ## Least of them holding cmavo: 254 read at seed `0`.

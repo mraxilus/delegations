@@ -79,6 +79,9 @@ type
 
   Occurrence* = object  ## Define word as stream holds it: place, letters, pause and stress.
     start*: int  ## Byte of stream where word opens.
+    finish*: int
+      ## Byte of stream past last letter of word, where it ends; past text, for text `zoi` or
+      ##   `la'o` quotes. Comma between two words of one written word stands outside both.
     text*: string  ## Letters of word in canonical form: lowercase, commas left out (3.3).
     pause*: Pause  ## Pause before word.
     stress*: Option[int]
@@ -94,7 +97,9 @@ type
     of false:
       refusal*: Refusal  ## Rule refusing stream.
       start*: int  ## Byte of stream where offending word or mark opens.
-      detail*: string  ## Offending character, form 4.11 gives, or two splits; empty otherwise.
+      detail*: string
+        ## Offending character, form 4.11 gives, or two splits; delimiter of `zoi` that no word
+        ##   spelling it closes, which live text waits for; empty otherwise.
 
   Spelling = object  ## Define written word with its marks taken out.
     letters: string  ## Letters in canonical form.
@@ -114,7 +119,7 @@ type
 
 
 const
-  MARKS_BOUNDARY = Whitespace + {'.'}  ## Marks dividing words: whitespace, and period (3.3).
+  MARKS_BOUNDARY* = Whitespace + {'.'}  ## Marks dividing words: whitespace, and period (3.3).
   CAPITALS = MARKS_STREAM - MARKS_BOUNDARY - {','}  ## Capital of each letter, marking stress.
   VOWELS_NUCLEUS = VOWELS + {'y'}  ## Letters making syllable: five vowels, and `y` (3.4, 3.9).
   CONSONANTS_SYLLABIC = {'l', 'm', 'n', 'r'}  ## Consonants that may make syllable alone (3.4).
@@ -228,7 +233,8 @@ func occurrenceWritten(
     if spelling.capitals.len > 0 and stress.isNone: return
     if spelling.capitals.len == 0 and spelling.letters[span.b + 1 .. ^1].anyIt(it in VOWELS): return
   some(Occurrence(
-    start: spelling.places[span.a], text: piece, stress: stress, breaks: breaks, reading: reading,
+    start: spelling.places[span.a], finish: spelling.places[span.b] + 1, text: piece,
+    stress: stress, breaks: breaks, reading: reading,
   ))
 
 
@@ -397,15 +403,17 @@ func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
   none(Slice[int])
 
 
-func readStream*(text: string): ReadingStream =
+func readStream*(text: string, is_lohu = false): ReadingStream =
   ## Read text as its words by rules of CLL alone, each with pause before it and stress it
-  ##   marks; refuse at first word or mark that no rule admits, naming its byte.
+  ##   marks; refuse at first word or mark that no rule admits, naming its byte. With `is_lohu`,
+  ##   text opens inside words `lo'u` quotes, as live text reads it after `lo'u` that waits.
   ##   Text `zoi` or `la'o` quotes stands as one occurrence, whole and as written; quotation
   ##     `zo` makes, or `lo'u` up to `le'u`, quotes words, so their cmavo act on none (19.9).
   ##   Stream stops after `fa'o` that no quotation holds, which ends parsable input (21.1).
   var
     occurrences: seq[Occurrence]
-    is_period, is_quoting, is_lohu = false
+    is_period, is_quoting = false
+    is_lohu = is_lohu  # words `lo'u` quotes, up to `le'u`
     zoi, closing = none(int)  # quotation whose delimiter comes next; delimiter closing text
     at = 0
   while at < text.len:
@@ -442,12 +450,12 @@ func readStream*(text: string): ReadingStream =
       if zoi.isSome:
         if i < words.high: return refuse(Refusal.Quotation, words[i + 1].start)
         let span = text.quoted(at, word.text)
-        if span.isNone: return refuse(Refusal.Quotation, occurrences[zoi.get].start)
+        if span.isNone: return refuse(Refusal.Quotation, occurrences[zoi.get].start, word.text)
         let quotation = text[span.get]
         if word.text in quotation.toLowerAscii:
           return refuse(Refusal.Quotation, span.get.a)  # 19.10, delimiter "not found" in text
         occurrences.add Occurrence(
-          start: span.get.a, text: quotation, stress: none(int),
+          start: span.get.a, finish: span.get.b + 1, text: quotation, stress: none(int),
           pause: (if '.' in text[at ..< span.get.a]: Pause.Written else: Pause.Inferred),
           reading: Reading(is_word: false, refusal: Refusal.Foreign),
         )

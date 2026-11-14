@@ -1,5 +1,5 @@
 // Schema of exchange file of `suggester`: message `exchanges.nim` writes and reads.
-//   File holds frame, then one `Exchange`: opening `lojban_tagger exchange 2` and line break,
+//   File holds frame, then one `Exchange`: format line `lojban_tagger exchange 2` and line break,
 //     then length and CRC-32C of message, four bytes each, least significant first; reader
 //     checks all three before it decodes (`exchanges.nim`).
 //   Field numbers carry versions of format: field joins under new number, and leaves only with

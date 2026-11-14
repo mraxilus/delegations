@@ -1,24 +1,29 @@
-## Expose reader of prose to JavaScript as one function, `parseLojban(text)`, which gives what
-##   `readText` gives as plain object; `nim r tools/build.nim js` compiles it, with whole parser,
-##   into `build/lojban_parser.js`.
+## Expose reader of prose to JavaScript as two functions, which `nim r tools/build.nim js`
+##   compiles, with whole parser, into `build/lojban_parser.js`: `parseLojban(text)` gives what
+##   `readText` gives as plain object, and `parseLojbanToNif(text)` gives tree as NIF text.
 ##   Object mirrors `ReadingText` of `prose.nim`, field for field, each enum as its name:
 ##     `is_read`; then `occurrences`, `units` and `tree` where text reads, else `refusal`, `start`
 ##     and `rule`, with `stream`, what `readStream` gives, so caller sees words before refusal, or
 ##     refusal of stream with its detail.
-##   Occurrence holds `start`, `text`, `pause`, `stress` (null where none), `breaks` and
-##     `reading`. Reading holds `is_word`, then `kind` and `selmaho` (null where none), else
+##   Occurrence holds `start`, `finish`, `text`, `pause`, `stress` (null where none), `breaks`
+##     and `reading`. Reading holds `is_word`, then `kind` and `selmaho` (null where none), else
 ##     `refusal` and `detail`. Unit holds `words` and `terminal`. Node holds `rule`, `number` and
 ##     `children`, or `at` alone for terminal.
-##   `start` counts bytes of text in UTF-8, as parser reads it; for text of ASCII alone, byte is
-##     index of JavaScript string too.
-##   Script defines `parseLojban` as global, and puts it on `module.exports` where loader of
-##     CommonJS gives one, so browser and node load one file.
+##   NIF text is module `toNif` of `nif.nim` writes, as string of JavaScript; null where text is
+##     refused, since refusal holds no tree, and `parseLojban` gives why.
+##   `start` and `finish` count bytes of text in UTF-8, as parser reads it; for text of ASCII
+##     alone, byte is index of JavaScript string too.
+##   Script defines each function as global of page that loads it, and `parseLojbanLive` too,
+##     which reads live text (`live_text.nim`). No node loads it (ruling on #859), so script puts
+##     nothing on `module.exports` of CommonJS, which no suite would hold.
 ##   Rejected: text of JSON, which caller would parse. Plain object is value caller's own runtime
-##     holds, so no format of data crosses between programs (CONTRIBUTOR.md, Data).
+##     holds, so no format of data crosses between programs (CONTRIBUTOR.md, Data). NIF crosses,
+##     as that rule admits, and law of `test_nif.nim` holds it.
 ##   Cost: reading runs on thread of caller, so page waits while it reads; PROVENANCE.md,
 ##     JavaScript build, gives figures measured against native build.
 
 {.experimental: "strictFuncs".}
+{.used.}  # suite that imports bridge for globals it defines alone uses no proc of it
 
 when compileOption("profiler"):
   import std/nimprof
@@ -26,12 +31,7 @@ when compileOption("profiler"):
 import std/[jsffi, options]
 
 import ../lojban_parser  # umbrella, for `$` of each type, as `KOhA` of `Selmaho`
-
-
-let MODULE_NODE {.nodecl, importc: "module".}: JsObject
-  ## Read module object node gives each script of CommonJS it loads; browser gives none.
-  ##   Boundary of JS target: `typeof` reads it, since bare name of undeclared global throws in
-  ##     browser.
+import ./live_text  # reader of live text, `parseLojbanLive`, in worker where page gives one
 
 
 
@@ -51,6 +51,7 @@ proc toObject(occurrence: Occurrence): JsObject =
   ## Mirror one word of stream: place, letters, pause, stress, commas and reading.
   result = newJsObject()
   result.start = occurrence.start
+  result.finish = occurrence.finish
   result.text = cstring(occurrence.text)
   result.pause = cstring($occurrence.pause)
   result.stress = (if occurrence.stress.isSome: occurrence.stress.get.toJs else: jsNull)
@@ -117,6 +118,11 @@ proc parseLojban*(text: cstring): JsObject {.exportc.} =
   result.stream = source.readStream.toObject
 
 
-
-# Export to loader of CommonJS where node gives one; browser keeps global alone.
-if MODULE_NODE.jsTypeOf != "undefined": MODULE_NODE.exports.parseLojban = parseLojban
+proc parseLojbanToNif*(text: cstring): cstring {.exportc.} =
+  ## Read text as prose, and give its tree as module of NIF that `toNif` writes; null where text
+  ##   is refused.
+  ##   Boundary of JS target: `exportc` keeps name `parseLojbanToNif` in script. Module is UTF-8
+  ##     bytes, which `cstring` gives caller as string of JavaScript.
+  let reading = ($text).readText
+  if not reading.is_read: return nil
+  cstring(reading.toNif)

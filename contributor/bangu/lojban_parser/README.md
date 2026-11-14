@@ -75,17 +75,17 @@ It reads prose by the formal grammar of CLL 21.1. Before the grammar, quotation,
 other cmavo of 19.16 act on the words, so each terminal holds the words of one construct:
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils], lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils, wordwrap], lojban_parser
 for text in ["mi klama le zarci", "ti gerku si mlatu",
-    "la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.", "mi klama le"]:
+    "la\x27o dy. Goethe .dy. cu me la\x27o ly. Homo sapiens .ly.", "mi klama le"]:
   let r = readText(text)
-  if r.is_read: echo text, ": ", r.units.mapIt(it.words.mapIt(r.occurrences[it].text).join(" ") &
-    " (" & $it.terminal & ")").join(", ")
+  if r.is_read: echo (text & ": " & r.units.mapIt(it.words.mapIt(r.occurrences[it].text).join(" ") &
+    " (" & $it.terminal & ")").join(", ")).wrapWords(100, newLine = "\n  ")
   else: echo text, ": ", r.refusal, " at byte ", r.start, ", in ", r.rule'
 mi klama le zarci: mi (KOhA), klama (BRIVLA), le (LE), zarci (BRIVLA)
 ti gerku si mlatu: ti (KOhA), mlatu (BRIVLA)
-la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.: la'o dy Goethe dy (ZOI), cu (CU),
-  me (ME), la'o ly Homo sapiens ly (ZOI)
+la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.: la'o dy Goethe dy (ZOI), cu (CU), me (ME),
+  la'o ly Homo sapiens ly (ZOI)
 mi klama le: Grammar at byte 11, in sumti-6 97
 ```
 
@@ -94,26 +94,216 @@ terminal of selma'o ZOI (Example 19.57). The grammar stops `mi klama le` at its 
 description of `le` waits for its selbri. `r.tree` holds the tree of the named rules of 21.1 over
 the terminals.
 
-The verb `javascript` compiles the reader of prose, with the whole parser, into one script of
-JavaScript. The script gives one function, `parseLojban`, which returns what `readText` gives as a
-plain object. After `nim r tools/build.nim javascript`, node reads the script:
+`toNif` writes that tree as text in the NIF data format, version 2027, which is the native format
+of Nim 3. So another program reads the tree with no part of this parser:
 
 ```text
-$ node -e 'const { parseLojban } = require("./build/lojban_parser.js")
-for (const text of ["mi klama le zarci", "mi klama le zarc"]) {
-  const r = parseLojban(text)
-  if (r.is_read) console.log(text + ":", r.occurrences.map((o) => o.text + " " +
-    (o.reading.selmaho ?? o.reading.kind)).join(", "), "| tree", r.tree.rule)
-  else console.log(text + ":", r.refusal, "at byte", r.start + ", in", r.rule + ", after",
-    r.stream.occurrences.map((o) => o.text).join(" "))
-}'
-mi klama le zarci: mi KOhA, klama Gismu, le LE, zarci Gismu | tree text
-mi klama le zarc: Grammar at byte 12, in sumti-6 97, after mi klama le zarc
+$ nim r --hints:off --path:src --eval:'import lojban_parser
+stdout.write readText("me\x27o vo").toNif'
+(.nif27)
+(.lang "cll-21.1")
+(sumti_6 0 (LI 0 4 "meho") (number 310 (PA 5 7 "vo")))
 ```
 
-A refused text also carries `stream`, which `readStream` gives, so the caller sees the words before
-the refusal. A page loads the same file with a `script` element, and calls `parseLojban` as a
-global.
+Each named rule is a node, which holds its name and then its nodes. In 21.1, a rule often holds the
+next rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a run of
+rules is one node. Its tag names the rule that closes the run, and its number is that of the rule
+that opens it. So `(sumti_6 0 ...)` is the run from `text`, rule 0, down to `sumti-6`.
+
+The two ends give one run in 21.1, and `LUT_CHAIN_BY_ENDS` gives each rule between them. A node
+that holds no number opens no run.
+
+The name of a rule gives its number, since 21.1 gives each of its 88 rules one name and one number.
+So the node writes no number of the rule that closes the run, as the Architect ruled on #859
+(comment 6805527878). `LUT_NUMBER_BY_RULE` gives that number, as 97 for `sumti-6`.
+
+Each terminal holds its class, as `LI` or `PA`, then three things for each word. Those are the byte
+where it opens, the byte past it, and its letters. So `(LI 0 4 "meho")` ties `me'o` to bytes 0 to 3
+of the text. A named rule holds no byte, since its leaves give its span.
+
+A tag writes `_` for `-`, and a word writes `h` for `'`, as chapter 20 writes the names of selma'o.
+Lojban writes no `h` of its own (3.3), so `meho` reads back as `me'o`. Only the text that `zoi` or
+`la'o` quotes can need an escape of NIF.
+
+`readTextMarked` reads a text as `readText` does, and it reads on past each error. So another
+program can mend the text by its tree, and this parser decides no mend (#859). A word that a stage
+refuses stands as a unit with that stage, and the grammar reads the words around it. Where the
+grammar stops, an error node holds the byte and the rule that stops there. It also holds the class
+of each terminal that the grammar would read there:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+for line in readTextMarked("mi 1987 klama le").toNif.strip.splitLines: echo line.wrapWords(100)'
+(.nif27)
+(.lang "cll-21.1")
+(srera 16 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA LA
+LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI
+ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (rivbi Stream Letter 3 7
+"1987") (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 8 13 "klama")) (tail_terms))) (LE 14 16 "le"))
+```
+
+CLL names none of these nodes, so each takes a gismu, as the Architect ruled on #859. The error
+node is `srera`, "x1 errs", and the classes that it holds are `nitcu`, "x1 needs x2". A unit that no
+terminal holds is `rivbi`, "x1 avoids x2", since the grammar reads around it.
+
+The stream refuses the digits `1987`, so they stand as `(rivbi Stream Letter 3 7 "1987")`, between
+the sumti and the bridi tail. The text ends after `le`, so the grammar stops at byte 16, in
+`sumti-6`, which waits for the selbri of `le`. The node names that rule alone, since its name gives
+its number, 97. The error node holds `mi klama`, which reads alone as a sentence, and then `le`
+alone. A text that reads gives the reading of `readText`.
+
+Each word that no terminal holds stands as a unit too, so each byte of each word lies in one leaf.
+Words that erasure erases stand with the `si` or `sa` that erases them, as stage `Erasure`. `su`
+ends the text before it, which stays as it read, and stands as stage `SU`, as the Architect chose
+on #859. `fa'o` that ends the input stands as stage `FAhO`, and each written word after it as stage
+`Stream`, with its bytes. Each stage takes the term of CLL, as CLL spells it:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+for line in readTextMarked("mi klama si do su ko fa\x27o 1234").toNif.strip.splitLines:
+  echo line.wrapWords(100)'
+(.nif27)
+(.lang "cll-21.1")
+(text (terms 0 (sumti_6 81 (KOhA 0 2 "mi")) (rivbi Erasure 3 8 "klama" 9 11 "si") (sumti_6 81 (KOhA
+12 14 "do"))) (rivbi SU 15 17 "su") (sumti_6 2 (KOhA 18 20 "ko")) (rivbi FAhO 21 25 "faho") (rivbi
+Stream FAhO 26 30 "1234"))
+```
+
+`si` erases `klama`, so one unit holds both. The root of the text after the last `su` holds each
+text before it first. So a program that reads the text as CLL does drops each node up to the last
+`su`, and `readText` gives the text `ko` alone.
+
+`initReaderLive` makes a reader of live text, which reads a text piece by piece as it arrives
+(#859). Each sentence goes out as NIF once the next one opens, and no piece reads the whole text
+again. A word that reaches back cuts the NIF back, as `si` does. Each change from `push` gives the
+offset that the NIF cuts back to, and the byte of the text where the cut opens. Then it gives the
+nodes that go out, and the tail. The tail is the node of the part still open, as the text so far
+gives it, and the next change replaces it:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+proc show(what: string, change: ChangeNif) =
+  echo what, ": cut back to ", change.at, ", byte ", change.start
+  for (kind, nif) in [("out ", change.text), ("tail", change.tail)]:
+    for line in nif.splitLines:
+      if line.len > 0: echo "  ", kind, " ", line.wrapWords(92, newLine = "\n       ")
+var reader = initReaderLive()
+for piece in ["mi klama .i do ", "si si si ", "su ko "]:
+  show("push \"" & piece & "\"", reader.push(piece))
+show("finish", reader.finish)'
+push "mi klama .i do ": cut back to 28, byte 0
+  out  (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3 8
+       "klama")) (tail_terms)))
+  tail (text_1 0 (I 10 11 "i") (sumti_6 4 (KOhA 12 14 "do")))
+push "si si si ": cut back to 28, byte 0
+  tail (sumti_6 0 (KOhA 0 2 "mi"))
+  tail (rivbi Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
+push "su ko ": cut back to 28, byte 0
+  out  (sumti_6 0 (KOhA 0 2 "mi"))
+  out  (rivbi Erasure 3 8 "klama" 10 11 "i" 12 14 "do" 15 17 "si" 18 20 "si" 21 23 "si")
+  out  (rivbi SU 24 26 "su")
+  tail (sumti_6 0 (KOhA 27 29 "ko"))
+finish: cut back to 160, byte 27
+  out  (sumti_6 0 (KOhA 27 29 "ko"))
+```
+
+Offset 28 is the end of the two directives. The sentence `mi klama` goes out once `.i do` opens.
+The three `si` erase `klama .i do`, so the NIF cuts back to the directives, and those words wait in
+the tail as one unit. `su` ends that text, so its nodes go out with `su`, and `ko` opens a text of
+its own. At the end, a text read piece by piece gives the NIF of its parts read whole, byte for byte
+(`suites/test_live.nim`).
+
+`mergeParts` merges the parts from their NIF alone, as a page or a fixer holds them. It drops each
+word that erasure erases, `fa'o` and each word after it, and each part up to the last `su`. Then it
+joins each run of parts that holds no error, as one pass builds the tree of its text. Where no error
+stays, it gives the NIF of one pass, byte for byte, and `is_whole` holds:
+
+```text
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+for text in ["mi klama .i do cadzu ni\x27o ko sipna", "mi klama .i x .i ko sipna",
+    "mi klama .i le .i ko"]:
+  let merged = readTextParts(text).reading.toNifParts.mergeParts
+  echo "whole: ", merged.is_whole
+  for line in merged.nif.strip.splitLines[2 .. ^1]: echo line.wrapWords(100)'
+whole: true
+(paragraphs 0 (paragraph (sentence 11 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2
+130 (BRIVLA 3 8 "klama")) (tail_terms))) (I 10 11 "i") (sentence 11 (sumti_6 80 (KOhA 12 14 "do"))
+(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 15 20 "cadzu")) (tail_terms)))) (NIhO 21 25 "niho")
+(sentence 4 (sumti_6 80 (KOhA 26 28 "ko")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 29 34
+"sipna")) (tail_terms))))
+whole: false
+(paragraph 0 (sentence 11 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3
+8 "klama")) (tail_terms))) (I 10 11 "i") (rivbi Stream Shape 12 13 "x") (I 15 16 "i") (sentence 11
+(sumti_6 80 (KOhA 17 19 "ko")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 20 25 "sipna"))
+(tail_terms))))
+whole: false
+(sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 3 8 "klama"))
+(tail_terms)))
+(srera 16 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA LA
+LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI
+ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (text_1 0 (I 10 11 "i")) (LE 12 14 "le"))
+(text_1 0 (I 16 17 "i") (sumti_6 4 (KOhA 18 20 "ko")))
+```
+
+The three parts of the first text join into two paragraphs, as rule 4 of 21.1 nests them. The
+Architect chose this NIF of one pass (D1 b on #859). Then the Architect chose a merge that refuses
+no error, and the marked reading of one pass shows where each error stays.
+
+In the second text, the stream refuses `x`, and the grammar reads around it. So `x` stands in the
+lowest node that holds the units read around it, the `paragraph`, as one pass places it. In the
+third text, `le` waits for its sumti past the end, so its part holds an error node. The grammar
+gives that part no place in a tree. So it stays as it is, and the parts on each side of it merge.
+
+A unit before the last `su` stays in front where its stage reads before `su` erases (19.16). So
+`x su mi klama` keeps `x`, as the stream reads the whole text first, and `le su mi klama` keeps no
+`le`. The merge refuses only NIF that reads not, or that holds a shape the writer gives not. Then
+it names the node, counted from 0 past the directives, and the reason (`suites/test_merge.nim`).
+
+The verb `javascript` compiles the parser into one script of JavaScript, `build/lojban_parser.js`.
+A page loads it with a `script` element, and calls three functions as globals:
+
+- `parseLojban(text)` returns what `readText` gives, as a plain object. A refused text also
+  carries `stream`, which `readStream` gives, so the caller sees the words before the refusal.
+- `parseLojbanToNif(text)` returns the module that `toNif` writes, as a string, or null where the
+  text is refused.
+- `parseLojbanLive()` returns a reader of live text. Its `push(piece)` and `finish()` each give a
+  promise of the change, `{at, start, text, tail}`, as `push` gives it in Nim. Its `nif()` gives a
+  promise of the NIF so far.
+
+The reader of live text reads in a worker where the page gives one, so the page never waits.
+Elsewhere it reads one sentence at each turn of the event loop. A page cuts the NIF it holds back
+to `at`, and adds `text`. `at` counts units of UTF-16, as a string of JavaScript indexes it.
+`start` counts bytes of the text, as each word of the NIF does.
+
+The verb `drive` holds the script to the native build in headless Chromium, which a backend of Nim
+serves, with no node. `LOJBAN_CHROMIUM` names the Chromium to drive. `koch drive` runs the verb,
+then judges the font faces of the control page, here with the warnings of the compiler left out:
+
+```text
+$ nim r --hints:off koch drive contributor/bangu/lojban_parser
+== contributor/bangu/lojban_parser
+[Suite] Internal: JavaScript build
+  [OK] Each sentence of Tatoeba sample takes verdict native build gave it
+  [OK] Object of text that reads holds occurrences, units and tree
+  [OK] Object of text refused holds refusal, its byte and rule, and stream before it
+  [OK] Byte of refusal counts text in UTF-8, apart from index of JavaScript string
+  [OK] NIF of every fourth sentence of sample that reads reads back, and rebuilds tree whole
+  [OK] parseLojbanToNif gives module native build writes, and null where text is refused
+[Suite] Internal: Live text of script
+  [OK] Script defines its three functions as globals of page that loads it
+  [OK] Worker reads each text to NIF native build gives, and thread of page reads none
+  [OK] Thread of page reads each text, one sentence at each turn, to NIF native build gives
+  [OK] Page runs task of its own between two sentences that thread of page reads
+  [OK] Offset of change counts units of UTF-16, so slice cuts NIF where change opens
+[Suite] Internal: Live text of script, worker refused
+  [OK] Worker page refuses gives way to thread of page, which reads each text to native NIF
+build/font-faces/written.json
+0 finding(s).
+```
+
+The suite of the script holds each verdict of the sample of Tatoeba. The suite of live text reads
+texts with words that reach back. Each text reads to the NIF that the native build gives, in the
+worker and on the thread of the page. The suite runs once more on a page that refuses each worker.
 
 ## Authority
 
@@ -162,6 +352,8 @@ nim r tools/build.nim tatoeba <export>            # write sample of Tatoeba agai
 nim r tools/build.nim wikipedia <directory>       # write articles of Wikipedia again from answers
 nim r tools/build.nim translations                # fetch Alice and Oz, which suites then read
 nim r tools/build.nim javascript                  # compile parser to build/lojban_parser.js
+nim r tools/build.nim page                        # build page of live text, one file in build/
+nim r tools/build.nim drive                       # run suites of script and page in Chromium
 nim r tools/build.nim system                      # print packages verbs and suites need
 ```
 
@@ -174,13 +366,31 @@ own name. The verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decomp
 `wikipedia` needs `sha256sum` and the saved answers of the API of the Wikipedia. The verb
 `translations` needs `curl` and `sha256sum`, and the verb `system` declares both.
 
-The suite `tests/test_javascript.nim` runs on the JavaScript target of the compiler, and needs
-node to run. The verb `system` declares node as the package `nodejs`. The verb `javascript` needs
-the compiler alone.
+The verb `javascript` needs the compiler alone. The verb `drive` needs Chromium, the one that
+`LOJBAN_CHROMIUM` names, full Chrome or its headless shell. Else it takes the headless shell of
+Chrome for Testing 153.0.8010.12 from the store of the repository. It unpacks that shell with
+`unzip`, which the verb `system` declares. No check needs node.
+
+The verbs `page` and `drive` fetch the font faces of the page through `koch fetch-assets`, which
+needs `curl` and `sha256sum`. `koch drive` reads the `woff2` of Commit Mono through `libbrotli1`,
+which the verb `system` declares.
 
 ## Pages
 
-The project publishes no page.
+[Lojban live tree](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) draws the tree of live text as
+a reader types it. A worker reads the text piece by piece, and the page draws each part from the
+NIF that the worker gives. A part still open shows in amber. A word that reaches back, as `si` or
+`li'u`, cuts the NIF back to where it lands. The button Merge joins each completed part into the one
+tree that one pass gives, by `mergeParts`. Where an error stays, each run of parts around it joins,
+and the error stays in its place.
+
+| built file, under `build/` | published at |
+| --- | --- |
+| lojban_parser.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
+
+The verb `page` builds it from `pages/live.html`. Publish it again from `build/lojban_parser.html`
+after any change that alters what the page shows. Put the URL in the pull request, and in the
+message that says the work is ready.
 
 ## Status
 
@@ -193,9 +403,14 @@ CLL 4.7 and 4.8.
 It reads a stream of text into its words, with its pauses, commas and capitals, and it splits
 words that a text writes together. It reads prose by the grammar of 21.1, after quotation,
 erasure, `zei`, BAhE, `bu` and indicators act on the words.
+It reads on past each error, and it reads live text piece by piece, as the text arrives. Its NIF
+ties each word to the bytes it reads from, and each byte of each word lies in one leaf. It merges
+the parts of a text from their NIF alone into the NIF that one pass gives, and keeps each error in
+its place.
 
-The verb `javascript` builds the reader of prose for a page or for node. A suite holds that build
-to the verdicts that the native build gives the sample of Tatoeba.
+The verb `javascript` builds the reader of prose and the reader of live text for a page. The verb
+`drive` holds that build in headless Chromium to the native build. It holds the verdicts of the
+sample of Tatoeba, and the NIF of live text, in a worker and on the thread of the page.
 
 The suites hold each part to CLL. The parser reads each numbered example of CLL 1.1 that the
 book calls grammatical, with the lines that hold notation left out. The book shows ten examples in

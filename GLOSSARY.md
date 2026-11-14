@@ -18,6 +18,13 @@ standard.
 - **Projective Geometric Algebra Illuminated**, Eric Lengyel, Terathon Software, 2024: `PGA`,
   `RGA` and `CGA`. They are the projective, rigid and conformal geometric algebras, as the wikis
   at `rigidgeometricalgebra.org` and `conformalgeometricalgebra.org` expand them.
+- **NIF data format**, nim-lang, version 2027, at commit `a31513c6` of `nifspec`, 2026: `NIF`,
+  from the title of `doc/nif-spec.md`. Nimony, the next compiler of Nim, holds its trees in it.
+- **The Complete Lojban Language**, Logical Language Group, first edition 1997: `C` and `V`.
+  `C` is a consonant, and `V` is a vowel other than `y` (4.1). The forms are `CVC`, `CCV`,
+  `CVV`, `CVCC`, `CCVC`, `CVCCV` and `CCVCV` (4.4, 4.6). A `/` marks a medial pair that need
+  only be permissible, as in `CVC/CV`. The author is John Woldemar Cowan, and the same symbols
+  are free at `lojban.github.io/cll`.
 - **Acronyms that a layman knows**, selected by the Architect: `3D`, `ID`, `JSON`, `URL`, `UI`,
   `RGB`, `RGBA`, `GIF`, `PNG`, `FOV`, `GL`, `GUI`, `DOM` and `fps`. Article V.9 keeps a layman
   as the test, and this list is the record of what passed it.
@@ -70,7 +77,7 @@ _Avoid_: rules, law, guidelines, policy
 
 **Stamp**:
 A short code that ties a file to what it was checked or made against. The stamp of a project
-names the charter that the audit last checked it against.
+names the version of the rules for its content that the audit last checked.
 _Avoid_: seal, hash, fingerprint
 
 **Provenance**:
@@ -194,3 +201,11 @@ _Avoid_: bucket, cell
 One weight and style of one font family, held in one file, as Noto Sans at weight 700. CSS
 declares one with `@font-face`.
 _Avoid_: face, font, typeface
+
+**Text format file**:
+A message of Protocol Buffers that the repository commits as text, in a `.txtpb` file.
+_Avoid_: record, committed worked example
+
+**Format line**:
+The one line of text that opens a file that a person keeps, and names its format and version.
+_Avoid_: tag, magic number, opening

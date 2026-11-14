@@ -162,6 +162,20 @@ suite "Chapter 19":
     check "zo .bab. cmene la'e zo .bab.".terminalsRead.isSome  # Example 19.54
     check "la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.".terminalsRead.isSome  # 19.57
 
+    # `zo` ending text, in each part quotation gives word; tolerant reader of #859 found
+    #   `mi cusku zo` read, as if `zo` quoted word.
+    check "mi cusku zo".refusalRead ==
+        some((RefusalText.Quotation, 9))  # 19.10, `zo` quotes next word, and none follows
+    check "zo".refusalRead == some((RefusalText.Quotation, 0))  # 19.10, `zo` alone; constructed
+    check "mi klama si zo".refusalRead ==
+        some((RefusalText.Quotation, 12))  # 19.13, erasure before it; constructed
+    check "mi cusku zo zo".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["zo", "zo"]])  # 19.10, `zo` quoted; constructed
+    check "mi cusku zoi zo gy zo".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["zoi", "zo", "gy", "zo"]])  # 19.10, delimiter; constructed
+    check "lo'u mi zo".refusalRead ==
+        some((RefusalText.Quotation, 8))  # 19.9, inside `lo'u` that no `le'u` closes
+
 
   test "Section 19.13":
     check "ti gerku si mlatu".terminalsRead == "ti mlatu".terminalsRead  # Example 19.75
@@ -190,6 +204,20 @@ suite "Chapter 19":
   test "Section 19.15":
     check "mi klama fa'o 日本".unitsRead == some(@[@["mi"], @["klama"]])  # 19.15, input ends
     check "zo fa'o cu cmavo".unitsRead.get[0] == @["zo", "fa'o"]  # 19.15, unless quoted
+
+    # `fa'o` ending text, in each part quotation gives word; tolerant reader of #859 found
+    #   `mi cusku zo fa'o` read as `zo` alone, which lost word quoted.
+    check "mi klama fa'o".unitsRead == some(@[@["mi"], @["klama"]])  # 19.15, plain: input ends
+    check "mi cusku zo fa'o".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["zo", "fa'o"]])  # 19.10, `zo` quotes any word; constructed
+    check "mi cusku zoi fa'o gy fa'o".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["zoi", "fa'o", "gy", "fa'o"]])  # 19.10, delimiter any word
+    check "mi cusku la'o fa'o gy fa'o".unitsRead ==
+        some(@[@["mi"], @["cusku"], @["la'o", "fa'o", "gy", "fa'o"]])  # 19.10, `la'o` as `zoi`
+    check "mi cusku lo'u fa'o".refusalRead ==
+        some((RefusalText.Quotation, 14))  # 19.9, `le'u` closes it; byte of word quoted last
+    check "mi klama le fa'o ko".refusalRead ==
+        some((RefusalText.Grammar, 12))  # 19.15, grammar stops where input ends; constructed
 
 
 

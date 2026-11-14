@@ -22,7 +22,8 @@
 ##     whose hyphens 4.11 sets otherwise: 4.7 forbids fu'ivla to be lujvo, never to look like
 ##     one. Else such brivla is refused as `Hyphen`, with form 4.11 gives.
 ##   Each refusal names rule of CLL. `Foreign` refuses nothing: it marks text that `zoi` or
-##     `la'o` quotes, which `readStream` holds whole as one occurrence (4.9 rule 7).
+##     `la'o` quotes, which `readStream` holds whole as one occurrence (4.9 rule 7). Nor does
+##     `Faho`: it marks written word after `fa'o` that ends input, which `prose.nim` holds (19.15).
 ##     `Stream` names text that `readStream` of `stream.nim` reads: marks of stream, or cmavo
 ##       run together (4.2).
 ##   Word reads as words of its tanru, never as its spelling: rafsi chosen do not change lujvo
@@ -83,6 +84,7 @@ type
     Split  ## Written word splits several ways, each with fewest pauses (3.3); detail is two.
     Quotation  ## `zoi` or `la'o` with no delimiter, or text it quotes never closing or holding it.
     Foreign  ## No refusal: text `zoi` or `la'o` quotes, no lojban (4.9 rule 7), stream holds whole.
+    Faho  ## No refusal: written word after `fa'o` that ends input (19.15), which stream reads not.
 
   Reading* = object  ## Define outcome of reading text as word.
     case is_word*: bool

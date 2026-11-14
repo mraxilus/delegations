@@ -1,13 +1,16 @@
 # Run repository checks on pull requests, on main, and weekly over what merged that week.
 #   Each job carries name of koch verb it runs, so red job names command to run locally.
 #   `list-projects` names projects one change asks to compile, and again those of them
-#   carrying driven checks. `check-files` runs whole-tree checks, which cost about second and
-#   so stay unscoped. `check-scope` and `check-commits` read branch. `test` is one matrix job
-#   per named project, each installing that project's own pin and system packages, since
-#   suites load what project declares (issue 780). `drive` is second matrix over
-#   subset of same list, building each page and driving it through real events.
+#   carrying driven checks. `check-files` runs whole-tree checks, which are cheap next to jobs
+#   that compile and test, and so stay unscoped; it reads branch, and holds each finding inside
+#   project that branch's role does not own (CURATOR.md, duty 3), except on line branch
+#   changed, which it reads against base. `check-scope` and `check-commits` read branch too.
+#   `test` is one matrix job per named project, each installing that project's own pin and
+#   system packages, since suites load what project declares (issue 780). `drive` is second
+#   matrix over subset of same list, building each page and driving it through real events.
 #   `check-types` type-checks scripts of every changed project carrying node manifest beside
-#   its lock. `check-drift` refuses branch predating base's charter or checker.
+#   its lock. `check-drift` refuses branch predating base's charter or checker, naming each
+#   section of charter base changed.
 #   `check-schemas` holds each folder of protobuf schemas branch changed to version base
 #   shipped, through `buf`; weekly run skips it, since it names no base.
 #   `test-windows` runs suites of knoller on Windows, whenever `list-projects` names knoller,
@@ -27,6 +30,12 @@
 #   Matrix runs in parallel, so wall time is slowest changed project, never sum of all.
 #   `nim r koch check` runs same checks locally before pull request opens; runner confirms,
 #   never discovers.
+#
+#   `test` and `drive` run on `ubuntu-24.04`, never `ubuntu-latest`: they build and run project
+#   code, so their toolchain is measured. Machine baselines of pga_benchmark name gcc 13.3.0
+#   and valgrind 3.22.0 of that release, and delegate containers run it too. `ubuntu-latest`
+#   moved to 26.04, with gcc 15.2.0, in 2026-11 (repository issue 848). Every other job runs
+#   koch alone on its own pin, so image moves nothing it reads.
 #
 #   `NIM_VERSION` builds koch and runs whole-tree checks. It is `curator/audit`'s pin, never
 #   second pin, and `toolchain.nim` fails audit when any workflow disagrees with it. Every
@@ -99,6 +108,9 @@ jobs:
 
   check-files:
     runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.head_ref || github.ref_name }}  # pull request branch, else `main`
+      BASE: origin/${{ github.base_ref || 'main' }}  # lines branch changed are read against it
     steps:
       - uses: actions/checkout@v7
         with:
@@ -112,7 +124,8 @@ jobs:
   test:
     needs: list-projects
     if: needs.list-projects.outputs.projects != '[]'
-    runs-on: ubuntu-latest
+    # Release whose toolchain machine baselines name; header says why.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -197,7 +210,8 @@ jobs:
   drive:
     needs: list-projects
     if: needs.list-projects.outputs.drive != '[]'
-    runs-on: ubuntu-latest
+    # Release whose toolchain machine baselines name; header says why.
+    runs-on: ubuntu-24.04
     # Whole suite drives real browser over thousands of objects under software rendering, so
     #   it is minutes rather than seconds. Ceiling is far above measured run and far below
     #   hang: job that stopped making progress should say so rather than hold runner.

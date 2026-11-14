@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, strutils, tempfiles, unittest]
+import std/[options, os, sequtils, sets, strutils, tables, tempfiles, unittest]
 import ../../src/[domains, tree]
 import ./fixtures
 
@@ -110,6 +110,51 @@ suite "Tree":
     check "NEW.md" notin changed  # base's gain is no change of branch
 
 
+  test "lines each hunk of diff adds are read by path after change":
+    # Body line opening `++` is content, never header of file.
+    let diff = [
+      "diff --git a.md a.md", "index 1111111..2222222 100644", "--- a.md", "+++ a.md",
+      "@@ -3,0 +4,2 @@ heading", "+one", "+++ two", "@@ -9 +11 @@", "-old", "+new",
+      "diff --git gone.md gone.md", "deleted file mode 100644", "--- gone.md", "+++ /dev/null",
+      "@@ -1 +0,0 @@", "-gone",
+    ].join("\n")
+    let lines = diff.linesHunks
+    check lines.len == 1  # deleted file adds none
+    check lines["a.md"] == [4, 5, 11].toHashSet
+
+
+  test "branch owns each line it changed, widened to opening of its prose block":
+    let root = repoTemp()
+    defer: removeDir(root)
+    let readme = DIRECTORY_ALPHA & "/README.md"
+    root.writeInto(readme, "# Alpha\n\nFirst line\nsecond line.\n\n- item\n")
+    root.writeInto("a.nim", "discard 1\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(alpha): add readme'")
+    discard root.git("checkout -q -b curator/rules")
+    discard root.git("mv a.nim b.nim")  # exact rename changes no line
+    root.writeInto(readme, "# Alpha\n\nFirst line\nsecond line, longer.\n\n- item\n")  # unstaged
+    let owned = linesOwned(root, root.readTree, "main")
+    check owned.len == 1
+    check owned[readme] == [3, 4].toHashSet  # paragraph opens on 3
+
+
+  test "deletion owns lines beside it, and path holding space keeps its name":
+    # Case as found: blank line deleted between two paragraphs joins them into one block,
+    #   whose finding names line that block opens on.
+    let diff = ["diff --git a b.md a b.md", "--- a b.md\t", "+++ a b.md\t", "@@ -5 +4,0 @@", "-"]
+    check diff.join("\n").linesHunks.getOrDefault("a b.md") == [4, 5].toHashSet
+    let root = repoTemp()
+    defer: removeDir(root)
+    let readme = DIRECTORY_ALPHA & "/README.md"
+    root.writeInto(readme, "# Alpha\n\nOne.\nTwo.\n\nThree.\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(alpha): add readme'")
+    discard root.git("checkout -q -b curator/rules")
+    root.writeInto(readme, "# Alpha\n\nOne.\nTwo.\nThree.\n")  # blank line deleted
+    check 3 in linesOwned(root, root.readTree, "main").getOrDefault(readme)  # joined block
+
+
   test "git failure raises with output":
     expect IOError: discard fieldsGit("/nonexistent_delegations", ["status"])  # non-zero exit
     let root = repoTemp()
@@ -146,6 +191,23 @@ suite "Tree":
     check checkoutAt(root, root / "sub" / "unwritten") == some(root)
     check checkoutAt(root, tree / "sub") == some(tree)  # worktree holds its own branch
     check checkoutAt(root, plain) == some(root)  # git fails, so root's rule still holds
+
+
+  test "root reached through link reads by its real path where git fails too (#883)":
+    # Case as found on #883: folder in no repository read as root spelt through link, while git
+    #   names each other top by real path, and `pathReal` reads file by real path.
+    let
+      root = repoTemp()
+      links = createTempDir("delegations_", "_links")
+      plain = createTempDir("delegations_", "_plain")
+    defer: removeDir(root)
+    defer: removeDir(links)
+    defer: removeDir(plain)
+    createSymlink(root, links / "root")
+    check checkoutAt(links / "root", plain) == some(root)  # git fails, so fallback reads root
+    # Domain: git names real top through same link, and root spelt real reads as it is.
+    check checkoutAt(links / "root", links / "root") == some(root)
+    check checkoutAt(root, plain) == some(root)
 
 
   test "lock that moved with its project and follows its name is move":

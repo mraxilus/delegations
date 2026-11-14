@@ -15,7 +15,7 @@
 ##   Corpus does not cover yet: rows of pronunciation of chapter 3 and of compound cmavo of
 ##     chapter 4, which `test_stream.nim` and `test_forms.nim` hold by hand; trees, which
 ##     `test_grammar.nim` holds for chapter 5 and Section 18.16.
-##   Cost: suite takes about 6 s of debug build, measured 2026-11-06 in container of delegate;
+##   Cost: suite takes about 4 s of debug build, measured 2026-11-09 in container of delegate;
 ##     grammar takes most of it, and stream 0.1 s.
 
 {.experimental: "strictFuncs".}

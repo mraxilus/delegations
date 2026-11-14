@@ -1095,7 +1095,7 @@ suite "Internal: Suggester":
     createDir(directory_case)
     for malformed in [
       "",  # empty
-      "lojban_tagger exchange 1" & whole[whole.find('\n') .. ^1],  # opening of version 1
+      "lojban_tagger exchange 1" & whole[whole.find('\n') .. ^1],  # format line of version 1
       whole[0 ..< ^2],  # cut
       whole & "\n",  # byte appended
       whole[0 ..< ^1] & char(ord(whole[^1]) xor 1),  # bit of message changed

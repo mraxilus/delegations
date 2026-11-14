@@ -26,15 +26,19 @@ import ./[
 export layout.Entry, layout.directoriesProject, layout.Tree
 
 
-func stampRules*(tree: Tree): string =
-  ## Compute stamp of rules documents as tree holds them; missing document digests empty.
-  var contents: seq[string]
+func documentsRules(tree: Tree): seq[string] =
+  ## Read each rules document as tree holds it, in `RULES` order; empty where absent.
   for rule in RULES:
     var content = ""
     for e in tree:
       if e.path == rule: content = e.content
-    contents.add content
-  contents.stamp
+    result.add content
+
+
+func stampRules*(tree: Tree): string =
+  ## Compute stamp of rules documents as tree holds them, each without its sections of process;
+  ##   missing document digests empty.
+  tree.documentsRules.stampRules
 
 
 proc writeRowsRules*(root: string, tree: Tree): seq[string] =
@@ -155,6 +159,9 @@ proc auditTree*(tree: Tree): seq[Finding] =
       if e.kind.isSome and not e.path.isCodeContributor(tree.directoriesProject):
         result.add checkMentions(e.path, e.content, verbs)
 
+  # Each section of process stamp leaves out stands in its document, absent document included,
+  #   so list cannot rot.
+  for k, document in tree.documentsRules: result.add checkSectionsProcess(RULES[k], document)
   let
     stamp_now = tree.stampRules
     directories = tree.directoriesProject
