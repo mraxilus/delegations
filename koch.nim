@@ -317,6 +317,13 @@ proc runHook(root, event, input: string): int =
       found.add checkReferencesBare(turn.text)
       found.add checkLinksReference(turn.text)
       found.add checkEndTurn(turn.text, branch_root, is_writing = turn.calls.isTurnWriting)
+      # Merge commit names its pull request, so group of earlier sign-off may drop once main
+      #   holds it; first-parent subjects are main's own, and failure of git reads as none.
+      if turn.signoffs_earlier.len > 0 and turn.text.isSignoff:
+        let subjects =
+          try: fieldsGit(root, ["log", "--first-parent", "-z", "--format=%s", "origin/" & MAIN])
+          except IOError: @[]
+        found.add checkSignoffWindow(turn.text, branch_root, turn.signoffs_earlier, subjects)
       let unread = checkSignoffRead(turn.text, turn.calls)
       if found.len == 0 and unread.len == 0: return 0
       let has_signoff = turn.text.isSignoff

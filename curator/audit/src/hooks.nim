@@ -103,6 +103,8 @@ type
   Turn* = object  ## Define what transcript says about turn since last message of person.
     calls*: seq[Call]  ## Tool calls in order.
     text*: string  ## Text of last assistant message.
+    signoffs_earlier*: seq[string]
+      ## Text of each earlier message holding sign-off, in order; empty until window reads.
 
   Word = object  ## Define one word of shell text, as shell passes it to command.
     text: string  ## Word with quotes and escapes taken out.
@@ -1413,6 +1415,14 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       if text.startsWith(label): text = text[label.len .. ^1].strip
     prose.add text
   result.add findingsEnglish("sign-off", prose.join("\n"))
+
+
+func checkSignoffWindow*(
+  message, branch: string; earlier, subjects: openArray[string]
+): seq[Finding] =
+  ## Report sign-off that drops or shrinks group of last sign-off since message of Architect.
+  ##   Compares nothing yet, ahead of reading groups of earlier sign-offs and merges on `main`.
+  discard
 
 
 func labelDefined(line: string): string =
