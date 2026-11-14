@@ -909,9 +909,10 @@ build leaves out is no moved function. At rga4d, P08 moves 2 functions, and P01 
 quiet, and the pages take their spread from it.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
-else. It compares the peak memory that the compiler reports for the pin and for the changed
-library. No proposal makes one at the pin. P01 made one, and the Architect ruled to drop it,
-since head now holds the saving that it measured. At rga6d head peaks at 195.8 MiB and P01 at
+else. It compares the peak memory or the seconds that the compiler reports for the pin and for the
+changed library. P12 makes four, of each measure at cga5d and cga6d, since its cell costs in the
+build alone. P01 made one, and the Architect ruled to drop it, since head now holds the saving that
+it measured. At rga6d head peaks at 195.8 MiB and P01 at
 200.3 MiB, ×1.02 (`evaluations/cayley-derivation.json` at `b9ed6685`, 2026-10-07,
 `linux amd64, 4 cores`).
 
@@ -966,6 +967,10 @@ root takes the smaller part by its own root fails the law of the small part at c
 `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and `limits.nim` its limits
 over long chains and frames, at rga3d, rga4d, cga4d and cga5d.
 
+`proposals/12-cayley-cells/laws.nim` holds the size of the cell of P12 tight at each of the nine
+algebras. A copy whose cell holds three terms under the conformal metric fails it at cga3d. A copy
+whose cell holds one term there stops the build, where `add` names the full cell.
+
 A basis-set form of P04 that reaches no basis stops the compile. So its laws hold such a form to
 zero in the library, at each type and pair that they sweep. Where a map drops the sign of its
 table, the laws fail at rga4d. Where a squared norm reads half its table, they fail at cga5d and
@@ -984,8 +989,9 @@ names. They cover the programs of a chain of proposals, base first.
 
 The same suites cover proposal numbers taken twice or skipped, and the status that freezes a
 proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and the
-table serialiser at pin. They cover the algebras that an evaluation measures, with the flag and
-without it. A digest moves with edits, and never with prose.
+table serialiser at pin. The serialiser reads a cell that holds its terms in place with their count
+too. They cover the algebras that an evaluation measures, with the flag and without it. A digest
+moves with edits, and never with prose.
 
 ## Notes
 

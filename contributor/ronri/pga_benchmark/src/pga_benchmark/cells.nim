@@ -3,7 +3,8 @@
 ##     copy; each prints tables through this module, and equal JSON is equal table, signs
 ##     included. Suites run same module against pin, so serialiser evaluation relies on is tested.
 ##   Cell is `seq` in every table at pin; library before `3121342` held `Option[BasisSigned]` in
-##     1D ones. `toTerms` reads both, so one module serves change that restores either shape.
+##     1D ones, and P12 holds terms in place beside their count. `toTerms` reads `Option`, and any
+##     other cell it can iterate, so one module serves change that brings any of these shapes.
 ##
 ##   Cost: serialiser walks every cell, N² for 2D table; 6D is 4 096 cells, milliseconds.
 
@@ -20,12 +21,12 @@ func term(b: BasisSigned): JsonNode =
 
 
 func toTerms[C](c: C): JsonNode =
-  ## Read one cell, `Option` or `seq`, as array of terms.
+  ## Read one cell, `Option` or any cell with `items`, as array of terms.
   result = newJArray()
-  when C is seq:
-    for b in c: result.add term(b)
-  else:
+  when C is Option:
     if c.isSome: result.add term(c.get)
+  else:
+    for b in c: result.add term(b)
 
 
 func cells*[T](table: T): JsonNode =
