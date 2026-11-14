@@ -808,9 +808,15 @@ suite "Hooks":
       SIGNOFF.replace(row, "| ✅ 2. Gap list reads each baseline | `src/` | `koch check` green |"),
       BRANCH,
     ).messages.anyIt("holds two cells" in it and "got `3`" in it)
-    for first in ["✅ Gap list reads", "🟢 2. Gap list reads", "✅ 2 Gap list reads", "✅ 2. "]:
+    for first in ["✅ Gap list reads", "✅ 2 Gap list reads", "✅ 2. "]:
       check checkSignoff(SIGNOFF.replace("✅ 2. Gap list reads each baseline", first), BRANCH)
         .messages.anyIt("opens first cell with state, number and claim" in it)
+    for first in ["🟢 2. Gap list reads", "Gap list reads"]:
+      check checkSignoff(SIGNOFF.replace("✅ 2. Gap list reads each baseline", first), BRANCH)
+        .messages.anyIt(
+          "opens first cell with state, one of ☑️ ✅ ⚠️ ⏸️ ⬜ ➖" in it and
+            "got `" & first.splitWhitespace[0] & "`" in it
+        )  # state that no marker gives is named, with markers that are
     check checkSignoff(SIGNOFF.replace("| this delegate |", "| |"), BRANCH)
       .messages.anyIt("holds evidence, or who acts" in it and "row `5`" in it)
     check checkSignoff(SIGNOFF.replace("| `koch check` green |", "| |"), BRANCH)
@@ -1250,6 +1256,12 @@ suite "Hooks":
     let stuck = SIGNOFF.replace("**State:** blocked", "**State:** stuck")
     check checkSignoffWindow(dropped, BRANCH, [stuck], []).len == 0  # groups read, shape refused
     check checkSignoffWindow(dropped, BRANCH, [dropped, SIGNOFF], []).len == 1  # last, not first
+
+    # Sign-off whose groups do not read takes findings of its shape alone, so group that it holds
+    #   is never named as dropped.
+    for unread in [gist, SIGNOFF.replace("/pull/331), draft", "/issues/331), draft")]:
+      check checkSignoff(unread, BRANCH).len > 0
+      check checkSignoffWindow(unread, BRANCH, [SIGNOFF], []).len == 0
 
 
   test "hook binary is built again where source at HEAD moves, and only there":
