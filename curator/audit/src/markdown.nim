@@ -4,6 +4,9 @@
 ##     may quote heading as example, as `GUIDE.md`, Glossary process, quotes `## Standards`.
 ##     Stamp, drift and checker's `section` read that one cut, so they never disagree on where
 ##     section ends, and parts joined give document back byte for byte.
+##   Heading of section is two to six `#` then space (`headings`), each with its level and line,
+##     since citation names subsection at any depth; `#` alone titles document, and `#823` opens
+##     no heading. `linesHeading` takes every `#` line, as record shape reads it.
 ##
 ##   Cost: table cell holding `|` splits wrongly; no governed table carries one.
 ##   Cost: fenced code blocks are not skipped by table and heading readers, so table inside
@@ -48,8 +51,14 @@ func linesHeading*(markdown: string): seq[string] =
 
 func headings*(markdown: string): seq[Heading] =
   ## Read each heading of section, i.e. two to six `#` at column one then space, in order.
-  ##   TODO: Stub reads none until reader lands.
-  discard
+  ##   Heading of no text reads none.
+  let lines = markdown.splitLines
+  for i, line in lines:
+    var level = 0
+    while level < line.len and line[level] == '#': inc level
+    if level < 2 or level > 6 or level == line.len or line[level] != ' ': continue
+    let text = line[level + 1 .. ^1].strip
+    if text.len > 0: result.add Heading(level: level, text: text, line: i + 1)
 
 
 func firstNonBlank*(markdown: string): string =
