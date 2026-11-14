@@ -77,7 +77,7 @@ _Avoid_: rules, law, guidelines, policy
 
 **Stamp**:
 A short code that ties a file to what it was checked or made against. The stamp of a project
-names the charter that the audit last checked it against.
+names the version of the rules for its content that the audit last checked.
 _Avoid_: seal, hash, fingerprint
 
 **Provenance**:

@@ -1,13 +1,22 @@
-## Read Markdown shapes checks depend on: pipe-table rows and headings.
+## Read Markdown shapes checks depend on: pipe-table rows, headings and `##` sections.
 ##   Deliberately tiny: no Markdown parser, only line forms governed documents use.
+##   Section is document cut at each `## ` line outside fenced code (`sections`), since fence
+##     may quote heading as example, as `GUIDE.md`, Glossary process, quotes `## Standards`.
+##     Stamp, drift and checker's `section` read that one cut, so they never disagree on where
+##     section ends, and parts joined give document back byte for byte.
 ##
 ##   Cost: table cell holding `|` splits wrongly; no governed table carries one.
-##   Cost: fenced code blocks are not skipped by readers below, so table inside fence counts
-##     as table; reader that must not see example composes `fencedOut` first.
+##   Cost: fenced code blocks are not skipped by table and heading readers, so table inside
+##     fence counts as table; reader that must not see example composes `fencedOut` first.
 
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils]
+
+
+type Section* = object  ## Define one part of document, cut at `## ` line outside fenced code.
+  heading*: string  ## Heading line, line end cut; empty for part before first heading.
+  text*: string  ## Every line of part, heading included, line ends kept.
 
 
 func isRowSeparator(cells: seq[string]): bool =
@@ -48,3 +57,17 @@ func fencedOut*(markdown: string): string =
     if is_fence: is_inside = not is_inside
     let body = line.strip(leading = false, chars = {'\r', '\n'})
     result.add(if is_fence or is_inside: line[body.len .. ^1] else: line)
+
+
+func sections*(markdown: string): seq[Section] =
+  ## Cut document at each `## ` line outside fenced code, part before first heading first, empty
+  ##   where heading opens document.
+  ##   Fence is read through `fencedOut`, which keeps line count, so line `i` of both is one line.
+  result = @[Section()]
+  let
+    lines = markdown.splitLines(keepEol = true)
+    shown = markdown.fencedOut.splitLines(keepEol = true)
+  for i, line in lines:
+    if shown[i].startsWith("## "):
+      result.add Section(heading: line.strip(leading = false, chars = {'\r', '\n'}), text: line)
+    else: result[^1].text.add line

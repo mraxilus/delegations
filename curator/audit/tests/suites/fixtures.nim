@@ -46,6 +46,20 @@ const
     "# Examples\n\nCases.\n", "# Guide\n\nSteps.\n",
   ]
     ## Contents of rules documents in fixture tree, in `RULES` order.
+  TEXT_PROCESS* = [
+    "",
+    "",
+    "## Read first, in this order\n\nRead.\n\n## Every delegate begins here\n\nBegin.\n\n" &
+      "## Carry the unchecked list in the open\n\nCarry.\n\n## Branch and commits\n\n" &
+      "Branch.\n\n## Before you open a pull request\n\nCheck.\n",
+    "",
+    "## The queue and the shared allowance\n\nWait.\n\n## Work for subagents\n\nHand off.\n\n" &
+      "## How to build on a project\n\nBuild.\n\n## Output contract\n\nSign off.\n",
+  ]
+    ## Sections of process that follow `TEXT_RULES` in each rules document of fixture tree, in
+    ##   `RULES` order, one for each row of `SECTIONS_PROCESS`. Stamp leaves them out, so tree
+    ##   stamps as `TEXT_RULES` alone; row added there without section here is finding of
+    ##   good tree, which names its heading.
   DIRECTORY_ALPHA* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
   DIRECTORY_AUDIT* = CURATOR & "/audit"  ## Curator project in fixture tree.
 
@@ -98,7 +112,7 @@ func treeGood*(): Tree =
     entry(".gitattributes", "# Endings.\n* text=auto eol=lf\n"),
     entry(".github/workflows/check.yml", TEXT_WORKFLOW),
   ]
-  for k, rule in RULES: result.add entry(rule, TEXT_RULES[k])
+  for k, rule in RULES: result.add entry(rule, TEXT_RULES[k] & TEXT_PROCESS[k])
   for root in ROOTS: result.add entry(root & "/README.md", "# " & root & "\n\nProjects.\n")
   for d in DOMAINS:
     result.add entry(

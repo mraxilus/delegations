@@ -5,7 +5,8 @@
 ##   exception: there git quotes path holding quote, backslash or control character, and such
 ##   path owns no line.
 ##   Same door serves branch context: checkout holding directory, changed paths, paths base
-##   gained, commit subjects since base, and oldest commit outside `--recent` window.
+##   gained, file as revision holds it, commit subjects since base, and oldest commit outside
+##   `--recent` window.
 ##
 ##   Git runs as direct process with argument list, never through shell, through knoller's
 ##     `runGit`, which command line of knoller lists directory with too: no quoting, and
@@ -162,6 +163,13 @@ proc pathsGained*(root, base: string): seq[string] =
   ## List paths base holds that branch does not, i.e. what base gained since branch forked.
   ##   Mirror of `pathsChanged`: same three-dot range, other way round.
   fieldsGit(root, ["diff", "-z", "--name-only", "--no-renames", "HEAD..." & base])
+
+
+proc textAt*(root, revision, path: string): string =
+  ## Read file as revision holds it; empty where revision holds none.
+  ##   Output is bytes of file rather than NUL-separated fields, so text file joins back whole.
+  try: fieldsGit(root, ["show", revision & ":" & path]).join
+  except IOError: ""
 
 
 proc subjects*(root, base: string): seq[string] =

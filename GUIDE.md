@@ -3,8 +3,8 @@
 How-to for every delegate: curator, contributor or coordinator. Nothing here binds on its own.
 What binds is in `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md`, and in
 `CURATOR.md` and `COORDINATOR.md`. A section here binds where one of those documents points at
-it. The stamp covers this file too, so a change here re-audits every project, as a change to
-the rules it carries should.
+it. The stamp covers each section of this file except the sections of process. So a change to a
+rule of content here re-audits every project, as it should.
 
 ## Simplified Technical English
 
@@ -46,14 +46,7 @@ leave a comment in code alone, which drops its articles and keeps the rest (Arti
   step.
 
 The `english` check reads three things: sentence length, paragraph length and that short
-table of words. It reads every root document except `LICENSE.md`, and the five templates. It
-also reads the README of each project root and of each domain, and the three records of every
-project.
-
-`PATHS_ENGLISH` in `curator/audit/src/english.nim` holds the root documents and the templates.
-The check derives every other path from the layout, so a new project or a new domain is read
-from its first line. A file below a project directory stays outside the set, and so does any
-other file. Every other rule above holds because you read it.
+table of words. Every other rule above holds because you read it.
 
 ## Names
 
@@ -68,15 +61,8 @@ those standards under `## Standards`, and a project glossary names its own. The 
 - A symbol keeps the case of its standard in prose, and takes the case of its kind in a name
   (`kib_peak`).
 
-The `names` check reads the words of every declared name in Nim. It reports a word from a short
-table of coined abbreviations, each with its one full word. It also reports a run of capitals that
-no glossary lists. It passes what the glossaries list under `## Standards`, their terms, and the
-jargon of V.6. A binding of a library's own name is skipped, because the name is not ours.
-
-The same check holds the first word of a routine (V.3) and the form of a lookup table (V.5). It
-also holds a global that shares its word with a type (V.10). It holds the last word `Of` of a
-routine (V.3) and of a type (V.13). It holds a collection type whose name is its member and a word
-for its form (V.6). The rest of Article V holds because you read it.
+The `names` check holds the words of every name declared in Nim, and a part of the rest of
+Article V. The rest of Article V holds because you read it.
 
 ## The queue and the shared allowance
 
@@ -148,28 +134,17 @@ reads out of your context, so hand it work wherever the work allows.
 
 ## Toolchain
 
-Every project pins its compiler exactly (`CONTRIBUTOR.md`, Toolchain). What follows is how a
-pin is served, installed and moved.
+Every project pins its compiler exactly (`CONTRIBUTOR.md`, Toolchain). Koch serves each pin,
+and so does the `knoller` command for each file that it fixes, so you do not have to install
+it. `curator/audit/PROVENANCE.md`, Toolchain, says how.
 
-- **You do not have to install it.** Koch resolves each pin, and the `knoller` command
-  resolves the pin of each file that it fixes. Each takes the compiler on `PATH` where that one
-  already serves, else one cached under `~/.cache/knoller/nim/<pin>/`, else a fetch. A release
-  arrives as a checksummed tarball in seconds. A commit is cloned from `nim-lang/Nim` and built
-  in minutes. Either fetch is paid once for each pin.
-- **One toolchain serves the whole run.** `$KNOLLER_NIM_DIR` moves the cache, for koch and
-  knoller both. Testament and Atlas come from the toolchain that serves the pin, and its `bin/`
-  leads `PATH`. So a lock is never replayed against another compiler. That is why `koch check`
-  and `koch test` stay green as one command over projects that pin different compilers.
-- **A pin that nothing can serve is a finding of koch, and a warning of knoller.** It names the
-  pin, and the finding names the cache that was tried. The network may be unreachable, or the
-  version may not exist. Neither is a reason to fall back to another compiler in silence.
 - **You may install it yourself, and skip the fetch.** Put a matching `bin/` on `PATH`, or a
-  toolchain at `~/.cache/knoller/nim/<pin>/`. `nim --version` prints `git hash:`, which a
-  commit pin is compared against.
+  toolchain at `~/.cache/knoller/nim/<pin>/`. For a commit pin, `nim --version` must print
+  that commit after `git hash:`.
+- **A pin that nothing can serve is a finding.** Never fall back to another compiler in
+  silence.
 - **A bump of the pin is your work.** Run the suites on the new version. Move the line.
   Record in `PROVENANCE.md` what moved and why.
-- **CI installs your pin for your project alone**, in its own job. No project is held to the
-  compiler of another.
 
 ## How to add a dependency
 
@@ -196,12 +171,14 @@ network for every command, so a project with no packages carries no lock and ski
 
 Every later delegate:
 
-1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code. Take the code in the
-   order that the bootstrap diagram of the umbrella module gives.
+1. Read the headings of `PROVENANCE.md`, then each section that your work touches, and Open
+   questions. The start hook prints those headings, each with the line where it opens. Then
+   read `GLOSSARY.md`, then the code. Take the code in the order that the bootstrap diagram of
+   the umbrella module gives.
 2. `nim r koch test contributor/<domain>/<project>` must be green before you start.
-3. `Rules stamp stale` means that the charter changed after the last audit of this project.
-   The curator re-audits every project in the same pull request as a charter change, so this
-   appears only where your branch is older than one. `CONTRIBUTOR.md`, Before you open a
+3. `Rules stamp stale` means that a rule of content changed after the last audit of this
+   project. The curator re-audits every project in the same pull request as such a change, so
+   this appears only where your branch is older than one. `CONTRIBUTOR.md`, Before you open a
    pull request, gives the steps under `check-drift`. Paste the new stamp in a `docs` commit of its
    own.
 4. Work in small commits. Update `PROVENANCE.md` in the same delivery as each design change,
@@ -350,9 +327,9 @@ you do it.
 **Answer a request for status from a fresh read of the open items of your role.** Sort them
 as `COORDINATOR.md`, The queue, sorts them, and give each a link and what it waits for. Order
 the ready pull requests so that each merges clean: an earlier stacked branch goes first.
-Contributor work goes before a change to the charter, since that change moves the stamp of
-every open branch. Then name what you still owe. `/triage all` reads every open item of the
-repository.
+Contributor work goes before a change to the charter, since `check-drift` then fails every
+open branch until it merges that change. Then name what you still owe. `/triage all` reads every
+open item of the repository.
 
 ### The sign-off
 

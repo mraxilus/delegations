@@ -28,8 +28,8 @@
 ##     env: `ROLE_BODY` from event payload, and `ROLE_LABELS` from API as JSON array of label
 ##     names. That is why `check` leaves it out: local run has no pull request to read.
 ##
-##   `check` compiles only projects whose code changed, since static pass costs about second
-##     and suites cost minutes (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
+##   `check` compiles only projects whose code changed, since static pass is cheap next to
+##     suites that compile and test (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
 ##     and weekly run do same against their own base, so nothing compiles every project
 ##     (CURATOR.md duty 11). Matrix runs each on its own pin, as `check` does locally:
 ##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
@@ -78,7 +78,7 @@ Verbs:
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
   check-commits  commits since base: subject form, scope, test before fix, body, record apart
-  check-drift    charter or checker that base gained and branch lacks
+  check-drift    each charter section and checker path base changed since branch forked
   check-schemas  each folder of protobuf schemas branch changed, against version base shipped
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
   hook           answer one hook event named as argument, from its JSON or refs on stdin
@@ -335,12 +335,15 @@ proc runHook(root, event, input: string): int =
     var drift: seq[Finding]
     try:
       discard fieldsGit(root, ["fetch", "-q", "origin", MAIN])
-      drift = checkBase(pathsGained(root, "origin/" & MAIN))
+      drift = checkBase(readDrift(root, "origin/" & MAIN))
     except CatchableError: discard
+    # Record branch works on is read where it exists; new project has none until it writes one.
+    let record = branch_root.pathRecord
     echo contextStart(
       branch_root,
       readFile(root / "CONTRIBUTOR.md"),
       "## Carry the unchecked list in the open",
+      if record.len > 0 and fileExists(root / record): readFile(root / record) else: "",
       drift,
     )
     0
@@ -378,8 +381,9 @@ proc run(options: Options): int =
   var found: seq[Finding]
   case options.command
   of "check":
-    # Checks costing about second run first, and any finding among them stops run before
-    #   types, suites and drive, which cost minutes and run again once finding is fixed.
+    # Static checks run first, since they are cheap next to types, suites and drive, which
+    #   compile and test; any finding among them stops run before those, which run again once
+    #   finding is fixed.
     #   Cost: suite failure shows only after static pass is clean.
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
@@ -390,7 +394,7 @@ proc run(options: Options): int =
     found.add findingsPruned(options.root, tree)
     found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
     found.add checkHistory(branch, commitsBranch(options.root, base))
-    found.add checkBase(pathsGained(options.root, base))
+    found.add checkBase(readDrift(options.root, base))
     found.add checkSchemas(options.root, base)
     # Finding inside project blocks only branch of role owning it (duty 3), and finding on
     #   line branch changed blocks it wherever it lies; rest blocks here.
@@ -445,7 +449,7 @@ proc run(options: Options): int =
     found = checkHistory(options.branchOrDefault, commits)
   of "check-drift":
     if not options.isReadAll({Root, Base}): return options.refused
-    found = checkBase(pathsGained(options.root, options.baseOrDefault))
+    found = checkBase(readDrift(options.root, options.baseOrDefault))
   of "check-schemas":
     if not options.isReadAll({Root, Base}): return options.refused
     found = checkSchemas(options.root, options.baseOrDefault)

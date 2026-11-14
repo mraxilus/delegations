@@ -1,15 +1,16 @@
 # Run repository checks on pull requests, on main, and weekly over what merged that week.
 #   Each job carries name of koch verb it runs, so red job names command to run locally.
 #   `list-projects` names projects one change asks to compile, and again those of them
-#   carrying driven checks. `check-files` runs whole-tree checks, which cost about second and
-#   so stay unscoped; it reads branch, and holds each finding inside project that branch's role
-#   does not own (CURATOR.md, duty 3), except on line branch changed, which it reads against
-#   base. `check-scope` and `check-commits` read branch too.
+#   carrying driven checks. `check-files` runs whole-tree checks, which are cheap next to jobs
+#   that compile and test, and so stay unscoped; it reads branch, and holds each finding inside
+#   project that branch's role does not own (CURATOR.md, duty 3), except on line branch
+#   changed, which it reads against base. `check-scope` and `check-commits` read branch too.
 #   `test` is one matrix job per named project, each installing that project's own pin and
 #   system packages, since suites load what project declares (issue 780). `drive` is second
 #   matrix over subset of same list, building each page and driving it through real events.
 #   `check-types` type-checks scripts of every changed project carrying node manifest beside
-#   its lock. `check-drift` refuses branch predating base's charter or checker.
+#   its lock. `check-drift` refuses branch predating base's charter or checker, naming each
+#   section of charter base changed.
 #   `check-schemas` holds each folder of protobuf schemas branch changed to version base
 #   shipped, through `buf`; weekly run skips it, since it names no base.
 #   `test-windows` runs suites of knoller on Windows, whenever `list-projects` names knoller,

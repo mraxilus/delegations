@@ -14,11 +14,12 @@ merge, never touch `main`, and never write outside your project.
 3. `GLOSSARY.md` at the root: the words of the repository itself, which this file uses.
 4. This file to the end, then `GUIDE.md`. The guide covers the English, the queue, the
    toolchain, dependencies, the glossary, the record, and what to report. Every role reads it,
-   and the stamp covers it.
+   and the stamp covers each of its sections except the sections of process.
 5. `contributor/<domain>/README.md` for the theme of the domain. Then your project's
-   `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, where they exist. `PROVENANCE.md`
-   describes the design as it is now, so read it before the code, and correct it where the
-   code disagrees.
+   `README.md` and `GLOSSARY.md`, where they exist. Then the headings of its `PROVENANCE.md`,
+   each section that your work touches, and Open questions (`GUIDE.md`, How to build on a
+   project). The record describes the design as it is now, so read it before the code, and
+   correct it where the code disagrees.
 6. `curator/probe/` is a complete worked example of the project shape: nimble file, source,
    matrix tests, provenance, glossary. `curator/audit/tests/` is a larger suite.
 
@@ -213,7 +214,7 @@ Before any code:
 
 1. Create `contributor/<domain>/<project>/`.
 2. Write `PROVENANCE.md` first. Open it with the header table in `GUIDE.md`. `Rules` is the
-   stamp of the charter, which `nim r koch stamp` prints at the repository root.
+   stamp of the rules for content, which `nim r koch stamp` prints at the repository root.
 3. Write `GLOSSARY.md`: a `# <project>` heading, one sentence on what the project is, then
    `## Standards`, then `## Language`. Add a term or a standard only after the Architect
    selects it, and never in advance.
@@ -240,10 +241,8 @@ logic in the virtual machine of the compiler. Run it from the project directory,
 
 The verbs that koch reaches are `types`, `drive`, `head` and `system`, and each one is
 described below. Koch runs them as `koch check-types`, `koch drive`, `koch head` and
-`koch list-packages`. Koch learns whether your project carries `drive`, `head` or `system` by a
-read of the dispatch of the driver itself. It runs `types` for every project that carries
-`package.json` beside its lock. A verb spelled any other way is one that the runner passes by in
-silence.
+`koch list-packages`. Koch finds `drive`, `head` and `system` in the dispatch of your driver
+alone. Spell each verb exactly so, because the runner passes any other spelling by in silence.
 
 ## Toolchain
 
@@ -260,8 +259,7 @@ nobody tried.
   is a moving target that records nothing. Pin a release whenever one will do, because
   everyone who builds your project builds a commit from source, CI included.
 
-`GUIDE.md` holds how koch serves a pin, how to install or bump one, and what happens to a pin
-that nothing can serve.
+`GUIDE.md` says how to install or bump a pin, and what happens to a pin that nothing can serve.
 
 ## System dependencies
 
@@ -403,32 +401,20 @@ A presentation target ships the font faces that Article X.8 names, inlined, and 
 serves them. Each Noto font face ships whole, as the TrueType file of its own release, and never
 as a subset.
 
-**A page proves its font faces in `drive`.** A project that builds pages has a `drive` verb,
-and it renders each page that the project builds. The verdict is the curator's, so no project
-judges its own pages. `koch drive` gives it in three steps:
+**A page proves its font faces in `drive`.** A project that builds pages has a `drive` verb.
+It reads each page that the project builds with one collector, and also the page `control`
+that `koch drive` writes to `build/font-faces/control.html`. It writes
+`build/font-faces/written.json`, in the shape that `font_stacks.nim` in `curator/audit/src/`
+gives, with every string that a page draws, ASCII included. `koch drive` then resolves each
+character against the font faces that the page ships, and judges each page, so no project
+judges its own.
 
-1. Before it runs the `drive` verb, `koch drive` writes a control page to
-   `build/font-faces/control.html` in the project.
-2. The `drive` verb reads each page that the project builds, and the control page, with one
-   collector. It writes `build/font-faces/written.json`, in the shape that `font_stacks.nim` in
-   `curator/audit/src/` gives. Its runs hold every string that a page draws, ASCII included,
-   since most bold that the browser synthesises falls on ASCII. The control page is page
-   `control`.
-3. `koch drive` resolves the font stack of each element against the `cmap` of each font face
-   that the page ships. It writes `build/font-faces/found.json`, and gives the verdict.
-
-The verdict fails where a font face of the system draws a character beyond ASCII. Its finding
-names the page, the element and the codepoint. It also fails where a font face does not load. It
-fails where text asks for 600 or more from a family with lighter font faces alone, since the
-browser then synthesises a bold. The control page holds a numeral in each kind of place where
-text stands, and the verdict fails where the collector misses one. So each run proves the
-collector too.
-
-The project keeps no reader of `cmap` and no judge of font faces. Its `system` verb declares
-`libbrotli1` where its pages ship `woff2`, because `koch drive` reads `woff2` through it.
-
-The audit reads what each font face of a project maps, across the whole project. Only a render
-follows the cascade of each element, so `drive` holds what the audit cannot.
+A page fails where a font face of the system draws a character beyond ASCII, or where a font
+face does not load. It also fails where text asks for 600 or more from a family with lighter
+font faces alone, since the browser then synthesises a bold. Each finding names the page, and
+the element or the font face. The project keeps no reader of `cmap` and no judge of font faces.
+Its `system` verb declares `libbrotli1` where its pages ship `woff2`, because `koch drive` reads
+`woff2` through it.
 
 ## Tests are paramount
 
@@ -484,22 +470,15 @@ follows the cascade of each element, so `drive` holds what the audit cannot.
 
 ## Before you open a pull request
 
-- `nim r koch check` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs what CI runs. First come the checks that cost about a second, and
-  a finding there stops the run: `check-files`, `check-scope`, `check-commits` and
-  `check-drift`. Then come `check-types`, and the suites and driven checks of every project
-  whose code changed, which is yours. A pull request opened before it passes breaks the
-  process, whatever CI later says: the runner confirms, and it never discovers. Run it again
-  before every later push.
-- **A change that touches only your three records compiles nothing**, and the static pass
-  still checks every stamp. A change that a curator makes to the checker compiles the
-  project of the checker, and never yours. The push to `main` and the weekly run compile what
-  changed as well, so your suites run when your code moves.
-- **`check-drift` fails where the rules or the checker moved on `main` after you branched.**
-  Your stamp then claims a charter that no longer exists, and a merge would redden `main`.
-  Merge `origin/main`, read the diff of the charter, re-audit your project against each change,
-  re-stamp, and push. Only the charter and the checker count, so another project's code that
-  moves underneath you will not stop you. The skill `sync` points here.
+- `nim r koch check` at the repository root passes on the exact commit you push. It runs what
+  CI runs, the static checks first, since they are cheap next to the jobs that compile and test.
+  A pull request opened before it passes breaks the process, whatever CI later says: the runner
+  confirms, and it never discovers. Run it again before every later push.
+- **`check-drift` fails where the charter or the checker moved on `main` after you branched.**
+  Its finding names each section of the charter that changed, and the command that shows the
+  change. Read each change, then merge `origin/main`. Where the finding asks for it, re-audit
+  your project against each change and re-stamp before you push. Only the charter and the
+  checker count, so the code of another project will not stop you. The skill `sync` points here.
 - **Your pull request clears each finding that a new check left in your project.** A curator
   lands a check once the rest of the tree is clean, and a review finding on your project quotes
   what it found. Those findings fail your branch, and a branch that changes their lines, and

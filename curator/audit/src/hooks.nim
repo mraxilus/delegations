@@ -11,8 +11,9 @@
 ##     refuses end of turn that pushed or posted and closes with neither sign-off block nor
 ##     working line, end of any turn whose message names `#N` outside link or cites charter
 ##     reference with no description, and sign-off from turn that read no open issue of its
-##     role; `start` prints role, read order, carried list and drift; `prompt` reads each message
-##     of Architect; `push` and `msg` serve git hooks.
+##     role; `start` prints role, read order, each finding of drift, headings of record branch
+##     works on, and carried list; `prompt` reads each message of Architect; `push` and `msg`
+##     serve git hooks.
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
 ##     so both pass it unread, as Architect approved on #847. Both read file through
 ##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
@@ -57,6 +58,7 @@
 import std/[json, options, os, sequtils, strutils, uri]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
+from ./toolchain import DIRECTORY_DRIVER
 from ./tree import checkoutAt
 
 
@@ -1457,8 +1459,26 @@ func checkMessage*(
   result.add checkCommitRecord(subject, staged)
 
 
-func contextStart*(branch, contributor, heading_carried: string; drift: seq[Finding]): string =
-  ## Compose text `start` adds to context: role, read order, grammar warning, drift, list.
+func pathRecord*(branch: string): string =
+  ## Read path of record branch works on: its project's, or audit's on curator root branch,
+  ##   whose work is checker and charter; empty outside grammar.
+  let parsed = branch.parseBranch
+  if parsed.isNone: return ""
+  case parsed.get.role
+  of Role.Curator: DIRECTORY_DRIVER & "/" & FILE_RECORD
+  of Role.CuratorProject, Role.Contributor: parsed.get.prefix & FILE_RECORD
+
+
+func contextStart*(
+  branch, contributor, heading_carried, record: string; drift: seq[Finding]
+): string =
+  ## Compose text `start` adds to context: role, read order, grammar warning, drift, headings
+  ##   of record, list.
+  ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
+  ##   that shows them, so start asks for new stamp only where finding does.
+  ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
+  ##     reads its headings, then each section work touches, and Open questions (GUIDE.md); line
+  ##     each heading opens on lets it read that section alone.
   let parsed = branch.parseBranch
   var lines: seq[string]
   if parsed.isNone:
@@ -1470,10 +1490,20 @@ func contextStart*(branch, contributor, heading_carried: string; drift: seq[Find
     lines.add "Read first: CONSTITUTION.md, STYLE.md, GLOSSARY.md, then " & prompt &
       ", then GUIDE.md."
   if drift.len > 0:
-    lines.add "Base gained charter or checker your branch lacks; merge `origin/main` and " &
-      "re-stamp (`check-drift`). " & LINE_SYNC
+    lines.add "Base changed charter or checker since this branch forked; read each change " &
+      "below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
+    for f in drift: lines.add "  " & f.render
   lines.add "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` once done, " &
     "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
+  if record.len > 0:
+    lines.add ""
+    lines.add "Record `" & branch.pathRecord & "`: read each section that your work touches, " &
+      "and Open questions, from line where its heading opens (GUIDE.md, How to build on a " &
+      "project)."
+    var line = 1
+    for part in record.sections:
+      if part.heading.len > 0: lines.add $line & ": " & part.heading
+      line += part.text.count('\n')
   lines.add ""
   lines.add heading_carried
   lines.add contributor.section(heading_carried).strip
