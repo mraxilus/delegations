@@ -7,8 +7,9 @@ coefficient as zero within rounding of the largest coefficient.
 **What it is for.** At pin the places of precision fall with the distance from the origin. Here
 they stay level at every distance measured, and `grade` misreads far fewer elements.
 
-**What it costs.** A comparison of a pair that differs takes far longer than at pin, and so does
-`grade`. A multivector with a coefficient that is not finite equals nothing, itself included.
+**What it costs.** A pair that differs takes 6 to 12 ns to compare, against 2 to 3 ns at pin. A
+conformal `grade` takes 1.5 to 3.5 times as long as at pin. A multivector with a coefficient that
+is not finite equals nothing, itself included.
 
 ## Problem
 
@@ -68,7 +69,7 @@ ruled on 2026-10-12.
 | Rounding units in the rigid algebras | The part scale alone misreads far fewer at 32 bits |
 | The split of P11 | At 64 bits it misreads more conformal elements than this bound |
 | `max` in place of the branch | Each step of `max` waits on the last, so a scan takes longer |
-| A loop that tests the part of each basis | It costs two to three times as much |
+| A loop that tests the part of each basis | `=~` takes 1.6 to 15 times as long, and `grade` 1.3 to 5 times |
 
 The normals of those two planes differ by 1, and the bound of the whole object would be 1e-4 times
 10 000. Each part takes a scale of its own, as the Architect ruled on 2026-10-06, since the gain
@@ -92,9 +93,13 @@ of pin but for an integer part number, and it keeps the import of `./cayleys`.
 ## Costs
 
 - **Time.** A pair that differs reads the scale of its first part in both objects before it
-  stops. `grade` reads the scale of each part, and in a conformal algebra it also scans for the
-  largest coefficient. `m =~ s` builds the scalar multivector of s and compares it part by part.
-  At pin it compares each coefficient with s or with zero, with no scale of a part.
+  stops. So it takes 6 to 12 ns, against 2 to 3 ns at pin. `grade` reads the scale of each part,
+  and in a conformal algebra it also scans for the largest coefficient. So it takes up to 1.3
+  times as long at rga4d, and 1.5 to 3.5 times as long at cga4d and cga5d. `m =~ s` builds the
+  scalar multivector of s and compares it part by part. At pin it compares each coefficient with
+  s or with zero, with no scale of a part. At rga4d at 64 bits `m =~ 0` takes 1.7 times as long,
+  and in each other build it takes ×0.88 to ×1.05 of the time of pin. An equal pair takes about a
+  quarter of the time of pin.
 - **Typed objects.** These costs fall on the types of the library at pin. A typed object knows its
   grade from its type when it compiles, so `grade` would cost nothing there under either rule. It
   knows its parts too. So the scale of a part is the largest of its own few coefficients, as three
@@ -136,7 +141,8 @@ of pin but for an integer part number, and it keeps the import of `./cayleys`.
   of 1e-100 in its `laws.nim`, since the scale of a part is at least one. So one test needs a
   `grade` whose part scale has no floor.
 - The macro `bases` and the read of `CAYLEYS_PARTS` in `pga/multivectors.nim`, as here, or a
-  lookup table from each basis to its part, at two to three times the cost of a loop over one part.
+  lookup table from each basis to its part. With that table `=~` takes 1.6 to 15 times as long,
+  and `grade` 1.3 to 5 times.
 
 ## Landing
 
@@ -262,49 +268,53 @@ tolerances beside a scalar of 1 000 compares equal, and one of 2 000 does not.
 
 ### Time
 
-`timing.nim` times both rules, with the rule of pin copied into the program. Each cell is the
-median of three runs by hand on `linux amd64, 4 cores` on 2026-10-12, in nanoseconds per pair or
-per object, on one core. Those runs took library `28f4e11`, with P06 applied for the 32-bit builds,
-and the rules they time are those of pin `3d9696e`. The P07 columns time a dense form of this rule
-with no set of bases, whose `scale` takes `max` and not the branch. So they do not time the form
-of `change.md`. Each run takes the median of 41 rounds over 1 024 pairs or objects. Each point has
-Gaussian coordinates of deviation 1 000 units, and is a round point in a conformal algebra. Each
-dense multivector has Gaussian coefficients of deviation 1. `timing.nim` also times `m =~ 0` on
-multivectors near zero, and the tables hold no row for it.
+`timing.nim` times both rules in one build, with the rule of pin copied into the program. Each
+cell is the median of 14 runs by hand on `linux amd64, 4 cores` on 2026-11-14, in nanoseconds per
+pair or per object, on one core. Those runs took the library at pin `3d9696e` with `change.md`
+applied, under gcc 13.3.0. Each run takes the median of 41 rounds over 1 024 pairs or objects. Each
+point has Gaussian coordinates of deviation 1 000 units, and is a round point in a conformal
+algebra. Each dense multivector has Gaussian coefficients of deviation 1. Each multivector near
+zero has Gaussian coefficients of deviation a tenth of the comparison tolerance.
 
 | Case, 64 bits | Pin, rga4d | P07, rga4d | Pin, cga4d | P07, cga4d | Pin, cga5d | P07, cga5d |
 |---------------|------------|------------|------------|------------|------------|------------|
-| Equal pair | 54.8 | 42.5 | 59.9 | 43.8 | 142.3 | 120.3 |
-| Pair that differs in its scalar | 3.7 | 19.2 | 2.1 | 21.2 | 2.5 | 46.5 |
-| `grade` of mixed multivector | 2.5 | 7.5 | 2.8 | 16.7 | 4.2 | 29.1 |
-| `grade` of point | 8.2 | 25.0 | 8.1 | 31.1 | 29.0 | 62.4 |
+| Equal pair | 52.2 | 13.3 | 47.6 | 12.2 | 109.9 | 25.4 |
+| Pair that differs in its scalar | 1.9 | 6.4 | 2.9 | 6.2 | 2.2 | 12.0 |
+| `grade` of mixed multivector | 5.8 | 6.5 | 5.8 | 8.8 | 5.8 | 20.1 |
+| `grade` of point | 16.6 | 16.8 | 13.0 | 26.3 | 32.2 | 47.3 |
+| `m =~ 0` near zero | 14.9 | 25.2 | 25.5 | 26.9 | 41.3 | 37.1 |
 
 | Case, 32 bits | Pin, rga4d | P07, rga4d | Pin, cga4d | P07, cga4d | Pin, cga5d | P07, cga5d |
 |---------------|------------|------------|------------|------------|------------|------------|
-| Equal pair | 55.9 | 41.9 | 54.2 | 46.2 | 130.6 | 124.5 |
-| Pair that differs in its scalar | 3.5 | 18.0 | 2.6 | 20.0 | 2.6 | 43.4 |
-| `grade` of mixed multivector | 2.5 | 8.1 | 3.2 | 10.6 | 5.9 | 27.1 |
-| `grade` of point | 8.1 | 26.1 | 8.1 | 35.8 | 20.9 | 62.2 |
+| Equal pair | 47.1 | 14.1 | 46.2 | 13.0 | 102.7 | 26.2 |
+| Pair that differs in its scalar | 2.8 | 6.5 | 2.7 | 6.5 | 1.8 | 12.2 |
+| `grade` of mixed multivector | 5.7 | 7.0 | 5.7 | 8.9 | 5.7 | 20.2 |
+| `grade` of point | 13.2 | 16.8 | 13.2 | 31.9 | 33.0 | 48.9 |
+| `m =~ 0` near zero | 14.9 | 13.6 | 16.2 | 14.3 | 39.3 | 38.0 |
 
-The `grade` cells under Pin come from an earlier copy of the rule of pin. That copy tested
-a flag of its own in place of `result.isNone`. The copy in `timing.nim` now spells the lines of
-pin, and for it those cells are unmeasured.
+An equal dense pair takes about a quarter of the time of pin in each build. Pin tests
+max(1, |x|, |y|) for each coefficient with a branch. On coefficients of deviation 1 that branch
+goes either way, so it is probably often mispredicted. P07 takes one bound for each part, so its
+loop over a part holds no such branch. On points the branch of pin goes one way. Pin reads 15 of
+16 coefficients of a point beside the same point with a stray, in 18.2 ns at 64 bits and 14.5 ns
+at 32 bits. P07 calls that pair equal, so it reads every coefficient, in 13.9 ns and 13.1 ns.
 
-At rga4d an equal dense pair costs about a quarter less than at pin. Pin tests max(1, |x|, |y|)
-for each coefficient with a branch. On coefficients of deviation 1 that branch goes either way, so
-it is probably often mispredicted. On points it goes one way. Pin reads 15 of 16 coefficients of a
-point beside the same point with a stray in 19.3 ns at both widths. P07 calls that pair equal, so it
-reads every coefficient, in 42.0 ns at 64 bits and 56.9 ns at 32 bits.
+Four more builds by hand on the same day each changed one thing. Each of their cells is the median
+of 7 or of 15 runs, and each ratio is against the P07 cell above.
 
-A build with the part scale alone, and no overflow guard, timed both cases of `grade` in the same
-runs. So the scan and the overflow guard add about 3 to 12 ns at cga4d, and 20 to 23 ns at
-cga5d.
+- **Part scale alone.** This build has no scan and no overflow guard in `grade`. So the scan and
+  the guard add 3 to 17 ns at cga4d, and 14 to 19 ns at cga5d.
+- **`max` in the scan of `grade`.** `grade` of a mixed multivector at cga5d took 53.5 ns at 64
+  bits, against 20.1 ns. The probable cause is that each step of `max` waits on the last.
+- **`max` in `scale`.** An equal pair took 2.5 to 3.7 times as long, and a pair that differs 2.3
+  to 3.3 times. `grade` took 1.1 to 2.0 times as long.
+- **A lookup table from each basis to the number of its part.** One pass finds the scale of each
+  part by branch, and one loop over the bases reads the table. An equal pair took 3.4 to 8.4
+  times as long, and a pair that differs 4.8 to 14.7 times. `grade` took 1.3 to 5.2 times as
+  long, and `m =~ 0` took 1.6 to 2.8 times as long. This build passes `laws.nim` at rga4d and
+  cga5d.
 
 The rule of pin is the same code in every build at one width. Yet at 64 bits its `grade` of a
-round point at cga5d took 20.9 ns in the build of the part scale alone. It took 29.0 ns in the
-build of P07. So the layout of the code alone can make two builds differ by up to about 40%.
-
-In a run by hand on 2026-10-12, `max` took the place of the branch in the scan of `grade`. `grade`
-of a mixed multivector then took 78 ns at cga5d, against 27 to 29 ns. The probable cause is that
-each step of `max` waits on the last. A run by hand on 2026-10-06 found that a loop that tests the
-part of each basis cost two to three times as much as a loop over the bases of one part.
+round point at cga5d took 17.7 ns in the build of the part scale alone. It took 32.2 ns in the
+build of P07. So one rule can differ by a factor of about 1.8 between two builds. The probable
+cause is the layout of the code.
