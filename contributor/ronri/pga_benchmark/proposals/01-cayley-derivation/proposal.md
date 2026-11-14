@@ -43,9 +43,8 @@ every other route to a box that holds at pin. So the dot has three routes: from 
 takes, from 𝐚 ∨ 𝐛★ at equal grades, and from 𝐆. The faded boxes give the operators with no table,
 such as the support, the distance and the flector, so the map shows how complete the library is.
 
-P01 lays out every Cayley table of the library, so most other proposals build on it. They count
-only the tables that the library builds, and they take a new table into account when the library
-adds it.
+P01 lays out every Cayley table of the library. Each other proposal counts only the tables that
+the library builds, and takes a new table into account when the library adds it.
 
 ### Against Lengyel's figure 2.16
 
@@ -61,7 +60,7 @@ adds it.
 | Transwedge | absent | 𝐚 ⩓ₖ 𝐛 = Σ (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★) where gr 𝐜 = k |
 | ∙ | 𝐚ᵀ𝐆𝐛 | 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛, as a suite holds equal to 𝐚ᵀ𝐆𝐛 |
 | ⟑ | from 𝐆 and ∧ | 𝐚 ⟑ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩓ₖ 𝐛 |
-| ⟇ | conjugate of ⟑ | 𝐚 ⟇ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩔ₖ 𝐛, not conjugates of base orders in CGA |
+| ⟇ | conjugate of ⟑ | 𝐚 ⟇ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩔ₖ 𝐛, from a family of its own |
 | Norms | √(𝐮 ∙ 𝐮) and √(𝐮 ∘ 𝐮) | ‖𝐮‖●² = 𝐮●ᵀ𝐮● as for each part, and ‖𝐮‖⊘² = 𝐮 ∘ 𝐮 in CGA |
 | Projective vectors | absent | split the parts, and give the horizon and the CGA carrier |
 
@@ -75,7 +74,7 @@ adds it.
 
 Each dual is a complement after 𝐆 or 𝔾, on the left or on the right, as the library keeps both
 sides. Each interior product is one dual fed into one product, by one rule. The squared radius
-norm is the table of ∘ itself, so it needs no filter, and `filterGrades` leaves the file.
+norm is the table of ∘ itself, so it needs no filter.
 
 Direct constructors remain for the base reverse, for 𝐆 from 𝖌, for the parts and for the squared
 norms. `constructDot` keeps the cells of 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 holds. The antireverse is
@@ -83,6 +82,11 @@ norms. `constructDot` keeps the cells of 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr
 parameter. `constructParts` splits each part by the presence of the projective vectors. The origin
 splits bulk from weight, and in CGA infinity splits round from flat. In RGA, 𝐆 and 𝔾 give the same
 parts, but one rule holds in both algebras.
+
+The change also puts the tables and the constructors in the order of the groups that the header
+of `pga/cayleys.nim` names. `negate` of `Cayley2D` loses its one caller and stays, marked `used`,
+beside `negate` of `Cayley1D`. `filterGrades` loses its one caller, and both of its overloads
+stay, marked `used` in the same way.
 
 ### Tables that change
 
@@ -103,8 +107,9 @@ The table below gives the new rule of each derived table that changes. In it, `s
 
 A cell of `Cayley1D` is `seq[BasisSigned]` at pin, and the emitter sums the terms of a cell. Each
 map that these rules build holds at most one term in a cell, so the emitter stays as at pin.
-`slice` keeps its assertion of one term, so a map of two terms stops the build. `applyMap` and
-`merge` both call `mergeTerm`, so `std/sequtils` leaves the imports.
+`applyMap` adds each term that it builds and cancels none. `toSigned` in
+`constructProductTransitional` asserts one term in each right dual. No check holds one term in the
+left duals or the interior products. `merge` stays as at pin.
 
 ### Transwedge
 
@@ -112,9 +117,9 @@ Order k of the transwedge, 𝐚 ⩓ₖ 𝐛, sums one term for each basis 𝐜 w
 from 𝐚 by its complement and from 𝐛 by its dual, and then joins the two results.
 
 The transwedge has 32 variants. Three choices matter: which product strips, which dual strips 𝐛,
-and whether the two complements are on opposed sides. Chirality changes no table, and grade order
-against antigrade order is a relabel. So eight families stay at even dimension, and four at odd
-dimension, where the complements are equal.
+and whether the two complements are on opposed sides. Chirality changes the sum of no cell, and
+grade order against antigrade order is a relabel. So eight families stay at even dimension, and
+four at odd dimension, where the complements are equal.
 
 Below, 𝐜̱ is the left complement of 𝐜 and 𝐜̄ is its right complement. The library takes ★ and ☆
 by the right complement, so 𝐜̱ is the opposed side. Each pair of rows differs in that choice
@@ -125,18 +130,21 @@ alone.
 | # | Term for each 𝐜 | Order 0 | Equal grades | Order gr 𝐚 | Signed sum |
 |---|-----------------|---------|--------------|------------|------------|
 | 1 | `(𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)` | ∧ | ∙ | 𝐛 ∨ 𝐚★ | ⟑, built |
-| 2 | `(𝐜̄ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)` | ∧ | ∙, signs differ | 𝐚★ ∨ 𝐛 | ⟑, antigrade sign |
+| 2 | `(𝐜̄ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)` | ∧ | ∙, signs differ | 𝐛 ∨ 𝐚★ | ⟑, antigrade sign |
 | 3 | `(𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜☆)` | 0 | weight on 𝟏 | 𝐛 ∨ 𝐚☆ | no unit |
-| 4 | `(𝐜̄ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜☆)` | 0 | weight, signs differ | 𝐚☆ ∨ 𝐛 | no unit |
+| 4 | `(𝐜̄ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜☆)` | 0 | weight, signs differ | 𝐛 ∨ 𝐚☆ | no unit |
 
 **Strip by ∧, join by ∨, order by antigrade.**
 
 | # | Term for each 𝐜 | Order 0 | Equal grades | Order antigrade 𝐚 | Signed sum |
 |---|-----------------|---------|--------------|-------------------|------------|
 | 5 | `(𝐜̱ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜☆)` | ∨ | ∘ | 𝐛 ∧ 𝐚☆ | ⟇, by conjugate |
-| 6 | `(𝐜̄ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜☆)` | ∨ | ∘, signs differ | 𝐚☆ ∧ 𝐛 | ⟇, grade sign |
+| 6 | `(𝐜̄ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜☆)` | ∨ | ∘, signs differ | 𝐛 ∧ 𝐚☆ | ⟇, grade sign |
 | 7 | `(𝐜̱ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜★)` | 0 | bulk on 𝟙 | 𝐛 ∧ 𝐚★ | no unit |
-| 8 | `(𝐜̄ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜★)` | 0 | bulk, signs differ | 𝐚★ ∧ 𝐛 | no unit |
+| 8 | `(𝐜̄ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜★)` | 0 | bulk, signs differ | 𝐛 ∧ 𝐚★ | no unit |
+
+In rows 2, 4, 6 and 8 the dual of 𝐚 in the column of order gr 𝐚 or antigrade 𝐚 is by the left
+complement.
 
 In families 3, 4, 7 and 8, the cells for order 0, equal grades and signed sum hold under the
 rigid metric only. Under the conformal metric 𝔾 = −𝐆, so family 3 is −1 and family 7 is −5.
@@ -159,16 +167,18 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
 | Radius norm by `filterGrades` of ∘ | Removes no cell; ruled on 2026-10-17 to read ∘ whole |
 | RGA parts as 𝐆 and 𝔾 | Built, equal; ruled on 2026-10-16 for one rule in both algebras |
 | `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
-| ⟇ as conjugate of ⟑, one family | Built; equal sum, but anti orders differ at cga4d and cga5d |
+| ⟇ from conjugates of base orders, one family | Built, equal, and an open decision |
 | Drop `CAYLEYS_NORM_SQUARED` | Built from parts at pin; outside this idea, so it stays |
 
 ## Costs
 
 - **Whole file.** The change replaces `pga/cayleys.nim` whole, from the digest `4aa7a2507c537c06`
   of the file at pin. So each change of that file at head needs the replacement written again.
-- **Two transwedge families.** The library keeps one family for ⟑ and one for ⟇. Under the
-  conformal metric, an order of the anti family is not the conjugate of that order of the base
-  family.
+- **Two transwedge families.** The library keeps one family for ⟑ and one for ⟇, each N³ at
+  compile time. The conjugate of each base order by complements has the net terms of that anti
+  order in every cell. Only the order of two terms that cancel differs, in 6 cells at cga4d and
+  64 at cga5d, and in no cell at cga3d. With one family, `CAYLEYS_WEDGE_DOT.anti` is equal cell
+  for cell, and the suites pass at rga4d and cga4d.
 - **No gain at run time.** Every exported name, type, table and cell stays as at pin. So no
   operator changes, none runs faster, and no caller must migrate.
 - **Private functions.** The removed and changed functions are private. `pga/operators.nim` and
@@ -176,7 +186,9 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
 
 ## Open decisions
 
-- Adopt the derivation into the library, before the typed layer, or not.
+- Adopt the derivation into the library, or not.
+- Build ⟇ from one transwedge family, with `constructAnti` of each base order, or from two
+  families, as here.
 
 ## Landing
 
@@ -187,14 +199,17 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
   proposal deletes, so its edits are void once this proposal lands. Its other idea still applies,
   because this proposal writes the parity k(k−1)/2 of the reverse twice, in `reverse` and in
   `constructProductGeometric`.
-- **Changes `doc-comments` and `doc-comments-2`.** Each edits `pga/cayleys.nim` too, and whichever
-  lands second quotes again against the first. If this proposal lands second, its Replace carries
-  their text under a new digest. `doc-comments-2` also edits the import line of `tests/suites.nim`
-  that this proposal edits, so the second to land quotes that line again.
-- **Edit that `doc-comments` drops.** Once this proposal lands, `doc-comments` drops its edit that
-  quotes `  CAYLEYS_DOT* = block:`. Applied after this proposal, that edit gives a line of 136
-  characters with two docs that contradict each other. This proposal gives the dot its doc on that
-  line already.
+- **Changes `doc-comments` and `doc-comments-2`.** Each edits `pga/cayleys.nim` too. If this
+  proposal lands second, its Replace carries their text under a new digest. If a change lands
+  second, its edits of that file apply as written. `doc-comments-2` also edits the import line of
+  `tests/suites.nim` that this proposal edits. If `doc-comments-2` lands second, it quotes that
+  line again.
+- **Dot doc of `doc-comments`.** Its edit that quotes `  CAYLEYS_DOT* = block:` applies after
+  this proposal too. It then gives a doc to one table constant, and this proposal gives none. The
+  header of `pga/cayleys.nim` states the dot already.
+- **P12, `cayley-cells`.** Two of its edits quote lines of `pga/cayleys.nim` that this proposal
+  rewrites, so whichever lands second is written again against the first. If this proposal lands
+  second, its Replace builds its cells with `toBasesSigned` under a new digest.
 
 ## Evidence
 
@@ -204,4 +219,5 @@ cga5d. Each route gives the table that it leads to, and the two brown routes hol
 A census by hand on 2026-10-12 checks chirality and the family count at nine algebras: rga2d to
 rga6d, and cga3d to cga6d. It calls `constructProductsTransitional` with each strip product, dual,
 chirality and side of each complement. At each of the nine, its tables agree with the families
-and the chirality that Idea states.
+and the chirality that Idea states. The census compares the sum of each cell. By raw cells,
+chirality changes the order of terms in each of the 16 variant pairs at cga3d and cga4d.
