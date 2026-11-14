@@ -257,6 +257,22 @@ suite "Fixes":
     ]  # and counts it elsewhere
 
 
+  test "fence warning counts fixed wait in `tests/` and `tools/` of project, as static pass reads":
+    # Case held: knoller read each file under directory `tests` or `tools` as drive code, which
+    #   is habit of this repository, so #886 moves it to koch, which names drive code of each
+    #   file. Domain: `tests/` and `tools/` of project, its `src/`, and file at root.
+    let fenced = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & FENCE_OFF & "\nsleep(1)\n" & FENCE_ON & "\n"
+    for (path, is_drive) in [
+      (DIRECTORY_AUDIT & "/tests/suites/test_a.nim", true),
+      (DIRECTORY_AUDIT & "/tools/a.nim", true),
+      (DIRECTORY_AUDIT & "/src/a.nim", false),
+      ("tools/a.nim", false),  # root holds no project
+    ]:
+      let warned = fixEntries(BRANCH_CURATOR, [entry(path, fenced)]).warned
+      check warned.len == 1  # one fence
+      check warned.anyIt("fixed-wait breaks once at line 6" in it.message) == is_drive
+
+
   test "fence left open runs to end of file; marker inside string fences nothing":
     let
       path = "curator/audit/a.nims"
