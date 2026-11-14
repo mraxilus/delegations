@@ -22,19 +22,13 @@ Other edits land in this order against the edits below:
 ## Edit `pga/cayleys.nim`
 
 ```nim
-    CAYLEY_CONTAINER*: Cayley2D =  ## Container, i.e. 𝐦 ∧ (𝐦⊟)☆, 𝐦 twice.
-      CAYLEYS_WEDGE.base.applyMap(
-        CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER),
-        Chirality.Right,
-      )
+    CAYLEY_CONTAINER*: Cayley2D =
+      CAYLEYS_INTERIOR.base.weight.right.applyMap(CAYLEY_CARRIER, Chirality.Right)
 ```
 
 ```nim
-    CAYLEY_CONTAINER*: Cayley2D =  ## Container, i.e. 𝐦 ∧ (𝐦⊟)☆, 𝐦 twice.
-      CAYLEYS_WEDGE.base.applyMap(
-        CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER),
-        Chirality.Right,
-      )
+    CAYLEY_CONTAINER*: Cayley2D =
+      CAYLEYS_INTERIOR.base.weight.right.applyMap(CAYLEY_CARRIER, Chirality.Right)
     CAYLEY_PARTNER_CONTAINER*: Cayley2D = block:  ## Partner step one, (-1)^(gr 𝐦 + 1) (𝐦☆)⊡.
       # Sign rides left read alone, by grade of its term. Container is quadratic, so sign on
       #   both reads would square away; on one, it is exact for single-grade operand.
