@@ -273,6 +273,37 @@ suite "Fixes":
       check warned.anyIt("fixed-wait breaks once at line 6" in it.message) == is_drive
 
 
+  test "fix reads stub, umbrella and suite of project below folder of its nimble file":
+    # Koch names nimble file of project of each file it fixes, and knoller reads tests, stubs and
+    #   umbrella below its folder (#886). Domain: stub, umbrella and suite of project, each fixed,
+    #   and same text at root, which lies in no project and so stays.
+    let
+      stub = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\n\"\"\"\n## Do.\n\n" &
+        STRICT_FUNCS & "\n\ninclude \"suites.nim\"\n"
+      umbrella = "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/os\n"
+      suites = "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/unittest\n\nsuite \"A\":\n" &
+        "  test \"a\":\n    check true\n"
+      cases = [
+        ("curator/probe/tests/test_a.nim", stub, stub.replace(" -r ", " ")),  # `-r` cut
+        (
+          "curator/probe/src/probe.nim",
+          umbrella,
+          umbrella.replace("\n\nimport", "\n\n" & IMPORT_PROFILER & "\n\nimport"),
+        ),  # profiler import added
+        (
+          "curator/probe/tests/suites/test_b.nim",
+          suites,
+          suites.replace("\n\nsuite", "\n\n\n\nsuite"),
+        ),  # three blank lines before suite
+        ("tests/test_a.nim", stub, stub),  # root holds no project, so no stub
+        ("src/probe.nim", umbrella, umbrella),
+        ("tests/suites/test_b.nim", suites, suites),
+      ]
+    for (path, source, fixed) in cases:
+      let written = fixEntries(BRANCH_CURATOR, [entry(path, source)]).written.mapIt(it.content)
+      check written == (if fixed == source: newSeq[string]() else: @[fixed])
+
+
   test "fence left open runs to end of file; marker inside string fences nothing":
     let
       path = "curator/audit/a.nims"
