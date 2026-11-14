@@ -294,9 +294,9 @@ cu to'e curmi lo se ciska be fi la'o gy. NIF .gy. po'o poi na se tcidu gi'a vasr
 ciska be fi la'o gy. NIF .gy. cu na ciska ke'a .i ba bo ri cusku lo namcu be lo jgena be'o noi krasi
 li no ba le re minde .e lo krinu to `suites/test_merge.nim` toi
 
-lo minde `javascript` cu zbasu `build/lojban_parser.js` noi samtci be fi la'o gy. JavaScript .gy. le
-genturfa'i .i lo papri cu cpacu ri sepi'o lo jgena po'u `script` .i lo papri cu pilno ci fancu poi
-ro da ka'e pilno ke'a
+lo minde po'u `javascript` cu zbasu `build/lojban_parser.js` noi samtci be fi la'o gy. JavaScript
+.gy. le genturfa'i .i lo papri cu cpacu ri sepi'o lo jgena po'u `script` .i lo papri cu pilno ci
+fancu poi ro da ka'e pilno ke'a
 
 - `parseLojban(text)` cu jarco lo se jarco be `readText` ta'i lo sampu dacti .i lo se ciska poi se
   to'e curmi cu vasru ji'a `stream` noi `readStream` cu jarco ke'a .i se ki'u bo lo pilno cu viska
@@ -314,10 +314,10 @@ papri cu katna lo se ciska be fi la'o gy. NIF .gy. poi lo papri cu ponse ke'a bu
 JavaScript .gy. cu kancu .i `start` cu kancu lo pagbu be lo se ciska simsa ro valsi pe la'o gy. NIF
 .gy.
 
-lo minde `drive` cu cipra lo du'u le samtci cu mintu le jbena zbasu ne'i la'o gy. headless Chromium
-.gy. .i lo samtci pe la'o gy. Nim .gy. cu sabji ri .i no `node` cu se pilno .i `LOJBAN_CHROMIUM` cu
-jarco la'o gy. Chromium .gy. poi se pilno .i `koch drive` cu pilno le minde .i ba bo ri jdice lo
-lerfu tarmi pe lo jitro papri .i vi lo kajde be lo fanva cu se vimcu
+lo minde po'u `drive` cu cipra lo du'u le samtci cu mintu le jbena zbasu ne'i la'o gy. headless
+Chromium .gy. .i lo samtci pe la'o gy. Nim .gy. cu sabji ri .i no `node` cu se pilno .i
+`LOJBAN_CHROMIUM` cu jarco la'o gy. Chromium .gy. poi se pilno .i `koch drive` cu pilno le minde .i
+ba bo ri jdice lo lerfu tarmi pe lo jitro papri .i vi lo kajde be lo fanva cu se vimcu
 
 ```text
 $ nim r --hints:off koch drive contributor/bangu/lojban_parser
@@ -341,7 +341,7 @@ build/font-faces/written.json
 0 finding(s).
 ```
 
-lo cipra be le samtci cu cipra ro jdice pe le mupli be la'o gy. Tatoeba .gy. .i lo cipra be lo jmive
+lo cipra be le samtci cu cipra ro jdice pe le mupli pe la'o gy. Tatoeba .gy. .i lo cipra be lo jmive
 se ciska cu tcidu lo se ciska poi vasru lo valsi poi galfi lo pu valsi .i ro se ciska cu se tcidu lo
 se ciska be fi la'o gy. NIF .gy. poi le jbena zbasu cu jarco ke'a ne'i lo gunka .e lo cilta pe lo
 papri .i lo cipra cu rapli pa roi ne'i lo papri poi to'e curmi ro gunka
@@ -401,25 +401,25 @@ nim r tools/build.nim system                      # print packages verbs and sui
 ```
 
 lo nu zbasu cu nitcu lo fanva poi `lojban_parser.nimble` cu stodi ke'a .e lo fadni samtci pe la'o
-gy. Nim .gy. po'o .i lo minde `lists` .e `head` .e lo cipra be lo drata se ciska cu nitcu ji'a
-`lojban-common` noi bakfu ku'o .e `sha256sum` pe `coreutils` .i lo minde `system` cu cusku le re
-bakfu
+gy. Nim .gy. po'o .i lo minde po'u `lists` .e `head` .e lo cipra be lo drata se ciska cu nitcu ji'a
+`lojban-common` noi bakfu ku'o .e `sha256sum` pe `coreutils` .i lo minde po'u `system` cu cusku le
+re bakfu
 
-lo minde `cll` cu nitcu `sha256sum` .e lo papri be la'o gy. CLL 1.1 .gy. noi se ralte ne'i pa vasru
-.i lo minde `tatoeba` cu nitcu `sha256sum` .e lo vreji be la'o gy. Tatoeba .gy. poi se kalri .i lo
-minde `wikipedia` cu nitcu `sha256sum` .e lo se ralte spuda be la'o gy. API .gy. pe la'o gy.
-Wikipedia .gy. .i lo minde `translations` cu nitcu `curl` .e `sha256sum` .i lo minde `system` cu
-cusku le re samtci
+lo minde po'u `cll` cu nitcu `sha256sum` .e lo papri be la'o gy. CLL 1.1 .gy. noi se ralte ne'i pa
+vasru .i lo minde po'u `tatoeba` cu nitcu `sha256sum` .e lo vreji be la'o gy. Tatoeba .gy. poi se
+kalri .i lo minde po'u `wikipedia` cu nitcu `sha256sum` .e lo se ralte spuda be la'o gy. API .gy. pe
+la'o gy. Wikipedia .gy. .i lo minde po'u `translations` cu nitcu `curl` .e `sha256sum` .i lo minde
+po'u `system` cu cusku le re samtci
 
-lo minde `javascript` cu nitcu lo fanva po'o .i lo minde `drive` cu nitcu la'o gy. Chromium .gy. poi
-`LOJBAN_CHROMIUM` cu cmene ke'a .i ri ka'e du la'o gy. Chrome .gy. .a `headless shell` pe ri .i va'o
-lo drata ri cpacu `headless shell` pe la'o gy. Chrome for Testing 153.0.8010.12 .gy. lo vreji be le
-vi se gunka .i ri kalri `headless shell` fi `unzip` noi lo minde `system` cu cusku ke'a .i no cipra
-cu nitcu `node`
+lo minde po'u `javascript` cu nitcu lo fanva po'o .i lo minde po'u `drive` cu nitcu la'o gy.
+Chromium .gy. poi `LOJBAN_CHROMIUM` cu cmene ke'a .i ri ka'e du la'o gy. Chrome .gy. .a `headless
+shell` pe ri .i va'o lo drata ri cpacu `headless shell` pe la'o gy. Chrome for Testing 153.0.8010.12
+.gy. lo vreji be le vi se gunka .i ri kalri `headless shell` fi `unzip` noi lo minde po'u `system`
+cu cusku ke'a .i no cipra cu nitcu `node`
 
-lo minde `page` .e `drive` cu cpacu lo lerfu tarmi pe le papri sepi'o `koch fetch-assets` noi nitcu
-`curl` .e `sha256sum` .i `koch drive` cu tcidu `woff2` pe la'o gy. Commit Mono .gy. sepi'o
-`libbrotli1` noi lo minde `system` cu cusku ke'a
+lo minde po'u `page` .e `drive` cu cpacu lo lerfu tarmi pe le papri sepi'o `koch fetch-assets` noi
+nitcu `curl` .e `sha256sum` .i `koch drive` cu tcidu `woff2` pe la'o gy. Commit Mono .gy. sepi'o
+`libbrotli1` noi lo minde po'u `system` cu cusku ke'a
 
 ## Pages
 
@@ -436,7 +436,7 @@ porsi be lo pagbu poi sruri le srera cu se jmina .i le srera cu stali
 | --- | --- |
 | lojban_parser.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
 
-lo minde `page` cu zbasu le papri `pages/live.html` .i ko rapli gubgau le papri fi
+lo minde po'u `page` cu zbasu le papri `pages/live.html` .i ko rapli gubgau le papri fi
 `build/lojban_parser.html` ba ro cenba poi galfi lo se jarco be le papri .i ko punji `URL` ne'i
 `pull request` .e lo notci poi cusku lo du'u le se gunka cu bredi
 
@@ -460,11 +460,11 @@ pa pezli .i le genturfa'i cu jmina lo pagbu be lo se ciska ja'i lo se ciska be f
 po'o fi lo se ciska be fi la'o gy. NIF .gy. pe lo nu tcidu le mulno se ciska .i le genturfa'i cu
 ralte ro srera bu'u lo stuzi be ri
 
-lo minde `javascript` cu zbasu lo tcidu be lo se ciska .e lo tcidu be lo jmive se ciska .i lo papri
-cu pilno le re tcidu .i lo minde `drive` cu cipra lo du'u le se zbasu cu mintu le jbena zbasu ne'i
-la'o gy. headless Chromium .gy. .i lo minde `drive` cu cipra ji'a lo jdice be le mupli be la'o gy.
-Tatoeba .gy. .e lo se ciska be fi la'o gy. NIF .gy. pe lo jmive se ciska ne'i lo gunka .e lo cilta
-pe lo papri
+lo minde po'u `javascript` cu zbasu lo tcidu be lo se ciska .e lo tcidu be lo jmive se ciska .i lo
+papri cu pilno le re tcidu .i lo minde po'u `drive` cu cipra lo du'u le se zbasu cu mintu le jbena
+zbasu ne'i la'o gy. headless Chromium .gy. .i lo minde po'u `drive` cu cipra ji'a lo jdice be le
+mupli pe la'o gy. Tatoeba .gy. .e lo se ciska be fi la'o gy. NIF .gy. pe lo jmive se ciska ne'i lo
+gunka .e lo cilta pe lo papri
 
 lo cipra cu cipra lo du'u ro pagbu cu mapti la'o gy. CLL .gy. .i le genturfa'i cu tcidu ro mupli poi
 se namcu ne'i la'o gy. CLL 1.1 .gy. gi'e drani ja'i le cukta .i lo jufra poi vasru lo sinxa poi na
