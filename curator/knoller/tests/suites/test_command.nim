@@ -170,6 +170,8 @@ suite "Command line":
     #   entry block, names and waits never, so it exited 0 on each source below (#557); domain is
     #   each rule of knoller static pass of `curator/audit` reads that fixers can leave, as left.
     #   Rule fixers always clear (trailing whitespace, banners, `strictFuncs`, stub keys) is none.
+    #   Fixed wait reads where caller says drive code alone, which command line never says, so
+    #   `test_chain.nim` holds it (#886).
     let module = "{.experimental: \"strictFuncs\".}\n\n"
     for (path, source, rule) in [
       ("a.nim", module & "const TEXT = \"" & "word ".repeat(24) & "\"\n", Rule.LineWidth),
@@ -184,7 +186,6 @@ suite "Command line":
       ("a.nim", module & "{.push inline.}\nproc f() = discard\n{.pop.}\n", Rule.PushForeign),
       ("tests/test_a.nim", module & "include \"suites.nim\"\n", Rule.HeaderStub),
       ("tests/suites/test_a.nim", module & "echo x\n", Rule.OutputDebug),
-      ("tests/suites/test_a.nim", module & "sleep(1)\n", Rule.WaitFixed),
       ("a.nim", module & "proc f(ctx: int) = discard\n", Rule.Abbreviation),
       ("a.nim", module & "proc f(quiet: bool) = discard\n", Rule.NameBoolean),
       ("a.nim", module & "const LUT_GRADE = 1\n", Rule.TableLookup),
@@ -205,6 +206,18 @@ suite "Command line":
     let fenced = outcome([("a.nims", "#!fix off\nlet a = 1 \n#!fix on\n")], [], is_check = true)
     check fenced.lines.anyIt("inside them trailing-whitespace breaks once at line 2" in it)
     check fenced.code == 1  # fence keeps line from fixer, never from finding
+
+
+  test "command line reads no file as drive code, so fixed wait passes under `tests` or `tools`":
+    # Case held: command line read each file under directory `tests` or `tools`, at any depth, as
+    #   drive code, which is layout of this repository, so it reported fixed wait of drive in any
+    #   repository (#886). Domain: each directory, at root of package and below it, and neither.
+    let module = "{.experimental: \"strictFuncs\".}\n\nsleep(1)\n"
+    for path in ["tests/suites/test_a.nim", "tools/build.nim", "src/tools/a.nim", "a.nim"]:
+      let outcome =
+        outcome([(path, module)], [], is_check = true, nimbles = {path: "a.nimble"}.toTable)
+      check not outcome.lines.anyIt(Rule.WaitFixed.id in it)  # fixed wait unread
+      check outcome.code == 0
 
 
   test "check reads no glossary, so acronym in name of another repository passes":
@@ -447,6 +460,24 @@ suite "Command line":
     check answers["p/src/a.nim"].symbols[(3, 8)].kind == "skType"
     let outcome = outcome(files, [], is_check = true, directory = root, answers = answers)
     check "p/src/a.nim:3: type-conversion to fix" in outcome.lines
+
+
+  test "command line passes no define, so file under `tests` compiles as any other does":
+    # Case held: semantic pass compiled each file under directory `tests` with `-d:testing`, define
+    #   stubs of this repository pass, so command line read stubs of any repository as this one's
+    #   (#886). Domain: name declared under define alone, under `tests` and outside it.
+    let
+      root = createTempDir("knoller_", "_defines")
+      source = "when defined(testing):\n  let x = 3\nlet y = x.float\n"
+      files = [("p/tests/a.nim", source), ("p/src/a.nim", source)]
+    defer: removeDir(root)
+    root.writeTree(@[("p/p.nimble", "version = \"0.1.0\"\n")] & @files)
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let answers = files.resolveConversions("", root, toolchains)
+    for (path, _) in files:
+      check "undeclared" in answers[path].reason  # `x` stands under define none passes
 
 
   test "rename planned is written first, and rename refused warns where it is declared":

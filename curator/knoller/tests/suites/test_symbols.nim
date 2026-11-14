@@ -5,7 +5,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, tables, tempfiles, unittest]
+import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/symbols
 
 
@@ -105,6 +105,36 @@ suite "Internal: Symbols":
     check answers["src/b.nim"].reason.contains("undeclared")  # no backend compiles it
     let d = answers["src/d.nim"]  # through its includer, `c.nim`
     check d.reason.len == 0 and d.symbols[(3, 7)].kind == "skLet"
+
+
+  test "compile of file takes each define its request names, and none of its own":
+    # Case held: pass compiled each file under directory `tests` with `-d:testing`, define stubs
+    #   of one repository pass (#886). Domain: name declared under define alone, under `tests`
+    #   and outside, with define named and without.
+    let
+      root = createTempDir("knoller_", "_symbols")
+      source = "when defined(testing):\n  let x = 3\nlet y = x.float\n"
+      cases = [
+        ("tests/a.nim", newSeq[string](), false),  # none of its own under `tests`
+        ("src/a.nim", newSeq[string](), false),
+        ("tests/b.nim", @["-d:testing"], true),
+        ("src/b.nim", @["-d:testing"], true),  # define request names, at any path
+      ]
+    defer: removeDir(root)
+    writeInto(root, "fixture.nimble", "version = \"0.1.0\"\n")
+    for (path, _, _) in cases: writeInto(root, path, source)
+    var requests: seq[Request]
+    for (path, defines, _) in cases:
+      requests.add Request(
+        query: Query(path: path, sites: @[(3, 10)]),
+        root: root,
+        directory: root,
+        includer: path,
+        defines: defines,
+      )
+    let answers = resolve(requests)
+    for (path, _, is_resolved) in cases:
+      check answers.anyIt(it.path == path and (it.reason.len == 0) == is_resolved)
 
 
   test "toolchain with no nimsuggest leaves each file unresolved, and says so":

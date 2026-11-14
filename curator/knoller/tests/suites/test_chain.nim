@@ -315,6 +315,25 @@ suite "Chain":
       )  # default counts it
 
 
+  test "fixed wait reads where caller says file is drive code, at any path, and nowhere else":
+    # Case held: chain read each file under directory `tests` or `tools` as drive code, which is
+    #   layout of one repository (#886). Domain: path of each layout, with caller's word and
+    #   without it, in checks of source and in fence warning.
+    let
+      source = STRICT_FUNCS & "\n\nsleep(1)\n"
+      fenced = STRICT_FUNCS & "\n\n" & FENCE_OFF & "\nsleep(1)\n" & FENCE_ON & "\n"
+    for path in ["src/a.nim", "tests/a.nim", "tools/a.nim"]:
+      let
+        read = checkSource(path, source, Dialect.Module, is_drive = true).mapIt(it.rule)
+        unread = checkSource(path, source, Dialect.Module).mapIt(it.rule)
+        warning = checkFenceHeld(path, fenced, Dialect.Module, is_drive = true)[0].message
+        warning_bare = checkFenceHeld(path, fenced, Dialect.Module)[0].message
+      check Rule.WaitFixed in read  # drive code, as caller says
+      check Rule.WaitFixed notin unread  # none, as command line says
+      check "fixed-wait breaks once at line 4" in warning  # fence counts it
+      check "fixed-wait" notin warning_bare
+
+
 
 suite "Repair that widens its line":
   test "spacing past `LINE_MAX` splits call crossing it, arguments one level in":
