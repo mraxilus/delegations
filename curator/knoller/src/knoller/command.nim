@@ -96,9 +96,12 @@ type
     paths*: seq[string]  ## Path of each file, as named.
     prover*: Prover  ## Parser of compiler these files take.
 
-  Pinning = object  ## Define what nearest nimble file at or above directory says of its pin.
+  Pinning = object  ## Define nearest nimble file at or above directory, and pin it names.
     pin: Option[string]  ## Pin it names; `none` where no nimble file stands above, or names none.
     refusal: string  ## Directory holding several nimble files, so no pin; empty where one.
+    nimble: string
+      ## Path of that nimble file, `/` separated; empty where none stands above, or directory
+      ##   holds several, which nimble refuses.
 
   Part = object  ## Define what fix of one file gives, before `joined` sorts it into outcome.
     path: string  ## Path as named.
@@ -167,17 +170,21 @@ func part(
   directory: string;
   proofs: Proofs;
   answer: Answer;
-  plans: openArray[Plan],
+  plans: openArray[Plan];
+  nimble: string;
 ): Part =
   ## Fix one file of Nim dialect, as `outcome` does: what file writes and reports, and what it
   ##   asks parser. Renames planned whole across files, and conversion semantic pass settles,
   ##   are written first, from source as given; file whose candidate pass could not resolve
   ##   keeps each conversion, and rename refused warns where it is declared, each saying why.
+  ##   Rules of tests, stubs and umbrella read nimble file nearest file, read whole as path is.
   let
     dialect = path.dialect.get
     layout = path.toAbsolute(directory)
+    nimble_layout = if nimble.len == 0: "" else: nimble.toAbsolute(directory)
     fence = source.fence
-  result.held = checkFenceHeld(layout, source, dialect, proofs).shownAs(path)
+    held = checkFenceHeld(layout, source, dialect, proofs, nimble = nimble_layout)
+  result.held = held.shownAs(path)
   if fence.lines.len > 0: result.asked.add source.questions(proofs)
   var
     renamed: seq[Edit]
@@ -209,9 +216,9 @@ func part(
     let (edits, reports) = editsConversion(layout, source, answer, fence.lines, renamed)
     base = source.applied(renamed & edits)
     rewritten.add reports.shownAs(path)
-  let fix = formatted(layout, base, dialect, proofs)
+  let fix = formatted(layout, base, dialect, proofs, nimble = nimble_layout)
   result.asked.add fix.asked
-  var after = checkSource(layout, fix.source, dialect, proofs)
+  var after = checkSource(layout, fix.source, dialect, proofs, nimble = nimble_layout)
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
   result.path = path
   result.unsettled = fix.unsettled
@@ -247,14 +254,15 @@ func joined(parts: openArray[Part], is_check: bool, failures: openArray[string])
 
 
 func outcome*(
-  files: openArray[(string, string)];
-  locked: openArray[string];
-  is_check: bool;
-  directory = "/";
-  proofs = Proofs();
-  failure = "";
-  answers = initTable[string, Answer]();
+  files: openArray[(string, string)],
+  locked: openArray[string],
+  is_check: bool,
+  directory = "/",
+  proofs = Proofs(),
+  failure = "",
+  answers = initTable[string, Answer](),
   plans: openArray[Plan] = [],
+  nimbles = initTable[string, string](),
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
   ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
@@ -263,11 +271,20 @@ func outcome*(
   ##   holds lines, since fence's warning reads it. Failure of prover prints as warning.
   ##   Conversion goes where answer of semantic pass for path settles it (`resolveConversions`), and
   ##   rename where its plan writes path (`planRenames`).
+  ##   Rules of tests, stubs and umbrella read nimble file nearest each path, as `nimbles` holds
+  ##   it by path as named (`nimblesNearest`); path it lacks has none above.
   var parts: seq[Part]
   for (path, source) in files:
     if path.dialect.isNone or path in locked: continue
     parts.add part(
-      path, source, is_check, directory, proofs, answers.getOrDefault(path), plans
+      path,
+      source,
+      is_check,
+      directory,
+      proofs,
+      answers.getOrDefault(path),
+      plans,
+      nimbles.getOrDefault(path),
     )
   parts.joined(is_check, [failure])
 
@@ -280,6 +297,7 @@ proc outcomeProven*(
   batches: openArray[Batch],
   answers = initTable[string, Answer](),
   plans: openArray[Plan] = [],
+  nimbles = initTable[string, string](),
 ): Outcome =
   ## Fix files as `outcome` does, ask prover of each batch what its files asked, and fix again
   ##   each file that asked, at most `ASKS_MAX` times; prover that fails is asked no more, and
@@ -302,7 +320,14 @@ proc outcomeProven*(
     doAssert owner >= 0, "File reads in no batch; got `" & path & "`."
     owners.add owner
     parts.add part(
-      path, source, is_check, directory, proofs[owner], answers.getOrDefault(path), plans
+      path,
+      source,
+      is_check,
+      directory,
+      proofs[owner],
+      answers.getOrDefault(path),
+      plans,
+      nimbles.getOrDefault(path),
     )
 
   # Ask prover of each batch what its files asked, then fix again each file that asked.
@@ -321,7 +346,14 @@ proc outcomeProven*(
     for k, (path, source) in read:
       if parts[k].asked.len == 0: continue
       parts[k] = part(
-        path, source, is_check, directory, proofs[owners[k]], answers.getOrDefault(path), plans
+        path,
+        source,
+        is_check,
+        directory,
+        proofs[owners[k]],
+        answers.getOrDefault(path),
+        plans,
+        nimbles.getOrDefault(path),
       )
   parts.joined(is_check, failures)
 
@@ -350,10 +382,21 @@ proc pinning(directory: string, seen: var Table[string, Pinning]): Pinning =
   let parent = directory.parentDir
   result =
     if nimbles.len > 1: Pinning(refusal: directory)
-    elif nimbles.len == 1: Pinning(pin: readFile(nimbles[0]).pinNim)
+    elif nimbles.len == 1: Pinning(pin: readFile(nimbles[0]).pinNim, nimble: nimbles[0].slashed)
     elif parent.len == 0 or parent == directory: Pinning()
     else: pinning(parent, seen)
   seen[directory] = result
+
+
+proc nimblesNearest(paths: openArray[string], directory: string): Table[string, string] =
+  ## Read nimble file nearest each path, at or above its directory, keyed by path as named, each
+  ##   read whole (`toAbsolute`); path with none above, or under directory holding several,
+  ##   which nimble refuses, takes none. Lookup reads file system, so it stays here, and chain
+  ##   takes its answer.
+  var seen = initTable[string, Pinning]()
+  for path in paths:
+    let nimble = pinning(path.toAbsolute(directory).parentDir, seen).nimble
+    if nimble.len > 0: result[path] = nimble
 
 
 proc groupByCompiler*(
@@ -698,7 +741,7 @@ proc main*(): int =
   paths = paths.deduplicate
 
   # Resolve conversion candidates, plan renames, group files by compiler proving their groups,
-  #   then fix them, each batch asking its own.
+  #   read nimble file nearest each, then fix them, each batch asking its own.
   var toolchains = initToolchains()
   let
     directory = getCurrentDir()
@@ -715,6 +758,7 @@ proc main*(): int =
       batches,
       answers,
       plans,
+      paths.nimblesNearest(directory),
     )
   for (path, text) in outcome.written: writeFile(path, text.restored(path in converted))
   for line in outcome.lines: echo line

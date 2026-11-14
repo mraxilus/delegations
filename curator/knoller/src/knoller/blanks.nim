@@ -175,11 +175,11 @@ func isOneLine(v: View; i, indent: int): bool =
   v.isHeadRoutine(i) and v.code[i].indentWidth == indent and v.lineLast(i) == i
 
 
-func runs(path, source: string): seq[Run] =
+func runs(path, source, nimble: string): seq[Run] =
   ## Find each run of blank lines beside suite, test or nested helper whose count breaks rule.
   let
     v = source.toView
-    is_file_test = path.isFileTest
+    is_file_test = path.isFileTest(nimble)
   var found: seq[Run]
   for i in 0 ..< v.lines.len:
     if not v.isCode(i) or v.inside[i]: continue
@@ -227,11 +227,11 @@ func runs(path, source: string): seq[Run] =
     result.add run
 
 
-func checkBlanks*(path, source: string): seq[Report] =
+func checkBlanks*(path, source: string; nimble = ""): seq[Report] =
   ## Report blank lines beside suite, test or nested helper other than rule asks (X.2, STYLE.md
-  ##   §1).
+  ##   §1); `nimble` is nimble file nearest path, which says where tests lie.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  for run in runs(path, source):
+  for run in runs(path, source, nimble):
     let message =
       case run.target
       of Target.Suite: "Suite takes three blank lines before it"
@@ -248,9 +248,9 @@ func checkBlanks*(path, source: string): seq[Report] =
     result.add initReport(path, run.line + 1, rule, message & "; got `" & $run.count & "`.")
 
 
-func fixBlanks*(path, source: string): Fix =
+func fixBlanks*(path, source: string; nimble = ""): Fix =
   ## Set each run check reports to count rule asks, last run first.
-  let found = runs(path, source)
+  let found = runs(path, source, nimble)
   var
     lines = source.split('\n')
     origin = toSeq(1 .. lines.len)

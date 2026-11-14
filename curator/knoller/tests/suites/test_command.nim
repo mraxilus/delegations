@@ -66,9 +66,12 @@ proc outcomeEvery(
     result = outcome(files, locked, is_check, directory, proofs, failure)
 
 
-func shown(path, directory, source: string): seq[string] =
-  ## Print check of one file path names from directory, path read as `<path>`.
-  let outcome = outcome([(path, source)], [], is_check = true, directory)
+func shown(path, directory, source, nimble: string): seq[string] =
+  ## Print check of one file path names from directory, beside nimble file nearest it, path read
+  ##   as `<path>`.
+  let outcome = outcome(
+    [(path, source)], [], is_check = true, directory, nimbles = {path: nimble}.toTable
+  )
   outcome.lines.mapIt(it.replace(path, "<path>"))
 
 
@@ -195,7 +198,8 @@ suite "Command line":
       ("a.nim", module & "import ./a\n\nimport std/os\n", Rule.RankImport),  # blank line apart
       ("a.nim", module & "const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n", Rule.BindingsSingle),
     ]:
-      let outcome = outcome([(path, source)], [], is_check = true)
+      let outcome =
+        outcome([(path, source)], [], is_check = true, nimbles = {path: "a.nimble"}.toTable)
       check outcome.code == 1  # violation fails run
       check outcome.lines.anyIt(it.startsWith(path) and (" " & rule.id & " left: ") in it)
     let fenced = outcome([("a.nims", "#!fix off\nlet a = 1 \n#!fix on\n")], [], is_check = true)
@@ -253,11 +257,11 @@ suite "Command line":
     for (source, rule, inside, outside) in [
       (SUITES, "test-blank-lines", ("suites.nim", "/p/tests"), ("tests/suites.nim", "/p")),
       (STUB, "stub-keys", ("test_p.nim", "/p/tests"), ("p/tests/test_p.nim", "/")),
-      (UMBRELLA, "profiler-import", ("p.nim", "/p/src"), ("../p/src/p.nim", "/p/tests")),
+      (UMBRELLA, "profiler-import", ("p.nim", "/p/src"), ("../src/p.nim", "/p/tests")),
     ]:
-      let lines = shown(inside[0], inside[1], source)
+      let lines = shown(inside[0], inside[1], source, "/p/p.nimble")
       check lines.anyIt(rule in it)  # rule reads path whole, from inside its directory too
-      check lines == shown(outside[0], outside[1], source)
+      check lines == shown(outside[0], outside[1], source, "/p/p.nimble")
 
 
   test "directory names Nim files git lists under it, sorted; one naming none says why":

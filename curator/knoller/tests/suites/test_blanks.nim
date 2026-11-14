@@ -8,19 +8,22 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[blanks, reports]
 
 
-const PATH_TEST = "curator/audit/tests/suites/test_a.nim"
-  ## Path under `tests/`, where suite and test rules hold.
+const
+  PATH_TEST = "curator/audit/tests/suites/test_a.nim"
+    ## Path under `tests/` of its package, where suite and test rules hold.
+  NIMBLE_TEST = "curator/audit/audit.nimble"  ## Nimble file nearest `PATH_TEST`.
 
 
 func fixed(source: string, path = PATH_TEST): string =
   ## Fix blank lines of source, as `koch fix` does.
-  fixBlanks(path, source).source
+  fixBlanks(path, source, NIMBLE_TEST).source
 
 
 func isSettled(source: string, path = PATH_TEST): bool =
   ## Decide whether source reports no blank-line finding and fixes to itself again.
-  checkBlanks(path, source).len == 0 and fixBlanks(path, source).source == source and
-    fixBlanks(path, source).fixed.len == 0
+  checkBlanks(path, source, NIMBLE_TEST).len == 0 and
+      fixBlanks(path, source, NIMBLE_TEST).source == source and
+      fixBlanks(path, source, NIMBLE_TEST).fixed.len == 0
 
 
 
@@ -28,7 +31,7 @@ suite "Blanks":
   test "suite takes three blank lines before it, test two, first child none":
     let breach = "import std/unittest\n\nsuite \"A\":\n  test \"a\":\n    check true\n\n" &
       "  test \"b\":\n    check true\n\nsuite \"B\":\n\n  test \"c\":\n    check true\n"
-    check checkBlanks(PATH_TEST, breach).mapIt(it.message.split(";")[0]) == @[
+    check checkBlanks(PATH_TEST, breach, NIMBLE_TEST).mapIt(it.message.split(";")[0]) == @[
       "Suite takes three blank lines before it", "Test takes two blank lines before it",
       "Suite takes three blank lines before it", "First child follows its opener at once",
     ]
@@ -36,7 +39,7 @@ suite "Blanks":
       "    check true\n\n\n  test \"b\":\n    check true\n\n\n\nsuite \"B\":\n  test \"c\":\n" &
       "    check true\n"
     check breach.fixed.isSettled
-    check checkBlanks("curator/audit/src/a.nim", breach).len == 0  # tests alone
+    check checkBlanks("curator/audit/src/a.nim", breach, NIMBLE_TEST).len == 0  # tests alone
 
 
   test "test file lies under `tests`; stub is its child `test_*`, or file of category with header":
@@ -46,25 +49,25 @@ suite "Blanks":
     let
       headed = "discard \"\"\"\naction: run\n\"\"\"\ninclude \"suites.nim\"\n"
       bare = "include \"suites.nim\"\n"
-    for (path, is_file_test, is_stub_headed, is_stub_bare) in [
-      ("tests/test_a.nim", true, true, true),  # header or not
-      ("/p/tests/test_a.nim", true, true, true),  # absolute, as command line reads it
-      ("tests/suites/test_a.nim", true, true, false),  # suite module, where no header opens it
-      ("tests/rga3d/test_rga3d.nim", true, true, false),  # one level down, as PGA library keeps it
-      ("tests/rga3d/deep/test_rga3d.nim", true, true, false),  # two levels down
-      ("tests/rga3d/tall.nim", true, true, false),  # `t*`, as testament reads category
-      ("tests/rga3d/rga3d.nim", true, false, false),  # name opens no `t`
-      ("tests/rga3d/test_rga3d.nims", true, false, false),  # script
-      ("tests/tall.nim", true, false, false),  # child of `tests` is stub as `test_*` alone
-      ("tests/suites.nim", true, false, false),
-      ("src/tests.nim", false, false, false),
-      ("src/rga3d/test_rga3d.nim", false, false, false),
-      ("tests", false, false, false),  # file named `tests`
-      ("test_a.nim", false, false, false),
+    for (path, nimble, is_file_test, is_stub_headed, is_stub_bare) in [
+      ("tests/test_a.nim", "a.nimble", true, true, true),  # header or not
+      ("/p/tests/test_a.nim", "/p/a.nimble", true, true, true),  # absolute, as command line reads
+      ("tests/suites/test_a.nim", "a.nimble", true, true, false),  # suite, which no header opens
+      ("tests/rga3d/test_rga3d.nim", "pga.nimble", true, true, false),  # as PGA library keeps it
+      ("tests/rga3d/deep/test_rga3d.nim", "pga.nimble", true, true, false),  # two levels down
+      ("tests/rga3d/tall.nim", "pga.nimble", true, true, false),  # `t*`, as testament reads it
+      ("tests/rga3d/rga3d.nim", "pga.nimble", true, false, false),  # name opens no `t`
+      ("tests/rga3d/test_rga3d.nims", "pga.nimble", true, false, false),  # script
+      ("tests/tall.nim", "a.nimble", true, false, false),  # child of `tests` is stub as `test_*`
+      ("tests/suites.nim", "a.nimble", true, false, false),
+      ("src/tests.nim", "a.nimble", false, false, false),
+      ("src/rga3d/test_rga3d.nim", "pga.nimble", false, false, false),
+      ("tests", "a.nimble", false, false, false),  # file named `tests`
+      ("test_a.nim", "a.nimble", false, false, false),
     ]:
-      check path.isFileTest == is_file_test
-      check path.isStub(headed) == is_stub_headed
-      check path.isStub(bare) == is_stub_bare
+      check path.isFileTest(nimble) == is_file_test
+      check path.isStub(headed, nimble) == is_stub_headed
+      check path.isStub(bare, nimble) == is_stub_bare
 
 
   test "suite opening `when` body follows it at once; suite after banner takes banner's one":

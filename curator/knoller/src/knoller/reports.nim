@@ -20,9 +20,12 @@
 ##   Dialect of Nim file, module, script or package, decides which idiom checks and fixers it
 ##     takes; `idioms.nim` and `chain.nim` both read it, so it stands here, below both.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
-##     line on every platform (`command.toAbsolute`). Rule reading layout from it reads test file
-##     and stub here alone, both from last directory `tests` (`partTests`), so each meaning is
-##     written once; drive file, where command line reads fixed waits, too (`isFileDrive`).
+##     line on every platform (`command.toAbsolute`). Rule reading layout from it reads test file,
+##     stub and umbrella here alone, test file and stub from last directory `tests`
+##     (`partTests`), so each meaning is written once; drive file, where command line reads
+##     fixed waits, too (`isFileDrive`).
+##   Caller names nimble file nearest each file, written as its path is, empty where none stands
+##     above (`nimble`); placed fixer takes it (`Placed`), as prover step takes answers.
 ##   Stub is read as testament reads category (#443), i.e. directory directly under `tests`,
 ##     whose tests are files `t*.nim` at any depth (`isTestFile`, `processCategory` of
 ##     `testament/categories.nim`): file there is stub where its source opens with testament
@@ -84,16 +87,22 @@ type
   Proven* = proc (path, source: string; proofs: Proofs): Fix {.nimcall, noSideEffect.}
     ## Define fixer whose rewrite parser must prove: writes what proofs answer, asks for rest.
 
-  KindStep* {.pure.} = enum  ## Define how step reads lines held and answers of parser.
+  Placed* = proc (path, source, nimble: string): Fix {.nimcall, noSideEffect.}
+    ## Define fixer whose rule reads where file lies in its package, from nimble file nearest it.
+
+  KindStep* {.pure.} = enum
+    ## Define how step reads lines held, answers of parser and nimble file nearest file.
     Guarded  ## Fixer guarded on every line.
     Widening  ## Widener, off held lines.
     Proving  ## Fixer writing what parser proves, guarded on every line.
+    Placing  ## Fixer reading nimble file nearest file, guarded on every line.
 
   Step* = object  ## Define one fixer of chain, of one kind.
     case kind*: KindStep
     of KindStep.Guarded: fixer*: Fixer
     of KindStep.Widening: widener*: Widener
     of KindStep.Proving: proven*: Proven
+    of KindStep.Placing: placed*: Placed
 
   Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
     Module  ## `.nim`, which module's idiom checks and fixers read too.
@@ -122,18 +131,25 @@ func partTests(path: string): seq[string] =
     if parts[k] == "tests": return parts[k + 1 .. ^1]
 
 
-func isFileTest*(path: string): bool =
-  ## Decide whether path lies under directory `tests`, at any depth.
+func isFileTest*(path, nimble: string): bool =
+  ## Decide whether path lies under directory `tests`, at any depth; `nimble` is nimble file
+  ##   nearest path, written as path is, empty where none stands above.
   path.partTests.len > 0
 
 
-func isStub*(path, source: string): bool =
+func isStub*(path, source, nimble: string): bool =
   ## Decide whether file is testament stub: `test_*` directly under directory `tests`, or
   ##   `t*.nim` at any depth inside category whose source opens with testament header.
   let part = path.partTests
   if part.len == 1: return part[0].startsWith("test_")
   part.len > 1 and part[^1].startsWith('t') and part[^1].endsWith(EXTENSIONS[Dialect.Module]) and
       source.startsWith(HEADER_TESTAMENT)
+
+
+func isUmbrella*(path, nimble: string): bool =
+  ## Decide whether path is library umbrella: `<project>/src/<project>.nim`.
+  let parts = path.split('/')
+  parts.len >= 3 and parts[^2] == "src" and parts[^1] == parts[^3] & ".nim"
 
 
 func isFileDrive*(path: string): bool =
@@ -158,13 +174,19 @@ func proving*(proven: Proven): Step =
   Step(kind: KindStep.Proving, proven: proven)
 
 
-func run*(step: Step; path, source: string; held: Held; proofs = Proofs()): Fix =
-  ## Run step on source: widener reads held lines, prover step reads answers, guarded fixer
-  ##   reads neither.
+func placing*(placed: Placed): Step =
+  ## Construct step of fixer whose rule reads nimble file nearest file.
+  Step(kind: KindStep.Placing, placed: placed)
+
+
+func run*(step: Step; path, source: string; held: Held; proofs = Proofs(); nimble = ""): Fix =
+  ## Run step on source: widener reads held lines, prover step reads answers, placed fixer reads
+  ##   nimble file nearest file, guarded fixer reads none of them.
   case step.kind
   of KindStep.Guarded: step.fixer(path, source)
   of KindStep.Widening: step.widener(path, source, held)
   of KindStep.Proving: step.proven(path, source, proofs)
+  of KindStep.Placing: step.placed(path, source, nimble)
 
 
 func isHeld*(held: Held, line: int): bool =

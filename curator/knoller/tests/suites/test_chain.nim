@@ -195,9 +195,11 @@ suite "Chain":
       check formatted("a" & EXTENSIONS[dialect], breach, dialect).source.contains(
         "let\n  A = 1  ## One.\n  B = 2  ## Two.\n",
       )  # bindings share keyword in every dialect
-    check checkSource("tests/a.nims", "echo x\n", Dialect.Script).mapIt(it.rule) ==
-      @[Rule.OutputDebug]  # test rules of any Nim code read script under `tests/`
-    check checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script).len == 0  # no stub
+    let
+      script = checkSource("tests/a.nims", "echo x\n", Dialect.Script, nimble = "a.nimble")
+      stub = checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script, nimble = "a.nimble")
+    check script.mapIt(it.rule) == @[Rule.OutputDebug]  # test rules of any Nim code read script
+    check stub.len == 0  # no stub
 
 
   test "fence keeps lines between its markers, and fix reaches every other line":
