@@ -91,10 +91,59 @@ check, and a script or a package takes those of any Nim code (`## Idioms`).
 
 - `curator/audit` maps each kind of Nim onto a dialect. It applies the fixers that need more than
   one file, then gives the source to `formatted`.
+- The caller also gives the facts of each file that its text does not hold. They are the mode of
+  its articles (`## Articles`), its nearest nimble file (`## Layout of a package`), and whether it
+  is drive code (`## Fixed waits`).
 - The header of `chain.nim` gives the order of the fixers, and why each one comes where it does.
 - The chain can run all its rounds again, and `## Wraps` gives why.
 - Verified by `suites/test_chain.nim`: a source that breaks each layout rule settles in one run,
   and a second run writes nothing. A script keeps its imports as written.
+
+## Layout of a package
+
+**Knoller reads the layout that the tools of Nim set, and its caller gives the rest (D2 a of
+#886).** Knoller takes the folder of the nearest nimble file as the root of the package. It keeps
+the rules of tests and of the umbrella, and reads each below that root. The folders of drive code
+and the define that stubs pass are habits of one repository. So the caller says which file is
+drive code (`## Fixed waits`) and which options its compile takes (`## Semantic pass`), and the
+command line says neither.
+
+- The caller names the nimble file nearest each file, written as its path is, and nothing where
+  none stands above (`nimble`). The chain takes that string and reads no file system, so it stays
+  pure.
+- One string carries both facts. Its folder is the folder of the package, and its name names the
+  umbrella, so the two cannot disagree. Rejected: the folder and the name as two inputs, which a
+  caller could give apart. Rejected: a lookup inside the chain, which would read the file system.
+- A test file lies below `tests` of its package, at any depth (`partTests`). A stub is
+  `tests/test_*.nim` there, or a file of a category (`## Layout fixes`). The umbrella is
+  `src/<name>.nim` beside `<name>.nimble`, whatever folder holds both. So a package at the root of
+  its repository has an umbrella, and a clone needs no folder that bears the name of its package.
+  Cost: a package whose `srcDir` is not `src` has no umbrella here.
+- A file with no nimble file above it takes no rule of tests, stubs or umbrella. So these rules
+  give fewer findings there, and never a false one. Rejected: the last directory `tests` of the
+  whole path, which makes a test file of each file below a directory `tests` above the repository.
+- A fixer that reads the nimble file is a step of its own kind (`placing`). Those are the fixers
+  of stub keys, of the profiler import and of the blank lines of tests. So no other fixer takes a
+  new parameter. Cost: a fourth kind of step.
+- Verified by `suites/test_blanks.nim`, against a table of paths and nimble files. It holds a
+  package at the root, a folder of another name, a package inside another, a path of Windows, and
+  no nimble file.
+- Each test file, stub and umbrella here lies below the folder of the nimble file of its project.
+  Verified by hand over each Nim file that git lists, 2026-11-14.
+
+**The command line reads the nearest nimble file from disk, in the walk that reads the pin
+(`nimblesNearest`).** One walk up from the directory of each file finds both. A directory that
+holds several nimble files names no package, as it names no pin, since nimble refuses such a
+directory.
+
+- Verified by hand with the nimble 0.26.2 that 2.4.0 ships, 2026-11-14. In a directory of two
+  nimble files, `nimble dump` stops with `Only one .nimble file should be present`.
+- Verified by `suites/test_command.nim`, on a real tree. A package at the root of a clone takes
+  the rule of its umbrella, and a package inside it takes its own stubs. A directory of two
+  nimble files, and a tree with none, take no rule of stubs.
+- Verified by `suites/test_command.nim`, through the command line built from its own source. Run
+  over a package `foo` at the root of a clone named `clone`, it names the umbrella `src/foo.nim`.
+  It names no fixed wait of `tools/build.nim`.
 
 ## Fences
 
@@ -183,8 +232,6 @@ under `--check`.
 - Verified by `suites/test_command.nim`, on a real checkout with `core.autocrlf=true`. The suite
   also holds each setting and attribute that decides the conversion. A demo checkout gave 3
   findings, where it gave 7 before. Cost: one git call in each directory of the files named.
-- Cost: a directory named `tests` above the repository makes each file below it a test file,
-  from the command line alone. `koch` gives paths from the root of the repository.
 - Each line of output is a line of the file as given. A finding left in the fixed text traces
   back through the fix, as a rewrite does. A line that the fix inserts has no line as given, so
   a finding there prints with the path alone.
@@ -342,14 +389,22 @@ cannot tell a conversion `x.T` from a field or a module path, such as `rigid3.Po
 find every use of a name across modules either. So `symbols.nim` asks `nimsuggest` of the
 toolchain that serves the pin of the project.
 
-- The caller names three facts for each file it asks: the directory the run starts in, the file
-  that includes it, and the toolchain. The command line reads them from disk. The run starts in
-  the nearest directory that holds a nimble file, and the includer is read among the Nim files git
-  lists there. The toolchain is the one that proves parentheses (`groupByCompiler`). `koch` reads
-  the same facts from its tree instead.
+- The caller names four facts for each file it asks. They are the directory the run starts in,
+  the file that includes it, the toolchain, and the options of its compile (`defines`). The
+  command line reads the first three from disk. The run starts in the nearest directory that holds
+  a nimble file, and the includer is read among the Nim files git lists there. The toolchain is
+  the one that proves parentheses (`groupByCompiler`). `koch` reads the same facts from its tree
+  instead.
 - One `nimsuggest --v3 --tester` serves each entry: the file itself, or the file that includes it.
-  It runs in the project directory, so the `nim.cfg` of the project applies. A file under
-  `tests/` takes `-d:testing`, as the stub of STYLE.md §6 does.
+  It runs in the project directory, so the `nim.cfg` of the project applies. It takes the options
+  that the first request of its entry names. Verified by `suites/test_symbols.nim`, through two
+  requests of one includer, where the first alone names a define.
+- The define that stubs pass is a habit of one repository, so knoller adds none, and the command
+  line names none. `koch` names `-d:testing` for a file under `tests/` of a project, as each stub
+  of STYLE.md §6 passes it.
+- Verified by `suites/test_symbols.nim`: a name that `-d:testing` alone declares resolves where its
+  request names the define, at any path, and nowhere else. Verified by `suites/test_command.nim`:
+  the command line leaves that name unresolved under `tests`.
 - Tester mode reads commands as `--stdin` does. It prints `!EOF!` once ready and after each
   answer, with no help and no prompt. On Windows, `--stdin` prompts `> ` before each command,
   which glues the prompt to the first line of each answer.
@@ -546,8 +601,9 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
-- The case of the stub `tests/rga3d/test_rga3d.nim` (#443) depends on its path. So it runs
-  through `outcome`, as the command line runs it, at that path and at `tests/test_rga3d.nim`.
+- The case of the stub `tests/rga3d/test_rga3d.nim` (#443) depends on its path, and on the
+  nimble file of the PGA library at its root. So it runs through `outcome`, as the command line
+  runs it, with that nimble file, at that path and at `tests/test_rga3d.nim`.
   Verified by hand, 2026-10-08: it fails at the parent of the commit that builds the ruling.
 - Verified by hand, 2026-10-05: the suite ran against the parent of the commit that fixed each
   case, with a shim that proves nothing. Each case that a commit fixed failed at its parent. A
@@ -705,21 +761,20 @@ where blank lines stand below it too.
 **A suite takes three blank lines before it, and a test two (X.2).** A first child follows its
 opener at once, such as a test that opens a suite, or a suite that opens a `when` body. A suite
 or a test after a banner takes the one blank line of the banner. The rule reads files under
-`tests/` alone.
+`tests/` of their package alone.
 
-- A test file has a directory `tests` in its path, at any depth. `reports.nim` holds this reading
-  and the reading of a stub, from the names below the last directory `tests`. So the blank-line
-  rule and the stub rules read one definition.
-- `isFileTest` holds exactly where `/tests/` stands in the path with a `/` before it. Verified by
-  `suites/test_blanks.nim`, which holds both readings to a table of paths. Verified by hand,
-  2026-10-04, over each path that git lists in this repository, relative and absolute.
+- A test file lies below `tests` of its package, at any depth (`## Layout of a package`).
+  `reports.nim` holds this reading and the reading of a stub, from the names below that
+  directory. So the blank-line rule and the stub rules read one definition.
+- Verified by `suites/test_blanks.nim`, which holds both readings to a table of paths.
 
 **Knoller reads a stub as testament reads a category (#443).** A testament category is a folder
-directly under `tests`. Its tests are the files `t*.nim` at any depth inside it, as `isTestFile`
-and `processCategory` of `testament/categories.nim` read them. Such a file is a stub where a
-testament header opens it, that is, where the file opens with `discard """`. A file there that
-opens with no header is a suite module, and no rule of a stub reads it. A file `tests/test_*.nim`
-is a stub with or without a header, so a missing header there stays a `stub-header` finding.
+directly under `tests` of a package. Its tests are the files `t*.nim` at any depth inside it, as
+`isTestFile` and `processCategory` of `testament/categories.nim` read them. Such a file is a stub
+where a testament header opens it, that is, where the file opens with `discard """`. A file there
+that opens with no header is a suite module, and no rule of a stub reads it. A file
+`tests/test_*.nim` is a stub with or without a header, so a missing header there stays a
+`stub-header` finding.
 
 - `isStub` takes the source beside the path, since the header decides. Each caller holds the
   source already: `keysStub`, `checkTests` and `profiler` of `idioms.nim`.
@@ -1676,8 +1731,8 @@ idiom that the static pass of `curator/audit` reads.
 - A `{.used.}` carries a comment that names its consumer. A `{.push.}` stands only over foreign
   bindings, where a word of `MARKS_FOREIGN` stands among the pragmas of the block. `return
   result` never appears, because a bare `return` exits with `result`.
-- Under `tests/`, a suite that imports `std/random` seeds it, and a stub carries its testament
-  header, without `-r`, `batchable` or `joinable`.
+- Under `tests/` of a package, a suite that imports `std/random` seeds it, and a stub carries its
+  testament header, without `-r`, `batchable` or `joinable`.
 - No fixer reaches `{.used.}`, `{.push.}`, the seed, the header of a stub or debug output. Each
   needs knowledge that the text does not hold.
 
@@ -1708,18 +1763,22 @@ diagnostic.
 **A fixed wait in drive code is a finding, and the caller decides which file is drive code.** The
 names are `sleep` and `sleepAsync` of Nim, and `waitForTimeout` of Playwright, each with what
 replaces it (`checkWaits`). The rule comes from IX.12 alone, so knoller holds the names. The
-paths of drive code belong to a layout, so the caller gives them.
+paths of drive code are a habit of one repository, so the caller gives them, and knoller holds
+none.
 
-- `curator/audit` reads `tests/` and `tools/` of each project. The command line reads each file
-  under a directory `tests` or `tools`, at any depth (`isFileDrive`).
+- The chain reads fixed waits where its caller says the file is drive code (`is_drive`). It reads
+  them in the checks of the source and in the fence warning. `curator/audit` says so of `tests/`
+  and `tools/` of each project. The command line says so of no file.
 - Nim names compare as the compiler compares them (`identity`), so `sleep_async` is `sleepAsync`.
   Nim source is read with comments and strings blanked.
 - A caller that reads another kind passes the identifiers of each line, less those of its
   comments. Only the name of Playwright reads there, exactly, since `sleep` of TypeScript is the
   helper of a drive.
-- Cost: the command line knows no project, so it reads a file that the static pass passes over,
-  such as `src/tests/a.nim`.
-- Verified by `suites/test_waits.nim`.
+- Cost: `knoller --check` alone reports no fixed wait. A repository that wants the rule runs
+  knoller through a caller that names its drive code, as `koch` does.
+- Verified by `suites/test_waits.nim`. Verified by `suites/test_chain.nim`: the word of the caller
+  reads at any path, and no path reads without it. Verified by `suites/test_command.nim`: a fixed
+  wait under `tests`, `tools` and `src/tools` passes the command line.
 
 ## Platforms
 
@@ -1746,7 +1805,3 @@ there is unverified.
 
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
   the nimble that 2.4.0 ships.
-- Some rules read paths in the layout of this repository: `tests/`, a test stub, a drive file
-  under `tests` or `tools`, and the umbrella `<project>/src/<project>.nim`. They read the whole
-  path, so the spelling of a path changes nothing. In another repository they would need to read
-  paths relative to the nearest nimble file.

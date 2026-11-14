@@ -8,8 +8,9 @@
 ##     use of name across modules; semantic pass of pin project runs on can, symbol by symbol.
 ##   One `nimsuggest --v3 --tester` serves each entry: file itself, or file including it, since
 ##     included file compiles inside includer alone. It runs in project directory, so project's
-##     `nim.cfg` and `config.nims` apply, with `-d:testing` under `tests/` as stubs compile
-##     (STYLE.md §6).
+##     `nim.cfg` and `config.nims` apply, with options caller names for file (`defines`), as its
+##     stubs compile it. Define stubs pass is habit of caller's repository, so knoller adds none,
+##     and command line names none.
 ##   Tester mode reads commands as `--stdin` does, and prints `!EOF!` once ready and after each
 ##     answer, with no help and no prompt. `--stdin` prompts `> ` before each command on
 ##     Windows, which glues prompt to first line of every answer there.
@@ -76,6 +77,9 @@ type
     directory*: string  ## Absolute directory run starts in, so project's configuration applies.
     includer*: string  ## Path, relative to root, of file whose compile holds query's file.
     bin*: string  ## Directory of toolchain serving pin; empty names PATH.
+    defines*: seq[string]
+      ## Options compile of file takes before entry, as defines its stubs pass; caller names
+      ##   them, and empty names none.
 
   Answer* = object  ## Define what semantic pass answers for one file.
     path*: string  ## Repository-relative path.
@@ -104,7 +108,6 @@ const
   MARK_END = "!EOF!"  ## Line tester mode prints once ready and after each answer.
   SEVERITY_ERROR = "Error"  ## Severity of `chk` answer that leaves file unresolved.
   BACKEND_JS = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
-  DEFINE_TESTING = "-d:testing"  ## Define stub's own `cmd` passes, read under `tests/`.
   KIND_RESULT = "skResult"  ## Kind of routine's implicit `result`.
   SUFFIX_RESULT = ".result"  ## Last part of qualified name of implicit `result`.
   KIND_ROUTINE = "routine"  ## Kind given routine declared at site whose answer is its result.
@@ -287,7 +290,7 @@ proc readAnswers(entry: Entry, asked: Asked): seq[Answer] =
 proc resolve*(requests: openArray[Request]): seq[Answer] =
   ## Answer each request through `nimsuggest` of its toolchain; file that compiles on no
   ##   backend is answered unresolved with reason. Requests whose includer is one file share
-  ##   one run.
+  ##   one run, with options first of them names.
   var entries: seq[Entry]
   for request in requests:
     let file = request.root / request.includer
@@ -298,8 +301,8 @@ proc resolve*(requests: openArray[Request]): seq[Answer] =
         directory: request.directory,
         file: file,
         bin: request.bin,
+        defines: request.defines,
       )
-      if "/tests/" in "/" & request.query.path: entries[^1].defines.add DEFINE_TESTING
       at = entries.high
     entries[at].queries.add request.query
 

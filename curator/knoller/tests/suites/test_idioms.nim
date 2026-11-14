@@ -8,7 +8,9 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[idioms, reports]
 
 
-const LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
+const
+  LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
+  NIMBLE = "x.nimble"  ## Nimble file of package at root, which each path here lies in.
 
 
 func module(body: string): string =
@@ -23,7 +25,7 @@ func fixed(source: string): Fix =
 
 func reported(path, source: string): seq[(Rule, string)] =
   ## Read rule and message of each idiom check reports over source.
-  checkIdioms(path, source).mapIt (it.rule, it.message)
+  checkIdioms(path, source, nimble = NIMBLE).mapIt (it.rule, it.message)
 
 
 
@@ -70,7 +72,7 @@ suite "Idioms":
     check reported("tests/suites/test_x.nim", unseeded) == @[
       (Rule.SeedRandom, "Suite seeds `std/random`, as `randomize(0)` does; got no seed."),
     ]
-    check checkIdioms("tests/suites/test_x.nim", unseeded)[0].line == 0  # whole file
+    check checkIdioms("tests/suites/test_x.nim", unseeded, nimble = NIMBLE)[0].line == 0  # file
     check reported("tests/suites/test_x.nim", unseeded.replace("let x", "randomize(0)\nlet x"))
       .len == 0
     check reported("tests/suites/test_x.nim", unseeded.replace("rand(1)", "initRand(7)")).len == 0
@@ -104,7 +106,8 @@ suite "Idioms":
       ("tests/test_x.nim", header & body, rules_stub),  # child of `tests`
       ("tests/test_x.nim", body, @[Rule.HeaderStub]),  # header or not
     ]:
-      check (checkIdioms(path, source) & checkProfiler(path, source)).mapIt(it.rule) == rules
+      let found = checkIdioms(path, source, nimble = NIMBLE) & checkProfiler(path, source, NIMBLE)
+      check found.mapIt(it.rule) == rules
 
 
   test "STYLE.md §3 stub that includes its suite takes profiler import from it":
@@ -118,7 +121,8 @@ suite "Idioms":
       ("when defined(x):\n  include \"suites.nim\"\n", 1),  # include of one configuration
       ("# include \"suites.nim\"\n", 1),  # comment includes nothing
     ]:
-      check checkProfiler("tests/rga3d/test_rga3d.nim", header & module(body)).len == count
+      let found = checkProfiler("tests/rga3d/test_rga3d.nim", header & module(body), NIMBLE)
+      check found.len == count
 
 
   test "VIII.5 test echo of unlabelled value is debug output; label or condition passes":
@@ -130,7 +134,7 @@ suite "Idioms":
           "`echo x`.",
       ),
     ]
-    check checkIdioms("tests/suites/test_x.nim", debug)[0].line == LINES_HEAD + 2
+    check checkIdioms("tests/suites/test_x.nim", debug, nimble = NIMBLE)[0].line == LINES_HEAD + 2
     check reported("tests/suites/test_x.nim", module("test \"a\":\n  echo \"x: \", x\n")).len == 0
     let diagnostic = module("test \"a\":\n  if x > 1:\n    echo x\n")
     check reported("tests/suites/test_x.nim", diagnostic).len == 0
@@ -144,7 +148,7 @@ suite "Idioms":
       Rule.StrictFuncs, Rule.ImportBracket, Rule.BindingsSingle, Rule.PushForeign,
       Rule.ReturnResult,
     ]  # order of static pass: fixers reach first five, then none
-    check checkIdioms("tests/test_a.nim", breach).mapIt(it.rule) == @[
+    check checkIdioms("tests/test_a.nim", breach, nimble = NIMBLE).mapIt(it.rule) == @[
       Rule.StrictFuncs, Rule.ImportBracket, Rule.BindingsSingle, Rule.PushForeign,
       Rule.ReturnResult, Rule.HeaderStub, Rule.OutputDebug,
     ]  # stub adds header and debug output
