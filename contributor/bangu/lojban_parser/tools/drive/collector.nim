@@ -1,23 +1,37 @@
-## Collect what page draws, and font faces it declares, as browser computed them, and post it to
-##   backend that serves page (`tools/drive.nim`) once page loads: collector `koch drive` judges
-##   through (CONTRIBUTOR.md, Pages and assets). It reads each page `drive` builds, and control
-##   page `koch drive` writes, and judges none: `font_stacks.nim` of curator resolves what it reads.
-##   Port of `contributor/ronri/pga_benchmark/tools/drive/text.ts`, which reads page through
-##     Playwright. Here code runs in page itself, as Nim compiled to JavaScript, so each expression
-##     is checked Nim, and no node runs it (ruling on #859). Code is one, so fix to either is
-##     finished only when other is checked (II.9).
-##   Text read is every string page draws: text nodes, SVG `text` among them, past elements that
-##     draw none; `placeholder`, and `value` of button; strings of `content` on `::before`,
-##     `::after` and `::marker`, and of `list-style-type`. Each is read with `font-family`,
-##     `font-weight` and `text-transform` of element drawing it.
-##   Each `@font-face` rule is read as CSSOM serialises its descriptors, and each font face browser
-##     refuses is read with status it reached.
-##   Every `details` opens first, and every element shows, so every state of page reads in one
-##     pass; `display` sets no font property, so no verdict moves.
-##   Posts `{runs, rules, refused}` to `/collected`, string of JSON, as `written.json` holds it;
-##     backend writes it into that file, which is format `koch drive` reads (`font_stacks.nim`).
-##   Cost: page is read at one viewport, default of Chromium; string or stack that `@media` gates
-##     on other width is unread.
+## crepu lo pixra pe le papri ge'u .e lo lerfu tarmi poi le papri cu cusku ke'a ku'o ta'i lo se
+##   kanji be lo tcidu be lo papri gi'e benji lo se crepu le samtci poi sabji le papri ku'o to
+##   `tools/drive.nim` toi ba lo nu le papri cu se cpacu .i `koch drive` cu jdice sepi'o le vi
+##   crepu to `CONTRIBUTOR.md, Pages and assets` toi .i le crepu cu tcidu ro papri poi lo minde
+##   po'u `drive` cu zbasu ke'a ku'o .e le jitro papri poi `koch drive` cu ciska ke'a .i le crepu
+##   cu jdice fi no papri .i `font_stacks.nim` pe la'o gy. curator .gy. cu jdice fi lo se tcidu be
+##   le crepu
+##   .i le vi datnyvei cu fukpi fi la'o gy. Nim .gy. fe
+##     `contributor/ronri/pga_benchmark/tools/drive/text.ts` noi tcidu lo papri sepi'o
+##     la'o gy. Playwright .gy. .i vi le se ciska cu fasnu ne'i le papri ta'i lo se ciska be fi
+##     la'o gy. Nim .gy. poi se fanva fi la'o gy. JavaScript .gy. .i se ki'u bo ro se ciska cu se
+##     ciska fi la'o gy. Nim .gy. .i le fanva cu cipra ro le se ciska .i la'o gy. node .gy. na
+##     jitro le se ciska .i la'o gy. Architect .gy. cu jdice di'u bu'u `#859` .i le re se ciska cu
+##     pilno le mintu tadji .i se ki'u bo va'o lo nu le drata na se cipra kei lo nu cikre pa le re
+##     se ciska cu na mulno to `II.9` toi
+##   .i le crepu cu tcidu ro lerpoi poi le papri cu pixra ke'a .i le se tcidu cu vasru lo se ciska
+##     jgena mu'u lo se ciska jgena pe `text` pe la'o gy. SVG .gy. .i le crepu cu tcidu no se ciska
+##     jgena pe lo pagbu be le papri be'o poi pixra no da .i le crepu cu tcidu `placeholder` .e
+##     `value` pe lo batke .i le crepu cu tcidu lo lerpoi pe `content` bu'u `::before` .e
+##     `::after` .e `::marker` .i le crepu cu tcidu ji'a lo lerpoi pe `list-style-type` .i ro le
+##     lerpoi cu se tcidu fi'o kansa `font-family` .e `font-weight` .e `text-transform` vu'o pe lo
+##     pagbu poi pixra le lerpoi
+##   .i le crepu cu tcidu ro skicu be lo javni pe `@font-face` ta'i lo lerpoi poi
+##     la'o gy. CSSOM .gy. cu ciska ke'a .i ro lerfu tarmi poi lo tcidu be lo papri cu to'e curmi
+##     ke'a cu se tcidu fi'o kansa lo tcini poi le lerfu tarmi cu klama ke'a
+##   .i pu lo nu tcidu le crepu cu kargau ro `details` gi'e jarco ro pagbu .i se ki'u bo ro tcini
+##     be le papri cu se tcidu ca pa nu tcidu .i `display` cu galfi no se ckaji be lo lerfu tarmi
+##     .i se ki'u bo no se jdice cu cenba
+##   .i benji `{runs, rules, refused}` fi `/collected` ta'i pa lerpoi pe la'o gy. JSON .gy. .i
+##     `written.json` cu vasru le lerpoi .i le samtci cu ciska le lerpoi fi le datnyvei .i le tarmi
+##     be le datnyvei cu du le tarmi poi `koch drive` cu tcidu ke'a to `font_stacks.nim` toi
+##   .i jdima fa lo nu le papri cu se tcidu bu'u pa canko po'o .i la'o gy. Chromium .gy. cu zmiku
+##     cuxna le canko .i se ki'u bo no da cu tcidu lo lerpoi .a lo porsi be lo lerfu tarmi vu'o poi
+##     `@media` cu curmi ke'a va'o lo ni ganra poi drata po'o
 
 {.experimental: "strictFuncs".}
 
@@ -25,36 +39,50 @@ import std/[asyncjs, jsffi, sets, strutils, unicode]
 
 
 const
-  SILENT = "script, style, title, desc, metadata, noscript"  ## Elements whose text draws none.
-  TYPES_BUTTON = ["button", "reset", "submit"]  ## Types of input whose value draws as text.
-  PSEUDOS = ["::before", "::after", "::marker"]  ## Pseudo-elements whose `content` draws.
-  SHOW_TEXT = 4  ## Filter of tree walker that shows text nodes alone (`NodeFilter.SHOW_TEXT`).
-  RULE_FONT_FACE = 5  ## Type of `@font-face` rule in CSSOM (`CSSRule.FONT_FACE_RULE`).
-  STYLE_SHOWN = "body * { display: revert !important; }"  ## Style that shows every element.
-  PATH_COLLECTED = "/collected"  ## Path collector posts what it read to.
-  PATH_DONE = "/done"  ## Path collector posts end of run to, once it posted what it read.
+  SILENT = "script, style, title, desc, metadata, noscript"
+    ## lo pagbu poi le papri cu pixra no se ciska pe ke'a
+  TYPES_BUTTON = ["button", "reset", "submit"]
+    ## lo klesi be lo pagbu po'u `input` be'o poi le papri cu pixra `value` pe le pagbu ta'i lo se
+    ##   ciska
+  PSEUDOS = ["::before", "::after", "::marker"]
+    ## lo jitfa pagbu poi le papri cu pixra `content` pe ke'a
+  SHOW_TEXT = 4
+    ## lo julne poi lo cadzu be le tricu cu jarco lo se ciska jgena po'o sepi'o ke'a to
+    ##   `NodeFilter.SHOW_TEXT` toi
+  RULE_FONT_FACE = 5
+    ## lo klesi be lo javni pe `@font-face` ne'i la'o gy. CSSOM .gy. to `CSSRule.FONT_FACE_RULE` toi
+  STYLE_SHOWN = "body * { display: revert !important; }"  ## lo javni poi jarco ro pagbu
+  PATH_COLLECTED = "/collected"  ## le judri poi le crepu cu benji lo se tcidu be vo'a fi ke'a
+  PATH_DONE = "/done"
+    ## le judri poi le crepu cu benji lo fanmo be le nu cipra fi ke'a ba lo nu le crepu cu benji lo
+    ##   se tcidu be vo'a
 
 
 let
-  DOCUMENT {.nodecl, importc: "document".}: JsObject  ## Document of page.
-  SELF {.nodecl, importc: "self".}: JsObject  ## Global scope of page.
+  DOCUMENT {.nodecl, importc: "document".}: JsObject  ## `document` pe le papri
+  SELF {.nodecl, importc: "self".}: JsObject  ## le mulno vanbi pe le papri
 
 
 proc styleOf(element: JsObject, pseudo: cstring): JsObject {.importjs: "getComputedStyle(@)".}
-  ## Give style browser computed for element, or for its pseudo-element. Boundary of JS target.
+  ## jarco lo tarmi be le pagbu .a lo tarmi be lo jitfa pagbu pe le pagbu .i lo tcidu be lo
+  ##   papri cu kanji le tarmi .i le fancu cu korbi la'o gy. Nim .gy. la'o gy. JavaScript .gy.
 proc stringify(value: JsObject): cstring {.importjs: "JSON.stringify(#)".}
-  ## Write value as string of JSON. Boundary of JS target.
+  ## ciska le datni ta'i pa lerpoi pe la'o gy. JSON .gy. .i le fancu cu korbi la'o gy. Nim .gy.
+  ##   la'o gy. JavaScript .gy.
 proc newRequest(): JsObject {.importjs: "new XMLHttpRequest()".}
-  ## Make request to backend. Boundary of JS target: constructor of page.
+  ## zbasu pa nu cpedu fi le samtci .i le fancu cu korbi la'o gy. Nim .gy.
+  ##   la'o gy. JavaScript .gy. .i le fancu cu pilno pa zbasu fancu pe le papri
 proc toArray(iterable: JsObject): JsObject {.importjs: "Array.from(#)".}
-  ## Give array of each item of collection. Boundary of JS target.
+  ## jarco lo porsi be ro cmima be le girzu .i le fancu cu korbi la'o gy. Nim .gy.
+  ##   la'o gy. JavaScript .gy.
 proc loaded(font_face: JsObject): Future[JsObject] {.importjs: "#.load()".}
-  ## Give promise of font face loaded. Boundary of JS target: method of `FontFace`.
+  ## jarco lo nupre be lo nu le lerfu tarmi cu se cpacu .i le fancu cu korbi la'o gy. Nim .gy.
+  ##   la'o gy. JavaScript .gy. .i le fancu cu pilno pa fancu pe `FontFace`
 
 
 
 proc named(element: JsObject): string =
-  ## Name element by tag, id and classes.
+  ## jarco lo cmene be le pagbu sepi'o le tcita .e `id` .e lo klesi vu'o pe le pagbu
   result = ($element.tagName.to(cstring)).toLowerAscii
   let id = $element.id.to(cstring)
   if id.len > 0: result.add "#" & id
@@ -64,7 +92,8 @@ proc named(element: JsObject): string =
 
 
 proc described(element: JsObject): string =
-  ## Name element under its ancestors, up to one carrying id, at most two.
+  ## jarco lo cmene be le pagbu be'o poi lo cmene be su'e re lo pagbu poi vasru le pagbu cu lidne
+  ##   ke'a .i le fancu cu sisti ca lo nu jmina lo cmene be pa pagbu poi ponse `id`
   var
     parts = @[element.named]
     at = element.parentElement
@@ -77,8 +106,11 @@ proc described(element: JsObject): string =
 
 
 func joinStrings(value: string): string =
-  ## Join strings of computed `content` or `list-style-type`, each between double quotes, with
-  ##   escapes of CSS resolved: hex of one to six digits and space after it, or character itself.
+  ## jarco pa lerpoi poi se pagbu ro lerpoi pe le se kanji pe `content` .a `list-style-type`
+  ##   .i ro le lerpoi cu zvati lo jbini be re lerfu po'u `"` .i ro lerpoi poi se krasi lo lerfu
+  ##   po'u `\` cu se basti lo lerfu poi le lerpoi cu sinxa ke'a .i le lerpoi cu vasru su'o pa
+  ##   lerfu pe la'o gy. hex .gy. gi'e vasru su'e xa le lerfu gi'e vasru lo kunti lerfu poi se
+  ##   lidne le lerfu .i ja le lerpoi cu sinxa le lerfu poi se lidne lo lerfu po'u `\`
   var
     k = 0
     is_quoted = false
@@ -98,7 +130,7 @@ func joinStrings(value: string): string =
       continue
     var last = k + 1
     while last < value.len and last - k <= 6 and value[last] in HexDigits: inc last
-    if last == k + 1:  # escape of character itself
+    if last == k + 1:  # `\` cu lidne le lerfu poi le lerpoi cu sinxa ke'a
       result.add value[k + 1]
       k += 2
       continue
@@ -107,11 +139,13 @@ func joinStrings(value: string): string =
 
 
 proc collect(): Future[JsObject] {.async.} =
-  ## Read every run page draws, ASCII included, every `@font-face` rule it declares, and every font
-  ##   face browser refused.
+  ## tcidu ro porsi be lo lerfu poi le papri cu pixra ke'a .i le se tcidu cu vasru ji'a lo lerfu
+  ##   pe la'o gy. ASCII .gy. .i tcidu ji'a ro javni pe `@font-face` ge'u zi'e poi le papri cu
+  ##   cusku ke'a ku'o .e ro lerfu tarmi poi lo tcidu be lo papri pu to'e curmi ke'a
   var runs: seq[JsObject]
   proc add(element: JsObject, pseudo, text: string, pseudo_style = "") =
-    ## Record text element draws under one pseudo-element, as its style transforms it.
+    ## ralte lo se ciska poi le pagbu cu pixra ke'a bu'u pa jitfa pagbu ku'o ta'i lo nu le tarmi
+    ##   pe le pagbu cu galfi le se ciska
     if text.len == 0: return
     let
       style = element.styleOf(cstring(pseudo_style))
@@ -126,7 +160,9 @@ proc collect(): Future[JsObject] {.async.} =
     var
       codepoints: seq[int]
       seen: HashSet[int]
-    for rune in drawn.runes:  # each codepoint once, ASCII included (D1 b of #751)
+    # ro lerfu namcu cu se ralte pa roi .i lo lerfu pe la'o gy. ASCII .gy. cu se ralte ji'a to
+    # `D1 b` pe `#751` toi
+    for rune in drawn.runes:
       if seen.containsOrIncl(int(rune)): continue
       codepoints.add int(rune)
     if codepoints.len == 0: return
@@ -138,7 +174,7 @@ proc collect(): Future[JsObject] {.async.} =
     runs.add run
 
   for details in DOCUMENT.querySelectorAll(cstring("details")).toArray.to(seq[JsObject]):
-    details.open = true  # every state of page reads in one pass
+    details.open = true  # ro tcini be le papri cu se tcidu ca pa nu tcidu
   let shown = DOCUMENT.createElement(cstring("style"))
   shown.textContent = cstring(STYLE_SHOWN)
   DOCUMENT.head.append(shown)
@@ -178,7 +214,9 @@ proc collect(): Future[JsObject] {.async.} =
 
   var refused: seq[JsObject]
   for font_face in DOCUMENT.fonts.toArray.to(seq[JsObject]):
-    try: discard await font_face.loaded  # face browser refuses reads as refused, not as unasked
+    # lo lerfu tarmi poi lo tcidu be lo papri cu to'e curmi ke'a cu se tcidu ta'i lo se to'e
+    # curmi .enai lo na'e se cpedu
+    try: discard await font_face.loaded
     except CatchableError: discard
     if $font_face.status.to(cstring) == "loaded": continue
     let face = newJsObject()
@@ -187,7 +225,8 @@ proc collect(): Future[JsObject] {.async.} =
     face.status = font_face.status
     refused.add face
 
-  let collected = newJsObject()  # `result` of proc of promises is no plain object to set on
+  # `result` pe lo fancu pe lo nupre cu na du lo sampu dacti poi ka'e punji lo datni pagbu ke'a
+  let collected = newJsObject()
   collected.runs = runs
   collected.rules = rules
   collected.refused = refused
@@ -195,14 +234,15 @@ proc collect(): Future[JsObject] {.async.} =
 
 
 proc post(path: string, body: cstring) =
-  ## Post body to backend at path, and wait for its answer.
+  ## benji `body` le samtci bu'u `path` gi'e denpa lo nu le samtci cu spuda
   let request = newRequest()
   request.open(cstring("POST"), cstring(path), false)
   request.send(body)
 
 
 proc collectPosted() {.async.} =
-  ## Collect page once it loads, post what collector read, then end run.
+  ## crepu le papri ba lo nu le papri cu se cpacu .i benji lo se tcidu be le crepu .i sisti le
+  ##   nu cipra ba lo nu benji
   post(PATH_COLLECTED, (await collect()).stringify)
   post(PATH_DONE, "0")
 

@@ -1,24 +1,35 @@
-## Hold long articles of lojban Wikipedia, with verdict parser gave each paragraph, for suite.
-##   Written by `nim r tools/build.nim wikipedia <directory>` from answers of API of
-##   Wikipedia, SHA-256 `6bbe766025354f3dd9e7335ccd779cc8`
-##   `68dbaddd9d8f2071eeb9680a0a3d0c21`; never edit by hand, run verb again.
-##   Text of lojban Wikipedia, under licence CC BY-SA 4.0; folder holding module is
-##     distributed under that licence, as `NOTICE.md` beside module gives, never under
-##     licence of repository.
+## ralte lo clani prosa pe la'o gy. Wikipedia .gy. pe la lojban. mu'i le cipra .i le vi
+##   datnyvei cu vasru lo se jdice be le genturfa'i bei ro ju'agri
+##   .i lo minde po'u `nim r tools/build.nim wikipedia <directory>` cu ciska le vi datnyvei
+##   ra'i lo danfu pe la'o gy. API .gy. pe la'o gy. Wikipedia .gy. .i lo sinxa namcu be le
+##   danfu cu du zoi ky. SHA-256 `6bbe766025354f3dd9e7335ccd779cc8`
+##   `68dbaddd9d8f2071eeb9680a0a3d0c21` .ky.
+##   .i lo nu xance galfi le vi datnyvei cu na drani .i lo nu galfi le vi datnyvei cu
+##   nitcu lo nu rapli pilno le minde
+##   .i lo se ciska pe la'o gy. Wikipedia .gy. pe la lojban. cu se javni la'o gy. CC BY-SA
+##     4.0 .gy. .i `NOTICE.md` noi lamji le vi datnyvei cu cusku lo du'u le datnyveiste poi
+##     vasru le vi datnyvei cu se javni le curmi javni gi'e no roi se javni le curmi javni pe
+##     la'o gy. delegations .gy.
 
 {.experimental: "strictFuncs".}
 
 
 type
-  ArticleWikipedia* = object  ## Define one article: title, and revision text comes from.
-    title* {.requiresInit.}: string  ## Title of page.
-    revision* {.requiresInit.}: int  ## Revision plain text comes from.
+  ArticleWikipedia* = object
+    ## pa prosa .i le klesi cu vasru lo cmene .e le te galfi poi le se ciska cu se krasi ke'a
+    title* {.requiresInit.}: string  ## lo cmene be le papri
+    revision* {.requiresInit.}: int  ## le te galfi poi le sampu se ciska cu se krasi ke'a
 
-  ParagraphWikipedia* = object  ## Define one paragraph: article, place, text and verdict.
-    article* {.requiresInit.}: string  ## Title of article holding paragraph.
-    index* {.requiresInit.}: int  ## Place of paragraph in its article, from one.
-    text* {.requiresInit.}: string  ## Line of plain text, as answer gives it.
-    verdict* {.requiresInit.}: string  ## Refusal and rule parser gave; empty where read.
+  ParagraphWikipedia* = object
+    ## pa ju'agri .i le klesi cu vasru lo prosa .e lo stuzi .e lo se ciska .e lo se jdice
+    article* {.requiresInit.}: string  ## lo cmene be le prosa poi vasru le ju'agri
+    index* {.requiresInit.}: int
+      ## lo namcu pe le ju'agri ne'i le prosa .i le namcu pe le pamoi ju'agri cu du li pa
+    text* {.requiresInit.}: string
+      ## pa linji pe lo sampu se ciska ta'i lo nu le danfu cu dunda le linji
+    verdict* {.requiresInit.}: string
+      ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i pu dunda ke'a .i va'o lo
+      ##   nu le ju'agri cu se tcidu kei le se jdice cu kunti
 
 
 const
@@ -27,7 +38,7 @@ const
     ArticleWikipedia(title: "eliogabalus", revision: 107948),
     ArticleWikipedia(title: "lo jbobau", revision: 115608),
   ]
-    ## Articles, in order of number of page as text.
+    ## lo prosa ja'i lo lerpoi porsi be lo namcu pe lo papri
   PARAGRAPHS_WIKIPEDIA* = [
     ParagraphWikipedia(
       article: "cmaci",
@@ -879,4 +890,4 @@ const
       verdict: "Stream Stress",
     ),
   ]
-    ## Paragraphs of each article, in order.
+    ## lo ju'agri pe ro prosa ta'i lo porsi

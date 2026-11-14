@@ -1,30 +1,44 @@
-## Convert gismu and cmavo lists of Logical Language Group into typed Nim modules project
-##   commits, and pin lujvo list suites read as outside text.
-##   Reads `gismu.txt` and `cmavo.txt` as Debian package `lojban-common` installs them, and
-##   renders `src/lojban_parser/lists/gismu.nim` and `cmavo.nim`; `build.nim` runs it.
+## galfi le gismu liste .e le cmavo liste vu'o pe la'o gy. Logical Language Group .gy. lo samtci
+##   datnyvei pe la'o gy. Nim .gy. zi'e poi ponse lo klesi gi'e se ralte le vi se gunka .i ji'a
+##   stodi sinxa le lujvo liste noi lo cipra cu tcidu ke'a ta'i lo drata se ciska
+##   .i tcidu `gismu.txt` .e `cmavo.txt` ta'i lo nu `lojban-common` noi bakfu ne'i la'o gy. Debian
+##     .gy. ku'o cu punji le re datnyvei .i ciska `src/lojban_parser/lists/gismu.nim` .e `cmavo.nim`
+##     .i `build.nim` cu pilno le vi datnyvei
 ##
-##   Converter of `lojban_tagger/tools/lists.nim` imports `Source`, `readSource`, `KEY_LISTS`,
-##     `DIRECTORY_LISTS`, `DIGEST_GISMU` and `DIGEST_LUJVO` from here, so each has caller outside
-##     parser, and one pin serves both projects.
-##     Its private `field` is sibling of `field` here (II.9); fix to one is finished only when
-##       other is checked.
-##   Columns of `gismu.txt` and `cmavo.txt` are fixed; `entries.nim` tables them, and every
-##     range here is measured over every line of each file: no character of any line falls
-##     between two fields.
-##   Modules keep fields rules need alone (`entries.nim`), so each entry renders on one line,
-##     far under 100 columns; no field needs wrapping.
-##   Cmavo list keeps each line of one cmavo; line whose selma'o `*` marks, compound or phrase,
-##     is left out. Name of selma'o is read before subclass list writes, and name chapter 20
-##     does not give fails converter, naming line.
-##   `lujvo.txt` is rendered nowhere: lujvo list gives meaning, never validity, so it stays with
-##     `lojban_tagger`. Suites read installed file as outside text, pinned here by digest, and
-##     skip where it is absent or moved (Article IX.9).
-##   Each source is pinned by SHA-256: Debian moving list makes `lists` refuse and `head`
-##     report, never silent rewrite of committed list or silent read of other text.
-##   Rendering is deterministic, so `head` compares rendered text byte for byte with what is
-##     committed.
-##   Cost: digest is read by shelling out to `sha256sum`, which `system` declares; standard
-##     library holds no SHA-256.
+##   .i le galfi samtci pe `lojban_tagger/tools/lists.nim` cu cpacu `Source` .e `readSource` .e
+##     `KEY_LISTS` .e `DIRECTORY_LISTS` .e `DIGEST_GISMU` .e `DIGEST_LUJVO` le vi datnyvei .i se
+##     ki'u bo ro le xa se cpacu cu se pilno su'o samtci poi na pagbu le genturfa'i .i ji'a ro stodi
+##     sinxa cu se ciska pa roi gi'e se pilno le re se gunka
+##     .i le galfi samtci cu ponse pa sivni fancu po'u `field` noi fukpi `field` pe le vi datnyvei
+##       to `Article II.9` toi .i lo nu cikre pa le re fancu cu na mulno pu lo nu le drata fancu cu
+##       se cipra
+##   .i lo stuzi pe `gismu.txt` ge'u .e lo stuzi pe `cmavo.txt` cu stodi .i `entries.nim` cu ciska
+##     le stuzi ne'i lo lijgri liste .i ro kuspe pe le vi datnyvei cu se merli ne'i ro linji pe ro
+##     le re datnyvei .i le nu merli cu jarco lo du'u ro linji cu vasru no lerfu poi zvati lo jbini
+##     be re datni pagbu
+##   .i le samtci datnyvei cu ralte ro datni pagbu poi lo javni cu nitcu ke'a ku'o gi'e ralte no
+##     drata datni pagbu to `entries.nim` toi .i se ki'u bo ro liste cmima cu se ciska fi pa linji
+##     poi mutce tordu gi'e vasru me'i panono stuzi .i no datni pagbu cu nitcu lo nu se fendi fi
+##     su'o re linji
+##   .i le cmavo liste cu ralte ro linji poi vasru pa cmavo po'o .i ro linji poi lo selma'o pe ke'a
+##     cu se tcita `*` cu se vimcu .i ro le linji cu vasru pa cmavo gunma .a pa jufra pagbu .i le
+##     galfi samtci cu tcidu lo cmene be lo selma'o .i le cmene cu lidne lo klesi poi le liste cu
+##     ciska ke'a .i va'o lo nu `CLL 20` cu na dunda le cmene kei le galfi samtci cu fliba gi'e
+##     cusku le linji
+##   .i no samtci datnyvei cu se zbasu fi `lujvo.txt` .i ki'u bo le lujvo liste cu dunda lo smuni
+##     gi'e no roi dunda lo ka drani .i se ki'u bo le lujvo liste cu stali `lojban_tagger` .i lo
+##     cipra cu tcidu le datnyvei poi se punji ku'o ta'i lo drata se ciska .i le vi datnyvei cu
+##     stodi sinxa le datnyvei sepi'o lo sinxa namcu .i va'o lo nu le datnyvei cu na zvati gi'a
+##     cenba kei lo cipra cu na zukte to `Article IX.9` toi
+##   .i le vi datnyvei cu stodi sinxa ro krasi sepi'o la'o gy. SHA-256 .gy. .i lo nu la'o gy. Debian
+##     .gy. cu galfi pa liste kei cu rinka lo nu lo minde po'u `lists` cu to'e curmi kei .e lo nu lo
+##     minde po'u `head` cu cusku le nu galfi .i le nu galfi cu no roi rinka lo nu smaji ke rapli
+##     ciska le se ralte liste kei .a lo nu smaji tcidu lo drata se ciska
+##   .i lo nu ciska lo samtci datnyvei cu ro roi dunda lo mintu se ciska ra'i lo mintu krasi .i se
+##     ki'u bo lo minde po'u `head` cu karbi ro stuzi be lo se ciska le mintu stuzi be le se ralte
+##   .i jdima fa lo nu le vi datnyvei cu pilno `sha256sum` mu'i lo nu tcidu lo sinxa namcu .i lo
+##     minde po'u `system` cu cusku `sha256sum` .i lo fadni samtci pe la'o gy. Nim .gy. cu na vasru
+##     la'o gy. SHA-256 .gy.
 
 {.experimental: "strictFuncs".}
 
@@ -34,47 +48,67 @@ import ../src/lojban_parser/[entries, selmaho]
 
 
 type
-  Source* = object  ## Define one list file read: its bytes, and digest they hash to.
-    text*: string  ## Content with carriage returns removed.
-    digest*: string  ## SHA-256 of bytes as installed, lowercase hex.
+  Source* = object
+    ## pa liste datnyvei poi se tcidu .i le klesi cu vasru lo stuzi be le datnyvei be'o .e lo sinxa
+    ##   namcu be le stuzi
+    text*: string
+      ## lo se vasru be le datnyvei .i ro lerfu po'u la'o gy. carriage return .gy. cu se vimcu
+    digest*: string
+      ## la'o gy. SHA-256 .gy. pe lo stuzi poi se punji .i le sinxa namcu cu se ciska ta'i la'o gy.
+      ##   hex .gy. sepi'o lo cmalu lerfu
 
 
 const
-  KEY_LISTS* = "LOJBAN_PARSER_LISTS"  ## Environment name overriding where lists are read from.
-  DIRECTORY_LISTS* = "/usr/share/lojban"  ## Directory package `lojban-common` installs lists in.
+  KEY_LISTS* = "LOJBAN_PARSER_LISTS"
+    ## lo cmene be lo vanbi cenba poi basti lo datnyveiste poi le liste cu se tcidu fi ke'a
+  DIRECTORY_LISTS* = "/usr/share/lojban"
+    ## lo datnyveiste poi `lojban-common` noi bakfu ku'o cu punji le liste ke'a
   DIGEST_GISMU* = "f2fc4cff4f265ad02717d56733b4627ffa78c616db78dcaa44caab694e1dd5b7"
-    ## SHA-256 of `gismu.txt` of `lojban-common` 1.5+dfsg.1-4, header dated 9/26/94.
+    ## la'o gy. SHA-256 .gy. pe `gismu.txt` pe la'o gy. 1.5+dfsg.1-4 .gy. pe `lojban-common` .i lo
+    ##   stedu be le datnyvei cu cusku lo detri po'u zoi gy. 9/26/94 .gy.
   DIGEST_LUJVO* = "23c182f3534f4e33efbb4a3d92cd943427d5a6fdf3b061b07cd6bbc3d0e6b0cc"
-    ## SHA-256 of `lujvo.txt` of `lojban-common` 1.5+dfsg.1-4; outside text suites read.
+    ## la'o gy. SHA-256 .gy. pe `lujvo.txt` pe la'o gy. 1.5+dfsg.1-4 .gy. pe `lojban-common` .i lo
+    ##   cipra cu tcidu le datnyvei ta'i lo drata se ciska
   DIGEST_CMAVO* = "544414d61f3ff35dd2cf4e4f79f3c86bf9bb0568eb3403f57288057e16796402"
-    ## SHA-256 of `cmavo.txt` of `lojban-common` 1.5+dfsg.1-4, header dated 26 August 2002;
-    ##   outside text suites read.
-  PATH_GISMU* = "src/lojban_parser/lists/gismu.nim"  ## Module gismu list renders to.
-  PATH_CMAVO* = "src/lojban_parser/lists/cmavo.nim"  ## Module cmavo list renders to.
+    ## la'o gy. SHA-256 .gy. pe `cmavo.txt` pe la'o gy. 1.5+dfsg.1-4 .gy. pe `lojban-common` .i lo
+    ##   stedu be le datnyvei cu cusku lo detri po'u zoi gy. 26 August 2002 .gy. .i lo cipra cu
+    ##   tcidu le datnyvei ta'i lo drata se ciska
+  PATH_GISMU* = "src/lojban_parser/lists/gismu.nim"
+    ## lo datnyvei poi le gismu liste cu se ciska fi ke'a
+  PATH_CMAVO* = "src/lojban_parser/lists/cmavo.nim"
+    ## lo datnyvei poi le cmavo liste cu se ciska fi ke'a
   NOTICE_GISMU = [
-    "Derived from material Logical Language Group placed in public domain; facts of",
-    "  derivation stated here as group asks: columns cut to word and rafsi of `entries.nim`,",
-    "  carriage returns removed, spaces at field ends trimmed. Further information about",
-    "  Lojban: Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA,",
-    "  https://www.lojban.org/.",
+    ".i le vi datnyvei cu se zbasu fi lo datni poi la'o gy. Logical Language Group .gy. cu rinka",
+    "  lo nu ke'a zifre fi ro da .i le girzu cu cpedu lo nu lo se zbasu be fi le datni cu cusku",
+    "  lo tadji be lo nu zbasu .i le vi pinka cu cusku le tadji .i le minde cu ralte lo stuzi be",
+    "  lo valsi jo'u lo rafsi pe `entries.nim` gi'e vimcu ro drata stuzi .i le minde cu vimcu ji'a",
+    "  ro lerfu po'u la'o gy. carriage return .gy. ge'u .e ro kunti lerfu poi zvati lo fanmo be lo",
+    "  datni pagbu .i lo zmadu datni be la lojban. cu zvati",
+    "  `Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA` .e",
+    "  `https://www.lojban.org/`",
   ]
-    ## Lines gismu module carries, honouring request of public-domain notice.
+    ## lo linji poi le datnyvei pe le gismu liste cu vasru ke'a ja'i lo se cpedu be le notci be lo
+    ##   du'u le datni cu zifre fi ro da
   NOTICE_CMAVO = [
-    "Derived from material Logical Language Group placed in public domain; facts of",
-    "  derivation stated here as group asks: lines of one cmavo kept, columns cut to word and",
-    "  selma'o of `entries.nim`, period of pause and subclass of selma'o removed, carriage",
-    "  returns removed, spaces at field ends trimmed. Further information about Lojban:",
-    "  Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA,",
-    "  https://www.lojban.org/.",
+    ".i le vi datnyvei cu se zbasu fi lo datni poi la'o gy. Logical Language Group .gy. cu rinka",
+    "  lo nu ke'a zifre fi ro da .i le girzu cu cpedu lo nu lo se zbasu be fi le datni cu cusku lo",
+    "  tadji be lo nu zbasu .i le vi pinka cu cusku le tadji .i le minde cu ralte lo linji poi",
+    "  vasru pa cmavo po'o ku'o gi'e ralte lo stuzi be lo valsi jo'u lo selma'o pe `entries.nim`",
+    "  gi'e vimcu ro drata stuzi .i le minde cu vimcu ji'a lo lerfu po'u denpa bu ge'u .e lo klesi",
+    "  be lo selma'o be'o .e ro lerfu po'u la'o gy. carriage return .gy. ge'u .e ro kunti lerfu",
+    "  poi zvati lo fanmo be lo datni pagbu .i lo zmadu datni be la lojban. cu zvati",
+    "  `Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA` .e",
+    "  `https://www.lojban.org/`",
   ]
-    ## Lines cmavo module carries, honouring same request.
+    ## lo linji poi le datnyvei pe le cmavo liste cu vasru ke'a ja'i le mintu se cpedu
 
 
 
-#[ Reading ]#
+#[ lo nu tcidu ]#
 
 proc readSource*(name: string): Source =
-  ## Read list file `name` from directory environment names, else from package's directory.
+  ## tcidu lo liste datnyvei poi se cmene `name` ku'o fi lo datnyveiste poi lo vanbi cu cusku lo
+  ##   cmene be ke'a .i va'o lo drata tcidu le liste datnyvei fi lo datnyveiste pe le bakfu
   let
     directory = getEnv(KEY_LISTS, DIRECTORY_LISTS)
     path = directory / name
@@ -87,13 +121,14 @@ proc readSource*(name: string): Source =
 
 
 func field(line: string, first, last: int): string =
-  ## Read columns `first` .. `last`, counted from one as `entries.nim` tables them, trimmed.
+  ## tcidu lo stuzi po'u `first` bi'o `last` .i lo namcu pe le pamoi stuzi cu du li pa ja'i
+  ##   `entries.nim` .i lo kunti lerfu poi zvati lo fanmo be le se tcidu cu se vimcu
   if line.len < first: return ""
   line[first - 1 .. min(last, line.len) - 1].strip
 
 
 func toEntriesGismu*(text: string): seq[EntryGismu] =
-  ## Read every entry of `gismu.txt`, header line skipped.
+  ## tcidu ro liste cmima pe `gismu.txt` .i le stedu linji cu na se tcidu
   for line in text.splitLines[1 .. ^1]:
     if line.strip.len == 0: continue
     var rafsi: seq[string]
@@ -104,18 +139,20 @@ func toEntriesGismu*(text: string): seq[EntryGismu] =
 
 
 func nameSelmaho*(text: string): string =
-  ## Read name of selma'o, before any mark or subclass list writes after it: `UI` of `UI3a`.
+  ## tcidu lo cmene be lo selma'o .i le cmene cu lidne ro sinxa .e ro klesi vu'o poi le liste cu
+  ##   ciska ke'a ba le cmene .i mupli fa `UI` pe `UI3a`
   for letter in text:
     if letter notin {'A' .. 'Z', 'h'}: break
     result.add letter
 
 
 func toEntriesCmavo*(text: string): seq[EntryCmavo] =
-  ## Read every line of `cmavo.txt` that holds one cmavo, header line skipped.
+  ## tcidu ro linji pe `cmavo.txt` zi'e poi vasru pa cmavo po'o .i le stedu linji cu na se tcidu
   for line in text.splitLines[1 .. ^1]:
     if line.strip.len == 0: continue
     let column = line.field(12, 20)
-    if '*' in column: continue  # Compound or phrase: cmavo it joins stand alone.
+    # lo cmavo gunma .a lo jufra pagbu .i ro cmavo pe le gunma cu ponse lo linji pe vo'a
+    if '*' in column: continue
     let
       word = line.field(1, 11).replace(".", "")
       found = column.nameSelmaho.toSelmaho
@@ -125,21 +162,27 @@ func toEntriesCmavo*(text: string): seq[EntryCmavo] =
 
 
 
-#[ Rendering ]#
+#[ lo nu ciska ]#
 
 func toLiteral(text: string): string =
-  ## Render text as Nim string literal; words and rafsi hold letters and apostrophe alone.
+  ## ciska lo se ciska ta'i pa se sitna lerpoi pe la'o gy. Nim .gy. .i lo valsi .e lo rafsi cu vasru
+  ##   lo lojbo lerfu jo'u lo lerfu po'u zoi gy. ' .gy. gi'e vasru no drata lerfu
   "\"" & text & "\""
 
 
 func toModuleGismu*(entries: openArray[EntryGismu], digest: string): string =
-  ## Render entries of gismu list as committed module text, one entry to line.
+  ## ciska lo liste cmima pe le gismu liste ta'i lo se ciska be fi le datnyvei poi se ralte .i ro
+  ##   liste cmima cu zvati pa linji
   var lines = @[
-    "## Hold gismu list of Logical Language Group as typed entries, one per line of list.",
-    "##   Written by `nim r tools/build.nim lists` from `gismu.txt` of Debian",
-    "##   package `lojban-common`, SHA-256 `" & digest[0 .. 31] & "`",
-    "##   `" & digest[32 .. ^1] & "`; never edit by hand, run verb again.",
-    "##   Entries keep order of list: gismu and cmavo carrying rafsi, alphabetically.",
+    "## ralte le gismu liste pe la'o gy. Logical Language Group .gy. ta'i lo liste cmima poi",
+    "##   ponse lo klesi .i ro linji pe le liste cu se sinxa pa liste cmima",
+    "##   .i lo minde po'u `nim r tools/build.nim lists` cu ciska le vi datnyvei ra'i `gismu.txt`",
+    "##   pe `lojban-common` noi bakfu ne'i la'o gy. Debian .gy. .i lo sinxa namcu be `gismu.txt`",
+    "##   cu du zoi ky. SHA-256 `" & digest[0 .. 31] & "`",
+    "##   `" & digest[32 .. ^1] & "`; .ky. .i lo nu xance galfi le vi datnyvei cu na drani .i lo",
+    "##   nu galfi le vi datnyvei cu nitcu lo nu rapli pilno le minde",
+    "##   .i le liste cmima cu ralte le porsi pe le liste .i le liste cu porsi lo gismu jo'u lo",
+    "##   cmavo poi ponse lo rafsi ku'o fi lo porsi be lo lerfu",
   ]
   for line in NOTICE_GISMU: lines.add "##   " & line
   lines.add [
@@ -157,18 +200,23 @@ func toModuleGismu*(entries: openArray[EntryGismu], digest: string): string =
     lines.add "  EntryGismu(word: " & toLiteral(entry.word) & ", rafsi: @[" & rafsi.join(", ") &
         "]),"
   lines.add "]"
-  lines.add "  ## Every entry of gismu list, in its order."
+  lines.add "  ## ro liste cmima pe le gismu liste ta'i le liste porsi"
   lines.join("\n") & "\n"
 
 
 func toModuleCmavo*(entries: openArray[EntryCmavo], digest: string): string =
-  ## Render entries of cmavo list as committed module text, one entry to line.
+  ## ciska lo liste cmima pe le cmavo liste ta'i lo se ciska be fi le datnyvei poi se ralte .i ro
+  ##   liste cmima cu zvati pa linji
   var lines = @[
-    "## Hold cmavo list of Logical Language Group as typed entries, one for each cmavo of list.",
-    "##   Written by `nim r tools/build.nim lists` from `cmavo.txt` of Debian",
-    "##   package `lojban-common`, SHA-256 `" & digest[0 .. 31] & "`",
-    "##   `" & digest[32 .. ^1] & "`; never edit by hand, run verb again.",
-    "##   Entries keep order of list: cmavo alphabetically, period of pause aside.",
+    "## ralte le cmavo liste pe la'o gy. Logical Language Group .gy. ta'i lo liste cmima poi",
+    "##   ponse lo klesi .i ro cmavo pe le liste cu se sinxa pa liste cmima",
+    "##   .i lo minde po'u `nim r tools/build.nim lists` cu ciska le vi datnyvei ra'i `cmavo.txt`",
+    "##   pe `lojban-common` noi bakfu ne'i la'o gy. Debian .gy. .i lo sinxa namcu be `cmavo.txt`",
+    "##   cu du zoi ky. SHA-256 `" & digest[0 .. 31] & "`",
+    "##   `" & digest[32 .. ^1] & "`; .ky. .i lo nu xance galfi le vi datnyvei cu na drani .i lo",
+    "##   nu galfi le vi datnyvei cu nitcu lo nu rapli pilno le minde",
+    "##   .i le liste cmima cu ralte le porsi pe le liste .i le liste cu porsi lo cmavo fi lo",
+    "##   porsi be lo lerfu poi na du denpa bu",
   ]
   for line in NOTICE_CMAVO: lines.add "##   " & line
   lines.add [
@@ -184,5 +232,5 @@ func toModuleCmavo*(entries: openArray[EntryCmavo], digest: string): string =
     lines.add "  EntryCmavo(word: " & toLiteral(entry.word) & ", selmaho: Selmaho." &
         symbolName(entry.selmaho) & "),"
   lines.add "]"
-  lines.add "  ## Every cmavo of cmavo list that one line holds, in its order."
+  lines.add "  ## ro cmavo poi lo linji pe le liste cu vasru ke'a po'o ku'o ta'i le liste porsi"
   lines.join("\n") & "\n"

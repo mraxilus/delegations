@@ -1,22 +1,37 @@
-## Fetch translations into lojban that suites read where present, pinned by digest and kept out
-##   of repository, and read their paragraphs; `build.nim` runs it.
-##   Ruling `D3 a` of #819: each translation is pinned and kept out of repository, since no
-##     translator stated release. Ruling `D5 c`: suites read Alice and Oz where pinned page is
-##     present, and runner, which has none, skips them.
-##   Verb fetches each page with `curl` into `DIRECTORY_TRANSLATIONS`, which ignore file keeps out
-##     of every commit, and checks digest against pin; page that differs is named, never read.
-##     Digest is of page with each `script` element cut, as `cll.nim` cuts it: server of Alice
-##       writes script that differs at each request, which text never holds.
-##   Paragraph is text of one `p` element: tags dropped, entities decoded, white space collapsed.
-##   Reading drops marks CLL does not define: guillemets, dashes, parentheses, colon, asterisk,
-##     marks of question and exclamation, quote, and accent or breve over vowel. Capitals stay,
-##     since CLL 3.9 defines them as stress.
-##     Cost: accent of Oz marks stress, which reading drops, so brivla reads as stressed where
-##       its form puts stress; CLL 3.9 calls more stress than that secondary, and gives it no
-##       written mark.
-##   Page of Oz holds Windows-1252, though its header declares UTF-8; reader converts it.
-##   Cost: few named entities are decoded, those pages use; other one stays, and stream refuses
-##     its `&`, naming it.
+## cpacu lo xe fanva be fi la lojban. .i lo cipra cu tcidu le xe fanva va'o lo nu le xe fanva cu
+##   zvati .i ro xe fanva cu ponse lo stodi sinxa gi'e na se ralte la'o gy. delegations .gy. .i ji'a
+##   tcidu lo ju'agri pe le xe fanva .i `build.nim` cu pilno le vi datnyvei
+##   .i la'o gy. Architect .gy. cu jdice `D3 a` bu'u `#819` .i ro xe fanva cu ponse lo stodi sinxa
+##     gi'e na se ralte la'o gy. delegations .gy. .i ki'u bo no fanva cu cusku lo nu curmi .i la'o
+##     gy. Architect .gy. cu jdice `D5 c` .i lo cipra cu tcidu la'o gy. Alice .gy. .e la'o gy. Oz
+##     .gy. va'o lo nu le stodi papri cu zvati .i le cipra skami cu vasru no papri .i se ki'u bo le
+##     cipra skami cu na tcidu le re xe fanva
+##   .i lo minde cu cpacu ro papri sepi'o `curl` gi'e punji le papri fi `DIRECTORY_TRANSLATIONS` .i
+##     `.gitignore` cu rinka lo nu no nu ralte cu vasru `DIRECTORY_TRANSLATIONS` .i le minde cu
+##     karbi lo sinxa namcu be ro papri le stodi sinxa .i va'o lo nu pa papri cu frica le stodi
+##     sinxa kei le minde cu cusku lo cmene be le papri gi'e no roi tcidu le papri
+##     .i le sinxa namcu cu sinxa le papri ba lo nu ro jgena po'u `script` cu se vimcu ta'i lo nu
+##       `cll.nim` cu vimcu le jgena .i ki'u bo le sabji pe la'o gy. Alice .gy. cu ciska pa jgena
+##       po'u `script` zi'e poi frica ca ro nu cpedu .i le se ciska pe le xe fanva no roi vasru lo
+##       jgena po'u `script`
+##   .i lo ju'agri cu du lo se ciska pe pa jgena po'u `p` .i ro tcita cu se vimcu .i ro sinxa pe
+##     la'o gy. HTML .gy. zi'e poi `&` cu krasi ke'a cu se basti lo lerfu poi le sinxa cu sinxa ke'a
+##     .i ro porsi be lo kunti lerfu cu binxo pa kunti lerfu
+##   .i lo nu tcidu cu vimcu ro sinxa poi la'o gy. CLL .gy. na skicu ke'a .i le sinxa cu du zoi gy.
+##     « » .gy. jo'u zoi gy. – — .gy. jo'u lo cukla grile'u jo'u zoi gy. : .gy. jo'u lo tarci
+##     lerfu .i ji'a le sinxa cu du zoi gy. ? .gy. jo'u zoi gy. ! .gy. jo'u lo sitna lerfu jo'u lo
+##     sinxa poi gapru pa karsna .i lo sinxa poi gapru pa karsna cu du la'o gy. accent .gy. .a la'o
+##     gy. breve .gy. .i lo barda lerfu cu stali .i ki'u bo `CLL 3.9` cu skicu lo barda lerfu ta'i
+##     lo sinxa be lo nu basna
+##     .i jdima fa lo nu la'o gy. accent .gy. pe la'o gy. Oz .gy. cu sinxa lo nu basna .i lo nu
+##       tcidu cu vimcu la'o gy. accent .gy. .i se ki'u bo ro brivla cu se tcidu ta'i lo nu basna
+##       kei poi lo tarmi be le brivla cu dunda ke'a .i `CLL 3.9` cu skicu ro drata nu basna ta'i lo
+##       nu na ralju .i ro le drata nu basna cu te dunda no se ciska sinxa
+##   .i le papri pe la'o gy. Oz .gy. cu se ciska ja'i la'o gy. Windows-1252 .gy. .i ku'i lo stedu be
+##     le papri cu cusku la'o gy. UTF-8 .gy. .i le tcidu cu galfi le papri
+##   .i jdima fa lo nu le vi datnyvei cu basti so'u sinxa poi vasru lo cmene .i le so'u sinxa cu du
+##     le sinxa poi le papri cu pilno ke'a .i lo drata sinxa poi vasru lo cmene cu stali .i le porsi
+##     be lo valsi cu to'e curmi lo lerfu po'u `&` pe le sinxa gi'e cusku le sinxa
 
 {.experimental: "strictFuncs".}
 
@@ -26,16 +41,22 @@ from std/unicode import `$`, Rune
 import ./cll
 
 
-type Translation* = object  ## Define one translation suites read where its pinned page is present.
-  name*: string  ## Name of page under `DIRECTORY_TRANSLATIONS`, without extension.
-  title*: string  ## Title of work, and its translator.
-  url*: string  ## Address page is fetched from.
-  digest*: string  ## SHA-256 of page fetched 2026-11-06, each `script` element cut.
-  encoding*: string  ## Encoding of bytes of page.
+type Translation* = object
+  ## pa xe fanva poi lo cipra cu tcidu ke'a va'o lo nu lo stodi papri be ke'a cu zvati
+  name*: string
+    ## lo cmene be le papri ne'i `DIRECTORY_TRANSLATIONS` .i le cmene cu claxu lo fanmo pagbu po'u
+    ##   `.html`
+  title*: string  ## lo cmene be lo se finti be'o .e le fanva be le se finti
+  url*: string  ## lo judri poi le papri cu se cpacu fi ke'a
+  digest*: string
+    ## la'o gy. SHA-256 .gy. pe le papri poi se cpacu de'i `2026-11-06` .i ro jgena po'u `script` cu
+    ##   se vimcu
+  encoding*: string  ## le tadji be lo nu le stuzi pe le papri cu sinxa lo lerfu
 
 
 const
-  DIRECTORY_TRANSLATIONS* = "build/translations"  ## Directory, under project, pages stand in.
+  DIRECTORY_TRANSLATIONS* = "build/translations"
+    ## lo datnyveiste poi zvati ne'i le vi se gunka gi'e vasru le papri
   TRANSLATIONS* = [
     Translation(
       name: "alis",
@@ -52,12 +73,14 @@ const
       encoding: "CP1252",
     ),
   ]
-    ## Translations of Alice and Oz, as `D5 c` names them.
+    ## lo xe fanva be la'o gy. Alice .gy. .e la'o gy. Oz .gy. be'o poi `D5 c` cu cusku lo cmene be
+    ##   ke'a
   MARKS_DROPPED = [
     "«", "»", "—", "–", "\u0096", "\u0097", "-", "(", ")", ":", "*", "!", "?",
     "\"", "¬",
   ]
-    ## Marks CLL does not define, which reading drops: guillemets, dashes, and other punctuation.
+    ## lo sinxa poi la'o gy. CLL .gy. na skicu ke'a zi'e noi lo nu tcidu cu vimcu ke'a .i le sinxa
+    ##   cu du zoi gy. « » .gy. jo'u zoi gy. – — .gy. jo'u lo drata jufra sinxa
   VOWELS_MARKED = [
     ("à", "a"), ("á", "a"), ("è", "e"), ("é", "e"), ("ì", "i"),
     ("í", "i"), ("ò", "o"), ("ó", "o"), ("ù", "u"), ("ú", "u"),
@@ -65,19 +88,22 @@ const
     ("É", "E"), ("Ì", "I"), ("Í", "I"), ("Ò", "O"), ("Ó", "O"),
     ("Ù", "U"), ("Ú", "U"), ("Ŭ", "U"), ("Ĭ", "I"),
   ]
-    ## Vowel with accent or breve, with vowel reading keeps; case stays.
+    ## lo karsna poi se gapru la'o gy. accent .gy. .a la'o gy. breve .gy. ku'o jo'u lo karsna poi lo
+    ##   nu tcidu cu ralte ke'a .i lo ka barda lerfu cu stali
   ENTITIES_NAMED = [
     ("nbsp", " "), ("amp", "&"), ("lt", "<"), ("gt", ">"), ("quot", "\""), ("apos", "'"),
     ("agrave", "à"),
   ]
-    ## Named entities pages use, each with text it stands for.
+    ## lo sinxa poi vasru lo cmene gi'e se pilno le papri .i ro le sinxa cu kansa lo se ciska poi le
+    ##   sinxa cu sinxa ke'a
 
 
 
-#[ Reading ]#
+#[ lo nu tcidu ]#
 
 func toEntitiesDecoded(text: string): string =
-  ## Decode each named entity `ENTITIES_NAMED` holds, and each numeric one.
+  ## galfi ro sinxa poi `ENTITIES_NAMED` cu vasru ke'a ku'o .e ro sinxa poi vasru lo namcu ku'o lo
+  ##   lerfu poi le sinxa cu sinxa ke'a
   var at = 0
   while at < text.len:
     let closing = (if text[at] == '&': text.find(';', at) else: -1)
@@ -101,7 +127,9 @@ func toEntitiesDecoded(text: string): string =
 
 
 func toReading(text: string): string =
-  ## Drop marks CLL does not define, keep each vowel under its accent or breve, collapse space.
+  ## vimcu ro sinxa poi la'o gy. CLL .gy. na skicu ke'a .i ralte ro karsna poi lo sinxa po'u la'o
+  ##   gy. accent .gy. .a la'o gy. breve .gy. ge'u cu gapru ke'a .i ro porsi be lo kunti lerfu cu
+  ##   binxo pa kunti lerfu
   var kept = text
   for mark in MARKS_DROPPED: kept = kept.replace(mark, " ")
   for (marked, vowel) in VOWELS_MARKED: kept = kept.replace(marked, vowel)
@@ -109,7 +137,8 @@ func toReading(text: string): string =
 
 
 func paragraphs*(page: string): seq[string] =
-  ## Read text of each `p` element of page, as reading keeps it; empty paragraph left out.
+  ## tcidu lo se ciska pe ro jgena po'u `p` zi'e pe le papri ta'i lo nu lo nu tcidu cu ralte le se
+  ##   ciska .i lo kunti ju'agri cu se vimcu
   let lower = page.toLowerAscii
   var at = 0
   while true:
@@ -137,14 +166,16 @@ func paragraphs*(page: string): seq[string] =
 
 
 proc readDigest(path: string): string =
-  ## Hash page at `path`, each `script` element cut, by `sha256sum`.
+  ## zbasu lo sinxa namcu be le papri poi zvati `path` ku'o sepi'o `sha256sum` .i ro jgena po'u
+  ##   `script` cu se vimcu pu lo nu zbasu
   let (output, code) = execCmdEx("sha256sum", input = readFile(path).toPageXml)
   if code != 0: quit "Digest could not be read; got `" & output.strip & "`.", 1
   output.splitWhitespace[0]
 
 
 proc readTranslation*(translation: Translation, root: string): Option[seq[string]] =
-  ## Read paragraphs of translation under `root`; none where page is absent or moved from pin.
+  ## tcidu lo ju'agri pe le xe fanva poi cnita `root` .i va'o lo nu le papri cu na zvati gi'a na
+  ##   mapti le stodi sinxa kei le fancu cu dunda `none`
   let path = root / DIRECTORY_TRANSLATIONS / translation.name & ".html"
   if not fileExists(path) or path.readDigest != translation.digest: return none(seq[string])
   let page =
@@ -154,7 +185,8 @@ proc readTranslation*(translation: Translation, root: string): Option[seq[string
 
 
 proc fetchTranslation*(translation: Translation, root: string): string =
-  ## Fetch page of translation into `DIRECTORY_TRANSLATIONS` under `root`, and give its digest.
+  ## cpacu le papri pe le xe fanva gi'e punji le papri fi `DIRECTORY_TRANSLATIONS` poi cnita `root`
+  ##   .i ji'a dunda lo sinxa namcu be le papri
   let path = root / DIRECTORY_TRANSLATIONS / translation.name & ".html"
   createDir(path.parentDir)
   let (output, code) = execCmdEx(

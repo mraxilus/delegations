@@ -1,13 +1,20 @@
-## Hold gismu list of Logical Language Group as typed entries, one per line of list.
-##   Written by `nim r tools/build.nim lists` from `gismu.txt` of Debian
-##   package `lojban-common`, SHA-256 `f2fc4cff4f265ad02717d56733b4627f`
-##   `fa78c616db78dcaa44caab694e1dd5b7`; never edit by hand, run verb again.
-##   Entries keep order of list: gismu and cmavo carrying rafsi, alphabetically.
-##   Derived from material Logical Language Group placed in public domain; facts of
-##     derivation stated here as group asks: columns cut to word and rafsi of `entries.nim`,
-##     carriage returns removed, spaces at field ends trimmed. Further information about
-##     Lojban: Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA,
-##     https://www.lojban.org/.
+## ralte le gismu liste pe la'o gy. Logical Language Group .gy. ta'i lo liste cmima poi
+##   ponse lo klesi .i ro linji pe le liste cu se sinxa pa liste cmima
+##   .i lo minde po'u `nim r tools/build.nim lists` cu ciska le vi datnyvei ra'i `gismu.txt`
+##   pe `lojban-common` noi bakfu ne'i la'o gy. Debian .gy. .i lo sinxa namcu be `gismu.txt`
+##   cu du zoi ky. SHA-256 `f2fc4cff4f265ad02717d56733b4627f`
+##   `fa78c616db78dcaa44caab694e1dd5b7`; .ky. .i lo nu xance galfi le vi datnyvei cu na drani .i lo
+##   nu galfi le vi datnyvei cu nitcu lo nu rapli pilno le minde
+##   .i le liste cmima cu ralte le porsi pe le liste .i le liste cu porsi lo gismu jo'u lo
+##   cmavo poi ponse lo rafsi ku'o fi lo porsi be lo lerfu
+##   .i le vi datnyvei cu se zbasu fi lo datni poi la'o gy. Logical Language Group .gy. cu rinka
+##     lo nu ke'a zifre fi ro da .i le girzu cu cpedu lo nu lo se zbasu be fi le datni cu cusku
+##     lo tadji be lo nu zbasu .i le vi pinka cu cusku le tadji .i le minde cu ralte lo stuzi be
+##     lo valsi jo'u lo rafsi pe `entries.nim` gi'e vimcu ro drata stuzi .i le minde cu vimcu ji'a
+##     ro lerfu po'u la'o gy. carriage return .gy. ge'u .e ro kunti lerfu poi zvati lo fanmo be lo
+##     datni pagbu .i lo zmadu datni be la lojban. cu zvati
+##     `Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA` .e
+##     `https://www.lojban.org/`
 
 {.experimental: "strictFuncs".}
 
@@ -1452,4 +1459,4 @@ const LIST_GISMU* = [
   EntryGismu(word: "zutse", rafsi: @["zut", "tse"]),
   EntryGismu(word: "zvati", rafsi: @["zva"]),
 ]
-  ## Every entry of gismu list, in its order.
+  ## ro liste cmima pe le gismu liste ta'i le liste porsi
