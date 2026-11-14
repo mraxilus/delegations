@@ -282,8 +282,8 @@ gets read first.
 as `[the ledger fix (#456)](https://github.com/mraxilus/delegations/pull/456)`. A bare number
 gives a reader who did not watch no context, and a name alone gives no way to open the item.
 Give this long form at the first mention in a message. After it, the number alone, as `#456`,
-names the same item. A row of the sign-off names its item in its own cells, so its `Where`
-cell holds the number alone. Write each link inline, because Claude Code shows a reference link
+names the same item. A row of the sign-off names its item in its own cells, so the number alone
+may stand in its second cell. Write each link inline, because Claude Code shows a reference link
 as raw text where its address stands below it.
 
 **Paraphrase the Architect in a comment, an issue or a pull request, and never quote.** Say in
@@ -338,8 +338,14 @@ The skill `sign-off` points here.
 **Sign off when you stop, and when a pull request goes ready.** You stop when nothing is left,
 or when nothing moves until someone else acts. A pull request that you mark ready waits on the
 Architect, so that turn signs off as `waiting`, even while other work goes on. Each run and
-subagent that has not reported is then a row of the table. The message that ends that turn, and
-the message of a handover, closes with one block, `## Sign-off`. Nothing follows it.
+subagent that has not reported is then a row. The message that ends that turn, and the message
+of a handover, closes with one block, `## Sign-off`. Nothing follows it.
+
+**A sign-off covers all the work since the last message of the Architect.** So the latest
+sign-off replaces each earlier one, and it is enough on its own. A wake, such as the
+end of a run or the report of a subagent, is no message of the Architect. The rows of a pull
+request stay until it merges or closes, whatever the Architect writes in between. Work outside a
+pull request starts again after each message of the Architect.
 
 **Read the open issues on your role in the turn that signs off.** A request can arrive while you
 work, and the reads at the start see none of it. The coordinator reads the `architect` label
@@ -378,17 +384,18 @@ line twice.
 The sign-off serves three readers. The Architect reads it first, and set the order of its parts.
 The block says who the delegate is and what it works on, then what happened, then where it
 stands and what waits on the Architect. The next delegate, and the same delegate after a
-compaction, read the same block. Its parts come in this order:
+compaction, read the same block. The `stop` hook reads the shape of each sign-off, whatever its
+turn did. Its parts come in this order:
 
-1. **Role.** The role string, then the branch.
+1. **Role.** The role string, then the word `branch` and the last part of the branch.
 2. **Context.** At most three sentences in the third person. They say what the branch is for,
    and what the Architect asked last.
-3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
+3. **The work.** A rule line, then one group for each pull request, then the table "Outside a
+   pull request.", as The table says.
 4. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
    by number, and decisions as `D1`.
-5. **State.** One word, then the short head of the branch, `pushed` or `not pushed`. Then the
-   pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
-   `red` or `pending`. The word is one of these:
+5. **State.** One word, then the short head of the branch, then `pushed` or `not pushed`. The
+   bold line of each pull request gives its state and its run. The word is one of these:
    - `blocked`: nothing moves until the Architect decides.
    - `waiting`: nothing moves until another delegate or an outside party acts.
    - `done`: nothing is left.
@@ -409,9 +416,9 @@ Write each decision so that the Architect can decide it from the block alone.
 - Class: blocks this delegate
 - Where: [names in the tests (#310)](https://github.com/mraxilus/delegations/issues/310)
 - Options:
-  - a. Keep: the tests stay as they are, and the root glossary gains two names.
-  - b. Rename: twelve suites change, and the gap list waits one turn.
-- Recommends: a, because both names are the names of the authority.
+  - **a. Keep:** the tests stay as they are, and the root glossary gains two names.
+  - **b. Rename:** twelve suites change, and the gap list waits one turn.
+- Recommends: **a**, because both names are the names of the authority.
 - Delay costs: [the gap list (#331)](https://github.com/mraxilus/delegations/pull/331) waits.
 ```
 
@@ -425,10 +432,11 @@ Write each decision so that the Architect can decide it from the block alone.
   exists, because a ruling in chat alone is lost. Label it `architect` the moment a decision
   waits there (`CONTRIBUTOR.md`, Boundaries). Post the ruling there, and take `architect` off in
   the same step, unless another decision still waits there.
-- **Options** are two to four. A label is at most three words. Each consequence is one sentence
-  that says what happens. Where no option fits, the last one is `Other: say which`. A `fact`
-  has no options, no recommendation and no delay cost.
-- **Recommends** names one option, and why, in one sentence.
+- **Options** are two to four. A label is at most three words, and it stands in bold with its
+  letter, as `**a. Keep:**`. Each consequence is one sentence that says what happens. Where no
+  option fits, the last one is `Other: say which`. A `fact` has no options, no recommendation
+  and no delay cost.
+- **Recommends** names one option by its letter in bold, and why, in one sentence.
 - **Delay costs** says what waits while nobody decides.
 
 **A ruling is recorded before it is acted on.** A bare letter answers the only open decision.
@@ -465,63 +473,103 @@ close each turn as The sign-off says.
 
 #### The table
 
-Rows are numbered from 1 and sorted by state, and a state never returns once the next one
-begins.
+The work opens with a rule line, `---`. Each pull request then takes a group: a bold line, and a
+table under it. The bold line links the pull request and gives its state and the run on its
+head, as `draft, run 1052 green`. Then one sentence says what the pull request does. The state
+is `draft`, `ready`, `merged` or `closed`.
 
-- ☑️ done earlier, nobody acts. A row stays only while it is a carried item or another row
-  names it.
-- ✅ done this turn, nobody acts. The last cell is never empty.
-- ⚠️ another delegate or an outside party acts. The last cell opens with that role string, or
+Work outside a pull request takes the last table, under the bold line
+`**Outside a pull request.**`. Each sign-off holds that table, even where the ➖ row is its only
+row.
+
+Each table has the two columns `Item` and `Evidence, or who acts`, because a phone shows the
+first column alone. The first cell opens with the state, then the number of the row and a claim
+of about six words, as `✅ 3. A test covers each rafsi form`. The second cell holds the evidence,
+or who acts. Rows are numbered from 1 across the tables. Inside each table they sort by state,
+and a state never returns once the next one begins:
+
+- ☑️ done, as an earlier sign-off showed. Nobody acts, and the second cell keeps its evidence.
+- ✅ done since the last sign-off. Nobody acts, and the second cell gives the evidence.
+- ⚠️ another delegate or an outside party acts. The second cell opens with that role string, or
   with `outside`, then says on what.
-- ⏸️ the Architect acts. The last cell names the decision, as `D1`.
+- ⏸️ the Architect acts. The second cell names the decision, as `D1`.
 - ⬜ up next, this delegate acts.
+- ➖ a carried rule that concerns no item of the sign-off. One row names each such rule.
 
-A carried item is a row in the state it is in, tagged `(carried N)`. A carried item that does
-not apply is not a row, and goes in the pull request body under Record. An item is a clause a
-reader can verify. No cell holds a semicolon, and an empty cell says there is nothing to say.
-Twelve rows is the ceiling, four of them ☑️. Third person and active voice throughout, and the
-rules of this guide over every sentence. The `Stop` hook holds the shape under Claude Code,
-where it holds this repository alone, and reading holds it elsewhere.
+**Each row of an earlier sign-off since the last message of the Architect comes back.** Its
+words may change and its state may move on, but it never moves to another group. The group of a
+pull request comes back until the pull request merges, or until one sign-off shows it `closed`.
+It comes back past a message of the Architect too, and so does each of its rows.
+
+The `stop` hook counts the items of each group against the last sign-off that it passed. For the
+table "Outside a pull request.", that sign-off is one since the last message of the Architect.
+The hook reads a merge from the subjects of `origin/main`. So fetch `main` before you drop the
+group of a merged pull request.
+
+**A carried rule stands as a row beside the item that it concerns**, with its tag in the second
+cell, as `carried 5` or `carried 3 and 4`. A rule that concerns one pull request stands in its
+group, and is not ➖ for another one. The one ➖ row names each rule that concerns no item, in
+words, with its tags and the reason. So each sign-off names all six rules (`CONTRIBUTOR.md`,
+Carry the unchecked list in the open).
+
+**Twelve rows is the ceiling.** Past it, fold the done rows of one pull request into one row
+that names its first and last item, as `☑️ 1–5. The search, its record and its tests`. A fold
+counts as each item that it names. An item is a clause a reader can verify. No cell holds a
+semicolon. Third person and active voice throughout, and the rules of this guide over every
+sentence.
+
+The `Stop` hook holds the shape under Claude Code, where it holds this repository alone, and
+reading holds it elsewhere.
 
 ```md
 ## Sign-off
 
-**Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list`
+**Role:** contributor/bangu/lojban_tagger, branch `lujvo-search`
 
-**Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
-the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
-of each algebra.
+**Context:** This branch lets `tagger find` read a lujvo that the lujvo list lacks, through its
+rafsi. The Architect asked for that search last.
 
-| # | State | Item | Where | Evidence, or who acts |
-| --- | --- | --- | --- | --- |
-| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | #331 | |
-| 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
-| 3 | ✅ | A worked example shows the gap rows (carried 5) | #331, Verification | command, output |
-| 4 | ⚠️ | `koch drive` red in pga_visualiser | #332 | contributor/ronri/pga_visualiser, fix |
-| 5 | ⏸️ | Names in the tests (carried 2) | #310 | D1 |
-| 6 | ⬜ | cga5d baseline measurement, then the pull request marks ready | `tests/` | this delegate |
+---
 
-**Summary:** The gap list is done and green, and its pull request waits only on D1. Row 4
-belongs to pga_visualiser and blocks nothing here.
+**[Lujvo search (#912)](https://github.com/mraxilus/delegations/pull/912), draft, run 1052 green.**
+`tagger find` reads a lujvo that the lujvo list lacks, through its rafsi, and a test covers each
+rafsi form.
 
-**State:** blocked, at `3f2a9c1`, pushed, #331 draft, run 412 green
+| Item | Evidence, or who acts |
+| --- | --- |
+| ☑️ 1. The search reads lujvo by rafsi | `a1b2c3d`, run 1041 green |
+| ☑️ 2. The record covers the split | `c3d4e5f`, run 1041 green |
+| ✅ 3. A test covers each rafsi form | `e5f6a7b`, run 1052 green |
+| ✅ 4. The change is shown | carried 5, in the pull request body |
+| ⏸️ 5. A term for unlisted lujvo | carried 6, D1 |
+| ⬜ 6. The ruled term, then ready | this delegate |
+
+**Outside a pull request.**
+
+| Item | Evidence, or who acts |
+| --- | --- |
+| ☑️ 7. The answered issue is closed | carried 1, #904 |
+| ✅ 8. The curator's request is answered | carried 2, #917 |
+| ⚠️ 9. The parser lacks some rafsi | contributor/bangu/lojban_parser, on #915 |
+| ➖ 10. Not needed: draft rule, page link | carried 3 and 4: no push after ready, no page |
+
+**Summary:** The search, its record and the test that the curator asked for are done and green.
+The pull request waits only on D1. Row 9 belongs to lojban_parser and blocks nothing here.
+
+**State:** blocked, at `e5f6a7b`, pushed
 
 **Decisions:**
 
-**D1.** Keep the names `rga4d` and `cga5d` in the tests?
+**D1.** Take `unlisted lujvo` as the term for a lujvo that the lujvo list lacks?
 - Class: blocks this delegate
-- Where: #310
+- Where: [glossary term (#913)](https://github.com/mraxilus/delegations/issues/913)
 - Options:
-  - a. Keep: the tests stay as they are, and the root glossary gains two names.
-  - b. Rename: twelve suites change, and the gap list waits one turn.
-- Recommends: a, because both names are the names of the authority.
-- Delay costs: #331 stays a draft.
+  - **a. Unlisted lujvo:** the glossary gains one term, and the names in the code read `unlisted`.
+  - **b. Lujvo alone:** the term `lujvo` covers both kinds, and the output marks no difference.
+- Recommends: **a**, because the README already names the lujvo list, so the word reads at once.
+- Delay costs: #912 stays a draft.
 
-**D2.** The cga5d baseline needs 16 GB, and the runner has 7 GB.
-- Class: fact
-- Where: #331
-
-**Next step:** Architect: rule on D1 in #310.
+**Next step:** Architect: rule on D1 in #913.
 ```
 
 ## Provenance guide

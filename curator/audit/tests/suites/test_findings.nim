@@ -108,7 +108,7 @@ suite "Findings":
           checkImports("a.nim", @["import std/[strutils, os]", "import ./a", "import std/math"]) &
           checkBindings("a.nim", @["proc f() =", "  let a = 1", "  let b = 2"]) &
           checkReturns("a.nim", @["proc f(): int =", "  return result"]) &
-          checkKeysStub("tests/test_a.nim", stub)
+          checkKeysStub("tests/test_a.nim", stub, "a.nimble")
     check found.toFindings.mapIt(it.message) == @[
       "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
       "line 3 (X.1); got lines `2` to `4`.",  # fence warning

@@ -114,6 +114,19 @@ suite "Layout":
     check (requiring & @[entry(DIRECTORY_ALPHA & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok
 
 
+  test "nimble file of path is that of project holding it, and path at root takes none":
+    # Knoller reads tests, stubs and umbrella below folder of this file, and its name names
+    #   umbrella (#886). Domain: source, suite and umbrella of project under each root, and root.
+    for (path, nimble) in [
+      (DIRECTORY_ALPHA & "/src/alpha.nim", DIRECTORY_ALPHA & "/alpha.nimble"),  # umbrella
+      (DIRECTORY_ALPHA & "/tests/suites/test_a.nim", DIRECTORY_ALPHA & "/alpha.nimble"),
+      (DIRECTORY_AUDIT & "/src/audit/a.nim", DIRECTORY_AUDIT & "/audit.nimble"),
+      ("koch.nim", ""),  # root lies in no project
+      ("curator/README.md", ""),
+    ]:
+      check path.nimbleProject == nimble
+
+
   test "top-level glossary is required":
     check treeGood().without("GLOSSARY.md").paths == @["GLOSSARY.md"]  # required at root
     check treeGood().without("GLOSSARY.md").messages == @["Top-level glossary missing."]  # named

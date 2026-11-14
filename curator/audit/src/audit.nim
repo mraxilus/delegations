@@ -198,7 +198,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
       result.add checkFontFamilies(e.path, e.content)
       if e.kind.get != Kind.Markdown: result.add checkPathsMachine(e.path, e.content)
     if e.kind.get.rule.has_guide:
-      result.add checkIdioms(e.path, e.content, e.kind.get.dialect).toFindings
+      result.add checkIdioms(e.path, e.content, e.kind.get.dialect, e.path.nimbleProject).toFindings
     for directory in directories:
       if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)

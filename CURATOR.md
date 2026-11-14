@@ -285,6 +285,21 @@ and the shared allowance. This section adds only what differs for a curator.
     README is writable, so restraint about a rewrite of a project's prose is still restraint,
     and not enforcement.
 
+12. **Merged branches.** GitHub deletes the head branch of each merged pull request
+    (Repository settings the Architect applies). A branch whose pull request closed, or that
+    never had one, stays, even where `main` holds its work. Such a branch serves no one, and it
+    hides the branches that still hold work.
+
+    So after each merge, and at each request for status, run `git fetch --prune origin`, and
+    read each branch that remains. A branch is merged where `git cherry origin/main <branch>`
+    marks no commit with `+`, which names a commit that `main` lacks. It is merged too where its
+    pull request closed, and another pull request carried its work into `main`. Keep each
+    branch that an open pull request holds, and each one that is not merged.
+
+    Delete each merged branch where you may delete it. Where you may not, give the Architect
+    one command that deletes them all, as `git push origin --delete <branch>`.
+    Reading holds this duty, and no check reads it. The skill `merged` points here.
+
 ## How to review a project
 
 To read a contributor project deeply is curator work. The only thing you may do with what
