@@ -4,7 +4,7 @@
 
 import std/[algorithm, os, sequtils, strutils, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[audit, domains, provenance]
+import ../../src/[audit, domains, prose_own, provenance]
 import ./fixtures
 
 
@@ -208,6 +208,19 @@ suite "Audit":
     check (treeGood() & @[entry(DIRECTORY_ALPHA & "/src/a.nim", source)]).auditTree.mapIt(
       it.message,
     ) == @["Line ends with whitespace (VIII.5).", "Comment holds article (VI.5); got `a`."]
+
+
+  test "entry of list of own prose whose project tree lacks is finding of umbrella, at list":
+    # Case: listed project moves or goes, and its entry stays, so exception names no project and
+    #   nothing says so. Domain: listed project gone whole, and present; held entry with no suite
+    #   is `checkProjectsProseOwn`'s, whose suite holds it, since no entry of list demands one yet.
+    let gone = treeGood().filterIt(not it.path.startsWith(DIRECTORY_PARSER & "/"))
+    check gone.auditTree.mapIt((it.path, it.message)) == @[(
+      PATH_PROSE_OWN,
+      "Project keeping its own prose (VI.5, VI.8) is one tree holds; remove its entry, or name " &
+        "project where it moved; got `" & DIRECTORY_PARSER & "`.",
+    )]
+    check treeGood().auditTree.len == 0  # present
 
 
   test "Pruned row reads history of record across move":
