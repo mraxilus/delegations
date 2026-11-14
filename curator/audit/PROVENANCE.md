@@ -234,12 +234,15 @@ language.** `PROJECTS_PROSE_OWN` in `prose_own.nim` names each such project, as 
 #818 approves `lojban_parser`. The English check reads none of its three records, and the check
 of articles reads none of its comments. `koch fix` deletes no word of those comments that reads as
 an article, and the plan reads each of those records as code. Every other check reads the
-project.
+project. Its comments follow their own language for capitals and periods too (VI.10), as the
+Architect ruled (D1 a on #817). No check reads VI.10, so reading holds that rule for each project.
 
 **A record or a comment in another language breaks a rule of English with no fault of its own.**
 In lojban, `a` joins two names as "or" does. So the check reads `# la .alis. a la .bob. cu klama`
 as a comment that holds an article, and the fixer deletes `a`, which changes what the comment
 says. Lojban closes no sentence with a stop, so a paragraph of lojban reads as one long sentence.
+A capital marks stress in lojban (CLL 3.9), and a period marks a pause (CLL 3.3). So a capital
+that opens a comment can change how the parser of `lojban_parser` reads the first word.
 
 **Each entry names its project, the issue of its approval, and the suite that holds its prose.**
 Such a suite reads the prose of its project in its own language, where no rule of English can.
