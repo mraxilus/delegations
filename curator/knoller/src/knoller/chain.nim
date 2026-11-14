@@ -4,7 +4,7 @@
 ##   Built from checks (Article II.1): each fixer sits beside its check and reads that check's
 ##     own data, so each rule is written once.
 ##   Fixer runs where its check runs: idiom fixers of module (`.nim`) alone, those of any Nim code
-##     (return, bindings) and every other fixer in every dialect (`fixersIdiom`). Order keeps each
+##     (return, bindings) and every other fixer in every dialect (`stepsIdiom`). Order keeps each
 ##     fixer from undoing one before it:
 ##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
@@ -32,7 +32,9 @@
 ##     since no wrap reads line holding comment; next round lays out line it leaves.
 ##   Chain is list of steps: fixer guarded on every line, widener (`reports.nim`), i.e. tab,
 ##     comment, message, condition, spacing, continuation and trailing separator fixers, which
-##     read held lines, or prover step, needless parentheses, which reads answers of parser.
+##     read held lines, prover step, needless parentheses, which reads answers of parser, or
+##     placed fixer, i.e. stub keys, profiler import and blank lines of tests, which reads nimble
+##     file nearest file.
 ##   Chain stays pure: it takes answers parser gave (`Proofs`), and each source prover step
 ##     read without answer is in `Fix.asked`, for caller to ask compiler and run chain again
 ##     (`proofs.nim`). Same source and same answers give same output.
@@ -58,7 +60,7 @@
 ##   Command line checks what fixers leave by every check knoller holds (`checkSource`): those
 ##     `checkFormatting` holds, off fenced lines, and those static pass of `curator/audit` reads
 ##     on Nim source (`checkStatic`): form, articles, entry block, names, idioms of dialect, and
-##     fixed waits of drive file. Fence keeps its lines from fixers alone, as static pass reads
+##     fixed waits of drive code. Fence keeps its lines from fixers alone, as static pass reads
 ##     every line, so finding there fails command line as it fails static pass.
 ##   Fence's warning runs checks as dry run: same checks on source unmasked, where each marker
 ##     reads as plain comment and each line keeps its number, so warning counts what same lines
@@ -70,6 +72,11 @@
 ##     chain runs neither fixer nor check of articles, and runs every other step. Policy is
 ##     caller's, as words names may take are (`names.nim`), so knoller holds none; command line
 ##     sets none, so it drops articles in every file it reads.
+##   Caller names nimble file nearest each file (`nimble`), written as path is, empty where none
+##     stands above: lookup reads file system, so it stays with caller, and chain stays pure.
+##   Caller says of each file whether it is drive code (`is_drive`), false by default. Folders of
+##     drive code are habit of caller's repository, as its verbs are, so knoller holds none, and
+##     command line says none, so it reads fixed waits nowhere.
 ##
 ##   Rejected: nimpretty, which sets one space before trailing comment where X.9 asks two,
 ##     and `;` between parameters where STYLE.md §5 asks `,`; fork of nimpretty's layouter,
@@ -109,8 +116,8 @@ func steps(dialect: Dialect, should_drop_articles = true): seq[Step] =
     widening(fixMessages), widening(fixMixtures), guarded(fixTargets), guarded(fixGenerations),
     guarded(fixCommands), proving(fixParentheses),
   ]
-  for fixer in dialect.fixersIdiom: result.add guarded(fixer)
-  result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
+  result.add dialect.stepsIdiom
+  result.add @[placing(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
   result.add STEPS_WRAPPING
   result.add @[guarded(fixDocsMissing), guarded(fixCommentsAbove)]
 
@@ -130,22 +137,35 @@ func nimblesLocked*(files: openArray[(string, string)]): seq[string] =
     result.add path[0 ..< path.len - FILE_LOCK.len] & content[open + 1 ..< close]
 
 
-func checkFormattingUnfenced(path, view: string; dialect: Dialect; proofs: Proofs): seq[Report] =
+func checkFormattingUnfenced(
+  path, view: string; dialect: Dialect; proofs: Proofs; nimble: string
+): seq[Report] =
   ## Run on view each check `checkFormatting` holds that dialect takes; fence is caller's.
-  ##   Parentheses check reads answers of parser, so it names only groups they prove.
-  let checks = [
-    checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkTargets,
-    checkCommands, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
-    checkSignatures, checkCalls, checkContinuations, checkTrailing, checkDocsMissing,
-    checkCommentsAbove,
-  ]
-  for check in checks: result.add check(path, view)
+  ##   Parentheses check reads answers of parser, so it names only groups they prove, and checks
+  ##   of tests and profiler import read nimble file nearest file.
+  let
+    checks_before = [
+      checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkTargets,
+      checkCommands,
+    ]
+    checks_after = [
+      checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures, checkCalls,
+      checkContinuations, checkTrailing, checkDocsMissing, checkCommentsAbove,
+    ]
+
+  # Run checks in order of chain, blank lines between, which read nimble file nearest file.
+  for check in checks_before: result.add check(path, view)
+  result.add checkBlanks(path, view, nimble)
+  for check in checks_after: result.add check(path, view)
   result.add checkParentheses(path, view, proofs)
   if dialect == Dialect.Module:
-    result.add checkBracketsImport(path, view) & checkLists(path, view) & checkProfiler(path, view)
+    result.add checkBracketsImport(path, view) & checkLists(path, view) &
+        checkProfiler(path, view, nimble)
 
 
-func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs()): seq[Report] =
+func checkFormatting*(
+  path, source: string; dialect: Dialect; proofs = Proofs(); nimble = ""
+): seq[Report] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
   ##   In every dialect: X.9 trailing comments and spaces, X.2 banners, IV.4 messages, X.4
@@ -155,34 +175,43 @@ func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs())
   ##   separators, and X.1 comments above.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
   ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
-  ##   alone. Needless parentheses read `proofs`, so no answer reports none.
+  ##   alone. Needless parentheses read `proofs`, so no answer reports none; tests and profiler
+  ##   import read `nimble`.
   let fence = source.fence
   if fence.fault >= 0: return checkFence(path, fence)
-  let found = checkFormattingUnfenced(path, source.masked(fence), dialect, proofs)
+  let found = checkFormattingUnfenced(path, source.masked(fence), dialect, proofs, nimble)
   found.filterIt(it.line - 1 notin fence.lines)
 
-func checkStatic(path, source: string; dialect: Dialect; should_drop_articles: bool): seq[Report] =
+func checkStatic(
+  path, source: string; dialect: Dialect; should_drop_articles: bool; nimble: string; is_drive: bool
+): seq[Report] =
   ## Run on source as given each check static pass of `curator/audit` reads on Nim source: form,
   ##   articles where comments drop them, entry block, names with no word exempt beyond `JARGON`,
-  ##   calls of `define…` and `emit…`, idioms of dialect, and fixed waits of drive file
-  ##   (`isFileDrive`). Fence keeps no line from them.
+  ##   calls of `define…` and `emit…`, idioms of dialect, tests read from nimble file nearest
+  ##   file, and fixed waits where caller says file is drive code. Fence keeps no line from them.
   result = checkForm(path, source)
   if should_drop_articles: result.add checkArticles(path, source)
   result.add checkBlockEntry(path, source) & checkNames(path, source, [])
   result.add checkGenerations(path, source)
-  result.add checkIdioms(path, source, dialect)
-  if path.isFileDrive: result.add checkWaits(path, source)
+  result.add checkIdioms(path, source, dialect, nimble)
+  if is_drive: result.add checkWaits(path, source)
 
 
 func checkSource*(
-  path, source: string; dialect: Dialect; proofs = Proofs(); should_drop_articles = true
+  path, source: string;
+  dialect: Dialect;
+  proofs = Proofs();
+  should_drop_articles = true;
+  nimble = "";
+  is_drive = false;
 ): seq[Report] =
   ## Report each rule knoller reads in source: those `checkFormatting` holds, off fenced lines,
   ##   and those static pass of `curator/audit` reads (`checkStatic`), on every line, so finding
   ##   fixers leave, or fence keeps from them, fails command line as it fails static pass.
-  ##   Articles are read only where comments drop them (`should_drop_articles`).
-  checkFormatting(path, source, dialect, proofs) &
-      checkStatic(path, source, dialect, should_drop_articles)
+  ##   Articles are read only where comments drop them (`should_drop_articles`), and tests from
+  ##   nimble file nearest file (`nimble`); caller says whether file is drive code (`is_drive`).
+  checkFormatting(path, source, dialect, proofs, nimble) &
+      checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
 
 
 
@@ -196,17 +225,18 @@ func heldThrough(held: Held; fix, step: Fix): Held =
 
 
 func settled(
-  path, view: string; steps: openArray[Step]; held: Held; proofs: Proofs
+  path, view: string; steps: openArray[Step]; held: Held; proofs: Proofs; nimble: string
 ): tuple[fix: Option[Fix], asked: seq[string]] =
   ## Run steps over view until round changes nothing, at most `ROUNDS_MAX` rounds, wideners off
-  ##   held lines, prover step reading proofs; fixer that would move fenced line is skipped.
-  ##   `none` where last round changes; what any round asks parser stands either way.
+  ##   held lines, prover step reading proofs, placed fixer reading nimble file nearest file;
+  ##   fixer that would move fenced line is skipped. `none` where last round changes; what any
+  ##   round asks parser stands either way.
   let shape = view.shapeFence
   var fix = Fix(source: view)
   for round in 1 .. ROUNDS_MAX:
     var step = Fix(source: fix.source)
     for each in steps:
-      let next = each.run(path, step.source, held.heldThrough(fix, step), proofs)
+      let next = each.run(path, step.source, held.heldThrough(fix, step), proofs, nimble)
       for asked in next.asked:
         if asked notin result.asked: result.asked.add asked
       if next.source.shapeFence != shape: continue
@@ -231,7 +261,7 @@ func widened(view: string, fix: Fix): seq[int] =
 
 
 func attempted(
-  path, view: string; steps: openArray[Step]; proofs = Proofs()
+  path, view: string; steps: openArray[Step]; proofs = Proofs(); nimble = ""
 ): tuple[fix: Option[Fix], attempts: int, asked: seq[string]] =
   ## Settle view, each attempt holding every line attempts before left wide, until none is left;
   ##   last attempt holds every line. Attempt that does not settle, holds no new line, or leaves
@@ -240,7 +270,7 @@ func attempted(
   var held = Held()
   while result.attempts + 1 < ATTEMPTS_MAX:
     inc result.attempts
-    let (fix, asked) = settled(path, view, steps, held, proofs)
+    let (fix, asked) = settled(path, view, steps, held, proofs, nimble)
     for each in asked:
       if each notin result.asked: result.asked.add each
     if fix.isNone: break
@@ -252,18 +282,20 @@ func attempted(
     if 0 in wide or grown == held.lines: break
     held.lines = grown
   inc result.attempts
-  let (fix, asked) = settled(path, view, steps, EVERY, proofs)
+  let (fix, asked) = settled(path, view, steps, EVERY, proofs, nimble)
   for each in asked:
     if each notin result.asked: result.asked.add each
   result.fix = fix
 
 
-func formattedBy(path, source: string; steps: openArray[Step]; proofs = Proofs()): Fix =
+func formattedBy(
+  path, source: string; steps: openArray[Step]; proofs = Proofs(); nimble = ""
+): Fix =
   ## Run steps on source until it settles, as `formatted` does; source that does not settle stays
   ##   as written, and its fix reports why. Fix carries what parser was asked, either way.
   let fence = source.fence
   if fence.fault >= 0: return Fix(source: source)
-  let (fix, _, asked) = attempted(path, source.masked(fence), steps, proofs)
+  let (fix, _, asked) = attempted(path, source.masked(fence), steps, proofs, nimble)
   if fix.isNone:
     let unsettled = "File still changes after " & $ROUNDS_MAX & " rounds of fixers, so fix " &
         "leaves it as written; got `" & $ROUNDS_MAX & "` rounds."
@@ -274,7 +306,11 @@ func formattedBy(path, source: string; steps: openArray[Step]; proofs = Proofs()
 
 
 func formatted*(
-  path, source: string; dialect: Dialect; proofs = Proofs(); should_drop_articles = true
+  path, source: string;
+  dialect: Dialect;
+  proofs = Proofs();
+  should_drop_articles = true;
+  nimble = "";
 ): Fix =
   ## Run on source each fixer dialect takes, in order header gives, until source settles;
   ##   fenced lines read as `FENCED`, and fixer that would move them is skipped. Source whose
@@ -282,12 +318,18 @@ func formatted*(
   ##   not settle stays as written too, and its fix says why (`Fix.unsettled`).
   ##   Needless parentheses go where `proofs` prove them; each source no answer reaches is in
   ##   `Fix.asked`, for caller to ask parser and run again.
-  ##   Articles go only where comments drop them (`should_drop_articles`).
-  formattedBy(path, source, dialect.steps(should_drop_articles), proofs)
+  ##   Articles go only where comments drop them (`should_drop_articles`), and fixers of tests,
+  ##   stubs and umbrella read nimble file nearest file (`nimble`).
+  formattedBy(path, source, dialect.steps(should_drop_articles), proofs, nimble)
 
 
 func checkFenceHeld*(
-  path, source: string; dialect: Dialect; proofs = Proofs(); should_drop_articles = true
+  path, source: string;
+  dialect: Dialect;
+  proofs = Proofs();
+  should_drop_articles = true;
+  nimble = "";
+  is_drive = false;
 ): seq[Report] =
   ## Report each run of fenced lines, markers included, as one warning at its first line: each
   ##   rule broken inside it, in order of `Rule`, with count and first line, so whoever runs fix
@@ -296,11 +338,13 @@ func checkFenceHeld*(
   ##   Checks read source unmasked, so marker reads as plain comment and each line keeps its
   ##     number: each check `checkSource` holds, those static pass reads among them. Source with
   ##     no fence runs none. Needless parentheses count where `proofs` answer for source as given
-  ##     (`questions`), and articles where comments drop them (`should_drop_articles`).
+  ##     (`questions`), articles where comments drop them (`should_drop_articles`), tests where
+  ##     nimble file nearest file puts them (`nimble`), and fixed waits where caller says file is
+  ##     drive code (`is_drive`).
   let fence = source.fence
   if fence.fault >= 0 or fence.lines.len == 0: return
-  let found = checkFormattingUnfenced(path, source, dialect, proofs) &
-      checkStatic(path, source, dialect, should_drop_articles)
+  let found = checkFormattingUnfenced(path, source, dialect, proofs, nimble) &
+      checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
 
   # Count each rule broken inside each run, keep its first line, and name each in `Rule` order.
   for run in fence.runs:

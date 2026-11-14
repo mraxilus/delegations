@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | d446c5be453722ff |
+| Rules   | 363e393b375ac380 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -234,12 +234,15 @@ language.** `PROJECTS_PROSE_OWN` in `prose_own.nim` names each such project, as 
 #818 approves `lojban_parser`. The English check reads none of its three records, and the check
 of articles reads none of its comments. `koch fix` deletes no word of those comments that reads as
 an article, and the plan reads each of those records as code. Every other check reads the
-project.
+project. Its comments follow their own language for capitals and periods too (VI.10), as the
+Architect ruled (D1 a on #817). No check reads VI.10, so reading holds that rule for each project.
 
 **A record or a comment in another language breaks a rule of English with no fault of its own.**
 In lojban, `a` joins two names as "or" does. So the check reads `# la .alis. a la .bob. cu klama`
 as a comment that holds an article, and the fixer deletes `a`, which changes what the comment
 says. Lojban closes no sentence with a stop, so a paragraph of lojban reads as one long sentence.
+A capital marks stress in lojban (CLL 3.9), and a period marks a pause (CLL 3.3). So a capital
+that opens a comment can change how the parser of `lojban_parser` reads the first word.
 
 **Each entry names its project, the issue of its approval, and the suite that holds its prose.**
 Such a suite reads the prose of its project in its own language, where no rule of English can.
@@ -2094,12 +2097,13 @@ needs no lock. The record of knoller holds the design of those fixers and checks
 
 - The checks of form, articles, names, idioms and fixed waits read one Nim file, and their rules
   come from `CONSTITUTION.md` and `STYLE.md` alone. So knoller holds them, as D3 a of #548 rules,
-  and `knoller --check` reports them on any repository. The static pass calls each of them.
+  and `knoller --check` reports them on any repository. Fixed waits are the one exception, since
+  only a caller names drive code. The static pass calls each of them.
 - Each of those checks names a rule of knoller with an id of its own, and `CITATIONS` holds its
-  article. What reads this repository stays here: the glossaries, the paths of drive code, the
-  exemption of `LICENSE.md`, machine paths, `tsconfig.json` and `PROJECTS_PROSE_OWN`. Knoller
-  takes the words of a name and the mode of each file from its caller. It keeps its own copy of
-  the paths of drive code (`DIRECTORIES_DRIVE`), which #886 asks to move to the caller.
+  article. What reads this repository stays here. That is the glossaries, the paths of drive code
+  and the define that its stubs pass. It is also the exemption of `LICENSE.md`, machine paths,
+  `tsconfig.json` and `PROJECTS_PROSE_OWN`. Knoller takes the words of a name and the facts of
+  each file from its caller (D2 a of #886).
 - `toFinding` renders each report of knoller as a finding. A rewrite renders as its rule and the
   article that `CITATIONS` holds for it, so `koch fix` prints `expression spacing (X.9) fixed`.
   Verified by `suites/test_findings.nim`.
@@ -2109,6 +2113,29 @@ needs no lock. The record of knoller holds the design of those fixers and checks
   both, and keeps the policy of duty 8 (`## Toolchain`).
 - Rejected: knoller copied first and audit switched later. The code would stand twice, and the
   paragraphs of the records copied word for word would trip the check of copies.
+
+**Koch gives knoller the facts of each file that its text does not hold.** They are the mode of
+its articles (`## Prose in its own language`), the nimble file of its project, whether it is drive
+code, and the options of its compile. Each comes from the layout or the habits of this repository,
+so knoller holds none of them. The record of knoller says what it reads from each (`Layout of a
+package` there).
+
+- The nimble file is that of the project that holds the file (`nimbleProject`), and a root file
+  has none. Each project keeps `<project>.nimble` at its root, so koch reads that file from the path
+  alone. Knoller reads the tests, the stubs and the umbrella of the file below its folder. Verified
+  by `suites/test_layout.nim`.
+- Rejected: a lookup of the nearest nimble file over the tree. `fixEntries` would need the tree as
+  a new input, and the lookup gives the same file in each project. Cost: a package inside a project
+  reads as its project, so its tests, stubs and umbrella take no rule of their own. No project holds
+  one, by `git ls-files '*.nimble'`, 2026-11-14.
+- A file is drive code where it lies under `tests/` or `tools/` of its project (`isCodeDrive`), as
+  the static pass reads fixed waits (`## Fixed waits`). A file under `tests/` of its project
+  compiles with `-d:testing` (`## Semantic pass`).
+- Each test file, stub and umbrella of a project lies below the folder of its nimble file, as the
+  record of knoller verifies (`Layout of a package` there).
+- Verified by hand, 2026-11-14: koch built at `c2e80da3` and koch built at `269d6579` gave the same
+  output, byte for byte, on the tree at `c2e80da3`. That holds for `check-files`, and for
+  `fix --dry-run --all --branch:main`, which reads every project.
 
 **The audit cites the article of each message of knoller, where its sentence ends.** A message of
 a check of knoller names no article, and reads `<sentence>; got <value>.`, or `<sentence>.` where
@@ -2403,10 +2430,13 @@ their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 **Every entry module, library umbrella and test stub imports the profiler on two lines (STYLE.md
 §3).** The import stands on its own line under its guard, by ruling of the Architect on the report
 of the PGA library. An entry module holds a `when isMainModule:` block in its code. The umbrella
-is `<project>/src/<project>.nim`, and a stub is `tests/test_*.nim` or a file of a testament
-category that a header opens (#443). The fixer splits the form on one line. It inserts the two
-lines after the last pragma that opens the module, with a blank line on each side.
+is `<project>/src/<project>.nim`, and a stub is `tests/test_*.nim` of a project or a file of a
+testament category that a header opens (#443). The fixer splits the form on one line. It inserts
+the two lines after the last pragma that opens the module, with a blank line on each side.
 
+- Knoller reads the umbrella and the stubs below the folder of the nimble file that koch gives
+  (`## Knoller`). Verified by `suites/test_fixes.nim`: `koch fix` fixes a stub, an umbrella and a
+  suite of a project, and leaves the same text at the root.
 - A `when isMainModule:` inside a string is no code, so `test_checker.nim` is no entry module.
 - A stub that includes a file at top level takes the import from that file, since the include
   makes one module of both. The Architect ruled so on the report of the PGA library, whose eight
@@ -2503,6 +2533,10 @@ audit gives the lookup what its tree holds (`symbols.nim`). The project of each 
 directory, whose nimble file names the pin, and a root file takes the pin of the driver. The
 includer of a file is read among the Nim files of the tree.
 
+- A file under `tests/` of a project compiles with `-d:testing`, as each stub of this repository
+  passes it (STYLE.md §6). Knoller names no define of its own, so koch names it for each file
+  (`defines`). Verified by `suites/test_symbols.nim`: a name that `-d:testing` alone declares
+  resolves under `tests/` of a project, and stays unresolved under `src/` and `src/tests/`.
 - A file whose project pins no compiler, or whose pin no compiler serves, is answered unresolved
   with its reason, and asks nothing.
 - `koch fix` fixes each conversion that the pass settles, and `koch check` and `koch test` report
@@ -2576,6 +2610,11 @@ comes from the charter alone, so knoller holds its names and their replacements 
 there). Nim source takes that check whole. The identifiers of each line of every other kind,
 less those that its comments hold, go to the same check. So each kind reports in the same words.
 
+- `koch fix` gives the same drive code to the fence warning of knoller (`isCodeDrive`). So the
+  warning counts a fixed wait where the static pass reports one.
+- Verified by `suites/test_fixes.nim`: a fenced `sleep` counts under `tests/` and `tools/` of a
+  project, and not under its `src/` or at the root.
+
 **A timer is unread, because one name is both clocks.** Inside a page under the clock of
 Playwright, `setTimeout` and `performance.now` are simulated reads. A check over them would
 report each drive that runs `setTimeout` inside a page, as every correctness drive of
@@ -2611,8 +2650,9 @@ that holds it. The events, each one a verb argument:
   label `coordinator`. It refuses a pull request body that leaves the template unfilled. It
   refuses a closing keyword before an issue outside a line of its own.
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
-  nor the working line. It also refuses a sign-off out of shape. At the end of any turn, it
-  refuses `#N` outside a link, and an article or a duty cited with no description.
+  nor the working line. At the end of any turn, it refuses a sign-off out of shape. It also
+  refuses one whose group holds fewer items than the last sign-off that passed. And it refuses
+  `#N` outside a link, and an article or a duty cited with no description.
 - `start` prints the role, the read order, each finding of drift, the headings of the record
   that the branch works on, and the carried list. It prints at the start, at resume and after
   each compaction.
@@ -2822,10 +2862,11 @@ each symbolic link through the nearest part of the path that exists.
 ## Hooks on messages
 
 **`body` and `stop` hold what a delegate writes for a person: each post, and the message that
-ends a turn.** Section Hooks on tool calls gives the mechanism that both share. The `stop` hook
-passes once `stop_hook_active` is set, so a blocked turn cannot loop. It counts a GitHub write
-as a post only where the call carried a body, as the `body` hook does. So a label or a draft
-update ends no turn with a sign-off.
+ends a turn.** Section Hooks on tool calls gives the mechanism that both share, and section
+Sign-off gives the block that closes a turn. The `stop` hook passes once `stop_hook_active` is
+set, so a blocked turn cannot loop. It counts a GitHub write as a post only where the call
+carried a body, as the `body` hook does. So a label or a draft update ends no turn with a
+sign-off.
 
 - **A refused message is mended by a diff of each error alone.** The message stands on screen
   once the hook reads it, so each line sent again reads twice. The reply passes unread, since
@@ -2876,86 +2917,6 @@ coordinator holds no branch. An issue that carries the label `coordinator` is re
 carries the label of the role that it starts, and no item is the work of the coordinator.
 Verified by `suites/test_hooks.nim`.
 
-**The sign-off follows the order that the Architect set, and `stop` holds that order.** The
-Architect reads the block first: who the delegate is and what it works on, then what happened.
-Where it stands and what waits on them come last (`GUIDE.md`, The sign-off). Each decision reads as
-a decision card, and its class says what blocks. Each ⚠️ row names the role that it waits on.
-The coordinator, once the Architect trials it, lifts each decision onto a card without a change
-of words.
-
-The block carries seven labels in order: `Role`, `Context`, the table, `Summary`, `State`,
-`Decisions` and `Next step`. The Architect set this order on 2026-10-04. The table ends where
-`Summary` starts. Verified by `suites/test_hooks.nim`, which refuses a table before the context
-and a state before the summary.
-
-- The state opens with `done`, `waiting` or `blocked`. The check reads that word alone, up to
-  the first comma or space. Where the branch stands follows it, and only the `english` check
-  reads it. Verified by hand through the built hook, 2026-10-03: a state line over 25 words
-  gives an `english` finding. The state is `blocked` exactly when a decision blocks this
-  delegate.
-- The block holds no brief line, by the choice of the Architect: no delegate starts from a
-  brief until the Architect trials the coordinator. No check refuses a line beyond the seven
-  labels, so reading holds this rule. Verified by hand through the built hook, 2026-10-03: a
-  sign-off with a brief line passes.
-- Decisions are numbered from `D1`, and each one names its class and where its ruling goes. With
-  no decision, the label reads `**Decisions:** None.`, and over its blocks it stands alone.
-- A class is `blocks this delegate`, that class with `and` and the role strings that wait too,
-  `has a workaround:` with the workaround, or `fact`.
-- A `fact` offers no option and picks none. Every other decision asks a question that ends with
-  `?`. It offers two to four options, each with a label of at most three words, and recommends
-  one by its letter. Four is what a decision card holds.
-- A ⚠️ row opens its last cell with a role string or `outside`. A ⏸️ row names a decision that
-  the block holds, as `D1`.
-- Rejected: a fenced block of YAML. It renders as no table on GitHub, and the `english` check
-  skips fenced text, so its prose would go unchecked.
-- Cost: the check reads shape, and never whether a decision says anything, or whether an option
-  is honest.
-- Cost: `stop` cannot tell the coordinator, which holds no branch, from a delegate. Where it
-  runs for the coordinator, whose message is the digest, a turn that posted is asked once for a
-  sign-off. The second stop passes.
-- Verified by `suites/test_hooks.nim`: one assertion for each rule above that a check holds,
-  and two for the order. The fixtures are the example in `GUIDE.md`, cut short, and a sign-off
-  with no decision.
-
-**A delegate signs off only when it stops, and a turn that ends while work goes on closes with
-a working line.** The Architect set this rule on 2026-10-04. A sign-off marks a stop, so one in
-the middle of work hides which delegates need the Architect. So each state word is a stop:
-`done`, `waiting` or `blocked`. A turn that pushed or posted closes with the sign-off, or with a
-last line that opens `**Working:**` and holds text. `stop` reads the sign-off in full where its
-heading is present, and else the last line.
-
-- Verified by `suites/test_hooks.nim`. It refuses a working line with no text, a working line
-  that is not last, and the state `working`. Its refusal of `working` points at the line.
-- Rejected, by the choice of the Architect: the hook skips the demand while a background task
-  has not reported. That ties the hook to the form of a task notification, which the harness
-  can change.
-- Rejected, by the same choice: no demand, with the shape read only where a sign-off is
-  present. Then a delegate can stop with no word to the Architect.
-- Cost: the hook reads that the working line holds text, and never whether anything runs. A
-  delegate that stops behind a working line passes, and only a reader sees it.
-- Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
-  by a change of label or draft alone is not asked for a sign-off.
-
-**A sign-off follows a read of the open issues on its role, in the turn that signs off.** The
-Architect ruled this check on 2026-10-24 (D2 a of #742). A request can arrive while a delegate
-works, and the reads at the start see none of it. `stop` takes the
-role from the role line of the sign-off. The coordinator reads `architect` instead, since no
-item carries its role. The check reads every turn, as the check of `#N` does, because a sign-off
-can close a turn that posted nothing.
-
-- A read is a call of `mcp__github__list_issues` whose `labels` hold the role, or none, and
-  whose `state` is not closed. That tool returns both states where none is given. A shell read
-  counts through `gh issue list`, and through a `gh api` list of issues with its query. `stop`
-  reads their filters as `gh` reads them, and each of them lists open issues alone by default.
-- A refusal asks for the read, and no diff. What waits in the queue can change the sign-off, so
-  the delegate takes it first, and names it in one line.
-- Rejected: a ledger report of a request that no comment of its role answered. That report lands
-  in the queue that went unread, and up to a day late.
-- Cost: the hook sees that a read happened, and never that the delegate took what it showed.
-- Cost: a read through any other tool, as a search, counts for nothing.
-- Verified by `suites/test_hooks.nim`: the case as found, each form of read, a closed state and
-  another label, the coordinator, and the reason of a refusal.
-
 **`stop` names each `#N` of the closing message that stands outside a link and outside code.**
 Each issue and pull request goes by a short description and its number, as one link (`GUIDE.md`,
 Output contract). The Architect ruled this check on 2026-10-04. It reads every turn, and not only
@@ -2984,6 +2945,214 @@ has that form. So `(X.2, X.9)` after text passes whole, and a line or a bullet t
 - Cost: a message wrapped by hand that puts the parenthesis at the head of a line fails there.
 - Verified by `suites/test_hooks.nim`, where each passing form stands beside a bare reference.
   Verified by hand through the hook built from the branch, 2026-10-04.
+
+## Sign-off
+
+**The sign-off follows the order that the Architect set, and `stop` holds that order.** The
+Architect reads the block first: who the delegate is and what it works on, then what happened.
+Where it stands and what waits on them come last (`GUIDE.md`, The sign-off). Each decision reads as
+a decision card, and its class says what blocks. Each ⚠️ row names the role that it waits on.
+The coordinator, once the Architect trials it, lifts each decision onto a card without a change
+of words.
+
+The block carries seven parts in order: `Role`, `Context`, the work, `Summary`, `State`,
+`Decisions` and `Next step`. The Architect set the order of the parts on 2026-10-04, and the
+rule line that opens the work on #844. The work opens with that line, `---`, and ends where
+`Summary` starts. Verified by `suites/test_hooks.nim`, which
+refuses work before the context, a state before the summary, and a block with no rule line.
+
+- The role line gives the role string, then the word `branch` and the last part of the branch.
+  Where the branch is outside the grammar, no role is fixed, so the line is not read.
+- The state opens with `done`, `waiting` or `blocked`, and it is `blocked` exactly when a
+  decision blocks this delegate. Then the line gives the short head and `pushed` or
+  `not pushed`, and nothing more. The bold line of each pull request gives its state and its run.
+- The block holds no brief line, by the choice of the Architect: no delegate starts from a
+  brief until the Architect trials the coordinator. No check refuses an extra line above the
+  rule line, so reading holds this rule. Verified by hand through the built hook, 2026-11-14: a
+  sign-off with a brief line under its role line passes.
+- Decisions are numbered from `D1`, and each one names its class and where its ruling goes. With
+  no decision, the label reads `**Decisions:** None.`, and over its blocks it stands alone.
+- A class is `blocks this delegate`, that class with `and` and the role strings that wait too,
+  `has a workaround:` with the workaround, or `fact`.
+- A `fact` offers no option and picks none. Every other decision asks a question that ends with
+  `?`. It offers two to four options, each with a label of at most three words, and recommends
+  one by its letter. Four is what a decision card holds.
+- The label of an option and the letter of the pick may stand in bold, as the card of #844
+  sets them. The check reads each item of a decision with bold taken out, since bold changes no
+  word that it reads.
+- Rejected: a fenced block of YAML. It renders as no table on GitHub, and the `english` check
+  skips fenced text, so its prose would go unchecked.
+- Cost: the check reads shape, and never whether a decision says anything, or whether an option
+  is honest.
+- Cost: `stop` cannot tell the coordinator, which holds no branch, from a delegate. Where it
+  runs for the coordinator, whose message is the digest, a turn that posted is asked once for a
+  sign-off. The second stop passes.
+- Verified by `suites/test_hooks.nim`: one assertion for each rule above that a check holds,
+  and the order as the paragraph above names it. The fixtures take the form of #844. The suite
+  also holds the example of `GUIDE.md` to the hook, read as committed.
+
+**Each pull request takes a group, and the work outside one takes the last table, because the
+Architect reads on a phone.** Assumed from the report of the Architect on #844: a phone shows
+the first column of a table alone, and no test here measures it. So each table has two columns,
+`Item` and `Evidence, or who acts`, and its first cell opens with the state, the number and the
+claim. A group opens with a bold line that links its pull request and gives its
+state: `draft`, `ready`, `merged` or `closed`. The table under `**Outside a pull request.**`
+closes the work of each sign-off, even where the ➖ row is its only row (#844, question 3).
+
+- Rows number from 1 across the tables, and sort by state inside each table, as
+  `☑️ ✅ ⚠️ ⏸️ ⬜ ➖`. A first cell that opens with no state is named with the six states. The
+  second cell of each row holds text. A ⚠️ row opens it with a role string or `outside`, after
+  any carried tag. A ⏸️ row names a decision that the block holds.
+- The tag of a carried rule stands in the second cell, as `carried 5` or `carried 3 and 4`.
+  Each of the six rules stands beside an item or in the one ➖ row, and never in both. A rule
+  may stand beside two items, since one rule can concern two pull requests.
+- The ➖ row stands in the table of work outside a pull request, and names its rules by tag.
+- Past twelve rows, the done rows of one pull request fold into one row that names its first and
+  last item, as `☑️ 1–5.`. A fold holds done rows alone. No check holds the ceiling, since rows
+  that wait cannot fold, and a cap would refuse a sign-off that no fold can mend.
+- A table whose header is out of shape is named once. Then the check reads no row of any table,
+  and no carried rule. So the table of five columns gives one finding for its header, and none
+  for its rows.
+- Rejected, by the choice of the Architect: the pull request as the header of its table, or in a
+  quote block. The rule line after the context reads clearest.
+- Cost: the bold line is read for its link and its state, and never for its run or what the
+  pull request does. Reading holds those.
+- Verified by `suites/test_hooks.nim`: the table of five columns as the case found, and each
+  rule above.
+
+**A delegate signs off only when it stops, and a turn that ends while work goes on closes with
+a working line.** The Architect set this rule on 2026-10-04. A sign-off marks a stop, so one in
+the middle of work hides which delegates need the Architect. So each state word is a stop:
+`done`, `waiting` or `blocked`. A turn that pushed or posted closes with the sign-off, or with a
+last line that opens `**Working:**` and holds text. `stop` reads the sign-off in full where its
+heading is present, and else the last line.
+
+- Verified by `suites/test_hooks.nim`. It refuses a working line with no text, a working line
+  that is not last, and the state `working`. Its refusal of `working` points at the line.
+- Rejected, by the choice of the Architect: the hook skips the demand while a background task
+  has not reported. That ties the hook to the form of a task notification, which the harness
+  can change.
+- Rejected, by the same choice: no demand, with the shape read only where a sign-off is
+  present. Then a delegate can stop with no word to the Architect.
+- Cost: the hook reads that the working line holds text, and never whether anything runs. A
+  delegate that stops behind a working line passes, and only a reader sees it.
+- Cost: `stop` asks for a sign-off or a working line only from a turn that pushed or posted. A
+  turn that reaches its stop by a change of label or draft alone is not asked for one.
+
+**Each message that holds a sign-off takes the shape check, whatever its turn did.** The
+Architect ruled this on #844, since a sign-off can close a turn that wrote nothing, as one after
+a wake does. A heading inside a fence is a quoted example, so it opens no sign-off. `isSignoff`
+names a sign-off outside fences alone, and the read of the queue and the shape check take that
+block. Verified by `suites/test_hooks.nim`: a sign-off out of shape from a turn that wrote
+nothing, and a sign-off quoted in a fence.
+
+**A sign-off follows a read of the open issues on its role, in the turn that signs off.** The
+Architect ruled this check on 2026-10-24 (D2 a of #742). A request can arrive while a delegate
+works, and the reads at the start see none of it. `stop` takes the
+role from the role line of the sign-off. The coordinator reads `architect` instead, since no
+item carries its role. The check reads every turn, as the check of `#N` does, because a sign-off
+can close a turn that posted nothing.
+
+- A read is a call of `mcp__github__list_issues` whose `labels` hold the role, or none, and
+  whose `state` is not closed. That tool returns both states where none is given. A shell read
+  counts through `gh issue list`, and through a `gh api` list of issues with its query. `stop`
+  reads their filters as `gh` reads them, and each of them lists open issues alone by default.
+- A refusal asks for the read, and no diff. What waits in the queue can change the sign-off, so
+  the delegate takes it first, and names it in one line.
+- Rejected: a ledger report of a request that no comment of its role answered. That report lands
+  in the queue that went unread, and up to a day late.
+- Cost: the hook sees that a read happened, and never that the delegate took what it showed.
+- Cost: a read through any other tool, as a search, counts for nothing.
+- Verified by `suites/test_hooks.nim`: the case as found, each form of read, a closed state and
+  another label, the coordinator, and the reason of a refusal.
+
+## Comparison of sign-offs
+
+**A sign-off covers all the work since the last message of the Architect, so the latest one is
+enough.** Several sign-offs can arrive before the Architect reads one, and the Architect does not
+scroll back. So each group of a pull request in the last sign-off that `stop` passed comes back
+in the next one. It comes back whatever the Architect wrote since, as the Architect ruled (D3 a
+on #895). The work outside a pull request starts again at each message of the Architect, so its
+group comes back inside that span alone.
+
+- `parseTurn` opens the span at the last entry whose `origin.kind` is `human`, as the Architect
+  ruled (#844, question 1). A wake, the report of a subagent, a refusal of a hook and the
+  summary of a compaction carry another kind, or none.
+- The turn starts at the last entry of type `user` that holds text and no tool result, wakes
+  included. A push, a post and a read of the queue are read from there.
+- Where no entry carries `origin.kind`, the span starts with the turn, so only the sign-offs of
+  that turn are compared. No earlier span reads, since spans cannot be told apart. Where entries
+  carry it and none is `human`, the span is the whole transcript. Only a message of the
+  Architect starts one, as the Architect ruled (#844, question 4).
+- `parseTurn` gives the sign-offs of each earlier span too, one list for each, oldest first, and
+  a span that holds none is left out. So the base of a group of a pull request can sit before
+  the last message of the Architect. Verified by `suites/test_hooks.nim`: a group that drops
+  whole past the message, and one that loses a row there, are refused. A row of work outside a
+  pull request may drop there.
+- The field is not the form of a notice, which the Architect rejected for the working line in
+  section Sign-off. It is one field of each entry, and its absence falls back to the turn.
+- Cost: the span holds one field of the harness. Where the harness writes the field and never
+  `human`, the span holds the whole transcript, so each sign-off grows. Where it writes `human`
+  on a wake, the span opens at each wake. A row of work outside a pull request can then drop with
+  no finding.
+- Read with `jq` over the transcript of one curator, 2026-11-14. Of 480 entries of type `user`
+  that hold text and no tool result, 95 carry `human`, over 12 versions of the harness. The
+  others carry another kind or none. They are wakes, reports of subagents, refusals of hooks,
+  summaries of compactions, texts of skills, restarts, reminders, interrupts, an image and a
+  command.
+- The group of a pull request comes back, with as many items, until a first-parent subject of
+  `origin/main` names its merge. The subject ends with `(#N)` or opens with `Merge pull request
+  #N`. Each merge here is a merge commit, so git answers at no cost to the shared allowance.
+  Read with git, 2026-11-14: each first-parent commit of `main` after the commits of 2026-09-05
+  has two parents.
+- A close shows on GitHub alone. So the group of a closed pull request shows `closed` on its bold
+  line once, and may drop after it. The word `merged` alone lets no group drop, as `main` holds
+  that fact.
+- The hook matches a group by the number of its pull request, and counts its items. An item
+  keeps its place when its words change, as the Architect ruled (#844, question 2). So a row
+  that moves to another group leaves the group that it left one item short. The work outside a
+  pull request is a group too. A fold counts as each item that it names, and the ➖ row as none.
+- A sign-off whose groups do not read, as one that lacks a part or links no pull request, takes
+  the findings of its shape alone. Each group that it holds would read as dropped. So a group
+  that it drops goes unnamed until the next sign-off, which is compared with the base before it.
+- Koch reads the subjects only where an earlier sign-off exists, which `isSignoffEarlier`
+  decides. A failure of git reads as no subject. Verified by `suites/test_hooks.nim` for that
+  decision, since no suite compiles koch.
+- Cost: the hook counts items, so a new row can take the place of a dropped row of its group.
+  Reading holds that, as it holds the words of each row.
+- Cost: a stale `origin/main` costs one refusal of a group whose pull request merged. A rebase
+  merge would lose the subject, and the merge commits above show none.
+- Cost: `stop` parses each line of the transcript at each stop. Where the last message holds a
+  sign-off, it also replays each earlier sign-off of the transcript. Measured on 2026-11-14 on 4
+  cores of an Intel Xeon at 2.10 GHz, over a transcript of 87 MB. Its last message holds a
+  sign-off, so the replay runs. Each of three runs fed it to `koch hook stop`, built as the hook
+  builds it. It took 3.05 to 3.57 s at `c2e80da35`, and 3.15 to 3.56 s at `a09f13792`.
+- Verified by `suites/test_hooks.nim`: two sign-offs after one message of the Architect, where
+  the second drops an item, as the case found. The domain adds a wake of each kind between them,
+  a new message of the Architect and the fallback. It also holds each form of merge, a close, a
+  fold and new words.
+- Verified by hand through the built hook, 2026-11-14. A wake parts two sign-offs of one
+  transcript, and the hook refuses the second, which drops a row of a pull request. Its refusal
+  names the count and the rows of the group. With a message of the Architect in place of the
+  wake, it refuses the second too. One that drops a row of work outside a pull request passes.
+
+**The base is the last sign-off that `stop` passed, and a replay of its own verdicts finds it.**
+A refused sign-off can lack items, and the stop after a refusal passes unread, so a refused one
+is no base. The hook replays its verdict on the block of each earlier sign-off, span by span,
+oldest first. One passes where its block keeps its shape, and its groups keep those of the one
+that passed before it. The hook judges each one by the rule of its own span. Every group counts
+where that base sits in that span, and only groups of pull requests elsewhere.
+
+- Rejected: the record of a refusal that the harness writes, the entry `stop_hook_summary`. That
+  ties the check to one more field of the harness, and the replay needs none.
+- Cost: the replay reads the block alone. So a sign-off refused only for a bare number, a bare
+  reference or an unread queue still serves as the base. Its rows stand whole.
+- Cost: a group that names a wrong pull request stays until one sign-off shows it `closed`.
+- Verified by `suites/test_hooks.nim`: a refused sign-off between two that pass, the first
+  sign-off of a span, and the table of five columns. It holds a sign-off refused for its shape
+  whose groups read, and the last base and not the first. It also holds a sign-off whose groups
+  do not read. Across spans, a sign-off refused in an earlier span is no base. One that passed
+  past a message is the base of its own span.
 
 ## Skills
 

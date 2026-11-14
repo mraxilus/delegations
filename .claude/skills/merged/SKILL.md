@@ -12,7 +12,9 @@ Use this after a pull request of yours merges, before you take your next item.
 2. Close each issue that the pull request answered and its keyword left open, as
    `CONTRIBUTOR.md`, section "Every delegate begins here", describes.
 3. Remove the worktree and the local branch of the merged pull request.
-4. If the merge changed the charter or the checker, run `/sync` on each of your open branches.
-5. Take your next item with `/triage`.
+4. A curator also reads each branch on GitHub for one that is merged and not deleted, as
+   `CURATOR.md`, duty 12, says.
+5. If the merge changed the charter or the checker, run `/sync` on each of your open branches.
+6. Take your next item with `/triage`.
 
 If this file and the charter disagree, the charter wins.
