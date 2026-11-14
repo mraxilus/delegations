@@ -4859,6 +4859,71 @@ Verified by a run of the `head` verb on 2026-11-03. At the pin, its finding name
 and pin `295bafc`, and it exits 1. With the remote of the checkout set to a clone whose head holds
 both patches, the finding names that head, `ef44aa7`, in place of `3d9696e`.
 
+## Comparison mockups
+
+**A decision about feel is tried before it is built.** `tools/build.nim mockup` builds the page
+with a panel for one open decision. The panel switches between the options of that decision, and
+builds a scene for each scenario where they part. The Architect does the steps of each scenario
+under each option, and rules on feel and figures together. The project then builds the chosen option
+once. README, Comparison mockups, says how to build the next one.
+
+**The define keeps the comparison out of the page that readers run.** Only `-d:mockup` includes
+`src/browser/mockup.nim`, and the hooks in `bridge.nim` stand under the same define. The `mockup`
+verb writes the mockup to a file of its own, `build/pga_visualiser_mockup.html`. Verified on
+2026-11-14 by `web` here and at `c2e80da3`: both pages hold 7,857,878 bytes. They differ in six
+characters, the line numbers of `bridge.nim` that two assertion messages quote. Rejected: a switch
+read at run time, which ships every option to every reader.
+
+**The hooks stand in the bridge, and the shared modules hold only the design that is.** A hook takes
+the place of one call of the bridge, as the wheel zoom does, or runs beside one, as the pinch hooks
+do. `mockup.nim` holds each option once, so the comparison reads whole there. Rejected: options in
+`interaction.nim` under the define, which leave a decided rule beside the rules it beat.
+
+**Each scenario builds a scene of its own, which holds only what its case needs.** That is a small
+system, the stars that the steps aim at, and a star where an option misreads the scale. The set-up
+places each star under its pixel, and the panel draws a ring there. Verified by the probe of #846,
+on the largest demo: a pointer aimed at random misses a far star at 54 of 117 spots. There, the
+stars that mislead the local scale stand where the catalogue puts them. A scene of its own gives
+each run the same case, and shows it plainly.
+
+**The panel measures each run against what its steps ask.** A notch out asks the eye's distance to
+Sol to scale by 1.12. A pinch asks it to scale by the ratio of the gaps of the fingers. The verdict
+reads the share of that scale on a log scale:
+
+- `as asked`, from 0.75 to 1.33 of it;
+- `short`, under 0.75;
+- `over`, from 1.33 to 3;
+- `flung`, over 3.
+
+A round trip is `returned` where the eye ends within a hundredth of a home distance of its start,
+and `off` where it ends further. A step that moves the eye too little to see feels like nothing, and
+the figure then says how much it moved.
+
+**The comparison now is D1 of #846**, what free flight's zoom out takes as its anchor. Verified by
+driven run in Chromium on 2026-11-14, at 1200 by 900 and on an emulated Pixel 7. Each cell gives the
+verdict, then how the eye's distance to Sol scaled. For the round trip, it gives how far the eye
+ends from its start, in home distances. One notch out asks 1.12, three notches ask 1.405, and the
+pinch asks 2.174.
+
+| Scenario | a | b | d | e |
+| --- | --- | --- | --- | --- |
+| 1. Far star at home. | Flung, 12,670. | As asked, 1.117. | Short, 1.074. | As asked, 1.117. |
+| 2. After a key flight. | As asked, 1.404. | Short, 1.037. | Short, 1.226. | As asked, 1.404. |
+| 3. Far out. | Flung, 163. | As asked, 1.407. | Short, 1.006. | As asked, 1.417. |
+| 4. Round trip. | Returned, 1.7e-11. | Returned, 1.7e-11. | Off, 27,610. | Returned, 1.7e-11. |
+| 5. Pinch on a phone. | Flung, 44,250. | As asked, 2.017. | As asked, 1.863. | As asked, 2.017. |
+
+These agree with the probe that D1 cites, on the cases that it measured:
+
+- option a carries the eye out over a far star;
+- option b falls short after a key flight;
+- option d falls short far out, and where a star off the line misleads the local scale.
+
+At home, d falls short at 1200 by 900, and scales as asked on the frame of the Architect, by 1.104.
+One notch of a there scaled the eye by 4,455, so home stood about 54 units from Sol, against 19
+here. Assumed: that the reach ahead then comes nearer the distance to the pivot. Assumed: that a
+pinch on a phone moves the camera as the touch that Chromium emulates moves it.
+
 ## Testing
 
 The suite runs from thin entry points that `koch` runs through testament:
