@@ -22,11 +22,11 @@ knoller [--check] [--nim:path] path...
 - Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
   an umbrella get the same rules from any directory. The output prints each path as you name it,
   and the files of a directory with `/`, on every platform.
-- Knoller reads the layout of a file below the folder of the nearest nimble file at or above it,
-  as testament and nimble do. A test file lies under `tests` of that folder. The umbrella is
-  `src/<name>.nim` beside `<name>.nimble`, whatever the folder is called. A file with no nimble
-  file above it takes no rule of tests, stubs or umbrella. Neither does a file in a directory that
-  holds more than one nimble file.
+- Knoller takes the folder of the nearest nimble file at or above a file as the root of its
+  package. A test file lies under `tests` of that folder. The umbrella is `src/<name>.nim` beside
+  `<name>.nimble`, whatever the folder is called, so a package whose `srcDir` is not `src` has no
+  umbrella here. A file with no nimble file above it takes no rule of tests, stubs or umbrella.
+  Neither does a file whose nearest folder with a nimble file holds more than one.
 - Knoller runs on Linux and Windows, and a runner holds each. Where git checks a file out with
   CRLF that a commit turns back into LF, knoller reads LF and writes CRLF back. Git for Windows
   does so by default. CRLF that a commit keeps stays a finding.

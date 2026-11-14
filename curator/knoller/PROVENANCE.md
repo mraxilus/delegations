@@ -102,11 +102,11 @@ check, and a script or a package takes those of any Nim code (`## Idioms`).
 ## Layout of a package
 
 **Knoller reads the layout that the tools of Nim set, and its caller gives the rest (D2 a of
-#886).** Testament reads the tests of a package under its `tests`, and nimble puts the umbrella of
-a package in its `src`. So knoller keeps these two rules, and reads each below the folder of the
-nearest nimble file. The folders of drive code and the define that stubs pass are habits of one
-repository. So the caller says which file is drive code (`## Fixed waits`) and which options its
-compile takes (`## Semantic pass`), and the command line says neither.
+#886).** Knoller takes the folder of the nearest nimble file as the root of the package. It keeps
+the rules of tests and of the umbrella, and reads each below that root. The folders of drive code
+and the define that stubs pass are habits of one repository. So the caller says which file is
+drive code (`## Fixed waits`) and which options its compile takes (`## Semantic pass`), and the
+command line says neither.
 
 - The caller names the nimble file nearest each file, written as its path is, and nothing where
   none stands above (`nimble`). The chain takes that string and reads no file system, so it stays
@@ -118,31 +118,32 @@ compile takes (`## Semantic pass`), and the command line says neither.
   `tests/test_*.nim` there, or a file of a category (`## Layout fixes`). The umbrella is
   `src/<name>.nim` beside `<name>.nimble`, whatever folder holds both. So a package at the root of
   its repository has an umbrella, and a clone needs no folder that bears the name of its package.
+  Cost: a package whose `srcDir` is not `src` has no umbrella here.
 - A file with no nimble file above it takes no rule of tests, stubs or umbrella. So these rules
   give fewer findings there, and never a false one. Rejected: the last directory `tests` of the
-  whole path. It made a test file of each file below a directory `tests` above the repository.
+  whole path, which makes a test file of each file below a directory `tests` above the repository.
 - A fixer that reads the nimble file is a step of its own kind (`placing`). Those are the fixers
   of stub keys, of the profiler import and of the blank lines of tests. So no other fixer takes a
   new parameter. Cost: a fourth kind of step.
 - Verified by `suites/test_blanks.nim`, against a table of paths and nimble files. It holds a
   package at the root, a folder of another name, a package inside another, a path of Windows, and
   no nimble file.
-- Verified by hand, 2026-11-14, over each Nim file that git lists in this repository, with the
-  nimble file of its project. Each reading gave the same files as the reading of the whole path
-  did, so no finding here moved (`curator/audit/PROVENANCE.md`, Knoller).
+- Each test file, stub and umbrella here lies below the folder of the nimble file of its project.
+  Verified by hand over each Nim file that git lists, 2026-11-14.
 
 **The command line reads the nearest nimble file from disk, in the walk that reads the pin
 (`nimblesNearest`).** One walk up from the directory of each file finds both. A directory that
 holds several nimble files names no package, as it names no pin, since nimble refuses such a
 directory.
 
+- Verified by hand with the nimble 0.26.2 that 2.4.0 ships, 2026-11-14. In a directory of two
+  nimble files, `nimble dump` stops with `Only one .nimble file should be present`.
 - Verified by `suites/test_command.nim`, on a real tree. A package at the root of a clone takes
   the rule of its umbrella, and a package inside it takes its own stubs. A directory of two
   nimble files, and a tree with none, take no rule of stubs.
-- Verified by hand, 2026-11-14, with the binary built at `c2e80da3` and at `269d6579`. On a
-  scratch package `foo` at the root of a clone named `clone`, `knoller --check src tools` named
-  the umbrella `src/foo.nim` at `269d6579` alone. It named the `sleep` of `tools/build.nim` at
-  `c2e80da3` alone.
+- Verified by `suites/test_command.nim`, through the command line built from its own source. Run
+  over a package `foo` at the root of a clone named `clone`, it names the umbrella `src/foo.nim`.
+  It names no fixed wait of `tools/build.nim`.
 
 ## Fences
 
@@ -396,7 +397,8 @@ toolchain that serves the pin of the project.
   instead.
 - One `nimsuggest --v3 --tester` serves each entry: the file itself, or the file that includes it.
   It runs in the project directory, so the `nim.cfg` of the project applies. It takes the options
-  that the first request of its entry names.
+  that the first request of its entry names. Verified by `suites/test_symbols.nim`, through two
+  requests of one includer, where the first alone names a define.
 - The define that stubs pass is a habit of one repository, so knoller adds none, and the command
   line names none. `koch` names `-d:testing` for a file under `tests/` of a project, as each stub
   of STYLE.md §6 passes it.
