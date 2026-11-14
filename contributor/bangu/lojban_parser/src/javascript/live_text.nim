@@ -1,42 +1,56 @@
-## Read live text in script as it arrives (#859): `parseLojbanLive` gives reader whose `push`,
-##   `finish` and `nif` each give promise. Where page gives worker, reading runs there, so page
-##   never waits; elsewhere script reads one sentence at each turn of event loop (rulings on
-##   #859).
+## tcidu lo jmive se ciska ne'i le samtci ca lo nu le se ciska cu klama to `#859` toi .i
+##   `parseLojbanLive` cu jarco lo tcidu .i le tcidu cu ponse `push` .e `finish` .e `nif` .i ro le
+##   ci fancu cu jarco pa nupre .i va'o lo nu le papri cu dunda pa gunka kei lo nu tcidu cu fasnu
+##   ne'i le gunka .i se ki'u bo le papri cu denpa no roi .i va'o lo drata le samtci cu tcidu pa
+##   jufra ca ro nu `event loop` cu carna to la'o gy. Architect .gy. cu jdice di'u bu'u `#859` toi
 ##
-##   |-----------------|-------------------------------------------------------------------|
-##   | Code            | Meaning                                                           |
-##   |-----------------|-------------------------------------------------------------------|
-##   | parseLojbanLive | reader of live text, in worker where page gives one               |
-##   | push            | promise of change next piece makes to NIF                         |
-##   | finish          | promise of change end makes, which gives rest of NIF              |
-##   | nif             | promise of NIF so far: NIF that went out, then tail               |
-##   | isWorker        | whether reading runs in worker                                    |
-##   | countRead       | bytes read on thread of page, summed: none where worker reads     |
-##   | countTurns      | turns of event loop that read on thread of page                   |
-##   |-----------------|-------------------------------------------------------------------|
+##   |-------------------|-------------------------------------------------------------------------|
+##   | lo cmene          | lo smuni                                                                |
+##   |-------------------|-------------------------------------------------------------------------|
+##   | `parseLojbanLive` | lo tcidu be lo jmive se ciska ne'i lo gunka poi le papri cu dunda ke'a  |
+##   | `push`            | lo nupre be lo cenba poi le bavla'i spisa cu rinka ke'a ne'i `NIF`      |
+##   | `finish`          | lo nupre be lo cenba pe lo fanmo noi jarco lo stali pagbu be `NIF`      |
+##   | `nif`             | lo nupre be `NIF` poi ca zvati .i lo se benji cu lidne le rebla         |
+##   | `isWorker`        | lo du'u lo nu tcidu cu fasnu ne'i lo gunka                              |
+##   | `countRead`       | lo sumji be lo stuzi poi le papri cilta cu tcidu .i li no ne'i lo gunka |
+##   | `countTurns`      | lo nu `event loop` cu carna kei poi tcidu ne'i lo cilta pe le papri     |
+##   |-------------------|-------------------------------------------------------------------------|
 ##
-##   Change is `{at, start, text, tail}`, as `ChangeNif` of `live.nim` gives it (D1 c of #859):
-##     page cuts NIF it holds back to `at`, then adds `text`, so stream of hours costs time linear
-##     in its length. `nif` gives NIF so far once, where page asks for it.
-##     `at` counts units of UTF-16, as string of JavaScript indexes NIF, so `slice` cuts there;
-##       `start` counts bytes of text in UTF-8, as each word of NIF does, so change ties to it.
-##     Rejected: NIF so far in each promise, which copies whole NIF out of worker for each piece.
-##       Tatoeba joined, read word by word, copies 363 MB so, against 1.8 MB of changes, and
-##       24.0 GB against 15.5 MB at eight times its length (ruling on #859).
-##   Worker is script itself, named `NAME_WORKER`: at address page loaded it from, else its text
-##     as Blob, where page holds it inline. Worker that fails before it answers that it loaded
-##     gives way to thread of page, which reads each piece sent to it, in order.
-##   Thread of page reads each piece sentence by sentence (`toSentences`), one at each turn of
-##     event loop, and gives one change for piece (`combine`). Turn is message of
-##     `MessageChannel`, which no timer delays and no clock of check holds.
-##   Rejected: reading of piece in one turn on thread of page, which holds page as long as text of
-##     piece takes, about 37 times as long as native build takes (PROVENANCE.md, JavaScript build).
-##   Asks answer in order of asking: worker answers messages in order, and thread of page reads
-##     asks from one queue.
-##   Reader loops by index, since `items` copies on JavaScript backend.
+##   le cenba cu du `{at, start, text, tail}` ta'i lo nu `ChangeNif` pe `live.nim` cu jarco le cenba
+##     to `D1 c` pe `#859` toi .i le papri cu katna la'o gy. NIF .gy. poi le papri cu ralte ke'a
+##     bu'u `at` .i ba bo le papri cu jmina `text` .i se ki'u bo lo temci poi jdima lo porsi be lo
+##     valsi be'o pe so'i cacra cu ckini lo ni le porsi cu clani kei ta'i lo linji .i `nif` cu jarco
+##     la'o gy. NIF .gy. poi ca zvati ku'o pa roi ca lo nu le papri cu cpedu
+##     .i `at` cu kancu lo pagbu pe la'o gy. UTF-16 .gy. ta'i lo nu lo lerpoi pe
+##       la'o gy. JavaScript .gy. cu kancu la'o gy. NIF .gy. .i se ki'u bo `slice` cu katna bu'u
+##       `at` .i `start` cu kancu lo stuzi be le se ciska ta'i la'o gy. UTF-8 .gy. .i ro valsi pe
+##       la'o gy. NIF .gy. cu go'i .i se ki'u bo le cenba cu jorne le se ciska
+##     .i se to'e cuxna fa lo nu ro nupre cu vasru la'o gy. NIF .gy. poi ca zvati .i ki'u bo ro
+##       spisa cu rinka lo nu la'o gy. NIF .gy. cu se fukpi ta'i lo mulno gi'e se benji fo le gunka
+##       .i va'o lo nu ro valsi pe lo se ciska poi vasru lo se jorne jufra pe la'o gy. Tatoeba .gy.
+##       cu spisa kei le se to'e cuxna cu fukpi `363 MB` .i ku'i lo cenba cu fukpi `1.8 MB` .i va'o
+##       lo nu le se ciska cu clani bi roi kei le se to'e cuxna cu fukpi `24.0 GB` .i ku'i lo cenba
+##       cu fukpi `15.5 MB` to la'o gy. Architect .gy. cu jdice di'u bu'u `#859` toi
+##   .i le gunka cu du le samtci gi'e se cmene `NAME_WORKER` .i le gunka cu se krasi lo judri poi le
+##     papri cu cpacu le samtci ke'a .i va'o lo nu le papri cu vasru le se ciska pe le samtci kei le
+##     gunka cu se krasi le se ciska ta'i la'o gy. Blob .gy. .i lo cilta pe le papri cu basti ro
+##     gunka poi fliba pu lo nu ke'a spuda fi lo du'u ke'a bredi .i ba bo le cilta cu tcidu ro spisa
+##     poi pu se benji fi le gunka ku'o ta'i le porsi
+##   .i lo cilta pe le papri cu tcidu ro jufra pe ro spisa ta'i lo porsi to `toSentences` toi .i ca
+##     ro nu `event loop` cu carna kei pa jufra cu se tcidu .i ca ro nu tcidu pa spisa le cilta cu
+##     jarco pa cenba to `combine` toi .i ro nu carna cu du pa notci pe `MessageChannel` .i no junla
+##     cu rinka lo nu le notci cu denpa .i no junla be lo cipra cu ralte le notci
+##   .i se to'e cuxna fa lo nu tcidu ro spisa ca pa nu carna ne'i lo cilta pe le papri .i ki'u bo le
+##     papri cu denpa ca lo temci be lo nu tcidu le se ciska pe le spisa .i le temci cu jibni lo
+##     pilji be li cize bei lo temci be lo nu le jbena zbasu cu tcidu le se ciska to
+##     la'o gy. PROVENANCE.md, JavaScript build .gy. toi
+##   .i ro nu cpedu cu se spuda ta'i le porsi be lo nu cpedu .i le gunka cu spuda lo notci ta'i le
+##     porsi .i lo cilta pe le papri cu tcidu lo nu cpedu fi pa porsi
+##   .i le tcidu cu rapli ja'i lo namcu pe lo porsi .i ki'u bo `items` cu fukpi va'o lo nu fanva fi
+##     la'o gy. JavaScript .gy.
 
 {.experimental: "strictFuncs".}
-{.used.}  # bridge imports module for `parseLojbanLive` it exports to script alone
+{.used.}  # `bridge.nim` cu cpacu le vi datnyvei ki'u lo nu benji `parseLojbanLive` le samtci po'o
 
 import std/[algorithm, asyncjs, jsffi, unicode]
 
@@ -44,70 +58,91 @@ import ../lojban_parser/[live, nif]
 
 
 type
-  Asked = enum  ## Define what page asks of reader.
+  Asked = enum  ## lo se cpedu be le papri bei le tcidu
     Push = "push", Finish = "finish", Nif = "nif"
 
-  Ask = object  ## Define one ask that waits for its answer.
+  Ask = object  ## pa nu cpedu poi denpa lo nu se spuda
     kind: Asked
-    piece: string  ## Piece of live text `push` gives; empty for other ask.
-    resolve: proc(response: JsObject)  ## Resolve promise of ask with its answer.
+    piece: string
+      ## lo spisa be lo jmive se ciska poi `push` cu dunda ke'a .i kunti va'o lo drata nu cpedu
+    resolve: proc(response: JsObject)  ## dunda lo te spuda be le nu cpedu le nupre pe le nu cpedu
 
   LinesNif = object
-    ## Define end of each line of NIF held, in bytes and in units of UTF-16, from directives on.
+    ## lo fanmo be ro linji pe la'o gy. NIF .gy. poi se ralte .i le fanmo cu se kancu ta'i lo stuzi
+    ##   .e lo pagbu pe la'o gy. UTF-16 .gy. .i lo nu kancu cu cfari bu'u le krasi be le minde
     bytes: seq[int]
     units: seq[int]
 
-  ReaderScript = ref object  ## Define reader page holds: worker, else reader on thread of page.
-    worker: JsObject  ## Worker reading live text; nil where thread of page reads it.
-    is_ready: bool  ## Worker answered that it loaded.
-    sent: seq[Ask]  ## Asks sent to worker, in order, not answered yet.
-    asks: seq[Ask]  ## Asks thread of page has yet to answer, in order.
-    is_finished: bool  ## Page asked for end of live text.
-    reader: ReaderLive  ## Reader on thread of page; reads nothing where worker reads.
-    lines: LinesNif  ## Lines of NIF reader on thread of page holds.
-    tail: string  ## Tail of last change on thread of page.
-    sentences: seq[string]  ## Sentences of piece read now, which turns read one by one.
-    changes: seq[ChangeNif]  ## Change of each sentence of piece read now.
-    channel: JsObject  ## Channel whose message is turn of event loop; nil till first turn.
-    is_turning: bool  ## Turn waits in event loop.
-    count_turns: int  ## Turns of event loop that read on thread of page.
+  ReaderScript = ref object
+    ## lo tcidu poi le papri cu ralte ke'a .i le tcidu cu du pa gunka .a pa tcidu poi zvati lo cilta
+    ##   pe le papri
+    worker: JsObject
+      ## lo gunka poi tcidu lo jmive se ciska .i kunti va'o lo nu lo cilta pe le papri cu tcidu le
+      ##   se ciska
+    is_ready: bool  ## lo du'u le gunka pu spuda fi lo du'u le gunka cu bredi
+    sent: seq[Ask]  ## lo porsi be lo nu cpedu poi pu se benji fi le gunka gi'e na pu se spuda
+    asks: seq[Ask]  ## lo porsi be lo nu cpedu poi lo cilta pe le papri cu na pu spuda ke'a
+    is_finished: bool  ## lo du'u le papri pu cpedu lo fanmo be lo jmive se ciska
+    reader: ReaderLive
+      ## lo tcidu poi zvati lo cilta pe le papri .i tcidu no da va'o lo nu lo gunka cu tcidu
+    lines: LinesNif
+      ## lo linji pe la'o gy. NIF .gy. poi le tcidu poi zvati lo cilta pe le papri cu ralte ke'a
+    tail: string  ## le rebla pe le romoi cenba ne'i lo cilta pe le papri
+    sentences: seq[string]
+      ## lo jufra pe le spisa poi ca se tcidu .i ro nu carna cu tcidu pa le jufra
+    changes: seq[ChangeNif]  ## lo cenba pe ro jufra pe le spisa poi ca se tcidu
+    channel: JsObject
+      ## lo tubnu .i ro notci pe le tubnu cu du pa nu `event loop` cu carna .i kunti pu lo pamoi nu
+      ##   carna
+    is_turning: bool  ## lo du'u pa nu carna cu denpa ne'i `event loop`
+    count_turns: int  ## lo nu `event loop` cu carna kei poi tcidu ne'i lo cilta pe le papri
 
 
 const NAME_WORKER = "lojban_parser live"
-  ## Name worker of live text takes, by which script knows it reads for page, and not for worker
-  ##   page gave script for work of its own.
+  ## lo cmene be lo gunka be lo jmive se ciska .i ki'u le cmene le samtci cu djuno lo du'u le samtci
+  ##   cu sidju le papri lo nu tcidu kei gi'e na sidju pa gunka poi le papri cu dunda lo se gunka pe
+  ##   le papri ke'a
 
 
 let
-  DOCUMENT {.nodecl, importc: "document".}: JsObject  ## Document of page; none in worker.
-  SELF {.nodecl, importc: "self".}: JsObject  ## Global scope of page or of worker.
-    ## Boundary of JS target: `typeof` reads each, since bare name of undeclared global throws.
+  DOCUMENT {.nodecl, importc: "document".}: JsObject
+    ## `document` pe le papri .i no da zasti ne'i lo gunka
+  SELF {.nodecl, importc: "self".}: JsObject  ## le mulno vanbi pe le papri .a pa gunka
+    ## lo korbi be la'o gy. JS .gy. .i `typeof` cu tcidu ro le re datni .i ki'u bo lo sampu cmene be
+    ##   lo mulno datni poi na se jarco cu rinka lo srera
   SCRIPT_LOADED = (if DOCUMENT.jsTypeOf != "undefined": DOCUMENT.currentScript else: jsNull)
-    ## Element of script page loaded, which gives its address or its text, read as script loads,
-    ##   since page reads it null after; null in worker.
+    ## lo pagbu be le papri be'o poi vasru le samtci poi le papri cu cpacu ke'a .i le pagbu cu jarco
+    ##   lo judri .a lo se ciska pe le samtci .i le pagbu cu se tcidu ca lo nu le samtci cu se cpacu
+    ##   .i ki'u bo ba la'e di'u le papri cu tcidu le pagbu ta'i lo kunti .i kunti ne'i lo gunka
 
 
 proc newWorker(address: cstring, options: JsObject): JsObject {.importjs: "new Worker(@)".}
-  ## Start worker from script at address. Boundary of JS target: constructor of page.
+  ## zbasu lo gunka fi lo samtci poi zvati `address` .i lo korbi be la'o gy. JS .gy. .i lo zbasu
+  ##   fancu pe le papri
 proc newBlobScript(text: cstring): JsObject {.importjs: "new Blob([#], {type: 'text/javascript'})".}
-  ## Hold text of script as Blob, which worker loads by address. Boundary of JS target.
+  ## ralte lo se ciska pe lo samtci ta'i la'o gy. Blob .gy. .i lo gunka cu cpacu la'o gy. Blob .gy.
+  ##   sepi'o lo judri .i lo korbi be la'o gy. JS .gy.
 proc toAddress(blob: JsObject): cstring {.importjs: "URL.createObjectURL(#)".}
-  ## Give address page serves Blob at. Boundary of JS target.
+  ## jarco lo judri poi le papri cu dunda la'o gy. Blob .gy. bu'u ke'a .i lo korbi be
+  ##   la'o gy. JS .gy.
 proc newChannel(): JsObject {.importjs: "new MessageChannel()".}
-  ## Make channel of two ports, whose message is turn of event loop. Boundary of JS target.
+  ## zbasu lo tubnu poi se pagbu re vorme .i ro notci pe le tubnu cu du pa nu `event loop` cu carna
+  ##   .i lo korbi be la'o gy. JS .gy.
 
 
 
-#[ Lines ]#
+#[ lo linji ]#
 
 func countUnits(text: string): int =
-  ## Count units of UTF-16 text takes, as string of JavaScript indexes it: two for each rune past
-  ##   U+FFFF, one for each other.
+  ## kancu lo pagbu poi le se ciska cu nitcu ke'a ne'i la'o gy. UTF-16 .gy. ta'i lo nu lo lerpoi pe
+  ##   la'o gy. JavaScript .gy. cu kancu le se ciska .i ro lerfu poi zmadu la'o gy. U+FFFF .gy. cu
+  ##   nitcu re pagbu .i ro drata lerfu cu nitcu pa pagbu
   for rune in text.runes: result += (if int32(rune) > 0xFFFF: 2 else: 1)
 
 
 func add(lines: var LinesNif, text: string) =
-  ## Add each line of NIF text holds, each ended by line end, as each node of NIF is.
+  ## jmina ro linji pe la'o gy. NIF .gy. poi `text` cu vasru ke'a .i lo linji fanmo cu fanmo ro le
+  ##   linji .i ji'a ro jgena pe la'o gy. NIF .gy. cu se fanmo lo linji fanmo
   var first = 0
   for k in 0 ..< text.len:
     if text[k] != '\n': continue
@@ -118,14 +153,15 @@ func add(lines: var LinesNif, text: string) =
 
 
 func initLinesNif(): LinesNif =
-  ## Make lines of NIF that holds directives alone.
+  ## zbasu lo linji pe la'o gy. NIF .gy. poi vasru le minde po'o
   result = LinesNif(bytes: @[0], units: @[0])
   result.add HEADER
 
 
 func apply(lines: var LinesNif, change: ChangeNif): int =
-  ## Cut lines back to offset of change, which opens line, add lines of its text, and give units of
-  ##   UTF-16 NIF holds before offset.
+  ## katna le linji bu'u le stuzi be le cenba be'o noi krasi pa linji .i jmina lo linji pe lo se
+  ##   ciska pe le cenba .i jarco lo ni la'o gy. NIF .gy. cu vasru lo pagbu pe la'o gy. UTF-16 .gy.
+  ##   pu le stuzi
   let k = lines.bytes.lowerBound(change.at)
   doAssert k < lines.bytes.len and lines.bytes[k] == change.at,
     "Change should cut NIF where line opens; got offset " & $change.at & "."
@@ -136,7 +172,8 @@ func apply(lines: var LinesNif, change: ChangeNif): int =
 
 
 proc toObject(change: ChangeNif, units: int): JsObject =
-  ## Mirror change as plain object, with offset of NIF in units of UTF-16.
+  ## fukpi le cenba ta'i lo sampu dacti .i le stuzi pe la'o gy. NIF .gy. cu se kancu ta'i lo pagbu
+  ##   pe la'o gy. UTF-16 .gy.
   result = newJsObject()
   result.at = units
   result.start = change.start
@@ -145,16 +182,19 @@ proc toObject(change: ChangeNif, units: int): JsObject =
 
 
 
-#[ Worker ]#
+#[ lo gunka ]#
 
 var
-  READER_WORKER = initReaderLive()  ## Reader in worker of live text; reads nothing on page.
-  LINES_WORKER = initLinesNif()  ## Lines of NIF reader in worker holds.
-  TAIL_WORKER: string  ## Tail of last change in worker.
+  READER_WORKER = initReaderLive()
+    ## lo tcidu ne'i lo gunka be lo jmive se ciska .i tcidu no da ne'i le papri
+  LINES_WORKER = initLinesNif()
+    ## lo linji pe la'o gy. NIF .gy. poi le tcidu ne'i le gunka cu ralte ke'a
+  TAIL_WORKER: string  ## le rebla pe le romoi cenba ne'i le gunka
 
 
 proc answerPage(event: JsObject) =
-  ## Answer one ask of page in worker: change of piece or of end, or NIF so far.
+  ## spuda pa nu cpedu pe le papri ne'i le gunka .i le te spuda cu du lo cenba pe pa spisa ge'u .a
+  ##   lo cenba pe lo fanmo ge'u .a la'o gy. NIF .gy. poi ca zvati
   let response = newJsObject()
   case $event.data.kind.to(cstring)
   of $Push, $Finish:
@@ -168,19 +208,21 @@ proc answerPage(event: JsObject) =
 
 
 proc isWorkerLive(): bool =
-  ## Tell whether script runs as worker of live text that page started.
+  ## jdice lo du'u le samtci cu du lo gunka be lo jmive se ciska be'o poi le papri cu rinka lo nu
+  ##   ke'a cfari
   DOCUMENT.jsTypeOf == "undefined" and SELF.jsTypeOf != "undefined" and
     SELF.name.jsTypeOf == "string" and $SELF.name.to(cstring) == NAME_WORKER
 
 
 
-#[ Thread of page ]#
+#[ lo cilta pe le papri ]#
 
 proc turn(reader: ReaderScript)
 
 
 proc schedule(reader: ReaderScript) =
-  ## Ask event loop for turn where thread of page has ask to answer, and no turn waits.
+  ## cpedu lo nu carna fi `event loop` va'o lo nu lo cilta pe le papri cu ponse lo nu cpedu poi na
+  ##   pu se spuda kei .e lo nu no nu carna cu denpa
   if reader.is_turning or reader.asks.len == 0: return
   reader.is_turning = true
   if reader.channel.isNil:
@@ -190,18 +232,20 @@ proc schedule(reader: ReaderScript) =
 
 
 proc turn(reader: ReaderScript) =
-  ## Read on thread of page in one turn: one sentence of piece asked first, or end, or NIF so far;
-  ##   answer ask once its piece is read, then ask for next turn.
+  ## tcidu ne'i lo cilta pe le papri ca pa nu carna .i tcidu pa jufra pe le pamoi se cpedu spisa
+  ##   gi'a tcidu lo fanmo gi'a jarco la'o gy. NIF .gy. poi ca zvati .i spuda le nu cpedu ca lo nu
+  ##   le spisa cu mulno se tcidu .i ba bo cpedu lo bavla'i nu carna
   reader.is_turning = false
   inc reader.count_turns
   template ask: untyped = reader.asks[0]
-    ## Alias ask answered now, which `let` would copy.
+    ## lo drata cmene be lo nu cpedu poi ca se spuda .i `let` da'i fukpi le nu cpedu
   var answer: JsObject
   case ask.kind
   of Push:
     if reader.changes.len == 0: reader.sentences = ask.piece.toSentences
     reader.changes.add reader.reader.push(reader.sentences[reader.changes.len])
-    if reader.changes.len < reader.sentences.len:  # sentences left, each its own turn
+    # su'o jufra cu stali .i ro le jufra cu se tcidu ca pa nu carna pe vo'a
+    if reader.changes.len < reader.sentences.len:
       reader.schedule()
       return
     let change = reader.changes.combine(reader.reader.toNif)
@@ -220,7 +264,8 @@ proc turn(reader: ReaderScript) =
 
 
 proc giveWay(reader: ReaderScript) =
-  ## Give each ask sent to worker that failed before it loaded to thread of page, in order.
+  ## dunda ro nu cpedu poi pu se benji fi lo gunka poi fliba pu lo nu bredi ku'o ku'o lo cilta pe le
+  ##   papri ta'i le porsi
   reader.worker.terminate()
   reader.worker = nil
   reader.asks = reader.sent & reader.asks
@@ -229,8 +274,9 @@ proc giveWay(reader: ReaderScript) =
 
 
 proc startWorker(reader: ReaderScript) =
-  ## Start worker of live text from script page loaded, where page gives worker and script;
-  ##   leave thread of page to read where it gives neither, or refuses worker.
+  ## zbasu lo gunka be lo jmive se ciska be'o fi le samtci poi le papri cu cpacu ke'a ku'o va'o lo
+  ##   nu le papri cu dunda lo gunka .e lo samtci .i va'o lo nu le papri cu dunda no le re dacti
+  ##   gi'a to'e curmi lo gunka kei curmi lo nu lo cilta pe le papri cu tcidu
   if SCRIPT_LOADED.isNull or SCRIPT_LOADED.isUndefined or SELF.Worker.jsTypeOf != "function":
     return
   let options = newJsObject()
@@ -241,7 +287,8 @@ proc startWorker(reader: ReaderScript) =
       else: SCRIPT_LOADED.text.to(cstring).newBlobScript.toAddress
     reader.worker = newWorker(address, options)
   except CatchableError, Defect:
-    return  # page refuses worker, as rule of its content may
+    # le papri cu to'e curmi le gunka .i lo javni pe lo se vasru be le papri cu ka'e rinka la'e di'u
+    return
   reader.worker.onmessage = proc(event: JsObject) =
     if event.data.ready.to(bool):
       reader.is_ready = true
@@ -254,7 +301,8 @@ proc startWorker(reader: ReaderScript) =
 
 
 proc ask(reader: ReaderScript, kind: Asked, piece: string): Future[JsObject] =
-  ## Ask reader for change of piece or of end, or for NIF so far, as promise answered in order.
+  ## cpedu fi le tcidu fe lo cenba pe pa spisa ge'u .a lo cenba pe lo fanmo ge'u .a
+  ##   la'o gy. NIF .gy. poi ca zvati .i jarco lo nupre poi se spuda ta'i le porsi be lo nu cpedu
   doAssert not (reader.is_finished and kind != Nif), "Live text should take no " & $kind &
     " after its end."
   reader.is_finished = reader.is_finished or kind == Finish
@@ -272,10 +320,12 @@ proc ask(reader: ReaderScript, kind: Asked, piece: string): Future[JsObject] =
 
 
 proc parseLojbanLive*(options: JsObject): JsObject {.exportc.} =
-  ## Make reader of live text: in worker where page gives one, else on thread of page. Option
-  ##   `worker: false` keeps reading on thread of page.
-  ##   Boundary of JS target: `exportc` keeps name `parseLojbanLive` in script. Each piece arrives
-  ##     as string of JavaScript, and `$` gives its UTF-8 bytes, which reader reads.
+  ## zbasu lo tcidu be lo jmive se ciska .i le tcidu cu tcidu ne'i lo gunka va'o lo nu le papri cu
+  ##   dunda pa gunka .i va'o lo drata le tcidu cu tcidu ne'i lo cilta pe le papri .i lo cuxna po'u
+  ##   `worker: false` cu ralte lo nu tcidu ne'i lo cilta pe le papri
+  ##   .i lo korbi be la'o gy. JS .gy. .i `exportc` cu ralte lo cmene po'u `parseLojbanLive` ne'i le
+  ##     samtci .i ro spisa cu klama ta'i lo lerpoi pe la'o gy. JavaScript .gy. .i `$` cu jarco lo
+  ##     stuzi pe le spisa ta'i la'o gy. UTF-8 .gy. .i le tcidu cu tcidu le stuzi
   let
     reader = ReaderScript(reader: initReaderLive(), lines: initLinesNif())
     is_worker = options.isUndefined or options.isNull or options.worker.isUndefined or
@@ -290,7 +340,8 @@ proc parseLojbanLive*(options: JsObject): JsObject {.exportc.} =
   result.countTurns = proc(): int = reader.count_turns
 
 
-# Answer page as worker of live text, where page started script so; else define reader alone.
+# va'o lo nu le papri cu rinka lo nu le samtci cu cfari ta'i la'e di'u kei kei le samtci cu spuda le
+#   papri ta'i lo gunka be lo jmive se ciska .i va'o lo drata le datnyvei cu jarco le tcidu po'o
 if isWorkerLive():
   SELF.onmessage = answerPage
   let ready = newJsObject()

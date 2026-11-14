@@ -1,42 +1,56 @@
-## Join rafsi into lujvo, score lujvo, and split lujvo back into rafsi, as CLL 4.11 and 4.12 do.
+## ja'i `CLL 4.11` .e `CLL 4.12` cu jmina lo rafsi fo lo lujvo gi'e dunda lo namcu lo lujvo gi'e
+##   fendi lo lujvo fi lo rafsi
 ##
-##   |-------------------|------------------------------------------------|----------------|
-##   | Code              | CLL                                            | Section        |
-##   |-------------------|------------------------------------------------|----------------|
-##   | Hyphen.Y          | `y`-hyphen                                     | 4.6, 4.11      |
-##   | Hyphen.R          | `r`-hyphen                                     | 4.6, 4.11 (4a) |
-##   | Hyphen.N          | `n`-hyphen, before rafsi starting `r` alone    | 4.6, 4.11 (4a) |
-##   | joinRafsi         | lujvo-making algorithm, steps 3 to 5           | 4.11           |
-##   | hyphensRafsi      | hyphen letters steps 4 and 5 install           | 4.11           |
-##   | score             | lujvo scoring algorithm, lowest preferred      | 4.12           |
-##   | scoreRafsi        | part of score one rafsi adds                   | 4.12           |
-##   | scoreJunction     | part one junction adds, step 5 included        | 4.11, 4.12     |
-##   | isRunOpen         | first rafsi opens run step 5 tests             | 4.11 (5)       |
-##   | splitLujvo        | inverse of `joinRafsi`                         | 4.5, 4.11      |
-##   |-------------------|------------------------------------------------|----------------|
+##   |-----------------|-------------------------------------------------------|------------------|
+##   | lo cmene        | `CLL`                                                 | lo ckupau        |
+##   |-----------------|-------------------------------------------------------|------------------|
+##   | `Hyphen.Y`      | lo lerfu jorne po'u `y`                               | `4.6, 4.11`      |
+##   | `Hyphen.R`      | lo lerfu jorne po'u `r`                               | `4.6, 4.11 (4a)` |
+##   | `Hyphen.N`      | lo lerfu jorne po'u `n` noi lidne `r` po'o            | `4.6, 4.11 (4a)` |
+##   | `joinRafsi`     | `steps 3 to 5` pe lo tadji be lo nu zbasu lo lujvo    | `4.11`           |
+##   | `hyphensRafsi`  | lo lerfu jorne poi `step 4` .e `step 5` cu punji ke'a | `4.11`           |
+##   | `score`         | lo lujvo namcu tadji .i lo cmalu traji cu se nelci    | `4.12`           |
+##   | `scoreRafsi`    | lo pagbu be lo namcu be'o poi pa rafsi cu jmina ke'a  | `4.12`           |
+##   | `scoreJunction` | lo pagbu poi pa te jorne cu jmina ja'i `step 5` ji'a  | `4.11, 4.12`     |
+##   | `isRunOpen`     | lo du'u lo pamoi rafsi cu krasi lo porsi pe `step 5`  | `4.11 (5)`       |
+##   | `splitLujvo`    | lo dukti be `joinRafsi`                               | `4.5, 4.11`      |
+##   |-----------------|-------------------------------------------------------|------------------|
 ##
-##   Split admits segmentation only where `joinRafsi` gives input back letter for letter, so
-##     split then join is identity by construction. 4.11 forbids hyphen algorithm does not
-##     require, so comparing with algorithm's own output is whole test of hyphens.
-##     Rejected: checking each junction by local rule, which would restate algorithm twice.
-##   Join follows 4.11 in right-to-left order that step 5 asks: steps 4a to 4c settle every
-##     junction before tosmabru test reads them.
-##   Each junction is settled by two rafsi beside it (`hyphenJunction`), and tosmabru test reads
-##     junctions left to right with one flag, whether leading run is open (`carryRun`). So
-##     score sums over rafsi and junctions, and render of tanru searches position by position.
-##     Cost: step 5 is read junction by junction, never as whole run, so `test_lujvo.nim` holds
-##       score of each lujvo to its sum over junctions.
-##   Parts of score and of step 5 stay private: `tanru.nim` and `test_lujvo.nim` reach them by
-##     import of all symbols, so surface umbrella exports stays as it was (#832).
-##   Forbidden triples: 4.11 step 4b names impermissible pairs alone, and CLL is silent on
-##     junction forming `ndj`, `ndz`, `ntc` or `nts`, which 3.7 forbids medially. Join puts
-##     `y` there too, so no lujvo it makes breaks 3.7.
-##     Cost: one more rule than 4.11 states; `test_lujvo.nim` names convention where it bites.
-##   Split asks no dictionary: candidate rafsi are judged by form alone (`forms.nim`), and
-##     caller looks each up; morphology and vocabulary stay separable.
-##   Cost: split tries every segmentation by recursion; lujvo of `n` rafsi has at most few
-##     candidates per position, and words are short, so cost is small (unmeasured).
-##   Cost model unread: no hot path; split and join run once for each word reader reads.
+##   `splitLujvo` cu ralte pa te fendi va'o lo nu `joinRafsi` cu jmina le te fendi fo lo valsi poi
+##     mintu le se fendi ro lerfu kei po'o .i se ki'u bo lo jalge be lo nu fendi gi'e ba bo jmina
+##     cu du le valsi ki'u lo tarmi be le samtci .i `CLL 4.11` cu to'e curmi lo lerfu jorne va'o lo
+##     nu le tadji cu na nitcu le lerfu jorne .i se ki'u bo lo nu karbi le valsi lo jalge be le
+##     tadji cu cipra fi ro lerfu jorne
+##     .i se to'e cuxna fa lo nu cipra ro te jorne ja'i lo javni pe lo lerfu poi jibni le te jorne
+##       .i le javni cu rinka lo nu le samtci cu re roi cusku le tadji
+##   .i lo nu jmina cu jersi `CLL 4.11` ta'i lo nu klama fi lo pritu fe lo zunle kei noi `step 5`
+##     cu cpedu ke'a .i `step 4a` bi'o `step 4c` cu jdice fi ro te jorne pu lo nu lo cipra pe
+##     `tosmabru` cu tcidu le te jorne
+##   .i `hyphenJunction` cu jdice fi ro te jorne ja'i le re rafsi poi jibni le te jorne .i ne'i
+##     `carryRun` lo cipra pe `tosmabru` cu tcidu ro te jorne ta'i lo nu klama fi lo zunle fe lo
+##     pritu kei sepi'o pa lanci noi cusku lo du'u xu kau le krasi porsi cu kalri .i se ki'u bo lo
+##     namcu cu sumji lo pagbu pe ro rafsi lo pagbu pe ro te jorne .i se ki'u bo lo nu ciska lo
+##     tanru ta'i lo lujvo cu sisku ta'i lo nu tcidu ro stuzi ta'i lo porsi
+##     .i jdima fa lo nu `step 5` cu tcidu ro te jorne ta'i lo nu sepli kei gi'e no roi tcidu le
+##       mulno porsi .i se ki'u bo `test_lujvo.nim` cu cipra lo du'u lo namcu pe ro lujvo cu sumji
+##       lo pagbu pe ro rafsi lo pagbu pe ro te jorne
+##   .i lo pagbu be lo namcu be'o .e lo pagbu be `step 5` be'o cu stali lo ka sivni .i `tanru.nim`
+##     .e `test_lujvo.nim` cu cpacu ro sinxa `lujvo.nim` mu'i lo nu pilno le pagbu .i se ki'u bo lo
+##     cmene poi le ralju samtci pagbu cu dunda ke'a cu stali to `#832` toi
+##   .i `step 4b` pe `CLL 4.11` cu casnu po'o lo zunsna remei poi na se curmi .i `CLL` na casnu lo
+##     te jorne poi zbasu lo zunsna cimei po'u `ndj` .a `ndz` .a `ntc` .a `nts` .i `CLL 3.7` cu
+##     to'e curmi le vo zunsna cimei bu'u lo midju be lo valsi .i `joinRafsi` cu punji `y` le te
+##     jorne ji'a .i se ki'u bo ro lujvo poi `joinRafsi` cu zbasu ke'a cu mapti `CLL 3.7`
+##     .i jdima fa lo nu `joinRafsi` cu pilno pa javni poi `CLL 4.11` na cusku ke'a .i
+##       `test_lujvo.nim` cu cusku le javni bu'u lo mupli poi le javni cu galfi ke'a
+##   .i `splitLujvo` cu retsku fi no vlaste .i `splitLujvo` cu jdice fi lo cumki rafsi ja'i lo tarmi
+##     po'o sepi'o `forms.nim` .i lo pilno cu retsku fi lo vlaste fo ro rafsi .i se ki'u bo lo tarmi
+##     be lo valsi cu ka'e sepli lo vlaste
+##   .i jdima fa lo nu `splitLujvo` cu cipra fi ro te fendi sepi'o lo fancu poi pilno vo'a .i bu'u
+##     ro stuzi lo lujvo poi vasru vei ny. ve'o rafsi cu ponse su'e so'u cumki rafsi .i lo valsi cu
+##     tordu .i se ki'u bo le jdima cu cmalu .i le jdima cu na se merli
+##   .i lo jdima cu na se tcidu ki'u lo nu no glare pluta cu zvati .i ca ro nu le tcidu cu tcidu pa
+##     valsi kei `splitLujvo` .e `joinRafsi` cu pa roi se pilno
 
 {.experimental: "strictFuncs".}
 
@@ -46,18 +60,19 @@ import ./[clusters, forms]
 
 
 type
-  Hyphen* {.pure.} = enum  ## Define hyphen letter joined after rafsi (4.6).
+  Hyphen* {.pure.} = enum  ## lo lerfu jorne poi lo rafsi cu lidne ke'a to `CLL 4.6` toi
     None, Y, R, N
 
-  Piece* = object  ## Define one rafsi of lujvo as spelled, with hyphen that follows it.
-    rafsi*: string  ## Rafsi letters, apostrophe included.
-    form*: Form  ## Shape of rafsi (`forms.nim`).
-    hyphen*: Hyphen  ## Hyphen after rafsi; `None` after last.
+  Piece* = object
+    ## lo lerfu be pa rafsi pe lo lujvo be'o .e lo lerfu jorne poi le rafsi cu lidne ke'a
+    rafsi*: string  ## lo lerfu be le rafsi .i zoi gy. ' .gy. cu se vasru ji'a
+    form*: Form  ## lo tarmi be le rafsi to `forms.nim` toi
+    hyphen*: Hyphen  ## lo lerfu jorne poi le rafsi cu lidne ke'a .i lo romoi rafsi cu lidne `None`
 
 
 const
   LUT_LETTER_BY_HYPHEN*: array[Hyphen, string] = ["", "y", "r", "n"]
-    ## Letters each hyphen writes.
+    ## lo lerfu poi lo lerfu jorne cu ciska ke'a
   LUT_VALUE_BY_FORM: array[Form, int] = [
     Form.Cvc: 5,
     Form.Ccv: 7,
@@ -67,15 +82,18 @@ const
     Form.Cvccv: 1,
     Form.Ccvcv: 3,
   ]
-    ## Value step 4 of 4.12 gives each form; CVV with apostrophe takes 6 instead.
+    ## lo namcu poi `step 4` pe `CLL 4.12` cu dunda ke'a lo tarmi .i ku'i lo rafsi poi se tarmi
+    ##   la'o gy. CVV .gy. gi'e vasru zoi gy. ' .gy. cu cpacu li xa
 
 
 
-#[ Joining ]#
+#[ lo nu jmina ]#
 
 func isPositionValid(forms: openArray[Form]): bool =
-  ## Test forms fill positions 4.11 steps 1 and 2 allow: at least two rafsi, short or 4-letter
-  ##   before last, and CVV, CCV or 5-letter last.
+  ## jdice lo du'u xu kau `forms` cu mapti lo stuzi poi `step 1` .e `step 2` vu'o pe `CLL 4.11`
+  ##   cu curmi ke'a .i su'o re rafsi cu zvati .i ro rafsi poi lidne le romoi rafsi cu cmalu gi'a
+  ##   vasru vo lerfu .i le romoi rafsi cu se tarmi la'o gy. CVV .gy. .a la'o gy. CCV .gy. gi'a
+  ##   vasru mu lerfu
   if forms.len < 2 or forms[^1] notin FORMS_FINAL: return false
   for one in forms[0 .. ^2]:
     if one notin FORMS_SHORT + FORMS_UNREDUCED: return false
@@ -83,39 +101,52 @@ func isPositionValid(forms: openArray[Form]): bool =
 
 
 func hyphenJunction(before, after: string; at, count: int): Hyphen =
-  ## Settle hyphen after rafsi `before` at index `at` of `count`, `after` next, by steps 4a to 4c
-  ##   of 4.11; step 5 may yet put `y` at first junction (`carryRun`).
+  ## jdice fi lo lerfu jorne poi lidne `after` gi'e se lidne `before` ku'o ja'i `step 4a` bi'o
+  ##   `step 4c` vu'o pe `CLL 4.11` .i `before` cu zvati lo stuzi po'u `at` .i `count` cu te kancu
+  ##   lo rafsi .i ba bo `step 5` cu ka'e punji `y` lo pamoi te jorne ne'i `carryRun`
   let form_before = before.form.get
 
-  # Step 4a: CVV first takes `r`, or `n` before `r`, unless two rafsi end in CCV.
+  # ja'i `step 4a` lo pamoi rafsi poi se tarmi la'o gy. CVV .gy. cu cpacu `r` .a `n` noi lidne `r`
+  #   .i ku'i le rafsi cu cpacu no da va'o lo nu lo lujvo cu vasru re rafsi po'o gi'e se fanmo lo
+  #   rafsi poi se tarmi la'o gy. CCV .gy.
   if at == 0 and form_before == Form.Cvv and (count > 2 or after.form.get != Form.Ccv):
     return (if after[0] == 'r': Hyphen.N else: Hyphen.R)
 
-  # Step 4c: `y` after every 4-letter rafsi, whatever pair follows.
+  # ja'i `step 4c` ro rafsi poi vasru vo lerfu cu lidne `y` .i lo du'u le rafsi cu lidne ma kau
+  #   zunsna remei cu na vajni
   if form_before in FORMS_UNREDUCED: return Hyphen.Y
 
-  # Step 4b: `y` between consonants of impermissible pair; forbidden triple too (3.7).
+  # ja'i `step 4b` `y` cu zvati lo jbini be le re zunsna pe lo zunsna remei poi na se curmi .i
+  #   ji'a `y` cu fendi lo zunsna cimei poi `CLL 3.7` cu to'e curmi ke'a
   let (a, b) = (before[^1], after[0])
   if not (a.isConsonant and b.isConsonant): return Hyphen.None
+  # lo javni poi `CLL 4.11` na cusku ke'a .i le krasi pinka cu skicu le javni
   let is_triple_forbidden = after[1].isConsonant and
-      not isTriplePermissible(a, b, after[1])  # Convention beyond 4.11; see header.
+      not isTriplePermissible(a, b, after[1])
   if not isPairPermissible(a, b) or is_triple_forbidden: Hyphen.Y else: Hyphen.None
 
 
-func isRunOpen(first: string): bool {.used.} =  # Used in `tanru.nim` and `test_lujvo.nim`.
-  ## Test leading run step 5 of 4.11 tests is open after first rafsi: CVC alone opens it.
+func isRunOpen(first: string): bool {.used.} =  # se pilno ne'i `tanru.nim` .e `test_lujvo.nim`
+  ## jdice lo du'u xu kau le krasi porsi poi `step 5` pe `CLL 4.11` cu cipra fi ke'a cu kalri ba
+  ##   lo nu tcidu le pamoi rafsi .i go le porsi cu kalri gi le pamoi rafsi cu se tarmi la'o gy.
+  ##   CVC .gy.
   first.form.get == Form.Cvc
 
 
 func carryRun(
   is_open: bool; before, after: string; hyphen: Hyphen; at, count: int
 ): tuple[is_open, is_breaking: bool] =
-  ## Carry step 5 of 4.11 across junction `at`, whose hyphen steps 4a to 4c settled: whether
-  ##   leading run stays open, and whether step 5 puts `y` at first junction here.
-  ##   Joints step 5a reads run up to first `y`: run stays open while each rafsi is CVC joined
-  ##     with no hyphen, and closes at first joint no initial pair makes, which 5b needs.
-  ##   Where each joint is initial pair, `y` after run breaks word (5b), and so does last rafsi
-  ##     of form CVCCV whose last two consonants make initial pair; 5c puts `y` at first junction.
+  ## bevri `step 5` pe `CLL 4.11` fu lo te jorne po'u `at` noi `step 4a` bi'o `step 4c` cu pu
+  ##   jdice fi lo lerfu jorne pe ke'a .i dunda lo du'u xu kau le krasi porsi cu stali lo ka kalri
+  ##   kei .e lo du'u xu kau `step 5` cu punji `y` lo pamoi te jorne ca lo nu tcidu le te jorne
+  ##   .i `step 5a` cu tcidu lo jorne remei pe le porsi pu lo pamoi be lo lerfu po'u `y` .i le
+  ##     porsi cu stali lo ka kalri ca lo nu ro rafsi cu se tarmi la'o gy. CVC .gy. gi'e lidne no
+  ##     lerfu jorne .i `step 5b` cu nitcu lo nu ro jorne remei cu ka'e krasi lo valsi .i se ki'u
+  ##     bo le porsi cu ganlo bu'u lo pamoi jorne remei poi na ka'e krasi lo valsi
+  ##   .i va'o lo nu ro jorne remei cu ka'e krasi lo valsi kei le valsi cu se fendi ki'u lo nu `y`
+  ##     cu se lidne le porsi to `step 5b` toi .a lo nu le romoi rafsi cu se tarmi la'o gy. CVCCV
+  ##     .gy. gi'e vasru lo zunsna remei poi ka'e krasi lo valsi .i `step 5c` cu punji `y` lo
+  ##     pamoi te jorne
   if not is_open: return (false, false)
   if hyphen == Hyphen.Y: return (false, true)
   let is_initial = hyphen == Hyphen.None and isPairInitial(before[^1], after[0])
@@ -126,26 +157,32 @@ func carryRun(
 
 
 func hyphensRafsi*(rafsi: openArray[string]): seq[Hyphen] =
-  ## Settle hyphen after each rafsi but last, by steps 4 and 5 of 4.11.
-  ##   Rafsi must fill positions steps 1 and 2 allow; `joinRafsi` asserts it.
+  ## jdice fi lo lerfu jorne poi lo rafsi poi na romoi cu lidne ke'a ku'o ja'i `step 4` .e
+  ##   `step 5` vu'o pe `CLL 4.11`
+  ##   .i lo rafsi cu bilga lo nu mapti lo stuzi poi `step 1` .e `step 2` cu curmi ke'a .i
+  ##     `joinRafsi` cu xusra di'u
   let count = rafsi.len
   result = newSeq[Hyphen](count)
 
-  # Steps 4a to 4c: hyphen of each junction, read from two rafsi beside it.
+  # ja'i `step 4a` bi'o `step 4c` lo lerfu jorne pe ro te jorne cu se tcidu fi le re rafsi poi
+  #   jibni le te jorne
   for at in 0 ..< count - 1: result[at] = hyphenJunction(rafsi[at], rafsi[at+1], at, count)
 
-  # Step 5: tosmabru test over leading run of CVC rafsi, junction by junction.
+  # ja'i `step 5` lo cipra pe `tosmabru` cu tcidu le krasi porsi be lo rafsi poi se tarmi la'o gy.
+  #   CVC .gy. .i le cipra cu tcidu ro te jorne ta'i lo nu sepli
   var is_open = rafsi[0].isRunOpen
   for at in 0 ..< count - 1:
     if not is_open: return
     let carried = carryRun(is_open, rafsi[at], rafsi[at+1], result[at], at, count)
-    if carried.is_breaking: result[0] = Hyphen.Y  # Step 5c: `y` at first junction.
+    if carried.is_breaking: result[0] = Hyphen.Y  # ja'i `step 5c` `y` cu zvati lo pamoi te jorne
     is_open = carried.is_open
 
 
 func joinRafsi*(rafsi: openArray[string]): string =
-  ## Join rafsi into lujvo with hyphens 4.11 requires, i.e. steps 3 to 5.
-  ##   Each rafsi must have form (`forms.nim`) and fill position 4.11 steps 1 and 2 allow.
+  ## jmina lo rafsi fo lo lujvo sepi'o lo lerfu jorne poi `CLL 4.11` cu nitcu ke'a ku'o ja'i
+  ##   `step 3` bi'o `step 5`
+  ##   .i ro rafsi cu bilga lo nu ponse lo tarmi to `forms.nim` toi gi'e mapti lo stuzi poi `step 1`
+  ##     .e `step 2` vu'o pe `CLL 4.11` cu curmi ke'a
   assert rafsi.allIt(it.form.isSome) and isPositionValid(rafsi.mapIt(it.form.get)),
     "Rafsi should fill positions of 4.11 steps 1 and 2; got `" & rafsi.join(" ") & "`."
   let hyphens = hyphensRafsi(rafsi)
@@ -155,52 +192,62 @@ func joinRafsi*(rafsi: openArray[string]): string =
 
 
 
-#[ Scoring ]#
+#[ lo nu dunda lo namcu ]#
 
-func scoreRafsi(rafsi: string, form: Form): int {.used.} =  # Used in `tanru.nim` and suites.
-  ## Score part of 4.12 rafsi of `form` adds, i.e. `1000 L − 500 A − 10 R − V`; hyphen aside.
+func scoreRafsi(rafsi: string, form: Form): int {.used.} =  # se pilno ne'i `tanru.nim` .e lo cipra
+  ## dunda lo pagbu be lo namcu pe `CLL 4.12` be'o poi lo rafsi poi se tarmi `form` cu jmina ke'a
+  ##   .i le pagbu cu du `1000 L − 500 A − 10 R − V` .i lo lerfu jorne cu na se kancu
   let value = (if '\'' in rafsi: 6 else: LUT_VALUE_BY_FORM[form])
   1000 * rafsi.len - 500 * rafsi.count('\'') - 10 * value - rafsi.countIt(it.isVowel)
 
 
 func scoreHyphen(hyphen: Hyphen): int =
-  ## Score part of 4.12 one hyphen adds, i.e. `1000 L + 100 H`.
+  ## dunda lo pagbu be lo namcu pe `CLL 4.12` be'o poi pa lerfu jorne cu jmina ke'a .i le pagbu cu
+  ##   du `1000 L + 100 H`
   1000 * LUT_LETTER_BY_HYPHEN[hyphen].len + (if hyphen == Hyphen.None: 0 else: 100)
 
 
 func scoreJunction(
   is_open: bool; before, after: string; at, count: int
-): tuple[score: int, is_open: bool] {.used.} =  # Used in `tanru.nim` and suites.
-  ## Score part of 4.12 junction `at` adds, between rafsi `before` and `after` of `count`, and
-  ##   tell whether leading run stays open past it (4.11 step 5).
-  ##   Where step 5 puts `y` at first junction, score holds it here: junction `at` is first, or
-  ##     first junction scored no hyphen, since open run holds none.
+): tuple[score: int, is_open: bool] {.used.} =  # se pilno ne'i `tanru.nim` .e lo cipra
+  ## dunda lo pagbu be lo namcu pe `CLL 4.12` be'o poi lo te jorne po'u `at` cu jmina ke'a .i le te
+  ##   jorne cu zvati lo jbini be `before` jo'u `after` .i `count` cu te kancu lo rafsi .i ji'a
+  ##   dunda lo du'u xu kau le krasi porsi cu stali lo ka kalri ba le te jorne to `step 5` pe
+  ##   `CLL 4.11` toi
+  ##   .i va'o lo nu `step 5` cu punji `y` lo pamoi te jorne kei le namcu cu ralte lo pagbu pe `y`
+  ##     bu'u le te jorne po'u `at` .i le te jorne cu pamoi .i ja le pamoi te jorne cu se dunda lo
+  ##     namcu pe `None` ki'u lo nu lo kalri porsi cu vasru no lerfu jorne
   let
     hyphen = hyphenJunction(before, after, at, count)
     carried = carryRun(is_open, before, after, hyphen, at, count)
-    hyphen_first = (if at == 0: hyphen else: Hyphen.None)  # Hyphen there before step 5.
+    # lo lerfu jorne pe le pamoi te jorne pu lo nu `step 5` cu se pilno
+    hyphen_first = (if at == 0: hyphen else: Hyphen.None)
     added = (if carried.is_breaking: scoreHyphen(Hyphen.Y) - scoreHyphen(hyphen_first) else: 0)
   (scoreHyphen(hyphen) + added, carried.is_open)
 
 
 func score*(pieces: openArray[Piece]): int =
-  ## Score lujvo spelled by pieces, i.e. `1000 L − 500 A + 100 H − 10 R − V` of 4.12.
-  ##   Lowest score is form dictionary prefers; ties have no preference in 4.12.
-  ##   Sum of part each rafsi adds and part each hyphen adds, since 4.12 counts each alone.
+  ## dunda lo namcu lo lujvo poi `pieces` cu ciska ke'a .i le namcu cu du
+  ##   `1000 L − 500 A + 100 H − 10 R − V` pe `CLL 4.12`
+  ##   .i lo tarmi poi lo namcu pe ke'a cu traji lo ka cmalu ku'o cu se nelci lo vlaste .i va'o lo
+  ##     nu su'o re tarmi cu ponse lo mintu namcu kei `CLL 4.12` cu nelci no le tarmi
+  ##   .i le namcu cu sumji lo pagbu pe ro rafsi lo pagbu pe ro lerfu jorne ki'u lo nu `CLL 4.12`
+  ##     cu kancu ro pagbu ta'i lo nu sepli
   for piece in pieces: result += scoreRafsi(piece.rafsi, piece.form) + piece.hyphen.scoreHyphen
 
 
 func toPieces*(rafsi: openArray[string]): seq[Piece] =
-  ## Spell rafsi as pieces with hyphens `joinRafsi` installs.
+  ## ciska lo rafsi ta'i lo me `Piece` poi vasru lo lerfu jorne poi `joinRafsi` cu punji ke'a
   let hyphens = hyphensRafsi(rafsi)
   for i, one in rafsi: result.add Piece(rafsi: one, form: one.form.get, hyphen: hyphens[i])
 
 
 
-#[ Splitting ]#
+#[ lo nu fendi ]#
 
 func segmentations(word: string, at: int, so_far: seq[Piece]): seq[seq[Piece]] =
-  ## Extend segmentation from letter `at` in every way forms allow; hyphens unjudged yet.
+  ## jmina lo rafsi lo te fendi bu'u lo stuzi po'u `at` ta'i ro tadji poi lo tarmi cu curmi ke'a
+  ##   .i lo lerfu jorne cu pu'o te jdice
   if at == word.len:
     if so_far.len >= 2 and so_far[^1].form in FORMS_FINAL: result.add so_far
     return
@@ -229,15 +276,20 @@ func segmentations(word: string, at: int, so_far: seq[Piece]): seq[seq[Piece]] =
 
 
 func segmentLujvo*(word: string): seq[seq[Piece]] =
-  ## Segment word into rafsi by form and position alone, hyphens as written, never judged.
-  ##   Reader takes it where `splitLujvo` finds nothing, to name form 4.11 would give.
+  ## fendi lo valsi fi lo rafsi ja'i lo tarmi .e lo stuzi gi'e na pilno lo drata .i lo lerfu jorne
+  ##   cu stali ta'i lo nu se ciska .i le nu fendi cu jdice fi no lerfu jorne
+  ##   .i le tcidu cu pilno le fancu va'o lo nu `splitLujvo` cu facki no da kei mu'i lo nu cusku lo
+  ##     tarmi poi `CLL 4.11` cu dunda ke'a
   for candidate in segmentations(word, 0, @[]):
     if isPositionValid(candidate.mapIt(it.form)): result.add candidate
 
 
 func splitLujvo*(word: string): seq[seq[Piece]] =
-  ## Split word into every rafsi sequence that `joinRafsi` joins back into word exactly.
-  ##   Empty where none does: word is no lujvo, or carries hyphen 4.11 does not require.
-  ##   Rafsi are judged by form alone; caller asks dictionary which word each one names.
+  ## fendi lo valsi fi ro porsi be lo rafsi be'o poi `joinRafsi` cu jmina ke'a fo le valsi ta'i lo
+  ##   nu satci
+  ##   .i lo jalge cu kunti va'o lo nu no porsi cu mapti .i lo nu le valsi cu na lujvo .a lo nu le
+  ##     valsi cu vasru lo lerfu jorne poi `CLL 4.11` na nitcu ke'a cu rinka la'e di'u
+  ##   .i lo rafsi cu te jdice ja'i lo tarmi po'o .i lo pilno cu retsku lo du'u ro rafsi cu sinxa ma
+  ##     kau poi valsi kei lo vlaste
   for candidate in segmentLujvo(word):
     if joinRafsi(candidate.mapIt(it.rafsi)) == word: result.add candidate

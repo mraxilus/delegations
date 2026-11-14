@@ -1,63 +1,97 @@
-## Read lojban prose: words of stream, rules of CLL that act on words before grammar, then
-##   grammar of 21.1 over terminals they leave.
+## tcidu lo lojbo prosa sepi'o le valsi pe le porsi be lo valsi ge'u .e lo javni pe la'o gy. CLL
+##   .gy. zi'e poi galfi lo valsi pu le gerna .i ba bo le gerna pe `CLL 21.1` cu tcidu lo gerna
+##   valsi poi le javni cu dunda ke'a
 ##
-##   |----------------|-------------------------------------------------------------------|
-##   | Code           | Meaning                                                           |
-##   |----------------|-------------------------------------------------------------------|
-##   | Unit           | words one terminal of grammar holds, or words stage refuses       |
-##   | RefusalText    | rule refusing text: stream, selma'o, quotation, construct, grammar |
-##   | ReadingText    | tree of text over its units, or refusal with its place            |
-##   | ReadingMarked  | tree of text that marks each error, over every unit               |
-##   | readText       | read text by stream, rules of 19.16, and grammar of 21.1          |
-##   | readTextMarked | read text as `readText` does, and read on past each error         |
-##   |----------------|-------------------------------------------------------------------|
+##   |------------------|----------------------------------------------------------------------|
+##   | lo cmene         | lo smuni                                                             |
+##   |------------------|----------------------------------------------------------------------|
+##   | `Unit`           | lo valsi pe pa gerna valsi ge'u .a lo se to'e curmi be pa ve pruce   |
+##   | `RefusalText`    | lo to'e curmi poi porsi ja selma'o ja sitna ja stura ja gerna        |
+##   | `ReadingText`    | lo tricu poi gapru lo pagbu ku'o .a lo nu to'e curmi bu'u lo stuzi   |
+##   | `ReadingMarked`  | lo tricu poi jarco ro srera gi'e gapru ro pagbu                      |
+##   | `readText`       | tcidu lo se ciska sepi'o le porsi .e `CLL 19.16` .e `CLL 21.1`       |
+##   | `readTextMarked` | tcidu lo se ciska ta'i `readText` gi'e ranji lo nu tcidu ba ro srera |
+##   |------------------|----------------------------------------------------------------------|
 ##
-##   Order follows what 19.16 says each cmavo does not affect: quotation first, then `fa'o`,
-##     then erasure, then `zei` and BAhE, then `bu`, then indicators. CLL gives no full order.
-##   Quotation: `zo` quotes next word, whatever it is (19.10); `lo'u` quotes words up to
-##     `le'u` that no `zo` quotes (19.9); `readStream` holds text `zoi` and `la'o` quote. Each
-##     stands as one terminal, as rewrites of `grammar.nim` give.
-##   `fa'o` ends parsable input unless quoted (19.15, 21.1); `readStream` stops after it, and
-##     it stands in no terminal.
-##   Erasure acts on words, each quotation counted by its words: `zo` quotation is two, `zoi`
-##     quotation four (19.13, Examples 19.77, 19.79). `si` erases word before it. `sa` erases
-##     back to and including last word of selma'o of word after it, or back to start of text
-##     where none stands, as Example 19.81 erases back to start for `.i` of no earlier sentence.
-##     `su` erases every word before it, so `readText` reads words after last `su` alone, as CLL
-##       reads text. Reading that marks each error keeps text before it, as it read before `su`
-##       came, so live text cuts back nowhere (ruling on #859): `su` ends that text, and stands
-##       as unit of its own, stage `Su`, before text after it, which reads alone. Program that
-##       reads text as CLL does drops each node before last `su`.
-##     Erasure leaving part of quotation is refused, as 19.80 says parser rejects
-##       `zo .djan. si .djordj.`: quotation is read before erasure, never again after it.
-##     Cost: 21.1 rule 1101 and chapter 20 give `sa` scope of utterance and `su` of text;
-##       reader takes words 19.13 describes, one speaker writing whole text.
-##   `zei` joins word before it and word after it into one terminal (4.6), and chain of them
-##     into one; neither word may be cmavo 19.16 says `zei` does not affect.
-##   BAhE, one or more, marks next word (rule 1100); `bu`, one or more, makes word before it
-##     lerfu word (17.4). Indicator marks word before it (13.9, rule 1100): UI or CAI with `nai`
-##     after it, `y`, `da'o`, `fu'e` and `fu'o`. Indicators opening text stand as terminals,
-##     which rule 0 reads.
-##   Refusal names byte where reading stops: word refused, or start of unit grammar stops at,
-##     or end of input: `fa'o` that ends it, else byte past text. So text after `fa'o` moves no
-##     byte that reading names, as live text holds once `fa'o` reads.
-##   Marks (#859): `readTextMarked` reads on past each error, so other program mends text by
-##     its tree, whose words that read keep their trees; this parser decides no mend.
-##     Words stage refuses stand as unit no terminal holds, with that stage, and grammar reads
-##       terminals around them: written word stream refuses, as written; words rule of 19.16
-##       refuses, as quotation erasure leaves in part, or `zei` joining nothing; and cmavo no
-##       list gives selma'o, with words marking it. `lo'u` no `le'u` closes stands alone, and
-##       words after it read on, as words after `zoi` with no delimiter do.
-##     Words no stage reads stand as unit too, so each byte of each word lies in one leaf: each
-##       run erasure erases, with `si` or `sa` erasing it, as unit of stage `Erasure`; `fa'o` that
-##       ends input as unit of stage `Faho`, and each written word after it as unit of stage
-##       `Stream`, refusal `Faho`, as written. Those stand last in root, past text.
-##     Unit refused stands as leaf in lowest node holding both units read around it, between
-##       them, or in root at end of text: no rule of 21.1 holds it, so its place is no claim of
-##       rule it would take.
-##     Grammar marks where it stops by error node (`grammar.nim`).
-##     Cost: each written word stream refuses reads stream again, so time grows with product of
-##       their count and length of text; each set of words rule refuses reads rules again.
+##   le porsi be le javni cu jalge lo nu `CLL 19.16` cu cusku lo du'u ro cmavo cu na galfi ma kau .i
+##     le porsi cu du lo nu sitna ce'o zo fa'o ce'o lo nu vimcu ce'o zo zei jo'u bo lo cmavo be
+##     `BAhE` be'o ce'o zo bu ce'o lo cinmo valsi .i la'o gy. CLL .gy. cu dunda no mulno porsi
+##   .i lo nu sitna zo'u zo zo cu sitna le bavla'i valsi .i ro valsi cu ka'e du le valsi to
+##     `CLL 19.10` toi .i zo lo'u cu sitna lo valsi poi lidne zo le'u poi no zo zo cu sitna ke'a to
+##     `CLL 19.9` toi .i `readStream` cu ralte lo se ciska poi zo zoi .e zo la'o cu sitna ke'a .i ro
+##     le nu sitna cu se sinxa pa gerna valsi ja'i lo basti javni pe `grammar.nim`
+##   .i zo fa'o cu fanmo le se ciska poi le gerna ka'e tcidu ke'a ku'o va'o lo nu zo fa'o na se
+##     sitna to `CLL 19.15` .e `CLL 21.1` toi .i `readStream` cu sisti ba zo fa'o .i no gerna valsi
+##     cu vasru zo fa'o
+##   .i lo nu vimcu zo'u le nu vimcu cu galfi lo valsi .i ro nu sitna cu se kancu ta'i le valsi pe
+##     vo'a .i lo nu sitna pe zo zo cu vasru re valsi .i lo nu sitna pe zo zoi cu vasru vo valsi to
+##     `CLL 19.13` .e lo mupli po'u `CLL 19.77` .e `CLL 19.79` toi .i zo si cu vimcu le valsi poi
+##     lidne zo si .i zo sa cu vimcu ro valsi poi lidne zo sa gi'e se lidne le romoi valsi poi cmima
+##     le selma'o be le bavla'i valsi .i zo sa cu vimcu ji'a le romoi valsi .i va'o lo nu no valsi
+##     poi lidne zo sa cu cmima le selma'o kei zo sa cu vimcu ro valsi poi lidne zo sa .i mupli fa
+##     lo nu lo mupli po'u `CLL 19.81` cu vimcu ro valsi poi lidne zo .i ku'o ki'u lo nu no zo .i cu
+##     lidne zo sa
+##     .i zo su cu vimcu ro valsi poi lidne zo su .i se ki'u bo `readText` cu tcidu ta'i lo nu la'o
+##       gy. CLL .gy. cu tcidu lo se ciska kei lo valsi po'o poi se lidne zo su noi romoi .i le se
+##       tcidu poi sinxa ro srera cu ralte le se ciska poi lidne zo su ku'o ta'i lo nu pu se tcidu
+##       pu lo nu zo su cu klama .i se ki'u bo lo jmive se ciska cu katna bu'u no stuzi to lo se
+##       jdice pe `#859` toi .i zo su cu fanmo le se ciska .i zo su cu zvati pa pagbu poi vasru
+##       zo su po'o gi'e se tcita `Su` .i le pagbu cu lidne le se ciska poi se lidne zo su .i le se
+##       ciska cu se tcidu ta'i pa mulno se ciska .i lo samtci poi tcidu lo se ciska ja'i la'o gy.
+##       CLL .gy. cu vimcu ro jgena poi lidne zo su noi romoi
+##     .i le genturfa'i cu to'e curmi lo nu vimcu poi ralte pa pagbu be pa nu sitna .i `CLL 19.80`
+##       cu cusku lo du'u lo genturfa'i cu to'e curmi lo'u zo .djan. si .djordj. le'u .i lo nu sitna
+##       cu se tcidu pu lo nu vimcu .i lo nu sitna cu no roi rapli se tcidu ba lo nu vimcu
+##     .i jdima fa lo nu `CLL 20` .e le javni pe li papanopa pe `CLL 21.1` cu cusku lo du'u lo se
+##       kuspe be zo sa cu du pa se cusku kei .e lo du'u lo se kuspe be zo su cu du pa se ciska .i
+##       le tcidu cu cuxna le valsi poi `CLL 19.13` cu skicu ke'a ku'o ki'u lo nu pa prenu cu ciska
+##       le mulno se ciska
+##   .i zo zei cu jmina le valsi poi lidne zo zei ku'o le valsi poi se lidne zo zei ku'o fo pa gerna
+##     valsi to `CLL 4.6` toi .i lo porsi be lo me zo zei me'u cu jmina ro le valsi fo pa gerna
+##     valsi .i no le re valsi cu ka'e du lo cmavo poi `CLL 19.16` cu cusku lo du'u zo zei na galfi
+##     ke'a
+##   .i su'o pa cmavo be `BAhE` cu tcita le bavla'i valsi to le javni pe li papanono toi .i su'o pa
+##     me zo bu me'u cu zbasu pa lerfu valsi fi le valsi poi lidne le me zo bu me'u to `CLL 17.4`
+##     toi .i lo cinmo valsi cu tcita le valsi poi lidne le cinmo valsi to `CLL 13.9` .e le javni pe
+##     li papanono toi .i lo cmavo be `UI` .a `CAI` cu cinmo valsi .i ro le cmavo cu kansa zo nai
+##     va'o lo nu zo nai cu se lidne le cmavo .i zo y .e zo da'o .e zo fu'e .e zo fu'o cu cinmo
+##     valsi ji'a .i lo cinmo valsi poi krasi lo se ciska cu se sinxa lo gerna valsi poi le javni pe
+##     li no cu tcidu ke'a
+##   .i lo nu to'e curmi cu cmene lo stuzi poi lo nu tcidu cu sisti bu'u ke'a .i le stuzi cu du le
+##     stuzi pe le valsi poi se to'e curmi .ija le stuzi cu du le krasi be le pagbu poi le gerna cu
+##     sisti bu'u ke'a .ija le stuzi cu du le fanmo be le se ciska .i le fanmo cu du le stuzi pe
+##     zo fa'o poi fanmo le se ciska .i va'o lo drata le fanmo cu du le stuzi poi se lidne le se
+##     ciska .i se ki'u bo lo se ciska poi se lidne zo fa'o cu muvdu no stuzi poi le se tcidu cu
+##     cmene ke'a .i lo jmive se ciska cu nitcu di'u ba lo nu zo fa'o cu se tcidu
+##   .i lo nu jarco ro srera zo'u `readTextMarked` cu ranji lo nu tcidu ba ro srera to `#859` toi .i
+##     se ki'u bo lo drata samtci cu cikre le se ciska sepi'o le tricu pe le se ciska .i lo valsi
+##     poi se tcidu cu ralte lo tricu pe vo'a ne'i le tricu .i le vi genturfa'i cu jdice no nu cikre
+##     .i lo valsi poi pa ve pruce cu to'e curmi ke'a cu zvati pa pagbu poi no gerna valsi cu vasru
+##       ke'a gi'e se tcita le ve pruce .i le gerna cu tcidu lo gerna valsi poi sruri le pagbu .i lo
+##       se ciska valsi poi le porsi be lo valsi cu to'e curmi ke'a cu zvati pa pagbu ta'i lo nu se
+##       ciska .i lo valsi poi pa javni pe `CLL 19.16` cu to'e curmi ke'a cu zvati pa pagbu .i mupli
+##       fa lo nu sitna poi lo nu vimcu cu vimcu lo pagbu be ke'a ku'o .e zo zei poi jorne no da .i
+##       lo cmavo poi no liste cu dunda lo selma'o ke'a cu kansa lo valsi poi sinxa le cmavo ku'o
+##       ne'i pa pagbu .i zo lo'u poi zo le'u na fanmo lo nu sitna pe ke'a cu zvati pa pagbu poi
+##       vasru zo lo'u po'o .i lo valsi poi se lidne zo lo'u cu se tcidu .i lo valsi poi se lidne
+##       zo zoi poi ponse no korbi valsi cu go'i ji'a
+##     .i lo valsi poi no ve pruce cu tcidu ke'a cu zvati pa pagbu ji'a .i se ki'u bo ro stuzi pe ro
+##       valsi cu zvati pa pezli .i ro porsi be lo valsi poi lo nu vimcu cu vimcu ke'a cu kansa
+##       zo si .a zo sa vu'o poi vimcu le porsi ku'o ne'i pa pagbu pe le ve pruce po'u `Erasure` .i
+##       zo fa'o poi fanmo le se ciska cu zvati pa pagbu pe le ve pruce po'u `Faho` .i ro se ciska
+##       valsi poi se lidne zo fa'o cu zvati pa pagbu pe le ve pruce po'u `Stream` gi'e ponse lo nu
+##       to'e curmi po'u `Faho` gi'e stali ta'i lo nu se ciska .i le pagbu pe zo fa'o ge'u .e ro
+##       pagbu poi se lidne zo fa'o cu zvati lo fanmo be le genja gi'e se lidne le se ciska
+##     .i lo pagbu poi se to'e curmi zi'e goi ko'a cu pezli lo jgena poi traji lo ka dizlo kei gi'e
+##       vasru le re pagbu poi se tcidu gi'e sruri ko'a .i ko'a cu zvati lo jbini be le re pagbu
+##       .ija ko'a cu zvati le genja bu'u lo fanmo be le se ciska .i no javni pe `CLL 21.1` cu vasru
+##       ko'a .i se ki'u bo le stuzi be ko'a cu xusra no javni poi ko'a cu ka'e cmima ke'a
+##     .i le gerna cu jarco lo stuzi poi le gerna cu sisti bu'u ke'a ku'o sepi'o lo srera jgena to
+##       `grammar.nim` toi
+##     .i jdima fa lo nu ro se ciska valsi poi le porsi be lo valsi cu to'e curmi ke'a cu rinka lo
+##       nu rapli tcidu le porsi .i se ki'u bo lo temci cu zenba simsa lo pilji be lo te kancu be le
+##       se ciska valsi be'o bei lo ni le se ciska cu clani .i ro girzu be lo valsi poi pa javni cu
+##       to'e curmi ke'a cu rinka lo nu rapli tcidu le javni
 
 {.experimental: "strictFuncs".}
 
@@ -67,139 +101,193 @@ import ./[grammar, selmaho, stream, tanru]
 
 
 type
-  RefusalText* {.pure.} = enum  ## Define why prose is refused, or why unit stands in no terminal.
-    Stream  ## Stream refuses text; `rule` names its refusal.
-    Selmaho  ## Cmavo no list gives selma'o, so grammar reads no terminal (ch. 20).
-    Quotation  ## `zo` quoting nothing, `lo'u` never closed or quoting nothing, or erasure
-                ##   leaving part of quotation (19.9, 19.10, 19.13).
-    Construct  ## `si` or `sa` with nothing to erase, or `zei`, BAhE or `bu` with no word
-               ##   to act on (19.13, 4.6, 17.4).
-    Grammar  ## Grammar of 21.1 refuses terminals; `rule` names rule stopping there.
-    Su  ## No refusal: `su` ending text before it, which reading that marks each error keeps.
-    Erasure  ## No refusal: words erasure erases, and `si` or `sa` erasing them (19.13).
-    Faho  ## No refusal: `fa'o` ending input (19.15).
+  RefusalText* {.pure.} = enum
+    ## lo krinu be lo nu lo prosa cu se to'e curmi kei be'o .a lo krinu be lo nu pa pagbu cu zvati
+    ##   no gerna valsi
+    Stream  ## le porsi be lo valsi cu to'e curmi le se ciska .i `rule` cu cmene le nu to'e curmi
+    Selmaho
+      ## no liste cu dunda lo selma'o le cmavo .i se ki'u bo le gerna cu tcidu no gerna valsi to
+      ##   `CLL 20` toi
+    Quotation
+      ## zo zo poi sitna no da ku'o .a zo lo'u poi no roi se fanmo gi'a sitna no da ku'o .a lo nu
+      ##   vimcu poi ralte pa pagbu be pa nu sitna to `CLL 19.9` .e `CLL 19.10` .e `CLL 19.13` toi
+    Construct
+      ## zo si .a zo sa vu'o poi ka'e vimcu no da .i ji'a zo zei .a lo cmavo be `BAhE` be'o .a zo bu
+      ##   vu'o poi ka'e galfi no valsi to `CLL 19.13` .e `CLL 4.6` .e `CLL 17.4` toi
+    Grammar
+      ## le gerna pe `CLL 21.1` cu to'e curmi le gerna valsi .i `rule` cu cmene le javni poi sisti
+      ##   bu'u le stuzi
+    Su
+      ## no nu to'e curmi .i zo su cu fanmo le se ciska poi lidne ri .i le se tcidu poi sinxa ro
+      ##   srera cu ralte le se ciska
+    Erasure
+      ## no nu to'e curmi .i lo valsi poi lo nu vimcu cu vimcu ke'a .i ji'a zo si .a zo sa vu'o poi
+      ##   vimcu le valsi to `CLL 19.13` toi
+    Faho  ## no nu to'e curmi .i zo fa'o poi fanmo le se ciska to `CLL 19.15` toi
 
   Unit* = object
-    ## Define words one terminal of grammar holds, one word or construct of 19.16; or words
-    ##   stage refuses, which no terminal holds (#859).
-    words*: seq[int]  ## Index of each occurrence unit holds, in order; erased words left out.
+    ## lo valsi poi pa gerna valsi cu vasru ke'a ku'o .a lo valsi poi pa ve pruce cu to'e curmi ke'a
+    ##   zi'e poi no gerna valsi cu vasru ke'a to `#859` toi .i le valsi poi pa gerna valsi cu vasru
+    ##   ke'a cu du pa valsi .a pa gerna stura pe `CLL 19.16`
+    words*: seq[int]
+      ## lo namcu pe ro valsi poi le pagbu cu vasru ke'a ku'o ta'i le porsi .i le liste cu claxu lo
+      ##   valsi poi se vimcu
     case is_read*: bool
     of true:
       terminal*: Terminal
     of false:
       refusal*: RefusalText
-        ## Stage refusing words, which no terminal holds, and grammar reads around them
-        ##   (`readTextMarked`): stream, selma'o, quotation or construct; or stage that leaves
-        ##   words out of every terminal: `su`, erasure, or `fa'o`.
+        ## le ve pruce poi to'e curmi le valsi .i no gerna valsi cu vasru le valsi .i le gerna cu
+        ##   tcidu lo valsi poi sruri le valsi to `readTextMarked` toi .i le ve pruce cu du le porsi
+        ##   be lo valsi be'o .a lo selma'o .a lo nu sitna .a lo gerna stura .ija le ve pruce cu
+        ##   rinka lo nu no gerna valsi cu vasru le valsi .i le ve pruce cu du zo su .a lo nu vimcu
+        ##   .a zo fa'o
 
-  ReadingText* = object  ## Define outcome of reading prose.
+  ReadingText* = object  ## lo jalge be lo nu tcidu lo prosa
     case is_read*: bool
     of true:
-      occurrences*: seq[Occurrence]  ## Words of stream in order, erased words and `fa'o` among.
-      units*: seq[Unit]  ## Terminals of grammar in order, with words each holds.
-      tree*: Node  ## Tree of text; each terminal of it indexes `units`.
+      occurrences*: seq[Occurrence]
+        ## lo valsi pe le porsi be lo valsi ta'i le porsi .i le valsi cu vasru lo valsi poi se vimcu
+        ##   ku'o .e zo fa'o
+      units*: seq[Unit]
+        ## lo gerna valsi ta'i le porsi .i ro le gerna valsi cu kansa lo valsi poi le gerna valsi cu
+        ##   vasru ke'a
+      tree*: Node
+        ## le tricu pe le se ciska .i ro gerna valsi pe le tricu cu sinxa pa cmima be `units`
     of false:
       refusal*: RefusalText
-      start*: int  ## Byte of text where reading stops.
-      rule*: string  ## Refusal of stream, or rule of grammar, as `sumti-6 97`; empty otherwise.
+      start*: int  ## le stuzi pe le se ciska zi'e poi lo nu tcidu cu sisti bu'u ke'a
+      rule*: string
+        ## lo nu to'e curmi pe le porsi be lo valsi ge'u .a lo javni pe le gerna mu'u `sumti-6 97`
+        ##   .i kunti va'o lo drata
 
-  ReadingMarked* = object  ## Define reading of prose that marks each error, and holds tree still.
+  ReadingMarked* = object  ## lo se tcidu pe lo prosa zi'e poi sinxa ro srera gi'e ralte lo tricu
     occurrences*: seq[Occurrence]
-      ## Words of stream in order, erased words and `fa'o` among; and each written word stream
-      ##   refuses, as written, whose reading names refusal of stream.
-    units*: seq[Unit]  ## Units in order of first word, each read or refused.
+      ## lo valsi pe le porsi be lo valsi ta'i le porsi .i le valsi cu vasru lo valsi poi se vimcu
+      ##   ku'o .e zo fa'o .i ji'a ro se ciska valsi poi le porsi be lo valsi cu to'e curmi ke'a cu
+      ##   stali ta'i lo nu se ciska .i lo se tcidu pe le se ciska valsi cu cmene lo nu to'e curmi
+      ##   pe le porsi
+    units*: seq[Unit]
+      ## lo pagbu ta'i le porsi be lo pamoi valsi .i ro pagbu cu se tcidu gi'a se to'e curmi
     tree*: Node
-      ## Tree of text, error node where grammar stops (`readGrammarMarked`); each leaf indexes
-      ##   `units`, and place grammar stops at indexes them too, count of them where text ends.
-    size*: int  ## Bytes of text, which names place where text ends.
+      ## le tricu pe le se ciska .i lo srera jgena cu zvati bu'u lo stuzi poi le gerna cu sisti bu'u
+      ##   ke'a to `readGrammarMarked` toi .i ro pezli cu sinxa pa cmima be `units` .i ji'a lo stuzi
+      ##   poi le gerna cu sisti bu'u ke'a cu sinxa pa cmima be `units` .i va'o lo nu le gerna cu
+      ##   sisti bu'u le fanmo be le se ciska kei le stuzi cu du lo te kancu be le cmima
+    size*: int  ## lo te kancu be lo stuzi pe le se ciska be'o noi cmene le fanmo be le se ciska
 
   ReadingParts* = object
-    ## Define reading of text as its parts, and what live text reads past them: erasure that
-    ##   reaches before text, and quotation that waits for its closer (`readTextParts`).
+    ## lo se tcidu pe ro pagbu be lo se ciska .i ji'a le se tcidu cu jarco lo nu vimcu poi klama pu
+    ##   le se ciska ku'o .e lo nu sitna poi denpa lo fanmo valsi pe vo'a .i lo jmive se ciska cu
+    ##   tcidu di'u ba le pagbu to `readTextParts` toi
     reading*: ReadingMarked
-      ## Reading whose root holds node of each part (`readGrammarParts`), and each unit refused
-      ##   between parts, in order, `su` among them; each part reads alone.
-    open*: seq[int]  ## Unit of each `tu'e`, `lu` or `to` that waits for its closer.
+      ## lo se tcidu poi le genja be ke'a cu vasru lo jgena pe ro pagbu be le se ciska ge'u .e ro
+      ##   pagbu poi se to'e curmi gi'e zvati lo jbini be le pagbu be le se ciska ku'o ta'i le porsi
+      ##   to `readGrammarParts` toi .i zo su cu cmima le pagbu poi se to'e curmi .i ro pagbu be le
+      ##   se ciska cu se tcidu ta'i pa mulno se ciska
+    open*: seq[int]  ## lo pagbu pe zo tu'e .a zo lu .a zo to vu'o poi denpa lo fanmo valsi pe vo'a
     zois*: seq[tuple[start: int, delimiter: string]]
-      ## Byte of written word of each `zoi` that no delimiter closes, with that delimiter.
+      ## lo stuzi pe lo se ciska valsi pe ro zo zoi poi no korbi valsi cu fanmo ke'a .i ji'a le
+      ##   korbi valsi
     lohus*: seq[int]
-      ## Byte of each `lo'u` whose words stream reads to end of text: no `zo` quotes it, and no
-      ##   `le'u` closes it, as stream reads them, whatever unit rules give it. So text after it
-      ##   reads as stream reads it, inside words it quotes, though erasure erases its `le'u`, or
-      ##   rules read it as text `la'o` quotes.
+      ## lo stuzi pe ro me zo lo'u me'u poi le porsi be lo valsi cu tcidu ke'a ta'i lo nu sitna poi
+      ##   klama le fanmo be le se ciska .i no zo zo cu sitna le me zo lo'u me'u .i no zo le'u cu
+      ##   fanmo le nu sitna kei ta'i lo nu le porsi cu tcidu .i lo pagbu poi lo javni cu dunda ke'a
+      ##   le me zo lo'u me'u cu na vajni .i se ki'u bo le se ciska poi se lidne le me zo lo'u me'u
+      ##   cu se tcidu ta'i lo nu le porsi cu tcidu le se ciska .i le se ciska cu zvati ne'i le
+      ##   valsi poi le me zo lo'u me'u cu sitna ke'a .i ku'i lo nu vimcu cu ka'e vimcu le me
+      ##   zo le'u me'u pe le nu sitna .ija lo javni cu ka'e tcidu le me zo lo'u me'u ta'i lo se
+      ##   ciska poi zo la'o cu sitna ke'a
     markers*: seq[Option[Terminal]]
-      ## Marker of each `sa` before first `su` that finds none, in any pass of rules of 19.16,
-      ##   so erases to start.
+      ## le liste cu vasru lo sinxa pe ro me zo sa me'u poi lidne ro me zo su me'u gi'e facki no
+      ##   sinxa ne'i su'o nu tcidu sepi'o lo javni pe `CLL 19.16` .i se ki'u bo le me zo sa me'u cu
+      ##   vimcu ro valsi poi lidne le me zo sa me'u
     faho*: Option[int]
-      ## Unit of `fa'o` that ends input (19.15): it and each unit after it, of written word stream
-      ##   reads not, stand last in root, past text; none where none.
+      ## lo pagbu pe zo fa'o poi fanmo le se ciska to `CLL 19.15` toi .i le pagbu .e ro pagbu poi se
+      ##   lidne le pagbu zi'e poi vasru pa se ciska valsi poi le porsi be lo valsi na tcidu ke'a cu
+      ##   zvati lo fanmo be le genja gi'e se lidne le se ciska .i no da va'o lo nu no zo fa'o cu
+      ##   fanmo le se ciska
     quoted*: seq[int]
-      ## Byte of each `su` that quotation holds in first pass of rules of 19.16, which erasure
-      ##   left in part, so pass refused it: erasure after `su` that erases rest of it makes first
-      ##   pass read, and quote `su` again, as `zo su si si` does (19.13).
+      ## lo stuzi pe ro me zo su me'u poi lo nu sitna cu vasru ke'a ne'i le pamoi nu tcidu sepi'o lo
+      ##   javni pe `CLL 19.16` .i lo nu vimcu cu vimcu lo pagbu be le nu sitna .i se ki'u bo le nu
+      ##   tcidu cu to'e curmi le nu sitna .i lo nu vimcu poi se lidne zo su gi'e vimcu le rebla be
+      ##   le nu sitna cu rinka lo nu le pamoi nu tcidu cu tcidu le se ciska gi'e rapli sitna zo su
+      ##   .i mupli fa lo'u zo su si si le'u to `CLL 19.13` toi
 
-  Role {.pure.} = enum  ## Define part word takes in quotation, or none (19.9, 19.10).
-    Plain  ## Word acting as itself.
-    Zo  ## `zo` quoting next word.
-    Quoted  ## Word `zo` quotes.
-    Lohu  ## `lo'u` opening quotation of words.
-    Inner  ## Word between `lo'u` and `le'u`.
-    Lehu  ## `le'u` closing it.
-    Zoi  ## `zoi` or `la'o` opening quotation of text.
-    Delimiter  ## Word delimiting text quoted, before it or after it.
-    Foreign  ## Text `zoi` or `la'o` quotes.
+  Role {.pure.} = enum
+    ## lo pagbu poi lo valsi cu cpacu ke'a ne'i lo nu sitna ku'o .a no da to `CLL 19.9` .e
+    ##   `CLL 19.10` toi
+    Plain  ## lo valsi poi gunka lo gunka pe vo'a
+    Zo  ## zo zo poi sitna le bavla'i valsi
+    Quoted  ## lo valsi poi zo zo cu sitna ke'a
+    Lohu  ## zo lo'u poi krasi lo nu sitna lo valsi
+    Inner  ## lo valsi poi zvati lo jbini be zo lo'u .e zo le'u
+    Lehu  ## zo le'u poi fanmo le nu sitna
+    Zoi  ## zo zoi .a zo la'o vu'o poi krasi lo nu sitna lo se ciska
+    Delimiter  ## lo korbi valsi poi lidne ja se lidne le se sitna
+    Foreign  ## lo se ciska poi zo zoi .a zo la'o cu sitna ke'a
 
-  Piece = object  ## Define unit under construction, and what it holds.
+  Piece = object  ## lo pagbu poi ca'o se zbasu ku'o .e le se vasru be le pagbu
     words: seq[int]
-    head: int  ## Occurrence whose terminal piece takes, for word alone.
-    terminal: Option[Terminal]  ## Terminal of construct; none for word alone.
-    is_plain: bool  ## Piece is one plain word, which construct may still act on.
+    head: int
+      ## lo valsi poi le pagbu cu cpacu lo gerna valsi pe ke'a va'o lo nu le pagbu cu du pa valsi
+      ##   po'o
+    terminal: Option[Terminal]
+      ## lo gerna valsi pe lo gerna stura .i no da va'o lo nu le pagbu cu du pa valsi po'o
+    is_plain: bool  ## le pagbu cu du pa sampu valsi noi lo gerna stura cu ka'e galfi ke'a
 
-  Reach = object  ## Define what erasure reaches before start of words, which live text reads.
+  Reach = object
+    ## le se klama be lo nu vimcu be'o poi zvati pu le krasi be le valsi .i lo jmive se ciska cu
+    ##   tcidu le se klama
     markers: seq[Option[Terminal]]
-      ## Marker of each `sa` before first `su` that finds none, so erases to start.
+      ## le liste cu vasru lo sinxa pe ro me zo sa me'u poi lidne ro me zo su me'u gi'e facki no
+      ##   sinxa .i se ki'u bo le me zo sa me'u cu vimcu ro valsi poi lidne le me zo sa me'u
 
 
 const
   SELMAHO_INDICATORS = {
     Selmaho.Ui, Selmaho.Cai, Selmaho.Y, Selmaho.Daho, Selmaho.Fuho, Selmaho.Fuhe,
   }
-    ## Selma'o of indicator marking word before it (13.9, 19.16).
+    ## lo selma'o be lo cinmo valsi poi tcita lo valsi poi lidne le cinmo valsi to `CLL 13.9` .e
+    ##   `CLL 19.16` toi
   SELMAHO_UNJOINED = {
     Selmaho.Zo, Selmaho.Si, Selmaho.Sa, Selmaho.Su, Selmaho.Lohu, Selmaho.Zoi, Selmaho.Faho,
     Selmaho.Zei,
   }
-    ## Selma'o of cmavo `zei` does not affect (19.16).
+    ## lo selma'o be lo cmavo poi zo zei na galfi ke'a to `CLL 19.16` toi
   SELMAHO_UNLETTERED = SELMAHO_UNJOINED + {Selmaho.Bahe, Selmaho.Bu}
-    ## Selma'o of cmavo `bu` makes no lerfu word (17.4, 19.16).
+    ## lo selma'o be lo cmavo poi zo bu na zbasu lo lerfu valsi fi ke'a to `CLL 17.4` .e `CLL 19.16`
+    ##   toi
 
 
 func refuse(refusal: RefusalText, start: int, rule = ""): ReadingText =
-  ## Build reading that refuses prose at byte `start`.
+  ## zbasu lo se tcidu poi to'e curmi lo prosa bu'u le stuzi po'u `start`
   ReadingText(is_read: false, refusal: refusal, start: start, rule: rule)
 
 
 func toSelmaho(word: Occurrence): Option[Selmaho] =
-  ## Give selma'o of cmavo word; none for other word, and for text quoted.
+  ## dunda lo selma'o be le valsi va'o lo nu le valsi cu cmavo .i dunda no da va'o lo nu le valsi cu
+  ##   na cmavo gi'a se sitna
   if word.reading.is_word: word.reading.selmaho else: none(Selmaho)
 
 
 func isSelmaho(word: Occurrence, selmaho: set[Selmaho]): bool =
-  ## Test word is cmavo of one of `selmaho`.
+  ## jdice lo du'u xu kau le valsi cu cmavo be pa cmima be `selmaho`
   let own = word.toSelmaho
   own.isSome and own.get in selmaho
 
 
 
-#[ Quotation and erasure ]#
+#[ lo nu sitna .e lo nu vimcu ]#
 
 func isClosingLohu*(words: openArray[Occurrence]): bool =
-  ## Test words hold `le'u` that no `zo` quotes, which closes `lo'u` before them, as stream reads
-  ##   words `lo'u` quotes (19.9).
+  ## jdice lo du'u xu kau le valsi cu vasru zo le'u poi no zo zo cu sitna ke'a .i le me zo le'u me'u
+  ##   cu fanmo lo me zo lo'u me'u poi lidne le valsi .i ta'i di'u le porsi be lo valsi cu tcidu lo
+  ##   valsi poi zo lo'u cu sitna ke'a to `CLL 19.9` toi
   var is_quoting = false
   for k in 0 ..< words.len:
     template word: untyped = words[k]
-      ## Alias word, which `let` would copy.
+      ## lo drata cmene be le valsi .i `let` cu zbasu lo fukpi be le valsi
     if not word.reading.is_word: continue
     if is_quoting:
       is_quoting = false
@@ -210,14 +298,17 @@ func isClosingLohu*(words: openArray[Occurrence]): bool =
 
 
 func toRoles(words: openArray[Occurrence], is_lohu = false): seq[Role] =
-  ## Give part each word takes in quotation: `zo` quotes next word, `lo'u` words up to `le'u`
-  ##   no `zo` quotes, and `zoi` its delimiter, text and delimiter, as `readStream` holds them.
-  ##   `zo` ending text quotes no word, and `quotations` refuses it (19.10). With `is_lohu`,
-  ##   words open inside words `lo'u` quotes, as `readStream` reads them.
+  ## dunda le pagbu poi ro valsi cu cpacu ke'a ne'i lo nu sitna .i zo zo cu sitna le bavla'i valsi
+  ##   .i zo lo'u cu sitna lo valsi poi lidne zo le'u poi no zo zo cu sitna ke'a .i zo zoi cu sitna
+  ##   le korbi valsi pe vo'a ge'u .e le se sitna .e le korbi valsi ta'i lo nu `readStream` cu ralte
+  ##   le valsi
+  ##   .i zo zo poi fanmo le se ciska cu sitna no valsi .i `quotations` cu to'e curmi le me zo zo
+  ##   me'u to `CLL 19.10` toi .i va'o lo nu `is_lohu` cu jetnu kei le valsi cu cfari ne'i lo valsi
+  ##   poi zo lo'u cu sitna ke'a ta'i lo nu `readStream` cu tcidu le valsi
   result = newSeq[Role](words.len)
   var
     i = 0
-    is_lohu = is_lohu  # words `lo'u` quotes, up to `le'u`
+    is_lohu = is_lohu  # lo valsi poi zo lo'u cu sitna ke'a .i le valsi cu lidne zo le'u
   while i < words.len:
     if words[i].isSelmaho({Selmaho.Zo}):
       result[i] = (if is_lohu: Role.Inner else: Role.Zo)
@@ -240,16 +331,23 @@ func erased(
     words: openArray[Occurrence], roles: openArray[Role], offender: var seq[int],
     reach: var Reach, as_parting: bool,
 ): Option[seq[int]] =
-  ## Keep words erasure leaves, by index (19.13): `si` erases word before it, `sa` back to last
-  ##   word of selma'o of word after it or to start, `su` every word before it; cmavo
-  ##   quotation holds erase nothing. None where `si` or `sa` has nothing to act on, which
-  ##   `offender` then names. `reach` names each `sa` before first `su` that erases to start.
-  ##   With `as_parting`, `su` stays as word kept, which ends text before it, so erasure after it
-  ##     reaches no word before it (ruling on #859).
+  ## ralte lo valsi poi lo nu vimcu cu cliva ke'a ku'o ta'i lo namcu to `CLL 19.13` toi .i zo si cu
+  ##   vimcu le valsi poi lidne zo si .i zo sa cu vimcu ro valsi poi lidne zo sa gi'e se lidne le
+  ##   romoi valsi poi cmima le selma'o be le bavla'i valsi .i zo sa cu vimcu ji'a le romoi valsi .i
+  ##   va'o lo nu no valsi cu cmima le selma'o kei zo sa cu vimcu ro valsi poi lidne zo sa .i zo su
+  ##   cu vimcu ro valsi poi lidne zo su .i lo cmavo poi lo nu sitna cu vasru ke'a cu vimcu no da
+  ##   .i dunda no da va'o lo nu zo si .a zo sa cu galfi no da .i ba bo `offender` cu cmene le cmavo
+  ##   .i `reach` cu cmene ro me zo sa me'u poi lidne ro me zo su me'u gi'e vimcu ro valsi poi lidne
+  ##   le me zo sa me'u
+  ##   .i va'o lo nu `as_parting` cu jetnu kei zo su cu stali ta'i lo valsi poi se ralte .i zo su cu
+  ##     fanmo le se ciska poi lidne ri .i se ki'u bo lo nu vimcu poi se lidne zo su cu klama no
+  ##     valsi poi lidne zo su to lo se jdice pe `#859` toi
   reach = Reach()
   var
     kept: seq[int]
-    floor = 0  # words kept before it stand before last `su`, which erasure reaches not
+    # lo valsi poi se ralte gi'e lidne `floor` cu lidne zo su noi romoi .i lo nu vimcu cu klama no
+    #   le valsi
+    floor = 0
   for i, word in words:
     if roles[i] != Role.Plain or not word.isSelmaho({Selmaho.Si, Selmaho.Sa, Selmaho.Su}):
       kept.add i
@@ -280,11 +378,14 @@ func quotations(
     words: openArray[Occurrence], roles: openArray[Role], kept: openArray[int],
     offender: var seq[int],
 ): Option[seq[Piece]] =
-  ## Group words kept into pieces: each quotation whole, as one terminal, and each other word
-  ##   alone; none where erasure leaves part of quotation, or `lo'u` quotes no word (19.80).
-  ##   `offender` then names words of that quotation kept: erasure leaves its first words. Of
-  ##     `lo'u` that no `le'u` closes, it names `lo'u` alone, so words after it read on, as words
-  ##     after `zoi` with no delimiter do: in live text, it holds no word of hours after it.
+  ## fendi lo valsi poi se ralte lo spisa .i ro nu sitna cu zvati pa spisa ta'i pa gerna valsi .i ro
+  ##   drata valsi cu zvati pa spisa pe vo'a .i dunda no da va'o lo nu lo nu vimcu cu ralte pa pagbu
+  ##   be pa nu sitna .i ji'a dunda no da va'o lo nu zo lo'u cu sitna no valsi to `CLL 19.80` toi
+  ##   .i ba bo `offender` cu cmene lo valsi pe le nu sitna zi'e poi se ralte .i lo nu vimcu cu
+  ##     ralte lo pamoi valsi pe le nu sitna .i va'o lo nu zo le'u na fanmo le nu sitna pe zo lo'u
+  ##     kei `offender` cu cmene zo lo'u po'o .i se ki'u bo lo valsi poi se lidne zo lo'u cu se
+  ##     tcidu .i lo valsi poi se lidne zo zoi poi ponse no korbi valsi cu go'i ji'a .i ne'i lo
+  ##     jmive se ciska zo lo'u cu vasru no valsi pe lo cacra poi se lidne zo lo'u
   var
     pieces: seq[Piece]
     p = 0
@@ -320,15 +421,16 @@ func quotations(
 
 
 
-#[ Constructs ]#
+#[ lo gerna stura ]#
 
 func isWordPlain(piece: Piece, words: openArray[Occurrence], selmaho: set[Selmaho]): bool =
-  ## Test piece is one plain word, cmavo of `selmaho`.
+  ## jdice lo du'u xu kau le spisa cu du pa sampu valsi poi cmavo be pa cmima be `selmaho`
   piece.is_plain and words[piece.head].isSelmaho(selmaho)
 
 
 func isJoinable(piece: Piece, words: openArray[Occurrence]): bool =
-  ## Test piece may stand by `zei`: plain word but cmavo `zei` does not affect, or `zei` chain.
+  ## jdice lo du'u xu kau le spisa cu ka'e lamji zo zei .i le spisa cu du pa sampu valsi poi na du
+  ##   lo cmavo poi zo zei na galfi ke'a .ija le spisa cu du pa porsi pe zo zei
   piece.terminal == some(Selmaho.Zei.toTerminal) or
       (piece.is_plain and not piece.isWordPlain(words, SELMAHO_UNJOINED))
 
@@ -336,8 +438,10 @@ func isJoinable(piece: Piece, words: openArray[Occurrence]): bool =
 func joined(
     pieces: openArray[Piece], words: openArray[Occurrence], offender: var seq[int]
 ): Option[seq[Piece]] =
-  ## Join each word before `zei` and word after it into one `ZEI` piece, chain into one (4.6);
-  ##   none where `zei` stands by no word it may join, which `offender` then names.
+  ## jmina ro valsi poi lidne zo zei ku'o le valsi poi se lidne zo zei ku'o fo pa spisa po'u `ZEI`
+  ##   .i lo porsi pe zo zei cu jmina ro le valsi fo pa spisa to `CLL 4.6` toi .i dunda no da va'o
+  ##   lo nu zo zei cu lamji no valsi poi zo zei ka'e jorne ke'a .i ba bo `offender` cu cmene le me
+  ##   zo zei me'u
   var
     joins: seq[Piece]
     k = 0
@@ -363,8 +467,10 @@ func joined(
 func marked(
     pieces: openArray[Piece], words: openArray[Occurrence], offender: var seq[int]
 ): Option[seq[Piece]] =
-  ## Give each BAhE, one or more, to piece after it, whose terminal stays (rule 1100); none
-  ##   where BAhE ends text, or stands before `su` that ends it, which `offender` then names.
+  ## dunda ro porsi be lo cmavo be `BAhE` le spisa poi se lidne le porsi .i le gerna valsi pe le
+  ##   spisa cu stali to le javni pe li papanono toi .i dunda no da va'o lo nu lo cmavo be `BAhE` cu
+  ##   fanmo le se ciska gi'a lidne zo su poi fanmo le se ciska .i ba bo `offender` cu cmene le
+  ##   cmavo
   var
     marks: seq[Piece]
     pending: seq[int]
@@ -387,8 +493,9 @@ func marked(
 func lettered(
     pieces: openArray[Piece], words: openArray[Occurrence], offender: var seq[int]
 ): Option[seq[Piece]] =
-  ## Make word before `bu`, one or more, lerfu word: one `BU` piece (17.4); none where `bu`
-  ##   follows no word, or cmavo `bu` does not affect, which `offender` then names.
+  ## zbasu pa lerfu valsi fi le valsi poi lidne su'o pa me zo bu me'u .i le lerfu valsi cu du pa
+  ##   spisa po'u `BU` to `CLL 17.4` toi .i dunda no da va'o lo nu zo bu cu se lidne no valsi gi'a
+  ##   se lidne lo cmavo poi zo bu na galfi ke'a .i ba bo `offender` cu cmene le me zo bu me'u
   var letters: seq[Piece]
   for piece in pieces:
     if not piece.isWordPlain(words, {Selmaho.Bu}):
@@ -406,9 +513,10 @@ func lettered(
 
 
 func indicated(pieces: openArray[Piece], words: openArray[Occurrence]): seq[Piece] =
-  ## Give each indicator to piece before it, `nai` after UI or CAI with it (13.9, 19.16);
-  ##   indicators opening text stay pieces of their own, which rule 0 reads, as do those after
-  ##   `su`, which opens text.
+  ## dunda ro cinmo valsi le spisa poi lidne le cinmo valsi .i zo nai poi se lidne lo cmavo be `UI`
+  ##   .a `CAI` cu kansa le cmavo to `CLL 13.9` .e `CLL 19.16` toi .i lo cinmo valsi poi krasi le se
+  ##   ciska cu stali ta'i lo spisa pe vo'a .i le javni pe li no cu tcidu le spisa .i lo cinmo valsi
+  ##   poi se lidne zo su cu stali ta'i lo spisa pe vo'a ji'a .i zo su cu krasi lo se ciska
   var
     is_opening = true
     k = 0
@@ -429,11 +537,12 @@ func indicated(pieces: openArray[Piece], words: openArray[Occurrence]): seq[Piec
 
 
 
-#[ Reading ]#
+#[ lo nu tcidu ]#
 
 func toParsable(occurrences: openArray[Occurrence], is_lohu = false): seq[Occurrence] =
-  ## Give words of parsable input: stream stops after `fa'o` no quotation holds, which stands
-  ##   in no unit (19.15); with `is_lohu`, words open inside words `lo'u` quotes.
+  ## dunda lo valsi pe le se ciska poi le gerna ka'e tcidu ke'a .i le porsi be lo valsi cu sisti ba
+  ##   zo fa'o poi no nu sitna cu vasru ke'a .i no pagbu cu vasru zo fa'o to `CLL 19.15` toi .i va'o
+  ##   lo nu `is_lohu` cu jetnu kei le valsi cu cfari ne'i lo valsi poi zo lo'u cu sitna ke'a
   result = @occurrences
   let is_ending = result.len > 0 and result[^1].isSelmaho({Selmaho.Faho}) and
     result.toRoles(is_lohu)[^1] == Role.Plain
@@ -444,11 +553,13 @@ func toPieces(
     words: openArray[Occurrence], refusal: var RefusalText, offender: var seq[int],
     reach: var Reach, as_parting: bool,
 ): Option[seq[Piece]] =
-  ## Group words into pieces by rules of 19.16 that act on words: quotation, then erasure,
-  ##   then `zei`, BAhE, `bu` and indicators; none where rule has nothing to act on, which
-  ##   `refusal` and `offender` then name. `reach` gives what erasure reaches before words.
-  ##   With `as_parting`, `su` stands as piece of its own, which ends text before it, and no
-  ##     rule acts across it.
+  ## fendi lo valsi lo spisa ja'i lo javni pe `CLL 19.16` zi'e poi galfi lo valsi .i le porsi cu du
+  ##   lo nu sitna ce'o lo nu vimcu ce'o zo zei ce'o lo cmavo be `BAhE` be'o ce'o zo bu ce'o lo
+  ##   cinmo valsi .i dunda no da va'o lo nu pa javni cu galfi no da .i ba bo `refusal` .e
+  ##   `offender` cu cmene le javni .i `reach` cu dunda le se klama be lo nu vimcu be'o poi zvati pu
+  ##   le valsi
+  ##   .i va'o lo nu `as_parting` cu jetnu kei zo su cu zvati pa spisa pe vo'a .i zo su cu fanmo le
+  ##     se ciska poi lidne ri .i no javni cu galfi lo valsi ta'i lo nu kuspe zo su
   let
     roles = words.toRoles
     kept = words.erased(roles, offender, reach, as_parting)
@@ -468,14 +579,16 @@ func toPieces(
 
 
 func toTerminal(piece: Piece, words: openArray[Occurrence]): Option[Terminal] =
-  ## Give terminal piece stands as: terminal of its construct, else of its word; none for cmavo
-  ##   no list gives selma'o.
+  ## dunda le gerna valsi poi le spisa cu se sinxa ke'a .i le gerna valsi cu du le gerna valsi pe le
+  ##   gerna stura pe le spisa .i va'o lo drata le gerna valsi cu du le gerna valsi pe le valsi .i
+  ##   dunda no da va'o lo nu le valsi cu du lo cmavo poi no liste cu dunda lo selma'o ke'a
   if piece.terminal.isSome: piece.terminal else: words[piece.head].reading.toTerminal
 
 
 func readText*(text: string): ReadingText =
-  ## Read text by stream, by rules of 19.16 that act on its words, and by grammar of 21.1;
-  ##   refuse at byte where reading stops, naming rule.
+  ## tcidu lo se ciska sepi'o le porsi be lo valsi be'o .e lo javni pe `CLL 19.16` zi'e poi galfi lo
+  ##   valsi pe le se ciska ku'o .e le gerna pe `CLL 21.1` .i to'e curmi bu'u le stuzi poi lo nu
+  ##   tcidu cu sisti bu'u ke'a ku'o gi'e cmene le javni
   let stream = text.readStream
   if not stream.is_read: return refuse(RefusalText.Stream, stream.start, $stream.refusal)
   let words = stream.occurrences.toParsable
@@ -486,7 +599,7 @@ func readText*(text: string): ReadingText =
   let pieces = words.toPieces(refusal, offender, reach, as_parting = false)
   if pieces.isNone: return refuse(refusal, (if words.len > 0: words[^1].start else: 0))
 
-  # Hold each piece as terminal, and read terminals by grammar.
+  # punji ro spisa ta'i lo gerna valsi gi'e tcidu le gerna valsi sepi'o le gerna
   var
     units: seq[Unit]
     terminals: seq[Terminal]
@@ -498,18 +611,20 @@ func readText*(text: string): ReadingText =
   let reading = terminals.readGrammar
   if not reading.is_read:
     let start =
+      # zo fa'o cu fanmo le se ciska
       if reading.at < units.len: words[units[reading.at].words[0]].start
-      elif words.len < stream.occurrences.len: stream.occurrences[^1].start  # `fa'o` ends input
+      elif words.len < stream.occurrences.len: stream.occurrences[^1].start
       else: text.len
     return refuse(RefusalText.Grammar, start, reading.rule)
   ReadingText(is_read: true, occurrences: stream.occurrences, units: units, tree: reading.tree)
 
 
 
-#[ Marks ]#
+#[ lo nu jarco lo srera ]#
 
 func writtenAt(text: string, at: int): Slice[int] =
-  ## Give bytes of written word holding byte `at`: run of bytes no mark between words parts.
+  ## dunda lo stuzi pe le se ciska valsi poi vasru le stuzi po'u `at` .i le stuzi cu du lo porsi be
+  ##   lo stuzi poi no sinxa poi zvati lo jbini be lo valsi cu fendi ke'a
   doAssert at < text.len and text[at] notin MARKS_BOUNDARY,
       "Stream should refuse byte of written word; got byte " & $at & "."
   var (a, b) = (at, at)
@@ -519,8 +634,9 @@ func writtenAt(text: string, at: int): Slice[int] =
 
 
 func remap(node: var Node, indexes: openArray[int], count: int) =
-  ## Index units by each terminal of tree, and by each place grammar stops at: terminal `k` is
-  ##   unit `indexes[k]`, and end of terminals is end of all `count` units.
+  ## rinka lo nu ro gerna valsi pe le tricu ge'u .e ro stuzi poi le gerna cu sisti bu'u ke'a cu
+  ##   sinxa lo pagbu .i le gerna valsi po'u `k` cu sinxa le pagbu po'u `indexes[k]` .i le fanmo be
+  ##   le gerna valsi cu sinxa le fanmo be ro le pagbu .i `count` cu te kancu le pagbu
   if node.is_terminal:
     node.at = indexes[node.at]
     return
@@ -531,7 +647,8 @@ func remap(node: var Node, indexes: openArray[int], count: int) =
 
 
 func addPaths(node: Node, path: var seq[int], wanted: openArray[bool], paths: var seq[seq[int]]) =
-  ## Give index of child at each depth down to each leaf of unit `wanted` marks, by unit.
+  ## dunda lo pluta be ro pezli pe lo pagbu poi `wanted` cu sinxa ke'a .i le pluta cu porsi lo namcu
+  ##   pe lo panzi bu'u ro dizlo .i ro pagbu cu ponse pa pluta
   if node.is_terminal:
     if wanted[node.at]: paths[node.at] = path
     return
@@ -542,7 +659,7 @@ func addPaths(node: Node, path: var seq[int], wanted: openArray[bool], paths: va
 
 
 func insertAt(node: var Node, path: openArray[int], index: int, leaves: openArray[Node]) =
-  ## Insert `leaves` among children of node `path` leads down to, before child `index`.
+  ## punji `leaves` ne'i lo panzi be le jgena poi `path` cu pluta ke'a ku'o pu le panzi po'u `index`
   if path.len > 0:
     node.children[path[0]].insertAt(path.toOpenArray(1, path.high), index, leaves)
     return
@@ -550,16 +667,20 @@ func insertAt(node: var Node, path: openArray[int], index: int, leaves: openArra
 
 
 func placeRefused*(tree: var Node, reads: openArray[bool], span: Slice[int]) =
-  ## Put leaf of each unit of `span` no terminal holds, whose `reads` is false, in lowest node
-  ##   holding both units read around it, between them; leaf before first unit read, or after
-  ##   last, stands in root at that end. Run of such units between two units read stands there
-  ##   together, in order. Tree holds units read of `span`: one text that `su` parts. Merge of
-  ##   parts places each unit so too (`merge.nim`).
+  ## punji lo pezli pe ro pagbu pe `span` zi'e poi no gerna valsi cu vasru ke'a .i `reads` pe le
+  ##   pagbu cu jitfa .i le pezli cu zvati lo jgena poi traji lo ka dizlo kei gi'e vasru le re pagbu
+  ##   poi se tcidu gi'e sruri le pagbu .i le pezli cu zvati lo jbini be le re pagbu .i lo pezli poi
+  ##   lidne le pamoi pagbu poi se tcidu cu zvati le krasi be le genja .i lo pezli poi se lidne le
+  ##   romoi pagbu poi se tcidu cu zvati le fanmo be le genja .i ro porsi be lo simsa pagbu be'o poi
+  ##   zvati lo jbini be re pagbu poi se tcidu cu zvati vi ta'i le porsi .i le tricu cu vasru lo
+  ##   pagbu pe `span` zi'e poi se tcidu .i `span` cu du pa se ciska poi zo su cu fendi ke'a .i lo
+  ##   nu jmina lo pagbu be lo se ciska cu punji ro pagbu ta'i di'u ji'a to `merge.nim` toi
   var
-    runs: seq[tuple[before, after: Option[int], leaves: seq[Node]]]  # units read around run
+    # lo pagbu poi se tcidu gi'e sruri le porsi
+    runs: seq[tuple[before, after: Option[int], leaves: seq[Node]]]
     wanted = newSeq[bool](reads.len)
-    last = none(int)  # unit read last
-    is_open = false  # last run waits for unit read after it
+    last = none(int)  # le romoi pagbu poi se tcidu
+    is_open = false  # le romoi porsi cu denpa lo pagbu poi se tcidu gi'e se lidne le porsi
   for k in span:
     if reads[k]:
       if is_open:
@@ -576,25 +697,29 @@ func placeRefused*(tree: var Node, reads: openArray[bool], span: Slice[int]) =
     paths = newSeq[seq[int]](reads.len)
   tree.addPaths(path, wanted, paths)
 
-  # From last run back, so path to each unit before it stays as it was.
+  # le nu cadzu cu cfari bu'u le romoi porsi gi'e klama le krasi .i se ki'u bo le pluta be ro pagbu
+  #   poi lidne le porsi cu stali
   for k in countdown(runs.high, 0):
     template run: untyped = runs[k]
-      ## Alias run, which `let` would copy.
+      ## lo drata cmene be le porsi .i `let` cu zbasu lo fukpi be le porsi
     if run.before.isNone or run.after.isNone:
       tree.children.insert(run.leaves, (if run.before.isNone: 0 else: tree.children.len))
       continue
     template a: untyped = paths[run.before.get]
-      ## Alias path to unit before run.
+      ## lo drata cmene be le pluta be le pagbu poi lidne le porsi
     template b: untyped = paths[run.after.get]
-      ## Alias path to unit after run.
+      ## lo drata cmene be le pluta be le pagbu poi se lidne le porsi
     var depth = 0
-    while a[depth] == b[depth]: inc depth  # leaves differ, so paths part before either ends
+    # le re pezli cu drata .i se ki'u bo le re pluta cu sepli pu lo nu pa le re pluta cu fanmo
+    while a[depth] == b[depth]: inc depth
     tree.insertAt(a.toOpenArray(0, depth - 1), a[depth] + 1, run.leaves)
 
 
 func occurrenceEnded*(text: string, first, last: int): Occurrence =
-  ## Give written word of bytes `first ..< last` of text, past `fa'o` that ends input, as
-  ##   occurrence stream reads not: bytes as written, and pause period writes before it (19.15).
+  ## dunda le se ciska valsi poi vasru le stuzi po'u `first ..< last` .i le valsi cu se lidne
+  ##   zo fa'o poi fanmo le se ciska .i le valsi cu du pa valsi poi le porsi be lo valsi na tcidu
+  ##   ke'a .i le valsi cu ralte le stuzi ta'i lo nu se ciska .i ji'a le valsi cu ralte lo denpa poi
+  ##   denpa bu cu ciska ke'a pu le valsi to `CLL 19.15` toi
   var k = first
   while k > 0 and text[k - 1] in MARKS_BOUNDARY: dec k
   Occurrence(
@@ -605,18 +730,23 @@ func occurrenceEnded*(text: string, first, last: int): Occurrence =
 
 
 func readUnits(text: string, is_lohu = false): ReadingParts =
-  ## Read text by stream and rules of 19.16 into units, in order of first word, reading on past
-  ##   each error: words stage refuses stand as unit of their own (`readTextMarked`). Tree stays
-  ##   empty; reading gives what live text reads past units: erasure, and quotation that waits.
-  ##   `su` stands as unit of its own, which ends text before it (ruling on #859).
-  ##   With `is_lohu`, text opens inside words `lo'u` quotes (`readStream`).
+  ## tcidu lo se ciska sepi'o le porsi be lo valsi be'o .e lo javni pe `CLL 19.16` gi'e fendi le se
+  ##   ciska lo pagbu ta'i le porsi be lo pamoi valsi .i ranji lo nu tcidu ba ro srera .i lo valsi
+  ##   poi pa ve pruce cu to'e curmi ke'a cu zvati pa pagbu pe vo'a to `readTextMarked` toi .i le
+  ##   tricu cu stali lo ka kunti .i le se tcidu cu jarco lo nu vimcu .e lo nu sitna poi denpa .i lo
+  ##   jmive se ciska cu tcidu di'u ba le pagbu
+  ##   .i zo su cu zvati pa pagbu pe vo'a .i zo su cu fanmo le se ciska poi lidne ri to lo se jdice
+  ##   pe `#859` toi
+  ##   .i va'o lo nu `is_lohu` cu jetnu kei le se ciska cu cfari ne'i lo valsi poi zo lo'u cu sitna
+  ##   ke'a to `readStream` toi
   template occurrences: untyped = result.reading.occurrences
-    ## Alias words of reading.
+    ## lo drata cmene be lo valsi pe le se tcidu
   template units: untyped = result.reading.units
-    ## Alias units of reading.
+    ## lo drata cmene be lo pagbu pe le se tcidu
   result.reading.size = text.len
 
-  # Stream: blank each written word stream refuses, which stands as occurrence of its own.
+  # le porsi be lo valsi zo'u galfi ro se ciska valsi poi le porsi cu to'e curmi ke'a ku'o lo kunti
+  #   lerfu .i le se ciska valsi cu zvati pa valsi pe vo'a
   var
     blanked = text
     refused: seq[Occurrence]
@@ -631,17 +761,20 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
       reading: Reading(is_word: false, refusal: stream.refusal, detail: stream.detail),
     )
     if stream.refusal == Refusal.Quotation and stream.detail.len > 0:
-      result.zois.add (span.a, stream.detail)  # `zoi` waits for its delimiter
+      result.zois.add (span.a, stream.detail)  # zo zoi cu denpa lo korbi valsi pe vo'a
     for i in span: blanked[i] = ' '
     stream = blanked.readStream(is_lohu)
   refused = refused.sortedByIt(it.start)
 
-  # Words stream reads and words it refuses, in order of byte; each refused is unit of its own.
+  # lo valsi poi le porsi be lo valsi cu tcidu ke'a ku'o .e lo valsi poi le porsi cu to'e curmi ke'a
+  #   ku'o ta'i le porsi be lo stuzi .i ro valsi poi se to'e curmi cu zvati pa pagbu pe vo'a
   var
-    indexes = newSeq[int](stream.occurrences.len)  # index in `occurrences` of each word read
+    # lo namcu pe ro valsi poi se tcidu ku'o ne'i `occurrences`
+    indexes = newSeq[int](stream.occurrences.len)
     r = 0
   template addRefused() =
-    ## Add word stream refuses next, and unit holding it.
+    ## jmina le bavla'i valsi poi le porsi be lo valsi cu to'e curmi ke'a ku'o .e lo pagbu poi vasru
+    ##   le valsi
     units.add Unit(words: @[occurrences.len], is_read: false, refusal: RefusalText.Stream)
     occurrences.add refused[r]
     inc r
@@ -651,12 +784,15 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     occurrences.add stream.occurrences[k]
   while r < refused.len: addRefused()
 
-  # Rules of 19.16: each set of words rule refuses stands as unit, and rules read words left.
+  # lo javni pe `CLL 19.16` zo'u ro girzu be lo valsi poi pa javni cu to'e curmi ke'a cu zvati pa
+  #   pagbu .i le javni cu tcidu lo valsi poi stali
   let
     words = stream.occurrences.toParsable(is_lohu)
-    roles = words.toRoles  # part each word takes in first pass, over every word
+    # le pagbu poi ro valsi cu cpacu ke'a ne'i le pamoi nu tcidu .i le nu tcidu cu kuspe ro valsi
+    roles = words.toRoles
   var
-    alive = toSeq(0 ..< words.len)  # index in `words` of each word rules read still
+    # lo namcu pe ro valsi poi le javni ca'o tcidu ke'a ku'o ne'i `words`
+    alive = toSeq(0 ..< words.len)
     pieces: seq[Piece]
     reach: Reach
   while true:
@@ -665,7 +801,8 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
       offender: seq[int]
     let grouped = alive.mapIt(words[it]).toPieces(refusal, offender, reach, as_parting = true)
     for marker in reach.markers:
-      if marker notin result.markers: result.markers.add marker  # `sa` refused later sought it
+      # lo me zo sa me'u poi ba se to'e curmi cu pu sisku le sinxa
+      if marker notin result.markers: result.markers.add marker
     if grouped.isSome:
       pieces = grouped.get
       break
@@ -673,8 +810,8 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     units.add Unit(words: offender.mapIt(indexes[alive[it]]), is_read: false, refusal: refusal)
     for k in countdown(offender.high, 0): alive.delete(offender[k])
 
-  # Each piece stands as terminal, or as unit no terminal holds: `su`, or cmavo no list gives
-  #   selma'o.
+  # ro spisa cu se sinxa pa gerna valsi gi'a zvati pa pagbu poi no gerna valsi cu vasru ke'a .i le
+  #   pagbu cu vasru zo su .a lo cmavo poi no liste cu dunda lo selma'o ke'a
   let left = alive.mapIt(words[it])
   for piece in pieces:
     let
@@ -686,9 +823,11 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     elif terminal.isSome: units.add Unit(words: held, is_read: true, terminal: terminal.get)
     else: units.add Unit(words: held, is_read: false, refusal: RefusalText.Selmaho)
 
-  # Words no unit holds: each run erasure erases, with cmavo erasing it (19.13); then `fa'o` that
-  #   ends input, and each written word after it, which stream reads not (19.15).
-  var is_helds = newSeq[bool](occurrences.len)  # some unit holds word
+  # lo valsi poi no pagbu cu vasru ke'a zo'u ro porsi be lo valsi poi lo nu vimcu cu vimcu ke'a cu
+  #   kansa le cmavo poi vimcu le porsi to `CLL 19.13` toi .i ba bo lo pagbu cu vasru zo fa'o poi
+  #   fanmo le se ciska ku'o .e ro se ciska valsi poi se lidne zo fa'o zi'e poi le porsi be lo valsi
+  #   na tcidu ke'a to `CLL 19.15` toi
+  var is_helds = newSeq[bool](occurrences.len)  # su'o pagbu cu vasru le valsi
   for k in 0 ..< units.len:
     for w in units[k].words: is_helds[w] = true
   let ending = (if words.len < stream.occurrences.len: occurrences.high else: occurrences.len)
@@ -719,8 +858,9 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     while units[u].words[0] != ending: dec u
     result.faho = some(u)
 
-  # `lo'u` waits where stream reads words it quotes to end of text, whatever unit holds it.
-  let roles_stream = words.toRoles(is_lohu)  # part each word takes as stream reads it
+  # zo lo'u cu denpa va'o lo nu le porsi be lo valsi cu tcidu le valsi poi zo lo'u cu sitna ke'a
+  #   ku'o ta'i lo nu klama le fanmo be le se ciska .i lo pagbu poi vasru zo lo'u cu na vajni
+  let roles_stream = words.toRoles(is_lohu)  # le pagbu pe ro valsi ta'i le porsi be lo valsi
   for w in 0 ..< words.len:
     let is_waiting = roles_stream[w] == Role.Lohu and
       not words.toOpenArray(w + 1, words.high).isClosingLohu
@@ -728,8 +868,9 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
 
 
 func toTexts(units: openArray[Unit]): seq[Slice[int]] =
-  ## Give units of each text `su` parts, in order: units before first `su`, between each two,
-  ##   then after last; `su` stands in none.
+  ## dunda lo pagbu pe ro se ciska poi zo su cu fendi ke'a ku'o ta'i le porsi .i le pagbu cu lidne
+  ##   ro me zo su me'u gi'a zvati lo jbini be re me zo su me'u gi'a se lidne ro me zo su me'u .i no
+  ##   se ciska cu vasru zo su
   var first = 0
   for k in 0 ..< units.len:
     if not units[k].is_read and units[k].refusal == RefusalText.Su:
@@ -741,7 +882,8 @@ func toTexts(units: openArray[Unit]): seq[Slice[int]] =
 func toTerminals(
     units: openArray[Unit], span: Slice[int]
 ): tuple[read: seq[int], terminals: seq[Terminal]] =
-  ## Give index of each unit of `span` grammar reads, in order, and terminal of each.
+  ## dunda lo namcu pe ro pagbu pe `span` zi'e poi le gerna cu tcidu ke'a ku'o ta'i le porsi .i ji'a
+  ##   dunda lo gerna valsi pe ro le pagbu
   for k in span:
     if units[k].is_read:
       result.read.add k
@@ -749,8 +891,10 @@ func toTerminals(
 
 
 func readTree(reading: ReadingMarked, span: Slice[int], count: int): Node =
-  ## Read units `span` of reading, one text that `su` parts, into tree that marks each error,
-  ##   with each unit refused in place: place where its grammar stops at its end is unit `count`.
+  ## tcidu le pagbu po'u `span` pe le se tcidu gi'e zbasu lo tricu poi jarco ro srera .i `span` cu
+  ##   du pa se ciska poi zo su cu fendi ke'a .i ro pagbu poi se to'e curmi cu zvati le stuzi pe
+  ##   vo'a .i va'o lo nu le gerna cu sisti bu'u le fanmo be le se ciska kei le stuzi poi le gerna
+  ##   cu sisti bu'u ke'a cu du le pagbu po'u `count`
   let (read, terminals) = reading.units.toTerminals(span)
   result = terminals.readGrammarMarked
   result.remap(read, count)
@@ -758,24 +902,36 @@ func readTree(reading: ReadingMarked, span: Slice[int], count: int): Node =
 
 
 func readTextMarked*(text: string): ReadingMarked =
-  ## Read text as `readText` does, and read on past each error, marking it (#859): words stage
-  ##   refuses stand as unit of their own, which grammar reads around, and tree marks where
-  ##   grammar stops (`readGrammarMarked`). Text `readText` reads gives reading it gives.
-  ##   Stream: each written word stream refuses stands as occurrence, as written, and stream
-  ##     reads text again with its bytes blanked; so each refusal holds one written word.
-  ##   Rules of 19.16: words rule refuses stand as unit, and rules read words left again.
-  ##   Selma'o: piece of cmavo no list gives selma'o stands as unit, with words it holds.
-  ##   This parser decides no mend (ruling `D1 a` of #859); other program reads tree and mends.
-  ##   `su` ends text before it, which reads alone, as text after it does: root of text after
-  ##     last `su` holds tree of each text before it, each with leaf of `su` after it, before its
-  ##     own nodes (ruling on #859). So tree `readText` gives is root past last `su`.
-  ##   `fa'o` that ends input, and each written word after it, stand last in root, past text.
+  ## tcidu lo se ciska ta'i lo nu `readText` cu tcidu kei gi'e ranji lo nu tcidu ba ro srera gi'e
+  ##   jarco ro le srera to `#859` toi .i lo valsi poi pa ve pruce cu to'e curmi ke'a cu zvati pa
+  ##   pagbu pe vo'a .i le gerna cu tcidu lo valsi poi sruri le pagbu .i le tricu cu jarco lo stuzi
+  ##   poi le gerna cu sisti bu'u ke'a to `readGrammarMarked` toi .i va'o lo nu `readText` cu tcidu
+  ##   lo se ciska kei le se tcidu cu mintu le se tcidu pe `readText`
+  ##   .i le porsi be lo valsi zo'u ro se ciska valsi poi le porsi cu to'e curmi ke'a cu zvati pa
+  ##     valsi ta'i lo nu se ciska .i ba bo le porsi cu rapli tcidu le se ciska ta'i lo nu lo stuzi
+  ##     pe le valsi cu kunti lerfu .i se ki'u bo ro nu to'e curmi cu vasru pa se ciska valsi
+  ##   .i lo javni pe `CLL 19.16` zo'u lo valsi poi pa javni cu to'e curmi ke'a cu zvati pa pagbu .i
+  ##     le javni cu rapli tcidu lo valsi poi stali
+  ##   .i lo selma'o zo'u lo spisa pe lo cmavo poi no liste cu dunda lo selma'o ke'a cu du pa pagbu
+  ##     poi vasru ro valsi pe le spisa
+  ##   .i le vi genturfa'i cu jdice no nu cikre ja'i `D1 a` pe `#859` .i lo drata samtci cu tcidu le
+  ##     tricu gi'e cikre le se ciska
+  ##   .i zo su cu fanmo lo se ciska poi lidne ri .i le se ciska cu se tcidu ta'i pa mulno se ciska
+  ##     .i le se ciska poi se lidne zo su cu go'i ji'a .i le genja pe le se ciska poi se lidne
+  ##     zo su noi romoi cu vasru le tricu pe ro se ciska poi lidne su'o me zo su me'u .i ro le
+  ##     tricu cu lidne lo pezli pe zo su .i le tricu .e le pezli cu lidne le jgena pe le genja to
+  ##     lo se jdice pe `#859` toi .i se ki'u bo le tricu poi `readText` cu dunda ke'a cu du le
+  ##     genja ba zo su noi romoi
+  ##   .i zo fa'o poi fanmo le se ciska ku'o .e ro se ciska valsi poi se lidne zo fa'o cu zvati lo
+  ##     fanmo be le genja gi'e se lidne le se ciska
   let parts = text.readUnits
   result = parts.reading
   let
     ending = (if parts.faho.isSome: parts.faho.get else: result.units.len)
     texts = result.units.toOpenArray(0, ending - 1).toTexts
-  var before: seq[Node]  # tree of each text before last `su`, then leaf of `su` after it
+  # le tricu pe ro se ciska poi lidne zo su noi romoi .i ro le tricu cu lidne lo pezli pe zo su poi
+  #   se lidne le tricu
+  var before: seq[Node]
   for k in 0 ..< texts.high:
     before.add result.readTree(texts[k], texts[k].b + 1)
     before.add Node(is_terminal: true, at: texts[k].b + 1)
@@ -785,17 +941,24 @@ func readTextMarked*(text: string): ReadingMarked =
 
 
 func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
-  ## Read text as `readTextMarked` does, into node of each part as passes cut it, each reading
-  ##   alone (`readGrammarParts`), so each sentence of live text goes out once it ends. Root
-  ##   holds them, with each unit refused between parts; `assembleText` builds tree of text.
-  ##   Live text (`is_live`) cuts after opener that waits for its closer (ruling on #859), and
-  ##     reads text after `lo'u` that waits inside words it quotes (`is_lohu`), as stream does.
-  ##   `su` ends text before it, which reads alone, as text after it does; its leaf stands
-  ##     between their parts. Opener of text before it that waits closes there, as at end of
-  ##     text, so live text cuts after opener of text after last `su` alone.
+  ## tcidu lo se ciska ta'i lo nu `readTextMarked` cu tcidu kei gi'e zbasu lo jgena pe ro pagbu poi
+  ##   le so'i nu tcidu cu katna ke'a .i ro pagbu cu se tcidu ta'i pa mulno se ciska to
+  ##   `readGrammarParts` toi .i se ki'u bo ro jufra pe lo jmive se ciska cu se benji ca lo nu le
+  ##   jufra cu fanmo .i le genja cu vasru le jgena .e ro pagbu poi se to'e curmi gi'e zvati lo
+  ##   jbini be le pagbu be le se ciska .i `assembleText` cu zbasu le tricu pe le se ciska
+  ##   .i lo jmive se ciska poi `is_live` cu jarco ke'a cu katna ba lo krasi valsi poi denpa lo
+  ##     fanmo valsi pe vo'a to lo se jdice pe `#859` toi .i ji'a lo jmive se ciska cu tcidu ta'i lo
+  ##     nu cfari ne'i lo valsi poi zo lo'u cu sitna ke'a kei lo se ciska poi se lidne zo lo'u poi
+  ##     denpa to `is_lohu` toi .i le porsi be lo valsi cu go'i ji'a
+  ##   .i zo su cu fanmo lo se ciska poi lidne ri .i le se ciska cu se tcidu ta'i pa mulno se ciska
+  ##     .i le se ciska poi se lidne zo su cu go'i ji'a .i le pezli pe zo su cu zvati lo jbini be le
+  ##     pagbu be le re se ciska .i lo krasi valsi poi denpa gi'e zvati le se ciska poi lidne zo su
+  ##     cu se fanmo bu'u zo su ta'i lo nu se fanmo bu'u lo fanmo be lo se ciska .i se ki'u bo lo
+  ##     jmive se ciska cu katna ba lo krasi valsi po'o poi zvati le se ciska poi se lidne zo su noi
+  ##     romoi
   result = text.readUnits(is_lohu)
   template reading: untyped = result.reading
-    ## Alias reading of parts.
+    ## lo drata cmene be le se tcidu pe le pagbu
   reading.tree = Node(is_terminal: false, rule: "text", number: 0)
   let
     ending = (if result.faho.isSome: result.faho.get else: reading.units.len)

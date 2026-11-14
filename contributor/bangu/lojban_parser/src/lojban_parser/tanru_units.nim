@@ -1,63 +1,97 @@
-## Fold tanru into tanru units: each word with cmavo binding it, net of conversion, so two
-##   spellings of one meaning fold alike.
+## fendi lo tanru fi lo tanru pagbu .i ro tanru pagbu cu vasru pa valsi .e lo cmavo poi jorne le
+##   valsi .i lo jalge be lo cmavo be `SE` po'o cu vajni .i se ki'u bo va'o lo nu re se ciska cu
+##   ponse pa smuni kei le re se ciska cu se fendi ta'i lo mintu
 ##
-##   |---------------------|-------------------------------------------------------------|
-##   | Code                | Meaning                                                     |
-##   |---------------------|-------------------------------------------------------------|
-##   | TanruUnit           | one part of tanru, and cmavo binding it, outer first        |
-##   | Link                | one conversion composed, or one other cmavo binding word    |
-##   | Places              | place of word standing at each position after conversion   |
-##   | tanruUnits          | fold parts of tanru into tanru units                        |
-##   |---------------------|-------------------------------------------------------------|
+##   |--------------|---------------------------------------------------------------------------|
+##   | lo cmene     | lo smuni                                                                  |
+##   |--------------|---------------------------------------------------------------------------|
+##   | `TanruUnit`  | pa pagbu be lo tanru be'o .e lo cmavo poi jorne .i lo bartu cu pamoi      |
+##   | `Link`       | pa nu galfi lo porsi be lo sumti kei noi se jmina .a pa drata jorne cmavo |
+##   | `Places`     | ro stuzi cu se zvati pa sumti be le valsi ba le nu galfi                  |
+##   | `tanruUnits` | fendi lo pagbu be lo tanru fi lo tanru pagbu                              |
+##   |--------------|---------------------------------------------------------------------------|
 ##
-##   Sibling: private `ending` walks parts before fold, as `ending` of
-##     `lojban_tagger/src/lojban_tagger/runs.nim` walks tanru units after it (II.9); fix to one is
-##     finished only when other is checked.
-##   Fold reads parts (`tanru.nim`): binding cmavo are words of list, so part no list names
-##     binds nothing, and stands as tanru unit of its own.
-##   Each folded cmavo carries in cmavo list selma'o its role in fold names (SE, NU, NA, NAhE,
-##     KE, KEhE, KEI, BO, CO), which static check holds, so fold and cmavo list never part.
-##   Cmavo binding next tanru unit: SE, as SE binds only following brivla or "equivalent unit"
-##     (CLL 9.4); NAhE, close-binding on individual brivla (15.4); NU, whose rafsi modify next
-##     tanru unit alone, as SE and NAhE rafsi do (12.12). Grammar puts SE and NAhE on one
-##     tanru unit (21.1, rule 152). JAI binds too, but list gives `jai` no rafsi, so no lujvo
-##     holds it.
-##   NA binds whole tanru: `na` applies to entire bridi, and not to part of selbri (15.2). So
-##     odd count of `na`, wherever it stands, folds as one `na` before group of whole tanru, and
-##     even count as none, since adjacent `na` cancel out (15.2).
-##   Every other cmavo binds nothing, and stands as tanru unit of its own where it does not
-##     only group: KOhA fills place of what follows (7.15), JA joins (5.6).
-##     Cost: number and MOI form one tanru unit (21.1, rule 152), yet each digit stands as
-##     tanru unit of its own, so `relpavmomci'a` folds `re`, `pa` and `moi` apart.
-##   Run of SE binding one tanru unit composes into one conversion, inner first (9.4):
-##     `te se ciska` puts x3 of `ciska` first, and `se se ciska` is `ciska`, since two `se`
-##     cancel (12.11). Conversion composing to no change leaves. Other cmavo keep their order
-##     against it.
-##   `ke` opens group, closed by `ke'e` or by end of tanru, since `ke'e` elides at end (5.5).
-##     Cmavo before `ke` binds whole group (9.4; 12.11, `selkemdzukla`). Group of one tanru unit
-##     is that tanru unit: `se ke ciska` is `se ciska`, and cmavo before `ke` join its own.
-##   Cmavo that only group drop, since fold tells what cmavo bind: `ke` and `ke'e` of group no
-##     cmavo binds, or whose cmavo fold to no link, `ke'e` closing nothing, and `bo` (5.3). So
-##     `kemdatnyvei` folds as `datnyvei`.
-##     Cost: grouping that no cmavo binds is lost, so `datni ke vreji liste` folds as `datni
-##     vreji liste`, which 5.3 groups otherwise.
-##   `kei` closes abstraction (21.1, rule 152): it reads as `ke'e` closing `ke` after its NU, so
-##     `nu citka gasnu kei klama` abstracts two tanru units. After one tanru unit that group is
-##     of one, as `kez` of `nunctikezgau` tells only what reader would guess (12.13).
-##   No group holds `co`: `ke'e` goes in before it for each group open there (5.8).
-##     Cost: `co` inverts order (5.8), yet stays as written, so fold keeps written order.
-##   Lujvo leaves `ke` out in two places CLL names. Two SE in row read as SE `ke` SE, so first
-##     converts rest of tanru, up to `ke'e` closing it (12.11, `selsel-` as `selkemsel-`).
-##     `ke'e` closing nothing implies `ke` after nearest run of binding cmavo before it that
-##     leaves two tanru units or more up to it, only place where `ke'e` means something
-##     (15.4, `nalsu'adzuke'ekla`); with no such run, `ke'e` only groups, and drops.
-##     Cost: run of `na'e se` before such group binds group by both, where 15.4 names `na'e`.
-##   Group of two tanru units or more stands as tanru unit `ke` carrying cmavo of group, then
-##     its tanru units, then `ke'e` where written; so its tanru units stay whole, as modifier
-##     inside converted group does.
-##   Cost: 12.11 reads lujvo, yet tanru `readTanru` reads from text folds by it too.
-##   Cost: `pe'a` and tense cmavo bind nothing here, though CLL gives them whole lujvo (13.13)
-##     or whole bridi (5.13).
+##   `ending` noi sivni cu tunba `ending` pe `lojban_tagger/src/lojban_tagger/runs.nim` to
+##     `Article II.9` toi .i `ending` pe le vi datnyvei cu tcidu lo pagbu pu lo nu fendi .i `ending`
+##     pe `runs.nim` cu tcidu lo tanru pagbu ba lo nu fendi ta'i lo simsa .i lo nu cikre pa tunba cu
+##     mulno va'o lo nu cipra fi le drata tunba kei po'o
+##   .i lo nu fendi cu tcidu lo pagbu to `tanru.nim` toi .i ro cmavo poi jorne cu se vasru lo liste
+##     .i se ki'u bo lo pagbu poi no liste cu vasru ke'a cu jorne no da gi'e se vasru pa tanru pagbu
+##     poi vasru no drata pagbu
+##   .i ro cmavo poi le nu fendi cu tcidu ke'a cu ponse lo selma'o poi mapti lo se gunka be le cmavo
+##     ne'i le nu fendi .i le cmavo liste cu dunda le selma'o le cmavo to `SE` .e `NU` .e `NA` .e
+##     `NAhE` .e `KE` .e `KEhE` .e `KEI` .e `BO` .e `CO` toi .i pa cipra ca lo nu fanva cu cipra
+##     di'u .i se ki'u bo le nu fendi cu mapti le cmavo liste ro roi
+##   .i lo cmavo poi jorne lo bavla'i tanru pagbu cu du lo cmavo be `SE` .e `NAhE` .e `NU` .i lo
+##     cmavo be `SE` cu jorne po'o lo bavla'i brivla .a lo bavla'i pagbu poi se cmene zoi gy.
+##     equivalent unit .gy. to `CLL 9.4` toi .i lo cmavo be `NAhE` cu jorne pa brivla ta'i lo ka
+##     jibni to `CLL 15.4` toi .i lo rafsi be lo cmavo be `NU` cu galfi lo bavla'i tanru pagbu po'o
+##     .i lo rafsi be lo cmavo be `SE` .a `NAhE` cu go'i ji'a to `CLL 12.12` toi .i le gerna cu
+##     punji lo cmavo be `SE` .e `NAhE` pa tanru pagbu to `CLL 21.1` .e le javni pe li pamure toi .i
+##     lo cmavo be `JAI` cu jorne ji'a .i ku'i lo liste cu dunda no rafsi zo jai .i se ki'u bo no
+##     lujvo cu vasru zo jai
+##   .i lo cmavo be `NA` cu jorne le mulno tanru .i zo na cu natfe lo mulno bridi gi'e na natfe lo
+##     pagbu be lo selbri to `CLL 15.2` toi .i se ki'u bo va'o lo nu lo te kancu be lo valsi po'u zo
+##     na cu se dilcu fi li re fo li pa kei le tanru cu se fendi ta'i lo nu pa zo na cu lidne pa
+##     girzu poi vasru le mulno tanru .i lo du'u zo na cu zvati ma kau cu na vajni .i va'o lo nu le
+##     te kancu cu se dilcu fi li re fo li no kei le tanru cu se fendi ta'i lo nu no zo na cu zvati
+##     .i ki'u bo lo re lamji zo na cu galfi no da to `CLL 15.2` toi
+##   .i ro drata cmavo cu jorne no da .i va'o lo nu lo drata cmavo cu na zbasu lo girzu po'o kei le
+##     cmavo cu se vasru pa tanru pagbu poi vasru no drata pagbu .i mupli fa lo nu lo cmavo be
+##     `KOhA` cu sumti lo bavla'i to `CLL 7.15` toi .e lo nu lo cmavo be `JA` cu jmina lo pagbu to
+##     `CLL 5.6` toi
+##     .i lo namcu jo'u lo cmavo be `MOI` cu zbasu pa tanru pagbu to `CLL 21.1` .e le javni pe li
+##       pamure toi .i ku'i jdima fa lo nu ro cmavo be `PA` cu se vasru pa tanru pagbu poi vasru no
+##       drata pagbu .i se ki'u bo zo re .e zo pa .e zo moi cu se vasru lo frica tanru pagbu ne'i lo
+##       nu fendi zo relpavmomci'a
+##   .i ro porsi poi jorne pa tanru pagbu gi'e porsi lo cmavo be `SE` cu se jalge pa nu galfi lo
+##     porsi be lo sumti .i lo cmavo be `SE` be'o poi traji lo ka jibni lo brivla cu galfi pu lo
+##     drata to `CLL 9.4` toi .i se ki'u bo lu te se ciska li'u cu punji lo cimoi sumti be zo ciska
+##     lo pamoi stuzi .i lu se se ciska li'u cu se fendi ta'i zo ciska ki'u lo nu lo re zo se cu
+##     galfi no da to `CLL 12.11` toi .i lo nu galfi poi se jalge no cenba cu se vimcu .i lo porsi
+##     be lo drata cmavo jo'u lo nu galfi cu stali
+##   .i zo ke cu krasi lo girzu .i zo ke'e .a lo fanmo be le tanru cu fanmo le girzu ki'u lo nu zo
+##     ke'e cu ka'e se vimcu bu'u le fanmo to `CLL 5.5` toi .i lo cmavo poi lidne zo ke cu jorne le
+##     mulno girzu to `CLL 9.4` .i `CLL 12.11` mu'u zo selkemdzukla toi .i lo girzu poi vasru pa
+##     tanru pagbu po'o cu du le tanru pagbu .i lu se ke ciska li'u cu se fendi ta'i lu se ciska
+##     li'u .i lo cmavo poi lidne zo ke cu se jmina fi lo cmavo pe le tanru pagbu
+##   .i lo cmavo poi zbasu lo girzu po'o cu se vimcu ki'u lo nu le nu fendi cu jarco lo du'u ma kau
+##     poi cmavo cu jorne .i zo ke .e zo ke'e vu'o pe lo girzu poi no cmavo cu jorne ke'a cu se
+##     vimcu .i ji'a zo ke .e zo ke'e vu'o pe lo girzu poi lo cmavo pe ke'a cu se fendi fi no `Link`
+##     cu se vimcu .i zo ke'e poi fanmo no girzu cu se vimcu .i zo bo cu se vimcu to `CLL 5.3` toi
+##     .i se ki'u bo zo kemdatnyvei cu se fendi ta'i zo datnyvei
+##     .i jdima fa lo nu le nu fendi cu cirko lo girzu poi no cmavo cu jorne ke'a .i se ki'u bo lu
+##       datni ke vreji liste li'u cu se fendi ta'i lu datni vreji liste li'u .i ku'i `CLL 5.3` cu
+##       dunda lo frica girzu le re tanru
+##   .i zo kei cu fanmo lo sucta to `CLL 21.1` .e le javni pe li pamure toi .i le nu fendi cu tcidu
+##     zo kei ta'i zo ke'e poi fanmo lo girzu .i zo ke poi krasi le girzu cu se lidne le cmavo be
+##     `NU` pe le girzu .i se ki'u bo ne'i lu nu citka gasnu kei klama li'u lo sucta cu vasru re
+##     tanru pagbu .i va'o lo nu zo kei cu se lidne pa tanru pagbu po'o kei le girzu cu vasru le
+##     tanru pagbu po'o .i ja'i `CLL 12.13` `kez` pe zo nunctikezgau cu cusku po'o lo se smadi be lo
+##     tcidu
+##   .i no girzu cu vasru zo co .i ro girzu poi kalri vi cu se fanmo pa zo ke'e poi lidne zo co to
+##     `CLL 5.8` toi
+##     .i jdima fa lo nu zo co cu galfi lo porsi lo fatne to `CLL 5.8` toi gi'e stali ta'i lo nu se
+##       ciska .i se ki'u bo le nu fendi cu ralte lo porsi poi se ciska
+##   .i lo lujvo cu claxu zo ke bu'u re stuzi poi `CLL` cu skicu ke'a .i lo re cmavo be `SE` be'o
+##     poi lamji cu se tcidu ta'i `SE ke SE` .i se ki'u bo le pamoi cmavo cu galfi lo porsi be lo
+##     sumti be le rebla be le tanru .i zo ke'e cu ka'e fanmo le rebla to `CLL 12.11` .i `selsel-`
+##     cu se tcidu ta'i `selkemsel-` toi
+##     .i zo ke'e poi fanmo no girzu cu sinxa pa zo ke .i zo ke cu se lidne le porsi be lo cmavo poi
+##       jorne be'o poi lidne zo ke'e gi'e traji lo ka jibni zo ke'e .i le porsi cu bilga lo nu
+##       lidne su'o re tanru pagbu poi lidne zo ke'e .i lo nu zo ke'e cu ponse lo smuni cu cumki vi
+##       po'o to `CLL 15.4` mu'u zo nalsu'adzuke'ekla toi .i va'o lo nu no simsa porsi cu zvati kei
+##       zo ke'e cu zbasu lo girzu po'o gi'e se vimcu
+##     .i jdima fa lo nu lo porsi po'u lo'u na'e se le'u poi lidne lo simsa girzu cu jorne le girzu
+##       sepi'o le re cmavo .i ku'i `CLL 15.4` cu cusku zo na'e po'o
+##   .i lo girzu poi vasru su'o re tanru pagbu cu se sinxa lo tanru pagbu po'u zo ke noi ponse lo
+##     cmavo pe le girzu .i ba bo le tanru pagbu pe le girzu cu zvati .i ba bo zo ke'e cu zvati va'o
+##     lo nu se ciska .i se ki'u bo le tanru pagbu pe le girzu cu stali lo ka mulno ta'i lo nu lo
+##     galfi valsi ne'i lo girzu poi se galfi cu stali lo ka mulno
+##   .i jdima fa lo nu lo tanru poi `readTanru` cu tcidu ke'a fi lo se ciska cu se fendi ja'i
+##     `CLL 12.11` ji'a .i ku'i `CLL 12.11` cu tcidu lo lujvo
+##   .i jdima fa lo nu zo pe'a .e lo temci cmavo cu jorne no da vi .i ku'i ja'i `CLL 13.13` zo pe'a
+##     cu srana lo mulno lujvo .i ja'i `CLL 5.13` lo temci cmavo cu srana lo mulno bridi
 
 {.experimental: "strictFuncs".}
 
@@ -68,36 +102,56 @@ import ./[dictionary, forms, selmaho, tanru]
 
 type
   Places* = array[1..5, int]
-    ## Place of word standing at each position after conversion; `xe` reaches x5 (9.4).
-  Link* = object  ## Define one step binding tanru unit: conversion composed, or other cmavo.
-    places*: Places  ## Conversion composed; `PLACES_SAME` where `operator` binds instead.
-    operator*: Option[Word]  ## NAhE, NA or NU cmavo binding tanru unit; none where link converts.
-  TanruUnit* = object  ## Define tanru unit: one word, and cmavo binding it (21.1, rule 152).
-    part*: Part  ## Brivla, or cmavo binding nothing, as `ke`; part no list names binds nothing.
-    links*: seq[Link]  ## Steps binding word, outer first; empty where nothing binds it.
+    ## ro stuzi cu se zvati pa sumti be le valsi ba lo nu galfi lo porsi be lo sumti .i zo xe cu
+    ##   pilno lo mumoi sumti to `CLL 9.4` toi
+  Link* = object
+    ## pa pagbu be lo nu jorne lo tanru pagbu .i le pagbu cu du pa nu galfi lo porsi be lo sumti kei
+    ##   noi se jmina ku'o .a pa drata cmavo
+    places*: Places
+      ## lo nu galfi lo porsi be lo sumti kei noi se jmina .i ku'i va'o lo nu `operator` cu jorne
+      ##   kei le datni pagbu cu du `PLACES_SAME`
+    operator*: Option[Word]
+      ## lo cmavo be `NAhE` .a `NA` .a `NU` be'o poi jorne lo tanru pagbu .i le datni pagbu cu kunti
+      ##   va'o lo nu galfi lo porsi be lo sumti
+  TanruUnit* = object
+    ## lo tanru pagbu noi vasru pa valsi .e lo cmavo poi jorne le valsi to `CLL 21.1` .e le javni pe
+    ##   li pamure toi
+    part*: Part
+      ## lo brivla .a lo cmavo poi jorne no da mu'u zo ke .i lo pagbu poi no liste cu vasru ke'a cu
+      ##   jorne no da
+    links*: seq[Link]
+      ## lo pagbu be lo nu jorne le valsi .i lo bartu cu pamoi .i le liste cu kunti va'o lo nu no da
+      ##   cu jorne le valsi
 
 
 const
-  PLACES_SAME*: Places = [1, 2, 3, 4, 5]  ## No conversion: each place at its own position.
+  PLACES_SAME*: Places = [1, 2, 3, 4, 5]  ## no nu galfi .i ro sumti cu zvati lo stuzi pe vo'a
   CONVERSIONS = ["se", "te", "ve", "xe"]
-    ## SE cmavo, in order: `n`th of them swaps x1 with place `n + 2` (9.4).
+    ## lo cmavo be `SE` ta'i lo porsi .i lo ny moi be le cmavo cu rinka lo nu lo pamoi sumti .e lo
+    ##   sumti pe li ny su'i re cu simxu lo ka basti to `CLL 9.4` toi
   ABSTRACTIONS = [
     "du'u", "jei", "ka", "li'i", "mu'e", "ni", "nu", "pu'u", "si'o", "su'u", "za'i", "zu'o",
   ]
-    ## NU cmavo, as list holds them: each binds next tanru unit (12.12), or tanru units up to
-    ##   its `kei`.
+    ## lo cmavo be `NU` ta'i lo nu le liste cu vasru le cmavo .i ro le cmavo cu jorne lo bavla'i
+    ##   tanru pagbu to `CLL 12.12` toi gi'a jorne lo tanru pagbu poi lidne zo kei pe le cmavo
   NEGATIONS = ["na", "na'e", "no'e", "to'e"]
-    ## Binding cmavo that deny what they bind: NA (15.2) and NAhE (15.4, 15.5).
-  WORDS_CONVERSION = CONVERSIONS.mapIt(it.word.get)  ## SE cmavo, as words of list.
-  WORDS_ABSTRACTION = ABSTRACTIONS.mapIt(it.word.get)  ## NU cmavo, as words of list.
-  WORDS_NEGATION = NEGATIONS.mapIt(it.word.get)  ## Denying cmavo, as words of list.
-  WORDS_OPERATOR = WORDS_ABSTRACTION & WORDS_NEGATION  ## Binding cmavo other than SE.
-  WORD_NA = "na".word.get  ## Cmavo denying entire bridi (15.2).
-  WORD_KE = "ke".word.get  ## Cmavo opening group (5.5).
-  WORD_KEHE = "ke'e".word.get  ## Cmavo closing group (5.5).
-  WORD_KEI = "kei".word.get  ## Cmavo closing abstraction (21.1, rule 152).
-  WORD_BO = "bo".word.get  ## Cmavo that only groups, wherever it stands (5.3).
-  WORD_CO = "co".word.get  ## Cmavo inverting tanru, which no group holds (5.8).
+    ## lo cmavo poi jorne lo valsi gi'e natfe le valsi .i le cmavo cu cmavo be `NA` to `CLL 15.2`
+    ##   toi .a `NAhE` to `CLL 15.4` .e `CLL 15.5` toi
+  WORDS_CONVERSION = CONVERSIONS.mapIt(it.word.get)  ## lo cmavo be `SE` ta'i lo valsi pe lo liste
+  WORDS_ABSTRACTION = ABSTRACTIONS.mapIt(it.word.get)  ## lo cmavo be `NU` ta'i lo valsi pe lo liste
+  WORDS_NEGATION = NEGATIONS.mapIt(it.word.get)
+    ## lo cmavo poi natfe ku'o ta'i lo valsi pe lo liste
+  WORDS_OPERATOR = WORDS_ABSTRACTION & WORDS_NEGATION  ## lo cmavo poi jorne gi'e na cmavo be `SE`
+  WORD_NA = "na".word.get  ## lo cmavo poi natfe lo mulno bridi to `CLL 15.2` toi
+  WORD_KE = "ke".word.get  ## lo cmavo poi krasi lo girzu to `CLL 5.5` toi
+  WORD_KEHE = "ke'e".word.get  ## lo cmavo poi fanmo lo girzu to `CLL 5.5` toi
+  WORD_KEI = "kei".word.get
+    ## lo cmavo poi fanmo lo sucta to `CLL 21.1` .e le javni pe li pamure toi
+  WORD_BO = "bo".word.get
+    ## lo cmavo poi zbasu lo girzu po'o .i lo du'u le cmavo cu zvati ma kau cu na vajni to `CLL 5.3`
+    ##   toi
+  WORD_CO = "co".word.get
+    ## lo cmavo poi galfi lo tanru lo fatne zi'e poi no girzu cu vasru ke'a to `CLL 5.8` toi
 
 static:
   for word in WORDS_CONVERSION & WORDS_OPERATOR & @[WORD_KE, WORD_KEHE, WORD_KEI, WORD_BO, WORD_CO]:
@@ -122,33 +176,39 @@ static:
 
 
 
-#[ Folding ]#
+#[ lo nu fendi ]#
 
 func isWord(part: Part, w: Word): bool = part.is_listed and part.word == w
-  ## Test part is listed word `w`.
+  ## jdice lo du'u xu kau `part` cu se vasru lo liste gi'e du `w`
 
 
 func swapping(word: Word): int =
-  ## Read place SE cmavo swaps with x1; 0 where word is no SE cmavo.
+  ## tcidu lo sumti poi le cmavo be `SE` cu rinka lo nu ke'a .e lo pamoi sumti cu simxu lo ka basti
+  ##   .i lo jalge cu du li no va'o lo nu le valsi cu na cmavo be `SE`
   let at = WORDS_CONVERSION.find(word)
   if at < 0: 0 else: at + 2
 
 
 func swapping(part: Part): int = (if part.is_listed: part.word.swapping else: 0)
-  ## Read place SE cmavo of part swaps with x1; 0 where part is no SE cmavo.
+  ## tcidu lo sumti poi lo cmavo be `SE` pe `part` cu rinka lo nu ke'a .e lo pamoi sumti cu simxu lo
+  ##   ka basti .i lo jalge cu du li no va'o lo nu `part` cu na cmavo be `SE`
 
 func isAbstraction(part: Part): bool = part.is_listed and part.word in WORDS_ABSTRACTION
-  ## Test part is NU cmavo.
+  ## jdice lo du'u xu kau `part` cu cmavo be `NU`
 
 
 func isBinding*(part: Part): bool =
-  ## Test part is cmavo binding next tanru unit: SE, NAhE, NA or NU; part no list names is none.
+  ## jdice lo du'u xu kau `part` cu du lo cmavo poi jorne lo bavla'i tanru pagbu .i le cmavo cu
+  ##   cmavo be `SE` .a `NAhE` .a `NA` .a `NU` .i lo pagbu poi no liste cu vasru ke'a cu du no le
+  ##   cmavo
   part.is_listed and (part.word in WORDS_CONVERSION or part.word in WORDS_OPERATOR)
 
 
 func toLinks*(chain: openArray[Word]): seq[Link] =
-  ## Fold cmavo binding one word into links, outer first: each run of SE composes into one
-  ##   conversion, inner applied first (9.4), and leaves where it composes to no change.
+  ## fendi lo cmavo poi jorne pa valsi fi lo me `Link` .i lo bartu cu pamoi .i ro porsi be lo cmavo
+  ##   be `SE` cu se jalge pa nu galfi lo porsi be lo sumti .i lo cmavo poi traji lo ka jibni le
+  ##   valsi cu galfi pu lo drata to `CLL 9.4` toi .i va'o lo nu le nu galfi cu se jalge no cenba
+  ##   kei le nu galfi cu se vimcu
   var places = PLACES_SAME
   for i in countdown(chain.high, 0):
     let swapped = chain[i].swapping
@@ -163,7 +223,8 @@ func toLinks*(chain: openArray[Word]): seq[Link] =
 
 
 func ending(parts: openArray[Part], start: int): int =
-  ## Find index of `ke'e` closing `ke` at `start`, or `parts.len` where none does (5.5).
+  ## facki lo stuzi be zo ke'e poi fanmo lo girzu poi zo ke pe lo stuzi po'u `start` cu krasi ke'a
+  ##   .i lo jalge cu du `parts.len` va'o lo nu no zo ke'e cu fanmo le girzu to `CLL 5.5` toi
   var depth = 0
   for i in start + 1 ..< parts.len:
     if parts[i].isWord(WORD_KE): inc depth
@@ -174,8 +235,9 @@ func ending(parts: openArray[Part], start: int): int =
 
 
 func countItems(parts: openArray[Part], start, stop: int): int =
-  ## Count tanru units group from `start` to `stop` holds at its own depth: each part binding
-  ##   nothing, and each nested group, counts once.
+  ## kancu lo tanru pagbu poi le girzu cu vasru ke'a ku'o bu'u lo stuzi po'u `start` bi'o lo stuzi
+  ##   po'u `stop` ta'i lo nu tcidu lo ni condi pe le girzu po'o .i ro pagbu poi jorne no da .e ro
+  ##   girzu poi se vasru le girzu cu se kancu pa roi
   var i = start
   while i < stop:
     if parts[i].isWord(WORD_KE):
@@ -187,15 +249,16 @@ func countItems(parts: openArray[Part], start, stop: int): int =
 
 
 func depthAt(parts: openArray[Part], stop: int): int =
-  ## Count groups open just before index `stop`.
+  ## kancu lo girzu poi kalri bu'u lo stuzi poi zi lidne lo stuzi po'u `stop`
   for part in parts[0 ..< stop]:
     if part.isWord(WORD_KE): inc result
     elif part.isWord(WORD_KEHE) and result > 0: dec result
 
 
 func placeOpening(parts: openArray[Part]): int =
-  ## Find index after nearest run of binding cmavo, inside no group, with two tanru units or more
-  ##   after it; -1 where none is.
+  ## facki lo stuzi poi se lidne le porsi .i le porsi cu porsi lo cmavo poi jorne gi'e traji lo ka
+  ##   jibni le fanmo gi'e zvati no girzu gi'e lidne su'o re tanru pagbu .i lo jalge cu du li ni'u
+  ##   pa va'o lo nu no porsi cu mapti
   for at in countdown(parts.len, 1):
     if not parts[at - 1].isBinding or (at < parts.len and parts[at].isBinding): continue
     if parts.depthAt(at) == 0 and parts.countItems(at, parts.len) >= 2: return at
@@ -203,10 +266,15 @@ func placeOpening(parts: openArray[Part]): int =
 
 
 func withImplied(parts: openArray[Part]): seq[Part] =
-  ## Insert `ke` and `ke'e` that lujvo leaves out. Odd count of `na` sets one `na ke` before
-  ##   whole tanru, and even count none, as `na` applies to entire bridi and two cancel (15.2).
-  ##   `ke` goes after first of two SE in row (12.11). `kei` reads as `ke'e` closing `ke` after
-  ##   nearest NU it may close (21.1, rule 152), and drops where no NU stands before it.
+  ## punji zo ke .e zo ke'e vu'o poi lo lujvo cu claxu ke'a .i va'o lo nu lo te kancu be lo valsi
+  ##   po'u zo na cu se dilcu fi li re fo li pa kei pa lo'u na ke le'u cu se punji lo stuzi poi
+  ##   lidne le mulno tanru .i va'o lo nu le te kancu cu se dilcu fi li re fo li no kei no da cu se
+  ##   punji .i ki'u bo zo na cu natfe lo mulno bridi .i ji'a lo re zo na cu galfi no da to
+  ##   `CLL 15.2` toi
+  ##   .i zo ke cu se lidne lo pamoi be lo re lamji cmavo be `SE` to `CLL 12.11` toi .i zo kei cu se
+  ##     tcidu ta'i zo ke'e poi fanmo lo girzu poi zo ke cu krasi ke'a .i zo ke cu se lidne le cmavo
+  ##     be `NU` poi traji lo ka jibni gi'e ka'e se fanmo zo kei to `CLL 21.1` .e le javni pe li
+  ##     pamure toi .i zo kei cu se vimcu va'o lo nu no cmavo be `NU` cu lidne zo kei
   let plain = parts.filterIt(not it.isWord(WORD_NA))
   if (parts.len - plain.len) mod 2 == 1: result.add [WORD_NA.toPart, WORD_KE.toPart]
   var abstractions: seq[int]
@@ -223,7 +291,8 @@ func withImplied(parts: openArray[Part]): seq[Part] =
 
 
 func withClosedBeforeCo(parts: openArray[Part]): seq[Part] =
-  ## Close each group open before `co` with `ke'e` there, since no group holds `co` (5.8).
+  ## rinka lo nu ro girzu poi kalri bu'u zo co cu ganlo sepi'o zo ke'e noi lidne zo co .i ki'u bo no
+  ##   girzu cu vasru zo co to `CLL 5.8` toi
   var depth = 0
   for part in parts:
     if part.isWord(WORD_KE): inc depth
@@ -235,9 +304,10 @@ func withClosedBeforeCo(parts: openArray[Part]): seq[Part] =
 
 
 func withLoneOpened(parts: openArray[Part]): seq[Part] =
-  ## Open group for each `ke'e` closing nothing, with `ke` after nearest run of binding cmavo
-  ##   that leaves two tanru units or more up to it, only place where `ke'e` means something (15.4);
-  ##   drop `ke'e` where no such run is.
+  ## ro zo ke'e poi fanmo no girzu zo'u punji zo ke lo stuzi poi se lidne le porsi be lo cmavo poi
+  ##   jorne be'o poi traji lo ka jibni le valsi .i le porsi cu bilga lo nu lidne su'o re tanru
+  ##   pagbu poi lidne le valsi .i lo nu le valsi cu ponse lo smuni cu cumki vi po'o to `CLL 15.4`
+  ##   toi .i vimcu le valsi va'o lo nu no simsa porsi cu zvati
   var depth = 0
   for part in parts:
     if part.isWord(WORD_KE): inc depth
@@ -251,9 +321,11 @@ func withLoneOpened(parts: openArray[Part]): seq[Part] =
 
 
 func withoutGrouping(parts: openArray[Part]): seq[Part] =
-  ## Drop cmavo that only group: `bo`; then, innermost first, `ke` and `ke'e` closing it around
-  ##   group holding one tanru unit or bound by no cmavo; then `ke'e` closing nothing. Cmavo before
-  ##   dropped `ke` then binds tanru unit after it directly (`se ke ciska` is `se ciska`).
+  ## vimcu lo cmavo poi zbasu lo girzu po'o .i pamoi fa lo nu vimcu zo bo .i remoi fa lo nu vimcu zo
+  ##   ke .e zo ke'e vu'o pe ro girzu poi vasru pa tanru pagbu po'o gi'a se jorne no cmavo .i le
+  ##   nenri traji girzu cu pamoi .i cimoi fa lo nu vimcu zo ke'e poi fanmo no girzu .i ba bo lo
+  ##   cmavo poi lidne zo ke poi se vimcu cu jorne lo bavla'i tanru pagbu ta'i lo nu no da cu jbini
+  ##   mu'u lo nu lu se ke ciska li'u cu se fendi ta'i lu se ciska li'u
   result = parts.filterIt(not it.isWord(WORD_BO))
   var i = result.high
   while i >= 0:
@@ -274,9 +346,11 @@ func withoutGrouping(parts: openArray[Part]): seq[Part] =
 
 
 func tanruUnits*(parts: openArray[Part]): seq[TanruUnit] =
-  ## Fold parts of tanru into tanru units: implied `ke` and `ke'e` inserted, cmavo that only group
-  ##   dropped, and cmavo binding each part folded into its links. Group whose cmavo fold to
-  ##   no link binds nothing, so its `ke` and `ke'e` drop too (12.11).
+  ## fendi lo pagbu be lo tanru fi lo tanru pagbu .i zo ke .e zo ke'e vu'o poi se sinxa cu se punji
+  ##   .i lo cmavo poi zbasu lo girzu po'o cu se vimcu .i ro pagbu zo'u lo cmavo poi jorne le pagbu
+  ##   cu se fendi fi lo me `Link` pe le pagbu .i lo girzu poi lo cmavo pe ke'a cu se fendi fi no
+  ##   `Link` cu jorne no da .i se ki'u bo zo ke .e zo ke'e pe le girzu cu se vimcu ji'a to
+  ##   `CLL 12.11` toi
   var
     chain: seq[Word]
     dropping: seq[bool]
@@ -295,4 +369,4 @@ func tanruUnits*(parts: openArray[Part]): seq[TanruUnit] =
 
 
 func tanruUnits*(tanru: Tanru): seq[TanruUnit] = tanru.parts.tanruUnits
-  ## Fold parts of tanru into tanru units.
+  ## fendi lo pagbu be lo tanru fi lo tanru pagbu
