@@ -600,6 +600,25 @@ suite "Hooks":
     check checkSignoff(picks, BRANCH).messages.anyIt("picks no option" in it)
 
 
+  test "sign-off decision reads label of each option and its pick through bold (#844)":
+    # Case as found: example of #844 sets each label and pick in bold, and hook read `D1` as
+    #   offering no option, and its pick as `**a**`.
+    let bold = SIGNOFF
+      .replace("  - a. Keep:", "  - **a. Keep:**")
+      .replace("  - b. Rename:", "  - **b. Rename:**")
+      .replace("- Recommends: a,", "- Recommends: **a**,")
+    check checkSignoff(bold, BRANCH).messages == newSeq[string]()
+    check checkSignoff(bold.replace("**a. Keep:**", "**a. Keep**:"), BRANCH)
+      .messages == newSeq[string]()  # colon after bold
+    # Domain: bold hides no rule of option or pick.
+    check checkSignoff(bold.replace("**a. Keep:**", "**a. Keep both names here:**"), BRANCH)
+      .messages.anyIt("at most 3 words" in it)
+    check checkSignoff(bold.replace("**a. Keep:**", "**a. Keep the tests.**"), BRANCH)
+      .messages.anyIt("`<letter>. <label>: <consequence>`" in it)
+    check checkSignoff(bold.replace("- Recommends: **a**,", "- Recommends: **c**,"), BRANCH)
+      .messages.anyIt("Recommends names letter" in it and "got `c`" in it)
+
+
   test "sign-off rows name who acts":
     check checkSignoff(SIGNOFF.replace("| #310 | D1 |", "| #310 | the Architect rules |"), BRANCH)
       .messages.anyIt("names decision it waits on" in it)
