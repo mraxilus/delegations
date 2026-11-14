@@ -180,7 +180,7 @@ func checkFormatting*(
   found.filterIt(it.line - 1 notin fence.lines)
 
 func checkStatic(
-  path, source: string; dialect: Dialect; should_drop_articles: bool; nimble: string
+  path, source: string; dialect: Dialect; should_drop_articles: bool; nimble: string; is_drive: bool
 ): seq[Report] =
   ## Run on source as given each check static pass of `curator/audit` reads on Nim source: form,
   ##   articles where comments drop them, entry block, names with no word exempt beyond `JARGON`,
@@ -200,14 +200,15 @@ func checkSource*(
   proofs = Proofs();
   should_drop_articles = true;
   nimble = "";
+  is_drive = false;
 ): seq[Report] =
   ## Report each rule knoller reads in source: those `checkFormatting` holds, off fenced lines,
   ##   and those static pass of `curator/audit` reads (`checkStatic`), on every line, so finding
   ##   fixers leave, or fence keeps from them, fails command line as it fails static pass.
   ##   Articles are read only where comments drop them (`should_drop_articles`), and tests from
-  ##   nimble file nearest file (`nimble`).
+  ##   nimble file nearest file (`nimble`); caller says whether file is drive code (`is_drive`).
   checkFormatting(path, source, dialect, proofs, nimble) &
-      checkStatic(path, source, dialect, should_drop_articles, nimble)
+      checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
 
 
 
@@ -325,6 +326,7 @@ func checkFenceHeld*(
   proofs = Proofs();
   should_drop_articles = true;
   nimble = "";
+  is_drive = false;
 ): seq[Report] =
   ## Report each run of fenced lines, markers included, as one warning at its first line: each
   ##   rule broken inside it, in order of `Rule`, with count and first line, so whoever runs fix
@@ -333,12 +335,13 @@ func checkFenceHeld*(
   ##   Checks read source unmasked, so marker reads as plain comment and each line keeps its
   ##     number: each check `checkSource` holds, those static pass reads among them. Source with
   ##     no fence runs none. Needless parentheses count where `proofs` answer for source as given
-  ##     (`questions`), articles where comments drop them (`should_drop_articles`), and tests
-  ##     where nimble file nearest file puts them (`nimble`).
+  ##     (`questions`), articles where comments drop them (`should_drop_articles`), tests where
+  ##     nimble file nearest file puts them (`nimble`), and fixed waits where caller says file is
+  ##     drive code (`is_drive`).
   let fence = source.fence
   if fence.fault >= 0 or fence.lines.len == 0: return
   let found = checkFormattingUnfenced(path, source, dialect, proofs, nimble) &
-      checkStatic(path, source, dialect, should_drop_articles, nimble)
+      checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
 
   # Count each rule broken inside each run, keep its first line, and name each in `Rule` order.
   for run in fence.runs:

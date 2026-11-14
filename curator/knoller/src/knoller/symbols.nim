@@ -76,6 +76,9 @@ type
     directory*: string  ## Absolute directory run starts in, so project's configuration applies.
     includer*: string  ## Path, relative to root, of file whose compile holds query's file.
     bin*: string  ## Directory of toolchain serving pin; empty names PATH.
+    defines*: seq[string]
+      ## Options compile of file takes before entry, as defines its stubs pass; caller names
+      ##   them, and empty names none.
 
   Answer* = object  ## Define what semantic pass answers for one file.
     path*: string  ## Repository-relative path.
