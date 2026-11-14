@@ -456,8 +456,9 @@ suite "Hooks":
       .messages.anyIt("lacks `**State:**`" in it)
     check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** stuck"), BRANCH)
       .messages.anyIt("state is one of" in it and "got `stuck`." in it)  # word, not branch
-    check checkSignoff(SIGNOFF.replace("**State:** blocked,", "**State:** blocked"), BRANCH)
-      .messages.allIt("state is one of" notin it)  # word ends at space too
+    let spaced = checkSignoff(SIGNOFF.replace("**State:** blocked,", "**State:** blocked"), BRANCH)
+      .messages
+    check spaced.len == 1 and "state line gives state word" in spaced[0]  # word ends at space too
     let unblocked = SIGNOFF.replace("- Class: blocks this delegate", "- Class: has a workaround: x")
     check checkSignoff(unblocked, BRANCH).messages.anyIt("exactly when" in it)  # blocked, no block
     check checkSignoff(unblocked.replace("**State:** blocked", "**State:** waiting"), BRANCH)
@@ -770,6 +771,7 @@ suite "Hooks":
       "opens with header `| Item | Evidence, or who acts |`; got `| # | State | Item |" in it
     )
     check five.anyIt("`**Outside a pull request.**` once" in it and "got `0`" in it)
+    check five.allIt("holds two cells" notin it)  # rows under header out of shape go unread
 
     # Bold line of group links its pull request and gives its state.
     const pull = "**[The gap list (#331)](https://github.com/mraxilus/delegations/pull/331), draft"
@@ -1160,6 +1162,11 @@ suite "Hooks":
     check (lineUser("Add the gap list.") & lineAssistant(SIGNOFF) & linesCall("git push") &
       lineAssistant(dropped)).parseTurn.signoffs_earlier == @[SIGNOFF]
 
+    # Where entries carry `origin.kind` and none is `human`, window holds whole transcript.
+    check (lineUser("Add the gap list.", "peer") & lineAssistant(SIGNOFF) &
+      lineUser(notice, "task-notification") & lineAssistant(dropped)).parseTurn
+      .signoffs_earlier == @[SIGNOFF]
+
     # Earlier message counts where it holds sign-off outside fence.
     let quoted = lineAssistant("The form:\n\n```md\n" & SIGNOFF & "```\n")
     check (lineUser("Add the gap list.", "human") & quoted & lineAssistant("Pushed.") &
@@ -1240,6 +1247,9 @@ suite "Hooks":
     check checkSignoffWindow(dropped, BRANCH, [FIVE, SIGNOFF], []).len == 1
     let gist = SIGNOFF.replace("**Summary:**", "**Gist:**")
     check checkSignoffWindow(dropped, BRANCH, [gist], []).len == 0  # refused for its shape
+    let stuck = SIGNOFF.replace("**State:** blocked", "**State:** stuck")
+    check checkSignoffWindow(dropped, BRANCH, [stuck], []).len == 0  # groups read, shape refused
+    check checkSignoffWindow(dropped, BRANCH, [dropped, SIGNOFF], []).len == 1  # last, not first
 
 
   test "hook binary is built again where source at HEAD moves, and only there":
