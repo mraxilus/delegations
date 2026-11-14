@@ -15,21 +15,35 @@ Done.
 
 ## Sign-off
 
-**Role:** contributor/ronri/pga_benchmark, `gap-list`
+**Role:** contributor/ronri/pga_benchmark, branch `gap-list`
 
 **Context:** This branch adds the gap list. The Architect asked for baselines. #331 was a draft.
 
-| # | State | Item | Where | Evidence, or who acts |
-| --- | --- | --- | --- | --- |
-| 1 | ☑️ | Names stay by the ruling (carried 3) | #320 | the Architect ruled |
-| 2 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
-| 3 | ⚠️ | `koch drive` red in pga_visualiser | #332 | contributor/ronri/pga_visualiser, fix |
-| 4 | ⏸️ | Names in the tests | #310 | D1 |
-| 5 | ⬜ | cga5d baseline | `tests/` | this delegate |
+---
+
+**[The gap list (#331)](https://github.com/mraxilus/delegations/pull/331), draft, run 412 green.**
+The gap list reads the baseline of each algebra.
+
+| Item | Evidence, or who acts |
+| --- | --- |
+| ☑️ 1. Draft since it opened, another commit intended | carried 3, #331 draft |
+| ✅ 2. Gap list reads each baseline | `koch check` green |
+| ✅ 3. A worked example shows the gap rows | carried 5, in the pull request body |
+| ⏸️ 4. Names in the tests | carried 6, D1 |
+| ⬜ 5. cga5d baseline | this delegate |
+
+**Outside a pull request.**
+
+| Item | Evidence, or who acts |
+| --- | --- |
+| ☑️ 6. The answered issue is closed | carried 1, #320 |
+| ✅ 7. The request of the curator is answered | carried 2, #330 |
+| ⚠️ 8. `koch drive` red in pga_visualiser | contributor/ronri/pga_visualiser, fix on #332 |
+| ➖ 9. Not needed: page link | carried 4: no page changed |
 
 **Summary:** The gap list is done. Row 4 waits on D1.
 
-**State:** blocked, at `3f2a9c1`, pushed, #331 draft
+**State:** blocked, at `3f2a9c1`, pushed
 
 **Decisions:**
 
@@ -37,9 +51,9 @@ Done.
 - Class: blocks this delegate
 - Where: #310
 - Options:
-  - a. Keep: the tests stay as they are.
-  - b. Rename: twelve suites change.
-- Recommends: a, because both names are the names of the authority.
+  - **a. Keep:** the tests stay as they are.
+  - **b. Rename:** twelve suites change.
+- Recommends: **a**, because both names are the names of the authority.
 - Delay costs: #331 stays a draft.
 
 **D2.** The cga5d baseline needs 16 GB, and the runner has 7 GB.
@@ -51,22 +65,56 @@ Done.
   PLAIN = """
 ## Sign-off
 
-**Role:** contributor/ronri/pga_benchmark, `gap-list`
+**Role:** contributor/ronri/pga_benchmark, branch `gap-list`
 
 **Context:** This branch adds the gap list.
 
-| # | State | Item | Where | Evidence, or who acts |
-| --- | --- | --- | --- | --- |
-| 1 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
+---
+
+**[The gap list (#331)](https://github.com/mraxilus/delegations/pull/331), ready, run 412 green.**
+The gap list reads the baseline of each algebra.
+
+| Item | Evidence, or who acts |
+| --- | --- |
+| ✅ 1. Gap list reads each baseline | `koch check` green |
+| ✅ 2. Ready, and no commit intended | carried 3, run 412 green |
+| ✅ 3. A worked example shows the gap rows | carried 5, in the pull request body |
+
+**Outside a pull request.**
+
+| Item | Evidence, or who acts |
+| --- | --- |
+| ➖ 4. Not needed: issues, requests, page link, terms | carried 1, 2, 4 and 6: none arose |
 
 **Summary:** The gap list is done.
 
-**State:** done, at `3f2a9c1`, pushed, #331 ready
+**State:** done, at `3f2a9c1`, pushed
 
 **Decisions:** None.
 
 **Next step:** Architect: merge #331.
 """
+  FIVE = """
+## Sign-off
+
+**Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list`
+
+**Context:** This branch adds the gap list.
+
+| # | State | Item | Where | Evidence, or who acts |
+| --- | --- | --- | --- | --- |
+| 1 | ☑️ | Names stay by the ruling (carried 3) | #320 | the Architect ruled |
+| 2 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
+
+**Summary:** The gap list is done.
+
+**State:** done, at `3f2a9c1`, pushed, #331 ready, run 412 green
+
+**Decisions:** None.
+
+**Next step:** Architect: merge #331.
+"""
+    ## Sign-off in form of `GUIDE.md` before #844: one table of five columns, which phone cuts.
 
 
 func messages(found: seq[Finding]): seq[string] =
@@ -339,8 +387,8 @@ suite "Hooks":
 
 
   test "sign-off shape":
-    check checkSignoff(SIGNOFF, BRANCH).len == 0
-    check checkSignoff(PLAIN, BRANCH).len == 0  # no decision
+    check checkSignoff(SIGNOFF, BRANCH).messages == newSeq[string]()
+    check checkSignoff(PLAIN, BRANCH).messages == newSeq[string]()  # no decision
     check checkSignoff("Done.\n", BRANCH).messages[0].contains("holds no")
     check checkSignoff(SIGNOFF & "\n## After\n", BRANCH)
       .messages.anyIt("Nothing follows sign-off" in it)  # heading rule, not Next step rule
@@ -348,28 +396,18 @@ suite "Hooks":
       .messages.anyIt("lacks `**Summary:**`" in it)
     check checkSignoff(SIGNOFF.replace("**Role:** contributor/ronri", "**Role:** curator"), BRANCH)
       .messages.anyIt("role must be" in it)
-    check checkSignoff(SIGNOFF.replace("| 2 | ✅ |", "| 2 | ⬜ |"), BRANCH)
-      .messages.anyIt("sort" in it)  # ⬜ before ⚠️
-    check checkSignoff(SIGNOFF.replace("| `koch check` green |", "| |"), BRANCH)
-      .messages.anyIt("needs evidence" in it)
-    check checkSignoff(SIGNOFF.replace("| 4 | ⏸️ |", "| 6 | ⏸️ |"), BRANCH)
-      .messages.anyIt("numbered" in it)
-    check checkSignoff(SIGNOFF.replace("(carried 3)", "(carried 9)"), BRANCH)
-      .messages.anyIt("1 to 6" in it)
     check checkSignoff(SIGNOFF & "\nTrailing.\n", BRANCH)
       .messages.anyIt("Nothing follows Next step" in it)
-    check checkSignoff(SIGNOFF.replace("| 2 | ✅ |", "| 2 | 🟢 |"), BRANCH)
-      .messages.anyIt("one of" in it)
 
 
   test "sign-off parts come in order Architect set":
-    # Order is role, context, table, summary, state, decisions, next step (GUIDE.md).
+    # Order is role, context, rule line, work, summary, state, decisions, next step (GUIDE.md).
     const context = "**Context:** This branch adds the gap list. The Architect asked for " &
       "baselines. #331 was a draft.\n\n"
-    let table_first = SIGNOFF.replace(context, "").replace("**Summary:**", context & "**Summary:**")
-    check checkSignoff(table_first, BRANCH)
-      .messages.anyIt("| # |" in it and "in its order" in it)  # context comes before table
-    const state = "**State:** blocked, at `3f2a9c1`, pushed, #331 draft\n\n"
+    let work_first = SIGNOFF.replace(context, "").replace("**Summary:**", context & "**Summary:**")
+    check checkSignoff(work_first, BRANCH)
+      .messages.anyIt("`---` in its order" in it)  # context comes before work
+    const state = "**State:** blocked, at `3f2a9c1`, pushed\n\n"
     let state_early = SIGNOFF.replace(state, "").replace("**Context:**", state & "**Context:**")
     check checkSignoff(state_early, BRANCH)
       .messages.anyIt("lacks `**State:**` in its order" in it)  # state follows summary
@@ -377,16 +415,18 @@ suite "Hooks":
     let summary_last = SIGNOFF.replace(summary, "").replace("**Next", summary & "**Next")
     check checkSignoff(summary_last, BRANCH)
       .messages.anyIt("lacks `**State:**` in its order" in it)  # summary comes before state
+    check checkSignoff(SIGNOFF.replace("---\n", ""), BRANCH)
+      .messages.anyIt("lacks `---` in its order" in it)  # rule line opens work
 
 
   test "sign-off state and decisions label":
-    const state = "**State:** blocked, at `3f2a9c1`, pushed, #331 draft\n"
+    const state = "**State:** blocked, at `3f2a9c1`, pushed\n"
     check checkSignoff(SIGNOFF.replace(state, ""), BRANCH)
       .messages.anyIt("lacks `**State:**`" in it)
     check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** stuck"), BRANCH)
       .messages.anyIt("state is one of" in it and "got `stuck`." in it)  # word, not branch
     check checkSignoff(SIGNOFF.replace("**State:** blocked,", "**State:** blocked"), BRANCH)
-      .len == 0  # word ends at space too
+      .messages.allIt("state is one of" notin it)  # word ends at space too
     let unblocked = SIGNOFF.replace("- Class: blocks this delegate", "- Class: has a workaround: x")
     check checkSignoff(unblocked, BRANCH).messages.anyIt("exactly when" in it)  # blocked, no block
     check checkSignoff(unblocked.replace("**State:** blocked", "**State:** waiting"), BRANCH)
@@ -397,6 +437,32 @@ suite "Hooks":
       .messages.anyIt("writes `**Decisions:** None.`" in it)
     check checkSignoff(SIGNOFF.replace("**Decisions:**\n", "**Decisions:** Two.\n"), BRANCH)
       .messages.anyIt("stands alone" in it)
+
+
+  test "sign-off role line and state line take their short forms (#844)":
+    # Case as found: role line named whole branch, and state line pull request and run too,
+    #   which bold line of each pull request now gives.
+    let five = checkSignoff(FIVE, BRANCH).messages
+    check five.anyIt("as `, branch `gap-list``" in it)
+    check five.anyIt("leaves pull request and run to its bold line" in it)
+    # Domain: role, then word `branch` and last part of branch; state word, head and push alone.
+    check checkSignoff(SIGNOFF.replace(", branch `gap-list`", ", `gap-list`"), BRANCH)
+      .messages.anyIt("got `, `gap-list``" in it)
+    check checkSignoff(SIGNOFF.replace(", branch `gap-list`", ""), BRANCH)
+      .messages.anyIt("closes with word `branch`" in it)
+    check checkSignoff(SIGNOFF.replace("pushed\n", "not pushed\n"), BRANCH)
+      .messages == newSeq[string]()
+    for state in [
+      "**State:** blocked, at `3f2a9c1`, pushed, #331 draft",
+      "**State:** blocked, at 3f2a9c1, pushed",
+      "**State:** blocked, at `head`, pushed",
+      "**State:** blocked, pushed",
+    ]:
+      check checkSignoff(SIGNOFF.replace("**State:** blocked, at `3f2a9c1`, pushed", state), BRANCH)
+        .messages.anyIt("state line gives" in it)
+    for other in ["claude/tool-named", "main"]:
+      check checkSignoff(SIGNOFF.replace(", branch `gap-list`", ", at `main`"), other)
+        .messages == newSeq[string]()  # branch outside grammar fixes no role
 
 
   test "stop hook asks for diff of each error alone, never whole message or its lines again":
@@ -429,8 +495,10 @@ suite "Hooks":
   test "sign-off follows read of open issues of its role, in its turn (#742)":
     # Case as found: curator signed off `done` on 2026-10-24 from turn that read runs alone,
     #   while request #730 on label `curator` waited 13 hours unread.
-    const list = "mcp__github__list_issues"
-    let curator = PLAIN.replace("contributor/ronri/pga_benchmark, `gap-list`", "curator, at main")
+    const
+      list = "mcp__github__list_issues"
+      role = "contributor/ronri/pga_benchmark, branch `gap-list`"
+    let curator = PLAIN.replace(role, "curator, at main")
     check checkSignoffRead(curator, [Call(name: "mcp__github__actions_list")])
       .messages.anyIt("labelled `curator`" in it and "got none" in it)
 
@@ -471,7 +539,7 @@ suite "Hooks":
     const encoded = "gh api 'repos/o/r/issues?labels=contributor%2Fronri%2Fpga_benchmark'"
     check checkSignoffRead(PLAIN, [Call(name: "Bash", command: encoded)]).len == 0
     check checkSignoffRead(PLAIN, [Call(name: list, labels: @["curator"])]).len == 1
-    let coordinator = PLAIN.replace("contributor/ronri/pga_benchmark, `gap-list`", "coordinator")
+    let coordinator = PLAIN.replace(role, "coordinator")
     check checkSignoffRead(coordinator, [Call(name: list, labels: @["architect"])]).len == 0
     check checkSignoffRead(coordinator, [Call(name: list, labels: @["coordinator"])]).len == 1
 
@@ -577,7 +645,7 @@ suite "Hooks":
 
 
   test "sign-off decision offers two to four short options and picks one":
-    check checkSignoff(SIGNOFF.replace("  - b. Rename: twelve suites change.\n", ""), BRANCH)
+    check checkSignoff(SIGNOFF.replace("  - **b. Rename:** twelve suites change.\n", ""), BRANCH)
       .messages.anyIt("offers 2 to 4 options; got `1`" in it)
     const more = "  - c. Drop: x.\n  - d. Wait: x.\n  - e. Ask: x.\n- Recommends:"
     check checkSignoff(SIGNOFF.replace("- Recommends:", more), BRANCH)
@@ -586,11 +654,11 @@ suite "Hooks":
       .messages.anyIt("at most 3 words" in it)
     check checkSignoff(SIGNOFF.replace("a. Keep:", "a. Keep the tests."), BRANCH)
       .messages.anyIt("`<letter>. <label>: <consequence>`" in it)  # no colon closes label
-    check checkSignoff(SIGNOFF.replace("- Recommends: a,", "- Recommends: c,"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("- Recommends: **a**,", "- Recommends: **c**,"), BRANCH)
       .messages.anyIt("Recommends names letter" in it)
-    check checkSignoff(SIGNOFF.replace("- Recommends: a,", "- Recommends: a. Keep,"), BRANCH)
-      .len == 0  # letter closed by period
-    check checkSignoff(SIGNOFF.replace("- Recommends: a, because", "- Because"), BRANCH)
+    let period = SIGNOFF.replace("- Recommends: **a**,", "- Recommends: **a**. Keep,")
+    check checkSignoff(period, BRANCH).len == 0  # letter closed by period
+    check checkSignoff(SIGNOFF.replace("- Recommends: **a**, because", "- Because"), BRANCH)
       .messages.anyIt("lacks `Recommends:`" in it)
     check checkSignoff(SIGNOFF.replace("in the tests?", "in the tests."), BRANCH)
       .messages.anyIt("ends with `?`" in it)
@@ -603,33 +671,167 @@ suite "Hooks":
   test "sign-off decision reads label of each option and its pick through bold (#844)":
     # Case as found: example of #844 sets each label and pick in bold, and hook read `D1` as
     #   offering no option, and its pick as `**a**`.
-    let bold = SIGNOFF
-      .replace("  - a. Keep:", "  - **a. Keep:**")
-      .replace("  - b. Rename:", "  - **b. Rename:**")
-      .replace("- Recommends: a,", "- Recommends: **a**,")
-    check checkSignoff(bold, BRANCH).messages == newSeq[string]()
-    check checkSignoff(bold.replace("**a. Keep:**", "**a. Keep**:"), BRANCH)
+    check checkSignoff(SIGNOFF, BRANCH).messages == newSeq[string]()
+    let plain = SIGNOFF
+      .replace("  - **a. Keep:**", "  - a. Keep:")
+      .replace("  - **b. Rename:**", "  - b. Rename:")
+      .replace("- Recommends: **a**,", "- Recommends: a,")
+    check checkSignoff(plain, BRANCH).messages == newSeq[string]()  # bold is no rule
+    check checkSignoff(SIGNOFF.replace("**a. Keep:**", "**a. Keep**:"), BRANCH)
       .messages == newSeq[string]()  # colon after bold
     # Domain: bold hides no rule of option or pick.
-    check checkSignoff(bold.replace("**a. Keep:**", "**a. Keep both names here:**"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("**a. Keep:**", "**a. Keep both names here:**"), BRANCH)
       .messages.anyIt("at most 3 words" in it)
-    check checkSignoff(bold.replace("**a. Keep:**", "**a. Keep the tests.**"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("**a. Keep:**", "**a. Keep the tests.**"), BRANCH)
       .messages.anyIt("`<letter>. <label>: <consequence>`" in it)
-    check checkSignoff(bold.replace("- Recommends: **a**,", "- Recommends: **c**,"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("- Recommends: **a**,", "- Recommends: **c**,"), BRANCH)
       .messages.anyIt("Recommends names letter" in it and "got `c`" in it)
 
 
   test "sign-off rows name who acts":
-    check checkSignoff(SIGNOFF.replace("| #310 | D1 |", "| #310 | the Architect rules |"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("carried 6, D1 |", "carried 6, the Architect |"), BRANCH)
       .messages.anyIt("names decision it waits on" in it)
-    check checkSignoff(SIGNOFF.replace("| #310 | D1 |", "| #310 | D3 |"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("carried 6, D1 |", "carried 6, D3 |"), BRANCH)
       .messages.anyIt("names decision it waits on" in it)  # no such decision
     check checkSignoff(SIGNOFF.replace("contributor/ronri/pga_visualiser, fix", "they fix"), BRANCH)
-      .messages.anyIt("opens last cell with role string" in it)
+      .messages.anyIt("opens second cell with role string" in it)
     check checkSignoff(
       SIGNOFF.replace("contributor/ronri/pga_visualiser, fix", "outside, GitHub fixes runner"),
       BRANCH,
-    ).len == 0
+    ).messages == newSeq[string]()
+    # Carried tag may open second cell, and role string then follows it.
+    const answered = "| ✅ 7. The request of the curator is answered | carried 2, #330 |"
+    check checkSignoff(
+      SIGNOFF.replace(answered, "| ⚠️ 7. The request of the curator waits | carried 2, curator |"),
+      BRANCH,
+    ).messages == newSeq[string]()
+    check checkSignoff(
+      SIGNOFF.replace(answered, "| ⚠️ 7. The request of the curator waits | carried 2, they act |"),
+      BRANCH,
+    ).messages.anyIt("got `they` in row `7`" in it)
+
+
+  test "sign-off holds group for each pull request, each with table of two columns (#844)":
+    # Case as found: table of five columns of each sign-off before #844, which phone cuts past its
+    #   first column, and which holds work of each pull request in one table.
+    let five = checkSignoff(FIVE, BRANCH).messages
+    check five.anyIt("lacks `---` in its order" in it)
+    check five.anyIt("follows bold line of its group" in it)
+    check five.anyIt(
+      "opens with header `| Item | Evidence, or who acts |`; got `| # | State | Item |" in it
+    )
+    check five.anyIt("`**Outside a pull request.**` once" in it and "got `0`" in it)
+
+    # Bold line of group links its pull request and gives its state.
+    const pull = "**[The gap list (#331)](https://github.com/mraxilus/delegations/pull/331), draft"
+    check checkSignoff(SIGNOFF.replace(pull, "**The gap list (#331), draft"), BRANCH)
+      .messages.anyIt("links its pull request and gives its state" in it)
+    check checkSignoff(SIGNOFF.replace("/pull/331)", "/issues/331)"), BRANCH)
+      .messages.anyIt("links its pull request and gives its state" in it)
+    check checkSignoff(SIGNOFF.replace("/pull/331), draft", "/pull/331), open"), BRANCH)
+      .messages.anyIt("one of draft, ready, merged, closed; got `open`" in it)
+    for state in ["ready", "merged", "closed"]:
+      check checkSignoff(SIGNOFF.replace("/pull/331), draft", "/pull/331), " & state), BRANCH)
+        .messages == newSeq[string]()
+
+    # One group for each pull request, and work outside one in last table, once.
+    let
+      at_pull = SIGNOFF.find("**[The gap list")
+      at_outside = SIGNOFF.find("**Outside a pull request.**")
+      group = SIGNOFF[at_pull ..< at_outside]
+      outside = SIGNOFF[at_outside ..< SIGNOFF.find("**Summary:**")]
+    check checkSignoff(SIGNOFF.replace(outside, ""), BRANCH)
+      .messages.anyIt("`**Outside a pull request.**` once" in it and "got `0`" in it)
+    check checkSignoff(SIGNOFF.replace(outside, outside & outside), BRANCH)
+      .messages.anyIt("`**Outside a pull request.**` once" in it and "got `2`" in it)
+    check checkSignoff(SIGNOFF.replace(group & outside, outside & group), BRANCH)
+      .messages.anyIt("after each group of pull request" in it)
+    check checkSignoff(SIGNOFF.replace(group, group & group), BRANCH)
+      .messages.anyIt("one group for each pull request; got `#331` twice" in it)
+    let bare = SIGNOFF.replace(group, group[group.find("| Item |") .. ^1])
+    check checkSignoff(bare, BRANCH).messages.anyIt("follows bold line of its group" in it)
+
+    # Row holds two cells, and its first opens with state, number and claim.
+    const row = "| ✅ 2. Gap list reads each baseline | `koch check` green |"
+    check checkSignoff(
+      SIGNOFF.replace(row, "| ✅ 2. Gap list reads each baseline | `src/` | `koch check` green |"),
+      BRANCH,
+    ).messages.anyIt("holds two cells" in it and "got `3`" in it)
+    for first in ["✅ Gap list reads", "🟢 2. Gap list reads", "✅ 2 Gap list reads", "✅ 2. "]:
+      check checkSignoff(SIGNOFF.replace("✅ 2. Gap list reads each baseline", first), BRANCH)
+        .messages.anyIt("opens first cell with state, number and claim" in it)
+    check checkSignoff(SIGNOFF.replace("| this delegate |", "| |"), BRANCH)
+      .messages.anyIt("holds evidence, or who acts" in it and "row `5`" in it)
+    check checkSignoff(SIGNOFF.replace("| `koch check` green |", "| |"), BRANCH)
+      .messages.anyIt("holds evidence, or who acts" in it and "row `2`" in it)
+
+    # Rows number from 1 across tables, and sort by state inside each table.
+    check checkSignoff(SIGNOFF.replace("| ☑️ 6. The answered", "| ☑️ 1. The answered"), BRANCH)
+      .messages.anyIt("numbered from 1 in order across its tables; got `1`" in it)
+    check checkSignoff(SIGNOFF.replace("| ⏸️ 4.", "| ⏸️ 6."), BRANCH)
+      .messages.anyIt("numbered from 1 in order across its tables; got `6`" in it)
+    check checkSignoff(SIGNOFF.replace("| ✅ 2.", "| ⬜ 2."), BRANCH)
+      .messages.anyIt("sort ☑️ ✅ ⚠️ ⏸️ ⬜ ➖ inside each table" in it)  # ⬜ before ✅
+    const review = "none arose |\n| ⬜ 5. Review asked | this delegate |\n"
+    check checkSignoff(PLAIN.replace("none arose |\n", review), BRANCH)
+      .messages.anyIt("sort ☑️ ✅ ⚠️ ⏸️ ⬜ ➖ inside each table" in it)  # ➖ closes its table
+
+
+  test "sign-off names each carried rule beside its item, or in ➖ row (#844)":
+    # Case as found: rule that did not apply went to body of pull request, so sign-off showed
+    #   only some rules, each tagged in its item cell.
+    check checkSignoff(FIVE, BRANCH)
+      .messages.allIt("carried rule" notin it)  # table unread, so no tag of it counts
+    const draft = "| ☑️ 1. Draft since it opened, another commit intended | carried 3, #331 draft |"
+    let tagged = SIGNOFF.replace(draft, "| ☑️ 1. Draft since it opened (carried 3) | #331 |")
+    check checkSignoff(tagged, BRANCH)
+      .messages.anyIt("names each carried rule" in it and "got none for `3`" in it)
+    check checkSignoff(SIGNOFF.replace("carried 3,", "carried 9,"), BRANCH)
+      .messages.anyIt("names rule 1 to 6; got `9`" in it)
+
+    # Rule may stand beside two items, and never beside one and in ➖ row too.
+    check checkSignoff(SIGNOFF.replace("| `koch check` green |", "| carried 5, green |"), BRANCH)
+      .messages == newSeq[string]()
+    check checkSignoff(SIGNOFF.replace("carried 4: no page", "carried 4 and 5: no page"), BRANCH)
+      .messages.anyIt("never in both; got `5`" in it)
+
+    # ➖ row names its rules by tag, once, in table of work outside pull request.
+    const unneeded = "| ➖ 9. Not needed: page link | carried 4: no page changed |"
+    let untagged = SIGNOFF.replace(unneeded, "| ➖ 9. Not needed: page link | no page |")
+    check checkSignoff(untagged, BRANCH)
+      .messages.anyIt("➖ row names each carried rule" in it and "got `no page` in row `9`" in it)
+    check checkSignoff(SIGNOFF.replace(unneeded & "\n", ""), BRANCH)
+      .messages.anyIt("got none for `4`" in it)
+    let
+      second = "| ➖ 10. Not needed: terms | carried 6: no term arose |"
+      twice = SIGNOFF.replace(unneeded, unneeded & "\n" & second).replace("carried 6, D1", "D1")
+    check checkSignoff(twice, BRANCH).messages.anyIt("holds one ➖ row; got `2`" in it)
+    let inside = SIGNOFF
+      .replace(unneeded & "\n", "")
+      .replace("| this delegate |", "| this delegate |\n| ➖ 6. Not needed: page link | carried 4 |")
+      .replace("| ☑️ 6.", "| ☑️ 7.").replace("| ✅ 7.", "| ✅ 8.").replace("| ⚠️ 8.", "| ⚠️ 9.")
+    check checkSignoff(inside, BRANCH)
+      .messages.anyIt("stands in table `**Outside a pull request.**`; got it in row `6`" in it)
+    # Tag joins its numbers by comma and `and`; word `carried` before no number is prose.
+    check checkSignoff(PLAIN, BRANCH).messages == newSeq[string]()  # `carried 1, 2, 4 and 6`
+    check checkSignoff(SIGNOFF.replace("| `koch check` green |", "| carried over, green |"), BRANCH)
+      .messages == newSeq[string]()
+
+
+  test "sign-off folds done rows of pull request into one row past twelve (#844)":
+    # Fold names first and last item it holds, so count of items stays readable.
+    const
+      first = "| ☑️ 1. Draft since it opened, another commit intended | carried 3, #331 draft |\n"
+      second = "| ✅ 2. Gap list reads each baseline | `koch check` green |\n"
+      folded = "| ☑️ 1–2. Draft, and gap list reads baselines | carried 3, `koch check` green |\n"
+    check checkSignoff(SIGNOFF.replace(first & second, folded), BRANCH)
+      .messages == newSeq[string]()
+    check checkSignoff(SIGNOFF.replace(first & second, folded.replace("1–2", "1-2")), BRANCH)
+      .messages == newSeq[string]()  # hyphen reads as dash
+    check checkSignoff(SIGNOFF.replace(first & second, folded.replace("1–2", "2–1")), BRANCH)
+      .messages.anyIt("numbered from 1 in order across its tables" in it)
+    check checkSignoff(SIGNOFF.replace("| ⬜ 5. cga5d", "| ⬜ 5–6. cga5d"), BRANCH)
+      .messages.anyIt("folds done rows alone" in it and "row `5`" in it)
 
 
   test "push and commit message":
