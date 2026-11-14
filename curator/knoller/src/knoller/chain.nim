@@ -67,7 +67,7 @@
 ##     exit code.
 ##   Caller says of each file whether its comments drop their articles (`should_drop_articles`),
 ##     true by default. Where they keep them, as comments in language other than English may,
-##     chain runs neither fixer nor check of articles, and every other step as before. Policy is
+##     chain runs neither fixer nor check of articles, and runs every other step. Policy is
 ##     caller's, as words names may take are (`names.nim`), so knoller holds none; command line
 ##     sets none, so it drops articles in every file it reads.
 ##
