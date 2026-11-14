@@ -301,16 +301,16 @@ suite "Chain":
       check comment_dropped in formatted(path, source, dialect).source  # default drops it
       check Rule.ArticleInComment notin rules and Rule.SpacingExpression in rules
       check Rule.ArticleInComment in checkSource(path, source, dialect).mapIt(it.rule)
-    let fenced = FENCE_OFF & "\n" & comment & "let A = 1+2  ## Sum.\n" & FENCE_ON & "\n"
-    check checkFenceHeld("a.nims", fenced, Dialect.Script, should_drop_articles = false).mapIt(
-      it.message,
-    ) == @[
-      "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
-        "line 3; got lines `1` to `4`.",
-    ]  # fence counts no article
-    check checkFenceHeld("a.nims", fenced, Dialect.Script)[0].message.contains(
-      "inside them article-in-comment breaks once at line 2 and expression-spacing",
-    )  # default counts it
+      let fenced = FENCE_OFF & "\n" & comment & "let A = 1+2  ## Sum.\n" & FENCE_ON & "\n"
+      check checkFenceHeld(path, fenced, dialect, should_drop_articles = false).mapIt(
+        it.message,
+      ) == @[
+        "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
+          "line 3; got lines `1` to `4`.",
+      ]  # fence counts no article
+      check checkFenceHeld(path, fenced, dialect)[0].message.contains(
+        "inside them article-in-comment breaks once at line 2 and expression-spacing",
+      )  # default counts it
 
 
 

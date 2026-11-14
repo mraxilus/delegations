@@ -224,6 +224,8 @@ suite "Command line":
     let outcome = outcome([("a.nims", "# la .alis. a la .bob. cu klama\n")], [], is_check = true)
     check outcome.lines == @["a.nims:1: article-in-comment to fix", "1 to fix."]
     check outcome.code == 1  # change due fails check
+    let fixed = outcome([("a.nims", "# la .alis. a la .bob. cu klama\n")], [], is_check = false)
+    check fixed.written == @[("a.nims", "# la .alis. la .bob. cu klama\n")]  # fix writes word away
 
 
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":
