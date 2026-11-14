@@ -3054,7 +3054,8 @@ group comes back inside that span alone.
   section Sign-off. It is one field of each entry, and its absence falls back to the turn.
 - Cost: the span holds one field of the harness. Where the harness writes the field and never
   `human`, the span holds the whole transcript, so each sign-off grows. Where it writes `human`
-  on a wake, the span opens at each wake, so an item can drop with no finding.
+  on a wake, the span opens at each wake. A row of work outside a pull request can then drop with
+  no finding.
 - Read with `jq` over the transcript of one curator, 2026-11-14. Of 480 entries of type `user`
   that hold text and no tool result, 95 carry `human`, over 12 versions of the harness. The
   others carry another kind or none. They are wakes, reports of subagents, refusals of hooks,
@@ -3075,16 +3076,18 @@ group comes back inside that span alone.
 - A sign-off whose groups do not read, as one that lacks a part or links no pull request, takes
   the findings of its shape alone. Each group that it holds would read as dropped. So a group
   that it drops goes unnamed until the next sign-off, which is compared with the base before it.
-- Koch reads the subjects only where an earlier sign-off exists, and a failure of git reads as no
-  subject.
+- Koch reads the subjects only where an earlier sign-off exists, which `isSignoffEarlier`
+  decides. A failure of git reads as no subject. Verified by `suites/test_hooks.nim` for that
+  decision, since no suite compiles koch.
 - Cost: the hook counts items, so a new row can take the place of a dropped row of its group.
   Reading holds that, as it holds the words of each row.
 - Cost: a stale `origin/main` costs one refusal of a group whose pull request merged. A rebase
   merge would lose the subject, and the merge commits above show none.
-- Cost: `stop` parses each line of the transcript at each stop, and replays each sign-off that
-  it holds. Measured on 2026-11-14 on 4 cores of an Intel Xeon at 2.10 GHz, over a transcript of
-  87 MB. Each of three runs fed it to `koch hook stop`, built as the hook builds it, after one run
-  to warm the cache. It took 2.89 to 3.00 s at `c2e80da35`, and 2.84 to 3.21 s at `a09f13792`.
+- Cost: `stop` parses each line of the transcript at each stop. Where the last message holds a
+  sign-off, it also replays each earlier sign-off of the transcript. Measured on 2026-11-14 on 4
+  cores of an Intel Xeon at 2.10 GHz, over a transcript of 87 MB. Its last message holds a
+  sign-off, so the replay runs. Each of three runs fed it to `koch hook stop`, built as the hook
+  builds it. It took 3.05 to 3.57 s at `c2e80da35`, and 3.15 to 3.56 s at `a09f13792`.
 - Verified by `suites/test_hooks.nim`: two sign-offs after one message of the Architect, where
   the second drops an item, as the case found. The domain adds a wake of each kind between them,
   a new message of the Architect and the fallback. It also holds each form of merge, a close, a
