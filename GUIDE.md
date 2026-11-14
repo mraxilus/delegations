@@ -499,11 +499,12 @@ and a state never returns once the next one begins:
 **Each row of an earlier sign-off since the last message of the Architect comes back.** Its
 words may change and its state may move on, but it never moves to another group. The group of a
 pull request comes back until the pull request merges, or until one sign-off shows it `closed`.
-Past a message of the Architect, reading alone keeps the group of an open pull request.
+It comes back past a message of the Architect too, and so does each of its rows.
 
-The `stop` hook counts the items of each group against the last sign-off that it passed since
-that message. It reads a merge from the subjects of `origin/main`. So fetch `main` before you
-drop the group of a merged pull request.
+The `stop` hook counts the items of each group against the last sign-off that it passed. For the
+table "Outside a pull request.", that sign-off is one since the last message of the Architect.
+The hook reads a merge from the subjects of `origin/main`. So fetch `main` before you drop the
+group of a merged pull request.
 
 **A carried rule stands as a row beside the item that it concerns**, with its tag in the second
 cell, as `carried 5` or `carried 3 and 4`. A rule that concerns one pull request stands in its
