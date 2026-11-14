@@ -23,6 +23,27 @@
       "measurand": "support_anti",
       "metric": "multiplies",
       "value": 54
+    },
+    {
+      "kind": "count",
+      "algebra": "cga5d",
+      "measurand": "carrier_co",
+      "metric": "multiplies",
+      "value": 0
+    },
+    {
+      "kind": "count",
+      "algebra": "cga5d",
+      "measurand": "center",
+      "metric": "multiplies",
+      "value": 162
+    },
+    {
+      "kind": "count",
+      "algebra": "cga5d",
+      "measurand": "container",
+      "metric": "multiplies",
+      "value": 162
     }
   ]
 }
