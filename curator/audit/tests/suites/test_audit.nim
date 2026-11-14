@@ -141,6 +141,18 @@ suite "Audit":
       check tree.auditTree.mapIt(it.message) == @[message]  # read by name, whatever language
 
 
+  test "comments of project keeping its own prose take no rule of articles, and every other check":
+    # Case: `a` of lojban joins two names as `or`, so comment of `lojban_parser` reads as one
+    #   holding article. Domain: its source, and same source in project list leaves out.
+    let source = "# la .alis. a la .bob. cu klama \n\n" & STRICT_FUNCS & "\n"
+    check (treeGood() & @[entry(DIRECTORY_PARSER & "/src/a.nim", source)]).auditTree.mapIt(
+      it.message,
+    ) == @["Line ends with whitespace (VIII.5)."]  # form still reads it
+    check (treeGood() & @[entry(DIRECTORY_ALPHA & "/src/a.nim", source)]).auditTree.mapIt(
+      it.message,
+    ) == @["Line ends with whitespace (VIII.5).", "Comment holds article (VI.5); got `a`."]
+
+
   test "Pruned row reads history of record across move":
     # Case held: `findingsPruned` read `git log -- <path>` without `--follow`, so move of
     #   `rga_visualiser` to `pga_visualiser` lost commits of old path, and true row naming

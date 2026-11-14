@@ -124,6 +124,6 @@ suite "Article VI.8":
     for file in FILES_PROJECT:
       check not isGoverned(DIRECTORY_PARSER & "/" & file)  # listed project
       check checkEnglish(DIRECTORY_PARSER & "/" & file, PROSE_LOJBAN).len == 0
-      let tagger = CONTRIBUTOR & "/bangu/lojban_tagger/" & file
+      let tagger = DIRECTORY_TAGGER & "/" & file
       check isGoverned(tagger) and checkEnglish(tagger, PROSE_LOJBAN).len == 1  # left out
     check isGoverned(CONTRIBUTOR & "/bangu/README.md")  # domain index stays English
