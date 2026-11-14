@@ -178,6 +178,7 @@ const
   OPTIONS_MIN = 2  ## Options decision offers at least, unless its class is `fact`.
   OPTIONS_MAX = 4  ## Options decision offers at most, which is what decision card holds.
   WORDS_OPTION = 3  ## Words label of option holds at most.
+  BOLD = "**"  ## Mark that opens and closes bold text.
   DECISION_OPENING = "**D"  ## Opening of decision line, before its number.
   DECISION_CLOSING = ".**"  ## Closing of decision number, before question.
   ITEM_CLASS = "- Class:"  ## Item naming class of decision.
@@ -817,21 +818,24 @@ func decisionsIn(lines: openArray[string]): seq[Decision] =
   ## Read each `**D<n>.**` block of lines, with items under it, in order.
   ##   Option is item opening `- <letter>.` below `Options:`, at any indent, so flat list
   ##     reads as nested one does.
+  ##   Item is read with bold taken out, since card sets label of each option and letter of
+  ##     pick in bold (#844), and bold changes no word that shape check reads.
   for line in lines:
-    let s = line.strip
-    if s.startsWith(DECISION_OPENING) and s.len > DECISION_OPENING.len and
-        s[DECISION_OPENING.len] in Digits:
+    let raw = line.strip
+    if raw.startsWith(DECISION_OPENING) and raw.len > DECISION_OPENING.len and
+        raw[DECISION_OPENING.len] in Digits:
       var close = DECISION_OPENING.len
-      while close < s.len and s[close] in Digits: inc close
+      while close < raw.len and raw[close] in Digits: inc close
       result.add Decision(
-        number: s[DECISION_OPENING.len ..< close].parseInt,
+        number: raw[DECISION_OPENING.len ..< close].parseInt,
         question:
-          if s.continuesWith(DECISION_CLOSING, close):
-            s[close + DECISION_CLOSING.len .. ^1].strip
+          if raw.continuesWith(DECISION_CLOSING, close):
+            raw[close + DECISION_CLOSING.len .. ^1].strip
           else: "",
       )
       continue
     if result.len == 0: continue
+    let s = raw.replace(BOLD, "")
     if s.startsWith(ITEM_CLASS): result[^1].class = s[ITEM_CLASS.len .. ^1].strip
     elif s.startsWith(ITEM_WHERE): result[^1].where = s[ITEM_WHERE.len .. ^1].strip
     elif s.startsWith(ITEM_OPTIONS): result[^1].has_options = true
