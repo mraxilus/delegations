@@ -14,9 +14,15 @@
 import std/[sequtils, strutils]
 
 
-type Section* = object  ## Define one part of document, cut at `## ` line outside fenced code.
-  heading*: string  ## Heading line, line end cut; empty for part before first heading.
-  text*: string  ## Every line of part, heading included, line ends kept.
+type
+  Section* = object  ## Define one part of document, cut at `## ` line outside fenced code.
+    heading*: string  ## Heading line, line end cut; empty for part before first heading.
+    text*: string  ## Every line of part, heading included, line ends kept.
+
+  Heading* = object  ## Define one heading of section: two to six `#`, space, then its text.
+    level*: int  ## Count of `#` heading opens with, two to six.
+    text*: string  ## Text after `#` run and its space, ends stripped.
+    line*: int  ## One-based line heading stands on.
 
 
 func isRowSeparator(cells: seq[string]): bool =
@@ -38,6 +44,12 @@ func linesHeading*(markdown: string): seq[string] =
   ## Collect ATX heading lines, i.e. lines opening with `#`.
   for line in markdown.splitLines:
     if line.startsWith("#"): result.add line
+
+
+func headings*(markdown: string): seq[Heading] =
+  ## Read each heading of section, i.e. two to six `#` at column one then space, in order.
+  ##   TODO: Stub reads none until reader lands.
+  discard
 
 
 func firstNonBlank*(markdown: string): string =
