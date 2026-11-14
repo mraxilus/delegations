@@ -6,7 +6,7 @@
 ##   Listed project keeps its three records and its comments in its own language: English check
 ##     reads none of those records (`english.nim`), article check and fixer read none of its files
 ##     (`prose.nim`, `fixes.nim`), and planner reads those records as its code, so change to one
-##     runs suites that hold them (`plan.nim`). Every other check reads them still.
+##     runs suites of its project (`plan.nim`). Every other check reads them.
 ##   Entry names project, issue where Architect approves it, and suite holding its prose in its
 ##     own language, which audit demands once entry says so. Static assertion holds project
 ##     directly under `contributor/bangu/`, since language is subject of that domain alone.
@@ -19,8 +19,8 @@
 ##     nothing.
 ##   Cost: bare `knoller` command knows no list, so it drops `a` of lojban from comment of listed
 ##     project; delegate of that project runs `koch fix` instead.
-##   Cost: until entry demands its suite, nothing reads prose of listed project, so English it
-##     holds on `main` goes unchecked until it moves to lojban, as ruling `D4 a` of #818 accepts.
+##   Cost: while entry demands no suite, nothing reads prose of its project, as ruling `D4 a` of
+##     #818 accepts.
 ##   Cost: each rules change re-stamps record of listed project, so it runs suites of that project.
 
 {.experimental: "strictFuncs".}

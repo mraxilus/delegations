@@ -10,8 +10,8 @@
 ##   Record nested below project directory is not governed yet. Widening to prose under
 ##     `simulation/` or `design/` reddens such project, so it lands as duty 3 says; record
 ##     holds it as open question.
-##   Records of project whose prose stays in its own language are not governed: its own suite
-##     holds that prose (`prose_own.nim`). Every other check still reads them.
+##   Records of project whose prose stays in its own language are not governed: its entry names
+##     suite holding that prose (`prose_own.nim`). Every other check reads them.
 ##   Block is bullet, numbered item or run of plain lines, each read alone: list of six
 ##     bullets is six blocks rather than one paragraph of six sentences.
 ##   Quotation is skipped whole: quoted text comes from outside this repository, so delegate may
