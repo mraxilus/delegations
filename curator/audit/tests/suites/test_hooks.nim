@@ -883,6 +883,20 @@ suite "Hooks":
       .messages.anyIt("folds done rows alone" in it and "row `5`" in it)
 
 
+  test "example sign-off of GUIDE.md holds shape that stop hook reads (#844)":
+    # Delegate copies form from example, so example passes hook that holds form, on branch whose
+    #   role it names.
+    const
+      guide = staticRead("../../../../GUIDE.md")
+      opening = "```md\n" & HEADING_SIGNOFF & "\n"
+    let at = guide.find(opening)
+    check at >= 0
+    if at >= 0:
+      let example = guide[at + "```md\n".len ..< guide.find("\n```", at)]
+      check checkSignoff(example, "contributor/bangu/lojban_tagger/lujvo-search")
+        .messages == newSeq[string]()
+
+
   test "push and commit message":
     check checkPush("abc\n", "abc").len == 0
     check checkPush("abc", "def").messages[0].contains("exact commit")
