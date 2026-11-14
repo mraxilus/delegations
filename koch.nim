@@ -217,7 +217,7 @@ proc directoriesScoped(options: Options, tree: Tree): seq[string] =
     projectsTest(
       directories,
       pathsChanged(options.root, options.baseOrDefault),
-      tree.directoriesImporting(directories),
+      tree.importersByFolder(directories),
     )
 
 
@@ -243,6 +243,8 @@ proc runHook(root, event, input: string): int =
   ##   `path`, `edit` and `bash` read checkout call acts in, never root alone: subagent works
   ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes). Call
   ##     acting in other repository is that repository's, so these three pass it unread.
+  ##   `path` and `edit` read checkout and path of file write names through `fileWritten`, which
+  ##     both events and suite call; file outside every checkout reads as none, so both pass it.
   let branch_root = root.branch
   case event
   of "path", "bash", "body", "edit", "stop":
@@ -250,14 +252,12 @@ proc runHook(root, event, input: string): int =
       data = input.parseJson
       tool = data{"tool_name"}.getStr
       directory = data{"cwd"}.getStr(root)
-      written = data{"tool_input", "file_path"}.getStr
-      file = if written.isAbsolute: written else: directory / written
     case event
     of "path":
       if tool notin TOOLS_EDIT: return 0
-      let checkout = checkoutAt(root, file.parentDir)
-      if checkout.isNone: return 0
-      refuse(checkPathEdit(checkout.get.branch, insideRoot(checkout.get, file)), 2)
+      let written = fileWritten(root, directory, data{"tool_input"})
+      if written.isNone: return 0
+      refuse(checkPathEdit(written.get.checkout.branch, written.get.path), 2)
     of "bash":
       let
         command = data{"tool_input", "command"}.getStr
@@ -284,20 +284,20 @@ proc runHook(root, event, input: string): int =
         2,
       )
     of "edit":
-      let checkout = checkoutAt(root, file.parentDir)
-      if checkout.isNone: return 0
+      let written = fileWritten(root, directory, data{"tool_input"})
+      if written.isNone: return 0
       let
-        path = insideRoot(checkout.get, file)
-        tree = checkout.get.readTree
+        (checkout, path) = written.get
+        tree = checkout.readTree
       var found = tree.auditTree
-      found.add findingsPruned(checkout.get, tree)
+      found.add findingsPruned(checkout, tree)
       # Held finding blocks no push, so it is named apart, for its project (duty 3); base
       #   unread leaves no line owned, and `koch check` still reads it before push.
       let owned =
-        try: linesOwned(checkout.get, tree, "origin/" & MAIN)
+        try: linesOwned(checkout, tree, "origin/" & MAIN)
         except IOError: initTable[string, HashSet[int]]()
       let
-        (held, own) = splitHeld(checkout.get.branch, found.filterIt(it.path == path), owned)
+        (held, own) = splitHeld(checkout.branch, found.filterIt(it.path == path), owned)
         named = contextFindings(path, held, own)
         skill = contextEdit(path)
       if named.len == 0 and skill.len == 0: return 0

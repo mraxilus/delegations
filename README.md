@@ -74,49 +74,14 @@ the Architect, and comes off when the wait ends.
 
 `main` is protected, and the Architect merges pull requests by hand. Branches mirror paths.
 `contributor/<domain>/<project>/<name>` and `curator/<project>/<name>` may change only that
-project, and `curator/<name>` is rules and root work. Every pull request runs these jobs, and
-each job carries the name of the koch verb that it runs:
+project, and `curator/<name>` is rules and root work.
 
-- `check-files`: layout, form, telegraphic comments, and records with their headers and stamps.
-  It also reads glossary shape, the prompts, and the Simplified Technical English of the
-  root documents and of every project record. It holds the root documents and every Markdown
-  file under `curator/` to the words that the glossary gives for people. It reads copied
-  paragraphs, and shipped font faces with the characters that they cover. It also reads the
-  compiler pin of each project, and each lock against its nimble file.
-
-  In Nim it reads the words of each declared name, and the idioms that `STYLE.md` sets. It
-  reads fixed waits in drive code, and the flags of each `tsconfig.json`. In each workflow it
-  reads the grants, the compiler that the workflow installs, and the weekly window against its
-  cron. It reads the reason that a file not in Nim gives, and the rules that the checker holds
-  itself to. It runs over the whole tree.
-- `test`: one job for each project whose code changed, on a pull request, on the push to
-  `main`, and in the weekly run alike. Each one installs that project's own pinned compiler,
-  restores its dependencies from its lock file, and runs its tests. Nothing compiles every
-  project. These jobs run in parallel, so the wall time follows the slowest changed project
-  rather than the number of projects in the repository.
-- `check-types`: `npm ci`, then that project's own `types` verb, for every changed project that
-  carries a node manifest beside its lock. It is one job on the compiler that builds koch,
-  because a type check compiles no project code.
-- `drive`: that project's own `drive` verb, for every changed project that carries one. The
-  page is built and driven through real keys, wheels, pointers and touches. It is a matrix
-  like `test`, and on the same pins, because a build of the page does compile project
-  code.
-- `check-scope`: every changed path lies inside the folder of the branch.
-- `check-commits`: every subject is a Conventional Commit of at most 100 characters. On a
-  project branch its scope is that project, and on `curator/<name>` any valid scope passes. A
-  `fix` follows a `test` of the same scope, with nothing between them. A body is in sentence
-  case, with one sentence to a line. `PROVENANCE.md` travels in a commit of its own, with no
-  file beside it but Markdown.
-- `check-drift`: the branch carries the charter and the checker as `main` now holds them. Its
-  finding names each section of the charter that changed after the branch forked. It asks for a
-  new stamp only where the stamp moved.
-- `summarize`: the gate that `check-files`, `test`, `check-types`, `drive` and `check-drift`
-  report to, and one of the required checks. `check-scope` and `check-commits` are required
-  checks of their own.
-
-One more job, `list-projects`, runs first and computes the matrices that `test` and `drive`
-fan out over. It names projects rather than checks them, and it also reports to `summarize`. Weekly,
-the same workflow compiles the projects whose code merged that week.
+Each pull request runs the checks of [`check.yml`](.github/workflows/check.yml), and branch
+protection lets it merge only when each check that runs is green. `nim r koch check` runs the
+same checks locally, against a fresh `origin/main`, before each push. The
+[checks reference of `CURATOR.md`](CURATOR.md#checks-reference) gives each verb of koch, with
+what it reads and what it does. The header of [`check.yml`](.github/workflows/check.yml)
+describes each job of that workflow.
 
 `role.yml` runs beside it on every pull request, and again whenever a label changes. It holds
 the opening role line and the labels to the role that the branch names.
@@ -139,12 +104,10 @@ GitHub records of the rules that no check reaches:
   `CURATOR.md`.
 
 `koch.nim` drives everything, as a compiled Nim program, in the shape that the repository of
-Nim itself uses. `nim r koch check` runs the same checks locally against a fresh
-`origin/main`, and every pull request passes it before somebody opens it. `./koch` alone lists
-every verb with its effect. `nim r koch list-packages` prints what a machine needs installed
-before any of it runs. That is the packages of koch itself and of
-every project, one to a line, so it pipes straight into a package manager. Any Nim that
-builds koch is the only thing it cannot name for you.
+Nim itself uses. `./koch` alone lists every verb with its effect. `nim r koch list-packages`
+prints what a machine needs installed before any of it runs. That is the packages of koch
+itself and of every project, one to a line, so it pipes straight into a package manager. Any
+Nim that builds koch is the only thing it cannot name for you.
 
 The pinned compiler of each project is resolved from `PATH`, from a cache, or from a
 download. So one machine runs the suites of every project, whatever they pin. Dependencies

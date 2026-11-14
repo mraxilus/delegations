@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, os, sequtils, unittest]
+import std/[json, os, sequtils, tables, unittest]
 import ../../src/[domains, plan, projects, toolchain]
 import ./fixtures
 
@@ -165,18 +165,73 @@ suite "Plan":
         entry(DIRECTORY_IMPORTING & "/src/assayer/command.nim",
             "import ../../../knoller/src/knoller/[compilers, pins]\n"),
         entry(DIRECTORY_KNOLLER & "/src/knoller.nim", "import ./knoller/[pins]\n"),
-        entry(DIRECTORY_PROBE & "/src/probe.nim", "## Names `knoller/src/knoller` in comment.\n"),
+        entry(DIRECTORY_PROBE & "/src/probe.nim", "## import ../../knoller/src/knoller\n"),
       ]
-      importers = tree.directoriesImporting(directories)
+      importers = tree.importersByFolder(directories)
       from_import = @[entry(DIRECTORY_PROBE & "/src/probe.nim",
           "from ../../knoller/src/knoller import NIM\n")]
-    check importers == @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]  # comment and own path import none
-    check from_import.directoriesImporting([DIRECTORY_PROBE]) == @[DIRECTORY_PROBE]  # `from` too
+    check importers ==
+      {FILES_KNOLLER[0]: @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]}.toTable  # comment, own path none
+    check from_import.importersByFolder([DIRECTORY_PROBE]) ==
+      {FILES_KNOLLER[0]: @[DIRECTORY_PROBE]}.toTable  # `from` too
     check projectsTest(directories, [FILES_KNOLLER[0] & "/knoller/pins.nim"], importers) ==
         @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # each importer, and knoller
     check projectsTest(directories, [FILES_KNOLLER[1]], importers) ==
         @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # nimble file names pin
     check projectsTest(directories, ["koch.nim"], importers) == @[DIRECTORY_AUDIT]  # driver alone
+
+
+  test "source of project selects each project importing it by path, and their importers":
+    # Case as found (#832): lojban_tagger imports lojban_parser by relative path, and change to
+    #   parser compiled no suite of tagger, so break of tagger merged unseen (#878).
+    let
+      parser = CONTRIBUTOR & "/ronri/parser"
+      tagger = CONTRIBUTOR & "/ronri/tagger"
+      reader = CONTRIBUTOR & "/ronri/reader"
+      tree = @[
+        entry(parser & "/parser.nimble", TEXT_NIMBLE),
+        entry(parser & "/src/parser.nim", "import ./parser/[nif]\n"),
+        entry(tagger & "/tagger.nimble", TEXT_NIMBLE),
+        entry(tagger & "/src/tagger/runs.nim", "import std/strutils, ../../../parser/src/parser\n"),
+        entry(reader & "/reader.nimble", TEXT_NIMBLE),
+        entry(reader & "/src/reader.nim", "from ../../tagger/src/tagger/runs import nil\n"),
+      ]
+    check tree.jobs([parser & "/src/parser/nif.nim"]).mapIt(it.directory) ==
+      @[parser, reader, tagger]  # importer of importer too
+    check tree.jobs([parser & "/parser.nimble"]).mapIt(it.directory) ==
+      @[parser, reader, tagger]  # nimble file names pin
+    check tree.jobs([tagger & "/src/tagger/runs.nim"]).mapIt(it.directory) == @[reader, tagger]
+    check tree.jobs([parser & "/tests/suites/test_nif.nim"]).mapIt(it.directory) ==
+      @[parser]  # suite alone, which no importer reads
+    check tree.jobs([parser & "/PROVENANCE.md"]).len == 0  # record
+
+
+  test "folder importer imports selects it, in each form of import, and comment none":
+    # Case as found: `tools/lists.nim` of lojban_tagger imports `tools/lists` of lojban_parser,
+    #   and its suite imports that tool, so change to that tool compiled no suite of tagger.
+    let
+      parser = CONTRIBUTOR & "/ronri/parser"
+      tagger = CONTRIBUTOR & "/ronri/tagger"
+      pinned = @[entry(parser & "/parser.nimble", TEXT_NIMBLE),
+          entry(tagger & "/tagger.nimble", TEXT_NIMBLE)]
+      tool = pinned & @[entry(tagger & "/tools/lists.nim", "import ../../parser/tools/lists\n")]
+    check tool.jobs([parser & "/tools/lists.nim"]).mapIt(it.directory) == @[parser, tagger]
+    check tool.jobs([parser & "/tests/test_lists.nim"]).mapIt(it.directory) ==
+      @[parser]  # folder no importer imports
+    for source in [
+      "import\n  std/strutils,\n  ../../parser/src/parser\n",  # statement on several lines
+      "import ../../parser/src/[\n  nif,\n  merge,\n]\n",  # list of modules in brackets
+      "when defined(js): import ../../parser/src/parser\n",  # behind guard
+      "import \"../../parser/src/parser\"\n",  # quoted path
+    ]:
+      let imported = pinned & @[entry(tagger & "/src/tagger.nim", source)]
+      check imported.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser, tagger]
+    for source in [
+      "# import ../../parser/src/parser\n",  # comment
+      "let path = \"../../parser/src/parser\"\n",  # string outside import
+    ]:
+      let named = pinned & @[entry(tagger & "/src/tagger.nim", source)]
+      check named.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser]
 
 
   test "path inside no project selects nothing by itself":

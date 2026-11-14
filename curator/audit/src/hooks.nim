@@ -2,17 +2,23 @@
 ##   Hook is mechanism and not rule: it calls koch verb and holds no rule of its own
 ##     (CURATOR.md, What no check can reach). Every finding here is one audit already states
 ##     for gate; this module reads hook's fact and names check holding it, so rule lives once.
-##   Events, by verb argument: `path` refuses write outside branch scope; `edit` returns
-##     static findings after write; `bash` refuses commit or push on `main` or outside grammar,
-##     rewrite of pushed history, and push past pre-push hook, since `koch check` holds what
-##     each project clears on its own branch (duty 3); `body` holds post before it lands to role
-##     line, footer, Simplified Technical English counts, issue title and label, pull request
-##     headings, and closing keyword before issue on line of its own alone; `stop` refuses end
-##     of turn that pushed or posted and closes with neither sign-off block nor working line,
-##     end of any turn whose message names `#N` outside link or cites charter reference with no
-##     description, and sign-off from turn that read no open issue of its role; `start` prints
-##     role, read order, each finding of drift, headings of record branch works on, and carried
-##     list; `prompt` reads each message of Architect; `push` and `msg` serve git hooks.
+##   Events, by verb argument: `path` refuses write inside repository and outside branch scope;
+##     `edit` returns static findings after write; `bash` refuses commit or push on `main` or
+##     outside grammar, rewrite of pushed history, and push past pre-push hook, since `koch check`
+##     holds what each project clears on its own branch (duty 3); `body` holds post before it
+##     lands to role line, footer, Simplified Technical English counts, issue title and label,
+##     pull request headings, and closing keyword before issue on line of its own alone; `stop`
+##     refuses end of turn that pushed or posted and closes with neither sign-off block nor
+##     working line, end of any turn whose message names `#N` outside link or cites charter
+##     reference with no description, and sign-off from turn that read no open issue of its
+##     role; `start` prints role, read order, each finding of drift, headings of record branch
+##     works on, and carried list; `prompt` reads each message of Architect; `push` and `msg`
+##     serve git hooks.
+##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
+##     so both pass it unread, as Architect approved on #847. Both read file through
+##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
+##     resolves (#883). So path reads where write tool puts file, since each tool of
+##     `TOOLS_EDIT` too drops `..` as text, before link ahead of it resolves (assumed).
 ##   Hook that sees moment of skill names that skill, as Architect ruled on D2 of #870: `stop`
 ##     names `/sign-off`, `start` names `/sync` and `/triage`, `edit` names `/propose-term` and
 ##     `/record`, and `prompt` names `/rule`, `/triage` and `/merged`. Line is hint, never refusal.
@@ -21,7 +27,8 @@
 ##     post. Hook runs before command, so body comes from literal text or file already written:
 ##     file same command writes, stdin and shell expansion are refused, with finding naming mend.
 ##   Pure functions take strings and return findings; procs read transcript JSON and body files,
-##     since `parseJson` and file reads are effectful.
+##     since `parseJson` and file reads are effectful. `fileWritten` runs git too, through
+##     `checkoutAt`, since git names checkout holding file.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
 ##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, context, table,
@@ -52,6 +59,7 @@ import std/[json, options, os, sequtils, strutils, uri]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
 from ./toolchain import DIRECTORY_DRIVER
+from ./tree import checkoutAt
 
 
 type
@@ -234,8 +242,51 @@ func insideRoot*(root, path: string): string =
   if path.startsWith(prefix): path[prefix.len .. ^1] else: path
 
 
+func pathWritten*(tool_input: JsonNode, directory: string): string =
+  ## Read path write names, absolute and in normal form: `file_path`, else `notebook_path`
+  ##   NotebookEdit sends, resolved against directory call runs in.
+  ##   Normal form drops `.`, `..` and doubled slash, so `<root>//x` never reads as `/x`, and
+  ##     `..` from folder outside root never reads as outside.
+  let named = tool_input{"file_path"}.getStr(tool_input{"notebook_path"}.getStr)
+  normalizedPath(if named.isAbsolute: named else: directory / named)
+
+
+proc pathReal*(path: string): string =
+  ## Read path through each symbolic link in it, as file system writes it and as git names top
+  ##   of checkout; path stays as given where file system refuses read.
+  ##   Nearest part that exists resolves: file that exists resolves whole, new file its directory.
+  ##   Cost: up to two `stat` calls for each part tried, then one `realpath`, for each write
+  ##     (PROVENANCE.md, Paths of write hooks, has figures). Link to file not yet written,
+  ##     and hard link, read where path names them.
+  var at = path
+  while at.len > 1 and not (fileExists(at) or dirExists(at)): at = at.parentDir
+  try: expandFilename(at) / path[at.len .. ^1].strip(trailing = false, chars = {'/'})
+  except OSError: path
+
+
+proc fileWritten*(
+  root, directory: string; tool_input: JsonNode
+): Option[tuple[checkout, path: string]] =
+  ## Read checkout of this repository holding file write names, and path of file inside it, as
+  ##   `path` judges it and `edit` audits it.
+  ##   None where file lies in other repository, or outside every checkout of this one: no commit
+  ##     of root reaches it, so `path` passes it, and `edit` names nothing and audits nothing for
+  ##     it, since audit costs seconds for each write.
+  let
+    file = pathWritten(tool_input, directory).pathReal
+    checkout = checkoutAt(root, file.parentDir)
+  if checkout.isNone: return
+  let path = insideRoot(checkout.get, file)
+  if path.isAbsolute: return
+  some((checkout: checkout.get, path: path))
+
+
 func checkPathEdit*(branch, path: string): seq[Finding] =
   ## Report write outside scope branch names, before it happens.
+  ##   Path `insideRoot` hands on whole lies outside root, so it passes, since no commit reaches
+  ##     it. `koch check` holds each path branch changed before push, and `check-scope` holds
+  ##     them on pull request.
+  if path.isAbsolute: return
   checkScope(branch, [path])
 
 

@@ -597,12 +597,21 @@ repository issue 671.
   does a judge that lets a finding through. Nothing outside the project would see either.
   Rejected: the verdict in the judge of each project, which trusts that judge. Rejected: the
   whole check inside koch, which would bring Node, a browser and every form of page into koch.
-- **The control page proves the collector on each run.** It holds the Chinese numerals one to
-  five, each in one kind of place. These are a paragraph, the placeholder of a field, a
-  `::before`, SVG text, and text that a script writes on load. No font face of the store maps
-  them, so each numeral that the collector reads is found. A numeral that is missing names the
-  place that the collector skips. The script builds its numeral from its codepoint, so only a
-  reader of the live page finds it.
+- **The control page proves the collector on each run.** It holds the numerals one to five, each
+  in one kind of place. These are a paragraph, the placeholder of a field, a `::before`, SVG text,
+  and text that a script writes on load. No font face of the store maps any of the five
+  numerals, so each one that the collector reads is found. A numeral that is missing names the
+  place that the collector skips. The script builds its string on load, and the numeral from its
+  codepoint, so only a reader of the live page finds it.
+- **Each place holds the ASCII digit of its value, then its numeral, in one string.** So the
+  `::before` holds `3三`. The `characters` of `found.json` hold codepoints past ASCII alone, and a
+  digit never reaches them. The check of the digits reads the runs of the control page in
+  `written.json` instead. Where runs hold a numeral but none holds its digit too, the finding
+  names the place where the collector drops ASCII. A place that the collector skips takes the
+  finding for its numeral alone.
+- Rejected: the digit after the numeral, since the CSS escape `\4E09` would read that digit as
+  one more hex digit. Rejected: a digit anywhere on the control page. A digit elsewhere proves
+  nothing about a place, and the source of the style and the script holds digits too.
 - **A project that writes no `written.json` is a finding.** The rule asks each project with
   pages for that file, and a verdict over no file would pass pages that nobody read.
 - **A finding names the page, and what failed there.** For a character that a font face of the
@@ -640,9 +649,13 @@ repository issue 671.
   browser picks a font face for each cluster.
 - Cost: a collector writes no `font-synthesis`, so a page that turns synthesis off still gets
   the finding for a bold. Its text then draws lighter than it asks.
-- Cost: no place of the control page holds ASCII. So a collector that writes runs past ASCII
-  alone passes, and hides the bold of ASCII text. The collectors of dance_ontology and
-  pga_benchmark wrote so when this rule merged, 2026-11-03, and each took an issue to port.
+- Cost: each string of the control page mixes ASCII with a numeral. So a collector that drops a
+  string of ASCII alone, and keeps a mixed string whole, passes, and hides the bold of that text.
+- Cost: a collector that writes one string as two runs gets a finding at each place, though it
+  writes the ASCII. No collector writes so in the drives verified below.
+- Cost: one run that holds the strings of several places serves each of them, in both checks of
+  the control page. The collector of pga_visualiser writes two such runs, for text written later,
+  and each holds all ten characters.
 - Cost: text that a script writes only once a reader acts stands in no place of the control
   page, and the collectors differ there. `coverage.nim` holds such text where a source writes
   it, against every font face that the project ships.
@@ -657,12 +670,17 @@ repository issue 671.
   each format that the reader reads. On 2026-10-22, a break of the rule on an unshipped family
   failed one test. A break of the window from 400 to 500 failed another. On 2026-10-23, a break
   of each rule of the verdict failed at least one test.
+- Verified by `suites/test_font_stacks.nim`, over each state of each place: whole, its digit
+  dropped, or skipped. Each place at fault takes one finding, which names it, and a digit in a
+  run apart from its numeral is a finding too. On 2026-11-12, a break of each part of the check
+  of the digits failed at least one test.
 - Verified by `suites/test_projects.nim`, which drives a project of its own through `runDriven`.
   The control page stands before the verb runs, no verdict follows a verb that failed, and a
-  verb that writes no file is a finding.
-- Verified in Chromium, 2026-10-23. A scratch reader that reads as a collector does found each
-  numeral of the control page in its place. The verdict over what it read gave no finding. With
-  `::before` left out, it gave one finding, which names `::before`.
+  verb that writes no file is a finding. A verb that drops one digit gets one finding.
+- Verified by `koch drive` of each project with a collector, in Chromium 153.0.8010.12, on
+  2026-11-12 over the code of `6c894c01`. These are lojban_parser, dance_ontology,
+  pga_benchmark and pga_visualiser. Each collector wrote each string of the control page in one
+  run, as `3三` in the `::before`, and each verdict gave no finding.
 - Verified by a run on font faces of the store, 2026-10-22. Noto Sans and Noto Sans Math drew
   "é", "→" and "∧" down one stack. "é" after `Inter` was reported, and so was an emoji in a
   stack of Noto Sans alone.
@@ -1646,6 +1664,33 @@ So rules propagation compiles nothing, while every stamp is still checked.
   every project in a repository younger than its window, and nothing over a window without a
   commit.
 
+**A change inside a folder that another project imports selects that importer.** An importer
+compiles what it imports, so a change there can break it. The folder is the first one below the
+project, as `src` or `tools`, since a module there can import any other module of that folder. A
+change to the nimble file of the project selects each of its importers too. That file names the pin
+and the packages that they compile with. The importers of an importer are selected in turn, until
+none is added.
+
+The plan reads each relative `import` and `from` of each Nim source, and resolves the path against
+the folder of that source. A statement on several lines, behind a `when` guard, or with a quoted
+path counts. A comment, or a string outside such a statement, imports nothing. So a project that
+adds an import is selected from then on, with no list to keep.
+
+- Measured on 2026-11-12: `lojban_tagger` imports `src` and `tools` of `lojban_parser`, and
+  `curator/assayer` and `curator/audit` import `src` of knoller. No other project imports another
+  one.
+- Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
+- Rejected: `src` alone, since the tools of the tagger import the tools of the parser.
+- Rejected: the importers of a project for each change to any of its code. A suite of the parser is
+  no folder that an importer imports, so that compiles more for no gain.
+- Cost: an importer turns red on a change to the surface of the folder that it imports, until it
+  follows. So that project keeps the old name while its importer moves.
+- Cost: the plan reads the text of each import. So a path that a macro builds, or an `include` of
+  another project, selects no importer.
+- Verified by `suites/test_plan.nim`, for each case as found. A change to the source or the tools
+  of the parser selects the tagger, and an importer of the tagger too. Each form of import counts,
+  and a suite or a record of the parser selects no importer.
+
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
 The phase finished in about four minutes, against about nine summed. It fired **6 h 09 m after
@@ -2035,10 +2080,9 @@ before `; got `, or before the closing period. So `koch check` prints
   source before its nimble file, and an older branch keeps a stable key. Verified by
   `suites/test_hooks.nim`: a commit of the source of knoller alone builds the binary again.
 - A change to the source or the nimble file of knoller counts as checker for drift. It selects
-  for test knoller and each project whose source imports knoller by a relative path, audit
-  among them. The plan reads those imports from the source of each project, so a project that
-  adds one is selected from then on. A change to a suite of knoller selects knoller alone.
-  Verified by `suites/test_plan.nim` and `suites/test_base.nim`.
+  knoller for test, and each project that imports knoller, as a folder that another project
+  imports does (Scoped checks). A change to a suite of knoller selects knoller alone. Verified by
+  `suites/test_plan.nim` and `suites/test_base.nim`.
 - Knoller pins the driver version, and `checkKnoller` reports a pin that differs. Verified by
   `suites/test_toolchain.nim`.
 - The rule on dead exports reads the modules and suites of knoller too. Verified by
@@ -2491,10 +2535,11 @@ rest by reading.
 The rule stays in the audit, once, and the hook reads the fact of its event and names the check
 that holds it. The events, each one a verb argument:
 
-- `path` refuses a write outside the scope of the branch, before the write.
-- `edit` runs the static checks after a write, and returns the findings of that file as
-  context. It splits them by the branch of the checkout and the lines that the branch changed,
-  as `koch check` does. So a held finding never stands under "fix before push".
+- `path` refuses a write inside the repository but outside the scope of the branch, before the
+  write.
+- `edit` runs the static checks after a write inside the repository, and returns the findings
+  of that file as context. It splits them by the branch of the checkout and the lines that the
+  branch changed, as `koch check` does. So a held finding never stands under "fix before push".
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
   history. It holds a post made through `gh api` as `body` holds the post of a tool.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
@@ -2577,7 +2622,7 @@ names, else the working directory of the call.
 - A call in another repository has no checkout here, so the three hooks pass it unread. That
   repository keeps its own branch, and a hook holds this repository alone. A directory in no
   repository, or a failure of git, reads as the primary checkout, so a failure still holds the
-  rule.
+  rule inside it.
 - Verified by `suites/test_tree.nim`, for the commit in a scratch repository of #380 as found.
   The suite also holds the root, a subdirectory, a path not yet written, a worktree and a
   directory in no repository. Fake inputs to the built koch use a detached checkout as the
@@ -2641,6 +2686,74 @@ commit before the new one, and `check-commits` reads the true order in CI.
   relative path then fails to open, and every hooked tool is refused.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
+
+## Paths of write hooks
+
+**`path` and `edit` judge only a file inside the repository.** A directory in no repository
+reads as the primary checkout, so a write there reaches both hooks. `insideRoot` then hands the
+file on whole, and `fileWritten` gives none for it. So `path` passes it, and `edit` returns
+before it reads the tree. A file outside the repository cannot reach a commit. `koch check`
+holds each path that the branch changed before the push, and `check-scope` holds them on the
+pull request.
+
+So a scratch file takes the write tools, which these hooks read, and needs no shell. `bash`
+reads each command, but it judges no path that the command writes.
+
+- A branch outside the grammar refuses each write inside the repository, and a scoped branch
+  refuses each write outside its folder.
+- Rejected: a `checkoutAt` that reads a directory in no repository as no checkout. Git fails
+  there as it fails for any other reason, so a failure of git would pass a commit on `main`.
+- Verified by `suites/test_hooks.nim`, for the scratch file of #847 as found. The suite also
+  holds its domain: each form of branch passes the file, and judges a file inside the
+  repository.
+- Verified by hand on 2026-11-12, by fake inputs to the built koch on a contributor branch and
+  on a detached head. Each branch passes a scratch file, which `ba1986f98` refused.
+- Measured by hand on 2026-11-12, in a delegate container, with fake inputs to the built koch
+  over this repository. `edit` takes 0.01 s for a scratch file, in each of three runs. The audit
+  that it skips there takes from 12.5 s to 14.2 s, in three runs.
+
+**`path` and `edit` read the path that a write names in normal form, through its links.** Both
+take these steps through `fileWritten`, which the suite calls too. `pathWritten` reads
+`file_path`, else the `notebook_path` that NotebookEdit sends. It drops `.`, `..` and a doubled
+slash, and resolves a relative path against the directory of the call. `pathReal` then resolves
+each symbolic link through the nearest part of the path that exists.
+
+- `checkoutAt` gives the real path of the checkout that holds the file, as git does, or of the
+  root where git fails. So `insideRoot` compares like with like.
+
+- Assumed: each tool of `TOOLS_EDIT` drops `..` as text before it writes, as `pathWritten` does.
+  So `<root>/./x`, `<root>//x`, `..` from any folder and a link to the root each read as the
+  file that the tool writes. Verified by hand in Claude Code 2.1.322 on 2026-11-12, for Write
+  and Edit. With a link `l` to `a/b`, the Write tool put `l/../t.txt` beside `l`, and not in `a`.
+  The Edit tool changed that same file, and the suite pins the reading.
+- Rejected: `..` read through the link before it, as the kernel reads it. The hook would then
+  judge a file that the Write tool never writes.
+- Rejected: a path compared as written. Then `<root>//x` reads as `/x`, outside the repository,
+  and `..` from a folder of the branch reaches each file of the repository.
+- Two forms read as outside: a symbolic link to a file not yet written, and a hard link.
+  `koch check` refuses such a file before the push, and `check-scope` refuses it on the pull
+  request.
+- Cost: on each write, up to two `stat` calls for each part that `pathReal` tries, then one
+  `realpath`. A file in no repository takes a second `realpath`, in the fallback of
+  `checkoutAt`.
+- Measured by hand on 2026-11-12, on a delegate container with 4 processors, an Intel Xeon
+  Processor at 2.10GHz. Each figure is the mean of 50 runs of the built
+  `koch hook path`, in two rounds. A scratch file outside the repository takes 9.0 ms and
+  9.9 ms at `3eee587bb`, and 7.4 ms and 7.9 ms at `18eafee60`. There `path` makes two git calls
+  rather than three, since it reads no branch of the checkout. A new file inside takes 14.3 ms
+  and 13.7 ms, then 13.5 ms and 13.6 ms, so the reads cost less than the spread.
+- Verified by `suites/test_hooks.nim` and `suites/test_tree.nim`, for the paths, the notebook and
+  the root behind a link of #883 as found. They also hold a relative path, a link to a file, and
+  paths that a branch may and may not change.
+- Verified by hand on 2026-11-12, by fake inputs to the built koch on a contributor branch. It
+  refuses `<root>/./x`, `<root>//x`, `..` from a folder inside or outside, a link to the root,
+  and a notebook at the top. It passes a notebook in the folder of the branch.
+- Verified by hand on 2026-11-12, by eight breaks in a scratch worktree over the code of
+  `18eafee60`. Seven fail a suite by an assertion. Four of them break `pathWritten` or
+  `pathReal`: no normal form, `file_path` alone, no link resolved, and the whole path alone. Two
+  break `fileWritten`: no `pathReal`, and a file outside judged. One reads the fallback of
+  `checkoutAt` as spelt. The eighth drops the guard of `fileWritten` for another repository, and
+  fails the suite by `UnpackDefect`.
 
 ## Hooks on messages
 
