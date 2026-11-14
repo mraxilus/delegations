@@ -241,7 +241,7 @@ proc refuse(found: seq[Finding], code: int): int =
 proc runHook(root, event, input: string): int =
   ## Answer one hook event from its stdin facts; dispatch over event name.
   ##   `path`, `edit` and `bash` read checkout call acts in, never root alone: subagent works
-  ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes). Call
+  ##     in worktree of its own, on branch of its own (GUIDE.md, Work for subagents). Call
   ##     acting in other repository is that repository's, so these three pass it unread.
   ##   `path` and `edit` read checkout and path of file write names through `fileWritten`, which
   ##     both events and suite call; file outside every checkout reads as none, so both pass it.
