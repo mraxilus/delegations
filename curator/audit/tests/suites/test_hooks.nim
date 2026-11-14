@@ -1264,6 +1264,72 @@ suite "Hooks":
       check checkSignoffWindow(unread, BRANCH, [SIGNOFF], []).len == 0
 
 
+  test "group of open pull request comes back past message of Architect (D3 a of #895)":
+    # Ruling `D3 a` on #895: short reply of Architect drops no work it has not read, and after
+    #   compaction hook alone still reads earlier sign-off. Work outside pull request starts again.
+    let
+      dropped = SIGNOFF
+        .replace("| ⬜ 5. cga5d baseline | this delegate |\n", "")
+        .replace("| ☑️ 6.", "| ☑️ 5.").replace("| ✅ 7.", "| ✅ 6.")
+        .replace("| ⚠️ 8.", "| ⚠️ 7.").replace("| ➖ 9.", "| ➖ 8.")
+      at_pull = SIGNOFF.find("**[The gap list")
+      gone = SIGNOFF.replace(SIGNOFF[at_pull ..< SIGNOFF.find("**Outside a pull request.**")], "")
+      fewer = SIGNOFF
+        .replace("| ✅ 7. The request of the curator is answered | carried 2, #330 |\n", "")
+        .replace("| ⚠️ 8.", "| ⚠️ 7.").replace("| ➖ 9.", "| ➖ 8.")
+        .replace("carried 4:", "carried 2 and 4:")
+      fewest = fewer
+        .replace("| ☑️ 6. The answered issue is closed | carried 1, #320 |\n", "")
+        .replace("| ⚠️ 7.", "| ⚠️ 6.").replace("| ➖ 8.", "| ➖ 7.")
+        .replace("carried 2 and 4:", "carried 1, 2 and 4:")
+      asked = lineUser("Add the gap list.", "human") & lineAssistant(SIGNOFF) &
+        lineUser("D1 b", "human")
+    check checkSignoff(fewest, BRANCH).messages == newSeq[string]()  # shape holds alone
+
+    # Case as found: sign-off after message of Architect drops row of open pull request.
+    let turn = (asked & lineAssistant(dropped)).parseTurn
+    check turn.signoffs_earlier.len == 0 and turn.signoffs_before == @[@[SIGNOFF]]
+    check checkSignoffWindow(turn.text, BRANCH, turn.signoffs_earlier, [], turn.signoffs_before)
+      .messages.anyIt("got `4` items in `#331`, which held `5`" in it)
+
+    # Spans: one list for each, oldest first, empty one left out, and one before first message.
+    check (asked & lineAssistant(fewer) & lineUser("D1 a", "human") & lineAssistant(dropped))
+      .parseTurn.signoffs_before == @[@[SIGNOFF], @[fewer]]
+    check (lineUser("Go.", "human") & asked & lineAssistant(dropped)).parseTurn
+      .signoffs_before == @[@[SIGNOFF]]
+    check (lineUser("Brief.", "peer") & lineAssistant(SIGNOFF) & lineUser("D1 b", "human") &
+      lineAssistant(dropped)).parseTurn.signoffs_before == @[@[SIGNOFF]]
+
+    # Group of open pull request comes back past message, and work outside one starts again.
+    check checkSignoffWindow(gone, BRANCH, [], [], [@[SIGNOFF]])
+      .messages.anyIt("got none for `#331`" in it)
+    check checkSignoffWindow(dropped, BRANCH, [], [], [@[SIGNOFF]]).len == 1
+    check checkSignoffWindow(fewer, BRANCH, [], [], [@[SIGNOFF]]).len == 0
+    check checkSignoffWindow(fewer, BRANCH, [SIGNOFF], []).len == 1  # same span holds it
+
+    # Merge that `main` names, or `closed` shown once, lets group drop past message too.
+    const merge = "feat(pga_benchmark): add the gap list (#331)"
+    check checkSignoffWindow(gone, BRANCH, [], [merge], [@[SIGNOFF]]).len == 0
+    let closed = SIGNOFF.replace("/pull/331), draft", "/pull/331), closed")
+    check checkSignoffWindow(gone, BRANCH, [], [], [@[closed]]).len == 0
+
+    # Replay judges each earlier sign-off by rule of its own span: base is last that passed.
+    check checkSignoffWindow(dropped, BRANCH, [], [], [@[SIGNOFF], @[dropped]])
+      .len == 1  # refused in its span, so no base
+    check checkSignoffWindow(dropped, BRANCH, [dropped], [], [@[SIGNOFF]])
+      .len == 1  # refused in this span too
+    check checkSignoffWindow(fewest, BRANCH, [fewer], [], [@[SIGNOFF]])
+      .len == 1  # fewer passed past message, so it is base in its own span
+    check checkSignoffWindow(SIGNOFF, BRANCH, [], [], [@[FIVE], @[SIGNOFF]]).len == 0
+
+    # Where no entry carries `origin.kind`, spans cannot be told apart, so turn alone compares.
+    let bare = (lineUser("Add the gap list.") & lineAssistant(SIGNOFF) & lineUser("D1 b") &
+      lineAssistant(gone)).parseTurn
+    check bare.signoffs_earlier.len == 0 and bare.signoffs_before.len == 0
+    check checkSignoffWindow(bare.text, BRANCH, bare.signoffs_earlier, [], bare.signoffs_before)
+      .len == 0
+
+
   test "hook binary is built again where source at HEAD moves, and only there":
     # Stub compiler writes binary printing `koch.nim` it read, so output names source of binary
     #   hook ran; real git and real `sh` run hook file itself (Article IX.5).
