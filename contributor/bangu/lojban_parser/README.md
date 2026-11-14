@@ -472,14 +472,14 @@ lojbo cu se vimcu .i le cukta cu jarco pano mupli poi vasru lo na'e lojbo sinxa 
 cusku lo du'u ci mupli na drani .i pa drata mupli cu glico jufra .i xa mupli cu ciska pa mekso po'o
 .i ro le xa mupli cu se tcidu ba zo li
 
-so mupli cu na mapti pa javni pe la'o gy. CLL 21.1 .gy. .i le genturfa'i cu jersi la'o gy. CLL 21.1
-.gy. gi'e to'e curmi le so mupli .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #815 .gy. .i
-`PROVENANCE.md` cu cmene le javni poi ro le so mupli cu na mapti ke'a
+so mupli cu na'e mapti su'o javni pe la'o gy. CLL 21.1 .gy. .i le genturfa'i cu jersi la'o gy. CLL
+21.1 .gy. gi'e to'e curmi le so mupli .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #815
+.gy. .i `PROVENANCE.md` cu cmene le javni poi ro le so mupli cu na'e mapti ke'a
 
 le genturfa'i cu tcidu paxavoxaso lo pazevosomu jufra pe la'o gy. Tatoeba .gy. .i ro klesi be lo
-drata cu na mapti pa javni pe la'o gy. CLL 1.1 .gy. .i `PROVENANCE.md` cu cmene ro klesi kansa lo
-javni .e lo namcu be ri .i lo cipra cu cipra ro jdice pe le mupli .i lo cipra cu sitna lo javni poi
-ro jufra poi se to'e curmi cu na mapti ke'a
+drata cu na'e mapti su'o javni pe la'o gy. CLL 1.1 .gy. .i `PROVENANCE.md` cu cmene ro klesi kansa
+lo javni .e lo namcu be ri .i lo cipra cu cipra ro jdice pe le mupli .i lo cipra cu sitna lo javni
+poi ro jufra poi se to'e curmi cu na'e mapti ke'a
 
 le genturfa'i cu tcidu xaso lo bixa pagbu be le ci prosa .i lo traji be lo ka clani cu vasru vomubi
 valsi .i le genturfa'i cu tcidu zebici lo bimuxa pagbu be la'o gy. Alice .gy. .e muxa lo pazeci
