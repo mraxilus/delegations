@@ -2981,81 +2981,6 @@ closes the work of each sign-off, even where the ➖ row is its only row (#844, 
 - Verified by `suites/test_hooks.nim`: the table of five columns as the case found, and each
   rule above.
 
-**A sign-off covers all the work since the last message of the Architect, so the latest one is
-enough.** Several sign-offs can arrive before the Architect reads one, and the Architect does not
-scroll back. That span opens at the message, and each group of its last sign-off that `stop`
-passed comes back in the next one. `parseTurn` opens it at the last entry whose `origin.kind` is
-`human`, as the Architect ruled (#844, question 1). A wake, the report of a subagent, a
-refusal of a hook and the summary of a compaction carry another kind, or none.
-
-- The turn starts at the last entry of type `user` that holds text and no tool result, wakes
-  included. A push, a post and a read of the queue are read from there.
-- Where no entry carries `origin.kind`, the span starts with the turn, so only the sign-offs of
-  that turn are compared. Where entries carry it and none is `human`, the span is the whole
-  transcript. Only a message of the Architect starts one, as the Architect ruled (#844,
-  question 4).
-- The field is not the form of a notice, which the Architect rejected for the working line
-  below. It is one field of each entry, and its absence falls back to the turn.
-- Cost: the span holds one field of the harness. Where the harness writes the field and never
-  `human`, the span holds the whole transcript, so each sign-off grows. Where it writes `human`
-  on a wake, the span opens at each wake, so an item can drop with no finding.
-- Read with `jq` over the transcript of one curator, 2026-11-14. Of 480 entries of type `user`
-  that hold text and no tool result, 95 carry `human`, over 12 versions of the harness. The
-  others carry another kind or none. They are wakes, reports of subagents, refusals of hooks,
-  summaries of compactions, texts of skills, restarts, reminders, interrupts, an image and a
-  command.
-- The group of a pull request comes back, with as many items, until a first-parent subject of
-  `origin/main` names its merge. The subject ends with `(#N)` or opens with `Merge pull request
-  #N`. Each merge here is a merge commit, so git answers at no cost to the shared allowance.
-  Read with git, 2026-11-14: each first-parent commit of `main` after the commits of 2026-09-05
-  has two parents.
-- A close shows on GitHub alone. So the group of a closed pull request shows `closed` on its bold
-  line once, and may drop after it. The word `merged` alone lets no group drop, as `main` holds
-  that fact.
-- The hook matches a group by the number of its pull request, and counts its items. An item
-  keeps its place when its words change, as the Architect ruled (#844, question 2). So a row
-  that moves to another group leaves the group that it left one item short. The work outside a
-  pull request is a group too. A fold counts as each item that it names, and the ➖ row as none.
-- A sign-off whose groups do not read, as one that lacks a part or links no pull request, takes
-  the findings of its shape alone. Each group that it holds would read as dropped. So a group
-  that it drops goes unnamed until the next sign-off, which is compared with the base before it.
-- Koch reads the subjects only where the span holds an earlier sign-off, and a failure of git
-  reads as no subject.
-- Cost: `stop` compares inside the span alone, as the ruling on the group of a pull request says
-  (#844, the rulings). So the first sign-off after a message of the Architect may drop the group
-  of an open pull request, and reading holds that group there.
-- Cost: the hook counts items, so a new row can take the place of a dropped row of its group.
-  Reading holds that, as it holds the words of each row.
-- Cost: a stale `origin/main` costs one refusal of a group whose pull request merged. A rebase
-  merge would lose the subject, and the merge commits above show none.
-- Cost: `stop` parses each line of the transcript at each stop. Measured on 2026-11-14 on 4
-  cores of an Intel Xeon at 2.10 GHz, over a transcript of 87 MB. Each of three runs fed it to
-  `koch hook stop`, built as the hook builds it. It took 2.88 to 3.01 s at `c2e80da35`, and
-  3.00 to 3.10 s at `9465f9228`.
-- Verified by `suites/test_hooks.nim`: two sign-offs after one message of the Architect, where
-  the second drops an item, as the case found. The domain adds a wake of each kind between them,
-  a new message of the Architect and the fallback. It also holds each form of merge, a close, a
-  fold and new words.
-- Verified by hand through the built hook, 2026-11-14. A wake parts two sign-offs of one
-  transcript, and the hook refuses the second, which drops a row. Its refusal names the count
-  and the rows of the group. With a message of the Architect in place of the wake, it passes.
-
-**The base is the last sign-off of the span that `stop` passed, and a replay of its own verdicts
-finds it.** A refused sign-off can lack items, and the stop after a refusal passes unread, so a
-refused one is no base. The hook replays its verdict on the block of each earlier sign-off of
-the span, in order. One passes where its block keeps its shape, and each group of the one that
-passed before it.
-
-- Rejected: the record of a refusal that the harness writes, the entry `stop_hook_summary`. That
-  ties the check to one more field of the harness, and the replay needs none.
-- Cost: the replay reads the block alone. So a sign-off refused only for a bare number, a bare
-  reference or an unread queue still serves as the base. Its rows stand whole.
-- Cost: a group that names a wrong pull request stays until one sign-off shows it `closed`.
-- Verified by `suites/test_hooks.nim`: a refused sign-off between two that pass, the first
-  sign-off of a span, and the table of five columns. It holds a sign-off refused for its shape
-  whose groups read, and the last base and not the first. It also holds a sign-off whose groups
-  do not read.
-
 **A delegate signs off only when it stops, and a turn that ends while work goes on closes with
 a working line.** The Architect set this rule on 2026-10-04. A sign-off marks a stop, so one in
 the middle of work hides which delegates need the Architect. So each state word is a stop:
@@ -3101,6 +3026,91 @@ can close a turn that posted nothing.
 - Cost: a read through any other tool, as a search, counts for nothing.
 - Verified by `suites/test_hooks.nim`: the case as found, each form of read, a closed state and
   another label, the coordinator, and the reason of a refusal.
+
+## Comparison of sign-offs
+
+**A sign-off covers all the work since the last message of the Architect, so the latest one is
+enough.** Several sign-offs can arrive before the Architect reads one, and the Architect does not
+scroll back. So each group of a pull request in the last sign-off that `stop` passed comes back
+in the next one. It comes back whatever the Architect wrote since, as the Architect ruled (D3 a
+on #895). The work outside a pull request starts again at each message of the Architect, so its
+group comes back inside that span alone.
+
+- `parseTurn` opens the span at the last entry whose `origin.kind` is `human`, as the Architect
+  ruled (#844, question 1). A wake, the report of a subagent, a refusal of a hook and the
+  summary of a compaction carry another kind, or none.
+- The turn starts at the last entry of type `user` that holds text and no tool result, wakes
+  included. A push, a post and a read of the queue are read from there.
+- Where no entry carries `origin.kind`, the span starts with the turn, so only the sign-offs of
+  that turn are compared. No earlier span reads, since spans cannot be told apart. Where entries
+  carry it and none is `human`, the span is the whole transcript. Only a message of the
+  Architect starts one, as the Architect ruled (#844, question 4).
+- `parseTurn` gives the sign-offs of each earlier span too, one list for each, oldest first, and
+  a span that holds none is left out. So the base of a group of a pull request can sit before
+  the last message of the Architect. Verified by `suites/test_hooks.nim`: a group that drops
+  whole past the message, and one that loses a row there, are refused. A row of work outside a
+  pull request may drop there.
+- The field is not the form of a notice, which the Architect rejected for the working line in
+  section Sign-off. It is one field of each entry, and its absence falls back to the turn.
+- Cost: the span holds one field of the harness. Where the harness writes the field and never
+  `human`, the span holds the whole transcript, so each sign-off grows. Where it writes `human`
+  on a wake, the span opens at each wake, so an item can drop with no finding.
+- Read with `jq` over the transcript of one curator, 2026-11-14. Of 480 entries of type `user`
+  that hold text and no tool result, 95 carry `human`, over 12 versions of the harness. The
+  others carry another kind or none. They are wakes, reports of subagents, refusals of hooks,
+  summaries of compactions, texts of skills, restarts, reminders, interrupts, an image and a
+  command.
+- The group of a pull request comes back, with as many items, until a first-parent subject of
+  `origin/main` names its merge. The subject ends with `(#N)` or opens with `Merge pull request
+  #N`. Each merge here is a merge commit, so git answers at no cost to the shared allowance.
+  Read with git, 2026-11-14: each first-parent commit of `main` after the commits of 2026-09-05
+  has two parents.
+- A close shows on GitHub alone. So the group of a closed pull request shows `closed` on its bold
+  line once, and may drop after it. The word `merged` alone lets no group drop, as `main` holds
+  that fact.
+- The hook matches a group by the number of its pull request, and counts its items. An item
+  keeps its place when its words change, as the Architect ruled (#844, question 2). So a row
+  that moves to another group leaves the group that it left one item short. The work outside a
+  pull request is a group too. A fold counts as each item that it names, and the ➖ row as none.
+- A sign-off whose groups do not read, as one that lacks a part or links no pull request, takes
+  the findings of its shape alone. Each group that it holds would read as dropped. So a group
+  that it drops goes unnamed until the next sign-off, which is compared with the base before it.
+- Koch reads the subjects only where an earlier sign-off exists, and a failure of git reads as no
+  subject.
+- Cost: the hook counts items, so a new row can take the place of a dropped row of its group.
+  Reading holds that, as it holds the words of each row.
+- Cost: a stale `origin/main` costs one refusal of a group whose pull request merged. A rebase
+  merge would lose the subject, and the merge commits above show none.
+- Cost: `stop` parses each line of the transcript at each stop, and replays each sign-off that
+  it holds. Measured on 2026-11-14 on 4 cores of an Intel Xeon at 2.10 GHz, over a transcript of
+  87 MB. Each of three runs fed it to `koch hook stop`, built as the hook builds it, after one run
+  to warm the cache. It took 2.89 to 3.00 s at `c2e80da35`, and 2.84 to 3.21 s at `a09f13792`.
+- Verified by `suites/test_hooks.nim`: two sign-offs after one message of the Architect, where
+  the second drops an item, as the case found. The domain adds a wake of each kind between them,
+  a new message of the Architect and the fallback. It also holds each form of merge, a close, a
+  fold and new words.
+- Verified by hand through the built hook, 2026-11-14. A wake parts two sign-offs of one
+  transcript, and the hook refuses the second, which drops a row of a pull request. Its refusal
+  names the count and the rows of the group. With a message of the Architect in place of the
+  wake, it refuses the second too. One that drops a row of work outside a pull request passes.
+
+**The base is the last sign-off that `stop` passed, and a replay of its own verdicts finds it.**
+A refused sign-off can lack items, and the stop after a refusal passes unread, so a refused one
+is no base. The hook replays its verdict on the block of each earlier sign-off, span by span,
+oldest first. One passes where its block keeps its shape, and its groups keep those of the one
+that passed before it. The hook judges each one by the rule of its own span. Every group counts
+where that base sits in that span, and only groups of pull requests elsewhere.
+
+- Rejected: the record of a refusal that the harness writes, the entry `stop_hook_summary`. That
+  ties the check to one more field of the harness, and the replay needs none.
+- Cost: the replay reads the block alone. So a sign-off refused only for a bare number, a bare
+  reference or an unread queue still serves as the base. Its rows stand whole.
+- Cost: a group that names a wrong pull request stays until one sign-off shows it `closed`.
+- Verified by `suites/test_hooks.nim`: a refused sign-off between two that pass, the first
+  sign-off of a span, and the table of five columns. It holds a sign-off refused for its shape
+  whose groups read, and the last base and not the first. It also holds a sign-off whose groups
+  do not read. Across spans, a sign-off refused in an earlier span is no base. One that passed
+  past a message is the base of its own span.
 
 ## Skills
 
@@ -3581,7 +3591,3 @@ pull requests sat on both sides, so the subject of a call does not say which met
   terms as words that a name may take (`exemptions`), so it acts as a rule of content. Neither
   the stamp nor drift reads it, so a standard that `main` drops reaches no older branch before
   the merge.
-- Whether `stop` should hold the group of an open pull request past a message of the Architect,
-  as item 2 of #844 asks. It compares inside the span alone, as the ruling on the group of a pull
-  request says (#844, the rulings). So reading holds the group there. To hold it, the base of the
-  groups of pull requests would be the last sign-off that passed in the whole transcript.
