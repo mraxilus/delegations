@@ -2611,9 +2611,9 @@ that holds it. The events, each one a verb argument:
   label `coordinator`. It refuses a pull request body that leaves the template unfilled. It
   refuses a closing keyword before an issue outside a line of its own.
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
-  nor the working line. At the end of any turn, it refuses a sign-off out of shape, or one that
-  drops an item that the last one held. It also refuses `#N` outside a link, and an article or a
-  duty cited with no description.
+  nor the working line. At the end of any turn, it refuses a sign-off out of shape. It also
+  refuses one whose group holds fewer items than the last sign-off that passed. And it refuses
+  `#N` outside a link, and an article or a duty cited with no description.
 - `start` prints the role, the read order, each finding of drift, the headings of the record
   that the branch works on, and the carried list. It prints at the start, at resume and after
   each compaction.
@@ -2917,8 +2917,9 @@ The coordinator, once the Architect trials it, lifts each decision onto a card w
 of words.
 
 The block carries seven parts in order: `Role`, `Context`, the work, `Summary`, `State`,
-`Decisions` and `Next step`. The Architect set this order on 2026-10-04. The work opens with a
-rule line, `---`, and ends where `Summary` starts. Verified by `suites/test_hooks.nim`, which
+`Decisions` and `Next step`. The Architect set the order of the parts on 2026-10-04, and the
+rule line that opens the work on #844. The work opens with that line, `---`, and ends where
+`Summary` starts. Verified by `suites/test_hooks.nim`, which
 refuses work before the context, a state before the summary, and a block with no rule line.
 
 - The role line gives the role string, then the word `branch` and the last part of the branch.
@@ -2927,8 +2928,8 @@ refuses work before the context, a state before the summary, and a block with no
   decision blocks this delegate. Then the line gives the short head and `pushed` or
   `not pushed`, and nothing more. The bold line of each pull request gives its state and its run.
 - The block holds no brief line, by the choice of the Architect: no delegate starts from a
-  brief until the Architect trials the coordinator. No check refuses a line beyond the seven
-  parts, so reading holds this rule. Verified by hand through the built hook, 2026-11-14: a
+  brief until the Architect trials the coordinator. No check refuses an extra line above the
+  rule line, so reading holds this rule. Verified by hand through the built hook, 2026-11-14: a
   sign-off with a brief line under its role line passes.
 - Decisions are numbered from `D1`, and each one names its class and where its ruling goes. With
   no decision, the label reads `**Decisions:** None.`, and over its blocks it stands alone.
@@ -2948,19 +2949,21 @@ refuses work before the context, a state before the summary, and a block with no
   runs for the coordinator, whose message is the digest, a turn that posted is asked once for a
   sign-off. The second stop passes.
 - Verified by `suites/test_hooks.nim`: one assertion for each rule above that a check holds,
-  and four for the order. The fixtures take the form of #844. The suite also holds the example
-  of `GUIDE.md` to the hook, read as committed.
+  and the order as the paragraph above names it. The fixtures take the form of #844. The suite
+  also holds the example of `GUIDE.md` to the hook, read as committed.
 
 **Each pull request takes a group, and the work outside one takes the last table, because the
-Architect reads on a phone.** A phone shows the first column of a table alone. So each table has
-two columns, `Item` and `Evidence, or who acts`, and its first cell opens with the state, the
-number and the claim. A group opens with a bold line that links its pull request and gives its
+Architect reads on a phone.** Assumed from the report of the Architect on #844: a phone shows
+the first column of a table alone, and no test here measures it. So each table has two columns,
+`Item` and `Evidence, or who acts`, and its first cell opens with the state, the number and the
+claim. A group opens with a bold line that links its pull request and gives its
 state: `draft`, `ready`, `merged` or `closed`. The table under `**Outside a pull request.**`
 closes the work of each sign-off, even where the ➖ row is its only row (#844, question 3).
 
 - Rows number from 1 across the tables, and sort by state inside each table, as
-  `☑️ ✅ ⚠️ ⏸️ ⬜ ➖`. The second cell of each row holds text. A ⚠️ row opens it with a role
-  string or `outside`, after any carried tag. A ⏸️ row names a decision that the block holds.
+  `☑️ ✅ ⚠️ ⏸️ ⬜ ➖`. A first cell that opens with no state is named with the six states. The
+  second cell of each row holds text. A ⚠️ row opens it with a role string or `outside`, after
+  any carried tag. A ⏸️ row names a decision that the block holds.
 - The tag of a carried rule stands in the second cell, as `carried 5` or `carried 3 and 4`.
   Each of the six rules stands beside an item or in the one ➖ row, and never in both. A rule
   may stand beside two items, since one rule can concern two pull requests.
@@ -2968,8 +2971,9 @@ closes the work of each sign-off, even where the ➖ row is its only row (#844, 
 - Past twelve rows, the done rows of one pull request fold into one row that names its first and
   last item, as `☑️ 1–5.`. A fold holds done rows alone. No check holds the ceiling, since rows
   that wait cannot fold, and a cap would refuse a sign-off that no fold can mend.
-- A table whose header is out of shape is named once, and its rows go unread. So the table of
-  five columns gives one finding for its header, and none for each of its rows.
+- A table whose header is out of shape is named once. Then the check reads no row of any table,
+  and no carried rule. So the table of five columns gives one finding for its header, and none
+  for its rows.
 - Rejected, by the choice of the Architect: the pull request as the header of its table, or in a
   quote block. The rule line after the context reads clearest.
 - Cost: the bold line is read for its link and its state, and never for its run or what the
@@ -2984,13 +2988,17 @@ passed comes back in the next one. `parseTurn` opens it at the last entry whose 
 `human`, as the Architect ruled (#844, question 1). A wake, the report of a subagent, a
 refusal of a hook and the summary of a compaction carry another kind, or none.
 
-- The turn still starts at the last entry of type `user` that holds text and no tool result,
-  wakes included. A push, a post and a read of the queue are read from there.
-- Where no entry carries `origin.kind`, the span starts with the turn, as it did before the field
-  existed. Where entries carry it and none is `human`, the span is the whole transcript. Only a
-  message of the Architect starts one, as the Architect ruled (#844, question 4).
+- The turn starts at the last entry of type `user` that holds text and no tool result, wakes
+  included. A push, a post and a read of the queue are read from there.
+- Where no entry carries `origin.kind`, the span starts with the turn, so only the sign-offs of
+  that turn are compared. Where entries carry it and none is `human`, the span is the whole
+  transcript. Only a message of the Architect starts one, as the Architect ruled (#844,
+  question 4).
 - The field is not the form of a notice, which the Architect rejected for the working line
   below. It is one field of each entry, and its absence falls back to the turn.
+- Cost: the span holds one field of the harness. Where the harness writes the field and never
+  `human`, the span holds the whole transcript, so each sign-off grows. Where it writes `human`
+  on a wake, the span opens at each wake, so an item can drop with no finding.
 - Read with `jq` over the transcript of one curator, 2026-11-14. Of 480 entries of type `user`
   that hold text and no tool result, 95 carry `human`, over 12 versions of the harness. The
   others carry another kind or none. They are wakes, reports of subagents, refusals of hooks,
@@ -2999,23 +3007,31 @@ refusal of a hook and the summary of a compaction carry another kind, or none.
 - The group of a pull request comes back, with as many items, until a first-parent subject of
   `origin/main` names its merge. The subject ends with `(#N)` or opens with `Merge pull request
   #N`. Each merge here is a merge commit, so git answers at no cost to the shared allowance.
+  Read with git, 2026-11-14: each first-parent commit of `main` after the commits of 2026-09-05
+  has two parents.
 - A close shows on GitHub alone. So the group of a closed pull request shows `closed` on its bold
   line once, and may drop after it. The word `merged` alone lets no group drop, as `main` holds
   that fact.
 - The hook matches a group by the number of its pull request, and counts its items. An item
   keeps its place when its words change, as the Architect ruled (#844, question 2). So a row
-  never moves to another group. The work outside a pull request is a group too. A fold counts as
-  each item that it names, and the ➖ row as none.
+  that moves to another group leaves the group that it left one item short. The work outside a
+  pull request is a group too. A fold counts as each item that it names, and the ➖ row as none.
+- A sign-off whose groups do not read, as one that lacks a part or links no pull request, takes
+  the findings of its shape alone. Each group that it holds would read as dropped. So a group
+  that it drops goes unnamed until the next sign-off, which is compared with the base before it.
 - Koch reads the subjects only where the span holds an earlier sign-off, and a failure of git
   reads as no subject.
-- Cost: `stop` compares inside the span alone, as the ruling on the group of a pull request says.
-  So the first sign-off after a message of the Architect may drop the group of an open pull
-  request, and reading holds that group there.
+- Cost: `stop` compares inside the span alone, as the ruling on the group of a pull request says
+  (#844, the rulings). So the first sign-off after a message of the Architect may drop the group
+  of an open pull request, and reading holds that group there.
+- Cost: the hook counts items, so a new row can take the place of a dropped row of its group.
+  Reading holds that, as it holds the words of each row.
 - Cost: a stale `origin/main` costs one refusal of a group whose pull request merged. A rebase
-  merge would lose the subject, and none happens here.
-- Cost: `stop` parses each line of the transcript at each stop, as before. Measured on
-  2026-11-14 on 4 cores of an Intel Xeon, three runs each, over a transcript of 84 MB. The hook
-  of `main` took 2.99 to 3.39 s, and the hook of this design took 3.07 to 3.17 s.
+  merge would lose the subject, and the merge commits above show none.
+- Cost: `stop` parses each line of the transcript at each stop. Measured on 2026-11-14 on 4
+  cores of an Intel Xeon at 2.10 GHz, over a transcript of 87 MB. Each of three runs fed it to
+  `koch hook stop`, built as the hook builds it. It took 2.88 to 3.01 s at `c2e80da35`, and
+  3.00 to 3.10 s at `9465f9228`.
 - Verified by `suites/test_hooks.nim`: two sign-offs after one message of the Architect, where
   the second drops an item, as the case found. The domain adds a wake of each kind between them,
   a new message of the Architect and the fallback. It also holds each form of merge, a close, a
@@ -3036,7 +3052,9 @@ passed before it.
   reference or an unread queue still serves as the base. Its rows stand whole.
 - Cost: a group that names a wrong pull request stays until one sign-off shows it `closed`.
 - Verified by `suites/test_hooks.nim`: a refused sign-off between two that pass, the first
-  sign-off of a span, and the form before #844. It also holds a sign-off refused for its shape.
+  sign-off of a span, and the table of five columns. It holds a sign-off refused for its shape
+  whose groups read, and the last base and not the first. It also holds a sign-off whose groups
+  do not read.
 
 **A delegate signs off only when it stops, and a turn that ends while work goes on closes with
 a working line.** The Architect set this rule on 2026-10-04. A sign-off marks a stop, so one in
@@ -3565,5 +3583,5 @@ pull requests sat on both sides, so the subject of a call does not say which met
   the merge.
 - Whether `stop` should hold the group of an open pull request past a message of the Architect,
   as item 2 of #844 asks. It compares inside the span alone, as the ruling on the group of a pull
-  request says, so reading holds the group there. To hold it, the base of the groups of pull
-  requests would be the last sign-off that passed in the whole transcript.
+  request says (#844, the rulings). So reading holds the group there. To hold it, the base of the
+  groups of pull requests would be the last sign-off that passed in the whole transcript.
