@@ -78,7 +78,7 @@ nothing of it was copied.
 **The 2D forms come from an expansion of the definitions.** A script expands each definition
 of Lengyel's exterior algebra on the components of the typed objects. At rga3d its metric is
 e₁² = e₂² = 1 and e₃² = 0. At cga4d it is e₁² = e₂² = 1 and e₃ ∙ e₄ = −1. The expansion
-reproduces the library on every pair of basis elements: 400 cases at rga3d, 1,245 at cga4d.
+reproduces the library on every pair of basis elements: 400 cases at rga3d, 1 245 at cga4d.
 They cover every product, complement, dual, part, attitude, carrier and cocarrier.
 
 The expansion also reproduces the support, center, container and partner on one integer operand of
@@ -233,7 +233,7 @@ reaching code below then falls to zero after the first measurand. Code that gcc 
 never to run is optimised for size, and gcc does not vectorise its loops. So the loop of `+`
 stayed scalar, while the straight-line dense form still became two-wide adds.
 
-At rga4d at `d9be8ae`, gcc estimated 5,215 of the 5,306 blocks of that function never to run.
+At rga4d at `d9be8ae`, gcc estimated 5 215 of the 5 306 blocks of that function never to run.
 It analysed 5 of its loops for vectorisation. Without its guessed profile, it analysed 673 and
 vectorised the loop of `+`. Three alternating runs of each build at rga4d, on `linux amd64,
 4 cores` on 2026-10-03, time the library against its dense form:
@@ -348,8 +348,15 @@ names the module.
 
 It keys every function by symbol and by parameter type stems. A stem drops the hash that the
 compiler puts in the name of a type, since that hash follows the path of its module. So a set of
-an enum reads as `set[Basis]`, and a key holds on every machine. It then counts what the C
-spells:
+an enum reads as `set[Basis]`, and a key holds on every machine.
+
+The compiler gives every instance of `MultivectorOf` one name with a hash. So the inspector names
+each instance after the library type of its count, which it reads from the array of the field.
+A field that carries an alignment opens with `NIM_ALIGN`, as the types of P04 and P05 do, and the
+inspector skips that word. So an aligned type keeps its key, and its evaluation lists no function
+twice.
+
+The inspector then counts what the C spells:
 
 - multiplies, adds, subtractions and divides;
 - `nimZeroMem` calls, intermediates and whole-object copies;
@@ -378,6 +385,7 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 
 - a demangling table with overload indices;
 - a fixture C source with known counts;
+- an instance named by its count, with an aligned field and without;
 - loops of literal, nested and variable bound;
 - divisions inside a loop and inside a callee, and callee folding;
 - movement from stems;
@@ -731,7 +739,7 @@ by ×1.002 to ×1.004 there. Cost: four runs more add about 4 s to a sweep of ab
 `unitized` times six point operations of Lengyel's code, each in the homogeneous form and in the
 unitized form that skips each product with w. It takes three layouts: four floats, his three, and
 three padded to four, so the saved arithmetic shows apart from the smaller layout. It takes 1024
-points in cache and 1,048,576 streamed from memory. Each operation runs behind a call that the
+points in cache and 1 048 576 streamed from memory. Each operation runs behind a call that the
 optimiser does not inline, and writes its result in place, as return value optimisation of C++
 does.
 
@@ -807,7 +815,7 @@ of the four stubs.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`: the function that
 runs the module holds under 2 MB of C. The law fails on suites at module level, where that
-function holds 8,316,057 bytes.
+function holds 8 316 057 bytes.
 
 ## Changes, proposals and evaluations
 
@@ -877,7 +885,7 @@ library implements drops out, since the library holds its edits.
 
 **Each proposal page states its dependencies, and one page lists every proposal.** The page of a
 proposal names what it depends on and what its rejection blocks. Where a proposal is reached through
-another, the page names that one too, as `(through P02)`. The proposals tab of the Proposals page
+another, the page names that one too, as `(through P08)`. The proposals tab of the Proposals page
 gives each proposal its standing, its claims that hold, its dependencies and what it blocks.
 
 Above the table, the tab draws the undecided proposals as a graph, in columns by depth and in rows
@@ -899,9 +907,8 @@ binaries of the pin and of the copy run alternately, 41 times each, so drift of 
 lands on both. The time ratio of a measurand is the median of the ratios of its pairs of runs.
 
 **An evaluation builds without dense forms**, under `-d:pga_benchmark.has_forms_dense=false`.
-A dense form reads tables by their names at pin, and a change may rename them, as
-`cayley-derivation` does. The evaluation compares the library with the pin, so it needs no
-dense form.
+A dense form reads tables by their names at pin, and a change may rename them. The evaluation
+compares the library with the pin, so it needs no dense form.
 
 The pristine counts are the baseline, which holds the dense forms. So a dense form that the changed
 build leaves out is no moved function. At rga4d, P08 moves 2 functions, and P01 and
@@ -1345,8 +1352,8 @@ Architect ruled on 2026-10-17. The exponential, the logarithm and the square roo
 not on it. The map also leaves out the motor that moves one object onto another, and the dilation
 and the transversion of CGA.
 
-P01 lays out every Cayley table of the library, so most other proposals build on it. The map shows
-how complete the library is, and a faded box is an operator that waits for its table. Other
+P01 lays out every Cayley table of the library. P08 builds on it, and P03 builds on both. The map
+shows how complete the library is, and a faded box is an operator that waits for its table. Other
 proposals count only the tables that the library builds. When the library adds a table, each
 proposal that it concerns takes the new table into account.
 
@@ -1580,10 +1587,11 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 - The inspector reads text patterns of Nim 2.4.0. Another release could spell the same C
   differently. The suite that holds the reader to the nimcache of the test binary is
   what would say so. A loop whose bound is a variable counts once.
-- 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
-  compared. The Architect ruled on 2026-10-06 that they stay unmeasured while the library holds
-  64-bit floats alone. A SIMD form may come as a proposal that keeps 64-bit floats, after a
-  proposal that makes the width of the float configurable.
+- The bench, the references and the gap list hold 64-bit floats alone. The library takes the
+  width of its floats as a build option, and a claim runs at 32 bits only where it names that
+  width. SIMD forms are unmeasured, and the SSE paths of Terathon were not compared. The
+  Architect ruled on 2026-10-06 that a SIMD form may come as a proposal that keeps 64-bit
+  floats. That proposal comes after the width of the float is configurable, and P06 made it so.
 - `sweep` is hand-run only. Three sweeps of five runs at `edb0c9d`, on `linux amd64, 4 cores` on
   2026-10-05 and 2026-10-06, differ by ×1.002 to ×1.004 at the median cell. At the 90th
   percentile they differ by ×1.025 to ×1.030. Five of 319 cells differ by more than ×1.10. The
