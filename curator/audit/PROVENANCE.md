@@ -2094,12 +2094,13 @@ needs no lock. The record of knoller holds the design of those fixers and checks
 
 - The checks of form, articles, names, idioms and fixed waits read one Nim file, and their rules
   come from `CONSTITUTION.md` and `STYLE.md` alone. So knoller holds them, as D3 a of #548 rules,
-  and `knoller --check` reports them on any repository. The static pass calls each of them.
+  and `knoller --check` reports them on any repository. Fixed waits are the one exception, since
+  only a caller names drive code. The static pass calls each of them.
 - Each of those checks names a rule of knoller with an id of its own, and `CITATIONS` holds its
-  article. What reads this repository stays here: the glossaries, the paths of drive code, the
-  exemption of `LICENSE.md`, machine paths, `tsconfig.json` and `PROJECTS_PROSE_OWN`. Knoller
-  takes the words of a name and the mode of each file from its caller. It keeps its own copy of
-  the paths of drive code (`DIRECTORIES_DRIVE`), which #886 asks to move to the caller.
+  article. What reads this repository stays here. That is the glossaries, the paths of drive code
+  and the define that its stubs pass. It is also the exemption of `LICENSE.md`, machine paths,
+  `tsconfig.json` and `PROJECTS_PROSE_OWN`. Knoller takes the words of a name and the facts of
+  each file from its caller (D2 a of #886).
 - `toFinding` renders each report of knoller as a finding. A rewrite renders as its rule and the
   article that `CITATIONS` holds for it, so `koch fix` prints `expression spacing (X.9) fixed`.
   Verified by `suites/test_findings.nim`.
@@ -2109,6 +2110,29 @@ needs no lock. The record of knoller holds the design of those fixers and checks
   both, and keeps the policy of duty 8 (`## Toolchain`).
 - Rejected: knoller copied first and audit switched later. The code would stand twice, and the
   paragraphs of the records copied word for word would trip the check of copies.
+
+**Koch gives knoller the facts of each file that its text does not hold.** They are the mode of
+its articles (`## Prose in its own language`), the nimble file of its project, whether it is drive
+code, and the options of its compile. Each comes from the layout or the habits of this repository,
+so knoller holds none of them. The record of knoller says what it reads from each (`Layout of a
+package` there).
+
+- The nimble file is that of the project that holds the file (`nimbleProject`), and a root file
+  has none. Each project keeps `<project>.nimble` at its root, so koch reads that file from the path
+  alone. Knoller reads the tests, the stubs and the umbrella of the file below its folder.
+- Rejected: a lookup of the nearest nimble file over the tree. `fixEntries` would need the tree as
+  a new input, and the lookup gives the same file in each project. Cost: a package inside a project
+  reads as its project, so its stubs take no rule of stubs. No project holds one, by
+  `git ls-files '*.nimble'`, 2026-11-14.
+- A file is drive code where it lies under `tests/` or `tools/` of its project (`isCodeDrive`), as
+  the static pass reads fixed waits (`## Fixed waits`). A file under `tests/` of its project
+  compiles with `-d:testing` (`## Semantic pass`).
+- Verified by hand, 2026-11-14, over each Nim file that git lists here. Each fact that koch gives
+  names the same files as knoller at `c2e80da3` read from the whole path. That holds for test
+  files, stubs, umbrellas, drive code and the define.
+- Verified by hand, 2026-11-14: koch built at `c2e80da3` and koch built at `269d6579` gave the same
+  output, byte for byte, on the tree at `c2e80da3`. That holds for `check-files`, and for
+  `fix --dry-run --all --branch:main`, which reads every project.
 
 **The audit cites the article of each message of knoller, where its sentence ends.** A message of
 a check of knoller names no article, and reads `<sentence>; got <value>.`, or `<sentence>.` where
@@ -2403,10 +2427,12 @@ their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 **Every entry module, library umbrella and test stub imports the profiler on two lines (STYLE.md
 §3).** The import stands on its own line under its guard, by ruling of the Architect on the report
 of the PGA library. An entry module holds a `when isMainModule:` block in its code. The umbrella
-is `<project>/src/<project>.nim`, and a stub is `tests/test_*.nim` or a file of a testament
-category that a header opens (#443). The fixer splits the form on one line. It inserts the two
-lines after the last pragma that opens the module, with a blank line on each side.
+is `<project>/src/<project>.nim`, and a stub is `tests/test_*.nim` of a project or a file of a
+testament category that a header opens (#443). The fixer splits the form on one line. It inserts
+the two lines after the last pragma that opens the module, with a blank line on each side.
 
+- Knoller reads the umbrella and the stubs below the folder of the nimble file that koch gives
+  (`## Knoller`).
 - A `when isMainModule:` inside a string is no code, so `test_checker.nim` is no entry module.
 - A stub that includes a file at top level takes the import from that file, since the include
   makes one module of both. The Architect ruled so on the report of the PGA library, whose eight
@@ -2503,6 +2529,10 @@ audit gives the lookup what its tree holds (`symbols.nim`). The project of each 
 directory, whose nimble file names the pin, and a root file takes the pin of the driver. The
 includer of a file is read among the Nim files of the tree.
 
+- A file under `tests/` of a project compiles with `-d:testing`, as each stub of this repository
+  passes it (STYLE.md §6). Knoller names no define of its own, so koch names it for each file
+  (`defines`). Verified by `suites/test_symbols.nim`: a name that `-d:testing` alone declares
+  resolves under `tests/` of a project, and stays unresolved under `src/` and `src/tests/`.
 - A file whose project pins no compiler, or whose pin no compiler serves, is answered unresolved
   with its reason, and asks nothing.
 - `koch fix` fixes each conversion that the pass settles, and `koch check` and `koch test` report
@@ -2575,6 +2605,11 @@ the English check does. Verified by `suites/test_waits.nim`.
 comes from the charter alone, so knoller holds its names and their replacements (`checkWaits`
 there). Nim source takes that check whole. The identifiers of each line of every other kind,
 less those that its comments hold, go to the same check. So each kind reports in the same words.
+
+- `koch fix` gives the same drive code to the fence warning of knoller (`isCodeDrive`). So the
+  warning counts a fixed wait where the static pass reports one.
+- Verified by `suites/test_fixes.nim`: a fenced `sleep` counts under `tests/` and `tools/` of a
+  project, and not under its `src/` or at the root.
 
 **A timer is unread, because one name is both clocks.** Inside a page under the clock of
 Playwright, `setTimeout` and `performance.now` are simulated reads. A check over them would
