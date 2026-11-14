@@ -567,6 +567,22 @@ suite "Hooks":
       .messages.anyIt("got `working`" in it and "**Working:**" in it)  # no state for work
 
 
+  test "sign-off takes shape check whatever its turn did, and one quoted in fence is none (#844)":
+    # Ruling on #844: each message that holds sign-off takes shape check, and not only message of
+    #   turn that pushed or posted, since sign-off can close turn that wrote nothing.
+    let gist = SIGNOFF.replace("**Summary:**", "**Gist:**")
+    check checkEndTurn(gist, BRANCH, is_writing = false)
+      .messages.anyIt("lacks `**Summary:**`" in it)
+    check checkEndTurn(SIGNOFF, BRANCH, is_writing = false).messages == newSeq[string]()
+    check checkEndTurn("Read.\n", BRANCH, is_writing = false).len == 0  # no sign-off, none asked
+    # Sign-off in fence is quoted example, so message holds none, and no read follows it.
+    let quoted = "The form:\n\n```md\n" & gist & "```\n"
+    check checkEndTurn(quoted, BRANCH, is_writing = false).len == 0
+    check checkEndTurn(quoted, BRANCH, is_writing = true).messages.anyIt("got neither" in it)
+    check checkEndTurn(quoted & "\n" & SIGNOFF, BRANCH, is_writing = true).len == 0  # real one
+    check checkSignoffRead(quoted, []).len == 0
+
+
   test "message names issue and pull request by link first, then by number alone":
     # Long form once, as one link of short description and number (GUIDE.md, Output contract).
     const linked = "[the ledger fix (#456)](https://x/456), [#457] and " &
