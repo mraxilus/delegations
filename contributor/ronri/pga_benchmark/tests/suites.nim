@@ -684,6 +684,26 @@ suiteInProc "Internal: Inspector":
     check "getMonoTime" in functions[0].body  # body runs to its closing brace
 
 
+  test "instance of `MultivectorOf` reads as library type of its count, aligned or not":
+    # Case: at 3d9696e, field of P05 and of P04 opens with `NIM_ALIGN(64)`, and instance kept
+    #   its C name, so evaluation of P05 listed each of 38 functions at rga4d as gone and new.
+    for field in ["tyArray__a elements;", "NIM_ALIGN(64) tyArray__a elements;"]:
+      let functions = functionsIn(
+        [
+          "typedef NF tyArray__a[16];",
+          "struct tyObject_MultivectorOf__h {",
+          "\t" & field,
+          "};",
+          "N_LIB_PRIVATE N_NIMCALL(void, negate__u0__m)(tyObject_MultivectorOf__h* m_p0) {",
+          "}",
+        ].join("\n") & "\n",
+        [(16, "Multivector")],
+      )
+      check functions.len == 1  # one definition read
+      if functions.len == 1:
+        check functions[0].parameters == @["Multivector"]  # named by count of its array
+
+
   test "terms inside loops of constant bound count once per trip":
     const
       multivector_mangled = "tyObject_Multivector__h"
