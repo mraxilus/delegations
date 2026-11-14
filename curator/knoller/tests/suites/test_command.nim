@@ -320,6 +320,36 @@ suite "Command line":
     check not outside.lines.anyIt("stub-keys" in it)  # so no stub rule
 
 
+  test "command line built from this source reads nimble file above each file it is run on":
+    # `main` reads nimble file nearest each file from disk and hands it to `outcome`, so run
+    #   built from this source drives that wiring (Article IX.6). Domain: package `foo` at root
+    #   of clone named `clone`, umbrella that its nimble file names, and drive code none names.
+    let
+      root = createTempDir("knoller_", "_built")
+      clone = root / "clone"  # folder named apart from package
+      binary = root / "knoller".addFileExt(ExeExt)
+      source = currentSourcePath().parentDir.parentDir.parentDir / "src" / "knoller.nim"
+      head = "## Do.\n\n{.experimental: \"strictFuncs\".}\n\nimport std/os\n\n"
+    defer: removeDir(root)
+    clone.writeTree([
+      ("foo.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+      ("src/foo.nim", head & "export os\n"),  # umbrella lacking profiler import
+      ("tools/build.nim", head & "sleep(10)\n"),
+    ])
+    check execCmd("git -C " & clone.quoteShell & " init -q") == 0
+    check execCmd("git -C " & clone.quoteShell & " add -A") == 0
+    let build = @[NIM, "c", "--hints:off", "--nimcache:" & root / "cache", "-o:" & binary, source]
+    check execCmdEx(build.mapIt(it.quoteShell).join(" ")).exitCode == 0  # one command rebuilds
+    let
+      run = @[binary, "--check", "--nim:" & NIM, "src", "tools"]
+      (output, code) = execCmdEx(run.mapIt(it.quoteShell).join(" "), workingDir = clone)
+    check output.splitLines.filterIt(it.len > 0) == @[
+      "src/foo.nim: profiler-import to fix",  # umbrella of `foo.nimble`, whatever folder holds it
+      "1 to fix.",
+    ]  # and no fixed wait under `tools`, since no caller names drive code
+    check code == 1  # change due under `--check`
+
+
   test "directory names Nim files git lists under it, sorted; one naming none says why":
     check listing("src", "b.nim\0a.md\0a.nim\0", 0) == (@["src/a.nim", "src/b.nim"], "")
     let outside = listing("/q", "fatal: not a git repository\n", 128)
