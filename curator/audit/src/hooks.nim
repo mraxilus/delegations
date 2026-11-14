@@ -45,18 +45,18 @@
 ##     contract). Turn that ends while work runs closes with working line instead, naming what
 ##     runs and what wakes delegate, so each state word marks stop and none means work goes on.
 ##   Sign-off covers all work since last message of Architect, as Architect ruled on #844, so
-##     latest one is enough: each group of last sign-off of that window that passed comes back,
-##     with as many items, until `main` holds merge of its pull request, or sign-off shows it
-##     `closed`. Transcript names message person typed by `origin.kind`, which no wake carries;
-##     turn still starts at wake, since what turn did is read from there.
+##     latest one is enough. Each group of pull request in last sign-off that passed comes back,
+##     with as many items, until `main` holds its merge or sign-off shows it `closed`, whatever
+##     Architect wrote since (`D3 a` of #895); work outside pull request does so inside window
+##     alone, since it starts again at each message of Architect. Transcript names message
+##     person typed by `origin.kind`, which no wake carries; turn still starts at wake, since
+##     what turn did is read from there.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: window reads field `origin.kind` of harness; where no entry carries it, window starts
-##     with turn, so only sign-offs of that turn are compared.
+##     with turn, so only sign-offs of that turn are compared, and no group past it.
 ##   Cost: sign-off whose groups do not read takes findings of its shape alone, so group it drops
 ##     goes unnamed until next sign-off, which is compared with base before it.
-##   Cost: hook compares inside window alone, so group of open pull request that first sign-off
-##     after message of Architect drops passes; reading holds it there.
 ##   Cost: `commandsGit` splits on shell operators by text, so `git` inside quoted string is
 ##     read as command; refusal then errs on safe side.
 ##   Cost: post whose body file same command writes, as by heredoc, is refused, so it takes two
@@ -117,8 +117,8 @@ type
     signoffs_earlier*: seq[string]
       ## Text of each earlier message holding sign-off since last message of Architect, in order.
     signoffs_before*: seq[seq[string]]
-      ## Text of each sign-off before that message, one list for each span between two messages
-      ##   of Architect, oldest first; empty until spans read.
+      ## Text of each sign-off before that message, one list for each window that holds one,
+      ##   oldest first; empty where no entry names message of Architect by `origin.kind`.
 
   Word = object  ## Define one word of shell text, as shell passes it to command.
     text: string  ## Word with quotes and escapes taken out.
@@ -1480,9 +1480,14 @@ func count(g: Group): int =
     result += (if row.first > 0 and row.last >= row.first: row.last - row.first + 1 else: 1)
 
 
-func findingsGroups(message, base: string; merged: openArray[int]): seq[Finding] =
+func findingsGroups(
+  message, base: string; merged: openArray[int]; is_window_same: bool
+): seq[Finding] =
   ## Report group of base that message drops or shrinks: each one comes back, with as many items,
   ##   until `main` holds merge of its pull request, or base shows it `closed`.
+  ##   Work outside pull request starts again at each message of Architect, so its group is read
+  ##     only where base sits in window of message; group of pull request is read past it
+  ##     (`D3 a` of #895).
   ##   Group is matched by number of its pull request and counted, since item may change words
   ##     (Question 2 of #844); so row moves to no other group. Finding quotes first cell of each
   ##     row group held, since compaction may have taken them from what delegate sees.
@@ -1491,7 +1496,7 @@ func findingsGroups(message, base: string; merged: openArray[int]): seq[Finding]
   let now = message.groupsSignoff
   if now.len == 0 or now.anyIt(it.number < 0): return
   for b in base.groupsSignoff:
-    if b.number < 0: continue
+    if b.number < 0 or (b.number == 0 and not is_window_same): continue
     var at = -1
     for i, g in now:
       if g.number == b.number: at = i
@@ -1522,20 +1527,27 @@ func findingsGroups(message, base: string; merged: openArray[int]): seq[Finding]
 func checkSignoffWindow*(
   message, branch: string; earlier, subjects: openArray[string]; before: openArray[seq[string]] = []
 ): seq[Finding] =
-  ## Report sign-off that drops or shrinks group of last sign-off that passed since message of
-  ##   Architect, since latest sign-off covers all work since then (#844).
-  ##   Sign-offs `before` that message are read nothing yet, ahead of keeping open groups past it.
-  ##   Earlier sign-off passed where its block keeps its shape and each group of one that passed
-  ##     before it, so replay of those verdicts finds base, and no field of harness is read.
+  ## Report sign-off that drops or shrinks group of last sign-off that passed: group of pull
+  ##   request whatever Architect wrote since (`D3 a` of #895), and work outside one since last
+  ##   message of Architect alone, so latest sign-off is enough (#844).
+  ##   `earlier` holds sign-offs of this window, and `before` those of each window before it,
+  ##     oldest first. Earlier sign-off passed where its block keeps its shape, and its groups
+  ##     keep those of one that passed before it by same rule; replay of those verdicts over each
+  ##     window finds base, and no field of harness is read.
   ##   Merge shows in first-parent subject of `main` that koch hands in, at no cost to shared
   ##     allowance; close shows on GitHub alone, so its group shows `closed` once, then drops.
   ##   Cost: verdict of block alone is replayed, so sign-off refused only for bare number or
   ##     reference serves as base, as its rows stand whole.
   let merged = subjects.numbersMerged
-  var base = ""
-  for s in earlier:
-    if checkSignoff(s, branch).len == 0 and findingsGroups(s, base, merged).len == 0: base = s
-  findingsGroups(message, base, merged)
+  var
+    base = ""
+    window_base = -1  # Window base sits in, counted from oldest; this one is `before.len`.
+  for window, signoffs in @before & @[@earlier]:
+    for s in signoffs:
+      if checkSignoff(s, branch).len > 0: continue
+      if findingsGroups(s, base, merged, is_window_same = window == window_base).len == 0:
+        (base, window_base) = (s, window)
+  findingsGroups(message, base, merged, is_window_same = window_base == before.len)
 
 
 func labelDefined(line: string): string =
@@ -2037,13 +2049,16 @@ func isTurnWriting*(calls: openArray[Call]): bool =
 
 proc parseTurn*(transcript: string): Turn =
   ## Read tool calls since last message person wrote, text of last assistant message, and each
-  ##   earlier sign-off since last message of Architect.
+  ##   earlier sign-off: since last message of Architect, and before it by window.
   ##   Transcript is JSON lines; message of person is `user` entry holding text and no tool
   ##     result, since tool results arrive as `user` entries too. Wake arrives same way, so turn
   ##     starts at it, and what turn did reads from there.
   ##   Message of Architect is `user` entry whose `origin.kind` is `human`, as Architect ruled on
   ##     #844; wake carries other kind, or none. Where no entry carries field, window starts with
-  ##     turn, as before harness wrote it; where none is human, window holds whole transcript.
+  ##     turn, as before harness wrote it, and no window before it reads; where none is human,
+  ##     window holds whole transcript.
+  ##   Each message of Architect opens window, and sign-off before first one sits in window of
+  ##     its own; window that holds no sign-off is left out.
   var entries: seq[JsonNode]
   for line in transcript.splitLines:
     if line.strip.len == 0: continue
@@ -2053,12 +2068,15 @@ proc parseTurn*(transcript: string): Turn =
     start = 0
     window = 0
     has_origin = false
+    messages: seq[int]  # Index of each message of Architect, in order.
   for i, e in entries:
     if e{"type"}.getStr != "user": continue
     let kind = e{"origin", "kind"}
     if kind != nil:
       has_origin = true
-      if kind.getStr == KIND_HUMAN: window = i
+      if kind.getStr == KIND_HUMAN:
+        window = i
+        messages.add i
     let content = e{"message", "content"}
     if content == nil: continue
     if content.kind == JString: start = i
@@ -2068,9 +2086,11 @@ proc parseTurn*(transcript: string): Turn =
       start = i
   if not has_origin: window = start
 
-  # Read calls of turn, and text of each assistant message from window or turn on.
-  var texts: seq[tuple[at: int, text: string]]
-  for i in min(start, window) .. entries.high:
+  # Read calls of turn, its last text, and each assistant text that names heading of sign-off.
+  var
+    at_message = -1
+    texts: seq[tuple[at: int, text: string]]  # Texts naming heading, in order.
+  for i in (if has_origin: 0 else: min(start, window)) .. entries.high:
     let e = entries[i]
     if e{"type"}.getStr != "assistant": continue
     let content = e{"message", "content"}
@@ -2089,11 +2109,19 @@ proc parseTurn*(transcript: string): Turn =
         )
       of "text": text.add item{"text"}.getStr
       else: discard
-    if text.len > 0: texts.add (at: i, text: text.join("\n"))
+    if text.len == 0: continue
+    let joined = text.join("\n")
+    if i >= start: (result.text, at_message) = (joined, i)
+    if HEADING_SIGNOFF in joined: texts.add (at: i, text: joined)
 
-  # Take last text of turn as message, and each earlier one of window holding sign-off.
-  var at_message = -1
+  # Sort each earlier sign-off into last window, or into window it sits in before that one.
+  var opened_last = -1  # Messages of Architect at or before sign-off sorted last.
   for (at, text) in texts:
-    if at >= start: (result.text, at_message) = (text, at)
-  for (at, text) in texts:
-    if at >= window and at != at_message and text.isSignoff: result.signoffs_earlier.add text
+    if at == at_message or not text.isSignoff: continue
+    if at >= window:
+      result.signoffs_earlier.add text
+      continue
+    let opened = messages.countIt(it <= at)
+    if opened != opened_last: result.signoffs_before.add newSeq[string]()
+    opened_last = opened
+    result.signoffs_before[^1].add text
