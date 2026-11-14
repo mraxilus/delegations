@@ -23,10 +23,9 @@
 ##     line on every platform (`command.toAbsolute`). Rule reading layout from it reads test file,
 ##     stub and umbrella here alone, each from names of path below folder of its package
 ##     (`partPackage`), so each meaning is written once.
-##   Nim tools set layout these rules read, so it holds in any repository: testament reads tests
-##     under `tests` of package, and nimble puts umbrella in `src` of package, named as nimble
-##     file is. So test file lies below `tests` of its package (`partTests`), and umbrella is
-##     `src/<name>.nim` beside `<name>.nimble`, whatever folder holds both (`isUmbrella`).
+##   Folder of nearest nimble file is root of package (#886): test file lies below `tests`
+##     of root (`partTests`), and umbrella is `src/<name>.nim` beside `<name>.nimble`, whatever
+##     folder holds both (`isUmbrella`).
 ##   Caller names nimble file nearest each file, written as its path is, empty where none stands
 ##     above (`nimble`); placed fixer takes it (`Placed`), as prover step takes answers. Lookup
 ##     reads file system, so caller makes it, and every rule here stays pure.
@@ -49,6 +48,7 @@
 ##     lower is no stub, so it takes no stub rule. Stub of STYLE.md §6 opens with header.
 ##   Cost: file whose caller names no nimble file takes no rule of test file, stub or umbrella:
 ##     fewer findings, never false one.
+##   Cost: package whose `srcDir` is not `src` has no umbrella here.
 
 {.experimental: "strictFuncs".}
 
