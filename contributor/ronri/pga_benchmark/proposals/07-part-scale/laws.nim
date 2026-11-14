@@ -6,17 +6,18 @@
 ##   Rigid laws, at rga4d: point moved twice equals point moved once by composed motor; join
 ##     moved equals join of moved points; meet moved equals meet of moved planes; moved point
 ##     keeps grade one; plane whose normal turns by ten tolerances never equals plane it came from.
-##   Laws of grade, in each algebra: multivector with coefficient not finite equals nothing, and
-##     one with infinite coefficient holds no grade. At 64 bits, `grade` reads every element of
-##     each population, reads it right, and agrees on it with its twin here. Twin is part scale
-##     in RGA, and in CGA part scale or 16 rounding units of largest coefficient.
+##   Laws of grade, in each algebra: multivector with coefficient not finite equals nothing, finite
+##     one included, and one with infinite coefficient holds no grade. Scalar comparison weighs
+##     stray against scale of its part. `grade` agrees on each element with its twin here, at each
+##     width; at 64 bits it also reads every element of each population, and reads it right. Twin
+##     is part scale in RGA, and in CGA part scale or 16 rounding units of largest coefficient.
 ##   Mixed populations: motion operators, products of two of them, general multivectors; in CGA
 ##     products of two spheres; at cga5d transversions and dilations. One-grade populations:
 ##     objects moved once or 30 times, k-vectors; in CGA round objects moved by conformal motion
 ##     operator, and spheres of every radius.
 ##   Figures it prints are evidence that never gates. Rigid figure is most decimal places one
 ##     rule keeps with no noise in any sample: "pin" weighs coefficient against max(1, |x|, |y|),
-##     as pin does and P06 alone does at 32 bits; "P07" weighs it against largest absolute value
+##     as pin does at each width; "P07" weighs it against largest absolute value
 ##     of its part, bulk or weight, in either. Population figure is misreads of each zero test, as
 ##     `Test` names each.
 ##   Rigid scene sits at distance from origin: each coordinate and translation is Gaussian, with
@@ -367,18 +368,21 @@ proc holdNonFinite() =
   ##   grade, wherever infinity lies.
   for b in Basis:
     for value in [Inf, NaN]:
-      var element = samplePoint(1)
+      let source = samplePoint(1)
+      var element = source
       element[b] = Coefficient(value)
       doAssert not (element =~ element),
         &"Multivector not finite equals nothing; got equal, holding `{value}` at `{b}`."
+      doAssert not (element =~ source) and not (source =~ element),
+        &"Multivector not finite differs from finite one; got equal, holding `{value}` at `{b}`."
       if value == Inf:
         doAssert element.grade.isNone,
           &"Overflowed multivector holds no grade; got `{element.grade}` at `{b}`."
 
 
 proc holdPopulations() =
-  ## Read every population with each zero test, print misreads of each, and hold `grade` right on
-  ##   every population at 64 bits.
+  ## Read every population with each zero test, print misreads of each, and hold `grade` with its
+  ##   twin on every population, and right on every population at 64 bits.
 
   template tally(label: string, is_one_grade_expected: bool, sampled: untyped) =
     ## Sample elements of one population, then print and add misreads of each test.
@@ -405,8 +409,8 @@ proc holdPopulations() =
           "`grade` reads every element of " & label & "; got `" & $count & "` read."
         doAssert misreads[Test.Library] == 0,
           "`grade` reads " & label & " right; got `" & $misreads[Test.Library] & "` misread."
-        doAssert count_apart == 0,
-          "`grade` agrees with its twin on " & label & "; got `" & $count_apart & "` apart."
+      doAssert count_apart == 0,
+        "`grade` agrees with its twin on " & label & "; got `" & $count_apart & "` apart."
 
   var
     parts: array[Basis, int]
@@ -464,12 +468,25 @@ proc holdPopulations() =
   echo line
 
 
+proc holdScalar() =
+  ## Hold that scalar comparison weighs stray against scale of its part; first basis vector lies
+  ##   in part of scalar in each algebra.
+  var m: Multivector
+  m[Basis.scalar] = 1000
+  m[Basis.scalar.succ] = TOLERANCE_ABS * 500
+  doAssert m =~ Coefficient(1000) and Coefficient(1000) =~ m,
+    "Scalar comparison weighs stray against scale of its part; got unequal."
+  m[Basis.scalar.succ] = TOLERANCE_ABS * 2000
+  doAssert not (m =~ Coefficient(1000)), "Stray past bound differs from scalar; got equal."
+
+
 proc main() =
   ## Print width of this build, then hold laws of its algebra.
   randomize(SEED)
   echo "width ", FLOAT_WIDTH, " tolerance ", FLOAT_TOLERANCE
   when IS_RIGID and DIMENSIONS == 4: holdRigid()
   holdPopulations()
+  holdScalar()
   holdNonFinite()  # Last, so populations draw from seed alone.
 
 
