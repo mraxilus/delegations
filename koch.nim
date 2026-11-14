@@ -316,7 +316,7 @@ proc runHook(root, event, input: string): int =
       var found = checkNumbersBare(turn.text)
       found.add checkReferencesBare(turn.text)
       found.add checkLinksReference(turn.text)
-      if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch_root)
+      found.add checkEndTurn(turn.text, branch_root, is_writing = turn.calls.isTurnWriting)
       let unread = checkSignoffRead(turn.text, turn.calls)
       if found.len == 0 and unread.len == 0: return 0
       let has_signoff = turn.text.splitLines.anyIt(it.strip == HEADING_SIGNOFF)

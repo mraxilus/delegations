@@ -468,8 +468,9 @@ suite "Hooks":
   test "stop hook asks for diff of each error alone, never whole message or its lines again":
     # Message stands on screen once hook reads it, so resent message reads twice (D1 of #570),
     #   and so does each paragraph sent again around one mended phrase.
-    let reason =
-      reasonStop(checkEndTurn("Pushed.\n", BRANCH) & checkNumbersBare("See #12.\n"), [])
+    let
+      ended = checkEndTurn("Pushed.\n", BRANCH, is_writing = true)
+      reason = reasonStop(ended & checkNumbersBare("See #12.\n"), [])
     check reason.startsWith("Mend message that ends this turn (GUIDE.md, Output contract).")
     check "Reply with a diff of each error alone: one `diff` block" in reason
     check "each wrong phrase after `-`, that phrase mended after `+`" in reason
@@ -552,16 +553,17 @@ suite "Hooks":
   test "turn ends with sign-off once delegate stops, else with working line":
     # Sign-off only when done, blocked or waiting; working line while work runs (GUIDE.md).
     const working = "Pushed.\n\n**Working:** run 890 of `check`, whose result wakes me.\n"
-    check checkEndTurn(SIGNOFF, BRANCH).len == 0
-    check checkEndTurn(working, BRANCH).len == 0
-    check checkEndTurn("Pushed.\n", BRANCH).messages.anyIt("got neither" in it)
-    check checkEndTurn("Pushed.\n\n**Working:**\n", BRANCH)
+    check checkEndTurn(SIGNOFF, BRANCH, is_writing = true).len == 0
+    check checkEndTurn(working, BRANCH, is_writing = true).len == 0
+    check checkEndTurn("Pushed.\n", BRANCH, is_writing = true).messages.anyIt("got neither" in it)
+    check checkEndTurn("Pushed.\n\n**Working:**\n", BRANCH, is_writing = true)
       .messages.anyIt("got neither" in it)  # names nothing
-    check checkEndTurn(working & "\nMore.\n", BRANCH)
+    check checkEndTurn(working & "\nMore.\n", BRANCH, is_writing = true)
       .messages.anyIt("got neither" in it)  # working line is last
-    check checkEndTurn(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH)
+    check checkEndTurn(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH, is_writing = true)
       .messages.anyIt("lacks `**Summary:**`" in it)  # sign-off read in full
-    check checkEndTurn(PLAIN.replace("**State:** done", "**State:** working"), BRANCH)
+    let working_state = PLAIN.replace("**State:** done", "**State:** working")
+    check checkEndTurn(working_state, BRANCH, is_writing = true)
       .messages.anyIt("got `working`" in it and "**Working:**" in it)  # no state for work
 
 

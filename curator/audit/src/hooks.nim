@@ -1599,10 +1599,12 @@ func checkReferencesBare*(message: string): seq[Finding] =
       i = after
 
 
-func checkEndTurn*(message, branch: string): seq[Finding] =
+func checkEndTurn*(message, branch: string; is_writing: bool): seq[Finding] =
   ## Report end of turn that pushed or posted: sign-off once delegate stops, else working line.
   ##   Working line is last line holding text, with text after label; reader alone judges
   ##     whether it names what runs and what wakes delegate.
+  ##   Turn that wrote nothing is asked for nothing here.
+  if not is_writing: return
   if message.splitLines.anyIt(it.strip == HEADING_SIGNOFF):
     return checkSignoff(message, branch)
   let last = message.strip.splitLines[^1].strip
