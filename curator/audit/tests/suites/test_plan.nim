@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, sequtils, tables, unittest]
-import ../../src/[domains, plan, projects, toolchain]
+import ../../src/[domains, layout, plan, projects, toolchain]
 import ./fixtures
 
 
@@ -28,7 +28,7 @@ suite "Plan":
       @[DIRECTORY_ALPHA]  # page
 
 
-  test "record change alone selects nothing, so rules propagation compiles nothing":
+  test "record change alone selects nothing, so rules propagation compiles no unlisted project":
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/PROVENANCE.md"]).len == 0  # stamp only
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/GLOSSARY.md"]).len == 0  # terms only
     # README runs nothing.
@@ -41,6 +41,21 @@ suite "Plan":
     # Record beside code still selects, since code changed.
     let mixed = [DIRECTORY_ALPHA & "/PROVENANCE.md", DIRECTORY_ALPHA & "/src/a.nim"]
     check projectsTest(DIRECTORIES, mixed) == @[DIRECTORY_ALPHA]
+
+
+  test "record change of project keeping its own prose selects it, whose suite holds that prose":
+    # Case: records of `lojban_parser` move to lojban, by ruling `D4 a` of #818, and no rule of
+    #   English reads them. Domain: each record of listed project and of project of same domain
+    #   list leaves out, rules propagation over both, and importer of listed project.
+    let directories = [DIRECTORY_PARSER, DIRECTORY_TAGGER]
+    for file in FILES_PROJECT:
+      check projectsTest(directories, [DIRECTORY_PARSER & "/" & file]) == @[DIRECTORY_PARSER]
+      check projectsTest(directories, [DIRECTORY_TAGGER & "/" & file]).len == 0  # left out
+    check projectsTest(directories, directories.mapIt(it & "/PROVENANCE.md")) ==
+      @[DIRECTORY_PARSER]  # rules propagation compiles listed project alone
+    let importers = {DIRECTORY_PARSER & "/src": @[DIRECTORY_TAGGER]}.toTable
+    check projectsTest(directories, [DIRECTORY_PARSER & "/README.md"], importers) ==
+      @[DIRECTORY_PARSER]  # importer reads no record
 
 
   test "project gains type check by carrying node manifest and its lock":
