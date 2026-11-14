@@ -1,21 +1,31 @@
-## Hold page of live text (`pages/live.html`) to native build, in headless Chromium that verb
-##   `drive` starts (`tools/drive.nim`): page built from same shell, with this suite as its script
-##   in place of `src/browser/page.nim`, which suite holds whole, since second script of Nim on
-##   page would replace procs of first (`tools/browser.nim`).
-##   Each case backend serves gives what page shows of it, against drawing native build gives:
-##     sample read whole, as its button reads it; text streamed word by word, then ended; text
-##     typed piece by piece, kept open; edit that keeps no text before it, which starts new
-##     reader. Case and each piece is file of one string, so no format stands between them.
-##   Merge of each case draws each tree native build merges its NIF so far to, with its line, as
-##     `drawnMerged` gives both builds: one tree of one pass, or tree of each run around error
-##     that stays; next change hides them, as stale. Suite wires controls as page does
-##     (`wiredControls`), and clicks button Merge.
-##   Drawing page shows and drawing native build writes compare as same browser serialises both,
-##     so no quirk of serialiser stands between them.
-##   Page whose rule of content refuses each worker reads on its own thread, shows same drawing,
-##     and says so in line of mode.
-##   Suite of promises reports each test as unittest spells it (`report.nim`), since unittest
-##     awaits none, then code of run.
+## cipra lo du'u le papri pe lo jmive se ciska to `pages/live.html` toi cu mintu le jbena zbasu
+##   ne'i la'o gy. headless Chromium .gy. noi lo minde po'u `drive` cu rinka lo nu ke'a cfari to
+##   `tools/drive.nim` toi .i le papri cu se zbasu fi le mintu calku .i le vi cipra cu du le samtci
+##   pe le papri gi'e basti `src/browser/page.nim` .i le cipra cu vasru ro pagbu be
+##   `src/browser/page.nim` .i ki'u bo va'o lo nu pa remoi samtci pe la'o gy. Nim .gy. cu zvati le
+##   papri kei le remoi samtci cu basti lo fancu pe le pamoi to `tools/browser.nim` toi
+##   .i le cipra cu karbi lo se jarco be le papri be'o pe ro se cipra poi le sabji samtci cu sabji
+##     ke'a ku'o le pixra poi le jbena zbasu cu dunda ke'a .i pa se cipra cu du pa mupli poi mulno
+##     se tcidu ta'i le batke pe ke'a .i pa se cipra cu du pa se ciska poi se benji ta'i lo nu ro
+##     valsi cu sepli kei gi'e ba se sisti .i pa se cipra cu du pa se ciska poi se ciska ta'i lo nu
+##     ro pagbu cu sepli kei gi'e ca'o kalri .i pa se cipra cu du pa nu galfi poi ralte no pu se
+##     ciska zi'e noi rinka lo nu pa cnino tcidu cu cfari .i ro se cipra .e ro pagbu cu datnyvei
+##     gi'e vasru pa lerpoi .i se ki'u bo no tarmi be lo datni cu zvati lo jbini be le sabji samtci
+##     .e le cipra
+##   .i lo pixra be lo nu jmina be ro se cipra cu jarco ro tricu poi le jbena zbasu cu jmina le ca
+##     se ciska be fi la'o gy. NIF .gy. be'o pe le se cipra fo ke'a .i le linji cu se jarco ji'a .i
+##     ro le re se zbasu cu pilno `drawnMerged` .i le se jarco cu du pa tricu pe lo nu tcidu le
+##     mulno se ciska .a lo tricu pe ro porsi be lo pagbu poi sruri pa srera poi stali .i lo
+##     bavla'i cenba cu mipri le tricu ki'u lo nu le tricu cu na drani .i le cipra cu jitro lo jitro
+##     tutci ta'i le papri to `wiredControls` toi gi'e danre le batke po'u la'o gy. Merge .gy.
+##   .i le pixra poi le papri cu jarco ke'a ku'o .e le pixra poi le jbena zbasu cu ciska ke'a cu se
+##     karbi ta'i lo nu le mintu tcidu be lo papri cu ciska ro le re pixra .i se ki'u bo no cizra be
+##     le ciska cu zvati lo jbini be le re pixra
+##   .i lo papri poi lo javni pe lo se vasru be ke'a cu to'e curmi ro gunka cu tcidu ne'i lo cilta
+##     pe vo'a gi'e jarco le mintu pixra .i le linji pe le tadji cu cusku di'u
+##   .i le cipra pe lo nupre cu cusku ro cipra ta'i lo nu la'o gy. unittest .gy. cu ciska to
+##     `report.nim` toi .i ki'u bo la'o gy. unittest .gy. cu denpa no nupre .i ba bo le cipra cu
+##     cusku lo fanmo namcu pe le nu cipra
 
 {.experimental: "strictFuncs".}
 
@@ -26,36 +36,43 @@ import ./report
 
 
 const
-  DIRECTORY_CASES = "/drive/page/"  ## Folder backend serves cases from.
-  COUNT_CASES_LEAST = 9  ## Cases backend serves, at least.
+  DIRECTORY_CASES = "/drive/page/"  ## lo vasru be lo se cipra poi le sabji samtci cu sabji ke'a
+  COUNT_CASES_LEAST = 9  ## lo du'u le sabji samtci cu sabji su'o xo kau se cipra
   MODE_REFUSED = "refused"
-    ## Mode of page whose rule of content refuses each worker, as attribute `data-mode` of body.
-  MODE_WORKER = "A worker reads the text."  ## Line of mode where worker reads.
+    ## lo tadji be lo papri poi lo javni pe lo se vasru be ke'a cu to'e curmi ro gunka .i
+    ##   `data-mode` pe `body` cu jarco le tadji
+  MODE_WORKER = "A worker reads the text."  ## le linji pe le tadji va'o lo nu pa gunka cu tcidu
   MODE_PAGE = "This page reads the text, since it gives no worker."
-    ## Line of mode where page refuses worker.
-  KINDS = ["whole", "stream", "typed", "edit"]  ## Kind of each case backend serves.
+    ## le linji pe le tadji va'o lo nu le papri cu to'e curmi lo gunka
+  KINDS = ["whole", "stream", "typed", "edit"]
+    ## lo klesi poi ro se cipra pe le sabji samtci cu cmima ke'a
 
 
-type Case = object  ## Define case of page: how suite reads it, and what native build draws.
-  kind: string  ## Member of `KINDS`.
-  pieces: seq[string]  ## Text of case, piece by piece; whole text for `whole` and `stream`.
-  html: string  ## Drawing native build gives.
-  status: string  ## Line native build gives.
-  merged_html: string  ## Drawing of tree native build merges NIF so far to.
-  merged_status: string  ## Line of merge native build gives.
+type Case = object
+  ## pa se cipra pe le papri .i le tadji be lo nu tcidu le se cipra .e le pixra pe le jbena zbasu
+  kind: string  ## pa cmima be `KINDS`
+  pieces: seq[string]
+    ## lo se ciska pe le se cipra ta'i lo nu ro pagbu cu sepli .i pa pagbu cu du le mulno se ciska
+    ##   va'o lo nu le klesi cu du `whole` .a `stream`
+  html: string  ## le pixra poi le jbena zbasu cu dunda ke'a
+  status: string  ## le linji poi le jbena zbasu cu dunda ke'a
+  merged_html: string  ## le pixra be le tricu poi le jbena zbasu cu jmina le ca se ciska fo ke'a
+  merged_status: string  ## le linji pe lo nu jmina ge'u zi'e poi le jbena zbasu cu dunda ke'a
 
 
-let DOCUMENT {.nodecl, importc: "document".}: JsObject  ## Document of page; none in worker.
+let DOCUMENT {.nodecl, importc: "document".}: JsObject
+  ## `document` pe le papri .i no da ne'i lo gunka
 
 
 proc serialised(html: cstring): cstring {.importjs:
   "(function(markup) { var held = document.createElement('template'); " &
   "held.innerHTML = markup; return held.innerHTML; })(#)".}
-  ## Give markup as browser serialises it. Boundary of JS target: element `template`.
+  ## dunda le se ciska be fi la'o gy. HTML .gy. be'o poi lo tcidu be lo papri cu ciska ke'a .i korbi
+  ##   la'o gy. JS .gy. sepi'o pa pagbu po'u `template`
 
 
 proc readCases(): seq[Case] =
-  ## Read each case backend serves, with each piece of it.
+  ## tcidu ro se cipra poi le sabji samtci cu sabji ke'a .i tcidu ji'a ro pagbu be le se cipra
   let count = readServed(DIRECTORY_CASES & "count.text").strip.parseInt
   for k in 0 ..< count:
     let path = DIRECTORY_CASES & $k
@@ -68,7 +85,8 @@ proc readCases(): seq[Case] =
 
 
 proc readCase(item: Case) {.async.} =
-  ## Read case as page reads it: by button, by stream with no pause, or typed piece by piece.
+  ## tcidu le se cipra ta'i le papri .i lo batke .a lo porsi be lo valsi be'o poi vasru no denpa .a
+  ##   lo nu ciska ro pagbu cu rinka lo nu tcidu
   case item.kind
   of "whole": await readWhole(cstring(item.pieces[0]))
   of "stream": await streamed(cstring(item.pieces[0]), 0)
@@ -83,7 +101,8 @@ proc readCase(item: Case) {.async.} =
 
 
 proc runSuite() {.async.} =
-  ## Run each test of suite in order, and report each, then code of run.
+  ## pilno ro cipra pe le cipra ta'i le porsi gi'e cusku ro le cipra .i ba bo cusku lo fanmo namcu
+  ##   pe le nu cipra
   let is_refused = DOCUMENT.body.dataset.mode.to(cstring) == MODE_REFUSED
   report "[Suite] Internal: Page of live text" & (if is_refused: ", worker refused" else: "")
   let cases = readCases()
@@ -91,14 +110,16 @@ proc runSuite() {.async.} =
   wiredControls()
 
   template ended(name: string) =
-    ## Report test as unittest spells it: failed where check failed since last test.
+    ## cusku le cipra ta'i lo nu la'o gy. unittest .gy. cu ciska .i le cipra cu fliba va'o lo nu pa
+    ##   xusra cu fliba ba le romoi cipra
     report "  [" & (if countFailures() > failures: "FAILED" else: "OK") & "] " & name
     failures = countFailures()
 
   expectThat cases.len >= COUNT_CASES_LEAST, "backend serves " & $COUNT_CASES_LEAST & " cases"
   var
     kinds: seq[string]
-    merges: seq[tuple[html, status: string, is_hidden: bool]]  # what page shows, case by case
+    # lo se jarco be le papri pe ro se cipra ta'i lo nu ro se cipra cu sepli
+    merges: seq[tuple[html, status: string, is_hidden: bool]]
   for item in cases:
     if item.kind notin kinds: kinds.add item.kind
     await item.readCase
@@ -114,7 +135,8 @@ proc runSuite() {.async.} =
       $DOCUMENT.getElementById(cstring("merged-parts")).innerHTML.to(cstring),
       $DOCUMENT.getElementById(cstring("merged-status")).textContent.to(cstring), is_hidden,
     )
-  expectThat kinds == @KINDS, "backend serves each kind of case"  # IX.3, guard keeps each kind
+  # lo bandu cu ralte ro klesi
+  expectThat kinds == @KINDS, "backend serves each kind of case"  # `IX.3`
   ended "Page draws each case as native build draws its NIF: whole, streamed, typed and edited"
 
   var count_whole, count_kept = 0
@@ -126,7 +148,7 @@ proc runSuite() {.async.} =
       "line of merge names what native build names: " & claim
     if cases[k].merged_status.startsWith("Merged · one tree"): inc count_whole
     elif cases[k].merged_status.startsWith("Merged · "): inc count_kept
-  expectThat count_whole > 0 and count_kept > 0, "cases merge whole, and keep error"  # IX.3
+  expectThat count_whole > 0 and count_kept > 0, "cases merge whole, and keep error"  # `IX.3`
   ended "Merge draws trees of completed parts as native build merges them, error in place"
 
   for k in 0 ..< cases.len:
@@ -139,7 +161,8 @@ proc runSuite() {.async.} =
   await typed(cstring(text_typed))
   discard DOCUMENT.getElementById(cstring("merge")).click()
   let is_shown = not DOCUMENT.getElementById(cstring("merged")).hidden.to(bool)
-  await typed(cstring(text_typed & " .i"))  # same reader takes word more, as it stays open
+  # le mintu tcidu cu cpacu pa valsi ji'a .i ki'u bo le tcidu cu ca'o kalri
+  await typed(cstring(text_typed & " .i"))
   expectThat is_shown, "button shows tree merged"
   expectThat DOCUMENT.getElementById(cstring("merged")).hidden.to(bool),
     "change of same reader hides tree merged"
@@ -152,7 +175,8 @@ proc runSuite() {.async.} =
   reportEnd(if countFailures() > 0: 1 else: 0)
 
 
-# Run suite in page; in worker, which starts from this script, answer page alone (`live_text.nim`).
+# le cipra cu fasnu ne'i le papri .i le gunka noi se krasi le vi samtci cu spuda le papri po'o to
+# `live_text.nim` toi
 if DOCUMENT.jsTypeOf != "undefined":
   initReporter()
   discard runSuite()

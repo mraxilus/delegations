@@ -1,8 +1,12 @@
-## Hold drawing of live text (`src/browser/draw.nim`) natively: card of each word in order of
-##   text, boxes of one row apart, each edge clear of each box, whole pixels, error node and part
-##   still open as page shows them, and line of merge. Suite of page holds page to same drawing
-##   under JavaScript (`tests/browser/suite_page.nim`).
-##   Laws read every eighth text of corpora, as native build reads each whole, and NIF it gives.
+## cipra le pixra be lo jmive se ciska to `src/browser/draw.nim` toi ne'i le jbena zbasu .i le
+##   cipra cu cipra lo du'u ro valsi cu se pixra pa karda ta'i le porsi pe le se ciska .i ro tanxe
+##   pe pa pinta porsi cu sepli .i ro jorne linji cu pencu no tanxe .i ro stuzi cu klani lo mulno
+##   namcu la'o gy. pixel .gy. .i lo srera jgena .e lo pagbu poi ca'o kalri cu se pixra ta'i le
+##   papri .i ji'a le linji pe lo nu jmina .i le cipra pe le papri cu cipra lo du'u le papri cu
+##   jarco le mintu pixra ne'i la'o gy. JavaScript .gy. to `tests/browser/suite_page.nim` toi
+##   .i lo flalu cu tcidu ro bimoi se ciska pe lo se ciska girzu .i le jbena zbasu cu tcidu ro le
+##     se ciska ta'i lo nu tcidu le mulno se ciska .i lo flalu cu tcidu ji'a le se ciska be fi la'o
+##     gy. NIF .gy. be'o poi le jbena zbasu cu dunda ke'a
 
 {.experimental: "strictFuncs".}
 
@@ -17,25 +21,31 @@ import ./corpora
 
 
 const
-  STEP_CORPORA = 8  ## Laws read each text of corpora whose index this divides.
-  COUNT_TEXTS_LEAST = 200  ## Texts laws read at least; 243 on adding suite.
+  STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro xo kau moi se ciska pe lo se ciska girzu
+  COUNT_TEXTS_LEAST = 200
+    ## lo du'u lo flalu cu tcidu su'o xo kau se ciska .i lo flalu pu tcidu revoci se ciska ca lo nu
+    ##   le cipra cu se jmina
   EXAMPLE_ERROR = (
-    text: "mi klama le .i ko",  # `le` opens sumti that no word closes (CLL 6.2)
+    text: "mi klama le .i ko",  # zo le cu krasi pa sumti poi no valsi cu fanmo ke'a .i `CLL 6.2`
     head: "srera · byte 13",
     rule: "in sumti-6",
   )
-    ## Text whose grammar stops at `.i`, byte 13, inside `sumti-6` 97, and what its box says.
+    ## pa se ciska .e lo se cusku be le tanxe pe le se ciska .i le gerna cu sisti bu'u zo .i noi
+    ##   zvati lo stuzi pe li paci ku'o ne'i `sumti-6` noi du le javni pe li soze
   MODULE_REFUSED = HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
     "(FOO 8 10 \"do\")\n"
-    ## Module whose second node names no selma'o, so merge refuses it and names that node.
+    ## lo se ciska be fi la'o gy. NIF .gy. be'o poi le tcita be le remoi jgena be ke'a cu cmene no
+    ##   selma'o .i se ki'u bo lo nu jmina cu to'e curmi le se ciska gi'e cusku le jgena
 
 
 type ReadingDrawn = tuple[key: string, nif: string, parts: seq[NodeNif]]
-  ## Define text of corpora as laws read it: key, NIF native build gives, and part of each line.
+  ## pa se ciska pe lo se ciska girzu ta'i lo nu lo flalu cu tcidu .i le ckiku .e le se ciska be fi
+  ##   la'o gy. NIF .gy. be'o poi le jbena zbasu cu dunda ke'a ku'o .e le pagbu pe ro linji
 
 
 func readPool(): seq[ReadingDrawn] =
-  ## Read every eighth text of corpora whole, with NIF of each and its parts.
+  ## tcidu ro bimoi se ciska pe lo se ciska girzu ta'i lo nu tcidu le mulno se ciska .i ro le se
+  ##   ciska cu se kansa le se ciska be fi la'o gy. NIF .gy. be'o pe vo'a .e le pagbu pe vo'a
   let texts = textsCorpora()
   for k in countup(0, texts.high, STEP_CORPORA):
     let nif = readTextParts(texts[k][1]).reading.toNifParts
@@ -46,7 +56,9 @@ func readPool(): seq[ReadingDrawn] =
 
 
 func countLeaves(node: NodeNif, tag: string): tuple[nodes, words: int] =
-  ## Count terminals, or units of `rivbi` where `tag` names it, under node, and words they hold.
+  ## va'o lo nu `tag` cu cmene `rivbi` kei kancu lo pagbu pe `rivbi` ge'u zi'e poi cnita le jgena .i
+  ##   va'o lo drata kancu lo gerna valsi poi cnita le jgena .i kancu ji'a lo valsi poi le se kancu
+  ##   cu vasru ke'a
   if node.kind != KindNif.Compound: return
   let is_leaf = node.children.len > 0 and node.children[^1].kind == KindNif.Literal
   if is_leaf:
@@ -61,29 +73,31 @@ func countLeaves(node: NodeNif, tag: string): tuple[nodes, words: int] =
     result.words += counts.words
 
 
-type Rectangle = tuple[x, y, width, height: int]  ## Define box of SVG: corner, then size.
+type Rectangle = tuple[x, y, width, height: int]
+  ## pa tanxe pe la'o gy. SVG .gy. .i lo kojna cu lidne lo ni barda
 
 
 func attribute(element, name: string): string =
-  ## Give value of attribute of element of SVG.
+  ## dunda lo se vasru be pa ckaji pe pa pagbu pe la'o gy. SVG .gy.
   let opening = element.find(" " & name & "=\"") + name.len + 3
   element[opening ..< element.find('"', opening)]
 
 
 func number(element, name: string): int =
-  ## Give value of attribute of element of SVG as integer.
+  ## dunda lo se vasru be pa ckaji pe pa pagbu pe la'o gy. SVG .gy. ta'i pa mulno namcu
   element.attribute(name).parseInt
 
 
 func isEntered(box: Rectangle, a, b: (int, int)): bool =
-  ## Decide whether segment of edge, across or down, passes inside box, edges of box apart.
+  ## jdice lo du'u pa pagbu be pa jorne linji be'o poi pinta ja sraji cu klama lo nenri be le tanxe
+  ##   .i le korbi be le tanxe cu na pagbu le nenri
   let
     (left, right) = (min(a[0], b[0]), max(a[0], b[0]))
     (top, bottom) = (min(a[1], b[1]), max(a[1], b[1]))
   left < box.x + box.width and right > box.x and top < box.y + box.height and bottom > box.y
 
 
-let POOL = readPool()  ## Texts laws read, once.
+let POOL = readPool()  ## lo se ciska poi lo flalu cu tcidu ke'a .i le se ciska cu se tcidu pa roi
 
 
 
@@ -172,8 +186,8 @@ suite "Internal: Drawing of live text":
       if node.kind != KindNif.Compound or node.text.startsWith("."): continue
       for place in node.laidOut.places:
         if place.kind == KindPlace.Rule: lines.add place.lines
-    check @["sumti-6", "… terms 80 (11)"] in lines  # header of `draw.nim`, name alone
-    check @["sentence", "… text 0 (9)"] in lines  # chain from `text` 0, nine rules
+    check @["sumti-6", "… terms 80 (11)"] in lines  # le krasi be `draw.nim` .i le cmene po'o
+    check @["sentence", "… text 0 (9)"] in lines  # se krasi `text` pe li no gi'e vasru so javni
 
 
   test "Error node draws box at byte grammar stops, naming its rule and what it needs":
@@ -201,8 +215,9 @@ suite "Internal: Drawing of live text":
     check not whole.is_refused and whole.count_parts == 1
     check kept.status == "Merged · 2 trees · 5 words · 1 error · 0 words unread"
     check not kept.is_refused and "class=\"box err\"" in kept.html
-    check refused.is_refused and refused.html.len == 0  # NIF that reads not draws no part
-    check refused.status.startsWith("Merge refused · part 2 · ")  # node counted from 1
+    # lo se ciska be fi la'o gy. NIF .gy. be'o poi na se tcidu
+    check refused.is_refused and refused.html.len == 0  # no pagbu cu se pixra
+    check refused.status.startsWith("Merge refused · part 2 · ")  # li pa cu krasi lo nu kancu
 
 
   test "Part still open draws as open, and line counts it apart":

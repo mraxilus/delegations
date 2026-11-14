@@ -1,13 +1,20 @@
-## Replicate catalogue of selma'o of CLL chapter 20 against `selmaho.nim` and cmavo list.
-##   Names and their order are copied from chapter 20, never from library output, so suite
-##     checks names rather than repeating them.
-##   Chapter 20 names each selma'o by representative cmavo, so that cmavo, spelled from name,
-##     carries that selma'o in list; suite holds it for every name.
-##   Lookup is held to linear scan of `LIST_CMAVO`, written here apart from binary search of
-##     `dictionary.nim`, over every entry and over seeded one-letter mutations (Article IX.3).
-##   Law over `cmavo.txt` reads it as outside text (`texts_outside.nim`), and skips where it is
-##     absent or moved (IX.9): line of one cmavo reads with its selma'o, compound splits into
-##     cmavo list holds, and phrase reads word by word.
+## rapli zbasu le liste be lo selma'o pe `CLL 20` gi'e cipra lo du'u `selmaho.nim` .e le cmavo liste
+##   cu mapti le se zbasu
+##   .i lo cmene .e lo porsi be le cmene cu fukpi lo se ciska pe `CLL 20` gi'e no roi fukpi lo se
+##     ciska be le samtci .i se ki'u bo le cipra cu cipra le cmene gi'e na rapli ciska le cmene
+##   .i `CLL 20` cu dunda lo cmene ro selma'o sepi'o pa cmavo poi sinxa le selma'o .i se ki'u bo le
+##     cmavo poi se ciska ja'i le cmene cu cmima le selma'o ne'i le cmavo liste .i le cipra cu cipra
+##     di'u fi ro cmene
+##   .i lo cipra cu cipra lo du'u lo nu sisku cu mintu lo nu sisku fi ro cmima be `LIST_CMAVO` ta'i
+##     lo porsi .i le vi cipra cu ciska le nu sisku ta'i lo porsi gi'e na pilno lo nu sisku pe
+##     `dictionary.nim` zi'e noi fendi lo liste fi re pagbu .i le cipra cu tcidu ro cmima be le
+##     liste be'o .e lo cmavo poi se cuxna lo tsiju gi'e se galfi pa lerfu to `Article IX.3` toi
+##   .i lo flalu pe `cmavo.txt` cu tcidu `cmavo.txt` ta'i lo se ciska poi na pagbu le vi se gunka to
+##     `texts_outside.nim` toi .i le flalu cu na se cipra va'o lo nu `cmavo.txt` cu na zvati gi'a
+##     muvdu fo lo stuzi poi se jgari to `Article IX.9` toi .i lo linji poi vasru pa cmavo po'o cu
+##     se tcidu .i le se tcidu cu vasru lo selma'o poi le linji cu dunda ke'a .i lo cmavo gunma cu
+##     se fendi fi lo cmavo poi le liste cu vasru ke'a .i le genturfa'i cu tcidu ro valsi pe lo
+##     jufra pagbu
 
 {.experimental: "strictFuncs".}
 
@@ -34,37 +41,50 @@ const
     "TO", "TOI", "TUhE", "TUhU", "UI", "VA", "VAU", "VEI", "VEhA", "VEhO", "VIhA", "VUhO",
     "VUhU", "XI", "Y", "ZAhO", "ZEI", "ZEhA", "ZI", "ZIhE", "ZO", "ZOI", "ZOhU",
   ]
-    ## Every selma'o chapter 20 names, in its order, as it spells each.
+    ## lo cmene be ro selma'o pe `CLL 20` ta'i le porsi .e le lerfu pe `CLL 20`
   LETTERS_MUTATION = "'abcdefgijklmnoprstuvxyz.ABh"
-    ## Letters of 3.1, period, and capitals and `h` that no cmavo holds, which mutations draw.
-  SAMPLES_MUTATION = 5000  ## Committed cmavo mutated in one letter and looked up, seeded.
+    ## lo lerfu poi lo galfi cu cuxna ke'a .i le lerfu cu du lo lerfu pe `CLL 3.1` ge'u .e denpa bu
+    ##   .e lo barda lerfu .e `h` .i no cmavo cu vasru lo barda lerfu .a `h`
+  SAMPLES_MUTATION = 5000
+    ## lo cmavo poi se cuxna fi le liste sepi'o lo tsiju gi'e se sisku ba lo nu pa lerfu pe ke'a cu
+    ##   se galfi
   FLOOR_UNLISTED = 3000
-    ## Least of those mutations no list holds, so corpus keeps misses: 3649 read at seed `0`.
-  COUNT_COMPOUNDS = 472  ## Lines of `cmavo.txt` writing compound as one word, which it pins.
-  COUNT_PHRASES = 21  ## Lines of `cmavo.txt` writing phrase of several words, which it pins.
+    ## lo mleca traji klani be le galfi poi no liste cu vasru ke'a .i le mleca traji cu ralte lo nu
+    ##   lo se cipra cu vasru lo valsi poi no liste cu vasru ke'a .i ca lo nu lo tsiju cu du `0` kei
+    ##   cixavoso le galfi cu se kancu
+  COUNT_COMPOUNDS = 472
+    ## lo klani be lo linji poi ciska lo cmavo gunma ta'i pa valsi ne'i `cmavo.txt` .i le cipra cu
+    ##   jdice lo du'u le klani cu stodi
+  COUNT_PHRASES = 21
+    ## lo klani be lo linji poi ciska lo jufra pagbu poi vasru su'o re valsi ku'o ne'i `cmavo.txt`
+    ##   .i le cipra cu jdice lo du'u le klani cu stodi
 
 
 func selmahoScanned(text: string): Option[Selmaho] =
-  ## Find selma'o of cmavo spelled `text` by linear scan of committed list, apart from lookup.
+  ## facki lo selma'o be lo cmavo po'u `text` sepi'o lo nu sisku fi ro cmima be le liste ta'i lo
+  ##   porsi .i le fancu cu sepli lo nu sisku pe `dictionary.nim`
   for entry in LIST_CMAVO:
     if entry.word == text: return some(entry.selmaho)
   none(Selmaho)
 
 
 func nameColumn(column: string): string =
-  ## Cut name of selma'o from column of `cmavo.txt`, before subclass or mark, apart from converter.
+  ## lebna lo cmene be lo selma'o lo pagbu be lo linji pe `cmavo.txt` .i le cmene cu lidne lo klesi
+  ##   pagbu .a lo sinxa .i le fancu cu sepli le galfi samtci
   for letter in column:
     if letter in {'A' .. 'Z', 'h'}: result.add letter
     else: break
 
 
 func toWord(name: string): string =
-  ## Spell cmavo chapter 20 names selma'o after: lowercase, `h` standing for apostrophe.
+  ## ciska lo cmavo poi `CLL 20` cu pilno ke'a lo nu cmene lo selma'o .i ro lerfu cu cmalu .i `h` cu
+  ##   sinxa zoi gy. ' .gy.
   name.toLowerAscii.replace('h', '\'')
 
 
 proc drawMutated(): seq[string] =
-  ## Draw `SAMPLES_MUTATION` committed cmavo, each mutated in one letter, seeded once.
+  ## cuxna lo cmavo pe le liste .i le klani be le cmavo cu du `SAMPLES_MUTATION` .i pa lerfu pe ro
+  ##   le cmavo cu se galfi .i lo tsiju cu se cuxna pa roi
   randomize(0)
   result = newSeqOfCap[string](SAMPLES_MUTATION)
   for _ in 1 .. SAMPLES_MUTATION:
@@ -76,15 +96,21 @@ proc drawMutated(): seq[string] =
 
 suite "Chapter 20":
   test "Catalogue of selma'o":
-    check CATALOGUE.len == Selmaho.high.ord + 1  # 20, one member for each selma'o listed
+    # `CLL 20` .i ro selma'o pe le liste cu se srana pa cmima
+    check CATALOGUE.len == Selmaho.high.ord + 1  # `CLL 20`
     for i, name in CATALOGUE:
-      check $Selmaho(i) == name  # 20, spelling and order of catalogue
-      check name.toSelmaho == some(Selmaho(i))  # 20, name reads back
-      check name.toWord.selmaho == some(Selmaho(i))  # 20, "names of representative cmavo"
-    check "ba'e".selmaho == some(Selmaho.Bahe)  # 20, `BAhE`, "la ba'e .djordj. klama"
-    check "bau".selmaho == some(Selmaho.Bai)  # 20, `BAI`, "mi tavla bau la lojban."
-    check "be".selmaho == some(Selmaho.Be)  # 20, `BE`, "mi klama be ta troci"
-    check "BAHE".toSelmaho.isNone and "bahe".toSelmaho.isNone  # 20, `h` small, rest capital
+      check $Selmaho(i) == name  # `CLL 20` .i lo lerfu .e lo porsi pe le liste
+      check name.toSelmaho == some(Selmaho(i))  # `CLL 20` .i le cmene cu rapli se tcidu
+      # `CLL 20` cu cusku zoi gy. names of representative cmavo .gy.
+      check name.toWord.selmaho == some(Selmaho(i))  # `CLL 20`
+    # `BAhE` pe `CLL 20` .i mupli fa zoi gy. la ba'e .djordj. klama .gy.
+    check "ba'e".selmaho == some(Selmaho.Bahe)  # `CLL 20`
+    # `BAI` pe `CLL 20` .i mupli fa zoi gy. mi tavla bau la lojban. .gy.
+    check "bau".selmaho == some(Selmaho.Bai)  # `CLL 20`
+    # `BE` pe `CLL 20` .i mupli fa zoi gy. mi klama be ta troci .gy.
+    check "be".selmaho == some(Selmaho.Be)  # `CLL 20`
+    # `CLL 20` .i `h` cu cmalu .i lo drata lerfu cu barda
+    check "BAHE".toSelmaho.isNone and "bahe".toSelmaho.isNone  # `CLL 20`
 
 
 
@@ -92,51 +118,64 @@ suite "Internal: Cmavo list":
   test "Each selma'o of catalogue holds cmavo of list":
     var found: set[Selmaho]
     for entry in LIST_CMAVO: found.incl entry.selmaho
-    check found == {Selmaho.low .. Selmaho.high}  # every member, none unused
+    check found == {Selmaho.low .. Selmaho.high}  # ro cmima .i no cmima cu na se pilno
 
 
   test "Lookup agrees with linear scan":
-    for entry in LIST_CMAVO:  # every entry, exhaustive
-      check entry.word.selmaho == some(entry.selmaho)  # each cmavo finds its selma'o
+    for entry in LIST_CMAVO:  # ro cmima be le liste
+      check entry.word.selmaho == some(entry.selmaho)  # lo nu sisku cu facki lo selma'o be ro cmavo
     for entry in LIST_GISMU:
-      if entry.word.isGismu: check entry.word.selmaho.isNone  # gismu has no selma'o
-      else: check entry.word.selmaho.isSome  # cmavo carrying rafsi stands in cmavo list too
-    check "".selmaho.isNone and ".a".selmaho.isNone and "LO".selmaho.isNone  # misses
+      if entry.word.isGismu: check entry.word.selmaho.isNone  # lo gismu cu ponse no selma'o
+      # lo cmavo poi ponse lo rafsi cu zvati le cmavo liste ji'a
+      else: check entry.word.selmaho.isSome
+    check "".selmaho.isNone and ".a".selmaho.isNone and "LO".selmaho.isNone  # lo nu sisku cu fliba
     var count_unlisted = 0
-    for text in drawMutated():  # `SAMPLES_MUTATION` strings, seeded
-      check text.selmaho == text.selmahoScanned  # binary search equals linear scan
+    # le lerpoi cu se cuxna lo tsiju .i le klani be le lerpoi cu du `SAMPLES_MUTATION`
+    for text in drawMutated():
+      # lo nu sisku sepi'o lo nu fendi lo liste fi re pagbu cu mintu lo nu sisku ta'i lo porsi
+      check text.selmaho == text.selmahoScanned  # lo re nu sisku cu mintu
       if text.selmaho.isNone: inc count_unlisted
-    check count_unlisted >= FLOOR_UNLISTED  # corpus keeps misses (Article IX.3)
+    # lo se cipra cu vasru lo valsi poi no liste cu vasru ke'a to `Article IX.3` toi
+    check count_unlisted >= FLOOR_UNLISTED  # `Article IX.3`
 
 
   test "Each cmavo of list reads as cmavo with its selma'o":
-    for entry in LIST_CMAVO:  # every entry, exhaustive
+    for entry in LIST_CMAVO:  # ro cmima be le liste
       let reading = entry.word.readWord
-      check reading.is_word and reading.kind == Kind.Cmavo  # 4.2, form of cmavo
-      if reading.is_word: check reading.selmaho == some(entry.selmaho)  # 20, list gives it
+      check reading.is_word and reading.kind == Kind.Cmavo  # lo tarmi be lo cmavo pe `CLL 4.2`
+      # `CLL 20` .i le liste cu dunda le selma'o
+      if reading.is_word: check reading.selmaho == some(entry.selmaho)
 
 
   test "Each line of cmavo list reads, each cmavo with its selma'o":
     let lines = readLinesCmavo()
-    if lines.isNone: skip()  # `cmavo.txt` absent or moved from its pin (`texts_outside.nim`)
+    # `cmavo.txt` na zvati gi'a muvdu fo lo stuzi poi se jgari to `texts_outside.nim` toi
+    if lines.isNone: skip()
     else:
       var count_simple, count_compound, count_phrase = 0
-      for line in lines.get:  # every line, exhaustive
+      for line in lines.get:  # ro linji
         if not line.is_compound:
           inc count_simple
           let reading = line.word.replace(".", "").readWord
+          # `CLL 20` .i le se tcidu be le cmavo cu vasru lo selma'o poi le linji cu dunda ke'a
           check reading.is_word and reading.selmaho.map(`$`) ==
-              some(line.selmaho.nameColumn)  # 20, cmavo reads with selma'o line gives
+              some(line.selmaho.nameColumn)  # `CLL 20`
         elif ' ' notin line.word:
           inc count_compound
           let pieces = line.word.splitCompound
-          check pieces.len >= 2 and pieces.allIt(it.selmaho.isSome)  # 4.2, cmavo list holds
+          # `CLL 4.2` .i le cmavo liste cu vasru ro pagbu
+          check pieces.len >= 2 and pieces.allIt(it.selmaho.isSome)  # `CLL 4.2`
         else:
           inc count_phrase
-          for word in line.word.splitWhitespace:  # stream of words, which #811 reads
+          # lo porsi be lo valsi noi le genturfa'i cu tcidu ke'a ja'i `#811`
+          for word in line.word.splitWhitespace:
             let pieces = word.splitCompound
+            # lo cmavo pe le liste .a lo brivla
             check pieces.allIt(it.selmaho.isSome) and
-                (pieces.len > 0 or word.readWord.is_word)  # cmavo of list, or brivla
-      check count_simple == LIST_CMAVO.len  # conservation: each line of one cmavo committed
-      check count_compound == COUNT_COMPOUNDS  # 4.2, each compound written as one word splits
-      check count_phrase == COUNT_PHRASES  # conservation: each phrase read word by word
+                (pieces.len > 0 or word.readWord.is_word)  # lo cmavo pe le liste .a lo brivla
+      # lo nu no da cu se cirko .i ro linji poi vasru pa cmavo po'o cu se vasru le liste
+      check count_simple == LIST_CMAVO.len  # lo nu no da cu se cirko
+      # `CLL 4.2` .i ro cmavo gunma poi se ciska ta'i pa valsi cu se fendi
+      check count_compound == COUNT_COMPOUNDS  # `CLL 4.2`
+      # lo nu no da cu se cirko .i le genturfa'i cu tcidu ro valsi pe ro jufra pagbu
+      check count_phrase == COUNT_PHRASES  # lo nu no da cu se cirko

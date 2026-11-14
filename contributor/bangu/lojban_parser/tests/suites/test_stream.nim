@@ -1,11 +1,16 @@
-## Replicate stream reading of CLL chapters 3 and 4 against `stream.nim`; hold laws CLL implies.
-##   Examples are copied from CLL text, never from library output; text no source holds is marked
-##     constructed.
-##   Laws run over seeded random streams of gismu, cmavo and lujvo, each drawn from every word of
-##     its list or from lujvo `$` renders, and over positions of each word exhaustively
-##     (Article IX.3). References restate each rule as CLL states it, apart from reader.
-##   Corpus does not cover yet: random streams holding cmene, fu'ivla or quotation, which suite
-##     holds by examples of CLL alone, as `test_prose.nim` holds quotation.
+## rapli zbasu lo nu tcidu lo porsi be lo valsi pe `CLL 3` .e `CLL 4` gi'e cipra lo du'u
+##   `stream.nim` cu mapti le se zbasu .i ji'a cipra lo flalu poi `CLL` cu nibli ke'a
+##   .i lo mupli cu fukpi lo se ciska pe `CLL` gi'e no roi fukpi lo se ciska be le samtci .i lo
+##     pinka be lo mupli poi no krasi cu vasru ke'a cu cusku lo du'u le mupli cu se finti
+##   .i lo flalu cu tcidu lo cunso porsi be lo valsi poi gismu ja cmavo ja lujvo be'o poi lo tsiju
+##     cu jdice ke'a .i lo gismu pe le porsi cu se cuxna fi ro cmima be le gismu liste .i lo cmavo
+##     pe le porsi cu se cuxna fi ro cmima be le cmavo liste .i lo lujvo pe le porsi cu se cuxna fi
+##     lo lujvo poi `$` cu ciska ke'a .i ji'a lo flalu cu tcidu ro stuzi be ro valsi to
+##     `Article IX.3` toi .i lo fancu pe lo rapli javni cu cusku ro javni ta'i lo nu `CLL` cu cusku
+##     gi'e na pilno le genturfa'i
+##   .i lo se cipra na ca vasru lo cunso porsi poi vasru lo cmene .a lo fu'ivla .a lo nu sitna .i le
+##     cipra cu cipra le cmene .e le fu'ivla .e le nu sitna sepi'o lo mupli pe `CLL` po'o .i
+##     `test_prose.nim` cu cipra lo nu sitna ta'i di'u
 
 {.experimental: "strictFuncs".}
 
@@ -19,105 +24,147 @@ import ../../src/lojban_parser/lists/[cmavo, gismu]
 
 
 const
-  SAMPLES = 1000  ## Random streams laws draw, seeded; also random lujvo pool draws.
-  COUNT_WORDS_MAX = 8  ## Most words of random stream.
+  SAMPLES = 1000
+    ## lo cunso porsi poi lo flalu cu cuxna ke'a sepi'o lo tsiju .i ji'a lo cunso lujvo poi le girzu
+    ##   cu cuxna ke'a
+  COUNT_WORDS_MAX = 8  ## lo traji klani be lo valsi pe lo cunso porsi
   FLOOR_COMMA_READ = 11000
-    ## Least commas comma law reads as syllable breaks: 11592 read over both lists and lujvo
-    ##   drawn at seed `1`.
+    ## lo mleca traji klani be lo lerfu po'u slaka bu poi le flalu pe slaka bu cu tcidu ke'a ta'i lo
+    ##   nu fendi lo slaka .i papamusore lerfu cu se tcidu ne'i le re liste .e lo lujvo poi se cuxna
+    ##   ca lo nu lo tsiju cu du `1`
   FLOOR_COMMA_REFUSED = 4000
-    ## Least commas comma law reads as refused: 4221 read over same words.
+    ## lo mleca traji klani be lo lerfu po'u slaka bu poi le flalu pe slaka bu cu to'e curmi ke'a .i
+    ##   vorerepa lerfu cu se tcidu ne'i le mintu valsi
   FLOOR_STRESS_REFUSED = 3900
-    ## Least capitals off penultimate syllable of brivla that reader refuses, rather than
-    ##   reading other words: 4130 read over gismu list and lujvo drawn at seed `1`, where each
-    ##   other brivla needs capital (`D3 a` of #811).
+    ## lo mleca traji klani be lo barda lerfu poi na zvati le slaka poi lidne le romoi slaka pe lo
+    ##   brivla ku'o gi'e se to'e curmi le genturfa'i .i le genturfa'i na tcidu lo drata valsi fi le
+    ##   barda lerfu .i vopacino barda lerfu cu se tcidu ne'i le gismu liste .e lo lujvo poi se
+    ##   cuxna ca lo nu lo tsiju cu du `1` .i ne'i le se cipra ro drata brivla cu nitcu lo barda
+    ##   lerfu to `D3 a` pe `#811` toi
   SAMPLES_JOINED = 4000
-    ## Random runs of two or three words written together, seeded; runs needing pause between
-    ##   words left out, since text written together writes none.
+    ## lo cunso porsi be lo valsi be'o poi vasru re valsi .a ci valsi zi'e poi se ciska ne'i pa se
+    ##   ciska valsi zi'e poi lo tsiju cu jdice ke'a .i lo porsi poi nitcu lo denpa poi zvati lo
+    ##   jbini be le valsi cu se vimcu ki'u lo nu lo se ciska poi jorne cu ciska no denpa
   FLOOR_JOINED = 2500
-    ## Least runs whose stress fits each brivla that read back as same words: 2757 read at
-    ##   seed `2`.
-  FLOOR_JOINED_OTHER = 800  ## Least runs whose stress fits no brivla: 885 read at seed `2`.
+    ## lo mleca traji klani be lo porsi poi lo nu basna pe ke'a cu mapti ro brivla zi'e poi le
+    ##   genturfa'i cu tcidu le mintu valsi fi ke'a .i rezemuze porsi cu se tcidu ca lo nu lo tsiju
+    ##   cu du `2`
+  FLOOR_JOINED_OTHER = 800
+    ## lo mleca traji klani be lo porsi poi lo nu basna pe ke'a cu mapti no brivla .i bibimu porsi
+    ##   cu se tcidu ca lo nu lo tsiju cu du `2`
   COUNT_COMMA_MARKED = 88
-    ## Commas law of unmarked words reads: each place in each word of `WORDS_BORROWED` and
-    ##   `WORDS_NAMED`, apostrophe aside.
-  FLOOR_COMMA_KEPT = 65  ## Least of them that still read: 71 read.
+    ## lo lerfu po'u slaka bu poi le flalu pe lo valsi poi claxu lo barda lerfu cu tcidu ke'a .i ro
+    ##   stuzi poi na lamji zoi gy. ' .gy. ne'i ro valsi pe `WORDS_BORROWED` .e `WORDS_NAMED`
+  FLOOR_COMMA_KEPT = 65
+    ## lo mleca traji klani be le lerfu po'u slaka bu poi za'o se tcidu .i zepa lerfu cu se tcidu
   WORDS_GROUPED = ["meiin", "iuain", "dauarnold", "meiris", "vauensas", "uiliam", "xuakin"]
-    ## Cmene whose vowels comma may group: Examples 3.6-7, two names review of #811 found, and
-    ##   Lojbanized names of 4.8.
-  COUNT_GROUPED = 36  ## Syllables of each grouping of each name law reads.
-  FLOOR_COMMA_STRESS = 8  ## Least fu'ivla with comma and stress that rule 5 law reads: 8 read.
-  SAMPLES_COMMA_PAUSE = 2000  ## Random pairs of cmavo comma law at pause draws, seeded.
-  FLOOR_COMMA_PAUSE = 190  ## Least of them needing pause between them: 201 read at seed `4`.
+    ## lo cmene poi slaka bu ka'e fendi lo karsna pe ke'a .i le cmene cu du lo cmene pe
+    ##   `Example 3.6` .e `Example 3.7` ge'u .e re cmene poi lo nu lanli `#811` cu facki ke'a ku'o
+    ##   .e lo lojbo cmene pe `CLL 4.8`
+  COUNT_GROUPED = 36  ## lo klani be lo slaka pe ro nu fendi pe ro cmene poi le flalu cu tcidu ke'a
+  FLOOR_COMMA_STRESS = 8
+    ## lo mleca traji klani be lo fu'ivla poi vasru slaka bu .e lo nu basna gi'e se tcidu le flalu
+    ##   pe le mumoi javni .i bi fu'ivla cu se tcidu
+  SAMPLES_COMMA_PAUSE = 2000
+    ## lo cunso remei be lo cmavo be'o poi lo tsiju cu jdice ke'a .i le flalu pe slaka bu ne'i lo
+    ##   denpa cu cuxna le remei
+  FLOOR_COMMA_PAUSE = 190
+    ## lo mleca traji klani be le remei poi nitcu lo denpa poi zvati lo jbini be le re cmavo .i
+    ##   renopa remei cu se tcidu ca lo nu lo tsiju cu du `4`
   FLOOR_GLIDE_READ = 40
-    ## Least capitals law of on-glide reads as one brivla: 40 read, on penultimate syllable of
-    ##   each on-glide in four frames of two syllables or three.
+    ## lo mleca traji klani be lo barda lerfu poi le flalu pe lo sakli karsna cu tcidu ke'a ta'i pa
+    ##   brivla .i vono barda lerfu cu se tcidu bu'u le slaka poi lidne le romoi slaka .i ro sakli
+    ##   karsna cu zvati vo greku poi vasru re slaka .a ci slaka
   FLOOR_STRESS_OTHER = 200
-    ## Least capitals off penultimate syllable of brivla read as other words: 228 read, as
-    ##   `xlUsnipa` reads `xlusni pa`.
+    ## lo mleca traji klani be lo barda lerfu poi na zvati le slaka poi lidne le romoi slaka pe lo
+    ##   brivla ku'o gi'e se tcidu ta'i lo drata valsi .i rerebi barda lerfu cu se tcidu .i mupli fa
+    ##   lo nu le genturfa'i cu tcidu `xlusni pa` fi `xlUsnipa`
   FLOOR_STRESS = 800
-    ## Least pauses stress law infers after stressed last syllable, which no other rule needs:
-    ##   842 read at seed `0`.
-  VOWELS_SYLLABLE = "aeiouy"  ## Letters making syllable: vowels of 3.1, and `y` (3.4, 3.9).
+    ## lo mleca traji klani be lo denpa poi le flalu pe lo nu basna cu facki ke'a ba lo romoi slaka
+    ##   poi se basna .i no drata javni cu nitcu le denpa .i bivore denpa cu se tcidu ca lo nu lo
+    ##   tsiju cu du `0`
+  VOWELS_SYLLABLE = "aeiouy"
+    ## lo lerfu poi zbasu lo slaka .i lo karsna pe `CLL 3.1` ge'u .e `y` to `CLL 3.4` .e `CLL 3.9`
+    ##   toi
   WRITTEN_SPANNED = [
     "bar,da", "le,nu", "KLAmaku", "miBROda", "secusku", ".ui,ku", "zoi gy. a, b .gy.",
     "la'o gy. X .gy. cu",
   ]
-    ## Written words whose bytes law of spans reads: comma inside word and between two words of
-    ##   one written word, capital, split, and quotation holding comma and period; constructed.
-  CONSONANTS_SYLLABIC = "lmnr"  ## Consonants that may make syllable alone (3.4).
-  DIPHTHONGS_OFF = ["ai", "ei", "oi", "au"]  ## Diphthongs with off-glide, in every word (3.4).
+    ## lo se ciska valsi poi le flalu pe lo stuzi cu tcidu lo stuzi pe ke'a .i le se ciska valsi cu
+    ##   vasru slaka bu poi zvati pa valsi ku'o .e slaka bu poi zvati lo jbini be re valsi pe pa se
+    ##   ciska valsi ku'o .e lo barda lerfu .e lo ve fendi .e lo nu sitna poi vasru slaka bu .e
+    ##   denpa bu .i le mupli cu se finti
+  CONSONANTS_SYLLABIC = "lmnr"  ## lo zunsna poi ka'e slaka to `CLL 3.4` toi
+  DIPHTHONGS_OFF = ["ai", "ei", "oi", "au"]
+    ## lo karsna gunma poi le romoi pagbu be ke'a cu sakli zi'e poi ka'e zvati ro valsi to `CLL 3.4`
+    ##   toi
   DIPHTHONGS_ON = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
-    ## Diphthongs with on-glide, first in words standing alone, and in names and borrowings
-    ##   (3.4, 4.2).
-  DIPHTHONGS_NAME = ["iy", "uy"]  ## Diphthongs 3.4 keeps to names.
-  KINDS_BRIVLA = {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}  ## Classes of brivla (4.3).
+    ## lo karsna gunma poi le pamoi pagbu be ke'a cu sakli .i le karsna gunma cu ka'e pamoi ne'i lo
+    ##   valsi poi sepli ku'o gi'e ka'e zvati lo cmene .e lo fu'ivla to `CLL 3.4` .e `CLL 4.2` toi
+  DIPHTHONGS_NAME = ["iy", "uy"]  ## lo karsna gunma poi `CLL 3.4` cu curmi ke'a ne'i lo cmene po'o
+  KINDS_BRIVLA = {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}  ## lo klesi be lo brivla to `CLL 4.3` toi
   WORDS_BORROWED = [
     "spageti", "kuarka", "integrale", "saskrkuarka", "bangrkorea", "zgiee", "crarciae",
     "gackioto",
   ]
-    ## Fu'ivla commas and capitals mark: Examples 4.46, 4.50, 4.56, prefix method of 4.7, and
-    ##   three that review of #811 found, whose vowels side by side comma may part; constructed.
+    ## lo fu'ivla poi slaka bu .e lo barda lerfu cu barna ke'a .i le fu'ivla cu du lo fu'ivla pe
+    ##   `Example 4.46` .e `Example 4.50` .e `Example 4.56` ge'u .e lo fu'ivla poi se zbasu ta'i lo
+    ##   nu jmina lo krasi pagbu ja'i `CLL 4.7` ku'o .e ci fu'ivla poi lo nu lanli `#811` cu facki
+    ##   ke'a .i slaka bu ka'e fendi lo lamji karsna pe le ci fu'ivla .i le ci mupli cu se finti
   WORDS_NAMED = ["djim", "katrinas", "uiliam", "xuakin", "meiris", "vauensas"]
-    ## Cmene commas and capitals mark: Examples 4.57, 4.61, and Lojbanized names of 4.8.
+    ## lo cmene poi slaka bu .e lo barda lerfu cu barna ke'a .i le cmene cu du lo cmene pe
+    ##   `Example 4.57` .e `Example 4.61` ge'u .e lo lojbo cmene pe `CLL 4.8`
   FRAMES_NAME = ["k_n", "dj_m", "m_tan", "s_lis"]
-    ## Letters of cmene around diphthong `_` of name, which make one syllable or two; constructed.
+    ## lo lerfu pe lo cmene ge'u zi'e poi sruri lo karsna gunma po'u `_` pe lo cmene .i le lerfu cu
+    ##   zbasu pa slaka .a re slaka .i le mupli cu se finti
   FRAMES_GLIDE = ["br_", "kobr_", "spag_", "br_na", "kobr_na"]
-    ## Letters around on-glide `_`, which make one syllable, two, or three; constructed.
-  COUNT_NAME_CAPITALS = 12  ## Syllables of each diphthong of name in each frame: 2 times 1+1+2+2.
-  COUNT_GLIDE_CAPITALS = 100  ## Syllables of each on-glide in each frame: 10 times 1+2+2+2+3.
+    ## lo lerfu poi sruri lo sakli karsna po'u `_` .i le lerfu cu zbasu pa slaka .a re slaka .a ci
+    ##   slaka .i le mupli cu se finti
+  COUNT_NAME_CAPITALS = 12
+    ## lo slaka pe ro karsna gunma pe lo cmene ne'i ro greku .i li pare du li re pi'i vei pa su'i pa
+    ##   su'i re su'i re ve'o
+  COUNT_GLIDE_CAPITALS = 100
+    ## lo slaka pe ro sakli karsna ne'i ro greku .i li panono du li pano pi'i vei pa su'i re su'i re
+    ##   su'i re su'i ci ve'o
 
 
 
-#[ Readers ]#
+#[ lo tcidu ]#
 
 func wordsRead(text: string): Option[seq[string]] =
-  ## Read stream, and list letters of each word in order; none where stream is refused.
+  ## tcidu le porsi gi'e liste lo lerfu pe ro valsi ta'i lo porsi .i dunda no da va'o lo nu le porsi
+  ##   cu se to'e curmi
   let reading = text.readStream
   if reading.is_read: some(reading.occurrences.mapIt(it.text)) else: none(seq[string])
 
 
 func pausesRead(text: string): Option[seq[Pause]] =
-  ## Read stream, and list pause before each word; none where stream is refused.
+  ## tcidu le porsi gi'e liste lo denpa poi lidne lo valsi ta'i lo porsi .i dunda no da va'o lo nu
+  ##   le porsi cu se to'e curmi
   let reading = text.readStream
   if reading.is_read: some(reading.occurrences.mapIt(it.pause)) else: none(seq[Pause])
 
 
 func stressesRead(text: string): Option[seq[Option[int]]] =
-  ## Read stream, and list nucleus capitals stress in each word; none where stream is refused.
+  ## tcidu le porsi gi'e liste lo slaka karsna poi lo barda lerfu cu basna ke'a ne'i lo valsi ta'i
+  ##   lo porsi .i dunda no da va'o lo nu le porsi cu se to'e curmi
   let reading = text.readStream
   if reading.is_read: some(reading.occurrences.mapIt(it.stress)) else: none(seq[Option[int]])
 
 
 func startsRead(text: string): Option[seq[int]] =
-  ## Read stream, and list byte where each word opens; none where stream is refused.
+  ## tcidu le porsi gi'e liste lo stuzi poi lo valsi cu cfari bu'u ke'a ta'i lo porsi .i dunda no da
+  ##   va'o lo nu le porsi cu se to'e curmi
   let reading = text.readStream
   if reading.is_read: some(reading.occurrences.mapIt(it.start)) else: none(seq[int])
 
 
 func isSpanned(text: string): bool =
-  ## Decide whether each word of stream ends past its last letter, before next word opens, and
-  ##   bytes it spans spell it: letters with each capital lowercased and each comma left out,
-  ##   or text quoted, as written. False where stream is refused.
+  ## jdice lo du'u ro valsi pe le porsi cu se fanmo ba le romoi lerfu pe vo'a gi'e se fanmo pu lo nu
+  ##   lo bavla'i valsi cu cfari .i ji'a lo stuzi poi le valsi cu kuspe ke'a cu ciska le valsi ba lo
+  ##   nu ro barda lerfu cu binxo lo cmalu lerfu kei .e lo nu ro slaka bu cu se vimcu .i ja le stuzi
+  ##   cu ciska le se ciska poi se sitna ta'i lo nu se ciska .i lo jalge cu jitfa va'o lo nu le
+  ##   porsi cu se to'e curmi
   let reading = text.readStream
   if not reading.is_read: return false
   for k, occurrence in reading.occurrences:
@@ -133,30 +180,35 @@ func isSpanned(text: string): bool =
 
 
 func selmahoRead(text: string): Option[seq[Option[Selmaho]]] =
-  ## Read stream, and list selma'o of each word; none where stream is refused.
+  ## tcidu le porsi gi'e liste lo selma'o be lo valsi ta'i lo porsi .i dunda no da va'o lo nu le
+  ##   porsi cu se to'e curmi
   let reading = text.readStream
   if reading.is_read: some(reading.occurrences.mapIt(it.reading.selmaho))
   else: none(seq[Option[Selmaho]])
 
 
 func refusalRead(text: string): Option[(Refusal, int)] =
-  ## Read stream, and give rule refusing it with byte it names; none where stream reads.
+  ## tcidu le porsi gi'e dunda lo javni poi to'e curmi le porsi ku'o .e lo stuzi poi le javni cu
+  ##   cusku ke'a .i dunda no da va'o lo nu le porsi cu se tcidu
   let reading = text.readStream
   if reading.is_read: none((Refusal, int)) else: some((reading.refusal, reading.start))
 
 
 
-#[ References ]#
+#[ lo rapli javni ]#
 
 func isLetteralConsonant(text: string): bool =
-  ## Test word is letteral of consonant, `Cy` (4.2, 17.2).
+  ## jdice lo du'u le valsi cu se tarmi `Cy` gi'e sinxa lo zunsna to `CLL 4.2` .e `CLL 17.2` toi
   text.len == 2 and text[1] == 'y' and text[0] notin VOWELS_SYLLABLE & "'"
 
 
 func pausesNeeded(words: openArray[string]): seq[Pause] =
-  ## List pause before each word of stream written with spaces and no capital, by rules as
-  ##   CLL states them: word opening with vowel or `y` (4.9 rule 3, 4.2), word after `y` (4.2),
-  ##   and word not `Cy` after `Cy` (4.9 rule 6).
+  ## liste lo denpa poi lidne lo valsi pe lo porsi poi se ciska sepi'o lo kunti lerfu gi'e vasru no
+  ##   barda lerfu .i le denpa cu se jdice ja'i lo javni ta'i lo nu `CLL` cu cusku .i lo denpa cu
+  ##   lidne lo valsi poi se krasi lo karsna .a `y` to le cimoi javni pe `CLL 4.9` ge'u .e `CLL 4.2`
+  ##   toi .i lo denpa cu lidne lo valsi poi se lidne zo y to `CLL 4.2` toi .i lo denpa cu lidne lo
+  ##   valsi poi na se tarmi `Cy` gi'e se lidne lo valsi poi se tarmi `Cy` to le xamoi javni pe
+  ##   `CLL 4.9` toi
   for i, word in words:
     let is_needed =
       word[0] in VOWELS_SYLLABLE or (i > 0 and words[i - 1] == "y") or
@@ -165,9 +217,11 @@ func pausesNeeded(words: openArray[string]): seq[Pause] =
 
 
 func isCommaAdmitted(word: string, at: int): bool =
-  ## Test comma before letter `at` of word breaks syllables, as 3.3 and 3.4 state: stretch on
-  ##   each side, up to apostrophe or edge, holds vowel, `y`, or consonant that may be syllabic;
-  ##   and comma splits no two vowels, which make diphthong in gismu, lujvo and cmavo.
+  ## jdice lo du'u slaka bu poi lidne le lerfu pe le stuzi po'u `at` cu fendi lo slaka ta'i lo nu
+  ##   `CLL 3.3` .e `CLL 3.4` cu cusku .i ro pagbu poi lamji slaka bu gi'e se fanmo zoi gy. ' .gy.
+  ##   .a lo korbi be le valsi cu vasru lo karsna .a `y` .a lo zunsna poi ka'e slaka .i ji'a slaka
+  ##   bu na zvati lo jbini be re karsna .i ne'i lo gismu .e lo lujvo .e lo cmavo re karsna cu zbasu
+  ##   lo karsna gunma
   let
     before = word[0 ..< at].rsplit('\'', maxsplit = 1)[^1]
     after = word[at .. ^1].split('\'', maxsplit = 1)[0]
@@ -179,10 +233,12 @@ func isCommaAdmitted(word: string, at: int): bool =
 func syllables(
     word: string, is_borrowing = false, is_name = false, breaks: openArray[int] = []
 ): seq[Slice[int]] =
-  ## List vowels of each syllable of word, as 3.4 groups them from left (3.5): diphthong with
-  ##   off-glide is one syllable, and with on-glide where word opens with it, or anywhere in
-  ##   borrowing or name; `iy` and `uy` in name alone; each other vowel is one. Comma before
-  ##   letter of `breaks` parts two vowels (3.5).
+  ## liste lo karsna pe ro slaka pe le valsi ta'i lo nu `CLL 3.4` cu jmina le karsna ne'i lo slaka
+  ##   .i le nu jmina cu cfari bu'u lo zunle to `CLL 3.5` toi .i lo karsna gunma poi le romoi pagbu
+  ##   be ke'a cu sakli cu du pa slaka .i lo karsna gunma poi le pamoi pagbu be ke'a cu sakli cu du
+  ##   pa slaka va'o lo nu le karsna gunma cu krasi le valsi kei .a lo nu le valsi cu fu'ivla ja
+  ##   cmene .i `iy` .e `uy` cu du pa slaka ne'i lo cmene po'o .i ro drata karsna cu du pa slaka .i
+  ##   slaka bu poi lidne lo lerfu pe `breaks` cu fendi re karsna to `CLL 3.5` toi
   var at = 0
   while at < word.len:
     if word[at] notin VOWELS_SYLLABLE:
@@ -199,14 +255,17 @@ func syllables(
 
 
 func penultimate(word: string, is_borrowing: bool): int =
-  ## Index syllable brivla stresses among syllables of word: penultimate, `y` not counted (3.9).
+  ## dunda lo stuzi be le slaka poi le brivla cu basna ke'a ne'i lo slaka pe le valsi .i le slaka cu
+  ##   lidne le romoi slaka .i `y` na se kancu to `CLL 3.9` toi
   let spans = word.syllables(is_borrowing = is_borrowing)
   toSeq(0 .. spans.high).filterIt(word[spans[it].a] != 'y')[^2]
 
 
 func isStressFit(words: openArray[string], kinds: openArray[Kind]): bool =
-  ## Test stress of written word, on its own penultimate syllable alone, falls on penultimate of
-  ##   each brivla among words, by class of each (`D3 a` of #811); `y` not counted (3.9).
+  ## jdice lo du'u lo nu basna pe le se ciska valsi noi basna le slaka po'o poi lidne le romoi slaka
+  ##   pe le se ciska valsi ku'o cu zvati le slaka poi lidne le romoi slaka pe ro brivla pe le valsi
+  ##   .i lo klesi pe ro valsi cu jdice lo du'u le valsi cu brivla to `D3 a` pe `#811` toi .i `y` na
+  ##   se kancu to `CLL 3.9` toi
   let
     run = words.join("")
     spans = run.syllables
@@ -221,47 +280,53 @@ func isStressFit(words: openArray[string], kinds: openArray[Kind]): bool =
 
 
 func capitalized(word: string, span: Slice[int]): string =
-  ## Write word with letters of `span` capital, as 3.9 marks stressed syllable by its vowel.
+  ## ciska le valsi .i lo lerfu pe `span` cu barda .i `CLL 3.9` cu sinxa lo slaka poi se basna ta'i
+  ##   lo nu lo karsna pe le slaka cu barda
   result = word
   for i in span: result[i] = result[i].toUpperAscii
 
 
 
-#[ Corpus ]#
+#[ lo se cipra ]#
 
 let
   INDEXES_GISMU = block:
-    ## Every gismu of list, by index; cmavo carrying rafsi left out.
+    ## lo stuzi be ro gismu pe le liste ne'i le liste .i lo cmavo poi ponse lo rafsi cu se vimcu
     var indexes: seq[Word]
     for i, entry in LIST_GISMU:
       if entry.word.isGismu: indexes.add Word(i)
     indexes
-  WORDS_GISMU = INDEXES_GISMU.mapIt(it.entry.word)  ## Every gismu of list.
+  WORDS_GISMU = INDEXES_GISMU.mapIt(it.entry.word)  ## ro gismu pe le liste
   WORDS_CMAVO = block:
-    ## Every cmavo of cmavo list but `ZOI`, which quotes text that is no lojban (19.10), and
-    ##   `FAhO`, which ends input (19.15).
+    ## ro cmavo pe le cmavo liste .i ku'i lo cmavo pe `ZOI` ge'u .e lo cmavo pe `FAhO` cu se vimcu
+    ##   .i `ZOI` cu sitna lo se ciska poi na lojbo to `CLL 19.10` toi .i `FAhO` cu fanmo le se
+    ##   ciska to `CLL 19.15` toi
     var words: seq[string]
     for entry in LIST_CMAVO:
       if entry.selmaho notin {Selmaho.Zoi, Selmaho.Faho}: words.add entry.word
     words
   LUT_SELMAHO_BY_CMAVO = block:
-    ## Selma'o cmavo list gives each cmavo, read from list apart from reader (chapter 20).
+    ## lo selma'o poi le cmavo liste cu dunda ke'a lo cmavo .i lo selma'o cu se tcidu fi le liste
+    ##   gi'e na se tcidu le genturfa'i to `CLL 20` toi
     var lut: Table[string, Selmaho]
     for entry in LIST_CMAVO: lut[entry.word] = entry.selmaho
     lut
 
 
 proc drawLujvo(): seq[string] =
-  ## Draw `SAMPLES` lujvo, seeded: form `$` renders for tanru of two or three gismu of list.
+  ## cuxna lo lujvo sepi'o lo tsiju .i le klani be le lujvo cu du `SAMPLES` .i ro lujvo cu sinxa lo
+  ##   tanru poi vasru re gismu .a ci gismu pe le liste .i `$` cu ciska le lujvo
   randomize(1)
   for _ in 1 .. SAMPLES:
     result.add $Tanru(parts: newSeqWith(rand(2 .. 3), INDEXES_GISMU.sample.toPart))
 
 
 let
-  WORDS_LUJVO = drawLujvo()  ## Random lujvo laws read, drawn once.
+  WORDS_LUJVO = drawLujvo()
+    ## lo cunso lujvo poi lo flalu cu tcidu ke'a .i le lujvo cu se cuxna pa roi
   LUT_KIND_BY_WORD = block:
-    ## Class of each word of every pool, as pool it comes from gives it: list or `$` (4.2-6).
+    ## lo klesi pe ro valsi pe ro girzu ja'i le girzu poi le valsi cu se krasi ke'a .i le girzu cu
+    ##   du lo liste .a `$` to `CLL 4.2` bi'o `CLL 4.6` toi
     var lut: Table[string, Kind]
     for word in WORDS_GISMU: lut[word] = Kind.Gismu
     for word in WORDS_CMAVO: lut[word] = Kind.Cmavo
@@ -270,8 +335,10 @@ let
 
 
 proc drawStreams(): seq[seq[string]] =
-  ## Draw `SAMPLES` streams of one to `COUNT_WORDS_MAX` words, seeded, each word gismu, cmavo
-  ##   or lujvo one time in three, from every word of its pool.
+  ## cuxna lo porsi be lo valsi sepi'o lo tsiju .i le klani be le porsi cu du `SAMPLES` .i ro porsi
+  ##   cu vasru lo valsi .i le klani be le valsi cu cmima li pa bi'o `COUNT_WORDS_MAX` .i ro valsi
+  ##   cu gismu ja cmavo ja lujvo .i le ci klesi cu mintu lo ka se cuxna ta'i lo nu cunso .i ro
+  ##   valsi cu se cuxna fi ro valsi pe lo girzu pe vo'a
   randomize(0)
   for _ in 1 .. SAMPLES:
     var words: seq[string]
@@ -284,11 +351,12 @@ proc drawStreams(): seq[seq[string]] =
     result.add words
 
 
-let STREAMS_RANDOM = drawStreams()  ## Random streams every law reads, drawn once.
+let STREAMS_RANDOM = drawStreams()
+  ## lo cunso porsi poi ro flalu cu tcidu ke'a .i le porsi cu se cuxna pa roi
 
 
 iterator wordsEach(): string =
-  ## Serve every gismu and cmavo of lists, then each random lujvo.
+  ## dunda ro gismu .e ro cmavo pe le liste .i ba bo dunda ro cunso lujvo
   for word in WORDS_GISMU: yield word
   for word in WORDS_CMAVO: yield word
   for word in WORDS_LUJVO: yield word
@@ -298,131 +366,183 @@ iterator wordsEach(): string =
 suite "Chapter 3":
   test "Section 3.1":
     for c in "aeiou":
-      check ($c.toUpperAscii).stressesRead == some(@[some(0)])  # 3.1, capital marks stress
-    for c in tanru.LETTERS - {'\''} - {'a', 'e', 'i', 'o', 'u', 'y'}:  # each consonant
-      check (c.toUpperAscii & "a").refusalRead == some((Refusal.Stress, 0))  # 3.9, vowel at least
+      # ja'i `CLL 3.1` lo barda lerfu cu sinxa lo nu basna
+      check ($c.toUpperAscii).stressesRead == some(@[some(0)])  # `CLL 3.1`
+    for c in tanru.LETTERS - {'\''} - {'a', 'e', 'i', 'o', 'u', 'y'}:  # ro zunsna
+      # ja'i `CLL 3.9` le barda lerfu cu vasru su'o pa karsna
+      check (c.toUpperAscii & "a").refusalRead == some((Refusal.Stress, 0))  # `CLL 3.9`
     for c in ['H', 'Q', 'W']:
-      check (c & "a").refusalRead == some((Refusal.Letter, 0))  # 3.1, omitting "h", "q", and "w"
-    for c in char.low .. char.high:  # 256 bytes, exhaustive
+      # zoi gy. h .gy. .e zoi gy. q .gy. .e zoi gy. w .gy. cu na cmima lo lerfu liste pe `CLL 3.1`
+      check (c & "a").refusalRead == some((Refusal.Letter, 0))  # `CLL 3.1`
+    for c in char.low .. char.high:  # ro le remuxa lerfu
       if c in tanru.LETTERS or c in MARKS_STREAM: continue
-      check ("mi " & c & "a").refusalRead == some((Refusal.Letter, 3))  # 3.1, alphabet
-    check "Mi klama".refusalRead == some((Refusal.Stress, 0))  # 3.1, capital for stress alone
+      # ja'i lo lerfu liste pe `CLL 3.1`
+      check ("mi " & c & "a").refusalRead == some((Refusal.Letter, 3))  # `CLL 3.1`
+    # ja'i `CLL 3.1` lo barda lerfu cu sinxa lo nu basna po'o
+    check "Mi klama".refusalRead == some((Refusal.Stress, 0))  # `CLL 3.1`
 
 
   test "Section 3.3":
-    check ".i.ai.i.ai.o".wordsRead == some(@["i", "ai", "i", "ai", "o"])  # 3.3, Example 3.1
-    check ".i.ai.i.ai.o".pausesRead == some(Pause.Written.repeat(5))  # 3.3, periods embedded
-    check "mi.klama".wordsRead == some(@["mi", "klama"])  # 3.3, no space where period; constructed
-    check "bri.vla".refusalRead == some((Refusal.Shape, 0))  # 3.3, not one word but two
+    # `CLL 3.3` .e `Example 3.1`
+    check ".i.ai.i.ai.o".wordsRead == some(@["i", "ai", "i", "ai", "o"])  # `CLL 3.3`
+    # `CLL 3.3` .i denpa bu cu se punji ne'i le se ciska
+    check ".i.ai.i.ai.o".pausesRead == some(Pause.Written.repeat(5))  # `CLL 3.3`
+    # ja'i `CLL 3.3` no kunti lerfu cu se nitcu va'o lo nu denpa bu cu zvati .i le mupli cu se finti
+    check "mi.klama".wordsRead == some(@["mi", "klama"])  # `CLL 3.3`
+    # ja'i `CLL 3.3` le se ciska cu vasru re valsi gi'e na du pa valsi
+    check "bri.vla".refusalRead == some((Refusal.Shape, 0))  # `CLL 3.3`
     check "mi klama i do klama".pausesRead ==
         some(@[Pause.Absent, Pause.Absent, Pause.Inferred, Pause.Absent, Pause.Absent])
-          # 3.3, missing period inferred; constructed
-    check ".i,ai,i,ai,on.".wordsRead == some(@["iaiiaion"])  # 3.3, Example 3.2, one cmene
-    check ".i'ai'i'ai'on.".wordsRead == some(@["i'ai'i'ai'on"])  # 3.3, Example 3.4, one cmene
-    check ",klama".refusalRead == some((Refusal.Comma, 0))  # 3.3, comma within word; constructed
-    check "kla,,ma".refusalRead == some((Refusal.Comma, 3))  # 3.3, comma separates syllables
-    check "y,ku".refusalRead == some((Refusal.Comma, 1))  # 3.3, pause after `y`; review of #811
-    check "ma,e".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma at pause; review of #811
-    check "crarcIae".wordsRead == some(@["crarciae"])  # 3.9, `ia` penultimate; constructed
+          # ja'i `CLL 3.3` le genturfa'i cu facki lo denpa poi denpa bu na sinxa ke'a .i le mupli cu
+          #   se finti
+    # `CLL 3.3` .e `Example 3.2` .i pa cmene
+    check ".i,ai,i,ai,on.".wordsRead == some(@["iaiiaion"])  # `CLL 3.3`
+    # `CLL 3.3` .e `Example 3.4` .i pa cmene
+    check ".i'ai'i'ai'on.".wordsRead == some(@["i'ai'i'ai'on"])  # `CLL 3.3`
+    # ja'i `CLL 3.3` slaka bu cu zvati ne'i lo valsi po'o .i le mupli cu se finti
+    check ",klama".refusalRead == some((Refusal.Comma, 0))  # `CLL 3.3`
+    # ja'i `CLL 3.3` slaka bu cu fendi lo slaka
+    check "kla,,ma".refusalRead == some((Refusal.Comma, 3))  # `CLL 3.3`
+    # ja'i `CLL 3.3` `y` cu lidne lo denpa .i le mupli cu se krasi lo nu lanli `#811`
+    check "y,ku".refusalRead == some((Refusal.Comma, 1))  # `CLL 3.3`
+    # ja'i `CLL 3.3` slaka bu na ka'e zvati lo stuzi be lo denpa .i le mupli cu se krasi lo nu lanli
+    #   `#811`
+    check "ma,e".refusalRead == some((Refusal.Comma, 2))  # `CLL 3.3`
+    # ja'i `CLL 3.9` `ia` cu du le slaka poi lidne le romoi slaka .i le mupli cu se finti
+    check "crarcIae".wordsRead == some(@["crarciae"])  # `CLL 3.9`
+    # ja'i `CLL 3.5` slaka bu cu fendi `ia` .i se ki'u bo le barda lerfu cu basna `crarcia` .i le
+    #   mupli cu se finti
     check "crarcI,ae".wordsRead ==
-        some(@["crarcia", "e"])  # 3.5, comma parts `ia`, so capital stresses `crarcia`; constructed
+        some(@["crarcia", "e"])  # `CLL 3.5`
 
 
   test "Section 3.4":
-    check "ka,i".refusalRead == some((Refusal.Comma, 2))  # 3.4, diphthong one syllable; constructed
-    check "sai,r,goi".wordsRead == some(@["sairgoi"])  # 3.4, syllabic "r"; Example 3.21
-    check "b,ridi".refusalRead == some((Refusal.Comma, 1))  # 3.4, "b" no syllable; constructed
-    check "sai,R,goi".refusalRead == some((Refusal.Stress, 4))  # 3.4, syllabic never stressed
+    # ja'i `CLL 3.4` lo karsna gunma cu du pa slaka .i le mupli cu se finti
+    check "ka,i".refusalRead == some((Refusal.Comma, 2))  # `CLL 3.4`
+    # ja'i `CLL 3.4` zoi gy. r .gy. cu slaka .i `Example 3.21`
+    check "sai,r,goi".wordsRead == some(@["sairgoi"])  # `CLL 3.4`
+    # ja'i `CLL 3.4` zoi gy. b .gy. na slaka .i le mupli cu se finti
+    check "b,ridi".refusalRead == some((Refusal.Comma, 1))  # `CLL 3.4`
+    # ja'i `CLL 3.4` lo zunsna poi slaka cu no roi se basna
+    check "sai,R,goi".refusalRead == some((Refusal.Stress, 4))  # `CLL 3.4`
+    # ja'i `CLL 3.4` lo karsna gunma cu du pa slaka .i se ki'u bo `brUa` na brivla to `CLL 4.3` toi
+    #   .i le mupli cu se krasi lo nu lanli `#811`
     check "brUa".refusalRead ==
-        some((Refusal.Shape, 0))  # 3.4, diphthong one syllable, so no brivla (4.3); review of #811
-    check "kUYn.".stressesRead == some(@[some(0)])  # 3.4, `uy` one syllable of name; review of #811
+        some((Refusal.Shape, 0))  # `CLL 3.4`
+    # ja'i `CLL 3.4` `uy` cu du pa slaka ne'i lo cmene .i le mupli cu se krasi lo nu lanli `#811`
+    check "kUYn.".stressesRead == some(@[some(0)])  # `CLL 3.4`
 
 
   test "Section 3.5":
     for text in ["meiin.", "mei,in.", "me,iin."]:
-      check text.wordsRead == some(@["meiin"])  # 3.5, Examples 3.6-7, comma makes no other word
-    check ".nu,IOrk.".stressesRead == some(@[some(1)])  # 3.5, comma parts `u` from `io`; Tatoeba
+      # `CLL 3.5` .e `Example 3.6` .e `Example 3.7` .i slaka bu cu zbasu no drata valsi
+      check text.wordsRead == some(@["meiin"])  # `CLL 3.5`
+    # ja'i `CLL 3.5` `u` cu sepli `io` fi slaka bu .i le mupli cu se krasi la'o gy. Tatoeba .gy.
+    check ".nu,IOrk.".stressesRead == some(@[some(1)])  # `CLL 3.5`
+    # `CLL 3.5` .e `Example 3.7` .i lo barda lerfu pe `CLL 4.8` cu zvati `ii` .i le mupli cu se
+    #   krasi lo nu lanli `#811`
     check "me,IIn.".stressesRead ==
-        some(@[some(1)])  # 3.5, Example 3.7 with capitals of 4.8 on `ii`; review of #811
+        some(@[some(1)])  # `CLL 3.5`
     for text in [".i,UAin.", "da,UArnold."]:
-      check text.stressesRead == some(@[some(1)])  # 3.5, comma groups vowels; review of #811
+      # ja'i `CLL 3.5` slaka bu cu fendi lo karsna .i le mupli cu se krasi lo nu lanli `#811`
+      check text.stressesRead == some(@[some(1)])  # `CLL 3.5`
 
 
   test "Section 3.9":
     check "pu,je,nai,ca,je,ba".wordsRead ==
-        some(@["pu", "je", "nai", "ca", "je", "ba"])  # 3.9, Example 3.18
+        some(@["pu", "je", "nai", "ca", "je", "ba"])  # `CLL 3.9` .e `Example 3.18`
     check "pujenaicajeba".wordsRead ==
-        "pu,je,nai,ca,je,ba".wordsRead  # 3.9, Example 3.18; comma not required
+        "pu,je,nai,ca,je,ba".wordsRead  # `CLL 3.9` .e `Example 3.18` .i slaka bu na bilga
     for (text, word) in [
       ("nin,mu", "ninmu"), ("fit,pri", "fitpri"), ("sair,goi", "sairgoi"),
       ("sai,r,goi", "sairgoi"), ("klez,ba", "klezba"), ("kle,zba", "klezba"),
     ]:
-      check text.wordsRead == some(@[word])  # 3.9, Examples 3.19-22
+      check text.wordsRead == some(@[word])  # `CLL 3.9` .e `Example 3.19` bi'o bo `Example 3.22`
     for (text, word, nucleus) in [
       ("DI,ky,jvo", "dikyjvo", 0), ("BI,sy,dja", "bisydja", 0), ("BI,syd,ja", "bisydja", 0),
       ("da'UD,ja", "da'udja", 1), ("da'U,dja", "da'udja", 1),
     ]:
-      check text.wordsRead == some(@[word])  # 3.9, Examples 3.23, 3.28-29
-      check text.stressesRead == some(@[some(nucleus)])  # 3.9, penultimate, `y` not counted
+      # `CLL 3.9` .e `Example 3.23` .e `Example 3.28` .e `Example 3.29`
+      check text.wordsRead == some(@[word])  # `CLL 3.9`
+      # ja'i `CLL 3.9` le slaka poi lidne le romoi slaka .i `y` na se kancu
+      check text.stressesRead == some(@[some(nucleus)])  # `CLL 3.9`
     for text in ["e'u bridi", "e'u BRI,di", "E'u BRI,di"]:
-      check text.pausesRead == some(@[Pause.Inferred, Pause.Absent])  # 3.9, Example 3.30
-    check "e'U.BRI,di".pausesRead == some(@[Pause.Inferred, Pause.Written])  # 3.9, Example 3.30
-    check "e'U.BRI,di".stressesRead == some(@[some(1), some(0)])  # 3.9, Example 3.30
+      check text.pausesRead == some(@[Pause.Inferred, Pause.Absent])  # `CLL 3.9` .e `Example 3.30`
+    # `CLL 3.9` .e `Example 3.30`
+    check "e'U.BRI,di".pausesRead == some(@[Pause.Inferred, Pause.Written])  # `CLL 3.9`
+    check "e'U.BRI,di".stressesRead == some(@[some(1), some(0)])  # `CLL 3.9` .e `Example 3.30`
+    # `CLL 3.9` .e `Example 3.30` .i le genturfa'i cu facki lo denpa poi denpa bu na sinxa ke'a to
+    #   `CLL 3.3` toi
     check "e'U BRI,di".pausesRead ==
-        some(@[Pause.Inferred, Pause.Inferred])  # 3.9, Example 3.30; period inferred (3.3)
+        some(@[Pause.Inferred, Pause.Inferred])  # `CLL 3.9`
     check "le re NObli PREnu".stressesRead ==
-        some(@[none(int), none(int), some(0), some(0)])  # 3.9, Example 3.31
+        some(@[none(int), none(int), some(0), some(0)])  # `CLL 3.9` .e `Example 3.31`
     check "le re no bliPREnu".wordsRead ==
-        some(@["le", "re", "no", "bliprenu"])  # 3.9, Example 3.32
+        some(@["le", "re", "no", "bliprenu"])  # `CLL 3.9` .e `Example 3.32`
     check "le re no bliPREnu".stressesRead ==
-        some(@[none(int), none(int), none(int), some(1)])  # 3.9, Example 3.32
-    check "briDI".refusalRead == some((Refusal.Stress, 3))  # 3.9, penultimate; constructed
-    check "dikYjvo".refusalRead == some((Refusal.Stress, 3))  # 3.9, "y" never stressed
-    check "BrIdi".refusalRead == some((Refusal.Stress, 0))  # 3.9, one syllable; constructed
-    check ".ARM,strong.".wordsRead == some(@["armstrong"])  # 3.9, Example 3.24
-    check ".ARM,strong.".stressesRead == some(@[some(0)])  # 3.9, Example 3.24, first syllable
+        some(@[none(int), none(int), none(int), some(1)])  # `CLL 3.9` .e `Example 3.32`
+    # ja'i `CLL 3.9` lo brivla cu basna le slaka poi lidne le romoi slaka .i le mupli cu se finti
+    check "briDI".refusalRead == some((Refusal.Stress, 3))  # `CLL 3.9`
+    # ja'i `CLL 3.9` zoi gy. y .gy. no roi se basna
+    check "dikYjvo".refusalRead == some((Refusal.Stress, 3))  # `CLL 3.9`
+    # ja'i `CLL 3.9` pa slaka po'o cu se basna .i le mupli cu se finti
+    check "BrIdi".refusalRead == some((Refusal.Stress, 0))  # `CLL 3.9`
+    check ".ARM,strong.".wordsRead == some(@["armstrong"])  # `CLL 3.9` .e `Example 3.24`
+    # `CLL 3.9` .e `Example 3.24` .i le pamoi slaka
+    check ".ARM,strong.".stressesRead == some(@[some(0)])  # `CLL 3.9`
 
 
 
 suite "Chapter 4":
   test "Section 4.2":
-    check ".iseci'i".wordsRead == some(@["i", "se", "ci'i"])  # 4.2, Example 4.1
+    check ".iseci'i".wordsRead == some(@["i", "se", "ci'i"])  # `CLL 4.2` .e `Example 4.1`
     check ".iseci'i".pausesRead ==
-        some(@[Pause.Written, Pause.Absent, Pause.Absent])  # 4.2, Example 4.1
+        some(@[Pause.Written, Pause.Absent, Pause.Absent])  # `CLL 4.2` .e `Example 4.1`
     check ".iseci'i".selmahoRead ==
-        some(@[some(Selmaho.I), some(Selmaho.Se), some(Selmaho.Pa)])  # 20, each cmavo
-    check "punaijecanai".wordsRead == some(@["pu", "nai", "je", "ca", "nai"])  # 4.2, Example 4.2
-    check "ki'e.u'e".wordsRead == some(@["ki'e", "u'e"])  # 4.2, Example 4.3
-    check "ki'e.u'e".pausesRead == some(@[Pause.Absent, Pause.Written])  # 4.2, pause kept
-    check "ki'e'u'e".wordsRead == some(@["ki'e'u'e"])  # 4.2, Example 4.4, experimental
-    check "cy.ibu.abu".wordsRead == some(@["cy", "i", "bu", "a", "bu"])  # 4.2, Example 4.5
+        some(@[some(Selmaho.I), some(Selmaho.Se), some(Selmaho.Pa)])  # `CLL 20` .i ro cmavo
+    # `CLL 4.2` .e `Example 4.2`
+    check "punaijecanai".wordsRead == some(@["pu", "nai", "je", "ca", "nai"])  # `CLL 4.2`
+    check "ki'e.u'e".wordsRead == some(@["ki'e", "u'e"])  # `CLL 4.2` .e `Example 4.3`
+    # ja'i `CLL 4.2` le denpa cu stali
+    check "ki'e.u'e".pausesRead == some(@[Pause.Absent, Pause.Written])  # `CLL 4.2`
+    # `CLL 4.2` .e `Example 4.4` .i le cmavo cu cipra cmavo
+    check "ki'e'u'e".wordsRead == some(@["ki'e'u'e"])  # `CLL 4.2`
+    # `CLL 4.2` .e `Example 4.5`
+    check "cy.ibu.abu".wordsRead == some(@["cy", "i", "bu", "a", "bu"])  # `CLL 4.2`
     check "cy.ibu.abu".pausesRead == some(@[
       Pause.Absent, Pause.Written, Pause.Absent, Pause.Written, Pause.Absent,
-    ])  # 4.2, Example 4.5, pauses required
-    check ".e'o ko ko kurji".wordsRead == some(@["e'o", "ko", "ko", "kurji"])  # 4.2, Example 4.6
+    ])  # `CLL 4.2` .e `Example 4.5` .i le denpa cu bilga
+    # `CLL 4.2` .e `Example 4.6`
+    check ".e'o ko ko kurji".wordsRead == some(@["e'o", "ko", "ko", "kurji"])  # `CLL 4.2`
     check ".E'o ko ko KURji".stressesRead ==
-        some(@[some(0), none(int), none(int), some(0)])  # 4.2, Example 4.6
-    check "le re nanmu".wordsRead == some(@["le", "re", "nanmu"])  # 4.2, Example 4.7
+        some(@[some(0), none(int), none(int), some(0)])  # `CLL 4.2` .e `Example 4.6`
+    check "le re nanmu".wordsRead == some(@["le", "re", "nanmu"])  # `CLL 4.2` .e `Example 4.7`
     check "le RE. NANmu".pausesRead ==
-        some(@[Pause.Absent, Pause.Absent, Pause.Written])  # 4.2, Example 4.8
+        some(@[Pause.Absent, Pause.Absent, Pause.Written])  # `CLL 4.2` .e `Example 4.8`
+    # ja'i `CLL 4.2` lo nu basna cu nitcu lo denpa to `CLL 3.3` toi
     check "le RE NANmu".pausesRead ==
-        some(@[Pause.Absent, Pause.Absent, Pause.Inferred])  # 4.2, stress demands pause (3.3)
+        some(@[Pause.Absent, Pause.Absent, Pause.Inferred])  # `CLL 4.2`
+    # `CLL 4.2` .i re slaka poi se basna cu penmi .i le mumoi javni pe `CLL 4.9` .i le mupli cu se
+    #   finti
     check "le RE LE nanmu".pausesRead == some(@[
       Pause.Absent, Pause.Absent, Pause.Inferred, Pause.Inferred,
-    ])  # 4.2, stressed syllables meet; 4.9 rule 5; constructed
+    ])
     check "LE re NANmu".pausesRead ==
-        some(@[Pause.Absent, Pause.Absent, Pause.Absent])  # 4.2, Example 4.9
+        some(@[Pause.Absent, Pause.Absent, Pause.Absent])  # `CLL 4.2` .e `Example 4.9`
     check "le re NANmu".stressesRead ==
-        some(@[none(int), none(int), some(0)])  # 4.2, Example 4.10
+        some(@[none(int), none(int), some(0)])  # `CLL 4.2` .e `Example 4.10`
+    # ja'i `CLL 4.2` zoi gy. .y. .gy. cu se lidne lo denpa gi'e lidne lo denpa
     check "mi .y. klama".pausesRead ==
-        some(@[Pause.Absent, Pause.Written, Pause.Written])  # 4.2, ".y." pauses before and after
+        some(@[Pause.Absent, Pause.Written, Pause.Written])  # `CLL 4.2`
+    # ja'i `CLL 4.2` le denpa cu se facki to `CLL 3.3` toi .i le mupli cu se finti
     check "mi y klama".pausesRead ==
-        some(@[Pause.Absent, Pause.Inferred, Pause.Inferred])  # 4.2, inferred (3.3); constructed
+        some(@[Pause.Absent, Pause.Inferred, Pause.Inferred])  # `CLL 4.2`
 
 
   test "Section 4.7":
     for (text, word) in [("bang,r,kore,a", "bangrkorea"), ("kuln,r,kore,a", "kulnrkorea")]:
-      check text.wordsRead == some(@[word])  # 4.7, Examples 4.55-56, comma parts `ea` of fu'ivla
+      # `CLL 4.7` .e `Example 4.55` .e `Example 4.56` .i slaka bu cu fendi `ea` pe le fu'ivla
+      check text.wordsRead == some(@[word])  # `CLL 4.7`
 
 
   test "Section 4.8":
@@ -433,44 +553,64 @@ suite "Chapter 4":
       ("djanbraun.", @["djanbraun"]), ("pav.", @["pav"]), ("sol.", @["sol"]),
       ("ralj.", @["ralj"]), ("nol.", @["nol"]),
     ]:
-      check text.wordsRead == some(words)  # 4.8, Examples 4.57-70
-    check "laplas.".wordsRead == some(@["la", "plas"])  # 4.8, "look like Lojban words la plas."
-    check "ilanas.".wordsRead == some(@["i", "la", "nas"])  # 4.8, "misunderstood as .i la nas."
-    check "NEderlants.".stressesRead == some(@[some(0)])  # 4.8, "cannot be misheard"
-    check ".eLIS.".stressesRead == some(@[some(1)])  # 4.8, table of names, "Elise"
-    check "lex. va,uensas.".wordsRead == some(@["lex", "vauensas"])  # 4.8, "Lech Walesa"
-    check "me la spagetis.".wordsRead == some(@["me", "la", "spagetis"])  # 4.7, Example 4.45
+      check text.wordsRead == some(words)  # `CLL 4.8` .e `Example 4.57` bi'o bo `Example 4.70`
+    # `CLL 4.8` cu cusku zoi gy. look like Lojban words la plas. .gy.
+    check "laplas.".wordsRead == some(@["la", "plas"])  # `CLL 4.8`
+    # `CLL 4.8` cu cusku zoi gy. misunderstood as .i la nas. .gy.
+    check "ilanas.".wordsRead == some(@["i", "la", "nas"])  # `CLL 4.8`
+    # `CLL 4.8` cu cusku zoi gy. cannot be misheard .gy.
+    check "NEderlants.".stressesRead == some(@[some(0)])  # `CLL 4.8`
+    # le cmene liste pe `CLL 4.8` .i zoi gy. Elise .gy.
+    check ".eLIS.".stressesRead == some(@[some(1)])  # `CLL 4.8`
+    # `CLL 4.8` .i zoi gy. Lech Walesa .gy.
+    check "lex. va,uensas.".wordsRead == some(@["lex", "vauensas"])  # `CLL 4.8`
+    # `CLL 4.7` .e `Example 4.45`
+    check "me la spagetis.".wordsRead == some(@["me", "la", "spagetis"])  # `CLL 4.7`
 
 
   test "Section 4.9":
-    check "bri.vla".refusalRead == some((Refusal.Shape, 0))  # rule 1, pause breaks up word
+    # le pamoi javni .i lo denpa cu fendi lo valsi
+    check "bri.vla".refusalRead == some((Refusal.Shape, 0))  # le pamoi javni
     check ".i mi klama".pausesRead ==
-        some(@[Pause.Written, Pause.Absent, Pause.Absent])  # rule 3; constructed
-    check "cy klama".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # rule 6; constructed
+        some(@[Pause.Written, Pause.Absent, Pause.Absent])  # le cimoi javni .i le mupli cu se finti
+    # le xamoi javni .i le mupli cu se finti
+    check "cy klama".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # le xamoi javni
+    # le xamoi javni .i lo valsi poi se lidne cu se tarmi zoi gy. Cy .gy. .i le mupli cu se finti
     check "cy ky klama".pausesRead ==
-        some(@[Pause.Absent, Pause.Absent, Pause.Inferred])  # rule 6, "Cy" follows; constructed
+        some(@[Pause.Absent, Pause.Absent, Pause.Inferred])  # le xamoi javni
     check "la djan cu klama".pausesRead == some(@[
       Pause.Absent, Pause.Absent, Pause.Inferred, Pause.Absent,
-    ])  # rules 2 and 4, after `la` no pause; constructed
-    check "mi djan".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # rule 4; constructed
-    check "doi djan".pausesRead == some(@[Pause.Absent, Pause.Absent])  # rule 4, `doi`
+    ])  # le remoi javni .e le vomoi javni .i zo la cu lidne no denpa .i le mupli cu se finti
+    # le vomoi javni .i le mupli cu se finti
+    check "mi djan".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # le vomoi javni
+    check "doi djan".pausesRead == some(@[Pause.Absent, Pause.Absent])  # le vomoi javni .i zo doi
+    # le mumoi javni .i slaka bu cu rinka lo nu `A` cu zvati le slaka poi lidne le romoi slaka .i le
+    #   mupli cu se krasi lo nu lanli `#811`
     check "ku,Arka broda".pausesRead ==
-        some(@[Pause.Absent, Pause.Absent])  # rule 5, comma makes `A` penultimate; review of #811
+        some(@[Pause.Absent, Pause.Absent])  # `#811`
+    # le zemoi javni .i le se ciska poi se sitna cu mulno .i `CLL 19.10`
     check "zoi gy. John .gy.".wordsRead ==
-        some(@["zoi", "gy", "John", "gy"])  # rule 7, text quoted whole; 19.10
+        some(@["zoi", "gy", "John", "gy"])  # `CLL 19.10`
     check "zoi gy. John .gy.".pausesRead == some(@[
       Pause.Absent, Pause.Absent, Pause.Written, Pause.Written,
-    ])  # rule 7, pause on each side of text quoted
-    check "zo zoi".wordsRead == some(@["zo", "zoi"])  # 19.10, `zo` quotes `zoi`
-    check "lo'u zoi le'u".wordsRead == some(@["lo'u", "zoi", "le'u"])  # 19.9, words quoted
-    check "mi zoi".refusalRead == some((Refusal.Quotation, 3))  # 19.10, no delimiter; constructed
+    ])  # le zemoi javni .i le se ciska poi se sitna cu se lidne lo denpa gi'e lidne lo denpa
+    check "zo zoi".wordsRead == some(@["zo", "zoi"])  # ja'i `CLL 19.10` zo zo cu sitna zo zoi
+    # ja'i `CLL 19.9` le valsi cu se sitna
+    check "lo'u zoi le'u".wordsRead == some(@["lo'u", "zoi", "le'u"])  # `CLL 19.9`
+    # ja'i `CLL 19.10` no korbi valsi cu zvati .i le mupli cu se finti
+    check "mi zoi".refusalRead == some((Refusal.Quotation, 3))  # `CLL 19.10`
+    # le zemoi javni .i zo la'o ji'a .i le mupli cu se finti
     check "mi cusku la'o gy. Mary .gy.".wordsRead ==
-        some(@["mi", "cusku", "la'o", "gy", "Mary", "gy"])  # rule 7, `la'o` too; constructed
+        some(@["mi", "cusku", "la'o", "gy", "Mary", "gy"])  # le zemoi javni
+    # `CLL 19.10` .e `Example 19.50` .i le korbi valsi cu zvati le se ciska
     check "zoi gy. gyrations .gy.".refusalRead ==
-        some((Refusal.Quotation, 8))  # 19.10, Example 19.50, delimiter inside text
-    check "zoi gy. never closes".refusalRead == some((Refusal.Quotation, 0))  # 19.10; constructed
-    check "mi fa'o 日本".wordsRead == some(@["mi", "fa'o"])  # 19.15, `fa'o` ends input
-    check "zo fa'o mi".wordsRead == some(@["zo", "fa'o", "mi"])  # 19.15, unless quoted
+        some((Refusal.Quotation, 8))  # `CLL 19.10`
+    # `CLL 19.10` .i le mupli cu se finti
+    check "zoi gy. never closes".refusalRead == some((Refusal.Quotation, 0))  # `CLL 19.10`
+    # ja'i `CLL 19.15` zo fa'o cu fanmo le se ciska
+    check "mi fa'o 日本".wordsRead == some(@["mi", "fa'o"])  # `CLL 19.15`
+    # ja'i `CLL 19.15` va'o lo nu zo fa'o na se sitna
+    check "zo fa'o mi".wordsRead == some(@["zo", "fa'o", "mi"])  # `CLL 19.15`
 
 
 
@@ -479,32 +619,37 @@ suite "Internal: Stream":
     var count = 0
     for words in STREAMS_RANDOM:
       let text = words.join(" ")
-      check text.wordsRead == some(words)  # 3.3, space divides words; round trip
+      # ja'i `CLL 3.3` lo kunti lerfu cu fendi lo valsi .i lo se tcidu cu mintu lo se ciska
+      check text.wordsRead == some(words)  # `CLL 3.3`
       var
         starts: seq[int]
         at = 0
       for word in words:
         starts.add at
         at += word.len + 1
-      check text.startsRead == some(starts)  # 3.3, byte where each word opens
+      check text.startsRead == some(starts)  # `CLL 3.3` .i lo stuzi be ro valsi
       let reading = text.readStream
       if not reading.is_read: continue
       for i, occurrence in reading.occurrences:
-        check occurrence.reading.kind == LUT_KIND_BY_WORD[words[i]]  # 4.2-6, class of pool
+        # `CLL 4.2` bi'o `CLL 4.6` .i lo klesi pe le girzu
+        check occurrence.reading.kind == LUT_KIND_BY_WORD[words[i]]  # `CLL 4.2`
         if occurrence.reading.kind != Kind.Cmavo: continue
+        # `CLL 20` .i lo selma'o poi le cmavo liste cu dunda ke'a
         check occurrence.reading.selmaho ==
-            some(LUT_SELMAHO_BY_CMAVO[words[i]])  # 20, selma'o cmavo list gives
+            some(LUT_SELMAHO_BY_CMAVO[words[i]])  # `CLL 20`
       inc count
-    check count == SAMPLES  # IX.3, guard keeps every stream
+    check count == SAMPLES  # `Article IX.3` .i le bandu cu ralte ro porsi
 
 
   test "Each word ends past its last letter, and bytes it spans spell it":
     for words in STREAMS_RANDOM:
       for joint in [" ", ".", " . "]:
-        check words.join(joint).isSpanned  # 3.3, marks divide words, and stand outside each
+        # ja'i `CLL 3.3` lo sinxa cu fendi lo valsi gi'e zvati no valsi
+        check words.join(joint).isSpanned  # `CLL 3.3`
     for text in WRITTEN_SPANNED:
       checkpoint text
-      check text.isSpanned  # WRITTEN_SPANNED, comma and capital inside word, quotation
+      # `WRITTEN_SPANNED` .i slaka bu .e lo barda lerfu poi zvati lo valsi ku'o .e lo nu sitna
+      check text.isSpanned  # `WRITTEN_SPANNED`
 
 
   test "Period between words reads as space, and writes pause before each":
@@ -512,17 +657,20 @@ suite "Internal: Stream":
     for words in STREAMS_RANDOM:
       for joint in [".", " .", ". ", " . "]:
         let text = words.join(joint)
-        check text.wordsRead == some(words)  # 3.3, no space needed where period stands
+        # ja'i `CLL 3.3` no kunti lerfu cu se nitcu va'o lo nu denpa bu cu zvati
+        check text.wordsRead == some(words)  # `CLL 3.3`
         let pauses = text.pausesRead
         if pauses.isNone: continue
-        check pauses.get[1 .. ^1].allIt(it == Pause.Written)  # 3.3, period writes pause
+        # ja'i `CLL 3.3` denpa bu cu sinxa lo denpa
+        check pauses.get[1 .. ^1].allIt(it == Pause.Written)  # `CLL 3.3`
         inc count
-    check count == 4 * SAMPLES  # IX.3, guard keeps every stream of each joint
+    check count == 4 * SAMPLES  # `Article IX.3` .i le bandu cu ralte ro porsi pe ro jorne
 
 
   test "Pause is inferred where rule of 4.9 needs one, and absent elsewhere":
     for words in STREAMS_RANDOM:
-      check words.join(" ").pausesRead == some(words.pausesNeeded)  # 4.9 rules 3, 6; 4.2
+      # le cimoi javni .e le xamoi javni pe `CLL 4.9` .i `CLL 4.2`
+      check words.join(" ").pausesRead == some(words.pausesNeeded)  # `CLL 4.9`
 
 
   test "Stressed last syllable takes pause before brivla, or before stressed first syllable":
@@ -544,8 +692,9 @@ suite "Internal: Stream":
         if not is_stressed_last[i - 1] or not (is_brivla or is_stressed_first): continue
         if pauses[i] == Pause.Absent: inc count
         pauses[i] = Pause.Inferred
-      check written.join(" ").pausesRead == some(pauses)  # 4.9 rule 5; 4.2, stresses meet
-    check count >= FLOOR_STRESS  # IX.3, guard keeps rule in play
+      # le mumoi javni pe `CLL 4.9` .i ja'i `CLL 4.2` re nu basna cu penmi
+      check written.join(" ").pausesRead == some(pauses)  # `CLL 4.9`
+    check count >= FLOOR_STRESS  # `Article IX.3` .i le bandu cu ralte lo nu le javni cu se cipra
 
 
   test "Comma breaking syllables changes no word, and other comma is refused at its byte":
@@ -554,13 +703,15 @@ suite "Internal: Stream":
       for at in 1 ..< word.len:
         let text = word[0 ..< at] & "," & word[at .. ^1]
         if word.isCommaAdmitted(at):
-          check text.wordsRead == some(@[word])  # 3.3, no two words differ by comma alone
+          # ja'i `CLL 3.3` slaka bu po'o na ka'e rinka lo nu re valsi cu frica
+          check text.wordsRead == some(@[word])  # `CLL 3.3`
           inc count_read
         else:
-          check text.refusalRead == some((Refusal.Comma, at))  # 3.3, 3.4
+          check text.refusalRead == some((Refusal.Comma, at))  # `CLL 3.3` .e `CLL 3.4`
           inc count_refused
-    check count_read >= FLOOR_COMMA_READ  # IX.3, guard keeps most draws
-    check count_refused >= FLOOR_COMMA_REFUSED  # IX.3, guard keeps refusals in play
+    check count_read >= FLOOR_COMMA_READ  # `Article IX.3` .i le bandu cu ralte so'e lo se cuxna
+    # `Article IX.3` .i le bandu cu ralte lo nu lo nu to'e curmi cu se cipra
+    check count_refused >= FLOOR_COMMA_REFUSED  # `Article IX.3`
 
 
   test "Without capital, comma changes no word that text without it reads":
@@ -571,11 +722,15 @@ suite "Internal: Stream":
       for at in 1 ..< word.len:
         if '\'' in [word[at - 1], word[at]]: continue
         let words = (word[0 ..< at] & "," & word[at .. ^1]).wordsRead
-        check words.isNone or words == texts  # 3.3, never "differ solely because of" comma
+        # ja'i `CLL 3.3` lo valsi no roi frica ki'u slaka bu po'o .i `CLL 3.3` cu cusku zoi gy.
+        #   differ solely because of .gy.
+        check words.isNone or words == texts  # `CLL 3.3`
         inc count
         if words.isSome: inc count_kept
-    check count == COUNT_COMMA_MARKED  # IX.3, guard keeps each comma of each word
-    check count_kept >= FLOOR_COMMA_KEPT  # IX.3, guard keeps commas that read in play
+    # `Article IX.3` .i le bandu cu ralte ro lerfu po'u slaka bu pe ro valsi
+    check count == COUNT_COMMA_MARKED  # `Article IX.3`
+    # `Article IX.3` .i le bandu cu ralte lo nu slaka bu poi se tcidu cu se cipra
+    check count_kept >= FLOOR_COMMA_KEPT  # `Article IX.3`
 
 
   test "Comma grouping vowels of cmene, with capital on each syllable, reads that cmene so":
@@ -587,10 +742,13 @@ suite "Internal: Stream":
           let
             marked = word.capitalized(span)
             text = marked[0 ..< at] & "," & marked[at .. ^1]
-          check text.wordsRead == some(@[word])  # 3.5, comma groups vowels of one name
-          check text.stressesRead == some(@[some(k)])  # 4.8, capital "to preserve" stress
+          # ja'i `CLL 3.5` slaka bu cu fendi lo karsna pe pa cmene
+          check text.wordsRead == some(@[word])  # `CLL 3.5`
+          # ja'i `CLL 4.8` lo barda lerfu cu ralte lo nu basna .i `CLL 4.8` cu cusku zoi gy. to
+          #   preserve .gy.
+          check text.stressesRead == some(@[some(k)])  # `CLL 4.8`
           inc count
-    check count == COUNT_GROUPED  # IX.3, guard keeps each syllable of each grouping
+    check count == COUNT_GROUPED  # `Article IX.3` .i le bandu cu ralte ro slaka pe ro nu fendi
 
 
   test "Stress comma leaves penultimate takes no pause before brivla after it":
@@ -604,10 +762,12 @@ suite "Internal: Stream":
           marked = word.capitalized(spans[^2])
           text = marked[0 ..< at] & "," & marked[at .. ^1] & " broda"
           pauses = text.pausesRead
-        if pauses.isNone: continue  # comma parts no syllable fu'ivla admits
-        check pauses.get[1] == Pause.Absent  # 4.9 rule 5 needs stressed last syllable
+        if pauses.isNone: continue  # slaka bu cu fendi no slaka poi lo fu'ivla cu curmi ke'a
+        # le mumoi javni pe `CLL 4.9` cu nitcu lo romoi slaka poi se basna
+        check pauses.get[1] == Pause.Absent  # `CLL 4.9`
         inc count
-    check count >= FLOOR_COMMA_STRESS  # IX.3, guard keeps stressed fu'ivla in play
+    # `Article IX.3` .i le bandu cu ralte lo nu lo fu'ivla poi se basna cu se cipra
+    check count >= FLOOR_COMMA_STRESS  # `Article IX.3`
 
 
   test "Comma between two cmavo that need pause is refused at comma":
@@ -616,42 +776,54 @@ suite "Internal: Stream":
     for _ in 1 .. SAMPLES_COMMA_PAUSE:
       let words = @[WORDS_CMAVO.sample, WORDS_CMAVO.sample]
       if words.pausesNeeded[1] == Pause.Absent or words.anyIt('.' in it): continue
+      # ja'i `CLL 3.3` slaka bu na ka'e se bacru ta'i lo denpa .i `CLL 3.3` cu cusku zoi gy. cannot
+      #   be pronounced as pause .gy.
       check (words[0] & "," & words[1]).refusalRead ==
-          some((Refusal.Comma, words[0].len))  # 3.3, comma "cannot be pronounced as pause"
+          some((Refusal.Comma, words[0].len))  # `CLL 3.3`
       inc count
-    check count >= FLOOR_COMMA_PAUSE  # IX.3, guard keeps pauses in play
+    # `Article IX.3` .i le bandu cu ralte lo nu lo denpa cu se cipra
+    check count >= FLOOR_COMMA_PAUSE  # `Article IX.3`
 
 
   test "Capital on penultimate syllable of brivla reads, and on any other never reads as it":
     var count_read, count_refused, count_other = 0
-    for word in concat(WORDS_GISMU, WORDS_LUJVO):  # every gismu, and each random lujvo
+    for word in concat(WORDS_GISMU, WORDS_LUJVO):  # ro gismu .e ro cunso lujvo
       let
         spans = word.syllables
         counted = toSeq(0 .. spans.high).filterIt(word[spans[it].a] != 'y')
       for k, span in spans:
         let text = word.capitalized(span)
         if k == counted[^2]:
-          check text.stressesRead == some(@[some(k)])  # 3.9, penultimate, `y` not counted
+          # ja'i `CLL 3.9` le slaka poi lidne le romoi slaka .i `y` na se kancu
+          check text.stressesRead == some(@[some(k)])  # `CLL 3.9`
           inc count_read
           continue
         let reading = text.readStream
         if not reading.is_read:
+          # ja'i `CLL 3.9` le nu to'e curmi cu zvati le barda lerfu .i ja ja'i `CLL 4.1` lo drata ve
+          #   fendi cu mintu
           check (reading.refusal == Refusal.Stress and reading.start == span.a) or
-              reading.refusal == Refusal.Split  # 3.9, at capital; 4.1, or tie of other words
+              reading.refusal == Refusal.Split  # `CLL 3.9`
           inc count_refused
           continue
         let texts = reading.occurrences.mapIt(it.text)
-        check texts != @[word]  # 3.9, false primary stress, "errors in word resolution"
-        check texts.join("") == word  # 4.1, other words split letters of word
+        # ja'i `CLL 3.9` lo nu basna poi na drani cu rinka lo srera .i `CLL 3.9` cu cusku zoi gy.
+        #   errors in word resolution .gy.
+        check texts != @[word]  # `CLL 3.9`
+        check texts.join("") == word  # ja'i `CLL 4.1` lo drata valsi cu fendi lo lerfu pe le valsi
         for occurrence in reading.occurrences:
           if occurrence.stress.isNone or occurrence.reading.kind notin KINDS_BRIVLA: continue
           let is_borrowing = occurrence.reading.kind == Kind.Fuhivla
+          # ja'i `CLL 3.9` le barda lerfu cu mapti le brivla poi se tcidu
           check occurrence.stress ==
-              some(occurrence.text.penultimate(is_borrowing))  # 3.9, capital fits brivla read
+              some(occurrence.text.penultimate(is_borrowing))  # `CLL 3.9`
         inc count_other
-    check count_read == WORDS_GISMU.len + WORDS_LUJVO.len  # IX.3, one stress reads in each
-    check count_refused >= FLOOR_STRESS_REFUSED  # IX.3, guard keeps refusals in play
-    check count_other >= FLOOR_STRESS_OTHER  # IX.3, guard keeps other words in play
+    # `Article IX.3` .i ne'i ro valsi pa nu basna cu se tcidu
+    check count_read == WORDS_GISMU.len + WORDS_LUJVO.len  # `Article IX.3`
+    # `Article IX.3` .i le bandu cu ralte lo nu lo nu to'e curmi cu se cipra
+    check count_refused >= FLOOR_STRESS_REFUSED  # `Article IX.3`
+    # `Article IX.3` .i le bandu cu ralte lo nu lo drata valsi cu se cipra
+    check count_other >= FLOOR_STRESS_OTHER  # `Article IX.3`
 
 
   test "Capital on syllable of word holding on-glide reads one brivla on penultimate alone":
@@ -666,10 +838,13 @@ suite "Internal: Stream":
           inc count
           if not reading.is_read or reading.occurrences.len != 1: continue
           if reading.occurrences[0].reading.kind notin KINDS_BRIVLA: continue
-          check k == spans.len - 2  # 3.4, diphthong one syllable; 3.9, penultimate
+          # ja'i `CLL 3.4` lo karsna gunma cu du pa slaka .i ja'i `CLL 3.9` le slaka poi lidne le
+          #   romoi slaka
+          check k == spans.len - 2  # `CLL 3.4`
           inc count_read
-    check count == COUNT_GLIDE_CAPITALS  # IX.3, guard keeps each syllable of each frame
-    check count_read >= FLOOR_GLIDE_READ  # IX.3, guard keeps brivla in play
+    check count == COUNT_GLIDE_CAPITALS  # `Article IX.3` .i le bandu cu ralte ro slaka pe ro greku
+    # `Article IX.3` .i le bandu cu ralte lo nu lo brivla cu se cipra
+    check count_read >= FLOOR_GLIDE_READ  # `Article IX.3`
 
 
   test "Capital on each syllable of cmene holding iy or uy stresses that syllable":
@@ -678,9 +853,10 @@ suite "Internal: Stream":
       for frame in FRAMES_NAME:
         let word = frame.replace("_", pair)
         for k, span in word.syllables(is_name = true):
-          check word.capitalized(span).stressesRead == some(@[some(k)])  # 3.4; 3.9, any syllable
+          # `CLL 3.4` .i ja'i `CLL 3.9` ro slaka cu ka'e se basna
+          check word.capitalized(span).stressesRead == some(@[some(k)])  # `CLL 3.4`
           inc count
-    check count == COUNT_NAME_CAPITALS  # IX.3, guard keeps each syllable of each frame
+    check count == COUNT_NAME_CAPITALS  # `Article IX.3` .i le bandu cu ralte ro slaka pe ro greku
 
 
   test "Capital on any vowel of cmavo stresses that syllable, and capital on y is refused":
@@ -688,9 +864,11 @@ suite "Internal: Stream":
       for k, span in word.syllables:
         let text = word.capitalized(span)
         if word[span.a] == 'y':
-          check text.refusalRead == some((Refusal.Stress, span.a))  # 3.9, "y" never stressed
+          # ja'i `CLL 3.9` zoi gy. y .gy. no roi se basna
+          check text.refusalRead == some((Refusal.Stress, span.a))  # `CLL 3.9`
         else:
-          check text.stressesRead == some(@[some(k)])  # 3.9, cmavo any syllable
+          # ja'i `CLL 3.9` ro slaka pe lo cmavo cu ka'e se basna
+          check text.stressesRead == some(@[some(k)])  # `CLL 3.9`
 
 
   test "Words needing no pause, written together, read back as them where brivla stands last":
@@ -705,47 +883,71 @@ suite "Internal: Stream":
         text = words.join("")
         texts = text.wordsRead
       if words.isStressFit(words.mapIt(LUT_KIND_BY_WORD[it])):
-        check texts == some(words) or texts == some(@[text])  # `D3 a` of #811; 4.1, one split
+        # `D3 a` pe `#811` .i ja'i `CLL 4.1` pa ve fendi po'o
+        check texts == some(words) or texts == some(@[text])  # `#811`
         if texts == some(words): inc count_joined
       else:
-        check texts != some(words)  # `D3 a` of #811, brivla before end needs capital
+        # `D3 a` pe `#811` .i lo brivla poi lidne lo fanmo cu nitcu lo barda lerfu
+        check texts != some(words)  # `#811`
         inc count_other
 
-      # Capital on each brivla marks each stress, so words read back as them.
+      # lo barda lerfu pe ro brivla cu sinxa ro nu basna .i se ki'u bo le genturfa'i cu rapli tcidu
+      #   le valsi
       var marked: seq[string]
       for word in words:
         if LUT_KIND_BY_WORD[word] == Kind.Cmavo:
           marked.add word
           continue
         marked.add word.capitalized(word.syllables[word.penultimate(false)])
-      check marked.join("").wordsRead == some(words)  # `D3 a` of #811; 3.9, capitals mark stress
-    check count_joined >= FLOOR_JOINED  # IX.3, guard keeps runs that read back
-    check count_other >= FLOOR_JOINED_OTHER  # IX.3, guard keeps brivla before end in play
+      # `D3 a` pe `#811` .i ja'i `CLL 3.9` lo barda lerfu cu sinxa lo nu basna
+      check marked.join("").wordsRead == some(words)  # `#811`
+    # `Article IX.3` .i le bandu cu ralte lo porsi poi se rapli tcidu
+    check count_joined >= FLOOR_JOINED  # `Article IX.3`
+    # `Article IX.3` .i le bandu cu ralte lo nu lo brivla poi lidne lo fanmo cu se cipra
+    check count_other >= FLOOR_JOINED_OTHER  # `Article IX.3`
 
 
   test "Stream of marks alone reads as no words":
     for text in ["", " ", ".", " .\t. \n"]:
-      check text.wordsRead == some(newSeq[string]())  # 3.3, marks divide words alone
+      # ja'i `CLL 3.3` lo sinxa cu fendi lo valsi gi'e na valsi
+      check text.wordsRead == some(newSeq[string]())  # `CLL 3.3`
 
 
   test "Refusal names byte where offending word opens":
-    check "mi klama iai".refusalRead == some((Refusal.Split, 9))  # 4.9 rule 3, tie; constructed
-    check "mi klama ktraile".refusalRead == some((Refusal.Cluster, 9))  # 4.7; constructed
-    check "mi klama c".refusalRead == some((Refusal.Shape, 9))  # 3.4, no syllable; constructed
+    # le cimoi javni pe `CLL 4.9` .i lo ve fendi cu mintu .i le mupli cu se finti
+    check "mi klama iai".refusalRead == some((Refusal.Split, 9))  # `CLL 4.9`
+    # `CLL 4.7` .i le mupli cu se finti
+    check "mi klama ktraile".refusalRead == some((Refusal.Cluster, 9))  # `CLL 4.7`
+    # ja'i `CLL 3.4` le valsi cu vasru no slaka .i le mupli cu se finti
+    check "mi klama c".refusalRead == some((Refusal.Shape, 9))  # `CLL 3.4`
 
 
   test "Written word splits where one split needs fewest pauses, and tie is refused as Split":
-    check "secusku".wordsRead == some(@["se", "cusku"])  # 4.1, one split; Tatoeba
-    check "ki'eu'e".wordsRead == some(@["ki'e", "u'e"])  # 3.3, period of Example 4.3 inferred
-    check "ki'eu'e".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # 4.9 rule 3
-    check "cia".wordsRead == some(@["ci", "a"])  # 3.3, period inferred; constructed
-    check "tosmabru".wordsRead == some(@["to", "smabru"])  # 4.11 step 5, "will break up"
-    check "miBROda".wordsRead == some(@["mi", "broda"])  # 3.9, stress places brivla
-    check "MIbroda".wordsRead == some(@["mibro", "da"])  # 3.9, stress of gismu `mibro`
-    check "KLAmaku".wordsRead == some(@["klama", "ku"])  # 3.9, stress fits `klama` alone
-    check "klamaku".wordsRead == some(@["klamaku"])  # 4.7, one fu'ivla; constructed
-    check "mibroda".wordsRead == some(@["mi", "broda"])  # `D3 a` of #811, penultimate of word alone
-    check "lonubroda".wordsRead == some(@["lo", "nu", "broda"])  # `D3 a` of #811
-    check ".esperanto".wordsRead == some(@["e", "speranto"])  # 4.1, Example 19.78 "breaks up"
-    check "iai".refusalRead == some((Refusal.Split, 0))  # 4.9 rule 3, `.i.ai` or `.ia.i`
-    check "ka,i".refusalRead == some((Refusal.Comma, 2))  # 3.3, comma is no pause; constructed
+    # ja'i `CLL 4.1` pa ve fendi po'o .i le mupli cu se krasi la'o gy. Tatoeba .gy.
+    check "secusku".wordsRead == some(@["se", "cusku"])  # `CLL 4.1`
+    # ja'i `CLL 3.3` le genturfa'i cu facki le denpa poi denpa bu cu sinxa ke'a ne'i `Example 4.3`
+    check "ki'eu'e".wordsRead == some(@["ki'e", "u'e"])  # `CLL 3.3`
+    # le cimoi javni pe `CLL 4.9`
+    check "ki'eu'e".pausesRead == some(@[Pause.Absent, Pause.Inferred])  # `CLL 4.9`
+    # ja'i `CLL 3.3` le genturfa'i cu facki lo denpa poi denpa bu na sinxa ke'a .i le mupli cu se
+    #   finti
+    check "cia".wordsRead == some(@["ci", "a"])  # `CLL 3.3`
+    # le mumoi pagbu be le tadji pe `CLL 4.11` .i `CLL 4.11` cu cusku zoi gy. will break up .gy.
+    check "tosmabru".wordsRead == some(@["to", "smabru"])  # `CLL 4.11`
+    # ja'i `CLL 3.9` lo nu basna cu jdice le stuzi be le brivla
+    check "miBROda".wordsRead == some(@["mi", "broda"])  # `CLL 3.9`
+    # ja'i `CLL 3.9` lo nu basna pe le gismu po'u `mibro`
+    check "MIbroda".wordsRead == some(@["mibro", "da"])  # `CLL 3.9`
+    # ja'i `CLL 3.9` lo nu basna cu mapti zo klama po'o
+    check "KLAmaku".wordsRead == some(@["klama", "ku"])  # `CLL 3.9`
+    # ja'i `CLL 4.7` pa fu'ivla .i le mupli cu se finti
+    check "klamaku".wordsRead == some(@["klamaku"])  # `CLL 4.7`
+    # `D3 a` pe `#811` .i le slaka po'o poi lidne le romoi slaka pe le se ciska valsi
+    check "mibroda".wordsRead == some(@["mi", "broda"])  # `#811`
+    check "lonubroda".wordsRead == some(@["lo", "nu", "broda"])  # `D3 a` pe `#811`
+    # `CLL 4.1` .e `Example 19.78` .i zoi gy. breaks up .gy.
+    check ".esperanto".wordsRead == some(@["e", "speranto"])  # `CLL 4.1`
+    # le cimoi javni pe `CLL 4.9` .i `.i.ai` .a `.ia.i`
+    check "iai".refusalRead == some((Refusal.Split, 0))  # `CLL 4.9`
+    # ja'i `CLL 3.3` slaka bu na sinxa lo denpa .i le mupli cu se finti
+    check "ka,i".refusalRead == some((Refusal.Comma, 2))  # `CLL 3.3`

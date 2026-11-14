@@ -1,11 +1,15 @@
-## Hold each command of `README.md` to shell that runs it: command that quotes its text with `'`
-##   holds no `'` of its own, so shell passes that text whole to Nim or to node.
-##   Command is each line from one that opens with `$ ` in block of text, till first line that ends
-##     with `'`, where quote closes; text inside writes `'` as `\x27`.
-##   Case as found, 2026-11-11: first command quoted `la'o` in its text of Nim, whose `'` closed
-##     quote, so shell gave Nim `dy.` as module, and command exited 1.
-##   README is read as text it is, at compile time; no command of it runs here, since each would
-##     compile parser again.
+## cipra ro minde pe `README.md` ja'i lo minde samtci poi tcidu le minde .i lo minde poi sitna lo se
+##   ciska sepi'o `'` cu vasru no drata lerfu po'u `'` .i se ki'u bo lo minde samtci cu dunda le
+##   mulno se ciska la'o gy. Nim .gy. .a `node`
+##   .i ro minde cu se krasi pa linji poi se krasi `$ ` ne'i pa girzu be lo linji be'o poi se tcita
+##     `text` .i le minde cu se fanmo le pamoi linji poi se fanmo `'` .i le nu sitna cu se fanmo vi
+##     .i ne'i le se sitna `\x27` cu basti `'`
+##   .i mupli fa lo nu fliba poi se facki de'i `2026-11-11` .i le pamoi minde cu sitna zo la'o ne'i
+##     lo vo'a se ciska be fi la'o gy. Nim .gy. .i le lerfu po'u `'` pe zo la'o cu fanmo le nu sitna
+##     pe lo minde samtci .i se ki'u bo lo minde samtci cu dunda `dy.` la'o gy. Nim .gy. ta'i lo
+##     datnyvei .i lo jalge be le minde cu du li pa
+##   .i `README.md` cu se tcidu ta'i lo se ciska ca lo nu fanva .i no minde pe `README.md` cu se
+##     pilno vi .i ki'u bo ro minde cu rapli fanva le genturfa'i
 
 {.experimental: "strictFuncs".}
 
@@ -16,15 +20,19 @@ import std/[strutils, unittest]
 
 
 const
-  TEXT_README = staticRead("../../README.md")  ## README, as committed.
-  OPENING_COMMAND = "$ "  ## Opening of first line of command in block of README.
-  COUNT_COMMANDS_LEAST = 8  ## Commands of README that quote text, at least; 10 on adding suite.
+  TEXT_README = staticRead("../../README.md")  ## `README.md` ta'i lo nu se vreji
+  OPENING_COMMAND = "$ "
+    ## lo krasi be lo pamoi linji be lo minde be'o ne'i lo girzu be lo linji be'o pe `README.md`
+  COUNT_COMMANDS_LEAST = 8
+    ## lo mleca traji te kancu be lo minde poi sitna lo se ciska gi'e zvati `README.md` .i ca lo nu
+    ##   jmina le cipra kei `README.md` cu vasru pano minde poi sitna lo se ciska
 
 
 
 func commandsQuoted(text: string): seq[tuple[line: int, command: string]] =
-  ## Give each command that quotes text with `'`, with line it opens on: lines from one opening
-  ##   with `$ ` till first that ends with `'`.
+  ## dunda ro minde poi sitna lo se ciska sepi'o `'` ku'o .e lo linji poi le minde cu se krasi ke'a
+  ##   .i ro minde cu se krasi pa linji poi se krasi `$ ` .i le minde cu se fanmo le pamoi linji poi
+  ##   se fanmo `'`
   let lines = text.splitLines
   var k = 0
   while k < lines.len:
@@ -47,5 +55,7 @@ suite "Internal: README":
     let commands = TEXT_README.commandsQuoted
     for (line, command) in commands:
       checkpoint "README.md line " & $line & ": " & command
-      check command.count('\'') == 2  # shell quote opens once and closes once (README.md)
-    check commands.len >= COUNT_COMMANDS_LEAST  # IX.3, guard keeps commands of README
+      # le nu sitna pe lo minde samtci cu se krasi pa roi gi'e se fanmo pa roi
+      check command.count('\'') == 2  # `README.md`
+    # lo bandu cu ralte lo minde pe `README.md`
+    check commands.len >= COUNT_COMMANDS_LEAST  # ja'i `IX.3`

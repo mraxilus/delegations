@@ -1,17 +1,30 @@
-## Hold converter of `tools/lists.nim` to its laws: word and rafsi of gismu list, and word and
-##   selma'o of cmavo list, read from their columns, rendered module kept to 100 columns and
-##   read back, and committed module equal to committed list rendered again. Hold reader of
-##   outside texts (`texts_outside.nim`) to lines it reads.
-##   CLL covers no word list file, so suite is `Internal:`, tests named by behaviour (IX.10).
-##   Sample lines are copied byte for byte from `gismu.txt`, `cmavo.txt` and `lujvo.txt` that
-##     their digests pin, carriage return removed as `readSource` removes it; doc of each names
-##     its line. Two tests compare committed lists with installed ones; each skips with reason
-##     where `lojban-common` is absent or moved from its pin (IX.9). `system` declares package,
-##     so CI installs it.
-##   Random entries hold word of one to five letters and up to three rafsi of three or four, all
-##     drawn from lojban letters and apostrophe, as committed entries hold (Article IX.4).
-##     Random cmavo hold word of one to eight letters, and any selma'o of chapter 20.
-##   Samples are drawn into pool allocated once, after one seeding, and served by `served`.
+## cipra lo du'u le galfi samtci pe `tools/lists.nim` cu zukte ja'i le javni be le galfi samtci .i
+##   le galfi samtci cu tcidu lo valsi jo'u lo rafsi vu'o pe le gismu liste ra'i lo stuzi be le
+##   datni pagbu .i le galfi samtci cu tcidu ji'a lo valsi jo'u lo selma'o vu'o pe le cmavo liste
+##   ra'i lo stuzi be le datni pagbu .i ro linji pe lo samtci datnyvei poi se ciska cu vasru su'e
+##   panono stuzi .i lo cipra cu rapli tcidu le samtci datnyvei .i va'o lo nu le liste poi se ralte
+##   cu se rapli ciska kei le jalge cu mintu le samtci datnyvei poi se ralte .i ji'a cipra lo du'u
+##   le tcidu be lo drata se ciska be'o to `texts_outside.nim` toi cu drani tcidu lo linji
+##   .i la'o gy. CLL .gy. cu casnu no valsi liste datnyvei .i se ki'u bo lo cmene be le vi cipra cu
+##     cfari fi `Internal:` .i lo cmene be ro cipra cu skicu lo nu le se cipra cu zukte to
+##     `Article IX.10` toi
+##   .i ro mupli linji cu fukpi pa linji pe `gismu.txt` .a `cmavo.txt` .a `lujvo.txt` vu'o poi lo
+##     sinxa namcu cu stodi sinxa ke'a .i ro stuzi pe le mupli linji cu mintu lo stuzi pe le linji
+##     .i ku'i lo lerfu po'u la'o gy. carriage return .gy. cu se vimcu ta'i lo nu `readSource` cu
+##     vimcu le lerfu .i lo pinka be ro mupli linji cu cusku le linji poi le mupli linji cu fukpi
+##     ke'a .i re cipra cu karbi le liste poi se ralte ku'o le liste poi se punji .i va'o lo nu
+##     `lojban-common` cu na zvati gi'a na mapti le stodi sinxa kei ro le re cipra cu na zukte gi'e
+##     cusku lo krinu to `Article IX.9` toi .i lo minde po'u `system` cu cusku le bakfu .i se ki'u
+##     bo la'o gy. CI .gy. cu punji le bakfu
+##   .i ro cunso liste cmima cu vasru pa valsi .e su'e ci rafsi .i le valsi cu vasru su'o pa lerfu
+##     gi'e vasru su'e mu lerfu .i ro le rafsi cu vasru ci lerfu .a vo lerfu .i ro lerfu pe le liste
+##     cmima cu se cuxna fi lo lojbo lerfu jo'u lo lerfu po'u zoi gy. ' .gy. ge'u ta'i lo nu lo
+##     liste cmima poi se ralte cu vasru lo mintu lerfu to `Article IX.4` toi
+##     .i ro cunso liste cmima pe le cmavo liste cu vasru pa valsi .e pa selma'o .i le valsi cu
+##       vasru su'o pa lerfu gi'e vasru su'e bi lerfu .i le selma'o cu ka'e du ro selma'o pe
+##       `CLL 20`
+##   .i ba lo nu dunda lo tsiju pa roi kei lo mupli cu se cuxna gi'e se punji fi pa vasru poi se
+##     zbasu pa roi .i `served` cu dunda le mupli
 
 {.experimental: "strictFuncs".}
 
@@ -27,13 +40,20 @@ import ./texts_outside
 
 
 const
-  SEED = 1997  ## Seed of every random draw, year of CLL first edition.
-  SAMPLES = 200  ## Random entries, and random orders of lines, each law is checked over.
-  WIDTH = 100  ## Column limit of Article X.1, which rendered lines keep.
-  LETTERS_LOJBAN = {'a'..'z', '\''}  ## Characters word and rafsi of list hold.
-  LETTERS_RANDOM = "abcdefgijklmnoprstuvxyz'"  ## Characters random words and rafsi draw from.
+  SEED = 1997
+    ## lo tsiju be ro cunso cuxna .i le tsiju cu du lo namcu pe lo nanca poi la'o gy. CLL .gy. cu
+    ##   pamoi se cupra ca ke'a
+  SAMPLES = 200
+    ## lo te kancu be lo cunso liste cmima .i ro javni cu se cipra ne'i le cunso liste cmima
+  WIDTH = 100
+    ## lo jimte be lo stuzi pe pa linji ja'i `Article X.1` .i ro linji poi se ciska cu na zmadu le
+    ##   jimte
+  LETTERS_LOJBAN = {'a'..'z', '\''}
+    ## lo lerfu poi lo valsi .e lo rafsi vu'o pe le liste cu vasru ke'a
+  LETTERS_RANDOM = "abcdefgijklmnoprstuvxyz'"
+    ## lo lerfu poi lo cunso valsi .e lo cunso rafsi cu se cuxna fi ke'a
   TEXT_MODULE_GISMU = staticRead("../../src/lojban_parser/lists/gismu.nim")
-    ## Committed module of gismu list, as text.
+    ## le datnyvei pe le gismu liste zi'e poi se ralte ku'o ta'i lo lerpoi
 
   LINE_HEADER =
       " 01436 Lojban                  gismu list  9/26/94        01436 Draft dictionary " &
@@ -41,50 +61,54 @@ const
       "cultural neutrality; physical attributes are safest. Use place structures.  rafsi " &
       "list baselined as of this date.  Note: a complete set can be partially specified " &
       "with etcetera (ce zo'e)"
-    ## Line 1 of `gismu.txt`: header, which converter skips.
+    ## le pamoi linji pe `gismu.txt` .i le linji cu stedu .i le galfi samtci cu na tcidu le linji
   LINE_BACRU =
       " bacru         ba'u utter                                     x1 utters " &
       "verbally/says/phonates/speaks [vocally makes sound] x2                              " &
       "   1h 386    [also voices; does not necessarily imply communication or audience; " &
       "('says' is usually cusku)]; (cf. krixa, cusku, casnu, tavla, voksa, pinka)"
-    ## Line 2 of `gismu.txt`: `bacru`, one CV'V rafsi in third slot.
+    ## le remoi linji pe `gismu.txt` .i zo bacru .i pa rafsi poi se tarmi `CV'V` cu zvati le cimoi
+    ##   stuzi
   LINE_BAKFU =
       " bakfu baf          bundle               'pack'               x1 is a " &
       "bundle/package/cluster/clump/pack [shape/form] containing x2, held together by x3   " &
       "     9b   3    (cf. daski, dakli, tanxe)"
-    ## Line 6 of `gismu.txt`: `bakfu`, hint in quotes.
+    ## le xamoi linji pe `gismu.txt` .i zo bakfu .i le linji cu vasru pa sidju valsi poi se sitna
   LINE_BI =
       " bi    biv          8                                         digit/number: 8 " &
       "(digit)                                                                          3a " &
       "  0"
-    ## Line 45 of `gismu.txt`: cmavo `bi`, carrying rafsi.
+    ## le vomumoi linji pe `gismu.txt` .i le cmavo po'u zo bi noi ponse lo rafsi
   LINE_BLOTI =
       " bloti lot blo lo'i boat                                      x1 is a " &
       "boat/ship/vessel [vehicle] for carrying x2, propelled by x3                         " &
       "     7f  33    (cf. falnu, fulta, marce, jatna, sabnu)"
-    ## Line 65 of `gismu.txt`: `bloti`, every rafsi slot full.
+    ## le xamumoi linji pe `gismu.txt` .i zo bloti .i ro stuzi be lo rafsi cu culno
   LINE_CUKTA =
       " cukta     cku      book                                      x1 is a book " &
       "containing work x2 by author x3 for audience x4 preserved in medium x5              " &
       "1f 163    [x1 is a manifestation/container [a physical object or its analogue] of a " &
       "work/content, not necessarily using paper (= selpapri)]; (cf. cfika, prina, prosa, " &
       "tcidu, papri)"
-    ## Line 247 of `gismu.txt`: `cukta`, CCV rafsi alone.
+    ## le revozemoi linji pe `gismu.txt` .i zo cukta .i le linji cu vasru pa rafsi po'o .i le rafsi
+    ##   cu se tarmi `CCV`
   LINE_DATNI =
       " datni              data                                      x1 (du'u) " &
       "[fact/measurement] is data/information/statistic(s) about x2 gathered by method x3  " &
       "   8b  14    [evidence (= velji'i datni or just velji'i, sidydatni)] (cf. fatci, " &
       "saske, vreji)"
-    ## Line 290 of `gismu.txt`: `datni`, no rafsi.
+    ## le resonomoi linji pe `gismu.txt` .i zo datni .i le linji cu vasru no rafsi
   LINE_VREJI =
       " vreji rej     vei  record                                    x1 is a record of x2 " &
       "(data/facts/du'u) about x3 (object/event) preserved in medium x4            8c   4  " &
       "  (cf. sorcu, datni, papri)"
-    ## Line 1333 of `gismu.txt`: `vreji`, CVC and CVV rafsi.
+    ## le pacicicimoi linji pe `gismu.txt` .i zo vreji .i le linji cu vasru pa rafsi poi se tarmi
+    ##   `CVC` ku'o .e pa rafsi poi se tarmi `CVV`
   LINES_GISMU = [LINE_BACRU, LINE_BAKFU, LINE_BI, LINE_BLOTI, LINE_CUKTA, LINE_DATNI, LINE_VREJI]
-    ## Sample lines of `gismu.txt` after header, in its order.
+    ## lo mupli linji pe `gismu.txt` zi'e poi se lidne le stedu ku'o ta'i le porsi pe le datnyvei
   TEXT_GISMU = LINE_HEADER & "\n" & LINES_GISMU.join("\n") & "\n"
-    ## Sample of `gismu.txt`: header, then each sample line.
+    ## lo mupli be `gismu.txt` .i le mupli cu vasru le stedu .e ro mupli linji .i le stedu cu lidne
+    ##   ro mupli linji
   EXPECTED_GISMU = [
     EntryGismu(word: "bacru", rafsi: @["ba'u"]),
     EntryGismu(word: "bakfu", rafsi: @["baf"]),
@@ -94,49 +118,60 @@ const
     EntryGismu(word: "datni", rafsi: @[]),
     EntryGismu(word: "vreji", rafsi: @["rej", "vei"]),
   ]
-    ## Entry of each sample line, fields read off by hand from columns of `entries.nim`.
+    ## lo liste cmima pe ro mupli linji .i lo prenu cu tcidu lo datni pagbu lo stuzi pe
+    ##   `entries.nim`
   LINE_BAARMOA = "ba'armo'a:barna+morna:pattern of marks:$morna1 $morna2 $=barna1 $morna3 $barna2"
-    ## Line 1 of `lujvo.txt`: tanru in lojban.
+    ## le pamoi linji pe `lujvo.txt` .i le tanru pe le linji cu lojbo
   LINE_BADGAI =
       "badgai#defend+cover: protective cover/ shield:$bandu1 $=gacri1 $bandu2 $=gacri1 " &
       "$bandu3"
-    ## Line 14 of `lujvo.txt`: tanru in English keywords, after `#`.
+    ## le pavomoi linji pe `lujvo.txt` .i le tanru pe le linji cu vasru lo glico ckiku valsi .i `#`
+    ##   cu lidne le tanru
   LINE_DATNYVEI =
       "datnyvei:datni+vreji:file (incl. computers):$vreji1 $vreji2 $=datni2 $vreji3 " &
       "$vreji4 [ = manner of encoding]"
-    ## Line 634 of `lujvo.txt`: `datnyvei`, tanru in lojban.
+    ## le xacivomoi linji pe `lujvo.txt` .i zo datnyvei .i le tanru pe le linji cu lojbo
   LINE_FEBJICLA = "febjicla#boil+stir:roil:roil:$jicla1 $jicla2 $=febvi1"
-    ## Line 841 of `lujvo.txt`: English, gloss given twice; first kept.
+    ## le bivopamoi linji pe `lujvo.txt` .i le tanru cu glico .i lo smuni valsi cu se ciska re roi
+    ##   .i le pamoi cu se ralte
   LINE_CIMNALSRA = "cimnalsra:foldi::cilmo+na'e+srasu foldi marsh"
-    ## Line 360 of `lujvo.txt`: one part, gloss empty.
+    ## le cixanomoi linji pe `lujvo.txt` .i le linji cu vasru pa pagbu .i lo smuni valsi cu kunti
   LINE_SEZYPEVDUA =
       "sezypevdu'a:sevzi+[figurative::]+dunda to dedicate oneself to someone/something, to " &
       "give oneself away"
-    ## Line 2848 of `lujvo.txt`: colons inside bracket, gloss empty.
+    ## le rebivobimoi linji pe `lujvo.txt` .i lo lerfu po'u zoi gy. : .gy. cu zvati lo jbini be zoi
+    ##   gy. [ .gy. jo'u zoi gy. ] .gy. .i lo smuni valsi cu kunti
   LINE_JGETERJOE = "jgeterjo'e#knot+3rd-place-of+joined"
-    ## Line 1238 of `lujvo.txt`: `#` and no colon, so no gloss.
+    ## le parecibimoi linji pe `lujvo.txt` .i le linji cu vasru `#` gi'e vasru no lerfu po'u zoi gy.
+    ##   : .gy. .i se ki'u bo le linji cu vasru no smuni valsi
   LINE_CIERSMITAI =
       "ci'ersmitai#system+similar+shape:$tarmi1 $=simsa1 $tarmi2 $=simsa2 $ciste1 $=simsa3"
-    ## Line 322 of `lujvo.txt`: `#`, and place structure for gloss.
+    ## le cireremoi linji pe `lujvo.txt` .i le linji cu vasru `#` .i lo smuni valsi cu du lo porsi
+    ##   be lo terbri
   LINE_PEVYSOASELTAI =
       "pevyso'aseltai#[figurative:]+egg+2nd-place-of+shape:egg-shaped:$tarmi2 $tarmi1"
-    ## Line 2261 of `lujvo.txt`: `#`, colon inside bracket.
+    ## le rerexapamoi linji pe `lujvo.txt` .i le linji cu vasru `#` .i lo lerfu po'u zoi gy. : .gy.
+    ##   cu zvati lo jbini be zoi gy. [ .gy. jo'u zoi gy. ] .gy.
   LINE_DATKYPIU = "datkypi'u gairki'e:datka+pimlu gacri+kicne:eiderdown [quilt]"
-    ## Line 630 of `lujvo.txt`: phrase for word, space inside.
+    ## le xacinomoi linji pe `lujvo.txt` .i le linji cu ciska lo jufra pagbu ne'i lo stuzi be lo
+    ##   valsi .i lo kunti lerfu cu zvati ne'i le jufra pagbu
   LINE_JAIRTAI = "jairtai:denmi:xance jgari+tarmi denmi xance:fist:$tarmi1 (omit $tarmi2 $=jgari3)"
-    ## Line 1091 of `lujvo.txt`: five fields, one part.
+    ## le panosopamoi linji pe `lujvo.txt` .i le linji cu vasru mu datni pagbu .i le tanru cu vasru
+    ##   pa pagbu
   LINE_BLOTI_ZERLEA = "bloti zerle'a:bloti zekri+lebna:pirate:"
-    ## Line 150 of `lujvo.txt`: phrase for word, gloss closed by colon.
+    ## le pamunomoi linji pe `lujvo.txt` .i le linji cu ciska lo jufra pagbu ne'i lo stuzi be lo
+    ##   valsi .i lo lerfu po'u zoi gy. : .gy. cu fanmo lo smuni valsi
   LINE_NALSUTYDZUKEPKLA =
       "nalsutydzukepkla:na'e+sutra+cadzu+,+klama:to go without walking fast:$klama1 " &
       "$klama2 $klama3 $klama4 $klama5"
-    ## Line 2008 of `lujvo.txt`: `,` among parts.
+    ## le renonobimoi linji pe `lujvo.txt` .i `,` cu zvati lo jbini be lo pagbu
   LINES_LUJVO = [
     LINE_BAARMOA, LINE_BADGAI, LINE_DATNYVEI, LINE_FEBJICLA, LINE_CIMNALSRA, LINE_SEZYPEVDUA,
     LINE_JGETERJOE, LINE_CIERSMITAI, LINE_PEVYSOASELTAI, LINE_DATKYPIU, LINE_JAIRTAI,
     LINE_BLOTI_ZERLEA, LINE_NALSUTYDZUKEPKLA,
   ]
-    ## Sample lines of `lujvo.txt`, one of each shape outside text reader meets.
+    ## lo mupli linji pe `lujvo.txt` .i ro tarmi poi le tcidu be lo drata se ciska cu penmi ke'a cu
+    ##   tarmi pa mupli linji
   EXPECTED_LUJVO = [
     LineLujvo(word: "ba'armo'a", is_english: false, parts: @["barna", "morna"]),
     LineLujvo(word: "badgai", is_english: true, parts: @["defend", "cover"]),
@@ -150,62 +185,68 @@ const
     LineLujvo(word: "jairtai", is_english: false, parts: @[]),
     LineLujvo(word: "nalsutydzukepkla", is_english: false, parts: @[]),
   ]
-    ## Line read from each sample line whose word is letters, read off by hand: parts where line
-    ##   writes two or more, lojban ones in letters alone.
+    ## lo se tcidu pe ro mupli linji poi lo valsi pe ke'a cu gunma lo lerfu po'o .i lo prenu cu
+    ##   tcidu le se tcidu .i va'o lo nu le linji cu ciska su'o re pagbu kei le se tcidu cu vasru le
+    ##   pagbu .i ro lojbo pagbu cu gunma lo lerfu po'o
   LINE_HEADER_CMAVO =
       "01090 Lojban         LogFlash cmavo list 26 August 2002 -- added va'e        01090"
-    ## Line 1 of `cmavo.txt`: header, which converter skips.
+    ## le pamoi linji pe `cmavo.txt` .i le linji cu stedu .i le galfi samtci cu na tcidu le linji
   LINE_A =
       ".a         A        sumti or                                  logical connective: su" &
       "mti afterthought or"
-    ## Line 2 of `cmavo.txt`: `.a`, period of pause before vowel.
+    ## le remoi linji pe `cmavo.txt` .i `.a` .i lo lerfu po'u denpa bu cu lidne lo karsna
   LINE_AACUHI =
       ".a'acu'i   UI*1     inattentive                               attitudinal: attentive" &
       " - inattentive - avoiding"
-    ## Line 4 of `cmavo.txt`: `.a'acu'i`, compound, `*` after selma'o.
+    ## le vomoi linji pe `cmavo.txt` .i `.a'acu'i` noi cmavo gunma .i `*` cu se lidne lo selma'o
   LINE_BAHE =
       " ba'e      BAhE     emphasize next                            forethought emphasis i" &
       "ndicator; indicates next word is especially emphasized"
-    ## Line 27 of `cmavo.txt`: `ba'e`, selma'o `BAhE` holding `h`.
+    ## le rezemoi linji pe `cmavo.txt` .i `ba'e` .i le selma'o po'u `BAhE` cu vasru `h`
   LINE_BIHU =
       " bi'u      UI3a     new information                           discursive: newly intr" &
       "oduced information - previously introduced information                              " &
       "(cf. nindatni, saurdatni)"
-    ## Line 52 of `cmavo.txt`: `bi'u`, subclass `3a` after selma'o.
+    ## le muremoi linji pe `cmavo.txt` .i `bi'u` .i lo klesi po'u `3a` cu se lidne le selma'o
   LINE_CINO =
       " cino      PA*      30                                        number/quantity: 30 [t" &
       "hirty]"
-    ## Line 101 of `cmavo.txt`: `cino`, compound of two PA.
+    ## le panopamoi linji pe `cmavo.txt` .i `cino` .i le cmavo gunma cu vasru re cmavo be `PA`
   LINE_LE_GOHI =
       " le go'i   KOhA*    the x1 of last bridi                      description pro-sumti:" &
       " reuses the value of the x1 of the previous bridi"
-    ## Line 408 of `cmavo.txt`: `le go'i`, phrase of two words.
+    ## le vonobimoi linji pe `cmavo.txt` .i `le go'i` noi jufra pagbu gi'e vasru re valsi
   LINE_YHY =
       ".y'y       BY2      '                                         letteral for '"
-    ## Line 1048 of `cmavo.txt`: `.y'y`, subclass digit after selma'o.
+    ## le panovobimoi linji pe `cmavo.txt` .i `.y'y` .i pa namcu lerfu cu se lidne le selma'o gi'e
+    ##   sinxa lo klesi
   LINES_CMAVO = [LINE_A, LINE_AACUHI, LINE_BAHE, LINE_BIHU, LINE_CINO, LINE_LE_GOHI, LINE_YHY]
-    ## Sample lines of `cmavo.txt` after header, in its order: one of each shape.
+    ## lo mupli linji pe `cmavo.txt` zi'e poi se lidne le stedu ku'o ta'i le porsi pe le datnyvei .i
+    ##   ro tarmi be lo linji cu tarmi pa mupli linji
   TEXT_CMAVO = LINE_HEADER_CMAVO & "\n" & LINES_CMAVO.join("\n") & "\n"
-    ## Sample of `cmavo.txt`: header, then each sample line.
+    ## lo mupli be `cmavo.txt` .i le mupli cu vasru le stedu .e ro mupli linji .i le stedu cu lidne
+    ##   ro mupli linji
   EXPECTED_CMAVO = [
     EntryCmavo(word: "a", selmaho: Selmaho.A),
     EntryCmavo(word: "ba'e", selmaho: Selmaho.Bahe),
     EntryCmavo(word: "bi'u", selmaho: Selmaho.Ui),
     EntryCmavo(word: "y'y", selmaho: Selmaho.By),
   ]
-    ## Entry of each sample line of one cmavo, read off by hand: compound and phrase left out.
+    ## lo liste cmima pe ro mupli linji poi vasru pa cmavo po'o .i lo prenu cu tcidu le liste cmima
+    ##   .i lo cmavo gunma .e lo jufra pagbu cu se vimcu
   TEXT_MODULE_CMAVO = staticRead("../../src/lojban_parser/lists/cmavo.nim")
-    ## Committed module of cmavo list, as text.
+    ## le datnyvei pe le cmavo liste zi'e poi se ralte ku'o ta'i lo lerpoi
 
 
 func entryGismu(word: string): Option[EntryGismu] =
-  ## Find committed entry of gismu list spelled `word`.
+  ## facki lo liste cmima pe le gismu liste zi'e poi se ralte gi'e ponse lo valsi po'u `word`
   for entry in LIST_GISMU:
     if entry.word == word: return some(entry)
 
 
 func entriesRendered(module: string): seq[EntryGismu] =
-  ## Read back word and rafsi of each entry line rendered module holds, apart from converter.
+  ## rapli tcidu lo valsi jo'u lo rafsi vu'o pe ro liste cmima linji poi lo samtci datnyvei poi se
+  ##   ciska cu vasru ke'a .i le fancu cu na pilno le galfi samtci
   for line in module.splitLines:
     if not line.startsWith("  EntryGismu("): continue
     let
@@ -216,12 +257,15 @@ func entriesRendered(module: string): seq[EntryGismu] =
 
 
 proc textRandom(lengths: Slice[int]): string =
-  ## Draw text of lojban letters and apostrophe, its length in `lengths`.
+  ## zbasu lo cunso se ciska poi gunma lo lojbo lerfu jo'u lo lerfu po'u zoi gy. ' .gy. .i lo ni
+  ##   clani be le se ciska cu cmima `lengths`
   for _ in 1..rand(lengths): result.add LETTERS_RANDOM.sample
 
 
 proc poolEntries(): seq[seq[EntryGismu]] =
-  ## Draw `SAMPLES` cases of one to three random entries into pool allocated once; caller seeds.
+  ## zbasu lo mupli .i lo te kancu be le mupli cu du `SAMPLES` .i ro mupli cu vasru su'o pa cunso
+  ##   liste cmima gi'e vasru su'e ci cunso liste cmima .i le mupli cu se punji fi pa vasru poi se
+  ##   zbasu pa roi .i le pilno cu dunda lo tsiju
   result = newSeqOfCap[seq[EntryGismu]](SAMPLES)
   for _ in 1..SAMPLES:
     var entries = newSeqOfCap[EntryGismu](3)
@@ -234,13 +278,14 @@ proc poolEntries(): seq[seq[EntryGismu]] =
 
 
 func entryCmavo(word: string): Option[EntryCmavo] =
-  ## Find committed entry of cmavo list spelled `word`.
+  ## facki lo liste cmima pe le cmavo liste zi'e poi se ralte gi'e ponse lo valsi po'u `word`
   for entry in LIST_CMAVO:
     if entry.word == word: return some(entry)
 
 
 func entriesRenderedCmavo(module: string): seq[EntryCmavo] =
-  ## Read back word and selma'o of each entry line rendered module holds, apart from converter.
+  ## rapli tcidu lo valsi jo'u lo selma'o vu'o pe ro liste cmima linji poi lo samtci datnyvei poi se
+  ##   ciska cu vasru ke'a .i le fancu cu na pilno le galfi samtci
   for line in module.splitLines:
     if not line.startsWith("  EntryCmavo("): continue
     let
@@ -250,8 +295,9 @@ func entriesRenderedCmavo(module: string): seq[EntryCmavo] =
 
 
 proc poolEntriesCmavo(): seq[seq[EntryCmavo]] =
-  ## Draw `SAMPLES` cases of one to three random cmavo entries into pool allocated once; caller
-  ##   seeds.
+  ## zbasu lo mupli .i lo te kancu be le mupli cu du `SAMPLES` .i ro mupli cu vasru su'o pa cunso
+  ##   liste cmima pe le cmavo liste gi'e vasru su'e ci cunso liste cmima pe le cmavo liste .i le
+  ##   mupli cu se punji fi pa vasru poi se zbasu pa roi .i le pilno cu dunda lo tsiju
   result = newSeqOfCap[seq[EntryCmavo]](SAMPLES)
   for _ in 1..SAMPLES:
     var entries = newSeqOfCap[EntryCmavo](3)
@@ -261,7 +307,7 @@ proc poolEntriesCmavo(): seq[seq[EntryCmavo]] =
 
 
 iterator served[T](pool: seq[T]): lent T =
-  ## Serve each sample of pool in order, with no copy.
+  ## dunda ro mupli pe le vasru ta'i le porsi .i no fukpi cu se zbasu
   for i in 0..<pool.len: yield pool[i]
 
 
@@ -269,124 +315,158 @@ iterator served[T](pool: seq[T]): lent T =
 suite "Internal: Lists":
   test "gismu converter reads word and rafsi from their columns, header skipped":
     let entries = TEXT_GISMU.toEntriesGismu
-    check entries.len == EXPECTED_GISMU.len  # header skipped, one entry for each line after
+    # ro linji poi se lidne le stedu cu se sinxa pa liste cmima
+    check entries.len == EXPECTED_GISMU.len  # le stedu cu na se tcidu
     for i, expected in EXPECTED_GISMU:
-      check entries[i] == expected  # word and rafsi from columns of `entries.nim`, trimmed
-      check entryGismu(expected.word) == some(expected)  # sample agrees with committed list
-    for mask in 0..<(1 shl LINES_GISMU.len):  # every subset of sample lines, exhaustive
+      # lo valsi jo'u lo rafsi cu se tcidu fi le stuzi .i lo kunti lerfu cu se vimcu
+      check entries[i] == expected  # lo stuzi pe `entries.nim`
+      check entryGismu(expected.word) == some(expected)  # le mupli cu mintu le liste poi se ralte
+    for mask in 0..<(1 shl LINES_GISMU.len):  # ro gripau be lo mupli linji cu se cipra
       var (lines, expected) = (@[LINE_HEADER], newSeqOfCap[EntryGismu](LINES_GISMU.len))
       for i, line in LINES_GISMU:
         if (mask and (1 shl i)) == 0: continue
         lines.add line
         expected.add EXPECTED_GISMU[i]
-      check lines.join("\n").toEntriesGismu == expected  # each line read alone, order kept
+      # le porsi be le linji cu stali
+      check lines.join("\n").toEntriesGismu == expected  # ro linji cu se tcidu ta'i lo nu sepli
     let spaced = (@[LINE_HEADER] & LINES_GISMU.mapIt(it & "\n\n   ")).join("\n")
-    check spaced.toEntriesGismu == @EXPECTED_GISMU  # blank lines skipped
-    check LINE_HEADER.toEntriesGismu.len == 0 and toEntriesGismu("").len == 0  # header alone
-    check LINE_HEADER[1..5].parseInt == LIST_GISMU.len  # committed list holds count header gives
+    check spaced.toEntriesGismu == @EXPECTED_GISMU  # lo kunti linji cu na se tcidu
+    check LINE_HEADER.toEntriesGismu.len == 0 and toEntriesGismu("").len == 0  # le stedu po'o
+    # lo te kancu be lo liste cmima pe le liste poi se ralte cu du le namcu poi le stedu cu cusku
+    #   ke'a
+    check LINE_HEADER[1..5].parseInt == LIST_GISMU.len  # le te kancu pe le stedu
 
 
   test "rendered module keeps 100 columns, and reads back each word and rafsi":
     let module_gismu = toModuleGismu(LIST_GISMU, DIGEST_GISMU)
-    check module_gismu.splitLines.allIt(it.len <= WIDTH)  # X.1, bytes bound
-    check module_gismu.entriesRendered == @LIST_GISMU  # helper reads back what renderer writes
+    # le jimte cu jimte lo te kancu be lo stuzi
+    check module_gismu.splitLines.allIt(it.len <= WIDTH)  # `Article X.1`
+    check module_gismu.entriesRendered == @LIST_GISMU  # le sidju cu rapli tcidu lo se ciska
     randomize(SEED)
     let pool = poolEntries()
-    for entries in served(pool):  # `SAMPLES` cases, seeded
+    # lo te kancu be lo mupli cu du `SAMPLES` .i lo tsiju cu jdice le mupli
+    for entries in served(pool):
       let rendered = toModuleGismu(entries, DIGEST_GISMU)
-      check rendered.splitLines.allIt(it.len <= WIDTH)  # X.1, one entry to line fits
-      check rendered.entriesRendered == entries  # round trip through rendered literal
+      # ro linji pe pa liste cmima cu mapti le jimte
+      check rendered.splitLines.allIt(it.len <= WIDTH)  # `Article X.1`
+      # lo lerpoi poi se ciska cu xruti le liste cmima
+      check rendered.entriesRendered == entries  # lo nu ciska kei jo'u lo nu rapli tcidu
 
 
   test "committed module is committed list rendered again":
-    check toModuleGismu(LIST_GISMU, DIGEST_GISMU) == TEXT_MODULE_GISMU  # render of parse
+    check toModuleGismu(LIST_GISMU, DIGEST_GISMU) == TEXT_MODULE_GISMU  # lo nu ciska lo se tcidu
 
 
   test "entry lacking word does not compile, as rule of data asks":
-    check compiles(EntryGismu(word: "cukta"))  # control: rafsi empty by right, so unmarked
-    check not compiles(EntryGismu(rafsi: @["cku"]))  # no word
+    # lo rafsi cu ka'e kunti .i se ki'u bo le rafsi cu na se tcita
+    check compiles(EntryGismu(word: "cukta"))  # lo jicmu cipra
+    check not compiles(EntryGismu(rafsi: @["cku"]))  # claxu lo valsi
 
 
   test "committed header names pinned digest, split as rendered":
     for digest in [DIGEST_GISMU, DIGEST_LUJVO, DIGEST_CMAVO]:
-      check digest.len == 64 and digest.allCharsInSet({'0'..'9', 'a'..'f'})  # SHA-256 in hex
+      # le sinxa namcu cu se ciska ta'i la'o gy. hex .gy.
+      check digest.len == 64 and digest.allCharsInSet({'0'..'9', 'a'..'f'})  # `SHA-256`
     let halves = "SHA-256 `" & DIGEST_GISMU[0..31] & "`\n##   `" & DIGEST_GISMU[32 .. ^1] & "`;"
-    check halves in TEXT_MODULE_GISMU  # digest split in halves over two header lines
+    # le re xadba cu zvati re linji pe le stedu
+    check halves in TEXT_MODULE_GISMU  # le sinxa namcu cu se fendi fi re xadba
 
 
   test "every committed entry fits columns":
-    for entry in LIST_GISMU:  # every entry, exhaustive
-      check entry.word.len in 1..5 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # columns 2-6
-      check entry.rafsi.len <= 3 and entry.rafsi.allIt(it.len in 3..4)  # three slots, 3-4 wide
-      check entry.rafsi.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # rafsi are letters
-      check entry.word == entry.word.strip  # spaces at field ends trimmed
+    for entry in LIST_GISMU:  # ro liste cmima
+      # lo stuzi pe le valsi
+      check entry.word.len in 1..5 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # li re bi'o li xa
+      # ro rafsi cu vasru ci lerfu .a vo lerfu
+      check entry.rafsi.len <= 3 and entry.rafsi.allIt(it.len in 3..4)  # ci stuzi
+      check entry.rafsi.allIt(it.allCharsInSet(LETTERS_LOJBAN))  # lo rafsi cu gunma lo lerfu
+      check entry.word == entry.word.strip  # lo kunti lerfu pe lo fanmo be le valsi cu se vimcu
 
 
   test "cmavo converter keeps each line of one cmavo, word and selma'o from their columns":
-    check TEXT_CMAVO.toEntriesCmavo == @EXPECTED_CMAVO  # compound and phrase left out, order kept
+    # lo jufra pagbu cu se vimcu .i le porsi cu stali
+    check TEXT_CMAVO.toEntriesCmavo == @EXPECTED_CMAVO  # lo cmavo gunma cu se vimcu
     for expected in EXPECTED_CMAVO:
-      check entryCmavo(expected.word) == some(expected)  # sample agrees with committed list
+      check entryCmavo(expected.word) == some(expected)  # le mupli cu mintu le liste poi se ralte
     for line in [LINE_AACUHI, LINE_CINO, LINE_LE_GOHI]:
-      check (LINE_HEADER_CMAVO & "\n" & line).toEntriesCmavo.len == 0  # `*`: several cmavo
-    check LINE_HEADER_CMAVO.toEntriesCmavo.len == 0 and toEntriesCmavo("").len == 0  # header
-    check EXPECTED_CMAVO.len + 3 == LINES_CMAVO.len  # conservation: each line kept or left out
+      # lo linji cu vasru su'o re cmavo
+      check (LINE_HEADER_CMAVO & "\n" & line).toEntriesCmavo.len == 0  # `*`
+    check LINE_HEADER_CMAVO.toEntriesCmavo.len == 0 and toEntriesCmavo("").len == 0  # le stedu
+    # ro linji cu se ralte gi'a se vimcu
+    check EXPECTED_CMAVO.len + 3 == LINES_CMAVO.len  # no linji cu se cirko
 
 
   test "rendered cmavo module keeps 100 columns, and reads back each word and selma'o":
     let module_cmavo = toModuleCmavo(LIST_CMAVO, DIGEST_CMAVO)
-    check module_cmavo.splitLines.allIt(it.len <= WIDTH)  # X.1, bytes bound
-    check module_cmavo.entriesRenderedCmavo == @LIST_CMAVO  # helper reads back what is written
+    # le jimte cu jimte lo te kancu be lo stuzi
+    check module_cmavo.splitLines.allIt(it.len <= WIDTH)  # `Article X.1`
+    check module_cmavo.entriesRenderedCmavo == @LIST_CMAVO  # le sidju cu rapli tcidu lo se ciska
     randomize(SEED)
     let pool = poolEntriesCmavo()
-    for entries in served(pool):  # `SAMPLES` cases, seeded
+    # lo te kancu be lo mupli cu du `SAMPLES` .i lo tsiju cu jdice le mupli
+    for entries in served(pool):
       let rendered = toModuleCmavo(entries, DIGEST_CMAVO)
-      check rendered.splitLines.allIt(it.len <= WIDTH)  # X.1, one entry to line fits
-      check rendered.entriesRenderedCmavo == entries  # round trip, every selma'o drawn
+      # ro linji pe pa liste cmima cu mapti le jimte
+      check rendered.splitLines.allIt(it.len <= WIDTH)  # `Article X.1`
+      # lo se ciska cu xruti le liste cmima .i ro selma'o cu ka'e se cunso cuxna
+      check rendered.entriesRenderedCmavo == entries  # lo nu ciska kei jo'u lo nu rapli tcidu
 
 
   test "committed cmavo module is committed cmavo list rendered again":
-    check toModuleCmavo(LIST_CMAVO, DIGEST_CMAVO) == TEXT_MODULE_CMAVO  # render of parse
+    check toModuleCmavo(LIST_CMAVO, DIGEST_CMAVO) == TEXT_MODULE_CMAVO  # lo nu ciska lo se tcidu
     let halves = "SHA-256 `" & DIGEST_CMAVO[0..31] & "`\n##   `" & DIGEST_CMAVO[32 .. ^1] & "`;"
-    check halves in TEXT_MODULE_CMAVO  # digest split in halves over two header lines
+    # le re xadba cu zvati re linji pe le stedu
+    check halves in TEXT_MODULE_CMAVO  # le sinxa namcu cu se fendi fi re xadba
 
 
   test "cmavo entry lacking word or selma'o does not compile, as rule of data asks":
-    check compiles(EntryCmavo(word: "lo", selmaho: Selmaho.Le))  # control: every field named
-    check not compiles(EntryCmavo(selmaho: Selmaho.Le))  # no word
-    check not compiles(EntryCmavo(word: "lo"))  # no selma'o, whose zero value `A` would stand
+    # ro datni pagbu cu se cmene
+    check compiles(EntryCmavo(word: "lo", selmaho: Selmaho.Le))  # lo jicmu cipra
+    check not compiles(EntryCmavo(selmaho: Selmaho.Le))  # claxu lo valsi
+    # va'o lo nu no da cu ciska le selma'o kei le selma'o cu du `A`
+    check not compiles(EntryCmavo(word: "lo"))  # claxu lo selma'o
 
 
   test "every committed cmavo entry fits its columns, once, in order":
-    for i, entry in LIST_CMAVO:  # every entry, exhaustive
-      check entry.word.len in 1..11 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # no period
-      if i > 0: check LIST_CMAVO[i - 1].word < entry.word  # byte order, each word once
+    for i, entry in LIST_CMAVO:  # ro liste cmima
+      check entry.word.len in 1..11 and entry.word.allCharsInSet(LETTERS_LOJBAN)  # no denpa bu
+      # ro valsi cu se ciska pa roi
+      if i > 0: check LIST_CMAVO[i - 1].word < entry.word  # ja'i lo porsi be lo stuzi
 
 
   test "committed cmavo list is list converted from installed file":
     if not fileExists(getEnv(KEY_LISTS, DIRECTORY_LISTS) / "cmavo.txt"):
-      skip()  # `lojban-common` absent; `system` declares it, and `head` compares where present
+      # `lojban-common` cu na zvati .i lo minde po'u `system` cu cusku le bakfu .i va'o lo nu le
+      #   bakfu cu zvati kei lo minde po'u `head` cu karbi
+      skip()
     else:
       let source = readSource("cmavo.txt")
       if source.digest != DIGEST_CMAVO:
-        skip()  # installed list moved from its pin, which `head` reports
+        # le liste poi se punji cu na mapti le stodi sinxa .i lo minde po'u `head` cu cusku le nu na
+        #   mapti
+        skip()
       else:
-        check source.text.toEntriesCmavo == @LIST_CMAVO  # committed list is converter's output
+        check source.text.toEntriesCmavo == @LIST_CMAVO  # le liste cu jalge le galfi samtci
 
 
   test "outside text reader keeps word of each line, and parts of either notation":
-    check toLinesLujvo(LINES_LUJVO.join("\n")) == @EXPECTED_LUJVO  # each shape, order kept
+    check toLinesLujvo(LINES_LUJVO.join("\n")) == @EXPECTED_LUJVO  # ro tarmi .i le porsi cu stali
     for line in [LINE_DATKYPIU, LINE_BLOTI_ZERLEA]:
-      check toLinesLujvo(line).len == 0  # phrase for word stands in no domain
-    check toLinesLujvo("\n  \n").len == 0  # blank line holds no word
-    check EXPECTED_LUJVO.len + 2 == LINES_LUJVO.len  # conservation: each line read or left out
+      check toLinesLujvo(line).len == 0  # lo jufra pagbu poi basti lo valsi cu cmima no selcmi
+    check toLinesLujvo("\n  \n").len == 0  # lo kunti linji cu vasru no valsi
+    # ro linji cu se tcidu gi'a se vimcu
+    check EXPECTED_LUJVO.len + 2 == LINES_LUJVO.len  # no linji cu se cirko
 
 
   test "committed gismu list is list converted from installed file":
     if not fileExists(getEnv(KEY_LISTS, DIRECTORY_LISTS) / "gismu.txt"):
-      skip()  # `lojban-common` absent; `system` declares it, and `head` compares where present
+      # `lojban-common` cu na zvati .i lo minde po'u `system` cu cusku le bakfu .i va'o lo nu le
+      #   bakfu cu zvati kei lo minde po'u `head` cu karbi
+      skip()
     else:
       let source = readSource("gismu.txt")
       if source.digest != DIGEST_GISMU:
-        skip()  # installed list moved from its pin, which `head` reports
+        # le liste poi se punji cu na mapti le stodi sinxa .i lo minde po'u `head` cu cusku le nu na
+        #   mapti
+        skip()
       else:
-        check source.text.toEntriesGismu == @LIST_GISMU  # committed list is converter's output
+        check source.text.toEntriesGismu == @LIST_GISMU  # le liste cu jalge le galfi samtci
