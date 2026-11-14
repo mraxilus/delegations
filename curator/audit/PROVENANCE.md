@@ -2119,17 +2119,17 @@ package` there).
 
 - The nimble file is that of the project that holds the file (`nimbleProject`), and a root file
   has none. Each project keeps `<project>.nimble` at its root, so koch reads that file from the path
-  alone. Knoller reads the tests, the stubs and the umbrella of the file below its folder.
+  alone. Knoller reads the tests, the stubs and the umbrella of the file below its folder. Verified
+  by `suites/test_layout.nim`.
 - Rejected: a lookup of the nearest nimble file over the tree. `fixEntries` would need the tree as
   a new input, and the lookup gives the same file in each project. Cost: a package inside a project
-  reads as its project, so its stubs take no rule of stubs. No project holds one, by
-  `git ls-files '*.nimble'`, 2026-11-14.
+  reads as its project, so its tests, stubs and umbrella take no rule of their own. No project holds
+  one, by `git ls-files '*.nimble'`, 2026-11-14.
 - A file is drive code where it lies under `tests/` or `tools/` of its project (`isCodeDrive`), as
   the static pass reads fixed waits (`## Fixed waits`). A file under `tests/` of its project
   compiles with `-d:testing` (`## Semantic pass`).
-- Verified by hand, 2026-11-14, over each Nim file that git lists here. Each fact that koch gives
-  names the same files as knoller at `c2e80da3` read from the whole path. That holds for test
-  files, stubs, umbrellas, drive code and the define.
+- Each test file, stub and umbrella of a project lies below the folder of its nimble file, as the
+  record of knoller verifies (`Layout of a package` there).
 - Verified by hand, 2026-11-14: koch built at `c2e80da3` and koch built at `269d6579` gave the same
   output, byte for byte, on the tree at `c2e80da3`. That holds for `check-files`, and for
   `fix --dry-run --all --branch:main`, which reads every project.
@@ -2432,7 +2432,8 @@ testament category that a header opens (#443). The fixer splits the form on one 
 the two lines after the last pragma that opens the module, with a blank line on each side.
 
 - Knoller reads the umbrella and the stubs below the folder of the nimble file that koch gives
-  (`## Knoller`).
+  (`## Knoller`). Verified by `suites/test_fixes.nim`: `koch fix` fixes a stub, an umbrella and a
+  suite of a project, and leaves the same text at the root.
 - A `when isMainModule:` inside a string is no code, so `test_checker.nim` is no entry module.
 - A stub that includes a file at top level takes the import from that file, since the include
   makes one module of both. The Architect ruled so on the report of the PGA library, whose eight
