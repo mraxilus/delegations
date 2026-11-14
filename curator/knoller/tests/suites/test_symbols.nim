@@ -137,6 +137,33 @@ suite "Internal: Symbols":
       check answers.anyIt(it.path == path and (it.reason.len == 0) == is_resolved)
 
 
+  test "requests of one includer share one run, with options of first of them":
+    # Includer compiles once for every file it includes, so options of one request stand for
+    #   all, those of first (`resolve`). Domain: first names define, and second, after it, none.
+    let
+      root = createTempDir("knoller_", "_symbols")
+      files = @[
+        ("fixture.nimble", "version = \"0.1.0\"\n"),
+        ("src/c.nim", "include \"d.nim\"\n"),
+        ("src/d.nim", "when defined(testing):\n  let x = 3\nlet y = x.float\n"),
+      ]
+    defer: removeDir(root)
+    for (path, content) in files: writeInto(root, path, content)
+    let answers = resolve([
+      Request(
+        query: Query(path: "src/d.nim", sites: @[(3, 10)]),
+        root: root,
+        directory: root,
+        includer: "src/c.nim",
+        defines: @["-d:testing"],
+      ),
+      Request(query: Query(path: "src/c.nim"), root: root, directory: root, includer: "src/c.nim"),
+    ])
+    check answers.len == 2  # one run answers both
+    check answers.anyIt(it.path == "src/d.nim" and it.reason.len == 0)  # define of first stands
+    check answers.anyIt(it.path == "src/c.nim" and it.reason.len == 0)
+
+
   test "toolchain with no nimsuggest leaves each file unresolved, and says so":
     # Case as found: PATH held `nim` and no `nimsuggest`, and two conversions of
     #   `pga/multivectors.nim:75` of PGA library (`749fecf`) stayed unfixed with no warning,
