@@ -319,7 +319,7 @@ proc runHook(root, event, input: string): int =
       found.add checkEndTurn(turn.text, branch_root, is_writing = turn.calls.isTurnWriting)
       let unread = checkSignoffRead(turn.text, turn.calls)
       if found.len == 0 and unread.len == 0: return 0
-      let has_signoff = turn.text.splitLines.anyIt(it.strip == HEADING_SIGNOFF)
+      let has_signoff = turn.text.isSignoff
       echo %*{"decision": "block", "reason": reasonStop(found, unread, has_signoff)}
       0
   of "prompt":

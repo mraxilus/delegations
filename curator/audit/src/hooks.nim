@@ -9,11 +9,11 @@
 ##     lands to role line, footer, Simplified Technical English counts, issue title and label,
 ##     pull request headings, and closing keyword before issue on line of its own alone; `stop`
 ##     refuses end of turn that pushed or posted and closes with neither sign-off block nor
-##     working line, end of any turn whose message names `#N` outside link or cites charter
-##     reference with no description, and sign-off from turn that read no open issue of its
-##     role; `start` prints role, read order, each finding of drift, headings of record branch
-##     works on, and carried list; `prompt` reads each message of Architect; `push` and `msg`
-##     serve git hooks.
+##     working line, sign-off out of shape whatever its turn did, end of any turn whose message
+##     names `#N` outside link or cites charter reference with no description, and sign-off
+##     from turn that read no open issue of its role; `start` prints role, read order, each
+##     finding of drift, headings of record branch works on, and carried list; `prompt` reads
+##     each message of Architect; `push` and `msg` serve git hooks.
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
 ##     so both pass it unread, as Architect approved on #847. Both read file through
 ##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
@@ -1295,14 +1295,27 @@ func isStateRest(text: string): bool =
     text[close .. ^1] in CLOSINGS_STATE
 
 
+func atSignoff(message: string): int =
+  ## Read index of line holding heading of last sign-off of message; -1 where none.
+  ##   Heading inside fence is quoted example, so it opens no sign-off.
+  result = -1
+  let lines = message.fencedOut.splitLines
+  for i, line in lines:
+    if line.strip == HEADING_SIGNOFF: result = i
+
+
+func isSignoff*(message: string): bool =
+  ## Decide whether message holds sign-off: its heading, outside fence.
+  message.atSignoff >= 0
+
+
 func checkSignoff*(message, branch: string): seq[Finding] =
   ## Report message that lacks sign-off block, or holds it out of shape.
   ##   Missing rule line is named, and work still reads from line after context, so table of
   ##     form before #844 is named for what it lacks.
-  let lines = message.splitLines
-  var at = -1
-  for i, line in lines:
-    if line.strip == HEADING_SIGNOFF: at = i
+  let
+    lines = message.splitLines
+    at = message.atSignoff
   if at < 0:
     return @[finding(
       "", 0, "Message holds no `" & HEADING_SIGNOFF & "` block (GUIDE.md, Output contract)."
@@ -1600,13 +1613,13 @@ func checkReferencesBare*(message: string): seq[Finding] =
 
 
 func checkEndTurn*(message, branch: string; is_writing: bool): seq[Finding] =
-  ## Report end of turn that pushed or posted: sign-off once delegate stops, else working line.
-  ##   Working line is last line holding text, with text after label; reader alone judges
-  ##     whether it names what runs and what wakes delegate.
-  ##   Turn that wrote nothing is asked for nothing here.
+  ## Report end of turn: sign-off out of shape, whatever turn did, and turn that pushed or posted
+  ##   with neither sign-off nor working line.
+  ##   Sign-off can close turn that wrote nothing, so each one takes shape check, as Architect
+  ##     ruled on #844. Working line is last line holding text, with text after label; reader
+  ##     alone judges whether it names what runs and what wakes delegate.
+  if message.isSignoff: return checkSignoff(message, branch)
   if not is_writing: return
-  if message.splitLines.anyIt(it.strip == HEADING_SIGNOFF):
-    return checkSignoff(message, branch)
   let last = message.strip.splitLines[^1].strip
   if last.startsWith(LABEL_WORKING) and last[LABEL_WORKING.len .. ^1].strip.len > 0: return
   @[finding(
@@ -1675,12 +1688,9 @@ func isQueueRead(call: Call, label: string): bool =
 func roleSignoff(message: string): string =
   ## Read role string of last sign-off of message: its role line, up to first comma; empty
   ##   where message holds no sign-off, or block no role line.
-  let lines = message.splitLines
-  var at = -1
-  for i, line in lines:
-    if line.strip == HEADING_SIGNOFF: at = i
+  let at = message.atSignoff
   if at < 0: return ""
-  for line in lines[at + 1 .. ^1]:
+  for line in message.splitLines[at + 1 .. ^1]:
     if line.startsWith(LABELS_SIGNOFF[Part.Role]):
       return line[LABELS_SIGNOFF[Part.Role].len .. ^1].split(',')[0].strip
   ""
