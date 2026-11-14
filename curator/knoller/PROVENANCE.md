@@ -1388,8 +1388,7 @@ words.
 
 **The caller says of each file whether its comments drop their articles.** `formatted`,
 `checkSource` and `checkFenceHeld` take `should_drop_articles`, which is true by default. Where it
-is false, the chain runs no fixer and no check of articles on that file. Every other rule runs as
-before.
+is false, the chain runs no fixer and no check of articles on that file. Every other rule runs.
 
 - A comment in another language can hold a word that reads as an article. In lojban, `a` joins
   two names, as "or" does in English. The fixer would delete it and change what the comment says.
@@ -1401,7 +1400,8 @@ before.
   A file whose comments keep another language needs a caller that sets the mode.
 - Verified by `suites/test_chain.nim`: in each dialect, the mode off keeps the word in the fixer,
   the check and the fence warning. The fix of spacing still runs, and the default drops the word.
-- Verified by `suites/test_command.nim`: the command line drops the word, and its check exits 1.
+- Verified by `suites/test_command.nim`: the check of the command line reports the word and exits
+  1, and its fix writes the word away.
 
 ## Names
 
