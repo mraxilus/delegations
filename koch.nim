@@ -217,7 +217,7 @@ proc directoriesScoped(options: Options, tree: Tree): seq[string] =
     projectsTest(
       directories,
       pathsChanged(options.root, options.baseOrDefault),
-      tree.directoriesImporting(directories),
+      tree.importersByFolder(directories),
     )
 
 
