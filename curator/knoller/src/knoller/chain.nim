@@ -60,7 +60,7 @@
 ##   Command line checks what fixers leave by every check knoller holds (`checkSource`): those
 ##     `checkFormatting` holds, off fenced lines, and those static pass of `curator/audit` reads
 ##     on Nim source (`checkStatic`): form, articles, entry block, names, idioms of dialect, and
-##     fixed waits of drive file. Fence keeps its lines from fixers alone, as static pass reads
+##     fixed waits of drive code. Fence keeps its lines from fixers alone, as static pass reads
 ##     every line, so finding there fails command line as it fails static pass.
 ##   Fence's warning runs checks as dry run: same checks on source unmasked, where each marker
 ##     reads as plain comment and each line keeps its number, so warning counts what same lines
@@ -74,6 +74,9 @@
 ##     sets none, so it drops articles in every file it reads.
 ##   Caller names nimble file nearest each file (`nimble`), written as path is, empty where none
 ##     stands above: lookup reads file system, so it stays with caller, and chain stays pure.
+##   Caller says of each file whether it is drive code (`is_drive`), false by default. Folders of
+##     drive code are habit of caller's repository, as its verbs are, so knoller holds none, and
+##     command line says none, so it reads fixed waits nowhere.
 ##
 ##   Rejected: nimpretty, which sets one space before trailing comment where X.9 asks two,
 ##     and `;` between parameters where STYLE.md §5 asks `,`; fork of nimpretty's layouter,
@@ -185,13 +188,13 @@ func checkStatic(
   ## Run on source as given each check static pass of `curator/audit` reads on Nim source: form,
   ##   articles where comments drop them, entry block, names with no word exempt beyond `JARGON`,
   ##   calls of `define…` and `emit…`, idioms of dialect, tests read from nimble file nearest
-  ##   file, and fixed waits of drive file (`isFileDrive`). Fence keeps no line from them.
+  ##   file, and fixed waits where caller says file is drive code. Fence keeps no line from them.
   result = checkForm(path, source)
   if should_drop_articles: result.add checkArticles(path, source)
   result.add checkBlockEntry(path, source) & checkNames(path, source, [])
   result.add checkGenerations(path, source)
   result.add checkIdioms(path, source, dialect, nimble)
-  if path.isFileDrive: result.add checkWaits(path, source)
+  if is_drive: result.add checkWaits(path, source)
 
 
 func checkSource*(

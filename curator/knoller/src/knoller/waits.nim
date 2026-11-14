@@ -4,9 +4,9 @@
 ##     apart. Timer such as `setTimeout`, `performance.now` or `getMonoTime` is unread: inside page
 ##     under Playwright's clock same name is simulated read, so check over it would report every
 ##     correctness drive.
-##   Caller decides which file is drive code, and passes it alone: `curator/audit` reads `tests/`
-##     and `tools/` of each project, and command line each file under directory `tests` or
-##     `tools` (`reports.isFileDrive`).
+##   Caller decides which file is drive code, and passes it alone (`is_drive` of `chain.nim`):
+##     `curator/audit` reads `tests/` and `tools/` of each project, and command line reads none,
+##     since folders of drive code are habit of one repository.
 ##   Nim names compare as Nim compares them (`identity`), so `sleep_async` is `sleepAsync`, and
 ##     Playwright's name reads in Nim binding too. Nim source is read with comments and strings
 ##     blanked, so suite holding its fixtures as strings reports nothing.

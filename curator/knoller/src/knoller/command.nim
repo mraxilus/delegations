@@ -40,6 +40,9 @@
 ##     as named. Their rules read nimble file nearest each file, which run reads from disk at or
 ##     above its directory, as it reads pin (`nimblesNearest`); directory holding several nimble
 ##     files names none, as nimble refuses such directory.
+##   Run reads no file as drive code and names no define for semantic pass: both are habits of
+##     caller's repository (`chain.nim`, `symbols.nim`), so fixed waits stay unread, and each
+##     file compiles as its project's configuration alone compiles it.
 ##   Fixers read text as commit stores it. Where checkout wrote CRLF that commit turns back into
 ##     LF, as `core.autocrlf` does on Windows by default, run reads LF and writes CRLF back
 ##     (`isConverted`), so no CR reads as trailing whitespace and no fix rewrites line endings.
@@ -140,7 +143,7 @@ func dialect*(path: string): Option[Dialect] =
 func toAbsolute*(path, directory: string): string =
   ## Read path whole, as fixers read it: absolute, from directory it is named from, with `.` and
   ##   `..` resolved, and each separator `/` on every platform (`slashed`), since rules split
-  ##   it there to find tests, stubs and drive code.
+  ##   it there to find tests, stubs and umbrella.
   slashed(if path.isAbsolute: path.normalizedPath else: normalizedPath(directory / path))
 
 

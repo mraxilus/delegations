@@ -22,8 +22,7 @@
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
 ##     line on every platform (`command.toAbsolute`). Rule reading layout from it reads test file,
 ##     stub and umbrella here alone, each from names of path below folder of its package
-##     (`partPackage`), so each meaning is written once; drive file, where command line reads
-##     fixed waits, too (`isFileDrive`).
+##     (`partPackage`), so each meaning is written once.
 ##   Nim tools set layout these rules read, so it holds in any repository: testament reads tests
 ##     under `tests` of package, and nimble puts umbrella in `src` of package, named as nimble
 ##     file is. So test file lies below `tests` of its package (`partTests`), and umbrella is
@@ -50,9 +49,6 @@
 ##     lower is no stub, so it takes no stub rule. Stub of STYLE.md §6 opens with header.
 ##   Cost: file whose caller names no nimble file takes no rule of test file, stub or umbrella:
 ##     fewer findings, never false one.
-##   Cost: drive file is file under directory `tests` or `tools` at any depth, wider than
-##     `curator/audit` reads it (those of each project alone), since command line knows no
-##     project; so command line reports fixed wait static pass passes over.
 
 {.experimental: "strictFuncs".}
 
@@ -120,7 +116,6 @@ type
 
 const
   EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
-  DIRECTORIES_DRIVE = ["tests", "tools"]  ## Directories whose files command line reads as drive.
   DIRECTORY_SOURCE = "src"  ## Directory of package that nimble puts its umbrella in.
   DIRECTORY_TESTS = "tests"  ## Directory of package that testament reads its tests from.
   EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
@@ -172,13 +167,6 @@ func isUmbrella*(path, nimble: string): bool =
   if file.len <= extension.len or not file.endsWith(extension): return false
   let name = file[0..<file.len-extension.len]
   path.partPackage(nimble) == @[DIRECTORY_SOURCE, name & EXTENSIONS[Dialect.Module]]
-
-
-func isFileDrive*(path: string): bool =
-  ## Decide whether path lies under directory `tests` or `tools`, at any depth: drive code, where
-  ##   command line reads fixed waits.
-  let parts = path.split('/')
-  parts[0 ..< parts.high].anyIt(it in DIRECTORIES_DRIVE)
 
 
 func guarded*(fixer: Fixer): Step =
