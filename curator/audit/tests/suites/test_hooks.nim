@@ -133,6 +133,29 @@ func citedBare(message: string): seq[string] =
   checkReferencesBare(message).mapIt(it.message.split('`')[1])
 
 
+func lineUser(text: string, kind = ""): string =
+  ## Write transcript line of user entry holding text, from origin of kind where one is given.
+  let entry =
+    if kind.len == 0: %*{"type": "user", "message": {"content": text}}
+    else: %*{"type": "user", "origin": {"kind": kind}, "message": {"content": text}}
+  $entry & "\n"
+
+
+func lineAssistant(text: string): string =
+  ## Write transcript line of assistant entry holding text.
+  $(%*{"type": "assistant", "message": {"content": [{"type": "text", "text": text}]}}) & "\n"
+
+
+func linesCall(command: string): string =
+  ## Write transcript lines of Bash call and its result, which arrives as user entry.
+  let
+    call = %*{"type": "assistant", "message": {"content": [
+      {"type": "tool_use", "name": "Bash", "input": {"command": command}},
+    ]}}
+    answer = %*{"type": "user", "message": {"content": [{"type": "tool_result", "content": "ok"}]}}
+  $call & "\n" & $answer & "\n"
+
+
 
 suite "Hooks":
   test "role string grammar":
@@ -1076,6 +1099,125 @@ suite "Hooks":
     let turn = transcript.parseTurn
     check turn.calls.len == 1 and turn.calls[0].labels == @["curator"]
     check turn.calls[0].state == "open"
+
+
+  test "sign-off keeps each item of sign-off before it, since message of Architect (#844)":
+    # Case as found on #844: second sign-off after one message of Architect drops item of first,
+    #   which Architect never read, since Architect reads latest sign-off alone.
+    let
+      dropped = SIGNOFF
+        .replace("| ⬜ 5. cga5d baseline | this delegate |\n", "")
+        .replace("| ☑️ 6.", "| ☑️ 5.").replace("| ✅ 7.", "| ✅ 6.")
+        .replace("| ⚠️ 8.", "| ⚠️ 7.").replace("| ➖ 9.", "| ➖ 8.")
+      asked = lineUser("Add the gap list.", "human") & lineAssistant(SIGNOFF)
+      turn = (asked & linesCall("git push") & lineAssistant(dropped)).parseTurn
+    check checkSignoff(dropped, BRANCH).messages == newSeq[string]()  # shape holds alone
+    check turn.text == dropped and turn.signoffs_earlier == @[SIGNOFF]
+    let found = checkSignoffWindow(turn.text, BRANCH, turn.signoffs_earlier, []).messages
+    check found.len == 1
+    check found.anyIt("got `4` items in `#331`, which held `5`" in it)
+    check found.anyIt("`⬜ 5. cga5d baseline`" in it)  # refusal quotes what group held
+
+    # Wake, report of other session and refusal of hook are no message of Architect.
+    const notice = "<task-notification>\n<status>completed</status>\n</task-notification>"
+    for wake in [
+      lineUser(notice, "task-notification"),
+      lineUser("Another Claude session sent a message: done.", "peer"),
+      lineUser("Stop hook feedback:\nMend message."),
+      lineUser("This session is being continued from a previous conversation."),
+    ]:
+      let woken = (asked & wake & lineAssistant(dropped)).parseTurn
+      check woken.signoffs_earlier == @[SIGNOFF]
+      check checkSignoffWindow(woken.text, BRANCH, woken.signoffs_earlier, []).len == 1
+    check (asked & lineUser("D1 b", "human") & lineAssistant(dropped)).parseTurn
+      .signoffs_earlier.len == 0  # message of Architect starts window again
+
+    # Where no entry carries `origin.kind`, window starts with turn, as before field existed.
+    check (lineUser("Add the gap list.") & lineAssistant(SIGNOFF) & lineUser(notice) &
+      lineAssistant(dropped)).parseTurn.signoffs_earlier.len == 0
+    check (lineUser("Add the gap list.") & lineAssistant(SIGNOFF) & linesCall("git push") &
+      lineAssistant(dropped)).parseTurn.signoffs_earlier == @[SIGNOFF]
+
+    # Earlier message counts where it holds sign-off outside fence.
+    let quoted = lineAssistant("The form:\n\n```md\n" & SIGNOFF & "```\n")
+    check (lineUser("Add the gap list.", "human") & quoted & lineAssistant("Pushed.") &
+      lineAssistant(dropped)).parseTurn
+      .signoffs_earlier.len == 0
+
+
+  test "group of pull request leaves sign-off once it merges, or once it shows closed (#844)":
+    # Merge commit names its pull request on `main`, and close shows on GitHub alone, so group
+    #   of closed pull request shows `closed` once, then drops.
+    let
+      at_pull = SIGNOFF.find("**[The gap list")
+      gone = SIGNOFF.replace(SIGNOFF[at_pull ..< SIGNOFF.find("**Outside a pull request.**")], "")
+    check checkSignoffWindow(gone, BRANCH, [SIGNOFF], [])
+      .messages.anyIt("got none for `#331`" in it and "`⬜ 5. cga5d baseline`" in it)
+    for subject in [
+      "feat(pga_benchmark): add the gap list (#331)",
+      "Merge pull request #331 from mraxilus/contributor/ronri/pga_benchmark/gap-list",
+    ]:
+      check checkSignoffWindow(gone, BRANCH, [SIGNOFF], [subject]).len == 0
+    for subject in [
+      "feat(pga_benchmark): add the gap list (#3310)",
+      "Merge pull request #33 from mraxilus/x",
+      "fix(pga_benchmark): read #331 again",
+      "feat(pga_benchmark): (#331) first",
+    ]:
+      check checkSignoffWindow(gone, BRANCH, [SIGNOFF], [subject]).len == 1
+    let
+      closed = SIGNOFF.replace("/pull/331), draft", "/pull/331), closed")
+      merged = SIGNOFF.replace("/pull/331), draft", "/pull/331), merged")
+    check checkSignoffWindow(gone, BRANCH, [closed], []).len == 0
+    check checkSignoffWindow(gone, BRANCH, [merged], []).len == 1  # word alone, main holds none
+
+
+  test "group may not shrink, and fold counts each item that it names (#844)":
+    # Item keeps its place when its words change, so count of items, and no match of words,
+    #   holds group (Question 2 of #844).
+    const three =
+      "| ☑️ 1. Draft since it opened, another commit intended | carried 3, #331 draft |\n" &
+      "| ✅ 2. Gap list reads each baseline | `koch check` green |\n" &
+      "| ✅ 3. A worked example shows the gap rows | carried 5, in the pull request body |\n"
+    let
+      folded = SIGNOFF.replace(three, "| ☑️ 1–3. Draft, list and example | carried 3 and 5 |\n")
+      short = SIGNOFF.replace(three, "| ☑️ 1–2. Draft and list | carried 3 and 5 |\n")
+      worded = SIGNOFF.replace("Gap list reads each baseline", "The list holds each baseline")
+    check checkSignoffWindow(folded, BRANCH, [SIGNOFF], []).len == 0
+    check checkSignoffWindow(short, BRANCH, [SIGNOFF], [])
+      .messages.anyIt("got `4` items in `#331`, which held `5`" in it)
+    check checkSignoffWindow(worded, BRANCH, [SIGNOFF], []).len == 0
+    check checkSignoffWindow(PLAIN, BRANCH, [PLAIN], []).len == 0  # same sign-off again
+
+    # Work outside pull request may not shrink either, and ➖ row names no item.
+    let fewer = SIGNOFF
+      .replace("| ✅ 7. The request of the curator is answered | carried 2, #330 |\n", "")
+      .replace("| ⚠️ 8.", "| ⚠️ 7.").replace("| ➖ 9.", "| ➖ 8.")
+      .replace("carried 4:", "carried 2 and 4:")
+    check checkSignoff(fewer, BRANCH).messages == newSeq[string]()  # shape holds alone
+    check checkSignoffWindow(fewer, BRANCH, [SIGNOFF], [])
+      .messages.anyIt("got `2` items in `Outside a pull request.`, which held `3`" in it)
+    let applied = SIGNOFF
+      .replace("| ➖ 9. Not needed: page link | carried 4: no page changed |\n", "")
+      .replace("carried 5, in the pull", "carried 4 and 5, in the pull")
+    check checkSignoff(applied, BRANCH).messages == newSeq[string]()
+    check checkSignoffWindow(applied, BRANCH, [SIGNOFF], []).len == 0
+
+
+  test "sign-off is compared with last sign-off of window that passed (#844)":
+    # Refused sign-off can lack items, and stop after its refusal passes unread, so replay of
+    #   verdicts over window skips it.
+    let dropped = SIGNOFF
+      .replace("| ⬜ 5. cga5d baseline | this delegate |\n", "")
+      .replace("| ☑️ 6.", "| ☑️ 5.").replace("| ✅ 7.", "| ✅ 6.")
+      .replace("| ⚠️ 8.", "| ⚠️ 7.").replace("| ➖ 9.", "| ➖ 8.")
+    check checkSignoffWindow(SIGNOFF, BRANCH, [SIGNOFF, dropped], []).len == 0
+    check checkSignoffWindow(dropped, BRANCH, [SIGNOFF, dropped], []).len == 1
+    check checkSignoffWindow(dropped, BRANCH, [], []).len == 0  # first of window
+    check checkSignoffWindow(dropped, BRANCH, [FIVE], []).len == 0  # form before #844 reads none
+    check checkSignoffWindow(dropped, BRANCH, [FIVE, SIGNOFF], []).len == 1
+    let gist = SIGNOFF.replace("**Summary:**", "**Gist:**")
+    check checkSignoffWindow(dropped, BRANCH, [gist], []).len == 0  # refused for its shape
 
 
   test "hook binary is built again where source at HEAD moves, and only there":
