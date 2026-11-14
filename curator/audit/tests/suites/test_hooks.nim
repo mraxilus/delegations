@@ -1329,6 +1329,21 @@ suite "Hooks":
     check checkSignoffWindow(bare.text, BRANCH, bare.signoffs_earlier, [], bare.signoffs_before)
       .len == 0
 
+    # Replay keeps each rule of span: refused sign-off of this span leaves base where it was.
+    check checkSignoffWindow(fewer, BRANCH, [SIGNOFF, fewer], []).len == 1
+    # One list holds each sign-off of its span, and call of earlier turn is no call of this one.
+    check (lineUser("Add the gap list.", "human") & lineAssistant(SIGNOFF) & lineAssistant(fewer) &
+      lineUser("D1 b", "human") & lineAssistant(dropped)).parseTurn
+      .signoffs_before == @[@[SIGNOFF, fewer]]
+    check (lineUser("Add the gap list.", "human") & linesCall("git push") & lineAssistant(SIGNOFF) &
+      lineUser("D1 b", "human") & lineAssistant(dropped)).parseTurn
+      .calls.len == 0
+
+    # Koch reads subjects of `main` and compares groups only where earlier sign-off exists.
+    check not Turn().isSignoffEarlier
+    check Turn(signoffs_earlier: @[SIGNOFF]).isSignoffEarlier
+    check Turn(signoffs_before: @[@[SIGNOFF]]).isSignoffEarlier  # one before message counts
+
 
   test "hook binary is built again where source at HEAD moves, and only there":
     # Stub compiler writes binary printing `koch.nim` it read, so output names source of binary
