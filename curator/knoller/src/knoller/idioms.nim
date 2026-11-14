@@ -17,22 +17,22 @@
 ##   - `return result` never appears: bare `return` exits early with `result` (§5).
 ##   - Profiler import stands on two lines, `import std/nimprof` indented under
 ##     `when compileOption("profiler"):`; entry module (`when isMainModule:`), library umbrella
-##     (`<project>/src/<project>.nim`) and stub carry it right after their pragmas (§3):
+##     (`src/<name>.nim` beside `<name>.nimble`) and stub carry it right after their pragmas (§3):
 ##     `checkProfiler`, outside static pass until projects run fix. Stub that includes file at
 ##     top level takes import from it, since include makes one module of both (§3, §6). Cost:
 ##     included file is unread here, so its import is held by reading alone.
 ##   - Stub leaves `-r`, `batchable` and `joinable` out of its testament header (§6). Stub is
-##     `tests/test_*.nim`, or `t*.nim` at any depth inside directory directly under `tests`
-##     whose source opens with that header, as testament reads category (`reports.isStub`).
+##     `tests/test_*.nim` of package, or `t*.nim` at any depth inside directory directly under
+##     `tests` whose source opens with that header, as testament reads category (`reports.isStub`).
 ##   Rules no fixer reaches, since each needs knowledge text does not hold (`checkPragmas`,
 ##     `checkTests`):
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2): word of
 ##     `MARKS_FOREIGN` stands among pragmas of block (`declared.nim`).
-##   - Under `tests/` (`reports.isFileTest`): suite importing `std/random` seeds it, and stub
-##     carries testament header (§6), so only `tests/test_*.nim` can lack it, since header makes
-##     stub of category; `echo` of value without label, outside condition, is debug output
-##     (VIII.5).
+##   - Under `tests/` of package (`reports.isFileTest`): suite importing `std/random` seeds it,
+##     and stub carries testament header (§6), so only `tests/test_*.nim` can lack it, since
+##     header makes stub of category; `echo` of value without label, outside condition, is debug
+##     output (VIII.5).
 ##   `checkIdioms` reads every idiom static pass of `curator/audit` reads, by dialect: module
 ##     each, script and package those of any Nim code, i.e. bindings, pragmas, return and test
 ##     rules but stub; `strictFuncs`, import order and stub keys are module's (`stepsIdiom` too).

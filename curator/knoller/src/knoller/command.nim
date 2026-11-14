@@ -37,7 +37,9 @@
 ##     pin no file asks about is never fetched.
 ##   Fixers read each path whole, absolute and with `.` and `..` resolved (`toAbsolute`), so test
 ##     file, stub and umbrella read alike however command line names them; output prints path
-##     as named.
+##     as named. Their rules read nimble file nearest each file, which run reads from disk at or
+##     above its directory, as it reads pin (`nimblesNearest`); directory holding several nimble
+##     files names none, as nimble refuses such directory.
 ##   Fixers read text as commit stores it. Where checkout wrote CRLF that commit turns back into
 ##     LF, as `core.autocrlf` does on Windows by default, run reads LF and writes CRLF back
 ##     (`isConverted`), so no CR reads as trailing whitespace and no fix rewrites line endings.

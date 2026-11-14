@@ -21,13 +21,18 @@
 ##     takes; `idioms.nim` and `chain.nim` both read it, so it stands here, below both.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
 ##     line on every platform (`command.toAbsolute`). Rule reading layout from it reads test file,
-##     stub and umbrella here alone, test file and stub from last directory `tests`
-##     (`partTests`), so each meaning is written once; drive file, where command line reads
+##     stub and umbrella here alone, each from names of path below folder of its package
+##     (`partPackage`), so each meaning is written once; drive file, where command line reads
 ##     fixed waits, too (`isFileDrive`).
+##   Nim tools set layout these rules read, so it holds in any repository: testament reads tests
+##     under `tests` of package, and nimble puts umbrella in `src` of package, named as nimble
+##     file is. So test file lies below `tests` of its package (`partTests`), and umbrella is
+##     `src/<name>.nim` beside `<name>.nimble`, whatever folder holds both (`isUmbrella`).
 ##   Caller names nimble file nearest each file, written as its path is, empty where none stands
-##     above (`nimble`); placed fixer takes it (`Placed`), as prover step takes answers.
-##   Stub is read as testament reads category (#443), i.e. directory directly under `tests`,
-##     whose tests are files `t*.nim` at any depth (`isTestFile`, `processCategory` of
+##     above (`nimble`); placed fixer takes it (`Placed`), as prover step takes answers. Lookup
+##     reads file system, so caller makes it, and every rule here stays pure.
+##   Stub is read as testament reads category (#443), i.e. directory directly under `tests` of
+##     package, whose tests are files `t*.nim` at any depth (`isTestFile`, `processCategory` of
 ##     `testament/categories.nim`): file there is stub where its source opens with testament
 ##     header, and suite module, which opens with none, stays suite. Stub `test_*` directly
 ##     under `tests` holds with header or without, so its missing header stays finding. So
@@ -35,13 +40,16 @@
 ##   Rejected: path alone, which reads each suite module of category as stub, so missing header
 ##     and profiler import would report on each, e.g. `tests/suites/test_names.nim`; header
 ##     test at each caller, which writes category rule three times.
+##   Rejected: last directory `tests` of whole path, and umbrella as `<folder>/src/<folder>.nim`,
+##     which read directories above repository and name of its clone; folder and name of
+##     package passed apart, two values that can disagree, where nimble file gives both.
 ##
 ##   Cost: line `0` marks whole-file report, so `0` never means first line.
 ##   Cost: header of category file reads at its first byte alone, where testament reads it
 ##     anywhere in first ten lines with no space before it; file of category whose header stands
 ##     lower is no stub, so it takes no stub rule. Stub of STYLE.md §6 opens with header.
-##   Cost: absolute path reads directories above repository too, so file under directory
-##     `tests` there reads as test file from command line.
+##   Cost: file whose caller names no nimble file takes no rule of test file, stub or umbrella:
+##     fewer findings, never false one.
 ##   Cost: drive file is file under directory `tests` or `tools` at any depth, wider than
 ##     `curator/audit` reads it (those of each project alone), since command line knows no
 ##     project; so command line reports fixed wait static pass passes over.
@@ -113,6 +121,8 @@ type
 const
   EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
   DIRECTORIES_DRIVE = ["tests", "tools"]  ## Directories whose files command line reads as drive.
+  DIRECTORY_SOURCE = "src"  ## Directory of package that nimble puts its umbrella in.
+  DIRECTORY_TESTS = "tests"  ## Directory of package that testament reads its tests from.
   EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
     ## Extension of file of each dialect.
   HEADER_TESTAMENT* = "discard \"\"\""
@@ -124,32 +134,44 @@ func initReport*(path: string, line: int, rule: Rule, message = ""): Report =
   Report(path: path, line: line, rule: rule, message: message)
 
 
-func partTests(path: string): seq[string] =
-  ## Read names of path below its last directory `tests`; empty where no directory is so named.
-  let parts = path.split('/')
-  for k in countdown(parts.high - 1, 0):
-    if parts[k] == "tests": return parts[k + 1 .. ^1]
+func partPackage(path, nimble: string): seq[string] =
+  ## Read names of path below folder of nimble file nearest it, both written alike; empty where
+  ##   none stands above, or path lies outside that folder.
+  if nimble.len == 0: return
+  let folder = nimble[0..nimble.rfind('/')]
+  if path.startsWith(folder): path[folder.len .. ^1].split('/') else: @[]
+
+
+func partTests(path, nimble: string): seq[string] =
+  ## Read names of path below directory `tests` of its package; empty where it lies elsewhere.
+  let part = path.partPackage(nimble)
+  if part.len > 1 and part[0] == DIRECTORY_TESTS: part[1 .. ^1] else: @[]
 
 
 func isFileTest*(path, nimble: string): bool =
-  ## Decide whether path lies under directory `tests`, at any depth; `nimble` is nimble file
-  ##   nearest path, written as path is, empty where none stands above.
-  path.partTests.len > 0
+  ## Decide whether path lies under directory `tests` of its package, at any depth; `nimble` is
+  ##   nimble file nearest path, written as path is, empty where none stands above.
+  path.partTests(nimble).len > 0
 
 
 func isStub*(path, source, nimble: string): bool =
-  ## Decide whether file is testament stub: `test_*` directly under directory `tests`, or
+  ## Decide whether file is testament stub: `test_*` directly under `tests` of its package, or
   ##   `t*.nim` at any depth inside category whose source opens with testament header.
-  let part = path.partTests
+  let part = path.partTests(nimble)
   if part.len == 1: return part[0].startsWith("test_")
   part.len > 1 and part[^1].startsWith('t') and part[^1].endsWith(EXTENSIONS[Dialect.Module]) and
       source.startsWith(HEADER_TESTAMENT)
 
 
 func isUmbrella*(path, nimble: string): bool =
-  ## Decide whether path is library umbrella: `<project>/src/<project>.nim`.
-  let parts = path.split('/')
-  parts.len >= 3 and parts[^2] == "src" and parts[^1] == parts[^3] & ".nim"
+  ## Decide whether path is library umbrella, which nimble puts in `src` of its package under name
+  ##   of nimble file: `src/<name>.nim` beside `<name>.nimble`.
+  let
+    file = nimble[nimble.rfind('/')+1 .. ^1]
+    extension = EXTENSIONS[Dialect.Package]
+  if file.len <= extension.len or not file.endsWith(extension): return false
+  let name = file[0..<file.len-extension.len]
+  path.partPackage(nimble) == @[DIRECTORY_SOURCE, name & EXTENSIONS[Dialect.Module]]
 
 
 func isFileDrive*(path: string): bool =

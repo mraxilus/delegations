@@ -1,9 +1,9 @@
 ## Enforce blank lines beside suites, tests and nested helpers in Nim source (Article X.2;
 ##   STYLE.md §1), and fix them (`koch fix`).
-##   Under `tests/` (`reports.isFileTest`): suite is first tier and takes three blank lines
-##     before it; test is second tier and takes two. First child follows its opener at once,
-##     i.e. test opening suite and suite opening `when` body: no blank line. Suite or test right
-##     after banner takes banner's one.
+##   Under `tests/` of package (`reports.isFileTest`): suite is first tier and takes three blank
+##     lines before it; test is second tier and takes two. First child follows its opener at
+##     once, i.e. test opening suite and suite opening `when` body: no blank line. Suite or test
+##     right after banner takes banner's one.
 ##   Nested helper, i.e. routine declared in body of routine: one blank line on each side,
 ##     right after owner's doc too. Side leaving owner's body is not read, since what stands
 ##     there is owner's sibling. Helper never moves (X.11 asks it first; reading holds that).
