@@ -4,7 +4,7 @@
 
 import std/[algorithm, os, sequtils, strutils, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[audit, domains, provenance]
+import ../../src/[audit, domains, prose_own, provenance]
 import ./fixtures
 
 
@@ -29,8 +29,11 @@ suite "Audit":
     let
       changed = treeGood().replaced("CONTRIBUTOR.md", TEXT_RULES[2] & "More.\n" & TEXT_PROCESS[2])
       stale = changed.auditTree.filterIt("stale" in it.message)
-    check stale.mapIt(it.path).sorted ==
-      @[DIRECTORY_ALPHA & "/PROVENANCE.md", DIRECTORY_AUDIT & "/PROVENANCE.md"]  # every project
+    check stale.mapIt(it.path).sorted == @[
+      DIRECTORY_PARSER & "/PROVENANCE.md",
+      DIRECTORY_ALPHA & "/PROVENANCE.md",
+      DIRECTORY_AUDIT & "/PROVENANCE.md",
+    ]  # every project
     let curator_only = changed.replaced("CURATOR.md", "# Curator\n\nChanged.\n")
     check curator_only.auditTree.len == stale.len  # CURATOR.md is not stamped
 
@@ -169,6 +172,55 @@ suite "Audit":
       "Line ends with whitespace (VIII.5).",
       "Comment holds article (VI.5); got `the`.",
     ]  # both checks ran
+
+
+  test "records of project keeping its own prose take no rule of English, and every other check":
+    # Case: records of `lojban_parser` move to lojban, by ruling `D4 a` of #818. Domain: its
+    #   README, record lacking header table, record lacking field read by name, glossary lacking
+    #   heading read by name, and same README in project list leaves out.
+    let readme = "# Project\n\n" & PROSE_LOJBAN
+    check treeGood().replaced(DIRECTORY_PARSER & "/README.md", readme).auditTree.len == 0
+    check treeGood().replaced(DIRECTORY_ALPHA & "/README.md", readme).auditTree.mapIt(
+      it.message,
+    ) == @[
+      "Sentence must hold at most 25 words; split it (ASD-STE100); got " &
+        "`mi klama le zarci .i do klama le ...`.",
+    ]  # project list leaves out
+    let unreviewed = textProvenance(stamp(TEXT_RULES)).replace("| Review | **Unreviewed.** |\n", "")
+    for (file, content, message) in [
+      ("PROVENANCE.md", "# Provenance\n\n" & PROSE_LOJBAN,
+        "Header table `| Field | Value |` missing or empty."),
+      ("PROVENANCE.md", unreviewed & "\n" & PROSE_LOJBAN, "Header lacks field; got `Review`."),
+      ("GLOSSARY.md", "# Project\n\n" & PROSE_LOJBAN & "\n## Standards\n",
+        "Glossary lacks `## Language` heading."),
+    ]:
+      let tree = treeGood().replaced(DIRECTORY_PARSER & "/" & file, content)
+      check tree.auditTree.mapIt(it.message) == @[message]  # read by name, whatever language
+
+
+  test "comments of project keeping its own prose take no rule of articles, and every other check":
+    # Case: `a` of lojban joins two names as `or`, so comment of `lojban_parser` reads as one
+    #   holding article. Domain: its source, and same source in project list leaves out.
+    let source = "# la .alis. a la .bob. cu klama \n\n" & STRICT_FUNCS & "\n"
+    check (treeGood() & @[entry(DIRECTORY_PARSER & "/src/a.nim", source)]).auditTree.mapIt(
+      it.message,
+    ) == @["Line ends with whitespace (VIII.5)."]  # form still reads it
+    check (treeGood() & @[entry(DIRECTORY_ALPHA & "/src/a.nim", source)]).auditTree.mapIt(
+      it.message,
+    ) == @["Line ends with whitespace (VIII.5).", "Comment holds article (VI.5); got `a`."]
+
+
+  test "entry of list of own prose whose project tree lacks is finding of umbrella, at list":
+    # Case: listed project moves or goes, and its entry stays, so exception names no project and
+    #   nothing says so. Domain: listed project gone whole, and present; held entry with no suite
+    #   is `checkProjectsProseOwn`'s, whose suite holds it, since no entry of list demands one yet.
+    let gone = treeGood().filterIt(not it.path.startsWith(DIRECTORY_PARSER & "/"))
+    check gone.auditTree.mapIt((it.path, it.message)) == @[(
+      PATH_PROSE_OWN,
+      "Project keeping its own prose (VI.5, VI.8) is one tree holds; remove its entry, or name " &
+        "project where it moved; got `" & DIRECTORY_PARSER & "`.",
+    )]
+    check treeGood().auditTree.len == 0  # present
 
 
   test "Pruned row reads history of record across move":

@@ -331,14 +331,17 @@ CAYLEYS_WEDGE  # module constant
 5. Prose in a comment is telegraphic, with no articles, in every comment of every language in
    the tree. That covers a header, a stage comment, a banner, and glue in a second language.
    A checker enforces it. A file kind that the checker does not read is a file kind that does
-   not exist yet.
+   not exist yet. A project of `bangu` that the Architect approves keeps its comments in its
+   own language, and the checker lists each such project.
 6. Say why, and at what cost. Vagueness is not telegraphic.
 7. A doc that asserts a global property names what enforces it: a test, an annotation that the
    compiler checks, or the generated output. Such a property is no allocation, no exceptions, a
    complexity, or "runs once for each save". Where nothing enforces it, the doc names its
    register from VIII.1: measured, expected or intended.
 8. Prose outside comments is Simplified Technical English, and `GUIDE.md` gives its rules. A
-   comment in code keeps the telegraphic register of VI.5 instead.
+   comment in code keeps the telegraphic register of VI.5 instead. A project of `bangu` that the
+   Architect approves keeps its records in its own language, and the checker lists each such
+   project.
 9. A doc has one position for each shape of declaration, and the expression guide of the
    language fixes it. A reader then finds every doc where the last one was.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and

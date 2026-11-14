@@ -230,6 +230,10 @@ and the shared allowance. This section adds only what differs for a curator.
    `toolchain.nim` fails the audit where it disagrees. A sibling imported by path is not a
    package, so it needs no lock. Its pin moves with the pin of `curator/audit`.
 
+   Knoller and assayer serve other repositories too. So no rule of either reads a detail of this
+   repository, and neither needs a checkout of it to build. Koch passes in what a rule needs, as
+   it passes the words of the glossaries.
+
    `curator/audit/PROVENANCE.md`, Toolchain, says how koch serves every other pin. What koch
    does not serve, `nim r koch list-packages` prints: the packages of koch itself, and those
    that each project declares through its `system` verb. Where a tool is absent, the check that

@@ -225,6 +225,38 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, [entry(path, unfenced)]).warned.len == 0  # no fence, none
 
 
+  test "fix keeps word of project keeping its own prose, and drops article elsewhere (VI.5)":
+    # Case: `a` of lojban joins two names as `or`, so fix deleting it from comment of
+    #   `lojban_parser` changes what comment says. Domain: comment and fence warning, in listed
+    #   project and in project of same domain list leaves out, each on branch of its own.
+    const
+      branch_parser = DIRECTORY_PARSER & "/prose"
+      branch_tagger = DIRECTORY_TAGGER & "/prose"
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      source = head & "# la .alis. a la .bob. cu klama \n"
+      fenced = head & FENCE_OFF & "\n# la .alis. a la .bob. cu klama\n" & FENCE_ON & "\n"
+    let
+      parser = fixEntries(branch_parser, [entry(DIRECTORY_PARSER & "/src/a.nim", source)])
+      tagger = fixEntries(branch_tagger, [entry(DIRECTORY_TAGGER & "/src/a.nim", source)])
+    check parser.refused.len == 0 and tagger.refused.len == 0  # each inside its own scope
+    check parser.written.mapIt(it.content) ==
+      @[head & "# la .alis. a la .bob. cu klama\n"]  # word stays, whitespace goes
+    check tagger.written.mapIt(it.content) == @[head & "# la .alis. la .bob. cu klama\n"]
+    check parser.fixed.mapIt(it.message) == @["trailing whitespace (VIII.5)"]  # other fixer runs
+    check fixEntries(branch_parser, [entry(DIRECTORY_PARSER & "/src/a.nim", fenced)]).warned.mapIt(
+      it.message,
+    ) == @[
+      "Fence keeps its lines as written, and nothing inside breaks a rule (X.1); got lines `5` " &
+        "to `7`.",
+    ]  # fence counts no article there
+    check fixEntries(branch_tagger, [entry(DIRECTORY_TAGGER & "/src/a.nim", fenced)]).warned.mapIt(
+      it.message,
+    ) == @[
+      "Fence keeps its lines as written, and inside them article-in-comment breaks once at line " &
+        "6 (X.1); got lines `5` to `7`.",
+    ]  # and counts it elsewhere
+
+
   test "fence left open runs to end of file; marker inside string fences nothing":
     let
       path = "curator/audit/a.nims"

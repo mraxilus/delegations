@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 1490be316e4c1901 |
+| Rules   | d446c5be453722ff |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -1385,6 +1385,23 @@ words.
   '*.nim'` lists. `linesComment` gives the same line and text as the Nim scanner of
   `curator/audit`.
 - Verified by `suites/test_articles.nim`, with the Nim cases of the scanner of `curator/audit`.
+
+**The caller says of each file whether its comments drop their articles.** `formatted`,
+`checkSource` and `checkFenceHeld` take `should_drop_articles`, which is true by default. Where it
+is false, the chain runs no fixer and no check of articles on that file. Every other rule runs.
+
+- A comment in another language can hold a word that reads as an article. In lojban, `a` joins
+  two names, as "or" does in English. The fixer would delete it and change what the comment says.
+- The mode is the policy of the caller, as the words that a name may take are (`## Names`). So
+  knoller holds no list of files, and reads nothing of a repository to decide.
+- Rejected: a set of directories that knoller matches against each path. The caller already holds
+  the path of each file that it passes, so one flag for each file is the smaller input.
+- Cost: the command line sets no mode, so it drops the articles of every comment that it reads.
+  A file whose comments keep another language needs a caller that sets the mode.
+- Verified by `suites/test_chain.nim`: in each dialect, the mode off keeps the word in the fixer,
+  the check and the fence warning. The fix of spacing still runs, and the default drops the word.
+- Verified by `suites/test_command.nim`: the check of the command line reports the word and exits
+  1, and its fix writes the word away.
 
 ## Names
 
