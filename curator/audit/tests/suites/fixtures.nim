@@ -51,6 +51,11 @@ const
   DIRECTORY_ALPHA* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
   DIRECTORY_PARSER* = CONTRIBUTOR & "/bangu/lojban_parser"
     ## Project list of own prose names, which fixture tree holds for that list's sake.
+  PROSE_LOJBAN* =
+      "mi klama le zarci .i do klama le zdani .i le gerku cu viska le mlatu .i le mlatu\n" &
+      "cu bajra .i mi tavla do le zarci .i do ciska lo xatra mi .i le xatra cu cmalu\n"
+    ## Paragraph of record in lojban, 38 words: `.i` opens each sentence, and no stop closes one,
+    ## so English check reads one sentence.
   DIRECTORY_AUDIT* = CURATOR & "/audit"  ## Curator project in fixture tree.
 
 

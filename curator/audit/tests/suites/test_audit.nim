@@ -117,6 +117,30 @@ suite "Audit":
     ]  # both checks ran
 
 
+  test "records of project keeping its own prose take no rule of English, and every other check":
+    # Case: records of `lojban_parser` move to lojban, by ruling `D4 a` of #818. Domain: its
+    #   README, record lacking header table, record lacking field read by name, glossary lacking
+    #   heading read by name, and same README in project list leaves out.
+    let readme = "# Project\n\n" & PROSE_LOJBAN
+    check treeGood().replaced(DIRECTORY_PARSER & "/README.md", readme).auditTree.len == 0
+    check treeGood().replaced(DIRECTORY_ALPHA & "/README.md", readme).auditTree.mapIt(
+      it.message,
+    ) == @[
+      "Sentence must hold at most 25 words; split it (ASD-STE100); got " &
+        "`mi klama le zarci .i do klama le ...`.",
+    ]  # project list leaves out
+    let unreviewed = textProvenance(stamp(TEXT_RULES)).replace("| Review | **Unreviewed.** |\n", "")
+    for (file, content, message) in [
+      ("PROVENANCE.md", "# Provenance\n\n" & PROSE_LOJBAN,
+        "Header table `| Field | Value |` missing or empty."),
+      ("PROVENANCE.md", unreviewed & "\n" & PROSE_LOJBAN, "Header lacks field; got `Review`."),
+      ("GLOSSARY.md", "# Project\n\n" & PROSE_LOJBAN & "\n## Standards\n",
+        "Glossary lacks `## Language` heading."),
+    ]:
+      let tree = treeGood().replaced(DIRECTORY_PARSER & "/" & file, content)
+      check tree.auditTree.mapIt(it.message) == @[message]  # read by name, whatever language
+
+
   test "Pruned row reads history of record across move":
     # Case held: `findingsPruned` read `git log -- <path>` without `--follow`, so move of
     #   `rga_visualiser` to `pga_visualiser` lost commits of old path, and true row naming
