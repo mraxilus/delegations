@@ -70,6 +70,31 @@ suite "Blanks":
       check path.isStub(bare, nimble) == is_stub_bare
 
 
+  test "test file, stub and umbrella read below folder of nimble file nearest them, else none":
+    # Case held: rules read last directory `tests` of whole path, and umbrella as
+    #   `<folder>/src/<folder>.nim`, so package at root of its repository had no umbrella, clone
+    #   had to bear name of package, and directory `tests` above repository made test file of
+    #   each file below it (#886). Domain: package at root, in folder of other name, nested in
+    #   another, on Windows, and none above.
+    let bare = "include \"suites.nim\"\n"
+    for (path, nimble, is_file_test, is_stub, is_umbrella) in [
+      ("src/foo.nim", "foo.nimble", false, false, true),  # package at root of repository
+      ("/c/clone/src/foo.nim", "/c/clone/foo.nimble", false, false, true),  # folder of other name
+      ("/c/foo/src/foo.nim", "/c/foo/bar.nimble", false, false, false),  # name of nimble file
+      ("C:/c/clone/src/foo.nim", "C:/c/clone/foo.nimble", false, false, true),  # Windows
+      ("/r/tests/clone/src/b.nim", "/r/tests/clone/a.nimble", false, false, false),  # `tests` above
+      ("/r/p/tests/sub/tests/test_a.nim", "/r/p/p.nimble", true, false, false),  # inside category
+      ("/r/p/inner/tests/test_a.nim", "/r/p/inner/inner.nimble", true, true, false),  # nearest
+      ("/r/p/inner/src/inner.nim", "/r/p/inner/inner.nimble", false, false, true),
+      ("/r/p/src/inner/src/p.nim", "/r/p/p.nimble", false, false, false),  # `src` of package alone
+      ("tests/test_a.nim", "", false, false, false),  # no nimble file above
+      ("src/foo.nim", "", false, false, false),
+    ]:
+      check path.isFileTest(nimble) == is_file_test
+      check path.isStub(bare, nimble) == is_stub
+      check path.isUmbrella(nimble) == is_umbrella
+
+
   test "suite opening `when` body follows it at once; suite after banner takes banner's one":
     let breach = "x\n\n\n\n#[ Native ]#\n\n\nsuite \"A\":\n  test \"a\":\n    discard\n\n\n\n" &
       "when defined(js):\n\n  suite \"B\":\n    test \"b\":\n      discard\n"

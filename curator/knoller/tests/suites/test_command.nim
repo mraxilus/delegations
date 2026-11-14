@@ -9,7 +9,7 @@
 
 import std/[importutils, options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[command, compilers, edits, proofs, reports, rewrites, rules, symbols]
-from ../../src/knoller/command {.all.} import joined, Part
+from ../../src/knoller/command {.all.} import joined, nimblesNearest, Part
 import ./stubs
 
 
@@ -262,6 +262,49 @@ suite "Command line":
       let lines = shown(inside[0], inside[1], source, "/p/p.nimble")
       check lines.anyIt(rule in it)  # rule reads path whole, from inside its directory too
       check lines == shown(outside[0], outside[1], source, "/p/p.nimble")
+
+
+  test "nimble file nearest each file, read from disk, decides its tests, stubs and umbrella":
+    # Case held: command line read umbrella as `<folder>/src/<folder>.nim` of path, so package
+    #   at root of clone whose folder bears other name had none, and it read directory `tests`
+    #   anywhere in path, so stub needed no package (#886). Domain: package at root of clone,
+    #   package nested inside it, directory of two nimble files, and tree with none above.
+    let
+      root = createTempDir("knoller_", "_clone")  # folder named apart from package
+      bare = createTempDir("knoller_", "_bare")
+    defer:
+      removeDir(root)
+      removeDir(bare)
+    root.writeTree([
+      ("foo.nimble", "version = \"0.1.0\"\n"),
+      ("src/foo.nim", UMBRELLA),
+      ("inner/inner.nimble", "version = \"0.1.0\"\n"),
+      ("inner/tests/test_a.nim", STUB),
+      ("pair/a.nimble", "version = \"0.1.0\"\n"),
+      ("pair/b.nimble", "version = \"0.1.0\"\n"),
+      ("pair/tests/test_a.nim", STUB),
+    ])
+    bare.writeTree([("tests/test_a.nim", STUB)])
+    let
+      paths = ["src/foo.nim", "inner/tests/test_a.nim", "pair/tests/test_a.nim"]
+      nimbles = paths.nimblesNearest(root)
+    check nimbles == {
+      "src/foo.nim": slashed(root / "foo.nimble"),
+      "inner/tests/test_a.nim": slashed(root / "inner" / "inner.nimble"),
+    }.toTable  # directory of two nimble files names no package, as nimble refuses it
+    let lines = outcome(
+      paths.mapIt((it, readFile(root / it))), [], is_check = true, root, nimbles = nimbles
+    ).lines
+    check "src/foo.nim: profiler-import to fix" in lines  # umbrella of package at root of clone
+    check "inner/tests/test_a.nim:3: stub-keys to fix" in lines  # stub of nearest package
+    check not lines.anyIt(it.startsWith("pair/") and "stub-keys" in it)  # no package, no stub
+    let
+      alone = ["tests/test_a.nim"]
+      outside = outcome(
+        [(alone[0], STUB)], [], is_check = true, bare, nimbles = alone.nimblesNearest(bare)
+      )
+    check alone.nimblesNearest(bare).len == 0  # no nimble file above
+    check not outside.lines.anyIt("stub-keys" in it)  # so no stub rule
 
 
   test "directory names Nim files git lists under it, sorted; one naming none says why":
