@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 5e637e1b4401ba15 |
+| Rules   | 1490be316e4c1901 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -189,7 +189,8 @@ check can hold all of it. `GUIDE.md` carries the working subset of the other rul
 **The governed set is half data and half derivation.** `PATHS_ENGLISH` holds every root
 Markdown document except `LICENSE.md`, and the issue and pull request templates. No rule can
 derive those. Everything else comes from the layout. That is the README of each project root
-and of each registered domain, and each record directly inside a project directory.
+and of each registered domain, and each record directly inside a project directory. Any other
+file stays outside the set, as a file below a project directory does.
 
 **The derived half needs no row that somebody must remember.** A list with one row for each
 record goes one row short at the next project. The records of that project then go unread, and
@@ -341,8 +342,43 @@ curator-only edit touches no project.
   across Nim versions.
 - Cost: it is a change detector and not a signature, so a collision needs an adversary.
 - Verified by `suites/test_provenance.nim` for determinism, one-byte, order and boundary
-  sensitivity, and CRLF invariance. Verified by `suites/test_audit.nim`: one byte in any rules
-  document goes stale in every project, and one byte in CURATOR.md in none.
+  sensitivity, and CRLF invariance.
+
+**The stamp reads every section of the five documents except the sections of process, as the
+Architect ruled (D1 d of #843).** `SECTIONS_PROCESS` in `provenance.nim` lists them by document
+and heading line. A section of process says what a delegate does, and never what a project
+holds. So its edit binds no project, and moves no `Rules` row. `check-drift` still names it to
+each older branch, because a delegate forgets (Drift).
+
+The list names the process, and not the content, so it fails closed. A new or renamed heading
+stays stamped until a curator lists it. Boundaries and Glossary process stay stamped whole,
+because each holds rules of content beside its process. A listed heading that its document
+lacks is a finding at that document, so a rename leaves no dead row. A static assertion holds
+each row to a rules document and a `## ` heading.
+
+- The stamp cuts each document through `sections` in `markdown.nim`, which skips fenced code.
+  Fences in GUIDE.md quote `## Standards`, `## Language` and `## Sign-off`, so a reader blind to
+  fences would end Glossary process at the first of them. `section` of the checker reads the
+  same cut, and matches a heading as the whole line.
+- CONSTITUTION.md, STYLE.md and EXAMPLES.md list none, so the stamp reads each of them whole.
+- Rejected: a list of the sections of content. A new or renamed heading of content would then
+  move no stamp and give no finding.
+- Rejected: a move of the sections of content into a stamped file of their own. Contributor code
+  cites those sections by heading, so a move leaves each citation with no target, and only each
+  contributor may edit that code. Outside the three records,
+  `git grep -n -E '(CONTRIBUTOR|GUIDE)\.md' ba1986f98 -- contributor` gives 48 lines, and 36 of
+  them cite a section by its heading.
+- Rejected: `GUIDE.md` and `CONTRIBUTOR.md` out of the stamp whole. Their rules of content would
+  then change with no audit of any project.
+- Cost: an edit of a mixed section, or of the opening above the first `##` heading, moves the
+  stamp of every project.
+- Verified by `suites/test_audit.nim`. An edit of each section of process moves no stamp, and
+  neither does text past a heading that a fence quotes. A CRLF checkout stamps the same. An edit
+  of the opening, of a section of content or of a mixed section moves it, and so does a new or
+  longer heading. A renamed heading is a finding at its document, and so is a document that is
+  gone. One byte in CURATOR.md goes stale in no project.
+- Verified by `suites/test_markdown.nim`: the parts of a document give it back byte for byte.
+  Verified by `suites/test_checker.nim`, for the reader of Glossary process as found.
 
 **`koch stamp --write` sets the `Rules` row of every provenance file itself.** `rewriteRowRules`
 rewrites the row in place, and finds it as `fieldsHeader` finds it, so what is written is what
@@ -561,14 +597,27 @@ repository issue 671.
   does a judge that lets a finding through. Nothing outside the project would see either.
   Rejected: the verdict in the judge of each project, which trusts that judge. Rejected: the
   whole check inside koch, which would bring Node, a browser and every form of page into koch.
-- **The control page proves the collector on each run.** It holds the Chinese numerals one to
-  five, each in one kind of place. These are a paragraph, the placeholder of a field, a
-  `::before`, SVG text, and text that a script writes on load. No font face of the store maps
-  them, so each numeral that the collector reads is found. A numeral that is missing names the
-  place that the collector skips. The script builds its numeral from its codepoint, so only a
-  reader of the live page finds it.
+- **The control page proves the collector on each run.** It holds the numerals one to five, each
+  in one kind of place. These are a paragraph, the placeholder of a field, a `::before`, SVG text,
+  and text that a script writes on load. No font face of the store maps any of the five
+  numerals, so each one that the collector reads is found. A numeral that is missing names the
+  place that the collector skips. The script builds its string on load, and the numeral from its
+  codepoint, so only a reader of the live page finds it.
+- **Each place holds the ASCII digit of its value, then its numeral, in one string.** So the
+  `::before` holds `3三`. The `characters` of `found.json` hold codepoints past ASCII alone, and a
+  digit never reaches them. The check of the digits reads the runs of the control page in
+  `written.json` instead. Where runs hold a numeral but none holds its digit too, the finding
+  names the place where the collector drops ASCII. A place that the collector skips takes the
+  finding for its numeral alone.
+- Rejected: the digit after the numeral, since the CSS escape `\4E09` would read that digit as
+  one more hex digit. Rejected: a digit anywhere on the control page. A digit elsewhere proves
+  nothing about a place, and the source of the style and the script holds digits too.
 - **A project that writes no `written.json` is a finding.** The rule asks each project with
   pages for that file, and a verdict over no file would pass pages that nobody read.
+- **A finding names the page, and what failed there.** For a character that a font face of the
+  system draws, it names the element and the character. For a font face that does not load, it
+  names that font face. For a bold that the browser synthesises, it names the element and the
+  weight. The collector reads the control page as page `control`.
 - **A family that the page does not ship ends the search.** A font face of that name on the
   machine of the viewer would draw the character, which Article X.8 forbids. Rejected: a step
   over such a family, which passes a page that such a viewer sees in the wrong font face.
@@ -600,9 +649,13 @@ repository issue 671.
   browser picks a font face for each cluster.
 - Cost: a collector writes no `font-synthesis`, so a page that turns synthesis off still gets
   the finding for a bold. Its text then draws lighter than it asks.
-- Cost: no place of the control page holds ASCII. So a collector that writes runs past ASCII
-  alone passes, and hides the bold of ASCII text. The collectors of dance_ontology and
-  pga_benchmark wrote so when this rule merged, 2026-11-03, and each took an issue to port.
+- Cost: each string of the control page mixes ASCII with a numeral. So a collector that drops a
+  string of ASCII alone, and keeps a mixed string whole, passes, and hides the bold of that text.
+- Cost: a collector that writes one string as two runs gets a finding at each place, though it
+  writes the ASCII. No collector writes so in the drives verified below.
+- Cost: one run that holds the strings of several places serves each of them, in both checks of
+  the control page. The collector of pga_visualiser writes two such runs, for text written later,
+  and each holds all ten characters.
 - Cost: text that a script writes only once a reader acts stands in no place of the control
   page, and the collectors differ there. `coverage.nim` holds such text where a source writes
   it, against every font face that the project ships.
@@ -617,12 +670,17 @@ repository issue 671.
   each format that the reader reads. On 2026-10-22, a break of the rule on an unshipped family
   failed one test. A break of the window from 400 to 500 failed another. On 2026-10-23, a break
   of each rule of the verdict failed at least one test.
+- Verified by `suites/test_font_stacks.nim`, over each state of each place: whole, its digit
+  dropped, or skipped. Each place at fault takes one finding, which names it, and a digit in a
+  run apart from its numeral is a finding too. On 2026-11-12, a break of each part of the check
+  of the digits failed at least one test.
 - Verified by `suites/test_projects.nim`, which drives a project of its own through `runDriven`.
   The control page stands before the verb runs, no verdict follows a verb that failed, and a
-  verb that writes no file is a finding.
-- Verified in Chromium, 2026-10-23. A scratch reader that reads as a collector does found each
-  numeral of the control page in its place. The verdict over what it read gave no finding. With
-  `::before` left out, it gave one finding, which names `::before`.
+  verb that writes no file is a finding. A verb that drops one digit gets one finding.
+- Verified by `koch drive` of each project with a collector, in Chromium 153.0.8010.12, on
+  2026-11-12 over the code of `6c894c01`. These are lojban_parser, dance_ontology,
+  pga_benchmark and pga_visualiser. Each collector wrote each string of the control page in one
+  run, as `3三` in the `::before`, and each verdict gave no finding.
 - Verified by a run on font faces of the store, 2026-10-22. Noto Sans and Noto Sans Math drew
   "é", "→" and "∧" down one stack. "é" after `Inter` was reported, and so was an emoji in a
   stack of Noto Sans alone.
@@ -691,35 +749,6 @@ such a name as NFD, so the same folder has different bytes there. A `static` ass
 
 Cost: a path written with the accented folder name does not parse, so an old link to one
 breaks.
-
-**A branch must carry the rules and the checker of its base before it may merge.**
-`check-drift` reads what the base gained since the branch forked. It reports a branch that
-predates a charter document or the checker. Without it, a branch green against the `main` it
-forked from can merge into a later `main`. Its stamp can then be one that a later rules change
-falsified.
-
-Only two kinds of path count. A charter document moves the stamp that every project claims,
-and the checker decides what the audit accepts. Everything else may differ freely.
-`check-drift` feeds the `summarize` gate that branch protection requires, so no setting
-changes.
-
-On the runner the job checks out the branch head, and never the merge ref that a pull request
-offers. The first parent of that ref is the tip of the base. So what it gained over the base is
-empty by construction, and the check would report nothing on every fresh run. `check-files`
-on the same merge ref is what holds a stale stamp there.
-
-- Rejected: the GitHub setting "require branches to be up to date". It is blanket, and makes
-  every open pull request stale on each merge. At this merge rate that costs more than it
-  saves: 48 pull requests merged in the week to 2026-09-23, and 16 in its last day.
-- Cost: a merge of a rules change reddens every open pull request until each one merges the
-  base. The blanket setting costs the same, and this fires only where the staleness is real.
-- Cost, the honest limit: this reads at pull request time, and never at merge time. So a
-  branch green at ten can merge at five past, after another one lands. Only a merge queue
-  closes that.
-- Verified by `suites/test_base.nim`. Verified by hand with `nim r koch check-drift`, recorded
-  2026-09-14. A branch a week behind `main` reports the finding at its head, which names
-  `CONTRIBUTOR.md`, check sources and `koch.nim`. At a synthetic merge of that head into
-  `main`, with `main` as the first parent, it reports nothing.
 
 **A finding inside a project blocks a branch of the role that owns that project, and no other
 branch that leaves its line alone.** The Architect ruled so (D1 a of #871), since a project at
@@ -800,6 +829,67 @@ a deletion joins own the line that their block opens on.
   character. Such a path owns no line, and on 2026-11-11 no tracked path held one.
 - Verified by `suites/test_scope.nim` for the case as found, by `suites/test_tree.nim` on a
   throwaway repository, and by `suites/test_english.nim` for the blocks.
+
+## Drift
+
+**A branch must carry the charter and the checker of its base before it may merge.**
+`check-drift` reads what the base gained since the branch forked. It reports a branch that
+predates a change of a charter document or of the checker. Without it, a branch green against
+the `main` it forked from can merge into a later `main`. Its stamp can then be one that a later
+change of a rule of content falsified.
+
+Only two kinds of path count. The checker decides what the audit accepts. A charter document
+holds rules of content, which move the stamp, and sections of process, which move none. A
+delegate forgets both, so each change of the charter reaches each older branch, as the
+Architect asked on #843. Everything else may differ freely. `check-drift` feeds the
+`summarize` gate that branch protection requires, so no setting changes.
+
+**The finding names each section that changed, and the command that shows the change.** Each
+charter document that the base changed is one finding at its path, in the one form of a
+finding. It names each changed `##` section by its heading line, in the order that the base
+holds them, then each section that the base dropped. It gives
+`git diff <fork>..<base> -- <document>`, so the delegate reads the change itself. The checker
+is one finding more, which names its paths.
+
+- The finding asks to re-audit and re-stamp only where the stamped text of that document moved
+  (`textStamped`). A change of process alone asks to read the change and merge.
+- A section that moved keeps its text, yet the stamp reads parts in order. So a move names each
+  section that changed place. A document that differs while no section does, as a heading
+  written twice can hide, names each of its headings. So a changed document never passes.
+- The opening above the first heading has no heading, so its first line names it.
+- `readDrift` reads the fork, and each rules document at both ends, only where the base gained
+  a governing path. Cost: two reads of git for each rules document there.
+- The start hook prints each finding under one line of its own (Hooks on tool calls). So a
+  delegate reads the same lines at the start, at resume and after a compaction.
+- Rejected: one finding for all paths. It names no section, and asks for a new stamp after any
+  edit.
+- Rejected: a finding of several lines. A finding prints on one line (CURATOR.md, Checks
+  reference).
+
+On the runner the job checks out the branch head, and never the merge ref that a pull request
+offers. The first parent of that ref is the tip of the base. So what it gained over the base is
+empty by construction, and the check would report nothing on every fresh run. `check-files`
+on the same merge ref is what holds a stale stamp there.
+
+- Rejected: the GitHub setting "require branches to be up to date". It is blanket, and makes
+  every open pull request stale on each merge. At this merge rate that costs more than it
+  saves: 48 pull requests merged in the week to 2026-09-23, and 16 in its last day.
+- Cost: a merge of a change of the charter reddens every open pull request until each one
+  merges the base. An edit of process does so too, because the Architect chose a fresh reading
+  over a new step for the delegate (#843).
+- Cost, the honest limit: this reads at pull request time, and never at merge time. So a
+  branch green at ten can merge at five past, after another one lands. Only a merge queue
+  closes that.
+- Verified by `suites/test_base.nim`, for the case as found: a branch older than an edit of
+  GUIDE.md, Output contract. The suite also holds its domain, and drives `readDrift` through
+  real git on a throwaway repository. Verified by `suites/test_hooks.nim`: the start hook prints
+  each finding.
+- Verified by hand with `nim r koch check-drift`, 2026-11-12. A scratch branch older than an edit
+  of Output contract reported one finding at `GUIDE.md`. It named `## Output contract` and the
+  command, and said that sections of process move no stamp.
+- Verified by hand, 2026-11-12, with `main` of that scratch repository edited at Toolchain too.
+  A stale head reported one finding, which named both sections and asked for a new stamp. A
+  synthetic merge of that head into `main`, with `main` as the first parent, reported nothing.
 
 ## Commits
 
@@ -1454,6 +1544,11 @@ hold one `Toolchains` of knoller, which resolves each pin once.
 So `nim r koch check` stays green as one command over a changed set that spans pins. These
 points hold here.
 
+- So a delegate need not install a compiler. GUIDE.md, Toolchain, says that, how to install one
+  by hand, and how to bump a pin, and this record says how koch serves it. Testament and Atlas
+  come from the toolchain that serves the pin, so a lock is never replayed against another
+  compiler. CI installs the pin of each project in a job of its own.
+
 - What stays in audit is the policy of this repository (CURATOR.md duty 8). That is
   `checkPin`, `checkDriver`, `checkKnoller` and `versionWorkflow`, with the constants of the
   driver and of the workflow. `missing` stays too, because it returns the `Finding` of audit, and
@@ -1552,9 +1647,9 @@ window. So every run compiles what changed and nothing else (CURATOR.md duty 11)
 a contributor is the contributor's to run. A path inside no project selects nothing by itself.
 So rules propagation compiles nothing, while every stamp is still checked.
 
-- Rejected: a scope on the static pass. The static pass costs about four seconds, against
-  seconds to minutes for the suites of one project (Figures). A scope buys nothing measurable
-  there, and costs a second code path and the whole-tree layout and stamp guarantees.
+- Rejected: a scope on the static pass. The static pass costs about twelve seconds, against
+  seconds to minutes for the suites of one project (Figures). A scope saves a part of that, and
+  costs a second code path and the whole-tree layout and stamp guarantees.
 - Cost: a change to the checker can leave an unchanged project red until it next changes, and
   nothing compiles it sooner. To run that suite is the work of that project, which is the
   point of the rule.
@@ -1568,6 +1663,33 @@ So rules propagation compiles nothing, while every stamp is still checked.
   plans that project alone. A change to `koch.nim` plans `curator/audit` alone. `--recent` plans
   every project in a repository younger than its window, and nothing over a window without a
   commit.
+
+**A change inside a folder that another project imports selects that importer.** An importer
+compiles what it imports, so a change there can break it. The folder is the first one below the
+project, as `src` or `tools`, since a module there can import any other module of that folder. A
+change to the nimble file of the project selects each of its importers too. That file names the pin
+and the packages that they compile with. The importers of an importer are selected in turn, until
+none is added.
+
+The plan reads each relative `import` and `from` of each Nim source, and resolves the path against
+the folder of that source. A statement on several lines, behind a `when` guard, or with a quoted
+path counts. A comment, or a string outside such a statement, imports nothing. So a project that
+adds an import is selected from then on, with no list to keep.
+
+- Measured on 2026-11-12: `lojban_tagger` imports `src` and `tools` of `lojban_parser`, and
+  `curator/assayer` and `curator/audit` import `src` of knoller. No other project imports another
+  one.
+- Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
+- Rejected: `src` alone, since the tools of the tagger import the tools of the parser.
+- Rejected: the importers of a project for each change to any of its code. A suite of the parser is
+  no folder that an importer imports, so that compiles more for no gain.
+- Cost: an importer turns red on a change to the surface of the folder that it imports, until it
+  follows. So that project keeps the old name while its importer moves.
+- Cost: the plan reads the text of each import. So a path that a macro builds, or an `include` of
+  another project, selects no importer.
+- Verified by `suites/test_plan.nim`, for each case as found. A change to the source or the tools
+  of the parser selects the tagger, and an importer of the tagger too. Each form of import counts,
+  and a suite or a record of the parser selects no importer.
 
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
@@ -1845,6 +1967,16 @@ acronym rule of V.9 stays here (`checkAcronyms`, D2 of #572). An acronym is a ru
 capitals inside a camel or Pascal name. It passes only where the root or the project glossary
 lists it, as a symbol under `## Standards` or as a term.
 
+**Through knoller, the static pass holds the words of every name declared in Nim, and the rules
+of Article V that one file shows.** It reports a word from the table of coined abbreviations,
+each with its one full word, and a run of capitals that no glossary lists. It passes what the
+glossaries list under `## Standards`, their terms, and the jargon of V.6. It holds the first word
+of a routine (V.3), and the form of a lookup table (V.5). It holds the last word `Of` of a
+routine (V.3) and of a type (V.13). It holds a global that shares its word with a type (V.10),
+and a collection type named for its member and its form (V.6).
+
+- A binding of the name of a library is skipped, because the name is not ours. GUIDE.md, Names,
+  gives the working subset of Article V, and the rest of the article holds by reading.
 - `exemptions` reads those two glossaries for each path. The static pass gives their words to
   the acronym check, and to the check of abbreviations of knoller (V.6). The jargon list of V.6
   passes too.
@@ -1948,10 +2080,9 @@ before `; got `, or before the closing period. So `koch check` prints
   source before its nimble file, and an older branch keeps a stable key. Verified by
   `suites/test_hooks.nim`: a commit of the source of knoller alone builds the binary again.
 - A change to the source or the nimble file of knoller counts as checker for drift. It selects
-  for test knoller and each project whose source imports knoller by a relative path, audit
-  among them. The plan reads those imports from the source of each project, so a project that
-  adds one is selected from then on. A change to a suite of knoller selects knoller alone.
-  Verified by `suites/test_plan.nim` and `suites/test_base.nim`.
+  knoller for test, and each project that imports knoller, as a folder that another project
+  imports does (Scoped checks). A change to a suite of knoller selects knoller alone. Verified by
+  `suites/test_plan.nim` and `suites/test_base.nim`.
 - Knoller pins the driver version, and `checkKnoller` reports a pin that differs. Verified by
   `suites/test_toolchain.nim`.
 - The rule on dead exports reads the modules and suites of knoller too. Verified by
@@ -2404,10 +2535,11 @@ rest by reading.
 The rule stays in the audit, once, and the hook reads the fact of its event and names the check
 that holds it. The events, each one a verb argument:
 
-- `path` refuses a write outside the scope of the branch, before the write.
-- `edit` runs the static checks after a write, and returns the findings of that file as
-  context. It splits them by the branch of the checkout and the lines that the branch changed,
-  as `koch check` does. So a held finding never stands under "fix before push".
+- `path` refuses a write inside the repository but outside the scope of the branch, before the
+  write.
+- `edit` runs the static checks after a write inside the repository, and returns the findings
+  of that file as context. It splits them by the branch of the checkout and the lines that the
+  branch changed, as `koch check` does. So a held finding never stands under "fix before push".
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
   history. It holds a post made through `gh api` as `body` holds the post of a tool.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
@@ -2417,10 +2549,24 @@ that holds it. The events, each one a verb argument:
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
   nor the working line. It also refuses a sign-off out of shape. At the end of any turn, it
   refuses `#N` outside a link, and an article or a duty cited with no description.
-- `start` prints the role, the read order, the carried list and the drift state, at the start
-  and after each compaction.
+- `start` prints the role, the read order, each finding of drift, the headings of the record
+  that the branch works on, and the carried list. It prints at the start, at resume and after
+  each compaction.
 - `prompt` reads each message of the Architect, and names the skill of its moment, as section
   Skills says.
+
+**`start` prints the headings of the record that the branch works on, each with the line where it
+opens.** A contributor branch and a branch of one curator project read the record of their
+project. `curator/<name>` reads the record of the audit (`pathRecord`). A delegate then
+reads the sections that its work touches, and Open questions, rather than the whole record
+(GUIDE.md, How to build on a project). The line lets it read one section alone. The headings
+come through `sections`, so a heading that a fence quotes opens nothing.
+
+- At `ba1986f98`, the record of pga_visualiser holds 4,923 lines (`wc -l`) in 47 sections, as
+  `sections` cuts it. Assumed: a task touches two or three of those sections.
+- A branch whose record does not exist yet prints no record.
+- Rejected: a read in full below a size. That is one more number to keep, for little gain.
+- Verified by `suites/test_hooks.nim`, for each form of branch and for a heading in a fence.
 
 **A post holds one footer, as its last line, and the footer of the proxy serves as that
 footer.** The GitHub proxy appends a footer that links the delegate to each post that ends in
@@ -2476,7 +2622,7 @@ names, else the working directory of the call.
 - A call in another repository has no checkout here, so the three hooks pass it unread. That
   repository keeps its own branch, and a hook holds this repository alone. A directory in no
   repository, or a failure of git, reads as the primary checkout, so a failure still holds the
-  rule.
+  rule inside it.
 - Verified by `suites/test_tree.nim`, for the commit in a scratch repository of #380 as found.
   The suite also holds the root, a subdirectory, a path not yet written, a worktree and a
   directory in no repository. Fake inputs to the built koch use a detached checkout as the
@@ -2540,6 +2686,74 @@ commit before the new one, and `check-commits` reads the true order in CI.
   relative path then fails to open, and every hooked tool is refused.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
+
+## Paths of write hooks
+
+**`path` and `edit` judge only a file inside the repository.** A directory in no repository
+reads as the primary checkout, so a write there reaches both hooks. `insideRoot` then hands the
+file on whole, and `fileWritten` gives none for it. So `path` passes it, and `edit` returns
+before it reads the tree. A file outside the repository cannot reach a commit. `koch check`
+holds each path that the branch changed before the push, and `check-scope` holds them on the
+pull request.
+
+So a scratch file takes the write tools, which these hooks read, and needs no shell. `bash`
+reads each command, but it judges no path that the command writes.
+
+- A branch outside the grammar refuses each write inside the repository, and a scoped branch
+  refuses each write outside its folder.
+- Rejected: a `checkoutAt` that reads a directory in no repository as no checkout. Git fails
+  there as it fails for any other reason, so a failure of git would pass a commit on `main`.
+- Verified by `suites/test_hooks.nim`, for the scratch file of #847 as found. The suite also
+  holds its domain: each form of branch passes the file, and judges a file inside the
+  repository.
+- Verified by hand on 2026-11-12, by fake inputs to the built koch on a contributor branch and
+  on a detached head. Each branch passes a scratch file, which `ba1986f98` refused.
+- Measured by hand on 2026-11-12, in a delegate container, with fake inputs to the built koch
+  over this repository. `edit` takes 0.01 s for a scratch file, in each of three runs. The audit
+  that it skips there takes from 12.5 s to 14.2 s, in three runs.
+
+**`path` and `edit` read the path that a write names in normal form, through its links.** Both
+take these steps through `fileWritten`, which the suite calls too. `pathWritten` reads
+`file_path`, else the `notebook_path` that NotebookEdit sends. It drops `.`, `..` and a doubled
+slash, and resolves a relative path against the directory of the call. `pathReal` then resolves
+each symbolic link through the nearest part of the path that exists.
+
+- `checkoutAt` gives the real path of the checkout that holds the file, as git does, or of the
+  root where git fails. So `insideRoot` compares like with like.
+
+- Assumed: each tool of `TOOLS_EDIT` drops `..` as text before it writes, as `pathWritten` does.
+  So `<root>/./x`, `<root>//x`, `..` from any folder and a link to the root each read as the
+  file that the tool writes. Verified by hand in Claude Code 2.1.322 on 2026-11-12, for Write
+  and Edit. With a link `l` to `a/b`, the Write tool put `l/../t.txt` beside `l`, and not in `a`.
+  The Edit tool changed that same file, and the suite pins the reading.
+- Rejected: `..` read through the link before it, as the kernel reads it. The hook would then
+  judge a file that the Write tool never writes.
+- Rejected: a path compared as written. Then `<root>//x` reads as `/x`, outside the repository,
+  and `..` from a folder of the branch reaches each file of the repository.
+- Two forms read as outside: a symbolic link to a file not yet written, and a hard link.
+  `koch check` refuses such a file before the push, and `check-scope` refuses it on the pull
+  request.
+- Cost: on each write, up to two `stat` calls for each part that `pathReal` tries, then one
+  `realpath`. A file in no repository takes a second `realpath`, in the fallback of
+  `checkoutAt`.
+- Measured by hand on 2026-11-12, on a delegate container with 4 processors, an Intel Xeon
+  Processor at 2.10GHz. Each figure is the mean of 50 runs of the built
+  `koch hook path`, in two rounds. A scratch file outside the repository takes 9.0 ms and
+  9.9 ms at `3eee587bb`, and 7.4 ms and 7.9 ms at `18eafee60`. There `path` makes two git calls
+  rather than three, since it reads no branch of the checkout. A new file inside takes 14.3 ms
+  and 13.7 ms, then 13.5 ms and 13.6 ms, so the reads cost less than the spread.
+- Verified by `suites/test_hooks.nim` and `suites/test_tree.nim`, for the paths, the notebook and
+  the root behind a link of #883 as found. They also hold a relative path, a link to a file, and
+  paths that a branch may and may not change.
+- Verified by hand on 2026-11-12, by fake inputs to the built koch on a contributor branch. It
+  refuses `<root>/./x`, `<root>//x`, `..` from a folder inside or outside, a link to the root,
+  and a notebook at the top. It passes a notebook in the folder of the branch.
+- Verified by hand on 2026-11-12, by eight breaks in a scratch worktree over the code of
+  `18eafee60`. Seven fail a suite by an assertion. Four of them break `pathWritten` or
+  `pathReal`: no normal form, `file_path` alone, no link resolved, and the whole path alone. Two
+  break `fileWritten`: no `pathReal`, and a file outside judged. One reads the fallback of
+  `checkoutAt` as spelt. The eighth drops the guard of `fileWritten` for another repository, and
+  fails the suite by `UnpackDefect`.
 
 ## Hooks on messages
 
@@ -2896,11 +3110,16 @@ commands, `check-files` and `test --all`, rather than one.
 - Rejected: one verb for the static pass and every suite on the compiler that `PATH` holds. It
   fails whenever the pins differ.
 
-**`nim r koch check` is the local form of the jobs.** It fetches `origin/main`. It then runs the
-whole-tree pass, and the restores and suites of the planned projects. It runs the type check,
-the driven checks, scope, commits and base, all in one process. Every pull request passes it
-before somebody opens it. The runner confirms, and it never discovers.
+**`nim r koch check` is the local form of the jobs.** It fetches `origin/main`, then runs every
+`check-` verb but `check-role`, then `test` and `drive`, in one process. The static checks come
+first: the whole-tree pass, scope, commits, drift and schemas. A finding among them stops the
+run, except one that duty 3 holds apart. Then come the type check, the restores and suites of
+the planned projects, and the driven checks. Every pull request passes it before somebody opens
+it, and the runner confirms it.
 
+- The static checks come first because they are cheap next to the jobs that compile and test
+  (Figures). A finding among them sends the branch back before those run. Cost: a failure of a
+  suite shows only after the static pass is clean.
 - Cost: one network fetch for each run, accepted so that the base is the one CI will use.
 - Cost: a branch whose change spans projects on several pins needs each pinned compiler, which
   resolution provides. A driven project also needs npm, a browser and its declared packages,
@@ -2990,21 +3209,29 @@ The machine for these figures is a four-core Intel Xeon 2.10 GHz container, on N
 2026-09-24, timed with `date +%s.%N`. Warm means that koch and the test binaries were already
 compiled. Each "before" figure is `origin/main` at `8a05673`, on the same machine and date.
 
-**The static pass costs about four seconds.** `nim r koch check-files`, warm, at `de0c189` on
-2026-10-04, on the same machine: a median of 3.80 s over ten consecutive runs, from 3.69 s to
-3.94 s. The dead-export rule became one pass at 2026-09-24. That pass then took 1.11 s, 1.15 s
-and 0.98 s, against 1.97 s, 1.96 s and 1.82 s before. Inside koch, the old dead-export rule took
-1.1 s of a 2.07 s pass, because it scanned every source once for each export.
+**The static pass costs about twelve seconds.** Warm `nim r koch check-files` took a median of
+11.85 s over five consecutive runs, from 11.46 s to 13.44 s. That was at `7ca14393a` on
+2026-11-12, with Nim 2.4.0, on a four-core Intel Xeon 2.10 GHz container as above. The documents
+name no figure for it. They say that the static checks are cheap next to the jobs that compile
+and test, which is what the order of `koch check` rests on.
 
-**A branch that changes the checker costs one project, and not every project.** Warm,
-`nim r koch check` takes 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the suite
-build of `curator/audit` removed first, it took 8.1 s. Before, with one comment added to a
+- Cost: on that machine and date, `nim r koch test curator/audit` took 14.7 s warm, and 22.9 s
+  at its first run. So the static pass costs about as much as the suites of the checker itself.
+- The suites of `dance_ontology` and `pga_visualiser`, and each driven check, took minutes on
+  2026-09-24 (below). Assumed: they still take minutes, so the static pass is cheap next to them.
+- The dead-export rule reads each source once. Rejected: a scan of every source for each export,
+  which took 1.1 s of a 2.07 s static pass inside koch on 2026-09-24. With one read, the static
+  pass took 1.11 s, 1.15 s and 0.98 s that day. With the scan, it took 1.97 s, 1.96 s and 1.82 s.
+
+**A branch that changes the checker costs one project, and not every project.** On 2026-09-24,
+warm `nim r koch check` took 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the
+suite build of `curator/audit` removed first, it took 8.1 s. Before, with one comment added to a
 check module, it took 32.9 s and 32.6 s warm, and 49.2 s cold. `koch list-projects` holds one
 row on such a branch, so the figure covers the suites of `curator/audit` and the static pass.
 
-**The suites of `curator/audit` cost their compile, and almost nothing to run.** Each suite
-compiled alone in 0.8 s to 1.2 s warm, and the run of every suite binary took 2.1 s. Joined,
-`nim r koch test curator/audit` takes 3.8 s to 4.2 s warm, against 31.9 s before.
+**The suites of `curator/audit` cost their compile, and almost nothing to run.** On 2026-09-24,
+each suite compiled alone in 0.8 s to 1.2 s warm, and the run of every suite binary took 2.1 s.
+Joined, `nim r koch test curator/audit` took 3.8 s to 4.2 s warm, against 31.9 s before.
 
 These two are the pair for scoping. A change to records alone costs the static pass, and a
 change to one project adds the suites of that project. An unscoped run pays every project.
@@ -3167,3 +3394,7 @@ pull requests sat on both sides, so the subject of a call does not say which met
   `design/README.md`, `simulation/README.md` and `simulation/verdicts.md` of `dance_ontology`
   added to `PATHS_ENGLISH`, `nim r koch check-files` reported 5 findings, all in `verdicts.md`.
   Until a widening lands, that prose holds Article VI.8 by reading alone.
+- Whether drift should cover the root `GLOSSARY.md`. The acronym check reads its standards and
+  terms as words that a name may take (`exemptions`), so it acts as a rule of content. Neither
+  the stamp nor drift reads it, so a standard that `main` drops reaches no older branch before
+  the merge.

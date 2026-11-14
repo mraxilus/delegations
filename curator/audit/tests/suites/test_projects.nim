@@ -82,16 +82,19 @@ if plan == "fail": quit(1)
 if plan != "none":
   writeFile("build" / "font-faces" / "written.json", readFile("written_" & plan & ".json"))
 """)
-    proc writeWritten(name: string, skipped: openArray[int]) =
-      ## Write control page as collector leaves it, each numeral in run of its own, but `skipped`.
+    proc writeWritten(name: string; skipped, dropped: openArray[int] = []) =
+      ## Write control page as collector leaves it, each place in run of its own, but `skipped`:
+      ##   ASCII digit of numeral's value, then numeral, but digit of each numeral in `dropped`.
       var runs = newJArray()
-      for (codepoint, place) in NUMERALS_CONTROL:
+      for index, (codepoint, place) in NUMERALS_CONTROL:
         if codepoint in skipped: continue
-        runs.add %*{"element": place, "stack": "serif", "weight": 400, "codepoints": [codepoint]}
+        let codepoints = if codepoint in dropped: @[codepoint] else: @[ord('1') + index, codepoint]
+        runs.add %*{"element": place, "stack": "serif", "weight": 400, "codepoints": codepoints}
       root.writeInto(directory & "/written_" & name & ".json",
         $(%*{"control": {"runs": runs, "declared": [], "refused": []}}))
     writeWritten("all", [])
     writeWritten("skip", [0x4E09])
+    writeWritten("drop", dropped = [0x4E09])
     let pages = Target(directory: directory)
 
     root.writeInto(directory & "/plan.txt", "none")
@@ -100,12 +103,16 @@ if plan != "none":
     check missing[0].path == directory / DIRECTORY_FONT_FACES / FILE_WRITTEN
     check fileExists(root / directory / DIRECTORY_FONT_FACES / FILE_CONTROL)
     root.writeInto(directory & "/plan.txt", "all")
-    check runDriven(root, [pages]).len == 0  # each numeral collected
+    check runDriven(root, [pages]).len == 0  # each string collected whole
     check fileExists(root / directory / DIRECTORY_FONT_FACES / FILE_FOUND)
     root.writeInto(directory & "/plan.txt", "skip")
     let skipped = runDriven(root, [pages])
     check skipped.len == 1
     check "`U+4E09` in `::before` uncollected" in skipped[0].message
+    root.writeInto(directory & "/plan.txt", "drop")
+    let dropped = runDriven(root, [pages])
+    check dropped.len == 1  # digit beside numeral, which `found.json` never holds (#822)
+    check "`U+0033` in `::before` unwritten" in dropped[0].message
     root.writeInto(directory & "/plan.txt", "fail")
     let failed = runDriven(root, [pages])
     check failed.len == 1  # verb's own exit, and no verdict over file it left before

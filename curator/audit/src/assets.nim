@@ -13,7 +13,8 @@
 ##     fetch. Nim tarball differs, since its digest comes from upstream at fetch time (below).
 ##
 ##   Codepoints are data because coverage check (`coverage.nim`, Article X.8) reads no bytes:
-##     static pass runs in about second and fetches nothing, and store lies outside checkout.
+##     static pass fetches nothing, so it stays cheap next to jobs that compile and test, and
+##     store lies outside checkout.
 ##     `test_assets.nim` holds each row to `cmap` of its file's bytes, so new digest with old
 ##     ranges fails, printing ranges read for row to take.
 ##   Ranges are spelled as `fc-query --format='%{charset}'` prints them: hex bounds joined by

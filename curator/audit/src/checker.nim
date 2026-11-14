@@ -294,17 +294,11 @@ func checkOptions*(koch: string): seq[Finding] =
 
 
 func section*(markdown, heading: string): string =
-  ## Read text under heading, up to next heading of same depth or deeper; empty when absent.
-  var
-    lines: seq[string]
-    is_inside = false
-  for line in markdown.splitLines:
-    if line.startsWith(heading):
-      is_inside = true
-      continue
-    if is_inside and line.startsWith("## "): break
-    if is_inside: lines.add line
-  lines.join("\n")
+  ## Read text under heading, up to next `## ` line outside fenced code; empty when absent.
+  ##   Heading matches whole line, so `## Toolchain` never reads `## Toolchain notes`.
+  for part in markdown.sections:
+    if part.heading == heading: return part.text.splitLines[1 .. ^1].join("\n")
+  ""
 
 
 func verbsTable*(curator: string): seq[string] =

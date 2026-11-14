@@ -1,7 +1,7 @@
 ## Enforce branch scope: project branch changes only its project folder.
 ##   Branch grammar lives in `domains.nim`; this check reads parsed prefix. Curator root
-##   branch owns empty prefix, so every path passes: rules changes must re-stamp every
-##   project (owner's decision). `main` passes: pushes to main are merges owner approved.
+##   branch owns empty prefix, so every path passes: change of rule of content must re-stamp
+##   every project (owner's decision). `main` passes: pushes to main are merges owner approved.
 ##
 ##   That empty prefix is narrowed where it reaches contributor projects. Curator propagating
 ##     rule writes their records, `FILES_PROJECT` from `layout.nim`, and nothing else: stamp

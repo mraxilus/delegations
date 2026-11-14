@@ -1,53 +1,19 @@
 # lojban_tagger
 
 A tagging and search system whose tags are lojban words. A parser reads each tag, and reduces it
-to the words of its tanru. The Architect selected each term and standard below before it was
-written.
+to the words of its tanru. The Architect selected each term below before it was written.
 
 ## Standards
 
-- **The Complete Lojban Language**, Logical Language Group, first edition 1997: `C` and `V`.
-  `C` is a consonant, and `V` is a vowel other than `y` (4.1). The forms are `CVC`, `CCV`,
-  `CVV`, `CVCC`, `CCVC`, `CVCCV` and `CCVCV` (4.4, 4.6). A `/` marks a medial pair that need
-  only be permissible, as in `CVC/CV`. The author is John Woldemar Cowan, and the same symbols
-  are free at `lojban.github.io/cll`.
+This project takes its symbols from The Complete Lojban Language, which the
+[root glossary](../../../GLOSSARY.md) names under Standards.
 
 ## Language
 
-### Words of lojban
-
-**gismu**:
-A root word of lojban, with five letters of the form CVC/CV or CCVCV. The gismu list of the
-Logical Language Group holds every one.
-_Avoid_: root, root word, primitive
-
-**cmavo**:
-A structure word of lojban, such as `se` or `nu`. Some cmavo carry rafsi, as `se` carries `sel`.
-_Avoid_: particle, function word
-
-**rafsi**:
-A combining form that stands for one gismu or cmavo inside a lujvo. It is a short form of three
-letters, or a gismu with or without its final vowel.
-_Avoid_: affix, combining form, stem
-
-**tanru**:
-An ordered sequence of words in which each word modifies the next, so the last word is the head.
-_Avoid_: metaphor, phrase
-
-**tanru unit**:
-One word of a tanru with the cmavo that bind it, as the grammar of CLL names it (21.2, rule 152).
-Its conversions count by their net result, so `se se ciska` is the tanru unit `ciska`.
-_Avoid_: unit, operand, converted word
-
-**lujvo**:
-A compound word joined from rafsi, with the hyphens that CLL 4.11 requires. It stands for one
-tanru, whichever rafsi it uses.
-_Avoid_: compound, composite word
-
-**brivla**:
-A predicate word of lojban: a gismu, a lujvo or a borrowing. It ends in a vowel, and holds a
-consonant pair in its first five letters.
-_Avoid_: predicate, content word
+The glossary of [lojban_parser](../lojban_parser/GLOSSARY.md) defines these words of lojban under
+Words of lojban: gismu, cmavo, rafsi, tanru, tanru unit, lujvo and brivla. The Architect selected
+each one. This project uses each word with that meaning, and does not write the definitions a
+second time.
 
 ### Tagger
 

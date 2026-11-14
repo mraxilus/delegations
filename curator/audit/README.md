@@ -4,8 +4,8 @@ The checker of the repository, driven by `koch.nim` at the root. It reads the tr
 it, and reports each broken rule as a finding. It also restores dependencies through Atlas,
 and runs the suites of every project through testament.
 
-What it enforces is listed once, in `CURATOR.md` under "Checks reference", and in the root
-`README.md` under "Branches and checks".
+What it enforces is listed once, in `CURATOR.md` under "Checks reference". The root `README.md`
+links that list under "Branches and checks", and copies none of it.
 
 Authority replicated: none. The checker holds the rules of this repository, and mirrors no
 book, paper or standard.

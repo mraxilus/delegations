@@ -2,8 +2,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[findings, hooks]
+import std/[json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
+import ../../src/[findings, hooks, tree]
 import ./fixtures
 
 
@@ -103,6 +103,99 @@ suite "Hooks":
     check checkPathEdit(BRANCH, "CONSTITUTION.md").len == 1  # outside project
     check checkPathEdit("curator/x", "contributor/ronri/pga_benchmark/src/a.nim").len == 1
     check checkPathEdit("curator/x", "contributor/ronri/pga_benchmark/GLOSSARY.md").len == 0
+
+
+  test "write outside repository passes, and scope of branch still holds inside it (#847)":
+    # Case as found: scratch file such as `/tmp/x/y.md` was refused as path outside folder of
+    #   branch, and every write on branch outside grammar. Directory in no repository reads as
+    #   root (`checkoutAt`), so `insideRoot` hands file on whole, as `koch hook path` reads it.
+    let
+      root = repoTemp()
+      scratch = createTempDir("delegations_", "_scratch")
+    defer: removeDir(root)
+    defer: removeDir(scratch)
+    let checkout = checkoutAt(root, scratch / "x")
+    check checkout == some(root)  # no repository, so root's branch judges
+    let outside = insideRoot(checkout.get, scratch / "x" / "y.md")
+    check outside == scratch / "x" / "y.md"  # handed on whole
+    # Domain: every branch form passes file no commit reaches, and judges each file inside.
+    for branch in [BRANCH, "curator/audit/x", "curator/x", "claude/tool-named", "main"]:
+      check checkPathEdit(branch, outside).messages == newSeq[string]()  # refusal names branch
+    let
+      own = insideRoot(root, root / "contributor/ronri/pga_benchmark/src/a.nim")
+      other = insideRoot(root, root / "CONSTITUTION.md")
+    check checkPathEdit(BRANCH, own).len == 0
+    check checkPathEdit(BRANCH, other).len == 1  # inside repository, outside folder of branch
+    check checkPathEdit("curator/audit/x", other).len == 1
+    check checkPathEdit("claude/tool-named", own).len == 1  # branch outside grammar
+
+
+  test "write hook reads path in normal form, from each tool, through links (#883)":
+    # Case as found on #883: `<root>//CONSTITUTION.md` read as `/CONSTITUTION.md`, and `..` from
+    #   folder outside and link to root read as outside, so each passed; NotebookEdit names
+    #   `notebook_path`, so hook judged directory of call in its place.
+    proc refused(root: string, input: JsonNode, branch: string = BRANCH): seq[string] =
+      ## Read refusals of write, through routine `koch hook path` and `koch hook edit` call.
+      let written = fileWritten(root, root, input)
+      if written.isNone: return
+      checkPathEdit(branch, written.get.path).messages
+
+    # Lay out root, and scratch folder holding link to root and link to file inside it.
+    let
+      root = repoTemp()
+      other = repoTemp()
+      scratch = createTempDir("delegations_", "_links")
+      constitution = root / "CONSTITUTION.md"
+      refusals_scope = @["Path outside branch scope `contributor/ronri/pga_benchmark/`."]
+    defer: removeDir(root)
+    defer: removeDir(other)
+    defer: removeDir(scratch)
+    root.writeInto("CONSTITUTION.md", "# Constitution\n")
+    createSymlink(root, scratch / "root")
+    createSymlink(constitution, scratch / "rules.md")
+
+    # Normal form drops `.`, `..` and doubled slash; relative path resolves against directory.
+    for written in [
+      root & "/./CONSTITUTION.md",
+      root & "//CONSTITUTION.md",
+      root & "/contributor/ronri/pga_benchmark/../../../CONSTITUTION.md",
+      scratch & "/../" & root.lastPathPart & "/CONSTITUTION.md",
+    ]:
+      check pathWritten(%*{"file_path": written}, "/w") == constitution
+      check refused(root, %*{"file_path": written}) == refusals_scope
+    check pathWritten(%*{"file_path": "sub/../CONSTITUTION.md"}, root) == constitution
+    # Write tool drops `..` as text, before link ahead of it resolves, so hook does too.
+    check pathWritten(%*{"file_path": scratch & "/root/../x.md"}, "/w").pathReal == scratch / "x.md"
+    check fileWritten(root, root, %*{"file_path": scratch & "/root/../x.md"}).isNone
+
+    # Resolve link to place file system writes: link to directory for new file, link to file whole.
+    check pathReal(scratch / "root" / "new.md") == root / "new.md"
+    check pathReal(scratch / "root" / "CONSTITUTION.md") == constitution
+    check pathReal(scratch / "rules.md") == constitution
+    check pathReal(scratch / "x" / "y.md") == scratch / "x" / "y.md"  # nothing to resolve
+    check refused(root, %*{"file_path": scratch / "root" / "CONSTITUTION.md"}) == refusals_scope
+    check refused(root, %*{"file_path": scratch / "rules.md"}) == refusals_scope
+
+    # Read notebook NotebookEdit names, never directory of call.
+    let notebook = %*{"notebook_path": root / "notes.ipynb"}
+    check pathWritten(notebook, root) == root / "notes.ipynb"
+    check refused(root, notebook) == refusals_scope
+    check refused(root, %*{"notebook_path": root / "contributor/ronri/pga_benchmark/a.ipynb"})
+      .len == 0
+    check pathWritten(%*{"file_path": "a.md", "notebook_path": "b.ipynb"}, "/w") == "/w/a.md"
+
+    # Read checkout and path inside it, which `path` judges and `edit` audits; none outside.
+    let inside = some((checkout: root, path: "CONSTITUTION.md"))
+    check fileWritten(root, root, %*{"file_path": root & "//CONSTITUTION.md"}) == inside
+    check fileWritten(scratch / "root", root, %*{"file_path": constitution}) == inside
+    check fileWritten(root, root, %*{"file_path": scratch / "x" / "y.md"}).isNone  # no repository
+    check fileWritten(scratch / "root", root, %*{"file_path": scratch / "x.md"}).isNone
+    check fileWritten(root, root, %*{"file_path": other / "a.md"}).isNone  # other repository
+
+    # Domain: path in normal form inside folder of branch passes, and curator stays out of code.
+    let code = root & "/./contributor/ronri/pga_benchmark/src/a.nim"
+    check refused(root, %*{"file_path": code}).len == 0
+    check refused(root, %*{"file_path": code}, "curator/x").len == 1  # records alone
 
 
   test "git commands read through shell operators and options":
@@ -675,11 +768,24 @@ suite "Hooks":
 
 
   test "start context and turn writes":
-    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
+    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", "", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
     check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
-    check "outside grammar" in contextStart("claude/x", "", "## List", @[])
-    check "re-stamp" in contextStart("curator/x", "", "## List", @[finding("", 0, "d")])
+    check "outside grammar" in contextStart("claude/x", "", "## List", "", @[])
+    # Drift prints each finding of `check-drift`: sections changed and command that shows them,
+    #   so start asks for new stamp only where finding does (#843).
+    let
+      drift = finding(
+        "GUIDE.md",
+        0,
+        "Base changed sections; read `git diff a..origin/main -- GUIDE.md`; got `## Output " &
+          "contract`.",
+      )
+      checker = finding("", 0, "Branch predates checker on base; got `koch.nim`.")
+      drifted = contextStart("curator/x", "", "## List", "", @[drift, checker])
+    check "\n  GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
+    check "\n  Branch predates checker on base; got `koch.nim`.\n" in drifted  # each, not first
+    check "re-stamp" notin drifted
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])
     check isTurnWriting([Call(name: "mcp__github__issue_write", has_body: true)])
     check not isTurnWriting([Call(name: "mcp__github__update_pull_request")])  # draft toggle
@@ -687,6 +793,24 @@ suite "Hooks":
     const issue = "gh api repos/o/r/issues/7/"
     check isTurnWriting([Call(name: "Bash", command: issue & "comments -F body=@x.md")])  # post
     check not isTurnWriting([Call(name: "Bash", command: issue & "labels -f 'labels[]=curator'")])
+
+
+  test "start prints headings of record branch works on, with line each opens on (#843)":
+    # Case as found: `GUIDE.md`, `How to build on a project`, asked delegate to read whole record,
+    #   and record of pga_visualiser holds about 93,000 tokens over 47 sections; task reads few.
+    check pathRecord(BRANCH) == "contributor/ronri/pga_benchmark/PROVENANCE.md"
+    check pathRecord("curator/probe/rings") == "curator/probe/PROVENANCE.md"
+    check pathRecord("curator/rules") == "curator/audit/PROVENANCE.md"  # checker is root work
+    check pathRecord("claude/x").len == 0  # outside grammar
+    let
+      record = "# Provenance\n\n| Field | Value |\n\n## Build\n\nText.\n\n```md\n## Quoted\n" &
+        "```\n\n## Open questions\n\n- One.\n"
+      text = contextStart(BRANCH, "## List\n\n1. one\n", "## List", record, @[])
+    check "Record `contributor/ronri/pga_benchmark/PROVENANCE.md`" in text
+    check "\n5: ## Build\n13: ## Open questions\n" in text  # each heading, line it opens on
+    check "## Quoted" notin text  # heading quoted in fence opens no section
+    check text.endsWith(LINE_CARRIED)  # carried list stays last
+    check "Record" notin contextStart(BRANCH, "## List\n", "## List", "", @[])  # none written
 
 
   test "transcript parse finds calls since last message of person":
@@ -782,9 +906,9 @@ suite "Hooks":
     check reasonStop(mended, [], has_signoff = true).splitLines[^1] ==
       "The skill /sign-off holds these steps."
     check "/sign-off" notin reasonStop(mended, [])  # plain message holds no sign-off
-    check "/sync" in contextStart("curator/x", "", "## List", @[finding("", 0, "d")])
-    check "/sync" notin contextStart("curator/x", "", "## List", @[])
-    check contextStart(BRANCH, "## List\n\n1. one\n", "## List", @[]).endsWith(
+    check "/sync" in contextStart("curator/x", "", "## List", "", @[finding("", 0, "d")])
+    check "/sync" notin contextStart("curator/x", "", "## List", "", @[])
+    check contextStart(BRANCH, "## List\n\n1. one\n", "## List", "", @[]).endsWith(
       "The skill /triage reports each item of this list that is not met.")
     check "/propose-term" in contextEdit("contributor/ronri/pga_benchmark/GLOSSARY.md")
     check "/propose-term" in contextEdit("GLOSSARY.md")

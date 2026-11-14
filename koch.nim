@@ -28,8 +28,8 @@
 ##     env: `ROLE_BODY` from event payload, and `ROLE_LABELS` from API as JSON array of label
 ##     names. That is why `check` leaves it out: local run has no pull request to read.
 ##
-##   `check` compiles only projects whose code changed, since static pass costs about second
-##     and suites cost minutes (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
+##   `check` compiles only projects whose code changed, since static pass is cheap next to
+##     suites that compile and test (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
 ##     and weekly run do same against their own base, so nothing compiles every project
 ##     (CURATOR.md duty 11). Matrix runs each on its own pin, as `check` does locally:
 ##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
@@ -78,7 +78,7 @@ Verbs:
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
   check-commits  commits since base: subject form, scope, test before fix, body, record apart
-  check-drift    charter or checker that base gained and branch lacks
+  check-drift    each charter section and checker path base changed since branch forked
   check-schemas  each folder of protobuf schemas branch changed, against version base shipped
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
   hook           answer one hook event named as argument, from its JSON or refs on stdin
@@ -217,7 +217,7 @@ proc directoriesScoped(options: Options, tree: Tree): seq[string] =
     projectsTest(
       directories,
       pathsChanged(options.root, options.baseOrDefault),
-      tree.directoriesImporting(directories),
+      tree.importersByFolder(directories),
     )
 
 
@@ -243,6 +243,8 @@ proc runHook(root, event, input: string): int =
   ##   `path`, `edit` and `bash` read checkout call acts in, never root alone: subagent works
   ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes). Call
   ##     acting in other repository is that repository's, so these three pass it unread.
+  ##   `path` and `edit` read checkout and path of file write names through `fileWritten`, which
+  ##     both events and suite call; file outside every checkout reads as none, so both pass it.
   let branch_root = root.branch
   case event
   of "path", "bash", "body", "edit", "stop":
@@ -250,14 +252,12 @@ proc runHook(root, event, input: string): int =
       data = input.parseJson
       tool = data{"tool_name"}.getStr
       directory = data{"cwd"}.getStr(root)
-      written = data{"tool_input", "file_path"}.getStr
-      file = if written.isAbsolute: written else: directory / written
     case event
     of "path":
       if tool notin TOOLS_EDIT: return 0
-      let checkout = checkoutAt(root, file.parentDir)
-      if checkout.isNone: return 0
-      refuse(checkPathEdit(checkout.get.branch, insideRoot(checkout.get, file)), 2)
+      let written = fileWritten(root, directory, data{"tool_input"})
+      if written.isNone: return 0
+      refuse(checkPathEdit(written.get.checkout.branch, written.get.path), 2)
     of "bash":
       let
         command = data{"tool_input", "command"}.getStr
@@ -284,20 +284,20 @@ proc runHook(root, event, input: string): int =
         2,
       )
     of "edit":
-      let checkout = checkoutAt(root, file.parentDir)
-      if checkout.isNone: return 0
+      let written = fileWritten(root, directory, data{"tool_input"})
+      if written.isNone: return 0
       let
-        path = insideRoot(checkout.get, file)
-        tree = checkout.get.readTree
+        (checkout, path) = written.get
+        tree = checkout.readTree
       var found = tree.auditTree
-      found.add findingsPruned(checkout.get, tree)
+      found.add findingsPruned(checkout, tree)
       # Held finding blocks no push, so it is named apart, for its project (duty 3); base
       #   unread leaves no line owned, and `koch check` still reads it before push.
       let owned =
-        try: linesOwned(checkout.get, tree, "origin/" & MAIN)
+        try: linesOwned(checkout, tree, "origin/" & MAIN)
         except IOError: initTable[string, HashSet[int]]()
       let
-        (held, own) = splitHeld(checkout.get.branch, found.filterIt(it.path == path), owned)
+        (held, own) = splitHeld(checkout.branch, found.filterIt(it.path == path), owned)
         named = contextFindings(path, held, own)
         skill = contextEdit(path)
       if named.len == 0 and skill.len == 0: return 0
@@ -335,12 +335,15 @@ proc runHook(root, event, input: string): int =
     var drift: seq[Finding]
     try:
       discard fieldsGit(root, ["fetch", "-q", "origin", MAIN])
-      drift = checkBase(pathsGained(root, "origin/" & MAIN))
+      drift = checkBase(readDrift(root, "origin/" & MAIN))
     except CatchableError: discard
+    # Record branch works on is read where it exists; new project has none until it writes one.
+    let record = branch_root.pathRecord
     echo contextStart(
       branch_root,
       readFile(root / "CONTRIBUTOR.md"),
       "## Carry the unchecked list in the open",
+      if record.len > 0 and fileExists(root / record): readFile(root / record) else: "",
       drift,
     )
     0
@@ -378,8 +381,9 @@ proc run(options: Options): int =
   var found: seq[Finding]
   case options.command
   of "check":
-    # Checks costing about second run first, and any finding among them stops run before
-    #   types, suites and drive, which cost minutes and run again once finding is fixed.
+    # Static checks run first, since they are cheap next to types, suites and drive, which
+    #   compile and test; any finding among them stops run before those, which run again once
+    #   finding is fixed.
     #   Cost: suite failure shows only after static pass is clean.
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
@@ -390,7 +394,7 @@ proc run(options: Options): int =
     found.add findingsPruned(options.root, tree)
     found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
     found.add checkHistory(branch, commitsBranch(options.root, base))
-    found.add checkBase(pathsGained(options.root, base))
+    found.add checkBase(readDrift(options.root, base))
     found.add checkSchemas(options.root, base)
     # Finding inside project blocks only branch of role owning it (duty 3), and finding on
     #   line branch changed blocks it wherever it lies; rest blocks here.
@@ -445,7 +449,7 @@ proc run(options: Options): int =
     found = checkHistory(options.branchOrDefault, commits)
   of "check-drift":
     if not options.isReadAll({Root, Base}): return options.refused
-    found = checkBase(pathsGained(options.root, options.baseOrDefault))
+    found = checkBase(readDrift(options.root, options.baseOrDefault))
   of "check-schemas":
     if not options.isReadAll({Root, Base}): return options.refused
     found = checkSchemas(options.root, options.baseOrDefault)

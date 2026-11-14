@@ -193,6 +193,23 @@ suite "Tree":
     check checkoutAt(root, plain) == some(root)  # git fails, so root's rule still holds
 
 
+  test "root reached through link reads by its real path where git fails too (#883)":
+    # Case as found on #883: folder in no repository read as root spelt through link, while git
+    #   names each other top by real path, and `pathReal` reads file by real path.
+    let
+      root = repoTemp()
+      links = createTempDir("delegations_", "_links")
+      plain = createTempDir("delegations_", "_plain")
+    defer: removeDir(root)
+    defer: removeDir(links)
+    defer: removeDir(plain)
+    createSymlink(root, links / "root")
+    check checkoutAt(links / "root", plain) == some(root)  # git fails, so fallback reads root
+    # Domain: git names real top through same link, and root spelt real reads as it is.
+    check checkoutAt(links / "root", links / "root") == some(root)
+    check checkoutAt(root, plain) == some(root)
+
+
   test "lock that moved with its project and follows its name is move":
     # Case held: `pathsMoved` read exact renames alone, so lock whose one line follows moved
     #   nimble file read as edit, and `check-scope` refused it (#631). Domain: that lock, and

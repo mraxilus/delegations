@@ -185,6 +185,26 @@ when isMainModule:
     check document.section("## Absent").len == 0
 
 
+  test "section reads past heading inside fence, and matches its heading whole":
+    # Case as found: `GUIDE.md`, Glossary process, fences format whose `## Standards` and
+    #   `## Language` ended section there, so reader kept 13 of its 67 lines and lost rules of
+    #   file below fence.
+    let
+      guide = "## Glossary process\n\nFormat:\n\n```md\n# <project>\n\n## Standards\n\n" &
+        "## Language\n```\n\nRules of the file.\n\n## Output contract\n\nSign off.\n"
+      glossary = guide.section("## Glossary process")
+    check "Rules of the file." in glossary  # read past fence
+    check "## Language" in glossary  # example stays text of section
+    check "Sign off." notin glossary  # heading outside fence ends it
+    check "Sign off." in guide.section("## Output contract")
+    # Domain: fence indented or left open, heading longer than one asked for, and line ends.
+    check "Pin." in "## A\n\n  ```\n## B\n  ```\n\nPin.\n".section("## A")  # indented fence
+    check "Pin." in "## A\n\n```\n## B\n\nPin.\n".section("## A")  # open fence runs to end
+    check "## Toolchain notes\n\nPin.\n".section("## Toolchain").len == 0  # whole heading
+    check "## Toolchain\r\n\r\nPin.\r\n".section("## Toolchain").strip == "Pin."  # CRLF
+    check "## A\n\n### Deeper\n\nPin.\n## B\n".section("## A").strip == "### Deeper\n\nPin."
+
+
   test "mention of koch run as command names verb koch dispatches":
     # Fixture builds each mention from `MARK_KOCH`, so this file writes none it would report.
     let run = "`nim r " & MARK_KOCH & "tree`"

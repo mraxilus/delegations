@@ -5,7 +5,8 @@
 ##   exception: there git quotes path holding quote, backslash or control character, and such
 ##   path owns no line.
 ##   Same door serves branch context: checkout holding directory, changed paths, paths base
-##   gained, commit subjects since base, and oldest commit outside `--recent` window.
+##   gained, file as revision holds it, commit subjects since base, and oldest commit outside
+##   `--recent` window.
 ##
 ##   Git runs as direct process with argument list, never through shell, through knoller's
 ##     `runGit`, which command line of knoller lists directory with too: no quoting, and
@@ -43,6 +44,8 @@ proc checkoutAt*(root, directory: string): Option[string] =
   ##   Worktree shares root's git store, so both name one common directory. Directory in no
   ##     repository, or git failing, reads as root, so failure still holds root's rule. Path not
   ##     yet written is read from nearest directory that exists.
+  ##   Root reads by its real path there too, as git names each other top, so file whose links
+  ##     `pathReal` resolved compares with it whichever way root is spelt (#883).
   var at = directory
   while at.len > 1 and not dirExists(at): at = at.parentDir
   const common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
@@ -50,7 +53,8 @@ proc checkoutAt*(root, directory: string): Option[string] =
     if fieldsGit(at, common)[0].strip != fieldsGit(root, common)[0].strip: return none(string)
     return some(fieldsGit(at, ["rev-parse", "--show-toplevel"])[0].strip)
   except IOError: discard
-  some(root)
+  try: some(expandFilename(root))
+  except OSError: some(root)
 
 
 proc listPaths*(root: string): seq[string] =
@@ -159,6 +163,13 @@ proc pathsGained*(root, base: string): seq[string] =
   ## List paths base holds that branch does not, i.e. what base gained since branch forked.
   ##   Mirror of `pathsChanged`: same three-dot range, other way round.
   fieldsGit(root, ["diff", "-z", "--name-only", "--no-renames", "HEAD..." & base])
+
+
+proc textAt*(root, revision, path: string): string =
+  ## Read file as revision holds it; empty where revision holds none.
+  ##   Output is bytes of file rather than NUL-separated fields, so text file joins back whole.
+  try: fieldsGit(root, ["show", revision & ":" & path]).join
+  except IOError: ""
 
 
 proc subjects*(root, base: string): seq[string] =
