@@ -263,8 +263,8 @@ as the policy of its caller, under Articles.
   reader at all.
 - Cost: the bare `knoller` command knows no list, so it deletes `a` from a comment of lojban. A
   delegate of a listed project runs `koch fix`, and not `knoller` alone.
-- Cost: on `main`, the records of `lojban_parser` are still English, and no check reads that
-  English until their move to lojban merges. Ruling D4 a of #818 accepts that.
+- Cost: on `main`, the records and the comments of `lojban_parser` are still English, and no
+  check reads that English until their move to lojban merges. Ruling D4 a of #818 accepts that.
 - Cost: the entry demands no suite until that move merges, so nothing holds the prose of that
   project until then.
 - Cost: each rules change re-stamps the record of each listed project. So it runs the suites and
