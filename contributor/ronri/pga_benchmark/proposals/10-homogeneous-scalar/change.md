@@ -44,7 +44,7 @@ object has an imaginary radius, where pin gives NaN.
 ##   +1 at cga3d and cga6d, so pair is split-complex number.
 ##   Symbol follows dual unit ε of `DualNum`, which writes pair s + tε with ε² = 0.
 ##   Coefficients s and t lie on 𝟏 and 𝟙, as basis table of `algebra.nim` names them.
-## Squares are constructed from product tables, as Architect ruled for P10 on 2026-10-09.
+## Squares are constructed from product tables.
 ##   Static check holds them to rev(n) det 𝖌, which 𝟙 ⟑ 𝟙 equals for any dimension and metric.
 ##     𝟙 ⟑ 𝟙̃ = (𝟙 • 𝟙)𝟏, where 𝟙 • 𝟙 = det 𝖌 is entry of exomorphism 𝐆 on 𝟙, by definition.
 ##     Reverse gives 𝟙̃ = rev(n) 𝟙, with rev(n) = (-1)^(n(n - 1)/2).
@@ -55,29 +55,32 @@ object has an imaginary radius, where pin gives NaN.
 ##     each idempotent.
 ##   Cost: ε² outside -1..1 needs scaling by its root, which no metric of library gives.
 ## Each form under antiproduct is derived from its form under geometric product at compile time.
-##   Complement swaps 𝟏 and 𝟙 and carries ⟑ to ⟇, as `constructAnti` derives each table.
+##   Complement swaps 𝟏 and 𝟙 and carries ⟑ to ⟇, as `constructAnti` carries `∧` to `∨`.
 ##     So `defineAnti` emits body again, with each name of `LUT_COMPLEMENT_BY_NAME` swapped.
 ##     Each call becomes call of its form under ⟇ where one is declared, so compositions follow.
 ##   Functions are not linear, so no table holds them, and derivation acts on their code.
-##   Cost: body calls each float function through its operand, e.g. `t.sqrt`, or by module.
-## Products of pairs are basis-set forms of P04, so module writes none of them.
+##   Cost: body calls float function named as function of pair through its operand, e.g. `s.exp`,
+##     or by module.
+## Products of pairs are forms of `basis_sets.nim`, so module writes none of them.
 ## Absence lives in return type, never NaN, and each function has one type in every algebra.
 ##   Inverse, root, inverse root, tangent and division are optional, as each lacks value somewhere.
 ##   Each unwraps by test and `get`, as `gradeAnti` does, and never by `map`.
 ##     Closure for `map` allocates on heap where it captures, as generated C shows.
 ##   Cost: root is never none at cga4d and cga5d, yet caller there unwraps it.
+##   Cost: no step guards float range, so overflow leaves ∞ or NaN in part of result.
 ## Root takes larger part by root and smaller by division, so neither cancels.
 ##   Cost: one branch on sign of s.
 ## Domain of root compares exactly, as no scale is in hand there.
 ##   Cost: 𝐦∘𝐦 of point on null cone rounds either side of zero, so caller compares at scale of 𝐦.
 ## Each definition precedes its use, as `codeReordering` cannot see functions `defineAnti` emits.
 ##   Cost: helpers such as `constructSquare` come before what they serve.
+##
 
 {.experimental: "strictFuncs".}
 
 import std/[macros, math, options, strformat, tables]
 
-import ./[algebra, basis_sets, cayleys {.all.}, emitters, multivectors, operators]
+import ./[algebra, basis_sets, cayleys {.all.}, emitters, multivectors]
 
 
 
@@ -109,7 +112,6 @@ const SQUARES_WEDGE_DOT* = Spatial[Coefficient](
   base: constructSquare(CAYLEYS_WEDGE_DOT, Spatiality.Base),
   anti: constructSquare(CAYLEYS_WEDGE_DOT, Spatiality.Anti),
 )
-  ## Square ε² of 𝟙 under geometric product and of 𝟏 under antiproduct, read from their tables.
 
 # Hold squares against metric, and range that arithmetic of pair covers.
 #   Metrics of library give ε² in -1..1; outside, lift range by scaling by its root in
@@ -128,15 +130,6 @@ static:
       else: 1.0
   doAssert SQUARES_WEDGE_DOT.base == square_metric,
     &"Square of product table must equal rev(n) det 𝖌; got `{square_metric=}`."
-
-
-
-#[ Scalar Construction ]#
-
-func initMultivectorScalars*(s, t: Coefficient): MultivectorScalars {.noinit.} =
-  ## Initialize homogeneous scalar as s𝟏 + t𝟙.
-  result[Basis.scalar] = s
-  result[Basis.scalarAnti] = t
 
 
 
@@ -210,7 +203,7 @@ macro defineAnti(docs: static[string], definition: untyped): untyped =
 
 
 
-#[ Inverses and Roots ]#
+#[ Algebraic Family ]#
 
 defineAnti(
   docs = "Get inverse of homogeneous scalar under antiproduct, i.e. 𝐦⟇⁻¹ with 𝐦 ⟇ 𝐦⟇⁻¹ = 𝟙.",
@@ -330,7 +323,10 @@ defineAnti(
 ):
   func tan*(m: MultivectorScalars): Option[MultivectorScalars] =
     ## Get tangent of homogeneous scalar under geometric product, i.e. tan⟑𝐦 = sin⟑𝐦 ⟑ (cos⟑𝐦)⟑⁻¹.
-    ##   None where cosine has no inverse, as at each pole.
+    ##   None where cosine has no inverse:
+    ##     never when dual, as float cosine never vanishes, so pole gives about 1.6e16;
+    ##     where cosine squares past float range when complex, as for |t| above about 355;
+    ##     where cosine is null when split-complex, as at s = t = π/4.
     ##   Product rather than closed form over cos 2s, which cancels near pole.
     let cosine_inverse = inverse(cos(m))
     if cosine_inverse.isNone: return
@@ -378,8 +374,164 @@ export algebra, basis_sets, cayleys, multivectors, operators, scalars
 
 ```nim
   func normRadius*(m: Multivector): Option[MultivectorScalars] {.inline.} =
-    ## Get radius norm of multivector as root under antiproduct, i.e. ‖𝐦‖⊘ = ⟇√(𝐦∘𝐦), book's (4.45).
+    ## Get radius norm of multivector as root under antiproduct, i.e. ‖𝐦‖⊘ = ⟇√(𝐦∘𝐦).
     ##   Real for real object, on 𝟙. Imaginary object has root on 𝟏, as i, at cga4d and cga5d.
     ##   None where 𝐦∘𝐦 has no root, as for imaginary object at cga3d and cga6d.
-    sqrtAnti(initMultivectorScalars(s = 0, t = (m ∘ m)[Basis.scalarAnti]))
+    sqrtAnti(initMultivectorScalars(s = 0, t = (`|⊘²`m)[Basis.scalarAnti]))
+```
+
+The table of norm operators in the header of `pga.nim` pairs each operator with its alias. Under
+the conformal metric, `normRadius` and `|⊘` differ in type and in value, so the row marks the
+alias, and the heading says what the mark means.
+
+## Edit `pga.nim`
+
+```nim
+## Norm operators:
+```
+
+```nim
+## Norm operators (‡ = alias is root under antiproduct, so optional; operator keeps float root):
+```
+
+## Edit `pga.nim`
+
+```nim
+##   | |⊘ | normRadius      † | ‖𝐦‖⊘        |
+```
+
+```nim
+##   | |⊘ | normRadius     †‡ | ‖𝐦‖⊘        |
+```
+
+The constructor of the pair builds a value of a type of `pga/multivectors.nim`, so it stands
+there beside `initElement`. The doc of the type names the pair as the homogeneous scalar, since
+the pair is no dual number under the conformal metric.
+
+## Edit `pga/multivectors.nim`
+
+```nim
+    ## Define generalised dual numbers for n-dimensional PGA.
+```
+
+```nim
+    ## Define homogeneous scalar s𝟏 + t𝟙 for n-dimensional PGA.
+```
+
+## Edit `pga/multivectors.nim`
+
+```nim
+func initElement*(b: Basis, scalar: Coefficient = 1'f): Multivector =
+  ## Construct multivector with single basis element.
+  result[b] = scalar
+```
+
+```nim
+func initElement*(b: Basis, scalar: Coefficient = 1'f): Multivector =
+  ## Construct multivector with single basis element.
+  result[b] = scalar
+
+
+func initMultivectorScalars*(s, t: Coefficient): MultivectorScalars {.noinit.} =
+  ## Initialize homogeneous scalar as s𝟏 + t𝟙.
+  result[Basis.scalar] = s
+  result[Basis.scalarAnti] = t
+```
+
+The suites of the library hold a stand-in root and antiroot, which wait for this module. The tests
+of (2.87) to (2.90) call the root and the antiroot of the module in their place, and check that
+each exists. The test of (4.45) holds the antiroot of 𝐦 ∘ 𝐦 under the conformal metric. It
+squares back under ⟇, and it equals the float root of `|⊘` where 𝐦 ∘ 𝐦 is zero or more.
+
+## Edit `tests/suites.nim`
+
+```nim
+# TODO: Add sqrt, abs, div, exp, etc. to library when homogeneous scalars are in.
+func sqrt(m: Multivector): MultivectorScalars =
+  ## Find square root of dual number, i.e. √𝐦.
+  let (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+  if s != 0:
+    result[Basis.scalar] = s.sqrt
+    result[Basis.scalarAnti] = t / (2 * s.sqrt)
+
+func sqrtAnti(m: Multivector): MultivectorScalars =
+  ## Find square root of dual number, i.e. √𝐦.
+  let (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+  if t != 0:
+    result[Basis.scalar] = s / (2 * t.sqrt)
+    result[Basis.scalarAnti] = t.sqrt
+
+
+
+func abs(m: Multivector): Multivector =
+```
+
+```nim
+# TODO: Add abs to library, and div that is no-op at zero norm.
+func abs(m: Multivector): Multivector =
+```
+
+## Edit `tests/suites.nim`
+
+```nim
+        #echo &"{|∙𝐦=}, {sqrt(𝐦 ∙ 𝐦)=}"
+        check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
+        check |∘𝐦 =~ sqrtAnti(𝐦 ∘ 𝐦)  # 2.88
+        check ^𝐦 =~ 𝐦 div |∘𝐦  # 2.89a
+        check ^𝐦 =~ 𝐦 div sqrtAnti(𝐦 ∘ 𝐦)  # 2.89b
+```
+
+```nim
+        let
+          root = sqrt(toMultivectorScalars(𝐦 ∙ 𝐦))
+          root_anti = sqrtAnti(toMultivectorScalars(𝐦 ∘ 𝐦))
+        check root.isSome and root_anti.isSome
+        check |∙𝐦 =~ root.get  # 2.87
+        check |∘𝐦 =~ root_anti.get  # 2.88
+        check ^𝐦 =~ 𝐦 div |∘𝐦  # 2.89a
+        check ^𝐦 =~ 𝐦 div root_anti.get  # 2.89b
+```
+
+## Edit `tests/suites.nim`
+
+```nim
+          𝑡 = (|𝐦)[Basis.scalarAnti]
+        check |𝐦 =~ |∙𝐦 + |∘𝐦  # 2.90a
+        #echo &"{𝐦=}\n{|𝐦=}, {sqrt(𝐦 ∙ 𝐦)=}, {sqrtAnti(𝐦 ∘ 𝐦)=}, {sqrt(𝐦 ∙ 𝐦) + sqrtAnti(𝐦 ∘ 𝐦)}"
+        check |𝐦 =~ sqrt(𝐦 ∙ 𝐦) + sqrtAnti(𝐦 ∘ 𝐦)  # 2.90b
+```
+
+```nim
+          𝑡 = (|𝐦)[Basis.scalarAnti]
+          root = sqrt(toMultivectorScalars(𝐦 ∙ 𝐦))
+          root_anti = sqrtAnti(toMultivectorScalars(𝐦 ∘ 𝐦))
+        check |𝐦 =~ |∙𝐦 + |∘𝐦  # 2.90a
+        check root.isSome and root_anti.isSome
+        check |𝐦 =~ root.get + root_anti.get  # 2.90b
+```
+
+## Edit `tests/suites.nim`
+
+```nim
+  test "Equation 4.45":
+    skip()
+    # when IS_RIGID: skip()
+    # when IS_CONFORMAL:
+    #   for 𝐦, 𝐧, 𝐨 in sampleMultivectors():
+    #     echo &"{𝐦=}, {|⊘𝐦=}, {sqrt(𝐦 ∘ 𝐦)=}"
+    #     check |⊘𝐦 =~ sqrt(𝐦 ∘ 𝐦)
+```
+
+```nim
+  test "Equation 4.45":
+    when IS_RIGID: skip()
+    when IS_CONFORMAL:
+      for 𝐦, _, _ in sampleMultivectors():
+        let
+          dot_anti = toMultivectorScalars(𝐦 ∘ 𝐦)
+          root = sqrtAnti(dot_anti)
+        check root.isSome == (SQUARES_WEDGE_DOT.anti == -1 or dot_anti[Basis.scalarAnti] >= 0)
+        if root.isNone: continue
+        check (root.get ⟇ root.get) =~ dot_anti  # 4.45a
+        if dot_anti[Basis.scalarAnti] >= 0: check |⊘𝐦 =~ root.get  # 4.45b
 ```
