@@ -125,10 +125,21 @@ comparison from the bridge, so it holds no option and no scenario of its own.
 
 | Part | What it holds |
 | --- | --- |
-| `src/browser/mockup.nim` | The question, options, scenarios with their scenes, and hooks. |
+| `src/browser/mockup.nim` | The open comparison: question, options, scenes, and hooks. |
 | `src/browser/bridge.nim` | One line under `when defined(mockup)` where options part. |
 | `pages/mockup.html` | The panel: it builds a scenario, draws rings, and measures each run. |
 | `tools/build.nim` | The `mockup` verb, which builds the page with all three. |
+
+No comparison is open now, so the `mockup` verb says so and stops. The first comparison, D1 of
+issue 846, stands in the history of `src/browser/mockup.nim`, and shows each part. A comparison
+gives the panel four exports:
+
+| Export | What it does |
+| --- | --- |
+| `nimMockupSpec()` | Returns the comparison as JSON: question, options, scenarios, steps. |
+| `nimMockupSetOption(key)` | Picks the option that has that key. |
+| `nimMockupSetUp(index, width, height)` | Builds a scenario, and returns pixels to aim at. |
+| `nimMockupReadout()` | Returns what the panel measures, such as the eye's distance to Sol. |
 
 To build the mockup for a new decision:
 

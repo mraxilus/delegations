@@ -597,7 +597,6 @@ proc nimLoadDemo(scale_ordinal: cint; now: cfloat; width, height: cint) {.export
   for handle in 0..<SCENE_PAGE.len: stampBorn(handle, SCENE_PAGE.bornAt(handle))
   SELECTION_PAGE.clear()
   HISTORY_PAGE.initHistory(SCENE_PAGE, CAMERA_PAGE)
-  when defined(mockup): forgetMockup()
 
 
 proc nimDemoScales(): seq[cint] {.exportc.} =
@@ -1321,7 +1320,6 @@ proc nimGripFingers(x_first, y_first, x_second, y_second: cfloat; width, height:
   TWEEN_CAMERA.yieldOrHalt(SELECTION_PAGE.len > 0)
   placeEdited()
   ensureViewOverlay(int(width), int(height))
-  when defined(mockup): beginGripMockup()
   INTERACTION_PAGE.grip = some(gripFingers(
     CAMERA_PAGE,
     SCENE_PAGE,
@@ -1344,11 +1342,6 @@ proc nimCarryGrip(x_first, y_first, x_second, y_second: cfloat; width, height: c
   ##   Fingers in order they landed. Nothing where no grip is held.
   if INTERACTION_PAGE.grip.isNone: return
   TWEEN_CAMERA.yieldOrHalt(SELECTION_PAGE.len > 0)
-  when defined(mockup):
-    retakeMockup(INTERACTION_PAGE.grip.get, [
-      ScreenPosition(x: float(x_first), y: float(y_first)),
-      ScreenPosition(x: float(x_second), y: float(y_second)),
-    ])
   carryGrip(
     INTERACTION_PAGE.grip.get,
     CAMERA_PAGE,
@@ -1359,7 +1352,6 @@ proc nimCarryGrip(x_first, y_first, x_second, y_second: cfloat; width, height: c
     int(width),
     int(height),
   )
-  when defined(mockup): takeGripMockup(INTERACTION_PAGE.grip.get)
 
 
 proc nimReleaseGrip() {.exportc.} =
@@ -1395,8 +1387,6 @@ proc nimCameraDollyAt(notches: cfloat; width, height: cint) {.exportc.} =
   placeEdited()
   # Read through frame's overlay extent, shared with every overlay call at this camera.
   ensureViewOverlay(int(width), int(height))
-  when defined(mockup):
-    if dollyAtMockup(factorWheel(float(notches)), int(width), int(height)): return
   INTERACTION_PAGE.dollyAtCursor(
     CAMERA_PAGE,
     SCENE_PAGE,
@@ -1965,8 +1955,6 @@ proc nimKeyDown(code: cstring; width, height: cint): cint {.exportc.} =
   #   Framing is standing offer's job (`framing.offerAim`).
   if action.get == KeyAction.FrameSelection: TWEEN_CAMERA.release()
   else: TWEEN_CAMERA.abandon()
-  when defined(mockup):
-    if action.get == KeyAction.ViewHome: forgetMockup()
   if handle.isNone: SLOT_NONE else: cint(handle.get)
 
 
@@ -1987,7 +1975,6 @@ proc nimDriveHeld(seconds: cfloat) {.exportc.} =
   ##   See `interaction.driveHeld`.
   ##   Abandons tween only when something is held, so frame with no key down leaves ease
   ##   alone.
-  when defined(mockup): frameMockup()
   if INTERACTION_PAGE.keys_held.len == 0: return
   INTERACTION_PAGE.driveHeld(CAMERA_PAGE, float(seconds), SELECTION_PAGE.len > 0)
   TWEEN_CAMERA.abandon()
