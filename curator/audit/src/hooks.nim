@@ -2125,3 +2125,9 @@ proc parseTurn*(transcript: string): Turn =
     if opened != opened_last: result.signoffs_before.add newSeq[string]()
     opened_last = opened
     result.signoffs_before[^1].add text
+
+
+func isSignoffEarlier*(turn: Turn): bool =
+  ## Decide whether transcript holds sign-off before last message of turn, in its window or in
+  ##   window before it, so stop hook reads subjects of `main` and compares groups of sign-off.
+  turn.signoffs_earlier.len > 0 or turn.signoffs_before.len > 0
