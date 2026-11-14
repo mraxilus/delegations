@@ -6,7 +6,7 @@ Lengyel's `DualNum` under each product, each written once in ε², the square of
 
 **What it is for.** A caller divides, roots, raises and takes the sine of a norm as one value, and
 keeps a distance with its weight. A function without a value for some pair returns an `Option`, so
-no NaN reaches the caller. At cga4d and cga5d the radius norm of an imaginary object is an
+no NaN marks a missing value. At cga4d and cga5d the radius norm of an imaginary object is an
 imaginary radius, where pin gives NaN.
 
 **What it costs.** The root and the radius norm return an `Option` in every algebra, so a caller
@@ -46,20 +46,29 @@ negative for about half of all multivectors, and there the float root of `|⊘` 
     ε². The sine and the cosine take −ε².
   - The inverse root, the tangent and the division come from these.
 - **Forms under ⟇.** The macro `defineAnti` derives each form under ⟇ from the body of its form
-  under ⟑, once, at compile time. The library derives each table of the antiproduct in the same
-  way. The macro swaps each name that the complement swaps: 𝟏 and 𝟙, s and t, `base` and `anti`,
-  and ⟑ and ⟇. So each function has one body, and no form calls a complement at run time. The
-  Architect ruled this on 2026-10-25.
+  under ⟑, once, at compile time. The library derives three anti tables in the same way, through
+  `constructAnti`: those of the metric exomorphism, the exterior product and the dot. It builds the
+  table of ⟇ from the anti transwedges. The macro swaps each name that the complement swaps: 𝟏
+  and 𝟙, s and t, `base` and `anti`, and ⟑ and ⟇. So each function has one body, and no form
+  calls a complement at run time. The Architect ruled this on 2026-10-25.
 - **Absence.** The inverse, the root, the inverse root, the tangent and the division return an
   `Option`, because each lacks a value for some pair. Each one has one type in every algebra, as
   the Architect ruled on 2026-10-24. At cga4d and cga5d the root is never none, and the caller
-  there unwraps it. No function returns infinity or NaN.
+  there unwraps it. No function returns infinity or NaN to mark a pair without a value.
+- **Tangent.** Under ε² = 0 the tangent of a finite pair always has a value, since the float cosine
+  is never 0. At the float nearest a pole it is about 1.6 × 10¹⁶. Under ε² = −1 it is none only
+  where a part of the cosine squares past the float range, as for |t| above about 355. Under
+  ε² = +1 it is none where the cosine is null, as at s = t = π/4.
 - **Norms.** Under the rigid metric, the bulk norm of pin equals the root of 𝐦 ∙ 𝐦 under the
   geometric product. Its weight norm equals the root of 𝐦 ∘ 𝐦 under the antiproduct, as the wiki
   takes both. So they stay as at pin. A division by the weight norm unitizes a multivector. It
   turns a geometric norm into d𝟏 + 𝟙, where d is the distance, as the wiki unitizes the pair.
   Under the conformal metric, `normRadius` becomes the root of 𝐦 ∘ 𝐦 under the antiproduct, the
-  radius norm of the book.
+  radius norm of the book. It reads the squared radius norm `|⊘²` of the library, as `|⊘` does.
+- **Suites.** At pin the suites of the library hold a stand-in root and antiroot, under a TODO
+  that waits for this module, and they skip the test of (4.45). The tests of (2.87) to (2.90) call
+  the root and the antiroot of this module in their place, and check that each exists. The test of
+  (4.45) holds the antiroot of 𝐦 ∘ 𝐦 under the conformal metric. The TODO keeps `abs` and `div`.
 
 The sign of 𝟙 ⟑ 𝟙 is the determinant of the metric on vectors, times (−1)^(n(n − 1)/2) for the
 reverse of n vectors. The rigid metric is degenerate, so there the square is 0. The conformal
@@ -93,7 +102,9 @@ metric, a division by a root on 𝟏 does not scale the element.
 
 At pin the library names the pair `MultivectorScalars`, and this proposal takes that name. The
 Architect ruled `ScalarHomogeneous` on 2026-10-10, for the type that this proposal then added. The
-constructor is `initMultivectorScalars`, as `init` names the constructor of a type.
+constructor is `initMultivectorScalars`, as `init` names the constructor of a type. It stands in
+`pga/multivectors.nim` beside `initElement`, since it builds a value of a type of that module. The
+doc of the type there names the pair the homogeneous scalar, and no longer dual numbers.
 
 | Lengyel | Proposed | Why |
 |---------|----------|-----|
@@ -120,13 +131,20 @@ constructor is `initMultivectorScalars`, as `init` names the constructor of a ty
 - **One alias.** Under the conformal metric, `normRadius` stops forwarding to its operator `|⊘`,
   which keeps its float root. It returns `Option[MultivectorScalars]`, so `pga.nim` imports
   `std/options`. No function or test of the library calls `normRadius`. The catalogue of this
-  project lists it only as an alias, so no expression changes.
+  project lists it only as an alias, so no expression changes. The table of norm operators in the
+  header of `pga.nim` marks the alias with ‡, and its heading says what the mark means.
+- **Body in an alias.** At pin each alias of `pga.nim` forwards to its operator in one line. Here
+  `normRadius` holds the root in a body of its own. The other form puts the root in `|⊘`, and
+  `pga/operators.nim` imports `pga/scalars.nim`, which imports no operator. The alias then forwards
+  in one line. In that form `laws.nim` compares the radius norm with that root, and not with the
+  float root of `|⊘`, or its conformal claims fail.
 - **An unwrap where a root always exists.** At cga4d and cga5d the root is never none, yet the
   caller unwraps it, since each function has one type in every algebra.
 - **Split-complex root.** At cga3d and cga6d a negative square has no root. So there the radius
   norm of an imaginary object is none.
 - **Derivation by name.** `defineAnti` swaps names in the code of each body. So a body names each
-  part as s or t, and calls each float function through its operand, as `t.sqrt`, or by module.
+  part as s or t. It calls a float function that shares its name with a function of the pair
+  through its operand, as `s.exp`, or by module.
 - **Square outside −1 to 1.** No metric of the library gives one. Such a metric needs a scaling by
   the root of its square, in the exponential and in the root of a negative s.
 - **Division of a multivector.** It is the `⟇` of P04 of 𝐦 by a pair, so it reads the columns of
@@ -145,30 +163,54 @@ constructor is `initMultivectorScalars`, as `init` names the constructor of a ty
   conformal metric. It divides a round object by its round weight norm, and any other element by
   √|𝐮 ∘ 𝐮| of that element. So a division by the weight norm here unitizes under the rigid metric
   alone.
-- **Squared norms.** The radius norm reads the antidot of the library on a whole `Multivector`,
-  since no change emits a squared norm. Each squared norm would be a unary 2D table.
+- **Float range.** No function guards the range of a float. Where a step overflows, a part of the
+  result is ∞ or NaN. `exp` of 710𝟏 is ∞𝟏 + NaN𝟙 in each algebra, and the root of 10³⁰⁸𝟏 is ∞𝟏.
+  At cga4d `tan` of 800𝟙 is some pair of NaN.
+- **Radius zero.** The root compares its domain exactly, as no scale is in hand there. 𝐦 ∘ 𝐦 of a
+  point of radius zero rounds to either side of zero. Of 4 096 such points with a weight of 0.5 to
+  2, 163 have no radius norm at cga3d. At cga4d 204 have an imaginary one, and at cga5d 187 do. Pin
+  gives NaN for the same points. A caller compares 𝐦 ∘ 𝐦 at the scale of 𝐦 first.
+- **Suites.** The suites of the library call `sqrt` and `sqrtAnti` of `pga/scalars.nim`, and no
+  other of its functions. The laws of the others run from this project alone.
 
 ## Open decisions
 
-None.
+- `normRadius` holds the root in `pga.nim`, as here, or `|⊘` holds it and `normRadius` forwards
+  to it in one line.
 
 ## Landing
 
 - **Order.** After P04, since the module takes its basis-set forms `⟑` and `⟇`.
 - **Imports of `pga.nim`.** This proposal adds `scalars` to the import and export lines of
   `pga.nim`, and `std/options` above them. P04 adds `basis_sets` to the same lines, and this edit
-  quotes them as P04 leaves them. The changes `doc-comments` and `doc-comments-2` quote them too.
-  So whichever lands later quotes them again.
+  quotes them as P04 leaves them. The change `doc-comments` keeps these lines, so the quotes of
+  this proposal fit after it. If this proposal lands first, that change quotes the import line
+  again. The change `doc-comments-2` edits the export line, so the second of the two to land
+  quotes it again.
+- **Change `doc-comments`.** It also adds a line to the doc of `normRadius`, which this proposal
+  replaces. If that change lands first, the edit of `normRadius` quotes both doc lines, so that no
+  doc line stays under the new body. If this proposal lands first, that edit of the change is void.
+- **Change `doc-comments-2`.** It adds a doc line to the stand-in `sqrt` of `tests/suites.nim`,
+  which this proposal removes. If that change lands first, the edit of the stand-ins quotes that
+  line too. If this proposal lands first, that edit of the change is void.
+- **Change `algebra-hygiene`.** It renames `TOLERANCE_ABS`, which `inverse` of `pga/scalars.nim`
+  and `laws.nim` name. The second to land carries the new name into both.
+- **P12, `cayley-cells`.** `constructSquare` and the check of the swap each build one cell as
+  `@[BasisSigned(...)]`. The second of the two to land writes `BasisSigned(...).toBasesSigned` at
+  both lines.
 - **Float width.** Each part of the pair is `Coefficient`, so the arithmetic builds at each width.
 - **P09, P11 and change `conformal-norms`.** Each edits other lines, so either order holds. P11
   edits `normalizeWeight` and `unitize` of `pga.nim`, and `|∘`, `^∘` and `^` of
   `pga/operators.nim`. `conformal-norms` edits `normCenter` of `pga.nim`, and `|⊘` of
   `pga/operators.nim`. If P11 lands too, the `unitize` of `pga.nim` stays `^m`, and calls the `^∘`
-  of P11.
+  of P11. In the table of norm operators, P11 quotes the row of `^∘` and the rule under it, and
+  this proposal quotes the heading and the row of `|⊘`. In `tests/suites.nim`, P11 quotes the
+  head of Chapter 4, `conformal-norms` quotes its last test, and this proposal quotes the test of
+  (4.45).
 
 ## Evidence
 
-`laws.nim` holds each law on 4096 seeded samples, beside structured ones such as zero, the basis
+`laws.nim` holds each law on 4 096 seeded samples, beside structured ones such as zero, the basis
 elements and the edges of each domain. It imports the library with P04 and this change applied,
 and nothing else. Each law compares against a product, a complement or a norm of the library, or
 against an authority:
@@ -185,9 +227,11 @@ The laws:
 - ⟑√𝐦 ⟑ ⟑√𝐦 = 𝐦, with an s of zero or more. The root is none exactly outside its domain. Where t
   is small, the square of the root misses it by a few rounding errors at most.
 - (⟑√𝐦)⟑⁻¹ squared gives 𝟏 with 𝐦, and tan⟑𝐦 ⟑ cos⟑𝐦 = sin⟑𝐦, wherever each has a value.
+- The tangent is none exactly where the cosine has no inverse. It is none at s = t = π/4 under
+  ε² = +1, and at 1𝟏 + 360𝟙 under ε² = −1.
 - The exponential, the sine and the cosine equal their power series, to 30 terms. The exponential
   of a sum is the product of the exponentials, and the squares of the sine and the cosine sum to 𝟏.
-- (𝐧 / 𝐦) ⟇ 𝐦 = 𝐧, for a pair and for a multivector.
+- (𝐧 / 𝐦) ⟇ 𝐦 = 𝐧, for a pair, and for a whole multivector over a pair with both parts.
 - Each law holds under the antiproduct as well.
 - Under the rigid metric, the root of 𝐦 ∙ 𝐦 under ⟑ equals the bulk norm of the library, and the
   root of 𝐦 ∘ 𝐦 under ⟇ equals its weight norm. A multivector divided by its weight norm equals
@@ -200,17 +244,17 @@ A copy whose root takes the smaller part by its own root fails the law of the sm
 and cga4d. Its root of 1𝟏 + 10⁻¹⁰𝟙 misses the weight by 10⁻¹⁰, and the law stops it. So the laws
 see the cancellation.
 
-The laws held at each of the nine algebras on `linux amd64, 4 cores`, on 2026-10-25. The table
-counts the pairs with a root, of 4112. It also counts the radius norms that are none, beside the
-float roots of `|⊘` that are NaN, on the same 4096 multivectors.
+The laws held at each of the nine algebras on `linux amd64, 4 cores`, on 2026-11-05. The table
+counts the pairs with a root, of 4 112. It also counts the radius norms that are none, beside the
+float roots of `|⊘` that are NaN, on the same 4 096 multivectors.
 
 | Algebra        | ε² | Pairs with a root | Float root NaN | `normRadius` none |
 |----------------|----|-------------------|----------------|-------------------|
-| rga2d to rga6d | 0  | 2111              |                |                   |
-| cga3d          | +1 | 1089              | 2022           | 2022              |
-| cga4d          | −1 | 4112              | 2095           | 0                 |
-| cga5d          | −1 | 4112              | 2043           | 0                 |
-| cga6d          | +1 | 1089              | 2061           | 2061              |
+| rga2d to rga6d | 0  | 2 111             |                |                   |
+| cga3d          | +1 | 1 089             | 2 022          | 2 022             |
+| cga4d          | −1 | 4 112             | 2 095          | 0                 |
+| cga5d          | −1 | 4 112             | 2 043          | 0                 |
+| cga6d          | +1 | 1 089             | 2 061          | 2 061             |
 
 No record times a function of this proposal, since the bench times the operators. Each function on
 a homogeneous scalar spends a few operations on two coefficients.
