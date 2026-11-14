@@ -198,8 +198,9 @@ record goes one row short at the next project. The records of that project then 
 the audit stays green over prose it never read. The derivation answers from the path, so the
 next project is governed from its first line.
 
-**The records of a project that keeps its own prose stay outside the set.** The suite of that
-project holds them instead (`## Prose in its own language`).
+**The records of a project that keeps its own prose stay outside the set.** Its entry names the
+suite that holds them, and the audit demands that suite where `should_demand_suite` is true
+(`## Prose in its own language`).
 
 **A widening measures its findings before the change, so that each review-finding issue can
 quote them.** They are held for each project that the branch does not own, as duty 3 says. A
@@ -232,8 +233,8 @@ can pass 25 words.
 language.** `PROJECTS_PROSE_OWN` in `prose_own.nim` names each such project, as ruling D4 a of
 #818 approves `lojban_parser`. The English check reads none of its three records, and the check
 of articles reads none of its comments. `koch fix` deletes no word of those comments that reads as
-an article, and the plan reads each of those records as code. Every other check reads the project
-as before.
+an article, and the plan reads each of those records as code. Every other check reads the
+project.
 
 **A record or a comment in another language breaks a rule of English with no fault of its own.**
 In lojban, `a` joins two names as "or" does. So the check reads `# la .alis. a la .bob. cu klama`
@@ -241,10 +242,10 @@ as a comment that holds an article, and the fixer deletes `a`, which changes wha
 says. Lojban closes no sentence with a stop, so a paragraph of lojban reads as one long sentence.
 
 **Each entry names its project, the issue of its approval, and the suite that holds its prose.**
-That suite reads the prose of the project in its own language, where no rule of English can. The
-entry says whether the audit demands the suite (`should_demand_suite`). The one entry demands
-none, since its suite lands with the move of its prose to lojban. A change to a record of a listed
-project runs its suites, so a record that breaks its suite never merges unseen.
+Such a suite reads the prose of its project in its own language, where no rule of English can.
+The entry says whether the audit demands the suite (`should_demand_suite`), and the entry of
+`lojban_parser` demands none. A change to a record of a listed project runs its suites, so a
+record that breaks a suite of its project never merges unseen.
 
 **A static assertion holds each entry to a project directly under `contributor/bangu/`.**
 Language is the subject of that domain alone, so an entry outside it fails the build. The audit
@@ -263,10 +264,8 @@ as the policy of its caller, under Articles.
   reader at all.
 - Cost: the bare `knoller` command knows no list, so it deletes `a` from a comment of lojban. A
   delegate of a listed project runs `koch fix`, and not `knoller` alone.
-- Cost: on `main`, the records and the comments of `lojban_parser` are still English, and no
-  check reads that English until their move to lojban merges. Ruling D4 a of #818 accepts that.
-- Cost: the entry demands no suite until that move merges, so nothing holds the prose of that
-  project until then.
+- Cost: while an entry demands no suite, no check reads the prose of its project. Ruling D4 a of
+  #818 accepts that.
 - Cost: each rules change re-stamps the record of each listed project. So it runs the suites and
   the driven check of that project, as a change to its code does.
 - Cost: the fixture tree holds each listed project, as it holds each domain. So an entry added to
@@ -2099,7 +2098,8 @@ needs no lock. The record of knoller holds the design of those fixers and checks
 - Each of those checks names a rule of knoller with an id of its own, and `CITATIONS` holds its
   article. What reads this repository stays here: the glossaries, the paths of drive code, the
   exemption of `LICENSE.md`, machine paths, `tsconfig.json` and `PROJECTS_PROSE_OWN`. Knoller
-  takes what it needs of them from its caller, as words of a name or as a mode for each file.
+  takes the words of a name and the mode of each file from its caller. It keeps its own copy of
+  the paths of drive code (`DIRECTORIES_DRIVE`), which #886 asks to move to the caller.
 - `toFinding` renders each report of knoller as a finding. A rewrite renders as its rule and the
   article that `CITATIONS` holds for it, so `koch fix` prints `expression spacing (X.9) fixed`.
   Verified by `suites/test_findings.nim`.
@@ -3430,6 +3430,8 @@ pull requests sat on both sides, so the subject of a call does not say which met
 
 ## Open questions
 
+- The entry of `lojban_parser` names `tests/suites/test_prose_own.nim`, which that project does
+  not hold, so the entry demands no suite. #817 stays open until the entry demands it.
 - Whether a run that authenticates as `GITHUB_TOKEN` spends the allowance of the repository or
   the allowance of the account. The repository's would keep the ledger off the budget that
   every delegate shares. Nothing here has measured it.
