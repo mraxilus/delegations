@@ -52,7 +52,9 @@
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: window reads field `origin.kind` of harness; where no entry carries it, window starts
-##     with turn, and no earlier sign-off is compared.
+##     with turn, so only sign-offs of that turn are compared.
+##   Cost: sign-off whose groups do not read takes findings of its shape alone, so group it drops
+##     goes unnamed until next sign-off, which is compared with base before it.
 ##   Cost: hook compares inside window alone, so group of open pull request that first sign-off
 ##     after message of Architect drops passes; reading holds it there.
 ##   Cost: `commandsGit` splits on shell operators by text, so `git` inside quoted string is
@@ -1132,6 +1134,14 @@ func findingsRows(groups: seq[Group], numbers: openArray[int]): seq[Finding] =
             $row.cells.len & "`.",
         )
         continue
+      if row.state < 0:
+        let word = if row.cells[0].len == 0: "" else: row.cells[0].splitWhitespace[0]
+        result.add finding(
+          "",
+          0,
+          "Sign-off row opens first cell with state, one of ☑️ ✅ ⚠️ ⏸️ ⬜ ➖; got `" & word & "`.",
+        )
+        continue
       if row.first == 0:
         result.add finding(
           "",
@@ -1473,7 +1483,10 @@ func findingsGroups(message, base: string; merged: openArray[int]): seq[Finding]
   ##   Group is matched by number of its pull request and counted, since item may change words
   ##     (Question 2 of #844); so row moves to no other group. Finding quotes first cell of each
   ##     row group held, since compaction may have taken them from what delegate sees.
+  ##   Message whose groups do not read, as one lacking part or linking no pull request, gives
+  ##     none, since group it holds would read as dropped; its shape check names what is wrong.
   let now = message.groupsSignoff
+  if now.len == 0 or now.anyIt(it.number < 0): return
   for b in base.groupsSignoff:
     if b.number < 0: continue
     var at = -1
