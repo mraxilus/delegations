@@ -65,6 +65,11 @@
 ##     report unfenced. Finding fixer clears and finding left for hand count alike, and so does
 ##     each check static pass reads. Fixer writes no fenced line still, and warning changes no
 ##     exit code.
+##   Caller says of each file whether its comments drop their articles (`should_drop_articles`),
+##     true by default. Where they keep them, as comments in language other than English may,
+##     chain runs neither fixer nor check of articles, and every other step as before. Policy is
+##     caller's, as words names may take are (`names.nim`), so knoller holds none; command line
+##     sets none, so it drops articles in every file it reads.
 ##
 ##   Rejected: nimpretty, which sets one space before trailing comment where X.9 asks two,
 ##     and `;` between parameters where STYLE.md §5 asks `,`; fork of nimpretty's layouter,
@@ -95,12 +100,14 @@ const
 
 
 func steps(dialect: Dialect, should_drop_articles = true): seq[Step] =
-  ## List steps dialect takes, in order header gives.
+  ## List steps dialect takes, in order header gives; fixer of articles runs only where comments
+  ##   drop them.
   result = @STEPS_FORM
+  result.add guarded(fixBlockEntry)
+  if should_drop_articles: result.add guarded(fixArticles)
   result.add @[
-    guarded(fixBlockEntry), guarded(fixArticles), widening(fixMessages),
-    widening(fixMixtures), guarded(fixTargets), guarded(fixGenerations), guarded(fixCommands),
-    proving(fixParentheses),
+    widening(fixMessages), widening(fixMixtures), guarded(fixTargets), guarded(fixGenerations),
+    guarded(fixCommands), proving(fixParentheses),
   ]
   for fixer in dialect.fixersIdiom: result.add guarded(fixer)
   result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
@@ -156,10 +163,11 @@ func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs())
 
 func checkStatic(path, source: string; dialect: Dialect; should_drop_articles: bool): seq[Report] =
   ## Run on source as given each check static pass of `curator/audit` reads on Nim source: form,
-  ##   articles, entry block, names with no word exempt beyond `JARGON`, calls of `define…` and
-  ##   `emit…`, idioms of dialect, and fixed waits of drive file (`isFileDrive`). Fence keeps no
-  ##   line from them.
-  result = checkForm(path, source) & checkArticles(path, source)
+  ##   articles where comments drop them, entry block, names with no word exempt beyond `JARGON`,
+  ##   calls of `define…` and `emit…`, idioms of dialect, and fixed waits of drive file
+  ##   (`isFileDrive`). Fence keeps no line from them.
+  result = checkForm(path, source)
+  if should_drop_articles: result.add checkArticles(path, source)
   result.add checkBlockEntry(path, source) & checkNames(path, source, [])
   result.add checkGenerations(path, source)
   result.add checkIdioms(path, source, dialect)
@@ -172,6 +180,7 @@ func checkSource*(
   ## Report each rule knoller reads in source: those `checkFormatting` holds, off fenced lines,
   ##   and those static pass of `curator/audit` reads (`checkStatic`), on every line, so finding
   ##   fixers leave, or fence keeps from them, fails command line as it fails static pass.
+  ##   Articles are read only where comments drop them (`should_drop_articles`).
   checkFormatting(path, source, dialect, proofs) &
       checkStatic(path, source, dialect, should_drop_articles)
 
@@ -273,6 +282,7 @@ func formatted*(
   ##   not settle stays as written too, and its fix says why (`Fix.unsettled`).
   ##   Needless parentheses go where `proofs` prove them; each source no answer reaches is in
   ##   `Fix.asked`, for caller to ask parser and run again.
+  ##   Articles go only where comments drop them (`should_drop_articles`).
   formattedBy(path, source, dialect.steps(should_drop_articles), proofs)
 
 
@@ -286,7 +296,7 @@ func checkFenceHeld*(
   ##   Checks read source unmasked, so marker reads as plain comment and each line keeps its
   ##     number: each check `checkSource` holds, those static pass reads among them. Source with
   ##     no fence runs none. Needless parentheses count where `proofs` answer for source as given
-  ##     (`questions`).
+  ##     (`questions`), and articles where comments drop them (`should_drop_articles`).
   let fence = source.fence
   if fence.fault >= 0 or fence.lines.len == 0: return
   let found = checkFormattingUnfenced(path, source, dialect, proofs) &
