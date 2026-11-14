@@ -1386,6 +1386,23 @@ words.
   `curator/audit`.
 - Verified by `suites/test_articles.nim`, with the Nim cases of the scanner of `curator/audit`.
 
+**The caller says of each file whether its comments drop their articles.** `formatted`,
+`checkSource` and `checkFenceHeld` take `should_drop_articles`, which is true by default. Where it
+is false, the chain runs no fixer and no check of articles on that file. Every other rule runs as
+before.
+
+- A comment in another language can hold a word that reads as an article. In lojban, `a` joins
+  two names, as "or" does in English. The fixer would delete it and change what the comment says.
+- The mode is the policy of the caller, as the words that a name may take are (`## Names`). So
+  knoller holds no list of files, and reads nothing of a repository to decide.
+- Rejected: a set of directories that knoller matches against each path. The caller already holds
+  the path of each file that it passes, so one flag for each file is the smaller input.
+- Cost: the command line sets no mode, so it drops the articles of every comment that it reads.
+  A file whose comments keep another language needs a caller that sets the mode.
+- Verified by `suites/test_chain.nim`: in each dialect, the mode off keeps the word in the fixer,
+  the check and the fence warning. The fix of spacing still runs, and the default drops the word.
+- Verified by `suites/test_command.nim`: the command line drops the word, and its check exits 1.
+
 ## Names
 
 **Every declared name in Nim is read, and its words are held to the table and to the words the
