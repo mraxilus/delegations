@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 363e393b375ac380 |
-| Pruned  | 1c3c58b7205100829c4d5b8902a07dde2c05b985 |
+| Pruned  | 819c4aae4c29f73ff0257a1175536cde3058bb4d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the `pga`
@@ -167,6 +167,7 @@ and this file does not:
 | `frame`, `classified`, `diagnostics`, `ramp` | frame's own clocks and counts, tree, colours |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `built`, `pool` | what scene costs, repaired faults, each frame built, drawer |
+| `counted` | calls, copies and bytes of marker, lattice and frame, optimiser off |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style` | outcome fade, declared CSS |
 | `type`, `canvas` | font faces in roles, blank refused |
@@ -430,13 +431,15 @@ limit of time as a fallback, which a loaded machine meets with no page fault. Ve
 and delegates meet it, and each fault that a bound pins reads over it. A fault reads as `pins.ts`
 recorded it on a delegate on 2026-09-07, under the figure that the check took then. A bound whose
 fault reads inside the spread of unchanged code is a budget, and pins no fault (Article VII.12). The
-bound of the marker is a budget, and a count pins its fault.
+bounds of the marker and of the moving grid are budgets, and a count pins each fault (Counts of the
+machine).
 
 Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
 2026-09-30, alone and in the gate. The anchor readings are from 11 runs of the measured page up to
 its pins, on 2026-09-30. The marker readings are from 11 such runs on 2026-10-04, with each outline
 shaped once for each pair (Marker pulse). A slower delegate read the marker at up to 1.66 ms in 4
-full drives on 2026-10-15. That reading sets its bound (repository issue 635).
+full drives on 2026-10-15. That reading sets its bound (repository issue 635). Another delegate read
+the anchor and the marker in 22 such runs on 2026-10-22, on 4 cores of an Intel Xeon at 2.10 GHz.
 
 Runner readings are from one CI run of the change that set each bound. The runner reading of the
 marker is from the drive job on `d305c68c`.
@@ -446,36 +449,32 @@ The still frame, the moving frame and the frame after an edit read a full build 
 the lock of the gate. They carry no runner reading. One run of the 20 is left out. It read the
 anchor at 23.5 µs and the loaded pick at 7.4 ms, each over its bound. That is load, not a fault.
 
-In 10 runs of `a1702384` beside them, frames that held their scene read 0.4 to 0.5 ms still. After
-an edit they read 1.5 to 2.4 ms.
-
 | Check | Bound | Runner | Delegates | Fault |
 |-------|-------|--------|-----------|-------|
 | Still frame, median | 2.1 ms | | 0.7 to 1.4 | |
 | Still frame, slowest tenth | 3.2 ms | | 1.0 to 2.1 | |
 | Moving frame, median | 3 ms | | 1.3 to 2.0 | |
 | Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
-| Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
-| Marker and its pulse, worst kind | 2.5 ms | 0.38 | 0.34 to 1.66 | 3.2, budget |
-| Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
+| Anchor lookup | 15 µs | 5.0 | 3.0 to 10.0 | 280 |
+| Marker and its pulse, worst kind | 2.5 ms | 0.38 | 0.28 to 1.66 | 3.2, budget |
+| Moving grid, median | 26 ms | 4.3 | 5.4 to 17.1 | 26.1, budget |
 | CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
 | Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
 | Frame after an edit, at 5,038 | 31 ms | | 8.4 to 20.2 | |
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, both with each outline shaped twice, so it
-costs 2.7 times the repair. The repair alone read 0.34 to 1.66 ms across delegates, a spread of
-almost 5 times. So the fault reads inside the spread of unchanged code, and its bound is a budget.
-The point count of the marker suite pins the fault on every run (Selection and markers).
-
-The moving grid fault reads over its bound by 0.1 ms only. A check with no fault reading pins a
-budget rather than a repair.
+costs 2.7 times the repair. The repair alone read 0.28 to 1.66 ms across delegates, a spread of
+almost 6 times. So the fault reads inside the spread of unchanged code, and its bound is a budget.
+The moving grid fault reads over its bound by 0.1 ms only, inside the spread of unchanged code, so
+its bound is a budget too.
 
 **A fault that reads close to its speed bound is pinned by a count too.** A count reads the same on
 every machine, and load never moves it. The marker suite counts the points that each marker reads
 out of the algebra (Selection and markers). `driveGround` counts the lines that the records of the
 lattice lie on (Geometry and drawing). `driveMarkerShapedOnce` counts the outlines that the overlay
-shapes for each marker it draws (Marker pulse).
+shapes for each marker it draws (Marker pulse). The page counts the calls and the copies of each
+span in its engine (Counts of the machine).
 
 Each bound stays at 1.5 times beside its count, so a slowdown that no count names still fails.
 Rejected: bounds at 3 times beside the counts, which pass such a slowdown.
@@ -525,6 +524,70 @@ in 3 runs of 3. The pinch then read 7.62 in 15 fresh pages of 15, 5 of them with
 lines for the simulated page. Each loads the other, and the lines agree in every figure. Without the
 rendering step, the touch wait and the seed, two runs of the same code differ in their figures, and
 their verdicts agree.
+
+## Counts of the machine
+
+**The page counts the work of its marker and of its moving lattice, in its engine with the optimiser
+off.** A check of cost gates on counts, and time is its budget (Article VII.10). `counted.ts` opens
+the built page in a browser of its own, under `--js-flags=--no-opt --no-maglev --no-sparkplug`. V8
+then runs its interpreter alone, so no tier inlines a function and stops its count (VII.11). The
+precise coverage of V8, over the DevTools protocol, gives the calls of each function. A page counts
+no instruction and no byte that it reads, so it counts calls, copies and the bytes it uploads.
+
+**Each count is of one span of work alone, on a paused clock.** The page runs on the simulated
+clock, so no frame or timer runs between the reset of the counters and their read. One pass that is
+not counted comes first, because the first call does work that no later call repeats. The span of
+the marker shapes one marker and its pulse for each of the 5 objects of the opening scene. The span
+of the lattice builds each of 9 frames twice, with the lattice and without it, as `drivePinGrid`
+turns the camera at 300. The lattice adds the difference of the two builds, and its bytes are the
+records that the frame hands to the upload.
+
+**The counted build is named, and the check refuses a baseline from another build.** The baseline
+names Chromium 153.0.8010.12, which Playwright 1.63.0 pins, its engine flags, and the Nim release
+that the nimble file requires. A run on another build fails, and names the build that it ran. The
+counted build is not the build that ships, which runs the optimiser. So a count is evidence for the
+interpreter alone (IX.6).
+
+**The band of each count is zero.** The counted code calls nothing that selects its code by
+processor, and every input is held, the clock among them. Six runs in fresh browsers on 2026-11-15
+read each count the same. A count under its baseline passes, and the baseline is then counted again.
+
+**A static count stands beside each count of the machine, because it names the line.** The check of
+the marker reports the copy sites in the functions that its span reaches: 50 sites in 84 functions.
+The check of the lattice reports those in the functions that only the lattice reaches: 11 sites in
+15 functions.
+
+| Count | Baseline | Repair, 2026-10-22 | With its fault, 2026-10-22 |
+|-------|----------|--------------------|----------------------------|
+| Copies of a marker and its pulse, over 5 objects | 15,887 | 15,883 | 16,523 |
+| Calls of a marker and its pulse, over 5 objects | 48,653 | 48,642 | 79,810 |
+| Calls that the lattice adds to 9 moving frames | 4,817,497 | 4,817,506 | 8,893,698 |
+| Bytes that the lattice adds to those frames | 219,136 | 219,136 | 219,136 |
+
+**Each fault is stood in for by hand, and its count reads over its repair.** Neither fault was
+repaired in this repository, so no commit holds it. The stand-in of the marker sums each sample of
+the loop of a plane in the algebra, as the reference of the marker suite does. The stand-in of the
+lattice sums four points along each line and takes the distance of each, and adds no record. So its
+records stay one for each line, and only the count of calls reads that fault.
+
+**Time does not read the fault of the lattice.** With its stand-in, the moving grid read 15.4 to
+18.9 ms in 5 runs, under the budget of 26 ms. Without it, the grid read 8.4 to 10.8 ms.
+
+**A whole frame is counted too, as a net for work that no span names.** A page of its own picks a
+point, then the plane, and counts one still frame after each pick settles. That net and the copies
+of the lattice pin no named fault, so each says that it pins the work that a change adds.
+
+**A move of the library pin is counted at both pins, and each count that grows is traced to its
+cause.** The baselines are counted at the pin, so a count that grows on a move fails the drive. At
+`3d9696e`, the copies grew for one cause, the generic `+` of the library (Dependencies and
+vendoring). That fix belongs in the library (Article II.8). Verified by `counted.ts` in a scratch
+copy of the library, 2026-10-22: a `+` that adds the packed slots in order copies nothing more.
+
+*Checked.* Verified by driven check: `counted.ts` reads each count at or under its baseline, on the
+build that the baseline names. Verified by runs on 2026-10-22: each stand-in read over its repair,
+as the table gives, and the counts of the other span did not move. Assumed: that each fault still
+reads over the baselines of 2026-11-15, which differ from its repair by at most 11 calls and 4
+copies.
 
 ## Browser front-end
 
@@ -754,9 +817,8 @@ to, and the operators render the same either way.
 **Each Noto font face of the page ships whole** (Article X.8, as the Architect ruled it on
 2026-10-03). A Latin subset leaves each character past its range to a font face of the viewer's
 system. `ˍ` and `˷` of the notation are two (repository issue 411). The cost is weight: the built
-page is 7,830,702 bytes, against 4,271,072 with the subsets. Measured on 2026-10-03 with
-`ls -l build/rga_visualiser.html`, at `main` and at this change. Rejected: a Noto Sans subset cut
-for the two accents, which no store row hosts without a release.
+page is 7,830,702 bytes, against 4,271,072 with the subsets, measured by `ls -l` on 2026-10-03.
+Rejected: a Noto Sans subset cut for the two accents, which no store row hosts without a release.
 
 **The maths and symbol font faces each take a family of their own, after the text font faces in
 every stack.** Within one family, the font faces that declare one weight form a set. The engine
@@ -990,17 +1052,12 @@ and `label`. A law in the shared suite holds that every wheel word appears there
 through `nim cpp`, and their assertions run against real headers. Dear ImGui starts over a hidden
 SDL3 window, with a real OpenGL 3.3 core context under Xvfb, and draws through both its backends.
 
-Verified by looking, 2026-10-02, at the PNG that this command writes under Xvfb:
-
-```sh
-xvfb-run -a -s "-screen 0 1440x900x24" \
-  binaries/rga_visualiser --hidden --frames:300 --screenshot:desktop.png
-```
-
-The PNG carries the axes, the scale bar, the disc of the ground plane, the points and the panel.
-Both front-ends draw one scene from one core. With `--frames:60` the disc is not drawn yet, because
-the entrance animation still runs. **Unverified**: no human has seen this on real graphics hardware.
-Software GL reports no multisampled visual, so thin lines alias.
+Verified by looking, 2026-10-02, at the PNG that `binaries/rga_visualiser --hidden --frames:300
+--screenshot:desktop.png` writes under `xvfb-run -a -s "-screen 0 1440x900x24"`. The PNG carries the
+axes, the scale bar, the disc of the ground plane, the points and the panel. Both front-ends draw
+one scene from one core. With `--frames:60` the disc is not drawn yet, because the entrance
+animation still runs. **Unverified**: no human has seen this on real graphics hardware. Software GL
+reports no multisampled visual, so thin lines alias.
 
 ## Desktop driven checks
 
@@ -1099,13 +1156,9 @@ reports `FAIL every codepoint the Mono font face sets has a glyph` with `missing
 With it, all four roles pass. Verified by a read of each font face's `cmap`, 2026-10-02, with a
 scratch reader. Noto Sans holds both codepoints, and the other three font faces hold neither.
 
-Verified by looking, 2026-10-02, at the operations tab that this command draws. Both accents draw as
-`�` without the merge, and as accents with it:
-
-```sh
-xvfb-run -a -s "-screen 0 1440x900x24" binaries/rga_visualiser \
-  --hidden --drive-help:operations --frames:300 --screenshot:operations.png
-```
+Verified by looking, 2026-10-02, at the operations tab that `binaries/rga_visualiser --hidden
+--drive-help:operations --frames:300 --screenshot:operations.png` draws under Xvfb at 1440 by 900.
+Both accents draw as `�` without the merge, and as accents with it.
 
 ## Diagnostics
 
@@ -1132,14 +1185,11 @@ so the one nearer the floor keeps its place. On an axis of 90 ms, the 240 line s
 120 line, and its labels would cover that line. The curve keeps its bands, since the list sets them,
 and not what is drawn.
 
-*Checked.* Verified by driven check:
-
-- four marks on a fast window, each named as a rate and as a duration;
-- on a window of 0 to 88.3 ms, the 15 fps mark drawn, and the 240 mark given way to the 120 mark;
-- three of the four band colours on a mixed window, since its feed holds no frame under 4.2 ms.
-
-Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by a
-render: the curve of the page and the plot of the window, before and after, in the pull request.
+*Checked.* Verified by driven check: four marks on a fast window, each named as a rate and as a
+duration. On a window of 0 to 88.3 ms the 15 fps mark is drawn, and the 240 mark gives way to the
+120 mark. A mixed window shows three of the four band colours, since its feed holds no frame under
+4.2 ms. Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by
+a render, before and after, in the pull request: the curve of the page and the plot of the window.
 
 **Each row of the breakdown of the page shows two figures, a short mean and a settled figure.** The
 short mean covers the last 200 ms, and is what to watch while something changes. The settled figure
@@ -1393,16 +1443,14 @@ about ten. `kindInto` and `positionInto` classify a multivector and read a point
 two copies left for each point are inside `grade`, in the library. The diagnostics tree has a row
 for placing, `objects placed`, so the prologue row stays what the camera and the aim cost.
 
-**What the largest demo costs a frame, before and after.** Measured on 2026-10-06 on one delegate,
-on the real clock, by a harness that is not kept, at 1200 by 900 px under SwiftShader. It reads the
-median of `ms_build`, the build of a frame alone, `598e7fa1` first and then this design, and no
-measured frame runs a pick. With every object selected, each of three pairs read 10 settled frames:
-447.6 to 387.2 ms, 460.8 to 418.9 ms and 442.8 to 381.6 ms. The overlay of those frames took 11.5 to
-11.7 s on both builds, which its SVG elements and labels spend.
+**What the largest demo costs a frame.** Measured on 2026-10-06 on one delegate, on the real clock,
+by a harness that is not kept, at 1200 by 900 px under SwiftShader. It reads the median of
+`ms_build`, the build of a frame alone, in pairs against `598e7fa1`, and no measured frame runs a
+pick. With every object selected, 10 settled frames read 381.6 to 418.9 ms, against 442.8 to 460.8
+ms. Their overlay took 11.5 to 11.7 s on both builds, which its SVG elements and labels spend.
 
-With nothing selected, six pairs of 300 frames read 7.9 to 8.1 ms before and 7.9 to 8.4 ms after.
-This design read 0.1 to 0.5 ms more in five pairs, and 0.2 ms less in one. The frame arenas alone,
-`8271aab1`, read 8.0 to 8.1 ms beside them. The cause of that difference is unmeasured.
+With nothing selected, six pairs of 300 frames read 7.9 to 8.4 ms, against 7.9 to 8.1 ms. This
+design read 0.1 to 0.5 ms more in five pairs and 0.2 ms less in one, and the cause is unmeasured.
 
 **What a frame costs, held and built.** Measured on 2026-10-05 on one delegate, under the lock of
 the gate, by a harness that is not kept. It drives the page at 1200 by 900 px under SwiftShader,
@@ -1422,16 +1470,11 @@ of the whole scene through the library, as the `objects placed` row shows. The h
 1 ms because it did none of that work.
 
 The desktop runs `--timings` for 300 frames, in three pairs, on the `desktop` build without
-`-d:release`. It reads the median frame in ms, and the mean of placing and tessellating in µs:
-
-| Scene | Frame, before | Frame, after | Placing and tessellating, before | And after |
-|-------|---------------|--------------|----------------------------------|-----------|
-| Opening scene | 4.66 to 5.01 | 4.63 to 5.63 | 42 to 44 | 73 to 80 |
-| 5,038 objects | 83.6 to 83.9 | 68.3 to 71.5 | 14,994 to 15,079 | 7,030 to 7,353 |
-
-At the opening scene the furniture is built in every frame, so tessellating costs more. At 5,038
-objects the desktop places each object once, where it classified each one three times. So its frame
-costs less, with the same 27,167 vertices.
+`-d:release`. At 5,038 objects it places each object once, where it classified each one three times.
+So its median frame reads 68.3 to 71.5 ms against 83.6 to 83.9 before, with the same 27,167
+vertices. Placing and tessellating read a mean of 7,030 to 7,353 µs, against 14,994 to 15,079. At
+the opening scene the furniture is built in every frame, so they read 73 to 80 µs against 42 to 44.
+The median frame there reads 4.63 to 5.63 ms, against 4.66 to 5.01.
 
 *Checked.* Verified: the suite runs on both backends, so it exercises the guard rather than trusts
 it (Testing). Verified by a compile, 2026-10-02: a `func` that calls `timings.nowMilliseconds` on
@@ -1442,10 +1485,7 @@ Verified by driven check:
 - a still camera builds its scenery on every frame, the same each time, and a moved camera too;
 - a still camera over a still scene builds its whole records on every frame;
 - every edit reaches the canvas, and the frame after an undo draws the scene that it restored;
-- a still frame under the largest demo copies fewer values of its own than the scene has objects;
-- a still frame under the largest demo builds fewer multivectors of its own than the scene has
-  objects;
-- each frame build of the page lifts the motor once, still and while a drag orbits;
+- the copies, multivectors and motor lifts of a frame, which Algebra boundary and Camera hold;
 - one frame of the page classifies each live object once, in each state that it counts.
 
 Verified by the measurements above, and by `suites.nim` on both backends: the placements that
@@ -1508,13 +1548,10 @@ UTF-8, which the JS backend percent-escapes into a name (`%e2%8a`).
 `Object` is a handle, and not an assembled copy. Under `nim js` it holds the `Scene` by value, so
 the loops that run for each frame use the accessors that take a handle instead.
 
-*Checked.* Verified by `suites.nim`:
-
-- handle stability across a removal, and the next add taking the handle freed last;
-- `handlesCreated` over a scrambled arena of hundreds;
-- `revisionPlacingAt` stamps one handle for each edit, and every handle after a restore;
-- `restoreFrom` lands on a revision that no earlier state carried;
-- a label cut never splits a character, at any buffer size.
+*Checked.* Verified by `suites.nim`: a handle stays across a removal, and the next add takes the
+handle freed last. `handlesCreated` holds over a scrambled arena of hundreds. `revisionPlacingAt`
+stamps one handle for each edit, and every handle after a restore. `restoreFrom` lands on a revision
+that no earlier state carried, and a label cut never splits a character, at any buffer size.
 
 Verified by driven check: the frame after an undo draws the current scene, and not the previous one.
 Verified by measurement on one delegate on 2026-10-04, under the lock of the gate, by builds and a
@@ -1790,9 +1827,6 @@ family. It is **spent on the cell, and not on the reach**: `sizeCellGridFor` ste
 **decades**, from 1,200 units of reach. Decades nest, so a step coarsens what is drawn without
 moving a line that the reader was measuring against. Rejected: a cut of the *reach*, which leaves a
 camera past 1,200 units with the lattice stopping short.
-
-In Chromium on 2026-10-01, `driveGround` on the first plane counts 382 records at orbit distance
-300, and 127 at 1,000. It counts 62, 49 and 127 at 5,000, 40,000 and 10⁶, each on a line of its own.
 
 `addLattice` dims the lattice by `ALPHA_GRID` at 0.75, because 0.55 read as absent. **The world axes
 are reference**: they fade and cut off on the schedule of the lattice, so all the furniture ends at
@@ -2323,10 +2357,9 @@ Rejected: the turntable about world up and the level axis for the orbit. Near th
 lies along the sight, so a drag spun the picture about the middle and the point held slipped.
 Rejected: the 0.008 radians for each pixel of the window about the camera's axes, since both
 front-ends drag alike by the ruling of the Architect. Rejected: the roll put back after each turn
-about the camera's own axes, which leaves the sight sunk.
-
-On a 390 by 844 page in Chromium on 2026-09-24, over 2,000 turns of each, a free-aim turn took 0.45
-to 0.48 ms. An orbit turn of the turntable took 0.63 to 0.72 ms. The trackball's turn is unmeasured.
+about the camera's own axes, which leaves the sight sunk. On a 390 by 844 page in Chromium on
+2026-09-24, over 2,000 turns, a free-aim turn took 0.45 to 0.48 ms. The trackball's turn is
+unmeasured.
 
 **`turnsCarrying` holds what a free-aim drag took.** It pitches about the level axis until one
 direction has the height of the other, then yaws about world up until their bearings meet. Of the
@@ -2494,45 +2527,28 @@ triangles over the box, which drew the ellipse through its corners. That ellipse
 up to 41% of its half extent, and every fragment there was cast and discarded. Cost: each of the six
 corners of the quad works out the box again, with a turn and a cross product.
 
-Measured on 2026-10-04 under SwiftShader, at 1200 by 900 px with antialias, by a bench that is not
-kept. It sums the `GPUTask` events of a Chromium trace over 100 simulated frame steps. Each change
-has two pairs, before then after, in ms of GPU work for each step:
+Measured on 2026-10-04 under SwiftShader, at 1200 by 900 px, by a bench that is not kept. It sums
+the `GPUTask` events of a Chromium trace over 100 simulated frame steps, in two pairs for each
+change. The same steps with the disc draws skipped read 5.5 to 9.2 ms, which is the spread of the
+bench. With antialias, the quad over the box cut the GPU work of a step in every view, by 0.6 to 9.8
+ms. The floor at the vanishing line cut the two low views by 2.3 to 5.8 ms. It moved the opening
+scene and the steep view by less than the spread.
 
-| View | Quad over the box | Floor at the vanishing line |
-|------|-------------------|-----------------------------|
-| Opening scene | 25.8 to 18.9, 21.5 to 18.1 | 18.9 to 19.8, 19.1 to 19.0 |
-| Level and low over the ground | 24.4 to 20.8, 21.8 to 21.2 | 21.1 to 16.7, 20.4 to 15.9 |
-| Steep over the ground | 36.5 to 26.7, 26.1 to 22.6 | 22.9 to 25.5, 23.0 to 24.0 |
-| Level and low under the ground | 24.8 to 21.0, 23.1 to 21.3 | 21.0 to 18.7, 23.5 to 17.7 |
+At the opening scene the cost is the box of the sphere. From the opening stance the sphere of the
+ground spans 50° of height, against 21° for its disc. The box of the rim was measured without
+antialias, as the simulated page draws, beside `eecc2b5c`. There the disc draws skipped read 2.2 to
+3.2 ms. The opening scene falls by 3.9 and 5.8 ms, and the other views move by no more than two runs
+of one build do. In the level views the rim reaches behind the eye, and in the steep view the disc
+covers nearly all of the view.
 
-The same steps with the disc draws skipped read 5.5 to 9.2 ms, which is the spread of the bench. So
-the floor changes the opening scene and the steep view by less than that spread. At the opening
-scene the cost is the box of the sphere. From the opening stance the sphere of the ground spans 50°
-of height, and its disc 21°.
+With antialias, the opening scene read 18.2 and 15.0 ms with the box of the rim, against 18.2 and
+18.8 on `eecc2b5c`. The two pairs disagree, so the gain with antialias is unmeasured.
 
-The box of the rim was measured on 2026-10-04 by the same bench, without antialias, as the simulated
-page draws. Each pair is `eecc2b5c`, then this design, in ms of GPU work for each step:
-
-| View | Box of the rim, without antialias |
-|------|-----------------------------------|
-| Opening scene | 11.0 to 7.1, 13.0 to 7.2 |
-| Level and low over the ground | 8.6 to 10.3, 10.5 to 9.5 |
-| Steep over the ground | 13.7 to 14.9, 15.8 to 13.8 |
-| Level and low under the ground | 8.3 to 8.5, 8.5 to 8.2 |
-
-The same steps with the disc draws skipped read 2.2 to 3.2 ms. The opening scene falls by 3.9 and
-5.8 ms, and the other views move by no more than two runs of one build do. In the level views the
-rim reaches behind the eye, and in the steep view the disc covers nearly all of the view. With
-antialias, as the page of the reader draws, the opening scene read 18.2 to 18.2 and 18.8 to 15.0 ms.
-The two pairs disagree, so the gain with antialias is unmeasured.
-
-The browser drive ran on 2026-10-04 in the lock of the gate, on each build in turn, twice each. It
-is `build/drive/main.js` alone, timed from outside, and each page inside it. Every check passed:
-
-| Build | Browser drive | Simulated page | Real-clock page |
-|-------|---------------|----------------|-----------------|
-| `eecc2b5c`, box of the sphere | 237.5 s, 235.0 s | 211.2 s, 208.6 s | 23.6 s, 23.9 s |
-| Box of the rim | 215.3 s, 212.4 s | 190.1 s, 187.7 s | 22.5 s, 21.9 s |
+The browser drive ran on 2026-10-04 in the lock of the gate, twice on each build, and every check
+passed. It is `build/drive/main.js` alone, timed from outside, and each page inside it. With the box
+of the rim it took 215.3 and 212.4 s, against 237.5 and 235.0 s on `eecc2b5c`. Its simulated page
+took 190.1 and 187.7 s, against 211.2 and 208.6 s. Its real-clock page took 22.5 and 21.9 s, against
+23.6 and 23.9 s.
 
 A `DomeRecord` of 8 floats widens over a static unit sphere, which has no orientation. A
 `RingRecord` of 14 floats is the thirteen of a disc plus a width, and one instance draws the circle.
@@ -2546,10 +2562,7 @@ that a rim segment would be, so one rule widens a rim and every line alike. The 
 `UNIT_CIRCLE_RIM`, resolved at start-up with the `cos` and `sin` of the runtime. The compile-time
 evaluator need not agree with the libm of each backend in the last bit.
 
-**Every position of a record is stored about the view origin** (Origins). Emission reads each world
-place about it once, and the five record writers store what they are handed. The suite pins a point,
-a line, a plane and the sky, each through `tessellateObject`, against a view origin a million units
-off.
+**Every position of a record is stored about the view origin** (Origins).
 
 **Veil order is kept, and not assumed away.** Two translucent veils still blend in scene order, so
 every append extends or opens a `VeilRun`, and both render paths walk the runs in sequence.
@@ -2650,21 +2663,14 @@ constructors, because their copies read 1.7% and 0.3% of a moving frame at 5,038
 Measured on 2026-10-04 on one delegate, under the lock of the gate, by a harness that is not kept.
 It drives the page at 1200 by 900 px under SwiftShader, with antialias. It times 6 s of frames for
 each scene, then profiles 6 s more through the DevTools protocol of Chromium. An orbit turns the
-camera 0.004 radians in each frame. Each pair is `c4e7e1fd`, then this design, run in turn, in ms of
-the frame callback:
+camera 0.004 radians in each frame. Three pairs ran in turn, `c4e7e1fd` first, in ms of the frame
+callback. At the opening scene, which holds five objects, the two builds overlap.
 
-| Scene | Median | Slowest tenth |
-|-------|--------|---------------|
-| Opening scene, still | 0.9 to 0.7, 0.8 to 0.7, 0.7 to 0.8 | 1.3 to 1.1, 1.2 to 1.0, 1.1 to 1.1 |
-| Opening scene, orbit | 0.9 to 0.9, 0.8 to 0.8, 0.8 to 0.9 | 1.5 to 1.3, 1.3 to 1.3, 1.3 to 1.3 |
-| 5,038 objects, still | 1.7 to 1.0, 1.6 to 1.0, 1.5 to 1.0 | 2.4 to 1.4, 2.4 to 1.3, 2.3 to 1.5 |
-| 5,038 objects, orbit | 2.6 to 2.2, 2.5 to 1.6, 2.3 to 1.8 | 3.9 to 2.9, 3.8 to 2.6, 3.1 to 2.7 |
-
-At the opening scene the two builds overlap, as it holds five objects. At 5,038 objects the profile
-puts `nimCopy` at 39% of the script of a still frame on `c4e7e1fd`, and at 10% in place. The
-subtraction of `reachNear` alone is 31.5% of it. A moving frame reads 34% and 10%. With the
-operators alone in place, the copies of `addRing` and `addDisc` read 2.6% and 2.7% of a moving
-frame.
+At 5,038 objects the median still frame reads 1.0 ms in place, against 1.5 to 1.7 ms on `c4e7e1fd`.
+In orbit it reads 1.6 to 2.2 ms, against 2.3 to 2.6 ms. The profile puts `nimCopy` at 39% of the
+script of a still frame on `c4e7e1fd`, and at 10% in place. The subtraction of `reachNear` alone is
+31.5% of it. A moving frame reads 34% and 10%. With the operators alone in place, the copies of
+`addRing` and `addDisc` read 2.6% and 2.7% of a moving frame.
 
 **A count holds the design, as it holds a fault close to its speed bound** (Clocks of the driven
 checks). `driveCopiesStill` counts the outermost `nimCopy` calls over 3 still frames of the largest
@@ -2675,8 +2681,7 @@ operators alone, which passes a copy for each object at any other site.
 A copy that a function of the reference library asks for is counted apart and reported, and never
 bound. What the library costs is the library's (Render paths). The check names the maker of each
 copy by the function that calls `nimCopy`, from the stack. Over 3 frames at 5,038 objects it reads
-9,639 copies of the project and 30,663 of the library, 13,434 a frame in all. With each object
-placed whole by `placeObject`, a counter that is not kept read 64,232 a frame, on 2026-10-05.
+9,639 copies of the project and 30,663 of the library, 13,434 a frame in all.
 
 **The hang of the selection menu writes its place field by field too** (Interaction model). The
 page hangs the menu on each frame that it shows, and an object built into the result of the hang
@@ -2710,16 +2715,10 @@ library. On `64efd55d`, which adds the check to the page of `28c559ae`, it reads
 
 Measured on 2026-10-24 on one delegate, on the real clock, by a harness that is not kept. It loads
 the largest demo at 1200 by 900 px under SwiftShader, and reads the median of `ms_place` and
-`ms_build` over about 50 frames. Three runs of `main` at `28c559ae` and of this design ran in turn,
-in ms:
-
-| Diagnostics | Placing, `main` | Placing, after | Build, `main` | Build, after |
-|-------------|-----------------|----------------|---------------|--------------|
-| Shut | 10.8 to 12.0 | 7.7 to 8.1 | 12.7 to 14.0 | 9.5 to 10.0 |
-| Open | 15.2 to 16.9 | 12.0 to 12.8 | 19.1 to 20.7 | 15.9 to 16.9 |
-
-With the diagnostics open, the page also times the placing and the emitting of each object. In each
-run here that adds 3.7 to 5.4 ms to placing, and 5.6 to 7.4 ms to the build.
+`ms_build` over about 50 frames. Three runs of `main` at `28c559ae` and of this design ran in turn.
+With the diagnostics shut, placing reads 7.7 to 8.1 ms against 10.8 to 12.0, and the build 9.5 to
+10.0 ms against 12.7 to 14.0. With them open, the page also times the placing and the emitting of
+each object. In each run here that adds 3.7 to 5.4 ms to placing, and 5.6 to 7.4 ms to the build.
 
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A sum of blades made 23 arrays for a motor, and a write
@@ -2781,9 +2780,7 @@ drew every multivector a frame computed, as what it is, never helped to resolve 
 to its reference. Verified by a 400-step camera trace: read-outs within 1e-13 of the vector forms on
 both backends. Verified in Chromium at 390 by 844 on 2026-09-25 against the vector forms, in four
 interleaved pairs, each the best of seven runs. A turn of a finger takes 223 to 251 µs in free aim,
-against 144 to 158. It takes 247 to 283 in orbit, against 113 to 122.
-
-A turn and a frame build take 0.93 to 0.94 ms, against 0.86 to 0.94.
+against 144 to 158. A turn and a frame build take 0.93 to 0.94 ms, against 0.86 to 0.94.
 
 Verified by `suites.nim`: placing charges the placing side on each of its seven exits, and a stretch
 that leaves early fails to build. Verified by driven check: a still frame under the largest demo
@@ -2881,14 +2878,9 @@ out moved the eye 0 m. Here they move it 3,000 m, within 1.3e-11 of a move of th
 read about the view origin by one subtraction. Measured on 2026-10-05 on one delegate, under the
 lock of the gate, in three interleaved pairs, `0fdcfcfc` first. The page runs at 1200 by 900 px
 under SwiftShader, with antialias, and times 6 s of frames for each scene, as Algebra boundary
-describes. Each figure is the median of the frame callback, in ms:
-
-| Scene | `0fdcfcfc` | View origin |
-|-------|------------|-------------|
-| Opening scene, still | 0.8, 0.8, 0.9 | 0.9, 0.9, 1.0 |
-| Opening scene, orbit | 1.1, 1.0, 1.1 | 1.0, 1.1, 1.1 |
-| 5,038 objects, still | 1.1, 1.2, 1.1 | 1.1, 1.1, 1.1 |
-| 5,038 objects, orbit | 2.3, 2.4, 2.2 | 2.3, 2.2, 2.2 |
+describes. Its median frame callback reads 0.9 to 1.1 ms at the opening scene, against 0.8 to 1.1
+on `0fdcfcfc`. At 5,038 objects it reads 1.1 ms still, against 1.1 to 1.2, and 2.2 to 2.3 ms in
+orbit, against 2.2 to 2.4.
 
 The clock of the page resolves 0.1 ms, so every pair overlaps. The `--timings` of the desktop reads
 300 frames. Its median frame read 5.29, 5.54 and 4.68 ms at the opening scene, against 5.10, 5.01
@@ -3407,8 +3399,8 @@ finger has to dismiss a selection. Touch reaches the sky by a long press.
 which is linear in the scene. While a mouse is the pointer, the frame loop picks in every frame
 after `nimDriveHeld`, as the desktop does. Hover then follows what the camera carries under a still
 cursor, and drops while the camera moves (`interaction.updateHover`). That is one pick in each
-frame, the cost that the desktop pays, measured below. A finger leaves no cursor, so only its move
-marks hover stale, and `nimClearHover` drops hover once it lifts.
+frame, the cost that the desktop pays (Clocks of the driven checks). A finger leaves no cursor, so
+only its move marks hover stale, and `nimClearHover` drops hover once it lifts.
 
 The wheel sums its notches and the loop applies one dolly, the same zoom, because notches compose
 (`interaction.factorWheel`). Rejected: a pick for each notch, at 83.8 ms of picking for six notches
@@ -3475,9 +3467,6 @@ eased its object under a still pointer, and hover named it once the ease arrived
 for twelve frames lit hover in none of them, and hover named the pick again three frames after the
 release. On the frame loop of `main` at `85ccefc1`, the page hovered the ground plane after the
 ease, and through all twelve frames.
-
-Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, and from 15.4 to 4.7
-ms at 10,000. A hover pick is 0.7, 1.6 and 3.5 ms at 60, 360 and 5,038.
 
 ## Interaction model
 
@@ -3644,15 +3633,11 @@ It is **shown by the gestures that pick, and hidden by the ones that build**. Ev
 leaves its result selected, and a menu over each new object would sit in the way of the next drag.
 The listener for a tap outside excludes the canvas, the drawer and the chip row.
 
-*Checked.* Verified by `suites.nim`:
-
-- every cell of the drag table, and the at-most-one property, exhaustively;
-- the click rule;
-- the dwell restarting on movement;
-- the anchor of the preview equal to that of the created object;
-- the ink cycle stepping on release and not on click;
-- the crowd count and the refusal;
-- the re-pivot rules under the wheel and over sky.
+*Checked.* Verified by `suites.nim`: every cell of the drag table, and the at-most-one property,
+exhaustively. It holds the click rule, the dwell restarting on movement, and the anchor of the
+preview equal to that of the created object. It holds the ink cycle stepping on release and not on
+click, and the crowd count and the refusal. It holds the re-pivot rules under the wheel and over
+sky.
 
 Verified by driven checks:
 
@@ -3878,15 +3863,11 @@ drops any open edit session and preview. It is bound to Ctrl or Cmd with Z, Ctrl
 and Z, and Ctrl with Y on both builds. Each build binds them through one function rather than the
 button. The `disabled` attribute of that button is refreshed on the low-cadence tick.
 
-*Checked.* Verified by `suites.nim`:
-
-- a record to capacity and past it, with a walk of every retained step forward and back;
-- a comparison of each state by `scenesEqual`, because the `==` of `Multivector` is an intentional
-  compile error;
-- camera restoration across two edits from two viewpoints;
-- a step either way, which carries the stance across and leaves the field of view alone;
-- a step keeps the picks it still names, in pick order, and drops one whose handle was refilled;
-- Home, which keeps the field of view.
+*Checked.* Verified by `suites.nim`: a record to capacity and past it, with a walk of every retained
+step forward and back. Each state compares by `scenesEqual`, since the `==` of `Multivector` is an
+intentional compile error. The camera is restored across two edits from two viewpoints. A step
+either way carries the stance across, and a step and Home leave the field of view alone. A step
+keeps the picks it still names, in pick order, and drops one whose handle was refilled.
 
 Verified end to end: `--drive-undo` and the browser drive both build, orbit away, undo, and hold the
 view where the construction was made. The browser drive also undoes an edit to one object, and the
@@ -3989,15 +3970,12 @@ is refused.
 **A wrong hue is recoverable, and a refused scene is not.** `loadScene` parses into a staging scene,
 and replaces the caller's only on complete success. It is native-only.
 
-*Checked.* Verified by a cross-read, and not by a round-trip:
-
-- the sixteen-object demo saved, reloaded and compared object for object in creation order;
-- the label, ink, visibility and all sixteen coefficients, 304 scalar comparisons, exactly equal;
-- the desktop re-saving the browser-written file byte-identical, all 2245 bytes;
-- hand-built files of version 1 and version 2 read the same by both parsers;
-- a file one version ahead refused by both;
-- ordinal 15 in a version-1 file refused;
-- the version-6 fold pinned ordinal by ordinal.
+*Checked.* Verified by a cross-read, and not by a round-trip: the sixteen-object demo saved,
+reloaded and compared object for object in creation order. Each label, ink, visibility and all
+sixteen coefficients, 304 scalar comparisons, are exactly equal. The desktop saves the
+browser-written file again byte-identical, all 2245 bytes. Both parsers read hand-built files of
+version 1 and version 2 the same, and refuse a file one version ahead. They refuse ordinal 15 in a
+version-1 file, and the version-6 fold is pinned ordinal by ordinal.
 
 Verified by watching: the seeds arrive over 0.480 s, and the sixteen of the demo over 1.84 s in the
 browser. Verified by `suites.nim`: the on-disk bytes of a known float. Assumed: the big-endian host
@@ -4607,21 +4585,16 @@ selection moves. One cache holds the result in creation order, so the window kee
 cache. The fold is ASCII alone, so `é` does not find `É`. A search stays in force after an add, so a
 new object that does not answer it is not listed. The count shows that a search narrows the list.
 
-*Checked.* Verified by `suites.nim`, on both backends:
+*Checked.* Verified by `suites.nim`, on both backends: each word in either place, folded, and a
+blank search that answers everything. Creation order is kept, each kept row stands where it stands,
+and the matches are counted apart. `addAll` keeps earlier picks where they stand, and adds each new
+handle once, in order. The count reads the same on both builds.
 
-- each word in either place, folded, and a blank search that answers everything;
-- creation order kept, each kept row where it stands, and the matches counted apart;
-- `addAll` keeping earlier picks where they stand, and adding each new handle once, in order;
-- the count reading the same on both builds.
-
-Verified by browser drive (`driveListSearched`, at 5,038 objects):
-
-- `/` with the drawer shut opens the list and focuses the field;
-- a deep label that no other label holds leaves its row alone;
-- `horizon` lists the 4 that the check counts again, and keeps the pick that it does not match;
-- `select all` adds the rows shown after that pick, in the order shown;
-- a search with no match shows its note, above the picks that it keeps;
-- escape clears the field, and a second escape leaves it.
+Verified by browser drive (`driveListSearched`, at 5,038 objects): `/` with the drawer shut opens
+the list and focuses the field. A deep label that no other label holds leaves its row alone.
+`horizon` lists the 4 that the check counts again, and keeps the pick that it does not match.
+`select all` adds the rows shown after that pick, in the order shown. A search with no match shows
+its note above the picks that it keeps. Escape clears the field, and a second escape leaves it.
 
 Verified by `--drive-search`: `/` and a typed label, posted as SDL events, narrow the list of the
 window to the 1 match of 5. A pick made first stays listed, so 2 rows show. A break on purpose,
@@ -4732,12 +4705,8 @@ falls against the frame. The last frame of the speed ramp travels about 6% of th
 allows a tenth between the two rates. The desktop steps its clock by whole frames, and reads them
 equal.
 
-Verified by browser drive:
-
-- real key events;
-- Tab from the canvas moving to the next control and back;
-- a blur mid-hold moving the pivot 0.0000 further;
-- `[]-+` typed into a label reaching the label.
+Verified by browser drive: real key events, and Tab from the canvas moving to the next control and
+back. A blur mid-hold moves the pivot 0.0000 further, and `[]-+` typed into a label reaches it.
 
 **Not demonstrated**: Tab landing on a Dear ImGui widget. A window that never takes focus under
 `xvfb` gives ImGui nothing to move.
@@ -4989,9 +4958,6 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - Far from the world origin, storage steps: by 17 to 35 m two million units out, as at HD 222237 b
   of the demo. A stance that history restores, and the aim of several objects, step with it
   (Origins, Classification at any scale).
-- A pick made from afar reads the place of its object about the view origin where the camera stands.
-  So the pivot lands a world step or so off the object. A probe that is not kept read 176 m at 4.7
-  million units, where doubles step by 139 m, on 2026-10-05. A second pick from near read 0.000 m.
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point that
   it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001. Float32 holds
   about 0.06 of a unit at 530,000 units, and the record stores the vanishing point in it. The near
