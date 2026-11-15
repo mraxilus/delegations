@@ -1,20 +1,30 @@
-## Hold lojban rows of each numbered example of CLL 1.1 that holds one, for corpus suite.
-##   Written by `nim r tools/build.nim cll <directory>` from pages of CLL 1.1, generated
-##   2016-08-26, SHA-256 `5baac481b4483b5efc2099de46b3cdc2`
-##   `4f741db8ee6f6ed41b80a3aad659fa55`; never edit by hand, run verb again.
-##   Extracted from version 1.1 of CLL, book of Logical Language Group; folder holding
-##     module is distributed under notice of book in `NOTICE.md`, never under licence of
-##     repository.
-##   Rows of class `jbo` and `jbophrase` alone: cells of row joined by one space, no-break
-##     space made space, white space collapsed, markup dropped; text otherwise as book
-##     writes it, brackets and notation included.
+## vasru lo jboli'i pe ro mupli poi selna'u ne'i `CLL 1.1` gi'e vasru su'o jboli'i
+##   .i le cipra pe le selci'agri cu tcidu le linji
+##   .i le minde po'u `nim r tools/build.nim cll <directory>` ciska le datnyvei ra'i lo papri be
+##       `CLL 1.1` be'o poi selzba de'i `2016-08-26`
+##   .i lo sinxa be le papri be'o pe `SHA-256` du `5baac481b4483b5efc2099de46b3cdc2` ce'o
+##       `4f741db8ee6f6ed41b80a3aad659fa55`
+##   .i no prenu cu galfi le datnyvei
+##   .i lo cenba cu selzba lo nu rapypli le minde
+##   .i le linji cu se lebna fi `CLL 1.1` noi cukta gi'e seldu'a `Logical Language Group`
+##   .i le datnyveiste poi vasru le vi datnyvei cu selbe'i ja'i le notci pe le cukta zi'e poi zvati
+##       `NOTICE.md`
+##   .i le datnyveiste cu na selbe'i ja'i le crujva pe `delegations`
+##   .i le vi datnyvei cu vasru lo linji pe lo klesi po'u `jbo` .a `jbophrase`
+##   .i le vi datnyvei cu vasru no datli'i
+##   .i ro selci pe pa lijgri cu jorne lo bavla'i selci pa kutle'u
+##   .i lo kutle'u poi fanta lo nu katna le linji cu binxo lo sapkutle'u
+##   .i ro porsi be lo kutle'u cu binxo pa kutle'u
+##   .i lo tcita cu selvi'u
+##   .i va'o lo drata le selci'a cu mintu le selci'a pe le cukta gi'e ralte lo grile'u .e lo sinxa
+##       poi na lojbo
 
 {.experimental: "strictFuncs".}
 
 
-type ExampleCll* = object  ## Define one numbered example of CLL 1.1 by lojban rows it holds.
-  number* {.requiresInit.}: string  ## Number book gives example, as `5.12`.
-  rows* {.requiresInit.}: seq[string]  ## Lojban rows in order of book.
+type ExampleCll* = object  ## skicu pa selnacmupli pe `CLL 1.1` sepi'o lo jboli'i pe le mupli
+  number* {.requiresInit.}: string  ## lo namcu pe le mupli ja'i le cukta mu'u `5.12`
+  rows* {.requiresInit.}: seq[string]  ## lo jboli'i ja'i le porsi pe le cukta
 
 
 const EXAMPLES_CLL* = [
@@ -2308,4 +2318,4 @@ const EXAMPLES_CLL* = [
   ExampleCll(number: "19.82", rows: @["mi cusku zo .djan."]),
   ExampleCll(number: "19.83", rows: @["mi viska le blanu .zdan. sa le xekri zdani"]),
 ]
-  ## Every numbered example of CLL 1.1 holding lojban row, in order of number.
+  ## lo nacpoi be ro mupli poi se namcu ne'i `CLL 1.1` gi'e vasru lo lojbo linji

@@ -108,9 +108,6 @@ func origin*(d: DrawExtent): lent Position = d.scale.origin
 func eye*(d: DrawExtent): Position = d.scale.eye
   ## Read where eye stands, about view origin.
 
-func pivot*(d: DrawExtent): Position = d.scale.pivot
-  ## Read where pivot stands, about view origin.
-
 func radiusHorizon*(d: DrawExtent): float = d.scale.radius_horizon
   ## Read how far out horizon objects are drawn about eye.
 
@@ -710,7 +707,7 @@ proc tessellateObject*(
     Outcome.Horizon
 
   of Case.LineThrough:
-    # Draw two segments meeting at line's point nearest pivot, each running to one of line's
+    # Draw two segments meeting at line's point nearest eye, each running to one of line's
     #   vanishing points.
     #   Vanishing point is `scale.eye` plus or minus `scale.radiusHorizon` along attitude,
     #   exactly where horizon marker draws attitude, so line reaches it with no gap.
@@ -720,9 +717,10 @@ proc tessellateObject*(
     #   lie in plane through eye containing line, which projects to one screen line.
     #   Cost is depth: far ends are displaced along view ray, so occlusion there is
     #   approximate. Rebuilt against current eye every frame, so not part of `Placement`.
-    #   Met nearest pivot, not at support: support, line's point nearest world origin, can
-    #   stand millions of units off, and float32 record stepped from there loses line where
-    #   it passes eye. Line picked far out passes 1e-8 from eye; see PROVENANCE.md.
+    #   Met nearest eye, not at support or pivot: either can stand millions of units off,
+    #   and float32 record stepped from there loses line where it passes eye. Line picked
+    #   far out passes 1e-8 from eye, and pivot zoomed out stands 1e5 off (repository issue
+    #   922). Image is same from any point of line, so meeting sets only precision.
     var far_ahead, far_behind = ORIGIN_WORLD
     timed(Side.Placing):
       let
@@ -732,7 +730,7 @@ proc tessellateObject*(
       far_behind = pointFrom(add(scale.eye_point, wedge(-reach, axis_point)))
     let
       tint_progress = tint.fade(tint.alpha * progress)
-      meeting = positionOnLineNearest(placed.at.toView(scale.origin), placed.toward, scale.pivot)
+      meeting = positionOnLineNearest(placed.at.toView(scale.origin), placed.toward, scale.eye)
     timed(Side.Emitting):
       meshes.addSegment(meeting, far_ahead, tint_progress, WIDTH_LINE_OBJECT)
       meshes.addSegment(meeting, far_behind, tint_progress, WIDTH_LINE_OBJECT)

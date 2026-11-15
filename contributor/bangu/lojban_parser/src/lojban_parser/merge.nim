@@ -1,42 +1,91 @@
-## Merge parts of text from their NIF into NIF one pass gives text they read, so program that
-##   holds NIF alone, as page or fixer, gives tree of one pass (ruling `D1 b` on #859); where
-##   error stays, merge each run of parts around it, and refuse no error (ruling after it there).
+## jmina lo pagbu be lo selci'a ja'i lo selci'a be fi `NIF` be'o pe le pagbu
+##   .i lo jalge cu du lo selci'a be fi `NIF` be'o poi lo nu tcidu le mulselci'a cu dunda ke'a
+##   .i se ki'u bo lo samtci poi ponse lo selci'a be fi `NIF` po'o ku'o mu'u lo papri .a lo cikre cu
+##       dunda lo tricu pe lo nu tcidu le mulno se ciska to `D1 b` pe `#859` toi
+##   .i va'o lo nu lo srera cu stali cu jmina ro porsi be lo pagbu poi sruri le srera ku'o gi'e to'e
+##       curmi no srera to lo seljdi poi se lidne `D1 b` bu'u `#859` toi
 ##
-##   |------------|------------------------------------------------------------------|
-##   | Code       | Meaning                                                          |
-##   |------------|------------------------------------------------------------------|
-##   | toTerminal | class of terminal, read back from its name                       |
-##   | toTree     | node of tree rebuilt from node of NIF, with terminals it holds   |
-##   | MergeNif   | module of trees merge gives, or refusal of NIF that reads not    |
-##   | mergeParts | NIF of trees one pass gives text, from NIF of its parts          |
-##   |------------|------------------------------------------------------------------|
+##   |--------------|--------------------------------------------------------------------------|
+##   | lo cmene     | lo smuni                                                                 |
+##   |--------------|--------------------------------------------------------------------------|
+##   | `toTerminal` | lo klesi be lo genvla be'o poi selraptcidu fi lo cmene be ke'a   |
+##   | `toTree`     | lo jgena pe lo tricu poi selrapyzba fi lo jgena pe `NIF` |
+##   |              | .i ji'a lo genvla poi le jgena cu vasru ke'a                        |
+##   | `MergeNif`   | lo selci'a be fi `NIF` be'o pe lo tricu                     |
+##   |              | .i lo nu jmina cu dunda le tricu                                         |
+##   |              | .i ja lo selci'a be fi `NIF` cu se to'e curmi               |
+##   |              | .i le selci'a na se tcidu                                               |
+##   | `mergeParts` | lo selci'a be fi `NIF` be'o pe lo tricu                     |
+##   |              | .i lo nu tcidu le mulselci'a cu dunda le tricu                       |
+##   |              | .i lo krasi cu du lo selci'a be fi `NIF` be'o pe lo pagbu   |
+##   |--------------|--------------------------------------------------------------------------|
 ##
-##   Parts: each node of module past its directives, as `toNifParts` writes them, and as live
-##     text gives them once each part goes out (`live.nim`).
-##   Rebuild: number of each named rule from its name (`LUT_NUMBER_BY_RULE`), each rule between
-##     two ends of chain from `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag, `'` for `h` of word, save
-##     text `zoi` quotes and written word stream refuses; error node takes byte grammar stops at
-##     as its place (`nif.nim`). Node of shape writer gives not raises `ValueError`, and merge
-##     refuses its module, naming node.
-##   Drop, as one pass reads text (19.13, 19.15): each unit of stage `Erasure`, wherever it
-##     stands; `fa'o` that ends input, and each written word after it; each node of root up to
-##     last `su`, which stands in root alone. Unit there that one pass refuses text for stays,
-##     each in front: unit stream refuses, `si` or `sa` erasing nothing, and `lo'u` no `le'u`
-##     closes, since 19.16 reads them before `su` erases. Unit `lo'u` holds alone tells `le'u`
-##     past it that no `zo` quotes, and no `ZOI` terminal holds, from none (19.9, 19.10).
-##   Merge: run of adjacent parts past last `su` that hold no error node merges to one tree, as
-##     one pass reads text of run: `assembleText` builds it from trees of parts, else grammar
-##     reads terminals whole, and where it stops, error node holds trees of parts, as marked
-##     reading of one pass gives them (`readGrammarMarked`). Unit some
-##     stage refuses stands in lowest node holding units read around it, as marked reading of
-##     one pass places it (`placeRefused` of `prose.nim`), so it parts no run.
-##   Part holding error node of grammar stays as it is, between runs: marked reading of one
-##     pass keeps each part apart under error node, so grammar gives it no place in tree.
-##   So merge gives NIF `readText` writes, byte for byte, where no error stays (`is_whole`),
-##     and tree of each run as one pass reads it where error stays (`test_merge.nim`).
-##   Cost: rebuild and merge grow with length of NIF; grammar reads terminals of run whole only
-##     where rule of passes breaks.
-##   Merge loops by index, since `items` and binding of node copy it on JavaScript backend.
+## ni'o lo pagbu be le selci'a cu du ro jgena poi zvati lo selci'a be fi `NIF` gi'e se lidne lo
+##     minde
+##   .i `toNifParts` ciska le jgena
+##   .i lo mivyselci'a cu dunda le jgena ba lo nu ro pagbu cu se benji to `live.nim` toi
+##
+## ni'o lo nu rapyzba cu cpacu lo namcu pe ro javni poi selcme ku'o lo cmene be le javni to
+##     `LUT_NUMBER_BY_RULE` toi gi'e cpacu ro javni poi zvati lo jbini be le re fanmo be lo porsi
+##     ku'o `LUT_CHAIN_BY_ENDS`
+##   .i `-` basti ro `_` pe lo tcita
+##   .i `'` basti ro `h` pe lo valsi
+##   .i ku'i lo selci'a poi zo zoi sitna ke'a ku'o .e lo selci'avla poi le porsi be lo valsi cu to'e
+##       curmi ke'a stali
+##   .i lo srejge cu ponse lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo stuzi pe vo'a to
+##       `nif.nim` toi
+##
+## ni'o va'o lo nu lo jgena cu ponse lo tarmi poi le ciska na ciska ke'a kei le nu rapyzba cu renro
+##     `ValueError`
+##   .i lo nu jmina cu to'e curmi le selci'a gi'e cusku lo namcu pe le jgena
+##
+## ni'o lo nu jmina cu vimcu lo pagbu ta'i lo nu tcidu le mulno se ciska to `CLL 19.13` .e
+##     `CLL 19.15` toi
+##   .i le nu jmina cu vimcu ro pagbu poi se tcita `Erasure`
+##   .i le pagbu cu ka'e zvati ro stuzi
+##   .i le nu jmina cu vimcu zo fa'o poi fanmo le selci'a ku'o .e ro selci'avla poi se lidne zo fa'o
+##       ku'o .e ro jgena poi zvati lo genja gi'e lidne zo su poi romoi
+##   .i zo su poi romoi cu zvati lo genja po'o
+##
+## ni'o ku'i lo pagbu poi zvati le jgena gi'e rinka lo nu lo nu tcidu le mulselci'a cu to'e curmi le
+##     selci'a cu stali bu'u lo krasi be lo selja'o be lo nu jmina
+##   .i le pagbu cu du lo pagbu poi le porsi be lo valsi cu to'e curmi ke'a ku'o .a zo si .a zo sa
+##       poi vimcu no da ku'o .a zo lo'u poi no zo le'u fanmo ke'a
+##   .i ki'u bo ja'i `CLL 19.16` le genturfa'i cu tcidu le pagbu pu lo nu zo su vimcu
+##   .i lo pagbu poi vasru zo lo'u po'o jarco lo du'u xu kau zo le'u se lidne le pagbu gi'e se sitna
+##       no zo zo gi'e selvau no genvla pe `ZOI` to `CLL 19.9` .e `CLL 19.10` toi
+##
+## ni'o ro porsi be lo pagbu poi lamji gi'e se lidne zo su poi romoi ku'o gi'e vasru no srejge cu se
+##     jmina fo pa tricu ta'i lo nu tcidu lo mulselci'a pe le porsi
+##   .i `assembleText` zbasu le tricu lo tricu pe ro pagbu
+##   .i va'o lo drata le gerna cu tcidu ro genvla pe le porsi ca pa nu tcidu
+##   .i va'o lo nu le gerna cu sisti kei pa srejge cu vasru lo tricu pe ro pagbu ta'i lo nu le se
+##       tcidu poi sinxa ro srera ca lo nu tcidu le mulselci'a cu dunda le tricu to
+##       `readGrammarMarked` toi
+##
+## ni'o ro pagbu poi su'o velru'e cu to'e curmi ke'a zvati lo jgena poi traji lo ka dizlo kei gi'e
+##     vasru lo pagbu poi se tcidu gi'e sruri le se to'e curmi ku'o ku'o ta'i lo nu le se tcidu poi
+##     sinxa ro srera ca lo nu tcidu le mulselci'a cu punji le se to'e curmi to `placeRefused` pe
+##     `prose.nim` toi
+##   .i se ki'u bo le se to'e curmi cu fendi no porsi
+##
+## ni'o lo pagbu poi vasru pa srejge pe le gerna cu stali gi'e na cenba gi'e zvati lo jbini be lo
+##     porsi
+##   .i le se tcidu poi sinxa ro srera ca lo nu tcidu le mulselci'a cu ralte ro le pagbu ta'i lo nu
+##       sepli kei ne'i pa srejge
+##   .i se ki'u bo le gerna cu dunda no stuzi pe le tricu le pagbu
+##   .i se ki'u bo va'o lo nu no srera cu stali kei lo nu jmina cu dunda lo selci'a be fi `NIF` be'o
+##       poi mintu le selci'a be `readText` be'o fi ro lerfu to `is_whole` toi
+##   .i va'o lo nu lo srera cu stali kei le nu jmina cu dunda lo tricu pe ro porsi ta'i lo nu tcidu
+##       le mulselci'a pe le porsi to `test_merge.nim` toi
+##
+## ni'o jdima fa lo nu lo temci be lo nu rapyzba .e lo nu jmina cu zenba ca lo nu lo selci'a be fi
+##     `NIF` cu zenba lo ka clani
+##   .i le gerna cu tcidu ro genvla pe pa porsi ca pa nu tcidu va'o lo nu le javni pe le so'i nu
+##       tcidu cu spofu kei po'o
+##   .i lo nu jmina cu rapli ja'i lo namcu pe lo jgena
+##   .i ki'u bo `items` .e lo nu cmene lo jgena cu zbasu lo fukpi be le jgena va'o lo nu fanva fi
+##       `JavaScript`
 
 {.experimental: "strictFuncs".}
 
@@ -46,33 +95,47 @@ import ./[dictionary, grammar, nif, nif_read, prose, selmaho, tanru]
 
 
 type
-  MergeNif* = object  ## Define outcome of merge of parts: module of trees, or refusal of NIF.
+  MergeNif* = object
+    ## lo jalge be lo nu jmina lo pagbu
+    ##   .i le jalge cu du lo selci'a be fi `NIF` be'o pe lo tricu ge'u .a lo nu to'e curmi lo
+    ##       selci'a be fi `NIF`
     case is_merged*: bool
     of true:
       nif*: string
-        ## Module of NIF of merge: each unit before last `su` one pass refuses text for, then
-        ##   tree of each run of parts that holds no error node, and each part that holds one,
-        ##   in order of text, each on line of its own.
+        ## lo selci'a be fi `NIF` be'o pe lo nu jmina
+        ##   .i ro pagbu poi lidne zo su poi romoi ku'o gi'e rinka lo nu lo nu tcidu le mulselci'a
+        ##       cu to'e curmi le selci'a cu lidne ro datyjge
+        ##   .i le datyjge cu du lo tricu pe ro porsi be lo pagbu poi vasru no srejge ge'u .e ro
+        ##       pagbu poi vasru pa srejge ku'o gi'e porsi ta'i le selci'a
+        ##   .i ro jgena cu zvati lo linji pe vo'a
       is_whole*: bool
-        ## Module holds one tree, and no error node nor unit refused: NIF `readText` writes.
+        ## le selci'a cu vasru pa tricu .e no srejge .e no pagbu poi se to'e curmi ku'o gi'e du lo
+        ##     selci'a be `readText`
     of false:
       part*: Option[int]
-        ## Node of module refused, counted from 0 past directives; none where NIF reads not.
-      reason*: string  ## What NIF should hold.
+        ## lo namcu pe lo jgena poi se to'e curmi
+        ##   .i li no cu krasi lo nu kancu lo jgena poi se lidne lo minde
+        ##   .i va'o lo nu le selci'a na se tcidu kei le datnypau cu kunti
+      reason*: string  ## lo seltcu be le selci'a be fi `NIF`
 
 
 const
-  DIRECTIVES = 2  ## Directives module opens with, version and language (`HEADER`).
-  ERASERS = {Selmaho.Si, Selmaho.Sa}  ## Selma'o of cmavo erasing word before it (19.13).
+  DIRECTIVES = 2
+    ## lo klani be lo minde poi krasi lo selci'a be fi `NIF`
+    ##   .i le minde cu cusku lo namcu pe le tarmi .e lo bangu to `HEADER` toi
+  ERASERS = {Selmaho.Si, Selmaho.Sa}
+    ## lo selma'o be lo cmavo poi vimcu lo valsi poi lidne le cmavo to `CLL 19.13` toi
   QUOTERS = {Selmaho.Zo, Selmaho.Zoi}
-    ## Selma'o of cmavo quoting word after it, or of terminal holding words it quotes: `le'u`
-    ##   either holds closes no `lo'u` (19.9, 19.10).
+    ## lo selma'o be lo cmavo poi sitna lo valsi poi se lidne le cmavo
+    ##   .i ji'a lo selma'o be lo genvla poi vasru lo valsi poi le genvla cu sitna ke'a
+    ##   .i zo le'u poi pa le re klesi cu vasru ke'a fanmo no zo lo'u to `CLL 19.9` .e `CLL 19.10`
+    ##       toi
 
 
 
 func toTerminal*(name: string): Terminal =
-  ## Read class of terminal back from its name, as `KOhA` or `BRIVLA`; `ValueError` where it
-  ##   names none.
+  ## raptcidu lo klesi be lo genvla be'o fi lo cmene be le klesi mu'u `KOhA` .a `BRIVLA`
+  ##   .i va'o lo nu le cmene cu cmene no klesi kei renro `ValueError`
   if name == $TERMINAL_BRIVLA: return TERMINAL_BRIVLA
   if name == $TERMINAL_CMENE: return TERMINAL_CMENE
   let named = name.toSelmaho
@@ -82,12 +145,21 @@ func toTerminal*(name: string): Terminal =
 
 
 func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
-  ## Rebuild node of tree from node of NIF: number of named rule from its name, and each chain
-  ##   from its two ends by `LUT_CHAIN_BY_ENDS`, number of rule opening it and name of rule
-  ##   closing it, `-` for each `_` of tag; terminal adds class and words to `terminals`, `'`
-  ##   for each `h` of word, and third string of `ZOI` as it is. Error node takes byte grammar
-  ##   stops at as its place; unit `rivbi` adds `rivbi` and its identifiers, and keeps letters
-  ##   of stage `Stream` as they are. `ValueError` where node holds no shape `nif.nim` writes.
+  ## rapyzba lo jgena pe lo tricu lo jgena pe `NIF`
+  ##   .i le fancu cu cpacu lo namcu pe lo javni poi selcme ku'o lo cmene be le javni gi'e cpacu ro
+  ##       porsi le re fanmo be le porsi sepi'o `LUT_CHAIN_BY_ENDS`
+  ##   .i le re fanmo cu du lo namcu pe lo javni poi krasi le porsi ku'o .e lo cmene be lo javni poi
+  ##       fanmo le porsi
+  ##   .i `-` basti ro `_` pe lo tcita
+  ##
+  ## ni'o lo genvla cu jmina lo klesi .e lo valsi `terminals`
+  ##   .i `'` basti ro `h` pe lo valsi
+  ##   .i ku'i lo cimoi lerpoi pe `ZOI` stali
+  ##
+  ## ni'o lo srejge cu ponse lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo stuzi pe vo'a
+  ##   .i lo pagbu poi se tcita `rivbi` jmina `rivbi` .e lo cmene pe vo'a
+  ##   .i va'o lo nu le velru'e cu du `Stream` kei lo lerfu cu stali
+  ##   .i va'o lo nu le jgena cu vasru no tarmi poi `nif.nim` ciska ke'a kei renro `ValueError`
   template refuse(shape: string) =
     raise newException(ValueError, "Node `" & node.text & "` of NIF should hold " & shape & ".")
 
@@ -152,20 +224,25 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
 
 
 func isUnit(node: NodeNif, stage: string): bool =
-  ## Decide whether node of NIF is unit no terminal holds, of stage `stage`.
+  ## jdice lo du'u lo jgena pe `NIF` du lo pagbu poi no genvla cu vasru ke'a zi'e poi se tcita
+  ##     `stage`
   node.kind == KindNif.Compound and node.text == TAG_UNREAD and node.children.len > 0 and
     node.children[0].kind == KindNif.Identifier and node.children[0].text == stage
 
 
 func isCmavo(literal: string, selmahos: set[Selmaho]): bool =
-  ## Decide whether literal of NIF spells cmavo of selma'o of `selmahos`, `h` read as `'`.
+  ## jdice lo du'u lo lerpoi pe `NIF` ciska lo cmavo be pa selma'o pe `selmahos`
+  ##   .i `h` se tcidu ta'i `'`
   let named = literal.replace('h', '\'').selmaho
   named.isSome and named.get in selmahos
 
 
 func isDropped(node: NodeNif): bool =
-  ## Decide whether node is unit one pass holds no word of: words erasure erases, with cmavo
-  ##   erasing them; `fa'o` that ends input; written word after it.
+  ## jdice lo du'u le jgena cu du lo pagbu poi lo nu tcidu le mulselci'a cu ralte no valsi pe ke'a
+  ##   .i le pagbu cu vasru lo valsi poi lo nu vimcu cu vimcu ke'a ku'o .e lo cmavo poi vimcu le
+  ##       valsi
+  ##   .i ja le pagbu cu vasru zo fa'o poi fanmo le selci'a
+  ##   .i ja le pagbu cu vasru lo selci'avla poi se lidne zo fa'o
   node.isUnit(RefusalText.Erasure.spelling) or node.isUnit(RefusalText.Faho.spelling) or (
     node.isUnit(RefusalText.Stream.spelling) and node.children.len > 1 and
     node.children[1].text == Refusal.Faho.spelling
@@ -173,7 +250,8 @@ func isDropped(node: NodeNif): bool =
 
 
 func isHoldingError(node: NodeNif): bool =
-  ## Decide whether node of NIF holds error node of grammar, at any depth.
+  ## jdice lo du'u lo jgena pe `NIF` vasru pa srejge pe le gerna
+  ##   .i lo ni le srejge cu dizlo cu na vajni
   if node.kind != KindNif.Compound: return false
   if node.text == TAG_ERROR: return true
   for k in 0 ..< node.children.len:
@@ -181,44 +259,63 @@ func isHoldingError(node: NodeNif): bool =
 
 
 func reach(node: NodeNif): int =
-  ## Give byte past last word node of NIF holds, at any depth; 0 where it holds none.
+  ## dunda lo stuzi poi se lidne lo romoi valsi poi lo jgena pe `NIF` vasru ke'a
+  ##   .i lo ni le valsi cu dizlo cu na vajni
+  ##   .i va'o lo nu le jgena cu vasru no valsi kei dunda li no
   if node.kind != KindNif.Compound: return 0
   for k in 0 ..< node.children.len:
     template child: untyped = node.children[k]
-      ## Alias node, which `let` would copy on JavaScript backend.
+      ## datcme le jgena
+      ##   .i `let` zbasu lo fukpi be le jgena va'o lo nu fanva fi `JavaScript`
     if child.kind == KindNif.Literal and k >= 1 and node.children[k - 1].kind == KindNif.Number:
       result = max(result, node.children[k - 1].number)
     elif child.kind == KindNif.Compound: result = max(result, child.reach)
 
 
 func isRefused(terminal: TerminalNif): bool =
-  ## Decide whether terminal NIF gave back is unit no terminal holds, which some stage refuses.
+  ## jdice lo du'u lo genvla poi `NIF` dunda ke'a du lo pagbu poi no genvla cu vasru ke'a
+  ##   .i su'o velru'e cu to'e curmi le pagbu
   terminal.terminal.startsWith(TAG_UNREAD)
 
 
 func mergedRun(
     trees: openArray[Node], span: Slice[int], terminals: openArray[TerminalNif], ending: int
 ): Node =
-  ## Merge run of trees rebuilt from parts that hold no error node into one tree, as marked
-  ##   reading of one pass reads their text, whose terminals are `span`: grammar reads
-  ##   terminals that read, and each unit some stage refuses stands in lowest node holding
-  ##   units read around it (`placeRefused` of `prose.nim`). Where trees of parts build no
-  ##   tree, grammar reads terminals whole, and where it stops, error node holds trees of parts
-  ##   (`readGrammarMarked`); it stops at byte where its terminal opens, or at `ending`.
+  ## jmina lo porsi be lo tricu poi selrapyzba fi lo pagbu poi vasru no srejge be'o fo pa tricu ta'i
+  ##     lo nu le se tcidu poi sinxa ro srera ca lo nu tcidu le mulselci'a cu tcidu lo selci'a pe le
+  ##     tricu
+  ##   .i lo genvla pe le selci'a cu du `span`
+  ##   .i le gerna cu tcidu lo genvla poi se tcidu
+  ##   .i ro pagbu poi su'o velru'e cu to'e curmi ke'a zvati lo jgena poi traji lo ka dizlo kei gi'e
+  ##       vasru lo pagbu poi se tcidu gi'e sruri le se to'e curmi to `placeRefused` pe `prose.nim`
+  ##       toi
+  ##
+  ## ni'o va'o lo nu lo tricu pe lo pagbu cu zbasu no tricu kei le gerna cu tcidu ro genvla ca pa nu
+  ##     tcidu
+  ##   .i va'o lo nu le gerna cu sisti kei pa srejge cu vasru lo tricu pe ro pagbu to
+  ##       `readGrammarMarked` toi
+  ##   .i le gerna cu sisti bu'u lo stuzi poi lo genvla pe le nu sisti cu krasi bu'u ke'a ku'o .a
+  ##       `ending`
   func indexed(node: Node, indexes: openArray[int], is_kept: openArray[bool]): Node =
-    ## Give node with each leaf `is_kept` refuses left out, and each other leaf at `indexes`.
+    ## dunda lo fukpi be le jgena
+    ##   .i ro pezli poi `is_kept` to'e curmi ke'a selvi'u
+    ##   .i ro datpezli cu ponse lo namcu pe `indexes`
     if node.is_terminal: return Node(is_terminal: true, at: indexes[node.at])
     result = Node(is_terminal: false, rule: node.rule, number: node.number, stop: node.stop)
     for k in 0 ..< node.children.len:
       template child: untyped = node.children[k]
-        ## Alias node, which `let` would copy on JavaScript backend.
+        ## datcme le jgena
+        ##   .i `let` zbasu lo fukpi be le jgena va'o lo nu fanva fi `JavaScript`
       if not child.is_terminal or is_kept[child.at]:
         result.children.add child.indexed(indexes, is_kept)
 
   func placed(node: var Node, globals: openArray[int], terminals: openArray[TerminalNif],
       ending: int) =
-    ## Index each leaf of node among terminals by `globals`, and give each place grammar stops
-    ##   at as byte where its terminal opens, or `ending` past last terminal, as NIF writes it.
+    ## galfi lo namcu pe ro pezli pe le jgena lo namcu pe lo genvla ja'i `globals` gi'e dunda ro
+    ##     stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo stuzi poi lo genvla pe le nu sisti cu
+    ##     krasi bu'u ke'a
+    ##   .i va'o lo nu le gerna cu sisti ba lo romoi gerna valsi kei dunda `ending`
+    ##   .i `NIF` ciska le stuzi ta'i le mintu
     if node.is_terminal:
       node.at = globals[node.at]
       return
@@ -229,9 +326,9 @@ func mergedRun(
     for k in 0 ..< node.children.len: node.children[k].placed(globals, terminals, ending)
 
   var
-    reads = newSeq[bool](terminals.len)  # terminal of grammar, by index
-    indexes = newSeq[int](terminals.len)  # index among terminals read, by index
-    globals: seq[int]  # index of each terminal read, in order
+    reads = newSeq[bool](terminals.len)  # lo genvla pe le gerna ja'i lo namcu
+    indexes = newSeq[int](terminals.len)  # lo namcu ne'i lo se tcidu ja'i lo namcu
+    globals: seq[int]  # lo namcu pe ro genvla poi se tcidu ku'o ta'i lo porsi
     classes: seq[Terminal]
   for g in span:
     if terminals[g].isRefused: continue
@@ -243,23 +340,34 @@ func mergedRun(
     let is_unit = trees[k].is_terminal and not reads[trees[k].at]
     if not is_unit: parts.add trees[k].indexed(indexes, reads)
   let built = classes.assembleText(parts)
-  result = (if built.isSome: built.get else: classes.readGrammarMarked)  # copy: `move` breaks JS
+  # lo fukpi
+  #   .i `move` spofu `JS`
+  result = (if built.isSome: built.get else: classes.readGrammarMarked)
   result.placed(globals, terminals, ending)
   result.placeRefused(reads, span)
 
 
 func mergeParts*(nif: string): MergeNif =
-  ## Give NIF of trees one pass gives text, from NIF of its parts, as `toNifParts` writes it and
-  ##   live text gives it: drop each unit one pass holds no word of, and each node of root up to
-  ##   last `su`, save unit one pass refuses text for; merge each run of parts that holds no
-  ##   error node, as one pass reads it, and keep each part that holds one as it is.
+  ## zbasu lo selci'a be fi `NIF` be'o pe lo tricu poi lo nu tcidu le mulselci'a cu dunda ke'a ge'u
+  ##     lo selci'a be fi `NIF` be'o pe lo pagbu be le selci'a
+  ##   .i `toNifParts` .e lo mivyselci'a cu dunda le selci'a pe le pagbu
+  ##
+  ## ni'o le fancu cu vimcu ro pagbu poi lo nu tcidu le mulselci'a cu ralte no valsi pe ke'a ku'o .e
+  ##     ro jgena poi zvati lo genja gi'e lidne zo su poi romoi
+  ##   .i ku'i le fancu na vimcu lo pagbu poi rinka lo nu lo nu tcidu le mulselci'a cu to'e curmi le
+  ##       selci'a
+  ##   .i le fancu cu jmina ro porsi be lo pagbu poi vasru no srejge ku'o ta'i lo nu tcidu le
+  ##       mulselci'a kei gi'e ralte ro pagbu poi vasru pa srejge ku'o gi'e na galfi le pagbu
   func refused(part: Option[int], reason: string): MergeNif =
     MergeNif(is_merged: false, part: part, reason: reason)
 
   func addCloser(node: NodeNif, closer: var Option[int], is_quoted_next: var bool) =
-    ## Walk words node holds, in order of text, keeping in `closer` byte where last `le'u`
-    ##   opens that may close `lo'u` as stream reads text: no `zo` before it quotes it, and no
-    ##   `ZOI` terminal holds it (19.9, 19.10). `is_quoted_next` holds whether word before quotes.
+    ## klama fo ro valsi poi le jgena cu vasru ke'a ku'o ta'i lo porsi pe le selci'a
+    ##   .i le fancu cu ralte ne'i `closer` lo stuzi poi zo le'u poi romoi gi'e ka'e fanmo zo lo'u
+    ##       ta'i lo nu le porsi be lo valsi cu tcidu le selci'a cu krasi bu'u ke'a
+    ##   .i no zo zo poi lidne zo le'u sitna zo le'u
+    ##   .i no genvla pe `ZOI` vasru zo le'u to `CLL 19.9` .e `CLL 19.10` toi
+    ##   .i `is_quoted_next` jarco lo du'u xu kau lo valsi poi lidne cu sitna
     if node.kind != KindNif.Compound: return
     if node.children.len == 0 or node.children[^1].kind != KindNif.Literal:
       for k in 0 ..< node.children.len: node.children[k].addCloser(closer, is_quoted_next)
@@ -268,26 +376,33 @@ func mergeParts*(nif: string): MergeNif =
     for k in 2 ..< node.children.len:
       if node.children[k].kind != KindNif.Literal: continue
       template literal: untyped = node.children[k].text
-        ## Alias letters of word, which `let` would copy on JavaScript backend.
+        ## datcme lo lerfu pe le valsi
+        ##   .i `let` zbasu lo fukpi be le lerfu va'o lo nu fanva fi `JavaScript`
       if not (is_quoting or is_quoted_next) and literal.isCmavo({Selmaho.Lehu}):
         closer = some(node.children[k - 2].number)
       is_quoted_next = is_quoting or literal.isCmavo(QUOTERS)
 
   func addFatal(node: NodeNif, closer: Option[int], units: var seq[NodeNif]) =
-    ## Add each unit node holds that one pass refuses text for, though `su` past it erases it:
-    ##   unit stream refuses, `si` or `sa` erasing nothing, or `lo'u` no `le'u` closes, as no
-    ##   `le'u` past it that `closer` gives stands: stream reads `su` after it as word it quotes.
+    ## jmina ro pagbu poi le jgena cu vasru ke'a zi'e poi rinka lo nu lo nu tcidu le mulselci'a cu
+    ##     to'e curmi le selci'a ku'o `units`
+    ##   .i ku'i zo su poi se lidne le pagbu cu vimcu le pagbu
+    ##   .i le pagbu cu du lo pagbu poi le porsi be lo valsi cu to'e curmi ke'a ku'o .a zo si .a zo
+    ##       sa poi vimcu no da ku'o .a zo lo'u poi no zo le'u fanmo ke'a
+    ##   .i zo lo'u na selfa'o va'o lo nu no zo le'u poi `closer` dunda ke'a se lidne zo lo'u
+    ##   .i ki'u bo le porsi be lo valsi cu tcidu zo su poi se lidne zo lo'u ta'i lo valsi poi zo
+    ##       lo'u sitna ke'a
     if node.kind != KindNif.Compound or node.isDropped: return
     if node.text != TAG_UNREAD:
       for k in 0 ..< node.children.len: node.children[k].addFatal(closer, units)
       return
     if node.children.len == 0: return
-    var start = 0  # first byte unit writes, past its identifiers
+    var start = 0  # lo pamoi stuzi pe le pagbu zi'e poi se lidne lo cmene pe le pagbu
     while start < node.children.len and node.children[start].kind != KindNif.Number: inc start
-    var is_closed = false  # unit holds `le'u`, or `le'u` stands past it
+    var is_closed = false  # zo le'u selvau le pagbu gi'a se lidne le pagbu
     for k in start ..< node.children.len:
       template child: untyped = node.children[k]
-        ## Alias node, which `let` would copy on JavaScript backend.
+        ## datcme le jgena
+        ##   .i `let` zbasu lo fukpi be le jgena va'o lo nu fanva fi `JavaScript`
       if child.kind == KindNif.Literal and child.text.isCmavo({Selmaho.Lehu}): is_closed = true
     if start < node.children.len:
       is_closed = is_closed or (closer.isSome and closer.get > node.children[start].number)
@@ -302,7 +417,9 @@ func mergeParts*(nif: string): MergeNif =
     if is_fatal: units.add node
 
   func kept(node: NodeNif): NodeNif =
-    ## Give node with each unit one pass holds no word of left out, at any depth.
+    ## dunda lo fukpi be le jgena
+    ##   .i ro pagbu poi lo nu tcidu le mulselci'a cu ralte no valsi pe ke'a selvi'u
+    ##   .i lo ni le pagbu cu dizlo cu na vajni
     result = NodeNif(kind: node.kind, text: node.text, number: node.number)
     for k in 0 ..< node.children.len:
       if not node.children[k].isDropped: result.children.add node.children[k].kept
@@ -313,7 +430,9 @@ func mergeParts*(nif: string): MergeNif =
   try: module = nif.readModule
   except ValueError as error: return refused(none(int), error.msg)
 
-  # Last `su` of root: nodes before it stand in text it erases, save unit one pass refuses.
+  # zo su poi romoi ne'i lo genja
+  #   .i ro jgena poi lidne zo su zvati lo selci'a poi zo su vimcu ke'a
+  #   .i ku'i lo pagbu poi lo nu tcidu le mulselci'a cu to'e curmi ke'a stali
   var
     su = DIRECTIVES - 1
     closer = none(int)
@@ -323,17 +442,21 @@ func mergeParts*(nif: string): MergeNif =
     if module[k].isUnit(RefusalText.Su.spelling): su = k
     module[k].addCloser(closer, is_quoted_next)
   for k in DIRECTIVES ..< su: module[k].addFatal(closer, fatal)
-  var faho = none(int)  # byte where `fa'o` that ends input opens
+  var faho = none(int)  # lo stuzi poi zo fa'o poi fanmo le selci'a cu krasi bu'u ke'a
   for k in su + 1 ..< module.len:
     let is_faho = module[k].isUnit(RefusalText.Faho.spelling) and module[k].children.len > 1 and
       module[k].children[1].kind == KindNif.Number
     if is_faho and faho.isNone: faho = some(module[k].children[1].number)
 
-  # Rebuild each unit kept before `su`, then each node past it, each class of terminal read.
+  # rapyzba ro pagbu poi lidne zo su gi'e stali
+  #   .i ba bo rapyzba ro jgena poi se lidne zo su
+  #   .i ro klesi be lo genvla cu se tcidu
   var
     terminals: seq[TerminalNif]
     rebuilt: seq[tuple[tree: Node, span: Slice[int], has_error: bool, reach: int]]
-      # reach: byte past last word node holds, or unit dropped after it
+      # `reach`
+      #   .i lo stuzi poi se lidne lo romoi valsi pe le jgena .a lo pagbu poi selvi'u gi'e se lidne
+      #       le jgena
   for k in 0 ..< fatal.len:
     let first = terminals.len
     try: rebuilt.add (fatal[k].toTree(terminals), first ..< terminals.len, true, 0)
@@ -353,14 +476,20 @@ func mergeParts*(nif: string): MergeNif =
         if not terminals[g].isRefused: discard terminals[g].terminal.toTerminal
     except ValueError as error: return refused(some(k - DIRECTIVES), error.msg)
 
-  # Merge each run of nodes that hold no error node; keep each that holds one as it is. Grammar
-  #   that stops past last terminal of run stops at `fa'o` past it, else past last word of run,
-  #   erased words among them, as marked reading stops where text ends.
+  # jmina ro porsi be lo jgena poi vasru no srejge
+  #   .i ralte ro jgena poi vasru pa srejge ku'o gi'e na galfi le jgena
+  #
+  # ni'o va'o lo nu le gerna cu sisti ba lo romoi gerna valsi pe le porsi kei le gerna cu sisti bu'u
+  #     zo fa'o poi se lidne le porsi
+  #   .i va'o lo drata le gerna cu sisti bu'u lo stuzi poi se lidne lo romoi valsi pe le porsi
+  #   .i lo valsi poi selvi'u cu se kancu ji'a
+  #   .i le se tcidu poi sinxa ro srera cu sisti ta'i le mintu bu'u lo stuzi poi le selci'a cu fanmo
+  #       bu'u ke'a
   var
     trees: seq[Node]
     run: seq[Node]
-    span = 0 ..< 0  # terminals of run
-    ending = 0  # byte past last word of run
+    span = 0 ..< 0  # lo genvla pe le porsi
+    ending = 0  # lo stuzi poi se lidne lo romoi valsi pe le porsi
   for k in 0 .. rebuilt.len:
     if k < rebuilt.len and not rebuilt[k].has_error:
       if run.len == 0: (span, ending) = (rebuilt[k].span, 0)
@@ -373,6 +502,7 @@ func mergeParts*(nif: string): MergeNif =
       trees.add run.mergedRun(span, terminals, ending)
       run.setLen(0)
     if k < rebuilt.len: trees.add rebuilt[k].tree
-  var is_whole = trees.len == 1 and trees[0].stop.isNone  # error node of run stands at root
+  # lo srejge pe lo porsi cu zvati lo genja
+  var is_whole = trees.len == 1 and trees[0].stop.isNone
   for m in 0 ..< terminals.len: is_whole = is_whole and not terminals[m].isRefused
   MergeNif(is_merged: true, nif: trees.toNif(LeavesNif(terminals: terminals)), is_whole: is_whole)
