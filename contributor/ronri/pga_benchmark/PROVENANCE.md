@@ -1546,7 +1546,7 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`, and at the pin they are from 2026-10-11 on `linux amd64, 4 cores`.
+under `taken`, and at the pin they are from 2026-10-28 on `linux amd64, 4 cores`.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
 the machine code of one function. The times of the point forms of Lengyel's code are
