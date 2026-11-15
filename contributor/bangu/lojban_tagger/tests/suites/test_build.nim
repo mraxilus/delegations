@@ -11,7 +11,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, sequtils, strutils, unittest]
+import std/[os, osproc, random, sequtils, strutils, unittest]
 
 from ../../tools/build {.all.} import SYSTEM
 
@@ -23,6 +23,16 @@ const
     ## Each entry of checkout that driver may read beside nimble file; `dependencies/` is none.
   PATH_NIM = getCurrentCompilerExe()  ## Compiler that builds this suite, which runs driver too.
   FLOOR_PACKAGES = 6  ## Least packages `system` prints: 6 printed on 2026-11-15.
+  SEED_NAMES = 939  ## Seed of names of project folder that copy is tried under.
+  COUNT_NAMES_SEEDED = 32  ## Seeded names tried beside old name and new one.
+  LENGTH_NAME_MAX = 16  ## Longest seeded name, first letter included.
+
+
+proc nameFolder(rng: var Rand): string =
+  ## Draw name of project folder of form `[a-z][a-z0-9_]*`, as audit takes it.
+  const CHARS = {'a' .. 'z', '0' .. '9', '_'}
+  result.add rng.sample({'a' .. 'z'})
+  for _ in 2 .. rng.rand(1 .. LENGTH_NAME_MAX): result.add rng.sample(CHARS)
 
 
 func pathsCopied(directory: string): seq[string] =
@@ -63,23 +73,29 @@ suite "Driver before restore of packages":
     check "protobuf-compiler" in printed
 
 
-  test "Copy holds nimble file of project whose folder takes another name, as move gives":
+  test "Copy holds nimble file of project under each folder name, as move gives":
     ## Regression of #939, as found on 2026-11-15: on branch that moves this folder to
     ##   `contributor/bangu/rictadni`, copy stopped with
     ##   `OSError: No such file or directory: …/rictadni/lojban_tagger.nimble`.
-    let
-      root = getTempDir() / ("lojban_tagger_folders_" & $getCurrentProcessId())
-      source = root / "rictadni"
-      target = root / "copy"
+    ##   Domain: old name, new name, and seeded names of form `[a-z][a-z0-9_]*`.
+    var
+      rng = initRand(SEED_NAMES)
+      names = @["lojban_tagger", "rictadni"]
+      missing: seq[string]
+    for _ in 1 .. COUNT_NAMES_SEEDED: names.add rng.nameFolder
+    let root = getTempDir() / ("lojban_tagger_folders_" & $getCurrentProcessId())
     removeDir(root)
-    for path in ["app", "src", "tools"]: createDir(source / path)
-    for path in ["atlas.config", "atlas.lock", "nim.cfg", "rictadni.nimble"]:
-      writeFile(source / path, "")
-    var is_copied = false
-    try:
-      copyProject(source, target)
-      is_copied = fileExists(target / "rictadni.nimble")
-    except OSError as error:
-      checkpoint "refused: " & error.msg
+    for name in names:
+      let (source, target) = (root / "source" / name, root / "target" / name)
+      for path in ["app", "src", "tools"]: createDir(source / path)
+      for path in ["atlas.config", "atlas.lock", "nim.cfg", name & ".nimble"]:
+        writeFile(source / path, "")
+      try:
+        copyProject(source, target)
+        if not fileExists(target / (name & ".nimble")): missing.add name
+      except OSError as error:
+        missing.add name & ": " & error.msg
     removeDir(root)
-    check is_copied
+    checkpoint "missing: " & missing.join(", ")
+    check names.len == 2 + COUNT_NAMES_SEEDED
+    check missing.len == 0
