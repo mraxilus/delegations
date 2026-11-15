@@ -2336,6 +2336,20 @@ suiteInProc "Internal: Evaluations":
     check functionsChanged(before, held).len == 1  # dense form built and moved
 
 
+  test "instance whose number alone moved is no moved function, where one whose counts moved is":
+    let
+      counts = %*{"total": {"multiplies": 3}, "movement": {"bytes_moved": 8}}
+      other = %*{"total": {"multiplies": 4}, "movement": {"bytes_moved": 8}}
+      before = %*{"functions": {"f(M)": counts, "f(M)#u7695": counts}}
+      renumbered = %*{"functions": {"f(M)": counts, "f(M)#u8687": counts}}
+      changed = %*{"functions": {"f(M)": counts, "f(M)#u8687": other}}
+      moved = functionsChanged(before, changed)
+    check functionsChanged(before, renumbered).len == 0  # compiler numbered instance again
+    check moved.len == 2  # counts differ, so instance reads gone and new
+    check moved["f(M)#u7695"]["after"].kind == JNull  # gone under number of pin
+    check moved["f(M)#u8687"]["before"].kind == JNull  # new under number of change
+
+
   test "digest moves with edits, claims and programs, and never with prose":
     let
       edit = Edit(path: "pga/a.nim", quote: "x", replacement: "y")
