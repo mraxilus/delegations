@@ -66,6 +66,7 @@ import ./curator/audit/src/[
   findings,
   fixes,
   hooks,
+  lags,
   merge,
   plan,
   projects,
@@ -345,10 +346,15 @@ proc runHook(root, event, input: string): int =
     }}
     0
   of "start":
-    var drift: seq[Finding]
+    var
+      drift: seq[Finding]
+      notices: seq[string]
     try:
       discard fieldsGit(root, ["fetch", "-q", "origin", MAIN])
       drift = checkBase(readDrift(root, "origin/" & MAIN))
+    except CatchableError: discard
+    # Commits of lock that lag `main` read what fetch brought, or what checkout held before.
+    try: notices = noticesLag(readLags(root, "origin/" & MAIN), "origin/" & MAIN)
     except CatchableError: discard
     # Record branch works on is read where it exists; new project has none until it writes one.
     #   File of role is read same way, in `readPrompt`, where suite reaches it.
@@ -360,6 +366,7 @@ proc runHook(root, event, input: string): int =
       "## Carry the unchecked list in the open",
       if record.len > 0 and fileExists(root / record): readFile(root / record) else: "",
       drift,
+      notices,
     )
     0
   of "push":
@@ -414,6 +421,8 @@ proc checkInPlace(options: Options; branch, base: string): int =
   #   branch changed blocks it wherever it lies; rest blocks here.
   let (held, own) = splitHeld(branch, found, linesOwned(options.root, tree, base))
   held.reportHeld
+  # Commit of lock that lags `main` is named, and fails nothing (D2 of #927); start prints same.
+  for line in noticesLag(readLags(options.root, "origin/" & MAIN), "origin/" & MAIN): echo line
   if own.len > 0:
     own.report
     echo "Types, suites and drive not run; fix findings above, then run again."
