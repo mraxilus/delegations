@@ -2350,12 +2350,13 @@ sphere still turns the view. `radiusHeld` takes the reach of the selection from 
 `reachAimed` reads off the aim that framed it. It is no less than a third of the short side at the
 depth of the pivot, and inside the eye's distance to the pivot.
 
-**A right drag in free flight carries the depth it grabbed, one pixel for one.** `grabPan` takes
-that depth at the press, while hover still reads what the pointer is over, or the depth of the pivot
-over nothing. `panAcross` slides the camera square to the sight, by what one pixel spans at that
-depth. A point at that depth then stays under the cursor, at any canvas height and field of view.
-Rejected: a fixed share of the distance to the pivot for each pixel, which matched the cursor at one
-canvas height alone. It ran 1.74 times the cursor on 900 px at 45 degrees.
+**A right drag in free flight carries the depth it grabbed, one pixel for one.** At the press,
+`grabPan` takes the depth under the pointer, or over nothing the reach of the point that the last
+zoom took. `panAcross` slides the camera square to the sight, so a point at that depth stays under
+the cursor. Rejected: a fixed share of the distance to the pivot for each pixel, which ran 1.74
+times the cursor on 900 px at 45 degrees. Rejected in D1 of #910: the pivot's depth, which key
+flight carries along, and the local scale, which a star out of view can set. Ten home distances
+back, a pan at the pivot's depth moves what the last zoom took by 0.091 of the pointer.
 
 **A right drag with a selection turns across as a left drag along the row of the pivot.** The turn
 goes first, through `turnFollowing`, for the same travel along that row. So the turn for each pixel
@@ -2399,7 +2400,9 @@ with the pivot 19 away. On the middle column the dolly moves alone, and returns 
 - a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
 - an orbit passes over the top and a look under its feet, and a drag goes through the pole;
 - a right drag carries a point held at 2.5, 19 and 4,000 units to its pixel, within 0.01 px;
-- a right drag takes the depth under the pointer, or the pivot's over nothing;
+- a right drag takes the depth under the pointer, or over nothing the reach that the last zoom took;
+- ten home distances back, a right drag over empty sky carries the point that the last zoom took to
+  its pixel, within 0.01 px;
 - a right drag with a selection turns as a left drag along the pivot's row, for the same travel. Its
   point's height scales as the pointer's does, within 0.01 px, on both sides of the row. A level
   drag zooms nothing, inside the band or outside it;
@@ -4931,10 +4934,7 @@ A pan asks the focus to move with the pointer. The verdict reads that share alon
 the same bounds, and `still` under 0.02. A round trip is `returned` where the eye ends within a
 hundredth of a home distance of its start, and `off` further out. The figure says how far it moved.
 
-The open comparison is D1 of #910: the depth that a pan holds, where it begins over empty sky. Its
-scenes stand the eye back from what it watches, as a key flight leaves it. Verified on 2026-11-15
-in Chromium at 1200 by 900: under b, the focus moved 0.984 to 1 of the pointer in each of five
-scenes. The first comparison, D1 of #846, stands in the history of `src/browser/mockup.nim`.
+No comparison is open. Each closed comparison stands in the history of `src/browser/mockup.nim`.
 
 ## Testing
 
