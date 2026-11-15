@@ -73,6 +73,7 @@
 import std/[json, options, os, sequtils, strutils, uri]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
+from ./prompts import HEADING_READ
 from ./toolchain import DIRECTORY_DRIVER
 from ./tree import checkoutAt
 
@@ -1937,8 +1938,14 @@ func pathRecord*(branch: string): string =
 func pathPrompt*(branch: string): string =
   ## Read path of file of role branch names, whose reading order `start` prints; empty outside
   ##   grammar.
-  ##   TODO: Stub names no file until start prints reading order of role; koch reads it already.
-  discard
+  ##   Curator root and one curator project read CURATOR.md, and contributor CONTRIBUTOR.md.
+  ##   Coordinator holds no branch, so it reads as branch outside grammar and gets no reading
+  ##     order until its trial, as Architect ruled on #891.
+  let parsed = branch.parseBranch
+  if parsed.isNone: return ""
+  case parsed.get.role
+  of Role.Curator, Role.CuratorProject: "CURATOR.md"
+  of Role.Contributor: "CONTRIBUTOR.md"
 
 
 func contextStart*(
@@ -1946,8 +1953,9 @@ func contextStart*(
 ): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, headings
   ##   of record, list.
-  ##   Prompt is text of file `pathPrompt` names; empty outside grammar.
-  ##     TODO: Stub prints copy of reading order until it prints section of `prompt`.
+  ##   Prompt is text of file `pathPrompt` names; empty outside grammar. Read order is its section
+  ##     under `HEADING_READ`, whole, so list lives in file of role alone. Line naming file opens
+  ##     it, since item `This file to the end` names no file out of its document.
   ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
   ##   that shows them, so start asks for new stamp only where finding does.
   ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
@@ -1959,10 +1967,11 @@ func contextStart*(
     lines.add "Branch `" & branch & "` is outside grammar; push to `curator/<name>`, " &
       "`curator/<project>/<name>` or `contributor/<domain>/<project>/<name>` (CLAUDE.md)."
   else:
-    let name_prompt = if parsed.get.role == Role.Contributor: "CONTRIBUTOR.md" else: "CURATOR.md"
     lines.add "Role: " & parsed.get.nameRole & ", on branch `" & branch & "`."
-    lines.add "Read first: CONSTITUTION.md, STYLE.md, GLOSSARY.md, then " & name_prompt &
-      ", then GUIDE.md."
+    lines.add ""
+    lines.add "Read first, from `" & branch.pathPrompt & "`:"
+    lines.add prompt.section(HEADING_READ).strip
+    lines.add ""
   if drift.len > 0:
     lines.add "Base changed charter or checker since this branch forked; read each change " &
       "below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
