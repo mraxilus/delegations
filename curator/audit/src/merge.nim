@@ -11,8 +11,9 @@
 ##     leaves HEAD at tip of branch, so `linesOwned` diffs merged tree from old fork and reads
 ##     lines base gained as branch's.
 ##   Merge is read by `merge-tree --write-tree` before second tree moves, so conflict leaves it
-##     as it was. Conflict is finding asking for merge of base; GitHub runs no `pull_request`
-##     workflow on conflicting pull request, so runner agrees.
+##     as it was. Conflict is finding asking for merge of base. Assumed from GitHub
+##     documentation: GitHub runs no `pull_request` workflow on conflicting pull request, so
+##     runner agrees.
 ##   Second tree stays, so ignored state suites restore there, as `dependencies/`,
 ##     `node_modules/` and `build/`, is restored once. Checkout is forced and untracked files
 ##     are cleaned, ignored ones kept, so tree holds merge exactly. Clean runs only where git
@@ -26,15 +27,19 @@
 ##     merge of commits misses, and no mark is written. Checkout holding base is
 ##     its own merge, so it is judged in place too. Koch of merge is handed commit of base, which
 ##     its HEAD holds, so it judges in place and never merges again.
+##   Detached HEAD records no mark on either path, since no branch holds its tree; second tree
+##     is detached, so its own run records none.
 ##
 ##   Cost: conflict blocks each push, since no mark is written.
 ##   Cost: hooks, `koch fix` and `koch stamp` keep checker of branch until it merges base.
 ##   Cost: second tree holds one more checkout and what suites restore there; cold build of koch
 ##     follows each change of checker on base.
 ##   Cost: two runs of `koch check` at once in one checkout share one second tree.
-##   Cost: `merge-tree --write-tree` needs git 2.38 or newer.
-##   Cost: move of checkout breaks link of second tree, as of each worktree; `git worktree
-##     repair`, or removal of its folder, mends it.
+##   Cost: `merge-tree --write-tree` needs git 2.38 or newer. Assumed from release notes of git
+##     2.38.0, which add that mode.
+##   Cost: move of main checkout breaks link of its second tree; `git worktree repair <second
+##     tree>` in checkout mends it, and bare `repair` does not. Moved linked worktree keeps
+##     second tree, since git dir holding it stays.
 
 {.experimental: "strictFuncs".}
 

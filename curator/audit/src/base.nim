@@ -8,8 +8,15 @@
 ##   Only two kinds of path matter. Charter (`RULES`) holds rules of content, which move stamp
 ##     every project claims, and sections of process, which move none yet say what delegate
 ##     does; delegate forgets both, so every change of charter reaches each older branch
-##     (#843). Code of stamp (`PATH_STAMP`) is checker code, yet change there moves every
-##     stamp, and `koch stamp` of older branch would write old one.
+##     (#843). Module of stamp (`PATH_STAMP`) holds `RULES`, `SECTIONS_PROCESS` and digest,
+##     whose change moves every stamp, and `koch stamp` of older branch would write old one.
+##     Same module holds checks of record too (`checkProvenance`, `checkCitations`,
+##     `isDateIso`), and path cannot tell which part moved, so drift names each change of it.
+##   Cost: edit of module of stamp that moves no stamp still sends each older branch to merge
+##     base (`curator/audit/PROVENANCE.md`, Drift, counts such merges).
+##   Cost: `sections` of `markdown.nim` cuts each document for stamp (`textStamped`), yet drift
+##     names no change of it. Where one moves stamp, check of merge reports stale stamp in
+##     record that branch wrote, and `koch stamp` of branch writes old one, until it merges base.
 ##   Rest of checker is no governing path (#893): `koch check` judges branch as merged with
 ##     base, by koch of that merge (`merge.nim`), as runner judges merge ref, so branch is
 ##     measured by ruler of base, and drift of it bought parity alone. Cost: hooks, `koch fix`
@@ -43,8 +50,9 @@ import ./[findings, markdown, plan, provenance, tree]
 
 
 const PATH_STAMP* = DIRECTORY_CHECKER & "/provenance.nim"
-  ## Module of stamp, holding `RULES`, `SECTIONS_PROCESS` and digest; checker code, yet change
-  ##   there moves every stamp, so drift names it beside charter.
+  ## Module of stamp, holding `RULES`, `SECTIONS_PROCESS` and digest beside checks of record;
+  ##   change of first three moves every stamp, so drift names each change of module beside
+  ##   charter.
 
 
 static:
