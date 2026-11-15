@@ -165,7 +165,7 @@ of pin but for an integer part number, and it keeps the import of `./cayleys`.
 - **P03, `partner-sign`, and P11, `unitize-general`.** Neither edits a line here. A test that P11
   adds to suite Internal compares two multivectors through the public `=~`, as
   `abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`. So that test reads this rule once both land. A run
-  by hand on 2026-10-19 applied this proposal and P11 to a copy of the library at pin. The suites
+  by hand on 2026-11-15 applied this proposal and P11 to a copy of the library at pin. The suites
   passed at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits.
 - **Two zero tests.** P11 keeps its own grade scan in `^∘`, at the comparison tolerance times the
   largest coefficient. So once both land, `grade` and `^∘` can read one element differently. That
