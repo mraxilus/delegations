@@ -100,6 +100,7 @@ suite "Role":
       "got `" & MARKER.shortened & "`, `" & CREDIT.shortened & "`, `Stray line.` above " &
         "`**Role:** curator`.",
     )  # whole block quoted, each line cut
+    check LINES_QUOTED == 4  # twice block of Claude Code, marker then credit
     var many = ""
     for i in 0 .. LINES_QUOTED: many.add "line " & $i & "\n"
     let quoted = checkRole("curator/mend-it", many & "**Role:** curator\n", ["curator"])
@@ -107,6 +108,12 @@ suite "Role":
       "`line " & $(LINES_QUOTED - 1) & "`, … above `**Role:** curator`.",
     )
     check "`line " & $LINES_QUOTED & "`" notin quoted[0].message  # quote cut at bound
+    var exact = ""  # as many lines above role line as quote holds
+    for i in 0..<LINES_QUOTED: exact.add "line " & $i & "\n"
+    let whole = checkRole("curator/mend-it", exact & "**Role:** curator\n", ["curator"])
+    check whole[0].message.endsWith(
+      "got `line 0`, `line 1`, `line 2`, `line 3` above `**Role:** curator`.",
+    )  # quote reaches bound, and shows no cut
     let fenced = checkRole("curator/mend-it", "## What\n\n```md\n**Role:** curator\n```\n", [])
     check fenced[0].message.endsWith("got `## What`.")  # role line in fence is example only
 
