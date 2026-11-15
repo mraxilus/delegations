@@ -58,6 +58,8 @@ suite "Article VI":
     check found[0].message.endsWith("got `" & DIRECTORY_PARSER & "/" & SUITE & "`.")
     let written = tree.with(entry(DIRECTORY_PARSER & "/" & SUITE, "## Hold prose.\n"))
     check written.checkProjectsProseOwn([demanding]).len == 0  # suite present
+    let elsewhere = tree.with(entry(DIRECTORY_AUDIT & "/" & SUITE, "## Hold prose.\n"))
+    check elsewhere.checkProjectsProseOwn([demanding]).len == 1  # same name elsewhere holds none
     var waiting = demanding
     waiting.should_demand_suite = false
     check tree.checkProjectsProseOwn([waiting]).len == 0  # suite not demanded yet
@@ -68,3 +70,15 @@ suite "Article VI":
     #   naming file that does not exist, and each test above would still pass.
     let root = currentSourcePath().parentDir.parentDir.parentDir.parentDir.parentDir
     check fileExists(root / PATH_PROSE_OWN)  # constant leads to this module
+
+
+  test "VI.5, VI.8 entry demands its suite once its project holds it":
+    # Entry that demands no suite gives no finding where tree lacks its suite, so suite could go
+    #   unseen; demand follows suite once tree holds it.
+    let root = currentSourcePath().parentDir.parentDir.parentDir.parentDir.parentDir
+    var held = 0  # Entries whose project holds its suite, so loop checks at least one.
+    for p in PROJECTS_PROSE_OWN:
+      if fileExists(root / p.directory / p.suite):
+        inc held
+        check p.should_demand_suite  # suite present, so audit demands it
+    check held >= 1  # floor: suite of lojban_parser stands in tree
