@@ -275,8 +275,9 @@ suite "Role":
   test "body shows at most 2500 characters while each fold is closed, link by its text (#845)":
     let
       form = bodyPull("**Role:** curator")
-      full = form & "x".repeat(CHARACTERS_BODY - (form & "x").textShown.runeLen + 1)
+      full = form & "é".repeat(CHARACTERS_BODY - (form & "é").textShown.runeLen + 1)
     check full.textShown.runeLen == CHARACTERS_BODY
+    check full.textShown.len > CHARACTERS_BODY  # `é` takes two bytes, so count reads characters
     check checkBodyPull(full).len == 0
     check checkBodyPull(full & "x").mapIt(it.message) == @[
       "Pull request body shows at most 2500 characters while each fold is closed, with each " &
