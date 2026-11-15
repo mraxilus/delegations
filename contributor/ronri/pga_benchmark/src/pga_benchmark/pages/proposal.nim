@@ -120,7 +120,10 @@ func htmlProposal*(
       case claim{"kind"}.getStr
       of "suites": "library's own suites pass on changed library" & defined
       of "tables": $claim{"pairs"}.len & " tables equal pristine ones cell for cell at " & algebras
-      of "program": code(claim{"path"}.getStr) & " compiles and runs clean at " & algebras & defined
+      of "program":
+        let backend = if claim{"backend"}.getStr == "js": " on JS" else: ""
+        code(claim{"path"}.getStr) & " compiles and runs clean" & backend & " at " & algebras &
+            defined
       of "count": code(claim{"measurand"}.getStr) & " spends " & $claim{"value"}.getInt & " " &
           claim{"metric"}.getStr & " at " & claim{"algebra"}.getStr
       of "build":

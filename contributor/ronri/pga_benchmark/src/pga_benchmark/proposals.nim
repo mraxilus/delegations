@@ -25,6 +25,8 @@
 ##     memory or seconds compiler reports).
 ##   `suites` or `program` claim may name `defines`, each `name=value`, and its builds pass each
 ##     as `-d:`, so claim holds at build option other than library's default.
+##   `program` claim may name `backend`, `c` or `js`; JS builds for Node, which `-r` runs, so
+##     program can count what JS backend does, such as its copies.
 ##
 ##   Argument has one shape, so every page reads in same order: summary of three labelled
 ##     paragraphs, what it is, is for and costs; then sections Problem, Idea, Alternatives,
@@ -73,6 +75,7 @@ const
   KINDS_CLAIM* = ["suites", "tables", "program", "count", "build"]
     ## Claim kinds evaluation knows how to check.
   KINDS_DEFINED = ["suites", "program"]  ## Claim kinds whose builds take defines of their own.
+  BACKENDS = ["c", "js"]  ## Backends `program` claim can build on; C where it names none.
   WIDTH_NUMBER = 2  ## Digits number is written with, zero-padded, in path and citation.
   WORDS_STATUS = ["proposed", "implemented", "withdrawn"]
     ## Status as `claims.json` spells it, in `StatusProposal` order.
@@ -248,6 +251,14 @@ func parseProposal*(
             $defines & "`.",
       )
       continue
+    let backend = claim{"backend"}
+    if not backend.isNil and (kind != "program" or backend.kind != JString or
+        backend.getStr notin BACKENDS):
+      findings.add Finding(
+        path: directory & "/claims.json",
+        message: "Backend needs `program` claim, and `c` or `js`; got `" & $backend & "`.",
+      )
+      continue
     proposal.claims.add claim
   (proposal, findings)
 
@@ -255,6 +266,16 @@ func parseProposal*(
 func flagsDefine*(claim: JsonNode): seq[string] =
   ## Spell defines claim names as compiler flags, in order; none where it names none.
   for define in claim{"defines"}.getElems: result.add "-d:" & define.getStr
+
+
+func commandBackend*(claim: JsonNode): seq[string] =
+  ## Spell compiler command of backend claim names, with its defines; C where it names none.
+  if claim{"backend"}.getStr == "js": @["js", "-d:nodejs"] else: @["c"]
+
+
+func extensionBackend*(claim: JsonNode): string =
+  ## Spell extension of program backend claim names emits; Node reads script by `.js`.
+  if claim{"backend"}.getStr == "js": ".js" else: ""
 
 
 func programs*(proposal: Proposal): seq[string] =

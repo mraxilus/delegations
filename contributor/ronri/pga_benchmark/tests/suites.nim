@@ -2190,6 +2190,26 @@ suiteInProc "Internal: Proposals":
     check parseProposal(record_sign, "", unformed, directory_sign)[1].len == 2  # each form
 
 
+  test "program claim builds on backend it names, JS under Node; backend elsewhere is finding":
+    let
+      named = %*{"status": "proposed", "builds_on": [], "claims": [
+        {"kind": "program", "path": "p.nim", "algebras": ["rga4d"], "backend": "js"},
+        {"kind": "program", "path": "q.nim", "algebras": ["rga4d"], "backend": "c"}]}
+      (proposal, findings) = parseProposal(record_sign, "", named, directory_sign)
+      misplaced = %*{"status": "proposed", "builds_on": [], "claims": [
+        {"kind": "suites", "backend": "js"}]}
+      unknown = %*{"status": "proposed", "builds_on": [], "claims": [
+        {"kind": "program", "path": "p.nim", "algebras": ["rga4d"], "backend": "wasm"}]}
+    check findings.len == 0 and proposal.claims.len == 2  # both backends known
+    check commandBackend(proposal.claims[0]) == @["js", "-d:nodejs"]  # JS runs under Node
+    check commandBackend(proposal.claims[1]) == @["c"]
+    check commandBackend(%*{"kind": "program"}) == @["c"]  # claim naming none builds C
+    check extensionBackend(proposal.claims[0]) == ".js"  # Node reads script by extension
+    check extensionBackend(proposal.claims[1]) == ""
+    check parseProposal(record_sign, "", misplaced, directory_sign)[1].len == 1  # other kind
+    check parseProposal(record_sign, "", unknown, directory_sign)[1].len == 1  # two backends
+
+
   test "path without number, title without citation and unknown status are findings":
     let
       claims = %*{"status": "proposed", "builds_on": [], "claims": []}
@@ -2413,14 +2433,16 @@ suiteInProc "Internal: Figures":
     check inline.figure("proposals/01-p").isNone  # image inside sentence stays text
 
 
-  test "proposal page names each define its claims build with":
+  test "proposal page names each define and backend its claims build with":
     let
       record = Proposal(number: 1, name: "p", directory: "proposals/01-p", title: "P",
         claims: newJArray())
       evaluation = %*{"algebras": {}, "claims": [
         {"kind": "suites", "defines": ["pga.float_width=32"], "passed": true, "detail": []},
         {"kind": "program", "path": "w.nim", "algebras": ["rga4d"], "passed": true,
-          "detail": []}]}
+          "detail": []},
+        {"kind": "program", "path": "j.nim", "algebras": ["rga4d"], "backend": "js",
+          "passed": true, "detail": []}]}
       body = bodyProposal(
         record,
         [record],
@@ -2435,6 +2457,7 @@ suiteInProc "Internal: Figures":
       )
     check ("changed library, with " & code("pga.float_width=32")) in body  # define named
     check ("runs clean at rga4d</li>") in body  # claim naming none reads as before
+    check ("runs clean on JS at rga4d</li>") in body  # backend named where claim names JS
 
 
   test "proposal page embeds SVG figure names, with caption beneath":
