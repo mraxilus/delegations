@@ -325,7 +325,7 @@ suite "Hooks":
       .len == 0  # no branch holds coordinator, so none is compared
     let no_role = "Hello.\n" & foot
     check checkBody("mcp__github__add_issue_comment", BRANCH, "", no_role, [], false)
-      .messages[0].contains("must open with `" & ROLE & "`")
+      .messages[0] == "Post must open with `" & ROLE & "`; got `Hello.`."  # opening alone
     let noted = "<!-- note -->\n" & ROLE & "\n\nOne short claim.\n"
     check checkBody("mcp__github__add_issue_comment", BRANCH, "", noted, [], false).messages ==
       @["Post must open with `" & ROLE & "`; got `<!-- note -->` above `" & ROLE & "`."]

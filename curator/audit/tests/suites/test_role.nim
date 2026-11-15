@@ -140,10 +140,10 @@ suite "Role":
 
 
   test "missing, unfilled and mismatched opening each report once":
-    let bare = checkRole("curator/mend-it", "## Intent\n", ["curator"])
+    let bare = checkRole("curator/mend-it", "## Intent\n\nText.\n", ["curator"])
     check bare.len == 1
     check bare[0].path.len == 0  # branch-level, no file to open
-    check bare[0].message.endsWith("got `## Intent`.")
+    check bare[0].message.endsWith("got `## Intent`.")  # no role line, so opening alone
     check checkRole(
       "curator/mend-it", "**Role:** <!-- curator, or contributor -->\n", ["curator"]
     ).len == 1  # template opened and left unfilled
@@ -156,7 +156,9 @@ suite "Role":
       "curator/mend-it", "**Role:** curator\n", ["curator", "contributor/ronri/alpha"]
     ).len == 0  # label joins when work hands across
     # Job `label` adds label before `check-role` reads list (#845), so empty list is fault too.
-    for labels in [newSeq[string](), @["curator/audit"]]:  # none, and near miss
+    for labels in [
+      newSeq[string](), @["curator/audit"], @["curator/audit", "architect"],
+    ]:  # none, near miss, and two that miss, each echoed whole
       let found = checkRole("curator/mend-it", "**Role:** curator\n", labels)
       check found.len == 1
       check found[0].message == "Pull request must carry label `curator`, which job `label` of " &
