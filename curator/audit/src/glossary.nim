@@ -165,8 +165,12 @@ func isLineImport(line: string): bool =
   ##   Import names file and holds no prose, and Claude Code loads none inside code, so it
   ##     stands outside backticks, as `@AGENTS.md` of `CLAUDE.md` does. Import inside sentence
   ##     stays prose.
+  ##   Path holds `/` or `.` before its last character, so word alone after `@`, as `@agents`
+  ##     or `@agents.`, names no file and stays prose.
+  ##   Cost: import of file at root with no extension reads as prose; repository holds none.
   let s = line.strip
-  s.len > 1 and s[0] == '@' and s.find(Whitespace) < 0
+  if s.len < 2 or s[0] != '@' or s.find(Whitespace) >= 0: return false
+  s[1 ..< ^1].find({'.', '/'}) >= 0
 
 
 func checkWordsPeople*(path, source: string): seq[Finding] =
