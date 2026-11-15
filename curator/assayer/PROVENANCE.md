@@ -24,7 +24,7 @@ command that testament builds by default. Read in `testament/testament.nim` of N
 
 **Assayer requires knoller as a package, at one commit of `main` that `atlas.lock` pins.**
 Knoller holds the toolchain that serves each pin (`compilers.nim`) and the reader of a pin
-(`pins.nim`). Assayer imports those two modules by the name of the package, and no import leads
+(`pins.nim`). Assayer imports `compilers` and `pins` by the name of the package, and no import leads
 into this repository. So assayer builds wherever Atlas can fetch that commit, and needs no checkout
 of this repository, as knoller needs none.
 
@@ -37,7 +37,11 @@ of this repository, as knoller needs none.
   from a checkout of this repository alone.
 - Cost: a change to knoller reaches assayer only when the lock moves to a newer commit. So a change
   to knoller selects no test of assayer, and a move of the lock selects one. The suite of the plan
-  in `curator/audit` holds both, over the tree of this repository.
+  in `curator/audit` holds both, on a fixture of the case.
+- Verified by `suites/test_imports.nim`, a copy of the suite of knoller. Each import of `src/`
+  names the standard library, a module of `src/`, or knoller. Each import of `tests/` stays inside
+  the project too, and each search path of `nim.cfg` reads a folder under `dependencies/`.
+  Against the imports by path that assayer held, the suite fails at each of them.
 
 **The requirement names knoller alone, and `atlas.config` names where knoller lives.** Knoller
 sits in the folder `curator/knoller` of this repository. The name override of `atlas.config` maps
@@ -311,13 +315,10 @@ knoller of its lock with its own compiler, so its suites verify that pair.
 
 Each rules change is audited against this project in the pull request that makes it, and the
 `Rules` row above then moves. This record and the README use Simplified Technical English
-(Article VI.8). The project holds Nim, Markdown, a nimble file, `nim.cfg`, and the two files of
-Atlas. It holds no page, node manifest or system package beyond the compiler and git.
+(Article VI.8). The project holds Nim, Markdown, a nimble file, `nim.cfg`, `atlas.config` and
+`atlas.lock`. It holds no page, node manifest or system package beyond the compiler and git.
 
 ## Open questions
 
-- No suite of assayer holds each import to the standard library, `src/` and knoller, as
-  `test_imports.nim` of knoller holds its own. The suite of the plan in `curator/audit` holds the
-  imports of knoller alone, and a change to assayer does not run it.
 - No verb of koch calls assayer, and no charter allows one file under several configurations
   (Article IX.7, STYLE.md §6). Both are decisions for later.
