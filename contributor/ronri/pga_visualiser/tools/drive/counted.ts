@@ -31,7 +31,7 @@ interface BuildCounted {
 const BUILD_BASELINE: BuildCounted = {
   chromium: '153.0.8010.12',
   flags: FLAGS_ENGINE_COUNTED,
-  nim: '27763495bcfe265507ca98aedc1c7064bf1e0e4d',
+  nim: '2.4.0',
 };
 
 /** Copies and calls of one marker and its pulse for each object of opening scene.
@@ -39,11 +39,11 @@ const BUILD_BASELINE: BuildCounted = {
  *  Each baseline is repair's count, and band is zero; readings, and fault's, are in
  *  `PROVENANCE.md`. Count under baseline passes, and baseline is then counted again.
  */
-const COPIES_MARKER = 15883; // Fault: outline summed sample by sample.
-const CALLS_MARKER = 48642;
+const COPIES_MARKER = 15887; // Fault: outline summed sample by sample.
+const CALLS_MARKER = 48653;
 
 /** Calls, copies and bytes lattice adds to `FRAMES_LATTICE` frames of moving camera. */
-const CALLS_LATTICE = 4817506; // Fault: fade sampled at each boundary.
+const CALLS_LATTICE = 4817497; // Fault: fade sampled at each boundary.
 const COPIES_LATTICE = 356725; // Pins copy any change adds, as library's `+` added one per sum.
 const BYTES_LATTICE = 219136;
 
@@ -53,8 +53,8 @@ const BYTES_LATTICE = 219136;
  *  span above reads it, as move of library pin can. Opening scene holds points and plane.
  */
 const FRAMES_PICKED = [
-  { kind: 'point', calls: 29591, copies: 4808 },
-  { kind: 'plane', calls: 96476, copies: 9874 },
+  { kind: 'point', calls: 31511, copies: 4876 },
+  { kind: 'plane', calls: 101952, copies: 10038 },
 ];
 
 /** Frames page draws after pick before one is counted, so pick's own first frames pass. */
@@ -167,9 +167,13 @@ async function sitesCopy(devtools: CDPSession, calls: Calls, apart?: Calls): Pro
   return `${inside.length} copy sites in the ${reached.length} functions reached`;
 }
 
-/** Read build counted page runs: browser's version, engine flags, and pinned compiler. */
+/** Read build counted page runs: browser's version, engine flags, and pinned compiler.
+ *
+ *  Compiler pin is release or commit, as `GUIDE.md`, Toolchain, allows both.
+ */
 function buildRunning(version: string): BuildCounted {
-  const pinned = /requires "nim == ([0-9a-f]{40})"/.exec(readFileSync(PATH_NIMBLE, 'utf8'));
+  const pinned = /requires "nim == ([0-9a-f]{40}|[0-9]+\.[0-9]+\.[0-9]+)"/
+    .exec(readFileSync(PATH_NIMBLE, 'utf8'));
   return { chromium: version, flags: FLAGS_ENGINE_COUNTED, nim: pinned?.[1] ?? 'unread' };
 }
 
