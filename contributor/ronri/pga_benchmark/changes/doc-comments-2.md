@@ -26,13 +26,9 @@ Two proposals edit lines that this change quotes:
   P10 lands first, the edit of this change that adds a line to the doc of `sqrt` is void. If this
   change lands first, P10 quotes that line.
 
-Two proposals make a line of this change false. Of this change and each of them, the second to
-land drops that line:
-
-- P03, `partner-sign`, reads no grade in the partner. Then the clause `` `⊛` calls it per object``
-  that this change adds to the doc of `grade` is false.
-- P12, `cayley-cells`, holds each cell of a table in place. Then the comment that this change
-  writes beside `export cayleys`, on a read that allocates, is false.
+P03, `partner-sign`, reads no grade in the partner. Then the clause `` `⊛` calls it per object``
+that this change adds to the doc of `grade` is false. Of this change and P03, the second to land
+drops that clause.
 
 ## Edit `pga.nim`
 
@@ -42,7 +38,7 @@ export algebra, cayleys, multivectors, operators
 
 ```nim
 export algebra, multivectors, operators
-export cayleys  # tables are compile-time values; reading one at runtime allocates
+export cayleys  # tables are compile-time values, exposed for inspection
 ```
 
 ## Edit `pga.nim`
@@ -77,7 +73,7 @@ when IS_RIGID:
 
 ```nim
 #   Library encodes bases as single decimal digits, so 9D is encoding ceiling.
-#   Enforced limit below is 6D: beyond it C compile time dominates build.
+#   Enforced limit below is 6D.
 ```
 
 ## Edit `pga/algebra.nim`
@@ -115,17 +111,6 @@ when IS_RIGID:
     ##   Nested and mutating by design: builds each dimension from one below it.
 ```
 
-## Edit `pga/algebra.nim`
-
-```nim
-  ## Alias (anti)antiscalar's (anti)grade index (where antiantiscalar is scalar).
-```
-
-```nim
-  ## Alias (anti)antiscalar's (anti)grade index (where antiantiscalar is scalar).
-  ##   Rigid twin of `infinity` below is `Basis.scalarAnti`, used as horizon.
-```
-
 ## Edit `pga/cayleys.nim`
 
 ```nim
@@ -134,7 +119,7 @@ when IS_RIGID:
 
 ```nim
   Chiral*[T] = object
-    ## Pair tables by operation orientation; left is built but unread today.
+    ## Pair values by operation orientation; nothing reads left tables of `CAYLEYS_INTERIOR`.
 ```
 
 ## Edit `pga/cayleys.nim`
@@ -155,19 +140,20 @@ when IS_RIGID:
 
 ```nim
   ## Get complement of basis (right by default).
-  ##   Complement is exterior product with antibasis, made executable.
+  ##   Antibasis of vectors absent from `b`, signed so 𝐛 ∧ 𝐛̅ = 𝟙 (right) or 𝐛̲ ∧ 𝐛 = 𝟙 (left).
 ```
 
 ## Edit `pga/cayleys.nim`
 
 ```nim
 ): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
+  ## Perform exterior product of two bases, reducing to its standard basis form.
 ```
 
 ```nim
 ): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
   ## Perform exterior product of two bases, reducing to its standard basis form.
-  ##   Parity argument below is proof; keep it with code.
+  ##   Parity comment below states method and its reason; keep it with code.
 ```
 
 ## Edit `pga/emitters.nim`
@@ -179,7 +165,7 @@ when IS_RIGID:
 ```nim
 ## AST emitters shared by operator macros, constructor generator and type definitions.
 ##   `emitFunc` builds `func` node with doc comment first in body, so `nim doc` renders it;
-##     its `pragma` argument is where `{.inline.}` would go for every generated operator.
+##     its `pragma` argument carries `{.inline, noinit.}` of operators, and none of constructors.
 ```
 
 ## Edit `pga/multivectors.nim`
@@ -254,7 +240,7 @@ import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
 
 ```nim
 import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
-  # Open imports reach private symbols; same narrowing as operators.nim would apply.
+  # `{.all.}` reaches private `BasisDigits`, its `$` and `toBasisName`, for suite "Internal".
 ```
 
 ## Edit `tests/suites.nim`
@@ -267,5 +253,5 @@ func sqrt(m: Multivector): MultivectorScalars =
 ```nim
 func sqrt(m: Multivector): MultivectorScalars =
   ## Find square root of dual number, i.e. √𝐦.
-  ##   Test scaffolding, deliberately independent of library norms.
+  ##   Test stand-in until library carries homogeneous scalars, per TODO above.
 ```
