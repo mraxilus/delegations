@@ -1,13 +1,13 @@
 # Package description read by Atlas and nimble; requirements live here (Article II.8).
-#   Lojban is read through `lojban_parser`, sibling project of this repository, imported
-#   by relative path as `curator/audit` imports knoller: parser exists to understand
-#   lojban, and this project to tag and search by it, so neither repeats other (II.8,
-#   II.9). Path, not package: both stand at one commit, so no lock line pins parser.
+#   Lojban is read through `lojban_parser`, sibling project of this repository: parser exists
+#   to understand lojban, and this project to tag and search by it, so neither repeats other
+#   (II.8, II.9). Parser is package, at commit of `main` that `atlas.lock` holds, and
+#   `atlas.config` names repository and folder it lives in, since requirement reads no folder:
+#   import by path breaks wherever either folder moves (`PROVENANCE.md`, Reading through
+#   lojban_parser).
 #   `protobuf_serialization` of Status reads and writes exchange files of `suggester`:
 #   data one program writes and another reads is Protocol Buffers (CONTRIBUTOR.md, Data),
 #   external concern, so package; `atlas.lock` pins it with each package it needs.
-#   Trap: `atlas.lock` keeps each line as JSON string, indented, quote escaped, so line
-#   stays within 91 characters, quote counting twice, and copy fits width (X.1).
 
 version = "0.1.0"
 author = "Emmanuel M. Smith"
@@ -17,3 +17,4 @@ srcDir = "src"
 
 requires "nim == 2.4.0"
 requires "https://github.com/status-im/nim-protobuf-serialization"
+requires "lojban_parser#0d6eaaebb95eeecc84359b6b4bf7da8c0715f26c"
