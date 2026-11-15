@@ -18,24 +18,28 @@
 ##   .i denpa bu cu sinxa lo denpa
 ##   .i slaka bu cu fendi lo slaka ne'i lo valsi
 ##   .i lo brale'u cu sinxa lo slaka poi se basna
-##   .i le genturfa'i cu tcidu pa valsi fi lo selci'avla poi zvati lo jbini be lo sinxa ku'o va'o lo
-##       nu le lerfu .e slaka bu .e lo brale'u pe le selci'avla cu curmi
+##
+## ni'o le genturfa'i cu tcidu pa valsi fi lo selci'avla poi zvati lo jbini be lo sinxa ku'o va'o lo
+##     nu le lerfu .e slaka bu .e lo brale'u pe le selci'avla cu curmi
 ##   .i va'o lo drata le genturfa'i cu fendi le selci'avla fi lo valsi
 ##   .i `Architect` jdice di'u bu'u `#811`
 ##   .i ki'u bo `CLL 4.1` cusku lo du'u lo sance pe lo porsi be lo valsi cu se fendi fo pa tadji
 ##       po'o
 ##   .i `CLL 3.3` curmi ji'a lo nu lo draselci'a cu claxu denpa bu
-##   .i lo ve fendi poi selcu'a cu nitcu lo mecraide'a poi lo javni cu nitcu ke'a zi'e poi le
-##       selci'a na ciska ke'a
+##
+## ni'o lo ve fendi poi selcu'a cu nitcu lo mecraide'a poi lo javni cu nitcu ke'a zi'e poi le
+##     selci'a na ciska ke'a
 ##   .i se ki'u bo le genturfa'i cu facki lo denpa poi le selci'a na ciska ke'a ku'o va'o po'o lo nu
 ##       no datseltcidu be fi le lerfu cu drani
 ##   .i le genturfa'i cu tcidu `lo sei` fi `losei` gi'e no roi tcidu `lo se .i` fi `losei`
-##   .i le genturfa'i cu to'e curmi ta'i `Split` lo selci'avla poi su'o re ve fendi be fi ke'a cu
-##       nitcu lo mecraide'a
+##
+## ni'o le genturfa'i cu to'e curmi ta'i `Split` lo selci'avla poi su'o re ve fendi be fi ke'a cu
+##     nitcu lo mecraide'a
 ##   .i mupli fa `iai` noi ka'e se fendi fi `.i.ai` .a `.ia.i`
 ##   .i le genturfa'i cu to'e curmi lo selci'avla poi claxu lo ve fendi ku'o ta'i lo nu `readWord`
 ##       to'e curmi le lerfu
-##   .i lo nu basna cu cuxna fi lo ve fendi ta'i lo nu tavla
+##
+## ni'o lo nu basna cu cuxna fi lo ve fendi ta'i lo nu tavla
 ##   .i lo selci'avla poi claxu lo brale'u cu basna lo slaka po'o poi lidne lo romoi slaka pe le
 ##       selci'avla
 ##   .i lo selci'avla poi vasru lo brale'u cu basna ro slaka poi le brale'u cu sinxa ke'a
@@ -43,93 +47,110 @@
 ##   .i se ki'u bo ro brivla cu vasru lo brale'u gi'a fanmo lo slaka poi se kancu mu'i lo nu basna
 ##   .i le genturfa'i cu tcidu `mi broda` fi `mibroda` gi'e tcidu `mibro da` fi `MIbroda` gi'e tcidu
 ##       `e speranto` fi `.esperanto` to `Example 19.78` toi gi'e tcidu pa fu'ivla fi `klamaku`
-##   .i slaka bu cu fendi lo slaka ta'i lo nu `CLL 3.5` fendi lo karsna sepi'o slaka bu
+##
+## ni'o slaka bu cu fendi lo slaka ta'i lo nu `CLL 3.5` fendi lo karsna sepi'o slaka bu
 ##   .i se ki'u bo lo brale'u cu basna lo slaka poi slaka bu cu sinxa ke'a
 ##   .i le genturfa'i cu tcidu pa cmene poi basna `ii` ku'o fi `me,IIn.`
-##   .i ja'i `CLL 3.3` slaka bu cu sinxa zoi gy. no pause between .gy. bu'u lo jbini be lo slaka
+##
+## ni'o ja'i `CLL 3.3` slaka bu cu sinxa zoi gy. no pause between .gy. bu'u lo jbini be lo slaka
 ##   .i se ki'u bo no ve fendi cu punji lo denpa lo stuzi be slaka bu
-##   .i le genturfa'i cu tcidu zo kai fi `ka,i` gi'e to'e curmi le lerfu po'u slaka bu
-##   .i le genturfa'i cu no roi tcidu lo'u ka .i le'u fi `ka,i`
+##   .i le genturfa'i cu tcidu zo kai fi `ka,i` gi'e to'e curmi le lerfu po'u slaka bu gi'e no roi
+##       tcidu lo'u ka .i le'u fi `ka,i`
 ##   .i ba bo le genturfa'i cu jdice fi ro slaka bu sepi'o lo valsi poi selcu'a
-##   .i jdima fa lo nu va'o lo nu lo brale'u cu zvati kei slaka bu cu ka'e rinka lo nu le selci'avla
-##       cu se fendi
+##
+## ni'o jdima fa lo nu va'o lo nu lo brale'u cu zvati kei slaka bu cu ka'e rinka lo nu le selci'avla
+##     cu se fendi
 ##   .i le genturfa'i cu tcidu `crarcia e` fi `crarcI,ae`
 ##   .i ku'i le genturfa'i cu tcidu `crarciae` fi `crarcIae`
 ##   .i va'o lo nu no brale'u cu zvati kei slaka bu cu galfi no valsi
-##   .i lo cmene cu romoi ne'i lo selci'avla
+##
+## ni'o lo cmene cu romoi ne'i lo selci'avla
 ##   .i ro cmene cu lidne lo denpa to le remoi javni pe `CLL 4.9` toi
 ##   .i lo pagbu be lo cmene cu pagbu pa valsi poi claxu lo denpa to `CLL 4.8` toi
 ##   .i se ki'u bo lo zunsna poi le cmene cu lidne ke'a ne'i le selci'avla cu pagbu le cmene
-##   .i se ki'u bo le genturfa'i na tcidu `br .i` fi `bri`
+##
+## ni'o ki'u la'e di'u le genturfa'i na tcidu `br .i` fi `bri`
 ##   .i ku'i le genturfa'i cu tcidu pa cmene fi `br` noi sepli
 ##   .i ji'a le genturfa'i cu tcidu pa cmene fi `rl` to `CLL 3.4` toi
 ##   .i le genturfa'i cu tcidu lo'u se cusku le'u fi `secusku` gi'e no roi tcidu `secusk .u` fi
 ##       `secusku`
-##   .i jdima fa lo nu `CLL` dunda no tadji be lo nu fendi to `CLL 4.1` toi
+##
+## ni'o jdima fa lo nu `CLL` dunda no tadji be lo nu fendi to `CLL 4.1` toi
 ##   .i se ki'u bo le tadji be lo nu fendi cu selfi'i le genturfa'i gi'e selzba fi lo javni pe
 ##       `CLL 3.9` .e `CLL 4.2` .e `CLL 4.7` .e `CLL 4.8` .e `CLL 4.9`
 ##   .i ro da poi valsi zo'u le tadji cu troci da .e ro valsi poi lidne da
 ##   .i se ki'u bo lo temci cu simsa lo tenfa be lo clani be le selci'avla be'o bei li ci
 ##   .i di'u se kanpe
 ##   .i lo valsi poi selci'a ta'i lo nu sepli cu cliva le tadji
-##   .i lo denpa cu mapti `CLL 4.9`
+##
+## ni'o lo denpa cu mapti `CLL 4.9`
 ##   .i denpa bu cu sinxa lo denpa
 ##   .i va'o lo nu lo javni cu nitcu lo denpa poi le selci'a na ciska ke'a kei le genturfa'i cu
 ##       facki le denpa ki'u lo nu `CLL 3.3` cusku lo du'u denpa bu cu na'e bilga sinxa lo denpa poi
 ##       lo draselci'a cu nibli ke'a
 ##   .i se ki'u bo le genturfa'i cu to'e curmi no selci'a ki'u lo denpa poi le selci'a na ciska ke'a
 ##   .i ro valsi cu ponse lo denpa poi lidne le valsi
-##   .i le javni poi le genturfa'i cu pilno ke'a du di'e
+##
+## ni'o le javni poi le genturfa'i cu pilno ke'a du di'e
 ##   .i le remoi javni cu srana lo valsi poi selfa'o lo zunsna
 ##   .i le cimoi javni cu srana lo valsi poi selkra lo karsna .a `y`
-##   .i le vomoi javni cu srana lo cmene
-##   .i lo valsi poi lidne le cmene cu drata zo la .e zo lai .e zo la'i .e zo doi
+##   .i le vomoi javni cu srana lo cmene poi se lidne lo valsi poi drata zo la .e zo lai .e zo la'i
+##       .e zo doi
 ##   .i le mumoi javni .e `CLL 4.2` srana lo romoi slaka poi se basna gi'e lidne lo brivla .a lo
 ##       pamoi slaka poi se basna
 ##   .i le xamoi javni cu srana lo valsi poi seltai `Cy` gi'e lidne lo valsi poi na seltai `Cy`
 ##   .i ji'a zo y lidne lo denpa to `CLL 4.2` toi
 ##   .i lo pamoi valsi cu se lidne lo denpa va'o lo nu le cimoi javni .a le vomoi javni cu nitcu le
 ##       denpa
-##   .i le zemoi javni cu nitcu lo nu lo selci'a poi zo zoi .a zo la'o sitna ke'a se lidne pa denpa
-##       gi'e lidne pa denpa
-##   .i le selci'a cu mulno gi'e du pa valsi pe le porsi
-##   .i le valsi cu se tcita `Foreign`
-##   .i le selci'a cu fanmo pu lo selci'avla poi rapci'a le koivla
-##   .i le genturfa'i cu to'e curmi lo selci'a poi vasru le koivla ku'o ta'i `Quotation`
+##
+## ni'o le zemoi javni cu nitcu lo nu lo selci'a poi zo zoi .a zo la'o sitna ke'a se lidne pa denpa
+##     gi'e lidne pa denpa
+##   .i le selci'a cu mulno gi'e du pa valsi pe le porsi gi'e se tcita `Foreign` gi'e fanmo pu lo
+##       selci'avla poi rapci'a le koivla
+##
+## ni'o le genturfa'i cu to'e curmi lo selci'a poi vasru le koivla ku'o ta'i `Quotation`
 ##   .i ki'u bo `CLL 19.10` skicu le koivla fo zoi gy. not found .gy. ne'i le selci'a
 ##   .i se ki'u bo le genturfa'i cu to'e curmi `zoi gy. gyrations .gy.`
 ##   .i `CLL` cusku ji'a lo du'u `Example 19.50` na drani va'o lo nu selci'a
-##   .i lo nu sitna poi zo zo .a zo lo'u zbasu ke'a sitna lo valsi
+##
+## ni'o lo nu sitna poi zo zo .a zo lo'u zbasu ke'a sitna lo valsi
 ##   .i zo lo'u sitna lo valsi poi lidne zo le'u
 ##   .i se ki'u bo zo zoi .e zo fa'o galfi no da va'o lo nu le re valsi cu zvati le nu sitna to
 ##       `CLL 19.9` .e `CLL 19.10` toi
 ##   .i le porsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a to `CLL 19.15` toi
-##   .i slaka bu cu no roi bilga to `CLL 3.3` toi
+##
+## ni'o slaka bu cu no roi bilga to `CLL 3.3` toi
 ##   .i se ki'u bo lo valsi cu se tcidu va'o lo nu ri claxu slaka bu
 ##   .i slaka bu cu fendi lo slaka
 ##   .i se ki'u bo ro pagbu poi slaka bu cu korbi ke'a vasru lo karsna .a `y` .a lo zunsna poi ka'e
 ##       slaka to `CLL 3.4` toi
 ##   .i le pagbu cu selfa'o slaka bu .a zoi gy. ' .gy. .a lo korbi be le valsi
-##   .i ne'i lo cmavo .e lo gismu .e lo lujvo re lamji karsna cu pagbu pa karsna gunma noi slaka to
-##       `CLL 3.4` toi
+##
+## ni'o ne'i lo cmavo .e lo gismu .e lo lujvo re lamji karsna cu pagbu pa karsna gunma noi slaka to
+##     `CLL 3.4` toi
 ##   .i se ki'u bo le genturfa'i cu to'e curmi slaka bu poi zvati lo jbini be le re karsna
 ##   .i ja'i `CLL 3.5` .e `CLL 4.7` lo cmene .e lo fu'ivla cu ka'e fendi re karsna sepi'o slaka bu
-##   .i jdima fa lo nu slaka bu poi lamji `l` .a `m` .a `n` .a `r` cu ka'e rinka lo nu le zunsna cu
-##       slaka
+##
+## ni'o jdima fa lo nu slaka bu poi lamji `l` .a `m` .a `n` .a `r` cu ka'e rinka lo nu le zunsna cu
+##     slaka
 ##   .i `CLL 3.4` curmi lo nu le zunsna cu slaka kei ja'i lo jicmu
 ##   .i se ki'u bo le genturfa'i cu curmi lo nu le zunsna cu slaka
-##   .i lo brale'u cu sinxa lo nu basna to `CLL 3.1` .e `CLL 3.9` toi
+##
+## ni'o lo brale'u cu sinxa lo nu basna to `CLL 3.1` .e `CLL 3.9` toi
 ##   .i lo brale'u pe pa valsi cu cmima pa porsi poi pencu pa karsna .a pa karsna gunma
 ##   .i le porsi cu vasru lo mulslaka .a lo karsna po'o
 ##   .i le genturfa'i na jdice lo zunsna pe le porsi
-##   .i lo brivla cu basna le slaka poi lidne le romoi slaka
+##
+## ni'o lo brivla cu basna le slaka poi lidne le romoi slaka
 ##   .i `y` .e lo zunsna poi slaka cu na se kancu
 ##   .i ro slaka pe lo cmavo ja cmene cu ka'e se basna
 ##   .i lo cmavo ja cmene cu ka'e claxu lo nu basna
 ##   .i `y` no roi se basna
-##   .i le genturfa'i cu to'e curmi lo brale'u poi pencu no karsna mu'u `Mi` noi krasi pa jufra
+##
+## ni'o le genturfa'i cu to'e curmi lo brale'u poi pencu no karsna mu'u `Mi` noi krasi pa jufra
 ##   .i ki'u bo `CLL 4.8` pilno lo brale'u lo nu sinxa lo nu basna po'o
-##   .i lo stuzi be ro valsi cu du lo stuzi poi le valsi cu cfari bu'u ke'a ne'i le porsi
+##
+## ni'o lo stuzi be ro valsi cu du lo stuzi poi le valsi cu cfari bu'u ke'a ne'i le porsi
 ##   .i lo stuzi be ro nu to'e curmi cu du lo stuzi poi le valsi .a le sinxa poi se to'e curmi cu
 ##       cfari bu'u ke'a
 ##   .i se ki'u bo lo pilno cu ka'e jarco le stuzi
@@ -272,8 +293,8 @@ func isPauseNeededFirst(word: Occurrence): bool =
 func isStretchSyllabic(text: string, at, start, finish, step: int): bool =
   ## jdice lo du'u lo pagbu be le valsi cu vasru lo karsna .a `y` .a lo zunsna poi ka'e slaka to
   ##     `CLL 3.4` toi
-  ##   .i le pagbu cu cfari bu'u slaka bu pe `at` gi'e selfa'a `step`
-  ##   .i le pagbu cu selfa'o slaka bu .a zoi gy. ' .gy. .a lo korbi be le valsi
+  ##   .i le pagbu cu cfari bu'u slaka bu pe `at` gi'e selfa'a `step` gi'e selfa'o slaka bu .a zoi
+  ##       gy. ' .gy. .a lo korbi be le valsi
   var i = at + step
   while i >= start and i < finish and text[i] notin {',', '\''}:
     if text[i].toLowerAscii in VOWELS_NUCLEUS + CONSONANTS_SYLLABIC: return true
@@ -318,7 +339,8 @@ func nucleusStressed(word: string, kind: Kind, capitals, breaks: openArray[int])
   ##   .i ja le brale'u cu zvati `y`
   ##   .i ja le brale'u na zvati le slaka poi lidne le romoi slaka pe lo brivla
   ##   .i `y` na se kancu
-  ##   .i `capitals` vasru su'o pa namcu
+  ##
+  ## ni'o `capitals` vasru su'o pa namcu
   ##   .i `capitals` .e `breaks` sinxa lo stuzi be lo lerfu pe `word`
   let (first, last) = (capitals[0], capitals[^1])
   if last - first + 1 != capitals.len: return  # ja'i `CLL 3.9` pa slaka po'o cu barda
@@ -391,7 +413,8 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
   ##   .i kancu lo ve fendi poi nitcu lo mecraide'a
   ##   .i li re cu sinxa li su'o re
   ##   .i va'o lo nu `is_parting` jetnu kei slaka bu cu fendi lo slaka
-  ##   .i `words[j][i]` vasru lo valsi pe lo lerfu po'u `j ..< i`
+  ##
+  ## ni'o `words[j][i]` vasru lo valsi pe lo lerfu po'u `j ..< i`
   ##   .i `scores[j][i]` vasru lo ve fendi poi le valsi cu fanmo ke'a
   let n = spelling.letters.len
   var
@@ -425,7 +448,7 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
           scores[j][i].get.ties = min(2, scores[j][i].get.ties + score.ties)
           scores[j][i].get.befores.add k
 
-  # cuxna lo mecrailai be lo denpa pe lo valsi poi fanmo le se ciska valsi
+  # cuxna lo mecrailai be lo denpa pe lo valsi poi fanmo le selci'avla
   #   .i kancu lo nu mintu
   var lasts: seq[int]
   for j in 1 ..< n:
@@ -471,7 +494,8 @@ func refusalWritten(spelling: Spelling, start: int): ReadingStream =
   ##   .i va'o lo drata le genturfa'i cu to'e curmi ta'i lo nu `readWord` to'e curmi le lerfu
   ##   .i va'o lo drata le nu to'e curmi cu zvati le pamoi barda lerfu noi na mapti lo javni pe
   ##       `CLL 3.9`
-  ##   .i lo lerfu poi se fendi fi lo cmavo cu se fendi vi ji'a
+  ##
+  ## ni'o lo lerfu poi se fendi fi lo cmavo cu se fendi vi ji'a
   ##   .i se ki'u bo slaka bu .a lo barda lerfu po'o cu fanta lo nu le lerfu cu se tcidu
   var bare = spelling
   (bare.breaks, bare.commas) = (newSeq[int](), newSeq[int]())
@@ -590,14 +614,17 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
   ##   .i to'e curmi bu'u le pamoi pagbu poi no javni cu curmi ke'a
   ##   .i le pagbu cu valsi ja sinxa
   ##   .i cusku le stuzi be le pagbu
-  ##   .i va'o lo nu `is_lohu` jetnu kei le selci'a cu cfari ne'i lo valsi poi zo lo'u sitna ke'a
+  ##
+  ## ni'o va'o lo nu `is_lohu` jetnu kei le selci'a cu cfari ne'i lo valsi poi zo lo'u sitna ke'a
   ##   .i lo mivyselci'a cu tcidu le selci'a ta'i di'u ba zo lo'u noi ca'o denpa
-  ##   .i lo selci'a poi zo zoi .a zo la'o sitna ke'a mulno gi'e du pa valsi pe le porsi gi'e na
-  ##       selga'i
+  ##
+  ## ni'o lo selci'a poi zo zoi .a zo la'o sitna ke'a mulno gi'e du pa valsi pe le porsi gi'e na
+  ##     selga'i
   ##   .i lo nu sitna poi zo zo .a zo lo'u zbasu ke'a sitna lo valsi
   ##   .i zo lo'u sitna lo valsi poi lidne zo le'u
   ##   .i se ki'u bo lo cmavo poi se sitna cu galfi no da to `CLL 19.9` toi
-  ##   .i le porsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a
+  ##
+  ## ni'o le porsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a
   ##   .i zo fa'o fanmo lo selci'a poi ka'e se tcidu to `CLL 21.1` toi
   var
     occurrences: seq[Occurrence]

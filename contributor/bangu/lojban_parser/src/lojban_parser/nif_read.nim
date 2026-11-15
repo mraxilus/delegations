@@ -15,37 +15,42 @@
 ##   |--------------|-------------------------------------------------|
 ##
 ## ni'o le tcidu cu tcidu lo pagbu be `NIF` po'o
-##   .i le tcidu cu tcidu lo minde
-##   .i le tcidu cu tcidu lo jgena poi vasru lo tcita .e lo jgena
+##   .i le tcidu cu tcidu lo minde .e lo jgena poi vasru lo tcita .e lo jgena
 ##   .i le tcidu cu tcidu lo cmene poi tcita .a lo cmene poi jgena gi'e vasru no jgena
-##   .i le tcidu cu tcidu lo mulna'u poi pilno pano lerfu .e lo lerpoi .e `\xx` .e lo mu torbasysni
-##       pe `\xx`
+##   .i le tcidu cu tcidu lo mulna'u poi pilno pano lerfu ku'o .e lo lerpoi .e `\xx` .e lo mu
+##       torbasysni pe `\xx`
 ##   .i le tcidu cu tcidu lo kutle'u poi zvati lo jbini be le se tcidu
-##   .i le tcidu cu to'e curmi ro datytai mu'u lo sinxa .e lo lerfu poi se sitna .e lo kutyjge .e lo
-##       datni be lo linji .e lo pinka
+##
+## ni'o le tcidu cu to'e curmi ro datytai mu'u lo sinxa .e lo lerfu poi se sitna .e lo kutyjge .e lo
+##     datni be lo linji be'o .e lo pinka
 ##   .i le ciska cu ciska no le datytai
 ##   .i se ki'u bo ro selci'a poi le tcidu cu tcidu ke'a selci'a fi `NIF` po'o
-##   .i le tcidu cu jersi lo gerna pe le velski
+##
+## ni'o le tcidu cu jersi lo gerna pe le velski
 ##   .i `IdentStart` du lo lerfu .a `_` .a lo stuzi poi na mleca li parebi .a lo basysni
 ##   .i `IdentChar` jmina lo namcu lerfu to `Identifiers` toi
-##   .i `\` krasi lo basysni
+##
+## ni'o `\` krasi lo basysni
 ##   .i le basysni cu vasru re lerfu pe li paxa gi'a vasru pa lerfu pe `n t r | ^`
 ##   .i le lerfu pe li paxa cu barda lerfu to `Escape sequences` toi
 ##   .i lo lerpoi cu vasru ro stuzi poi na mleca li cire gi'e na midle'u ku'o .e ro stuzi poi na
 ##       mleca li parebi ku'o .e `#` .e `:` .e lo kutle'u .e lo basysni
 ##   .i re `"` sruri le lerpoi to `String literals` toi
-##   .i lo jgena poi vasru lo tcita .e lo jgena cu du `(` ce'o lo tcita ce'o lo jgena ce'o `)`
+##
+## ni'o lo jgena poi vasru lo tcita .e lo jgena cu du `(` ce'o lo tcita ce'o lo jgena ce'o `)`
 ##   .i lo minde cu du `(.name ...)` to `Directives` toi
-##   .i ro jgena cu du lo jgena poi vasru no jgena .a lo jgena poi vasru lo tcita .e lo jgena
+##   .i ro jgena cu du lo jgena poi vasru no jgena ku'o .a lo jgena poi vasru lo tcita .e lo jgena
 ##   .i ro cmene cu du lo jgena poi vasru no jgena to `Atoms` toi
 ##   .i lo minde poi cusku lo namcu pe le tarmi cu krasi le selci'a gi'e se lidne no stuzi to
 ##       `Version directive` toi
-##   .i ro valsi pe `NIF` fanmo bu'u lo kutle'u .a `(` .a `)` .a lo fanmo be le selci'a
+##
+## ni'o ro valsi pe `NIF` fanmo bu'u lo kutle'u .a `(` .a `)` .a lo fanmo be le selci'a
 ##   .i le tcidu cu to'e curmi ro datstu poi se lidne le valsi mu'u `@` pe lo datni be lo linji ge'u
 ##       .a `#` pe lo pinka
 ##   .i lo nu to'e curmi cu renro `ValueError` noi cusku lo stuzi .e lo selcpe be `NIF` bu'u le
 ##       stuzi
-##   .i le tcidu cu sepli le ciska po'u `nif.nim` gi'e nerbei no pagbu be `nif.nim`
+##
+## ni'o le tcidu cu sepli le ciska po'u `nif.nim` gi'e nerbei no pagbu be `nif.nim`
 ##   .i se ki'u bo ro le re datnyvei cu cipra fi le drata
 
 {.experimental: "strictFuncs".}
@@ -57,8 +62,7 @@ type
   KindNif* {.pure.} = enum  ## lo klesi be lo jgena poi le tcidu cu dunda ke'a
     Compound
       ## lo jgena poi vasru lo tcita .e lo jgena mu'u `(tag child ...)`
-      ##   .i ji'a lo minde
-      ##   .i lo tcita be lo minde cu selkra `.`
+      ##   .i ji'a lo minde noi lo tcita be ke'a cu selkra `.`
     Identifier  ## lo cmene poi jgena gi'e vasru no jgena mu'u `sumti_6` pe lo srejge
     Number  ## lo mulna'u mu'u `97`
     Literal  ## lo lerpoi mu'u `"mi"`
@@ -224,8 +228,7 @@ func readNode(reader: var Reader): NodeNif =
 func readModule*(text: string): seq[NodeNif] =
   ## tcidu lo selci'a be fi `NIF`
   ##   .i lo minde poi cusku lo namcu pe le tarmi cu zvati lo pamoi stuzi
-  ##   .i lo jgena cu se lidne le minde
-  ##   .i le jgena cu klama lo fanmo be le se ciska to `Modules` toi
+  ##   .i lo jgena cu se lidne le minde gi'e klama lo fanmo be le se ciska to `Modules` toi
   var reader = Reader(text: text)
   if not text.startsWith(VERSION): reader.refuse("version directive `" & VERSION & "`")
   while true:

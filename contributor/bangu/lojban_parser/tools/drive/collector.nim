@@ -3,40 +3,45 @@
 ##     `tools/drive.nim` toi ba lo nu le papri cu selcpa
 ##   .i `koch drive` jdice sepi'o le vi crepu to `CONTRIBUTOR.md, Pages and assets` toi
 ##   .i le crepu cu tcidu ro papri poi lo minde po'u `drive` zbasu ke'a ku'o .e le tropapri poi
-##       `koch drive` ciska ke'a
-##   .i le crepu cu jdice fi no papri
+##       `koch drive` ciska ke'a ku'o gi'e jdice fi no papri
 ##   .i `font_stacks.nim` pe `curator` jdice fi lo se tcidu be le crepu
-##   .i le vi datnyvei cu fukpi fi `Nim` fe `contributor/ronri/pga_benchmark/tools/drive/text.ts`
-##       noi tcidu lo papri sepi'o `Playwright`
+##
+## ni'o le vi datnyvei cu fukpi fi `Nim` fe `contributor/ronri/pga_benchmark/tools/drive/text.ts`
+##     noi tcidu lo papri sepi'o `Playwright`
 ##   .i vi le selci'a cu fasnu ne'i le papri ta'i lo selci'a be fi `Nim` poi se fanva fi
 ##       `JavaScript`
 ##   .i se ki'u bo ro selci'a cu selci'a fi `Nim`
 ##   .i le fanva cu cipra ro le selci'a
 ##   .i `node` na jitro le selci'a
 ##   .i `Architect` jdice di'u bu'u `#859`
-##   .i le re selci'a cu pilno le mitytadji
+##
+## ni'o le re selci'a cu pilno le mitytadji
 ##   .i se ki'u bo va'o lo nu le drata na se cipra kei lo nu cikre pa le re selci'a cu na mulno to
 ##       `II.9` toi
-##   .i le crepu cu tcidu ro lerpoi poi le papri cu pixra ke'a
+##
+## ni'o le crepu cu tcidu ro lerpoi poi le papri cu pixra ke'a
 ##   .i le se tcidu cu vasru lo selci'ajge mu'u lo selci'ajge pe `text` pe `SVG`
 ##   .i le crepu cu tcidu no selci'ajge pe lo pagbu be le papri be'o poi pixra no da
-##   .i le crepu cu tcidu `placeholder` .e `value` pe lo batke
-##   .i le crepu cu tcidu lo lerpoi pe `content` bu'u `::before` .e `::after` .e `::marker`
-##   .i le crepu cu tcidu ji'a lo lerpoi pe `list-style-type`
+##   .i le crepu cu tcidu `placeholder` .e `value` pe lo batke gi'e tcidu lo lerpoi pe `content`
+##       bu'u `::before` .e `::after` .e `::marker` gi'e tcidu lo lerpoi pe `list-style-type`
 ##   .i ro le lerpoi cu se tcidu fi'o kansa `font-family` .e `font-weight` .e `text-transform` vu'o
 ##       pe lo pagbu poi pixra le lerpoi
-##   .i le crepu cu tcidu ro skicu be lo javni pe `@font-face` ta'i lo lerpoi poi `CSSOM` ciska ke'a
+##
+## ni'o le crepu cu tcidu ro skicu be lo javni pe `@font-face` ta'i lo lerpoi poi `CSSOM` ciska ke'a
 ##   .i ro lertai poi lo tcidu be lo papri cu to'e curmi ke'a se tcidu fi'o kansa lo tcini poi le
 ##       lertai cu klama ke'a
-##   .i pu lo nu tcidu le crepu cu kargau ro `details` gi'e jarco ro pagbu
+##
+## ni'o pu lo nu tcidu kei le crepu cu kargau ro `details` gi'e jarco ro pagbu
 ##   .i se ki'u bo ro tcini be le papri cu se tcidu ca pa nu tcidu
-##   .i `display` galfi no selkai be lo lerfu tarmi
+##   .i `display` galfi no selkai be lo lertai
 ##   .i se ki'u bo no seljdi cu cenba
-##   .i benji `{runs, rules, refused}` fi `/collected` ta'i pa lerpoi pe `JSON`
+##
+## ni'o benji `{runs, rules, refused}` fi `/collected` ta'i pa lerpoi pe `JSON`
 ##   .i `written.json` vasru le lerpoi
 ##   .i le samtci cu ciska le lerpoi fi le datnyvei
 ##   .i le tarmi be le datnyvei cu du le tarmi poi `koch drive` tcidu ke'a to `font_stacks.nim` toi
-##   .i jdima fa lo nu le papri cu se tcidu bu'u pa canko po'o
+##
+## ni'o jdima fa lo nu le papri cu se tcidu bu'u pa canko po'o
 ##   .i `Chromium` zmicu'a le canko
 ##   .i se ki'u bo no da tcidu lo lerpoi .a lo porsi be lo lertai vu'o poi `@media` curmi ke'a va'o
 ##       lo ni ganra poi drata po'o
@@ -80,15 +85,13 @@ proc stringify(value: JsObject): cstring {.importjs: "JSON.stringify(#)".}
   ##   .i le fancu cu korbi `Nim` `JavaScript`
 proc newRequest(): JsObject {.importjs: "new XMLHttpRequest()".}
   ## zbasu pa nu cpedu fi le samtci
-  ##   .i le fancu cu korbi `Nim` `JavaScript`
-  ##   .i le fancu cu pilno pa zbafancu pe le papri
+  ##   .i le fancu cu korbi `Nim` `JavaScript` gi'e pilno pa zbafancu pe le papri
 proc toArray(iterable: JsObject): JsObject {.importjs: "Array.from(#)".}
   ## jarco lo porsi be ro cmima be le girzu
   ##   .i le fancu cu korbi `Nim` `JavaScript`
 proc loaded(font_face: JsObject): Future[JsObject] {.importjs: "#.load()".}
   ## jarco lo nupre be lo nu le lertai cu selcpa
-  ##   .i le fancu cu korbi `Nim` `JavaScript`
-  ##   .i le fancu cu pilno pa fancu pe `FontFace`
+  ##   .i le fancu cu korbi `Nim` `JavaScript` gi'e pilno pa fancu pe `FontFace`
 
 
 
@@ -256,8 +259,7 @@ proc post(path: string, body: cstring) =
 
 proc collectPosted() {.async.} =
   ## crepu le papri ba lo nu le papri cu selcpa
-  ##   .i benji lo se tcidu be le crepu
-  ##   .i sisti le nu cipra ba lo nu benji
+  ##   .i benji lo se tcidu be le crepu gi'e sisti le nu cipra ba lo nu benji
   post(PATH_COLLECTED, (await collect()).stringify)
   post(PATH_DONE, "0")
 

@@ -23,41 +23,51 @@
 ##       samtci
 ##   .i `CLL 4.11` to'e curmi lo lerjo'e va'o lo nu le tadji cu na nitcu le lerjo'e
 ##   .i se ki'u bo lo nu karbi le valsi lo jalge be le tadji cu cipra fi ro lerjo'e
-##   .i se to'e cuxna fa lo nu cipra ro terjo'e ja'i lo javni pe lo lerfu poi jibni le terjo'e
+##
+## ni'o se to'e cuxna fa lo nu cipra ro terjo'e ja'i lo javni pe lo lerfu poi jibni le terjo'e
 ##   .i le javni cu rinka lo nu le samtci cu re roi cusku le tadji
-##   .i lo nu jmina cu jersi `CLL 4.11` ta'i lo nu klama fi lo pritu fe lo zunle kei noi `step 5`
-##       cpedu ke'a
+##
+## ni'o lo nu jmina cu jersi `CLL 4.11` ta'i lo nu klama fi lo pritu fe lo zunle kei noi `step 5`
+##     cpedu ke'a
 ##   .i `step 4a` bi'o `step 4c` jdice fi ro terjo'e pu lo nu lo cipra pe `tosmabru` tcidu le
 ##       terjo'e
-##   .i `hyphenJunction` jdice fi ro terjo'e ja'i le re rafsi poi jibni le terjo'e
+##
+## ni'o `hyphenJunction` jdice fi ro terjo'e ja'i le re rafsi poi jibni le terjo'e
 ##   .i ne'i `carryRun` lo cipra pe `tosmabru` tcidu ro terjo'e ta'i lo nu klama fi lo zunle fe lo
 ##       pritu kei sepi'o pa lanci noi cusku lo du'u xu kau le krapoi cu kalri
 ##   .i se ki'u bo lo namcu cu sumji lo pagbu pe ro rafsi lo pagbu pe ro terjo'e
 ##   .i se ki'u bo lo nu ciska lo tanru ta'i lo lujvo cu sisku ta'i lo nu tcidu ro stuzi ta'i lo
 ##       porsi
-##   .i jdima fa lo nu `step 5` tcidu ro terjo'e ta'i lo nu sepli kei gi'e no roi tcidu le mulpoi
+##
+## ni'o jdima fa lo nu `step 5` tcidu ro terjo'e ta'i lo nu sepli kei gi'e no roi tcidu le mulpoi
 ##   .i se ki'u bo `test_lujvo.nim` cipra lo du'u lo namcu pe ro lujvo cu sumji lo pagbu pe ro rafsi
 ##       lo pagbu pe ro terjo'e
-##   .i lo pagbu be lo namcu be'o .e lo pagbu be `step 5` cu stali lo ka sivni
+##
+## ni'o lo pagbu be lo namcu be'o .e lo pagbu be `step 5` cu stali lo ka sivni
 ##   .i `tanru.nim` .e `test_lujvo.nim` cpacu ro sinxa `lujvo.nim` mu'i lo nu pilno le pagbu
 ##   .i se ki'u bo lo cmene poi le ralju samtci pagbu cu dunda ke'a stali to `#832` toi
-##   .i `step 4b` pe `CLL 4.11` casnu po'o lo zunsna remei poi na selcru
+##
+## ni'o `step 4b` pe `CLL 4.11` casnu po'o lo zunsna remei poi na selcru
 ##   .i `CLL` na casnu lo terjo'e poi zbasu lo zunsna cimei po'u `ndj` .a `ndz` .a `ntc` .a `nts`
 ##   .i `CLL 3.7` to'e curmi le vo zunsna cimei bu'u lo midju be lo valsi
 ##   .i `joinRafsi` punji `y` le te jorne ji'a
 ##   .i se ki'u bo ro lujvo poi `joinRafsi` zbasu ke'a mapti `CLL 3.7`
-##   .i jdima fa lo nu `joinRafsi` pilno pa javni poi `CLL 4.11` na cusku ke'a
+##
+## ni'o jdima fa lo nu `joinRafsi` pilno pa javni poi `CLL 4.11` na cusku ke'a
 ##   .i `test_lujvo.nim` cusku le javni bu'u lo mupli poi le javni cu galfi ke'a
-##   .i `splitLujvo` retsku fi no vlaste
-##   .i `splitLujvo` jdice fi lo cumrafsi ja'i lo tarmi po'o sepi'o `forms.nim`
+##
+## ni'o `splitLujvo` retsku fi no vlaste gi'e jdice fi lo cumrafsi ja'i lo tarmi po'o sepi'o
+##     `forms.nim`
 ##   .i lo pilno cu retsku fi lo vlaste fo ro rafsi
 ##   .i se ki'u bo lo tarmi be lo valsi cu ka'e sepli lo vlaste
-##   .i jdima fa lo nu `splitLujvo` cipra fi ro te fendi sepi'o lo fancu poi pilno vo'a
+##
+## ni'o jdima fa lo nu `splitLujvo` cipra fi ro te fendi sepi'o lo fancu poi pilno vo'a
 ##   .i bu'u ro stuzi lo lujvo poi vasru vei ny. ve'o rafsi cu ponse su'e so'u cumrafsi
 ##   .i lo valsi cu tordu
 ##   .i se ki'u bo le jdima cu cmalu
 ##   .i le jdima cu na selmre
-##   .i lo jdima cu na se tcidu ki'u lo nu no glalu'a cu zvati
+##
+## ni'o lo jdima cu na se tcidu ki'u lo nu no glalu'a cu zvati
 ##   .i ca ro nu le tcidu cu tcidu pa valsi kei `splitLujvo` .e `joinRafsi` cu pa roi selpli
 
 {.experimental: "strictFuncs".}
@@ -154,13 +164,15 @@ func carryRun(
   ##     fi lo lerjo'e pe ke'a
   ##   .i dunda lo du'u xu kau le krapoi cu stali lo ka kalri kei .e lo du'u xu kau `step 5` punji
   ##       `y` lo pamoi te jorne ca lo nu tcidu le terjo'e
-  ##   .i `step 5a` tcidu lo jorne remei pe le porsi pu lo pamoi be lo lerfu po'u `y`
+  ##
+  ## ni'o `step 5a` tcidu lo jorne remei pe le porsi pu lo pamoi be lo lerfu po'u `y`
   ##   .i le porsi cu stali lo ka kalri ca lo nu ro rafsi cu seltai `CVC` gi'e lidne no lerjo'e
   ##   .i `step 5b` nitcu lo nu ro jorne remei cu ka'e krasi lo valsi
   ##   .i se ki'u bo le porsi cu ganlo bu'u lo pamoi jorne remei poi na ka'e krasi lo valsi
-  ##   .i va'o lo nu ro jorne remei cu ka'e krasi lo valsi kei le valsi cu se fendi ki'u lo nu `y`
-  ##       se lidne le porsi to `step 5b` toi .a lo nu le romoi rafsi cu seltai `CVCCV` gi'e vasru
-  ##       lo zunsna remei poi ka'e krasi lo valsi
+  ##
+  ## ni'o va'o lo nu ro jorne remei cu ka'e krasi lo valsi kei le valsi cu se fendi ki'u lo nu `y`
+  ##     se lidne le porsi to `step 5b` toi .a lo nu le romoi rafsi cu seltai `CVCCV` gi'e vasru lo
+  ##     zunsna remei poi ka'e krasi lo valsi
   ##   .i `step 5c` punji `y` lo pamoi te jorne
   if not is_open: return (false, false)
   if hyphen == Hyphen.Y: return (false, true)
@@ -183,7 +195,7 @@ func hyphensRafsi*(rafsi: openArray[string]): seq[Hyphen] =
   #     terjo'e
   for at in 0 ..< count - 1: result[at] = hyphenJunction(rafsi[at], rafsi[at+1], at, count)
 
-  # ja'i `step 5` lo cipra pe `tosmabru` tcidu le krapoi be lo rafsi poi se tarmi `CVC`
+  # ja'i `step 5` lo cipra pe `tosmabru` tcidu le krapoi be lo rafsi poi seltai `CVC`
   #   .i le cipra cu tcidu ro terjo'e ta'i lo nu sepli
   var is_open = rafsi[0].isRunOpen
   for at in 0 ..< count - 1:
@@ -229,10 +241,11 @@ func scoreJunction(
   ## dunda lo pagbu be lo namcu pe `CLL 4.12` be'o poi lo terjo'e po'u `at` jmina ke'a
   ##   .i le terjo'e cu zvati lo jbini be `before` jo'u `after`
   ##   .i `count` te kancu lo rafsi
-  ##   .i ji'a dunda lo du'u xu kau le krapoi cu stali lo ka kalri ba le te jorne to `step 5` pe
+  ##   .i dunda lo du'u xu kau le krapoi cu stali lo ka kalri ba le te jorne to `step 5` pe
   ##       `CLL 4.11` toi
-  ##   .i va'o lo nu `step 5` punji `y` lo pamoi te jorne kei le namcu cu ralte lo pagbu pe `y` bu'u
-  ##       le terjo'e po'u `at`
+  ##
+  ## ni'o va'o lo nu `step 5` punji `y` lo pamoi te jorne kei le namcu cu ralte lo pagbu pe `y` bu'u
+  ##     le terjo'e po'u `at`
   ##   .i le terjo'e cu pamoi
   ##   .i ja le pamoi te jorne cu seldu'a lo namcu pe `None` ki'u lo nu lo karpoi cu vasru no
   ##       lerjo'e

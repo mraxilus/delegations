@@ -1,46 +1,52 @@
-## cpacu lo xe fanva be fi la lojban.
+## cpacu lo xe fanva be fi la lojban. gi'e tcidu lo ju'agri pe le xe fanva
 ##   .i lo cipra cu tcidu le xe fanva va'o lo nu le xe fanva cu zvati
-##   .i ro xe fanva cu ponse lo stosni gi'e na selra'e `delegations`
-##   .i ji'a tcidu lo ju'agri pe le xe fanva
 ##   .i `build.nim` pilno le vi datnyvei
-##   .i `Architect` jdice `D3 a` bu'u `#819`
+##
+## ni'o `Architect` jdice `D3 a` bu'u `#819`
 ##   .i ro xe fanva cu ponse lo stosni gi'e na selra'e `delegations`
 ##   .i ki'u bo no fanva cu cusku lo nu curmi
-##   .i `Architect` jdice `D5 c`
+##
+## ni'o `Architect` jdice `D5 c`
 ##   .i lo cipra cu tcidu `Alice` .e `Oz` va'o lo nu le stopapri cu zvati
 ##   .i le cipskami cu vasru no papri
 ##   .i se ki'u bo le cipskami cu na tcidu le re xe fanva
-##   .i lo minde cu cpacu ro papri sepi'o `curl` gi'e punji le papri fi `DIRECTORY_TRANSLATIONS`
+##
+## ni'o lo minde cu cpacu ro papri sepi'o `curl` gi'e punji le papri fi `DIRECTORY_TRANSLATIONS`
 ##   .i `.gitignore` rinka lo nu no nu ralte cu vasru `DIRECTORY_TRANSLATIONS`
 ##   .i le minde cu karbi lo snina'u be ro papri le stosni
 ##   .i va'o lo nu pa papri cu frica le stosni kei le minde cu cusku lo cmene be le papri gi'e no
 ##       roi tcidu le papri
-##   .i le snina'u cu sinxa le papri ba lo nu ro jgena po'u `script` selvi'u ta'i lo nu `cll.nim`
-##       vimcu le jgena
+##
+## ni'o le snina'u cu sinxa le papri ba lo nu ro jgena po'u `script` selvi'u ta'i lo nu `cll.nim`
+##     vimcu le jgena
 ##   .i ki'u bo le sabji pe `Alice` ciska pa jgena po'u `script` zi'e poi frica ca ro nu cpedu
 ##   .i le selci'a pe le xe fanva no roi vasru lo jgena po'u `script`
-##   .i lo ju'agri cu du lo selci'a pe pa jgena po'u `p`
+##
+## ni'o lo ju'agri cu du lo selci'a pe pa jgena po'u `p`
 ##   .i ro tcita cu selvi'u
 ##   .i ro sinxa pe `HTML` zi'e poi `&` krasi ke'a se basti lo lerfu poi le sinxa cu sinxa ke'a
 ##   .i ro porsi be lo kutle'u cu binxo pa kutle'u
-##   .i lo nu tcidu cu vimcu ro sinxa poi `CLL` na skicu ke'a
+##
+## ni'o lo nu tcidu cu vimcu ro sinxa poi `CLL` na skicu ke'a
 ##   .i le sinxa cu du zoi gy. « » .gy. jo'u zoi gy. – — .gy. jo'u lo cukla grile'u jo'u zoi gy. :
-##       .gy. jo'u lo tarle'u
-##   .i ji'a le sinxa cu du zoi gy. ? .gy. jo'u zoi gy. ! .gy. jo'u lo sitle'u jo'u lo sinxa poi
-##       gapru pa karsna
+##       .gy. jo'u lo tarle'u jo'u zoi gy. ? .gy. jo'u zoi gy. ! .gy. jo'u lo sitle'u jo'u lo sinxa
+##       poi gapru pa karsna
 ##   .i lo sinxa poi gapru pa karsna cu du `accent` .a `breve`
 ##   .i lo brale'u cu stali
 ##   .i ki'u bo `CLL 3.9` skicu lo brale'u ta'i lo sinxa be lo nu basna
-##   .i jdima fa lo nu `accent` pe `Oz` sinxa lo nu basna
+##
+## ni'o jdima fa lo nu `accent` pe `Oz` sinxa lo nu basna
 ##   .i lo nu tcidu cu vimcu `accent`
 ##   .i se ki'u bo ro brivla cu se tcidu ta'i lo nu basna kei poi lo tarmi be le brivla cu dunda
 ##       ke'a
 ##   .i `CLL 3.9` skicu ro drata nu basna ta'i lo nu na ralju
 ##   .i ro le drata nu basna cu terdu'a no selci'asni
-##   .i le papri pe `Oz` selci'a ja'i `Windows-1252`
+##
+## ni'o le papri pe `Oz` selci'a ja'i `Windows-1252`
 ##   .i ku'i lo stedu be le papri cu cusku `UTF-8`
 ##   .i le tcidu cu galfi le papri
-##   .i jdima fa lo nu le vi datnyvei cu basti so'u sinxa poi vasru lo cmene
+##
+## ni'o jdima fa lo nu le vi datnyvei cu basti so'u sinxa poi vasru lo cmene
 ##   .i le so'u sinxa cu du le sinxa poi le papri cu pilno ke'a
 ##   .i lo datsni poi vasru lo cmene cu stali
 ##   .i le porsi be lo valsi cu to'e curmi lo lerfu po'u `&` pe le sinxa gi'e cusku le sinxa
@@ -198,7 +204,7 @@ proc readTranslation*(translation: Translation, root: string): Option[seq[string
 
 proc fetchTranslation*(translation: Translation, root: string): string =
   ## cpacu le papri pe le xe fanva gi'e punji le papri fi `DIRECTORY_TRANSLATIONS` poi cnita `root`
-  ##   .i ji'a dunda lo snina'u be le papri
+  ##   .i dunda lo snina'u be le papri
   let path = root / DIRECTORY_TRANSLATIONS / translation.name & ".html"
   createDir(path.parentDir)
   let (output, code) = execCmdEx(

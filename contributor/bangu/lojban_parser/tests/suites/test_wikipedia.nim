@@ -1,20 +1,22 @@
 ## cipra le genturfa'i sepi'o `prose.nim` .e lo claro'a pe `Wikipedia` pe la lojban.
 ##   .i ro ju'agri cu ralte lo seljdi poi le genturfa'i pu dunda ke'a ca lo nu ciska
 ##   .i ro ju'agri poi se to'e curmi cu na'e mapti lo javni pe `CLL` zi'e poi vi se sitna
-##   .i le prosa cu du `tests/articles_wikipedia/articles.nim` noi lo minde po'u `wikipedia` pe
-##       `tools/build.nim` ciska ke'a
-##   .i le prosa cu seljva `CC BY-SA` noi selci'a fi lo datnyvei poi lamji le prosa to `D5 c` pe
-##       `#819` toi
+##
+## ni'o le prosa cu du `tests/articles_wikipedia/articles.nim` noi lo minde po'u `wikipedia` pe
+##     `tools/build.nim` ciska ke'a ku'o gi'e seljva `CC BY-SA` noi selci'a fi lo datnyvei poi lamji
+##     le prosa to `D5 c` pe `#819` toi
 ##   .i lo samtci bakfu no roi ciska le prosa
-##   .i lo ju'agri cu du pa linji pe lo sapselci'a
+##
+## ni'o lo ju'agri cu du pa linji pe lo sapselci'a gi'e du lo jonselci'a poi vasru su'o re jufra
 ##   .i le cipra cu tcidu le ju'agri ta'i pa selci'a pe `CLL 21.1`
-##   .i le ju'agri cu du lo jonselci'a poi vasru su'o re jufra
 ##   .i lo ju'agri poi traji lo ka ce'u clani cu vasru vomubi valsi
-##   .i lo linji poi pagbu lo jufra poi cfari ne'i lo pu linji cu se tcidu ta'i lo sepselci'a
+##
+## ni'o lo linji poi pagbu lo jufra poi cfari ne'i lo pu linji cu se tcidu ta'i lo sepselci'a
 ##   .i mupli fa lo pagbu be lo liste
 ##   .i va'o lo nu le genturfa'i cu to'e curmi le linji kei lo sitna cu cusku la'e di'u gi'e cusku
 ##       lo namcu pe lo pu linji poi le linji cu se tcidu va'o lo nu kansa ke'a
-##   .i lo seljdi .e lo se tcidu pe le seljdi cu selkra `tools/tatoeba.nim`
+##
+## ni'o lo seljdi .e lo se tcidu pe le seljdi cu selkra `tools/tatoeba.nim`
 ##   .i se ki'u bo lo cipra jo'u lo minde cu skicu le seljdi .e le se tcidu pa roi to `Article II.9`
 ##       toi
 
@@ -30,13 +32,12 @@ import ../articles_wikipedia/articles
 
 
 const KEYS_REFUSED = [
-  # le linji cu pagbu lo jufra poi cfari ne'i le pamoi linji
-  #   .i le linji cu se tcidu ta'i lo nu kansa le pamoi linji
+  # le linji cu pagbu lo jufra poi cfari ne'i le pamoi linji ku'o gi'e se tcidu ta'i lo nu kansa le
+  #     pamoi linji
   #   .i va'o lo nu le linji cu sepli kei lo selci'a poi vasru `.e` jo'u lo sumti cu na me
   #       `fragment`
   ("cmaci", 2),  # le javni pe li reno
-  # le linji cu pagbu le jufra poi cfari ne'i le pamoi linji
-  #   .i le remoi linji cu pagbu le jufra ji'a
+  # le linji .e le remoi linji cu pagbu le jufra poi cfari ne'i le pamoi linji
   ("cmaci", 3),  # le javni pe li reno
   # lo nacle'u po'u `3` na'e lerfu la lojban.
   #   .i le ju'agri cu vasru `3000moi`

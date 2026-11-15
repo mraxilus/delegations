@@ -1,6 +1,5 @@
 ## tcidu lo mivyselci'a ne'i le samtci ca lo nu le selci'a cu klama to `#859` toi
-##   .i `parseLojbanLive` jarco lo tcidu
-##   .i le tcidu cu ponse `push` .e `finish` .e `nif`
+##   .i `parseLojbanLive` jarco lo tcidu poi ponse `push` .e `finish` .e `nif`
 ##   .i ro le ci fancu cu jarco pa nupre
 ##   .i va'o lo nu le papri cu dunda pa gunka kei lo nu tcidu cu fasnu ne'i le gunka
 ##   .i se ki'u bo le papri cu denpa no roi
@@ -23,43 +22,50 @@
 ##
 ## ni'o le cenba cu du `{at, start, text, tail}` ta'i lo nu `ChangeNif` pe `live.nim` jarco le cenba
 ##     to `D1 c` pe `#859` toi
-##   .i le papri cu katna `NIF` poi le papri cu ralte ke'a bu'u `at`
+##   .i le papri cu katna `NIF` poi le papri cu ralte ke'a ku'o bu'u `at`
 ##   .i ba bo le papri cu jmina `text`
 ##   .i se ki'u bo lo temci poi jdima lo porsi be lo valsi be'o pe so'i cacra cu ckini lo ni le
 ##       porsi cu clani kei ta'i lo linji
 ##   .i `nif` jarco `NIF` poi ca zvati ku'o pa roi ca lo nu le papri cu cpedu
-##   .i `at` kancu lo pagbu pe `UTF-16` ta'i lo nu lo lerpoi pe `JavaScript` kancu `NIF`
+##
+## ni'o `at` kancu lo pagbu pe `UTF-16` ta'i lo nu lo lerpoi pe `JavaScript` kancu `NIF`
 ##   .i se ki'u bo `slice` katna bu'u `at`
 ##   .i `start` kancu lo stuzi be le selci'a ta'i `UTF-8`
 ##   .i ro valsi pe `NIF` go'i
 ##   .i se ki'u bo le cenba cu jorne le selci'a
-##   .i se to'e cuxna fa lo nu ro nupre cu vasru `NIF` poi ca zvati
+##
+## ni'o se to'e cuxna fa lo nu ro nupre cu vasru `NIF` poi ca zvati
 ##   .i ki'u bo ro spisa cu rinka lo nu `NIF` selfu'i ta'i lo mulno gi'e selbe'i fo le gunka
 ##   .i va'o lo nu ro valsi pe lo selci'a poi vasru lo seljonju'a pe `Tatoeba` spisa kei le se to'e
 ##       cuxna cu fukpi `363 MB`
 ##   .i ku'i lo cenba cu fukpi `1.8 MB`
 ##   .i va'o lo nu le selci'a cu clani bi roi kei le se to'e cuxna cu fukpi `24.0 GB`
 ##   .i ku'i lo cenba cu fukpi `15.5 MB` to `Architect` jdice di'u bu'u `#859` toi
-##   .i le gunka cu du le samtci gi'e selcme `NAME_WORKER`
-##   .i le gunka cu selkra lo judri poi le papri cu cpacu le samtci ke'a
+##
+## ni'o le gunka cu du le samtci gi'e selcme `NAME_WORKER` gi'e selkra lo judri poi le papri cu
+##     cpacu le samtci ke'a
 ##   .i va'o lo nu le papri cu vasru le selci'a pe le samtci kei le gunka cu selkra le selci'a ta'i
 ##       `Blob`
-##   .i lo cilta pe le papri cu basti ro gunka poi fliba pu lo nu ke'a spuda fi lo du'u ke'a bredi
+##   .i lo paprycilta cu basti ro gunka poi fliba pu lo nu ke'a spuda fi lo du'u ke'a bredi
 ##   .i ba bo le cilta cu tcidu ro spisa poi pu selbe'i fi le gunka ku'o ta'i le porsi
-##   .i lo cilta pe le papri cu tcidu ro jufra pe ro spisa ta'i lo porsi to `toSentences` toi
+##
+## ni'o lo paprycilta cu tcidu ro jufra pe ro spisa ta'i lo porsi to `toSentences` toi
 ##   .i ca ro nu `event loop` carna kei pa jufra cu se tcidu
 ##   .i ca ro nu tcidu pa spisa le cilta cu jarco pa cenba to `combine` toi
 ##   .i ro nu carna cu du pa notci pe `MessageChannel`
 ##   .i no junla cu rinka lo nu le notci cu denpa
 ##   .i no junla be lo cipra cu ralte le notci
-##   .i se to'e cuxna fa lo nu tcidu ro spisa ca pa nu carna ne'i lo cilta pe le papri
+##
+## ni'o se to'e cuxna fa lo nu tcidu ro spisa ca pa nu carna ne'i lo paprycilta
 ##   .i ki'u bo le papri cu denpa ca lo temci be lo nu tcidu le selci'a pe le spisa
 ##   .i le temci cu jibni lo pilji be li cize bei lo temci be lo nu le jbezba cu tcidu le se ciska
 ##       to lu le se zbasu pe `JavaScript` li'u pe `PROVENANCE.md` toi
-##   .i ro nu cpedu cu selspu ta'i le porsi be lo nu cpedu
+##
+## ni'o ro nu cpedu cu selspu ta'i le porsi be lo nu cpedu
 ##   .i le gunka cu spuda lo notci ta'i le porsi
-##   .i lo cilta pe le papri cu tcidu lo nu cpedu fi pa porsi
-##   .i le tcidu cu rapli ja'i lo namcu pe lo porsi
+##   .i lo paprycilta cu tcidu lo nu cpedu fi pa porsi
+##
+## ni'o le tcidu cu rapli ja'i lo namcu pe lo porsi
 ##   .i ki'u bo `items` fukpi va'o lo nu fanva fi `JavaScript`
 
 {.experimental: "strictFuncs".}
@@ -90,20 +96,20 @@ type
 
   ReaderScript = ref object
     ## lo tcidu poi le papri cu ralte ke'a
-    ##   .i le tcidu cu du pa gunka .a pa tcidu poi zvati lo cilta pe le papri
+    ##   .i le tcidu cu du pa gunka .a pa tcidu poi zvati lo paprycilta
     worker: JsObject
       ## lo gunka poi tcidu lo mivyselci'a
-      ##   .i kunti va'o lo nu lo cilta pe le papri cu tcidu le selci'a
+      ##   .i kunti va'o lo nu lo paprycilta cu tcidu le selci'a
     is_ready: bool  ## lo du'u le gunka pu spuda fi lo du'u le gunka cu bredi
     sent: seq[Ask]  ## lo porsi be lo nu cpedu poi pu selbe'i fi le gunka gi'e na pu selspu
-    asks: seq[Ask]  ## lo porsi be lo nu cpedu poi lo cilta pe le papri cu na pu spuda ke'a
+    asks: seq[Ask]  ## lo porsi be lo nu cpedu poi lo paprycilta cu na pu spuda ke'a
     is_finished: bool  ## lo du'u le papri pu cpedu lo fanmo be lo mivyselci'a
     reader: ReaderLive
-      ## lo tcidu poi zvati lo cilta pe le papri
+      ## lo tcidu poi zvati lo paprycilta
       ##   .i tcidu no da va'o lo nu lo gunka cu tcidu
     lines: LinesNif
-      ## lo linji pe `NIF` poi le tcidu poi zvati lo cilta pe le papri cu ralte ke'a
-    tail: string  ## le rebla pe le romoi cenba ne'i lo cilta pe le papri
+      ## lo linji pe `NIF` poi le tcidu poi zvati lo paprycilta cu ralte ke'a
+    tail: string  ## le rebla pe le romoi cenba ne'i lo paprycilta
     sentences: seq[string]
       ## lo jufra pe le spisa poi ca se tcidu
       ##   .i ro nu carna cu tcidu pa le jufra
@@ -113,7 +119,7 @@ type
       ##   .i ro notci pe le tubnu cu du pa nu `event loop` carna
       ##   .i kunti pu lo pamoi nu carna
     is_turning: bool  ## lo du'u pa nu carna cu denpa ne'i `event loop`
-    count_turns: int  ## lo nu `event loop` carna kei poi tcidu ne'i lo cilta pe le papri
+    count_turns: int  ## lo nu `event loop` carna kei poi tcidu ne'i lo paprycilta
 
 
 const NAME_WORKER = "lojban_parser live"
@@ -129,7 +135,7 @@ let
   SELF {.nodecl, importc: "self".}: JsObject  ## le mulvanbi pe le papri .a pa gunka
     ## lo korbi be `JS`
     ##   .i `typeof` tcidu ro le re datni
-    ##   .i ki'u bo lo sapcme be lo mulno datni poi na se jarco cu rinka lo srera
+    ##   .i ki'u bo lo sapcme be lo muldatni poi na selja'o cu rinka lo srera
   SCRIPT_LOADED = (if DOCUMENT.jsTypeOf != "undefined": DOCUMENT.currentScript else: jsNull)
     ## lo pagbu be le papri be'o poi vasru le samtci poi le papri cu cpacu ke'a
     ##   .i le pagbu cu jarco lo judri .a lo selci'a pe le samtci
@@ -169,7 +175,7 @@ func countUnits(text: string): int =
 func add(lines: var LinesNif, text: string) =
   ## jmina ro linji pe `NIF` poi `text` vasru ke'a
   ##   .i lo lijyfa'o cu fanmo ro le linji
-  ##   .i ji'a ro jgena pe `NIF` selfa'o lo lijyfa'o
+  ##   .i ro jgena pe `NIF` selfa'o lo lijyfa'o
   var first = 0
   for k in 0 ..< text.len:
     if text[k] != '\n': continue
@@ -250,8 +256,8 @@ proc turn(reader: ReaderScript)
 
 
 proc schedule(reader: ReaderScript) =
-  ## cpedu lo nu carna fi `event loop` va'o lo nu lo cilta pe le papri cu ponse lo nu cpedu poi na
-  ##     pu selspu kei .e lo nu no nu carna cu denpa
+  ## cpedu lo nu carna fi `event loop` va'o lo nu lo paprycilta cu ponse lo nu cpedu poi na pu
+  ##     selspu kei .e lo nu no nu carna cu denpa
   if reader.is_turning or reader.asks.len == 0: return
   reader.is_turning = true
   if reader.channel.isNil:
@@ -261,7 +267,7 @@ proc schedule(reader: ReaderScript) =
 
 
 proc turn(reader: ReaderScript) =
-  ## tcidu ne'i lo cilta pe le papri ca pa nu carna
+  ## tcidu ne'i lo paprycilta ca pa nu carna
   ##   .i tcidu pa jufra pe le pamoi se cpedu spisa gi'a tcidu lo fanmo gi'a jarco `NIF` poi ca
   ##       zvati
   ##   .i spuda le nu cpedu ca lo nu le spisa cu mulseltcidu
@@ -269,7 +275,7 @@ proc turn(reader: ReaderScript) =
   reader.is_turning = false
   inc reader.count_turns
   template ask: untyped = reader.asks[0]
-    ## lo datcme be lo nu cpedu poi ca se spuda
+    ## lo datcme be lo nu cpedu poi ca selspu
     ##   .i `let` da'i fukpi le nu cpedu
   var answer: JsObject
   case ask.kind
@@ -310,7 +316,7 @@ proc startWorker(reader: ReaderScript) =
   ## zbasu lo gunka be lo mivyselci'a be'o fi le samtci poi le papri cu cpacu ke'a ku'o va'o lo nu
   ##     le papri cu dunda lo gunka .e lo samtci
   ##   .i va'o lo nu le papri cu dunda no le re dacti gi'a to'e curmi lo gunka kei curmi lo nu lo
-  ##       cilta pe le papri cu tcidu
+  ##       paprycilta cu tcidu
   if SCRIPT_LOADED.isNull or SCRIPT_LOADED.isUndefined or SELF.Worker.jsTypeOf != "function":
     return
   let options = newJsObject()
@@ -358,9 +364,10 @@ proc ask(reader: ReaderScript, kind: Asked, piece: string): Future[JsObject] =
 proc parseLojbanLive*(options: JsObject): JsObject {.exportc.} =
   ## zbasu lo tcidu be lo mivyselci'a
   ##   .i le tcidu cu tcidu ne'i lo gunka va'o lo nu le papri cu dunda pa gunka
-  ##   .i va'o lo drata le tcidu cu tcidu ne'i lo cilta pe le papri
-  ##   .i lo cuxna po'u `worker: false` ralte lo nu tcidu ne'i lo cilta pe le papri
-  ##   .i lo korbi be `JS`
+  ##   .i va'o lo drata le tcidu cu tcidu ne'i lo paprycilta
+  ##   .i lo cuxna po'u `worker: false` ralte lo nu tcidu ne'i lo paprycilta
+  ##
+  ## ni'o lo korbi be `JS`
   ##   .i `exportc` ralte lo cmene po'u `parseLojbanLive` ne'i le samtci
   ##   .i ro spisa cu klama ta'i lo lerpoi pe `JavaScript`
   ##   .i `$` jarco lo stuzi pe le spisa ta'i `UTF-8`

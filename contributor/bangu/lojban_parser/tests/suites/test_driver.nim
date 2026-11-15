@@ -6,16 +6,18 @@
 ##   .i `koch` cpacu lo du'u xu kau le vi selgu'a cu ponse `drive` .a `head` .a `system` kei le
 ##       pagbu po'o to `CONTRIBUTOR.md` toi
 ##   .i se ki'u bo `runner` smali'a ro minde poi `koch` na ka'e tcidu ke'a
-##   .i lo mupli cu terfa'i de'i `2026-11-11` bu'u lo jimca be `git` be'o pe le samtci pe lo
-##       mivyselci'a
+##
+## ni'o lo mupli cu terfa'i de'i `2026-11-11` bu'u lo jimca be `git` be'o pe le samtci pe lo
+##     mivyselci'a
 ##   .i le pagbu poi cuxna lo minde cu pu selkra `case arguments[0]`
 ##   .i se ki'u bo `koch` pu tcidu no minde pe le jitro samtci
 ##   .i `koch drive` pu jitro no da
 ##   .i `koch list-packages` pu cusku no bakfu pe le vi selgu'a
-##   .i `readVerbs` fukpi `verbsDispatch`
+##
+## ni'o `readVerbs` fukpi `verbsDispatch`
 ##   .i ki'u bo le vi selgu'a cu cpacu no datnyvei pe `curator`
-##   .i le jitro samtci cu se tcidu ta'i lo selci'a ca lo nu fanva
-##   .i no linji pe le jitro samtci cu selpli vi
+##   .i le jitro samtci cu se tcidu ta'i lo selci'a ca lo nu fanva kei gi'e vasru no linji poi
+##       selpli vi
 
 {.experimental: "strictFuncs".}
 

@@ -4,7 +4,8 @@
 ##   .i rinka lo nu `Chromium` cfari bu'u le papri
 ##   .i jarco ro linji poi le papri cu cusku ke'a ku'o .e ro datnyvei poi le papri cu benji ke'a
 ##       ku'o .e le famna'u pe le papri
-##   .i `node` na jitro le samtci
+##
+## ni'o `node` na jitro le samtci
 ##   .i le samtci cu selci'a fi `Nim`
 ##   .i `Architect` jdice di'u bu'u `#859`
 ##
@@ -22,32 +23,38 @@
 ##   .i `POST` fi ro datyjudri cu benji pa datnyvei poi selcme le judri
 ##   .i se ki'u bo no tarmi be lo datni cu zvati lo jbini be le papri .e le samtci pe `Nim` to
 ##       `CONTRIBUTOR.md, Data` toi
-##   .i `Chromium` poi selpli cu du lo tcidu be lo papri be'o poi `LOJBAN_CHROMIUM` cmene ke'a
+##
+## ni'o `Chromium` poi selpli cu du lo tcidu be lo papri be'o poi `LOJBAN_CHROMIUM` cmene ke'a
 ##   .i le tcidu cu ka'e du `Chrome` noi mulno .a `headless shell` pe `Chrome`
 ##   .i va'o lo drata `Chromium` poi selpli cu du `headless shell` poi lo sorcu pe `delegations`
 ##       sabji ke'a sepi'o lo sinxa namcu to `browser.nim` toi
 ##   .i le papri cu fasnu ne'i pa vreji pe vo'a ge'u zi'e noi le nu cipra cu vimcu ke'a
-##   .i `Chromium` jatna pa girzu pe vo'a
+##
+## ni'o `Chromium` jatna pa girzu pe vo'a
 ##   .i le nu cipra cu catra ro pruce pe le girzu gi'e cpacu lo fanmo be ro le pruce ba lo nu catra
-##   .i le nu cipra cu vimcu le vreji ba lo nu cpacu lo fanmo be ro le pruce
+##       kei gi'e vimcu le vreji ba lo nu cpacu lo fanmo be ro le pruce
 ##   .i ki'u bo lo pruce pe `Chromium` ciska fi le vreji ba lo nu le pamoi pruce cu sisti kei mu'u
 ##       lo nu `Chrome` noi mulno cu ciska `TransportSecurity` to `test_drive.nim` toi
 ##   .i le nu cipra cu catra ki'u lo nu le vreji cu selvi'u kei .e lo nu `Chrome` noi mulno cu ka'e
 ##       stali ne'i lo nu sisti poi `SIGTERM` cpedu ke'a
-##   .i le vi pruce cu kurji ro pruce poi selkra le vi pruce ku'o ta'i `subreaper` to `prctl(2)` toi
+##
+## ni'o le vi pruce cu kurji ro pruce poi selkra le vi pruce ku'o ta'i `subreaper` to `prctl(2)` toi
 ##   .i se ki'u bo ro pruce pe `Chromium` ge'u zi'e poi lo rirni be ke'a cu morsi cu klama le vi
 ##       pruce
 ##   .i ro nu denpa vi cu nu denpa lo nu morsi
 ##   .i no nu denpa vi cu nu denpa lo temci
-##   .i lo nu cipra poi cusku no fanmo pu `TIMEOUT_PAGE` fliba mu'u lo papri poi no roi mulno gi'a
-##       renro lo srera pu lo nu le cusku pe ke'a selcpa
-##   .i `TIMEOUT_PAGE` tcemau lo temci be lo nu cipra poi selmre gi'e tceme'a lo temci be lo nu no
-##       roi mulno
-##   .i se to'e cuxna fa `Playwright` noi `API` pe ke'a fasnu ne'i `node` to `Architect` jdice bu'u
-##       `#859` toi ku'o .e lo tavjva pe `DevTools` ge'u zi'e noi lo papri poi cusku sepi'o lo nu
-##       cpedu cu na nitcu ke'a
-##   .i jdima fa lo nu va'o lo nu `Linux` na selpli kei pa pruce pe `Chromium` ge'u zi'e poi lo
-##       rirni be ke'a cu morsi cu klama `init`
+##
+## ni'o lo nu cipra poi cusku no fanmo pu `TIMEOUT_PAGE` fliba mu'u lo papri poi no roi mulno gi'a
+##     renro lo srera pu lo nu le cusku pe ke'a selcpa
+##   .i `TIMEOUT_PAGE` tcemau lo temci be lo nu cipra poi selmre ku'o gi'e tceme'a lo temci be lo nu
+##       no roi mulno
+##
+## ni'o se to'e cuxna fa `Playwright` noi `API` pe ke'a fasnu ne'i `node` to `Architect` jdice bu'u
+##     `#859` toi ku'o .e lo tavjva pe `DevTools` ge'u zi'e noi lo papri poi cusku sepi'o lo nu
+##     cpedu cu na nitcu ke'a
+##
+## ni'o jdima fa lo nu va'o lo nu `Linux` na selpli kei pa pruce pe `Chromium` ge'u zi'e poi lo
+##     rirni be ke'a cu morsi cu klama `init`
 ##   .i se ki'u bo lo nu vimcu le vreji cu ka'e jivna le pruce
 
 {.experimental: "strictFuncs".}
@@ -145,8 +152,8 @@ proc serve(
   ##   .i `acceptRequest` denpa lo nu jorne poi bavla'i
   ##   .i se ki'u bo no nu denpa lo temci poi stodi cu zvati vi to `IX.12` toi
   ##   .i va'o lo nu le nu cipra cu sisti le sabji ca lo nu `acceptRequest` denpa kei kei
-  ##       `acceptRequest` cu fliba gi'e sisti lo nu sabji kei ki'u lo nu le papri pu cusku lo fanmo
-  ##       be vo'a kei .a lo nu le nu cipra cu pu zmadu le traji temci
+  ##       `acceptRequest` fliba gi'e sisti lo nu sabji kei ki'u lo nu le papri pu cusku lo fanmo be
+  ##       vo'a kei .a lo nu le nu cipra cu pu zmadu le rairtei
   while not run.is_done:
     try:
       await server.acceptRequest(proc(request: Request) {.async.} =

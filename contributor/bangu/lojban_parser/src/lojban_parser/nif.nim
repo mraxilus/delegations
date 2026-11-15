@@ -20,90 +20,108 @@
 ##   .i `(.lang "cll-21.1")` se lidne `(.nif27)` gi'e cusku lo du'u ro tcita cu cmene lo javni pe
 ##       `CLL 21.1` .a lo klesi be lo genvla
 ##   .i lo lerfu pe ro tcita cu mintu lo lerfu poi le gerna cu ciska ke'a
-##   .i ro javni poi selcme cu du lo jgena poi vasru lo tcita .e lo jgena
+##
+## ni'o ro javni poi selcme cu du lo jgena poi vasru lo tcita .e lo jgena
 ##   .i le tcita cu cmene le javni gi'e lidne lo jgena poi le javni cu vasru ke'a
-##   .i no jgena cu ciska lo namcu pe le javni ne'i `CLL 21.1`
+##
+## ni'o no jgena cu ciska lo namcu pe le javni ne'i `CLL 21.1`
 ##   .i ki'u bo lo cmene be le javni cu jarco le namcu to `LUT_NUMBER_BY_RULE` toi
 ##   .i `Architect` jdice di'u bu'u `#859` to `comment 6805527878` toi
 ##   .i lo fukpi be le namcu cu ka'e rinka lo nu pa jgena cu cmene re javni
-##   .i lo porsi be lo javni poi ro ke'a vasru lo bavla'i javni po'o cu du pa jgena
-##   .i le jgena cu vasru lo tcita be lo javni poi fanmo le porsi
+##
+## ni'o lo porsi be lo javni poi ro ke'a vasru lo bavla'i javni po'o cu du pa jgena poi vasru lo
+##     tcita be lo javni poi fanmo le porsi
 ##   .i lo namcu pe lo javni poi krasi le porsi cu se lidne le tcita mu'u `(sumti_6 80 ...)` noi du
 ##       lo porsi poi selkra `terms<80>` gi'e selfa'o `sumti-6<97>`
-##   .i ne'i `CLL 21.1` re fanmo cu jarco pa porsi to `LUT_CHAIN_BY_ENDS` toi
+##
+## ni'o ne'i `CLL 21.1` re fanmo cu jarco pa porsi to `LUT_CHAIN_BY_ENDS` toi
 ##   .i se ki'u bo le tcidu cu rapyzba ro javni poi zvati lo jbini be le re fanmo
 ##   .i le tcidu cu rapyzba le multricu
 ##   .i lo jgena poi ciska no namcu cu krasi no porsi mu'u `(tail_terms)`
-##   .i ro genvla cu du lo jgena poi vasru lo tcita .e lo jgena
+##
+## ni'o ro genvla cu du lo jgena poi vasru lo tcita .e lo jgena
 ##   .i lo tcita cu cmene lo klesi be le genvla mu'u `KOhA` .a `BRIVLA`
-##   .i ro valsi pe le genvla cu selja'o ci jgena poi se lidne le tcita
-##   .i le ci jgena cu jarco lo stuzi poi le valsi cu krasi bu'u ke'a ku'o .e lo stuzi poi se lidne
-##       lo romoi lerfu pe le valsi ku'o .e lo lerfu pe le valsi ta'i lo lerpoi mu'u
-##       `(BU 15 17 "ta" 18 20 "bu")`
+##   .i ro valsi pe le genvla cu selja'o ci jgena poi se lidne le tcita gi'e jarco lo stuzi poi le
+##       valsi cu krasi bu'u ke'a ku'o .e lo stuzi poi se lidne lo romoi lerfu pe le valsi ku'o .e
+##       lo lerfu pe le valsi ta'i lo lerpoi mu'u `(BU 15 17 "ta" 18 20 "bu")`
 ##   .i se ki'u bo ro valsi cu jorne lo stuzi pe le selci'a poi le valsi cu se tcidu fi ke'a
-##   .i lo porsi be lo genvla ne'i le tricu cu jarco lo namcu pe ro pagbu
+##
+## ni'o lo porsi be lo genvla ne'i le tricu cu jarco lo namcu pe ro pagbu
 ##   .i se ki'u bo no jgena cu vasru lo namcu pe lo pagbu
-##   .i lo javni poi selcme cu ciska no stuzi
-##   .i le javni cu kuspe lo stuzi pe lo pezli poi le javni cu vasru ke'a
+##
+## ni'o lo javni poi selcme cu ciska no stuzi gi'e kuspe lo stuzi pe lo pezli poi le javni cu vasru
+##     ke'a
 ##   .i le tcidu cu lebna le stuzi le pezli
-##   .i jdima fa lo nu lo selci'a be fi `NIF` be'o pe le selci'aste cu zenba fi `8.0 percent` ki'u
-##       lo stuzi poi se lidne ro valsi to lu lo se ciska be fi `NIF` li'u pe `PROVENANCE.md` toi
+##
+## ni'o jdima fa lo nu lo selci'a be fi `NIF` be'o pe le selci'aste cu zenba fi `8.0 percent` ki'u
+##     lo stuzi poi se lidne ro valsi to lu lo se ciska be fi `NIF` li'u pe `PROVENANCE.md` toi
 ##   .i se to'e cuxna fa lo nu ciska lo stuzi po'o poi lo valsi cu krasi bu'u ke'a
 ##   .i ki'u bo lo tcidu cu na ka'e facki lo du'u ma kau poi stuzi cu fanmo le valsi kei sepi'o lo
 ##       lerfu po'o
 ##   .i ki'u bo lo lerfu po'u slaka bu poi zvati ne'i lo valsi cu ciska lo stuzi poi lo lerfu cu
 ##       vimcu ke'a
-##   .i lo se tcidu poi sinxa ro srera to `readTextMarked` .e `#859` toi cu ciska ji'a re klesi be
-##       lo jgena
+##
+## ni'o lo se tcidu poi sinxa ro srera to `readTextMarked` .e `#859` toi cu ciska ji'a re klesi be
+##     lo jgena
 ##   .i lo srejge cu selkra lo tcita po'u `srera`
 ##   .i lo stuzi poi le gerna cu sisti bu'u ke'a se lidne le tcita
 ##   .i lo tcita be lo javni poi sisti bu'u le stuzi gi'e traji lo ka dizlo cu se lidne le stuzi
 ##   .i no namcu pe le javni cu selci'a ki'u lo nu lo cmene be le javni cu jarco le namcu to lo
 ##       seljdi pe `#859` pe `comment 6806614095` toi
-##   .i `(nitcu ...)` se lidne le tcita be le javni gi'e vasru lo klesi be ro genvla poi su'o nu
-##       genytcidu cu tcidu ke'a bu'u le stuzi
+##
+## ni'o `(nitcu ...)` se lidne le tcita be le javni gi'e vasru lo klesi be ro genvla poi su'o nu
+##     genytcidu cu tcidu ke'a bu'u le stuzi
 ##   .i lo jgena poi le srejge cu vasru ke'a se lidne `(nitcu ...)`
 ##   .i lo porsi be lo javni cu sisti bu'u lo jgena poi gapru le srejge ki'u lo nu no porsi pe
 ##       `CLL 21.1` vasru le srejge
-##   .i lo pagbu poi no genvla cu vasru ke'a selkra lo tcita po'u `rivbi`
+##
+## ni'o lo pagbu poi no genvla cu vasru ke'a selkra lo tcita po'u `rivbi`
 ##   .i lo cmene be lo velru'e poi to'e curmi le pagbu cu se lidne le tcita mu'u `selmaho`
 ##   .i lo stuzi .e lo lerfu pe ro valsi pe le pagbu cu se lidne le cmene
 ##   .i lo genvla cu ciska lo stuzi .e lo lerfu ta'i le mintu
-##   .i lo velru'e po'u `Stream` jmina lo nu to'e curmi pe lo porsi be lo valsi mu'u `Letter`
+##
+## ni'o lo velru'e po'u `Stream` jmina lo nu to'e curmi pe lo porsi be lo valsi mu'u `Letter`
 ##   .i lo selci'avla poi le porsi be lo valsi cu to'e curmi ke'a ralte lo stuzi pe vo'a
 ##   .i lo selci'a poi zo zoi sitna ke'a go'i ji'a
 ##   .i no `h` basti `'`
 ##   .i `'` se basti lo basysni
-##   .i se to'e cuxna fa lo nu le pagbu cu vasru lo ve pruce po'o
+##
+## ni'o se to'e cuxna fa lo nu le pagbu cu vasru lo ve pruce po'o
 ##   .i ki'u bo le porsi be lo valsi .e lo gerna pe lo nu sitna cu dunda lo cmene po'u `Quotation`
 ##       lo nu to'e curmi
 ##   .i se ki'u bo lo tcidu cu na ka'e ganse lo nu lo stuzi cu frica lo valsi
-##   .i lo pagbu poi se tcita `SU` .a `Erasure` .a `FAhO` sinxa no nu to'e curmi
+##
+## ni'o lo pagbu poi se tcita `SU` .a `Erasure` .a `FAhO` sinxa no nu to'e curmi
 ##   .i ku'i le pagbu cu vasru lo valsi poi no genvla cu tcidu ke'a
 ##   .i lo pagbu poi se tcita `SU` vasru zo su poi fanmo lo selci'a poi lidne zo su
 ##   .i lo pagbu poi se tcita `Erasure` vasru lo valsi poi lo nu vimcu cu vimcu ke'a ku'o .e lo
 ##       cmavo poi vimcu le valsi
 ##   .i lo pagbu poi se tcita `FAhO` vasru zo fa'o poi fanmo le selci'a
-##   .i ro selci'avla poi se lidne zo fa'o se tcita `Stream` gi'e ponse lo nu to'e curmi po'u `FAhO`
-##       gi'e ralte lo stuzi pe vo'a
+##
+## ni'o ro selci'avla poi se lidne zo fa'o se tcita `Stream` gi'e ponse lo nu to'e curmi po'u `FAhO`
+##     gi'e ralte lo stuzi pe vo'a
 ##   .i se ki'u bo ro stuzi pe ro valsi cu zvati pa pezli to `isCovering` pe lo cipra toi
-##   .i va'o lo nu `CLL` dunda lo valsi kei ro tcita poi cmene lo sinxa .a lo velru'e .a lo nu to'e
-##       curmi cu du lo valsi pe `CLL` gi'e selci'a ta'i `CLL`
+##
+## ni'o va'o lo nu `CLL` dunda lo valsi kei ro tcita poi cmene lo sinxa .a lo velru'e .a lo nu to'e
+##     curmi cu du lo valsi pe `CLL` gi'e selci'a ta'i `CLL`
 ##   .i lo cmene be lo selma'o cu mintu lo cmene poi `CLL 20` dunda ke'a mu'u `SU`
 ##   .i lo jbovla cu selci'a ta'i lo cmale'u mu'u `slinkuhi`
 ##   .i lo glivla cu stali mu'u `Erasure` pe `CLL 19.13`
-##   .i va'o lo nu `CLL` dunda no valsi kei lo tcita cu du pa valsi pe le gimste
+##
+## ni'o va'o lo nu `CLL` dunda no valsi kei lo tcita cu du pa valsi pe le gimste
 ##   .i `srera` selsmu zoi gy. errs .gy.
 ##   .i `nitcu` selsmu zoi gy. needs .gy.
 ##   .i `rivbi` selsmu zoi gy. avoids .gy.
 ##   .i `Architect` jdice di'u bu'u `#859`
-##   .i se to'e cuxna fa lo jbocme be lo javni pe `CLL 21.1`
+##
+## ni'o se to'e cuxna fa lo jbocme be lo javni pe `CLL 21.1`
 ##   .i `CLL` dunda no jbocme be lo javni
 ##   .i se ki'u bo lo tcita be lo javni cu ralte lo cmene pe `CLL 21.1` ca lo nu `CLL` dunda no
 ##       jbocme
 ##   .i se to'e cuxna fa lo lujvo po'u `naltcidu` noi basti `rivbi`
 ##   .i no liste cu vasru `naltcidu`
-##   .i lo tcita cu ciska `_` lo stuzi be ro `-`
+##
+## ni'o lo tcita cu ciska `_` lo stuzi be ro `-`
 ##   .i no cmene pe `CLL 21.1` vasru `_`
 ##   .i lo valsi cu ciska `h` lo stuzi be ro `'` ta'i lo nu `CLL 20` ciska `h` ta'i lo brale'u pe
 ##       `'` ne'i lo cmene be lo selma'o
@@ -111,31 +129,37 @@
 ##   .i lo porsi be lo valsi cu to'e curmi `h` poi na zvati lo nu sitna
 ##   .i se ki'u bo le tcidu cu tcidu `-` fi `_` gi'e tcidu `'` fi `h`
 ##   .i se ki'u bo no tcita .e no valsi cu nitcu lo basysni pe `NIF`
-##   .i lo selci'a poi zo zoi .a zo la'o sitna ke'a cimoi lo lerpoi pe lo genvla pe `ZOI` gi'e stali
+##
+## ni'o lo selci'a poi zo zoi .a zo la'o sitna ke'a cimoi lo lerpoi pe lo genvla pe `ZOI` gi'e stali
 ##   .i ro midle'u pe `NIF` .e ro stuzi poi mleca lo kutle'u cu se basti `\xx`
 ##   .i `#` .e `:` .e lo kutle'u .e ro stuzi poi na mleca li parebi cu stali
-##   .i se to'e cuxna fa `\2D` pe lo tcita ge'u .e `\27` pe lo valsi
+##
+## ni'o se to'e cuxna fa `\2D` pe lo tcita ge'u .e `\27` pe lo valsi
 ##   .i le velski cu dunda le re basysni
 ##   .i `Architect` to'e cuxna le re basti sinxa to `#855` toi
 ##   .i le tcidu pe `nimony` pe `2c5b3dca` tcidu lo tcita ta'i lo stuzi pe le tcita
 ##   .i se ki'u bo le tcidu cu na galfi `\2D`
-##   .i lo javni pe lo datni poi zvati lo jbini be lo samtci cu curmi `NIF` to
-##       `CONTRIBUTOR.md, Data` toi
+##
+## ni'o lo javni pe lo datni poi zvati lo jbini be lo samtci cu curmi `NIF` to
+##     `CONTRIBUTOR.md, Data` toi
 ##   .i lo flalu pe lo cipra cu cipra lo tarmi be `NIF`
 ##   .i `test_nif.nim` ciska ro tricu pe le selci'aste gi'e rapyzba ro le tricu ta'i lo mulno sepi'o
 ##       lo nu tcidu
-##   .i se to'e cuxna fa lo nu lo datni be lo linji cu jarco lo stuzi pe lo valsi
+##
+## ni'o se to'e cuxna fa lo nu lo datni be lo linji cu jarco lo stuzi pe lo valsi
 ##   .i ki'u bo `NIF` ciska le datni ta'i lo vujnu be fi lo mamjge
 ##   .i le tcidu pe `nimony` pilno `10 bits` po'o lo nu ralte lo stuzi ne'i lo linji
 ##   .i se ki'u bo le tcidu cu katna lo stuzi poi zmadu li panoreci lo'o to `#852` toi
 ##   .i se to'e cuxna fa lo bakfu pe `nimony` zi'e noi na ka'e se fanva fi `JavaScript` to `#852`
 ##       toi
-##   .i le ciska cu rapli ja'i lo namcu pe lo jgena gi'e klama fo lo porsi be lo javni ta'i lo nu le
-##       fancu cu pilno vo'a
+##
+## ni'o le ciska cu rapli ja'i lo namcu pe lo jgena gi'e klama fo lo porsi be lo javni ta'i lo nu le
+##     fancu cu pilno vo'a
 ##   .i ki'u bo `items` .e lo nu cmene lo jgena cu zbasu lo fukpi be le jgena va'o lo nu fanva fi
 ##       `JavaScript`
-##   .i lo tricu poi selrapyzba fi `NIF` to `toTree` pe `merge.nim` toi cu selci'a ta'i lo nu ciska
-##       lo se tcidu
+##
+## ni'o lo tricu poi selrapyzba fi `NIF` to `toTree` pe `merge.nim` toi cu selci'a ta'i lo nu ciska
+##     lo se tcidu
 ##   .i lo pezli be le tricu cu sinxa lo genvla poi `NIF` dunda ke'a
 ##   .i `'` basti ro `h` pe lo valsi pe le genvla
 ##   .i ku'i lo selci'a poi lo nu sitna cu vasru ke'a ku'o .e lo selci'avla poi le porsi be lo valsi
@@ -205,8 +229,9 @@ func escaped(text: string, is_identifier: bool): string =
   ## ciska lo selci'a
   ##   .i lo basysni `\xx` basti ro stuzi poi `NIF` na vasru ke'a ta'i lo nu stali
   ##   .i `\xx` ciska lo stuzi ta'i re lerfu pe li paxa gi'e pilno lo brale'u
-  ##   .i ne'i lo cmene le basysni cu basti ro stuzi poi mleca li parebi gi'e na lerfu gi'e na namcu
-  ##       gi'e na du `_`
+  ##
+  ## ni'o ne'i lo cmene le basysni cu basti ro stuzi poi mleca li parebi gi'e na lerfu gi'e na namcu
+  ##     gi'e na du `_`
   ##   .i ne'i lo lerpoi le basysni cu basti ro midle'u poi na du `#` gi'e na du `:` ku'o .e ro
   ##       stuzi poi mleca lo kutle'u ku'o .e `DEL`
   ##   .i ro stuzi poi na mleca li parebi cu stali
@@ -364,10 +389,10 @@ func addRule(
   ##   .i lo javni poi fanmo lo porsi cu ciska lo tcita pe vo'a ge'u ce'o `top` ce'o lo jgena pe
   ##       vo'a
   ##   .i va'o lo nu le porsi cu selkra le javni poi fanmo le porsi kei `top` na selci'a
-  ##   .i lo srejge cu fanmo lo porsi poi gapru le srejge
-  ##   .i le srejge cu ciska `srera` ce'o lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ce'o lo
-  ##       tcita be lo javni poi sisti bu'u le stuzi be'o ce'o `nitcu` joi lo genvla poi se tcidu
-  ##       bu'u le stuzi
+  ##
+  ## ni'o lo srejge cu fanmo lo porsi poi gapru le srejge ku'o gi'e ciska `srera` ce'o lo stuzi poi
+  ##     le gerna cu sisti bu'u ke'a ku'o ce'o lo tcita be lo javni poi sisti bu'u le stuzi be'o
+  ##     ce'o `nitcu` joi lo genvla poi se tcidu bu'u le stuzi
   let is_chain = node.stop.isNone and node.children.len == 1 and
     not node.children[0].is_terminal and node.children[0].stop.isNone
   if is_chain:

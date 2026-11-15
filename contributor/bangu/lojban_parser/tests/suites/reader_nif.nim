@@ -4,35 +4,38 @@
 ##   .i se ki'u bo lo flalu pe le cipra cu tcidu lo selci'a be le ciska
 ##   .i le tcidu pe le velski cu du `nif_read.nim` pe le bakfu
 ##   .i lo papri cu tcidu `NIF` sepi'o `nif_read.nim` ji'a
-##   .i le selci'a be fi `NIF` be'o poi le vi datnyvei cu dunda ke'a morna lo tarmi poi `nif.nim`
-##       skicu ke'a ne'i lo krapinka pe vo'a
-##   .i lo minde cu krasi le morna
-##   .i le morna cu vasru ji'a ro porsi be lo javni .e ro genvla
+##
+## ni'o le selci'a be fi `NIF` be'o poi le vi datnyvei cu dunda ke'a morna lo tarmi poi `nif.nim`
+##     skicu ke'a ne'i lo krapinka pe vo'a
+##   .i le morna cu selkra lo minde gi'e vasru ji'a ro porsi be lo javni .e ro genvla
 ##   .i ro porsi cu selci'a ta'i lo tcita be lo javni poi fanmo le porsi be'o .e lo namcu pe lo
 ##       javni poi krasi le porsi
 ##   .i ro genvla cu selci'a ta'i lo klesi pe vo'a ge'u .e lo stuzi .e lo lerfu pe ro valsi
 ##   .i va'o lo nu le se tcidu cu sinxa ro srera kei le morna cu vasru ji'a lo srejge .e lo pagbu
 ##       poi no genvla cu vasru ke'a
-##   .i le ciska cu dunda lo selci'a
+##
+## ni'o le ciska cu dunda lo selci'a
 ##   .i le morna cu dunda lo jgena
 ##   .i se ki'u bo no le re fancu cu cipra fi vo'a
-##   .i lo nu rapyzba cu tcidu le selci'a gi'e rapyzba lo tricu .e lo gerna valsi to `toTree` pe
-##       `merge.nim` toi
+##
+## ni'o lo nu rapyzba cu tcidu le selci'a gi'e rapyzba lo tricu .e lo gerna valsi to `toTree` pe
+##     `merge.nim` toi
 ##   .i lo nu jmina lo pagbu cu tcidu `NIF` sepi'o `toTree` ji'a
-##   .i le nu rapyzba cu cpacu lo namcu pe ro javni lo cmene be le javni
-##   .i le nu rapyzba cu cpacu ro javni poi zvati lo jbini be le re fanmo be lo porsi ku'o
-##       `LUT_CHAIN_BY_ENDS`
+##   .i le nu rapyzba cu cpacu lo namcu pe ro javni lo cmene be le javni gi'e cpacu ro javni poi
+##       zvati lo jbini be le re fanmo be lo porsi ku'o `LUT_CHAIN_BY_ENDS`
 ##   .i `-` basti ro `_` pe lo tcita
 ##   .i `'` basti ro `h` pe lo valsi
 ##   .i se ki'u bo le flalu cu cipra lo du'u le tarmi cu cirko no pagbu be le tricu
 ##   .i le flalu na cipra lo du'u le ciska cu tugni le morna kei po'o
-##   .i le flalu pe le gacri to `isCovering` toi cu cipra lo du'u le tricu cu mapti lo stuzi pe le
-##       selci'a
+##
+## ni'o le flalu pe le gacri to `isCovering` toi cu cipra lo du'u le tricu cu mapti lo stuzi pe le
+##     selci'a
 ##   .i ro stuzi pe ro valsi cu zvati pa pezli
 ##   .i lo porsi be lo pezli cu mintu lo porsi be le selci'a
 ##   .i ro datstu cu du lo sinxa poi zvati lo jbini be lo valsi
 ##   .i lo cipra pe lo sinxa .e lo cipra pe lo mivyselci'a cu tcidu le flalu
-##   .i lo jbecipra .e lo cipra pe `JavaScript` tcidu le mitytcidu .e le mitmo'a .e le mitmupli
+##
+## ni'o lo jbecipra .e lo cipra pe `JavaScript` tcidu le mitytcidu .e le mitmo'a .e le mitmupli
 ##   .i se ki'u bo ro le ci pagbu cu selci'a pa roi to `Article II.9` toi
 
 {.experimental: "strictFuncs".}
@@ -116,9 +119,10 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
   ##       vo'a
   ##   .i va'o lo nu le porsi cu selkra le javni poi fanmo le porsi kei `top` na seldu'a
   ##   .i lo genvla cu dunda lo klesi ce'o lo stuzi .e bo lo lerfu pe ro valsi
-  ##   .i lo srejge cu dunda `srera` ce'o lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ce'o lo
-  ##       cmene be lo javni be'o ce'o `nitcu` joi bo lo klesi ce'o lo jgena pe vo'a
-  ##   .i lo srejge cu fanmo lo porsi poi gapru le srejge
+  ##
+  ## ni'o lo srejge cu dunda `srera` ce'o lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ce'o lo
+  ##     cmene be lo javni be'o ce'o `nitcu` joi bo lo klesi ce'o lo jgena pe vo'a gi'e fanmo lo
+  ##     porsi poi gapru le srejge
   ##   .i lo pagbu poi no genvla cu vasru ke'a dunda `rivbi` ce'o lo velru'e ce'o lo valsi pe vo'a
   ##   .i le velru'e po'u `Stream` se lidne lo nu to'e curmi pe lo porsi be lo valsi
   if node.is_terminal:

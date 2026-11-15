@@ -4,8 +4,9 @@
 ##   .i le datnyvei cu du lo datnyvei poi `git` ralte ke'a ku'o .e lo datnyvei poi `git` na ralte
 ##       ke'a zi'e poi no javni be lo nu na jundi cu cmene ke'a
 ##   .i lo cipra pe `curator` tcidu le datnyvei ta'i di'u
-##   .i `reader_prose.nim` tcidu ro selci'a
-##   .i ji'a le datnyvei cu cipra lo du'u ro jufra cu krasi pa linji ja'i lo seljdi pe `#818`
+##
+## ni'o `reader_prose.nim` tcidu ro selci'a
+##   .i ji'a le vi datnyvei cu cipra lo du'u ro jufra cu krasi pa linji ja'i lo seljdi pe `#818`
 ##   .i le cipypau poi se lidne le vi pinka cu cipra le javni pe `reader_prose.nim` sepi'o lo
 ##       selci'a poi selfi'i le cipypau
 
@@ -70,9 +71,8 @@ func faultsRead(path, content: string): seq[string] =
 
 proc readingsProject(): tuple[readings: seq[(Text, ReadingMarked)], lines: Table[string,
     seq[string]]] =
-  ## tcidu ro selci'a pe le vi selgu'a pa roi
+  ## tcidu ro selci'a pe le vi selgu'a pa roi gi'e dunda ro linji pe ro datnyvei
   ##   .i le re flalu pe le cipra cu pilno le se tcidu
-  ##   .i ji'a dunda ro linji pe ro datnyvei
   for path in pathsProse():
     let content = readFile(DIRECTORY_PROJECT / path)
     result.lines[path] = content.splitLines
@@ -80,7 +80,7 @@ proc readingsProject(): tuple[readings: seq[(Text, ReadingMarked)], lines: Table
 
 
 let PROJECT = readingsProject()
-  ## ro selci'a pe le vi selgu'a .e lo se tcidu be ri .e ro linji pe ro datnyvei
+  ## ro selci'a pe le vi selgu'a ge'u .e lo se tcidu pe le selci'a ge'u .e ro linji pe ro datnyvei
 
 
 proc show(found: seq[Error]) =

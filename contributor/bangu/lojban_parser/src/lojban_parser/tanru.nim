@@ -16,11 +16,13 @@
 ##   .i lo liste cu dunda lo cmene po'o to `#823` toi
 ##   .i lo selci'a cu se tcidu va'o lo nu lo javni pe `CLL` curmi le selci'a
 ##   .iju lo liste cu vasru le selci'a
-##   .i va'o lo nu lo liste cu dunda lo rafsi pe lo pagbu lo valsi kei le liste cu jarco le valsi
+##
+## ni'o va'o lo nu lo liste cu dunda lo rafsi pe lo pagbu lo valsi kei le liste cu jarco le valsi
 ##   .i lo pagbu poi no liste cu vasru ke'a ralte lo lerfu pe vo'a gi'e selsmu no da ne'i le vi
 ##       selgu'a
 ##   .i `lojban_tagger` to'e curmi le pagbu
-##   .i lo lerfu pe lo valsi cu jdice lo klesi ja'i `CLL 4.1` bi'i `CLL 4.8`
+##
+## ni'o lo lerfu pe lo valsi cu jdice lo klesi ja'i `CLL 4.1` bi'i `CLL 4.8`
 ##   .i lo fanmo zunsna cu sinxa lo cmene to `CLL 4.8` toi
 ##   .i va'o lo nu `y` .e zoi gy. ' .gy. na se kancu kei lo zunsna remei poi zvati le mu lerfu poi
 ##       krasi le valsi cu sinxa lo brivla to `CLL 4.3` toi
@@ -28,67 +30,80 @@
 ##   .i lo drata brivla cu lujvo va'o lo nu lo rafsi pe le brivla cu mapti `CLL 4.6` .e `CLL 4.11`
 ##   .i va'o lo drata le brivla cu fu'ivla va'o lo nu le brivla cu mapti ro javni pe `CLL 4.7`
 ##   .i lo valsi poi vasru no zunsna remei cu du pa cmavo .a lo cmavo gunma to `CLL 4.2` toi
-##   .i lo brivla poi mapti ro javni pe lo fu'ivla cu se tcidu ta'i lo fu'ivla ji'a va'o lo nu lo
-##       lerfu pe le brivla cu se fendi fi lo rafsi poi `CLL 4.11` jorne ke'a sepi'o lo datlerjo'e
+##
+## ni'o lo brivla poi mapti ro javni pe lo fu'ivla cu se tcidu ta'i lo fu'ivla ji'a va'o lo nu lo
+##     lerfu pe le brivla cu se fendi fi lo rafsi poi `CLL 4.11` jorne ke'a sepi'o lo datlerjo'e
 ##   .i `CLL 4.7` to'e curmi lo nu lo fu'ivla cu lujvo
 ##   .i ku'i `CLL 4.7` no roi to'e curmi lo nu lo fu'ivla cu simsa lo lujvo
 ##   .i va'o lo drata le brivla cu se to'e curmi ta'i `Hyphen`
 ##   .i le tcila cu du lo tarmi poi `CLL 4.11` dunda ke'a
-##   .i ro nu to'e curmi cu cusku lo javni pe `CLL`
-##   .i `Foreign` to'e curmi no da
-##   .i `Foreign` tcita lo selci'a poi zo zoi .a zo la'o sitna ke'a
+##
+## ni'o ro nu to'e curmi cu cusku lo javni pe `CLL`
+##   .i `Foreign` to'e curmi no da gi'e tcita lo selci'a poi zo zoi .a zo la'o sitna ke'a
 ##   .i `readStream` ralte le selci'a ta'i pa mulpau be lo porsi be lo valsi to `CLL 4.9 rule 7` toi
-##   .i `Faho` ji'a to'e curmi no da
-##   .i `Faho` tcita lo selci'avla poi se lidne zo fa'o noi fanmo lo se tcidu
+##   .i `Faho` ji'a to'e curmi no da gi'e tcita lo selci'avla poi se lidne zo fa'o noi fanmo lo se
+##       tcidu
 ##   .i `prose.nim` ralte le se ciska valsi to `CLL 19.15` toi
-##   .i `Stream` cusku lo selci'a poi `readStream` pe `stream.nim` tcidu ke'a
+##
+## ni'o `Stream` cusku lo selci'a poi `readStream` pe `stream.nim` tcidu ke'a
 ##   .i le selci'a cu du lo sinxa be lo porsi be lo valsi be'o be'o .a lo cmavo gunma to `CLL 4.2`
 ##       toi
-##   .i lo se tcidu pe ro valsi cu du lo valsi pe lo tanru pe le valsi gi'e no roi du lo lerpoi pe
-##       le valsi
+##
+## ni'o lo se tcidu pe ro valsi cu du lo valsi pe lo tanru pe le valsi gi'e no roi du lo lerpoi pe
+##     le valsi
 ##   .i lo selcuxrafsi cu na galfi lo lujvo to `CLL 4.5` toi
 ##   .i se ki'u bo zo brivla .e zo brivalsi .e zo bridyvla .e zo bridyvalsi se tcidu ta'i pa tanru
 ##   .i `$` ciska lo tarmi poi `CLL 4.12` nelci ke'a
 ##   .i lo porsi be le valsi cu stali ki'u lo nu ro tanru cu vasru lo ga'ivla poi lidne lo stedu
 ##       valsi to `CLL 4.5` toi
-##   .i lo rafsi be lo cmavo cu sinxa le cmavo
+##
+## ni'o lo rafsi be lo cmavo cu sinxa le cmavo
 ##   .i le tanru cu ralte le cmavo
 ##   .i se ki'u bo zo selci'a se tcidu ta'i lo'u se ciska le'u
 ##   .i zo selci'a no roi se tcidu ta'i zo ciska ki'u lo nu zo se galfi zo ciska to `CLL 4.6` .e
 ##       `CLL 9.4` toi
-##   .i lo lujvo poi lo romoi rafsi pe ke'a sinxa pa cmavo cu se tcidu ji'a
+##
+## ni'o lo lujvo poi lo romoi rafsi pe ke'a sinxa pa cmavo cu se tcidu ji'a
 ##   .i `CLL 4.11 step 2` cpacu lo romoi rafsi lo famgi'u
 ##   .i ku'i le liste po'o cu cusku lo du'u lo rafsi cu sinxa ma kau poi valsi
 ##   .i lo lerfu no roi cusku la'e di'u
-##   .i lo rafsi poi vasru vo lerfu gi'e selpo'e su'o re gismu cu sinxa no gismu mu'u `brod` to
-##       `CLL 4.4` toi
+##
+## ni'o lo rafsi poi vasru vo lerfu gi'e selpo'e su'o re gismu cu sinxa no gismu mu'u `brod` to
+##     `CLL 4.4` toi
 ##   .i se ki'u bo lo pagbu pe le rafsi cu ralte lo lerfu po'u `brod`
-##   .i lo cmavo poi se tcidu ta'i lo nu mulno cu ponse lo selma'o be vo'a
+##
+## ni'o lo cmavo poi se tcidu ta'i lo nu mulno cu ponse lo selma'o be vo'a
 ##   .i le ma'oste cu dunda le selma'o to le renomoi ckupau be `CLL` toi
 ##   .i lo cmavo poi no liste cu vasru ke'a ponse no selma'o mu'u lo cipma'o po'u zo ku'a'e
-##   .i lo pagbu be lo lujvo cu ponse no selma'o
+##
+## ni'o lo pagbu be lo lujvo cu ponse no selma'o
 ##   .i lo rafsi cu ka'e selci'a ta'i lo cmavo mu'u lo nu lo rafsi po'u `kau` pe zo kampu selci'a
 ##       ta'i zo kau
 ##   .i ku'i le rafsi cu sinxa no cmavo ki'u la'e di'u
-##   .i le tcidu cu pilno lo pamoi porsi be lo rafsi poi `splitLujvo` dunda ke'a
+##
+## ni'o le tcidu cu pilno lo pamoi porsi be lo rafsi poi `splitLujvo` dunda ke'a
 ##   .i lo jvacipra pe `test_lujvo.nim` jarco lo du'u `splitLujvo` dunda pa porsi po'o kei ne'i lo
 ##       cunrafsi .e le jvoste
-##   .i lo selci'a cu se tcidu ta'i lo nu selci'a kei ne'i lo raltai
+##
+## ni'o lo selci'a cu se tcidu ta'i lo nu selci'a kei ne'i lo raltai
 ##   .i le raltai cu vasru lo cmale'u .e zoi gy. ' .gy. gi'e vasru no datle'u
 ##   .i lo calyle'u .e lo lerfu po'u slaka bu ge'u .e lo lerfu po'u denpa bu ge'u .e lo brale'u cu
 ##       sinxa lo porsi be lo valsi to `CLL 3.3` .e `CLL 3.9` toi
 ##   .i `readStream` vimcu le sinxa pu lo nu `readWord` tcidu ro valsi ta'i lo nu `readStream` vimcu
 ##       le sinxa pe `sai,r,goi` .e `DI,ky,jvo` pe `CLL 3.9`
-##   .i `h` no roi sinxa zoi gy. ' .gy.
+##
+## ni'o `h` no roi sinxa zoi gy. ' .gy.
 ##   .i `CLL 3.3` cusku lo du'u lo lerfu po'u `h` na sinxa zoi gy. ' .gy.
 ##   .i se ki'u bo `h` se to'e curmi
-##   .i `$` na pilno lo rafsi poi vasru vo lerfu gi'e selpo'e su'o re gismu va'o lo nu le gismu cu
-##       ponse lo datrafsi
+##
+## ni'o `$` na pilno lo rafsi poi vasru vo lerfu gi'e selpo'e su'o re gismu ku'o va'o lo nu le gismu
+##     cu ponse lo datrafsi
 ##   .i zo brodi .e zo brodo .e zo brodu ponse no datrafsi
 ##   .i se ki'u bo lo lujvo pe le gismu cu selci'a sepi'o `brod`
 ##   .i lo se tcidu be le lujvo cu vasru lo pagbu po'u `brod` to lo preti poi na selspu ne'i
 ##       `PROVENANCE` toi
-##   .i jdima fa lo nu `$` sisku lo selcuxrafsi pe ro stuzi ta'i lo porsi be lo stuzi
+##
+## ni'o jdima fa lo nu `$` sisku lo selcuxrafsi pe ro stuzi ta'i lo porsi be lo stuzi
 ##   .i se ki'u bo lo temci be le nu sisku cu zenba fi lo mintu ca ro nu jmina pa valsi le tanru to
 ##       la'e di'u selmre ne'i lu lo namcu li'u pe `PROVENANCE.md` toi
 ##   .i `readWord` punji no jimte lo te kancu be lo valsi
@@ -163,7 +178,7 @@ type
     Comma
       ## lo lerfu po'u slaka bu poi na zvati lo slakykoi
       ##   .i le lerfu cu lamji lo korbi be le valsi gi'a lamji zoi gy. ' .gy. gi'a lamji lo pagbu
-      ##       poi vasru no slaka gi'a zvati ne'i lo karsna remei to `CLL 3.3` .e `CLL 3.4` toi
+      ##       poi vasru no slaka ku'o gi'a zvati ne'i lo karsna remei to `CLL 3.3` .e `CLL 3.4` toi
     Split
       ## lo selci'avla cu se fendi fo su'o re tadji
       ##   .i ro le tadji cu nitcu lo mleca traji denpa to `CLL 3.3` toi
@@ -309,8 +324,8 @@ func readWhole(text: string, kind: Kind): Reading =
 
 func readCmene(text: string): Reading =
   ## tcidu lo selci'a poi selfa'o lo zunsna ku'o ta'i lo cmene ja'i lo javni pe `CLL 4.8`
-  ##   .i le cmene cu vasru su'o slaka gi'e vasru no zunsna remei poi na selcru gi'e na vasru zo la
-  ##       .a zo lai .a zo doi vu'o poi no zunsna cu lidne ke'a
+  ##   .i le cmene cu vasru su'o slaka gi'e vasru no zunsna remei poi na selcru ku'o gi'e na vasru
+  ##       zo la .a zo lai .a zo doi vu'o poi no zunsna cu lidne ke'a
   ##   .i lo slaka cu selcmu pa karsna .a `y` .a pa zunsna poi ka'e slaka ku'o mu'u `rl` pe
   ##       `CLL 3.4`
   ##   .i `c` po'o vasru no slaka
@@ -370,7 +385,8 @@ func readWord*(text: string): Reading =
   ##   .i le valsi cu cmavo ja gismu ja lujvo ja fu'ivla ja cmene
   ##   .iju lo liste cu vasru le valsi
   ##   .i le selci'a cu se tcidu ta'i lo nu selci'a kei ne'i lo raltai
-  ##   .i lo lerfu poi se to'e curmi cu selsku ta'i lo nu mulno
+  ##
+  ## ni'o lo lerfu poi se to'e curmi cu selsku ta'i lo nu mulno
   ##   .i se ki'u bo le tcila pe lo selci'a pe `UTF-8` stali lo ka me `UTF-8`
   ##   .i lo cipra po'u zoi gy. Character outside letters is named whole, so detail of UTF-8 stays
   ##       UTF-8 .gy. pe `test_tanru.nim` jarco la'e di'u
@@ -416,8 +432,8 @@ func choices(part: Part, is_final: bool): seq[string] {.used.} =  # selpli `test
   ##   .i lo rafsi poi vasru vo lerfu gi'e selpo'e su'o re gismu cu selvi'u va'o lo nu le gismu cu
   ##       ponse su'o datrafsi
   ##   .i lo pagbu poi no liste cu vasru ke'a dunda lo lerfu pe vo'a va'o lo nu lo tarmi be le lerfu
-  ##       cu selcru bu'u le stuzi gi'a dunda lo rafsi poi vasru vo lerfu va'o lo nu le pagbu cu
-  ##       gismu gi'e mulseltcidu
+  ##       cu selcru bu'u le stuzi kei gi'a dunda lo rafsi poi vasru vo lerfu ku'o va'o lo nu le
+  ##       pagbu cu gismu gi'e mulseltcidu
   ##   .i lo cmavo poi no rafsi cu sinxa ke'a ku'o mu'u zo lo dunda no da
   if not part.is_listed:
     let shape = part.letters.form
@@ -444,19 +460,22 @@ func searchLowest(options: seq[seq[string]]): seq[string] {.used.} =  # selpli `
   ##   .i su'o re stuzi cu zasti
   ##   .i lo porsi be le selcu'a cu ponse lo cmaraina'u ja'i `CLL 4.12`
   ##   .i va'o lo nu lo namcu cu mintu cu cuxna lo pamoi ja'i lo porsi be le tercu'a
-  ##   .i sisku sepi'o `dynamic programming` bu'u ro stuzi
+  ##
+  ## ni'o sisku sepi'o `dynamic programming` bu'u ro stuzi
   ##   .i lo namcu pe `CLL 4.12` sumji lo pagbu pe ro rafsi lo pagbu pe ro terjo'e
   ##   .i lo pagbu pe ro terjo'e cu seljdi le re rafsi poi jibni le terjo'e ku'o .e pa lanci noi
   ##       cusku lo du'u xu kau lo krapoi pe `CLL 4.11 step 5` kalri to `lujvo.nim` toi
   ##   .i se ki'u bo lo temci cu zenba fi lo mintu ca ro nu jmina pa stuzi to la'e di'u selmre ne'i
   ##       lu lo namcu li'u pe `PROVENANCE.md` toi
-  ##   .i pa liste cu ralte pa namcu pe ro selcu'a bu'u ro stuzi ne'i ro tcini be le porsi
+  ##
+  ## ni'o pa liste cu ralte pa namcu pe ro selcu'a bu'u ro stuzi ne'i ro tcini be le porsi
   ##   .i le namcu cu du lo cmaraina'u pe lo rebla
   ##   .i lo nu klama fi le pamoi stuzi cu cuxna lo pamoi se cuxna poi le namcu cu jalge ke'a
   ##   .i se ki'u bo va'o lo nu lo namcu cu mintu kei le pamoi cu selcu'a
   ##   .i lo nu dunda lo namcu ro porsi cu cuxna le pamoi ji'a to `test_tanru.nim` jarco lo du'u le
   ##       re tadji cu dunda lo mintu toi
-  ##   .i se to'e cuxna fa lo nu dunda lo namcu ro porsi be lo selcu'a
+  ##
+  ## ni'o se to'e cuxna fa lo nu dunda lo namcu ro porsi be lo selcu'a
   ##   .i lo te kancu be le porsi cu pilji lo te kancu be lo se cuxna pe ro stuzi
   ##   .i lu lo namcu li'u pe `PROVENANCE.md` cusku lo jdima be ro le re tadji
 
@@ -511,8 +530,9 @@ func `$`*(tanru: Tanru): string =
   ##   .i va'o lo drata cu ciska lo jvotai poi lo namcu pe ke'a traji lo ka cmalu ja'i `CLL 4.12`
   ##   .i va'o lo nu lo namcu cu mintu cu cuxna lo pamoi ja'i lo porsi be lo se cuxna to
   ##       `searchLowest` toi
-  ##   .i va'o lo nu lo tanru cu ponse no jvotai cu ciska lo pagbu be le tanru gi'e punji pa
-  ##       calyle'u lo jbini be re pagbu ta'i lo nu `CLL` ciska lo tanru to `CLL 5.1` toi
+  ##
+  ## ni'o va'o lo nu lo tanru cu ponse no jvotai cu ciska lo pagbu be le tanru gi'e punji pa
+  ##     calyle'u lo jbini be re pagbu ta'i lo nu `CLL` ciska lo tanru to `CLL 5.1` toi
   ##   .i mupli fa lo tanru poi selfa'o lo cmavo poi ponse no rafsi poi seltai `CCV` .a `CVV`
   if tanru.parts.len == 0: return ""
   if tanru.parts.len == 1: return $tanru.parts[0]

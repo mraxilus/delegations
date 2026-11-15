@@ -23,7 +23,8 @@
 ##   .i se ki'u bo le liste na ka'e frica le javni
 ##   .i lo zunsna remei poi ka'e krasi lo valsi cu selci'a ta'i lo liste poi `CLL` dunda ke'a ki'u
 ##       lo nu no javni cu zbasu le zunsna remei
-##   .i lo lerfu cu stali lo ka selkle `char`
+##
+## ni'o lo lerfu cu stali lo ka selkle `char`
 ##   .i lo lerfu po'u `'a' .. 'z'` judri lo cmima be le liste
 ##   .i no lerlei cu selzba ki'u lo nu ro pilno cu ralte lo selci'a kei .e lo nu lo klesi poi vasru
 ##       lo lerfu cu fanta no srera poi ka'e fasnu to `Article IV.2` toi

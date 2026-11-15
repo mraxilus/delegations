@@ -1,37 +1,41 @@
 ## cipra lo du'u le galfi samtci pe `tools/lists.nim` zukte ja'i le javni be le galfi samtci
 ##   .i le galfi samtci cu tcidu lo valsi jo'u lo rafsi vu'o pe le gimste ra'i lo stuzi be le
+##       datnypau gi'e tcidu lo valsi jo'u lo selma'o vu'o pe le ma'oste ra'i lo stuzi be le
 ##       datnypau
-##   .i le galfi samtci cu tcidu ji'a lo valsi jo'u lo selma'o vu'o pe le ma'oste ra'i lo stuzi be
-##       le datnypau
 ##   .i ro linji pe lo samtci datnyvei poi selci'a cu vasru su'e panono stuzi
 ##   .i lo cipra cu raptcidu le samtci datnyvei
 ##   .i va'o lo nu le liste poi selra'e cu selrapci'a kei le jalge cu mintu le samtci datnyvei poi
 ##       selra'e
-##   .i ji'a cipra lo du'u le tcidu be lo datselci'a be'o to `texts_outside.nim` toi cu dratcidu lo
-##       linji
-##   .i `CLL` casnu no valsi liste datnyvei
+##   .i cipra lo du'u le tcidu be lo datselci'a be'o to `texts_outside.nim` toi cu dratcidu lo linji
+##
+## ni'o `CLL` casnu no valsi liste datnyvei
 ##   .i se ki'u bo lo cmene be le vi cipra cu cfari fi `Internal:`
 ##   .i lo cmene be ro cipra cu skicu lo nu le se cipra cu zukte to `Article IX.10` toi
-##   .i ro mupli'i cu fukpi pa linji pe `gismu.txt` .a `cmavo.txt` .a `lujvo.txt` vu'o poi lo
-##       snina'u cu stosni ke'a
+##
+## ni'o ro mupli'i cu fukpi pa linji pe `gismu.txt` .a `cmavo.txt` .a `lujvo.txt` vu'o poi lo
+##     snina'u cu stosni ke'a
 ##   .i ro stuzi pe le mupli'i cu mintu lo stuzi pe le linji
 ##   .i ku'i lo lerfu po'u `carriage return` selvi'u ta'i lo nu `readSource` vimcu le lerfu
 ##   .i lo pinka be ro mupli'i cu cusku le linji poi le mupli'i cu fukpi ke'a
-##   .i re cipra cu karbi le liste poi selra'e ku'o le liste poi selpu'i
+##
+## ni'o re cipra cu karbi le liste poi selra'e ku'o le liste poi selpu'i
 ##   .i va'o lo nu `lojban-common` na zvati gi'a na mapti le stosni kei ro le re cipra cu na zukte
 ##       gi'e cusku lo krinu to `Article IX.9` toi
 ##   .i lo minde po'u `system` cusku le bakfu
 ##   .i se ki'u bo `CI` punji le bakfu
-##   .i ro cunstecmi cu vasru pa valsi .e su'e ci rafsi
-##   .i le valsi cu vasru su'o pa lerfu gi'e vasru su'e mu lerfu
+##
+## ni'o ro cunstecmi cu vasru pa valsi .e su'e ci rafsi
+##   .i le valsi cu vasru su'o pa lerfu .e su'e mu lerfu
 ##   .i ro le rafsi cu vasru ci lerfu .a vo lerfu
 ##   .i ro lerfu pe le stecmi cu selcu'a fi lo jbole'u jo'u lo lerfu po'u zoi gy. ' .gy. ge'u ta'i
 ##       lo nu lo stecmi poi selra'e cu vasru lo mintu lerfu to `Article IX.4` toi
-##   .i ro cunstecmi pe le ma'oste cu vasru pa valsi .e pa selma'o
-##   .i le valsi cu vasru su'o pa lerfu gi'e vasru su'e bi lerfu
+##
+## ni'o ro cunstecmi pe le ma'oste cu vasru pa valsi .e pa selma'o
+##   .i le valsi cu vasru su'o pa lerfu .e su'e bi lerfu
 ##   .i le selma'o cu ka'e du ro selma'o pe `CLL 20`
-##   .i ba lo nu dunda lo tsiju pa roi kei lo mupli cu selcu'a gi'e selpu'i fi pa vasru poi selzba
-##       pa roi
+##
+## ni'o ba lo nu dunda lo tsiju pa roi kei lo mupli cu selcu'a gi'e selpu'i fi pa vasru poi selzba
+##     pa roi
 ##   .i `served` dunda le mupli
 
 {.experimental: "strictFuncs".}
@@ -109,8 +113,7 @@ const
       "tcidu, papri)"
     ## le revozemoi linji pe `gismu.txt`
     ##   .i zo cukta
-    ##   .i le linji cu vasru pa rafsi po'o
-    ##   .i le rafsi cu seltai `CCV`
+    ##   .i le linji cu vasru pa rafsi po'o noi seltai `CCV`
   LINE_DATNI =
       " datni              data                                      x1 (du'u) " &
       "[fact/measurement] is data/information/statistic(s) about x2 gathered by method x3  " &
@@ -175,7 +178,7 @@ const
     ##   .i lo smuvla cu kunti
   LINE_JGETERJOE = "jgeterjo'e#knot+3rd-place-of+joined"
     ## le parecibimoi linji pe `lujvo.txt`
-    ##   .i le linji cu vasru `#` gi'e vasru no lerfu po'u zoi gy. : .gy.
+    ##   .i le linji cu vasru `#` .e no lerfu po'u zoi gy. : .gy.
     ##   .i se ki'u bo le linji cu vasru no smuvla
   LINE_CIERSMITAI =
       "ci'ersmitai#system+similar+shape:$tarmi1 $=simsa1 $tarmi2 $=simsa2 $ciste1 $=simsa3"
@@ -322,7 +325,7 @@ proc textRandom(lengths: Slice[int]): string =
 proc poolEntries(): seq[seq[EntryGismu]] =
   ## zbasu lo mupli
   ##   .i lo te kancu be le mupli cu du `SAMPLES`
-  ##   .i ro mupli cu vasru su'o pa cunstecmi gi'e vasru su'e ci cunstecmi
+  ##   .i ro mupli cu vasru su'o pa cunstecmi .e su'e ci cunstecmi
   ##   .i le mupli cu selpu'i fi pa vasru poi selzba pa roi
   ##   .i le pilno cu dunda lo tsiju
   result = newSeqOfCap[seq[EntryGismu]](SAMPLES)

@@ -3,34 +3,42 @@
 ##   .i le cipra cu tcidu ro lerpoi poi vasru su'e vo lerfu
 ##   .i ro le lerfu cu cmima lo fangyle'u .a le lerste pe `CLL 3.1`
 ##   .i le cipra cu tcidu ji'a ro lerpoi poi lo lerfu pe ke'a mapti `CVC/CV` .a `CCVCV`
-##   .i le cipra cu tcidu lo mupli be lo drata lerpoi poi vasru mu lerfu
+##
+## ni'o le cipra cu tcidu lo mupli be lo drata lerpoi poi vasru mu lerfu
 ##   .i lo tsiju cu jdice le mupli
 ##   .i ro mupli cu selzba ta'i lo nu basti pa lerfu pe pa gismu pe le liste to `Article IX.3` toi
 ##   .i ro cipra cu dunda pa tsiju le cupra be lo cunyna'u pa roi gi'e cuxna lo mupli pe vo'a gi'e
 ##       punji le mupli lo vasru
 ##   .i lo rapfancu cu dunda le mupli pe le vasru
-##   .i lo tarmi cu rapselci'a vi ja'i lo sinxa pe `CLL 4.1` gi'e sepli `form`
+##
+## ni'o lo tarmi cu rapselci'a vi ja'i lo sinxa pe `CLL 4.1` gi'e sepli `form`
 ##   .i le cipra cu rapypli lo seljdi be fi lo zunsna remei be'o pe `clusters.nim` ki'u lo nu
 ##       `test_clusters.nim` cipra le seljdi
-##   .i va'o lo nu `CLL` casnu ro gismu .a ro rafsi kei le cipra cu cipra fi ro stecmi pe le liste
-##       poi selra'e
+##
+## ni'o va'o lo nu `CLL` casnu ro gismu .a ro rafsi kei le cipra cu cipra fi ro stecmi pe le liste
+##     poi selra'e
 ##   .i se ki'u bo lo liste poi na'e mapti lo xusra pe `CLL` rinka lo nu le cipra cu fliba gi'e
 ##       cusku lo cmene be le stecmi poi srera
 ##   .i va'o lo nu `CLL` casnu ro lujvo kei le cipra cu cipra fi ro valsi pe `lujvo.txt`
 ##   .i le valsi cu se tcidu ta'i lo drata se ciska to `texts_outside.nim` toi
 ##   .i le cipra cu na zukte va'o lo nu le datnyvei cu na zvati gi'a cenba to `Article IX.9` toi
-##   .i va'o lo nu lo cmarafsi cu na zvati lo liste pe `CLL 4.6` kei le rafsi cu selra'e ne'i lo
-##       stodi pe lo na'e mapti gi'e na rinka lo nu fliba
+##
+## ni'o va'o lo nu lo cmarafsi cu na zvati lo liste pe `CLL 4.6` kei le rafsi cu selra'e ne'i lo
+##     stodi pe lo na'e mapti gi'e na rinka lo nu fliba
 ##   .i le gimste cu vasru no le cmarafsi
-##   .i lo pinka be lo lerpoi poi no krasi cu vasru ke'a cu vasru lu le lerpoi cu se zbasu li'u
-##   .i slaka bu cu cmima le lerste poi le cipra pe `CLL 4` tcidu ke'a ki'u lo nu `CLL 3.1` ciska
-##       slaka bu ne'i lo liste be lo sinxa
+##
+## ni'o lo pinka be lo lerpoi poi no krasi cu vasru ke'a cu vasru lu le lerpoi cu selzba li'u
+##
+## ni'o slaka bu cu cmima le lerste poi le cipra pe `CLL 4` tcidu ke'a ki'u lo nu `CLL 3.1` ciska
+##     slaka bu ne'i lo liste be lo sinxa
 ##   .i slaka bu na selsni zoi gy. C .gy. .a zoi gy. V .gy. pe `CLL 4.1`
 ##   .i se ki'u bo no tarmi cu vasru slaka bu
-##   .i lo cipra pe `Internal: Forms` cipra lo selcu'a poi `CLL` na cuxna ke'a
+##
+## ni'o lo cipra pe `Internal: Forms` cipra lo selcu'a poi `CLL` na cuxna ke'a
 ##   .i `form` tcidu lo ralju lerfu po'o
 ##   .i lo tcidu pe `tanru.nim` to'e curmi slaka bu pu lo nu retsku fi su'o tarmi
-##   .i jdima fa lo nu le cipra cu tcidu ji'i paxanononononono lerpoi
+##
+## ni'o jdima fa lo nu le cipra cu tcidu ji'i paxanononononono lerpoi
 ##   .i le cipra po'o cu gunka ze'a `2.02 s` bi'o `2.13 s` ca lo nu le fanva na troci lo nu le
 ##       samtci cu sutra
 ##   .i lo nu merli cu selci'a ne'i `PROVENANCE.md` ne'i le pagbu poi selcme lu lo namcu li'u
@@ -54,7 +62,7 @@ const
     ## le mu karsna poi zoi gy. V .gy. sinxa ke'a
     ##   .i zoi gy. V .gy. na sinxa `y` to le pamoi javni pe `CLL 4.1` toi
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"
-    ## lo lerfu pe `CLL 3.1` .e zoi gy. ' .gy. .e slaka bu .e denpa bu
+    ## lo lerfu pe `CLL 3.1` ge'u .e zoi gy. ' .gy. .e slaka bu .e denpa bu
   LETTERS_FOREIGN = "ABhqw"
     ## lo brale'u .e `h` .e `q` .e `w`
     ##   .i `CLL 3.1` claxu `h` .e `q` .e `w`
@@ -108,13 +116,12 @@ const
     ##   .i ro linji cu vasru lo tarmi .e lo stuzi be lo lerfu pe le gismu be'o poi selpli .e lo
     ##       rafsi
   EXCEPTIONS_TABLE: seq[string] = @[]
-    ## lo cmarafsi be lo gismu pe le gismu liste be'o poi no linji be lo liste pe `CLL 4.6` cu ciska
-    ##     ke'a
+    ## lo cmarafsi be lo gismu pe le gimste be'o poi no linji be lo liste pe `CLL 4.6` cu ciska ke'a
     ##   .i le liste cu mapti lo tarmi be le gismu
     ##   .i le stodi cu ralte le gismu .e le rafsi
     ##   .i le gimste cu vasru no le rafsi
   EXCEPTIONS_LETTERS: seq[string] = @[]
-    ## lo cmarafsi be lo gismu pe le gismu liste be'o poi vasru lo lerfu poi le gismu cu claxu ke'a
+    ## lo cmarafsi be lo gismu pe le gimste be'o poi vasru lo lerfu poi le gismu cu claxu ke'a
     ##   .i le stodi cu ralte le gismu .e le rafsi
     ##   .i le gimste cu vasru no le rafsi
   SAMPLES_MUTATION = 20000
@@ -168,8 +175,7 @@ func formRestated(text: string): Option[Form] =
 
 func positionsNotation(notation: string): seq[string] =
   ## tcidu lo lerfu poi ro stuzi be lo sinxa pe `CLL 4.1` cu curmi ke'a
-  ##   .i `C` curmi lo zunsna
-  ##   .i `V` curmi lo karsna
+  ##   .i `C` fa'u `V` curmi lo zunsna fa'u lo karsna
   ##   .i ro datsni cu curmi vo'a po'o
   for symbol in notation:
     result.add(
@@ -181,7 +187,7 @@ func positionsNotation(notation: string): seq[string] =
 
 
 func positionsAny(length: int): seq[string] =
-  ## curmi ro lerfu pe `CLL 3.1` .e ro fangyle'u bu'u ro stuzi
+  ## curmi ro lerfu pe `CLL 3.1` ge'u .e ro fangyle'u bu'u ro stuzi
   ##   .i lo te kancu be le stuzi cu du `length`
   newSeqWith(length, ALPHABET & LETTERS_FOREIGN)
 
@@ -250,9 +256,8 @@ func countPairs(text: string): int =
 
 func isBrivlaRestated(text: string): bool =
   ## jdice lo du'u xu kau le selci'a cu ckaji le selkai pe `CLL 4.3`
-  ##   .i le selkai cu rapselci'a gi'e sepli `isBrivla`
-  ##   .i le selkai cu du lo ka selfa'o lo karsna kei jo'u lo ka vasru lo zunsna remei ne'i le mu
-  ##       lerfu poi krasi
+  ##   .i le selkai cu rapselci'a gi'e sepli `isBrivla` gi'e du lo ka selfa'o lo karsna kei jo'u lo
+  ##       ka vasru lo zunsna remei ne'i le mu lerfu poi krasi
   ##   .i `y` .e zoi gy. ' .gy. selvi'u pu lo nu kancu
   let counted = text.filterIt(it notin {'y', '\''})
   if text.len == 0 or text[^1] notin ORDER_VOWELS: return false
@@ -746,6 +751,6 @@ suite "Internal: Forms":
       for text in entry.rafsi & @[entry.word]:
         for at in 1..text.high:
           let spelled = text[0..<at] & ',' & text[at .. ^1]
-          # lo selcu'a be le vi se gunka
+          # lo selcu'a be le vi selgu'a
           #   .i `tanru.nim` to'e curmi slaka bu pu lo nu `form` tcidu
-          check spelled.form.isNone  # lo selcu'a be le vi se gunka
+          check spelled.form.isNone  # lo selcu'a be le vi selgu'a

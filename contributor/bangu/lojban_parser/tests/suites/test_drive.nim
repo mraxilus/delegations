@@ -4,18 +4,21 @@
 ##   .i ki'u bo lo pruce pe `Chromium` ciska fi le vreji ba lo nu le pamoi pruce cu sisti
 ##   .i se ki'u bo lo nu vimcu le vreji ca lo nu su'o pruce cu jmive cu fliba
 ##   .i ja le vreji cu rapselzba
-##   .i lo mupli cu terfa'i de'i `2026-11-11` bu'u lo jimca be `git` be'o pe le samtci pe lo
-##       mivyselci'a
+##
+## ni'o lo mupli cu terfa'i de'i `2026-11-11` bu'u lo jimca be `git` be'o pe le samtci pe lo
+##     mivyselci'a
 ##   .i `LOJBAN_CHROMIUM` cmene `Chrome for Testing 153.0.8010.12` noi mulno
 ##   .i `Chrome` cu pu ciska `Default/TransportSecurity` ba lo nu le pamoi pruce cu sisti
 ##   .i `removeDir` pe le vreji cu pu fliba gi'e jarco `Directory not empty`
-##   .i le cipra cu cipra ro pruce pe `Chromium` ge'u zi'e poi jmive ba lo nu le pamoi pruce cu
-##       sisti
+##
+## ni'o le cipra cu cipra ro pruce pe `Chromium` ge'u zi'e poi jmive ba lo nu le pamoi pruce cu
+##     sisti
 ##   .i lo ni le pruce cu condi cu na vajni
 ##   .i le fukpi cu zbasu pa pruce poi ciska fi le vreji ca ro lo nu ke'a zasti ku'o ta'i `Chrome`
-##   .i le fukpi cu zbasu ji'a pa pruce poi lo rirni be lo rirni be ke'a cu du le fukpi ku'o zi'e
-##       poi no roi sisti
-##   .i le fukpi be `Chromium` cu selci'a fi `shell`
+##       gi'e zbasu pa pruce poi lo rirni be lo rirni be ke'a cu du le fukpi ku'o zi'e poi no roi
+##       sisti
+##
+## ni'o le fukpi be `Chromium` cu selci'a fi `shell`
 ##   .i se ki'u bo le cipra cu pilno no tcidu be lo papri
 ##   .i le fukpi cu cusku lo fanmo be le nu cipra sepi'o `curl` ta'i lo papri
 

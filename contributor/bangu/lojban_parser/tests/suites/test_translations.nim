@@ -2,18 +2,21 @@
 ##     stopapri cu zvati
 ##   .i ro ju'agri cu se tcidu gi'a se to'e curmi ta'i lo nu vi se kancu
 ##   .i `PROVENANCE.md` cusku le javni poi ro klesi be lo nu to'e curmi cu na'e mapti ke'a
-##   .i le papri na selra'e `delegations` to `D3 a` pe `#819` toi
+##
+## ni'o le papri na selra'e `delegations` to `D3 a` pe `#819` toi
 ##   .i lo minde po'u `nim r tools/build.nim translations` cpacu le papri gi'e punji le papri fi
 ##       `build/translations/`
 ##   .i va'o lo nu lo papri be pa xe fanva cu na zvati gi'a na mapti le stosni kei le cipra cu na
 ##       tcidu le xe fanva
 ##   .i le cipskami noi cpacu no papri cu zukte ta'i le mintu to `Article IX.9` toi
-##   .i le te kancu cu du lo te kancu be lo ju'agri be'o .e lo te kancu be lo ju'agri poi se tcidu
-##       ku'o ja'i le stosni pe de'i `2026-11-06`
+##
+## ni'o le te kancu cu du lo te kancu be lo ju'agri be'o .e lo te kancu be lo ju'agri poi se tcidu
+##     ku'o ja'i le stosni pe de'i `2026-11-06`
 ##   .i lo nu galfi le genturfa'i kei poi galfi lo seljdi pe su'o ju'agri cu galfi lo te kancu be lo
 ##       ju'agri poi se tcidu
 ##   .i se ki'u bo le vi cipra cu fliba
-##   .i lo ju'agri .e lo se tcidu pe le ju'agri cu selkra `tools/translations.nim`
+##
+## ni'o lo ju'agri .e lo se tcidu pe le ju'agri cu selkra `tools/translations.nim`
 ##   .i lo seljdi cu selkra `tools/tatoeba.nim`
 ##   .i se ki'u bo lo cipra jo'u lo minde cu skicu le ju'agri .e le se tcidu .e le seljdi pa roi to
 ##       `Article II.9` toi

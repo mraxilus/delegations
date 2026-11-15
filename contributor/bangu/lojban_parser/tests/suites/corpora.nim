@@ -1,10 +1,11 @@
-## dunda ro selci'a pe le selci'agri poi lo cipra cu tcidu ke'a ta'i pa selci'a
+## dunda ro selci'a pe le selci'agri zi'e poi lo cipra cu tcidu ke'a ta'i pa selci'a
 ##   .i ro mupli pe `CLL 1.1` du pa selci'a
 ##   .i le linji pe le mupli cu seljo'e
 ##   .i lo valsi poi lo kurfa grile'u cu sinxa ke'a stali
 ##   .i ro jufra pe le stomupli pe `Tatoeba` du pa selci'a
 ##   .i ro ju'agri pe lo prosa pe `Wikipedia` du pa selci'a
-##   .i `test_nif.nim` .e `test_marks.nim` tcidu le mitselci'a
+##
+## ni'o `test_nif.nim` .e `test_marks.nim` tcidu le mitselci'a
 ##   .i se ki'u bo le liste cu selci'a pa roi to `Article II.9` toi
 
 {.experimental: "strictFuncs".}

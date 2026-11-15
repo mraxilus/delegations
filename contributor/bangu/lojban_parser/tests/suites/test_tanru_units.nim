@@ -6,20 +6,23 @@
 ##   .i ro xusra cu fendi lo mupli poi `CLL` dunda ke'a
 ##   .i va'o lo nu le ckupau cu dunda no mupli poi vasru lo cmavo be `SE` kei le xusra cu fendi lo
 ##       tanru pe zo ciska .e zo vreji .e zo gunka
-##   .i lo tanru cu selzba fi lo stevla poi seljo'e sepi'o `+`
+##
+## ni'o lo tanru cu selzba fi lo stevla poi seljo'e sepi'o `+`
 ##   .i le cipra cu ciska lo tanru ta'i la'e di'u
 ##   .i se ki'u bo no nu cuxna lo rafsi cu selpli
 ##   .i va'o lo nu `CLL` dunda lo lujvo kei lo valsi pe le lujvo cu du lo valsi poi le tcidu cu
 ##       dunda ke'a le lujvo
-##   .i lo jvacipra cu cipra fi ro cmima be lo cmagri
+##
+## ni'o lo jvacipra cu cipra fi ro cmima be lo cmagri
 ##   .i pa girzu cu du ro porsi be `SE` be'o poi lo nilclani be ke'a na zmadu `LENGTH_CHAIN`
 ##   .i pa girzu cu du ro porsi be lo cmavo poi jorne be'o poi lo nilclani be ke'a na zmadu
 ##       `LENGTH_GROUPED` zi'e poi lidne lo girzu poi vasru pa tanru pagbu po'o
 ##   .i pa girzu cu du ro tanru poi selzba fi `ALPHABET` zi'e poi lo te kancu be lo valsi pe ke'a na
 ##       zmadu `LENGTH_TANRU`
 ##   .i lo te kancu cu selsku bu'u lo stuzi poi jibni ro xusra
-##   .i lo stuzi poi lo nu galfi cu dunda ke'a se karbi lo jalge be `placesOracle` noi galfi lo
-##       porsi be lo cmene be lo sumti noi lerpoi
+##
+## ni'o lo stuzi poi lo nu galfi cu dunda ke'a se karbi lo jalge be `placesOracle` noi galfi lo
+##     porsi be lo cmene be lo sumti noi lerpoi
 ##   .i se ki'u bo `placesOracle` pilno no pagbu be `toLinks`
 
 {.experimental: "strictFuncs".}
@@ -34,7 +37,7 @@ import ../../src/lojban_parser/[dictionary, forms, tanru, tanru_units]
 
 const
   LENGTH_CHAIN = 4
-    ## lo zmaraiterkancu be lo cmavo be `SE` be'o pe pa porsi poi lo javni cipra pe lo nu jmina cu
+    ## lo zmaraiterkancu be lo cmavo be `SE` be'o pe pa porsi poi lo jvacipra pe lo nu jmina cu
     ##     fendi ke'a
   COUNT_CHAINS = 1 + 4 + 16 + 64 + 256
     ## lo te kancu be lo porsi be `SE` be'o poi lo nilclani be ke'a cu du li no bi'o `LENGTH_CHAIN`

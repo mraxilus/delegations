@@ -4,18 +4,22 @@
 ##   .i ro tricu pe le selci'aste zo'u le tcidu cu raptcidu le tricu fi le selci'a be fi `NIF` be'o
 ##       pe le tricu ta'i le seldu'a be le morna be le tarmi gi'e rapyzba le multricu .e ro genvla
 ##       pe le se tcidu le selci'a
-##   .i le selci'aste cu vasru ro mupli pe `CLL 1.1`
+##
+## ni'o le selci'aste cu vasru ro mupli pe `CLL 1.1`
 ##   .i lo linji pe ro mupli cu seljo'e gi'e ralte lo valsi poi lo kurfa grile'u cu sinxa ke'a
-##   .i le selci'aste cu vasru ji'a ro jufra pe le mupli pe `Tatoeba` .e ro ju'agri pe lo claro'a pe
+##   .i le selci'aste cu vasru ro jufra pe le mupli pe `Tatoeba` .e ro ju'agri pe lo claro'a pe
 ##       `Wikipedia` to `corpora.nim` toi
-##   .i lo selci'a poi se to'e curmi cu vasru no tricu
+##
+## ni'o lo selci'a poi se to'e curmi cu vasru no tricu
 ##   .i se ki'u bo le flalu cu cliva le selci'a
 ##   .i `test_marks.nim` raptcidu le selci'a ta'i lo nu sinxa ro srera
-##   .i lo cipra pe lo selzba pe `JavaScript` pilno le tcidu pe le vi cipra gi'e cipra le mitfla
-##       ne'i ro vomoi jufra pe le mupli pe `Tatoeba` gi'e cipra fi le mitmupli po'u `EXAMPLE_NIF`
-##       to `tests/test_javascript.nim` toi
-##   .i le selci'aste cu vasru lo stuzi poi na mleca li parebi .e lo krastu poi zmadu li panoreci .e
-##       lo pagbu poi vasru su'o re valsi
+##
+## ni'o lo cipra pe lo selzba pe `JavaScript` pilno le tcidu pe le vi cipra gi'e cipra le mitfla
+##     ne'i ro vomoi jufra pe le mupli pe `Tatoeba` gi'e cipra fi le mitmupli po'u `EXAMPLE_NIF` to
+##     `tests/test_javascript.nim` toi
+##
+## ni'o le selci'aste cu vasru lo stuzi poi na mleca li parebi .e lo krastu poi zmadu li panoreci .e
+##     lo pagbu poi vasru su'o re valsi
 ##   .i lo selci'a be fi `NIF` be'o pe le selci'aste cu ciska lo basysni ne'i lo selci'a poi se
 ##       sitna po'o
 ##   .i ne'i lo selci'a poi se sitna ku'o le selci'aste cu ca na vasru ro midle'u .e `\t` .e lo

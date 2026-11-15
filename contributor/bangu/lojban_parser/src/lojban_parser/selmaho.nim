@@ -13,18 +13,21 @@
 ## ni'o lo selma'o cu genlei lo cmavo to `CLL 4.2` toi
 ##   .i `CLL 20` dunda lo cmene ro selma'o sepi'o pa cmavo poi sinxa le selma'o ku'o ta'i lo brale'u
 ##   .i `h` sinxa zoi gy. ' .gy. ne'i le cmene
-##   .i ro cmima be `Selmaho` cu ciska le cmene ta'i `Pascal case` to `Article V.11` toi
+##
+## ni'o ro cmima be `Selmaho` cu ciska le cmene ta'i `Pascal case` to `Article V.11` toi
 ##   .i `Form.Cvc` ciska `CVC` ta'i `Pascal case` ji'a
 ##   .i `h` no roi lerfu la lojban. to `CLL 3.3` toi
 ##   .i se ki'u bo ro `h` pe ro cmima cu sinxa zoi gy. ' .gy.
 ##   .i `$` rapci'a lo cmene pe `CLL` ta'i lo brale'u
 ##   .i `h` po'o cmalu
-##   .i lo cipra cu cipra lo du'u `$` ciska ro cmima ta'i le liste pe `CLL 20`
+##
+## ni'o lo cipra cu cipra lo du'u `$` ciska ro cmima ta'i le liste pe `CLL 20`
 ##   .i se ki'u bo le liste poi gapru cu mupli gi'e na mulno
 ##   .i le cmima cu ralte lo porsi pe le liste pe `CLL 20`
 ##   .i le porsi cu du lo porsi be le cmene bei fi lo stuzi
 ##   .i se ki'u bo `BAI` lidne `BAhE`
-##   .i jdima fa lo nu `Selmaho` vasru parere cmima
+##
+## ni'o jdima fa lo nu `Selmaho` vasru parere cmima
 ##   .i ro selma'o pe `CLL 20` selra'a pa cmima
 ##   .i le liste cu ciska lo selma'o be ro cmavo ta'i lo cmene to `tools/lists.nim` toi
 ##   .i lo cmene poi na zvati le liste pe `CLL 20` rinka lo nu le galfi samtci cu fliba

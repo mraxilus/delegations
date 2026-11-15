@@ -17,16 +17,19 @@
 ## ni'o ro sisyste cu stodi gi'e porsi gi'e selzba fi le liste ca lo nu fanva to `Article II.2` toi
 ##   .i ca lo nu le samtci cu gunka kei le samtci cu pilno lo sapypoi poi stali .e lo nu sisku ta'i
 ##       lo nu rapfendi fi re pagbu gi'e pilno no drata
-##   .i lo cipra ca lo nu fanva cu xusra ro seltcu be lo nu sisku
+##
+## ni'o lo cipra ca lo nu fanva cu xusra ro seltcu be lo nu sisku
 ##   .i ro liste cu porsi fi lo stuzi
 ##   .i ro cmarafsi cu sinxa pa valsi
 ##   .i ro cmavo cu zvati le ma'oste pa roi
-##   .i va'o lo nu lo liste cu na'e mapti su'o le seltcu kei lo nu zbasu cu fliba gi'e cusku lo
-##       cmene be lo stecmi poi srera
+##
+## ni'o va'o lo nu lo liste cu na'e mapti su'o le seltcu kei lo nu zbasu cu fliba gi'e cusku lo
+##     cmene be lo stecmi poi srera
 ##   .i lo nu fliba cu basti lo nu lo nu sisku cu srera
 ##   .i ji'a lo nu zbasu cu fliba va'o lo nu le ma'oste cu claxu pa cmavo pe le gimste
 ##   .i ki'u bo ro cmavo poi ponse lo rafsi cu ponse lo selma'o
-##   .i `Word` kuspe ro stecmi
+##
+## ni'o `Word` kuspe ro stecmi
 ##   .i se ki'u bo lo korbi be `Word` cu selkra le liste
 ##   .i no te kancu be lo liste cmima cu se ciska to `Article II.5` toi
 

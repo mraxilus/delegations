@@ -3,37 +3,44 @@
 ##     to `tools/drive.nim` toi
 ##   .i le cipra cu fasnu ne'i pa papri poi cpacu le cipra sepi'o lo judri be le cipra ta'i lo nu lo
 ##       papri pe lo viska cu cpacu le samtci to lo seljdi bu'u `#859` toi
-##   .i le cipra cu vasru le cripu ta'i le cipra pe le samtci
+##
+## ni'o le cipra cu vasru le cripu ta'i le cipra pe le samtci
 ##   .i ki'u bo ro samtci poi `Nim` fanva ke'a punji ro fancu pe vo'a lo stuzi poi ro da ka'e pilno
 ##       ke'a
 ##   .i se ki'u bo pa remoi samtci ne'i pa papri cu basti ro fancu pe le pamoi ge'u zi'e poi ke'a .e
 ##       pa fancu pe le remoi cu selcme pa cmene
 ##   .i se ki'u bo va'o lo nu pa sepcipra cu zvati lo mlana be le samtci kei le cipra cu tcidu lo
 ##       spofu samtci
-##   .i le gunka cu selkra le cipra ta'i lo nu selkra le samtci
-##   .i le cipra cu fasnu ne'i lo papri poi vasru `document`
-##   .i le cipra cu na fasnu ne'i le gunka
-##   .i ro selci'a poi le sabji samtci cu sabji ke'a se tcidu ta'i lo nu ro valsi cu sepli kei ne'i
-##       pa gunka .e lo cilta pe le papri
+##
+## ni'o le gunka cu selkra le cipra ta'i lo nu selkra le samtci
+##   .i le cipra cu fasnu ne'i lo papri poi vasru `document` ku'o gi'e na fasnu ne'i le gunka
+##
+## ni'o ro selci'a poi le sabji samtci cu sabji ke'a se tcidu ta'i lo nu ro valsi cu sepli kei ne'i
+##     pa gunka .e lo cilta pe le papri
 ##   .i le cenba cu katna lo lerpoi pe `JavaScript` bu'u `at` gi'e jmina fi le lerpoi
 ##   .i ca lo fanmo le lerpoi cu mintu le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a le se
 ##       ciska to `readTextParts` toi ro stuzi
 ##   .i `nif` dunda le ca selci'a be fi `NIF` be'o poi mintu lo jalge be le cenba
-##   .i le gunka cu tcidu ro selci'a
+##
+## ni'o le gunka cu tcidu ro selci'a
 ##   .i lo cilta pe le papri cu tcidu no pagbu be le selci'a
 ##   .i se ki'u bo le papri cu denpa no roi le tcidu
-##   .i lo cilta pe le papri cu tcidu pa jufra ca ro nu `event loop` carna to `toSentences` toi
+##
+## ni'o lo cilta pe le papri cu tcidu pa jufra ca ro nu `event loop` carna to `toSentences` toi
 ##   .i le papri cu gasnu pa selgu'a pe vo'a ca lo jbini be re jufra pe pa pagbu
 ##   .i ki'u bo ro nu carna cu fasnu sepi'o pa notci pe `MessageChannel`
 ##   .i `event loop` cpacu le notci ta'i le porsi be lo nu benji
-##   .i lo stuzi be lo cenba cu kancu lo pagbu pe `UTF-16`
-##   .i lo selci'a poi zo zoi sitna ke'a gi'e vasru pa lerfu poi zmadu `U+FFFF` zi'e noi re pagbu cu
-##       ciska ke'a se tcidu fi le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a
+##
+## ni'o lo stuzi be lo cenba cu kancu lo pagbu pe `UTF-16`
+##   .i lo selci'a poi zo zoi sitna ke'a zi'e poi vasru pa lerfu poi zmadu `U+FFFF` zi'e noi re
+##       pagbu cu ciska ke'a se tcidu fi le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a
 ##   .i se ki'u bo `slice` katna bu'u lo stuzi poi le cenba cu cfari bu'u ke'a
-##   .i va'o lo nu lo javni pe lo selvau be le papri cu to'e curmi ro gunka kei lo cilta pe le papri
-##       cu basti le gunka poi le tcidu cu cpedu ke'a
-##   .i le cilta cu tcidu ro selci'a fi le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a
-##   .i le cipra pe lo nupre cu cusku ro cipra ta'i lo nu `unittest` ciska to `report.nim` toi
+##
+## ni'o va'o lo nu lo javni pe lo selvau be le papri cu to'e curmi ro gunka kei lo cilta pe le papri
+##     cu basti le gunka poi le tcidu cu cpedu ke'a ku'o gi'e tcidu ro selci'a fi le selci'a be fi
+##     `NIF` be'o poi le jbezba cu dunda ke'a
+##
+## ni'o le cipra pe lo nupre cu cusku ro cipra ta'i lo nu `unittest` ciska to `report.nim` toi
 ##   .i ki'u bo `unittest` denpa no nupre
 ##   .i ba bo le cipra cu cusku lo famna'u pe le nu cipra
 
@@ -118,7 +125,7 @@ proc piecesWords(text: string): seq[string] =
 
 proc readTexts(): seq[tuple[text, nif: string]] =
   ## tcidu ro selci'a poi le sabji samtci cu sabji ke'a
-  ##   .i tcidu ji'a lo selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a le selci'a
+  ##   .i tcidu lo selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a le selci'a
   for k in 0 ..< readServed(PATH_COUNT).strip.parseInt:
     let path = "/drive/live/" & $k
     result.add (readServed(path & ".text"), readServed(path & ".nif"))

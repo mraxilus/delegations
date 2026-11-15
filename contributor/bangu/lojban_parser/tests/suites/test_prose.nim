@@ -2,13 +2,16 @@
 ##   .i le cipra cu cipra lo nu sitna .e lo nu vimcu .e zo zei .e lo cmavo be `BAhE` be'o .e zo bu
 ##       .e lo cnivla ja'i `CLL 4` .e `CLL 6` .e `CLL 13` .e `CLL 17` .e `CLL 19`
 ##   .i ba bo le cipra cu cipra le gerna pe `CLL 21.1`
-##   .i lo mupli cu fukpi lo selci'a pe `CLL` gi'e no roi fukpi lo selja'o be le genturfa'i
+##
+## ni'o lo mupli cu fukpi lo selci'a pe `CLL` gi'e no roi fukpi lo selja'o be le genturfa'i
 ##   .i lo linji pe pa jufra cu seljo'e
 ##   .i lo selci'a poi no krasi cu vasru ke'a se tcita lu se finti li'u
-##   .i lo flalu cu cipra lo mupli poi se sitna ku'o bu'u ro stuzi poi zvati lo jbini be le valsi pe
-##       le mupli
-##   .i lo flalu cu cipra ji'a ro cmavo pe le cmavo liste to `Article IX.3` toi
-##   .i `test_corpus.nim` tcidu ro mupli pe `CLL 1.1` fi lo selcpa poi seljva le notci pe `CLL`
+##
+## ni'o lo flalu cu cipra lo mupli poi se sitna ku'o bu'u ro stuzi poi zvati lo jbini be le valsi pe
+##     le mupli
+##   .i lo flalu cu cipra ro cmavo pe le cmavo liste to `Article IX.3` toi
+##
+## ni'o `test_corpus.nim` tcidu ro mupli pe `CLL 1.1` fi lo selcpa poi seljva le notci pe `CLL`
 ##   .i lo javni pe `CLL 19.16` dunda lo pagbu .e lo gensu'a lo mupli poi le vi cipra cu sitna ke'a
 ##   .i le vi cipra cu cipra le pagbu .e le gensu'a
 

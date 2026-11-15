@@ -5,8 +5,9 @@
 ##   .i ro stuzi cu klani lo mulna'u `pixel`
 ##   .i lo srejge .e lo pagbu poi ca'o kalri cu selxra ta'i le papri
 ##   .i ji'a le linji pe lo nu jmina
-##   .i le cipra pe le papri cu cipra lo du'u le papri cu jarco le mitxra ne'i `JavaScript` to
-##       `tests/browser/suite_page.nim` toi
+##
+## ni'o le cipra pe le papri cu cipra lo du'u le papri cu jarco le mitxra ne'i `JavaScript` to
+##     `tests/browser/suite_page.nim` toi
 ##   .i lo flalu cu tcidu ro bimoi se ciska pe lo selci'agri
 ##   .i le jbezba cu tcidu ro le selci'a ta'i lo nu tcidu le mulselci'a
 ##   .i lo flalu cu tcidu ji'a le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a
@@ -34,7 +35,7 @@ const
     head: "srera · byte 13",
     rule: "in sumti-6",
   )
-    ## pa selci'a .e lo selsku be le tanxe pe le se ciska
+    ## pa selci'a .e lo selsku be le tanxe pe le selci'a
     ##   .i le gerna cu sisti bu'u zo .i noi zvati lo stuzi pe li paci ku'o ne'i `sumti-6` noi du le
     ##       javni pe li soze
   MODULE_REFUSED = HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &

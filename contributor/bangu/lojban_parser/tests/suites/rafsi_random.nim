@@ -1,8 +1,9 @@
 ## zbasu lo cunrafsi lo lerfu sepi'o ro tarmi pe `CLL 4.6`
 ##   .iju lo liste cu dunda le rafsi lo valsi
-##   .i lo cipra pe le tcidu .e lo cipra pe lo lujvo cu pilno lo fancu pe le vi datnyvei
+##   .i lo cipra pe le tcidu ge'u .e lo cipra pe lo lujvo cu pilno lo fancu pe le vi datnyvei
 ##   .i se ki'u bo lo rafsi poi na selcpa fi lo liste cu selzba ne'i pa datnyvei po'o to `II.9` toi
-##   .i lo tsiju poi lo pilno cu cusku ke'a jdice ro mupli ta'i `randomize(0)`
+##
+## ni'o lo tsiju poi lo pilno cu cusku ke'a jdice ro mupli ta'i `randomize(0)`
 ##   .i se ki'u bo no lo nu cuncu'a kei poi fasnu pu le mupli cu galfi le mupli
 ##   .i lo nu zbasu lo rafsi cu se rapli va'o lo nu lo lerfu pe le rafsi cu na mapti lo tarmi be le
 ##       rafsi ja'i lo zunsna remei javni pe `CLL 3.6` jo'u `CLL 3.7`
@@ -47,8 +48,9 @@ proc drawSequencesLetters*(count: int, lengths: Slice[int], seed: int64): seq[se
   ## zbasu lo porsi be lo rafsi
   ##   .i lo te kancu be le porsi cu du `count`
   ##   .i lo te kancu be lo rafsi pe ro porsi cu cmima `lengths`
-  ##   .i ro rafsi cu selzba lo lerfu ja'i pa tarmi poi `CLL 4.11 step 1` .e `CLL 4.11 step 2` curmi
-  ##       ke'a bu'u le stuzi be le rafsi
+  ##
+  ## ni'o ro rafsi cu selzba lo lerfu ja'i pa tarmi poi `CLL 4.11 step 1` .e `CLL 4.11 step 2` curmi
+  ##     ke'a bu'u le stuzi be le rafsi
   ##   .i lo tarmi cu selcu'a pu lo nu cuxna lo lerfu
   ##   .i se ki'u bo lo tarmi poi rirci cu so'i roi selpli
   randomize(seed)

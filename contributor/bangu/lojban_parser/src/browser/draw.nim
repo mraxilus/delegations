@@ -1,5 +1,5 @@
 ## ro pagbu be lo selci'a be fi `NIF` be'o pe lo mivyselci'a cu selxra pa pixra be fo `SVG`
-##   .i pa linji cu cusku lo selvau be le se ciska
+##   .i pa linji cu cusku lo selvau be le selci'a
 ##   .i le papri pe le vi selgu'a cu jarco ro pixra .e le linji to `pages/live.html` toi
 ##   .i lo cipra cu cipra lo nu pixra ne'i le jbezba .e le selzba pe `JavaScript`
 ##
@@ -16,17 +16,20 @@
 ##   .i le papri cu ralte lo selci'a be fi `NIF` be'o poi lo tcidu be lo mivyselci'a cu dunda ke'a
 ##       ku'o gi'e pixra le selci'a
 ##   .i se ki'u bo le pixra cu jarco lo selvau be le se ciska po'o
-##   .i ro pagbu cu du lo jgena pe pa linji pe le selci'a be fi `NIF`
+##
+## ni'o ro pagbu cu du lo jgena pe pa linji pe le selci'a be fi `NIF`
 ##   .i ro valsi pe le pagbu cu selxra pa karda
 ##   .i le karda cu zvati pa pinpoi bu'u le dzikoi be le pixra
 ##   .i ro karda cu ponse pa rajypau
 ##   .i le porsi be le karda cu mintu le porsi be le valsi pe le selci'a
-##   .i ro javni poi gapru le karda cu tanxe
+##
+## ni'o ro javni poi gapru le karda cu tanxe
 ##   .i le genja cu gapru ro datyta'e
 ##   .i lo pinpoi pe ro tanxe cu du lo ni le tanxe cu gapru le karda
 ##   .i se ki'u bo no valsi cu selvau re tanxe pe pa pinpoi
 ##   .i lo ni lo midju be le re tanxe cu darno cu na mleca lo ni pa rajypau cu ganra
-##   .i ro tanxe cu sinxa pa jgena pe le selci'a be fi `NIF`
+##
+## ni'o ro tanxe cu sinxa pa jgena pe le selci'a be fi `NIF`
 ##   .i pa jgena ka'e porsi lo javni
 ##   .i ro javni pe le porsi cu vasru pa javni po'o
 ##   .i le tanxe pe le porsi cu ciska lo cmene be le javni poi traji lo ka jibni lo valsi ku'o ta'i
@@ -34,38 +37,47 @@
 ##   .i lo cmene cu se lidne le javni poi traji lo ka bartu ku'o .e lo namcu pe le javni ge'u .e lo
 ##       du'u le porsi cu vasru xo kau javni to `LUT_CHAIN_BY_ENDS` toi
 ##   .i ki'u bo le jgena cu jarco lo namcu pe le javni poi krasi le porsi
-##   .i lo javni poi vasru no valsi cu selxra no tanxe
+##
+## ni'o lo javni poi vasru no valsi cu selxra no tanxe
 ##   .i ki'u bo no rajypau cu punji le javni
-##   .i ro srera jgena to `srera` toi cu tanxe gi'e cmima `err`
+##
+## ni'o ro srera jgena to `srera` toi cu tanxe gi'e cmima `err`
 ##   .i le tanxe cu ciska lo stuzi poi le gerna cu sisti bu'u ke'a ku'o .e le javni poi sisti bu'u
 ##       le stuzi
 ##   .i lo cmene be le tanxe cu liste ro genvla poi le gerna ka'e tcidu ke'a bu'u le stuzi to
 ##       `nitcu` toi
 ##   .i lo srejge poi vasru no valsi cu selxra pa karda pe vo'a bu'u lo stuzi pe vo'a
-##   .i ro pagbu poi no genvla cu vasru ke'a to `rivbi` toi cu karda gi'e cmima `off`
+##
+## ni'o ro pagbu poi no genvla cu vasru ke'a to `rivbi` toi cu karda gi'e cmima `off`
 ##   .i le karda cu ciska lo cmene be le pagbu be le genturfa'i be'o poi to'e curmi le selvau be le
 ##       karda
-##   .i ro jgena pe le rebla cu ca'o kalri
+##
+## ni'o ro jgena pe le rebla cu ca'o kalri
 ##   .i lo bavla'i cenba cu basti le jgena
 ##   .i se ki'u bo le pagbu pe le jgena cu cmima `open`
-##   .i ro valsi cu ciska `'` lo stuzi be `h` noi `NIF` ciska ke'a lo stuzi be `'`
+##
+## ni'o ro valsi cu ciska `'` lo stuzi be `h` noi `NIF` ciska ke'a lo stuzi be `'`
 ##   .i lo selci'a poi zo zoi sitna ke'a na selga'i
-##   .i ro stuzi cu klani lo mulna'u `pixel`
+##
+## ni'o ro stuzi cu klani lo mulna'u `pixel`
 ##   .i ro namcu cu mulna'u
 ##   .i se ki'u bo le selzba pe `Nim` .e le selzba pe `JavaScript` ciska le mitselci'a
 ##   .i lo cipra .e lo minde po'u `drive` cipra di'u
-##   .i ro tricu poi lo nu jmina lo pagbu be le ca selci'a be fi `NIF` cu jarco ke'a selxra sepi'o
-##       le se ciska po'o to `merge.nim` toi
+##
+## ni'o ro tricu poi lo nu jmina lo pagbu be le ca selci'a be fi `NIF` cu jarco ke'a selxra sepi'o
+##     le se ciska po'o to `merge.nim` toi
 ##   .i le rebla cu na se jmina
 ##   .i ki'u bo lo bavla'i cenba cu basti le rebla
-##   .i va'o lo nu lo nu jmina cu jarco le tricu pe lo nu tcidu le mulselci'a kei le linji cu cusku
-##       pa tricu
+##
+## ni'o va'o lo nu lo nu jmina cu jarco le tricu pe lo nu tcidu le mulselci'a kei le linji cu cusku
+##     pa tricu
 ##   .i va'o lo drata le linji cu kancu lo tricu .e lo valsi .e lo srera .e lo valsi poi na se tcidu
 ##       ku'o ta'i lo nu `drawn` kancu
 ##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu kei no pagbu cu selxra
 ##   .i le linji cu cusku lo namcu pe le jgena poi se to'e curmi ku'o .e lo krinu
 ##   .i li pa cu krasi lo nu kancu le jgena
-##   .i le papri cu dunda lo tarmi ro klesi be lo pagbu be le pixra
+##
+## ni'o le papri cu dunda lo tarmi ro klesi be lo pagbu be le pixra
 ##   .i le pixra cu cusku no skari
 ##   .i jdima fa lo nu lo clapau cu selxra lo ganxra noi le papri cu muvgau ke'a
 
@@ -178,15 +190,17 @@ func rectangle(x, y, width, height: int; class: string): string =
 
 
 func elbow(x_from, y_from, x_to, y_to: int): string =
-  ## ciska pa jonli'i poi selkra lo dzikoi be pa tanxe gi'e selfa'o lo galkoi be lo se punji poi
+  ## ciska pa jonli'i poi selkra lo dzikoi be pa tanxe gi'e selfa'o lo galkoi be lo selpu'i poi
   ##     cnita le tanxe
   ##   .i le linji cu ni'a klama lo kunti poi cnita le tanxe
   ##   .i ba bo le linji cu pinkla
   ##   .i ba bo le linji cu ni'a klama
-  ##   .i le kunti cu vasru no tanxe
+  ##
+  ## ni'o le kunti cu vasru no tanxe
   ##   .i no rajypau cu selvau re tanxe pe pa pinpoi
   ##   .i se ki'u bo le pinpau be le linji cu pencu no datyjonli'i
-  ##   .i le romoi sraji pagbu be le linji cu zvati lo midju be le selpu'i poi cnita le tanxe
+  ##
+  ## ni'o le romoi sraji pagbu be le linji cu zvati lo midju be le selpu'i poi cnita le tanxe
   ##   .i le rajypau be le linji cu sepli ro datyta'e poi le linji cu klama lo mlana be ke'a ku'o
   ##       su'o pa rajypau
   ##   .i se ki'u bo le rajypau be le linji cu pencu no tanxe
@@ -317,7 +331,8 @@ func placed(
   ##   .i dunda lo ni le jgena cu gapru le karda kei .e lo midju .e lo namcu vu'o pe le selpu'i pe
   ##       le jgena
   ##   .i va'o lo nu le jgena cu vasru no valsi kei le ni gapru cu du li ni'u pa
-  ##   .i lo tanxe cu ponse lo namcu pe `boxes`
+  ##
+  ## ni'o lo tanxe cu ponse lo namcu pe `boxes`
   ##   .i lo karda cu ponse lo namcu pe `cards`
   if node.isTerminal or node.text == TAG_UNREAD:
     let
@@ -489,8 +504,8 @@ func drawnMerged*(nif: string): DrawingLive =
   ##   .i va'o lo nu lo nu jmina cu jarco le tricu pe lo nu tcidu le mulselci'a kei le linji cu
   ##       cusku pa tricu
   ##   .i va'o lo drata le linji cu cusku lo selvau be le tricu
-  ##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu kei cu ciska no pixra gi'e cusku le jgena .e
-  ##       le krinu ne'i le linji
+  ##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu cu ciska no pixra gi'e cusku le jgena .e le
+  ##       krinu ne'i le linji
   let merged = nif.mergeParts
   if not merged.is_merged:
     result.is_refused = true

@@ -1,17 +1,19 @@
 ## cipra ro minde pe `README.md` ja'i lo minde samtci poi tcidu le minde
 ##   .i lo minde poi sitna lo selci'a sepi'o `'` vasru no datle'u po'u `'`
 ##   .i se ki'u bo lo minde samtci cu dunda le mulselci'a `Nim` .a `node`
-##   .i ro minde cu selkra pa linji poi selkra `$ ` ne'i pa girzu be lo linji be'o poi se tcita
-##       `text`
-##   .i le minde cu selfa'o le pamoi linji poi selfa'o `'`
-##   .i le nu sitna cu selfa'o vi
+##
+## ni'o ro minde cu selkra pa linji poi selkra `$ ` ne'i pa girzu be lo linji be'o poi se tcita
+##     `text`
+##   .i le minde .e le nu sitna cu selfa'o le pamoi linji poi selfa'o `'`
 ##   .i ne'i le se sitna `\x27` basti `'`
-##   .i mupli fa lo nu fliba poi selfa'i de'i `2026-11-11`
+##
+## ni'o mupli fa lo nu fliba poi selfa'i de'i `2026-11-11`
 ##   .i le pamoi minde cu sitna zo la'o ne'i lo vo'a selci'a be fi `Nim`
 ##   .i le lerfu po'u `'` pe zo la'o fanmo le nu sitna pe lo minde samtci
 ##   .i se ki'u bo lo minde samtci cu dunda `dy.` `Nim` ta'i lo datnyvei
 ##   .i lo jalge be le minde cu du li pa
-##   .i `README.md` se tcidu ta'i lo selci'a ca lo nu fanva
+##
+## ni'o `README.md` se tcidu ta'i lo selci'a ca lo nu fanva
 ##   .i no minde pe `README.md` selpli vi
 ##   .i ki'u bo ro minde cu rapfanva le genturfa'i
 
@@ -28,15 +30,15 @@ const
   OPENING_COMMAND = "$ "
     ## lo krasi be lo pamoi linji be lo minde be'o ne'i lo girzu be lo linji be'o pe `README.md`
   COUNT_COMMANDS_LEAST = 8
-    ## lo mecraiterkancu be lo minde poi sitna lo se ciska gi'e zvati `README.md`
+    ## lo mecraiterkancu be lo minde poi sitna lo selci'a gi'e zvati `README.md`
     ##   .i ca lo nu jmina le cipra kei `README.md` vasru pano minde poi sitna lo selci'a
 
 
 
 func commandsQuoted(text: string): seq[tuple[line: int, command: string]] =
   ## dunda ro minde poi sitna lo selci'a sepi'o `'` ku'o .e lo linji poi le minde cu selkra ke'a
-  ##   .i ro minde cu selkra pa linji poi selkra `$ `
-  ##   .i le minde cu selfa'o le pamoi linji poi selfa'o `'`
+  ##   .i ro minde cu selkra pa linji poi selkra `$ ` ku'o gi'e selfa'o le pamoi linji poi selfa'o
+  ##       `'`
   let lines = text.splitLines
   var k = 0
   while k < lines.len:

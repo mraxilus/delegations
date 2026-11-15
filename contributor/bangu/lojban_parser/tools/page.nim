@@ -14,21 +14,24 @@
 ##
 ## ni'o le papri cu du le calku po'u `pages/live.html`
 ##   .i ro sinxa pe le calku cu se basti to `CONTRIBUTOR.md, Pages and assets` toi
-##   .i ro lertai poi le calku cu punji ke'a basti pa sinxa
+##
+## ni'o ro lertai poi le calku cu punji ke'a basti pa sinxa
 ##   .i `koch fetch-assets` sabji le lertai ba lo nu cipra lo du'u lo snina'u cu mintu le sorcu pe
 ##       `delegations` to `curator/audit/src/assets.nim` toi
 ##   .i le lertai cu selpu'i ne'i le papri ta'i pa `data:`
 ##   .i se ki'u bo le papri cu cusku no cmene be lo lertai poi lo viska ka'e claxu ke'a to
 ##       `Article X.8` toi
-##   .i le selci'a .e le linji .e le pixra .e le selci'a be fi `NIF` vu'o pe le pamoi mupli cu basti
-##       lo sinxa ta'i lo nu le jbezba cu tcidu le mulmupli gi'e ciska lo pixra be le selci'a be fi
-##       `NIF` to `src/browser/draw.nim` toi
+##
+## ni'o le selci'a .e le linji .e le pixra .e le selci'a be fi `NIF` vu'o pe le pamoi mupli cu basti
+##     lo sinxa ta'i lo nu le jbezba cu tcidu le mulmupli gi'e ciska lo pixra be le selci'a be fi
+##     `NIF` to `src/browser/draw.nim` toi
 ##   .i se ki'u bo le papri cu mulseltcidu pu lo nu le samtci pe le papri cu cfari
 ##   .i le samtci po'u `src/browser/page.nim` poi le fanva poi selsto cu fanva ke'a fi `JavaScript`
 ##       selpu'i ne'i le selci'a pe le papri
 ##   .i se ki'u bo le gunka poi le samtci cu rinka lo nu ke'a cfari cu selkra pa `Blob` pe le
 ##       selci'a pe le samtci to `live_text.nim` toi
-##   .i le selzbapapri cu du pa clali'i ne'i `build/` noi `git` na jundi ke'a
+##
+## ni'o le selzbapapri cu du pa clali'i ne'i `build/` noi `git` na jundi ke'a
 ##   .i le papri cu no roi selra'e `git`
 ##   .i jdima fa lo nu le papri cu vasru le mulno genturfa'i .e mu lertai
 ##   .i so'e lo stuzi pe le papri cu pagbu le genturfa'i .a le lertai

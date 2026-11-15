@@ -4,37 +4,45 @@
 ##   .i ro jufra pe le stomupli pe `Tatoeba` cpacu le seljdi poi le jbezba cu dunda ke'a ca lo nu
 ##       ciska le mupli
 ##   .i lo dacti pe `parseLojban` mintu `ReadingText` ro datnypau
-##   .i va'o lo nu ro vomoi jufra pe le mupli cu se tcidu kei `JS` ciska lo selci'a be fi `NIF` be'o
-##       pe le jufra
+##
+## ni'o va'o lo nu ro vomoi jufra pe le mupli cu se tcidu kei `JS` ciska lo selci'a be fi `NIF` be'o
+##     pe le jufra
 ##   .i le selci'a cu se tcidu ta'i le velski be le tarmi gi'e rapyzba le multricu pe le jufra
 ##       sepi'o le tcidu pe le jbena cipra to `suites/reader_nif.nim` toi
 ##   .i `parseLojbanToNif` dunda lo selci'a be fi `NIF` be'o poi mintu le selci'a pe le mupli poi le
 ##       jbecipra cu vasru ke'a ku'o ro stuzi
-##   .i jdima fa lo nu lo nu tcidu ro jufra cu nitcu ji'i `70 ms` ne'i `JS`
+##
+## ni'o jdima fa lo nu lo nu tcidu ro jufra cu nitcu ji'i `70 ms` ne'i `JS`
 ##   .i se ki'u bo va'o lo nu tcidu le mulmupli kei le temci cu zenba fi ji'i `13 s`
 ##   .i le jbecipra cu tcidu ro selci'a pe lo selci'agri
-##   .i le mupli cu pilno bixa lo bibi javni poi selcme ne'i `CLL 21.1`
-##   .i su'o le jufra cu se to'e curmi le tcidu be lo porsi be lo valsi
-##   .i su'o le jufra cu se to'e curmi le gerna
+##
+## ni'o le mupli cu pilno bixa lo bibi javni poi selcme ne'i `CLL 21.1`
+##   .i le gerna .e le tcidu be lo porsi be lo valsi cu to'e curmi su'o le jufra
 ##   .i le se to'e curmi cu du voso jufra
 ##   .i se ki'u bo pa nu cipra cu cipra lo so'e pagbu be le genturfa'i ne'i `JavaScript` to
 ##       `sample_tatoeba/sentences.nim` toi
-##   .i le seljdi cu vasru lo nu to'e curmi .e le javni ta'i lo nu `tools/tatoeba.nim` ciska
-##   .i le seljdi cu kunti va'o lo nu le jufra cu se tcidu
-##   .i le cipra cu fasnu ne'i lo papri gi'e sepli `test_suites.nim`
+##
+## ni'o le seljdi cu vasru lo nu to'e curmi .e le javni ta'i lo nu `tools/tatoeba.nim` ciska kei
+##     gi'e kunti va'o lo nu le jufra cu se tcidu
+##
+## ni'o le cipra cu fasnu ne'i lo papri gi'e sepli `test_suites.nim`
 ##   .i ki'u bo le cripu cu pencu lo dacti pe `JavaScript` sepi'o `std/jsffi` noi le jbezba na ka'e
 ##       fanva ke'a
-##   .i le cusku cu benji ro cipra le sabji samtci
+##
+## ni'o le cusku cu benji ro cipra le sabji samtci
 ##   .i ba bo le cusku cu benji lo famna'u pe le nu cipra
 ##   .i se ki'u bo pa xusra poi fliba cu rinka lo nu `drive` fliba to `report.nim` toi
-##   .i `node` na pilno le cipra to lo seljdi bu'u `#859` toi
+##
+## ni'o `node` na pilno le cipra to lo seljdi bu'u `#859` toi
 ##   .i se ki'u bo le samtci cu se cipra ne'i le papri noi le samtci cu fasnu ne'i ke'a
-##   .i le cipra cu se fanva sepi'o `-d:release` ta'i lo nu lo minde po'u `javascript` zbasu le
-##       samtci
+##
+## ni'o le cipra cu se fanva sepi'o `-d:release` ta'i lo nu lo minde po'u `javascript` zbasu le
+##     samtci
 ##   .i se ki'u bo le cipra cu cipra le selzba poi se benji to `IX.6` toi
 ##   .i pa xusra poi fliba cu cusku ji'a lo linji pe vo'a
 ##   .i `check` jdice le linji ca lo nu fanva
-##   .i pa minde po'u `-d:` pe lo nu sisti cu na selpli
+##
+## ni'o pa minde po'u `-d:` pe lo nu sisti cu na selpli
 ##   .i se ki'u bo ro jufra poi lo seljdi be fi ke'a cu cenba cu selsku ne'i pa nu cipra
 
 {.experimental: "strictFuncs".}

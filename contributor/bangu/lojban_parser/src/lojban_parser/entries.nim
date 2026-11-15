@@ -17,34 +17,37 @@
 ##   |                |             | .i lo cmene poi lidne lo klesi pe le liste                  |
 ##   |----------------|-------------|-------------------------------------------------------------|
 ##
-## ni'o le vi selgu'a cu ralte le liste ta'i lo samtci pe `Nim` zi'e poi ponse lo klesi ku'o gi'e na
-##     ralte le liste ta'i lo se ciska datnyvei
+## ni'o le vi selgu'a cu ralte le liste ta'i lo samtci pe `Nim` zi'e poi ponse lo klesi ku'o .enai
+##     lo se ciska datnyvei
 ##   .i ki'u bo ge le jdice samtci cu tcidu no datnyvei pe `.txt` gi lo fanva pe `Nim` karbi ro
 ##       datnypau lo klesi pe le vi datnyvei
 ##   .i ku'i `JSON` cipra no datnypau
-##   .i lo javni pe `CLL` nitcu ro datnypau poi selra'e ku'o gi'e nitcu no datydatnypau
+##
+## ni'o lo javni pe `CLL` nitcu ro datnypau poi selra'e ku'o .e no datydatnypau
 ##   .i lo javni cu nitcu lo valsi .e lo rafsi vu'o pe le gimste ki'u lo nu `CLL 4.11` .e `CLL 4.12`
 ##       pilno lo rafsi be ro valsi pe lo tanru be'o lo nu jmina gi'e dunda lo namcu
-##   .i lo javni cu nitcu ji'a lo valsi .e lo selma'o vu'o pe le ma'oste ki'u lo nu le gerna pe
-##       `CLL` tcidu le re datnypau
+##   .i lo javni cu nitcu lo valsi .e lo selma'o vu'o pe le ma'oste ki'u lo nu le gerna pe `CLL`
+##       tcidu le re datnypau
 ##   .i lo glipau be ro liste cu dunda lo smuni gi'e no roi dunda lo ka drani
 ##   .i se ki'u bo lo glipau cu stali `lojban_tagger` noi sisku sepi'o lo glipau
 ##   .i jdima fa lo nu lo samtci poi djica pa stuzi poi selvi'u cu galfi le galfi samtci .e le liste
 ##       ca pa nu ralte
-##   .i le ma'oste cu ralte lo linji poi vasru pa cmavo po'o ku'o gi'e ralte no datli'i
-##   .i ki'u bo ge lo linji be lo ma'orgunma cu jmina no datni gi lo jufpau cu vasru su'o re valsi
-##   .i ki'u lo nu le genturfa'i cu tcidu lo cmavo pe lo ma'orgunma fi lo cmavo gunma to `CLL 4.2`
-##       toi kei lo linji be lo ma'orgunma cu jmina no datni
+##
+## ni'o le ma'oste cu ralte lo linji poi vasru pa cmavo po'o ku'o .e no datli'i
+##   .i ki'u bo ge ki'u lo nu le genturfa'i cu tcidu lo cmavo pe lo ma'orgunma fi lo cmavo gunma to
+##       `CLL 4.2` toi kei lo linji be lo ma'orgunma cu jmina no datni gi lo jufpau cu vasru su'o re
+##       valsi
 ##   .i lo klesi be lo selma'o be'o poi le liste cu ciska ke'a ba lo cmene be le selma'o ku'o mu'u
 ##       `1` pe `UI1` fendi lo cmavo mu'i lo tadni
 ##   .i no javni pe `CLL` tcidu le klesi
-##   .i ro stecmi cu ralte le porsi be lo stuzi be lo rafsi
-##   .i le stuzi be `CVC` cu lidne le stuzi be `CCV`
-##   .i le stuzi be `CCV` cu lidne le stuzi be `CVV`
+##
+## ni'o ro stecmi cu ralte le porsi be lo stuzi be lo rafsi
+##   .i le stuzi be `CVC` cu lidne le stuzi be `CCV` be'o noi lidne le stuzi be `CVV`
 ##   .i ca lo nu tcidu lo rafsi kei lo lerfu cu rapyjdi lo tarmi be le rafsi to `forms.nim` toi
 ##   .i se ki'u bo le porsi cu selsmu no da vi
-##   .i ro datnypau poi ro linji cu vasru ke'a se tcita `{.requiresInit.}` to le pagbu poi selcme
-##       zoi gy. Data .gy. ne'i `CONTRIBUTOR.md` toi
+##
+## ni'o ro datnypau poi ro linji cu vasru ke'a se tcita `{.requiresInit.}` to le pagbu poi selcme
+##     zoi gy. Data .gy. ne'i `CONTRIBUTOR.md` toi
 ##   .i se ki'u bo lo fanva cu to'e curmi ro zbasu be lo stecmi be'o poi claxu pa le datnypau ku'o
 ##       gi'e jarco le stecmi
 ##   .i le datnypau cu du lo valsi pe ro liste ge'u jo'u lo selma'o
@@ -52,12 +55,14 @@
 ##       smaji
 ##   .i lo rafsi cu ka'e kunti
 ##   .i se ki'u bo le rafsi cu na se tcita
-##   .i jdima fa lo nu ro `var` pe lo stecmi cu nitcu lo cfadatni
-##   .i jdima ji'a fa lo nu lo fanva cu to'e curmi lo nu `mapIt` tcidu lo stecmi kei ki'u lo nu
-##       `mapIt` ciska `var it`
+##
+## ni'o jdima fa lo nu ro `var` pe lo stecmi cu nitcu lo cfadatni
+##   .i jdima fa lo nu lo fanva cu to'e curmi lo nu `mapIt` tcidu lo stecmi kei ki'u lo nu `mapIt`
+##       ciska `var it`
 ##   .i se ki'u bo lo cipra cu tcidu lo datnypau sepi'o lo rapli samtci .a `collect`
-##   .i lo porsi be lo stecmi cu rinka lo kajde po'u `UnsafeSetLen` .e `UnsafeDefault` ca lo nu le
-##       porsi cu zenba
+##
+## ni'o lo porsi be lo stecmi cu rinka lo kajde po'u `UnsafeSetLen` .e `UnsafeDefault` ca lo nu le
+##     porsi cu zenba
 ##   .i `newSeq` pe lo stecmi cu rinka lo kajde po'u `ProveInit` noi `Nim` cusku lo du'u ke'a ba
 ##       binxo lo srera
 ##   .i se ki'u bo lo cipra cu zbasu sepi'o `newSeqOfCap`

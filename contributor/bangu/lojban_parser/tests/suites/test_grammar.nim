@@ -1,22 +1,25 @@
 ## cipra lo du'u `grammar.nim` tcidu lo mupli pe `CLL 5` ja'i le ci'erge'a pe `CLL 21.1` simsa lo nu
 ##     `CLL 5` tcidu le mupli
 ##   .i cipra ji'a lo flalu poi ro tricu cu mapti ke'a
-##   .i lo mupli cu selfu'i fi lo selci'a pe `CLL` gi'e no roi selfu'i fi lo selja'o be le
-##       genturfa'i
+##
+## ni'o lo mupli cu selfu'i fi lo selci'a pe `CLL` gi'e no roi selfu'i fi lo selja'o be le
+##     genturfa'i
 ##   .i lo linji pe pa jufra cu seljo'e
 ##   .i lo selci'a poi no krasi cu vasru ke'a se tcita lu se finti li'u
 ##   .i lo kurfa grile'u pe `CLL` sinxa lo valsi poi lo selci'a cu ka'e claxu ke'a to `CLL 5.5` toi
-##   .i se ki'u bo ro mupli cu se tcidu ta'i lo nu vasru le valsi .e lo nu claxu le valsi
-##   .i le se sitna pe le cipra cu du lo valsi poi `CLL` gunma ke'a ne'i lo prosa .e lo vlafanva
-##       ta'i lo selku'e be lo javni ku'o .e lo famvla poi `CLL 21.1` ciska ke'a fi lo jbini be re
-##       `/`
+##   .i se ki'u bo ro mupli cu se tcidu ta'i lo nu vasru le valsi kei .e lo nu claxu le valsi
+##
+## ni'o le se sitna pe le cipra cu du lo valsi poi `CLL` gunma ke'a ne'i lo prosa .e lo vlafanva
+##     ta'i lo selku'e be lo javni ku'o .e lo famvla poi `CLL 21.1` ciska ke'a fi lo jbini be re `/`
 ##   .i le vi datnyvei cu liste le se sitna gi'e sepli `grammar.nim`
-##   .i `test_corpus.nim` tcidu ro mupli pe `CLL 1.1` fi lo selcpa poi seljva le notci pe `CLL`
+##
+## ni'o `test_corpus.nim` tcidu ro mupli pe `CLL 1.1` fi lo selcpa poi seljva le notci pe `CLL`
 ##   .i le vi cipra cu cipra le tricu pe le mupli poi le vi cipra cu sitna ke'a
 ##   .i `test_prose.nim` cipra lo nu sitna .e lo nu vimcu .e zo zei .e zo bu vu'o noi galfi pu lo nu
 ##       le gerna cu tcidu
-##   .i le flalu pe le nu tcidu ro pagbu cu cipra lo du'u `readGrammar` noi tcidu ro pagbu be le
-##       selci'a cu mintu `readWhole` noi tcidu le mulselci'a pa roi
+##
+## ni'o le flalu pe le nu tcidu ro pagbu cu cipra lo du'u `readGrammar` noi tcidu ro pagbu be le
+##     selci'a cu mintu `readWhole` noi tcidu le mulselci'a pa roi
 ##   .i le flalu cu tcidu ro selci'a pe le selci'agri zi'e poi selka'a ku'o .e le selci'a poi jorne
 ##       lo ju'agri pe pa prosa to `#849` toi
 
@@ -142,9 +145,9 @@ const
   ]
     ## lo selci'a poi vasru ro stuzi poi le nu tcidu ro pagbu cu katna bu'u ke'a gi'a tcidu le
     ##     mulselci'a bu'u ke'a
-    ##   .i le selci'a cu vasru zo .i poi jorne no da ku'o .e zo .i poi jorne ku'o .e zo ni'o
+    ##   .i le selci'a cu vasru zo .i poi jorne no da ku'o .e zo .i poi jorne ku'o .e zo ni'o gi'e
+    ##       selfi'i
     ##   .i ne'i le selci'a zo tu'e .e zo lu .e zo to cu ca'o kalri gi'a selfa'o
-    ##   .i le selci'a cu selfi'i
   CUTTING = {Selmaho.I, Selmaho.Niho, Selmaho.Tuhe, Selmaho.Lu, Selmaho.To}
     ## lo selma'o poi le nu tcidu ro pagbu cu katna bu'u ke'a ku'o .a lo selma'o poi krasi lo
     ##     selci'a ne'i lo selci'a
@@ -203,8 +206,8 @@ func terminalsStream(text: string): Option[seq[Terminal]] =
 
 
 func terminalsRead(text: string): Option[seq[Terminal]] =
-  ## dunda le genvla poi `readText` ralte ke'a va'o lo nu le selci'a cu se tcidu
-  ##   .i va'o lo datydu'a ro valsi pe le porsi be lo valsi
+  ## dunda le genvla poi `readText` ralte ke'a ku'o va'o lo nu le selci'a cu se tcidu
+  ##   .i va'o lo drata ku dunda ro valsi pe le porsi be lo valsi
   let reading = text.readText
   if reading.is_read: some(reading.units.mapIt(it.terminal)) else: text.terminalsStream
 
@@ -228,10 +231,11 @@ func isCutting(text: string): bool =
 
 
 func textJoined(): string =
-  ## zbasu pa selci'a lo ju'agri pe le prosa po'u `lo jbobau` zi'e poi se tcidu ba zo ni'o
+  ## zbasu pa selci'a lo ju'agri poi se tcidu ba zo ni'o zi'e pe le prosa po'u `lo jbobau`
   ##   .i lo sinxa be lo ju'agri .a lo jufra be'o poi krasi le ju'agri cu selvi'u
   ##   .i zo ni'o zvati lo jbini be ro re lamji ju'agri
-  ##   .i le recimoi ju'agri pe le prosa cu selfa'o zo tu'e
+  ##
+  ## ni'o le recimoi ju'agri pe le prosa cu selfa'o zo tu'e
   ##   .i le resomoi ju'agri cu vasru zo tu'u po'o gi'e na se tcidu
   ##   .i se ki'u bo zo tu'e cu ca'o kalri vi le fanmo be le selci'a
   var paragraphs: seq[string]
@@ -291,12 +295,13 @@ func shape(node: Node): string =
 func shape(reading: ReadingGrammar): string =
   ## ciska le se tcidu ta'i lo lerpoi
   ##   .i va'o lo nu le selci'a cu se tcidu kei ciska le tricu ta'i lo nu `shape` ciska
-  ##   .i va'o lo datci'a le stuzi .e le javni pe le nu to'e curmi
+  ##   .i va'o lo drata ku ciska le stuzi .e le javni pe le nu to'e curmi
   if reading.is_read: reading.tree.shape else: "refused " & $reading.at & " " & reading.rule
 
 
 func shapesRead(text: string): Option[tuple[passes, whole: string]] =
-  ## tcidu le selci'a ta'i le nu tcidu ro pagbu .e lo nu tcidu le mulselci'a gi'e ciska ro se tcidu
+  ## tcidu le selci'a ta'i le nu tcidu ro pagbu kei .e lo nu tcidu le mulselci'a kei gi'e ciska ro
+  ##     se tcidu
   ##   .i va'o lo nu le selci'a cu se tcidu kei le tricu pe le nu tcidu ro pagbu cu selcpa fi
   ##       `readText` noi tcidu le selci'a ta'i le nu tcidu ro pagbu
   ##   .i va'o lo drata ro valsi pe le porsi be lo valsi cu genvla

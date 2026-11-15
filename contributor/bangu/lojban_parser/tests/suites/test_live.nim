@@ -2,41 +2,49 @@
 ##   .i ca lo fanmo lo selci'a poi ro spisa be ke'a cu se tcidu ta'i lo porsi cu jarco `NIF` pe lo
 ##       pagbu be le selci'a poi se tcidu ta'i lo mulno to `toNifParts` pe `readTextParts` toi
 ##   .i ro stuzi pe le re selci'a be fi `NIF` cu mintu va'o ro nu le spisa cu katna le selci'a
-##   .i lo spisa cu jalge lo cunso nu katna poi seljdi lo tsiju
+##
+## ni'o lo spisa cu jalge lo cunso nu katna poi seljdi lo tsiju
 ##   .i le nu katna cu ka'e zvati ne'i lo valsi
 ##   .i le cipra cu katna ro remoi se ciska pe le selci'aste ge'u .e lo selci'a poi selzba fi lo
 ##       valsi poi galfi lo pu valsi to `texts_built.nim` toi
 ##   .i ki'u bo le selci'aste cu vasru so'u le valsi
 ##   .i ne'i le flalu pe lo jdima ro selci'avla cu spisa
-##   .i ro cenba cu katna `NIF` ne'i le se ralte po'o
+##
+## ni'o ro cenba cu katna `NIF` ne'i le se ralte po'o
 ##   .i `NIF` poi stali ba le cenba cu mintu `NIF` poi le tcidu cu ralte ke'a
 ##   .i pu lo fanmo `NIF` .e le rebla pe ro cenba cu mintu `NIF` pe lo pagbu be lo selci'a poi ca
 ##       zvati gi'e fanmo bu'u lo romoi sinxa poi jbini lo valsi be'o poi se tcidu ta'i pa
 ##       mulji'eselci'a
 ##   .i se ki'u bo le tricu cu zenba ta'i lo nu le selci'a poi ca zvati cu jarco le tricu
-##   .i ro cenba cu jorne le selci'a
+##
+## ni'o ro cenba cu jorne le selci'a
 ##   .i ro valsi pe `NIF` poi le cenba cu ralte ke'a fanmo bu'u lo stuzi poi na se lidne le krasi be
 ##       le cenba
 ##   .i ro valsi pe lo jgena poi le cenba cu jarco ke'a krasi bu'u lo stuzi poi na lidne le krasi be
 ##       le cenba
-##   .i le pagbu be le selci'a cu cirko no pagbu be le tricu
+##
+## ni'o le pagbu be le selci'a cu cirko no pagbu be le tricu
 ##   .i `assembleText` zbasu lo tricu poi `readGrammar` jarco ke'a ku'o fi le pagbu
-##   .i lo spisa poi selka'a fi lo jufra to `toSentences` toi zi'e poi ro jufra pe ke'a se tcidu
-##       ta'i lo porsi cu jarco ne'i pa cenba to `combine` toi lo selja'o be lo spisa poi se tcidu
-##       ta'i lo mulno
+##
+## ni'o lo spisa poi selka'a fi lo jufra to `toSentences` toi zi'e poi ro jufra pe ke'a se tcidu
+##     ta'i lo porsi cu jarco ne'i pa cenba to `combine` toi lo selja'o be lo spisa poi se tcidu
+##     ta'i lo mulno
 ##   .i le selja'o cu vasru `NIF` pe lo pagbu be le selci'a ca lo fanmo
 ##   .i ji'a `NIF` selra'e gi'e zenba
 ##   .i ji'a le cenba cu jorne le selci'a
-##   .i le spisa cu jalge lo nu jmina ro le jufra
+##
+## ni'o le spisa cu jalge lo nu jmina ro le jufra
 ##   .i ro jufra cu vasru pa cmavo be zoi gy. I .gy. .a zoi gy. NIhO .gy. be'o noi pamoi valsi be le
 ##       jufra
-##   .i jdima fa lo nu lo stuzi poi se tcidu ca ro nu tcidu cu zenba ca lo nu le selci'a cu zmadu lo
-##       ka clani
+##
+## ni'o jdima fa lo nu lo stuzi poi se tcidu ca ro nu tcidu cu zenba ca lo nu le selci'a cu zmadu lo
+##     ka clani
 ##   .i va'o lo nu ro valsi pe lo seljonju'a pe `Tatoeba` spisa kei lo stuzi poi se tcidu cu na
 ##       zmadu lo pilji be `COST_MOST` bei lo stuzi pe le jufra
 ##   .i va'o lo nu le selci'a cu clani re roi kei lo stuzi poi se tcidu cu du lo pilji be li re bei
 ##       lo stuzi poi pu se tcidu
-##   .i lo mupli cu jarco lo cenba pe ro spisa
+##
+## ni'o lo mupli cu jarco lo cenba pe ro spisa
 ##   .i ro stuzi pe le cenba cu se cipra
 ##   .i le mupli cu cipra lo nu lo jufra cu selbe'i kei .e lo nu lo valsi cu selka'a kei .e lo nu zo
 ##       si katna `NIF` kei .e lo nu zo su fanmo lo selci'a gi'e katna no da gi'a fanmo zo lu poi
@@ -88,10 +96,10 @@ const
   SEED = 859  ## lo tsiju be lo cunso nu katna .e lo selci'a poi selzba
   COUNT_BUILT = 300  ## lo klani be lo selci'a poi selzba fi lo valsi poi galfi lo pu valsi
   PIECE_MOST = 6
-    ## lo stuzi pe lo cunspi be lo se ciska poi se zbasu cu na zmadu le stodi
+    ## lo stuzi pe lo cunspi be lo selci'a poi selzba cu na zmadu le stodi
     ##   .i se ki'u bo lo spisa cu katna lo valsi
   PIECE_CORPORA_MOST = 96
-    ## lo stuzi pe lo cunspi be lo se ciska pe le se ciska liste cu na zmadu le stodi
+    ## lo stuzi pe lo cunspi be lo selci'a pe le selci'aste cu na zmadu le stodi
     ##   .i lo selci'a poi vasru pa jufra cu selraptcidu ca ro spisa
     ##   .i se ki'u bo da'i va'o lo nu ro valsi cu spisa kei lo jdima cu du `100 s` ne'i lo cikryzba
     ##   .i le temci cu du lo pilji be li pavo bei lo temci be lo nu tcidu le selci'aste ta'i lo
@@ -119,16 +127,15 @@ const
     ##   .i ki'u bo pa jufra po'o cu ka'e katna lo valsi gi'a krasi ne'i lo nu sitna
   SENTENCES_COST = 30
     ## lo seljonju'a pe `Tatoeba`
-    ##   .i le flalu pe lo jdima cu tcidu le jufra
-    ##   .i ba bo le flalu cu tcidu lo selci'a poi vasru le jufra re roi
+    ##   .i le flalu pe lo jdima cu tcidu le jufra gi'e ba bo tcidu lo selci'a poi vasru le jufra re
+    ##       roi
   COST_MOST = 12.0
-    ## lo zmaraifrinu be lo stuzi poi se tcidu bei lo stuzi pe le se ciska ca lo nu ro valsi cu
-    ##     spisa
+    ## lo zmaraifrinu be lo stuzi poi se tcidu bei lo stuzi pe le selci'a ca lo nu ro valsi cu spisa
     ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li bi pi re
     ##   .i ki'u bo ro spisa cu raptcidu lo jufra poi ca'o kalri
   COST_TWICE_MOST = 2.2
-    ## lo zmaraifrinu be lo stuzi poi le se ciska poi re roi clani cu tcidu ke'a bei lo stuzi poi le
-    ##     se ciska cu tcidu ke'a
+    ## lo zmaraifrinu be lo stuzi poi le selci'a poi re roi clani cu tcidu ke'a bei lo stuzi poi le
+    ##     selci'a cu tcidu ke'a
   TEXTS_LOHU_ERASED = [
     # le cuncipra pe le flalu pe lo mivyselci'a cu facki le selci'a
     #   .i zo fa'o se tcidu ta'i lo valsi
@@ -173,7 +180,8 @@ const
     ##   .i zo si vimcu ko'a
     ##   .i ba bo le javni cu tcidu ko'a ta'i lo nu sitna be ci valsi
     ##   .i zo lo'u cmima le ci valsi
-    ##   .i le porsi be lo valsi cu tcidu lo du'u zo lo'u sitna ro valsi poi se lidne zo lo'u
+    ##
+    ## ni'o le porsi be lo valsi cu tcidu lo du'u zo lo'u sitna ro valsi poi se lidne zo lo'u
     ##   .i se ki'u bo lo bavla'i valsi cu se tcidu ne'i le valsi poi zo lo'u sitna ke'a
     ##   .i le selci'a cu selfi'i
   TEXTS_SA_PARTED = [
@@ -192,8 +200,9 @@ const
     ##   .i le valsi cu dunda lo sinxa be zo sa to `CLL 19.13` toi
     ##   .i lo bavla'i valsi cu rinka lo nu le valsi cu se to'e curmi ji'a
     ##   .i se ki'u bo le sinxa cu cenba
-    ##   .i mupli fa lo nu zo si vimcu lo valsi poi zo zo sitna ke'a kei noi rinka lo nu zo zo se
-    ##       to'e curmi
+    ##
+    ## ni'o mupli fa lo nu zo si vimcu lo valsi poi zo zo sitna ke'a kei noi rinka lo nu zo zo se
+    ##     to'e curmi
     ##   .i mupli fa ji'a lo nu zo ba'e tcita no valsi
     ##   .i le selci'a cu selfi'i
   TEXTS_ZEI_REFUSED = [
@@ -475,17 +484,16 @@ func readLive(
   ##   .i ralte `NIF` poi stali ba ro cenba
   ##   .i va'o lo nu `is_growing` jetnu kei cipra lo du'u `NIF` .e le rebla pe ro cenba poi lidne lo
   ##       fanmo cu mapti le selci'a poi ca zvati
-  ##   .i va'o lo nu `is_sentences` jetnu kei tcidu ro jufra pe ro spisa ta'i lo porsi ta'i lo nu le
-  ##       samtci cu tcidu ne'i lo cilta pe le papri
-  ##   .i ji'a jmina lo cenba pe le jufra fo pa cenba pe le spisa
+  ##   .i va'o lo nu `is_sentences` jetnu cu tcidu ro jufra pe ro spisa ta'i lo porsi ta'i lo nu le
+  ##       samtci cu tcidu ne'i lo cilta pe le papri kei gi'e jmina lo cenba pe le jufra fo pa cenba
+  ##       pe le spisa
   var
     reader = initReaderLive()
     last = 0
   result = ReadingLive(nif: HEADER, is_held: true, is_grown: true, is_tied: true, is_cut: true)
   template apply(change: ChangeNif) =
     ## katna `NIF` poi selra'e ku'o ta'i lo nu le cenba cu jarco
-    ##   .i ba bo jmina lo jgena pe le cenba
-    ##   .i ji'a ralte le cenba
+    ##   .i ba bo jmina lo jgena pe le cenba gi'e ralte le cenba
     ##   .i cipra lo du'u ro valsi pe `NIF` poi le cenba cu ralte ke'a fanmo bu'u lo stuzi poi na se
     ##       lidne le krasi be le cenba kei .e lo du'u ro valsi poi le cenba cu jarco ke'a krasi
     ##       bu'u le krasi be le cenba
@@ -694,7 +702,7 @@ suite "Internal: Live text":
       checkpoint text & " cut at " & $cuts
       let live = text.readLive(cuts, is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # le flalu pe le stedu be `live.nim`
-      # lo famvla be lo krasi valsi poi denpa
+      # lo famvla be lo kravla poi denpa
       check live.is_grown  # le stedu be `live.nim` to `CLL 17.4` toi
 
 

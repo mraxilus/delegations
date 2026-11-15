@@ -2,37 +2,45 @@
 ##   .i ro mupli poi le cukta cu cusku lo du'u ke'a drani cu se tcidu
 ##   .i ro mupli poi le cukta cu cusku lo du'u ke'a na drani ku'o .e ro mupli poi na'e mapti su'o
 ##       javni pe `CLL 21.1` se to'e curmi
-##   .i le selci'agri cu du `tests/cll/examples.nim`
+##
+## ni'o le selci'agri cu du `tests/cll/examples.nim`
 ##   .i le minde po'u `nim r tools/build.nim cll` ciska le datnyvei ra'i le papri be le cukta
 ##   .i le datnyvei cu seljva le notci pe `CLL` zi'e noi zvati `tests/cll/NOTICE.md` to lo seljdi
 ##       po'u `D1 a` bu'u `#815` toi
 ##   .i le datnyvei cu no roi selzba fi lo selja'o be le genturfa'i
-##   .i lo mupli cu se tcidu va'o lo nu lo linji pe le mupli cu seljo'e gi'e se tcidu kei .a lo nu
-##       ro linji pe le mupli cu sepseltcidu
+##
+## ni'o lo mupli cu se tcidu va'o lo nu lo linji pe le mupli cu seljo'e gi'e se tcidu kei .a lo nu
+##     ro linji pe le mupli cu sepseltcidu
 ##   .i ki'u bo lo linji pe lo lijgri liste cu pagbu pa jufra .a so'i jufra
 ##   .i lo tcita pe le cukta na cusku lo du'u xu kau le linji cu pagbu pa jufra
-##   .i lo kurfa grile'u cu sinxa lo valsi poi lo selci'a cu ka'e claxu ke'a to `CLL 5.5` toi
+##
+## ni'o lo kurfa grile'u cu sinxa lo valsi poi lo selci'a cu ka'e claxu ke'a to `CLL 5.5` toi
 ##   .i se ki'u bo ro selci'a cu se tcidu ta'i lo nu vasru lo valsi poi lo grile'u cu sinxa ke'a kei
 ##       .e lo nu claxu le valsi
-##   .i lo linji poi vasru lo sinxa pe le cukta zi'e poi na lojbo cu na se tcidu
+##
+## ni'o lo linji poi vasru lo sinxa pe le cukta zi'e poi na lojbo cu na se tcidu
 ##   .i le sinxa cu du lo nacle'u pe lo cmene be lo sumstu be'o to `CLL 2.5` toi ge'u .a ci denpa bu
 ##       .a lo cukla grile'u .a zoi gy. : .gy. poi se lidne lo cmene be lo cusku ku'o .a zoi gy. -
 ##       .gy.
 ##   .i va'o lo nu ro linji pe pa mupli cu vasru lo sinxa poi na lojbo kei no linji pe le mupli cu
 ##       se tcidu
-##   .i lo mupli poi ciska pa mekso po'o ta'i lo nu `CLL 18.10` .e `CLL 18.14` .e `CLL 18.15` ciska
-##       lo mekpau cu se tcidu ba zo li
-##   .i le genturfa'i cu to'e curmi ro mupli poi na'e mapti su'o javni pe `CLL 21.1` ja'i lo seljdi
-##       po'u `D2 a` bu'u `#815`
+##
+## ni'o lo mupli poi ciska pa mekso po'o ta'i lo nu `CLL 18.10` .e `CLL 18.14` .e `CLL 18.15` ciska
+##     lo mekpau cu se tcidu ba zo li
+##
+## ni'o le genturfa'i cu to'e curmi ro mupli poi na'e mapti su'o javni pe `CLL 21.1` ja'i lo seljdi
+##     po'u `D2 a` bu'u `#815`
 ##   .i le javni cu jinga le mupli
 ##   .i ro le mupli cu se tcidu ba lo nu se cikre ja'i le javni poi lamji le mupli
 ##   .i le cipra cu cipra le se cikre
-##   .i le selci'agri ca na vasru lo linji pe `CLL 3` zi'e poi skicu lo nu bacru ku'o .e lo linji pe
-##       `CLL 4` zi'e poi skicu lo selci'avla poi vasru so'i cmavo
+##
+## ni'o le selci'agri ca na vasru lo linji pe `CLL 3` zi'e poi skicu lo nu bacru ku'o .e lo linji pe
+##     `CLL 4` zi'e poi skicu lo selci'avla poi vasru so'i cmavo
 ##   .i `test_stream.nim` .e `test_forms.nim` vasru le linji poi selci'a ta'i lo nu na'e zmiku
-##   .i le selci'agri ca na vasru ji'a lo tricu
+##   .i le selci'agri ca na vasru lo tricu
 ##   .i `test_grammar.nim` cipra lo tricu pe `CLL 5` .e `CLL 18.16`
-##   .i jdima fa lo nu le cipra cu pilno lo temci poi jibni `4 s` ne'i lo selzba pe `debug`
+##
+## ni'o jdima fa lo nu le cipra cu pilno lo temci poi jibni `4 s` ne'i lo selzba pe `debug`
 ##   .i le temci cu selmre de'i `2026-11-09` ne'i le skami pe le gunka
 ##   .i le gerna cu pilno so'a le temci
 ##   .i lo nu tcidu lo porsi be lo valsi cu pilno `0.1 s`

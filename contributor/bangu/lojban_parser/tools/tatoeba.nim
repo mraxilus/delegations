@@ -1,11 +1,11 @@
-## cuxna lo stomupli be fi lo lojbo jufra pe `Tatoeba` be'o poi jarco so'e javni pe `CLL`
+## cuxna lo stomupli be fi lo jboju'a pe `Tatoeba` be'o poi jarco so'e javni pe `CLL`
 ##   .i ciska le mupli ta'i pa samtci datnyvei pe `Nim` zi'e poi ponse lo klesi gi'e vasru lo seljdi
 ##       be le genturfa'i bei ro le jufra
 ##   .i `build.nim` pilno le vi datnyvei
-##   .i tcidu `jbo_sentences_detailed.tsv`
+##
+## ni'o tcidu `jbo_sentences_detailed.tsv`
 ##   .i le datnyvei cu selcpa fi le vreji poi `URL_TATOEBA` benji ke'a ku'o ta'i lo nu kalri le
-##       vreji
-##   .i le datnyvei cu selstosni sepi'o `SHA-256` ta'i lo nu `lists.nim` stosni lo liste
+##       vreji kei gi'e selstosni sepi'o `SHA-256` ta'i lo nu `lists.nim` stosni lo liste
 ##   .i ciska `tests/sample_tatoeba/sentences.nim` .e `NOTICE.md` noi lamji `sentences.nim`
 ##
 ## ni'o `Architect` jdice `D4 c` bu'u `#819`
@@ -14,32 +14,37 @@
 ##   .i le mupli cu vrici
 ##   .i se ki'u bo le jufra pe le mupli cu jarco ro javni be fi `CLL` be'o poi le jufra cu ka'e
 ##       jarco ke'a
-##   .i lo tcila cu selja'o lo se tcidu pe pa jufra
+##
+## ni'o lo tcila cu selja'o lo se tcidu pe pa jufra
 ##   .i lo tarmi be ro javni poi selcme gi'e zvati le tricu cu tcila
 ##   .i lo tarmi cu du le javni jo'u lo tcita be lo panzi be le javni
 ##   .i va'o lo nu pa tcita cu rapli kei le tcita cu zvati le tarmi pa roi
-##   .i ro genvla cu tcila
-##   .i ro gensu'a poi selski `CLL 19.16` gi'e vasru su'o re valsi cu tcila
-##   .i ro klesi be lo valsi be'o .e ro tarmi be lo rafsi be'o .e ro lerjo'e pe lo lujvo cu tcila
-##   .i lo sinxa pe lo porsi be lo valsi cu tcila
-##   .i le sinxa cu du lo denpa jo'u lo nu basna kei jo'u lo lerfu po'u slaka bu
+##   .i ro genvla .e ro gensu'a poi selski `CLL 19.16` gi'e vasru su'o re valsi cu tcila
+##
+## ni'o ro klesi be lo valsi be'o .e ro tarmi be lo rafsi be'o .e ro lerjo'e pe lo lujvo cu tcila
+##   .i lo sinxa pe lo porsi be lo valsi cu tcila gi'e du lo denpa jo'u lo nu basna kei jo'u lo
+##       lerfu po'u slaka bu
 ##   .i lo valsi poi no pagbu cu vasru ke'a tcila mu'u lo vi'uvla
 ##   .i lo selci'a poi se sitna cu tcila
 ##   .i lo nu to'e curmi kei jo'u le javni be le nu to'e curmi cu tcila
-##   .i le mupli cu gacri le tcila ta'i lo nu ro roi cuxna lo traji
+##
+## ni'o le mupli cu gacri le tcila ta'i lo nu ro roi cuxna lo traji
 ##   .i lo jufra poi traji lo ka ce'u jmina so'i tcila poi na pu selja'o cu lidne ro datyju'a
 ##   .i va'o lo nu dunli kei lo jufra poi tormau cu selcu'a
 ##   .i ba bo va'o lo nu dunli kei lo jufra poi ckini lo mecna'u cu selcu'a
 ##   .i le gacri cu mulno va'o lo nu no jufra cu jmina su'o tcila
-##   .i jdima fa lo nu le mupli na du lo gacri poi traji lo ka ce'u cmalu
+##
+## ni'o jdima fa lo nu le mupli na du lo gacri poi traji lo ka ce'u cmalu
 ##   .i lo nu facki le gacri poi traji lo ka ce'u cmalu cu cmima `NP-hard`
 ##   .i ku'i lo ni le mupli cu barda cu na zmadu lo pilji be lo ni le raircmagai cu barda kei bei lo
 ##       dugri
-##   .i lo seljdi cu du lo seldu'a be le genturfa'i ca lo nu ciska
+##
+## ni'o lo seljdi cu du lo seldu'a be le genturfa'i ca lo nu ciska
 ##   .i va'o lo nu le jufra cu se tcidu kei le seljdi cu kunti
 ##   .i va'o lo drata le seljdi cu du lo nu to'e curmi kei jo'u le javni mu'u `Grammar sumti-6 97`
 ##   .i le cipra cu fliba ca ro nu pa seljdi cu cenba
-##   .i lo minde po'u `tatoeba` cusku lo te kancu be ro se jdice ne'i le mulvei
+##
+## ni'o lo minde po'u `tatoeba` cusku lo te kancu be ro se jdice ne'i le mulvei
 ##   .i `PROVENANCE.md` cusku le te kancu
 ##   .i jdima fa lo nu le minde cu tcidu ro jufra sepi'o le genturfa'i pa roi
 ##   .i se ki'u bo le nu le minde cu zukte cu mentu li ji'i pa
@@ -102,7 +107,7 @@ const
     ## lo stuzi poi lo selci'a pe lo claju'a cu cfari bu'u ke'a ba `text: ` pe le datnypau
   INDENT_CONTINUED = 10
     ## lo stuzi poi ro linji pe le selci'a zi'e poi na pamoi cu cfari bu'u ke'a
-    ##   .i le stuzi cu zmadu le cfastu be le linji pe le datni pagbu fo li vo
+    ##   .i le stuzi cu zmadu le cfastu be le linji pe le datnypau fo li vo
 
 
 
@@ -238,7 +243,7 @@ func linesSentence(sentence: Sentence): seq[string] =
 
 
 func toModuleSentences*(sample: Sample): string =
-  ## ciska le mupli ta'i lo selci'a be fi le datnyvei poi se ralte
+  ## ciska le mupli ta'i lo selci'a be fi le datnyvei poi selra'e
   var lines = @[
     "## ralte lo stomupli be fi lo lojbo jufra pe `Tatoeba` mu'i le cipra",
     "##   .i le mupli cu vasru lo seljdi be le genturfa'i bei ro le jufra",

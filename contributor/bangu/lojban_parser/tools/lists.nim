@@ -13,34 +13,41 @@
 ##   .i le galfi samtci cu ponse pa sivyfancu po'u `field` noi fukpi `field` pe le vi datnyvei to
 ##       `Article II.9` toi
 ##   .i lo nu cikre pa le re fancu cu na mulno pu lo nu le datfancu cu se cipra
-##   .i lo stuzi pe `gismu.txt` ge'u .e lo stuzi pe `cmavo.txt` stodi
+##
+## ni'o lo stuzi pe `gismu.txt` ge'u .e lo stuzi pe `cmavo.txt` stodi
 ##   .i `entries.nim` ciska le stuzi ne'i lo lijgri liste
 ##   .i ro kuspe pe le vi datnyvei cu selmre ne'i ro linji pe ro le re datnyvei
 ##   .i le nu merli cu jarco lo du'u ro linji cu vasru no lerfu poi zvati lo jbini be re datnypau
-##   .i le samtci datnyvei cu ralte ro datnypau poi lo javni cu nitcu ke'a ku'o gi'e ralte no drata
-##       datni pagbu to `entries.nim` toi
+##
+## ni'o le samtci datnyvei cu ralte ro datnypau poi lo javni cu nitcu ke'a ku'o gi'e ralte no drata
+##     datni pagbu to `entries.nim` toi
 ##   .i se ki'u bo ro stecmi cu selci'a fi pa linji poi tceto'u gi'e vasru me'i panono stuzi
 ##   .i no datnypau cu nitcu lo nu se fendi fi su'o re linji
-##   .i le ma'oste cu ralte ro linji poi vasru pa cmavo po'o
-##   .i ro linji poi lo selma'o pe ke'a se tcita `*` selvi'u
-##   .i ro le linji cu vasru pa ma'orgunma .a pa jufpau
+##
+## ni'o le ma'oste cu ralte ro linji poi vasru pa cmavo po'o
+##   .i ro linji poi lo selma'o pe ke'a se tcita `*` selvi'u gi'e vasru pa ma'orgunma .a pa jufpau
 ##   .i le galfi samtci cu tcidu lo cmene be lo selma'o
 ##   .i le cmene cu lidne lo klesi poi le liste cu ciska ke'a
 ##   .i va'o lo nu `CLL 20` na dunda le cmene kei le galfi samtci cu fliba gi'e cusku le linji
-##   .i no samtci datnyvei cu selzba fi `lujvo.txt`
+##
+## ni'o no samtci datnyvei cu selzba fi `lujvo.txt`
 ##   .i ki'u bo le jvoste cu dunda lo smuni gi'e no roi dunda lo ka drani
 ##   .i se ki'u bo le jvoste cu stali `lojban_tagger`
-##   .i lo cipra cu tcidu le datnyvei poi selpu'i ku'o ta'i lo datselci'a
+##
+## ni'o lo cipra cu tcidu le datnyvei poi selpu'i ku'o ta'i lo datselci'a
 ##   .i le vi datnyvei cu stosni le datnyvei sepi'o lo snina'u
 ##   .i va'o lo nu le datnyvei cu na zvati gi'a cenba kei lo cipra cu na zukte to `Article IX.9` toi
-##   .i le vi datnyvei cu stosni ro krasi sepi'o `SHA-256`
+##
+## ni'o le vi datnyvei cu stosni ro krasi sepi'o `SHA-256`
 ##   .i lo nu `Debian` galfi pa liste cu rinka lo nu lo minde po'u `lists` to'e curmi kei .e lo nu
 ##       lo minde po'u `head` cusku le nu galfi
 ##   .i le nu galfi cu no roi rinka lo nu smaji ke rapci'a le selra'este kei .a lo nu smatcidu lo
 ##       datselci'a
-##   .i lo nu ciska lo samtci datnyvei cu ro roi dunda lo mitselci'a ra'i lo mitkra
-##   .i se ki'u bo lo minde po'u `head` karbi ro stuzi be lo selci'a le mitstu be le se ralte
-##   .i jdima fa lo nu le vi datnyvei cu pilno `sha256sum` mu'i lo nu tcidu lo snina'u
+##
+## ni'o lo nu ciska lo samtci datnyvei cu ro roi dunda lo mitselci'a ra'i lo mitkra
+##   .i se ki'u bo lo minde po'u `head` karbi ro stuzi be lo selci'a le mitstu be le selra'e
+##
+## ni'o jdima fa lo nu le vi datnyvei cu pilno `sha256sum` mu'i lo nu tcidu lo snina'u
 ##   .i lo minde po'u `system` cusku `sha256sum`
 ##   .i lo fadni samtci pe `Nim` na vasru `SHA-256`
 
@@ -122,7 +129,7 @@ const
 proc readSource*(name: string): Source =
   ## tcidu lo liste datnyvei poi selcme `name` ku'o fi lo datnyveiste poi lo vanbi cu cusku lo cmene
   ##     be ke'a
-  ##   .i va'o lo datytcidu le liste datnyvei fi lo datnyveiste pe le bakfu
+  ##   .i va'o lo drata ku tcidu le liste datnyvei fi lo datnyveiste pe le bakfu
   let
     directory = getEnv(KEY_LISTS, DIRECTORY_LISTS)
     path = directory / name
@@ -191,7 +198,7 @@ func toLiteral(text: string): string =
 
 
 func toModuleGismu*(entries: openArray[EntryGismu], digest: string): string =
-  ## ciska lo stecmi pe le gimste ta'i lo selci'a be fi le datnyvei poi se ralte
+  ## ciska lo stecmi pe le gimste ta'i lo selci'a be fi le datnyvei poi selra'e
   ##   .i ro stecmi cu zvati pa linji
   var lines = @[
     "## ralte le gimste pe `Logical Language Group` ta'i lo stecmi poi ponse lo klesi",
@@ -227,7 +234,7 @@ func toModuleGismu*(entries: openArray[EntryGismu], digest: string): string =
 
 
 func toModuleCmavo*(entries: openArray[EntryCmavo], digest: string): string =
-  ## ciska lo stecmi pe le ma'oste ta'i lo selci'a be fi le datnyvei poi se ralte
+  ## ciska lo stecmi pe le ma'oste ta'i lo selci'a be fi le datnyvei poi selra'e
   ##   .i ro stecmi cu zvati pa linji
   var lines = @[
     "## ralte le ma'oste pe `Logical Language Group` ta'i lo stecmi poi ponse lo klesi",

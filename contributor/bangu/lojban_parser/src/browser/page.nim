@@ -21,39 +21,49 @@
 ##   .i se ki'u bo lo nu tcidu cu fasnu ne'i lo gunka poi selkra le selci'a pe le samtci
 ##   .i ne'i le gunka no papri cu zasti
 ##   .i no pagbu be le papri cu seltro
-##   .i le papri cu ralte le ca selci'a be fi `NIF` ta'i pa lerpoi pe `JavaScript`
+##
+## ni'o le papri cu ralte le ca selci'a be fi `NIF` ta'i pa lerpoi pe `JavaScript`
 ##   .i le papri cu katna le selci'a bu'u `at` pe le cenba gi'e jmina `text`
 ##   .i ba bo le papri cu pixra `tail` ta'i lo pagbu poi ca'o kalri
 ##   .i lo bavla'i cenba cu basti `tail` to `D1 c` pe `#859` toi
-##   .i lo selci'a poi zenba bu'u lo fanmo be ke'a po'o cu selbe'i fi le mitytcidu ta'i lo nu lo
-##       mivyselci'a cu klama
+##
+## ni'o lo selci'a poi zenba bu'u lo fanmo be ke'a po'o cu selbe'i fi le mitytcidu ta'i lo nu lo
+##     mivyselci'a cu klama
 ##   .i va'o ro drata nu galfi kei pa ninytcidu cu tcidu le mulselci'a
 ##   .i ro mupli .e ro porsi be lo valsi .e le pamoi se ciska cu sisti lo tcidu pe vo'a
 ##   .i se ki'u bo ro pagbu pe ro le selci'a cu ganlo
 ##   .i lo selci'a poi lo prenu cu ciska ke'a cu ca'o kalri ta'i lo mivyselci'a
-##   .i ro cenba cu se kansa lo namcu pe le tcidu poi dunda le cenba
+##
+## ni'o ro cenba cu se kansa lo namcu pe le tcidu poi dunda le cenba
 ##   .i lo cenba pe lo tcidu poi le papri cu ba'o vimcu ke'a rinka no nu pixra
-##   .i lo nu pixra cu denpa lo bavla'i nu jarco
+##
+## ni'o lo nu pixra cu denpa lo bavla'i nu jarco
 ##   .i se ki'u bo su'o re cenba pe pa nu jarco cu selxra pa roi
 ##   .i ro cenba pe pa nu jarco cu denpa le pa nu pixra
-##   .i `typed` .e `readWhole` .e `streamed` jarco pa nupre poi mulno ca lo nu lo romoi cenba pe le
-##       fancu cu selxra
+##
+## ni'o `typed` .e `readWhole` .e `streamed` jarco pa nupre poi mulno ca lo nu lo romoi cenba pe le
+##     fancu cu selxra
 ##   .i lo cipra pe le papri cu denpa le nupre to `tests/browser/suite_page.nim` toi
 ##   .i se ki'u bo no xusra cu denpa lo temci
-##   .i lo nu zbasu cu punji lo jbexra be le pamoi se ciska le papri to lo minde po'u `page` toi
+##
+## ni'o lo nu zbasu cu punji lo jbexra be le pamoi se ciska le papri to lo minde po'u `page` toi
 ##   .i se ki'u bo le papri cu mulseltcidu pu lo nu le samtci cu cfari
-##   .i lo denpa poi zvati lo jbini be lo valsi pe pa porsi be lo valsi cu du pa junla pe le papri
+##
+## ni'o lo denpa poi zvati lo jbini be lo valsi pe pa porsi be lo valsi cu du pa junla pe le papri
 ##   .i lo cipra pe le papri cu benji lo porsi be lo valsi ta'i no denpa
-##   .i lo nu jmina cu jmina ro pagbu be le ca selci'a be fi `NIF` fo pa tricu pe lo nu tcidu le
-##       mulselci'a .a ro tricu pe ro porsi be lo pagbu poi sruri pa srera poi stali to
-##       `drawnMerged` pe `draw.nim` toi
+##
+## ni'o lo nu jmina cu jmina ro pagbu be le ca selci'a be fi `NIF` fo pa tricu pe lo nu tcidu le
+##     mulselci'a .a ro tricu pe ro porsi be lo pagbu poi sruri pa srera poi stali to `drawnMerged`
+##     pe `draw.nim` toi
 ##   .i le rebla cu na se jmina
 ##   .i le papri cu pixra ro tricu poi cnita le pagbu
-##   .i lo nu jmina cu fasnu ne'i lo cilta pe le papri
+##
+## ni'o lo nu jmina cu fasnu ne'i lo cilta pe le papri
 ##   .i ki'u bo lo nu jmina cu tcidu lo selci'a be fi `NIF` be'o poi le papri cu ralte ke'a
 ##   .i ro cenba cu mipri lo tricu poi se jmina zi'e noi ca na drani
-##   .i lo cipra pe le papri cu jitro lo trotci ta'i le papri to `wiredControls` toi gi'e danre le
-##       trotci
+##
+## ni'o lo cipra pe le papri cu jitro lo trotci ta'i le papri to `wiredControls` toi gi'e danre le
+##     trotci
 ##   .i se ki'u bo le cipra cu cipra lo selgau be lo batke pe le papri
 
 {.experimental: "strictFuncs".}
@@ -162,8 +172,8 @@ proc mergeShown() =
 
 
 proc shown() =
-  ## ciska lo pixra be le ca selci'a be fi `NIF` be'o le papri
-  ##   .i ciska ji'a le linji .e lo tadji be le tcidu .e le selci'a be fi `NIF`
+  ## ciska lo pixra be le ca selci'a be fi `NIF` be'o le papri gi'e ciska le linji .e lo tadji be le
+  ##     tcidu .e le selci'a be fi `NIF`
   ##   .i le cenba cu se tcita
   ##   .i lo pagbu poi ca'o kalri cu sepli lo drata
   let drawing = drawn($STATE.nif, $STATE.tail)
@@ -247,7 +257,7 @@ proc ended(): Future[void] {.async.} =
 
 proc typed*(text: cstring): Future[void] {.async.} =
   ## dunda le selci'a poi le stuzi be lo nu ciska cu vasru ke'a
-  ##   .i le ninfa'o be le se ciska cu klama le mitytcidu
+  ##   .i le ninfa'o be le selci'a cu klama le mitytcidu
   ##   .i va'o lo drata le mulselci'a cu klama pa ninytcidu
   if STATE.reader.isNil or STATE.is_ended or not text.isOpening(STATE.sent):
     started()

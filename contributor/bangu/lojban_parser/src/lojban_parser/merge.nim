@@ -2,8 +2,8 @@
 ##   .i lo jalge cu du lo selci'a be fi `NIF` be'o poi lo nu tcidu le mulselci'a cu dunda ke'a
 ##   .i se ki'u bo lo samtci poi ponse lo selci'a be fi `NIF` po'o ku'o mu'u lo papri .a lo cikre cu
 ##       dunda lo tricu pe lo nu tcidu le mulno se ciska to `D1 b` pe `#859` toi
-##   .i va'o lo nu lo srera cu stali kei cu jmina ro porsi be lo pagbu poi sruri le srera ku'o gi'e
-##       to'e curmi no srera to lo seljdi poi se lidne `D1 b` bu'u `#859` toi
+##   .i va'o lo nu lo srera cu stali cu jmina ro porsi be lo pagbu poi sruri le srera ku'o gi'e to'e
+##       curmi no srera to lo seljdi poi se lidne `D1 b` bu'u `#859` toi
 ##
 ##   |--------------|--------------------------------------------------------------------------|
 ##   | lo cmene     | lo smuni                                                                 |
@@ -24,47 +24,53 @@
 ##     minde
 ##   .i `toNifParts` ciska le jgena
 ##   .i lo mivyselci'a cu dunda le jgena ba lo nu ro pagbu cu se benji to `live.nim` toi
-##   .i lo nu rapyzba cu cpacu lo namcu pe ro javni poi selcme ku'o lo cmene be le javni to
-##       `LUT_NUMBER_BY_RULE` toi
-##   .i le nu rapyzba cu cpacu ro javni poi zvati lo jbini be le re fanmo be lo porsi ku'o
-##       `LUT_CHAIN_BY_ENDS`
+##
+## ni'o lo nu rapyzba cu cpacu lo namcu pe ro javni poi selcme ku'o lo cmene be le javni to
+##     `LUT_NUMBER_BY_RULE` toi gi'e cpacu ro javni poi zvati lo jbini be le re fanmo be lo porsi
+##     ku'o `LUT_CHAIN_BY_ENDS`
 ##   .i `-` basti ro `_` pe lo tcita
 ##   .i `'` basti ro `h` pe lo valsi
 ##   .i ku'i lo selci'a poi zo zoi sitna ke'a ku'o .e lo selci'avla poi le porsi be lo valsi cu to'e
 ##       curmi ke'a stali
 ##   .i lo srejge cu ponse lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo stuzi pe vo'a to
 ##       `nif.nim` toi
-##   .i va'o lo nu lo jgena cu ponse lo tarmi poi le ciska na ciska ke'a kei le nu rapyzba cu renro
-##       `ValueError`
+##
+## ni'o va'o lo nu lo jgena cu ponse lo tarmi poi le ciska na ciska ke'a kei le nu rapyzba cu renro
+##     `ValueError`
 ##   .i lo nu jmina cu to'e curmi le selci'a gi'e cusku lo namcu pe le jgena
-##   .i lo nu jmina cu vimcu lo pagbu ta'i lo nu tcidu le mulno se ciska to `CLL 19.13` .e
-##       `CLL 19.15` toi
+##
+## ni'o lo nu jmina cu vimcu lo pagbu ta'i lo nu tcidu le mulno se ciska to `CLL 19.13` .e
+##     `CLL 19.15` toi
 ##   .i le nu jmina cu vimcu ro pagbu poi se tcita `Erasure`
 ##   .i le pagbu cu ka'e zvati ro stuzi
 ##   .i le nu jmina cu vimcu zo fa'o poi fanmo le selci'a ku'o .e ro selci'avla poi se lidne zo fa'o
-##   .i le nu jmina cu vimcu ro jgena poi zvati lo genja gi'e lidne zo su poi romoi
+##       ku'o .e ro jgena poi zvati lo genja gi'e lidne zo su poi romoi
 ##   .i zo su poi romoi cu zvati lo genja po'o
-##   .i ku'i lo pagbu poi zvati le jgena gi'e rinka lo nu lo nu tcidu le mulselci'a cu to'e curmi le
-##       selci'a cu stali bu'u lo krasi be lo selja'o be lo nu jmina
+##
+## ni'o ku'i lo pagbu poi zvati le jgena gi'e rinka lo nu lo nu tcidu le mulselci'a cu to'e curmi le
+##     selci'a cu stali bu'u lo krasi be lo selja'o be lo nu jmina
 ##   .i le pagbu cu du lo pagbu poi le porsi be lo valsi cu to'e curmi ke'a ku'o .a zo si .a zo sa
 ##       poi vimcu no da ku'o .a zo lo'u poi no zo le'u fanmo ke'a
 ##   .i ki'u bo ja'i `CLL 19.16` le genturfa'i cu tcidu le pagbu pu lo nu zo su vimcu
 ##   .i lo pagbu poi vasru zo lo'u po'o jarco lo du'u xu kau zo le'u se lidne le pagbu gi'e se sitna
 ##       no zo zo gi'e selvau no genvla pe `ZOI` to `CLL 19.9` .e `CLL 19.10` toi
-##   .i ro porsi be lo pagbu poi lamji gi'e se lidne zo su poi romoi ku'o gi'e vasru no srejge cu se
-##       jmina fo pa tricu ta'i lo nu tcidu lo mulselci'a pe le porsi
+##
+## ni'o ro porsi be lo pagbu poi lamji gi'e se lidne zo su poi romoi ku'o gi'e vasru no srejge cu se
+##     jmina fo pa tricu ta'i lo nu tcidu lo mulselci'a pe le porsi
 ##   .i `assembleText` zbasu le tricu lo tricu pe ro pagbu
 ##   .i va'o lo drata le gerna cu tcidu ro genvla pe le porsi ca pa nu tcidu
 ##   .i va'o lo nu le gerna cu sisti kei pa srejge cu vasru lo tricu pe ro pagbu ta'i lo nu le se
 ##       tcidu poi sinxa ro srera ca lo nu tcidu le mulselci'a cu dunda le tricu to
 ##       `readGrammarMarked` toi
-##   .i ro pagbu poi su'o velru'e cu to'e curmi ke'a zvati lo jgena poi traji lo ka dizlo kei gi'e
-##       vasru lo pagbu poi se tcidu gi'e sruri le se to'e curmi ku'o ku'o ta'i lo nu le se tcidu
-##       poi sinxa ro srera ca lo nu tcidu le mulselci'a cu punji le se to'e curmi to `placeRefused`
-##       pe `prose.nim` toi
+##
+## ni'o ro pagbu poi su'o velru'e cu to'e curmi ke'a zvati lo jgena poi traji lo ka dizlo kei gi'e
+##     vasru lo pagbu poi se tcidu gi'e sruri le se to'e curmi ku'o ku'o ta'i lo nu le se tcidu poi
+##     sinxa ro srera ca lo nu tcidu le mulselci'a cu punji le se to'e curmi to `placeRefused` pe
+##     `prose.nim` toi
 ##   .i se ki'u bo le se to'e curmi cu fendi no porsi
-##   .i lo pagbu poi vasru pa srejge pe le gerna cu stali gi'e na cenba gi'e zvati lo jbini be lo
-##       porsi
+##
+## ni'o lo pagbu poi vasru pa srejge pe le gerna cu stali gi'e na cenba gi'e zvati lo jbini be lo
+##     porsi
 ##   .i le se tcidu poi sinxa ro srera ca lo nu tcidu le mulselci'a cu ralte ro le pagbu ta'i lo nu
 ##       sepli kei ne'i pa srejge
 ##   .i se ki'u bo le gerna cu dunda no stuzi pe le tricu le pagbu
@@ -72,8 +78,9 @@
 ##       poi mintu le selci'a be `readText` be'o fi ro lerfu to `is_whole` toi
 ##   .i va'o lo nu lo srera cu stali kei le nu jmina cu dunda lo tricu pe ro porsi ta'i lo nu tcidu
 ##       le mulselci'a pe le porsi to `test_merge.nim` toi
-##   .i jdima fa lo nu lo temci be lo nu rapyzba .e lo nu jmina cu zenba ca lo nu lo selci'a be fi
-##       `NIF` cu zenba lo ka clani
+##
+## ni'o jdima fa lo nu lo temci be lo nu rapyzba .e lo nu jmina cu zenba ca lo nu lo selci'a be fi
+##     `NIF` cu zenba lo ka clani
 ##   .i le gerna cu tcidu ro genvla pe pa porsi ca pa nu tcidu va'o lo nu le javni pe le so'i nu
 ##       tcidu cu spofu kei po'o
 ##   .i lo nu jmina cu rapli ja'i lo namcu pe lo jgena
@@ -99,18 +106,17 @@ type
         ##   .i ro pagbu poi lidne zo su poi romoi ku'o gi'e rinka lo nu lo nu tcidu le mulselci'a
         ##       cu to'e curmi le selci'a cu lidne ro datyjge
         ##   .i le datyjge cu du lo tricu pe ro porsi be lo pagbu poi vasru no srejge ge'u .e ro
-        ##       pagbu poi vasru pa srejge
-        ##   .i le datyjge cu porsi ta'i le selci'a
+        ##       pagbu poi vasru pa srejge ku'o gi'e porsi ta'i le selci'a
         ##   .i ro jgena cu zvati lo linji pe vo'a
       is_whole*: bool
-        ## le selci'a cu vasru pa tricu gi'e vasru no srejge gi'e vasru no pagbu poi se to'e curmi
-        ##   .i le selci'a cu du lo selci'a be `readText`
+        ## le selci'a cu vasru pa tricu .e no srejge .e no pagbu poi se to'e curmi ku'o gi'e du lo
+        ##     selci'a be `readText`
     of false:
       part*: Option[int]
         ## lo namcu pe lo jgena poi se to'e curmi
         ##   .i li no cu krasi lo nu kancu lo jgena poi se lidne lo minde
         ##   .i va'o lo nu le selci'a na se tcidu kei le datnypau cu kunti
-      reason*: string  ## lo seltcu be le se ciska be fi `NIF`
+      reason*: string  ## lo seltcu be le selci'a be fi `NIF`
 
 
 const
@@ -140,15 +146,17 @@ func toTerminal*(name: string): Terminal =
 
 func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
   ## rapyzba lo jgena pe lo tricu lo jgena pe `NIF`
-  ##   .i le fancu cu cpacu lo namcu pe lo javni poi selcme ku'o lo cmene be le javni
-  ##   .i le fancu cu cpacu ro porsi le re fanmo be le porsi sepi'o `LUT_CHAIN_BY_ENDS`
+  ##   .i le fancu cu cpacu lo namcu pe lo javni poi selcme ku'o lo cmene be le javni gi'e cpacu ro
+  ##       porsi le re fanmo be le porsi sepi'o `LUT_CHAIN_BY_ENDS`
   ##   .i le re fanmo cu du lo namcu pe lo javni poi krasi le porsi ku'o .e lo cmene be lo javni poi
   ##       fanmo le porsi
   ##   .i `-` basti ro `_` pe lo tcita
-  ##   .i lo genvla cu jmina lo klesi .e lo valsi `terminals`
+  ##
+  ## ni'o lo genvla cu jmina lo klesi .e lo valsi `terminals`
   ##   .i `'` basti ro `h` pe lo valsi
   ##   .i ku'i lo cimoi lerpoi pe `ZOI` stali
-  ##   .i lo srejge cu ponse lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo stuzi pe vo'a
+  ##
+  ## ni'o lo srejge cu ponse lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo stuzi pe vo'a
   ##   .i lo pagbu poi se tcita `rivbi` jmina `rivbi` .e lo cmene pe vo'a
   ##   .i va'o lo nu le velru'e cu du `Stream` kei lo lerfu cu stali
   ##   .i va'o lo nu le jgena cu vasru no tarmi poi `nif.nim` ciska ke'a kei renro `ValueError`
@@ -216,7 +224,8 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
 
 
 func isUnit(node: NodeNif, stage: string): bool =
-  ## jdice lo du'u lo jgena pe `NIF` du lo pagbu poi no genvla cu vasru ke'a gi'e se tcita `stage`
+  ## jdice lo du'u lo jgena pe `NIF` du lo pagbu poi no genvla cu vasru ke'a zi'e poi se tcita
+  ##     `stage`
   node.kind == KindNif.Compound and node.text == TAG_UNREAD and node.children.len > 0 and
     node.children[0].kind == KindNif.Identifier and node.children[0].text == stage
 
@@ -272,16 +281,17 @@ func isRefused(terminal: TerminalNif): bool =
 func mergedRun(
     trees: openArray[Node], span: Slice[int], terminals: openArray[TerminalNif], ending: int
 ): Node =
-  ## jmina lo porsi be lo tricu poi selrapyzba fi lo pagbu poi vasru no srejge ku'o be'o fo pa tricu
-  ##     ta'i lo nu le se tcidu poi sinxa ro srera ca lo nu tcidu le mulselci'a cu tcidu lo selci'a
-  ##     pe le tricu
+  ## jmina lo porsi be lo tricu poi selrapyzba fi lo pagbu poi vasru no srejge be'o fo pa tricu ta'i
+  ##     lo nu le se tcidu poi sinxa ro srera ca lo nu tcidu le mulselci'a cu tcidu lo selci'a pe le
+  ##     tricu
   ##   .i lo genvla pe le selci'a cu du `span`
   ##   .i le gerna cu tcidu lo genvla poi se tcidu
   ##   .i ro pagbu poi su'o velru'e cu to'e curmi ke'a zvati lo jgena poi traji lo ka dizlo kei gi'e
   ##       vasru lo pagbu poi se tcidu gi'e sruri le se to'e curmi to `placeRefused` pe `prose.nim`
   ##       toi
-  ##   .i va'o lo nu lo tricu pe lo pagbu cu zbasu no tricu kei le gerna cu tcidu ro genvla ca pa nu
-  ##       tcidu
+  ##
+  ## ni'o va'o lo nu lo tricu pe lo pagbu cu zbasu no tricu kei le gerna cu tcidu ro genvla ca pa nu
+  ##     tcidu
   ##   .i va'o lo nu le gerna cu sisti kei pa srejge cu vasru lo tricu pe ro pagbu to
   ##       `readGrammarMarked` toi
   ##   .i le gerna cu sisti bu'u lo stuzi poi lo genvla pe le nu sisti cu krasi bu'u ke'a ku'o .a
@@ -301,9 +311,9 @@ func mergedRun(
 
   func placed(node: var Node, globals: openArray[int], terminals: openArray[TerminalNif],
       ending: int) =
-    ## galfi lo namcu pe ro pezli pe le jgena lo namcu pe lo genvla ja'i `globals`
-    ##   .i ji'a dunda ro stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo stuzi poi lo genvla pe
-    ##       le nu sisti cu krasi bu'u ke'a
+    ## galfi lo namcu pe ro pezli pe le jgena lo namcu pe lo genvla ja'i `globals` gi'e dunda ro
+    ##     stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo stuzi poi lo genvla pe le nu sisti cu
+    ##     krasi bu'u ke'a
     ##   .i va'o lo nu le gerna cu sisti ba lo romoi gerna valsi kei dunda `ending`
     ##   .i `NIF` ciska le stuzi ta'i le mintu
     if node.is_terminal:
@@ -341,12 +351,13 @@ func mergeParts*(nif: string): MergeNif =
   ## zbasu lo selci'a be fi `NIF` be'o pe lo tricu poi lo nu tcidu le mulselci'a cu dunda ke'a ge'u
   ##     lo selci'a be fi `NIF` be'o pe lo pagbu be le selci'a
   ##   .i `toNifParts` .e lo mivyselci'a cu dunda le selci'a pe le pagbu
-  ##   .i le fancu cu vimcu ro pagbu poi lo nu tcidu le mulselci'a cu ralte no valsi pe ke'a ku'o .e
-  ##       ro jgena poi zvati lo genja gi'e lidne zo su poi romoi
+  ##
+  ## ni'o le fancu cu vimcu ro pagbu poi lo nu tcidu le mulselci'a cu ralte no valsi pe ke'a ku'o .e
+  ##     ro jgena poi zvati lo genja gi'e lidne zo su poi romoi
   ##   .i ku'i le fancu na vimcu lo pagbu poi rinka lo nu lo nu tcidu le mulselci'a cu to'e curmi le
   ##       selci'a
-  ##   .i le fancu cu jmina ro porsi be lo pagbu poi vasru no srejge ta'i lo nu tcidu le mulselci'a
-  ##   .i le fancu cu ralte ro pagbu poi vasru pa srejge ku'o gi'e na galfi le pagbu
+  ##   .i le fancu cu jmina ro porsi be lo pagbu poi vasru no srejge ku'o ta'i lo nu tcidu le
+  ##       mulselci'a kei gi'e ralte ro pagbu poi vasru pa srejge ku'o gi'e na galfi le pagbu
   func refused(part: Option[int], reason: string): MergeNif =
     MergeNif(is_merged: false, part: part, reason: reason)
 
@@ -372,8 +383,8 @@ func mergeParts*(nif: string): MergeNif =
       is_quoted_next = is_quoting or literal.isCmavo(QUOTERS)
 
   func addFatal(node: NodeNif, closer: Option[int], units: var seq[NodeNif]) =
-    ## jmina ro pagbu poi le jgena cu vasru ke'a gi'e rinka lo nu lo nu tcidu le mulselci'a cu to'e
-    ##     curmi le selci'a ku'o `units`
+    ## jmina ro pagbu poi le jgena cu vasru ke'a zi'e poi rinka lo nu lo nu tcidu le mulselci'a cu
+    ##     to'e curmi le selci'a ku'o `units`
     ##   .i ku'i zo su poi se lidne le pagbu cu vimcu le pagbu
     ##   .i le pagbu cu du lo pagbu poi le porsi be lo valsi cu to'e curmi ke'a ku'o .a zo si .a zo
     ##       sa poi vimcu no da ku'o .a zo lo'u poi no zo le'u fanmo ke'a
@@ -467,8 +478,9 @@ func mergeParts*(nif: string): MergeNif =
 
   # jmina ro porsi be lo jgena poi vasru no srejge
   #   .i ralte ro jgena poi vasru pa srejge ku'o gi'e na galfi le jgena
-  #   .i va'o lo nu le gerna cu sisti ba lo romoi gerna valsi pe le porsi kei le gerna cu sisti bu'u
-  #       zo fa'o poi se lidne le porsi
+  #
+  # ni'o va'o lo nu le gerna cu sisti ba lo romoi gerna valsi pe le porsi kei le gerna cu sisti bu'u
+  #     zo fa'o poi se lidne le porsi
   #   .i va'o lo drata le gerna cu sisti bu'u lo stuzi poi se lidne lo romoi valsi pe le porsi
   #   .i lo valsi poi selvi'u cu se kancu ji'a
   #   .i le se tcidu poi sinxa ro srera cu sisti ta'i le mintu bu'u lo stuzi poi le selci'a cu fanmo

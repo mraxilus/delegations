@@ -3,30 +3,34 @@
 ##   .i ro le liste cu ponse lo stosnina'u
 ##   .i ja'i `D3 a` pe `#819` lo datselci'a cu cipra le genturfa'i gi'e ponse lo stosnina'u gi'e na
 ##       zvati le vreji
-##   .i le jvoste cu dunda lo smuni gi'e no roi jdice lo du'u xu kau lo valsi cu drani
+##
+## ni'o le jvoste cu dunda lo smuni gi'e no roi jdice lo du'u xu kau lo valsi cu drani
 ##   .i se ki'u bo le genturfa'i cu ralte no pagbu be le liste
 ##   .i ku'i va'o lo nu `CLL` tavla fi ro lujvo kei lo valsi pe le liste cu stali ta'i lo selcmi be
 ##       lo lujvo poi lo prenu cu ciska ke'a
-##   .i le tcidu cu dunda `none` va'o lo nu le datnyvei cu na zvati gi'a cenba lo snina'u
+##
+## ni'o le tcidu cu dunda `none` va'o lo nu le datnyvei cu na zvati gi'a cenba lo snina'u
 ##   .i se ki'u bo ro cipra poi tcidu le datnyvei cu na zukte gi'e cusku lo krinu to `Article IX.9`
 ##       toi
 ##   .i lo minde po'u `system` pe `tools/build.nim` cusku le bakfu
 ##   .i se ki'u bo `CI` punji le bakfu
-##   .i `lujvo.txt` ciska lo tanru sepi'o re sinxa
+##
+## ni'o `lujvo.txt` ciska lo tanru sepi'o re sinxa
 ##   .i `word:part+part:gloss` sinxa lo tanru sepi'o lo jbovla
 ##   .i `word#keyword+keyword:gloss` sinxa lo tanru sepi'o lo glikikyvla
-##   .i le tcidu cu ralte lo linji va'o lo nu lo valsi pe le linji cu se gunma lo lojbo lerfu po'o
-##   .i le tcidu cu ralte ji'a lo pagbu be le linji va'o lo nu le linji cu ciska su'o re pagbu kei
-##       .e lo nu ro jbopau cu se gunma lo jbole'u
+##
+## ni'o le tcidu cu ralte lo linji va'o lo nu lo valsi pe le linji cu se gunma lo lojbo lerfu po'o
+##     kei gi'e ralte lo pagbu be le linji va'o lo nu le linji cu ciska su'o re pagbu kei .e lo nu
+##     ro jbopau cu se gunma lo jbole'u
 ##   .i le genturfa'i cu vasru no glivla
 ##   .i se ki'u bo le cipra cu kancu lo kikyvla pe le linji gi'e no roi tcidu le kikyvla
 ##   .i jdima fa lo nu lo linji poi ciska lo jufpau ne'i lo stuzi be lo valsi mu'u lo'u datkypi'u
 ##       gairki'e le'u cmima no selcmi
-##   .i `cmavo.txt` ciska lo cmavo ne'i le pamoi stuzi bi'o le papamoi stuzi gi'e ralte denpa bu poi
-##       sinxa lo denpa to `CLL 3.3` toi
+##
+## ni'o `cmavo.txt` ciska lo cmavo ne'i le pamoi stuzi bi'o le papamoi stuzi gi'e ralte denpa bu poi
+##     sinxa lo denpa to `CLL 3.3` toi
 ##   .i `cmavo.txt` ciska lo selma'o ne'i le paremoi stuzi bi'o le renomoi stuzi
-##   .i `*` pe le stuzi cu sinxa lo gunma be lo cmavo
-##   .i le gunma cu se tcidu ta'i su'o re cmavo
+##   .i `*` pe le stuzi cu sinxa lo gunma be lo cmavo be'o noi se tcidu ta'i su'o re cmavo
 
 {.experimental: "strictFuncs".}
 
@@ -84,8 +88,8 @@ func toLinesLujvo*(text: string): seq[LineLujvo] =
 
 proc readLinesLujvo*(): Option[seq[LineLujvo]] =
   ## tcidu `lujvo.txt` noi selpu'i
-  ##   .i dunda `none` va'o lo nu le datnyvei cu na zvati kei .a lo nu lo snina'u be le datnyvei cu
-  ##       na du `DIGEST_LUJVO`
+  ##   .i dunda `none` va'o lo nu le datnyvei cu na zvati gi'a ponse lo snina'u poi na du
+  ##       `DIGEST_LUJVO`
   if not fileExists(getEnv(KEY_LISTS, DIRECTORY_LISTS) / "lujvo.txt"): return
   let source = readSource("lujvo.txt")
   if source.digest != DIGEST_LUJVO: return
@@ -106,8 +110,8 @@ func toLinesCmavo*(text: string): seq[LineCmavo] =
 
 proc readLinesCmavo*(): Option[seq[LineCmavo]] =
   ## tcidu `cmavo.txt` noi selpu'i
-  ##   .i dunda `none` va'o lo nu le datnyvei cu na zvati kei .a lo nu lo snina'u be le datnyvei cu
-  ##       na du `DIGEST_CMAVO`
+  ##   .i dunda `none` va'o lo nu le datnyvei cu na zvati gi'a ponse lo snina'u poi na du
+  ##       `DIGEST_CMAVO`
   if not fileExists(getEnv(KEY_LISTS, DIRECTORY_LISTS) / "cmavo.txt"): return
   let source = readSource("cmavo.txt")
   if source.digest != DIGEST_CMAVO: return

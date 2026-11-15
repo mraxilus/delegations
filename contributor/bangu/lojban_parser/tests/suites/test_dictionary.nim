@@ -1,27 +1,30 @@
-## rapyzba lo rafsi .e lo gismu vu'o poi `CLL 4` cusku ke'a gi'e cipra lo du'u lo nu sisku pe
+## rapyzba lo rafsi .e lo gismu vu'o poi `CLL 4` cusku ke'a ku'o gi'e cipra lo du'u lo nu sisku pe
 ##     `dictionary.nim` mapti le selzba
 ##   .i le cipra cu sisku ro stecmi .e ro cmarafsi .e ro lerpoi poi seltai lo tarmi be lo cmarafsi
 ##       .a lo rafsi poi vasru vo lerfu
 ##   .i se ki'u bo le cipra cu tcidu lo mulseltcidu be ro sisku fancu to `Article IX.3` toi
 ##   .i le cipra cu tcidu lo mupli be lo lerpoi poi na zvati le liste
-##   .i lo tsiju cu jdice le mupli
-##   .i ro mupli cu selzba ta'i lo nu basti pa lerfu pe pa valsi pe le liste
-##   .i le cipra cu karbi ro nu sisku lo nu tcidu ro stecmi pe `LIST_GISMU` ta'i lo porsi
+##   .i ro mupli cu seljdi lo tsiju gi'e selzba ta'i lo nu basti pa lerfu pe pa valsi pe le liste
+##
+## ni'o le cipra cu karbi ro nu sisku lo nu tcidu ro stecmi pe `LIST_GISMU` ta'i lo porsi
 ##   .i le nu tcidu cu selci'a vi gi'e sepli lo nu sisku pe `dictionary.nim` ta'i lo nu rapfendi fi
 ##       re pagbu
 ##   .i se ki'u bo lo sisyste poi porsi .e le nu sisku cu tugni le liste poi krasi le sisyste
-##   .i ro cipra cu dunda pa tsiju le cupra be lo cunyna'u pa roi gi'e cuxna lo mupli pe vo'a gi'e
-##       punji le mupli lo vasru
+##
+## ni'o ro cipra cu dunda pa tsiju le cupra be lo cunyna'u pa roi gi'e cuxna lo mupli pe vo'a gi'e
+##     punji le mupli lo vasru
 ##   .i lo rapfancu cu dunda le mupli pe le vasru
-##   .i `CLL` cusku lo gismu .e lo lujvo ne'i `CLL 4.4` .e `CLL 4.6` .e `CLL 4.13` .e `CLL 4.14` .e
-##       `CLL 4.15`
-##   .i le cipra cu pilno le valsi ta'i lo mupli
-##   .i le cipra cu sisku ro rafsi pe ro le valsi ja'i lo cmene gi'e no roi sisku ja'i lo namcu
+##
+## ni'o `CLL` cusku lo gismu .e lo lujvo ne'i `CLL 4.4` .e `CLL 4.6` .e `CLL 4.13` .e `CLL 4.14` .e
+##     `CLL 4.15`
+##   .i le cipra cu pilno le valsi ta'i lo mupli gi'e sisku ro rafsi pe ro le valsi ja'i lo cmene
+##       gi'e no roi sisku ja'i lo namcu
 ##   .i va'o lo nu `CLL` dunda lo lujvo gi'e na fendi le lujvo fi lo rafsi kei lo pinka cu vasru lu
-##       le nu fendi cu se sruma li'u
-##   .i lo pinka be lo lerpoi poi no krasi cu vasru ke'a cu vasru lu le lerpoi cu se zbasu li'u
-##   .i lo cipra pe `Internal: Dictionary` cipra lo selkai poi `CLL` na cusku ke'a
-##   .i le selkai cu du lo klesi be ro valsi jo'u lo porsi jo'u lo nu ciska jo'u lo datnypau
+##       le nu fendi cu selru'a li'u
+##   .i lo pinka be lo lerpoi poi no krasi cu vasru ke'a cu vasru lu le lerpoi cu selzba li'u
+##
+## ni'o lo cipra pe `Internal: Dictionary` cipra lo selkai poi `CLL` na cusku ke'a
+##   .i le selkai cu du lo klesi be ro valsi be'o jo'u lo porsi jo'u lo nu ciska jo'u lo datnypau
 
 {.experimental: "strictFuncs".}
 
@@ -87,13 +90,11 @@ const
   FLOOR_UNLISTED = 9450
     ## lo nityjimte be lo te kancu be le se galfi poi na zvati le liste
     ##   .i ki'u la'e di'u le cipra cu ro roi cipra fi lo nu sisku poi facki no da
-    ##   .i le jimte cu xadba li pabisonomu
-    ##   .i ca lo nu le tsiju cu du li no kei le te kancu cu du li pabisonomu
+    ##   .i le jimte cu xadba li pabisonomu noi du le te kancu ca lo nu le tsiju cu du li no
   FLOOR_LISTED = 177
     ## lo nityjimte be lo te kancu be le se galfi poi du pa drata liste cmima
     ##   .i ki'u la'e di'u le cipra cu ro roi cipra fi lo nu sisku poi facki pa stecmi
-    ##   .i le jimte cu xadba li cimuvo
-    ##   .i ca lo nu le tsiju cu du li no kei le te kancu cu du li cimuvo
+    ##   .i le jimte cu xadba li cimuvo noi du le te kancu ca lo nu le tsiju cu du li no
   SAMPLES_PAIRS = 20000  ## lo remei be lo valsi poi se karbi to lo tsiju cu jdice le remei toi
   STEMS_4_13 = [
     ("gerk", "gerku"), ("zdan", "zdani"), ("logj", "logji"), ("bang", "bangu"),

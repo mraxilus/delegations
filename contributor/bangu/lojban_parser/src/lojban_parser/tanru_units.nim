@@ -19,17 +19,20 @@
 ##   .i `ending` pe le vi datnyvei cu tcidu lo pagbu pu lo nu fendi
 ##   .i `ending` pe `runs.nim` tcidu lo taurpau ba lo nu fendi ta'i lo simsa
 ##   .i lo nu cikre pa tunba cu mulno va'o lo nu cipra fi le datytunba kei po'o
-##   .i lo nu fendi cu tcidu lo pagbu to `tanru.nim` toi
+##
+## ni'o lo nu fendi cu tcidu lo pagbu to `tanru.nim` toi
 ##   .i ro cmavo poi jorne cu selvau lo liste
 ##   .i se ki'u bo lo pagbu poi no liste cu vasru ke'a jorne no da gi'e selvau pa taurpau poi vasru
 ##       no datpau
-##   .i ro cmavo poi le nu fendi cu tcidu ke'a ponse lo selma'o poi mapti lo selgu'a be le cmavo
-##       ne'i le nu fendi
+##
+## ni'o ro cmavo poi le nu fendi cu tcidu ke'a ponse lo selma'o poi mapti lo selgu'a be le cmavo
+##     ne'i le nu fendi
 ##   .i le ma'oste cu dunda le selma'o le cmavo to `SE` .e `NU` .e `NA` .e `NAhE` .e `KE` .e `KEhE`
 ##       .e `KEI` .e `BO` .e `CO` toi
 ##   .i pa cipra ca lo nu fanva cu cipra di'u
 ##   .i se ki'u bo le nu fendi cu mapti le ma'oste ro roi
-##   .i lo cmavo poi jorne lo bavla'i tanru pagbu cu du lo cmavo be `SE` .e `NAhE` .e `NU`
+##
+## ni'o lo cmavo poi jorne lo bavla'i tanru pagbu cu du lo cmavo be `SE` .e `NAhE` .e `NU`
 ##   .i lo cmavo be `SE` cu jorne po'o lo bavla'i brivla .a lo bavla'i pagbu poi selcme zoi gy.
 ##       equivalent unit .gy. to `CLL 9.4` toi
 ##   .i lo cmavo be `NAhE` cu jorne pa brivla ta'i lo ka jibni to `CLL 15.4` toi
@@ -37,10 +40,12 @@
 ##   .i lo rafsi be lo cmavo be `SE` .a `NAhE` cu go'i ji'a to `CLL 12.12` toi
 ##   .i le gerna cu punji lo cmavo be `SE` .e `NAhE` pa tanru pagbu to `CLL 21.1` .e le javni pe li
 ##       pamure toi
-##   .i lo cmavo be `JAI` cu jorne ji'a
+##
+## ni'o lo cmavo be `JAI` cu jorne ji'a
 ##   .i ku'i lo liste cu dunda no rafsi zo jai
 ##   .i se ki'u bo no lujvo cu vasru zo jai
-##   .i lo cmavo be `NA` cu jorne le multau
+##
+## ni'o lo cmavo be `NA` cu jorne le multau
 ##   .i zo na natfe lo mulbri gi'e na natfe lo pagbu be lo selbri to `CLL 15.2` toi
 ##   .i se ki'u bo va'o lo nu lo te kancu be lo valsi po'u zo na cu se dilcu fi li re fo li pa kei
 ##       le tanru cu se fendi ta'i lo nu pa zo na lidne pa girzu poi vasru le multau
@@ -48,24 +53,28 @@
 ##   .i va'o lo nu le te kancu cu se dilcu fi li re fo li no kei le tanru cu se fendi ta'i lo nu no
 ##       zo na zvati
 ##   .i ki'u bo lo re lamji zo na galfi no da to `CLL 15.2` toi
-##   .i ro datma'o cu jorne no da
+##
+## ni'o ro datma'o cu jorne no da
 ##   .i va'o lo nu lo datma'o cu na zbasu lo girzu po'o kei le cmavo cu selvau pa taurpau poi vasru
 ##       no datpau
 ##   .i mupli fa lo nu lo cmavo be `KOhA` cu sumti lo bavla'i to `CLL 7.15` toi .e lo nu lo cmavo be
 ##       `JA` cu jmina lo pagbu to `CLL 5.6` toi
-##   .i lo namcu jo'u lo cmavo be `MOI` cu zbasu pa tanru pagbu to `CLL 21.1` .e le javni pe li
-##       pamure toi
+##
+## ni'o lo namcu jo'u lo cmavo be `MOI` cu zbasu pa tanru pagbu to `CLL 21.1` .e le javni pe li
+##     pamure toi
 ##   .i ku'i jdima fa lo nu ro cmavo be `PA` cu selvau pa taurpau poi vasru no datpau
 ##   .i se ki'u bo zo re .e zo pa .e zo moi selvau lo fictaupau ne'i lo nu fendi zo relpavmomci'a
-##   .i ro porsi poi jorne pa taurpau gi'e porsi lo cmavo be `SE` cu selja'e pa nu galfi lo porsi be
-##       lo sumti
+##
+## ni'o ro porsi poi jorne pa taurpau gi'e porsi lo cmavo be `SE` cu selja'e pa nu galfi lo porsi be
+##     lo sumti
 ##   .i lo cmavo be `SE` be'o poi traji lo ka jibni lo brivla cu galfi pu lo drata to `CLL 9.4` toi
 ##   .i se ki'u bo lu te se ciska li'u punji lo cimoi sumti be zo ciska lo pamoi stuzi
 ##   .i lu se se ciska li'u se fendi ta'i zo ciska ki'u lo nu lo re zo se galfi no da to `CLL 12.11`
 ##       toi
 ##   .i lo nu galfi poi selja'e no cenba cu selvi'u
 ##   .i lo porsi be lo datma'o jo'u lo nu galfi cu stali
-##   .i zo ke krasi lo girzu
+##
+## ni'o zo ke krasi lo girzu
 ##   .i zo ke'e .a lo fanmo be le tanru cu fanmo le girzu ki'u lo nu zo ke'e cu ka'e selvi'u bu'u le
 ##       fanmo to `CLL 5.5` toi
 ##   .i lo cmavo poi lidne zo ke jorne le mulno girzu to `CLL 9.4`
@@ -73,50 +82,60 @@
 ##   .i lo girzu poi vasru pa tanru pagbu po'o cu du le taurpau
 ##   .i lu se ke ciska li'u se fendi ta'i lu se ciska li'u
 ##   .i lo cmavo poi lidne zo ke se jmina fi lo cmavo pe le taurpau
-##   .i lo cmavo poi zbasu lo girzu po'o cu selvi'u ki'u lo nu le nu fendi cu jarco lo du'u ma kau
-##       poi cmavo cu jorne
+##
+## ni'o lo cmavo poi zbasu lo girzu po'o cu selvi'u ki'u lo nu le nu fendi cu jarco lo du'u ma kau
+##     poi cmavo cu jorne
 ##   .i zo ke .e zo ke'e vu'o pe lo girzu poi no cmavo cu jorne ke'a selvi'u
 ##   .i ji'a zo ke .e zo ke'e vu'o pe lo girzu poi lo cmavo pe ke'a se fendi fi no `Link` selvi'u
 ##   .i zo ke'e poi fanmo no girzu cu selvi'u
 ##   .i zo bo se vimcu to `CLL 5.3` toi
 ##   .i se ki'u bo zo kemdatnyvei se fendi ta'i zo datnyvei
-##   .i jdima fa lo nu le nu fendi cu cirko lo girzu poi no cmavo cu jorne ke'a
+##
+## ni'o jdima fa lo nu le nu fendi cu cirko lo girzu poi no cmavo cu jorne ke'a
 ##   .i se ki'u bo lu datni ke vreji liste li'u se fendi ta'i lu datni vreji liste li'u
 ##   .i ku'i `CLL 5.3` dunda lo ficygri le re tanru
-##   .i zo kei fanmo lo sucta to `CLL 21.1` .e le javni pe li pamure toi
+##
+## ni'o zo kei fanmo lo sucta to `CLL 21.1` .e le javni pe li pamure toi
 ##   .i le nu fendi cu tcidu zo kei ta'i zo ke'e poi fanmo lo girzu
 ##   .i zo ke poi krasi le girzu cu se lidne le cmavo be `NU` pe le girzu
 ##   .i se ki'u bo ne'i lu nu citka gasnu kei klama li'u lo sucta cu vasru re taurpau
 ##   .i va'o lo nu zo kei se lidne pa tanru pagbu po'o kei le girzu cu vasru le tanru pagbu po'o
 ##   .i ja'i `CLL 12.13` `kez` pe zo nunctikezgau cusku po'o lo se smadi be lo tcidu
-##   .i no girzu cu vasru zo co
+##
+## ni'o no girzu cu vasru zo co
 ##   .i ro girzu poi kalri vi cu selfa'o pa zo ke'e poi lidne zo co to `CLL 5.8` toi
 ##   .i jdima fa lo nu zo co galfi lo porsi lo fatne to `CLL 5.8` toi gi'e stali ta'i lo nu selci'a
 ##   .i se ki'u bo le nu fendi cu ralte lo porsi poi selci'a
-##   .i lo lujvo cu claxu zo ke bu'u re stuzi poi `CLL` skicu ke'a
+##
+## ni'o lo lujvo cu claxu zo ke bu'u re stuzi poi `CLL` skicu ke'a
 ##   .i lo re cmavo be `SE` be'o poi lamji cu se tcidu ta'i `SE ke SE`
 ##   .i se ki'u bo le pamoi cmavo cu galfi lo porsi be lo sumti be le rebla be le tanru
 ##   .i zo ke'e cu ka'e fanmo le rebla to `CLL 12.11`
 ##   .i `selsel-` se tcidu ta'i `selkemsel-` toi
-##   .i zo ke'e poi fanmo no girzu cu sinxa pa zo ke
+##
+## ni'o zo ke'e poi fanmo no girzu cu sinxa pa zo ke
 ##   .i zo ke se lidne le porsi be lo cmavo poi jorne be'o poi lidne zo ke'e gi'e traji lo ka jibni
 ##       zo ke'e
 ##   .i le porsi cu bilga lo nu lidne su'o re taurpau poi lidne zo ke'e
 ##   .i lo nu zo ke'e ponse lo smuni cu cumki vi po'o to `CLL 15.4` mu'u zo nalsu'adzuke'ekla toi
 ##   .i va'o lo nu no smipoi cu zvati kei zo ke'e zbasu lo girzu po'o gi'e selvi'u
-##   .i jdima fa lo nu lo porsi po'u lo'u na'e se le'u poi lidne lo smigri cu jorne le girzu sepi'o
-##       le re cmavo
+##
+## ni'o jdima fa lo nu lo porsi po'u lo'u na'e se le'u poi lidne lo smigri cu jorne le girzu sepi'o
+##     le re cmavo
 ##   .i ku'i `CLL 15.4` cusku zo na'e po'o
-##   .i lo girzu poi vasru su'o re taurpau cu selsni lo taurpau po'u zo ke noi ponse lo cmavo pe le
-##       girzu
+##
+## ni'o lo girzu poi vasru su'o re taurpau cu selsni lo taurpau po'u zo ke noi ponse lo cmavo pe le
+##     girzu
 ##   .i ba bo le taurpau pe le girzu cu zvati
 ##   .i ba bo zo ke'e zvati va'o lo nu selci'a
 ##   .i se ki'u bo le taurpau pe le girzu cu stali lo ka mulno ta'i lo nu lo ga'ivla ne'i lo girzu
 ##       poi selga'i cu stali lo ka mulno
-##   .i jdima fa lo nu lo tanru poi `readTanru` tcidu ke'a fi lo selci'a cu se fendi ja'i
-##       `CLL 12.11` ji'a
+##
+## ni'o jdima fa lo nu lo tanru poi `readTanru` tcidu ke'a fi lo selci'a cu se fendi ja'i
+##     `CLL 12.11` ji'a
 ##   .i ku'i `CLL 12.11` tcidu lo lujvo
-##   .i jdima fa lo nu zo pe'a .e lo teirma'o cu jorne no da vi
+##
+## ni'o jdima fa lo nu zo pe'a .e lo teirma'o cu jorne no da vi
 ##   .i ku'i ja'i `CLL 13.13` zo pe'a srana lo muljvo
 ##   .i ja'i `CLL 5.13` lo teirma'o cu srana lo mulbri
 
@@ -305,7 +324,8 @@ func withImplied(parts: openArray[Part]): seq[Part] =
   ##   .i va'o lo nu le te kancu cu se dilcu fi li re fo li no kei no da selpu'i
   ##   .i ki'u bo zo na natfe lo mulbri
   ##   .i ji'a lo re zo na galfi no da to `CLL 15.2` toi
-  ##   .i zo ke se lidne lo pamoi be lo re lamyma'o be `SE` to `CLL 12.11` toi
+  ##
+  ## ni'o zo ke se lidne lo pamoi be lo re lamyma'o be `SE` to `CLL 12.11` toi
   ##   .i zo kei se tcidu ta'i zo ke'e poi fanmo lo girzu poi zo ke krasi ke'a
   ##   .i zo ke se lidne le cmavo be `NU` poi traji lo ka jibni gi'e ka'e selfa'o zo kei to
   ##       `CLL 21.1` .e le javni pe li pamure toi

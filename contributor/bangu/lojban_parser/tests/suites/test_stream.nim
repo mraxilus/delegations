@@ -1,16 +1,19 @@
-## rapyzba lo nu tcidu lo porsi be lo valsi pe `CLL 3` .e `CLL 4` gi'e cipra lo du'u `stream.nim`
-##     mapti le selzba
-##   .i ji'a cipra lo flalu poi `CLL` nibli ke'a
-##   .i lo mupli cu fukpi lo selci'a pe `CLL` gi'e no roi fukpi lo selci'a be le samtci
+## rapyzba lo nu tcidu lo porsi be lo valsi pe `CLL 3` .e `CLL 4` kei gi'e cipra lo du'u
+##     `stream.nim` mapti le selzba
+##   .i cipra lo flalu poi `CLL` nibli ke'a
+##
+## ni'o lo mupli cu fukpi lo selci'a pe `CLL` gi'e no roi fukpi lo selci'a be le samtci
 ##   .i lo pinka be lo mupli poi no krasi cu vasru ke'a cu cusku lo du'u le mupli cu selfi'i
-##   .i lo flalu cu tcidu lo cunpoi be lo valsi poi gismu ja cmavo ja lujvo be'o poi lo tsiju cu
-##       jdice ke'a
+##
+## ni'o lo flalu cu tcidu lo cunpoi be lo valsi poi gismu ja cmavo ja lujvo be'o poi lo tsiju cu
+##     jdice ke'a ku'o .e ro stuzi be ro valsi to `Article IX.3` toi
 ##   .i lo gismu pe le porsi cu selcu'a fi ro cmima be le gimste
 ##   .i lo cmavo pe le porsi cu selcu'a fi ro cmima be le ma'oste
 ##   .i lo lujvo pe le porsi cu selcu'a fi lo lujvo poi `$` ciska ke'a
-##   .i ji'a lo flalu cu tcidu ro stuzi be ro valsi to `Article IX.3` toi
-##   .i lo fancu pe lo rapyjva cu cusku ro javni ta'i lo nu `CLL` cusku gi'e na pilno le genturfa'i
-##   .i lo se cipra na ca vasru lo cunpoi poi vasru lo cmene .a lo fu'ivla .a lo nu sitna
+##   .i lo fancu pe lo rapyjva cu cusku ro javni ta'i lo nu `CLL` cusku kei gi'e na pilno le
+##       genturfa'i
+##
+## ni'o lo se cipra na ca vasru lo cunpoi poi vasru lo cmene .a lo fu'ivla .a lo nu sitna
 ##   .i le cipra cu cipra le cmene .e le fu'ivla .e le nu sitna sepi'o lo mupli pe `CLL` po'o
 ##   .i `test_prose.nim` cipra lo nu sitna ta'i di'u
 
@@ -27,9 +30,9 @@ import ../../src/lojban_parser/lists/[cmavo, gismu]
 
 const
   SAMPLES = 1000
-    ## lo cunpoi poi lo flalu cu cuxna ke'a sepi'o lo tsiju
-    ##   .i ji'a lo cunjvo poi le girzu cu cuxna ke'a
-  COUNT_WORDS_MAX = 8  ## lo rairlai be lo valsi pe lo cunso porsi
+    ## lo cunpoi poi lo flalu cu cuxna ke'a sepi'o lo tsiju ku'o .e lo cunjvo poi le girzu cu cuxna
+    ##     ke'a
+  COUNT_WORDS_MAX = 8  ## lo rairlai be lo valsi pe lo cunpoi
   FLOOR_COMMA_READ = 11000
     ## lo mecrailai be lo lerfu po'u slaka bu poi le flalu pe slaka bu cu tcidu ke'a ta'i lo nu
     ##     fendi lo slaka
@@ -39,8 +42,8 @@ const
     ## lo mecrailai be lo lerfu po'u slaka bu poi le flalu pe slaka bu cu to'e curmi ke'a
     ##   .i vorerepa lerfu cu se tcidu ne'i le mi'uvla
   FLOOR_STRESS_REFUSED = 3900
-    ## lo mecrailai be lo barda lerfu poi na zvati le slaka poi lidne le romoi slaka pe lo brivla
-    ##     ku'o gi'e se to'e curmi le genturfa'i
+    ## lo mecrailai be lo brale'u poi na zvati le slaka poi lidne le romoi slaka pe lo brivla ku'o
+    ##     gi'e se to'e curmi le genturfa'i
     ##   .i le genturfa'i na tcidu lo datyvla fi le brale'u
     ##   .i vopacino brale'u cu se tcidu ne'i le gimste .e lo lujvo poi selcu'a ca lo nu lo tsiju cu
     ##       du `1`
@@ -52,7 +55,7 @@ const
     ##       selci'a poi jorne cu ciska no denpa
   FLOOR_JOINED = 2500
     ## lo mecrailai be lo porsi poi lo nu basna pe ke'a mapti ro brivla zi'e poi le genturfa'i cu
-    ##     tcidu le mintu valsi fi ke'a
+    ##     tcidu le mi'uvla fi ke'a
     ##   .i rezemuze porsi cu se tcidu ca lo nu lo tsiju cu du `2`
   FLOOR_JOINED_OTHER = 800
     ## lo mecrailai be lo porsi poi lo nu basna pe ke'a mapti no brivla
@@ -69,7 +72,7 @@ const
     ##       lanli `#811` cu facki ke'a ku'o .e lo jbocme pe `CLL 4.8`
   COUNT_GROUPED = 36  ## lo klani be lo slaka pe ro nu fendi pe ro cmene poi le flalu cu tcidu ke'a
   FLOOR_COMMA_STRESS = 8
-    ## lo mecrailai be lo fu'ivla poi vasru slaka bu .e lo nu basna gi'e se tcidu le flalu pe le
+    ## lo mecrailai be lo fu'ivla poi vasru slaka bu .e lo nu basna kei gi'e se tcidu le flalu pe le
     ##     mumoi javni
     ##   .i bi fu'ivla cu se tcidu
   SAMPLES_COMMA_PAUSE = 2000
@@ -79,12 +82,12 @@ const
     ## lo mecrailai be le remei poi nitcu lo denpa poi zvati lo jbini be le re cmavo
     ##   .i renopa remei cu se tcidu ca lo nu lo tsiju cu du `4`
   FLOOR_GLIDE_READ = 40
-    ## lo mecrailai be lo barda lerfu poi le flalu pe lo sakli karsna cu tcidu ke'a ta'i pa brivla
+    ## lo mecrailai be lo brale'u poi le flalu pe lo sakli karsna cu tcidu ke'a ta'i pa brivla
     ##   .i vono brale'u cu se tcidu bu'u le slaka poi lidne le romoi slaka
     ##   .i ro sakli karsna cu zvati vo greku poi vasru re slaka .a ci slaka
   FLOOR_STRESS_OTHER = 200
-    ## lo mecrailai be lo barda lerfu poi na zvati le slaka poi lidne le romoi slaka pe lo brivla
-    ##     ku'o gi'e se tcidu ta'i lo drata valsi
+    ## lo mecrailai be lo brale'u poi na zvati le slaka poi lidne le romoi slaka pe lo brivla ku'o
+    ##     gi'e se tcidu ta'i lo datyvla
     ##   .i rerebi brale'u cu se tcidu
     ##   .i mupli fa lo nu le genturfa'i cu tcidu `xlusni pa` fi `xlUsnipa`
   FLOOR_STRESS = 800
@@ -226,10 +229,8 @@ func pausesNeeded(words: openArray[string]): seq[Pause] =
   ##     brale'u
   ##   .i le denpa cu seljdi ja'i lo javni ta'i lo nu `CLL` cusku
   ##   .i lo denpa cu lidne lo valsi poi selkra lo karsna .a `y` to le cimoi javni pe `CLL 4.9` ge'u
-  ##       .e `CLL 4.2` toi
-  ##   .i lo denpa cu lidne lo valsi poi se lidne zo y to `CLL 4.2` toi
-  ##   .i lo denpa cu lidne lo valsi poi na seltai `Cy` gi'e se lidne lo valsi poi seltai `Cy` to le
-  ##       xamoi javni pe `CLL 4.9` toi
+  ##       .e `CLL 4.2` toi ku'o .e lo valsi poi se lidne zo y to `CLL 4.2` toi ku'o .e lo valsi poi
+  ##       na seltai `Cy` gi'e se lidne lo valsi poi seltai `Cy` to le xamoi javni pe `CLL 4.9` toi
   for i, word in words:
     let is_needed =
       word[0] in VOWELS_SYLLABLE or (i > 0 and words[i - 1] == "y") or
@@ -257,7 +258,8 @@ func syllables(
 ): seq[Slice[int]] =
   ## liste lo karsna pe ro slaka pe le valsi ta'i lo nu `CLL 3.4` jmina le karsna ne'i lo slaka
   ##   .i le nu jmina cu cfari bu'u lo zunle to `CLL 3.5` toi
-  ##   .i lo karsna gunma poi le romoi pagbu be ke'a cu sakli cu du pa slaka
+  ##
+  ## ni'o lo karsna gunma poi le romoi pagbu be ke'a cu sakli cu du pa slaka
   ##   .i lo karsna gunma poi le pamoi pagbu be ke'a cu sakli cu du pa slaka va'o lo nu le karsna
   ##       gunma cu krasi le valsi kei .a lo nu le valsi cu fu'ivla ja cmene
   ##   .i `iy` .e `uy` du pa slaka ne'i lo cmene po'o
@@ -370,9 +372,9 @@ proc drawStreams(): seq[seq[string]] =
   ##   .i le klani be le porsi cu du `SAMPLES`
   ##   .i ro porsi cu vasru lo valsi
   ##   .i le klani be le valsi cu cmima li pa bi'o `COUNT_WORDS_MAX`
-  ##   .i ro valsi cu gismu ja cmavo ja lujvo
+  ##
+  ## ni'o ro valsi cu gismu ja cmavo ja lujvo gi'e selcu'a fi ro valsi pe lo girzu pe vo'a
   ##   .i le ci klesi cu mintu lo ka selcu'a ta'i lo nu cunso
-  ##   .i ro valsi cu selcu'a fi ro valsi pe lo girzu pe vo'a
   randomize(0)
   for _ in 1 .. SAMPLES:
     var words: seq[string]

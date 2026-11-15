@@ -1,13 +1,12 @@
-## pilno ro cipra pe le vi selgu'a poi fasnu ne'i lo tcidu be lo papri ku'o ta'i lo minde po'u
-##     `drive`
+## pilno ro cipra pe le vi selgu'a ge'u zi'e poi fasnu ne'i lo tcidu be lo papri ku'o ta'i lo minde
+##     po'u `drive`
 ##   .i zbasu le samtci .e le papri
-##   .i fanva ro cipra pe `tests/browser/` .e le crepu fi `JavaScript`
+##   .i fanva ro cipra pe `tests/browser/` ge'u .e le crepu fi `JavaScript`
 ##   .i ciska lo selci'a .e lo se cipra poi lo cipra cu tcidu ke'a
-##   .i ro le selci'a .e ro le se cipra cu se kansa lo seldu'a be le jbena zbasu
+##   .i ro le selci'a .e ro le se cipra cu se kansa lo seldu'a be le jbezba
 ##   .i pilno ro cipra ne'i `headless Chromium` to `drive.nim` toi
-##   .i tcidu le papri pe lo mivyselci'a .e le tropapri poi `koch drive` ciska ke'a ku'o sepi'o le
-##       crepu
-##   .i le se tcidu cu selci'a fi `written.json`
+##   .i tcidu le papri pe lo mivyselci'a ge'u .e le tropapri poi `koch drive` ciska ke'a ku'o sepi'o
+##       le crepu gi'e ciska le se tcidu fi `written.json`
 ##
 ##   |------------|-------------------------------------------------------------------------------|
 ##   | lo fancu   | lo smuni                                                                      |
@@ -16,12 +15,13 @@
 ##   |            | .i li pa va'o lo nu fliba                                                     |
 ##   |------------|-------------------------------------------------------------------------------|
 ##
-## ni'o le cipra pe lo mivyselci'a .e le cipra pe le papri cu rapfau ne'i pa papri poi lo javni pe
-##     lo selvau be ke'a cu to'e curmi ro gunka
+## ni'o le cipra pe lo mivyselci'a ge'u .e le cipra pe le papri cu rapfau ne'i pa papri poi lo javni
+##     pe lo selvau be ke'a cu to'e curmi ro gunka
 ##   .i se ki'u bo lo cilta pe le papri cu basti le gunka pe le tcidu ta'i le samtci va'o lo nu le
 ##       papri cu to'e curmi lo gunka
-##   .i ro cipra pe le samtci cu fasnu ne'i pa papri pe vo'a ge'u zi'e noi cpacu le cipra po'o
-##       sepi'o lo judri be le cipra
+##
+## ni'o ro cipra pe le samtci cu fasnu ne'i pa papri pe vo'a ge'u zi'e noi cpacu le cipra po'o
+##     sepi'o lo judri be le cipra
 ##   .i ro cipra cu vasru le cripu ta'i le samtci poi selbe'i
 ##   .i ki'u bo ro samtci poi `Nim` fanva ke'a punji ro fancu pe vo'a lo stuzi poi ro da ka'e pilno
 ##       ke'a
@@ -29,40 +29,47 @@
 ##       pe le remoi cu selcme pa cmene
 ##   .i le gunka pe le cipra pe lo mivyselci'a cu selkra le judri ta'i lo nu le gunka pe le samtci
 ##       cu selkra le judri be le samtci
-##   .i le cipra pe le papri cu fasnu ne'i pa papri poi selzba fi le calku
-##   .i le cipra cu zvati le selci'a pe le papri gi'e basti le samtci pe le papri
-##   .i le cipra cu vasru ro pagbu be le samtci
+##
+## ni'o le cipra pe le papri cu fasnu ne'i pa papri poi selzba fi le calku
+##   .i le cipra cu zvati le selci'a pe le papri gi'e basti le samtci pe le papri gi'e vasru ro
+##       pagbu be le samtci
 ##   .i le gunka cu selkra pa `Blob` pe le selci'a pe le cipra ta'i le gunka pe le papri
-##   .i lo selfinselci'a pe le cipra pe lo mivyselci'a cu vasru pa valsi poi galfi lo pu valsi
+##
+## ni'o lo selfinselci'a pe le cipra pe lo mivyselci'a cu vasru pa valsi poi galfi lo pu valsi
 ##   .i pa datselci'a cu jorne lo jufra pe `Tatoeba`
 ##   .i le jbezba cu dunda le selci'a be fi `NIF` be'o pe ro selci'a ta'i lo nu `readTextParts`
 ##       dunda lo pagbu be lo selci'a poi mulseltcidu
 ##   .i le flalu pe `test_live.nim` cipra lo du'u lo mivyselci'a cu mintu le pagbu
-##   .i lo se cipra pe le cipra pe le papri cu du ro mupli pe le calku ge'u zi'e poi mulseltcidu
-##       ku'o .e lo selci'a poi selbe'i ta'i lo porsi be lo valsi ku'o .e pa selci'a poi selci'a
-##       ta'i lo nu ro pagbu cu sepli kei gi'e ca'o kalri ku'o .e pa nu galfi poi rinka lo nu pa
-##       ninytcidu cu cfari
+##
+## ni'o lo se cipra pe le cipra pe le papri cu du ro mupli pe le calku ge'u zi'e poi mulseltcidu
+##     ku'o .e lo selci'a poi selbe'i ta'i lo porsi be lo valsi ku'o .e pa selci'a poi selci'a ta'i
+##     lo nu ro pagbu cu sepli kei gi'e ca'o kalri ku'o .e pa nu galfi poi rinka lo nu pa ninytcidu
+##     cu cfari
 ##   .i le jbezba cu ciska le pixra be ro se cipra sepi'o `drawn`
-##   .i `drawn` pilno le selci'a be fi `NIF` be'o poi le jbetcidu be lo jmive se ciska cu dunda ke'a
-##       ca lo nu cpacu le mitpau
+##   .i `drawn` pilno le selci'a be fi `NIF` be'o poi le jbetcidu be lo mivyselci'a cu dunda ke'a ca
+##       lo nu cpacu le mitpau
 ##   .i va'o lo nu le tcidu cu sisti kei le selci'a cu mintu le selci'a be fi `NIF` be'o pe lo nu
 ##       tcidu le mulno se ciska to `live.nim`
 ##   .i lo flalu toi
-##   .i lo nu jmina ro se cipra cu pilno `drawnMerged` le ca selci'a be fi `NIF` be'o pe le se cipra
+##
+## ni'o lo nu jmina ro se cipra cu pilno `drawnMerged` le ca selci'a be fi `NIF` be'o pe le se cipra
 ##   .i le rebla cu na se jmina ta'i lo nu le papri cu jmina
-##   .i ro selci'a .e ro se cipra .e ro pagbu .e ro pixra cu datnyvei gi'e vasru pa lerpoi
+##
+## ni'o ro selci'a .e ro se cipra .e ro pagbu .e ro pixra cu datnyvei gi'e vasru pa lerpoi
 ##   .i se ki'u bo no tarmi be lo datni cu zvati lo jbini be le sabji samtci .e le papri
-##   .i le crepu cu tcidu le papri pe lo mivyselci'a poi vasru no samtci
+##
+## ni'o le crepu cu tcidu le papri pe lo mivyselci'a ge'u zi'e poi vasru no samtci
 ##   .i le papri cu mulseltcidu va'o lo nu no samtci cu zasti
 ##   .i ki'u bo lo nu zbasu cu punji lo jbexra be le pamoi mupli le papri
-##   .i ro lertai poi le papri cu cusku ke'a selkra pa `data:`
+##
+## ni'o ro lertai poi le papri cu cusku ke'a selkra pa `data:`
 ##   .i le crepu cu ciska lo stuzi pe ro lertai fi pa datnyvei pe le lertai
-##   .i lo snina'u cu cmene le datnyvei
-##   .i le datnyvei cu zvati lo mlana be `written.json`
+##   .i le datnyvei cu selcme lo snina'u gi'e zvati lo mlana be `written.json`
 ##   .i se ki'u bo `koch drive` tcidu lo stuzi poi lo viska cu cpacu ke'a to `font_stacks.nim` pe
 ##       `curator` toi
 ##   .i le tropapri cu cusku no lertai
-##   .i `Chromium` poi selpli cu du lo selcme be `LOJBAN_CHROMIUM`
+##
+## ni'o `Chromium` poi selpli cu du lo selcme be `LOJBAN_CHROMIUM`
 ##   .i va'o lo drata `Chromium` poi selpli cu du `headless shell` pe `Chrome for Testing` ge'u zi'e
 ##       noi `koch fetch-assets` cpacu ke'a lo sorcu pe `delegations` zi'e noi se kalri ne'i
 ##       `build/chromium/`
@@ -87,8 +94,8 @@ const
     ##   .i ro datnyvei ne'i le vasru cu se sabji sepi'o lo judri be vo'a
   DIRECTORY_DRIVE = ROOT_SERVED / "drive"  ## lo vasru be ro samtci .e ro selci'a pe lo cipra
   DIRECTORY_LIVE = DIRECTORY_DRIVE / "live"
-    ## lo vasru be lo selci'a pe le cipra pe lo mivyselci'a .e le selci'a be fi `NIF` be'o pe ro le
-    ##     selci'a
+    ## lo vasru be lo selci'a pe le cipra pe lo mivyselci'a ge'u ge'u .e le selci'a be fi `NIF` be'o
+    ##     pe ro le selci'a
   DIRECTORY_CASES = DIRECTORY_DRIVE / "page"  ## lo vasru be lo se cipra pe le cipra pe le papri
   MODE_REFUSED = "refused"
     ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka
@@ -99,8 +106,8 @@ const
   SUITES = [("suite_script", ""), ("suite_live", ""), ("suite_live", MODE_REFUSED)]
     ## ro cipra pe `tests/browser/` fasnu ne'i pa papri pe le cipra gi'e ponse lo tadji poi le papri
     ##     cu dunda ke'a
-    ##   .i le cipra pe lo mivyselci'a cu fasnu re roi
-    ##   .i pa roi le cipra cu fasnu ne'i lo papri poi to'e curmi lo gunka
+    ##   .i le cipra pe lo mivyselci'a cu fasnu re roi gi'e pa roi fasnu ne'i lo papri poi to'e
+    ##       curmi lo gunka
   PATH_COLLECTOR = "tools" / "drive" / "collector.nim"  ## le crepu be lo pixra pe le papri
   DIRECTORY_FONT_FACES = ROOT_SERVED / "font-faces"
     ## lo vasru poi `koch drive` tcidu ke'a
@@ -128,16 +135,15 @@ const
     ## le samtci pe `Chromium` ge'u zi'e noi zvati le vreji poi se kalri
   SENTENCES_LIVE = 12
     ## lo du'u xo kau jufra pe `Tatoeba` seljo'e fi pa selci'a pe le cipra pe lo mivyselci'a
-    ##   .i le samtci cu tcidu ro valsi ta'i pa pagbu
-    ##   .i le samtci cu nitcu lo temci poi pilji li ji'i cize le temci pe le jbezba
-    ##   .i le samtci cu tcidu le selci'a re roi
+    ##   .i le samtci cu tcidu ro valsi ta'i pa pagbu gi'e nitcu lo temci poi pilji li ji'i cize le
+    ##       temci pe le jbezba ku'o gi'e tcidu le selci'a re roi
   TEXTS_LIVE = [
     # zo si vimcu zo cadzu .e zo do .e zo .i
     "mi klama .i do cadzu si si si ko",  # `CLL 19.13`
     # zo li'u rinka lo nu lo jufra poi se lidne zo lu rapseltcidu
     "lu mi klama .i do cadzu li'u .i ko",  # `CLL 19.9`
     "zoi gy. café \u{1F600} .gy. cu melbi .i mi klama .i do cadzu si si si ko",
-      # le selci'a be fi `NIF` cu vasru pa lerfu poi zmadu `U+FFFF` pu pa nu katna
+      # le selci'a be fi `NIF` cu vasru pa lerfu poi zmadu `U+FFFF` ku'o pu pa nu katna
       #   .i zo zoi sitna le lerfu to `CLL 19.10` toi
       #   .i `\u{1F600}` basti le lerfu ki'u lo nu no lertai poi le vi selgu'a cu benji ke'a pixra
       #       le lerfu to `Article X.8` toi
@@ -151,10 +157,7 @@ const
     "</title></head><body data-mode=\"", "\">", "</body></html>",
   )
     ## le selci'a be fi `HTML` be'o poi ro cipra cu fasnu ne'i ke'a
-    ##   .i le krasi cu lidne le cmene
-    ##   .i le cmene cu lidne le tadji
-    ##   .i le tadji cu lidne le samtci
-    ##   .i le samtci cu lidne le fanmo
+    ##   .i le krasi cu lidne le cmene noi lidne le tadji noi lidne le samtci noi lidne le fanmo
   SKELETON_HOSTED = (
     "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" " &
       "content=\"width=device-width, initial-scale=1\"></head><body data-mode=\"",
@@ -162,9 +165,7 @@ const
   )
     ## le selci'a be fi `HTML` be'o poi lo sabji be le papri cu punji le papri ne'i ke'a ki'u lo nu
     ##     le papri poi se gubgau cu claxu lo ralselci'a pe vo'a
-    ##   .i le krasi cu lidne le tadji
-    ##   .i le tadji cu lidne le papri
-    ##   .i le papri cu lidne le fanmo
+    ##   .i le krasi cu lidne le tadji noi lidne le papri noi lidne le fanmo
   STREAMED = [
     "mi klama le zarci .i do cadzu si si si ko .i lu mi klama li'u cu xamgu",
       # zo si vimcu lo valsi pe le pamoi jufra to `CLL 19.13` toi
@@ -187,8 +188,8 @@ const
 
 
 proc writeTextsLive() =
-  ## ciska ro selci'a pe le cipra pe lo mivyselci'a .e le selci'a be fi `NIF` be'o poi le jbezba cu
-  ##     dunda ke'a le selci'a
+  ## ciska ro selci'a pe le cipra pe lo mivyselci'a ge'u ge'u .e le selci'a be fi `NIF` be'o poi le
+  ##     jbezba cu dunda ke'a le selci'a
   ##   .i ro le selci'a cu zvati pa drata datnyvei poi vasru pa lerpoi po'o
   removeDir(DIRECTORY_LIVE)
   createDir(DIRECTORY_LIVE)
@@ -218,8 +219,8 @@ func toPieces(text: string): seq[string] =
 proc writeCase(k: int, kind: string, pieces: seq[string], nif, tail: string) =
   ## ciska pa se cipra pe le cipra pe le papri
   ##   .i ciska le klesi .e ro pagbu
-  ##   .i ciska le pixra .e le linji vu'o poi le jbezba cu dunda ke'a le ca selci'a be fi `NIF` .e
-  ##       le rebla
+  ##   .i ciska le pixra .e le linji vu'o poi le jbezba cu dunda ke'a le ca selci'a be fi `NIF` be'o
+  ##       .e le rebla
   ##   .i ba bo ciska le pixra .e le linji vu'o pe le tricu poi le ca selci'a cu se jmina fo ke'a
   let
     path = DIRECTORY_CASES / $k
@@ -331,7 +332,7 @@ proc toFile(source: string): string =
   ## ciska lo stuzi pe `source` fi pa datnyvei poi selcme lo snina'u pe le stuzi
   ##   .i le datnyvei cu zvati lo mlana be `written.json`
   ##   .i `source` krasi be pa lertai gi'e selkra `data:`
-  ##   .i dunda lo judri be le datnyvei poi selkra `written.json`
+  ##   .i dunda lo judri be le datnyvei be'o poi selkra `written.json`
   ##   .i lo kunti lerpoi va'o lo nu `source` na krasi be pa lertai poi selpu'i ne'i le papri
   let
     opening = source.find("data:font/")

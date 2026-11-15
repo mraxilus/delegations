@@ -1,6 +1,6 @@
 ## tcidu la lojban. ja'i lo javni pe `CLL` po'o
-##   .i tcidu lo lerfu .e ro klesi be lo valsi .e lo rafsi .e lo tanru .e lo porsi be lo valsi .e lo
-##       selci'a
+##   .i tcidu lo lerfu .e ro klesi be lo valsi be'o .e lo rafsi .e lo tanru .e lo porsi be lo valsi
+##       be'o .e lo selci'a
 ##   .i le vi datnyvei cu ralju samtci pagbu gi'e rapybe'i lo pagbu be ro samtci pagbu be'o poi lo
 ##       pilno cu ka'e pilno ke'a ku'o ta'i lo porsi be lo nu lo tcidu cu cilre le selsnu
 ##
@@ -57,20 +57,22 @@
 ##   .i `Selmaho` .e `Reading` lidne `Terminal`
 ##   .i `Node` lidne `ReadingGrammar`
 ##   .i `Occurrence` .e `Terminal` lidne `Unit`
-##   .i `Unit` .e `Node` lidne `ReadingText`
-##   .i `Unit` .e `Node` lidne `ReadingMarked`
+##   .i `Unit` .e `Node` lidne `ReadingText` .e `ReadingMarked`
 ##   .i `ReadingMarked` .e `Terminal` lidne `ReadingParts`
 ##   .i `Selmaho` .e `Terminal` lidne `ReaderLive`
 ##   .i `NodeNif` .e `Terminal` lidne `MergeNif`
-##   .i lo liste cu du lo datni poi lo minde po'u `nim r tools/build.nim lists` ciska ke'a
+##
+## ni'o lo liste cu du lo datni poi lo minde po'u `nim r tools/build.nim lists` ciska ke'a
 ##   .i `Word` kuspe ro stecmi pe le gimste
 ##   .i se ki'u bo lo korbi be `Word` cu selkra le liste
 ##   .i no namcu cu re roi se ciska to `Article II.5` toi
-##   .i le ralju samtci pagbu cu benji no liste
+##
+## ni'o le ralju samtci pagbu cu benji no liste
 ##   .i lo pilno poi djica ro stecmi cu cpacu `lists/gismu` .a `lists/cmavo`
 ##   .i `dictionary` tcidu pa stecmi pe pa valsi
-##   .i le gimste cu ralte lo valsi .e lo rafsi gi'e ralte no drata
-##   .i le ma'oste cu ralte lo valsi .e lo selma'o gi'e ralte no drata
+##
+## ni'o le gimste cu ralte lo valsi .e lo rafsi .e no drata
+##   .i le ma'oste cu ralte lo valsi .e lo selma'o .e no drata
 ##   .i `lojban_tagger` ralte lo glipau be ro liste be'o .e le mulno ke jvoste
 
 {.experimental: "strictFuncs".}

@@ -24,48 +24,57 @@
 ##   .i zoi gy. V .gy. sinxa lo karsna
 ##   .i `/` sinxa lo midju zunsna remei poi bilga lo ka se curmi po'o to `CLL 3.6` toi
 ##   .i lo re lamji zunsna poi krasi le tarmi cu bilga lo ka ka'e krasi lo valsi to `CLL 3.7` toi
-##   .i ro cmima be `Form` cu ciska le sinxa ta'i `Pascal case` to `Article V.11` toi
+##
+## ni'o ro cmima be `Form` cu ciska le sinxa ta'i `Pascal case` to `Article V.11` toi
 ##   .i `Cvv` sinxa `CV'V` .e `CVV` noi vasru lo karsna remei ku'o ki'u lo nu ro le re tarmi cu ka'e
 ##       zvati ro stuzi poi `CVV` cu ka'e zvati ke'a
 ##   .i zoi gy. ' .gy. vajni lo namcu po'o to `CLL 4.12` toi
 ##   .i le namcu cu tcidu zoi gy. ' .gy. fi lo lerfu
-##   .i lo tarmi cu jdice fi lo lerfu po'o gi'e no roi retsku fi lo vlaste
+##
+## ni'o lo tarmi cu jdice fi lo lerfu po'o gi'e no roi retsku fi lo vlaste
 ##   .i mupli fa lo nu `dri` seltai `Ccv`
 ##   .iju lo liste cu dunda `dri` lo valsi
 ##   .i se ki'u bo lo tarmi be lo valsi cu sepli lo vlaste
 ##   .i lo cipra cu ka'e cipra fi lo tarmi po'o .a lo vlaste po'o
-##   .i `Kind` fendi lo valsi lo klesi pe `CLL 4.1` sepi'o lo lerfu po'o ta'i lo nu `CLL 4.2` bi'o
-##       `CLL 4.8` skicu ro klesi
+##
+## ni'o `Kind` fendi lo valsi lo klesi pe `CLL 4.1` sepi'o lo lerfu po'o ta'i lo nu `CLL 4.2` bi'o
+##     `CLL 4.8` skicu ro klesi
 ##   .i lo liste cu dunda lo smuni gi'e no roi dunda lo klesi
-##   .i le vi datnyvei cu vasru lo javni pe lo cmene to `CLL 4.8` toi .e lo javni pe lo fu'ivla to
-##       `CLL 4.7` toi vu'o poi nitcu lo lerfu po'o
+##
+## ni'o le vi datnyvei cu vasru lo javni pe lo cmene to `CLL 4.8` toi .e lo javni pe lo fu'ivla to
+##     `CLL 4.7` toi vu'o poi nitcu lo lerfu po'o
 ##   .i lo javni pe lo zunsna remei to `CLL 3.6` toi cu srana ro le re klesi
 ##   .i lo javni pe lo zunsna cimei to `CLL 3.7` toi cu srana lo fu'ivla po'o
 ##   .i le javni cu srana ji'a lo zunsna gunma poi krasi lo fu'ivla ku'o .e lo du'u lo cmene na ka'e
 ##       vasru zo la .a zo doi
 ##   .i lo javni poi nitcu lo datyvla cu zvati `fuhivla.nim`
 ##   .i mupli fa lo javni pe lo vlagunma .e lo cipra pe zoi gy. slinku'i .gy.
-##   .i le vi datnyvei cu vasru ji'a lo javni pe lo denpa zi'e poi nitcu lo lerfu po'o to `CLL 4.9`
-##       toi
+##
+## ni'o le vi datnyvei cu vasru ji'a lo javni pe lo denpa zi'e poi nitcu lo lerfu po'o to `CLL 4.9`
+##     toi
 ##   .i se ki'u bo `fuhivla.nim` .e `stream.nim` pilno le javni
 ##   .i `stream.nim` jmina lo javni pe lo nu basna
-##   .i ja'i `CLL 4.2` lo cmavo cu vasru lo porsi be lo karsna
+##
+## ni'o ja'i `CLL 4.2` lo cmavo cu vasru lo porsi be lo karsna
 ##   .i pa zunsna cu ka'e lidne le porsi
 ##   .i lo pamoi pagbu be le porsi cu du pa karsna .a pa karsna remei
 ##   .i zoi gy. ' .gy. lidne ro datpau be le porsi
 ##   .i le pano sakli karsna poi `CLL 4.2` jmina ke'a pamoi ne'i lo cmavo poi lo karsna cu krasi
 ##       ke'a ku'o po'o ki'u lo nu `CLL 3.4` to'e curmi le sakli karsna ne'i ro valsi poi na sepli
 ##   .i `Cy` .e `y` .e `y'y` lerfu cmavo to `CLL 4.2` .e `CLL 17.2` toi
-##   .i jdima fa lo nu `CLL 4.2` ralte lo porsi be su'o ci karsna mu'i lo nu cipra
+##
+## ni'o jdima fa lo nu `CLL 4.2` ralte lo porsi be su'o ci karsna mu'i lo nu cipra
 ##   .i se ki'u bo le porsi cu se tcidu ta'i lo cmavo poi no liste ka'e vasru ke'a
-##   .i ja'i `CLL 4.2` .e `CLL 3.3` lo ma'orgunma cu se fendi pu ro zunsna gi'e se fendi bu'u ro
-##       lerfu po'u denpa bu
+##
+## ni'o ja'i `CLL 4.2` .e `CLL 3.3` lo ma'orgunma cu se fendi pu ro zunsna gi'e se fendi bu'u ro
+##     lerfu po'u denpa bu
 ##   .i lo cmavo cu vasru su'e pa zunsna noi pamoi
 ##   .i lo cmavo poi lo karsna cu krasi ke'a se lidne lo denpa
 ##   .i se ki'u bo lo ma'orgunma cu se fendi ta'i pa tadji po'o
 ##   .i ro pagbu cu cmavo ja'i `CLL 4.2`
 ##   .i ja le selci'a cu na ma'orgunma
-##   .i jdima fa lo nu ro roi lo nu tcidu lo rafsi cu rinka lo nu rapfa'i lo tarmi be le rafsi
+##
+## ni'o jdima fa lo nu ro roi lo nu tcidu lo rafsi cu rinka lo nu rapfa'i lo tarmi be le rafsi
 ##   .i le tarmi na selra'e ta'i lo nu kansa le rafsi
 ##   .i le rafsi cu vasru su'e mu lerfu
 ##   .i se ki'u bo le jdima cu stodi
@@ -174,7 +183,8 @@ func isBrivla*(text: string): bool =
   ##   .i le selkai cu du lo ka selfa'o lo karsna kei jo'u lo ka vasru lo zunsna remei ne'i le mu
   ##       lerfu poi krasi
   ##   .i `y` .e zoi gy. ' .gy. na se kancu
-  ##   .i lo nu basna cu cimoi se ckaji
+  ##
+  ## ni'o lo nu basna cu cimoi se ckaji
   ##   .i lo selci'a cu ralte no nu basna
   ##   .i lo selci'avla poi vasru no brale'u cu se basna lo slaka poi lidne lo romoi
   if text.len == 0 or not text[^1].isVowel: return false
@@ -192,7 +202,8 @@ func nuclei*(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[i
   ##   .i lo midju cu du pa karsna po'o .a `y` po'o .a pa karsna remei noi ro roi zvati pa slaka
   ##       po'o to `CLL 3.4` toi
   ##   .i lo karsna remei cu selfa'i ta'i lo nu klama fi lo zunle fe lo pritu to `CLL 3.5` toi
-  ##   .i lo sakli karsna cu karsna remei ne'i ro stuzi be lo fu'ivla .e lo cmene
+  ##
+  ## ni'o lo sakli karsna cu karsna remei ne'i ro stuzi be lo fu'ivla .e lo cmene
   ##   .i ku'i ne'i lo cmavo lo sakli karsna cu karsna remei va'o lo nu pamoi kei po'o
   ##   .i `iy` .e `uy` karsna remei ne'i lo cmene po'o to `CLL 3.4` .e `CLL 4.2` toi
   ##   .i va'o lo nu slaka bu cu lidne lo lerfu pe `breaks` kei le re karsna cu se fendi fi re slaka
@@ -226,11 +237,13 @@ func isCmavo*(text: string): bool =
   ##       `CLL 4.2` ralte ke'a mu'i lo nu cipra
   ##   .i ja le selci'a cu du lo lerma'o po'u `Cy` .a `y` po'o .a `y'y` to `CLL 4.2` .e `CLL 17.2`
   ##       toi
-  ##   .i `VV` du pa karsna remei .a `V'V` to le remoi javni pe `CLL 4.1` toi
+  ##
+  ## ni'o `VV` du pa karsna remei .a `V'V` to le remoi javni pe `CLL 4.1` toi
   ##   .i ne'i lo cmavo poi lo karsna cu krasi ke'a ku'o le pamoi karsna remei cu ka'e du ji'a pa le
   ##       pano sakli karsna poi `CLL 4.2` jmina ke'a
   ##   .i zoi gy. ' .gy. lidne ro karsna poi se lidne le pamoi karsna remei
-  ##   .i lo denpa poi lidne lo karsna cu na selci'a vi
+  ##
+  ## ni'o lo denpa poi lidne lo karsna cu na selci'a vi
   ##   .i denpa bu noi ciska le denpa cu se tcidu lo tcidu be lo porsi be lo valsi to `CLL 3.3` toi
   let
     start = (if text.len > 0 and text[0].isConsonant: 1 else: 0)
@@ -253,7 +266,8 @@ func splitCompound*(text: string): seq[string] =
   ## fendi le ma'orgunma fi ro cmavo pe le ma'orgunma ja'i `CLL 4.2`
   ##   .i dunda lo kunti va'o lo nu su'o pagbu cu na cmavo ja'i `CLL 4.2`
   ##   .i pa cmavo cu se fendi fi vo'a
-  ##   .i ro zunsna cu krasi lo ninpau ki'u lo nu lo cmavo cu vasru su'e pa zunsna noi pamoi
+  ##
+  ## ni'o ro zunsna cu krasi lo ninpau ki'u lo nu lo cmavo cu vasru su'e pa zunsna noi pamoi
   ##   .i ji'a ro lerfu po'u denpa bu cu fanmo lo pagbu
   ##   .i denpa bu cu sinxa lo denpa poi lidne lo cmavo poi lo karsna cu krasi ke'a to `CLL 3.3` toi
   var piece = ""
@@ -331,7 +345,8 @@ func isPauseNeeded*(prior, next: string): bool =
   ## jdice ja'i lo lerfu po'o lo du'u xu kau lo javni pe `CLL 4.9` nitcu lo denpa poi zvati lo jbini
   ##     be le re valsi
   ##   .i na tcidu lo nu basna
-  ##   .i le remoi javni cu srana lo valsi poi selfa'o lo zunsna
+  ##
+  ## ni'o le remoi javni cu srana lo valsi poi selfa'o lo zunsna
   ##   .i le cimoi javni cu srana lo valsi poi selkra lo karsna .a `y` to `CLL 4.2` toi
   ##   .i le vomoi javni cu srana lo cmene poi se lidne lo valsi poi na du zo la .a zo lai .a zo
   ##       la'i .a zo doi

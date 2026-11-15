@@ -1,7 +1,8 @@
 ## ciska lo claro'a pe `Wikipedia` pe la lojban. ta'i pa samtci datnyvei pe `Nim` zi'e poi ponse lo
 ##     klesi gi'e vasru lo seljdi be le genturfa'i bei ro ju'agri
 ##   .i `build.nim` pilno le vi datnyvei
-##   .i tcidu lo danfu pe `API` pe `Wikipedia`
+##
+## ni'o tcidu lo danfu pe `API` pe `Wikipedia`
 ##   .i le danfu cu selra'e ne'i pa datnyveiste
 ##   .i ro prosa cu ponse pa datnyvei
 ##   .i `QUERY` cpedu lo sapselci'a .e lo terga'i be le papri
@@ -10,23 +11,26 @@
 ## ni'o `Architect` jdice `D5 c` bu'u `#819`
 ##   .i pa datnyveiste pe `delegations` vasru lo claro'a poi seljva `CC BY-SA`
 ##   .i ro nu cipra cu tcidu le prosa
-##   .i le datnyveiste cu vasru ji'a lo seljdi pe ro pagbu
-##   .i lo pagbu cu du lo ju'agri
-##   .i lo ju'agri cu du pa linji pe lo sapselci'a
+##   .i le datnyveiste cu vasru lo seljdi pe ro pagbu
+##
+## ni'o lo pagbu cu du lo ju'agri noi du pa linji pe lo sapselci'a
 ##   .i lo cmene be lo ckupaupau cu na se tcidu
 ##   .i se ki'u bo le cipra cu tcidu lo jonselci'a poi vasru su'o re jufra ku'o ta'i pa selci'a pe
 ##       `CLL 21.1`
-##   .i pa snina'u pe `SHA-256` stosni le danfu
+##
+## ni'o pa snina'u pe `SHA-256` stosni le danfu
 ##   .i le snina'u cu selzba fi lo selsku be `sha256sum` poi tcidu ro datnyvei ja'i lo porsi be lo
 ##       cmene
 ##   .i `cll.nim` stosni lo papri ta'i le mintu
 ##   .i le sapselci'a cu selkra le terga'i poi le danfu cu cusku lo namcu pe ke'a
-##   .i le terga'i cu se stodi sinxa ji'a
+##   .i le terga'i cu selstosni
 ##   .i ki'u bo lo ninterga'i cu galfi le snina'u
-##   .i lo seljdi cu du lo seldu'a be le genturfa'i ca lo nu ciska
-##   .i le seljdi cu se tcidu ja'i `tatoeba.nim`
+##
+## ni'o lo seljdi cu du lo seldu'a be le genturfa'i ca lo nu ciska kei gi'e se tcidu ja'i
+##     `tatoeba.nim`
 ##   .i le cipra cu fliba ca ro nu pa seljdi cu cenba
-##   .i jdima fa lo nu `JSON` se tcidu ne'i le vi datnyvei po'o
+##
+## ni'o jdima fa lo nu `JSON` se tcidu ne'i le vi datnyvei po'o
 ##   .i ki'u bo `API` pe `Wikipedia` spuda sepi'o `JSON`
 ##   .i no jgena pe `JSON` cliva le vi datnyvei to le pagbu poi selcme zoi gy. Data .gy. ne'i
 ##       `CONTRIBUTOR.md` toi
@@ -144,7 +148,7 @@ func linesParagraph(article: Article, index: int, paragraph: Paragraph): seq[str
 
 
 func toModuleArticles*(articles: Articles): string =
-  ## ciska le prosa ta'i lo selci'a be fi le datnyvei poi se ralte
+  ## ciska le prosa ta'i lo selci'a be fi le datnyvei poi selra'e
   var lines = @[
     "## ralte lo claro'a pe `Wikipedia` pe la lojban. mu'i le cipra",
     "##   .i le vi datnyvei cu vasru lo seljdi be le genturfa'i bei ro ju'agri",

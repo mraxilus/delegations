@@ -1,35 +1,40 @@
 ## cipra lo du'u le papri pe lo jmive se ciska to `pages/live.html` toi cu mintu le jbezba ne'i
 ##     `headless Chromium` noi lo minde po'u `drive` rinka lo nu ke'a cfari to `tools/drive.nim` toi
 ##   .i le papri cu selzba fi le mitcalku
-##   .i le vi cipra cu du le samtci pe le papri gi'e basti `src/browser/page.nim`
-##   .i le cipra cu vasru ro pagbu be `src/browser/page.nim`
+##   .i le vi cipra cu du le samtci pe le papri gi'e basti `src/browser/page.nim` gi'e vasru ro
+##       pagbu be `src/browser/page.nim`
 ##   .i ki'u bo va'o lo nu pa remoi samtci pe `Nim` zvati le papri kei le remoi samtci cu basti lo
 ##       fancu pe le pamoi to `tools/browser.nim` toi
-##   .i le cipra cu karbi lo selja'o be le papri be'o pe ro se cipra poi le sabji samtci cu sabji
-##       ke'a ku'o le pixra poi le jbezba cu dunda ke'a
+##
+## ni'o le cipra cu karbi lo selja'o be le papri be'o pe ro se cipra poi le sabji samtci cu sabji
+##     ke'a ku'o le pixra poi le jbezba cu dunda ke'a
 ##   .i pa se cipra cu du pa mupli poi mulseltcidu ta'i le batke pe ke'a
 ##   .i pa se cipra cu du pa selci'a poi selbe'i ta'i lo nu ro valsi cu sepli kei gi'e ba selsti
 ##   .i pa se cipra cu du pa selci'a poi selci'a ta'i lo nu ro pagbu cu sepli kei gi'e ca'o kalri
 ##   .i pa se cipra cu du pa nu galfi poi ralte no pu selci'a zi'e noi rinka lo nu pa ninytcidu cu
 ##       cfari
-##   .i ro se cipra .e ro pagbu cu datnyvei gi'e vasru pa lerpoi
+##
+## ni'o ro se cipra .e ro pagbu cu datnyvei gi'e vasru pa lerpoi
 ##   .i se ki'u bo no tarmi be lo datni cu zvati lo jbini be le sabji samtci .e le cipra
-##   .i lo pixra be lo nu jmina be ro se cipra cu jarco ro tricu poi le jbezba cu jmina le ca
-##       selci'a be fi `NIF` be'o pe le se cipra fo ke'a
-##   .i le linji cu se jarco ji'a
+##
+## ni'o lo pixra be lo nu jmina be ro se cipra cu jarco ro tricu poi le jbezba cu jmina le ca
+##     selci'a be fi `NIF` be'o pe le se cipra fo ke'a ku'o .e le linji
 ##   .i ro le re selzba cu pilno `drawnMerged`
 ##   .i le selja'o cu du pa tricu pe lo nu tcidu le mulselci'a .a lo tricu pe ro porsi be lo pagbu
 ##       poi sruri pa srera poi stali
 ##   .i lo bavla'i cenba cu mipri le tricu ki'u lo nu le tricu cu na drani
 ##   .i le cipra cu jitro lo trotci ta'i le papri to `wiredControls` toi gi'e danre le batke po'u
 ##       `Merge`
-##   .i le pixra poi le papri cu jarco ke'a ku'o .e le pixra poi le jbezba cu ciska ke'a se karbi
-##       ta'i lo nu le mitytcidu be lo papri cu ciska ro le re pixra
+##
+## ni'o le pixra poi le papri cu jarco ke'a ku'o .e le pixra poi le jbezba cu ciska ke'a se karbi
+##     ta'i lo nu le mitytcidu be lo papri cu ciska ro le re pixra
 ##   .i se ki'u bo no cizra be le ciska cu zvati lo jbini be le re pixra
-##   .i lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka cu tcidu ne'i lo cilta pe
-##       vo'a gi'e jarco le mitxra
+##
+## ni'o lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka cu tcidu ne'i lo cilta pe
+##     vo'a gi'e jarco le mitxra
 ##   .i le linji pe le tadji cu cusku di'u
-##   .i le cipra pe lo nupre cu cusku ro cipra ta'i lo nu `unittest` ciska to `report.nim` toi
+##
+## ni'o le cipra pe lo nupre cu cusku ro cipra ta'i lo nu `unittest` ciska to `report.nim` toi
 ##   .i ki'u bo `unittest` denpa no nupre
 ##   .i ba bo le cipra cu cusku lo famna'u pe le nu cipra
 
@@ -80,8 +85,7 @@ proc serialised(html: cstring): cstring {.importjs:
 
 
 proc readCases(): seq[Case] =
-  ## tcidu ro se cipra poi le sabji samtci cu sabji ke'a
-  ##   .i tcidu ji'a ro pagbu be le se cipra
+  ## tcidu ro se cipra poi le sabji samtci cu sabji ke'a ku'o .e ro pagbu be le se cipra
   let count = readServed(DIRECTORY_CASES & "count.text").strip.parseInt
   for k in 0 ..< count:
     let path = DIRECTORY_CASES & $k
@@ -95,8 +99,8 @@ proc readCases(): seq[Case] =
 
 proc readCase(item: Case) {.async.} =
   ## tcidu le se cipra ta'i le papri
-  ##   .i lo batke .a lo porsi be lo valsi be'o poi vasru no denpa .a lo nu ciska ro pagbu cu rinka
-  ##       lo nu tcidu
+  ##   .i lo batke .a lo porsi be lo valsi be'o poi vasru no denpa ku'o .a lo nu ciska ro pagbu cu
+  ##       rinka lo nu tcidu
   case item.kind
   of "whole": await readWhole(cstring(item.pieces[0]))
   of "stream": await streamed(cstring(item.pieces[0]), 0)

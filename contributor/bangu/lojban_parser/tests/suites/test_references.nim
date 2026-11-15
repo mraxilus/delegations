@@ -2,32 +2,37 @@
 ##     lo lerjo'e pe `CLL 4.11`
 ##   .i lo pinka pe ro xusra cu sitna lo javni pe `CLL` ge'u zi'e poi jdice fi le valsi
 ##   .i le pinka cu cusku lo samtci poi tugni le cipra ku'o ba lo nu sitna le javni
-##   .i le seljdi cu se tcidu de'i `2026-10-24` fi `camxes` pe `ilmentufa master` ge'u .e
-##       `vlatai 0.38` .e `is_valid_lujvo` pe `jbofihe 0.43 master` ge'u .e `latkerlo-jvotci 2.4.0`
+##
+## ni'o le seljdi cu se tcidu de'i `2026-10-24` fi `camxes` pe `ilmentufa master` ge'u .e
+##     `vlatai 0.38` .e `is_valid_lujvo` pe `jbofihe 0.43 master` ge'u .e `latkerlo-jvotci 2.4.0`
 ##   .i lo pinka cu ciska zoi gy. jbofihe .gy. ta'i lo cmene be `is_valid_lujvo`
 ##   .i ki'u bo `vlatai` sepselcme
-##   .i va'o lo nu le samtci cu na tugni kei le vi selgu'a cu jersi `CLL` ta'i lo ka satci
+##
+## ni'o va'o lo nu le samtci cu na tugni kei le vi selgu'a cu jersi `CLL` ta'i lo ka satci
 ##   .i `4.11 step 4` to'e curmi ro lerjo'e poi le tadji na nitcu ke'a
 ##   .i se ki'u bo le cipra cu to'e curmi ro valsi poi vasru pa lerjo'e poi na seltcu
 ##   .iju lo na'e satci samtci cu curmi le valsi
-##   .i jdima fa di'e
+##
+## ni'o jdima fa di'e
 ##   .i le cipra cu frica `camxes` bu'u `y` .e `r` vu'o poi se jmina
 ##   .i le cipra cu frica `latkerlo` bu'u `r` poi se jmina
 ##   .i le cipra cu frica `jbofihe` bu'u `r` poi zvati lo jbini be `CVV` jo'u `CCV` poi fanmo le
 ##       valsi
-##   .i le cipra cu frica `jbofihe` bu'u `nlatu` ji'a
-##   .i `jbofihe` tcidu `nlatu` ta'i `CCVCV`
-##   .i le pinka cu tcidu lo selsku be le samtci ta'i di'e
+##   .i le cipra cu frica `jbofihe` bu'u `nlatu` ji'a noi `jbofihe` tcidu ke'a ta'i `CCVCV`
+##
+## ni'o le pinka cu tcidu lo selsku be le samtci ta'i di'e
 ##   .i va'o lo nu `vlatai` cusku `lujvo : to smabru` kei `vlatai` fendi le valsi re pagbu
 ##   .i se ki'u bo le selsku cu sinxa lo nu to'e curmi
 ##   .i `EXTENDED_LUJVO` noi seljdi `latkerlo` cmene pa tarmi poi bartu `CLL`
 ##   .i se ki'u bo le seljdi cu sinxa lo nu to'e curmi ji'a
-##   .i lo pinka cu cusku lo samtci poi tugni
+##
+## ni'o lo pinka cu cusku lo samtci poi tugni
 ##   .i lu ro samtci cu tugni li'u sinxa ro le vo samtci
 ##   .i lo'u ro samtci poi na du le'u lidne lo cmene be le samtci poi frica
 ##   .i `vlatai` .e `jbofihe` satci samtci
 ##   .i lo pinka cu cusku lo nu le re satci samtci cu frica
-##   .i lo ci zunsna poi na selcru gi'e zvati lo jonstu cu cpacu `y` ja'i lo tcaci pe `lujvo.nim`
+##
+## ni'o lo ci zunsna poi na selcru gi'e zvati lo jonstu cu cpacu `y` ja'i lo tcaci pe `lujvo.nim`
 ##   .i `4.11` na cusku le tcaci to `3.7` toi
 ##   .i ro samtci cu tugni fo ro valsi poi le samtci cu jdice fi ke'a
 

@@ -3,70 +3,81 @@
 ##   .i ba bo `Architect` jdice bu'u `#859` lo du'u lo nu jmina cu jmina ro porsi be lo pagbu poi
 ##       sruri lo srera
 ##   .i lo selci'a be fi `NIF` be'o pe lo pagbu be lo selci'a ge'u zi'e poi `toNifParts` ciska ke'a
-##       se jmina fo lo seldu'a be lo nu tcidu le mulno se ciska
+##       se jmina fo lo seldu'a be lo nu tcidu le mulselci'a
 ##   .i lo nu jmina cu to'e curmi no srera
-##   .i ro flalu cu jdice ja'i lo seldu'a be lo nu tcidu le mulno se ciska
+##
+## ni'o ro flalu cu jdice ja'i lo seldu'a be lo nu tcidu le mulselci'a
 ##   .i va'o lo nu lo nu tcidu le mulselci'a cu tcidu lo selci'a kei le selci'a cu se jmina fo lo
 ##       selci'a be fi `NIF` be'o poi `readText` ciska ke'a
 ##   .i ro lerfu cu mintu
 ##   .i `is_whole` jetnu
-##   .i lo selci'a poi no pagbu be ke'a cu vasru lo srejge cu se jmina fo le se tcidu poi sinxa ro
-##       srera ca lo nu tcidu le mulno se ciska to `readTextMarked` toi
+##
+## ni'o lo selci'a poi no pagbu be ke'a cu vasru lo srejge cu se jmina fo le se tcidu poi sinxa ro
+##     srera ca lo nu tcidu le mulno se ciska to `readTextMarked` toi
 ##   .i ro pagbu poi lo nu tcidu le mulselci'a cu ralte no valsi pe ke'a selvi'u ta'i lo nu lo nu
 ##       jmina cu vimcu le pagbu
 ##   .i ro pagbu poi su'o velru'e cu to'e curmi ke'a zvati lo stuzi pe vo'a
 ##   .i lo srejge cu gapru lo pagbu poi na seljo'e
-##   .i lo selci'a poi su'o pagbu be ke'a cu vasru lo srejge cu ralte ro pagbu poi vasru lo srejge
-##       ku'o gi'e na galfi le pagbu gi'e jmina ro porsi be lo pagbu poi zvati lo jbini be le pagbu
-##       ku'o be'o fo le se tcidu poi sinxa ro srera ca lo nu tcidu lo selci'a pe le porsi po'o
+##
+## ni'o lo selci'a poi su'o pagbu be ke'a cu vasru lo srejge cu ralte ro pagbu poi vasru lo srejge
+##     ku'o gi'e na galfi le pagbu gi'e jmina ro porsi be lo pagbu poi zvati lo jbini be le pagbu
+##     ku'o be'o fo le se tcidu poi sinxa ro srera ca lo nu tcidu lo selci'a pe le porsi po'o
 ##   .i di'u jetnu va'o lo nu le selci'a pe le porsi cu dunda le mi'uvla
 ##   .i lo valsi poi bancu lo krasi be le porsi cu se tcidu ta'i lo drata va'o lo nu le porsi cu se
 ##       tcidu po'o
 ##   .i mupli fa lo nu zo si .a zo sa .a zo zei .a zo bu galfi lo valsi poi lidne lo krasi be le
 ##       porsi
 ##   .i mupli fa lo nu lo nu sitna sepi'o zo lo'u .a zo la'o .a zo zoi cu bancu le krasi
-##   .i lo selci'a poi lo nu tcidu le mulselci'a cu to'e curmi ke'a ralte ro valsi pe lo pagbu pe
-##       vo'a ta'i lo porsi
+##
+## ni'o lo selci'a poi lo nu tcidu le mulselci'a cu to'e curmi ke'a ralte ro valsi pe lo pagbu pe
+##     vo'a ta'i lo porsi
 ##   .i ro pagbu poi lo nu tcidu le mulselci'a cu ralte no valsi pe ke'a selvi'u
 ##   .i se ki'u bo no porsi cu cirko lo pagbu poi lo flalu pe lo porsi cu na viska ke'a
-##   .i le flalu cu tcidu ro selci'a pe le selci'aste .e lo selci'a poi selzba fi lo valsi poi galfi
-##       lo pu valsi to `texts_built.nim` toi
+##
+## ni'o le flalu cu tcidu ro selci'a pe le selci'aste .e lo selci'a poi selzba fi lo valsi poi galfi
+##     lo pu valsi to `texts_built.nim` toi
 ##   .i ki'u bo le selci'aste cu vasru so'u lo selci'a poi vasru le valsi
 ##   .i ro selci'a cu selka'a re roi
-##   .i pa roi le selci'a cu selka'a ta'i lo nu tcidu le mulselci'a
-##   .i pa roi le selci'a cu selka'a ta'i lo mivyselci'a
-##   .i lo selci'a poi lo nu tcidu le mulselci'a cu to'e curmi ke'a gi'e vasru zo su zvati lo mupli
-##       po'o
+##   .i le selci'a cu pa roi selka'a ta'i lo nu tcidu le mulselci'a kei gi'e pa roi selka'a ta'i lo
+##       mivyselci'a
+##
+## ni'o lo selci'a poi lo nu tcidu le mulselci'a cu to'e curmi ke'a zi'e poi vasru zo su zvati lo
+##     mupli po'o
 ##   .i ki'u bo le se tcidu poi sinxa ro srera cu ralte lo selci'a poi lidne zo su
 ##   .i ku'i lo nu jmina cu vimcu le selci'a
-##   .i lo mivypau poi selka'a ba pa cfavla poi denpa cu ka'e frica lo pagbu pe lo nu tcidu le
-##       mulselci'a
+##
+## ni'o lo mivypau poi selka'a ba pa cfavla poi denpa cu ka'e frica lo pagbu pe lo nu tcidu le
+##     mulselci'a
 ##   .i ca lo nu tcidu pa pagbu po'o kei le gerna cu sisti bu'u lo stuzi poi le famvla cu ka'e zvati
 ##       ke'a
 ##   .i se ki'u bo lo nu jmina cu ralte le pagbu ta'i lo pagbu poi vasru pa srejge
 ##   .i ja lo pagbu cu se jmina fo pa datydraseltcidu
 ##   .i le se tcidu na vasru le famvla
-##   .i le flalu cu tcidu lo mivypau ta'i lo nu lo mivyselci'a cu katna lo selci'a
-##   .i ku'i le flalu na tcidu lo mivypau be lo se ciska poi lo jmive pagbu be ke'a na mapti le
-##       flalu to `EXAMPLES_LIVE` toi
-##   .i lo mupli cu jarco ro nu vimcu .e ro stuzi
+##
+## ni'o le flalu cu tcidu lo mivypau ta'i lo nu lo mivyselci'a cu katna lo selci'a
+##   .i ku'i le flalu na tcidu lo mivypau be lo selci'a poi lo mivypau be ke'a na mapti le flalu to
+##       `EXAMPLES_LIVE` toi
+##
+## ni'o lo mupli cu jarco ro nu vimcu .e ro stuzi
 ##   .i lo mupli cu vasru lo'u ni'o ni'o le'u .e zo tu'e .e lo'u .ibo le'u .e lo cmavo be zoi gy.
-##       COI .gy. be'o .e zo si .e zo su .e zo fa'o
-##   .i ji'a lo mupli cu vasru lo pagbu poi zvati lo stuzi pe vo'a ku'o .e lo porsi poi sruri lo
-##       srejge ku'o .e lo pagbu poi lidne zo su poi romoi ku'o gi'e rinka lo nu lo nu tcidu le
-##       mulselci'a cu to'e curmi le se ciska to `CLL 19.16` toi ku'o .e lo mivypau poi frica
+##       COI .gy. be'o .e zo si .e zo su .e zo fa'o .e lo pagbu poi zvati lo stuzi pe vo'a ku'o .e
+##       lo porsi poi sruri lo srejge ku'o .e lo pagbu poi lidne zo su poi romoi ku'o gi'e rinka lo
+##       nu lo nu tcidu le mulselci'a cu to'e curmi le se ciska to `CLL 19.16` toi ku'o .e lo
+##       mivypau poi frica
 ##   .i ro mupli cu jdice lo krasi be lo jgena poi vasru lo srera
 ##   .i le krasi cu du lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ce'o lo javni ce'o lo namcu
 ##   .i ja le krasi cu du lo pagbu ce'o lo valsi pe le pagbu
-##   .i lo nu rapyzba cu cirko no da
+##
+## ni'o lo nu rapyzba cu cirko no da
 ##   .i lo tricu poi ro jgena pe lo selci'a be fi `NIF` cu rapyzba ke'a rapci'a le jgena
 ##   .i ro lerfu cu mintu
 ##   .i le sinxa cu se kancu ji'a to `toNif` pe lo tricu .e lo pezli toi
 ##   .i le flalu cu tcidu ro selci'a pe le selci'aste ge'u .e ro selci'a poi selzba ku'o .e lo
 ##       selci'a poi selfi'i
 ##   .i ro nu katna cu se kancu
-##   .i lo selci'a be fi `NIF` be'o poi na se tcidu gi'a vasru lo tarmi poi le ciska na ciska ke'a
-##       se to'e curmi
+##
+## ni'o lo selci'a be fi `NIF` be'o poi na se tcidu gi'a vasru lo tarmi poi le ciska na ciska ke'a
+##     se to'e curmi
 ##   .i lo nu jmina cu no roi renro lo srera
 
 {.experimental: "strictFuncs".}
@@ -90,8 +101,8 @@ const
     ##   .i le selci'aste cu vasru pasovopa selci'a
     ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li pabicipa
   COUNT_PARTED_LEAST = 100
-    ## lo klani be lo selci'a pe le selci'aste zi'e poi lo nu tcidu le mulselci'a cu tcidu ke'a gi'e
-    ##     selka'a fi su'o re jgena
+    ## lo klani be lo selci'a pe le selci'aste zi'e poi lo nu tcidu le mulselci'a cu tcidu ke'a zi'e
+    ##     poi selka'a fi su'o re jgena
     ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li pacici
   COUNT_MARKED_LEAST = 350
     ## lo klani be lo selci'a poi lo nu tcidu le mulselci'a cu to'e curmi ke'a
@@ -115,8 +126,8 @@ const
     ## lo klani be lo selci'a poi selzba gi'e se tcidu ca lo nu tcidu le mulselci'a
     ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li rexaci
   COUNT_BUILT_SU_LEAST = 30
-    ## lo klani be lo selci'a poi selzba gi'e se tcidu ca lo nu tcidu le mulselci'a gi'e vasru zo su
-    ##     poi fanmo lo selci'a poi lidne zo su
+    ## lo klani be lo selci'a poi selzba gi'e se tcidu ca lo nu tcidu le mulselci'a kei gi'e vasru
+    ##     zo su poi fanmo lo selci'a poi lidne zo su
     ##   .i ca lo nu le flalu cu se jmina kei le klani cu du li voxa
   MARKS_TRAILING = {' ', '\t', '\n', '.', ','}
     ## lo sinxa poi zvati lo jbini be lo valsi gi'e fanmo lo selci'a
@@ -186,7 +197,7 @@ const
     ),
   ]
     ## lo selci'a poi selfi'i .e lo tricu poi lo pagbu be le selci'a cu se jmina fo ke'a
-    ##   .i ro lerfu pe le tricu cu mintu lo seldu'a be lo nu tcidu le mulno se ciska
+    ##   .i ro lerfu pe le tricu cu mintu lo seldu'a be lo nu tcidu le mulselci'a
   EXAMPLES_KEPT = [
     (text: "x su mi klama", count: 2, held: @[(0, "(rivbi Stream Shape 0 1 \"x\")")]),
       # le porsi be lo valsi cu tcidu le mulselci'a pu lo nu zo su vimcu
@@ -237,15 +248,15 @@ const
     ),  # lo pagbu cu se jmina fo lo drata se tcidu to no zo toi se lidne zo nai toi
   ]
     ## lo selci'a poi selzba
-    ##   .i lo mivypau be le se ciska cu na mapti lo flalu
+    ##   .i lo mivypau be le selci'a cu na mapti lo flalu
     ##   .i ku'i lo pagbu be le selci'a ta'i lo nu tcidu le mulselci'a cu mapti le flalu
-    ##   .i le ci selci'a cu pagbu lo cinonono selci'a poi selzba sepi'o lo tsiju pe le cipra ku'o
-    ##       gi'e selka'a ta'i ro lo re tadji
+    ##   .i le ci selci'a cu pagbu lo cinonono selci'a poi selzba sepi'o lo tsiju pe le cipra gi'e
+    ##       selka'a ta'i ro lo re tadji
     ##   .i lo namcu pe le ci selci'a cu du li panoremuso .e li pasopavopa .e li remucimuvo
-    ##   .i ro mupli cu vasru lo du'u xu kau lo nu tcidu le mulselci'a cu curmi le selci'a pe le
-    ##       mupli
-    ##   .i ji'a ro mupli cu vasru lo jgena poi lo nu jmina lo mivypau cu dunda ke'a ta'i le tarmi
-    ##       pe `EXAMPLES_KEPT`
+    ##
+    ## ni'o ro mupli cu vasru lo du'u xu kau lo nu tcidu le mulselci'a cu curmi le selci'a pe le
+    ##     mupli kei .e lo jgena poi lo nu jmina lo mivypau cu dunda ke'a ta'i le tarmi pe
+    ##     `EXAMPLES_KEPT`
   MODULES_MALFORMED = [
     ("", "should open with directives", -1),  # no minde
     (HEADER & "(sentence 0", "NIF should hold", -1),  # lo jgena poi no roi selfa'o
@@ -353,8 +364,8 @@ func isLiveDiffering(text: string): bool =
 func isHolding(nif: string, count: int, held: openArray[(int, string)]): bool =
   ## jdice lo du'u lo selci'a be fi `NIF` cu vasru lo jgena
   ##   .i lo klani be le jgena cu du `count`
-  ##   .i ji'a jdice lo du'u ro jgena poi vasru lo srejge .a lo pagbu poi se to'e curmi cu zvati lo
-  ##       namcu poi `held` dunda ke'a gi'e selkra lo seldu'a be `held`
+  ##   .i jdice lo du'u ro jgena poi vasru lo srejge .a lo pagbu poi se to'e curmi cu zvati lo namcu
+  ##       poi `held` dunda ke'a ku'o gi'e selkra lo seldu'a be `held`
   let lines = nif.splitLines[2 .. ^2]
   if lines.len != count: return false
   var indexes: seq[int]
@@ -394,9 +405,9 @@ func readTexts(): seq[
   ## tcidu ro selci'a pe le selci'aste
   ##   .i ba bo tcidu ro selci'a poi selzba
   ##   .i ro selci'a cu se tcidu pa roi mu'i lo flalu poi tcidu le selci'a
-  ##   .i le fancu cu dunda lo se tcidu pe lo nu tcidu le mulselci'a
-  ##   .i ji'a le fancu cu dunda lo selci'a be fi `NIF` be'o pe lo pagbu be le selci'a ta'i ro lo re
-  ##       tadji
+  ##
+  ## ni'o le fancu cu dunda lo se tcidu pe lo nu tcidu le mulselci'a kei gi'e dunda lo selci'a be fi
+  ##     `NIF` be'o pe lo pagbu be le selci'a ta'i ro lo re tadji
   ##   .i pa tadji cu du lo nu tcidu le mulselci'a
   ##   .i le drata cu du lo nu lo mivyselci'a cu katna le selci'a
   var
@@ -417,7 +428,8 @@ func isRunAlone(text: string, module: seq[NodeNif], k: int, inside, outside: var
   ##   .i di'u jetnu va'o lo nu le selci'a cu dunda le mi'uvla
   ##   .i ro stuzi poi lidne le jgena cu se basti lo kutle'u
   ##   .i le selci'a cu selka'a bu'u lo stuzi poi lo bavla'i jgena cu krasi bu'u ke'a
-  ##   .i va'o lo nu le selci'a cu dunda le mi'uvla kei le fancu cu kancu le jgena ne'i `inside`
+  ##
+  ## ni'o va'o lo nu le selci'a cu dunda le mi'uvla kei le fancu cu kancu le jgena ne'i `inside`
   ##   .i va'o lo drata le fancu cu kancu le jgena ne'i `outside`
   var (first, past) = (high(int), -1)
   module[k].span(first, past)

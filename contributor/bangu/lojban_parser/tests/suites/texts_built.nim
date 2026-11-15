@@ -5,8 +5,8 @@
 ##       fanmo le selci'a
 ##   .i lo sapyvla cu sruri le valsi
 ##   .i se ki'u bo le liste cu selci'a pa roi to `II.9` toi
-##   .i le zbasu cu cpacu le cupra be lo cunyna'u be'o pe le cipra
-##   .i le cipra cu dunda lo tsiju le cupra
+##
+## ni'o le zbasu cu cpacu le cupra be lo cunyna'u be'o pe le cipra noi dunda lo tsiju le cupra
 ##   .i se ki'u bo lo selci'a pe ro cipra cu selpra le cupra pe le cipra
 
 {.experimental: "strictFuncs".}
@@ -15,7 +15,7 @@ import std/strutils
 
 
 const
-  WORDS_BUILT_MOST = 14  ## lo rairterkancu be lo valsi pe lo se ciska poi se zbasu
+  WORDS_BUILT_MOST = 14  ## lo rairterkancu be lo valsi pe lo selci'a poi selzba
   WORDS_BUILT = [
     "mi", "do", "ko", "klama", "cadzu", "zarci", "broda", "le", "lo", "ku", "cu", "je", "bo", "nai",
     ".i", ".i", "ni'o", "si", "sa", "su", "zo", "lo'u", "le'u", "zoi", "gy", "la'o", "lu", "li'u",
@@ -31,7 +31,7 @@ const
 
 func textBuilt*[R](rng: var R): string =
   ## zbasu lo cunselci'a poi vasru lo valsi poi galfi lo pu valsi
-  ##   .i le zbasu cu pilno lo cupra be lo cunyna'u be'o poi `std/random` dunda ke'a le cipra
+  ##   .i pilno lo cupra be lo cunyna'u be'o poi `std/random` dunda ke'a le cipra
   mixin rand
   var words: seq[string]
   for k in 0 ..< rng.rand(1 .. WORDS_BUILT_MOST): words.add WORDS_BUILT[rng.rand(WORDS_BUILT.high)]

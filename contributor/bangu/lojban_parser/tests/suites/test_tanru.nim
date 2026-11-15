@@ -3,53 +3,62 @@
 ##   .i lo selci'avla .e lo tanru .e lo namcu cu fukpi lo selci'a be `CLL` gi'e no roi fukpi lo
 ##       jalge be le genturfa'i
 ##   .i se ki'u bo le cipra cu cipra lo se tcidu gi'e na rapli le se tcidu
-##   .i `CLL 4.13` cusku lo du'u `V` pe zo gerzda du li ci
-##   .i la'e di'u srera
+##
+## ni'o `CLL 4.13` sresku lo du'u `V` pe zo gerzda du li ci
 ##   .i ku'i lo sumji po'u li mubizebi cu drani
 ##   .i le cipra cu cipra lo du'u le sumji cu du li mubizebi
-##   .i lo pinka be lo lujvo poi `CLL` dunda ke'a gi'e na fendi ke'a lo rafsi cu cusku lu lo nu
-##       fendi cu se sruma li'u
-##   .i lo pinka be lo valsi poi no krasi cu vasru ke'a cu cusku lu le valsi cu se zbasu li'u
-##   .i lo javni cu jdice
+##
+## ni'o lo pinka be lo lujvo poi `CLL` dunda ke'a gi'e na fendi ke'a lo rafsi cu cusku lu lo nu
+##     fendi cu selru'a li'u
+##   .i lo pinka be lo valsi poi no krasi cu vasru ke'a cu cusku lu le valsi cu selzba li'u
+##
+## ni'o lo javni cu jdice
 ##   .i lo liste cu dunda lo cmene po'o to `#823` toi
 ##   .i le cipra cu jarco lo du'u lo selci'a poi lo javni cu curmi ke'a se tcidu
 ##   .iju lo liste cu vasru le selci'a
 ##   .i le cipra cu karbi ro nu to'e curmi lo javni pe `CLL` ge'u zi'e poi le nu to'e curmi cu cusku
 ##       ke'a
-##   .i lo sinxa be lo porsi be lo valsi cu se cipra ta'i `Stream`
+##
+## ni'o lo sinxa be lo porsi be lo valsi cu se cipra ta'i `Stream`
 ##   .i `readStream` tcidu le sinxa
 ##   .i `test_stream.nim` cipra lo lerfu po'u slaka bu .e lo brale'u vu'o poi `CLL` ciska ke'a ne'i
 ##       lo valsi to `CLL 3.3` .e `CLL 3.9` toi
-##   .i lo te kancu be lo tanru cu na se jimte
+##
+## ni'o lo te kancu be lo tanru cu na se jimte
 ##   .i se ki'u bo lo jvacipra cu tcidu lo cuntau poi lo tsiju cu jdice ke'a
 ##   .i lo te kancu be lo gismu pe ro le tanru cu cmima li pa bi'o li vo
 ##   .i ro le gismu cu selcu'a fi lo'i gismu pe le liste
-##   .i lo jvacipra cu tcidu ji'a ro cmima be le liste to `Article IX.3` toi
-##   .i lo jvacipra poi ciska lo tanru gi'e xrutcidu le selci'a cu tcidu ji'a lo tanru poi lo tsiju
-##       cu jdice ke'a
+##   .i lo jvacipra cu tcidu ro cmima be le liste to `Article IX.3` toi
+##
+## ni'o lo jvacipra poi ciska lo tanru gi'e xrutcidu le selci'a cu tcidu ji'a lo tanru poi lo tsiju
+##     cu jdice ke'a
 ##   .i lo te kancu be lo valsi pe ro le tanru cu cmima li pa bi'o li xa
 ##   .i su'o le valsi cu cmavo
 ##   .i ki'u bo lo lujvo cu vasru ji'a lo rafsi be lo cmavo to `CLL 4.6` toi
-##   .i lo valsi poi no liste cu vasru ke'a se cipra ji'a
+##
+## ni'o lo valsi poi no liste cu vasru ke'a se cipra ji'a
 ##   .i le cipra cu tcidu ro lerpoi poi seltai lo tarmi be lo gismu
-##   .i le cipra cu tcidu ji'a lo lujvo poi lo tsiju cu jdice ke'a gi'e se gunma lo rafsi poi selzba
+##   .i le cipra cu tcidu lo lujvo poi lo tsiju cu jdice ke'a zi'e poi se gunma lo rafsi poi selzba
 ##       lo lerfu ja'i ro tarmi
 ##   .iju lo liste cu dunda le rafsi lo valsi to `Article IX.4` toi
-##   .i le se karbi pe lo cmaraina'u cu liste ro rafsi poi `CLL 4.11 step 1` .e `CLL 4.11 step 2`
-##       curmi ke'a
+##
+## ni'o le se karbi pe lo cmaraina'u cu liste ro rafsi poi `CLL 4.11 step 1` .e `CLL 4.11 step 2`
+##     curmi ke'a
 ##   .i `brod` noi selpo'e su'o re gismu cu cmima le liste
 ##   .i le se karbi cu ralte lo selci'avla poi se tcidu ta'i le tanru
 ##   .i le cipra cu karbi lo namcu pe lo selci'a be `$` lo cmaraina'u pe le selci'avla
 ##   .i jdima fa lo nu lo te kancu be lo nu jmina .e lo nu tcidu ne'i ro tanru cu na zmadu `4^n`
 ##   .i `n` du lo te kancu be lo gismu pe le tanru
-##   .i le mulsisku cu dunda lo namcu ro porsi be lo selcu'a poi `$` tcidu ke'a
-##   .i le mulsisku cu ralte le pamoi be le porsi poi ponse lo cmaraina'u
+##
+## ni'o le mulsisku cu dunda lo namcu ro porsi be lo selcu'a poi `$` tcidu ke'a ku'o gi'e ralte le
+##     pamoi be le porsi poi ponse lo cmaraina'u
 ##   .i `$` ciska le mintu tarmi to `IX.2` toi
-##   .i `searchLowest` po'o cuxna le mitpoi ne'i lo cunste be lo te cuxna
+##   .i `searchLowest` po'o cuxna le mitpoi ne'i lo cunste be lo tercu'a
 ##   .i ne'i le liste lo mitna'u .e lo tcini be lo porsi pe `CLL 4.11 step 5` cu so'i roi jdice
 ##   .i lo jdima be ro le re mulsisku cu du lo pilji be lo te kancu be lo se cuxna pe ro stuzi
-##   .i lo se cipra ca na vasru lo nu karbi lo cmaraina'u pe lo tanru poi vasru su'o pano valsi kei
-##       le mulsisku
+##
+## ni'o lo se cipra ca na vasru lo nu karbi lo cmaraina'u pe lo tanru poi vasru su'o pano valsi kei
+##     le mulsisku
 ##   .i pa tanru poi vasru pabi valsi cu se karbi fi le mulsisku ne'i ro lo krasi pagbu po'o poi lo
 ##       te kancu be lo valsi pe ke'a na zmadu `COUNT_PREFIX_MAX`
 
@@ -83,12 +92,12 @@ const
     ##     ke'a
     ##   .i ro le mupli cu vasru su'o re gismu gi'e vasru no gismu poi du zo brodi .a zo brodo .a zo
     ##       brodu gi'e na romoi
-    ##   .i li zepaso le mupli cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i zepaso le mupli cu se tcidu va'o lo tsiju po'u `0`
     ##   .i lo nu ci fi'u vo lo mupli cu se tcidu cu se kanpe
   FLOOR_SEARCH = 3400
     ## lo cmajimte be lo te kancu be lo cunso tanru poi lo javni cipra be lo nu sisku cu cipra `$`
     ##     sepi'o ke'a
-    ##   .i li cimunono le tanru cu se tcidu va'o lo tsiju pe le sorcu
+    ##   .i cimunono le tanru cu se tcidu va'o lo tsiju pe le sorcu
     ##   .i la'e di'u du ro lo cunselcu'a
   FLOOR_BROKEN = 3
     ## lo cmajimte be lo te kancu be le cunso tanru poi `CLL 4.11 step 5` punji `y` lo pamoi te
@@ -97,7 +106,7 @@ const
   FLOOR_LUJVO_LIST = 3700
     ## lo cmajimte be lo te kancu be lo linji pe `lujvo.txt` ge'u zi'e poi se tcidu ta'i lo tanru
     ##     poi vasru su'o re valsi
-    ##   .i li cibireno le linji cu se tcidu
+    ##   .i cibireno le linji cu se tcidu
   SAMPLES_OPTIONS = 5000
     ## lo te kancu be lo cunso liste be lo te cuxna be'o poi lo javni cipra be lo nu sisku cu cuxna
     ##     ke'a
@@ -105,18 +114,18 @@ const
   FLOOR_TIE = 2500
     ## lo cmajimte be lo te kancu be le liste poi lo romoi be lo porsi poi ponse lo cmalu traji
     ##     namcu cu frica lo pamoi be le porsi
-    ##   .i li rebipano le liste cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i rebipano le liste cu se tcidu va'o lo tsiju po'u `0`
   FLOOR_STATE = 45
     ## lo cmajimte be lo te kancu be le liste poi lo nu sisku poi na pilno lo tcini be lo porsi cu
     ##     cuxna lo drata
-    ##   .i li mubi le liste cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i mubi le liste cu se tcidu va'o lo tsiju po'u `0`
   COUNT_PREFIX_MAX = 9
     ## lo brajimte be lo te kancu be lo valsi pe lo krasi pagbu be lo clani tanru be'o poi se karbi
     ##     fi lo mulno sisku
   FLOOR_FINAL_CMAVO = 25
     ## lo cmajimte be lo te kancu be lo rafsi be lo cmavo be'o poi se tarmi `CVV` .a `CCV` gi'e ka'e
     ##     fanmo lo valsi gi'e se tcidu lo javni cipra be lo fanmo stuzi
-    ##   .i li cino le rafsi cu selvau le liste
+    ##   .i cino le rafsi cu selvau le liste
   SAMPLES_CMAVO = 500
     ## lo te kancu be lo cunso tanru poi lo remoi javni cipra be lo nu ciska gi'e xruti tcidu cu
     ##     cuxna ke'a
@@ -130,11 +139,11 @@ const
     ##   .i se ki'u bo lo nu li xa cu jimte cu ralte lo nu le cipra cu sutra
   FLOOR_CMAVO = 220
     ## lo cmajimte be lo te kancu be le tanru poi vasru lo cmavo
-    ##   .i li remuvo le tanru cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i remuvo le tanru cu se tcidu va'o lo tsiju po'u `0`
   FLOOR_SHARED = 20
     ## lo cmajimte be lo te kancu be le tanru poi vasru zo brodi .a zo brodo .a zo brodu vu'o poi na
     ##     romoi
-    ##   .i li reze le tanru cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i reze le tanru cu se tcidu va'o lo tsiju po'u `0`
   SAMPLES_FORMS = 2000
     ## lo te kancu be lo cunso lujvo poi se gunma lo rafsi poi se zbasu lo lerfu sepi'o ro tarmi
     ##   .i lo tsiju cu jdice le lujvo
@@ -144,10 +153,10 @@ const
     ##   .i lo nu lo lerfu cu zunsna cu cunso fi li pa fi'u re
   FLOOR_FUHIVLA = 1400
     ## lo cmajimte be lo te kancu be le lerpoi poi se tcidu ta'i lo fu'ivla
-    ##   .i li pamuvomu le lerpoi cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i pamuvomu le lerpoi cu se tcidu va'o lo tsiju po'u `0`
   FLOOR_CMENE = 4800
     ## lo cmajimte be lo te kancu be le lerpoi poi se tcidu ta'i lo cmene
-    ##   .i li munovoci le lerpoi cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i munovoci le lerpoi cu se tcidu va'o lo tsiju po'u `0`
   SAMPLES_JOINED = 2000
     ## lo te kancu be lo cunso se jmina
     ##   .i ro se jmina cu se gunma pa cmavo .a re cmavo vu'o pe lo liste ge'u zi'e poi selkra lo
@@ -155,12 +164,13 @@ const
     ##   .i ro se jmina cu se gunma ji'a pa gismu pe lo liste ge'u zi'e poi seltai `CCVCV`
     ##   .i le cmavo cu lidne le gismu
     ##   .i lo tsiju cu jdice le se jmina
-    ##   .i no javni pe `CLL 4.9` nitcu lo denpa bu'u lo jbini be le valsi
+    ##
+    ## ni'o no javni pe `CLL 4.9` nitcu lo denpa bu'u lo jbini be le valsi
     ##   .i lo zunsna remei poi krasi le gismu cu zvati le mu lerfu poi krasi le se jmina ta'i lo
     ##       brivla to `CLL 4.3` toi
   FLOOR_JOINED = 140
     ## lo cmajimte be lo te kancu be le se jmina poi se to'e curmi ta'i lo valsi gunma
-    ##   .i li pamuxa le se jmina cu se tcidu va'o lo tsiju po'u `3`
+    ##   .i pamuxa le se jmina cu se tcidu va'o lo tsiju po'u `3`
     ##   .i so'e lo datseljmina cu se tcidu ta'i lo lujvo poi ponse lo srelerjo'e ku'o gi'a vasru lo
     ##       zunsna remei poi se lidne lo mumoi lerfu
   CONSONANTS_LETTERS = "bcdfgjklmnprstvxz"  ## lo paze zunsna pe `CLL 3.1`
@@ -168,7 +178,7 @@ const
     ## lo cmajimte be lo te kancu be lo cunso lujvo poi vasru lo rafsi poi le liste cu dunda ke'a no
     ##     valsi
     ##   .i ro le lujvo cu se gunma lo rafsi poi selzba lo lerfu
-    ##   .i li pazevoci le lujvo cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i pazevoci le lujvo cu se tcidu va'o lo tsiju po'u `0`
     ##   .i ki'u bo so'e lo rafsi poi selzba lo lerfu cu sinxa no valsi ne'i ro tarmi
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"
     ## lo lerfu .e lo sinxa vu'o pe `CLL 3.1`
@@ -194,8 +204,8 @@ const
   SPELLINGS_CLL_REFUSED = ["patta'a", "mudsiclu", "ro'ire'o", "ro'irre'o"]
     ## ro selci'avla pe le vomoi ckupau be `CLL` ge'u zi'e poi le cipra cu sitna ke'a zi'e poi le
     ##     tcidu cu to'e curmi ke'a
-    ##   .i ro le selci'avla cu vasru lo lerjo'e poi `CLL 4.6` to'e curmi ke'a gi'a du lo ma'orgunma
-    ##       be re cmavo
+    ##   .i ro le selci'avla cu vasru lo lerjo'e poi `CLL 4.6` to'e curmi ke'a ku'o gi'a du lo
+    ##       ma'orgunma be re cmavo
   WORDS_GISMU = block:
     ## ro gismu pe le liste ta'i lo stuna'u
     ##   .i lo cmavo poi ponse lo rafsi cu na selvau
@@ -229,20 +239,20 @@ const
     ##   .i le lerfu poi pilno ci stuzi cu du lo krule'u poi simsa zoi gy. ' .gy. ku'o .e lo xrale'u
     ##       .e `U+FFFD` .e lo pamoi .e lo romoi
     ##   .i le lerfu poi pilno vo stuzi cu du lo sa'ormekle'u .e lo cnixra .e lo pamoi .e lo romoi
-    ##   .i le se cipra cu se ganzu gi'e na du le mulselcipra
-    ##   .i lo cunle'u poi lo tsiju cu jdice ke'a se tcidu ne'i lo datpau be le mulno se cipra
+    ##
+    ## ni'o le se cipra cu se ganzu gi'e na du le mulselcipra
+    ##   .i lo cunle'u poi lo tsiju cu jdice ke'a se tcidu ne'i lo datpau be le mulselcipra
     ##   .i lo te kancu be le cunso lerfu cu du `SAMPLES_FOREIGN`
   SAMPLES_FOREIGN = 1000
     ## lo te kancu be lo cunso lerfu poi na cmima `ASCII` gi'e se tcidu lo javni cipra pe `Letter`
     ##   .i lo tsiju cu jdice le lerfu
-    ##   .i lo te kancu be lo stuzi pe `UTF-8` cu selcu'a pu lo drata
-    ##   .i le te kancu cu cmima li re bi'o li vo
+    ##   .i lo te kancu be lo stuzi pe `UTF-8` cu selcu'a pu lo drata gi'e cmima li re bi'o li vo
     ##   .i ba bo lo lerna'u poi pilno le te kancu cu selcu'a
     ##   .i se ki'u bo ro linji pe `Table 3-6` cu so'i roi se tcidu
   FLOOR_FOREIGN = 950
     ## lo cmajimte be lo te kancu be lo cunso lerfu poi me `scalar value`
     ##   .i lo me `surrogate` cu selvi'u
-    ##   .i li sobixa le lerfu cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i sobixa le lerfu cu se tcidu va'o lo tsiju po'u `0`
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"
     ## lo paze zunsna poi `C` sinxa ke'a ja'i `CLL 4.1 rule 3`
   ORDER_VOWELS = "aeiou"
@@ -350,7 +360,8 @@ func searchExhaustive(
   ##   .i dunda le pamoi .e le romoi vu'o pe lo porsi poi ponse lo cmaraina'u
   ##   .i se ki'u bo lo jvacipra cu viska lo nu lo porsi be le tercu'a cu jdice va'o lo nu lo namcu
   ##       cu mintu
-  ##   .i lo jvacipra cu karbi `searchLowest` .e `$` le vi mulno sisku to `IX.2` toi
+  ##
+  ## ni'o lo jvacipra cu karbi `searchLowest` .e `$` le vi mulno sisku to `IX.2` toi
   ##   .i le mulsisku cu pilno lo namcu pe `CLL 4.12`
   ##   .i va'o lo nu `as_stateless` jetnu kei le mulsisku cu pilno lo namcu poi na pilno lo tcini be
   ##       lo porsi
@@ -377,7 +388,8 @@ func choicesTanru(tanru: Tanru): seq[seq[string]] =
 func renderExhaustive(tanru: Tanru): string =
   ## ciska lo tanru ta'i lo nu dunda lo namcu ro porsi be lo selcu'a poi `$` tcidu ke'a
   ##   .i le pamoi be le porsi poi ponse lo cmaraina'u cu selra'e
-  ##   .i lo jvacipra cu karbi `$` le vi mulno sisku to `IX.2` toi
+  ##
+  ## ni'o lo jvacipra cu karbi `$` le vi mulno sisku to `IX.2` toi
   ##   .i le re tadji cu pilno lo mitselcu'a .e lo mitpoi .e lo mitna'u pe `CLL 4.12`
   ##   .i lo temci be le mulsisku cu binxo lo pilji be lo pu temci ca ro nu jmina pa valsi
   ##   .i se ki'u bo lo jvacipra cu pilno le mulsisku ne'i lo tordu tanru po'o
@@ -396,7 +408,8 @@ proc drawOptions(): seq[seq[seq[string]]] =
   ##   .i lo te kancu be lo rafsi pe ro stuzi cu cmima li pa bi'o li vo
   ##   .i ro rafsi cu seltai pa tarmi poi `CLL 4.11 step 1` .e `CLL 4.11 step 2` curmi ke'a bu'u le
   ##       stuzi
-  ##   .i lo nu lo rafsi poi na romoi cu seltai `CVC` cu cunso fi li pa fi'u re
+  ##
+  ## ni'o lo nu lo rafsi poi na romoi cu seltai `CVC` cu cunso fi li pa fi'u re
   ##   .i se ki'u bo lo porsi pe `CLL 4.11 step 5` cu so'i roi kalri
   ##   .i ro rafsi poi seltai pa tarmi cu ponse lo mitna'u ta'i lo nu sepli
   ##   .i se ki'u bo lo mitna'u cu so'i roi zasti ji'a
@@ -416,19 +429,18 @@ proc drawOptions(): seq[seq[seq[string]]] =
 
 
 let OPTIONS_DRAWN = drawOptions()
-  ## lo cunste be lo te cuxna be'o poi lo jvacipra be lo nu sisku cu tcidu ke'a
+  ## lo cunste be lo tercu'a be'o poi lo jvacipra be lo nu sisku cu tcidu ke'a
   ##   .i le liste cu selcu'a pa roi
 
 
 iterator optionsDrawn(): lent seq[seq[string]] =
-  ## dunda ro cunste be lo te cuxna gi'e fukpi no da
+  ## dunda ro cunste be lo tercu'a gi'e fukpi no da
   for i in 0..<OPTIONS_DRAWN.len: yield OPTIONS_DRAWN[i]
 
 
 func isBrokenFirst(text: string): bool =
   ## jdice lo du'u le valsi cu vasru `y` noi `CLL 4.11 step 5` punji ke'a lo pamoi te jorne
-  ##   .i lo pamoi rafsi cu seltai `CVC`
-  ##   .i `y` se lidne le rafsi
+  ##   .i lo pamoi rafsi cu seltai `CVC` gi'e lidne `y`
   ##   .i `CLL 4.11 step 4b` na punji `y` bu'u le terjo'e ki'u lo nu le zunsna remei cu selcru gi'e
   ##       zbasu no zunsna cimei poi se to'e curmi
   let reading = text.readWord
@@ -516,7 +528,8 @@ proc drawTanruCmavo(): seq[Tanru] =
   ##   .i lo te kancu be le tanru cu du `SAMPLES_CMAVO`
   ##   .i lo te kancu be lo valsi pe ro tanru cu cmima li pa bi'o `COUNT_WORDS_CMAVO_MAX`
   ##   .i lo tsiju cu jdice le tanru
-  ##   .i lo romoi valsi cu gismu
+  ##
+  ## ni'o lo romoi valsi cu gismu
   ##   .i lo nu lo valsi poi na romoi cu cmavo cu cunso fi li pa fi'u ci
   ##   .i va'o lo drata lo nu le valsi cu du zo brodi .a zo brodo .a zo brodu cu cunso fi li pa fi'u
   ##       remu
@@ -640,8 +653,7 @@ suite "Chapter 4":
     #   .i se ki'u bo no liste cu vasru le cmavo
     check "ku'a'e".readWord.selmaho.isNone  # `CLL 4.2`
     check "klama".readWord.selmaho.isNone  # ja'i `CLL 4.3` no brivla cu ponse lo selma'o
-    # lo rafsi po'u `kau` sinxa zo kampu
-    #   .i le rafsi na sinxa lo cmavo
+    # lo rafsi po'u `kau` sinxa zo kampu gi'e na sinxa lo cmavo
     #   .i le valsi cu selzba
     check "kauzba".readWord.selmaho.isNone  # lo rafsi po'u `kau` sinxa zo kampu
     for text in ["iseci'i", "punaijecanai", "da'amei"]:

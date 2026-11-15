@@ -3,19 +3,21 @@
 ##   .i lo cmene .e lo porsi be le cmene cu fukpi lo selci'a pe `CLL 20` gi'e no roi fukpi lo
 ##       selci'a be le samtci
 ##   .i se ki'u bo le cipra cu cipra le cmene gi'e na rapci'a le cmene
-##   .i `CLL 20` dunda lo cmene ro selma'o sepi'o pa cmavo poi sinxa le selma'o
+##
+## ni'o `CLL 20` dunda lo cmene ro selma'o sepi'o pa cmavo poi sinxa le selma'o
 ##   .i se ki'u bo le cmavo poi selci'a ja'i le cmene cu cmima le selma'o ne'i le ma'oste
 ##   .i le cipra cu cipra di'u fi ro cmene
-##   .i lo cipra cu cipra lo du'u lo nu sisku cu mintu lo nu sisku fi ro cmima be `LIST_CMAVO` ta'i
-##       lo porsi
-##   .i le vi cipra cu ciska le nu sisku ta'i lo porsi gi'e na pilno lo nu sisku pe `dictionary.nim`
-##       zi'e noi fendi lo liste fi re pagbu
+##
+## ni'o lo cipra cu cipra lo du'u lo nu sisku cu mintu lo nu sisku fi ro cmima be `LIST_CMAVO` ta'i
+##     lo porsi
+##   .i le vi cipra cu ciska le nu sisku ta'i lo porsi kei gi'e na pilno lo nu sisku pe
+##       `dictionary.nim` zi'e noi fendi lo liste fi re pagbu
 ##   .i le cipra cu tcidu ro cmima be le liste be'o .e lo cmavo poi selcu'a lo tsiju gi'e selga'i pa
 ##       lerfu to `Article IX.3` toi
-##   .i lo flalu pe `cmavo.txt` tcidu `cmavo.txt` ta'i lo selci'a poi na pagbu le vi se gunka to
-##       `texts_outside.nim` toi
-##   .i le flalu cu na se cipra va'o lo nu `cmavo.txt` na zvati gi'a muvdu fo lo stuzi poi se jgari
-##       to `Article IX.9` toi
+##
+## ni'o lo flalu pe `cmavo.txt` tcidu `cmavo.txt` ta'i lo selci'a poi na pagbu le vi selgu'a ku'o to
+##     `texts_outside.nim` toi gi'e na se cipra va'o lo nu `cmavo.txt` na zvati gi'a muvdu fo lo
+##     stuzi poi se jgari to `Article IX.9` toi
 ##   .i lo linji poi vasru pa cmavo po'o cu se tcidu
 ##   .i le se tcidu cu vasru lo selma'o poi le linji cu dunda ke'a
 ##   .i lo ma'orgunma cu se fendi fi lo cmavo poi le liste cu vasru ke'a

@@ -3,10 +3,10 @@
 ##   .i ciska ji'a le notci pe le cukta lo datnyvei poi lamji le datnyvei pe `Nim`
 ##   .i le cipra pe le selci'agri cu tcidu le datnyvei
 ##   .i `build.nim` pilno le vi datnyvei
-##   .i tcidu lo papri be `CLL 1.1` be'o noi selci'a bau `XHTML` gi'e selzba de'i `2016-08-26`
+##
+## ni'o tcidu lo papri be `CLL 1.1` be'o noi selci'a bau `XHTML` gi'e selzba de'i `2016-08-26`
 ##   .i `lojban.org` benji le papri
-##   .i ro papri cu vasru pa ckupaupau
-##   .i ro papri cu selra'e ne'i pa datnyvei poi selcme lo cmene be le papri
+##   .i ro papri cu vasru pa ckupaupau gi'e selra'e ne'i pa datnyvei poi selcme lo cmene be le papri
 ##   .i ro le datnyvei cu zvati pa datnyveiste
 ##   .i ciska `tests/cll/examples.nim` .e `tests/cll/NOTICE.md`
 ##
@@ -15,43 +15,52 @@
 ##   .i ro selci pe pa lijgri pe pa liste cu jorne lo bavla'i selci pa kutle'u
 ##   .i lo kutsle cu selvi'u
 ##   .i ro ju'agri cu binxo pa linji
-##   .i lo linji pe lo klesi po'u `pronunciation-jbo` .a `compound-cmavo-jbo` na se lebna
+##
+## ni'o lo linji pe lo klesi po'u `pronunciation-jbo` .a `compound-cmavo-jbo` na se lebna
 ##   .i ki'u bo le cukta cu jdice fi ro le linji ne'i lo prosa
 ##   .i `test_stream.nim` .e `test_forms.nim` vasru le seljdi poi selci'a ta'i lo nu na'e zmiku gi'e
 ##       sitna le mupli
-##   .i lo linji cu ralte le selci'a pe le cukta
+##
+## ni'o lo linji cu ralte le selci'a pe le cukta
 ##   .i le selci'a cu vasru lo grile'u .e lo sinxa poi na lojbo
 ##   .i se ki'u bo le cipra pe le selci'agri cu jdice lo du'u ma kau poi linji cu se tcidu
 ##   .i le nu lebna cu no roi jdice di'u
-##   .i lo kutle'u poi fanta lo nu katna le linji cu zvati lo jbini be lo valsi pe lo selci
+##
+## ni'o lo kutle'u poi fanta lo nu katna le linji cu zvati lo jbini be lo valsi pe lo selci
 ##   .i le kutle'u cu binxo lo sapkutle'u
 ##   .i ro porsi be lo kutle'u cu binxo pa kutle'u
 ##   .i lo tcita poi zvati ne'i le linji cu selvi'u
-##   .i lo mupli cu selna'u va'o lo nu lo cmene pe le jgena po'u `div.example` pe le mupli cu mintu
-##       `Example N.M.`
+##
+## ni'o lo mupli cu selna'u va'o lo nu lo cmene pe le jgena po'u `div.example` pe le mupli cu mintu
+##     `Example N.M.`
 ##   .i lo mupli poi vasru no jboli'i cu na se lebna
 ##   .i va'o lo nu pa namcu cu seldu'a re roi kei le minde cu fliba gi'e cusku le namcu
-##   .i pa sinxa pe `SHA-256` stosni le papri
+##
+## ni'o pa sinxa pe `SHA-256` stosni le papri
 ##   .i le sinxa cu selzba fi lo selsku be `sha256sum`
 ##   .i `sha256sum` tcidu ro papri poi se tcidu ku'o ta'i lo porsi poi selcmu lo cmene be le papri
 ##   .i le papri cu du ro papri poi vasru su'o mupli ku'o .e le papri pe `CLL 1.8` zi'e noi vasru le
 ##       notci
 ##   .i va'o lo nu `lojban.org` galfi pa papri kei lo minde po'u `cll` to'e curmi
 ##   .i le minde cu no roi rapci'a le selra'e ta'i lo nu smaji
-##   .i le notci cu se tcidu fi `CLL 1.8`
+##
+## ni'o le notci cu se tcidu fi `CLL 1.8`
 ##   .i le selci'a cu mintu le notci pe le cukta ro valsi
 ##   .i le notci poi srana lo nu curmi cu cpedu di'u ro gafyfu'i
 ##   .i se ki'u bo le datnyveiste poi vasru le se lebna cu selbe'i ja'i le notci po'o
-##   .i le sabji pe `lojban.org` mipri lo samjudri pe le notci ne'i pa mifselkai pe pa jgena po'u
-##       `span`
+##
+## ni'o le sabji pe `lojban.org` mipri lo samjudri pe le notci ne'i pa mifselkai pe pa jgena po'u
+##     `span`
 ##   .i le minde cu fanva le mifra
 ##   .i se ki'u bo le notci cu mintu le selci'a pe le cukta
-##   .i jdima fa lo nu le papri cu se tcidu ta'i `XML` ba lo nu ro jgena po'u `script` selvi'u
+##
+## ni'o jdima fa lo nu le papri cu se tcidu ta'i `XML` ba lo nu ro jgena po'u `script` selvi'u
 ##   .i `XHTML` pe le cukta cu me `XML`
 ##   .i le jgena po'u `script` vasru `&` poi `XML` to'e curmi ke'a ku'o gi'e vasru no mupli
 ##   .i va'o lo nu pa papri cu selbe'i ta'i `HTML` po'o kei le tcidu be `XML` cu fliba gi'e cusku le
 ##       cmene be le papri
-##   .i jdima fa lo nu le sinxa cu se tcidu sepi'o `sha256sum` noi drata samtci
+##
+## ni'o jdima fa lo nu le sinxa cu se tcidu sepi'o `sha256sum` noi drata samtci
 ##   .i `lists.nim` pilno ji'a `sha256sum`
 
 {.experimental: "strictFuncs".}
@@ -95,8 +104,7 @@ type
 
 const
   DIGEST_CLL* = "5baac481b4483b5efc2099de46b3cdc24f741db8ee6f6ed41b80a3aad659fa55"
-    ## lo sinxa pe `SHA-256`
-    ##   .i le sinxa cu sinxa le papri be `CLL 1.1` be'o poi selzba de'i `2016-08-26`
+    ## lo sinxa pe `SHA-256` zi'e poi sinxa le papri be `CLL 1.1` be'o poi selzba de'i `2016-08-26`
     ##   .i `lojban.org` benji le papri
   URL_CLL* = "https://lojban.org/publications/cll/cll_v1.1_xhtml-section-chunks/"
     ## lo judri poi le papri cu selcpa fi ke'a
@@ -223,7 +231,7 @@ func classLine(node: XmlNode): string =
 func addLinesRow(lines: var seq[Line], row: XmlNode) =
   ## jmina le linji pe le lijgri pe lo liste
   ##   .i va'o lo nu pa selci po'o cu vasru lo jgena pe lo linji kei ro le jgena cu dunda pa linji
-  ##   .i va'o lo datyjmina pa linji poi jorne le selci
+  ##   .i va'o lo drata ku jmina pa linji poi jorne le selci
   let
     class_row = row.attr("class")
     class_plain = (if class_row.len > 0: class_row else: "plain")
@@ -301,8 +309,8 @@ func paragraphsNotice(page: XmlNode): seq[string] =
 #[ ni'o ni'o ni'o lo nu tcidu ]#
 
 proc readDigest(directory: string, names: openArray[string]): string =
-  ## zbasu pa sinxa pe `SHA-256` lo selsku be `sha256sum` poi tcidu le papri poi se cmene ku'o ja'i
-  ##     le porsi be lo cmene
+  ## zbasu pa sinxa pe `SHA-256` lo selsku be `sha256sum` poi tcidu le papri poi selcme ku'o ja'i le
+  ##     porsi be lo cmene
   let (output, code) = execCmdEx(
     "sha256sum " & names.mapIt(quoteShell(it)).join(" "), workingDir = directory
   )
@@ -313,8 +321,8 @@ proc readDigest(directory: string, names: openArray[string]): string =
 
 
 proc readBook*(directory: string): Book =
-  ## tcidu ro papri pe le datnyveiste
-  ##   .i dunda lo mupli .e le notci pe `CLL 1.8` ge'u .e le sinxa be le papri poi se tcidu
+  ## tcidu ro papri pe le datnyveiste gi'e dunda lo mupli .e le notci pe `CLL 1.8` ge'u .e le sinxa
+  ##     be le papri poi se tcidu
   var names: seq[string]
   for kind, name in walkDir(directory, relative = true):
     if kind == pcFile and name.endsWith(".html"): names.add name
@@ -420,9 +428,8 @@ func linesQuoted(paragraph: string): seq[string] =
 
 
 func toNotice*(book: Book): string =
-  ## ciska le notci pe le cukta
-  ##   .i ciska ji'a lo selsku be lo du'u le datnyveiste cu vasru ma kau kei .e lo du'u le se vasru
-  ##       cu se lebna ta'i ma kau
+  ## ciska le notci pe le cukta gi'e ciska lo selsku be lo du'u le datnyveiste cu vasru ma kau kei
+  ##     .e lo du'u le selvau cu se lebna ta'i ma kau
   var lines = @[
     "# Notice",
     "",

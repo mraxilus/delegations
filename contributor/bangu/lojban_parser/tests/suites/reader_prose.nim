@@ -4,15 +4,16 @@
 ##   .i lo selci'a poi se tcidu cu du lo selci'a poi re glicipra cu tcidu ke'a
 ##   .i se ki'u bo ca lo nu le re cipra cu na tcidu lo prosa pe le vi selgu'a ja'i `#817` kei ro le
 ##       prosa cu se tcidu su'o cipra
-##   .i le vi datnyvei cu tcidu ro rospau poi `english.nim` pe `curator/audit/src/` tcidu ke'a ne'i
-##       le ci vreji
-##   .i ji'a le vi datnyvei cu tcidu ro pinka poi le cipra be lo gadri cu tcidu ke'a
+##
+## ni'o le vi datnyvei cu tcidu ro rospau poi `english.nim` pe `curator/audit/src/` tcidu ke'a ne'i
+##     le ci vreji ku'o .e ro pinka poi le cipra be lo gadri cu tcidu ke'a
 ##   .i le javni be lo nu fendi lo rospau cu fukpi lo javni pe `english.nim` .e `fencedOut` pe
 ##       `markdown.nim`
 ##   .i le vi selgu'a cu pilno no da pe `curator`
 ##   .i se ki'u bo lo nu cikre pa le re datnyvei cu na mulno pu lo nu le drata datnyvei cu se cipra
 ##       ja'i `Article II.9`
-##   .i ro samtci pagbu cu se tcidu ta'i pa cmene
+##
+## ni'o ro samtci pagbu cu se tcidu ta'i pa cmene
 ##   .i le vi datnyvei cu sitna le samtci pagbu sepi'o zo la'o pu lo nu le genturfa'i cu tcidu le
 ##       samtci pagbu
 ##   .i se ki'u bo le gerna cu tcidu le samtci pagbu ta'i pa sumti ja'i le soze moi javni pe
@@ -20,44 +21,51 @@
 ##   .i `Architect` jdice di'u bu'u `#818` ta'i `D1 a`
 ##   .i zo zo poi lidne lo samtci pagbu cu se to'e curmi ki'u lo nu zo zo ka'e sitna zo la'o poi le
 ##       vi datnyvei cu jmina ke'a
-##   .i lo judryjo'e cu se tcidu ta'i lo selci'a pe vo'a
+##
+## ni'o lo judryjo'e cu se tcidu ta'i lo selci'a pe vo'a
 ##   .i lo sinxa be lo nu basna cu selvi'u
-##   .i ro pinka cu se tcidu ta'i pa selci'a
-##   .i le pinka cu selpau lo lamli'i noi ro ke'a selkra lo mitsni bu'u lo mitstu
+##
+## ni'o ro pinka cu se tcidu ta'i pa selci'a gi'e selpau lo lamli'i noi ro ke'a selkra lo mitsni
+##     bu'u lo mitstu
 ##   .i `Architect` jdice di'u bu'u `#818` ta'i `D3 a`
-##   .i va'o lo nu pa linji pe lo pinka cu pagbu lo cartu kei ro pagbu be le linji cu se tcidu ta'i
-##       pa selci'a ki'u lo nu le cipra be lo gadri cu tcidu ji'a le linji
+##
+## ni'o va'o lo nu pa linji pe lo pinka cu pagbu lo cartu kei ro pagbu be le linji cu se tcidu ta'i
+##     pa selci'a ki'u lo nu le cipra be lo gadri cu tcidu ji'a le linji
 ##   .i lo linji pe lo cartu poi vasru no valsi cu na se tcidu
 ##   .i lo stesni poi krasi pa linji pe lo pinka mu'u `- ` sinxa gi'e na valsi
 ##   .i se ki'u bo le stesni cu na se tcidu
 ##   .i lo stesni pe lo vreji cu na se tcidu ji'a
-##   .i lo datnypau poi lo cipra cu tcidu ke'a ta'i lo cmene cu na prosa gi'e stali ta'i lo nu lo
-##       cipra cu nitcu ja'i le mumoi sarcu pe `#817`
+##
+## ni'o lo datnypau poi lo cipra cu tcidu ke'a ta'i lo cmene cu na prosa gi'e stali ta'i lo nu lo
+##     cipra cu nitcu ja'i le mumoi sarcu pe `#817`
 ##   .i `glossary.nim` tcidu ta'i lo cmene le linji be lo valsi be'o .e le linji poi selkra
 ##       `_Avoid_` ne'i le vlaste
 ##   .i `provenance.nim` tcidu ta'i lo cmene lo sitna be lo cipra be'o poi selkra `Verified by`
 ##   .i le vi datnyvei cu tcidu lo prosa poi sruri ro le datnypau
-##   .i lo sitna cu datnypau va'o lo nu `provenance.nim` facki le sitna
+##
+## ni'o lo sitna cu datnypau va'o lo nu `provenance.nim` facki le sitna
 ##   .i le cipra cu facki le sitna va'o lo nu le re valsi .e le lerfu po'u `backtick` zvati pa linji
 ##       ki'u lo nu le cipra cu tcidu le mulno datnyvei
 ##   .i lo sitna poi se fendi fi lo fanmo be lo linji cu prosa
 ##   .i se ki'u bo le vi datnyvei cu tcidu le sitna
-##   .i ro pagbu poi no genvla cu vasru ke'a srera
-##   .i ro stuzi poi le gerna cu sisti bu'u ke'a srera ji'a
+##
+## ni'o ro pagbu poi no genvla cu vasru ke'a srera
+##   .i ro stuzi poi le gerna cu sisti bu'u ke'a srera
 ##   .i ro srera cu zvati le pamoi lerfu pe le valsi pe vo'a
-##   .i ro valsi poi zo si .a zo sa .a zo su vimcu ke'a srera ji'a
-##   .i zo fa'o .e ro se lidne be zo fa'o cu srera ji'a
+##
+## ni'o ro valsi poi zo si .a zo sa .a zo su vimcu ke'a srera
+##   .i zo fa'o .e ro se lidne be zo fa'o cu srera
 ##   .i lo prosa pe lo vreji cu vimcu no da gi'e fanmo no da
 ##   .i se ki'u bo ro le valsi cu na se sitna
 ##   .i ku'i le ciska be le valsi cu djica lo nu le valsi cu se sitna
 ##
-## ni'o ji'a le vi datnyvei cu facki lo srera be lo nu punji lo selci'a fi lo linji ja'i `#818`
+## ni'o le vi datnyvei cu facki lo srera be lo nu punji lo selci'a fi lo linji ja'i `#818`
 ##   .i ro jufra cu krasi pa linji
 ##   .i ro ju'agri pe lo vreji cu selkra zo ni'o
 ##   .i ro stedu pe lo vreji poi se tcidu cu selkra su'o re cmavo po'u zo ni'o
-##   .i le genturfa'i cu facki ro krasi be lo jufra fi lo tricu
-##   .i se ki'u bo zo .i poi zvati lo se sitna cu krasi no jufra
-##   .i ji'a zo .i poi se lidne zo zo krasi no jufra
+##
+## ni'o le genturfa'i cu facki ro krasi be lo jufra fi lo tricu
+##   .i se ki'u bo zo .i poi zvati lo se sitna ku'o .e zo .i poi se lidne zo zo krasi no jufra
 ##   .i ku'i zo .i poi zvati lo se jmina be zo to cu krasi pa jufra
 ##
 ## ni'o jdima fa lo nu le tcidu be lo pinka cu facki lo lerpoi .e lo lerfu .e lo cmene poi se sitna
@@ -74,7 +82,7 @@ import ../../src/lojban_parser/[grammar, prose, selmaho, stream]
 type
   Place* = object
     ## lo stuzi be pa lerfu ne'i lo datnyvei
-    ##   .i le stuzi cu du lo namcu pe lo linji .e lo namcu pe lo lerfu ne'i le linji
+    ##   .i le stuzi cu du lo namcu pe lo linji ge'u .e lo namcu pe lo lerfu ne'i le linji
     ##   .i ro le re namcu cu selkra li pa
     line*: int  ## lo namcu pe le linji
     column*: int  ## lo namcu pe le lerfu ne'i le linji
@@ -114,7 +122,7 @@ type
     place*: Place  ## lo stuzi be le srera
     why*: string  ## lo krinu be lo nu to'e curmi be'o .a lo javni poi le gerna cu sisti ne'i ke'a
 
-  Piece = tuple[c: char, place: Place]  ## pa lerfu pe lo datnyvei .e lo stuzi pe le lerfu
+  Piece = tuple[c: char, place: Place]  ## pa lerfu pe lo datnyvei ge'u .e lo stuzi pe le lerfu
 
 
 const
@@ -326,7 +334,7 @@ func textsRecord*(path, markdown: string): seq[Text] =
   ## tcidu ro rospau pe le vreji ta'i pa selci'a
   ##   .i le rospau cu du ro stecmi .e ro porsi be lo sapli'i ta'i lo nu `blocks` pe `english.nim`
   ##       tcidu
-  ##   .i ji'a ro stedu cu se tcidu ta'i pa selci'a
+  ##   .i ro stedu cu se tcidu ta'i pa selci'a
   ##   .i ku'i le stedu be le vreji .e lo stedu poi lo cipra cu tcidu ke'a ta'i lo cmene cu na se
   ##       tcidu
   ##   .i ro lerfu cu se tcita lo stuzi pe vo'a
@@ -690,12 +698,14 @@ func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
   ## dunda ro srera be lo nu punji le selci'a fi lo linji ja'i lo seljdi pe `#818`
   ##   .i `lines` du ro linji pe le datnyvei
   ##   .i `marked` se tcidu fi le selci'a
-  ##   .i ro krasi be lo jufra .e lo ju'agri cu krasi lo linji
+  ##
+  ## ni'o ro krasi be lo jufra .e lo ju'agri cu krasi lo linji
   ##   .i `INDENT_SENTENCE` jdice lo stuzi be lo na pamoi jufra
   ##   .i ku'i ne'i lo stecmi lo jufra poi na pamoi cu zvati lo stuzi be le pamoi lerfu pe le stecmi
   ##   .i `INDENT_BROKEN` jdice lo stuzi be lo linji poi lo jufra cu ranji ke'a
   ##   .i ro ju'agri pe lo pinka cu se lidne lo linji poi vasru lo sinxa be le pinka po'o
-  ##   .i `checked` se jmina lo klani be lo linji poi le vi fancu cu cipra ke'a
+  ##
+  ## ni'o `checked` se jmina lo klani be lo linji poi le vi fancu cu cipra ke'a
   template fault(at: Place, reason: string) =
     result.add Error(path: text.path, place: at, why: reason)
   if text.opening >= 0:
@@ -758,7 +768,7 @@ func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
 
 func texts*(path, content: string): seq[Text] =
   ## tcidu ro selci'a pe lo datnyvei ja'i lo klesi be le datnyvei
-  ##   .i le klesi cu du lo vreji .a lo samtci pe `Nim` .a lo papri
+  ##   .i le klesi cu du lo vreji .a lo samtci pe `Nim` ge'u .a lo papri
   let extension = path.splitFile.ext
   if extension == ".md": path.textsRecord(content)
   elif extension in [".nim", ".nimble"]: path.textsSource(content)

@@ -21,9 +21,10 @@
 ##   .i le papri cu cusku le fanmo ba lo nu cusku ro linji
 ##   .i no linji cu selsku ba le fanmo
 ##   .i se to'e cuxna fa `fetch` noi lo nu ke'a cpedu cu ka'e klama ta'i lo datpoi
-##   .i ro srera poi le papri cu renro ke'a .a ro nupre poi le papri cu to'e curmi ke'a zi'e noi no
-##       fancu cu spuda ke'a selsku gi'e rinka lo nu le nu cipra cu sisti sepi'o lo famna'u poi du
-##       li pa
+##
+## ni'o ro srera poi le papri cu renro ke'a .a ro nupre poi le papri cu to'e curmi ke'a zi'e noi no
+##     fancu cu spuda ke'a selsku gi'e rinka lo nu le nu cipra cu sisti sepi'o lo famna'u poi du li
+##     pa
 ##   .i se ki'u bo lo nu cipra poi spofu cu fliba ca lo nu spofu
 ##   .i le nu cipra cu na denpa lo rairtei pe le sabji samtci
 
@@ -103,8 +104,7 @@ proc reportError(event: JsObject) =
 
 
 proc initReporter*() =
-  ## cusku ro cipra pe `unittest` le sabji samtci
-  ##   .i le sabji samtci cu basti `console`
+  ## cusku ro cipra pe `unittest` le sabji samtci noi basti `console`
   ##   .i cusku ji'a ro srera poi le papri cu renro ke'a
   addOutputFormatter(ReporterPage())
   SELF.addEventListener(cstring("error"), reportError)

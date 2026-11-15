@@ -57,17 +57,20 @@
 ##   .i no jitro samtci cu dunda pa minde lo drata samtci
 ##   .i se ki'u bo le tadji cu zvati ro le re jitro samtci to `II.9` toi
 ##   .i va'o lo nu le drata na se cipra kei lo nu cikre pa le re jitro samtci cu na mulno
-##   .i `CONTRIBUTOR.md` cusku lo minde po'u `head` tezu'e lo nu cipra lo barselsitna poi cenba
+##
+## ni'o `CONTRIBUTOR.md` cusku lo minde po'u `head` tezu'e lo nu cipra lo barselsitna poi cenba
 ##   .i lo bakfu cu ka'e bevri lo ninste ca lo nu no da selpu'i vi
 ##   .i no nu jmina cu denpa lo minde po'u `head`
 ##   .i lo minde po'u `head` tcidu `lujvo.txt` tezu'e lo sinxa namcu po'o
 ##   .i ki'u bo lo cipra cu tcidu `lujvo.txt` ta'i lo datselci'a gi'e zbasu no datnyvei fi
 ##       `lujvo.txt`
-##   .i se to'e cuxna fa lo nu tcidu lo liste fi le vasru pe le bakfu ca lo nu fanva kei noi rinka
-##       lo nu ro nu zbasu cu nitcu le bakfu
+##
+## ni'o se to'e cuxna fa lo nu tcidu lo liste fi le vasru pe le bakfu ca lo nu fanva kei noi rinka
+##     lo nu ro nu zbasu cu nitcu le bakfu
 ##   .i lo liste poi selpu'i cu sabji ro nu zbasu
 ##   .i lo minde po'u `head` zgana lo krasi be le liste
-##   .i jdima fa lo nu le jitro samtci cu selpli bu'u le vasru pe le vi selgu'a
+##
+## ni'o jdima fa lo nu le jitro samtci cu selpli bu'u le vasru pe le vi selgu'a
 ##   .i ki'u bo ro judri vi cu selkra le vasru
 
 {.experimental: "strictFuncs".}
@@ -231,8 +234,9 @@ proc writeJavascript(): int =
   ##     datnyvei cu barda
   ##   .i le fanva cu du le fanva poi pu fanva le vi jitro samtci
   ##   .i le jitro samtci no roi pilno lo datfanva po'u `nim` poi `PATH` vasru ke'a
-  ##   .i `-d:release` ralte ro cipra gi'e vimcu lo vreji be lo nu pilno lo fancu be'o .e lo vreji
-  ##       be lo linji to `config/nim.cfg` pe le selstofanva toi
+  ##
+  ## ni'o `-d:release` ralte ro cipra gi'e vimcu lo vreji be lo nu pilno lo fancu be'o .e lo vreji
+  ##     be lo linji to `config/nim.cfg` pe le selstofanva toi
   ##   .i lo cipra pe `tests/browser/` se fanva sepi'o `-d:release` ji'a
   ##   .i se ki'u bo le cipra cu cipra le selzba poi selbe'i lo pilno
   ##   .i se to'e cuxna fa `-d:danger` noi vimcu ro cipra be lo korbi .e lo selku'e le selzba poi lo

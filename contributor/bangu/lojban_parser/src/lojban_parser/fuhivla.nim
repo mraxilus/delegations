@@ -4,13 +4,15 @@
 ##       cmavo ja gismu ja lujvo
 ##   .i ji'a lo cmavo poi seltai `CV` gi'e jorne lo crane be lo fu'ivla cu zbasu no lujvo
 ##   .i le cipra be di'u cu selcme zoi gy. slinku'i test .gy. bu'u `CLL 4.7`
-##   .i lo vlagunma cu jorne lo valsi
-##   .i no denpa cu zvati lo jbini be lo valsi pe le vlagunma ja'i lo de'ajva pe `CLL 4.9`
+##
+## ni'o lo vlagunma cu jorne lo valsi poi no denpa cu zvati lo jbini be ke'a ja'i lo de'ajva pe
+##     `CLL 4.9`
 ##   .i `forms.nim` ralte le javni
 ##   .i lo re valsi poi nitcu lo denpa ne'i lo jbini be ke'a na jorne ne'i lo selba'u
 ##   .i le vlagunma cu vajni va'o po'o lo nu ri basna lo slaka poi lidne le romoi slaka
-##   .i lo fu'ivla cu basna ji'a le slaka
-##   .i jdima fa lo nu le vlagunma cu fendi le selci'a pa roi bu'u ro lerfu
+##   .i lo fu'ivla cu basna le slaka
+##
+## ni'o jdima fa lo nu le vlagunma cu fendi le selci'a pa roi bu'u ro lerfu
 ##   .i le cipra po'u `slinku'i test` fendi lo bimu valsi poi seljo'e ku'o ta'i lo lujvo
 ##   .i ro cmavo poi seltai `CV` krasi pa le valsi
 ##   .i se ki'u bo lo temci be le cipra cu du lo temci be lo bimu nu pilno `splitLujvo`
@@ -35,14 +37,16 @@ func combination*(text: string): Option[seq[string]] =
   ##   .i no denpa cu zvati lo jbini be lo valsi to `CLL 4.9` toi
   ##   .i jarco no da va'o lo nu le lerfu cu curmi no le ve fendi
   ##   .i lo fu'ivla cu nitcu lo nu no le ve fendi cu se curmi to `CLL 4.7` toi
-  ##   .i lo vlagunma cu vajni va'o lo nu lo sance be ri cu simsa lo sance be lo fu'ivla
+  ##
+  ## ni'o lo vlagunma cu vajni va'o lo nu lo sance be ri cu simsa lo sance be lo fu'ivla
   ##   .i lo brivla cu basna le slaka poi lidne le romoi slaka to `CLL 3.9` toi
   ##   .i se ki'u bo le brivla cu basna lo slaka poi lo fu'ivla cu basna ke'a va'o po'o lo nu le
   ##       brivla cu fanmo le vlagunma
   ##   .i lo cmavo poi lidne le brivla cu ka'e basna su'o slaka .a no slaka
   ##   .i se ki'u bo `spageti` na du lo vlagunma po'u `spage ti`
   ##   .i `CLL 4.7` xusra lo du'u `spageti` fu'ivla
-  ##   .i lo ma'orgunma cu se fendi pu ro zunsna ta'i lo nu `splitCompound` fendi
+  ##
+  ## ni'o lo ma'orgunma cu se fendi pu ro zunsna ta'i lo nu `splitCompound` fendi
   ##   .i lo cmavo poi selkra lo karsna gi'e zvati lo ma'orgunma cu nitcu lo denpa
   ##   .i se ki'u bo no ve fendi cu vasru lo cmavo poi selkra lo karsna
   for j in 1 ..< text.len:

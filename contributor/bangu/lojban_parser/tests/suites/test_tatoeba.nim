@@ -1,26 +1,30 @@
-## cipra le genturfa'i sepi'o `prose.nim` .e lo stomupli be fi lo lojbo jufra pe `Tatoeba`
+## cipra le genturfa'i sepi'o `prose.nim` .e lo stomupli be fi lo jboju'a pe `Tatoeba`
 ##   .i ro jufra cu ralte lo seljdi poi le genturfa'i pu dunda ke'a ca lo nu ciska
 ##   .i ro jufra poi se to'e curmi cu na'e mapti lo javni pe `CLL` zi'e poi vi se sitna
-##   .i le mupli cu du `tests/sample_tatoeba/sentences.nim` noi lo minde po'u `tatoeba` pe
-##       `tools/build.nim` ciska ke'a
-##   .i le mupli cu seljva le crujva pe `Tatoeba` noi selci'a fi lo datnyvei poi lamji le mupli to
-##       `D4 c` pe `#819` toi
+##
+## ni'o le mupli cu du `tests/sample_tatoeba/sentences.nim` noi lo minde po'u `tatoeba` pe
+##     `tools/build.nim` ciska ke'a ku'o gi'e seljva le crujva pe `Tatoeba` zi'e noi selci'a fi lo
+##     datnyvei poi lamji le mupli to `D4 c` pe `#819` toi
 ##   .i lo samtci bakfu no roi ciska le mupli
-##   .i lo jufra poi se tcidu cu bilga lo nu se tcidu
+##
+## ni'o lo jufra poi se tcidu cu bilga lo nu se tcidu
 ##   .i lo jufra poi se to'e curmi cu bilga lo nu le genturfa'i cu dunda lo mintu nu to'e curmi kei
 ##       .e lo mi'ujva
 ##   .i se ki'u bo va'o lo nu lo nu galfi le genturfa'i cu galfi su'o seljdi kei le cipra cu fliba
 ##       gi'e cusku le jufra
-##   .i ro jufra pe le mupli zi'e poi se to'e curmi cu se lanli ja'i `CLL 1.1` vi
+##
+## ni'o ro jufra pe le mupli zi'e poi se to'e curmi cu se lanli ja'i `CLL 1.1` vi
 ##   .i lo sitna pe ro le jufra cu cusku le javni poi le jufra cu na'e mapti ke'a
 ##   .i lo nu to'e curmi cu cusku le javni poi lo nu tcidu cu sisti ne'i ke'a
 ##   .i lo nu sisti cu ka'e fasnu ba le javni poi le jufra cu na'e mapti ke'a
-##   .i le mupli cu jarco ro tcila poi le mupli pu jarco ke'a
+##
+## ni'o le mupli cu jarco ro tcila poi le mupli pu jarco ke'a
 ##   .i le cipra cu karbi lo te kancu be le tcila `COUNT_FEATURES_TATOEBA`
 ##   .i lo se tcidu .e lo tcila cu selkra `tools/tatoeba.nim`
 ##   .i se ki'u bo le cipra jo'u le minde cu skicu le se tcidu .e le tcila pa roi to `Article II.9`
 ##       toi
-##   .i le mupli ca na gacri lo javni poi no jufra pe le vreji cu jarco ke'a
+##
+## ni'o le mupli ca na gacri lo javni poi no jufra pe le vreji cu jarco ke'a
 ##   .i le javni cu du `rp-expression` jo'u `rp-operand` vu'o pe lo mekso pe `reverse Polish`
 ##   .i `test_grammar.nim` cipra le re javni sepi'o `CLL 18.16`
 
@@ -87,8 +91,7 @@ const IDS_REFUSED = [
   #   .i `lo` no roi lidne lo cmene
   #   .i le jufra cu vasru `lo tom`
   2577894,  # le javni pe li soze
-  # lo cmavo be `NAhE` cu lidne lo valsi poi le cmavo cu natfe ke'a
-  #   .i lo cmavo be `NAhE` no roi zvati lo fanmo
+  # lo cmavo be `NAhE` cu lidne lo valsi poi le cmavo cu natfe ke'a ku'o gi'e no roi zvati lo fanmo
   #   .i le jufra cu vasru `je'a`
   2626994,  # le javni pe li sozere
   # `bei` lidne lo me `term`
@@ -133,8 +136,7 @@ const IDS_REFUSED = [
   # lo lerfu po'u slaka bu cu fendi lo slaka pe pa porsi be lo lerfu gi'e zvati lo stuzi poi no
   #     denpa cu ka'e zvati ke'a
   4225380,  # `CLL 3.3`
-  # `je ca bo` lidne lo selbri
-  #   .i `je ca bo` no roi lidne `cu`
+  # `je ca bo` lidne lo selbri gi'e no roi lidne `cu`
   4226728,  # le javni pe li pacimu
   # `i'e` .e `ei'e` selkra lo karsna
   #   .i se ki'u bo le selci'a cu bilga lo nu denpa bu cu lidne pa le re valsi
@@ -155,8 +157,8 @@ const IDS_REFUSED = [
   #   .i `je` no roi jongau lo namcu
   #   .i le jufra cu vasru `pa je su'e`
   5183488,  # le javni pe li cibici
-  # lo brale'u cu sinxa lo slaka poi se basna ku'o .a lo karsna pe le slaka
-  #   .i lo brale'u no roi sinxa lo zunsna po'o
+  # lo brale'u cu sinxa lo slaka poi se basna ku'o .a lo karsna pe le slaka gi'e no roi sinxa lo
+  #     zunsna po'o
   #   .i le jufra cu vasru `Mi`
   5912012,  # `CLL 3.9`
   # `ne` lidne lo me `term`

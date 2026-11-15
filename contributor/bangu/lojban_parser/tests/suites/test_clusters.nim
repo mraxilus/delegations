@@ -25,7 +25,7 @@ const
 
 
 func unvoiced(c: char): char =
-  ## dunda lo na'e voksa zunsna poi le voksa zunsna cu kansa ke'a ne'i le liste pe `CLL 3.6`
+  ## dunda lo na'e voksa zunsna poi kansa le voksa zunsna ne'i le liste pe `CLL 3.6`
   for (voiced, partner) in LUT_UNVOICED_BY_VOICED:
     if voiced == c: return partner
   c

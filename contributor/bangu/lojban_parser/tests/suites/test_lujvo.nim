@@ -5,34 +5,41 @@
 ##   .i va'o lo nu `CLL` dunda lo valsi gi'e na dunda lo rafsi pe le valsi kei le cipra cu sruma le
 ##       te fendi
 ##   .i lo pinka cu cusku di'u
-##   .i `CLL` dunda no mupli be lo cipra pe `tosmabru` to `step 5` pe `CLL 4.11` toi
+##
+## ni'o `CLL` dunda no mupli be lo cipra pe `tosmabru` to `step 5` pe `CLL 4.11` toi
 ##   .i se ki'u bo lo valsi pe `lujvo.txt` zi'e poi nitcu le cipra cu basti le mupli
 ##   .i lo valsi poi le cipra cu zbasu ke'a kansa le valsi gi'e se tcita lo pinka poi cusku di'u
 ##   .i pa cipra cu cipra lo du'u `lujvo.txt` ciska ro le valsi pe `lujvo.txt`
-##   .i ja'i lo javni pe `lujvo.nim` zi'e noi `CLL 4.11` na cusku ke'a ku'o lo terjo'e poi zbasu lo
-##       zunsna cimei poi se to'e curmi cu cpacu `y`
+##
+## ni'o ja'i lo javni pe `lujvo.nim` zi'e noi `CLL 4.11` na cusku ke'a ku'o lo terjo'e poi zbasu lo
+##     zunsna cimei poi se to'e curmi cu cpacu `y`
 ##   .i lo cipra po'u `Internal: Convention` cusku lo mupli poi le javni cu galfi ke'a
-##   .i va'o lo nu lo lerjo'e poi seltcu gi'e se lidne lo cmarafsi cu selvi'u kei no lujvo cu stali
+##
+## ni'o va'o lo nu lo lerjo'e poi seltcu gi'e se lidne lo cmarafsi cu selvi'u kei no lujvo cu stali
 ##   .i le cipra cu cipra di'u
-##   .i ku'i no smijva cu drani va'o lo nu le lerjo'e cu se lidne lo rafsi poi vasru vo lerfu
+##
+## ni'o ku'i no smijva cu drani va'o lo nu le lerjo'e cu se lidne lo rafsi poi vasru vo lerfu
 ##   .i lo nu vimcu `y` cu ka'e rinka lo nu lo datrafsi cu stali gi'e se jmina ja'i `CLL 4.11`
 ##       sepi'o no lerjo'e
 ##   .i mupli fa lo nu zo kramliste se fendi fi `kra` jo'u `mli` jo'u `ste`
 ##   .i papabi lo sososoxa terjo'e poi simsa ku'o pe le girzu cu rapselfendi
 ##   .i le namcu cu selmre
 ##   .i se ki'u bo le cipra cu xusra no da fi le rafsi poi vasru vo lerfu
-##   .i lo jvacipra pe `lujvo.txt` tcidu `lujvo.txt` ta'i lo drata se ciska to `texts_outside.nim`
-##       toi gi'e na zukte va'o lo nu `lujvo.txt` na zvati gi'a cenba to `Article IX.9` toi
-##   .i le jvacipra cu sitna fi ro linji poi na mapti ke'a gi'e cusku lo krinu
+##
+## ni'o lo jvacipra pe `lujvo.txt` tcidu `lujvo.txt` ta'i lo drata se ciska to `texts_outside.nim`
+##     toi gi'e na zukte va'o lo nu `lujvo.txt` na zvati gi'a cenba to `Article IX.9` toi
+##   .i le jvacipra cu sitna fi ro linji poi na mapti ke'a ku'o gi'e cusku lo krinu
 ##   .i se ki'u bo va'o lo nu le liste .a le genturfa'i cu cenba kei le cipra cu fliba gi'e cusku le
 ##       valsi poi frica
 ##   .i va'o lo nu le liste cu na tugni `CLL` kei le krinu cu cusku le selsra be `CLL`
-##   .i lo cunjvacipra cu tcidu pa girzu be lo porsi be lo rafsi
+##
+## ni'o lo cunjvacipra cu tcidu pa girzu be lo porsi be lo rafsi
 ##   .i le girzu cu selzba pa roi sepi'o lo tsiju po'u `0`
 ##   .i se ki'u bo ro jvacipra cu tcidu le mitmupli
 ##   .i no jvacipra cu rapyzba lo mupli
-##   .i lo remoi girzu cu zbasu ro rafsi fi lo lerfu poi mapti lo tarmi be le rafsi to
-##       `rafsi_random.nim` toi
+##
+## ni'o lo remoi girzu cu zbasu ro rafsi fi lo lerfu poi mapti lo tarmi be le rafsi to
+##     `rafsi_random.nim` toi
 ##   .i se ki'u bo le cipra cu cipra lo nu fendi ji'a ne'i lo rafsi poi no liste cu dunda ke'a to
 ##       `Article IX.4` toi
 ##   .i ro porsi pe lo cimoi girzu cu selkra lo porsi be lo rafsi poi seltai `CVC`
@@ -88,9 +95,9 @@ const
     ##     jdice lo du'u lo zunsna remei pe ke'a na selcru
     ##   .i mucirexa le rafsi cu se tcidu
   LENGTH_MIN = 2
-    ## lo mecraiterkancu be lo rafsi pe pa cunso porsi
+    ## lo mecraiterkancu be lo rafsi pe pa cunpoi
     ##   .i ro lujvo cu vasru su'o re rafsi to `CLL 4.6` toi
-  LENGTH_MAX = 5  ## lo zmaraiterkancu be lo rafsi pe pa cunso porsi
+  LENGTH_MAX = 5  ## lo zmaraiterkancu be lo rafsi pe pa cunpoi
   ENTRIES_FLOOR_LOJBAN = 3000
     ## lo cmima be le jvoste be'o poi selci'a ta'i lo jbosni zi'e poi ro pagbu be ke'a cu bilga lo
     ##     nu selste
@@ -214,7 +221,8 @@ proc drawRafsi(): seq[seq[string]] =
   ##     curmi ke'a
   ##   .i `SAMPLES` te kancu le porsi
   ##   .i lo tsiju cu jdice le porsi pa roi
-  ##   .i pamoi fa lo nu cuxna lo tarmi ta'i lo nu ro tarmi cu dunli fi lo ka ce'u la'erselcu'a
+  ##
+  ## ni'o pamoi fa lo nu cuxna lo tarmi ta'i lo nu ro tarmi cu dunli fi lo ka ce'u la'erselcu'a
   ##   .i remoi fa lo nu cuxna lo rafsi poi seltai le tarmi
   ##   .i se ki'u bo lo nu cuxna lo rircytai mu'u `CCVC` .e `CV'V` cu dunli lo nu cuxna `CVC` lo ka
   ##       ce'u lakne
@@ -265,16 +273,18 @@ proc drawSequencesRun(): seq[seq[string]] =
   ##     `CLL 4.11` tcidu ke'a
   ##   .i `SAMPLES_RUN` te kancu le porsi
   ##   .i lo tsiju cu jdice le porsi
-  ##   .i le krapoi cu se gunma lo rafsi poi seltai `CVC`
+  ##
+  ## ni'o le krapoi cu se gunma lo rafsi poi seltai `CVC`
   ##   .i lo te kancu be le rafsi cu du li pa bi'o li vo
   ##   .i ro terjo'e ne'i le krapoi zo'u bapli lo nu le terjo'e cu zbasu lo zunsna remei poi ka'e
   ##       krasi lo valsi kei ne'i pa fi'u re lo nu cuxna
   ##   .i la'e di'u fasnu va'o lo nu su'o zunsna remei poi ka'e krasi lo valsi cu selkra lo zunsna
   ##       poi lidne le terjo'e
   ##   .i se ki'u bo ro nu cuxna cu selfa'o
-  ##   .i ne'i pa fi'u re lo nu cuxna le romoi rafsi cu seltai `CVCCV` gi'e vasru lo zunsna remei
-  ##       poi ka'e krasi lo valsi gi'e jorne le krapoi sepi'o lo zunsna remei poi ka'e krasi lo
-  ##       valsi ku'o va'o lo nu su'o le simsa zunsna remei cu cumki
+  ##
+  ## ni'o ne'i pa fi'u re lo nu cuxna kei le romoi rafsi cu seltai `CVCCV` gi'e vasru lo zunsna
+  ##     remei poi ka'e krasi lo valsi ku'o gi'e jorne le krapoi sepi'o lo zunsna remei poi ka'e
+  ##     krasi lo valsi ku'o va'o lo nu su'o le simsa zunsna remei cu cumki
   ##   .i va'o lo drata le romoi rafsi cu seltai lo tarmi poi `step 2` curmi ke'a
   randomize(0)
   result = newSeqOfCap[seq[string]](SAMPLES_RUN)
