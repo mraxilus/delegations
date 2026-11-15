@@ -65,7 +65,7 @@ const
   TEXT_CURATOR* = "# Curator\n\nDuties.\n\n## Read first, in this order\n\nRead.\n"
     ## Curator prompt of fixture tree, holding reading order of role under its heading.
   DIRECTORY_ALPHA* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
-  DIRECTORY_PARSER* = CONTRIBUTOR & "/bangu/lojban_parser"
+  DIRECTORY_PARSER* = CONTRIBUTOR & "/bangu/ricysoho"
     ## Project list of own prose names, which fixture tree holds for that list's sake.
   DIRECTORY_TAGGER* = CONTRIBUTOR & "/bangu/lojban_tagger"
     ## Project of same domain that list of own prose leaves out; fixture tree holds none of it.
