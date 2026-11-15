@@ -742,9 +742,18 @@ its evidence and the condition that closes it. The list then closes by measureme
 by an edit. The renderer refuses any line beyond 100 runes, because the product is committed
 and form-checked.
 
+**The cause on inlining counts the operators that a measurand times.** A light operator spends
+no multiply, add or subtract, so an inline body removes a call and adds no arithmetic to the
+caller. D06 counts such an operator only where a measurand names it as its library function. A
+printer such as `$(Basis)` spends no arithmetic either, and no measurand names it.
+
+- Cost: a light operator that a timed function reaches only through a call of its own goes
+  uncounted. The static baseline names the top function of each measurand, and no callee.
+
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Gaps`. It covers the gap verdicts
 on fixture documents, an unmeasured gap, and docket stability across a reorder and a new key. It
 also covers the verdict and evidence of every cause, the rendered width, and rune-counted wrap.
+For D06 it holds a printer that no measurand times, and a light operator that one measurand times.
 
 ## Driver
 

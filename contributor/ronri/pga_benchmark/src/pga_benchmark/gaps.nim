@@ -101,7 +101,8 @@ const CAUSES* = [
     id: "D06",
     rule: Rule.Inline,
     title: "Sign and permutation operators cross the module boundary as calls.",
-    closes_when: "every library function spending no multiply, add or subtract is inline.",
+    closes_when: "every library operator that a measurand times and that spends no multiply, " &
+        "add or subtract is inline.",
   ),
   Cause(
     id: "D07",
@@ -284,17 +285,32 @@ func named(names: openArray[string], most = 6): string =
   names[0..<most].join(", ") & ", and " & $(names.len - most) & " more"
 
 
+func keysTimed(document: JsonNode): seq[string] =
+  ## Collect library function each measurand names, i.e. function its timed loop calls.
+  let measurands = document.at("measurands")
+  if measurands.isNil: return
+  for _, measurand in measurands.pairs:
+    let key = measurand{"library"}.getStr
+    if key.len > 0 and key notin result: result.add key
+
+
 func countFunctions(
   algebras: openArray[Algebra], metric: string, is_inline_rule: bool
 ): (int, int, string, int) =
-  ## Count library functions exceeding zero on metric, or light operators not inline.
+  ## Count library functions exceeding zero on metric, or timed light operators not inline.
   ##   Return count, total, worst key and its value.
+  ##   Inline rule weighs operators that measurand times alone, since printer such as
+  ##     `$(Basis)` spends no arithmetic yet costs no timed loop call.
+  ##   Cost: light operator that timed function reaches only through its own call goes uncounted;
+  ##     static document names top function of each measurand, and no callee.
   var value_worst = -1
   for algebra in algebras:
     let functions = algebra.measurements_static.at("functions")
     if functions.isNil: continue
+    let timed = if is_inline_rule: algebra.measurements_static.keysTimed else: @[]
     for key, function in functions.pairs:
-      if not function.isLibrary or (is_inline_rule and not function.isOperator): continue
+      if not function.isLibrary: continue
+      if is_inline_rule and (not function.isOperator or key notin timed): continue
       inc result[1]
       let value =
         if is_inline_rule: (if function.isLight and not function{"inline"}.getBool: 1 else: 0)
@@ -374,9 +390,12 @@ func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Ga
       (count, total, worst, value) = countFunctions(algebras, metric, cause.rule == Rule.Inline)
     result.status = if count > 0: Status.Over else: Status.Met
     result.evidence =
-      if count == 0: "no library function of " & $total & "."
+      if count == 0 and cause.rule == Rule.Inline:
+        "no library operator of " & $total & " that a measurand times."
+      elif count == 0: "no library function of " & $total & "."
       elif cause.rule == Rule.Inline:
-        $count & " of " & $total & " library operators, for example " & worst & "."
+        $count & " of " & $total & " library operators that a measurand times, for example " &
+            worst & "."
       else:
         $count & " of " & $total & " library functions. The most is " & worst & " with " &
             $value & "."
