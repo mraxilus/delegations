@@ -169,12 +169,13 @@ You show it to a reader who is present, and that reader is the enforcement.
 - **File kinds.** Only the kinds registered in `curator/audit/src/kinds.nim` may exist, and
   the audit rejects any other. Where you need a new kind, record it as an open question, and
   leave the file out until the curator registers it.
-- **Dependencies.** Derive what the project exists to understand (Article II.8). An external
-  concern may be a dependency. Justify each one where you import it, declare it in your
-  nimble file, and pin it with Atlas. The audit demands `atlas.lock` whenever the nimble file
-  requires a package, and `GUIDE.md` gives the steps. Vendored source stays out of the
-  repository (Article XI.3): `dependencies/` is ignored, and `PROVENANCE.md` records the
-  origin and licence of each dependency.
+- **Dependencies.** Derive what the project exists to understand (Article II.8), and an
+  external concern may be a dependency. Justify each one where you import it, declare it in
+  your nimble file, and pin it with Atlas. Another project of this repository is a package
+  too, never a path, except inside the checker, and the driver imports no package. The audit
+  demands `atlas.lock` whenever the nimble file requires a package, and `GUIDE.md` gives the
+  steps. Vendored source stays out of the repository (Article XI.3): `dependencies/` is
+  ignored, and `PROVENANCE.md` records the origin and licence of each dependency.
 - **Code comments are telegraphic** in every file kind, with no `a`, `an` or `the` in any.
   The audit reads the comments of every kind that `curator/audit/src/kinds.nim` registers,
   which is every kind but Markdown and JSON. Markdown is prose and keeps its
