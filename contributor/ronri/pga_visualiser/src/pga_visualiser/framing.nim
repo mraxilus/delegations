@@ -178,8 +178,8 @@ func reachNear*(
   ##   Object's own middle, with no drawn radius taken off: camera at planet's surface
   ##   then reads that planet's radius rather than zero, and near clip of one
   ##   four-hundredth of it still holds whole planet.
-  ##   Line stands where it passes nearest `pivot`, which is where it is drawn from; see
-  ##   `tessellate`.
+  ##   Line stands where it passes nearest `pivot`, not where its halves meet, nearest eye;
+  ##   see `tessellate`. That point stands no deeper than line's distance from eye.
   ##     Never at its support: support, its point nearest world origin, stood 4.7e6 units
   ##     behind eye of line picked far out, and next object ahead put near clip at 21.3
   ##     units, so line 2.4e-7 off was cut away (#767).

@@ -716,12 +716,12 @@ proc pickWalk(
 
     of Case.LineThrough:
       if is_points_only: continue
-      # Test both halves `tessellate` draws, from line's point nearest pivot out to each
+      # Test both halves `tessellate` draws, from line's point nearest eye out to each
       #   vanishing point.
       #   Which half is on screen changes as camera orbits.
       var distance_nearest = Inf
       let meeting =
-        positionOnLineNearest(place.at.toView(scale.origin), place.toward, scale.pivot)
+        positionOnLineNearest(place.at.toView(scale.origin), place.toward, scale.eye)
       for reach in [scale.radiusHorizon, -scale.radiusHorizon]:
         let clipped = clipToEyeSide(
           meeting,
@@ -1274,10 +1274,10 @@ func isLineShownCentrally(
   # Test both halves `tessellate` draws, clipped to eye side as `pickNearest` clips.
   #   Half can sit behind eye while other half fills frame.
   #   Support is world's, read about view origin as frame is; halves meet at line's point
-  #   nearest pivot, as drawn.
+  #   nearest eye, as drawn.
   let (anchor, axis) = (positionAnchor(m), direction(m))
   if anchor.isNone or axis.isNone: return false
-  let meeting = positionOnLineNearest(anchor.get.toView(scale.origin), axis.get, scale.pivot)
+  let meeting = positionOnLineNearest(anchor.get.toView(scale.origin), axis.get, scale.eye)
   for reach in [scale.radiusHorizon, -scale.radiusHorizon]:
     let clipped = clipToEyeSide(
       meeting,
