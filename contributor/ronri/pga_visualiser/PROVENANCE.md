@@ -4899,11 +4899,10 @@ under each option, and rules on feel and figures together. The project then buil
 once. README, Comparison mockups, says how to build the next one.
 
 **The define keeps the comparison out of the page that readers run.** Only `-d:mockup` includes
-`src/browser/mockup.nim`, and the hooks in `bridge.nim` stand under the same define. The `mockup`
-verb writes the mockup to a file of its own, `build/pga_visualiser_mockup.html`. Verified on
-2026-11-14 by `web` here and at `c2e80da3`: both pages hold 7,857,878 bytes. They differ in six
-characters, the line numbers of `bridge.nim` that two assertion messages quote. Rejected: a switch
-read at run time, which ships every option to every reader.
+`src/browser/mockup.nim` and the hooks in `bridge.nim`, and the `mockup` verb writes its page to
+`build/pga_visualiser_mockup.html`. Verified on 2026-11-14: the page from `web` differs from that of
+`c2e80da3` in two line numbers alone. Rejected: a switch read at run time, which ships every option
+to every reader.
 
 **The hooks stand in the bridge, and the shared modules hold only the design that is.** A hook takes
 the place of one call of the bridge, as the wheel zoom does, or runs beside one, as the pinch hooks
@@ -4911,11 +4910,13 @@ do. `mockup.nim` holds each option once, so the comparison reads whole there. Re
 `interaction.nim` under the define, which leave a decided rule beside the rules it beat.
 
 **Each scenario builds a scene of its own, which holds only what its case needs.** That is a small
-system, the stars that the steps aim at, and a star where an option misreads the scale. The set-up
-places each star under its pixel, and the panel draws a ring there. Verified by the probe of #846,
-on the largest demo: a pointer aimed at random misses a far star at 54 of 117 spots. There, the
-stars that mislead the local scale stand where the catalogue puts them. A scene of its own gives
-each run the same case, and shows it plainly.
+system, what the steps aim at, and a star where an option misreads the scale. Verified by the probe
+of #846, on the largest demo: a pointer aimed at random misses a far star at 54 of 117 spots. A
+scene of its own gives each run the same case.
+
+**A diamond of chevrons marks each pixel to aim at, and growing chevrons mark a drag.** It turns
+so a corner faces the drag, and the drag runs on from that corner. A still frame shows what to do,
+and the pixel stays clear. Rejected: a ring with a cross, which covered that pixel.
 
 **The panel measures each run against what its steps ask.** A notch out asks the eye's distance to
 Sol to scale by 1.12. A pinch asks it to scale by the ratio of the gaps of the fingers. The verdict
@@ -4926,12 +4927,14 @@ reads the share of that scale on a log scale:
 - `over`, from 1.33 to 3;
 - `flung`, over 3.
 
-A round trip is `returned` where the eye ends within a hundredth of a home distance of its start,
-and `off` where it ends further. A step that moves the eye too little to see feels like nothing, and
-the figure then says how much it moved.
+A pan asks the focus to move with the pointer. The verdict reads that share along the drag, with
+the same bounds, and `still` under 0.02. A round trip is `returned` where the eye ends within a
+hundredth of a home distance of its start, and `off` further out. The figure says how far it moved.
 
-No comparison is open now. The first, D1 of #846, stands in the history of
-`src/browser/mockup.nim`, and Zoom holds the rule it chose, with its figures.
+The open comparison is D1 of #910: the depth that a pan holds, where it begins over empty sky. Its
+scenes stand the eye back from what it watches, as a key flight leaves it. Verified on 2026-11-15
+in Chromium at 1200 by 900: under b, the focus moved 0.984 to 1 of the pointer in each of five
+scenes. The first comparison, D1 of #846, stands in the history of `src/browser/mockup.nim`.
 
 ## Testing
 
