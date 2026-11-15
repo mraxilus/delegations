@@ -1,0 +1,195 @@
+## Replicate judgement of `merge.nim` header: real git on throwaway repository, second tree read
+##   back, and koch of merge built by stub compiler.
+
+{.experimental: "strictFuncs".}
+
+import std/[options, os, strutils, tables, tempfiles, unittest]
+import ../../../knoller/src/knoller
+import ../../src/[merge, tree]
+import ./fixtures
+
+
+const STUB_NIM = "#!/bin/sh\n" &
+  "logs=\"$(cd \"$(dirname \"$0\")/../..\" && pwd)\"\n" &
+  "if [ \"$1\" = --version ]; then echo 'Nim Compiler Version 0.0.1 [Linux: amd64]'; exit 0; fi\n" &
+  "echo \"$*\" >> \"$logs/builds.log\"\n" &
+  "[ \"$(cat koch.nim)\" != broken ] || exit 1\n" &
+  "for a in \"$@\"; do case \"$a\" in -o:*) out=\"${a#-o:}\" ;; esac; done\n" &
+  "[ -n \"${out:-}\" ] || exit 1\n" &
+  "printf '#!/bin/sh\\necho \"built from %s; ran $*\" > \"%s/run.log\"\\nexit 3\\n' " &
+  "\"$(cat koch.nim)\" \"$logs\" > \"$out\"\n" &
+  "chmod +x \"$out\"\n"
+  ## Compiler of pin `0.0.1` writing koch that logs source it was built from and arguments it
+  ##   ran with, then exits 3; source `broken` fails build.
+
+
+proc repoForked(): string =
+  ## Create repository whose branch `curator/older` forked, then `main` changed checker alone,
+  ##   with its pin, as #893 names case; branch is checked out.
+  result = repoTemp()
+  result.writeInto(".gitignore", "build/\n")
+  result.writeInto("koch.nim", "checker of fork\n")
+  result.writeInto("curator/audit/audit.nimble", "requires \"nim == 0.0.0\"\n")
+  result.writeInto("README.md", "Fork.\n")
+  discard result.git("add -A")
+  discard result.git("commit -q -m 'feat(audit): write checker'")
+  discard result.git("checkout -q -b curator/older")
+  result.writeInto("README.md", "Branch.\n")
+  discard result.git("commit -q -am 'docs(curator): write readme'")
+  discard result.git("checkout -q main")
+  result.writeInto("koch.nim", "checker of base\n")
+  result.writeInto("curator/audit/audit.nimble", "requires \"nim == 0.0.1\"\n")
+  discard result.git("commit -q -am 'feat(audit): move checker and its pin'")
+  discard result.git("checkout -q curator/older")
+
+
+proc lines(path: string): seq[string] =
+  ## Read lines of file, none where file is absent.
+  if fileExists(path): readFile(path).strip.splitLines else: @[]
+
+
+
+suite "Merge":
+  test "branch older than change of checker alone is judged in second tree, by checker of base":
+    # Case as #893 names it: runner judges merge ref with checker of base, so `koch check`
+    #   judges same merge, in tree that git dir holds.
+    let root = repoForked()
+    defer: removeDir(root)
+    check root.isMerging("main")  # clean, and HEAD lacks base
+    let merged = writeMerge(root, "main")
+    check merged.findings.len == 0
+    check sameFile(merged.directory, root / ".git" / DIRECTORY_MERGE)  # under git dir
+    check readFile(merged.directory / "koch.nim") == "checker of base\n"
+    check readFile(merged.directory / "README.md") == "Branch.\n"  # with what branch holds
+    # HEAD there is merge commit of its own, base its second parent, and no branch holds it.
+    check merged.directory.git("rev-parse HEAD^1") == root.git("rev-parse HEAD")
+    check merged.directory.git("rev-parse HEAD^2") == root.git("rev-parse main")
+    check merged.base == root.git("rev-parse main").strip
+    check root.git("branch --contains " & merged.directory.git("rev-parse HEAD").strip).len == 0
+    # Lines owned there are branch's alone, and none of those base changed.
+    let owned = linesOwned(merged.directory, merged.directory.readTree, merged.base)
+    check "README.md" in owned and "koch.nim" notin owned
+    # Mark records tree of branch, which push compares, and checkout stays clean.
+    check merged.tree == root.git("rev-parse HEAD^{tree}").strip
+    check root.git("status --porcelain").len == 0
+
+
+  test "second tree stays, keeps what git ignores, and holds merge exactly on each run":
+    # Suites restore ignored state there, as `dependencies/` and `build/`, so tree that stays
+    #   restores it once; file earlier run left, tracked or not, is no part of merge.
+    let root = repoForked()
+    defer: removeDir(root)
+    let first = writeMerge(root, "main")
+    first.directory.writeInto("build/restored", "kept\n")
+    first.directory.writeInto("stray.md", "gone\n")
+    first.directory.writeInto("README.md", "Edited by run.\n")
+    root.writeInto("README.md", "Branch, again.\n")
+    discard root.git("commit -q -am 'docs(curator): write readme again'")
+    let again = writeMerge(root, "main")
+    check again.findings.len == 0 and again.directory == first.directory
+    check readFile(again.directory / "build/restored") == "kept\n"
+    check not fileExists(again.directory / "stray.md")
+    check readFile(again.directory / "README.md") == "Branch, again.\n"
+    check again.directory.git("status --porcelain").len == 0
+
+
+  test "dirty checkout, and checkout holding base, are judged in place":
+    # `readTree` reads uncommitted and untracked files, which merge of commits misses; checkout
+    #   holding base is its own merge.
+    let root = repoForked()
+    defer: removeDir(root)
+    root.writeInto("README.md", "Edit in progress.\n")
+    check not root.isMerging("main")
+    discard root.git("checkout -q -- README.md")
+    root.writeInto("notes.md", "Untracked.\n")
+    check not root.isMerging("main")
+    removeFile(root / "notes.md")
+    check root.isMerging("main")
+    discard root.git("merge -q --no-edit main")
+    check not root.isMerging("main")
+    check not dirExists(root / ".git" / DIRECTORY_MERGE)  # nothing merged, so no second tree
+
+
+  test "branch in conflict with base asks for merge of base, and leaves second tree as it was":
+    # Runner runs no `pull_request` workflow on conflicting pull request, so local run agrees.
+    let root = repoForked()
+    defer: removeDir(root)
+    let
+      clean = writeMerge(root, "main")
+      head = clean.directory.git("rev-parse HEAD")
+    root.writeInto("koch.nim", "checker of branch\n")
+    discard root.git("commit -q -am 'feat(audit): move checker on branch'")
+    let found = writeMerge(root, "main").findings
+    check found.len == 1 and found[0].path.len == 0 and found[0].line == 0
+    check found.len == 1 and "merge base" in found[0].message and "/sync" in found[0].message
+    check found.len == 1 and found[0].message.endsWith("got `koch.nim`.")
+    check clean.directory.git("rev-parse HEAD") == head
+
+
+  test "each checkout keeps second tree of its own, under its own git dir":
+    let
+      root = repoForked()
+      worktree = root & "_worktree"
+    defer: removeDir(root)
+    defer: removeDir(worktree)
+    discard root.git("worktree add -q -b curator/other " & worktree.quoteShell & " curator/older")
+    let
+      of_root = writeMerge(root, "main")
+      of_worktree = writeMerge(worktree, "main")
+    check of_root.findings.len == 0 and of_worktree.findings.len == 0
+    check of_worktree.directory != of_root.directory
+    check sameFile(
+      of_worktree.directory.parentDir, worktree.git("rev-parse --absolute-git-dir").strip
+    )
+    check readFile(of_worktree.directory / "koch.nim") == "checker of base\n"
+    check worktree.git("status --porcelain").len == 0 and root.git("status --porcelain").len == 0
+
+
+  test "koch of merge builds on pin merge names, with cache of its own, where its source moved":
+    # Stub compiler logs each build and writes koch that logs its source and arguments, so log
+    #   names koch that judged; real git and real `sh` run (Article IX.5). Pin of branch is on
+    #   PATH, and pin of base is in cache alone, as after base moved compiler of koch.
+    let
+      root = repoForked()
+      toolchain = createTempDir("delegations_", "_nim")
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    toolchain.writeInto("0.0.1/bin/nim", STUB_NIM)
+    inclFilePermissions(toolchain / "0.0.1" / "bin" / "nim", {fpUserExec})
+    var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
+    let
+      merged = writeMerge(root, "main")
+      (code, found) = runMerge(merged, "curator/older", toolchains)
+    check found.len == 0 and code == 3  # exit of koch of merge is verdict
+    check lines(toolchain / "run.log") == @["built from checker of base; ran check --root:" &
+      merged.directory & " --branch:curator/older --base:" & merged.base]
+    # Build and its cache sit beside second tree, in git dir, and read `koch.nim` of merge.
+    let
+      built = lines(toolchain / "builds.log")
+      beside = merged.directory.parentDir
+    check built.len == 1 and built[0].startsWith("c ") and built[0].endsWith(" koch.nim")
+    check built.len == 1 and ("--nimcache:" & beside) in built[0] and ("-o:" & beside) in built[0]
+
+    # Same sources build nothing again; base moving checker builds again.
+    check runMerge(merged, "curator/older", toolchains).code == 3
+    check lines(toolchain / "builds.log").len == 1
+    discard root.git("checkout -q main")
+    root.writeInto("koch.nim", "checker of base, moved\n")
+    discard root.git("commit -q -am 'feat(audit): move checker again'")
+    discard root.git("checkout -q curator/older")
+    let moved = writeMerge(root, "main")
+    check runMerge(moved, "curator/older", toolchains).code == 3
+    let ran = lines(toolchain / "run.log")
+    check lines(toolchain / "builds.log").len == 2
+    check ran.len == 1 and ran[0].startsWith("built from checker of base, moved; ran check ")
+
+    # Build that fails is one finding, and nothing runs.
+    discard root.git("checkout -q main")
+    root.writeInto("koch.nim", "broken\n")
+    discard root.git("commit -q -am 'feat(audit): break checker'")
+    discard root.git("checkout -q curator/older")
+    removeFile(toolchain / "run.log")
+    let broken = runMerge(writeMerge(root, "main"), "curator/older", toolchains)
+    check broken.code == 1 and broken.found.len == 1
+    check broken.found.len == 1 and "failed to build" in broken.found[0].message
+    check not fileExists(toolchain / "run.log")
