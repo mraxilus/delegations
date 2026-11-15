@@ -170,8 +170,9 @@ chose.
 _Avoid_: assignment, task, ticket
 
 **Digest**:
-One message from the coordinator to the Architect. It carries every sign-off since the last
-one, combined and sorted, and leaves no row of any sign-off out.
+One message from the coordinator to the Architect, which covers all the work since the last
+message of the Architect. It carries the latest sign-off of each delegate, combined and sorted,
+and leaves no row of any sign-off out.
 _Avoid_: relay, roll-up, summary
 
 **Index**:

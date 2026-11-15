@@ -9,7 +9,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, unittest]
+import std/[os, strutils, tables, unittest]
 import ../../src/knoller/[chain, command, proofs, reports]
 
 
@@ -445,12 +445,14 @@ suite "Regressions":
     let mended =
       STUB.replace(" -r ", " ").replace("\"\"\"\ninclude", "\"\"\"\n\n" & HEAD & "include") & "\n"
     for path in ["tests/rga3d/test_rga3d.nim", "tests/test_rga3d.nim"]:
-      check outcome([(path, STUB)], [], is_check = true).lines == @[
+      let nimbles = {path: "pga.nimble"}.toTable  # nimble file of PGA library, at its root
+      check outcome([(path, STUB)], [], is_check = true, nimbles = nimbles).lines == @[
         path & ": file-ending to fix",
         path & ": strictfuncs to fix",
         path & ":3: stub-keys to fix",
         "3 to fix.",
       ]  # stub of category reports as stub directly under `tests` does
-      let written = outcome([(path, STUB)], [], is_check = false).written
+      let written = outcome([(path, STUB)], [], is_check = false, nimbles = nimbles).written
       check written == @[(path, mended)]
-      check outcome(written, [], is_check = false).lines == @["0 fixed."]  # second run
+      let again = outcome(written, [], is_check = false, nimbles = nimbles)
+      check again.lines == @["0 fixed."]  # second run
