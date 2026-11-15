@@ -58,6 +58,8 @@ suite "Article VI":
     check found[0].message.endsWith("got `" & DIRECTORY_PARSER & "/" & SUITE & "`.")
     let written = tree.with(entry(DIRECTORY_PARSER & "/" & SUITE, "## Hold prose.\n"))
     check written.checkProjectsProseOwn([demanding]).len == 0  # suite present
+    let elsewhere = tree.with(entry(DIRECTORY_AUDIT & "/" & SUITE, "## Hold prose.\n"))
+    check elsewhere.checkProjectsProseOwn([demanding]).len == 1  # same name elsewhere holds none
     var waiting = demanding
     waiting.should_demand_suite = false
     check tree.checkProjectsProseOwn([waiting]).len == 0  # suite not demanded yet
