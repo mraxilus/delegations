@@ -1,0 +1,71 @@
+{
+  "status": "proposed",
+  "builds_on": [],
+  "claims": [
+    {
+      "kind": "suites"
+    },
+    {
+      "kind": "program",
+      "path": "laws.nim",
+      "algebras": [
+        "rga2d",
+        "rga3d",
+        "rga4d",
+        "rga5d",
+        "rga6d",
+        "cga3d",
+        "cga4d",
+        "cga5d",
+        "cga6d"
+      ]
+    },
+    {
+      "kind": "count",
+      "algebra": "rga4d",
+      "measurand": "transform_point_motor",
+      "metric": "multiplies",
+      "value": 82
+    },
+    {
+      "kind": "count",
+      "algebra": "rga4d",
+      "measurand": "transform_line_motor",
+      "metric": "multiplies",
+      "value": 82
+    },
+    {
+      "kind": "count",
+      "algebra": "rga4d",
+      "measurand": "transform_plane_motor",
+      "metric": "multiplies",
+      "value": 82
+    },
+    {
+      "kind": "count",
+      "algebra": "rga3d",
+      "measurand": "transform_point_motor",
+      "metric": "multiplies",
+      "value": 23
+    },
+    {
+      "kind": "count",
+      "algebra": "rga3d",
+      "measurand": "transform_line_motor",
+      "metric": "multiplies",
+      "value": 23
+    },
+    {
+      "kind": "build",
+      "algebra": "cga5d",
+      "metric": "peak",
+      "at_most": 1.3
+    },
+    {
+      "kind": "build",
+      "algebra": "cga6d",
+      "metric": "seconds",
+      "at_most": 1.6
+    }
+  ]
+}

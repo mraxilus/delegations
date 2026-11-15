@@ -36,8 +36,12 @@ Every operation that the library exports is one `Measurand` value, built at comp
 under the same `when` that the library selects its algebra with. So one list serves every
 algebra. A general measurand spells each exported operator over dense multivectors. A typed
 measurand spells the same operator over the operand kinds that Lengyel's reference has a form
-for, and it names that form. Three composed measurands spell the motor sandwich that the
-library has no operator for.
+for, and it names that form.
+
+The transform measurands spell the motor sandwich as a chain of three steps, since the library at
+pin has no operator for it. Where the library declares `⟇⟇~∘`, as P13 adds, they spell
+`(m ⟇⟇~∘ n)` and name its one function. So an evaluation of P13 times and counts the operator,
+and D08 names the chain at pin.
 
 Expressions are strings, fully parenthesised, because the header of the library warns that
 `∨` parses as additive and `∧` as multiplicative. They are lowered by `parseExpr` where the
@@ -63,7 +67,10 @@ suites of the library cite none. The reference returns the weight squared norm a
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Catalogue`. Ids are unique. Every
 expression compiles against the library. The set of symbols equals the set of exported
 operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set of aliases
-equals the exports of the umbrella.
+equals the exports of the umbrella. At pin, each transform spells the chain.
+
+Verified by the evaluation of P13 on 2026-11-15: each transform counts `⟇⟇~∘`, 82 multiplies at
+rga4d and 23 at rga3d.
 
 ## Reference
 

@@ -58,6 +58,12 @@ const
   ALIAS_NORM_BULK = when IS_RIGID: "normBulk" else: "normBulkRound"  ## Library's name for `|∙ m`.
   ALIAS_NORM_WEIGHT = when IS_RIGID: "normWeight" else: "normWeightRound"
     ## Library's name for `|∘ m`.
+  IS_TRANSFORM_DECLARED = declared(`⟇⟇~∘`)
+    ## Library declares sandwich operator, as `transform-operator` adds; transforms then time it.
+  SYMBOL_TRANSFORM = when IS_TRANSFORM_DECLARED: "⟇⟇~∘" else: ""  ## Library's transform symbol.
+  ALIAS_TRANSFORM = when IS_TRANSFORM_DECLARED: "transform" else: ""  ## Library's transform alias.
+  EXPRESSION_TRANSFORM = when IS_TRANSFORM_DECLARED: "(m ⟇⟇~∘ n)" else: "((n ⟇ m) ⟇ (~∘ n))"
+    ## Library's spelling of transform: its operator where declared, else chain of three steps.
 
 
 func addGeneral(catalogue: var seq[Measurand], rows: openArray[RowGeneral]) {.compileTime.} =
@@ -291,15 +297,15 @@ const CATALOGUE* = block:
         Kind.Motor, Kind.Motor, "wedgeDotAnti(m, n)", "wiki:Motor",
       ),
       (
-        "transform_point_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        "transform_point_motor", SYMBOL_TRANSFORM, ALIAS_TRANSFORM, EXPRESSION_TRANSFORM,
         Kind.Point, Kind.Motor, "transform(m, n)", "wiki:Motor",
       ),
       (
-        "transform_line_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        "transform_line_motor", SYMBOL_TRANSFORM, ALIAS_TRANSFORM, EXPRESSION_TRANSFORM,
         Kind.Line, Kind.Motor, "transform(m, n)", "wiki:Motor",
       ),
       (
-        "transform_plane_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        "transform_plane_motor", SYMBOL_TRANSFORM, ALIAS_TRANSFORM, EXPRESSION_TRANSFORM,
         Kind.Plane, Kind.Motor, "transform(m, n)", "wiki:Motor",
       ),
       (
@@ -533,11 +539,11 @@ const CATALOGUE* = block:
         Kind.Motor, Kind.Motor, "wedgeDotAnti(m, n)", "wiki:Motor",
       ),
       (
-        "transform_point_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        "transform_point_motor", SYMBOL_TRANSFORM, ALIAS_TRANSFORM, EXPRESSION_TRANSFORM,
         Kind.Point, Kind.Motor, "transform(m, n)", "wiki:Motor",
       ),
       (
-        "transform_line_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        "transform_line_motor", SYMBOL_TRANSFORM, ALIAS_TRANSFORM, EXPRESSION_TRANSFORM,
         Kind.Line, Kind.Motor, "transform(m, n)", "wiki:Motor",
       ),
       (
