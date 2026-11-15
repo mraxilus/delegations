@@ -496,16 +496,16 @@ suite "Camera":
     for handle in 0..<scene.bound:
       if scene.isAlive(handle):
         placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
-    let (eye, pivot) = (camera.eye, camera.pivot)
+    let eye = camera.eye
     # Nearest ahead answers, and one behind is passed over however near it stands.
     #   Eye stands one unit out at +x, so depths are five and thirty one.
-    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 5.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 5.0
     # Hidden objects are not drawn, so they set no scale.
     scene.setVisible(0, false)
-    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 31.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 31.0
     # Nothing ahead at all reads zero, which hands scale back to distance to pivot.
     scene.setVisible(2, false)
-    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 0.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 0.0
 
 
   test "a line reaches as near as it passes the eye, and one through it or square behind none":
@@ -524,7 +524,7 @@ suite "Camera":
       var placed = newSeq[Placement](scene.bound)
       for handle in 0..<scene.bound:
         placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
-      reachNear(placed, scene, camera.originView, camera.eye, camera.pivot, camera.frame.forward)
+      reachNear(placed, scene, camera.originView, camera.eye, camera.frame.forward)
     let
       beside = (Position(x: 1.0, y: 0.0, z: 0.25), Direction(x: -1.0, y: 0.5, z: 0.0))
       through = (Position(x: 1.0, y: 0.0, z: 0.0), Direction(x: -1.0, y: 1.0, z: 0.0))

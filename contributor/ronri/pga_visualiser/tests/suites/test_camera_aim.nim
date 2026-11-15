@@ -1441,9 +1441,7 @@ suite "Camera Aim":
     for handle in 0..<scene.bound:
       placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
     let (eye, frame) = camera.moveOriginView
-    camera.reach_near = reachNear(
-      placed, scene, camera.originView, eye, eye + camera.distance * frame.forward, frame.forward
-    )
+    camera.reach_near = reachNear(placed, scene, camera.originView, eye, frame.forward)
     let
       scale = camera.drawExtentFor(eye, frame, height_aim, reachFar(placed, scene))
       view_projection = camera.initMatrixViewProjection(eye, frame, width_aim / height_aim)

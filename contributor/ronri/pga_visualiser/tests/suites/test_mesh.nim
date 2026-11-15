@@ -414,9 +414,7 @@ suite "Mesh":
     for handle in 0..<scene.bound:
       placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
     let (eye, frame) = camera.moveOriginView
-    camera.reach_near = reachNear(
-      placed, scene, camera.originView, eye, eye + camera.distance * frame.forward, frame.forward
-    )
+    camera.reach_near = reachNear(placed, scene, camera.originView, eye, frame.forward)
     let
       scale = camera.drawExtentFor(eye, frame, tall_beside, reachFar(placed, scene))
       view_projection = camera.initMatrixViewProjection(eye, frame, wide_beside / tall_beside)
@@ -503,10 +501,7 @@ suite "Mesh":
       let
         placed = [placeObject(scene.geometryAt(0), scene.anchorOverrideAt(0))]
         (eye, frame) = camera.moveOriginView
-        reach = reachNear(
-          placed, scene, camera.originView, eye, eye + camera.distance * frame.forward,
-          frame.forward,
-        )
+        reach = reachNear(placed, scene, camera.originView, eye, frame.forward)
         base_view = base.toView(camera.originView)
         distance_eye = norm(cross(base_view - eye, way))
       check abs(reach - distance_eye) <= 1.0e-9 * max(1.0, distance_eye)
