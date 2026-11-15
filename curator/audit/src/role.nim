@@ -339,13 +339,14 @@ func checkBodyPull*(body: string): seq[Finding] =
     parts = body.replace("\r", "").commentsOut.sections[1 .. ^1]
     headings = parts.mapIt(it.heading)
   if headings != @HEADINGS_PULL:
-    let named = HEADINGS_PULL[0 ..< ^1].mapIt("`" & it & "`").join(", ")
+    let
+      named = HEADINGS_PULL[0 ..< ^1].mapIt("`" & it & "`").join(", ")
+      got = if headings.len == 0: "``" else: headings.mapIt("`" & it & "`").join(", ")
     result.add finding(
       "",
       0,
       "Pull request body holds " & named & " and `" & HEADINGS_PULL[^1] & "`, once each and " &
-        "in that order; got " & (if headings.len == 0: "``" else: headings.mapIt(
-          "`" & it & "`").join(", ")) & ".",
+        "in that order; got " & got & ".",
     )
   for part in parts:
     if part.heading in HEADINGS_PULL: result.add part.checkSummary
