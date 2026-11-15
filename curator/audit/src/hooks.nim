@@ -26,9 +26,10 @@
 ##     tool whose rules it shares, and holds its body as `body` holds tool's; `stop` counts it as
 ##     post. Hook runs before command, so body comes from literal text or file already written:
 ##     file same command writes, stdin and shell expansion are refused, with finding naming mend.
-##   Pure functions take strings and return findings; procs read transcript JSON and body files,
-##     since `parseJson` and file reads are effectful. `fileWritten` runs git too, through
-##     `checkoutAt`, since git names checkout holding file.
+##   Pure functions take strings and return findings; procs read transcript JSON, body files and
+##     file of role `start` prints (`readPrompt`), since `parseJson` and file reads are
+##     effectful. `fileWritten` runs git too, through `checkoutAt`, since git names checkout
+##     holding file.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
 ##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, context, rule line,
