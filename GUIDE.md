@@ -518,8 +518,8 @@ counts as each item that it names. An item is a clause a reader can verify. No c
 semicolon. Third person and active voice throughout, and the rules of this guide over every
 sentence.
 
-The `Stop` hook holds the shape under Claude Code, where it holds this repository alone, and
-reading holds it elsewhere.
+The `Stop` hook holds the shape under Claude Code, where it holds this repository alone.
+`AGENTS.md`, Under another harness, says what holds it elsewhere.
 
 ```md
 ## Sign-off
