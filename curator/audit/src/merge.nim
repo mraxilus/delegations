@@ -7,8 +7,9 @@
 ##     does. Mark of `pre-push` hook, drift, branch name and hooks read checkout itself; static
 ##     pass and suites alone read second tree.
 ##   HEAD of second tree is merge commit of its own, base its second parent, so `linesOwned` there
-##     reads lines branch owns; no branch holds commit. Rejected: `git merge --no-commit`, whose
-##     HEAD is base, so lines of base read as branch's (16 files where branch changed 8, #883).
+##     reads lines branch owns; no branch holds commit. Rejected: `git merge --no-commit`, which
+##     leaves HEAD at tip of branch, so `linesOwned` diffs merged tree from old fork and reads
+##     lines base gained as branch's.
 ##   Merge is read by `merge-tree --write-tree` before second tree moves, so conflict leaves it
 ##     as it was. Conflict is finding asking for merge of base; GitHub runs no `pull_request`
 ##     workflow on conflicting pull request, so runner agrees.
@@ -21,8 +22,8 @@
 ##     compiler is one pin of `curator/audit` in merge names, as `NIM_VERSION` of merge builds
 ##     it on runner. Rejected: `nim r` of merge, which turns each exit of koch into 1, so failed
 ##     build reads as findings.
-##   Dirty checkout is judged in place, as before: `readTree` reads uncommitted and untracked
-##     files, which merge of commits misses, and no mark is written. Checkout holding base is
+##   Dirty checkout is judged in place: `readTree` reads uncommitted and untracked files, which
+##     merge of commits misses, and no mark is written. Checkout holding base is
 ##     its own merge, so it is judged in place too. Koch of merge is handed commit of base, which
 ##     its HEAD holds, so it judges in place and never merges again.
 ##
@@ -32,6 +33,8 @@
 ##     follows each change of checker on base.
 ##   Cost: two runs of `koch check` at once in one checkout share one second tree.
 ##   Cost: `merge-tree --write-tree` needs git 2.38 or newer.
+##   Cost: move of checkout breaks link of second tree, as of each worktree; `git worktree
+##     repair`, or removal of its folder, mends it.
 
 {.experimental: "strictFuncs".}
 
