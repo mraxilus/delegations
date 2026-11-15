@@ -19,8 +19,9 @@
 ##     nothing.
 ##   Cost: bare `knoller` command knows no list, so it drops `a` of lojban from comment of listed
 ##     project; delegate of that project runs `koch fix` instead.
-##   Cost: while entry demands no suite, nothing reads prose of its project, as ruling `D4 a` of
-##     #818 accepts.
+##   Cost: entry demanding no suite gives no finding where tree lacks its suite, so suite could
+##     go unseen; entry demands suite once project holds it, as
+##     `curator/audit/tests/suites/test_prose_own.nim` holds.
 ##   Cost: each rules change re-stamps record of listed project, so it runs suites of that project.
 
 {.experimental: "strictFuncs".}
@@ -45,7 +46,7 @@ const
       directory: "contributor/bangu/lojban_parser",
       issue: 818,
       suite: "tests/suites/test_prose_own.nim",
-      should_demand_suite: false,
+      should_demand_suite: true,
     ),
   ]
     ## Projects whose records and comments stay in their own language, each by Architect's ruling.
