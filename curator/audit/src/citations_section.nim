@@ -10,7 +10,8 @@
 ##     hold comma, as that one does.
 ##   Match is lenient, as Architect ruled (option b of #892), so citation in telegraphic comment
 ##     passes (VI.5): case and articles are not compared; first words of heading or bold rule
-##     pass, up to stop; quote passes where text of document outside fences holds its words.
+##     pass, up to first mark; quote passes where text of document outside fences holds its
+##     words one after another.
 ##   Heading is two to six `#` outside fences (`headings` over `fencedOut`), since fence quotes
 ##     example. Bold rule is line or list item opening with bold text: text to closing `**`,
 ##     last stop or colon cut, as duty, term of glossary and rule of guide open.
@@ -345,7 +346,8 @@ func citationsWritten(text: string): seq[Citation] =
 
 func isNamingNone(text: string, at: int): bool =
   ## Decide whether section after comma names no heading: article as `VI.5`, `duty N`,
-  ##   `section N`, `§N`, or file name, which lists documents.
+  ##   `section N`, or file name, which lists documents. `§N` opens with no capital, so caller
+  ##   skips it with lower case.
   var i = at
   if text.continuesWith("Article ", i): i += "Article ".len
   var k = i
@@ -355,7 +357,6 @@ func isNamingNone(text: string, at: int): bool =
     if text.continuesWith(word, at) or text.continuesWith(word.capitalizeAscii, at):
       let digit = at + word.len
       if digit < text.len and text[digit] in Digits: return true
-  if text.continuesWith("§", at): return true
 
   # File name: run of path characters ending in extension, sentence stop cut.
   var j = if text.continuesWith("`", at): at + 1 else: at
