@@ -3564,7 +3564,8 @@ ni'o **lo pinka poi lo samtci cu lidne ke'a ne'i pa linji cu vasru pa jufra po'o
   .i ji'a ro nu xusra pa lo cipra cu ponse no sitna ne'i le linji pe le xusra
   .i jdima fa lo nu lo se jmina be zo to cu se tcidu ta'i lo se jmina be le pamoi jufra
   .i lo se jmina na se tcidu ta'i lo xusra pe vo'a
-  .i la'o gy. Architect .gy. na pu jdice di'u Verified by `suites/test_prose_own.nim`.
+  .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #890 .gy. ta'i la'o gy. D1 a .gy.
+    Verified by `suites/test_prose_own.nim`.
 
 ni'o **lo pagbu be pa linji pe lo cartu poi vasru su'o re jufra cu se fendi fi lo linji**
   .i le pamoi jufra cu stali ne'i le linji
@@ -3572,7 +3573,8 @@ ni'o **lo pagbu be pa linji pe lo cartu poi vasru su'o re jufra cu se fendi fi l
   .i le cartu pe `merge.nim` .e `nif.nim` cu se ciska ta'i di'u
   .i ki'u bo pa linji pe lo cartu cu na ka'e se katna
   .i se ki'u bo ro jufra cu krasi pa pagbu be pa linji
-  .i la'o gy. Architect .gy. na pu jdice di'u Verified by `suites/test_prose_own.nim`.
+  .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #890 .gy. ta'i la'o gy. D2 a .gy.
+    Verified by `suites/test_prose_own.nim`.
 
 ni'o **le cipra cu facki ro krasi be lo jufra .e lo ju'agri fi le tricu poi le genturfa'i cu zbasu
   ke'a**
@@ -4325,10 +4327,3 @@ ni'o lo namcu cu se merli de'i `2026-11-11` sepi'o le stodi fanva .e la'o gy. In
     namcu poi jorne lo cmavo pe la'o gy. MOI .gy.
   .i le tricu pe la'o gy. CLL 21.1 .gy. cu vasru le remei
   .i no samtci pagbu cu ca tcidu lo se smuni fi le tricu
-- ny.mai **lo pinka poi lo samtci cu lidne ke'a ne'i pa linji gi'e vasru su'o re jufra**
-  .i lo se jdice pe la'o gy. #818 .gy. cu na skicu le pinka
-  .i ca ku ro drata jufra pe le pinka cu se jmina fi le pamoi jufra sepi'o zo to
-  .i la'o gy. Architect .gy. ka'e cuxna lo nu le pinka cu muvdu lo linji pe vo'a
-- ny.mai **lo pagbu be pa linji pe lo cartu poi vasru su'o re jufra**
-  .i lo se jdice pe la'o gy. #818 .gy. cu na skicu le pagbu
-  .i ca ku ro drata jufra pe le pagbu cu zvati pa linji pe vo'a
