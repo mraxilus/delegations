@@ -144,9 +144,10 @@ You show it to a reader who is present, and that reader is the enforcement.
   your hands. Copy the string, and never compose it: to apply a label creates it, so a
   misspelling makes a second label that nobody filters on.
 
-  A harness that opens a pull request for a thread writes its attribution block first: a
-  marker comment, then a credit line. The role line then comes directly below that block, and
-  `check-role` reads it there.
+  A harness may write lines above the role line of its pull request, such as a marker comment
+  and a credit line. `curator/audit/src/role.nim` lists the shape of each such line for each
+  harness, and `check-role` reads the role line below them. Where a harness writes lines that
+  `role.nim` does not list, `check-role` quotes them, and a curator adds its entry.
 - **Put the label `architect` on what waits on the Architect**, beside your role label and
   never in its place. Such an item is the issue or pull request where a decision of your
   sign-off goes. A pull request that is green and ready waits on the Architect too. Remove the
