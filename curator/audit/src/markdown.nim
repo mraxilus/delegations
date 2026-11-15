@@ -1,4 +1,4 @@
-## Read Markdown shapes checks depend on: pipe-table rows, headings and `##` sections.
+## Read Markdown shapes checks depend on: pipe-table rows, headings, `##` sections, code, links.
 ##   Deliberately tiny: no Markdown parser, only line forms governed documents use.
 ##   Section is document cut at each `## ` line outside fenced code (`sections`), since fence
 ##     may quote heading as example, as `GUIDE.md`, Glossary process, quotes `## Standards`.
@@ -11,6 +11,8 @@
 ##   Cost: table cell holding `|` splits wrongly; no governed table carries one.
 ##   Cost: fenced code blocks are not skipped by table and heading readers, so table inside
 ##     fence counts as table; reader that must not see example composes `fencedOut` first.
+##   Cost: code span and link are read inside one line, so one wrapped over line end reads as
+##     text.
 
 {.experimental: "strictFuncs".}
 
@@ -78,6 +80,63 @@ func fencedOut*(markdown: string): string =
     if is_fence: is_inside = not is_inside
     let body = line.strip(leading = false, chars = {'\r', '\n'})
     result.add(if is_fence or is_inside: line[body.len .. ^1] else: line)
+
+
+func blankSpansCode*(line: string): string =
+  ## Blank each code span of line: run of backticks opens it, next run of same length closes
+  ##   it, and run left open stays text, as CommonMark reads it.
+  var i = 0
+  while i < line.len:
+    if line[i] != '`':
+      result.add line[i]
+      inc i
+      continue
+    var n = 0
+    while i + n < line.len and line[i + n] == '`': inc n
+    var
+      j = i + n
+      close = -1
+    while j < line.len and close < 0:
+      if line[j] != '`':
+        inc j
+        continue
+      var m = 0
+      while j + m < line.len and line[j + m] == '`': inc m
+      if m == n: close = j
+      j += m
+    if close < 0:
+      result.add line[i ..< i + n]
+      i += n
+    else:
+      result.add ' '.repeat(close + n - i)
+      i = close + n
+
+
+iterator spansLink*(line: string, labels: openArray[string]): tuple[start, stop: int] =
+  ## Yield span of each link of line: `[text](url)`, and `[text][label]` or `[label]` whose
+  ##   label `labels` names. Bracket opening no link is passed over.
+  var i = 0
+  while i < line.len:
+    if line[i] != '[':
+      inc i
+      continue
+    let close = line.find(']', i + 1)
+    if close < 0: break
+    let text = line[i + 1 ..< close]
+    var stop = -1  # Index past link; none where bracket opens no link.
+    if close + 1 < line.len and line[close + 1] == '(':
+      let paren = line.find(')', close + 2)
+      if paren >= 0: stop = paren + 1
+    elif close + 1 < line.len and line[close + 1] == '[':
+      let shut = line.find(']', close + 2)
+      if shut >= 0:
+        let label = line[close + 2 ..< shut]
+        if (if label.len == 0: text else: label).toLowerAscii in labels: stop = shut + 1
+    elif text.toLowerAscii in labels: stop = close + 1
+    if stop < 0: inc i
+    else:
+      yield (i, stop)
+      i = stop
 
 
 func sections*(markdown: string): seq[Section] =
