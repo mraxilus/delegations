@@ -1068,9 +1068,10 @@ of the checker alone meets the checker of its base, on the runner and on the del
   Each merge was read with `git diff --name-only --no-renames <merge>^1 <merge>`. 96 of those 329
   merges changed the charter or the checker: 17 the charter alone, 44 the checker alone, and 35
   both.
-- The merges of `main` into a branch are what `git rev-list --merges` lists over the same window,
-  off that first-parent chain, with a second parent on it. Of those 258, 62 took changes of the
-  checker alone, by the same `git diff` of each.
+- The merges of `main` into a branch are what
+  `git rev-list --merges --since=2026-10-02T00:00:00Z c2e80da35` lists, off that first-parent
+  chain, with a second parent on it. Of those 258, 62 took changes of the checker alone, by the
+  same `git diff` of each.
 - Cost: the hooks, `koch fix` and `koch stamp` keep the checker of the branch until it merges the
   base. A merge in the second tree changes none of them.
 - Cost: `check-drift` runs the `base.nim` of each branch. So a branch that predates this rule
@@ -1210,8 +1211,14 @@ merge passes, as `judgeMerged` decides.
 - Verified by `suites/test_merge.nim` for `judgeCheckout`, which chooses between the second tree
   and the path in place. It holds `recordMark`, the mark of a run in place, too. `koch.nim` calls
   the first, and its path in place calls the second.
-- Cost: no suite runs `main` of koch. So the checks of `checkInPlace` in `koch.nim`, their order,
-  and its call of `recordMark` after a green run hold by reading and by hand.
+- Cost: no suite runs `main` of koch, so parts of `koch.nim` hold by hand alone. They are the
+  checks of `checkInPlace`, their order, and its call of `recordMark` after a green run. They are
+  also the `check` arm: its fetch of `origin/main`, and the proc that gives `checkInPlace` its
+  branch and base.
+- Verified by hand on 2026-11-15, by a read of those parts and two runs of `nim r koch check`
+  on `curator/second-tree`, the branch of #893. Before a merge of `origin/main`, it merged in the
+  second tree and recorded the tree of the branch. After that merge, it ran in place and
+  recorded the tree of HEAD.
 - Verified by hand on 2026-11-15, by mutants of `merge.nim` on scratch copies, where the suite
   fails each. They key `koch.nim` and `koch.nim.cfg` alone, build inside the second tree, or
   clean with no `-d`. They clean a folder that is no worktree, or add with no `--force`. They
