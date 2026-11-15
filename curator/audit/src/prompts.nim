@@ -15,8 +15,8 @@ import ./[findings, markdown, provenance, record]
 
 
 const
-  PATHS_PROMPT* = ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
-    ## Files that open new delegates.
+  PATHS_PROMPT* = ["AGENTS.md", "CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+    ## Files that open new delegates: entry file each harness reads first, and file of each role.
   BYTES_PROMPT* = 40_000
     ## Bytes prompt may hold; ceiling guards runaway growth, never trims by length alone.
     ## Number is Architect's.

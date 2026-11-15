@@ -48,10 +48,10 @@ const
     ## Index every root, every domain and every project carries, named once for all three.
   FILES_ROOT* = [
     FILE_README, "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "EXAMPLES.md", "CURATOR.md",
-    "COORDINATOR.md", "CONTRIBUTOR.md", "GUIDE.md", "CLAUDE.md", "GLOSSARY.md", "koch.nim",
-    "koch.nim.cfg", ".gitignore", ".gitattributes",
+    "COORDINATOR.md", "CONTRIBUTOR.md", "GUIDE.md", "AGENTS.md", "CLAUDE.md", "GLOSSARY.md",
+    "koch.nim", "koch.nim.cfg", ".gitignore", ".gitattributes",
   ]
-    ## Files allowed directly at root.
+    ## Files allowed directly at root; `AGENTS.md` is entry file each harness reads first.
   DIRECTORIES_ROOT* = [".github", ".claude", ".githooks"]
     ## Root directories unchecked inside; project roots are `ROOTS`. `.claude` holds hooks,
     ## permissions, skills and agents Claude Code loads; `.githooks` holds git's own hooks.
