@@ -513,9 +513,9 @@ ni'o lo minde po'u `page` .e `drive` cu cpacu lo lerfu tarmi pe le papri sepi'o 
 ## ni'o ni'o ni'o lo papri
 
 ni'o [la'o gy. Lojban live tree .gy.](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) cu pixra lo
-  tricu be lo jmive se ciska ca lo nu lo prenu cu ciska le se ciska .i lo gunka cu tcidu ro pagbu be
-  le se ciska ca lo nu le pagbu cu klama .i le papri cu pixra ro pagbu ja'i lo se ciska be fi la'o
-  gy. NIF .gy. poi le gunka cu dunda ke'a
+  tricu be lo jmive se ciska ca lo nu lo prenu cu ciska le se ciska
+  .i lo gunka cu tcidu ro pagbu be le se ciska ca lo nu le pagbu cu klama
+  .i le papri cu pixra ro pagbu ja'i lo se ciska be fi la'o gy. NIF .gy. poi le gunka cu dunda ke'a
   .i lo pagbu poi ca'o kalri cu se skari lo narju pelxu
   .i lo valsi poi galfi lo pu valsi mu'u zo si .a zo li'u cu katna lo se ciska be fi la'o gy. NIF
     .gy. bu'u lo stuzi be lo se galfi be ri
