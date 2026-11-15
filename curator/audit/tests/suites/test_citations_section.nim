@@ -162,6 +162,15 @@ suite "Duty 1":
       entry("CONTRIBUTOR.md", rules), entry("koch.nim", "## Drive (CONTRIBUTOR.md, Inner rule).\n")
     )
     check inner.len == 1  # bold inside line opens no rule
+    for opener in ["* ", "+ ", "> "]:
+      let opened = "# Guide\n\n" & opener & "**Keep it short.** Text.\n"
+      check citeIn(opened, "Keep it short").len == 0  # star, plus and quote open rule too
+    check citeIn("# Guide\n\n**Open bold\n\n**Next.** Text.\n", "Open bold")
+      .len == 1  # close is sought in paragraph of rule alone
+    check citeIn("# Guide\n\n- **Scope.** Text.\n\n- **Role.** Text.\n", "Scope and Role")
+      .len == 0  # last stop is cut, so `and` follows whole rule
+    check citeIn("# Guide\n\n```md\n- **Keep it short.**\n```\n", "Keep it short")
+      .len == 1  # rule that fence alone holds is example
 
 
   test "match passes case and articles, first words, and quote that document holds":
@@ -173,22 +182,42 @@ suite "Duty 1":
       check cite(section).len == 0  # option b of #892
     let chain = "# Provenance\n\n## Rules of the chain\n\nRules.\n"
     check citeIn(chain, "Rules of chain").len == 0  # article dropped, as dance_ontology cites
+    check citeIn("# Guide\n\n## An open question\n\nText.\n", "Open question")
+      .len == 0  # `an` is article
+    check citeIn("# Guide\n\n## A check that reddens\n\nText.\n", "Check that reddens")
+      .len == 0  # `a` is article
+    check citeIn("# Guide\n\n- **A check that reddens a project.** Duty.\n", "A check that reddens")
+      .len == 0  # first words drop article too
+    check cite("\"Claim needs run\"").len == 0  # quote of last words of document
+    check findingsTree(
+      entry("GUIDE.md", GUIDE), entry("koch.nim", "## Follow (GUIDE.md, Prune) and cut it.\n")
+    ).len == 0  # first words end at first mark
 
 
   test "match fails where document holds no such heading, first words or text":
     for section in [
       "Work for agents", "Subagents", "Work for subagents now", "\"Hand work on\"",
-      "`Hand off work`", "Output contract, The tables",
+      "`Hand off work`", "Output contract, The tables", "\"Hand off\"",
+      "section \"Hand work on\"",
     ]:
       let found = cite(section)
       check found.len == 1  # duty 1
       check found.len == 1 and found[0].message.endsWith("got `" & section & "`.")  # value
+    check citeIn("# Guide\n\n```md\nKeep it short.\n```\n", "\"Keep it short\"")
+      .len == 1  # quote that fence alone holds is example
 
 
   test "longest heading opening text wins, so heading holding comma reads whole":
     check cite("Prune, never narrate").len == 0  # comma inside heading
     check cite("Work for subagents, gives the test").len == 0  # prose after comma
     check cite("Work for subagents. Then more").len == 0  # stop ends citation
+    let rules = "# Guide\n\n## Rules\n\nText.\n\n## Rules, Old and new\n\nText.\n"
+    check citeIn(rules, "Rules, Old and new").len == 0  # longest wins over heading it opens
+    let costs = "# Guide\n\n## Alpha\n\n### Cost\n\n#### Small\n\n## Beta\n\n### Cost\n\n" &
+      "#### Large\n"
+    check citeIn(costs, "Cost, Large").len == 0  # tie keeps each heading of that name
+    let longer = "# Guide\n\n## Rules\n\n### Old\n\n## Rules of cost\n\n### Cost\n"
+    check citeIn(longer, "Rules, Cost").len == 1  # mark ends name, so longer heading is unread
 
 
   test "subsection lies inside section before it, at any depth":
@@ -208,6 +237,8 @@ suite "Duty 1":
     check cite("Work for subagents and the rest").len == 0  # prose after `and`
     let planned = "# Provenance\n\n## Planned turn\n\nTurn.\n\n## Figures\n\nTimes.\n"
     check citeIn(planned, "Planned turn and Figures").len == 0  # as dance_ontology cites
+    check cite("Output contract, The sign-off and Prune, never narrate")
+      .len == 1  # second section among candidates of first, so in same section
 
 
   test "heading is two to six `#` then space, so title and seventh level name none":
@@ -223,10 +254,13 @@ suite "Duty 1":
     for section in [
       "VI.5", "Article IV.7", "duty 3", "Duty 3", "duties 1 and 2", "section 4", "§5",
       "which every delegate reads", "`STYLE.md` and `EXAMPLES.md`", "`koch.nim`",
-      "`<project>.nimble`", "README.md",
+      "`<project>.nimble`", "README.md", "Section 4", "Duties 1 and 2",
     ]:
       check cite(section).len == 0  # names no heading
     check findingsTree(entry("koch.nim", "## Drive (NOTICE.md, Text).\n")).len == 0  # no file
+    check findingsTree(
+      entry("notes.md", "# Notes\n\n## Kept\n"), entry("koch.nim", "## Do (notes.md, Gone).\n")
+    ).len == 0  # name in lower case names no document
     check findingsTree(entry("GUIDE.md", GUIDE), entry("koch.nim", "## (GUIDE.md,Nothing).\n"))
       .len == 0  # comma with no space opens no citation
 
@@ -255,6 +289,8 @@ suite "Duty 1":
     check tree.citeFrom(DIRECTORY_ALPHA & "/README.md", "./PROVENANCE.md, Toolchain")
       .len == 1  # `./` from folder of file
     check tree.citeFrom(source, "../../../../../PROVENANCE.md, Toolchain").len == 0  # above root
+    check tree.citeFrom(source, "../../../../../GUIDE.md, Toolchain")
+      .len == 0  # above root names nothing, though root holds guide
 
 
   test "comment lines that follow each other join, and line end ends name":
@@ -271,6 +307,22 @@ suite "Duty 1":
     check findingsTree(guide, entry("koch.nim", trailing.replace(" contract", ""))).len == 0
     let markdown = "# Fixture\n\nSee (`GUIDE.md`, Work for\nsubagents) here.\n"
     check findingsTree(guide, entry("README.md", markdown)).len == 0  # paragraph reads whole
+    let above = "## See GUIDE.md, Output\nlet x = 1  # contracts\n"
+    check findingsTree(guide, entry("koch.nim", above)).len == 0  # after code, joins none above
+    let below = "let x = 1  # See GUIDE.md, Output\n## contracts\n"
+    check findingsTree(guide, entry("koch.nim", below)).len == 0  # line below continues none
+    let between = "## See GUIDE.md, Output\nlet x = 1\n## contracts\n"
+    check findingsTree(guide, entry("koch.nim", between)).len == 0  # code between keeps apart
+    let paired = "## Hand (GUIDE.md, Work for\n##   subagents and Output contract).\n"
+    check findingsTree(guide, entry("koch.nim", paired)).len == 0  # line end inside name passed
+    let ended = "# Fixture\n\nSee GUIDE.md, Output contract\nfor more.\n"
+    check findingsTree(guide, entry("README.md", ended)).len == 0  # line end ends name
+    let cut = "# Fixture\n\nSee GUIDE.md, Output\n\ncontracts follow.\n"
+    check findingsTree(guide, entry("README.md", cut)).len == 0  # blank line cuts paragraph
+    let
+      split = "## Hand work over, as\n## GUIDE.md, Independent changes says.\n"
+      found = findingsTree(guide, entry("koch.nim", split))
+    check found.len == 1 and found[0].line == 2  # finding at line that name opens on
 
 
   test "string literal and file of no comments are unread":
@@ -291,3 +343,6 @@ suite "Duty 1":
       .len == 0  # span ends citation
     check findingsTree(contributor, entry("README.md", "As `CONTRIBUTOR.md, Bounds` does.\n"))
       .len == 1  # duty 1
+    let unopened = "## Run `cat GUIDE.md`, Then.\n"
+    check findingsTree(entry("GUIDE.md", GUIDE), entry("koch.nim", unopened))
+      .len == 0  # backtick closing name needs one opening it
