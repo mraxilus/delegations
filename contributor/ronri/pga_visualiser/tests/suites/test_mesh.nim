@@ -339,6 +339,92 @@ suite "Mesh":
         check abs((fx - ax) * uy - (fy - ay) * ux) < 1e-9
 
 
+  test "a line beside the eye stays on its image while the pivot stands far off":
+    # Fault: halves met at line's point nearest pivot, which float32 record holds about view
+    #   origin. Pivot 100,000 units out put that point as far, and line 0.01 beside eye ran
+    #   75 px off its image (repository issue 922). Image is same from any point of line.
+    const
+      (wide, tall) = (1440, 900)
+      distances_pivot = [19.0, 1.0e3, 1.0e5, 1.0e6, 4.7e6]
+        ## Distances to pivot, out to that of HD 222237 b of demo.
+        ##   Each runs with every offset and angle below.
+      offsets_eye = [0.01, 1.0]  ## How far line passes beside eye.
+      degrees_sight = [2.4, 30.0]  ## Angle line makes with sight.
+    proc offSegment(at, tail, head: ScreenPosition): float =
+      ## Measure pixels from `at` to nearest point of screen segment `tail` to `head`.
+      let
+        (run_x, run_y) = (head.x - tail.x, head.y - tail.y)
+        length_squared = run_x * run_x + run_y * run_y
+        dot_run = (at.x - tail.x) * run_x + (at.y - tail.y) * run_y
+        along = if length_squared == 0.0: 0.0 else: clamp(dot_run / length_squared, 0.0, 1.0)
+      hypot(at.x - (tail.x + along * run_x), at.y - (tail.y + along * run_y))
+    var cases: seq[(float, float, float)]
+    for distance in distances_pivot:
+      for beside in offsets_eye:
+        for degrees in degrees_sight: cases.add (distance, beside, degrees)
+    for (distance, beside, degrees) in cases:
+      var camera = cameraAround(
+        Position(x: 1000.0, y: -2000.0, z: 300.0), distance, Direction(x: 0.3, y: -1.0, z: 0.2)
+      )
+      let
+        axes = camera.frame
+        along = cos(degToRad(degrees)) * axes.forward + sin(degToRad(degrees)) * axes.axis_right
+        base = camera.eyeWorld + beside * axes.axis_up
+      # Joined through `applyOperation`, as every build joins: about its own point. Bare join
+      #   about world origin stands line 4.7e6 out 8.6e-5 off where meant, which is no fault of
+      #   drawing.
+      var scene = initScene()
+      discard scene.addObject(
+        applyOperation(Operation.Wedge, base.toMultivector, (base + along).toMultivector),
+        "line",
+        Ink.Rose,
+      )
+      # Point unit ahead sets near clip close, as scene about eye does, so near part is drawn.
+      discard scene.addObject(
+        (camera.eyeWorld + axes.forward - 0.2 * axes.axis_up).toMultivector, "near", Ink.Jade
+      )
+      var placed = newSeq[Placement](scene.bound)
+      for handle in 0..<scene.bound:
+        placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+      let (eye, frame) = camera.moveOriginView
+      camera.reach_near = reachNear(
+        placed, scene, camera.originView, eye, eye + camera.distance * frame.forward, frame.forward
+      )
+      let
+        scale = camera.drawExtentFor(eye, frame, tall, reachFar(placed, scene))
+        view_projection = camera.initMatrixViewProjection(eye, frame, wide / tall)
+      MESHES_SCENE.clearMeshes
+      discard MESHES_SCENE.tessellateObject(placed[0], Ink.Rose.colour, scale)
+      var halves: seq[(ScreenPosition, ScreenPosition)]
+      for index in 0..<MESHES_SCENE.ribbons.count:
+        let corners = expandRibbon(MESHES_SCENE.ribbons.records[index], scale.toScale)
+        if corners[0].alpha == 0.0: continue
+        var ends: array[2, ScreenPosition]
+        for side, (first, second) in [(0, 5), (1, 2)]:
+          ends[side] = projectToScreen(view_projection, wide, tall, Position(
+            x: 0.5 * (float(corners[first].x) + float(corners[second].x)),
+            y: 0.5 * (float(corners[first].y) + float(corners[second].y)),
+            z: 0.5 * (float(corners[first].z) + float(corners[second].z)),
+          ))
+        halves.add (ends[0], ends[1])
+      check halves.len > 0
+      # Sample true line in frame, past near clip, from just beside eye out to far field.
+      var worst = 0.0
+      let base_view = base.toView(camera.originView)
+      for step in 0..400:
+        let reach = pow(10.0, -3.0 + 12.0 * float(step) / 400.0)
+        for sign in [1.0, -1.0]:
+          let
+            place = base_view + (sign * reach) * along
+            seen = projectToScreen(view_projection, wide, tall, place)
+          if not seen.isInFront or dot(place - eye, frame.forward) < 2.0 * scale.depthNear: continue
+          if seen.x < 0.0 or seen.x > float(wide) or seen.y < 0.0 or seen.y > float(tall): continue
+          var nearest = Inf
+          for (tail, head) in halves: nearest = min(nearest, offSegment(seen, tail, head))
+          worst = max(worst, nearest)
+      check worst < 0.5
+
+
   test "a line's near crossing holds its place with the camera close on the line":
     # Crossing was stepped from end being cut away -- `head + fraction*(tail - head)`,
     #   fraction hair under one where head is far end -- so difference of two places
