@@ -617,11 +617,13 @@ proc run(options: Options): int =
 
 
 proc main(): int =
-  ## Parse options and run; `./koch` alone prints usage, and usage error exits 2.
+  ## Parse options, point git at hooks of checkout, and run; `./koch` alone prints usage, and
+  ##   usage error exits 2.
   let options = parseOptions()
   if options.isNone:
     stderr.write USAGE
     return 2
+  options.get.root.setPathHooks
   options.get.run
 
 

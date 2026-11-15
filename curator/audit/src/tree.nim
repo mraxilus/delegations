@@ -57,6 +57,12 @@ proc checkoutAt*(root, directory: string): Option[string] =
   except OSError: some(root)
 
 
+proc setPathHooks*(root: string) =
+  ## Point `core.hooksPath` of checkout at `DIRECTORY_HOOKS` where git names other path or none.
+  ##   TODO: Stub writes nothing until setter lands; each verb of koch calls it already.
+  discard
+
+
 proc listPaths*(root: string): seq[string] =
   ## List files git sees, i.e. cached plus others minus ignored, existing on disk, sorted.
   fieldsGit(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])

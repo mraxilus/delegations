@@ -52,7 +52,9 @@ const
     "koch.nim", "koch.nim.cfg", ".gitignore", ".gitattributes",
   ]
     ## Files allowed directly at root; `AGENTS.md` is entry file each harness reads first.
-  DIRECTORIES_ROOT* = [".github", ".claude", ".githooks"]
+  DIRECTORY_HOOKS* = ".githooks"
+    ## Directory of git's own hooks, which `core.hooksPath` names from top of each worktree.
+  DIRECTORIES_ROOT* = [".github", ".claude", DIRECTORY_HOOKS]
     ## Root directories unchecked inside; project roots are `ROOTS`. `.claude` holds hooks,
     ## permissions, skills and agents Claude Code loads; `.githooks` holds git's own hooks.
   FILES_PROJECT* = [FILE_README, "PROVENANCE.md", "GLOSSARY.md"]
@@ -62,7 +64,7 @@ const
   DIRECTORY_TESTS* = "tests"  ## Directory every project must populate.
   DIRECTORIES_PAGE* = ["pages", "mockups"]
     ## Directories committed pages live in: kept pages, then one-off mock-ups.
-  DIRECTORIES_SHELL* = [".claude", ".githooks"]
+  DIRECTORIES_SHELL* = [".claude", DIRECTORY_HOOKS]
     ## Root directories Shell may live in: command Claude Code runs, and hooks git runs.
   KINDS_PATH = "curator/audit/src/kinds.nim"  ## Registry named in finding for unregistered kind.
 
