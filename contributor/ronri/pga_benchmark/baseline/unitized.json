@@ -2,8 +2,8 @@
   "schema": 1,
   "kind": "unitized",
   "taken": {
-    "date": "2026-10-28",
-    "machine": "linux amd64, 4 cores",
+    "date": "2026-11-15",
+    "machine": "linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207",
     "nim": "14991af742d0833503741fd9a0918133d1bcf8a4",
     "flags": "-d:release",
     "passes": 7
@@ -15,45 +15,45 @@
         "rows": {
           "join two points": {
             "saved": 6,
-            "homogeneous": 14.0908203125,
-            "null": 14.087890625,
-            "unitized": 12.7978515625,
-            "padded": 13.0419921875
+            "homogeneous": 4.7744140625,
+            "null": 4.7734375,
+            "unitized": 3.6806640625,
+            "padded": 3.82421875
           },
           "join line and point": {
             "saved": 3,
-            "homogeneous": 14.7783203125,
-            "null": 14.63671875,
-            "unitized": 14.28515625,
-            "padded": 13.8291015625
+            "homogeneous": 5.51171875,
+            "null": 5.509765625,
+            "unitized": 4.4482421875,
+            "padded": 4.669921875
           },
           "meet point and plane": {
             "saved": 1,
-            "homogeneous": 11.2998046875,
-            "null": 10.32421875,
-            "unitized": 10.154296875,
-            "padded": 11.2294921875
+            "homogeneous": 3.1728515625,
+            "null": 3.171875,
+            "unitized": 3.12890625,
+            "padded": 3.1640625
           },
           "antisupport": {
             "saved": 3,
-            "homogeneous": 3.4189453125,
-            "null": 3.4267578125,
-            "unitized": 3.5751953125,
-            "padded": 3.07421875
+            "homogeneous": 2.1396484375,
+            "null": 2.1484375,
+            "unitized": 1.8798828125,
+            "padded": 1.8818359375
           },
           "transform by motor": {
             "saved": 4,
-            "homogeneous": 17.62890625,
-            "null": 17.6455078125,
-            "unitized": 16.86328125,
-            "padded": 16.8974609375
+            "homogeneous": 7.248046875,
+            "null": 7.2451171875,
+            "unitized": 7.291015625,
+            "padded": 7.4814453125
           },
           "unitize, book against code": {
             "saved": 1,
-            "homogeneous": 2.544921875,
-            "null": 3.56640625,
-            "unitized": 2.630859375,
-            "padded": 3.5673828125
+            "homogeneous": 1.77734375,
+            "null": 1.794921875,
+            "unitized": 1.58203125,
+            "padded": 2.177734375
           }
         }
       },
@@ -62,45 +62,45 @@
         "rows": {
           "join two points": {
             "saved": 6,
-            "homogeneous": 49.596720695495605,
-            "null": 55.266913414001465,
-            "unitized": 34.72563171386719,
-            "padded": 43.58871364593506
+            "homogeneous": 22.743693351745605,
+            "null": 16.664165496826172,
+            "unitized": 12.77687931060791,
+            "padded": 17.525043487548828
           },
           "join line and point": {
             "saved": 3,
-            "homogeneous": 55.57551956176758,
-            "null": 54.94372272491455,
-            "unitized": 35.90988540649414,
-            "padded": 46.345720291137695
+            "homogeneous": 19.468509674072266,
+            "null": 18.529186248779297,
+            "unitized": 15.798375129699707,
+            "padded": 16.957645416259766
           },
           "meet point and plane": {
             "saved": 1,
-            "homogeneous": 48.416236877441406,
-            "null": 49.499144554138184,
-            "unitized": 48.51692867279053,
-            "padded": 49.268714904785156
+            "homogeneous": 9.469733238220215,
+            "null": 9.410348892211914,
+            "unitized": 8.733510971069336,
+            "padded": 9.053974151611328
           },
           "antisupport": {
             "saved": 3,
-            "homogeneous": 7.527804374694824,
-            "null": 7.319461822509766,
-            "unitized": 6.204316139221191,
-            "padded": 7.086885452270508
+            "homogeneous": 7.044367790222168,
+            "null": 6.7355451583862305,
+            "unitized": 6.369076728820801,
+            "padded": 6.770576477050781
           },
           "transform by motor": {
             "saved": 4,
-            "homogeneous": 72.61744213104248,
-            "null": 71.18256664276123,
-            "unitized": 49.998154640197754,
-            "padded": 49.946794509887695
+            "homogeneous": 52.334336280822754,
+            "null": 50.367371559143066,
+            "unitized": 45.430641174316406,
+            "padded": 49.59928035736084
           },
           "unitize, book against code": {
             "saved": 1,
-            "homogeneous": 7.3422393798828125,
-            "null": 7.7629594802856445,
-            "unitized": 7.090000152587891,
-            "padded": 8.393189430236816
+            "homogeneous": 7.265509605407715,
+            "null": 7.523418426513672,
+            "unitized": 6.2879533767700195,
+            "padded": 6.701568603515625
           }
         }
       }
@@ -111,45 +111,45 @@
         "rows": {
           "join two points": {
             "saved": 6,
-            "homogeneous": 14.0849609375,
-            "null": 14.080078125,
-            "unitized": 12.8037109375,
-            "padded": 13.0458984375
+            "homogeneous": 4.7685546875,
+            "null": 4.763671875,
+            "unitized": 3.6376953125,
+            "padded": 3.818359375
           },
           "join line and point": {
             "saved": 3,
-            "homogeneous": 14.78125,
-            "null": 14.623046875,
-            "unitized": 14.2900390625,
-            "padded": 13.826171875
+            "homogeneous": 5.5048828125,
+            "null": 5.50390625,
+            "unitized": 4.4404296875,
+            "padded": 4.6484375
           },
           "meet point and plane": {
             "saved": 1,
-            "homogeneous": 11.296875,
-            "null": 10.32421875,
-            "unitized": 10.1533203125,
-            "padded": 11.234375
+            "homogeneous": 3.169921875,
+            "null": 3.1689453125,
+            "unitized": 3.123046875,
+            "padded": 3.166015625
           },
           "antisupport": {
             "saved": 3,
-            "homogeneous": 3.427734375,
-            "null": 3.4296875,
-            "unitized": 3.564453125,
-            "padded": 3.0537109375
+            "homogeneous": 2.1669921875,
+            "null": 2.1611328125,
+            "unitized": 1.92578125,
+            "padded": 1.9326171875
           },
           "transform by motor": {
             "saved": 4,
-            "homogeneous": 17.6328125,
-            "null": 17.640625,
-            "unitized": 16.8583984375,
-            "padded": 16.900390625
+            "homogeneous": 7.24609375,
+            "null": 7.25390625,
+            "unitized": 7.2939453125,
+            "padded": 7.4638671875
           },
           "unitize, book against code": {
             "saved": 1,
-            "homogeneous": 2.61328125,
-            "null": 3.61328125,
-            "unitized": 2.6748046875,
-            "padded": 3.5673828125
+            "homogeneous": 1.79296875,
+            "null": 1.78125,
+            "unitized": 1.64453125,
+            "padded": 1.9033203125
           }
         }
       },
@@ -158,45 +158,45 @@
         "rows": {
           "join two points": {
             "saved": 6,
-            "homogeneous": 49.48750019073486,
-            "null": 49.18688678741455,
-            "unitized": 33.43449783325195,
-            "padded": 40.389763832092285
+            "homogeneous": 18.837870597839355,
+            "null": 16.279722213745117,
+            "unitized": 12.71843147277832,
+            "padded": 14.283742904663086
           },
           "join line and point": {
             "saved": 3,
-            "homogeneous": 50.095736503601074,
-            "null": 51.91719722747803,
-            "unitized": 36.08592987060547,
-            "padded": 47.00665092468262
+            "homogeneous": 27.680705070495605,
+            "null": 19.632925033569336,
+            "unitized": 15.242000579833984,
+            "padded": 24.499256134033203
           },
           "meet point and plane": {
             "saved": 1,
-            "homogeneous": 48.82819366455078,
-            "null": 48.71822261810303,
-            "unitized": 47.890740394592285,
-            "padded": 46.650644302368164
+            "homogeneous": 9.904714584350586,
+            "null": 10.16475772857666,
+            "unitized": 8.829819679260254,
+            "padded": 9.542282104492188
           },
           "antisupport": {
             "saved": 3,
-            "homogeneous": 7.644558906555176,
-            "null": 7.442505836486816,
-            "unitized": 6.524011611938477,
-            "padded": 7.464831352233887
+            "homogeneous": 7.894289970397949,
+            "null": 7.509243965148926,
+            "unitized": 6.956356048583984,
+            "padded": 7.531589508056641
           },
           "transform by motor": {
             "saved": 4,
-            "homogeneous": 67.36638259887695,
-            "null": 70.97230529785156,
-            "unitized": 53.68103218078613,
-            "padded": 70.21151065826416
+            "homogeneous": 50.51866340637207,
+            "null": 51.420753479003906,
+            "unitized": 49.439828872680664,
+            "padded": 49.27114009857178
           },
           "unitize, book against code": {
             "saved": 1,
-            "homogeneous": 7.5653486251831055,
-            "null": 7.42133903503418,
-            "unitized": 6.99202823638916,
-            "padded": 8.522089958190918
+            "homogeneous": 6.590607643127441,
+            "null": 6.65872859954834,
+            "unitized": 6.504608154296875,
+            "padded": 6.821872711181641
           }
         }
       }
