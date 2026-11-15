@@ -26,7 +26,7 @@ func drifted(fork, base: string; path = "GUIDE.md"): Drift =
 suite "Base":
   test "charter and code of stamp govern drift; checker and everything else do not (#893)":
     for rule in RULES: check rule.isGoverning  # constitution, style, contributor
-    check STAMP.isGoverning  # checker code, yet change there moves every stamp
+    check STAMP.isGoverning  # checker code, yet change there can move every stamp
     # Checker reaches branch through merge `koch check` judges (`merge.nim`), as runner judges
     #   merge ref, so drift of it bought parity alone.
     check not "koch.nim".isGoverning
@@ -123,9 +123,12 @@ suite "Base":
     check found.len == 1 and found[0].message.endsWith("got `## Output contract`.")
 
 
-  test "code of stamp is named once":
+  test "code of stamp is named once, as module whose change can move every stamp":
+    # Case as second record review of #893 found it: finding said change there moves every
+    #   stamp, where one of five merges that changed module moved none.
     let found = checkBase(Drift(gained: @[STAMP, STAMP, "koch.nim"]))
     check found.len == 1 and found[0].message.endsWith("got `" & STAMP & "`.")
+    check found.len == 1 and "which can move every stamp" in found[0].message
 
 
   test "branch older than change of checker alone passes drift, and older than charter fails":
@@ -148,7 +151,7 @@ suite "Base":
     discard root.git("checkout -q curator/older")
     check checkBase(readDrift(root, "main")).len == 0
 
-    # Code of stamp moves every stamp, so it still drifts, and so does charter.
+    # Code of stamp can move every stamp, so it still drifts, and so does charter.
     discard root.git("checkout -q main")
     root.writeInto(STAMP, "discard 2\n")
     discard root.git("commit -q -am 'feat(audit): move code of stamp'")
