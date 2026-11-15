@@ -195,9 +195,11 @@ suite "Chain":
       check formatted("a" & EXTENSIONS[dialect], breach, dialect).source.contains(
         "let\n  A = 1  ## One.\n  B = 2  ## Two.\n",
       )  # bindings share keyword in every dialect
-    check checkSource("tests/a.nims", "echo x\n", Dialect.Script).mapIt(it.rule) ==
-      @[Rule.OutputDebug]  # test rules of any Nim code read script under `tests/`
-    check checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script).len == 0  # no stub
+    let
+      script = checkSource("tests/a.nims", "echo x\n", Dialect.Script, nimble = "a.nimble")
+      stub = checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script, nimble = "a.nimble")
+    check script.mapIt(it.rule) == @[Rule.OutputDebug]  # test rules of any Nim code read script
+    check stub.len == 0  # no stub
 
 
   test "fence keeps lines between its markers, and fix reaches every other line":
@@ -311,6 +313,25 @@ suite "Chain":
       check checkFenceHeld(path, fenced, dialect)[0].message.contains(
         "inside them article-in-comment breaks once at line 2 and expression-spacing",
       )  # default counts it
+
+
+  test "fixed wait reads where caller says file is drive code, at any path, and nowhere else":
+    # Case held: chain read each file under directory `tests` or `tools` as drive code, which is
+    #   layout of one repository (#886). Domain: path of each layout, with caller's word and
+    #   without it, in checks of source and in fence warning.
+    let
+      source = STRICT_FUNCS & "\n\nsleep(1)\n"
+      fenced = STRICT_FUNCS & "\n\n" & FENCE_OFF & "\nsleep(1)\n" & FENCE_ON & "\n"
+    for path in ["src/a.nim", "tests/a.nim", "tools/a.nim"]:
+      let
+        read = checkSource(path, source, Dialect.Module, is_drive = true).mapIt(it.rule)
+        unread = checkSource(path, source, Dialect.Module).mapIt(it.rule)
+        warning = checkFenceHeld(path, fenced, Dialect.Module, is_drive = true)[0].message
+        warning_bare = checkFenceHeld(path, fenced, Dialect.Module)[0].message
+      check Rule.WaitFixed in read  # drive code, as caller says
+      check Rule.WaitFixed notin unread  # none, as command line says
+      check "fixed-wait breaks once at line 4" in warning  # fence counts it
+      check "fixed-wait" notin warning_bare
 
 
 

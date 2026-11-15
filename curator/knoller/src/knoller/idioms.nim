@@ -17,25 +17,25 @@
 ##   - `return result` never appears: bare `return` exits early with `result` (§5).
 ##   - Profiler import stands on two lines, `import std/nimprof` indented under
 ##     `when compileOption("profiler"):`; entry module (`when isMainModule:`), library umbrella
-##     (`<project>/src/<project>.nim`) and stub carry it right after their pragmas (§3):
+##     (`src/<name>.nim` beside `<name>.nimble`) and stub carry it right after their pragmas (§3):
 ##     `checkProfiler`, outside static pass until projects run fix. Stub that includes file at
 ##     top level takes import from it, since include makes one module of both (§3, §6). Cost:
 ##     included file is unread here, so its import is held by reading alone.
 ##   - Stub leaves `-r`, `batchable` and `joinable` out of its testament header (§6). Stub is
-##     `tests/test_*.nim`, or `t*.nim` at any depth inside directory directly under `tests`
-##     whose source opens with that header, as testament reads category (`reports.isStub`).
+##     `tests/test_*.nim` of package, or `t*.nim` at any depth inside directory directly under
+##     `tests` whose source opens with that header, as testament reads category (`reports.isStub`).
 ##   Rules no fixer reaches, since each needs knowledge text does not hold (`checkPragmas`,
 ##     `checkTests`):
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2): word of
 ##     `MARKS_FOREIGN` stands among pragmas of block (`declared.nim`).
-##   - Under `tests/` (`reports.isFileTest`): suite importing `std/random` seeds it, and stub
-##     carries testament header (§6), so only `tests/test_*.nim` can lack it, since header makes
-##     stub of category; `echo` of value without label, outside condition, is debug output
-##     (VIII.5).
+##   - Under `tests/` of package (`reports.isFileTest`): suite importing `std/random` seeds it,
+##     and stub carries testament header (§6), so only `tests/test_*.nim` can lack it, since
+##     header makes stub of category; `echo` of value without label, outside condition, is debug
+##     output (VIII.5).
 ##   `checkIdioms` reads every idiom static pass of `curator/audit` reads, by dialect: module
 ##     each, script and package those of any Nim code, i.e. bindings, pragmas, return and test
-##     rules but stub; `strictFuncs`, import order and stub keys are module's (`fixersIdiom` too).
+##     rules but stub; `strictFuncs`, import order and stub keys are module's (`stepsIdiom` too).
 ##
 ##   Fixers read same spans, runs and constants their checks read, so each rule is written
 ##     once (Article II.1), and each rewrites only lines its check reports:
@@ -299,10 +299,10 @@ func linesHeader(source: string): Slice[int] =
   source[0 ..< open].count('\n') + 1 .. source[0 ..< close].count('\n') - 1
 
 
-func keysStub(path, source: string): seq[KeyStub] =
+func keysStub(path, source, nimble: string): seq[KeyStub] =
   ## Find each key §6 leaves out of stub's testament header: `-r` in `cmd`, whole line of
   ##   `batchable` or `joinable`. `-r` is flag alone, so space, quote or line end follows it.
-  if not path.isStub(source): return
+  if not path.isStub(source, nimble): return
   let lines = source.split('\n')
   for i in source.linesHeader:
     let s = lines[i].strip
@@ -317,9 +317,10 @@ func keysStub(path, source: string): seq[KeyStub] =
       if s.startsWith(key & ":"): result.add KeyStub(line: i, key: key, first: -1, after: -1)
 
 
-func checkKeysStub*(path, source: string): seq[Report] =
-  ## Report key stub's testament header leaves out: `-r` in `cmd`, `batchable`, `joinable` (§6).
-  for stub in keysStub(path, source):
+func checkKeysStub*(path, source: string; nimble = ""): seq[Report] =
+  ## Report key stub's testament header leaves out: `-r` in `cmd`, `batchable`, `joinable` (§6);
+  ##   `nimble` is nimble file nearest path, which says where stubs lie.
+  for stub in keysStub(path, source, nimble):
     let message =
       if stub.first >= 0:
         "Stub `cmd` leaves out `-r`, since testament runs binary itself; got `-r`."
@@ -434,11 +435,13 @@ func isSeeded(code: string): bool =
   "initRand(" in code or (at >= 0 and at + 10 < code.len and code[at + 10] != ')')
 
 
-func checkTests(path, source: string; lines, code: seq[string]; dialect: Dialect): seq[Report] =
+func checkTests(
+  path, source: string; lines, code: seq[string]; dialect: Dialect; nimble: string
+): seq[Report] =
   ## Report, in test file, unseeded random suite, stub lacking testament header, and `echo` of
   ##   debug shape (§6, VIII.5); file outside `tests/` reports none, and stub is module alone,
   ##   since koch runs testament over `tests/t*.nim`.
-  if not path.isFileTest: return
+  if not path.isFileTest(nimble): return
   if code.isRandomImported and not code.join("\n").isSeeded:
     result.add initReport(
       path,
@@ -446,7 +449,8 @@ func checkTests(path, source: string; lines, code: seq[string]; dialect: Dialect
       Rule.SeedRandom,
       "Suite seeds `std/random`, as `randomize(0)` does; got no seed.",
     )
-  if dialect == Dialect.Module and path.isStub(source) and source.find(HEADER_TESTAMENT) < 0:
+  if dialect == Dialect.Module and path.isStub(source, nimble) and
+      source.find(HEADER_TESTAMENT) < 0:
     result.add initReport(path, 0, Rule.HeaderStub, "Test stub carries testament header; got none.")
   for i, c in code:
     if c.wordFirst == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
@@ -459,11 +463,14 @@ func checkTests(path, source: string; lines, code: seq[string]; dialect: Dialect
       )
 
 
-func checkIdioms*(path, source: string; dialect: Dialect = Dialect.Module): seq[Report] =
+func checkIdioms*(
+  path, source: string; dialect: Dialect = Dialect.Module; nimble = ""
+): seq[Report] =
   ## Report Nim source breaking one-line idiom of STYLE.md or Article X.5, as static pass reads
   ##   them: those fixers reach, then those none reaches; test file adds its own. Script and
   ##   package read idioms of any Nim code alone, and module reads its own too: `strictFuncs`,
-  ##   import order and keys of stub.
+  ##   import order and keys of stub. `nimble` is nimble file nearest path, which says where
+  ##   tests and stubs lie.
   let
     lines = source.splitLines
     code = source.codeOnly.splitLines
@@ -474,9 +481,9 @@ func checkIdioms*(path, source: string; dialect: Dialect = Dialect.Module): seq[
   result.add checkBindings(path, code)
   result.add checkPragmas(path, lines, code)
   result.add checkReturns(path, code)
-  if path.isFileTest:
-    result.add checkTests(path, source, lines, code, dialect)
-    if is_module: result.add checkKeysStub(path, source)
+  if path.isFileTest(nimble):
+    result.add checkTests(path, source, lines, code, dialect, nimble)
+    if is_module: result.add checkKeysStub(path, source, nimble)
 
 
 func place(lines, code: seq[string]; i: int): PlaceReturn =
@@ -809,18 +816,12 @@ func fixStrictFuncs(path, source: string): Fix =
   result.fixed.add initReport(path, reported, Rule.StrictFuncs)
 
 
-func isUmbrella(path: string): bool =
-  ## Decide whether path is library umbrella: `<project>/src/<project>.nim`.
-  let parts = path.split('/')
-  parts.len >= 3 and parts[^2] == "src" and parts[^1] == parts[^3] & ".nim"
-
-
 func isIncluding(source: string): bool =
   ## Decide whether module includes file at top level, so both compile as one module.
   source.codeOnly.splitLines.anyIt(it.startsWith("include "))
 
 
-func profiler(path, source: string): Profiler =
+func profiler(path, source, nimble: string): Profiler =
   ## Read profiler import of module: forms joined onto one line, presence, and pragma it goes
   ##   after.
   ##   Module opens with header docs, notes and testament header; pragma lines after them, with
@@ -830,7 +831,8 @@ func profiler(path, source: string): Profiler =
     code = source.codeOnly.split('\n')
     header = source.linesHeader
   result.anchor = -1
-  result.is_entry = (path.isStub(source) and not source.isIncluding) or path.isUmbrella
+  result.is_entry = (path.isStub(source, nimble) and not source.isIncluding) or
+      path.isUmbrella(nimble)
   for i, line in lines:
     if code[i].strip.len == 0: continue
     if line.startsWith(GUARD_MAIN): result.is_entry = true
@@ -850,11 +852,11 @@ func profiler(path, source: string): Profiler =
     else: is_opening = false
 
 
-func checkProfiler*(path, source: string): seq[Report] =
+func checkProfiler*(path, source: string; nimble = ""): seq[Report] =
   ## Report profiler import joined onto one line, and entry module, umbrella or stub lacking it
-  ##   (STYLE.md §3).
+  ##   (STYLE.md §3); `nimble` is nimble file nearest path, which says where they lie.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  let profiler = profiler(path, source)
+  let profiler = profiler(path, source, nimble)
   for i in profiler.lines_joined:
     result.add initReport(
       path,
@@ -873,12 +875,12 @@ func checkProfiler*(path, source: string): seq[Report] =
     )
 
 
-func fixProfiler(path, source: string): Fix =
+func fixProfiler(path, source, nimble: string): Fix =
   ## Split each profiler import joined onto one line into two lines; insert one, after module's
   ##   last opening pragma, where entry module, umbrella or stub lacks it. Module without such
   ##   pragma stays.
   ##   Both lines of split import trace to line it was joined on.
-  let profiler = profiler(path, source)
+  let profiler = profiler(path, source, nimble)
   result.source = source
   if profiler.lines_joined.len == 0 and (profiler.is_present or not profiler.is_entry or
       profiler.anchor < 0):
@@ -905,9 +907,9 @@ func fixProfiler(path, source: string): Fix =
   if not profiler.is_present: result.fixed.add initReport(path, 0, Rule.ImportProfiler)
 
 
-func fixKeysStub(path, source: string): Fix =
+func fixKeysStub(path, source, nimble: string): Fix =
   ## Cut `-r` from stub's `cmd`, and delete line of `batchable` or `joinable`, as check reads them.
-  let found = keysStub(path, source)
+  let found = keysStub(path, source, nimble)
   result.source = source
   if found.len == 0: return
   var
@@ -1013,29 +1015,32 @@ func fixLists(path, source: string): Fix =
   for d in found: result.fixed.add initReport(path, d.line + 1, Rule.ListUnordered)
 
 
-const FIXERS_IDIOM: array[8, Fixer] = [
-  fixReturnResult,
-  fixKeysStub,
-  fixImports,
-  fixConsolidations,
-  fixBindings,
-  fixStrictFuncs,
-  fixProfiler,
-  fixLists,
+const STEPS_IDIOM: array[8, Step] = [
+  guarded(fixReturnResult),
+  placing(fixKeysStub),
+  guarded(fixImports),
+  guarded(fixConsolidations),
+  guarded(fixBindings),
+  guarded(fixStrictFuncs),
+  placing(fixProfiler),
+  guarded(fixLists),
 ]
   ## Idiom fixers in order they run: brackets merge after rank orders blocks, so merged
   ##   statement takes first rank's place; profiler import goes after pragma `strictFuncs`
-  ##   fixer places.
+  ##   fixer places. Stub keys and profiler import read nimble file nearest file.
 
 
-func fixersIdiom*(dialect: Dialect): seq[Fixer] =
-  ## List idiom fixers dialect takes, in order they run: module takes each, script and package
-  ##   those whose check reads any Nim code (`checkIdioms`), i.e. return and bindings.
-  if dialect == Dialect.Module: @FIXERS_IDIOM else: @[fixReturnResult, fixBindings]
+func stepsIdiom*(dialect: Dialect): seq[Step] =
+  ## List steps of idiom fixers dialect takes, in order they run: module takes each, script and
+  ##   package those whose check reads any Nim code (`checkIdioms`), i.e. return and bindings.
+  if dialect == Dialect.Module: @STEPS_IDIOM
+  else: @[guarded(fixReturnResult), guarded(fixBindings)]
 
 
-func fixIdioms*(path, source: string): Fix =
+func fixIdioms*(path, source: string; nimble = ""): Fix =
   ## Rewrite Nim source so each idiom with one mechanical fix holds; report each rewrite.
   ##   `chain` traces each report through lines earlier fixers moved, to source as given.
+  ##   `nimble` is nimble file nearest path, which says where stubs and umbrella lie.
   result.source = source
-  for fixer in FIXERS_IDIOM: result = result.chain(fixer(path, result.source))
+  for step in STEPS_IDIOM:
+    result = result.chain(step.run(path, result.source, EVERY, nimble = nimble))

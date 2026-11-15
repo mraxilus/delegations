@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-11-10 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | d446c5be453722ff |
+| Rules   | 363e393b375ac380 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 le vi se gunka cu se gunka la'o gy. contributor .gy. .i le vi se gunka cu se krasi lo se minde be

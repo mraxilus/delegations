@@ -5,6 +5,9 @@
 ##     same words, with article `toFinding` cites.
 ##   Reads `tests/` and `tools/` of every project, with no exemption: speed check samples count
 ##     of frames or calls and never sleeps (IX.12), so no check has reason to hold fixed wait.
+##   Folders of drive code are habit of this repository, so knoller holds none: `koch fix` names
+##     drive code of each file it hands knoller (`isCodeDrive`), and fence warning there counts
+##     fixed wait where static pass reads it.
 ##
 ##   Cost: string of kind other than Nim is read as code, so message naming `waitForTimeout`
 ##     reports itself.
@@ -13,7 +16,7 @@
 
 import std/strutils
 import ../../knoller/src/knoller
-import ./[comments, findings, kinds]
+import ./[comments, findings, kinds, layout]
 
 
 const
@@ -30,6 +33,13 @@ func isCodeDrive*(path: string, directories: openArray[string]): bool =
   for directory in directories:
     for drive in DIRECTORIES_DRIVE:
       if path.startsWith(directory & "/" & drive & "/"): return true
+
+
+func isCodeDrive*(path: string): bool =
+  ## Decide whether path lies under `tests/` or `tools/` of project holding it, read from path
+  ##   alone, as `koch fix` names drive code to knoller (`fixes.nim`).
+  let directory = path.split('/').directoryProject
+  directory.len > 0 and path.isCodeDrive([directory])
 
 
 func identifiers(line: string): seq[string] =

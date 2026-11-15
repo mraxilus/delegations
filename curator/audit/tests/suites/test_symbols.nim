@@ -5,7 +5,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, tables, tempfiles, unittest]
+import std/[os, sequtils, strutils, tables, tempfiles, unittest]
 import ../../../knoller/src/knoller
 import ../../src/symbols
 import ./fixtures
@@ -70,3 +70,30 @@ suite "Internal: Symbols":
     check d.reason.len == 0
     check d.symbols[(3, 7)].kind == "skLet" and d.symbols[(3, 7)].line == 2
     check d.symbols[(3, 7)] == d.symbols[(2, 6)]  # use and declaration name one symbol
+
+
+  test "file under `tests/` of project compiles with `-d:testing`, as its stubs pass it":
+    # Case held: knoller compiled each file under directory `tests` with `-d:testing`, define
+    #   stubs of this repository pass (STYLE.md §6), so #886 moves it to koch, which names options
+    #   of each file. Domain: name declared under define alone, under `tests/` of project, under
+    #   its `src/`, and under directory `tests` outside it.
+    let
+      root = createTempDir("delegations_", "_defines")
+      pin = compilerRunning().version
+      nimble = "version = \"0.1.0\"\nrequires \"nim == " & pin & "\"\n"
+      source = "when defined(testing):\n  let x = 3\nlet y = x.float\n"
+      cases = [
+        ("curator/fixture/tests/a.nim", true),  # stubs pass define, so `x` stands
+        ("curator/fixture/tests/suites/b.nim", true),
+        ("curator/fixture/src/a.nim", false),  # define reaches `tests/` of project alone
+        ("curator/fixture/src/tests/c.nim", false),
+      ]
+    defer: removeDir(root)
+    var tree = @[entry("curator/fixture/fixture.nimble", nimble)]
+    for (path, _) in cases: tree.add entry(path, source)
+    for e in tree: writeInto(root, e.path, e.content)
+    var queries: seq[Query]
+    for (path, _) in cases: queries.add Query(path: path, sites: @[(3, 10)])
+    let answers = resolve(root, tree, queries)
+    for (path, is_resolved) in cases:
+      check answers.anyIt(it.path == path and (it.reason.len == 0) == is_resolved)
