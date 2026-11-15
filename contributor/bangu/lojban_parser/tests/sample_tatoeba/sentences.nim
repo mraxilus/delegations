@@ -1,24 +1,37 @@
-## Hold fixed sample of lojban sentences of Tatoeba, with verdict parser gave each, for suite.
-##   Written by `nim r tools/build.nim tatoeba <export>` from `jbo_sentences_detailed.tsv` of
-##   Tatoeba export of 2026-10-31, SHA-256 `bf91e751a78a5137ffa741b0971df3c4`
-##   `e7a5444e18b47545be51d0593629bb40`; never edit by hand, run verb again.
-##   Sentences of Tatoeba, under licence CC BY 2.0 FR; folder holding module is distributed
-##     under that licence, as `NOTICE.md` beside module gives, never under licence of
-##     repository.
-##   Sample is greedy cover of features of reading, as `tools/tatoeba.nim` defines them.
+## ralte lo stomupli be fi lo lojbo jufra pe `Tatoeba` mu'i le cipra
+##   .i le mupli cu vasru lo seljdi be le genturfa'i bei ro le jufra
+##   .i lo minde po'u `nim r tools/build.nim tatoeba <export>` ciska le vi datnyvei ra'i
+##       `jbo_sentences_detailed.tsv` pe le vreji pe `Tatoeba` zi'e pe de'i `2026-10-31`
+##   .i lo snina'u be `jbo_sentences_detailed.tsv` cu du zoi ky. SHA-256
+##       `bf91e751a78a5137ffa741b0971df3c4` `e7a5444e18b47545be51d0593629bb40` .ky.
+##   .i lo nu xanga'i le vi datnyvei cu na drani
+##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapypli le minde
+##   .i lo jufra pe `Tatoeba` seljva `CC BY 2.0 FR`
+##   .i `NOTICE.md` noi lamji le vi datnyvei cu cusku lo du'u le datnyveiste poi vasru le vi
+##       datnyvei cu seljva le crujva gi'e no roi seljva le crujva pe `delegations`
+##   .i le mupli cu gacri lo tcila pe lo se tcidu ta'i lo nu ro roi cuxna lo traji
+##   .i `tools/tatoeba.nim` skicu le tcila
 
 {.experimental: "strictFuncs".}
 
 
-type SentenceTatoeba* = object  ## Define one sentence of sample: number, text, owner, verdict.
-  id* {.requiresInit.}: int  ## Number Tatoeba gives sentence, as `599308`.
-  text* {.requiresInit.}: string  ## Sentence as export writes it.
-  owner* {.requiresInit.}: string  ## Name of account owning sentence; empty where none owns it.
-  verdict* {.requiresInit.}: string  ## Refusal and rule parser gave; empty where it reads.
+type SentenceTatoeba* = object
+  ## pa jufra pe le mupli
+  ##   .i le klesi cu vasru lo namcu .e lo selci'a .e lo ponse .e lo seljdi
+  id* {.requiresInit.}: int
+    ## lo namcu poi `Tatoeba` dunda ke'a le jufra ku'o mu'u `599308`
+  text* {.requiresInit.}: string  ## le jufra ta'i lo nu le vreji cu ciska le jufra
+  owner* {.requiresInit.}: string
+    ## lo cmene be lo ponse be le jufra
+    ##   .i va'o lo nu no da ponse le jufra kei le cmene cu kunti
+  verdict* {.requiresInit.}: string
+    ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i pu dunda ke'a
+    ##   .i va'o lo nu le jufra cu se tcidu kei le seljdi cu kunti
 
 
 const
-  COUNT_FEATURES_TATOEBA* = 599  ## Features of reading sample reaches at render.
+  COUNT_FEATURES_TATOEBA* = 599
+    ## lo te kancu be lo tcila pe lo se tcidu zi'e poi le mupli cu jarco ke'a ca lo nu ciska
   SENTENCES_TATOEBA* = [
     SentenceTatoeba(id: 602555, text: "ko'a puze'i stali", owner: "remod", verdict: ""),
     SentenceTatoeba(id: 620861, text: "do ba'e ka'e co'e", owner: "FB", verdict: ""),
@@ -1222,4 +1235,4 @@ const
       verdict: "",
     ),
   ]
-    ## Sentences of sample, in order of number.
+    ## lo jufra pe le mupli ta'i lo porsi be lo namcu

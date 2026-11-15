@@ -224,8 +224,8 @@ suite "Audit":
 
   test "entry of list of own prose whose project tree lacks is finding of umbrella, at list":
     # Case: listed project moves or goes, and its entry stays, so exception names no project and
-    #   nothing says so. Domain: listed project gone whole, and present; held entry with no suite
-    #   is `checkProjectsProseOwn`'s, whose suite holds it, since no entry of list demands one yet.
+    #   nothing says so. Domain: listed project gone whole, and present; gone project names no
+    #   suite besides, and entry demanding suite tree lacks is `checkProjectsProseOwn`'s case.
     let gone = treeGood().filterIt(not it.path.startsWith(DIRECTORY_PARSER & "/"))
     check gone.auditTree.mapIt((it.path, it.message)) == @[(
       PATH_PROSE_OWN,

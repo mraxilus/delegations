@@ -1441,9 +1441,7 @@ suite "Camera Aim":
     for handle in 0..<scene.bound:
       placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
     let (eye, frame) = camera.moveOriginView
-    camera.reach_near = reachNear(
-      placed, scene, camera.originView, eye, eye + camera.distance * frame.forward, frame.forward
-    )
+    camera.reach_near = reachNear(placed, scene, camera.originView, eye, frame.forward)
     let
       scale = camera.drawExtentFor(eye, frame, height_aim, reachFar(placed, scene))
       view_projection = camera.initMatrixViewProjection(eye, frame, width_aim / height_aim)
@@ -1453,8 +1451,10 @@ suite "Camera Aim":
       )
     # Near clip stands short of pivot, so line where it passes pivot is in frame.
     check scale.depthNear < camera.distance
-    # Both halves are drawn through middle, where pivot stands on line: one runs on to
-    #   vanishing point, other out past edge of frame on far side of middle from it.
+    # Line is drawn through middle, where pivot stands on line: on to vanishing point one
+    #   way, out past edge of frame on far side of middle other way. Halves meet at line's
+    #   point nearest eye, beside it, so half running away behind eye is clipped whole, and
+    #   one half carries whole image (repository issue 922).
     proc offSegment(at, tail, head: ScreenPosition): float =
       ## Measure pixels from `at` to nearest point of screen segment `tail` to `head`.
       let
@@ -1485,7 +1485,7 @@ suite "Camera Aim":
             (drawn_end.y - middle.y) * (middle.y - vanishing.y)) /
             hypot(middle.x - vanishing.x, middle.y - vanishing.y)
         if beyond > float(width_aim): is_edge_reached = true
-    check halves_drawn == 2
+    check halves_drawn == 1
     check is_vanishing_reached
     check is_edge_reached
     # Cursor on image, 200 px from middle toward eye's side of line, picks line.

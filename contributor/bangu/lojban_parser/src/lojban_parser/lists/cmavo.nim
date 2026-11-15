@@ -1,14 +1,24 @@
-## Hold cmavo list of Logical Language Group as typed entries, one for each cmavo of list.
-##   Written by `nim r tools/build.nim lists` from `cmavo.txt` of Debian
-##   package `lojban-common`, SHA-256 `544414d61f3ff35dd2cf4e4f79f3c86b`
-##   `f9bb0568eb3403f57288057e16796402`; never edit by hand, run verb again.
-##   Entries keep order of list: cmavo alphabetically, period of pause aside.
-##   Derived from material Logical Language Group placed in public domain; facts of
-##     derivation stated here as group asks: lines of one cmavo kept, columns cut to word and
-##     selma'o of `entries.nim`, period of pause and subclass of selma'o removed, carriage
-##     returns removed, spaces at field ends trimmed. Further information about Lojban:
-##     Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA,
-##     https://www.lojban.org/.
+## ralte le ma'oste pe `Logical Language Group` ta'i lo stecmi poi ponse lo klesi
+##   .i ro cmavo pe le liste cu selsni pa stecmi
+##   .i lo minde po'u `nim r tools/build.nim lists` ciska le vi datnyvei ra'i `cmavo.txt` pe
+##       `lojban-common` noi bakfu ne'i `Debian`
+##   .i lo snina'u be `cmavo.txt` cu du zoi ky. SHA-256 `544414d61f3ff35dd2cf4e4f79f3c86b`
+##       `f9bb0568eb3403f57288057e16796402`; .ky.
+##   .i lo nu xanga'i le vi datnyvei cu na drani
+##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapypli le minde
+##   .i le stecmi cu ralte le porsi pe le liste
+##   .i le liste cu porsi lo cmavo fi lo porsi be lo lerfu poi na du denpa bu
+##   .i le vi datnyvei cu selzba fi lo datni poi `Logical Language Group` rinka lo nu ke'a zifre fi
+##       ro da
+##   .i le girzu cu cpedu lo nu lo selzba be fi le datni cu cusku lo tadji be lo nu zbasu
+##   .i le vi pinka cu cusku le tadji
+##   .i le minde cu ralte lo linji poi vasru pa cmavo po'o ku'o gi'e ralte lo stuzi be lo valsi jo'u
+##       lo selma'o pe `entries.nim` gi'e vimcu ro datstu
+##   .i le minde cu vimcu ji'a lo lerfu po'u denpa bu ge'u .e lo klesi be lo selma'o be'o .e ro
+##       lerfu po'u `carriage return` ge'u .e ro kutle'u poi zvati lo fanmo be lo datnypau
+##   .i lo zmadatni be la lojban. cu zvati
+##       `Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA` .e
+##       `https://www.lojban.org/`
 
 {.experimental: "strictFuncs".}
 
@@ -615,4 +625,4 @@ const LIST_CMAVO* = [
   EntryCmavo(word: "zu'u", selmaho: Selmaho.Ui),
   EntryCmavo(word: "zy", selmaho: Selmaho.By),
 ]
-  ## Every cmavo of cmavo list that one line holds, in its order.
+  ## ro cmavo poi lo linji pe le liste cu vasru ke'a po'o ku'o ta'i le stepoi

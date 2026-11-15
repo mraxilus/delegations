@@ -1,13 +1,23 @@
-## Hold driver of verbs, `tools/build.nim`, to shape koch reads its verbs in: dispatch opens on
-##   line `case paramStr(1)`, and names each verb koch reaches as branch `of "<verb>":` before
-##   `else:` (`verbsDispatch` of `checker.nim` of curator, `CASE_DRIVER`). Koch learns from that
-##   dispatch alone whether project carries `drive`, `head` or `system` (CONTRIBUTOR.md), so verb
-##   it cannot read is one runner passes by in silence.
-##   Case as found, 2026-11-11, on branch of live script: dispatch opened on `case arguments[0]`,
-##     so koch read no verb of driver. `koch drive` drove nothing, and `koch list-packages` named
-##     no package of project.
-##   Reader below is copy of `verbsDispatch`, since project imports no module of curator; driver
-##     is read as text it is, at compile time, and no line of it runs here.
+## cipra lo du'u le jitro samtci be lo minde be'o po'u `tools/build.nim` mapti le tarmi poi `koch`
+##     tcidu lo minde ne'i ke'a
+##   .i le pagbu poi cuxna lo minde cu selkra le linji po'u `case paramStr(1)` gi'e vasru ro minde
+##       poi `koch` pilno ke'a ku'o ta'i lo jimca po'u `of "<verb>":` noi lidne `else:` to
+##       `CASE_DRIVER` .e `verbsDispatch` pe `checker.nim` pe `curator` toi
+##   .i `koch` cpacu lo du'u xu kau le vi selgu'a cu ponse `drive` .a `head` .a `system` kei le
+##       pagbu po'o to `CONTRIBUTOR.md` toi
+##   .i se ki'u bo `runner` smali'a ro minde poi `koch` na ka'e tcidu ke'a
+##
+## ni'o lo mupli cu terfa'i de'i `2026-11-11` bu'u lo jimca be `git` be'o pe le samtci pe lo
+##     mivyselci'a
+##   .i le pagbu poi cuxna lo minde cu pu selkra `case arguments[0]`
+##   .i se ki'u bo `koch` pu tcidu no minde pe le jitro samtci
+##   .i `koch drive` pu jitro no da
+##   .i `koch list-packages` pu cusku no bakfu pe le vi selgu'a
+##
+## ni'o `readVerbs` fukpi `verbsDispatch`
+##   .i ki'u bo le vi selgu'a cu cpacu no datnyvei pe `curator`
+##   .i le jitro samtci cu se tcidu ta'i lo selci'a ca lo nu fanva kei gi'e vasru no linji poi
+##       selpli vi
 
 {.experimental: "strictFuncs".}
 
@@ -18,17 +28,23 @@ import std/[strutils, unittest]
 
 
 const
-  TEXT_DRIVER = staticRead("../../tools/build.nim")  ## Driver, as committed.
-  OPENING_DISPATCH = "case paramStr(1)"  ## Line dispatch opens on (`CASE_DRIVER` of curator).
-  MARK_BRANCH = "of \""  ## Opening of branch naming one verb (`MARK_DISPATCH` of curator).
-  CLOSING_DISPATCH = "else:"  ## Line dispatch closes on (`CASE_END` of curator).
-  VERBS_KOCH = ["drive", "head", "system"]  ## Verbs of driver koch reaches, each carried here.
+  TEXT_DRIVER = staticRead("../../tools/build.nim")  ## le jitro samtci poi selpu'i
+  OPENING_DISPATCH = "case paramStr(1)"
+    ## le linji poi le pagbu poi cuxna lo minde cu selkra ke'a to `CASE_DRIVER` pe `curator` toi
+  MARK_BRANCH = "of \""
+    ## lo krasi be lo jimca poi cusku pa minde to `MARK_DISPATCH` pe `curator` toi
+  CLOSING_DISPATCH = "else:"
+    ## le linji poi le pagbu poi cuxna lo minde cu selfa'o ke'a to `CASE_END` pe `curator` toi
+  VERBS_KOCH = ["drive", "head", "system"]
+    ## lo minde pe le jitro samtci ge'u zi'e poi `koch` pilno ke'a
+    ##   .i le vi selgu'a cu ponse ro le minde
 
 
 
 func readVerbs(text: string): seq[string] =
-  ## Read verbs driver dispatches as koch reads them: quoted label of each branch after line that
-  ##   opens dispatch, till line that closes it.
+  ## tcidu lo minde poi le jitro samtci cu cuxna ke'a ku'o ta'i lo nu `koch` tcidu le minde
+  ##   .i tcidu lo cmene poi se sitna ne'i ro jimca poi se lidne le linji poi le pagbu poi cuxna lo
+  ##       minde cu selkra ke'a ku'o gi'e lidne le linji poi le pagbu cu selfa'o ke'a
   var is_inside = false
   for line in text.splitLines:
     let stripped = line.strip
@@ -48,4 +64,5 @@ suite "Internal: Driver":
     let verbs = TEXT_DRIVER.readVerbs
     checkpoint "verbs read: " & $verbs
     for verb in VERBS_KOCH:
-      check verb in verbs  # `CASE_DRIVER` of curator, koch learns verb from dispatch alone
+      # ja'i `CASE_DRIVER` pe `curator` `koch` cpacu lo minde le pagbu po'o
+      check verb in verbs  # `CASE_DRIVER` pe `curator`
