@@ -16,11 +16,13 @@ const STUB_NIM = "#!/bin/sh\n" &
   "[ \"$(cat koch.nim)\" != broken ] || exit 1\n" &
   "for a in \"$@\"; do case \"$a\" in -o:*) out=\"${a#-o:}\" ;; esac; done\n" &
   "[ -n \"${out:-}\" ] || exit 1\n" &
-  "printf '#!/bin/sh\\necho \"built from %s; ran $*\" > \"%s/run.log\"\\nexit 3\\n' " &
-  "\"$(cat koch.nim)\" \"$logs\" > \"$out\"\n" &
+  "printf '#!/bin/sh\\necho \"built from %s; ran $*\" > \"%s/run.log\"\\n" &
+  "exit \"$(cat \"%s/exit\" 2>/dev/null || echo 3)\"\\n' " &
+  "\"$(cat koch.nim)\" \"$logs\" \"$logs\" > \"$out\"\n" &
   "chmod +x \"$out\"\n"
   ## Compiler of pin `0.0.1` writing koch that logs source it was built from and arguments it
-  ##   ran with, then exits 3; source `broken` fails build.
+  ##   ran with, then exits with code that file `exit` beside cache holds, else 3; source
+  ##   `broken` fails build.
 
 
 proc repoForked(): string =
@@ -46,6 +48,13 @@ proc repoForked(): string =
 proc lines(path: string): seq[string] =
   ## Read lines of file, none where file is absent.
   if fileExists(path): readFile(path).strip.splitLines else: @[]
+
+
+proc toolchainStub(): string =
+  ## Create cache of toolchains that holds stub compiler of pin `0.0.1` alone.
+  result = createTempDir("delegations_", "_nim")
+  result.writeInto("0.0.1/bin/nim", STUB_NIM)
+  inclFilePermissions(result / "0.0.1" / "bin" / "nim", {fpUserExec})
 
 
 proc moveOnBase(root, path, content: string) =
@@ -121,19 +130,24 @@ suite "Merge":
 
   test "dirty checkout, and checkout holding base, are judged in place":
     # `readTree` reads uncommitted and untracked files, which merge of commits misses; checkout
-    #   holding base is its own merge.
+    #   holding base is its own merge. Merge path of `koch check` gives each back unjudged.
     let root = repoForked()
     defer: removeDir(root)
+    var toolchains = initToolchains(root, some(Compiler(version: "0.0.0")))  # never asked
     root.writeInto("README.md", "Edit in progress.\n")
     check not root.isMerging("main")
+    check not judgeMerged(root, "main", "curator/older", toolchains).is_merged
     discard root.git("checkout -q -- README.md")
     root.writeInto("notes.md", "Untracked.\n")
     check not root.isMerging("main")
+    check not judgeMerged(root, "main", "curator/older", toolchains).is_merged
     removeFile(root / "notes.md")
     check root.isMerging("main")
     discard root.git("merge -q --no-edit main")
     check not root.isMerging("main")
+    check not judgeMerged(root, "main", "curator/older", toolchains).is_merged
     check not dirExists(root / ".git" / DIRECTORY_MERGE)  # nothing merged, so no second tree
+    check not fileExists(root.fileMark)
 
 
   test "branch in conflict with base asks for merge of base, and leaves second tree as it was":
@@ -254,3 +268,46 @@ suite "Merge":
       root.moveOnBase(path, "Moved.\n")
       check runMerge(writeMerge(root, "main"), "curator/older", toolchains).code == 3
       check lines(toolchain / "builds.log").len == builds  # path is no source of koch
+
+
+  test "merge path of koch check reads drift first, and merges nothing where branch drifts":
+    # Drift reads checkout, since merge as HEAD gains no governing path over its base; branch
+    #   that drifts merges base first, so second tree waits.
+    let
+      root = repoForked()
+      toolchain = toolchainStub()
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    root.moveOnBase("GUIDE.md", "# Guide\n\n## Toolchain\n\nPin.\n")
+    var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
+    let verdict = judgeMerged(root, "main", "curator/older", toolchains)
+    check verdict.is_merged and verdict.code == 1
+    check verdict.findings.len == 1 and verdict.findings[0].path == "GUIDE.md"
+    check not dirExists(root / ".git" / DIRECTORY_MERGE) and not fileExists(root.fileMark)
+    check lines(toolchain / "builds.log").len == 0
+
+
+  test "mark of merge path records tree of branch where koch of merge exits 0, and only there":
+    # Exit of koch of merge is exit of `koch check`; push sends commits of branch, so mark holds
+    #   tree of branch, never tree of merge.
+    let
+      root = repoForked()
+      toolchain = toolchainStub()
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
+    let failed = judgeMerged(root, "main", "curator/older", toolchains)
+    check failed.is_merged and failed.code == 3 and failed.findings.len == 0
+    check not fileExists(root.fileMark)
+    toolchain.writeInto("exit", "0\n")
+    let passed = judgeMerged(root, "main", "curator/older", toolchains)
+    check passed.is_merged and passed.code == 0 and passed.findings.len == 0
+    check readFile(root.fileMark).strip == root.git("rev-parse HEAD^{tree}").strip
+
+    # Conflict gives one finding, and no mark.
+    removeFile(root.fileMark)
+    root.writeInto("koch.nim", "checker of branch\n")
+    discard root.git("commit -q -am 'feat(audit): move checker on branch'")
+    let conflicted = judgeMerged(root, "main", "curator/older", toolchains)
+    check conflicted.is_merged and conflicted.code == 1 and conflicted.findings.len == 1
+    check not fileExists(root.fileMark)
