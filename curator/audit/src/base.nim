@@ -14,9 +14,11 @@
 ##     `isDateIso`), and path cannot tell which part moved, so drift names each change of it.
 ##   Cost: edit of module of stamp that moves no stamp still sends each older branch to merge
 ##     base (`curator/audit/PROVENANCE.md`, Drift, counts such merges).
-##   Cost: `sections` of `markdown.nim` cuts each document for stamp (`textStamped`), yet drift
-##     names no change of it. Where one moves stamp, check of merge reports stale stamp in
-##     record that branch wrote, and `koch stamp` of branch writes old one, until it merges base.
+##   Cost: code outside module of stamp feeds stamp too, and drift names no change of it:
+##     `sections` of `markdown.nim` cuts each document (`textStamped`), and `documentsRules` and
+##     `stampRules` of `audit.nim` read each from tree and digest them. Where one moves stamp,
+##     check of merge reports stale stamp in record that branch wrote, and `koch stamp` of
+##     branch writes old one, until it merges base.
 ##   Rest of checker is no governing path (#893): `koch check` judges branch as merged with
 ##     base, by koch of that merge (`merge.nim`), as runner judges merge ref, so branch is
 ##     measured by ruler of base, and drift of it bought parity alone. Cost: hooks, `koch fix`

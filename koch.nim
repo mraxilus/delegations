@@ -399,7 +399,9 @@ proc checkInPlace(options: Options; branch, base: string): int =
   ##     finding is fixed.
   ##   Cost: suite failure shows only after static pass is clean.
   ##   Cost: no suite runs `main` of koch, so this order, and call of `recordMark` after green
-  ##     run, hold by reading (`curator/audit/PROVENANCE.md`, Merge with base).
+  ##     run, hold by hand: read on 2026-11-15, and run that day as `nim r koch check` in place
+  ##     on branch holding `origin/main`, which recorded tree of HEAD
+  ##     (`curator/audit/PROVENANCE.md`, Merge with base).
   let tree = options.root.readTree
   var found = tree.auditTree
   found.add findingsPruned(options.root, tree)
@@ -440,6 +442,8 @@ proc run(options: Options): int =
     # Clean checkout lacking base is judged as merged with it, by koch of that merge, as runner
     #   judges merge ref, and any other checkout in place (`judgeCheckout`); drift, branch name
     #   and mark read this checkout.
+    #   Cost: no suite runs this arm, so its fetch, and proc giving `checkInPlace` branch and
+    #     base, hold by hand (`curator/audit/PROVENANCE.md`, Merge with base).
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     # Base runner compares with is fetched fresh; koch of merge is handed commit, fetching none.
