@@ -20,6 +20,18 @@ the compiler stay in `curator/audit`. There is no vendored source.
 is the umbrella, and the modules sit under `src/knoller/`. So a repository other than this one
 can install it, and no rule of knoller reads the layout of this repository.
 
+**Atlas installs knoller by its name, through an override that gives its address and folder.**
+Knoller sits in the folder `curator/knoller` of this repository. So a project that requires it maps
+the name `knoller` to `https://github.com/mraxilus/delegations?subdir=curator/knoller` in its
+`atlas.config`. Its requirement names a commit, as `knoller#<commit>`. Its `nim.cfg` names
+`curator/knoller/src` inside the clone by hand, since Atlas 0.14.7 writes a path without that
+folder. `curator/assayer` requires knoller so, and its record gives each rejected form and each
+cost (`curator/assayer/PROVENANCE.md`, Package).
+
+- Verified by hand with Atlas 0.14.7 and Nim 2.4.0, 2026-11-15, in a scratch project outside this
+  repository. The lock restored into a fresh clone, and a program that imports `compilers` and
+  `pins` built and ran.
+
 **`audit` reaches knoller by a relative import, as `koch.nim` reaches `audit`.** A sibling
 project imported by its path is not a package, so it needs no requirement and no lock.
 
@@ -1803,5 +1815,6 @@ there is unverified.
 
 ## Open questions
 
-- Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
-  the nimble that 2.4.0 ships.
+- Nimble 0.26.2, which 2.4.0 ships, is not verified with the `?subdir=curator/knoller` form of a
+  git URL. Its check needs the package list of nimble, which the proxy of the machine of a
+  delegate refuses with status 405. Atlas reads the form through an override (`## Package`).

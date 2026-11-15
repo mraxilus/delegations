@@ -24,7 +24,7 @@ Overarching theme: methods of communication.
 
 ```text
 README.md  LICENSE.md  CONSTITUTION.md  STYLE.md  EXAMPLES.md  CURATOR.md  COORDINATOR.md
-CONTRIBUTOR.md  GUIDE.md  CLAUDE.md  GLOSSARY.md  koch.nim  koch.nim.cfg  .gitignore
+CONTRIBUTOR.md  GUIDE.md  AGENTS.md  CLAUDE.md  GLOSSARY.md  koch.nim  koch.nim.cfg  .gitignore
 .gitattributes  .github/  .claude/  .githooks/
 curator/README.md                        curator projects: audit, probe, any other
 curator/<project>/                       README.md  PROVENANCE.md  GLOSSARY.md  <project>.nimble
@@ -45,8 +45,10 @@ contributor/<domain>/<project>/          same shape as a curator project
   writes code inside a contributor project. It starts from [CURATOR.md](CURATOR.md).
 - A **contributor** delegate builds one project and touches nothing outside its folder. It
   starts from [CONTRIBUTOR.md](CONTRIBUTOR.md).
-- All then read [GUIDE.md](GUIDE.md), the how-to that they share. Every word they write for
-  a person is Simplified Technical English, and the guide gives the rules.
+- Each harness reads `AGENTS.md` first, the entry file. It sends each delegate to the file of
+  its role, whose section Read first is the one reading order of the role.
+- [GUIDE.md](GUIDE.md) is the how-to that they share. Every word they write for a person is
+  Simplified Technical English, and the guide gives the rules.
 
 ## Issues
 

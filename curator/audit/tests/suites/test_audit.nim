@@ -34,7 +34,7 @@ suite "Audit":
       DIRECTORY_ALPHA & "/PROVENANCE.md",
       DIRECTORY_AUDIT & "/PROVENANCE.md",
     ]  # every project
-    let curator_only = changed.replaced("CURATOR.md", "# Curator\n\nChanged.\n")
+    let curator_only = changed.replaced("CURATOR.md", TEXT_CURATOR.replace("Duties.", "Changed."))
     check curator_only.auditTree.len == stale.len  # CURATOR.md is not stamped
 
 

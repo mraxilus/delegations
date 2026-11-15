@@ -88,3 +88,20 @@ suite "Glossary":
     let found = checkWordsPeople("CURATOR.md", "# T\n\nowner\n| Author | x |\n```\nbot\n```\n")
     check found.mapIt(it.line) == @[3]  # table row and fence skipped
     check found[0].message.endsWith("got `owner`.")
+
+
+  test "import line of Claude Code names file, so people check reads no word of it":
+    # Case: `CLAUDE.md` imports entry file as `@AGENTS.md` on line of its own, outside code, since
+    #   Claude Code loads no import in code, and check read `AGENTS` there as people word. Domain:
+    #   import line alone, indented one, prose beside it, prose after it on its line, import
+    #   inside sentence, still prose, and word alone after `@`, which names no file, while path
+    #   through directory does.
+    check checkWordsPeople("CLAUDE.md", "# Claude Code\n\n@AGENTS.md\n").len == 0
+    check checkWordsPeople("CLAUDE.md", "  @AGENTS.md\n").len == 0  # indented
+    check checkWordsPeople("CLAUDE.md", "@AGENTS.md\nThe agents read it.\n").mapIt(it.line) ==
+      @[2]  # prose line beside import still read
+    check checkWordsPeople("CLAUDE.md", "@AGENTS.md and the agents.\n").len == 2  # line read whole
+    check checkWordsPeople("CLAUDE.md", "Read @AGENTS.md first.\n").len == 1  # sentence
+    check checkWordsPeople("CURATOR.md", "@agents\n").len == 1  # word alone names no file
+    check checkWordsPeople("CURATOR.md", "@agents.\n").len == 1  # word closing sentence
+    check checkWordsPeople("CLAUDE.md", "@notes/agents\n").len == 0  # path through directory

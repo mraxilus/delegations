@@ -98,14 +98,17 @@ and testament. `PROVENANCE.md`, Report, gives each pattern and its source.
 ## Build and test
 
 ```sh
-nim r koch check                 # from repository root: every check a pull request runs
-nim r koch test curator/assayer  # this project alone
+nim r koch check                       # from repository root: every check a pull request runs
+nim r koch test curator/assayer        # this project alone, after it restores knoller
+nim r koch fetch-deps curator/assayer  # knoller alone, at the commit that atlas.lock pins
 nim c -d:release -o:binaries/assayer curator/assayer/src/assayer.nim  # command line
 ```
 
-This needs the compiler that the project pins in `assayer.nimble`, and git. Assayer imports
-`curator/knoller` by a relative path, so it builds from a checkout of this repository. The suites
-run real processes through `/bin/sh`, so they need a POSIX system, and CI runs them on Linux.
+This needs the compiler that the project pins in `assayer.nimble`, git, and the Atlas that ships
+with that compiler. Assayer requires knoller as a package, and `atlas.lock` pins its commit. Atlas
+fetches that commit from GitHub into `dependencies/`, so assayer builds with no checkout of this
+repository. The build of the command line needs that restore first. The suites run real processes
+through `/bin/sh`, so they need a POSIX system, and CI runs them on Linux.
 
 ## Published pages
 

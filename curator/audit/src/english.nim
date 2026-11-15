@@ -44,6 +44,7 @@ const
     ".github/ISSUE_TEMPLATE/queued-work.md",
     ".github/ISSUE_TEMPLATE/review-finding.md",
     ".github/pull_request_template.md",
+    "AGENTS.md",
     "CLAUDE.md",
     "CONSTITUTION.md",
     "CONTRIBUTOR.md",

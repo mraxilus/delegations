@@ -226,6 +226,9 @@ can pass 25 words.
   yet are governed. A domain outside the registry is not, and neither is a README below a project
   directory. That arm has its own assertion, because `## Open questions` holds its widening. One
   more assertion holds that a derived path is read, and not merely listed.
+- Verified by `suites/test_english.nim`: each Markdown file that `FILES_ROOT` allows is governed,
+  except `LICENSE.md`. So a root document that `PATHS_ENGLISH` lacks fails the suite, as the entry
+  file would, which each harness reads first.
 
 ## Prose in its own language
 
@@ -379,6 +382,21 @@ are findings, and are never skipped. `.claude` and `.githooks` are root director
 - Verified by `suites/test_layout.nim` over a fixture tree that the tests build. The project list is
   pinned, and the unknown-domain case asserts both the finding and the unchanged list.
   `test_audit.nim` proves that fixture clean under every static check.
+
+**The entry file stands at the root, and `CLAUDE.md` imports it on a line of its own, outside
+code.** `AGENTS.md` is the file that each harness reads first, so its absence is a finding.
+Claude Code loads no import inside code, and this repository writes each path in backticks. So
+an import in a code span would load nothing, and only a check would see it. The check reads the
+line `@AGENTS.md` whole, outside fences, so an import indented as Markdown code counts as none.
+A suite alone cannot hold it, because a change to `CLAUDE.md` alone selects no suite.
+
+- Assumed: Claude Code loads no import inside code. Its documentation said so when read on
+  2026-11-15: import parsing skips code spans and fenced code blocks.
+- A tree without `CLAUDE.md` passes. Assumed: Claude Code then reads `AGENTS.md` itself, as its
+  documentation said when read on 2026-11-14. It still advises the import, which loads once.
+- Verified by `suites/test_layout.nim`: an import that is missing, of another file, in a code
+  span, in a fence and indented. Also an entry file that is missing, with `CLAUDE.md` and
+  without it.
 
 **Only one check reads substance, and it reads a narrow slice.** `checkCitations` resolves
 every claim that opens `Verified by` and names a backticked `.nim` file in the `PROVENANCE.md`
@@ -538,11 +556,21 @@ two ways passes, as a paraphrase passes the duplicates check. Verified by
 Markdown under `curator/`.** `WORDS_PEOPLE` is the avoid list under Architect, Delegate,
 Curator, Contributor and Role, cut to the words for people. It is read whole and without case,
 plural included, outside code spans, fences and tables. A glossary is exempt, because it lists
-the words it avoids.
+the words it avoids. An import line of Claude Code, `@` and a path alone on a line, is skipped
+too, because it holds no prose.
 
 - Rejected: the full avoid list, which holds build, rules and version, plain words everywhere.
 - `identity` is left out, as the word of algebra in `curator/probe`.
 - Contributor prose is not read. Verified by `suites/test_glossary.nim`.
+- `CLAUDE.md` imports `@AGENTS.md` outside code, as Layout says, and without the skip the check
+  reads `AGENTS` there as a word for people. Verified by `suites/test_glossary.nim`, for that
+  line of `CLAUDE.md`. An import inside a sentence stays prose, and so does a line that holds
+  prose after its import.
+- A path holds `/` or `.` before its last character, as `AGENTS.md` does. So a word alone after
+  `@`, as `@agents`, names no file, and the check reads it as prose. Verified by
+  `suites/test_glossary.nim`. Cost: an import of a file at the root with no extension reads as
+  prose. Rejected: a test that the named file exists, since the check reads one file and never
+  the tree.
 
 ## Prompts
 
@@ -554,6 +582,21 @@ not. Code spans and fences pass, which keeps the carried-list example legal.
 
 - Cost: `II.9`, `duty 10` and a bare year pass by shape, so only a whole date is diary here.
 - Verified by `suites/test_prompts.nim`.
+
+**The entry file is a prompt, and each role file holds its reading order under one heading.**
+`PATHS_PROMPT` lists `AGENTS.md` beside the three role files, because each harness reads it at
+each start. Each role file holds `## Read first, in this order`, and the entry file sends each
+role to that section. The start hook prints it from `CURATOR.md` for a curator branch, and from
+`CONTRIBUTOR.md` for a contributor branch (Hooks on tool calls). A role file that lacks it is a
+finding, since its delegate would find no list, and nothing else would see it.
+`SECTIONS_PROCESS` names that heading in `CONTRIBUTOR.md` alone, because it lists rules
+documents only.
+
+- The start hook prints no section of `COORDINATOR.md`. The coordinator holds no branch, so it
+  gets no reading order from the hook until its trial, as the Architect ruled on #891. The entry
+  file still sends it to that section, so the check holds the heading there too.
+- Verified by `suites/test_prompts.nim`, for each file of the pinned list of roles. The suite
+  also holds a heading cut to `## Read first`, a heading that a fence quotes, and the entry file.
 
 ## Copies
 
@@ -1879,6 +1922,17 @@ at the line that names the copy.
 - Verified by `suites/test_dependencies.nim`: a matching name, another name, a lock that stores no
   name, and a lock that will not parse.
 
+**A package in a folder of its repository restores as any other package.** `curator/assayer`
+requires knoller so, through a name override in its `atlas.config`. Atlas clones the whole
+repository, and `checkCheckouts` finds the directory that the lock names. `atlas changed` then warns
+that the remote of the clone lacks the query of the address in the lock. It exits 0, so the verdict
+stands.
+
+- Verified by `nim r koch test curator/assayer` with Atlas 0.14.7, 2026-11-15, after a delete of
+  `dependencies/`.
+- Cost: a later Atlas that makes that warning a failure turns the restore of assayer red, and the
+  finding names the exit code of `atlas changed`.
+
 ## Scoped checks
 
 **The static pass stays whole-tree, and only compilation is scoped.** A project enters the test
@@ -1921,9 +1975,9 @@ the folder of that source. A statement on several lines, behind a `when` guard, 
 path counts. A comment, or a string outside such a statement, imports nothing. So a project that
 adds an import is selected from then on, with no list to keep.
 
-- Measured on 2026-11-12: `lojban_tagger` imports `src` and `tools` of `lojban_parser`, and
-  `curator/assayer` and `curator/audit` import `src` of knoller. No other project imports another
-  one.
+- Measured on 2026-11-15 by `importersByFolder` over the tree: `lojban_tagger` imports `src` and
+  `tools` of `lojban_parser`, and `curator/audit` imports `src` of knoller. No other project imports
+  another one by its path.
 - Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
 - Rejected: `src` alone, since the tools of the tagger import the tools of the parser.
 - Rejected: the importers of a project for each change to any of its code. A suite of the parser is
@@ -1935,6 +1989,18 @@ adds an import is selected from then on, with no list to keep.
 - Verified by `suites/test_plan.nim`, for each case as found. A change to the source or the tools
   of the parser selects the tagger, and an importer of the tagger too. Each form of import counts,
   and a suite or a record of the parser selects no importer.
+
+**A project that requires another project as a package is no importer of it.** It imports by the
+name of the package, and it compiles the commit that its `atlas.lock` pins. So a change to the
+other project does not select it, and a move of its lock does, as any change of its code does.
+`curator/assayer` requires knoller so (`curator/assayer/PROVENANCE.md`, Package).
+
+- Cost: a change to knoller that breaks assayer shows when the lock of assayer next moves.
+- Verified by `suites/test_plan.nim`, on a fixture of the case. A change to a source or to the
+  nimble file of knoller plans `curator/audit` and not a project that requires knoller as a
+  package. A change to the lock of that project plans it, and an import by path plans it again.
+- Verified by the import suite of assayer, `test_imports.nim` in `curator/assayer/tests/suites/`.
+  A path import that a change to assayer brings back fails that suite in the same change.
 
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
@@ -2840,6 +2906,27 @@ that holds it. The events, each one a verb argument:
 - `prompt` reads each message of the Architect, and names the skill of its moment, as section
   Skills says.
 
+**`start` prints the reading order from the file of the role, so the list lives once.** The
+section Read first of `CURATOR.md` serves a curator branch of either form, and that of
+`CONTRIBUTOR.md` a contributor branch (`pathPrompt`). A line that names the file opens the list,
+since its item "This file to the end" names no file out of its document. The coordinator holds
+no branch, so it reads as a branch outside the grammar. It gets no list until its trial, as the
+Architect ruled on #891. Prompts says what holds each role file to its heading.
+
+- Rejected: a copy of the list in the hook, which drifts from the file of the role unseen.
+- The read of the file of the role lives in `hooks.nim` (`readPrompt`), and not in koch, because
+  no suite runs `main` of koch.
+- Verified by `suites/test_hooks.nim`, for each arm of the grammar, a role file that lacks the
+  heading, and a branch outside the grammar. The suite also reads the file of the role over a
+  scratch root, for a curator branch and a contributor branch.
+
+**A harness without these hooks gets the start context by a command, and reading holds the
+rest.** `AGENTS.md` tells it to run `nim r koch hook start < /dev/null` at each start. That is
+because `koch hook` reads standard input to its end, and `start` uses none of it. The git hooks
+hold its commits and pushes, once a verb of koch sets the hooks path. Verified by hand on
+2026-11-15, in a fresh clone at `c89a916f8`. There that command printed the start context of a
+curator branch, with the reading order from `CURATOR.md`, and exited 0.
+
 **`start` prints the headings of the record that the branch works on, each with the line where it
 opens.** A contributor branch and a branch of one curator project read the record of their
 project. `curator/<name>` reads the record of the audit (`pathRecord`). A delegate then
@@ -2910,10 +2997,9 @@ names, else the working directory of the call.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
-At the start it fetches the release tarball where no `nim` is on `PATH`. It sets
-`core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
-exists. Every hook command runs the koch that it built into `binaries/`, and falls back to
-`nim r`.
+At the start it fetches the release tarball where no `nim` is on `PATH`. It writes PATH to
+`CLAUDE_ENV_FILE` where that variable exists. Every hook command runs the koch that it built
+into `binaries/`, and falls back to `nim r`.
 
 The tarball is linux_x64, which is what the cloud runner of Claude Code uses. Verified by hand
 on 2026-10-01, by a fake input to each event, before any delegate ran under the settings file.
@@ -2937,25 +3023,9 @@ the binary that it finds.
   compiler that names the source it read. By hand on 2026-10-03, a first hook built in 2.3 s,
   and a second ran in 0.016 s.
 
-**The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
-writes the tree hash it passed on into `koch-check` in the git directory when the working tree
-is clean. `pre-push` refuses a push whose tree differs. The git directory is the one that
-`git rev-parse --git-dir` names, so a worktree, whose `.git` is a file, keeps its own mark.
+**A hook reaches only Claude Code, and only where it holds this repository alone.** A checkout
+of several repositories reads no project settings.
 
-`commit-msg` runs the commit check over the new subject and the ladder before the commit
-lands. A merge commit passes it, because git writes that subject and the commit check excludes
-merges. Both are two-line shell wrappers that call `hooks.sh`, because git runs a hook as an
-executable and a binary is never committed. A clone reads them once the start hook sets
-`core.hooksPath`, so any other tool reaches CI unchecked, and CI stays the gate.
-
-The subject that `commit-msg` reads is the first paragraph, its lines joined, because git reads
-it so. A finding on an earlier subject stays with `check-commits`, because `--amend` keeps the
-old head among the earlier subjects. One earlier finding cancels one same finding, so a bad
-subject written again still reports. Under `--amend`, the ladder reads the old head as the
-commit before the new one, and `check-commits` reads the true order in CI.
-
-- A hook reaches only Claude Code, and only where it holds this repository alone, because a
-  checkout of several repositories reads no project settings.
 - Rejected: a hook per rule, which puts the rule in two places. Rejected: `nim r` on every
   hook, which recompiles on each source change and costs seconds; the built binary costs
   milliseconds, and `nim r` stays as the fallback.
@@ -2964,6 +3034,57 @@ commit before the new one, and `check-commits` reads the true order in CI.
   relative path then fails to open, and every hooked tool is refused.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
+
+## Git hooks
+
+**The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
+writes the tree hash it passed on into `koch-check` in the git directory when the working tree
+is clean. `pre-push` refuses a push whose tree differs. The git directory is the one that
+`git rev-parse --git-dir` names, so a worktree, whose `.git` is a file, keeps its own mark.
+
+`commit-msg` runs the commit check over the new subject and the ladder before the commit
+lands. A merge commit passes it, because git writes that subject and the commit check excludes
+merges. Both are two-line shell wrappers that call `hooks.sh`, because git runs a hook as an
+executable and a binary is never committed. A clone reads them once a verb of koch sets
+`core.hooksPath`. A tool that never runs koch reaches CI unchecked, so CI stays the gate.
+
+The subject that `commit-msg` reads is the first paragraph, its lines joined, because git reads
+it so. A finding on an earlier subject stays with `check-commits`, because `--amend` keeps the
+old head among the earlier subjects. One earlier finding cancels one same finding, so a bad
+subject written again still reports. Under `--amend`, the ladder reads the old head as the
+commit before the new one, and `check-commits` reads the true order in CI.
+
+- Both git hooks run `.claude/hooks.sh`, a file in the folder of Claude Code, under each
+  harness. That works, because the steps for a push and a commit read no variable of Claude
+  Code. Rejected: a move of the file, which touches each command of `.claude/settings.json`, the
+  suite that reads the file, and the lists of the layout.
+- Verified by hand on 2026-11-15, in a fresh clone at `c89a916f8`, under `env -i`. The
+  environment held `HOME`, `PATH`, `XDG_CACHE_HOME` and `BASE` alone, and `BASE` named the base,
+  since the clone held no `origin/main`. There `commit-msg` refused a subject out of form, and
+  passed one in form. The hook `pre-push` took one ref on standard input, as git gives it, and
+  refused a tree that `koch check` did not pass.
+
+**Each verb of koch points git at `.githooks`, so each harness that runs koch gets the git
+hooks.** `main` calls `setPathHooks` before it dispatches, whatever the verb, as the Architect
+ruled on #891. The setter reads `core.hooksPath` first, and writes it only where it differs.
+So hooks that run at the same time take no lock once it is set. It prints nothing, because CI
+reads the output of `list-projects`, and a hook answers on standard output. A failure of git
+fails no verb, and that covers a lock that another run holds.
+
+- The path is relative, so git finds `.githooks` at the top of each worktree, and one write
+  serves each one. A write of the config leaves the tree clean, so the mark of `koch check`
+  stays safe. No workflow commits or pushes, so CI runs no git hook.
+- Rejected: a verb of its own, which reaches only a harness that follows an instruction.
+- Cost: one read of git on each run of koch. A person who removes the value gets it back at the
+  next verb. A harness that sets a global hooks path of its own loses it in this checkout.
+- Verified by `suites/test_tree.nim`, over real git in scratch repositories. It covers a path
+  unset, another path, the same path, and a lock that another run holds. It also covers a
+  directory in no repository, no git on `PATH`, and a worktree. Under that lock, in that
+  directory and with no git, the setter raises nothing and writes nothing to descriptor 1 or 2.
+- No suite runs `main` of koch, so a check by hand holds its call of the setter. Verified by
+  hand on 2026-11-15, in a fresh clone at `c89a916f8`: `koch list-projects --all`, with koch
+  built from that clone, set the value. It printed its JSON alone, wrote nothing to standard
+  error, and left the tree clean.
 
 ## Paths of write hooks
 

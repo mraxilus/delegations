@@ -35,6 +35,11 @@
 ##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
 ##     which compiler PATH holds decides nothing.
 ##
+##   Each verb first points git at `.githooks` (`setPathHooks` of `tree.nim`), so each harness
+##     running koch gets git hooks; it reads first, prints nothing, and fails no verb.
+##   Rejected: verb of its own for it, which reaches only harness following instruction, and
+##     adds verb to table, usage text and dispatch.
+##
 ##   Rejected: make (second toolchain, recipe tabs, untested glue); NimScript tasks (compiler
 ##     VM subset, script loaded on every compile, task names shadow compiler commands,
 ##     untestable). Chosen: compiled driver, as Nim's repository builds with `koch`.
@@ -347,9 +352,11 @@ proc runHook(root, event, input: string): int =
       drift = checkBase(readDrift(root, "origin/" & MAIN))
     except CatchableError: discard
     # Record branch works on is read where it exists; new project has none until it writes one.
+    #   File of role is read same way, in `readPrompt`, where suite reaches it.
     let record = branch_root.pathRecord
     echo contextStart(
       branch_root,
+      readPrompt(root, branch_root),
       readFile(root / "CONTRIBUTOR.md"),
       "## Carry the unchecked list in the open",
       if record.len > 0 and fileExists(root / record): readFile(root / record) else: "",
@@ -614,11 +621,13 @@ proc run(options: Options): int =
 
 
 proc main(): int =
-  ## Parse options and run; `./koch` alone prints usage, and usage error exits 2.
+  ## Parse options, point git at hooks of checkout, and run; `./koch` alone prints usage, and
+  ##   usage error exits 2.
   let options = parseOptions()
   if options.isNone:
     stderr.write USAGE
     return 2
+  options.get.root.setPathHooks
   options.get.run
 
 

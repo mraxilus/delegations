@@ -84,6 +84,14 @@ suite "Article VI.8":
     check isGoverned("contributor/ronri/pga_visualiser/GLOSSARY.md")
 
 
+  test "every root Markdown document but licence is governed, entry file among them":
+    # Record holds that `PATHS_ENGLISH` lists each one, and root document it leaves out passes
+    #   unread; entry file would, though each harness reads it first. Domain: `FILES_ROOT`.
+    for path in FILES_ROOT:
+      if path.endsWith(".md"): check path.isGoverned == (path != "LICENSE.md")
+    check isGoverned("AGENTS.md")  # entry file
+
+
   test "project and domain added later are governed from their first line":
     check isGoverned("curator/newcomer/README.md")  # no such project today
     check isGoverned("curator/newcomer/PROVENANCE.md")
