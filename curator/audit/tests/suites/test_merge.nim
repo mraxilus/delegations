@@ -4,6 +4,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, strutils, tables, tempfiles, unittest]
+from std/posix import close, dup, dup2, STDOUT_FILENO
 import ../../../knoller/src/knoller
 import ../../src/[merge, tree]
 import ./fixtures
@@ -48,6 +49,25 @@ proc repoForked(): string =
 proc lines(path: string): seq[string] =
   ## Read lines of file, none where file is absent.
   if fileExists(path): readFile(path).strip.splitLines else: @[]
+
+
+proc captureOutput(run: proc(): int): tuple[code: int, output: string] =
+  ## Run proc with descriptor 1 sent to file; give its exit, and what it printed there, which
+  ##   child process inherits too.
+  let
+    folder = createTempDir("delegations_", "_output")
+    copy = dup(STDOUT_FILENO)
+  defer: removeDir(folder)
+  var file = open(folder / "output", fmWrite)
+  flushFile(stdout)
+  discard dup2(file.getFileHandle, STDOUT_FILENO)
+  try: result.code = run()
+  finally:
+    flushFile(stdout)
+    discard dup2(copy, STDOUT_FILENO)
+    discard close(copy)
+    file.close
+  result.output = readFile(folder / "output")
 
 
 proc toolchainStub(): string =
@@ -351,10 +371,26 @@ suite "Merge":
     check not fileExists(root.fileMark)
 
 
-  test "build that fails, and pin of merge that no compiler serves, each give finding and no mark":
-    # Each stops judgement at exit 1, so `koch check` reports it rather than pass. Stub `curl`
-    #   fails as unreachable network would, so pin nothing serves fetches nothing, as in
-    #   `test_compilers.nim` of knoller.
+  test "build that fails gives finding, exit 1 and no mark":
+    # It stops judgement at exit 1, so `koch check` reports it rather than pass.
+    let
+      root = repoForked()
+      toolchain = toolchainStub()
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    toolchain.writeInto("exit", "0\n")
+    var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
+    root.moveOnBase("koch.nim", "broken\n")
+    let broken = judgeMerged(root, "main", "curator/older", toolchains)
+    check broken.is_merged and broken.code == 1 and broken.findings.len == 1
+    check broken.findings.len == 1 and "failed to build" in broken.findings[0].message
+    check not fileExists(root.fileMark) and not fileExists(toolchain / "run.log")
+
+
+  test "pin of merge that no compiler serves gives finding, exit 1 and no mark":
+    # It stops judgement at exit 1, as failed build does. Stub `curl` fails as unreachable network
+    #   would, so pin nothing serves fetches nothing, as in `test_compilers.nim` of knoller. Case
+    #   stands alone, so its skip hides no other check.
     let
       root = repoForked()
       toolchain = toolchainStub()
@@ -364,11 +400,6 @@ suite "Merge":
     defer: removeDir(tools)
     toolchain.writeInto("exit", "0\n")
     var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
-    root.moveOnBase("koch.nim", "broken\n")
-    let broken = judgeMerged(root, "main", "curator/older", toolchains)
-    check broken.is_merged and broken.code == 1 and broken.findings.len == 1
-    check broken.findings.len == 1 and "failed to build" in broken.findings[0].message
-    check not fileExists(root.fileMark) and not fileExists(toolchain / "run.log")
     if platform(hostOS, hostCPU).len == 0:
       # Gap: platform with no tarball builds pin from source through real git, so pin nothing
       #   serves is held on platform that has tarball alone.
@@ -409,9 +440,18 @@ suite "Merge":
     removeFile(root / "notes.md")
     check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 3  # merged
     check runs_in_place == 1 and lines(toolchain / "run.log").len == 1
+    toolchain.writeInto("exit", "0\n")
+    check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 0  # green
+    check runs_in_place == 1  # merge that passes runs nothing in place
+
+    # Drift stops merge at exit 1, and reports each finding.
     root.moveOnBase("GUIDE.md", "# Guide\n\n## Toolchain\n\nPin.\n")
-    check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 1  # drift
-    check runs_in_place == 1
+    let drifted = captureOutput(
+      proc(): int = judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace)
+    )
+    check drifted.code == 1 and runs_in_place == 1
+    check "GUIDE.md: Base changed sections" in drifted.output
+    check "1 finding(s)." in drifted.output and "Merge with base not judged" in drifted.output
     discard root.git("merge -q --no-edit main")
     check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 7  # holds base
     check runs_in_place == 2
@@ -424,8 +464,12 @@ suite "Merge":
     defer: removeDir(root)
     root.writeInto("notes.md", "Untracked.\n")
     root.recordMark
-    check not fileExists(root.fileMark)
+    check not fileExists(root.fileMark)  # untracked file
     removeFile(root / "notes.md")
+    root.writeInto("README.md", "Edit in progress.\n")
+    root.recordMark
+    check not fileExists(root.fileMark)  # tracked file changed
+    discard root.git("checkout -q -- README.md")
     discard root.git("checkout -q --detach")
     root.recordMark
     check not fileExists(root.fileMark)
