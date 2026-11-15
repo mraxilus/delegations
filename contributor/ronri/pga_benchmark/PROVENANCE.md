@@ -992,10 +992,12 @@ hold at rga4d, whose metric is diagonal.
 
 Up to 5D the laws of P04 sweep each product over every pair of named types and the whole
 multivector. At 6D they sweep a vector with each type. The compiler takes about 0.05 MiB for each
-term that a form emits. At cga6d every pair takes 18 minutes and 6 106 MiB to build and run. A
-vector with each type there takes 2 minutes and 1 196 MiB. Measured as the peak resident size of
-each build under Nim 2.4.0, 2026-10-29. By the same measure on 2026-11-15, on a Xeon of family 6
-model 173, a vector with each type takes 68 s and 1 223 MiB there.
+term that a form emits.
+
+At cga6d every pair takes 18 minutes and 6 106 MiB to build and run. A vector with each type there
+takes 2 minutes and 1 196 MiB. Measured as the peak resident size of each build under Nim 2.4.0,
+2026-10-29. The same measure of 2026-11-15 reads 68 s and 1 223 MiB for a vector with each type.
+That run was on a Xeon of family 6 model 173.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
