@@ -1649,7 +1649,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
   no zero fill and two error checks. P01 and P08 alone spend 437, 71 and 106. Both are the
   counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
-- Whether the library takes P04, `exact-kinds`, so that each operator from one table returns the
+- Whether the library takes P04, `basis-set-forms`, so that each operator from one table returns the
   exact basis-set type of the bases it reaches. At rga4d 16 measurands stand above the byte bound
   only because they write a whole multivector for one coefficient, and at cga5d 15 do. Each is a
   dot, an antidot or a squared norm. Under P04 each of them writes 8 bytes on a basis-set type.
@@ -1668,7 +1668,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   Under P05 and under P04, an AVX2 build can fault where the pin runs. It faults on a multivector
   in raw storage, which `alloc` aligns to 16 bytes. It also faults on one in a `seq` under
   `--mm:refc`, whose data the pinned compiler does not align.
-  `proposals/04-exact-kinds/proposal.md` and `proposals/05-multivector-align/proposal.md` state
+  `proposals/04-basis-set-forms/proposal.md` and `proposals/05-multivector-align/proposal.md` state
   each case. So each of the two holds one more decision, among three options. They are the
   alignment as now, an alignment of at most 16 bytes, and the alignment as now only under
   `defined(gcDestructors)`.
