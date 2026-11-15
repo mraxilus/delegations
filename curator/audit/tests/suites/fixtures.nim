@@ -62,6 +62,8 @@ const
     ##   `RULES` order, one for each row of `SECTIONS_PROCESS`. Stamp leaves them out, so tree
     ##   stamps as `TEXT_RULES` alone; row added there without section here is finding of
     ##   good tree, which names its heading.
+  TEXT_CURATOR* = "# Curator\n\nDuties.\n\n## Read first, in this order\n\nRead.\n"
+    ## Curator prompt of fixture tree, holding reading order of role under its heading.
   DIRECTORY_ALPHA* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
   DIRECTORY_PARSER* = CONTRIBUTOR & "/bangu/lojban_parser"
     ## Project list of own prose names, which fixture tree holds for that list's sake.
@@ -111,12 +113,13 @@ func treeGood*(): Tree =
   result = @[
     entry("README.md", textReadme()),
     entry("LICENSE.md", "# Licence\n\nText.\n"),
-    entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
+    entry("AGENTS.md", "# Entry\n\nRead file of role.\n"),
+    entry("CLAUDE.md", "# Claude Code\n\nImport entry file.\n\n@AGENTS.md\n"),
     entry(
       "GLOSSARY.md",
       "# Fixture\n\nWords.\n\n## Standards\n\n## Language\n\n**Term**:\nOne thing.\n",
     ),
-    entry("CURATOR.md", "# Curator\n\nDuties.\n"),
+    entry("CURATOR.md", TEXT_CURATOR),
     entry("koch.nim", "## Drive checks.\n\n" & STRICT_FUNCS & "\n\ndiscard\n"),
     entry("koch.nim.cfg", "# Flags for koch.\nhints:off\n"),
     entry(".gitignore", "# Build products.\nbin/\n"),

@@ -75,6 +75,11 @@ The five documents that every delegate follows: CONSTITUTION.md, STYLE.md, EXAMP
 GUIDE.md and CONTRIBUTOR.md.
 _Avoid_: rules, law, guidelines, policy
 
+**Entry file**:
+The one file at the root that each harness reads first. It names the reading order and the file
+of each role.
+_Avoid_: agent file, root prompt
+
 **Stamp**:
 A short code that ties a file to what it was checked or made against. The stamp of a project
 names the version of the rules for its content that the audit last checked.

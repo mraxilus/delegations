@@ -1060,10 +1060,10 @@ suite "Hooks":
 
 
   test "start context and turn writes":
-    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", "", @[])
+    let text = contextStart(BRANCH, "", "## List\n\n1. one\n\n## Next\n", "## List", "", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
     check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
-    check "outside grammar" in contextStart("claude/x", "", "## List", "", @[])
+    check "outside grammar" in contextStart("claude/x", "", "", "## List", "", @[])
     # Drift prints each finding of `check-drift`: sections changed and command that shows them,
     #   so start asks for new stamp only where finding does (#843).
     let
@@ -1074,7 +1074,7 @@ suite "Hooks":
           "contract`.",
       )
       checker = finding("", 0, "Branch predates checker on base; got `koch.nim`.")
-      drifted = contextStart("curator/x", "", "## List", "", @[drift, checker])
+      drifted = contextStart("curator/x", "", "", "## List", "", @[drift, checker])
     check "\n  GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
     check "\n  Branch predates checker on base; got `koch.nim`.\n" in drifted  # each, not first
     check "re-stamp" notin drifted
@@ -1097,12 +1097,53 @@ suite "Hooks":
     let
       record = "# Provenance\n\n| Field | Value |\n\n## Build\n\nText.\n\n```md\n## Quoted\n" &
         "```\n\n## Open questions\n\n- One.\n"
-      text = contextStart(BRANCH, "## List\n\n1. one\n", "## List", record, @[])
+      text = contextStart(BRANCH, "", "## List\n\n1. one\n", "## List", record, @[])
     check "Record `contributor/ronri/pga_benchmark/PROVENANCE.md`" in text
     check "\n5: ## Build\n13: ## Open questions\n" in text  # each heading, line it opens on
     check "## Quoted" notin text  # heading quoted in fence opens no section
     check text.endsWith(LINE_CARRIED)  # carried list stays last
-    check "Record" notin contextStart(BRANCH, "## List\n", "## List", "", @[])  # none written
+    check "Record" notin contextStart(BRANCH, "", "## List\n", "## List", "", @[])  # none written
+
+
+  test "start prints reading order from file of role, and holds no copy of its own (#891)":
+    # Case as found: start printed `CONSTITUTION.md`, `STYLE.md`, `GLOSSARY.md`, then `CURATOR.md`,
+    #   then `GUIDE.md` to curator, while `CURATOR.md`, Read first, puts `CONTRIBUTOR.md` second
+    #   and itself fourth. Domain: each arm of grammar, file of role lacking heading, and branch
+    #   outside grammar, as coordinator's reads until its trial.
+    const
+      heading = "## Read first, in this order"  # `HEADING_READ` of `prompts.nim`
+      curator = "# Curator\n\n" & heading & "\n\n1. Charter.\n2. `CONTRIBUTOR.md`.\n" &
+        "4. This file to the end.\n\n## Duties\n\nDo.\n"
+      contributor = "# Contributor\n\n" & heading & "\n\n1. Charter.\n\n## List\n\n1. one\n"
+    check pathPrompt("curator/rules") == "CURATOR.md"  # curator root
+    check pathPrompt("curator/probe/rings") == "CURATOR.md"  # one curator project
+    check pathPrompt(BRANCH) == "CONTRIBUTOR.md"
+    check pathPrompt("claude/x").len == 0  # outside grammar
+    let text = contextStart("curator/rules", curator, contributor, "## List", "", @[])
+    check text.startsWith("Role: curator, on branch `curator/rules`.\n\nRead first, from " &
+      "`CURATOR.md`:\n1. Charter.\n2. `CONTRIBUTOR.md`.\n4. This file to the end.\n\n")
+    check "Do." notin text  # next section stays out
+    check "then GUIDE.md" notin text  # no copy of list of its own
+    check "\nRead first, from `CONTRIBUTOR.md`:\n1. Charter.\n\n" in
+      contextStart(BRANCH, contributor, contributor, "## List", "", @[])
+    let lacking = "# Curator\n\nDuties.\n"  # prompt check reports it
+    check "Duties." notin contextStart("curator/rules", lacking, contributor, "## List", "", @[])
+    check "Read first" notin contextStart("claude/x", "", contributor, "## List", "", @[])
+
+
+  test "start reads file of role that branch names, from root of checkout":
+    # Koch passes this text to `contextStart`, and no suite runs `main` of koch, so read is held
+    #   here, over scratch root. Domain: curator branch, contributor branch, branch outside
+    #   grammar, and root lacking file of role.
+    let root = createTempDir("delegations_", "_prompts")
+    defer: removeDir(root)
+    writeFile(root / "CURATOR.md", "# Curator\n")
+    writeFile(root / "CONTRIBUTOR.md", "# Contributor\n")
+    check readPrompt(root, "curator/rules") == "# Curator\n"
+    check readPrompt(root, BRANCH) == "# Contributor\n"
+    check readPrompt(root, "claude/x").len == 0  # outside grammar, though root holds both
+    removeFile(root / "CONTRIBUTOR.md")
+    check readPrompt(root, BRANCH).len == 0  # root lacking file of role
 
 
   test "transcript parse finds calls since last message of person":
@@ -1412,9 +1453,9 @@ suite "Hooks":
     check reasonStop(mended, [], has_signoff = true).splitLines[^1] ==
       "The skill /sign-off holds these steps."
     check "/sign-off" notin reasonStop(mended, [])  # plain message holds no sign-off
-    check "/sync" in contextStart("curator/x", "", "## List", "", @[finding("", 0, "d")])
-    check "/sync" notin contextStart("curator/x", "", "## List", "", @[])
-    check contextStart(BRANCH, "## List\n\n1. one\n", "## List", "", @[]).endsWith(
+    check "/sync" in contextStart("curator/x", "", "", "## List", "", @[finding("", 0, "d")])
+    check "/sync" notin contextStart("curator/x", "", "", "## List", "", @[])
+    check contextStart(BRANCH, "", "## List\n\n1. one\n", "## List", "", @[]).endsWith(
       "The skill /triage reports each item of this list that is not met.")
     check "/propose-term" in contextEdit("contributor/ronri/pga_benchmark/GLOSSARY.md")
     check "/propose-term" in contextEdit("GLOSSARY.md")

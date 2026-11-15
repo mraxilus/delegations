@@ -2,8 +2,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, sets, strutils, tables, tempfiles, unittest]
-import ../../src/[domains, tree]
+import std/[options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
+from std/posix import close, dup, dup2, STDERR_FILENO, STDOUT_FILENO
+import ../../src/[domains, layout, tree]
 import ./fixtures
 
 
@@ -208,6 +209,82 @@ suite "Tree":
     # Domain: git names real top through same link, and root spelt real reads as it is.
     check checkoutAt(links / "root", links / "root") == some(root)
     check checkoutAt(root, plain) == some(root)
+
+
+  test "each verb points git at hooks of checkout, quietly, and fails on nothing (#891)":
+    # Case: only start hook of Claude Code set `core.hooksPath`, so other harness committed and
+    #   pushed past git hooks, and runner alone held them. Domain: path unset, other path, same
+    #   path, lock that run at once holds, directory in no repository, git missing from `PATH`,
+    #   and worktree.
+    let
+      root = repoTemp()
+      plain = createTempDir("delegations_", "_plain")
+      tree = root & "_worktree"
+      config = root / ".git" / "config"
+      (streams, path_streams) = createTempFile("delegations_", "_streams")
+    defer: removeDir(root)
+    defer: removeDir(plain)
+    defer: removeDir(tree)
+    defer: removeFile(path_streams)
+    proc named(): string =
+      ## Read hooks path git names in root; empty where unset.
+      execCmdEx("git -C " & root.quoteShell & " config --get core.hooksPath").output.strip
+
+    root.setPathHooks
+    check named() == DIRECTORY_HOOKS  # unset, so written
+    let written = getFileInfo(config).id.file
+    root.setPathHooks
+    check getFileInfo(config).id.file == written  # same path, so read alone and never written
+    discard root.git("config core.hooksPath hooks_of_harness")
+    root.setPathHooks
+    check named() == DIRECTORY_HOOKS  # other path, so written over
+
+    # Lock of run at once fails write, and verb goes on; so do git outside any repository, and
+    #   git missing from `PATH`, which `startProcess` reports as `OSError`, never `IOError`.
+    #   Descriptors 1 and 2 go to file around those calls, since child process inherits them,
+    #   so line either one takes is read back: CI reads output of `list-projects`, and hook
+    #   answers on stdout.
+    discard root.git("config core.hooksPath hooks_of_harness")
+    writeFile(config & ".lock", "")
+    let
+      (copy_output, copy_error) = (dup(STDOUT_FILENO), dup(STDERR_FILENO))
+      path_saved = getEnv("PATH")
+    var is_raised = false
+    flushFile(stdout)
+    flushFile(stderr)
+    discard dup2(streams.getFileHandle, STDOUT_FILENO)
+    discard dup2(streams.getFileHandle, STDERR_FILENO)
+    try:
+      root.setPathHooks
+      plain.setPathHooks
+      putEnv("PATH", "")
+      root.setPathHooks
+    except CatchableError: is_raised = true
+    finally:
+      putEnv("PATH", path_saved)
+      flushFile(stdout)
+      flushFile(stderr)
+      discard dup2(copy_output, STDOUT_FILENO)
+      discard dup2(copy_error, STDERR_FILENO)
+      discard close(copy_output)
+      discard close(copy_error)
+      streams.close
+    check not is_raised  # git missing from `PATH` fails no verb either
+    check readFile(path_streams).len == 0  # neither descriptor took line
+    check named() == "hooks_of_harness"
+    removeFile(config & ".lock")
+    check not dirExists(plain / ".git")
+
+    # Real git runs hook that path names from top of each worktree, so one write serves each.
+    root.setPathHooks
+    root.writeInto(DIRECTORY_HOOKS & "/commit-msg", "#!/bin/sh\ntouch ran\n")
+    inclFilePermissions(root / DIRECTORY_HOOKS / "commit-msg", {fpUserExec})
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'chore(curator): add hook'")
+    check fileExists(root / "ran")
+    discard root.git("worktree add -q -b work " & tree.quoteShell)
+    discard tree.git("commit -q --allow-empty -m 'chore(curator): run hook'")
+    check fileExists(tree / "ran")
 
 
   test "lock that moved with its project and follows its name is move":
