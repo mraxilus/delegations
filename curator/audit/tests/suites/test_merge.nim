@@ -48,6 +48,15 @@ proc lines(path: string): seq[string] =
   if fileExists(path): readFile(path).strip.splitLines else: @[]
 
 
+proc moveOnBase(root, path, content: string) =
+  ## Write file on `main` and commit it, then check branch `curator/older` out again.
+  discard root.git("checkout -q main")
+  root.writeInto(path, content)
+  discard root.git("add -A")
+  discard root.git("commit -q -m 'feat(audit): move " & path & "'")
+  discard root.git("checkout -q curator/older")
+
+
 
 suite "Merge":
   test "branch older than change of checker alone is judged in second tree, by checker of base":
@@ -82,6 +91,7 @@ suite "Merge":
     let first = writeMerge(root, "main")
     first.directory.writeInto("build/restored", "kept\n")
     first.directory.writeInto("stray.md", "gone\n")
+    first.directory.writeInto("stray/notes.md", "gone too\n")  # folder git does not track
     first.directory.writeInto("README.md", "Edited by run.\n")
     root.writeInto("README.md", "Branch, again.\n")
     discard root.git("commit -q -am 'docs(curator): write readme again'")
@@ -89,8 +99,24 @@ suite "Merge":
     check again.findings.len == 0 and again.directory == first.directory
     check readFile(again.directory / "build/restored") == "kept\n"
     check not fileExists(again.directory / "stray.md")
+    check not dirExists(again.directory / "stray")
     check readFile(again.directory / "README.md") == "Branch, again.\n"
     check again.directory.git("status --porcelain").len == 0
+
+
+  test "folder in place of second tree that is no worktree of its own is left to person":
+    # Clean there would reach files of tree git names instead, so it gives finding, and touches
+    #   nothing.
+    let root = repoForked()
+    defer: removeDir(root)
+    root.writeInto(".git/" & DIRECTORY_MERGE & "/notes.md", "Kept.\n")
+    let
+      folder = root / ".git" / DIRECTORY_MERGE
+      found = writeMerge(root, "main").findings
+    check found.len == 1 and sameFile(found[0].path, folder)
+    check found.len == 1 and "no worktree of its own" in found[0].message
+    check readFile(folder / "notes.md") == "Kept.\n"
+    check root.git("worktree list --porcelain").count("worktree ") == 1  # none added
 
 
   test "dirty checkout, and checkout holding base, are judged in place":
@@ -169,9 +195,11 @@ suite "Merge":
       beside = merged.directory.parentDir
     check built.len == 1 and built[0].startsWith("c ") and built[0].endsWith(" koch.nim")
     check built.len == 1 and ("--nimcache:" & beside) in built[0] and ("-o:" & beside) in built[0]
+    check merged.directory.git("status --porcelain --ignored").len == 0  # nothing built there
 
-    # Same sources build nothing again; base moving checker builds again.
-    check runMerge(merged, "curator/older", toolchains).code == 3
+    # Same sources build nothing again, after merge writes and cleans second tree once more;
+    #   base moving checker builds again.
+    check runMerge(writeMerge(root, "main"), "curator/older", toolchains).code == 3
     check lines(toolchain / "builds.log").len == 1
     discard root.git("checkout -q main")
     root.writeInto("koch.nim", "checker of base, moved\n")
@@ -193,3 +221,36 @@ suite "Merge":
     check broken.code == 1 and broken.found.len == 1
     check broken.found.len == 1 and "failed to build" in broken.found[0].message
     check not fileExists(toolchain / "run.log")
+
+
+  test "koch of merge builds again where base moves any source it keys, and nowhere else":
+    # Key holds each path `.claude/hooks.sh` keys, so base moving any one of them builds koch
+    #   that judges; path koch never compiles builds nothing.
+    let
+      root = repoForked()
+      toolchain = createTempDir("delegations_", "_nim")
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    toolchain.writeInto("0.0.1/bin/nim", STUB_NIM)
+    inclFilePermissions(toolchain / "0.0.1" / "bin" / "nim", {fpUserExec})
+    var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
+    discard runMerge(writeMerge(root, "main"), "curator/older", toolchains)
+    var builds = lines(toolchain / "builds.log").len
+    check builds == 1
+    const keyed = [
+      ("koch.nim", "checker of base, keyed\n"),
+      ("koch.nim.cfg", "hints:off\n"),
+      ("curator/audit/audit.nimble", "requires \"nim == 0.0.1\"\n# keyed\n"),
+      ("curator/audit/src/checks.nim", "discard\n"),
+      ("curator/knoller/src/knoller.nim", "discard\n"),
+      ("curator/knoller/knoller.nimble", "requires \"nim == 0.0.1\"\n"),
+    ]
+    for (path, content) in keyed:
+      root.moveOnBase(path, content)
+      check runMerge(writeMerge(root, "main"), "curator/older", toolchains).code == 3
+      builds += 1
+      check lines(toolchain / "builds.log").len == builds  # path is keyed
+    for path in ["notes.md", "curator/audit/tests/test_checks.nim", "curator/knoller/README.md"]:
+      root.moveOnBase(path, "Moved.\n")
+      check runMerge(writeMerge(root, "main"), "curator/older", toolchains).code == 3
+      check lines(toolchain / "builds.log").len == builds  # path is no source of koch
