@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 363e393b375ac380 |
+| Rules   | 2dab47ba779bfacc |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1137,14 +1137,49 @@ runner holds it to that before the merge. The role line says who speaks, and the
 whose work it is. On a pull request both are the role of the branch itself. So `parseBranch`
 derives one string through `nameRole`, and the check is equality rather than presence.
 
+**The job `label` adds the role label before `check-role` reads the labels, as the Architect
+ruled on #845.** It cuts the last part of the branch, for the three shapes of the grammar alone.
+It holds `issues: write` and `pull-requests: write`, and it checks out no code. `check-role`
+checks out koch and holds no scope that writes. So no code of a pull request runs with a token
+that can write, as `watch.yml` and `ledger.yml` hold for their own events.
+
+- The label goes through the REST endpoint of the labels of an issue. Assumed: that endpoint
+  creates a label that a new project lacks, as `CONTRIBUTOR.md` says of each label applied.
+- Assumed, from GitHub documentation (Triggering a workflow): an event of the token of a run
+  starts no other run. So the label starts no second run of `role`, and `check-role` reads it
+  in the same run.
+- `check-role` runs after `label` unless the run is cancelled. Assumed, from GitHub
+  documentation (Using jobs in a workflow): without that condition, a failed `label` skips
+  `check-role`. Assumed, from GitHub documentation (Using conditions to control job execution):
+  a skipped job counts as passed, even as a required check.
+- `labeled` and `unlabeled` start `role`, so the job adds again a role label that a person
+  removes. A label that a person adds runs the check again.
+- The event is `pull_request`, and never `pull_request_target`. The workflow then comes from
+  the branch, so a pull request tests its own jobs on the runner (duty 2). Each branch comes
+  from the one account that can already write, so no code of a pull request gains a power.
+- Cost: the shell holds a second copy of the grammar, and it reads no list of domains, because
+  it checks out nothing. A branch that names a domain that does not exist gets a stray label,
+  and `check-scope` still fails it.
+- Cost: no suite reads the pattern of the branch in `label`, or the condition `!cancelled()` of
+  `check-role`. The runner and the hand check below hold both.
+- Cost: a pull request from a fork gets a token that can only read, so its label stays a task
+  by hand.
+- Cost: `workflows.nim` reads the `permissions` block at the top of a workflow alone. So no check
+  reads the grant of `label`, and no check holds that `check-role` writes nothing.
+- Verified by hand on 2026-11-15. The step of `label`, read from the workflow file, ran under
+  `bash` with a stub for `gh`. Each of the three shapes posted its role, and a branch with a
+  domain that does not exist posted a stray one. Each branch outside the grammar posted nothing.
+  `yq` read the jobs, their grants and the condition of `check-role` as written.
+- Unverified on the runner: only a stub for `gh` drives the step.
+
 **The body comes from the event payload, and the labels come from the API.** The job passes
 the body as `ROLE_BODY`, and the label names as `ROLE_LABELS`, a JSON array. `gh pr view` with
 `--json labels` reads the labels that stand at the moment the check runs. The read is its own
 shell assignment. Under `set -e`, a failed substitution that only sets a variable for one
 command goes unseen. Koch would then read the empty list as a missing label.
 
-- Rejected: the label list of the event payload. GitHub sends `opened` before `labeled`, so
-  that list is empty on `opened`.
+- Rejected: the label list of the event payload. It holds the labels from before `label` ran,
+  so it is empty on `opened`.
 - Cost: the `pull-requests: read` scope, and one API call for each run. The read is shell
   inside `role.yml`, so no suite drives it.
 
@@ -1165,12 +1200,9 @@ may open with a whole paragraph, and the finding is read in a log.
   of its runs, because half live under half an hour.
 - Rejected: `opened` dropped from the trigger. The check then says nothing to a delegate who
   opened a pull request wrongly, which is the reason it exists.
-- An empty label list can still be the state a pull request opens in. No API call creates a
-  pull request and its label together, so a label can land after the run reads the list. The
-  `labeled` event then starts a run that clears it.
-- So the two states carry two messages. The empty one names the event that clears it, and the
-  one that names a wrong label does not. The finding stays red either way. A green run on an
-  empty list would let a pull request opened and merged in one go carry no label.
+- A missing role label takes one finding, which names the job `label` as what adds it. The
+  finding stays red, because a green run on an empty list would let a pull request merge with no
+  label.
 - Cost: an issue carries no branch, so which label it needs stays a judgement, and stays the
   ledger's. A comment is unreachable, and that is what remains of the first carried rule.
 - Cost: the labels are searched for the expected string rather than compared whole. A role
@@ -1187,28 +1219,37 @@ may open with a whole paragraph, and the finding is read in a log.
 comments, and no pull request. Its role string is `coordinator`, which `isStringRole` in the
 `body` hook accepts (section Hooks on messages).
 
-**The role line may stand below the attribution block of a harness.** A harness that starts a
-delegate in a thread writes two lines above each pull request body that it opens, and it
-requires them. First comes a marker, an HTML comment that opens `<!-- ccr-projects-attribution:`
-and renders as nothing. Then comes a credit line in italics that opens `_Requested by **` and
-names who asked. `lineRole` passes each line only whole and in its place. A credit line with no
-marker, a second block or any other comment still reads as the opening line.
+**The role line may stand below the block that a harness writes above it, as the Architect
+ruled on #845.** `HARNESSES` in `role.nim` holds one entry for each harness that writes such a
+block, and each entry lists the shape of each of its lines. A shape is known by its two ends,
+and never by the words of the harness. The entry of Claude Code is one line of HTML comment,
+then one italic line. A harness that writes nothing above the role line needs no entry.
 
-- Rejected: a skip of every leading comment and every italic line. Each would let a stray line
-  pass where the role line belongs.
+- `lineRole` passes a block only whole and in its place. So a lone marker, a lone credit line or
+  any other comment reads as the opening line, and fails.
+- Where a line that no listed block holds stands above the role line, the finding quotes each
+  line above it. A curator then adds the entry of the new harness. The quote holds the role
+  line, and at most `LINES_QUOTED` lines above it, twice the longest listed block. A body with no
+  role line quotes its opening line alone.
+- The opening is read outside fenced code, so a role line that a fence quotes is no role line.
+- Rejected: the words of the harness, held as data. Each change of its words fails every such
+  pull request, while the suite stays green, because its fixture copies them.
+- Rejected: a skip of every leading comment and every italic line. Any count of stray lines
+  would then pass where the role line belongs.
 - Rejected: a request to each delegate to leave the block out. The harness marks the block as
   required, so the delegate would meet two rules that disagree.
-- Cost: the block is the text of the harness, held as data in `LINES_ATTRIBUTION`. Where the
-  harness changes it, each such pull request fails again. The suite stays green, because its
-  fixture copies the block.
-- The `body` hook reads the line through `lineRole` too, so it lets such a pull request through
-  where the hooks run. The ledger reads the block more loosely (section Ledger).
+- Cost: stray lines in the shapes of a listed block pass above the role line, as the block does.
+  An italic line in asterisks is another shape, so a harness that turns to it fails until its
+  entry changes.
+- Cost: a marker with no credit line fails, as a block that is not whole.
+- The `body` hook reads the line through `lineRole` too, and quotes through `openingQuoted`. So
+  hook and runner agree. The ledger reads the block more loosely (section Ledger).
 - Verified by `suites/test_role.nim`: a body below the block reads as the body alone, with `\n`
-  or `\r\n` line ends. Each stray part of a block reads as the opening line.
-- Verified by hand with `nim r koch check-role` and `koch hook body`, recorded 2026-10-03. Before
-  the fix, a body below the block read as an empty opening line. `check-role` exited 1, and the
-  `body` hook refused the body with exit 2. After the fix, the same body reports nothing, and the
-  finding echoes a wrong role below the block.
+  or `\r\n` line ends. So does a body below a block in other words. Each stray part of a block
+  reads as the opening line. The bound is twice the block of Claude Code, and a quote up to it
+  shows no cut. A body with no role line quotes its opening line alone.
+- Verified by hand with `koch check-role`, built from the branch, on 2026-11-15. The body of
+  #449, below the block of Claude Code, takes no finding on its role line.
 
 **The title of a pull request holds the grammar of a commit subject.** The merge commit takes
 the title as its subject, and `main` takes no rewrite after. So `checkTitle` holds the title to
@@ -1224,6 +1265,62 @@ event runs the check again after a rename. The Architect ruled this check on 202
 - Verified by `suites/test_role.nim`. Titles in form pass, and so does a branch outside the
   grammar. The title of #463 fails, as do a final period, a capital summary, a scope off its
   branch, and a width over the limit.
+
+## Body of a pull request
+
+**A pull request body holds the form of the template, as the Architect shaped it on #845.** It
+holds What, Why, Evidence and Next steps, once each and in that order. Each section opens with a
+summary of one to three sentences, then its points. At most `CHARACTERS_BODY` characters show
+while each fold is closed, and a link counts by its text. So the Architect skims the whole of
+what merges at the gate, and evidence costs no room.
+
+`checkBodyPull` in `role.nim` holds the form. `check-role` calls it at each event, and the
+`body` hook calls it at each create and each update of a pull request. So the rule lives once,
+and the hook and the runner agree. The hook holds no rule of its own (section Hooks on tool
+calls).
+
+- Cost: no suite drives `koch check-role`, so no suite reads its call of `checkBodyPull`. The
+  runner and the hand check of #449 below hold it.
+- The headings are read through `sections`, outside fenced code and comments. So a sign-off that
+  a fence quotes, as the body of #895 does, cuts no section.
+- A summary is the first prose block of a section, on its first line that holds text. A list
+  item, a table, a quotation, a heading, fenced code or an HTML tag there opens no summary.
+  `sentences` of `english.nim` counts the sentences of the summary.
+- Every open body is read by the same rules at its next event, as the Architect ruled on #845.
+  No cutoff by date or number stands in `role.nim`.
+- Rejected: a limit of 2,000 characters, which is too tight once each section opens with a
+  summary (#845).
+- The example of #845 keeps two refusals of the hook: a keyword that closes #783 inside a point,
+  and a point of 26 words. So the template asks for `Closes #N` alone on the last line.
+- Verified by `suites/test_role.nim`: each heading missing, doubled, or turned with the next,
+  and a heading in a fence or a comment. It also holds each shape that opens no summary, and a
+  summary of four sentences. Verified by `suites/test_hooks.nim`, for the form on each tool and
+  for the example.
+
+**The count reads what shows while each fold is closed.** `textShown` drops each comment, since a
+comment renders as nothing. A fold, from `<details>` to its `</details>`, shows the text of its
+`<summary>` alone. A link shows its text alone. The last italic line below a `---` rule is the
+footer that the proxy appends after the hook reads the body, so it shows nothing. A `\r` shows
+nothing, since a body edited on GitHub ends each line with `\r\n`.
+
+- Each mark is read outside code. So a tag of a fold, a comment or a link inside a code span or
+  a fence shows whole.
+- A closing tag of a fold with no fold open closes nothing, so the fold after it shows its
+  summary alone.
+- Blank lines may stand between the `---` rule and the footer.
+- The credit of the harness at the end of a body counts, at 85 characters by its link text, as
+  the Architect ruled on #845. So `role.nim` holds no words of a harness.
+- The example of #845 applies the form to #790, and shows 2,108 characters. That is 2,046 outside
+  its fold by link text, as the review on #845 counts them, and the summary of the fold.
+- Cost: a fold marked `open` shows its points, and they count as folded. A last italic line
+  below a `---` rule counts nothing, whoever wrote it.
+- Cost: a link written as a reference counts in full. So do a link and a code span that wrap over
+  a line end, since `markdown.nim` reads both inside one line.
+- Verified by `suites/test_role.nim`, for each law above, the fold marked `open`, the credit and
+  the example. The bound counts characters, and the suite fills it with a character of two bytes.
+- Verified by hand with `koch check-role`, built from the branch, on 2026-11-15. The example of
+  #845 takes no finding. The body of #449 takes the finding of its five old headings, and one
+  for its 4,908 characters shown.
 
 ## Assets
 
@@ -1567,10 +1664,10 @@ is the failure it exists to catch.
   carries its marker first, and a marker renders as nothing. Rejected: the pattern that read
   from the first character, which named each such issue as having no role line. The same
   pattern still names an unfilled template, whose role line opens `**Role:** <!--`.
-- **On a pull request, the role line may also follow the credit line of an attribution block**
-  (section Role). The ledger passes that line after any leading comment, and not only after the
-  marker. That is looser than `lineRole`, as the rest of the ledger reading is. An issue carries
-  no block, so the pattern for issues does not pass the line.
+- **On a pull request, the role line may also follow an italic line**, as the block of Claude
+  Code ends (section Role). The ledger passes any italic line after any leading comment, and it
+  reads no words of a harness. That is looser than `lineRole`, as the rest of the ledger reading
+  is. An issue carries no block, so the pattern for issues does not pass the line.
 - The `permissions` block of `ledger.yml` names `actions: read`, `issues: write` and
   `pull-requests: read`, and nothing else. `workflows.nim` marks `gh pr` as a use of
   `pull-requests`, so a block that leaves that scope out is a finding.
@@ -1616,11 +1713,14 @@ beside the section that each title comes from.
 - The role-line pattern, verified by hand through real `jq` 1.7 on 2026-09-24. The program was
   read from the workflow file, and it was run over fixture bodies. A marker before the role
   line passes, and an unfilled template, a missing role line and a null body are named.
-- The pattern for pull requests, verified by hand through `jq` 1.7 and `gojq` 0.12.19 on
-  2026-10-03. `gh` runs `--jq` through `gojq`, at 0.12.17 in `gh` 2.89.0. The program was read
-  from the workflow file, and it was run over fixture bodies. A role line below the block
-  passes, also unbolded and with `\r\n` line ends. A block over no role line, or over an
-  unfilled template, is named.
+- The pattern for pull requests, verified by hand through `jq` 1.7 on 2026-11-15. The program
+  was read from the workflow file, and it was run over fixture bodies. A role line below the
+  block of Claude Code passes, and so does one below a block in other words, also with `\r\n`
+  line ends. A block over no role line, an unfilled template and a null body are named. A
+  pattern on the words of the harness names the block in other words, so this fixture tells the
+  two apart.
+- Cost: `gh` runs `--jq` through `gojq`, at 0.12.17 in `gh` 2.89.0, so that `gojq` agrees on that
+  pattern is inferred. It holds no lookaround and no back-reference.
 - Verified by hand through a stub for `gh` that serves fixture JSON through real `jq` 1.7,
   2026-09-24. The step runs as the workflow holds it. Over the fixture titles, each expected
   title is named and no other, among them `fix:`, `feat(audit)!:`, `bug:` and `koch:`. Over
@@ -2791,10 +2891,11 @@ that holds it. The events, each one a verb argument:
   branch changed, as `koch check` does. So a held finding never stands under "fix before push".
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
   history. It holds a post made through `gh api` as `body` holds the post of a tool.
-- `body` refuses a post that lacks the role line or the footer, or breaks the three English
-  counts. It also refuses an issue titled as a commit, or one with no role label or with the
-  label `coordinator`. It refuses a pull request body that leaves the template unfilled. It
-  refuses a closing keyword before an issue outside a line of its own.
+- `body` refuses a post that lacks the role line, or breaks the three English counts. It also
+  refuses an issue titled as a commit, or one with no role label or with the label
+  `coordinator`. It refuses a pull request body out of the form of the template, on each create
+  and each update (section Body of a pull request). It refuses a closing keyword before an issue
+  outside a line of its own.
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
   nor the working line. At the end of any turn, it refuses a sign-off out of shape. It also
   refuses one whose group holds fewer items than the last sign-off that passed. And it refuses
@@ -2839,20 +2940,13 @@ come through `sections`, so a heading that a fence quotes opens nothing.
 - Rejected: a read in full below a size. That is one more number to keep, for little gain.
 - Verified by `suites/test_hooks.nim`, for each form of branch and for a heading in a fence.
 
-**A post holds one footer, as its last line, and the footer of the proxy serves as that
-footer.** The GitHub proxy appends a footer that links the delegate to each post that ends in
-none. An edit fetches a body, changes it, and sends it back, so the body holds the footer of
-the proxy. Where `body` asked for the plain footer there too, the edit added a second one, as
-the body of #574 shows. So `body` takes either footer as the footer, and refuses a second one
-anywhere, or one above the last line (D1 of #578).
+**`body` reads no footer, as the Architect ruled on #845.** No post asks for one, and no check
+refuses one. The GitHub proxy appends its own footer to a post that does not link its delegate.
+So the count of a pull request body leaves that footer out, by its shape (section Body of a pull
+request).
 
-- A footer quoted in fenced code is no footer, so a post may show one as an example.
-- A pull request body asks for no footer, since the proxy appends one. It still holds one at most.
-- Verified by `suites/test_hooks.nim`, for the body of #574 as found. The suite also holds its
-  domain: the footer of the proxy alone, two plain footers, a footer above the last line, and a
-  quoted one.
-- Cost: the footer of the proxy is read by its opening and its closing, so a change to its
-  address reads as no footer. Then `body` asks for the plain one, and the proxy appends nothing.
+- Verified by `suites/test_hooks.nim`, for a comment and for an issue. Each passes with each
+  form of footer: none, the plain one, the one of the proxy, both, and one above the text.
 
 **A closing keyword stands before an issue only on a line of its own.** GitHub reads `close`,
 `fix` and `resolve`, in each of their forms, before an issue reference in any sentence. It reads
