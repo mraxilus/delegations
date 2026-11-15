@@ -270,11 +270,12 @@ tolerances beside a scalar of 1 000 compares equal, and one of 2 000 does not.
 
 `timing.nim` times both rules in one build, with the rule of pin copied into the program. Each
 cell is the median of 14 runs by hand on `linux amd64, 4 cores` on 2026-11-14, in nanoseconds per
-pair or per object, on one core. Those runs took the library at pin `3d9696e` with `change.md`
-applied, under gcc 13.3.0. Each run takes the median of 41 rounds over 1 024 pairs or objects. Each
-point has Gaussian coordinates of deviation 1 000 units, and is a round point in a conformal
-algebra. Each dense multivector has Gaussian coefficients of deviation 1. Each multivector near
-zero has Gaussian coefficients of deviation a tenth of the comparison tolerance.
+pair or per object, on one core of a Xeon of family 6 model 173. Those runs took the library at
+pin `3d9696e` with `change.md` applied, under gcc 13.3.0. Each run takes the median of 41 rounds
+over 1 024 pairs or objects. Each point has Gaussian coordinates of deviation 1 000 units, and is
+a round point in a conformal algebra. Each dense multivector has Gaussian coefficients of
+deviation 1. Each multivector near zero has Gaussian coefficients of deviation a tenth of the
+comparison tolerance.
 
 | Case, 64 bits | Pin, rga4d | P07, rga4d | Pin, cga4d | P07, cga4d | Pin, cga5d | P07, cga5d |
 |---------------|------------|------------|------------|------------|------------|------------|
