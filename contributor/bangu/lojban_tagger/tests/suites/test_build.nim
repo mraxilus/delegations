@@ -1,9 +1,13 @@
 ## Hold that driver runs before Atlas restores any package, as `koch list-packages` runs it.
-##   CI installs each package that `system` prints before it restores `dependencies/`, and verb
-##     that fails installs nothing; suite needing `protoc` then stops on runner alone.
+##   Regression of CI job 132944576548, as found on 2026-11-15: `koch list-packages` printed
+##     nothing, and stub stopped at `test_exchanges.nim:449` with
+##     `/bin/sh: 1: protoc: not found`.
+##   CI installs each package that `system` prints before it restores `dependencies/`
+##     (`.github/workflows/check.yml`); driver that does not compile there prints none.
 ##   Copy of project without `dependencies/` stands in for that checkout: relative import into
 ##     clone resolves wherever clone stands, so compile in project itself proves nothing.
-##   Cost: copy and compile of driver take seconds each run.
+##   Cost: copy, compile and run of driver took 1.30 s to 1.53 s over three runs on 2026-11-15,
+##     against 94.72 s for whole stub.
 
 {.experimental: "strictFuncs".}
 
