@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, sequtils, tables, unittest]
-import ../../src/[domains, layout, plan, projects, toolchain, tree]
+import ../../src/[domains, layout, plan, projects, toolchain]
 import ./fixtures
 
 
@@ -11,7 +11,8 @@ const
   DIRECTORIES = [DIRECTORY_ALPHA, DIRECTORY_AUDIT]
     ## Unlisted project directories fixture tree holds, in sorted order selection returns them:
     ## `contributor` sorts before `curator`.
-  DIRECTORY_IMPORTING = CURATOR & "/assayer"  ## Curator project importing knoller, besides driver.
+  DIRECTORY_IMPORTING = CURATOR & "/assayer"
+    ## Curator project of fixture that imports knoller, besides driver, by path or as package.
   DIRECTORY_PROBE = CURATOR & "/probe"  ## Curator project importing no knoller.
 
 
@@ -199,14 +200,28 @@ suite "Plan":
   test "knoller source selects no project requiring it as package, whose lock pins its commit":
     # Case as found (#888): assayer imported knoller by path, so it built from checkout of this
     #   repository alone; as package it compiles commit its lock pins, which change to knoller
-    #   leaves as it is. Tree is repository's own, since its imports are case.
+    #   leaves as it is.
     let
-      tree = currentSourcePath().parentDir.parentDir.parentDir.parentDir.parentDir.readTree
-      planned = tree.jobs([FILES_KNOLLER[0] & "/knoller/pins.nim"]).mapIt(it.directory)
-    check DIRECTORY_AUDIT in planned  # driver imports knoller by path
-    check DIRECTORY_IMPORTING notin planned  # assayer compiles knoller its lock pins
+      required = TEXT_NIMBLE & "requires \"knoller#11403468a97c0d3ae922182d894606e2688504e9\"\n"
+      tree = @[
+        entry(DIRECTORY_AUDIT & "/audit.nimble", TEXT_NIMBLE),
+        entry(DIRECTORY_AUDIT & "/src/audit.nim", "import ../../knoller/src/knoller\n"),
+        entry(DIRECTORY_KNOLLER & "/knoller.nimble", TEXT_NIMBLE),
+        entry(DIRECTORY_IMPORTING & "/assayer.nimble", required),
+        entry(DIRECTORY_IMPORTING & "/atlas.lock", "{}\n"),
+        entry(DIRECTORY_IMPORTING & "/src/assayer/command.nim",
+          "import knoller/[compilers, pins]\n"),
+      ]
+    for changed in [FILES_KNOLLER[0] & "/knoller/pins.nim", FILES_KNOLLER[1]]:
+      let planned = tree.jobs([changed]).mapIt(it.directory)
+      check DIRECTORY_AUDIT in planned  # driver imports knoller by path
+      check DIRECTORY_IMPORTING notin planned  # assayer compiles knoller its lock pins
     check tree.jobs([DIRECTORY_IMPORTING & "/atlas.lock"]).mapIt(it.directory) ==
       @[DIRECTORY_IMPORTING]  # lock moving to newer knoller compiles assayer
+    let pathed = tree & @[entry(DIRECTORY_IMPORTING & "/src/assayer/runs.nim",
+      "import ../../../knoller/src/knoller/compilers\n")]
+    check DIRECTORY_IMPORTING in pathed.jobs([FILES_KNOLLER[0] & "/knoller/pins.nim"])
+      .mapIt(it.directory)  # import by path, as found, compiles importer
 
 
   test "source of project selects each project importing it by path, and their importers":
