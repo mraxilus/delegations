@@ -37,7 +37,7 @@ Three proposals edit lines that this change quotes:
 
 - P12 removes the TODO of the type block of `pga/cayleys.nim`, under which this change adds a
   line. That edit is void once P12 lands. If this change lands first, P12 quotes both lines.
-- P04, `exact-kinds`, adds `basis_sets` to the import line of `pga.nim`, which an edit of this
+- P04, `basis-set-forms`, adds `basis_sets` to the import line of `pga.nim`, which an edit of this
   change quotes and keeps. So P04 applies after this change as written. If P04 lands first, this
   change quotes that line again. P09 and P10 build on P04, so each meets this change as P04 does.
 - P10, `homogeneous-scalar`, replaces the doc and the body of `normRadius` in `pga.nim`. If P10

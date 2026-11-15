@@ -1,4 +1,4 @@
-## Time stand-ins of basis-set types as caller holding them in `seq` would (`exact-kinds`).
+## Time stand-ins of basis-set types as caller holding them in `seq` would (`basis-set-forms`).
 ##   Evaluation compiles this against changed library at each algebra its claim names; exit code
 ##     says it ran, and figures it prints are evidence that never gates.
 ##   Stand-ins hold 3 to 16 floats, counts that basis-set types reach from rga3d to cga5d, under

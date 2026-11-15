@@ -5,7 +5,8 @@
 ##     in every storage caller holds under `--mm:orc` or `--mm:arc`, from three dimensions up at
 ##     64 bits and from four at 32 bits.
 ##   Laws read width of coefficient from library, so they hold at each float width.
-##   Law on `MultivectorScalars` goes when P04 (`exact-kinds`) lands, since P04 aligns it by count.
+##   Law on `MultivectorScalars` goes when P04 (`basis-set-forms`) lands, since P04 aligns it by
+##     count.
 
 {.experimental: "strictFuncs".}
 

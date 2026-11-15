@@ -78,12 +78,12 @@ intermediate multivector. The partner `⊛` calls `⊡`, so it runs that chain t
   `#[ Support ]#` at pin. No other proposal or change edits those lines.
 - **P03, `partner-sign`.** It quotes `CAYLEY_CONTAINER`, so it lands after this proposal. It then
   folds the partner further.
-- **P04, `exact-kinds`.** It gives a basis-set form to each operator that the library builds from
-  one table. The header of its `pga/basis_sets.nim` lists the supports among the operators from no
-  table. Its Costs list the cocarrier, the center and the container there too. This proposal
-  builds each of the five from one table. So whichever of the two lands second gives each of the
-  five a form. Or it states in that header and in those Costs that these five have a table and
-  stay on `Multivector`.
+- **P04, `basis-set-forms`.** It gives a basis-set form to each operator that the library builds
+  from one table. The header of its `pga/basis_sets.nim` lists the supports among the operators
+  from no table. Its Costs list the cocarrier, the center and the container there too. This
+  proposal builds each of the five from one table. So whichever of the two lands second gives each
+  of the five a form. Or it states in that header and in those Costs that these five have a table
+  and stay on `Multivector`.
 - **P12, `cayley-cells`.** It and P01 are written again against each other, whichever lands
   second. The edits of this proposal quote no line that P12 edits and build no cell, so they hold
   once that is done.
