@@ -25,7 +25,7 @@ when compileOption("profiler"):
 
 import std/[algorithm, json, options, random, sequtils, strutils, sugar, unittest]
 
-import ../../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 import ../../src/lojban_tagger/[commands, english, suggestions {.all.}, tags]
 import ../../src/lojban_tagger/lists/gismu

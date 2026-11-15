@@ -56,9 +56,11 @@ makes a test root for each run, and they need `protoc` to compile. `suggester` n
 `ca-certificates` when it runs. The verbs `lists` and `head` also need the Debian package
 `lojban-common`. The verb `system` declares all of them.
 
+Every build also needs the Nim package `lojban_parser`, at the commit that `atlas.lock` pins.
 `suggester`, the verb `examples` and the suites also need the Nim package
-`protobuf_serialization`, which `atlas.lock` pins. `nim r koch test` restores it under
-`dependencies/` before it runs the suites.
+`protobuf_serialization`, which the lock pins too. `nim r koch fetch-deps
+contributor/bangu/lojban_tagger` restores both under `dependencies/`, and `nim r koch test` does
+so before it runs the suites.
 
 ## Use
 

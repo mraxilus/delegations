@@ -30,7 +30,7 @@
 
 import std/[options, sequtils, strutils]
 
-import ../../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 import ./[english, index, search, tags]
 

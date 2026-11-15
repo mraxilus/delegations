@@ -1,6 +1,10 @@
 ## Convert English of gismu list, and lujvo list, into typed Nim modules project commits.
 ##   Reads `gismu.txt` and `lujvo.txt` as Debian package `lojban-common` installs them, and
 ##   renders `src/lojban_tagger/lists/gismu.nim` and `lujvo.nim`; `build.nim` runs it.
+##   Runs as own program for verbs `lists` and `head` of `build.nim`, as
+##     `nim r tools/lists.nim <lists|head>`: module reads parser package, which driver imports
+##     none of, so `koch list-packages` runs driver before Atlas restores any package
+##     (`suites/test_build.nim`).
 ##
 ##   Columns of `gismu.txt` are fixed; `entries.nim` tables them, and every range here is
 ##     measured over every line of file: no character of any line falls between two fields.
@@ -9,7 +13,7 @@
 ##     more, and gloss is present. Other shapes (phrase for word, no gloss, `,` in tanru) are
 ##     left out, and module header counts them, so cut stays visible.
 ##   Reader of each source, key naming its directory, and SHA-256 pin of each file are those of
-##     `lojban_parser/tools/lists.nim`, re-exported for `build.nim` and suites: both projects
+##     `lojban_parser/tools/lists.nim`, re-exported for suites: both projects
 ##     read one `gismu.txt`, and English here follows parser's list entry for entry, so one pin
 ##     serves both. Debian moving list makes `lists` refuse and `head` report, never silent
 ##     rewrite of committed list.
@@ -23,9 +27,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, strutils]
+import std/[options, os, sequtils, strutils]
 
-from ../../lojban_parser/tools/lists import
+from ../dependencies/lojban_parser/contributor/bangu/lojban_parser/tools/lists import
   DIGEST_GISMU, DIGEST_LUJVO, DIRECTORY_LISTS, KEY_LISTS, readSource, Source
 
 import ../src/lojban_tagger/entries
@@ -222,3 +226,74 @@ func toModuleLujvo*(entries: openArray[EntryLujvo], count_left: int, digest: str
   lines.add "]"
   lines.add "  ## Every well-formed entry of lujvo list, in its order."
   lines.join("\n") & "\n"
+
+
+
+#[ Verbs ]#
+
+const USAGE = "Usage: nim r tools/lists.nim <lists|head>\n"  ## Text printed on usage error.
+
+
+proc readLists(): tuple[gismu, lujvo: string, digests: array[2, string]] =
+  ## Read both lists and render both modules, with digest each source carries.
+  let
+    gismu = readSource("gismu.txt")
+    lujvo = readSource("lujvo.txt")
+    (entries, count_left) = lujvo.text.toEntriesLujvo
+  (
+    toModuleGismu(gismu.text.toEntriesGismu, gismu.digest),
+    toModuleLujvo(entries, count_left, lujvo.digest),
+    [gismu.digest, lujvo.digest],
+  )
+
+
+proc refuseDigests(digests: array[2, string]): int =
+  ## Report each list whose digest left its pin; count reports.
+  for (name, digest, pin) in [
+    ("gismu.txt", digests[0], DIGEST_GISMU),
+    ("lujvo.txt", digests[1], DIGEST_LUJVO),
+  ]:
+    if digest == pin: continue
+    stderr.writeLine "List moved from its pin in `tools/lists.nim`; read diff, then move pin; " &
+        "got `" & digest & "` for `" & name & "`."
+    inc result
+
+
+proc writeLists(): int =
+  ## Write both modules where both digests match their pins.
+  let (gismu, lujvo, digests) = readLists()
+  if refuseDigests(digests) > 0: return 1
+  createDir(PATH_GISMU.parentDir)
+  writeFile(PATH_GISMU, gismu)
+  writeFile(PATH_LUJVO, lujvo)
+  echo PATH_GISMU
+  echo PATH_LUJVO
+
+
+proc compareLists(): int =
+  ## Compare digests and rendered modules with committed modules; 1 where any differs.
+  let (gismu, lujvo, digests) = readLists()
+  var count_differing = refuseDigests(digests)
+  for (path, rendered) in [(PATH_GISMU, gismu), (PATH_LUJVO, lujvo)]:
+    if fileExists(path) and readFile(path) == rendered: continue
+    stderr.writeLine "Committed list differs from list rendered again; run `lists`; got `" &
+        path & "`."
+    inc count_differing
+  if count_differing > 0: 1 else: 0
+
+
+proc main(): int =
+  ## Dispatch verb named as first argument.
+  if paramCount() != 1:
+    stderr.write USAGE
+    return 2
+  case paramStr(1)
+  of "lists": writeLists()
+  of "head": compareLists()
+  else:
+    stderr.write USAGE
+    2
+
+
+when isMainModule:
+  quit main()

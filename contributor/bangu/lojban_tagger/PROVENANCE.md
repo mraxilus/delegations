@@ -36,19 +36,56 @@ of a word, its rendering and the fold of a tanru, each with its suite. This proj
 policy of a tag, the English of the gismu list, the whole lujvo list, and the runs that search
 ranks by. The Architect ruled that the tagger alone restricts words.
 
-**Each module that reads lojban imports the umbrella of the parser by relative path.**
-`curator/audit` imports knoller the same way. Both projects stand at one commit of this
-repository, so no package and no line of the lock pin the parser. Rejected: copies of the
-modules, which Article II.9 refuses where no constraint forces them. Rejected: an import of each
-module that the tagger needs, which compiles faster (Figures) but reaches past the umbrella that
-the parser presents.
+**This project requires the parser as a package, at one commit of `main` that `atlas.lock`
+pins.** Each module that reads lojban imports the umbrella of the parser by the name of its
+package. Atlas clones this repository into `dependencies/lojban_parser`, and `nim.cfg` names the
+folder of the parser in that clone. So no import and no search path leads out of the folder of
+this project. A move of the folder of the parser then changes no module here while the lock
+stays. The Architect ruled this route on #920, so that the curator can move both folders.
 
-Cost: the umbrella compiles every module of the parser, the grammar among them, so each compile
-from an empty cache takes longer (Figures). Cost: a change to the parser compiles no suite of this
-project, because `koch` selects only the importers of knoller (#832). So a change there can break
-this project, and no run turns red until this project next changes. Verified by hand on
-2026-11-07 with `nim r koch list-projects`: a probe commit that changes one byte of a source of the
-parser plans `lojban_parser` alone.
+Verified by hand, 2026-11-15: in a throwaway worktree, with the folder of the parser moved to
+`contributor/bangu/ricysoho`, `nim r koch test contributor/bangu/lojban_tagger` passes. A move of
+the folder of this project holds the same way, since each of its paths stays inside it
+(expected).
+
+- Origin: this repository on GitHub, `https://github.com/mraxilus/delegations`, in the folder
+  `contributor/bangu/lojban_parser`. The commit is `0d6eaaebb95eeecc84359b6b4bf7da8c0715f26c`,
+  the merge of #890. It is the newest commit of `main` that changes the parser, on 2026-11-15.
+  The licence is the Prosperity Public License 3.0.0, as `lojban_parser.nimble` gives it.
+- `atlas.config` maps the name `lojban_parser` to that address, with the folder as `?subdir=`,
+  since a requirement reads no folder. `curator/assayer` requires knoller the same way.
+  `curator/assayer/PROVENANCE.md`, Package, gives each form that Atlas 0.14.7 refuses, verified
+  there and not here.
+- `tools/lists.nim` imports `tools/lists` of the parser, which stands outside its `srcDir`, so
+  no search path reaches it by the name of the package. It imports that module from the clone, by
+  a relative path that stays inside this project.
+- Rejected: an import by relative path into the folder of the parser. A move of either folder
+  breaks each such import, and the curator writes no code inside this project.
+- Rejected: copies of the modules, which Article II.9 refuses where no constraint forces them.
+- Rejected: an import of each module that the tagger needs, which compiles faster (Figures) but
+  reaches past the umbrella that the parser presents.
+- Cost: a change to the parser reaches this project only when the lock moves to a newer commit.
+  So a change to the parser selects no suite of this project, and a move of the lock selects them.
+  Verified by hand with `nim r koch list-projects`, 2026-11-15. A probe commit that changes a
+  source of the parser plans `lojban_parser` alone. One that changes `atlas.lock` plans this
+  project.
+- Cost: `atlas.config`, `nim.cfg`, `tools/lists.nim` and `suites/test_names.nim` name the folder
+  of the parser as the clone holds it. So a move of the lock past a move of the parser changes all
+  four.
+- Cost: the clone holds the whole repository, 52 MiB by `du -sh dependencies/lojban_parser` on
+  2026-11-15, against no clone for an import by path.
+- Cost: `atlas changed` warns that the remote of the clone differs from the address in the lock,
+  since the clone has no query. It still exits 0, so the restore of koch passes. Verified by hand
+  with Atlas 0.14.7, 2026-11-15.
+- Cost: the umbrella compiles every module of the parser, the grammar among them, so each compile
+  from an empty cache takes longer (Figures).
+- Verified by hand, 2026-11-15: with no `dependencies/`, `nim r koch fetch-deps
+  contributor/bangu/lojban_tagger` restores the lock with no finding, and `nim r koch test
+  contributor/bangu/lojban_tagger` then passes. `nim check --processing:filenames
+  --listFullPaths:on` reads the parser only from the clone, for `src/lojban_tagger.nim`,
+  `suggester`, `tools/build.nim` and `suites/test_tags.nim`.
+- Verified by hand with `git grep -F ../lojban_parser/` over each Nim file, 2026-11-15: none names
+  it, against 16 at `0d6eaaeb`.
 
 **This project names its own types and constants apart from those of the parser.** The parser
 exports `Reading` and `Refusal` for one word, so the types of a tag take the qualifier `Tag`, as
@@ -730,6 +767,20 @@ of exchanges runs `protoc` of `protobuf-compiler` when it compiles, and `system`
 
 A system package carries no pin, so its version is what the machine has. Here, OpenSSL is 3.0.13,
 and `protoc` is 3.21.12.
+
+**The driver imports no package, so `koch list-packages` runs its verb `system` before Atlas
+restores any.** CI installs each package that `system` prints, and only then restores
+`dependencies/` (`.github/workflows/check.yml`). Where the driver does not compile there,
+`koch list-packages` prints no package and exits 0. CI then installs none, and the stub does not
+compile (Tests). So `lists` and `head` run `tools/lists.nim` as a program of its own, as
+`examples` runs `tools/examples.nim`, since that module reads the parser package. Verified by hand
+with Nim 2.4.0 on 2026-11-15: with `dependencies/` moved aside, `nim r koch list-packages
+contributor/bangu/lojban_tagger` prints each package that `system` declares.
+
+Verified by `suites/test_build.nim`, which runs the driver in a copy of the project without
+`dependencies/`. The suite refuses a driver that imports a package by path or by name, since that
+driver does not compile in the copy. Cost: `lists` and `head` each compile a second program,
+`tools/lists.nim`, in a time that is unmeasured.
 
 **One package reads and writes exchange files, and Atlas pins it.** The project derives the
 morphology of lojban, which it exists to understand (Article II.8). Protocol Buffers are an

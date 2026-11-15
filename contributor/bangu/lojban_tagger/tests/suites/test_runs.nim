@@ -13,7 +13,7 @@ when compileOption("profiler"):
 
 import std/[options, unittest]
 
-import ../../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 import ../../src/lojban_tagger/[runs, tags]
 

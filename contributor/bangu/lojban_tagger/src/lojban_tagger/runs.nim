@@ -26,7 +26,7 @@
 
 import std/[options, sequtils]
 
-import ../../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 
 func isSelmaho(unit: TanruUnit, selmaho: Selmaho): bool =

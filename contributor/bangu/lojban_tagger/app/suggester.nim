@@ -120,7 +120,7 @@ when compileOption("profiler"):
 import std/[asyncdispatch, net, options, os, sequtils, strutils, times, uri]
 from std/posix import close, mkdir, O_CREAT, O_EXCL, open, O_WRONLY
 
-import ../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 import ../src/lojban_tagger/suggestions
 import ./exchanges

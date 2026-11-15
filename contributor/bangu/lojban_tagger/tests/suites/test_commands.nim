@@ -16,7 +16,7 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, unittest]
 
-import ../../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 import ../../src/lojban_tagger/[commands, english, index, search, tags]
 

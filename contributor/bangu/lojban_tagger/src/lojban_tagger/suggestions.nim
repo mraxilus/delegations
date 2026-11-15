@@ -124,7 +124,7 @@
 import std/[json, options, sequtils, strutils]
 from std/unicode import runes
 
-import ../../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 import ./[commands, tags]
 import ./lists/gismu
