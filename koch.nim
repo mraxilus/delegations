@@ -35,6 +35,11 @@
 ##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
 ##     which compiler PATH holds decides nothing.
 ##
+##   Each verb first points git at `.githooks` (`setPathHooks` of `tree.nim`), so each harness
+##     running koch gets git hooks; it reads first, prints nothing, and fails no verb.
+##   Rejected: verb of its own for it, which reaches only harness following instruction, and
+##     adds verb to table, usage text and dispatch.
+##
 ##   Rejected: make (second toolchain, recipe tabs, untested glue); NimScript tasks (compiler
 ##     VM subset, script loaded on every compile, task names shadow compiler commands,
 ##     untestable). Chosen: compiled driver, as Nim's repository builds with `koch`.

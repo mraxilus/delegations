@@ -6,7 +6,7 @@
 ##   path owns no line.
 ##   Same door serves branch context: checkout holding directory, changed paths, paths base
 ##   gained, file as revision holds it, commit subjects since base, and oldest commit outside
-##   `--recent` window.
+##   `--recent` window. It also points git at hooks of checkout, on each verb of koch.
 ##
 ##   Git runs as direct process with argument list, never through shell, through knoller's
 ##     `runGit`, which command line of knoller lists directory with too: no quoting, and
@@ -59,8 +59,21 @@ proc checkoutAt*(root, directory: string): Option[string] =
 
 proc setPathHooks*(root: string) =
   ## Point `core.hooksPath` of checkout at `DIRECTORY_HOOKS` where git names other path or none.
-  ##   TODO: Stub writes nothing until setter lands; each verb of koch calls it already.
-  discard
+  ##   Each verb of koch calls it, so each harness running koch gets git hooks, and none has to
+  ##     remember step, as Architect ruled on #891.
+  ##   Read comes first, and write only where value differs, so hooks running at once take no
+  ##     lock of `.git/config` once it is set. Nothing prints, since `runGit` reads both streams:
+  ##     CI reads output of `list-projects`, and hook answers on stdout. Failure of git, lock held
+  ##     included, fails no verb.
+  ##   Path is relative, so git finds it at top of each worktree, and one write serves each one.
+  ##   Cost: one read of git on each run of koch. Person who removes value gets it back at next
+  ##     verb, and harness that sets global hooks path of its own loses it in this checkout.
+  let named =
+    try: fieldsGit(root, ["config", "--get", "core.hooksPath"]).join.strip
+    except IOError, OSError: ""  # Unset key fails, as no repository and no git do.
+  if named == DIRECTORY_HOOKS: return
+  try: discard fieldsGit(root, ["config", "core.hooksPath", DIRECTORY_HOOKS])
+  except IOError, OSError: discard  # Lock of run at once, or no repository: verb goes on.
 
 
 proc listPaths*(root: string): seq[string] =
