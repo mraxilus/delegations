@@ -19,6 +19,10 @@ them, the second to land carries the new name:
   `laws.nim`. With both applied, the build stops on `undeclared identifier: 'TOLERANCE_ABS'`. The
   second to land carries the new name into both.
 
+This project names `TOLERANCE_ABS` three times too, in `src/pga_benchmark/dense.nim`,
+`src/pga_benchmark/widening.nim` and `tests/suites.nim`. Each takes the new name when the pin
+moves to a library with this change.
+
 ## Edit `pga/algebra.nim`
 
 ```nim
