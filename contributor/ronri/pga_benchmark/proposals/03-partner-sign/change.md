@@ -160,8 +160,8 @@ the container.
   )
 ```
 
-The first step lands in an intermediate declared `noinit`. The compiler zero-fills the
-intermediate of a call that is the operand of a second call.
+The first step lands in a variable declared `noinit`. The compiler zero-fills the result of a
+call that is the operand of a second call, and the variable takes no such fill.
 
 ## Edit `pga/operators.nim`
 
