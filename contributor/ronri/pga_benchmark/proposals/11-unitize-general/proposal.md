@@ -7,7 +7,7 @@ conformal algebra by its round weight norm, and any other element by √|𝐮 �
 with no sign of it. Here every element whose divisor is not 0 comes back with unit weight.
 
 **What it costs.** Conformal unitize is much slower than at pin. A rigid unitize costs one call
-more, ×1.05 to ×1.06 at rga4d. The test of a round object has edges at a huge sphere, a small
+more, ×1.07 to ×1.09 at rga4d. The test of a round object has edges at a huge sphere, a small
 sphere, a far plane, a far transversion and 32 bits.
 
 ## Problem
@@ -196,7 +196,7 @@ reading holds at a probability of about 0.8.
   sphere too, at a probability of 0.75 to 0.8.
 - **`inline`.** The guide of the language inlines a large body only where a measurement shows
   the gain (`STYLE.md`, section 2). No pair of runs at cga5d shows one, as Evidence states, so
-  `^∘` drops `inline`. At rga4d the call costs ×1.05 to ×1.06 on each unitize measurand, and
+  `^∘` drops `inline`. At rga4d the call costs ×1.07 to ×1.09 on each unitize measurand, and
   Open decisions holds that choice.
 
 ## Costs
@@ -205,7 +205,7 @@ reading holds at a probability of about 0.8.
   only where the round weight passes, and stops at a second grade. Most of the rest is calls and
   error checks, which the library's operators carry everywhere, and which the gap list holds as
   causes D02 and D05. The rigid branch is the rule at pin, and costs one call more, as the next
-  item gives: ×1.05 to ×1.06 at rga4d.
+  item gives: ×1.07 to ×1.09 at rga4d.
 - **One call.** Since `^∘` is not inline, each call to `unitize` or `normalizeWeight` calls it, in
   the rigid algebras too.
 - **Callers.** No caller changes its text, and in the library `^` and `^∘` reach callers through
@@ -298,7 +298,7 @@ kind is in hand.
 - Whether a grade test exists that no motor changes, and that keeps the results of this rule. The
   probability is about 0.6. That figure is an estimate, and nothing here measures it.
 - `^∘` without `inline`, as here, or with it. Without it, each rigid unitize at rga4d costs
-  ×1.05 to ×1.06. With it, each caller at cga5d can take in the 1 807 lines of C of `^∘`.
+  ×1.07 to ×1.09. With it, each caller at cga5d can take in the 1 807 lines of C of `^∘`.
 - The table of norm operators gives 𝐦 ÷ W(𝐦) for `^∘` in its column Lengyel, as here, or
   𝐦 ÷ ‖𝐦‖∘, as at pin. Lengyel gives no W(𝐦).
 
@@ -457,9 +457,14 @@ to 66. Its C grows from 284 to 1 807 lines. Six earlier evaluations of the inlin
 commit a712559b to commit 09e9579a. So the time of the change varies by up to about 40% between
 evaluations.
 
-The form here, without `inline`, ran under Nim 2.4.0 in 86.05 ns, against 10.35 ns of pin, so at
-×8.15. That ratio lies inside their range, so no pair of runs at cga5d separates a gain of `inline`
-from noise. At rga4d each unitize measurand reads ×1.05 to ×1.06 without `inline`.
+The form here, without `inline`, ran under Nim 2.4.0 on 2026-11-05 in 86.05 ns, against 10.35 ns of
+pin, so at ×8.15. That ratio lies inside their range, so no pair of runs at cga5d separates a gain
+of `inline` from noise.
+
+The evaluation of 2026-11-14 ran on a Xeon of family 6 model 173, under the same machine name.
+There pin takes 6.30 ns and the form 69.18 ns, so ×11.00. Pin runs there in 0.61 of its time of
+2026-11-05, so the processor was probably another one then, and the two ratios do not compare. At
+rga4d each unitize measurand reads ×1.07 to ×1.09 there, without `inline`.
 
 ### Lengyel's sources
 
