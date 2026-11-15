@@ -114,7 +114,7 @@ func treeGood*(): Tree =
     entry("README.md", textReadme()),
     entry("LICENSE.md", "# Licence\n\nText.\n"),
     entry("AGENTS.md", "# Entry\n\nRead file of role.\n"),
-    entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
+    entry("CLAUDE.md", "# Claude Code\n\nImport entry file.\n\n@AGENTS.md\n"),
     entry(
       "GLOSSARY.md",
       "# Fixture\n\nWords.\n\n## Standards\n\n## Language\n\n**Term**:\nOne thing.\n",
