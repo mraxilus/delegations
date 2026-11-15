@@ -17,6 +17,10 @@ import ./[findings, markdown, provenance, record]
 const
   PATHS_PROMPT* = ["AGENTS.md", "CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
     ## Files that open new delegates: entry file each harness reads first, and file of each role.
+  PATHS_ROLE* = ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+    ## Files of roles, each holding reading order of its role under `HEADING_READ`.
+  HEADING_READ* = "## Read first, in this order"
+    ## Heading of reading order of each role file; `start` prints that section from there.
   BYTES_PROMPT* = 40_000
     ## Bytes prompt may hold; ceiling guards runaway growth, never trims by length alone.
     ## Number is Architect's.
@@ -82,7 +86,14 @@ func checkSizePrompt(path, source: string): seq[Finding] =
     )
 
 
+func checkHeadingRead(path, source: string): seq[Finding] =
+  ## Report file of role lacking `HEADING_READ`, which `start` prints as reading order of role.
+  ##   TODO: Stub reports nothing until check lands; `checkPrompt` calls it already.
+  discard
+
+
 func checkPrompt*(path, source: string): seq[Finding] =
-  ## Run both prompt checks over one prompt.
+  ## Run each prompt check over one prompt: diary, size, and heading of reading order of role.
   result = checkDiary(path, source)
   result.add checkSizePrompt(path, source)
+  result.add checkHeadingRead(path, source)
