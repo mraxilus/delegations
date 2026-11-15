@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, sequtils, tables, unittest]
-import ../../src/[domains, layout, plan, projects, toolchain]
+import ../../src/[domains, layout, plan, projects, toolchain, tree]
 import ./fixtures
 
 
@@ -194,6 +194,19 @@ suite "Plan":
     check projectsTest(directories, [FILES_KNOLLER[1]], importers) ==
         @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # nimble file names pin
     check projectsTest(directories, ["koch.nim"], importers) == @[DIRECTORY_AUDIT]  # driver alone
+
+
+  test "knoller source selects no project requiring it as package, whose lock pins its commit":
+    # Case as found (#888): assayer imported knoller by path, so it built from checkout of this
+    #   repository alone; as package it compiles commit its lock pins, which change to knoller
+    #   leaves as it is. Tree is repository's own, since its imports are case.
+    let
+      tree = currentSourcePath().parentDir.parentDir.parentDir.parentDir.parentDir.readTree
+      planned = tree.jobs([FILES_KNOLLER[0] & "/knoller/pins.nim"]).mapIt(it.directory)
+    check DIRECTORY_AUDIT in planned  # driver imports knoller by path
+    check DIRECTORY_IMPORTING notin planned  # assayer compiles knoller its lock pins
+    check tree.jobs([DIRECTORY_IMPORTING & "/atlas.lock"]).mapIt(it.directory) ==
+      @[DIRECTORY_IMPORTING]  # lock moving to newer knoller compiles assayer
 
 
   test "source of project selects each project importing it by path, and their importers":
