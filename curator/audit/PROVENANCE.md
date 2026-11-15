@@ -1699,6 +1699,17 @@ at the line that names the copy.
 - Verified by `suites/test_dependencies.nim`: a matching name, another name, a lock that stores no
   name, and a lock that will not parse.
 
+**A package in a folder of its repository restores as any other package.** `curator/assayer`
+requires knoller so, through a name override in its `atlas.config`. Atlas clones the whole
+repository, and `checkCheckouts` finds the directory that the lock names. `atlas changed` then warns
+that the remote of the clone lacks the query of the address in the lock. It exits 0, so the verdict
+stands.
+
+- Verified by `nim r koch test curator/assayer` with Atlas 0.14.7, 2026-11-15, after a delete of
+  `dependencies/`.
+- Cost: a later Atlas that makes that warning a failure turns the restore of assayer red, and the
+  finding names the exit code of `atlas changed`.
+
 ## Scoped checks
 
 **The static pass stays whole-tree, and only compilation is scoped.** A project enters the test
@@ -1741,9 +1752,9 @@ the folder of that source. A statement on several lines, behind a `when` guard, 
 path counts. A comment, or a string outside such a statement, imports nothing. So a project that
 adds an import is selected from then on, with no list to keep.
 
-- Measured on 2026-11-12: `lojban_tagger` imports `src` and `tools` of `lojban_parser`, and
-  `curator/assayer` and `curator/audit` import `src` of knoller. No other project imports another
-  one.
+- Measured on 2026-11-15 by `importersByFolder` over the tree: `lojban_tagger` imports `src` and
+  `tools` of `lojban_parser`, and `curator/audit` imports `src` of knoller. No other project imports
+  another one by its path.
 - Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
 - Rejected: `src` alone, since the tools of the tagger import the tools of the parser.
 - Rejected: the importers of a project for each change to any of its code. A suite of the parser is
@@ -1755,6 +1766,18 @@ adds an import is selected from then on, with no list to keep.
 - Verified by `suites/test_plan.nim`, for each case as found. A change to the source or the tools
   of the parser selects the tagger, and an importer of the tagger too. Each form of import counts,
   and a suite or a record of the parser selects no importer.
+
+**A project that requires another project as a package is no importer of it.** It imports by the
+name of the package, and it compiles the commit that its `atlas.lock` pins. So a change to the
+other project does not select it, and a move of its lock does, as any change of its code does.
+`curator/assayer` requires knoller so (`curator/assayer/PROVENANCE.md`, Package).
+
+- Cost: a change to knoller that breaks assayer shows when the lock of assayer next moves.
+- Verified by `suites/test_plan.nim`, over the tree of this repository, since the imports of
+  assayer are the case. A change to knoller plans `curator/audit` and not `curator/assayer`, and a
+  change to the lock of assayer plans `curator/assayer`.
+- Cost: that test runs with the suites of the audit. So a path import that a change to assayer
+  brings back shows at the next change to the audit or to knoller.
 
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
