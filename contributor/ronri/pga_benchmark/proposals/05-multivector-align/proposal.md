@@ -79,16 +79,16 @@ into a line, so each element touches one line more than it holds:
 - Align the whole set to 64 bytes, as here, to 16 bytes, which `alloc` gives, or to 64 bytes only
   under `defined(gcDestructors)`. The guard keeps a `seq` under `--mm:refc` valid, and raw storage
   still needs 64 bytes.
-- Align the whole set alone, as here, or every basis-set type by the rule of P04, `exact-kinds`,
+- Align the whole set alone, as here, or every basis-set type by the rule of P04, `basis-set-forms`,
   which gives the whole set the same alignment.
 
 ## Landing
 
 - **Float width.** The alignment reads the size of `Coefficient`. So at 32 bits a multivector at
   rga3d aligns to its own 32 bytes and pads none, and from rga4d up it aligns to 64.
-- **P04, `exact-kinds`.** It replaces the same type definition, and aligns every basis-set type to
-  `alignment` of its count. That is the largest power of two that divides its bytes, and at most 64.
-  The second of the two to land quotes the first. For the whole set, that rule gives `min(64,
+- **P04, `basis-set-forms`.** It replaces the same type definition, and aligns every basis-set type
+  to `alignment` of its count. That is the largest power of two that divides its bytes, and at most
+  64. The second of the two to land quotes the first. For the whole set, that rule gives `min(64,
   size)`, since 2^D coefficients take a power of two bytes. So once P04 lands, its rule spells both.
   The law of `layout.nim` on `MultivectorScalars` then goes, since P04 aligns that type by count.
 

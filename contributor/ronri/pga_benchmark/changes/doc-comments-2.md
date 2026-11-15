@@ -19,7 +19,7 @@ the width: a multivector at 4D holds 128 bytes at 64 bits.
 
 Two proposals edit lines that this change quotes:
 
-- P04, `exact-kinds`, adds `basis_sets` to the export line of `pga.nim`, which this change
+- P04, `basis-set-forms`, adds `basis_sets` to the export line of `pga.nim`, which this change
   splits. The second of the two to land quotes that line again. P09 and P10 build on P04, so each
   meets this change as P04 does.
 - P10, `homogeneous-scalar`, removes the stand-in `sqrt` and `sqrtAnti` of `tests/suites.nim`. If

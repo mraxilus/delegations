@@ -8,7 +8,7 @@ own 32 bytes, so it never crosses a line.
 
 At pin, `Multivector` is the alias of `MultivectorOf` of all bases. So this change aligns that
 set alone, through a `when` in the type definition, and every other basis-set type keeps its
-alignment. P04, `exact-kinds`, replaces the same type definition, and aligns every set by its
+alignment. P04, `basis-set-forms`, replaces the same type definition, and aligns every set by its
 count. The second of the two to land quotes the first. The rule of P04 gives the whole set
 `min(64, size)`, so once P04 lands its rule spells both.
 

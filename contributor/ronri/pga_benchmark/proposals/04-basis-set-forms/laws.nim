@@ -1,4 +1,4 @@
-## Hold laws of basis-set types, as library carrying this change exports them (`exact-kinds`).
+## Hold laws of basis-set types, as library carrying this change exports them (`basis-set-forms`).
 ##   Evaluation compiles this against library with change applied, at each algebra its claim
 ##     names, and exit code is verdict: every law below holds, or program stops on assertion.
 ##   Each form of basis-set types equals operator of library on whole multivectors, at each named
@@ -226,7 +226,7 @@ proc main(): int =
   doAssert (p ∧ q) is Multivector2, "Vector wedge vector must be bivector, equal to its alias."
   doAssert ($typeof(p ∧ q)).startsWith("MultivectorOf[{"),
     "Alias must add no type, so type prints as generic with its bases."
-  echo "exact-kinds: vector wedge vector prints as ", $typeof(p ∧ q)
+  echo "basis-set-forms: vector wedge vector prints as ", $typeof(p ∧ q)
   doAssert (m ∙ n) is Multivector,
     "Product of two whole multivectors must stay library's, so no caller sees change."
   doAssert (p ∙ m) is Multivector0, "Dot of vector and whole multivector must be scalar."
@@ -240,11 +240,11 @@ proc main(): int =
   doAssert (∙m) is Multivector, "Bulk of whole multivector must stay library's."
   doAssert ((even ⟇ p) ⟇ even) is MultivectorOdd,
     "Sandwich of vector must reach whole odd parity, as table can produce."
-  echo "exact-kinds: bytes of p ∙ m ", sizeof(p ∙ m), ", p ∘ m ", sizeof(p ∘ m), ", ∙ bivector ",
-    (when compiles(∙bivector): sizeof(∙bivector) else: 0), ", ∘ vector ", sizeof(∘p),
-    ", ∙ whole ", sizeof(∙m), ", sandwich ", sizeof((even ⟇ p) ⟇ even), ", library ",
-    sizeof(Multivector)
-  echo "exact-kinds: bytes of ‖p‖∙² ", sizeof(`|∙²`(p)), ", / p ", sizeof(/p), ", ★ p ",
+  echo "basis-set-forms: bytes of p ∙ m ", sizeof(p ∙ m), ", p ∘ m ", sizeof(p ∘ m),
+    ", ∙ bivector ", (when compiles(∙bivector): sizeof(∙bivector) else: 0), ", ∘ vector ",
+    sizeof(∘p), ", ∙ whole ", sizeof(∙m), ", sandwich ", sizeof((even ⟇ p) ⟇ even),
+    ", library ", sizeof(Multivector)
+  echo "basis-set-forms: bytes of ‖p‖∙² ", sizeof(`|∙²`(p)), ", / p ", sizeof(/p), ", ★ p ",
     sizeof(★p), ", ☆ p ", sizeof(☆p), ", p ⟑ q ", sizeof(p ⟑ q)
   # Bivectors hold no bulk at rga2d, where grade 2 is antiscalar, nor at cga3d.
   when compiles(∙bivector):
@@ -267,9 +267,9 @@ proc main(): int =
   holdAliases()
   var held, stopped: CountTable[string]
   holdForms(held, stopped)
-  echo "exact-kinds: forms hold at ", toSeq(held.values).foldl(a + b), " types and pairs; ",
+  echo "basis-set-forms: forms hold at ", toSeq(held.values).foldl(a + b), " types and pairs; ",
     toSeq(stopped.values).foldl(a + b, 0), " stop compile, each zero in library"
-  echo "exact-kinds: stops by operator ",
+  echo "basis-set-forms: stops by operator ",
     toSeq(stopped.keys).sorted.mapIt(it & " " & $stopped[it]).join(", ")
   for _ in 1..SAMPLES:
     let
@@ -294,7 +294,7 @@ proc main(): int =
     when compiles(∘b):
       doAssert (∘b).toMultivector =~ ∘b.toMultivector,
         &"Weight must equal library's; got `{(∘b).toMultivector}`."
-  echo "exact-kinds: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
+  echo "basis-set-forms: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
   0
 
 

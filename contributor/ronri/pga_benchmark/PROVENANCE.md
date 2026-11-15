@@ -1546,7 +1546,7 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`, and at the pin they are from 2026-10-11 on `linux amd64, 4 cores`.
+under `taken`, and at the pin they are from 2026-10-28 on `linux amd64, 4 cores`.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
 the machine code of one function. The times of the point forms of Lengyel's code are
@@ -1609,10 +1609,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.
-- A stamp that names no processor, as that of each record committed here, leaves the machine
-  unknown. Under the stamp `linux amd64, 4 cores`, pin ran `wedge` at cga5d in 97.55 ns on
-  2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in
-  `evaluations/cayley-derivation.json`, at `c2e80da3` and at head. By `/proc/cpuinfo`, the
+- A stamp that names no processor, as that of each baseline and of the evaluations of P02 and
+  P06, leaves the machine unknown. Under the stamp `linux amd64, 4 cores`, pin ran `wedge` at
+  cga5d in 97.55 ns on 2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in
+  `evaluations/cayley-derivation.json`, at `c2e80da3` and at `78d5c3d5`. By `/proc/cpuinfo`, the
   processor of 2026-11-14 and 2026-11-15 is a Xeon of family 6 model 173, and nothing records
   that of 2026-11-05. So a time of one evaluation compares with a time of another only where the
   times of pin agree.
@@ -1649,7 +1649,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
   no zero fill and two error checks. P01 and P08 alone spend 437, 71 and 106. Both are the
   counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
-- Whether the library takes P04, `exact-kinds`, so that each operator from one table returns the
+- Whether the library takes P04, `basis-set-forms`, so that each operator from one table returns the
   exact basis-set type of the bases it reaches. At rga4d 16 measurands stand above the byte bound
   only because they write a whole multivector for one coefficient, and at cga5d 15 do. Each is a
   dot, an antidot or a squared norm. Under P04 each of them writes 8 bytes on a basis-set type.
@@ -1668,7 +1668,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   Under P05 and under P04, an AVX2 build can fault where the pin runs. It faults on a multivector
   in raw storage, which `alloc` aligns to 16 bytes. It also faults on one in a `seq` under
   `--mm:refc`, whose data the pinned compiler does not align.
-  `proposals/04-exact-kinds/proposal.md` and `proposals/05-multivector-align/proposal.md` state
+  `proposals/04-basis-set-forms/proposal.md` and `proposals/05-multivector-align/proposal.md` state
   each case. So each of the two holds one more decision, among three options. They are the
   alignment as now, an alignment of at most 16 bytes, and the alignment as now only under
   `defined(gcDestructors)`.

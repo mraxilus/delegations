@@ -461,10 +461,10 @@ The form here, without `inline`, ran under Nim 2.4.0 on 2026-11-05 in 86.05 ns, 
 pin, so at ×8.15. That ratio lies inside their range, so no pair of runs at cga5d separates a gain
 of `inline` from noise.
 
-The evaluation of 2026-11-14 ran on a Xeon of family 6 model 173, under the same machine name.
-There pin takes 6.30 ns and the form 69.18 ns, so ×11.00. Pin runs there in 0.61 of its time of
-2026-11-05, so the processor was probably another one then, and the two ratios do not compare. At
-rga4d each unitize measurand reads ×1.07 to ×1.09 there, without `inline`.
+The evaluation of 2026-11-15 names its processor, a Xeon of family 6 model 173. There pin takes
+6.30 ns and the form 69.21 ns, so ×10.97. Pin runs there in 0.61 of its time of 2026-11-05, so
+the processor was probably another one then, and the two ratios do not compare. At rga4d each
+unitize measurand reads ×1.07 to ×1.09 there, without `inline`.
 
 ### Lengyel's sources
 

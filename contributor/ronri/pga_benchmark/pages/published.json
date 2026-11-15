@@ -5,51 +5,51 @@
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "fe9a74e0477b7f10"
+    "digest": "564f37b8099838ca"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "ee80e4bfaabe4c04"
+    "digest": "d9c599945b136d4d"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "d55d314d6d1a3822"
+    "digest": "f966f17bb268a776"
   },
-  "exact-kinds": {
+  "basis-set-forms": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "c52b1fe2d9c7f504"
+    "digest": "37af890a35792a37"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "39afcd7f0fd8a913"
+    "digest": "4a26f2b756de3842"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "b54ef9115605ec7c"
+    "digest": "703fca8d60643c7e"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
-    "digest": "96532a242d476bd9"
+    "digest": "abde4f4adcc501ac"
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "088e9983b32dba24"
+    "digest": "669c72543cc71f1c"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
-    "digest": "2e92dd5a7edca422"
+    "digest": "056be9be1cf699eb"
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "c938cd8ce9c25e7c"
+    "digest": "6d433c8f05bb224a"
   },
   "homogeneous-scalar": {
     "url": "https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D",
-    "digest": "c48633a7d382807e"
+    "digest": "5539f8b94e01860b"
   },
   "unitize-general": {
     "url": "https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy",
-    "digest": "aafa55915696e396"
+    "digest": "183d69e7c8732626"
   },
   "progress": {
     "url": "https://claude.ai/artifact/TsUU8dwwthrgRvbAvCeinV",
@@ -61,6 +61,6 @@
   },
   "cayley-cells": {
     "url": "https://claude.ai/artifact/Jjeg6CQWsiY3s8b8D7KWmE",
-    "digest": "86490cd961dbfa79"
+    "digest": "34e5ce6b75992b85"
   }
 }
