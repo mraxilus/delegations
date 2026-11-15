@@ -768,6 +768,16 @@ of exchanges runs `protoc` of `protobuf-compiler` when it compiles, and `system`
 A system package carries no pin, so its version is what the machine has. Here, OpenSSL is 3.0.13,
 and `protoc` is 3.21.12.
 
+**The driver imports no package, so `koch list-packages` runs its verb `system` before Atlas
+restores any.** CI installs each package that `system` prints, and only then restores
+`dependencies/`. A driver that fails there installs nothing, and a suite that needs `protoc` then
+stops on the runner alone. So `lists` and `head` run `tools/lists.nim` as a program of its own, as
+`examples` runs `tools/examples.nim`, since that module reads the parser package. Verified by
+`suites/test_build.nim`, which runs the driver in a copy of the project without `dependencies/`.
+
+The suite fails against the driver that imported `tools/lists.nim`, and prints no package. Cost:
+each run of `lists` or `head` compiles `tools/lists.nim` as a program of its own.
+
 **One package reads and writes exchange files, and Atlas pins it.** The project derives the
 morphology of lojban, which it exists to understand (Article II.8). Protocol Buffers are an
 external concern, and the rule of data names `protobuf_serialization`. Atlas pins it in
