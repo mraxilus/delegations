@@ -311,3 +311,20 @@ suite "Merge":
     let conflicted = judgeMerged(root, "main", "curator/older", toolchains)
     check conflicted.is_merged and conflicted.code == 1 and conflicted.findings.len == 1
     check not fileExists(root.fileMark)
+
+
+  test "detached checkout lacking base records no mark, even where its merge passes":
+    # Case as record review of #893 found it: mark followed exit 0 alone, so clean detached
+    #   checkout judged with `--branch` was marked, though no branch holds its tree. In place,
+    #   detached HEAD already recorded none.
+    let
+      root = repoForked()
+      toolchain = toolchainStub()
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    toolchain.writeInto("exit", "0\n")
+    var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
+    discard root.git("checkout -q --detach")
+    let verdict = judgeMerged(root, "main", "curator/older", toolchains)
+    check verdict.is_merged and verdict.code == 0 and verdict.findings.len == 0
+    check not fileExists(root.fileMark)
