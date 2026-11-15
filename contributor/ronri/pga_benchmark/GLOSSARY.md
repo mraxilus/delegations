@@ -138,8 +138,8 @@ time.
 _Avoid_: time band, slack, margin, noise band
 
 **Spread**:
-The range that holds 90% of the time ratios in evaluations that change no library function. A
-time ratio outside it counts as moved.
+The range that holds 99% of the time ratios in evaluations that use the current count of runs
+and change no library function. A time ratio outside it counts as moved.
 _Avoid_: noise band, noise floor, jitter
 
 **Docket**:
@@ -212,8 +212,13 @@ _Avoid_: configuration, config, target, signature
 **Basis-set type**:
 A type that holds the coefficients of one set of bases alone, dense in basis order, as
 `MultivectorOf[B]` of the library does. A named one is an alias of a set, such as
-`Multivector2`. An exact one holds the bases that a product reaches.
+`Multivector2`. An exact one holds the bases that an operator reaches.
 _Avoid_: kind, exact kind, named kind
+
+**Basis-set form**:
+An operator of the library on basis-set types, which returns the exact basis-set type of the
+bases that its table reaches.
+_Avoid_: exact form, typed operator, generic product
 
 **Comparison tolerance**:
 The bound under which `=~` counts two coefficients equal and `grade` counts one as zero. It is
@@ -221,9 +226,9 @@ The bound under which `=~` counts two coefficients equal and `grade` counts one 
 _Avoid_: tolerance, alone in this sense; places
 
 **Homogeneous scalar**:
-The pair x𝟏 + y𝟙 of a scalar and an antiscalar. It stands for the value x/y kept with its weight
-y, as a homogeneous point keeps a position with its weight. Under the rigid metric it is a dual
-number, and under the conformal metric a complex number.
+The pair s𝟏 + t𝟙 of a scalar and an antiscalar, which stands for the value s/t kept with its
+weight t. It is a dual number under the rigid metric, a complex number at cga4d and cga5d, and a
+split-complex number at cga3d and cga6d.
 _Avoid_: magnitude, dual number, dual scalar
 
 **Motion operator**:

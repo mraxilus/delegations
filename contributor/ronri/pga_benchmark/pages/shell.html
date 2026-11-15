@@ -12,12 +12,15 @@
   src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
 @font-face { font-family: "Noto Serif"; font-weight: 600;
   src: url(@EMBED:NotoSerif-SemiBold.ttf@) format("truetype"); }
-@font-face { font-family: "Commit Mono"; font-weight: 400;
+/* Commit Mono, maths and symbols each ship one weight, declared over 400 to 700: heading, `th`
+   or `strong` asking 600 or 700 then draws regular glyphs of that file, and never bold
+   browser synthesises (Article X.8). */
+@font-face { font-family: "Commit Mono"; font-weight: 400 700;
   src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2");
   unicode-range: U+0000-2604, U+2606-10FFFF; }
-@font-face { font-family: "Noto Sans Math"; font-weight: 400;
+@font-face { font-family: "Noto Sans Math"; font-weight: 400 700;
   src: url(@EMBED:NotoSansMath-Regular.ttf@) format("truetype"); }
-@font-face { font-family: "Noto Sans Symbols 2"; font-weight: 400;
+@font-face { font-family: "Noto Sans Symbols 2"; font-weight: 400 700;
   src: url(@EMBED:NotoSansSymbols2-Regular.ttf@) format("truetype"); }
 
 :root {

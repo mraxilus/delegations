@@ -19,22 +19,26 @@ import std/[options, os, sequtils, sets, strutils]
 import ../../knoller/src/knoller
 import ./[
   checker, coverage, dependencies, domains, duplicates, english, findings, font_families, form,
-  glossary, idioms, justification, kinds, layout, names, plan, prompts, prose, provenance, record,
-  toolchain, tree, waits, workflows,
+  glossary, idioms, justification, kinds, layout, names, plan, prompts, prose, prose_own,
+  provenance, record, toolchain, tree, waits, workflows,
 ]
 
 export layout.Entry, layout.directoriesProject, layout.Tree
 
 
-func stampRules*(tree: Tree): string =
-  ## Compute stamp of rules documents as tree holds them; missing document digests empty.
-  var contents: seq[string]
+func documentsRules(tree: Tree): seq[string] =
+  ## Read each rules document as tree holds it, in `RULES` order; empty where absent.
   for rule in RULES:
     var content = ""
     for e in tree:
       if e.path == rule: content = e.content
-    contents.add content
-  contents.stamp
+    result.add content
+
+
+func stampRules*(tree: Tree): string =
+  ## Compute stamp of rules documents as tree holds them, each without its sections of process;
+  ##   missing document digests empty.
+  tree.documentsRules.stampRules
 
 
 proc writeRowsRules*(root: string, tree: Tree): seq[string] =
@@ -155,6 +159,11 @@ proc auditTree*(tree: Tree): seq[Finding] =
       if e.kind.isSome and not e.path.isCodeContributor(tree.directoriesProject):
         result.add checkMentions(e.path, e.content, verbs)
 
+  # Each section of process stamp leaves out stands in its document, absent document included,
+  #   so list cannot rot.
+  for k, document in tree.documentsRules: result.add checkSectionsProcess(RULES[k], document)
+  # Each project list of own prose names stands in tree, and so does each suite its entry demands.
+  result.add tree.checkProjectsProseOwn(PROJECTS_PROSE_OWN)
   let
     stamp_now = tree.stampRules
     directories = tree.directoriesProject
@@ -187,7 +196,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
       result.add checkFontFamilies(e.path, e.content)
       if e.kind.get != Kind.Markdown: result.add checkPathsMachine(e.path, e.content)
     if e.kind.get.rule.has_guide:
-      result.add checkIdioms(e.path, e.content, e.kind.get.dialect).toFindings
+      result.add checkIdioms(e.path, e.content, e.kind.get.dialect, e.path.nimbleProject).toFindings
     for directory in directories:
       if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)

@@ -1198,6 +1198,12 @@ proc overlap(couple: Couple): tuple[depth: float, pair: string] =
 # Mutable: corpus is stood on first law that wants it, then kept for rest.
 var STILLS_POSED: seq[Posed]  ## Corpus of stills, stood once.
 
+func named(strain: Strain): string =
+  ## Joint strain sits at, as echo writes it: which joint, whose, and on which arm.
+  if strain.at.isNone: return "no joint"
+  let at = strain.at.get
+  at.what & " " & $at.who & (if at.arm.isSome: " " & $at.arm.get else: "")
+
 proc poses(): seq[Posed] =
   ## Every still of corpus stood live at its kept answer, once: strain for one
   ## law; overlap, joined hands and parted joints for other.
@@ -1233,7 +1239,7 @@ suite "Internal: Every still stands at ease":
       check where.is_holding
       check still.is_holding
       echo &"    {still.key}: stood {where.apart:.2f}, strain {still.strain.most:.2f} " &
-          &"at {still.strain.what} {still.strain.whose.body} {still.strain.whose.arm}"
+          &"at {still.strain.named}"
       check still.strain.most <= AT_EASE
 
 
@@ -1456,10 +1462,10 @@ suite "Internal: Every still stands at ease":
     ## distances differing in their last bit answer differently, so what is
     ## held is exact repetition: same distance, same numbers.
     for i in 0..1:
-      var got: array[2, float]
+      var got: array[2, Option[float]]
       for run in 0..1:
         let (is_holding, couple) = stood(HUMAN, Band.Crown, WOUND, 1.0, false, Body.Two, 0.44)
-        got[run] = (if is_holding: couple.strainWorst.most else: -1.0)
+        got[run] = (if is_holding: some(couple.strainWorst.most) else: none(float))
         couple.free()
       check got[0] == got[1]
 

@@ -14,11 +14,12 @@ merge, never touch `main`, and never write outside your project.
 3. `GLOSSARY.md` at the root: the words of the repository itself, which this file uses.
 4. This file to the end, then `GUIDE.md`. The guide covers the English, the queue, the
    toolchain, dependencies, the glossary, the record, and what to report. Every role reads it,
-   and the stamp covers it.
+   and the stamp covers each of its sections except the sections of process.
 5. `contributor/<domain>/README.md` for the theme of the domain. Then your project's
-   `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, where they exist. `PROVENANCE.md`
-   describes the design as it is now, so read it before the code, and correct it where the
-   code disagrees.
+   `README.md` and `GLOSSARY.md`, where they exist. Then the headings of its `PROVENANCE.md`,
+   each section that your work touches, and Open questions (`GUIDE.md`, How to build on a
+   project). The record describes the design as it is now, so read it before the code, and
+   correct it where the code disagrees.
 6. `curator/probe/` is a complete worked example of the project shape: nimble file, source,
    matrix tests, provenance, glossary. `curator/audit/tests/` is a larger suite.
 
@@ -44,7 +45,7 @@ Two reads before any other work, one list to carry, and work to hand off.
 - **Answered issues still open.** Where the pull request that answers one has merged, **close
   the issue by hand**. Add a comment that names that pull request and what shipped. Do not
   rely on `Closes #N`, which fires only for a merge into the default branch. Where a ruling
-  in a comment answered the issue, close it by hand as well.
+  in a comment answered the issue, close it by hand as well. The skill `merged` points here.
 
 `GUIDE.md` holds the rest, under "The queue and the shared allowance".
 
@@ -81,19 +82,20 @@ The role line and the label are not on it. The `body` hook reads every post befo
 The list is a view of those sections. Where the list and a section disagree, the section wins.
 
 Post it **at the start**, with what applies and what does not. After that it lives in each
-sign-off, and in the sign-off of the handover (`GUIDE.md`, Output contract, The sign-off).
-Each item is a row there, in the state it is in, tagged `(carried N)`.
+sign-off, and in the sign-off of the handover (`GUIDE.md`, Output contract, The table). Each
+item is a row beside the work that it concerns, in the state it is in. Its tag stands in the
+second cell, as `carried 5`.
 
-- An item that does not apply is **a line in the pull request body under Record**, with its
-  reason. Never drop it, and never tick it.
-- A done row **names what discharged it** in its last cell, such as
+- An item that concerns no work of the sign-off is **named in its ➖ row**, in words, with its
+  tag and its reason. Never drop it, and never tick it.
+- A done row **names what discharged it** in its second cell, such as
   `[#140] opened draft, run 238 green`, where `[#140]` is a link (`GUIDE.md`, Output contract).
   A bare tick is a claim that carries no evidence (Article VIII.1).
-- **A row may wait at handover.** A ⏸️ row whose last cell names its decision, such as `D1`, is
-  complete and correct. A list that has to come out all ticked is a list that will.
+- **A row may wait at handover.** A ⏸️ row whose second cell names its decision, such as `D1`,
+  is complete and correct. A list that has to come out all ticked is a list that will.
 
-Nothing checks the carrying, and that is the point. You show it to a reader who is present,
-and that reader is the enforcement.
+The `stop` hook checks that each sign-off names all six, and nothing checks that a row is true.
+You show it to a reader who is present, and that reader is the enforcement.
 
 ## Boundaries
 
@@ -213,7 +215,7 @@ Before any code:
 
 1. Create `contributor/<domain>/<project>/`.
 2. Write `PROVENANCE.md` first. Open it with the header table in `GUIDE.md`. `Rules` is the
-   stamp of the charter, which `nim r koch stamp` prints at the repository root.
+   stamp of the rules for content, which `nim r koch stamp` prints at the repository root.
 3. Write `GLOSSARY.md`: a `# <project>` heading, one sentence on what the project is, then
    `## Standards`, then `## Language`. Add a term or a standard only after the Architect
    selects it, and never in advance.
@@ -240,10 +242,8 @@ logic in the virtual machine of the compiler. Run it from the project directory,
 
 The verbs that koch reaches are `types`, `drive`, `head` and `system`, and each one is
 described below. Koch runs them as `koch check-types`, `koch drive`, `koch head` and
-`koch list-packages`. Koch learns whether your project carries `drive`, `head` or `system` by a
-read of the dispatch of the driver itself. It runs `types` for every project that carries
-`package.json` beside its lock. A verb spelled any other way is one that the runner passes by in
-silence.
+`koch list-packages`. Koch finds `drive`, `head` and `system` in the dispatch of your driver
+alone. Spell each verb exactly so, because the runner passes any other spelling by in silence.
 
 ## Toolchain
 
@@ -260,8 +260,7 @@ nobody tried.
   is a moving target that records nothing. Pin a release whenever one will do, because
   everyone who builds your project builds a commit from source, CI included.
 
-`GUIDE.md` holds how koch serves a pin, how to install or bump one, and what happens to a pin
-that nothing can serve.
+`GUIDE.md` says how to install or bump a pin, and what happens to a pin that nothing can serve.
 
 ## System dependencies
 
@@ -324,6 +323,63 @@ API of a test driver.
   itself. A driven check that first wants some other verb run by hand is a check that the
   runner will not run.
 
+## Data
+
+Data takes its form from who writes it and who reads it. The compiler, the schema, or a law of
+the suite then checks each field. The cost is a schema or a law beside each format between
+programs. It is also `protoc`, in each build that turns a text format file into binary.
+
+- **Data that a person writes, or a fixed list that code reads, is a Nim module of typed
+  constants.** A field whose absence is a mistake takes `{.requiresInit.}`. A verb renders a
+  list that comes from outside, and the header of the module names that verb. `STYLE.md` §4
+  gives the idiom.
+- **Data that one program writes and another reads is Protocol Buffers, or the NIF data
+  format.** A schema of Protocol Buffers is a committed `.proto` file, in the folder of the code
+  that owns the format. Nim reads and writes it through `import_proto3` of
+  `protobuf_serialization`, which Atlas pins. A page reads it through `protobufjs`, which loads
+  the same schema. Both read one schema, so the writer and the reader never disagree.
+- **Keep the schemas of one format in one folder, and import them by file name.** Each reader
+  finds an import in the folder of the schema that imports it. `koch check-schemas` reads each
+  folder as one unit.
+- **The field numbers carry the versions of the format.** Add a field or an enum value under a
+  new number. Delete one only when you reserve its number and its name. Never renumber, retype
+  or rename one, and never add or drop the `optional` of a field. `koch check-schemas` refuses
+  each of those against the schema on `main`, through `buf breaking`. A change of meaning with
+  no change of layout is a new field, because a reader can see nothing else.
+- **A field whose default is not zero is `optional`.** Proto3 gives no default except zero. So
+  an older file that lacks the field reads as absent, and the code gives the default.
+- **Value zero of each enum means unknown.** Name it `<ENUM>_UNSPECIFIED`, and never write it.
+  The reader of Nim reads a value that its enum lacks as zero, and a page reads it as a bare
+  number. So the code refuses zero, and a page also refuses a number that its enum lacks.
+- **A message that the repository does not hold is binary.** It is a file that a person saves,
+  or a file that one verb writes for another under `build/`. Binaries are never committed.
+- **A message that the repository commits is a text format file, a `.txtpb`.** The verb that
+  writes it writes binary through the Nim library, and `protoc --decode` turns that into text.
+  A build or a suite has `protoc --encode` write the binary into a file under `build/` at
+  compile time, then reads the file with `staticRead`. `STYLE.md` §4 gives the idiom, which
+  checks the exit code of `protoc`. Declare `protobuf-compiler` in your `system` verb, and never
+  use `buf convert`, which drops a misspelt field and gives no error.
+- **The readers check no length and no checksum.** A file cut between two fields still reads,
+  as fewer objects. So a file that a person keeps starts with a format line, one line of text
+  that names the format and its version. The length and the checksum of its message follow it.
+  The reader checks all three before it decodes.
+- **A format in NIF holds its shape by a law of its suite, since no schema reads it.** NIF is
+  the native format of Nim 3, and the root glossary names its specification. A file opens with
+  the version directive, `(.nif27)`, which also names the format to a tool. A suite writes each
+  value of the format and reads it back whole, so the writer and the reader agree.
+  `koch check-schemas` reads no NIF. `kinds.nim` registers no `.nif` yet, so a project asks a
+  curator for that kind before it commits a NIF file.
+- **A format moves to this rule when its shape next changes.** A new format follows the rule
+  at once. An existing format in JSON, or in a form of its own, moves in the pull request that
+  next changes its shape. From then on, `koch check-schemas` or the law of its suite holds each
+  change of it. A port with no change of shape buys no check of versions, so nothing moves
+  before then.
+- **JSON stays only where a tool or an outside service forces it**: npm, `tsc`, Atlas, Claude
+  Code hooks, GitHub Actions and `gh`. It also stays in a format whose shape has not changed
+  since this rule. A service forces it where its API speaks JSON alone, and data on its wire
+  takes the form that the service gives. No `JsonNode` leaves the module that speaks to the
+  service, so the compiler checks each field past that module.
+
 ## Pages and assets
 
 A page that the project stands behind lives in `pages/`. A one-off exploration kept for
@@ -346,28 +402,20 @@ A presentation target ships the font faces that Article X.8 names, inlined, and 
 serves them. Each Noto font face ships whole, as the TrueType file of its own release, and never
 as a subset.
 
-**A page proves its font faces in `drive`.** A project that builds pages has a `drive` verb,
-and it renders each page that the project builds. The verdict is the curator's, so no project
-judges its own pages. `koch drive` gives it in three steps:
+**A page proves its font faces in `drive`.** A project that builds pages has a `drive` verb.
+It reads each page that the project builds with one collector, and also the page `control`
+that `koch drive` writes to `build/font-faces/control.html`. It writes
+`build/font-faces/written.json`, in the shape that `font_stacks.nim` in `curator/audit/src/`
+gives, with every string that a page draws, ASCII included. `koch drive` then resolves each
+character against the font faces that the page ships, and judges each page, so no project
+judges its own.
 
-1. Before it runs the `drive` verb, `koch drive` writes a control page to
-   `build/font-faces/control.html` in the project.
-2. The `drive` verb reads each page that the project builds, and the control page, with one
-   collector. It writes `build/font-faces/written.json`, in the shape that `font_stacks.nim` in
-   `curator/audit/src/` gives. The control page is page `control`.
-3. `koch drive` resolves the font stack of each element against the `cmap` of each font face
-   that the page ships. It writes `build/font-faces/found.json`, and gives the verdict.
-
-The verdict fails where a font face of the system draws a character beyond ASCII. Its finding
-names the page, the element and the codepoint. It also fails where a font face does not load.
-The control page holds a numeral in each kind of place where text stands, and the verdict fails
-where the collector misses one. So each run proves the collector too.
-
-The project keeps no reader of `cmap` and no judge of font faces. Its `system` verb declares
-`libbrotli1` where its pages ship `woff2`, because `koch drive` reads `woff2` through it.
-
-The audit reads what each font face of a project maps, across the whole project. Only a render
-follows the cascade of each element, so `drive` holds what the audit cannot.
+A page fails where a font face of the system draws a character beyond ASCII, or where a font
+face does not load. It also fails where text asks for 600 or more from a family with lighter
+font faces alone, since the browser then synthesises a bold. Each finding names the page, and
+the element or the font face. The project keeps no reader of `cmap` and no judge of font faces.
+Its `system` verb declares `libbrotli1` where its pages ship `woff2`, because `koch drive` reads
+`woff2` through it.
 
 ## Tests are paramount
 
@@ -423,22 +471,20 @@ follows the cascade of each element, so `drive` holds what the audit cannot.
 
 ## Before you open a pull request
 
-- `nim r koch check` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs what CI runs. First come the checks that cost about a second, and
-  a finding there stops the run: `check-files`, `check-scope`, `check-commits` and
-  `check-drift`. Then come `check-types`, and the suites and driven checks of every project
-  whose code changed, which is yours. A pull request opened before it passes breaks the
-  process, whatever CI later says: the runner confirms, and it never discovers. Run it again
-  before every later push.
-- **A change that touches only your three records compiles nothing**, and the static pass
-  still checks every stamp. A change that a curator makes to the checker compiles the
-  project of the checker, and never yours. The push to `main` and the weekly run compile what
-  changed as well, so your suites run when your code moves.
-- **`check-drift` fails where the rules or the checker moved on `main` after you branched.**
-  Your stamp then claims a charter that no longer exists, and a merge would redden `main`.
-  Merge `origin/main`, read the diff of the charter, re-audit your project against each change,
-  re-stamp, and push. Only the charter and the checker count, so another project's code that
-  moves underneath you will not stop you.
+- `nim r koch check` at the repository root passes on the exact commit you push. It runs what
+  CI runs, the static checks first, since they are cheap next to the jobs that compile and test.
+  A pull request opened before it passes breaks the process, whatever CI later says: the runner
+  confirms, and it never discovers. Run it again before every later push.
+- **`check-drift` fails where the charter or the checker moved on `main` after you branched.**
+  Its finding names each section of the charter that changed, and the command that shows the
+  change. Read each change, then merge `origin/main`. Where the finding asks for it, re-audit
+  your project against each change and re-stamp before you push. Only the charter and the
+  checker count, so the code of another project will not stop you. The skill `sync` points here.
+- **Your pull request clears each finding that a new check left in your project.** A curator
+  lands a check once the rest of the tree is clean, and a review finding on your project quotes
+  what it found. Those findings fail your branch, and a branch that changes their lines, and
+  no other. So your next pull request clears them all, and `nim r koch fix` repairs each one
+  that has a fix.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed, and each figure carrying its pair. Nothing narrates. `GLOSSARY.md` holds every
   term that resolved.

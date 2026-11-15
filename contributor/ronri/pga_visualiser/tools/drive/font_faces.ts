@@ -2,14 +2,14 @@
 //   `build/font-faces/written.json` for `koch drive` (CONTRIBUTOR.md, Pages and assets); not Nim
 //   because what is read is browser's own cascade, which only Playwright's API reaches.
 //   Verdict is `koch drive`'s, never this project's: it writes control page before `drive`, and
-//     once `drive` passes resolves this file down each font stack against `cmap` of each font
-//     face, and reports each finding (`curator/audit/src/font_stacks.nim`). This resolves nothing
-//     and judges nothing.
+//     once `drive` passes resolves this file down each font stack against `cmap` of each
+//     font face, and reports each finding (`curator/audit/src/font_stacks.nim`). This resolves
+//     nothing and judges nothing.
 //   Each element is run in its own stack and at its own weight, as browser resolves them: its
 //     text, value and placeholder of field, and what its `::before` and `::after` generate.
 //     Stack read from text of shell would pass element that takes stack of its own.
 //   What page writes later stands nowhere yet. Bridge's `nimCodepointsShown` gives every text
-//     catalogue, help, notation and units write, as desktop's `--drive-faces` reads them, and
+//     catalogue, help, notation and units write, as desktop's `--drive-font-faces` reads them, and
 //     strings of page's own scripts give rest. Element that will show such character may not
 //     stand yet either, so these, with every character page shows now, are one run for each
 //     stack some element of page resolves to or some rule declares, at each weight page

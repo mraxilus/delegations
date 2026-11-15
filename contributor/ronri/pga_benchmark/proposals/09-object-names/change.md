@@ -1,7 +1,7 @@
 # Names of geometric objects
 
 `pga.nim` names the geometric objects of rga4d and cga5d, the algebras of 3D space that the book
-uses. Each name is an alias of a basis-set type of the library. P04, `exact-kinds`, gives the
+uses. Each name is an alias of a basis-set type of the library. P04, `basis-set-forms`, gives the
 products that return these types, so this change builds on it.
 
 ## Edit `pga.nim`

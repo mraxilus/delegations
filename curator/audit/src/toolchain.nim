@@ -1,7 +1,7 @@
 ## Enforce per-project Nim pin, and driver version derived from it (CURATOR.md duty 8).
-##   Project's compiler is property of project, not of repository: `pga` needs lexer change
-##   no release carries yet, so `pga_visualiser` and `pga_benchmark` pin commit while every
-##   other project pins release, and no single version serves them all. Pin therefore lives
+##   Project's compiler is property of project, not of repository: project may need change no
+##   release carries yet, and pin commit where another pins release, so no single version need
+##   serve them all. Pin therefore lives
 ##   in project's nimble file as `requires "nim == <pin>"`, beside package requirements Atlas
 ##   already reads, and is exact for same reason `atlas.lock` is exact: it records what was
 ##   verified, never range nobody tried.

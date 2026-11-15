@@ -41,6 +41,21 @@ suite "Checker":
     check routinesExported("func `<`*(a, b: Finding): bool =\n").len == 0
 
 
+  test "line opening inside multi-line string is data, never routine, and fixer leaves it":
+    # Case held: module patching generated code quoted Nim runtime of FlatBuffers in `"""`, and
+    #   `proc Finish*` inside one read as routine exported and named by nothing (#761). Domain
+    #   is each routine keyword, on line opening inside multi-line string literal.
+    for keyword in ["func", "proc", "iterator", "template", "macro", "converter", "method"]:
+      let
+        quoted = "const EDIT = \"\"\"\n" & keyword & " Finish*(this) =\n  discard\n\"\"\"\n"
+        calls = "let x = Finish(1)\nlet y = Finish(2)\n"
+      check routinesExported(quoted & "func real*(): int = 1\n") == @["real"]
+      check checkExportsDead(["m.nim", "n.nim"], [quoted, "let x = 1\n"], []).len == 0
+      # Two calls outnumber one declaration, so fixer reading quoted line as declaration drops
+      #   its `*`, and so rewrites data.
+      check fixExportsDead("m.nim", quoted & calls, ["Finish"]).source == quoted & calls
+
+
   test "exported routine of every keyword is collected, `method` among them, and fixed alike":
     # Case held: `ROUTINES` of `checker.nim` lacked `method`, so exported `method` nothing names
     #   was never dead, and its `*` never dropped (#557); domain is each keyword opening routine.
@@ -168,6 +183,26 @@ when isMainModule:
     #   separates verb rows from it.
     check document.section("## Checks reference").rowsTable.len == 2
     check document.section("## Absent").len == 0
+
+
+  test "section reads past heading inside fence, and matches its heading whole":
+    # Case as found: `GUIDE.md`, Glossary process, fences format whose `## Standards` and
+    #   `## Language` ended section there, so reader kept 13 of its 67 lines and lost rules of
+    #   file below fence.
+    let
+      guide = "## Glossary process\n\nFormat:\n\n```md\n# <project>\n\n## Standards\n\n" &
+        "## Language\n```\n\nRules of the file.\n\n## Output contract\n\nSign off.\n"
+      glossary = guide.section("## Glossary process")
+    check "Rules of the file." in glossary  # read past fence
+    check "## Language" in glossary  # example stays text of section
+    check "Sign off." notin glossary  # heading outside fence ends it
+    check "Sign off." in guide.section("## Output contract")
+    # Domain: fence indented or left open, heading longer than one asked for, and line ends.
+    check "Pin." in "## A\n\n  ```\n## B\n  ```\n\nPin.\n".section("## A")  # indented fence
+    check "Pin." in "## A\n\n```\n## B\n\nPin.\n".section("## A")  # open fence runs to end
+    check "## Toolchain notes\n\nPin.\n".section("## Toolchain").len == 0  # whole heading
+    check "## Toolchain\r\n\r\nPin.\r\n".section("## Toolchain").strip == "Pin."  # CRLF
+    check "## A\n\n### Deeper\n\nPin.\n## B\n".section("## A").strip == "### Deeper\n\nPin."
 
 
   test "mention of koch run as command names verb koch dispatches":

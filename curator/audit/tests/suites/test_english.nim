@@ -2,8 +2,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
-import ../../src/english
+import std/[sequtils, sets, strutils, unittest]
+import ../../src/[domains, english, layout]
+import ./fixtures
 
 
 
@@ -90,8 +91,15 @@ suite "Article VI.8":
     check not isGoverned("contributor/nowhere/README.md")  # domain outside registry
 
 
-  test "prose below project directory keeps contributor's own register":
-    check not isGoverned("contributor/sincopa/dance_ontology/sim/README.md")  # duty 3
+  test "changed line inside prose block owns line that block opens on":
+    let markdown = "# Title\n\nFirst line of paragraph\nsecond line.\n\n- item one\n- item two\n"
+    check linesOpening(markdown, [4].toHashSet) == [3, 4].toHashSet  # paragraph opens on 3
+    check linesOpening(markdown, [7].toHashSet) == [7].toHashSet  # list item stands alone
+    check linesOpening(markdown, [2].toHashSet) == [2].toHashSet  # blank line opens nothing
+
+
+  test "prose below project directory stays outside governed set":
+    check not isGoverned("contributor/sincopa/dance_ontology/sim/README.md")  # nested, not yet
     check not isGoverned("curator/audit/tests/README.md")
     check not isGoverned("contributor/ronri/pga_benchmark/gaps.md")  # generated
     check not isGoverned("LICENSE.md")
@@ -103,3 +111,19 @@ suite "Article VI.8":
     check checkEnglish("curator/README.md", prose).len == 2  # word, then sentence
     check checkEnglish("contributor/abstand/newcomer/README.md", prose).len == 2
     check checkEnglish("contributor/sincopa/dance_ontology/sim/README.md", prose).len == 0
+
+
+  test "record of project keeping its own prose is read by no rule of English":
+    # Case: records of `lojban_parser` move to lojban, by ruling `D4 a` of #818; lojban closes no
+    #   sentence with stop, so its paragraph reads as one sentence past `WORDS_SENTENCE`. Domain:
+    #   each record of listed project, each of project list leaves out in same domain, its index.
+    check findingsEnglish("x.md", PROSE_LOJBAN).mapIt(it.message) == @[
+      "Sentence must hold at most 25 words; split it (ASD-STE100); got " &
+        "`mi klama le zarci .i do klama le ...`.",
+    ]  # what check reads in lojban
+    for file in FILES_PROJECT:
+      check not isGoverned(DIRECTORY_PARSER & "/" & file)  # listed project
+      check checkEnglish(DIRECTORY_PARSER & "/" & file, PROSE_LOJBAN).len == 0
+      let tagger = DIRECTORY_TAGGER & "/" & file
+      check isGoverned(tagger) and checkEnglish(tagger, PROSE_LOJBAN).len == 1  # left out
+    check isGoverned(CONTRIBUTOR & "/bangu/README.md")  # domain index stays English

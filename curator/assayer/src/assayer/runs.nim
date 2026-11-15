@@ -1,5 +1,5 @@
 ## Make each planned run, all in parallel: compile it, execute what compile writes, and judge it as
-##   testament judges it (`testSpecHelper` of `testament/testament.nim`, Nim 2.2.12).
+##   testament judges it (`testSpecHelper` of `testament/testament.nim`, Nim 2.4.0).
 ##   Threads, `jobs` of them at most, take runs off one channel and send each outcome back
 ##     on another (`runAll`). Channel copies value whole, so no thread frees memory of another.
 ##   Each command starts under one lock (`Pool.lock_pipes`): pipe of child carries no close-on-exec

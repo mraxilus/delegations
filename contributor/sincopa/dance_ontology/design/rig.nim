@@ -7,9 +7,9 @@
 ##     `pages` run would pay for it.  `rig_page` folds it into page, which is
 ##     published as single document and so may leave nothing to fetch.  Its jobs share one
 ##     queue with modelled's (`design/record`).
-##   Sweep over crown that walk stops short of all it asks, by whatever stopped it, is planned
-##     way where that holds further (`seen.shown`), and says so (`planned`): it keeps no moment
-##     that gave, and its last moment stands.
+##   Each sweep is planned way, at band of its hold, however far walk would carry it
+##     (`seen.shown`), and says so (`planned`): it keeps no moment that gave, and its last moment
+##     stands.
 ##   What is constant through sweep is written once -- radius and owner of each
 ##     capsule, and each joint's two ends -- and only what moves is written per
 ##     moment.  Straight transcription ran to four megabytes; this is fifth of
@@ -68,7 +68,7 @@ const SHOWN: seq[Cut] = @[
   ## Eight sweeps worth watching: four holds above, and two chains at each lower level,
   ## where floor and engine still argue.  Above is where sections `B` to `G` are drawn,
   ## and where section `A`, which draws no level, is asked.
-  ##   Reached by `design/floors`, which plans each sweep over crown, and by
+  ##   Reached by `design/floors`, which plans each at band of its hold, and by
   ##     `tests/suites/test_asks`, which counts them.
 
 const
@@ -162,7 +162,11 @@ proc bodyOfSweep(recording: Shown, key = "", mirror = ""): string =
                                recording.why == Stop.None:
                              "no plan carries the turn further"
                            else: recording.why.says) & "\""
-  bits.add &"\"whose\":[{ord(recording.whose.body)},{ord(recording.whose.arm)}]"
+  let whose =
+    if recording.whose.isSome:
+      &"[{ord(recording.whose.get.body)},{ord(recording.whose.get.arm)}]"
+    else: "null"
+  bits.add &"\"whose\":{whose}"
   if recording.stills.len == 0:
     bits.add "\"stills\":[]"
     return "{" & bits.join(",\n") & "}"
@@ -223,7 +227,7 @@ func keeperTwin(ask: StillAsk, links: seq[Link], turns: float): string =
         other.links == links and other.turns == turns and
         other.isRestAway == ask.isRestAway and other.head == ask.head and
         other.is_either_way == ask.is_either_way and other.who == ask.who and
-        other.over == mirrored(ask.over):
+        other.over == mirrored(ask.over) and other.straight == mirrored(ask.straight):
       return other.key
   ask.key
 
@@ -251,6 +255,7 @@ proc recorded*(job: Job): tuple[note, text: string] =
       is_either_way = ask.is_either_way,
       who = ask.who,
       over = (if twin.is_reflected: mirrored(ask.over) else: ask.over),
+      straight = (if twin.is_reflected: mirrored(ask.straight) else: ask.straight),
     )
     result.note =
       if recording.stills.len > 0:

@@ -8,7 +8,8 @@
 when compileOption("profiler"): import std/nimprof
 
 import std/[
-  algorithm, compilesettings, json, macros, options, os, sequtils, strutils, tables, unittest,
+  algorithm, compilesettings, json, macros, math, options, os, sequtils, strutils, tables,
+  unittest,
 ]
 from std/unicode import runeLen
 
@@ -21,8 +22,8 @@ import ../src/pga_benchmark/pages/[
   completion, docket, evaluation, home, listing, proposal, render, search, shell,
 ]
 from ../src/pga_benchmark/evaluations import
-  ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, compareNan, readLibrary,
-  compileCost, pairTimes
+  ENTRY_LIBRARY, RUNS_EVALUATION, algebrasEvaluated, digestEdits, functionsChanged, compareNan,
+  readLibrary, compileCost, pairTimes
 from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
 
@@ -61,6 +62,13 @@ const
     ## Library operators, generated and hand-written.
   SOURCE_MULTIVECTORS = staticRead(LIBRARY & "/pga/multivectors.nim")
     ## Library arithmetic and accessors.
+  SOURCES_REFERENCE = [
+    ("reference/rigid2", staticRead("../src/pga_benchmark/reference/rigid2.nim")),
+    ("reference/rigid3", staticRead("../src/pga_benchmark/reference/rigid3.nim")),
+    ("reference/conformal2", staticRead("../src/pga_benchmark/reference/conformal2.nim")),
+    ("reference/conformal3", staticRead("../src/pga_benchmark/reference/conformal3.nim")),
+  ]
+    ## Typed reference modules by tail of module path, whose docs state counts of each form.
   SYMBOLS_EXCLUDED = ["==", "=~", "$", "*"]
     ## Exported symbols catalogue leaves out on purpose.
     ##   Poisoned equality, approximate comparison and display are predicates or text.
@@ -159,6 +167,44 @@ macro checkReferencesWiki(measurands: static seq[Measurand]): untyped =
     result.add quote do:
       suite "Wiki":
         `tests`
+
+
+macro checkTransformsAnyNorm(measurands: static seq[Measurand]): untyped =
+  ## Emit suite holding each motor transform of typed reference to library at motor scaled by 2.
+  ##   Scaled motor has norm 2, so transform taking motor as unit misses factor 4 of operation.
+  ##   One skipped test stands where algebra carries no transform.
+  var tests = newStmtList()
+  let (m, n) = (ident"m", ident"n")  # plain idents, so expression and reference bind them
+  for p in measurands:
+    if not p.reference.startsWith("transform("): continue
+    let
+      expression = parseExpr(p.expression)
+      reference = parseExpr(p.reference)
+      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade))
+      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade))
+      m_reference = parseExpr(namePoolReference(p.operands[0]))
+      n_reference = parseExpr(namePoolReference(p.operands[1]))
+      name = newLit(p.id & " at motor scaled by 2  # " & p.cite)
+    tests.add quote do:
+      test `name`:
+        for i in 0..<OBJECTS:
+          let
+            j = (i * 7 + 3) mod OBJECTS
+            expected = block:
+              let
+                `m` = `m_reference`[i]
+                `n` = toMotor(2.0 * widen(`n_reference`[j]))
+              widen(`reference`)
+            got = block:
+              let
+                `m` = `m_library`[i]
+                `n` = 2.0 * `n_library`[j]
+              `expression`
+          check widen(got) =~ expected  # library and reference agree at motor of norm 2
+  if tests.len == 0: tests.add emitTestSkipped()
+  result = quote do:
+    suiteInProc "Reference: Motor of any norm":
+      `tests`
 
 
 func isNear[B: static Bases](got, expected: MultivectorOf[B]): bool =
@@ -332,6 +378,7 @@ suiteInProc "Chapter 2":
 
 
 checkReferencesWiki(CATALOGUE)
+checkTransformsAnyNorm(CATALOGUE)
 
 
 
@@ -406,6 +453,18 @@ suiteInProc "Internal: Measurements":
     check library{"ns_runs"} == %*[12.0, 10.0, 11.0]  # run order kept, pairs with reference
     check combined{"measurands", "wedge", "reference", "ns_runs"} == %*[4.0, 5.0, 3.0]  # paired
     check median([4.0, 1.0, 3.0, 2.0]) == 2.5  # even count, mean of middle two
+
+
+  test "machine names processor by model name, family and model of first block of cpuinfo":
+    let cpuinfo = "processor\t: 0\nvendor_id\t: GenuineIntel\ncpu family\t: 6\n" &
+      "model\t\t: 173\nmodel name\t: Intel(R) Xeon(R) Processor @ 2.30GHz\n\n" &
+      "processor\t: 1\nmodel\t\t: 85\n"
+    check processor(cpuinfo) ==
+      "Intel(R) Xeon(R) Processor @ 2.30GHz, family 6 model 173"  # second block left alone
+    check processor("") == PROCESSOR_UNRECORDED  # host that describes none
+    check processor("processor\t: 0\nCPU part\t: 0xd0c\n") ==
+      PROCESSOR_UNRECORDED  # block that names no model
+    check machineNow().startsWith(hostOS & " " & hostCPU & ", ")  # stamp of this host
 
 
 
@@ -637,6 +696,26 @@ suiteInProc "Internal: Inspector":
     check "getMonoTime" in functions[0].body  # body runs to its closing brace
 
 
+  test "instance of `MultivectorOf` reads as library type of its count, aligned or not":
+    # Case: at 3d9696e, field of P05 and of P04 opens with `NIM_ALIGN(64)`, and instance kept
+    #   its C name, so evaluation of P05 listed each of 38 functions at rga4d as gone and new.
+    for field in ["tyArray__a elements;", "NIM_ALIGN(64) tyArray__a elements;"]:
+      let functions = functionsIn(
+        [
+          "typedef NF tyArray__a[16];",
+          "struct tyObject_MultivectorOf__h {",
+          "\t" & field,
+          "};",
+          "N_LIB_PRIVATE N_NIMCALL(void, negate__u0__m)(tyObject_MultivectorOf__h* m_p0) {",
+          "}",
+        ].join("\n") & "\n",
+        [(16, "Multivector")],
+      )
+      check functions.len == 1  # one definition read
+      if functions.len == 1:
+        check functions[0].parameters == @["Multivector"]  # named by count of its array
+
+
   test "terms inside loops of constant bound count once per trip":
     const
       multivector_mangled = "tyObject_Multivector__h"
@@ -842,7 +921,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check compared == CATALOGUE.countIt(it.reference.len == 0)  # every general row has one
 
 
-  test "typed reference spends no fill and no error check, so it is optimal code":
+  test "typed reference spends no fill, no copy and no error check, so it is optimal code":
     if not CATALOGUE.anyIt(it.reference.len > 0):
       echo "    typed reference exists at rga3d, rga4d, cga4d and cga5d alone, so law skips (IX.9)"
       skip()
@@ -851,10 +930,62 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for f in INSPECTED:
         if not f.module.tailModule.startsWith("reference/"): continue
         let counts = count(f.body)
-        checkpoint f.key & " fills " & $counts.fills_zero & ", checks " & $counts.checks
+        checkpoint f.key & " fills " & $counts.fills_zero & ", copies " & $counts.copies &
+            ", checks " & $counts.checks
         # Call to Nim function costs fill of its result and check of error flag after it,
-        #   so form shared with another function is spelled in place or is template.
-        check counts.fills_zero == 0 and counts.checks == 0  # straight line, as hand code is
+        #   so form shared with another function is spelled in place. Result built in
+        #   temporary and copied whole is written twice, so form writes it once from scalars.
+        check counts.fills_zero == 0 and counts.copies == 0 and counts.checks == 0  # as hand code
+        inc compared
+      check compared >= FLOOR_FUNCTIONS_REFERENCE  # guard skips no reference function
+
+  test "doc of each typed reference form states multiplies, adds and divides its C spends":
+    func countsStated(source: string): Table[string, array[3, int]] =
+      ## Read multiplies, adds with subtractions, and divides each form's doc states, keyed as
+      ##   inspector keys its C, e.g. `wedge(Point,Point)`.
+      var key = ""
+      for line in source.splitLines:
+        if line.startsWith("func ") and "*(" in line:
+          let params = line[line.find("*(") + 2 ..< line.find("):")]
+          var names, stems: seq[string]
+          for part in params.split(", "):
+            let at = part.find(": ")
+            names.add(if at < 0: part else: part[0 ..< at])
+            if at >= 0:
+              for _ in names: stems.add part[at + 2 .. ^1]
+              names.setLen 0
+          key = line["func ".len ..< line.find("*(")] & "(" & stems.join(",") & ")"
+          result[key] = [0, 0, 0]
+        elif key.len > 0 and line.startsWith("  ##"):
+          let words = line.splitWhitespace
+          for i in 1 ..< words.len:
+            if not words[i - 1].allCharsInSet(Digits): continue
+            case words[i].strip(chars = {',', '.', ';'})
+            of "mul": result[key][0] += words[i - 1].parseInt
+            of "add", "sub": result[key][1] += words[i - 1].parseInt
+            of "div": result[key][2] += words[i - 1].parseInt
+            else: discard
+        else:
+          key = ""
+
+    if not CATALOGUE.anyIt(it.reference.len > 0):
+      echo "    typed reference exists at rga3d, rga4d, cga4d and cga5d alone, so law skips (IX.9)"
+      skip()
+    else:
+      var
+        stated: Table[string, array[3, int]]
+        compared = 0
+      for (module, source) in SOURCES_REFERENCE:
+        for key, counts in source.countsStated: stated[module & " " & key] = counts
+      for f in INSPECTED:
+        let module = f.module.tailModule
+        if not module.startsWith("reference/"): continue
+        let
+          counts = count(f.body)
+          spent = [counts.multiplies, counts.adds + counts.subtractions, counts.divides]
+        checkpoint f.key & " states " & $stated.getOrDefault(module & " " & f.key) & ", spends " &
+            $spent
+        check stated.getOrDefault(module & " " & f.key, [-1, -1, -1]) == spent  # doc reads C
         inc compared
       check compared >= FLOOR_FUNCTIONS_REFERENCE  # guard skips no reference function
 
@@ -879,8 +1010,9 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
   test "timed loop binds result returned by value, so no temporary is zero-filled":
     # Result of three floats or fewer returns by value; assigned straight into its element, it
-    #   passes through temporary that call site zero-fills, out of line where function is
-    #   large, about 11 ns. Reference returns so, and library's norms return two scalars so.
+    #   passed under Nim 2.3.1 through temporary that call site zero-filled, out of line where
+    #   function is large, about 11 ns; Nim 2.4.0 assigns it in place. Reference returns so, and
+    #   library's norms return two scalars so.
     let returning_scalars = INSPECTED.filterIt(it.stem_result == "MultivectorScalars")
         .mapIt(it.name)
     var calls, filled, calls_library, filled_library = 0
@@ -2156,6 +2288,22 @@ suiteInProc "Internal: Evaluations":
     check times["a"][2].getFloat == 0.5  # ratio of each run, then median
 
 
+  test "runs of evaluation outvote whole runs that machine slows, at share measured 2026-11-01":
+    const
+      share_slow = 0.37
+        ## Share of runs of one binary 1.2 times its fastest or slower, as whole: 51 runs on
+        ##   `linux amd64, 4 cores`, 2026-11-01.
+      bound = 2.5e-4
+        ## Chance per measurand: one false median in some 16 evaluations of 246 measurands.
+    let side = share_slow * (1.0 - share_slow)  # pair whose ratio leaves 1 upward, as downward
+    var off = 0.0  # chance that more than half of pairs leave 1 on one side
+    for k in RUNS_EVALUATION div 2 + 1 .. RUNS_EVALUATION:
+      off += 2.0 * float(binom(RUNS_EVALUATION, k)) * pow(side, float(k)) *
+          pow(1.0 - side, float(RUNS_EVALUATION - k))
+    checkpoint "runs " & $RUNS_EVALUATION & ", chance " & $off
+    check off < bound  # median of paired ratios reads slow run as change, rarely
+
+
   test "NaN shares that moved are kept, and only those":
     let
       before = @[run([("norm", 1.0, 0.5), ("wedge", 1.0, 0.0)])]
@@ -2198,6 +2346,20 @@ suiteInProc "Internal: Evaluations":
       held = %*{"functions": {"f(M)": counts, "denseF(M)": other}}
     check functionsChanged(before, left_out).len == 0  # built without dense forms by design
     check functionsChanged(before, held).len == 1  # dense form built and moved
+
+
+  test "instance whose number alone moved is no moved function, where one whose counts moved is":
+    let
+      counts = %*{"total": {"multiplies": 3}, "movement": {"bytes_moved": 8}}
+      other = %*{"total": {"multiplies": 4}, "movement": {"bytes_moved": 8}}
+      before = %*{"functions": {"f(M)": counts, "f(M)#u7695": counts}}
+      renumbered = %*{"functions": {"f(M)": counts, "f(M)#u8687": counts}}
+      changed = %*{"functions": {"f(M)": counts, "f(M)#u8687": other}}
+      moved = functionsChanged(before, changed)
+    check functionsChanged(before, renumbered).len == 0  # compiler numbered instance again
+    check moved.len == 2  # counts differ, so instance reads gone and new
+    check moved["f(M)#u7695"]["after"].kind == JNull  # gone under number of pin
+    check moved["f(M)#u8687"]["before"].kind == JNull  # new under number of change
 
 
   test "digest moves with edits, claims and programs, and never with prose":
@@ -2502,6 +2664,17 @@ suiteInProc "Internal: Search":
 
 
 
+type CellFixed = object
+  ## Fixture cell that holds its terms in place with their count, as P12 proposes.
+  terms: array[2, BasisSigned]
+  count: range[0..2]
+
+
+iterator items(cell: CellFixed): BasisSigned =
+  ## Yield each term of fixture cell, in order.
+  for i in 0..<cell.count: yield cell.terms[i]
+
+
 suiteInProc "Internal: Cells":
   test "table reads cell for cell, sign included, in both cell shapes":
     let wedge = cells(CAYLEYS_WEDGE.base)
@@ -2509,6 +2682,20 @@ suiteInProc "Internal: Cells":
     check wedge["E2,E1"] == %*[{"to": "E12", "neg": true}]  # antisymmetric
     check not wedge.hasKey("E1,E1")  # vector wedge itself vanishes
     check cells(CAYLEY_ATTITUDE).len > 0  # 1D table reads too
+
+
+  test "table reads cell that holds its terms in place with their count":
+    var table: array[Basis, CellFixed]
+    table[Basis.E1] = CellFixed(
+      terms: [BasisSigned(basis: Basis.E12), BasisSigned(basis: Basis.E1, is_negated: true)],
+      count: 2,
+    )
+    table[Basis.E2] =
+      CellFixed(terms: [BasisSigned(basis: Basis.E2), BasisSigned(basis: Basis.E1)], count: 1)
+    let read = cells(table)
+    check read["E1"] == %*[{"to": "E12", "neg": false}, {"to": "E1", "neg": true}]  # in order
+    check read["E2"] == %*[{"to": "E2", "neg": false}]  # term past count left out
+    check read.len == 2  # empty cells left out
 
 
 
@@ -2607,9 +2794,31 @@ suiteInProc "Internal: Pages":
 
 
   test "spread is assumed until quiet evaluations give enough ratios":
-    let quiet = %*{"algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
+    let quiet = %*{"taken": {"runs": RUNS_EVALUATION},
+        "algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
     check spread([quiet]).count == 0  # too few ratios: spread assumed
     check spread([quiet]).low < 1.0 and spread([quiet]).high > 1.0  # around no change
+
+
+  test "spread reads evaluations over runs in use alone, and holds 99% of their ratios":
+    var
+      times = newJObject()  # 400 ratios, evenly from ×0.90 to ×1.10
+      times_few = newJObject()  # 100 ratios, each ×1.00
+    for i in 0 ..< 400: times["m" & $i] = %*[1.0, 1.0, 0.9 + 0.2 * float(i) / 399.0]
+    for i in 0 ..< 100: times_few["m" & $i] = %*[1.0, 1.0, 1.0]
+    let
+      current = %*{"taken": {"runs": RUNS_EVALUATION},
+          "algebras": {"rga4d": {"functions": {}, "times": times}}}
+      older = %*{"taken": {"runs": 5}, "algebras": {"cga5d": {"functions": {},
+          "times": {"a": [1.0, 1.0, 0.5], "b": [1.0, 1.0, 2.0]}}}}
+      few = %*{"taken": {"runs": RUNS_EVALUATION},
+          "algebras": {"rga4d": {"functions": {}, "times": times_few}}}
+      read = spread([current, older])
+    check read.count == 400  # evaluation over five runs left out
+    check read.low == times["m2"][2].getFloat and read.high == times["m397"][2].getFloat
+      # 99%: two ratios of 400 cut from each end
+    check "99% of 400 time ratios" in textSpread(read)
+    check spread([few]).count == 0  # 100 ratios cut none from each end: spread assumed
 
 
   test "every grid in shell and docket bounds its columns, so wide content scrolls in place":
@@ -2764,6 +2973,22 @@ suiteInProc "Internal: Pages":
         if family notin stack: gaps.add stack[0] & " stack lacks " & family
     checkpoint "gaps: " & gaps.join(", ")
     check gaps.len == 0  # Article X.8: stack falls to font face page ships, never to system
+
+
+  test "every family shell ships reaches weight 600, so browser synthesises no bold":
+    const shell_html = staticRead("../pages/shell.html")
+    var heaviest: Table[string, int]  # heaviest weight font faces of each family cover
+    for rule in shell_html.split("@font-face")[1..^1]:
+      let
+        family = rule.split('"')[1]
+        at = rule.find("font-weight: ") + "font-weight: ".len
+        weights = rule[at..<rule.find(';', at)].splitWhitespace.mapIt(it.parseInt)
+      heaviest[family] = max(heaviest.getOrDefault(family), weights.max)
+    var light: seq[string]
+    for family, weight in heaviest.pairs:
+      if weight < 600: light.add family & " at " & $weight
+    checkpoint "light: " & light.join(", ")
+    check light.len == 0  # Article X.8: bold asked of lighter set is bold browser synthesises
 
 
   test "docket rows carry identifiers docket file allots":
@@ -3222,6 +3447,21 @@ suiteInProc "Internal: Render":
     check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
 
 
+  test "page whose strings lack ASCII of its bar is finding, as #784 found the collector":
+    let
+      bar = VIEWS.mapIt(it[1]).join  # titles bar of every page draws, all ASCII
+      whole = %*{"home": {"runs": [
+        {"codepoints": bar.mapIt(ord(it))}, {"codepoints": [ord('a'), 0x2227]}]}}
+      past = %*{"home": {"runs": [{"codepoints": [0x2227]}, {"codepoints": [0x2228]}]}}
+    check checkWritten(whole, ["home"], "h", "f/written.json").len == 0  # every string written
+    let found = checkWritten(past, ["home"], "h", "f/written.json").mapIt(it.render)
+    check found.len == 2  # ASCII string unwritten, and mixed string written past ASCII alone
+    check found[0].startsWith("h/home.html:0: Collector writes every string page draws")
+    check found[1].startsWith("f/written.json:0: Collector writes each character of string")
+    check checkWritten(newJObject(), ["docket"], "h", "f/written.json").len == 2  # page wrote none
+    check checkWritten(newJObject(), [], "h", "f/written.json").len == 0  # no page, nothing held
+
+
   test "harness reads control of layout for layout alone, and of font faces for text alone":
     let pages = ["h/docket.html", "h/home.html"]
     check argumentsHarness(
@@ -3345,6 +3585,7 @@ suiteInProc "Internal: Driver":
       body = verbs[start..<verbs.find("\n\n\n", start)]
     check "argumentsHarness(PATH_WRITTEN, PATH_CROWDED," in body  # held by `Internal: Render`
     check "checkCrowded(readDocument(PATH_CROWDED)" in body  # judge reads file harness writes
+    check "checkWritten(readDocument(PATH_WRITTEN)" in body  # and holds file it writes for koch
 
 
   test "header table names files verbs write":

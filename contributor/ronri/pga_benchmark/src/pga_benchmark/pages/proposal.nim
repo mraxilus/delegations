@@ -61,7 +61,7 @@ func htmlDependencies*(
   proposals: openArray[Proposal], proposal: Proposal, urls: Table[string, string]
 ): string =
   ## Render what adopting proposal needs first and what rejecting it blocks, each one cited.
-  ##   One reached through another names that one, as `P01 Title (through P02)`.
+  ##   One reached through another names that one, as `P01 Title (through P08)`.
   ##   Base library implements is named so, since it needs no decision.
 
   func named(cited: Proposal, through: seq[Proposal], urls: Table[string, string]): string =

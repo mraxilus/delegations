@@ -186,6 +186,16 @@ func normalize*(d: Direction, scale = 0.0): Option[Direction] =
   some(Direction(x: d.x / magnitude, y: d.y / magnitude, z: d.z / magnitude))
 
 
+func positionOnLineNearest*(support: Position; toward: Direction; place: Position): Position =
+  ## Find point of line through `support` along `toward` that stands nearest `place`.
+  ##   Orthogonal projection, by components: frame reads it for every line it draws and
+  ##   picks, and builds no multivector for it (Art. VII.1).
+  ##   `toward` of any length. `support` itself where it has none.
+  let length_squared = dot(toward, toward)
+  if length_squared == 0.0: return support
+  support + (dot(place - support, toward) / length_squared) * toward
+
+
 func unitRing*[N: static int](segments: int): array[N, RingAngle] =
   ## Resolve `N` entries of ring stepped `segments` ways round circle.
   ##   Entry `i` sits at angle `2*PI*i/segments`.

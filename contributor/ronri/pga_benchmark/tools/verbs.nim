@@ -28,15 +28,15 @@ import ../src/pga_benchmark/[
   changes, gaps, guard, head, inspector, model, notes, proposals, trace
 ]
 from ../src/pga_benchmark/report import
-  combineRuns, document, nodeAlgebra, takenNow, IMPLEMENTATIONS
+  combineRuns, document, machineNow, nodeAlgebra, takenNow, IMPLEMENTATIONS
 import ../src/pga_benchmark/pages/[
   completion, docket, home, listing, marginalia, render, shell
 ]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
-  Candidate, Toolchain, algebrasEvaluated, digestCache, digestEdits, binaryPristine,
-  suitesPristine, readLibrary, runEvaluation
+  RUNS_EVALUATION, Candidate, Toolchain, algebrasEvaluated, digestCache, digestEdits,
+  binaryPristine, suitesPristine, readLibrary, runEvaluation
 
 
 const
@@ -115,7 +115,6 @@ const
     ## What harness read of each page, in shape `koch drive` resolves.
   PATH_CONTROL = "tests" / "fixtures" / "control_render.json"
     ## Fixture control page of layout is built from; under `tests/`, as `render.nim` says why.
-  RUNS_EVALUATION = 5  ## Timed runs of each binary per evaluation, alternating.
   RUNS_BENCH = 5
     ## Timed runs of each algebra's bench, and of each swept dimension, alternating algebras, so
     ##   drift lands on all alike.
@@ -807,7 +806,8 @@ proc renderedChecked(
       path: PATH_HARNESS,
       message: "Render of pages failed, as harness printed above; got exit `" & $code & "`.",
     )]
-  checkCrowded(readDocument(PATH_CROWDED), crowdedExpected(cards), CONTROL, BUILD_HOSTED)
+  checkCrowded(readDocument(PATH_CROWDED), crowdedExpected(cards), CONTROL, BUILD_HOSTED) &
+    checkWritten(readDocument(PATH_WRITTEN), toSeq(built.keys), BUILD_HOSTED, PATH_WRITTEN)
 
 
 proc publishedAt(name, url: string) =
@@ -884,11 +884,6 @@ proc evaluate(which: string, is_thorough: bool) =
   ## Try one change or proposal at pin, and write each evaluation document.
   ##   `all` tries every one, and `stale` tries those `drive` would name.
   ##   rga4d and cga5d alone, or all four when thorough.
-
-  func machine(): string =
-    ## Describe machine evaluation ran on, as bench documents do.
-    hostOS & " " & hostCPU & ", " & $countProcessors() & " cores"
-
   var findings: seq[Finding]
   let
     changes = readChanges(findings)
@@ -912,7 +907,7 @@ proc evaluate(which: string, is_thorough: bool) =
     ValueError,
     "No change or proposal named `" & which & "`.",
   )
-  let taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": commitNim(),
+  let taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machineNow(), "nim": commitNim(),
     "pga": pin, "flags": FLAGS, "runs": RUNS_EVALUATION}
   tried(selected, algebrasEvaluated(is_thorough), taken, initTable[string, JsonNode](), findings)
   report(findings)

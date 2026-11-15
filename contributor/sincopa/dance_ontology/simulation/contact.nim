@@ -1,4 +1,4 @@
-## Arms against bodies, and arms against arms.
+## Arms against bodies.
 ##
 ##   Every link of arm is capsule: segment with limb's radius round
 ##     it.  Body is its rig's cylinders.  Test between them is exact on
@@ -108,20 +108,6 @@ func bodyGap*(rig: Rig; shape: BodyShape; a, b: Vector; is_own: bool): Touch =
 func bodyGap*(rig: Rig; stance: Stance; a, b: Vector; is_own: bool): Touch =
   ## Same, from stance.
   bodyGap(rig, toBodyShape(rig, stance), a, b, is_own)
-
-
-func armGap*(rig: Rig; a, b, c, d: Vector; meet: Vector; excuse: float): float =
-  ## Clearance between two links of different arms; infinite where they
-  ## come nearest within `excuse` of `meet`, which is how two arms holding
-  ## one join are let converge on it.
-  let near = closest(a, b, c, d)
-  if excuse > 0.0:
-    let
-      p = a + (b - a) * near.t
-      q = c + (d - c) * near.u
-    if distance(p, meet) < excuse and distance(q, meet) < excuse:
-      return Inf
-  near.gap - 2.0 * rig.limb
 
 
 func isPressingBody*(rig: Rig, stance: Stance, pose: tuple[elbow, wrist, join: Vector]): bool =

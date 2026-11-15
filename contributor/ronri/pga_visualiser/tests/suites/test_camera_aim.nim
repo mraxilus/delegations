@@ -54,7 +54,7 @@ suite "Camera Aim":
     ]
       ## Same five bearings, from little higher.
     share_pivot_off_max = 1.0e-6
-      ## Hold pivot of settled pick this share of separation off object picked, at most.
+      ## Hold pivot of settled pick this share of distance to pivot off object picked, at most.
       ##   Pick that missed by rounding far out stood it 2.7e-2 off, and star swung 15 px.
 
   proc marginsCentred(): (float, float) =
@@ -432,6 +432,74 @@ suite "Camera Aim":
     # Twelve units off, disc spans 724.3 px and leaves corners bare, so it stays handle.
     check spanAt(12.0) < corner
     check not scene.isBackdropUnder(ground, scaleAt(12.0), wide, tall)
+
+
+  test "a plane whose disc covers nine tenths of the frame is backdrop, wherever it stands":
+    # Architect's report of 2026-10-25 (repository issue 758), on page under mouse: ground
+    #   filling frame but for two corners read as drag handle. Rule asked disc's radius to
+    #   reach every corner from middle, and ground covering 98.2% of frame read as handle.
+    #   Share is read by pick, pixel by pixel on grid of its own, as reader's pointer finds
+    #   disc. Stance whose share stands within `slack_share` of bound is left out, since
+    #   two grids may part there.
+    const
+      share_backdrop = 0.9  ## Nine tenths of frame, as issue 758 sets it.
+      count_stances = 96  ## Stances sampled, at two frames.
+      count_kept_least = 64  ## Least stances clear of bound, so law holds over most.
+      count_side_least = 16  ## Least stances kept on each side of bound.
+      slack_share = 0.03  ## Band about bound that two grids may disagree in.
+      columns_pick = 48  ## Columns pick reads share on; rows follow frame's shape.
+      seed_stances = 2026_10_25
+    proc sharePicked(scene: Scene; camera: Camera; width, height: int): float =
+      ## Read share of grid's pixels that pick finds plane under.
+      let
+        scale = camera.drawExtentFor(height, 0.0)
+        view_projection = camera.initMatrixViewProjection(float(width) / float(height))
+        rows = max(1, int(round(float(columns_pick * height) / float(width))))
+      var found = 0
+      for row in 0..<rows:
+        for column in 0..<columns_pick:
+          let cursor = ScreenPosition(
+            x: (float(column) + 0.5) * float(width) / float(columns_pick),
+            y: (float(row) + 0.5) * float(height) / float(rows),
+          )
+          if pickNearest(scene, camera, scale, view_projection, width, height, cursor).isSome:
+            found += 1
+      float(found) / float(rows * columns_pick)
+
+    var scene = initScene()
+    let ground = scene.addObject(groundPlane(), "ground", inkCycled(0))
+    # Case as found: disc covering all of frame but slivers at its corners reads as handle.
+    #   In report's screenshot, fill took 94.6% of pixels and bare background 3.3%.
+    block:
+      const (wide, tall) = (1058, 994)
+      let
+        camera = cameraAround(ORIGIN, 13.47, Direction(x: 0.6, y: -1.2, z: 13.4))
+        share = sharePicked(scene, camera, wide, tall)
+      checkpoint(&"share picked {share}")
+      check share >= 0.95 and share < 1.0
+      check scene.isBackdropUnder(ground, camera.drawExtentFor(tall, 0.0), wide, tall)
+    # Law over sampled stances: backdrop exactly where share is nine tenths or more.
+    var
+      generator = initRand(seed_stances)
+      (kept, backdrops, handles) = (0, 0, 0)
+    for index in 0..<count_stances:
+      let
+        (wide, tall) = if index mod 2 == 0: (1200, 900) else: (412, 915)
+        elevation = degToRad(generator.rand(35.0..90.0))
+        azimuth = degToRad(generator.rand(0.0..360.0))
+        pivot = Position(x: generator.rand(-3.0..3.0), y: generator.rand(-3.0..3.0), z: 0.0)
+        out_to = Direction(
+          x: cos(elevation) * cos(azimuth), y: cos(elevation) * sin(azimuth), z: sin(elevation)
+        )
+        camera = cameraAround(pivot, generator.rand(8.0..24.0), out_to)
+        share = sharePicked(scene, camera, wide, tall)
+      if abs(share - share_backdrop) <= slack_share: continue
+      kept += 1
+      let is_backdrop = scene.isBackdropUnder(ground, camera.drawExtentFor(tall, 0.0), wide, tall)
+      check is_backdrop == (share >= share_backdrop)
+      if share >= share_backdrop: backdrops += 1 else: handles += 1
+    check kept >= count_kept_least
+    check backdrops >= count_side_least and handles >= count_side_least
 
 
   test "a point whose drawn sphere reaches every corner of the frame is backdrop":
@@ -1112,12 +1180,12 @@ suite "Camera Aim":
         check camera.elevation =~ stanceAim(out_to).elevation
         let fit = depthSpanning(2.0 * radius, FRACTION_HEIGHT_APPROACH_POINT, camera)
         check abs(camera.distance - fit) < 1.0e-9
-        # Separation is reach to object, because object is what pivot stands on.
+        # Distance to pivot is reach to object, because object is what pivot stands on.
         check abs(norm(place.toView(camera.originView) - camera.eye) - fit) < 1.0e-6
 
 
   test "a pointer pick never moves the eye further off than the object stands":
-    # Object already nearer than its fit leaves reader's own scale alone: separation
+    # Object already nearer than its fit leaves reader's own scale alone: distance to pivot
     #   becomes its own reach and no more. Point seen at its size, and line, come in to
     #   orbit distance and no further; only floor dot comes in to its fit.
     let camera = stanceAim(Direction(x: 12, y: 10, z: 3))
@@ -1170,8 +1238,8 @@ suite "Camera Aim":
   test "a pointer pick of a star at least radius lands on it in front, near and far out":
     # Catalogue's stars and planets are drawn at `RADIUS_OBJECT_LEAST`, so pick comes in
     #   until disc spans `FRACTION_HEIGHT_APPROACH_POINT` of height: 2.4e-7 units off it.
-    #   Separation must land there and pivot on star, which must read in front: ring, label,
-    #   menu and every pick read that, and orbit turns about pivot.
+    #   Distance to pivot must land there and pivot on star, which must read in front: ring,
+    #   label, menu and every pick read that, and orbit turns about pivot.
     #   Swept beside origin and at HD 222237, 2.36 million units out, where double steps by
     #   about 5e-10 and view origin follows eye.
     const
@@ -1210,7 +1278,7 @@ suite "Camera Aim":
         for step in 1..5:
           tween.advance(camera, duration * float(step) / 5.0, easeOutCubic)
         check tween.is_arrived
-        # Separation lands on fit, read relatively: `=~` floors its tolerance at one unit.
+        # Distance to pivot lands on fit, read relatively: `=~` floors its tolerance at one unit.
         let fit = depthSpanning(2.0 * RADIUS_OBJECT_LEAST, FRACTION_HEIGHT_APPROACH_POINT, camera)
         check abs(camera.distance / fit - 1.0) < 1.0e-6
         # Star reads in front, and stands under middle pixel for hover and pick.
@@ -1235,14 +1303,210 @@ suite "Camera Aim":
         check norm(turned.pivot - place.toView(turned.originView)) <= share_pivot_off_max * fit
 
 
+  test "a line picked far off brings the pivot to its point nearest the eye, by pointer or list":
+    # As found on published page, 2026-10-25, from Ross 794 (#767).
+    #   Star picked from 4.7 million units out holds eye 2.4e-7 off it. Line `sol ∧ earth`
+    #   then came in at that distance to its support, centre of Sol, and left eye inside
+    #   Sol. Ruling on #767: line comes to its point nearest eye, eye's own projection.
+    #   Line here runs through origin 2.4 degrees off sight, as that one stands from star.
+    const
+      duration = 0.35
+      distance = 2.414213562373095e-7
+    let
+      star = Position(x: 1072071.0, y: 4533088.5, z: 171618.671875)
+      sight = (1.0 / norm(star - ORIGIN)) * (star - ORIGIN)
+      aside = normalize(cross(sight, Direction(x: 0.0, y: 0.0, z: 1.0))).get
+      tilted = sight + tan(degToRad(2.4)) * aside
+      along = (1.0 / norm(tilted)) * tilted
+      line = ORIGIN.toMultivector ∧ (ORIGIN + along).toMultivector
+    for is_pointer in [true, false]:
+      var camera = cameraAround(star, distance, -sight)
+      # Distance to pivot as built, which rounding of eye 4.7e6 units out sets 5e-4 off `distance`.
+      let
+        nearest = ORIGIN + dot(camera.eyeWorld - ORIGIN, along) * along
+        distance_before = camera.distance
+      var (scene, picked) = initScenePicked(line)
+      var
+        tween: CameraTween
+        pointer =
+          if is_pointer: some(PointerPick(handle: picked.at(0))) else: none(PointerPick)
+      tween.offerAim(
+        camera,
+        scene,
+        picked,
+        none(Preview),
+        camera.drawExtentFor(height_aim, 0.0),
+        width_aim,
+        height_aim,
+        0.0,
+        duration,
+        pointer,
+      )
+      for step in 1..5:
+        tween.advance(camera, duration * float(step) / 5.0, easeOutCubic)
+      check tween.is_arrived
+      # Pivot stands on line where it passes nearest eye, 2e5 units off, never at support.
+      check norm(camera.pivot.toWorld(camera.originView) - nearest) <= 1.0e-6
+      # Distance to pivot is reader's own from before pick, since line stands further off than it.
+      check abs(camera.distance / distance_before - 1.0) < 1.0e-6
+      check norm(camera.eyeWorld - ORIGIN) > 4.0e6
+
+  test "a line picked alone and then moved takes the pivot straight across, never along it":
+    const duration = 0.35
+    proc rail(k: int): Multivector =
+      ## Build line along x at height `3 + 0.01 k`, so each step of `k` moves it across.
+      let support = Position(x: 0.0, y: 3.0 + 0.01 * float(k), z: 0.0)
+      support.toMultivector ∧ (support + Direction(x: 1.0, y: 0.0, z: 0.0)).toMultivector
+    for is_pointer in [true, false]:
+      var camera = cameraAround(ORIGIN, 10.0, Direction(x: 1.0, y: 1.0, z: 1.0))
+      let eye = camera.eyeWorld
+      var (scene, picked) = initScenePicked(rail(0))
+      var
+        tween: CameraTween
+        pointer =
+          if is_pointer: some(PointerPick(handle: picked.at(0))) else: none(PointerPick)
+      tween.offerAim(
+        camera,
+        scene,
+        picked,
+        none(Preview),
+        camera.drawExtentFor(height_aim, 0.0),
+        width_aim,
+        height_aim,
+        0.0,
+        duration,
+        pointer,
+      )
+      tween.advance(camera, duration, easeOutCubic)
+      # Pick reads eye: pivot lands where line passes nearest it, never at support.
+      check norm(camera.pivotWorld - Position(x: eye.x, y: 3.0, z: 0.0)) <= 1.0e-9
+      let distance_picked = camera.distance
+      # Line moves across itself each frame, and each frame offers it again.
+      var now = duration
+      for k in 1..20:
+        scene.setGeometryAt(picked.at(0), rail(k))
+        now += 1.0 / 60.0
+        tween.offerAim(
+          camera,
+          scene,
+          picked,
+          none(Preview),
+          camera.drawExtentFor(height_aim, 0.0),
+          width_aim,
+          height_aim,
+          now,
+          duration,
+        )
+        tween.advance(camera, now + 1.0 / 60.0, easeOutCubic)
+      tween.advance(camera, now + 2.0 * duration, easeOutCubic)
+      check tween.is_arrived
+      # Pivot crossed with line and kept its place along it, at distance pick left.
+      check norm(camera.pivotWorld - Position(x: eye.x, y: 3.2, z: 0.0)) <= 1.0e-9
+      check abs(camera.distance / distance_picked - 1.0) < 1.0e-9
+
+  test "a line picked far off is drawn and picked through the middle of the frame":
+    # Pick from star 4.7e6 units out lands eye 2.4e-7 off line, which passes 1e-8 from eye,
+    #   while line's support stands at origin, behind eye. Point ahead stands 8,000 units
+    #   off, as star field does on page.
+    const duration = 0.35
+    let
+      star = Position(x: 1072071.0, y: 4533088.5, z: 171618.671875)
+      sight = (1.0 / norm(star - ORIGIN)) * (star - ORIGIN)
+      aside = normalize(cross(sight, Direction(x: 0.0, y: 0.0, z: 1.0))).get
+      tilted = sight + tan(degToRad(2.4)) * aside
+      along = (1.0 / norm(tilted)) * tilted
+      line = ORIGIN.toMultivector ∧ (ORIGIN + along).toMultivector
+    var camera = cameraAround(star, 2.414213562373095e-7, -sight)
+    let nearest = ORIGIN + dot(camera.eyeWorld - ORIGIN, along) * along
+    var (scene, picked) = initScenePicked(line)
+    discard scene.addObject((nearest + 8000.0 * sight).toMultivector, "ahead", Ink.Jade)
+    var
+      tween: CameraTween
+      pointer = some(PointerPick(handle: picked.at(0)))
+    tween.offerAim(
+      camera,
+      scene,
+      picked,
+      none(Preview),
+      camera.drawExtentFor(height_aim, 0.0),
+      width_aim,
+      height_aim,
+      0.0,
+      duration,
+      pointer,
+    )
+    tween.advance(camera, duration, easeOutCubic)
+    # Read frame as front-ends do: placements, nearest reach ahead, extent, transform.
+    var placed = newSeq[Placement](scene.bound)
+    for handle in 0..<scene.bound:
+      placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    let (eye, frame) = camera.moveOriginView
+    camera.reach_near = reachNear(
+      placed, scene, camera.originView, eye, eye + camera.distance * frame.forward, frame.forward
+    )
+    let
+      scale = camera.drawExtentFor(eye, frame, height_aim, reachFar(placed, scene))
+      view_projection = camera.initMatrixViewProjection(eye, frame, width_aim / height_aim)
+      middle = ScreenPosition(x: 0.5 * float(width_aim), y: 0.5 * float(height_aim))
+      vanishing = projectToScreen(
+        view_projection, width_aim, height_aim, eye + scale.radiusHorizon * along
+      )
+    # Near clip stands short of pivot, so line where it passes pivot is in frame.
+    check scale.depthNear < camera.distance
+    # Both halves are drawn through middle, where pivot stands on line: one runs on to
+    #   vanishing point, other out past edge of frame on far side of middle from it.
+    proc offSegment(at, tail, head: ScreenPosition): float =
+      ## Measure pixels from `at` to nearest point of screen segment `tail` to `head`.
+      let
+        (run_x, run_y) = (head.x - tail.x, head.y - tail.y)
+        length_squared = run_x * run_x + run_y * run_y
+        dot_run = (at.x - tail.x) * run_x + (at.y - tail.y) * run_y
+        along = if length_squared == 0.0: 0.0 else: clamp(dot_run / length_squared, 0.0, 1.0)
+      hypot(at.x - (tail.x + along * run_x), at.y - (tail.y + along * run_y))
+    MESHES_SCENE.clearMeshes
+    discard MESHES_SCENE.tessellateObject(placed[picked.at(0)], Ink.Rose.colour, scale)
+    var (halves_drawn, is_vanishing_reached, is_edge_reached) = (0, false, false)
+    for index in 0..<MESHES_SCENE.ribbons.count:
+      let corners = expandRibbon(MESHES_SCENE.ribbons.records[index], scale.toScale)
+      if corners[0].alpha == 0.0: continue
+      inc halves_drawn
+      var ends: array[2, ScreenPosition]
+      for side, (first, second) in [(0, 5), (1, 2)]:
+        ends[side] = projectToScreen(view_projection, width_aim, height_aim, Position(
+          x: 0.5 * (float(corners[first].x) + float(corners[second].x)),
+          y: 0.5 * (float(corners[first].y) + float(corners[second].y)),
+          z: 0.5 * (float(corners[first].z) + float(corners[second].z)),
+        ))
+      check offSegment(middle, ends[0], ends[1]) < 1.0
+      for drawn_end in ends:
+        if hypot(drawn_end.x - vanishing.x, drawn_end.y - vanishing.y) < 1.0:
+          is_vanishing_reached = true
+        let beyond = ((drawn_end.x - middle.x) * (middle.x - vanishing.x) +
+            (drawn_end.y - middle.y) * (middle.y - vanishing.y)) /
+            hypot(middle.x - vanishing.x, middle.y - vanishing.y)
+        if beyond > float(width_aim): is_edge_reached = true
+    check halves_drawn == 2
+    check is_vanishing_reached
+    check is_edge_reached
+    # Cursor on image, 200 px from middle toward eye's side of line, picks line.
+    let
+      reach = hypot(middle.x - vanishing.x, middle.y - vanishing.y)
+      cursor = ScreenPosition(
+        x: middle.x + 200.0 * (middle.x - vanishing.x) / reach,
+        y: middle.y + 200.0 * (middle.y - vanishing.y) / reach,
+      )
+      report = pickAt(scene, camera, scale, view_projection, width_aim, height_aim, cursor, placed)
+    check report.handle == some(picked.at(0))
+
+
   test "a point picked from the list never lands nearer than its fit, and one further out stays":
     # Ruling of #535: selection never starts nearer than its fit. Wheel over empty sky shrinks
-    #   separation to 9.4e-8 while view barely moves, and pick from list carried pivot onto
-    #   star at that separation: star at least radius drew as sphere 20 px across. It eases
+    #   distance to pivot to 9.4e-8 while view barely moves, and pick from list carried pivot
+    #   onto star at that distance: star at least radius drew as sphere 20 px across. It eases
     #   out to fit pointer pick comes in to, 2.4e-7 units, where its disc spans
     #   `FRACTION_HEIGHT_APPROACH_POINT` of frame.
     #   Swept with star ahead of eye, behind it and beside it, beside origin and at HD 222237:
-    #   pick from list need not stand in view. Separation past fit is reader's, and stands.
+    #   pick from list need not stand in view. Distance to pivot past fit is reader's, and stands.
 
     proc pickedFromList(
       camera: var Camera; scene: Scene; picked: Selection; width, height: int
@@ -1265,7 +1529,7 @@ suite "Camera Aim":
         tween.advance(camera, duration * float(step) / 5.0, easeOutCubic)
       tween.is_arrived
 
-    const separations = [9.4e-8, 1.0e-6, 12.0]  ## Wheeled in under fit, just past it, opening's.
+    const distances = [9.4e-8, 1.0e-6, 12.0]  ## Wheeled in under fit, just past it, opening's.
     let centres = [
       Position(x: 1.0, y: 0.0, z: 0.0),
       Position(x: 698390.5004, y: -953804.3279, z: -2043454.915),
@@ -1277,9 +1541,9 @@ suite "Camera Aim":
           let place = centre + offset
           var (scene, picked) = initScenePicked(place.toMultivector)
           scene.setRadius(picked.at(0), RADIUS_OBJECT_LEAST)
-          for separation in separations:
+          for distance in distances:
             var camera = cameraAround(centre, 12.0, out_to)
-            camera.dollyTo(separation)
+            camera.dollyTo(distance)
             let held = camera.distance
             check pickedFromList(camera, scene, picked, width_aim, height_aim)
             let fit =
@@ -1287,7 +1551,7 @@ suite "Camera Aim":
             if held >= fit:
               check camera.distance == held
               continue
-            # Separation lands on fit, read relatively: `=~` floors its tolerance at one unit.
+            # Distance to pivot lands on fit, read relatively: `=~` floors tolerance at one unit.
             check abs(camera.distance / fit - 1.0) < 1.0e-6
             # Pivot is star, which reads in front at that share of frame's height.
             #   Star read about camera's own origin, as pointer pick's far case above reads it.
@@ -1334,7 +1598,7 @@ suite "Camera Aim":
     # Case as found on published page, 2026-10-17: after Architect's first click on
     #   LSPM J0344+0741, 3.19 million units out in demo of 5,038, mouse orbit moved star about
     #   screen; second click, from beside star, held it. Reproduced on `afd0a46d` from demo's
-    #   opening stance: pivot 6.6e-9 in front of star, 2.7% of separation, swung 15 px.
+    #   opening stance: pivot 6.6e-9 in front of star, 2.7% of distance to it, swung 15 px.
     #   Ease's last frame stood on `toward` at progress 1, not on destination, and destination
     #   was held about view origin of far eye: both round on doubles millions of units out.
     # Swept: pointer pick and pick from list, eye starting 40 units to 3.19 million off star,
@@ -1837,10 +2101,10 @@ suite "Camera Aim":
     check camera.distance =~ 40.0
 
 
-  test "a tween lands on its destination's separation at every decade down to the floor":
-    # Separation eases through its logarithm, so it is held off zero first, and at
-    #   `DISTANCE_LIMIT_NEAR` as every separation is: pointer pick of star at least radius
-    #   asks 2.4e-7. Read relatively, since `=~` floors its tolerance at one unit.
+  test "a tween lands on its destination's distance to the pivot at every decade down to the floor":
+    # Distance to pivot eases through its logarithm, so it is held off zero first, and at
+    #   `DISTANCE_LIMIT_NEAR` as every distance to pivot is: pointer pick of star at least
+    #   radius asks 2.4e-7. Read relatively, since `=~` floors its tolerance at one unit.
     let from_stance = stanceAround(ORIGIN, 19.0, Direction(x: 10, y: 15, z: 6))
     for power in -9..2:
       var to_stance = from_stance
@@ -2033,7 +2297,7 @@ suite "Camera Aim":
 
   test "a plane picked alone from a level view lifts the view to ten degrees off it":
     # Ruling of #454: sliver centred shows nothing, so pick of plane turns view, by least
-    #   turn. Level direction of sight, pivot, separation and level horizon all survive.
+    #   turn. Level direction of sight, pivot, distance to it and level horizon all survive.
     let
       normal = Direction(x: 0, y: 0, z: 1)
       sine = sin(ANGLE_PLANE_LEAST)

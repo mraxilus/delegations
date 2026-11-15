@@ -5,6 +5,7 @@
 import std/[sequtils, unittest]
 import ../../../knoller/src/knoller
 import ../../src/[kinds, prose]
+import ./fixtures
 
 
 
@@ -21,6 +22,20 @@ suite "Article VI":
     check checkProse("a.ts", "// A row.\nlet a = 1\n", Syntax.Slash).mapIt((it.line, it.message)) ==
       @[(1, "Comment holds article (VI.5); got `a`.")]  # TypeScript, same words
     check checkProse("README.md", "The row.\n", Syntax.None).len == 0  # prose keeps articles
+
+
+  test "VI.5 file of project keeping its own prose keeps its words, in every kind":
+    # Case: `a` of lojban joins two names as `or`, so comment of `lojban_parser` reads as one
+    #   holding article. Domain: Nim, cfg and TypeScript, in listed project and in project of
+    #   same domain list leaves out.
+    for (file, source, syntax) in [
+      ("src/a.nim", "# la .alis. a la .bob. cu klama\n", Syntax.Nim),
+      ("nim.cfg", "hints:off  # la .alis. a la .bob. cu klama\n", Syntax.Hash),
+      ("src/a.ts", "// la .alis. a la .bob. cu klama\n", Syntax.Slash),
+    ]:
+      check checkProse(DIRECTORY_PARSER & "/" & file, source, syntax).len == 0  # own language
+      check checkProse(DIRECTORY_TAGGER & "/" & file, source, syntax).mapIt(it.message) ==
+        @["Comment holds article (VI.5); got `a`."]  # left out
 
 
 

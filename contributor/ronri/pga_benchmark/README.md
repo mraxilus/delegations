@@ -16,8 +16,9 @@ A home page and three views answer the question: Progress, Performance and Propo
 built from committed files alone. `drive` holds each file to the library at pin, and `head` holds
 the pin to library head. A bar on top of each page links the home page and the three views.
 
-`drive` also renders each page, and writes what each page draws for `koch drive` to judge. Then
-`koch drive` fails where a font face of the system draws a character beyond ASCII. Its own control
+`drive` also renders each page, and writes every string each page draws for `koch drive` to judge.
+Then `koch drive` fails where a font face of the system draws a character beyond ASCII, or where
+the browser synthesises a bold. Its own control
 page proves that the render reads text in each of the five kinds of place that it holds. `drive`
 itself fails where two blocks of a card touch, and a control page of the project proves that read.
 
@@ -30,14 +31,15 @@ itself fails where two blocks of a card touch, and a control page of the project
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table from metric and 𝟙 |
 | [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, now P04 and P09 |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
-| [P04 Exact kinds][exact-kinds] | proposal | product returns exactly bases it reaches |
+| [P04 Basis-set forms][basis-set-forms] | proposal | operator returns exactly bases it reaches |
 | [P05 Multivector align][multivector-align] | proposal | multivector aligned to one cache line |
-| [P06 Float width][float-width] | proposal | width of each float as a build option |
+| [P06 Float width][float-width] | implemented | width of each float as a build option |
 | [P07 Part scale][part-scale] | proposal | each part compared at its own scale |
-| [P08 Compound tables][compound-tables] | proposal | one table for each compound operator |
+| [P08 Compound tables][compound-tables] | proposal | one table for each of five chains |
 | [P09 Object names][object-names] | proposal | names of objects over basis-set types |
 | [P10 Homogeneous scalar][homogeneous-scalar] | proposal | scalar kept with its weight |
 | [P11 Unitize general][unitize-general] | proposal | one unitize rule for any element |
+| [P12 Cayley cells][cayley-cells] | proposal | each cell of a table an array with its count |
 
 Progress and Performance show the library as it is. A **proposal** page shows a future state of the
 library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the same
@@ -51,9 +53,9 @@ the catalogue. A box has a table of its own, or the library builds it from other
 library lacks it. `drive` fails where the map draws a box in another state, or where the library
 builds a table that no box stands for.
 
-P01 lays out every Cayley table of the library, so most other proposals build on it. A proposal
-counts only the tables that the library builds at pin, as the library map shows them. When the
-library adds a table, each proposal that the table concerns takes it into account.
+P01 lays out every Cayley table of the library. P08 builds on it, and P03 builds on both. A
+proposal counts only the tables that the library builds at pin, as the library map shows them.
+When the library adds a table, each proposal that the table concerns takes it into account.
 
 ## What pages are built from
 
@@ -112,13 +114,12 @@ binary. `drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to
 Chromium executable, and `drive` uses that one instead. `types` and `drive` need node and npm on
 `PATH`, and `nim r tools/build.nim system` names every system package.
 
-The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches and builds it
-once for each machine (`GUIDE.md`, Toolchain). The record says which characters of `pga` need
-it.
+The pin is **Nim 2.4.0**, the first release that lexes each character of `pga`. Koch fetches it
+once for each machine (`GUIDE.md`, Toolchain).
 
 Run each verb of `tools/build.nim` with the `bin/` of the pin first on `PATH`, as koch does
-(`GUIDE.md`, Toolchain). The page `docket` holds a script that `nim js` emits, and a release of
-Nim emits another script. Then `drive` finds that the page changed since it was published.
+(`GUIDE.md`, Toolchain). The page `docket` holds a script that `nim js` emits, and another release
+of Nim emits another script. Then `drive` finds that the page changed since it was published.
 
 ## Layout
 
@@ -170,7 +171,7 @@ checked against.
 [cayley-derivation]: https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q
 [typed-multivectors]: https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX
 [partner-sign]: https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf
-[exact-kinds]: https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe
+[basis-set-forms]: https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe
 [multivector-align]: https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh
 [float-width]: https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ
 [part-scale]: https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj
@@ -178,3 +179,4 @@ checked against.
 [object-names]: https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX
 [homogeneous-scalar]: https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D
 [unitize-general]: https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy
+[cayley-cells]: https://claude.ai/artifact/Jjeg6CQWsiY3s8b8D7KWmE

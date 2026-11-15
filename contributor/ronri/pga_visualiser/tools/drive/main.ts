@@ -11,12 +11,14 @@ import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import { basename, delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
+import { driveBulkUndo, driveFieldsHeld, driveHoverWhileMoving } from './acts';
 import { driveKeys, driveKeysChorded } from './keys';
 import { driveEscape } from './escape';
-import { driveMenuHung, driveMoreAtPointer } from './menus';
+import { driveMenuHung, driveMenuHungCopies, driveMoreAtPointer } from './menus';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
+import { driveCullHeld } from './held';
 import {
   driveBackdropPlane, driveCrowd, driveEmptyRelease, drivePausedDrag, drivePointFills,
   driveTouchConstruct, driveTwoFingerPan,
@@ -59,10 +61,13 @@ import { driveClassifiedOnce } from './classified';
 import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { driveSurfacesFilled } from './surface';
-import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
+import { driveHeapUnit, drivePhaseSums, drivePhaseSumsCoarse, driveTree } from './diagnostics';
 import { driveCrossingsCounted, driveShareAgrees, driveShareRefused } from './share';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
-import { driveSidesCarryTime, driveSums, driveTint, openEveryBranch } from './ramp';
+import {
+  coarsenClock, driveBracketsCoarse, driveBracketsFine, driveSidesCarryTime, driveSums,
+  driveTint, openEveryBranch,
+} from './ramp';
 import {
   drivePinAnchor, drivePinGrid, drivePinMarker, drivePinPick, drivePinPool,
   MILLISECONDS_PICK_HOVER_LOADED,
@@ -72,9 +77,12 @@ import {
   driveAllowance, driveKinds, driveMoving, driveSceneryBound, driveSceneryEvery,
 } from './scenery';
 import { driveGround } from './ground';
+import { driveBufferCovered } from './buffer';
 import { driveAntialias, driveBlankRefused } from './canvas';
+import { driveContextPaths } from './context';
 import {
-  driveCopiesStill, driveFrameWork, driveLoopRuns, driveStanceReadOnce, watchFrames,
+  driveBuiltStill, driveCopiesStill, driveFrameWork, driveLoopRuns, driveStanceReadOnce,
+  watchFrames,
 } from './frame';
 import { driveHostSave } from './host';
 import { driveVeilCovers } from './veil';
@@ -217,7 +225,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   // Sweeps viewport and puts it back; kept beside other chrome checks rather than among
   //   drawer's, since what it reads is row above drawer and not drawer itself.
   await driveChipRowFits(page);
-  // After help, so tab strip exists to be asked which face it is drawn in.
+  // After help, so tab strip exists to be asked which font face it is drawn in.
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
   await driveTypeLigatures(page);
@@ -252,11 +260,16 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveRuler(page);
   await driveSceneBuilt(page);
   await driveDrawerCost(page);
-  // Key and menu checks, last on opening scene: demo below replaces it.
+  // Key and menu checks, and acts both front-ends share, last on opening scene: demo below
+  //   replaces it.
   await driveKeysChorded(page);
   await driveEscape(page);
   await driveMenuHung(page);
+  await driveMenuHungCopies(page);
   await driveMoreAtPointer(page);
+  await driveBulkUndo(page);
+  await driveFieldsHeld(page);
+  await driveHoverWhileMoving(page);
 
   // Demo runs last, and under load: it builds thousands of objects, and every check above is
   //   written against opening scene's own weight.
@@ -267,7 +280,10 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await loadDemo(page, objects_largest);
   // First, while demo stands as loaded and nothing in it moves.
   await driveCopiesStill(page, objects_largest);
+  await driveBuiltStill(page, objects_largest);
   await driveCulling(page);
+  // Beside cull, under largest demo, where objects stand at every edge of frame.
+  await driveCullHeld(page, devtools);
   await driveOccluded(page);
   await driveFarSky(page);
   await driveDiscUnderfoot(page);
@@ -326,6 +342,7 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await driveTree(page);
   await driveTint(page);
   await driveSums(page);
+  await driveBracketsFine(page);
   await driveHeapUnit(page);
   await driveRingsTimed(page);
   await driveKinds(page);
@@ -373,6 +390,20 @@ async function driveServed(browser: Browser): Promise<void> {
   await page.close();
 }
 
+/** Drive brackets and phase sums of breakdown under clock that steps 1 ms, as Firefox's does.
+ *
+ *  Page of its own, since clock is cut before page's scripts run, and page reads its step once.
+ */
+async function driveCoarse(browser: Browser): Promise<void> {
+  const page = await browser.newPage({ viewport: SIZE_VIEW, hasTouch: true });
+  await coarsenClock(page);
+  await page.goto(`file://${PATH_PAGE}`);
+  await waitScene(page);
+  await driveBracketsCoarse(page);
+  await drivePhaseSumsCoarse(page);
+  await page.close();
+}
+
 async function main(): Promise<void> {
   const executable = chromiumChosen();
   const browser = await chromium.launch({
@@ -383,8 +414,13 @@ async function main(): Promise<void> {
   await driveSimulated(browser);
   await driveMeasured(browser);
   await driveServed(browser);
+  await driveCoarse(browser);
   // Page of its own, since host it stands in has to be there before page's script runs.
   await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
+  // Pages of their own, since what each browser refuses has to stand before page's script runs.
+  await driveContextPaths(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
+  // Page of its own too, since limit it runs under has to be there before page's script runs.
+  await driveBufferCovered(browser, `file://${PATH_PAGE}`);
   // Last, so control page is read once page itself was.
   await writeFontFaces(browser);
 

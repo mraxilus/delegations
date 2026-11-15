@@ -291,7 +291,11 @@ function frame() {
     notches_wheel = 0;
     is_hover_stale = true; // Camera moved under cursor that did not.
   }
-  if (is_hover_stale) {
+  // Pick in every frame while mouse is pointer, and while camera moves, which hides hover.
+  //   Desktop picks every frame, so its hover follows what slides under still cursor and
+  //   drops for whole of move; page matches it (repository issue 632).
+  //   Finger picks only when it moves, for reason `nimClearHover` gives.
+  if (is_hover_stale || is_cursor_mouse || nimIsMovingCamera()) {
     is_hover_stale = false;
     nimUpdateHover(canvas.clientWidth, canvas.clientHeight);
   }

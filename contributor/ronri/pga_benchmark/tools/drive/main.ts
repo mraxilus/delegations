@@ -110,7 +110,7 @@ async function pageRead(browser: Browser, named: Named, directory: string): Prom
     const codepoints = new Set(collected.runs.flatMap((run) => run.codepoints));
     said.push(
       `${collected.count_elements} elements`,
-      `${collected.runs.length} strings beyond ASCII`,
+      `${collected.runs.length} strings`,
       `${codepoints.size} distinct characters`,
       `${read.written.declared.length} font faces declared`,
       `${collected.refused.length} refused`,

@@ -1,11 +1,21 @@
 ## Enforce provenance header and rules stamp (Article VIII.6, provenance guide).
 ##   Header is first pipe table in file, `| Field | Value |`, with rows Harness, Author, Date,
-##   Style, Rules, Review. Rules value is stamp of governing documents, so stale audit fails
-##   and rules change cannot merge half-propagated. Stale stamp is propagation, so finding is
-##   curator's in any project.
+##   Style, Rules, Review. Rules value is stamp of rules of content, so stale audit fails and
+##   change of such rule cannot merge half-propagated. Stale stamp is propagation, so finding
+##   is curator's in any project.
 ##
-##   Stamp is FNV-1a 64-bit over `RULES` contents in order, CR stripped, NUL between files,
-##     rendered as 16 lowercase hex digits.
+##   Stamp is FNV-1a 64-bit over `RULES` documents in order, each without its sections of
+##     process (`SECTIONS_PROCESS`), CR stripped, NUL between files, rendered as 16 lowercase
+##     hex digits. Section of process says what delegate does, never what project holds, so
+##     its edit binds no project and moves no `Rules` row (D1 d of #843). `check-drift` still
+##     names it to every older branch, since delegate forgets (`base.nim`).
+##   List names sections of process, never sections of content, so it fails closed: new or
+##     renamed heading stays stamped until list names it. Section that mixes both stays
+##     stamped whole, as Boundaries and Glossary process do, since split would move what
+##     contributor code cites. Listed heading its document lacks is finding, so rename leaves
+##     no dead row.
+##   Cost: edit of mixed section, or of opening above first `##` heading, re-stamps every
+##     project as before.
 ##   Rejected: `std/sha1` (deprecated in Nim 2, warns on every build); `checksums` package
 ##     (nimble install in CI for one digest); `std/hashes` (unstable across Nim versions).
 ##   Cost: FNV-1a is change detector, not signature; collision needs adversary, none here.
@@ -25,13 +35,26 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sets, strutils, tables]
+import std/[sequtils, sets, strutils, tables]
 import ./[findings, markdown]
 
 
 const
   RULES* = ["CONSTITUTION.md", "STYLE.md", "CONTRIBUTOR.md", "EXAMPLES.md", "GUIDE.md"]
     ## Documents stamp covers, in digest order; CURATOR.md is excluded as curator-only.
+  SECTIONS_PROCESS* = [
+    ("CONTRIBUTOR.md", "## Read first, in this order"),
+    ("CONTRIBUTOR.md", "## Every delegate begins here"),
+    ("CONTRIBUTOR.md", "## Carry the unchecked list in the open"),
+    ("CONTRIBUTOR.md", "## Branch and commits"),
+    ("CONTRIBUTOR.md", "## Before you open a pull request"),
+    ("GUIDE.md", "## The queue and the shared allowance"),
+    ("GUIDE.md", "## Work for subagents"),
+    ("GUIDE.md", "## How to build on a project"),
+    ("GUIDE.md", "## Output contract"),
+  ]
+    ## Sections of process stamp leaves out, as rules document and heading line; every other
+    ##   section is stamped, and CONSTITUTION.md, STYLE.md and EXAMPLES.md list none.
   FIELDS* = ["Harness", "Author", "Date", "Style", "Rules", "Review"]
     ## Header rows every PROVENANCE.md carries.
   CITATION* = "verified by `"
@@ -39,6 +62,16 @@ const
   EXT_NIM* = ".nim"  ## Extension citation must carry to be read as file rather than command.
   FNV_OFFSET = 0xcbf29ce484222325'u64
   FNV_PRIME = 0x100000001b3'u64
+
+
+static:
+  # Row outside rules documents, or off `##` heading, matches no section, so stamp would read
+  #   that section whole while list claims it left out.
+  for (document, heading) in SECTIONS_PROCESS:
+    doAssert document in RULES, "Section of process lies in rules document; got `" & document &
+      "`."
+    doAssert heading.startsWith("## "), "Section of process opens at `## ` line; got `" &
+      heading & "`."
 
 
 func digest(data: openArray[string]): uint64 =
@@ -54,6 +87,35 @@ func digest(data: openArray[string]): uint64 =
 func stamp*(rules: openArray[string]): string =
   ## Render rules stamp as 16 lowercase hex digits.
   rules.digest.toHex(16).toLowerAscii
+
+
+func textStamped*(path, source: string): string =
+  ## Read rules document as stamp digests it: every part but each section of process
+  ##   `SECTIONS_PROCESS` lists for path.
+  for part in source.sections:
+    if (path, part.heading) notin SECTIONS_PROCESS: result.add part.text
+
+
+func stampRules*(documents: openArray[string]): string =
+  ## Render stamp of rules documents given in `RULES` order, each without its sections of
+  ##   process.
+  var stamped: seq[string]
+  for k, rule in RULES: stamped.add textStamped(rule, documents[k])
+  stamped.stamp
+
+
+func checkSectionsProcess*(path, source: string): seq[Finding] =
+  ## Report each section of process `SECTIONS_PROCESS` lists for document at path that it
+  ##   lacks, so renamed heading never leaves row that matches nothing.
+  let headings = source.sections.mapIt(it.heading)
+  for (document, heading) in SECTIONS_PROCESS:
+    if document == path and heading notin headings:
+      result.add finding(
+        path,
+        0,
+        "Section of process that stamp leaves out is absent; restore its heading, or rename " &
+          "or drop its row of `SECTIONS_PROCESS` in `provenance.nim`; got `" & heading & "`.",
+      )
 
 
 func fieldsHeader*(source: string): Table[string, string] =

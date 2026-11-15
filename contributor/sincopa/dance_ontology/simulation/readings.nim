@@ -44,7 +44,7 @@ type
     is_stopped*: bool
     at*, apart*: float
     why*: Stop
-    whose*: Hand
+    whose*: Option[Hand]  ## Whose hand it gave at, or none where nothing gave.
 
   SweepRead* = object  ## Sweep of one hold, as report reads it.
     found_rest*: bool

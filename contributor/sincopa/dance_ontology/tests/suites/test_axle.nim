@@ -7,9 +7,18 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strutils, unittest]
+import std/[options, sequtils, strutils, unittest]
 
 import ../../src/dance_ontology
+
+
+
+func heldAbove(target: Frame): FrameState =
+  ## Get frame at rest, each arm that holds carried above.
+  result = target.rest
+  for side in Side:
+    if target.hold[side].isSome:
+      result.level[side] = Level.Above
 
 
 
@@ -52,6 +61,8 @@ suite "Internal: The axle":
     # or left is wrong for half of what it names.  Frame states on axle are named from above
     # too (`turnName`).  Red with arcs named right and left, measured 2026-10-22
     # (issue #698): `Right to left` at rest drew `half a turn right`.
+    #   Single hand above keeps orientation alone (rule 16): its one arc stands for half turn
+    #     and turn and half, either way, so it names size alone.
     var told: seq[string] = @[]
     for stood in frameStates():
       for chunk in renderAxle(stood).split("class=\"turn-name\"")[1 .. ^1]:
@@ -60,9 +71,24 @@ suite "Internal: The axle":
           name = said[said.find('>') + 1 .. ^1]
         if name notin told:
           told.add name
-    check told.len == 2 * MOST_TURN  # Every size of turn, either way.
+    let ways = told.filterIt(it.split(' ')[^1] in ["clockwise", "anticlockwise"])
+    check ways.len == 2 * MOST_TURN  # Every size of turn, either way.
+    check told.filterIt(it notin ways) == @["half a turn"]
     for name in told:
       let words = name.split(' ')
-      check words[^1] in ["clockwise", "anticlockwise"]
       check "right" notin words
       check "left" notin words
+
+
+  test "held above, a single hand stands two frame states and a pair its chain":
+    # Single hand keeps orientation alone, so its axle holds rest and half turn from it.
+    #   Hand to hand stands all seven of its chain.  Same-name pair stands six: its far swan
+    #   is two turns from its cross, past every turn workbook offers.  Red with one full turn
+    #   on one connection and half turn on two, measured 2026-11-03 (issue #698, D-5).
+    for target in FRAMES:
+      let stood = target.heldAbove
+      checkpoint stood.key
+      case target.countHolds
+      of 1: check standing(stood) == @[0, 1]
+      of 2: check standing(stood).len == (if target.isOverlapping: 6 else: 7)
+      else: discard

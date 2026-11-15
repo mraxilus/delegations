@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0ff7fe750293e4e9 |
+| Rules   | 363e393b375ac380 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -43,10 +43,10 @@ command line built from the root of the repository.
 
 - Rejected: the flag in the `cmd` of the stub. It reaches the build that testament runs, and no
   other.
-- Verified by hand, 2026-10-06, with Nim 2.2.12. An unread import in a module of `src/` fails
-  `nim c` of `tests/test_suites.nim`, of one suite alone that imports the module, and of
-  `src/knoller.nim`. An unread import in a suite fails `nim c` of the stub and of that suite.
-  Through `koch test`, testament reads the flag too.
+- Verified by hand with Nim 2.2.12, 2026-10-06, and with Nim 2.4.0, 2026-10-29. An unread
+  import in a module of `src/` fails `nim c` of `tests/test_suites.nim`, of one suite alone that
+  imports the module, and of `src/knoller.nim`. An unread import in a suite fails `nim c` of the
+  stub and of that suite. Through `koch test`, testament reads the flag too.
 - Cost: a build of `koch` and the suites of `curator/audit` read no configuration here. So an
   unused import in knoller fails the suite of knoller alone, which `koch check` runs whenever
   knoller changes.
@@ -91,10 +91,59 @@ check, and a script or a package takes those of any Nim code (`## Idioms`).
 
 - `curator/audit` maps each kind of Nim onto a dialect. It applies the fixers that need more than
   one file, then gives the source to `formatted`.
+- The caller also gives the facts of each file that its text does not hold. They are the mode of
+  its articles (`## Articles`), its nearest nimble file (`## Layout of a package`), and whether it
+  is drive code (`## Fixed waits`).
 - The header of `chain.nim` gives the order of the fixers, and why each one comes where it does.
 - The chain can run all its rounds again, and `## Wraps` gives why.
 - Verified by `suites/test_chain.nim`: a source that breaks each layout rule settles in one run,
   and a second run writes nothing. A script keeps its imports as written.
+
+## Layout of a package
+
+**Knoller reads the layout that the tools of Nim set, and its caller gives the rest (D2 a of
+#886).** Knoller takes the folder of the nearest nimble file as the root of the package. It keeps
+the rules of tests and of the umbrella, and reads each below that root. The folders of drive code
+and the define that stubs pass are habits of one repository. So the caller says which file is
+drive code (`## Fixed waits`) and which options its compile takes (`## Semantic pass`), and the
+command line says neither.
+
+- The caller names the nimble file nearest each file, written as its path is, and nothing where
+  none stands above (`nimble`). The chain takes that string and reads no file system, so it stays
+  pure.
+- One string carries both facts. Its folder is the folder of the package, and its name names the
+  umbrella, so the two cannot disagree. Rejected: the folder and the name as two inputs, which a
+  caller could give apart. Rejected: a lookup inside the chain, which would read the file system.
+- A test file lies below `tests` of its package, at any depth (`partTests`). A stub is
+  `tests/test_*.nim` there, or a file of a category (`## Layout fixes`). The umbrella is
+  `src/<name>.nim` beside `<name>.nimble`, whatever folder holds both. So a package at the root of
+  its repository has an umbrella, and a clone needs no folder that bears the name of its package.
+  Cost: a package whose `srcDir` is not `src` has no umbrella here.
+- A file with no nimble file above it takes no rule of tests, stubs or umbrella. So these rules
+  give fewer findings there, and never a false one. Rejected: the last directory `tests` of the
+  whole path, which makes a test file of each file below a directory `tests` above the repository.
+- A fixer that reads the nimble file is a step of its own kind (`placing`). Those are the fixers
+  of stub keys, of the profiler import and of the blank lines of tests. So no other fixer takes a
+  new parameter. Cost: a fourth kind of step.
+- Verified by `suites/test_blanks.nim`, against a table of paths and nimble files. It holds a
+  package at the root, a folder of another name, a package inside another, a path of Windows, and
+  no nimble file.
+- Each test file, stub and umbrella here lies below the folder of the nimble file of its project.
+  Verified by hand over each Nim file that git lists, 2026-11-14.
+
+**The command line reads the nearest nimble file from disk, in the walk that reads the pin
+(`nimblesNearest`).** One walk up from the directory of each file finds both. A directory that
+holds several nimble files names no package, as it names no pin, since nimble refuses such a
+directory.
+
+- Verified by hand with the nimble 0.26.2 that 2.4.0 ships, 2026-11-14. In a directory of two
+  nimble files, `nimble dump` stops with `Only one .nimble file should be present`.
+- Verified by `suites/test_command.nim`, on a real tree. A package at the root of a clone takes
+  the rule of its umbrella, and a package inside it takes its own stubs. A directory of two
+  nimble files, and a tree with none, take no rule of stubs.
+- Verified by `suites/test_command.nim`, through the command line built from its own source. Run
+  over a package `foo` at the root of a clone named `clone`, it names the umbrella `src/foo.nim`.
+  It names no fixed wait of `tools/build.nim`.
 
 ## Fences
 
@@ -183,8 +232,6 @@ under `--check`.
 - Verified by `suites/test_command.nim`, on a real checkout with `core.autocrlf=true`. The suite
   also holds each setting and attribute that decides the conversion. A demo checkout gave 3
   findings, where it gave 7 before. Cost: one git call in each directory of the files named.
-- Cost: a directory named `tests` above the repository makes each file below it a test file,
-  from the command line alone. `koch` gives paths from the root of the repository.
 - Each line of output is a line of the file as given. A finding left in the fixed text traces
   back through the fix, as a rewrite does. A line that the fix inserts has no line as given, so
   a finding there prints with the path alone.
@@ -233,7 +280,7 @@ procedure.
 **The command takes one compiler for each file, in a fixed order.** The compiler that `--nim`
 names comes first. Else knoller takes the compiler of the pin in the nearest nimble file at or
 above the directory of the file. Else it takes `nim` on `PATH`. This order (D1 of #548) lets a run
-by hand on the `ronri` projects take their commit pin with no option.
+by hand take the pin of each project with no option.
 
 - A pin is `requires "nim == <pin>"`, or `requires "nim#<commit>"` with a full commit, as nimble
   writes a commit. A range, a branch, a tag and a short commit name no pin. A nimble file that
@@ -292,8 +339,9 @@ recipe.
   who has not. Rejected: the layout of `choosenim`, a second convention that cannot serve a
   commit pin at all.
 - Cost: the first run on a pin that the machine lacks fetches a release in seconds, or builds a
-  commit in minutes, once. A fetched release takes about 140 MB, and a built commit about
-  2.4 GB, measured below. Nothing prunes them.
+  commit in minutes, once. A fetched release takes 140 MB to 192 MB, and a built commit about
+  2.4 GB. Release 2.4.0 takes 192 MB, measured with `du`, 2026-10-29, and the others are
+  measured below. Nothing prunes them.
 - On CI, the installed compiler of each job serves its pin, so resolution stops at `PATH`.
 
 **The fetched tarball is checked against the digest published beside it.**
@@ -316,9 +364,9 @@ recipe.
 - Verified by hand with koch, 2026-09-10: `2.2.2`, which nothing on the machine served, fetched,
   digest-checked and unpacked.
 
-**The command takes the commit pin of `pga_benchmark` with no option.** Verified by hand,
-2026-10-05, with the binary built at `db2f90a`. It ran on a copy of `pga_benchmark` in a new git
-repository, with a private cache.
+**The command takes a commit pin from the nimble file with no option.** Verified by hand,
+2026-10-05, with the binary built at `db2f90a`. It ran on a copy of `pga_benchmark`, which pinned
+a commit then, in a new git repository, with a private cache.
 
 - With no `--nim`, knoller took the pin `27763495b` from `pga_benchmark.nimble`. The cache held
   no compiler for it, so knoller built one, and that first run took 603 s. A second run took
@@ -341,14 +389,22 @@ cannot tell a conversion `x.T` from a field or a module path, such as `rigid3.Po
 find every use of a name across modules either. So `symbols.nim` asks `nimsuggest` of the
 toolchain that serves the pin of the project.
 
-- The caller names three facts for each file it asks: the directory the run starts in, the file
-  that includes it, and the toolchain. The command line reads them from disk. The run starts in
-  the nearest directory that holds a nimble file, and the includer is read among the Nim files git
-  lists there. The toolchain is the one that proves parentheses (`groupByCompiler`). `koch` reads
-  the same facts from its tree instead.
+- The caller names four facts for each file it asks. They are the directory the run starts in,
+  the file that includes it, the toolchain, and the options of its compile (`defines`). The
+  command line reads the first three from disk. The run starts in the nearest directory that holds
+  a nimble file, and the includer is read among the Nim files git lists there. The toolchain is
+  the one that proves parentheses (`groupByCompiler`). `koch` reads the same facts from its tree
+  instead.
 - One `nimsuggest --v3 --tester` serves each entry: the file itself, or the file that includes it.
-  It runs in the project directory, so the `nim.cfg` of the project applies. A file under
-  `tests/` takes `-d:testing`, as the stub of STYLE.md §6 does.
+  It runs in the project directory, so the `nim.cfg` of the project applies. It takes the options
+  that the first request of its entry names. Verified by `suites/test_symbols.nim`, through two
+  requests of one includer, where the first alone names a define.
+- The define that stubs pass is a habit of one repository, so knoller adds none, and the command
+  line names none. `koch` names `-d:testing` for a file under `tests/` of a project, as each stub
+  of STYLE.md §6 passes it.
+- Verified by `suites/test_symbols.nim`: a name that `-d:testing` alone declares resolves where its
+  request names the define, at any path, and nowhere else. Verified by `suites/test_command.nim`:
+  the command line leaves that name unresolved under `tests`.
 - Tester mode reads commands as `--stdin` does. It prints `!EOF!` once ready and after each
   answer, with no help and no prompt. On Windows, `--stdin` prompts `> ` before each command,
   which glues the prompt to the first line of each answer.
@@ -375,8 +431,8 @@ toolchain that serves the pin of the project.
   answer reads as the routine declared at the site, where each use of it resolves. Both pins that
   koch serves answer so (verified by hand, 2026-10-03).
 - Rejected: the compiler as a library inside knoller. Every build of knoller would compile the
-  compiler. Knoller would also bind to one pin, and the `ronri` projects lex glyphs that only
-  their commit pin knows.
+  compiler. Knoller would also bind to one pin, while two pins can lex one glyph apart, as 2.2.12
+  and 2.4.0 do.
 - Rejected: `nim check --def` for each site, which compiles the project once for each site.
   `nimsuggest` ships with each toolchain that knoller serves, so the pass costs no build.
 - Cost, measured 2026-10-02 on the container of the curator: about 2 s for each entry of a
@@ -384,9 +440,9 @@ toolchain that serves the pin of the project.
   candidate asks.
 - A site of an included file asks `dus`, whose answer opens on the same definition as `def`.
   Verified by `suites/test_symbols.nim`, which resolves a use of an included file to its `let`.
-- On the commit pin, `def` in an included file recompiles the file that includes it for each
+- On commit `27763495`, `def` in an included file recompiles the file that includes it for each
   site, and `dus` recompiles only what is dirty. Read in `executeNoHooksV3` of `nimsuggest.nim`
-  at that pin. Measured on the container of the curator, 2026-10-04, over 20 sites of the shared
+  at that commit. Measured on the container of the curator, 2026-10-04, over 20 sites of the shared
   suite of `rga_visualiser` at `c5c65db`. There `def` took 345 s and `dus` took 50 s.
 - A site of the entry itself keeps `def`, because `dus` lists every use of the symbol. Measured in
   the same run: `dus` gave 182 use lines beside the 20 definitions. That the list grows long for a
@@ -422,7 +478,7 @@ by word, in its own case. `rewrites.nim` plans the rename from what the pass res
   stays. A site that resolves to nothing refuses the rename.
 - A site whose answer names another identifier refuses the rename too. That answer is a call that
   the compiler places on the name, such as `items` in `for e in x`, or a converter. Verified by
-  `suites/test_rewrites.nim`, and by hand with the `nimsuggest` of the commit pin, 2026-10-04:
+  `suites/test_rewrites.nim`, and by hand with the `nimsuggest` of commit `27763495`, 2026-10-04:
   `def` at `WINDING` in `for (which_end, side) in WINDING:` of `mesh.nim` at `c5c65db` answers
   `items`.
 - An old name inside the braces of an interpolated string, `&"…"` or `fmt"…"`, refuses the rename.
@@ -539,15 +595,15 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
   `rga_visualiser` (#521), and from the rulings of #533, #526 and #443.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
-- A case that 2.2.12 reads rightly asks the parser of 2.2.12, which builds the suite. A case with
-  the glyph operators of the commit pin asks the stub (`suites/stubs.nim`), since the job of
-  knoller runs 2.2.12 alone. The stub gave the verdict of the commit pin on each such case,
-  verified by hand, 2026-10-05.
+- Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
+  A case with glyph operators asks it too. Commit `27763495` gave the same verdict on each such
+  case, verified by hand, 2026-10-05, and 2.4.0 gives it, verified by hand, 2026-10-29.
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
-- The case of the stub `tests/rga3d/test_rga3d.nim` (#443) depends on its path. So it runs
-  through `outcome`, as the command line runs it, at that path and at `tests/test_rga3d.nim`.
+- The case of the stub `tests/rga3d/test_rga3d.nim` (#443) depends on its path, and on the
+  nimble file of the PGA library at its root. So it runs through `outcome`, as the command line
+  runs it, with that nimble file, at that path and at `tests/test_rga3d.nim`.
   Verified by hand, 2026-10-08: it fails at the parent of the commit that builds the ruling.
 - Verified by hand, 2026-10-05: the suite ran against the parent of the commit that fixed each
   case, with a shim that proves nothing. Each case that a commit fixed failed at its parent. A
@@ -559,8 +615,11 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 **`tokens.nim` keeps the rules of the lexer of the compiler.** A run of operator characters is one
 operator. A `-` before a digit opens a number after a space or an opening bracket.
 
-- The glyphs are those of the commit pin of the `ronri` projects. It adds `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the
-  glyphs of 2.2.12, and no project on 2.2.12 spells them in code.
+- The glyphs are the largest set that a pinned compiler reads, that of 2.4.0. It adds
+  `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the glyphs of 2.2.12, and commit `27763495` reads the same set as 2.4.0.
+  Verified by hand, 2026-10-29, in the source of each lexer.
+- Cost: where code on a pin that reads fewer glyphs spells one of them in a name, the scan reads
+  it otherwise than that compiler. No code on 2.2.12 did, verified by hand, 2026-10-29.
 - Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
   each Nim file outside whitespace lies in one token, and each bracket finds its partner.
 
@@ -660,8 +719,9 @@ An argument splits its own call only where that call is the whole argument.
 **A list written one item to a line takes a trailing separator (X.3).** That holds for a call,
 parameters, an array, a seq, a set, a table, a tuple of several items, a constructor and an import
 bracket. Parameters take the separator that their groups take. A parenthesis of one item takes
-none, because `(a,)` is a tuple and `(a)` is a grouping. Verified by hand with 2.2.12, 2026-10-02:
-the compiler accepts the separator in each of these lists, and `;` after the last parameter group.
+none, because `(a,)` is a tuple and `(a)` is a grouping. Verified by hand with 2.2.12, 2026-10-02,
+and with 2.4.0, 2026-10-29. Each compiler accepts the separator in each of these lists, and `;`
+after the last parameter group.
 
 - The separator stands only where the list would not fit joined onto the line where it opens
   (`isFittingJoined`). A list that fits joined takes none: a call joins under the call layout,
@@ -701,21 +761,20 @@ where blank lines stand below it too.
 **A suite takes three blank lines before it, and a test two (X.2).** A first child follows its
 opener at once, such as a test that opens a suite, or a suite that opens a `when` body. A suite
 or a test after a banner takes the one blank line of the banner. The rule reads files under
-`tests/` alone.
+`tests/` of their package alone.
 
-- A test file has a directory `tests` in its path, at any depth. `reports.nim` holds this reading
-  and the reading of a stub, from the names below the last directory `tests`. So the blank-line
-  rule and the stub rules read one definition.
-- `isFileTest` holds exactly where `/tests/` stands in the path with a `/` before it. Verified by
-  `suites/test_blanks.nim`, which holds both readings to a table of paths. Verified by hand,
-  2026-10-04, over each path that git lists in this repository, relative and absolute.
+- A test file lies below `tests` of its package, at any depth (`## Layout of a package`).
+  `reports.nim` holds this reading and the reading of a stub, from the names below that
+  directory. So the blank-line rule and the stub rules read one definition.
+- Verified by `suites/test_blanks.nim`, which holds both readings to a table of paths.
 
 **Knoller reads a stub as testament reads a category (#443).** A testament category is a folder
-directly under `tests`. Its tests are the files `t*.nim` at any depth inside it, as `isTestFile`
-and `processCategory` of `testament/categories.nim` read them. Such a file is a stub where a
-testament header opens it, that is, where the file opens with `discard """`. A file there that
-opens with no header is a suite module, and no rule of a stub reads it. A file `tests/test_*.nim`
-is a stub with or without a header, so a missing header there stays a `stub-header` finding.
+directly under `tests` of a package. Its tests are the files `t*.nim` at any depth inside it, as
+`isTestFile` and `processCategory` of `testament/categories.nim` read them. Such a file is a stub
+where a testament header opens it, that is, where the file opens with `discard """`. A file there
+that opens with no header is a suite module, and no rule of a stub reads it. A file
+`tests/test_*.nim` is a stub with or without a header, so a missing header there stays a
+`stub-header` finding.
 
 - `isStub` takes the source beside the path, since the header decides. Each caller holds the
   source already: `keysStub`, `checkTests` and `profiler` of `idioms.nim`.
@@ -781,6 +840,117 @@ literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `O
 **A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
 which fixers widen, which wraps follow, and what the chain holds where none fits.
 
+## Missing docs
+
+**Each declaration takes a doc where its shape puts it, and `## TODO: Document.` waits for its
+text (VI.1).** The rule reads each name that `declared.nim` declares. A local, a parameter and a
+placeholder take none. Names that one line declares share one doc, so that line reports once.
+A line of enum members is such a line (D1 a of #752). The check and the fixer share one reading,
+`writesDoc` of `declarations.nim`.
+
+- A doc counts where it trails the line of the declaration, or the last line of its value or its
+  type. A doc that opens the first line below either one, at a deeper indent, counts too. The doc
+  of a routine counts on the first line below its signature.
+- The value of a binding runs on over each line of code below it at a deeper indent. Examples
+  are the branches of `when`, a sum after `+`, and a `block:` below `=`. Nim reads those lines as
+  part of the value, and `nim jsondoc` reads the doc below the last of them. Verified by hand
+  with `nim jsondoc` of 2.2.12 and of commit `27763495`, 2026-10-25. 2.4.0 reads the
+  same, verified by hand, 2026-10-29.
+- A line of enum members ends on itself, because the `,` that closes it opens the next member.
+- A name on a line that opens inside a bracket is part of an expression, and takes no doc. Such a
+  name is a field of a tuple type, or a parameter of a routine type, over several lines. A doc
+  among them breaks the parse, as one after the last field before `]` does. A routine declared
+  there, as in `compiles(block: …)`, takes its doc as the first line of its body.
+- A doc that holds another TODO, such as `## TODO: Make distinct.`, holds a design note and no
+  text. The fixer moves the note above the declaration as a `#` comment (VIII.3), and the doc
+  becomes `## TODO: Document.`. A doc of several lines that opens with a note stays for hand,
+  because its outline can elaborate the note or the text.
+- A one-line borrow or forward in a stack under a group comment passes (VI.1). The stack is a run
+  of routines on one line each, at one indent, with the group comment right above it. The group
+  comment is a `#` comment. A `##` doc right above the run is no group comment. Inside a
+  routine, it is the doc of that routine.
+- Code in `quote do:` passes too, since its generator carries its docs through a parameter. So
+  does a doc on the line above, at the indent of the declaration, because it stands out of place.
+- The rule reads the end of each line from its tokens. A string, the closing `"""` of a long
+  string and a character literal hold no bracket and no comment for it. A line whose last token
+  is `,`, or an operator that ends in `=` or `&`, continues its statement.
+- A value or a body that opens a long string, or a comment of several lines, takes its doc where
+  that string or comment closes. A doc written on its first line would stand inside the string,
+  and change its value.
+- Nim 2.2.12, 2.4.0 and commit `27763495` refuse a doc after the `=` of an argument
+  inside an open bracket. They refuse one after the `:` of a field or a key there too, as
+  `expression expected`. Verified by hand with each compiler, 2026-10-29.
+
+**The fixer writes each doc where doc position puts it and `nim doc` reads it (D2 a of #760).** A
+declaration on one line takes it joined to that line, where the joined line fits and holds no
+comment. Otherwise the doc takes the next line, one level in (STYLE.md §5). A routine takes it as
+the first line of its body, at the indent of the body.
+
+- A value or a type over several lines takes the doc after an `=` that ends its first line,
+  where that line fits. The library writes it so, as `Cayley1D* =  ## …`. Otherwise the value
+  takes the doc joined to its last line, or on the line below it, one level in.
+- A `case` value takes the doc on the line below its last branch, because `nim doc` reads none
+  that trails a branch.
+- A value that opens `block` on its first line stays for hand. Its report asks for the doc after
+  `=`, with `block` on the next line.
+- `nim jsondoc` of 2.2.12 and of commit `27763495` reads a doc in each of these places. It
+  reads none after the `(` of a call, after `[`, `,` or a binary operator, after `block:`, or
+  first in the body of `block:`. Verified by hand with both compilers, 2026-10-25. 2.4.0 reads
+  the same, verified by hand, 2026-10-29.
+- Nim parses no doc on the line below an `=` that ends the first line. So a first line too wide
+  for a joined doc sends the doc to the close. Verified by hand with both compilers, 2026-10-25,
+  and with 2.4.0, 2026-10-29.
+- No comment alone gives a value that opens `block` on its first line a doc that `nim doc` reads.
+  `nim jsondoc` reads none after `block:`, first in the body, after its last line, or below it at
+  the indent of the declaration. A doc below the body at the indent of the body leaves its last
+  value unused, as `nim check` reports. Verified by hand with both compilers, 2026-10-25, and
+  with 2.4.0, 2026-10-29.
+
+**A forward declaration takes the doc of its routine, and the fix leaves that move for hand.**
+`nim doc` of Nim 2.2.12, of 2.4.0 and of commit `27763495` reads the doc of a forward
+declaration, and drops the doc of the definition. Where the forward declaration holds no doc, the
+page shows none. Verified by hand with `nim doc` of 2.2.12, 2026-10-25, and of each compiler,
+2026-10-29. A `## TODO: Document.` there would hide the doc below it, so the fix writes none.
+
+**Missing doc runs after the wraps, and before the comment above.** A doc joins a line only where
+the line fits once the wraps settle it. Rejected: missing doc before the wraps. There a doc that
+trails a line which opens a bracket holds apart a call that the wraps would join.
+
+- A nested helper on one line that takes its doc stands on two lines. So the next round gives it
+  a blank line on each side (STYLE.md §1), and the chain settles in two rounds still. Verified by
+  hand with `knoller --check` on each project of this repository, 2026-10-25: no file stays
+  unsettled.
+
+- Verified by `suites/test_declarations.nim`: each kind and shape of declaration, and what passes.
+  It holds a shared line, a line of enum members, a design note, a forward declaration and the
+  lines that the fix traces. It holds a value over lines in each shape that takes its own place,
+  and a value that opens `block` and stays for hand.
+  It also holds cases of this repository whose value or signature runs past its first line, each
+  named where it stands.
+- Verified by `suites/test_chain.nim`: a call that the wraps join takes the doc after them.
+- Verified by hand on the PGA library at `3d9696e`, 2026-10-25, with a driver that runs
+  `fixDocsMissing` alone. It writes 43 docs, and leaves 8 values that open `block:` for hand.
+  `nim jsondoc` of commit `27763495` reads 42 of those docs, in the rigid and the conformal
+  configuration. The other one is the doc of a private field, which `nim doc` shows nowhere.
+  Knoller built at `cb433e68` and knoller of this rule give outputs that differ by those writes
+  alone, and a second run reports `0 to fix`.
+- Verified by hand on that output, 2026-10-25: the suites of `rga3d` and `cga4d` compile and
+  pass, with commit `27763495`.
+- Verified by hand with that driver over each Nim file of this repository and of the library,
+  2026-10-25. A second fix writes nothing, and no token but a comment changes. A probe parses
+  each file the fix writes with `parseStmt`, under 2.2.12 and under commit `27763495`, and
+  each one parses. Each one parses under 2.4.0 too, verified by hand, 2026-10-29.
+- Cost: a doc that opens the line right below the first line of a declaration counts, though the
+  value runs on past it. That holds for the first line of a `block:`, and for a line inside a
+  bracket, where `nim jsondoc` reads no doc. Verified by hand with `nim jsondoc` of 2.2.12,
+  2026-10-25, and of 2.4.0, 2026-10-29. The fixer never writes a doc there.
+- Cost: a routine with no body reads as a forward declaration where any overload of its name
+  follows.
+- Cost: a routine on one line reads as a forward where its body after `= ` is shorter than
+  `BODY_FORWARD_MAX`, 40 bytes. A forward calls one routine with the arguments it takes, as
+  `entry(PICK)` does, and a longer body holds logic of its own. The bound is chosen and not
+  measured, so a short helper under a group comment passes too.
+
 ## Spaces
 
 **Each space inside an expression takes the count of the list of X.9.** A binary operator and
@@ -803,7 +973,7 @@ takes none. A prefix operator is glued to its operand.
   after the fix. In `suites/test_chain.nim`, the operator tokens of the stacked form read the same
   after the whole chain.
 - Verified by hand on the PGA library of `replications` at `d9be8ae`, 2026-10-04. The lines of
-  `tests/suites.nim` with `|∙ ⊖` keep their space. With the commit pin of the `ronri` projects,
+  `tests/suites.nim` with `|∙ ⊖` keep their space. With commit `27763495`,
   `nim check` passes on 64 of 64 targets, on the library as given and as knoller writes it. The
   eight test programs, `rga2d` to `rga5d` and `cga3d` to `cga6d`, print the same output on both.
   `testament all` passes 8 of 8 on both.
@@ -817,6 +987,11 @@ takes none. A prefix operator is glued to its operand.
 - An export marker is a `*` glued after a name that a declaration places. That name opens its
   line, follows a declaration keyword, or follows a comma after a marked name. A name inside an
   expression declares nothing, so `PI*(a + b)` multiplies.
+- A glued `*` before `:` or `,` is a marker wherever its name stands. A binary `*` takes an
+  operand after it, and neither token opens one. So `case is_read*: bool` and the field of a
+  branch, `of true: fixer*: Fixer`, keep their form. Verified by `suites/test_spacing.nim`, and by
+  `koch fix --dry-run` on `src/knoller/reports.nim` on 2026-11-03, which reports no spacing on
+  its lines 93 to 96.
 - Cost: a name that opens a line of a wrapped expression reads as declared, so `a*(b)` at the
   start of such a line stays.
 - Cost: the spaces that align the columns of a table go, unless a fence holds them.
@@ -834,7 +1009,7 @@ tokens. Verified by `suites/test_spacing.nim`, with each example of the ruling.
   `precedence.nim`). `..` binds at 6, `&` at 7, `+` at 8, and `*` and most glyphs at 9.
 - A bracket group is one operand, so the spaces inside it do not count, as in `f(i + 1)..n`.
 - Spacing moves no parse tree, so the rewrite moves no reading. Verified by hand, 2026-10-04,
-  with the parser of the commit pin of the `ronri` projects. `i + 1 ..< n` and `i + 1..<n` read
+  with the parser of commit `27763495`. `i + 1 ..< n` and `i + 1..<n` read
   alike, and so do `x in 2 .. 6` and `x in 2..6`. Only a merge, as of `1 .. ^1` into `1..^1`,
   changes the tree.
 - The merge guard reads a binary operator with both neighbours glued (`isMerging`). So `s[1 .. ^1]`
@@ -868,7 +1043,7 @@ exception. Verified by `suites/test_spacing.nim`, with each example of the rulin
   `-1^(int(b.grade) * int(b.gradeAnti))`. Verified by `suites/test_chain.nim`.
 - A `^` that ends its line takes one space before it, as a range does.
 - Spacing moves no parse tree, and the wrap adds one group around the exponent alone. Verified by
-  hand, 2026-10-05, with the parser of the commit pin of the `ronri` projects. `-1 ^ k`,
+  hand, 2026-10-05, with the parser of commit `27763495`. `-1 ^ k`,
   `a + b ^ 2` and `(a + b) ^ 2` read as their glued forms do. `a ^ -b` reads as `a^(-b)` once
   the group around one operand is normalised.
 
@@ -890,8 +1065,8 @@ Verified by `suites/test_spacing.nim`, with each example of the ruling.
   `suites/test_spacing.nim`.
 - Cost: a generic list of an entry under a `when` inside a `type` section reads as a selector.
 - An operator that ends its line inside such a bracket takes one space before it, as elsewhere.
-- Spacing moves no parse tree here too. Verified by hand, 2026-10-04, with the parser of the
-  commit pin of the `ronri` projects: `prev[i - 1]`, `digits[i + 1 ..< n]` and `a[f(x, y + 1)]`
+- Spacing moves no parse tree here too. Verified by hand, 2026-10-04, with the parser of
+  commit `27763495`: `prev[i - 1]`, `digits[i + 1 ..< n]` and `a[f(x, y + 1)]`
   read as their tight forms do.
 
 ## Content fixes
@@ -969,10 +1144,10 @@ operand as one side of a binary operator, as `2'u^(DIMENSIONS)` becomes `2'u^DIM
 - The proof drops three guards of the scan, since the parser decides their cases. One is the
   merge guard of `spacing.nim`, as for `-(1)`, `\(/𝐮)` and `^(|𝐦)`. The others guard a glued
   suffix, as in `(■m).x`, and the head of a command, as in `check (|∙ x)`. Each of those groups
-  still stays, as the parser of the commit pin answers.
+  still stays, as the parser of commit `27763495` answers.
 - The guard on the head of a command was too wide. In `doAssert (⊛m) =~ x`, the glued `⊛` reads
-  as a prefix operator, so the commit pin reads the same tree without the group. The group goes
-  now, at line 35 of `proposals/03-partner-sign/laws.nim` of `pga_benchmark`.
+  as a prefix operator, so commit `27763495` reads the same tree without the group. So the group
+  goes. The case as found was line 35 of `proposals/03-partner-sign/laws.nim` of `pga_benchmark`.
 - Two filters stay, and each one only saves runs of the probe. A group after the power operator
   `^` whose removal would glue the exponent into the operator is no candidate. Spacing glues `^`
   and wraps that exponent again (X.9), so `a^(-b)` and `a ^ (-b)` keep the group in one round.
@@ -1000,26 +1175,27 @@ file that asked nothing gives the same result again. The command line asks at mo
   same outcome. This holds for a stub parser, for a parser that fails, and for a parser that fails
   from its second run.
 - The prover is a proc value (`Prover`), so the suites stub it (`suites/stubs.nim`). The stub
-  answers each case as the commit pin of the `ronri` projects answered it, 2026-10-05.
-  `suites/test_proofs.nim` runs the compiler that builds it, 2.2.12 in the job of knoller, and
-  holds the verdicts of the ASCII cases to the real parser.
+  answers each case as commit `27763495` answered it, 2026-10-05. `suites/test_proofs.nim` and
+  `suites/test_regressions.nim` run the compiler that builds them, 2.4.0 in the job of knoller,
+  and hold their verdicts to the real parser.
 - The compiler is the caller's. `koch fix` passes the pin of each project. The command line takes
   `--nim:path`, else the pin of the nearest nimble file, else `nim` on `PATH` (`## Compilers`).
 - Where the compiler does not run, the rule removes nothing, and the run prints one warning that
   says why. The exit code stays. Verified by `suites/test_command.nim`.
-- Rejected: the parser of the compiler linked into knoller. The source of the commit pin does not
-  build under the standard library of 2.2.12 (`llstream.nim`: `readRawData`). Knoller builds with
-  2.2.12, and the parser of 2.2.12 lexes the glyph operators of the commit pin as names.
-- Cost: a wrong compiler can prove what the right one refuses. 2.2.12 reads `■m` as one name, so
-  it proves the group of `(■m).x + y`, and the commit pin reads `■m.x` as `■(m.x)`. So `koch fix`
-  and the command line each take the pin of the project. Verified by `suites/test_proofs.nim`.
+- Rejected: the parser of the compiler linked into knoller. It would read each project with the
+  grammar of one compiler, while each project may pin another. 2.2.12 lexes as names the glyph
+  operators that 2.4.0 lexes as operators.
+- Cost: a wrong compiler can prove what the right one refuses. 2.4.0 and commit `27763495` read
+  `■m.x` as `■(m.x)`, so the group of `(■m).x + y` stays. 2.2.12 reads `■m` as one name, so it
+  proves that group. So `koch fix` and the command line each take the pin of the project.
+  Verified by `suites/test_proofs.nim` for 2.4.0, and by hand for each compiler, 2026-10-29.
 - Cost: each round of asking compiles the probe once, about 0.6 s to 0.8 s on this container.
   Measured 2026-10-05 with `knoller --check`, this head against `main`: `rga_visualiser` took
   6.0 s against 5.5 s, and `pga_benchmark` 3.1 s against 2.0 s. `dance_ontology` took 5.3 s
   against 3.6 s, and `curator` 4.2 s against 3.1 s.
 
 **The proof on the PGA library: the parser removes what the scan removed, and nothing more.**
-Verified by hand, 2026-10-05, with the built binary and the commit pin of the `ronri` projects.
+Verified by hand, 2026-10-05, with the built binary and commit `27763495`.
 
 - At `edb0c9d`, knoller at `main` and at this head each fix 84 rewrites. The counts by rule are
   the same, and so is the output, byte for byte. The one group is `(DIMENSIONS)` of
@@ -1078,8 +1254,8 @@ layout, and its `))` becomes `)`.
 - A plain call `f(g(x))` stays, and so do a call of two arguments and a comma after the argument.
   An argument of another shape stays too, such as `g(a) + 1`, `g(a).h` or `@[a]`.
 - The parse tree changes in one node kind alone: the parser reads `nkCommand` where it read
-  `nkCall`, with the same callee and argument. Verified by hand, 2026-10-04, with the parser of the
-  commit pin of the `ronri` projects, on each shape of `suites/test_commands.nim`.
+  `nkCall`, with the same callee and argument. Verified by hand, 2026-10-04, with the parser of
+  commit `27763495`, on each shape of `suites/test_commands.nim`.
 - The rewrite never widens a line: `(` becomes a space, and its `)` goes. The chain runs it before
   the call layout, so the layout reads the command form. Verified by `suites/test_commands.nim` and
   `suites/test_chain.nim`.
@@ -1265,6 +1441,23 @@ words.
   `curator/audit`.
 - Verified by `suites/test_articles.nim`, with the Nim cases of the scanner of `curator/audit`.
 
+**The caller says of each file whether its comments drop their articles.** `formatted`,
+`checkSource` and `checkFenceHeld` take `should_drop_articles`, which is true by default. Where it
+is false, the chain runs no fixer and no check of articles on that file. Every other rule runs.
+
+- A comment in another language can hold a word that reads as an article. In lojban, `a` joins
+  two names, as "or" does in English. The fixer would delete it and change what the comment says.
+- The mode is the policy of the caller, as the words that a name may take are (`## Names`). So
+  knoller holds no list of files, and reads nothing of a repository to decide.
+- Rejected: a set of directories that knoller matches against each path. The caller already holds
+  the path of each file that it passes, so one flag for each file is the smaller input.
+- Cost: the command line sets no mode, so it drops the articles of every comment that it reads.
+  A file whose comments keep another language needs a caller that sets the mode.
+- Verified by `suites/test_chain.nim`: in each dialect, the mode off keeps the word in the fixer,
+  the check and the fence warning. The fix of spacing still runs, and the default drops the word.
+- Verified by `suites/test_command.nim`: the check of the command line reports the word and exits
+  1, and its fix writes the word away.
+
 ## Names
 
 **Every declared name in Nim is read, and its words are held to the table and to the words the
@@ -1337,7 +1530,7 @@ parameter of `typedesc[I]` keeps the snake case of V.1, since `I` is its placeho
 
 **The letter is the only form of a generic parameter.** Snake case fails as any other form
 does, so one file never spells two generic parameters two ways. Each project names such a
-parameter with one capital, as `timeKind(K: typedesc, …)` in `pga_benchmark` does.
+parameter with one capital, as in `timeKind(K: typedesc, …)`.
 
 **No rename of case touches a generic parameter.** The letter is the initial of what the
 parameter ranges over, which is a choice. So `renamesCase` gives none, as it gives none for a
@@ -1538,8 +1731,8 @@ idiom that the static pass of `curator/audit` reads.
 - A `{.used.}` carries a comment that names its consumer. A `{.push.}` stands only over foreign
   bindings, where a word of `MARKS_FOREIGN` stands among the pragmas of the block. `return
   result` never appears, because a bare `return` exits with `result`.
-- Under `tests/`, a suite that imports `std/random` seeds it, and a stub carries its testament
-  header, without `-r`, `batchable` or `joinable`.
+- Under `tests/` of a package, a suite that imports `std/random` seeds it, and a stub carries its
+  testament header, without `-r`, `batchable` or `joinable`.
 - No fixer reaches `{.used.}`, `{.push.}`, the seed, the header of a stub or debug output. Each
   needs knowledge that the text does not hold.
 
@@ -1570,18 +1763,22 @@ diagnostic.
 **A fixed wait in drive code is a finding, and the caller decides which file is drive code.** The
 names are `sleep` and `sleepAsync` of Nim, and `waitForTimeout` of Playwright, each with what
 replaces it (`checkWaits`). The rule comes from IX.12 alone, so knoller holds the names. The
-paths of drive code belong to a layout, so the caller gives them.
+paths of drive code are a habit of one repository, so the caller gives them, and knoller holds
+none.
 
-- `curator/audit` reads `tests/` and `tools/` of each project. The command line reads each file
-  under a directory `tests` or `tools`, at any depth (`isFileDrive`).
+- The chain reads fixed waits where its caller says the file is drive code (`is_drive`). It reads
+  them in the checks of the source and in the fence warning. `curator/audit` says so of `tests/`
+  and `tools/` of each project. The command line says so of no file.
 - Nim names compare as the compiler compares them (`identity`), so `sleep_async` is `sleepAsync`.
   Nim source is read with comments and strings blanked.
 - A caller that reads another kind passes the identifiers of each line, less those of its
   comments. Only the name of Playwright reads there, exactly, since `sleep` of TypeScript is the
   helper of a drive.
-- Cost: the command line knows no project, so it reads a file that the static pass passes over,
-  such as `src/tests/a.nim`.
-- Verified by `suites/test_waits.nim`.
+- Cost: `knoller --check` alone reports no fixed wait. A repository that wants the rule runs
+  knoller through a caller that names its drive code, as `koch` does.
+- Verified by `suites/test_waits.nim`. Verified by `suites/test_chain.nim`: the word of the caller
+  reads at any path, and no path reads without it. Verified by `suites/test_command.nim`: a fixed
+  wait under `tests`, `tools` and `src/tools` passes the command line.
 
 ## Platforms
 
@@ -1607,8 +1804,4 @@ there is unverified.
 ## Open questions
 
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
-  the nimble that 2.2.12 ships.
-- Some rules read paths in the layout of this repository: `tests/`, a test stub, a drive file
-  under `tests` or `tools`, and the umbrella `<project>/src/<project>.nim`. They read the whole
-  path, so the spelling of a path changes nothing. In another repository they would need to read
-  paths relative to the nearest nimble file.
+  the nimble that 2.4.0 ships.

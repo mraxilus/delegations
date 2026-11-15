@@ -133,6 +133,33 @@ suite "Selection":
     check selection.isAllHidden(scene)
 
 
+  test "hiding or deleting a selection is one act, which one undo takes back":
+    # Both front-ends' menus act through here and record once (repository issue 632).
+    var
+      scene = initScene()
+      camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
+      history: History
+      selection: Selection
+    let (a, b) = (scene.addObject(POINTS[0], "a", Ink.Rose), scene.addObject(POINTS[1], "b",
+      Ink.Rose))
+    history.initHistory(scene, camera)
+    selection.toggle(a)
+    selection.toggle(b)
+    selection.setVisibleAll(scene, false)
+    history.record(scene, camera)
+    check not (scene.isVisible(a) or scene.isVisible(b))
+    check history.undo(scene, camera)
+    check scene.isVisible(a) and scene.isVisible(b)
+    check not history.isUndoable  # One act was one step.
+    selection.removeAll(scene)
+    history.record(scene, camera)
+    check not (scene.isAlive(a) or scene.isAlive(b))
+    check selection.len == 0  # Freed handle keeps no pick, or next add would inherit it.
+    check history.undo(scene, camera)
+    check scene.isAlive(a) and scene.isAlive(b)
+    check not history.isUndoable
+
+
   test "toggle appends in pick order, so the first two picks name m and n":
     var selection: Selection
     selection.toggle(4)

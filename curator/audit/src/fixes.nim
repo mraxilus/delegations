@@ -12,9 +12,9 @@
 ##     chain asks (`Fix.asked`), `fixProven` runs compiler of each pin asked once on all its
 ##     sources (`answered`), holds answers by path in `Context`, and fixes again each entry
 ##     that asked, at most `ASKS_MAX` times. Pin is that of project holding file, driver's for
-##     root file, served as `resolve` of knoller serves it, so `ronri` projects read with commit
-##     pin, whose glyphs 2.2.12 lexes as names. Pin nothing serves proves nothing, and run
-##     prints why.
+##     root file, served as `resolve` of knoller serves it, so each project reads with grammar
+##     of its pin: 2.2.12 lexes as names glyphs that 2.4.0 lexes as operators. Pin nothing
+##     serves proves nothing, and run prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
 ##     from what `initContext` reads: rename of abbreviation (V.6), and to case of name's kind
 ##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
@@ -26,9 +26,18 @@
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`) is never written, and layout
 ##     checks read none of it: rewrite would leave lock's copy stale, and Atlas reads that as
 ##     change of package.
+##   File of project whose prose stays in its own language takes no fixer of articles, and its
+##     fence warning counts none (`prose_own.nim`). Knoller takes that as mode of each file
+##     (`should_drop_articles`), since list is policy of this repository, which knoller holds none
+##     of.
+##   Knoller reads tests, stubs and umbrella from nimble file nearest each file, and its caller
+##     finds that file; koch gives that of project holding it (`nimbleProject`).
+##   Knoller reads fixed waits where its caller says file is drive code, and koch says so of
+##     `tests/` and `tools/` of each project (`waits.isCodeDrive`), so fence warning counts them
+##     where static pass reads them.
 ##   `checkFormatting` holds every check whose findings these fixers clear and static pass
-##     does not run yet; pull request after projects run `koch fix` wires its tree form
-##     (CURATOR.md, duty 3), one line in `auditTree`; exact banners it holds, static pass reads
+##     does not run yet; pull request wiring its tree form, one line in `auditTree`, lands once
+##     rest of tree is clean (CURATOR.md, duty 3); exact banners it holds, static pass reads
 ##     already (`form.nim`), since no project breaks them.
 ##   Scope: every path fix would write goes through `scope.checkScope` for branch. One path
 ##     outside refuses every write, so run writes all it planned or nothing. Curator branch
@@ -43,7 +52,10 @@
 
 import std/[options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
-import ./[checker, findings, glossary, kinds, layout, names, plan, scope, symbols, toolchain]
+import ./[
+  checker, findings, glossary, kinds, layout, names, plan, prose_own, scope, symbols, toolchain,
+  waits,
+]
 
 
 
@@ -78,7 +90,7 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
   ## Report each rule `koch fix` clears in full in source of Nim syntax, as knoller reads its
   ##   dialect (`checkFormatting` there); other kind is read by none.
   if kind.rule.syntax != Syntax.Nim: return
-  checkFormatting(path, source, kind.dialect)
+  checkFormatting(path, source, kind.dialect, nimble = path.nimbleProject)
 
 
 func checkFormatting*(tree: Tree): seq[Finding] =
@@ -282,7 +294,15 @@ func fixSource(
       result.fixed.add step.fixed
 
   # Run chain of knoller's fixers until source settles; unsettled source keeps edits above.
-  let fix = formatted(path, base, kind.dialect, context.proofs.getOrDefault(path))
+  #   Articles stay in file of project keeping its own prose (`isProseOwn`).
+  let fix = formatted(
+    path,
+    base,
+    kind.dialect,
+    context.proofs.getOrDefault(path),
+    should_drop_articles = not path.isProseOwn,
+    nimble = path.nimbleProject,
+  )
   result.source = fix.source
   result.asked = fix.asked
   result.fixed.add fix.fixed.toFindings
@@ -304,7 +324,15 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     result.left.add checkFence(e.path, fence).toFindings
     return
   let proofs = context.proofs.getOrDefault(e.path)
-  result.warned.add checkFenceHeld(e.path, e.content, e.kind.get.dialect, proofs).toFindings
+  result.warned.add checkFenceHeld(
+    e.path,
+    e.content,
+    e.kind.get.dialect,
+    proofs,
+    should_drop_articles = not e.path.isProseOwn,
+    nimble = e.path.nimbleProject,
+    is_drive = e.path.isCodeDrive,
+  ).toFindings
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:

@@ -54,6 +54,7 @@ type Question* = object  ## One card's question, as data, so threads may share i
   is_either_way*: bool  ## Still that fixes no way about: wound either way.
   who*, head*: Body  ## Who turns, and whose crown hands go over: one dancer.
   over*: Option[Arm]  ## Lead's arm still card lays over, or none.
+  straight*: Option[Arm]  ## Lead's arm swan's card draws straight, or none.
 
 
 func moving(key: string, links: seq[Link], is_away: bool, manner: Manner, amount: float): Question =
@@ -74,6 +75,7 @@ func moving(key: string, links: seq[Link], is_away: bool, manner: Manner, amount
     who: who,
     head: who,
     over: none(Arm),
+    straight: none(Arm),
   )
 
 func questions*(): seq[Question] =
@@ -92,6 +94,7 @@ func questions*(): seq[Question] =
       who: ask.who,
       head: ask.head,
       over: ask.over,
+      straight: ask.straight,
     )
 
   # `B` and `E`: four single-hand holds, four manners, four quarters, moving.  Page walks
@@ -159,6 +162,7 @@ proc answered*(question: Question): bool =
       is_either_way = question.is_either_way,
       who = question.who,
       over = question.over,
+      straight = question.straight,
     ) or isPlannedHolding(
       HUMAN,
       CROWN,
@@ -169,6 +173,7 @@ proc answered*(question: Question): bool =
       is_either_way = question.is_either_way,
       who = question.who,
       over = question.over,
+      straight = question.straight,
     )
   else:
     isReaching(

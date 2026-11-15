@@ -58,11 +58,19 @@ declare global {
     __is_counting_copies?: boolean;
     /** JS backend's own copy, held while counting wrapper stands in front of it. */
     __copy_unwrapped?: CopyNim;
+    /** How many multivectors page built while counting stood open; see `driveBuiltStill`. */
+    __built_counted?: number;
+    /** How many of those reference library's own functions built, counted apart. */
+    __built_library?: number;
+    /** Whether build counter counts now. */
+    __is_counting_built?: boolean;
+    /** Typed array constructor, held while counting wrapper stands in front of it. */
+    __array_unwrapped?: Float64ArrayConstructor;
   }
 }
 
 /** Shape of JS backend's deep copy, `nimCopy`: destination, source, type, and copy made. */
-type CopyNim = (destination: unknown, source: unknown, type: unknown) => unknown;
+export type CopyNim = (destination: unknown, source: unknown, type: unknown) => unknown;
 
 /** Stand wrapper in front of page's frame build, collecting what each frame costs.
  *
@@ -132,12 +140,43 @@ export async function readWork(page: Page, from = 0): Promise<Work | null> {
  */
 export const FRAMES_PHASES_LEAST = 30;
 
-/** Least frames over 2 ms that accounting under demo reads: fewer leave too few to divide. */
-export const FRAMES_PHASES_HEAVY_LEAST = 20;
-
 /** Read each frame's clocks, dropping first two, which carry page's own warm-up. */
 export async function readPhases(page: Page, from = 2): Promise<Phase[]> {
   return page.evaluate((given) => (window.__phase_frame ?? []).slice(given), from);
+}
+
+/** Least step of page's clock: Chromium coarsens `performance.now` to it off isolated page. */
+export const MILLISECONDS_STEP_CLOCK = 0.1;
+
+/** Read middle value of readings, which one slow frame of preemption does not move. */
+export function median(readings: number[]): number {
+  const sorted = [...readings].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)] ?? 0;
+}
+
+/** Whole factor that slows typical reading toward wanted size, and never speeds it.
+ *
+ *  Typical reading counts as one step of clock at least, since clock reads nothing shorter.
+ */
+export function rateToward(typical: number, wanted: number): number {
+  return Math.max(1, Math.ceil(wanted / Math.max(typical, MILLISECONDS_STEP_CLOCK)));
+}
+
+/** Slow page's processor by this factor while `run` runs, then set it back.
+ *
+ *  Chrome's own protocol slows processor as whole, so phases slow alike over sample, while
+ *  single frame can slip through unslowed. Check then reads machine at size its clock can
+ *  divide, whatever its speed.
+ */
+export async function underRate<T>(page: Page, rate: number, run: () => Promise<T>): Promise<T> {
+  const devtools = await page.context().newCDPSession(page);
+  await devtools.send('Emulation.setCPUThrottlingRate', { rate });
+  try {
+    return await run();
+  } finally {
+    await devtools.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    await devtools.detach();
+  }
 }
 
 /** How many frames have been collected, for section timing window of its own. */
@@ -312,6 +351,65 @@ export async function driveCopiesStill(page: Page, objects: number): Promise<voi
       ? `${copies.project} copies over ${phases.length} frames, for ${objects} objects; ` +
         `library's own ${copies.library}, apart`
       : 'page holds no `nimCopy` to count',
+  );
+}
+
+
+/** How many still frames builds are counted over; more than one, so steady state is read. */
+const FRAMES_BUILT = 3;
+
+/** Count multivectors still frames build, and assert each frame builds fewer than scene has
+ *  objects.
+ *
+ *  JS backend keeps multivector's sixteen coefficients in `Float64Array` of 128 bytes, which
+ *  V8 backs off its heap: each costs microseconds to build and free, where one of 64 bytes
+ *  costs tens of nanoseconds. Function whose default result JS backend builds, then
+ *  overwrites, turns frame linear in scene for no drawn change, and copy check cannot see it,
+ *  since building is no copy. As found: `scene.geometryAt`, `lent` func, did once per object.
+ *  Counts arrays of one multivector's length alone. Library's own are counted apart and
+ *  reported, not bound, as copies are (`driveCopiesStill`); their count above zero says
+ *  wrapper saw multivectors at all. Builder is function calling constructor, read off stack.
+ */
+export async function driveBuiltStill(page: Page, objects: number): Promise<void> {
+  const is_wrapped = await page.evaluate((mark) => {
+    const scope = globalThis as unknown as { Float64Array: Float64ArrayConstructor };
+    const unwrapped = scope.Float64Array;
+    const coefficients = nimObjectCoefficients(nimSceneHandles()[0] ?? 0).length;
+    window.__array_unwrapped = unwrapped;
+    window.__built_counted = 0;
+    window.__built_library = 0;
+    window.__is_counting_built = false;
+    scope.Float64Array = new Proxy(unwrapped, {
+      construct(target, given: unknown[]): object {
+        if (window.__is_counting_built === true && given[0] === coefficients) {
+          // Line 0 names error, line 1 this trap, line 2 function building array.
+          const maker = (new Error().stack ?? '').split('\n')[2] ?? '';
+          if (maker.includes(mark)) window.__built_library = (window.__built_library ?? 0) + 1;
+          else window.__built_counted = (window.__built_counted ?? 0) + 1;
+        }
+        return Reflect.construct(target, given) as object;
+      },
+    });
+    return coefficients > 0;
+  }, MARK_LIBRARY);
+
+  const from = await countFrames(page);
+  await page.evaluate(() => { window.__is_counting_built = true; });
+  await advanceFrames(page, FRAMES_BUILT);
+  const built = await page.evaluate(() => {
+    window.__is_counting_built = false;
+    const scope = globalThis as unknown as { Float64Array: Float64ArrayConstructor };
+    if (window.__array_unwrapped !== undefined) scope.Float64Array = window.__array_unwrapped;
+    return { project: window.__built_counted ?? 0, library: window.__built_library ?? 0 };
+  });
+  const phases = await readPhases(page, from);
+
+  report(
+    'a still frame under the largest demo builds fewer multivectors than the scene has objects',
+    is_wrapped && phases.length === FRAMES_BUILT && built.library > 0 &&
+      built.project < objects * FRAMES_BUILT,
+    `${built.project} multivectors over ${phases.length} frames, for ${objects} objects; ` +
+      `library's own ${built.library}, apart`,
   );
 }
 

@@ -1,0 +1,124 @@
+{
+  "status": "proposed",
+  "builds_on": [],
+  "claims": [
+    {
+      "kind": "suites"
+    },
+    {
+      "kind": "tables",
+      "algebras": ["rga2d", "rga3d", "rga4d", "rga5d", "rga6d", "cga3d", "cga4d", "cga5d", "cga6d"],
+      "pairs": [
+        ["CAYLEYS_COMPLEMENT.left", "CAYLEYS_COMPLEMENT.left"],
+        ["CAYLEYS_COMPLEMENT.right", "CAYLEYS_COMPLEMENT.right"],
+        ["CAYLEYS_PARTS.bulk.round", "CAYLEYS_PARTS.bulk.round"],
+        ["CAYLEYS_PARTS.weight.round", "CAYLEYS_PARTS.weight.round"],
+        ["CAYLEYS_REVERSE.base", "CAYLEYS_REVERSE.base"],
+        ["CAYLEYS_REVERSE.anti", "CAYLEYS_REVERSE.anti"],
+        ["CAYLEY_METRIC", "CAYLEY_METRIC"],
+        ["CAYLEYS_EXOMORPHISM_METRIC.base", "CAYLEYS_EXOMORPHISM_METRIC.base"],
+        ["CAYLEYS_EXOMORPHISM_METRIC.anti", "CAYLEYS_EXOMORPHISM_METRIC.anti"],
+        ["CAYLEYS_WEDGE.base", "CAYLEYS_WEDGE.base"],
+        ["CAYLEYS_WEDGE.anti", "CAYLEYS_WEDGE.anti"],
+        ["CAYLEYS_DUAL.base.left", "CAYLEYS_DUAL.base.left"],
+        ["CAYLEYS_DUAL.base.right", "CAYLEYS_DUAL.base.right"],
+        ["CAYLEYS_DUAL.anti.left", "CAYLEYS_DUAL.anti.left"],
+        ["CAYLEYS_DUAL.anti.right", "CAYLEYS_DUAL.anti.right"],
+        ["CAYLEYS_INTERIOR.base.bulk.left", "CAYLEYS_INTERIOR.base.bulk.left"],
+        ["CAYLEYS_INTERIOR.base.bulk.right", "CAYLEYS_INTERIOR.base.bulk.right"],
+        ["CAYLEYS_INTERIOR.base.weight.left", "CAYLEYS_INTERIOR.base.weight.left"],
+        ["CAYLEYS_INTERIOR.base.weight.right", "CAYLEYS_INTERIOR.base.weight.right"],
+        ["CAYLEYS_INTERIOR.anti.bulk.left", "CAYLEYS_INTERIOR.anti.bulk.left"],
+        ["CAYLEYS_INTERIOR.anti.bulk.right", "CAYLEYS_INTERIOR.anti.bulk.right"],
+        ["CAYLEYS_INTERIOR.anti.weight.left", "CAYLEYS_INTERIOR.anti.weight.left"],
+        ["CAYLEYS_INTERIOR.anti.weight.right", "CAYLEYS_INTERIOR.anti.weight.right"],
+        ["CAYLEYS_DOT.base", "CAYLEYS_DOT.base"],
+        ["CAYLEYS_DOT.anti", "CAYLEYS_DOT.anti"],
+        ["CAYLEYS_WEDGE_DOT.base", "CAYLEYS_WEDGE_DOT.base"],
+        ["CAYLEYS_WEDGE_DOT.anti", "CAYLEYS_WEDGE_DOT.anti"],
+        ["CAYLEYS_NORM_SQUARED.bulk.round", "CAYLEYS_NORM_SQUARED.bulk.round"],
+        ["CAYLEYS_NORM_SQUARED.weight.round", "CAYLEYS_NORM_SQUARED.weight.round"],
+        ["CAYLEY_ATTITUDE", "CAYLEY_ATTITUDE"],
+        ["CAYLEYS_WEDGES_TRANS.base[Order(0)]", "CAYLEYS_WEDGES_TRANS.base[Order(0)]"],
+        ["CAYLEYS_WEDGES_TRANS.anti[Order(0)]", "CAYLEYS_WEDGES_TRANS.anti[Order(0)]"],
+        ["CAYLEYS_WEDGES_TRANS.base[Order(1)]", "CAYLEYS_WEDGES_TRANS.base[Order(1)]"],
+        ["CAYLEYS_WEDGES_TRANS.anti[Order(1)]", "CAYLEYS_WEDGES_TRANS.anti[Order(1)]"],
+        ["CAYLEYS_WEDGES_TRANS.base[Order(2)]", "CAYLEYS_WEDGES_TRANS.base[Order(2)]"],
+        ["CAYLEYS_WEDGES_TRANS.anti[Order(2)]", "CAYLEYS_WEDGES_TRANS.anti[Order(2)]"]
+      ]
+    },
+    {
+      "kind": "tables",
+      "algebras": ["rga3d", "rga4d", "rga5d", "rga6d", "cga3d", "cga4d", "cga5d", "cga6d"],
+      "pairs": [
+        ["CAYLEYS_WEDGES_TRANS.base[Order(3)]", "CAYLEYS_WEDGES_TRANS.base[Order(3)]"],
+        ["CAYLEYS_WEDGES_TRANS.anti[Order(3)]", "CAYLEYS_WEDGES_TRANS.anti[Order(3)]"]
+      ]
+    },
+    {
+      "kind": "tables",
+      "algebras": ["rga4d", "rga5d", "rga6d", "cga4d", "cga5d", "cga6d"],
+      "pairs": [
+        ["CAYLEYS_WEDGES_TRANS.base[Order(4)]", "CAYLEYS_WEDGES_TRANS.base[Order(4)]"],
+        ["CAYLEYS_WEDGES_TRANS.anti[Order(4)]", "CAYLEYS_WEDGES_TRANS.anti[Order(4)]"]
+      ]
+    },
+    {
+      "kind": "tables",
+      "algebras": ["rga5d", "rga6d", "cga5d", "cga6d"],
+      "pairs": [
+        ["CAYLEYS_WEDGES_TRANS.base[Order(5)]", "CAYLEYS_WEDGES_TRANS.base[Order(5)]"],
+        ["CAYLEYS_WEDGES_TRANS.anti[Order(5)]", "CAYLEYS_WEDGES_TRANS.anti[Order(5)]"]
+      ]
+    },
+    {
+      "kind": "tables",
+      "algebras": ["rga6d", "cga6d"],
+      "pairs": [
+        ["CAYLEYS_WEDGES_TRANS.base[Order(6)]", "CAYLEYS_WEDGES_TRANS.base[Order(6)]"],
+        ["CAYLEYS_WEDGES_TRANS.anti[Order(6)]", "CAYLEYS_WEDGES_TRANS.anti[Order(6)]"]
+      ]
+    },
+    {
+      "kind": "tables",
+      "algebras": ["cga3d", "cga4d", "cga5d", "cga6d"],
+      "pairs": [
+        ["CAYLEY_CARRIER", "CAYLEY_CARRIER"],
+        ["CAYLEYS_PARTS.bulk.flat", "CAYLEYS_PARTS.bulk.flat"],
+        ["CAYLEYS_PARTS.weight.flat", "CAYLEYS_PARTS.weight.flat"],
+        ["CAYLEYS_NORM_SQUARED.bulk.flat", "CAYLEYS_NORM_SQUARED.bulk.flat"],
+        ["CAYLEYS_NORM_SQUARED.weight.flat", "CAYLEYS_NORM_SQUARED.weight.flat"],
+        ["CAYLEYS_NORM_SQUARED_RADIUS", "CAYLEYS_NORM_SQUARED_RADIUS"]
+      ]
+    },
+    {
+      "kind": "program",
+      "path": "laws.nim",
+      "algebras": ["rga2d", "rga3d", "rga4d", "rga5d", "rga6d", "cga3d", "cga4d", "cga5d", "cga6d"]
+    },
+    {
+      "kind": "build",
+      "algebra": "cga5d",
+      "metric": "peak",
+      "at_most": 1.5
+    },
+    {
+      "kind": "build",
+      "algebra": "cga5d",
+      "metric": "seconds",
+      "at_most": 2.5
+    },
+    {
+      "kind": "build",
+      "algebra": "cga6d",
+      "metric": "peak",
+      "at_most": 1.5
+    },
+    {
+      "kind": "build",
+      "algebra": "cga6d",
+      "metric": "seconds",
+      "at_most": 2.5
+    }
+  ]
+}

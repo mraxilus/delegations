@@ -80,7 +80,7 @@ of grades, not a `set[Grade]`.
 
 - **Reach.** A sandwich comes back as `MultivectorOdd` at 4D, although its value lies in grade 1.
   An operator that knows better declares its product set, as `filter_product` does at the pin of
-  its evaluation. P04, `exact-kinds`, replaces this return rule, as the Architect ruled on
+  its evaluation. P04, `basis-set-forms`, replaces this return rule, as the Architect ruled on
   2026-10-04.
 - **Callers.** `Multivector` stays the whole algebra, unchanged, so every line written today
   compiles.

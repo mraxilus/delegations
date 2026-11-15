@@ -473,8 +473,8 @@ proc checkRules*() =
   # nothing loads yet -- see TODO in `rules.nim`.  One doAssert used to
   # compare it to its own spelled-out copy here, which checked nothing;
   # what drawing can actually be held to is half above.
-  told.add "`above` takes no lock or wrap, and leads only to high wrap " &
-      "or default"
+  told.add "`above` takes no lock or wrap; where it may lead next (`FROM_ABOVE`) " &
+      "is not checked"
 
   # RULE 9.  Connecting line's two halves are its two hands' own
   # colours.  Shades are asked of palette rather than spelled out
@@ -522,29 +522,38 @@ proc checkRules*() =
           short_seen.incl int(max(arcs.get.a, arcs.get.b))
   doAssert short_freed > 0,
     "No high lock hugs less than rule 7 asks, so nothing here tests rule 41."
-  # And between quarter turns: no rule sends line of high lock, so it takes short way,
-  # which finds route at every whole degree of follow's turn.  Back way of retired
-  # rule 6 found none in two bands on each crossed hold (repository issue 688).
-  var degrees_routed = 0
-  for single in SINGLES:
-    let arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
-    for degree in 0..359:
-      let
-        pose = canonicalise(spinAbout(rest(), Dancer.Follow, float(degree)))
-        levels = said(some freed.level, arm)
-        modifiers = said(some freed.modifier, arm)
-        hands = handPoints(settled(pose, single.holds, levels, modifiers))
-        ends: route.Ends = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get],
-          (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
-          (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
-      doAssert routed(ends, wayFor(ends, levels[arm], modifiers[arm])).isSome,
-        &"A high lock found no route; got `{single.name}` at `{degree}` degrees."
-      inc degrees_routed
   let shorts = short_seen.toSeq.sorted
   told.add &"a high lock stands whatever its line hugs: {drawn_freed} drawn, every single " &
       &"hold at every quarter turn, {short_freed} of them short of {WRAP_MIN} degrees, " &
-      &"at [{shorts.mapIt($it).join(\", \")}]; and it finds a route at each whole degree of " &
-      &"turn, {degrees_routed div SINGLES.len} on each of {SINGLES.len} single holds"
+      &"at [{shorts.mapIt($it).join(\", \")}]"
+
+  # RULES 7 AND 41, between quarter turns.  Each lock or wrap that drawing allows is one
+  # it draws: route found at every whole degree of follow's turn, on each single hold.
+  # Rule 7 binds every landing here but high lock, whose line takes short way (rule 41).
+  # Rule 7's measure and drawing stop at same `PASSES_MAX` of `route.nim`, which this holds.
+  var allowed, tried = 0
+  for landing in landings:
+    for single in SINGLES:
+      let
+        arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
+        levels = said(some landing.level, arm)
+        modifiers = said(some landing.modifier, arm)
+      for degree in 0..359:
+        let pose = canonicalise(spinAbout(rest(), Dancer.Follow, float(degree)))
+        inc tried
+        if not isDanceable(pose, single.holds, levels, modifiers):
+          continue
+        let
+          hands = handPoints(settled(pose, single.holds, levels, modifiers))
+          ends: route.Ends = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get],
+            (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
+            (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
+        doAssert routed(ends, wayFor(ends, levels[arm], modifiers[arm])).isSome,
+          &"A lock or wrap that the drawing allows found no route; got `{landing.level} " &
+          &"{landing.modifier}` on `{single.name}` at `{degree}` degrees."
+        inc allowed
+  told.add &"each lock and wrap that the drawing allows finds a route at each whole degree " &
+      &"of turn: {allowed} of {tried} allowed, on {SINGLES.len} single holds"
 
   for line in told:
     echo &"  rule: {line}"
@@ -1175,7 +1184,7 @@ func inkLength(figure, ink: string): float =
   ##   Counting pieces one reach is drawn in cannot see break that falls
   ##     where two shades meet -- it makes one piece of each rather than
   ##     two of one.  Length can see it wherever it falls: broken reach
-  ##     draws one `BREAK` less than whole one.
+  ##     draws less than whole one by gap `hidesAt` sizes.
   ##   Reach is drawn as quadratics through midpoints between its
   ##     sampled points (rule 35), and every one of those points is
   ##     control point of curve -- so reading `M`, each `Q`'s
@@ -1305,10 +1314,12 @@ proc checkHandTurns*(built: Parts) =
     holds_its_bend = 1.2  ## Turns of wind by which straight one must still
                          ## carry most of its swing.
     most_of_it = 0.5  ## What most of it is, as share.
-  doAssert windShare(holds_its_bend, straightArm(holds_its_bend)) > most_of_it,
+  # This chain's swans stand Face-to-back, where arm over at first crossing runs straight
+  # (Architect, 2026-10-06, issue #375).
+  doAssert windShare(holds_its_bend, overArm(holds_its_bend), true) > most_of_it,
     &"The straight connection gives up its bend too early; at " &
     &"{decimal(holds_its_bend, 2)} turns it carries only " &
-    &"`{decimal(windShare(holds_its_bend, straightArm(holds_its_bend)), 2)}`."
+    &"`{decimal(windShare(holds_its_bend, overArm(holds_its_bend), true), 2)}`."
   # And what that bend is for: diamond keeps its two crossings all way to
   # swan, where third joins them.  Pair that crosses once is one arm laid
   # over other rather than going round it, and no such state lies between
@@ -1347,7 +1358,7 @@ proc checkHandTurns*(built: Parts) =
     &"stretch."
   told.add &"and the diamond opens into the swan rather than coming apart " &
       &"on the way: the straight connection still carries " &
-      &"{decimal(windShare(holds_its_bend, straightArm(holds_its_bend)), 2)} " &
+      &"{decimal(windShare(holds_its_bend, overArm(holds_its_bend), true), 2)} " &
       &"of its swing at {decimal(holds_its_bend, 2)} turns, nowhere over " &
       &"that stretch do the two cross fewer than {fewest} times, and the " &
       &"third crossing arrives once and stays -- at " &
@@ -1357,23 +1368,25 @@ proc checkHandTurns*(built: Parts) =
   # opens out into loops that go round it.  Order is load-bearing -- snake
   # that opens early drives that crossing under hand mark, where no break
   # can be drawn -- so it is asserted rather than left to comment.
+  #   Snake of this chain is arm under at first crossing, since its swans stand
+  #     Face-to-back (Architect, 2026-10-06, issue #375).
   var
     tightest_snake = (share: Inf, at: 0.0)
   for step in countup(100, 150, 1):
     let
       wind = -float(step) / 100.0
-      carried = windShare(wind, overArm(wind))
+      carried = windShare(wind, other(overArm(wind)), true)
     if carried < tightest_snake.share: tightest_snake = (carried, wind)
   doAssert tightest_snake.share < 1.0,
     &"Snake never pulls in before it opens; got `" &
     &"{decimal(tightest_snake.share, 2)}` at its tightest."
-  doAssert windShare(-1.5, overArm(-1.5)) > 1.0,
+  doAssert windShare(-1.5, other(overArm(-1.5)), true) > 1.0,
     &"Snake never opens out into its loops; got " &
-    &"`{decimal(windShare(-1.5, overArm(-1.5)), 2)}` at swan."
+    &"`{decimal(windShare(-1.5, other(overArm(-1.5)), true), 2)}` at swan."
   told.add &"the snake draws in to " &
       &"{decimal(tightest_snake.share, 2)} of one connection's swing by " &
       &"{decimal(abs(tightest_snake.at), 2)} of a turn and opens out to " &
-      &"{decimal(windShare(-1.5, overArm(-1.5)), 2)} at the swan, which is " &
+      &"{decimal(windShare(-1.5, other(overArm(-1.5)), true), 2)} at the swan, which is " &
       &"the order that keeps the third crossing clear of the hands"
 
   var
@@ -1394,12 +1407,14 @@ proc checkHandTurns*(built: Parts) =
       doAssert abs(bowed[Arm.Left] - bowed[Arm.Right]) < 1e-6,
         &"A pair short of a swan drew lopsided; got `{position.name}`."
       continue
-    # Snake is arm that is over at first crossing (Architect, 2026-09-07).
+    # Which connection runs straight is set by loop, and loop by facing at swan
+    # (Architect, 2026-10-06, issue #375).  This chain's swans stand Face-to-back,
+    # where pair under at first crossing loops up round arm over: arm over runs straight.
     # Named from `overArm` rather than from `straightArm`, so this states
     # rule instead of echoing whichever answer drawing happens to hold.
     let
-      snake = overArm(position.wind)
-      straight = other(snake)
+      straight = overArm(position.wind)
+      snake = other(straight)
     doAssert bowed[straight] < MARK_STROKE,
       &"A swan's straight connection is not straight; got " &
       &"`{decimal(bowed[straight], 1)}` of bow in `{position.name}`."
@@ -1423,24 +1438,45 @@ proc checkHandTurns*(built: Parts) =
       &"A swan's snake bows clean out of the figure; got " &
       &"`{decimal(bowed[snake], 1)}` against `{decimal(apart, 1)}` in " &
       &"`{position.name}`."
-    # Snake is arm position is named over, and it is over where name says
-    # -- at lead's own crossover.  Alternation then leaves it over at both
-    # outer crossings and under at middle, so it is drawn in two pieces
-    # and straight one, diving either side of it, in three.
+    # Snake is under where position names other arm over -- at lead's own
+    # crossover.  Alternation then leaves it under at both outer crossings and
+    # over at middle, which is its loop passing up over straight one: so it is
+    # drawn in three pieces, and straight one, diving at middle, in two.
     var pieces: array[Arm, int]
     let dives = divesPair(pair[Arm.Left], pair[Arm.Right], position.wind)
     for arm in Arm:
       pieces[arm] = cutGapsAt(pair[arm], pair[other(arm)], dives[arm]).len
-    doAssert pieces[snake] == 2,
-      &"A swan's snake is not drawn in two pieces; got " &
+    doAssert pieces[snake] == 3,
+      &"A swan's snake is not drawn in three pieces; got " &
       &"`{pieces[snake]}` in `{position.name}`."
-    doAssert pieces[straight] == 3,
-      &"A swan's straight connection is not drawn in three pieces; got " &
+    doAssert pieces[straight] == 2,
+      &"A swan's straight connection is not drawn in two pieces; got " &
       &"`{pieces[straight]}` in `{position.name}`."
     flattest = min(flattest, bowed[straight])
     snakiest = min(snakiest, bowed[snake])
     inc swans
   doAssert swans == 2, &"Two swans expected; got `{swans}`."
+
+  # Same-name chain's swans stand Face-to-face, where pair over at first crossing loops
+  # down round arm under: arm under runs straight (Architect, 2026-10-05 and 2026-10-06,
+  # issue #375).  Stated here beside cross-name chain's, so one rule reads for both.
+  let phase_paired = phaseChain(PAIRED)
+  for wind in [-1.5, 1.5]:
+    let pair = pairAt(PAIRED, wind, phase_paired)
+    var bowed: array[Arm, float]
+    for arm in Arm:
+      let chord = @[pair[arm][0], pair[arm][^1]]
+      for point in pair[arm]:
+        bowed[arm] = max(bowed[arm], nearestOn(chord, point))
+    let
+      snake = overArm(wind)
+      straight = other(snake)
+    doAssert bowed[straight] < MARK_STROKE,
+      &"A same-name swan's straight connection is not straight; got " &
+      &"`{decimal(bowed[straight], 1)}` of bow at `{decimal(wind, 1)}` turns."
+    doAssert bowed[snake] > DIAMOND_ROOM / 2,
+      &"A same-name swan's snake does not go round anything; got " &
+      &"`{decimal(bowed[snake], 1)}` of bow at `{decimal(wind, 1)}` turns."
 
   # RULE 35.  `"make it smoother (a simpler curved, right now it looks`
   # `jagged/sharp)."`  Reach is held as points so it can morph, and drawn
@@ -1467,9 +1503,9 @@ proc checkHandTurns*(built: Parts) =
       "is stored as, so what turns hard reads as turning rather than as a " &
       "run of corners"
 
-  # And crossing is drawn as crossing: reach that dives loses one
-  # `BREAK` of its own length, and reach that dives twice loses two --
-  # which is alternation, measured rather than assumed.
+  # And crossing is drawn as crossing: reach that dives loses one gap
+  # of its own length, as `hidesAt` sizes it, and reach that dives twice
+  # loses two -- which is alternation, measured rather than assumed.
   for i, position in CHAIN:
     let
       figure = built[&"hh_{i}"]
@@ -1640,7 +1676,7 @@ proc checkHandTurns*(built: Parts) =
             axisPair(put[i]).across,
             degToRad(windMeasured(put[i], HAND_TO_HAND, arm).phi),
             degToRad(spun[arm]),
-            share = windShare(spun[arm] / 360, arm),
+            share = windShare(spun[arm] / 360, arm, true),
           )
         # Drawing reads wind off Left connection to say which arm is on
         # top, so check reads it off same one and asks `divesPair` for

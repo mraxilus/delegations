@@ -79,6 +79,8 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   WrappingOperator = "operator wrapping"  ## Line fitting nowhere breaks after binary operator.
   IndentContinuation = "continuation indent"  ## Line after operator takes four spaces more.
   SeparatorTrailing = "trailing separator"  ## List of one item to line ends in separator.
+  DocMissing = "missing doc"
+    ## Declaration takes doc, which reads `## TODO: Document.` while it waits for text.
   CommentAbove = "comment above"  ## Trailing comment that does not fit takes own line above.
   Fence = "fence"  ## Fence closes inside bracket, string or comment it opens in.
   FenceHeld = "fence held"  ## Fence keeps its lines as written; run warns of each fence.

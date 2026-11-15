@@ -249,6 +249,14 @@ suite "Spacing":
     check "let z = PI*(a + b)\nf(c, d*[1])\n".fixed == "let z = PI * (a + b)\nf(c, d * [1])\n"
 
 
+  test "glued `*` before `:` or `,` marks export, after `case` and in branch as elsewhere":
+    let kept = "type\n  Step* = object\n    case is_read*: bool\n    of true: a*, b*: int\n" &
+      "    else: fixer*: Fixer\n"  # Case of #781, and form of `reports.nim`.
+    check kept.isSettled
+    check "case n*m\nof 0: discard\nelse: discard\n".fixed ==
+      "case n * m\nof 0: discard\nelse: discard\n"  # Operand follows: `*` multiplies.
+
+
   test "fix never writes wide line; finding stays for hand":
     let line = "let a = " & "x".repeat(89) & "+y\n"  # 99 runes; spaced, 101
     check checkSpacing("a.nim", line).len == 1

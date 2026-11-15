@@ -187,8 +187,8 @@ func ownTerms*(axes: Axes, arm: Arm, point: Vector): Vector =
 
 func swing*(axes: Axes, arm: Arm, pose: ArmPose): Swing =
   ## Read every joint but twist off pose, in body's own terms.
-  ##   Twist is dear one to read, and one each seed asks for last,
-  ##     so it is read apart.
+  ##   Twist is read apart, off elbow's plane that upper arm and forearm here give
+  ##     (`twistShoulder`).
   let
     shoulder_point = ownTerms(axes, arm, pose.shoulder)
     elbow_point = ownTerms(axes, arm, pose.elbow)

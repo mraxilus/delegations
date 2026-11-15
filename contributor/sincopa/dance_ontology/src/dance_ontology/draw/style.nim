@@ -9,7 +9,7 @@
 ##       it will be shown on.
 ##   Values are ones workbench settled on and are repeated in
 ##     two places that define properties, `design/page.nim` and
-##     `app/index.html`.  Repeated on purpose: fallback is what reader
+##     `pages/app/index.html`.  Repeated on purpose: fallback is what reader
 ##     gets when nothing defines them, so it cannot itself be reference.
 ##   Each side has two shades of one hue -- plain for follow, deep
 ##     for lead -- so connection says whose end is whose along its own

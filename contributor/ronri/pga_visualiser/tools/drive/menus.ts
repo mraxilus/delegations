@@ -6,7 +6,7 @@
 import type { Page } from '@playwright/test';
 import { waitUntil } from './clock';
 import { settleCamera } from './camera';
-import { waitFrames } from './frame';
+import { type CopyNim, waitFrames } from './frame';
 import { focusCanvas, settleSelection } from './gestures';
 import { report } from './report';
 
@@ -90,6 +90,60 @@ export async function driveMenuHung(page: Page): Promise<void> {
       `(${x.toFixed(1)}, ${y.toFixed(1)})`,
   );
   await toHome(page);
+}
+
+/** Anchors hang is driven from, as fractions of canvas on each axis: past, near and between
+ *  edges, so each bound of its clamp holds some of them.
+ */
+const FRACTIONS_ANCHOR = [-0.25, 0.01, 0.5, 0.99, 1.25];
+
+/** Menu sizes hang is driven with, as fractions of canvas: one small, one larger than view. */
+const FRACTIONS_MENU = [0.1, 1.5];
+
+/** Drive hang from every anchor and size above, and assert it copies no value.
+ *
+ *  Page hangs menu again every frame it shows, so one copy in hang is one copy per frame.
+ *  JS backend deep-copies through `nimCopy`; outermost call alone counted, as
+ *  `driveCopiesStill` counts it. Here, not in suite: suite compiles to C, which makes no such copy.
+ */
+export async function driveMenuHungCopies(page: Page): Promise<void> {
+  const counted = await page.evaluate(({ anchors, menus }) => {
+    const scope = globalThis as unknown as { nimCopy?: CopyNim };
+    const unwrapped = scope.nimCopy;
+    if (typeof unwrapped !== 'function') return null;
+    const canvas = document.getElementById('gl') as HTMLCanvasElement;
+    const [width, height] = [canvas.clientWidth, canvas.clientHeight];
+    let [copies, hangs, depth] = [0, 0, 0];
+    scope.nimCopy = function (destination: unknown, source: unknown, type: unknown): unknown {
+      if (depth === 0) copies += 1;
+      depth += 1;
+      try {
+        return unwrapped(destination, source, type);
+      } finally {
+        depth -= 1;
+      }
+    };
+    try {
+      for (const across of anchors) {
+        for (const down of anchors) {
+          for (const size of menus) {
+            nimMenuHung(across * width, down * height, width, height, size * width, size * height);
+            hangs += 1;
+          }
+        }
+      }
+    } finally {
+      scope.nimCopy = unwrapped;
+    }
+    return { copies, hangs };
+  }, { anchors: FRACTIONS_ANCHOR, menus: FRACTIONS_MENU });
+  report(
+    'hanging the selection menu copies no value, wherever it hangs',
+    counted !== null && counted.copies === 0,
+    counted === null
+      ? 'page holds no `nimCopy` to count'
+      : `${counted.copies} copies over ${counted.hangs} hangs`,
+  );
 }
 
 /** Drive right drag from one object onto another and out onto `more…`: picker opens beside

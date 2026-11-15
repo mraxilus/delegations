@@ -2,10 +2,12 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, os, strformat, strutils, tables, unittest]
+import std/[json, math, options, os, strformat, strutils, tables, unittest]
 
 import ../../design/[checks, marks, parts, plain, rig_page]
 import ../../src/dance_ontology/draw/[body, geometry, route, style, terms]
+from ../../design/rig as recording import KEPT_RIG
+from ../../design/rig_page {.all.} import cardsBody, HEAD_BODY
 import ../../tools/title
 from ../../src/dance_ontology/rotation import facing, seenAfter
 
@@ -224,6 +226,27 @@ suite "Internal: Every page this project publishes":
     check isTitleCased(TITLE)
 
 
+  test "viewer's prose keeps each sentence and each paragraph inside its bound":
+    ## Viewer is written by its own module rather than by workbench above, so its prose is held
+    ##   here to same two bounds as each page of `PAGES` (`plain.WORDS`, `plain.SENTENCES`).
+    ##   Read off markup page carries: header and panel (`rig_page.HEAD_BODY`), then cards
+    ##     (`rig_page.cardsBody`), cut from Reference written above and laid beside stills
+    ##     recording keeps.  Wrapper, style sheets and scripts hold no prose.
+    ##   Regression of finding E-15 of issue 698, as found on 2026-10-22 in audit of project:
+    ##     third paragraph of viewer's header held seven sentences, one of them 26 words long,
+    ##     and no law read viewer's prose.
+    let written = HEAD_BODY &
+        cardsBody(readFile(OUT / "reference.html"), folded(parseFile(KEPT_RIG)))
+    # Bounds below say nothing of markup that holds no paragraph.
+    check written.prose.len > 0
+    for said in written.longSentences:
+      checkpoint "sentence over " & $WORDS & " words: " & said
+      fail()
+    for said in written.longParagraphs:
+      checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
+      fail()
+
+
 
 suite "Internal: The sixteen facings, drawn":
   # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Reference
@@ -237,13 +260,21 @@ suite "Internal: The sixteen facings, drawn":
 suite "Internal: The rests and the chains, named by model":
   ## Reference names each chain's rest through `parts.facingRest`, and law reads written page
   ##   back (Article IX.5).
-  test "the Reference heads each chain with the facing it rests at":
+  test "the Reference heads each section of a chain with the name of that chain":
+    ## Cross-name chain stands in C and moves in F; same-name chain stands in D and moves in G.
+    ##   Headings of C, D and G also name facing their chain rests at.
+    ##   Red with G headed `Hand-to-hand chain`, name of cross-name hold, as audit of #698
+    ##     found it.
     let page = readFile(OUT / "reference.html")
     check page.contains(
       "<h2>C &middot; The cross-name chain, " & facingRest(HAND_TO_HAND).name & " at rest</h2>",
     )
     check page.contains(
       "<h2>D &middot; The same-name chain, " & facingRest(PAIRED).name & " at rest</h2>",
+    )
+    check page.contains("<h2>F &middot; The cross-name chain, moving</h2>")
+    check page.contains(
+      "<h2>G &middot; The same-name chain, " & facingRest(PAIRED).name & ", moving</h2>",
     )
 
 

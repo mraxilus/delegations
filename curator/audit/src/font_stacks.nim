@@ -1,6 +1,7 @@
 ## Judge font faces each page of project draws, for `koch drive` (Article X.8; CONTRIBUTOR.md,
-##   Pages and assets): each character page draws past ASCII is resolved down font stack of
-##   its element, against font faces page ships.
+##   Pages and assets): each character page draws is resolved down font stack of its element,
+##   against font faces page ships. Character past ASCII is judged for font face drawing it,
+##   and every character for bold browser synthesises.
 ##   Verdict is curator's, never project's: project's collector writes what browser computed,
 ##     and judge of project's own could let finding through. Three copies of resolver had
 ##     drifted and disagreed (repository issue 671), so one serves every project.
@@ -9,28 +10,37 @@
 ##     Control page is written to `build/font-faces/control.html`, before project's `drive`.
 ##     Project's `drive` reads each page it builds, and control page as page `control`, with
 ##       one collector, and writes `build/font-faces/written.json`.
-##     Once `drive` passes, that file resolves into `found.json` beside it, which is judged.
+##     Once `drive` passes, that file resolves into `found.json` beside it, and both are judged.
 ##   Project writing no `written.json` is finding: rule asks every project with pages for it,
 ##     and verdict over no file would pass pages nobody read.
 ##
-##   Control page holds Chinese numerals one to five, each in one kind of place text stands:
-##     paragraph, placeholder of field, `::before`, SVG text, and text script writes on load.
-##     No font face of store maps any of them, which suite holds to rows of `assets.nim`, so
-##     each is found wherever collector reads its place, and numeral missing names place
-##     collector skips. Script builds its numeral from codepoint, so no literal stands for
-##     reader of source alone.
+##   Control page holds numerals one to five, each as ASCII digit then Chinese numeral in one
+##     string, in one kind of place text stands: paragraph, placeholder of field, `::before`,
+##     SVG text, and text script writes on load.
+##     No font face of store maps any of five numerals, which suite holds to rows of
+##       `assets.nim`, so each is found wherever collector reads its place, and numeral missing
+##       names place collector skips.
+##     `characters` of `found.json` hold codepoints past ASCII alone, so digit never reaches
+##       them, and verdict reads runs of control page in `written.json` instead: run holding
+##       numeral holds its digit, or digit missing names place where collector drops ASCII.
+##       Digit elsewhere proves nothing of its place, as source of style and script holds digits.
+##     Script builds its string on load, so no literal of numeral stands for reader of source.
 ##   Verdict: finding for each character page other than control draws from font face of
-##     system, each font face browser refused, and each numeral control page lacks.
+##     system, each run drawn in bold browser synthesises, each font face browser refused, each
+##     numeral control page lacks, and each digit run of its numeral lacks.
 ##
 ##   Input, `written.json`, maps each page to three lists:
-##     `runs`: each string page draws past ASCII, as `element`, `stack` (computed `font-family`),
-##       `weight` (computed `font-weight`) and `codepoints`;
+##     `runs`: each string page draws, ASCII included, as `element`, `stack` (computed
+##       `font-family`), `weight` (computed `font-weight`) and `codepoints`; ASCII is written as
+##       Architect ruled (D1 b of #751), since most bold browser synthesises falls on it;
 ##     `declared`: each `@font-face` rule, as `family`, `weight` (keyword, number, or range of
 ##       two), `range` (`unicode-range` as rule writes it) and `file`, which path relative to
 ##       folder of `written.json` names where it is not absolute;
 ##     `refused`: each font face browser did not load, as `family`, `weight` and `status`.
 ##   Output, `found.json`, maps each page to `characters`, each `element` and `codepoint` that font
-##     face of system would draw, once for each element, and to `refused`, copied as read.
+##     face of system would draw, once for each element; to `synthesised`, each `element` and
+##     `family` drawn in bold browser synthesises, with `weight` asked and `matched` weight its
+##     font face holds, once for each element and family; and to `refused`, copied as read.
 ##
 ##   Matching follows CSS Fonts 4 for `font-family` and `font-weight`:
 ##     Family names match without case, quotes stripped.
@@ -42,10 +52,20 @@
 ##       draws it.
 ##     Rule of set draws character where its `unicode-range` holds it, or it sets none, and its
 ##       file maps it (`font_files.nim`).
+##     Family drawing character at weight of 600 or more, from set matched at lighter weight,
+##       draws it in bold browser synthesises: glyphs no file page ships holds, which each
+##       engine thickens its own way (Article X.8; repository issue 730). CSS Fonts 4 names no
+##       bound (2.2.2); Chromium (`kBoldThreshold`) and Firefox (`SupportsBold`) both set 600.
 ##   Each file is read once, however many rules and pages name it.
 ##
 ##   Cost: weight alone is matched; `font-style` and `font-stretch` are unread, as no copy read
-##     them. Italic that page ships is later step.
+##     them. Italic that page ships is later step, and so is oblique browser synthesises.
+##   Cost: collector writes no `font-synthesis`, so page turning synthesis off still gets finding
+##     for bold; its text then draws lighter than it asks.
+##   Cost: every string of control page mixes ASCII with numeral, so collector dropping string of
+##     ASCII alone, and keeping mixed string whole, passes, and hides bold of such text.
+##   Cost: collector writing one string as two runs gets finding at each place, though bold check
+##     would read both runs.
 ##   Cost: character is resolved alone, as `cmap` maps it. Browser picks font face per cluster,
 ##     so combining mark whose base font face lacks it can draw from font face this does not name.
 ##   Cost: text script writes only once reader acts stands in no place of control page.
@@ -56,7 +76,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, os, sequtils, sets, strutils, tables]
+import std/[algorithm, json, options, os, sequtils, sets, strutils, tables]
 import ./[findings, font_files]
 
 
@@ -72,6 +92,12 @@ const
   WEIGHT_BOLD = 700  ## Weight keyword `bold` names.
   WEIGHTS_UPWARD = 400 .. 500
     ## Weights wanted that look upward to 500 before they look downward (CSS Fonts 4).
+  WEIGHT_SYNTHESIS = 600
+    ## Weight asked from which browser synthesises bold, where set matched is lighter: Chromium's
+    ##   `kBoldThreshold`, and bold of `SupportsBold` in Firefox.
+  LAST_ASCII = 0x7F
+    ## Last codepoint of ASCII; rule judges font face of system past it alone (CONTRIBUTOR.md,
+    ##   Pages and assets), while bold is judged on every character.
   DIRECTORY_FONT_FACES* = "build" / "font-faces"
     ## Folder of project, from its root, holding control page, `written.json` and `found.json`.
   FILE_CONTROL* = "control.html"  ## Control page, written before project's `drive`.
@@ -85,26 +111,29 @@ const
     (0x56DB, "SVG text"),
     (0x4E94, "text script writes on load"),
   ]
-    ## Chinese numerals one to five, each with kind of place control page holds it in.
+    ## Chinese numerals one to five, each with kind of place control page holds it in, after ASCII
+    ##   digit of its value.
   TEMPLATE_CONTROL = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Control of font faces</title>
-<style>#before::before { content: "\$3"; }</style>
+<style>#before::before { content: "3\$3"; }</style>
 </head>
 <body>
-<p id="paragraph">&#x$1;</p>
-<input id="placeholder" placeholder="&#x$2;">
+<p id="paragraph">1&#x$1;</p>
+<input id="placeholder" placeholder="2&#x$2;">
 <p id="before"></p>
-<svg width="48" height="48"><text id="svg" x="0" y="32">&#x$4;</text></svg>
+<svg width="48" height="48"><text id="svg" x="0" y="32">4&#x$4;</text></svg>
 <p id="script"></p>
-<script>document.getElementById("script").textContent = String.fromCodePoint(0x$5);</script>
+<script>document.getElementById("script").textContent = "5" + String.fromCodePoint(0x$5);</script>
 </body>
 </html>
 """
-    ## Control page; `$n` stands for hex digits of numeral `n`. References and escapes keep
-    ##   source ASCII, and script builds its numeral, so it stands only once script runs.
+    ## Control page; `$n` stands for hex digits of numeral `n`, after ASCII digit `n` in one
+    ##   string. Digit stands first, since CSS escape `\4E09` would read digit after it as hex.
+    ##   References and escapes keep source ASCII, and script builds its string, so it stands only
+    ##   once script runs.
 
 
 func toFamilies(stack: string): seq[string] =
@@ -162,6 +191,13 @@ func weightMatched(wanted: int, bounds: seq[int]): int =
   else: (if above.len > 0: above[0] else: below[0])
 
 
+func weightFamily(own: seq[FontFace], wanted: int): int =
+  ## Pick weight family's rules settle on for `wanted`: `wanted` where range of rule holds it,
+  ##   else bound CSS Fonts 4 picks among bounds rules declare.
+  if own.anyIt(wanted in it.weights): wanted
+  else: weightMatched(wanted, own.mapIt(@[it.weights.a, it.weights.b]).concat)
+
+
 func isHolding(font_face: FontFace, codepoint: int): bool =
   ## Tell whether rule draws `codepoint`: its range holds it, or it sets none, and its file maps it.
   (font_face.ranges.len == 0 or font_face.ranges.anyIt(codepoint in it)) and
@@ -178,15 +214,30 @@ func isDrawn(
   var sets: OrderedTable[(int, int), seq[FontFace]]
   for font_face in own:
     sets.mgetOrPut((font_face.weights.a, font_face.weights.b), @[]).add font_face
-  let matched =
-    if own.anyIt(weight in it.weights): weight
-    else: weightMatched(weight, own.mapIt(@[it.weights.a, it.weights.b]).concat)
+  let matched = own.weightFamily(weight)
   for (bounds, set) in sets.pairs:
     if matched notin bounds[0] .. bounds[1]: continue
     if not set.anyIt(it.isHolding(codepoint)) and
         not font_faces.isDrawn(families.toOpenArray(1, families.high), weight, codepoint):
       return false
   true
+
+
+func boldSynthesised(
+  font_faces: seq[FontFace], families: openArray[string], weight, codepoint: int
+): Option[tuple[family: string, matched: int]] =
+  ## Find family drawing `codepoint` at `weight` in bold browser synthesises, with weight its set
+  ##   holds; none under bound, where font face of system draws, or where set matched is bold.
+  ##   Family draws where set matching weight holds `codepoint`, as browser falls back per
+  ##     character; where one of tied sets holds it, family is taken to draw it.
+  if weight < WEIGHT_SYNTHESIS: return
+  for family in families:
+    let own = font_faces.filterIt(it.family == family)
+    if own.len == 0: return  # family page does not ship ends search (Article X.8)
+    let matched = own.weightFamily(weight)
+    if not own.anyIt(matched in it.weights and it.isHolding(codepoint)): continue
+    if matched < WEIGHT_SYNTHESIS: return some((family: family, matched: matched))
+    return
 
 
 proc toFontFaces(
@@ -218,24 +269,36 @@ proc toFound*(written: JsonNode, directory: string): JsonNode =
     let font_faces = entry{"declared"}.toFontFaces(directory, read)
     var
       characters = newJArray()
+      synthesised = newJArray()
       reported: HashSet[(string, int)]
+      bolded: HashSet[(string, string)]
     for run in entry{"runs"}.getElems:
       let
         element = run["element"].getStr
         families = run["stack"].getStr.toFamilies
         weight = int(run["weight"].getFloat)
       for node in run["codepoints"].getElems:
-        let codepoint = node.getInt
-        if (element, codepoint) in reported or font_faces.isDrawn(families, weight, codepoint):
+        let
+          codepoint = node.getInt
+          bold = font_faces.boldSynthesised(families, weight, codepoint)
+        if bold.isSome and (element, bold.get.family) notin bolded:
+          bolded.incl (element, bold.get.family)
+          synthesised.add %*{
+            "element": element, "family": bold.get.family, "weight": weight,
+            "matched": bold.get.matched,
+          }
+        if codepoint <= LAST_ASCII or (element, codepoint) in reported or
+            font_faces.isDrawn(families, weight, codepoint):
           continue
         reported.incl (element, codepoint)
         characters.add %*{"element": element, "codepoint": codepoint}
     let refused = if entry{"refused"}.isNil: newJArray() else: entry["refused"]
-    result[page] = %*{"characters": characters, "refused": refused}
+    result[page] = %*{"characters": characters, "synthesised": synthesised, "refused": refused}
 
 
 func pageControl*(): string =
-  ## Render control page, each numeral of `NUMERALS_CONTROL` in its kind of place.
+  ## Render control page, each numeral of `NUMERALS_CONTROL` after its ASCII digit, in its kind
+  ##   of place.
   TEMPLATE_CONTROL % NUMERALS_CONTROL.mapIt(it[0].toHex(4))
 
 
@@ -262,6 +325,14 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
           page & "`: `" & character{"element"}.toText & "` draws `" &
           character{"codepoint"}.getInt.toNotation & "`.",
       )
+    for bold in entry{"synthesised"}.getElems:
+      result.add finding(
+        path, 0,
+        "Page ships font face of each weight it draws, never bold browser synthesises (Article " &
+          "X.8); got `" & page & "`: `" & bold{"element"}.toText & "` asks `" &
+          bold{"family"}.toText & "` for weight `" & bold{"weight"}.toText &
+          "`, which draws from font face of weight `" & bold{"matched"}.toText & "`.",
+      )
   if found{PAGE_CONTROL}.isNil:
     result.add finding(
       path, 0,
@@ -278,6 +349,23 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
       )
 
 
+func toVerdictDigits(written: JsonNode, path: string): seq[Finding] =
+  ## Judge runs `written` holds for control page: run holding numeral holds ASCII digit of its
+  ##   value too, which `found.json` never holds (header); each finding names `path`.
+  ##   Place collector skips is numeral `toVerdict` reports, so it takes no second finding here.
+  let runs = written{PAGE_CONTROL}{"runs"}.getElems.mapIt(
+    it{"codepoints"}.getElems.mapIt(it.getInt)
+  )
+  for index, (numeral, place) in NUMERALS_CONTROL:
+    let digit = ord('1') + index  # ASCII digit of numeral's value
+    if not runs.anyIt(numeral in it) or runs.anyIt(numeral in it and digit in it): continue
+    result.add finding(
+      path, 0,
+      "Collector writes each string page draws whole, ASCII included (CONTRIBUTOR.md, Pages " &
+        "and assets); got `" & digit.toNotation & "` in " & place & " unwritten.",
+    )
+
+
 proc writeControl*(root, project: string) =
   ## Write control page into folder of font faces of `project`, where its `drive` reads it.
   let folder = root / project / DIRECTORY_FONT_FACES
@@ -286,7 +374,7 @@ proc writeControl*(root, project: string) =
 
 
 proc checkFontFaces*(root, project: string): seq[Finding] =
-  ## Resolve `written.json` of `project`, write `found.json` beside it, and judge it; project
+  ## Resolve `written.json` of `project`, write `found.json` beside it, and judge both; project
   ##   writing none is finding (header).
   let
     folder = root / project / DIRECTORY_FONT_FACES
@@ -297,9 +385,10 @@ proc checkFontFaces*(root, project: string): seq[Finding] =
       "Drive of project with pages writes what its collector read, control page included " &
         "(CONTRIBUTOR.md, Pages and assets); got no file.",
     )]
-  var found: JsonNode
+  var written, found: JsonNode
   try:
-    found = parseFile(folder / FILE_WRITTEN).toFound(folder)
+    written = parseFile(folder / FILE_WRITTEN)
+    found = written.toFound(folder)
     writeFile(folder / FILE_FOUND, found.pretty & "\n")
   except IOError, OSError, ValueError, KeyError:
     return @[finding(
@@ -307,4 +396,4 @@ proc checkFontFaces*(root, project: string): seq[Finding] =
       "Written file resolves where each page holds runs, rules and refused font faces, and " &
         "each file of rule reads; got `" & getCurrentExceptionMsg() & "`.",
     )]
-  found.toVerdict(path)
+  found.toVerdict(path) & written.toVerdictDigits(path)

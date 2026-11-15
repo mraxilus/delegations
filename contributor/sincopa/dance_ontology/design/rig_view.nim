@@ -27,14 +27,18 @@ import ./drawn
 const VERDICTS* = [
   "Holds. The simulation wound the couple here from rest, lifted their joined hands, and let the " &
   "pose settle.",
+  "Holds. The simulation planned every arm through the turn, and the engine stood each " &
+  "moment of the plan.",
   "No pose holds, at any distance the couple can stand.",
   "Nothing stops the turn inside the range this sweep tried.",
 ]
   ## Every whole sentence viewer shows as its verdict, in one table.
+  ##   Still that holds says how simulation reached it, as recording marks it (`planned`):
+  ##     wound from rest by walk (`walk.stood`), or planned arm by arm (`walk.plannedStill`).
   ##   Page is built in browser, so no page on disk carries these sentences and
   ##     `test_marks` cannot read them.  Table is what `test_said` counts instead, which
   ##     holds them to same two rules as prose written into markup (Article VI.8).
-  ##   Fourth verdict is not whole sentence: it opens `Stops at <b>N</b> turns:`
+  ##   Verdict of sweep that stops is not whole sentence: it opens `Stops at <b>N</b> turns:`
   ##     and closes with reason recorded by simulation, so it is built at reading time
   ##     and counted by nothing.
 
@@ -313,19 +317,21 @@ proc where(recording: JsObject, at: int): cstring =
         toFixed(apartAt(recording, at), 2) & cstring"</b> m apart"
 
 proc caption() =
-  ## Say what entry shows: its turns and distance, or what stopped it.
+  ## Say what entry shows: its turns and distance, how still was reached, or what stopped sweep.
   let sweep_shown = sweep()
   document.getElementById("where").innerHTML = where(sweep_shown, MOMENT_SHOWN)
   if isStill(sweep_shown):
     document.getElementById("verdict").innerHTML =
-      (if moments() > 0: cstring(VERDICTS[0]) else: cstring(VERDICTS[1]))
+      (if moments() == 0: cstring(VERDICTS[2])
+       elif truth(sweep_shown.planned): cstring(VERDICTS[1])
+       else: cstring(VERDICTS[0]))
   else:
     document.getElementById("verdict").innerHTML =
       (if truth(sweep_shown.stopped):
          cstring"Stops at <b>" & toFixed(sweep_shown.turns.toFloat, 2) & cstring"</b> turns: " &
              text(sweep_shown.says)
        else:
-         cstring(VERDICTS[2]))
+         cstring(VERDICTS[3]))
 
 
 proc framingEntry(recording: JsObject): Framing =

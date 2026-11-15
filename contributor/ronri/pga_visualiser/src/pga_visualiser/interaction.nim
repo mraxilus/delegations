@@ -107,7 +107,8 @@ const
   #   Time bound dropped clicks hand lingered on; see `isClick`.
 
   FACTOR_DOLLY_NOTCH* = 1.12
-    ## Scale separation by this for each notch of wheel, on both front-ends; see `factorWheel`.
+    ## Scale distance to pivot by this for each notch of wheel, on both front-ends; see
+    ## `factorWheel`.
   PIXELS_NOTCH* = 100.0
     ## Count this much of page's wheel travel as one notch, so page zooms as desktop does.
     ##   Desktop reads whole notches from SDL; page reads pixels.
@@ -132,7 +133,7 @@ const
   PIXELS_MENU_CORNER_FURTHEST* = 103.9
     ## Record furthest any wedge's outer corner sits from menu centre, measured.
     ##   Not derivable here: wedge is as wide as its label, and only render path knows what
-    ##   its face laid that out as.
+    ##   its font face laid that out as.
     ##     Read off drawn rects in browser build; all four labels are fixed, so one number.
     ##   Kept beside constant it justifies, so wider label or longer reach surfaces as number
     ##   no longer clearing `PIXELS_MENU_DISENGAGE`, not as menu closing on wedge.
@@ -311,13 +312,15 @@ type
       ## past it alone, at any frame rate; see `fingersHeld`.
     angle_from*: Option[float]  ## Angle twist counts from, once fingers turn past slop.
     is_orbit*: bool  ## Whether grip orbits selection, rather than slides camera.
-    is_open*: bool  ## Whether free flight's places stand at separation over nothing, with
-      ## no object under either finger nor near pivot's depth to name theirs.
+    is_open*: bool  ## Whether free flight's places stand at distance to pivot over nothing,
+      ## with no object under either finger nor near pivot's depth to name theirs.
     reach_selection*: float  ## Selection's reach from pivot, which orbit's sphere takes.
     middle_last*: ScreenPosition  ## Fingers' middle as orbit last carried it.
     reach*: float  ## Length one unit of free flight's slide stands for: mean reach of
       ## places held.
     solution*: array[4, float]  ## Free flight's last answer, which next solve starts from.
+    is_retaken*: bool  ## Whether fingers have passed slop, and places were held at reach.
+      ## Once, as fingers first close or part past slop; see `retakeClosing`.
 
   Interaction* = object  ## Define cursor, drag and press state held between frames.
     is_enabled*: bool  ## Whether picking and overlay run at all; off during storyboard capture.
@@ -592,13 +595,13 @@ func pointMenuHung*(
   ##   Centred `PIXELS_LIFT_MENU_SELECTION` above object it follows; both front-ends hang it here.
   ##   Near edge, moved only as far as keeps whole menu `PIXELS_MARGIN_MENU_SELECTION` inside
   ##   view. Lower bound wins, so menu larger than view keeps its left and top edges inside.
+  ##   Written field by field, never assigned whole: page hangs menu every frame it shows, and
+  ##   object built into `result` is copy on JS backend (read in emitted JS).
   let
     margin = PIXELS_MARGIN_MENU_SELECTION
     half = width_menu / 2
-  ScreenPosition(
-    x: max(margin + half, min(width - margin - half, anchor.x)),
-    y: max(margin + height_menu, min(height - margin, anchor.y - PIXELS_LIFT_MENU_SELECTION)),
-  )
+  result.x = max(margin + half, min(width - margin - half, anchor.x))
+  result.y = max(margin + height_menu, min(height - margin, anchor.y - PIXELS_LIFT_MENU_SELECTION))
 
 
 func toDrag*(choice: DragChoice): Option[DragOperation] =
@@ -872,6 +875,16 @@ proc updateHover*(
 
 #[ Keyboard ]#
 
+func onRayAtDepth(eye, place: Position; forward: Direction; depth: float): Position =
+  ## Read point on eye's ray through `place`, at `depth` along sight.
+  let along = depth / depthAlong(eye, forward, place)
+  Position(
+    x: eye.x + along * (place.x - eye.x),
+    y: eye.y + along * (place.y - eye.y),
+    z: eye.z + along * (place.z - eye.z),
+  )
+
+
 proc dollyAbout*(
   camera: var Camera;
   scene: Scene;
@@ -923,11 +936,15 @@ proc dollyAt*(
 ) =
   ## Zoom camera by `factor`, in whichever way its state reads; see `dollyAtCursor`.
   ##   Two states, as `driveHeld` has.
-  ##     Free flight comes in to object under pointer, at whatever depth it stands,
-  ##     floored at that object's drawn radius. Over nothing it does nothing: wheel refers
-  ##     to object, and with none there it has nothing to come in to (repository issue
-  ##     535).
-  ##       Not pointer's ray at separation, which each notch over empty sky scales toward floor.
+  ##     Free flight comes in to object nearest eye within fingertip's reach of pointer, at
+  ##     whatever depth it stands, floored where point fills frame; see
+  ##     `picking.Rank.Eye`. Over nothing it does nothing: wheel refers to object, and with
+  ##     none there it has nothing to come in to (repository issue 535).
+  ##       Not pointer's ray at distance to pivot, which notches over empty sky scale toward floor.
+  ##     Its zoom out takes that object within `FACTOR_ANCHOR_DEPTH` of reach to point last
+  ##     zoom took, and past it holds that reach on pointer's ray; see `camera.pointTaken`.
+  ##       Not object at any depth: far star under pointer carried eye out of solar system
+  ##       in one notch (repository issue 846). Zoom in still comes to it (issue 745).
   ##     Selection dollies about pivot, which stands on what is picked, wherever pointer
   ##     stands, so orbit stays on it; see `dollyAbout`.
   if has_selection:
@@ -947,14 +964,26 @@ proc dollyAt*(
     is_banded = false,
   )
   if anchor.isNone: return
-  camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
-  # Separation follows anchor's own depth, so frustum's scale tracks flight.
+  var
+    at = anchor.get.at
+    floor = anchor.get.floor_reach
+  block:
+    let
+      (eye, frame) = camera.sight
+      reach = camera.reachTaken
+    if factor > 1.0 and depthAlong(eye, frame.forward, at) > FACTOR_ANCHOR_DEPTH * reach:
+      at = onRayAtDepth(eye, at, frame.forward, reach)
+      floor = 0.0
+  let taken = at.toWorld(camera.originView)
+  camera.travelToward(factor, at, floor)
+  # Distance to pivot follows anchor's own depth, so frustum's scale tracks flight.
   #   Crossing as well as standing object: free flight has no orbit for pivot to
   #   anchor, so depth here is scale and nothing else.
   let
     (eye, frame) = camera.sight
-    depth = depthAlong(eye, frame.forward, anchor.get.at)
+    depth = depthAlong(eye, frame.forward, at)
   if depth > 0.0: camera.repivotToDepth(depth)
+  camera.takePoint(taken)
 
 
 func yieldOrHalt*(tween: var CameraTween, has_selection: bool) =
@@ -969,7 +998,8 @@ func yieldOrHalt*(tween: var CameraTween, has_selection: bool) =
 
 
 func factorWheel*(notches: float): float =
-  ## Scale separation for `notches` of wheel turned away from reader, i.e. `FACTOR_DOLLY_NOTCH⁻ⁿ`.
+  ## Scale distance to pivot for `notches` of wheel turned away from reader, i.e.
+  ## `FACTOR_DOLLY_NOTCH⁻ⁿ`.
   ##   One rule for both front-ends, so one notch zooms same on page as on desktop.
   ##     Desktop passes SDL's notches; page passes what `bridge.nimNotchesWheel` counts.
   pow(FACTOR_DOLLY_NOTCH, -notches)
@@ -988,9 +1018,9 @@ proc dollyAtCursor*(
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
   ##   One statement of what wheel notch does, so both front-ends zoom same way.
-  ##   `picking.anchorZoomAt` decides what "over" means: object under cursor, and nothing
-  ##   else.
-  ##   Falls back to plain `dolly` where none answers, cursor on empty sky above horizon.
+  ##   `picking.anchorZoomAt` decides what "over" means: in free flight object nearest eye
+  ##   within fingertip's reach, with selection object nearest cursor, and nothing else.
+  ##   Over nothing, free flight does nothing; see `dollyAt`.
   ##   Where anchor is point or line, pivot then follows its depth along sight line; see
   ##   `camera.repivotToDepth` and `picking.AnchorZoom`.
   dollyAt(camera, scene, factor, scale, view_projection, width, height, interaction.cursor,
@@ -1042,10 +1072,12 @@ func grabPan*(
   reach_selection = 0.0;
 ) =
   ## Take what right drag holds, as it begins, under pointer where press came down.
-  ##   Free flight holds depth: what pointer is over, or pivot's over nothing. Pivot's depth
-  ##   is where orbit and zoom already centre, so empty space pans what reader looks at.
+  ##   Free flight holds depth: what pointer is over, or over nothing, reach of point last
+  ##   zoom took, as zoom out and pinch read it; see `camera.pointTaken`.
+  ##     Not pivot's depth, which key flight carries along, so pan over empty sky crawled
+  ##     after flight away from what reader looked at (repository issue 910).
   ##   Selection holds point on sphere left drag's orbit holds; see `turnFollowing`.
-  interaction.depth_pan = interaction.depth_pointer.get(camera.distance)
+  interaction.depth_pan = interaction.depth_pointer.get(camera.reachTaken)
   interaction.point_pan = none(Position)
   if not has_selection: return
   let (eye, frame) = camera.sight
@@ -1117,7 +1149,7 @@ func stretchAcross(
     ratio = max(side * (row - before.y), least) / max(side * (row - after.y), least)
   if not turned.isInFront or depth <= 0.0 or ratio == 1.0: return
   # Eye comes in by what leaves held depth at `ratio` of itself, so held height scales by
-  #   its inverse; pivot's separation gives up same length.
+  #   its inverse; distance to pivot gives up same length.
   camera.dolly((camera.distance - depth * (1.0 - ratio)) / camera.distance)
 
 
@@ -1136,7 +1168,8 @@ func panAcross*(
   ##   holds its own. See `grabPan`.
   ##     One pixel at that depth spans `2*depth*tan(half field)/height` of world, so camera
   ##     slides that far against drag. Slide is square to sight, so depth held stays held.
-  ##     Not rate: fraction of separation for each pixel matches cursor at one canvas height alone.
+  ##     Not rate: fraction of distance to pivot for each pixel matches cursor at one canvas
+  ##     height alone.
   ##   Selection zooms on vertical and orbits on horizontal, so one drag reaches both
   ##   without asking for second button. It holds `point_held` as free flight holds depth;
   ##   see `stretchAcross`.
@@ -1199,9 +1232,9 @@ func driveHeld*(
   ##   Two states, and `has_selection` picks between them.
   ##     Empty selection flies as ship does: travel and turn are about camera's own axes,
   ##     and travel climbs toward ship's own speed, `speed_ship`. Plus and minus scale
-  ##     that speed as they scale separation with selection, and nothing else sets it.
-  ##       Not depth under pointer, nor separation, which runs down each step until flight stalls.
-  ##       Travel carries pivot along, so separation stays as it was.
+  ##     that speed as they scale distance to pivot with selection, and nothing else sets it.
+  ##       Not depth under pointer, nor distance to pivot, which runs down each step until
+  ##       flight stalls. Travel carries pivot along, so distance to pivot stays as it was.
   ##     Selection orbits centroid instead. W and space rise over it, S and control fall,
   ##     and sideways keys swing round it; frame rule holds eye clear either way.
   ##       Slide across ground stood here, and it had no reading once camera stopped being
@@ -1470,6 +1503,16 @@ func placeShownNearest(
       result = some((depth: depth, floor: min(scene.radiusAt(handle), depth)))
 
 
+func reachPinch*(fingers: array[2, ScreenPosition]): float =
+  ## Read how far, in pixels, each finger of pinch reaches for object it takes, nothing selected.
+  ##   Fingertip past middle of two fingers, and never less than two fingertips: pinch lands
+  ##   each finger beside object reader means, not on it, and fingertip's reach alone took
+  ##   star behind finger (repository issue 745). Past fingertip, only object within
+  ##   `picking.FACTOR_ANCHOR_DEPTH` of distance to pivot answers. Wheel keeps fingertip.
+  let gap = hypot(fingers[1].x - fingers[0].x, fingers[1].y - fingers[0].y)
+  RADIUS_CROWD_TOUCH + max(RADIUS_CROWD_TOUCH, 0.5 * gap)
+
+
 proc gripFingers*(
   camera: Camera;
   scene: Scene;
@@ -1482,8 +1525,9 @@ proc gripFingers*(
   reach_selection = 0.0;
 ): GripFingers =
   ## Take what each of two fingers holds, as second lands (repository issue 592).
-  ##   Place under finger at depth of object there, as wheel's anchor reads it: at any depth
-  ##   in free flight, inside selection's band with selection.
+  ##   Place under finger at depth of object there, as wheel's anchor reads it: nearest eye
+  ##   within `reachPinch` in free flight, nearest finger inside selection's band with
+  ##   selection.
   ##   Over nothing, selection holds point on sphere about pivot, as left drag's orbit does.
   ##   Free flight holds place at depth of other finger's object; where neither finger
   ##   stands on one, at depth of object shown nearest fingers' middle near pivot's depth,
@@ -1491,6 +1535,10 @@ proc gripFingers*(
   ##     Not sky itself, which no slide moves, so pinch on sky after zoom out moves nothing.
   ##     Pivot follows what fingers hold; see `slideGripped`.
   ##   Every place stands on its finger's ray, so first step starts at no miss.
+  ##   Free flight reads pivot's depth as reach to point last zoom took, as its zoom out
+  ##   does; see `dollyAt`.
+  var camera = camera
+  if not has_selection: camera.repivotToDepth(camera.reachTaken)
   let (eye, frame) = camera.sight
   result = GripFingers(
     stance: camera,
@@ -1500,6 +1548,7 @@ proc gripFingers*(
     middle_last: middle(fingers),
   )
   var anchors: array[2, Option[AnchorZoom]]
+  let reach_eye = reachPinch(fingers)
   for index, finger in fingers:
     anchors[index] = anchorZoomAt(
       scene,
@@ -1511,6 +1560,7 @@ proc gripFingers*(
       finger,
       placed,
       is_banded = has_selection,
+      reach_eye = reach_eye,
     )
   # Depth and floor fingers over nothing hold, in free flight.
   var open = none(tuple[depth, floor: float])
@@ -1561,7 +1611,7 @@ func slideGripped(
   ##   it on object, so next pinch scales same thing and repeated zoom out grows by fingers'
   ##   ratio. Slide alone carries pivot along at its own depth.
   ##     Places over nothing at all never draw pivot in: pinch in there carries it along,
-  ##     and no pinch runs separation down (repository issue 535).
+  ##     and no pinch runs distance to pivot down (repository issue 535).
   ##   Camera's own nearest reach survives: frame that owns scene stamps it.
   let start = grip.solution
   var
@@ -1625,12 +1675,18 @@ func slideGripped(
   camera.reach_near = reach_near
   if grip.gap_from.isNone: return
   let (eye, frame) = camera.sight
-  var depth_held = Inf
+  var
+    depth_held = Inf
+    nearer = grip.fingers[0].place
   for place in grip.fingers:
-    depth_held =
-      min(depth_held, depthAlong(eye, frame.forward, place.place.toView(camera.originView)))
+    let depth = depthAlong(eye, frame.forward, place.place.toView(camera.originView))
+    if depth < depth_held:
+      depth_held = depth
+      nearer = place.place
   if grip.is_open: depth_held = max(depth_held, grip.stance.distance)
   if depth_held > 0.0 and depth_held < Inf: camera.repivotToDepth(depth_held)
+  # Nearer place is what pinch zooms about, as wheel's anchor is; see `camera.pointTaken`.
+  camera.takePoint(nearer)
 
 
 func gapDollied(grip: GripFingers; camera: Camera; width, height: int; along: float): float =
@@ -1660,7 +1716,7 @@ func orbitGripped(
   )
   grip.middle_last = middle
   # Dolly: gap falls as eye backs away, so bisect log of factor between reaches either side.
-  #   Floor bounds log from below: eye comes in by what separation gives up.
+  #   Floor bounds log from below: eye comes in by what distance to pivot gives up.
   let (eye, frame) = camera.sight
   var least = NegInf
   for place in grip.fingers:
@@ -1700,6 +1756,38 @@ func orbitGripped(
   if turned != 0.0: camera.roll(-turned)
 
 
+func retakeClosing(grip: var GripFingers; fingers: array[2, ScreenPosition]) =
+  ## Hold places past twice pivot's depth at it on their rays, as fingers first close past
+  ## slop, in free flight.
+  ##   Pinch takes places as second finger lands, before it knows its direction, and pinch
+  ##   in about far star carried eye out of solar system (repository issue 846). Pinch out
+  ##   keeps star, as wheel's zoom in does.
+  ##   Pivot's depth is reach to point last zoom took here; see `gripFingers`.
+  if grip.is_orbit or grip.is_retaken or grip.gap_from.isNone: return
+  grip.is_retaken = true
+  let
+    (gap_landed, _) = gapAndAngle(grip.landed)
+    (gap, _) = gapAndAngle(fingers)
+  if gap >= gap_landed: return
+  let
+    (eye, frame) = grip.stance.sight
+    reach = grip.stance.distance
+    origin = grip.stance.originView
+  var reaches = 0.0
+  for finger in grip.fingers.mitems:
+    var held = finger.place.toView(origin)
+    if depthAlong(eye, frame.forward, held) > FACTOR_ANCHOR_DEPTH * reach:
+      held = onRayAtDepth(eye, held, frame.forward, reach)
+      finger.floor = 0.0
+    finger.place = held.toWorld(origin)
+    reaches += norm(held - eye)
+  let reach_held = 0.5 * reaches
+  if reach_held <= 0.0 or grip.reach <= 0.0: return
+  # Slide already solved is in units of `reach`, so it stays where it stood.
+  for unknown in 0..2: grip.solution[unknown] *= grip.reach / reach_held
+  grip.reach = reach_held
+
+
 func carryGrip*(
   grip: var GripFingers; camera: var Camera; fingers: array[2, ScreenPosition]; width, height: int
 ) =
@@ -1709,6 +1797,7 @@ func carryGrip*(
   ##   Free flight slides and rolls, and selection orbits, dollies and rolls about pivot;
   ##   see `slideGripped` and `orbitGripped`.
   grip.noteSlop(fingers)
+  grip.retakeClosing(fingers)
   let held = grip.fingersHeld(fingers)
   if grip.is_orbit: grip.orbitGripped(camera, held, width, height)
   else: grip.slideGripped(camera, held, width, height)

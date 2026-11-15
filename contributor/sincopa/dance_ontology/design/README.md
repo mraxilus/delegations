@@ -13,7 +13,8 @@ and confirmed. `CONFIRMED` in `reference_page.nim` names each confirmed cell.
 
 - `reference.html` lays out each frame state the project draws, card by card, for the Architect to
   rule on.
-- `rig.html` plays the sweeps and stills that the body simulation recorded.
+- `rig.html` plays the sweeps and stills that the body simulation recorded. Each sweep is planned
+  at the band of its hold.
 
 `../README.md` gives the address where each page is published.
 
@@ -89,7 +90,8 @@ round a body, so the line takes the short way. `checkRules` holds the drawing to
 > 1/2 of the circumference. it doesn't make sense to have a wrap or a lock without the line actually
 > going around the body
 
-Held by `checkRules`, for every lock and wrap but a high lock, which rule 41 frees.
+Held by `checkRules`, for every lock and wrap but a high lock, which rule 41 frees. It also routes
+each lock and wrap that the drawing allows at each whole degree that the follow turns.
 
 ### Rule 8
 
@@ -153,7 +155,8 @@ Held by `checkSingleTurns`.
 > if held high, they can turn infinitely in either direction, so all we add is the additional
 > quarter turn orientations for each of the 4 single hand connections
 
-Held by `checkSingleTurns`.
+Held by `checkSingleTurns`, for a hand held above. Rule 17 replaces its level: a turn is drawn
+above.
 
 ### Rule 17
 
@@ -352,7 +355,8 @@ Left to left held low, turned from face to face.
 
 It answers the second sentence of rule 7. Held by `checkRules`, which draws a high lock on each
 single hold at each quarter turn of the follow. It prints how many of them hug less than rule 7
-asks, and at which arcs. It also routes a high lock at each whole degree that the follow turns.
+asks, and at which arcs. The check of rule 7 routes a high lock at each whole degree that the
+follow turns, with each other lock and wrap.
 
 ## Layout
 
@@ -384,7 +388,7 @@ design/
   asks.nim               what each card of the Reference asks of the body simulation
   modelled.nim           which cards the simulation reaches: modelled.json
   floors.nim             how far the plan carries each rig sweep over the crown, printed
-  rig.nim                the sweeps and stills the viewer plays: rig.json
+  rig.nim                the planned sweeps and the stills the viewer plays: rig.json
   rig_page.nim           rig.html
   rig_view.nim           the viewer, which draws what the engine collides
   watch.nim              the stills the C cards show, as watched: watched-fixtures.json

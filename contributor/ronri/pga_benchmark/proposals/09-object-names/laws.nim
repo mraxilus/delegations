@@ -9,6 +9,7 @@
 ##     of four sphere. Each wedge equals library's on whole multivectors.
 ##   Prints name compiler gives type of wedge of two points, and of binding declared with object
 ##     name, since alias adds no type to print.
+##   At each other algebra claim names, holds that no name stands, so guards of change hold.
 
 {.experimental: "strictFuncs".}
 
@@ -21,8 +22,10 @@ import pga
 
 
 static:
-  doAssert (DIMENSIONS == 4 and IS_RIGID) or (DIMENSIONS == 5 and IS_CONFORMAL),
-    &"Names stand at rga4d and cga5d alone; got `{DIMENSIONS=}`, `{IS_CONFORMAL=}`."
+  doAssert declared(Point) == (DIMENSIONS == 4 and IS_RIGID),
+    &"`Point` must stand at rga4d alone; got `{DIMENSIONS=}`, `{IS_CONFORMAL=}`."
+  doAssert declared(PointRound) == (DIMENSIONS == 5 and IS_CONFORMAL),
+    &"`PointRound` must stand at cga5d alone; got `{DIMENSIONS=}`, `{IS_CONFORMAL=}`."
 
 const
   SAMPLES = 256  ## Seeded samples each law is checked on.
@@ -54,7 +57,7 @@ func holdParity(m: Multivector, is_even: bool) =
 proc main(): int =
   ## Hold laws on seeded samples; print where they hold and name compiler prints, and exit zero.
   randomize(SEED)
-  when IS_RIGID:
+  when DIMENSIONS == 4 and IS_RIGID:
     doAssert sizeof(Motor) == 8 * sizeof(Coefficient),
       &"Motor must hold 8 coefficients, as Lengyel's; got `{sizeof(Motor)}` bytes."
     doAssert sizeof(Flector) == 8 * sizeof(Coefficient),
@@ -75,7 +78,7 @@ proc main(): int =
       line: Line = p ∧ q
     echo "object-names: laws hold at 4D rigid; type of point wedge point prints as ",
       name(typeof(p ∧ q)), ", and binding declared as line prints as ", name(typeof(line))
-  else:
+  elif DIMENSIONS == 5 and IS_CONFORMAL:
     for _ in 1..SAMPLES:
       let (a, b, c, d) = (sample(PointRound), sample(PointRound), sample(PointRound),
           sample(PointRound))
@@ -96,6 +99,8 @@ proc main(): int =
     echo "object-names: laws hold at 5D conformal; type of round point wedge round point ",
       "prints as ", name(typeof(a ∧ b)), ", and binding declared as dipole prints as ",
       name(typeof(dipole))
+  else:
+    echo "object-names: no name stands at this algebra"
   0
 
 
