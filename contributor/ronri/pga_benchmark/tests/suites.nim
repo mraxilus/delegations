@@ -1669,7 +1669,7 @@ suiteInProc "Internal: Gaps":
     check checks.status == Status.Over and "1 of 3 library functions" in checks.evidence  # ∧
     check "`" & key_wedge & "` with 178" in checks.evidence  # most
     check decideRule(Rule.Inline, algebras_fixture, gaps).evidence ==
-        "1 of 3 library operators, for example rga4d `~(Multivector)`."  # light operator called
+        "no library operator of 2 that a measurand times."  # light `~` is timed by none
     check decideRule(Rule.FillsZero, algebras_fixture, gaps).evidence.startsWith(
       "2 of 3")  # ∧ and ~
     check decideRule(Rule.Terms, algebras_fixture, gaps).evidence == "1 gaps. The widest is " &
@@ -1682,6 +1682,21 @@ suiteInProc "Internal: Gaps":
     check decideRule(Rule.Missing, algebras_fixture, gaps).status == Status.Met  # nothing missing
     check decideRule(Rule.Cayley, algebras_fixture, gaps).status ==
         Status.Unmeasured  # not readable here
+
+
+  test "cause on inlining counts operators that a measurand times, and no other":
+    # `$` prints and is timed by none, so it crosses no boundary that a measurand pays.
+    var document = documentStaticFixture()
+    document["functions"]["$(Basis)"] = nodeFunction("$", "pga/algebra", false, 0, 0, 0, 0)
+    document["measurands"]["reverse"] = %*{
+      "symbol": "~", "library": "~(Multivector)", "reference": ""
+    }
+    let
+      algebras = @[Algebra(name: "rga4d", measurements_static: document)]
+      inline = decideRule(Rule.Inline, algebras, @[])
+    check inline.status == Status.Over
+    check inline.evidence == "1 of 3 library operators that a measurand times, for example " &
+        "rga4d `~(Multivector)`."  # ∧ and [] timed too; [] is inline, and $ untimed
 
 
   test "causes count library functions, never reference or dense form":
