@@ -1,6 +1,6 @@
 ## Replicate role rule of CONTRIBUTOR.md, Say which role you are, over pull request bodies.
-##   Cost: attribution block fixture copies harness's form, so harness changing it reddens
-##     runner, never this suite.
+##   Block fixture copies form Claude Code writes today; rule reads its shapes alone, so
+##     second fixture with other words holds that harness changing its words fails nothing.
 
 {.experimental: "strictFuncs".}
 
@@ -10,10 +10,10 @@ import ../../src/[checker, markdown, role]
 
 const
   MARKER = "<!-- ccr-projects-attribution: {\"github_login\":\"octocat\"} -->"
-    ## Marker line of attribution block, as harness writes it.
+    ## Marker line of block Claude Code writes above role line, as it writes it.
   CREDIT =
     "_Requested by **Octocat** · [project thread](https://claude.ai/code/project/p?thread=t)_"
-    ## Credit line of attribution block, as harness writes it.
+    ## Credit line of block Claude Code writes above role line, as it writes it.
 
 
 
@@ -29,7 +29,7 @@ suite "Role":
     check "\n \n".lineRole == ""
 
 
-  test "body below attribution block reads as body alone, so thread's pull request passes":
+  test "body below block of listed harness reads as body alone, so thread's pull request passes":
     for attribution in [MARKER & "\n" & CREDIT & "\n", MARKER & "\n\n" & CREDIT & "\n\n"]:
       for body in [
         "**Role:** curator\n\n## Intent\n", "**Role:** curator <!-- copied -->\n",
@@ -38,7 +38,6 @@ suite "Role":
         let attributed = attribution & body
         check attributed.lineRole == body.lineRole
         check attributed.replace("\n", "\r\n").lineRole == body.lineRole  # edited on GitHub
-    check (MARKER & "\n**Role:** curator\n").lineRole == "**Role:** curator"  # credit left out
     let thread = MARKER & "\n" & CREDIT & "\n\n**Role:** curator\n\n## Intent\n"
     check checkRole("curator/mend-it", thread, ["curator"]).len == 0
     let wrong = checkRole(
@@ -50,18 +49,62 @@ suite "Role":
     check wrong[0].message.endsWith("got `**Role:** curator/probe`.")  # line below block echoed
 
 
-  test "attribution block is passed only whole, once and in order":
+  test "block of listed harness is passed only whole, once and in order":
     let unclosed = CREDIT[0 ..^ 2]  # italic never closed
     for (body, opening) in [
+      (MARKER & "\n**Role:** curator\n", ""),  # marker alone, credit left out
       (CREDIT & "\n**Role:** curator\n", CREDIT),  # credit with no marker
       (CREDIT & "\n" & MARKER & "\n**Role:** curator\n", CREDIT),  # order turned
-      (MARKER & "\n" & unclosed & "\n**Role:** curator\n", unclosed),  # credit not whole
+      (MARKER & "\n" & unclosed & "\n**Role:** curator\n", ""),  # credit not whole
       (MARKER & "\n" & CREDIT & "\n" & CREDIT & "\n**Role:** curator\n", CREDIT),  # credit twice
       (MARKER & "\n" & CREDIT & "\n" & MARKER & "\n**Role:** curator\n", ""),  # marker twice
       (MARKER & " **Role:** curator\n", ""),  # marker not whole line
-      ("<!-- note -->\n**Role:** curator\n", ""),  # other comment reads as before
+      ("<!-- note -->\n**Role:** curator\n", ""),  # comment alone is no block
     ]:
       check body.lineRole == opening
+
+
+  test "block is known by shape of each line, never by words of harness (#845)":
+    # Architect ruled on #845: entry of each harness lists shapes of its lines. Claude Code writes
+    #   one line of HTML comment, then one italic line, so other words in that shape pass.
+    for (marker, credit) in [
+      (MARKER, CREDIT),  # as harness writes them today
+      ("<!-- marker of any harness -->", "_Credit in any words_"),  # words changed
+      ("<!---->", "__"),  # each shape at its shortest
+    ]:
+      let body = marker & "\n" & credit & "\n\n**Role:** curator\n"
+      check body.lineRole == "**Role:** curator"
+      check body.replace("\n", "\r\n").lineRole == "**Role:** curator"  # edited on GitHub
+      check checkRole("curator/mend-it", body, ["curator"]).len == 0
+    for body in [
+      "<!-- marker -->\n*Credit*\n**Role:** curator\n",  # italic by asterisks
+      "<!-- marker\n-->\n_Credit_\n**Role:** curator\n",  # comment over two lines
+      "<!-- marker -->\n_\n**Role:** curator\n",  # one mark opens and closes nothing
+    ]:
+      check body.lineRole == ""  # first line, its comment dropped
+      check checkRole("curator/mend-it", body, ["curator"]).len == 1
+
+
+  test "finding quotes each line above role line that no listed harness writes (#845)":
+    # Harness writing block `role.nim` does not list fails on its first pull request, and
+    #   finding quotes block, so curator adds its entry.
+    let lone = checkRole("curator/mend-it", "<!-- note -->\n**Role:** curator\n", ["curator"])
+    check lone.len == 1
+    check lone[0].message.endsWith("got `<!-- note -->` above `**Role:** curator`.")
+    let stray = MARKER & "\n" & CREDIT & "\nStray line.\n\n**Role:** curator\n"
+    check checkRole("curator/mend-it", stray, ["curator"])[0].message.endsWith(
+      "got `" & MARKER.shortened & "`, `" & CREDIT.shortened & "`, `Stray line.` above " &
+        "`**Role:** curator`.",
+    )  # whole block quoted, each line cut
+    var many = ""
+    for i in 0 .. LINES_QUOTED: many.add "line " & $i & "\n"
+    let quoted = checkRole("curator/mend-it", many & "**Role:** curator\n", ["curator"])
+    check quoted[0].message.endsWith(
+      "`line " & $(LINES_QUOTED - 1) & "`, … above `**Role:** curator`.",
+    )
+    check "`line " & $LINES_QUOTED & "`" notin quoted[0].message  # quote cut at bound
+    let fenced = checkRole("curator/mend-it", "## What\n\n```md\n**Role:** curator\n```\n", [])
+    check fenced[0].message.endsWith("got `## What`.")  # role line in fence is example only
 
 
   test "echoed opening is cut, since body may open with whole paragraph":
