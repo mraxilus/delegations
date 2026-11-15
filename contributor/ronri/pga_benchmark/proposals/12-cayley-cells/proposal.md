@@ -70,8 +70,9 @@ that term.
 - **Build.** The compile-time evaluator holds each value as nodes. An empty `seq` is one node, and a
   cell of this form is several nodes, empty or not. Most cells are empty, so the tables take more
   memory, and the evaluator takes more time to build them. At cga5d and cga6d `import pga` peaks
-  at ×1.47 and ×1.49 of the memory at pin, and takes about twice the time. Four build claims bound
-  it: the peak at most ×1.5 and the time at most ×2.5, at each of the two.
+  at ×1.50 and ×1.49 of the memory at pin, and takes ×1.66 to ×2.19 of the time over four builds.
+  Four build claims bound it: the peak at most ×1.5 and the time at most ×2.5, at each of the two.
+  At cga5d the peak is 314.8 MiB against 210.5 MiB, so it holds its bound by 0.3%.
 - **Run time.** None. Macros alone read the tables, so each operator emits the same C as at pin.
 - **Calls of `seq`.** A caller that reads a cell through another call of `seq`, such as `high` or a
   slice, no longer compiles. No module of the library makes such a call.
@@ -138,6 +139,6 @@ The packed form of the doc comment was built on 2026-11-08, under Nim 2.4.0 on
 `linux amd64, 4 cores`. It passes the suites at the nine algebras, and its 388 tables equal those
 at pin. At cga6d it builds `import pga` in ×0.97 of the time at pin and ×0.81 of the peak memory,
 median of seven builds. In that run, pin takes about 9.8 s and 618 MiB, and the packed form 9.5 s
-and 501 MiB. This proposal takes 19.0 s and 914 MiB there, median of three builds. The evaluation
-is another run of one build for each side, so its seconds differ. So the packed form takes about
-half the time and memory of this one there.
+and 501 MiB. On 2026-11-15 this proposal takes 21.6 s and 913 MiB there, and pin 10.2 s and
+615 MiB, median of three builds in turn. The evaluation is another run of one build for each side,
+so its seconds differ. So the packed form takes about half the time and memory of this one there.
