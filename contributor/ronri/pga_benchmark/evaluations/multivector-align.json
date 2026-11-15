@@ -3,9 +3,9 @@
   "kind": "evaluation",
   "name": "multivector-align",
   "path": "proposals/05-multivector-align",
-  "edits_digest": "601d230c4f7d31c5",
+  "edits_digest": "298253fe55cf0ee3",
   "taken": {
-    "date": "2026-11-05",
+    "date": "2026-11-14",
     "machine": "linux amd64, 4 cores",
     "nim": "14991af742d0833503741fd9a0918133d1bcf8a4",
     "pga": "3d9696edbaaa5dca655c3024174bd46fd156d7c6",
@@ -22,6 +22,16 @@
       "ok": 28,
       "failed": 0,
       "built": true
+    },
+    "rga3d": {
+      "ok": 33,
+      "failed": 0,
+      "built": true
+    },
+    "cga4d": {
+      "ok": 28,
+      "failed": 0,
+      "built": true
     }
   },
   "algebras": {
@@ -31,1931 +41,562 @@
         "failed": 0,
         "built": true
       },
-      "functions": {
-        "+(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 16,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 48,
-            "lines": 179,
-            "bytes_moved": 512,
-            "bytes_zeroed": 128,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "+(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 16,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 48,
-            "lines": 179,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "-(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 32,
-            "lines": 132,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "-(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 16,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 48,
-            "lines": 183,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "-(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 32,
-            "lines": 132,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "-(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 16,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 48,
-            "lines": 183,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "/(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "/(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "\\(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "\\(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "^∘(Multivector)": {
-          "before": {
-            "multiplies": 24,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 1,
-            "fills_zero": 1,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 33,
-            "lines": 172,
-            "bytes_moved": 512,
-            "bytes_zeroed": 128,
-            "bytes_intermediates": 128
-          },
-          "after": null
-        },
-        "^∘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 24,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 1,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 33,
-            "lines": 172,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "^∙(Multivector)": {
-          "before": {
-            "multiplies": 24,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 1,
-            "fills_zero": 1,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 33,
-            "lines": 172,
-            "bytes_moved": 512,
-            "bytes_zeroed": 128,
-            "bytes_intermediates": 128
-          },
-          "after": null
-        },
-        "^∙(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 24,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 1,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 33,
-            "lines": 172,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "projectCentral(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 108,
-            "adds": 84,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 48,
-            "bytes_moved": 768,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 128
-          },
-          "after": null
-        },
-        "projectCentral(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 108,
-            "adds": 84,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 48,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "projectCentralAnti(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 135,
-            "adds": 103,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 48,
-            "bytes_moved": 768,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 128
-          },
-          "after": null
-        },
-        "projectCentralAnti(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 135,
-            "adds": 103,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 48,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "projectOrthogonal(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 135,
-            "adds": 103,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 48,
-            "bytes_moved": 768,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 128
-          },
-          "after": null
-        },
-        "projectOrthogonal(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 135,
-            "adds": 103,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 48,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "projectOrthogonalAnti(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 108,
-            "adds": 84,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 48,
-            "bytes_moved": 768,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 128
-          },
-          "after": null
-        },
-        "projectOrthogonalAnti(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 108,
-            "adds": 84,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 48,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "{}(Multivector,int)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 2,
-            "lines": 52,
-            "bytes_moved": 392,
-            "bytes_zeroed": 128,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "{}(Multivector,int)#u1": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 3,
-            "lines": 68,
-            "bytes_moved": 392,
-            "bytes_zeroed": 128,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "{}(MultivectorOf,int)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 2,
-            "lines": 52,
-            "bytes_moved": 8,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "{}(MultivectorOf,int)#u1": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 3,
-            "lines": 68,
-            "bytes_moved": 8,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "|(Multivector)": {
-          "before": {
-            "multiplies": 16,
-            "adds": 14,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 5,
-            "intermediates": 2,
-            "copies": 0,
-            "checks": 4,
-            "calls": 4,
-            "lines": 82,
-            "bytes_moved": 480,
-            "bytes_zeroed": 80,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "|(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 16,
-            "adds": 14,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 5,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 4,
-            "calls": 4,
-            "lines": 82,
-            "bytes_moved": 96,
-            "bytes_zeroed": 80,
-            "bytes_intermediates": 0
-          }
-        },
-        "|∘(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 31,
-            "bytes_moved": 304,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 128
-          },
-          "after": null
-        },
-        "|∘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 31,
-            "bytes_moved": 48,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 0
-          }
-        },
-        "|∘²(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "|∘²(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "|∙(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 31,
-            "bytes_moved": 304,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 128
-          },
-          "after": null
-        },
-        "|∙(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 31,
-            "bytes_moved": 48,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 0
-          }
-        },
-        "|∙²(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "|∙²(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "~(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "~(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "~∘(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "~∘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∘(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∘(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∘(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∙(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∙(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∙(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∙(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∧(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 81,
-            "adds": 65,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∧(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 81,
-            "adds": 65,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∧(float,Multivector)": {
-          "before": {
-            "multiplies": 16,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 32,
-            "lines": 132,
-            "bytes_moved": 264,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∧(float,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 16,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 32,
-            "lines": 132,
-            "bytes_moved": 8,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∧★(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 27,
-            "adds": 19,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∧★(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 27,
-            "adds": 19,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∧☆(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 54,
-            "adds": 38,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∧☆(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 54,
-            "adds": 38,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∨(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 81,
-            "adds": 65,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∨(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 81,
-            "adds": 65,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∨★(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 54,
-            "adds": 38,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∨★(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 54,
-            "adds": 38,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∨☆(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 27,
-            "adds": 19,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∨☆(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 27,
-            "adds": 19,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∩(Multivector)": {
-          "before": {
-            "multiplies": 162,
-            "adds": 130,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 3,
-            "intermediates": 2,
-            "copies": 0,
-            "checks": 3,
-            "calls": 3,
-            "lines": 70,
-            "bytes_moved": 896,
-            "bytes_zeroed": 384,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "∩(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 162,
-            "adds": 130,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 3,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 3,
-            "calls": 3,
-            "lines": 70,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∪(Multivector)": {
-          "before": {
-            "multiplies": 162,
-            "adds": 130,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 3,
-            "intermediates": 2,
-            "copies": 0,
-            "checks": 3,
-            "calls": 3,
-            "lines": 70,
-            "bytes_moved": 896,
-            "bytes_zeroed": 384,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "∪(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 162,
-            "adds": 130,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 3,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 3,
-            "calls": 3,
-            "lines": 70,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⊖(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "⊖(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "★(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "★(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "☆(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "☆(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⟇(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 192,
-            "adds": 176,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "⟇(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 192,
-            "adds": 176,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⟑(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 192,
-            "adds": 176,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 384,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "⟑(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 192,
-            "adds": 176,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 16,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        }
-      },
+      "functions": {},
       "times": {
         "wedge": [
-          28.88,
-          28.81,
-          0.999
-        ],
-        "wedge_anti": [
-          28.46,
-          28.44,
-          0.9988
-        ],
-        "wedge_dot": [
-          65.25,
-          65.21,
-          0.9995
-        ],
-        "wedge_dot_anti": [
-          68.25,
-          68.24,
-          1.0005
-        ],
-        "dot": [
-          6.22,
-          6.21,
-          0.9991
-        ],
-        "dot_anti": [
-          6.21,
-          6.23,
-          1.0012
-        ],
-        "contract_bulk": [
-          14.65,
-          14.65,
-          0.999
-        ],
-        "contract_weight": [
-          8.0,
-          8.0,
-          1.0007
-        ],
-        "expand_bulk": [
-          7.83,
-          7.83,
-          1.0002
-        ],
-        "expand_weight": [
-          14.63,
-          14.64,
-          1.0011
-        ],
-        "add": [
-          4.59,
-          4.59,
-          0.9986
-        ],
-        "subtract": [
-          4.89,
-          4.89,
-          0.9963
-        ],
-        "project_central": [
-          36.41,
-          36.45,
-          1.0
-        ],
-        "project_central_anti": [
-          41.68,
-          41.66,
-          0.9988
-        ],
-        "project_orthogonal": [
-          47.42,
-          47.43,
-          0.9986
-        ],
-        "project_orthogonal_anti": [
-          30.29,
-          30.29,
-          1.0006
-        ],
-        "scale": [
-          5.61,
-          5.61,
-          1.0005
-        ],
-        "bulk": [
-          2.7,
-          2.71,
-          1.0031
-        ],
-        "weight": [
-          5.85,
-          5.86,
+          14.73,
+          14.73,
           1.0003
         ],
-        "complement_right": [
-          4.09,
-          4.09,
-          0.9995
+        "wedge_anti": [
+          13.58,
+          13.59,
+          1.0003
         ],
-        "complement_left": [
-          6.11,
-          6.11,
-          1.0
+        "wedge_dot": [
+          35.38,
+          35.39,
+          1.0002
         ],
-        "reverse": [
-          6.34,
-          6.37,
-          1.0015
-        ],
-        "reverse_anti": [
-          3.98,
-          3.97,
-          0.999
-        ],
-        "dual_bulk": [
-          5.26,
-          5.26,
-          0.999
-        ],
-        "dual_weight": [
-          2.72,
-          2.73,
-          1.0004
-        ],
-        "negate": [
-          2.86,
-          2.86,
-          1.0005
-        ],
-        "norm_bulk": [
-          3.31,
-          3.31,
-          1.0021
-        ],
-        "norm_weight": [
-          3.31,
-          3.31,
-          1.0001
-        ],
-        "norm_bulk_squared": [
-          5.82,
-          5.84,
-          1.001
-        ],
-        "norm_weight_squared": [
-          5.04,
-          5.04,
-          0.9989
-        ],
-        "norm": [
-          4.26,
-          4.26,
-          1.0011
-        ],
-        "normalize_bulk": [
-          6.79,
-          6.78,
-          1.0016
-        ],
-        "normalize_weight": [
-          6.79,
-          6.78,
+        "wedge_dot_anti": [
+          35.61,
+          35.61,
           1.0009
         ],
+        "dot": [
+          4.63,
+          4.61,
+          0.9983
+        ],
+        "dot_anti": [
+          4.36,
+          4.36,
+          0.9983
+        ],
+        "contract_bulk": [
+          9.67,
+          9.67,
+          1.0012
+        ],
+        "contract_weight": [
+          4.51,
+          4.5,
+          0.9995
+        ],
+        "expand_bulk": [
+          5.06,
+          4.76,
+          0.9417
+        ],
+        "expand_weight": [
+          10.1,
+          10.09,
+          0.9996
+        ],
+        "add": [
+          3.03,
+          3.02,
+          0.9981
+        ],
+        "subtract": [
+          3.0,
+          2.99,
+          0.9966
+        ],
+        "project_central": [
+          17.31,
+          17.31,
+          1.0003
+        ],
+        "project_central_anti": [
+          22.67,
+          22.67,
+          1.0003
+        ],
+        "project_orthogonal": [
+          22.96,
+          22.97,
+          1.0006
+        ],
+        "project_orthogonal_anti": [
+          16.09,
+          16.1,
+          1.0003
+        ],
+        "scale": [
+          3.81,
+          3.82,
+          1.0027
+        ],
+        "bulk": [
+          2.82,
+          2.8,
+          0.9972
+        ],
+        "weight": [
+          2.95,
+          2.94,
+          0.997
+        ],
+        "complement_right": [
+          2.73,
+          2.73,
+          0.9972
+        ],
+        "complement_left": [
+          4.24,
+          4.26,
+          0.9995
+        ],
+        "reverse": [
+          3.58,
+          3.56,
+          0.989
+        ],
+        "reverse_anti": [
+          2.57,
+          2.57,
+          0.9989
+        ],
+        "dual_bulk": [
+          3.33,
+          3.26,
+          0.9971
+        ],
+        "dual_weight": [
+          2.82,
+          2.83,
+          1.0007
+        ],
+        "negate": [
+          2.61,
+          2.59,
+          0.9981
+        ],
+        "norm_bulk": [
+          1.88,
+          1.89,
+          1.001
+        ],
+        "norm_weight": [
+          1.89,
+          1.89,
+          0.9969
+        ],
+        "norm_bulk_squared": [
+          3.39,
+          3.39,
+          1.0001
+        ],
+        "norm_weight_squared": [
+          3.77,
+          3.77,
+          1.0017
+        ],
+        "norm": [
+          2.67,
+          2.67,
+          0.9978
+        ],
+        "normalize_bulk": [
+          3.81,
+          3.79,
+          0.998
+        ],
+        "normalize_weight": [
+          3.83,
+          3.79,
+          0.9885
+        ],
         "unitize": [
-          6.8,
-          6.8,
-          1.0024
+          3.81,
+          3.79,
+          0.9986
         ],
         "attitude": [
-          2.7,
-          2.71,
-          1.0034
+          2.82,
+          2.8,
+          0.9956
         ],
         "select_grade": [
-          12.97,
-          12.8,
-          0.9758
+          10.44,
+          10.51,
+          0.9993
         ],
         "select_grade_anti": [
-          14.13,
-          14.15,
-          1.0019
+          11.35,
+          11.35,
+          1.0028
         ],
         "select_part": [
-          0.61,
-          0.61,
+          0.67,
+          0.67,
           1.0
         ],
         "support": [
-          63.28,
-          63.53,
-          1.0045
+          35.9,
+          36.74,
+          1.0103
         ],
         "support_anti": [
-          49.37,
-          49.72,
-          1.0069
+          37.01,
+          36.86,
+          0.9963
         ],
         "wedge_point_point": [
-          29.55,
-          29.55,
-          1.0032
+          14.75,
+          14.75,
+          0.9999
         ],
         "wedge_line_point": [
-          29.66,
-          29.7,
-          1.0014
+          14.67,
+          14.67,
+          0.9994
         ],
         "wedge_point_line": [
-          29.48,
-          29.68,
-          1.0019
+          15.87,
+          14.68,
+          0.9983
         ],
         "wedge_anti_plane_plane": [
-          28.63,
-          28.56,
-          0.9997
+          14.68,
+          14.68,
+          0.9999
         ],
         "wedge_anti_plane_line": [
-          28.67,
-          28.63,
-          0.9999
+          14.67,
+          14.67,
+          0.9997
         ],
         "wedge_anti_line_plane": [
-          28.49,
-          28.48,
-          1.0002
+          14.67,
+          14.67,
+          1.0004
         ],
         "wedge_anti_line_line": [
-          28.48,
-          28.46,
-          1.0004
+          14.72,
+          14.72,
+          0.9998
         ],
         "wedge_anti_point_plane": [
-          28.62,
-          28.63,
-          0.9988
+          14.66,
+          14.66,
+          1.0002
         ],
         "dot_point_point": [
-          6.22,
-          6.21,
-          0.9998
+          4.98,
+          4.99,
+          1.0005
         ],
         "dot_line_line": [
-          6.22,
-          6.21,
-          0.9972
+          4.68,
+          4.95,
+          0.9962
         ],
         "dot_plane_plane": [
-          6.22,
-          6.22,
-          0.998
+          4.62,
+          4.62,
+          0.9986
         ],
         "dot_anti_point_point": [
-          6.22,
-          6.22,
-          0.9999
-        ],
-        "dot_anti_line_line": [
-          6.22,
-          6.23,
-          1.0011
-        ],
-        "dot_anti_plane_plane": [
-          6.21,
-          6.22,
-          1.0017
-        ],
-        "wedge_dot_anti_motor_motor": [
-          68.26,
-          68.23,
-          0.9995
-        ],
-        "transform_point_motor": [
-          138.04,
-          138.11,
-          1.0003
-        ],
-        "transform_line_motor": [
-          138.2,
-          138.18,
-          0.9999
-        ],
-        "transform_plane_motor": [
-          138.07,
-          138.25,
-          1.0003
-        ],
-        "project_orthogonal_point_plane": [
-          47.31,
-          47.32,
-          1.0006
-        ],
-        "project_orthogonal_point_line": [
-          47.56,
-          47.52,
-          0.9996
-        ],
-        "project_orthogonal_line_plane": [
-          47.33,
-          47.32,
-          0.9995
-        ],
-        "support_line": [
-          63.57,
-          65.33,
-          1.0276
-        ],
-        "support_plane": [
-          63.29,
-          63.49,
-          1.0027
-        ],
-        "support_anti_point": [
-          49.49,
-          50.24,
-          1.015
-        ],
-        "support_anti_line": [
-          49.43,
-          50.16,
-          1.0142
-        ],
-        "reverse_anti_motor": [
-          3.97,
-          3.97,
-          0.9991
-        ],
-        "unitize_motor": [
-          6.59,
-          6.58,
-          0.9994
-        ],
-        "norm_weight_motor": [
-          3.22,
-          3.22,
-          1.0
-        ],
-        "norm_bulk_motor": [
-          3.31,
-          3.31,
-          1.0003
-        ],
-        "complement_right_point": [
-          4.09,
-          4.09,
-          0.9995
-        ],
-        "complement_left_point": [
-          6.09,
-          6.1,
-          1.0052
-        ],
-        "reverse_point": [
-          6.34,
-          6.33,
-          1.0005
-        ],
-        "reverse_anti_point": [
-          3.97,
-          3.98,
-          0.9998
-        ],
-        "dual_bulk_point": [
-          5.25,
-          5.25,
-          1.0005
-        ],
-        "dual_weight_point": [
-          2.72,
-          2.72,
-          1.0
-        ],
-        "bulk_point": [
-          2.7,
-          2.7,
-          1.0018
-        ],
-        "weight_point": [
-          5.85,
-          5.85,
-          1.0011
-        ],
-        "norm_bulk_point": [
-          3.31,
-          3.31,
-          0.9997
-        ],
-        "norm_weight_point": [
-          3.31,
-          3.31,
-          1.0006
-        ],
-        "norm_bulk_squared_point": [
-          5.83,
-          5.82,
-          0.9981
-        ],
-        "norm_weight_squared_point": [
-          5.03,
-          5.03,
-          0.9995
-        ],
-        "unitize_point": [
-          6.79,
-          6.79,
-          1.0
-        ],
-        "attitude_point": [
-          2.7,
-          2.7,
-          1.0015
-        ],
-        "complement_right_line": [
-          4.09,
-          4.09,
-          0.9994
-        ],
-        "complement_left_line": [
-          6.1,
-          6.1,
-          1.0011
-        ],
-        "reverse_line": [
-          6.33,
-          6.34,
+          4.36,
+          4.37,
           1.001
         ],
-        "reverse_anti_line": [
-          3.98,
-          3.98,
-          1.0001
+        "dot_anti_line_line": [
+          4.36,
+          4.37,
+          1.0033
         ],
-        "dual_bulk_line": [
-          5.22,
-          5.22,
+        "dot_anti_plane_plane": [
+          4.36,
+          4.36,
+          1.0024
+        ],
+        "wedge_dot_anti_motor_motor": [
+          35.61,
+          35.62,
           1.0004
         ],
-        "dual_weight_line": [
-          2.72,
-          2.73,
-          1.0014
+        "transform_point_motor": [
+          71.62,
+          71.63,
+          0.9998
         ],
-        "bulk_line": [
-          2.7,
-          2.7,
-          1.002
+        "transform_line_motor": [
+          71.6,
+          71.61,
+          1.0001
         ],
-        "weight_line": [
-          5.84,
-          5.85,
-          1.0027
-        ],
-        "norm_bulk_line": [
-          3.31,
-          3.31,
-          1.0003
-        ],
-        "norm_weight_line": [
-          3.31,
-          3.31,
-          1.0003
-        ],
-        "norm_bulk_squared_line": [
-          5.83,
-          5.83,
-          1.0003
-        ],
-        "norm_weight_squared_line": [
-          5.02,
-          5.03,
+        "transform_plane_motor": [
+          71.62,
+          71.61,
           1.0
         ],
-        "unitize_line": [
-          6.79,
-          6.79,
-          0.9994
+        "project_orthogonal_point_plane": [
+          22.88,
+          22.88,
+          0.9998
         ],
-        "attitude_line": [
-          2.7,
-          2.7,
-          1.0022
+        "project_orthogonal_point_line": [
+          22.97,
+          22.97,
+          0.9991
         ],
-        "complement_right_plane": [
-          4.09,
-          4.09,
-          1.0004
+        "project_orthogonal_line_plane": [
+          22.97,
+          22.97,
+          0.9999
         ],
-        "complement_left_plane": [
-          6.1,
-          6.1,
-          1.002
+        "support_line": [
+          36.08,
+          36.53,
+          1.0154
         ],
-        "reverse_plane": [
-          6.33,
-          6.34,
-          1.0016
+        "support_plane": [
+          39.49,
+          39.51,
+          1.0005
         ],
-        "reverse_anti_plane": [
-          3.98,
-          3.98,
-          0.9993
+        "support_anti_point": [
+          40.12,
+          39.93,
+          0.9903
         ],
-        "dual_bulk_plane": [
-          5.22,
-          5.22,
-          1.0004
+        "support_anti_line": [
+          37.4,
+          36.91,
+          0.9871
         ],
-        "dual_weight_plane": [
-          2.72,
-          2.73,
-          1.0007
+        "reverse_anti_motor": [
+          2.78,
+          2.78,
+          0.9984
         ],
-        "bulk_plane": [
-          2.7,
-          2.7,
-          1.0022
+        "unitize_motor": [
+          4.12,
+          4.11,
+          0.9955
         ],
-        "weight_plane": [
-          5.84,
-          5.85,
-          1.0008
+        "norm_weight_motor": [
+          1.99,
+          1.98,
+          0.9973
         ],
-        "norm_bulk_plane": [
-          3.31,
-          3.32,
-          0.9996
+        "norm_bulk_motor": [
+          2.05,
+          2.04,
+          0.995
         ],
-        "norm_weight_plane": [
-          3.31,
-          3.31,
-          1.0001
+        "complement_right_point": [
+          2.96,
+          2.95,
+          0.9979
         ],
-        "norm_bulk_squared_plane": [
-          5.82,
-          5.84,
+        "complement_left_point": [
+          4.59,
+          4.59,
+          0.9938
+        ],
+        "reverse_point": [
+          3.84,
+          3.83,
+          0.9909
+        ],
+        "reverse_anti_point": [
+          2.78,
+          2.78,
+          0.9982
+        ],
+        "dual_bulk_point": [
+          3.57,
+          3.52,
+          0.991
+        ],
+        "dual_weight_point": [
+          3.06,
+          3.06,
+          0.9978
+        ],
+        "bulk_point": [
+          3.04,
+          3.03,
+          0.9956
+        ],
+        "weight_point": [
+          3.2,
+          3.18,
+          0.9828
+        ],
+        "norm_bulk_point": [
+          2.04,
+          2.02,
+          0.9875
+        ],
+        "norm_weight_point": [
+          2.04,
+          2.03,
+          0.9842
+        ],
+        "norm_bulk_squared_point": [
+          3.67,
+          3.66,
           0.9989
         ],
-        "norm_weight_squared_plane": [
-          5.02,
-          5.03,
-          0.9997
+        "norm_weight_squared_point": [
+          4.09,
+          4.09,
+          0.9989
         ],
-        "unitize_plane": [
-          6.79,
-          6.79,
+        "unitize_point": [
+          4.17,
+          4.09,
+          0.9774
+        ],
+        "attitude_point": [
+          3.03,
+          3.02,
+          0.9971
+        ],
+        "complement_right_line": [
+          2.95,
+          2.95,
+          1.0
+        ],
+        "complement_left_line": [
+          4.58,
+          4.58,
+          0.991
+        ],
+        "reverse_line": [
+          3.8,
+          3.78,
+          0.9938
+        ],
+        "reverse_anti_line": [
+          2.57,
+          2.57,
+          0.999
+        ],
+        "dual_bulk_line": [
+          3.31,
+          3.26,
+          0.9944
+        ],
+        "dual_weight_line": [
+          2.83,
+          2.82,
+          0.9967
+        ],
+        "bulk_line": [
+          2.8,
+          2.8,
           0.9981
         ],
+        "weight_line": [
+          2.95,
+          2.93,
+          0.9958
+        ],
+        "norm_bulk_line": [
+          1.92,
+          1.92,
+          1.0005
+        ],
+        "norm_weight_line": [
+          1.92,
+          1.9,
+          0.9985
+        ],
+        "norm_bulk_squared_line": [
+          3.39,
+          3.38,
+          0.9997
+        ],
+        "norm_weight_squared_line": [
+          4.08,
+          4.07,
+          0.9978
+        ],
+        "unitize_line": [
+          4.1,
+          4.09,
+          0.9877
+        ],
+        "attitude_line": [
+          3.04,
+          3.03,
+          0.9973
+        ],
+        "complement_right_plane": [
+          2.96,
+          2.96,
+          0.9979
+        ],
+        "complement_left_plane": [
+          4.59,
+          4.59,
+          0.9865
+        ],
+        "reverse_plane": [
+          3.83,
+          3.82,
+          0.9917
+        ],
+        "reverse_anti_plane": [
+          2.78,
+          2.78,
+          0.9989
+        ],
+        "dual_bulk_plane": [
+          3.55,
+          3.53,
+          0.9913
+        ],
+        "dual_weight_plane": [
+          3.06,
+          3.06,
+          0.997
+        ],
+        "bulk_plane": [
+          3.03,
+          3.03,
+          0.9976
+        ],
+        "weight_plane": [
+          3.18,
+          3.18,
+          0.9962
+        ],
+        "norm_bulk_plane": [
+          2.04,
+          2.03,
+          0.993
+        ],
+        "norm_weight_plane": [
+          2.04,
+          2.04,
+          0.9917
+        ],
+        "norm_bulk_squared_plane": [
+          3.67,
+          3.67,
+          0.9992
+        ],
+        "norm_weight_squared_plane": [
+          4.08,
+          4.08,
+          0.9982
+        ],
+        "unitize_plane": [
+          4.1,
+          4.1,
+          0.9874
+        ],
         "attitude_plane": [
-          2.7,
-          2.71,
-          1.0036
+          3.03,
+          3.03,
+          0.9992
         ]
       },
       "nan": {},
@@ -1970,2489 +611,1743 @@
         "failed": 0,
         "built": true
       },
-      "functions": {
-        "+(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 32,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 96,
-            "lines": 323,
-            "bytes_moved": 1024,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "+(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 32,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 96,
-            "lines": 323,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "-(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 64,
-            "lines": 228,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "-(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 32,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 96,
-            "lines": 327,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "-(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 64,
-            "lines": 228,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "-(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 32,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 96,
-            "lines": 327,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "/(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "/(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "\\(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "\\(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "^∘(Multivector)": {
-          "before": {
-            "multiplies": 40,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 1,
-            "fills_zero": 1,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 65,
-            "lines": 284,
-            "bytes_moved": 1024,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "^∘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 40,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 1,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 65,
-            "lines": 284,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "^∙(Multivector)": {
-          "before": {
-            "multiplies": 40,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 1,
-            "fills_zero": 1,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 65,
-            "lines": 284,
-            "bytes_moved": 1024,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "^∙(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 40,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 1,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 65,
-            "lines": 284,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "grade(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 66,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 96,
-            "calls": 321,
-            "lines": 1896,
-            "bytes_moved": 256,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "grade(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 66,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 96,
-            "calls": 321,
-            "lines": 1896,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "projectCentral(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 1536,
-            "bytes_zeroed": 512,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "projectCentral(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "projectCentralAnti(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 1536,
-            "bytes_zeroed": 512,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "projectCentralAnti(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "projectOrthogonal(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 1536,
-            "bytes_zeroed": 512,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "projectOrthogonal(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "projectOrthogonalAnti(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 1536,
-            "bytes_zeroed": 512,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "projectOrthogonalAnti(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "{}(Multivector,int)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 2,
-            "lines": 52,
-            "bytes_moved": 776,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "{}(Multivector,int)#u1": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 3,
-            "lines": 68,
-            "bytes_moved": 776,
-            "bytes_zeroed": 256,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "{}(MultivectorOf,int)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 2,
-            "lines": 52,
-            "bytes_moved": 8,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "{}(MultivectorOf,int)#u1": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 1,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 3,
-            "lines": 68,
-            "bytes_moved": 8,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "|(Multivector)": {
-          "before": {
-            "multiplies": 16,
-            "adds": 14,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 5,
-            "intermediates": 2,
-            "copies": 0,
-            "checks": 4,
-            "calls": 4,
-            "lines": 114,
-            "bytes_moved": 864,
-            "bytes_zeroed": 80,
-            "bytes_intermediates": 512
-          },
-          "after": null
-        },
-        "|(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 16,
-            "adds": 14,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 5,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 4,
-            "calls": 4,
-            "lines": 114,
-            "bytes_moved": 96,
-            "bytes_zeroed": 80,
-            "bytes_intermediates": 0
-          }
-        },
-        "|∘(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 560,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "|∘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 48,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 0
-          }
-        },
-        "|∘²(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "|∘²(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "|∙(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 560,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "|∙(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 48,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 0
-          }
-        },
-        "|∙²(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "|∙²(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "|⊘(Multivector)": {
-          "before": {
-            "multiplies": 32,
-            "adds": 31,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 560,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "|⊘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 32,
-            "adds": 31,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 48,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 0
-          }
-        },
-        "|⊘²(Multivector)": {
-          "before": {
-            "multiplies": 32,
-            "adds": 31,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "|⊘²(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 32,
-            "adds": 31,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "|■(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 560,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "|■(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 48,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 0
-          }
-        },
-        "|■²(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "|■²(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "|□(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 560,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "|□(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 1,
-            "calls": 1,
-            "lines": 47,
-            "bytes_moved": 48,
-            "bytes_zeroed": 32,
-            "bytes_intermediates": 0
-          }
-        },
-        "|□²(Multivector)": {
-          "before": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "|□²(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 8,
-            "adds": 7,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "~(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "~(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "~∘(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "~∘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∘(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∘(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 32,
-            "adds": 31,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∘(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∘(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 32,
-            "adds": 31,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∙(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∙(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 32,
-            "adds": 31,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∙(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∙(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 32,
-            "adds": 31,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∧(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∧(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∧(float,Multivector)": {
-          "before": {
-            "multiplies": 32,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 64,
-            "lines": 228,
-            "bytes_moved": 520,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∧(float,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 32,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 64,
-            "lines": 228,
-            "bytes_moved": 8,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∧★(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∧★(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∧☆(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∧☆(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∨(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∨(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∨★(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∨★(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "∨☆(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "∨☆(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⊖(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "⊖(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⊙(Multivector)": {
-          "before": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 3,
-            "intermediates": 2,
-            "copies": 0,
-            "checks": 4,
-            "calls": 4,
-            "lines": 127,
-            "bytes_moved": 1792,
-            "bytes_zeroed": 768,
-            "bytes_intermediates": 512
-          },
-          "after": null
-        },
-        "⊙(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 486,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 3,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 4,
-            "calls": 4,
-            "lines": 127,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⊛(Multivector)": {
-          "before": {
-            "multiplies": 518,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 73,
-            "intermediates": 6,
-            "copies": 0,
-            "checks": 109,
-            "calls": 399,
-            "lines": 2530,
-            "bytes_moved": 20736,
-            "bytes_zeroed": 18688,
-            "bytes_intermediates": 1536
-          },
-          "after": null
-        },
-        "⊛(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 518,
-            "adds": 422,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 73,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 109,
-            "calls": 399,
-            "lines": 2530,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⊞(Multivector)": {
-          "before": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 1,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 1280,
-            "bytes_zeroed": 512,
-            "bytes_intermediates": 256
-          },
-          "after": null
-        },
-        "⊞(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 2,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 2,
-            "calls": 2,
-            "lines": 80,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⊟(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "⊟(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⊡(Multivector)": {
-          "before": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 3,
-            "intermediates": 2,
-            "copies": 0,
-            "checks": 3,
-            "calls": 3,
-            "lines": 118,
-            "bytes_moved": 1792,
-            "bytes_zeroed": 768,
-            "bytes_intermediates": 512
-          },
-          "after": null
-        },
-        "⊡(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 243,
-            "adds": 211,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 3,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 3,
-            "calls": 3,
-            "lines": 118,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "■(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "■(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "□(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "□(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "★(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "★(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "☆(Multivector)": {
-          "before": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 512,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "☆(MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 0,
-            "adds": 0,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⟇(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 1024,
-            "adds": 992,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "⟇(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 1024,
-            "adds": 992,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        },
-        "⟑(Multivector,Multivector)": {
-          "before": {
-            "multiplies": 1024,
-            "adds": 992,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 768,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          },
-          "after": null
-        },
-        "⟑(MultivectorOf,MultivectorOf)": {
-          "before": null,
-          "after": {
-            "multiplies": 1024,
-            "adds": 992,
-            "subtractions": 0,
-            "divides": 0,
-            "fills_zero": 0,
-            "intermediates": 0,
-            "copies": 0,
-            "checks": 0,
-            "calls": 0,
-            "lines": 32,
-            "bytes_moved": 0,
-            "bytes_zeroed": 0,
-            "bytes_intermediates": 0
-          }
-        }
-      },
+      "functions": {},
       "times": {
         "wedge": [
-          97.53,
-          97.49,
-          0.9987
+          48.48,
+          48.63,
+          1.0032
         ],
         "wedge_anti": [
-          96.93,
-          97.06,
-          1.0003
+          46.35,
+          46.36,
+          1.0001
         ],
         "wedge_dot": [
-          528.92,
-          530.35,
-          0.9962
+          223.3,
+          223.33,
+          0.9992
         ],
         "wedge_dot_anti": [
-          532.38,
-          532.29,
-          0.9987
+          224.35,
+          224.66,
+          1.0016
         ],
         "dot": [
-          18.35,
-          18.39,
-          1.0035
+          9.26,
+          9.26,
+          0.9992
         ],
         "dot_anti": [
-          17.64,
-          17.6,
-          0.9917
+          9.1,
+          9.21,
+          1.0131
         ],
         "contract_bulk": [
-          96.13,
-          96.21,
-          1.0012
+          46.31,
+          46.36,
+          1.0018
         ],
         "contract_weight": [
-          100.22,
-          100.25,
-          0.9995
+          47.84,
+          47.94,
+          1.004
         ],
         "expand_bulk": [
-          100.13,
-          99.59,
-          0.995
+          50.42,
+          50.47,
+          1.0013
         ],
         "expand_weight": [
-          104.2,
-          103.46,
-          0.9934
+          55.88,
+          56.13,
+          1.0044
         ],
         "add": [
-          9.4,
-          9.46,
-          1.003
+          6.17,
+          6.18,
+          1.0018
         ],
         "subtract": [
-          9.39,
-          9.47,
-          1.0009
-        ],
-        "project_central": [
-          199.15,
-          198.95,
-          1.0022
-        ],
-        "project_central_anti": [
-          173.5,
-          172.92,
-          0.9942
-        ],
-        "project_orthogonal": [
-          199.83,
-          200.11,
-          0.9999
-        ],
-        "project_orthogonal_anti": [
-          175.65,
-          175.05,
-          0.9965
-        ],
-        "scale": [
-          6.51,
-          6.51,
-          1.0004
-        ],
-        "bulk": [
-          12.8,
-          12.77,
-          1.0005
-        ],
-        "weight": [
-          12.15,
-          12.16,
-          1.0012
-        ],
-        "complement_right": [
-          6.97,
-          6.97,
-          1.0002
-        ],
-        "complement_left": [
-          6.97,
-          6.98,
-          1.0008
-        ],
-        "reverse": [
-          9.45,
-          9.46,
-          1.0015
-        ],
-        "reverse_anti": [
-          9.45,
-          9.45,
-          1.0004
-        ],
-        "dual_bulk": [
-          12.26,
-          12.21,
-          0.9962
-        ],
-        "dual_weight": [
-          11.45,
-          11.56,
-          1.0078
-        ],
-        "negate": [
-          5.67,
-          5.67,
-          1.0011
-        ],
-        "norm_bulk": [
-          3.36,
-          3.37,
-          1.0012
-        ],
-        "norm_weight": [
-          3.4,
-          3.39,
-          0.998
-        ],
-        "norm_bulk_squared": [
-          9.02,
-          9.02,
-          1.0062
-        ],
-        "norm_weight_squared": [
-          8.5,
-          8.52,
-          1.0025
-        ],
-        "norm": [
-          4.36,
-          4.37,
+          6.17,
+          6.18,
           1.0024
         ],
+        "project_central": [
+          100.51,
+          100.58,
+          0.9998
+        ],
+        "project_central_anti": [
+          90.2,
+          90.21,
+          0.9992
+        ],
+        "project_orthogonal": [
+          100.95,
+          101.26,
+          1.0028
+        ],
+        "project_orthogonal_anti": [
+          90.91,
+          90.9,
+          1.0005
+        ],
+        "scale": [
+          5.4,
+          5.4,
+          0.9995
+        ],
+        "bulk": [
+          5.94,
+          5.94,
+          0.9996
+        ],
+        "weight": [
+          6.19,
+          6.19,
+          0.9995
+        ],
+        "complement_right": [
+          4.87,
+          4.87,
+          0.9999
+        ],
+        "complement_left": [
+          4.87,
+          4.87,
+          1.0021
+        ],
+        "reverse": [
+          6.22,
+          6.2,
+          0.9945
+        ],
+        "reverse_anti": [
+          6.21,
+          6.2,
+          0.9956
+        ],
+        "dual_bulk": [
+          8.05,
+          7.88,
+          0.9967
+        ],
+        "dual_weight": [
+          8.16,
+          8.12,
+          0.9931
+        ],
+        "negate": [
+          5.31,
+          5.22,
+          0.992
+        ],
+        "norm_bulk": [
+          1.93,
+          1.96,
+          1.002
+        ],
+        "norm_weight": [
+          1.96,
+          1.97,
+          1.0005
+        ],
+        "norm_bulk_squared": [
+          6.19,
+          6.19,
+          0.9999
+        ],
+        "norm_weight_squared": [
+          5.95,
+          5.8,
+          0.9987
+        ],
+        "norm": [
+          2.79,
+          2.82,
+          1.0125
+        ],
         "normalize_bulk": [
-          10.33,
-          10.33,
-          1.0007
+          6.3,
+          6.25,
+          0.9962
         ],
         "normalize_weight": [
-          10.34,
-          10.35,
-          1.0015
+          6.24,
+          6.29,
+          1.0032
         ],
         "unitize": [
-          10.34,
-          10.35,
-          1.0009
+          6.3,
+          6.32,
+          1.0042
         ],
         "attitude": [
-          12.83,
-          12.82,
-          1.0029
+          6.71,
+          6.71,
+          1.0001
         ],
         "select_grade": [
-          13.53,
-          12.95,
-          0.9585
+          10.31,
+          10.65,
+          1.0347
         ],
         "select_grade_anti": [
-          13.92,
-          13.9,
-          0.9963
+          11.22,
+          11.22,
+          0.9993
         ],
         "select_part": [
-          0.92,
-          0.92,
+          0.91,
+          0.91,
           1.0
         ],
         "bulk_flat": [
-          12.98,
-          13.01,
-          1.0019
+          6.7,
+          6.7,
+          0.9999
         ],
         "weight_flat": [
-          13.16,
-          13.13,
-          1.0027
-        ],
-        "norm_bulk_flat": [
-          3.4,
-          3.4,
-          1.0011
-        ],
-        "norm_weight_flat": [
-          3.38,
-          3.39,
-          0.9988
-        ],
-        "norm_bulk_flat_squared": [
-          9.16,
-          9.18,
-          1.0065
-        ],
-        "norm_weight_flat_squared": [
-          8.23,
-          8.23,
-          0.9997
-        ],
-        "norm_radius": [
-          17.11,
-          17.12,
-          0.9994
-        ],
-        "norm_radius_squared": [
-          15.92,
-          16.23,
-          1.0052
-        ],
-        "carrier": [
-          12.36,
-          12.39,
-          1.0036
-        ],
-        "carrier_co": [
-          59.65,
-          59.33,
-          0.9944
-        ],
-        "center": [
-          149.51,
-          153.44,
-          1.0196
-        ],
-        "container": [
-          113.82,
-          116.01,
-          1.0213
-        ],
-        "partner": [
-          259.39,
-          258.8,
-          1.002
-        ],
-        "wedge_round_point_round_point": [
-          99.03,
-          99.2,
-          1.0011
-        ],
-        "wedge_dipole_round_point": [
-          98.64,
-          98.8,
-          0.9994
-        ],
-        "wedge_round_point_dipole": [
-          98.55,
-          98.83,
-          1.0028
-        ],
-        "wedge_circle_round_point": [
-          99.67,
-          98.77,
-          0.9998
-        ],
-        "wedge_round_point_circle": [
-          98.94,
-          98.56,
-          0.9955
-        ],
-        "wedge_dipole_dipole": [
-          99.12,
-          99.08,
-          0.9983
-        ],
-        "wedge_anti_sphere_sphere": [
-          97.22,
-          97.31,
-          0.9964
-        ],
-        "wedge_anti_sphere_circle": [
-          96.82,
-          97.21,
-          1.0022
-        ],
-        "wedge_anti_circle_sphere": [
-          98.22,
-          97.15,
-          0.998
-        ],
-        "wedge_anti_circle_circle": [
-          97.36,
-          97.52,
-          1.0039
-        ],
-        "wedge_anti_sphere_dipole": [
-          97.49,
-          98.12,
-          0.9981
-        ],
-        "wedge_anti_dipole_sphere": [
-          97.15,
-          96.92,
-          0.9999
-        ],
-        "dot_round_point_round_point": [
-          18.35,
-          18.39,
-          1.0057
-        ],
-        "dot_dipole_dipole": [
-          18.3,
-          18.39,
-          1.0081
-        ],
-        "dot_circle_circle": [
-          18.29,
-          18.38,
-          1.0081
-        ],
-        "dot_sphere_sphere": [
-          18.32,
-          18.35,
-          1.0033
-        ],
-        "dot_anti_round_point_round_point": [
-          17.54,
-          17.64,
-          1.0083
-        ],
-        "dot_anti_dipole_dipole": [
-          17.63,
-          17.59,
-          0.9986
-        ],
-        "dot_anti_circle_circle": [
-          17.57,
-          17.66,
-          1.0073
-        ],
-        "dot_anti_sphere_sphere": [
-          17.57,
-          17.62,
-          1.0059
-        ],
-        "complement_right_round_point": [
-          6.97,
-          6.98,
-          1.0015
-        ],
-        "complement_left_round_point": [
-          6.97,
-          6.97,
-          1.0012
-        ],
-        "reverse_round_point": [
-          9.44,
-          9.45,
+          5.94,
+          5.94,
           0.9995
         ],
-        "reverse_anti_round_point": [
-          9.44,
-          9.45,
+        "norm_bulk_flat": [
+          1.97,
+          1.97,
           1.0005
         ],
-        "dual_bulk_round_point": [
-          12.24,
-          12.29,
-          1.0039
+        "norm_weight_flat": [
+          1.93,
+          1.94,
+          1.0023
         ],
-        "dual_weight_round_point": [
-          11.43,
-          11.49,
-          1.0002
-        ],
-        "bulk_round_point": [
-          12.83,
-          12.79,
-          0.9981
-        ],
-        "weight_round_point": [
-          12.13,
-          12.13,
-          1.0005
-        ],
-        "bulk_flat_round_point": [
-          13.0,
-          12.98,
-          0.9973
-        ],
-        "weight_flat_round_point": [
-          13.13,
-          13.09,
-          0.9979
-        ],
-        "attitude_round_point": [
-          12.79,
-          12.82,
-          1.0028
-        ],
-        "carrier_round_point": [
-          12.36,
-          12.36,
-          1.0009
-        ],
-        "carrier_co_round_point": [
-          59.66,
-          59.63,
-          1.0
-        ],
-        "center_round_point": [
-          154.94,
-          151.16,
-          0.977
-        ],
-        "container_round_point": [
-          113.86,
-          115.13,
-          1.0054
-        ],
-        "partner_round_point": [
-          259.35,
-          258.65,
-          0.9974
-        ],
-        "complement_right_dipole": [
-          6.97,
-          6.97,
-          1.0011
-        ],
-        "complement_left_dipole": [
-          6.97,
-          6.97,
-          1.0018
-        ],
-        "reverse_dipole": [
-          9.45,
-          9.47,
-          1.0021
-        ],
-        "reverse_anti_dipole": [
-          9.46,
-          9.5,
-          0.9979
-        ],
-        "dual_bulk_dipole": [
-          12.15,
-          12.3,
-          1.0138
-        ],
-        "dual_weight_dipole": [
-          11.46,
-          11.53,
-          1.011
-        ],
-        "bulk_dipole": [
-          12.8,
-          12.83,
-          1.0012
-        ],
-        "weight_dipole": [
-          12.14,
-          12.15,
-          1.0026
-        ],
-        "bulk_flat_dipole": [
-          13.01,
-          12.99,
-          0.9992
-        ],
-        "weight_flat_dipole": [
-          13.17,
-          13.17,
-          1.0022
-        ],
-        "attitude_dipole": [
-          12.81,
-          12.82,
-          0.9982
-        ],
-        "carrier_dipole": [
-          12.36,
-          12.37,
-          1.0006
-        ],
-        "carrier_co_dipole": [
-          59.34,
-          59.43,
-          0.9999
-        ],
-        "center_dipole": [
-          151.69,
-          153.91,
-          1.0196
-        ],
-        "container_dipole": [
-          115.36,
-          115.76,
-          1.0094
-        ],
-        "partner_dipole": [
-          266.16,
-          266.99,
-          0.9994
-        ],
-        "complement_right_circle": [
-          6.97,
-          6.98,
-          1.0011
-        ],
-        "complement_left_circle": [
-          6.97,
-          6.98,
-          1.0013
-        ],
-        "reverse_circle": [
-          9.45,
-          9.46,
+        "norm_bulk_flat_squared": [
+          6.45,
+          6.45,
           0.9998
         ],
-        "reverse_anti_circle": [
-          9.44,
-          9.45,
-          1.0022
+        "norm_weight_flat_squared": [
+          5.61,
+          5.49,
+          0.9983
         ],
-        "dual_bulk_circle": [
-          12.17,
-          12.26,
-          1.011
+        "norm_radius": [
+          7.06,
+          7.06,
+          0.9992
         ],
-        "dual_weight_circle": [
-          11.4,
-          11.5,
-          1.0095
+        "norm_radius_squared": [
+          6.68,
+          6.65,
+          0.9931
         ],
-        "bulk_circle": [
-          12.77,
-          12.69,
-          0.9946
+        "carrier": [
+          6.46,
+          6.45,
+          0.9995
         ],
-        "weight_circle": [
-          12.15,
-          12.16,
+        "carrier_co": [
+          38.84,
+          38.82,
+          0.9983
+        ],
+        "center": [
+          88.94,
+          90.09,
+          1.0134
+        ],
+        "container": [
+          69.9,
+          69.84,
+          1.0002
+        ],
+        "partner": [
+          158.01,
+          158.44,
+          1.0026
+        ],
+        "wedge_round_point_round_point": [
+          48.75,
+          48.67,
+          0.9984
+        ],
+        "wedge_dipole_round_point": [
+          48.72,
+          48.9,
+          1.003
+        ],
+        "wedge_round_point_dipole": [
+          48.92,
+          48.93,
+          1.001
+        ],
+        "wedge_circle_round_point": [
+          48.72,
+          48.94,
+          1.0047
+        ],
+        "wedge_round_point_circle": [
+          48.92,
+          48.71,
+          0.9962
+        ],
+        "wedge_dipole_dipole": [
+          48.72,
+          48.73,
+          1.0013
+        ],
+        "wedge_anti_sphere_sphere": [
+          46.39,
+          46.32,
+          0.9991
+        ],
+        "wedge_anti_sphere_circle": [
+          46.39,
+          46.32,
           0.9985
         ],
-        "bulk_flat_circle": [
-          12.98,
-          13.01,
-          1.0014
+        "wedge_anti_circle_sphere": [
+          46.35,
+          46.36,
+          0.9996
         ],
-        "weight_flat_circle": [
-          13.1,
-          13.12,
-          1.0035
+        "wedge_anti_circle_circle": [
+          46.34,
+          46.31,
+          0.9987
         ],
-        "attitude_circle": [
-          12.77,
-          12.85,
-          1.006
+        "wedge_anti_sphere_dipole": [
+          50.23,
+          50.21,
+          0.9991
         ],
-        "carrier_circle": [
-          12.38,
-          12.39,
-          1.0014
+        "wedge_anti_dipole_sphere": [
+          50.25,
+          50.18,
+          0.9956
         ],
-        "carrier_co_circle": [
-          59.78,
-          59.64,
-          1.0013
+        "dot_round_point_round_point": [
+          9.77,
+          9.25,
+          0.9536
         ],
-        "center_circle": [
-          151.0,
-          153.53,
-          1.013
+        "dot_dipole_dipole": [
+          9.78,
+          9.76,
+          0.9886
         ],
-        "container_circle": [
-          113.89,
-          115.3,
-          1.0108
+        "dot_circle_circle": [
+          9.78,
+          9.78,
+          0.9961
         ],
-        "partner_circle": [
-          271.35,
-          272.85,
-          1.0074
+        "dot_sphere_sphere": [
+          9.79,
+          9.76,
+          0.9961
         ],
-        "complement_right_sphere": [
-          6.97,
-          6.97,
-          1.0013
+        "dot_anti_round_point_round_point": [
+          9.76,
+          9.72,
+          0.9929
         ],
-        "complement_left_sphere": [
-          6.97,
-          6.98,
-          1.0008
+        "dot_anti_dipole_dipole": [
+          9.81,
+          9.71,
+          0.9876
         ],
-        "reverse_sphere": [
-          9.44,
-          9.45,
-          1.0013
+        "dot_anti_circle_circle": [
+          9.82,
+          9.72,
+          0.9866
         ],
-        "reverse_anti_sphere": [
-          9.44,
-          9.45,
-          1.0001
+        "dot_anti_sphere_sphere": [
+          9.76,
+          9.71,
+          0.9855
         ],
-        "dual_bulk_sphere": [
-          12.21,
-          12.27,
-          1.0004
+        "complement_right_round_point": [
+          4.89,
+          5.26,
+          1.0247
         ],
-        "dual_weight_sphere": [
-          11.42,
-          11.52,
-          1.0077
+        "complement_left_round_point": [
+          4.89,
+          4.88,
+          0.9978
         ],
-        "bulk_sphere": [
-          12.8,
-          12.69,
-          0.989
+        "reverse_round_point": [
+          6.23,
+          6.19,
+          0.9879
         ],
-        "weight_sphere": [
-          12.14,
-          12.14,
+        "reverse_anti_round_point": [
+          6.22,
+          6.2,
+          0.9926
+        ],
+        "dual_bulk_round_point": [
+          8.13,
+          7.74,
+          0.9691
+        ],
+        "dual_weight_round_point": [
+          8.2,
+          8.12,
+          0.9902
+        ],
+        "bulk_round_point": [
+          5.94,
+          5.94,
+          0.9984
+        ],
+        "weight_round_point": [
+          6.19,
+          6.19,
+          0.9991
+        ],
+        "bulk_flat_round_point": [
+          6.7,
+          6.7,
+          0.9996
+        ],
+        "weight_flat_round_point": [
+          5.94,
+          5.94,
+          0.9991
+        ],
+        "attitude_round_point": [
+          6.71,
+          6.71,
+          0.9971
+        ],
+        "carrier_round_point": [
+          6.46,
+          6.45,
+          0.9992
+        ],
+        "carrier_co_round_point": [
+          38.8,
+          38.85,
+          0.9997
+        ],
+        "center_round_point": [
+          89.0,
+          90.13,
+          1.0122
+        ],
+        "container_round_point": [
+          69.43,
+          70.35,
+          1.0129
+        ],
+        "partner_round_point": [
+          159.2,
+          157.23,
+          0.9901
+        ],
+        "complement_right_dipole": [
+          5.28,
+          5.27,
+          0.9998
+        ],
+        "complement_left_dipole": [
+          5.28,
+          5.27,
+          0.9983
+        ],
+        "reverse_dipole": [
+          6.73,
+          6.72,
+          0.9938
+        ],
+        "reverse_anti_dipole": [
+          6.75,
+          6.72,
+          0.9869
+        ],
+        "dual_bulk_dipole": [
+          8.68,
+          8.39,
+          0.9717
+        ],
+        "dual_weight_dipole": [
+          8.83,
+          8.79,
+          0.9891
+        ],
+        "bulk_dipole": [
+          6.44,
+          6.43,
           0.9989
         ],
+        "weight_dipole": [
+          6.71,
+          6.7,
+          0.9996
+        ],
+        "bulk_flat_dipole": [
+          7.26,
+          7.26,
+          0.9995
+        ],
+        "weight_flat_dipole": [
+          6.44,
+          6.43,
+          0.9989
+        ],
+        "attitude_dipole": [
+          6.71,
+          6.71,
+          0.9997
+        ],
+        "carrier_dipole": [
+          6.46,
+          6.45,
+          0.9992
+        ],
+        "carrier_co_dipole": [
+          38.79,
+          38.84,
+          1.0007
+        ],
+        "center_dipole": [
+          88.99,
+          90.18,
+          1.0135
+        ],
+        "container_dipole": [
+          69.97,
+          70.32,
+          1.0043
+        ],
+        "partner_dipole": [
+          158.99,
+          158.16,
+          0.9956
+        ],
+        "complement_right_circle": [
+          4.87,
+          4.86,
+          0.9944
+        ],
+        "complement_left_circle": [
+          4.87,
+          4.86,
+          1.0
+        ],
+        "reverse_circle": [
+          6.21,
+          6.21,
+          0.9973
+        ],
+        "reverse_anti_circle": [
+          6.24,
+          6.2,
+          0.9934
+        ],
+        "dual_bulk_circle": [
+          8.12,
+          7.73,
+          0.9628
+        ],
+        "dual_weight_circle": [
+          8.16,
+          8.13,
+          0.9915
+        ],
+        "bulk_circle": [
+          5.94,
+          5.94,
+          0.9979
+        ],
+        "weight_circle": [
+          6.19,
+          6.19,
+          0.9991
+        ],
+        "bulk_flat_circle": [
+          6.7,
+          6.7,
+          0.9996
+        ],
+        "weight_flat_circle": [
+          5.94,
+          5.94,
+          0.999
+        ],
+        "attitude_circle": [
+          6.71,
+          6.71,
+          0.9988
+        ],
+        "carrier_circle": [
+          6.46,
+          6.45,
+          0.9993
+        ],
+        "carrier_co_circle": [
+          38.79,
+          38.84,
+          0.9993
+        ],
+        "center_circle": [
+          89.05,
+          90.19,
+          1.0137
+        ],
+        "container_circle": [
+          69.49,
+          69.77,
+          1.003
+        ],
+        "partner_circle": [
+          158.98,
+          158.27,
+          0.9909
+        ],
+        "complement_right_sphere": [
+          4.92,
+          4.87,
+          0.9844
+        ],
+        "complement_left_sphere": [
+          4.9,
+          4.87,
+          0.9987
+        ],
+        "reverse_sphere": [
+          6.22,
+          6.2,
+          0.9929
+        ],
+        "reverse_anti_sphere": [
+          6.23,
+          6.2,
+          0.9911
+        ],
+        "dual_bulk_sphere": [
+          8.05,
+          7.92,
+          0.9854
+        ],
+        "dual_weight_sphere": [
+          8.18,
+          8.13,
+          0.992
+        ],
+        "bulk_sphere": [
+          5.94,
+          5.94,
+          0.9993
+        ],
+        "weight_sphere": [
+          6.19,
+          6.19,
+          0.9987
+        ],
         "bulk_flat_sphere": [
-          13.0,
-          12.99,
-          0.9986
+          6.7,
+          6.7,
+          0.9992
         ],
         "weight_flat_sphere": [
-          13.09,
-          13.14,
-          0.9986
+          5.94,
+          5.94,
+          0.9988
         ],
         "attitude_sphere": [
-          12.8,
-          12.82,
-          1.0011
+          6.71,
+          6.71,
+          0.9989
         ],
         "carrier_sphere": [
-          12.36,
-          12.35,
-          0.9994
+          6.46,
+          6.45,
+          0.9989
         ],
         "carrier_co_sphere": [
-          59.58,
-          59.99,
-          1.0017
+          38.76,
+          38.79,
+          1.0005
         ],
         "center_sphere": [
-          151.48,
-          152.86,
-          1.0071
+          88.95,
+          90.19,
+          1.0138
         ],
         "container_sphere": [
-          115.72,
-          115.12,
-          1.004
+          75.73,
+          76.1,
+          1.0031
         ],
         "partner_sphere": [
-          265.63,
-          265.42,
-          0.999
+          153.38,
+          153.02,
+          0.9944
         ]
       },
       "nan": {},
       "digest_c": {
         "pristine": "dba420e795ec126e",
         "changed": "dfea1c8b6c901dcc"
+      }
+    },
+    "rga3d": {
+      "suites": {
+        "ok": 33,
+        "failed": 0,
+        "built": true
+      },
+      "functions": {},
+      "times": {
+        "wedge": [
+          4.52,
+          4.52,
+          1.0
+        ],
+        "wedge_anti": [
+          4.56,
+          4.56,
+          0.9999
+        ],
+        "wedge_dot": [
+          8.06,
+          8.06,
+          1.0009
+        ],
+        "wedge_dot_anti": [
+          8.09,
+          8.09,
+          1.0
+        ],
+        "dot": [
+          1.91,
+          1.91,
+          1.0028
+        ],
+        "dot_anti": [
+          1.66,
+          1.66,
+          0.9991
+        ],
+        "contract_bulk": [
+          3.17,
+          3.17,
+          0.9989
+        ],
+        "contract_weight": [
+          2.34,
+          2.34,
+          0.9998
+        ],
+        "expand_bulk": [
+          2.29,
+          2.29,
+          1.0009
+        ],
+        "expand_weight": [
+          3.37,
+          3.37,
+          1.0015
+        ],
+        "add": [
+          1.53,
+          1.53,
+          0.9994
+        ],
+        "subtract": [
+          1.53,
+          1.53,
+          1.0006
+        ],
+        "project_central": [
+          6.43,
+          6.43,
+          0.9998
+        ],
+        "project_central_anti": [
+          8.13,
+          8.13,
+          1.0011
+        ],
+        "project_orthogonal": [
+          8.28,
+          8.28,
+          1.0001
+        ],
+        "project_orthogonal_anti": [
+          6.33,
+          6.33,
+          1.0002
+        ],
+        "scale": [
+          1.63,
+          1.63,
+          0.9985
+        ],
+        "bulk": [
+          1.6,
+          1.59,
+          0.9966
+        ],
+        "weight": [
+          1.6,
+          1.59,
+          0.9901
+        ],
+        "complement_right": [
+          1.58,
+          1.58,
+          1.0006
+        ],
+        "complement_left": [
+          1.58,
+          1.58,
+          1.0009
+        ],
+        "reverse": [
+          1.42,
+          1.44,
+          0.9979
+        ],
+        "reverse_anti": [
+          1.43,
+          1.42,
+          0.9986
+        ],
+        "dual_bulk": [
+          1.67,
+          1.65,
+          0.9861
+        ],
+        "dual_weight": [
+          1.67,
+          1.65,
+          0.9857
+        ],
+        "negate": [
+          1.43,
+          1.41,
+          0.9941
+        ],
+        "norm_bulk": [
+          1.7,
+          1.7,
+          1.0
+        ],
+        "norm_weight": [
+          1.7,
+          1.7,
+          1.0
+        ],
+        "norm_bulk_squared": [
+          1.78,
+          1.76,
+          0.9909
+        ],
+        "norm_weight_squared": [
+          1.68,
+          1.68,
+          0.9904
+        ],
+        "norm": [
+          1.7,
+          1.7,
+          0.9998
+        ],
+        "normalize_bulk": [
+          3.07,
+          3.07,
+          0.9994
+        ],
+        "normalize_weight": [
+          3.07,
+          3.07,
+          1.0002
+        ],
+        "unitize": [
+          2.96,
+          2.95,
+          0.9983
+        ],
+        "attitude": [
+          1.68,
+          1.64,
+          0.981
+        ],
+        "select_grade": [
+          2.15,
+          2.15,
+          0.9889
+        ],
+        "select_grade_anti": [
+          2.7,
+          2.68,
+          0.9995
+        ],
+        "select_part": [
+          0.49,
+          0.46,
+          0.9927
+        ],
+        "support": [
+          6.97,
+          7.01,
+          1.0074
+        ],
+        "support_anti": [
+          6.74,
+          6.82,
+          1.0111
+        ],
+        "wedge_point_point": [
+          4.52,
+          4.52,
+          1.0001
+        ],
+        "wedge_point_line": [
+          4.54,
+          4.54,
+          1.0001
+        ],
+        "wedge_line_point": [
+          4.54,
+          4.54,
+          1.0
+        ],
+        "wedge_anti_line_line": [
+          4.56,
+          4.56,
+          1.0003
+        ],
+        "wedge_anti_point_line": [
+          4.59,
+          4.58,
+          0.9999
+        ],
+        "wedge_anti_line_point": [
+          4.6,
+          4.59,
+          0.9988
+        ],
+        "dot_point_point": [
+          1.92,
+          1.9,
+          1.0015
+        ],
+        "dot_line_line": [
+          1.93,
+          1.9,
+          0.9964
+        ],
+        "dot_anti_point_point": [
+          1.77,
+          1.73,
+          0.9874
+        ],
+        "dot_anti_line_line": [
+          1.66,
+          1.64,
+          0.9967
+        ],
+        "wedge_dot_anti_motor_motor": [
+          8.81,
+          8.8,
+          0.9992
+        ],
+        "transform_point_motor": [
+          17.93,
+          17.93,
+          1.0
+        ],
+        "transform_line_motor": [
+          17.88,
+          17.88,
+          1.0001
+        ],
+        "project_orthogonal_point_line": [
+          8.22,
+          8.22,
+          0.9997
+        ],
+        "support_line": [
+          6.96,
+          7.02,
+          1.0076
+        ],
+        "support_anti_point": [
+          7.3,
+          7.39,
+          1.0118
+        ],
+        "reverse_anti_motor": [
+          1.43,
+          1.42,
+          0.9986
+        ],
+        "unitize_motor": [
+          2.6,
+          2.61,
+          1.0006
+        ],
+        "norm_weight_motor": [
+          1.41,
+          1.41,
+          1.0
+        ],
+        "norm_bulk_motor": [
+          1.7,
+          1.7,
+          1.0
+        ],
+        "complement_right_point": [
+          1.46,
+          1.46,
+          0.9983
+        ],
+        "complement_left_point": [
+          1.47,
+          1.46,
+          0.998
+        ],
+        "reverse_point": [
+          1.4,
+          1.31,
+          0.9799
+        ],
+        "reverse_anti_point": [
+          1.4,
+          1.32,
+          0.9875
+        ],
+        "dual_bulk_point": [
+          1.62,
+          1.52,
+          0.9892
+        ],
+        "dual_weight_point": [
+          1.63,
+          1.53,
+          0.9865
+        ],
+        "bulk_point": [
+          1.56,
+          1.48,
+          0.9886
+        ],
+        "weight_point": [
+          1.56,
+          1.48,
+          0.9936
+        ],
+        "norm_bulk_point": [
+          1.57,
+          1.57,
+          1.0
+        ],
+        "norm_weight_point": [
+          1.57,
+          1.57,
+          1.0
+        ],
+        "norm_bulk_squared_point": [
+          1.71,
+          1.63,
+          0.9879
+        ],
+        "norm_weight_squared_point": [
+          1.65,
+          1.55,
+          0.9842
+        ],
+        "unitize_point": [
+          2.84,
+          2.83,
+          0.9993
+        ],
+        "attitude_point": [
+          1.62,
+          1.53,
+          0.9978
+        ],
+        "complement_right_line": [
+          1.47,
+          1.46,
+          0.999
+        ],
+        "complement_left_line": [
+          1.47,
+          1.46,
+          0.9993
+        ],
+        "reverse_line": [
+          1.4,
+          1.32,
+          0.9801
+        ],
+        "reverse_anti_line": [
+          1.4,
+          1.32,
+          0.9881
+        ],
+        "dual_bulk_line": [
+          1.6,
+          1.53,
+          0.9958
+        ],
+        "dual_weight_line": [
+          1.61,
+          1.53,
+          0.9852
+        ],
+        "bulk_line": [
+          1.52,
+          1.48,
+          0.996
+        ],
+        "weight_line": [
+          1.52,
+          1.48,
+          0.9894
+        ],
+        "norm_bulk_line": [
+          1.57,
+          1.57,
+          1.0
+        ],
+        "norm_weight_line": [
+          1.57,
+          1.57,
+          1.0
+        ],
+        "norm_bulk_squared_line": [
+          1.71,
+          1.63,
+          0.9988
+        ],
+        "norm_weight_squared_line": [
+          1.61,
+          1.55,
+          0.9827
+        ],
+        "unitize_line": [
+          2.84,
+          2.83,
+          0.9983
+        ],
+        "attitude_line": [
+          1.6,
+          1.52,
+          0.9811
+        ]
+      },
+      "nan": {},
+      "digest_c": {
+        "pristine": "e1f7dfca1bd739f2",
+        "changed": "db807d8332c82a66"
+      }
+    },
+    "cga4d": {
+      "suites": {
+        "ok": 28,
+        "failed": 0,
+        "built": true
+      },
+      "functions": {},
+      "times": {
+        "wedge": [
+          14.73,
+          14.72,
+          1.0
+        ],
+        "wedge_anti": [
+          13.53,
+          13.52,
+          1.0006
+        ],
+        "wedge_dot": [
+          46.25,
+          46.38,
+          1.0041
+        ],
+        "wedge_dot_anti": [
+          47.21,
+          47.26,
+          1.0013
+        ],
+        "dot": [
+          5.35,
+          5.35,
+          1.0003
+        ],
+        "dot_anti": [
+          5.25,
+          5.23,
+          0.9993
+        ],
+        "contract_bulk": [
+          14.74,
+          14.71,
+          0.998
+        ],
+        "contract_weight": [
+          15.24,
+          15.2,
+          0.9987
+        ],
+        "expand_bulk": [
+          16.79,
+          16.79,
+          1.0002
+        ],
+        "expand_weight": [
+          16.54,
+          16.54,
+          1.0004
+        ],
+        "add": [
+          3.22,
+          3.23,
+          1.0036
+        ],
+        "subtract": [
+          3.24,
+          3.24,
+          1.0033
+        ],
+        "project_central": [
+          31.85,
+          32.03,
+          1.0059
+        ],
+        "project_central_anti": [
+          28.22,
+          28.2,
+          0.9994
+        ],
+        "project_orthogonal": [
+          29.89,
+          29.65,
+          0.9931
+        ],
+        "project_orthogonal_anti": [
+          28.47,
+          28.52,
+          1.0015
+        ],
+        "scale": [
+          3.83,
+          3.81,
+          0.996
+        ],
+        "bulk": [
+          3.49,
+          3.49,
+          1.0004
+        ],
+        "weight": [
+          3.11,
+          3.11,
+          0.9998
+        ],
+        "complement_right": [
+          2.73,
+          2.73,
+          0.9988
+        ],
+        "complement_left": [
+          4.25,
+          4.24,
+          0.9956
+        ],
+        "reverse": [
+          3.54,
+          3.54,
+          1.0008
+        ],
+        "reverse_anti": [
+          2.57,
+          2.57,
+          1.0006
+        ],
+        "dual_bulk": [
+          2.84,
+          2.84,
+          0.9997
+        ],
+        "dual_weight": [
+          2.85,
+          2.84,
+          0.9998
+        ],
+        "negate": [
+          2.66,
+          2.63,
+          0.9953
+        ],
+        "norm_bulk": [
+          1.57,
+          1.57,
+          1.0
+        ],
+        "norm_weight": [
+          1.57,
+          1.57,
+          1.0
+        ],
+        "norm_bulk_squared": [
+          3.37,
+          3.36,
+          0.9994
+        ],
+        "norm_weight_squared": [
+          3.16,
+          3.08,
+          0.9784
+        ],
+        "norm": [
+          1.57,
+          1.57,
+          0.9997
+        ],
+        "normalize_bulk": [
+          3.29,
+          3.29,
+          0.9982
+        ],
+        "normalize_weight": [
+          3.29,
+          3.3,
+          1.0016
+        ],
+        "unitize": [
+          3.3,
+          3.29,
+          0.996
+        ],
+        "attitude": [
+          3.16,
+          3.15,
+          0.9955
+        ],
+        "select_grade": [
+          10.29,
+          10.31,
+          1.0015
+        ],
+        "select_grade_anti": [
+          10.81,
+          10.85,
+          0.9888
+        ],
+        "select_part": [
+          0.67,
+          0.67,
+          0.9993
+        ],
+        "bulk_flat": [
+          3.25,
+          3.23,
+          0.9972
+        ],
+        "weight_flat": [
+          3.13,
+          3.12,
+          0.9995
+        ],
+        "norm_bulk_flat": [
+          1.57,
+          1.57,
+          1.0
+        ],
+        "norm_weight_flat": [
+          1.57,
+          1.57,
+          1.0
+        ],
+        "norm_bulk_flat_squared": [
+          3.37,
+          3.36,
+          0.9993
+        ],
+        "norm_weight_flat_squared": [
+          3.16,
+          3.06,
+          0.9843
+        ],
+        "norm_radius": [
+          3.31,
+          3.31,
+          1.0001
+        ],
+        "norm_radius_squared": [
+          3.85,
+          3.74,
+          0.9615
+        ],
+        "carrier": [
+          3.57,
+          3.56,
+          0.9915
+        ],
+        "carrier_co": [
+          17.18,
+          17.17,
+          0.9978
+        ],
+        "center": [
+          38.59,
+          38.63,
+          1.002
+        ],
+        "container": [
+          32.0,
+          31.82,
+          0.9927
+        ],
+        "partner": [
+          67.69,
+          68.03,
+          1.0044
+        ],
+        "wedge_round_point_round_point": [
+          14.74,
+          14.76,
+          1.001
+        ],
+        "wedge_dipole_round_point": [
+          14.67,
+          14.76,
+          1.0067
+        ],
+        "wedge_round_point_dipole": [
+          14.75,
+          14.67,
+          0.9941
+        ],
+        "wedge_circle_round_point": [
+          14.75,
+          14.68,
+          0.9949
+        ],
+        "wedge_round_point_circle": [
+          14.66,
+          14.76,
+          1.0068
+        ],
+        "wedge_dipole_dipole": [
+          14.75,
+          14.75,
+          1.0003
+        ],
+        "wedge_anti_circle_circle": [
+          13.53,
+          13.53,
+          1.0004
+        ],
+        "wedge_anti_circle_dipole": [
+          13.54,
+          13.53,
+          1.0001
+        ],
+        "wedge_anti_dipole_circle": [
+          13.54,
+          13.54,
+          0.9998
+        ],
+        "wedge_anti_dipole_dipole": [
+          13.53,
+          13.53,
+          1.0002
+        ],
+        "wedge_anti_circle_round_point": [
+          13.54,
+          13.54,
+          1.0004
+        ],
+        "wedge_anti_round_point_circle": [
+          13.54,
+          13.54,
+          1.0003
+        ],
+        "dot_round_point_round_point": [
+          5.35,
+          5.35,
+          0.9985
+        ],
+        "dot_dipole_dipole": [
+          5.36,
+          5.35,
+          0.9983
+        ],
+        "dot_circle_circle": [
+          5.36,
+          5.35,
+          0.9985
+        ],
+        "dot_anti_round_point_round_point": [
+          5.23,
+          5.22,
+          0.9973
+        ],
+        "dot_anti_dipole_dipole": [
+          5.22,
+          5.22,
+          0.9984
+        ],
+        "dot_anti_circle_circle": [
+          5.22,
+          5.23,
+          0.9988
+        ],
+        "complement_right_round_point": [
+          2.96,
+          2.96,
+          0.9997
+        ],
+        "complement_left_round_point": [
+          4.59,
+          4.59,
+          0.9988
+        ],
+        "reverse_round_point": [
+          3.83,
+          3.83,
+          0.979
+        ],
+        "reverse_anti_round_point": [
+          2.78,
+          2.78,
+          0.9986
+        ],
+        "dual_bulk_round_point": [
+          3.07,
+          3.07,
+          0.9997
+        ],
+        "dual_weight_round_point": [
+          3.08,
+          3.08,
+          1.0003
+        ],
+        "bulk_round_point": [
+          3.78,
+          3.77,
+          0.9969
+        ],
+        "weight_round_point": [
+          3.37,
+          3.37,
+          0.9994
+        ],
+        "bulk_flat_round_point": [
+          3.5,
+          3.49,
+          0.9956
+        ],
+        "weight_flat_round_point": [
+          3.38,
+          3.37,
+          0.9991
+        ],
+        "attitude_round_point": [
+          3.41,
+          3.4,
+          0.9981
+        ],
+        "carrier_round_point": [
+          3.84,
+          3.84,
+          0.9981
+        ],
+        "carrier_co_round_point": [
+          17.27,
+          17.17,
+          0.9986
+        ],
+        "center_round_point": [
+          38.61,
+          38.63,
+          1.0011
+        ],
+        "container_round_point": [
+          34.69,
+          34.36,
+          0.9912
+        ],
+        "partner_round_point": [
+          73.65,
+          73.19,
+          0.993
+        ],
+        "complement_right_dipole": [
+          2.96,
+          2.96,
+          0.9998
+        ],
+        "complement_left_dipole": [
+          4.59,
+          4.59,
+          0.9914
+        ],
+        "reverse_dipole": [
+          3.83,
+          3.83,
+          0.9844
+        ],
+        "reverse_anti_dipole": [
+          2.78,
+          2.78,
+          1.0012
+        ],
+        "dual_bulk_dipole": [
+          3.07,
+          3.08,
+          1.0006
+        ],
+        "dual_weight_dipole": [
+          3.08,
+          3.08,
+          0.9995
+        ],
+        "bulk_dipole": [
+          3.78,
+          3.77,
+          0.9977
+        ],
+        "weight_dipole": [
+          3.37,
+          3.37,
+          0.9994
+        ],
+        "bulk_flat_dipole": [
+          3.51,
+          3.5,
+          0.9925
+        ],
+        "weight_flat_dipole": [
+          3.39,
+          3.37,
+          0.9991
+        ],
+        "attitude_dipole": [
+          3.41,
+          3.41,
+          0.9983
+        ],
+        "carrier_dipole": [
+          3.85,
+          3.86,
+          1.0014
+        ],
+        "carrier_co_dipole": [
+          18.71,
+          18.61,
+          0.9996
+        ],
+        "center_dipole": [
+          39.39,
+          39.01,
+          0.9895
+        ],
+        "container_dipole": [
+          32.03,
+          31.76,
+          0.9925
+        ],
+        "partner_dipole": [
+          75.72,
+          75.78,
+          1.0007
+        ],
+        "complement_right_circle": [
+          2.96,
+          2.96,
+          1.0015
+        ],
+        "complement_left_circle": [
+          4.51,
+          4.59,
+          1.0185
+        ],
+        "reverse_circle": [
+          3.82,
+          3.8,
+          0.9979
+        ],
+        "reverse_anti_circle": [
+          2.78,
+          2.78,
+          1.0016
+        ],
+        "dual_bulk_circle": [
+          2.84,
+          2.84,
+          0.9995
+        ],
+        "dual_weight_circle": [
+          2.84,
+          2.85,
+          1.0005
+        ],
+        "bulk_circle": [
+          3.49,
+          3.48,
+          0.9997
+        ],
+        "weight_circle": [
+          3.11,
+          3.11,
+          1.0
+        ],
+        "bulk_flat_circle": [
+          3.24,
+          3.23,
+          0.9988
+        ],
+        "weight_flat_circle": [
+          3.12,
+          3.11,
+          1.0002
+        ],
+        "attitude_circle": [
+          3.15,
+          3.15,
+          0.9994
+        ],
+        "carrier_circle": [
+          3.56,
+          3.56,
+          1.0001
+        ],
+        "carrier_co_circle": [
+          17.18,
+          17.22,
+          1.0013
+        ],
+        "center_circle": [
+          38.59,
+          38.64,
+          1.0019
+        ],
+        "container_circle": [
+          34.66,
+          34.43,
+          0.9928
+        ],
+        "partner_circle": [
+          77.52,
+          76.52,
+          0.9884
+        ]
+      },
+      "nan": {},
+      "digest_c": {
+        "pristine": "473757dc5a9c68f9",
+        "changed": "e5aceb689628fb00"
       }
     }
   },
@@ -4466,6 +2361,7 @@
       "kind": "program",
       "path": "layout.nim",
       "algebras": [
+        "rga2d",
         "rga3d",
         "rga4d",
         "cga4d",
