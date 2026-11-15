@@ -303,11 +303,14 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-28 at all four algebras**, five runs each on `linux
-amd64, 4 cores`. They ran at the pin `3d9696e` under Nim 2.4.0, with nothing else on the machine.
-Each algebra keeps the take whose median paired spread is smaller, as the Architect ruled on
-2026-10-19 (D5). A take under another compiler times other C, so this take is the only one at the
-pin.
+**The runtime baselines are from 2026-11-15 at all four algebras**, five runs each on `linux
+amd64, 4 cores`, a Xeon of family 6 model 207. They ran at the pin `3d9696e` under Nim 2.4.0, with
+nothing else on the machine. Each algebra keeps the one of three takes of that day whose median
+paired spread is smallest, as the Architect ruled on 2026-10-19 (D5).
+
+A take under another compiler times other C, and a take on another processor times other
+hardware. These takes and each evaluation but those of P02 and P06 ran on one processor, under one
+compiler.
 
 The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day,
 gives the drift between days. At rga4d its library runs ×1.19 to
@@ -317,11 +320,13 @@ to ×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.03
-to ×1.13 apart at each algebra. The widest measurand spreads ×1.87, as `complement_left_point` at
-rga3d does. Its library takes 2.41 to 3.55 ns across the five runs, and its reference 0.63 to
-1.74 ns, both slowest in the fourth run. Under Nim 2.3.1, the takes of 2026-10-03 and 2026-10-19
-spread ×1.10 to ×1.12 and ×1.15 to ×1.19, so this figure moves between takes.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
+to ×1.21 apart at each algebra. The widest measurand spreads ×2.41, as `norm_bulk_plane` at rga4d
+does. Its library takes 2.52 to 5.63 ns across the five runs, slowest in the fourth. Its
+reference takes 0.37 to 0.60 ns, slowest in the second.
+
+The other two takes of each algebra are not committed, and spread ×1.17 to ×1.29 at the median
+measurand. So this figure moves between takes.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -400,9 +405,11 @@ that names algebra, compiler commit, library commit, flags, machine and date.
 
 **The machine names its processor**, as the Architect ruled on 2026-11-15. It gives the system,
 the architecture and the count of cores. Then it gives the model name, family and model of the
-first block of `/proc/cpuinfo` that names one. On the host of 2026-11-15, `machineNow` reads
-`linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.30GHz, family 6 model 173`. That model name
-names no generation of processor, so the family and model tell the generations apart.
+first block of `/proc/cpuinfo` that names one. The baselines at the pin read `linux amd64, 4 cores,
+Intel(R) Xeon(R) Processor @ 2.10GHz, family 6 model 207`. Under the same machine name, the stamps
+of the evaluations at `08a1c416` read `Intel(R) Xeon(R) Processor @ 2.30GHz, family 6 model 173`.
+Neither model name names a generation of processor, so the family and model tell the generations
+apart.
 
 A host that describes no processor, as macOS or Windows, writes `processor unrecorded`. Each verb
 that times or counts takes the machine from `machineNow` of `report.nim`, and `sweep` takes the
@@ -696,14 +703,15 @@ first step leaves whole grades at zero, and the second step reads none of them. 
 bound is an estimate.
 
 **What the library spends in time against them.** The runtime baselines time each dense form
-beside the library, five alternating runs at four algebras, on `linux amd64, 4 cores` on
-2026-10-19. The median general measurand runs ×1.00 to ×1.01 its dense form at each algebra,
-since most library operators are already one generated table. The compound operations are not.
-They run ×2.0 to ×5.7 their dense forms, from the container at cga5d to the support at rga4d.
+beside the library, five alternating runs at four algebras. They ran on `linux amd64, 4 cores`, a
+Xeon of family 6 model 207, on 2026-11-15. The median general measurand runs ×1.00 to ×1.01 its
+dense form at each algebra, since most library operators are already one generated table. The
+compound operations are not. They run ×2.1 to ×6.0 their dense forms, from the antisupport at
+rga3d to the cocarrier at cga5d.
 
-The antigrade selection runs ×2.5 to ×4.6, and the norms ×0.68 to ×1.11. Sum, difference and
-negation run ×0.63 to ×1.14, and the unitizes and normalizations ×0.59 to ×0.89. So a dense
-form is a measure, and never a lower bound on time.
+The grade selection runs ×1.3 to ×2.9, and the antigrade selection ×1.7 to ×4.4. The norms run
+×0.92 to ×1.11. Sum, difference and negation run ×0.82 to ×1.23, and the unitizes and
+normalizations ×0.55 to ×1.05. So a dense form is a measure, and never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -1546,7 +1554,8 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`, and at the pin they are from 2026-10-28 on `linux amd64, 4 cores`.
+under `taken`. At the pin they are from 2026-11-15 on `linux amd64, 4 cores`, a Xeon of family 6
+model 207.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
 the machine code of one function. The times of the point forms of Lengyel's code are
@@ -1609,13 +1618,15 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.
-- A stamp that names no processor, as that of each baseline and of the evaluations of P02 and
-  P06, leaves the machine unknown. Under the stamp `linux amd64, 4 cores`, pin ran `wedge` at
-  cga5d in 97.55 ns on 2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in
-  `evaluations/cayley-derivation.json`, at `c2e80da3` and at `78d5c3d5`. By `/proc/cpuinfo`, the
-  processor of 2026-11-14 and 2026-11-15 is a Xeon of family 6 model 173, and nothing records
-  that of 2026-11-05. So a time of one evaluation compares with a time of another only where the
-  times of pin agree.
+- One machine name can hold more than one processor. Under `linux amd64, 4 cores`, pin ran
+  `wedge` at cga5d in 97.55 ns on 2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in the
+  history of `evaluations/cayley-derivation.json`, at `c2e80da3` and `78d5c3d5`. The stamps at
+  `08a1c416` name a Xeon of family 6 model 173, where pin ran it in 48.49 ns. The stamps now name
+  model 207, where it runs in 65.19 ns. Nothing records the processor of 2026-11-05 or 2026-11-14.
+- The baselines and each evaluation but those of P02 and P06 ran on 2026-11-15 on one processor,
+  a Xeon of family 6 model 207. The stamps of P02 and P06 name no processor, which leaves their
+  machine unknown. So a time of P02 or P06 compares with another time only where the times of pin
+  agree.
 - Movement is modelled from the bytes that the code names, and never measured as cache
   traffic.
 - The inspector reads text patterns of Nim 2.4.0. Another release could spell the same C
