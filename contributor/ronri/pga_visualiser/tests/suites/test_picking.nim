@@ -53,7 +53,7 @@ suite "Picking":
     )
     check anchor_far.isNone
     # Free flight takes it where it stands: wheel there refers to object under pointer, and
-    #   band about separation would leave it nothing once flight moved on.
+    #   band about distance to pivot would leave it nothing once flight moved on.
     let anchor_free = anchorZoomAt(
       far,
       camera,
@@ -414,7 +414,7 @@ suite "Picking":
     ) == some(0)
 
 
-  test "a point ahead of the eye reads in front, and is picked, at every separation held":
+  test "a point ahead of the eye reads in front and is picked, at every distance to the pivot held":
     # Ring, label, menu and every pick read `isInFront`, so its floor is camera's own,
     #   `DISTANCE_LIMIT_NEAR`: pointer pick of star at least radius stands 2.4e-7 off it.
     #   Point as far behind eye reads behind at every one of them.
@@ -730,7 +730,7 @@ suite "Picking":
 
 
   test "a plane a camera stands millionths off is picked, and found under the pointer":
-    # Hit stands at camera's own separation, under millionth yet over camera's floor.
+    # Hit stands at camera's own distance to pivot, under millionth yet over camera's floor.
     #   In front is judged against hit's own reach from eye, so it reads in front.
     #   Plane as far behind eye answers neither.
     let corners = [

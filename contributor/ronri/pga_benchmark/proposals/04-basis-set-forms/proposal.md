@@ -11,7 +11,8 @@ what it is.
 
 **What it costs.** The compiler builds a body for each type or pair of types that a program uses.
 Each term of a body takes about 0.05 MiB of compiler memory. A form that reaches no basis stops
-the compile, where a widened call gives zero.
+the compile, where a widened call gives zero. An alignment above 8 bytes pads the objects of a
+caller, and a caller that allocates its own storage must align it.
 
 ## Problem
 
@@ -35,8 +36,8 @@ At pin, each basis-set type aligns to its coefficient, 8 bytes at 64 bits, whate
 `Multivector` is the alias of the whole set, and `MultivectorScalars` of the scalar and the
 antiscalar. One macro names an alias for each grade and for each parity. At rga4d these are:
 
-| Alias | Bases at `rga4d` | Coefficients |
-|-------|------------------|-------------:|
+| Alias | Bases at rga4d | Coefficients |
+|-------|----------------|-------------:|
 | `Multivector0` | `S` | 1 |
 | `Multivector1` | `E1`, `E2`, `E3`, `E4` | 4 |
 | `Multivector2` | `E41`, `E42`, `E43`, `E23`, `E31`, `E12` | 6 |
@@ -65,18 +66,20 @@ each form the alias of its operator, where the library names one:
 | Squared norms | `‖𝐦‖■²`, `‖𝐦‖□²`, `‖𝐦‖⊘²` | conformal |
 
 The emitter walks the whole table of the library over the bases of the operands. It finds the
-bases that the form can reach, and writes one line for each. `defineProduct` and `defineMap`
-read the same tables as `defineOperator`, over the bases of the operands alone. So the tables stay
-whole, and their count does not grow with the count of types. Forms are generic, so a program
-makes only the types and pairs of types that it uses.
+bases that the form can reach, and writes one line for each. The two overloads of `defineForm`
+read the same tables as the two of `defineOperator`, over the bases of the operands alone. So the
+tables stay whole, and their count does not grow with the count of types. Forms are generic, so a
+program makes only the types and pairs of types that it uses.
 
-A squared norm applies a table of two operands to one operand. So `defineProduct` reads that
-operand on both sides, as `as_unary` of the library does. The library spells the squared norms
+A squared norm applies a table of two operands to one operand. So `defineForm` reads that operand
+on both sides, as `as_unary` of the library does. The library spells the squared norms
 `|∙²` to `|⊘²`, names no alias for them, and this proposal adds none.
 
-A form reaches every coefficient of its exact basis-set type. So each form is `noinit`, and
-writes each coefficient once. `typeReached` names the result type, and `defineProduct` or
-`defineMap` fills it. Both read the same table, so the type and the body agree.
+A form reaches every coefficient of its exact basis-set type. So each form is `inline` and
+`noinit`, as each operator of the library is, and writes each coefficient once. `typeReached`
+names the result type, and `defineForm` fills it. Both read the same table, so the type and the
+body agree. A reverse keeps each basis, so `~` and `~∘` return `MultivectorOf[A]`, the type of
+the operand.
 
 Nim reads the argument of a generic type as it is spelled. `MultivectorOf[{Basis.E1..Basis.E4}]`
 is not `Multivector1`, which lists its four bases, and a set of all bases listed is not
@@ -92,8 +95,11 @@ Nim prefers the operator of the library to a generic one that also matches. So a
 whole multivectors stays as at pin, and returns `Multivector`. A product of a whole multivector
 and a basis-set type had no operator at pin, and takes the generic one.
 
-For example, at `rga3d` the product `Multivector1 ∧ Multivector1` reaches `Multivector2`, and
-`defineProduct` writes three lines through `emitTerm`:
+`pga/basis_sets.nim` and `pga.nim` enable `openSym`. Without it, each use of a form of two
+operands prints the warning `IgnoredSymbolInjection`, and the library at pin prints none.
+
+For example, at rga3d the product `Multivector1 ∧ Multivector1` reaches `Multivector2`, and
+`defineForm` writes three lines through `emitTerm`:
 
 ```nim
 result[E23] = m[E2] * n[E3] + -(m[E3] * n[E2])
@@ -115,11 +121,14 @@ branch and no lookup. `(𝐞₁ + 2𝐞₂) ∧ (3𝐞₂ + 4𝐞₃)` gives `8�
 ### Alignment
 
 Each basis-set type aligns to `alignment` of its count of coefficients: the largest power of two
-that divides their bytes, and at most 64. So it pads no count. Each takes it from the size of its
-basis set, as the Architect ruled on 2026-10-04. `MultivectorOf[B]` chooses among 16, 32 and 64
-through `when`, and otherwise keeps the alignment of its coefficient. So a named type and an
-unnamed type follow one rule. The whole set takes 64 bytes from rga3d up at 64 bits, which is the
-alignment that P05, `multivector-align`, gives `Multivector`.
+that divides their bytes, and at most 64. So the type itself pads no count. Each takes it from the
+size of its basis set, as the Architect ruled on 2026-10-04. `MultivectorOf[B]` chooses among 8,
+16, 32 and 64 through `when`, and otherwise keeps the alignment of its coefficient. So a named
+type and an unnamed type follow one rule. The whole set takes 64 bytes from rga3d up at 64 bits,
+which is the alignment that P05, `multivector-align`, gives `Multivector`.
+
+`alignment` stays private to `pga/multivectors.nim`. `laws.nim` reads it through `{.all.}`, as
+the tests of the library read private names.
 
 ## Alternatives
 
@@ -137,13 +146,13 @@ lost |
 | One named type for each set reached | The names would spell the bases, as the generic does |
 | Empty set for a product that reaches none | Pinned compiler stops on `B.card` and on `index` |
 | Generic product of two whole multivectors | Callers of pin would see a new type |
-| Filtered copy of each table for each pair of types | About 1.7 GB of compiler memory at 6D |
+| Filtered copy of each table for each pair of types | About 1 700 MiB of compiler memory at 6D |
 | One emitted procedure for each pair | About 6 000 bodies at 5D conformal, most never called |
 | 64 bytes for each basis-set type | Pads 3, 4, 5, 6 and 10 floats; most padded ones ran slower |
 | `align` of a static parameter | Pinned compiler stops, even on `align(A)` of `A: static int` |
 
-One filtered copy of a 2D table costs 0.1 MB at 4D, 0.35 MB at 5D and 0.9 MB at 6D. About eight
-types and thirty binary operators give some 1 900 copies, or about 1.7 GB at 6D.
+One filtered copy of a 2D table costs 0.1 MiB at 4D, 0.35 MiB at 5D and 0.9 MiB at 6D. About
+eight types and thirty binary operators give some 1 900 copies, or about 1 700 MiB at 6D.
 
 ### Names
 
@@ -156,21 +165,23 @@ bare noun (V.3).
 | Alignment of a count | `alignment(count)` | `alignmentOf`: V.3 wants the bare noun |
 | Module | `basis_sets` | `products`: `operators.nim` holds products too |
 | Product of one operand | `as_unary`, as the library names it | `defineSquare`: a second macro |
+| Body of each form | `defineForm` | `defineMap`, `defineProduct`: library names a pair once |
 
 ## Costs
 
 - **Compile memory.** The compiler takes about 0.05 MiB for each term that a form emits, and about
-  0.35 MiB for each instance. At rga4d, 63 instances of `⟑` over the pairs of named types emit
-  1 536 terms. They take 102 MiB above the 104 MiB of the library alone. Each instance takes a whole
-  table as a static argument, and that costs little: 63 instances of `∙` take 22 MiB. A sweep of
-  every form over every pair of types emits about 20 000 terms at rga5d, and peaks at 1 521 MiB.
+  0.35 MiB for each pair of types that a program tries. At rga4d, the 63 pairs of the named types
+  and the whole multivector give 62 instances of `⟑`, which emit 1 536 terms. They take 102 MiB
+  above the 104 MiB of the library alone. A whole table as a static argument of each instance
+  costs little: the 63 pairs of `∙`, of which 26 compile, take 22 MiB. A sweep of
+  every form over every pair of types emits about 20 000 terms at rga5d, and peaks at 1 580 MiB.
   Compile time is unmeasured, apart from the runs of `laws.nim`.
 - **Operators from no table.** These stay on `Multivector` alone: the norms, `unitize`, the
   supports and the projections. So do the cocarrier, center, container and partner, and `-`, `$`
   and `grade`. A caller widens a basis-set type for each of them, and narrows the result back. At
   pin `+` and `=~` already take any basis-set type. The library names no flat basis-set type.
 - **Reach of the table.** The reach is what the table can produce, not what the algebra
-  guarantees. A sandwich of a vector comes back as `MultivectorOdd` at each of the four algebras,
+  guarantees. A sandwich of a vector comes back as `MultivectorOdd` at each of the nine algebras,
   although its value lies in grade 1. An operator that knows better declares its product set. The
   emitter at pin takes no grade filter, so that set comes from the table that the operator reads.
 - **Printed name.** At rga4d, `$typeof(p ∧ q)` of two vectors prints the generic with its bases,
@@ -186,16 +197,44 @@ bare noun (V.3).
 - **Norms.** A norm takes a root of its squared norm, and at pin it returns `MultivectorScalars`.
   So a norm stays on `Multivector`, and this proposal does not cover it. Each squared norm has a
   form, and that form of a vector writes 8 bytes.
-- **Alignment.** A basis-set type of an odd count keeps the alignment of its coefficient, so it
-  can still cross a line. Only padding would prevent that, and padding costs more than the line. An
-  alias holds no field of its own. So `laws.nim` writes each number into its laws, and not into a
-  type.
-- **Callers.** No caller must migrate, since every type and operator at pin stays. An operator on
-  whole multivectors keeps its form at pin. A product of a whole multivector and a basis-set type
-  had no operator at pin. The field `elements` stays private, so `laws.nim` samples
-  each type through the narrow.
+- **Alignment.** A basis-set type whose bytes are not a power of two, as 3, 5, 6 and 10 floats at
+  64 bits, can still cross a line. Only padding would prevent that, and padding costs more than the
+  line. An alias holds no field of its own. So `laws.nim` writes each number into its laws, and not
+  into a type.
+- **Caller objects.** A field of a basis-set type aligns its object to 16, 32 or 64 bytes, where
+  pin aligns it to 8. So an object that holds one beside other fields pads to that alignment, and
+  so does each `seq` or array of such objects. At rga4d, a motor and an `int32` take 128 bytes and
+  not 72, and a vector and a float take 64 and not 40.
+- **Raw storage.** A caller that holds basis-set types in memory from `alloc`, `create` or
+  `createU`, or from an allocator of its own, must align each block to the alignment of the type,
+  up to 64 bytes. Those calls align to 16 bytes, and an AVX2 build faults there on an aligned move.
+  The library at pin runs such a program.
+- **Memory manager.** Under `--mm:refc` and `--mm:markAndSweep` the pinned compiler does not align
+  the data of a `seq`, but the C type declares the alignment of the type. A caller that holds
+  basis-set types in a `seq` there can stop on an aligned store, as an AVX2 build does. The library
+  at pin runs such a program, and names no memory manager.
+- **Callers.** A caller that lets the compiler place its basis-set types does not migrate, since
+  every type and operator at pin stays. An operator on whole multivectors keeps its form at pin. A
+  product of a whole multivector and a basis-set type had no operator at pin. The field `elements`
+  stays private, so `laws.nim` samples each type through the narrow.
 - **Machines.** The runtime measurements of basis-set types come from two Intel Xeons. None
   covers an AMD or an ARM core.
+- **Suites.** The suites of the library read no routine of `pga/basis_sets.nim`, and its laws run
+  from this project alone.
+- **Forms by hand.** At pin each operator from a table is one call of `defineOperator`, 29 in all.
+  This change writes its 27 forms by hand as generic funcs, each with its symbol, its doc and its
+  table. Each body names the table, and 25 return types name it again. So the operators of
+  `pga/operators.nim` and the forms must stay equal by hand. A private macro that defines each form
+  from one call, of symbol, doc and table, builds and passes.
+- **Module.** At pin each operator stands in `pga/operators.nim`, and no module serves one feature.
+  `pga/basis_sets.nim` holds 27 operators, 4 macros and 3 emitters. The same code builds inside
+  `pga/operators.nim`, with no edit of the import and export lines of `pga.nim`. With the new
+  module, the header of `pga.nim` names `operators.nim` alone as the source of its operators.
+- **Aliases.** At pin `pga.nim` names no Cayley table, and each alias is one code line. Here 22
+  aliases name a table in a wrapped return type, through `typeReached`, which is exported for them
+  alone. The aliases of the reverse and the antireverse return `MultivectorOf[A]`, on one line.
+  Aliases of return type `auto` name no table and fit one line, and they build and pass. `auto`
+  has no use at pin.
 
 ## Open decisions
 
@@ -203,6 +242,14 @@ bare noun (V.3).
 - Generate and test the conformal flat basis-set types.
 - Whether a product that reaches no basis stops the compile, as here, or the library admits a
   basis-set type of an empty set.
+- Write each form by hand as a generic func, as here, or define each from one call of a private
+  macro, as the library defines each operator.
+- Keep the forms in a module of their own, `pga/basis_sets.nim`, as here, or put the same code
+  inside `pga/operators.nim`, which builds.
+- Let `pga.nim` name 22 tables in the return types of its aliases, as here, or keep one-line
+  aliases of return type `auto` that name no table.
+- Align each basis-set type to at most 64 bytes, as here, or to at most 16 bytes, which `alloc`
+  gives, or align past 8 bytes only under a guard on `defined(gcDestructors)`.
 
 ## Landing
 
@@ -210,11 +257,18 @@ bare noun (V.3).
 - **P05, `multivector-align`.** It aligns the whole set alone, on the type definition that the
   first edit replaces. The second of the two to land quotes the first. Once this change lands, the
   whole set takes `alignment` of its count, which equals the alignment of P05.
-- **Changes `doc-comments` and `doc-comments-2`.** `doc-comments` edits the import line of
-  `pga.nim`, and `doc-comments-2` its export line. Whichever of each pair lands second quotes that
-  line again.
+- **Changes `doc-comments` and `doc-comments-2`.** `doc-comments` quotes the import line of
+  `pga.nim` and keeps it, so this change applies after it as written. If this change lands first,
+  `doc-comments` quotes that line again. `doc-comments-2` edits the export line, so whichever of
+  those two lands second quotes it again.
 - **Float width.** Each basis-set type holds `Coefficient`, and `alignment` reads its size. So a
-  32-bit build aligns by the same rule, and at least to 4 bytes.
+  32-bit build aligns by the same rule, and at least to 4 bytes. `laws.nim` holds this at 32 bits
+  at each algebra up to 5D.
+- **P08, `compound-tables`.** It builds the supports, the cocarrier, the center and the container
+  from one table each. This change gives them no basis-set form, and the header of
+  `pga/basis_sets.nim` lists the supports among the operators from no table. So whichever of the
+  two lands second gives each of the five a form, or states in that header and in Costs that these
+  five have a table and stay on `Multivector`.
 - **P09 and P10.** P09, `object-names`, names the objects of the book by the aliases at pin. P10,
   `homogeneous-scalar`, gives arithmetic to the type of two scalars that each norm returns. It
   multiplies its pairs through the `⟑` and `⟇` of this change.
@@ -249,29 +303,33 @@ It gains nothing on the dots and the squared norms.
 
 The prototype of P02 counts the terms that a motor sandwich on a point emits at 4D, with the
 second product kept to grade 1. It counts 384 untyped, 96 over contiguous ranges with the motor at
-full width, and 48 over named basis-set types. An exact basis-set type holds a subset of the bases
-of the smallest named type that holds it, so it spends at most 48. `laws.nim` does not count them.
+full width, and 48 over named basis-set types. An exact form keeps no product to grade 1, so
+`(even ⟇ p) ⟇ even` emits 20 and then 48 terms at rga4d, 68 in all. An operator that declares its
+product set would spend the 48 of P02. `laws.nim` does not count them.
 
 ### Laws
 
 `laws.nim` holds each form against the operator of the library, on 256 seeded samples of each type
 or pair. It sweeps each part, map and squared norm over each named type. Up to 5D it sweeps each
 product over every pair of named types and the whole multivector. At 6D a vector pairs with each
-type, on either side. There every pair takes 18 minutes and 6 106 MiB at cga6d, where vector pairs
-take 2 minutes and 1 196 MiB. Where a form stops the compile, the operator of the library gives
-zero on each sample.
+type, on either side. On 2026-10-29 every pair took 18 minutes and 6 106 MiB at cga6d, where vector
+pairs took 2 minutes and 1 196 MiB. Where a form stops the compile, the operator of the library
+gives zero on each sample.
+
+The laws held at each of the nine algebras on 2026-11-15, on `linux amd64, 4 cores`, a Xeon of
+family 6 model 173. The table gives the forms and the peak resident size of each build there.
 
 | Algebra | Pairs of each product | Forms that hold | Forms that stop | Peak of build |
 |---------|-----------------------|----------------:|----------------:|--------------:|
-| rga2d | every pair | 302 | 103 | 318 MiB |
-| rga3d | every pair | 409 | 137 | 342 MiB |
-| rga4d | every pair | 524 | 183 | 630 MiB |
-| rga5d | every pair | 649 | 239 | 1 521 MiB |
-| rga6d | a vector with each type | 216 | 73 | 903 MiB |
-| cga3d | every pair | 472 | 110 | 400 MiB |
-| cga4d | every pair | 595 | 154 | 787 MiB |
-| cga5d | every pair | 728 | 208 | 2 000 MiB |
-| cga6d | a vector with each type | 262 | 81 | 1 196 MiB |
+| rga2d | every pair | 302 | 103 | 307 MiB |
+| rga3d | every pair | 409 | 137 | 356 MiB |
+| rga4d | every pair | 524 | 183 | 656 MiB |
+| rga5d | every pair | 649 | 239 | 1 580 MiB |
+| rga6d | a vector with each type | 216 | 73 | 926 MiB |
+| cga3d | every pair | 472 | 110 | 415 MiB |
+| cga4d | every pair | 595 | 154 | 822 MiB |
+| cga5d | every pair | 728 | 208 | 2 074 MiB |
+| cga6d | a vector with each type | 262 | 81 | 1 223 MiB |
 
 Each alias returns the type of its operator, and equals it. Each reverse keeps its type, and each
 complement takes grade k to grade N - k. A map that drops the sign of its table fails at rga4d, at
@@ -332,4 +390,5 @@ Under AVX2, its sum ranged ×0.86 to ×1.47 over the 20 single executions. That 
 executions, and the medians lie inside the range of the table.
 
 `laws.nim` holds `alignment` at each count from 0 to 64, and at each count in the table above. It
-also holds the size and the alignment of each named basis-set type at each of the nine algebras.
+also holds the size and the alignment of each named basis-set type at each of the nine algebras,
+and at 32 bits at each algebra up to 5D.

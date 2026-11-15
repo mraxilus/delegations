@@ -2779,12 +2779,12 @@ proc verdictDriven(
       &"{wheel_drive.is_over_menu}; distance {before:.3f} -> {after:.3f}, " &
       &"pivot off the point by {off:.2e}",
     )
-    # Check three notches scale separation by core's rule, which page's `wheel.ts` holds too.
+    # Check three notches scale distance to pivot by core's rule, as page's `wheel.ts` does.
     let ratio_rule = factorWheel(float(NOTCHES_WHEEL_DRIVEN))
     report(
       "and three notches zoom the desktop by the rule the page reads",
       before > 0.0 and abs(after / before / ratio_rule - 1.0) < 1.0e-6,
-      &"separation scaled by {after / before:.9f}, rule {ratio_rule:.9f}",
+      &"distance to pivot scaled by {after / before:.9f}, rule {ratio_rule:.9f}",
     )
   if options.is_bulk_driven:
     # Check each act on two picked objects is one step of undo, as page's `acts.ts` holds.

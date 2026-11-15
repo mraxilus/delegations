@@ -239,11 +239,22 @@ proc inspectStatic(
 
 #[ Comparisons ]#
 
+func stem(key: string): string =
+  ## Read key without number of its instance, e.g. `index(Basis)` of `index(Basis)#u7695`.
+  let at = key.rfind("#u")
+  if at < 0: key else: key[0..<at]
+
+
 func functionsChanged*(before, after: JsonNode): JsonNode =
   ## Compare static documents function by function; keep those whose counts differ.
   ##   Function on one side only is JSON null on other, never nil, so document prints.
   ##   Dense form changed build leaves out is no move: changed build omits dense forms, since
   ##     change may rename tables they read, and pristine counts hold them.
+  ##   Instance whose number alone moved is no move: compiler numbers instance of generic
+  ##     among every symbol before it, so change above it moves that number. Key gone and key
+  ##     new that share stem and counts pair, first with first in order of keys.
+  ##
+  ##   Cost: instance whose number and counts both moved reads gone and new, never moved.
 
   func reportCounts(function: JsonNode): JsonNode =
     ## Build totals and movement evaluation reports for one function.
@@ -270,8 +281,23 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
   for key in now.keys:
     if key notin keys: keys.add key
   keys.sort
+  var gone, added, renumbered: seq[string]
+  for key in keys:
+    if not now.hasKey(key):
+      if key notin forms_dense: gone.add key
+    elif not was.hasKey(key): added.add key
+  for key in gone:
+    var at = -1
+    for i, twin in added:
+      if twin.stem == key.stem and reportCounts(now[twin]) == reportCounts(was[key]):
+        at = i
+        break
+    if at >= 0:
+      renumbered.add [key, added[at]]
+      added.delete at
   for key in keys:
     if key in forms_dense and not now.hasKey(key): continue
+    if key in renumbered: continue
     let
       counts_before = if was.hasKey(key): reportCounts(was[key]) else: newJNull()
       counts_after = if now.hasKey(key): reportCounts(now[key]) else: newJNull()

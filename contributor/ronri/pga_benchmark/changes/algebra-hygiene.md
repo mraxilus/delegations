@@ -6,13 +6,18 @@ change calls it `TOLERANCE_REL`.
 `$` is the one operator that `Grade` does not borrow, so this change borrows it. A define,
 `pgaValidate`, keeps the compile-time checks in a release build.
 
-Two proposals edit lines that this change quotes. Of this change and each of them, the second
-to land quotes the first:
+Three proposals name `TOLERANCE_ABS`, which this change renames. Of this change and each of
+them, the second to land carries the new name:
 
-- P07, `part-scale`, replaces the zero test of `grade`, and its new `=~` names the tolerance. Its
-  new code takes the new name.
-- P11, `unitize-general`, names `TOLERANCE_ABS` in `^∘`. The second to land carries the new name
-  into `^∘`.
+- P07, `part-scale`, replaces the zero test of `grade`, and its new `=~` names the tolerance. Both
+  quote that test, so the second to land quotes the first. The new code of P07 and its programs
+  `laws.nim` and `timing.nim` take the new name.
+- P11, `unitize-general`, names `TOLERANCE_ABS` in `^∘`, `laws.nim` and `limits.nim`. With both
+  applied, the conformal build stops on `undeclared identifier: 'TOLERANCE_ABS'`. The second to
+  land carries the new name into `^∘` and into both programs.
+- P10, `homogeneous-scalar`, names `TOLERANCE_ABS` in `inverse` of `pga/scalars.nim` and in its
+  `laws.nim`. With both applied, the build stops on `undeclared identifier: 'TOLERANCE_ABS'`. The
+  second to land carries the new name into both.
 
 ## Edit `pga/algebra.nim`
 

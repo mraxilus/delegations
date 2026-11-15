@@ -8,13 +8,18 @@ reaches. `pga.nim` exports the module, and gives each generic form its named ali
 alias on `Multivector`.
 
 Each basis-set type also aligns to `alignment` of its count of coefficients. That is the largest
-power of two that divides their bytes, and at most one cache line, so it pads none.
+power of two that divides their bytes, and at most one cache line, so it pads none. The `when` of
+`MultivectorOf` chooses among 8, 16, 32 and 64, so a 32-bit build follows the same rule.
 
 Nim reads the set of a generic type as it is spelled, so `{Basis.E1..Basis.E4}` and the four bases
 listed are two types. Each alias of pin lists its bases, and `Multivector` spells the range of all
 bases. So `typeReached` lists the bases it reaches, and names `Multivector` where it reaches all.
+A reverse keeps each basis, so `~` and `~∘` return `MultivectorOf[A]`, the type of the operand.
 A form that reaches no basis stops the compile, since the pinned compiler instantiates no
 `MultivectorOf` of an empty set.
+
+`pga/basis_sets.nim` and `pga.nim` enable `openSym`. Without it, each use of a form of two
+operands prints the warning `IgnoredSymbolInjection`, which the library at pin does not print.
 
 P05, `multivector-align`, aligns the whole set alone, on the line that the first edit replaces. The
 second to land quotes the first. Where this change lands, the whole set takes `alignment` of its
@@ -34,10 +39,10 @@ type
 ```nim
 #[ Type Definition ]#
 
-const ALIGNMENT_MAX = 64  ## Cap alignment at bytes of one cache line.
+const ALIGNMENT_MAX = 64  # Cap alignment at bytes of one cache line.
 
 
-func alignment*(count: int): int =
+func alignment(count: int): int =
   ## Get alignment of `count` coefficients: largest power of two dividing their bytes, at most
   ##   one line. Alignment divides size, so it pads no count; empty set keeps that of coefficient.
   let size = sizeof(Coefficient) * count
@@ -47,13 +52,15 @@ func alignment*(count: int): int =
 type
   Bases* = set[Basis]  ## TODO: Make distinct.
   MultivectorOf*[B: static Bases] = object
-    ## Align to `alignment` of count through `when`: pinned compiler stops on `align` of `B`.
+    ## Align to `alignment` of count through `when`, as Nim rejects `align` of `B`.
     when alignment(B.card) == 64:
       elements {.align(64).}: array[B.card, Coefficient]
     elif alignment(B.card) == 32:
       elements {.align(32).}: array[B.card, Coefficient]
     elif alignment(B.card) == 16:
       elements {.align(16).}: array[B.card, Coefficient]
+    elif alignment(B.card) == 8:
+      elements {.align(8).}: array[B.card, Coefficient]
     else:
       elements: array[B.card, Coefficient]
 ```
@@ -61,23 +68,26 @@ type
 ## Add `pga/basis_sets.nim`
 
 ```nim
-## Define forms of basis-set types for each operator library builds from one table.
+## Define forms of multivector subtypes for each operator library builds from one table.
 ##   Form reads library's whole table over bases of its operands alone, and returns exact
 ##     `MultivectorOf` of bases it reaches. So dot is one coefficient, and bulk of bivector is
 ##     part of its grade. Tables stay whole, so their count grows with no type.
 ##   Result spells its set as aliases spell theirs, so it is their type: Nim tells sets apart by
 ##     spelling, and `{Basis.E1..Basis.E4}` is not `Multivector1`.
+##   Reverse and antireverse keep each basis, so they return subtype of operand.
 ##   Squared norm reads its table with operand on both sides, as library's `as_unary` does.
 ##
-##   Cost: forms stay generic, since one body per pair of types makes some 6 000 at cga5d;
-##     each instance takes whole table as static argument, compile cost unmeasured.
-##   Cost: operator library builds from no table stays on `Multivector`, as norms, `unitize`,
-##     supports and `-` do; caller widens first.
-##   Cost: form that reaches no basis stops compile, as bulk dual of antiscalar under rigid
-##     metric does; widened call gives zero there.
-##   Cost: reach is what table can produce, not what algebra guarantees; sandwich of vector
-##     returns `MultivectorOdd`, though its value lies in grade 1.
+## Cost: forms stay generic, since one body per pair of types makes some 6 000 at cga5d;
+##   each instance takes whole table as static argument, compile time unmeasured.
+## Cost: operator library builds from no table stays on `Multivector`, as norms, `unitize`,
+##   supports and `-` do; caller widens first.
+## Cost: form that reaches no basis stops compile, as bulk dual of antiscalar under rigid
+##   metric does; widened call gives zero there.
+## Cost: reach is what table can produce, not what algebra guarantees; sandwich of vector
+##   returns `MultivectorOdd`, though its value lies in grade 1.
+##
 
+{.experimental: "openSym".}
 {.experimental: "strictFuncs".}
 
 import std/macros
@@ -89,8 +99,8 @@ import ./[algebra, cayleys, emitters, multivectors]
 #[ Emission ]#
 
 func emitWrites(sums: array[Basis, seq[NimNode]]): NimNode {.compileTime.} =
-  ## Emit write of each reached coefficient once; every coefficient of exact type is reached, so
-  ## none fills.
+  ## Emit write of each reached coefficient once; every coefficient of exact subtype is reached,
+  ##   so none fills.
 
   func emitSum(terms: seq[NimNode]): NimNode =
     ## Emit sum of terms, left to right.
@@ -99,21 +109,29 @@ func emitWrites(sums: array[Basis, seq[NimNode]]): NimNode {.compileTime.} =
 
   result = newStmtList()
   for b in Basis:
-    if sums[b].len > 0:
+    if sums[b].len != 0:
       result.add newAssignment(emitSubscript("result", b), emitSum(sums[b]))
 
 
 func emitReached(reached: Bases): NimNode {.compileTime.} =
   ## Spell type of reached bases as aliases spell theirs: `Multivector` for all, else each listed.
-  ##   Product that reaches no basis is zero for any operands, and pinned compiler instantiates no
-  ##     empty set, firstOrd(tyEmpty); so it stops compile.
-  if reached.card == 0: error("Product must reach a basis; this one is zero for any operands.")
+  ##   Form that reaches no basis is zero for any operand, and Nim instantiates no `MultivectorOf`
+  ##     of empty set; so it stops compile.
+  if reached.card == 0: error("Form must reach a basis; this one is zero for any operand.")
   if reached == {Basis.scalar..Basis.scalarAnti}: ident"Multivector"
   else: emitMultivectorOf(reached)
 
 
+macro typeReached*(cayley: static Cayley1D, bases_m: static Bases): untyped =
+  ## Spell subtype map reaches, so it is same type as any alias.
+  var reached: Bases
+  for b in bases_m:
+    for term in cayley[b]: reached.incl term.basis
+  emitReached(reached)
+
+
 macro typeReached*(cayley: static Cayley2D; bases_m, bases_n: static Bases): untyped =
-  ## Spell basis-set type product reaches, so it is same type as any alias.
+  ## Spell subtype product reaches, so it is same type as any alias.
   var reached: Bases
   for left in bases_m:
     for right in bases_n:
@@ -121,18 +139,20 @@ macro typeReached*(cayley: static Cayley2D; bases_m, bases_n: static Bases): unt
   emitReached(reached)
 
 
-macro typeReached*(cayley: static Cayley1D, bases_m: static Bases): untyped =
-  ## Spell basis-set type map reaches, so it is same type as any alias.
-  var reached: Bases
+macro defineForm(cayley: static Cayley1D, bases_m: static Bases): untyped =
+  ## Define map over operand's bases alone, into result of exact subtype.
+  var sums: array[Basis, seq[NimNode]]
   for b in bases_m:
-    for term in cayley[b]: reached.incl term.basis
-  emitReached(reached)
+    for term in cayley[b]:
+      let read = emitSubscript("m", b)
+      sums[term.basis].add(if term.is_negated: prefix(read, "-") else: read)
+  emitWrites(sums)
 
 
-macro defineProduct(
+macro defineForm(
   cayley: static Cayley2D; bases_m, bases_n: static Bases; as_unary: static bool = false
 ): untyped =
-  ## Define product over operands' bases alone, into result of exact basis-set type.
+  ## Define product over operands' bases alone, into result of exact subtype.
   ##   Unary product reads 𝐦 on both sides, as library's squared norms do.
   let name_n = if as_unary: "m" else: "n"
   var sums: array[Basis, seq[NimNode]]
@@ -143,87 +163,87 @@ macro defineProduct(
   emitWrites(sums)
 
 
-macro defineMap(cayley: static Cayley1D, bases_m: static Bases): untyped =
-  ## Define map over operand's bases alone, into result of exact basis-set type.
-  var sums: array[Basis, seq[NimNode]]
-  for b in bases_m:
-    for term in cayley[b]:
-      let read = emitSubscript("m", b)
-      sums[term.basis].add(if term.is_negated: prefix(read, "-") else: read)
-  emitWrites(sums)
-
-
 
 #[ Products ]#
 
 func `∧`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_WEDGE.base, A, B) {.noinit.} =
-  ## Multiply through exterior product, i.e. 𝐦 ∧ 𝐧; result holds exactly bases reached.
-  defineProduct(CAYLEYS_WEDGE.base, A, B)
+): typeReached(CAYLEYS_WEDGE.base, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through exterior product, i.e. 𝐦 ∧ 𝐧.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_WEDGE.base, A, B)
 
 
 func `∨`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_WEDGE.anti, A, B) {.noinit.} =
-  ## Multiply through exterior antiproduct, i.e. 𝐦 ∨ 𝐧; result holds exactly bases reached.
-  defineProduct(CAYLEYS_WEDGE.anti, A, B)
+): typeReached(CAYLEYS_WEDGE.anti, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through exterior antiproduct, i.e. 𝐦 ∨ 𝐧.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_WEDGE.anti, A, B)
 
 
 func `⟑`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_WEDGE_DOT.base, A, B) {.noinit.} =
-  ## Multiply through geometric product, i.e. 𝐦 ⟑ 𝐧; result holds exactly bases reached.
-  defineProduct(CAYLEYS_WEDGE_DOT.base, A, B)
+): typeReached(CAYLEYS_WEDGE_DOT.base, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through geometric product, i.e. 𝐦 ⟑ 𝐧.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_WEDGE_DOT.base, A, B)
 
 
 func `⟇`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_WEDGE_DOT.anti, A, B) {.noinit.} =
-  ## Multiply through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧; result holds exactly bases reached.
-  defineProduct(CAYLEYS_WEDGE_DOT.anti, A, B)
+): typeReached(CAYLEYS_WEDGE_DOT.anti, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_WEDGE_DOT.anti, A, B)
 
 
 func `∙`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_DOT.base, A, B) {.noinit.} =
-  ## Multiply through inner product, i.e. 𝐦 ∙ 𝐧; result holds scalar coefficient alone.
-  defineProduct(CAYLEYS_DOT.base, A, B)
+): typeReached(CAYLEYS_DOT.base, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through inner product, i.e. 𝐦∙𝐧 = (𝐦ᵀ𝐆𝐧)𝟏.
+  ##   Result holds scalar coefficient alone.
+  defineForm(CAYLEYS_DOT.base, A, B)
 
 
 func `∘`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_DOT.anti, A, B) {.noinit.} =
-  ## Multiply through inner antiproduct, i.e. 𝐦 ∘ 𝐧; result holds antiscalar coefficient alone.
-  defineProduct(CAYLEYS_DOT.anti, A, B)
+): typeReached(CAYLEYS_DOT.anti, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through inner antiproduct, i.e. 𝐦∘𝐧 = (𝐦ᵀ𝔾𝐧)𝟙.
+  ##   Result holds antiscalar coefficient alone.
+  defineForm(CAYLEYS_DOT.anti, A, B)
 
 
 func `∧★`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_INTERIOR.base.bulk.right, A, B) {.noinit.} =
-  ## Multiply through right bulk expansion, i.e. 𝐦 ∧ 𝐧★; result holds exactly bases reached.
-  defineProduct(CAYLEYS_INTERIOR.base.bulk.right, A, B)
+): typeReached(CAYLEYS_INTERIOR.base.bulk.right, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through right inner product bulk expansion, i.e. 𝐦 ∧ 𝐧★.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_INTERIOR.base.bulk.right, A, B)
 
 
 func `∧☆`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_INTERIOR.base.weight.right, A, B) {.noinit.} =
-  ## Multiply through right weight expansion, i.e. 𝐦 ∧ 𝐧☆; result holds exactly bases reached.
-  defineProduct(CAYLEYS_INTERIOR.base.weight.right, A, B)
+): typeReached(CAYLEYS_INTERIOR.base.weight.right, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through right interior product expansion, i.e. 𝐦 ∧ 𝐧☆.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_INTERIOR.base.weight.right, A, B)
 
 
 func `∨★`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_INTERIOR.anti.bulk.right, A, B) {.noinit.} =
-  ## Multiply through right bulk contraction, i.e. 𝐦 ∨ 𝐧★; result holds exactly bases reached.
-  defineProduct(CAYLEYS_INTERIOR.anti.bulk.right, A, B)
+): typeReached(CAYLEYS_INTERIOR.anti.bulk.right, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through right interior product contraction, i.e. 𝐦 ∨ 𝐧★.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_INTERIOR.anti.bulk.right, A, B)
 
 
 func `∨☆`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_INTERIOR.anti.weight.right, A, B) {.noinit.} =
-  ## Multiply through right weight contraction, i.e. 𝐦 ∨ 𝐧☆; result holds exactly bases reached.
-  defineProduct(CAYLEYS_INTERIOR.anti.weight.right, A, B)
+): typeReached(CAYLEYS_INTERIOR.anti.weight.right, A, B) {.inline, noinit.} =
+  ## Multiply multivectors through right inner product weight contraction, i.e. 𝐦 ∨ 𝐧☆.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_INTERIOR.anti.weight.right, A, B)
 
 
 
@@ -231,31 +251,35 @@ func `∨☆`*[A, B: static Bases](
 
 func `∙`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_PARTS.bulk.round, A) {.noinit.} =
-  ## Extract (round) bulk, i.e. 𝐦∙; result holds exactly bulk bases of operand's type.
-  defineMap(CAYLEYS_PARTS.bulk.round, A)
+): typeReached(CAYLEYS_PARTS.bulk.round, A) {.inline, noinit.} =
+  ## Extract (round) bulk of multivector, i.e. 𝐦∙.
+  ##   Result holds exactly bulk bases of operand's subtype.
+  defineForm(CAYLEYS_PARTS.bulk.round, A)
 
 
 func `∘`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_PARTS.weight.round, A) {.noinit.} =
-  ## Extract (round) weight, i.e. 𝐦∘; result holds exactly weight bases of operand's type.
-  defineMap(CAYLEYS_PARTS.weight.round, A)
+): typeReached(CAYLEYS_PARTS.weight.round, A) {.inline, noinit.} =
+  ## Extract (round) weight of multivector, i.e. 𝐦∘.
+  ##   Result holds exactly weight bases of operand's subtype.
+  defineForm(CAYLEYS_PARTS.weight.round, A)
 
 
 when IS_CONFORMAL:
   func `■`*[A: static Bases](
     m: MultivectorOf[A],
-  ): typeReached(CAYLEYS_PARTS.bulk.flat, A) {.noinit.} =
-    ## Extract flat bulk, i.e. 𝐦■; result holds exactly flat bulk bases of operand's type.
-    defineMap(CAYLEYS_PARTS.bulk.flat, A)
+  ): typeReached(CAYLEYS_PARTS.bulk.flat, A) {.inline, noinit.} =
+    ## Extract flat bulk of multivector, i.e. 𝐦■.
+    ##   Result holds exactly flat bulk bases of operand's subtype.
+    defineForm(CAYLEYS_PARTS.bulk.flat, A)
 
 
   func `□`*[A: static Bases](
     m: MultivectorOf[A],
-  ): typeReached(CAYLEYS_PARTS.weight.flat, A) {.noinit.} =
-    ## Extract flat weight, i.e. 𝐦□; result holds exactly flat weight bases of operand's type.
-    defineMap(CAYLEYS_PARTS.weight.flat, A)
+  ): typeReached(CAYLEYS_PARTS.weight.flat, A) {.inline, noinit.} =
+    ## Extract flat weight of multivector, i.e. 𝐦□.
+    ##   Result holds exactly flat weight bases of operand's subtype.
+    defineForm(CAYLEYS_PARTS.weight.flat, A)
 
 
 
@@ -263,59 +287,67 @@ when IS_CONFORMAL:
 
 func `/`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_COMPLEMENT.right, A) {.noinit.} =
-  ## Get right complement, i.e. 𝐦̅; result holds complement of each basis of operand's type.
-  defineMap(CAYLEYS_COMPLEMENT.right, A)
+): typeReached(CAYLEYS_COMPLEMENT.right, A) {.inline, noinit.} =
+  ## Get right complement of multivector, i.e. 𝐦̅.
+  ##   Result holds complement of each basis of operand's subtype.
+  defineForm(CAYLEYS_COMPLEMENT.right, A)
 
 
 func `\`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_COMPLEMENT.left, A) {.noinit.} =
-  ## Get left complement, i.e. 𝐦̲; result holds complement of each basis of operand's type.
-  defineMap(CAYLEYS_COMPLEMENT.left, A)
+): typeReached(CAYLEYS_COMPLEMENT.left, A) {.inline, noinit.} =
+  ## Get left complement of multivector, i.e. 𝐦̲.
+  ##   Result holds complement of each basis of operand's subtype.
+  defineForm(CAYLEYS_COMPLEMENT.left, A)
 
 
 func `~`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_REVERSE.base, A) {.noinit.} =
-  ## Get reverse, i.e. 𝐦̃; result holds bases of operand's type.
-  defineMap(CAYLEYS_REVERSE.base, A)
+): MultivectorOf[A] {.inline, noinit.} =
+  ## Get reverse of multivector, i.e. 𝐦̃.
+  ##   Result keeps operand's subtype.
+  defineForm(CAYLEYS_REVERSE.base, A)
 
 
 func `~∘`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_REVERSE.anti, A) {.noinit.} =
-  ## Get antireverse, i.e. 𝐦̰; result holds bases of operand's type.
-  defineMap(CAYLEYS_REVERSE.anti, A)
+): MultivectorOf[A] {.inline, noinit.} =
+  ## Get antireverse of multivector, i.e. 𝐦̰.
+  ##   Result keeps operand's subtype.
+  defineForm(CAYLEYS_REVERSE.anti, A)
 
 
 func `★`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_DUAL.base.right, A) {.noinit.} =
-  ## Get right dual of bulk, i.e. 𝐦★; result holds exactly bases reached.
-  defineMap(CAYLEYS_DUAL.base.right, A)
+): typeReached(CAYLEYS_DUAL.base.right, A) {.inline, noinit.} =
+  ## Get right dual of multivector's bulk components, i.e. 𝐦★.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_DUAL.base.right, A)
 
 
 func `☆`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_DUAL.anti.right, A) {.noinit.} =
-  ## Get right dual of weight, i.e. 𝐦☆; result holds exactly bases reached.
-  defineMap(CAYLEYS_DUAL.anti.right, A)
+): typeReached(CAYLEYS_DUAL.anti.right, A) {.inline, noinit.} =
+  ## Get right dual of multivector's weight components, i.e. 𝐦☆.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEYS_DUAL.anti.right, A)
 
 
 func `⊖`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEY_ATTITUDE, A) {.noinit.} =
-  ## Get attitude, i.e. ⊖𝐦 = 𝐦 ∨ 𝐞̄ₙ; result holds exactly bases reached.
-  defineMap(CAYLEY_ATTITUDE, A)
+): typeReached(CAYLEY_ATTITUDE, A) {.inline, noinit.} =
+  ## Get attitude of multivector, i.e. ⊖𝐦 = 𝐦 ∨ 𝐞̄ₙ.
+  ##   Result holds exactly bases reached.
+  defineForm(CAYLEY_ATTITUDE, A)
 
 
 when IS_CONFORMAL:
   func `⊟`*[A: static Bases](
     m: MultivectorOf[A],
-  ): typeReached(CAYLEY_CARRIER, A) {.noinit.} =
-    ## Get carrier, i.e. 𝐦 ∧ 𝐞ₙ; result holds exactly bases reached.
-    defineMap(CAYLEY_CARRIER, A)
+  ): typeReached(CAYLEY_CARRIER, A) {.inline, noinit.} =
+    ## Get carrier of multivector, i.e. 𝐦 ∧ 𝐞ₙ.
+    ##   Result holds exactly bases reached.
+    defineForm(CAYLEY_CARRIER, A)
 
 
 
@@ -323,50 +355,54 @@ when IS_CONFORMAL:
 
 func `|∙²`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_NORM_SQUARED.bulk.round, A, A) {.noinit.} =
-  ## Get (round) bulk squared norm, i.e. ‖𝐦‖∙² = 𝐦 ∙ 𝐦; result holds scalar coefficient alone.
-  defineProduct(CAYLEYS_NORM_SQUARED.bulk.round, A, A, as_unary = true)
+): typeReached(CAYLEYS_NORM_SQUARED.bulk.round, A, A) {.inline, noinit.} =
+  ## Get (round) bulk squared norm of multivector.
+  ##   Result holds scalar coefficient alone.
+  defineForm(CAYLEYS_NORM_SQUARED.bulk.round, A, A, as_unary = true)
 
 
 func `|∘²`*[A: static Bases](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_NORM_SQUARED.weight.round, A, A) {.noinit.} =
-  ## Get (round) weight squared norm, i.e. ‖𝐦‖∘² = 𝐦 ∘ 𝐦; result holds antiscalar alone.
-  defineProduct(CAYLEYS_NORM_SQUARED.weight.round, A, A, as_unary = true)
+): typeReached(CAYLEYS_NORM_SQUARED.weight.round, A, A) {.inline, noinit.} =
+  ## Get (round) weight squared norm of multivector.
+  ##   Result holds antiscalar coefficient alone.
+  defineForm(CAYLEYS_NORM_SQUARED.weight.round, A, A, as_unary = true)
 
 
 when IS_CONFORMAL:
   func `|■²`*[A: static Bases](
     m: MultivectorOf[A],
-  ): typeReached(CAYLEYS_NORM_SQUARED.bulk.flat, A, A) {.noinit.} =
-    ## Get flat bulk squared norm; result holds scalar coefficient alone.
-    defineProduct(CAYLEYS_NORM_SQUARED.bulk.flat, A, A, as_unary = true)
+  ): typeReached(CAYLEYS_NORM_SQUARED.bulk.flat, A, A) {.inline, noinit.} =
+    ## Get flat bulk squared norm of multivector.
+    ##   Result holds scalar coefficient alone.
+    defineForm(CAYLEYS_NORM_SQUARED.bulk.flat, A, A, as_unary = true)
 
 
   func `|□²`*[A: static Bases](
     m: MultivectorOf[A],
-  ): typeReached(CAYLEYS_NORM_SQUARED.weight.flat, A, A) {.noinit.} =
-    ## Get flat weight squared norm; result holds antiscalar coefficient alone.
-    defineProduct(CAYLEYS_NORM_SQUARED.weight.flat, A, A, as_unary = true)
+  ): typeReached(CAYLEYS_NORM_SQUARED.weight.flat, A, A) {.inline, noinit.} =
+    ## Get flat weight squared norm of multivector.
+    ##   Result holds antiscalar coefficient alone.
+    defineForm(CAYLEYS_NORM_SQUARED.weight.flat, A, A, as_unary = true)
 
 
   func `|⊘²`*[A: static Bases](
     m: MultivectorOf[A],
-  ): typeReached(CAYLEYS_NORM_SQUARED_RADIUS, A, A) {.noinit.} =
-    ## Get squared radius norm, i.e. ‖𝐦‖⊘² = 𝐦 ∘ 𝐦; result holds antiscalar coefficient alone.
-    defineProduct(CAYLEYS_NORM_SQUARED_RADIUS, A, A, as_unary = true)
+  ): typeReached(CAYLEYS_NORM_SQUARED_RADIUS, A, A) {.inline, noinit.} =
+    ## Get squared radius norm of multivector, i.e. ‖𝐦‖⊘² = 𝐦∘𝐦.
+    ##   Result holds antiscalar coefficient alone.
+    defineForm(CAYLEYS_NORM_SQUARED_RADIUS, A, A, as_unary = true)
 ```
 
 ## Edit `pga.nim`
 
 ```nim
-##   Basis -> BasisSigned
-##         -> Multivector
+{.experimental: "strictFuncs".}
 ```
 
 ```nim
-##   Basis -> BasisSigned
-##         -> [Multivector, MultivectorOf]
+{.experimental: "openSym".}
+{.experimental: "strictFuncs".}
 ```
 
 ## Edit `pga.nim`
@@ -384,6 +420,10 @@ export algebra, basis_sets, cayleys, multivectors, operators
 ## Edit `pga.nim`
 
 ```nim
+  func bulk*(m: Multivector): Multivector {.inline.} = ∙m
+    ## Extract bulk of multivector.
+    ##   Bulk contains object's position.
+
   func weight*(m: Multivector): Multivector {.inline.} = ∘m
     ## Extract weight of multivector.
     ##   Weight contains object's attitude and orientation.
@@ -391,20 +431,24 @@ export algebra, basis_sets, cayleys, multivectors, operators
 ```
 
 ```nim
+  func bulk*(m: Multivector): Multivector {.inline.} = ∙m
+    ## Extract bulk of multivector.
+    ##   Bulk contains object's position.
+
+  func bulk*[A: static Bases](
+    m: MultivectorOf[A],
+  ): typeReached(CAYLEYS_PARTS.bulk.round, A) {.inline.} = ∙m
+    ## Extract bulk of multivector subtype, into exact subtype reached.
+
   func weight*(m: Multivector): Multivector {.inline.} = ∘m
     ## Extract weight of multivector.
     ##   Weight contains object's attitude and orientation.
     ##   Where weight is 0, object is contained by (N-1)D object at infinity.
 
-  func bulk*[A: static Bases](
-    m: MultivectorOf[A],
-  ): typeReached(CAYLEYS_PARTS.bulk.round, A) {.inline.} = ∙m
-    ## Extract bulk of basis-set type, into exact basis-set type reached.
-
   func weight*[A: static Bases](
     m: MultivectorOf[A],
   ): typeReached(CAYLEYS_PARTS.weight.round, A) {.inline.} = ∘m
-    ## Extract weight of basis-set type, into exact basis-set type reached.
+    ## Extract weight of multivector subtype, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -423,7 +467,7 @@ export algebra, basis_sets, cayleys, multivectors, operators
   func bulkFlat*[A: static Bases](
     m: MultivectorOf[A],
   ): typeReached(CAYLEYS_PARTS.bulk.flat, A) {.inline.} = ■m
-    ## Extract flat bulk of basis-set type, into exact basis-set type reached.
+    ## Extract flat bulk of multivector subtype, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -442,7 +486,7 @@ export algebra, basis_sets, cayleys, multivectors, operators
   func bulkRound*[A: static Bases](
     m: MultivectorOf[A],
   ): typeReached(CAYLEYS_PARTS.bulk.round, A) {.inline.} = ∙m
-    ## Extract round bulk of basis-set type, into exact basis-set type reached.
+    ## Extract round bulk of multivector subtype, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -461,7 +505,7 @@ export algebra, basis_sets, cayleys, multivectors, operators
   func weightFlat*[A: static Bases](
     m: MultivectorOf[A],
   ): typeReached(CAYLEYS_PARTS.weight.flat, A) {.inline.} = □m
-    ## Extract flat weight of basis-set type, into exact basis-set type reached.
+    ## Extract flat weight of multivector subtype, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -480,7 +524,7 @@ export algebra, basis_sets, cayleys, multivectors, operators
   func weightRound*[A: static Bases](
     m: MultivectorOf[A],
   ): typeReached(CAYLEYS_PARTS.weight.round, A) {.inline.} = ∘m
-    ## Extract round weight of basis-set type, into exact basis-set type reached.
+    ## Extract round weight of multivector subtype, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -497,7 +541,7 @@ func attitude*(m: Multivector): Multivector {.inline.} = ⊖m
 func attitude*[A: static Bases](
   m: MultivectorOf[A],
 ): typeReached(CAYLEY_ATTITUDE, A) {.inline.} = ⊖m
-  ## Get attitude of basis-set type, into exact basis-set type reached.
+  ## Get attitude of multivector subtype, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -520,7 +564,7 @@ func attitude*[A: static Bases](
   func carrier*[A: static Bases](
     m: MultivectorOf[A],
   ): typeReached(CAYLEY_CARRIER, A) {.inline.} = ⊟m
-    ## Get carrier of basis-set type, into exact basis-set type reached.
+    ## Get carrier of multivector subtype, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -546,7 +590,7 @@ func complementLeft*(m: Multivector): Multivector {.inline.} = \m
 func complementLeft*[A: static Bases](
   m: MultivectorOf[A],
 ): typeReached(CAYLEYS_COMPLEMENT.left, A) {.inline.} = \m
-  ## Get left complement of basis-set type, into exact basis-set type reached.
+  ## Get left complement of multivector subtype, into exact subtype reached.
 
 func complementRight*(m: Multivector): Multivector {.inline.} = /m
   ## Get right complement of multivector.
@@ -554,7 +598,7 @@ func complementRight*(m: Multivector): Multivector {.inline.} = /m
 func complementRight*[A: static Bases](
   m: MultivectorOf[A],
 ): typeReached(CAYLEYS_COMPLEMENT.right, A) {.inline.} = /m
-  ## Get right complement of basis-set type, into exact basis-set type reached.
+  ## Get right complement of multivector subtype, into exact subtype reached.
 
 func dualBulk*(m: Multivector): Multivector {.inline.} = ★m
   ## Get right dual of multivector's bulk components.
@@ -562,7 +606,7 @@ func dualBulk*(m: Multivector): Multivector {.inline.} = ★m
 func dualBulk*[A: static Bases](
   m: MultivectorOf[A],
 ): typeReached(CAYLEYS_DUAL.base.right, A) {.inline.} = ★m
-  ## Get right dual of bulk of basis-set type, into exact basis-set type reached.
+  ## Get right dual of bulk of multivector subtype, into exact subtype reached.
 
 func dualWeight*(m: Multivector): Multivector {.inline.} = ☆m
   ## Get right dual of multivector's weight components.
@@ -570,7 +614,7 @@ func dualWeight*(m: Multivector): Multivector {.inline.} = ☆m
 func dualWeight*[A: static Bases](
   m: MultivectorOf[A],
 ): typeReached(CAYLEYS_DUAL.anti.right, A) {.inline.} = ☆m
-  ## Get right dual of weight of basis-set type, into exact basis-set type reached.
+  ## Get right dual of weight of multivector subtype, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -590,19 +634,15 @@ func reverse*(m: Multivector): Multivector {.inline.} = ~m
   ## Reverse multivector.
   ##   I.e. rearrange vector element factors so they wedge in reverse order.
 
-func reverse*[A: static Bases](
-  m: MultivectorOf[A],
-): typeReached(CAYLEYS_REVERSE.base, A) {.inline.} = ~m
-  ## Reverse basis-set type, into same basis-set type.
+func reverse*[A: static Bases](m: MultivectorOf[A]): MultivectorOf[A] {.inline.} = ~m
+  ## Reverse multivector subtype, into same subtype.
 
 func reverseAnti*(m: Multivector): Multivector {.inline.} = ~∘m
   ## Reverse complement of multivector.
   ##   I.e. rearrange antivector element factors so they antiwedge in reverse order.
 
-func reverseAnti*[A: static Bases](
-  m: MultivectorOf[A],
-): typeReached(CAYLEYS_REVERSE.anti, A) {.inline.} = ~∘m
-  ## Get antireverse of basis-set type, into same basis-set type.
+func reverseAnti*[A: static Bases](m: MultivectorOf[A]): MultivectorOf[A] {.inline.} = ~∘m
+  ## Get antireverse of multivector subtype, into same subtype.
 ```
 
 ## Edit `pga.nim`
@@ -619,7 +659,7 @@ func dot*(m, n: Multivector): Multivector {.inline.} = m ∙ n
 func dot*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_DOT.base, A, B) {.inline.} = m ∙ n
-  ## Multiply basis-set types through inner product, into exact basis-set type reached.
+  ## Multiply multivector subtypes through inner product, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -636,7 +676,7 @@ func dotAnti*(m, n: Multivector): Multivector {.inline.} = m ∘ n
 func dotAnti*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_DOT.anti, A, B) {.inline.} = m ∘ n
-  ## Multiply basis-set types through inner antiproduct, into exact basis-set type reached.
+  ## Multiply multivector subtypes through inner antiproduct, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -657,7 +697,7 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
 func wedge*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_WEDGE.base, A, B) {.inline.} = m ∧ n
-  ## Multiply basis-set types through exterior product, into exact basis-set type reached.
+  ## Multiply multivector subtypes through exterior product, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -682,7 +722,7 @@ func wedgeAnti*(m: Multivector, n: Multivector): Multivector {.inline.} = m ∨ 
 func wedgeAnti*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_WEDGE.anti, A, B) {.inline.} = m ∨ n
-  ## Multiply basis-set types through exterior antiproduct, into exact basis-set type reached.
+  ## Multiply multivector subtypes through exterior antiproduct, into exact subtype reached.
 
 func wedgeDot*(m, n: Multivector): Multivector {.inline.} = m ⟑ n
   ## Multiply multivectors through geometric product.
@@ -691,7 +731,7 @@ func wedgeDot*(m, n: Multivector): Multivector {.inline.} = m ⟑ n
 func wedgeDot*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_WEDGE_DOT.base, A, B) {.inline.} = m ⟑ n
-  ## Multiply basis-set types through geometric product, into exact basis-set type reached.
+  ## Multiply multivector subtypes through geometric product, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -710,7 +750,7 @@ func wedgeDotAnti*(m, n: Multivector): Multivector {.inline.} = m ⟇ n
 func wedgeDotAnti*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_WEDGE_DOT.anti, A, B) {.inline.} = m ⟇ n
-  ## Multiply basis-set types through geometric antiproduct, into exact basis-set type reached.
+  ## Multiply multivector subtypes through geometric antiproduct, into exact subtype reached.
 ```
 
 ## Edit `pga.nim`
@@ -736,7 +776,7 @@ func contractBulk*(m, n: Multivector): Multivector {.inline.} = m ∨★ n
 func contractBulk*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_INTERIOR.anti.bulk.right, A, B) {.inline.} = m ∨★ n
-  ## Multiply basis-set types through right bulk contraction, into exact basis-set type reached.
+  ## Multiply multivector subtypes through right bulk contraction, into exact subtype reached.
 
 func contractWeight*(m, n: Multivector): Multivector {.inline.} = m ∨☆ n
   ## Multiply multivectors through right inner product weight contraction, i.e. 𝐦 ∨ 𝐧☆.
@@ -744,7 +784,7 @@ func contractWeight*(m, n: Multivector): Multivector {.inline.} = m ∨☆ n
 func contractWeight*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_INTERIOR.anti.weight.right, A, B) {.inline.} = m ∨☆ n
-  ## Multiply basis-set types through right weight contraction, into exact basis-set type reached.
+  ## Multiply multivector subtypes through right weight contraction, into exact subtype reached.
 
 func expandBulk*(m, n: Multivector): Multivector {.inline.} = m ∧★ n
   ## Multiply multivectors through right inner product bulk expansion, i.e. 𝐦 ∧ 𝐧★.
@@ -752,7 +792,7 @@ func expandBulk*(m, n: Multivector): Multivector {.inline.} = m ∧★ n
 func expandBulk*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_INTERIOR.base.bulk.right, A, B) {.inline.} = m ∧★ n
-  ## Multiply basis-set types through right bulk expansion, into exact basis-set type reached.
+  ## Multiply multivector subtypes through right bulk expansion, into exact subtype reached.
 
 func expandWeight*(m, n: Multivector): Multivector {.inline.} = m ∧☆ n
   ## Multiply multivectors through right inner product weight expansion, i.e. 𝐦 ∧ 𝐧☆.
@@ -760,5 +800,5 @@ func expandWeight*(m, n: Multivector): Multivector {.inline.} = m ∧☆ n
 func expandWeight*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_INTERIOR.base.weight.right, A, B) {.inline.} = m ∧☆ n
-  ## Multiply basis-set types through right weight expansion, into exact basis-set type reached.
+  ## Multiply multivector subtypes through right weight expansion, into exact subtype reached.
 ```

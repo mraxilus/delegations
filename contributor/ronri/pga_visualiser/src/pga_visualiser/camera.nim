@@ -141,7 +141,7 @@ const
     ##   Centre of it then turns about as fast as half turn per short side did, which
     ##   Architect found almost right; see `radiusHeld`.
   FRACTION_HELD_INSIDE* = 0.9
-    ## Bound sphere finger's orbit holds to this share of eye's separation from pivot.
+    ## Bound sphere finger's orbit holds to this share of eye's distance to pivot.
     ##   Eye inside sphere would meet it from behind, and hold point it cannot see.
   FACTOR_CLIP_NEAR* = 1.0 / 400.0
     ## Set near clip plane this fraction of orbit distance out.
@@ -189,7 +189,7 @@ const
     ##   farthest catalogued star is minute away and nothing is unreachable.
   SPEED_FLOOR* = DISTANCE_LIMIT_NEAR
     ## Floor ship's own speed at this many units per second, however long minus is held.
-    ##   Near floor of every separation each second. Held off zero, so plus climbs back
+    ##   Near floor of every distance to pivot each second. Held off zero, so plus climbs back
     ##   from it by factor, as it climbs from anywhere.
   SPEED_LIGHT* = 1.0 / 499.0
     ## Fix speed of light in this world's own units, at one unit one astronomical unit.
@@ -230,10 +230,15 @@ type
       ##   readings of one spelling, so spelling is withdrawn and `dolly`, `dollyTo` and
       ##   `repivotToDepth` say which is meant.
     degrees_field_of_view*: float  ## Vertical field of view, in degrees.
+    point_taken: Position  ## World point free flight's zoom out reads its reach from.
+      ## What last zoom took, or pivot where camera was last placed; see `pointTaken`.
+      ##   Flight, turns and pans leave it, as they leave what reader zoomed toward.
+      ##     Not pivot, which held key carries along: after flight out, zoom out read
+      ##     reach home left, and crawled (repository issue 846).
     reach_near*: float  ## How far nearest drawn object stands ahead of eye, along sight.
-      ## Scale frustum and furniture take, in place of separation from pivot; see
+      ## Scale frustum and furniture take, in place of distance to pivot; see
       ## `scaleLocal`.
-      ##   Zero where nothing is drawn ahead, which hands scale back to separation.
+      ##   Zero where nothing is drawn ahead, which hands scale back to distance to pivot.
       ##   Stamped by whoever owns scene, once for each frame, from that frame's placements.
       ##   Depth along sight rather than distance, and never behind eye: what reader turned
       ##   away from is not drawn, and scale read off it would follow that.
@@ -302,7 +307,7 @@ type
       ## was stored; see `stanceWorld`. Zero by default, so stance built from world points
       ## reads as world reads.
     motor*: Motor  ## Rigid motion carrying reference stance to this one, about `origin`.
-    distance*: float  ## Separation of eye from pivot.
+    distance*: float  ## Eye's distance to pivot.
 
   CameraTween* = object  ## Define ease carrying camera from where it was toward its goal.
     ## Eased over `duration`, so camera jumping to freshly built object is followed
@@ -444,9 +449,11 @@ func motorFacing*(eye, pivot: Position): Motor =
 
 func initCamera*(eye, pivot: Position): Camera =
   ## Construct camera standing at `eye`, facing `pivot`, level, through 45 degree lens.
-  ##   Separation is distance between two, held off near bound; see `stanceFacing`.
+  ##   Distance to pivot is held off near bound; see `stanceFacing`.
+  ##   Point zoom out reads its reach from is pivot; see `pointTaken`.
   let stance = stanceFacing(eye, pivot)
-  Camera(motor: stance.motor, depth_pivot: stance.distance, degrees_field_of_view: 45.0)
+  result = Camera(motor: stance.motor, depth_pivot: stance.distance, degrees_field_of_view: 45.0)
+  result.point_taken = result.pivot
 
 
 func initCameraDefault*(width, height: int): Camera =
@@ -480,7 +487,7 @@ func initCameraDefault*(width, height: int): Camera =
 
 func speedOpening*(width, height: int): float =
   ## Read ship's own speed both front-ends open at, in units per second.
-  ##   Opening's separation each second, on frame opening was fitted to.
+  ##   Opening's distance to pivot each second, on frame opening was fitted to.
   ##   Read once, at open. From then on speed is reader's alone, and only plus and minus
   ##   change it; `home` returns stance and leaves speed, as it leaves lens.
   initCameraDefault(width, height).distance
@@ -499,9 +506,9 @@ func rollHeld*(camera: Camera): Option[float] =
 
 func scaleLocal*(camera: Camera): float =
   ## Read distance frustum and furniture take their scale from.
-  ##   Reach to nearest drawn object where one is stamped, and separation from pivot where
+  ##   Reach to nearest drawn object where one is stamped, and distance to pivot where
   ##   none is.
-  ##     Separation alone kept scale of stance reader set off from: near clip is one
+  ##     Distance to pivot alone kept scale of stance reader set off from: near clip is one
   ##     four-hundredth of it, and camera flying from opening stance at planet met that
   ##     plane long before planet.
   ##     Never pointer's own depth: pointer figure would move grid and `depthLogScale` at
@@ -571,8 +578,24 @@ func depthClip*(camera: Camera; depth, reach_scene: float): float =
 
 
 func distance*(camera: Camera): float = camera.depth_pivot
-  ## Read separation of eye from pivot.
+  ## Read eye's distance to pivot.
   ##   Read-only: see `Camera.depth_pivot` for why no spelling assigns to it.
+
+
+func pointTaken*(camera: Camera): Position = camera.point_taken
+  ## Read world point free flight's zoom out reads its reach from.
+  ##   What last zoom took, or pivot where camera was last placed. `placed` writes pivot,
+  ##   `takePoint` writes what zoom took, and nothing else writes it.
+
+
+func takePoint*(camera: var Camera, point: Position) =
+  ## Note world `point` as what zoom took; see `pointTaken`.
+  camera.point_taken = point
+
+
+func reachTaken*(camera: Camera): float =
+  ## Read how far eye stands from point free flight's zoom out reads; see `pointTaken`.
+  norm(camera.eye.toWorld(camera.origin_view) - camera.point_taken)
 
 
 func eyeCarried(motion, motion_reversed: Multivector): Position =
@@ -695,7 +718,7 @@ func orbit*(camera: var Camera; turn, rise: float) =
   ##   Composed rather than rebuilt from four turntable numbers, which carry no roll.
   ##     Sphere about bare point has no pole, so there is no clamp either.
   ##   Arguments read as `look`'s do, and with same signs, so one drag feeds either verb.
-  ##   Pivot and separation both survive, because both axes run through pivot.
+  ##   Pivot and distance to it both survive, because both axes run through pivot.
   ##   Frame is read again between two turns, for reason `look` gives.
   block:
     let (eye, frame) = camera.sight
@@ -724,17 +747,17 @@ func acrossLevel(frame: FrameCamera): Direction =
 
 
 func dolly*(camera: var Camera, factor: float) =
-  ## Scale separation of eye from pivot, holding it off near bound.
+  ## Scale eye's distance to pivot, holding it off near bound.
   ##   Eye slides along sight line and pivot stands, which is what dolly means.
-  ##     Pivot is derived now, so holding it means sliding eye by what separation gave up,
-  ##     then naming new separation.
+  ##     Pivot is derived now, so holding it means sliding eye by what distance to pivot
+  ##     gave up, then naming new distance.
   let settled = distanceHeld(camera.depth_pivot * factor)
   camera.slideBy wedge(camera.depth_pivot - settled, camera.frame.forward.toMultivector)
   camera.depth_pivot = settled
 
 
 func dollyTo*(camera: var Camera, distance: float) =
-  ## Set separation of eye from pivot outright, holding it off near bound.
+  ## Set eye's distance to pivot outright, holding it off near bound.
   ##   For reader typing figure into numeric field, where `dolly` takes factor.
   ##   Through `dolly`, so one statement says what holding pivot means.
   if camera.depth_pivot <= 0.0: return
@@ -743,7 +766,7 @@ func dollyTo*(camera: var Camera, distance: float) =
 
 func repivotToDepth*(camera: var Camera, depth: float) =
   ## Move pivot along sight line to `depth` from eye, leaving picture unchanged.
-  ##   Eye and sight direction stay; only separation moves, so nothing on screen shifts.
+  ##   Eye and sight direction stay; only distance to pivot moves, so nothing on screen shifts.
   ##   What turntable revolves about, and what every rate scaled by orbit distance reads,
   ##   then follows what reader looks at: zoom that carried eye up to planet while pivot
   ##   stayed on Sol far behind left every orbit swinging planet across frame.
@@ -869,7 +892,7 @@ func radiusHeld*(camera: Camera; width, height: int; reach_selection: float): fl
   ##   Selection's own reach from pivot, so what is picked follows finger over its extent;
   ##   no smaller than `FRACTION_HELD_CANVAS` of short side at pivot's depth, so single
   ##   point still gives finger something to hold; inside `FRACTION_HELD_INSIDE` of
-  ##   separation, so eye stays outside it.
+  ##   distance to pivot, so eye stays outside it.
   let
     half_height = tan(0.5 * degToRad(camera.degrees_field_of_view))
     per_pixel = 2.0 * camera.distance * half_height / float(height)
@@ -961,11 +984,11 @@ func roll*(camera: var Camera, radians: float) =
 
 func travel*(camera: var Camera; ahead, across, rise: float) =
   ## Slide camera along its own three axes, leaving which way it faces alone.
-  ##   World units, unlike drag rates, which take fractions of separation.
-  ##     Caller scales: free flight reads its own speed curve, which has no separation in
-  ##     it; see `speedTravelling`.
+  ##   World units, unlike drag rates, which take fractions of distance to pivot.
+  ##     Caller scales: free flight reads its own speed curve, which has no distance to
+  ##     pivot in it; see `speedTravelling`.
   ##   `ahead` dives where sight dives: fly reading, not map one.
-  ##   Pivot rides along at its own depth, so separation stays as it was.
+  ##   Pivot rides along at its own depth, so distance to pivot stays as it was.
   let axes = camera.frame
   camera.slideBy add(
     add(
@@ -983,7 +1006,7 @@ func travelToward*(camera: var Camera, factor: float, anchor: Position, floor_re
   ##   Floor is reach caller names, where point stands there its fill, so wheel stops where
   ##   nearer shows nothing more of it; see `picking.AnchorZoom`.
   ##     Floor never pushes eye out: it applies only where eye is already further out.
-  ##   Separation from pivot is left to caller, which knows anchor's own depth.
+  ##   Distance to pivot is left to caller, which knows anchor's own depth.
   let
     (anchor_place, eye_place) = (anchor.toMultivector, camera.eye.toMultivector)
     reach = distanceBetween(anchor_place, eye_place)
@@ -1084,8 +1107,8 @@ func pivotWorld*(camera: Camera): Position = camera.pivot.toWorld(camera.origin_
 func rulerFor*(camera: Camera, scale: DrawExtent): tuple[span, pixels: float] =
   ## Choose scale bar for this frame: world length it claims, and pixels it is drawn over.
   ##   Measured at depth of `scaleLocal`, what frustum and furniture take their scale from:
-  ##   nearest drawn object ahead, or separation where none is. Not pointer's depth, which
-  ##   would change what bar claims as pointer moved over still view.
+  ##   nearest drawn object ahead, or distance to pivot where none is. Not pointer's depth,
+  ##   which would change what bar claims as pointer moved over still view.
   ##   Zero span where nothing is measured, which each front-end reads as no bar.
   let
     world_per_pixel = worldPerPixelAt(scale.eye + camera.scaleLocal * scale.forward, scale)
@@ -1447,7 +1470,7 @@ func stanceFacing*(eye, pivot: Position; origin: Position = ORIGIN_WORLD): Camer
   ## Build stance standing at `eye`, facing `pivot`, level; see `motorFacing`.
   ##   Both points are about `origin`, which stance is then held about: world origin for
   ##   world points, camera's view origin for what frame reads.
-  ##   Separation is distance between two, held off near bound.
+  ##   Distance to pivot is held off near bound.
   CameraStance(
     origin: origin,
     motor: motorFacing(eye, pivot),
@@ -1461,11 +1484,11 @@ func stance*(camera: Camera): CameraStance =
 
 
 func stanceDollied*(camera: Camera, stance: CameraStance, distance: float): CameraStance =
-  ## Read `stance` with its separation set to `distance`, pivot standing.
-  ##   Separation is depth of pivot along sight now, so naming it alone moves pivot and
-  ##   leaves eye. Dolly is what moves eye and holds pivot; see `dollyTo`.
-  ##     Four turntable numbers named stance before, and separation was one of them, so
-  ##     writing it rebuilt eye. Whoever wrote it now writes this.
+  ## Read `stance` with its distance to pivot set to `distance`, pivot standing.
+  ##   Distance to pivot is depth of pivot along sight now, so naming it alone moves pivot
+  ##   and leaves eye. Dolly is what moves eye and holds pivot; see `dollyTo`.
+  ##     Four turntable numbers named stance before, and distance to pivot was one of them,
+  ##     so writing it rebuilt eye. Whoever wrote it now writes this.
   var held = camera.placed(stance)
   held.dollyTo(distance)
   held.stance
@@ -1475,7 +1498,7 @@ func stanceRepivoted*(camera: Camera, pivot: Position): CameraStance =
   ## Read stance camera would stand at with its pivot moved to `pivot`.
   ##   Whole camera slides by step between two pivots, so eye follows exactly as far as
   ##   turntable rebuild moved it, and roll survives.
-  ##   Sight direction and separation both stand, so nothing turns and nothing zooms.
+  ##   Sight direction and distance to pivot both stand, so nothing turns and nothing zooms.
   ##   `pivot` is about camera's view origin, as `camera.pivot` is, and stance is held there.
   CameraStance(
     origin: camera.origin_view,
@@ -1499,7 +1522,7 @@ func stanceRepivotedAt*(camera: Camera, pivot: Position): CameraStance =
   var near = camera
   let
     (eye, frame) = near.moveOriginView
-    # Pivot is stance's origin, so eye stands separation back along sight from zero.
+    # Pivot is stance's origin, so eye stands its distance to pivot back along sight from zero.
     eye_wanted = Position() + -camera.distance * frame.forward
   CameraStance(
     origin: pivot,
@@ -1521,6 +1544,8 @@ func placed*(camera: Camera, stance: CameraStance): Camera =
   result.origin_view = stance.origin
   result.motor = stance.motor
   result.depth_pivot = distanceHeld(stance.distance)
+  # Placed camera has zoomed toward nothing yet, so zoom out reads reach from its pivot.
+  result.point_taken = result.pivot.toWorld(result.origin_view)
 
 
 func motorRigid*(m: Multivector): Option[Motor] =
@@ -1538,13 +1563,13 @@ func motorRigid*(m: Multivector): Option[Motor] =
 
 
 func placedAtMotor*(camera: Camera, motor: Motor): Camera =
-  ## Put copy of `camera` at rigid motion `motor`, keeping its separation and its lens.
+  ## Put copy of `camera` at rigid motion `motor`, keeping its distance to pivot and its lens.
   ##   `motor` is about world origin, as panel shows and takes it; see `stanceWorld`.
   camera.placed CameraStance(origin: ORIGIN_WORLD, motor: motor, distance: camera.distance)
 
 
 func placedAtDistance*(camera: Camera, distance: float): Camera =
-  ## Put copy of `camera` at same stance but this separation, pivot standing.
+  ## Put copy of `camera` at same stance but this distance to pivot, pivot standing.
   ##   Same reading as `dolly`, which reaches it by factor; roll survives.
   result = camera
   result.dollyTo(distance)
@@ -1552,18 +1577,18 @@ func placedAtDistance*(camera: Camera, distance: float): Camera =
 
 func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStance =
   ## Step `progress` of way from one stance to another.
-  ##   Motion eases as one screw, and separation eases geometrically beside it.
+  ##   Motion eases as one screw, and distance to pivot eases geometrically beside it.
   ##   Screw rather than four numbers eased apart.
   ##     Roll survives, which four turntable numbers cannot carry: rolling and then
   ##     framing snapped view upright.
   ##     Turn takes short way round without being told to. `motors.log` flips sign of
   ##     motion whose antiscalar is negative, which is same motion by shorter arc, so
   ##     destination just past -pi stays next door to camera short of +pi.
-  ##     One path, rather than pivot linear and separation geometric pulling apart
+  ##     One path, rather than pivot linear and distance to pivot geometric pulling apart
   ##     mid-ease.
-  ##   Separation is multiplicative, and linear ease from 12 to 300 covers most visible
-  ##   change in first few frames then crawls.
-  ##     Held off zero by `distanceHeld`, floor of every separation, so ease lands on
+  ##   Distance to pivot is multiplicative, and linear ease from 12 to 300 covers most
+  ##   visible change in first few frames then crawls.
+  ##     Held off zero by `distanceHeld`, floor of every distance to pivot, so ease lands on
   ##     destination's own: pointer pick of star at least radius asks 2.4e-7.
   ##     Not fixed millionth, which stood pivot 7.6e-7 past that star; suite case trips on it.
   ##   Eased about destination's own origin; where two origins differ, start is read about

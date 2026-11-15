@@ -549,13 +549,13 @@ export async function driveGroupTurnedAtOnce(page: Page, devtools: CDPSession): 
 }
 
 
-/** Separation far orbit is asked for, in world units: 150 m, floor orbit had before.
+/** Distance to pivot far orbit is asked for, in world units: 150 m, floor orbit had before.
  *
  *  Frame rule holds point picked alone at its fill, about 217 m for demo's far stars, so camera
  *  ends there. Demo's farthest point stands 4.7 million units out, where world's doubles step by
  *  139 m.
  */
-const SEPARATION_FAR = 1.0e-9;
+const DISTANCE_FAR = 1.0e-9;
 
 /** Pixels far orbit's drag runs across, and how far picked object may stand off middle. */
 const PIXELS_ORBIT_FAR = 180, PIXELS_MIDDLE_FAR = 1;
@@ -566,7 +566,7 @@ const STEPS_ORBIT_FAR = 6;
 /** Drive pick of demo's farthest point, come in as close as frame rule lets, and orbit.
  *
  *  Point is picked, then picked by pointer once camera stands near it, so pivot is that point.
- *  Asked in to `SEPARATION_FAR`, frame rule stands camera at point's fill, where it fills
+ *  Asked in to `DISTANCE_FAR`, frame rule stands camera at point's fill, where it fills
  *  frame and press on it turns view. Left drag across `PIXELS_ORBIT_FAR` px orbits it, and
  *  point stands within `PIXELS_MIDDLE_FAR` px of middle before and after: camera's stance,
  *  records and transform are held about view origin, near eye.
@@ -594,7 +594,7 @@ export async function driveFarOrbit(page: Page): Promise<void> {
   await settleCamera(page);
   await page.evaluate((one) => nimPickByPointer(one), far.handle);
   await settleCamera(page);
-  await page.evaluate((separation) => nimSetCameraDistance(separation), SEPARATION_FAR);
+  await page.evaluate((distance) => nimSetCameraDistance(distance), DISTANCE_FAR);
   await waitFrames(page, 2);
   await settleCamera(page);
 
@@ -605,7 +605,7 @@ export async function driveFarOrbit(page: Page): Promise<void> {
       ? Math.hypot((at[0] ?? 0) - rect.width / 2, (at[1] ?? 0) - rect.height / 2) : Infinity;
   }, far.handle);
   const before = { off: await offMiddle(), azimuth: await page.evaluate(() => nimCameraAzimuth()) };
-  const separation = await page.evaluate(() => nimCameraDistance());
+  const distance = await page.evaluate(() => nimCameraDistance());
 
   const rect = await page.evaluate(() => {
     const box = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
@@ -633,7 +633,7 @@ export async function driveFarOrbit(page: Page): Promise<void> {
     'a point millions of units out, orbited close, stays in the middle of the frame',
     before.off <= PIXELS_MIDDLE_FAR && after.off <= PIXELS_MIDDLE_FAR && turned > 0.05,
     `point ${(far.reach / 1e6).toFixed(2)} million units out, ` +
-      `${(separation * 149_597_870_700).toFixed(0)} m away; ` +
+      `${(distance * 149_597_870_700).toFixed(0)} m away; ` +
       `off middle ${before.off.toFixed(3)} px, then ${after.off.toFixed(3)} px after ` +
       `${PIXELS_ORBIT_FAR} px of drag turned ${turned.toFixed(3)} rad`,
   );
@@ -798,9 +798,9 @@ function spreadOf(readings: readonly number[][]): { off_most: number; move_most:
  *  3.19e6 units out in demo of 5,038, mouse orbit moved star about screen; second click held
  *  it. Reproduced on `afd0a46d` from demo's opening stance: pivot 6.6e-9 in front of star,
  *  and star swung up to 15 px.
- *  Pivot's offset along sight is star's depth less separation: `nimCameraScaleLocal` reads
- *  depth of nearest object drawn ahead, which is star at its fit. World places cross as
- *  float32, which cannot resolve offset 3e6 units out, so it is read along sight alone.
+ *  Pivot's offset along sight is star's depth less distance to pivot: `nimCameraScaleLocal`
+ *  reads depth of nearest object drawn ahead, which is star at its fit. World places cross
+ *  as float32, which cannot resolve offset 3e6 units out, so it is read along sight alone.
  */
 export async function driveFarPick(page: Page): Promise<void> {
   const name = 'a first click on a star millions of units out holds it in the middle through ' +
@@ -824,7 +824,7 @@ export async function driveFarPick(page: Page): Promise<void> {
   const settled = await page.evaluate((one) => ({
     is_picked: nimSelectionCount() === 1 && nimSelectionHandles()[0] === one,
     is_carrying: nimCameraCarrying(),
-    separation: nimCameraDistance(),
+    distance: nimCameraDistance(),
     depth: nimCameraScaleLocal(),
   }), star.handle);
   const readings = [await offMiddleOf(page, star.handle, box)];
@@ -854,7 +854,7 @@ export async function driveFarPick(page: Page): Promise<void> {
       `${spreadOf(readings.slice(0, 1)).off_most.toFixed(3)} px once settled, then by up to ` +
       `${off_most.toFixed(3)} px over ${readings.length - 1} steps, moving up to ` +
       `${move_most.toFixed(3)} px a step; star stands ` +
-      `${(settled.depth - settled.separation).toExponential(2)} units past the pivot along the ` +
-      `sight, at ${settled.separation.toExponential(4)}`,
+      `${(settled.depth - settled.distance).toExponential(2)} units past the pivot along the ` +
+      `sight, and the pivot ${settled.distance.toExponential(4)} from the eye`,
   );
 }

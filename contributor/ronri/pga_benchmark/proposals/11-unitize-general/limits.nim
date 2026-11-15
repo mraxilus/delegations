@@ -1,8 +1,9 @@
 ## Measure limits of one unitize rule over long chains of moves and over frames
 ##   (`unitize-general`).
 ##   Evaluation compiles this against changed library at each algebra its claim names; exit code
-##     is verdict: chain of million moves never passes tolerance of grade test, and pattern of
-##     one frame holds within its bound.
+##     is verdict: chain of million moves never passes tolerance of grade test, in CGA unitize
+##     leaves each moved round object at round weight one, and pattern of one frame holds within
+##     its bound. Library at pin passes same gates; figures measure limits of rule.
 ##   Each move is product of two nearby reflections, as animation steps: planes for rigid moves,
 ##     spheres or planes for conformal moves. Residue is largest coefficient outside grade of
 ##     object, over largest coefficient: rounding leaves it, and grade test must ignore it.
@@ -140,6 +141,9 @@ proc moveChains(as_rigid, should_unitize: bool) =
         if should_unitize:
           objects[i].element = ^objects[i].element
           objects_selected[i].element = ^objects_selected[i].element
+          when IS_CONFORMAL:
+            doAssert abs(sqrt((`|∘²`objects[i].element)[Basis.scalarAnti]) - 1) < TOLERANCE_GRADE,
+              "moved round object unitizes to round weight one."
         let found = objects[i].element.residue(objects[i].grade)
         residue_worst = max(residue_worst, found)
         for t, tolerance in TOLERANCES:
