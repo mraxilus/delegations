@@ -1816,6 +1816,5 @@ there is unverified.
 ## Open questions
 
 - Nimble 0.26.2, which 2.4.0 ships, is not verified with the `?subdir=curator/knoller` form of a
-  git URL. On the machine of the delegate, 2026-11-15, the proxy refused the download of its
-  package list, so nimble stopped before it fetched this repository. Atlas reads the form through
-  an override (`## Package`).
+  git URL. Its check needs the package list of nimble, which the proxy of the machine of a
+  delegate refuses with status 405. Atlas reads the form through an override (`## Package`).
