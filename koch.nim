@@ -603,15 +603,18 @@ proc run(options: Options): int =
     # Named project answers for that project, which is what runner asks per matrix job.
     #   Named none answers for machine: koch's own packages and every project's, unscoped,
     #   since question is what must be installed rather than what one change touched.
+    #   Driver that fails is named on stderr, since runner pipes stdout into installer, and exit
+    #   is 1, so step that installs goes red rather than suite that needs package (#934).
     if not options.isReadAll({Root}, has_project = true): return options.refused
     let
       tree = options.root.readTree
-      named =
+      (named, failed) =
         if options.project.len > 0:
           packagesSystem(options.root, tree, [options.project.strip(chars = {'/'})])
         else: systemRepository(options.root, tree, tree.directoriesProject)
     for package in named: echo package
-    return 0
+    for f in failed: stderr.write f.render & "\n"
+    return if failed.len > 0: 1 else: 0
   of "list-projects":
     if not options.isReadAll({Root, Base, All, Recent, Drive, Head}, has_project = true):
       return options.refused

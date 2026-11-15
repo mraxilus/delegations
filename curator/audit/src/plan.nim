@@ -207,27 +207,35 @@ func directoriesVerb*(tree: Tree, directories: openArray[string], verb: string):
     if verb in tree.driver(directory).verbsDispatch(CASE_DRIVER): result.add directory
 
 
-proc packagesSystem*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
-  ## Read system packages every selected project declares, sorted.
+proc packagesSystem*(
+  root: string, tree: Tree, directories: openArray[string]
+): tuple[packages: seq[string], failed: seq[Finding]] =
+  ## Read system packages every selected project declares, sorted, and finding naming each
+  ##   driver that fails.
   ##   Sorted so output is stable between runs: caller pipes it into installer, and list
   ##   reordering itself would read as change where nothing changed.
   var targets: seq[Target]
   for directory in tree.directoriesVerb(directories, VERB_SYSTEM):
     targets.add Target(directory: directory)
-  packagesSystem(root, targets).sorted
+  result = packagesSystem(root, targets)
+  result.packages.sort
 
 
-proc systemRepository*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
-  ## Read what whole machine needs: koch's own packages, plus every named project's, sorted.
+proc systemRepository*(
+  root: string, tree: Tree, directories: openArray[string]
+): tuple[packages: seq[string], failed: seq[Finding]] =
+  ## Read what whole machine needs: koch's own packages, plus every named project's, sorted, and
+  ##   finding naming each driver that fails.
   ##   Answer to "what must be installed before any of this runs" is one command rather than
   ##   prose somewhere, which is what rule koch enforces asks of every project, koch included.
   ##   koch's own are unconditional; project's arrive by that project declaring them, so caller
   ##   naming one project gets that project's alone and is served by `packagesSystem`.
-  var names: seq[string]
-  for (package, _) in SYSTEM_KOCH: names.add package
-  for package in packagesSystem(root, tree, directories):
-    if package notin names: names.add package
-  names.sorted
+  for (package, _) in SYSTEM_KOCH: result.packages.add package
+  let (packages, failed) = packagesSystem(root, tree, directories)
+  for package in packages:
+    if package notin result.packages: result.packages.add package
+  result.packages.sort
+  result.failed = failed
 
 
 proc runJobsType*(root: string, tree: Tree, directories: openArray[string]): seq[Finding] =
