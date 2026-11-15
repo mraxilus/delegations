@@ -88,3 +88,14 @@ suite "Glossary":
     let found = checkWordsPeople("CURATOR.md", "# T\n\nowner\n| Author | x |\n```\nbot\n```\n")
     check found.mapIt(it.line) == @[3]  # table row and fence skipped
     check found[0].message.endsWith("got `owner`.")
+
+
+  test "import line of Claude Code names file, so people check reads no word of it":
+    # Case: `CLAUDE.md` imports entry file as `@AGENTS.md` on line of its own, outside code, since
+    #   Claude Code loads no import in code, and check read `AGENTS` there as people word. Domain:
+    #   import line alone, indented one, prose beside it, and import inside sentence, still prose.
+    check checkWordsPeople("CLAUDE.md", "# Claude Code\n\n@AGENTS.md\n").len == 0
+    check checkWordsPeople("CLAUDE.md", "  @AGENTS.md\n").len == 0  # indented
+    check checkWordsPeople("CLAUDE.md", "@AGENTS.md\nThe agents read it.\n").mapIt(it.line) ==
+      @[2]  # prose line beside import still read
+    check checkWordsPeople("CLAUDE.md", "Read @AGENTS.md first.\n").len == 1  # sentence
