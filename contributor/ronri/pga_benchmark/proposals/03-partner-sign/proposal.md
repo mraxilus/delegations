@@ -99,5 +99,5 @@ At cga5d the 324 multiplies of the partner are the bound of its chain: 162 for e
 Its error checks fall from 109 to 2, and its lines of C from 2 530 to 78.
 
 P01 and P08 alone run the partner at ×0.69 to ×0.73 of pin at cga5d, over the kinds of its
-operand. With this proposal it runs at ×0.36 to ×0.41. So the fold gives the rest of the gain on
+operand. With this proposal it runs at ×0.36 to ×0.40. So the fold gives the rest of the gain on
 the partner.
