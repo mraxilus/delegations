@@ -1,68 +1,159 @@
-## Read stream of lojban text into its words, each with pause before it and stress it marks.
+## tcidu lo porsi be lo valsi pe lo jboselci'a
+##   .i ro valsi cu ponse lo denpa poi lidne le valsi ku'o .e lo nu basna poi le selci'a cu sinxa
+##       ke'a
 ##
-##   |---------------|------------------------------------------------------------|
-##   | Code          | Meaning                                                    |
-##   |---------------|------------------------------------------------------------|
-##   | Pause         | pause before word: absent, written as period, or inferred  |
-##   | Occurrence    | word as stream holds it: place, letters, pause and stress  |
-##   | ReadingStream | words of stream in order, or refusal with its place        |
-##   | readStream    | read text as its words by rules of CLL, or refuse it       |
-##   |---------------|------------------------------------------------------------|
+##   |-----------------|--------------------------------------------------------------------------|
+##   | lo samtci cmene | lo smuni                                                                 |
+##   |-----------------|--------------------------------------------------------------------------|
+##   | `Pause`         | lo li'erde'a                                                           |
+##   |                 | .i le denpa na zvati gi'a selsni denpa bu gi'a selfa'i                |
+##   | `Occurrence`    | lo valsi pe le porsi                                                     |
+##   |                 | .i lo stuzi .e lo lerfu .e lo denpa .e lo nu basna                       |
+##   | `ReadingStream` | lo porsi be lo valsi be'o .a lo nu to'e curmi poi ponse lo stuzi         |
+##   | `readStream`    | tcidu lo valsi pe le selci'a ja'i `CLL` gi'a to'e curmi le selci'a     |
+##   |-----------------|--------------------------------------------------------------------------|
 ##
-##   Marks of stream (3.3, 3.9): whitespace and period divide words, and period writes pause;
-##     comma breaks syllables inside word; capital marks stressed syllable.
-##   Written word between marks reads as one word where it can, its commas and capitals
-##     admitted. Else reader splits it into words, as Architect ruled on #811: 4.1 says sounds
-##     of stream split one way alone, and 3.3 lets correct text leave period out.
-##     Split chosen needs fewest pauses that rules need and text does not write, so period left
-##       out is inferred only where letters read no other way: `losei` reads as `lo sei`, never
-##       as `lo se .i`.
-##     Several splits of fewest pauses tie, as `iai` for `.i.ai` or `.ia.i`, and reader refuses
-##       them as `Split`; written word with no split is refused as `readWord` refuses letters.
-##     Stress takes part, as in speech. Written word with no capital is stressed on its own
-##       penultimate syllable alone, and one with capitals on each syllable they mark, as
-##       Architect ruled (`D3 a` on #811). So each brivla holds capital, or ends syllables counted
-##       for stress: `mibroda` reads as `mi broda`, `MIbroda` as `mibro da`, `.esperanto` as
-##       `e speranto` (Example 19.78), and `klamaku` as one fu'ivla.
-##     Comma parts syllables, as 3.5 groups vowels by it, so capitals stress syllables it marks:
-##       `me,IIn.` is one cmene stressed on `ii`. Comma marks "no pause between" syllables
-##       (3.3), so no split takes pause where it stands: `ka,i` is `kai` with comma refused,
-##       never `ka .i`. Each comma is then judged against words chosen.
-##       Cost: comma under capital may make written word split, as `crarcI,ae` reads
-##         `crarcia e` where `crarcIae` reads `crarciae`; with no capital, comma changes no word.
-##     Cmene stands last in written word: pause follows it (4.9 rule 2), and parts of name join
-##       into one word with no pause (4.8), so consonant inside written word goes on with name.
-##       So `bri` is no `br .i`, though `br` alone would read as cmene, as `rl` does (3.4); and
-##       `secusku` is `se cusku`, never `secusk .u`.
-##     Cost: CLL presents no algorithm for split (4.1), so split is reader's, built from rules
-##       of 3.9, 4.2, 4.7, 4.8 and 4.9. It tries each word and each word before it, so time grows
-##       with cube of length of written word (expected); words written apart skip it.
-##   Pause follows 4.9. Period writes it. Where rule needs pause that text does not write,
-##     reader infers it, since 3.3 calls period optional reminder that correct text implies.
-##     So no text is refused for unwritten pause, and each word carries pause before it.
-##     Rules read: 2, word ending in consonant; 3, word opening with vowel or `y`; 4, cmene
-##       after word other than `la`, `lai`, `la'i` or `doi`; 5 and 4.2, stressed last syllable
-##       before brivla or before stressed first syllable; 6, `Cy` before word not `Cy`; and
-##       pause after `y` (4.2). First word takes pause where rule 3 or 4 needs one.
-##     Rule 7 sets pause on each side of text that `zoi` and `la'o` quote. Reader holds that
-##       text whole as one occurrence, `Foreign`, up to written word spelling delimiter again;
-##       text holding delimiter is refused as `Quotation`, since delimiter is "not found" in it
-##       (19.10), so `zoi gy. gyrations .gy.` is refused, as Example 19.50 is as written.
-##   Quotation `zo` makes, or `lo'u` up to `le'u`, quotes words, so `zoi` and `fa'o` inside it
-##     act on none (19.9, 19.10). Stream stops after `fa'o` no quotation holds (19.15).
-##   Comma is never required (3.3), so word reads without it. Comma breaks syllables, so each
-##     stretch it bounds, up to next comma, apostrophe or edge of word, holds vowel, `y`, or
-##     consonant that may be syllabic (3.4). In cmavo, gismu and lujvo, vowels side by side make
-##     diphthong, which is one syllable (3.4), so comma between them is refused; cmene and
-##     fu'ivla may part vowels with it (3.5, 4.7).
-##     Cost: comma beside `l`, `m`, `n` or `r` may make it syllabic, which 3.4 admits in
-##       principle, so reader accepts it.
-##   Capital marks stress (3.1, 3.9): capitals form one run touching one vowel or diphthong,
-##     whole syllable or vowel alone, and consonants of run are not judged. Brivla stresses
-##     penultimate syllable, `y` and syllabic consonant not counted; cmavo and cmene any syllable
-##     or none; `y` never. Capital touching no vowel is refused, as sentence opening `Mi` is:
-##     4.8 keeps capitals for stress alone.
-##   Place of each word and refusal is byte of stream where it opens, so caller can point at it.
+## ni'o lo sinxa pe lo porsi be lo valsi cu du di'e to `CLL 3.3` .e `CLL 3.9` toi
+##   .i lo kutle'u .e denpa bu cu fendi lo valsi
+##   .i denpa bu cu sinxa lo denpa
+##   .i slaka bu cu fendi lo slaka ne'i lo valsi
+##   .i lo brale'u cu sinxa lo slaka poi se basna
+##
+## ni'o le genturfa'i cu tcidu pa valsi fi lo selci'avla poi zvati lo jbini be lo sinxa ku'o va'o lo
+##     nu le lerfu .e slaka bu .e lo brale'u pe le selci'avla cu curmi
+##   .i va'o lo drata le genturfa'i cu fendi le selci'avla fi lo valsi
+##   .i `Architect` jdice di'u bu'u `#811`
+##   .i ki'u bo `CLL 4.1` cusku lo du'u lo sance pe lo porsi be lo valsi cu se fendi fo pa tadji
+##       po'o
+##   .i `CLL 3.3` curmi ji'a lo nu lo draselci'a cu claxu denpa bu
+##
+## ni'o lo ve fendi poi selcu'a cu nitcu lo mecraide'a poi lo javni cu nitcu ke'a zi'e poi le
+##     selci'a na ciska ke'a
+##   .i se ki'u bo le genturfa'i cu facki lo denpa poi le selci'a na ciska ke'a ku'o va'o po'o lo nu
+##       no datseltcidu be fi le lerfu cu drani
+##   .i le genturfa'i cu tcidu `lo sei` fi `losei` gi'e no roi tcidu `lo se .i` fi `losei`
+##
+## ni'o le genturfa'i cu to'e curmi ta'i `Split` lo selci'avla poi su'o re ve fendi be fi ke'a cu
+##     nitcu lo mecraide'a
+##   .i mupli fa `iai` noi ka'e se fendi fi `.i.ai` .a `.ia.i`
+##   .i le genturfa'i cu to'e curmi lo selci'avla poi claxu lo ve fendi ku'o ta'i lo nu `readWord`
+##       to'e curmi le lerfu
+##
+## ni'o lo nu basna cu cuxna fi lo ve fendi ta'i lo nu tavla
+##   .i lo selci'avla poi claxu lo brale'u cu basna lo slaka po'o poi lidne lo romoi slaka pe le
+##       selci'avla
+##   .i lo selci'avla poi vasru lo brale'u cu basna ro slaka poi le brale'u cu sinxa ke'a
+##   .i `Architect` jdice di'u to `D3 a` bu'u `#811` toi
+##   .i se ki'u bo ro brivla cu vasru lo brale'u gi'a fanmo lo slaka poi se kancu mu'i lo nu basna
+##   .i le genturfa'i cu tcidu `mi broda` fi `mibroda` gi'e tcidu `mibro da` fi `MIbroda` gi'e tcidu
+##       `e speranto` fi `.esperanto` to `Example 19.78` toi gi'e tcidu pa fu'ivla fi `klamaku`
+##
+## ni'o slaka bu cu fendi lo slaka ta'i lo nu `CLL 3.5` fendi lo karsna sepi'o slaka bu
+##   .i se ki'u bo lo brale'u cu basna lo slaka poi slaka bu cu sinxa ke'a
+##   .i le genturfa'i cu tcidu pa cmene poi basna `ii` ku'o fi `me,IIn.`
+##
+## ni'o ja'i `CLL 3.3` slaka bu cu sinxa zoi gy. no pause between .gy. bu'u lo jbini be lo slaka
+##   .i se ki'u bo no ve fendi cu punji lo denpa lo stuzi be slaka bu
+##   .i le genturfa'i cu tcidu zo kai fi `ka,i` gi'e to'e curmi le lerfu po'u slaka bu gi'e no roi
+##       tcidu lo'u ka .i le'u fi `ka,i`
+##   .i ba bo le genturfa'i cu jdice fi ro slaka bu sepi'o lo valsi poi selcu'a
+##
+## ni'o jdima fa lo nu va'o lo nu lo brale'u cu zvati kei slaka bu cu ka'e rinka lo nu le selci'avla
+##     cu se fendi
+##   .i le genturfa'i cu tcidu `crarcia e` fi `crarcI,ae`
+##   .i ku'i le genturfa'i cu tcidu `crarciae` fi `crarcIae`
+##   .i va'o lo nu no brale'u cu zvati kei slaka bu cu galfi no valsi
+##
+## ni'o lo cmene cu romoi ne'i lo selci'avla
+##   .i ro cmene cu lidne lo denpa to le remoi javni pe `CLL 4.9` toi
+##   .i lo pagbu be lo cmene cu pagbu pa valsi poi claxu lo denpa to `CLL 4.8` toi
+##   .i se ki'u bo lo zunsna poi le cmene cu lidne ke'a ne'i le selci'avla cu pagbu le cmene
+##
+## ni'o ki'u la'e di'u le genturfa'i na tcidu `br .i` fi `bri`
+##   .i ku'i le genturfa'i cu tcidu pa cmene fi `br` noi sepli
+##   .i ji'a le genturfa'i cu tcidu pa cmene fi `rl` to `CLL 3.4` toi
+##   .i le genturfa'i cu tcidu lo'u se cusku le'u fi `secusku` gi'e no roi tcidu `secusk .u` fi
+##       `secusku`
+##
+## ni'o jdima fa lo nu `CLL` dunda no tadji be lo nu fendi to `CLL 4.1` toi
+##   .i se ki'u bo le tadji be lo nu fendi cu selfi'i le genturfa'i gi'e selzba fi lo javni pe
+##       `CLL 3.9` .e `CLL 4.2` .e `CLL 4.7` .e `CLL 4.8` .e `CLL 4.9`
+##   .i ro da poi valsi zo'u le tadji cu troci da .e ro valsi poi lidne da
+##   .i se ki'u bo lo temci cu simsa lo tenfa be lo clani be le selci'avla be'o bei li ci
+##   .i di'u se kanpe
+##   .i lo valsi poi selci'a ta'i lo nu sepli cu cliva le tadji
+##
+## ni'o lo denpa cu mapti `CLL 4.9`
+##   .i denpa bu cu sinxa lo denpa
+##   .i va'o lo nu lo javni cu nitcu lo denpa poi le selci'a na ciska ke'a kei le genturfa'i cu
+##       facki le denpa ki'u lo nu `CLL 3.3` cusku lo du'u denpa bu cu na'e bilga sinxa lo denpa poi
+##       lo draselci'a cu nibli ke'a
+##   .i se ki'u bo le genturfa'i cu to'e curmi no selci'a ki'u lo denpa poi le selci'a na ciska ke'a
+##   .i ro valsi cu ponse lo denpa poi lidne le valsi
+##
+## ni'o le javni poi le genturfa'i cu pilno ke'a du di'e
+##   .i le remoi javni cu srana lo valsi poi selfa'o lo zunsna
+##   .i le cimoi javni cu srana lo valsi poi selkra lo karsna .a `y`
+##   .i le vomoi javni cu srana lo cmene poi se lidne lo valsi poi drata zo la .e zo lai .e zo la'i
+##       .e zo doi
+##   .i le mumoi javni .e `CLL 4.2` srana lo romoi slaka poi se basna gi'e lidne lo brivla .a lo
+##       pamoi slaka poi se basna
+##   .i le xamoi javni cu srana lo valsi poi seltai `Cy` gi'e lidne lo valsi poi na seltai `Cy`
+##   .i ji'a zo y lidne lo denpa to `CLL 4.2` toi
+##   .i lo pamoi valsi cu se lidne lo denpa va'o lo nu le cimoi javni .a le vomoi javni cu nitcu le
+##       denpa
+##
+## ni'o le zemoi javni cu nitcu lo nu lo selci'a poi zo zoi .a zo la'o sitna ke'a se lidne pa denpa
+##     gi'e lidne pa denpa
+##   .i le selci'a cu mulno gi'e du pa valsi pe le porsi gi'e se tcita `Foreign` gi'e fanmo pu lo
+##       selci'avla poi rapci'a le koivla
+##
+## ni'o le genturfa'i cu to'e curmi lo selci'a poi vasru le koivla ku'o ta'i `Quotation`
+##   .i ki'u bo `CLL 19.10` skicu le koivla fo zoi gy. not found .gy. ne'i le selci'a
+##   .i se ki'u bo le genturfa'i cu to'e curmi `zoi gy. gyrations .gy.`
+##   .i `CLL` cusku ji'a lo du'u `Example 19.50` na drani va'o lo nu selci'a
+##
+## ni'o lo nu sitna poi zo zo .a zo lo'u zbasu ke'a sitna lo valsi
+##   .i zo lo'u sitna lo valsi poi lidne zo le'u
+##   .i se ki'u bo zo zoi .e zo fa'o galfi no da va'o lo nu le re valsi cu zvati le nu sitna to
+##       `CLL 19.9` .e `CLL 19.10` toi
+##   .i le porsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a to `CLL 19.15` toi
+##
+## ni'o slaka bu cu no roi bilga to `CLL 3.3` toi
+##   .i se ki'u bo lo valsi cu se tcidu va'o lo nu ri claxu slaka bu
+##   .i slaka bu cu fendi lo slaka
+##   .i se ki'u bo ro pagbu poi slaka bu cu korbi ke'a vasru lo karsna .a `y` .a lo zunsna poi ka'e
+##       slaka to `CLL 3.4` toi
+##   .i le pagbu cu selfa'o slaka bu .a zoi gy. ' .gy. .a lo korbi be le valsi
+##
+## ni'o ne'i lo cmavo .e lo gismu .e lo lujvo re lamji karsna cu pagbu pa karsna gunma noi slaka to
+##     `CLL 3.4` toi
+##   .i se ki'u bo le genturfa'i cu to'e curmi slaka bu poi zvati lo jbini be le re karsna
+##   .i ja'i `CLL 3.5` .e `CLL 4.7` lo cmene .e lo fu'ivla cu ka'e fendi re karsna sepi'o slaka bu
+##
+## ni'o jdima fa lo nu slaka bu poi lamji `l` .a `m` .a `n` .a `r` cu ka'e rinka lo nu le zunsna cu
+##     slaka
+##   .i `CLL 3.4` curmi lo nu le zunsna cu slaka kei ja'i lo jicmu
+##   .i se ki'u bo le genturfa'i cu curmi lo nu le zunsna cu slaka
+##
+## ni'o lo brale'u cu sinxa lo nu basna to `CLL 3.1` .e `CLL 3.9` toi
+##   .i lo brale'u pe pa valsi cu cmima pa porsi poi pencu pa karsna .a pa karsna gunma
+##   .i le porsi cu vasru lo mulslaka .a lo karsna po'o
+##   .i le genturfa'i na jdice lo zunsna pe le porsi
+##
+## ni'o lo brivla cu basna le slaka poi lidne le romoi slaka
+##   .i `y` .e lo zunsna poi slaka cu na se kancu
+##   .i ro slaka pe lo cmavo ja cmene cu ka'e se basna
+##   .i lo cmavo ja cmene cu ka'e claxu lo nu basna
+##   .i `y` no roi se basna
+##
+## ni'o le genturfa'i cu to'e curmi lo brale'u poi pencu no karsna mu'u `Mi` noi krasi pa jufra
+##   .i ki'u bo `CLL 4.8` pilno lo brale'u lo nu sinxa lo nu basna po'o
+##
+## ni'o lo stuzi be ro valsi cu du lo stuzi poi le valsi cu cfari bu'u ke'a ne'i le porsi
+##   .i lo stuzi be ro nu to'e curmi cu du lo stuzi poi le valsi .a le sinxa poi se to'e curmi cu
+##       cfari bu'u ke'a
+##   .i se ki'u bo lo pilno cu ka'e jarco le stuzi
 
 {.experimental: "strictFuncs".}
 
@@ -72,85 +163,138 @@ import ./[clusters, forms, selmaho, tanru]
 
 
 type
-  Pause* {.pure.} = enum  ## Define pause before word of stream (3.3, 4.9).
-    Absent  ## No period, and no rule of 4.9 needs pause, so words may run together.
-    Written  ## Period writes pause.
-    Inferred  ## Rule of 4.9 needs pause that text does not write, so reader infers it (3.3).
+  Pause* {.pure.} = enum  ## lo denpa poi lidne pa valsi pe lo porsi to `CLL 3.3` .e `CLL 4.9` toi
+    Absent
+      ## denpa bu na zvati
+      ##   .i no javni pe `CLL 4.9` nitcu lo denpa
+      ##   .i se ki'u bo le valsi cu ka'e jorne
+    Written  ## denpa bu cu sinxa lo denpa
+    Inferred
+      ## lo javni pe `CLL 4.9` nitcu lo denpa poi le selci'a na ciska ke'a
+      ##   .i se ki'u bo le genturfa'i cu facki le denpa to `CLL 3.3` toi
 
-  Occurrence* = object  ## Define word as stream holds it: place, letters, pause and stress.
-    start*: int  ## Byte of stream where word opens.
+  Occurrence* = object
+    ## lo valsi pe lo porsi
+    ##   .i le valsi cu ponse lo stuzi .e lo lerfu .e lo denpa .e lo nu basna
+    start*: int  ## lo stuzi poi le valsi cu cfari bu'u ke'a ne'i le porsi
     finish*: int
-      ## Byte of stream past last letter of word, where it ends; past text, for text `zoi` or
-      ##   `la'o` quotes. Comma between two words of one written word stands outside both.
-    text*: string  ## Letters of word in canonical form: lowercase, commas left out (3.3).
-    pause*: Pause  ## Pause before word.
+      ## lo stuzi poi se lidne le romoi lerfu pe le valsi
+      ##   .i le stuzi cu fanmo le valsi
+      ##   .i va'o lo nu zo zoi .a zo la'o sitna lo selci'a kei le stuzi cu se lidne le selci'a
+      ##   .i slaka bu poi zvati lo jbini be re valsi pe pa selci'avla cu zvati no le re valsi
+    text*: string
+      ## lo lerfu pe le valsi ta'i lo raltai
+      ##   .i ro lerfu cu cmalu
+      ##   .i slaka bu cu se vimcu to `CLL 3.3` toi
+    pause*: Pause  ## lo denpa poi lidne le valsi
     stress*: Option[int]
-      ## Nucleus capitals mark stressed, counted from zero over vowels, `y` and diphthongs of
-      ##   word, commas parting them; none where text marks none.
-    breaks*: seq[int]  ## Index of letter of word each comma stands before, in order (3.3).
-    reading*: Reading  ## Word as `readWord` reads `text`.
+      ## le slaka karsna poi lo brale'u cu sinxa lo nu basna be ke'a
+      ##   .i li no cu krasi lo nu kancu lo karsna .e `y` .e lo karsna gunma pe le valsi
+      ##   .i slaka bu cu fendi lo karsna
+      ##   .i no da va'o lo nu le selci'a cu sinxa no nu basna
+    breaks*: seq[int]
+      ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a ne'i le valsi
+      ##   .i le stuzi cu se porsi to `CLL 3.3` toi
+    reading*: Reading  ## le valsi ta'i lo nu `readWord` tcidu `text`
 
-  ReadingStream* = object  ## Define outcome of reading stream as its words.
+  ReadingStream* = object  ## lo jalge be lo nu tcidu lo valsi pe lo porsi
     case is_read*: bool
     of true:
-      occurrences*: seq[Occurrence]  ## Words of stream in order; empty for marks alone.
+      occurrences*: seq[Occurrence]
+        ## ro valsi pe le selci'a ta'i lo porsi
+        ##   .i no valsi cu zvati va'o lo nu le selci'a cu vasru lo sinxa po'o
     of false:
-      refusal*: Refusal  ## Rule refusing stream.
-      start*: int  ## Byte of stream where offending word or mark opens.
+      refusal*: Refusal  ## lo javni poi to'e curmi le porsi
+      start*: int
+        ## lo stuzi poi lo valsi .a lo sinxa poi se to'e curmi cu cfari bu'u ke'a ne'i le porsi
       detail*: string
-        ## Offending character, form 4.11 gives, or two splits; delimiter of `zoi` that no word
-        ##   spelling it closes, which live text waits for; empty otherwise.
+        ## le datnypau cu du lo lerfu poi se to'e curmi .a lo tarmi poi `CLL 4.11` dunda ke'a ku'o
+        ##     .a re ve fendi
+        ##   .i ja le datnypau cu du lo koivla pe zo zoi
+        ##   .i no valsi poi ciska le koivla cu fanmo le selci'a
+        ##   .i lo mivyselci'a cu denpa le valsi
+        ##   .i va'o lo drata le datnypau cu kunti
 
-  Spelling = object  ## Define written word with its marks taken out.
-    letters: string  ## Letters in canonical form.
-    places: seq[int]  ## Byte of stream each letter stands at.
-    capitals: seq[int]  ## Index of each letter written capital, in order.
-    breaks: seq[int]  ## Index of letter each comma stands before, in order.
-    commas: seq[int]  ## Byte of stream each comma stands at, in order of `breaks`.
+  Spelling = object  ## lo selci'avla poi lo sinxa pe ke'a selvi'u
+    letters: string  ## lo lerfu ta'i lo raltai
+    places: seq[int]  ## lo stuzi be ro lerfu ne'i le porsi
+    capitals: seq[int]
+      ## lo stuzi be ro lerfu poi barda ne'i le selci'avla
+      ##   .i le stuzi cu selpoi
+    breaks: seq[int]  ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a to le stuzi cu selpoi toi
+    commas: seq[int]
+      ## lo stuzi be ro slaka bu ne'i le porsi
+      ##   .i le stuzi cu selpoi ta'i `breaks`
 
-  Score = object  ## Define splits reaching word: fewest pauses, ties, and words before.
-    pauses: int  ## Fewest pauses of any split reaching word.
-    ties: int  ## Splits of fewest pauses reaching word, two standing for more.
-    befores: seq[int]  ## Start of word before, in each split of fewest pauses; none for first.
+  Score = object
+    ## lo ve fendi poi le valsi cu fanmo ke'a
+    ##   .i lo mecrailai be lo denpa be'o .e lo klani be lo ve fendi poi mintu be'o .e lo valsi poi
+    ##       lidne le valsi
+    pauses: int  ## lo mecrailai be lo denpa pe lo ve fendi poi le valsi cu fanmo ke'a
+    ties: int
+      ## lo klani be lo ve fendi poi le valsi cu fanmo ke'a gi'e nitcu lo mecraide'a
+      ##   .i li re cu sinxa li su'o re
+    befores: seq[int]
+      ## lo krasi be lo valsi poi lidne le valsi ne'i ro ve fendi poi nitcu lo mecraide'a
+      ##   .i no da va'o lo nu le valsi cu pamoi
 
-  Split = object  ## Define split of written word into words with fewest pauses it needs.
-    splits: seq[seq[Occurrence]]  ## Up to two splits of fewest pauses, in order; pause unset.
-    count: int  ## Splits of fewest pauses: none, one, or two standing for two or more.
+  Split = object  ## lo ve fendi be fi lo se ciska valsi be'o poi nitcu lo mecraide'a
+    splits: seq[seq[Occurrence]]
+      ## su'e re ve fendi poi nitcu lo mecraide'a
+      ##   .i le ve fendi cu selpoi
+      ##   .i no denpa cu seljdi
+    count: int
+      ## lo klani be lo ve fendi poi nitcu lo mecraide'a
+      ##   .i li no .a li pa .a li re
+      ##   .i li re cu sinxa li su'o re
 
 
 const
-  MARKS_BOUNDARY* = Whitespace + {'.'}  ## Marks dividing words: whitespace, and period (3.3).
-  CAPITALS = MARKS_STREAM - MARKS_BOUNDARY - {','}  ## Capital of each letter, marking stress.
-  VOWELS_NUCLEUS = VOWELS + {'y'}  ## Letters making syllable: five vowels, and `y` (3.4, 3.9).
-  CONSONANTS_SYLLABIC = {'l', 'm', 'n', 'r'}  ## Consonants that may make syllable alone (3.4).
+  MARKS_BOUNDARY* = Whitespace + {'.'}
+    ## lo sinxa poi fendi lo valsi to `CLL 3.3` toi
+    ##   .i lo kutle'u .e denpa bu
+  CAPITALS = MARKS_STREAM - MARKS_BOUNDARY - {','}
+    ## lo brale'u pe ro lerfu
+    ##   .i lo brale'u cu sinxa lo nu basna
+  VOWELS_NUCLEUS = VOWELS + {'y'}
+    ## lo lerfu poi zbasu lo slaka
+    ##   .i le mu karsna .e `y` to `CLL 3.4` .e `CLL 3.9` toi
+  CONSONANTS_SYLLABIC = {'l', 'm', 'n', 'r'}  ## lo zunsna poi ka'e slaka to `CLL 3.4` toi
   KINDS_BRIVLA = {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}
-    ## Classes stressed on penultimate syllable alone (3.9, 4.7).
+    ## lo klesi poi basna le slaka po'o poi lidne le romoi slaka to `CLL 3.9` .e `CLL 4.7` toi
   KINDS_DIPHTHONG = {Kind.Cmavo, Kind.Gismu, Kind.Lujvo}
-    ## Classes whose vowels side by side make diphthong, so comma may not part them (3.4).
+    ## lo klesi poi re lamji karsna pe ke'a zbasu lo karsna gunma
+    ##   .i ki'u la'e di'u slaka bu na ka'e fendi le re karsna to `CLL 3.4` toi
 
 
 func refuse(refusal: Refusal, start: int, detail = ""): ReadingStream =
-  ## Build reading that refuses stream at byte `start`.
+  ## zbasu lo se tcidu poi to'e curmi le porsi bu'u le stuzi po'u `start`
   ReadingStream(is_read: false, refusal: refusal, start: start, detail: detail)
 
 
 func isPauseNeeded(prior, next: Occurrence): bool =
-  ## Test rule of 4.9 needs pause between two words: rules by letters (`forms.nim`), and rule 5,
-  ##   stressed last syllable before brivla or before stressed first syllable (4.2).
+  ## jdice lo du'u lo javni pe `CLL 4.9` nitcu lo denpa poi zvati lo jbini be le re valsi
+  ##   .i le javni cu du le mumoi javni .e lo javni poi jdice fi lo lerfu to `forms.nim` toi
+  ##   .i le mumoi javni cu srana lo romoi slaka poi se basna gi'e lidne lo brivla .a lo pamoi slaka
+  ##       poi se basna to `CLL 4.2` toi
   if isPauseNeeded(prior.text, next.text): return true
   if prior.stress != some(prior.text.nuclei(prior.reading.kind, prior.breaks).high): return false
-  next.reading.kind in KINDS_BRIVLA or next.stress == some(0)  # rule 5; 4.2
+  next.reading.kind in KINDS_BRIVLA or next.stress == some(0)  # le mumoi javni to `CLL 4.2` toi
 
 
 func isPauseNeededFirst(word: Occurrence): bool =
-  ## Test rule of 4.9 needs pause before word opening stream: rule 3, vowel or `y` first (4.2),
-  ##   or rule 4, cmene.
+  ## jdice lo du'u lo javni pe `CLL 4.9` nitcu lo denpa poi lidne lo valsi poi krasi le porsi
+  ##   .i le javni cu du le cimoi javni .a le vomoi javni
+  ##   .i le cimoi javni cu srana lo valsi poi selkra lo karsna .a `y` to `CLL 4.2` toi
+  ##   .i le vomoi javni cu srana lo cmene
   word.text[0] in VOWELS_NUCLEUS or word.reading.kind == Kind.Cmene
 
 
 func isStretchSyllabic(text: string, at, start, finish, step: int): bool =
-  ## Test stretch from comma at `at` toward `step`, up to next comma, apostrophe or edge of
-  ##   word, holds vowel, `y` or consonant that may be syllabic (3.4).
+  ## jdice lo du'u lo pagbu be le valsi cu vasru lo karsna .a `y` .a lo zunsna poi ka'e slaka to
+  ##     `CLL 3.4` toi
+  ##   .i le pagbu cu cfari bu'u slaka bu pe `at` gi'e selfa'a `step` gi'e selfa'o slaka bu .a zoi
+  ##       gy. ' .gy. .a lo korbi be le valsi
   var i = at + step
   while i >= start and i < finish and text[i] notin {',', '\''}:
     if text[i].toLowerAscii in VOWELS_NUCLEUS + CONSONANTS_SYLLABIC: return true
@@ -159,19 +303,24 @@ func isStretchSyllabic(text: string, at, start, finish, step: int): bool =
 
 
 func refusalMarks(text: string, start, finish: int): Option[ReadingStream] =
-  ## Find first character or comma of written word that no rule admits, as refusal at its byte.
+  ## facki lo pamoi lerfu poi no javni cu curmi ke'a ne'i le selci'avla
+  ##   .i le lerfu ka'e du slaka bu
+  ##   .i dunda lo nu to'e curmi bu'u le stuzi be le lerfu
   for at in start ..< finish:
     let symbol = text[at]
     if symbol in tanru.LETTERS or symbol in CAPITALS: continue
-    if symbol != ',': return some(refuse(Refusal.Letter, at, text.character(at)))  # 3.1
+    if symbol != ',': return some(refuse(Refusal.Letter, at, text.character(at)))  # `CLL 3.1`
     let is_syllabic = text.isStretchSyllabic(at, start, finish, -1) and
         text.isStretchSyllabic(at, start, finish, 1)
-    if not is_syllabic: return some(refuse(Refusal.Comma, at))  # 3.3, comma breaks syllables
+    # ja'i `CLL 3.3` slaka bu cu fendi lo slaka
+    if not is_syllabic: return some(refuse(Refusal.Comma, at))
   none(ReadingStream)
 
 
 func toSpelling(text: string, start, finish: int): Spelling =
-  ## Take marks out of written word: lowercase each capital, and leave out each comma.
+  ## vimcu lo sinxa le selci'avla
+  ##   .i ro brale'u cu binxo lo cmale'u
+  ##   .i ro slaka bu cu selvi'u
   for at in start ..< finish:
     if text[at] == ',':
       result.breaks.add result.letters.len
@@ -183,39 +332,55 @@ func toSpelling(text: string, start, finish: int): Spelling =
 
 
 func nucleusStressed(word: string, kind: Kind, capitals, breaks: openArray[int]): Option[int] =
-  ## Find nucleus capitals mark stressed, or none where 3.9 admits no such stress: capitals
-  ##   broken by letter or comma, touching no nucleus or several, on `y`, or off penultimate
-  ##   syllable of brivla, `y` not counted.
-  ##   `capitals` holds one index at least; `capitals` and `breaks` index letters of `word`.
+  ## facki le slaka karsna poi lo brale'u cu basna ke'a
+  ##   .i dunda no da va'o lo nu `CLL 3.9` na curmi le nu basna
+  ##   .i mupli fa lo nu lo lerfu .a slaka bu cu fendi le brale'u
+  ##   .i ja le brale'u cu pencu no slaka karsna .a su'o re slaka karsna
+  ##   .i ja le brale'u cu zvati `y`
+  ##   .i ja le brale'u na zvati le slaka poi lidne le romoi slaka pe lo brivla
+  ##   .i `y` na se kancu
+  ##
+  ## ni'o `capitals` vasru su'o pa namcu
+  ##   .i `capitals` .e `breaks` sinxa lo stuzi be lo lerfu pe `word`
   let (first, last) = (capitals[0], capitals[^1])
-  if last - first + 1 != capitals.len: return  # 3.9, one syllable capitalized
+  if last - first + 1 != capitals.len: return  # ja'i `CLL 3.9` pa slaka po'o cu barda
   for b in breaks:
-    if first < b and b <= last: return  # 3.3, comma breaks syllable inside run
+    # ja'i `CLL 3.3` slaka bu cu fendi lo slaka ne'i le porsi be lo brale'u
+    if first < b and b <= last: return
   let spans = word.nuclei(kind, breaks)
   var touched: seq[int]
   for i, nucleus in spans:
     if nucleus.b >= first and nucleus.a <= last: touched.add i
-  if touched.len != 1 or word[spans[touched[0]].a] == 'y': return  # 3.9, `y` never stressed
+  # ja'i `CLL 3.9` `y` no roi se basna
+  if touched.len != 1 or word[spans[touched[0]].a] == 'y': return
   if kind in KINDS_BRIVLA:
     var counted: seq[int]
     for i, nucleus in spans:
       if word[nucleus.a] != 'y': counted.add i
-    if touched[0] != counted[^2]: return  # 3.9, brivla stresses penultimate; two at least (4.3)
+    # ja'i `CLL 3.9` lo brivla cu basna le slaka poi lidne le romoi slaka
+    #   .i lo brivla cu vasru su'o re slaka to `CLL 4.3` toi
+    if touched[0] != counted[^2]: return
   some(touched[0])
 
 
 func occurrenceWritten(
     spelling: Spelling, span: Slice[int], is_parting = true
 ): Option[Occurrence] =
-  ## Read letters of `span` as one word, with stress its capitals mark; none where no word
-  ##   reads, or where its capitals break rule of 3.9. Commas part syllables where
-  ##   `is_parting`, and judge no word otherwise; pause left unset.
+  ## tcidu pa valsi fi lo lerfu pe `span`
+  ##   .i le valsi cu ponse lo nu basna poi le brale'u cu sinxa ke'a
+  ##   .i dunda no da va'o lo nu no valsi cu se tcidu kei .a lo nu le brale'u cu na mapti lo javni
+  ##       pe `CLL 3.9`
+  ##   .i va'o lo nu `is_parting` jetnu kei slaka bu cu fendi lo slaka
+  ##   .i va'o lo drata slaka bu cu jdice no valsi
+  ##   .i lo denpa na seljdi
   let
     piece = spelling.letters[span]
     reading = piece.readWord
   if not reading.is_word: return
 
-  # Read stress capitals mark, commas inside breaking run, and refuse stress 3.9 does not admit.
+  # tcidu lo nu basna poi lo brale'u cu sinxa ke'a
+  #   .i slaka bu poi zvati lo brale'u cu fendi le porsi be lo brale'u
+  #   .i to'e curmi lo nu basna poi `CLL 3.9` na curmi ke'a
   var capitals, breaks: seq[int]
   for b in spelling.breaks:
     if is_parting and b > span.a and b <= span.b: breaks.add b - span.a
@@ -226,9 +391,11 @@ func occurrenceWritten(
     stress = piece.nucleusStressed(reading.kind, capitals, breaks)
     if stress.isNone: return
 
-  # Written word with capitals marks each stress with them; one with none stresses its own
-  #   penultimate syllable alone (`D3 a` on #811). So brivla holds capital, or no vowel counted
-  #   for stress follows it in written word.
+  # lo selci'avla poi vasru lo brale'u cu sinxa ro nu basna sepi'o le brale'u
+  #   .i lo selci'avla poi vasru no brale'u cu basna le slaka po'o poi lidne le romoi slaka pe le se
+  #       ciska valsi to `D3 a` bu'u `#811` toi
+  #   .i se ki'u bo lo brivla cu vasru lo brale'u gi'a se lidne no karsna poi se kancu mu'i lo nu
+  #       basna ne'i le selci'avla
   if reading.kind in KINDS_BRIVLA:
     if spelling.capitals.len > 0 and stress.isNone: return
     if spelling.capitals.len == 0 and spelling.letters[span.b + 1 .. ^1].anyIt(it in VOWELS): return
@@ -239,21 +406,29 @@ func occurrenceWritten(
 
 
 func splitWritten(spelling: Spelling, is_parting: bool): Split =
-  ## Split written word into words with fewest pauses that rules need and text does not write
-  ##   (3.3, 4.9), and none where comma stands; count splits of fewest pauses, two standing for
-  ##   more. Commas part syllables where `is_parting`.
-  ##   `words[j][i]` holds word of letters `j ..< i`, and `scores[j][i]` splits ending in it.
+  ## fendi le selci'avla fi lo valsi
+  ##   .i le ve fendi cu nitcu lo mecraide'a poi lo javni cu nitcu ke'a zi'e poi le selci'a na ciska
+  ##       ke'a to `CLL 3.3` .e `CLL 4.9` toi
+  ##   .i no denpa cu zvati lo stuzi be slaka bu
+  ##   .i kancu lo ve fendi poi nitcu lo mecraide'a
+  ##   .i li re cu sinxa li su'o re
+  ##   .i va'o lo nu `is_parting` jetnu kei slaka bu cu fendi lo slaka
+  ##
+  ## ni'o `words[j][i]` vasru lo valsi pe lo lerfu po'u `j ..< i`
+  ##   .i `scores[j][i]` vasru lo ve fendi poi le valsi cu fanmo ke'a
   let n = spelling.letters.len
   var
     words = newSeqWith(n + 1, newSeq[Option[Occurrence]](n + 1))
     scores = newSeqWith(n + 1, newSeq[Option[Score]](n + 1))
 
-  # Score each word by fewest pauses of splits reaching it, counting ties.
+  # dunda lo namcu ro valsi ja'i lo mecrailai be lo denpa pe lo ve fendi poi le valsi cu fanmo ke'a
+  #   .i kancu lo nu mintu
   for i in 1 .. n:
     for j in 0 ..< i:
       let word = spelling.occurrenceWritten(j .. i - 1, is_parting)
       if word.isNone: continue
-      if word.get.reading.kind == Kind.Cmene and i < n: continue  # 4.8, cmene stands last
+      # lo cmene cu romoi
+      if word.get.reading.kind == Kind.Cmene and i < n: continue  # `CLL 4.8`
       words[j][i] = word
       if j == 0:
         scores[j][i] = some(Score(pauses: 0, ties: 1))
@@ -262,7 +437,8 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
       for k in 0 ..< j:
         if scores[k][j].isNone: continue
         let is_needed = isPauseNeeded(words[k][j].get, word.get)
-        if is_needed and is_comma: continue  # 3.3, comma marks "no pause between" syllables
+        # ja'i `CLL 3.3` slaka bu cu sinxa zoi gy. no pause between .gy. bu'u lo jbini be lo slaka
+        if is_needed and is_comma: continue
         let
           score = scores[k][j].get
           pauses = score.pauses + ord(is_needed)
@@ -272,7 +448,8 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
           scores[j][i].get.ties = min(2, scores[j][i].get.ties + score.ties)
           scores[j][i].get.befores.add k
 
-  # Choose fewest pauses over words ending written word, and count ties.
+  # cuxna lo mecrailai be lo denpa pe lo valsi poi fanmo le selci'avla
+  #   .i kancu lo nu mintu
   var lasts: seq[int]
   for j in 1 ..< n:
     if scores[j][n].isNone: continue
@@ -284,7 +461,8 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
       lasts.add j
       result.count = min(2, result.count + score.ties)
 
-  # Read up to two splits of fewest pauses back, from last word, by each word before it.
+  # tcidu su'e re ve fendi poi nitcu lo mecraide'a
+  #   .i le nu tcidu cu cfari bu'u le romoi valsi gi'e ca'o klama ro valsi poi lidne
   var paths = lasts.mapIt(@[(it, n)])
   while paths.len > 0 and result.splits.len < 2:
     let
@@ -298,18 +476,27 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
 
 
 func splitChosen(spelling: Spelling, is_parting: bool): Split =
-  ## Choose words of written word: one word where letters read whole, else splits of fewest
-  ##   pauses; commas part syllables where `is_parting`.
+  ## cuxna lo valsi pe le selci'avla
+  ##   .i va'o lo nu le lerfu cu se tcidu ta'i pa mulvla kei cuxna pa valsi
+  ##   .i va'o lo datcu'a lo ve fendi poi nitcu lo mecraide'a
+  ##   .i va'o lo nu `is_parting` jetnu kei slaka bu cu fendi lo slaka
   let whole = spelling.occurrenceWritten(0 .. spelling.letters.high, is_parting)
   if whole.isSome: return Split(splits: @[@[whole.get]], count: 1)
   spelling.splitWritten(is_parting)
 
 
 func refusalWritten(spelling: Spelling, start: int): ReadingStream =
-  ## Refuse written word that splits into no words, at byte `start`: at first comma where words
-  ##   its letters read take pause, since comma marks none (3.3); else as `readWord` refuses its
-  ##   letters; else at its first capital, which breaks rule of 3.9. Letters that split into
-  ##   cmavo split here too, so comma or capital alone stops them.
+  ## to'e curmi lo selci'avla poi se fendi fi no valsi
+  ##   .i le nu to'e curmi cu zvati le stuzi po'u `start`
+  ##   .i va'o lo nu lo valsi poi le genturfa'i cu tcidu ke'a fi le lerfu cu nitcu lo denpa kei le
+  ##       nu to'e curmi cu zvati le pamoi lerfu po'u slaka bu poi zvati le stuzi be le denpa
+  ##   .i ki'u bo slaka bu cu sinxa no denpa to `CLL 3.3` toi
+  ##   .i va'o lo drata le genturfa'i cu to'e curmi ta'i lo nu `readWord` to'e curmi le lerfu
+  ##   .i va'o lo drata le nu to'e curmi cu zvati le pamoi barda lerfu noi na mapti lo javni pe
+  ##       `CLL 3.9`
+  ##
+  ## ni'o lo lerfu poi se fendi fi lo cmavo cu se fendi vi ji'a
+  ##   .i se ki'u bo slaka bu .a lo barda lerfu po'o cu fanta lo nu le lerfu cu se tcidu
   var bare = spelling
   (bare.breaks, bare.commas) = (newSeq[int](), newSeq[int]())
   let split = bare.splitChosen(is_parting = false)
@@ -318,19 +505,24 @@ func refusalWritten(spelling: Spelling, start: int): ReadingStream =
     for i, word in split.splits[0]:
       let k = spelling.breaks.find(lo)
       if i > 0 and k >= 0 and isPauseNeeded(split.splits[0][i - 1], word):
-        return refuse(Refusal.Comma, spelling.commas[k])  # 3.3, comma "cannot be" pause
+        # ja'i `CLL 3.3` slaka bu na ka'e du lo denpa
+        #   .i `CLL 3.3` cusku zoi gy. cannot be .gy.
+        return refuse(Refusal.Comma, spelling.commas[k])
       lo += word.text.len
   let whole = spelling.letters.readWord
   if not whole.is_word and whole.refusal != Refusal.Stream:
     return refuse(whole.refusal, start, whole.detail)
   doAssert spelling.capitals.len > 0, "Written word whose letters read should break 3.9 by capital."
-  refuse(Refusal.Stress, spelling.places[spelling.capitals[0]])  # 3.9
+  refuse(Refusal.Stress, spelling.places[spelling.capitals[0]])  # `CLL 3.9`
 
 
 func refusalCommas(spelling: Spelling, words: openArray[Occurrence]): Option[ReadingStream] =
-  ## Find first comma that breaks rule against words written word holds, as refusal at its
-  ##   byte: comma inside diphthong of cmavo, gismu or lujvo (3.4), or where pause must stand
-  ##   between two words, since comma "cannot be pronounced as pause" (3.3).
+  ## facki lo pamoi lerfu po'u slaka bu poi na mapti lo javni ja'i lo valsi poi le selci'avla cu
+  ##     vasru ke'a
+  ##   .i dunda lo nu to'e curmi bu'u le stuzi be le lerfu
+  ##   .i le lerfu cu zvati lo karsna gunma pe pa cmavo .a pa gismu .a pa lujvo to `CLL 3.4` toi
+  ##   .i ja le lerfu cu zvati lo stuzi poi lo denpa cu bigzva ke'a ne'i lo jbini be re valsi
+  ##   .i ki'u bo slaka bu cu selski `CLL 3.3` fo zoi gy. cannot be pronounced as pause .gy.
   var
     lo = 0
     k = 0
@@ -350,13 +542,17 @@ func refusalCommas(spelling: Spelling, words: openArray[Occurrence]): Option[Rea
 
 
 func isForeign(word: Occurrence): bool =
-  ## Test occurrence holds text that `zoi` or `la'o` quotes, which is no lojban (4.9 rule 7).
+  ## jdice lo du'u le valsi pe le porsi cu vasru lo selci'a poi zo zoi .a zo la'o sitna ke'a
+  ##   .i le selci'a na lojbo to le zemoi javni pe `CLL 4.9` toi
   not word.reading.is_word and word.reading.refusal == Refusal.Foreign
 
 
 func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period: bool): Pause =
-  ## Name pause before word that follows `occurrences`: period writes it, or rule needs it.
-  ##   Pause stands on each side of text quoted that is no lojban (4.9 rule 7).
+  ## cusku lo denpa poi lidne lo valsi poi se lidne `occurrences`
+  ##   .i denpa bu cu sinxa le denpa
+  ##   .i ja lo javni cu nitcu le denpa
+  ##   .i lo selci'a poi se sitna gi'e na lojbo cu se lidne pa denpa gi'e lidne pa denpa to le zemoi
+  ##       javni pe `CLL 4.9` toi
   if is_period: return Pause.Written
   let is_needed =
     if occurrences.len == 0: word.isPauseNeededFirst
@@ -366,28 +562,36 @@ func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period
 
 
 func wordsWritten(text: string, start, finish: int): ReadingStream =
-  ## Read written word of bytes `start ..< finish` as its words, pause left unset; refuse mark,
-  ##   letters or split no rule admits.
+  ## tcidu lo valsi pe lo selci'avla pe lo stuzi po'u `start ..< finish`
+  ##   .i lo denpa na seljdi
+  ##   .i to'e curmi lo pagbu poi no javni cu curmi ke'a
+  ##   .i le pagbu cu sinxa ja lerfu ja ve fendi
   let refusal_marks = text.refusalMarks(start, finish)
   if refusal_marks.isSome: return refusal_marks.get
 
-  # Choose words that fit every mark: comma parts syllables, as 3.5 groups vowels by it, so
-  #   capitals stress syllables it marks; and no split takes pause where comma stands (3.3).
+  # cuxna lo valsi poi mapti ro sinxa
+  #   .i slaka bu cu fendi lo slaka ta'i lo nu `CLL 3.5` fendi lo karsna sepi'o slaka bu
+  #   .i se ki'u bo lo brale'u cu basna lo slaka poi slaka bu cu sinxa ke'a
+  #   .i ji'a ja'i `CLL 3.3` no ve fendi cu punji lo denpa lo stuzi be slaka bu
   let
     spelling = text.toSpelling(start, finish)
     split = spelling.splitChosen(is_parting = true)
   if split.count == 0: return spelling.refusalWritten(start)
   if split.count > 1:
     let detail = split.splits.mapIt(it.mapIt(it.text).join(" ")).join(", or ")
-    return refuse(Refusal.Split, start, detail)  # 3.3, no one split to infer
+    # ja'i `CLL 3.3` le genturfa'i na ka'e facki lo pa ve fendi
+    return refuse(Refusal.Split, start, detail)
   let refusal_commas = spelling.refusalCommas(split.splits[0])
   if refusal_commas.isSome: return refusal_commas.get
   ReadingStream(is_read: true, occurrences: split.splits[0])
 
 
 func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
-  ## Find bytes of text quoted from `start` up to next written word spelling `delimiter`, marks
-  ##   around it left out; none where no such word follows (19.10).
+  ## facki lo stuzi be lo selci'a poi se sitna
+  ##   .i le selci'a cu cfari bu'u `start` gi'e fanmo pu lo bavla'i se ciska valsi poi ciska
+  ##       `delimiter`
+  ##   .i lo sinxa poi sruri le selci'a cu selvi'u
+  ##   .i dunda no da va'o lo nu no selci'avla poi ciska `delimiter` se lidne to `CLL 19.10` toi
   var at = start
   while at < text.len:
     if text[at] in MARKS_BOUNDARY:
@@ -404,56 +608,80 @@ func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
 
 
 func readStream*(text: string, is_lohu = false): ReadingStream =
-  ## Read text as its words by rules of CLL alone, each with pause before it and stress it
-  ##   marks; refuse at first word or mark that no rule admits, naming its byte. With `is_lohu`,
-  ##   text opens inside words `lo'u` quotes, as live text reads it after `lo'u` that waits.
-  ##   Text `zoi` or `la'o` quotes stands as one occurrence, whole and as written; quotation
-  ##     `zo` makes, or `lo'u` up to `le'u`, quotes words, so their cmavo act on none (19.9).
-  ##   Stream stops after `fa'o` that no quotation holds, which ends parsable input (21.1).
+  ## tcidu lo valsi pe le selci'a ja'i lo javni pe `CLL` po'o
+  ##   .i ro valsi cu ponse lo denpa poi lidne le valsi ku'o .e lo nu basna poi le selci'a cu sinxa
+  ##       ke'a
+  ##   .i to'e curmi bu'u le pamoi pagbu poi no javni cu curmi ke'a
+  ##   .i le pagbu cu valsi ja sinxa
+  ##   .i cusku le stuzi be le pagbu
+  ##
+  ## ni'o va'o lo nu `is_lohu` jetnu kei le selci'a cu cfari ne'i lo valsi poi zo lo'u sitna ke'a
+  ##   .i lo mivyselci'a cu tcidu le selci'a ta'i di'u ba zo lo'u noi ca'o denpa
+  ##
+  ## ni'o lo selci'a poi zo zoi .a zo la'o sitna ke'a mulno gi'e du pa valsi pe le porsi gi'e na
+  ##     selga'i
+  ##   .i lo nu sitna poi zo zo .a zo lo'u zbasu ke'a sitna lo valsi
+  ##   .i zo lo'u sitna lo valsi poi lidne zo le'u
+  ##   .i se ki'u bo lo cmavo poi se sitna cu galfi no da to `CLL 19.9` toi
+  ##
+  ## ni'o le porsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a
+  ##   .i zo fa'o fanmo lo selci'a poi ka'e se tcidu to `CLL 21.1` toi
   var
     occurrences: seq[Occurrence]
     is_period, is_quoting = false
-    is_lohu = is_lohu  # words `lo'u` quotes, up to `le'u`
-    zoi, closing = none(int)  # quotation whose delimiter comes next; delimiter closing text
+    is_lohu = is_lohu  # lo valsi poi zo lo'u sitna ke'a to le valsi cu lidne zo le'u toi
+    # lo nu sitna poi le koivla pe ke'a bavla'i
+    #   .i lo koivla poi fanmo le selci'a
+    zoi, closing = none(int)
     at = 0
   while at < text.len:
-    # Pass marks between words, noting period.
+    # klama pa'o lo sinxa poi zvati lo jbini be lo valsi
+    #   .i ralte lo du'u denpa bu cu zvati
     if text[at] in MARKS_BOUNDARY:
       is_period = is_period or text[at] == '.'
       inc at
       continue
 
-    # Take written word up to next mark between words, and read its words.
+    # lebna lo selci'avla poi fanmo pu lo bavla'i sinxa poi zvati lo jbini be lo valsi
+    #   .i tcidu lo valsi pe le selci'avla
     let start = at
     while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
     let written = text.wordsWritten(start, at)
     if not written.is_read: return written
     let words = written.occurrences
 
-    # Read delimiter closing text quoted: that written word alone, spelled as delimiter (19.10).
+    # tcidu le koivla poi fanmo le selci'a poi se sitna
+    #   .i le selci'avla cu vasru pa valsi po'o
+    #   .i le valsi cu selci'a ta'i le korbi valsi to `CLL 19.10` toi
     if closing.isSome:
       if words.len != 1 or words[0].text != occurrences[closing.get].text:
         return refuse(Refusal.Quotation, start)
       var occurrence = words[0]
-      occurrence.pause = (if is_period: Pause.Written else: Pause.Inferred)  # 4.9 rule 7
+      # le zemoi javni pe `CLL 4.9`
+      occurrence.pause = (if is_period: Pause.Written else: Pause.Inferred)
       occurrences.add occurrence
       (closing, is_period) = (none(int), false)
       continue
 
-    # Add each word with its pause, and follow quotation it opens or closes.
+    # jmina ro valsi
+    #   .i ro valsi cu ponse lo denpa poi lidne le valsi
+    #   .i jersi lo nu sitna poi le valsi cu krasi ja fanmo ke'a
     for i, word in words:
       var occurrence = word
       occurrence.pause = occurrences.pauseBefore(occurrence, is_period = i == 0 and is_period)
       occurrences.add occurrence
 
-      # Delimiter ends its written word, and text it quotes runs to it again (19.10).
+      # lo koivla cu fanmo lo selci'avla pe vo'a
+      #   .i le selci'a poi le koivla cu sitna ke'a fanmo pu lo nu le koivla cu rapli se ciska to
+      #       `CLL 19.10` toi
       if zoi.isSome:
         if i < words.high: return refuse(Refusal.Quotation, words[i + 1].start)
         let span = text.quoted(at, word.text)
         if span.isNone: return refuse(Refusal.Quotation, occurrences[zoi.get].start, word.text)
         let quotation = text[span.get]
         if word.text in quotation.toLowerAscii:
-          return refuse(Refusal.Quotation, span.get.a)  # 19.10, delimiter "not found" in text
+          # ja'i `CLL 19.10` le koivla cu selski fo zoi gy. not found .gy. ne'i le selci'a
+          return refuse(Refusal.Quotation, span.get.a)
         occurrences.add Occurrence(
           start: span.get.a, finish: span.get.b + 1, text: quotation, stress: none(int),
           pause: (if '.' in text[at ..< span.get.a]: Pause.Written else: Pause.Inferred),
@@ -462,7 +690,9 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
         (zoi, closing, at) = (none(int), some(occurrences.high - 1), span.get.b + 1)
         break
 
-      # Word after `zo` is quoted; `lo'u` quotes words up to `le'u`, but `zo le'u` (19.9).
+      # zo zo sitna lo bavla'i valsi
+      #   .i zo lo'u sitna lo valsi poi lidne zo le'u
+      #   .i ku'i zo le'u poi zo zo sitna ke'a fanmo no da to `CLL 19.9` toi
       if is_quoting:
         is_quoting = false
         continue
@@ -475,7 +705,11 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
       elif selmaho == some(Selmaho.Lohu): is_lohu = true
       elif selmaho == some(Selmaho.Zoi): zoi = some(occurrences.high)
       elif selmaho == some(Selmaho.Faho):
-        return ReadingStream(is_read: true, occurrences: occurrences)  # 19.15, end of input
+        # `CLL 19.15`
+        #   .i le selci'a cu fanmo
+        return ReadingStream(is_read: true, occurrences: occurrences)
     is_period = false
-  if zoi.isSome: return refuse(Refusal.Quotation, occurrences[zoi.get].start)  # 19.10, no delimiter
+  # `CLL 19.10`
+  #   .i no koivla cu zvati
+  if zoi.isSome: return refuse(Refusal.Quotation, occurrences[zoi.get].start)
   ReadingStream(is_read: true, occurrences: occurrences)

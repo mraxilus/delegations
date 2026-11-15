@@ -1,53 +1,79 @@
-## Parse lojban by rules of CLL alone: letters, each class of word, rafsi, tanru, stream, prose.
-##   Umbrella module: re-exports surface of each module, in order reader learns subject.
+## tcidu la lojban. ja'i lo javni pe `CLL` po'o
+##   .i tcidu lo lerfu .e ro klesi be lo valsi be'o .e lo rafsi .e lo tanru .e lo porsi be lo valsi
+##       be'o .e lo selci'a
+##   .i le vi datnyvei cu ralju samtci pagbu gi'e rapybe'i lo pagbu be ro samtci pagbu be'o poi lo
+##       pilno cu ka'e pilno ke'a ku'o ta'i lo porsi be lo nu lo tcidu cu cilre le selsnu
 ##
-##   |--------------|------------------------------------------------------|------------------|
-##   | Module       | Concept                                              | CLL              |
-##   |--------------|------------------------------------------------------|------------------|
-##   | clusters     | letters, consonant pairs, initial pairs, triples     | 3.1, 3.6-7       |
-##   | forms        | shapes of rafsi, gismu and cmavo, class of word      | 4.2-4, 4.6       |
-##   |              | rules of cmene and fu'ivla by letters, and pauses    | 4.7-9            |
-##   | lujvo        | joining rafsi, scoring lujvo, splitting it back      | 4.5, 4.11-2      |
-##   | fuhivla      | fu'ivla as no combination of words, slinku'i test    | 4.7              |
-##   | selmaho      | name of each selma'o, as chapter 20 lists them       | ch. 20           |
-##   | entries      | entry of each list: word with rafsi, or selma'o      |                  |
-##   | dictionary   | words and rafsi of gismu list, selma'o of cmavo      | 4.6, ch. 20      |
-##   | tanru        | word read by rules alone, as parts of its tanru      | 4.2-8, 4.11-2    |
-##   | tanru_units  | cmavo binding each tanru unit, conversions composed  | ch. 5, 9, 12, 15 |
-##   | stream       | text read as its words, with pause and stress        | 3.3, 3.9, 4.9    |
-##   | grammar      | words read by formal grammar into tree of its rules  | 21.1             |
-##   | prose        | text: quotation, erasure, marks, then grammar        | 19.9-16, 21.1    |
-##   | nif          | tree of text as module of NIF data format            | 21.1             |
-##   | nif_read     | module of NIF read back into its nodes, by its spec  |                  |
-##   | live         | live text read piece by piece, cut back by cursor    | 19.13, 21.1      |
-##   | merge        | NIF of parts merged into NIF one pass gives text     | 19.13-16, 21.1   |
-##   |--------------|------------------------------------------------------|------------------|
+##   |---------------|-------------------------------------------------------|------------------|
+##   | lo datnyvei   | lo selsnu                                           | lo ckupau        |
+##   |---------------|-------------------------------------------------------|------------------|
+##   | `clusters`    | lo lerfu .e lo zunsna remei .e lo zunsna cimei        | `3.1, 3.6-7`     |
+##   |               | lo zunsna remei poi ka'e krasi lo valsi               |                  |
+##   | `forms`       | lo tarmi be lo rafsi .e lo gismu .e lo cmavo          | `4.2-4, 4.6`     |
+##   |               | lo klesi be lo valsi                                  |                  |
+##   |               | lo javni pe lo cmene .e lo fu'ivla ja'i lo lerfu      | `4.7-9`          |
+##   |               | lo denpa                                              |                  |
+##   | `lujvo`       | lo nu jmina lo rafsi .e lo nu dunda lo namcu lo lujvo | `4.5, 4.11-2`    |
+##   |               | lo nu fendi le lujvo fi lo rafsi                      |                  |
+##   | `fuhivla`     | lo fu'ivla poi na gunma lo valsi                      | `4.7`            |
+##   |               | lo cipra pe zoi gy. slinku'i .gy.                     |                  |
+##   | `selmaho`     | lo cmene be ro selma'o ja'i le liste pe `CLL 20`      | `ch. 20`         |
+##   | `entries`     | lo stecmi be ro liste                            |                  |
+##   |               | le stecmi cu vasru pa valsi                      |                  |
+##   |               | le stecmi cu vasru lo rafsi .a lo selma'o        |                  |
+##   | `dictionary`  | lo valsi .e lo rafsi vu'o pe le gimste           | `4.6, ch. 20`    |
+##   |               | lo selma'o pe le ma'oste                          |                  |
+##   | `tanru`       | lo valsi poi se tcidu ja'i lo javni po'o              | `4.2-8, 4.11-2`  |
+##   |               | lo pagbu be lo tanru pe le valsi                      |                  |
+##   | `tanru_units` | lo cmavo poi jorne ro taurpau                     | `ch. 5, 9`       |
+##   |               | lo nu jmina lo nu galfi lo porsi be fi lo sumti       | `ch. 12, 15`     |
+##   | `stream`      | lo selci'a poi se tcidu ta'i lo valsi pe ke'a        | `3.3, 3.9, 4.9`  |
+##   |               | lo denpa .e lo nu basna                               |                  |
+##   | `grammar`     | lo valsi poi le gerna cu tcidu ke'a                   | `21.1`           |
+##   |               | lo tricu pe lo javni pe le gerna                      |                  |
+##   | `prose`       | lo nu sitna .e lo nu vimcu .e lo nu tcita lo valsi    | `19.9-16, 21.1`  |
+##   |               | lo nu tcidu ja'i le gerna ba lo drata                 |                  |
+##   | `nif`         | lo tricu pe lo selci'a                               | `21.1`           |
+##   |               | lo samtci pagbu pe `NIF` noi datnytai              |                  |
+##   | `nif_read`    | lo nu raptcidu lo samtci pagbu pe `NIF`            |                  |
+##   |               | lo jgena ja'i lo javni pe `NIF`                       |                  |
+##   | `live`        | lo nu tcidu ro pagbu be lo mivyselci'a             | `19.13, 21.1`    |
+##   |               | lo nu katna lo pu se tcidu bu'u lo stusni        |                  |
+##   | `merge`       | lo nu jmina lo pagbu ja'i lo selci'a be fi `NIF`     | `19.13-16, 21.1` |
+##   |               | lo jalge cu mintu lo se tcidu be le mulno se ciska    |                  |
+##   |---------------|-------------------------------------------------------|------------------|
 ##
-##   Order of compile-time type bootstrapping:
-##     EntryGismu -> LIST_GISMU
-##     Selmaho -> EntryCmavo
-##     EntryCmavo -> LIST_CMAVO
-##     LIST_GISMU -> Word
-##     Word -> Part
-##     Part -> Tanru
-##     [Places, Word] -> Link
-##     [Link, Part] -> TanruUnit
-##     [Pause, Reading] -> Occurrence
-##     Occurrence -> ReadingStream
-##     [Selmaho, Reading] -> Terminal
-##     Node -> ReadingGrammar
-##     [Occurrence, Terminal] -> Unit
-##     [Unit, Node] -> ReadingText
-##     [Unit, Node] -> ReadingMarked
-##     [ReadingMarked, Terminal] -> ReadingParts
-##     [Selmaho, Terminal] -> ReaderLive
-##     [NodeNif, Terminal] -> MergeNif
-##   Lists are data that `nim r tools/build.nim lists` renders; `Word` is range over entries of
-##     gismu list, so its bound follows list with no number written twice (Article II.5).
-##   Lists stay off surface: caller wanting every entry imports `lists/gismu` or `lists/cmavo`
-##     itself, and `dictionary` reads one entry of word. Gismu list keeps word and rafsi, and
-##     cmavo list word and selma'o, alone; English of each list and whole lujvo list stay with
-##     `lojban_tagger`.
+## ni'o lo porsi be lo nu zbasu lo klesi ca lo nu fanva cu du di'e
+##   .i `EntryGismu` lidne `LIST_GISMU`
+##   .i `Selmaho` lidne `EntryCmavo`
+##   .i `EntryCmavo` lidne `LIST_CMAVO`
+##   .i `LIST_GISMU` lidne `Word`
+##   .i `Word` lidne `Part`
+##   .i `Part` lidne `Tanru`
+##   .i `Places` .e `Word` lidne `Link`
+##   .i `Link` .e `Part` lidne `TanruUnit`
+##   .i `Pause` .e `Reading` lidne `Occurrence`
+##   .i `Occurrence` lidne `ReadingStream`
+##   .i `Selmaho` .e `Reading` lidne `Terminal`
+##   .i `Node` lidne `ReadingGrammar`
+##   .i `Occurrence` .e `Terminal` lidne `Unit`
+##   .i `Unit` .e `Node` lidne `ReadingText` .e `ReadingMarked`
+##   .i `ReadingMarked` .e `Terminal` lidne `ReadingParts`
+##   .i `Selmaho` .e `Terminal` lidne `ReaderLive`
+##   .i `NodeNif` .e `Terminal` lidne `MergeNif`
+##
+## ni'o lo liste cu du lo datni poi lo minde po'u `nim r tools/build.nim lists` ciska ke'a
+##   .i `Word` kuspe ro stecmi pe le gimste
+##   .i se ki'u bo lo korbi be `Word` cu selkra le liste
+##   .i no namcu cu re roi se ciska to `Article II.5` toi
+##
+## ni'o le ralju samtci pagbu cu benji no liste
+##   .i lo pilno poi djica ro stecmi cu cpacu `lists/gismu` .a `lists/cmavo`
+##   .i `dictionary` tcidu pa stecmi pe pa valsi
+##
+## ni'o le gimste cu ralte lo valsi .e lo rafsi .e no drata
+##   .i le ma'oste cu ralte lo valsi .e lo selma'o .e no drata
+##   .i `lojban_tagger` ralte lo glipau be ro liste be'o .e le mulno ke jvoste
 
 {.experimental: "strictFuncs".}
 

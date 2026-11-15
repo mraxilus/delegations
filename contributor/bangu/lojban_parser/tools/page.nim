@@ -1,26 +1,40 @@
-## Build page of live text from committed shell, as verb `page`, and compile each module of
-##   this project that runs as JavaScript.
+## zbasu le papri pe lo mivyselci'a le calku poi selra'e ne'i `git` ta'i lo minde po'u `page`
+##   .i fanva ro datnyvei pe le vi selgu'a ge'u zi'e poi fasnu ta'i `JavaScript` ku'o fi
+##       `JavaScript`
 ##
-##   |-----------|---------------------------------------------------------------------------|
-##   | Code      | Meaning                                                                   |
-##   |-------------|-------------------------------------------------------------------------|
-##   | compileJs   | compile module to JavaScript, as script ships                           |
-##   | fontFaces   | bytes of each font face shell embeds, as store serves them              |
-##   | compiledPage | script of page, compiled                                               |
-##   | builtPage   | page built from shell, with script given, as one file                   |
-##   | writePage   | build page into `build/`, and print its path, digest and size           |
-##   |-------------|-------------------------------------------------------------------------|
+##   |----------------|---------------------------------------------------------------------------|
+##   | lo fancu       | lo smuni                                                                  |
+##   |----------------|---------------------------------------------------------------------------|
+##   | `compileJs`    | fanva pa datnyvei fi `JavaScript` ta'i le samtci poi selbe'i |
+##   | `fontFaces`    | lo stuzi pe ro lertai poi le calku cu vasru ke'a ku'o ta'i le sorcu  |
+##   | `compiledPage` | le se fanva samtci pe le papri                                            |
+##   | `builtPage`    | le papri poi selzba fi le calku .e le se dunda samtci gi'e datnyvei     |
+##   | `writePage`    | zbasu ne'i `build/` gi'e ciska le judri .e le snina'u .e le ni barda  |
+##   |----------------|---------------------------------------------------------------------------|
 ##
-##   Page is shell `pages/live.html` with its tokens filled (CONTRIBUTOR.md, Pages and assets):
-##     each font face it embeds, which `koch fetch-assets` serves after it checks digest against
-##       store of repository (`curator/audit/src/assets.nim`), inlined as `data:` source, so page
-##       names no font face viewer may lack (Article X.8);
-##     text, line, drawing and NIF of first sample, as native build reads it whole and draws its
-##       NIF (`src/browser/draw.nim`), so page reads complete before its script runs;
-##     script, `src/browser/page.nim` compiled by JavaScript backend of pin, inline, so worker
-##       it starts reads from Blob of its text (`live_text.nim`).
-##   Built page is one long line under ignored `build/`, never committed.
-##   Cost: page holds parser whole and five font faces, which make up most of its bytes.
+## ni'o le papri cu du le calku po'u `pages/live.html`
+##   .i ro sinxa pe le calku cu se basti to `CONTRIBUTOR.md, Pages and assets` toi
+##
+## ni'o ro lertai poi le calku cu punji ke'a basti pa sinxa
+##   .i `koch fetch-assets` sabji le lertai ba lo nu cipra lo du'u lo snina'u cu mintu le sorcu pe
+##       `delegations` to `curator/audit/src/assets.nim` toi
+##   .i le lertai cu selpu'i ne'i le papri ta'i pa `data:`
+##   .i se ki'u bo le papri cu cusku no cmene be lo lertai poi lo viska ka'e claxu ke'a to
+##       `Article X.8` toi
+##
+## ni'o le selci'a .e le linji .e le pixra .e le selci'a be fi `NIF` vu'o pe le pamoi mupli cu basti
+##     lo sinxa ta'i lo nu le jbezba cu tcidu le mulmupli gi'e ciska lo pixra be le selci'a be fi
+##     `NIF` to `src/browser/draw.nim` toi
+##   .i se ki'u bo le papri cu mulseltcidu pu lo nu le samtci pe le papri cu cfari
+##   .i le samtci po'u `src/browser/page.nim` poi le fanva poi selsto cu fanva ke'a fi `JavaScript`
+##       selpu'i ne'i le selci'a pe le papri
+##   .i se ki'u bo le gunka poi le samtci cu rinka lo nu ke'a cfari cu selkra pa `Blob` pe le
+##       selci'a pe le samtci to `live_text.nim` toi
+##
+## ni'o le selzbapapri cu du pa clali'i ne'i `build/` noi `git` na jundi ke'a
+##   .i le papri cu no roi selra'e `git`
+##   .i jdima fa lo nu le papri cu vasru le mulno genturfa'i .e mu lertai
+##   .i so'e lo stuzi pe le papri cu pagbu le genturfa'i .a le lertai
 
 {.experimental: "strictFuncs".}
 
@@ -31,23 +45,30 @@ import ../src/lojban_parser/[nif, prose]
 
 
 const
-  PATH_SHELL* = "pages" / "live.html"  ## Shell page is assembled in.
-  PATH_ENTRY = "src" / "browser" / "page.nim"  ## Entry of script page runs.
-  PATH_COMPILED = "build" / "page" / "page.js"  ## Script of page, compiled.
-  PATH_PAGE* = "build" / "lojban_parser.html"  ## Page built.
-  PATH_KOCH = ".." / ".." / ".." / "koch.nim"  ## Driver of repository, asked for font faces.
-  TOKEN_EMBED = "@EMBED:"  ## Opening of token one font face replaces, closed by `@`.
+  PATH_SHELL* = "pages" / "live.html"  ## le calku poi le papri cu selzba ne'i ke'a
+  PATH_ENTRY = "src" / "browser" / "page.nim"  ## le krasi datnyvei pe le samtci pe le papri
+  PATH_COMPILED = "build" / "page" / "page.js"  ## le se fanva samtci pe le papri
+  PATH_PAGE* = "build" / "lojban_parser.html"  ## le selzbapapri
+  PATH_KOCH = ".." / ".." / ".." / "koch.nim"
+    ## le jitro samtci pe `delegations` ge'u zi'e poi le vi samtci cu cpedu lo lertai ke'a
+  TOKEN_EMBED = "@EMBED:"
+    ## lo krasi be lo sinxa poi pa lertai cu basti ke'a
+    ##   .i `@` fanmo le sinxa
   TOKENS = ["@SOURCE@", "@STATUS@", "@DIAGRAM@", "@NIF@", "@SCRIPT@"]
-    ## Tokens shell carries beyond font faces, each filled once; script last.
-  ATTRIBUTE_SAMPLE = "data-sample=\""  ## Opening of attribute holding text of one sample.
+    ## lo sinxa pe le calku ge'u zi'e poi na sinxa lo lertai
+    ##   .i ro sinxa cu se basti pa roi
+    ##   .i le sinxa pe le samtci cu se basti ba ro drata
+  ATTRIBUTE_SAMPLE = "data-sample=\""  ## lo krasi be lo ckaji poi vasru lo selci'a pe pa mupli
 
 
 
-#[ Processes ]#
+#[ ni'o ni'o ni'o lo pruce ]#
 
 proc compileJs*(source, output: string, defines: openArray[string] = []): int =
-  ## Compile module to JavaScript with `-d:release`, as script ships, and give exit of compiler.
-  ##   Compiler is one that compiled this driver, never other `nim` that PATH holds.
+  ## fanva pa datnyvei fi `JavaScript` sepi'o `-d:release` ta'i le samtci poi selbe'i gi'e dunda lo
+  ##     famna'u pe le fanva
+  ##   .i le fanva cu du le fanva poi fanva le vi jitro samtci
+  ##   .i le fanva cu no roi du lo datfanva poi selcme `nim` gi'e selvau `PATH`
   createDir(output.parentDir)
   var arguments = @["js", "--hints:off", "-d:release", "--out:" & output]
   for define in defines: arguments.add "-d:" & define
@@ -59,17 +80,18 @@ proc compileJs*(source, output: string, defines: openArray[string] = []): int =
 
 
 proc digestText*(text: string): string =
-  ## Give SHA-256 of text, by `sha256sum`.
+  ## dunda lo snina'u pe le selci'a ta'i `SHA-256` sepi'o `sha256sum`
   let (output, code) = execCmdEx("sha256sum", input = text)
   if code != 0: raise newException(OSError, "Digest should be read; got `" & output & "`.")
   output.splitWhitespace[0]
 
 
 
-#[ Shell ]#
+#[ ni'o ni'o ni'o le calku ]#
 
 func fontFacesAsked(shell: string): seq[string] =
-  ## List font faces embed tokens of shell name, in order of first use.
+  ## liste lo lertai poi lo sinxa pe lo nu punji ne'i le calku cu cmene ke'a ku'o ta'i le porsi be
+  ##     lo pamoi nu pilno
   var at = shell.find(TOKEN_EMBED)
   while at >= 0:
     let close = shell.find('@', at + TOKEN_EMBED.len)
@@ -80,7 +102,8 @@ func fontFacesAsked(shell: string): seq[string] =
 
 
 func samples*(shell: string): seq[string] =
-  ## List text of each sample shell offers, in order, entities of attribute decoded.
+  ## liste lo selci'a pe ro mupli poi le calku cu dunda ke'a ku'o ta'i le porsi
+  ##   .i lo sinxa pe `HTML` ne'i le ckaji cu selga'i lo lerfu
   var at = shell.find(ATTRIBUTE_SAMPLE)
   while at >= 0:
     let
@@ -92,22 +115,26 @@ func samples*(shell: string): seq[string] =
 
 
 func mediaType(name: string): string =
-  ## Give media type of font face by extension of its file.
+  ## dunda `font/woff2` .a `font/ttf` ja'i le fanmo be le cmene be le datnyvei pe le lertai
   if name.endsWith(".woff2"): "font/woff2" else: "font/ttf"
 
 
 func drawnWhole*(text: string): DrawingLive =
-  ## Draw NIF native build gives text read whole, as page draws it once reader ends.
+  ## ciska lo pixra be le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a le selci'a poi
+  ##     mulseltcidu ku'o ta'i lo nu le papri cu ciska lo pixra ca lo nu le tcidu cu sisti
   drawn(readTextParts(text).reading.toNifParts, "")
 
 
 
-#[ Build ]#
+#[ ni'o ni'o ni'o lo nu zbasu ]#
 
 proc fontFaces*(): Table[string, string] =
-  ## Ask `koch fetch-assets` for each font face shell embeds, and read bytes of each, by name.
-  ##   Count of paths is held, since verb prints nothing for font face it could not serve, and
-  ##   short list would pair wrong bytes with right name.
+  ## cpedu ro lertai poi le calku cu punji ke'a ku'o fi `koch fetch-assets` gi'e tcidu lo stuzi pe
+  ##     ro le lertai
+  ##   .i le cmene cu ckiku le stuzi
+  ##   .i le te kancu be lo judri cu se cipra
+  ##   .i ki'u bo le minde cu ciska no da va'o lo nu le minde cu na ka'e sabji pa lertai
+  ##   .i va'o lo nu le liste cu claxu pa judri kei lo na drastu cu ka'e seljo'e lo dracme
   let
     names = readFile(PATH_SHELL).fontFacesAsked
     (output, code) = execCmdEx("nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) &
@@ -125,15 +152,18 @@ proc fontFaces*(): Table[string, string] =
 
 
 proc compiledPage*(): string =
-  ## Compile script of page, `src/browser/page.nim`, and give its text.
+  ## fanva le samtci pe le papri to `src/browser/page.nim` toi gi'e dunda le selci'a pe le samtci
   if compileJs(PATH_ENTRY, PATH_COMPILED) != 0:
     raise newException(OSError, "Script of page should compile; got `" & PATH_ENTRY & "`.")
   readFile(PATH_COMPILED)
 
 
 proc builtPage*(script: string, faces: Table[string, string]): string =
-  ## Build page from shell: font faces, first sample drawn natively, then script, which is
-  ##   script of page as viewer gets it, suite of page in its place, or nothing for collector.
+  ## zbasu le papri le calku
+  ##   .i punji lo lertai .e lo jbexra be le pamoi mupli
+  ##   .i ba bo punji `script`
+  ##   .i `script` du le samtci pe le papri ge'u zi'e poi lo viska cu cpacu ke'a ku'o .a le cipra pe
+  ##       le papri ge'u zi'e poi basti le samtci ku'o .a lo kunti lerpoi poi le crepu cu pilno ke'a
   if "</script" in script.toLowerAscii:
     raise newException(ValueError, "Script should never close its element; it would close " &
         "element it stands in.")
@@ -158,7 +188,7 @@ proc builtPage*(script: string, faces: Table[string, string]): string =
 
 
 proc writePage*(): int =
-  ## Build page into `build/`, and print its path, digest and size.
+  ## zbasu le papri ne'i `build/` gi'e ciska le judri .e le snina'u .e lo ni le papri cu barda
   let page = builtPage(compiledPage(), fontFaces())
   writeFile(PATH_PAGE, page)
   echo PATH_PAGE

@@ -1,23 +1,49 @@
-## Hold JavaScript build of parser, `src/javascript/bridge.nim`, to native build, in headless
-##   Chromium that verb `drive` starts (`tools/drive.nim`): each sentence of fixed sample of Tatoeba
-##   takes verdict native build gave it at render, and object of `parseLojban` mirrors
-##   `ReadingText` field for field.
-##   NIF of every fourth sentence of sample, where it reads, written on JS backend, reads back as
-##     model of format gives, and rebuilds its tree whole, by reader of native suite
-##     (`suites/reader_nif.nim`); `parseLojbanToNif` gives module of worked example native suite
-##     holds, byte for byte.
-##     Cost: reading takes about 70 ms each sentence on JS backend, so whole sample would add
-##       about 13 s; native suite reads every text of corpora.
-##   Sample reaches 86 of 88 named rules of 21.1, and refuses 49 sentences at stream and grammar
-##     alike, so one run holds most of parser under JavaScript (`sample_tatoeba/sentences.nim`).
-##   Verdict is refusal and rule, as `tools/tatoeba.nim` spells it; empty where sentence reads.
-##   Runs in page, apart from `test_suites.nim`, since bridge reaches JavaScript objects through
-##     `std/jsffi`, which native build cannot compile. Reporter sends each test to backend, then
-##     code of run, so failed check fails `drive` (`report.nim`). No node runs it (ruling on
-##     #859), so script is held where it runs: in page.
-##   Compiled with `-d:release`, as verb `javascript` builds script, so suite holds build that
-##     ships (IX.6); failed check still names its line, which `check` fixes at compile time.
-##   Abort define is left out, so every sentence whose verdict moved reports in one run.
+## cipra lo du'u le genturfa'i pe `JavaScript` to `src/javascript/bridge.nim` toi cu mintu le jbezba
+##     ne'i `headless Chromium` noi lo minde po'u `drive` rinka lo nu ke'a cfari to
+##     `tools/drive.nim` toi
+##   .i ro jufra pe le stomupli pe `Tatoeba` cpacu le seljdi poi le jbezba cu dunda ke'a ca lo nu
+##       ciska le mupli
+##   .i lo dacti pe `parseLojban` mintu `ReadingText` ro datnypau
+##
+## ni'o va'o lo nu ro vomoi jufra pe le mupli cu se tcidu kei `JS` ciska lo selci'a be fi `NIF` be'o
+##     pe le jufra
+##   .i le selci'a cu se tcidu ta'i le velski be le tarmi gi'e rapyzba le multricu pe le jufra
+##       sepi'o le tcidu pe le jbena cipra to `suites/reader_nif.nim` toi
+##   .i `parseLojbanToNif` dunda lo selci'a be fi `NIF` be'o poi mintu le selci'a pe le mupli poi le
+##       jbecipra cu vasru ke'a ku'o ro stuzi
+##
+## ni'o jdima fa lo nu lo nu tcidu ro jufra cu nitcu ji'i `70 ms` ne'i `JS`
+##   .i se ki'u bo va'o lo nu tcidu le mulmupli kei le temci cu zenba fi ji'i `13 s`
+##   .i le jbecipra cu tcidu ro selci'a pe lo selci'agri
+##
+## ni'o le mupli cu pilno bixa lo bibi javni poi selcme ne'i `CLL 21.1`
+##   .i le gerna .e le tcidu be lo porsi be lo valsi cu to'e curmi su'o le jufra
+##   .i le se to'e curmi cu du voso jufra
+##   .i se ki'u bo pa nu cipra cu cipra lo so'e pagbu be le genturfa'i ne'i `JavaScript` to
+##       `sample_tatoeba/sentences.nim` toi
+##
+## ni'o le seljdi cu vasru lo nu to'e curmi .e le javni ta'i lo nu `tools/tatoeba.nim` ciska kei
+##     gi'e kunti va'o lo nu le jufra cu se tcidu
+##
+## ni'o le cipra cu fasnu ne'i lo papri gi'e sepli `test_suites.nim`
+##   .i ki'u bo le cripu cu pencu lo dacti pe `JavaScript` sepi'o `std/jsffi` noi le jbezba na ka'e
+##       fanva ke'a
+##
+## ni'o le cusku cu benji ro cipra le sabji samtci
+##   .i ba bo le cusku cu benji lo famna'u pe le nu cipra
+##   .i se ki'u bo pa xusra poi fliba cu rinka lo nu `drive` fliba to `report.nim` toi
+##
+## ni'o `node` na pilno le cipra to lo seljdi bu'u `#859` toi
+##   .i se ki'u bo le samtci cu se cipra ne'i le papri noi le samtci cu fasnu ne'i ke'a
+##
+## ni'o le cipra cu se fanva sepi'o `-d:release` ta'i lo nu lo minde po'u `javascript` zbasu le
+##     samtci
+##   .i se ki'u bo le cipra cu cipra le selzba poi se benji to `IX.6` toi
+##   .i pa xusra poi fliba cu cusku ji'a lo linji pe vo'a
+##   .i `check` jdice le linji ca lo nu fanva
+##
+## ni'o pa minde po'u `-d:` pe lo nu sisti cu na selpli
+##   .i se ki'u bo ro jufra poi lo seljdi be fi ke'a cu cenba cu selsku ne'i pa nu cipra
 
 {.experimental: "strictFuncs".}
 
@@ -34,12 +60,15 @@ import ./report
 
 
 const
-  STRIDE_NIF = 4  ## Law of NIF reads every fourth sentence of sample.
-  COUNT_TREES_LEAST = 40  ## Sentences of that stride that read, of 59; law reads tree of each.
+  STRIDE_NIF = 4  ## le flalu pe `NIF` tcidu ro vomoi jufra pe le mupli
+  COUNT_TREES_LEAST = 40
+    ## lo du'u xo kau lo mupaso jufra poi le flalu cu cuxna ke'a se tcidu
+    ##   .i le flalu cu tcidu le tricu pe ro le jufra
 
 
 proc verdict(reading: JsObject): string =
-  ## Spell outcome of `parseLojban` as verdict of sample: empty where text reads.
+  ## ciska lo jalge be `parseLojban` ta'i lo seljdi pe le mupli
+  ##   .i lo kunti lerpoi va'o lo nu le selci'a cu se tcidu
   if reading.is_read.to(bool): return ""
   let rule = $reading.rule.to(cstring)
   $reading.refusal.to(cstring) & (if rule.len > 0: " " & rule else: "")
@@ -53,63 +82,83 @@ suite "Internal: JavaScript build":
   test "Each sentence of Tatoeba sample takes verdict native build gave it":
     var count = 0
     for sentence in SENTENCES_TATOEBA:
-      check parseLojban(cstring(sentence.text)).verdict == sentence.verdict  # native at render
+      # le seljdi cu seldu'a ca lo nu ciska le mupli
+      check parseLojban(cstring(sentence.text)).verdict == sentence.verdict  # le jbezba
       inc count
-    check count == SENTENCES_TATOEBA.len  # IX.3, guard keeps every sentence
+    check count == SENTENCES_TATOEBA.len  # `IX.3` to lo bandu cu ralte ro jufra toi
 
 
   test "Object of text that reads holds occurrences, units and tree":
-    let reading = parseLojban("mi klama le zarci")  # Example 2.1 of CLL 1.1
-    check reading.is_read.to(bool)  # prose.nim, text reads
-    check reading.occurrences.length.to(int) == 4  # one occurrence per word
-    check reading.occurrences[0].reading.selmaho.to(cstring) == "KOhA"  # ch. 20, name as spelled
-    check reading.occurrences[1].reading.kind.to(cstring) == "Gismu"  # 4.4, `klama`
-    check reading.occurrences[1].stress == jsNull  # no capital marks stress
-    check reading.occurrences[1].start.to(int) == 3  # stream.nim, byte where `klama` opens
-    check reading.occurrences[1].finish.to(int) == 8  # stream.nim, byte past its last letter
-    check reading.units.length.to(int) == 4  # one terminal per word
-    check reading.units[1].terminal.to(cstring) == "BRIVLA"  # 21.1, terminal of brivla
-    check reading.tree.rule.to(cstring) == "text"  # 21.1, rule 0 opens tree
+    let reading = parseLojban("mi klama le zarci")  # `Example 2.1` pe `CLL 1.1`
+    check reading.is_read.to(bool)  # `prose.nim` to le selci'a cu se tcidu toi
+    check reading.occurrences.length.to(int) == 4  # ro valsi cu se tcidu pa roi
+    # le cmene cu mintu le selci'a be le cukta
+    check reading.occurrences[0].reading.selmaho.to(cstring) == "KOhA"  # `CLL 20`
+    check reading.occurrences[1].reading.kind.to(cstring) == "Gismu"  # `CLL 4.4` to zo klama toi
+    check reading.occurrences[1].stress == jsNull  # no brale'u cu sinxa lo nu basna
+    # lo stuzi poi zo klama cfari bu'u ke'a
+    check reading.occurrences[1].start.to(int) == 3  # `stream.nim`
+    # lo stuzi poi se lidne le romoi lerfu be zo klama
+    check reading.occurrences[1].finish.to(int) == 8  # `stream.nim`
+    check reading.units.length.to(int) == 4  # ro valsi cu selvau pa genvla
+    # le genvla pe lo brivla
+    check reading.units[1].terminal.to(cstring) == "BRIVLA"  # `CLL 21.1`
+    # le javni pe li no cu krasi le tricu
+    check reading.tree.rule.to(cstring) == "text"  # `CLL 21.1`
     check reading.tree.number.to(int) == 0
 
 
   test "Object of text refused holds refusal, its byte and rule, and stream before it":
-    let typo = parseLojban("mi klama le zarc")  # `zarci` missing last letter; constructed
+    let typo = parseLojban("mi klama le zarc")  # zo zarci claxu le romoi lerfu to selfi'i toi
     check not typo.is_read.to(bool)
-    check typo.refusal.to(cstring) == "Grammar"  # 21.1 refuses
-    check typo.start.to(int) == 12  # byte where `zarc` opens
-    check typo.rule.to(cstring) == "sumti-6 97"  # rule 97, innermost open there
-    check typo.stream.occurrences[3].reading.kind.to(cstring) == "Cmene"  # 4.8, consonant last
-    let tie = parseLojban("iai")  # 4.9 rule 3, `.i.ai` or `.ia.i`; constructed
+    check typo.refusal.to(cstring) == "Grammar"  # `CLL 21.1` to'e curmi
+    check typo.start.to(int) == 12  # lo stuzi poi zoi gy. zarc .gy. cfari bu'u ke'a
+    # le javni cu ca'o kalri vi gi'e traji lo ka nenri
+    check typo.rule.to(cstring) == "sumti-6 97"  # le javni pe li soze
+    # lo zunsna cu romoi
+    check typo.stream.occurrences[3].reading.kind.to(cstring) == "Cmene"  # `CLL 4.8`
+    # `.i.ai` .a `.ia.i`
+    #   .i selfi'i
+    let tie = parseLojban("iai")  # `CLL 4.9` le javni pe li ci
     check tie.refusal.to(cstring) == "Stream"
-    check tie.stream.refusal.to(cstring) == "Split"  # 3.3, two splits of fewest pauses
+    # re fendi cu nitcu lo mecraide'a
+    check tie.stream.refusal.to(cstring) == "Split"  # `CLL 3.3`
     check tie.stream.detail.to(cstring) == "ia i, or i ai"
 
 
   test "Byte of refusal counts text in UTF-8, apart from index of JavaScript string":
     let
-      text = "la'o gy. Größe .gy. cu barda le zarc"  # 19.10, `la'o` quotes name; constructed
+      # `CLL 19.10`
+      #   .i zo la'o sitna pa cmene
+      #   .i selfi'i
+      text = "la'o gy. Größe .gy. cu barda le zarc"
       start = parseLojban(cstring(text)).start.to(int)
-    check start == text.find("zarc")  # byte where `zarc` opens, as Nim indexes text
+    # le stuzi cu se kancu ta'i `Nim`
+    check start == text.find("zarc")  # lo stuzi poi zoi gy. zarc .gy. cfari bu'u ke'a
     check start == 34
-    check cstring(text).toJs.indexOf(cstring("zarc")).to(int) == 32  # `ö` and `ß` one unit each
+    check cstring(text).toJs.indexOf(cstring("zarc")).to(int) == 32  # `ö` .e `ß` du pa pagbu
 
 
   test "NIF of every fourth sentence of sample that reads reads back, and rebuilds tree whole":
     var count = 0
     for k in countup(0, SENTENCES_TATOEBA.high, STRIDE_NIF):
-      if SENTENCES_TATOEBA[k].verdict.len > 0: continue  # refusal holds no tree
+      if SENTENCES_TATOEBA[k].verdict.len > 0: continue  # lo nu to'e curmi cu vasru no tricu
       let reading = SENTENCES_TATOEBA[k].text.readText
-      check reading.isReadBack  # `test_nif.nim`, law of native build
+      check reading.isReadBack  # `test_nif.nim` to le flalu pe le jbezba toi
       inc count
-    check count >= COUNT_TREES_LEAST  # IX.3, guard keeps sentences that read
+    check count >= COUNT_TREES_LEAST  # `IX.3` to lo bandu cu ralte lo jufra poi se tcidu toi
 
 
   test "parseLojbanToNif gives module native build writes, and null where text is refused":
     check $parseLojbanToNif(cstring(EXAMPLE_NIF.text)) == EXAMPLE_NIF.module  # `test_nif.nim`
-    check parseLojbanToNif("mi klama le zarc").isNil  # refusal holds no tree; constructed
-    let quoted = $parseLojbanToNif("la'o gy. Größe .gy.")  # 19.10, `la'o`; constructed
-    check "\"Größe\"" in quoted  # UTF-8 bytes from 128 through string of JavaScript, unescaped
+    # le selci'a cu selfi'i
+    check parseLojbanToNif("mi klama le zarc").isNil  # lo nu to'e curmi cu vasru no tricu
+    # zo la'o
+    #   .i selfi'i
+    let quoted = $parseLojbanToNif("la'o gy. Größe .gy.")  # `CLL 19.10`
+    # lo stuzi poi na mleca li parebi cu pagre lo lerpoi pe `JavaScript`
+    check "\"Größe\"" in quoted  # le stuzi pe `UTF-8` na selga'i
 
 
-reportEnd(if countFailures() > 0: 1 else: 0)  # code of run, once each test reported
+# lo famna'u pe le nu cipra ba lo nu ro cipra cu selsku
+reportEnd(if countFailures() > 0: 1 else: 0)
