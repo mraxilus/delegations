@@ -598,6 +598,8 @@ ni'o le ci vreji .e ro pinka pe le samtci .e le papri cu me lo lojbo se ciska po
   tcidu ke'a
   .i `suites/test_prose_own.nim` cu tcidu ro le se ciska sepi'o le genturfa'i gi'e fliba va'o ro
     srera
+  .i ro jufra pe le se ciska cu krasi pa linji
+  .i le cipra cu fliba ji'a va'o lo nu pa jufra cu krasi lo midju be pa linji
   .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #818 .gy.
 
 ni'o `lojban_tagger` cu tcidu la lojban. sepi'o le genturfa'i

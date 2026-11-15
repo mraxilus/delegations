@@ -3458,7 +3458,9 @@ ni'o **le cipra cu tcidu le se ciska poi le re glico cipra pe la'o gy. curator .
   .i le cipra be lo gadri pe `knoller` cu tcidu no datnyvei pe le vi se gunka
   .i le cipra cu tcidu ro prosa pagbu pe ro vreji ta'i lo nu `blocks` pe `english.nim` cu tcidu
   .i ro prosa pagbu cu du pa liste cmima .a pa porsi be lo sampu linji
-  .i lo stedu linji .e lo cartu .e lo nu sitna .e lo samtci poi se bitmu cu na se tcidu
+  .i ro stedu cu se tcidu ta'i pa se ciska
+  .i ku'i le cmene be le vreji .e lo stedu poi lo cipra cu tcidu ke'a ta'i lo cmene cu na se tcidu
+  .i lo cartu .e lo nu sitna .e lo samtci poi se bitmu cu na se tcidu ji'a
   .i le datnyvei cu du lo datnyvei poi la'o gy. git .gy. cu ralte ke'a ku'o .e lo datnyvei poi la'o
     gy. git .gy. na ralte ke'a zi'e poi no javni be lo nu na jundi cu cmene ke'a
     Verified by `suites/test_prose_own.nim`.
@@ -3510,6 +3512,98 @@ ni'o **ro pagbu poi no gerna valsi cu vasru ke'a cu srera
   .i ku'i le ciska be le valsi cu djica lo nu le valsi cu se sitna
     Verified by `suites/test_prose_own.nim`.
 
+ni'o **ro jufra cu krasi pa linji**
+  .i la'o gy. Architect .gy. cu jdice di'u bu'u la'o gy. #818 .gy. de'i `2026-11-15`
+  .i zo .i cu krasi pa linji va'o lo nu zo .i cu na zvati lo se sitna gi'e na se lidne zo zo
+  .i lo se sitna cu se krasi zo lu .a zo lo'u .a zo zoi .a zo la'o
+  .i ku'i lo se jmina be zo to cu na se sitna
+  .i se ki'u bo zo .i poi zvati lo se jmina be zo to cu krasi pa linji ji'a
+  .i lo jufra poi na pamoi cu zvati re kunti lerfu ba le krasi be le pamoi linji be le prosa pagbu
+  .i lo linji poi se katna fi pa jufra cu zvati re kunti lerfu ba le krasi be le linji pe le krasi
+    be le jufra
+  .i ne'i lo pinka le pamoi linji cu zvati pa kunti lerfu ba le sinxa be le pinka
+  .i ro jufra poi na pamoi cu zvati ci kunti lerfu ba le sinxa
+  .i ro linji cu vasru su'e panono lerfu
+  .i ku'i lo linji poi vasru lo se sitna .a lo judri poi na ka'e se katna cu ka'e vasru lo zmadu
+  .i `curator/audit/src/form.nim` cu cipra le klani be lo lerfu
+    Verified by `suites/test_prose_own.nim`.
+
+ni'o **ro ju'agri pe lo vreji cu se krasi zo ni'o**
+  .i ro stedu cu lojbo
+  .i lo stedu poi se krasi `##` cu vasru ci lo cmavo po'u zo ni'o ba `##`
+  .i lo stedu poi se krasi `###` cu vasru re lo cmavo po'u zo ni'o ba `###`
+  .i ku'i le cmene be le vreji .e le stedu po'u `## Standards` .e `## Language` .e
+    `## Open questions` cu stali ki'u lo nu lo cipra pe la'o gy. curator .gy. cu tcidu ke'a ta'i lo
+    cmene
+  .i le pamoi prosa pagbu poi se lidne lo stedu poi stali cu se krasi ci lo cmavo po'u zo ni'o
+  .i ro liste cmima cu se krasi `ny.mai`
+  .i le smuni be ro valsi pe le vlaste cu se krasi no zo ni'o
+  .i ne'i lo pinka le pamoi ju'agri cu se krasi no zo ni'o
+  .i ro drata ju'agri pe le pinka cu se krasi zo ni'o
+  .i ro stedu pe le samtci poi se sinxa `#[ ]#` cu vasru ci lo cmavo po'u zo ni'o
+  .i lo krinu cu du la'o gy. CLL 19.3 .gy. noi cusku lo du'u pa zo ni'o cu sinxa lo cnino ju'agri
+  .i lo zmadu be li pa cu sinxa lo zmadu pagbu
+  .i ji'a la'o gy. CLL 19.7 .gy. cu cusku lo du'u lo cmavo be zoi gy. MAI .gy. cu namcu lo pagbu
+    gi'e sinxa no porsi Verified by `suites/test_prose_own.nim`.
+
+ni'o **lo pinka poi lo samtci cu lidne ke'a ne'i pa linji cu vasru pa jufra po'o
+  .i ro drata jufra pe le pinka cu se jmina fi le pamoi jufra sepi'o zo to**
+  .i mupli fa lu la'o gy. CLL 5.5 .gy. to lo valsi cu ka'e se claxu toi li'u
+  .i se ki'u bo le sitna pe ro nu xusra pa lo cipra cu stali ne'i le linji pe le xusra ja'i
+    la'o gy. Article IX.1 .gy.
+  .i ji'a ro mupli pe lo cartu be lo mupli cu stali ne'i pa linji
+  .i va'o lo nu le linji cu zmadu panono lerfu .a lo nu pa jufra cu se krasi lo jorne cmavo poi na
+    ka'e se lidne zo to kei le pinka cu muvdu
+  .i lo pinka pe pa se cmene cu muvdu lo linji poi se lidne le se cmene ja'i `knoller`
+  .i lo drata pinka cu ralte le pamoi jufra ne'i le linji
+  .i le drata jufra cu muvdu lo linji poi lidne le linji
+  .i va'o lo nu zo to cu se lidne lo namcu poi se lidne zo li kei le namcu cu se fanmo zo lo'o
+  .i ki'u bo la'o gy. CLL 21.1 .gy. cu curmi no se jmina ba lo namcu poi na se fanmo
+  .i se to'e cuxna fa lo nu ro pinka poi vasru su'o re jufra cu muvdu lo linji pe vo'a
+  .i ki'u bo ro mupli pe lo cartu be lo mupli cu ponse re linji
+  .i ji'a ro nu xusra pa lo cipra cu ponse no sitna ne'i le linji pe le xusra
+  .i jdima fa lo nu lo se jmina be zo to cu se tcidu ta'i lo se jmina be le pamoi jufra
+  .i lo se jmina na se tcidu ta'i lo xusra pe vo'a
+  .i la'o gy. Architect .gy. na pu jdice di'u Verified by `suites/test_prose_own.nim`.
+
+ni'o **lo pagbu be pa linji pe lo cartu poi vasru su'o re jufra cu se fendi fi lo linji**
+  .i le pamoi jufra cu stali ne'i le linji
+  .i ro drata jufra cu zvati pa linji poi lo drata pagbu be ke'a cu kunti
+  .i le cartu pe `merge.nim` .e `nif.nim` cu se ciska ta'i di'u
+  .i ki'u bo pa linji pe lo cartu cu na ka'e se katna
+  .i se ki'u bo ro jufra cu krasi pa pagbu be pa linji
+  .i la'o gy. Architect .gy. na pu jdice di'u Verified by `suites/test_prose_own.nim`.
+
+ni'o **le cipra cu facki ro krasi be lo jufra .e lo ju'agri fi le tricu poi le genturfa'i cu zbasu
+  ke'a**
+  .i pa krasi cu du pa pezli poi le gerna valsi pe ke'a cu me `I` .a `NIhO`
+  .i le pezli na se vasru lo jgena po'u `text` poi se vasru lo jgena po'u `sumti-6`
+  .i se ki'u bo zo .i poi zvati lo se sitna be zo lu cu krasi no jufra
+  .i ku'i zo .i poi zvati lo se jmina be zo to cu krasi pa jufra
+  .i ki'u bo lo jgena po'u `text` poi se vasru lo jgena po'u `free` cu sinxa no se sitna
+  .i le pamoi valsi cu krasi le se ciska bu'u lo stuzi be le se ciska
+  .i se ki'u bo lo pinka poi lo samtci cu lidne ke'a cu ka'e se krasi zo .i
+  .i zo ni'o poi se lidne zo ni'o cu pagbu lo krasi be pa ju'agri
+  .i le flalu cu pilno lo se tcidu pe le flalu be lo nu tcidu
+  .i se ki'u bo le cipra cu tcidu ro se ciska pa roi
+  .i de'i `2026-11-15` le flalu cu cipra `13,662 lines` ne'i `5,640 texts`
+  .i `COUNT_LINES_LEAST` cu du `12,000`
+  .i ro javni pe le flalu cu se cipra sepi'o lo se ciska poi se finti gi'e srera
+  .i le flalu cu to'e curmi ro le se ciska
+  .i se to'e cuxna fa lo nu facki lo krasi fi lo valsi po'o
+  .i ki'u bo lo nu tcidu lo valsi po'o cu fukpi lo javni pe le genturfa'i be fi lo se sitna
+    Verified by `suites/test_prose_own.nim`.
+
+ni'o **lo ju'agri poi se krinu lo pu ju'agri cu se krasi lo'u ni'o ki'u la'e di'u le'u**
+  .i ki'u bo lo ju'agri poi se lidne zo ni'o cu se krasi lo me `statement` me'u .a lo me
+    `fragment` me'u
+  .i se ki'u bo lo tcita poi lidne zo bo cu na ka'e se lidne zo ni'o ja'i le javni pe li vo .e li
+    pano pe la'o gy. CLL 21.1 .gy.
+  .i lu la'e di'u li'u cu sinxa le se sinxa be le pu jufra ja'i la'o gy. CLL 7.4 .gy.
+  .i le mupli po'u la'o gy. Example 7.19 .gy. cu pilno lu la'e di'u li'u
+  .i ji'a mu ju'agri pe le vi vreji cu se krasi lo sitna be lo cipra
+  .i se ki'u bo le pamoi jufra cu se lidne le sitna gi'e na se krasi zo .i
+
 ni'o jdima fa lo nu le cipra cu fukpi le javni be lo nu fendi lo prosa pagbu pe `english.nim` .e le
   tcidu be lo pinka
   .i se ki'u bo lo nu cikre pa le re datnyvei cu na mulno pu lo nu le drata datnyvei cu se cipra
@@ -3519,6 +3613,10 @@ ni'o jdima fa lo nu le cipra cu fukpi le javni be lo nu fendi lo prosa pagbu pe 
   .i jdima fa lo nu lo lojbo vreji cu clani zmadu lo glico vreji
   .i ca `b76ab376` le vreji cu vasru `3,127 lines`
   .i ca `5ce98690` le glico vreji cu vasru `2,243 lines`
+  .i jdima fa lo nu lo nu punji ro jufra fi pa linji cu zenba lo ni le vreji cu clani
+  .i ca `9e29cdd6` le vreji cu vasru `3,188 lines`
+  .i ca `6ba4701f` le vreji cu vasru `4,229 lines`
+  .i ze pagbu pe le vreji cu se fendi ki'u lo nu ro pagbu cu vasru su'e renono linji
   .i se to'e cuxna fa lo nu ro linji pe pa pinka cu se tcidu ta'i pa se ciska ki'u lo nu pa lojbo
     jufra cu ka'e se fendi fi lo fanmo be pa linji
 
@@ -4227,3 +4325,10 @@ ni'o lo namcu cu se merli de'i `2026-11-11` sepi'o le stodi fanva .e la'o gy. In
     namcu poi jorne lo cmavo pe la'o gy. MOI .gy.
   .i le tricu pe la'o gy. CLL 21.1 .gy. cu vasru le remei
   .i no samtci pagbu cu ca tcidu lo se smuni fi le tricu
+- ny.mai **lo pinka poi lo samtci cu lidne ke'a ne'i pa linji gi'e vasru su'o re jufra**
+  .i lo se jdice pe la'o gy. #818 .gy. cu na skicu le pinka
+  .i ca ku ro drata jufra pe le pinka cu se jmina fi le pamoi jufra sepi'o zo to
+  .i la'o gy. Architect .gy. ka'e cuxna lo nu le pinka cu muvdu lo linji pe vo'a
+- ny.mai **lo pagbu be pa linji pe lo cartu poi vasru su'o re jufra**
+  .i lo se jdice pe la'o gy. #818 .gy. cu na skicu le pagbu
+  .i ca ku ro drata jufra pe le pagbu cu zvati pa linji pe vo'a
