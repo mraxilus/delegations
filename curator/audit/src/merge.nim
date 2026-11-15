@@ -41,7 +41,7 @@
 import std/[options, os, sequtils, strutils]
 from ../../knoller/src/knoller/command import runGit
 import ../../knoller/src/knoller
-import ./[checker, compilers, findings, layout, plan, projects, toolchain, tree]
+import ./[base, checker, compilers, findings, hooks, layout, plan, projects, toolchain, tree]
 
 
 const
@@ -55,11 +55,22 @@ const
     ## Author of merge commit, which never leaves second tree.
 
 
-type Merge* = object  ## Define merge of branch with base, as second tree holds it.
-  directory*: string  ## Top of second tree, in git dir of checkout.
-  base*: string  ## Commit of base, second parent of merge; koch of merge compares with it.
-  tree*: string  ## Tree of branch at HEAD, which mark records once merge passes.
-  findings*: seq[Finding]  ## What stops judgement, such as conflict; second tree stays as it was.
+type
+  Merge* = object  ## Define merge of branch with base, as second tree holds it.
+    directory*: string  ## Top of second tree, in git dir of checkout.
+    base*: string  ## Commit of base, second parent of merge; koch of merge compares with it.
+    tree*: string  ## Tree of branch at HEAD, which mark records once merge passes.
+    findings*: seq[Finding]  ## What stops judgement, such as conflict; second tree stays as it was.
+
+  Verdict* = object  ## Define what judgement of checkout as merged with base gives `koch check`.
+    is_merged*: bool  ## Whether second tree judged checkout; else checkout is judged in place.
+    code*: int  ## Exit code of `koch check`: that of koch of merge, else 1 where findings stop it.
+    findings*: seq[Finding]  ## Drift, conflict, compiler or build that stops judgement.
+
+
+proc fileMark*(root: string): string =
+  ## Read path of check mark, in git dir git names for this checkout.
+  pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
 
 
 proc isMerging*(root, base: string): bool =
@@ -183,3 +194,22 @@ proc runMerge*(
     "check", "--root:" & merge.directory, "--branch:" & branch, "--base:" & merge.base,
   ]
   (runIn(merge.directory, binary, arguments, bin.get), @[])
+
+
+proc judgeMerged*(root, base, branch: string, toolchains: var Toolchains): Verdict =
+  ## Judge clean checkout lacking base as merged with it, as `koch check` does: drift of checkout
+  ##   first, then merge in second tree, then `check` of koch of that merge for branch. Mark of
+  ##   `pre-push` hook records tree of branch where that run exits 0, and never else; checkout
+  ##   judged in place gives verdict not merged.
+  if not root.isMerging(base): return
+  result = Verdict(is_merged: true, code: 1, findings: checkBase(readDrift(root, base)))
+  if result.findings.len > 0: return
+  let merged = writeMerge(root, base)
+  result.findings = merged.findings
+  if result.findings.len > 0: return
+  echo "Koch of merge with base judges branch, in `" & merged.directory & "`."
+  let (code, found) = runMerge(merged, branch, toolchains)
+  (result.code, result.findings) = (code, found)
+  if code != 0 or found.len > 0: return
+  writeFile(root.fileMark, merged.tree & "\n")
+  echo "Tree hash of branch recorded for pre-push hook, as its merge passed."

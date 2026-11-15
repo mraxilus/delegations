@@ -230,22 +230,17 @@ proc directoriesScoped(options: Options, tree: Tree): seq[string] =
     )
 
 
-proc fileMark(root: string): string =
-  ## Read path of check mark, in git dir git names for this checkout.
-  pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
-
-
 proc branch(checkout: string): string =
   ## Read branch checked out in checkout.
   fieldsGit(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
 
 
-proc recordMark(root, tree: string, said = "Tree hash recorded for pre-push hook.") =
+proc recordMark(root, tree: string) =
   ## Write tree hash `pre-push` hook compares each pushed commit with, then print line that says
-  ##   so.
+  ##   so; path of mark is `fileMark` of `merge.nim`.
   ##   Proc of its own, since bare `else:` inside dispatch ends verbs `checker.nim` reads there.
   writeFile(root.fileMark, tree)
-  echo said
+  echo "Tree hash recorded for pre-push hook."
 
 
 proc refuse(found: seq[Finding], code: int): int =
@@ -418,29 +413,14 @@ proc run(options: Options): int =
     # Base runner compares with is fetched fresh; koch of merge is handed commit, fetching none.
     if base == "origin/" & MAIN: discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
     # Clean checkout lacking base is judged as merged with it, by koch of that merge, as runner
-    #   judges merge ref; drift, branch name and mark read this checkout (`merge.nim`).
-    if isMerging(options.root, base):
-      found = checkBase(readDrift(options.root, base))
-      var merged = Merge()
-      if found.len == 0:
-        merged = writeMerge(options.root, base)
-        found = merged.findings
-      if found.len > 0:
-        found.report
+    #   judges merge ref; drift, branch name and mark read this checkout (`judgeMerged`).
+    var toolchains = initToolchains()
+    let verdict = judgeMerged(options.root, base, branch, toolchains)
+    if verdict.is_merged:
+      if verdict.findings.len > 0:
+        verdict.findings.report
         echo "Merge with base not judged; fix findings above, then run again."
-        return 1
-      echo "Koch of merge with base judges branch, in `" & merged.directory & "`."
-      var toolchains = initToolchains()
-      let (code, unserved) = runMerge(merged, branch, toolchains)
-      if unserved.len > 0:
-        unserved.report
-        return 1
-      # Mark records tree of branch, which push sends, once its merge with base passed.
-      if code == 0:
-        options.root.recordMark(
-          merged.tree & "\n", "Tree hash of branch recorded for pre-push hook, as its merge passed."
-        )
-      return code
+      return verdict.code
     let tree = options.root.readTree
     found = tree.auditTree
     found.add findingsPruned(options.root, tree)
