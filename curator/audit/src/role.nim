@@ -68,6 +68,8 @@ const
     2 * longest
   HEADINGS_PULL* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
     ## Headings pull request template gives.
+  SENTENCES_SUMMARY = 3  ## Sentences summary opening each section holds at most.
+  CHARACTERS_BODY = 2500  ## Characters body shows at most while each fold is closed.
 
 
 func shortened*(line: string): string =
@@ -177,3 +179,15 @@ func checkTitle*(branch, title: string): seq[Finding] =
       0,
       "Pull request title exceeds " & $SUBJECT_MAX & " characters; got `" & $title.runeLen & "`.",
     )
+
+
+func textShown(body: string): string =
+  ## Read text body shows while each fold is closed, as count of `CHARACTERS_BODY` reads it.
+  ##   TODO: Drop comments, folds but their summaries, marks of links, and footer of proxy.
+  body
+
+
+func checkBodyPull*(body: string): seq[Finding] =
+  ## Report pull request body out of form of template.
+  ##   TODO: Hold its sections, their summaries and characters it shows.
+  discard

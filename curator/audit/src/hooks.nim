@@ -736,6 +736,7 @@ func checkBody*(
     let shown = body.section(HEADINGS_PULL[2]).blankComments.strip
     if HEADINGS_PULL[2] in headings and shown.len == 0:
       result.add finding("", 0, "Verification must show change; got template comment alone.")
+  if tool in TOOLS_PULL: result.add body.checkBodyPull
 
 
 proc checkPosts*(branch, command, directory: string): seq[Finding] =

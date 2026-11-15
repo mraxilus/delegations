@@ -473,6 +473,7 @@ proc run(options: Options): int =
         else: named.parseJson.getElems.mapIt(it.getStr)
     found = checkRole(options.branchOrDefault, getEnv("ROLE_BODY"), labels)
     found.add checkTitle(options.branchOrDefault, getEnv("ROLE_TITLE"))
+    found.add checkBodyPull(getEnv("ROLE_BODY"))
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
     #   answer leaves in that protocol too: exit 2 with stderr refuses tool before it runs,
