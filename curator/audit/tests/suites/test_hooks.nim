@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[findings, hooks, tree]
+import ../../src/[findings, hooks, lags, tree]
 import ./fixtures
 
 
@@ -1098,6 +1098,26 @@ suite "Hooks":
     const issue = "gh api repos/o/r/issues/7/"
     check isTurnWriting([Call(name: "Bash", command: issue & "comments -F body=@x.md")])  # post
     check not isTurnWriting([Call(name: "Bash", command: issue & "labels -f 'labels[]=curator'")])
+
+
+  test "start prints each commit of lock that lags main, after drift, as koch check does":
+    # D2 of #927: `koch check` and start name each commit of lock that names folder of this
+    #   repository and lags `main`, with its count; lines come from `noticesLag` once, so both
+    #   print same lines, and none where nothing lags.
+    let
+      knoller = Locked(
+        lock: "curator/assayer/atlas.lock",
+        name: "knoller",
+        folder: "curator/knoller",
+        commit: "11403468a97c0d3ae922182d894606e2688504e9",
+      )
+      notices = noticesLag([Lag(locked: knoller, count: some(5), is_held: true)], "origin/main")
+      drift = finding("GUIDE.md", 0, "Base changed sections; got `## Output contract`.")
+      text = contextStart("curator/x", "", "", "## List", "", @[drift], notices)
+    check notices.len == 2  # heading and one item
+    check "\n" & notices.join("\n") & "\n" in text  # each line, unchanged
+    check text.find(notices[1]) > text.find("GUIDE.md: Base changed")  # after drift
+    check notices[0] notin contextStart("curator/x", "", "", "## List", "", @[drift])  # none lags
 
 
   test "start prints headings of record branch works on, with line each opens on (#843)":
