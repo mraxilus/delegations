@@ -3,10 +3,9 @@
 ## Motor is rigid motion of space held as one value: turn about line, and slide along that
 ## same line, together. Camera's stance is one.
 ##
-## Transitional, and states its own end. At pinned pga head library declares no motor and
-## names that absence twice as its own work: `multivectors.nim` asks for even-grade basis
-## "namely for motors/flectors", and `operators.nim` names motors beside sandwich macro it
-## leaves commented out. Project needs them now, so bodies stand here until library's return.
+## Transitional, and states its own end. At pinned pga head library declares no motor, no
+## `exp` and no sandwich, and names motor among compact types it has yet to write
+## (`multivectors.nim`). Project needs them now, so bodies stand here until library's return.
 ##   Library already carries every part these are built from: geometric antiproduct (`⟇`),
 ##   antireverse (`~∘`), weight and bulk split, and `unitize`. Nothing here reimplements one.
 ##   Guard below refuses to compile once pinned pga carries own `exp`, so stand-in can never
@@ -20,7 +19,8 @@
 ##   | Turn generator  | line direction (`E41`, `E42`, `E43`), which antisquares to -𝟙.|
 ##   | Slide generator | line moment (`E23`, `E31`, `E12`), which antisquares to 0.    |
 ##   | Sandwich        | `Q ⟇ m ⟇ ~∘Q`, one form for point, line and plane alike.      |
-##   | Turn by +θ      | `exp(-(θ/2)𝐋̂)`, so `turnAbout` holds that sign for callers.  |
+##   | Turn by +θ      | `exp((θ/2)𝐋̂)`, right-handed about line's own direction.      |
+##   | Slide by 𝐭      | `𝟙 + ½𝐭` with 𝐭 as moment, which `motorSliding` writes.       |
 ##   |-----------------|---------------------------------------------------------------|
 ##
 ##   Base product is not this algebra. Under `⟑` it is line *moment* that squares to -1, so
@@ -178,7 +178,7 @@ func turnAbout*(axis: Multivector, radians: float): Option[Multivector] =
   ##     axis, whatever its own scale.
   ##   Half-angle and its sign live here, so no caller holds either.
   if normWeight(axis)[Basis.scalarAnti] <= TOLERANCE_ABS * normBulk(axis)[Basis.scalar]: return
-  some(exp(wedge(-0.5 * radians, unitize(axis))))
+  some(exp(wedge(0.5 * radians, unitize(axis))))
 
 
 func carried*(m, motor, motor_reversed: Multivector): Multivector =

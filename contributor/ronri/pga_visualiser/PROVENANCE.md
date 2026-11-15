@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 363e393b375ac380 |
-| Pruned  | 49b8f1c6ca50b0bb20472edd1cc819a6d7222045 |
+| Pruned  | 1c3c58b7205100829c4d5b8902a07dde2c05b985 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the `pga`
@@ -490,23 +490,14 @@ scale unlike each other between machines, so no one reference normalises them al
 clock of the page ticks in steps of 100 µs, so a call of a few microseconds is timed in hundreds.
 One mean of 400 anchor lookups read 5.75 to 32 µs on one fresh page, and the first was dearest.
 After an untimed batch, the median of 15 batches of 200 read 6.0 to 7.0 µs in 12 trials. A
-collection or a preemption then spoils one batch, not the figure.
-
-The marker takes the same figure. Its worst mean of 30 pairs read 0.46 to 1.67 ms over 4 pages. Its
-worst median of 9 batches of 5 read 0.48 to 0.62 ms. Both were measured with each outline shaped
-twice.
+collection or a preemption then spoils one batch, not the figure. The marker takes the median of 9
+batches of 5 pairs.
 
 **Sustained load moves a median too.** On 2026-09-30, with three of four cores kept busy, 10 runs of
 the measured page read the anchor at 7.0 to 14.5 µs. Each check but the marker stayed inside its
 bound. Ten such runs on 2026-10-04, with each outline shaped once, read the marker at 0.34 to 0.78
 ms, inside its bound. The gate runs projects one at a time, so no gate run puts that load beside the
 drive. A delegate that shares its cores with other tenants can still.
-
-**A delegate can read a speed check over its bound with no fault present.** With each outline shaped
-twice, nine pages on a fresh delegate read the marker at 0.72 to 2.64 ms, over a bound of 1.7 ms.
-They ran on 2026-10-01, and read the grid at 6.4 to 22.3 ms. Six pages ran the read tally of
-`boundary`, and three ran the build without it, over the same range. The 2.64 ms was the first page
-after a build. The counts hold each fault whatever the clock reads.
 
 **The rendering step of the browser runs on real frames, so each simulated frame waits for one.**
 Resize, scroll, media-query and resize-observer events fire in that step, whatever the clock says.
@@ -1179,7 +1170,7 @@ owner of the innermost owned frame on its stack. The Architect set the PGA share
 
 **PGA owns the time in its own operators, whoever called them.** PGA calls back into nothing of the
 project, so a frame in `pga` is the innermost owned frame wherever it stands. The algebra side owns
-`motors`, `projections` and `objects`, which compose the operators of PGA. The boundary owns
+`motors` and `objects`, which compose the operators of PGA. The boundary owns
 `boundary`, which lifts into the algebra and reads back out. The Euclidean side owns `euclid` and
 `mesh`, which never name a multivector. A frame that no side owns, such as a copy in `system`,
 belongs to the owned frame that called it.
@@ -1234,16 +1225,16 @@ page less the engine over seven runs.
 | Page less engine | -2.5 to +4.3 | -0.9 to +0.4 | -2.7 to +1.6 | -1.3 to +0.5 | |
 
 **The loop that the suite samples reads the clock once for 256 products.** A read of the CPU clock
-of the process is a system call, and it costs about as much as one product. That cost falls outside
-PGA. With a read for each product, the runner read 49.5% on 2026-10-24, against a bound of 50%. On
-one delegate, 12 runs read 73.7 to 87.9% that way, and 94.9 to 100% with one read for 256 products.
+of the process is a system call. With the pinned library, it costs about as much as one product.
+With a read for each product, the share read 44 to 59% in 12 runs on 2026-10-22, against a bound of
+50%. With one read for 256 products, it read 82 to 94% in 12 runs.
 
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
-sampler counts a loop of products as PGA's, at 94.9 to 100% of 99 samples. Verified by driven
+sampler counts a loop of products as PGA's, at 82 to 94% of about 100 samples. Verified by driven
 check: the page from a file says why once, and the served page agrees with the engine on each side.
-Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
---frames:300 --demo:5038`: the desktop figures above.
+Verified on 2026-10-06, at `295bafc`, by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
+--timings --frames:300 --demo:5038`: the desktop figures above.
 
 ## Values crossing the boundary
 
@@ -1303,7 +1294,7 @@ row. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --n
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
 |  |  | `format`, `help`, `message`, `wording`, `timings`, `ramp`, |
-|  |  | `projections` |
+|  |  | `motors`, `share`, `shown` |
 | `src/desktop` | `main.nim` alone | `main`, `panel`, `renderer`, `gui`, `gui_shim.cpp`, |
 |  |  | `opengl`, `sdl3`, `image`, `gif`, `arena` |
 | `src/browser` | `bridge.nim` alone | `bridge.nim` and the page's own scripts |
@@ -3054,11 +3045,11 @@ about a line and a slide along that same line.
 base form, `⟇` for this one), the antireverse (`~∘`), the weight and bulk split, and `unitize`. It
 carries no motor type, no `exp` and no `log`.
 
-The library names that gap twice as its own work. `multivectors.nim` asks for an even grade basis,
-and names motors as the reason. `operators.nim` names motors beside the sandwich macro that it
-leaves commented out. So this module stands in until the library returns, on the pattern of
-`projections.nim`. A compile guard refuses the build once the pinned library carries its own `exp`.
-Nothing here reimplements a library operation, which Article II.8 forbids.
+The library names a motor once, among the compact types that it has yet to write
+(`multivectors.nim`). It carries `MultivectorEven`, the even-grade set that a motor lives in, but
+its operators take a full multivector. So this module stands in until the library carries motors.
+A compile guard refuses the build once the pinned library carries its own `exp`. Nothing here
+reimplements a library operation, which Article II.8 forbids.
 
 **A motor lives in the algebra of the antiproduct, and not in that of the base product.** A probe
 read the rows below off the pinned tree, and the suite pins every one of them.
@@ -3067,12 +3058,18 @@ read the rows below off the pinned tree, and the suite pins every one of them.
 - The turn generator is the line direction (`E41`, `E42`, `E43`), which antisquares to `-𝟙`.
 - The slide generator is the line moment (`E23`, `E31`, `E12`), which antisquares to zero.
 - The sandwich is `Q ⟇ m ⟇ ~∘Q`. One form serves a point, a line and a plane alike.
-- A turn by `+θ` about a unit line is `exp(-(θ/2)L)`, and `turnAbout` holds that sign.
+- A turn by `+θ` about a unit line is `exp((θ/2)L)`, right-handed about the direction of the line.
+  `turnAbout` holds that sign.
+- A slide by `t` is `𝟙 + ½t`, with `t` written as a moment, and `motorSliding` holds that sign.
 - Motors compose right to left, so `m.carried(a).carried(b)` is `m.carried(b ⟇ a)`.
 
 The base product is not this algebra. Under `⟑` the two halves swap roles: the moment squares to
 `-1`, and the direction squares to zero. A sandwich built there turns about the line at infinity
 rather than about the line meant, and both products compile.
+
+**The signs of a turn and a slide are the signs that Lengyel writes.** At the pin, the antiproduct
+of two basis elements is the right complement of the product of their left complements, as
+`/((\m) ⟑ (\n))`. That holds for all 256 pairs, so the signs of a motor follow from the table.
 
 **Neither `exp` nor `log` needs a degenerate branch.** Both read two series of the half-angle,
 `sin(a)/a` and `(a*cos(a) - sin(a))/a³`, which are finite at zero, where they read 1 and `-1/3`. A
@@ -3109,6 +3106,9 @@ back with `carried`. Nothing else in the tree names a motor.
 - the identity, the inverse through `~∘`, and the grade that survives a sandwich;
 - the distance and the weight that a rigid motion keeps;
 - the order of composition.
+
+Verified by a probe on 2026-10-22: the complements give the antiproduct for all 256 pairs at the
+pin. Under the opposite signs, 127 cases of the C suite fail, and under these signs none fails.
 
 Assumed: that `unitize` is the motor norm for any unit motor. The suite reads it back for every
 motor that `exp` builds. Nothing renormalises a composed stance. Natively on 2026-09-24, 10^6 turns
@@ -4798,20 +4798,24 @@ inside it. So the requirement in `pga_visualiser.nimble` names the repository by
 it to. `koch fetch-deps` replays that lock, and nothing is committed (Article XI.3).
 
 Both projects are under the Prosperity Public License 3.0.0. Rejected: a project verb that clones
-it, because CI runs `check-files`, `fetch-deps` and `test`, and never the build driver of a project.
+it, because koch restores the lock before each verb that compiles the code of a project.
 
 **This project tracks the head of pga, and says so when it cannot.** The standing instruction of the
 Architect is to take the latest pga. Where the latest does not work, pin the most recent commit that
 does, record which and why, and move forward when it works again. Every pull request states which
 commit of pga it builds against, and whether that is head. The pin stands at
-`295bafc5e97e8ee94943c6f4c7a92f215a74e5e7`, which costs two things, and the instruction is to pay
-both rather than trail behind.
+`3d9696edbaaa5dca655c3024174bd46fd156d7c6`, which was the head of the library on 2026-10-22.
 
-**The pin waits behind head `3d9696e` for a fix in the library.** At `3d9696e`, the generic `+`
-copies its constant set of bases at each call on the JS backend. So a frame of the page makes more
-copies there than at the pin. The library-head pull request (#702) moves the pin, and posts the
-patches that fix it in the library. The pin moves to the head that holds them, and not to
-`3d9696e`.
+**The pin does not wait on a fix of the library, and two fixes that it lacks stand here.** At
+`3d9696e`, the generic `+` copies its constant set of bases at each call on the JS backend. So the
+lattice adds 356,725 copies to 9 moving frames, against 340,767 at `295bafc` (V8, optimiser off,
+2026-10-22). A product takes only the full multivector, so the project reads a plane whole where
+three bases serve.
+
+The patches of D3 on the library-head pull request (#702), and of D1 on issue 734, fix both. Both
+apply to `3d9696e`. With both, a scratch copy that placed planes through typed products took the
+placing step of the largest demo from 3.30 to 2.00 ms. That is the median of 5 runs in Chromium, on
+2026-11-03. The library takes fixes over time, so the pin moves to each head that holds one.
 
 **The `head` verb holds the pin to the head, and only a daily run reads it.** `nim r tools/build.nim
 head` compares the directory of the library at the pin with the same directory at the head of
@@ -4820,9 +4824,8 @@ changes nothing here. A finding exits 1, and `head.yml` then keeps one issue ope
 while the pin lags. No merge waits on the verb, because its verdict moves with the library.
 
 **So each new head of the library reaches the issue once.** The finding names the head, and the
-issue gains a comment only where the finding changes. So the day the library takes its fix, a
-comment names the fixed head. The pin then moves straight to that head, once every check passes
-there.
+issue gains a comment only where the finding changes. So the day the library takes a fix, a
+comment names that head. The pin then moves straight to that head, once every check passes there.
 
 `tools/head.nim` holds the comparison as pure functions, so the suite reads it on both backends. The
 build driver holds git and the network, and it compiles no project code. Rejected: a comparison of
@@ -4846,52 +4849,51 @@ converted from a string that a call returns, as "a value that refers to invalid 
 frame reads without a conversion. Verified by a run: without `static`, 2.4.0 refuses
 `panel.nim(89, 43)`, and `27763495b` builds it.
 
-**Four projections are withdrawn at the pin, and `projections.nim` stands in until they return.**
-`projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` are declared
-`{.error.}` while the library rebuilds them as compound operators (`∨∧★`, `∧∨★`, `∨∧☆`, `∧∨☆`). This
-project calls two of them at eight sites, so head alone does not compile here. Each stand-in is a
-template that carries the definition which the own operator table of the library gives. It is
-copied, and never derived, so nothing about the algebra is invented here (Article II.8).
+**The pin carries the four projections, so the project calls them from `pga`.** `projectCentral`,
+`projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` have bodies at the pin. Each
+is the definition that the operator table of the library gives. `scene`, `tessellate`, `camera`,
+`interaction` and the suite import `pga` itself.
 
-The module is a seam. `scene`, `tessellate`, `interaction` and the suite import it instead of `pga`,
-and `export pga except` those four keeps the names from colliding. An import of both raises an
-ambiguous call rather than answers from the wrong one. **The guard makes this transitional rather
-than a fork.** A `compiles` probe through a qualified call reads the own declaration of the library.
-An `{.error.}` then refuses the build the day it gains a body, and names the module to delete and
-the imports to restore.
+**The multivector `=~` of the pin is generic, so the scalar `=~` of the suite is generic too.** A
+generic of the library compiles where its caller instantiates it. There, the private scalar `=~` of
+the library and the exported one of the suite are an ambiguous call. A generic over `SomeFloat`
+ranks below the exact match of the library, which then wins inside its own `=~`. Everywhere else the
+suite reads its own. Rejected: a rename of the scalar `=~` of the suite, which changes each of its
+calls.
 
-Rejected: a pin held one commit back, which leaves the project behind its own dependency. Rejected:
-a reshape of the call sites, which lets the library's build state decide what the visualiser offers.
+**The pin prints its multivector aliases while it compiles, through `expandMacros`.** That adds
+about ten lines to each build log, and changes nothing that is built.
+
+**On the page, the pin makes a frame cheaper in calls than `295bafc`.** A frame of the opening scene
+with its plane picked and no lattice makes 16,484 calls at the pin, against 25,163. V8 counted them
+with its optimiser off, on 2026-10-22. Each speed check passes at the pin.
 
 **One Atlas defect stands, and the workaround is by hand.** `atlas pin` writes `"items": {}` for a
 repository that carries no nimble file, so the resolved commit is patched into `atlas.lock` by hand.
 The stored nimble of the lock must equal the committed one exactly, or `rep` reverts the pin
-silently (repository issue 25). The static pass refuses the difference, so the hand-patch is checked
-rather than trusted.
+silently (repository issue 25). The static pass refuses the difference, and the suite holds the
+commit of the lock to the requirement of the nimble file.
 
 *Checked.* Verified by a run on the pinned commit, through `koch test`: every suite on the C
-backend, on JS, and at reduced capacities. It ran at the same case counts that the previous pin
-produced, which says the stand-ins behave as the own ones of the library did. Verified: with
-`dependencies/` deleted, `atlas --noexec rep` clones and checks out `295bafc`, `atlas changed` exits
-0, and the nimble file is byte-identical afterwards. Verified by a run on 2.4.0 that the guard
-fires. `pga.nim` patched to give `projectOrthogonal` a body refuses the build at
-`projections.nim(40, 10)`, and names the module to delete and the four imports to restore.
+backend, on JS, and at reduced capacities. Verified: in a worktree with no `dependencies/`, `koch
+fetch-deps` clones and checks out `3d9696e`. The nimble file and the lock are byte-identical
+afterwards.
+
+Verified by `suites.nim`: the comparison, and the commit of the lock against the nimble file.
+Verified by runs of the verb on 2026-10-22 and 2026-11-15: it exits 0 at the pin. With the lock set
+to `295bafc`, it exits 1 and names both commits. With a commit that the checkout lacks, it exits 1
+and names the pin. On 2026-11-03, with a remote whose head holds both patches, it names that head.
 
 Verified: the pinned compiler reports `Nim Compiler Version 2.4.0`, which `compilers.isServedBy` of
 knoller compares with the pin. Its `git hash:` is `14991af742d0833503741fd9a0918133d1bcf8a4`, tag
 `v2.4.0`, which holds commit `27763495b` of pull request 26074, 269 commits back. Tag `v2.2.14`, the
 latest release of 2.2, does not hold that commit. Verified by a run: 2.4.0 reads `☆m` and `-☆(m)` as
 operators, and 2.2.14 refuses `☆m` as an undeclared identifier. Verified by a run on 2.4.0, through
-`koch test`: every suite passes on C, on JS and at reduced capacities. Measured on 2026-10-29, the
-JS suite alone takes 162 s and 168 s on 2.4.0, and 170 s and 163 s on `27763495b`.
+`koch test`: every suite passes on C, on JS and at reduced capacities.
 
 Verified on a copy of the project: `atlas pin` writes `"items": {}`, and changes nothing else in the
 lock, `nimVersion` included. It warns `broken nimble file: nim` for a pin by commit, and nothing for
 2.4.0.
-
-Verified by a run of the `head` verb on 2026-11-03. At the pin, its finding names head `3d9696e`
-and pin `295bafc`, and it exits 1. With the remote of the checkout set to a clone whose head holds
-both patches, the finding names that head, `ef44aa7`, in place of `3d9696e`.
 
 ## Comparison mockups
 
@@ -4923,12 +4925,8 @@ and the pixel stays clear. Rejected: a ring with a cross, which covered that pix
 
 **The panel measures each run against what its steps ask.** A notch out asks the eye's distance to
 Sol to scale by 1.12. A pinch asks it to scale by the ratio of the gaps of the fingers. The verdict
-reads the share of that scale on a log scale:
-
-- `as asked`, from 0.75 to 1.33 of it;
-- `short`, under 0.75;
-- `over`, from 1.33 to 3;
-- `flung`, over 3.
+reads the share of that scale on a log scale. It is `as asked` from 0.75 to 1.33 of it, `short`
+under 0.75, `over` from 1.33 to 3, and `flung` over 3.
 
 A pan asks the focus to move with the pointer. The verdict reads that share along the drag, with
 the same bounds, and `still` under 0.02. A round trip is `returned` where the eye ends within a
@@ -4981,6 +4979,8 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - No tool in this repository measures the palette floors again (Colour palette).
 - The frame-time tail on real hardware is undiagnosed, and this container cannot see it.
 - The conformal metric (`IS_CONFORMAL`) is unfinished in the library, and this build is rigid 4D.
+- The pinned library copies a set at each `+` on JS, and its products take only the full
+  multivector (Dependencies and vendoring).
 - A scene file is little-endian by rule, but only a little-endian host has ever written or read one,
   so the byte-swapping path is unexercised.
 - A page on WebGL1 without `EXT_frag_depth` keeps linear depth. It keeps the fault of the far
