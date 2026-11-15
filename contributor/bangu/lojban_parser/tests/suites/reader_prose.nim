@@ -147,6 +147,16 @@ const
   TERMINALS_OPENING = [Selmaho.I.toTerminal, Selmaho.Niho.toTerminal]
     ## lo genvla poi krasi pa jufra .a pa ju'agri
   RULE_TEXT = "text"  ## lo javni poi le selci'a cu mapti ke'a
+  RULE_SENTENCE = "sentence"  ## lo javni poi pa jufra cu mapti ke'a
+  RULE_TERMS = "terms"  ## lo javni poi lo porsi be lo sumti cu mapti ke'a
+  RULE_TAIL = "bridi-tail"
+    ## lo javni poi le selbri pe pa jufra ge'u .e le sumti poi se lidne le selbri cu mapti ke'a
+  RULE_SELBRI = "selbri"  ## lo javni poi pa selbri cu mapti ke'a
+  TERMINALS_JOINING = [TERMINAL_BRIVLA, Selmaho.Se.toTerminal, Selmaho.Nu.toTerminal,
+    Selmaho.Nahe.toTerminal, Selmaho.Jai.toTerminal, Selmaho.Me.toTerminal,
+    Selmaho.Goha.toTerminal, Selmaho.Ke.toTerminal]
+    ## lo genvla poi ka'e krasi pa taurpau
+    ##   .i lo genturfa'i poi na cuxna cu jmina le genvla lo tanru poi kalri to `CLL 21.2` toi
   RULE_QUOTING = "sumti-6"
     ## lo javni poi vasru lo se sitna be zo lu .e zo li'u
     ##   .i lo jgena po'u `text` poi selvau lo jgena po'u `sumti-6` sinxa lo se sitna
@@ -764,6 +774,63 @@ func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
       else: sentence + INDENT_BROKEN
     if column != wanted: fault(place, "indent")
     if number in lines_paragraph or number in lines_sentence: sentence = wanted
+
+
+func spanUnits(node: Node): tuple[first, last: int] =
+  ## dunda lo stuna'u be le pamoi pagbu be'o .e lo stuna'u be le romoi pagbu pe le jgena
+  ##   .i va'o lo nu le jgena cu vasru no pagbu kei le romoi stuna'u cu du li ni'u pa
+  if node.is_terminal: return (node.at, node.at)
+  result = (int.high, -1)
+  for child in node.children:
+    let span = child.spanUnits
+    if span.last >= 0:
+      result.first = min(result.first, span.first)
+      result.last = max(result.last, span.last)
+
+
+func isEndingOpen(node: Node, last: int): bool =
+  ## jdice lo du'u xu kau pa selbri poi le jgena cu vasru ke'a fanmo bu'u le pagbu poi `last`
+  ##     stuna'u ke'a
+  ##   .i lo selbri poi fanmo bu'u le romoi pagbu be lo sumti cu kalri
+  if node.is_terminal: return false
+  if node.rule == RULE_SELBRI and node.spanUnits.last == last: return true
+  for child in node.children:
+    if child.isEndingOpen(last): return true
+
+
+func joinedTree(node: Node, units: seq[Unit], parent: string, found: var seq[int]) =
+  ## jmina lo stuna'u be le pamoi pagbu be ro selbri poi na se lidne zo cu gi'e se lidne lo sumti
+  ##     poi lo selbri poi kalri cu fanmo ke'a
+  ##   .i va'o lo nu le pamoi pagbu cu ka'e krasi pa taurpau kei le genturfa'i poi na cuxna cu jmina
+  ##       le selbri lo tanru poi kalri
+  ##   .i `parent` du lo cmene be le javni pe lo jgena poi vasru le jgena
+  if node.is_terminal: return
+  if node.rule == RULE_TEXT and parent == RULE_QUOTING: return
+  if node.rule == RULE_SENTENCE and node.children.len == 2 and
+      not node.children[0].is_terminal and node.children[0].rule == RULE_TERMS and
+      not node.children[1].is_terminal and node.children[1].rule == RULE_TAIL:
+    let
+      last = node.children[0].spanUnits.last
+      first = node.children[1].spanUnits.first
+    if last >= 0 and first > last and first < units.len and units[first].is_read and
+        units[first].terminal in TERMINALS_JOINING and node.children[0].isEndingOpen(last):
+      found.add first
+  for child in node.children: joinedTree(child, units, node.rule, found)
+
+
+func faultsJoined*(text: Text, marked: ReadingMarked): seq[Error] =
+  ## dunda ro selbri poi na se lidne zo cu gi'e se lidne lo sumti poi lo selbri poi kalri cu fanmo
+  ##     ke'a
+  ##   .i `marked` se tcidu fi le selci'a
+  ##   .i le vi genturfa'i cu tcidu le selbri ta'i lo selbri pe le jufra
+  ##   .i ku'i lo genturfa'i poi na cuxna cu jmina le selbri le tanru poi kalri gi'e na tcidu lo
+  ##       jufra to `CLL 21.2` toi
+  var found: seq[int]
+  joinedTree(marked.tree, marked.units, "", found)
+  for at in found:
+    let start = marked.occurrences[marked.units[at].words[0]].start
+    result.add Error(path: text.path, place: text.place(start),
+      why: "selbri after open tanru, with no cu")
 
 
 func texts*(path, content: string): seq[Text] =

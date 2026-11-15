@@ -69,6 +69,12 @@ func faultsRead(path, content: string): seq[string] =
     for fault in text.faultsLayout(lines, text.readingMarked, checked): result.add fault.why
 
 
+func faultsJoinedRead(path, content: string): seq[string] =
+  ## dunda lo krinu be ro srera be lo nu zo cu selvi'u ba lo tanru poi kalri ne'i le datnyvei
+  for text in texts(path, content):
+    for fault in text.faultsJoined(text.readingMarked): result.add fault.why
+
+
 proc readingsProject(): tuple[readings: seq[(Text, ReadingMarked)], lines: Table[string,
     seq[string]]] =
   ## tcidu ro selci'a pe le vi selgu'a pa roi gi'e dunda ro linji pe ro datnyvei
@@ -105,6 +111,22 @@ suite "Internal: Prose of project, in lojban":
     found.show
     check found.len == 0  # `#818`
     check checked >= COUNT_LINES_LEAST  # `Article IX.3`
+
+  test "Selbri after open tanru of head terms takes cu, since reader that does not choose joins it":
+    var found: seq[Error]
+    for (text, marked) in PROJECT.readings: found.add text.faultsJoined(marked)
+    found.show
+    check found.len == 0  # `#890`
+
+  test "Selbri after be clause, me or kei takes cu, and selbri after name, pronoun or ku none":
+    for (prose, count) in [
+        ("ni'o lo nu lo mlatu be mi klama\n", 1), ("ni'o lo nu lo mlatu be mi cu klama\n", 0),
+        ("ni'o lo nu lo mlatu be lo gerku ku klama\n", 1), ("ni'o lo nu le me zo zo sitna\n", 1),
+        ("ni'o lo nu lo nu mi klama kei xamgu\n", 1),
+        ("ni'o lo nu lo nu mi klama kei cu xamgu\n", 0), ("ni'o lo nu la .alis. klama\n", 0),
+        ("ni'o lo nu mi klama\n", 0), ("ni'o lo nu lo mlatu ku klama\n", 0),
+        ("ni'o lo nu lo mlatu be mi na klama\n", 0)]:
+      check faultsJoinedRead("README.md", prose).len == count  # `#890`
 
   test "Span reads as one name, quoted by la'o; link as its text; emphasis mark not at all":
     let texts = textsRead("README.md",
