@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, sequtils, tables, unittest]
-import ../../src/[domains, layout, plan, projects, toolchain]
+import ../../src/[domains, findings, layout, plan, projects, toolchain]
 import ./fixtures
 
 
@@ -310,7 +310,7 @@ suite "Plan":
     # No project here declares anything, so what comes back is koch's own alone, which
     #   makes this readable without running any project's verb.
     check systemRepository(".", treeGood(), newSeq[string]()) ==
-      @["coreutils", "curl", "git", "libbrotli1", "tar"]
+      (packages: @["coreutils", "curl", "git", "libbrotli1", "tar"], failed: newSeq[Finding]())
     check SYSTEM_KOCH.mapIt(it[0]).deduplicate.len == SYSTEM_KOCH.len  # each package once
     for (package, why) in SYSTEM_KOCH:
       check package.len > 0
