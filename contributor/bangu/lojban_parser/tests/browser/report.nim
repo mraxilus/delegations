@@ -1,56 +1,72 @@
-## Report suite that runs in page to backend that serves page (`tools/drive.nim`): each line,
-##   then code page exits with, each as request of its own.
+## cusku lo jalge be lo cipra poi fasnu ne'i lo papri ku'o fi le sabji samtci poi sabji le papri to
+##     `tools/drive.nim` toi
+##   .i cusku ro linji
+##   .i ba bo cusku lo famna'u pe le papri
+##   .i ro selsku cu selbe'i sepi'o pa nu cpedu pe vo'a
 ##
-##   |-----------------|-------------------------------------------------------------------|
-##   | Code            | Meaning                                                           |
-##   |-----------------|-------------------------------------------------------------------|
-##   | report          | send one line to backend                                          |
-##   | reportEnd       | send code suite exits with, which ends run                        |
-##   | readServed      | read file backend serves, as string                               |
-##   | initReporter    | report each test of unittest, and each error page throws          |
-##   | expectThat      | count failure of check of suite of promises, and report it        |
-##   | countFailures   | tests that failed, and checks `expectThat` counted                |
-##   |-----------------|-------------------------------------------------------------------|
+##   |-----------------|-------------------------------------------------------------------------|
+##   | lo fancu        | lo smuni                                                                |
+##   |-----------------|-------------------------------------------------------------------------|
+##   | `report`        | benji pa linji le sabji samtci                                          |
+##   | `reportEnd`     | benji lo famna'u pe le cipra                                        |
+##   |                 | .i se ki'u bo le nu cipra cu sisti                                      |
+##   | `readServed`    | tcidu lo datnyvei poi le sabji samtci cu sabji ke'a ku'o ta'i pa lerpoi |
+##   | `initReporter`  | cusku ro cipra pe `unittest` .e ro rersre pe le papri  |
+##   | `expectThat`    | kancu je cusku lo nu pa xusra pe lo cipra pe lo nupre cu fliba          |
+##   | `countFailures` | lo cipra poi fliba ku'o .e lo xusra poi `expectThat` kancu ke'a      |
+##   |-----------------|-------------------------------------------------------------------------|
 ##
-##   Each request is synchronous, so backend reads lines in order page reports them, and page
-##     reports end only after each line. Rejected: `fetch`, whose requests may land out of order.
-##   Error page throws, or promise it rejects with no handler, reports and ends run with code 1, so
-##     run that breaks fails at once rather than at ceiling of backend.
+## ni'o ro nu cpedu cu rinka lo nu le papri cu denpa lo nu le sabji samtci cu spuda
+##   .i se ki'u bo le sabji samtci cu tcidu lo linji ta'i le porsi be lo nu le papri cu cusku
+##   .i le papri cu cusku le fanmo ba lo nu cusku ro linji
+##   .i no linji cu selsku ba le fanmo
+##   .i se to'e cuxna fa `fetch` noi lo nu ke'a cpedu cu ka'e klama ta'i lo datpoi
+##
+## ni'o ro srera poi le papri cu renro ke'a .a ro nupre poi le papri cu to'e curmi ke'a zi'e noi no
+##     fancu cu spuda ke'a selsku gi'e rinka lo nu le nu cipra cu sisti sepi'o lo famna'u poi du li
+##     pa
+##   .i se ki'u bo lo nu cipra poi spofu cu fliba ca lo nu spofu
+##   .i le nu cipra cu na denpa lo rairtei pe le sabji samtci
 
 {.experimental: "strictFuncs".}
 
 import std/[jsffi, unittest]
 
 
-type ReporterPage = ref object of OutputFormatter  ## Define formatter reporting to backend.
+type ReporterPage = ref object of OutputFormatter  ## lo taizba poi cusku fi le sabji samtci
 
 
-var COUNT_FAILURES = 0  ## Tests of unittest that failed, and checks of suite of promises.
+var COUNT_FAILURES = 0
+  ## lo cipra pe `unittest` ge'u .e lo xusra pe lo cipra pe lo nupre vu'o poi fliba
 
 
-let SELF {.nodecl, importc: "self".}: JsObject  ## Global scope of page.
+let SELF {.nodecl, importc: "self".}: JsObject
+  ## lo stuzi pe le papri ge'u zi'e poi ro da ka'e pilno ke'a
 
 
 proc newRequest(): JsObject {.importjs: "new XMLHttpRequest()".}
-  ## Make request to backend. Boundary of JS target: constructor of page.
+  ## zbasu lo nu cpedu fi le sabji samtci
+  ##   .i korbi `JS` sepi'o pa zbafancu pe le papri
 
 
 proc send(path, body: string) =
-  ## Send body to backend at path, and wait for its answer.
+  ## benji `body` le sabji samtci bu'u `path` gi'e denpa lo nu le sabji samtci cu spuda
   let request = newRequest()
   request.open(cstring("POST"), cstring(path), false)
   request.send(cstring(body))
 
 
 proc report*(line: string) = send("/log", line)
-  ## Send one line to backend, which adds it to lines of run.
+  ## benji pa linji le sabji samtci
+  ##   .i le sabji samtci cu jmina le linji lo linji pe le nu cipra
 
 proc reportEnd*(code: int) = send("/done", $code)
-  ## Send code suite exits with to backend, which ends run.
+  ## benji lo famna'u pe le cipra le sabji samtci
+  ##   .i le sabji samtci cu sisti le nu cipra
 
 
 proc readServed*(path: string): string =
-  ## Read file backend serves at path, as string of UTF-8.
+  ## tcidu lo datnyvei poi le sabji samtci cu sabji ke'a bu'u `path` ku'o ta'i pa lerpoi pe `UTF-8`
   let request = newRequest()
   request.open(cstring("GET"), cstring(path), false)
   request.send()
@@ -60,42 +76,48 @@ proc readServed*(path: string): string =
 
 
 method suiteStarted*(formatter: ReporterPage, suite_name: string) =
-  ## Report opening of suite, as console of unittest spells it.
+  ## cusku lo krasi be le cipra ta'i lo nu `unittest` ciska fi `console`
   report "[Suite] " & suite_name
 
 
 method testEnded*(formatter: ReporterPage, result: TestResult) =
-  ## Report outcome of one test, as console of unittest spells it, and count it where it failed:
-  ##   unittest sets no exit code on JS backend with no node, so failures give code of run.
+  ## cusku lo jalge be pa cipra ta'i lo nu `unittest` ciska fi `console`
+  ##   .i va'o lo nu le cipra cu fliba kei kancu le cipra
+  ##   .i `unittest` jdice no famna'u ne'i `JS` va'o lo nu `node` na selpli
+  ##   .i se ki'u bo lo nu fliba cu jdice lo famna'u pe le nu cipra
   report "  [" & $result.status & "] " & result.testName
   if result.status == TestStatus.FAILED: inc COUNT_FAILURES
 
 
 method failureOccurred*(formatter: ReporterPage, checkpoints: seq[string], stack_trace: string) =
-  ## Report each checkpoint of failed check, as console of unittest does.
+  ## cusku ro `checkpoint` pe lo xusra poi fliba ku'o ta'i lo nu `unittest` ciska fi `console`
   for checkpoint in checkpoints: report "    " & checkpoint
 
 
 proc reportError(event: JsObject) =
-  ## Report error page throws, or promise it rejects with no handler, and end run with code 1.
+  ## cusku lo srera poi le papri cu renro ke'a .a lo nupre poi le papri cu to'e curmi ke'a zi'e noi
+  ##     no fancu cu spuda ke'a
+  ##   .i ba bo sisti le nu cipra sepi'o lo famna'u poi du li pa
   let error = (if event.reason.isUndefined: event.message else: event.reason)
   report "Page should throw no error; got `" & $error.toString().to(cstring) & "`."
   reportEnd(1)
 
 
 proc initReporter*() =
-  ## Report each test of unittest to backend in place of console, and each error page throws.
+  ## cusku ro cipra pe `unittest` le sabji samtci noi basti `console`
+  ##   .i cusku ji'a ro srera poi le papri cu renro ke'a
   addOutputFormatter(ReporterPage())
   SELF.addEventListener(cstring("error"), reportError)
   SELF.addEventListener(cstring("unhandledrejection"), reportError)
 
 
 proc expectThat*(is_held: bool, claim: string) =
-  ## Count failure of one check of suite of promises, which unittest cannot await, and report it.
+  ## kancu je cusku lo nu pa xusra pe lo cipra pe lo nupre cu fliba
+  ##   .i `unittest` na ka'e denpa lo nupre
   if is_held: return
   inc COUNT_FAILURES
   report "    Check failed: " & claim
 
 
 proc countFailures*(): int = COUNT_FAILURES
-  ## Give tests of unittest that failed, and checks `expectThat` counted.
+  ## dunda lo du'u xo kau cipra pe `unittest` fliba kei .e lo du'u `expectThat` kancu xo kau xusra

@@ -1,12 +1,16 @@
 # lojban_parser
 
-This project is a parser of lojban. Its scope is every valid lojban text, and it reads lojban words,
-streams of them, and prose. It judges each word by the rules of CLL alone, so a word reads whether a
-word list holds it or not. It reads a gismu, a cmavo or a lujvo as the parts of its tanru. It
-refuses any other text with the rule that refuses it.
+ni'o ni'o ni'o le vi selgu'a cu genturfa'i la lojban.
+  .i le genturfa'i cu ka'e tcidu ro drajboselci'a gi'e tcidu lo jbovla .e lo vlapoi .e lo selci'a
 
-It renders a tanru back as the lujvo form that CLL prefers. It also tells which cmavo bind each
-tanru unit.
+ni'o le genturfa'i cu jdice ro valsi ja'i lo javni pe `CLL` po'o
+  .i se ki'u bo le genturfa'i cu tcidu lo valsi
+  .iju lo vlaste cu vasru le valsi
+  .i le genturfa'i cu tcidu lo pagbu be lo tanru pe pa gismu .a pa cmavo .a pa lujvo gi'e to'e curmi
+      ro datselci'a gi'e cusku lo javni poi to'e curmi ri
+
+ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o gi'e jarco lo du'u ma
+    kau poi cmavo cu jorne ro taurpau
 
 ```text
 $ nim r --hints:off --path:src --eval:'import lojban_parser
@@ -21,14 +25,20 @@ mudsiclu: Hyphen mudysiclu
 lojban: Cmene @[lojban], renders as lojban
 ```
 
-The reader reads `bridyvalsi` as the tanru of `bridi` and `valsi`, and renders the lujvo of lowest
-score, `brivla`. It reads `kukta` as a gismu by its form, though no list holds it. It reads
-`clozba` as a lujvo, and keeps the letters `clo`, a rafsi that no list assigns. It refuses
-`mudsiclu`, because CLL 4.11 requires a `y` there, and it names the correct form. It reads
-`lojban` as a cmene, because the word ends in a consonant (4.8).
+ni'o le genturfa'i cu facki lo du'u zo bridyvalsi sinxa lo tanru be zo bridi bei zo valsi kei gi'e
+    ciska zo brivla noi ckini lo cmaraina'u
+  .i le genturfa'i cu facki lo du'u zo kukta gismu kei ja'i lo tarmi be zo kukta
+  .i ku'i no liste cu vasru zo kukta
+  .i le genturfa'i cu facki lo du'u zo clozba lujvo kei gi'e ralte zoi gy. clo .gy. noi rafsi
+  .i ku'i no liste cu vasru zoi gy. clo .gy.
 
-It also reads a stream of text into its words. Each word carries the pause before it, and the
-stress that a capital marks:
+ni'o le genturfa'i cu to'e curmi zoi gy. mudsiclu .gy. ki'u lo nu `CLL 4.11` nitcu lo lerjo'e ne'i
+    le valsi kei gi'e cusku lo dratai
+  .i le genturfa'i cu facki lo du'u zo lojban. cmene ki'u lo nu zo lojban. selfa'o lo zunsna to
+      `CLL 4.8` toi
+
+ni'o le genturfa'i cu tcidu lo vlapoi pe lo selci'a
+  .i ro valsi cu ponse lo denpa poi lidne ri ku'o .e lo nu basna poi lo brale'u cu sinxa ke'a
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/options, lojban_parser
@@ -43,12 +53,14 @@ re: Cmavo, pause Absent, stress on syllable 0
 nanmu: Gismu, pause Inferred, stress on syllable 0
 ```
 
-The period before `i` writes its pause. The capitals of `RE` stress a last syllable before a
-brivla, so CLL 4.9 needs a pause there. The text writes none, so the reader infers it, as CLL 3.3
-allows.
+ni'o denpa bu poi lidne zo i sinxa lo denpa
+  .i lo brale'u pe zoi gy. RE .gy. basna lo romoi slaka be zo re noi lidne pa brivla
+  .i se ki'u bo `CLL 4.9` nitcu lo denpa vi
+  .i le selci'a na sinxa lo denpa
+  .i se ki'u bo le genturfa'i cu facki lo denpa ja'i `CLL 3.3`
 
-A written word that holds several words splits into them, where one split needs the fewest
-pauses:
+ni'o le genturfa'i cu fendi lo selci'avla poi vasru so'i valsi ku'o gi'e cuxna lo fendi poi ke'a
+    po'o nitcu lo mecraide'a
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/strutils, lojban_parser
@@ -66,13 +78,17 @@ MIbroda: mibro (Gismu) da (Cmavo)
 .esperanto: e (Cmavo) speranto (Lujvo)
 ```
 
-CLL 4.8 says that `laplas.` looks like the words `la plas.`. A written word with no capital is
-stressed on its own penultimate syllable alone, as the Architect ruled on #811. So `mibroda`
-reads as `mi broda`, and `MIbroda`, whose capitals mark the stress of `mibro`, as `mibro da`.
-`.esperanto` reads as `e speranto`, as Example 19.78 of CLL says.
+ni'o `CLL 4.8` cusku lo du'u zoi gy. laplas. .gy. simsa lo'u la plas. le'u
+  .i lo selci'avla poi vasru no brale'u cu se basna lo slaka poi lidne lo romoi
+  .i `Architect` jdice di'u bu'u `#811`
+  .i se ki'u bo le genturfa'i cu tcidu lo'u mi broda le'u fi zoi gy. mibroda .gy. gi'e tcidu lo'u
+      mibro da le'u fi zoi gy. MIbroda .gy. noi lo brale'u be ri cu sinxa lo nu basna zo mibro
+  .i le genturfa'i cu tcidu lo'u e speranto le'u fi zoi gy. .esperanto .gy. ja'i `CLL 19.78`
 
-It reads prose by the formal grammar of CLL 21.1. Before the grammar, quotation, erasure and the
-other cmavo of 19.16 act on the words, so each terminal holds the words of one construct:
+ni'o le genturfa'i cu tcidu lo selci'a ja'i lo gerna pe `CLL 21.1`
+  .i pu lo nu le gerna cu tcidu kei lo cmavo pe lo nu sitna .e lo nu vimcu .e lo datma'o pe
+      `CLL 19.16` galfi lo valsi
+  .i se ki'u bo ro genvla cu vasru lo valsi be pa gensu'a
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils, wordwrap], lojban_parser
@@ -89,13 +105,14 @@ la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.: la'o dy Goethe dy (ZOI), 
 mi klama le: Grammar at byte 11, in sumti-6 97
 ```
 
-`si` erases `gerku`, as Example 19.75 says. The text that `la'o` quotes stands whole, in one
-terminal of selma'o ZOI (Example 19.57). The grammar stops `mi klama le` at its end, where the
-description of `le` waits for its selbri. `r.tree` holds the tree of the named rules of 21.1 over
-the terminals.
+ni'o zo si vimcu zo gerku ja'i `CLL 19.75`
+  .i lo selci'a poi zo la'o sitna ke'a mulno gi'e selvau pa genvla pe `ZOI` to `CLL 19.57` toi
+  .i le gerna cu sisti fi lo fanmo be lo'u mi klama le le'u
+  .i vi ku lo sumti pe zo le denpa lo selbri be ri
+  .i `r.tree` vasru lo tricu pe lo javni poi selcme noi gapru lo genvla
 
-`toNif` writes that tree as text in the NIF data format, version 2027, which is the native format
-of Nim 3. So another program reads the tree with no part of this parser:
+ni'o `toNif` ciska le tricu fi lo selci'a be fi `NIF 2027` noi raltai `Nim 3`
+  .i se ki'u bo lo drata samtci cu ka'e tcidu le tricu gi'e pilno no pagbu be le genturfa'i
 
 ```text
 $ nim r --hints:off --path:src --eval:'import lojban_parser
@@ -105,31 +122,51 @@ stdout.write readText("me\x27o vo").toNif'
 (sumti_6 0 (LI 0 4 "meho") (number 310 (PA 5 7 "vo")))
 ```
 
-Each named rule is a node, which holds its name and then its nodes. In 21.1, a rule often holds the
-next rule alone, as `sumti` holds `sumti-1` where the text adds no relative clause. Such a run of
-rules is one node. Its tag names the rule that closes the run, and its number is that of the rule
-that opens it. So `(sumti_6 0 ...)` is the run from `text`, rule 0, down to `sumti-6`.
+ni'o ro javni poi selcme cu jgena gi'e vasru lo cmene be le javni be'o .e lo jgena pe le javni
+  .i ne'i `CLL 21.1` lo javni cu so'i roi vasru pa javni po'o
+  .i mupli fa lo nu `sumti` vasru `sumti-1` po'o va'o lo nu lo selci'a cu na vasru
+      `relative-clauses`
 
-The two ends give one run in 21.1, and `LUT_CHAIN_BY_ENDS` gives each rule between them. A node
-that holds no number opens no run.
+ni'o lo porsi be lo javni poi simsa cu jgena
+  .i lo tcita be lo jgena cu cmene lo javni poi fanmo lo porsi
+  .i lo namcu pe lo jgena cu du lo namcu pe lo javni poi krasi lo porsi
+  .i se ki'u bo `(sumti_6 0 ...)` jgena lo porsi poi selkra `text` noi ckini li no ku'o gi'e selfa'o
+      `sumti-6`
 
-The name of a rule gives its number, since 21.1 gives each of its 88 rules one name and one number.
-So the node writes no number of the rule that closes the run, as the Architect ruled on #859
-(comment 6805527878). `LUT_NUMBER_BY_RULE` gives that number, as 97 for `sumti-6`.
+ni'o ne'i `CLL 21.1` le re fanmo cu jarco pa porsi
+  .i `LUT_CHAIN_BY_ENDS` jarco ro javni poi zvati lo jbini be le re fanmo
+  .i lo jgena poi vasru no namcu cu krasi no porsi
 
-Each terminal holds its class, as `LI` or `PA`, then three things for each word. Those are the byte
-where it opens, the byte past it, and its letters. So `(LI 0 4 "meho")` ties `me'o` to bytes 0 to 3
-of the text. A named rule holds no byte, since its leaves give its span.
+ni'o lo cmene be lo javni cu jarco lo namcu pe lo javni
+  .i ki'u bo `CLL 21.1` dunda pa cmene .e pa namcu ro lo bibi javni
+  .i se ki'u bo lo jgena cu ciska no namcu pe lo javni poi fanmo lo porsi
+  .i `Architect` jdice di'u bu'u `#859` to `comment 6805527878` toi
+  .i `LUT_NUMBER_BY_RULE` jarco lo namcu mu'u li soze pe `sumti-6`
 
-A tag writes `_` for `-`, and a word writes `h` for `'`, as chapter 20 writes the names of selma'o.
-Lojban writes no `h` of its own (3.3), so `meho` reads back as `me'o`. Only the text that `zoi` or
-`la'o` quotes can need an escape of NIF.
+ni'o ro genvla cu vasru lo klesi be ri mu'u `LI` .a `PA`
+  .i ba bo le genvla cu vasru lo namcu pe lo krasi be ro valsi ge'u .e lo namcu pe lo fanmo be le
+      valsi ge'u .e lo lerfu be le valsi
+  .i se ki'u bo `(LI 0 4 "meho")` jorne zo me'o lo selci'apau poi krasi li no gi'e fanmo li vo
+  .i lo javni poi selcme cu vasru no namcu pe lo selci'apau ki'u lo nu lo pezli be le javni cu jarco
+      lo pagbu
 
-`readTextMarked` reads a text as `readText` does, and it reads on past each error. So another
-program can mend the text by its tree, and this parser decides no mend (#859). A word that a stage
-refuses stands as a unit with that stage, and the grammar reads the words around it. Where the
-grammar stops, an error node holds the byte and the rule that stops there. It also holds the class
-of each terminal that the grammar would read there:
+ni'o lo tcita cu ciska zoi gy. _ .gy. lo stuzi be zoi gy. - .gy.
+  .i lo valsi cu ciska zoi gy. h .gy. lo stuzi be zoi gy. ' .gy. ja'i lo cmene be lo selma'o pe
+      `CLL 20`
+  .i la lojban. na pilno zoi gy. h .gy. to `CLL 3.3` toi
+  .i se ki'u bo zoi gy. meho .gy. se tcidu lo'u me'o le'u
+  .i lo selci'a po'o poi zo zoi .a zo la'o sitna ke'a cu ka'e nitcu lo bilga be fi `NIF`
+
+ni'o `readTextMarked` tcidu lo selci'a gi'e simsa `readText` gi'e ku'i tcidu ji'a lo valsi poi se
+    lidne ro srera
+  .i se ki'u bo lo drata samtci cu ka'e cikre lo selci'a ja'i lo tricu be ri
+  .i le genturfa'i na jdice lo nu cikre to `#859` toi
+
+ni'o lo valsi poi lo pagbu be le genturfa'i cu to'e curmi ke'a selvau pa genvla noi se tcita lo
+    cmene be le pagbu
+  .i le gerna cu tcidu lo valsi poi sruri le genvla
+  .i vi lo nu le gerna cu sisti kei lo srejge cu vasru lo namcu pe lo stuzi ge'u .e lo javni poi
+      sisti vi ku'o gi'e vasru lo klesi be ro genvla poi le gerna ka'e tcidu ke'a vi
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
@@ -142,21 +179,42 @@ ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (rivbi 
 "1987") (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 8 13 "klama")) (tail_terms))) (LE 14 16 "le"))
 ```
 
-CLL names none of these nodes, so each takes a gismu, as the Architect ruled on #859. The error
-node is `srera`, "x1 errs", and the classes that it holds are `nitcu`, "x1 needs x2". A unit that no
-terminal holds is `rivbi`, "x1 avoids x2", since the grammar reads around it.
+ni'o `CLL` dunda no cmene le jgena
+  .i se ki'u bo ro le jgena cu selcme pa gismu
+  .i `Architect` jdice di'u bu'u `#859`
 
-The stream refuses the digits `1987`, so they stand as `(rivbi Stream Letter 3 7 "1987")`, between
-the sumti and the bridi tail. The text ends after `le`, so the grammar stops at byte 16, in
-`sumti-6`, which waits for the selbri of `le`. The node names that rule alone, since its name gives
-its number, 97. The error node holds `mi klama`, which reads alone as a sentence, and then `le`
-alone. A text that reads gives the reading of `readText`.
+ni'o lo srejge cu selcme zo srera noi selsmu lu ko'a srera li'u
+  .i lo klesi poi le srejge cu vasru ke'a selcme zo nitcu noi selsmu lu ko'a nitcu ko'e li'u
+  .i lo pagbu poi no genvla cu vasru ke'a selcme zo rivbi noi selsmu lu ko'a rivbi ko'e li'u
+  .i ki'u bo le gerna cu tcidu lo valsi poi sruri le pagbu
 
-Each word that no terminal holds stands as a unit too, so each byte of each word lies in one leaf.
-Words that erasure erases stand with the `si` or `sa` that erases them, as stage `Erasure`. `su`
-ends the text before it, which stays as it read, and stands as stage `SU`, as the Architect chose
-on #859. `fa'o` that ends the input stands as stage `FAhO`, and each written word after it as stage
-`Stream`, with its bytes. Each stage takes the term of CLL, as CLL spells it:
+ni'o le genturfa'i cu to'e curmi zoi gy. 1987 .gy. ca lo nu tcidu lo vlapoi
+  .i se ki'u bo zoi gy. 1987 .gy. selvau `(rivbi Stream Letter 3 7 "1987")` noi se lidne lo sumti
+      gi'e lidne lo brirebla
+
+ni'o le selci'a cu fanmo ba zo le
+  .i se ki'u bo le gerna cu sisti bu'u lo stuzi poi ckini li paxa ku'o ne'i `sumti-6` noi denpa lo
+      selbri pe zo le
+  .i le jgena cu ciska lo cmene be le javni po'o
+  .i ki'u bo lo cmene cu jarco li soze noi ckini le javni
+
+ni'o le srejge cu vasru lu mi klama li'u noi jufra ku'o gi'e ba bo vasru zo le po'o
+  .i va'o lo nu no srera cu zvati kei le re se tcidu cu mintu
+
+ni'o ro valsi poi no genvla cu vasru ke'a selvau pa pagbu
+  .i se ki'u bo ro pagbu be ro valsi cu zvati pa pezli
+  .i lo valsi poi zo si .a zo sa vimcu ke'a kansa le vi'uvla ne'i pa pagbu poi se tcita zoi gy.
+      Erasure .gy.
+
+ni'o zo su fanmo lo selci'a poi lidne ri
+  .i le selci'a cu stali
+  .i zo su se tcita zoi gy. SU .gy.
+  .i `Architect` cuxna di'u bu'u `#859`
+
+ni'o zo fa'o poi fanmo lo selci'a cu se tcita zoi gy. FAhO .gy.
+  .i ro selci'avla poi se lidne zo fa'o se tcita zoi gy. Stream .gy. gi'e ralte lo stuzi pe vo'a
+  .i ro pagbu be le genturfa'i cu selcme lo valsi pe `CLL`
+  .i lo lerfu be le valsi cu mintu lo lerfu poi `CLL` ciska ke'a
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
@@ -169,16 +227,23 @@ for line in readTextMarked("mi klama si do su ko fa\x27o 1234").toNif.strip.spli
 Stream FAhO 26 30 "1234"))
 ```
 
-`si` erases `klama`, so one unit holds both. The root of the text after the last `su` holds each
-text before it first. So a program that reads the text as CLL does drops each node up to the last
-`su`, and `readText` gives the text `ko` alone.
+ni'o zo si vimcu zo klama
+  .i se ki'u bo pa pagbu cu vasru le re valsi
+  .i lo genja pe le romoi selci'a cu vasru ro selci'a poi lidne le romoi selci'a
+  .i se ki'u bo lo samtci poi tcidu lo selci'a ja'i `CLL` vimcu ro jgena poi lidne zo su noi romoi
+  .i `readText` jarco zo ko po'o
 
-`initReaderLive` makes a reader of live text, which reads a text piece by piece as it arrives
-(#859). Each sentence goes out as NIF once the next one opens, and no piece reads the whole text
-again. A word that reaches back cuts the NIF back, as `si` does. Each change from `push` gives the
-offset that the NIF cuts back to, and the byte of the text where the cut opens. Then it gives the
-nodes that go out, and the tail. The tail is the node of the part still open, as the text so far
-gives it, and the next change replaces it:
+ni'o `initReaderLive` zbasu lo mivyselci'a tcidu noi tcidu ro selci'apau ca lo nu le pagbu cu klama
+    to `#859` toi
+  .i ro jufra cu selbe'i fi `NIF` ca lo nu lo bavla'i jufra cu cfari
+  .i no pagbu cu raptcidu le mulselci'a
+  .i lo valsi poi galfi lo pu valsi cu katna lo pagbu be le selci'a be fi `NIF` mu'u zo si
+
+ni'o ro cenba pe `push` jarco lo stuzi poi le selci'a be fi `NIF` cu selka'a bu'u ke'a ku'o .e lo
+    stuzi poi le katna cu cfari bu'u ke'a ne'i lo jboselci'a
+  .i ba bo le cenba cu jarco lo jgena poi selbe'i .e lo rebla
+  .i lo rebla cu du lo jgena pe lo pagbu poi ca'o kalri ja'i le selci'a ca
+  .i lo bavla'i cenba cu basti lo rebla
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
@@ -207,16 +272,26 @@ finish: cut back to 160, byte 27
   out  (sumti_6 0 (KOhA 27 29 "ko"))
 ```
 
-Offset 28 is the end of the two directives. The sentence `mi klama` goes out once `.i do` opens.
-The three `si` erase `klama .i do`, so the NIF cuts back to the directives, and those words wait in
-the tail as one unit. `su` ends that text, so its nodes go out with `su`, and `ko` opens a text of
-its own. At the end, a text read piece by piece gives the NIF of its parts read whole, byte for byte
-(`suites/test_live.nim`).
+ni'o li reci cu namcu lo fanmo be le re minde
+  .i lu mi klama li'u selbe'i ca lo nu lo'u .i do le'u cfari
+  .i le ci valsi po'u zo si vimcu lo'u klama .i do le'u
+  .i se ki'u bo le selci'a be fi `NIF` cu selka'a bu'u lo fanmo be le re minde
+  .i le vi'uvla cu denpa ne'i lo rebla gi'e selvau pa pagbu
 
-`mergeParts` merges the parts from their NIF alone, as a page or a fixer holds them. It drops each
-word that erasure erases, `fa'o` and each word after it, and each part up to the last `su`. Then it
-joins each run of parts that holds no error, as one pass builds the tree of its text. Where no error
-stays, it gives the NIF of one pass, byte for byte, and `is_whole` holds:
+ni'o zo su fanmo le selci'a
+  .i se ki'u bo lo jgena be le selci'a cu selbe'ikansa zo su
+  .i zo ko cfari pa datselci'a
+  .i ca lo fanmo le se tcidu be lo pagbu cu mintu le se tcidu be le mulselci'a ro lerfu to
+      `suites/test_live.nim` toi
+
+ni'o `mergeParts` goi ko'a jmina lo pagbu ja'i lo selci'a be fi `NIF` po'o noi lo papri .a lo cikre
+    cu ponse ke'a
+  .i ko'a vimcu ro valsi poi selvi'u .e zo fa'o .e ro valsi poi se lidne zo fa'o ku'o .e ro pagbu
+      poi lidne zo su noi romoi
+  .i ba bo ko'a jmina ro porsi be lo pagbu poi vasru no srera ku'o ta'i lo nu tcidu le mulselci'a
+  .i va'o lo nu no srera cu stali kei ko'a jarco lo selci'a be fi `NIF` pe lo nu tcidu le mulselci'a
+      ro lerfu
+  .i `is_whole` jetnu
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
@@ -245,39 +320,63 @@ ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (text_1 0 (I 10 11 "i")) (LE 12 14 "le"))
 (text_1 0 (I 16 17 "i") (sumti_6 4 (KOhA 18 20 "ko")))
 ```
 
-The three parts of the first text join into two paragraphs, as rule 4 of 21.1 nests them. The
-Architect chose this NIF of one pass (D1 b on #859). Then the Architect chose a merge that refuses
-no error, and the marked reading of one pass shows where each error stays.
+ni'o le ci pagbu be le pamoi selci'a cu selvau re `paragraph` ja'i le javni pe li vo pe `CLL 21.1`
+  .i `Architect` cuxna le selci'a be fi `NIF` pe le nu tcidu le mulselci'a kei to `D1 b` bu'u `#859`
+      toi gi'e ba bo cuxna lo nu jmina poi to'e curmi no srera
+  .i le se tcidu poi sinxa ro srera cu jarco lo stuzi be ro srera
 
-In the second text, the stream refuses `x`, and the grammar reads around it. So `x` stands in the
-lowest node that holds the units read around it, the `paragraph`, as one pass places it. In the
-third text, `le` waits for its sumti past the end, so its part holds an error node. The grammar
-gives that part no place in a tree. So it stays as it is, and the parts on each side of it merge.
+ni'o ne'i le remoi selci'a le genturfa'i cu to'e curmi zoi gy. x .gy. ca lo nu tcidu lo vlapoi
+  .i le gerna cu tcidu lo valsi poi sruri zoi gy. x .gy.
+  .i se ki'u bo zoi gy. x .gy. zvati le jgena poi traji lo ka dizlo kei gi'e vasru lo pagbu poi se
+      tcidu gi'e sruri zoi gy. x .gy.
+  .i le jgena cu du `paragraph` ja'i lo nu tcidu le mulselci'a
 
-A unit before the last `su` stays in front where its stage reads before `su` erases (19.16). So
-`x su mi klama` keeps `x`, as the stream reads the whole text first, and `le su mi klama` keeps no
-`le`. The merge refuses only NIF that reads not, or that holds a shape the writer gives not. Then
-it names the node, counted from 0 past the directives, and the reason (`suites/test_merge.nim`).
+ni'o ne'i le cimoi selci'a zo le denpa lo selbri be ri ba lo fanmo
+  .i se ki'u bo le pagbu be zo le cu vasru pa srejge
+  .i le gerna cu dunda no stuzi ne'i lo tricu le pagbu
+  .i se ki'u bo le pagbu cu stali
+  .i lo pagbu poi sruri ri se jmina
 
-The verb `javascript` compiles the parser into one script of JavaScript, `build/lojban_parser.js`.
-A page loads it with a `script` element, and calls three functions as globals:
+ni'o lo pagbu poi lidne zo su noi romoi cu stali va'o lo nu le genturfa'i cu tcidu le pagbu pu lo nu
+    zo su vimcu to `CLL 19.16` toi
+  .i se ki'u bo lo jmina be zoi gy. x su mi klama .gy. cu ralte zoi gy. x .gy. ki'u lo nu le
+      genturfa'i cu tcidu lo vlapoi pe le mulselci'a pu ro drata
+  .i lo jmina be lo'u le su mi klama le'u cu ralte no zo le
+  .i lo nu jmina cu to'e curmi lo selci'a be fi `NIF` po'o poi na se tcidu gi'a vasru lo tarmi poi
+      le ciska be fi `NIF` na ciska ke'a
+  .i ba bo lo nu jmina cu cusku lo namcu be lo jgena be'o noi krasi li no ba le re minde ku'o .e lo
+      krinu to `suites/test_merge.nim` toi
 
-- `parseLojban(text)` returns what `readText` gives, as a plain object. A refused text also
-  carries `stream`, which `readStream` gives, so the caller sees the words before the refusal.
-- `parseLojbanToNif(text)` returns the module that `toNif` writes, as a string, or null where the
-  text is refused.
-- `parseLojbanLive()` returns a reader of live text. Its `push(piece)` and `finish()` each give a
-  promise of the change, `{at, start, text, tail}`, as `push` gives it in Nim. Its `nif()` gives a
-  promise of the NIF so far.
+ni'o lo minde po'u `javascript` zbasu `build/lojban_parser.js` noi samtci be fi `JavaScript` le
+    genturfa'i
+  .i lo papri cu cpacu le samtci sepi'o lo jgena po'u `script` gi'e pilno ci fancu poi ro da ka'e
+      pilno ke'a
 
-The reader of live text reads in a worker where the page gives one, so the page never waits.
-Elsewhere it reads one sentence at each turn of the event loop. A page cuts the NIF it holds back
-to `at`, and adds `text`. `at` counts units of UTF-16, as a string of JavaScript indexes it.
-`start` counts bytes of the text, as each word of the NIF does.
+- ny.mai `parseLojban(text)` jarco lo selja'o be `readText` ta'i lo sapydai
+  .i lo selci'a poi se to'e curmi cu vasru ji'a `stream` noi `readStream` jarco ke'a
+  .i se ki'u bo lo pilno cu viska lo valsi poi lidne lo nu to'e curmi
+- ny.mai `parseLojbanToNif(text)` jarco lo selci'a be `toNif` ta'i lo porsi be lo lerfu gi'e jarco
+      `null` va'o lo nu le selci'a cu se to'e curmi
+- ny.mai `parseLojbanLive()` jarco lo mivyselci'a tcidu
+  .i `push(piece)` .e `finish()` pe le tcidu cu jarco lo nupre be lo cenba po'u
+      `{at, start, text, tail}` noi `push` jarco ke'a ne'i `Nim`
+  .i `nif()` pe le tcidu cu jarco lo nupre be lo selci'a be fi `NIF` ca
 
-The verb `drive` holds the script to the native build in headless Chromium, which a backend of Nim
-serves, with no node. `LOJBAN_CHROMIUM` names the Chromium to drive. `koch drive` runs the verb,
-then judges the font faces of the control page, here with the warnings of the compiler left out:
+ni'o lo mivyselci'a tcidu cu tcidu ne'i lo gunka va'o lo nu lo papri cu dunda pa gunka
+  .i se ki'u bo lo papri na denpa
+  .i va'o lo drata le tcidu cu tcidu pa jufra ca ro nu `event loop` carna
+
+ni'o lo papri cu katna lo selci'a be fi `NIF` be'o poi lo papri cu ponse ke'a ku'o bu'u `at` gi'e
+    jmina `text`
+  .i `at` kancu lo pagbu be fi `UTF-16` be'o noi lo porsi be fi `JavaScript` cu kancu ke'a
+  .i `start` kancu lo selci'apau noi ro valsi pe `NIF` kancu ke'a
+
+ni'o lo minde po'u `drive` cipra lo du'u le samtci cu mintu le jbezba ne'i `headless Chromium` noi
+    lo samtci pe `Nim` sabji ke'a
+  .i no `node` selpli
+  .i `LOJBAN_CHROMIUM` jarco `Chromium` poi selpli
+  .i `koch drive` pilno le minde gi'e ba bo jdice lo lertai pe lo tropapri
+  .i lo kajde be lo fanva cu selvi'u vi
 
 ```text
 $ nim r --hints:off koch drive contributor/bangu/lojban_parser
@@ -301,46 +400,57 @@ build/font-faces/written.json
 0 finding(s).
 ```
 
-The suite of the script holds each verdict of the sample of Tatoeba. The suite of live text reads
-texts with words that reach back. Each text reads to the NIF that the native build gives, in the
-worker and on the thread of the page. The suite runs once more on a page that refuses each worker.
+ni'o lo cipra be le samtci cu cipra ro jdice pe le mupli pe `Tatoeba`
+  .i lo cipra be lo mivyselci'a cu tcidu lo selci'a poi vasru lo valsi poi galfi lo pu valsi
+  .i ro selci'a cu se tcidu lo selci'a be fi `NIF` poi le jbezba cu jarco ke'a ku'o ne'i lo gunka .e
+      lo cilta pe lo papri
+  .i lo cipra cu rapli pa roi ne'i lo papri poi to'e curmi ro gunka
 
-## Authority
+## ni'o ni'o ni'o lo krasi
 
-The project replicates The Complete Lojban Language (CLL), by John Woldemar Cowan, from the
-Logical Language Group. It follows version 1.1, generated 2016-08-26, which is the latest edition,
-at `lojban.org/publications/cll/`. Chapter 3 gives the letters, the marks of a stream, the consonant
-clusters, the syllables and the stress. Chapter 4 gives the classes and shapes of words, the
-rafsi, the algorithms that join and score a lujvo, and the pauses between words.
-Chapters 5, 7, 9, 12 and 15 tell which words each cmavo binds, and chapter 20 is the catalogue of
-selma'o. Chapters 13, 17 and 19 give indicators, lerfu words, quotation and erasure, and 21.1 gives
-the formal grammar, which is in the public domain.
+ni'o le vi selgu'a cu fukpi `The Complete Lojban Language` noi `John Woldemar Cowan` ciska ke'a
+  .i `Logical Language Group` dunda `CLL`
+  .i le vi selgu'a cu jersi `1.1` noi selzba de'i li renopaxa pi'e bi pi'e rexa gi'e romoi bu'u
+      `lojban.org/publications/cll/`
 
-The suites carry the names of those chapters, and each assertion cites its source. The name of a
-suite that CLL does not cover opens with `Internal:`.
+ni'o `CLL 3` ciska lo lerfu .e lo zunsna gunma .e lo slaka .e lo nu basna .e lo sinxa be lo vlapoi
+  .i `CLL 4` ciska lo vlalei .e lo vlatai .e lo rafsi .e lo tadji poi jmina gi'e jdice lo lujvo ku'o
+      .e lo denpa poi zvati lo jbini be lo valsi
 
-The gismu list and the cmavo list come from the Logical Language Group, which placed them in the
-public domain. The project commits both as typed Nim modules under
-`src/lojban_parser/lists/`. It keeps the word and the rafsi of each gismu, and the word and the
-selma'o of each cmavo. The
-suites also read the lujvo list and the whole cmavo list as outside texts, where the Debian
-package `lojban-common` installs them.
+ni'o `CLL 5 7 9 12 15` cusku lo du'u ro cmavo cu jorne ma kau valsi
+  .i `CLL 20` liste lo selma'o
+  .i `CLL 13 17 19` ciska lo cnivla .e lo lervla .e lo nu sitna .e lo nu vimcu
+  .i `CLL 21.1` ciska le gerna noi zifre fi ro da
 
-The folder `tests/cll/` holds the lojban lines of each numbered example of CLL 1.1. A verb
-extracts them from the pages of the book, and the folder keeps the notice of the book. That notice
-permits a modified copy only under its own terms. So the folder is not under the licence of the
-repository.
+ni'o lo cipra cu selcme lo cmene be le ckupau
+  .i ro xusra cu sitna lo krasi be ri
+  .i lo cmene be lo cipra poi `CLL` na casnu ke'a cu cfari fi `Internal:`
 
-The folder `tests/sample_tatoeba/` holds a fixed sample of the lojban sentences of Tatoeba. Its
-sentences together reach as many rules of CLL as the export can reach. The folder is under the
-licence of Tatoeba, CC BY 2.0 FR, and its notice credits each owner of a sentence.
+ni'o le gimste .e le ma'oste cu seldu'a `Logical Language Group` gi'e zifre fi ro da
+  .i le vi selgu'a cu ralte le re liste ta'i lo samtci pagbu pe `Nim` ne'i
+      `src/lojban_parser/lists/` gi'e ralte lo valsi .e lo rafsi be ro gismu be'o .e lo valsi .e lo
+      selma'o be ro cmavo
+  .i lo cipra cu tcidu ji'a le jvoste .e le mulma'oste noi datselci'a bu'u lo stuzi poi
+      `lojban-common` noi bakfu cu punji le liste ke'a
 
-The folder `tests/articles_wikipedia/` holds three long articles of the lojban Wikipedia, under
-CC BY-SA 4.0. The suites read each paragraph of them as one connected text. The translations of
-Alice and Oz stay out of the repository, and the suites read them where their pinned pages are
-present.
+ni'o `tests/cll/` vasru lo jboju'a be ro mupli poi selna'u ne'i `CLL 1.1` be'o .e lo notci be le
+    cukta
+  .i pa minde cu cpacu le jufra lo papri be le cukta
+  .i le notci cu curmi lo gafyfu'i va'o le javni pe le notci po'o
+  .i se ki'u bo `tests/cll/` na seljva le crujva pe `delegations`
 
-## Build and test
+ni'o `tests/sample_tatoeba/` vasru lo stomupli be lo jboju'a pe `Tatoeba`
+  .i le jufra poi kansa cu jarco ro javni pe `CLL` zi'e poi lo mulselcpa ka'e jarco ke'a
+  .i `tests/sample_tatoeba/` seljva le crujva pe `Tatoeba` zi'e po'u `CC BY 2.0 FR`
+  .i le notci cu cmene ro ponse be lo jufra
+
+ni'o `tests/articles_wikipedia/` vasru ci claro'a noi seljva `CC BY-SA 4.0` zi'e pe `Wikipedia` pe
+    la lojban.
+  .i lo cipra cu tcidu ro pagbu be le prosa ta'i pa jonselci'a
+  .i lo fanva be `Alice` .e `Oz` na zvati le vi selgu'a
+  .i lo cipra cu tcidu lo fanva va'o lo nu lo stopapri be lo fanva cu zvati
+
+## ni'o ni'o ni'o lo nu zbasu .e lo nu cipra
 
 ```sh
 nim r koch check                                  # from repository root: every check
@@ -357,78 +467,118 @@ nim r tools/build.nim drive                       # run suites of script and pag
 nim r tools/build.nim system                      # print packages verbs and suites need
 ```
 
-The build needs the compiler that `lojban_parser.nimble` pins, and the standard library alone.
-The verbs `lists` and `head`, and the tests of outside texts, also need the Debian package
-`lojban-common`, and `sha256sum` of `coreutils`. The verb `system` declares both.
+ni'o lo nu zbasu cu nitcu lo fanva poi `lojban_parser.nimble` stodi ke'a ku'o .e lo fadni samtci pe
+    `Nim` po'o
+  .i lo minde po'u `lists` .e `head` ge'u .e lo cipra be lo datselci'a cu nitcu ji'a `lojban-common`
+      noi bakfu ku'o .e `sha256sum` pe `coreutils`
+  .i lo minde po'u `system` cusku le re bakfu
 
-The verb `cll` needs `sha256sum`, and the pages of CLL 1.1 saved in one directory, each under its
-own name. The verb `tatoeba` needs `sha256sum` and the export of Tatoeba, decompressed. The verb
-`wikipedia` needs `sha256sum` and the saved answers of the API of the Wikipedia. The verb
-`translations` needs `curl` and `sha256sum`, and the verb `system` declares both.
+ni'o lo minde po'u `cll` nitcu `sha256sum` .e lo papri be `CLL 1.1` be'o noi selra'e ne'i pa vasru
+  .i lo minde po'u `tatoeba` nitcu `sha256sum` .e lo vreji be `Tatoeba` be'o poi se kalri
+  .i lo minde po'u `wikipedia` nitcu `sha256sum` .e lo selra'espu be `API` pe `Wikipedia`
+  .i lo minde po'u `translations` nitcu `curl` .e `sha256sum`
+  .i lo minde po'u `system` cusku le re samtci
 
-The verb `javascript` needs the compiler alone. The verb `drive` needs Chromium, the one that
-`LOJBAN_CHROMIUM` names, full Chrome or its headless shell. Else it takes the headless shell of
-Chrome for Testing 153.0.8010.12 from the store of the repository. It unpacks that shell with
-`unzip`, which the verb `system` declares. No check needs node.
+ni'o lo minde po'u `javascript` nitcu lo fanva po'o
+  .i lo minde po'u `drive` nitcu `Chromium` poi selcme `LOJBAN_CHROMIUM` gi'e ka'e du `Chrome` .a
+      `headless shell` pe `Chrome`
+  .i va'o lo drata le minde cu cpacu `headless shell` pe `Chrome for Testing 153.0.8010.12` lo vreji
+      be le vi selgu'a gi'e kalri `headless shell` fi `unzip` noi lo minde po'u `system` cusku ke'a
+  .i no cipra cu nitcu `node`
 
-The verbs `page` and `drive` fetch the font faces of the page through `koch fetch-assets`, which
-needs `curl` and `sha256sum`. `koch drive` reads the `woff2` of Commit Mono through `libbrotli1`,
-which the verb `system` declares.
+ni'o lo minde po'u `page` .e `drive` cpacu lo lertai pe le papri sepi'o `koch fetch-assets` noi
+    nitcu `curl` .e `sha256sum`
+  .i `koch drive` tcidu `woff2` pe `Commit Mono` sepi'o `libbrotli1` noi lo minde po'u `system`
+      cusku ke'a
 
-## Pages
+## ni'o ni'o ni'o lo papri
 
-[Lojban live tree](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) draws the tree of live text as
-a reader types it. A worker reads the text piece by piece, and the page draws each part from the
-NIF that the worker gives. A part still open shows in amber. A word that reaches back, as `si` or
-`li'u`, cuts the NIF back to where it lands. The button Merge joins each completed part into the one
-tree that one pass gives, by `mergeParts`. Where an error stays, each run of parts around it joins,
-and the error stays in its place.
+ni'o [`Lojban live tree`](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) pixra lo tricu be lo
+    mivyselci'a ca lo nu lo prenu cu ciska le selci'a
+  .i lo gunka cu tcidu ro pagbu be le selci'a ca lo nu le pagbu cu klama
+  .i le papri cu pixra ro pagbu ja'i lo selci'a be fi `NIF` poi le gunka cu dunda ke'a
+  .i lo pagbu poi ca'o kalri cu selska lo najypelxu
+  .i lo valsi poi galfi lo pu valsi mu'u zo si .a zo li'u katna lo selci'a be fi `NIF` bu'u lo stuzi
+      be lo selga'i be le valsi
+
+ni'o lo batke po'u `Merge` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi lo nu tcidu le
+    mulselci'a cu jarco ke'a
+  .i va'o lo nu lo srera cu stali kei ro porsi be lo pagbu poi sruri le srera cu se jmina
+  .i le srera cu stali
 
 | built file, under `build/` | published at |
 | --- | --- |
 | lojban_parser.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
 
-The verb `page` builds it from `pages/live.html`. Publish it again from `build/lojban_parser.html`
-after any change that alters what the page shows. Put the URL in the pull request, and in the
-message that says the work is ready.
+ni'o lo minde po'u `page` zbasu le papri `pages/live.html`
+  .i ko rapli gubgau le papri fi `build/lojban_parser.html` ba ro cenba poi galfi lo selja'o be le
+      papri
+  .i ko punji `URL` ne'i `pull request` .e lo notci poi cusku lo du'u le selgu'a cu bredi
 
-## Status
+## ni'o ni'o ni'o lo ca ckaji be le genturfa'i
 
-The parser reads words by the rules of CLL alone. It reads each gismu and each cmavo by its form,
-and each lujvo by its rafsi and hyphens, listed or not. It gives the selma'o of each cmavo that
-the cmavo list holds, and splits cmavo run together into each cmavo. It renders a tanru as a
-lujvo, and folds a tanru into tanru units. It reads each fu'ivla and each cmene by the rules of
-CLL 4.7 and 4.8.
+ni'o le genturfa'i cu tcidu lo valsi ja'i lo javni pe `CLL` po'o
+  .i le genturfa'i cu tcidu ro gismu .e ro cmavo ja'i lo tarmi gi'e tcidu ro lujvo ja'i lo rafsi .e
+      lo lerjo'e
+  .iju lo liste cu vasru le valsi
+  .i le genturfa'i cu jarco lo selma'o be ro cmavo poi le ma'oste cu vasru ke'a ku'o gi'e fendi pa
+      selci'avla poi vasru so'i cmavo ku'o lo cmavo
+  .i le genturfa'i cu ciska pa tanru ta'i pa lujvo gi'e fendi pa tanru ro taurpau gi'e tcidu ro
+      fu'ivla .e ro cmene ja'i `CLL 4.7` .e `CLL 4.8`
 
-It reads a stream of text into its words, with its pauses, commas and capitals, and it splits
-words that a text writes together. It reads prose by the grammar of 21.1, after quotation,
-erasure, `zei`, BAhE, `bu` and indicators act on the words.
-It reads on past each error, and it reads live text piece by piece, as the text arrives. Its NIF
-ties each word to the bytes it reads from, and each byte of each word lies in one leaf. It merges
-the parts of a text from their NIF alone into the NIF that one pass gives, and keeps each error in
-its place.
+ni'o le genturfa'i cu tcidu lo vlapoi pe lo selci'a ge'u .e lo denpa .e lo lerfu po'u slaka bu ge'u
+    .e lo brale'u gi'e fendi lo valsi poi le selci'a cu ciska ke'a ne'i pa selci'avla
+  .i le genturfa'i cu tcidu lo selci'a ja'i le gerna pe `CLL 21.1` ba lo nu lo nu sitna .e lo nu
+      vimcu .e zo zei .e lo cmavo be zoi gy. BAhE .gy. be'o .e zo bu .e lo cnivla cu galfi lo valsi
+  .i le genturfa'i cu tcidu lo valsi poi se lidne ro srera ku'o gi'e tcidu lo mivyselci'a ro pagbu
+      ca lo nu le pagbu cu klama
 
-The verb `javascript` builds the reader of prose and the reader of live text for a page. The verb
-`drive` holds that build in headless Chromium to the native build. It holds the verdicts of the
-sample of Tatoeba, and the NIF of live text, in a worker and on the thread of the page.
+ni'o lo selci'a be fi `NIF` pe le genturfa'i cu jorne ro valsi lo stuzi be ri ne'i lo jboselci'a
+  .i ro pagbu be ro valsi cu zvati pa pezli
+  .i le genturfa'i cu jmina lo selci'apau ja'i lo selci'a be fi `NIF` po'o fi lo selci'a be fi `NIF`
+      pe lo nu tcidu le mulselci'a kei gi'e ralte ro srera bu'u lo stuzi be ri
 
-The suites hold each part to CLL. The parser reads each numbered example of CLL 1.1 that the
-book calls grammatical, with the lines that hold notation left out. The book shows ten examples in
-notation alone. It calls three examples wrong, and one more is an English sentence. Six write a
-mex alone, and each reads after `li`.
+ni'o lo minde po'u `javascript` zbasu lo selci'a tcidu .e lo mivyselci'a tcidu
+  .i lo papri cu pilno le re tcidu
+  .i lo minde po'u `drive` cipra lo du'u le selzba cu mintu le jbezba ne'i `headless Chromium` kei
+      gi'e cipra lo jdice be le mupli pe `Tatoeba` be'o .e lo selci'a be fi `NIF` pe lo mivyselci'a
+      ne'i lo gunka .e lo cilta pe lo papri
 
-Nine examples break a rule of 21.1. The parser follows 21.1 and refuses them, as the Architect
-ruled on #815. `PROVENANCE.md` names the rule that each one breaks.
+ni'o lo cipra cu cipra lo du'u ro pagbu cu mapti `CLL`
+  .i le genturfa'i cu tcidu ro mupli poi selna'u ne'i `CLL 1.1` gi'e drani ja'i le cukta
+  .i lo jufra poi vasru lo sinxa poi na lojbo cu selvi'u
 
-The parser reads 16,469 of the 17,495 sentences of Tatoeba. Each class of the others breaks a rule
-of CLL 1.1, and `PROVENANCE.md` names each class with its rule and its count. The suites hold
-each verdict of the sample, and cite the rule that each refused sentence of it breaks.
+ni'o le cukta cu jarco pano mupli poi vasru lo na'e lojbo sinxa po'o
+  .i le cukta cu cusku lo du'u ci mupli na drani
+  .i pa datmupli cu gliju'a
+  .i xa mupli cu ciska pa mekso po'o
+  .i ro le xa mupli cu se tcidu ba zo li
 
-The parser reads 69 of the 86 paragraphs of the three articles, and the longest holds 458 words.
-It reads 783 of the 856 paragraphs of Alice, and 56 of the 173 longer paragraphs of Oz. Each
-refusal of these long texts breaks a rule of CLL, and none is a mistake of the parser.
+ni'o so mupli cu na'e mapti su'o javni pe `CLL 21.1`
+  .i le genturfa'i cu jersi `CLL 21.1` gi'e to'e curmi le so mupli
+  .i `Architect` jdice di'u bu'u `#815`
+  .i `PROVENANCE.md` cmene le javni poi ro le so mupli cu na'e mapti ke'a
 
-The project `lojban_tagger` reads lojban through this parser, and holds no copy of its modules.
-Its converter of the word lists imports the reader of the lists, and their pins, from
-`tools/lists.nim`.
-Nothing here has been read line by line by a human.
+ni'o le genturfa'i cu tcidu paxavoxaso lo pazevosomu jufra pe `Tatoeba`
+  .i ro klesi be lo drata cu na'e mapti su'o javni pe `CLL 1.1`
+  .i `PROVENANCE.md` cmene ro klesi .e lo javni .e lo namcu pe le klesi
+  .i lo cipra cu cipra ro jdice pe le mupli gi'e sitna lo javni poi ro jufra poi se to'e curmi cu
+      na'e mapti ke'a
+
+ni'o le genturfa'i cu tcidu xaso lo bixa pagbu be le ci prosa
+  .i lo traji be lo ka clani cu vasru vomubi valsi
+  .i le genturfa'i cu tcidu zebici lo bimuxa pagbu be `Alice` be'o .e muxa lo pazeci clapau be `Oz`
+  .i ro le nu to'e curmi cu drani ja'i `CLL`
+
+ni'o le ci vreji .e ro pinka pe le samtci .e le papri cu me lo jboselci'a poi le genturfa'i cu tcidu
+    ke'a
+  .i `suites/test_prose_own.nim` tcidu ro le selci'a sepi'o le genturfa'i gi'e fliba va'o ro srera
+  .i ro jufra pe le selci'a cu krasi pa linji
+  .i le cipra cu fliba ji'a va'o lo nu pa jufra cu krasi lo midju be pa linji
+  .i `Architect` jdice di'u bu'u `#818`
+
+ni'o `lojban_tagger` tcidu la lojban. sepi'o le genturfa'i gi'e ralte no fukpi be lo pagbu be le
+    genturfa'i
+  .i lo samtci pe `lojban_tagger` zi'e poi galfi lo vlaste cu cpacu lo tcidu be le liste be'o .e lo
+      stodi be le liste be'o `tools/lists.nim`
+  .i no prenu cu tcidu ro lo jufra pe le vi selci'a

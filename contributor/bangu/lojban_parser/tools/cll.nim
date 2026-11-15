@@ -1,31 +1,67 @@
-## Extract lojban rows of each numbered example of CLL 1.1 into typed Nim module, with notice of
-##   book beside it, for corpus suite to read; `build.nim` runs it.
-##   Reads XHTML pages of CLL 1.1, generated 2016-08-26, which lojban.org serves one section to
-##   page, each saved under its own name in one directory; renders `tests/cll/examples.nim` and
-##   `tests/cll/NOTICE.md`.
+## lebna lo jboli'i pe ro mupli poi selna'u ne'i `CLL 1.1` ku'o gi'e punji le linji pa datnyvei pe
+##     `Nim` zi'e noi ralte le linji ta'i lo datni poi ponse lo klesi
+##   .i ciska ji'a le notci pe le cukta lo datnyvei poi lamji le datnyvei pe `Nim`
+##   .i le cipra pe le selci'agri cu tcidu le datnyvei
+##   .i `build.nim` pilno le vi datnyvei
 ##
-##   Row is lojban where class of its element is `jbo` or `jbophrase`, as markup of book names
-##     lojban text. Cells of table row join by one space, empty cells skipped; paragraph is row
-##     alone.
-##     Rows of class `pronunciation-jbo` and `compound-cmavo-jbo` are left out: book judges each
-##       in prose, and suites of stream and forms hold those judgments by hand, citing example.
-##   Rows keep text as book writes it, brackets and notation included: corpus suite decides
-##     which rows read, never extraction.
-##     No-break space joining words of cell becomes space, and run of white space one space;
-##       markup within row is dropped.
-##   Example is numbered where title of its `div.example` reads `Example N.M.`; example holding
-##     no lojban row is left out, and number given twice fails verb, naming it.
-##   Pages are pinned by one SHA-256 over output of `sha256sum` given every page read in order
-##     of name: page holding example, and page of section 1.8 holding notice. Page lojban.org moves
-##     makes `cll` refuse, never silent rewrite of committed text.
-##   Notice is read from section 1.8 and rendered verbatim, as permission of book asks of every
-##     modified copy: folder holding extract is distributed under that notice alone.
-##     Server of lojban.org hides email address of notice in encoded attribute of span; verb
-##       decodes it, so notice reads as book writes it.
-##   Cost: pages are read as XML, which XHTML of book is, once each `script` element is cut:
-##     script of page holds `&` that XML forbids, and never example. Page served as HTML alone
-##     would fail parser, naming page.
-##   Cost: digest is read by shelling out to `sha256sum`, as in `lists.nim`.
+## ni'o tcidu lo papri be `CLL 1.1` be'o noi selci'a bau `XHTML` gi'e selzba de'i `2016-08-26`
+##   .i `lojban.org` benji le papri
+##   .i ro papri cu vasru pa ckupaupau gi'e selra'e ne'i pa datnyvei poi selcme lo cmene be le papri
+##   .i ro le datnyvei cu zvati pa datnyveiste
+##   .i ciska `tests/cll/examples.nim` .e `tests/cll/NOTICE.md`
+##
+## ni'o lo linji cu lojbo va'o lo nu lo klesi pe le jgena pe le linji cu du `jbo` .a `jbophrase`
+##   .i ki'u bo le re klesi cu sinxa lo jboselci'a ne'i lo tcita pe le cukta
+##   .i ro selci pe pa lijgri pe pa liste cu jorne lo bavla'i selci pa kutle'u
+##   .i lo kutsle cu selvi'u
+##   .i ro ju'agri cu binxo pa linji
+##
+## ni'o lo linji pe lo klesi po'u `pronunciation-jbo` .a `compound-cmavo-jbo` na se lebna
+##   .i ki'u bo le cukta cu jdice fi ro le linji ne'i lo prosa
+##   .i `test_stream.nim` .e `test_forms.nim` vasru le seljdi poi selci'a ta'i lo nu na'e zmiku gi'e
+##       sitna le mupli
+##
+## ni'o lo linji cu ralte le selci'a pe le cukta
+##   .i le selci'a cu vasru lo grile'u .e lo sinxa poi na lojbo
+##   .i se ki'u bo le cipra pe le selci'agri cu jdice lo du'u ma kau poi linji cu se tcidu
+##   .i le nu lebna cu no roi jdice di'u
+##
+## ni'o lo kutle'u poi fanta lo nu katna le linji cu zvati lo jbini be lo valsi pe lo selci
+##   .i le kutle'u cu binxo lo sapkutle'u
+##   .i ro porsi be lo kutle'u cu binxo pa kutle'u
+##   .i lo tcita poi zvati ne'i le linji cu selvi'u
+##
+## ni'o lo mupli cu selna'u va'o lo nu lo cmene pe le jgena po'u `div.example` pe le mupli cu mintu
+##     `Example N.M.`
+##   .i lo mupli poi vasru no jboli'i cu na se lebna
+##   .i va'o lo nu pa namcu cu seldu'a re roi kei le minde cu fliba gi'e cusku le namcu
+##
+## ni'o pa sinxa pe `SHA-256` stosni le papri
+##   .i le sinxa cu selzba fi lo selsku be `sha256sum`
+##   .i `sha256sum` tcidu ro papri poi se tcidu ku'o ta'i lo porsi poi selcmu lo cmene be le papri
+##   .i le papri cu du ro papri poi vasru su'o mupli ku'o .e le papri pe `CLL 1.8` zi'e noi vasru le
+##       notci
+##   .i va'o lo nu `lojban.org` galfi pa papri kei lo minde po'u `cll` to'e curmi
+##   .i le minde cu no roi rapci'a le selra'e ta'i lo nu smaji
+##
+## ni'o le notci cu se tcidu fi `CLL 1.8`
+##   .i le selci'a cu mintu le notci pe le cukta ro valsi
+##   .i le notci poi srana lo nu curmi cu cpedu di'u ro gafyfu'i
+##   .i se ki'u bo le datnyveiste poi vasru le se lebna cu selbe'i ja'i le notci po'o
+##
+## ni'o le sabji pe `lojban.org` mipri lo samjudri pe le notci ne'i pa mifselkai pe pa jgena po'u
+##     `span`
+##   .i le minde cu fanva le mifra
+##   .i se ki'u bo le notci cu mintu le selci'a pe le cukta
+##
+## ni'o jdima fa lo nu le papri cu se tcidu ta'i `XML` ba lo nu ro jgena po'u `script` selvi'u
+##   .i `XHTML` pe le cukta cu me `XML`
+##   .i le jgena po'u `script` vasru `&` poi `XML` to'e curmi ke'a ku'o gi'e vasru no mupli
+##   .i va'o lo nu pa papri cu selbe'i ta'i `HTML` po'o kei le tcidu be `XML` cu fliba gi'e cusku le
+##       cmene be le papri
+##
+## ni'o jdima fa lo nu le sinxa cu se tcidu sepi'o `sha256sum` noi drata samtci
+##   .i `lists.nim` pilno ji'a `sha256sum`
 
 {.experimental: "strictFuncs".}
 
@@ -35,64 +71,93 @@ import ./literals
 
 
 type
-  Example* = object  ## Define one numbered example as extracted: number and lojban rows.
-    chapter*: int  ## Chapter number names first, as `5` of `5.12`.
-    index*: int  ## Place in chapter number names second, as `12` of `5.12`.
-    rows*: seq[string]  ## Lojban rows in order of book.
+  Example* = object
+    ## pa mupli poi selna'u ku'o ta'i lo nu se lebna
+    ##   .i le mupli cu vasru lo namcu .e lo jboli'i
+    chapter*: int
+      ## le ckupau poi lo pamoi pagbu be le namcu cu cmene ke'a
+      ##   .i mupli fa `5` pe `5.12`
+    index*: int
+      ## le stuzi poi lo remoi pagbu be le namcu cu cmene ke'a ne'i le ckupau
+      ##   .i mupli fa `12` pe `5.12`
+    rows*: seq[string]  ## lo jboli'i ja'i le porsi pe le cukta
 
-  Line = object  ## Define one line of example as markup gives it: class and text.
-    class: string  ## Class of element holding line, which names lojban, gloss or translation.
-    text: string  ## Text of line, white space collapsed.
+  Line = object
+    ## pa linji pe lo mupli ta'i lo nu le tcita cu dunda le linji
+    ##   .i le linji cu vasru lo klesi .e lo selci'a
+    class: string
+      ## lo klesi pe le jgena poi vasru le linji
+      ##   .i le klesi cu cmene lo jboselci'a .a lo vlafanva .a lo xe fanva
+    text: string
+      ## le selci'a pe le linji
+      ##   .i ro porsi be lo kutle'u cu binxo pa kutle'u
 
-  Book* = object  ## Define what pages give: examples, notice, and pin they hash to.
-    examples*: seq[Example]  ## Examples in order of number.
-    notice*: seq[string]  ## Paragraphs of section 1.8, verbatim.
-    digest*: string  ## SHA-256 over output of `sha256sum` given every page read, by name.
+  Book* = object
+    ## le seldu'a be le papri
+    ##   .i le seldu'a cu du lo mupli jo'u le notci jo'u le stosni be le papri
+    examples*: seq[Example]  ## lo mupli ja'i le porsi be lo namcu
+    notice*: seq[string]  ## lo ju'agri pe `CLL 1.8` zi'e noi mintu le selci'a pe le cukta ro valsi
+    digest*: string
+      ## lo sinxa pe `SHA-256` zi'e poi sinxa lo selsku be `sha256sum`
+      ##   .i `sha256sum` tcidu ro papri poi se tcidu ku'o ja'i le porsi be lo cmene
 
 
 const
   DIGEST_CLL* = "5baac481b4483b5efc2099de46b3cdc24f741db8ee6f6ed41b80a3aad659fa55"
-    ## SHA-256 over pages of CLL 1.1 generated 2016-08-26, as lojban.org serves them.
+    ## lo sinxa pe `SHA-256` zi'e poi sinxa le papri be `CLL 1.1` be'o poi selzba de'i `2016-08-26`
+    ##   .i `lojban.org` benji le papri
   URL_CLL* = "https://lojban.org/publications/cll/cll_v1.1_xhtml-section-chunks/"
-    ## Address pages are saved from, one section to page.
-  PATH_EXAMPLES* = "tests/cll/examples.nim"  ## Module examples render to.
-  PATH_NOTICE* = "tests/cll/NOTICE.md"  ## Notice of book, rendered beside module.
-  PAGE_NOTICE = "section-copyright.html"  ## Page of section 1.8, which holds notice.
-  CLASSES_LOJBAN = ["jbo", "jbophrase"]  ## Classes of element holding lojban row.
+    ## lo judri poi le papri cu selcpa fi ke'a
+    ##   .i ro papri cu vasru pa ckupaupau
+  PATH_EXAMPLES* = "tests/cll/examples.nim"  ## le datnyvei poi le mupli cu selci'a fi ke'a
+  PATH_NOTICE* = "tests/cll/NOTICE.md"
+    ## le notci pe le cukta zi'e noi selci'a fi lo datnyvei poi lamji `PATH_EXAMPLES`
+  PAGE_NOTICE = "section-copyright.html"  ## le papri pe `CLL 1.8` zi'e noi vasru le notci
+  CLASSES_LOJBAN = ["jbo", "jbophrase"]  ## lo klesi be lo jgena poi vasru lo jboli'i
   TAGS_BLOCK = [
     "blockquote", "dd", "div", "dl", "dt", "h1", "h2", "h3", "h4", "li", "ol", "p", "pre",
     "table", "td", "th", "tr", "ul",
   ]
-    ## Elements whose edges part words, as browser lays them out.
-  WHITESPACE_HTML = {' ', '\t', '\n', '\f', '\r'}  ## White space of HTML; no-break space aside.
-  SPACE_NO_BREAK = "\u00A0"  ## No-break space joining words of cell.
-  TAG_SCRIPT_CLOSING = "</script>"  ## Tag closing script element of page.
-  CLASS_ADDRESS = "__cf_email__"  ## Class of span server writes in place of email address.
-  ATTRIBUTE_ADDRESS = "data-cfemail"  ## Attribute holding that address, encoded.
+    ## lo jgena poi lo korbi be ke'a cu fendi lo valsi ta'i lo nu lo samtci poi pixra lo papri cu
+    ##     punji le jgena
+  WHITESPACE_HTML = {' ', '\t', '\n', '\f', '\r'}
+    ## lo kutle'u pe `HTML`
+    ##   .i lo kutle'u poi fanta lo nu katna le linji cu na selvau
+  SPACE_NO_BREAK = "\u00A0"
+    ## lo kutle'u poi fanta lo nu katna le linji kei gi'e zvati lo jbini be lo valsi pe lo selci
+  TAG_SCRIPT_CLOSING = "</script>"  ## lo tcita poi fanmo lo jgena po'u `script` zi'e pe le papri
+  CLASS_ADDRESS = "__cf_email__"
+    ## le klesi pe le jgena po'u `span` zi'e poi le sabji cu ciska ke'a ne'i lo stuzi be lo samjudri
+  ATTRIBUTE_ADDRESS = "data-cfemail"  ## le selkai poi vasru le mifra samjudri
 
 
 
-#[ Text ]#
+#[ ni'o ni'o ni'o lo se ciska ]#
 
 func elements(node: XmlNode): seq[XmlNode] =
-  ## Collect child elements of node, text left out.
+  ## jmaji lo pazyjge pe le jgena
+  ##   .i lo selci'a cu na se jmaji
   for child in node:
     if child.kind == xnElement: result.add child
 
 
 func isClass(node: XmlNode; tag, class: string): bool =
-  ## Decide whether node is element `tag` whose class attribute is `class` exactly.
+  ## jdice lo du'u xu kau le jgena cu du lo jgena po'u `tag` zi'e poi lo klesi pe ke'a mintu `class`
+  ##     ro lerfu
   node.kind == xnElement and node.tag == tag and node.attr("class") == class
 
 
 func toAddress(encoded: string): string =
-  ## Decode address server hid: first byte of hex is key, each later byte holds letter under it.
+  ## fanva le samjudri poi le sabji cu mipri ke'a
+  ##   .i le pamoi stuzi pe le mifra cu ckiku
+  ##   .i ro stuzi poi se lidne cu mifra pa lerfu le ckiku
   let key = parseHexInt(encoded[0..1])
   for i in countup(2, encoded.high, 2): result.add chr(parseHexInt(encoded[i..i+1]) xor key)
 
 
 func addText(text: var string, node: XmlNode) =
-  ## Append text of node and every node under it; `br` and edge of block give space.
+  ## jmina le selci'a pe le jgena .e ro jgena poi selvau le jgena
+  ##   .i `br` .e lo korbi be lo jgena pe `TAGS_BLOCK` cu dunda lo kutle'u
   case node.kind
   of xnText, xnCData, xnVerbatimText: text.add node.text
   of xnElement:
@@ -110,7 +175,9 @@ func addText(text: var string, node: XmlNode) =
 
 
 func toCollapsed(text: string): string =
-  ## Collapse each run of white space, no-break space among, to one space; trim ends.
+  ## galfi ro porsi be lo kutle'u fi pa kutle'u
+  ##   .i le porsi cu vasru ji'a lo kutle'u poi fanta lo nu katna le linji
+  ##   .i vimcu lo kutle'u poi zvati le re fanmo
   for word in text.replace(SPACE_NO_BREAK, " ").split(WHITESPACE_HTML):
     if word.len == 0: continue
     if result.len > 0: result.add ' '
@@ -118,15 +185,18 @@ func toCollapsed(text: string): string =
 
 
 func toText(node: XmlNode): string =
-  ## Read text of node as browser shows it, white space collapsed.
+  ## tcidu le selci'a pe le jgena ta'i lo nu lo samtci poi pixra lo papri cu jarco le selci'a
+  ##   .i ro porsi be lo kutle'u cu binxo pa kutle'u
   var text: string
   text.addText node
   text.toCollapsed
 
 
 func toPageXml*(text: string): string =
-  ## Cut each `script` element from page, since script of book holds `&` that XML forbids.
-  ##   `translations.nim` reaches it, to pin page without script server writes for each request.
+  ## vimcu ro jgena po'u `script` le papri
+  ##   .i ki'u bo le jgena po'u `script` pe le cukta cu vasru `&` poi `XML` to'e curmi ke'a
+  ##   .i `translations.nim` pilno ji'a le vi fancu tezu'e lo nu stosni lo papri poi claxu le jgena
+  ##       po'u `script` zi'e poi le sabji cu ciska ke'a ca ro nu cpedu
   var at = 0
   while true:
     let opening = text.find("<script", at)
@@ -139,23 +209,29 @@ func toPageXml*(text: string): string =
 
 
 
-#[ Lines ]#
+#[ ni'o ni'o ni'o lo linji ]#
 
 func isLineCell(node: XmlNode): bool =
-  ## Decide whether element of cell is line of its own: paragraph, phrase or equation.
+  ## jdice lo du'u xu kau le jgena pe le selci cu du pa linji poi sepli
+  ##   .i le jgena cu du lo ju'agri .a lo jufpau .a lo dunme'o
   node.tag == "p" or node.isClass("span", "foreignphrase") or
       node.isClass("div", "informalequation")
 
 
 func classLine(node: XmlNode): string =
-  ## Name class of line cell element gives: class of paragraph, else kind of element.
+  ## dunda le klesi pe le linji poi le jgena pe le selci cu dunda ke'a
+  ##   .i va'o lo nu le jgena cu ju'agri kei le klesi cu du le selkai po'u zoi gy. class .gy. pe le
+  ##       ju'agri
+  ##   .i va'o lo drata le klesi cu du lo tarmi be le jgena
   if node.tag == "p": (if node.attr("class").len > 0: node.attr("class") else: "p")
   elif node.tag == "div": "informalequation"
   else: "foreignphrase"
 
 
 func addLinesRow(lines: var seq[Line], row: XmlNode) =
-  ## Add lines of table row: one for each line element of one cell, else one joining cells.
+  ## jmina le linji pe le lijgri pe lo liste
+  ##   .i va'o lo nu pa selci po'o cu vasru lo jgena pe lo linji kei ro le jgena cu dunda pa linji
+  ##   .i va'o lo drata ku jmina pa linji poi jorne le selci
   let
     class_row = row.attr("class")
     class_plain = (if class_row.len > 0: class_row else: "plain")
@@ -175,7 +251,8 @@ func addLinesRow(lines: var seq[Line], row: XmlNode) =
 
 
 func addLines(lines: var seq[Line], node: XmlNode) =
-  ## Add lines of every element under node: table row, paragraph, phrase or equation.
+  ## jmina le linji pe ro jgena poi selvau le jgena
+  ##   .i le jgena cu du lo lijgri pe lo liste .a lo ju'agri .a lo jufpau .a lo dunme'o
   for child in node:
     if child.kind != xnElement: continue
     if child.tag == "tr": lines.addLinesRow child
@@ -188,10 +265,10 @@ func addLines(lines: var seq[Line], node: XmlNode) =
 
 
 
-#[ Examples ]#
+#[ ni'o ni'o ni'o lo mupli ]#
 
 func addExamples(examples: var seq[Example], node: XmlNode) =
-  ## Add every numbered example under node that holds lojban row.
+  ## jmina ro mupli poi selna'u gi'e selvau le jgena gi'e vasru su'o jboli'i
   for child in node.elements:
     if not child.isClass("div", "example"):
       examples.addExamples child
@@ -210,13 +287,15 @@ func addExamples(examples: var seq[Example], node: XmlNode) =
 
 
 func isExample(node: XmlNode): bool =
-  ## Decide whether page holds numbered example anywhere.
+  ## jdice lo du'u xu kau le papri cu vasru su'o mupli poi selna'u
+  ##   .i lo du'u le mupli cu zvati ma kau na vajni
   if node.isClass("div", "example"): return true
   node.elements.anyIt(it.isExample)
 
 
 func paragraphsNotice(page: XmlNode): seq[string] =
-  ## Read text of each paragraph of section 1.8, title and links of page left out.
+  ## tcidu le selci'a pe ro ju'agri pe `CLL 1.8`
+  ##   .i le cmene .e lo judri vu'o pe le papri cu na se tcidu
   for node in page.elements:
     if node.isClass("div", "section"):
       for child in node.elements:
@@ -227,10 +306,11 @@ func paragraphsNotice(page: XmlNode): seq[string] =
 
 
 
-#[ Reading ]#
+#[ ni'o ni'o ni'o lo nu tcidu ]#
 
 proc readDigest(directory: string, names: openArray[string]): string =
-  ## Hash output of `sha256sum` over named pages, given in order of name, into one SHA-256.
+  ## zbasu pa sinxa pe `SHA-256` lo selsku be `sha256sum` poi tcidu le papri poi selcme ku'o ja'i le
+  ##     porsi be lo cmene
   let (output, code) = execCmdEx(
     "sha256sum " & names.mapIt(quoteShell(it)).join(" "), workingDir = directory
   )
@@ -241,7 +321,8 @@ proc readDigest(directory: string, names: openArray[string]): string =
 
 
 proc readBook*(directory: string): Book =
-  ## Read every page of directory: examples, notice of section 1.8, and digest of pages read.
+  ## tcidu ro papri pe le datnyveiste gi'e dunda lo mupli .e le notci pe `CLL 1.8` ge'u .e le sinxa
+  ##     be le papri poi se tcidu
   var names: seq[string]
   for kind, name in walkDir(directory, relative = true):
     if kind == pcFile and name.endsWith(".html"): names.add name
@@ -269,10 +350,12 @@ proc readBook*(directory: string): Book =
 
 
 
-#[ Rendering ]#
+#[ ni'o ni'o ni'o lo nu ciska ]#
 
 func linesExample(example: Example): seq[string] =
-  ## Render one example as constructor: on one line where it fits, else one argument to line.
+  ## ciska pa mupli ta'i lo nu zbasu lo dacti
+  ##   .i va'o lo nu pa linji cu banzu kei ciska pa linji po'o
+  ##   .i va'o lo drata ro linji cu vasru pa sumti
   let
     number = "number: \"" & $example.chapter & "." & $example.index & "\""
     rows = "rows: @[" & example.rows.mapIt(it.toLiteral).join(", ") & "]"
@@ -290,38 +373,51 @@ func linesExample(example: Example): seq[string] =
 
 
 func toModuleExamples*(book: Book): string =
-  ## Render examples of book as committed module text.
+  ## ciska le mupli pe le cukta ta'i le selci'a pe le se ralte datnyvei
   var lines = @[
-    "## Hold lojban rows of each numbered example of CLL 1.1 that holds one, for corpus suite.",
-    "##   Written by `nim r tools/build.nim cll <directory>` from pages of CLL 1.1, generated",
-    "##   2016-08-26, SHA-256 `" & book.digest[0..31] & "`",
-    "##   `" & book.digest[32 .. ^1] & "`; never edit by hand, run verb again.",
-    "##   Extracted from version 1.1 of CLL, book of Logical Language Group; folder holding",
-    "##     module is distributed under notice of book in `NOTICE.md`, never under licence of",
-    "##     repository.",
-    "##   Rows of class `jbo` and `jbophrase` alone: cells of row joined by one space, no-break",
-    "##     space made space, white space collapsed, markup dropped; text otherwise as book",
-    "##     writes it, brackets and notation included.",
+    "## vasru lo jboli'i pe ro mupli poi selna'u ne'i `CLL 1.1` gi'e vasru su'o jboli'i",
+    "##   .i le cipra pe le selci'agri cu tcidu le linji",
+    "##   .i le minde po'u `nim r tools/build.nim cll <directory>` ciska le datnyvei ra'i lo " &
+    "papri be",
+    "##       `CLL 1.1` be'o poi selzba de'i `2016-08-26`",
+    "##   .i lo sinxa be le papri be'o pe `SHA-256` du `" & book.digest[0..31] & "` ce'o",
+    "##       `" & book.digest[32 .. ^1] & "`",
+    "##   .i no prenu cu galfi le datnyvei",
+    "##   .i lo cenba cu selzba lo nu rapypli le minde",
+    "##   .i le linji cu se lebna fi `CLL 1.1` noi cukta gi'e seldu'a `Logical Language Group`",
+    "##   .i le datnyveiste poi vasru le vi datnyvei cu selbe'i ja'i le notci pe le cukta zi'e " &
+    "poi zvati",
+    "##       `NOTICE.md`",
+    "##   .i le datnyveiste cu na selbe'i ja'i le crujva pe `delegations`",
+    "##   .i le vi datnyvei cu vasru lo linji pe lo klesi po'u `jbo` .a `jbophrase`",
+    "##   .i le vi datnyvei cu vasru no datli'i",
+    "##   .i ro selci pe pa lijgri cu jorne lo bavla'i selci pa kutle'u",
+    "##   .i lo kutle'u poi fanta lo nu katna le linji cu binxo lo sapkutle'u",
+    "##   .i ro porsi be lo kutle'u cu binxo pa kutle'u",
+    "##   .i lo tcita cu selvi'u",
+    "##   .i va'o lo drata le selci'a cu mintu le selci'a pe le cukta gi'e ralte lo grile'u .e " &
+    "lo sinxa",
+    "##       poi na lojbo",
     "",
     "{.experimental: \"strictFuncs\".}",
     "",
     "",
-    "type ExampleCll* = object  ## Define one numbered example of CLL 1.1 by lojban rows it " &
-    "holds.",
-    "  number* {.requiresInit.}: string  ## Number book gives example, as `5.12`.",
-    "  rows* {.requiresInit.}: seq[string]  ## Lojban rows in order of book.",
+    "type ExampleCll* = object  ## skicu pa selnacmupli pe `CLL 1.1` sepi'o lo jboli'i pe le mupli",
+    "  number* {.requiresInit.}: string  ## lo namcu pe le mupli ja'i le cukta mu'u `5.12`",
+    "  rows* {.requiresInit.}: seq[string]  ## lo jboli'i ja'i le porsi pe le cukta",
     "",
     "",
     "const EXAMPLES_CLL* = [",
   ]
   for example in book.examples: lines.add example.linesExample
   lines.add "]"
-  lines.add "  ## Every numbered example of CLL 1.1 holding lojban row, in order of number."
+  lines.add "  ## lo nacpoi be ro mupli poi se namcu ne'i `CLL 1.1` gi'e vasru lo lojbo linji"
   lines.join("\n") & "\n"
 
 
 func linesQuoted(paragraph: string): seq[string] =
-  ## Render paragraph as Markdown quotation, wrapped at spaces to fit `WIDTH`.
+  ## ciska le ju'agri ta'i lo nu sitna pe `Markdown`
+  ##   .i le ju'agri cu selka'a bu'u lo kutle'u tezu'e lo nu mapti `WIDTH`
   var line = ">"
   for word in paragraph.split(' '):
     if line.len > 1 and not (line & " " & word).isFit:
@@ -332,7 +428,8 @@ func linesQuoted(paragraph: string): seq[string] =
 
 
 func toNotice*(book: Book): string =
-  ## Render notice of book, with statement of what folder holds and how it was extracted.
+  ## ciska le notci pe le cukta gi'e ciska lo selsku be lo du'u le datnyveiste cu vasru ma kau kei
+  ##     .e lo du'u le selvau cu se lebna ta'i ma kau
   var lines = @[
     "# Notice",
     "",

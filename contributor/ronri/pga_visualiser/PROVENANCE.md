@@ -1708,7 +1708,7 @@ weight, so that sign survives. `depthAgainst` is linear in its point. A meet pas
 therefore reports its depth **negated** on every plane met from behind its normal. Such a plane
 picks at 0 of 462 sampled pixels, while the ground plane hides the fault.
 
-**Line.** Two segments meet on the line at its point nearest the pivot. Each runs out to one of the
+**Line.** Two segments meet on the line at its point nearest the eye. Each runs out to one of the
 two vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is a property of
 the *eye*, which forces this shape. An end anchored at a fixed reach from the support stops short of
 it, by about 6.7° for a support 40 units out.
@@ -1720,12 +1720,16 @@ from the far end, the two halves part on screen. The far ends sit off the line a
 so occlusion is approximate there. `picking` tests both halves through `clipToEyeSide`, a near-plane
 clip written by hand, because this reach puts an endpoint behind the eye.
 
-**The halves meet where the line passes nearest the pivot, and not at its support.** The image is
-the same from any point of the line, so the point only sets what a float32 record holds.
-`DrawScale.pivot` carries the pivot about the view origin, and `picking` and `isLineShownCentrally`
-test the same halves. Rejected: the support, which a line picked far off has 4.7e6 units behind the
-eye. A record stepped from there loses the line where it passes the eye, 1e-8 off. On the page that
-line then ran about 30° off its own image.
+**The halves meet where the line passes nearest the eye.** The image is the same from any point of
+the line, so the point only sets what a float32 record holds. Records hold places about the view
+origin, near the eye, so that point holds the line best where it passes close. `picking` and
+`isLineShownCentrally` test the same halves.
+
+Rejected: the support, which a line picked far off has 4.7e6 units behind the eye. A record stepped
+from there loses the line where it passes the eye, 1e-8 off. On the page that line then ran about
+30° off its own image. Rejected: the point nearest the pivot, which a zoom out stands 100,000 units
+off. A line 0.01 beside the eye then runs 75 px off its image, and 425 px with the pivot a million
+units off. The suite case in the checked list reads both under that rule.
 
 **Horizon objects are drawn as sky.** A horizon point is a fixed star at `eye +
 radius_horizon*heading`. A horizon line is a great circle about the eye. A horizon plane is a
@@ -1848,6 +1852,8 @@ reads once the reader closes the panel.
 
 - a meet far outside the drawn disc, from both sides of one plane;
 - both halves of a line pickable;
+- a line beside the eye stays within half a pixel of its image, the pivot 19 to 4.7 million units
+  off;
 - the dome of the horizon plane inserted first;
 - the segment count of the great circle after the eye cut;
 - the fog radii at an eye inside its own fog;
@@ -2260,16 +2266,38 @@ which only runs the speed down.
 it to the near clip, the far clip, the depth mapping and the furniture's extent. So flying at a
 planet draws its near clip in. The distance to the pivot answers only where nothing is drawn ahead.
 
-It is depth along the sight, and never distance, because what a reader turns away from is not drawn.
+Rejected there: the reach of the point that the last zoom took. It agrees with the distance to the
+pivot at home, and parts only after a flight, with the eye turned from every object. A Playwright
+probe of the page, which is not kept, turned the view 40 ways at each of four stances on 2026-11-15.
+The stances were home and after a flight of 10 s, in the opening scene and in the demo of 360.
+Nothing was drawn ahead in 9 views at home in the opening scene, and in no view of the other three.
+
+For a point or a plane it is depth along the sight, and never distance, because what a reader turns
+away from is not drawn.
 It is the middle of the object, with no drawn radius taken off. A camera at the surface of a planet
 then reads its radius rather than zero. A near clip of one four-hundredth of that still holds the
 whole planet. It is never the depth of the pointer, which would move the furniture and the depth
 mapping at every pointer move of a still camera.
 
-**A line stands where it passes nearest the pivot**, as it is drawn (Geometry and drawing).
-`reachNear` reads that point in components, as it reads every place. Rejected: its support, the
-point nearest the world origin. A line picked far off has it 4.7e6 units behind the eye. The next
-object ahead then sets the near clip at 21.3 units, and cuts away the line 2.4e-7 ahead.
+**A line reaches its distance from the eye**, where any point of it stands ahead. No point of the
+line stands nearer the eye. The near clip stands a four-hundredth of that distance ahead. A point of
+the line nearer in depth stands over 89.8° off the sight, outside the frame. That distance runs to
+the point where the halves meet (Geometry and drawing). `reachNear` reads each line in components,
+as it reads every place.
+
+A line nearer the eye than `DISTANCE_LIMIT_NEAR`, the least orbit, reaches nothing, because its
+image is one point. So does a line square to the sight behind the eye, of which no point is drawn.
+Cost: where a line passes close, the furniture and the scale bar shrink to that distance, as they do
+for a planet close ahead. No check measures this. It follows from `scaleLocal`, which both read.
+
+Rejected: the depth where the line passes nearest the pivot. A line alone 0.01 beside the eye then
+sets the near clip far ahead. It loses up to 449 px of its image, as a probe that is not kept read.
+The suite case in the checked list fails 17 of its 20 cases under that rule.
+
+Rejected: its support, the point nearest the world origin. A line picked far off has it 4.7e6 units
+behind the eye. The next object ahead then sets the near clip at 21.3 units, and cuts away the line
+2.4e-7 ahead. Rejected, and not measured: the depth where the line enters the frame. It shrinks
+nothing for a line out of view, but clips each line against the view pyramid in each frame.
 
 **It is read once for each frame, and never for each overlay call.** `reachNear` walks every
 placement of the frame, and `ensureViewOverlay` runs many times over one frame: the anchor, each
@@ -2313,7 +2341,13 @@ held a pinch 0.08 units off it, and a wheel stopped 0.08 off any line or plane.
 - a travel in and back out returns the eye, and a factor of 1e-15 stops at the near floor;
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
 - the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
-- the nearest reach is read ahead of the eye, never behind it, and never from a hidden object.
+- the nearest reach is read ahead of the eye, never behind it, and never from a hidden object;
+- a line reaches its distance from the eye, and one through the eye or square behind it reaches
+  nothing;
+- 200 seeded lines reach their distance from the eye, and no sample of one in frame stands under the
+  near clip;
+- a line alone beside the eye stays within half a pixel of its whole image, the pivot 19 to 4.7
+  million units off.
 
 Verified by driven checks, in Chromium on 2026-10-07:
 
@@ -4497,8 +4531,8 @@ which `CameraTween.revision_offered` holds.
 The projection is held in world coordinates, as the scene stores the line. A probe that is not kept
 measured it on 2026-10-25, in exact rational arithmetic. From a star 4.7e6 units out, the pivot
 lands 4.4e-11 off the line. That is a fifth of a pixel at the orbit distance, in a frame 900 px
-high. The frame reads the line from the same point, for its near clip and its drawn halves (Free
-flight, Geometry and drawing).
+high. The near clip and the drawn halves read the line where it passes nearest the eye (Free flight,
+Geometry and drawing). Neither reads it at the pivot.
 
 Rejected: the eye read at each offer. For a line moved across itself in 20 frames, the pivot slides
 9.89 units along it, and the distance loses 51%. Rejected: the frame rule, which centres a lone line

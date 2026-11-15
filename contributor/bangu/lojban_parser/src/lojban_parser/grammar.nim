@@ -1,67 +1,149 @@
-## Read terminals of lojban text by formal grammar of CLL 21.1, into tree of its named rules.
+## tcidu lo genvla pe lo jboselci'a ja'i le ci'erge'a pe `CLL 21.1` gi'e zbasu lo tricu pe lo javni
+##     poi selcme
 ##
-##   |--------------------|-----------------------------------------------------------|
-##   | Code               | Meaning                                                   |
-##   |--------------------|-----------------------------------------------------------|
-##   | EBNF               | 88 formal rules of 21.1, as book writes them              |
-##   | Terminal           | class of word grammar reads: selma'o, `BRIVLA` or `CMENE` |
-##   | Node               | named rule with what it holds, or one terminal            |
-##   | Stop               | place grammar stops at, and terminals it would read there |
-##   | ReadingGrammar     | tree of text, or place and rule where grammar stops       |
-##   | readGrammar        | read terminals by grammar of 21.1                         |
-##   | readGrammarMarked  | read terminals into tree that marks where grammar stops   |
-##   | LUT_CHAIN_BY_ENDS  | rules between two rules, each node holding next alone     |
-##   | LUT_NUMBER_BY_RULE | number of each named rule of 21.1, by its name            |
-##   |--------------------|-----------------------------------------------------------|
+##   |----------------------|---------------------------------------------------------------------|
+##   | lo cmene             | lo smuni                                                            |
+##   |----------------------|---------------------------------------------------------------------|
+##   | `EBNF`               | le bibi ci'ejva pe `CLL 21.1` ta'i le selci'a pe le cukta      |
+##   | `Terminal`           | lo selma'o .a `BRIVLA` .a `CMENE` vu'o noi genlei lo valsi     |
+##   | `Node`               | lo javni poi selcme gi'e vasru lo panzi ku'o .a pa genvla    |
+##   | `Stop`               | lo stistu .e lo genvla poi le gerna ka'e tcidu ke'a vi    |
+##   | `ReadingGrammar`     | lo tricu pe le selci'a .a lo stistu .ebo lo stijva       |
+##   | `readGrammar`        | tcidu lo genvla ja'i le gerna pe `CLL 21.1`                    |
+##   | `readGrammarMarked`  | tcidu lo genvla gi'e zbasu lo tricu poi sinxa lo stistu   |
+##   | `LUT_CHAIN_BY_ENDS`  | lo javni poi jbini re javni                                         |
+##   |                      | .i ro jgena cu vasru le bavla'i po'o                                |
+##   | `LUT_NUMBER_BY_RULE` | lo namcu pe ro javni pe `CLL 21.1` ja'i lo cmene be le javni        |
+##   |----------------------|---------------------------------------------------------------------|
 ##
-##   Grammar is data: `EBNF` holds formal rules of 21.1 as book writes them, which Logical
-##     Language Group dedicates to public domain; line opening with space goes on with rule
-##     before it. Compile time turns each rule into productions, so no rule is written twice
-##     (II.9); static checks hold 88 rules, each name defined, and each rewrite and grouping below
-##     applied once.
-##   Notation follows 21.1: `|` choice, `[]` option, `&` and/or, `...` repetition, `()` group,
-##     `#` free modifiers, as `[free ...]`, and `/X/` terminator that text may elide.
-##     `...` binds closer than `&`, and `&` closer than `|`; juxtaposition closer than `&`, as
-##       `ZEhA [PU [NAI]]` stands between two `&` in rule 1030.
-##     21.1 leaves order of juxtaposition and `&` unstated. Final baseline YACC grammar, whose
-##       numbers 21.1 cross-references, takes other order in rule 972 alone: `&` of tense and
-##       CAhA stands inside `[NAhE]` and `[KI]`, so `GROUPINGS` writes its parentheses.
-##       Cost: `EBNF` stays text of book, and grouping is one line beside it.
-##   Constructs that act on words before grammar, as rules 1100 and 1101 say, stand as one word:
-##     `ZO any-word` as `ZO`, `LOhU any-word ... LEhU` as `LOhU`, `ZOI any-word anything any-word`
-##     as `ZOI`, `any-word (ZEI any-word) ...` as `ZEI`, and `any-word BU` as `BU`; `prose.nim`
-##     joins their words before grammar reads them (#814).
-##   Parser is Earley's: grammar holds left recursion (`rp-expression` through `rp-operand`),
-##     empty options, and ambiguity, which recursive descent reads not. Text reads where any
-##     derivation holds it.
-##     Tree is derivation closing fewest rules before each terminal, from first, so construct
-##       text opens last takes each word it can: elided `ke'e` closes at end of selbri (5.5), and
-##       clause after `be` attaches to last linked sumti (5.7). Tie goes to first choice of rule.
-##       21.1 lets terminator be elided only where no ambiguity results, and orders no trees, so
-##       choice follows examples of CLL; parser reading left to right that prefers to read
-##       terminal over closing rule, as YACC does, chooses same tree.
-##     Cost: Earley reads in cube of number of terminals at worst, and choice of tree compares
-##       closures over each span it holds. So text reads part by part, cut at `ni'o` and `.i`
-##       (`readGrammar`), and time grows with length of text (#849), save part that holds `lu`
-##       or `to` left open, which runs to end and reads in one pass. Text has no bound on its
-##       length, so parser holds `seq` and `Table` at runtime, as `stream` does (STYLE.md §4).
-##   Refusal names place where every derivation stops, and named rule that stops innermost there.
-##   Chain is run of named rules in tree, each holding next rule alone, as `sumti` holds `sumti-1`
-##     where text gives no relative clause; layers of 21.1 make most of each tree such runs.
-##     Compile time finds each chain 21.1 allows, and holds that two ends give one chain, so tree
-##     writes chain by its ends alone and reads back whole (`nif.nim`).
-##   Marks: where grammar refuses text, `readGrammarMarked` still gives tree, so other program
-##     mends text by its tree; this parser decides no mend (ruling `D1 a` of #859).
-##     Error node takes name and number of rule stopping innermost, and `Stop`: place where
-##       every derivation stops, and terminals some derivation reads there.
-##     Text cut into parts, as passes cut it, reads part by part: error node of text holds tree
-##       of each part that reads alone, and error node of each that does not. So reading starts
-##       again at each `ni'o`, and at each `.i` that joins nothing, as Architect ruled (#859).
-##     Error node of part holds largest branches that keep 21.1, and terminals between them:
-##       cover leaves fewest terminals out, then takes fewest pieces (`islands`). Sets seeded
-##       with each named rule at each set find each branch, wherever text broke rules before.
-##     Cost: error node of whole text reads it in one pass, as refusal of `readGrammar` does, and
-##       seeded sets of part refused hold each named rule at each set.
+## ni'o le gerna cu datni
+##   .i `EBNF` vasru le ci'ejva pe `CLL 21.1` zi'e noi mintu le selci'a pe le cukta
+##   .i `Logical Language Group` dunda le selci'a ro da
+##   .i lo linji poi selkra lo kutle'u cu pagbu le javni poi lidne le linji
+##
+## ni'o ca lo nu fanva kei ro javni cu selga'i fi lo basyjva
+##   .i se ki'u bo no javni cu selci'a re roi to `Article II.9` toi
+##   .i lo cipra pe lo nu fanva cu cipra lo du'u le gerna cu vasru lo bibi javni kei .e lo du'u ro
+##       cmene be lo javni cu selski kei .e lo du'u ro nu galfi .e ro nu gunma cu fasnu pa roi
+##   .i le nu galfi cu selci'a ne'i `REWRITES`
+##   .i le nu gunma cu selci'a ne'i `GROUPINGS`
+##
+## ni'o le snici'e cu mapti `CLL 21.1`
+##   .i `|` sinxa lo nu cuxna
+##   .i `[]` sinxa lo na'e bilga pagbu
+##   .i `&` sinxa lo selsmu be zo ja
+##   .i `...` sinxa lo nu rapli
+##   .i `()` sinxa lo girzu
+##   .i `#` sinxa `[free ...]` noi sinxa lo zifyga'i
+##   .i `/X/` sinxa lo nu lo selci'a cu ka'e claxu lo famvla po'u `X`
+##
+## ni'o `...` zmadu `&` lo ka jorne
+##   .i `&` zmadu `|` lo ka jorne
+##   .i lo porsi cu zmadu `&` lo ka jorne
+##   .i mupli fa lo nu `ZEhA [PU [NAI]]` zvati lo jbini be re `&` ne'i le javni pe li panocino
+##
+## ni'o `CLL 21.1` na cusku lo du'u xu kau lo porsi cu zmadu `&` lo ka jorne
+##   .i le romoi jicmu gerna pe `YACC` zi'e noi `CLL 21.1` sitna lo namcu pe ke'a pilno lo drata nu
+##       gunma ne'i le javni pe li sozere po'o
+##   .i ne'i le javni ku `&` poi jorne lo temtcita .e lo cmavo be `CAhA` cu zvati ne'i `[NAhE]` .e
+##       `[KI]`
+##   .i se ki'u bo `GROUPINGS` ciska lo cukla grile'u pe le nu gunma
+##   .i jdima fa lo nu `EBNF` stali lo ka mintu le selci'a pe le cukta
+##   .i le nu gunma cu selci'a fi pa linji poi lamji `EBNF`
+##
+## ni'o le javni pe li papanono .e li papanopa cu cusku lo du'u lo gensu'a cu galfi lo valsi pu lo
+##     nu le gerna cu tcidu
+##   .i ro le gensu'a cu selsni pa valsi
+##   .i `ZO any-word` selsni `ZO`
+##   .i `LOhU any-word ... LEhU` selsni `LOhU`
+##   .i `ZOI any-word anything any-word` selsni `ZOI`
+##   .i `any-word (ZEI any-word) ...` selsni `ZEI`
+##   .i `any-word BU` selsni `BU`
+##   .i `prose.nim` jmina le valsi pe ro gensu'a fi pa pagbu pu lo nu le gerna cu tcidu le valsi to
+##       `#814` toi
+##
+## ni'o le genturfa'i cu pilno le tadji pe `Earley`
+##   .i ki'u bo le gerna cu vasru lo javni poi selkra vo'a
+##   .i mupli fa `rp-expression` noi selkra vo'a sepi'o `rp-operand`
+##   .i le gerna cu vasru lo selcu'a poi ka'e kunti ku'o gi'e ka'e dunda re tricu pa selci'a
+##   .i lo tadji po'u `recursive descent` na ka'e tcidu le gerna
+##   .i le genturfa'i cu tcidu lo selci'a va'o lo nu su'o cumtricu cu vasru le selci'a
+##
+## ni'o le tricu cu du le cumtricu poi vasru lo mecraijva poi mulno pu ro genvla
+##   .i le pamoi gerna valsi cu krasi lo nu cuxna
+##   .i se ki'u bo lo gensu'a poi romoi cfari cu vasru ro valsi poi ka'e pagbu le gensu'a
+##   .i va'o lo nu le selci'a cu claxu zo ke'e kei le gensu'a cu mulno bu'u lo fanmo be le selbri to
+##       `CLL 5.5` toi
+##   .i lo me `relative-clauses` me'u poi se lidne zo be ckini lo romoi sumti poi zo be .a zo bei
+##       jorne ke'a to `CLL 5.7` toi
+##   .i va'o lo nu su'o re cumtricu cu dunli kei lo pamoi se cuxna pe lo javni cu jinga
+##
+## ni'o `CLL 21.1` curmi lo nu lo selci'a cu claxu lo famvla va'o po'o lo nu le gerna na dunda re
+##     tricu le selci'a
+##   .i `CLL 21.1` na cusku lo du'u ma kau poi tricu cu selcu'a
+##   .i se ki'u bo lo nu cuxna cu mapti lo mupli pe `CLL`
+##   .i lo genturfa'i poi tcidu ro valsi pu lo bavla'i valsi gi'e zmanei lo nu tcidu lo genvla kei
+##       lo nu lo javni cu mulno cu cuxna le tricu poi le vi genturfa'i cu cuxna ke'a
+##   .i mupli fa `YACC`
+##
+## ni'o jdima fa lo nu lo temci pe lo nu tcidu ta'i `Earley` cu ka'e zensmi lo tenfa be lo te kancu
+##     be lo gerna valsi be'o bei li ci
+##   .i lo nu cuxna lo tricu cu karbi lo te kancu be lo javni sinxa poi mulno ne'i ro se kuspe poi
+##       le tricu cu vasru ke'a
+##   .i se ki'u bo `readGrammar` tcidu ro pagbu be le selci'a
+##   .i le selci'a cu selka'a bu'u zo ni'o .e zo .i
+##   .i lo temci cu zensmi lo ni le selci'a cu clani to `#849` toi
+##   .i ku'i va'o lo nu zo lu .a zo to cu ca'o kalri kei le pagbu poi vasru le kravla cu selfa'o le
+##       fanmo be le selci'a gi'e se tcidu pa roi
+##
+## ni'o lo ni lo selci'a cu clani cu se jimte no da
+##   .i se ki'u bo le genturfa'i cu pilno `seq` .e `Table` ca lo nu le samtci cu gunka to
+##       `STYLE.md §4` toi
+##   .i `stream` pilno `seq` .e `Table`
+##
+## ni'o lo nu to'e curmi cu cusku lo stuzi poi ro cumtricu cu sisti bu'u ke'a ku'o .e lo javni poi
+##     selcme gi'e sisti bu'u le stuzi gi'e traji lo ka ce'u selvau
+##
+## ni'o lo porsi be lo javni cu porsi lo javni poi selcme ne'i lo tricu
+##   .i ro le javni cu vasru le bavla'i javni po'o
+##   .i mupli fa lo nu `sumti` vasru `sumti-1` po'o va'o lo nu lo selci'a cu na vasru
+##       `relative-clauses`
+##   .i ki'u lo nu so'i javni pe `CLL 21.1` jorne ta'i lo porsi kei so'a jgena pe ro tricu cu pagbu
+##       lo porsi be lo javni
+##
+## ni'o ca lo nu fanva kei le genturfa'i cu facki ro porsi be lo javni be'o poi `CLL 21.1` curmi
+##     ke'a
+##   .i lo cipra cu cipra lo du'u ro re fanmo cu dunda pa porsi po'o
+##   .i se ki'u bo `nif.nim` ciska ro porsi sepi'o le re fanmo be le porsi po'o
+##   .i lo nu raptcidu cu dunda le multricu
+##
+## ni'o va'o lo nu le gerna cu to'e curmi lo selci'a kei `readGrammarMarked` dunda lo tricu poi
+##     sinxa ro srera
+##   .i se ki'u bo lo drata samtci cu ka'e cikre le selci'a ja'i le tricu
+##   .i le vi genturfa'i cu jdice no nu cikre to lo seljdi po'u `D1 a` bu'u `#859` toi
+##   .i lo srejge cu ponse lo cmene .e lo namcu vu'o pe le javni poi sisti gi'e traji lo ka ce'u
+##       selvau ku'o gi'e ponse pa `Stop`
+##   .i `Stop` vasru lo stuzi poi ro cumtricu cu sisti bu'u ke'a ku'o .e lo genvla poi su'o cumtricu
+##       cu tcidu ke'a bu'u le stuzi
+##
+## ni'o va'o lo nu le nu tcidu ro pagbu cu katna lo selci'a fi lo pagbu kei ro pagbu cu se tcidu
+##     ta'i lo nu sepli
+##   .i le srejge pe le selci'a cu vasru lo tricu pe ro pagbu poi se tcidu ge'u .e lo srejge pe ro
+##       pagbu poi na se tcidu
+##   .i se ki'u bo lo nu tcidu cu rapcfa bu'u ro valsi po'u zo ni'o ge'u .e ro valsi po'u zo .i zi'e
+##       poi jorne no da
+##   .i `Architect` jdice di'u bu'u `#859`
+##
+## ni'o lo srejge pe pa pagbu cu vasru lo rairbraricpau poi mapti `CLL 21.1` ku'o .e lo genvla poi
+##     zvati lo jbini be le ricpau
+##   .i le gacri cu vasru lo mecraigenvla poi na pagbu su'o ricpau
+##   .i ba bo le gacri cu vasru lo mleca traji pagbu to `islands` toi
+##   .i va'o lo nu ro selcmi cu kanpe ro javni poi selcme kei le selcmi cu facki ro ricpau
+##   .i lo du'u le selci'a pu na'e mapti lo javni bu'u ma kau na vajni
+##
+## ni'o jdima fa lo nu le nu zbasu lo srejge pe pa mulselci'a cu tcidu le mulselci'a pa roi
+##   .i ca lo nu `readGrammar` to'e curmi kei `readGrammar` tcidu le mulselci'a pa roi
+##   .i jdima fa lo nu ro selcmi pe lo pagbu poi se to'e curmi cu vasru ro javni poi selcme
 
 {.experimental: "strictFuncs".}
 
@@ -174,99 +256,148 @@ vocative 415= (COI [NAI]) ... & DOI
 indicators 411= [FUhE] indicator ...
 indicator 413= (UI | CAI) [NAI] | Y | DAhO | FUhO
 """
-  ## Formal rules of CLL 21.1, EBNF version, Final Baseline, as version 1.1 writes them.
+  ## le ci'ejva pe `CLL 21.1`
+  ##   .i le javni cu pagbu le romoi jicmu gerna pe `EBNF` gi'e mintu le selci'a pe `CLL 1.1`
 
 
 type
-  Terminal* = distinct int  ## Define class of word grammar reads: selma'o, `BRIVLA` or `CMENE`.
+  Terminal* = distinct int  ## lo selma'o .a `BRIVLA` .a `CMENE` vu'o noi genlei lo valsi
 
-  Symbol = object  ## Define symbol of production: terminal, or nonterminal of grammar.
+  Symbol = object
+    ## lo sinxa pe lo basyjva
+    ##   .i le sinxa cu du lo genvla .a lo jvasni pe le gerna
     is_terminal: bool
-    code: int  ## Code of terminal, or index of nonterminal.
+    code: int  ## lo namcu pe lo genvla .a lo stuna'u pe lo jvasni
 
-  Production = object  ## Define one way nonterminal derives sequence of symbols.
-    head: int  ## Index of nonterminal it derives.
-    body: seq[Symbol]  ## Symbols it derives, in order; empty for empty option.
+  Production = object  ## pa tadji be lo nu pa jvasni cu binxo lo porsi be lo sinxa
+    head: int  ## lo stuna'u pe le jvasni poi binxo le porsi
+    body: seq[Symbol]
+      ## lo porsi be lo sinxa poi selbi'o
+      ##   .i le porsi cu kunti va'o lo kutselcu'a
 
-  Grammar = object  ## Define grammar compiled from `EBNF`: nonterminals and their productions.
-    names: seq[string]  ## Name of each nonterminal; helper takes name of rule holding it.
-    numbers: seq[Option[int]]  ## Number of each named rule in 21.1; none for helper.
+  Grammar = object  ## lo gerna poi selzba fi `EBNF` gi'e vasru lo jvasni .e lo basyjva
+    names: seq[string]
+      ## lo cmene be ro jvasni
+      ##   .i lo djujva cu ponse lo cmene be le javni poi vasru le djujva
+    numbers: seq[Option[int]]
+      ## lo namcu pe ro javni poi selcme ne'i `CLL 21.1`
+      ##   .i lo djujva cu ponse no namcu
     productions: seq[Production]
-    heads: seq[seq[int]]  ## Productions of each nonterminal, in order of its choices.
-    nullable: seq[bool]  ## Nonterminal derives empty sequence.
-    lengths: seq[int]  ## Least terminals each nonterminal derives.
-    start: int  ## Index of `text`, rule 0.
+    heads: seq[seq[int]]  ## lo basyjva pe ro jvasni ja'i le porsi pe le selcu'a
+    nullable: seq[bool]  ## le jvasni cu ka'e binxo lo kutpoi
+    lengths: seq[int]  ## lo mecraiterkancu be lo genvla poi ro jvasni cu binxo ke'a
+    start: int  ## lo stuna'u pe `text` noi du le javni pe li no
 
-  Builder = object  ## Define grammar under construction from tokens of one rule of `EBNF`.
+  Builder = object  ## lo gerna poi ca'o selzba fi lo pagbu be pa javni pe `EBNF`
     grammar: Grammar
     lut_index_by_name: Table[string, int]
     tokens: seq[string]
-    at: int  ## Index of next token to read.
-    rule: int  ## Index of rule being read, which names its helpers.
-    frees: Option[int]  ## Helper `#` stands for, `[free ...]`, built once.
+    at: int  ## lo stuna'u pe le bavla'i pagbu poi se tcidu
+    rule: int
+      ## lo stuna'u pe le javni poi ca'o se tcidu
+      ##   .i lo djujva cu cpacu lo cmene le javni
+    frees: Option[int]
+      ## le djujva poi `#` sinxa ke'a zi'e po'u `[free ...]`
+      ##   .i le djujva cu selzba pa roi
 
-  Stop* = object  ## Define place where grammar stops in text, and terminals it would read there.
-    at*: int  ## Index of terminal where every derivation stops; count of them, where text ends.
-    expected*: seq[Terminal]  ## Terminals some derivation reads at `at`, in order of code.
+  Stop* = object
+    ## lo stistu pe le selci'a ge'u .e lo genvla poi le gerna ka'e tcidu ke'a vi
+    at*: int
+      ## lo stuna'u pe le genvla poi ro cumtricu cu sisti bu'u ke'a
+      ##   .i va'o lo nu ro cumtricu cu sisti bu'u lo fanmo be le selci'a kei le stuna'u cu du lo te
+      ##       kancu be le gerna valsi
+    expected*: seq[Terminal]
+      ## lo genvla poi su'o cumtricu cu tcidu ke'a bu'u `at` ku'o ja'i le porsi pe le namcu
 
-  Node* = object  ## Define node of tree: named rule of 21.1 with nodes it holds, or terminal.
+  Node* = object
+    ## lo jgena pe lo tricu
+    ##   .i le jgena cu du lo javni poi selcme ne'i `CLL 21.1` gi'e vasru lo jgena ku'o .a lo genvla
     case is_terminal*: bool
     of true:
-      at*: int  ## Index of terminal in terminals read.
+      at*: int  ## lo stuna'u pe le genvla ne'i lo genvla poi se tcidu
     of false:
-      rule*: string  ## Name of rule, as `sumti-6`.
-      number*: int  ## Number of rule in 21.1, as 97.
+      rule*: string  ## lo cmene be le javni mu'u `sumti-6`
+      number*: int  ## lo namcu pe le javni ne'i `CLL 21.1` mu'u li soze
       children*: seq[Node]
       stop*: Option[Stop] = none(Stop)
-        ## Place grammar stops at, where node marks error: rule is rule stopping innermost there,
-        ##   and children are branches that keep 21.1, with terminals between them
-        ##   (`readGrammarMarked`); none where node keeps 21.1.
+        ## lo stistu pe le gerna va'o lo nu le jgena cu sinxa lo srera
+        ##   .i le javni pe le jgena cu du le javni poi sisti vi gi'e traji lo ka ce'u selvau
+        ##   .i lo panzi be le jgena cu du lo ricpau poi mapti `CLL 21.1` ku'o .e lo genvla poi
+        ##       zvati lo jbini be le tricu pagbu to `readGrammarMarked` toi
+        ##   .i va'o lo nu le jgena cu mapti `CLL 21.1` kei le datnypau cu kunti
 
-  ReadingGrammar* = object  ## Define outcome of reading terminals by grammar of 21.1.
+  ReadingGrammar* = object  ## lo jalge be lo nu tcidu lo genvla ja'i le gerna pe `CLL 21.1`
     case is_read*: bool
     of true:
-      tree*: Node  ## Rule `text` and all it holds.
+      tree*: Node  ## le javni po'u `text` ge'u .e ro da poi le javni cu vasru ke'a
     of false:
-      at*: int  ## Index of terminal where every derivation stops; count of them, where text ends.
-      rule*: string  ## Named rule stopping innermost there, with its number, as `sumti-6 97`.
-      head: int  ## Nonterminal of that rule, which error node `readGrammarMarked` gives takes.
-      expected: seq[Terminal]  ## Terminals some derivation reads at `at`, in order of code.
+      at*: int
+        ## lo stuna'u pe le genvla poi ro cumtricu cu sisti bu'u ke'a
+        ##   .i va'o lo nu ro cumtricu cu sisti bu'u lo fanmo be le selci'a kei le stuna'u cu du lo
+        ##       te kancu be le gerna valsi
+      rule*: string
+        ## le cmene .e le namcu vu'o pe le javni poi selcme gi'e sisti vi gi'e traji lo ka ce'u
+        ##     selvau
+        ##   .i mupli fa `sumti-6 97`
+      head: int
+        ## le jvasni pe le javni
+        ##   .i le srejge poi `readGrammarMarked` dunda ke'a cpacu le jvasni
+      expected: seq[Terminal]
+        ## lo genvla poi su'o cumtricu cu tcidu ke'a bu'u `at` ku'o ja'i le porsi pe le namcu
 
-  Item = tuple[production, dot, origin: int]  ## Define Earley item: production, dot, start set.
+  Item = tuple[production, dot, origin: int]
+    ## lo cmima pe `Earley` zi'e noi vasru lo basyjva .e lo stuzi be lo nu tcidu ne'i le basyjva
+    ##     be'o .e le selcmi poi le cmima cu cfari ne'i ke'a
 
 
 const
-  TERMINAL_BRIVLA* = Terminal(ord(Selmaho.high) + 1)  ## Brivla: gismu, lujvo or fu'ivla.
-  TERMINAL_CMENE* = Terminal(ord(Selmaho.high) + 2)  ## Cmene.
+  TERMINAL_BRIVLA* = Terminal(ord(Selmaho.high) + 1)  ## lo brivla noi gismu ja lujvo ja fu'ivla
+  TERMINAL_CMENE* = Terminal(ord(Selmaho.high) + 2)  ## lo cmene
   REWRITES = [
     ("ZO any-word #", "ZO #"), ("LOhU any-word ... LEhU #", "LOhU #"),
     ("ZOI any-word anything any-word #", "ZOI #"), ("any-word (ZEI any-word) ...", "ZEI"),
     ("any-word BU", "BU"),
   ]
-    ## Constructs grammar reads as one word, which `prose.nim` joins first (rules 1100, 1101).
+    ## lo gensu'a poi le gerna cu tcidu ke'a ta'i pa valsi
+    ##   .i `prose.nim` jmina le valsi pe ro gensu'a pu lo nu le gerna cu tcidu to le javni pe li
+    ##       papanono .e li papanopa toi
   GROUPINGS = [
     (
       "[NAhE] (time [space] | space [time]) & CAhA [KI]",
       "[NAhE] ((time [space] | space [time]) & CAhA) [KI]",
     ),
   ]
-    ## Groupings 21.1 leaves open, as final baseline YACC grammar `grammar.300` gives them: its
-    ##   rule 972 takes NAhE before tense or CAhA alone (973, 978), and KI after either (977).
-  COUNT_RULES = 88  ## Formal rules 21.1 gives, rules 1100 and 1101 aside.
-  BOUND_LENGTH = 1 shl 20  ## Bound on least terminals of nonterminal, above any length found.
-  DELIMITERS = {'[', ']', '(', ')', '|', '&', '#', '/'}  ## Marks of notation, `...` aside.
+    ## lo nu gunma poi `CLL 21.1` na jdice fi ke'a
+    ##   .i le romoi jicmu gerna pe `YACC` zi'e po'u `grammar.300` dunda le nu gunma
+    ##   .i ne'i `grammar.300` le javni pe li sozere cu curmi lo nu lo cmavo be `NAhE` cu lidne lo
+    ##       temci tcita po'o .a lo cmavo be `CAhA` po'o to le javni pe li sozeci .e li sozebi toi
+    ##   .i lo cmavo be `KI` cu ka'e se lidne lo temtcita .a lo cmavo be `CAhA` to le javni pe li
+    ##       sozeze toi
+  COUNT_RULES = 88
+    ## lo te kancu be le ciste javni pe `CLL 21.1`
+    ##   .i le javni pe li papanono .e li papanopa cu na se kancu
+  BOUND_LENGTH = 1 shl 20
+    ## lo jimte be lo mecraiterkancu be lo genvla pe ro jvasni
+    ##   .i le jimte cu zmadu ro te kancu poi selfa'i
+  DELIMITERS = {'[', ']', '(', ')', '|', '&', '#', '/'}
+    ## lo sinxa pe le snici'e
+    ##   .i le stodi na vasru `...`
 
 
 func `==`*(a, b: Terminal): bool {.borrow.}
-  ## Compare terminals by code.
+  ## karbi lo re genvla sepi'o lo namcu pe le genvla
 
 func toTerminal*(selmaho: Selmaho): Terminal = Terminal(ord(selmaho))
-  ## Hold selma'o as terminal of grammar.
+  ## ralte lo selma'o ta'i lo genvla
 
 
 func toTerminal*(reading: Reading): Option[Terminal] =
-  ## Hold word as terminal of grammar: cmavo by its selma'o, cmene as `CMENE`, and gismu, lujvo
-  ##   and fu'ivla as `BRIVLA` (21.1); none for refusal, and for cmavo no list gives selma'o.
+  ## ralte lo valsi ta'i lo genvla
+  ##   .i lo cmavo cu selsni lo selma'o be vo'a
+  ##   .i lo cmene cu selsni `CMENE`
+  ##   .i lo gismu .e lo lujvo .e lo fu'ivla cu selsni `BRIVLA` to `CLL 21.1` toi
+  ##   .i lo se tcidu poi se to'e curmi ku'o .e lo cmavo poi no liste cu dunda lo selma'o ke'a
+  ##       selsni no genvla
   if not reading.is_word: return none(Terminal)
   case reading.kind
   of Kind.Cmavo:
@@ -276,17 +407,20 @@ func toTerminal*(reading: Reading): Option[Terminal] =
 
 
 func `$`*(terminal: Terminal): string =
-  ## Spell terminal as 21.1 does: selma'o by its name, else `BRIVLA` or `CMENE`.
+  ## ciska lo genvla ja'i `CLL 21.1`
+  ##   .i lo selma'o cu selci'a sepi'o lo cmene be le selma'o
+  ##   .i va'o lo drata `BRIVLA` .a `CMENE` selci'a
   if terminal == TERMINAL_BRIVLA: "BRIVLA"
   elif terminal == TERMINAL_CMENE: "CMENE"
   else: $Selmaho(int(terminal))
 
 
 
-#[ Compiling ]#
+#[ ni'o ni'o ni'o lo nu fanva ]#
 
 func toRules(text: string): seq[string] =
-  ## Join each rule of text with lines going on with it, and apply each rewrite and grouping once.
+  ## jmina ro linji poi pagbu pa javni pe le selci'a ku'o le javni
+  ##   .i ba bo pilno ro nu galfi .e ro nu gunma pa roi
   for line in text.splitLines:
     if line.len == 0: continue
     if line[0] == ' ': result[^1].add " " & line.strip
@@ -299,7 +433,7 @@ func toRules(text: string): seq[string] =
 
 
 func toTokens(text: string): seq[string] =
-  ## Split expression of rule into names, marks of notation, and `...`.
+  ## fendi le selsku pe pa javni fi lo cmene .e `...` .e lo sinxa pe le snici'e
   var at = 0
   while at < text.len:
     if text[at] == ' ':
@@ -319,7 +453,8 @@ func toTokens(text: string): seq[string] =
 
 
 func index(builder: var Builder, name: string): int =
-  ## Find nonterminal named `name`, adding it on first use.
+  ## facki lo jvasni poi selcme `name`
+  ##   .i jmina le jvasni ca lo pamoi nu pilno
   if name notin builder.lut_index_by_name:
     builder.lut_index_by_name[name] = builder.grammar.names.len
     builder.grammar.names.add name
@@ -329,7 +464,8 @@ func index(builder: var Builder, name: string): int =
 
 
 func addHelper(builder: var Builder): int =
-  ## Add nonterminal standing for part of rule being read, named after that rule.
+  ## jmina pa jvasni poi sinxa pa pagbu be le javni poi ca'o se tcidu
+  ##   .i le jvasni cu selcme le cmene be le javni
   let index = builder.grammar.names.len
   builder.grammar.names.add builder.grammar.names[builder.rule]
   builder.grammar.numbers.add none(int)
@@ -338,13 +474,14 @@ func addHelper(builder: var Builder): int =
 
 
 func addProduction(builder: var Builder, head: int, body: seq[Symbol]) =
-  ## Add production deriving `body` from nonterminal `head`.
+  ## jmina pa basyjva poi `head` binxo `body` sepi'o ke'a
   builder.grammar.heads[head].add builder.grammar.productions.len
   builder.grammar.productions.add Production(head: head, body: body)
 
 
 func toSymbol(builder: var Builder, name: string): Symbol =
-  ## Read name of rule as nonterminal, and name in capitals as terminal (21.1).
+  ## tcidu lo cmene be lo javni ta'i lo jvasni
+  ##   .i tcidu lo cmene poi selci'a ta'i lo brale'u ku'o ta'i lo gerna valsi to `CLL 21.1` toi
   if name[0] in {'a' .. 'z'}: return Symbol(is_terminal: false, code: builder.index(name))
   if name == "BRIVLA": return Symbol(is_terminal: true, code: int(TERMINAL_BRIVLA))
   if name == "CMENE": return Symbol(is_terminal: true, code: int(TERMINAL_CMENE))
@@ -354,7 +491,8 @@ func toSymbol(builder: var Builder, name: string): Symbol =
 
 
 func peek(builder: Builder): string =
-  ## Name next token, or empty where rule ends.
+  ## dunda le bavla'i pagbu
+  ##   .i va'o lo nu le javni cu fanmo kei dunda lo kunti lerpoi
   if builder.at < builder.tokens.len: builder.tokens[builder.at] else: ""
 
 
@@ -362,15 +500,17 @@ func parseAlternation(builder: var Builder): seq[seq[Symbol]]
 
 
 func toHelper(builder: var Builder, bodies: seq[seq[Symbol]]): Symbol =
-  ## Add helper deriving each of `bodies`, and stand for it.
+  ## jmina pa djujva poi ka'e binxo ro cmima be `bodies`
+  ##   .i dunda lo sinxa be le djujva
   let helper = builder.addHelper
   for body in bodies: builder.addProduction(helper, body)
   Symbol(is_terminal: false, code: helper)
 
 
 func parseItem(builder: var Builder): Symbol =
-  ## Read one item: name, `[]` option, `()` group, `/X/` elidable terminator or `#`, each
-  ##   repeated where `...` follows it.
+  ## tcidu pa pagbu po'u lo cmene .a lo na'e bilga pagbu po'u `[]` ge'u .a lo girzu po'u `()` ge'u
+  ##     .a lo famvla poi ka'e selcau zi'e po'u `/X/` ge'u .a `#`
+  ##   .i va'o lo nu `...` se lidne le pagbu kei le pagbu cu se rapli
   let token = builder.peek
   inc builder.at
   case token
@@ -386,7 +526,7 @@ func parseItem(builder: var Builder): Symbol =
     var body: seq[Symbol]
     while builder.peek != "/": body.add builder.parseItem
     inc builder.at
-    result = builder.toHelper(@[body, newSeq[Symbol]()])  # terminator elided or written
+    result = builder.toHelper(@[body, newSeq[Symbol]()])  # lo famvla cu selcau gi'a selci'a
   of "#":
     if builder.frees.isNone:
       let
@@ -408,12 +548,15 @@ func parseItem(builder: var Builder): Symbol =
 
 
 func parseSequence(builder: var Builder): seq[Symbol] =
-  ## Read items side by side, up to `|`, `&`, close of group or end of rule.
+  ## tcidu lo pagbu poi lamji
+  ##   .i le nu tcidu cu sisti bu'u `|` .a `&` .a lo fanmo be lo girzu .a lo fanmo be le javni
   while builder.peek notin ["", "|", "&", "]", ")"]: result.add builder.parseItem
 
 
 func parseAndOr(builder: var Builder): seq[Symbol] =
-  ## Read sequences joined by `&`: `A & B` is `A | B | A B` (21.1), folded from left.
+  ## tcidu lo porsi poi seljo'e `&`
+  ##   .i `A & B` du `A | B | A B` to `CLL 21.1` toi
+  ##   .i `A & B & C` du `(A & B) & C`
   result = builder.parseSequence
   while builder.peek == "&":
     inc builder.at
@@ -422,7 +565,7 @@ func parseAndOr(builder: var Builder): seq[Symbol] =
 
 
 func parseAlternation(builder: var Builder): seq[seq[Symbol]] =
-  ## Read choices joined by `|`.
+  ## tcidu lo selcu'a poi seljo'e `|`
   result.add builder.parseAndOr
   while builder.peek == "|":
     inc builder.at
@@ -430,12 +573,13 @@ func parseAlternation(builder: var Builder): seq[seq[Symbol]] =
 
 
 func constructGrammar(text: string): Grammar {.compileTime.} =
-  ## Compile each rule of `EBNF` into productions, and find nonterminals deriving nothing.
+  ## galfi ro javni pe `EBNF` fi lo basyjva gi'e facki lo jvasni poi ka'e binxo lo kutpoi
   var builder: Builder
   let rules = text.toRules
   doAssert rules.len == COUNT_RULES, "21.1 should give " & $COUNT_RULES & " formal rules."
 
-  # Read each rule: name, number, then expression.
+  # tcidu ro javni
+  #   .i le javni cu vasru lo cmene ce'o lo namcu ce'o lo selsku
   for rule in rules:
     let
       (header, expression) = (rule.split("=", 1)[0], rule.split("=", 1)[1])
@@ -452,7 +596,8 @@ func constructGrammar(text: string): Grammar {.compileTime.} =
     doAssert result.heads[i].len > 0, "Name should be defined by rule; got `" & name & "`."
   result.start = builder.lut_index_by_name["text"]
 
-  # Mark nonterminals deriving empty sequence, until none more is found.
+  # sinxa lo jvasni poi ka'e binxo lo kutpoi
+  #   .i le nu sinxa cu fanmo ca lo nu no cnino cu selfa'i
   result.nullable = newSeq[bool](result.names.len)
   var is_changed = true
   while is_changed:
@@ -463,7 +608,9 @@ func constructGrammar(text: string): Grammar {.compileTime.} =
         result.nullable[production.head] = true
         is_changed = true
 
-  # Find least terminals each nonterminal derives, until none lowers; bound keeps sum finite.
+  # facki lo mecraiterkancu be lo genvla poi ro jvasni cu ka'e binxo ke'a
+  #   .i le nu facki cu fanmo ca lo nu no te kancu cu jdika
+  #   .i le jimte cu fanta lo nu lo sumji cu cimni
   result.lengths = newSeqWith(result.names.len, BOUND_LENGTH)
   is_changed = true
   while is_changed:
@@ -477,8 +624,11 @@ func constructGrammar(text: string): Grammar {.compileTime.} =
         result.lengths[production.head] = total
         is_changed = true
 
-  # Hold every unit cycle self-loop, as `choose` needs: symbol derives nonterminal alone where
-  #   each other symbol of its production may derive nothing.
+  # cipra lo du'u ro jvasni poi xruti vo'a sepi'o lo basyjva poi vasru pa sinxa po'o cu xruti vo'a
+  #     sepi'o pa basti javni po'o
+  #   .i `choose` nitcu di'u
+  #   .i lo sinxa cu binxo pa javni sinxa po'o va'o lo nu ro datsni pe le basyjva cu ka'e binxo lo
+  #       kutpoi
   var units = newSeq[seq[int]](result.names.len)
   for production in result.productions:
     for i, symbol in production.body:
@@ -497,22 +647,30 @@ func constructGrammar(text: string): Grammar {.compileTime.} =
     doAssert head notin reached, "Unit cycle should be self-loop; got `" & result.names[head] & "`."
 
 
-const GRAMMAR_EBNF = constructGrammar(EBNF)  ## Grammar of 21.1, compiled once.
+const GRAMMAR_EBNF = constructGrammar(EBNF)  ## le gerna pe `CLL 21.1` zi'e noi se fanva pa roi
 
 
 func constructChains(grammar: Grammar): Table[(int, int), seq[tuple[rule: string, number: int]]]
     {.compileTime.} =
-  ## Construct each chain of named rules, each node holding next alone, keyed by numbers of rule
-  ##   opening it and rule closing it; assert each pair of ends gives one chain, holding no cycle.
-  ##   Named rule holds rule alone where its production derives that rule and nothing else: each
-  ##     other symbol is helper deriving no node, since named rule is node even where empty.
+  ## zbasu ro porsi be lo javni poi selcme
+  ##   .i ro jgena pe le porsi cu vasru le bavla'i po'o
+  ##   .i lo namcu pe le javni poi krasi le porsi ku'o .e lo namcu pe le javni poi fanmo le porsi cu
+  ##       ckiku le porsi
+  ##   .i cipra lo du'u ro re fanmo cu dunda pa porsi po'o kei .e lo du'u no porsi cu xruti
+  ##
+  ## ni'o va'o lo nu lo basyjva pe lo javni poi selcme cu binxo pa javni po'o kei le javni poi
+  ##     selcme cu vasru le pa javni po'o
+  ##   .i ro datsni pe le basyjva cu du lo djujva poi binxo no jgena
+  ##   .i ki'u bo ro javni poi selcme cu jgena
+  ##   .i le javni cu jgena ji'a va'o lo nu kunti
   let count = grammar.names.len
   func isHelper(grammar: Grammar, code: int): bool = grammar.numbers[code].isNone
 
-  # Mark helpers deriving no node: nothing, through helpers alone.
+  # sinxa lo djujva poi binxo no jgena
+  #   .i le djujva cu binxo lo kutpoi sepi'o lo sidju javni po'o
   var nodeless = newSeq[bool](count)
   template isNodeless(symbol: Symbol): bool =
-    ## Decide whether symbol derives no node: helper marked so far.
+    ## jdice lo du'u xu kau le sinxa cu djujva poi pu selsni ta'i lo nu binxo no jgena
     not symbol.is_terminal and grammar.isHelper(symbol.code) and nodeless[symbol.code]
   var is_changed = true
   while is_changed:
@@ -523,7 +681,8 @@ func constructChains(grammar: Grammar): Table[(int, int), seq[tuple[rule: string
         nodeless[production.head] = true
         is_changed = true
 
-  # Find named rules each nonterminal derives alone, until none more is found.
+  # facki lo javni poi selcme zi'e poi ro jvasni cu binxo ke'a po'o
+  #   .i le nu facki cu fanmo ca lo nu no cnino cu selfa'i
   var alone = newSeq[HashSet[int]](count)
   is_changed = true
   while is_changed:
@@ -538,7 +697,8 @@ func constructChains(grammar: Grammar): Table[(int, int), seq[tuple[rule: string
         for code in found:
           if not alone[production.head].containsOrIncl(code): is_changed = true
 
-  # Walk each chain from each named rule, keyed by its two ends.
+  # litru ro porsi be lo javni be'o poi selkra lo javni poi selcme
+  #   .i le re fanmo be le porsi cu ckiku le porsi
   for top in 0 ..< count:
     if grammar.isHelper(top): continue
     var stack = @[@[top]]
@@ -555,13 +715,19 @@ func constructChains(grammar: Grammar): Table[(int, int), seq[tuple[rule: string
 
 
 const LUT_CHAIN_BY_ENDS* = GRAMMAR_EBNF.constructChains
-  ## Rules of each chain, each node holding next alone, by numbers of rule opening it and rule
-  ##   closing it: from `terms` 80 to `sumti-6` 97, each rule of 21.1 between them, in order.
+  ## lo javni pe ro porsi noi ro jgena pe ke'a vasru le bavla'i po'o
+  ##   .i lo namcu pe le javni poi krasi le porsi ku'o .e lo namcu pe le javni poi fanmo le porsi cu
+  ##       ckiku le porsi
+  ##   .i mupli fa lo porsi poi selkra `terms` noi ckini li bino ku'o gi'e selfa'o `sumti-6` noi
+  ##       ckini li soze
+  ##   .i le porsi cu porsi ro javni poi jbini le re javni ne'i `CLL 21.1`
 
 
 func constructNumbers(grammar: Grammar): Table[string, int] {.compileTime.} =
-  ## Construct number of each named rule by its name; assert no two rules share name or number,
-  ##   so name gives number, and number gives name.
+  ## zbasu lo namcu pe ro javni poi selcme ja'i lo cmene be le javni
+  ##   .i cipra lo du'u no re javni cu ponse lo mitcme .a lo mitna'u
+  ##   .i se ki'u bo lo cmene cu dunda lo namcu
+  ##   .i lo namcu cu dunda lo cmene
   var named: Table[int, string]
   for code in 0 ..< grammar.names.len:
     if grammar.numbers[code].isNone: continue
@@ -574,31 +740,52 @@ func constructNumbers(grammar: Grammar): Table[string, int] {.compileTime.} =
 
 
 const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
-  ## Number of each named rule of 21.1 by its name, as `sumti-6` 97: NIF writes name of rule
-  ##   closing each chain alone, and reader takes its number here (ruling on #859, comment
-  ##   6805527878).
+  ## lo namcu pe ro javni poi selcme ne'i `CLL 21.1` ja'i lo cmene be le javni
+  ##   .i mupli fa li soze noi du le namcu pe `sumti-6`
+  ##   .i `NIF` ciska lo cmene po'o be le javni poi fanmo ro porsi
+  ##   .i lo tcidu be `NIF` cu cpacu le namcu le vi stodi
+  ##   .i `Architect` jdice di'u bu'u `#859` to `comment 6805527878` toi
 
 
 
-#[ Parsing ]#
+#[ ni'o ni'o ni'o lo nu tcidu ]#
 
 func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[Item]] =
-  ## Fill Earley sets: set `i` holds items each derivation reaches after `i` terminals.
-  ##   Nonterminal deriving nothing is passed when predicted, as Aycock and Horspool do.
-  ##   `is_everywhere` predicts each named rule at each set too, so completions hold each span
-  ##     any named rule derives, wherever text breaks rules before it (`islands`).
-  ##   Hot path, once for each text: set indexes its items by nonterminal each waits for, so
-  ##     completion walks those alone, and predicts each nonterminal once. Per set, index and
-  ##     marks hold one entry for each nonterminal; items grow with text, and each allocates.
-  ##   Body of production is alias, never `let`, which copies its seq at each item (read in
-  ##     emitted C); item, three integers, copies by value.
+  ## tisna lo selcmi pe `Earley`
+  ##   .i le selcmi pe `i` vasru lo cmima poi su'o cumtricu cu klama ke'a ba lo nu tcidu lo genvla
+  ##       noi lo te kancu be ke'a cu du `i`
+  ##   .i ca lo nu kanpe pa jvasni poi ka'e binxo lo kutpoi kei le cmima cu pagre le jvasni
+  ##   .i `Aycock` .e `Horspool` pilno le vi tadji
+  ##
+  ## ni'o `is_everywhere` rinka lo nu ro selcmi cu kanpe ji'a ro javni poi selcme
+  ##   .i se ki'u bo le mulcmi cu vasru ro selku'e poi su'o javni poi selcme cu kuspe ke'a
+  ##   .i lo du'u le selci'a cu na'e mapti lo javni bu'u ma kau pu le selku'e cu na vajni to
+  ##       `islands` toi
+  ##
+  ## ni'o so'a lo temci pe lo nu tcidu cu zvati le fancu
+  ##   .i le fancu cu selpli pa roi ro selci'a
+  ##   .i ro selcmi cu fendi lo cmima be vo'a ja'i lo jvasni poi le cmima cu denpa ke'a
+  ##   .i se ki'u bo ca lo nu pa jvasni cu mulno kei le fancu cu tcidu lo cmima po'o poi denpa le
+  ##       jvasni
+  ##   .i ro selcmi cu kanpe ro jvasni pa roi
+  ##
+  ## ni'o ne'i ro selcmi `waiting` .e `predicted` vasru lo pagbu
+  ##   .i ro jvasni cu ponse pa le pagbu
+  ##   .i lo te kancu be lo cmima cu zensmi lo ni le selci'a cu clani
+  ##   .i ro cmima cu cpacu lo ninstu
+  ##
+  ## ni'o lo porsi be lo sinxa pe lo basyjva cu selcme pa `template`
+  ##   .i `let` na selpli ki'u lo nu `let` fukpi le porsi ca ro cmima
+  ##   .i lo na'e zmiku cipra cu tcidu lo samtci pe `C` zi'e poi le fanva cu ciska ke'a
+  ##   .i lo cmima cu vasru ci namcu gi'e selfu'i ta'i lo nu fukpi le ci namcu
 
   template add(i: int, item: Item) =
-    ## Add item to set `i` once, indexed by nonterminal it waits for.
+    ## jmina le cmima le selcmi pe `i` pa roi
+    ##   .i le selcmi cu fendi le cmima ja'i le jvasni poi le cmima cu denpa ke'a
     let added: Item = item
     if not seen[i].containsOrIncl(added):
       template bodyAdded: untyped = GRAMMAR_EBNF.productions[added.production].body
-        ## Alias body of production added.
+        ## sinxa le porsi be lo sinxa pe le basyjva pe le selmincmi
       if added.dot < bodyAdded.len and not bodyAdded[added.dot].is_terminal:
         waiting[i][bodyAdded[added.dot].code].add result[i].len
       result[i].add added
@@ -607,7 +794,7 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
   let count_nonterminals = GRAMMAR_EBNF.heads.len
   var
     seen = newSeq[HashSet[Item]](terminals.len + 1)
-    waiting = newSeq[seq[seq[int]]](terminals.len + 1)  # index of items by nonterminal awaited
+    waiting = newSeq[seq[seq[int]]](terminals.len + 1)  # lo cmima ja'i lo jvasni poi selde'a
     predicted = newSeq[seq[bool]](terminals.len + 1)
   for i in 0..terminals.len:
     waiting[i] = newSeq[seq[int]](count_nonterminals)
@@ -623,11 +810,14 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
     while k < result[i].len:
       let item = result[i][k]
       template body: untyped = GRAMMAR_EBNF.productions[item.production].body
-        ## Alias body of production of item.
+        ## sinxa le porsi be lo sinxa pe le basyjva pe le cmima
       inc k
 
-      # Complete: advance each item waiting for nonterminal this item derives; list can grow
-      #   while walked, where item derives nothing, so walk goes by index.
+      # le cmima cu mulno
+      #   .i ro cmima poi denpa le jvasni pe le vi cmima cu klama le bavla'i sinxa
+      #   .i va'o lo nu le vi cmima cu binxo lo kutpoi kei le liste cu ka'e zenba ca lo nu le liste
+      #       cu se tcidu
+      #   .i se ki'u bo le nu tcidu cu pilno lo stuna'u
       if item.dot == body.len:
         let head = GRAMMAR_EBNF.productions[item.production].head
         var j = 0
@@ -637,7 +827,7 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
           inc j
         continue
 
-      # Scan terminal, or predict nonterminal.
+      # tcidu lo genvla gi'a kanpe lo jvasni
       let symbol = body[item.dot]
       if symbol.is_terminal:
         if i < terminals.len and int(terminals[i]) == symbol.code:
@@ -650,7 +840,8 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
 
 
 func toRule(head: int): tuple[name: string, number: int] =
-  ## Give name and number of rule of nonterminal, as `sumti-6` 97; helper takes its rule's.
+  ## dunda lo cmene .e lo namcu vu'o pe le javni pe le jvasni mu'u `sumti-6` .e li soze
+  ##   .i lo djujva cu cpacu le cmene .e le namcu vu'o pe le javni poi vasru le djujva
   let name = GRAMMAR_EBNF.names[head]
   for i, other in GRAMMAR_EBNF.names:
     let number = GRAMMAR_EBNF.numbers[i]
@@ -659,15 +850,19 @@ func toRule(head: int): tuple[name: string, number: int] =
 
 
 func ruleNamed(head: int): string =
-  ## Name rule of nonterminal with its number, as `sumti-6 97`; helper takes its rule's.
+  ## dunda lo cmene .e lo namcu vu'o pe le javni pe le jvasni ta'i pa lerpoi mu'u `sumti-6 97`
+  ##   .i lo djujva cu cpacu le cmene .e le namcu vu'o pe le javni poi vasru le djujva
   let rule = head.toRule
   rule.name & " " & $rule.number
 
 
 func refusal(sets: openArray[seq[Item]]): ReadingGrammar =
-  ## Refuse at last set any derivation reaches, naming rule of item there that waits, has read
-  ##   terminal, and started latest; item started in that set has read nothing, and names no rule.
-  ##   Terminals items there wait for are those some derivation reads there.
+  ## to'e curmi bu'u le romoi se cmima poi su'o cumtricu cu klama ke'a
+  ##   .i cusku le javni pe le cmima poi zvati le selcmi gi'e denpa gi'e pu tcidu pa genvla gi'e
+  ##       romoi cfari
+  ##   .i lo cmima poi cfari ne'i le selcmi cu tcidu no genvla gi'e cusku no javni
+  ##   .i lo genvla poi le cmima pe le selcmi cu denpa ke'a du lo genvla poi su'o cumtricu cu tcidu
+  ##       ke'a vi
   var last = sets.high
   while sets[last].len == 0: dec last
   var
@@ -675,7 +870,8 @@ func refusal(sets: openArray[seq[Item]]): ReadingGrammar =
     expected: seq[Terminal]
   for item in sets[last]:
     template body: untyped = GRAMMAR_EBNF.productions[item.production].body
-      ## Alias body of production of item, which `let` would copy.
+      ## sinxa le porsi be lo sinxa pe le basyjva pe le cmima
+      ##   .i lo nu pilno `let` cu rinka lo nu fukpi le porsi
     let is_waiting = item.dot < body.len
     if is_waiting and body[item.dot].is_terminal: expected.add Terminal(body[item.dot].code)
     if is_waiting and item.origin < last and (best.isNone or item.origin >= best.get.origin):
@@ -690,24 +886,32 @@ func refusal(sets: openArray[seq[Item]]): ReadingGrammar =
 
 type
   Completions = seq[Table[(int, int), seq[int]]]
-    ## Define productions completing in each set, by nonterminal and start set.
+    ## lo basyjva poi mulno ne'i ro selcmi ku'o ja'i lo jvasni .e lo kraselcmi
 
-  Choice = object  ## Define derivation of nonterminal over span that tree takes.
+  Choice = object
+    ## le cumtricu pe pa jvasni bu'u pa selku'e
+    ##   .i le tricu cu cuxna le cumtricu
     closures: seq[int]
-      ## Nonterminals of derivation closing at each place of span, from its start; parser reading
-      ##   left to right reduces them there, before it reads terminal at that place.
+      ## lo te kancu be lo javni sinxa pe le cumki tricu zi'e poi mulno bu'u ro stuzi pe le se kuspe
+      ##   .i le pamoi te kancu cu ckini le krasi be le selku'e
+      ##   .i lo genturfa'i poi tcidu ro valsi pu lo bavla'i valsi cu mulgau le jvasni bu'u le stuzi
+      ##       pu lo nu tcidu le genvla pe le stuzi
     production: int
-    bounds: seq[int]  ## Place where each symbol of body ends.
+    bounds: seq[int]  ## lo stuzi be lo fanmo be ro sinxa pe le basyjva
 
-  Chart = object  ## Define completions of text, and choices found while tree is chosen.
+  Chart = object
+    ## lo mulcmi pe le selci'a ge'u .e lo selcu'a poi selfa'i ca lo nu cuxna le tricu
     completions: Completions
     terminals: seq[Terminal]
-    choices: Table[(int, int, int), Option[Choice]]  ## Choice by nonterminal, start and end.
-    open: HashSet[(int, int, int)]  ## Spans being chosen, which unit cycle reaches again.
+    choices: Table[(int, int, int), Option[Choice]]
+      ## lo selcu'a ja'i lo jvasni .e lo krasi .e lo fanmo
+    open: HashSet[(int, int, int)]
+      ## lo selku'e poi ca'o selcu'a gi'e ka'e selrapcpa ki'u lo nu pa jvasni cu xruti vo'a
 
 
 func toCompletions(sets: openArray[seq[Item]]): Completions =
-  ## Index each completed item by set it ends in, nonterminal, and set it starts in.
+  ## fendi ro mulcmi ja'i le selcmi poi le cmima cu fanmo ne'i ke'a ku'o .e le jvasni .e le selcmi
+  ##     poi le cmima cu cfari ne'i ke'a
   result = newSeq[Table[(int, int), seq[int]]](sets.len)
   for i, items in sets:
     for item in items:
@@ -718,21 +922,26 @@ func toCompletions(sets: openArray[seq[Item]]): Completions =
 
 
 func isFewer(a, b: seq[int]): bool =
-  ## Test closures `a` close fewer nonterminals than `b` at first place where they differ.
+  ## jdice lo du'u xu kau `a` mleca `b` lo ka mulgau lo jvasni kei bu'u le pamoi stuzi poi `a` .e
+  ##     `b` frica bu'u ke'a
   for i in 0 ..< min(a.len, b.len):
     if a[i] != b[i]: return a[i] < b[i]
   false
 
 
 func offer(partials: var seq[Option[Choice]], i: int, candidate: Choice) =
-  ## Keep candidate at place `i` where it closes fewer nonterminals than one kept; tie keeps first.
+  ## ralte le cumselcu'a bu'u le stuzi pe `i` va'o lo nu le cumselcu'a cu mleca le selra'e lo ka
+  ##     mulgau lo jvasni
+  ##   .i va'o lo nu dunli kei le pamoi cu stali
   if partials[i].isNone or candidate.closures.isFewer(partials[i].get.closures):
     partials[i] = some(candidate)
 
 
 func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
-  ## Test chart derives terminals `start ..< finish` from `symbol`: terminal reads one that
-  ##   matches it, and nonterminal completes over span, or derives nothing where span is empty.
+  ## jdice lo du'u xu kau `chart` jarco lo nu `symbol` binxo le genvla pe `start ..< finish`
+  ##   .i va'o lo nu `symbol` genvla kei `symbol` binxo pa gerna valsi po'o poi mintu `symbol`
+  ##   .i va'o lo nu `symbol` jvasni kei `symbol` mulno bu'u le selku'e gi'a binxo lo kutpoi va'o lo
+  ##       nu le selku'e cu kunti
   if symbol.is_terminal:
     return finish == start + 1 and int(chart.terminals[start]) == symbol.code
   (start == finish and GRAMMAR_EBNF.nullable[symbol.code]) or
@@ -740,17 +949,34 @@ func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
 
 
 func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
-  ## Choose derivation of terminals `start ..< finish` from `head` that closes fewest nonterminals
-  ##   at each place, from first; tie goes to first production, then to longer symbol.
-  ##   Choice is kept once found. No symbol tries more terminals than symbols after it leave, so
-  ##     child spans all of span only where each other symbol may derive nothing: unit cycle,
-  ##     which is self-loop (`constructGrammar`). Unit cycle closes more and is never chosen, so
-  ##     no choice kept depends on span still open.
-  ##   Last symbol of body tries end of span alone, since no other bound reaches whole span;
-  ##     every other bound cost time that grew with square of span, on long text.
-  ##   Nonterminal before last symbol tries only bound that last symbol ends span from: partial
-  ##     at other bound never reaches end. Each such dead child chose itself, and copied closures
-  ##     as long as its span; where opener stayed open, that cost grew faster than text (#849).
+  ## cuxna le cumtricu poi `head` binxo le genvla pe `start ..< finish` sepi'o ke'a zi'e poi mecrai
+  ##     lo ka mulgau lo jvasni bu'u ro stuzi
+  ##   .i le pamoi stuzi cu krasi lo nu cuxna
+  ##   .i va'o lo nu dunli kei le pamoi basti javni cu jinga
+  ##   .i ba bo lo sinxa poi zmadu lo ka clani cu jinga
+  ##
+  ## ni'o le selcu'a cu selra'e ba lo nu selfa'i
+  ##   .i no sinxa cu troci lo nu kuspe lo genvla poi le sinxa poi se lidne cu nitcu ke'a
+  ##   .i se ki'u bo lo panzi cu kuspe le mulselku'e va'o po'o lo nu ro datsni cu ka'e binxo lo
+  ##       kutpoi
+  ##   .i ro jvasni poi xruti vo'a sepi'o lo basyjva poi vasru pa sinxa po'o cu xruti vo'a sepi'o pa
+  ##       basti javni po'o to `constructGrammar` toi
+  ##   .i lo cumtricu poi xruti cu zmadu lo drata lo ka mulgau lo jvasni gi'e no roi selcu'a
+  ##   .i se ki'u bo no selcu'a poi selra'e cu nitcu lo selku'e poi ca'o selcu'a
+  ##
+  ## ni'o le romoi sinxa pe le basyjva cu pilno le fanmo be le se kuspe po'o ta'i lo korbi
+  ##   .i ki'u bo no datkoi cu rinka lo nu le basyjva cu kuspe le mulselku'e
+  ##   .i lo temci pe ro datkoi pu zensmi lo pilji be lo klani be le selku'e be'o bei le klani ne'i
+  ##       lo claselci'a
+  ##
+  ## ni'o le jvasni poi lidne le romoi sinxa cu pilno lo korbi po'o poi le romoi sinxa cu selfa'o le
+  ##     fanmo be le selku'e va'o lo nu cfari bu'u ke'a
+  ##   .i lo na'e mulno poi zvati lo datkoi cu no roi klama le fanmo
+  ##   .i ro panzi poi no roi selpli pu selcu'a gi'e pu fukpi lo te kancu be lo javni sinxa poi
+  ##       mulno
+  ##   .i le te kancu pu clasmi le selku'e be le panzi
+  ##   .i va'o lo nu pa kravla pu ca'o kalri kei le jdima pu zmadu le selci'a lo ka zenba to `#849`
+  ##       toi
   let key = (head, start, finish)
   if key in chart.choices: return chart.choices[key]
   if chart.open.containsOrIncl(key): return none(Choice)
@@ -759,14 +985,17 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   var best = none(Choice)
   for p in GRAMMAR_EBNF.heads[head]:
     template body: untyped = GRAMMAR_EBNF.productions[p].body
-      ## Alias body of production `p`, which `let` would copy.
+      ## sinxa le porsi be lo sinxa pe le basyjva po'u `p`
+      ##   .i lo nu pilno `let` cu rinka lo nu fukpi le porsi
     if span == 0 and body.anyIt(it.is_terminal or not GRAMMAR_EBNF.nullable[it.code]): continue
     if span > 0 and p notin chart.completions[finish].getOrDefault((head, start)): continue
 
-    # Match body left to right, keeping at each place partial that closes fewest there; each
-    #   symbol leaves terminals enough for symbols after it.
+    # tcidu ro sinxa pe le basyjva pu lo bavla'i sinxa
+    #   .i bu'u ro stuzi le na'e mulno poi mecrai lo ka mulgau lo jvasni vi cu selra'e
+    #   .i ro sinxa cu curmi lo nu lo sinxa poi se lidne cu ponse lo bazgenvla
     var
-      rests = newSeq[int](body.len + 1)  # least terminals symbols from each on derive
+      # le mecraiterkancu be lo genvla poi ro rebla be le porsi cu binxo ke'a
+      rests = newSeq[int](body.len + 1)
       partials = newSeq[Option[Choice]](span + 1)
     for k in countdown(body.high, 0):
       let length = (if body[k].is_terminal: 1 else: GRAMMAR_EBNF.lengths[body[k].code])
@@ -776,7 +1005,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
       var nexts = newSeq[Option[Choice]](span + 1)
       for m in start .. finish:
         template partial: untyped = partials[m - start]
-          ## Alias partial choice ending at `m`, which `let` would copy.
+          ## sinxa le na'e mulno se cuxna poi fanmo bu'u `m`
+          ##   .i lo nu pilno `let` cu rinka lo nu fukpi le na'e mulno se cuxna
         if partial.isNone: continue
         if symbol.is_terminal:
           if m + 1 + rests[k + 1] <= finish and int(chart.terminals[m]) == symbol.code:
@@ -785,10 +1015,11 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
             next.bounds.add m + 1
             nexts.offer(m + 1 - start, next)
           continue
-        let low = (if k == body.high: finish else: m)  # last symbol ends at end of span
+        # le romoi sinxa cu selfa'o le fanmo be le selku'e
+        let low = (if k == body.high: finish else: m)
         for bound in countdown(finish - rests[k + 1], low):
           if not chart.isDerived(symbol, m, bound): continue
-          if k == body.high - 1 and not chart.isDerived(body[^1], bound, finish): continue  # dead
+          if k == body.high - 1 and not chart.isDerived(body[^1], bound, finish): continue  # morsi
           let child = chart.choose(symbol.code, m, bound)
           if child.isNone: continue
           var next = partial.get
@@ -799,25 +1030,32 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
       partials = nexts
     if partials[span].isNone: continue
     var whole = partials[span].get
-    inc whole.closures[^1]  # head closes at its end
+    inc whole.closures[^1]  # `head` mulno bu'u le fanmo be le selku'e
     if best.isNone or whole.closures.isFewer(best.get.closures): best = some(whole)
   chart.choices[key] = best
   best
 
 
 func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
-  ## Add nodes of choice of `head` over span to `nodes`: named rule adds one node holding its
-  ##   children, and helper adds its own nodes in place, for rule holding it.
-  ##   Named node takes its place before its children fill it, so build copies no subtree, on
-  ##     JavaScript too, whose `add` copies each value; nor closures of choice. Copy at each level
-  ##     cost time that grew with square of text, since rule 4 nests one level for each paragraph
-  ##     (#849).
+  ## jmina lo jgena pe le selcu'a pe `head` bu'u le selku'e fi `nodes`
+  ##   .i ro javni poi selcme cu jmina pa jgena poi vasru lo panzi be vo'a
+  ##   .i ro djujva cu jmina lo jgena pe vo'a lo javni poi vasru le djujva
+  ##
+  ## ni'o lo jgena pe lo javni poi selcme cu zvati lo stuzi pe vo'a pu lo nu lo panzi be le jgena cu
+  ##     tisna le jgena
+  ##   .i se ki'u bo le nu zbasu cu fukpi no ricpau
+  ##   .i di'u jetnu ji'a ne'i `JavaScript` noi `add` pe ke'a fukpi ro datni
+  ##   .i le nu zbasu cu fukpi no `closures` pe le selcu'a
+  ##   .i lo temci pe lo nu fukpi bu'u ro jgena cu pu zensmi lo pilji be lo klani be le selci'a be'o
+  ##       bei le klani
+  ##   .i ki'u bo ro ju'agri cu rinka lo nu le javni pe li vo cu punji pa jgena ne'i pa jgena to
+  ##       `#849` toi
   let
     key = (head, start, finish)
     production = chart.choices[key].get.production
     bounds = chart.choices[key].get.bounds
   template addChildren(into: var seq[Node]) =
-    ## Add node of each symbol of production to `into`, in order.
+    ## jmina lo jgena pe ro sinxa pe le basyjva fi `into` ja'i le porsi
     var at = start
     for k, symbol in GRAMMAR_EBNF.productions[production].body:
       if symbol.is_terminal: into.add Node(is_terminal: true, at: at)
@@ -833,8 +1071,9 @@ func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
 
 
 func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
-  ## Read terminals of text by grammar of 21.1 in one pass, into tree of its named rules; refuse
-  ##   at place where every derivation stops.
+  ## tcidu lo genvla pe le selci'a ja'i le gerna pe `CLL 21.1` pa roi gi'e zbasu lo tricu pe lo
+  ##     javni poi selcme
+  ##   .i to'e curmi bu'u le stuzi poi ro cumtricu cu sisti bu'u ke'a
   let sets = terminals.fillSets
   var is_whole = false
   for item in sets[^1]:
@@ -849,26 +1088,36 @@ func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
   doAssert chart.choose(GRAMMAR_EBNF.start, 0, terminals.len).isSome,
       "Text grammar reads should derive tree."
   chart.addNodes(GRAMMAR_EBNF.start, 0, terminals.len, nodes)
-  ReadingGrammar(is_read: true, tree: nodes.pop)  # rule 0 is named, so one node
+  # le javni pe li no cu selcme
+  #   .i se ki'u bo lo jgena cu pa mei
+  ReadingGrammar(is_read: true, tree: nodes.pop)
 
 
 
-#[ Passes ]#
+#[ ni'o ni'o ni'o lo nu tcidu ro pagbu ]#
 
 const
   OPENERS* = [Selmaho.Tuhe, Selmaho.Lu, Selmaho.To]
-    ## Selma'o opening text inside text: statement-3, sumti-6 and free (rules 14, 97, 32).
-  CLOSERS* = [Selmaho.Tuhu, Selmaho.Lihu, Selmaho.Toi]  ## Terminator of each opener, in its order.
+    ## lo selma'o poi krasi lo selci'a ne'i lo selci'a
+    ##   .i le selma'o cu pagbu `statement-3` .e `sumti-6` .e `free` to le javni pe li pavo .e li
+    ##       soze .e li cire toi
+  CLOSERS* = [Selmaho.Tuhu, Selmaho.Lihu, Selmaho.Toi]
+    ## lo famvla pe ro kravla ja'i le porsi pe `OPENERS`
   JOINS = {Selmaho.Ja, Selmaho.Joi, Selmaho.Bihi, Selmaho.Gaho, Selmaho.Bo}
-    ## Selma'o after `I`, past NA and SE, that joins statements: jek, joik or BO (rules 12, 13).
+    ## lo selma'o poi se lidne `I` gi'e jorne lo jufra ta'i lo me `jek` me'u .a lo me `joik` me'u .a
+    ##     `BO`
+    ##   .i le selma'o cu ka'e se lidne lo cmavo be `NA` be'o .e lo cmavo be `SE` to le javni pe li
+    ##       pare .e li paci toi
   TAGS = {
     Selmaho.Nahe, Selmaho.Se, Selmaho.Bai, Selmaho.Nai, Selmaho.Ki, Selmaho.Cuhe, Selmaho.Zi,
     Selmaho.Pu, Selmaho.Zeha, Selmaho.Va, Selmaho.Faha, Selmaho.Mohi, Selmaho.Veha, Selmaho.Viha,
     Selmaho.Fehe, Selmaho.Tahe, Selmaho.Roi, Selmaho.Zaho, Selmaho.Caha, Selmaho.Pa, Selmaho.Na,
     Selmaho.Ja, Selmaho.Joi,
   }
-    ## Selma'o of tag before BO of statement-2 (rule 13, stag); run of them up to BO joins.
-  RULE_TEXT_1 = ("text-1", 2)  ## Name and number of rule holding paragraphs of text.
+    ## lo selma'o pe lo tcita poi lidne `BO` ne'i `statement-2` to le javni pe li paci .e `stag` toi
+    ##   .i lo porsi be le selma'o be'o poi selfa'o `BO` jorne lo jufra
+  RULE_TEXT_1 = ("text-1", 2)
+    ## lo cmene .e lo namcu vu'o pe le javni poi vasru lo se ciska ju'agri
   RULE_PARAGRAPHS = ("paragraphs", 4)
   RULE_PARAGRAPH = ("paragraph", 10)
   RULE_STATEMENT_3 = ("statement-3", 14)
@@ -876,22 +1125,28 @@ const
 
 
 type Split = tuple[parts: seq[Slice[int]], inner: int]
-  ## Define parts of text that each read alone, and start of text of `tu'e` left open, else end.
+  ## lo pagbu be lo selci'a be'o poi se tcidu ta'i lo nu sepli ku'o .e lo krasi be le selci'a pe zo
+  ##     tu'e poi ca'o kalri
+  ##   .i va'o lo drata le krasi cu du le fanmo
 
 
 func isAmong(terminal: Terminal, selmaho: set[Selmaho]): bool =
-  ## Test terminal is cmavo of one of `selmaho`.
+  ## jdice lo du'u xu kau le genvla cu cmavo pa cmima be `selmaho`
   int(terminal) <= ord(Selmaho.high) and Selmaho(int(terminal)) in selmaho
 
 
 func isRule(node: Node, rule: (string, int)): bool =
-  ## Test node is named rule `rule`, by name and number.
+  ## jdice lo du'u xu kau le jgena cu du le javni po'u `rule` kei sepi'o lo cmene .e lo namcu
   not node.is_terminal and node.rule == rule[0] and node.number == rule[1]
 
 
 func isJoining(terminals: openArray[Terminal], at: int): bool =
-  ## Test `I` at `at` joins statements: jek or joik after it, past NA and SE, or run of tag
-  ##   ending at BO (rules 12, 13); such `I` holds no paragraph of its own.
+  ## jdice lo du'u xu kau le cmavo be `I` be'o poi zvati `at` jorne lo jufra
+  ##   .i va'o lo nu le cmavo cu lidne lo me `jek` me'u .a lo me `joik` kei le cmavo cu jorne
+  ##   .i lo cmavo be `NA` be'o .e lo cmavo be `SE` cu ka'e zvati lo jbini
+  ##   .i va'o lo nu le cmavo cu lidne lo porsi be lo tcita poi selfa'o `BO` kei le cmavo cu jorne
+  ##       to le javni pe li pare .e li paci toi
+  ##   .i ro le cmavo poi jorne cu vasru no ju'agri pe vo'a
   var k = at + 1
   while k < terminals.len and terminals[k].isAmong({Selmaho.Na, Selmaho.Se}): inc k
   if k < terminals.len and terminals[k].isAmong(JOINS): return true
@@ -901,8 +1156,11 @@ func isJoining(terminals: openArray[Terminal], at: int): bool =
 
 
 func isCutAt*(terminals: openArray[Terminal], at: int, before: Option[Terminal]): bool =
-  ## Test passes cut text before terminal `at`, where no opener is open: `NIhO` that follows none,
-  ##   as `before` gives terminal before it, or `I` that joins nothing (`toParts`).
+  ## jdice lo du'u xu kau le nu tcidu ro pagbu cu katna le selci'a pu le genvla pe `at` va'o lo nu
+  ##     no kravla cu ca'o kalri
+  ##   .i le genvla cu du lo cmavo be `NIhO` be'o poi se lidne no cmavo be `NIhO` ku'o .a lo cmavo
+  ##       be `I` poi jorne no da to `toParts` toi
+  ##   .i `before` dunda le genvla poi lidne `at`
   let terminal = terminals[at]
   (terminal == Selmaho.Niho.toTerminal and before != some(Selmaho.Niho.toTerminal)) or
     (terminal == Selmaho.I.toTerminal and not terminals.isJoining(at))
@@ -912,8 +1170,12 @@ func isTracked(
     opened: var seq[tuple[selmaho: Selmaho, at: int]], terminals: openArray[Terminal], i: int,
     ignored: openArray[int],
 ): bool =
-  ## Apply terminal `i` to openers open, innermost last: opener opens, unless `ignored` holds it;
-  ##   closer closes nearest opener of its kind, and each opener inside it. True for both.
+  ## galfi le liste be lo kravla poi ca'o kalri sepi'o le genvla pe `i`
+  ##   .i le romoi pe le liste cu traji lo ka ce'u selvau
+  ##   .i lo kravla cu kalri va'o lo nu `ignored` na vasru le kravla
+  ##   .i lo famvla cu fanmo le kravla poi mapti le famvla gi'e traji lo ka ce'u jibni le famvla
+  ##       ku'o .e ro kravla poi zvati ne'i le kravla
+  ##   .i le jalge cu du `true` va'o lo nu le genvla cu kravla gi'a famvla
   let terminal = terminals[i]
   if terminal.isAmong({OPENERS[0], OPENERS[1], OPENERS[2]}):
     if i notin ignored: opened.add (Selmaho(int(terminal)), i)
@@ -927,8 +1189,9 @@ func isTracked(
 
 
 func unclosed(terminals: openArray[Terminal], first, last: int): seq[int] =
-  ## Give index of each opener of terminals `first ..< last` that no closer there closes, in
-  ##   order: `tu'e`, `lu` or `to` that waits for its closer in live text.
+  ## dunda lo stuna'u pe ro kravla poi zvati `first ..< last` zi'e poi no famvla poi zvati vi cu
+  ##     fanmo ke'a ku'o ja'i le porsi
+  ##   .i le kravla cu du zo tu'e .a zo lu .a zo to gi'e denpa lo famvla pe vo'a ne'i lo mivyselci'a
   var opened: seq[tuple[selmaho: Selmaho, at: int]]
   for i in first ..< last: discard opened.isTracked(terminals, i, [])
   opened.mapIt(it.at)
@@ -937,17 +1200,31 @@ func unclosed(terminals: openArray[Terminal], first, last: int): seq[int] =
 func toParts(
     terminals: openArray[Terminal], first, last: int, ignored: openArray[int] = []
 ): Split =
-  ## Split terminals `first ..< last` into parts that each read alone: cut before `NIhO` that
-  ##   follows none, and before `I` that joins nothing, where no opener is open.
-  ##   `inner` opens text of `tu'e` that no `tu'u` closes, which runs to `last`; else it is
-  ##     `last`. Each cut stands where no opener is open, so before first opener left open: part
-  ##     holding `lu` or `to` left open runs to `last`, and reads in one pass, since later word
-  ##     decides where it closes.
-  ##   Opener `ignored` holds reads as plain terminal: live text cuts after opener that waits
-  ##     for its closer, so each sentence after it goes out at once (ruling on #859).
+  ## fendi le genvla pe `first ..< last` fi lo pagbu poi se tcidu ta'i lo nu sepli
+  ##   .i katna pu ro cmavo be `NIhO` be'o poi se lidne no cmavo be `NIhO` ku'o .e ro cmavo be `I`
+  ##       be'o poi jorne no da
+  ##   .i le nu katna cu fasnu va'o lo nu no kravla cu ca'o kalri
+  ##
+  ## ni'o `inner` krasi le selci'a pe zo tu'e poi no me zo tu'u cu fanmo ke'a
+  ##   .i le selci'a cu selfa'o `last`
+  ##   .i va'o lo drata `inner` du `last`
+  ##
+  ## ni'o ro nu katna cu zvati lo stuzi poi no kravla cu ca'o kalri vi ke'a
+  ##   .i se ki'u bo ro nu katna cu zvati pu le pamoi krasi valsi poi ca'o kalri
+  ##   .i va'o lo nu zo lu .a zo to cu ca'o kalri kei le pagbu poi vasru le kravla cu selfa'o `last`
+  ##       gi'e se tcidu pa roi
+  ##   .i ki'u bo lo valsi poi se lidne le kravla cu jdice lo du'u ma kau poi stuzi cu fanmo le
+  ##       gensu'a pe le kravla
+  ##
+  ## ni'o lo kravla poi `ignored` vasru ke'a se tcidu ta'i lo sapygenvla
+  ##   .i lo mivyselci'a cu selka'a ba ro kravla poi denpa lo famvla pe vo'a
+  ##   .i se ki'u bo ro jufra poi se lidne le kravla cu selbe'i gi'e na denpa le famvla
+  ##   .i `Architect` jdice di'u bu'u `#859`
   var
     starts = @[first]
-    opened: seq[tuple[selmaho: Selmaho, at: int]]  # each opener open, innermost last
+    # ro kravla poi ca'o kalri
+    #   .i le romoi cu traji lo ka ce'u selvau
+    opened: seq[tuple[selmaho: Selmaho, at: int]]
   for i in first ..< last:
     if opened.isTracked(terminals, i, ignored): continue
     if opened.len == 0 and i > starts[^1] and terminals.isCutAt(i, some(terminals[i - 1])):
@@ -962,8 +1239,9 @@ func toParts(
 
 
 func shift(node: var Node, by: int) =
-  ## Move index of each terminal of tree, and each place grammar stops at, by `by`: part read
-  ##   alone counts from its own start.
+  ## jmina `by` ro stuzi poi le gerna cu sisti bu'u ke'a ku'o .e lo stuna'u pe ro genvla pe le tricu
+  ##   .i va'o lo nu pa pagbu cu se tcidu ta'i lo nu sepli kei le stuna'u pe le krasi be le pagbu cu
+  ##       du li no
   if node.is_terminal: node.at += by
   else:
     if node.stop.isSome: node.stop.get.at += by
@@ -971,7 +1249,9 @@ func shift(node: var Node, by: int) =
 
 
 func readPart(terminals: openArray[Terminal], part: Slice[int]): Option[Node] =
-  ## Read terminals of part alone, as text, into tree whose indexes count from start of text.
+  ## tcidu le genvla pe le pagbu ta'i lo selci'a poi sepli
+  ##   .i zbasu lo tricu
+  ##   .i ne'i le tricu le stuna'u pe le krasi be le mulselci'a cu du li no
   var reading = terminals.toOpenArray(part.a, part.b).readWhole
   if not reading.is_read: return none(Node)
   var tree = move(reading.tree)
@@ -980,16 +1260,22 @@ func readPart(terminals: openArray[Terminal], part: Slice[int]): Option[Node] =
 
 
 func isGroup(nodes: openArray[Node], terminals: openArray[Terminal], head: Selmaho): bool =
-  ## Test nodes are terminals of `head`, then free modifiers alone: `I #` of rule 10, or
-  ##   `NIhO ... #` of rule 4. Jek, joik, tag or BO there means statements join instead.
+  ## jdice lo du'u xu kau le jgena cu du lo genvla pe `head` ge'u ce'o lo zifre galfi po'o
+  ##   .i mupli fa `I #` ja'i le javni pe li pano
+  ##   .i mupli fa `NIhO ... #` ja'i le javni pe li vo
+  ##   .i va'o lo nu lo me `jek` me'u .a lo me `joik` me'u .a lo tcita .a lo cmavo be `BO` cu zvati
+  ##       vi kei lo jufra cu jorne
   var k = 0
   while k < nodes.len and nodes[k].is_terminal and terminals[nodes[k].at] == head.toTerminal: inc k
   k > 0 and nodes.toOpenArray(k, nodes.high).allIt(it.isRule(RULE_FREE))
 
 
 func graftInner(node: var Node, at: int, inner: var Node): bool =
-  ## Put text-1 `inner` into statement-3 whose `tu'e` stands at `at`, down last child of each
-  ##   node, where text alone read empty text-1 after that `tu'e`.
+  ## punji `inner` noi me `text-1` ku'o lo jgena po'u `statement-3` zi'e poi zo tu'e pe ke'a zvati
+  ##     `at`
+  ##   .i le jgena cu selfa'i ne'i le romoi panzi be ro jgena
+  ##   .i va'o lo nu le selci'a cu se tcidu ta'i lo nu sepli kei le jgena po'u `text-1` zi'e poi se
+  ##       lidne zo tu'e cu kunti
   if node.is_terminal: return false
   if node.isRule(RULE_STATEMENT_3) and node.children.anyIt(it.is_terminal and it.at == at):
     if not node.children[^1].isRule(RULE_TEXT_1) or node.children[^1].children.len > 0:
@@ -1000,31 +1286,47 @@ func graftInner(node: var Node, at: int, inner: var Node): bool =
 
 
 func toNode(rule: (string, int), children: sink seq[Node]): Node =
-  ## Make node of named rule holding `children`.
+  ## zbasu lo jgena poi vasru `children` zi'e pe lo javni poi selcme
   Node(is_terminal: false, rule: rule[0], number: rule[1], children: children)
 
 
 func readParts(terminals: openArray[Terminal], first, last: int, trees: var seq[Node]): bool =
-  ## Read each part of text of terminals `first ..< last` alone, as passes cut it, into `trees`,
-  ##   then each part of text of `tu'e` left open; false where part refuses. Part holding `lu` or
-  ##   `to` left open runs to `last`, as `toParts` cuts it.
+  ## tcidu ro pagbu be le selci'a pe le genvla pe `first ..< last` ta'i lo nu sepli
+  ##   .i le pagbu cu selka'a ta'i le nu tcidu ro pagbu
+  ##   .i punji le tricu `trees`
+  ##   .i ba bo tcidu ro pagbu be le selci'a pe zo tu'e poi ca'o kalri
+  ##   .i va'o lo nu pa pagbu cu se to'e curmi kei le jalge cu du `false`
+  ##   .i va'o lo nu zo lu .a zo to cu ca'o kalri kei le pagbu poi vasru le kravla cu selfa'o `last`
+  ##       ja'i le nu `toParts` katna
   let split = terminals.toParts(first, last)
   for part in split.parts:
     let tree = terminals.readPart(part)
     if tree.isNone: return false
-    trees.add tree.get  # copy, since `move` of `get` is no lvalue on JavaScript
+    # fukpi
+    #   .i ki'u bo `get` na dunda lo me `lvalue` me'u noi `move` nitcu ke'a ne'i `JavaScript`
+    trees.add tree.get
   split.inner >= last or terminals.readParts(split.inner, last, trees)
 
 
 func assemble(
     terminals: openArray[Terminal], first, last: int, parts: var seq[Node], at: var int
 ): Option[Node] =
-  ## Build tree one pass gives text of terminals `first ..< last` around tree of each of its
-  ##   parts, taken from `parts` at `at` on, in order `readParts` gives them: `text 0`,
-  ##   `text-1 2`, `paragraphs 4` and `paragraph 10` (rules 0 to 10).
-  ##   Part holds nodes of one rule each: tree of choice is fixed for span and rule, and closures
-  ##     of rules around part fall at its ends alike. Law holds this against one pass.
-  ##   None where rule of passes breaks; one pass then reads whole text.
+  ## zbasu le tricu poi lo nu tcidu le mulselci'a cu dunda ke'a le selci'a pe le genvla pe
+  ##     `first ..< last`
+  ##   .i le tricu cu sruri le tricu pe ro pagbu be le selci'a
+  ##   .i le tricu pe le pagbu cu se lebna fi `parts`
+  ##   .i le nu lebna cu krasi `at` gi'e mapti le porsi poi `readParts` dunda ke'a
+  ##   .i le jgena poi sruri cu du `text 0` .e `text-1 2` .e `paragraphs 4` .e `paragraph 10` to le
+  ##       javni pe li no bi'o li pano toi
+  ##
+  ## ni'o ro pagbu cu vasru lo jgena
+  ##   .i ro le jgena cu ckini pa javni po'o
+  ##   .i lo tricu pe lo selcu'a cu stodi va'o lo nu le selku'e .e le javni cu stodi
+  ##   .i ro javni poi sruri pa pagbu cu mulno ta'i lo mitytadji bu'u le re korbi be le pagbu
+  ##   .i lo flalu cu cipra di'u sepi'o lo nu tcidu le mulselci'a
+  ##
+  ## ni'o va'o lo nu lo javni pe le nu tcidu ro pagbu cu spofu kei le jalge cu kunti
+  ##   .i ba bo le mulselci'a cu se tcidu pa roi
   let split = terminals.toParts(first, last)
   if at + split.parts.len > parts.len: return none(Node)
   var trees: seq[Node]
@@ -1032,11 +1334,12 @@ func assemble(
     trees.add move(parts[at])
     inc at
 
-  # First part gives `text 0` and nodes of `text-1` before its paragraphs; each paragraph is
-  #   group of `NIhO` before it, and nodes of `paragraph` (rules 2, 4).
+  # le pamoi pagbu cu dunda `text 0` .e lo jgena pe `text-1` zi'e poi lidne le ju'agri pe le pagbu
+  #   .i ro ju'agri cu selvau lo girzu poi vasru lo cmavo be `NIhO` gi'e lidne le ju'agri ku'o .e lo
+  #       jgena pe `paragraph` to le javni pe li re .e li vo toi
   var
     text = move(trees[0])
-    text_1 = text.children.pop  # rule 0 ends in text-1
+    text_1 = text.children.pop  # le javni pe li no cu selfa'o `text-1`
     paragraphs: seq[tuple[group, nodes: seq[Node]]]
   if text_1.children.len > 0 and text_1.children[^1].isRule(RULE_PARAGRAPHS):
     var first_paragraphs = text_1.children.pop
@@ -1044,7 +1347,7 @@ func assemble(
     paragraphs.add (newSeq[Node](), move(first_paragraphs.children[0].children))
   for k in 1 ..< trees.len:
     if trees[k].children.len != 1 or not trees[k].children[0].isRule(RULE_TEXT_1):
-      return none(Node)  # part opens with what only text opens with
+      return none(Node)  # le pagbu cu selkra lo valsi poi lo se ciska po'o cu ka'e selkra ke'a
     var
       part = move(trees[k].children[0])
       nodes: seq[Node]
@@ -1059,7 +1362,8 @@ func assemble(
       if not part.children.isGroup(terminals, Selmaho.I): return none(Node)
       if paragraphs.len == 0:
         if text_1.children.anyIt(it.is_terminal and terminals[it.at] == Selmaho.Niho.toTerminal):
-          return none(Node)  # rule 2 opens with `I` or with `NIhO`, never both
+          # le javni pe li re cu selkra `I` .a `NIhO` gi'e no roi selkra le re mei
+          return none(Node)
         for node in part.children.mitems: text_1.children.add move(node)
         if has_paragraph: paragraphs.add (newSeq[Node](), move(nodes))
       else:
@@ -1068,27 +1372,33 @@ func assemble(
     elif head == Selmaho.Niho.toTerminal:
       if not part.children.isGroup(terminals, Selmaho.Niho): return none(Node)
       if paragraphs.len == 0:
-        if text_1.children.len > 0: return none(Node)  # rule 2 opens with one group
+        if text_1.children.len > 0: return none(Node)  # le javni pe li re cu selkra pa girzu po'o
         for node in part.children.mitems: text_1.children.add move(node)
         if has_paragraph: paragraphs.add (newSeq[Node](), move(nodes))
       else:
-        if not has_paragraph: return none(Node)  # rule 4 holds paragraph after `NIhO`
+        if not has_paragraph: return none(Node)  # le javni pe li vo cu vasru `paragraph` ba `NIhO`
         paragraphs.add (move(part.children), move(nodes))
     else:
       return none(Node)
 
-  # Text of `tu'e` left open runs to end: build it from its parts too, and put it in place.
+  # le selci'a pe zo tu'e poi ca'o kalri cu selfa'o le fanmo
+  #   .i zbasu le tricu pe le selci'a fi le pagbu be le selci'a gi'e punji le tricu le drastu
   if split.inner < last:
     var inner = terminals.assemble(split.inner, last, parts, at)
     if inner.isNone or paragraphs.len == 0: return none(Node)
     if inner.get.children.len != 1 or not inner.get.children[0].isRule(RULE_TEXT_1):
-      return none(Node)  # text of `tu'e` is text-1, which opens with no prefix of text
+      # le selci'a pe zo tu'e me `text-1`
+      #   .i `text-1` na selkra lo krapau pe `text`
+      return none(Node)
     var inner_text_1 = move(inner.get.children[0])
     if paragraphs[^1].nodes.len == 0: return none(Node)
     if not paragraphs[^1].nodes[^1].graftInner(split.inner - 1, inner_text_1):
       return none(Node)
 
-  # Nest paragraphs from last, each holding group of next and rest after it (rule 4).
+  # punji ro ju'agri ne'i le ju'agri poi lidne ke'a
+  #   .i le nu punji cu krasi le romoi ju'agri
+  #   .i ro ju'agri cu vasru le girzu pe le bavla'i ju'agri ge'u .e le rebla poi se lidne le girzu
+  #       to le javni pe li vo toi
   var rest: seq[Node]
   for k in countdown(paragraphs.high, 0):
     var children = @[RULE_PARAGRAPH.toNode(move(paragraphs[k].nodes))]
@@ -1102,9 +1412,12 @@ func assemble(
 
 
 func buildText(terminals: openArray[Terminal], first, last: int): Option[Node] =
-  ## Read text of terminals `first ..< last` part by part, and build tree one pass gives around
-  ##   their nodes (`assemble`); none where part refuses, or where rule of passes breaks: one
-  ##   pass then reads whole text, and gives each refusal.
+  ## tcidu ro pagbu be le selci'a pe le genvla pe `first ..< last` gi'e zbasu le tricu poi lo nu
+  ##     tcidu le mulselci'a cu dunda ke'a gi'e sruri le jgena pe le pagbu to `assemble` toi
+  ##   .i va'o lo nu pa pagbu cu se to'e curmi kei .a lo nu lo javni pe le nu tcidu ro pagbu cu
+  ##       spofu kei le jalge cu kunti
+  ##   .i ba bo le mulselci'a cu se tcidu pa roi
+  ##   .i le nu tcidu cu cusku ro nu to'e curmi
   var
     trees: seq[Node]
     at = 0
@@ -1113,10 +1426,15 @@ func buildText(terminals: openArray[Terminal], first, last: int): Option[Node] =
 
 
 func assembleText*(terminals: openArray[Terminal], parts: openArray[Node]): Option[Node] =
-  ## Build tree of text from tree of each of its parts, read alone, in order passes give them
-  ##   (`readGrammarParts`); so parts lose nothing of tree `readGrammar` gives text they read.
-  ##   Text of one part is that part; none where rule of passes breaks, and one pass alone reads
-  ##     text.
+  ## zbasu le tricu pe le selci'a fi le tricu pe ro pagbu be le selci'a be'o poi se tcidu ta'i lo nu
+  ##     sepli
+  ##   .i le pagbu cu selpoi ja'i le nu tcidu ro pagbu to `readGrammarParts` toi
+  ##   .i se ki'u bo le pagbu cu cirko no pagbu be le tricu poi `readGrammar` dunda ke'a le selci'a
+  ##       poi le pagbu cu pagbu ke'a
+  ##
+  ## ni'o le tricu pe pa selci'a poi vasru pa pagbu po'o cu du le tricu pe le pagbu
+  ##   .i va'o lo nu lo javni pe le nu tcidu ro pagbu cu spofu kei le jalge cu kunti
+  ##   .i ba bo lo nu tcidu le mulno se ciska po'o cu tcidu le selci'a
   let
     split = terminals.toParts(0, terminals.len)
     is_one = split.parts.len == 1 and split.inner == terminals.len
@@ -1129,12 +1447,17 @@ func assembleText*(terminals: openArray[Terminal], parts: openArray[Node]): Opti
 
 
 func readGrammar*(terminals: openArray[Terminal]): ReadingGrammar =
-  ## Read terminals of text by grammar of 21.1, into tree of its named rules; refuse at place
-  ##   where every derivation stops.
-  ##   Reads text part by part, so time grows with length of text alone (#849). One pass over
-  ##     whole text reads where passes cannot, and gives each refusal.
-  ##   Text of one part reads in one pass at once, as passes would only read it so and build
-  ##     its tree again; where it refuses, passes would read it twice.
+  ## tcidu lo genvla pe le selci'a ja'i le gerna pe `CLL 21.1` gi'e zbasu lo tricu pe lo javni poi
+  ##     selcme
+  ##   .i to'e curmi bu'u le stuzi poi ro cumtricu cu sisti bu'u ke'a
+  ##   .i tcidu ro pagbu be le selci'a
+  ##   .i se ki'u bo lo temci cu zensmi lo ni le selci'a cu clani to `#849` toi
+  ##
+  ## ni'o lo nu tcidu le mulselci'a pa roi cu tcidu le selci'a va'o lo nu le nu tcidu ro pagbu cu na
+  ##     ka'e tcidu kei gi'e cusku ro nu to'e curmi
+  ##   .i lo selci'a poi vasru pa pagbu po'o cu se tcidu pa roi ca
+  ##   .i ki'u bo lo nu tcidu ro pagbu cu tcidu le selci'a ta'i le mitytadji gi'e rapyzba le tricu
+  ##   .i va'o lo nu le selci'a cu se to'e curmi kei lo nu tcidu ro pagbu cu tcidu le selci'a re roi
   let split = terminals.toParts(0, terminals.len)
   if split.parts.len > 1 or split.inner < terminals.len:
     let built = terminals.buildText(0, terminals.len)
@@ -1143,11 +1466,12 @@ func readGrammar*(terminals: openArray[Terminal]): ReadingGrammar =
 
 
 
-#[ Marks ]#
+#[ ni'o ni'o ni'o lo nu sinxa lo srera ]#
 
 func toError(reading: ReadingGrammar, children: sink seq[Node]): Node =
-  ## Make error node of refusal, holding `children`: rule stopping innermost, and place grammar
-  ##   stops at, with terminals some derivation reads there.
+  ## zbasu lo srejge poi vasru `children` zi'e pe le nu to'e curmi
+  ##   .i le srejge cu ponse le javni poi sisti gi'e traji lo ka ce'u selvau ku'o .e le stistu pe le
+  ##       gerna ge'u .e lo genvla poi su'o cumtricu cu tcidu ke'a vi
   let rule = reading.head.toRule
   Node(
     is_terminal: false, rule: rule.name, number: rule.number, children: children,
@@ -1156,12 +1480,23 @@ func toError(reading: ReadingGrammar, children: sink seq[Node]): Node =
 
 
 func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
-  ## Cover terminals `first ..< last` by branches that keep 21.1, and terminals between them:
-  ##   fewest terminals between, then fewest pieces, and tie goes to longest piece first.
-  ##   Branch is named rule of least number deriving its span: rule 0, `text`, where its words
-  ##     read alone, so branch is tree they give alone. Rule of greatest number was rejected:
-  ##     other derivation of span may hold it, as `mi klama` read as `sumti-tail` 111 with
-  ##     possessor `mi` in place of `sentence` 40.
+  ## gacri le genvla pe `first ..< last` sepi'o lo ricpau poi mapti `CLL 21.1` ku'o .e lo genvla poi
+  ##     zvati lo jbini be le ricpau
+  ##   .i le gacri cu vasru lo mecraigenvla poi zvati lo jbini
+  ##   .i ba bo le gacri cu vasru lo mecraipau
+  ##   .i va'o lo nu dunli kei le gacri poi le pamoi pagbu pe ke'a traji lo ka ce'u clani cu jinga
+  ##
+  ## ni'o ro ricpau cu du lo javni poi selcme gi'e kuspe le selku'e pe le ricpau gi'e ponse lo
+  ##     mecraina'u
+  ##   .i va'o lo nu le valsi pe le selku'e cu se tcidu ta'i lo nu sepli kei le javni cu du le javni
+  ##       pe li no zi'e po'u `text`
+  ##   .i se ki'u bo le ricpau cu du le tricu poi le valsi cu dunda ke'a ta'i lo nu sepli
+  ##
+  ## ni'o se to'e cuxna fa lo javni poi ponse lo zmaraina'u
+  ##   .i ki'u bo lo datcumtricu pe le selku'e cu ka'e vasru le javni
+  ##   .i mupli fa lo nu lu mi klama li'u se tcidu ta'i `sumti-tail` noi ckini li papapa ku'o .enai
+  ##       `sentence` noi ckini li vono
+  ##   .i ne'i `sumti-tail` zo mi sinxa lo ponse be le klama
   let count = last - first
   if count == 0: return
   var chart = Chart(
@@ -1170,7 +1505,8 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
     terminals: terminals[first ..< last],
   )
 
-  # Head of branch over each span, by start and end: named rule of least number there.
+  # le stedu be lo ricpau poi kuspe ro selku'e ku'o ja'i le krasi .e le fanmo
+  #   .i le stedu cu du lo javni poi selcme gi'e ponse lo mecraina'u vi
   var heads = newSeq[Table[int, int]](count)
   for finish in 1 .. count:
     for (head, start) in chart.completions[finish].keys:
@@ -1179,8 +1515,12 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
         GRAMMAR_EBNF.numbers[head].get < GRAMMAR_EBNF.numbers[heads[start][finish]].get
       if is_outer: heads[start][finish] = head
 
-  # Cover of terminals from each place to end, from last place back: terminals between,
-  #   pieces, and end of first piece, with head of its branch; none for terminal alone.
+  # le gacri be le genvla poi zvati ro stuzi bi'o le fanmo
+  #   .i le nu facki cu krasi le romoi stuzi
+  #   .i le gacri cu vasru lo te kancu be lo gerna valsi poi zvati lo jbini be'o .e lo te kancu be
+  #       lo pagbu be'o .e le fanmo be le pamoi pagbu be'o .e le stedu be le ricpau pe le pamoi
+  #       pagbu
+  #   .i va'o lo nu le pamoi pagbu cu gerna valsi po'o kei le stedu cu kunti
   var covers = newSeq[tuple[between, pieces, finish: int, head: Option[int]]](count + 1)
   for start in countdown(count - 1, 0):
     covers[start] = (
@@ -1193,7 +1533,8 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
       if cost < kept or (cost == kept and finish > covers[start].finish):
         covers[start] = (cost[0], cost[1], finish, some(head))
 
-  # Build each piece in order: branch with its tree, as part read alone would give it.
+  # zbasu ro pagbu ja'i le porsi
+  #   .i ro ricpau cu ponse le tricu poi lo pagbu poi se tcidu ta'i lo nu sepli cu dunda ke'a
   var start = 0
   while start < count:
     let cover = covers[start]
@@ -1202,14 +1543,18 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
     else:
       doAssert chart.choose(cover.head.get, start, cover.finish).isSome,
           "Span completions hold should derive tree."
-      chart.addNodes(cover.head.get, start, cover.finish, result)  # named, so one node
+      # le javni cu selcme
+      #   .i se ki'u bo lo jgena cu pa mei
+      chart.addNodes(cover.head.get, start, cover.finish, result)
       result[^1].shift(first)
     start = cover.finish
 
 
 func markPart(terminals: openArray[Terminal], part: Slice[int]): Node =
-  ## Read part alone, as text, into tree whose indexes count from start of text; where grammar
-  ##   refuses it, into error node of part, holding branches that keep 21.1 (`islands`).
+  ## tcidu le pagbu ta'i lo selci'a poi sepli gi'e zbasu lo tricu
+  ##   .i ne'i le tricu le stuna'u pe le krasi be le mulselci'a cu du li no
+  ##   .i va'o lo nu le gerna cu to'e curmi le pagbu kei zbasu lo srejge pe le pagbu zi'e poi vasru
+  ##       lo ricpau poi mapti `CLL 21.1` to `islands` toi
   var reading = terminals.toOpenArray(part.a, part.b).readWhole
   if reading.is_read:
     result = move(reading.tree)
@@ -1222,10 +1567,13 @@ func markPart(terminals: openArray[Terminal], part: Slice[int]): Node =
 func markText(
     terminals: openArray[Terminal], first, last: int, ignored: openArray[int] = []
 ): seq[Node] =
-  ## Give pieces of text of terminals `first ..< last` as passes cut it (`toParts`): tree of
-  ##   each part that reads alone, and error node of each that does not; then pieces of text of
-  ##   `tu'e` left open. Part holding `lu` or `to` left open runs to `last`. Opener `ignored`
-  ##   holds reads as plain terminal.
+  ## dunda lo pagbu be le selci'a pe le genvla pe `first ..< last` ta'i lo nu le nu tcidu ro pagbu
+  ##     cu katna to `toParts` toi
+  ##   .i le pagbu cu du lo tricu pe ro pagbu poi se tcidu ta'i lo nu sepli ge'u .e lo srejge pe ro
+  ##       pagbu poi na se tcidu
+  ##   .i ba bo dunda lo pagbu be le selci'a pe zo tu'e poi ca'o kalri
+  ##   .i va'o lo nu zo lu .a zo to cu ca'o kalri kei le pagbu poi vasru le kravla cu selfa'o `last`
+  ##   .i lo kravla poi `ignored` vasru ke'a se tcidu ta'i lo sapygenvla
   let split = terminals.toParts(first, last, ignored)
   for part in split.parts: result.add terminals.markPart(part)
   if split.inner < last: result.add terminals.markText(split.inner, last, ignored)
@@ -1234,21 +1582,33 @@ func markText(
 func readGrammarParts*(
     terminals: openArray[Terminal], is_live = false
 ): tuple[parts: seq[Node], open: seq[int]] =
-  ## Read terminals by grammar of 21.1 into node of each part, as passes cut them: tree of each
-  ##   part that reads alone, error node of each that does not, then parts of text of `tu'e`
-  ##   left open; `assembleText` builds tree of text from them, so they lose nothing of it.
-  ##   Live text cuts after opener that waits for its closer, so each sentence after it reads
-  ##     alone (`is_live`); `open` gives index of each such opener, which closer reads again.
+  ## tcidu lo genvla ja'i le gerna pe `CLL 21.1` gi'e zbasu lo jgena pe ro pagbu ta'i lo nu le nu
+  ##     tcidu ro pagbu cu katna
+  ##   .i le jgena cu du lo tricu pe ro pagbu poi se tcidu ta'i lo nu sepli ge'u .e lo srejge pe ro
+  ##       pagbu poi na se tcidu
+  ##   .i ba bo le jgena cu du lo pagbu be le selci'a pe zo tu'e poi ca'o kalri
+  ##   .i `assembleText` zbasu le tricu pe le selci'a fi le jgena
+  ##   .i se ki'u bo le jgena cu cirko no pagbu be le tricu
+  ##
+  ## ni'o lo mivyselci'a cu selka'a ba ro kravla poi denpa lo famvla pe vo'a
+  ##   .i se ki'u bo ro jufra poi se lidne le kravla cu se tcidu ta'i lo nu sepli to `is_live` toi
+  ##   .i `open` dunda lo stuna'u pe ro le kravla
+  ##   .i le famvla cu raptcidu le kravla
   let open = (if is_live: terminals.unclosed(0, terminals.len) else: @[])
   (terminals.markText(0, terminals.len, open), open)
 
 
 func readGrammarMarked*(terminals: openArray[Terminal]): Node =
-  ## Read terminals by grammar of 21.1 into tree of its named rules, as `readGrammar` does; where
-  ##   grammar refuses them, into error node of whole text, so tree marks each error (#859).
-  ##   Error node of text cut into parts holds tree of each part that reads alone, and error
-  ##     node of each that does not, so reading starts again at each part; text of one part
-  ##     holds branches that keep 21.1, and terminals between them (`islands`).
+  ## tcidu lo genvla ja'i le gerna pe `CLL 21.1` gi'e zbasu lo tricu pe lo javni poi selcme ta'i lo
+  ##     nu `readGrammar` zbasu
+  ##   .i va'o lo nu le gerna cu to'e curmi le genvla cu zbasu lo srejge pe le mulno selci'a
+  ##   .i se ki'u bo le tricu cu sinxa ro srera to `#859` toi
+  ##
+  ## ni'o va'o lo nu le selci'a cu selka'a fi lo pagbu kei le srejge pe le selci'a cu vasru lo tricu
+  ##     pe ro pagbu poi se tcidu ta'i lo nu sepli ge'u .e lo srejge pe ro pagbu poi na se tcidu
+  ##   .i se ki'u bo lo nu tcidu cu rapcfa bu'u ro pagbu
+  ##   .i le srejge pe lo selci'a poi vasru pa pagbu po'o cu vasru lo ricpau poi mapti `CLL 21.1`
+  ##       ku'o .e lo genvla poi zvati lo jbini be le tricu pagbu to `islands` toi
   var reading = terminals.readGrammar
   if reading.is_read: return move(reading.tree)
   let

@@ -1,44 +1,84 @@
-## Classify shapes of lojban words and rafsi, as CLL chapter 4 writes them in C and V.
+## facki lo tarmi be lo jbovla .e lo rafsi ta'i lo nu `CLL 4` ciska le tarmi sepi'o zoi gy. C .gy.
+##     .e zoi gy. V .gy.
 ##
-##   |--------|----------|----------------------------------------------|-------------|
-##   | Code   | CLL      | Meaning                                      | Section     |
-##   |--------|----------|----------------------------------------------|-------------|
-##   | Cvc    | CVC      | short rafsi, never final                     | 4.6         |
-##   | Ccv    | CCV      | short rafsi, CC permissible initial          | 4.6         |
-##   | Cvv    | CVV      | short rafsi; CV'V, or VV one of four         | 4.6         |
-##   |        |          |   diphthongs `ai ei oi au`                   |             |
-##   | Cvcc   | CVC/C    | 4-letter rafsi of CVCCV gismu, never final   | 4.6         |
-##   | Ccvc   | CCVC     | 4-letter rafsi of CCVCV gismu, never final   | 4.6         |
-##   | Cvccv  | CVC/CV   | gismu, or its 5-letter rafsi, final alone    | 4.4, 4.6    |
-##   | Ccvcv  | CCVCV    | gismu, or its 5-letter rafsi, final alone    | 4.4, 4.6    |
-##   |--------|----------|----------------------------------------------|-------------|
+##   |----------|----------|--------------------------------------------------------|------------|
+##   | lo cmima | lo tarmi | lo smuni                                               | lo ckupau  |
+##   |----------|----------|--------------------------------------------------------|------------|
+##   | `Cvc`    | `CVC`    | lo cmarafsi poi no roi fanmo lo lujvo               | `4.6`      |
+##   | `Ccv`    | `CCV`    | lo cmarafsi                                         | `4.6`      |
+##   |          |          | .i `CC` cu ka'e krasi lo valsi                         |            |
+##   | `Cvv`    | `CVV`    | lo cmarafsi poi seltai `CV'V` .a `CVV`            | `4.6`      |
+##   |          |          | `VV` du pa le vo karsna remei po'u `ai ei oi au`    |            |
+##   | `Cvcc`   | `CVC/C`  | lo rafsi poi vasru vo lerfu gi'e no roi fanmo lo lujvo | `4.6`      |
+##   |          |          | le rafsi cu selkra lo gismu poi seltai `CVCCV`     |            |
+##   | `Ccvc`   | `CCVC`   | lo rafsi poi vasru vo lerfu gi'e no roi fanmo lo lujvo | `4.6`      |
+##   |          |          | le rafsi cu selkra lo gismu poi seltai `CCVCV`     |            |
+##   | `Cvccv`  | `CVC/CV` | lo gismu .a lo rafsi be ri be'o poi vasru mu lerfu     | `4.4, 4.6` |
+##   |          |          | le rafsi cu fanmo ro lujvo poi vasru ke'a              |            |
+##   | `Ccvcv`  | `CCVCV`  | lo gismu .a lo rafsi be ri be'o poi vasru mu lerfu     | `4.4, 4.6` |
+##   |          |          | le rafsi cu fanmo ro lujvo poi vasru ke'a              |            |
+##   |----------|----------|--------------------------------------------------------|------------|
 ##
-##   Notation of CLL is canonical spelling (Article III.1): C is consonant, V is vowel, `/`
-##     marks medial pair that need only be permissible (3.6), adjacent CC at start must be
-##     initial pair (3.7). Members are Pascal case of that notation (V.11).
-##   CV'V and diphthong CVV share `Cvv`, since both take every position CVV takes; apostrophe
-##     matters only to score (4.12), which reads it off letters.
-##   Form judges letters alone, never dictionary: `dri` is `Ccv` whether or not list assigns
-##     it, so morphology and vocabulary stay separable and each testable alone.
-##   `Kind` sorts word into class of 4.1 by letters alone, as 4.2 to 4.8 give each class; list
-##     gives meaning, never class.
-##   Rules of cmene (4.8) and fu'ivla (4.7) that letters alone decide stand here: pairs of 3.6
-##     for both, triples of 3.7 for fu'ivla alone, cluster opening fu'ivla, and `la` and `doi`
-##     cmene may not hold.
-##     Rules needing other words, combination and slinku'i test, stand in `fuhivla.nim`.
-##   Pause rules of 4.9 that letters decide stand here too, so fu'ivla and stream share them;
-##     stream adds stress.
-##   Cmavo form (4.2) is optional consonant, then run of vowels: one vowel or diphthong, then
-##     each further one after apostrophe. Ten on-glides 4.2 adds stand first, in cmavo opening
-##     with vowel alone, as 3.4 keeps them to words standing alone. `Cy`, `y` and `y'y` are
-##     letterals (4.2, 17.2).
-##     Cost: run of three vowels or more is form 4.2 keeps for experiment, so it reads as cmavo
-##       no list can hold.
-##   Compound cmavo splits before each consonant and at each period (4.2, 3.3): cmavo holds
-##     one consonant at most, first, and cmavo opening with vowel follows pause. So split is
-##     unique, and each piece is cmavo of 4.2 or compound is none.
-##   Cost: every rafsi text classified again where read, rather than form stored beside it;
-##     text is at most five letters, so cost is constant (unmeasured).
+## ni'o lo sinxa pe `CLL` raltadji lo nu ciska lo cmene to `Article III.1` toi
+##   .i zoi gy. C .gy. sinxa lo zunsna
+##   .i zoi gy. V .gy. sinxa lo karsna
+##   .i `/` sinxa lo midju zunsna remei poi bilga lo ka se curmi po'o to `CLL 3.6` toi
+##   .i lo re lamji zunsna poi krasi le tarmi cu bilga lo ka ka'e krasi lo valsi to `CLL 3.7` toi
+##
+## ni'o ro cmima be `Form` cu ciska le sinxa ta'i `Pascal case` to `Article V.11` toi
+##   .i `Cvv` sinxa `CV'V` .e `CVV` noi vasru lo karsna remei ku'o ki'u lo nu ro le re tarmi cu ka'e
+##       zvati ro stuzi poi `CVV` cu ka'e zvati ke'a
+##   .i zoi gy. ' .gy. vajni lo namcu po'o to `CLL 4.12` toi
+##   .i le namcu cu tcidu zoi gy. ' .gy. fi lo lerfu
+##
+## ni'o lo tarmi cu jdice fi lo lerfu po'o gi'e no roi retsku fi lo vlaste
+##   .i mupli fa lo nu `dri` seltai `Ccv`
+##   .iju lo liste cu dunda `dri` lo valsi
+##   .i se ki'u bo lo tarmi be lo valsi cu sepli lo vlaste
+##   .i lo cipra cu ka'e cipra fi lo tarmi po'o .a lo vlaste po'o
+##
+## ni'o `Kind` fendi lo valsi lo klesi pe `CLL 4.1` sepi'o lo lerfu po'o ta'i lo nu `CLL 4.2` bi'o
+##     `CLL 4.8` skicu ro klesi
+##   .i lo liste cu dunda lo smuni gi'e no roi dunda lo klesi
+##
+## ni'o le vi datnyvei cu vasru lo javni pe lo cmene to `CLL 4.8` toi .e lo javni pe lo fu'ivla to
+##     `CLL 4.7` toi vu'o poi nitcu lo lerfu po'o
+##   .i lo javni pe lo zunsna remei to `CLL 3.6` toi cu srana ro le re klesi
+##   .i lo javni pe lo zunsna cimei to `CLL 3.7` toi cu srana lo fu'ivla po'o
+##   .i le javni cu srana ji'a lo zunsna gunma poi krasi lo fu'ivla ku'o .e lo du'u lo cmene na ka'e
+##       vasru zo la .a zo doi
+##   .i lo javni poi nitcu lo datyvla cu zvati `fuhivla.nim`
+##   .i mupli fa lo javni pe lo vlagunma .e lo cipra pe zoi gy. slinku'i .gy.
+##
+## ni'o le vi datnyvei cu vasru ji'a lo javni pe lo denpa zi'e poi nitcu lo lerfu po'o to `CLL 4.9`
+##     toi
+##   .i se ki'u bo `fuhivla.nim` .e `stream.nim` pilno le javni
+##   .i `stream.nim` jmina lo javni pe lo nu basna
+##
+## ni'o ja'i `CLL 4.2` lo cmavo cu vasru lo porsi be lo karsna
+##   .i pa zunsna cu ka'e lidne le porsi
+##   .i lo pamoi pagbu be le porsi cu du pa karsna .a pa karsna remei
+##   .i zoi gy. ' .gy. lidne ro datpau be le porsi
+##   .i le pano sakli karsna poi `CLL 4.2` jmina ke'a pamoi ne'i lo cmavo poi lo karsna cu krasi
+##       ke'a ku'o po'o ki'u lo nu `CLL 3.4` to'e curmi le sakli karsna ne'i ro valsi poi na sepli
+##   .i `Cy` .e `y` .e `y'y` lerfu cmavo to `CLL 4.2` .e `CLL 17.2` toi
+##
+## ni'o jdima fa lo nu `CLL 4.2` ralte lo porsi be su'o ci karsna mu'i lo nu cipra
+##   .i se ki'u bo le porsi cu se tcidu ta'i lo cmavo poi no liste ka'e vasru ke'a
+##
+## ni'o ja'i `CLL 4.2` .e `CLL 3.3` lo ma'orgunma cu se fendi pu ro zunsna gi'e se fendi bu'u ro
+##     lerfu po'u denpa bu
+##   .i lo cmavo cu vasru su'e pa zunsna noi pamoi
+##   .i lo cmavo poi lo karsna cu krasi ke'a se lidne lo denpa
+##   .i se ki'u bo lo ma'orgunma cu se fendi ta'i pa tadji po'o
+##   .i ro pagbu cu cmavo ja'i `CLL 4.2`
+##   .i ja le selci'a cu na ma'orgunma
+##
+## ni'o jdima fa lo nu ro roi lo nu tcidu lo rafsi cu rinka lo nu rapfa'i lo tarmi be le rafsi
+##   .i le tarmi na selra'e ta'i lo nu kansa le rafsi
+##   .i le rafsi cu vasru su'e mu lerfu
+##   .i se ki'u bo le jdima cu stodi
+##   .i le jdima na selmre
 
 {.experimental: "strictFuncs".}
 
@@ -48,44 +88,63 @@ import ./clusters
 
 
 type
-  Form* {.pure.} = enum  ## Define shape of rafsi, in notation of CLL 4.6.
+  Form* {.pure.} = enum  ## lo tarmi be lo rafsi ja'i lo sinxa pe `CLL 4.6`
     Cvc, Ccv, Cvv, Cvcc, Ccvc, Cvccv, Ccvcv
 
-  Kind* {.pure.} = enum  ## Define class of word, as 4.1 to 4.8 sort words by form.
-    Cmavo  ## Structure word, no consonant pair (4.2).
-    Gismu  ## Root brivla of five letters, CVC/CV or CCVCV (4.4).
-    Lujvo  ## Brivla of two rafsi or more, joined as 4.11 joins them (4.5, 4.6).
-    Fuhivla  ## Brivla neither gismu nor lujvo, nor any combination of words (4.7).
-    Cmene  ## Name, ending in consonant (4.8).
+  Kind* {.pure.} = enum  ## lo klesi be lo valsi ja'i lo tarmi to `CLL 4.1` bi'o `CLL 4.8` toi
+    Cmavo  ## lo turvla poi vasru no zunsna remei to `CLL 4.2` toi
+    Gismu  ## lo jicmu brivla poi vasru mu lerfu gi'e seltai `CVC/CV` .a `CCVCV` to `CLL 4.4` toi
+    Lujvo  ## lo brivla poi vasru su'o re rafsi noi se jmina ja'i `CLL 4.11` to `CLL 4.5, 4.6` toi
+    Fuhivla  ## lo brivla poi na gismu gi'e na lujvo gi'e na gunma lo valsi to `CLL 4.7` toi
+    Cmene  ## lo cmene poi selfa'o lo zunsna to `CLL 4.8` toi
 
 
 const
   DIPHTHONGS* = ["ai", "ei", "oi", "au"]
-    ## Vowel pairs VV stands for unbroken (4.1 rule 2): CVV rafsi (4.6) and cmavo (4.2) hold them.
+    ## lo karsna remei poi `VV` sinxa ke'a zi'e poi na se fendi to le remoi javni pe `CLL 4.1` toi
+    ##   .i lo rafsi poi seltai `CVV` ku'o to `CLL 4.6` toi .e lo cmavo to `CLL 4.2` toi cu vasru le
+    ##       karsna remei
   DIPHTHONGS_CMAVO* = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
-    ## Ten diphthongs 4.2 adds for cmavo of VV form: on-glides 3.4 keeps to words standing alone,
-    ##   names and borrowings.
-  FORMS_SHORT* = {Form.Cvc, Form.Ccv, Form.Cvv}  ## Three-letter rafsi, apostrophe aside (4.6).
-  FORMS_UNREDUCED* = {Form.Cvcc, Form.Ccvc}  ## 4-letter rafsi, gismu less final vowel (4.6).
-  FORMS_GISMU* = {Form.Cvccv, Form.Ccvcv}  ## Shapes of gismu, and of 5-letter rafsi (4.4).
+    ## le pano karsna remei poi `CLL 4.2` jmina ke'a lo cmavo poi seltai `VV`
+    ##   .i le karsna remei cu sakli karsna
+    ##   .i `CLL 3.4` curmi lo sakli karsna ne'i lo valsi poi sepli .e lo cmene .e lo fu'ivla gi'e
+    ##       to'e curmi le sakli karsna ne'i ro datyvla
+  FORMS_SHORT* = {Form.Cvc, Form.Ccv, Form.Cvv}
+    ## lo tarmi be lo cmarafsi poi vasru ci lerfu
+    ##   .i zoi gy. ' .gy. na se kancu to `CLL 4.6` toi
+  FORMS_UNREDUCED* = {Form.Cvcc, Form.Ccvc}
+    ## lo tarmi be lo rafsi poi vasru vo lerfu
+    ##   .i le rafsi cu du lo gismu poi lo fanmo karsna pe ke'a se vimcu to `CLL 4.6` toi
+  FORMS_GISMU* = {Form.Cvccv, Form.Ccvcv}
+    ## lo tarmi be lo gismu .e lo rafsi poi vasru mu lerfu to `CLL 4.4` toi
   FORMS_FINAL* = {Form.Ccv, Form.Cvv, Form.Cvccv, Form.Ccvcv}
-    ## Forms lujvo may end with: those ending in vowel (4.6, 4.11 step 2).
+    ## lo tarmi be lo rafsi poi ka'e fanmo lo lujvo
+    ##   .i le tarmi cu selfa'o lo karsna to `CLL 4.6` .e `CLL 4.11 step 2` toi
   CMAVO_BEFORE_CMENE* = ["la", "lai", "la'i", "doi"]
-    ## Cmavo cmene may follow with no pause between them (4.9 rule 4).
+    ## lo cmavo poi ka'e lidne lo cmene ta'i lo nu no denpa cu zvati lo jbini be le re valsi to le
+    ##     vomoi javni pe `CLL 4.9` toi
   SEQUENCES_BREAKUP* = ["la", "doi"]
-    ## Letters cmene holds only after consonant, else it breaks up into words (4.8); `lai` and
-    ##   `la'i` open with `la`, so ban on `la` holds them too.
-  VOWELS_SYLLABLE = VOWELS + {'y'}  ## Letters each making syllable: five vowels, and `y` (3.4).
+    ## lo lerpoi poi lo cmene cu ka'e vasru ke'a va'o lo nu lo zunsna cu lidne ke'a
+    ##   .i va'o lo drata le cmene cu se fendi fi lo valsi to `CLL 4.8` toi
+    ##   .i zo lai .e zo la'i selkra zo la
+    ##   .i se ki'u bo lo nu to'e curmi zo la cu to'e curmi ji'a zo lai .e zo la'i
+  VOWELS_SYLLABLE = VOWELS + {'y'}
+    ## lo lerfu poi zbasu lo slaka
+    ##   .i le lerfu cu du le mu karsna jo'u `y` to `CLL 3.4` toi
   KINDS_GLIDE = {Kind.Fuhivla, Kind.Cmene}
-    ## Classes holding on-glide anywhere as diphthong, as borrowing and name (3.4).
-  DIPHTHONGS_NAME = ["iy", "uy"]  ## Diphthongs 3.4 keeps to names, `y` second.
+    ## lo klesi be lo fu'ivla .e lo cmene be'o noi ro sakli karsna ne'i ke'a karsna remei to
+    ##     `CLL 3.4` toi
+  DIPHTHONGS_NAME = ["iy", "uy"]
+    ## lo karsna remei poi `CLL 3.4` curmi ke'a ne'i lo cmene po'o
+    ##   .i lo remoi lerfu cu du `y`
 
 
 
-#[ Forms ]#
+#[ ni'o ni'o ni'o lo tarmi ]#
 
 func form*(text: string): Option[Form] =
-  ## Classify text as rafsi form of 4.6; `none` where letters fit no form.
+  ## facki lo raftai pe `CLL 4.6` poi le selci'a cu seltai ke'a
+  ##   .i dunda `none` va'o lo nu le lerfu cu mapti no tarmi
   template c(i: int): bool = text[i].isConsonant
   template v(i: int): bool = text[i].isVowel
 
@@ -111,15 +170,23 @@ func form*(text: string): Option[Form] =
 
 
 func isGismu*(text: string): bool =
-  ## Test text has shape of gismu, i.e. CVC/CV or CCVCV (4.4); list membership not asked.
+  ## jdice lo du'u xu kau le selci'a cu seltai lo gimtai
+  ##   .i lo gimtai cu du `CVC/CV` jo'u `CCVCV` to `CLL 4.4` toi
+  ##   .i no roi retsku lo du'u xu kau lo liste cu vasru le selci'a
   let shape = text.form
   shape.isSome and shape.get in FORMS_GISMU
 
 
 func isBrivla*(text: string): bool =
-  ## Test written properties every brivla holds (4.3): final vowel, and consonant pair among
-  ##   first five letters, `y` and apostrophe not counted.
-  ##   Stress is third property; written text carries none, and penultimate stress is default.
+  ## jdice lo du'u xu kau le selci'a cu ckaji ro selkai be ro brivla be'o poi lo selci'a cu ka'e
+  ##     jarco ke'a to `CLL 4.3` toi
+  ##   .i le selkai cu du lo ka selfa'o lo karsna kei jo'u lo ka vasru lo zunsna remei ne'i le mu
+  ##       lerfu poi krasi
+  ##   .i `y` .e zoi gy. ' .gy. na se kancu
+  ##
+  ## ni'o lo nu basna cu cimoi se ckaji
+  ##   .i lo selci'a cu ralte no nu basna
+  ##   .i lo selci'avla poi vasru no brale'u cu se basna lo slaka poi lidne lo romoi
   if text.len == 0 or not text[^1].isVowel: return false
   var letters: string
   for character in text:
@@ -131,11 +198,16 @@ func isBrivla*(text: string): bool =
 
 
 func nuclei*(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[int]] =
-  ## Find nucleus of each syllable of word of class `kind`: vowel or `y` alone, or diphthong,
-  ##   which is always one syllable (3.4); vowels pair from left (3.5). On-glide is diphthong
-  ##   anywhere in fu'ivla and cmene, and first in cmavo alone; `iy` and `uy` in cmene alone
-  ##   (3.4, 4.2).
-  ##   Comma before letter of `breaks` parts two vowels into two syllables (3.5).
+  ## facki lo midju be ro slaka be lo valsi poi `kind` klesi ke'a
+  ##   .i lo midju cu du pa karsna po'o .a `y` po'o .a pa karsna remei noi ro roi zvati pa slaka
+  ##       po'o to `CLL 3.4` toi
+  ##   .i lo karsna remei cu selfa'i ta'i lo nu klama fi lo zunle fe lo pritu to `CLL 3.5` toi
+  ##
+  ## ni'o lo sakli karsna cu karsna remei ne'i ro stuzi be lo fu'ivla .e lo cmene
+  ##   .i ku'i ne'i lo cmavo lo sakli karsna cu karsna remei va'o lo nu pamoi kei po'o
+  ##   .i `iy` .e `uy` karsna remei ne'i lo cmene po'o to `CLL 3.4` .e `CLL 4.2` toi
+  ##   .i va'o lo nu slaka bu cu lidne lo lerfu pe `breaks` kei le re karsna cu se fendi fi re slaka
+  ##       to `CLL 3.5` toi
   var at = 0
   while at < text.len:
     if text[at] notin VOWELS_SYLLABLE:
@@ -153,16 +225,26 @@ func nuclei*(text: string, kind: Kind, breaks: openArray[int] = []): seq[Slice[i
 
 
 func syllables*(text: string, kind: Kind): int =
-  ## Count syllables of word of class `kind`: one to each nucleus, `y` included (3.4).
+  ## kancu lo slaka be lo valsi poi `kind` klesi ke'a
+  ##   .i ro midju cu zbasu pa slaka
+  ##   .i `y` se kancu ji'a to `CLL 3.4` toi
   text.nuclei(kind).len
 
 
 func isCmavo*(text: string): bool =
-  ## Test text is one cmavo by form of 4.2: V, VV, CV or CVV, or run of three vowels or more
-  ##   that 4.2 keeps for experiment; or letteral `Cy`, `y` alone, or `y'y` (4.2, 17.2).
-  ##   VV is diphthong or V'V (4.1 rule 2); in cmavo opening with vowel, first pair may also be
-  ##     one of ten on-glides 4.2 adds. Each vowel past first pair follows apostrophe.
-  ##   Pause before vowel goes unwritten here; period writing it is mark of stream (3.3).
+  ## jdice lo du'u xu kau le selci'a cu du pa cmavo ja'i lo tarmi pe `CLL 4.2`
+  ##   .i le tarmi cu du `V` .a `VV` .a `CV` .a `CVV` .a lo porsi be su'o ci karsna be'o poi
+  ##       `CLL 4.2` ralte ke'a mu'i lo nu cipra
+  ##   .i ja le selci'a cu du lo lerma'o po'u `Cy` .a `y` po'o .a `y'y` to `CLL 4.2` .e `CLL 17.2`
+  ##       toi
+  ##
+  ## ni'o `VV` du pa karsna remei .a `V'V` to le remoi javni pe `CLL 4.1` toi
+  ##   .i ne'i lo cmavo poi lo karsna cu krasi ke'a ku'o le pamoi karsna remei cu ka'e du ji'a pa le
+  ##       pano sakli karsna poi `CLL 4.2` jmina ke'a
+  ##   .i zoi gy. ' .gy. lidne ro karsna poi se lidne le pamoi karsna remei
+  ##
+  ## ni'o lo denpa poi lidne lo karsna cu na selci'a vi
+  ##   .i denpa bu noi ciska le denpa cu se tcidu lo tcidu be lo porsi be lo valsi to `CLL 3.3` toi
   let
     start = (if text.len > 0 and text[0].isConsonant: 1 else: 0)
     rest = text[start .. ^1]
@@ -181,10 +263,13 @@ func isCmavo*(text: string): bool =
 
 
 func splitCompound*(text: string): seq[string] =
-  ## Split cmavo run together into each cmavo, as 4.2 compounds them; empty where any piece is
-  ##   no cmavo of 4.2. One cmavo splits into itself.
-  ##   Piece ends before each consonant, since cmavo holds one consonant at most, first; and at
-  ##     each period, which writes pause before cmavo opening with vowel (3.3).
+  ## fendi le ma'orgunma fi ro cmavo pe le ma'orgunma ja'i `CLL 4.2`
+  ##   .i dunda lo kunti va'o lo nu su'o pagbu cu na cmavo ja'i `CLL 4.2`
+  ##   .i pa cmavo cu se fendi fi vo'a
+  ##
+  ## ni'o ro zunsna cu krasi lo ninpau ki'u lo nu lo cmavo cu vasru su'e pa zunsna noi pamoi
+  ##   .i ji'a ro lerfu po'u denpa bu cu fanmo lo pagbu
+  ##   .i denpa bu cu sinxa lo denpa poi lidne lo cmavo poi lo karsna cu krasi ke'a to `CLL 3.3` toi
   var piece = ""
   for letter in text:
     if letter == '.' or (letter.isConsonant and piece.len > 0):
@@ -198,11 +283,14 @@ func splitCompound*(text: string): seq[string] =
 
 
 
-#[ Cmene, Fu'ivla and Pauses ]#
+#[ ni'o ni'o ni'o lo cmene .e lo fu'ivla .e lo denpa ]#
 
 func pairForbidden*(text: string): Option[string] =
-  ## Find first consonant pair of text that 3.6 forbids; none where each is permissible, as
-  ##   cmene needs alone (4.8): `NEderlants` holds triple `nts`, and 4.8 calls it valid.
+  ## facki lo pamoi zunsna remei poi `CLL 3.6` to'e curmi ke'a ku'o ne'i le selci'a
+  ##   .i dunda `none` va'o lo nu ro zunsna remei cu selcru
+  ##   .i lo cmene cu nitcu di'u po'o to `CLL 4.8` toi
+  ##   .i mupli fa lo nu zo NEderlants vasru lo zunsna cimei po'u `nts`
+  ##   .i ku'i `CLL 4.8` cusku lo du'u le cmene cu drani
   for i in 0 ..< text.high:
     if not (text[i].isConsonant and text[i + 1].isConsonant): continue
     if not isPairPermissible(text[i], text[i + 1]): return some(text[i .. i + 1])
@@ -210,8 +298,11 @@ func pairForbidden*(text: string): Option[string] =
 
 
 func clusterForbidden*(text: string): Option[string] =
-  ## Find first consonant pair of text that 3.6 forbids, or triple that 3.7 forbids by name;
-  ##   none where each is permissible, as fu'ivla needs (4.7): `lerndjamo` holds `ndj`.
+  ## facki lo pamoi zunsna remei poi `CLL 3.6` to'e curmi ke'a ku'o .a lo pamoi zunsna cimei poi
+  ##     `CLL 3.7` cusku ke'a gi'e to'e curmi ke'a ku'o ne'i le selci'a
+  ##   .i dunda `none` va'o lo nu ro zunsna remei .e ro zunsna cimei cu selcru
+  ##   .i lo fu'ivla cu nitcu di'u to `CLL 4.7` toi
+  ##   .i mupli fa lo nu `lerndjamo` vasru `ndj`
   let pair = text.pairForbidden
   if pair.isSome: return pair
   for i in 0 ..< text.len - 2:
@@ -220,8 +311,11 @@ func clusterForbidden*(text: string): Option[string] =
 
 
 func clusterOpeningForbidden*(text: string): Option[string] =
-  ## Find consonant cluster opening text where some pair is no initial pair of 3.7, which 4.7
-  ##   forbids fu'ivla; none where text opens with vowel, one consonant, or initial pairs alone.
+  ## facki lo zunsna gunma poi krasi le selci'a gi'e vasru su'o zunsna remei poi na ka'e krasi lo
+  ##     valsi ja'i `CLL 3.7`
+  ##   .i `CLL 4.7` to'e curmi lo nu lo fu'ivla cu selkra lo vi zunsna gunma
+  ##   .i dunda `none` va'o lo nu le selci'a cu selkra lo karsna .a pa zunsna po'o .a lo zunsna
+  ##       gunma poi ro zunsna remei pe ke'a cu ka'e krasi lo valsi
   var finish = 0
   while finish < text.len and text[finish].isConsonant: inc finish
   for i in 0 ..< finish - 1:
@@ -230,8 +324,10 @@ func clusterOpeningForbidden*(text: string): Option[string] =
 
 
 func breakup*(text: string): Option[string] =
-  ## Find `la` or `doi` text holds after no consonant, where cmene would break up into words
-  ##   (4.8); none where each stands after consonant, or text holds neither.
+  ## facki lo valsi poi du zo la .a zo doi gi'e selvau le selci'a gi'e na se lidne lo zunsna
+  ##   .i lo cmene poi vasru le valsi cu se fendi fi lo valsi to `CLL 4.8` toi
+  ##   .i dunda `none` va'o ga lo nu ro le valsi cu se lidne lo zunsna gi lo nu le selci'a cu vasru
+  ##       no le re valsi
   for sequence in SEQUENCES_BREAKUP:
     var at = text.find(sequence)
     while at >= 0:
@@ -241,14 +337,22 @@ func breakup*(text: string): Option[string] =
 
 
 func isLetteral*(text: string): bool = text.len == 2 and text[0].isConsonant and text[1] == 'y'
-  ## Test word is letteral `Cy`, which names consonant (4.2, 17.2).
+  ## jdice lo du'u xu kau le valsi cu du lo lerma'o po'u `Cy` noi cmene lo zunsna to `CLL 4.2` .e
+  ##     `CLL 17.2` toi
 
 
 func isPauseNeeded*(prior, next: string): bool =
-  ## Test rule of 4.9 needs pause between two words by their letters alone, stress aside:
-  ##   rule 2, word ending in consonant; rule 3, word opening with vowel, or `y` (4.2); rule 4,
-  ##   cmene after word other than `la`, `lai`, `la'i` or `doi`; rule 6, `Cy` before word not
-  ##   `Cy`; and pause after `y` (4.2).
-  if prior[^1].isConsonant or next[0] in VOWELS_SYLLABLE: return true  # rules 2, 3; 4.2
-  if next[^1].isConsonant and prior notin CMAVO_BEFORE_CMENE: return true  # rule 4
-  prior == "y" or (prior.isLetteral and not next.isLetteral)  # 4.2; rule 6
+  ## jdice ja'i lo lerfu po'o lo du'u xu kau lo javni pe `CLL 4.9` nitcu lo denpa poi zvati lo jbini
+  ##     be le re valsi
+  ##   .i na tcidu lo nu basna
+  ##
+  ## ni'o le remoi javni cu srana lo valsi poi selfa'o lo zunsna
+  ##   .i le cimoi javni cu srana lo valsi poi selkra lo karsna .a `y` to `CLL 4.2` toi
+  ##   .i le vomoi javni cu srana lo cmene poi se lidne lo valsi poi na du zo la .a zo lai .a zo
+  ##       la'i .a zo doi
+  ##   .i le xamoi javni cu srana lo lerma'o poi seltai `Cy` gi'e lidne lo valsi poi na seltai `Cy`
+  ##   .i ji'a lo denpa poi zvati lo jbini be `y` jo'u lo bavla'i valsi cu se nitcu to `CLL 4.2` toi
+  # le remoi javni .e le cimoi javni .e `CLL 4.2`
+  if prior[^1].isConsonant or next[0] in VOWELS_SYLLABLE: return true
+  if next[^1].isConsonant and prior notin CMAVO_BEFORE_CMENE: return true  # le vomoi javni
+  prior == "y" or (prior.isLetteral and not next.isLetteral)  # `CLL 4.2` .e le xamoi javni
