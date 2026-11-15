@@ -1,12 +1,32 @@
-# Hold every pull request to role line and label its branch names, and its title to commit
-#   grammar, before it can merge.
-#   Rule is first of CONTRIBUTOR.md's carried list. `ledger.yml` reads same two facts, but
+# Label each pull request with role its branch names, then hold its role line, label, title and
+#   body to that role, to commit grammar and to form of template, before it can merge.
+#   Rule is first of CONTRIBUTOR.md's carried list. `ledger.yml` reads role line and label, but
 #   daily and over open items only, so it reports after merge; this gates before it.
 #
+#   Two jobs, as Architect ruled on #845. `label` holds grant to write labels and checks out no
+#     code; `check-role` checks out koch and holds no scope that writes. So no code of pull
+#     request runs with token that can write, as `watch.yml` and `ledger.yml` hold for their
+#     own events.
+#   `label` cuts last part of branch for role, for three shapes of grammar alone (`domains.nim`).
+#     Shell holds second copy of grammar, and reads no list of domains, since it checks out
+#     nothing. Cost: branch naming domain that does not exist gets stray label, and
+#     `check-scope` still fails it.
+#   Label goes through REST, which creates label that new project lacks. Event of run token
+#     starts no other run, so label starts no second run, and `check-role` reads it after.
+#   `check-role` runs after `label` unless run is cancelled: failed `label` would otherwise skip
+#     it, and GitHub counts skipped required check as passed. So it runs, and names missing label.
+#   Label events stay: role label person removes is added again, and label added by hand runs
+#     check again.
+#   Event is `pull_request`, never `pull_request_target`, as Architect ruled on #845: workflow
+#     then comes from branch, so pull request tests its own jobs on runner (CURATOR.md, duty 2).
+#     Each branch here comes from one account that can already write, so no code gains power
+#     its author lacks. Pull request from fork gets token that only reads, so its label stays
+#     task by hand.
+#
 #   Separate workflow rather than job in `check.yml`, for one reason: this must fire when
-#   label changes, and label is applied after opening. Widening that workflow's types would
-#   re-run all of its jobs on every label event, where this runs one. Cost: its name is its own,
-#   so branch protection lists `check-role` by hand (CURATOR.md, repository settings section).
+#   label changes. Widening that workflow's types would re-run all of its jobs on every label
+#   event, where this runs two. Cost: its name is its own, so branch protection lists
+#   `check-role` by hand (CURATOR.md, repository settings section).
 #   `ready_for_review` is here because draft is where delegate fixes this, and flipping to
 #   ready must re-ask rather than carry draft's verdict.
 #
@@ -14,11 +34,15 @@
 #   script, as `check.yml` does with branch and event kind: title and body are whatever
 #   somebody typed, and label names are theirs too. Labels arrive as JSON array, which
 #   `--json labels` emits through `jq` and koch parses.
-#   Labels are read through API rather than from event payload: GitHub sends `opened` before
-#   `labeled`, so payload's list is empty on `opened`. API answers with labels that stand when
-#   check runs. Cost: `pull-requests: read`.
-#   `permissions` block is whole grant: `contents` is what checkout uses, and `pull-requests`
-#   is what `gh pr view` uses.
+#   Labels are read through API rather than from event payload: payload holds labels from
+#   before `label` ran, and is empty on `opened`. API answers with labels that stand when check
+#   runs. Cost: `pull-requests: read`.
+#   Top-level `permissions` block is whole grant of `check-role`, which names none of its own:
+#     `contents` is what checkout uses, and `pull-requests` is what `gh pr view` uses. `label`
+#     names its own block, `issues: write` and `pull-requests: write`, since label of pull
+#     request takes both (`architect.yml`).
+#   Cost: `workflows.nim` reads top-level block alone, so no check reads grant of `label`, and
+#     none holds that `check-role` writes nothing.
 #   `concurrency` group carries event's own action, so `opened`, `labeled` and
 #   `ready_for_review` do not cancel each other. They fire from same act of opening pull
 #   request, and cancelled run is not success: where branch protection requires this check,
@@ -44,7 +68,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    env:
+      BRANCH: ${{ github.head_ref }}
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Role is branch with last part cut: `curator`, `curator/<project>` or
+          #   `contributor/<domain>/<project>`; any other branch takes no label.
+          grammar='^(curator|curator/[a-z][a-z0-9_]*|contributor/[a-z][a-z0-9_]*/[a-z][a-z0-9_]*)'
+          grammar="$grammar/[a-z0-9][a-z0-9_-]*\$"
+          if [[ "$BRANCH" =~ $grammar ]]; then
+            gh api -X POST "repos/$REPO/issues/$NUMBER/labels" -f "labels[]=${BASH_REMATCH[1]}" \
+              --silent
+            echo "Labelled #$NUMBER \`${BASH_REMATCH[1]}\`."
+          fi
+
   check-role:
+    needs: label
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     env:
       BRANCH: ${{ github.head_ref }}
