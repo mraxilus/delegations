@@ -7,7 +7,7 @@
 ##     outside grammar, rewrite of pushed history, and push past pre-push hook, since `koch check`
 ##     holds what each project clears on its own branch (duty 3); `body` holds post before it
 ##     lands to role line, Simplified Technical English counts, issue title and label,
-##     pull request headings, and closing keyword before issue on line of its own alone; `stop`
+##     pull request form, and closing keyword before issue on line of its own alone; `stop`
 ##     refuses end of turn that pushed or posted and closes with neither sign-off block nor
 ##     working line, sign-off out of shape whatever its turn did, end of any turn whose message
 ##     names `#N` outside link or cites charter reference with no description, and sign-off
@@ -613,20 +613,6 @@ func isPost*(request: Request): bool =
   isPost(request.tool, request.has_body)
 
 
-func blankComments(text: string): string =
-  ## Blank every HTML comment, so template left unfilled reads as empty.
-  var rest = text
-  while true:
-    let open = rest.find(COMMENT_OPEN)
-    if open < 0: break
-    let close = rest.find("-->", open)
-    if close < 0:
-      rest = rest[0 ..< open]
-      break
-    rest = rest[0 ..< open] & rest[close + 3 .. ^1]
-  rest
-
-
 func stopIssue(text: string, at: int): int =
   ## Read issue reference opening at `at` of text: `#N`, `<owner>/<repo>#N`, or issue URL.
   ##   Return index past it; `-1` where none opens there, or word character runs on after `N`.
@@ -728,14 +714,6 @@ func checkBody*(
         "Issue must carry role label of its work, copied from grammar, and never `" &
           COORDINATOR & "`; got `" & labels.join(", ") & "`.",
       )
-  if tool == "mcp__github__create_pull_request":
-    let headings = body.linesHeading
-    for h in HEADINGS_PULL:
-      if h notin headings:
-        result.add finding("", 0, "Pull request body must carry `" & h & "`; got none.")
-    let shown = body.section(HEADINGS_PULL[2]).blankComments.strip
-    if HEADINGS_PULL[2] in headings and shown.len == 0:
-      result.add finding("", 0, "Verification must show change; got template comment alone.")
   if tool in TOOLS_PULL: result.add body.checkBodyPull
 
 

@@ -208,7 +208,7 @@ func isSentenceEnd*(word: string): bool =
   word[i - 1] in Letters + Digits or word[i - 1] in {')', ']', '"', '%', '*', '_'}
 
 
-func sentences(text: string): seq[string] =
+func sentences*(text: string): seq[string] =
   ## Split block into sentences at every word that closes one.
   var words: seq[string]
   for word in text.splitWhitespace:
