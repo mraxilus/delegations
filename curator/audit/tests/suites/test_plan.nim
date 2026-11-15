@@ -266,12 +266,14 @@ suite "Plan":
       "import ../../parser/src/[\n  nif,\n  merge,\n]\n",  # list of modules in brackets
       "when defined(js): import ../../parser/src/parser\n",  # behind guard
       "import \"../../parser/src/parser\"\n",  # quoted path
+      "include \"../../parser/src/parser.nim\"\n",  # include, which compiles what it names
     ]:
       let imported = pinned & @[entry(tagger & "/src/tagger.nim", source)]
       check imported.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser, tagger]
     for source in [
       "# import ../../parser/src/parser\n",  # comment
       "let path = \"../../parser/src/parser\"\n",  # string outside import
+      "const page = \"\"\"\nimport ../../parser/src/parser\n\"\"\"\n",  # line of long string
     ]:
       let named = pinned & @[entry(tagger & "/src/tagger.nim", source)]
       check named.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser]
