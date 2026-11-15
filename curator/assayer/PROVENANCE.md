@@ -22,17 +22,47 @@ command that testament builds by default. Read in `testament/testament.nim` of N
 
 ## Package
 
-**Assayer imports knoller by a relative path, as `curator/audit` does.** Knoller holds the
-toolchain that serves each pin (`compilers.nim`) and the reader of a pin (`pins.nim`). Assayer
-imports those two modules and no other.
+**Assayer requires knoller as a package, at one commit of `main` that `atlas.lock` pins.**
+Knoller holds the toolchain that serves each pin (`compilers.nim`) and the reader of a pin
+(`pins.nim`). Assayer imports those two modules by the name of the package, and no import leads
+into this repository. So assayer builds wherever Atlas can fetch that commit, and needs no checkout
+of this repository, as knoller needs none.
 
+- Origin: this repository on GitHub, `https://github.com/mraxilus/delegations`, in the folder
+  `curator/knoller`. The commit is `11403468a97c0d3ae922182d894606e2688504e9`, the merge of #899.
+  It is the newest commit of `main` that changes knoller, on 2026-11-15. The licence is the
+  Prosperity Public License 3.0.0, as `knoller.nimble` gives it.
 - Rejected: a copy of the toolchain code. Two copies of one fetch drift apart.
-- Cost: the pin of assayer is the pin of knoller, which is the pin of `curator/audit`.
-- Cost: no install of the package carries knoller, so assayer builds from a checkout of this
-  repository alone.
-- Cost: a change to knoller selects `curator/audit` and knoller for test, and not assayer
-  (`plan.nim` of the audit). A change to knoller that breaks assayer shows at the next change
-  to assayer, or in the weekly run.
+- Rejected: an import by a relative path, as `curator/audit` imports knoller. Assayer then builds
+  from a checkout of this repository alone.
+- Cost: a change to knoller reaches assayer only when the lock moves to a newer commit. So a change
+  to knoller selects no test of assayer, and a move of the lock selects one. The suite of the plan
+  in `curator/audit` holds both, over the tree of this repository.
+
+**The requirement names knoller alone, and `atlas.config` names where knoller lives.** Knoller
+sits in the folder `curator/knoller` of this repository. The name override of `atlas.config` maps
+`knoller` to `https://github.com/mraxilus/delegations?subdir=curator/knoller`. Atlas 0.14.7 then
+clones the whole repository into `dependencies/knoller`, and reads the nimble file of knoller in
+that folder. The requirement names the commit of the lock as well. Without it, Atlas selects the
+first commit that carries the version of knoller.
+
+- Rejected: `?subdir=curator/knoller` in the requirement itself. Atlas ends the name of a
+  requirement at its first `=`, and then refuses `curator/knoller` as a version.
+- Rejected: the address of the repository alone, as `pga_benchmark` requires its library. Atlas
+  finds the nimble file of each project at that commit, so each release is ambiguous, and Atlas
+  selects none.
+- Cost: Atlas joins the source folder of knoller to the root of the clone, and leaves out
+  `curator/knoller`. So `nim.cfg` names the correct path by hand. The path that Atlas writes into
+  its own section reaches nothing, and Atlas writes it again at each install and restore.
+- Cost: `atlas changed` warns that the remote of the clone differs from the address in the lock,
+  since the clone has no query. It still exits 0, so the restore of koch passes.
+- Verified by hand with Atlas 0.14.7 and Nim 2.4.0, 2026-11-15, in a scratch project outside this
+  repository. `atlas rep` restored the lock into a fresh clone, `atlas changed` exited 0, and a
+  program that imports `compilers` and `pins` built and ran. Each rejected form failed as this
+  section says.
+- Verified by `nim r koch test curator/assayer`, 2026-11-15, after a delete of `dependencies/`. The
+  restore checked out the commit of the lock, and every suite passed. A `nim check` that names each
+  file it reads named each module of knoller under `dependencies/knoller/curator/knoller/src`.
 
 **Assayer finds the nearest nimble file itself.** Knoller keeps its own lookup private, in its
 command line. The two lookups follow one rule: the nearest folder that holds a nimble file
@@ -251,7 +281,8 @@ Each line form is verified by `suites/test_reports.nim`, and the whole report by
 **One stub runs every suite as one program**, as a copy of `curator/audit/tests/test_suites.nim`.
 Each module has one suite under `tests/suites/`. The suites start real processes through
 `/bin/sh`, so they run on POSIX alone. The suite of the command line compiles small test files
-with the compiler that built it (`getCurrentCompilerExe`), so it needs no fetch.
+with the compiler that built it (`getCurrentCompilerExe`), so it fetches no compiler. `koch test`
+restores knoller from the lock before the suites compile (`## Package`).
 
 ## Figures
 
@@ -268,22 +299,21 @@ Both start from an empty cache, on one file that lists the 8 configurations. Ass
 
 ## Toolchain
 
-**The compiler is pinned exactly at 2.4.0, the pin of knoller**: `requires "nim == 2.4.0"` in
-`assayer.nimble`. Assayer imports knoller by its path, so the two pins move together.
+**The compiler is pinned exactly at 2.4.0**: `requires "nim == 2.4.0"` in `assayer.nimble`. The
+pin is the pin of this project, and it moves apart from the pin of knoller. Assayer compiles the
+knoller of its lock with its own compiler, so its suites verify that pair.
 
 ## Rules audits
 
 Each rules change is audited against this project in the pull request that makes it, and the
 `Rules` row above then moves. This record and the README use Simplified Technical English
-(Article VI.8). The project holds Nim, Markdown and a nimble file, and no page, node manifest or
-system package beyond the compiler and git.
+(Article VI.8). The project holds Nim, Markdown, a nimble file, `nim.cfg`, and the two files of
+Atlas. It holds no page, node manifest or system package beyond the compiler and git.
 
 ## Open questions
 
-- A change to knoller does not select assayer for test. `plan.nim` of the audit can add
-  assayer beside `curator/audit`, in a merge-process change (CURATOR.md duty 2).
-- The stub of `curator/audit` names one copy of itself, the stub of knoller. A root change can
-  name the copy here too (Article II.9).
-- `curator/README.md` does not name assayer yet, and a root change can add the line.
+- No suite of assayer holds each import to the standard library, `src/` and knoller, as
+  `test_imports.nim` of knoller holds its own. The suite of the plan in `curator/audit` holds the
+  imports of knoller alone, and a change to assayer does not run it.
 - No verb of koch calls assayer, and no charter allows one file under several configurations
   (Article IX.7, STYLE.md §6). Both are decisions for later.
