@@ -43,6 +43,10 @@ const
   ECHO_MAX* = 72
     ## Runes echoed back from opening line: it is whatever somebody typed, and body opening
     ## with whole paragraph would otherwise print that paragraph as finding.
+  LINES_QUOTED* = 4
+    ## Lines above role line finding quotes at most: twice block of longest listed harness, so
+    ##   block of new harness shows whole, and body whose role line stands low prints no whole
+    ##   opening.
   HEADINGS_PULL* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
     ## Headings pull request template gives.
 
@@ -71,19 +75,23 @@ func lineRole*(body: string): string =
   ""
 
 
+func openingQuoted*(body: string): string =
+  ## Quote what finding on opening of body names, in backticks.
+  ##   TODO: Quote each line above first role line that no listed harness writes.
+  "`" & body.lineRole.shortened & "`"
+
+
 func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
   ## Report pull request whose opening line or labels do not name role its branch names.
   let parsed = branch.parseBranch
   if parsed.isNone: return
-  let
-    expected = parsed.get.nameRole
-    opening = body.lineRole
-  if opening != KEY_ROLE & " " & expected:
+  let expected = parsed.get.nameRole
+  if body.lineRole != KEY_ROLE & " " & expected:
     result.add finding(
       "",
       0,
       "Pull request must open with `" & KEY_ROLE & " " & expected &
-        "`, which its branch names; got `" & opening.shortened & "`.",
+        "`, which its branch names; got " & body.openingQuoted & ".",
     )
   if expected notin labels:
     result.add finding(

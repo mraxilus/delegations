@@ -710,7 +710,7 @@ func checkBody*(
       result.add finding(
         "",
         0,
-        "Post must open with `" & expected & "`; got `" & body.lineRole.shortened & "`.",
+        "Post must open with `" & expected & "`; got " & body.openingQuoted & ".",
       )
   if tool in TOOLS_PULL or tool == "mcp__github__issue_write": result.add checkClosing(body)
   result.add findingsEnglish("post", body)
