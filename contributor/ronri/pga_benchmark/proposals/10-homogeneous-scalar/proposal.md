@@ -244,17 +244,17 @@ A copy whose root takes the smaller part by its own root fails the law of the sm
 and cga4d. Its root of 1𝟏 + 10⁻¹⁰𝟙 misses the weight by 10⁻¹⁰, and the law stops it. So the laws
 see the cancellation.
 
-The laws held at each of the nine algebras on `linux amd64, 4 cores`, on 2026-11-05. The table
-counts the pairs with a root, of 4 112. It also counts the radius norms that are none, beside the
+The laws held at each of the nine algebras on `linux amd64, 4 cores`, on 2026-11-15. The table
+counts the pairs with a root, of 4 114. It also counts the radius norms that are none, beside the
 float roots of `|⊘` that are NaN, on the same 4 096 multivectors.
 
 | Algebra        | ε² | Pairs with a root | Float root NaN | `normRadius` none |
 |----------------|----|-------------------|----------------|-------------------|
-| rga2d to rga6d | 0  | 2 111             |                |                   |
-| cga3d          | +1 | 1 089             | 2 022          | 2 022             |
-| cga4d          | −1 | 4 112             | 2 095          | 0                 |
-| cga5d          | −1 | 4 112             | 2 043          | 0                 |
-| cga6d          | +1 | 1 089             | 2 061          | 2 061             |
+| rga2d to rga6d | 0  | 2 113             |                |                   |
+| cga3d          | +1 | 1 090             | 2 022          | 2 022             |
+| cga4d          | −1 | 4 114             | 2 095          | 0                 |
+| cga5d          | −1 | 4 114             | 2 043          | 0                 |
+| cga6d          | +1 | 1 090             | 2 061          | 2 061             |
 
 No record times a function of this proposal, since the bench times the operators. Each function on
 a homogeneous scalar spends a few operations on two coefficients.
