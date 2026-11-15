@@ -35,12 +35,15 @@ suite "Duty 10":
 
   test "role file lacking heading of its reading order is finding, since start prints it":
     # Start prints reading order of role from section under that heading, so file that renames
-    #   it prints empty list, and nothing else sees it. Domain: each role file, heading quoted in
-    #   fence alone, and entry file, which holds no reading order of role.
+    #   it prints empty list, and nothing else sees it. Domain: each role file, pinned, so list
+    #   that drops one fails here; heading absent, cut to its first words, and quoted in fence
+    #   alone; and entry file, which holds no reading order of role.
     let absent = "Reading order of role that `start` prints is absent; restore its heading, " &
       "or rename `HEADING_READ` in `prompts.nim`; got `" & HEADING_READ & "`."
+    check @PATHS_ROLE == @["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]  # each role file
     for path in PATHS_ROLE:
       check checkPrompt(path, "# Role\n\nDuties.\n").mapIt(it.message) == @[absent]
+      check checkPrompt(path, "# Role\n\n## Read first\n\n1. Read.\n").len == 1  # cut
       check checkPrompt(path, "# Role\n\n```md\n" & HEADING_READ & "\n```\n").len == 1  # fence
       check checkPrompt(path, "# Role\n\n" & HEADING_READ & "\n\n1. Read.\n").len == 0
     check checkPrompt("AGENTS.md", "# Entry\n\nRead file of role.\n").len == 0  # no role
