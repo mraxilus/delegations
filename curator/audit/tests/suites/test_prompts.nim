@@ -29,8 +29,8 @@ suite "Duty 10":
     check found[0].message.endsWith("got `issue 25`.")
 
 
-  test "every file that opens delegate is prompt, coordinator's too":
-    check PATHS_PROMPT == ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+  test "every file that opens delegate is prompt, entry file and coordinator's too":
+    check @PATHS_PROMPT == @["AGENTS.md", "CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
 
 
   test "prompt over its byte ceiling is finding naming size":

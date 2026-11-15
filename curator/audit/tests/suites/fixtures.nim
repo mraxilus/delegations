@@ -111,6 +111,7 @@ func treeGood*(): Tree =
   result = @[
     entry("README.md", textReadme()),
     entry("LICENSE.md", "# Licence\n\nText.\n"),
+    entry("AGENTS.md", "# Entry\n\nRead file of role.\n"),
     entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
     entry(
       "GLOSSARY.md",
