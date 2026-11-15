@@ -47,9 +47,10 @@ between steps. Every other bound in these tables is derived from the axioms alon
   functions. The most is cga5d `⊛(Multivector)` with 109. Closes when no library function branches
   on `nimErr_`. The pinned compiler with `--panics:on` already emits none in either implementation.
   A user of the library must know to pass it.
-- **D06, over.** Sign and permutation operators cross the module boundary as calls. Evidence: 16 of
-  166 library operators, for example rga4d `$(Basis)`. Closes when every library function spending
-  no multiply, add or subtract is inline.
+- **D06, over.** Sign and permutation operators cross the module boundary as calls. Evidence: 8 of
+  158 library operators that a measurand times, for example rga4d `{}(Multivector,int)`. Closes when
+  every library operator that a measurand times and that spends no multiply, add or subtract is
+  inline.
 - **D07, over.** The radius norm returns NaN where 𝐦 ∘ 𝐦 is negative. Evidence: cga5d/norm_radius,
   cga4d/norm_radius. Closes when every bench measurement's NaN share is zero.
 - **D08, over.** A transform by motor spells three products, because it has no operator of its own.
