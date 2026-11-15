@@ -34,6 +34,9 @@
 ##     (CURATOR.md duty 11). Matrix runs each on its own pin, as `check` does locally:
 ##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
 ##     which compiler PATH holds decides nothing.
+##   `check` judges clean checkout lacking base as merged with it, by koch of that merge, in
+##     second tree under git dir, as runner judges merge ref (`merge.nim`); drift, branch name
+##     and mark read checkout itself. Detached HEAD, as second tree holds, records no mark.
 ##
 ##   Each verb first points git at `.githooks` (`setPathHooks` of `tree.nim`), so each harness
 ##     running koch gets git hooks; it reads first, prints nothing, and fails no verb.
@@ -63,6 +66,7 @@ import ./curator/audit/src/[
   findings,
   fixes,
   hooks,
+  merge,
   plan,
   projects,
   role,
@@ -236,6 +240,14 @@ proc branch(checkout: string): string =
   fieldsGit(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
 
 
+proc recordMark(root, tree: string, said = "Tree hash recorded for pre-push hook.") =
+  ## Write tree hash `pre-push` hook compares each pushed commit with, then print line that says
+  ##   so.
+  ##   Proc of its own, since bare `else:` inside dispatch ends verbs `checker.nim` reads there.
+  writeFile(root.fileMark, tree)
+  echo said
+
+
 proc refuse(found: seq[Finding], code: int): int =
   ## Print findings to stderr for hook host, and return code; zero findings return 0.
   if found.len == 0: return 0
@@ -402,10 +414,34 @@ proc run(options: Options): int =
     #   finding is fixed.
     #   Cost: suite failure shows only after static pass is clean.
     if not options.isReadAll({Root, Branch, Base}): return options.refused
-    discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
-    let
-      tree = options.root.readTree
-      (branch, base) = (options.branchOrDefault, options.baseOrDefault)
+    let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
+    # Base runner compares with is fetched fresh; koch of merge is handed commit, fetching none.
+    if base == "origin/" & MAIN: discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
+    # Clean checkout lacking base is judged as merged with it, by koch of that merge, as runner
+    #   judges merge ref; drift, branch name and mark read this checkout (`merge.nim`).
+    if isMerging(options.root, base):
+      found = checkBase(readDrift(options.root, base))
+      var merged = Merge()
+      if found.len == 0:
+        merged = writeMerge(options.root, base)
+        found = merged.findings
+      if found.len > 0:
+        found.report
+        echo "Merge with base not judged; fix findings above, then run again."
+        return 1
+      echo "Koch of merge with base judges branch, in `" & merged.directory & "`."
+      var toolchains = initToolchains()
+      let (code, unserved) = runMerge(merged, branch, toolchains)
+      if unserved.len > 0:
+        unserved.report
+        return 1
+      # Mark records tree of branch, which push sends, once its merge with base passed.
+      if code == 0:
+        options.root.recordMark(
+          merged.tree & "\n", "Tree hash of branch recorded for pre-push hook, as its merge passed."
+        )
+      return code
+    let tree = options.root.readTree
     found = tree.auditTree
     found.add findingsPruned(options.root, tree)
     found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
@@ -430,11 +466,13 @@ proc run(options: Options): int =
     for warning in unread: echo "warning: " & warning
     # Green run on clean tree records tree hash, which `pre-push` hook compares against
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
+    #   Detached HEAD records nothing either, since no branch holds tree: second tree is one.
     if found.len == 0:
-      if fieldsGit(options.root, ["status", "--porcelain"]).len == 0:
-        writeFile(options.root.fileMark, fieldsGit(options.root, ["rev-parse", "HEAD^{tree}"])[0])
-        echo "Tree hash recorded for pre-push hook."
-      else: echo "Working tree not clean; nothing recorded for pre-push hook."
+      if fieldsGit(options.root, ["status", "--porcelain"]).len > 0:
+        echo "Working tree not clean; nothing recorded for pre-push hook."
+      elif options.root.branch == "HEAD":
+        echo "Detached HEAD holds no branch; nothing recorded for pre-push hook here."
+      else: options.root.recordMark(fieldsGit(options.root, ["rev-parse", "HEAD^{tree}"])[0])
   of "check-files":
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     let tree = options.root.readTree
