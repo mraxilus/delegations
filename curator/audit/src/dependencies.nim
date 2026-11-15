@@ -22,9 +22,12 @@
 ##
 ##   Cost: lock storing no copy is compared against nothing, since one lock is thin evidence
 ##     for demanding key, and lock with no copy reverts nothing either way.
-##   Cost: Atlas needs network for every command, even with zero packages, so runner
-##     touches only projects holding lock file; layout demands lock where packages are
-##     required.
+##   Restore needs network only where checkout is cold: over warm `dependencies/`, with network
+##     cut, `atlas --noexec rep` and `atlas changed` each exit 0, and restore takes 0.10 s
+##     (Atlas 0.14.7, 2026-11-15). Project holding no lock has nothing to restore, and Atlas
+##     exits 1 there, reading no lock; so runner touches only projects holding lock file, and
+##     layout demands lock where packages are required.
+##   Cost: cold restore clones each package, so it needs network.
 
 {.experimental: "strictFuncs".}
 
@@ -181,7 +184,7 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
 
 
 proc restoreAll*(root: string, targets: openArray[Target]): seq[Finding] =
-  ## Restore every project holding lock file; projects without one need no network.
+  ## Restore every project holding lock file; project without one has nothing to restore.
   for target in targets:
     if fileExists(root / target.directory / FILE_LOCK):
       result.add restoreDependencies(root, target)
