@@ -34,6 +34,7 @@
 ##   Cost: labels are searched for expected string rather than compared whole, since label is
 ##     added when work hands across and never removed.
 ##   Cost: stray lines in shapes of listed block pass above role line, as block itself does.
+##   Cost: marker with no credit line fails, as block that is not whole.
 ##   Cost: italic line written in asterisks is other shape, so harness turning to it fails until
 ##     its entry changes.
 ##   Cost: marks of body are read outside code by their text alone: fold marked `open` shows its
@@ -128,8 +129,8 @@ func lineRole*(body: string): string =
   ##   harness, with trailing HTML comment dropped.
   ##   Unfilled template opens `**Role:** <!-- curator, or ... -->`, which then reads as key
   ##     alone and fails equality below, rather than passing as line naming no role.
-  ##   Block is passed only whole and in its place, so lone marker, stray credit line or any
-  ##     other comment still reads as opening.
+  ##   Block is passed only whole and in its place, so lone marker, lone credit line or any
+  ##     other comment reads as opening, and fails equality below.
   let
     lines = body.linesOpening
     at = lines.lenBlock
@@ -141,8 +142,8 @@ func lineRole*(body: string): string =
 func openingQuoted*(body: string): string =
   ## Quote what finding on opening of body names, each line in backticks: each line above first
   ##   role line where line no listed block holds stands there, else opening line alone.
-  ##   Quote holds at most `LINES_QUOTED` lines, each cut to `ECHO_MAX` runes, since body is
-  ##     whatever somebody typed.
+  ##   Quote holds role line and at most `LINES_QUOTED` lines above it, each cut to `ECHO_MAX`
+  ##     runes, since body is whatever somebody typed.
   let lines = body.linesOpening
   if lines.len <= lines.lenBlock + 1 or not lines[^1].startsWith(KEY_ROLE):
     return "`" & body.lineRole.shortened & "`"

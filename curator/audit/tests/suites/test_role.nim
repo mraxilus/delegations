@@ -315,6 +315,6 @@ suite "Role":
 
   test "example of #845 takes form, and shows 2108 characters with each link by its text":
     # Review of #845 counts 2,046 characters outside fold, by link text; summary of fold shows
-    #   too, 62 characters and its line end.
+    #   too, 62 characters.
     check checkBodyPull(BODY_EXAMPLE).len == 0
     check BODY_EXAMPLE.textShown.runeLen == 2108
