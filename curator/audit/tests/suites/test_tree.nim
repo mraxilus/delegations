@@ -3,6 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
+from std/posix import close, dup, dup2, STDERR_FILENO, STDOUT_FILENO
 import ../../src/[domains, layout, tree]
 import ./fixtures
 
@@ -213,15 +214,18 @@ suite "Tree":
   test "each verb points git at hooks of checkout, quietly, and fails on nothing (#891)":
     # Case: only start hook of Claude Code set `core.hooksPath`, so other harness committed and
     #   pushed past git hooks, and runner alone held them. Domain: path unset, other path, same
-    #   path, lock that run at once holds, directory in no repository, and worktree.
+    #   path, lock that run at once holds, directory in no repository, git missing from `PATH`,
+    #   and worktree.
     let
       root = repoTemp()
       plain = createTempDir("delegations_", "_plain")
       tree = root & "_worktree"
       config = root / ".git" / "config"
+      (streams, path_streams) = createTempFile("delegations_", "_streams")
     defer: removeDir(root)
     defer: removeDir(plain)
     defer: removeDir(tree)
+    defer: removeFile(path_streams)
     proc named(): string =
       ## Read hooks path git names in root; empty where unset.
       execCmdEx("git -C " & root.quoteShell & " config --get core.hooksPath").output.strip
@@ -235,13 +239,40 @@ suite "Tree":
     root.setPathHooks
     check named() == DIRECTORY_HOOKS  # other path, so written over
 
-    # Lock of run at once fails write, and verb goes on; so does git outside any repository.
+    # Lock of run at once fails write, and verb goes on; so do git outside any repository, and
+    #   git missing from `PATH`, which `startProcess` reports as `OSError`, never `IOError`.
+    #   Descriptors 1 and 2 go to file around those calls, since child process inherits them,
+    #   so line either one takes is read back: CI reads output of `list-projects`, and hook
+    #   answers on stdout.
     discard root.git("config core.hooksPath hooks_of_harness")
     writeFile(config & ".lock", "")
-    root.setPathHooks
+    let
+      (copy_output, copy_error) = (dup(STDOUT_FILENO), dup(STDERR_FILENO))
+      path_saved = getEnv("PATH")
+    var is_raised = false
+    flushFile(stdout)
+    flushFile(stderr)
+    discard dup2(streams.getFileHandle, STDOUT_FILENO)
+    discard dup2(streams.getFileHandle, STDERR_FILENO)
+    try:
+      root.setPathHooks
+      plain.setPathHooks
+      putEnv("PATH", "")
+      root.setPathHooks
+    except CatchableError: is_raised = true
+    finally:
+      putEnv("PATH", path_saved)
+      flushFile(stdout)
+      flushFile(stderr)
+      discard dup2(copy_output, STDOUT_FILENO)
+      discard dup2(copy_error, STDERR_FILENO)
+      discard close(copy_output)
+      discard close(copy_error)
+      streams.close
+    check not is_raised  # git missing from `PATH` fails no verb either
+    check readFile(path_streams).len == 0  # neither descriptor took line
     check named() == "hooks_of_harness"
     removeFile(config & ".lock")
-    plain.setPathHooks
     check not dirExists(plain / ".git")
 
     # Real git runs hook that path names from top of each worktree, so one write serves each.
