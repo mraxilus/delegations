@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 2dab47ba779bfacc |
-| Pruned  | 819c4aae4c29f73ff0257a1175536cde3058bb4d |
+| Pruned  | 5a7e3bc6b52c8d61d9f0e545a49f562447845e7e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the `pga`
@@ -2266,11 +2266,11 @@ which only runs the speed down.
 it to the near clip, the far clip, the depth mapping and the furniture's extent. So flying at a
 planet draws its near clip in. The distance to the pivot answers only where nothing is drawn ahead.
 
-Rejected there: the reach of the point that the last zoom took. It agrees with the distance to the
-pivot at home, and parts only after a flight, with the eye turned from every object. A Playwright
-probe of the page, which is not kept, turned the view 40 ways at each of four stances on 2026-11-15.
-The stances were home and after a flight of 10 s, in the opening scene and in the demo of 360.
-Nothing was drawn ahead in 9 views at home in the opening scene, and in no view of the other three.
+Rejected there: the reach of the point that the last zoom took. It parts from the distance to the
+pivot only after a flight, with the eye turned from every object. A Playwright probe of the page,
+not kept, turned the view 40 ways at each of four stances on 2026-11-15. The stances were home and
+after a flight of 10 s, in the opening scene and in the demo of 360. Only 9 views, all at home in
+the opening scene, had nothing drawn ahead.
 
 For a point or a plane it is depth along the sight, and never distance, because what a reader turns
 away from is not drawn.
@@ -2344,8 +2344,7 @@ held a pinch 0.08 units off it, and a wheel stopped 0.08 off any line or plane.
 - the nearest reach is read ahead of the eye, never behind it, and never from a hidden object;
 - a line reaches its distance from the eye, and one through the eye or square behind it reaches
   nothing;
-- 200 seeded lines reach their distance from the eye, and no sample of one in frame stands under the
-  near clip;
+- 200 seeded lines reach their distance from the eye, with no sample in frame under the near clip;
 - a line alone beside the eye stays within half a pixel of its whole image, the pivot 19 to 4.7
   million units off.
 
@@ -2887,6 +2886,15 @@ world double to lift it back to.
 The eye that the shaders take is the remainder, about zero at world scale, and so is the translation
 of the transform. Dropping it would snap an orbit a metre wide to the world step.
 
+Rejected: 64-bit positions on the GPU, which WebGL1, WebGL2, WebGPU and GLSL 3.30 do not have. Both
+front ends would emulate them as pairs of float32. A ribbon record would hold 22 floats, not 16, and
+its positions would cost 10 to 20 times the arithmetic, unmeasured. Rejected: a vanishing point
+stored at infinity, with w = 0. Neither has a fault to fix.
+
+Verified by `suites.nim`: the reference holds a line through a body within 0.1 px of it, the camera
+0.001 to 1e-6 off. A page probe, not kept, read it under SwiftShader on 2026-11-15. It found 0.05 to
+0.08 px at those orbits, against 0.02 px at an orbit of 1. No kept check reads the shaders there.
+
 **What stores or shows the stance converts at that edge.** History's steps and the panel's motor are
 about the world origin (`stanceWorld`). So are the drive's readings of eye, pivot and anchor
 (`eyeWorld`, `pivotWorld`). Cost: a stance that history restores far out lands on the world step.
@@ -3023,13 +3031,9 @@ in that calculation. A join holds a metre wherever storage holds one. It runs ab
 joins, so its rounding is `ε` of the distance of that point from the world origin.
 
 **Cost: more work in each classification.** Measured on 2026-10-05 on one delegate, under the lock
-of the gate. Each probe places the largest demo, and each pair is `0d47eab3`, then this design:
-
-- release C, five pairs of the median of 41 runs: 0.48 to 0.55 ms, then 0.50 to 0.52 ms;
-- release JS on Node 22, five pairs of the same probe: 26.2 to 29.6 ms, then 26.6 to 35.9 ms;
-- tessellation that the debug desktop's `--timings` reads over 300 frames, three pairs: 12.5 to
-  12.9 ms, then 14.4 to 14.6 ms;
-- the frame at p50 from that same run: 79.6 to 80.3 ms, then 86.7 to 87.2 ms.
+of the gate, against `0d47eab3`, as the largest demo is placed. Release C held its 0.5 ms. Release
+JS on Node 22 read 26 to 30 ms, then 27 to 36 ms. The debug desktop's tessellation rose from 12.7 to
+14.5 ms, and its frame at p50 from 80 to 87 ms. The commit of the `Pruned` row keeps each pair.
 
 Both front-ends place every object in each frame (Render paths), and the desktop also asks
 `isHorizon` of each row of its objects list. That second norm of `isHorizon`, and the second pass of
@@ -4992,9 +4996,5 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - Far from the world origin, storage steps: by 17 to 35 m two million units out, as at HD 222237 b
   of the demo. A stance that history restores, and the aim of several objects, step with it
   (Origins, Classification at any scale).
-- A line drawn with the camera inside the body that it frames stands a few pixels off the point that
-  it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001. Float32 holds
-  about 0.06 of a unit at 530,000 units, and the record stores the vanishing point in it. The near
-  crossing is not the cause (Records and shaders).
 
 [replications]: https://gitlab.com/mraxilus/replications
