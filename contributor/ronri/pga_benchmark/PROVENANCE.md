@@ -899,7 +899,7 @@ Node through `nim js -d:nodejs`, and `-r` runs the script there, as it runs a C 
 program can count what the JS backend does, as `copies.nim` of P14 counts each `nimCopy` call. The
 backend is part of the claim, so it moves the digest of the evaluation, and the page names JS
 beside its claim. Rejected: a claim kind of its own for JS. It would repeat each rule of a program
-claim, and add only the command.
+claim, and add only the command and the extension of its output.
 
 **Proposals build on each other as a graph without cycles,** as the Architect ruled on
 2026-10-04. The Architect decides each proposal on its own. So each one lists in `builds_on` the
