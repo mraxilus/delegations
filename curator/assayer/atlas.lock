@@ -1,0 +1,50 @@
+{
+  "items": {
+    "knoller": {
+      "dir": "$deps/knoller",
+      "url": "https://github.com/mraxilus/delegations?subdir=curator%2Fknoller",
+      "commit": "11403468a97c0d3ae922182d894606e2688504e9",
+      "version": ""
+    }
+  },
+  "nimcfg": [
+    "# Configure every build of assayer: where knoller sits, which Atlas restores under",
+    "#   `dependencies/` from `atlas.lock`, and git never keeps (Article XI.3).",
+    "#   Knoller is folder `curator/knoller` of repository Atlas clones whole, and Atlas 0.14.7 joins",
+    "#     `srcDir` to root of clone, so path below names that folder.",
+    "#   Cost: Atlas writes path lacking that folder into its section, at each install and restore,",
+    "#     and that path reaches nothing.",
+    "",
+    "--path:\"dependencies/knoller/curator/knoller/src\"",
+    "",
+    "############# begin Atlas config section ##########",
+    "--noNimblePath",
+    "--path:\"dependencies/knoller/src\"",
+    "############# end Atlas config section   ##########",
+    ""
+  ],
+  "nimbleFile": {
+    "filename": "assayer.nimble",
+    "content": [
+      "# Package description read by Atlas and nimble; requirements live here (Article II.8).",
+      "#   Knoller serves compiler of each pin (`compilers.nim`, `pins.nim`), so it is package here, at",
+      "#     commit of `main` that `atlas.lock` holds; `atlas.config` names repository and folder it",
+      "#     lives in, since requirement reads no folder (`PROVENANCE.md`, Package).",
+      "",
+      "version = \"0.1.0\"",
+      "author = \"Emmanuel M. Smith\"",
+      "description = \"Runner of each test file under each configuration of its header, in parallel.\"",
+      "license = \"Prosperity-3.0.0\"",
+      "srcDir = \"src\"",
+      "",
+      "requires \"nim == 2.4.0\"",
+      "requires \"knoller#11403468a97c0d3ae922182d894606e2688504e9\"",
+      ""
+    ]
+  },
+  "hostOS": "linux",
+  "hostCPU": "amd64",
+  "nimVersion": "2.4.0",
+  "gccVersion": "13.3.0",
+  "clangVersion": ""
+}
