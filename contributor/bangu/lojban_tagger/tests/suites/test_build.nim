@@ -19,17 +19,16 @@ from ../../tools/build {.all.} import SYSTEM
 const
   DIRECTORY_PROJECT = currentSourcePath().parentDir.parentDir.parentDir
     ## Folder of this project, two above `tests/suites/`.
-  PATHS_COPIED = [
-    "app", "src", "tools", "atlas.config", "atlas.lock", "lojban_tagger.nimble", "nim.cfg",
-  ]
-    ## Each entry of checkout that driver may read; `dependencies/` is none of them.
+  PATHS_COPIED = ["app", "src", "tools", "atlas.config", "atlas.lock", "nim.cfg"]
+    ## Each entry of checkout that driver may read beside nimble file; `dependencies/` is none.
   PATH_NIM = getCurrentCompilerExe()  ## Compiler that builds this suite, which runs driver too.
   FLOOR_PACKAGES = 6  ## Least packages `system` prints: 6 printed on 2026-11-15.
 
 
 func pathsCopied(directory: string): seq[string] =
-  ## Read each entry that driver may read in project whose folder is `directory`.
-  @PATHS_COPIED
+  ## Read each entry that driver may read in project whose folder is `directory`: nimble file
+  ##   takes name of folder, so move of folder renames it, and copy follows.
+  @PATHS_COPIED & (directory.lastPathPart & ".nimble")
 
 
 proc copyProject(source, target: string) =
