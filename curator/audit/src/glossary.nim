@@ -160,11 +160,20 @@ func wordsPeopleIn*(line: string): seq[string] =
     i = j
 
 
+func isLineImport(line: string): bool =
+  ## Decide whether line is import of Claude Code, i.e. `@` then path alone on its line.
+  ##   Import names file and holds no prose, and Claude Code loads none inside code, so it
+  ##     stands outside backticks, as `@AGENTS.md` of `CLAUDE.md` does. Import inside sentence
+  ##     stays prose.
+  let s = line.strip
+  s.len > 1 and s[0] == '@' and s.find(Whitespace) < 0
+
+
 func checkWordsPeople*(path, source: string): seq[Finding] =
-  ## Report people word glossary avoids, outside fenced code, code spans and tables.
+  ## Report people word glossary avoids, outside fenced code, code spans, tables and imports.
   let lines = source.fencedOut.splitLines
   for i, line in lines:
-    if line.strip.startsWith("|"): continue
+    if line.strip.startsWith("|") or line.isLineImport: continue
     for word in line.wordsPeopleIn:
       result.add finding(
         path,
