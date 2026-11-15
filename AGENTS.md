@@ -28,17 +28,17 @@ file, which each harness reads first. Before any change:
 ## Under another harness
 
 Claude Code reads this file through the import in `CLAUDE.md`, and runs the hooks of
-`.claude/settings.json`. Each hook calls one verb of koch, and holds a rule before an act lands.
-A harness without these hooks gets two of them by other means:
+`.claude/settings.json`. Each hook calls one verb of koch. A harness without these hooks still
+gets two parts of what they give:
 
 - **The start context.** Run `nim r koch hook start < /dev/null` at each start, at each resume
   and after each compaction. It prints what the start hook prints under Claude Code. That is your
   role, the reading order of your role, the headings of your record and the carried list. It
   also names each change to the charter or the checker since your branch forked.
 - **The git hooks.** Each verb of koch sets `core.hooksPath` to `.githooks`, so git runs these
-  hooks after the first run of koch. They refuse a commit whose subject breaks the rules, and a
-  push of a tree that `koch check` did not pass. So they hold a harness that commits or pushes
-  on its own too.
+  hooks after the first run of koch. They refuse a commit whose message breaks the rules of
+  commits, and a push of a tree that `koch check` did not pass. So they hold a harness that
+  commits or pushes on its own too.
 
 Under such a harness, reading holds each other rule of a hook. `curator/audit/PROVENANCE.md`,
 Hooks on tool calls, lists each one.
