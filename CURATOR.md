@@ -399,7 +399,7 @@ alone.
 | `check-commits` | commits since base | subject and scope; test before fix; body; record apart |
 | `check-drift` | charter and checker base changed | each changed section of charter, and its diff |
 | `check-schemas` | schemas changed, and base | each against the version base shipped |
-| `check-role` | a pull request's body and labels | opening line and label are the branch's role |
+| `check-role` | a pull request's body, title and labels | branch's role; title and body in form |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, the verb, judge font faces |

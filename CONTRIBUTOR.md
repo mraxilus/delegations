@@ -71,11 +71,11 @@ The role line and the label are not on it. The `body` hook reads every post befo
    request). The `draft` workflow returns a ready pull request to draft on a push. What stays
    yours is the intent before the push, and to mark it ready again after. The return to draft
    also takes `architect` off, unless a decision still waits on the item (Boundaries).
-4. **The URL of a published page in the message** (`GUIDE.md`, Output contract). The `body`
-   hook holds the pull request half.
+4. **The URL of a published page in the message** (`GUIDE.md`, Output contract). No check
+   reads it, in the message or in the pull request.
 5. **Change ends by showing itself**: a picture, a worked example, or one line on why neither
-   one fits (Before you open a pull request). The `body` hook holds that the Verification
-   section is not empty, and reading holds what it shows.
+   one fits (Before you open a pull request). The `body` hook and `check-role` hold that the
+   Evidence section opens with a summary, and reading holds what it shows.
 6. **Glossary term or standard proposed, and never written on sight** (`GUIDE.md`, Glossary
    process).
 
@@ -487,10 +487,13 @@ Its `system` verb declares `libbrotli1` where its pages ship `woff2`, because `k
   assumed, and each figure carrying its pair. Nothing narrates. `GLOSSARY.md` holds every
   term that resolved.
 - Leave no debug output behind. The audit already checks whitespace, tabs and width.
-- The body follows `.github/pull_request_template.md`: role, intent, scope, verification
-  (what ran, on which build), record, notes.
+- The body follows `.github/pull_request_template.md`: the role line, then What, Why, Evidence
+  and Next steps, once each. Each section opens with a summary of one to three sentences, then
+  its points. Outside `<details>`, the body shows at most 2,500 characters, and a link counts
+  by its text. `check-role` holds this form at each event, and the `body` hook at each create
+  and update.
 - **A published page is linked, and not described.** Where your change alters what a page
-  shows, publish it again and put the URL in the verification section. The Architect then
+  shows, publish it again and put the URL in the Evidence section. The Architect then
   opens it rather than rebuilds it. To name a page is not evidence about a page. Where you
   cannot publish a page again before review, say which pages would change, and why they are
   not up now.
