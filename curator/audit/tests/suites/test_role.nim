@@ -97,20 +97,16 @@ suite "Role":
       .len == 1  # role of somebody else
 
 
-  test "label must be present, beside any other":
+  test "label must be present, beside any other, and finding names job that adds it":
     check checkRole(
       "curator/mend-it", "**Role:** curator\n", ["curator", "contributor/ronri/alpha"]
     ).len == 0  # label joins when work hands across
-    let unlabelled = checkRole("curator/mend-it", "**Role:** curator\n", newSeq[string]())
-    check unlabelled.len == 1
-    check unlabelled[0].message.endsWith("got ``.")  # nothing to echo
-    # No label at all is opening's own state, so message names race rather than fault.
-    check unlabelled[0].message.startsWith("Pull request carries no label")
-    check "`labeled` event" in unlabelled[0].message
-    let wrong = checkRole("curator/mend-it", "**Role:** curator\n", ["curator/audit"])
-    check wrong.len == 1  # near miss is miss
-    check wrong[0].message.startsWith("Pull request must carry label")  # fault, not race
-    check "`labeled` event" notin wrong[0].message
+    # Job `label` adds label before `check-role` reads list (#845), so empty list is fault too.
+    for labels in [newSeq[string](), @["curator/audit"]]:  # none, and near miss
+      let found = checkRole("curator/mend-it", "**Role:** curator\n", labels)
+      check found.len == 1
+      check found[0].message == "Pull request must carry label `curator`, which job `label` of " &
+        "`role.yml` adds from its branch; got `" & labels.join(", ") & "`."
 
 
   test "branch outside grammar reports nothing, since scope already fails it":
