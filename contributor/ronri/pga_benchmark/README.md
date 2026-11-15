@@ -40,6 +40,7 @@ itself fails where two blocks of a card touch, and a control page of the project
 | [P10 Homogeneous scalar][homogeneous-scalar] | proposal | scalar kept with its weight |
 | [P11 Unitize general][unitize-general] | proposal | one unitize rule for any element |
 | [P12 Cayley cells][cayley-cells] | proposal | each cell of a table an array with its count |
+| [P13 Transform operator][transform-operator] | proposal | one operator for a transform by motor |
 
 Progress and Performance show the library as it is. A **proposal** page shows a future state of the
 library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the same
@@ -180,3 +181,4 @@ checked against.
 [homogeneous-scalar]: https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D
 [unitize-general]: https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy
 [cayley-cells]: https://claude.ai/artifact/Jjeg6CQWsiY3s8b8D7KWmE
+[transform-operator]: https://claude.ai/artifact/G5en4TE1nRNxAuoCHHAhsw
