@@ -1022,18 +1022,23 @@ that can write, as `watch.yml` and `ledger.yml` hold for their own events.
 
 - The label goes through the REST endpoint of the labels of an issue. Assumed: that endpoint
   creates a label that a new project lacks, as `CONTRIBUTOR.md` says of each label applied.
-- An event of the token of a run starts no other run. So the label starts no second run of
-  `role`, and `check-role` reads it in the same run.
-- `check-role` runs after `label` unless the run is cancelled. Without that condition, a failed
-  `label` skips `check-role`, and GitHub counts a skipped required check as passed.
-- The label events stay. A role label that a person removes is added again, and a label that a
-  person adds runs the check again.
+- Assumed, from GitHub documentation (Triggering a workflow): an event of the token of a run
+  starts no other run. So the label starts no second run of `role`, and `check-role` reads it
+  in the same run.
+- `check-role` runs after `label` unless the run is cancelled. Assumed, from GitHub
+  documentation (Using jobs in a workflow): without that condition, a failed `label` skips
+  `check-role`. Assumed, from GitHub documentation (Using conditions to control job execution):
+  a skipped job counts as passed, even as a required check.
+- `labeled` and `unlabeled` start `role`, so the job adds again a role label that a person
+  removes. A label that a person adds runs the check again.
 - The event is `pull_request`, and never `pull_request_target`. The workflow then comes from
   the branch, so a pull request tests its own jobs on the runner (duty 2). Each branch comes
   from the one account that can already write, so no code of a pull request gains a power.
 - Cost: the shell holds a second copy of the grammar, and it reads no list of domains, because
   it checks out nothing. A branch that names a domain that does not exist gets a stray label,
   and `check-scope` still fails it.
+- Cost: no suite reads the pattern of the branch in `label`, or the condition `!cancelled()` of
+  `check-role`. The runner and the hand check below hold both.
 - Cost: a pull request from a fork gets a token that can only read, so its label stays a task
   by hand.
 - Cost: `workflows.nim` reads the `permissions` block at the top of a workflow alone. So no check
@@ -1042,8 +1047,7 @@ that can write, as `watch.yml` and `ledger.yml` hold for their own events.
   `bash` with a stub for `gh`. Each of the three shapes posted its role, and a branch with a
   domain that does not exist posted a stray one. Each branch outside the grammar posted nothing.
   `yq` read the jobs, their grants and the condition of `check-role` as written.
-- Unverified on the runner: the job is read and driven by a stub, and not yet run against
-  GitHub.
+- Unverified on the runner: only a stub for `gh` drives the step.
 
 **The body comes from the event payload, and the labels come from the API.** The job passes
 the body as `ROLE_BODY`, and the label names as `ROLE_LABELS`, a JSON array. `gh pr view` with
@@ -1098,11 +1102,12 @@ block, and each entry lists the shape of each of its lines. A shape is known by 
 and never by the words of the harness. The entry of Claude Code is one line of HTML comment,
 then one italic line. A harness that writes nothing above the role line needs no entry.
 
-- `lineRole` passes a block only whole and in its place. So a lone marker, a stray credit line
-  or any other comment still reads as the opening line.
+- `lineRole` passes a block only whole and in its place. So a lone marker, a lone credit line or
+  any other comment reads as the opening line, and fails.
 - Where a line that no listed block holds stands above the role line, the finding quotes each
-  line above it. A curator then adds the entry of the new harness. The quote holds at most
-  `LINES_QUOTED` lines, twice the longest listed block.
+  line above it. A curator then adds the entry of the new harness. The quote holds the role
+  line, and at most `LINES_QUOTED` lines above it, twice the longest listed block. A body with no
+  role line quotes its opening line alone.
 - The opening is read outside fenced code, so a role line that a fence quotes is no role line.
 - Rejected: the words of the harness, held as data. Each change of its words fails every such
   pull request, while the suite stays green, because its fixture copies them.
@@ -1113,11 +1118,13 @@ then one italic line. A harness that writes nothing above the role line needs no
 - Cost: stray lines in the shapes of a listed block pass above the role line, as the block does.
   An italic line in asterisks is another shape, so a harness that turns to it fails until its
   entry changes.
+- Cost: a marker with no credit line fails, as a block that is not whole.
 - The `body` hook reads the line through `lineRole` too, and quotes through `openingQuoted`. So
   hook and runner agree. The ledger reads the block more loosely (section Ledger).
 - Verified by `suites/test_role.nim`: a body below the block reads as the body alone, with `\n`
   or `\r\n` line ends. So does a body below a block in other words. Each stray part of a block
-  reads as the opening line, and each line above the role line is quoted, up to the bound.
+  reads as the opening line. The bound is twice the block of Claude Code, and a quote up to it
+  shows no cut. A body with no role line quotes its opening line alone.
 - Verified by hand with `koch check-role`, built from the branch, on 2026-11-15. The body of
   #449, below the block of Claude Code, takes no finding on its role line.
 
@@ -1149,6 +1156,8 @@ what merges at the gate, and evidence costs no room.
 and the hook and the runner agree. The hook holds no rule of its own (section Hooks on tool
 calls).
 
+- Cost: no suite drives `koch check-role`, so no suite reads its call of `checkBodyPull`. The
+  runner and the hand check of #449 below hold it.
 - The headings are read through `sections`, outside fenced code and comments. So a sign-off that
   a fence quotes, as the body of #895 does, cuts no section.
 - A summary is the first prose block of a section, on its first line that holds text. A list
@@ -1160,9 +1169,10 @@ calls).
   summary (#845).
 - The example of #845 keeps two refusals of the hook: a keyword that closes #783 inside a point,
   and a point of 26 words. So the template asks for `Closes #N` alone on the last line.
-- Verified by `suites/test_role.nim`: each heading missing, doubled or turned, and a heading in
-  a fence or a comment. It also holds each shape that opens no summary, and a summary of four
-  sentences. Verified by `suites/test_hooks.nim`, for the form on each tool and for the example.
+- Verified by `suites/test_role.nim`: each heading missing, doubled, or turned with the next,
+  and a heading in a fence or a comment. It also holds each shape that opens no summary, and a
+  summary of four sentences. Verified by `suites/test_hooks.nim`, for the form on each tool and
+  for the example.
 
 **The count reads what shows while each fold is closed.** `textShown` drops each comment, since a
 comment renders as nothing. A fold, from `<details>` to its `</details>`, shows the text of its
@@ -1172,6 +1182,9 @@ nothing, since a body edited on GitHub ends each line with `\r\n`.
 
 - Each mark is read outside code. So a tag of a fold, a comment or a link inside a code span or
   a fence shows whole.
+- A closing tag of a fold with no fold open closes nothing, so the fold after it shows its
+  summary alone.
+- Blank lines may stand between the `---` rule and the footer.
 - The credit of the harness at the end of a body counts, at 85 characters by its link text, as
   the Architect ruled on #845. So `role.nim` holds no words of a harness.
 - The example of #845 applies the form to #790, and shows 2,108 characters. That is 2,046 outside
@@ -1180,7 +1193,8 @@ nothing, since a body edited on GitHub ends each line with `\r\n`.
   below a `---` rule counts nothing, whoever wrote it.
 - Cost: a link written as a reference counts in full. So do a link and a code span that wrap over
   a line end, since `markdown.nim` reads both inside one line.
-- Verified by `suites/test_role.nim`, for each law above, the credit and the example.
+- Verified by `suites/test_role.nim`, for each law above, the fold marked `open`, the credit and
+  the example. The bound counts characters, and the suite fills it with a character of two bytes.
 - Verified by hand with `koch check-role`, built from the branch, on 2026-11-15. The example of
   #845 takes no finding. The body of #449 takes the finding of its five old headings, and one
   for its 4,908 characters shown.
@@ -1579,8 +1593,9 @@ beside the section that each title comes from.
 - The pattern for pull requests, verified by hand through `jq` 1.7 on 2026-11-15. The program
   was read from the workflow file, and it was run over fixture bodies. A role line below the
   block of Claude Code passes, and so does one below a block in other words, also with `\r\n`
-  line ends. A block over no role line, an unfilled template and a null body are named. Over the
-  same bodies, the program of `11403468a` named the block in other words too.
+  line ends. A block over no role line, an unfilled template and a null body are named. A
+  pattern on the words of the harness names the block in other words, so this fixture tells the
+  two apart.
 - Cost: `gh` runs `--jq` through `gojq`, at 0.12.17 in `gh` 2.89.0, so that `gojq` agrees on that
   pattern is inferred. It holds no lookaround and no back-reference.
 - Verified by hand through a stub for `gh` that serves fixture JSON through real `jq` 1.7,
