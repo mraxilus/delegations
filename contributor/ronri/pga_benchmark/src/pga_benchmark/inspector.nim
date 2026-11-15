@@ -151,6 +151,7 @@ func named(source: string, stems: openArray[(int, string)]): string =
   ## Rename each `MultivectorOf` instance C source defines after library type of its count.
   ##   C names every instance `tyObject_MultivectorOf__<hash>`, so element count tells them
   ##     apart: `struct <name> {` holds `<array> elements;`, and `typedef NF <array>[<n>];`.
+  ##     Field that carries alignment opens with `NIM_ALIGN(<bytes>)`, which is skipped.
   ##   Renamed instance reads `tyObject_<type>__<hash>`, as one type per object did, so every
   ##     reader below sees one stem per library type. Count no stem names keeps its C name.
   var counts: Table[string, int]
@@ -168,7 +169,8 @@ func named(source: string, stems: openArray[(int, string)]): string =
     let
       instance = line["struct ".len..^3]
       field = lines[index+1].strip
-      array = field.split(' ')[0]
+      words = field.split(' ')
+      array = if words.len > 1 and words[0].startsWith("NIM_ALIGN("): words[1] else: words[0]
     if not field.endsWith(" elements;") or array notin counts: continue
     for (count, stem) in stems:
       if count == counts[array]:

@@ -60,7 +60,7 @@ export async function driveTwoFingerPan(page: Page, devtools: CDPSession): Promi
   //   pivot rides along at its own depth. Sight read off eye and pivot through float32, so
   //   bound is float32's.
   report(
-    'and leave the sight and the separation as they were',
+    'and leave the sight and the distance to the pivot as they were',
     spanOf(forwardOf(before), forwardOf(after)) < 1e-6 &&
       Math.abs(after.distance - before.distance) < 1e-9,
     `sight moved ${spanOf(forwardOf(before), forwardOf(after)).toExponential(2)}, ` +

@@ -150,7 +150,8 @@ and the shared allowance. This section adds only what differs for a curator.
    and `check-drift` still names it to each older branch.
 
    A new or renamed `##` heading stays stamped until you list it. List a section of process in
-   the pull request that writes it. A listed heading that its document lacks is a finding.
+   the pull request that writes it. A listed heading that its document lacks is a finding. A
+   citation of a section that its document lacks is a finding too.
 
    Do all of this in the same pull request. Read the diff, and re-audit every project
    against each changed rule. Apply what the rule now demands in the records, which duty 11

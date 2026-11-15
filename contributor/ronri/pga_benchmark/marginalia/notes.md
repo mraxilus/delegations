@@ -23,7 +23,7 @@ reference, most spend more multiplies than the reference, and this is why.
 
 An instance holds only the coefficients of its own bases, and the norms return two of them. Grade
 restriction still lives in the emission of each product, and the tables stay whole. Proposal P04,
-`exact-kinds`, explores products that return only the bases they reach.
+`basis-set-forms`, explores products that return only the bases they reach.
 
 ## What an out-of-range grade does
 
@@ -56,7 +56,7 @@ operations, the result alone puts them above the byte bound. The norms return
 `MultivectorScalars`, which holds 𝟏 and 𝟙 alone.
 
 An emitter that returns that pair, for a table whose products all land in 𝟏 or 𝟙, closes the rest.
-Proposal P04, `exact-kinds`, returns the kind of exactly the bases that the result reaches,
+Proposal P04, `basis-set-forms`, returns the kind of exactly the bases that the result reaches,
 which here is one coefficient.
 
 ## What the conformal norms compute

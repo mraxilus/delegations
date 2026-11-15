@@ -3,10 +3,10 @@
 Duals, interior products, antireverse and attitude read two of the three rules, in place of
 constructors of their own. The dot reads the transwedge 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛, as at pin.
 The parts split by the projective vectors in both algebras. The radius norm reads ∘ whole, so
-`filterGrades` leaves the file. This change adds `applyMap`, `constructDot`, and `mergeTerm`,
-which both `applyMap` and `merge` call. Every exported table keeps its name, shape
-and cells. The suites hold that the dot equals 𝐚ᵀ𝐆𝐛, as in Lengyel's figure 2.16. `cayleys.nim`
-is replaced whole, since its tables and constructors change together.
+`filterGrades` loses its one caller, and both of its overloads stay, marked `used`. This change
+adds `applyMap` and `constructDot`. Every exported table keeps its name, shape and cells. The
+suites hold that the dot equals 𝐚ᵀ𝐆𝐛, as in Lengyel's figure 2.16. `cayleys.nim` is replaced
+whole, since its tables and constructors change together.
 
 ### Order of edits
 
@@ -19,14 +19,17 @@ below:
   proposal deletes. So the edits of that change are void once this proposal lands. Its other
   idea still applies: this proposal writes the parity k(k−1)/2 of the reverse twice, in
   `reverse` and in `constructProductGeometric`. After this proposal, its edit quotes those lines.
-- The changes `doc-comments` and `doc-comments-2` edit `pga/cayleys.nim` too. Whichever lands
-  second is quoted again against the first. If this proposal lands second, its Replace carries
-  their text under a new digest.
-- Once this proposal lands, `doc-comments` drops its edit that quotes `  CAYLEYS_DOT* = block:`.
-  Applied after this proposal, that edit gives a line of 136 characters with two docs that
-  contradict each other. This proposal gives the dot its doc on that line already.
-- `doc-comments-2` also edits the import line of `tests/suites.nim` that this proposal edits. The
-  second to land quotes that line again.
+- The changes `doc-comments` and `doc-comments-2` edit `pga/cayleys.nim` too. If this proposal
+  lands second, its Replace carries their text under a new digest. If a change lands second, its
+  edits of that file apply as written.
+- The edit of `doc-comments` that quotes `  CAYLEYS_DOT* = block:` applies after this proposal
+  too. It then gives a doc to one table constant, and this proposal gives none. The header of
+  this file states the dot already.
+- `doc-comments-2` also edits the import line of `tests/suites.nim` that this proposal edits. If
+  `doc-comments-2` lands second, it quotes that line again.
+- P12, `cayley-cells`, edits `pga/cayleys.nim` too. Two of its edits quote lines that this
+  proposal rewrites, so whichever lands second is written again against the first. If this
+  proposal lands second, its Replace builds its cells with `toBasesSigned` under a new digest.
 
 ## Edit `tests/suites.nim`
 
@@ -41,32 +44,36 @@ import ../pga/[algebra {.all.}, cayleys {.all.}, multivectors {.all.}, operators
 ## Edit `tests/suites.nim`
 
 ```nim
-  test "TODO: Add remaining chapter 5 tests":
-    skip()
+    check c == "E412"
+
+
+
+suite "Chapter 2":
 ```
 
 ```nim
-  test "TODO: Add remaining chapter 5 tests":
-    skip()
+    check c == "E412"
 
 
-
-suite "Internal: Transwedge":
-  test "Order 0 is wedge, order gr(𝐚) is bulk contraction, equal grades give dot as 𝐚ᵀ𝐆𝐛":
+  test "constructProductsTransitional(complement, dual: Cayley1D, ...): array[Order, Cayley2D]":
     const (contraction, dot) = block:
       var contraction, dot: Cayley2D
       for k in Order:
-        for a in Basis:
-          if Order(a.grade) != k: continue
-          for b in Basis:
-            contraction[b][a].add(CAYLEYS_WEDGES_TRANS.base[k][a][b])
-      for n in Basis:  # 𝐚ᵀ𝐆𝐛: scalar wherever 𝐆 maps one basis onto other.
+        for m in Basis:
+          if Order(m.grade) != k: continue
+          for n in Basis:
+            contraction[n][m].add(CAYLEYS_WEDGES_TRANS.base[k][m][n])
+      for n in Basis:  # 𝐦ᵀ𝐆𝐧: scalar wherever 𝐆 maps one basis onto other.
         for term in CAYLEYS_EXOMORPHISM_METRIC.base[n]:
           dot[term.basis][n].add BasisSigned(basis: Basis.scalar, is_negated: term.is_negated)
       (contraction, dot)
-    check CAYLEYS_WEDGES_TRANS.base[Order.low] == CAYLEYS_WEDGE.base  # 𝐚 ⩓₀ 𝐛 = 𝐚 ∧ 𝐛
-    check contraction == CAYLEYS_INTERIOR.anti.bulk.right  # 𝐚 ⩓ₖ 𝐛 where k = gr(𝐚) is 𝐛 ∨ 𝐚★
-    check dot == CAYLEYS_DOT.base  # 𝐚 ⩓ₖ 𝐛 where k = gr(𝐚) = gr(𝐛) is 𝐚ᵀ𝐆𝐛
+    check CAYLEYS_WEDGES_TRANS.base[Order.low] == CAYLEYS_WEDGE.base  # 𝐦 ⩓₀ 𝐧 = 𝐦 ∧ 𝐧
+    check contraction == CAYLEYS_INTERIOR.anti.bulk.right  # 𝐦 ⩓ₖ 𝐧 where k = gr 𝐦 is 𝐧 ∨ 𝐦★
+    check dot == CAYLEYS_DOT.base  # 𝐦 ⩓ₖ 𝐧 where k = gr 𝐦 = gr 𝐧 is 𝐦ᵀ𝐆𝐧
+
+
+
+suite "Chapter 2":
 ```
 
 ## Replace `pga/cayleys.nim` from `4aa7a2507c537c06`
@@ -76,31 +83,34 @@ suite "Internal: Transwedge":
 ##
 ## Cayleys exposed to importer so they can inspect algebra's definition.
 ##
-## Derive tables from two inputs, as in Lengyel's figure 2.16: metric 𝖌 on vectors, and
-##   orientation of volume element 𝟙. Exterior product and reverse follow from basis alone;
-##   each complement solves 𝐮 ∧ 𝐮̄ = 𝟙. Projective vectors, origin and CGA infinity, are named.
+## Derive tables from two inputs, as Lengyel does: metric 𝖌 on vectors, orientation of 𝟙.
+##   Exterior product and reverse follow from basis alone.
+##   Left and right complements solve 𝐮̲ ∧ 𝐮 = 𝟙 = 𝐮 ∧ 𝐮̄.
+##   Projective vectors, origin and CGA infinity, are named.
 ##   Three rules derive other tables:
 ##     `constructAnti` conjugates table by complements, giving anti-variants
 ##       (antiwedge, 𝔾, antireverse, antidot).
 ##     `applyConstant` and `applyMap` fix or map one operand of product
 ##       (attitude, carrier, duals, interior products).
 ##       Each dual composes two maps: complement after 𝐆 or 𝔾.
-##     `constructProductsTransitional` sums wedge chains over one grade (transwedge orders),
-##       i.e. 𝐚 ⩓ₖ 𝐛 = Σ (𝐜̲ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★) where gr 𝐜 = k; ⩔ₖ swaps ∧ for ∨, ★ for ☆.
-##       `constructProductGeometric` sums orders with sign, i.e. 𝐚 ⟑ 𝐛 = Σ (-1)^(k(k-1)/2) 𝐚 ⩓ₖ 𝐛.
-##   Dot reads transwedge at equal grades, i.e. 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
+##     `constructProductsTransitional` sums wedge chains over one grade (transwedge orders).
+##       I.e. 𝐦 ⩓ₖ 𝐧 = Σ (𝐜̲ ∨ 𝐦) ∧ (𝐧 ∨ 𝐜★) where gr 𝐜 = k.
+##       ⩔ₖ swaps ∧ for ∨ and ★ for ☆, and sums over antigrade of 𝐜 in place of grade.
+##       `constructProductGeometric` sums orders with sign, i.e. 𝐦 ⟑ 𝐧 = Σ (-1)^(k(k-1)/2) 𝐦 ⩓ₖ 𝐧.
+##   Dot reads transwedge at equal grades, i.e. 𝐦 ∙ 𝐧 = 𝐦 ⩓ₖ 𝐧 where k = gr 𝐦 = gr 𝐧.
 ##   Parts split by presence of origin and, in CGA, of infinity.
 ##   Tables and constructors come in groups, in order of derivation: bases with exterior product,
 ##     metric, parts, transitional products, interior products with dot, geometric products,
 ##     norms, properties with reverse.
-##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time, since conformal anti
-##     orders are not conjugates of base orders; maps and filters walk N² cells.
+##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time.
+##     Conjugate of base order by complements gives anti order with same net terms in each cell.
+##     Maps and filters walk N² cells.
 ##
 
 {.experimental: "codeReordering".}
 {.experimental: "strictFuncs".}
 
-import std/[bitops, strformat]
+import std/[bitops, sequtils, strformat]
 
 import ./algebra {.all.}
 
@@ -148,7 +158,7 @@ iterator items(t: typedesc[Order]): Order =
 
 #[ Cayley Definitions ]#
 
-const  # Bases.
+const
   CAYLEYS_COMPLEMENT* = Chiral[Cayley1D](
     left: constructComplement(Chirality.Left),
     right: constructComplement(Chirality.Right),
@@ -160,7 +170,7 @@ const  # Bases.
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
 
-const  # Metric.
+const
   CAYLEY_METRIC* = constructMetric()
   CAYLEYS_EXOMORPHISM_METRIC* = block:
     let base = constructExomorphismMetric(CAYLEY_METRIC)
@@ -168,7 +178,7 @@ const  # Metric.
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
-  CAYLEYS_DUAL* = Spatial[Chiral[Cayley1D]](  ## Complement after exomorphism, e.g. 𝐦★ = (𝐆𝐦)̅.
+  CAYLEYS_DUAL* = Spatial[Chiral[Cayley1D]](
     base: Chiral[Cayley1D](
       left: CAYLEYS_COMPLEMENT.left.applyMap(CAYLEYS_EXOMORPHISM_METRIC.base),
       right: CAYLEYS_COMPLEMENT.right.applyMap(CAYLEYS_EXOMORPHISM_METRIC.base),
@@ -179,13 +189,13 @@ const  # Metric.
     ),
   )
 
-const  # Parts.
-  CAYLEYS_PARTS* = Partial[Formal[Cayley1D]](  ## Split by presence of projective vectors.
+const
+  CAYLEYS_PARTS* = Partial[Formal[Cayley1D]](
     bulk: constructParts(Partiality.Bulk),
     weight: constructParts(Partiality.Weight),
   )
 
-const  # Transitional products.
+const
   CAYLEYS_WEDGES_TRANS* = Spatial[array[Order, Cayley2D]](
     base: constructProductsTransitional(
       CAYLEYS_COMPLEMENT.left,
@@ -203,8 +213,8 @@ const  # Transitional products.
     ),
   )
 
-const  # Interior products.
-  CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](  ## (Anti)wedge with one operand dualized.
+const
+  CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](
     base: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
         left: CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.base.left, Chirality.Left),
@@ -226,35 +236,35 @@ const  # Interior products.
       ),
     ),
   )
-  CAYLEYS_DOT* = block:  ## Dot as 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛; antidot conjugates it.
+  CAYLEYS_DOT* = block:
     let base = constructDot(CAYLEYS_WEDGES_TRANS.base)
     Spatial[Cayley2D](
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
 
-const  # Geometric products.
+const
   CAYLEYS_WEDGE_DOT* = Spatial[Cayley2D](
     base: constructProductGeometric(CAYLEYS_WEDGES_TRANS.base),
     anti: constructProductGeometric(CAYLEYS_WEDGES_TRANS.anti),
   )
 
-const  # Norms.
+const
   CAYLEYS_NORM_SQUARED* = Partial[Formal[Cayley2D]](
     bulk: constructNormsSquared(CAYLEYS_PARTS, Partiality.Bulk),
     weight: constructNormsSquared(CAYLEYS_PARTS, Partiality.Weight),
   )
 when IS_CONFORMAL:
-  const CAYLEYS_NORM_SQUARED_RADIUS* = CAYLEYS_DOT.anti  ## Squared radius norm, i.e. 𝐦 ∘ 𝐦.
+  const CAYLEYS_NORM_SQUARED_RADIUS* = CAYLEYS_DOT.anti
 
-const  # Properties.
-  CAYLEYS_REVERSE* = block:  ## Reverse; antireverse conjugates it by complements.
+const
+  CAYLEYS_REVERSE* = block:
     let base = constructReverse()
     Spatial[Cayley1D](
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
-  CAYLEY_ATTITUDE*: Cayley1D = block:  ## Attitude as one map, i.e. 𝐦 ∨ 𝐞̄ₙ.
+  CAYLEY_ATTITUDE*: Cayley1D = block:
     var cayley = CAYLEYS_WEDGE.anti
     cayley.applyConstant(Basis.horizon, Chirality.Right)
 
@@ -302,7 +312,7 @@ func constructProductExterior(
 
 func constructAnti(cayley: Cayley1D, complements: Chiral[Cayley1D]): Cayley1D {.compileTime.} =
   ## Construct anti version of 1D cayley table by applying right (left) complement before (after).
-  complements.left.applyMap cayley.applyMap(complements.right)
+  complements.left.applyMap(cayley.applyMap(complements.right))
 
 
 func constructAnti(cayley: Cayley2D, complements: Chiral[Cayley1D]): Cayley2D {.compileTime.} =
@@ -493,10 +503,10 @@ func constructProductTransitional(
 
 
 func constructDot(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =
-  ## Construct Cayley table for dot from transwedge, i.e. 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
-  for a in Basis:
-    for b in Basis:
-      if a.grade == b.grade: result[a][b] = wedges_trans[Order(a.grade)][a][b]
+  ## Construct Cayley table for dot from transwedge, i.e. 𝐦 ⩓ₖ 𝐧 where k = gr 𝐦 = gr 𝐧.
+  for m in Basis:
+    for n in Basis:
+      if m.grade == n.grade: result[m][n] = wedges_trans[Order(m.grade)][m][n]
 
 
 func constructProductGeometric(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =
@@ -632,11 +642,10 @@ func applyConstant(
 
 func applyMap(cayley, map: Cayley1D): Cayley1D {.compileTime.} =
   ## Apply map to operand of 1D cayley, i.e. cayley(map(𝐦)).
-  ##   Map runs first, cayley second; several terms distribute and opposing terms cancel.
   for operand in Basis:
     for term_map in map[operand]:
       for term in cayley[term_map.basis]:
-        result[operand].mergeTerm BasisSigned(
+        result[operand].add BasisSigned(
           basis: term.basis,
           is_negated: term_map.is_negated xor term.is_negated,
         )
@@ -655,7 +664,7 @@ func applyMap(cayley: Cayley2D, map: Cayley1D, chirality: Chirality): Cayley2D {
           of Chirality.Left: cayley[term_map.basis][n]
           of Chirality.Right: cayley[m][term_map.basis]
         for term in products:
-          result[m][n].mergeTerm BasisSigned(
+          result[m][n].add BasisSigned(
             basis: term.basis,
             is_negated: term_map.is_negated xor term.is_negated,
           )
@@ -714,6 +723,62 @@ func filterBases(
           break
 
 
+func filterGrades(
+  cayley: var Cayley1D,
+  operands = default(seq[Grade]),
+  products = default(seq[Grade]),
+  as_exclusions = false,
+) {.compileTime, used.} =  # Not used; provided for completion.
+  ## Filter out specific operands/products from 1D cayley table by grades.
+  for operand in Basis:
+    if cayley[operand].len == 0: continue
+
+    # Filter by operand grade.
+    if (operands.len != 0 and operand.grade notin operands) or
+        (as_exclusions and operand.grade in operands):
+      cayley[operand] = @[]
+      continue
+
+    # Filter by product grade.
+    let product_signed = cayley[operand].toSigned
+    if (products.len != 0 and product_signed.basis.grade notin products) or
+        (as_exclusions and product_signed.basis.grade in products):
+      cayley[operand] = @[]
+
+
+func filterGrades(
+  cayley: var Cayley2D,
+  operands_m = default(seq[Grade]),
+  operands_n = default(seq[Grade]),
+  products = default(seq[Grade]),
+  as_exclusions = false,
+) {.compileTime, used.} =  # Not used; provided for completion.
+  ## Filter out specific operands/products from 2D cayley table by bases.
+  for m in Basis:
+
+    # Filter by m operands.
+    if (operands_m.len != 0 and m.grade notin operands_m) or
+        (as_exclusions and m.grade in operands_m):
+      for n in Basis:
+        cayley[m][n] = @[]
+
+    for n in Basis:
+      if cayley[m][n].len == 0: continue
+
+      # Filter by n operands.
+      if (operands_n.len != 0 and n.grade notin operands_n) or
+          (as_exclusions and n.grade in operands_n):
+        cayley[m][n] = @[]
+        continue
+
+      # Filter by product.
+      for b in cayley[m][n]:
+        if (products.len != 0 and b.basis.grade notin products) or
+            (as_exclusions and b.basis.grade in products):
+          cayley[m][n] = @[]  # TODO: Remove only matching elements.
+          break
+
+
 func filterFactors(
   cayley: var Cayley1D, factors: seq[Basis], as_exclusions = false
 ) {.compileTime.} =
@@ -737,25 +802,27 @@ func filterFactors(
       cayley[operand] = @[]
 
 
-func mergeTerm(cell: var seq[BasisSigned], term: BasisSigned, as_negated = false) {.compileTime.} =
-  ## Merge term into cell, cancelling opposing term when found, else adding term.
-  ##   Cancels matching where `as_negated = true`.
-  let
-    is_negated = not term.is_negated xor as_negated
-    term_cancel = BasisSigned(basis: term.basis, is_negated: is_negated)
-    position = cell.find(term_cancel)
-  if position != -1:
-    cell.delete(position)
-    return
-  cell.add BasisSigned(basis: term.basis, is_negated: term.is_negated xor as_negated)
-
-
 func merge(destination: var Cayley2D, source: Cayley2D, as_negated = false) {.compileTime.} =
   ## Merge two 2D cayley tables in place, simplifying/cancelling opposing terms.
   for m in Basis:
     for n in Basis:
       for term in source[m][n]:
-        destination[m][n].mergeTerm(term, as_negated)
+
+        # Cancel out opposing (or matching) terms found after merge.
+        #   Cancels matching where `as_negated=true`.
+        let
+          is_negated = not term.is_negated xor as_negated
+          term_cancel = BasisSigned(basis: term.basis, is_negated: is_negated)
+          position = destination[m][n].findIt(it == term_cancel)
+        if position != -1:
+          destination[m][n].delete(position)
+          continue
+
+        # Add term if not cancelled.
+        destination[m][n].add BasisSigned(
+          basis: term.basis,
+          is_negated: term.is_negated xor as_negated,
+        )
 
 
 func negate(cayley: var Cayley1D) {.compileTime, used.} =  # Not used; provided for completion.
