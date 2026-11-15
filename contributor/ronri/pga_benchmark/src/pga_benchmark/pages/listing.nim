@@ -106,13 +106,16 @@ func htmlListing*(
   ## Render proposals tab: graph, table, then every proposal behind its checkbox.
 
   func chipStanding(proposal: Proposal): string =
-    ## Render where proposal stands as chip: proposed, implemented or withdrawn.
+    ## Render where proposal stands as chip: proposed, implemented, withdrawn or deferred.
     if proposal.isImplemented: chip("implemented", "pass")
+    elif proposal.isDeferred: chip("deferred", "")
     elif proposal.isFrozen: chip("withdrawn", "")
     else: chip("proposed", "status")
 
-  func chipClaims(evaluation: JsonNode): string =
+  func chipClaims(proposal: Proposal, evaluation: JsonNode): string =
     ## Render claims that hold over claims checked, as chip; failing where any fails.
+    ##   Deferred proposal is tested apart, so its missing evaluation is no failure.
+    if evaluation.isNil and proposal.isDeferred: return chip(TEXT_DEFERRED, "")
     if evaluation.isNil: return chip("no evaluation", "fail")
     let
       claims = evaluation{"claims"}.getElems
@@ -145,7 +148,7 @@ func htmlListing*(
     result.add "<tr><td><label class=\"tick\" for=\"" & idPick(proposal) & "\" title=\"Read " &
         escapeHtml(proposal.citation) & " here\"></label></td><td>" & citeLinked(proposal, urls) &
         " " & renderInline(proposal.title) & "</td><td>" & chipStanding(proposal) & "</td><td>" &
-        chipClaims(evaluation) & "</td><td>" &
+        chipClaims(proposal, evaluation) & "</td><td>" &
         htmlCited(dependencies(proposals, proposal)[0], urls) & "</td><td>" &
         htmlCited(dependents(proposals, proposal), urls) & "</td></tr>"
   result.add "</table></div></section><section class=\"block readings\"><h2>Selected " &

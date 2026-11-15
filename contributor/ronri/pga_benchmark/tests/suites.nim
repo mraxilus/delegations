@@ -2205,7 +2205,7 @@ suiteInProc "Internal: Proposals":
     check unnumbered.len == 2  # path lacks number, so title cites none it could match
     check "`01-sign`" in unnumbered[0].message  # names form path needs
     check uncited.len == 1 and "`P01: `" in uncited[0].message  # title opens with citation
-    check unplaced.len == 1 and "`dreamt`" in unplaced[0].message  # three statuses only
+    check unplaced.len == 1 and "`dreamt`" in unplaced[0].message  # four statuses only
 
 
   test "implemented proposal needs its commit, and implemented or withdrawn is frozen":
@@ -2227,6 +2227,18 @@ suiteInProc "Internal: Proposals":
     check checkNumbers([numbered(1), numbered(1)]).len == 1  # taken twice
     let skipped = checkNumbers([numbered(1), numbered(3)])
     check skipped.len == 1 and "`P02`" in skipped[0].message  # two was freed
+
+
+  test "deferred proposal is frozen, and top block counts down from P99 apart from running one":
+    let deferred = numbered(99, "deferred")
+    check deferred.isDeferred and deferred.isFrozen and not deferred.isImplemented
+      # tested apart, and no longer applied at pin
+    check checkNumbers([numbered(1), numbered(2), numbered(99)]).len == 0  # two blocks, no gap
+    let
+      skipped = checkNumbers([numbered(1), numbered(99), numbered(97)])
+      unopened = checkNumbers([numbered(1), numbered(98)])
+    check skipped.len == 1 and "`P98`" in skipped[0].message  # top block counts down
+    check unopened.len == 1 and "`P99`" in unopened[0].message  # top block opens at P99
 
 
   test "builds on must list names, and absent list is finding, since proposal states its bases":
@@ -2258,15 +2270,17 @@ suiteInProc "Internal: Proposals":
     check basesToward(diamond, diamond[3], diamond[1]).len == 0  # direct base needs no path
 
 
-  test "implemented base drops out, and cycle, unknown or withdrawn base is finding":
+  test "implemented base drops out, and cycle, unknown, withdrawn or deferred base is finding":
     let
       landed = [numbered(1, "implemented"), numbered(2, bases = @[1])]
       looped = [numbered(1, bases = @[2]), numbered(2, bases = @[1])]
       lost = [numbered(1, bases = @[7])]
       dropped = [numbered(1, "withdrawn"), numbered(2, bases = @[1])]
+      waiting = [numbered(99, "deferred"), numbered(1, bases = @[99])]
       (cycle, why_cycle) = dependencies(looped, looped[0])
       (_, why_lost) = dependencies(lost, lost[0])
       (_, why_dropped) = dependencies(dropped, dropped[1])
+      (_, why_waiting) = dependencies(waiting, waiting[1])
     let (held, why_held) = dependencies(landed, landed[1])
     check held.len == 0 and why_held.len == 0  # library holds base
     check dependents(landed, landed[0]).len == 0  # rejecting landed one blocks nothing
@@ -2274,6 +2288,10 @@ suiteInProc "Internal: Proposals":
     check "cycle" in why_cycle[0].message and why_cycle[0].path == looped[0].directory
     check why_lost.len == 1 and "`p7`" in why_lost[0].message  # names unknown base
     check why_dropped.len == 1 and "`P01`" in why_dropped[0].message  # cites withdrawn one
+    check why_dropped[0].message.startsWith("Proposal builds on withdrawn proposal")
+      # names status of base
+    check why_waiting.len == 1 and "deferred proposal; got `P99`" in why_waiting[0].message
+      # deferred base is frozen too
 
 
 
@@ -3219,6 +3237,34 @@ suiteInProc "Internal: Pages":
     check "pga <code>bd6b23c</code>" in body  # pin named
 
 
+  test "deferred proposal page says it is tested apart, with no failing chip for its evaluation":
+    let
+      record = Proposal(
+        number: 99,
+        name: "p",
+        directory: "proposals/99-p",
+        title: "P",
+        status: StatusProposal.Deferred,
+        claims: newJArray(),
+      )
+      body = bodyProposal(
+        record,
+        [record],
+        nil,
+        initTable[string, string](),
+        initTable[string, string](),
+        initTable[string, JsonNode](),
+        Spread(),
+        initTable[string, string](),
+        "bd6b23c590d7",
+        "",
+      )
+    check "<p class=\"meta\">deferred · pga <code>bd6b23c</code>" in body  # status in header
+    check "<span class=\"chip \">" & TEXT_DEFERRED & "</span>" in body  # chip says why
+    check "no evaluation" notin body and "Claims</h3>" notin body  # nothing reads as failure
+    check "Deferred: general evaluation leaves this proposal out" in body  # notes hold evidence
+
+
 
 suiteInProc "Internal: Proposal list":
   func listed(number: int, status = "proposed", bases: seq[int] = @[]): Proposal =
@@ -3326,6 +3372,29 @@ suiteInProc "Internal: Proposal list":
     check "<h2>P02: Title 2</h2>" in body and "<h4>Claims</h4>" in body  # nested one level down
     check "<a href=\"https://example.org/p1\">its own page</a>" in body  # published page linked
     check "<button class=\"clear\" type=\"reset\">" in body  # one control clears all
+
+
+  test "list page names deferred proposal so, with no failing chip for its claims":
+    func listing(proposals: seq[Proposal]): string =
+      ## Render list page of proposals, none evaluated.
+      htmlListing(
+        proposals,
+        initTable[string, JsonNode](),
+        initTable[string, string](),
+        initTable[string, string](),
+        initTable[string, JsonNode](),
+        Spread(),
+        initTable[string, string](),
+        "bd6b23c590d7",
+      )
+
+    let
+      body = listing(@[listed(1), listed(99, "deferred")])
+      alone = listing(@[listed(1)])
+    check "<span class=\"chip \">deferred</span>" in body  # standing
+    check "<span class=\"chip \">" & TEXT_DEFERRED & "</span>" in body  # claims chip
+    check body.count("no evaluation") == alone.count("no evaluation")
+      # deferred one adds no failing chip, where P01 lacks evaluation it needs
 
 
   test "Proposals page opens on proposals tab, with marginalia in tab beside it":
