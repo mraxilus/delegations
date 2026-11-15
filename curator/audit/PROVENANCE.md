@@ -431,7 +431,7 @@ each row to a rules document and a `## ` heading.
   cites those sections by heading, so a move leaves each citation with no target, and only each
   contributor may edit that code. Outside the three records,
   `git grep -n -E '(CONTRIBUTOR|GUIDE)\.md' ba1986f98 -- contributor` gives 48 lines, and 36 of
-  them cite a section by its heading. Such a move now gives a finding at each citation that it
+  them cite a section by its heading. Such a move gives a finding at each citation that it
   leaves with no target, held for the project of each (Citations of sections).
 - Rejected: `GUIDE.md` and `CONTRIBUTOR.md` out of the stamp whole. Their rules of content would
   then change with no audit of any project.
@@ -582,11 +582,13 @@ pass runs it over every file that the audit reads.
   The word `and` and a capital name a second section beside the first.
 - The longest heading that opens the text after the comma wins, because a heading can hold a
   comma, as (`GUIDE.md`, Prune, never narrate) does.
+- Verified by `suites/test_citations_section.nim`, for each form of the name, the section and
+  the quote.
 
 **The match is lenient, as the Architect ruled on #892 with option b.** It does not compare
 case, or the articles `a`, `an` and `the`, because a telegraphic comment drops its articles
-(Article VI.5). The first words of a heading or of a bold rule pass, up to a stop. A quote
-passes where the text of its document, outside fences, holds its words in order.
+(Article VI.5). The first words of a heading or of a bold rule pass, up to the first mark. A
+quote passes where the text of its document, outside fences, holds its words one after another.
 
 - Rejected: a word-for-word match. It reports each comment that drops an article of the
   heading that it cites, which VI.5 asks for and `koch fix` does.
@@ -601,8 +603,8 @@ example headings. A bold rule is a line or a list item that opens with bold text
 runs to the closing `**`, on a later line of its paragraph where it wraps, without its last
 stop or colon. Duties, terms of a glossary and the rules of the guide open that way.
 
-- Rejected: `sections`, which cuts at a `## ` line alone. Two skills cite a heading of level
-  four.
+- Rejected: `sections`, which cuts at a `## ` line alone. A citation can name a subsection, as
+  (`GUIDE.md`, Prune, never narrate) names one of level three.
 - Verified by `suites/test_markdown.nim` for the levels, and by `suites/test_citations_section.nim`
   for a heading inside a fence and for each form of bold rule.
 
@@ -639,10 +641,9 @@ first. A line end reads as a space, and it ends a citation after a whole name.
 It also skips a lower-case word after the comma, which continues the prose, and a file name,
 which opens a list of documents. Verified by `suites/test_citations_section.nim`.
 
-**A finding inside a contributor project is held for that project (CURATOR.md, duty 3).** So
-the check lands while the rest of the tree is clean, and each project clears its own finding.
-Verified by a run of `nim r koch check-files` at `9445bbdc7`, 2026-11-14: one finding, held
-for pga_visualiser, and none outside it.
+**A finding inside a contributor project is held for that project (Branch scope).** So the
+check lands while the rest of the tree is clean, and each project clears its own finding when it
+next moves.
 
 ## Font faces
 
@@ -3547,9 +3548,9 @@ two commits alternated, from separate worktrees, each with a cache of its own. A
 - Inside one process at `9445bbdc7`, `checkCitationsSection` took 432 ms, 445 ms and 526 ms over
   three rounds, timed with `std/monotimes`. In those rounds, the whole static pass took 11.7 s to
   12.0 s.
-- Most of that time is the scan of the comments of each file whose text holds `.md`. The words
-  of a document are read at its first quote and not before, since most documents are cited by
-  heading alone (Article VII.3).
+- Assumed: most of that time is the scan of the comments of each file whose text holds `.md`.
+  The words of a document are read at its first quote and not before, since most documents are
+  cited by heading alone (Article VII.3).
 
 **A branch that changes the checker costs one project, and not every project.** On 2026-09-24,
 warm `nim r koch check` took 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the
