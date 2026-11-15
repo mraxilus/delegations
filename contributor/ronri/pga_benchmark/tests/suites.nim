@@ -355,6 +355,15 @@ suiteInProc "Internal: Catalogue":
       check line in SOURCE_OPERATORS  # one-line template, target's function is what C holds
 
 
+  test "transform spells its operator where library declares one, else chain":
+    for p in CATALOGUE:
+      if not p.id.startsWith("transform_"): continue
+      when declared(`⟇⟇~∘`):
+        check p.expression == "(m ⟇⟇~∘ n)" and p.headEmitted == "⟇⟇~∘"  # one function to count
+      else:
+        check p.expression == "((n ⟇ m) ⟇ (~∘ n))" and p.headEmitted == ""  # chain, as D08 names
+
+
   test "aliases match every name library's umbrella exports":
     let
       exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
