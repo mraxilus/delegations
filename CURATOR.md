@@ -68,7 +68,8 @@ Every rule below serves it:
 | `COORDINATOR.md` | Opening prompt for the coordinator delegate | curator |
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, content stamped | curator |
 | `GUIDE.md` | Shared how-to, and rules the constitution points here, content stamped | curator |
-| `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
+| `AGENTS.md` | Entry file that each harness reads first, with the file of each role | curator |
+| `CLAUDE.md` | Import of `AGENTS.md`, which Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <verb>` | curator |
 | `.gitignore`, `.gitattributes` | Artifacts and checkouts out, LF endings | curator |
 | `.github/workflows/check.yml` | Every job of `check`, and the `summarize` gate | curator |
@@ -81,7 +82,7 @@ Every rule below serves it:
 | `.github/workflows/architect.yml` | Label `architect` off an item that closes | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
 | `.claude/skills/`, `.claude/agents/` | Skills, and the agent `record-reviewer` | curator |
-| `.githooks/` | `pre-push` and `commit-msg`, reached through `core.hooksPath` | curator |
+| `.githooks/` | `pre-push` and `commit-msg`, through `core.hooksPath` that koch sets | curator |
 | `.github/pull_request_template.md` | Body that every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/brief.md` | Body that every brief follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body that every process request follows | curator |
@@ -259,8 +260,8 @@ and the shared allowance. This section adds only what differs for a curator.
    `watch.yml` watches `check`, `ledger` and `head`, and opens or extends one issue for each
    workflow.
 
-10. **Opening prompts.** `CURATOR.md`, `COORDINATOR.md` and `CONTRIBUTOR.md` open new
-    delegates, so every paragraph is read on every start. Keep each self-contained.
+10. **Opening prompts.** `AGENTS.md`, `CURATOR.md`, `COORDINATOR.md` and `CONTRIBUTOR.md` open
+    new delegates, so every paragraph is read on every start. Keep each self-contained.
     Cut what is dated or written twice, rather than what is merely long. A prompt cut short
     is answered from the model's own defaults instead, and that is a failure no ceiling can
     see. State the rule and its cost, and leave the incident that produced it to
@@ -473,8 +474,12 @@ left there after it became checkable is the one that teaches the skimming.
 A Claude Code hook is such a way. `.claude/settings.json` names the events. Each hook calls
 one `koch hook` verb and holds no rule of its own, so the rule lives in the audit once. A hook
 reaches only Claude Code, and only where it holds this repository alone, so CI stays the gate
-and the hook shortens the loop. A hook has a suite, as every check has. The git hooks under
-`.githooks/` are the same mechanism for a push and a commit, from any tool in the checkout.
+and the hook shortens the loop. A hook has a suite, as every check has.
+
+The git hooks under `.githooks/` are the same mechanism for a push and a commit. Each verb of
+koch sets `core.hooksPath`, so they hold each tool in a checkout where koch ran once. Under
+another harness, reading holds each other rule of a hook, as `AGENTS.md`, Under another
+harness, says.
 
 ## Output contract
 

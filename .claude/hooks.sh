@@ -39,7 +39,6 @@ if [ "$1" = start ]; then
     curl -sSL "https://nim-lang.org/download/nim-$PIN-linux_x64.tar.xz" |
       tar xJ -C "$CACHE" --strip-components=1
   fi
-  git -C "$ROOT" config core.hooksPath .githooks
   if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
     echo "export PATH=\"$CACHE/bin:\$PATH\"" >> "$CLAUDE_ENV_FILE"
   fi

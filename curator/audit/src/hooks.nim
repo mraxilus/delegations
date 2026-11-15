@@ -26,9 +26,10 @@
 ##     tool whose rules it shares, and holds its body as `body` holds tool's; `stop` counts it as
 ##     post. Hook runs before command, so body comes from literal text or file already written:
 ##     file same command writes, stdin and shell expansion are refused, with finding naming mend.
-##   Pure functions take strings and return findings; procs read transcript JSON and body files,
-##     since `parseJson` and file reads are effectful. `fileWritten` runs git too, through
-##     `checkoutAt`, since git names checkout holding file.
+##   Pure functions take strings and return findings; procs read transcript JSON, body files and
+##     file of role `start` prints (`readPrompt`), since `parseJson` and file reads are
+##     effectful. `fileWritten` runs git too, through `checkoutAt`, since git names checkout
+##     holding file.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
 ##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, context, rule line,
@@ -73,6 +74,7 @@
 import std/[json, options, os, sequtils, strutils, uri]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
+from ./prompts import HEADING_READ
 from ./toolchain import DIRECTORY_DRIVER
 from ./tree import checkoutAt
 
@@ -402,7 +404,7 @@ func checkBash*(branch, command: string; is_head_pushed: bool): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Never commit to `main`; push to branch inside grammar (CLAUDE.md); got `" & branch & "`.",
+        "Never commit to `main`; push to branch inside grammar (AGENTS.md); got `" & branch & "`.",
       )
     let is_forced = arguments.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-"))
     if sub == "push" and is_forced:
@@ -1884,7 +1886,7 @@ func checkPush*(recorded, tree_pushed: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "`nim r koch check` must pass on exact commit pushed (CLAUDE.md); last green tree `" &
+      "`nim r koch check` must pass on exact commit pushed (AGENTS.md); last green tree `" &
         recorded.strip & "`; got `" & tree_pushed.strip & "`.",
     )
 
@@ -1934,11 +1936,36 @@ func pathRecord*(branch: string): string =
   of Role.CuratorProject, Role.Contributor: parsed.get.prefix & FILE_RECORD
 
 
+func pathPrompt*(branch: string): string =
+  ## Read path of file of role branch names, whose reading order `start` prints; empty outside
+  ##   grammar.
+  ##   Curator root and one curator project read CURATOR.md, and contributor CONTRIBUTOR.md.
+  ##   Coordinator holds no branch, so it reads as branch outside grammar and gets no reading
+  ##     order until its trial, as Architect ruled on #891.
+  let parsed = branch.parseBranch
+  if parsed.isNone: return ""
+  case parsed.get.role
+  of Role.Curator, Role.CuratorProject: "CURATOR.md"
+  of Role.Contributor: "CONTRIBUTOR.md"
+
+
+proc readPrompt*(root, branch: string): string =
+  ## Read text of file of role branch names (`pathPrompt`), as `start` passes it to
+  ##   `contextStart`; empty outside grammar, or where root holds no such file.
+  ##   Read lives here and not in koch, since no suite runs `main` of koch, and suite reads it
+  ##     over scratch root.
+  let path = branch.pathPrompt
+  if path.len > 0 and fileExists(root / path): readFile(root / path) else: ""
+
+
 func contextStart*(
-  branch, contributor, heading_carried, record: string; drift: seq[Finding]
+  branch, prompt, contributor, heading_carried, record: string; drift: seq[Finding]
 ): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, headings
   ##   of record, list.
+  ##   Prompt is text of file `pathPrompt` names; empty outside grammar. Read order is its section
+  ##     under `HEADING_READ`, whole, so list lives in file of role alone. Line naming file opens
+  ##     it, since item `This file to the end` names no file out of its document.
   ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
   ##   that shows them, so start asks for new stamp only where finding does.
   ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
@@ -1948,12 +1975,13 @@ func contextStart*(
   var lines: seq[string]
   if parsed.isNone:
     lines.add "Branch `" & branch & "` is outside grammar; push to `curator/<name>`, " &
-      "`curator/<project>/<name>` or `contributor/<domain>/<project>/<name>` (CLAUDE.md)."
+      "`curator/<project>/<name>` or `contributor/<domain>/<project>/<name>` (AGENTS.md)."
   else:
-    let prompt = if parsed.get.role == Role.Contributor: "CONTRIBUTOR.md" else: "CURATOR.md"
     lines.add "Role: " & parsed.get.nameRole & ", on branch `" & branch & "`."
-    lines.add "Read first: CONSTITUTION.md, STYLE.md, GLOSSARY.md, then " & prompt &
-      ", then GUIDE.md."
+    lines.add ""
+    lines.add "Read first, from `" & branch.pathPrompt & "`:"
+    lines.add prompt.section(HEADING_READ).strip
+    lines.add ""
   if drift.len > 0:
     lines.add "Base changed charter or checker since this branch forked; read each change " &
       "below, then merge `origin/main` (`check-drift`). " & LINE_SYNC

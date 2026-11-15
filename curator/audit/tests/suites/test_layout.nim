@@ -132,6 +132,30 @@ suite "Layout":
     check treeGood().without("GLOSSARY.md").messages == @["Top-level glossary missing."]  # named
 
 
+  test "entry file stands at root, and CLAUDE.md imports it on line of its own, outside code":
+    # Claude Code loads no import in code, and repository writes each path in backticks, so
+    #   import in code span would load nothing, and no suite runs on change to `CLAUDE.md` alone.
+    #   Domain: import missing, of other file, in code span, in fence, indented as code, and entry
+    #   file missing, beside `CLAUDE.md` or without it.
+    const
+      absent = "`CLAUDE.md` imports entry file on line `@AGENTS.md` of its own, outside code, " &
+        "as Claude Code loads no import in code; got none."
+      lacking = [
+        "# Claude Code\n\nRead rules.\n",  # none
+        "# Claude Code\n\n@README.md\n",  # other file
+        "# Claude Code\n\n`@AGENTS.md`\n",  # code span
+        "# Claude Code\n\n```md\n@AGENTS.md\n```\n",  # fence
+        "# Claude Code\n\n    @AGENTS.md\n",  # indented, so code
+      ]
+    for text in lacking:
+      check treeGood().replaced("CLAUDE.md", text).messages == @[absent]
+    check treeGood().replaced("CLAUDE.md", "# Claude Code\n\n@AGENTS.md\n").checkLayout.len == 0
+    check treeGood().without("CLAUDE.md").checkLayout.len == 0  # Claude Code reads entry itself
+    check treeGood().without("AGENTS.md").messages == @["Entry file missing."]
+    check treeGood().without("CLAUDE.md").without("AGENTS.md").messages ==
+      @["Entry file missing."]  # each harness reads it, Claude Code too
+
+
   test "committed pages live in page directories only":
     for directory_page in DIRECTORIES_PAGE:  # 2 directories, exhaustive
       let inside = treeGood() & @[
