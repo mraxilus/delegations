@@ -184,7 +184,7 @@ func reachNear*(
   ##     units, so line 2.4e-7 off was cut away (#767).
   ##   Horizon kinds answer nothing, as they do for `reachOfPlacement`: neither stands
   ##   anywhere.
-  ##   Zero where nothing is drawn ahead, which hands scale back to separation.
+  ##   Zero where nothing is drawn ahead, which hands scale back to distance to pivot.
   result = 0.0
   for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
@@ -350,8 +350,8 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
   ##     Straight out from sphere's centre was least move. But sphere's centre is not
   ##     middle of what is picked once three objects part them, so that slid view sideways
   ##     and carried pivot off middle that orbit turns about.
-  ##   Pivot is re-stamped at middle's depth, so separation follows eye rather than going
-  ##   stale. Middle stands on sight line after any pick, so there pivot is middle itself.
+  ##   Pivot is re-stamped at middle's depth, so distance to pivot follows eye rather than
+  ##   going stale. Middle stands on sight line after any pick, so there pivot is middle itself.
   ##   Nothing finite named means no bound; horizon objects are bound by their own rule.
   if aim.sphere.isNone: return
   let
@@ -372,20 +372,20 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
 
 func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStance =
   ## Resolve `aim` against camera as it stands into placement ease should end at.
-  ##   Pivot to middle of everything finite picked, and separation pulled back only as far
-  ##   as frame rule demands. Never in: rule is floor, so reader standing further out
+  ##   Pivot to middle of everything finite picked, and distance to pivot pulled back only as
+  ##   far as frame rule demands. Never in: rule is floor, so reader standing further out
   ##   keeps their own framing.
   ##   Turn faces horizon objects only where nothing finite was.
   ##     Finite framing wins outright over facing star, since two can disagree. Star
   ##     behind reader and point in front have no placement showing both, and selection
   ##     with something finite is one reader works on.
   ##   Pivot comes to middle of what was picked even where nothing is pulled back: reader
-  ##   who picks object and turns means to turn about *it*. Bound still decides separation.
+  ##   who picks object and turns means to turn about *it*. Bound still decides distance to pivot.
   ##   Two searches stood here, and both are gone.
-  ##     One bisected separation between where camera stood and distance whole sphere fits,
-  ##     running `isShownAll` at each halving. `camera.stepOutTo` answers in closed form.
+  ##     One bisected distance to pivot between where camera stood and distance whole sphere
+  ##     fits, running `isShownAll` at each halving. `camera.stepOutTo` answers in closed form.
   ##     Other bisected fraction of whole move already showing everything. Move is least by
-  ##     construction now: pivot goes to centroid, and separation gives up exactly what
+  ##     construction now: pivot goes to centroid, and distance to it gives up exactly what
   ##     rule demands.
   ##   Price is named in `CameraAim`: one bounding sphere frames line further out than
   ##   crossing frame would need.
@@ -403,13 +403,13 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     #   in view keeps reader's own framing, as finite selection already fitting does.
     let facing = aim.headingFacing
     if facing.isNone or aim.isBounded(camera, width, height): return settled
-    # Level stance facing that way names that turn, about pivot and at reader's separation:
+    # Level stance facing that way names that turn, about pivot and at reader's distance to it:
     #   direction alone names no roll, and least turn off steep sight leaves view rolled.
     #   Eye and pivot name it, so no pole collapses.
     let length = sqrt(inner(facing.get.toMultivector, facing.get.toMultivector))
     return stanceFacing(pointAlong(pivot, facing.get, -camera.distance / length), pivot, origin)
   # Pull eye back along its own sight, by least step carrying it out to fitting reach.
-  #   Sphere's centre is not pivot, so separation is not that reach; quadratic is what
+  #   Sphere's centre is not pivot, so distance to pivot is not that reach; quadratic is what
   #   accounts for offset between them.
   let
     placed = camera.placed(settled)
@@ -496,7 +496,7 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
   ##     world up leans to.
   ##     Level direction is meet of plane with plane holding sight and normal, both through
   ##     origin; turned sight is sum of two weightless points, read back unit.
-  ##   Result is level stance facing pivot along turned sight, at stance's own separation,
+  ##   Result is level stance facing pivot along turned sight, at stance's own distance to it,
   ##     as `stanceFor` faces star: least turn off steep sight leaves view rolled.
   ##   Held about stance's own origin, which its pivot is read about.
   let
@@ -538,7 +538,7 @@ func stanceFitted*(
   ## Carry `stance` back out to fit of point picked alone where it lands nearer: ruling of #535.
   ##   Selection never starts nearer than its fit. Far star picked from list then draws as
   ##   disc spanning `FRACTION_HEIGHT_APPROACH_POINT` of frame, and not as sphere at whatever
-  ##   separation wheel over empty sky left.
+  ##   distance to pivot wheel over empty sky left.
   ##   Fit is depth pointer pick of dot comes in to (`stanceApproaching`): own reach where
   ##   that is nearer, as neither moves eye further off than object already stands.
   ##   Only point read as floor dot has fit. Point seen at its size is reader's working
@@ -546,7 +546,7 @@ func stanceFitted*(
   ##     Read by reach from eye, not depth along sight as pointer pick reads it: pick from
   ##     list may stand behind eye or off screen, where depth names nothing.
   ##   Floor, not fit: stance standing further out keeps reader's own scale, as frame rule does.
-  ##   Pivot stands on point after `stanceFor`, so separation is reach to it, and dolly
+  ##   Pivot stands on point after `stanceFor`, so distance to pivot is reach to it, and dolly
   ##   holding pivot carries eye back along sight.
   ##   `placed` is frame's placements, where caller has them; see `aimFor`.
   if picked.len != 1: return stance

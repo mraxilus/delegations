@@ -37,6 +37,20 @@ suite "Markdown":
     check linesHeading("  # indented\n").len == 0  # opening means column one
 
 
+  test "heading of section is two to six hashes then space, with its level, text and line":
+    # Citation names subsection at any depth, so reader of `##` alone misses `####` heading two
+    #   skills cite; `#` titles document, and `#823` opens line of record with no heading.
+    let document = "# Title\n\n## Two\n### Three\n#### Four\n##### Five\n###### Six\n" &
+      "####### Seven\n##Glued\n#823, issue\n## \n  ## Indented\n"
+    check document.headings.mapIt((it.level, it.text, it.line)) == @[
+      (2, "Two", 3), (3, "Three", 4), (4, "Four", 5), (5, "Five", 6), (6, "Six", 7),
+    ]  # title, seventh level, glued, number, empty and indented read none
+    check "## Spaced  \r\n".headings.mapIt(it.text) == @["Spaced"]  # ends cut, CRLF included
+    let fenced = "```md\n## Quoted\n```\n## Real\n"
+    check fenced.headings.len == 2  # reader alone sees fence, as table reader does
+    check fenced.fencedOut.headings.mapIt((it.text, it.line)) == @[("Real", 4)]  # line kept
+
+
   test "first non-blank line skips whitespace, and empty document names nothing":
     check firstNonBlank("\n\n   \n# Title\nmore\n") == "# Title"
     check firstNonBlank("# Title\n") == "# Title"

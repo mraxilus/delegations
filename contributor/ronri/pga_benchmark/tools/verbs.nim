@@ -28,7 +28,7 @@ import ../src/pga_benchmark/[
   changes, gaps, guard, head, inspector, model, notes, proposals, trace
 ]
 from ../src/pga_benchmark/report import
-  combineRuns, document, nodeAlgebra, takenNow, IMPLEMENTATIONS
+  combineRuns, document, machineNow, nodeAlgebra, takenNow, IMPLEMENTATIONS
 import ../src/pga_benchmark/pages/[
   completion, docket, home, listing, marginalia, render, shell
 ]
@@ -884,11 +884,6 @@ proc evaluate(which: string, is_thorough: bool) =
   ## Try one change or proposal at pin, and write each evaluation document.
   ##   `all` tries every one, and `stale` tries those `drive` would name.
   ##   rga4d and cga5d alone, or all four when thorough.
-
-  func machine(): string =
-    ## Describe machine evaluation ran on, as bench documents do.
-    hostOS & " " & hostCPU & ", " & $countProcessors() & " cores"
-
   var findings: seq[Finding]
   let
     changes = readChanges(findings)
@@ -912,7 +907,7 @@ proc evaluate(which: string, is_thorough: bool) =
     ValueError,
     "No change or proposal named `" & which & "`.",
   )
-  let taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": commitNim(),
+  let taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machineNow(), "nim": commitNim(),
     "pga": pin, "flags": FLAGS, "runs": RUNS_EVALUATION}
   tried(selected, algebrasEvaluated(is_thorough), taken, initTable[string, JsonNode](), findings)
   report(findings)

@@ -2,7 +2,7 @@
 ##   Evaluation compiles this against changed library at each algebra its claim names; exit code
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   Rule: element divides by √|𝐮∘𝐮|, as rigid unitization does; in CGA, round object divides by
-##     its round weight norm instead, which is weight of its carrier 𝐮 ∧ 𝐞∞.
+##     its round weight norm instead, which is weight of its carrier 𝐮 ∧ 𝐞ₙ.
 ##   Laws: each kind Lengyel unitizes ends at unit weight; product of reflections ends at unit
 ##     motion operator; rule is homogeneous of degree one; rule commutes with rigid motion; flat
 ##     has 𝐮∘𝐮 = ‖𝐮‖□²; unit motion operator keeps 𝐮∘𝐮; in CGA, element and each of its duals
@@ -10,8 +10,9 @@
 ##     sphere and back keeps flat weight; round object moved far from origin keeps round weight;
 ##     each unit motion operator form of Lengyel's wiki divides by 1, and dilation by √σ.
 ##   Figures it prints are evidence that never gates: worst error of each law, how each other
-##     test of round object fares on same moved objects, and how motion moves element whose
-##     residue lies near tolerance of grade test across it.
+##     test of round object fares on same moved objects, how motion moves element whose residue
+##     lies near tolerance of grade test across it, and how rule reads far planes sent through
+##     sphere and back.
 ##   Helpers `dotAntiSelf`, `moved`, `samplePoint` and `unitizeAntidot` mirror those of
 ##     `limits.nim`, whose `largest` also reads NaN as infinity; fix to one reaches each.
 ##     P07's `laws.nim` holds twins of `largest`, `part` and `unitizeAntidot`.
@@ -55,6 +56,7 @@ const
   REFLECTIONS_BACK = 10000  ## Planes sent through sphere and back.
   STEPS_FAMILY = [1.0, 1e-2, 1e-4, 1e-6, 1e-8, 0.0]  ## Weights of sphere in pencil toward plane.
   SIZES_SCENE = [1.0, 1e8]  ## Deviation of each coordinate in scenes whose objects move.
+  SIZES_FAR = [1e2, 1e3, 1e4, 1e6, 1e8]  ## Deviation of points of far planes through sphere.
   SAMPLES_MOVED = 256  ## Moved round objects each test reads, at each deviation.
   SAMPLES_BAND = 20000  ## Rotated round points whose residue lies just past grade tolerance.
   NAME_ALGEBRA = (when IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
@@ -113,14 +115,14 @@ proc sampleReflector(): Multivector =
     if b.grade == Grade.high.pred: result[b] = gauss()
 
 
-proc samplePlane(): Multivector =
+proc samplePlane(deviation = 1.0): Multivector =
   ## Sample plane through random points; plane is flat in CGA.
-  result = samplePoint()
+  result = samplePoint(deviation)
   when IS_CONFORMAL:
-    for _ in 2 ..< DIMENSIONS - 1: result = result ∧ samplePoint()
+    for _ in 2 ..< DIMENSIONS - 1: result = result ∧ samplePoint(deviation)
     result = result ∧ initElement(Basis.infinity)
   else:
-    for _ in 2..<DIMENSIONS: result = result ∧ samplePoint()
+    for _ in 2..<DIMENSIONS: result = result ∧ samplePoint(deviation)
 
 
 proc sampleMotor(): Multivector =
@@ -312,7 +314,9 @@ when IS_CONFORMAL:
         for _ in 2 .. 1 + rand(DIMENSIONS - 2): element = element ∧ samplePoint(size)
         let element_moved = element.moved(operator_motion)
         for selector in Selector:
-          let weight = element_moved.normWeightRound / element_moved.divisorBy(selector)
+          let found = if selector == Selector.Relative: element_moved.divisor
+            else: element_moved.divisorBy(selector)
+          let weight = element_moved.normWeightRound / found
           if abs(weight - 1) < TOLERANCE_LAW: inc counts[selector]
       for selector in Selector: result.add (selector, size, counts[selector])
       doAssert counts[Selector.Relative] == SAMPLES_MOVED,
@@ -333,19 +337,37 @@ when IS_CONFORMAL:
         &"pencil divides by round weight, and plane by 1; got `{found}` at `{step}`."
 
 
+  proc sampleBack(deviation = 1.0): Multivector =
+    ## Sample plane through points at deviation, sent through random sphere and back.
+    let plane = unitizeAntidot(samplePlane(deviation))
+    var sphere = samplePoint()
+    for _ in 2..<DIMENSIONS: sphere = sphere ∧ samplePoint()
+    plane.moved(sphere).moved(sphere)
+
+
   proc countReflectionsBack(): tuple[rule, exact: int] =
     ## Count planes sent through sphere and back that rule, and exact zero test, treat as round.
     for _ in 1..REFLECTIONS_BACK:
-      let plane = unitizeAntidot(samplePlane())
-      var sphere = samplePoint()
-      for _ in 2..<DIMENSIONS: sphere = sphere ∧ samplePoint()
       let
-        back = plane.moved(sphere).moved(sphere)
+        back = sampleBack()
         flat = sqrt((`|□²`back)[Basis.scalarAnti])
       if abs(back.divisor / flat - 1) > TOLERANCE_LAW: inc result.rule
       if abs(back.divisorExact / flat - 1) > TOLERANCE_LAW: inc result.exact
     doAssert result.rule == 0,
       &"plane sent through sphere and back keeps flat weight; got `{result.rule}`."
+
+
+  proc countReflectionsFar(): seq[tuple[size: float, misread, as_round: int]] =
+    ## Count far planes sent through sphere and back whose divisor leaves flat weight, and those
+    ##   rule takes for round; evidence alone, as rounding of far flat bulk leaves round weight.
+    for size in SIZES_FAR:
+      var misread, as_round = 0
+      for _ in 1..REFLECTIONS_BACK:
+        let back = sampleBack(size)
+        if abs(back.divisor / sqrt((`|□²`back)[Basis.scalarAnti]) - 1) > TOLERANCE_LAW:
+          inc misread
+          if abs(back.divisor / back.normWeightRound - 1) < TOLERANCE_LAW: inc as_round
+      result.add (size, misread, as_round)
 
 
   when DIMENSIONS == 5:
@@ -450,6 +472,9 @@ proc main() =
           &"{at_origin:.3g}, translated by 10 {translated:.3g}"
       echo &"{NAME_ALGEBRA}: residue 1.0000001e-9 of largest coefficient, rotations about " &
           &"origin that change branch: {flips} of {SAMPLES_BAND}"
+    for (size, misread, as_round) in countReflectionsFar():
+      echo &"{NAME_ALGEBRA}: planes at deviation {size:.0e} through sphere and back, misread " &
+          &"{misread}, taken for round {as_round}, of {REFLECTIONS_BACK}"
 
 
 when isMainModule: main()

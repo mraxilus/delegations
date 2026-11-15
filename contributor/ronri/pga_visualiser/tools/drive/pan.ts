@@ -49,13 +49,13 @@ export async function driveLook(page: Page): Promise<void> {
     `eye moved ${spanOf(before.eye, after.eye).toFixed(6)} units, ` +
       `azimuth ${before.azimuth.toFixed(4)} -> ${after.azimuth.toFixed(4)}`,
   );
-  // Pivot is what moves instead: it rides ahead of eye on sight, at same separation.
+  // Pivot is what moves instead: it rides ahead of eye on sight, at same distance.
   report(
-    'and it carries the orbit centre round instead, at the separation it had',
+    'and it carries the orbit centre round instead, at the distance it had from the eye',
     spanOf(before.pivot, after.pivot) > 0.5 &&
       Math.abs(after.distance - before.distance) < 1e-6,
     `pivot moved ${spanOf(before.pivot, after.pivot).toFixed(3)}, ` +
-      `separation ${after.distance.toFixed(3)}`,
+      `distance to the pivot ${after.distance.toFixed(3)}`,
   );
   // Mouse holds what is under it, as finger does: object beside cursor moves with it, one
   //   for one. Aim by rate slid it several times as far, and against cursor.
@@ -123,7 +123,7 @@ export async function drivePan(page: Page): Promise<void> {
     `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}, ` +
       `${across.toFixed(3)} of it across the sight line`,
   );
-  // Fault: rate of fixed share of separation for each pixel ran 1.74 times cursor at 900 px.
+  // Fault: fixed share of distance to pivot for each pixel ran 1.74 times cursor at 900 px.
   const lens = await page.evaluate(() => ({
     degrees: nimCameraFov(),
     height: document.getElementById('gl')?.clientHeight ?? 0,
@@ -198,7 +198,7 @@ export async function driveStretch(page: Page): Promise<void> {
         (after.distance < before.distance) === is_closer &&
         spanOf(before.pivot, after.pivot) < 1e-4,
       `pressed on ${is_open ? 'open sky' : 'an object'}; point ${slip.toFixed(3)} px off the ` +
-        `cursor's height, turned ${turned.toFixed(6)}, separation ` +
+        `cursor's height, turned ${turned.toFixed(6)}, distance to the pivot ` +
         `${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}`,
     );
   }
@@ -253,7 +253,7 @@ export async function driveAim(page: Page, width: number, height: number): Promi
   report(
     'zooming low in the frame carries the eye down that ray, not straight in',
     closed > 0.2 * before.distance && across > 0.1,
-    `separation ${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}, ` +
+    `distance to the pivot ${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}, ` +
       `eye ${across.toFixed(3)} units off the sight axis`,
   );
 }

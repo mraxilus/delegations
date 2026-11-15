@@ -257,6 +257,8 @@ proc holdFunctions(pairs: openArray[MultivectorScalars]): array[8, int] =
     # Hold tangent: tan⟑𝐦 ⟑ cos⟑𝐦 = sin⟑𝐦, and none exactly where cosine has no inverse.
     let (tangent, tangent_anti) = (tan(m), tanAnti(m))
     doAssert tangent.isSome == isInvertible(cos(m)), &"Tangent exists by cosine; got `{m=}`."
+    doAssert tangent_anti.isSome == isInvertible(complement(cosAnti(m))),
+      &"Antitangent exists by anticosine; got `{m=}`."
     if tangent.isSome:
       inc result[4]
       doAssert product(tangent.get, cos(m)).isNear(sin(m), tangent.get.size * cos(m).size),
@@ -281,6 +283,8 @@ proc holdFunctions(pairs: openArray[MultivectorScalars]): array[8, int] =
       doAssert sin(m) =~ sinLengyel(s, t), &"`Sin` of Lengyel; got `{m=}`."
       doAssert cos(m) =~ cosLengyel(s, t), &"`Cos` of Lengyel; got `{m=}`."
       doAssert expAnti(m) =~ complement(expLengyel(t, s)), "`AntiExp` of Lengyel."
+      doAssert sinAnti(m) =~ complement(sinLengyel(t, s)), "`AntiSin` of Lengyel."
+      doAssert cosAnti(m) =~ complement(cosLengyel(t, s)), "`AntiCos` of Lengyel."
       if s > 0:
         inc result[6]
         doAssert root.get =~ sqrtLengyel(s, t), &"`Sqrt` of Lengyel; got `{m=}`."
@@ -289,8 +293,12 @@ proc holdFunctions(pairs: openArray[MultivectorScalars]): array[8, int] =
       if t > 0:
         doAssert root_anti.get =~ complement(sqrtLengyel(t, s)), "`AntiSqrt` of Lengyel."
         doAssert inverse_anti.get =~ complement(inverseLengyel(t, s)), "`AntiInverse`."
+        doAssert root_inverse_anti.get =~ complement(sqrtInverseLengyel(t, s)),
+          "`AntiInverseSqrt` of Lengyel."
       if tangent.isSome:
         doAssert tangent.get =~ tanLengyel(s, t), &"`Tan` of Lengyel; got `{m=}`."
+      if tangent_anti.isSome:
+        doAssert tangent_anti.get =~ complement(tanLengyel(t, s)), "`AntiTan` of Lengyel."
     elif SQUARES_WEDGE_DOT.base == -1:
       inc result[6]
       doAssert root.get =~ sqrt(m.toComplex).toScalars, &"Principal complex root; got `{m=}`."
@@ -315,6 +323,10 @@ proc holdFunctions(pairs: openArray[MultivectorScalars]): array[8, int] =
       doAssert residual <= 8 * epsilon(Coefficient) * max(abs(s), abs(t)),
         &"Root must not cancel small part; got `{residual=}` for `{m.toMultivector}`."
       inc result[7]
+    if root_anti.isSome and abs(s) > 0:
+      let residual_anti = abs(productAnti(root_anti.get, root_anti.get)[Basis.scalar] - s)
+      doAssert residual_anti <= 8 * epsilon(Coefficient) * max(abs(s), abs(t)),
+        &"Antiroot must not cancel small part; got `{residual_anti=}` for `{m.toMultivector}`."
 
 
 proc holdNorms(): tuple[nan_float, radius_none: int] =
@@ -449,6 +461,18 @@ proc holdSuiteSample() =
     doAssert productAnti(radius.get, radius.get) =~ dot_anti, "‖𝐦‖⊘ ⟇ ‖𝐦‖⊘ must be 𝐦∘𝐦."
 
 
+proc holdDivision() =
+  ## Hold (𝐦 / 𝐧) ⟇ 𝐧 = 𝐦 for whole multivector and pair with both parts.
+  for _ in 1..SAMPLES:
+    var m: Multivector
+    for basis in Basis: m[basis] = rand(-1.0..1.0)
+    let
+      n = initMultivectorScalars(rand(0.5..1.0), rand(1.5..2.0))
+      quotient = m / n
+    doAssert quotient.isSome and (quotient.get ⟇ n.toMultivector) =~ m,
+      "(𝐦 / 𝐧) ⟇ 𝐧 must be 𝐦, for whole multivector."
+
+
 proc main(): int =
   ## Hold laws on structured and seeded samples; print counts where they hold, and exit zero.
   randomize(SEED)
@@ -457,17 +481,26 @@ proc main(): int =
   for (s, t) in [
     (0.0, 0.0), (1.0, 0.0), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0), (1.0, 1.0), (1.0, -1.0),
     (-1.0, 1.0), (2.0, 1.0), (1.0, 2.0), (1.0, 1e-10), (-1.0, 1e-10), (1e-10, 1.0),
-    (-0.44325163735009460, 0.0), (0.0, -0.44325163735009460), (PI / 2, 0.0),
+    (-0.44325163735009460, 0.0), (0.0, -0.44325163735009460), (PI / 2, 0.0), (PI / 4, PI / 4),
+    (1.0, 1.0 + 1e-12),
   ]:
     pairs.add initMultivectorScalars(s, t)
   for _ in 1..SAMPLES: pairs.add initMultivectorScalars(rand(-1.0..1.0), rand(-1.0..1.0))
   let passed = holdFunctions(pairs)
   for count in passed:
     doAssert count >= SAMPLES_FLOOR, &"Guard must pass floor of samples; got `{passed}`."
+
+  # Hold tangent without value: null cosine where split, cosine past float range where complex.
+  when SQUARES_WEDGE_DOT.base == 1:
+    doAssert tan(initMultivectorScalars(PI / 4, PI / 4)).isNone, "Null cosine must give none."
+  elif SQUARES_WEDGE_DOT.base == -1:
+    doAssert tan(initMultivectorScalars(1, 360)).isNone, "Cosine past float range must give none."
+
   let radius = holdRadius()
   holdSuiteSample()
   let norms = holdNorms()
   when IS_CONFORMAL: holdPointsRound()
+  holdDivision()
   let
     kind = if IS_CONFORMAL: "conformal" else: "rigid"
     square = SQUARES_WEDGE_DOT.base

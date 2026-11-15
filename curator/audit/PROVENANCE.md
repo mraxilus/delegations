@@ -431,7 +431,8 @@ each row to a rules document and a `## ` heading.
   cites those sections by heading, so a move leaves each citation with no target, and only each
   contributor may edit that code. Outside the three records,
   `git grep -n -E '(CONTRIBUTOR|GUIDE)\.md' ba1986f98 -- contributor` gives 48 lines, and 36 of
-  them cite a section by its heading.
+  them cite a section by its heading. Such a move gives a finding at each citation that it
+  leaves with no target, held for the project of each (Citations of sections).
 - Rejected: `GUIDE.md` and `CONTRIBUTOR.md` out of the stamp whole. Their rules of content would
   then change with no audit of any project.
 - Cost: an edit of a mixed section, or of the opening above the first `##` heading, moves the
@@ -564,6 +565,85 @@ Two copies of one rule drift.
 - Cost: a paragraph reworded by one word passes. The check catches a copy, and never a
   paraphrase.
 - Verified by `suites/test_duplicates.nim`.
+
+## Citations of sections
+
+**A citation of a section that its document lacks is a finding at the line of the citation
+(CURATOR.md, duty 1).** A citation is the name of a Markdown document, a comma, then a
+heading, a bold rule or a quote. A heading or a rule that moves leaves each citation of it with
+no target, and no reader sees that. `citations_section.nim` holds the check, and the static
+pass runs it over every file that the audit reads.
+
+- The name is `NAME.md` in capitals, a path from the root, or a path that opens with `../` or
+  `./`. Backticks around the name are optional, and one code span can hold the whole citation.
+- After the comma, a heading or a bold rule opens with a capital. A quote is text in double
+  quotes or in backticks, and the word `section` or `under` can come before it.
+- A further comma and a capital name a subsection, at any depth inside the section before it.
+  The word `and` and a capital name a second section beside the first.
+- The longest heading that opens the text after the comma wins, because a heading can hold a
+  comma, as (`GUIDE.md`, Prune, never narrate) does.
+- Verified by `suites/test_citations_section.nim`, for each form of the name, the section and
+  the quote.
+
+**The match is lenient, as the Architect ruled on #892 with option b.** It does not compare
+case, or the articles `a`, `an` and `the`, because a telegraphic comment drops its articles
+(Article VI.5). The first words of a heading or of a bold rule pass, up to the first mark. A
+quote passes where the text of its document, outside fences, holds its words one after another.
+
+- Rejected: a word-for-word match. It reports each comment that drops an article of the
+  heading that it cites, which VI.5 asks for and `koch fix` does.
+- Rejected: a quote that must open a heading or a bold rule. Code in pga_benchmark,
+  pga_visualiser and dance_ontology quotes the text of a rule, and that match reports each line.
+- Verified by `suites/test_citations_section.nim`, for each lenient form that passes and each
+  that fails.
+
+**A heading is two to six `#` at column one, then a space, outside fences.** `headings` in
+`markdown.nim` reads it, and the check composes `fencedOut` first, because a fence quotes
+example headings. A bold rule is a line or a list item that opens with bold text. Its text
+runs to the closing `**`, on a later line of its paragraph where it wraps, without its last
+stop or colon. Duties, terms of a glossary and the rules of the guide open that way.
+
+- Rejected: `sections`, which cuts at a `## ` line alone. A citation can name a subsection, as
+  (`GUIDE.md`, Prune, never narrate) names one of level three.
+- Verified by `suites/test_markdown.nim` for the levels, and by `suites/test_citations_section.nim`
+  for a heading inside a fence and for each form of bold rule.
+
+**A document resolves as a reader finds it.** A bare name resolves at the nearest folder above
+the file that holds a file of that name, then at the root. So project code that cites
+`PROVENANCE.md` reads the record of its own project. A path reads from the root, and a path
+that opens with `../` or `./` reads from the folder of the file.
+
+- Cost: a bare name that a project also holds reads the file of that project. So a citation of
+  the root glossary from project code reads the glossary of that project.
+- Cost: a citation of a document that the tree lacks passes. The root documents name the
+  record that each project holds, and the root holds no record of that name.
+- Verified by `suites/test_citations_section.nim`.
+
+**The check reads Markdown outside fences, and the comments of each kind through
+`comments.nim`.** Markdown is cut into paragraphs at each blank line. Comments of consecutive
+lines join, so a citation that wraps reads whole. A comment after code on its line stands
+alone. A test can end two lines of code with two comments, and the second never continues the
+first. A line end reads as a space, and it ends a citation after a whole name.
+
+- Rejected: a read of string literals. A literal split by `&` reads as two broken halves, and
+  the fixtures of the suite would report themselves.
+- Cost: a citation in a string literal, as the message of a finding writes, passes unread.
+- Cost: a reference to a heading of the same document, as (Boundaries), names no document, so
+  a rename of that heading stays unseen.
+- Cost: the check does not read a name with its headings in brackets after it. `CURATOR.md`
+  cites `CONTRIBUTOR.md` for its commit types in that form.
+- Cost: first words pass, so a rename that keeps the first words of a heading keeps its
+  citations. A quote passes on any text of its document, so a rule that moves to another
+  section keeps its quote.
+- Verified by `suites/test_citations_section.nim`, for Markdown and for each kind of comment.
+
+**An article as VI.5, `duty N`, `section N` and `§N` name no heading, so the check skips them.**
+It also skips a lower-case word after the comma, which continues the prose, and a file name,
+which opens a list of documents. Verified by `suites/test_citations_section.nim`.
+
+**A finding inside a contributor project is held for that project (Branch scope).** So the
+check lands while the rest of the tree is clean, and each project clears its own finding when it
+next moves.
 
 ## Font faces
 
@@ -3478,6 +3558,22 @@ and test, which is what the order of `koch check` rests on.
 - The dead-export rule reads each source once. Rejected: a scan of every source for each export,
   which took 1.1 s of a 2.07 s static pass inside koch on 2026-09-24. With one read, the static
   pass took 1.11 s, 1.15 s and 0.98 s that day. With the scan, it took 1.97 s, 1.96 s and 1.82 s.
+
+**The check of citations costs about half a second of the static pass.** Warm
+`nim r koch check-files` took 12.63 s, 12.82 s and 13.14 s at `9445bbdc7`, which holds the
+check. It took 12.16 s, 12.04 s and 11.86 s at `c2e80da35`, before the check. The runs of the
+two commits alternated, from separate worktrees, each with a cache of its own. All of it was on
+2026-11-14, with Nim 2.4.0, on a four-core Intel Xeon 2.10 GHz container, timed with
+`date +%s.%N`.
+
+- Another build ran on the same machine at the same time, at a load average near 0.9. Each set
+  spreads over 0.3 s to 0.5 s, so the gap of 0.78 s between the medians holds that noise too.
+- Inside one process at `9445bbdc7`, `checkCitationsSection` took 432 ms, 445 ms and 526 ms over
+  three rounds, timed with `std/monotimes`. In those rounds, the whole static pass took 11.7 s to
+  12.0 s.
+- Assumed: most of that time is the scan of the comments of each file whose text holds `.md`.
+  The words of a document are read at its first quote and not before, since most documents are
+  cited by heading alone (Article VII.3).
 
 **A branch that changes the checker costs one project, and not every project.** On 2026-09-24,
 warm `nim r koch check` took 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the

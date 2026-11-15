@@ -6,18 +6,24 @@ grade table from the suites.
 This change names each symbol. The compiler gives the list: compile, add each symbol it names,
 and compile again. The equality of `Grade` is a private borrow, so the list names `==` too.
 
-Two proposals change which tables the operators read. Of this change and each of them, the
+Four proposals change which symbols the operators read. Of this change and each of them, the
 second to land writes the merged import:
 
 - P08, `compound-tables`: with both applied, the build stops on
-  `undeclared identifier: 'CAYLEY_SUPPORT'`. The merged import adds `CAYLEY_SUPPORT` and
-  `CAYLEY_SUPPORT_ANTI` in an import under `when IS_RIGID:`. It adds `CAYLEY_CARRIER_CO`,
+  `undeclared identifier: 'CAYLEYS_SUPPORT'` under the rigid metric. Under the conformal metric,
+  it stops on `undeclared identifier: 'CAYLEY_CARRIER_CO'`. The merged import adds
+  `CAYLEYS_SUPPORT` in an import under `when IS_RIGID:`. It adds `CAYLEY_CARRIER_CO`,
   `CAYLEY_CENTER` and `CAYLEY_CONTAINER` to the conformal import of `cayleys`. It drops
   `origin`, `horizon` and `infinity`, which no operator then reads. The proposal of P08 gives
   the merged import in full.
 - P03, `partner-sign`, which lands after P08: the merged import also adds
-  `CAYLEY_PARTNER_CONTAINER` and `CAYLEY_PARTNER_MEET` to the conformal import of `cayleys`, and
-  drops `grade`.
+  `CAYLEY_PARTNER_CONTAINER` and `CAYLEY_PARTNER_MEET` to the conformal import of `cayleys`.
+- P11, `unitize-general`: `^∘` names `TOLERANCE_ABS` in its conformal branch. With both applied,
+  the conformal build stops on `undeclared identifier: 'TOLERANCE_ABS'`. The merged import adds
+  `TOLERANCE_ABS` to the import from `./algebra` under `when IS_CONFORMAL:`.
+- P12, `cayley-cells`: the operators read each cell through `items`. With both applied, the build
+  stops on `type mismatch` at `items(cayley[b])`. The merged import adds `items` to the import of
+  `cayleys`.
 
 ## Edit `pga/operators.nim`
 

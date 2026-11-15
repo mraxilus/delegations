@@ -2,8 +2,7 @@
 ##   (`part-scale`).
 ##   Evaluation compiles this against changed library at rga4d, cga4d and cga5d, at default width
 ##     and at 32 bits; exit code says it ran, and figures it prints are evidence that never gates.
-##   Rule of pin is copied here, since claim builds against changed library alone; at 32 bits it
-##     is rule of P06 alone, since pin has no 32-bit build.
+##   Rule of pin is copied here, since claim builds against changed library alone.
 ##   Equal pairs read every coefficient under both rules. Unequal pairs differ in scalar: rule of
 ##     pin stops at first coefficient. Rule of P07 stops in part holding scalar, after it reads
 ##     scale of that part; in CGA it first reads and compares whole of part that bulk flat holds.
@@ -11,6 +10,9 @@
 ##     CGA, whose grade under rule of P07 also scans for largest coefficient. Stray pairs, in
 ##     RGA alone, are such points, one holding stray of 50 tolerances in its plane coefficient: rule
 ##     of P07 calls them equal, and rule of pin stops there and does not.
+##   Near-zero multivectors hold Gaussian coefficients of deviation tenth of tolerance: both rules
+##     call each equal to scalar zero and read every coefficient. They are drawn last, so other
+##     cases read same objects as before.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
 ##   Template `timeRounds` mirrors that of `timing.nim` in P05 and P06; fix to one reaches each.
 ##
@@ -41,6 +43,19 @@ func isEqualPin(m, n: Multivector): bool =
   true
 
 
+func isNearPin(a, b: Coefficient): bool =
+  ## Compare coefficients as pin does: difference against max(1, |a|, |b|).
+  abs(a - b) <= TOLERANCE_ABS * max(Coefficient(1), max(abs(a), abs(b)))
+
+
+func isEqualScalarPin(m: Multivector, s: Coefficient): bool =
+  ## Compare with scalar as pin does: scalar coefficient with it, then each other one with zero.
+  if not isNearPin(m[Basis.scalar], s): return false
+  for basis in Basis.scalar.succ..Basis.scalarAnti:
+    if not isNearPin(m[basis], 0): return false
+  true
+
+
 func gradePin(m: Multivector): Option[Grade] =
   ## Get grade as pin does: each coefficient at most tolerance counts as zero.
   var found_grade = false
@@ -67,26 +82,38 @@ template timeRounds(label: string, loop: untyped) =
 
 proc timeEqual(label: string; left, right: seq[Multivector]) {.noinline.} =
   ## Time both comparisons over pairs, counting equal ones so no loop folds away.
-  var count = 0
+  var count_pin, count_p07 = 0
   timeRounds(label & " pin"):
     for i in 0..<OBJECTS:
-      if isEqualPin(left[i], right[i]): inc count
+      if isEqualPin(left[i], right[i]): inc count_pin
   timeRounds(label & " P07"):
     for i in 0..<OBJECTS:
-      if left[i] =~ right[i]: inc count
-  echo label, " equal ", count div (2 * ROUNDS), " of ", OBJECTS
+      if left[i] =~ right[i]: inc count_p07
+  echo label, " equal pin ", count_pin div ROUNDS, " P07 ", count_p07 div ROUNDS, " of ", OBJECTS
+
+
+proc timeEqualScalar(label: string, objects: seq[Multivector]) {.noinline.} =
+  ## Time both comparisons with scalar zero over objects, counting equal ones so no loop folds away.
+  var count_pin, count_p07 = 0
+  timeRounds(label & " pin"):
+    for i in 0..<OBJECTS:
+      if isEqualScalarPin(objects[i], 0): inc count_pin
+  timeRounds(label & " P07"):
+    for i in 0..<OBJECTS:
+      if objects[i] =~ Coefficient(0): inc count_p07
+  echo label, " equal pin ", count_pin div ROUNDS, " P07 ", count_p07 div ROUNDS, " of ", OBJECTS
 
 
 proc timeGrade(label: string, objects: seq[Multivector]) {.noinline.} =
   ## Time both grades over objects, counting grades found so no loop folds away.
-  var count = 0
+  var count_pin, count_p07 = 0
   timeRounds(label & " pin"):
     for i in 0..<OBJECTS:
-      if gradePin(objects[i]).isSome: inc count
+      if gradePin(objects[i]).isSome: inc count_pin
   timeRounds(label & " P07"):
     for i in 0..<OBJECTS:
-      if objects[i].grade.isSome: inc count
-  echo label, " graded ", count div (2 * ROUNDS), " of ", OBJECTS
+      if objects[i].grade.isSome: inc count_p07
+  echo label, " graded pin ", count_pin div ROUNDS, " P07 ", count_p07 div ROUNDS, " of ", OBJECTS
 
 
 proc main() =
@@ -119,6 +146,10 @@ proc main() =
     timeEqual("stray", points, strays)
   timeGrade("grade_point", points)
   when IS_RIGID: timeGrade("grade_stray", strays)
+  var nears = newSeq[Multivector](OBJECTS)
+  for near in nears.mitems:
+    for basis in Basis: near[basis] = Coefficient(gauss() * float(TOLERANCE_ABS) / 10)
+  timeEqualScalar("zero", nears)
 
 
 main()
