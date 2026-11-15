@@ -1577,8 +1577,8 @@ a copy from two different font faces.
   as served by the other. Neither project can check that. The store owns the shape of the row,
   so the store holds the law.
 
-**The store holds archives too, in a table of their own.** The Architect ruled on 2026-11-11 that
-`drive` of ricysoho runs the headless shell of Chrome for Testing, pinned (D1 a of #864).
+**The store holds archives too, in a table of their own.** `drive` of ricysoho runs the headless
+shell of Chrome for Testing, pinned, by ruling D1 a of #864.
 Each delegate pins each browser that its project drives. An archive maps no codepoints, so its
 row is the name, the whole address and the digest. Its name carries its version, since each
 release keeps one upstream file name, `chrome-headless-shell-linux64.zip`. The project unpacks
@@ -2130,11 +2130,11 @@ the folder of that source. A statement on several lines, behind a `when` guard, 
 path counts. A comment, or a string outside such a statement, imports nothing. So a project that
 adds an import is selected from then on, with no list to keep.
 
-- Measured on 2026-11-15 by `importersByFolder` over the tree: `lojban_tagger` imports `src` and
-  `tools` of `lojban_parser`, and `curator/audit` imports `src` of knoller. No other project imports
-  another one by its path.
+- Measured on 2026-11-15 by `importersByFolder` over the tree at `be4825550`: `curator/audit`
+  imports `src` of knoller, and no other project imports another one by its path.
 - Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
-- Rejected: `src` alone, since the tools of the tagger import the tools of the parser.
+- Rejected: `src` alone, since a tool of one project can import a tool of another, and `src`
+  alone would select no importer of that tool.
 - Rejected: the importers of a project for each change to any of its code. A suite of the parser is
   no folder that an importer imports, so that compiles more for no gain.
 - Cost: an importer turns red on a change to the surface of the folder that it imports, until it
@@ -2224,8 +2224,8 @@ meaning for each job that the runner asks for.
 
 **The jobs `test` and `drive` each install what their project declares.** A suite can load a
 library or run a command that the `system` verb declares. The suites of rictadni load
-`libssl3` and run `openssl` on the branch of its suggester (#780). They passed only because the
-image of the runner held both. A project that declares nothing installs nothing, so the jobs of
+`libssl3` and run `openssl` (#780), so without the install they pass only on an image that holds
+both. A project that declares nothing installs nothing, so the jobs of
 `curator/audit` and `curator/knoller` keep their time.
 
 - Cost: a job whose project declares packages spends an `apt-get update` and an install. The
