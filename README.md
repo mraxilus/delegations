@@ -83,8 +83,10 @@ same checks locally, against a fresh `origin/main`, before each push. The
 what it reads and what it does. The header of [`check.yml`](.github/workflows/check.yml)
 describes each job of that workflow.
 
-`role.yml` runs beside it on every pull request, and again whenever a label changes. It holds
-the opening role line and the labels to the role that the branch names.
+`role.yml` runs beside it on every pull request, and again whenever a label changes. Its first
+job labels the pull request with the role that the branch names. Its second job holds the
+opening role line and the labels to that role. It also holds the title to the grammar of a
+commit, and the body to the form of the template.
 
 Six more workflows watch the rest. `watch.yml` opens an issue labelled `curator` when a run
 on `main` concludes failure. `head.yml` runs the `head` verb of each project daily, and keeps

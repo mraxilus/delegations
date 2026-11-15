@@ -137,12 +137,12 @@ You show it to a reader who is present, and that reader is the enforcement.
   holds its final form or records it. Read a file before you delete it, and never delete one
   that a running thread still uses.
 - **Say which role you are.** Every delegate posts as the same account, so open every issue,
-  pull request and comment with `**Role:** contributor/<domain>/<project>`. Label every pull
-  request and every issue of your own queue with that same string. An issue for another role
-  carries the label of that role, as the process-change template sets `curator`. A filter on
-  your string then finds what needs your eyes, and what came from your hands. Copy the string,
-  and never compose it: to apply a label creates it, so a misspelling makes a second label
-  that nobody filters on.
+  pull request and comment with `**Role:** contributor/<domain>/<project>`. Label every issue of
+  your own queue with that same string, and the `role` workflow labels each pull request with
+  it. An issue for another role carries the label of that role, as the process-change template
+  sets `curator`. A filter on your string then finds what needs your eyes, and what came from
+  your hands. Copy the string, and never compose it: to apply a label creates it, so a
+  misspelling makes a second label that nobody filters on.
 
   A harness that opens a pull request for a thread writes its attribution block first: a
   marker comment, then a credit line. The role line then comes directly below that block, and
