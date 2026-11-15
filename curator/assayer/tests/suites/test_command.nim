@@ -4,8 +4,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, strutils, tempfiles, unittest]
+import knoller/compilers
 import ../../src/assayer/[command, headers, plans]
-import ../../../knoller/src/knoller/compilers
 
 
 const

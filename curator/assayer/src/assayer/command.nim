@@ -28,7 +28,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, monotimes, options, os, osproc, parseopt, sequtils, strutils, terminal]
-import ../../../knoller/src/knoller/[compilers, pins]
+import knoller/[compilers, pins]
 import ./[headers, plans, reports, runs]
 
 
