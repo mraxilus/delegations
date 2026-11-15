@@ -7,9 +7,12 @@ import ../../src/[base, plan, provenance]
 import ./fixtures
 
 
-const GUIDE = "# Guide\n\nSteps.\n\n## Names\n\nWords.\n\n## Toolchain\n\nPin.\n\n" &
-  "## Output contract\n\nSign off.\n"
-  ## Guide holding sections of content, then one of process, as `GUIDE.md` does.
+const
+  GUIDE = "# Guide\n\nSteps.\n\n## Names\n\nWords.\n\n## Toolchain\n\nPin.\n\n" &
+    "## Output contract\n\nSign off.\n"
+    ## Guide holding sections of content, then one of process, as `GUIDE.md` does.
+  STAMP = DIRECTORY_CHECKER & "/provenance.nim"
+    ## Module holding `RULES`, `SECTIONS_PROCESS` and digest of stamp.
 
 
 func drifted(fork, base: string; path = "GUIDE.md"): Drift =
@@ -21,13 +24,16 @@ func drifted(fork, base: string; path = "GUIDE.md"): Drift =
 
 
 suite "Base":
-  test "charter and checker govern what green means; nothing else does":
+  test "charter and code of stamp govern drift; checker and everything else do not (#893)":
     for rule in RULES: check rule.isGoverning  # constitution, style, contributor
-    check "koch.nim".isGoverning
-    check "koch.nim.cfg".isGoverning
-    check (DIRECTORY_CHECKER & "/layout.nim").isGoverning
-    check (FILES_KNOLLER[0] & "/knoller/tokens.nim").isGoverning  # checker imports it by path
-    check (FILES_KNOLLER[1]).isGoverning  # its nimble file
+    check STAMP.isGoverning  # checker code, yet change there moves every stamp
+    # Checker reaches branch through merge `koch check` judges (`merge.nim`), as runner judges
+    #   merge ref, so drift of it bought parity alone.
+    check not "koch.nim".isGoverning
+    check not "koch.nim.cfg".isGoverning
+    check not (DIRECTORY_CHECKER & "/layout.nim").isGoverning
+    check not (FILES_KNOLLER[0] & "/knoller/tokens.nim").isGoverning  # checker imports it by path
+    check not (FILES_KNOLLER[1]).isGoverning  # its nimble file
     check not "curator/knoller/tests/suites/test_tokens.nim".isGoverning  # its suites do not
     # Project's own code, records and suites do not.
     check not "contributor/ronri/alpha/src/alpha.nim".isGoverning
@@ -79,21 +85,22 @@ suite "Base":
     check checkBase(drifted(twice_fork, twice_base))[0].message.endsWith("got `## X`, `## Y`.")
 
 
-  test "each changed document is one finding, and checker one more":
+  test "each changed document is one finding, and code of stamp one more; checker none":
     check checkBase(Drift()).len == 0  # base gained nothing
     check checkBase(Drift(gained: @["contributor/ronri/alpha/src/alpha.nim"])).len == 0
     check checkBase(Drift(gained: @["CURATOR.md", "README.md"])).len == 0  # prose stamps none
+    check checkBase(Drift(gained: @["koch.nim", DIRECTORY_CHECKER & "/layout.nim"])).len == 0
 
     var drift = drifted(GUIDE, GUIDE.replace("Sign off.", "Go."))
-    drift.gained.add ["contributor/ronri/alpha/x.nim", "koch.nim", "CONTRIBUTOR.md"]
+    drift.gained.add ["contributor/ronri/alpha/x.nim", "koch.nim", "CONTRIBUTOR.md", STAMP]
     drift.rules_base[RULES.find("CONTRIBUTOR.md")] = "# Contributor\n\n## Data\n\nProtobuf.\n"
     let found = checkBase(drift)
-    check found.len == 3  # each changed document in `RULES` order, then checker
+    check found.len == 3  # each changed document in `RULES` order, then code of stamp
     check found.len == 3 and found[0].path == "CONTRIBUTOR.md" and found[1].path == "GUIDE.md"
     check found.len == 3 and "re-stamp" in found[0].message  # content of its own moved
     check found.len == 3 and "re-stamp" notin found[1].message  # process alone moved here
-    check found.len == 3 and found[2].path.len == 0  # checker is branch-level, no file to open
-    check found.len == 3 and found[2].message.endsWith("got `koch.nim`.")  # only what governs
+    check found.len == 3 and found[2].path.len == 0  # branch-level, no file to open
+    check found.len == 3 and found[2].message.endsWith("got `" & STAMP & "`.")  # koch.nim none
     check found.len == 3 and "as /sync says" in found[2].message
 
 
@@ -116,10 +123,42 @@ suite "Base":
     check found.len == 1 and found[0].message.endsWith("got `## Output contract`.")
 
 
-  test "each governing path is named once":
-    check checkBase(Drift(gained: @["koch.nim", "koch.nim.cfg"]))[0].message.endsWith(
-      "got `koch.nim, koch.nim.cfg`.",
-    )
-    check checkBase(Drift(gained: @["koch.nim", "koch.nim"]))[0].message.endsWith(
-      "got `koch.nim`.",
-    )
+  test "code of stamp is named once":
+    let found = checkBase(Drift(gained: @[STAMP, STAMP, "koch.nim"]))
+    check found.len == 1 and found[0].message.endsWith("got `" & STAMP & "`.")
+
+
+  test "branch older than change of checker alone passes drift, and older than charter fails":
+    # Done as #893 asks it: fixture branch predating change of checker alone passes, and
+    #   `merge.nim` judges it with checker of base; one predating charter or code of stamp fails.
+    #   Real git on throwaway repository (Article IX.5).
+    let root = repoTemp()
+    defer: removeDir(root)
+    root.writeInto("GUIDE.md", GUIDE)
+    root.writeInto("koch.nim", "discard\n")
+    root.writeInto(STAMP, "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'docs(curator): write guide'")
+    discard root.git("branch curator/older")
+    root.writeInto("koch.nim", "discard 1\n")
+    root.writeInto(DIRECTORY_CHECKER & "/layout.nim", "discard\n")
+    root.writeInto(FILES_KNOLLER[0] & "/knoller.nim", "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(audit): change checker alone'")
+    discard root.git("checkout -q curator/older")
+    check checkBase(readDrift(root, "main")).len == 0
+
+    # Code of stamp moves every stamp, so it still drifts, and so does charter.
+    discard root.git("checkout -q main")
+    root.writeInto(STAMP, "discard 2\n")
+    discard root.git("commit -q -am 'feat(audit): move code of stamp'")
+    discard root.git("checkout -q curator/older")
+    let moved = checkBase(readDrift(root, "main"))
+    check moved.len == 1 and moved[0].message.endsWith("got `" & STAMP & "`.")
+    discard root.git("checkout -q main")
+    root.writeInto("GUIDE.md", GUIDE.replace("Pin.", "Pin it."))
+    discard root.git("commit -q -am 'docs(curator): pin it'")
+    discard root.git("checkout -q curator/older")
+    let found = checkBase(readDrift(root, "main"))
+    check found.len == 2 and found[0].path == "GUIDE.md" and "re-stamp" in found[0].message
+    check found.len == 2 and found[0].message.endsWith("got `## Toolchain`.")
