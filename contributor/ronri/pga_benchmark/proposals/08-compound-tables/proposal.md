@@ -76,8 +76,8 @@ intermediate multivector. The partner `⊛` calls `⊡`, so it runs that chain t
   of P01. The other edit quotes the block of `CAYLEY_CARRIER`, which is the same at pin. The two
   edits of `pga/operators.nim` quote the call of `⊟` and the hand-written operators of
   `#[ Support ]#` at pin. No other proposal or change edits those lines.
-- **P03, `partner-sign`.** It quotes `CAYLEY_CONTAINER`, so it lands after this proposal. It then
-  folds the partner further.
+- **P03, `partner-sign`.** It quotes `CAYLEY_CONTAINER` and the call of `⊡`, so it lands after
+  this proposal. It then folds the partner further.
 - **P04, `basis-set-forms`.** It gives a basis-set form to each operator that the library builds
   from one table. The header of its `pga/basis_sets.nim` lists the supports among the operators
   from no table. Its Costs list the cocarrier, the center and the container there too. This

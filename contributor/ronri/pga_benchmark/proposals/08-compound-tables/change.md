@@ -11,7 +11,8 @@ Other edits land in this order against the edits below:
 - P01, `cayley-derivation`, lands first. Only the first edit quotes text of P01, a line of its
   header, and the block of `CAYLEY_CARRIER` is the same at pin. Every table reads `applyMap` of
   P01, so no build holds these edits without P01.
-- P03, `partner-sign`, quotes `CAYLEY_CONTAINER` below, so it lands after this change.
+- P03, `partner-sign`, quotes `CAYLEY_CONTAINER` and the call of `⊡` below, so it lands after
+  this change.
 - The change `imports-narrow` names each symbol that `pga/operators.nim` imports. With both
   applied, the build stops on `undeclared identifier: 'CAYLEYS_SUPPORT'` under the rigid metric.
   Under the conformal metric, it stops on `undeclared identifier: 'CAYLEY_CARRIER_CO'`. Whichever
