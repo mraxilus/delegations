@@ -167,7 +167,7 @@ func isLineImport(line: string): bool =
   ##     stays prose.
   ##   Path holds `/` or `.` before its last character, so word alone after `@`, as `@agents`
   ##     or `@agents.`, names no file and stays prose.
-  ##   Cost: import of file at root with no extension reads as prose; repository holds none.
+  ##   Cost: import of file at root with no extension reads as prose.
   let s = line.strip
   if s.len < 2 or s[0] != '@' or s.find(Whitespace) >= 0: return false
   s[1 ..< ^1].find({'.', '/'}) >= 0
