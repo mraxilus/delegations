@@ -208,17 +208,24 @@ suite "Role":
         "each and in that order; got `## Intent`, `## Scope`, `## Verification`, `## Record`, " &
         "`## Notes`.",
     ]
-    let turned = form.replace("## Why", "## X").replace("## Evidence", "## Why")
-      .replace("## X", "## Evidence")
-    for (body, got) in [
-      (form.replace("## Next steps\n\nNothing remains.\n", ""),
-        "`## What`, `## Why`, `## Evidence`"),  # one missing
-      (form & "\n## Why\n\nAgain.\n",
-        "`## What`, `## Why`, `## Evidence`, `## Next steps`, `## Why`"),  # one twice
-      (turned, "`## What`, `## Evidence`, `## Why`, `## Next steps`"),  # order turned
-      ("**Role:** curator\n\nText.\n", "``"),  # none
-    ]:
-      check checkBodyPull(body).mapIt(it.message.endsWith("got " & got & ".")) == @[true]
+    # Each heading missing, then twice, then turned with next: sections of form, joined again.
+    let
+      parts = form.sections  # part above first heading, then one for each heading
+      indices = toSeq(1..<parts.len)
+    for i in indices:
+      var orders = @[indices.filterIt(it != i), indices & i]  # missing, then twice
+      if i < indices[^1]:
+        var turned = indices
+        swap(turned[i-1], turned[i])
+        orders.add turned  # turned with next
+      for order in orders:
+        let got = order.mapIt("`" & parts[it].heading & "`").join(", ")
+        check checkBodyPull(parts[0].text & order.mapIt(parts[it].text).join)
+          .mapIt(it.message.endsWith("got " & got & ".")) == @[true]
+    check checkBodyPull("**Role:** curator\n\nText.\n").mapIt(it.message) == @[
+      "Pull request body holds `## What`, `## Why`, `## Evidence` and `## Next steps`, once " &
+      "each and in that order; got ``.",
+    ]  # no heading
     for body in [
       form.replace("The suites pass.\n", "The suites pass.\n\n```md\n## Sign-off\n```\n"),
       form.replace("Nothing remains.\n", "Nothing remains.\n\n<!--\n## Notes\n-->\n"),
