@@ -56,6 +56,10 @@ first commit that carries the version of knoller.
   its own section reaches nothing, and Atlas writes it again at each install and restore.
 - Cost: `atlas changed` warns that the remote of the clone differs from the address in the lock,
   since the clone has no query. It still exits 0, so the restore of koch passes.
+- Cost: Atlas reads the `atlas.config` of the root project alone, as its source at 0.14.7 reads,
+  2026-11-15. So a project that requires assayer as a package maps `knoller` in its own
+  `atlas.config`, and names both paths in its own `nim.cfg`. Not verified, since no such project
+  exists.
 - Verified by hand with Atlas 0.14.7 and Nim 2.4.0, 2026-11-15, in a scratch project outside this
   repository. `atlas rep` restored the lock into a fresh clone, `atlas changed` exited 0, and a
   program that imports `compilers` and `pins` built and ran. Each rejected form failed as this
