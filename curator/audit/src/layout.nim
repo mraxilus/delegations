@@ -15,6 +15,10 @@
 ##   Top-level GLOSSARY.md carries repository's agreed words, and every project carries its
 ##     own; shape is checked here, agreement never is, since checker cannot know what
 ##     Architect selected.
+##   Entry file `AGENTS.md` stands at root, and `CLAUDE.md` imports it on line `@AGENTS.md` of
+##     its own, outside code: Claude Code loads no import in code, and repository writes each
+##     path in backticks. Suite alone cannot hold it, since change to `CLAUDE.md` alone selects
+##     no suite. Tree without `CLAUDE.md` passes, since Claude Code then reads entry file itself.
 ##   Unregistered file kind anywhere is finding (Article VI.5), pointing at `kinds.nim`.
 ##   Committed page (Html, Svg) lives in project's `pages/`, what project stands behind, or
 ##     `mockups/`, one-off exploration kept for reference; generated markup stays under
@@ -46,12 +50,15 @@ type
 const
   FILE_README* = "README.md"
     ## Index every root, every domain and every project carries, named once for all three.
+  FILE_ENTRY = "AGENTS.md"  ## Entry file: one file at root each harness reads first.
+  FILE_CLAUDE = "CLAUDE.md"  ## File Claude Code reads on its own, which imports entry file.
+  IMPORT_ENTRY = "@" & FILE_ENTRY  ## Line of `FILE_CLAUDE` that imports entry file, alone.
   FILES_ROOT* = [
     FILE_README, "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "EXAMPLES.md", "CURATOR.md",
-    "COORDINATOR.md", "CONTRIBUTOR.md", "GUIDE.md", "AGENTS.md", "CLAUDE.md", "GLOSSARY.md",
+    "COORDINATOR.md", "CONTRIBUTOR.md", "GUIDE.md", FILE_ENTRY, FILE_CLAUDE, "GLOSSARY.md",
     "koch.nim", "koch.nim.cfg", ".gitignore", ".gitattributes",
   ]
-    ## Files allowed directly at root; `AGENTS.md` is entry file each harness reads first.
+    ## Files allowed directly at root.
   DIRECTORY_HOOKS* = ".githooks"
     ## Directory of git's own hooks, which `core.hooksPath` names from top of each worktree.
   DIRECTORIES_ROOT* = [".github", ".claude", DIRECTORY_HOOKS]
@@ -246,6 +253,20 @@ func checkViewsRoot(tree: Tree, paths: Table[string, int]): seq[Finding] =
       result.add finding(path, 1, "Root folder README must open with `# " & root & "`.")
 
 
+func checkFileEntry(tree: Tree, paths: Table[string, int]): seq[Finding] =
+  ## Report entry file missing, and `FILE_CLAUDE` that imports it on no line of its own, outside
+  ##   code; line is read whole, so import indented as Markdown code counts as none.
+  if FILE_ENTRY notin paths: result.add finding(FILE_ENTRY, 0, "Entry file missing.")
+  if FILE_CLAUDE notin paths: return
+  if IMPORT_ENTRY notin tree[paths[FILE_CLAUDE]].content.fencedOut.splitLines:
+    result.add finding(
+      FILE_CLAUDE,
+      0,
+      "`" & FILE_CLAUDE & "` imports entry file on line `" & IMPORT_ENTRY & "` of its own, " &
+        "outside code, as Claude Code loads no import in code; got none.",
+    )
+
+
 func checkViewsDomain(tree: Tree, paths: Table[string, int]): seq[Finding] =
   ## Report root and domain README files disagreeing with `DOMAINS`.
   if FILE_README in paths:
@@ -275,4 +296,5 @@ func checkLayout*(tree: Tree): seq[Finding] =
   for e in tree: result.add e.checkEntry
   for directory in tree.directoriesProject: result.add checkProject(tree, paths, directory)
   result.add checkViewsRoot(tree, paths)
+  result.add checkFileEntry(tree, paths)
   result.add checkViewsDomain(tree, paths)
