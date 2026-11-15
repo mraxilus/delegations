@@ -121,11 +121,11 @@ when IS_CONFORMAL:
 
 ## Evidence
 
-Each of the five operators takes ×0.21 to ×0.42 of its time at pin, for one operand of kind
-General. The partner takes ×0.67 to ×0.71 of pin at cga5d, over the kinds of its operand.
+Each of the five operators takes ×0.17 to ×0.42 of its time at pin, for one operand of kind
+General. The partner takes ×0.69 to ×0.73 of pin at cga5d, over the kinds of its operand.
 
 P01 alone changes no library function, so the gain belongs to this proposal. Its evaluation of
-the same date times these operators at ×0.99 to ×1.00 of pin, which is noise of the machine.
+2026-11-14 times these operators at ×1.00 to ×1.01 of pin, which is noise of the machine.
 
 Five count claims hold the multiplies of each operator. `∩` and `∪` take 54 each at rga4d,
 against 162 at pin. At cga5d, `⊞` takes none against 243, and `⊙` and `⊡` take 162 each against
