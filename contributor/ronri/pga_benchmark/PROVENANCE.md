@@ -398,6 +398,21 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 records the machine measurements, as the next section says. All are schema 1, with a header
 that names algebra, compiler commit, library commit, flags, machine and date.
 
+**The machine names its processor**, as the Architect ruled on 2026-11-15. It gives the system,
+the architecture and the count of cores. Then it gives the model name, family and model of the
+first block of `/proc/cpuinfo` that names one. On the host of 2026-11-15, `machineNow` reads
+`linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.30GHz, family 6 model 173`. That model name
+names no generation of processor, so the family and model tell the generations apart.
+
+A host that describes no processor, as macOS or Windows, writes `processor unrecorded`. Each verb
+that times or counts takes the machine from `machineNow` of `report.nim`, and `sweep` takes the
+stamp of `bench`. `restamp` moves a stamp to a new pin, and keeps the machine of the run that
+timed it.
+
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Measurements`. It reads a
+fixture of two blocks, where the second names another model. It also reads an empty text, and a
+block that names no model.
+
 `guard` compares a fresh inspection against the baseline. Any gated count or bytes moved that
 grew is a finding, rendered as `path:0: message; got value`. Any shrink is a notice. A document
 of another algebra, compiler or set of flags is refused rather than compared.
@@ -1594,13 +1609,13 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.
-- The stamp of a machine names its system, its architecture and its count of cores, and never
-  its processor. Under the stamp `linux amd64, 4 cores`, pin ran `wedge` at cga5d in 97.55 ns on
+- A stamp that names no processor, as that of each record committed here, leaves the machine
+  unknown. Under the stamp `linux amd64, 4 cores`, pin ran `wedge` at cga5d in 97.55 ns on
   2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in
   `evaluations/cayley-derivation.json`, at `c2e80da3` and at head. By `/proc/cpuinfo`, the
-  processor of 2026-11-14 is a Xeon of family 6 model 173, and nothing records that of
-  2026-11-05. So a time of one evaluation compares with a time of another only where the times of
-  pin agree.
+  processor of 2026-11-14 and 2026-11-15 is a Xeon of family 6 model 173, and nothing records
+  that of 2026-11-05. So a time of one evaluation compares with a time of another only where the
+  times of pin agree.
 - Movement is modelled from the bytes that the code names, and never measured as cache
   traffic.
 - The inspector reads text patterns of Nim 2.4.0. Another release could spell the same C
