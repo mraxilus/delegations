@@ -14,6 +14,8 @@
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline font faces, fold everything into one self-contained |
 ##   |          | page                                                                   |
+##   | mockup   | web, with bridge under `-d:mockup` and comparison panel appended, into |
+##   |          | its own page; see README, Comparison mockups                           |
 ##   | drive    | fetch font faces and browser, build page, drive it, report every check |
 ##   | desktop  | fetch SDL3 and Dear ImGui, compile desktop front-end into `binaries/`  |
 ##   | driven   | build desktop front-end, drive it through every scripted run, report   |
@@ -84,6 +86,10 @@ const
   PATH_INTERACTION_NIM = "src" / "pga_visualiser" / "interaction.nim"
     ## Gesture rules, read for enums page names beside wording's keys; see `declare`.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"  ## Compiled bridge, first script on page.
+  PATH_BRIDGE_JS_MOCKUP = BUILD_BROWSER / "bridge_mockup.js"
+    ## Bridge compiled under `-d:mockup`, which includes comparison of `PATH_MOCKUP_NIM`.
+  PATH_MOCKUP_NIM = "src" / "browser" / "mockup.nim"
+    ## Comparison mockup carries: options, scenarios, and title `TITLE_MOCKUP` names.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
     ## Derived declarations of bridge's exports, read by type-checker alone.
     ##   Outside `outDir`, which TypeScript excludes from its own inputs by default.
@@ -147,6 +153,9 @@ const
   PATH_SHELL = "pages" / "shell.html"
     ## Committed markup, carrying `@EMBED:<font face>@` and `@SCRIPT@` tokens.
   PATH_PAGE = BUILD / "pga_visualiser.html"  ## Assembled page.
+  PATH_PAGE_MOCKUP = BUILD / "pga_visualiser_mockup.html"  ## Assembled comparison mockup.
+  PATH_PANEL_MOCKUP = "pages" / "mockup.html"
+    ## Comparison panel, appended to mockup's page; reads comparison from bridge at load.
   TOKEN_SCRIPT = "@SCRIPT@"
     ## Token every script replaces, so committed shell stays whole document.
   TOKEN_EMBED = "@EMBED:"  ## Opening of token one font face replaces.
@@ -232,7 +241,7 @@ const
     ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned to
     ##   commit rather than to package manager; see `COMMIT_IMGUI` and `COMMIT_SDL3`.
   USAGE = "Usage: nim r tools/build.nim " &
-      "<declare|types|web|drive|desktop|driven|assets|head|system|clean>\n"
+      "<declare|types|web|mockup|drive|desktop|driven|assets|head|system|clean>\n"
     ## Text printed on usage error.
 
 
@@ -604,12 +613,13 @@ proc worded(page: string): string =
     )
 
 
-proc web() =
+proc assemble(defines: openArray[string]; path_bridge: string): string =
   ## Assemble whole page: declarations, type-check, bridge, scripts, font faces, markup.
   ##   Fails with reason rather than emitting broken page: absent font face renders as box and
   ##   absent script as blank canvas, neither reporting itself.
   ##   `types` runs first, and emits every script this reads, under flags curator ratified
   ##   (repository issue 27).
+  ##   `defines` reach bridge alone, compiled to `path_bridge`; `mockup` passes `-d:mockup`.
   types()
   createDir BUILD_BROWSER
 
@@ -618,9 +628,10 @@ proc web() =
   #   its checks and stack traces, page must not carry them.
   #   `-d:danger` rejected: buys tenth of frame by removing every bounds, range and field
   #   check from one build reader runs.
-  run("nim", ["js", "--hints:off", "-d:release", "-o:" & PATH_BRIDGE_JS, PATH_BRIDGE_NIM])
+  run("nim", @["js", "--hints:off", "-d:release"] & @defines &
+    @["-o:" & path_bridge, PATH_BRIDGE_NIM])
 
-  var scripts = readFile(PATH_BRIDGE_JS)
+  var scripts = readFile(path_bridge)
   for name in SCRIPTS:
     let path = BUILD_BROWSER / name & ".js"
     if not fileExists(path):
@@ -648,11 +659,45 @@ proc web() =
 
   if TOKEN_SCRIPT notin page:
     raise newException(OSError, "Shell carries no `" & TOKEN_SCRIPT & "`; nothing to fill.")
-  page = page.replace(TOKEN_SCRIPT, "\n" & scripts & "\n")
+  page.replace(TOKEN_SCRIPT, "\n" & scripts & "\n")
 
+
+proc web() =
+  ## Assemble page reader runs, and write it to `PATH_PAGE`.
+  let page = assemble([], PATH_BRIDGE_JS)
   createDir BUILD
   writeFile(PATH_PAGE, page)
   echo "Wrote ", PATH_PAGE, " (", page.len, " bytes)."
+
+
+proc titleMockup(): string =
+  ## Read comparison's name off `TITLE_MOCKUP` in `PATH_MOCKUP_NIM`, for page title.
+  ##   No file is no comparison open: README, Comparison mockups, says how to open one.
+  if not fileExists(PATH_MOCKUP_NIM):
+    raise newException(OSError, "No comparison is open; wanted `" & PATH_MOCKUP_NIM &
+      "`. See README, Comparison mockups.")
+  for line in readFile(PATH_MOCKUP_NIM).splitLines:
+    let stripped = line.strip
+    if stripped.startsWith("TITLE_MOCKUP = \""):
+      return stripped.split('"')[1]
+  raise newException(OSError, "Comparison names no title; wanted `TITLE_MOCKUP` in `" &
+    PATH_MOCKUP_NIM & "`.")
+
+
+proc mockup() =
+  ## Assemble comparison mockup: page, bridge under `-d:mockup`, and comparison panel.
+  ##   Its own file, so page reader runs is never built with comparison in it.
+  ##   Title names comparison, so each mockup published stands apart from page.
+  let title = titleMockup()
+  var page = assemble(["-d:mockup"], PATH_BRIDGE_JS_MOCKUP)
+  let (opening, closing) = (page.find("<title>"), page.find("</title>"))
+  if opening < 0 or closing < opening:
+    raise newException(OSError, "Shell carries no `<title>`; mockup cannot name itself.")
+  page = page[0 ..< opening + "<title>".len] & title & " Mockup" & page[closing .. ^1]
+  page = page.strip(leading = false) & "\n" & readFile(PATH_PANEL_MOCKUP)
+  createDir BUILD
+  writeFile(PATH_PAGE_MOCKUP, page)
+  echo "Wrote ", PATH_PAGE_MOCKUP, " (", page.len, " bytes)."
 
 
 proc checkCommit(directory, commit, what: string) =
@@ -973,6 +1018,7 @@ proc main(): int =
     of "declare": declare()
     of "types": types()
     of "web": web()
+    of "mockup": mockup()
     of "drive": drive()
     of "desktop": desktop()
     of "driven": driven()
