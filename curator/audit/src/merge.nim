@@ -78,6 +78,11 @@ proc fileMark*(root: string): string =
   pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
 
 
+proc isDetached(root: string): bool =
+  ## Decide whether HEAD of checkout is detached, i.e. no branch holds its tree.
+  fieldsGit(root, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip == "HEAD"
+
+
 proc isMerging*(root, base: string): bool =
   ## Decide whether `koch check` judges checkout in second tree: working tree clean, and HEAD
   ##   lacking base.
@@ -217,8 +222,36 @@ proc judgeMerged*(root, base, branch: string, toolchains: var Toolchains): Verdi
   let (code, found) = runMerge(merged, branch, toolchains)
   (result.code, result.findings) = (code, found)
   if code != 0 or found.len > 0: return
-  if fieldsGit(root, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip == "HEAD":
+  if root.isDetached:
     echo "Detached HEAD holds no branch; nothing recorded for pre-push hook."
     return
   writeFile(root.fileMark, merged.tree & "\n")
   echo "Tree hash of branch recorded for pre-push hook, as its merge passed."
+
+
+proc judgeCheckout*(
+  root, base, branch: string, toolchains: var Toolchains, judge_in_place: proc(): int
+): int =
+  ## Judge checkout as `koch check` does, and give its exit code: as merged with base where clean
+  ##   HEAD lacks base (`judgeMerged`), else in place through `judge_in_place`, which koch holds.
+  ##   Finding that stops merge is reported here, at exit 1.
+  let verdict = judgeMerged(root, base, branch, toolchains)
+  if not verdict.is_merged: return judge_in_place()
+  if verdict.findings.len > 0:
+    verdict.findings.report
+    echo "Merge with base not judged; fix findings above, then run again."
+  verdict.code
+
+
+proc recordMark*(root: string) =
+  ## Record tree of HEAD for `pre-push` hook after green run in place, where checkout is clean
+  ##   and on branch, then say what was recorded or why nothing was.
+  ##   Dirty tree records nothing, since no commit holds exactly what passed; detached HEAD
+  ##     records nothing, since no branch holds its tree, and second tree is one.
+  if fieldsGit(root, ["status", "--porcelain"]).len > 0:
+    echo "Working tree not clean; nothing recorded for pre-push hook."
+  elif root.isDetached:
+    echo "Detached HEAD holds no branch; nothing recorded for pre-push hook here."
+  else:
+    writeFile(root.fileMark, fieldsGit(root, ["rev-parse", "HEAD^{tree}"])[0])
+    echo "Tree hash recorded for pre-push hook."
