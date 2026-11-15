@@ -1105,6 +1105,32 @@ suite "Hooks":
     check "Record" notin contextStart(BRANCH, "", "## List\n", "## List", "", @[])  # none written
 
 
+  test "start prints reading order from file of role, and holds no copy of its own (#891)":
+    # Case as found: start printed `CONSTITUTION.md`, `STYLE.md`, `GLOSSARY.md`, then `CURATOR.md`,
+    #   then `GUIDE.md` to curator, while `CURATOR.md`, Read first, puts `CONTRIBUTOR.md` second
+    #   and itself fourth. Domain: each arm of grammar, file of role lacking heading, and branch
+    #   outside grammar, as coordinator's reads until its trial.
+    const
+      heading = "## Read first, in this order"  # `HEADING_READ` of `prompts.nim`
+      curator = "# Curator\n\n" & heading & "\n\n1. Charter.\n2. `CONTRIBUTOR.md`.\n" &
+        "4. This file to the end.\n\n## Duties\n\nDo.\n"
+      contributor = "# Contributor\n\n" & heading & "\n\n1. Charter.\n\n## List\n\n1. one\n"
+    check pathPrompt("curator/rules") == "CURATOR.md"  # curator root
+    check pathPrompt("curator/probe/rings") == "CURATOR.md"  # one curator project
+    check pathPrompt(BRANCH) == "CONTRIBUTOR.md"
+    check pathPrompt("claude/x").len == 0  # outside grammar
+    let text = contextStart("curator/rules", curator, contributor, "## List", "", @[])
+    check text.startsWith("Role: curator, on branch `curator/rules`.\n\nRead first, from " &
+      "`CURATOR.md`:\n1. Charter.\n2. `CONTRIBUTOR.md`.\n4. This file to the end.\n\n")
+    check "Do." notin text  # next section stays out
+    check "then GUIDE.md" notin text  # no copy of list of its own
+    check "\nRead first, from `CONTRIBUTOR.md`:\n1. Charter.\n\n" in
+      contextStart(BRANCH, contributor, contributor, "## List", "", @[])
+    let lacking = "# Curator\n\nDuties.\n"  # prompt check reports it
+    check "Duties." notin contextStart("curator/rules", lacking, contributor, "## List", "", @[])
+    check "Read first" notin contextStart("claude/x", "", contributor, "## List", "", @[])
+
+
   test "transcript parse finds calls since last message of person":
     const transcript =
       "{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"do it\"}]}}\n" &
