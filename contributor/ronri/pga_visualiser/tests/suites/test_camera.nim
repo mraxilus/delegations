@@ -1647,7 +1647,7 @@ suite "Camera":
       check camera.distance =~ 19.0
 
 
-  test "a right drag holds the depth under the pointer, or the pivot's over nothing":
+  test "a right drag holds the depth under the pointer, or the reach last zoom took over nothing":
     let camera = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
     var interaction = Interaction(is_enabled: true)
     interaction.depth_pointer = some(7.5)
@@ -1656,7 +1656,34 @@ suite "Camera":
     check interaction.point_pan.isNone
     interaction.depth_pointer = none(float)
     interaction.grabPan(camera, 1440, 900, has_selection = false)
-    check interaction.depth_pan =~ camera.distance
+    check interaction.depth_pan =~ camera.reachTaken
+
+
+  test "with no selection a right drag over empty sky keeps what the last zoom took under it":
+    # Fault: drag over nothing held pivot's depth, which key flight carries along, so after
+    #   flight ten home distances back pan moved sun tenth of pointer (repository issue 910).
+    #   It holds reach of point last zoom took, as zoom out and pinch do.
+    const (wide, tall) = (1440, 900)
+    let
+      before = ScreenPosition(x: 720.0, y: 450.0)
+      after = ScreenPosition(x: 960.0, y: 560.0)
+    var
+      camera = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
+      interaction = Interaction(is_enabled: true)
+    camera.travel(-190.0, 0.0, 0.0)
+    interaction.grabPan(camera, wide, tall, has_selection = false)
+    camera.panAcross(
+      before, after, wide, tall, has_selection = false, depth_held = interaction.depth_pan
+    )
+    let seen = projectToScreen(
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      ORIGIN.toView(camera.originView),
+    )
+    check seen.isInFront
+    check abs(seen.x - after.x) < 0.01
+    check abs(seen.y - after.y) < 0.01
 
 
   test "a right drag with a selection zooms by the pointer's heights, and turns along the row":
