@@ -250,8 +250,6 @@ const
     ## Words between numbers of one tag, as in `carried 1, 2 and 4`; longest first.
   CARRIED_MAX* = 6  ## Rules on carried list (CONTRIBUTOR.md).
   SUBJECT_MERGE = "Merge "  ## Opening of subject git writes for merge commit.
-  HEADINGS_PULL* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
-    ## Headings pull request template gives.
   MARK_CHECK* = "koch-check"
     ## File in git dir where `koch check` writes tree hash it passed on, which `pre-push`
     ##   reads; `pathMark` places it.
@@ -631,36 +629,6 @@ func blankComments(text: string): string =
       break
     rest = rest[0 ..< open] & rest[close + 3 .. ^1]
   rest
-
-
-func blankSpansCode(line: string): string =
-  ## Blank each code span of line: run of backticks opens it, next run of same length closes
-  ##   it, and run left open stays text, as CommonMark reads it.
-  var i = 0
-  while i < line.len:
-    if line[i] != '`':
-      result.add line[i]
-      inc i
-      continue
-    var n = 0
-    while i + n < line.len and line[i + n] == '`': inc n
-    var
-      j = i + n
-      close = -1
-    while j < line.len and close < 0:
-      if line[j] != '`':
-        inc j
-        continue
-      var m = 0
-      while j + m < line.len and line[j + m] == '`': inc m
-      if m == n: close = j
-      j += m
-    if close < 0:
-      result.add line[i ..< i + n]
-      i += n
-    else:
-      result.add ' '.repeat(close + n - i)
-      i = close + n
 
 
 func isFooter(line: string): bool =
@@ -1558,33 +1526,6 @@ func labelDefined(line: string): string =
   if close < 2 or not s[close + 1 .. ^1].startsWith(":") or s[close + 2 .. ^1].strip.len == 0:
     return ""
   s[1 ..< close].toLowerAscii
-
-
-iterator spansLink(line: string, labels: openArray[string]): tuple[start, stop: int] =
-  ## Yield span of each link of line: `[text](url)`, and `[text][label]` or `[label]` whose
-  ##   label message defines. Bracket opening no link is passed over.
-  var i = 0
-  while i < line.len:
-    if line[i] != '[':
-      inc i
-      continue
-    let close = line.find(']', i + 1)
-    if close < 0: break
-    let text = line[i + 1 ..< close]
-    var stop = -1  # Index past link; none where bracket opens no link.
-    if close + 1 < line.len and line[close + 1] == '(':
-      let paren = line.find(')', close + 2)
-      if paren >= 0: stop = paren + 1
-    elif close + 1 < line.len and line[close + 1] == '[':
-      let shut = line.find(']', close + 2)
-      if shut >= 0:
-        let label = line[close + 2 ..< shut]
-        if (if label.len == 0: text else: label).toLowerAscii in labels: stop = shut + 1
-    elif text.toLowerAscii in labels: stop = close + 1
-    if stop < 0: inc i
-    else:
-      yield (i, stop)
-      i = stop
 
 
 func linksOut(line: string, labels: openArray[string]): string =

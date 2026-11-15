@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, osproc, sequtils, strutils, tempfiles, unittest]
-import ../../src/[checker, findings, hooks, markdown, tree]
+import ../../src/[findings, hooks, tree]
 import ./fixtures
 
 
@@ -379,14 +379,6 @@ suite "Hooks":
     let missing = head & "## Verification\n\nGreen.\n\n## Notes\n\nNone.\n"
     check checkBody("mcp__github__create_pull_request", BRANCH, "t", missing, [], true)
       .messages.anyIt("`## Record`" in it)
-
-
-  test "template of pull request holds each heading body hook asks for, and no carried rule (#844)":
-    # Carried rule that concerns no item stands in ➖ row of sign-off, so body names none of them.
-    const template_pull = staticRead("../../../../.github/pull_request_template.md")
-    for heading in HEADINGS_PULL:
-      check heading in template_pull.linesHeading
-    check "carried" notin template_pull.section("## Record").toLowerAscii
 
 
   test "closing keyword stands before issue only on line of its own (#859)":

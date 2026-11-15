@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[strutils, unicode, unittest]
-import ../../src/role
+import ../../src/[checker, markdown, role]
 
 
 const
@@ -136,3 +136,11 @@ suite "Role":
     let wide = checkTitle("curator/mend-it", "docs(curator): " & "a".repeat(90))
     check wide.len == 1 and wide[0].message.startsWith("Pull request title exceeds 100")
     check checkTitle("claude/setup-5uk08q", "Anything at all").len == 0  # scope fails it
+
+
+  test "template of pull request holds each heading body hook asks for, and no carried rule (#844)":
+    # Carried rule that concerns no item stands in ➖ row of sign-off, so body names none of them.
+    const template_pull = staticRead("../../../../.github/pull_request_template.md")
+    for heading in HEADINGS_PULL:
+      check heading in template_pull.linesHeading
+    check "carried" notin template_pull.section("## Record").toLowerAscii

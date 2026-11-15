@@ -46,6 +46,8 @@ const
   ECHO_MAX* = 72
     ## Runes echoed back from opening line: it is whatever somebody typed, and body opening
     ## with whole paragraph would otherwise print that paragraph as finding.
+  HEADINGS_PULL* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
+    ## Headings pull request template gives.
 
 
 func shortened*(line: string): string =
