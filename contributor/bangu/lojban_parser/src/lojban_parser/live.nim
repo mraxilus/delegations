@@ -1,69 +1,149 @@
-## Read live text as it arrives, piece by piece: each sentence goes out as NIF once it ends, and
-##   word that reaches back cuts NIF back, so live text of hours reads in time its length gives
-##   (#859).
+## tcidu ro spisa be lo mivyselci'a ca lo nu le spisa cu klama
+##   .i ro jufra cu selbe'i ta'i `NIF` ca lo nu le jufra cu selfa'o
+##   .i lo valsi poi galfi lo pu valsi cu katna `NIF`
+##   .i se ki'u bo lo mivyselci'a pe so'i cacra cu se tcidu ca lo temci poi lo ni le selci'a cu
+##       clani cu jarco ke'a to `#859` toi
 ##
-##   |----------------|--------------------------------------------------------------------|
-##   | Code           | Meaning                                                            |
-##   |----------------|--------------------------------------------------------------------|
-##   | ReaderLive     | text so far, NIF that went out, and openers that wait for closers  |
-##   | ChangeNif      | change piece makes to NIF: offset and byte it cuts to, nodes, tail |
-##   | initReaderLive | reader of live text, whose NIF holds directives alone              |
-##   | push           | read next piece of live text                                       |
-##   | finish         | read end of live text, and give rest of its NIF                    |
-##   | toNif          | NIF that went out so far                                           |
-##   | countRead      | bytes each reading read, summed, which cost check reads            |
-##   | toSentences    | piece cut before each word that opens sentence, as stream reads it |
-##   | combine        | changes of pieces read in turn, joined into change of all of them  |
-##   |----------------|--------------------------------------------------------------------|
+##   |------------------|--------------------------------------------------------------------------|
+##   | lo cmene         | lo smuni                                                                 |
+##   |------------------|--------------------------------------------------------------------------|
+##   | `ReaderLive`     | le ca selci'a .e `NIF` poi pu selbe'i .e lo kravla poi denpa      |
+##   | `ChangeNif`      | lo cenba pe pa spisa ne'i `NIF`                                          |
+##   |                  | .i re stuzi .e lo jgena .e lo rebla                                      |
+##   | `initReaderLive` | lo mivyselci'atcidu noi `NIF` pe ke'a vasru lo minde po'o         |
+##   | `push`           | tcidu lo bavla'i spisa be lo mivyselci'a                              |
+##   | `finish`         | tcidu lo fanmo be lo mivyselci'a gi'e jarco lo stapau be `NIF`   |
+##   | `toNif`          | `NIF` poi pu selbe'i                                                    |
+##   | `countRead`      | le di'arcipra cu tcidu lo sumji be lo stuzi poi se tcidu ca ro nu tcidu |
+##   | `toSentences`    | katna lo spisa pu ro valsi poi krasi lo jufra ja'i le porsi be lo valsi  |
+##   | `combine`        | jmina lo cenba pe lo spisa poi se tcidu ta'i lo porsi ku'o fo pa cenba   |
+##   |------------------|--------------------------------------------------------------------------|
 ##
-##   Rulings of Architect on #859 give design:
-##     Node of each part, read alone (`readTextParts`), goes out on line of its own once next
-##       part opens, and so does unit refused between parts. Tree of text follows from nodes
-##       (`assembleText`), so nothing of it is lost.
-##     No piece reads whole text again: piece reads text from start of part still open. Word
-##       that reaches back reads again from node where it lands, and NIF cuts back to offset
-##       where that node opens: cursor, as `ChangeNif` gives it. Change gives byte of text where
-##       node opens too, so other program ties each node to text it reads, at each change.
-##     Node of part still open goes out as tail, which next change replaces, so tree grows word
-##       by word, as program that animates it may show.
-##   Piece may cut word, so text read stops before last written word no mark ends: `su` that
-##     next piece makes `su'i` erases nothing. Text read opens at span of node: its first word,
-##     past words of node before, so span holds each word erasure erased before node. Node
-##     shares span before it where quotation holds word span would open at, or where its first
-##     word stands among words of node before, as word stream refuses between word and `bu`; or
-##     where rules refuse `zei` before it, which joins word after it once they read one (19.16).
-##   Reach back, from text read again to node before it:
-##     `si` that finds no word, back as many words as it erases; `bu` or `zei` that finds none,
-##       to word before; `sa` that finds no marker, to node holding it, or to start (19.13).
-##       Erasure reaches no node before `su` (19.13).
-##     First unit read that opens no part, as `zei` joining `.i` to word after it, to node holding
-##       unit read last; error node whose stop names unit read after it, once that unit changes.
-##     Closer of opener that waits, to node holding opener.
-##     `su` ends text before it, which stays as it read: NIF cuts back nowhere, and `su` goes out
-##       as node of its own, before text after it, which reads alone (ruling on #859). Opener of
-##       text before it that waits, `tu'e`, `lu` or `to`, closes there, as at end, so text reads
-##       again from it; quotation that waits quotes `su` once closed (19.9, 19.10).
-##   Opener that waits for its closer, `tu'e`, `lu`, `to`, `lo'u`, `zoi` or `la'o`, reads as
-##     plain terminal, so sentences after it go out at once; its closer reads them again. Opener
-##     of quotation with word erasure erased before it reads again from start of its text, since
-##     its closer may quote word that erased it. End reads text from first opener still waiting
-##     as whole text does: `lu`, `to` and `tu'e` close there, as 21.1 lets closer be elided, and
-##     `zoi`, `la'o` and `lo'u` stand as errors.
-##   Text after `lo'u` that waits reads inside words it quotes, as stream reads them (19.9):
-##     there `zoi` takes three words after it as quotation once they come (`toRoles`), so waits.
-##     `lo'u` whose `le'u` erasure erases waits for none, since stream reads that `le'u`.
-##   `fa'o` that ends input (19.15) stops each piece reading past it, till delimiter of `zoi`
-##     before it comes, which quotes it. Each node goes out once `fa'o` reads, and each written
-##     word after it goes out as unit of its own once mark ends it, so no piece reads text again:
-##     cost stays linear past `fa'o`. End reads text from `fa'o` again, as whole text does.
-##   Words erasure erases stand as unit of their own (`prose.nim`), and node after it shares its
-##     span, so text read again from node reads them again, as erasure in it may have erased them.
-##   Laws: at end, NIF of text read piece by piece is NIF of its parts read whole; before end,
-##     NIF and tail of each change are parts of text so far, to its last mark, read whole as
-##     live text (`test_live.nim`).
-##   Cost: each piece reads part still open again, so time grows with length of text times
-##     length of sentence; reach back reads from node where it lands, once.
-##   Reader loops by index, since `items` copies on JavaScript backend.
+## ni'o le tarmi cu seljdi `Architect` bu'u `#859`
+##   .i ro pagbu be le selci'a cu se tcidu ta'i pa mulno se ciska to `readTextParts` toi
+##   .i lo jgena pe ro pagbu be le selci'a cu selbe'i ne'i pa linji pe vo'a ca lo nu le bavla'i
+##       pagbu cu cfari
+##   .i ro pagbu poi se to'e curmi gi'e jbini re pagbu be le selci'a cu go'i ji'a
+##   .i lo tricu be le selci'a cu jalge le jgena to `assembleText` toi
+##   .i se ki'u bo no pagbu be le tricu cu selcri
+##
+## ni'o ro spisa cu na raptcidu le mulselci'a gi'e tcidu le selci'a poi selkra le pagbu poi ca'o
+##     kalri
+##   .i lo valsi poi galfi lo pu valsi cu rinka lo nu raptcidu le selci'a poi selkra lo jgena poi le
+##       valsi cu klama ke'a
+##   .i `NIF` selka'a bu'u lo stuzi poi le jgena cu krasi bu'u ke'a
+##   .i `ChangeNif` jarco le stuzi ta'i lo sinxa be lo stuzi
+##   .i ji'a ro cenba cu jarco lo stuzi be le selci'a be'o poi le jgena cu krasi bu'u ke'a
+##   .i se ki'u bo ca ro cenba lo drata samtci cu ka'e rinka lo nu ro jgena cu jorne lo selci'a poi
+##       le jgena cu tcidu ke'a
+##
+## ni'o lo jgena pe le pagbu poi ca'o kalri cu selbe'i ta'i lo rebla
+##   .i lo bavla'i cenba cu basti le rebla
+##   .i se ki'u bo le tricu cu zenba ca ro nu pa valsi cu klama
+##   .i lo samtci poi pixra lo nu le tricu cu binxo cu ka'e jarco lo nu le tricu cu zenba
+##
+## ni'o lo spisa cu ka'e katna lo valsi
+##   .i se ki'u bo le se tcidu cu sisti pu lo romoi se ciska valsi poi no sinxa cu fanmo ke'a
+##   .i se ki'u bo zo su poi lo bavla'i spisa cu galfi ke'a zo su'i vimcu no da
+##
+## ni'o le se tcidu cu krasi bu'u lo selku'e be pa jgena
+##   .i le selku'e cu krasi bu'u lo pamoi valsi poi se lidne lo valsi pe lo jgena poi lidne le jgena
+##   .i se ki'u bo le selku'e cu vasru ro valsi poi lo nu vimcu cu pu vimcu ke'a zi'e poi lidne le
+##       jgena
+##
+## ni'o lo jgena goi ko'e pilno lo selku'e be lo jgena poi lidne ko'e be'o goi ko'o va'o lo nu lo nu
+##     sitna cu vasru lo valsi poi le selku'e be ko'e cu ka'e krasi bu'u ke'a
+##   .i ji'a ko'e pilno ko'o va'o lo nu lo pamoi valsi pe ko'e cmima lo valsi pe lo jgena poi lidne
+##       ko'e
+##   .i mupli fa lo valsi poi le porsi be lo valsi cu to'e curmi ke'a zi'e poi jbini pa valsi .e zo
+##       bu
+##   .i ji'a ko'e pilno ko'o va'o lo nu le javni cu to'e curmi pa zo zei poi lidne ko'e
+##   .i zo zei jorne lo valsi poi se lidne zo zei ca lo nu le javni cu tcidu pa valsi to `CLL 19.16`
+##       toi
+##
+## ni'o lo nu galfi lo pu valsi cu selkra le selci'a poi selraptcidu ku'o gi'e klama lo jgena poi
+##     lidne le selci'a
+##   .i zo si poi facki no valsi cu klama ro pu valsi poi zo si vimcu ke'a
+##   .i zo bu .a zo zei klama lo pu valsi va'o lo nu le cmavo cu facki no valsi
+##   .i zo sa poi facki no sinxa cu klama lo jgena poi vasru le sinxa .a lo krasi be le se ciska to
+##       `CLL 19.13` toi
+##   .i lo nu vimcu cu klama no jgena poi lidne zo su to `CLL 19.13` toi
+##
+## ni'o lo pamoi pagbu poi se tcidu zi'e poi krasi no pagbu be le selci'a cu klama lo jgena poi
+##     vasru lo romoi pagbu poi se tcidu
+##   .i mupli fa zo zei poi rinka lo nu zo .i jorne lo valsi poi se lidne zo zei
+##   .i lo srejge goi ko'i selkla ca lo nu cenba fa lo pagbu poi se tcidu gi'e se lidne ko'i kei
+##       va'o lo nu lo nu ko'i sisti cu cmene le pagbu
+##   .i lo famvla be lo kravla poi denpa cu klama lo jgena poi vasru le kravla
+##
+## ni'o zo su fanmo lo selci'a poi lidne zo su
+##   .i le selci'a cu stali ta'i lo nu pu se tcidu
+##   .i se ki'u bo `NIF` selka'a bu'u no stuzi
+##   .i zo su selbe'i ta'i pa jgena poi vasru zo su po'o ku'o pu lo selci'a poi se lidne zo su
+##   .i le selci'a cu se tcidu ta'i pa mulno se ciska to `Architect` jdice di'u bu'u `#859` toi
+##
+## ni'o lo kravla poi denpa gi'e zvati lo selci'a poi lidne zo su selfa'o bu'u zo su ta'i lo nu
+##     selfa'o bu'u lo fanmo be lo selci'a
+##   .i le kravla cu du zo tu'e .a zo lu .a zo to
+##   .i se ki'u bo le selci'a cu selraptcidu bu'u le kravla
+##   .i lo nu sitna poi denpa cu sitna zo su ca lo nu le nu sitna cu se fanmo to `CLL 19.9` .e
+##       `CLL 19.10` toi
+##
+## ni'o lo kravla poi denpa lo famvla pe ke'a se tcidu ta'i lo sapygenvla
+##   .i le kravla cu du zo tu'e .a zo lu .a zo to .a zo lo'u .a zo zoi .a zo la'o
+##   .i se ki'u bo lo jufra poi se lidne le kravla cu zi selbe'i
+##   .i lo famvla pe le kravla cu raptcidu le jufra
+##
+## ni'o va'o lo nu lo nu vimcu cu vimcu lo valsi poi lidne lo kravla pe lo nu sitna kei kei le
+##     selci'a poi vasru le kravla cu selraptcidu bu'u lo krasi be le selci'a
+##   .i ki'u bo lo famvla pe le nu sitna cu ka'e sitna lo valsi poi vimcu le valsi
+##
+## ni'o ca lo fanmo lo selci'a poi selkra lo pamoi krasi valsi poi ca'o denpa cu se tcidu ta'i lo nu
+##     le mulselci'a cu se tcidu
+##   .i ca le fanmo zo lu .e zo to .e zo tu'e selfa'o
+##   .i ki'u bo `CLL 21.1` curmi lo nu lo famvla pe le ci cmavo cu na selci'a
+##   .i zo zoi .e zo la'o .e zo lo'u se tcidu ta'i lo srera
+##
+## ni'o lo selci'a poi se lidne zo lo'u poi denpa cu se tcidu ne'i lo valsi poi zo lo'u sitna ke'a
+##     ta'i lo nu le porsi be lo valsi cu tcidu to `CLL 19.9` toi
+##   .i bu'u le selci'a zo zoi sitna le ci valsi poi se lidne zo zoi ca lo nu le ci valsi cu klama
+##       to `toRoles` toi
+##   .i se ki'u bo zo zoi denpa
+##   .i zo lo'u poi lo nu vimcu cu vimcu zo le'u pe ke'a denpa no da
+##   .i ki'u bo le porsi be lo valsi cu tcidu zo le'u
+##
+## ni'o zo fa'o poi fanmo lo se ciska to `CLL 19.15` toi cu rinka lo nu ro spisa cu sisti bu'u zo
+##     fa'o
+##   .i lo famvla pe pa zo zoi poi lidne zo fa'o vimcu le nu sisti ca lo nu le famvla cu klama
+##   .i ki'u bo zo zoi sitna zo fa'o
+##
+## ni'o ro jgena cu selbe'i ca lo nu zo fa'o se tcidu
+##   .i ro selci'avla poi se lidne zo fa'o selbe'i ta'i pa pagbu poi vasru le se ciska valsi po'o ca
+##       lo nu lo sinxa cu fanmo le selci'avla
+##   .i se ki'u bo no spisa cu raptcidu le selci'a
+##   .i se ki'u bo ba zo fa'o le jdima cu zenba ta'i lo linji
+##   .i ca lo fanmo le selci'a cu selraptcidu bu'u zo fa'o ta'i lo nu le mulselci'a cu se tcidu
+##
+## ni'o ro valsi poi lo nu vimcu cu vimcu ke'a zvati pa pagbu poi vasru le valsi po'o to `prose.nim`
+##     toi
+##   .i lo jgena poi se lidne le pagbu cu pilno lo selku'e be le pagbu
+##   .i se ki'u bo le valsi cu selraptcidu ca lo nu le selci'a cu selraptcidu bu'u le jgena
+##   .i ki'u bo lo nu vimcu poi zvati le selci'a cu pu ka'e vimcu le valsi
+##
+## ni'o flalu fa lo du'u ca lo fanmo `NIF` pe lo selci'a poi ro spisa be ke'a cu se tcidu ta'i lo
+##     porsi cu mintu `NIF` pe lo pagbu be le selci'a be'o poi se tcidu ta'i lo mulno kei .e lo du'u
+##     pu lo fanmo `NIF` .e le rebla pe ro cenba cu mintu `NIF` pe lo pagbu be lo selci'a poi ca
+##     zvati gi'e fanmo bu'u lo romoi sinxa pe ke'a be'o poi se tcidu ta'i pa mulno jmive se ciska
+##     to `test_live.nim` toi
+##
+## ni'o jdima fa lo nu ro spisa cu raptcidu le pagbu poi ca'o kalri
+##   .i se ki'u bo le temci cu zenba ta'i lo pilji be lo ni le selci'a cu clani kei bei lo ni pa
+##       jufra cu clani
+##   .i lo valsi poi galfi lo pu valsi cu rinka lo nu raptcidu pa roi bu'u lo jgena poi le valsi cu
+##       klama ke'a
+##
+## ni'o le tcidu cu rapli ja'i lo namcu pe lo porsi
+##   .i ki'u bo `items` fukpi va'o lo nu fanva fi `JavaScript`
 
 {.experimental: "strictFuncs".}
 
@@ -73,100 +153,163 @@ import ./[grammar, nif, prose, selmaho, stream, tanru]
 
 
 type
-  ChangeNif* = object  ## Define change one piece makes to NIF of live text.
-    at*: int  ## Offset in NIF where change opens: NIF from it on drops, then `text` follows.
+  ChangeNif* = object
+    ## lo cenba poi pa spisa be lo mivyselci'a cu rinka ke'a ne'i `NIF`
+    at*: int
+      ## lo stuzi poi le cenba cu krasi bu'u ke'a ne'i `NIF`
+      ##   .i `NIF` poi selkra le stuzi cu selvi'u
+      ##   .i ba bo `text` se jmina
     start*: int
-      ## Byte of text where change opens: each word of NIF before `at` ends at it or before, and
-      ##   each word of `text` and `tail` opens at it or past, so NIF ties to text it reads.
-    text*: string  ## NIF of each node that goes out, each on line of its own.
+      ## lo stuzi poi le cenba cu krasi bu'u ke'a ne'i le selci'a
+      ##   .i ro valsi pe `NIF` poi lidne `at` fanmo bu'u lo stuzi poi na se lidne le stuzi
+      ##   .i ro valsi pe `text` .e `tail` krasi bu'u lo stuzi poi na lidne le stuzi
+      ##   .i se ki'u bo `NIF` jorne le selci'a poi se tcidu
+    text*: string
+      ## `NIF` pe ro jgena poi selbe'i
+      ##   .i ro le jgena cu zvati pa linji pe vo'a
     tail*: string
-      ## NIF of each node still open, as text so far gives it, each on line of its own; next
-      ##   change replaces it.
+      ## `NIF` pe ro jgena poi ca'o kalri
+      ##   .i le selci'a poi ca zvati cu jarco le jgena
+      ##   .i ro le jgena cu zvati pa linji pe vo'a
+      ##   .i lo bavla'i cenba cu basti le rebla
 
-  ItemLive = object  ## Define node that went out: part, or unit refused between parts.
-    start: int  ## Byte where its span opens: word past words of node before it (`toSpans`).
-    offset: int  ## Offset in NIF where its line opens.
+  ItemLive = object
+    ## lo jgena poi pu selbe'i
+    ##   .i le jgena cu srana pa pagbu be le selci'a be'o .a pa pagbu poi se to'e curmi gi'e jbini
+    ##       re pagbu be le selci'a
+    start: int
+      ## lo stuzi poi lo selku'e be le jgena cu krasi bu'u ke'a
+      ##   .i lo valsi poi se lidne lo valsi pe lo jgena poi lidne le jgena cu krasi bu'u le stuzi
+      ##       to `toSpans` toi
+    offset: int  ## lo stuzi poi lo linji pe le jgena cu krasi bu'u ke'a ne'i `NIF`
     kept: seq[Option[Terminal]]
-      ## Terminal of each word it holds that erasure may erase, in order: words of units read,
-      ##   and of cmavo no list gives selma'o.
-    last: Option[Terminal]  ## Terminal of unit read last, in it or in node before it.
-    held: int  ## Index of last node, it or one before it, that holds unit read; -1 for none.
+      ## lo porsi be lo genvla pe ro valsi poi le jgena cu vasru ke'a zi'e poi lo nu vimcu cu ka'e
+      ##     vimcu ke'a
+      ##   .i le valsi cu pagbu lo pagbu poi se tcidu .a lo pagbu poi vasru lo cmavo poi no liste cu
+      ##       dunda lo selma'o ke'a
+    last: Option[Terminal]
+      ## lo genvla pe lo romoi pagbu poi se tcidu ne'i le jgena .a lo jgena poi lidne le jgena
+    held: int
+      ## lo namcu pe lo romoi jgena poi vasru lo pagbu poi se tcidu
+      ##   .i le romoi jgena cu du le jgena .a lo jgena poi lidne le jgena
+      ##   .i va'o lo nu no jgena cu vasru lo pagbu poi se tcidu kei le namcu cu du li ni'u pa
     is_parted: bool
-      ## Part of its text went out, at it or before it: part of no unit, which text of no unit
-      ##   read gives, stands in it once.
+      ## lo du'u su'o pagbu be lo selci'a pe le jgena cu pu selbe'i bu'u le jgena .a lo jgena poi
+      ##     lidne le jgena
+      ##   .i ki'u la'e di'u lo pagbu be le selci'a be'o poi vasru no pagbu zi'e noi lo selci'a poi
+      ##       vasru no pagbu poi se tcidu cu jarco ke'a zvati le selci'a pa roi
     stop: Option[int]
-      ## Byte of unit read after it, which stop of its error node names; none where no stop
-      ##   names unit past its own.
+      ## lo stuzi pe lo pagbu poi se tcidu gi'e se lidne le jgena
+      ##   .i lo nu sisti pe lo srejge pe le jgena cu cmene le pagbu
+      ##   .i le datnypau cu kunti va'o lo nu no nu sisti cu cmene lo pagbu poi se lidne lo pagbu pe
+      ##       le jgena
     is_su: bool
-      ## Node is leaf of `su`, which ends text before it: erasure after it reaches no node before,
-      ##   save where `is_quoted`.
+      ## lo du'u le jgena cu pezli zo su noi fanmo lo selci'a poi lidne zo su
+      ##   .i lo nu vimcu poi se lidne zo su klama no jgena poi lidne zo su
+      ##   .i ku'i va'o lo nu `is_quoted` jetnu kei lo nu vimcu cu ka'e klama lo jgena poi lidne zo
+      ##       su
     is_quoted: bool
-      ## Node is leaf of `su` that quotation held in first pass of rules of 19.16: erasure after
-      ##   it reaches past it, since erasure that erases rest of quotation quotes it again.
+      ## lo du'u le jgena cu pezli zo su poi lo nu sitna cu vasru ke'a ca lo pamoi nu le javni pe
+      ##     `CLL 19.16` tcidu
+      ##   .i lo nu vimcu poi se lidne zo su klama lo jgena poi lidne zo su
+      ##   .i ki'u bo lo nu vimcu poi vimcu lo datpau be le nu sitna cu rinka lo nu zo su
+      ##       rapselsitna
     start_reading: int
-      ## Byte where reading that put node out opened: closer of quotation that quotes `su` reads
-      ##   text again from it, since `su` then ends no text.
+      ## lo stuzi poi lo nu tcidu poi benji le jgena cu cfari bu'u ke'a
+      ##   .i lo famvla pe lo nu sitna poi sitna zo su rinka lo nu le selci'a cu selraptcidu bu'u le
+      ##       stuzi
+      ##   .i ki'u bo ca la'e di'u zo su fanmo no selci'a
 
-  OpenerLive = object  ## Define opener that waits for its closer in text so far.
-    selmaho: Selmaho  ## Selma'o of opener: TUhE, LU, TO, LOhU, or ZOI for `zoi` and `la'o`.
-    at: int  ## Byte where its word opens.
-    start: int  ## Byte where span of node holding it opens, which its closer reads again from.
-    after: int  ## Byte where text `zoi` quotes opens, past its delimiter; 0 for other opener.
+  OpenerLive = object
+    ## lo kravla poi denpa lo famvla pe ke'a ne'i le selci'a poi ca zvati
+    selmaho: Selmaho
+      ## lo selma'o be le kravla
+      ##   .i le selma'o cu du zoi gy. TUhE .gy. .a zoi gy. LU .gy. .a zoi gy. TO .gy. .a zoi gy.
+      ##       LOhU .gy. .a zoi gy. ZOI .gy. pe zo zoi .e zo la'o
+    at: int  ## lo stuzi poi le kravla cu krasi bu'u ke'a
+    start: int
+      ## lo stuzi poi lo selku'e be lo jgena poi vasru le kravla cu krasi bu'u ke'a
+      ##   .i lo famvla pe le kravla cu rinka lo nu raptcidu bu'u le stuzi
+    after: int
+      ## lo stuzi poi krasi lo selci'a poi zo zoi sitna ke'a
+      ##   .i le stuzi cu se lidne lo koivla pe zo zoi
+      ##   .i li no va'o lo nu le kravla cu na du zo zoi
     delimiter: string
-      ## Delimiter of `zoi`, which closes it; empty for other opener, and for `zoi` that takes
-      ##   three words after it, inside words `lo'u` quotes, which each word closes.
+      ## lo koivla pe zo zoi ge'u zi'e noi fanmo le nu sitna
+      ##   .i le koivla cu kunti va'o lo nu le kravla cu na du zo zoi
+      ##   .i ji'a le koivla cu kunti va'o lo nu zo zoi goi ko'u sitna le ci valsi poi se lidne ko'u
+      ##       ne'i lo valsi poi zo lo'u sitna ke'a
+      ##   .i ro valsi cu fanmo ko'u
 
-  ReaderLive* = object  ## Define reader of live text: text so far, NIF out, openers waiting.
+  ReaderLive* = object
+    ## lo tcidu be lo mivyselci'a
+    ##   .i le tcidu cu ponse le selci'a poi ca zvati .e `NIF` poi pu selbe'i .e lo kravla poi denpa
     text: string
-    nif: string  ## Directives, then line of each node that went out.
-    tail: string  ## NIF of each node still open, as last change gives it.
+    nif: string  ## le minde cu lidne lo linji pe ro jgena poi pu selbe'i
+    tail: string
+      ## `NIF` pe ro jgena poi ca'o kalri
+      ##   .i le romoi cenba cu jarco le jgena
     start_tail: int
-      ## Byte where first word of tail opens, past each word that went out: change of piece that
-      ##   reads no word more opens there. End of text read, where tail holds no word.
-    items: seq[ItemLive]  ## Each node that went out, in order.
-    openers: seq[OpenerLive]  ## Each opener waiting, in order of byte.
-    start: int  ## Byte where text not yet out opens.
-    count_read: int  ## Bytes each reading has read, summed; cost check reads it.
-    ending: int  ## Byte where text read last ends: past last mark between words.
+      ## lo stuzi poi lo pamoi valsi pe le rebla cu krasi bu'u ke'a
+      ##   .i le stuzi cu se lidne ro valsi poi pu selbe'i
+      ##   .i lo cenba pe lo spisa poi rinka lo nu tcidu no datyvla cu krasi bu'u le stuzi
+      ##   .i va'o lo nu le rebla cu vasru no valsi kei le stuzi cu du lo fanmo be le se tcidu
+    items: seq[ItemLive]  ## lo porsi be ro jgena poi pu selbe'i
+    openers: seq[OpenerLive]  ## lo porsi be ro kravla poi denpa ku'o bei lo stuzi
+    start: int  ## lo stuzi poi lo selci'a poi na pu selbe'i cu krasi bu'u ke'a
+    count_read: int
+      ## lo sumji be lo stuzi poi se tcidu ca ro nu tcidu
+      ##   .i le di'arcipra cu tcidu le sumji
+    ending: int
+      ## lo stuzi poi le romoi se tcidu cu fanmo bu'u ke'a
+      ##   .i le stuzi cu se lidne lo romoi sinxa poi jbini lo valsi
     stop: Option[int]
-      ## Byte past written word of `fa'o` that ends input (19.15), where each piece stops reading;
-      ##   none before. End reads past it, since closer of opener before may quote it.
-    is_ended: bool  ## End of live text was read.
+      ## lo stuzi poi se lidne lo selci'avla pe zo fa'o poi fanmo lo se ciska to `CLL 19.15` toi
+      ##   .i ro spisa cu sisti lo nu tcidu bu'u le stuzi
+      ##   .i le datnypau cu kunti pu lo nu zo fa'o se tcidu
+      ##   .i lo fanmo be le selci'a cu tcidu ba le stuzi
+      ##   .i ki'u bo lo famvla pe lo kravla poi lidne zo fa'o cu ka'e sitna zo fa'o
+    is_ended: bool  ## lo du'u lo fanmo be le mivyselci'a cu pu se tcidu
 
 
 func initReaderLive*(): ReaderLive =
-  ## Make reader of live text, whose NIF holds directives alone.
+  ## zbasu lo tcidu be lo mivyselci'a be'o noi `NIF` pe ke'a vasru lo minde po'o
   ReaderLive(nif: HEADER)
 
 
 func toNif*(reader: ReaderLive): string = reader.nif
-  ## Give NIF that went out so far: directives, then line of each node.
+  ## jarco `NIF` poi pu selbe'i
+  ##   .i le minde cu lidne lo linji pe ro jgena
 
 func countRead*(reader: ReaderLive): int = reader.count_read
-  ## Give bytes each reading of text has read, summed: cost, which grows with length of text
-  ##   times length of sentence.
+  ## jarco lo sumji be lo stuzi poi se tcidu ca ro nu tcidu le selci'a
+  ##   .i le sumji cu jdima gi'e zenba ta'i lo pilji be lo ni le selci'a cu clani kei bei lo ni pa
+  ##       jufra cu clani
 
 
 
-#[ Text read ]#
+#[ ni'o ni'o ni'o lo se tcidu ]#
 
 func isSu(unit: Unit): bool =
-  ## Test unit is `su`, which ends text before it.
+  ## jdice lo du'u le pagbu cu vasru zo su po'o
+  ##   .i zo su fanmo lo selci'a poi lidne zo su
   not unit.is_read and unit.refusal == RefusalText.Su
 
 
 func isErasure(unit: Unit): bool =
-  ## Test unit holds words erasure erases, and cmavo erasing them.
+  ## jdice lo du'u le pagbu cu vasru lo valsi poi lo nu vimcu cu vimcu ke'a ku'o .e lo cmavo poi
+  ##     vimcu le valsi
   not unit.is_read and unit.refusal == RefusalText.Erasure
 
 
 func isWall(item: ItemLive): bool =
-  ## Test node is `su` that erasure after it reaches not: no quotation held it in first pass.
+  ## jdice lo du'u le jgena cu pezli zo su gi'e selkla no nu vimcu poi se lidne le jgena
+  ##   .i no nu sitna cu vasru le jgena ca lo pamoi nu tcidu
   item.is_su and not item.is_quoted
 
 
 func addLeaves(node: Node, leaves: var seq[int]) =
-  ## Add index of each unit under node to `leaves`, in order of tree.
+  ## jmina lo namcu pe ro pagbu poi cnita le jgena ku'o `leaves` ta'i le porsi pe le tricu
   if node.is_terminal:
     leaves.add node.at
     return
@@ -174,24 +317,32 @@ func addLeaves(node: Node, leaves: var seq[int]) =
 
 
 func stopMost(node: Node): int =
-  ## Give greatest unit where grammar stops in tree, as error node marks; -1 where none stops.
+  ## jarco lo romoi pagbu poi le gerna cu sisti bu'u ke'a ne'i le tricu
+  ##   .i lo srejge cu sinxa le stuzi poi le gerna cu sisti bu'u ke'a
+  ##   .i va'o lo nu le gerna cu sisti bu'u no pagbu kei jarco li ni'u pa
   if node.is_terminal: return -1
   result = (if node.stop.isSome: node.stop.get.at else: -1)
   for k in 0 ..< node.children.len: result = max(result, node.children[k].stopMost)
 
 
 func toCleans(occurrences: openArray[Occurrence]): seq[bool] =
-  ## Give, for each word of text read, whether stream reads text from it as it reads it in
-  ##   place: no quotation holds it, as word `zo` quotes, word of `zoi` or `la'o` after it, or
-  ##   word of `lo'u` that `le'u` closes. Word stream refuses takes state of word stream reads
-  ##   after it. `lo'u` no `le'u` closes waits as opener instead (`OpenerLive`).
+  ## jdice fi ro valsi pe le se tcidu fe lo du'u xu kau le porsi be lo valsi cu tcidu le selci'a poi
+  ##     selkra le valsi ta'i lo nu tcidu le valsi bu'u lo stuzi pe le valsi
+  ##   .i la'e di'u jetnu va'o lo nu no nu sitna cu vasru le valsi
+  ##   .i mupli fa lo valsi poi zo zo sitna ke'a ku'o .e lo valsi poi zo zoi .a zo la'o sitna ke'a
+  ##       ku'o .e lo valsi poi zo lo'u sitna ke'a zi'e poi zo le'u fanmo lo nu sitna pe ke'a
+  ##   .i ro valsi poi le porsi be lo valsi cu to'e curmi ke'a ponse lo jalge pe lo valsi poi le
+  ##       porsi cu tcidu ke'a zi'e poi se lidne le valsi
+  ##   .i zo lo'u poi no zo le'u fanmo ke'a denpa ta'i lo krasi valsi to `OpenerLive` toi
   func isSelmaho(word: Occurrence, selmaho: Selmaho): bool =
-    ## Test word is cmavo of `selmaho`.
+    ## jdice lo du'u le valsi cu cmavo `selmaho`
     word.reading.is_word and word.reading.selmaho == some(selmaho)
 
   result = newSeq[bool](occurrences.len)
   var
-    reads: seq[int]  # each word stream reads, past words it refuses
+    # ro valsi poi le porsi be lo valsi cu tcidu ke'a
+    #   .i no valsi poi le porsi cu to'e curmi ke'a cmima
+    reads: seq[int]
     is_reads = newSeq[bool](occurrences.len)
   for k in 0 ..< occurrences.len:
     result[k] = true
@@ -201,8 +352,9 @@ func toCleans(occurrences: openArray[Occurrence]): seq[bool] =
   var i = 0
   while i < reads.len:
     template word: untyped = occurrences[reads[i]]
-      ## Alias word, which `let` would copy.
-    var last = i  # last word quotation holds
+      ## lo datcme be le valsi
+      ##   .i `let` da'i fukpi le valsi
+    var last = i  # lo romoi valsi poi lo nu sitna cu vasru ke'a
     if word.isSelmaho(Selmaho.Zo): last = i + 1
     elif word.isSelmaho(Selmaho.Zoi):
       let is_quoting = i + 2 < reads.len and not occurrences[reads[i + 2]].reading.is_word
@@ -214,48 +366,79 @@ func toCleans(occurrences: openArray[Occurrence]): seq[bool] =
       if j < reads.len: last = j
     for q in i + 1 .. min(last, reads.high): result[reads[q]] = false
     i = last + 1
-  var is_clean = true  # stream reads from word it reads next as it reads it in place
+  # le porsi be lo valsi cu tcidu lo selci'a poi selkra le bavla'i valsi ta'i lo nu tcidu le valsi
+  #     bu'u lo stuzi pe le valsi
+  var is_clean = true
   for k in countdown(occurrences.high, 0):
     if is_reads[k]: is_clean = result[k] else: result[k] = is_clean
 
 
 func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq[int] =
-  ## Give byte where span of each child of root of text read opens: first word past words of
-  ##   child before it, so span holds each word erasure erased before child, which erasure in
-  ##   it may have erased; first opens at `first`. Child shares span of child before where its
-  ##   first word stands among words of that child, as refused word between word and indicator
-  ##   marking it; where quotation holds word span would open at (`toCleans`), which erasure
-  ##   erased; where word before its first word is `sa` that erasure erased, past each word stream
-  ##   or rules refuse, since first word rules read past `sa` gives its marker (19.13); where
-  ##   child before is words erasure erased, which erasure in it may have erased; or where rules
-  ##   refuse `zei` before its first word, past each word stream or rules refuse or erasure
-  ##   erases, since `zei` joins word after it once rules read one there, as once they refuse
-  ##   quotation that opens there (19.16).
+  ## jarco lo stuzi poi lo selku'e be ro panzi be lo genja be le se tcidu cu krasi bu'u ke'a
+  ##   .i le selku'e cu krasi bu'u lo pamoi valsi poi se lidne lo valsi pe lo panzi poi lidne le
+  ##       panzi
+  ##   .i se ki'u bo le selku'e cu vasru ro valsi poi lo nu vimcu cu pu vimcu ke'a zi'e poi lidne le
+  ##       panzi zi'e noi lo nu vimcu poi zvati le panzi cu pu ka'e vimcu ke'a
+  ##   .i le pamoi se kuspe cu krasi bu'u `first`
+  ##
+  ## ni'o lo panzi goi ko'e pilno lo selku'e be lo panzi poi lidne ko'e be'o goi ko'o va'o lo nu lo
+  ##     pamoi valsi pe ko'e cmima lo valsi pe le panzi poi lidne ko'e
+  ##   .i mupli fa lo valsi poi se to'e curmi gi'e jbini pa valsi .e lo cnivla poi tcita le valsi
+  ##   .i ji'a ko'e pilno ko'o va'o lo nu lo nu sitna cu vasru lo valsi poi le selku'e be ko'e cu
+  ##       ka'e krasi bu'u ke'a to `toCleans` toi
+  ##   .i lo nu vimcu cu pu vimcu le valsi
+  ##
+  ## ni'o ji'a ko'e pilno ko'o va'o lo nu lo valsi poi lidne lo pamoi valsi pe ko'e du pa zo sa poi
+  ##     lo nu vimcu cu pu vimcu ke'a
+  ##   .i lo nu sisku lo pu valsi cu cliva ro valsi poi se to'e curmi le porsi be lo valsi be'o .a
+  ##       le javni
+  ##   .i ki'u bo lo pamoi valsi poi le javni cu tcidu ke'a zi'e poi se lidne zo sa dunda lo sinxa
+  ##       be zo sa to `CLL 19.13` toi
+  ##   .i ji'a ko'e pilno ko'o va'o lo nu le panzi poi lidne ko'e du lo valsi poi lo nu vimcu cu pu
+  ##       vimcu ke'a
+  ##   .i lo nu vimcu poi zvati ko'e cu pu ka'e vimcu le valsi
+  ##
+  ## ni'o ji'a ko'e pilno ko'o va'o lo nu le javni cu to'e curmi pa zo zei poi lidne lo pamoi valsi
+  ##     pe ko'e
+  ##   .i lo nu sisku lo pu valsi cu cliva ro valsi poi se to'e curmi le porsi be lo valsi be'o .a
+  ##       le javni gi'a selvi'u lo nu vimcu
+  ##   .i ki'u bo zo zei jorne lo valsi poi se lidne zo zei ca lo nu le javni cu tcidu pa valsi bu'u
+  ##       le stuzi
+  ##   .i mupli fa lo nu le javni cu to'e curmi lo nu sitna poi krasi bu'u le stuzi to `CLL 19.16`
+  ##       toi
   func isRefused(unit: Unit): bool =
-    ## Test rule of 19.16 refuses unit, so rules read on past its words.
+    ## jdice lo du'u lo javni pe `CLL 19.16` to'e curmi le pagbu
+    ##   .i se ki'u bo le javni cu ranji lo nu tcidu ba lo valsi pe le pagbu
     not unit.is_read and unit.refusal in {RefusalText.Quotation, RefusalText.Construct}
 
   func isRefusedZei(unit: Unit, word: Occurrence): bool =
-    ## Test rules refuse word of unit as `zei`, which joins word after it once they read one.
+    ## jdice lo du'u le valsi pe le pagbu cu du zo zei gi'e se to'e curmi le javni
+    ##   .i zo zei jorne lo valsi poi se lidne zo zei ca lo nu le javni cu tcidu pa valsi
     not unit.is_read and unit.refusal == RefusalText.Construct and word.reading.is_word and
       word.reading.selmaho == some(Selmaho.Zei)
 
   template units: untyped = region.reading.units
-    ## Alias units of text read, which `let` would copy.
+    ## lo datcme be lo pagbu pe le se tcidu
+    ##   .i `let` da'i fukpi le pagbu
   template occurrences: untyped = region.reading.occurrences
-    ## Alias words of text read, which `let` would copy.
+    ## lo datcme be lo valsi pe le se tcidu
+    ##   .i `let` da'i fukpi le valsi
   let cleans = occurrences.toCleans
-  var holders = newSeq[int](occurrences.len)  # unit holding each word; -1 for none
+  # ro valsi cu ponse lo namcu pe lo pagbu poi vasru le valsi
+  #   .i li ni'u pa cu sinxa lo nu no pagbu cu vasru le valsi
+  var holders = newSeq[int](occurrences.len)
   for w in 0 ..< occurrences.len: holders[w] = -1
   for u in 0 ..< units.len:
     for w in units[u].words: holders[w] = u
   result = newSeq[int](leaves.len)
-  var next = 0  # word past words of children before
+  var next = 0  # lo valsi poi se lidne lo valsi pe lo pu panzi
   for k in 0 ..< leaves.len:
-    let opening = (if leaves[k].len > 0: units[leaves[k][0]].words[0] else: next)  # first word
+    let opening = (if leaves[k].len > 0: units[leaves[k][0]].words[0] else: next)  # lo pamoi valsi
     var
-      before = opening - 1  # word before it, past words stream or rules refuse
-      prior = opening - 1  # word before it, past words erasure erases too, save `zei` refused
+      before = opening - 1  # lo pu valsi poi na se to'e curmi le porsi be lo valsi be'o .a le javni
+      # lo pu valsi poi na se to'e curmi le porsi be lo valsi be'o .a le javni gi'e na selvi'u
+      #   .i ku'i lo nu sisku cu na cliva zo zei poi le javni cu to'e curmi ke'a
+      prior = opening - 1
     while before >= 0 and (not occurrences[before].reading.is_word or
         (holders[before] >= 0 and units[holders[before]].isRefused)):
       dec before
@@ -282,8 +465,12 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
 
 
 func byteQuoted(text: string, at: int, delimiter: string): int =
-  ## Give byte where text `zoi` at byte `at` quotes opens: past written word after it where that
-  ##   word spells delimiter, else past written word holding `zoi`, which then holds delimiter.
+  ## jarco lo stuzi poi krasi lo selci'a poi zo zoi sitna ke'a
+  ##   .i zo zoi krasi bu'u `at`
+  ##   .i le stuzi cu se lidne lo selci'avla poi se lidne zo zoi ku'o va'o lo nu le selci'avla cu du
+  ##       le koivla
+  ##   .i va'o lo drata le stuzi cu se lidne lo selci'avla poi vasru zo zoi
+  ##   .i ca la'e di'u le selci'avla cu vasru le koivla
   var a = at
   while a < text.len and text[a] notin MARKS_BOUNDARY: inc a
   var b = a
@@ -294,8 +481,9 @@ func byteQuoted(text: string, at: int, delimiter: string): int =
 
 
 func isSpelled(text: string, first, last: int, delimiter: string): bool =
-  ## Test written word of bytes `first ..< last` of text spells `delimiter`, as stream reads word
-  ##   closing text `zoi` quotes (19.10).
+  ## jdice lo du'u su'o selci'avla pe lo stuzi po'u `first ..< last` pe le selci'a cu du `delimiter`
+  ##     ta'i lo nu le porsi be lo valsi cu tcidu lo valsi poi fanmo lo selci'a poi zo zoi sitna
+  ##     ke'a to `CLL 19.10` toi
   var at = first
   while at < last:
     if text[at] in MARKS_BOUNDARY:
@@ -308,10 +496,15 @@ func isSpelled(text: string, first, last: int, delimiter: string): bool =
 
 
 func readFrom(reader: var ReaderLive, start: int, is_final: bool): ReadingParts =
-  ## Read text from byte `start` on as its parts, each byte counted from start of text, inside
-  ##   words `lo'u` waiting before it quotes, as stream reads them. Before end, text read stops
-  ##   before last written word no mark ends, since next piece may go on with it, as `su'i`
-  ##   with `su`; and at `fa'o` that ends input, though its end counts past text after it.
+  ## tcidu lo selci'a poi selkra `start` ku'o ta'i lo pagbu be le selci'a
+  ##   .i lo nu kancu ro stuzi cu cfari bu'u lo krasi be le mulselci'a
+  ##   .i va'o lo nu zo lo'u poi denpa cu lidne `start` kei le selci'a cu se tcidu ne'i lo valsi poi
+  ##       zo lo'u sitna ke'a ta'i lo nu le porsi be lo valsi cu tcidu
+  ##
+  ## ni'o pu lo fanmo le se tcidu cu sisti pu lo romoi se ciska valsi poi no sinxa cu fanmo ke'a
+  ##   .i ki'u bo lo bavla'i spisa cu ka'e ranji le selci'avla mu'u lo nu zo su binxo zo su'i
+  ##   .i ji'a le se tcidu cu sisti bu'u zo fa'o poi fanmo le selci'a
+  ##   .i ku'i lo fanmo be le se tcidu cu se kancu ba lo selci'a poi se lidne zo fa'o
   var ending = reader.text.len
   if not is_final:
     while ending > start and reader.text[ending - 1] notin MARKS_BOUNDARY: dec ending
@@ -329,12 +522,16 @@ func readFrom(reader: var ReaderLive, start: int, is_final: bool): ReadingParts 
 
 
 
-#[ Reach back ]#
+#[ ni'o ni'o ni'o lo nu galfi lo pu valsi ]#
 
 func reopening(reader: ReaderLive, opener: OpenerLive): int =
-  ## Give byte where closer of quotation opener reads text again from: node holding opener, or
-  ##   where reading that put out `su` after it opened, since quotation quotes each `su` after
-  ##   it, so text before it reads again as text `su` ends not (19.9, 19.10).
+  ## jarco lo stuzi poi lo famvla pe le kravla pe lo nu sitna cu raptcidu le selci'a bu'u ke'a
+  ##   .i le stuzi cu du lo krasi be lo jgena poi vasru le kravla
+  ##   .i ja le stuzi cu du lo stuzi poi lo nu tcidu poi benji pa zo su poi se lidne le kravla cu
+  ##       cfari bu'u ke'a
+  ##   .i ki'u bo le nu sitna cu sitna ro zo su poi se lidne le kravla
+  ##   .i se ki'u bo lo selci'a poi lidne zo su selraptcidu ta'i lo selci'a poi zo su na fanmo ke'a
+  ##       to `CLL 19.9` .e `CLL 19.10` toi
   result = opener.start
   var k = reader.items.high
   while k >= 0 and reader.items[k].start > opener.at:
@@ -343,9 +540,11 @@ func reopening(reader: ReaderLive, opener: OpenerLive): int =
 
 
 func boundary(reader: ReaderLive, at: int): int =
-  ## Give byte at or before `at` where reading may open again: where node holding first byte of
-  ##   written word holding `at` opens, since stream reads each written word whole; start of text,
-  ##   with no node there.
+  ## jarco lo stuzi poi na se lidne `at` zi'e poi lo nu tcidu cu ka'e rapcfa bu'u ke'a
+  ##   .i lo selci'avla goi ko'a vasru `at`
+  ##   .i le stuzi cu du lo krasi be lo jgena poi vasru lo pamoi stuzi pe ko'a
+  ##   .i ki'u bo le porsi be lo valsi cu tcidu ro selci'avla ta'i lo mulno
+  ##   .i va'o lo nu no jgena cu zvati le stuzi kei le stuzi cu du lo krasi be le selci'a
   result = at
   while result > 0 and reader.text[result - 1] notin MARKS_BOUNDARY:
     var first = result - 1
@@ -356,39 +555,61 @@ func boundary(reader: ReaderLive, at: int): int =
 
 
 func reach(reader: ReaderLive, region: ReadingParts, start: int): Option[int] =
-  ## Give earliest byte before `start` that reading of text from `start` reaches: node holding
-  ##   opener whose closer text holds, or that `su` closes, node where its erasure lands, node
-  ##   its first unit read joins, and node whose stop names unit read after it; none where text
-  ##   before reads as it did. Words after first `su` of text read reach no node before it, save
-  ##   closer of quotation, which quotes `su`.
+  ## jarco lo pamoi stuzi poi lidne `start` zi'e poi lo nu tcidu le selci'a poi selkra `start` cu
+  ##     klama ke'a
+  ##   .i le selkla cu du lo jgena poi vasru lo kravla poi le selci'a cu vasru lo famvla pe ke'a
+  ##   .i ja le selkla cu du lo jgena poi vasru lo kravla poi zo su fanmo ke'a
+  ##   .i ja le selkla cu du lo jgena poi lo nu vimcu pe le selci'a cu klama ke'a
+  ##   .i ja le selkla cu du lo jgena poi lo pamoi pagbu poi se tcidu cu jorne ke'a
+  ##   .i ja le selkla cu du pa srejge goi ko'i noi lo nu ko'i sisti cu cmene lo pagbu poi se tcidu
+  ##       gi'e se lidne ko'i
+  ##
+  ## ni'o va'o lo nu le selci'a poi lidne `start` se tcidu ta'i lo nu pu se tcidu kei kei jarco no
+  ##     stuzi
+  ##   .i ro valsi poi se lidne lo pamoi cmavo po'u zo su pe le se tcidu cu klama no jgena poi lidne
+  ##       le cmavo
+  ##   .i ku'i lo famvla pe lo nu sitna noi sitna zo su cu ka'e klama lo jgena poi lidne le cmavo
   func earlier(back: Option[int], at: int): Option[int] =
-    ## Give earlier of byte kept and `at`.
+    ## jarco lo pamoi be le stuzi poi selra'e ku'o joi `at`
     some(if back.isSome: min(back.get, at) else: at)
 
   func landing(reader: ReaderLive, k, j, start: int): int =
-    ## Give byte where node `k` opens, where erasure of text from `start`, past node `j`, lands;
-    ##   past it where it is `su` that erasure reaches not.
+    ## jarco lo stuzi poi le jgena pe `k` krasi bu'u ke'a
+    ##   .i lo nu vimcu pe le selci'a poi selkra `start` klama le jgena
+    ##   .i le nu vimcu cu cliva le jgena pe `j`
+    ##   .i va'o lo nu le jgena cu pezli zo su poi lo nu vimcu cu na klama ke'a kei le stuzi cu se
+    ##       lidne le jgena
     if not reader.items[k].isWall: reader.items[k].start
     elif k + 1 < j: reader.items[k + 1].start
     else: start
 
   template units: untyped = region.reading.units
-    ## Alias units of text read, which `let` would copy.
+    ## lo datcme be lo pagbu pe le se tcidu
+    ##   .i `let` da'i fukpi le pagbu
   template occurrences: untyped = region.reading.occurrences
-    ## Alias words of text read, which `let` would copy.
+    ## lo datcme be lo valsi pe le se tcidu
+    ##   .i `let` da'i fukpi le valsi
   var
     back = none(int)
-    j = reader.items.len  # nodes before `start`
-    first = 0  # units of first text of text read, before its first `su`
+    j = reader.items.len  # lo jgena poi lidne `start`
+    first = 0  # lo pagbu poi lidne lo pamoi cmavo po'u zo su pe le se tcidu
   while j > 0 and reader.items[j - 1].start >= start: dec j
   while first < units.len and not units[first].isSu: inc first
 
-  # Closer of `tu'e`, `lu` or `to` that no opener of text opens closes opener of its kind that
-  #   waits before text, nearest first, as passes track them (`toParts`); text read again reads
-  #   each opener in it again, which may open no more. `su` closes each, as end does.
+  # lo famvla poi no kravla pe le selci'a cu mapti ke'a zi'e poi mapti zo tu'e .a zo lu .a zo to
+  #     fanmo lo kravla poi mapti le famvla gi'e denpa gi'e lidne le selci'a
+  #   .i le jbirai cu pamoi
+  #   .i le so'i nu tcidu cu jersi le kravla ta'i la'e di'u to `toParts` toi
+  #   .i le selci'a poi selraptcidu cu raptcidu ro kravla poi zvati le selci'a zi'e noi ka'e sisti
+  #       lo nu krasi
+  #   .i zo su fanmo ro le kravla ta'i lo fanmo be le selci'a
   var
-    strays: array[OPENERS.len, int]  # closers of each kind that close no opener of text
-    opened: seq[int]  # kind of each opener open in text, innermost last
+    # lo famvla poi fanmo no kravla pe le selci'a
+    #   .i ro klesi cu ponse pa namcu
+    strays: array[OPENERS.len, int]
+    # lo klesi be ro kravla poi kalri ne'i le selci'a
+    #   .i le kravla poi zvati ne'i ro drata cu romoi
+    opened: seq[int]
   for u in 0 ..< first:
     if not units[u].is_read: continue
     for k in 0 ..< OPENERS.len:
@@ -407,33 +628,41 @@ func reach(reader: ReaderLive, region: ReadingParts, start: int): Option[int] =
         dec left
       dec n
 
-  # Closer of quotation: `le'u` closes first `lo'u` that waits, which quotes each after it, and
-  #   delimiter its `zoi`; each quotes `su` before it.
+  # lo famvla pe lo nu sitna
+  #   .i zo le'u fanmo lo pamoi cmavo po'u zo lo'u poi denpa
+  #   .i ki'u bo le cmavo cu sitna ro zo lo'u poi se lidne le cmavo
+  #   .i lo koivla cu fanmo zo zoi pe vo'a
+  #   .i ro le nu sitna cu sitna ro zo su poi lidne le famvla
   if occurrences.isClosingLohu:
     var n = 0
     while n < reader.openers.len and reader.openers[n].selmaho != Selmaho.Lohu: inc n
     if n < reader.openers.len: back = back.earlier(reader.reopening(reader.openers[n]))
   for n in 0 ..< reader.openers.len:
     template opener: untyped = reader.openers[n]
-      ## Alias opener, which `let` would copy.
+      ## lo datcme be le kravla
+      ##   .i `let` da'i fukpi le kravla
     if opener.selmaho != Selmaho.Zoi: continue
     let is_closing = opener.delimiter.len == 0 or
       reader.text.isSpelled(max(start, opener.after), region.reading.size, opener.delimiter)
     if is_closing: back = back.earlier(reader.reopening(opener))
   if j == 0: return back
 
-  # `si` that finds no word erases words of nodes before, last first; `bu` or `zei` that finds
-  #   none acts on last word of nodes before, where no word kept stands before it (19.13, 19.16).
+  # zo si poi facki no valsi cu vimcu lo valsi pe lo jgena poi lidne le se tcidu
+  #   .i le romoi cu pamoi se vimcu
+  #   .i zo bu .a zo zei galfi lo romoi valsi pe lo jgena poi lidne le se tcidu ku'o va'o lo nu no
+  #       valsi poi selra'e cu lidne le cmavo to `CLL 19.13` .e `CLL 19.16` toi
   var
     deficit = 0
-    is_kept = false  # word kept stands before unit
+    is_kept = false  # lo valsi poi selra'e cu lidne le pagbu
   for u in 0 ..< first:
     template unit: untyped = units[u]
-      ## Alias unit, which `let` would copy.
+      ## lo datcme be le pagbu
+      ##   .i `let` da'i fukpi le pagbu
     if unit.is_read or unit.refusal == RefusalText.Selmaho: is_kept = true
     if unit.is_read or unit.refusal != RefusalText.Construct or unit.words.len != 1: continue
     template word: untyped = occurrences[unit.words[0]]
-      ## Alias word of unit, which `let` would copy.
+      ## lo datcme be lo valsi pe le pagbu
+      ##   .i `let` da'i fukpi le valsi
     if not word.reading.is_word: continue
     if word.reading.selmaho == some(Selmaho.Si): inc deficit
     elif word.reading.selmaho in [some(Selmaho.Bu), some(Selmaho.Zei)] and not is_kept:
@@ -445,20 +674,23 @@ func reach(reader: ReaderLive, region: ReadingParts, start: int): Option[int] =
       dec k
     back = back.earlier(reader.landing(k, j, start))
 
-  # `sa` that finds no marker in text erases back to node holding it, or to start of its text
-  #   (19.13).
+  # zo sa poi facki no sinxa ne'i le se tcidu cu vimcu lo pu valsi
+  #   .i le nu vimcu cu klama lo jgena poi vasru le sinxa .a lo krasi be lo selci'a pe zo sa to
+  #       `CLL 19.13` toi
   for marker in region.markers:
     var k = j - 1
     while k > 0 and not reader.items[k].isWall and marker notin reader.items[k].kept: dec k
     back = back.earlier(reader.landing(k, j, start))
 
-  # First unit read opens part only where it opens one after unit read before (`isCutAt`); and
-  #   stop that names unit read after node names first unit read here.
+  # lo pamoi pagbu poi se tcidu cu krasi lo pagbu be le selci'a va'o po'o lo nu le pamoi pagbu cu
+  #     krasi lo pagbu be le selci'a ba lo pagbu poi pu se tcidu to `isCutAt` toi
+  #   .i ji'a lo nu sisti poi cmene lo pagbu poi se tcidu gi'e se lidne le jgena cu cmene le pamoi
+  #       pagbu poi se tcidu vi
   let held = reader.items[j - 1].held
   if held < 0: return back
   var
     terminals: seq[Terminal]
-    first_read = none(int)  # byte of first unit read
+    first_read = none(int)  # lo stuzi pe lo pamoi pagbu poi se tcidu
   for u in 0 ..< first:
     if not units[u].is_read: continue
     terminals.add units[u].terminal
@@ -470,11 +702,12 @@ func reach(reader: ReaderLive, region: ReadingParts, start: int): Option[int] =
 
 
 
-#[ Change of NIF ]#
+#[ ni'o ni'o ni'o lo cenba pe `NIF` ]#
 
 func cut(reader: var ReaderLive, start: int): int =
-  ## Cut nodes, openers and NIF back to first node text from `start` holds, and give offset NIF
-  ##   cuts back to.
+  ## katna lo jgena .e lo kravla .e `NIF` bu'u lo pamoi jgena poi lo selci'a poi selkra `start`
+  ##     vasru ke'a
+  ##   .i ji'a jarco lo stuzi poi `NIF` selka'a bu'u ke'a
   var
     j = reader.items.len
     n = reader.openers.len
@@ -490,35 +723,54 @@ func addItems(
     reader: var ReaderLive, region: ReadingParts, leaves: openArray[seq[int]],
     spans: openArray[int], start: int, is_final: bool, change: var ChangeNif,
 ) =
-  ## Put out node of each part of text read but last, and of each unit refused before it, on
-  ##   line of its own; last part, and units after it, go out as tail. End puts out each.
-  ##   `su` ends text before it, so each node up to it goes out at once, and node after it
-  ##     takes nothing of node before it.
-  ##   Part of no unit, of text of no unit read, goes out only where no part of its text went out
-  ##   before, as whole text reads it: it stands last in first text, before first `su`.
+  ## benji lo jgena pe ro pagbu be le se tcidu be'o poi na romoi
+  ##   .i ji'a benji lo jgena pe ro pagbu poi se to'e curmi gi'e lidne le romoi pagbu be le se tcidu
+  ##   .i ro le jgena cu zvati pa linji pe vo'a
+  ##   .i le romoi pagbu be le se tcidu be'o .e ro pagbu poi se lidne le romoi pagbu cu selbe'i ta'i
+  ##       le rebla
+  ##   .i ca lo fanmo ro jgena cu selbe'i
+  ##
+  ## ni'o zo su fanmo lo selci'a poi lidne zo su
+  ##   .i se ki'u bo ro jgena poi na se lidne zo su cu zi selbe'i
+  ##   .i lo jgena poi se lidne zo su cpacu no da lo jgena poi lidne zo su
+  ##
+  ## ni'o lo pagbu be le selci'a be'o poi vasru no pagbu zi'e noi lo selci'a poi vasru no pagbu poi
+  ##     se tcidu cu jarco ke'a selbe'i va'o po'o lo nu no pagbu be lo selci'a pe vo'a cu pu selbe'i
+  ##     kei ta'i lo nu le mulselci'a cu se tcidu
+  ##   .i le pagbu cu zvati lo fanmo be le pamoi se ciska noi lidne lo pamoi cmavo po'u zo su
   template children: untyped = region.reading.tree.children
-    ## Alias nodes of root of text read, which `let` would copy.
+    ## lo datcme be lo jgena pe lo genja be le se tcidu
+    ##   .i `let` da'i fukpi le jgena
   template units: untyped = region.reading.units
-    ## Alias units of text read, which `let` would copy.
+    ## lo datcme be lo pagbu pe le se tcidu
+    ##   .i `let` da'i fukpi le pagbu
   template occurrences: untyped = region.reading.occurrences
-    ## Alias words of text read, which `let` would copy.
+    ## lo datcme be lo valsi pe le se tcidu
+    ##   .i `let` da'i fukpi le valsi
   var
-    first_su = children.len  # first leaf of `su` among children; count of them for none
-    last_su = -1  # last leaf of `su` among children; -1 for none
-    first_ended = children.len  # first leaf past text: `fa'o` that ends input, and words after
+    # lo pamoi pezli be zo su ne'i le panzi
+    #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du lo klani be le panzi
+    first_su = children.len
+    # lo romoi pezli be zo su ne'i le panzi
+    #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du li ni'u pa
+    last_su = -1
+    # lo pamoi pezli poi se lidne le selci'a
+    #   .i ro le pezli cu du zo fa'o poi fanmo le selci'a ku'o .a lo valsi poi se lidne zo fa'o
+    first_ended = children.len
   for k in 0 ..< children.len:
     if not children[k].is_terminal: continue
     if units[children[k].at].isSu: (first_su, last_su) = (min(first_su, k), k)
     if region.faho.isSome and children[k].at >= region.faho.get:
       first_ended = min(first_ended, k)
   let
-    hollow = min(first_su, first_ended) - 1  # child that may be part of no unit
+    # lo panzi poi ka'e du lo pagbu be le selci'a be'o poi vasru no pagbu
+    hollow = min(first_su, first_ended) - 1
     is_hollow = reader.items.len > 0 and reader.items[^1].is_parted and hollow >= 0 and
       not children[hollow].is_terminal and leaves[hollow].len == 0
-  var order: seq[int]  # children that go out, now or as tail, in order
+  var order: seq[int]  # lo porsi be lo panzi poi zi selbe'i gi'a selbe'i ta'i le rebla
   for k in 0 ..< children.len:
     if not is_hollow or k != hollow: order.add k
-  var count = order.len  # children of `order` that go out now
+  var count = order.len  # lo panzi poi cmima `order` gi'e ca selbe'i
   if not is_final:
     count = 0
     for m in 0 ..< order.len:
@@ -535,10 +787,11 @@ func addItems(
       (item.last, item.held) = (reader.items[^1].last, reader.items[^1].held)
       item.is_parted = reader.items[^1].is_parted or not children[k].is_terminal
     else: item.is_parted = not children[k].is_terminal
-    var read_last = -1  # unit read last
+    var read_last = -1  # lo romoi pagbu poi se tcidu
     for u in leaves[k]:
       template unit: untyped = units[u]
-        ## Alias unit, which `let` would copy.
+        ## lo datcme be le pagbu
+        ##   .i `let` da'i fukpi le pagbu
       if unit.is_read: (item.last, read_last) = (some(unit.terminal), u)
       if unit.is_read or unit.refusal == RefusalText.Selmaho:
         for w in unit.words: item.kept.add occurrences[w].reading.toTerminal
@@ -564,27 +817,40 @@ func addOpeners(
     reader: var ReaderLive, region: ReadingParts, leaves: openArray[seq[int]],
     spans: openArray[int], start: int,
 ) =
-  ## Add each opener of text read from `start` that waits for its closer, in order of byte:
-  ##   `tu'e`, `lu` and `to` left open, `lo'u` alone, and `zoi` no delimiter closes.
-  ##   Opener of quotation with word erasure erased before it opens again at `start`, and its
-  ##     closer reads text from it: closer may quote word that erased it, or change marker of
-  ##     `sa` before it.
+  ## jmina ro kravla poi denpa lo famvla pe ke'a gi'e zvati le selci'a poi selkra `start` ku'o ku'o
+  ##     ta'i lo porsi be lo stuzi
+  ##   .i ro le kravla cu du zo tu'e .a zo lu .a zo to .a zo lo'u .a zo zoi
+  ##   .i zo tu'e .e zo lu .e zo to stali lo ka kalri
+  ##   .i zo lo'u zvati pa pagbu poi vasru zo lo'u po'o
+  ##   .i no koivla cu fanmo zo zoi
+  ##
+  ## ni'o va'o lo nu lo nu vimcu cu vimcu lo valsi poi lidne lo kravla pe lo nu sitna kei kei le
+  ##     kravla cu rapkra bu'u `start`
+  ##   .i lo famvla pe le kravla cu tcidu le selci'a bu'u `start`
+  ##   .i ki'u bo le famvla cu ka'e sitna lo valsi poi vimcu le valsi gi'a galfi lo sinxa be zo sa
+  ##       poi lidne le kravla
   func ownerAt(region: ReadingParts, owners: openArray[int], at: int): Option[int] =
-    ## Give byte where child holding unit that holds word opening at byte `at` opens; none where
-    ##   no unit holds such word.
+    ## jarco lo stuzi poi lo panzi goi ko'a krasi bu'u ke'a
+    ##   .i ko'a vasru lo pagbu poi vasru lo valsi poi krasi bu'u `at`
+    ##   .i va'o lo nu no pagbu cu vasru lo valsi poi krasi bu'u `at` kei jarco no stuzi
     for u in 0 ..< region.reading.units.len:
       for w in region.reading.units[u].words:
         if region.reading.occurrences[w].start == at: return some(owners[u])
     none(int)
 
   template units: untyped = region.reading.units
-    ## Alias units of text read, which `let` would copy.
+    ## lo datcme be lo pagbu pe le se tcidu
+    ##   .i `let` da'i fukpi le pagbu
   template occurrences: untyped = region.reading.occurrences
-    ## Alias words of text read, which `let` would copy.
+    ## lo datcme be lo valsi pe le se tcidu
+    ##   .i `let` da'i fukpi le valsi
   var
-    owners = newSeq[int](units.len)  # byte where span of child holding each unit opens
-    holders = newSeq[int](occurrences.len)  # unit holding each word; -1 for none
-    erased_first = int.high  # byte of first word erasure erased
+    # ro pagbu cu ponse lo stuzi poi lo selku'e be lo panzi poi vasru le pagbu cu krasi bu'u ke'a
+    owners = newSeq[int](units.len)
+    # ro valsi cu ponse lo namcu pe lo pagbu poi vasru le valsi
+    #   .i li ni'u pa cu sinxa lo nu no pagbu cu vasru le valsi
+    holders = newSeq[int](occurrences.len)
+    erased_first = int.high  # lo stuzi pe lo pamoi valsi poi lo nu vimcu cu pu vimcu ke'a
     added: seq[OpenerLive]
   for k in 0 ..< leaves.len:
     for u in leaves[k]: owners[u] = spans[k]
@@ -593,7 +859,8 @@ func addOpeners(
     for w in units[u].words: holders[w] = u
   for w in 0 ..< occurrences.len:
     template word: untyped = occurrences[w]
-      ## Alias word, which `let` would copy.
+      ## lo datcme be le valsi
+      ##   .i `let` da'i fukpi le valsi
     if not word.reading.is_word or (holders[w] >= 0 and not units[holders[w]].isErasure): continue
     let
       selmaho = word.reading.selmaho
@@ -602,7 +869,8 @@ func addOpeners(
       erased_first = word.start
       break
   template opening(at: int, owner: Option[int]): int =
-    ## Give byte where reading opens again at closer of opener of quotation at byte `at`.
+    ## jarco lo stuzi poi lo nu tcidu cu rapcfa bu'u ke'a ca lo nu lo famvla pe lo kravla pe lo nu
+    ##     sitna poi krasi bu'u `at` se tcidu
     if owner.isNone or erased_first < at: start else: owner.get
   for u in region.open:
     added.add OpenerLive(
@@ -618,18 +886,27 @@ func addOpeners(
       after: reader.text.byteQuoted(zoi.start, zoi.delimiter), delimiter: zoi.delimiter,
     )
 
-  # `zoi` stream reads as no quotation, inside words `lo'u` quotes, takes three words after it
-  #   as quotation once they come (`toRoles` of `prose.nim`), so it waits: alone, or erased.
+  # pa zo zoi goi ko'a zvati ne'i lo valsi poi zo lo'u sitna ke'a
+  #   .i le porsi be lo valsi na tcidu ko'a ta'i lo kravla pe lo nu sitna
+  #   .i ko'a sitna le ci valsi poi se lidne ko'a ca lo nu le ci valsi cu klama to `toRoles` pe
+  #       `prose.nim` toi
+  #   .i se ki'u bo ko'a denpa
+  #   .i ko'a sepli gi'a selvi'u
   for w in 0 ..< occurrences.len:
     template word: untyped = occurrences[w]
-      ## Alias word, which `let` would copy.
+      ## lo datcme be le valsi
+      ##   .i `let` da'i fukpi le valsi
     if not word.reading.is_word or word.reading.selmaho != some(Selmaho.Zoi): continue
     var
-      reads: seq[int]  # two words stream reads after it: delimiter, then text it quotes, if any
+      # le re valsi poi le porsi be lo valsi cu tcidu ke'a zi'e poi se lidne zo zoi
+      #   .i le pamoi cu koivla
+      #   .i le remoi cu se sitna va'o lo nu zasti
+      reads: seq[int]
       next = w + 1
     while next < occurrences.len and reads.len < 2:
       template after: untyped = occurrences[next].reading
-        ## Alias reading of word after, which `let` would copy.
+        ## lo datcme be lo nu tcidu lo bavla'i valsi
+        ##   .i `let` da'i fukpi le nu tcidu
       if after.is_word or after.refusal == Refusal.Foreign: reads.add next
       inc next
     let
@@ -637,7 +914,9 @@ func addOpeners(
       u = holders[w]
       is_erased = u < 0 or units[u].isErasure
       is_whole = not is_erased and (not units[u].is_read or units[u].words.countIt(it > w) >= 3)
-    if is_quoting or is_whole: continue  # stream quotes text, or unit holds its three words
+    # le porsi be lo valsi cu sitna le selci'a
+    #   .i ja le pagbu cu vasru le ci valsi pe zo zoi
+    if is_quoting or is_whole: continue
     added.add OpenerLive(
       selmaho: Selmaho.Zoi, at: word.start,
       start: opening(word.start, if is_erased: none(int) else: some(owners[u])),
@@ -646,9 +925,13 @@ func addOpeners(
 
 
 func addRest(reader: var ReaderLive, first: int): ChangeNif =
-  ## Put out each written word of text from byte `first` up to end of text read, past `fa'o`
-  ##   that ends input, as unit of its own, which stream reads not (19.15); no text before it
-  ##   reads again, since each node before `fa'o` went out once it read.
+  ## benji ro selci'avla pe le selci'a poi selkra `first` ku'o ta'i pa pagbu poi vasru le se ciska
+  ##     valsi po'o
+  ##   .i le selci'a cu fanmo bu'u lo fanmo be le se tcidu gi'e se lidne zo fa'o poi fanmo lo
+  ##       selci'a
+  ##   .i le porsi be lo valsi na tcidu le se ciska valsi to `CLL 19.15` toi
+  ##   .i no selci'a poi lidne le selci'a cu selraptcidu
+  ##   .i ki'u bo ro jgena poi lidne zo fa'o cu pu selbe'i ca lo nu pu se tcidu
   result = ChangeNif(at: reader.nif.len, start: first)
   var at = first
   while at < reader.ending:
@@ -670,8 +953,11 @@ func addRest(reader: var ReaderLive, first: int): ChangeNif =
 
 
 func readChange(reader: var ReaderLive, at: int, is_final: bool): ChangeNif =
-  ## Read text from byte `at` on, back as far as it reaches, and give change to NIF: node of each
-  ##   part from first node read again, as each goes out, then tail of part still open.
+  ## tcidu lo selci'a poi selkra `at` ku'o .e ro pu selci'a poi le selci'a cu klama ke'a
+  ##   .i jarco lo cenba pe `NIF`
+  ##   .i le cenba cu vasru lo jgena pe ro pagbu be le selci'a poi selkra lo pamoi jgena poi
+  ##       selraptcidu ku'o ku'o ta'i lo nu ro le jgena cu selbe'i
+  ##   .i ba bo le cenba cu vasru lo rebla pe le pagbu poi ca'o kalri
   var
     start = reader.boundary(at)
     region = reader.readFrom(start, is_final)
@@ -692,43 +978,53 @@ func readChange(reader: var ReaderLive, at: int, is_final: bool): ChangeNif =
   var stop = faho
   while stop < reader.text.len and reader.text[stop] notin MARKS_BOUNDARY: inc stop
   reader.stop = some(stop)
-  var k = 0  # child holding `fa'o`, whose span end reads again from
+  # lo panzi poi vasru zo fa'o
+  #   .i lo fanmo be le selci'a cu raptcidu bu'u lo selku'e be le panzi
+  var k = 0
   while k < spans.high:
     template child: untyped = region.reading.tree.children[k]
-      ## Alias child of root, which `let` would copy.
+      ## lo datcme be lo panzi be le genja
+      ##   .i `let` da'i fukpi le panzi
     if child.is_terminal and child.at == region.faho.get: break
     inc k
-  reader.start = min(reader.start, spans[k])  # end reads `fa'o` again
+  reader.start = min(reader.start, spans[k])  # lo fanmo be le selci'a cu raptcidu zo fa'o
 
 
 
-#[ Live text ]#
+#[ ni'o ni'o ni'o lo jmive se ciska ]#
 
 func push*(reader: var ReaderLive, piece: string): ChangeNif =
-  ## Read next piece of live text, and give change it makes to NIF: nodes that go out, and tail
-  ##   of part still open. Piece may cut word, which next piece ends.
+  ## tcidu lo bavla'i spisa be lo mivyselci'a gi'e jarco lo cenba poi le spisa cu rinka ke'a ne'i
+  ##     `NIF`
+  ##   .i le cenba cu vasru lo jgena poi selbe'i .e lo rebla pe le pagbu poi ca'o kalri
+  ##   .i le spisa cu ka'e katna lo valsi
+  ##   .i lo bavla'i spisa cu fanmo le valsi
   doAssert not reader.is_ended, "Live text should take no piece after its end."
   reader.text.add piece
-  var ending = reader.text.len  # text read ends past last mark between words
+  var ending = reader.text.len  # le se tcidu cu fanmo ba le romoi sinxa poi jbini lo valsi
   while ending > reader.ending and reader.text[ending - 1] notin MARKS_BOUNDARY: dec ending
   if ending == reader.ending:
-    return ChangeNif(at: reader.nif.len, start: reader.start_tail, tail: reader.tail)  # none new
+    return ChangeNif(at: reader.nif.len, start: reader.start_tail, tail: reader.tail)  # no cnino
   for n in 0 ..< reader.openers.len:
     template opener: untyped = reader.openers[n]
-      ## Alias opener, which `let` would copy.
+      ## lo datcme be le kravla
+      ##   .i `let` da'i fukpi le kravla
     if reader.stop.isNone: break
     let is_closing = opener.selmaho == Selmaho.Zoi and opener.at < reader.stop.get and
       reader.text.isSpelled(max(reader.ending, opener.after), ending, opener.delimiter)
-    if is_closing: reader.stop = none(int)  # `zoi` before `fa'o` quotes it once closed
-  let first = reader.ending  # text not read yet
+    if is_closing: reader.stop = none(int)  # zo zoi poi lidne zo fa'o sitna ri ca lo nu selfa'o
+  let first = reader.ending  # lo selci'a poi na pu se tcidu
   reader.ending = ending
   if reader.stop.isSome: return reader.addRest(first)
   reader.readChange(reader.start, is_final = false)
 
 
 func finish*(reader: var ReaderLive): ChangeNif =
-  ## Read end of live text: text from first opener still waiting on reads as whole text does, and
-  ##   each node left goes out, so NIF holds node of each part of text.
+  ## tcidu lo fanmo be lo mivyselci'a
+  ##   .i lo selci'a poi selkra lo pamoi krasi valsi poi ca'o denpa cu se tcidu ta'i lo nu le
+  ##       mulselci'a cu se tcidu
+  ##   .i ro jgena poi stali cu selbe'i
+  ##   .i se ki'u bo `NIF` vasru lo jgena pe ro pagbu be le selci'a
   doAssert not reader.is_ended, "Live text should end once."
   reader.is_ended = true
   var start = reader.start
@@ -737,21 +1033,30 @@ func finish*(reader: var ReaderLive): ChangeNif =
 
 
 
-#[ Turns ]#
+#[ ni'o ni'o ni'o lo nu carna ]#
 
 func toSentences*(piece: string): seq[string] =
-  ## Cut piece before each word of selma'o I or NIhO, which opens sentence or paragraph, as stream
-  ##   reads piece alone; pieces join to piece. So script reads one sentence at each turn of event
-  ##   loop, where page gives no worker (ruling on #859).
-  ##   Stream that refuses piece cuts it in words before refusal alone. Cut moves no NIF: text
-  ##     read piece by piece gives NIF of its parts, wherever pieces cut (law of `test_live.nim`).
+  ## katna lo spisa pu ro cmavo be zoi gy. I .gy. .a zoi gy. NIhO .gy. ta'i lo nu le porsi be lo
+  ##     valsi cu tcidu le spisa po'o
+  ##   .i le cmavo cu krasi lo jufra .a lo ju'agri
+  ##   .i le spisa cu jalge lo nu jmina ro le selka'a
+  ##   .i se ki'u bo le samtci cu tcidu pa jufra ca ro nu `event loop` carna kei va'o lo nu le papri
+  ##       cu dunda no gunka to `Architect` jdice di'u bu'u `#859` toi
+  ##
+  ## ni'o va'o lo nu le porsi be lo valsi cu to'e curmi le spisa kei le porsi cu katna le spisa ne'i
+  ##     lo valsi po'o poi lidne le nu to'e curmi
+  ##   .i le nu katna cu galfi no pagbu be `NIF`
+  ##   .i lo selci'a poi ro spisa be ke'a cu se tcidu ta'i lo porsi cu jarco `NIF` pe lo pagbu be le
+  ##       selci'a va'o ro nu le spisa cu katna le se ciska to lo flalu pe `test_live.nim` toi
   var reading = piece.readStream
-  if not reading.is_read: reading = piece[0 ..< reading.start].readStream  # words before refusal
+  # lo valsi poi lidne le nu to'e curmi
+  if not reading.is_read: reading = piece[0 ..< reading.start].readStream
   var last = 0
   if reading.is_read:
     for n in 0 ..< reading.occurrences.len:
       template occurrence: untyped = reading.occurrences[n]
-        ## Alias word, which `let` would copy on JavaScript backend.
+        ## lo datcme be le valsi
+        ##   .i `let` da'i fukpi le valsi va'o lo nu fanva fi `JavaScript`
       let is_opener = occurrence.reading.is_word and occurrence.reading.selmaho.isSome and
         occurrence.reading.selmaho.get in {Selmaho.I, Selmaho.Niho}
       if is_opener and occurrence.start > last:
@@ -761,11 +1066,20 @@ func toSentences*(piece: string): seq[string] =
 
 
 func combine*(changes: openArray[ChangeNif], nif: string): ChangeNif =
-  ## Join changes that pieces read in turn made into change of all of them: least offset and byte
-  ##   any one opens at, NIF from that offset on, as `nif` holds it after last, and tail of last.
-  ##   Each change keeps NIF before its offset, so NIF before least offset stands as before
-  ##     first. Each word that change keeps ends at its byte, and each word it gives opens there or
-  ##     past, so least byte ties change of all as each ties its own.
+  ## jmina lo cenba poi lo spisa poi se tcidu ta'i lo porsi cu rinka ke'a ku'o fo pa cenba pe ro le
+  ##     spisa
+  ##   .i le jalge cu krasi bu'u lo stuzi pe `NIF` ge'u .e lo stuzi pe le selci'a
+  ##   .i ro le re stuzi cu du lo mecraistu poi su'o le cenba cu krasi bu'u ke'a
+  ##   .i ji'a le jalge cu ponse `NIF` poi selkra le stuzi pe `NIF` ku'o ta'i lo nu `nif` vasru le
+  ##       selci'a ba le romoi cenba kei gi'e ponse le rebla pe le romoi cenba
+  ##
+  ## ni'o ro cenba cu ralte `NIF` poi lidne lo stuzi pe le cenba
+  ##   .i se ki'u bo `NIF` poi lidne le mecraistu cu stali ta'i lo nu zasti pu le pamoi cenba
+  ##   .i ro valsi poi pa cenba cu ralte ke'a fanmo bu'u lo stuzi poi na se lidne le stuzi pe le
+  ##       cenba
+  ##   .i ro valsi poi le cenba cu jarco ke'a krasi bu'u lo stuzi poi na lidne le stuzi pe le cenba
+  ##   .i se ki'u bo le jalge cu jorne le selci'a le mecraistu ta'i lo nu ro cenba cu jorne le
+  ##       selci'a lo stuzi pe vo'a
   doAssert changes.len > 0, "Changes should be one or more; got none."
   result = ChangeNif(at: changes[0].at, start: changes[0].start, tail: changes[^1].tail)
   for k in 1 ..< changes.len:

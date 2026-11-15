@@ -496,16 +496,57 @@ suite "Camera":
     for handle in 0..<scene.bound:
       if scene.isAlive(handle):
         placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
-    let (eye, pivot) = (camera.eye, camera.pivot)
+    let eye = camera.eye
     # Nearest ahead answers, and one behind is passed over however near it stands.
     #   Eye stands one unit out at +x, so depths are five and thirty one.
-    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 5.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 5.0
     # Hidden objects are not drawn, so they set no scale.
     scene.setVisible(0, false)
-    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 31.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 31.0
     # Nothing ahead at all reads zero, which hands scale back to distance to pivot.
     scene.setVisible(2, false)
-    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 0.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 0.0
+
+
+  test "a line reaches as near as it passes the eye, and one through it or square behind none":
+    # Fault: line reached where it passes nearest pivot, and near clip that this set cut away
+    #   its part nearer eye (repository issue 929). No point of line stands nearer eye than
+    #   line's own distance, so clip at four-hundredth of that distance cuts none of it.
+    # Camera at origin looking along -x, as above: eye stands one unit out at +x.
+    let camera = cameraAround(ORIGIN, 1.0, Direction(x: 1, y: 0, z: 0))
+    proc reachLines(lines: openArray[(Position, Direction)]): float =
+      ## Read nearest reach ahead of scene holding these lines, each through place along way.
+      var scene = initScene()
+      for (place, way) in lines:
+        discard scene.addObject(
+          place.toMultivector ∧ (place + way).toMultivector, "line", Ink.Rose
+        )
+      var placed = newSeq[Placement](scene.bound)
+      for handle in 0..<scene.bound:
+        placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+      reachNear(placed, scene, camera.originView, camera.eye, camera.frame.forward)
+    let
+      beside = (Position(x: 1.0, y: 0.0, z: 0.25), Direction(x: -1.0, y: 0.5, z: 0.0))
+      through = (Position(x: 1.0, y: 0.0, z: 0.0), Direction(x: -1.0, y: 1.0, z: 0.0))
+      behind = (Position(x: 3.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0))
+      slanted = (Position(x: 3.0, y: 0.0, z: 0.0), Direction(x: -1.0, y: 1.0, z: 0.0))
+      limit_under = (
+        Position(x: 1.0, y: 0.0, z: 0.5 * DISTANCE_LIMIT_NEAR), Direction(x: -1.0, y: 0.5, z: 0.0)
+      )
+      limit_over = (
+        Position(x: 1.0, y: 0.0, z: 2.0 * DISTANCE_LIMIT_NEAR), Direction(x: -1.0, y: 0.5, z: 0.0)
+      )
+    # Line 0.25 above eye reaches 0.25, not 0.8, depth where it passes nearest pivot.
+    check reachLines([beside]) =~ 0.25
+    # Line through eye shows as one point, and line square to sight behind eye shows nothing.
+    check reachLines([through]) =~ 0.0
+    check reachLines([behind]) =~ 0.0
+    check reachLines([through, behind, beside]) =~ 0.25
+    # Slanted line nearest eye behind it still runs ahead, so it reaches its distance.
+    check reachLines([slanted]) =~ sqrt(2.0)
+    # Nearer than least orbit reads as through eye; just past it, line reaches its distance.
+    check reachLines([limit_under]) == 0.0
+    check abs(reachLines([limit_over]) - 2.0 * DISTANCE_LIMIT_NEAR) <= 1.0e-3 * DISTANCE_LIMIT_NEAR
 
 
   test "a moved camera carries the view origin to its eye, and a still one leaves it standing":

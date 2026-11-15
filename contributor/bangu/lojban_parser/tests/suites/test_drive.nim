@@ -1,14 +1,26 @@
-## Hold backend of driven checks, `tools/drive.nim`, to end each process Chromium starts before
-##   run removes its profile and gives what page reported: processes of Chromium write profile
-##   after first one exits, so profile removed while one lives fails, or comes back.
-##   Case as found, 2026-11-11, on branch of live script: full Chrome for Testing 153.0.8010.12,
-##     as `LOJBAN_CHROMIUM` named it, wrote `Default/TransportSecurity` after its first process
-##     exited, and `removeDir` of profile failed with `Directory not empty`.
-##   Domain is each process of Chromium, at any depth, that lives once first one exits: fake
-##     leaves one that writes profile till it ends, as Chrome did, and one two levels down that
-##     never ends.
-##   Fake of Chromium is script of shell, so no browser runs here: it reports end of run, as page
-##     does, through `curl`.
+## cipra lo du'u le samtci po'u `tools/drive.nim` noi jitro lo cipra cu sisti ro pruce poi
+##     `Chromium` rinka lo nu ke'a cfari ku'o pu lo nu le nu cipra cu vimcu le vreji pe vo'a gi'e
+##     jarco lo selsku be le papri
+##   .i ki'u bo lo pruce pe `Chromium` ciska fi le vreji ba lo nu le pamoi pruce cu sisti
+##   .i se ki'u bo lo nu vimcu le vreji ca lo nu su'o pruce cu jmive cu fliba
+##   .i ja le vreji cu rapselzba
+##
+## ni'o lo mupli cu terfa'i de'i `2026-11-11` bu'u lo jimca be `git` be'o pe le samtci pe lo
+##     mivyselci'a
+##   .i `LOJBAN_CHROMIUM` cmene `Chrome for Testing 153.0.8010.12` noi mulno
+##   .i `Chrome` cu pu ciska `Default/TransportSecurity` ba lo nu le pamoi pruce cu sisti
+##   .i `removeDir` pe le vreji cu pu fliba gi'e jarco `Directory not empty`
+##
+## ni'o le cipra cu cipra ro pruce pe `Chromium` ge'u zi'e poi jmive ba lo nu le pamoi pruce cu
+##     sisti
+##   .i lo ni le pruce cu condi cu na vajni
+##   .i le fukpi cu zbasu pa pruce poi ciska fi le vreji ca ro lo nu ke'a zasti ku'o ta'i `Chrome`
+##       gi'e zbasu pa pruce poi lo rirni be lo rirni be ke'a cu du le fukpi ku'o zi'e poi no roi
+##       sisti
+##
+## ni'o le fukpi be `Chromium` cu selci'a fi `shell`
+##   .i se ki'u bo le cipra cu pilno no tcidu be lo papri
+##   .i le fukpi cu cusku lo fanmo be le nu cipra sepi'o `curl` ta'i lo papri
 
 {.experimental: "strictFuncs".}
 
@@ -22,9 +34,12 @@ import ../../tools/drive
 
 
 const
-  DIRECTORY_FAKE = "build" / "drive" / "fake"  ## Folder fake of Chromium runs in, and serves.
+  DIRECTORY_FAKE = "build" / "drive" / "fake"
+    ## lo vasru poi le fukpi be `Chromium` cu gunka ne'i ke'a
+    ##   .i `runPage` sabji le vasru
   PATH_RECORD = DIRECTORY_FAKE / "descendant"
-    ## Id of process fake leaves two levels down, as fake records it.
+    ## lo namcu poi cmene lo pruce poi lo rirni be lo rirni be ke'a cu du le fukpi
+    ##   .i le fukpi cu ciska le namcu
   FAKE_CHROMIUM = """#!/bin/sh
 # Fake of Chromium: leave process two levels down that never ends, and record its id, under
 # process that waits on it; leave process that writes profile till it ends; report end of run.
@@ -41,7 +56,8 @@ until [ -e "$profile/late" ]; do :; done
 curl -s -X POST --data 0 "${address}done" > /dev/null
 exec sleep infinity
 """
-    ## Fake of Chromium; last argument is address of page, as `runPage` passes it.
+    ## le fukpi be `Chromium`
+    ##   .i `runPage` benji lo judri be le papri le fukpi ta'i le romoi sumti
 
 
 
@@ -57,10 +73,12 @@ suite "Internal: Backend of driven checks":
       is_alive = false
     try:
       run = runPage(fake, "", DIRECTORY_FAKE)
-    finally:  # run that fails, or raises, leaves no process behind
+    finally:  # no pruce cu stali ba lo nu cipra poi fliba gi'a renro lo nafmupli
       let descendant = Pid(PATH_RECORD.readFile.strip.parseInt)
-      is_alive = kill(descendant, 0) == 0  # zombie counts: run reaps each process it ends
-      if is_alive: discard kill(descendant, SIGKILL)  # writer ends with it
+      # `kill` jdice lo du'u lo pruce poi morsi zi'e poi no da cpacu lo fanmo be ke'a cu jmive
+      #   .i ki'u bo le nu cipra cu cpacu lo fanmo be ro pruce poi le nu cipra cu sisti ke'a
+      is_alive = kill(descendant, 0) == 0
+      if is_alive: discard kill(descendant, SIGKILL)  # le ciska be fi le vreji cu sisti ji'a
     check run.code == 0
     check not is_alive
     check not dirExists(DIRECTORY_FAKE / "profile")

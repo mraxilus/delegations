@@ -1,19 +1,42 @@
-## Give module of NIF each reading should read as, and read module back into tree, so law of
-##   suite is reader of what writer writes; reader of spec is `nif_read.nim` of library, which
-##   page reads NIF through too.
-##   Module of reading is model of format `nif.nim` gives in its header: directives, then each
-##     chain by tag of rule closing it and number of rule opening it, and class of each terminal
-##     with bytes and letters of each word; for reading that marks each error, error node and unit
-##     no terminal holds too. Writer gives text, and model gives nodes, so neither checks itself.
-##   Rebuild reads module back into tree and terminals (`toTree` of `merge.nim`, which merge of
-##     parts reads NIF through too): number of rule from its name, each rule between two ends of
-##     chain from `LUT_CHAIN_BY_ENDS`, `-` for `_` of tag, `'` for `h` of word. So law holds that
-##     format loses nothing of tree, not just that writer and model agree.
-##   Law of cover (`isCovering`) holds tree to bytes of text: each byte of each word lies in one
-##     leaf, leaves follow text, and each other byte is mark between words; suites of marks and
-##     of live text read it.
-##   Suites of native and JavaScript builds read same reader, model and worked example, so each
-##     is written once (II.9).
+## dunda lo selci'a be fi `NIF` be'o poi lo selci'a be fi `NIF` be'o pe ro se tcidu cu se tcidu ta'i
+##     ke'a
+##   .i ji'a rapyzba lo tricu le selci'a
+##   .i se ki'u bo lo flalu pe le cipra cu tcidu lo selci'a be le ciska
+##   .i le tcidu pe le velski cu du `nif_read.nim` pe le bakfu
+##   .i lo papri cu tcidu `NIF` sepi'o `nif_read.nim` ji'a
+##
+## ni'o le selci'a be fi `NIF` be'o poi le vi datnyvei cu dunda ke'a morna lo tarmi poi `nif.nim`
+##     skicu ke'a ne'i lo krapinka pe vo'a
+##   .i le morna cu selkra lo minde gi'e vasru ji'a ro porsi be lo javni .e ro genvla
+##   .i ro porsi cu selci'a ta'i lo tcita be lo javni poi fanmo le porsi be'o .e lo namcu pe lo
+##       javni poi krasi le porsi
+##   .i ro genvla cu selci'a ta'i lo klesi pe vo'a ge'u .e lo stuzi .e lo lerfu pe ro valsi
+##   .i va'o lo nu le se tcidu cu sinxa ro srera kei le morna cu vasru ji'a lo srejge .e lo pagbu
+##       poi no genvla cu vasru ke'a
+##
+## ni'o le ciska cu dunda lo selci'a
+##   .i le morna cu dunda lo jgena
+##   .i se ki'u bo no le re fancu cu cipra fi vo'a
+##
+## ni'o lo nu rapyzba cu tcidu le selci'a gi'e rapyzba lo tricu .e lo gerna valsi to `toTree` pe
+##     `merge.nim` toi
+##   .i lo nu jmina lo pagbu cu tcidu `NIF` sepi'o `toTree` ji'a
+##   .i le nu rapyzba cu cpacu lo namcu pe ro javni lo cmene be le javni gi'e cpacu ro javni poi
+##       zvati lo jbini be le re fanmo be lo porsi ku'o `LUT_CHAIN_BY_ENDS`
+##   .i `-` basti ro `_` pe lo tcita
+##   .i `'` basti ro `h` pe lo valsi
+##   .i se ki'u bo le flalu cu cipra lo du'u le tarmi cu cirko no pagbu be le tricu
+##   .i le flalu na cipra lo du'u le ciska cu tugni le morna kei po'o
+##
+## ni'o le flalu pe le gacri to `isCovering` toi cu cipra lo du'u le tricu cu mapti lo stuzi pe le
+##     selci'a
+##   .i ro stuzi pe ro valsi cu zvati pa pezli
+##   .i lo porsi be lo pezli cu mintu lo porsi be le selci'a
+##   .i ro datstu cu du lo sinxa poi zvati lo jbini be lo valsi
+##   .i lo cipra pe lo sinxa .e lo cipra pe lo mivyselci'a cu tcidu le flalu
+##
+## ni'o lo jbecipra .e lo cipra pe `JavaScript` tcidu le mitytcidu .e le mitmo'a .e le mitmupli
+##   .i se ki'u bo ro le ci pagbu cu selci'a pa roi to `Article II.9` toi
 
 {.experimental: "strictFuncs".}
 
@@ -25,31 +48,45 @@ export merge, nif_read
 
 
 const
-  TAG_ERROR = "srera"  ## Tag of error node, gismu of rulings on #859, as model gives it.
-  TAG_EXPECTS = "nitcu"  ## Tag of terminals grammar reads where it stops, as model gives it.
-  TAG_UNREAD = "rivbi"  ## Tag of unit no terminal holds, as model gives it.
+  TAG_ERROR = "srera"
+    ## lo tcita be lo srejge
+    ##   .i le tcita cu gismu ja'i lo seljdi pe `#859`
+    ##   .i le morna cu dunda le tcita
+  TAG_EXPECTS = "nitcu"
+    ## lo tcita be lo genvla poi le gerna cu tcidu ke'a bu'u lo stuzi poi le gerna cu sisti bu'u
+    ##     ke'a
+    ##   .i le morna cu dunda le tcita
+  TAG_UNREAD = "rivbi"
+    ## lo tcita be lo pagbu poi no genvla cu vasru ke'a
+    ##   .i le morna cu dunda le tcita
   EXAMPLE_NIF* = (
-    text: "me'o vo",  # Example 6.98 of CLL 1.1
+    text: "me'o vo",  # lo mupli po'u `CLL 6.98` pe `CLL 1.1`
     module: "(.nif27)\n(.lang \"cll-21.1\")\n" &
       "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n",
   )
-    ## Text, and module `nif.nim` writes for it, byte for byte: chain from `text` 0 to `sumti-6`
-    ##   97 is one node, and so is chain from `mex` 310 to `number` 812; tag `sumti-6` takes `_`,
-    ##   and word `me'o` takes `h`.
+    ## lo selci'a .e lo selci'a be fi `NIF` be'o poi ro lerfu pe ke'a mintu lo selci'a be `nif.nim`
+    ##   .i lo porsi poi selkra `text<0>` gi'e selfa'o `sumti-6<97>` du pa jgena
+    ##   .i lo porsi poi selkra `mex<310>` gi'e selfa'o `number<812>` go'i ji'a
+    ##   .i lo tcita be `sumti-6` cu pilno `_`
+    ##   .i lo valsi po'u zo me'o pilno `h`
 
 
 
-#[ Model ]#
+#[ ni'o ni'o ni'o lo morna ]#
 
 func letters(occurrence: Occurrence): string =
-  ## Give letters string literal of occurrence holds: word with `h` for each `'`, or text
-  ##   quotation holds, or written word stream refuses, as it is.
+  ## dunda lo lerfu poi lo lerpoi pe lo selci'avla cu vasru ke'a
+  ##   .i va'o lo nu le selci'avla cu valsi kei `h` basti ro `'`
+  ##   .i lo selci'a poi lo nu sitna cu vasru ke'a ku'o .e lo selci'avla poi le porsi be lo valsi cu
+  ##       to'e curmi ke'a stali
   if occurrence.reading.is_word: occurrence.text.replace('\'', 'h') else: occurrence.text
 
 
 func spelled(stage: RefusalText): string =
-  ## Give tag stage should read as: selma'o as chapter 20 names it, lojban word in lower case,
-  ##   English term of CLL as it stands (rulings on #859).
+  ## dunda lo tcita poi lo velru'e cu se tcidu ta'i ke'a
+  ##   .i lo cmene be lo selma'o cu mintu lo cmene poi `CLL 20` dunda ke'a
+  ##   .i lo jbovla cu selci'a ta'i lo cmale'u
+  ##   .i lo glivla pe `CLL` stali to lo seljdi pe `#859` toi
   case stage
   of RefusalText.Su: "SU"
   of RefusalText.Faho: "FAhO"
@@ -58,7 +95,8 @@ func spelled(stage: RefusalText): string =
 
 
 func spelled(refusal: Refusal): string =
-  ## Give tag refusal of stream should read as, spelled as stage is.
+  ## dunda lo tcita poi lo nu to'e curmi pe lo porsi be lo valsi cu se tcidu ta'i ke'a
+  ##   .i le tcita cu selci'a ta'i lo tcita be lo velru'e
   case refusal
   of Refusal.Faho: "FAhO"
   of Refusal.Slinkuhi: "slinkuhi"
@@ -66,21 +104,31 @@ func spelled(refusal: Refusal): string =
 
 
 func byteStop(reading: ReadingMarked, at: int): int =
-  ## Give byte grammar stops at, from unit `at`: byte where unit opens, or size of text at end.
+  ## dunda lo stuzi poi le gerna cu sisti bu'u ke'a sepi'o le pagbu poi `at` sinxa ke'a
+  ##   .i le stuzi cu du lo stuzi poi le pagbu cu krasi bu'u ke'a
+  ##   .i va'o lo nu `at` zvati lo fanmo kei le stuzi cu du lo ni le selci'a cu barda
   if at < reading.units.len: reading.occurrences[reading.units[at].words[0]].start
   else: reading.size
 
 
 func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): NodeNif =
-  ## Give node of NIF that node of tree should read as: rule holding rule alone passes on to it,
-  ##   as chain opening at `top`; rule closing chain gives tag, then `top` where chain opens above
-  ##   it, then its nodes; terminal gives class, then bytes and letters of each word.
-  ##   Error node gives `srera`, byte grammar stops at, rule by name, `nitcu` with classes,
-  ##     then its nodes, and closes chain above it; unit no terminal holds gives `rivbi`, stage,
-  ##     refusal of stream for stage `Stream`, then its words.
+  ## dunda lo jgena pe `NIF` poi lo jgena pe lo tricu cu se tcidu ta'i ke'a
+  ##   .i va'o lo nu lo javni cu vasru pa javni po'o kei le fancu cu dunda le selvau ta'i lo pagbu
+  ##       be lo porsi poi krasi bu'u `top`
+  ##   .i lo javni poi fanmo lo porsi cu dunda lo tcita pe vo'a ge'u ce'o `top` ce'o lo jgena pe
+  ##       vo'a
+  ##   .i va'o lo nu le porsi cu selkra le javni poi fanmo le porsi kei `top` na seldu'a
+  ##   .i lo genvla cu dunda lo klesi ce'o lo stuzi .e bo lo lerfu pe ro valsi
+  ##
+  ## ni'o lo srejge cu dunda `srera` ce'o lo stuzi poi le gerna cu sisti bu'u ke'a ku'o ce'o lo
+  ##     cmene be lo javni be'o ce'o `nitcu` joi bo lo klesi ce'o lo jgena pe vo'a gi'e fanmo lo
+  ##     porsi poi gapru le srejge
+  ##   .i lo pagbu poi no genvla cu vasru ke'a dunda `rivbi` ce'o lo velru'e ce'o lo valsi pe vo'a
+  ##   .i le velru'e po'u `Stream` se lidne lo nu to'e curmi pe lo porsi be lo valsi
   if node.is_terminal:
     template unit: untyped = reading.units[node.at]
-      ## Alias unit of terminal, which `let` would copy on JavaScript backend.
+      ## datcme lo pagbu pe le genvla
+      ##   .i `let` zbasu lo fukpi be le pagbu va'o lo nu fanva fi `JavaScript`
     result = NodeNif(
       kind: KindNif.Compound, text: (if unit.is_read: $unit.terminal else: TAG_UNREAD)
     )
@@ -91,7 +139,8 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
         result.children.add NodeNif(kind: KindNif.Identifier, text: refusal)
     for k in 0 ..< unit.words.len:
       template word: untyped = reading.occurrences[unit.words[k]]
-        ## Alias word of unit, which `let` would copy on JavaScript backend.
+        ## datcme lo valsi pe le pagbu
+        ##   .i `let` zbasu lo fukpi be le valsi va'o lo nu fanva fi `JavaScript`
       result.children.add NodeNif(kind: KindNif.Number, number: word.start)
       result.children.add NodeNif(kind: KindNif.Number, number: word.finish)
       result.children.add NodeNif(kind: KindNif.Literal, text: word.letters)
@@ -122,7 +171,10 @@ func toNodeNif(node: Node, top: int, reading: ReadingText | ReadingMarked): Node
 
 
 func toModule*(reading: ReadingText | ReadingMarked): seq[NodeNif] =
-  ## Give module that NIF of reading should read as: version, language, then tree.
+  ## dunda lo selci'a poi lo selci'a be fi `NIF` be'o pe lo se tcidu cu se tcidu ta'i ke'a
+  ##   .i lo namcu pe le tarmi cu krasi le selci'a
+  ##   .i lo bangu cu se lidne le namcu
+  ##   .i le tricu cu se lidne le bangu
   @[
     NodeNif(kind: KindNif.Compound, text: ".nif27"),
     NodeNif(
@@ -134,14 +186,17 @@ func toModule*(reading: ReadingText | ReadingMarked): seq[NodeNif] =
 
 
 
-#[ Rebuild ]#
+#[ ni'o ni'o ni'o lo nu rapli zbasu ]#
 
 func toTerminals(reading: ReadingText | ReadingMarked): seq[TerminalNif] =
-  ## Give terminals reading holds: class, then bytes and letters of each word; unit no terminal
-  ##   holds gives `rivbi`, stage, and refusal of stream for stage `Stream`.
+  ## dunda lo genvla poi lo se tcidu cu vasru ke'a
+  ##   .i lo klesi cu lidne lo stuzi .e lo lerfu pe ro valsi
+  ##   .i lo pagbu poi no genvla cu vasru ke'a dunda `rivbi` ce'o lo velru'e
+  ##   .i le velru'e po'u `Stream` se lidne lo nu to'e curmi pe lo porsi be lo valsi
   for k in 0 ..< reading.units.len:
     template unit: untyped = reading.units[k]
-      ## Alias unit, which `let` would copy on JavaScript backend.
+      ## datcme le pagbu
+      ##   .i `let` zbasu lo fukpi be le pagbu va'o lo nu fanva fi `JavaScript`
     var
       terminal = (if unit.is_read: $unit.terminal else: TAG_UNREAD & " " & unit.refusal.spelled)
       words: seq[WordNif]
@@ -149,14 +204,17 @@ func toTerminals(reading: ReadingText | ReadingMarked): seq[TerminalNif] =
       terminal.add " " & reading.occurrences[unit.words[0]].reading.refusal.spelled
     for m in 0 ..< unit.words.len:
       template word: untyped = reading.occurrences[unit.words[m]]
-        ## Alias word of unit, which `let` would copy on JavaScript backend.
+        ## datcme lo valsi pe le pagbu
+        ##   .i `let` zbasu lo fukpi be le valsi va'o lo nu fanva fi `JavaScript`
       words.add (word.start, word.finish, word.text)
     result.add (terminal: terminal, words: words)
 
 
 func isSame(a, b: Node, reading: ReadingText | ReadingMarked): bool =
-  ## Decide whether tree of reading `a`, and tree `b` rebuilt, hold same rules, numbers and
-  ##   terminals, in same order; and same place grammar stops at, which `b` holds as byte.
+  ## jdice lo du'u lo tricu po'u `a` pe lo se tcidu .e lo tricu po'u `b` poi selrapyzba cu vasru lo
+  ##     mi'ujva .e lo mitna'u .e lo mitygenvla ta'i lo mitpoi
+  ##   .i ji'a jdice lo du'u le re tricu cu vasru lo mitstu poi le gerna cu sisti bu'u ke'a
+  ##   .i `b` vasru le stuzi ta'i lo stuzi pe le selci'a
   if a.is_terminal != b.is_terminal: return false
   if a.is_terminal: return a.at == b.at
   if a.rule != b.rule or a.number != b.number or a.children.len != b.children.len: return false
@@ -172,7 +230,7 @@ func isSame(a, b: Node, reading: ReadingText | ReadingMarked): bool =
 
 
 func addLeaves(node: Node, leaves: var seq[int]) =
-  ## Add index of each leaf under node to `leaves`, in order of tree.
+  ## jmina lo namcu pe ro pezli poi le jgena cu vasru ke'a ku'o `leaves` ta'i lo porsi pe le tricu
   if node.is_terminal:
     leaves.add node.at
     return
@@ -180,24 +238,29 @@ func addLeaves(node: Node, leaves: var seq[int]) =
 
 
 func isCovering*(marked: ReadingMarked, text: string): bool =
-  ## Decide whether each byte of each word of text lies in one leaf of tree, leaves follow order
-  ##   of text by their first byte, and each byte no leaf holds is mark between words, or comma
-  ##   between two words of one written word (3.3).
+  ## jdice lo du'u ro stuzi pe ro valsi pe le selci'a cu zvati pa pezli pe le tricu
+  ##   .i ji'a jdice lo du'u lo porsi be lo pezli cu mintu lo porsi be le selci'a ja'i lo pamoi
+  ##       stuzi pe ro pezli
+  ##   .i ji'a jdice lo du'u ro stuzi poi no pezli cu vasru ke'a du lo sinxa poi zvati lo jbini be
+  ##       lo valsi .a lo lerfu po'u slaka bu poi zvati lo jbini be re valsi pe pa se ciska valsi to
+  ##       `CLL 3.3` toi
   var
-    counts = newSeq[int](text.len)  # leaves holding each byte
-    last = -1  # first byte of leaf before
+    counts = newSeq[int](text.len)  # lo klani be lo pezli poi vasru lo stuzi
+    last = -1  # lo pamoi stuzi pe lo pezli poi lidne
   var leaves: seq[int]
   marked.tree.addLeaves(leaves)
   for u in leaves:
     template unit: untyped = marked.units[u]
-      ## Alias unit, which `let` would copy.
+      ## datcme le pagbu
+      ##   .i `let` zbasu lo fukpi be le pagbu
     let first = marked.occurrences[unit.words[0]].start
     if first <= last: return false
     last = first
     for w in unit.words:
       template word: untyped = marked.occurrences[w]
-        ## Alias word, which `let` would copy.
-      if word.start > word.finish or word.finish > text.len: return false  # empty text quoted
+        ## datcme le valsi
+        ##   .i `let` zbasu lo fukpi be le valsi
+      if word.start > word.finish or word.finish > text.len: return false  # lo kutselsitna
       for b in word.start ..< word.finish: inc counts[b]
   for b in 0 ..< text.len:
     if counts[b] > 1: return false
@@ -206,8 +269,11 @@ func isCovering*(marked: ReadingMarked, text: string): bool =
 
 
 func isReadBack*(reading: ReadingText | ReadingMarked): bool =
-  ## Decide whether NIF of reading reads as model of format gives it, and rebuilds tree and
-  ##   terminals of reading whole: law both suites hold.
+  ## jdice lo du'u lo selci'a be fi `NIF` be'o pe lo se tcidu cu mapti lo seldu'a be le morna be le
+  ##     tarmi
+  ##   .i ji'a jdice lo du'u lo nu tcidu le selci'a cu rapyzba le multricu .e ro genvla pe le se
+  ##       tcidu
+  ##   .i ro le re cipra cu cipra le vi flalu
   var module: seq[NodeNif]
   try: module = reading.toNif.readModule
   except ValueError: return false

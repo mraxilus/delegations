@@ -1,39 +1,85 @@
-## Draw NIF of live text as one SVG for each part, and line naming what it holds; page of
-##   project shows both (`pages/live.html`), and suites hold drawing natively and under
-##   JavaScript.
+## ro pagbu be lo selci'a be fi `NIF` be'o pe lo mivyselci'a cu selxra pa pixra be fo `SVG`
+##   .i pa linji cu cusku lo selvau be le selci'a
+##   .i le papri pe le vi selgu'a cu jarco ro pixra .e le linji to `pages/live.html` toi
+##   .i lo cipra cu cipra lo nu pixra ne'i le jbezba .e le selzba pe `JavaScript`
 ##
-##   |-------------|----------------------------------------------------------------------|
-##   | Code        | Meaning                                                              |
-##   |-------------|----------------------------------------------------------------------|
-##   | drawn       | SVG of each part of NIF so far and of its tail, with counts and line |
-##   | drawnMerged | SVG of each tree parts of NIF so far merge to, with counts and line  |
-##   | laidOut     | boxes and cards of one part, as `drawn` places them                  |
-##   |-------------|----------------------------------------------------------------------|
+##   |---------------|---------------------------------------------------------------------------|
+##   | lo fancu      | lo smuni                                                                  |
+##   |---------------|---------------------------------------------------------------------------|
+##   | `drawn`       | lo namcu .e lo linji .e lo pixra be ro pagbu be le ca selci'a .e le rebla |
+##   | `drawnMerged` | lo namcu .e lo linji .e lo pixra be ro tricu poi ve jmina le ca selci'a  |
+##   | `laidOut`     | punji lo tanxe .e lo karda vu'o pe pa pagbu ta'i lo nu `drawn` punji   |
+##   |---------------|---------------------------------------------------------------------------|
 ##
-##   Drawing reads NIF alone, through `nif_read.nim`, as any other program reads it: page holds
-##     NIF live reader gives, and draws it, so drawing shows what NIF carries, and no more.
-##   Part is node of one line of NIF. Its words stand in one row of cards at foot, one column
-##     each, in order of text; each rule over them is box, with root at top. Row of box is its
-##     height over cards, so two boxes of one row hold disjoint words, and their centres stand
-##     one column apart at least.
-##   Box stands for node of NIF: chain of rules, each holding next alone, names rule nearest
-##     words, as its tag gives it, then outermost rule, its number, and count of chain
-##     (`LUT_CHAIN_BY_ENDS`), as node gives number of rule opening chain. Rule that holds no word
-##     draws no box, since no column places it.
-##   Error node (`srera`) is box of class `err`: byte where grammar stops, and rule stopping
-##     there; title of box names each terminal grammar reads there (`nitcu`). Error node that
-##     holds no word is card of its own at its byte.
-##   Unit no terminal holds (`rivbi`) is card of class `off`, naming stage refusing it.
-##   Node of tail is still open: next change replaces it, so its part takes class `open`.
-##   Each word writes `'` for `h`, which NIF writes for `'`; text `zoi` quotes stays as it is.
-##   Positions are whole pixels, and every number is integer, so build of Nim and build of
-##     JavaScript write same text, which suites and `drive` hold.
-##   Merge draws each tree merge of parts of NIF so far gives, from that NIF alone (`merge.nim`):
-##     tail stays out, since next change replaces it. Line names one tree where merge gives tree
-##     of one pass, else trees, words, errors and words unread, as `drawn` counts them. NIF that
-##     reads not draws no part, and line names node refused, counted from 1, and reason.
-##   Classes of elements are styled by page; drawing names no colour.
-##   Cost: long part makes wide drawing, which page scrolls.
+## ni'o le vi datnyvei cu tcidu lo selci'a be fi `NIF` po'o sepi'o `nif_read.nim` ta'i lo nu ro
+##     drata samtci cu tcidu
+##   .i le papri cu ralte lo selci'a be fi `NIF` be'o poi lo tcidu be lo mivyselci'a cu dunda ke'a
+##       ku'o gi'e pixra le selci'a
+##   .i se ki'u bo le pixra cu jarco lo selvau be le se ciska po'o
+##
+## ni'o ro pagbu cu du lo jgena pe pa linji pe le selci'a be fi `NIF`
+##   .i ro valsi pe le pagbu cu selxra pa karda
+##   .i le karda cu zvati pa pinpoi bu'u le dzikoi be le pixra
+##   .i ro karda cu ponse pa rajypau
+##   .i le porsi be le karda cu mintu le porsi be le valsi pe le selci'a
+##
+## ni'o ro javni poi gapru le karda cu tanxe
+##   .i le genja cu gapru ro datyta'e
+##   .i lo pinpoi pe ro tanxe cu du lo ni le tanxe cu gapru le karda
+##   .i se ki'u bo no valsi cu selvau re tanxe pe pa pinpoi
+##   .i lo ni lo midju be le re tanxe cu darno cu na mleca lo ni pa rajypau cu ganra
+##
+## ni'o ro tanxe cu sinxa pa jgena pe le selci'a be fi `NIF`
+##   .i pa jgena ka'e porsi lo javni
+##   .i ro javni pe le porsi cu vasru pa javni po'o
+##   .i le tanxe pe le porsi cu ciska lo cmene be le javni poi traji lo ka jibni lo valsi ku'o ta'i
+##       le tcita pe le jgena
+##   .i lo cmene cu se lidne le javni poi traji lo ka bartu ku'o .e lo namcu pe le javni ge'u .e lo
+##       du'u le porsi cu vasru xo kau javni to `LUT_CHAIN_BY_ENDS` toi
+##   .i ki'u bo le jgena cu jarco lo namcu pe le javni poi krasi le porsi
+##
+## ni'o lo javni poi vasru no valsi cu selxra no tanxe
+##   .i ki'u bo no rajypau cu punji le javni
+##
+## ni'o ro srera jgena to `srera` toi cu tanxe gi'e cmima `err`
+##   .i le tanxe cu ciska lo stuzi poi le gerna cu sisti bu'u ke'a ku'o .e le javni poi sisti bu'u
+##       le stuzi
+##   .i lo cmene be le tanxe cu liste ro genvla poi le gerna ka'e tcidu ke'a bu'u le stuzi to
+##       `nitcu` toi
+##   .i lo srejge poi vasru no valsi cu selxra pa karda pe vo'a bu'u lo stuzi pe vo'a
+##
+## ni'o ro pagbu poi no genvla cu vasru ke'a to `rivbi` toi cu karda gi'e cmima `off`
+##   .i le karda cu ciska lo cmene be le pagbu be le genturfa'i be'o poi to'e curmi le selvau be le
+##       karda
+##
+## ni'o ro jgena pe le rebla cu ca'o kalri
+##   .i lo bavla'i cenba cu basti le jgena
+##   .i se ki'u bo le pagbu pe le jgena cu cmima `open`
+##
+## ni'o ro valsi cu ciska `'` lo stuzi be `h` noi `NIF` ciska ke'a lo stuzi be `'`
+##   .i lo selci'a poi zo zoi sitna ke'a na selga'i
+##
+## ni'o ro stuzi cu klani lo mulna'u `pixel`
+##   .i ro namcu cu mulna'u
+##   .i se ki'u bo le selzba pe `Nim` .e le selzba pe `JavaScript` ciska le mitselci'a
+##   .i lo cipra .e lo minde po'u `drive` cipra di'u
+##
+## ni'o ro tricu poi lo nu jmina lo pagbu be le ca selci'a be fi `NIF` cu jarco ke'a selxra sepi'o
+##     le se ciska po'o to `merge.nim` toi
+##   .i le rebla cu na se jmina
+##   .i ki'u bo lo bavla'i cenba cu basti le rebla
+##
+## ni'o va'o lo nu lo nu jmina cu jarco le tricu pe lo nu tcidu le mulselci'a kei le linji cu cusku
+##     pa tricu
+##   .i va'o lo drata le linji cu kancu lo tricu .e lo valsi .e lo srera .e lo valsi poi na se tcidu
+##       ku'o ta'i lo nu `drawn` kancu
+##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu kei no pagbu cu selxra
+##   .i le linji cu cusku lo namcu pe le jgena poi se to'e curmi ku'o .e lo krinu
+##   .i li pa cu krasi lo nu kancu le jgena
+##
+## ni'o le papri cu dunda lo tarmi ro klesi be lo pagbu be le pixra
+##   .i le pixra cu cusku no skari
+##   .i jdima fa lo nu lo clapau cu selxra lo ganxra noi le papri cu muvgau ke'a
 
 {.experimental: "strictFuncs".}
 
@@ -43,86 +89,121 @@ import ../lojban_parser/[grammar, merge, nif_read]
 
 
 type
-  KindPlace* {.pure.} = enum  ## Define kind of place drawing gives.
-    Rule  ## Box of rule, or of chain of rules.
-    Error  ## Box of error node, or card of one that holds no word.
-    Word  ## Card of terminal.
-    Unread  ## Card of unit no terminal holds.
+  KindPlace* {.pure.} = enum  ## lo klesi be lo selpu'i be le pixra
+    Rule  ## lo tanxe be pa javni .a pa porsi be lo javni
+    Error  ## lo tanxe be pa srejge be'o .a lo karda pe pa srejge poi vasru no valsi
+    Word  ## lo karda pe pa genvla
+    Unread  ## lo karda pe pa pagbu poi no genvla cu vasru ke'a
 
-  Place* = object  ## Define box or card as drawing places it.
+  Place* = object  ## lo tanxe .a lo karda vu'o poi le pixra cu punji ke'a
     kind*: KindPlace
-    x*: int  ## Centre, in pixels.
-    y*: int  ## Top, in pixels.
-    height*: int  ## Rows over cards; zero for card.
-    first*: int  ## Column of first card under place.
-    last*: int  ## Column of last card under place.
-    lines*: seq[string]  ## Lines place writes, top to bottom.
-    title*: string  ## Text reader sees on pointing at place; empty where none.
-    parent*: int  ## Index of place over this one; -1 for root.
-    words*: int  ## Words card holds; zero for box.
+    x*: int  ## lo midju poi selmre fo `pixel`
+    y*: int  ## lo galkoi poi selmre fo `pixel`
+    height*: int
+      ## lo ni le selpu'i cu gapru le karda kei ta'i lo pinpoi
+      ##   .i li no va'o lo nu le selpu'i cu karda
+    first*: int  ## lo rajypau pe le pamoi karda poi cnita le selpu'i
+    last*: int  ## lo rajypau pe le romoi karda poi cnita le selpu'i
+    lines*: seq[string]
+      ## lo linji poi le selpu'i cu ciska ke'a
+      ##   .i lo galyli'i cu lidne lo dzili'i
+    title*: string
+      ## lo selci'a poi lo tcidu cu viska ke'a ca lo nu farsni le selpu'i
+      ##   .i lo kunti lerpoi va'o lo nu no selci'a cu zasti
+    parent*: int
+      ## lo namcu pe le selpu'i poi gapru le vi selpu'i
+      ##   .i li ni'u pa va'o le genja
+    words*: int
+      ## lo du'u le karda cu vasru xo kau valsi
+      ##   .i li no va'o lo nu le selpu'i cu tanxe
 
-  PartDrawn* = object  ## Define one part as drawn: its places, and size of its drawing.
-    places*: seq[Place]  ## Cards first, in order of text, then boxes, children before parent.
+  PartDrawn* = object  ## lo selpu'i pe pa pagbu poi selxra ku'o .e lo ni le pixra cu barda
+    places*: seq[Place]
+      ## ro karda cu lidne ro tanxe
+      ##   .i le porsi be le karda cu mintu le porsi be le valsi pe le selci'a
+      ##   .i lo panzi cu lidne lo rirni
     width*: int
     height*: int
 
-  DrawingLive* = object  ## Define drawing of NIF so far: markup of each part, counts and line.
-    html*: string  ## One `figure` of class `part` for each part, in order, tail last.
-    status*: string  ## Line naming what parts hold.
+  DrawingLive* = object
+    ## lo pixra be le ca selci'a be fi `NIF`
+    ##   .i le klesi cu vasru lo selci'a be fi `HTML` be'o pe ro pagbu ge'u .e lo namcu .e lo linji
+    html*: string
+      ## ro pagbu cu selxra pa `figure` poi cmima `part`
+      ##   .i lo pixra cu selpoi ta'i le pagbu
+      ##   .i lo pixra pe le rebla cu romoi
+    status*: string  ## lo linji poi cusku lo selvau be le pagbu
     count_parts*: int
-    count_words*: int  ## Words of terminals.
-    count_errors*: int  ## Error nodes.
-    count_unread*: int  ## Words of units no terminal holds.
-    count_open*: int  ## Parts of tail, still open.
-    is_refused*: bool = false  ## Merge refused NIF that reads not, so drawing holds none.
+    count_words*: int  ## lo du'u lo genvla cu vasru xo kau valsi
+    count_errors*: int  ## lo du'u le pixra cu vasru xo kau srejge
+    count_unread*: int  ## lo du'u lo pagbu poi no genvla cu vasru ke'a vasru xo kau valsi
+    count_open*: int  ## lo du'u le rebla cu vasru xo kau pagbu noi ca'o kalri
+    is_refused*: bool = false
+      ## lo nu jmina cu to'e curmi lo selci'a be fi `NIF` be'o poi na se tcidu
+      ##   .i se ki'u bo le pixra cu vasru no pagbu
 
 
 const
-  COLUMN* = 144  ## Width of column of one card.
-  WIDTH_PLACE* = 136  ## Width of box and card.
-  HEIGHT_BOX* = 40  ## Height of box.
-  HEIGHT_CARD = 58  ## Height of card.
-  ROW* = 64  ## Step between rows of boxes.
-  MARGIN = 10  ## Margin around drawing.
-  LETTERS_MOST = 15  ## Characters card writes of its letters at most.
-  LABEL_MOST = 17  ## Characters box writes of rule nearest words at most.
-  CHAIN_MOST = 21  ## Characters box writes of outermost rule of chain at most.
-  TAG_ERROR = "srera"  ## Tag of error node (`nif.nim`).
-  TAG_EXPECTS = "nitcu"  ## Tag of terminals grammar reads where it stops (`nif.nim`).
-  TAG_UNREAD = "rivbi"  ## Tag of unit no terminal holds (`nif.nim`).
-  TAG_QUOTING = ["ZOI"]  ## Class of terminal whose third string is text it quotes.
+  COLUMN* = 144  ## lo ni lo rajypau pe pa karda cu ganra
+  WIDTH_PLACE* = 136  ## lo ni lo tanxe .e lo karda cu ganra
+  HEIGHT_BOX* = 40  ## lo ni lo tanxe cu rajycla
+  HEIGHT_CARD = 58  ## lo ni lo karda cu rajycla
+  ROW* = 64  ## lo ni re lampinpoi be lo tanxe cu darno
+  MARGIN = 10  ## lo kutkoi poi sruri le pixra
+  LETTERS_MOST = 15  ## lo du'u pa karda cu ciska su'e xo kau lerfu pe le valsi
+  LABEL_MOST = 17
+    ## lo du'u pa tanxe cu ciska su'e xo kau lerfu pe le javni poi traji lo ka jibni lo valsi
+  CHAIN_MOST = 21
+    ## lo du'u pa tanxe cu ciska su'e xo kau lerfu pe le javni poi traji lo ka bartu ne'i le porsi
+  TAG_ERROR = "srera"  ## lo tcita be lo srera jgena to `nif.nim` toi
+  TAG_EXPECTS = "nitcu"
+    ## lo tcita be lo genvla poi le gerna ka'e tcidu ke'a ca lo nu sisti to `nif.nim` toi
+  TAG_UNREAD = "rivbi"  ## lo tcita be lo pagbu poi no genvla cu vasru ke'a to `nif.nim` toi
+  TAG_QUOTING = ["ZOI"]  ## lo klesi be lo genvla poi ke'a sitna le cimoi lerpoi pe vo'a
 
 
 
-#[ Marks ]#
+#[ ni'o ni'o ni'o lo sinxa ]#
 
 func escaped*(text: string): string =
-  ## Escape text for element or attribute of SVG and HTML.
+  ## galfi lo selci'a tezu'e lo nu le selci'a cu selpu'i ne'i pa pagbu .a pa ckaji vu'o pe `SVG` .e
+  ##     `HTML`
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"))
 
 
 func clipped(text: string, count: int): string =
-  ## Keep first `count` characters of text, last one ellipsis where text is longer.
+  ## ralte le krasi be le selci'a be'o poi vasru lo lerfu poi se kancu fi `count`
+  ##   .i va'o lo nu le selci'a cu clamau le krasi kei le romoi lerfu pe le krasi cu du `…`
   if text.runeLen <= count: text else: text.runeSubStr(0, count - 1) & "…"
 
 
 func mark(x, y: int; text, class: string): string =
-  ## Write one `text` element, centred at `x`.
+  ## ciska pa pagbu po'u `text` ge'u zi'e poi se midju `x`
   "<text class=\"" & class & "\" x=\"" & $x & "\" y=\"" & $y & "\" text-anchor=\"middle\">" &
       text.escaped & "</text>"
 
 
 func rectangle(x, y, width, height: int; class: string): string =
-  ## Write one `rect` element with rounded corners.
+  ## ciska pa pagbu po'u `rect` ge'u zi'e poi ponse lo cukyko'a
   "<rect class=\"" & class & "\" x=\"" & $x & "\" y=\"" & $y & "\" width=\"" & $width &
       "\" height=\"" & $height & "\" rx=\"6\"/>"
 
 
 func elbow(x_from, y_from, x_to, y_to: int): string =
-  ## Write edge from foot of box down to head of place under it: down into gap under box, across,
-  ##   then down. Gap holds no box, and boxes of one row span disjoint columns, so across meets
-  ##   no other edge; down stands at centre of place under it, one column at least from any other
-  ##   box it passes, so it meets none.
+  ## ciska pa jonli'i poi selkra lo dzikoi be pa tanxe gi'e selfa'o lo galkoi be lo selpu'i poi
+  ##     cnita le tanxe
+  ##   .i le linji cu ni'a klama lo kunti poi cnita le tanxe
+  ##   .i ba bo le linji cu pinkla
+  ##   .i ba bo le linji cu ni'a klama
+  ##
+  ## ni'o le kunti cu vasru no tanxe
+  ##   .i no rajypau cu selvau re tanxe pe pa pinpoi
+  ##   .i se ki'u bo le pinpau be le linji cu pencu no datyjonli'i
+  ##
+  ## ni'o le romoi sraji pagbu be le linji cu zvati lo midju be le selpu'i poi cnita le tanxe
+  ##   .i le rajypau be le linji cu sepli ro datyta'e poi le linji cu klama lo mlana be ke'a ku'o
+  ##       su'o pa rajypau
+  ##   .i se ki'u bo le rajypau be le linji cu pencu no tanxe
   let turn = y_from + (ROW - HEIGHT_BOX) div 2
   if x_from == x_to:
     return "<line class=\"edge\" x1=\"" & $x_from & "\" y1=\"" & $y_from & "\" x2=\"" & $x_to &
@@ -132,31 +213,36 @@ func elbow(x_from, y_from, x_to, y_to: int): string =
 
 
 
-#[ Nodes ]#
+#[ ni'o ni'o ni'o lo jgena ]#
 
 func spoken(tag: string): string =
-  ## Give name of rule as 21.1 writes it: `-` for each `_` of tag.
+  ## dunda lo cmene be le javni be'o poi `CLL 21.1` ciska ke'a
+  ##   .i `-` basti ro `_` pe le tcita
   tag.replace('_', '-')
 
 
 func said(letters: string): string =
-  ## Give word as lojban writes it: `'` for each `h` of NIF.
+  ## dunda le valsi ta'i le selci'a be la lojban.
+  ##   .i `'` basti ro `h` pe `NIF`
   letters.replace('h', '\'')
 
 
 func isCompound(node: NodeNif): bool =
-  ## Decide whether node is compound and no directive.
+  ## jdice lo du'u le jgena cu cmima `KindNif.Compound` gi'e na minde
   node.kind == KindNif.Compound and not node.text.startsWith(".")
 
 
 func isTerminal(node: NodeNif): bool =
-  ## Decide whether node is terminal: compound whose children end in string literal.
+  ## jdice lo du'u le jgena cu genvla
+  ##   .i lo genvla cu cmima `KindNif.Compound`
+  ##   .i le romoi panzi be lo genvla cu lerpoi
   node.isCompound and node.text notin [TAG_ERROR, TAG_UNREAD] and node.children.len > 0 and
       node.children[^1].kind == KindNif.Literal
 
 
 func words(node: NodeNif): seq[tuple[start, finish: int, letters: string]] =
-  ## Read each word of terminal or unit no terminal holds: bytes, then letters.
+  ## tcidu ro valsi pe pa genvla .a pa pagbu poi no genvla cu vasru ke'a
+  ##   .i lo stuzi cu lidne lo lerfu ne'i ro valsi
   var k = 0
   while k < node.children.len and node.children[k].kind != KindNif.Number: inc k
   while k + 2 < node.children.len:
@@ -165,7 +251,8 @@ func words(node: NodeNif): seq[tuple[start, finish: int, letters: string]] =
 
 
 func spelling(node: NodeNif): string =
-  ## Give letters of terminal or unit as text writes them, each word after space.
+  ## dunda lo lerfu pe pa genvla .a pa pagbu ta'i le selci'a
+  ##   .i lo calyle'u cu jbini lo valsi
   let words = node.words
   var spelled: seq[string]
   for k in 0 ..< words.len:
@@ -176,14 +263,17 @@ func spelling(node: NodeNif): string =
 
 
 func span(node: NodeNif): string =
-  ## Give bytes node spans, as `0–2`.
+  ## dunda lo stuzi poi le jgena cu kuspe ke'a mu'u `0–2`
   let words = node.words
   if words.len == 0: "" else: $words[0].start & "–" & $words[^1].finish
 
 
 func labelRule(node: NodeNif): tuple[inner, outer: string] =
-  ## Name rule nearest words, then outermost rule and count of chain, where node is chain: node
-  ##   gives number of rule opening it, and name of rule closing it gives that rule's number.
+  ## cusku lo cmene be le javni poi traji lo ka jibni lo valsi
+  ##   .i va'o lo nu le jgena cu porsi lo javni kei lo cmene cu se lidne le javni poi traji lo ka
+  ##       bartu ku'o .e lo du'u le porsi cu vasru xo kau javni
+  ##   .i le jgena cu jarco lo namcu pe le javni poi krasi le porsi
+  ##   .i lo cmene be le javni poi fanmo le porsi cu jarco lo namcu pe le javni
   let inner = node.text.spoken
   if node.children.len == 0 or node.children[0].kind != KindNif.Number: return (inner, "")
   let top = node.children[0].number
@@ -195,7 +285,8 @@ func labelRule(node: NodeNif): tuple[inner, outer: string] =
 
 
 func labelError(node: NodeNif): tuple[head, rule, expected: string] =
-  ## Name byte where grammar stops, rule stopping there, and each terminal it reads there.
+  ## cusku lo stuzi poi le gerna cu sisti bu'u ke'a ku'o .e le javni poi sisti bu'u le stuzi ku'o .e
+  ##     ro genvla poi le gerna ka'e tcidu ke'a bu'u le stuzi
   var
     numbers: seq[int]
     rule = ""
@@ -213,17 +304,18 @@ func labelError(node: NodeNif): tuple[head, rule, expected: string] =
 
 
 
-#[ Layout ]#
+#[ ni'o ni'o ni'o lo nu punji ]#
 
 func columnX*(k: int): int =
-  ## Give centre of column `k`.
+  ## dunda lo midju be le rajypau pe `k`
   MARGIN + COLUMN * k + COLUMN div 2
 
 
 func card(
   kind: KindPlace, cards: var seq[Place], lines: seq[string], title: string, count: int
 ): tuple[height, x, index: int, is_card: bool] =
-  ## Place card in next column, and give it as place under its box.
+  ## punji lo karda le bavla'i sraji pagbu gi'e dunda le karda ta'i lo selpu'i poi cnita le tanxe pe
+  ##     le karda
   let column = cards.len
   cards.add Place(kind: kind, x: columnX(column), first: column, last: column, lines: lines,
       title: title, parent: -1, words: count)
@@ -233,9 +325,15 @@ func card(
 func placed(
   node: NodeNif, cards, boxes: var seq[Place]
 ): tuple[height, x, index: int, is_card: bool] =
-  ## Place cards of node in order, then its box over them, centred over places under it; give
-  ##   height of node over cards, centre and index of its place, or height -1 where node holds
-  ##   no word. Box takes index in `boxes`, and card index in `cards`.
+  ## punji lo karda pe le jgena ta'i le porsi
+  ##   .i ba bo punji le tanxe pe le jgena lo gapru be le karda
+  ##   .i lo midju be le tanxe cu midju lo selpu'i poi cnita le tanxe
+  ##   .i dunda lo ni le jgena cu gapru le karda kei .e lo midju .e lo namcu vu'o pe le selpu'i pe
+  ##       le jgena
+  ##   .i va'o lo nu le jgena cu vasru no valsi kei le ni gapru cu du li ni'u pa
+  ##
+  ## ni'o lo tanxe cu ponse lo namcu pe `boxes`
+  ##   .i lo karda cu ponse lo namcu pe `cards`
   if node.isTerminal or node.text == TAG_UNREAD:
     let
       is_unread = node.text == TAG_UNREAD
@@ -253,7 +351,7 @@ func placed(
     height = -1
     sum = 0
   for k in 0 ..< node.children.len:
-    template child: untyped = node.children[k]  # alias, which `let` would copy whole
+    template child: untyped = node.children[k]  # lo drata cmene to `let` fukpi le mulno toi
     if not child.isCompound or child.text == TAG_EXPECTS: continue
     let kid = child.placed(cards, boxes)
     if kid.height < 0: continue
@@ -289,8 +387,12 @@ func placed(
 
 
 func laidOut*(node: NodeNif): PartDrawn =
-  ## Lay out one part: card of each word in its column at foot, then box of each node over
-  ##   places under it, root at top; places give cards first, then boxes, children first.
+  ## punji ro selpu'i pe pa pagbu
+  ##   .i ro valsi cu selxra pa karda ne'i lo rajypau pe vo'a bu'u le dzikoi
+  ##   .i ba bo ro jgena cu selxra pa tanxe noi gapru le selpu'i pe lo panzi be le jgena
+  ##   .i le genja cu gapru ro datselpu'i
+  ##   .i ro karda cu lidne ro tanxe ne'i le liste be lo selpu'i
+  ##   .i lo panzi cu lidne lo rirni
   var cards, boxes: seq[Place]
   let root = node.placed(cards, boxes)
   if root.height < 0: return PartDrawn(width: 2 * MARGIN, height: 2 * MARGIN)
@@ -306,13 +408,16 @@ func laidOut*(node: NodeNif): PartDrawn =
 
 
 
-#[ Drawing ]#
+#[ ni'o ni'o ni'o lo nu pixra ]#
 
 func svg*(part: PartDrawn, label: string): string =
-  ## Write part as one SVG: edges, then boxes, then cards, each place with its title.
+  ## ciska pa pixra be le pagbu bei fo `SVG`
+  ##   .i lo jonli'i cu lidne lo tanxe
+  ##   .i lo tanxe cu lidne lo karda
+  ##   .i ro selpu'i cu ponse lo cmene be vo'a
   var marks: seq[string]
   for k in 0 ..< part.places.len:
-    template child: untyped = part.places[k]  # alias, which `let` would copy whole
+    template child: untyped = part.places[k]  # lo drata cmene to `let` fukpi le mulno toi
     if child.parent < 0: continue
     template parent: untyped = part.places[child.parent]
     marks.add elbow(parent.x, parent.y + HEIGHT_BOX, child.x, child.y)
@@ -347,19 +452,22 @@ func svg*(part: PartDrawn, label: string): string =
 
 
 func counted(count: int, one, many: string): string =
-  ## Give count with noun it counts, one or many.
+  ## dunda le namcu .e le valsi be le se kancu
+  ##   .i le valsi cu du `one` .a `many`
   $count & " " & (if count == 1: one else: many)
 
 
 func readParts(module: string): seq[NodeNif] =
-  ## Give each node of module that is no directive, in order.
+  ## dunda ro jgena poi na minde gi'e pagbu le selci'a be fi `NIF` ku'o ta'i le porsi
   for node in module.readModule:
     if node.isCompound: result.add node
 
 
 func drawn*(nif, tail: string): DrawingLive =
-  ## Draw each part of NIF so far, then each part of tail, still open, as one `figure` each;
-  ##   name what they hold in line of status.
+  ## ciska lo pixra be ro pagbu be le ca selci'a be fi `NIF`
+  ##   .i ba bo ciska lo pixra be ro pagbu be le rebla noi ca'o kalri
+  ##   .i ro pagbu cu selxra pa `figure`
+  ##   .i le linji cu cusku lo selvau be le pagbu
   var parts, opened: seq[NodeNif]
   try:
     parts = nif.readParts
@@ -391,9 +499,13 @@ func drawn*(nif, tail: string): DrawingLive =
 
 
 func drawnMerged*(nif: string): DrawingLive =
-  ## Merge each part of NIF so far (`merge.nim`), and draw each tree merge gives as one part;
-  ##   line names one tree where merge gives tree of one pass, else what trees hold. Where NIF
-  ##   reads not, draw none, and name node and reason in line.
+  ## jmina ro pagbu be le ca selci'a be fi `NIF` to `merge.nim` toi
+  ##   .i ciska lo pixra be ro tricu poi lo nu jmina cu jarco ke'a ku'o ta'i pa pagbu
+  ##   .i va'o lo nu lo nu jmina cu jarco le tricu pe lo nu tcidu le mulselci'a kei le linji cu
+  ##       cusku pa tricu
+  ##   .i va'o lo drata le linji cu cusku lo selvau be le tricu
+  ##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu cu ciska no pixra gi'e cusku le jgena .e le
+  ##       krinu ne'i le linji
   let merged = nif.mergeParts
   if not merged.is_merged:
     result.is_refused = true
