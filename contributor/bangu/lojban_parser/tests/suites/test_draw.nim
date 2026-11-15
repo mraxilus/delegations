@@ -39,8 +39,8 @@ const
     ##       javni pe li soze
   MODULE_REFUSED = HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
     "(FOO 8 10 \"do\")\n"
-    ## lo selci'a be fi `NIF` be'o poi le tcita be le remoi jgena be ke'a cmene no selma'o
-    ##   .i se ki'u bo lo nu jmina cu to'e curmi le selci'a gi'e cusku le jgena
+    ## lo selci'a be fi `NIF` be'o poi le tcita be le remoi jgena be ke'a cu cmene no selma'o
+    ##   .i ki'u la'e di'u lo nu jmina cu to'e curmi le selci'a gi'e cusku le jgena
 
 
 type ReadingDrawn = tuple[key: string, nif: string, parts: seq[NodeNif]]

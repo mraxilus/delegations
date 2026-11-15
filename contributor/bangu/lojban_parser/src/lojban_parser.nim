@@ -64,7 +64,7 @@
 ##   .i `NodeNif` .e `Terminal` lidne `MergeNif`
 ##   .i lo liste cu du lo datni poi lo minde po'u `nim r tools/build.nim lists` ciska ke'a
 ##   .i `Word` kuspe ro stecmi pe le gimste
-##   .i se ki'u bo lo korbi be `Word` selkra le liste
+##   .i se ki'u bo lo korbi be `Word` cu selkra le liste
 ##   .i no namcu cu re roi se ciska to `Article II.5` toi
 ##   .i le ralju samtci pagbu cu benji no liste
 ##   .i lo pilno poi djica ro stecmi cu cpacu `lists/gismu` .a `lists/cmavo`

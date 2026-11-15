@@ -86,7 +86,7 @@ type
     Item  ## lo stecmi pe lo vreji
     Definition  ## lo smuni be pa valsi pe le vlaste
     Heading  ## lo cmene be pa pagbu pe lo vreji
-    Run  ## lo pinka poi ro linji be ke'a selkra lo mitsni bu'u lo mitstu
+    Run  ## lo pinka poi ro linji be ke'a cu selkra lo mitsni bu'u lo mitstu
     Trailing  ## lo pinka poi lo samtci cu lidne ke'a ne'i lo linji pe ke'a
     Banner  ## lo pinka poi selsni `#[ ]#` gi'e cmene pa pagbu be lo samtci
     Cell  ## pa pagbu be pa linji pe lo cartu
@@ -152,8 +152,8 @@ const
   INDENT_SENTENCE = 2
     ## lo namcu poi lo stuzi be lo na pamoi jufra cu sumji ke'a lo stuzi be le pamoi linji
   INDENT_BROKEN = 4
-    ## lo namcu poi lo stuzi be lo linji poi lo jufra cu ranji ke'a sumji ke'a lo stuzi be le linji
-    ##     poi krasi le jufra
+    ## lo namcu poi lo stuzi be lo linji poi lo jufra cu ranji ke'a cu sumji ke'a lo stuzi be le
+    ##     linji poi krasi le jufra
     ##   .i `Architect` jdice le namcu bu'u `#890`
 
 

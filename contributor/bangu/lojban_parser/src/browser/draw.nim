@@ -489,8 +489,8 @@ func drawnMerged*(nif: string): DrawingLive =
   ##   .i va'o lo nu lo nu jmina cu jarco le tricu pe lo nu tcidu le mulselci'a kei le linji cu
   ##       cusku pa tricu
   ##   .i va'o lo drata le linji cu cusku lo selvau be le tricu
-  ##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu kei ciska no pixra gi'e cusku le jgena .e le
-  ##       krinu ne'i le linji
+  ##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu kei cu ciska no pixra gi'e cusku le jgena .e
+  ##       le krinu ne'i le linji
   let merged = nif.mergeParts
   if not merged.is_merged:
     result.is_refused = true

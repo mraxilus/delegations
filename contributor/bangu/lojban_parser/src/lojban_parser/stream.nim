@@ -30,8 +30,8 @@
 ##   .i se ki'u bo le genturfa'i cu facki lo denpa poi le selci'a na ciska ke'a ku'o va'o po'o lo nu
 ##       no datseltcidu be fi le lerfu cu drani
 ##   .i le genturfa'i cu tcidu `lo sei` fi `losei` gi'e no roi tcidu `lo se .i` fi `losei`
-##   .i le genturfa'i cu to'e curmi ta'i `Split` lo selci'avla poi su'o re ve fendi be fi ke'a nitcu
-##       lo mecraide'a
+##   .i le genturfa'i cu to'e curmi ta'i `Split` lo selci'avla poi su'o re ve fendi be fi ke'a cu
+##       nitcu lo mecraide'a
 ##   .i mupli fa `iai` noi ka'e se fendi fi `.i.ai` .a `.ia.i`
 ##   .i le genturfa'i cu to'e curmi lo selci'avla poi claxu lo ve fendi ku'o ta'i lo nu `readWord`
 ##       to'e curmi le lerfu
@@ -243,7 +243,7 @@ const
     ## lo klesi poi basna le slaka po'o poi lidne le romoi slaka to `CLL 3.9` .e `CLL 4.7` toi
   KINDS_DIPHTHONG = {Kind.Cmavo, Kind.Gismu, Kind.Lujvo}
     ## lo klesi poi re lamji karsna pe ke'a zbasu lo karsna gunma
-    ##   .i se ki'u bo slaka bu na ka'e fendi le re karsna to `CLL 3.4` toi
+    ##   .i ki'u la'e di'u slaka bu na ka'e fendi le re karsna to `CLL 3.4` toi
 
 
 func refuse(refusal: Refusal, start: int, detail = ""): ReadingStream =

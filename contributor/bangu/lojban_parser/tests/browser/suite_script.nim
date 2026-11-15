@@ -35,7 +35,7 @@
 ##   .i pa xusra poi fliba cu cusku ji'a lo linji pe vo'a
 ##   .i `check` jdice le linji ca lo nu fanva
 ##   .i pa minde po'u `-d:` pe lo nu sisti cu na selpli
-##   .i se ki'u bo ro jufra poi lo seljdi be fi ke'a cenba cu selsku ne'i pa nu cipra
+##   .i se ki'u bo ro jufra poi lo seljdi be fi ke'a cu cenba cu selsku ne'i pa nu cipra
 
 {.experimental: "strictFuncs".}
 

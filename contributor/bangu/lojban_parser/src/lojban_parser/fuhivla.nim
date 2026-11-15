@@ -35,7 +35,7 @@ func combination*(text: string): Option[seq[string]] =
   ##   .i no denpa cu zvati lo jbini be lo valsi to `CLL 4.9` toi
   ##   .i jarco no da va'o lo nu le lerfu cu curmi no le ve fendi
   ##   .i lo fu'ivla cu nitcu lo nu no le ve fendi cu se curmi to `CLL 4.7` toi
-  ##   .i lo vlagunma cu vajni va'o lo nu lo sance be ri simsa lo sance be lo fu'ivla
+  ##   .i lo vlagunma cu vajni va'o lo nu lo sance be ri cu simsa lo sance be lo fu'ivla
   ##   .i lo brivla cu basna le slaka poi lidne le romoi slaka to `CLL 3.9` toi
   ##   .i se ki'u bo le brivla cu basna lo slaka poi lo fu'ivla cu basna ke'a va'o po'o lo nu le
   ##       brivla cu fanmo le vlagunma

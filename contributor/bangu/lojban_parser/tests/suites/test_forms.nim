@@ -108,7 +108,7 @@ const
     ##   .i ro linji cu vasru lo tarmi .e lo stuzi be lo lerfu pe le gismu be'o poi selpli .e lo
     ##       rafsi
   EXCEPTIONS_TABLE: seq[string] = @[]
-    ## lo cmarafsi be lo gismu pe le gismu liste be'o poi no linji be lo liste pe `CLL 4.6` ciska
+    ## lo cmarafsi be lo gismu pe le gismu liste be'o poi no linji be lo liste pe `CLL 4.6` cu ciska
     ##     ke'a
     ##   .i le liste cu mapti lo tarmi be le gismu
     ##   .i le stodi cu ralte le gismu .e le rafsi
@@ -122,8 +122,8 @@ const
     ##   .i le cipra cu facki lo tarmi be ro le gismu
     ##   .i lo tsiju cu jdice le gismu
   FLOOR_MUTATION = 3080
-    ## lo cnita jimte be lo te kancu be le se galfi poi ralte lo tarmi be lo gismu
-    ##   .i se ki'u bo le se cipra cu vasru le re seljdi
+    ## lo nityjimte be lo te kancu be le se galfi poi ralte lo tarmi be lo gismu
+    ##   .i ki'u la'e di'u le se cipra cu vasru le re seljdi
     ##   .i le jimte cu xadba li xapaxano
     ##   .i ca lo nu le tsiju cu du li no kei le te kancu cu du li xapaxano
   SAMPLES_INSERTION = 2000
@@ -167,7 +167,7 @@ func formRestated(text: string): Option[Form] =
 
 
 func positionsNotation(notation: string): seq[string] =
-  ## tcidu lo lerfu poi ro stuzi be lo sinxa pe `CLL 4.1` curmi ke'a
+  ## tcidu lo lerfu poi ro stuzi be lo sinxa pe `CLL 4.1` cu curmi ke'a
   ##   .i `C` curmi lo zunsna
   ##   .i `V` curmi lo karsna
   ##   .i ro datsni cu curmi vo'a po'o
@@ -187,7 +187,7 @@ func positionsAny(length: int): seq[string] =
 
 
 iterator texts(positions: seq[string]): string =
-  ## dunda ro lerpoi poi ro stuzi be ke'a cpacu pa lerfu le selcmi pe le stuzi
+  ## dunda ro lerpoi poi ro stuzi be ke'a cu cpacu pa lerfu le selcmi pe le stuzi
   ##   .i le romoi stuzi cu traji lo ka sutcne
   var
     at = newSeq[int](positions.len)
@@ -282,7 +282,7 @@ proc insertUncounted(text: string): string =
 proc drawLengthened(words: seq[string]): seq[string] =
   ## cuxna lo valsi pe `words`
   ##   .i lo te kancu cu du `SAMPLES_LONG`
-  ##   .i ro le valsi cu te jmina lo lerfu poi lo te kancu be ke'a cmima li pa bi'o li vo
+  ##   .i ro le valsi cu te jmina lo lerfu poi lo te kancu be ke'a cu cmima li pa bi'o li vo
   ##   .i lo tsiju cu jdice le nu cuxna .e le nu jmina
   result = newSeqOfCap[string](SAMPLES_LONG)
   for _ in 1..SAMPLES_LONG:

@@ -149,7 +149,7 @@ proc mergeHidden() =
 
 
 proc mergeShown() =
-  ## jmina ro pagbu poi le ca selci'a be fi `NIF` vasru ke'a
+  ## jmina ro pagbu poi le ca selci'a be fi `NIF` cu vasru ke'a
   ##   .i le rebla cu na se jmina
   ##   .i ciska lo pixra be ro tricu poi le nu jmina cu jarco ke'a ku'o bu'u lo cnita be le pagbu
   ##   .i va'o lo nu le selci'a be fi `NIF` na se tcidu kei le linji cu cusku le jgena .e le krinu

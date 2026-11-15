@@ -66,7 +66,7 @@ const
   WORDS_GROUPED = ["meiin", "iuain", "dauarnold", "meiris", "vauensas", "uiliam", "xuakin"]
     ## lo cmene poi slaka bu ka'e fendi lo karsna pe ke'a
     ##   .i le cmene cu du lo cmene pe `Example 3.6` .e `Example 3.7` ge'u .e re cmene poi lo nu
-    ##       lanli `#811` facki ke'a ku'o .e lo jbocme pe `CLL 4.8`
+    ##       lanli `#811` cu facki ke'a ku'o .e lo jbocme pe `CLL 4.8`
   COUNT_GROUPED = 36  ## lo klani be lo slaka pe ro nu fendi pe ro cmene poi le flalu cu tcidu ke'a
   FLOOR_COMMA_STRESS = 8
     ## lo mecrailai be lo fu'ivla poi vasru slaka bu .e lo nu basna gi'e se tcidu le flalu pe le
@@ -106,10 +106,10 @@ const
     ##   .i le mupli cu selfi'i
   CONSONANTS_SYLLABIC = "lmnr"  ## lo zunsna poi ka'e slaka to `CLL 3.4` toi
   DIPHTHONGS_OFF = ["ai", "ei", "oi", "au"]
-    ## lo karsna gunma poi le romoi pagbu be ke'a sakli zi'e poi ka'e zvati ro valsi to `CLL 3.4`
+    ## lo karsna gunma poi le romoi pagbu be ke'a cu sakli zi'e poi ka'e zvati ro valsi to `CLL 3.4`
     ##     toi
   DIPHTHONGS_ON = ["ia", "ie", "ii", "io", "iu", "ua", "ue", "ui", "uo", "uu"]
-    ## lo karsna gunma poi le pamoi pagbu be ke'a sakli
+    ## lo karsna gunma poi le pamoi pagbu be ke'a cu sakli
     ##   .i le karsna gunma cu ka'e pamoi ne'i lo valsi poi sepli ku'o gi'e ka'e zvati lo cmene .e
     ##       lo fu'ivla to `CLL 3.4` .e `CLL 4.2` toi
   DIPHTHONGS_NAME = ["iy", "uy"]  ## lo karsna gunma poi `CLL 3.4` curmi ke'a ne'i lo cmene po'o
@@ -121,7 +121,7 @@ const
     ## lo fu'ivla poi slaka bu .e lo brale'u cu barna ke'a
     ##   .i le fu'ivla cu du lo fu'ivla pe `Example 4.46` .e `Example 4.50` .e `Example 4.56` ge'u
     ##       .e lo fu'ivla poi selzba ta'i lo nu jmina lo krapau ja'i `CLL 4.7` ku'o .e ci fu'ivla
-    ##       poi lo nu lanli `#811` facki ke'a
+    ##       poi lo nu lanli `#811` cu facki ke'a
     ##   .i slaka bu ka'e fendi lo lamji karsna pe le ci fu'ivla
     ##   .i le ci mupli cu selfi'i
   WORDS_NAMED = ["djim", "katrinas", "uiliam", "xuakin", "meiris", "vauensas"]

@@ -27,8 +27,8 @@
 ##   .i lo lerfu po'u `'a' .. 'z'` judri lo cmima be le liste
 ##   .i no lerlei cu selzba ki'u lo nu ro pilno cu ralte lo selci'a kei .e lo nu lo klesi poi vasru
 ##       lo lerfu cu fanta no srera poi ka'e fasnu to `Article IV.2` toi
-##   .i jdima fa lo nu lo seljdi be fi lo lerfu poi na cmima `'a' .. 'z'` jitfa ki'u lo bandu gi'e
-##       no roi jitfa ki'u le liste
+##   .i jdima fa lo nu lo seljdi be fi lo lerfu poi na cmima `'a' .. 'z'` cu jitfa ki'u lo bandu
+##       gi'e no roi jitfa ki'u le liste
 ##   .i se ki'u bo ro fancu poi jdice cu cipra lo du'u lo lerfu cu cmima lo selcmi kei pa roi pu lo
 ##       nu sisku ne'i le liste
 

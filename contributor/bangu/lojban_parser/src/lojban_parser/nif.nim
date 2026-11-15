@@ -444,8 +444,8 @@ func toNif*(reading: ReadingMarked): string =
 
 
 func toNif*(node: Node, reading: ReadingMarked): string =
-  ## ciska pa jgena pe lo tricu pe lo se tcidu fi `NIF` ta'i lo nu lo selci'a be fi `NIF` ciska le
-  ##     jgena
+  ## ciska pa jgena pe lo tricu pe lo se tcidu fi `NIF` ta'i lo nu lo selci'a be fi `NIF` cu ciska
+  ##     le jgena
   ##   .i le fancu cu ciska no minde
   ##   .i ne'i lo mivyselci'a lo jgena pe ro pagbu be le selci'a cu selbe'i ne'i lo linji pe vo'a to
   ##       `live.nim` toi

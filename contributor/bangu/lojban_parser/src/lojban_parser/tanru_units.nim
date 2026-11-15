@@ -1,6 +1,6 @@
 ## fendi lo tanru fi lo taurpau
 ##   .i ro taurpau cu vasru pa valsi .e lo cmavo poi jorne le valsi
-##   .i lo jalge be lo cmavo be `SE` po'o vajni
+##   .i lo jalge be lo cmavo be `SE` po'o cu vajni
 ##   .i se ki'u bo va'o lo nu re selci'a cu ponse pa smuni kei le re selci'a cu se fendi ta'i lo
 ##       mintu
 ##
@@ -42,8 +42,8 @@
 ##   .i se ki'u bo no lujvo cu vasru zo jai
 ##   .i lo cmavo be `NA` cu jorne le multau
 ##   .i zo na natfe lo mulbri gi'e na natfe lo pagbu be lo selbri to `CLL 15.2` toi
-##   .i se ki'u bo va'o lo nu lo te kancu be lo valsi po'u zo na se dilcu fi li re fo li pa kei le
-##       tanru cu se fendi ta'i lo nu pa zo na lidne pa girzu poi vasru le multau
+##   .i se ki'u bo va'o lo nu lo te kancu be lo valsi po'u zo na cu se dilcu fi li re fo li pa kei
+##       le tanru cu se fendi ta'i lo nu pa zo na lidne pa girzu poi vasru le multau
 ##   .i lo du'u zo na zvati ma kau na vajni
 ##   .i va'o lo nu le te kancu cu se dilcu fi li re fo li no kei le tanru cu se fendi ta'i lo nu no
 ##       zo na zvati
@@ -51,11 +51,11 @@
 ##   .i ro datma'o cu jorne no da
 ##   .i va'o lo nu lo datma'o cu na zbasu lo girzu po'o kei le cmavo cu selvau pa taurpau poi vasru
 ##       no datpau
-##   .i mupli fa lo nu lo cmavo be `KOhA` sumti lo bavla'i to `CLL 7.15` toi .e lo nu lo cmavo be
-##       `JA` jmina lo pagbu to `CLL 5.6` toi
+##   .i mupli fa lo nu lo cmavo be `KOhA` cu sumti lo bavla'i to `CLL 7.15` toi .e lo nu lo cmavo be
+##       `JA` cu jmina lo pagbu to `CLL 5.6` toi
 ##   .i lo namcu jo'u lo cmavo be `MOI` cu zbasu pa tanru pagbu to `CLL 21.1` .e le javni pe li
 ##       pamure toi
-##   .i ku'i jdima fa lo nu ro cmavo be `PA` selvau pa taurpau poi vasru no datpau
+##   .i ku'i jdima fa lo nu ro cmavo be `PA` cu selvau pa taurpau poi vasru no datpau
 ##   .i se ki'u bo zo re .e zo pa .e zo moi selvau lo fictaupau ne'i lo nu fendi zo relpavmomci'a
 ##   .i ro porsi poi jorne pa taurpau gi'e porsi lo cmavo be `SE` cu selja'e pa nu galfi lo porsi be
 ##       lo sumti
@@ -300,8 +300,8 @@ func placeOpening(parts: openArray[Part]): int =
 
 func withImplied(parts: openArray[Part]): seq[Part] =
   ## punji zo ke .e zo ke'e vu'o poi lo lujvo cu claxu ke'a
-  ##   .i va'o lo nu lo te kancu be lo valsi po'u zo na se dilcu fi li re fo li pa kei pa lo'u na ke
-  ##       le'u selpu'i lo stuzi poi lidne le multau
+  ##   .i va'o lo nu lo te kancu be lo valsi po'u zo na cu se dilcu fi li re fo li pa kei pa lo'u na
+  ##       ke le'u selpu'i lo stuzi poi lidne le multau
   ##   .i va'o lo nu le te kancu cu se dilcu fi li re fo li no kei no da selpu'i
   ##   .i ki'u bo zo na natfe lo mulbri
   ##   .i ji'a lo re zo na galfi no da to `CLL 15.2` toi
@@ -309,7 +309,7 @@ func withImplied(parts: openArray[Part]): seq[Part] =
   ##   .i zo kei se tcidu ta'i zo ke'e poi fanmo lo girzu poi zo ke krasi ke'a
   ##   .i zo ke se lidne le cmavo be `NU` poi traji lo ka jibni gi'e ka'e selfa'o zo kei to
   ##       `CLL 21.1` .e le javni pe li pamure toi
-  ##   .i zo kei selvi'u va'o lo nu no cmavo be `NU` lidne zo kei
+  ##   .i zo kei selvi'u va'o lo nu no cmavo be `NU` cu lidne zo kei
   let plain = parts.filterIt(not it.isWord(WORD_NA))
   if (parts.len - plain.len) mod 2 == 1: result.add [WORD_NA.toPart, WORD_KE.toPart]
   var abstractions: seq[int]

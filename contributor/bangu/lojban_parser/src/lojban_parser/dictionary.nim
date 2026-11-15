@@ -27,7 +27,7 @@
 ##   .i ji'a lo nu zbasu cu fliba va'o lo nu le ma'oste cu claxu pa cmavo pe le gimste
 ##   .i ki'u bo ro cmavo poi ponse lo rafsi cu ponse lo selma'o
 ##   .i `Word` kuspe ro stecmi
-##   .i se ki'u bo lo korbi be `Word` selkra le liste
+##   .i se ki'u bo lo korbi be `Word` cu selkra le liste
 ##   .i no te kancu be lo liste cmima cu se ciska to `Article II.5` toi
 
 {.experimental: "strictFuncs".}

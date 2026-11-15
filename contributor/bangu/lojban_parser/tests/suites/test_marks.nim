@@ -96,7 +96,7 @@ const
     "zei mi klama", "mi zei", "si mi klama", "mi klama sa", "bu mi", "mi klama ba'e",  # `Construct`
     # `Quotation`
     #   .i lo nu sitna poi no roi selfa'o ce'o lo nu sitna poi kunti ce'o lo nu sitna poi lo pagbu
-    #       be ke'a se vimcu to `CLL 19.13` toi
+    #       be ke'a cu se vimcu to `CLL 19.13` toi
     "mi cusku lo'u mi klama", "mi cusku lo'u .i mi klama", "mi cusku zo", "lo'u le'u",
     "mi se cmene zo .djan. si .djordj.",
     # `Grammar`
@@ -222,7 +222,7 @@ func dropUnread(node: var Node, marked: ReadingMarked) =
 
 func isHolding(marked: ReadingMarked, unit: Unit, start: int): bool =
   ## jdice lo du'u xu kau le pagbu cu vasru lo valsi poi lo stuzi be ke'a ta'i lo nu le selci'a cu
-  ##     ciska ke'a vasru le stuzi po'u `start`
+  ##     ciska ke'a cu vasru le stuzi po'u `start`
   for k in unit.words:
     let occurrence = marked.occurrences[k]
     if occurrence.start <= start and start < occurrence.start + occurrence.text.len: return true

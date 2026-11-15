@@ -17,7 +17,7 @@
 ##   |------------|-------------------------------------------------------------------------------|
 ##
 ## ni'o le cipra pe lo mivyselci'a .e le cipra pe le papri cu rapfau ne'i pa papri poi lo javni pe
-##     lo selvau be ke'a to'e curmi ro gunka
+##     lo selvau be ke'a cu to'e curmi ro gunka
 ##   .i se ki'u bo lo cilta pe le papri cu basti le gunka pe le tcidu ta'i le samtci va'o lo nu le
 ##       papri cu to'e curmi lo gunka
 ##   .i ro cipra pe le samtci cu fasnu ne'i pa papri pe vo'a ge'u zi'e noi cpacu le cipra po'o
@@ -91,7 +91,7 @@ const
     ##     selci'a
   DIRECTORY_CASES = DIRECTORY_DRIVE / "page"  ## lo vasru be lo se cipra pe le cipra pe le papri
   MODE_REFUSED = "refused"
-    ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a to'e curmi ro gunka
+    ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka
   POLICY_REFUSED = ("Content-Security-Policy", "worker-src 'none'")
     ## lo sedli'i pe lo papri pe `MODE_REFUSED`
     ##   .i le sedli'i cu to'e curmi ro gunka ta'i lo nu lo javni pe lo papri cu ka'e to'e curmi ro

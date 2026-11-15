@@ -85,13 +85,13 @@ const
     ##   .i le cipra cu sisku ro le valsi
     ##   .i lo tsiju cu jdice le valsi
   FLOOR_UNLISTED = 9450
-    ## lo cnita jimte be lo te kancu be le se galfi poi na zvati le liste
-    ##   .i se ki'u bo le cipra cu ro roi cipra fi lo nu sisku poi facki no da
+    ## lo nityjimte be lo te kancu be le se galfi poi na zvati le liste
+    ##   .i ki'u la'e di'u le cipra cu ro roi cipra fi lo nu sisku poi facki no da
     ##   .i le jimte cu xadba li pabisonomu
     ##   .i ca lo nu le tsiju cu du li no kei le te kancu cu du li pabisonomu
   FLOOR_LISTED = 177
     ## lo nityjimte be lo te kancu be le se galfi poi du pa drata liste cmima
-    ##   .i se ki'u bo le cipra cu ro roi cipra fi lo nu sisku poi facki pa stecmi
+    ##   .i ki'u la'e di'u le cipra cu ro roi cipra fi lo nu sisku poi facki pa stecmi
     ##   .i le jimte cu xadba li cimuvo
     ##   .i ca lo nu le tsiju cu du li no kei le te kancu cu du li cimuvo
   SAMPLES_PAIRS = 20000  ## lo remei be lo valsi poi se karbi to lo tsiju cu jdice le remei toi
@@ -104,7 +104,7 @@ const
 
 
 func positionsNotation(notation: string): seq[string] =
-  ## tcidu lo lerfu poi ro stuzi be lo sinxa pe `CLL 4.1` curmi ke'a
+  ## tcidu lo lerfu poi ro stuzi be lo sinxa pe `CLL 4.1` cu curmi ke'a
   ##   .i `C` curmi lo zunsna
   ##   .i `V` curmi lo karsna
   ##   .i ro datsni cu curmi vo'a po'o
@@ -118,7 +118,7 @@ func positionsNotation(notation: string): seq[string] =
 
 
 iterator texts(positions: seq[string]): string =
-  ## dunda ro lerpoi poi ro stuzi be ke'a cpacu pa lerfu le selcmi pe le stuzi
+  ## dunda ro lerpoi poi ro stuzi be ke'a cu cpacu pa lerfu le selcmi pe le stuzi
   ##   .i le romoi stuzi cu traji lo ka sutcne
   var
     at = newSeq[int](positions.len)

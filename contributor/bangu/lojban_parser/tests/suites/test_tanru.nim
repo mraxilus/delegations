@@ -396,7 +396,7 @@ proc drawOptions(): seq[seq[seq[string]]] =
   ##   .i lo te kancu be lo rafsi pe ro stuzi cu cmima li pa bi'o li vo
   ##   .i ro rafsi cu seltai pa tarmi poi `CLL 4.11 step 1` .e `CLL 4.11 step 2` curmi ke'a bu'u le
   ##       stuzi
-  ##   .i lo nu lo rafsi poi na romoi cu seltai `CVC` cunso fi li pa fi'u re
+  ##   .i lo nu lo rafsi poi na romoi cu seltai `CVC` cu cunso fi li pa fi'u re
   ##   .i se ki'u bo lo porsi pe `CLL 4.11 step 5` cu so'i roi kalri
   ##   .i ro rafsi poi seltai pa tarmi cu ponse lo mitna'u ta'i lo nu sepli
   ##   .i se ki'u bo lo mitna'u cu so'i roi zasti ji'a
@@ -1295,7 +1295,7 @@ suite "Internal: Laws":
       if options.searchExhaustive(as_stateless = true).first != reference.first: inc count_state
     # le bandu cu zgana lo liste poi lo porsi be lo tercu'a cu jdice va'o lo nu lo namcu cu mintu
     check count_tie >= FLOOR_TIE  # le bandu cu zgana lo liste poi lo porsi cu jdice
-    # le bandu cu zgana lo liste poi lo tcini be lo porsi pe `CLL 4.11 step 5` jdice
+    # le bandu cu zgana lo liste poi lo tcini be lo porsi pe `CLL 4.11 step 5` cu jdice
     check count_state >= FLOOR_STATE  # `CLL 4.11 step 5`
 
 

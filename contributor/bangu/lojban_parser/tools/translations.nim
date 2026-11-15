@@ -54,7 +54,7 @@ import ./cll
 
 
 type Translation* = object
-  ## pa xe fanva poi lo cipra cu tcidu ke'a va'o lo nu lo stopapri be ke'a zvati
+  ## pa xe fanva poi lo cipra cu tcidu ke'a va'o lo nu lo stopapri be ke'a cu zvati
   name*: string
     ## lo cmene be le papri ne'i `DIRECTORY_TRANSLATIONS`
     ##   .i le cmene cu claxu lo fampau po'u `.html`

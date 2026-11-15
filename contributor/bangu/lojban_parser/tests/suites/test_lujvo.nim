@@ -92,8 +92,8 @@ const
     ##   .i ro lujvo cu vasru su'o re rafsi to `CLL 4.6` toi
   LENGTH_MAX = 5  ## lo zmaraiterkancu be lo rafsi pe pa cunso porsi
   ENTRIES_FLOOR_LOJBAN = 3000
-    ## lo cmima be le jvoste be'o poi selci'a ta'i lo jbosni zi'e poi ro pagbu be ke'a bilga lo nu
-    ##     selste
+    ## lo cmima be le jvoste be'o poi selci'a ta'i lo jbosni zi'e poi ro pagbu be ke'a cu bilga lo
+    ##     nu selste
   ENTRIES_FLOOR_ENGLISH = 600
     ## lo linji poi selci'a ta'i lo glisni gi'e vasru su'o re kikyvla zi'e poi le jvacipra cu tcidu
     ##     ke'a
@@ -216,7 +216,7 @@ proc drawRafsi(): seq[seq[string]] =
   ##   .i lo tsiju cu jdice le porsi pa roi
   ##   .i pamoi fa lo nu cuxna lo tarmi ta'i lo nu ro tarmi cu dunli fi lo ka ce'u la'erselcu'a
   ##   .i remoi fa lo nu cuxna lo rafsi poi seltai le tarmi
-  ##   .i se ki'u bo lo nu cuxna lo rircytai mu'u `CCVC` .e `CV'V` dunli lo nu cuxna `CVC` lo ka
+  ##   .i se ki'u bo lo nu cuxna lo rircytai mu'u `CCVC` .e `CV'V` cu dunli lo nu cuxna `CVC` lo ka
   ##       ce'u lakne
   randomize(0)
   result = newSeq[seq[string]](SAMPLES)

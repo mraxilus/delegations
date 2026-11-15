@@ -35,7 +35,8 @@
 ##   .i le nu cipra cu catra ki'u lo nu le vreji cu selvi'u kei .e lo nu `Chrome` noi mulno cu ka'e
 ##       stali ne'i lo nu sisti poi `SIGTERM` cpedu ke'a
 ##   .i le vi pruce cu kurji ro pruce poi selkra le vi pruce ku'o ta'i `subreaper` to `prctl(2)` toi
-##   .i se ki'u bo ro pruce pe `Chromium` ge'u zi'e poi lo rirni be ke'a morsi cu klama le vi pruce
+##   .i se ki'u bo ro pruce pe `Chromium` ge'u zi'e poi lo rirni be ke'a cu morsi cu klama le vi
+##       pruce
 ##   .i ro nu denpa vi cu nu denpa lo nu morsi
 ##   .i no nu denpa vi cu nu denpa lo temci
 ##   .i lo nu cipra poi cusku no fanmo pu `TIMEOUT_PAGE` fliba mu'u lo papri poi no roi mulno gi'a
@@ -46,7 +47,7 @@
 ##       `#859` toi ku'o .e lo tavjva pe `DevTools` ge'u zi'e noi lo papri poi cusku sepi'o lo nu
 ##       cpedu cu na nitcu ke'a
 ##   .i jdima fa lo nu va'o lo nu `Linux` na selpli kei pa pruce pe `Chromium` ge'u zi'e poi lo
-##       rirni be ke'a morsi cu klama `init`
+##       rirni be ke'a cu morsi cu klama `init`
 ##   .i se ki'u bo lo nu vimcu le vreji cu ka'e jivna le pruce
 
 {.experimental: "strictFuncs".}
@@ -97,7 +98,7 @@ const
 when defined(linux):
   let OPTION_SUBREAPER {.importc: "PR_SET_CHILD_SUBREAPER", header: "<sys/prctl.h>".}: cint
     ## lo selcu'a pe `prctl` ge'u zi'e poi rinka lo nu le vi pruce cu kurji ro pruce poi selkra le
-    ##     vi pruce ku'o zi'e poi lo rirni be ke'a morsi
+    ##     vi pruce ku'o zi'e poi lo rirni be ke'a cu morsi
   proc prctl(option: cint, value: culong): cint {.importc, header: "<sys/prctl.h>".}
     ## galfi pa selkai be le vi pruce
     ##   .i le fancu cu korbi `Nim` `C`
@@ -143,9 +144,9 @@ proc serve(
   ##     fanmo be vo'a
   ##   .i `acceptRequest` denpa lo nu jorne poi bavla'i
   ##   .i se ki'u bo no nu denpa lo temci poi stodi cu zvati vi to `IX.12` toi
-  ##   .i va'o lo nu le nu cipra cu sisti le sabji ca lo nu `acceptRequest` denpa kei
-  ##       `acceptRequest` fliba gi'e sisti lo nu sabji kei ki'u lo nu le papri pu cusku lo fanmo be
-  ##       vo'a kei .a lo nu le nu cipra pu zmadu le traji temci
+  ##   .i va'o lo nu le nu cipra cu sisti le sabji ca lo nu `acceptRequest` denpa kei kei
+  ##       `acceptRequest` cu fliba gi'e sisti lo nu sabji kei ki'u lo nu le papri pu cusku lo fanmo
+  ##       be vo'a kei .a lo nu le nu cipra cu pu zmadu le traji temci
   while not run.is_done:
     try:
       await server.acceptRequest(proc(request: Request) {.async.} =

@@ -2,7 +2,7 @@
 ##   .i lo jalge cu du lo selci'a be fi `NIF` be'o poi lo nu tcidu le mulselci'a cu dunda ke'a
 ##   .i se ki'u bo lo samtci poi ponse lo selci'a be fi `NIF` po'o ku'o mu'u lo papri .a lo cikre cu
 ##       dunda lo tricu pe lo nu tcidu le mulno se ciska to `D1 b` pe `#859` toi
-##   .i va'o lo nu lo srera cu stali kei jmina ro porsi be lo pagbu poi sruri le srera ku'o gi'e
+##   .i va'o lo nu lo srera cu stali kei cu jmina ro porsi be lo pagbu poi sruri le srera ku'o gi'e
 ##       to'e curmi no srera to lo seljdi poi se lidne `D1 b` bu'u `#859` toi
 ##
 ##   |--------------|--------------------------------------------------------------------------|
@@ -73,7 +73,7 @@
 ##   .i va'o lo nu lo srera cu stali kei le nu jmina cu dunda lo tricu pe ro porsi ta'i lo nu tcidu
 ##       le mulselci'a pe le porsi to `test_merge.nim` toi
 ##   .i jdima fa lo nu lo temci be lo nu rapyzba .e lo nu jmina cu zenba ca lo nu lo selci'a be fi
-##       `NIF` zenba lo ka clani
+##       `NIF` cu zenba lo ka clani
 ##   .i le gerna cu tcidu ro genvla pe pa porsi ca pa nu tcidu va'o lo nu le javni pe le so'i nu
 ##       tcidu cu spofu kei po'o
 ##   .i lo nu jmina cu rapli ja'i lo namcu pe lo jgena

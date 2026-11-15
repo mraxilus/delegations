@@ -24,7 +24,7 @@
 ##       tcidu po'o
 ##   .i mupli fa lo nu zo si .a zo sa .a zo zei .a zo bu galfi lo valsi poi lidne lo krasi be le
 ##       porsi
-##   .i mupli fa lo nu lo nu sitna sepi'o zo lo'u .a zo la'o .a zo zoi bancu le krasi
+##   .i mupli fa lo nu lo nu sitna sepi'o zo lo'u .a zo la'o .a zo zoi cu bancu le krasi
 ##   .i lo selci'a poi lo nu tcidu le mulselci'a cu to'e curmi ke'a ralte ro valsi pe lo pagbu pe
 ##       vo'a ta'i lo porsi
 ##   .i ro pagbu poi lo nu tcidu le mulselci'a cu ralte no valsi pe ke'a selvi'u
@@ -144,7 +144,7 @@ const
     # zo zei se tcidu ba lo nu zo su vimcu
     #   .i se ki'u bo lo srera pe zo zei selvi'u
     "zei su mi klama",  # `CLL 19.16`
-    # lo cmavo be zoi gy. BAhE .gy. se tcidu ba lo nu zo su vimcu
+    # lo cmavo be zoi gy. BAhE .gy. cu se tcidu ba lo nu zo su vimcu
     #   .i se ki'u bo lo srera pe le cmavo cu selvi'u
     "ba'e su mi klama",  # `CLL 19.16`
     # zo bu se tcidu ba lo nu zo su vimcu
@@ -351,7 +351,7 @@ func isLiveDiffering(text: string): bool =
 
 
 func isHolding(nif: string, count: int, held: openArray[(int, string)]): bool =
-  ## jdice lo du'u lo selci'a be fi `NIF` vasru lo jgena
+  ## jdice lo du'u lo selci'a be fi `NIF` cu vasru lo jgena
   ##   .i lo klani be le jgena cu du `count`
   ##   .i ji'a jdice lo du'u ro jgena poi vasru lo srejge .a lo pagbu poi se to'e curmi cu zvati lo
   ##       namcu poi `held` dunda ke'a gi'e selkra lo seldu'a be `held`
@@ -376,7 +376,7 @@ func wordsKept(nif: string): seq[TerminalNif] =
 
 
 func isWrittenBack(nif: string): bool =
-  ## jdice lo du'u lo tricu poi ro jgena pe lo selci'a be fi `NIF` rapyzba ke'a rapci'a le jgena
+  ## jdice lo du'u lo tricu poi ro jgena pe lo selci'a be fi `NIF` cu rapyzba ke'a rapci'a le jgena
   ##   .i ro lerfu cu mintu
   let
     module = nif.readModule

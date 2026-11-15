@@ -13,9 +13,9 @@
 ##       sisti
 ##   .i lo ni le pruce cu condi cu na vajni
 ##   .i le fukpi cu zbasu pa pruce poi ciska fi le vreji ca ro lo nu ke'a zasti ku'o ta'i `Chrome`
-##   .i le fukpi cu zbasu ji'a pa pruce poi lo rirni be lo rirni be ke'a du le fukpi ku'o zi'e poi
-##       no roi sisti
-##   .i le fukpi be `Chromium` selci'a fi `shell`
+##   .i le fukpi cu zbasu ji'a pa pruce poi lo rirni be lo rirni be ke'a cu du le fukpi ku'o zi'e
+##       poi no roi sisti
+##   .i le fukpi be `Chromium` cu selci'a fi `shell`
 ##   .i se ki'u bo le cipra cu pilno no tcidu be lo papri
 ##   .i le fukpi cu cusku lo fanmo be le nu cipra sepi'o `curl` ta'i lo papri
 
@@ -32,10 +32,10 @@ import ../../tools/drive
 
 const
   DIRECTORY_FAKE = "build" / "drive" / "fake"
-    ## lo vasru poi le fukpi be `Chromium` gunka ne'i ke'a
+    ## lo vasru poi le fukpi be `Chromium` cu gunka ne'i ke'a
     ##   .i `runPage` sabji le vasru
   PATH_RECORD = DIRECTORY_FAKE / "descendant"
-    ## lo namcu poi cmene lo pruce poi lo rirni be lo rirni be ke'a du le fukpi
+    ## lo namcu poi cmene lo pruce poi lo rirni be lo rirni be ke'a cu du le fukpi
     ##   .i le fukpi cu ciska le namcu
   FAKE_CHROMIUM = """#!/bin/sh
 # Fake of Chromium: leave process two levels down that never ends, and record its id, under
@@ -72,7 +72,7 @@ suite "Internal: Backend of driven checks":
       run = runPage(fake, "", DIRECTORY_FAKE)
     finally:  # no pruce cu stali ba lo nu cipra poi fliba gi'a renro lo nafmupli
       let descendant = Pid(PATH_RECORD.readFile.strip.parseInt)
-      # `kill` jdice lo du'u lo pruce poi morsi zi'e poi no da cpacu lo fanmo be ke'a jmive
+      # `kill` jdice lo du'u lo pruce poi morsi zi'e poi no da cpacu lo fanmo be ke'a cu jmive
       #   .i ki'u bo le nu cipra cu cpacu lo fanmo be ro pruce poi le nu cipra cu sisti ke'a
       is_alive = kill(descendant, 0) == 0
       if is_alive: discard kill(descendant, SIGKILL)  # le ciska be fi le vreji cu sisti ji'a

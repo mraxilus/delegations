@@ -163,7 +163,7 @@ const IDS_REFUSED = [
   #   .i ku'i `facki` selbri
   8639562,  # le javni pe li parere
   8721221,  # le javni pe li paxano lo'o to `be` nitcu lo me `term` poi se lidne `be` toi
-  # lo me `term` lidne `cu`
+  # lo me `term` cu lidne `cu`
   #   .i se ki'u bo `na ku` na ka'e se lidne `cu`
   8738058,  # le javni pe li vono
   # `jai` lidne pa tcita

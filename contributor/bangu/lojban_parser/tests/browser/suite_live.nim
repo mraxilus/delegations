@@ -61,7 +61,7 @@ const
     ## lo du'u `TEXT_TURNS` vasru xo kau jufra
     ##   .i ro jufra cu se tcidu ca pa drata nu carna
   MODE_REFUSED = "refused"
-    ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a to'e curmi ro gunka
+    ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka
     ##   .i `data-mode` pe `body` jarco le tadji
 
 

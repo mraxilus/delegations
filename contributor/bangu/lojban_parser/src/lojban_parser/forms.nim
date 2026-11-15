@@ -118,7 +118,7 @@ const
     ## lo lerpoi poi lo cmene cu ka'e vasru ke'a va'o lo nu lo zunsna cu lidne ke'a
     ##   .i va'o lo drata le cmene cu se fendi fi lo valsi to `CLL 4.8` toi
     ##   .i zo lai .e zo la'i selkra zo la
-    ##   .i se ki'u bo lo nu to'e curmi zo la to'e curmi ji'a zo lai .e zo la'i
+    ##   .i se ki'u bo lo nu to'e curmi zo la cu to'e curmi ji'a zo lai .e zo la'i
   VOWELS_SYLLABLE = VOWELS + {'y'}
     ## lo lerfu poi zbasu lo slaka
     ##   .i le lerfu cu du le mu karsna jo'u `y` to `CLL 3.4` toi

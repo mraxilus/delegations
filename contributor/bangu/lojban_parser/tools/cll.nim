@@ -49,7 +49,7 @@
 ##   .i jdima fa lo nu le papri cu se tcidu ta'i `XML` ba lo nu ro jgena po'u `script` selvi'u
 ##   .i `XHTML` pe le cukta cu me `XML`
 ##   .i le jgena po'u `script` vasru `&` poi `XML` to'e curmi ke'a ku'o gi'e vasru no mupli
-##   .i va'o lo nu pa papri cu selbe'i ta'i `HTML` po'o kei le tcidu be `XML` fliba gi'e cusku le
+##   .i va'o lo nu pa papri cu selbe'i ta'i `HTML` po'o kei le tcidu be `XML` cu fliba gi'e cusku le
 ##       cmene be le papri
 ##   .i jdima fa lo nu le sinxa cu se tcidu sepi'o `sha256sum` noi drata samtci
 ##   .i `lists.nim` pilno ji'a `sha256sum`
@@ -110,8 +110,8 @@ const
     "blockquote", "dd", "div", "dl", "dt", "h1", "h2", "h3", "h4", "li", "ol", "p", "pre",
     "table", "td", "th", "tr", "ul",
   ]
-    ## lo jgena poi lo korbi be ke'a fendi lo valsi ta'i lo nu lo samtci poi pixra lo papri cu punji
-    ##     le jgena
+    ## lo jgena poi lo korbi be ke'a cu fendi lo valsi ta'i lo nu lo samtci poi pixra lo papri cu
+    ##     punji le jgena
   WHITESPACE_HTML = {' ', '\t', '\n', '\f', '\r'}
     ## lo kutle'u pe `HTML`
     ##   .i lo kutle'u poi fanta lo nu katna le linji cu na selvau

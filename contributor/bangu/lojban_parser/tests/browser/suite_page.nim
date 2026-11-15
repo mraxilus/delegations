@@ -45,7 +45,7 @@ const
   DIRECTORY_CASES = "/drive/page/"  ## lo vasru be lo se cipra poi le sabji samtci cu sabji ke'a
   COUNT_CASES_LEAST = 9  ## lo du'u le sabji samtci cu sabji su'o xo kau se cipra
   MODE_REFUSED = "refused"
-    ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a to'e curmi ro gunka
+    ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka
     ##   .i `data-mode` pe `body` jarco le tadji
   MODE_WORKER = "A worker reads the text."  ## le linji pe le tadji va'o lo nu pa gunka cu tcidu
   MODE_PAGE = "This page reads the text, since it gives no worker."

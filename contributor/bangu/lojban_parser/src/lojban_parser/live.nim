@@ -115,11 +115,11 @@
 ##   .i lo jgena poi se lidne le pagbu cu pilno lo selku'e be le pagbu
 ##   .i se ki'u bo le valsi cu selraptcidu ca lo nu le selci'a cu selraptcidu bu'u le jgena
 ##   .i ki'u bo lo nu vimcu poi zvati le selci'a cu pu ka'e vimcu le valsi
-##   .i flalu fa lo du'u ca lo fanmo `NIF` pe lo selci'a poi ro spisa be ke'a se tcidu ta'i lo porsi
-##       cu mintu `NIF` pe lo pagbu be le selci'a poi se tcidu ta'i lo mulno kei .e lo du'u pu lo
-##       fanmo `NIF` .e le rebla pe ro cenba cu mintu `NIF` pe lo pagbu be lo selci'a poi ca zvati
-##       gi'e fanmo bu'u lo romoi sinxa pe ke'a be'o poi se tcidu ta'i pa mulno jmive se ciska to
-##       `test_live.nim` toi
+##   .i flalu fa lo du'u ca lo fanmo `NIF` pe lo selci'a poi ro spisa be ke'a cu se tcidu ta'i lo
+##       porsi cu mintu `NIF` pe lo pagbu be le selci'a poi se tcidu ta'i lo mulno kei .e lo du'u pu
+##       lo fanmo `NIF` .e le rebla pe ro cenba cu mintu `NIF` pe lo pagbu be lo selci'a poi ca
+##       zvati gi'e fanmo bu'u lo romoi sinxa pe ke'a be'o poi se tcidu ta'i pa mulno jmive se ciska
+##       to `test_live.nim` toi
 ##   .i jdima fa lo nu ro spisa cu raptcidu le pagbu poi ca'o kalri
 ##   .i se ki'u bo le temci cu zenba ta'i lo pilji be lo ni le selci'a cu clani kei bei lo ni pa
 ##       jufra cu clani
@@ -536,8 +536,8 @@ func boundary(reader: ReaderLive, at: int): int =
 
 
 func reach(reader: ReaderLive, region: ReadingParts, start: int): Option[int] =
-  ## jarco lo pamoi stuzi poi lidne `start` zi'e poi lo nu tcidu le selci'a poi selkra `start` klama
-  ##     ke'a
+  ## jarco lo pamoi stuzi poi lidne `start` zi'e poi lo nu tcidu le selci'a poi selkra `start` cu
+  ##     klama ke'a
   ##   .i le selkla cu du lo jgena poi vasru lo kravla poi le selci'a cu vasru lo famvla pe ke'a
   ##   .i ja le selkla cu du lo jgena poi vasru lo kravla poi zo su fanmo ke'a
   ##   .i ja le selkla cu du lo jgena poi lo nu vimcu pe le selci'a cu klama ke'a
@@ -727,10 +727,10 @@ func addItems(
     ##   .i `let` da'i fukpi le valsi
   var
     # lo pamoi pezli be zo su ne'i le panzi
-    #   .i va'o lo nu no pezli be zo su zvati kei le namcu cu du lo klani be le panzi
+    #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du lo klani be le panzi
     first_su = children.len
     # lo romoi pezli be zo su ne'i le panzi
-    #   .i va'o lo nu no pezli be zo su zvati kei le namcu cu du li ni'u pa
+    #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du li ni'u pa
     last_su = -1
     # lo pamoi pezli poi se lidne le selci'a
     #   .i ro le pezli cu du zo fa'o poi fanmo le selci'a .a lo valsi poi se lidne zo fa'o

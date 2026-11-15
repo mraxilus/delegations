@@ -41,7 +41,7 @@
 ##   .i `CLL 21.1` na cusku lo du'u xu kau lo porsi cu zmadu `&` lo ka jorne
 ##   .i `CLL 21.1` sitna lo namcu pe le romoi jicmu gerna pe `YACC`
 ##   .i le gerna pe `YACC` pilno lo drata nu gunma ne'i le javni pe li sozere po'o
-##   .i ne'i le javni ku `&` poi jorne lo temtcita .e lo cmavo be `CAhA` zvati ne'i `[NAhE]` .e
+##   .i ne'i le javni ku `&` poi jorne lo temtcita .e lo cmavo be `CAhA` cu zvati ne'i `[NAhE]` .e
 ##       `[KI]`
 ##   .i se ki'u bo `GROUPINGS` ciska lo cukla grile'u pe le nu gunma
 ##   .i jdima fa lo nu `EBNF` stali lo ka mintu le selci'a pe le cukta
@@ -737,7 +737,7 @@ const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
 func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[Item]] =
   ## tisna lo selcmi pe `Earley`
   ##   .i le selcmi pe `i` vasru lo cmima poi su'o cumtricu cu klama ke'a ba lo nu tcidu lo genvla
-  ##       noi lo te kancu be ke'a du `i`
+  ##       noi lo te kancu be ke'a cu du `i`
   ##   .i ca lo nu kanpe pa jvasni poi ka'e binxo lo kutpoi kei le cmima cu pagre le jvasni
   ##   .i `Aycock` .e `Horspool` pilno le vi tadji
   ##   .i `is_everywhere` rinka lo nu ro selcmi cu kanpe ji'a ro javni poi selcme
@@ -1022,7 +1022,7 @@ func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
   ##   .i se ki'u bo le nu zbasu cu fukpi no ricpau
   ##   .i di'u jetnu ji'a ne'i `JavaScript` noi `add` pe ke'a fukpi ro datni
   ##   .i le nu zbasu cu fukpi ji'a no `closures` pe le selcu'a
-  ##   .i lo temci pe lo nu fukpi bu'u ro jgena pu zenba simsa lo pilji be lo klani be le selci'a
+  ##   .i lo temci pe lo nu fukpi bu'u ro jgena cu pu zenba simsa lo pilji be lo klani be le selci'a
   ##       be'o bei le klani
   ##   .i ki'u bo ro ju'agri cu rinka lo nu le javni pe li vo cu punji pa jgena ne'i pa jgena to
   ##       `#849` toi
@@ -1180,7 +1180,7 @@ func toParts(
   ##   .i katna pu ro cmavo be `NIhO` be'o poi se lidne no cmavo be `NIhO` ku'o .e ro cmavo be `I`
   ##       be'o poi jorne no da
   ##   .i le nu katna cu fasnu va'o lo nu no kravla cu ca'o kalri
-  ##   .i `inner` krasi le selci'a pe zo tu'e poi no me zo tu'u fanmo ke'a
+  ##   .i `inner` krasi le selci'a pe zo tu'e poi no me zo tu'u cu fanmo ke'a
   ##   .i le selci'a cu selfa'o `last`
   ##   .i va'o lo drata `inner` du `last`
   ##   .i ro nu katna cu zvati lo stuzi poi no kravla cu ca'o kalri vi ke'a
@@ -1236,8 +1236,8 @@ func isGroup(nodes: openArray[Node], terminals: openArray[Terminal], head: Selma
   ## jdice lo du'u xu kau le jgena cu du lo genvla pe `head` ge'u ce'o lo zifre galfi po'o
   ##   .i mupli fa `I #` ja'i le javni pe li pano
   ##   .i mupli fa ji'a `NIhO ... #` ja'i le javni pe li vo
-  ##   .i va'o lo nu lo me `jek` me'u .a lo me `joik` me'u .a lo tcita .a lo cmavo be `BO` zvati vi
-  ##       kei lo jufra cu jorne
+  ##   .i va'o lo nu lo me `jek` me'u .a lo me `joik` me'u .a lo tcita .a lo cmavo be `BO` cu zvati
+  ##       vi kei lo jufra cu jorne
   var k = 0
   while k < nodes.len and nodes[k].is_terminal and terminals[nodes[k].at] == head.toTerminal: inc k
   k > 0 and nodes.toOpenArray(k, nodes.high).allIt(it.isRule(RULE_FREE))
@@ -1568,7 +1568,7 @@ func readGrammarParts*(
 func readGrammarMarked*(terminals: openArray[Terminal]): Node =
   ## tcidu lo genvla ja'i le gerna pe `CLL 21.1` gi'e zbasu lo tricu pe lo javni poi selcme ta'i lo
   ##     nu `readGrammar` zbasu
-  ##   .i va'o lo nu le gerna cu to'e curmi le genvla kei zbasu lo srejge pe le mulno selci'a
+  ##   .i va'o lo nu le gerna cu to'e curmi le genvla kei cu zbasu lo srejge pe le mulno selci'a
   ##   .i se ki'u bo le tricu cu sinxa ro srera to `#859` toi
   ##   .i va'o lo nu le selci'a cu selka'a fi lo pagbu kei le srejge pe le selci'a cu vasru lo tricu
   ##       pe ro pagbu poi se tcidu ta'i lo nu sepli ge'u .e lo srejge pe ro pagbu poi na se tcidu
