@@ -770,13 +770,17 @@ and `protoc` is 3.21.12.
 
 **The driver imports no package, so `koch list-packages` runs its verb `system` before Atlas
 restores any.** CI installs each package that `system` prints, and only then restores
-`dependencies/`. A driver that fails there installs nothing, and a suite that needs `protoc` then
-stops on the runner alone. So `lists` and `head` run `tools/lists.nim` as a program of its own, as
-`examples` runs `tools/examples.nim`, since that module reads the parser package. Verified by
-`suites/test_build.nim`, which runs the driver in a copy of the project without `dependencies/`.
+`dependencies/` (`.github/workflows/check.yml`). Where the driver does not compile there,
+`koch list-packages` prints no package and exits 0. CI then installs none, and the stub does not
+compile (Tests). So `lists` and `head` run `tools/lists.nim` as a program of its own, as
+`examples` runs `tools/examples.nim`, since that module reads the parser package. Verified by hand
+with Nim 2.4.0 on 2026-11-15: with `dependencies/` moved aside, `nim r koch list-packages
+contributor/bangu/lojban_tagger` prints each package that `system` declares.
 
-The suite fails against the driver that imported `tools/lists.nim`, and prints no package. Cost:
-each run of `lists` or `head` compiles `tools/lists.nim` as a program of its own.
+Verified by `suites/test_build.nim`, which runs the driver in a copy of the project without
+`dependencies/`. The suite refuses a driver that imports a package by path or by name, since that
+driver does not compile in the copy. Cost: `lists` and `head` each compile a second program,
+`tools/lists.nim`, in a time that is unmeasured.
 
 **One package reads and writes exchange files, and Atlas pins it.** The project derives the
 morphology of lojban, which it exists to understand (Article II.8). Protocol Buffers are an
