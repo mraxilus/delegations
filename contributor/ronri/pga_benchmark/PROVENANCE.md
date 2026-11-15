@@ -879,24 +879,6 @@ claims that its evaluation checks. A claim is data, so the page shows each verdi
 kinds are `suites`, `tables`, `program`, `count` and `build`. Rejected: a proposal as prose
 alone, because nothing could then say whether it still holds at head.
 
-**A proposal keeps its number for good.** Its directory opens with the number, as
-`01-cayley-derivation`, and its title with the citation, as `P01`. `drive` holds the numbers
-unique and without a gap, so no number goes to a second proposal. A proposal that the library
-implements stays, with status `implemented` and the library commit, and a withdrawn one stays
-too. `drive` applies neither at pin, and each page keeps its last evaluation. So a
-citation still leads to what was proposed and measured.
-
-**The Architect reads each proposal, and implements it in the library over time,** as the
-Architect ruled on 2026-10-04. So no sign-off asks whether the library takes a proposal, and each
-one stays `proposed` until the library or the Architect settles it. The Architect states each
-rejection, and that proposal is then withdrawn. The Architect may never state an adoption, since
-a try to implement can lead elsewhere. So a new commit of the library is where an adoption
-shows.
-
-The daily `head` workflow opens an issue for this project when the head moves past the pin. This
-project then checks each proposal against that head, and updates it, or sets `implemented` with
-that commit.
-
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
@@ -1043,12 +1025,54 @@ Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `
 cover parse, quote and digest rules, and claim kinds, with the defines a claim may name and the page
 names. They cover the programs of a chain of proposals, base first.
 
-The same suites cover proposal numbers taken twice or skipped, and the status that freezes a
-proposal. They also cover pairing of runs, NaN shares, and an instance whose number alone moved.
-They cover the success line of the compiler, and the table serialiser at pin. The serialiser
-reads a cell that holds its terms in place with their count too. They cover the algebras that an
-evaluation measures, with the flag and without it. A digest moves with edits, and never with
-prose.
+The same suites also cover pairing of runs, NaN shares, and an instance whose number alone moved.
+They cover the success line of the compiler, and the table serialiser at pin. The serialiser reads a
+cell that holds its terms in place with their count too. They cover the algebras that an evaluation
+measures, with the flag and without it. A digest moves with edits, and never with prose.
+
+## Numbers and standing of proposals
+
+**A proposal keeps its number for good.** Its directory opens with the number, as
+`01-cayley-derivation`, and its title with the citation, as `P01`. `drive` holds the numbers
+unique and without a gap, so no number goes to a second proposal. A proposal that the library
+implements stays, with status `implemented` and the library commit, and a withdrawn one stays
+too. `drive` applies neither at pin, and each page keeps its last evaluation. So a
+citation still leads to what was proposed and measured.
+
+**Numbers run in two blocks,** as the Architect ruled on 2026-11-15. The running block counts up
+from P01, and the top block counts down from P99 through P90. The top block holds each proposal
+that waits on a release outside this project when it opens, as P99 waits on Nimony. So such a
+proposal takes no number of the running block, which another delegate may be about to take.
+`drive` holds each block unique and without a gap. The cost is a bound: the running block holds 89
+proposals before it meets the top block.
+
+**A deferred proposal waits on a release outside this project,** as the Architect ruled on
+2026-11-15. It is tested and reported when it opens, and its own `proposal.md` holds its evidence,
+since an evaluation of this project cannot build it. `drive` freezes it, as it freezes an
+implemented or a withdrawn proposal: it applies its change at no pin, and asks no evaluation of
+it. So `evaluate all`, `evaluate stale` and the work of the `head` workflow leave it out. The
+Architect asks for each update, and the delegate then runs its evidence again. Its page and the
+list name it deferred, and show no failing chip where it has no evaluation.
+
+A deferred proposal may hold files beside those of every proposal, where its release needs them.
+P99, `nimony-port`, holds the patches of its compiler, the record of its deviations and its
+regression program, each as Markdown. The program is Markdown and no module, since Nimony refuses
+the line `{.experimental: "strictFuncs".}` that `STYLE.md` asks of every module.
+
+**The Architect reads each proposal, and implements it in the library over time,** as the
+Architect ruled on 2026-10-04. So no sign-off asks whether the library takes a proposal, and each
+one stays `proposed` until the library or the Architect settles it. The Architect states each
+rejection, and that proposal is then withdrawn. The Architect may never state an adoption, since
+a try to implement can lead elsewhere. So a new commit of the library is where an adoption
+shows.
+
+The daily `head` workflow opens an issue for this project when the head moves past the pin. This
+project then checks each proposal that is not frozen against that head, and updates it, or sets
+`implemented` with that commit.
+
+Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Proposals`, `Internal: Pages`
+and `Internal: Proposal list`. They cover numbers taken twice or skipped in either block, and each
+status that freezes a proposal. They cover the page and the list row of a deferred proposal too.
 
 ## Notes
 
@@ -1699,6 +1723,9 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   each case. So each of the two holds one more decision, among three options. They are the
   alignment as now, an alignment of at most 16 bytes, and the alignment as now only under
   `defined(gcDestructors)`.
+- When Nimony has a release, whether to port the library again at that release, or to update P99,
+  `nimony-port`. Its open decisions also name 20 optional changes of its review, and 15 defects of
+  Nimony that wait to be reported.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
