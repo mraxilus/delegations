@@ -674,7 +674,7 @@ proc imgui() =
   ## Clone Dear ImGui at pinned commit, unless checkout already stands somewhere.
   ##   Verb fetches what it compiles rather than asking caller to, for reason `drive` fetches
   ##   font faces: check that first wants command run by hand is check runner will not run
-  ##   (CONTRIBUTOR.md, "One command drives it").
+  ##   (CONTRIBUTOR.md, TypeScript and Node).
   ##   Leaves existing checkout alone rather than resetting it: `checkImgui` reads what is
   ##   there next and refuses wrong commit by name, so contributor pointing this at their own
   ##   clone is told rather than overwritten.
