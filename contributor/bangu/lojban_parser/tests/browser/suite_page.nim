@@ -1,39 +1,37 @@
-## cipra lo du'u le papri pe lo jmive se ciska to `pages/live.html` toi cu mintu le jbena zbasu ne'i
-##   la'o gy. headless Chromium .gy. noi lo minde po'u `drive` cu rinka lo nu ke'a cfari to
-##   `tools/drive.nim` toi
-##   .i le papri cu se zbasu fi le mintu calku
+## cipra lo du'u le papri pe lo jmive se ciska to `pages/live.html` toi cu mintu le jbezba ne'i
+##     `headless Chromium` noi lo minde po'u `drive` rinka lo nu ke'a cfari to `tools/drive.nim` toi
+##   .i le papri cu selzba fi le mitcalku
 ##   .i le vi cipra cu du le samtci pe le papri gi'e basti `src/browser/page.nim`
 ##   .i le cipra cu vasru ro pagbu be `src/browser/page.nim`
-##   .i ki'u bo va'o lo nu pa remoi samtci pe la'o gy. Nim .gy. cu zvati le papri kei le remoi
-##     samtci cu basti lo fancu pe le pamoi to `tools/browser.nim` toi
-##   .i le cipra cu karbi lo se jarco be le papri be'o pe ro se cipra poi le sabji samtci cu sabji
-##     ke'a ku'o le pixra poi le jbena zbasu cu dunda ke'a
-##   .i pa se cipra cu du pa mupli poi mulno se tcidu ta'i le batke pe ke'a
-##   .i pa se cipra cu du pa se ciska poi se benji ta'i lo nu ro valsi cu sepli kei gi'e ba se sisti
-##   .i pa se cipra cu du pa se ciska poi se ciska ta'i lo nu ro pagbu cu sepli kei gi'e ca'o kalri
-##   .i pa se cipra cu du pa nu galfi poi ralte no pu se ciska zi'e noi rinka lo nu pa cnino tcidu
-##     cu cfari
+##   .i ki'u bo va'o lo nu pa remoi samtci pe `Nim` zvati le papri kei le remoi samtci cu basti lo
+##       fancu pe le pamoi to `tools/browser.nim` toi
+##   .i le cipra cu karbi lo selja'o be le papri be'o pe ro se cipra poi le sabji samtci cu sabji
+##       ke'a ku'o le pixra poi le jbezba cu dunda ke'a
+##   .i pa se cipra cu du pa mupli poi mulseltcidu ta'i le batke pe ke'a
+##   .i pa se cipra cu du pa selci'a poi selbe'i ta'i lo nu ro valsi cu sepli kei gi'e ba selsti
+##   .i pa se cipra cu du pa selci'a poi selci'a ta'i lo nu ro pagbu cu sepli kei gi'e ca'o kalri
+##   .i pa se cipra cu du pa nu galfi poi ralte no pu selci'a zi'e noi rinka lo nu pa ninytcidu cu
+##       cfari
 ##   .i ro se cipra .e ro pagbu cu datnyvei gi'e vasru pa lerpoi
 ##   .i se ki'u bo no tarmi be lo datni cu zvati lo jbini be le sabji samtci .e le cipra
-##   .i lo pixra be lo nu jmina be ro se cipra cu jarco ro tricu poi le jbena zbasu cu jmina le ca
-##     se ciska be fi la'o gy. NIF .gy. be'o pe le se cipra fo ke'a
+##   .i lo pixra be lo nu jmina be ro se cipra cu jarco ro tricu poi le jbezba cu jmina le ca
+##       selci'a be fi `NIF` be'o pe le se cipra fo ke'a
 ##   .i le linji cu se jarco ji'a
-##   .i ro le re se zbasu cu pilno `drawnMerged`
-##   .i le se jarco cu du pa tricu pe lo nu tcidu le mulno se ciska .a lo tricu pe ro porsi be lo
-##     pagbu poi sruri pa srera poi stali
+##   .i ro le re selzba cu pilno `drawnMerged`
+##   .i le selja'o cu du pa tricu pe lo nu tcidu le mulselci'a .a lo tricu pe ro porsi be lo pagbu
+##       poi sruri pa srera poi stali
 ##   .i lo bavla'i cenba cu mipri le tricu ki'u lo nu le tricu cu na drani
-##   .i le cipra cu jitro lo jitro tutci ta'i le papri to `wiredControls` toi gi'e danre le batke
-##     po'u la'o gy. Merge .gy.
-##   .i le pixra poi le papri cu jarco ke'a ku'o .e le pixra poi le jbena zbasu cu ciska ke'a cu se
-##     karbi ta'i lo nu le mintu tcidu be lo papri cu ciska ro le re pixra
+##   .i le cipra cu jitro lo trotci ta'i le papri to `wiredControls` toi gi'e danre le batke po'u
+##       `Merge`
+##   .i le pixra poi le papri cu jarco ke'a ku'o .e le pixra poi le jbezba cu ciska ke'a se karbi
+##       ta'i lo nu le mitytcidu be lo papri cu ciska ro le re pixra
 ##   .i se ki'u bo no cizra be le ciska cu zvati lo jbini be le re pixra
-##   .i lo papri poi lo javni pe lo se vasru be ke'a cu to'e curmi ro gunka cu tcidu ne'i lo cilta
-##     pe vo'a gi'e jarco le mintu pixra
+##   .i lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka cu tcidu ne'i lo cilta pe
+##       vo'a gi'e jarco le mitxra
 ##   .i le linji pe le tadji cu cusku di'u
-##   .i le cipra pe lo nupre cu cusku ro cipra ta'i lo nu la'o gy. unittest .gy. cu ciska to
-##     `report.nim` toi
-##   .i ki'u bo la'o gy. unittest .gy. cu denpa no nupre
-##   .i ba bo le cipra cu cusku lo fanmo namcu pe le nu cipra
+##   .i le cipra pe lo nupre cu cusku ro cipra ta'i lo nu `unittest` ciska to `report.nim` toi
+##   .i ki'u bo `unittest` denpa no nupre
+##   .i ba bo le cipra cu cusku lo famna'u pe le nu cipra
 
 {.experimental: "strictFuncs".}
 
@@ -47,8 +45,8 @@ const
   DIRECTORY_CASES = "/drive/page/"  ## lo vasru be lo se cipra poi le sabji samtci cu sabji ke'a
   COUNT_CASES_LEAST = 9  ## lo du'u le sabji samtci cu sabji su'o xo kau se cipra
   MODE_REFUSED = "refused"
-    ## lo tadji be lo papri poi lo javni pe lo se vasru be ke'a cu to'e curmi ro gunka
-    ##   .i `data-mode` pe `body` cu jarco le tadji
+    ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a to'e curmi ro gunka
+    ##   .i `data-mode` pe `body` jarco le tadji
   MODE_WORKER = "A worker reads the text."  ## le linji pe le tadji va'o lo nu pa gunka cu tcidu
   MODE_PAGE = "This page reads the text, since it gives no worker."
     ## le linji pe le tadji va'o lo nu le papri cu to'e curmi lo gunka
@@ -58,15 +56,15 @@ const
 
 type Case = object
   ## pa se cipra pe le papri
-  ##   .i le tadji be lo nu tcidu le se cipra .e le pixra pe le jbena zbasu
+  ##   .i le tadji be lo nu tcidu le se cipra .e le pixra pe le jbezba
   kind: string  ## pa cmima be `KINDS`
   pieces: seq[string]
-    ## lo se ciska pe le se cipra ta'i lo nu ro pagbu cu sepli
-    ##   .i pa pagbu cu du le mulno se ciska va'o lo nu le klesi cu du `whole` .a `stream`
-  html: string  ## le pixra poi le jbena zbasu cu dunda ke'a
-  status: string  ## le linji poi le jbena zbasu cu dunda ke'a
-  merged_html: string  ## le pixra be le tricu poi le jbena zbasu cu jmina le ca se ciska fo ke'a
-  merged_status: string  ## le linji pe lo nu jmina ge'u zi'e poi le jbena zbasu cu dunda ke'a
+    ## lo selci'a pe le se cipra ta'i lo nu ro pagbu cu sepli
+    ##   .i pa pagbu cu du le mulselci'a va'o lo nu le klesi cu du `whole` .a `stream`
+  html: string  ## le pixra poi le jbezba cu dunda ke'a
+  status: string  ## le linji poi le jbezba cu dunda ke'a
+  merged_html: string  ## le pixra be le tricu poi le jbezba cu jmina le ca selci'a fo ke'a
+  merged_status: string  ## le linji pe lo nu jmina ge'u zi'e poi le jbezba cu dunda ke'a
 
 
 let DOCUMENT {.nodecl, importc: "document".}: JsObject
@@ -77,8 +75,8 @@ let DOCUMENT {.nodecl, importc: "document".}: JsObject
 proc serialised(html: cstring): cstring {.importjs:
   "(function(markup) { var held = document.createElement('template'); " &
   "held.innerHTML = markup; return held.innerHTML; })(#)".}
-  ## dunda le se ciska be fi la'o gy. HTML .gy. be'o poi lo tcidu be lo papri cu ciska ke'a
-  ##   .i korbi la'o gy. JS .gy. sepi'o pa pagbu po'u `template`
+  ## dunda le selci'a be fi `HTML` be'o poi lo tcidu be lo papri cu ciska ke'a
+  ##   .i korbi `JS` sepi'o pa pagbu po'u `template`
 
 
 proc readCases(): seq[Case] =
@@ -98,7 +96,7 @@ proc readCases(): seq[Case] =
 proc readCase(item: Case) {.async.} =
   ## tcidu le se cipra ta'i le papri
   ##   .i lo batke .a lo porsi be lo valsi be'o poi vasru no denpa .a lo nu ciska ro pagbu cu rinka
-  ##     lo nu tcidu
+  ##       lo nu tcidu
   case item.kind
   of "whole": await readWhole(cstring(item.pieces[0]))
   of "stream": await streamed(cstring(item.pieces[0]), 0)
@@ -114,7 +112,7 @@ proc readCase(item: Case) {.async.} =
 
 proc runSuite() {.async.} =
   ## pilno ro cipra pe le cipra ta'i le porsi gi'e cusku ro le cipra
-  ##   .i ba bo cusku lo fanmo namcu pe le nu cipra
+  ##   .i ba bo cusku lo famna'u pe le nu cipra
   let is_refused = DOCUMENT.body.dataset.mode.to(cstring) == MODE_REFUSED
   report "[Suite] Internal: Page of live text" & (if is_refused: ", worker refused" else: "")
   let cases = readCases()
@@ -122,7 +120,7 @@ proc runSuite() {.async.} =
   wiredControls()
 
   template ended(name: string) =
-    ## cusku le cipra ta'i lo nu la'o gy. unittest .gy. cu ciska
+    ## cusku le cipra ta'i lo nu `unittest` ciska
     ##   .i le cipra cu fliba va'o lo nu pa xusra cu fliba ba le romoi cipra
     report "  [" & (if countFailures() > failures: "FAILED" else: "OK") & "] " & name
     failures = countFailures()
@@ -130,7 +128,7 @@ proc runSuite() {.async.} =
   expectThat cases.len >= COUNT_CASES_LEAST, "backend serves " & $COUNT_CASES_LEAST & " cases"
   var
     kinds: seq[string]
-    # lo se jarco be le papri pe ro se cipra ta'i lo nu ro se cipra cu sepli
+    # lo selja'o be le papri pe ro se cipra ta'i lo nu ro se cipra cu sepli
     merges: seq[tuple[html, status: string, is_hidden: bool]]
   for item in cases:
     if item.kind notin kinds: kinds.add item.kind
@@ -173,7 +171,7 @@ proc runSuite() {.async.} =
   await typed(cstring(text_typed))
   discard DOCUMENT.getElementById(cstring("merge")).click()
   let is_shown = not DOCUMENT.getElementById(cstring("merged")).hidden.to(bool)
-  # le mintu tcidu cu cpacu pa valsi ji'a
+  # le mitytcidu cu cpacu pa valsi ji'a
   #   .i ki'u bo le tcidu cu ca'o kalri
   await typed(cstring(text_typed & " .i"))
   expectThat is_shown, "button shows tree merged"
@@ -189,7 +187,7 @@ proc runSuite() {.async.} =
 
 
 # le cipra cu fasnu ne'i le papri
-#   .i le gunka noi se krasi le vi samtci cu spuda le papri po'o to `live_text.nim` toi
+#   .i le gunka noi selkra le vi samtci cu spuda le papri po'o to `live_text.nim` toi
 if DOCUMENT.jsTypeOf != "undefined":
   initReporter()
   discard runSuite()

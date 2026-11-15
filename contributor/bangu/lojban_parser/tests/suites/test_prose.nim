@@ -1,19 +1,16 @@
-## cipra lo nu `prose.nim` cu tcidu lo prosa
+## cipra lo nu `prose.nim` tcidu lo prosa
 ##   .i le cipra cu cipra lo nu sitna .e lo nu vimcu .e zo zei .e lo cmavo be `BAhE` be'o .e zo bu
-##     .e lo cinmo valsi ja'i `CLL 4` .e `CLL 6` .e `CLL 13` .e `CLL 17` .e `CLL 19`
+##       .e lo cnivla ja'i `CLL 4` .e `CLL 6` .e `CLL 13` .e `CLL 17` .e `CLL 19`
 ##   .i ba bo le cipra cu cipra le gerna pe `CLL 21.1`
-##   .i lo mupli cu fukpi lo se ciska pe la'o gy. CLL .gy. gi'e no roi fukpi lo se jarco be le
-##     genturfa'i
-##   .i lo linji pe pa jufra cu se jorne
-##   .i lo se ciska poi no krasi cu vasru ke'a cu se tcita lu se finti li'u
+##   .i lo mupli cu fukpi lo selci'a pe `CLL` gi'e no roi fukpi lo selja'o be le genturfa'i
+##   .i lo linji pe pa jufra cu seljo'e
+##   .i lo selci'a poi no krasi cu vasru ke'a se tcita lu se finti li'u
 ##   .i lo flalu cu cipra lo mupli poi se sitna ku'o bu'u ro stuzi poi zvati lo jbini be le valsi pe
-##     le mupli
+##       le mupli
 ##   .i lo flalu cu cipra ji'a ro cmavo pe le cmavo liste to `Article IX.3` toi
-##   .i `test_corpus.nim` cu tcidu ro mupli pe `CLL 1.1` fi lo se cpacu poi se javni le notci pe
-##     la'o gy. CLL .gy.
-##   .i lo javni pe `CLL 19.16` cu dunda lo pagbu .e lo gerna stura lo mupli poi le vi cipra cu
-##     sitna ke'a
-##   .i le vi cipra cu cipra le pagbu .e le gerna stura
+##   .i `test_corpus.nim` tcidu ro mupli pe `CLL 1.1` fi lo selcpa poi seljva le notci pe `CLL`
+##   .i lo javni pe `CLL 19.16` dunda lo pagbu .e lo gensu'a lo mupli poi le vi cipra cu sitna ke'a
+##   .i le vi cipra cu cipra le pagbu .e le gensu'a
 
 {.experimental: "strictFuncs".}
 
@@ -49,10 +46,10 @@ const
     "mi viska le sa .i mi cusku zo .djan.", "mi viska le blanu .zdan. sa le xekri zdani",
   ]
     ## lo mupli po'u `CLL 4.38-44, 6.92-94, 13.2, 13.9, 13.55, 13.61-62, 13.74-75, 17.10-12,
-    ##   17.18-19, 19.42, 19.44-45, 19.47-49, 19.51-53, 19.57, 19.75-77, 19.79-81, 19.83` ta'i le
-    ##   porsi
+    ##     17.18-19, 19.42, 19.44-45, 19.47-49, 19.51-53, 19.57, 19.75-77, 19.79-81, 19.83` ta'i le
+    ##     porsi
   FLOOR_ERASED = 150
-    ## lo mleca traji te kancu be lo stuzi poi le flalu pe lo nu vimcu cu tcidu ke'a
+    ## lo mecraiterkancu be lo stuzi poi le flalu pe lo nu vimcu cu tcidu ke'a
     ##   .i le flalu cu tcidu paxare stuzi
     ##   .i le stuzi cu zvati lo jbini be lo valsi pe ro mupli poi vasru no nu vimcu
     ##   .i ku'i le flalu cu tcidu no stuzi poi se lidne zo zo .a zo zoi .a zo la'o
@@ -62,7 +59,7 @@ const
 #[ ni'o ni'o ni'o lo tcidu ]#
 
 func unitsRead(text: string): Option[seq[seq[string]]] =
-  ## tcidu lo prosa gi'e dunda lo liste be lo lerfu pe lo valsi poi ro gerna valsi cu vasru ke'a
+  ## tcidu lo prosa gi'e dunda lo liste be lo lerfu pe lo valsi poi ro genvla cu vasru ke'a
   ##   .i dunda no da va'o lo nu le prosa cu se to'e curmi
   let reading = text.readText
   if not reading.is_read: return none(seq[seq[string]])
@@ -70,7 +67,7 @@ func unitsRead(text: string): Option[seq[seq[string]]] =
 
 
 func terminalsRead(text: string): Option[seq[Terminal]] =
-  ## tcidu lo prosa gi'e dunda lo liste be lo gerna valsi pe ro pagbu
+  ## tcidu lo prosa gi'e dunda lo liste be lo genvla pe ro pagbu
   ##   .i dunda no da va'o lo nu le prosa cu se to'e curmi
   let reading = text.readText
   if reading.is_read: some(reading.units.mapIt(it.terminal)) else: none(seq[Terminal])
@@ -78,15 +75,14 @@ func terminalsRead(text: string): Option[seq[Terminal]] =
 
 func refusalRead(text: string): Option[(RefusalText, int)] =
   ## tcidu lo prosa gi'e dunda lo javni poi to'e curmi le prosa ku'o .e lo stuzi poi le javni cu
-  ##   cmene ke'a
+  ##     cmene ke'a
   ##   .i dunda no da va'o lo nu le prosa cu se tcidu
   let reading = text.readText
   if reading.is_read: none((RefusalText, int)) else: some((reading.refusal, reading.start))
 
 
 func leaves(node: Node): seq[int] =
-  ## dunda lo liste be lo namcu pe ro gerna valsi poi zvati ne'i le jgena ku'o ta'i le porsi pe le
-  ##   tricu
+  ## dunda lo liste be lo namcu pe ro genvla poi zvati ne'i le jgena ku'o ta'i le porsi pe le tricu
   if node.is_terminal: return @[node.at]
   for child in node.children: result.add child.leaves
 
@@ -97,11 +93,11 @@ suite "Chapter 4":
     check "bridi zei valsi".unitsRead == some(@[@["bridi", "zei", "valsi"]])  # `CLL 4.38` mupli
     check "xy. zei kantu".terminalsRead == some(@[Selmaho.Zei.toTerminal])  # `CLL 4.39` mupli
     check "na'e zei .a zei na'e zei by. livgyterbilma".unitsRead.get.len ==
-        2  # `CLL 4.41` mupli to pa porsi pe zo zei cu lidne pa lujvo toi
+        2  # `CLL 4.41` mupli to pa porsi pe zo zei lidne pa lujvo toi
     check "na'e zei .a zei na'e zei by. zei livgyterbilma".unitsRead.get.len ==
-        1  # `CLL 4.43` mupli to le se ciska cu du pa porsi pe zo zei toi
-    # zo zei cu jorne re valsi
-    check "mi zei".refusalRead == some((RefusalText.Construct, 3))  # `CLL 4.6` to se finti toi
+        1  # `CLL 4.43` mupli to le selci'a cu du pa porsi pe zo zei toi
+    # zo zei jorne re valsi
+    check "mi zei".refusalRead == some((RefusalText.Construct, 3))  # `CLL 4.6` to selfi'i toi
 
 
   test "Section 4.7":
@@ -114,7 +110,7 @@ suite "Chapter 6":
   test "Section 6.14":
     check "mi cusku lo'u li mi le'u".unitsRead ==
         some(@[@["mi"], @["cusku"], @["lo'u", "li", "mi", "le'u"]])  # `CLL 6.92` mupli
-    # le se ciska cu mupli
+    # le selci'a cu mupli
     check "mi cusku zo .ai".unitsRead == some(@[@["mi"], @["cusku"], @["zo", "ai"]])  # `CLL 6.93`
     check "mi cusku zoi kuot. I'm John .kuot.".unitsRead ==
         some(@[@["mi"], @["cusku"], @["zoi", "kuot", "I'm John", "kuot"]])  # `CLL 6.94` mupli
@@ -123,21 +119,21 @@ suite "Chapter 6":
 
 suite "Chapter 13":
   test "Section 13.1-2":
-    # lo cinmo valsi cu krasi le se ciska
-    #   .i le javni pe li no cu tcidu le cinmo valsi
+    # lo cnivla cu krasi le selci'a
+    #   .i le javni pe li no cu tcidu le cnivla
     check ".ui la djan klama".terminalsRead.get[0] ==
         Selmaho.Ui.toTerminal  # `CLL 13.2` mupli
     check ".ui mi facki fi le mi mapku".terminalsRead.isSome  # `CLL 13.9` mupli
 
 
   test "Section 13.7-10":
-    # ro le cinmo valsi cu krasi le se ciska
+    # ro le cnivla cu krasi le selci'a
     check ".uiro'obe'unai".terminalsRead.get.len == 4  # `CLL 13.55` mupli
-    # zo ui .e zo nai cu pagbu pa cinmo valsi gi'e tcita zo .e
+    # zo ui .e zo nai pagbu pa cnivla gi'e tcita zo .e
     check "mi .e .ui nai do".unitsRead.get[1] ==
         @["e", "ui", "nai"]  # `CLL 13.61` mupli
     check "mi .e nai .ui do".unitsRead.get[1 .. 2] ==
-        @[@["e"], @["nai", "ui"]]  # `CLL 13.62` mupli to zo nai cu pagbu `ek` gi'e se tcita toi
+        @[@["e"], @["nai", "ui"]]  # `CLL 13.62` mupli to zo nai pagbu `ek` gi'e se tcita toi
     for text in [".o'onai bu'o", ".iu bu'onai .uinai"]:
       check text.terminalsRead.isSome  # `CLL 13.74-75` mupli
 
@@ -145,24 +141,24 @@ suite "Chapter 13":
 
 suite "Chapter 17":
   test "Section 17.4-8":
-    check "zo bu".unitsRead == some(@[@["zo", "bu"]])  # `CLL 17.10` mupli to zo bu cu se sitna toi
+    check "zo bu".unitsRead == some(@[@["zo", "bu"]])  # `CLL 17.10` mupli to zo bu se sitna toi
     check "ky.bu .ubu .abu cy. ky.".unitsRead ==
         some(@[@["ky", "bu"], @["u", "bu"], @["a", "bu"], @["cy"], @["ky"]])  # `CLL 17.11` mupli
-    # lo cmene cu binxo pa lerfu valsi
+    # lo cmene cu binxo pa lervla
     check "zai .devanagar. bu".unitsRead ==
         some(@[@["zai"], @["devanagar", "bu"]])  # `CLL 17.12` mupli
     check "tei .ebu .akut.bu foi ty. tei .akut.bu .ebu foi".terminalsRead.isSome  # `CLL 17.18`
     check ".y'y.bu .abu ny. vo zy. .ibu vo".terminalsRead.isSome  # `CLL 17.19` mupli
     # le cukta cu cusku zoi gy. abubu is legal .gy.
     check ".abubu".unitsRead == some(@[@["a", "bu", "bu"]])  # `CLL 17.4`
-    # zo bu cu nitcu pa valsi poi lidne zo bu
-    check "bu".refusalRead == some((RefusalText.Construct, 0))  # `CLL 17.4` to se finti toi
+    # zo bu nitcu pa valsi poi lidne zo bu
+    check "bu".refusalRead == some((RefusalText.Construct, 0))  # `CLL 17.4` to selfi'i toi
 
 
 
 suite "Chapter 19":
   test "Section 19.8":
-    # zo fu'e .e zo fu'o cu tcita lo valsi poi lidne le re cmavo to `CLL 19.16` toi
+    # zo fu'e .e zo fu'o tcita lo valsi poi lidne le re cmavo to `CLL 19.16` toi
     check "mi viska le fu'e .ia blanu zdani fu'o ponse".unitsRead == some(@[
       @["mi"], @["viska"], @["le", "fu'e", "ia"], @["blanu"], @["zdani", "fu'o"], @["ponse"],
     ])  # `CLL 19.42` mupli
@@ -175,14 +171,14 @@ suite "Chapter 19":
         8  # `CLL 19.44` mupli
     check "la tcarlis. cusku lo'u le ninmu cu morsi le'u .iku'i ri jmive".terminalsRead.isSome
       # `CLL 19.47` mupli
-    # zo lo'u cu sitna su'o pa valsi
+    # zo lo'u sitna su'o pa valsi
     check "lo'u le'u".refusalRead == some((RefusalText.Quotation, 5))  # `CLL 21.1`
-    # zo le'u cu fanmo le nu sitna
+    # zo le'u fanmo le nu sitna
     check "lo'u mi".refusalRead == some((RefusalText.Quotation, 5))  # `CLL 19.9`
 
 
   test "Section 19.10":
-    # zo si cu se sitna
+    # zo si se sitna
     check "zo si cu lojbo valsi".unitsRead.get[0] == @["zo", "si"]  # `CLL 19.48` mupli
     check "zoi gy. John is a man .gy. cu glico jufra".unitsRead.get[0] ==
         @["zoi", "gy", "John is a man", "gy"]  # `CLL 19.49` mupli
@@ -194,24 +190,24 @@ suite "Chapter 19":
     check "zo .bab. cmene la'e zo .bab.".terminalsRead.isSome  # `CLL 19.54` mupli
     check "la'o dy. Goethe .dy. cu me la'o ly. Homo sapiens .ly.".terminalsRead.isSome  # `19.57`
 
-    # zo zo poi fanmo le se ciska ne'i ro pagbu poi lo nu sitna cu dunda pa valsi ke'a
-    #   .i lo tcidu pe `#859` zi'e poi curmi cu facki lo du'u `mi cusku zo` cu se tcidu
-    #   .i simsa lo nu zo zo cu sitna pa valsi
+    # zo zo poi fanmo le selci'a ne'i ro pagbu poi lo nu sitna cu dunda pa valsi ke'a
+    #   .i lo tcidu pe `#859` zi'e poi curmi cu facki lo du'u `mi cusku zo` se tcidu
+    #   .i simsa lo nu zo zo sitna pa valsi
     check "mi cusku zo".refusalRead ==
-        some((RefusalText.Quotation, 9))  # `CLL 19.10` to zo zo cu sitna lo bavla'i gi'e fanmo toi
-    # se finti
+        some((RefusalText.Quotation, 9))  # `CLL 19.10` to zo zo sitna lo bavla'i gi'e fanmo toi
+    # selfi'i
     check "zo".refusalRead == some((RefusalText.Quotation, 0))  # `CLL 19.10` zo zo po'o
     check "mi klama si zo".refusalRead ==
         # lo nu vimcu cu lidne zo zo
-        #   .i se finti
+        #   .i selfi'i
         some((RefusalText.Quotation, 12))  # `CLL 19.13`
     check "mi cusku zo zo".unitsRead ==
-        # zo zo cu se sitna
-        #   .i se finti
+        # zo zo se sitna
+        #   .i selfi'i
         some(@[@["mi"], @["cusku"], @["zo", "zo"]])  # `CLL 19.10`
-    # zo zo cu korbi valsi
+    # zo zo koivla
     check "mi cusku zoi zo gy zo".unitsRead ==
-        some(@[@["mi"], @["cusku"], @["zoi", "zo", "gy", "zo"]])  # `CLL 19.10` to se finti toi
+        some(@[@["mi"], @["cusku"], @["zoi", "zo", "gy", "zo"]])  # `CLL 19.10` to selfi'i toi
     check "lo'u mi zo".refusalRead ==
         some((RefusalText.Quotation, 8))  # `CLL 19.9` to ne'i zo lo'u poi zo le'u na fanmo ke'a toi
 
@@ -220,7 +216,7 @@ suite "Chapter 19":
     check "ti gerku si mlatu".terminalsRead == "ti mlatu".terminalsRead  # `CLL 19.75` mupli
     check "ta blanu zdani si si xekri zdani".terminalsRead ==
         "ta xekri zdani".terminalsRead  # `CLL 19.76` mupli
-    # lo nu sitna pe zo zo cu vasru re valsi
+    # lo nu sitna pe zo zo vasru re valsi
     check "zo .bab. se cmene zo si si si la bab.".unitsRead ==
         "zo .bab. se cmene la bab.".unitsRead  # `CLL 19.77` mupli
     # le cukta cu cusku zoi gy. four words have been uttered .gy.
@@ -228,53 +224,53 @@ suite "Chapter 19":
         "mi cusku zo .djan.".unitsRead  # `CLL 19.79` mupli
     check "mi se cmene zo .djan. si si zo .djordj.".unitsRead ==
         "mi se cmene zo .djordj.".unitsRead  # `CLL 19.80` mupli
-    # le cukta cu skicu le se ciska fo zoi gy. parser will reject .gy.
+    # le cukta cu skicu le selci'a fo zoi gy. parser will reject .gy.
     check "mi se cmene zo .djan. si .djordj.".refusalRead ==
         some((RefusalText.Quotation, 26))  # `CLL 19.13`
-    # le jufra poi lidne zo .i cu se vimcu
+    # le jufra poi lidne zo .i selvi'u
     check "mi viska le sa .i mi cusku zo .djan.".unitsRead ==
         ".i mi cusku zo .djan.".unitsRead  # `CLL 19.81-82` mupli
-    # zo le cu fanmo lo nu zo sa cu vimcu
+    # zo le fanmo lo nu zo sa vimcu
     check "mi viska le blanu .zdan. sa le xekri zdani".unitsRead ==
         "mi viska le xekri zdani".unitsRead  # `CLL 19.83` mupli
-    # zo si cu nitcu pa valsi poi lidne zo si
-    check "si".refusalRead == some((RefusalText.Construct, 0))  # `CLL 19.13` to se finti toi
+    # zo si nitcu pa valsi poi lidne zo si
+    check "si".refusalRead == some((RefusalText.Construct, 0))  # `CLL 19.13` to selfi'i toi
 
 
   test "Section 19.13, Example 19.78":
-    # lo'u .e speranto le'u cu se vimcu ta'i re valsi
+    # lo'u .e speranto le'u selvi'u ta'i re valsi
     check "mi tavla fo la .esperanto si si .esperanton.".unitsRead ==
         "mi tavla fo la .esperanton.".unitsRead  # `CLL 19.78` mupli
 
 
   test "Section 19.15":
-    # le se ciska cu se fanmo
+    # le selci'a cu selfa'o
     check "mi klama fa'o 日本".unitsRead == some(@[@["mi"], @["klama"]])  # `CLL 19.15`
-    # zo fa'o poi se sitna cu fanmo no se ciska
+    # zo fa'o poi se sitna cu fanmo no selci'a
     check "zo fa'o cu cmavo".unitsRead.get[0] == @["zo", "fa'o"]  # `CLL 19.15`
 
-    # zo fa'o poi fanmo le se ciska ne'i ro pagbu poi lo nu sitna cu dunda pa valsi ke'a
-    #   .i lo tcidu pe `#859` zi'e poi curmi cu facki lo du'u `mi cusku zo fa'o` cu se tcidu ta'i zo
-    #     zo po'o
-    #   .i se ki'u bo le valsi poi se sitna cu se cirko
-    #   .i va'o lo nu zo fa'o na se sitna kei le se ciska cu se fanmo
+    # zo fa'o poi fanmo le selci'a ne'i ro pagbu poi lo nu sitna cu dunda pa valsi ke'a
+    #   .i lo tcidu pe `#859` zi'e poi curmi cu facki lo du'u `mi cusku zo fa'o` se tcidu ta'i zo zo
+    #       po'o
+    #   .i se ki'u bo le valsi poi se sitna cu selcri
+    #   .i va'o lo nu zo fa'o na se sitna kei le selci'a cu selfa'o
     check "mi klama fa'o".unitsRead == some(@[@["mi"], @["klama"]])  # `CLL 19.15`
     # zo zo cu ka'e sitna ro valsi
     check "mi cusku zo fa'o".unitsRead ==
-        some(@[@["mi"], @["cusku"], @["zo", "fa'o"]])  # `CLL 19.10` to se finti toi
-    # ro valsi cu ka'e korbi valsi
+        some(@[@["mi"], @["cusku"], @["zo", "fa'o"]])  # `CLL 19.10` to selfi'i toi
+    # ro valsi cu ka'e koivla
     check "mi cusku zoi fa'o gy fa'o".unitsRead ==
         some(@[@["mi"], @["cusku"], @["zoi", "fa'o", "gy", "fa'o"]])  # `CLL 19.10`
-    # zo la'o cu simsa zo zoi
+    # zo la'o simsa zo zoi
     check "mi cusku la'o fa'o gy fa'o".unitsRead ==
         some(@[@["mi"], @["cusku"], @["la'o", "fa'o", "gy", "fa'o"]])  # `CLL 19.10`
-    # zo le'u cu fanmo le nu sitna
+    # zo le'u fanmo le nu sitna
     #   .i le stuzi cu du le stuzi pe le romoi valsi poi se sitna
     check "mi cusku lo'u fa'o".refusalRead ==
         some((RefusalText.Quotation, 14))  # `CLL 19.9`
-    # le gerna cu sisti bu'u le fanmo be le se ciska
+    # le gerna cu sisti bu'u le fanmo be le selci'a
     check "mi klama le fa'o ko".refusalRead ==
-        some((RefusalText.Grammar, 12))  # `CLL 19.15` to se finti toi
+        some((RefusalText.Grammar, 12))  # `CLL 19.15` to selfi'i toi
 
 
 
@@ -285,7 +281,7 @@ suite "Internal: Prose":
       let reading = text.readText
       check reading.is_read
       if not reading.is_read: continue
-      # le pezli cu du le gerna valsi ta'i le porsi
+      # le pezli cu du le genvla ta'i le porsi
       check reading.tree.leaves == toSeq(0 ..< reading.units.len)  # `#815`
       let held = reading.units.mapIt(it.words).concat
       # lo nu vimcu cu ralte le porsi be lo valsi poi stali
@@ -325,7 +321,7 @@ suite "Internal: Prose":
 
   test "Tie of stream is refused, though grammar reads one split alone":
     # le ciska cu cusku lo cmene po'u `lauras`
-    #   .i se finti
+    #   .i selfi'i
     let stream = "la .lauras. klama".readStream
     # zo la na krasi lo cmene
     #   .i mupli fa `laplas.`
@@ -336,6 +332,6 @@ suite "Internal: Prose":
         some((RefusalText.Stream, 4))  # `D4 a` pe `#811`
     # `fragment` poi vasru pa sumti
     check "la la .uras. klama".terminalsRead.isSome  # `CLL 21.1`
-    # lo cmavo be `LAU` cu nitcu pa lerfu valsi
+    # lo cmavo be `LAU` cu nitcu pa lervla
     check "la lau .ras. klama".refusalRead ==
         some((RefusalText.Grammar, 8))  # le javni pe li sobize pe `CLL 21.1`

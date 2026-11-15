@@ -1,8 +1,8 @@
-## rapli zbasu lo zunsna gunma pe `CLL 3` gi'e cipra lo du'u `clusters.nim` cu mapti le se zbasu
+## rapyzba lo zunsna gunma pe `CLL 3` gi'e cipra lo du'u `clusters.nim` mapti le selzba
 ##   .i lo se cipra cu du le paze zunsna
 ##   .i se ki'u bo ro zunsna remei .e ro zunsna cimei cu se liste to `Article IX.3` toi
-##   .i le vi cipra cu rapli cusku le javni ja'i lo se ciska pe `CLL` gi'e na pilno lo liste poi
-##     `clusters.nim` cu zbasu ke'a
+##   .i le vi cipra cu rapsku le javni ja'i lo selci'a pe `CLL` gi'e na pilno lo liste poi
+##       `clusters.nim` zbasu ke'a
 ##   .i se ki'u bo le cipra cu cipra lo nu zbasu le liste kei gi'e na rapli le nu zbasu
 
 {.experimental: "strictFuncs".}
@@ -47,20 +47,20 @@ suite "Chapter 3":
         if is_sibilant_both: check not isPairPermissible(a, b)  # le cimoi javni pe `CLL 3.6`
         if is_named: check not isPairPermissible(a, b)  # le vomoi javni pe `CLL 3.6`
         if not (is_doubled or is_voicing_mixed or is_sibilant_both or is_named):
-          # ja'i `CLL 3.6` ro zunsna remei poi le vo javni na fanta ke'a cu se curmi
+          # ja'i `CLL 3.6` ro zunsna remei poi le vo javni na fanta ke'a selcru
           check isPairPermissible(a, b)  # `CLL 3.6`
           inc count_permissible
     check count_permissible > 0  # ja'i `CLL 3.6` le javni cu curmi su'o zunsna remei
-    check not isPairPermissible('b', 'f')  # ja'i `CLL 3.6` zoi gy. bf .gy. na se curmi
-    check not isPairPermissible('s', 'd')  # ja'i `CLL 3.6` zoi gy. sd .gy. na se curmi
-    # ja'i `CLL 3.6` zoi gy. fl .gy. .e zoi gy. vl .gy. cu se curmi
+    check not isPairPermissible('b', 'f')  # ja'i `CLL 3.6` zoi gy. bf .gy. na selcru
+    check not isPairPermissible('s', 'd')  # ja'i `CLL 3.6` zoi gy. sd .gy. na selcru
+    # ja'i `CLL 3.6` zoi gy. fl .gy. .e zoi gy. vl .gy. selcru
     check isPairPermissible('f', 'l') and isPairPermissible('v', 'l')  # `CLL 3.6`
-    # ja'i `CLL 3.6` zoi gy. ls .gy. .e zoi gy. lz .gy. cu se curmi
+    # ja'i `CLL 3.6` zoi gy. ls .gy. .e zoi gy. lz .gy. selcru
     check isPairPermissible('l', 's') and isPairPermissible('l', 'z')  # `CLL 3.6`
     # `CLL 3.6` .e `Example 3.8`
-    #   .i `y` cu fendi zoi gy. mz .gy. pe zoi gy. djeimyz .gy.
+    #   .i `y` fendi zoi gy. mz .gy. pe zoi gy. djeimyz .gy.
     check not isPairPermissible('m', 'z')  # `CLL 3.6`
-    # le vomoi javni pe `CLL 3.6` cu cusku zoi gy. mz .gy. po'o gi'e no roi cusku zoi gy. zm .gy.
+    # le vomoi javni pe `CLL 3.6` cusku zoi gy. mz .gy. po'o gi'e no roi cusku zoi gy. zm .gy.
     check isPairPermissible('z', 'm')  # `CLL 3.6`
     # ja'i `CLL 3.6` lo zunsna po'o cu zbasu lo zunsna remei
     check not isPairPermissible('a', 'b') and not isPairPermissible('\'', 'b')  # `CLL 3.6`
@@ -72,13 +72,13 @@ suite "Chapter 3":
       for b in ORDER_CONSONANTS:  # ro le rebiso zunsna remei
         if not isPairInitial(a, b): continue
         inc count_initial
-        # ja'i `CLL 3.7` ro zunsna remei poi ka'e krasi lo valsi cu se curmi ja'i `CLL 3.6`
+        # ja'i `CLL 3.7` ro zunsna remei poi ka'e krasi lo valsi cu selcru ja'i `CLL 3.6`
         check isPairPermissible(a, b)  # `CLL 3.7`
         if a in VOICED and b in VOICED:
           # ja'i `CLL 3.7` lo nu lo voksa zunsna remei cu ka'e krasi lo valsi cu nibli lo nu lo na'e
-          #   voksa zunsna remei poi mapti cu ka'e krasi lo valsi
+          #     voksa zunsna remei poi mapti cu ka'e krasi lo valsi
           check isPairInitial(a.unvoiced, b.unvoiced)  # `CLL 3.7`
-    # `CLL 3.7` cu cusku zoi gy. just 48 such permissible initial consonant pairs .gy.
+    # `CLL 3.7` cusku zoi gy. just 48 such permissible initial consonant pairs .gy.
     check count_initial == 48  # `CLL 3.7`
     # ja'i `CLL 3.7` lo fatne be lo nibli na jetnu
     check isPairInitial('c', 'n') and not isPairInitial('j', 'n')  # `CLL 3.7`
@@ -94,5 +94,5 @@ suite "Chapter 3":
           check isTriplePermissible(a, b, c) == is_expected  # le ci cimei javni pe `CLL 3.7`
     for triple in ["ndj", "ndz", "ntc", "nts"]:
       check isPairPermissible(triple[0], triple[1]) and isPairInitial(triple[1], triple[2])
-      # `CLL 3.7` cu cusku le zunsna cimei gi'e to'e curmi ri
+      # `CLL 3.7` cusku le zunsna cimei gi'e to'e curmi ri
       check not isTriplePermissible(triple[0], triple[1], triple[2])  # `CLL 3.7`

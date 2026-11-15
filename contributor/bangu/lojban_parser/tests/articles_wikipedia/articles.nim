@@ -1,15 +1,14 @@
-## ralte lo clani prosa pe la'o gy. Wikipedia .gy. pe la lojban. mu'i le cipra
-##   .i le vi datnyvei cu vasru lo se jdice be le genturfa'i bei ro ju'agri
-##   .i lo minde po'u `nim r tools/build.nim wikipedia <directory>` cu ciska le vi datnyvei ra'i lo
-##     danfu pe la'o gy. API .gy. pe la'o gy. Wikipedia .gy.
-##   .i lo sinxa namcu be le danfu cu du zoi ky. SHA-256 `6bbe766025354f3dd9e7335ccd779cc8`
-##     `68dbaddd9d8f2071eeb9680a0a3d0c21` .ky.
-##   .i lo nu xance galfi le vi datnyvei cu na drani
-##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapli pilno le minde
-##   .i lo se ciska pe la'o gy. Wikipedia .gy. pe la lojban. cu se javni la'o gy. CC BY-SA 4.0 .gy.
+## ralte lo claro'a pe `Wikipedia` pe la lojban. mu'i le cipra
+##   .i le vi datnyvei cu vasru lo seljdi be le genturfa'i bei ro ju'agri
+##   .i lo minde po'u `nim r tools/build.nim wikipedia <directory>` ciska le vi datnyvei ra'i lo
+##       danfu pe `API` pe `Wikipedia`
+##   .i lo snina'u be le danfu cu du zoi ky. SHA-256 `6bbe766025354f3dd9e7335ccd779cc8`
+##       `68dbaddd9d8f2071eeb9680a0a3d0c21` .ky.
+##   .i lo nu xanga'i le vi datnyvei cu na drani
+##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapypli le minde
+##   .i lo selci'a pe `Wikipedia` pe la lojban. seljva `CC BY-SA 4.0`
 ##   .i `NOTICE.md` noi lamji le vi datnyvei cu cusku lo du'u le datnyveiste poi vasru le vi
-##     datnyvei cu se javni le curmi javni gi'e no roi se javni le curmi javni pe la'o gy.
-##     delegations .gy.
+##       datnyvei cu seljva le crujva gi'e no roi seljva le crujva pe `delegations`
 
 {.experimental: "strictFuncs".}
 
@@ -17,22 +16,22 @@
 type
   ArticleWikipedia* = object
     ## pa prosa
-    ##   .i le klesi cu vasru lo cmene .e le te galfi poi le se ciska cu se krasi ke'a
+    ##   .i le klesi cu vasru lo cmene .e le terga'i poi le selci'a cu selkra ke'a
     title* {.requiresInit.}: string  ## lo cmene be le papri
-    revision* {.requiresInit.}: int  ## le te galfi poi le sampu se ciska cu se krasi ke'a
+    revision* {.requiresInit.}: int  ## le terga'i poi le sapselci'a cu selkra ke'a
 
   ParagraphWikipedia* = object
     ## pa ju'agri
-    ##   .i le klesi cu vasru lo prosa .e lo stuzi .e lo se ciska .e lo se jdice
+    ##   .i le klesi cu vasru lo prosa .e lo stuzi .e lo selci'a .e lo seljdi
     article* {.requiresInit.}: string  ## lo cmene be le prosa poi vasru le ju'agri
     index* {.requiresInit.}: int
       ## lo namcu pe le ju'agri ne'i le prosa
       ##   .i le namcu pe le pamoi ju'agri cu du li pa
     text* {.requiresInit.}: string
-      ## pa linji pe lo sampu se ciska ta'i lo nu le danfu cu dunda le linji
+      ## pa linji pe lo sapselci'a ta'i lo nu le danfu cu dunda le linji
     verdict* {.requiresInit.}: string
       ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i pu dunda ke'a
-      ##   .i va'o lo nu le ju'agri cu se tcidu kei le se jdice cu kunti
+      ##   .i va'o lo nu le ju'agri cu se tcidu kei le seljdi cu kunti
 
 
 const

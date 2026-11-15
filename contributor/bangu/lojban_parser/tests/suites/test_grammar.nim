@@ -1,26 +1,24 @@
-## cipra lo du'u `grammar.nim` cu tcidu lo mupli pe `CLL 5` ja'i le ciste gerna pe `CLL 21.1` simsa
-##   lo nu `CLL 5` cu tcidu le mupli
+## cipra lo du'u `grammar.nim` tcidu lo mupli pe `CLL 5` ja'i le ci'erge'a pe `CLL 21.1` simsa lo nu
+##     `CLL 5` tcidu le mupli
 ##   .i cipra ji'a lo flalu poi ro tricu cu mapti ke'a
-##   .i lo mupli cu se fukpi fi lo se ciska pe la'o gy. CLL .gy. gi'e no roi se fukpi fi lo se jarco
-##     be le genturfa'i
-##   .i lo linji pe pa jufra cu se jorne
-##   .i lo se ciska poi no krasi cu vasru ke'a cu se tcita lu se finti li'u
-##   .i lo kurfa grile'u pe la'o gy. CLL .gy. cu sinxa lo valsi poi lo se ciska cu ka'e claxu ke'a
-##     to `CLL 5.5` toi
+##   .i lo mupli cu selfu'i fi lo selci'a pe `CLL` gi'e no roi selfu'i fi lo selja'o be le
+##       genturfa'i
+##   .i lo linji pe pa jufra cu seljo'e
+##   .i lo selci'a poi no krasi cu vasru ke'a se tcita lu se finti li'u
+##   .i lo kurfa grile'u pe `CLL` sinxa lo valsi poi lo selci'a cu ka'e claxu ke'a to `CLL 5.5` toi
 ##   .i se ki'u bo ro mupli cu se tcidu ta'i lo nu vasru le valsi .e lo nu claxu le valsi
-##   .i le se sitna pe le cipra cu du lo valsi poi la'o gy. CLL .gy. cu gunma ke'a ne'i lo prosa .e
-##     lo valsi fanva ta'i lo se kuspe be lo javni ku'o .e lo fanmo valsi poi `CLL 21.1` cu ciska
-##     ke'a fi lo jbini be re `/`
+##   .i le se sitna pe le cipra cu du lo valsi poi `CLL` gunma ke'a ne'i lo prosa .e lo vlafanva
+##       ta'i lo selku'e be lo javni ku'o .e lo famvla poi `CLL 21.1` ciska ke'a fi lo jbini be re
+##       `/`
 ##   .i le vi datnyvei cu liste le se sitna gi'e sepli `grammar.nim`
-##   .i `test_corpus.nim` cu tcidu ro mupli pe `CLL 1.1` fi lo se cpacu poi se javni le notci pe
-##     la'o gy. CLL .gy.
+##   .i `test_corpus.nim` tcidu ro mupli pe `CLL 1.1` fi lo selcpa poi seljva le notci pe `CLL`
 ##   .i le vi cipra cu cipra le tricu pe le mupli poi le vi cipra cu sitna ke'a
-##   .i `test_prose.nim` cu cipra lo nu sitna .e lo nu vimcu .e zo zei .e zo bu vu'o noi galfi pu lo
-##     nu le gerna cu tcidu
-##   .i le flalu pe le nu tcidu ro pagbu cu cipra lo du'u `readGrammar` noi tcidu ro pagbu be le se
-##     ciska cu mintu `readWhole` noi tcidu le mulno se ciska pa roi
-##   .i le flalu cu tcidu ro se ciska pe le se ciska girzu zi'e poi se katna ku'o .e le se ciska poi
-##     jorne lo ju'agri pe pa prosa to `#849` toi
+##   .i `test_prose.nim` cipra lo nu sitna .e lo nu vimcu .e zo zei .e zo bu vu'o noi galfi pu lo nu
+##       le gerna cu tcidu
+##   .i le flalu pe le nu tcidu ro pagbu cu cipra lo du'u `readGrammar` noi tcidu ro pagbu be le
+##       selci'a cu mintu `readWhole` noi tcidu le mulselci'a pa roi
+##   .i le flalu cu tcidu ro selci'a pe le selci'agri zi'e poi selka'a ku'o .e le selci'a poi jorne
+##       lo ju'agri pe pa prosa to `#849` toi
 
 {.experimental: "strictFuncs".}
 
@@ -37,13 +35,13 @@ import ../sample_tatoeba/sentences
 
 type
   Example = object
-    ## skicu pa mupli pe la'o gy. CLL .gy. sepi'o le ckupaupau poi vasru le mupli ku'o .e le namcu
-    ##   .e le lojbo se ciska pe le mupli
+    ## skicu pa mupli pe `CLL` sepi'o le ckupaupau poi vasru le mupli ku'o .e le namcu .e le
+    ##     jboselci'a pe le mupli
     section: string
     number: string
     text: string
-      ## le lojbo se ciska pe le mupli
-      ##   .i lo kurfa grile'u cu sinxa lo valsi poi lo se ciska cu ka'e claxu ke'a
+      ## le jboselci'a pe le mupli
+      ##   .i lo kurfa grile'u cu sinxa lo valsi poi lo selci'a cu ka'e claxu ke'a
 
 
 const
@@ -53,11 +51,11 @@ const
     Selmaho.Luhu, Selmaho.Mehu, Selmaho.Nuhu, Selmaho.Sehu, Selmaho.Tehu, Selmaho.Toi,
     Selmaho.Tuhu, Selmaho.Vau, Selmaho.Veho,
   }
-    ## lo selma'o poi `CLL 21.1` cu ciska ke'a fi lo jbini be re `/` ta'i lo fanmo valsi poi lo se
-    ##   ciska cu ka'e claxu ke'a
+    ## lo selma'o poi `CLL 21.1` ciska ke'a fi lo jbini be re `/` ta'i lo famvla poi lo selci'a cu
+    ##     ka'e claxu ke'a
   COUNT_ELIDED = 12
     ## lo te kancu be lo mupli pe le vi datnyvei zi'e poi ciska lo fanmo valsi po'o ne'i lo kurfa
-    ##   grile'u
+    ##     grile'u
   EXAMPLES = [
     Example(section: "5.1", number: "5.1", text: "do mamta mi"),
     Example(section: "5.1", number: "5.5", text: "ta blotrskunri"),
@@ -122,7 +120,7 @@ const
     Example(section: "5.16", number: "5.171", text: "melbi je ke cmalu je nixli je ckule [ke'e]"),
   ]
     ## lo mupli pe ro ckupaupau pe `CLL 5` ne'i `CLL 1.1`
-    ##   .i lo linji pe pa jufra cu se jorne
+    ##   .i lo linji pe pa jufra cu seljo'e
   TEXTS_PASSES = [
     "mi klama .i do cadzu .ije do bajra ni'o la .alis. cusku lu mi citka .i do pinxe li'u",
     "mi klama .i tu'e do klama .i mi cadzu ni'o do cadzu",
@@ -142,24 +140,23 @@ const
     ".ije mi klama .i do klama", "mi klama .i tu'e .i do klama .i mi cadzu", "mi klama .i tu'e .i",
     "le .i mi klama", "mi klama le .i do klama", "mi klama .i lu do cadzu .i mi klama",
   ]
-    ## lo se ciska poi vasru ro stuzi poi le nu tcidu ro pagbu cu katna bu'u ke'a gi'a tcidu le
-    ##   mulno se ciska bu'u ke'a
-    ##   .i le se ciska cu vasru zo .i poi jorne no da ku'o .e zo .i poi jorne ku'o .e zo ni'o
-    ##   .i ne'i le se ciska zo tu'e .e zo lu .e zo to cu ca'o kalri gi'a se fanmo
-    ##   .i le se ciska cu se finti
+    ## lo selci'a poi vasru ro stuzi poi le nu tcidu ro pagbu cu katna bu'u ke'a gi'a tcidu le
+    ##     mulselci'a bu'u ke'a
+    ##   .i le selci'a cu vasru zo .i poi jorne no da ku'o .e zo .i poi jorne ku'o .e zo ni'o
+    ##   .i ne'i le selci'a zo tu'e .e zo lu .e zo to cu ca'o kalri gi'a selfa'o
+    ##   .i le selci'a cu selfi'i
   CUTTING = {Selmaho.I, Selmaho.Niho, Selmaho.Tuhe, Selmaho.Lu, Selmaho.To}
-    ## lo selma'o poi le nu tcidu ro pagbu cu katna bu'u ke'a ku'o .a lo selma'o poi krasi lo se
-    ##   ciska ne'i lo se ciska
-    ##   .i lo se ciska poi vasru no le selma'o cu vasru pa pagbu po'o
+    ## lo selma'o poi le nu tcidu ro pagbu cu katna bu'u ke'a ku'o .a lo selma'o poi krasi lo
+    ##     selci'a ne'i lo selci'a
+    ##   .i lo selci'a poi vasru no le selma'o cu vasru pa pagbu po'o
   COUNT_PASSES_LEAST = 300
-    ## lo dizlo jimte be lo te kancu be lo se ciska poi le flalu pe le nu tcidu ro pagbu cu tcidu
-    ##   ke'a
-    ##   .i le se ciska cu du lo se ciska poi pagbu le se ciska girzu gi'e vasru pa cmima be
-    ##     `CUTTING` ku'o .e lo se ciska pe le vi datnyvei ge'u .e le se ciska poi jorne lo ju'agri
-    ##     pe pa prosa to `Article IX.3` toi
+    ## lo dzijimte be lo te kancu be lo se ciska poi le flalu pe le nu tcidu ro pagbu cu tcidu ke'a
+    ##   .i le selci'a cu du lo selci'a poi pagbu le selci'agri gi'e vasru pa cmima be `CUTTING`
+    ##       ku'o .e lo selci'a pe le vi datnyvei ge'u .e le selci'a poi jorne lo ju'agri pe pa
+    ##       prosa to `Article IX.3` toi
   COUNT_PARTS_JOINED = 64
     ## lo te kancu be lo pagbu poi le nu tcidu ro pagbu cu katna le se ciska poi jorne lo ju'agri pe
-    ##   pa prosa ku'o fi ke'a
+    ##     pa prosa ku'o fi ke'a
 
 
 
@@ -167,15 +164,15 @@ const
 
 func occurrencesRead(text: string): seq[Occurrence] =
   ## tcidu lo porsi be lo valsi gi'e liste le valsi
-  ##   .i lo porsi be lo valsi pe ro mupli pe la'o gy. CLL .gy. cu se tcidu ro roi
+  ##   .i lo porsi be lo valsi pe ro mupli pe `CLL` cu se tcidu ro roi
   let reading = text.readStream
   doAssert reading.is_read, "Stream of example should read; got `" & text & "`."
   reading.occurrences
 
 
 func readingRead(text: string): ReadingGrammar =
-  ## tcidu lo valsi pe lo porsi be lo valsi ta'i lo gerna valsi
-  ##   .i tcidu le gerna valsi ja'i le gerna pe `CLL 21.1`
+  ## tcidu lo valsi pe lo porsi be lo valsi ta'i lo genvla
+  ##   .i tcidu le genvla ja'i le gerna pe `CLL 21.1`
   var terminals: seq[Terminal]
   for occurrence in text.occurrencesRead:
     let terminal = occurrence.reading.toTerminal
@@ -185,16 +182,16 @@ func readingRead(text: string): ReadingGrammar =
 
 
 func treeRead(text: string): Option[Node] =
-  ## tcidu lo se ciska ja'i le gerna gi'e dunda le tricu pe le se ciska
-  ##   .i va'o lo nu le gerna cu to'e curmi le se ciska kei dunda no da
+  ## tcidu lo selci'a ja'i le gerna gi'e dunda le tricu pe le selci'a
+  ##   .i va'o lo nu le gerna cu to'e curmi le selci'a kei dunda no da
   let reading = text.readingRead
   if reading.is_read: some(reading.tree) else: none(Node)
 
 
 func terminalsStream(text: string): Option[seq[Terminal]] =
-  ## dunda ro valsi pe lo porsi be lo valsi pe le se ciska ta'i lo gerna valsi
-  ##   .i va'o lo nu lo porsi be lo valsi cu se to'e curmi kei .a lo nu pa valsi cu vasru no gerna
-  ##     valsi kei dunda no da
+  ## dunda ro valsi pe lo porsi be lo valsi pe le selci'a ta'i lo genvla
+  ##   .i va'o lo nu lo porsi be lo valsi cu se to'e curmi kei .a lo nu pa valsi cu vasru no genvla
+  ##       kei dunda no da
   let stream = text.readStream
   if not stream.is_read: return none(seq[Terminal])
   var terminals: seq[Terminal]
@@ -206,15 +203,15 @@ func terminalsStream(text: string): Option[seq[Terminal]] =
 
 
 func terminalsRead(text: string): Option[seq[Terminal]] =
-  ## dunda le gerna valsi poi `readText` cu ralte ke'a va'o lo nu le se ciska cu se tcidu
-  ##   .i va'o lo drata dunda ro valsi pe le porsi be lo valsi
+  ## dunda le genvla poi `readText` ralte ke'a va'o lo nu le selci'a cu se tcidu
+  ##   .i va'o lo datydu'a ro valsi pe le porsi be lo valsi
   let reading = text.readText
   if reading.is_read: some(reading.units.mapIt(it.terminal)) else: text.terminalsStream
 
 
 func partsRead(text: string): Option[seq[Slice[int]]] =
-  ## tcidu le gerna valsi pe le se ciska gi'e dunda ro pagbu poi le nu tcidu ro pagbu cu katna le se
-  ##   ciska fi ke'a
+  ## tcidu le genvla pe le selci'a gi'e dunda ro pagbu poi le nu tcidu ro pagbu cu katna le selci'a
+  ##     fi ke'a
   let
     terminals = text.terminalsRead.get
     split = terminals.toParts(0, terminals.len)
@@ -222,7 +219,7 @@ func partsRead(text: string): Option[seq[Slice[int]]] =
 
 
 func isCutting(text: string): bool =
-  ## jdice lo du'u xu kau lo porsi be lo valsi pe le se ciska cu vasru pa cmima be `CUTTING`
+  ## jdice lo du'u xu kau lo porsi be lo valsi pe le selci'a cu vasru pa cmima be `CUTTING`
   ##   .i le valsi cu se tcidu ja'i lo tarmi be vo'a po'o pu lo nu le gerna cu tcidu
   let stream = text.readStream
   stream.is_read and stream.occurrences.anyIt(
@@ -231,12 +228,12 @@ func isCutting(text: string): bool =
 
 
 func textJoined(): string =
-  ## zbasu pa se ciska lo ju'agri pe le prosa po'u `lo jbobau` zi'e poi se tcidu ba zo ni'o
-  ##   .i lo sinxa be lo ju'agri .a lo jufra be'o poi krasi le ju'agri cu se vimcu
-  ##   .i zo ni'o cu zvati lo jbini be ro re lamji ju'agri
-  ##   .i le recimoi ju'agri pe le prosa cu se fanmo zo tu'e
+  ## zbasu pa selci'a lo ju'agri pe le prosa po'u `lo jbobau` zi'e poi se tcidu ba zo ni'o
+  ##   .i lo sinxa be lo ju'agri .a lo jufra be'o poi krasi le ju'agri cu selvi'u
+  ##   .i zo ni'o zvati lo jbini be ro re lamji ju'agri
+  ##   .i le recimoi ju'agri pe le prosa cu selfa'o zo tu'e
   ##   .i le resomoi ju'agri cu vasru zo tu'u po'o gi'e na se tcidu
-  ##   .i se ki'u bo zo tu'e cu ca'o kalri vi le fanmo be le se ciska
+  ##   .i se ki'u bo zo tu'e cu ca'o kalri vi le fanmo be le selci'a
   var paragraphs: seq[string]
   for paragraph in PARAGRAPHS_WIKIPEDIA:
     if paragraph.article != "lo jbobau" or paragraph.verdict.len > 0: continue
@@ -248,21 +245,21 @@ func textJoined(): string =
 
 
 func refusalRead(text: string): Option[(int, string)] =
-  ## tcidu lo se ciska ja'i le gerna gi'e dunda le stuzi .e le javni vu'o poi to'e curmi le se ciska
-  ##   .i va'o lo nu le gerna cu tcidu le se ciska kei dunda no da
+  ## tcidu lo selci'a ja'i le gerna gi'e dunda le stuzi .e le javni vu'o poi to'e curmi le selci'a
+  ##   .i va'o lo nu le gerna cu tcidu le selci'a kei dunda no da
   let reading = text.readingRead
   if reading.is_read: none((int, string)) else: some((reading.at, reading.rule))
 
 
 func leaves(node: Node): seq[int] =
-  ## liste lo stuzi namcu pe ro gerna valsi poi se vasru le jgena ku'o ja'i le porsi pe le tricu
+  ## liste lo stuna'u pe ro genvla poi selvau le jgena ku'o ja'i le porsi pe le tricu
   if node.is_terminal: return @[node.at]
   for child in node.children: result.add child.leaves
 
 
 func spans(node: Node, rule: string): seq[Slice[int]] =
-  ## liste lo se kuspe be ro jgena pe `rule` be'o poi vasru su'o re valsi ku'o ja'i lo porsi be lo
-  ##   nu le jgena cu cfari
+  ## liste lo selku'e be ro jgena pe `rule` be'o poi vasru su'o re valsi ku'o ja'i lo porsi be lo nu
+  ##     le jgena cu cfari
   if node.is_terminal: return
   let leaves = node.leaves
   if node.rule == rule and leaves.len >= 2: result.add leaves[0] .. leaves[^1]
@@ -270,8 +267,8 @@ func spans(node: Node, rule: string): seq[Slice[int]] =
 
 
 func spansRead(text, rule: string): seq[Slice[int]] =
-  ## tcidu lo se ciska ja'i le gerna gi'e liste lo se kuspe be ro jgena pe `rule` be'o poi vasru
-  ##   su'o re valsi
+  ## tcidu lo selci'a ja'i le gerna gi'e liste lo selku'e be ro jgena pe `rule` be'o poi vasru su'o
+  ##     re valsi
   let tree = text.treeRead
   doAssert tree.isSome, "Grammar should read example; got `" & text & "`."
   tree.get.spans(rule)
@@ -279,31 +276,30 @@ func spansRead(text, rule: string): seq[Slice[int]] =
 
 func shape(node: Node, words: openArray[string], dropped: openArray[int]): string =
   ## ciska le tricu ta'i lo javni noi vasru lo valsi
-  ##   .i lo valsi pe `dropped` cu na se ciska
+  ##   .i lo valsi pe `dropped` na selci'a
   if node.is_terminal: return (if node.at in dropped: "" else: words[node.at])
   let parts = node.children.mapIt(it.shape(words, dropped)).filterIt(it.len > 0)
   node.rule & "(" & parts.join(" ") & ")"
 
 
 func shape(node: Node): string =
-  ## ciska le tricu ta'i lo namcu pe lo javni noi vasru lo stuzi namcu pe lo gerna valsi
+  ## ciska le tricu ta'i lo namcu pe lo javni noi vasru lo stuna'u pe lo genvla
   if node.is_terminal: return $node.at
   $node.number & "(" & node.children.mapIt(it.shape).join(" ") & ")"
 
 
 func shape(reading: ReadingGrammar): string =
   ## ciska le se tcidu ta'i lo lerpoi
-  ##   .i va'o lo nu le se ciska cu se tcidu kei ciska le tricu ta'i lo nu `shape` cu ciska
-  ##   .i va'o lo drata ciska le stuzi .e le javni pe le nu to'e curmi
+  ##   .i va'o lo nu le selci'a cu se tcidu kei ciska le tricu ta'i lo nu `shape` ciska
+  ##   .i va'o lo datci'a le stuzi .e le javni pe le nu to'e curmi
   if reading.is_read: reading.tree.shape else: "refused " & $reading.at & " " & reading.rule
 
 
 func shapesRead(text: string): Option[tuple[passes, whole: string]] =
-  ## tcidu le se ciska ta'i le nu tcidu ro pagbu .e lo nu tcidu le mulno se ciska gi'e ciska ro se
-  ##   tcidu
-  ##   .i va'o lo nu le se ciska cu se tcidu kei le tricu pe le nu tcidu ro pagbu cu se cpacu fi
-  ##     `readText` noi tcidu le se ciska ta'i le nu tcidu ro pagbu
-  ##   .i va'o lo drata ro valsi pe le porsi be lo valsi cu gerna valsi
+  ## tcidu le selci'a ta'i le nu tcidu ro pagbu .e lo nu tcidu le mulselci'a gi'e ciska ro se tcidu
+  ##   .i va'o lo nu le selci'a cu se tcidu kei le tricu pe le nu tcidu ro pagbu cu selcpa fi
+  ##       `readText` noi tcidu le selci'a ta'i le nu tcidu ro pagbu
+  ##   .i va'o lo drata ro valsi pe le porsi be lo valsi cu genvla
   let reading = text.readText
   if reading.is_read:
     let terminals = reading.units.mapIt(it.terminal)
@@ -327,9 +323,9 @@ func withoutBracketed(text: string): string =
 
 
 func bracketedAt(text: string): seq[int] =
-  ## liste lo stuzi namcu pe ro valsi poi lo kurfa grile'u cu sinxa ke'a ku'o ne'i ro valsi pe le
-  ##   mupli poi vasru le valsi
-  ##   .i ro se ciska valsi pe `CLL 5` cu du pa valsi pe lo porsi be lo valsi
+  ## liste lo stuna'u pe ro valsi poi lo kurfa grile'u cu sinxa ke'a ku'o ne'i ro valsi pe le mupli
+  ##     poi vasru le valsi
+  ##   .i ro selci'avla pe `CLL 5` du pa valsi pe lo porsi be lo valsi
   let tokens = text.splitWhitespace
   for i, token in tokens:
     if token.startsWith("["): result.add i
@@ -341,7 +337,7 @@ suite "Chapter 5":
     var count = 0
     for example in EXAMPLES:
       check example.text.withBracketed.treeRead.isSome  # le mupli ta'i le nu le cukta cu ciska
-      # lo valsi cu ka'e se claxu
+      # lo valsi cu ka'e selcau
       check example.text.withoutBracketed.treeRead.isSome  # `CLL 5.5`
       inc count
     check count == EXAMPLES.len
@@ -368,24 +364,24 @@ suite "Chapter 5":
     check "ta ke ke ke melbi cmalu ke'e nixli ke'e ckule ke'e".spansRead("tanru-unit-2") ==
         @[1 .. 10, 2 .. 8, 3 .. 6]  # `CLL 5.33`
     check "ta melbi ke cmalu nixli ckule".spansRead("tanru-unit-2") ==
-        @[2 .. 5]  # `CLL 5.36` to zo ke'e cu se claxu bu'u lo fanmo be le selbri toi
+        @[2 .. 5]  # `CLL 5.36` to zo ke'e selcau bu'u lo fanmo be le selbri toi
     check "ta melbi ke cmalu ke nixli ckule".spansRead("tanru-unit-2") ==
-        @[2 .. 6, 4 .. 6]  # `CLL 5.37` to zo ke'e cu re roi se claxu toi
+        @[2 .. 6, 4 .. 6]  # `CLL 5.37` to zo ke'e cu re roi selcau toi
 
 
   test "Section 5.7":
     check "le xamgu be do noi barda cu zdani".spansRead("linkargs") ==
-        # le me `relative-clauses` me'u cu ckini le romoi sumti pe zo be
+        # le me `relative-clauses` cu ckini le romoi sumti pe zo be
         @[2 .. 5]  # `CLL 5.73`
     check "le xamgu be do be'o noi barda cu zdani".spansRead("linkargs") ==
-        @[2 .. 4]  # `CLL 5.74` to zo be'o cu fanmo le sumti pe zo be toi
+        @[2 .. 4]  # `CLL 5.74` to zo be'o fanmo le sumti pe zo be toi
     check "le xamgu be do be'o noi barda cu zdani".spansRead("relative-clause") ==
-        # le me `relative-clauses` me'u cu ckini le sumti poi vasru zo be
+        # le me `relative-clauses` cu ckini le sumti poi vasru zo be
         @[5 .. 6]  # `CLL 5.74`
     check "le xamgu be le ctuca be'o zdani".spansRead("sumti-6") ==
-        @[0 .. 6, 3 .. 4]  # `CLL 5.75` to zo be'o cu fanmo le sumti pe zo be toi
-    # va'o lo nu claxu zo ku .e zo be'o kei zo zdani cu pagbu le sumti pe zo be
-    #   .i se finti
+        @[0 .. 6, 3 .. 4]  # `CLL 5.75` to zo be'o fanmo le sumti pe zo be toi
+    # va'o lo nu claxu zo ku .e zo be'o kei zo zdani pagbu le sumti pe zo be
+    #   .i selfi'i
     check "le xamgu be le ctuca zdani".spansRead("sumti-6") ==
         @[0 .. 5, 3 .. 5]  # `CLL 5.7`
 
@@ -395,7 +391,7 @@ suite "Chapter 18":
   test "Section 18.16":
     check "li fu'a reboi ci su'i du li mu".treeRead.isSome  # `CLL 18.110`
     # lo pu tadji be lo nu cuxna lo tricu pu cirko le mupli po'u `CLL 18.111`
-    #   .i lo nu cipra ro mupli pe la'o gy. CLL .gy. pu facki di'u
+    #   .i lo nu cipra ro mupli pe `CLL` pu facki di'u
     check "li fu'a reboi ci pi'i voboi mu pi'i su'i du li rexa".treeRead.isSome  # `CLL 18.111`
     for depth in 1 .. 5:
       var (left, right) = (@["li", "fu'a", "pa"], @["li", "fu'a", "pa"])
@@ -407,7 +403,7 @@ suite "Chapter 18":
           # zo su'i ba lo namcu
           toSeq(countdown(depth, 1)).mapIt(2 .. 2 + 2 * it)  # `CLL 18.16`
       check right.join(" ").spansRead("rp-expression") ==
-          # lo pritu gunma
+          # lo pritygunma
           toSeq(0 ..< depth).mapIt(2 + it .. 2 + 2 * depth - it)  # `CLL 18.16`
 
 
@@ -440,7 +436,7 @@ suite "Internal: Grammar":
       check with_all.isSome and without.isSome
       if with_all.isNone or without.isNone: continue
       let words_without = example.text.withoutBracketed.occurrencesRead.mapIt(it.text)
-      # lo fanmo valsi cu se claxu
+      # lo famvla cu selcau
       #   .i zoi gy. without change of meaning .gy.
       check with_all.get.shape(words.mapIt(it.text), dropped) ==
           without.get.shape(words_without, [])  # `CLL 21.1`
@@ -449,28 +445,28 @@ suite "Internal: Grammar":
 
 
   test "Refusal names place where every derivation stops, and rule stopping there":
-    # se finti
+    # selfi'i
     check "mi klama le".refusalRead == some((3, "sumti-6 97"))  # fanmo ne'i lo sumti
-    check "le".refusalRead == some((1, "sumti-6 97"))  # se finti
-    check "cu".refusalRead == some((0, "text 0"))  # zo cu na krasi lo se ciska to se finti toi
-    # se finti
+    check "le".refusalRead == some((1, "sumti-6 97"))  # selfi'i
+    check "cu".refusalRead == some((0, "text 0"))  # zo cu na krasi lo se ciska to selfi'i toi
+    # selfi'i
     check "mi cu cu klama".refusalRead == some((2, "sentence 40"))  # zo cu poi remoi
-    check "mi poi".refusalRead == some((2, "relative-clause 122"))  # se finti
-    # se finti
+    check "mi poi".refusalRead == some((2, "relative-clause 122"))  # selfi'i
+    # selfi'i
     check "lo nu".refusalRead == some((2, "tanru-unit-2 152"))  # zo nu denpa lo bridi
     # zo ku fanmo no sumti
-    check "mi klama ku".refusalRead == some((2, "bridi-tail 50"))  # se finti
+    check "mi klama ku".refusalRead == some((2, "bridi-tail 50"))  # selfi'i
 
 
   test "Rule 972 groups and/or of tense and CAhA inside NAhE and KI, as grammar.300 does":
-    check "mi na'e ka'e tavla".spansRead("simple-tense-modal") == @[1 .. 2]  # `973` to se finti toi
-    check "mi to'e ca'a tavla".spansRead("simple-tense-modal") == @[1 .. 2]  # `973` to se finti toi
-    # se finti
+    check "mi na'e ka'e tavla".spansRead("simple-tense-modal") == @[1 .. 2]  # `973` to selfi'i toi
+    check "mi to'e ca'a tavla".spansRead("simple-tense-modal") == @[1 .. 2]  # `973` to selfi'i toi
+    # selfi'i
     check "mi na'e pu ki tavla".spansRead("simple-tense-modal") == @[1 .. 3]  # `977`
-    # lo cmavo be la'o gy. NAhE .gy. cu jorne lo temci tcita .a lo cmavo be la'o gy. BAI .gy.
-    check "mi na'e ki tavla".treeRead.isNone  # `973` to se finti toi
-    check "mi ze'a pu ta'e tavla".spansRead("time") == @[1 .. 3]  # `1034` `ZEhA PU` to se finti toi
-    check "mi ta'e tavla".treeRead.isSome  # `1034` to `interval-property` po'o toi to se finti toi
+    # lo cmavo be `NAhE` cu jorne lo temtcita .a lo cmavo be `BAI`
+    check "mi na'e ki tavla".treeRead.isNone  # `973` to selfi'i toi
+    check "mi ze'a pu ta'e tavla".spansRead("time") == @[1 .. 3]  # `1034` `ZEhA PU` to selfi'i toi
+    check "mi ta'e tavla".treeRead.isSome  # `1034` to `interval-property` po'o toi to selfi'i toi
 
 
   test "Passes give tree or refusal one pass gives, over corpora and text of article joined":
@@ -486,28 +482,28 @@ suite "Internal: Grammar":
       if shapes.isNone: continue
       check shapes.get.passes == shapes.get.whole  # `#849` to le nu tcidu pa roi cu te karbi toi
       inc count
-    # le bandu cu ralte lo se ciska poi se katna
+    # le bandu cu ralte lo selci'a poi selka'a
     check count >= COUNT_PASSES_LEAST  # `Article IX.3`
 
 
   test "Passes cut before ni'o and before .i that joins nothing, where no opener is open":
-    # lo'u .ije le'u cu jorne
-    check TEXTS_PASSES[0].partsRead == some(@[0 .. 1, 2 .. 8, 9 .. 19])  # se finti
-    # lo'u .i ba bo le'u cu jorne
-    check TEXTS_PASSES[11].partsRead == some(@[0 .. 6])  # `statement-2` to se finti toi
-    # no la'o gy. BO .gy. cu se lidne le tcita
-    check TEXTS_PASSES[12].partsRead == some(@[0 .. 1, 2 .. 5])  # se finti
-    # zo .i cu jorne ki'u lo me `jek` me'u poi se krasi zo na
-    check TEXTS_PASSES[13].partsRead == some(@[0 .. 6])  # `statement-1` to se finti toi
+    # lo'u .ije le'u jorne
+    check TEXTS_PASSES[0].partsRead == some(@[0 .. 1, 2 .. 8, 9 .. 19])  # selfi'i
+    # lo'u .i ba bo le'u jorne
+    check TEXTS_PASSES[11].partsRead == some(@[0 .. 6])  # `statement-2` to selfi'i toi
+    # no `BO` se lidne le tcita
+    check TEXTS_PASSES[12].partsRead == some(@[0 .. 1, 2 .. 5])  # selfi'i
+    # zo .i jorne ki'u lo me `jek` me'u poi selkra zo na
+    check TEXTS_PASSES[13].partsRead == some(@[0 .. 6])  # `statement-1` to selfi'i toi
     # le nu katna cu zvati pu `NIhO ...`
-    check TEXTS_PASSES[9].partsRead == some(@[0 .. 3, 4 .. 7])  # `paragraphs` to se finti toi
+    check TEXTS_PASSES[9].partsRead == some(@[0 .. 3, 4 .. 7])  # `paragraphs` to selfi'i toi
     # pa pagbu po'o
     check TEXTS_PASSES[2].partsRead == some(@[0 .. 10])  # zo lu kalri ca le krasi
     # zo to cu ca'o kalri
     #   .i no nu katna cu zvati pu zo to
-    check TEXTS_PASSES[3].partsRead == some(@[0 .. 11])  # se finti
+    check TEXTS_PASSES[3].partsRead == some(@[0 .. 11])  # selfi'i
     # le nu katna cu zvati pu zo lu poi ca'o kalri
-    check TEXTS_PASSES[^1].partsRead == some(@[0 .. 1, 2 .. 8])  # se finti
+    check TEXTS_PASSES[^1].partsRead == some(@[0 .. 1, 2 .. 8])  # selfi'i
     let terminals = TEXTS_PASSES[1].terminalsRead.get
     # zo tu'e cu ca'o kalri
     check terminals.toParts(0, terminals.len) == (@[0 .. 1, 2 .. 3], 4)  # `statement-3`

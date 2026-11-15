@@ -1,26 +1,24 @@
-## ralte le cmavo liste pe la'o gy. Logical Language Group .gy. ta'i lo liste cmima poi ponse lo
-##   klesi
-##   .i ro cmavo pe le liste cu se sinxa pa liste cmima
-##   .i lo minde po'u `nim r tools/build.nim lists` cu ciska le vi datnyvei ra'i `cmavo.txt` pe
-##     `lojban-common` noi bakfu ne'i la'o gy. Debian .gy.
-##   .i lo sinxa namcu be `cmavo.txt` cu du zoi ky. SHA-256 `544414d61f3ff35dd2cf4e4f79f3c86b`
-##     `f9bb0568eb3403f57288057e16796402`; .ky.
-##   .i lo nu xance galfi le vi datnyvei cu na drani
-##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapli pilno le minde
-##   .i le liste cmima cu ralte le porsi pe le liste
+## ralte le ma'oste pe `Logical Language Group` ta'i lo stecmi poi ponse lo klesi
+##   .i ro cmavo pe le liste cu selsni pa stecmi
+##   .i lo minde po'u `nim r tools/build.nim lists` ciska le vi datnyvei ra'i `cmavo.txt` pe
+##       `lojban-common` noi bakfu ne'i `Debian`
+##   .i lo snina'u be `cmavo.txt` cu du zoi ky. SHA-256 `544414d61f3ff35dd2cf4e4f79f3c86b`
+##       `f9bb0568eb3403f57288057e16796402`; .ky.
+##   .i lo nu xanga'i le vi datnyvei cu na drani
+##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapypli le minde
+##   .i le stecmi cu ralte le porsi pe le liste
 ##   .i le liste cu porsi lo cmavo fi lo porsi be lo lerfu poi na du denpa bu
-##   .i le vi datnyvei cu se zbasu fi lo datni poi la'o gy. Logical Language Group .gy. cu rinka lo
-##     nu ke'a zifre fi ro da
-##   .i le girzu cu cpedu lo nu lo se zbasu be fi le datni cu cusku lo tadji be lo nu zbasu
+##   .i le vi datnyvei cu selzba fi lo datni poi `Logical Language Group` rinka lo nu ke'a zifre fi
+##       ro da
+##   .i le girzu cu cpedu lo nu lo selzba be fi le datni cu cusku lo tadji be lo nu zbasu
 ##   .i le vi pinka cu cusku le tadji
 ##   .i le minde cu ralte lo linji poi vasru pa cmavo po'o ku'o gi'e ralte lo stuzi be lo valsi jo'u
-##     lo selma'o pe `entries.nim` gi'e vimcu ro drata stuzi
+##       lo selma'o pe `entries.nim` gi'e vimcu ro datstu
 ##   .i le minde cu vimcu ji'a lo lerfu po'u denpa bu ge'u .e lo klesi be lo selma'o be'o .e ro
-##     lerfu po'u la'o gy. carriage return .gy. ge'u .e ro kunti lerfu poi zvati lo fanmo be lo
-##     datni pagbu
-##   .i lo zmadu datni be la lojban. cu zvati
-##     `Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA` .e
-##     `https://www.lojban.org/`
+##       lerfu po'u `carriage return` ge'u .e ro kutle'u poi zvati lo fanmo be lo datnypau
+##   .i lo zmadatni be la lojban. cu zvati
+##       `Logical Language Group, Inc., 2904 Beau Lane, Fairfax VA 22031 USA` .e
+##       `https://www.lojban.org/`
 
 {.experimental: "strictFuncs".}
 
@@ -627,4 +625,4 @@ const LIST_CMAVO* = [
   EntryCmavo(word: "zu'u", selmaho: Selmaho.Ui),
   EntryCmavo(word: "zy", selmaho: Selmaho.By),
 ]
-  ## ro cmavo poi lo linji pe le liste cu vasru ke'a po'o ku'o ta'i le liste porsi
+  ## ro cmavo poi lo linji pe le liste cu vasru ke'a po'o ku'o ta'i le stepoi

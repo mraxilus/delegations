@@ -1,125 +1,121 @@
-## tcidu lo lojbo prosa sepi'o le valsi pe le porsi be lo valsi ge'u .e lo javni pe la'o gy. CLL
-##   .gy. zi'e poi galfi lo valsi pu le gerna
-##   .i ba bo le gerna pe `CLL 21.1` cu tcidu lo gerna valsi poi le javni cu dunda ke'a
+## tcidu lo jboro'a sepi'o le valsi pe le porsi be lo valsi ge'u .e lo javni pe `CLL` zi'e poi galfi
+##     lo valsi pu le gerna
+##   .i ba bo le gerna pe `CLL 21.1` tcidu lo genvla poi le javni cu dunda ke'a
 ##
 ##   |------------------|----------------------------------------------------------------------|
 ##   | lo cmene         | lo smuni                                                             |
 ##   |------------------|----------------------------------------------------------------------|
-##   | `Unit`           | lo valsi pe pa gerna valsi ge'u .a lo se to'e curmi be pa ve pruce   |
+##   | `Unit`           | lo valsi pe pa genvla ge'u .a lo se to'e curmi be pa velru'e   |
 ##   | `RefusalText`    | lo to'e curmi poi porsi ja selma'o ja sitna ja stura ja gerna        |
 ##   | `ReadingText`    | lo tricu poi gapru lo pagbu ku'o .a lo nu to'e curmi bu'u lo stuzi   |
 ##   | `ReadingMarked`  | lo tricu poi jarco ro srera gi'e gapru ro pagbu                      |
-##   | `readText`       | tcidu lo se ciska sepi'o le porsi .e `CLL 19.16` .e `CLL 21.1`       |
-##   | `readTextMarked` | tcidu lo se ciska ta'i `readText` gi'e ranji lo nu tcidu ba ro srera |
+##   | `readText`       | tcidu lo selci'a sepi'o le porsi .e `CLL 19.16` .e `CLL 21.1`       |
+##   | `readTextMarked` | tcidu lo selci'a ta'i `readText` gi'e ranji lo nu tcidu ba ro srera |
 ##   |------------------|----------------------------------------------------------------------|
 ##
-## ni'o le porsi be le javni cu jalge lo nu `CLL 19.16` cu cusku lo du'u ro cmavo cu na galfi ma kau
+## ni'o le porsi be le javni cu jalge lo nu `CLL 19.16` cusku lo du'u ro cmavo cu na galfi ma kau
 ##   .i le porsi cu du lo nu sitna ce'o zo fa'o ce'o lo nu vimcu ce'o zo zei jo'u bo lo cmavo be
-##     `BAhE` be'o ce'o zo bu ce'o lo cinmo valsi
-##   .i la'o gy. CLL .gy. cu dunda no mulno porsi
-##   .i lo nu sitna zo'u zo zo cu sitna le bavla'i valsi
+##       `BAhE` be'o ce'o zo bu ce'o lo cnivla
+##   .i `CLL` dunda no mulpoi
+##   .i lo nu sitna zo'u zo zo sitna le bavla'i valsi
 ##   .i ro valsi cu ka'e du le valsi to `CLL 19.10` toi
-##   .i zo lo'u cu sitna lo valsi poi lidne zo le'u poi no zo zo cu sitna ke'a to `CLL 19.9` toi
-##   .i `readStream` cu ralte lo se ciska poi zo zoi .e zo la'o cu sitna ke'a
-##   .i ro le nu sitna cu se sinxa pa gerna valsi ja'i lo basti javni pe `grammar.nim`
-##   .i zo fa'o cu fanmo le se ciska poi le gerna ka'e tcidu ke'a ku'o va'o lo nu zo fa'o na se
-##     sitna to `CLL 19.15` .e `CLL 21.1` toi
-##   .i `readStream` cu sisti ba zo fa'o
-##   .i no gerna valsi cu vasru zo fa'o
+##   .i zo lo'u sitna lo valsi poi lidne zo le'u poi no zo zo sitna ke'a to `CLL 19.9` toi
+##   .i `readStream` ralte lo selci'a poi zo zoi .e zo la'o sitna ke'a
+##   .i ro le nu sitna cu selsni pa genvla ja'i lo basyjva pe `grammar.nim`
+##   .i zo fa'o fanmo le selci'a poi le gerna ka'e tcidu ke'a ku'o va'o lo nu zo fa'o na se sitna to
+##       `CLL 19.15` .e `CLL 21.1` toi
+##   .i `readStream` sisti ba zo fa'o
+##   .i no genvla cu vasru zo fa'o
 ##   .i lo nu vimcu zo'u le nu vimcu cu galfi lo valsi
 ##   .i ro nu sitna cu se kancu ta'i le valsi pe vo'a
-##   .i lo nu sitna pe zo zo cu vasru re valsi
-##   .i lo nu sitna pe zo zoi cu vasru vo valsi to `CLL 19.13` .e lo mupli po'u `CLL 19.77` .e
-##     `CLL 19.79` toi
-##   .i zo si cu vimcu le valsi poi lidne zo si
-##   .i zo sa cu vimcu ro valsi poi lidne zo sa gi'e se lidne le romoi valsi poi cmima le selma'o be
-##     le bavla'i valsi
-##   .i zo sa cu vimcu ji'a le romoi valsi
-##   .i va'o lo nu no valsi poi lidne zo sa cu cmima le selma'o kei zo sa cu vimcu ro valsi poi
-##     lidne zo sa
-##   .i mupli fa lo nu lo mupli po'u `CLL 19.81` cu vimcu ro valsi poi lidne zo .i ku'o ki'u lo nu
-##     no zo .i cu lidne zo sa
-##   .i zo su cu vimcu ro valsi poi lidne zo su
-##   .i se ki'u bo `readText` cu tcidu ta'i lo nu la'o gy. CLL .gy. cu tcidu lo se ciska kei lo
-##     valsi po'o poi se lidne zo su noi romoi
-##   .i le se tcidu poi sinxa ro srera cu ralte le se ciska poi lidne zo su ku'o ta'i lo nu pu se
-##     tcidu pu lo nu zo su cu klama
-##   .i se ki'u bo lo jmive se ciska cu katna bu'u no stuzi to lo se jdice pe `#859` toi
-##   .i zo su cu fanmo le se ciska
-##   .i zo su cu zvati pa pagbu poi vasru zo su po'o gi'e se tcita `Su`
-##   .i le pagbu cu lidne le se ciska poi se lidne zo su
-##   .i le se ciska cu se tcidu ta'i pa mulno se ciska
-##   .i lo samtci poi tcidu lo se ciska ja'i la'o gy. CLL .gy. cu vimcu ro jgena poi lidne zo su noi
-##     romoi
+##   .i lo nu sitna pe zo zo vasru re valsi
+##   .i lo nu sitna pe zo zoi vasru vo valsi to `CLL 19.13` .e lo mupli po'u `CLL 19.77` .e
+##       `CLL 19.79` toi
+##   .i zo si vimcu le valsi poi lidne zo si
+##   .i zo sa vimcu ro valsi poi lidne zo sa gi'e se lidne le romoi valsi poi cmima le selma'o be le
+##       bavla'i valsi
+##   .i zo sa vimcu ji'a le romoi valsi
+##   .i va'o lo nu no valsi poi lidne zo sa cmima le selma'o kei zo sa vimcu ro valsi poi lidne zo
+##       sa
+##   .i mupli fa lo nu lo mupli po'u `CLL 19.81` vimcu ro valsi poi lidne zo .i ku'o ki'u lo nu no
+##       zo .i lidne zo sa
+##   .i zo su vimcu ro valsi poi lidne zo su
+##   .i se ki'u bo `readText` tcidu ta'i lo nu `CLL` tcidu lo selci'a kei lo valsi po'o poi se lidne
+##       zo su noi romoi
+##   .i le se tcidu poi sinxa ro srera cu ralte le selci'a poi lidne zo su ku'o ta'i lo nu pu se
+##       tcidu pu lo nu zo su klama
+##   .i se ki'u bo lo mivyselci'a cu katna bu'u no stuzi to lo seljdi pe `#859` toi
+##   .i zo su fanmo le selci'a
+##   .i zo su zvati pa pagbu poi vasru zo su po'o gi'e se tcita `Su`
+##   .i le pagbu cu lidne le selci'a poi se lidne zo su
+##   .i le selci'a cu se tcidu ta'i pa mulselci'a
+##   .i lo samtci poi tcidu lo selci'a ja'i `CLL` vimcu ro jgena poi lidne zo su noi romoi
 ##   .i le genturfa'i cu to'e curmi lo nu vimcu poi ralte pa pagbu be pa nu sitna
-##   .i `CLL 19.80` cu cusku lo du'u lo genturfa'i cu to'e curmi lo'u zo .djan. si .djordj. le'u
+##   .i `CLL 19.80` cusku lo du'u lo genturfa'i cu to'e curmi lo'u zo .djan. si .djordj. le'u
 ##   .i lo nu sitna cu se tcidu pu lo nu vimcu
-##   .i lo nu sitna cu no roi rapli se tcidu ba lo nu vimcu
-##   .i jdima fa lo nu `CLL 20` .e le javni pe li papanopa pe `CLL 21.1` cu cusku lo du'u lo se
-##     kuspe be zo sa cu du pa se cusku kei .e lo du'u lo se kuspe be zo su cu du pa se ciska
-##   .i le tcidu cu cuxna le valsi poi `CLL 19.13` cu skicu ke'a ku'o ki'u lo nu pa prenu cu ciska
-##     le mulno se ciska
-##   .i zo zei cu jmina le valsi poi lidne zo zei ku'o le valsi poi se lidne zo zei ku'o fo pa gerna
-##     valsi to `CLL 4.6` toi
-##   .i lo porsi be lo me zo zei me'u cu jmina ro le valsi fo pa gerna valsi
-##   .i no le re valsi cu ka'e du lo cmavo poi `CLL 19.16` cu cusku lo du'u zo zei na galfi ke'a
+##   .i lo nu sitna cu no roi rapseltcidu ba lo nu vimcu
+##   .i jdima fa lo nu `CLL 20` .e le javni pe li papanopa pe `CLL 21.1` cusku lo du'u lo selku'e be
+##       zo sa du pa selsku kei .e lo du'u lo selku'e be zo su du pa selci'a
+##   .i le tcidu cu cuxna le valsi poi `CLL 19.13` skicu ke'a ku'o ki'u lo nu pa prenu cu ciska le
+##       mulselci'a
+##   .i zo zei jmina le valsi poi lidne zo zei ku'o le valsi poi se lidne zo zei ku'o fo pa gerna
+##       valsi to `CLL 4.6` toi
+##   .i lo porsi be lo me zo zei cu jmina ro le valsi fo pa genvla
+##   .i no le re valsi cu ka'e du lo cmavo poi `CLL 19.16` cusku lo du'u zo zei na galfi ke'a
 ##   .i su'o pa cmavo be `BAhE` cu tcita le bavla'i valsi to le javni pe li papanono toi
-##   .i su'o pa me zo bu me'u cu zbasu pa lerfu valsi fi le valsi poi lidne le me zo bu me'u to
-##     `CLL 17.4` toi
-##   .i lo cinmo valsi cu tcita le valsi poi lidne le cinmo valsi to `CLL 13.9` .e le javni pe li
-##     papanono toi
-##   .i lo cmavo be `UI` .a `CAI` cu cinmo valsi
-##   .i ro le cmavo cu kansa zo nai va'o lo nu zo nai cu se lidne le cmavo
-##   .i zo y .e zo da'o .e zo fu'e .e zo fu'o cu cinmo valsi ji'a
-##   .i lo cinmo valsi poi krasi lo se ciska cu se sinxa lo gerna valsi poi le javni pe li no cu
-##     tcidu ke'a
+##   .i su'o pa me zo bu cu zbasu pa lervla fi le valsi poi lidne le me zo bu me'u to `CLL 17.4` toi
+##   .i lo cnivla cu tcita le valsi poi lidne le cinmo valsi to `CLL 13.9` .e le javni pe li
+##       papanono toi
+##   .i lo cmavo be `UI` .a `CAI` cu cnivla
+##   .i ro le cmavo cu kansa zo nai va'o lo nu zo nai se lidne le cmavo
+##   .i zo y .e zo da'o .e zo fu'e .e zo fu'o cinmo valsi ji'a
+##   .i lo cnivla poi krasi lo selci'a cu selsni lo genvla poi le javni pe li no cu tcidu ke'a
 ##   .i lo nu to'e curmi cu cmene lo stuzi poi lo nu tcidu cu sisti bu'u ke'a
 ##   .i le stuzi cu du le stuzi pe le valsi poi se to'e curmi
 ##   .ija le stuzi cu du le krasi be le pagbu poi le gerna cu sisti bu'u ke'a
-##   .ija le stuzi cu du le fanmo be le se ciska
-##   .i le fanmo cu du le stuzi pe zo fa'o poi fanmo le se ciska
-##   .i va'o lo drata le fanmo cu du le stuzi poi se lidne le se ciska
-##   .i se ki'u bo lo se ciska poi se lidne zo fa'o cu muvdu no stuzi poi le se tcidu cu cmene ke'a
-##   .i lo jmive se ciska cu nitcu di'u ba lo nu zo fa'o cu se tcidu
-##   .i lo nu jarco ro srera zo'u `readTextMarked` cu ranji lo nu tcidu ba ro srera to `#859` toi
-##   .i se ki'u bo lo drata samtci cu cikre le se ciska sepi'o le tricu pe le se ciska
+##   .ija le stuzi cu du le fanmo be le selci'a
+##   .i le fanmo cu du le stuzi pe zo fa'o poi fanmo le selci'a
+##   .i va'o lo drata le fanmo cu du le stuzi poi se lidne le selci'a
+##   .i se ki'u bo lo selci'a poi se lidne zo fa'o muvdu no stuzi poi le se tcidu cu cmene ke'a
+##   .i lo mivyselci'a cu nitcu di'u ba lo nu zo fa'o se tcidu
+##   .i lo nu jarco ro srera zo'u `readTextMarked` ranji lo nu tcidu ba ro srera to `#859` toi
+##   .i se ki'u bo lo drata samtci cu cikre le selci'a sepi'o le tricu pe le selci'a
 ##   .i lo valsi poi se tcidu cu ralte lo tricu pe vo'a ne'i le tricu
 ##   .i le vi genturfa'i cu jdice no nu cikre
-##   .i lo valsi poi pa ve pruce cu to'e curmi ke'a cu zvati pa pagbu poi no gerna valsi cu vasru
-##     ke'a gi'e se tcita le ve pruce
-##   .i le gerna cu tcidu lo gerna valsi poi sruri le pagbu
-##   .i lo se ciska valsi poi le porsi be lo valsi cu to'e curmi ke'a cu zvati pa pagbu ta'i lo nu
-##     se ciska
-##   .i lo valsi poi pa javni pe `CLL 19.16` cu to'e curmi ke'a cu zvati pa pagbu
+##   .i lo valsi poi pa velru'e cu to'e curmi ke'a zvati pa pagbu poi no genvla cu vasru ke'a gi'e
+##       se tcita le velru'e
+##   .i le gerna cu tcidu lo genvla poi sruri le pagbu
+##   .i lo selci'avla poi le porsi be lo valsi cu to'e curmi ke'a zvati pa pagbu ta'i lo nu selci'a
+##   .i lo valsi poi pa javni pe `CLL 19.16` to'e curmi ke'a zvati pa pagbu
 ##   .i mupli fa lo nu sitna poi lo nu vimcu cu vimcu lo pagbu be ke'a ku'o .e zo zei poi jorne no
-##     da
-##   .i lo cmavo poi no liste cu dunda lo selma'o ke'a cu kansa lo valsi poi sinxa le cmavo ku'o
-##     ne'i pa pagbu
-##   .i zo lo'u poi zo le'u na fanmo lo nu sitna pe ke'a cu zvati pa pagbu poi vasru zo lo'u po'o
-##   .i lo valsi poi se lidne zo lo'u cu se tcidu
-##   .i lo valsi poi se lidne zo zoi poi ponse no korbi valsi cu go'i ji'a
-##   .i lo valsi poi no ve pruce cu tcidu ke'a cu zvati pa pagbu ji'a
+##       da
+##   .i lo cmavo poi no liste cu dunda lo selma'o ke'a kansa lo valsi poi sinxa le cmavo ku'o ne'i
+##       pa pagbu
+##   .i zo lo'u poi zo le'u na fanmo lo nu sitna pe ke'a zvati pa pagbu poi vasru zo lo'u po'o
+##   .i lo valsi poi se lidne zo lo'u se tcidu
+##   .i lo valsi poi se lidne zo zoi poi ponse no koivla cu go'i ji'a
+##   .i lo valsi poi no velru'e cu tcidu ke'a zvati pa pagbu ji'a
 ##   .i se ki'u bo ro stuzi pe ro valsi cu zvati pa pezli
 ##   .i ro porsi be lo valsi poi lo nu vimcu cu vimcu ke'a cu kansa zo si .a zo sa vu'o poi vimcu le
-##     porsi ku'o ne'i pa pagbu pe le ve pruce po'u `Erasure`
-##   .i zo fa'o poi fanmo le se ciska cu zvati pa pagbu pe le ve pruce po'u `Faho`
-##   .i ro se ciska valsi poi se lidne zo fa'o cu zvati pa pagbu pe le ve pruce po'u `Stream` gi'e
-##     ponse lo nu to'e curmi po'u `Faho` gi'e stali ta'i lo nu se ciska
-##   .i le pagbu pe zo fa'o ge'u .e ro pagbu poi se lidne zo fa'o cu zvati lo fanmo be le genja gi'e
-##     se lidne le se ciska
-##   .i lo pagbu poi se to'e curmi zi'e goi ko'a cu pezli lo jgena poi traji lo ka dizlo kei gi'e
-##     vasru le re pagbu poi se tcidu gi'e sruri ko'a
-##   .i ko'a cu zvati lo jbini be le re pagbu
-##   .ija ko'a cu zvati le genja bu'u lo fanmo be le se ciska
-##   .i no javni pe `CLL 21.1` cu vasru ko'a
-##   .i se ki'u bo le stuzi be ko'a cu xusra no javni poi ko'a cu ka'e cmima ke'a
+##       porsi ku'o ne'i pa pagbu pe le velru'e po'u `Erasure`
+##   .i zo fa'o poi fanmo le selci'a cu zvati pa pagbu pe le velru'e po'u `Faho`
+##   .i ro selci'avla poi se lidne zo fa'o zvati pa pagbu pe le velru'e po'u `Stream` gi'e ponse lo
+##       nu to'e curmi po'u `Faho` gi'e stali ta'i lo nu selci'a
+##   .i le pagbu pe zo fa'o ge'u .e ro pagbu poi se lidne zo fa'o zvati lo fanmo be le genja gi'e se
+##       lidne le selci'a
+##   .i lo pagbu poi se to'e curmi zi'e goi ko'a pezli lo jgena poi traji lo ka dizlo kei gi'e vasru
+##       le re pagbu poi se tcidu gi'e sruri ko'a
+##   .i ko'a zvati lo jbini be le re pagbu
+##   .ija ko'a zvati le genja bu'u lo fanmo be le selci'a
+##   .i no javni pe `CLL 21.1` vasru ko'a
+##   .i se ki'u bo le stuzi be ko'a xusra no javni poi ko'a cu ka'e cmima ke'a
 ##   .i le gerna cu jarco lo stuzi poi le gerna cu sisti bu'u ke'a ku'o sepi'o lo srera jgena to
-##     `grammar.nim` toi
-##   .i jdima fa lo nu ro se ciska valsi poi le porsi be lo valsi cu to'e curmi ke'a cu rinka lo nu
-##     rapli tcidu le porsi
-##   .i se ki'u bo lo temci cu zenba simsa lo pilji be lo te kancu be le se ciska valsi be'o bei lo
-##     ni le se ciska cu clani
-##   .i ro girzu be lo valsi poi pa javni cu to'e curmi ke'a cu rinka lo nu rapli tcidu le javni
+##       `grammar.nim` toi
+##   .i jdima fa lo nu ro selci'avla poi le porsi be lo valsi cu to'e curmi ke'a rinka lo nu
+##       raptcidu le porsi
+##   .i se ki'u bo lo temci cu zensmi lo pilji be lo te kancu be le se ciska valsi be'o bei lo ni le
+##       selci'a cu clani
+##   .i ro girzu be lo valsi poi pa javni cu to'e curmi ke'a cu rinka lo nu raptcidu le javni
 
 {.experimental: "strictFuncs".}
 
@@ -130,28 +126,28 @@ import ./[grammar, selmaho, stream, tanru]
 
 type
   RefusalText* {.pure.} = enum
-    ## lo krinu be lo nu lo prosa cu se to'e curmi kei be'o .a lo krinu be lo nu pa pagbu cu zvati
-    ##   no gerna valsi
+    ## lo krinu be lo nu lo prosa cu se to'e curmi be'o .a lo krinu be lo nu pa pagbu cu zvati no
+    ##     genvla
     Stream
-      ## le porsi be lo valsi cu to'e curmi le se ciska
-      ##   .i `rule` cu cmene le nu to'e curmi
+      ## le porsi be lo valsi cu to'e curmi le selci'a
+      ##   .i `rule` cmene le nu to'e curmi
     Selmaho
       ## no liste cu dunda lo selma'o le cmavo
       ##   .i se ki'u bo le gerna cu tcidu no gerna valsi to `CLL 20` toi
     Quotation
-      ## zo zo poi sitna no da ku'o .a zo lo'u poi no roi se fanmo gi'a sitna no da ku'o .a lo nu
-      ##   vimcu poi ralte pa pagbu be pa nu sitna to `CLL 19.9` .e `CLL 19.10` .e `CLL 19.13` toi
+      ## zo zo poi sitna no da ku'o .a zo lo'u poi no roi selfa'o gi'a sitna no da ku'o .a lo nu
+      ##     vimcu poi ralte pa pagbu be pa nu sitna to `CLL 19.9` .e `CLL 19.10` .e `CLL 19.13` toi
     Construct
       ## zo si .a zo sa vu'o poi ka'e vimcu no da
       ##   .i ji'a zo zei .a lo cmavo be `BAhE` be'o .a zo bu vu'o poi ka'e galfi no valsi to
-      ##     `CLL 19.13` .e `CLL 4.6` .e `CLL 17.4` toi
+      ##       `CLL 19.13` .e `CLL 4.6` .e `CLL 17.4` toi
     Grammar
-      ## le gerna pe `CLL 21.1` cu to'e curmi le gerna valsi
-      ##   .i `rule` cu cmene le javni poi sisti bu'u le stuzi
+      ## le gerna pe `CLL 21.1` to'e curmi le genvla
+      ##   .i `rule` cmene le javni poi sisti bu'u le stuzi
     Su
       ## no nu to'e curmi
-      ##   .i zo su cu fanmo le se ciska poi lidne ri
-      ##   .i le se tcidu poi sinxa ro srera cu ralte le se ciska
+      ##   .i zo su fanmo le selci'a poi lidne ri
+      ##   .i le se tcidu poi sinxa ro srera cu ralte le selci'a
     Erasure
       ## no nu to'e curmi
       ##   .i lo valsi poi lo nu vimcu cu vimcu ke'a
@@ -159,41 +155,40 @@ type
     Faho  ## no nu to'e curmi to zo fa'o poi fanmo le se ciska to `CLL 19.15` toi toi
 
   Unit* = object
-    ## lo valsi poi pa gerna valsi cu vasru ke'a ku'o .a lo valsi poi pa ve pruce cu to'e curmi ke'a
-    ##   zi'e poi no gerna valsi cu vasru ke'a to `#859` toi
-    ##   .i le valsi poi pa gerna valsi cu vasru ke'a cu du pa valsi .a pa gerna stura pe
-    ##     `CLL 19.16`
+    ## lo valsi poi pa genvla cu vasru ke'a ku'o .a lo valsi poi pa velru'e cu to'e curmi ke'a zi'e
+    ##     poi no genvla cu vasru ke'a to `#859` toi
+    ##   .i le valsi poi pa genvla cu vasru ke'a du pa valsi .a pa gensu'a pe `CLL 19.16`
     words*: seq[int]
       ## lo namcu pe ro valsi poi le pagbu cu vasru ke'a ku'o ta'i le porsi
-      ##   .i le liste cu claxu lo valsi poi se vimcu
+      ##   .i le liste cu claxu lo valsi poi selvi'u
     case is_read*: bool
     of true:
       terminal*: Terminal
     of false:
       refusal*: RefusalText
-        ## le ve pruce poi to'e curmi le valsi
-        ##   .i no gerna valsi cu vasru le valsi
+        ## le velru'e poi to'e curmi le valsi
+        ##   .i no genvla cu vasru le valsi
         ##   .i le gerna cu tcidu lo valsi poi sruri le valsi to `readTextMarked` toi
-        ##   .i le ve pruce cu du le porsi be lo valsi be'o .a lo selma'o .a lo nu sitna .a lo gerna
-        ##     stura
-        ##   .ija le ve pruce cu rinka lo nu no gerna valsi cu vasru le valsi
-        ##   .i le ve pruce cu du zo su .a lo nu vimcu .a zo fa'o
+        ##   .i le velru'e cu du le porsi be lo valsi be'o .a lo selma'o .a lo nu sitna .a lo
+        ##       gensu'a
+        ##   .ija le velru'e cu rinka lo nu no genvla cu vasru le valsi
+        ##   .i le velru'e cu du zo su .a lo nu vimcu .a zo fa'o
 
   ReadingText* = object  ## lo jalge be lo nu tcidu lo prosa
     case is_read*: bool
     of true:
       occurrences*: seq[Occurrence]
         ## lo valsi pe le porsi be lo valsi ta'i le porsi
-        ##   .i le valsi cu vasru lo valsi poi se vimcu ku'o .e zo fa'o
+        ##   .i le valsi cu vasru lo valsi poi selvi'u ku'o .e zo fa'o
       units*: seq[Unit]
-        ## lo gerna valsi ta'i le porsi
-        ##   .i ro le gerna valsi cu kansa lo valsi poi le gerna valsi cu vasru ke'a
+        ## lo genvla ta'i le porsi
+        ##   .i ro le genvla cu kansa lo valsi poi le genvla cu vasru ke'a
       tree*: Node
-        ## le tricu pe le se ciska
-        ##   .i ro gerna valsi pe le tricu cu sinxa pa cmima be `units`
+        ## le tricu pe le selci'a
+        ##   .i ro genvla pe le tricu cu sinxa pa cmima be `units`
     of false:
       refusal*: RefusalText
-      start*: int  ## le stuzi pe le se ciska zi'e poi lo nu tcidu cu sisti bu'u ke'a
+      start*: int  ## le stuzi pe le selci'a zi'e poi lo nu tcidu cu sisti bu'u ke'a
       rule*: string
         ## lo nu to'e curmi pe le porsi be lo valsi ge'u .a lo javni pe le gerna mu'u `sumti-6 97`
         ##   .i kunti va'o lo drata
@@ -201,113 +196,111 @@ type
   ReadingMarked* = object  ## lo se tcidu pe lo prosa zi'e poi sinxa ro srera gi'e ralte lo tricu
     occurrences*: seq[Occurrence]
       ## lo valsi pe le porsi be lo valsi ta'i le porsi
-      ##   .i le valsi cu vasru lo valsi poi se vimcu ku'o .e zo fa'o
-      ##   .i ji'a ro se ciska valsi poi le porsi be lo valsi cu to'e curmi ke'a cu stali ta'i lo nu
-      ##     se ciska
-      ##   .i lo se tcidu pe le se ciska valsi cu cmene lo nu to'e curmi pe le porsi
+      ##   .i le valsi cu vasru lo valsi poi selvi'u ku'o .e zo fa'o
+      ##   .i ji'a ro selci'avla poi le porsi be lo valsi cu to'e curmi ke'a stali ta'i lo nu
+      ##       selci'a
+      ##   .i lo se tcidu pe le selci'avla cu cmene lo nu to'e curmi pe le porsi
     units*: seq[Unit]
       ## lo pagbu ta'i le porsi be lo pamoi valsi
       ##   .i ro pagbu cu se tcidu gi'a se to'e curmi
     tree*: Node
-      ## le tricu pe le se ciska
-      ##   .i lo srera jgena cu zvati bu'u lo stuzi poi le gerna cu sisti bu'u ke'a to
-      ##     `readGrammarMarked` toi
+      ## le tricu pe le selci'a
+      ##   .i lo srejge cu zvati bu'u lo stuzi poi le gerna cu sisti bu'u ke'a to
+      ##       `readGrammarMarked` toi
       ##   .i ro pezli cu sinxa pa cmima be `units`
-      ##   .i ji'a lo stuzi poi le gerna cu sisti bu'u ke'a cu sinxa pa cmima be `units`
-      ##   .i va'o lo nu le gerna cu sisti bu'u le fanmo be le se ciska kei le stuzi cu du lo te
-      ##     kancu be le cmima
-    size*: int  ## lo te kancu be lo stuzi pe le se ciska be'o noi cmene le fanmo be le se ciska
+      ##   .i ji'a lo stuzi poi le gerna cu sisti bu'u ke'a sinxa pa cmima be `units`
+      ##   .i va'o lo nu le gerna cu sisti bu'u le fanmo be le selci'a kei le stuzi cu du lo te
+      ##       kancu be le cmima
+    size*: int  ## lo te kancu be lo stuzi pe le se ciska be'o noi cmene le fanmo be le selci'a
 
   ReadingParts* = object
-    ## lo se tcidu pe ro pagbu be lo se ciska
-    ##   .i ji'a le se tcidu cu jarco lo nu vimcu poi klama pu le se ciska ku'o .e lo nu sitna poi
-    ##     denpa lo fanmo valsi pe vo'a
-    ##   .i lo jmive se ciska cu tcidu di'u ba le pagbu to `readTextParts` toi
+    ## lo se tcidu pe ro pagbu be lo selci'a
+    ##   .i ji'a le se tcidu cu jarco lo nu vimcu poi klama pu le selci'a ku'o .e lo nu sitna poi
+    ##       denpa lo famvla pe vo'a
+    ##   .i lo mivyselci'a cu tcidu di'u ba le pagbu to `readTextParts` toi
     reading*: ReadingMarked
-      ## lo se tcidu poi le genja be ke'a cu vasru lo jgena pe ro pagbu be le se ciska ge'u .e ro
-      ##   pagbu poi se to'e curmi gi'e zvati lo jbini be le pagbu be le se ciska ku'o ta'i le porsi
-      ##   to `readGrammarParts` toi
-      ##   .i zo su cu cmima le pagbu poi se to'e curmi
-      ##   .i ro pagbu be le se ciska cu se tcidu ta'i pa mulno se ciska
-    open*: seq[int]  ## lo pagbu pe zo tu'e .a zo lu .a zo to vu'o poi denpa lo fanmo valsi pe vo'a
+      ## lo se tcidu poi le genja be ke'a vasru lo jgena pe ro pagbu be le selci'a ge'u .e ro pagbu
+      ##     poi se to'e curmi gi'e zvati lo jbini be le pagbu be le selci'a ku'o ta'i le porsi to
+      ##     `readGrammarParts` toi
+      ##   .i zo su cmima le pagbu poi se to'e curmi
+      ##   .i ro pagbu be le selci'a cu se tcidu ta'i pa mulselci'a
+    open*: seq[int]  ## lo pagbu pe zo tu'e .a zo lu .a zo to vu'o poi denpa lo famvla pe vo'a
     zois*: seq[tuple[start: int, delimiter: string]]
-      ## lo stuzi pe lo se ciska valsi pe ro zo zoi poi no korbi valsi cu fanmo ke'a
-      ##   .i ji'a le korbi valsi
+      ## lo stuzi pe lo selci'avla pe ro zo zoi poi no koivla cu fanmo ke'a
+      ##   .i ji'a le koivla
     lohus*: seq[int]
       ## lo stuzi pe ro me zo lo'u me'u poi le porsi be lo valsi cu tcidu ke'a ta'i lo nu sitna poi
-      ##   klama le fanmo be le se ciska
-      ##   .i no zo zo cu sitna le me zo lo'u me'u
-      ##   .i no zo le'u cu fanmo le nu sitna kei ta'i lo nu le porsi cu tcidu
-      ##   .i lo pagbu poi lo javni cu dunda ke'a le me zo lo'u me'u cu na vajni
-      ##   .i se ki'u bo le se ciska poi se lidne le me zo lo'u me'u cu se tcidu ta'i lo nu le porsi
-      ##     cu tcidu le se ciska
-      ##   .i le se ciska cu zvati ne'i le valsi poi le me zo lo'u me'u cu sitna ke'a
+      ##     klama le fanmo be le selci'a
+      ##   .i no zo zo sitna le me zo lo'u
+      ##   .i no zo le'u fanmo le nu sitna kei ta'i lo nu le porsi cu tcidu
+      ##   .i lo pagbu poi lo javni cu dunda ke'a le me zo lo'u na vajni
+      ##   .i se ki'u bo le selci'a poi se lidne le me zo lo'u se tcidu ta'i lo nu le porsi cu tcidu
+      ##       le selci'a
+      ##   .i le selci'a cu zvati ne'i le valsi poi le me zo lo'u sitna ke'a
       ##   .i ku'i lo nu vimcu cu ka'e vimcu le me zo le'u me'u pe le nu sitna
-      ##   .ija lo javni cu ka'e tcidu le me zo lo'u me'u ta'i lo se ciska poi zo la'o cu sitna ke'a
+      ##   .ija lo javni cu ka'e tcidu le me zo lo'u me'u ta'i lo selci'a poi zo la'o sitna ke'a
     markers*: seq[Option[Terminal]]
       ## le liste cu vasru lo sinxa pe ro me zo sa me'u poi lidne ro me zo su me'u gi'e facki no
-      ##   sinxa ne'i su'o nu tcidu sepi'o lo javni pe `CLL 19.16`
-      ##   .i se ki'u bo le me zo sa me'u cu vimcu ro valsi poi lidne le me zo sa me'u
+      ##     sinxa ne'i su'o nu tcidu sepi'o lo javni pe `CLL 19.16`
+      ##   .i se ki'u bo le me zo sa vimcu ro valsi poi lidne le me zo sa
     faho*: Option[int]
       ## lo pagbu pe zo fa'o poi fanmo le se ciska to `CLL 19.15` toi
-      ##   .i le pagbu .e ro pagbu poi se lidne le pagbu zi'e poi vasru pa se ciska valsi poi le
-      ##     porsi be lo valsi na tcidu ke'a cu zvati lo fanmo be le genja gi'e se lidne le se ciska
-      ##   .i no da va'o lo nu no zo fa'o cu fanmo le se ciska
+      ##   .i le pagbu .e ro pagbu poi se lidne le pagbu zi'e poi vasru pa selci'avla poi le porsi
+      ##       be lo valsi na tcidu ke'a zvati lo fanmo be le genja gi'e se lidne le selci'a
+      ##   .i no da va'o lo nu no zo fa'o fanmo le selci'a
     quoted*: seq[int]
       ## lo stuzi pe ro me zo su me'u poi lo nu sitna cu vasru ke'a ne'i le pamoi nu tcidu sepi'o lo
-      ##   javni pe `CLL 19.16`
+      ##     javni pe `CLL 19.16`
       ##   .i lo nu vimcu cu vimcu lo pagbu be le nu sitna
       ##   .i se ki'u bo le nu tcidu cu to'e curmi le nu sitna
       ##   .i lo nu vimcu poi se lidne zo su gi'e vimcu le rebla be le nu sitna cu rinka lo nu le
-      ##     pamoi nu tcidu cu tcidu le se ciska gi'e rapli sitna zo su
+      ##       pamoi nu tcidu cu tcidu le selci'a gi'e rapsitna zo su
       ##   .i mupli fa lo'u zo su si si le'u to `CLL 19.13` toi
 
   Role {.pure.} = enum
     ## lo pagbu poi lo valsi cu cpacu ke'a ne'i lo nu sitna ku'o .a no da to `CLL 19.9` .e
-    ##   `CLL 19.10` toi
+    ##     `CLL 19.10` toi
     Plain  ## lo valsi poi gunka lo gunka pe vo'a
     Zo  ## zo zo poi sitna le bavla'i valsi
-    Quoted  ## lo valsi poi zo zo cu sitna ke'a
+    Quoted  ## lo valsi poi zo zo sitna ke'a
     Lohu  ## zo lo'u poi krasi lo nu sitna lo valsi
     Inner  ## lo valsi poi zvati lo jbini be zo lo'u .e zo le'u
     Lehu  ## zo le'u poi fanmo le nu sitna
-    Zoi  ## zo zoi .a zo la'o vu'o poi krasi lo nu sitna lo se ciska
-    Delimiter  ## lo korbi valsi poi lidne ja se lidne le se sitna
-    Foreign  ## lo se ciska poi zo zoi .a zo la'o cu sitna ke'a
+    Zoi  ## zo zoi .a zo la'o vu'o poi krasi lo nu sitna lo selci'a
+    Delimiter  ## lo koivla poi lidne ja se lidne le se sitna
+    Foreign  ## lo selci'a poi zo zoi .a zo la'o sitna ke'a
 
-  Piece = object  ## lo pagbu poi ca'o se zbasu ku'o .e le se vasru be le pagbu
+  Piece = object  ## lo pagbu poi ca'o selzba ku'o .e le selvau be le pagbu
     words: seq[int]
     head: int
-      ## lo valsi poi le pagbu cu cpacu lo gerna valsi pe ke'a va'o lo nu le pagbu cu du pa valsi
-      ##   po'o
+      ## lo valsi poi le pagbu cu cpacu lo genvla pe ke'a va'o lo nu le pagbu cu du pa valsi po'o
     terminal: Option[Terminal]
-      ## lo gerna valsi pe lo gerna stura
+      ## lo genvla pe lo gensu'a
       ##   .i no da va'o lo nu le pagbu cu du pa valsi po'o
-    is_plain: bool  ## le pagbu cu du pa sampu valsi noi lo gerna stura cu ka'e galfi ke'a
+    is_plain: bool  ## le pagbu cu du pa sapyvla noi lo gensu'a cu ka'e galfi ke'a
 
   Reach = object
-    ## le se klama be lo nu vimcu be'o poi zvati pu le krasi be le valsi
-    ##   .i lo jmive se ciska cu tcidu le se klama
+    ## le selkla be lo nu vimcu be'o poi zvati pu le krasi be le valsi
+    ##   .i lo mivyselci'a cu tcidu le selkla
     markers: seq[Option[Terminal]]
       ## le liste cu vasru lo sinxa pe ro me zo sa me'u poi lidne ro me zo su me'u gi'e facki no
-      ##   sinxa
-      ##   .i se ki'u bo le me zo sa me'u cu vimcu ro valsi poi lidne le me zo sa me'u
+      ##     sinxa
+      ##   .i se ki'u bo le me zo sa vimcu ro valsi poi lidne le me zo sa
 
 
 const
   SELMAHO_INDICATORS = {
     Selmaho.Ui, Selmaho.Cai, Selmaho.Y, Selmaho.Daho, Selmaho.Fuho, Selmaho.Fuhe,
   }
-    ## lo selma'o be lo cinmo valsi poi tcita lo valsi poi lidne le cinmo valsi to `CLL 13.9` .e
-    ##   `CLL 19.16` toi
+    ## lo selma'o be lo cnivla poi tcita lo valsi poi lidne le cinmo valsi to `CLL 13.9` .e
+    ##     `CLL 19.16` toi
   SELMAHO_UNJOINED = {
     Selmaho.Zo, Selmaho.Si, Selmaho.Sa, Selmaho.Su, Selmaho.Lohu, Selmaho.Zoi, Selmaho.Faho,
     Selmaho.Zei,
   }
     ## lo selma'o be lo cmavo poi zo zei na galfi ke'a to `CLL 19.16` toi
   SELMAHO_UNLETTERED = SELMAHO_UNJOINED + {Selmaho.Bahe, Selmaho.Bu}
-    ## lo selma'o be lo cmavo poi zo bu na zbasu lo lerfu valsi fi ke'a to `CLL 17.4` .e `CLL 19.16`
-    ##   toi
+    ## lo selma'o be lo cmavo poi zo bu na zbasu lo lervla fi ke'a to `CLL 17.4` .e `CLL 19.16` toi
 
 
 func refuse(refusal: RefusalText, start: int, rule = ""): ReadingText =
@@ -331,15 +324,14 @@ func isSelmaho(word: Occurrence, selmaho: set[Selmaho]): bool =
 #[ ni'o ni'o ni'o lo nu sitna .e lo nu vimcu ]#
 
 func isClosingLohu*(words: openArray[Occurrence]): bool =
-  ## jdice lo du'u xu kau le valsi cu vasru zo le'u poi no zo zo cu sitna ke'a
-  ##   .i le me zo le'u me'u cu fanmo lo me zo lo'u me'u poi lidne le valsi
-  ##   .i ta'i di'u le porsi be lo valsi cu tcidu lo valsi poi zo lo'u cu sitna ke'a to `CLL 19.9`
-  ##     toi
+  ## jdice lo du'u xu kau le valsi cu vasru zo le'u poi no zo zo sitna ke'a
+  ##   .i le me zo le'u cu fanmo lo me zo lo'u me'u poi lidne le valsi
+  ##   .i ta'i di'u le porsi be lo valsi cu tcidu lo valsi poi zo lo'u sitna ke'a to `CLL 19.9` toi
   var is_quoting = false
   for k in 0 ..< words.len:
     template word: untyped = words[k]
-      ## lo drata cmene be le valsi
-      ##   .i `let` cu zbasu lo fukpi be le valsi
+      ## lo datcme be le valsi
+      ##   .i `let` zbasu lo fukpi be le valsi
     if not word.reading.is_word: continue
     if is_quoting:
       is_quoting = false
@@ -351,18 +343,18 @@ func isClosingLohu*(words: openArray[Occurrence]): bool =
 
 func toRoles(words: openArray[Occurrence], is_lohu = false): seq[Role] =
   ## dunda le pagbu poi ro valsi cu cpacu ke'a ne'i lo nu sitna
-  ##   .i zo zo cu sitna le bavla'i valsi
-  ##   .i zo lo'u cu sitna lo valsi poi lidne zo le'u poi no zo zo cu sitna ke'a
-  ##   .i zo zoi cu sitna le korbi valsi pe vo'a ge'u .e le se sitna .e le korbi valsi ta'i lo nu
-  ##     `readStream` cu ralte le valsi
-  ##   .i zo zo poi fanmo le se ciska cu sitna no valsi
-  ##   .i `quotations` cu to'e curmi le me zo zo me'u to `CLL 19.10` toi
-  ##   .i va'o lo nu `is_lohu` cu jetnu kei le valsi cu cfari ne'i lo valsi poi zo lo'u cu sitna
-  ##     ke'a ta'i lo nu `readStream` cu tcidu le valsi
+  ##   .i zo zo sitna le bavla'i valsi
+  ##   .i zo lo'u sitna lo valsi poi lidne zo le'u poi no zo zo sitna ke'a
+  ##   .i zo zoi sitna le koivla pe vo'a ge'u .e le se sitna .e le koivla ta'i lo nu `readStream`
+  ##       ralte le valsi
+  ##   .i zo zo poi fanmo le selci'a cu sitna no valsi
+  ##   .i `quotations` to'e curmi le me zo zo me'u to `CLL 19.10` toi
+  ##   .i va'o lo nu `is_lohu` jetnu kei le valsi cu cfari ne'i lo valsi poi zo lo'u sitna ke'a ta'i
+  ##       lo nu `readStream` tcidu le valsi
   result = newSeq[Role](words.len)
   var
     i = 0
-    is_lohu = is_lohu  # lo valsi poi zo lo'u cu sitna ke'a to le valsi cu lidne zo le'u toi
+    is_lohu = is_lohu  # lo valsi poi zo lo'u sitna ke'a to le valsi cu lidne zo le'u toi
   while i < words.len:
     if words[i].isSelmaho({Selmaho.Zo}):
       result[i] = (if is_lohu: Role.Inner else: Role.Zo)
@@ -386,25 +378,25 @@ func erased(
     reach: var Reach, as_parting: bool,
 ): Option[seq[int]] =
   ## ralte lo valsi poi lo nu vimcu cu cliva ke'a ku'o ta'i lo namcu to `CLL 19.13` toi
-  ##   .i zo si cu vimcu le valsi poi lidne zo si
-  ##   .i zo sa cu vimcu ro valsi poi lidne zo sa gi'e se lidne le romoi valsi poi cmima le selma'o
-  ##     be le bavla'i valsi
-  ##   .i zo sa cu vimcu ji'a le romoi valsi
-  ##   .i va'o lo nu no valsi cu cmima le selma'o kei zo sa cu vimcu ro valsi poi lidne zo sa
-  ##   .i zo su cu vimcu ro valsi poi lidne zo su
-  ##   .i lo cmavo poi lo nu sitna cu vasru ke'a cu vimcu no da
-  ##   .i dunda no da va'o lo nu zo si .a zo sa cu galfi no da
-  ##   .i ba bo `offender` cu cmene le cmavo
-  ##   .i `reach` cu cmene ro me zo sa me'u poi lidne ro me zo su me'u gi'e vimcu ro valsi poi lidne
-  ##     le me zo sa me'u
-  ##   .i va'o lo nu `as_parting` cu jetnu kei zo su cu stali ta'i lo valsi poi se ralte
-  ##   .i zo su cu fanmo le se ciska poi lidne ri
-  ##   .i se ki'u bo lo nu vimcu poi se lidne zo su cu klama no valsi poi lidne zo su to lo se jdice
-  ##     pe `#859` toi
+  ##   .i zo si vimcu le valsi poi lidne zo si
+  ##   .i zo sa vimcu ro valsi poi lidne zo sa gi'e se lidne le romoi valsi poi cmima le selma'o be
+  ##       le bavla'i valsi
+  ##   .i zo sa vimcu ji'a le romoi valsi
+  ##   .i va'o lo nu no valsi cu cmima le selma'o kei zo sa vimcu ro valsi poi lidne zo sa
+  ##   .i zo su vimcu ro valsi poi lidne zo su
+  ##   .i lo cmavo poi lo nu sitna cu vasru ke'a vimcu no da
+  ##   .i dunda no da va'o lo nu zo si .a zo sa galfi no da
+  ##   .i ba bo `offender` cmene le cmavo
+  ##   .i `reach` cmene ro me zo sa me'u poi lidne ro me zo su me'u gi'e vimcu ro valsi poi lidne le
+  ##       me zo sa
+  ##   .i va'o lo nu `as_parting` jetnu kei zo su stali ta'i lo valsi poi selra'e
+  ##   .i zo su fanmo le selci'a poi lidne ri
+  ##   .i se ki'u bo lo nu vimcu poi se lidne zo su klama no valsi poi lidne zo su to lo seljdi pe
+  ##       `#859` toi
   reach = Reach()
   var
     kept: seq[int]
-    # lo valsi poi se ralte gi'e lidne `floor` cu lidne zo su noi romoi
+    # lo valsi poi selra'e gi'e lidne `floor` lidne zo su noi romoi
     #   .i lo nu vimcu cu klama no le valsi
     floor = 0
   for i, word in words:
@@ -437,17 +429,17 @@ func quotations(
     words: openArray[Occurrence], roles: openArray[Role], kept: openArray[int],
     offender: var seq[int],
 ): Option[seq[Piece]] =
-  ## fendi lo valsi poi se ralte lo spisa
-  ##   .i ro nu sitna cu zvati pa spisa ta'i pa gerna valsi
-  ##   .i ro drata valsi cu zvati pa spisa pe vo'a
+  ## fendi lo valsi poi selra'e lo spisa
+  ##   .i ro nu sitna cu zvati pa spisa ta'i pa genvla
+  ##   .i ro datyvla cu zvati pa spisa pe vo'a
   ##   .i dunda no da va'o lo nu lo nu vimcu cu ralte pa pagbu be pa nu sitna
-  ##   .i ji'a dunda no da va'o lo nu zo lo'u cu sitna no valsi to `CLL 19.80` toi
-  ##   .i ba bo `offender` cu cmene lo valsi pe le nu sitna zi'e poi se ralte
+  ##   .i ji'a dunda no da va'o lo nu zo lo'u sitna no valsi to `CLL 19.80` toi
+  ##   .i ba bo `offender` cmene lo valsi pe le nu sitna zi'e poi selra'e
   ##   .i lo nu vimcu cu ralte lo pamoi valsi pe le nu sitna
-  ##   .i va'o lo nu zo le'u na fanmo le nu sitna pe zo lo'u kei `offender` cu cmene zo lo'u po'o
-  ##   .i se ki'u bo lo valsi poi se lidne zo lo'u cu se tcidu
-  ##   .i lo valsi poi se lidne zo zoi poi ponse no korbi valsi cu go'i ji'a
-  ##   .i ne'i lo jmive se ciska zo lo'u cu vasru no valsi pe lo cacra poi se lidne zo lo'u
+  ##   .i va'o lo nu zo le'u na fanmo le nu sitna pe zo lo'u kei `offender` cmene zo lo'u po'o
+  ##   .i se ki'u bo lo valsi poi se lidne zo lo'u se tcidu
+  ##   .i lo valsi poi se lidne zo zoi poi ponse no koivla cu go'i ji'a
+  ##   .i ne'i lo mivyselci'a zo lo'u vasru no valsi pe lo cacra poi se lidne zo lo'u
   var
     pieces: seq[Piece]
     p = 0
@@ -486,13 +478,13 @@ func quotations(
 #[ ni'o ni'o ni'o lo gerna stura ]#
 
 func isWordPlain(piece: Piece, words: openArray[Occurrence], selmaho: set[Selmaho]): bool =
-  ## jdice lo du'u xu kau le spisa cu du pa sampu valsi poi cmavo be pa cmima be `selmaho`
+  ## jdice lo du'u xu kau le spisa cu du pa sapyvla poi cmavo be pa cmima be `selmaho`
   piece.is_plain and words[piece.head].isSelmaho(selmaho)
 
 
 func isJoinable(piece: Piece, words: openArray[Occurrence]): bool =
   ## jdice lo du'u xu kau le spisa cu ka'e lamji zo zei
-  ##   .i le spisa cu du pa sampu valsi poi na du lo cmavo poi zo zei na galfi ke'a
+  ##   .i le spisa cu du pa sapyvla poi na du lo cmavo poi zo zei na galfi ke'a
   ##   .ija le spisa cu du pa porsi pe zo zei
   piece.terminal == some(Selmaho.Zei.toTerminal) or
       (piece.is_plain and not piece.isWordPlain(words, SELMAHO_UNJOINED))
@@ -502,9 +494,9 @@ func joined(
     pieces: openArray[Piece], words: openArray[Occurrence], offender: var seq[int]
 ): Option[seq[Piece]] =
   ## jmina ro valsi poi lidne zo zei ku'o le valsi poi se lidne zo zei ku'o fo pa spisa po'u `ZEI`
-  ##   .i lo porsi pe zo zei cu jmina ro le valsi fo pa spisa to `CLL 4.6` toi
-  ##   .i dunda no da va'o lo nu zo zei cu lamji no valsi poi zo zei ka'e jorne ke'a
-  ##   .i ba bo `offender` cu cmene le me zo zei me'u
+  ##   .i lo porsi pe zo zei jmina ro le valsi fo pa spisa to `CLL 4.6` toi
+  ##   .i dunda no da va'o lo nu zo zei lamji no valsi poi zo zei ka'e jorne ke'a
+  ##   .i ba bo `offender` cmene le me zo zei
   var
     joins: seq[Piece]
     k = 0
@@ -531,10 +523,10 @@ func marked(
     pieces: openArray[Piece], words: openArray[Occurrence], offender: var seq[int]
 ): Option[seq[Piece]] =
   ## dunda ro porsi be lo cmavo be `BAhE` le spisa poi se lidne le porsi
-  ##   .i le gerna valsi pe le spisa cu stali to le javni pe li papanono toi
-  ##   .i dunda no da va'o lo nu lo cmavo be `BAhE` cu fanmo le se ciska gi'a lidne zo su poi fanmo
-  ##     le se ciska
-  ##   .i ba bo `offender` cu cmene le cmavo
+  ##   .i le genvla pe le spisa cu stali to le javni pe li papanono toi
+  ##   .i dunda no da va'o lo nu lo cmavo be `BAhE` fanmo le selci'a gi'a lidne zo su poi fanmo le
+  ##       selci'a
+  ##   .i ba bo `offender` cmene le cmavo
   var
     marks: seq[Piece]
     pending: seq[int]
@@ -557,11 +549,11 @@ func marked(
 func lettered(
     pieces: openArray[Piece], words: openArray[Occurrence], offender: var seq[int]
 ): Option[seq[Piece]] =
-  ## zbasu pa lerfu valsi fi le valsi poi lidne su'o pa me zo bu me'u
-  ##   .i le lerfu valsi cu du pa spisa po'u `BU` to `CLL 17.4` toi
-  ##   .i dunda no da va'o lo nu zo bu cu se lidne no valsi gi'a se lidne lo cmavo poi zo bu na
-  ##     galfi ke'a
-  ##   .i ba bo `offender` cu cmene le me zo bu me'u
+  ## zbasu pa lervla fi le valsi poi lidne su'o pa me zo bu
+  ##   .i le lervla cu du pa spisa po'u `BU` to `CLL 17.4` toi
+  ##   .i dunda no da va'o lo nu zo bu se lidne no valsi gi'a se lidne lo cmavo poi zo bu na galfi
+  ##       ke'a
+  ##   .i ba bo `offender` cmene le me zo bu
   var letters: seq[Piece]
   for piece in pieces:
     if not piece.isWordPlain(words, {Selmaho.Bu}):
@@ -579,13 +571,13 @@ func lettered(
 
 
 func indicated(pieces: openArray[Piece], words: openArray[Occurrence]): seq[Piece] =
-  ## dunda ro cinmo valsi le spisa poi lidne le cinmo valsi
+  ## dunda ro cnivla le spisa poi lidne le cnivla
   ##   .i zo nai poi se lidne lo cmavo be `UI` .a `CAI` cu kansa le cmavo to `CLL 13.9` .e
-  ##     `CLL 19.16` toi
-  ##   .i lo cinmo valsi poi krasi le se ciska cu stali ta'i lo spisa pe vo'a
+  ##       `CLL 19.16` toi
+  ##   .i lo cnivla poi krasi le selci'a cu stali ta'i lo spisa pe vo'a
   ##   .i le javni pe li no cu tcidu le spisa
-  ##   .i lo cinmo valsi poi se lidne zo su cu stali ta'i lo spisa pe vo'a ji'a
-  ##   .i zo su cu krasi lo se ciska
+  ##   .i lo cnivla poi se lidne zo su stali ta'i lo spisa pe vo'a ji'a
+  ##   .i zo su krasi lo selci'a
   var
     is_opening = true
     k = 0
@@ -609,11 +601,10 @@ func indicated(pieces: openArray[Piece], words: openArray[Occurrence]): seq[Piec
 #[ ni'o ni'o ni'o lo nu tcidu ]#
 
 func toParsable(occurrences: openArray[Occurrence], is_lohu = false): seq[Occurrence] =
-  ## dunda lo valsi pe le se ciska poi le gerna ka'e tcidu ke'a
+  ## dunda lo valsi pe le selci'a poi le gerna ka'e tcidu ke'a
   ##   .i le porsi be lo valsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a
   ##   .i no pagbu cu vasru zo fa'o to `CLL 19.15` toi
-  ##   .i va'o lo nu `is_lohu` cu jetnu kei le valsi cu cfari ne'i lo valsi poi zo lo'u cu sitna
-  ##     ke'a
+  ##   .i va'o lo nu `is_lohu` jetnu kei le valsi cu cfari ne'i lo valsi poi zo lo'u sitna ke'a
   result = @occurrences
   let is_ending = result.len > 0 and result[^1].isSelmaho({Selmaho.Faho}) and
     result.toRoles(is_lohu)[^1] == Role.Plain
@@ -626,12 +617,12 @@ func toPieces(
 ): Option[seq[Piece]] =
   ## fendi lo valsi lo spisa ja'i lo javni pe `CLL 19.16` zi'e poi galfi lo valsi
   ##   .i le porsi cu du lo nu sitna ce'o lo nu vimcu ce'o zo zei ce'o lo cmavo be `BAhE` be'o ce'o
-  ##     zo bu ce'o lo cinmo valsi
+  ##       zo bu ce'o lo cnivla
   ##   .i dunda no da va'o lo nu pa javni cu galfi no da
-  ##   .i ba bo `refusal` .e `offender` cu cmene le javni
-  ##   .i `reach` cu dunda le se klama be lo nu vimcu be'o poi zvati pu le valsi
-  ##   .i va'o lo nu `as_parting` cu jetnu kei zo su cu zvati pa spisa pe vo'a
-  ##   .i zo su cu fanmo le se ciska poi lidne ri
+  ##   .i ba bo `refusal` .e `offender` cmene le javni
+  ##   .i `reach` dunda le selkla be lo nu vimcu be'o poi zvati pu le valsi
+  ##   .i va'o lo nu `as_parting` jetnu kei zo su zvati pa spisa pe vo'a
+  ##   .i zo su fanmo le selci'a poi lidne ri
   ##   .i no javni cu galfi lo valsi ta'i lo nu kuspe zo su
   let
     roles = words.toRoles
@@ -652,16 +643,16 @@ func toPieces(
 
 
 func toTerminal(piece: Piece, words: openArray[Occurrence]): Option[Terminal] =
-  ## dunda le gerna valsi poi le spisa cu se sinxa ke'a
-  ##   .i le gerna valsi cu du le gerna valsi pe le gerna stura pe le spisa
-  ##   .i va'o lo drata le gerna valsi cu du le gerna valsi pe le valsi
+  ## dunda le genvla poi le spisa cu selsni ke'a
+  ##   .i le genvla cu du le genvla pe le gensu'a pe le spisa
+  ##   .i va'o lo drata le genvla cu du le genvla pe le valsi
   ##   .i dunda no da va'o lo nu le valsi cu du lo cmavo poi no liste cu dunda lo selma'o ke'a
   if piece.terminal.isSome: piece.terminal else: words[piece.head].reading.toTerminal
 
 
 func readText*(text: string): ReadingText =
-  ## tcidu lo se ciska sepi'o le porsi be lo valsi be'o .e lo javni pe `CLL 19.16` zi'e poi galfi lo
-  ##   valsi pe le se ciska ku'o .e le gerna pe `CLL 21.1`
+  ## tcidu lo selci'a sepi'o le porsi be lo valsi be'o .e lo javni pe `CLL 19.16` zi'e poi galfi lo
+  ##     valsi pe le selci'a ku'o .e le gerna pe `CLL 21.1`
   ##   .i to'e curmi bu'u le stuzi poi lo nu tcidu cu sisti bu'u ke'a ku'o gi'e cmene le javni
   let stream = text.readStream
   if not stream.is_read: return refuse(RefusalText.Stream, stream.start, $stream.refusal)
@@ -673,7 +664,7 @@ func readText*(text: string): ReadingText =
   let pieces = words.toPieces(refusal, offender, reach, as_parting = false)
   if pieces.isNone: return refuse(refusal, (if words.len > 0: words[^1].start else: 0))
 
-  # punji ro spisa ta'i lo gerna valsi gi'e tcidu le gerna valsi sepi'o le gerna
+  # punji ro spisa ta'i lo genvla gi'e tcidu le genvla sepi'o le gerna
   var
     units: seq[Unit]
     terminals: seq[Terminal]
@@ -685,7 +676,7 @@ func readText*(text: string): ReadingText =
   let reading = terminals.readGrammar
   if not reading.is_read:
     let start =
-      # zo fa'o cu fanmo le se ciska
+      # zo fa'o fanmo le selci'a
       if reading.at < units.len: words[units[reading.at].words[0]].start
       elif words.len < stream.occurrences.len: stream.occurrences[^1].start
       else: text.len
@@ -697,9 +688,9 @@ func readText*(text: string): ReadingText =
 #[ ni'o ni'o ni'o lo nu jarco lo srera ]#
 
 func writtenAt(text: string, at: int): Slice[int] =
-  ## dunda lo stuzi pe le se ciska valsi poi vasru le stuzi po'u `at`
+  ## dunda lo stuzi pe le selci'avla poi vasru le stuzi po'u `at`
   ##   .i le stuzi cu du lo porsi be lo stuzi poi no sinxa poi zvati lo jbini be lo valsi cu fendi
-  ##     ke'a
+  ##       ke'a
   doAssert at < text.len and text[at] notin MARKS_BOUNDARY,
       "Stream should refuse byte of written word; got byte " & $at & "."
   var (a, b) = (at, at)
@@ -709,11 +700,11 @@ func writtenAt(text: string, at: int): Slice[int] =
 
 
 func remap(node: var Node, indexes: openArray[int], count: int) =
-  ## rinka lo nu ro gerna valsi pe le tricu ge'u .e ro stuzi poi le gerna cu sisti bu'u ke'a cu
-  ##   sinxa lo pagbu
-  ##   .i le gerna valsi po'u `k` cu sinxa le pagbu po'u `indexes[k]`
-  ##   .i le fanmo be le gerna valsi cu sinxa le fanmo be ro le pagbu
-  ##   .i `count` cu te kancu le pagbu
+  ## rinka lo nu ro genvla pe le tricu ge'u .e ro stuzi poi le gerna cu sisti bu'u ke'a sinxa lo
+  ##     pagbu
+  ##   .i le genvla po'u `k` sinxa le pagbu po'u `indexes[k]`
+  ##   .i le fanmo be le genvla cu sinxa le fanmo be ro le pagbu
+  ##   .i `count` te kancu le pagbu
   if node.is_terminal:
     node.at = indexes[node.at]
     return
@@ -724,7 +715,7 @@ func remap(node: var Node, indexes: openArray[int], count: int) =
 
 
 func addPaths(node: Node, path: var seq[int], wanted: openArray[bool], paths: var seq[seq[int]]) =
-  ## dunda lo pluta be ro pezli pe lo pagbu poi `wanted` cu sinxa ke'a
+  ## dunda lo pluta be ro pezli pe lo pagbu poi `wanted` sinxa ke'a
   ##   .i le pluta cu porsi lo namcu pe lo panzi bu'u ro dizlo
   ##   .i ro pagbu cu ponse pa pluta
   if node.is_terminal:
@@ -737,7 +728,7 @@ func addPaths(node: Node, path: var seq[int], wanted: openArray[bool], paths: va
 
 
 func insertAt(node: var Node, path: openArray[int], index: int, leaves: openArray[Node]) =
-  ## punji `leaves` ne'i lo panzi be le jgena poi `path` cu pluta ke'a ku'o pu le panzi po'u `index`
+  ## punji `leaves` ne'i lo panzi be le jgena poi `path` pluta ke'a ku'o pu le panzi po'u `index`
   if path.len > 0:
     node.children[path[0]].insertAt(path.toOpenArray(1, path.high), index, leaves)
     return
@@ -745,18 +736,18 @@ func insertAt(node: var Node, path: openArray[int], index: int, leaves: openArra
 
 
 func placeRefused*(tree: var Node, reads: openArray[bool], span: Slice[int]) =
-  ## punji lo pezli pe ro pagbu pe `span` zi'e poi no gerna valsi cu vasru ke'a
+  ## punji lo pezli pe ro pagbu pe `span` zi'e poi no genvla cu vasru ke'a
   ##   .i `reads` pe le pagbu cu jitfa
   ##   .i le pezli cu zvati lo jgena poi traji lo ka dizlo kei gi'e vasru le re pagbu poi se tcidu
-  ##     gi'e sruri le pagbu
+  ##       gi'e sruri le pagbu
   ##   .i le pezli cu zvati lo jbini be le re pagbu
   ##   .i lo pezli poi lidne le pamoi pagbu poi se tcidu cu zvati le krasi be le genja
   ##   .i lo pezli poi se lidne le romoi pagbu poi se tcidu cu zvati le fanmo be le genja
-  ##   .i ro porsi be lo simsa pagbu be'o poi zvati lo jbini be re pagbu poi se tcidu cu zvati vi
-  ##     ta'i le porsi
+  ##   .i ro porsi be lo smipau be'o poi zvati lo jbini be re pagbu poi se tcidu cu zvati vi ta'i le
+  ##       porsi
   ##   .i le tricu cu vasru lo pagbu pe `span` zi'e poi se tcidu
-  ##   .i `span` cu du pa se ciska poi zo su cu fendi ke'a
-  ##   .i lo nu jmina lo pagbu be lo se ciska cu punji ro pagbu ta'i di'u ji'a to `merge.nim` toi
+  ##   .i `span` du pa selci'a poi zo su fendi ke'a
+  ##   .i lo nu jmina lo pagbu be lo selci'a cu punji ro pagbu ta'i di'u ji'a to `merge.nim` toi
   var
     # lo pagbu poi se tcidu gi'e sruri le porsi
     runs: seq[tuple[before, after: Option[int], leaves: seq[Node]]]
@@ -783,15 +774,15 @@ func placeRefused*(tree: var Node, reads: openArray[bool], span: Slice[int]) =
   #   .i se ki'u bo le pluta be ro pagbu poi lidne le porsi cu stali
   for k in countdown(runs.high, 0):
     template run: untyped = runs[k]
-      ## lo drata cmene be le porsi
-      ##   .i `let` cu zbasu lo fukpi be le porsi
+      ## lo datcme be le porsi
+      ##   .i `let` zbasu lo fukpi be le porsi
     if run.before.isNone or run.after.isNone:
       tree.children.insert(run.leaves, (if run.before.isNone: 0 else: tree.children.len))
       continue
     template a: untyped = paths[run.before.get]
-      ## lo drata cmene be le pluta be le pagbu poi lidne le porsi
+      ## lo datcme be le pluta be le pagbu poi lidne le porsi
     template b: untyped = paths[run.after.get]
-      ## lo drata cmene be le pluta be le pagbu poi se lidne le porsi
+      ## lo datcme be le pluta be le pagbu poi se lidne le porsi
     var depth = 0
     # le re pezli cu drata
     #   .i se ki'u bo le re pluta cu sepli pu lo nu pa le re pluta cu fanmo
@@ -800,10 +791,10 @@ func placeRefused*(tree: var Node, reads: openArray[bool], span: Slice[int]) =
 
 
 func occurrenceEnded*(text: string, first, last: int): Occurrence =
-  ## dunda le se ciska valsi poi vasru le stuzi po'u `first ..< last`
-  ##   .i le valsi cu se lidne zo fa'o poi fanmo le se ciska
+  ## dunda le selci'avla poi vasru le stuzi po'u `first ..< last`
+  ##   .i le valsi cu se lidne zo fa'o poi fanmo le selci'a
   ##   .i le valsi cu du pa valsi poi le porsi be lo valsi na tcidu ke'a
-  ##   .i le valsi cu ralte le stuzi ta'i lo nu se ciska
+  ##   .i le valsi cu ralte le stuzi ta'i lo nu selci'a
   ##   .i ji'a le valsi cu ralte lo denpa poi denpa bu cu ciska ke'a pu le valsi to `CLL 19.15` toi
   var k = first
   while k > 0 and text[k - 1] in MARKS_BOUNDARY: dec k
@@ -815,27 +806,25 @@ func occurrenceEnded*(text: string, first, last: int): Occurrence =
 
 
 func readUnits(text: string, is_lohu = false): ReadingParts =
-  ## tcidu lo se ciska sepi'o le porsi be lo valsi be'o .e lo javni pe `CLL 19.16` gi'e fendi le se
-  ##   ciska lo pagbu ta'i le porsi be lo pamoi valsi
+  ## tcidu lo selci'a sepi'o le porsi be lo valsi be'o .e lo javni pe `CLL 19.16` gi'e fendi le
+  ##     selci'a lo pagbu ta'i le porsi be lo pamoi valsi
   ##   .i ranji lo nu tcidu ba ro srera
-  ##   .i lo valsi poi pa ve pruce cu to'e curmi ke'a cu zvati pa pagbu pe vo'a to `readTextMarked`
-  ##     toi
+  ##   .i lo valsi poi pa velru'e cu to'e curmi ke'a zvati pa pagbu pe vo'a to `readTextMarked` toi
   ##   .i le tricu cu stali lo ka kunti
   ##   .i le se tcidu cu jarco lo nu vimcu .e lo nu sitna poi denpa
-  ##   .i lo jmive se ciska cu tcidu di'u ba le pagbu
-  ##   .i zo su cu zvati pa pagbu pe vo'a
-  ##   .i zo su cu fanmo le se ciska poi lidne ri to lo se jdice pe `#859` toi
-  ##   .i va'o lo nu `is_lohu` cu jetnu kei le se ciska cu cfari ne'i lo valsi poi zo lo'u cu sitna
-  ##     ke'a to `readStream` toi
+  ##   .i lo mivyselci'a cu tcidu di'u ba le pagbu
+  ##   .i zo su zvati pa pagbu pe vo'a
+  ##   .i zo su fanmo le selci'a poi lidne ri to lo seljdi pe `#859` toi
+  ##   .i va'o lo nu `is_lohu` jetnu kei le selci'a cu cfari ne'i lo valsi poi zo lo'u sitna ke'a to
+  ##       `readStream` toi
   template occurrences: untyped = result.reading.occurrences
-    ## lo drata cmene be lo valsi pe le se tcidu
+    ## lo datcme be lo valsi pe le se tcidu
   template units: untyped = result.reading.units
-    ## lo drata cmene be lo pagbu pe le se tcidu
+    ## lo datcme be lo pagbu pe le se tcidu
   result.reading.size = text.len
 
-  # le porsi be lo valsi zo'u galfi ro se ciska valsi poi le porsi cu to'e curmi ke'a ku'o lo kunti
-  #   lerfu
-  #   .i le se ciska valsi cu zvati pa valsi pe vo'a
+  # le porsi be lo valsi zo'u galfi ro selci'avla poi le porsi cu to'e curmi ke'a ku'o lo kutle'u
+  #   .i le selci'avla cu zvati pa valsi pe vo'a
   var
     blanked = text
     refused: seq[Occurrence]
@@ -850,13 +839,13 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
       reading: Reading(is_word: false, refusal: stream.refusal, detail: stream.detail),
     )
     if stream.refusal == Refusal.Quotation and stream.detail.len > 0:
-      result.zois.add (span.a, stream.detail)  # zo zoi cu denpa lo korbi valsi pe vo'a
+      result.zois.add (span.a, stream.detail)  # zo zoi denpa lo koivla pe vo'a
     for i in span: blanked[i] = ' '
     stream = blanked.readStream(is_lohu)
   refused = refused.sortedByIt(it.start)
 
   # lo valsi poi le porsi be lo valsi cu tcidu ke'a ku'o .e lo valsi poi le porsi cu to'e curmi ke'a
-  #   ku'o ta'i le porsi be lo stuzi
+  #     ku'o ta'i le porsi be lo stuzi
   #   .i ro valsi poi se to'e curmi cu zvati pa pagbu pe vo'a
   var
     # lo namcu pe ro valsi poi se tcidu ku'o ne'i `occurrences`
@@ -864,7 +853,7 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     r = 0
   template addRefused() =
     ## jmina le bavla'i valsi poi le porsi be lo valsi cu to'e curmi ke'a ku'o .e lo pagbu poi vasru
-    ##   le valsi
+    ##     le valsi
     units.add Unit(words: @[occurrences.len], is_read: false, refusal: RefusalText.Stream)
     occurrences.add refused[r]
     inc r
@@ -874,8 +863,7 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     occurrences.add stream.occurrences[k]
   while r < refused.len: addRefused()
 
-  # lo javni pe `CLL 19.16` zo'u ro girzu be lo valsi poi pa javni cu to'e curmi ke'a cu zvati pa
-  #   pagbu
+  # lo javni pe `CLL 19.16` zo'u ro girzu be lo valsi poi pa javni cu to'e curmi ke'a zvati pa pagbu
   #   .i le javni cu tcidu lo valsi poi stali
   let
     words = stream.occurrences.toParsable(is_lohu)
@@ -902,7 +890,7 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     units.add Unit(words: offender.mapIt(indexes[alive[it]]), is_read: false, refusal: refusal)
     for k in countdown(offender.high, 0): alive.delete(offender[k])
 
-  # ro spisa cu se sinxa pa gerna valsi gi'a zvati pa pagbu poi no gerna valsi cu vasru ke'a
+  # ro spisa cu selsni pa genvla gi'a zvati pa pagbu poi no genvla cu vasru ke'a
   #   .i le pagbu cu vasru zo su .a lo cmavo poi no liste cu dunda lo selma'o ke'a
   let left = alive.mapIt(words[it])
   for piece in pieces:
@@ -915,10 +903,10 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     elif terminal.isSome: units.add Unit(words: held, is_read: true, terminal: terminal.get)
     else: units.add Unit(words: held, is_read: false, refusal: RefusalText.Selmaho)
 
-  # lo valsi poi no pagbu cu vasru ke'a zo'u ro porsi be lo valsi poi lo nu vimcu cu vimcu ke'a cu
-  #   kansa le cmavo poi vimcu le porsi to `CLL 19.13` toi
-  #   .i ba bo lo pagbu cu vasru zo fa'o poi fanmo le se ciska ku'o .e ro se ciska valsi poi se
-  #     lidne zo fa'o zi'e poi le porsi be lo valsi na tcidu ke'a to `CLL 19.15` toi
+  # lo valsi poi no pagbu cu vasru ke'a zo'u ro porsi be lo valsi poi lo nu vimcu cu vimcu ke'a
+  #     kansa le cmavo poi vimcu le porsi to `CLL 19.13` toi
+  #   .i ba bo lo pagbu cu vasru zo fa'o poi fanmo le selci'a ku'o .e ro selci'avla poi se lidne zo
+  #       fa'o zi'e poi le porsi be lo valsi na tcidu ke'a to `CLL 19.15` toi
   var is_helds = newSeq[bool](occurrences.len)  # su'o pagbu cu vasru le valsi
   for k in 0 ..< units.len:
     for w in units[k].words: is_helds[w] = true
@@ -950,9 +938,9 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     while units[u].words[0] != ending: dec u
     result.faho = some(u)
 
-  # zo lo'u cu denpa va'o lo nu le porsi be lo valsi cu tcidu le valsi poi zo lo'u cu sitna ke'a
-  #   ku'o ta'i lo nu klama le fanmo be le se ciska
-  #   .i lo pagbu poi vasru zo lo'u cu na vajni
+  # zo lo'u denpa va'o lo nu le porsi be lo valsi cu tcidu le valsi poi zo lo'u sitna ke'a ku'o ta'i
+  #     lo nu klama le fanmo be le selci'a
+  #   .i lo pagbu poi vasru zo lo'u na vajni
   let roles_stream = words.toRoles(is_lohu)  # le pagbu pe ro valsi ta'i le porsi be lo valsi
   for w in 0 ..< words.len:
     let is_waiting = roles_stream[w] == Role.Lohu and
@@ -961,10 +949,10 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
 
 
 func toTexts(units: openArray[Unit]): seq[Slice[int]] =
-  ## dunda lo pagbu pe ro se ciska poi zo su cu fendi ke'a ku'o ta'i le porsi
+  ## dunda lo pagbu pe ro selci'a poi zo su fendi ke'a ku'o ta'i le porsi
   ##   .i le pagbu cu lidne ro me zo su me'u gi'a zvati lo jbini be re me zo su me'u gi'a se lidne
-  ##     ro me zo su me'u
-  ##   .i no se ciska cu vasru zo su
+  ##       ro me zo su
+  ##   .i no selci'a cu vasru zo su
   var first = 0
   for k in 0 ..< units.len:
     if not units[k].is_read and units[k].refusal == RefusalText.Su:
@@ -977,7 +965,7 @@ func toTerminals(
     units: openArray[Unit], span: Slice[int]
 ): tuple[read: seq[int], terminals: seq[Terminal]] =
   ## dunda lo namcu pe ro pagbu pe `span` zi'e poi le gerna cu tcidu ke'a ku'o ta'i le porsi
-  ##   .i ji'a dunda lo gerna valsi pe ro le pagbu
+  ##   .i ji'a dunda lo genvla pe ro le pagbu
   for k in span:
     if units[k].is_read:
       result.read.add k
@@ -986,10 +974,10 @@ func toTerminals(
 
 func readTree(reading: ReadingMarked, span: Slice[int], count: int): Node =
   ## tcidu le pagbu po'u `span` pe le se tcidu gi'e zbasu lo tricu poi jarco ro srera
-  ##   .i `span` cu du pa se ciska poi zo su cu fendi ke'a
+  ##   .i `span` du pa selci'a poi zo su fendi ke'a
   ##   .i ro pagbu poi se to'e curmi cu zvati le stuzi pe vo'a
-  ##   .i va'o lo nu le gerna cu sisti bu'u le fanmo be le se ciska kei le stuzi poi le gerna cu
-  ##     sisti bu'u ke'a cu du le pagbu po'u `count`
+  ##   .i va'o lo nu le gerna cu sisti bu'u le fanmo be le selci'a kei le stuzi poi le gerna cu
+  ##       sisti bu'u ke'a du le pagbu po'u `count`
   let (read, terminals) = reading.units.toTerminals(span)
   result = terminals.readGrammarMarked
   result.remap(read, count)
@@ -997,39 +985,38 @@ func readTree(reading: ReadingMarked, span: Slice[int], count: int): Node =
 
 
 func readTextMarked*(text: string): ReadingMarked =
-  ## tcidu lo se ciska ta'i lo nu `readText` cu tcidu kei gi'e ranji lo nu tcidu ba ro srera gi'e
-  ##   jarco ro le srera to `#859` toi
-  ##   .i lo valsi poi pa ve pruce cu to'e curmi ke'a cu zvati pa pagbu pe vo'a
+  ## tcidu lo selci'a ta'i lo nu `readText` tcidu kei gi'e ranji lo nu tcidu ba ro srera gi'e jarco
+  ##     ro le srera to `#859` toi
+  ##   .i lo valsi poi pa velru'e cu to'e curmi ke'a zvati pa pagbu pe vo'a
   ##   .i le gerna cu tcidu lo valsi poi sruri le pagbu
   ##   .i le tricu cu jarco lo stuzi poi le gerna cu sisti bu'u ke'a to `readGrammarMarked` toi
-  ##   .i va'o lo nu `readText` cu tcidu lo se ciska kei le se tcidu cu mintu le se tcidu pe
-  ##     `readText`
-  ##   .i le porsi be lo valsi zo'u ro se ciska valsi poi le porsi cu to'e curmi ke'a cu zvati pa
-  ##     valsi ta'i lo nu se ciska
-  ##   .i ba bo le porsi cu rapli tcidu le se ciska ta'i lo nu lo stuzi pe le valsi cu kunti lerfu
-  ##   .i se ki'u bo ro nu to'e curmi cu vasru pa se ciska valsi
-  ##   .i lo javni pe `CLL 19.16` zo'u lo valsi poi pa javni cu to'e curmi ke'a cu zvati pa pagbu
-  ##   .i le javni cu rapli tcidu lo valsi poi stali
-  ##   .i lo selma'o zo'u lo spisa pe lo cmavo poi no liste cu dunda lo selma'o ke'a cu du pa pagbu
-  ##     poi vasru ro valsi pe le spisa
+  ##   .i va'o lo nu `readText` tcidu lo selci'a kei le se tcidu cu mintu le se tcidu pe `readText`
+  ##   .i le porsi be lo valsi zo'u ro selci'avla poi le porsi cu to'e curmi ke'a zvati pa valsi
+  ##       ta'i lo nu selci'a
+  ##   .i ba bo le porsi cu raptcidu le selci'a ta'i lo nu lo stuzi pe le valsi cu kutle'u
+  ##   .i se ki'u bo ro nu to'e curmi cu vasru pa selci'avla
+  ##   .i lo javni pe `CLL 19.16` zo'u lo valsi poi pa javni cu to'e curmi ke'a zvati pa pagbu
+  ##   .i le javni cu raptcidu lo valsi poi stali
+  ##   .i lo selma'o zo'u lo spisa pe lo cmavo poi no liste cu dunda lo selma'o ke'a du pa pagbu poi
+  ##       vasru ro valsi pe le spisa
   ##   .i le vi genturfa'i cu jdice no nu cikre ja'i `D1 a` pe `#859`
-  ##   .i lo drata samtci cu tcidu le tricu gi'e cikre le se ciska
-  ##   .i zo su cu fanmo lo se ciska poi lidne ri
-  ##   .i le se ciska cu se tcidu ta'i pa mulno se ciska
-  ##   .i le se ciska poi se lidne zo su cu go'i ji'a
-  ##   .i le genja pe le se ciska poi se lidne zo su noi romoi cu vasru le tricu pe ro se ciska poi
-  ##     lidne su'o me zo su me'u
+  ##   .i lo drata samtci cu tcidu le tricu gi'e cikre le selci'a
+  ##   .i zo su fanmo lo selci'a poi lidne ri
+  ##   .i le selci'a cu se tcidu ta'i pa mulselci'a
+  ##   .i le selci'a poi se lidne zo su go'i ji'a
+  ##   .i le genja pe le selci'a poi se lidne zo su noi romoi cu vasru le tricu pe ro selci'a poi
+  ##       lidne su'o me zo su
   ##   .i ro le tricu cu lidne lo pezli pe zo su
-  ##   .i le tricu .e le pezli cu lidne le jgena pe le genja to lo se jdice pe `#859` toi
-  ##   .i se ki'u bo le tricu poi `readText` cu dunda ke'a cu du le genja ba zo su noi romoi
-  ##   .i zo fa'o poi fanmo le se ciska ku'o .e ro se ciska valsi poi se lidne zo fa'o cu zvati lo
-  ##     fanmo be le genja gi'e se lidne le se ciska
+  ##   .i le tricu .e le pezli cu lidne le jgena pe le genja to lo seljdi pe `#859` toi
+  ##   .i se ki'u bo le tricu poi `readText` dunda ke'a du le genja ba zo su noi romoi
+  ##   .i zo fa'o poi fanmo le selci'a ku'o .e ro selci'avla poi se lidne zo fa'o zvati lo fanmo be
+  ##       le genja gi'e se lidne le selci'a
   let parts = text.readUnits
   result = parts.reading
   let
     ending = (if parts.faho.isSome: parts.faho.get else: result.units.len)
     texts = result.units.toOpenArray(0, ending - 1).toTexts
-  # le tricu pe ro se ciska poi lidne zo su noi romoi
+  # le tricu pe ro selci'a poi lidne zo su noi romoi
   #   .i ro le tricu cu lidne lo pezli pe zo su poi se lidne le tricu
   var before: seq[Node]
   for k in 0 ..< texts.high:
@@ -1041,29 +1028,29 @@ func readTextMarked*(text: string): ReadingMarked =
 
 
 func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
-  ## tcidu lo se ciska ta'i lo nu `readTextMarked` cu tcidu kei gi'e zbasu lo jgena pe ro pagbu poi
-  ##   le so'i nu tcidu cu katna ke'a
+  ## tcidu lo selci'a ta'i lo nu `readTextMarked` tcidu kei gi'e zbasu lo jgena pe ro pagbu poi le
+  ##     so'i nu tcidu cu katna ke'a
   ##   .i ro pagbu cu se tcidu ta'i pa mulno se ciska to `readGrammarParts` toi
-  ##   .i se ki'u bo ro jufra pe lo jmive se ciska cu se benji ca lo nu le jufra cu fanmo
+  ##   .i se ki'u bo ro jufra pe lo mivyselci'a cu selbe'i ca lo nu le jufra cu fanmo
   ##   .i le genja cu vasru le jgena .e ro pagbu poi se to'e curmi gi'e zvati lo jbini be le pagbu
-  ##     be le se ciska
-  ##   .i `assembleText` cu zbasu le tricu pe le se ciska
-  ##   .i lo jmive se ciska poi `is_live` cu jarco ke'a cu katna ba lo krasi valsi poi denpa lo
-  ##     fanmo valsi pe vo'a to lo se jdice pe `#859` toi
-  ##   .i ji'a lo jmive se ciska cu tcidu ta'i lo nu cfari ne'i lo valsi poi zo lo'u cu sitna ke'a
-  ##     kei lo se ciska poi se lidne zo lo'u poi denpa to `is_lohu` toi
+  ##       be le selci'a
+  ##   .i `assembleText` zbasu le tricu pe le selci'a
+  ##   .i lo mivyselci'a poi `is_live` jarco ke'a katna ba lo kravla poi denpa lo famvla pe vo'a to
+  ##       lo seljdi pe `#859` toi
+  ##   .i ji'a lo mivyselci'a cu tcidu ta'i lo nu cfari ne'i lo valsi poi zo lo'u sitna ke'a kei lo
+  ##       selci'a poi se lidne zo lo'u poi denpa to `is_lohu` toi
   ##   .i le porsi be lo valsi cu go'i ji'a
-  ##   .i zo su cu fanmo lo se ciska poi lidne ri
-  ##   .i le se ciska cu se tcidu ta'i pa mulno se ciska
-  ##   .i le se ciska poi se lidne zo su cu go'i ji'a
-  ##   .i le pezli pe zo su cu zvati lo jbini be le pagbu be le re se ciska
-  ##   .i lo krasi valsi poi denpa gi'e zvati le se ciska poi lidne zo su cu se fanmo bu'u zo su
-  ##     ta'i lo nu se fanmo bu'u lo fanmo be lo se ciska
-  ##   .i se ki'u bo lo jmive se ciska cu katna ba lo krasi valsi po'o poi zvati le se ciska poi se
-  ##     lidne zo su noi romoi
+  ##   .i zo su fanmo lo selci'a poi lidne ri
+  ##   .i le selci'a cu se tcidu ta'i pa mulselci'a
+  ##   .i le selci'a poi se lidne zo su go'i ji'a
+  ##   .i le pezli pe zo su zvati lo jbini be le pagbu be le re selci'a
+  ##   .i lo kravla poi denpa gi'e zvati le selci'a poi lidne zo su selfa'o bu'u zo su ta'i lo nu
+  ##       selfa'o bu'u lo fanmo be lo selci'a
+  ##   .i se ki'u bo lo mivyselci'a cu katna ba lo krasi valsi po'o poi zvati le selci'a poi se
+  ##       lidne zo su noi romoi
   result = text.readUnits(is_lohu)
   template reading: untyped = result.reading
-    ## lo drata cmene be le se tcidu pe le pagbu
+    ## lo datcme be le se tcidu pe le pagbu
   reading.tree = Node(is_terminal: false, rule: "text", number: 0)
   let
     ending = (if result.faho.isSome: result.faho.get else: reading.units.len)

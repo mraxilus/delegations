@@ -1,16 +1,15 @@
-## cipra le pixra be lo jmive se ciska to `src/browser/draw.nim` toi ne'i le jbena zbasu
-##   .i le cipra cu cipra lo du'u ro valsi cu se pixra pa karda ta'i le porsi pe le se ciska
-##   .i ro tanxe pe pa pinta porsi cu sepli
-##   .i ro jorne linji cu pencu no tanxe
-##   .i ro stuzi cu klani lo mulno namcu la'o gy. pixel .gy.
-##   .i lo srera jgena .e lo pagbu poi ca'o kalri cu se pixra ta'i le papri
+## cipra le pixra be lo jmive se ciska to `src/browser/draw.nim` toi ne'i le jbezba
+##   .i le cipra cu cipra lo du'u ro valsi cu selxra pa karda ta'i le porsi pe le selci'a
+##   .i ro tanxe pe pa pinpoi cu sepli
+##   .i ro jonli'i cu pencu no tanxe
+##   .i ro stuzi cu klani lo mulna'u `pixel`
+##   .i lo srejge .e lo pagbu poi ca'o kalri cu selxra ta'i le papri
 ##   .i ji'a le linji pe lo nu jmina
-##   .i le cipra pe le papri cu cipra lo du'u le papri cu jarco le mintu pixra ne'i la'o gy.
-##     JavaScript .gy. to `tests/browser/suite_page.nim` toi
-##   .i lo flalu cu tcidu ro bimoi se ciska pe lo se ciska girzu
-##   .i le jbena zbasu cu tcidu ro le se ciska ta'i lo nu tcidu le mulno se ciska
-##   .i lo flalu cu tcidu ji'a le se ciska be fi la'o gy. NIF .gy. be'o poi le jbena zbasu cu dunda
-##     ke'a
+##   .i le cipra pe le papri cu cipra lo du'u le papri cu jarco le mitxra ne'i `JavaScript` to
+##       `tests/browser/suite_page.nim` toi
+##   .i lo flalu cu tcidu ro bimoi se ciska pe lo selci'agri
+##   .i le jbezba cu tcidu ro le selci'a ta'i lo nu tcidu le mulselci'a
+##   .i lo flalu cu tcidu ji'a le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a
 
 {.experimental: "strictFuncs".}
 
@@ -25,36 +24,34 @@ import ./corpora
 
 
 const
-  STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro xo kau moi se ciska pe lo se ciska girzu
+  STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro xo kau moi se ciska pe lo selci'agri
   COUNT_TEXTS_LEAST = 200
-    ## lo du'u lo flalu cu tcidu su'o xo kau se ciska
-    ##   .i lo flalu pu tcidu revoci se ciska ca lo nu le cipra cu se jmina
+    ## lo du'u lo flalu cu tcidu su'o xo kau selci'a
+    ##   .i lo flalu pu tcidu revoci selci'a ca lo nu le cipra cu se jmina
   EXAMPLE_ERROR = (
     # `CLL 6.2`
-    text: "mi klama le .i ko",  # zo le cu krasi pa sumti poi no valsi cu fanmo ke'a
+    text: "mi klama le .i ko",  # zo le krasi pa sumti poi no valsi cu fanmo ke'a
     head: "srera · byte 13",
     rule: "in sumti-6",
   )
-    ## pa se ciska .e lo se cusku be le tanxe pe le se ciska
+    ## pa selci'a .e lo selsku be le tanxe pe le se ciska
     ##   .i le gerna cu sisti bu'u zo .i noi zvati lo stuzi pe li paci ku'o ne'i `sumti-6` noi du le
-    ##     javni pe li soze
+    ##       javni pe li soze
   MODULE_REFUSED = HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
     "(FOO 8 10 \"do\")\n"
-    ## lo se ciska be fi la'o gy. NIF .gy. be'o poi le tcita be le remoi jgena be ke'a cu cmene no
-    ##   selma'o
-    ##   .i se ki'u bo lo nu jmina cu to'e curmi le se ciska gi'e cusku le jgena
+    ## lo selci'a be fi `NIF` be'o poi le tcita be le remoi jgena be ke'a cmene no selma'o
+    ##   .i se ki'u bo lo nu jmina cu to'e curmi le selci'a gi'e cusku le jgena
 
 
 type ReadingDrawn = tuple[key: string, nif: string, parts: seq[NodeNif]]
-  ## pa se ciska pe lo se ciska girzu ta'i lo nu lo flalu cu tcidu
-  ##   .i le ckiku .e le se ciska be fi la'o gy. NIF .gy. be'o poi le jbena zbasu cu dunda ke'a ku'o
-  ##     .e le pagbu pe ro linji
+  ## pa selci'a pe lo selci'agri ta'i lo nu lo flalu cu tcidu
+  ##   .i le ckiku .e le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a ku'o .e le pagbu pe ro
+  ##       linji
 
 
 func readPool(): seq[ReadingDrawn] =
-  ## tcidu ro bimoi se ciska pe lo se ciska girzu ta'i lo nu tcidu le mulno se ciska
-  ##   .i ro le se ciska cu se kansa le se ciska be fi la'o gy. NIF .gy. be'o pe vo'a .e le pagbu pe
-  ##     vo'a
+  ## tcidu ro bimoi se ciska pe lo selci'agri ta'i lo nu tcidu le mulselci'a
+  ##   .i ro le selci'a cu se kansa le selci'a be fi `NIF` be'o pe vo'a .e le pagbu pe vo'a
   let texts = textsCorpora()
   for k in countup(0, texts.high, STEP_CORPORA):
     let nif = readTextParts(texts[k][1]).reading.toNifParts
@@ -65,8 +62,8 @@ func readPool(): seq[ReadingDrawn] =
 
 
 func countLeaves(node: NodeNif, tag: string): tuple[nodes, words: int] =
-  ## va'o lo nu `tag` cu cmene `rivbi` kei kancu lo pagbu pe `rivbi` ge'u zi'e poi cnita le jgena
-  ##   .i va'o lo drata kancu lo gerna valsi poi cnita le jgena
+  ## va'o lo nu `tag` cmene `rivbi` kei kancu lo pagbu pe `rivbi` ge'u zi'e poi cnita le jgena
+  ##   .i va'o lo datkancu lo genvla poi cnita le jgena
   ##   .i kancu ji'a lo valsi poi le se kancu cu vasru ke'a
   if node.kind != KindNif.Compound: return
   let is_leaf = node.children.len > 0 and node.children[^1].kind == KindNif.Literal
@@ -83,23 +80,23 @@ func countLeaves(node: NodeNif, tag: string): tuple[nodes, words: int] =
 
 
 type Rectangle = tuple[x, y, width, height: int]
-  ## pa tanxe pe la'o gy. SVG .gy.
+  ## pa tanxe pe `SVG`
   ##   .i lo kojna cu lidne lo ni barda
 
 
 func attribute(element, name: string): string =
-  ## dunda lo se vasru be pa ckaji pe pa pagbu pe la'o gy. SVG .gy.
+  ## dunda lo selvau be pa ckaji pe pa pagbu pe `SVG`
   let opening = element.find(" " & name & "=\"") + name.len + 3
   element[opening ..< element.find('"', opening)]
 
 
 func number(element, name: string): int =
-  ## dunda lo se vasru be pa ckaji pe pa pagbu pe la'o gy. SVG .gy. ta'i pa mulno namcu
+  ## dunda lo selvau be pa ckaji pe pa pagbu pe `SVG` ta'i pa mulna'u
   element.attribute(name).parseInt
 
 
 func isEntered(box: Rectangle, a, b: (int, int)): bool =
-  ## jdice lo du'u pa pagbu be pa jorne linji be'o poi pinta ja sraji cu klama lo nenri be le tanxe
+  ## jdice lo du'u pa pagbu be pa jonli'i be'o poi pinta ja sraji cu klama lo nenri be le tanxe
   ##   .i le korbi be le tanxe cu na pagbu le nenri
   let
     (left, right) = (min(a[0], b[0]), max(a[0], b[0]))
@@ -108,8 +105,8 @@ func isEntered(box: Rectangle, a, b: (int, int)): bool =
 
 
 let POOL = readPool()
-  ## lo se ciska poi lo flalu cu tcidu ke'a
-  ##   .i le se ciska cu se tcidu pa roi
+  ## lo selci'a poi lo flalu cu tcidu ke'a
+  ##   .i le selci'a cu se tcidu pa roi
 
 
 
@@ -199,7 +196,7 @@ suite "Internal: Drawing of live text":
       for place in node.laidOut.places:
         if place.kind == KindPlace.Rule: lines.add place.lines
     check @["sumti-6", "… terms 80 (11)"] in lines  # le krasi be `draw.nim` to le cmene po'o toi
-    check @["sentence", "… text 0 (9)"] in lines  # se krasi `text` pe li no gi'e vasru so javni
+    check @["sentence", "… text 0 (9)"] in lines  # selkra `text` pe li no gi'e vasru so javni
 
 
   test "Error node draws box at byte grammar stops, naming its rule and what it needs":
@@ -227,8 +224,8 @@ suite "Internal: Drawing of live text":
     check not whole.is_refused and whole.count_parts == 1
     check kept.status == "Merged · 2 trees · 5 words · 1 error · 0 words unread"
     check not kept.is_refused and "class=\"box err\"" in kept.html
-    # lo se ciska be fi la'o gy. NIF .gy. be'o poi na se tcidu
-    check refused.is_refused and refused.html.len == 0  # no pagbu cu se pixra
+    # lo selci'a be fi `NIF` be'o poi na se tcidu
+    check refused.is_refused and refused.html.len == 0  # no pagbu cu selxra
     check refused.status.startsWith("Merge refused · part 2 · ")  # li pa cu krasi lo nu kancu
 
 

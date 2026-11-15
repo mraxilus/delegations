@@ -1,33 +1,32 @@
-## ralte lo stodi mupli be fi lo lojbo jufra pe la'o gy. Tatoeba .gy. mu'i le cipra
-##   .i le mupli cu vasru lo se jdice be le genturfa'i bei ro le jufra
-##   .i lo minde po'u `nim r tools/build.nim tatoeba <export>` cu ciska le vi datnyvei ra'i
-##     `jbo_sentences_detailed.tsv` pe le vreji pe la'o gy. Tatoeba .gy. zi'e pe de'i `2026-10-31`
-##   .i lo sinxa namcu be `jbo_sentences_detailed.tsv` cu du zoi ky. SHA-256
-##     `bf91e751a78a5137ffa741b0971df3c4` `e7a5444e18b47545be51d0593629bb40` .ky.
-##   .i lo nu xance galfi le vi datnyvei cu na drani
-##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapli pilno le minde
-##   .i lo jufra pe la'o gy. Tatoeba .gy. cu se javni la'o gy. CC BY 2.0 FR .gy.
+## ralte lo stomupli be fi lo lojbo jufra pe `Tatoeba` mu'i le cipra
+##   .i le mupli cu vasru lo seljdi be le genturfa'i bei ro le jufra
+##   .i lo minde po'u `nim r tools/build.nim tatoeba <export>` ciska le vi datnyvei ra'i
+##       `jbo_sentences_detailed.tsv` pe le vreji pe `Tatoeba` zi'e pe de'i `2026-10-31`
+##   .i lo snina'u be `jbo_sentences_detailed.tsv` cu du zoi ky. SHA-256
+##       `bf91e751a78a5137ffa741b0971df3c4` `e7a5444e18b47545be51d0593629bb40` .ky.
+##   .i lo nu xanga'i le vi datnyvei cu na drani
+##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapypli le minde
+##   .i lo jufra pe `Tatoeba` seljva `CC BY 2.0 FR`
 ##   .i `NOTICE.md` noi lamji le vi datnyvei cu cusku lo du'u le datnyveiste poi vasru le vi
-##     datnyvei cu se javni le curmi javni gi'e no roi se javni le curmi javni pe la'o gy.
-##     delegations .gy.
+##       datnyvei cu seljva le crujva gi'e no roi seljva le crujva pe `delegations`
 ##   .i le mupli cu gacri lo tcila pe lo se tcidu ta'i lo nu ro roi cuxna lo traji
-##   .i `tools/tatoeba.nim` cu skicu le tcila
+##   .i `tools/tatoeba.nim` skicu le tcila
 
 {.experimental: "strictFuncs".}
 
 
 type SentenceTatoeba* = object
   ## pa jufra pe le mupli
-  ##   .i le klesi cu vasru lo namcu .e lo se ciska .e lo ponse .e lo se jdice
+  ##   .i le klesi cu vasru lo namcu .e lo selci'a .e lo ponse .e lo seljdi
   id* {.requiresInit.}: int
-    ## lo namcu poi la'o gy. Tatoeba .gy. cu dunda ke'a le jufra ku'o mu'u `599308`
+    ## lo namcu poi `Tatoeba` dunda ke'a le jufra ku'o mu'u `599308`
   text* {.requiresInit.}: string  ## le jufra ta'i lo nu le vreji cu ciska le jufra
   owner* {.requiresInit.}: string
     ## lo cmene be lo ponse be le jufra
     ##   .i va'o lo nu no da ponse le jufra kei le cmene cu kunti
   verdict* {.requiresInit.}: string
     ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i pu dunda ke'a
-    ##   .i va'o lo nu le jufra cu se tcidu kei le se jdice cu kunti
+    ##   .i va'o lo nu le jufra cu se tcidu kei le seljdi cu kunti
 
 
 const
