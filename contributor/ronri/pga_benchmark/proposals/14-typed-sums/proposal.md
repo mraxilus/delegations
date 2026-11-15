@@ -11,6 +11,7 @@ On the JS backend, `+` of whole multivectors also copies its set of bases at eac
 
 **What it costs.** A sum of two types can hold more bases than their union, such as 16 for a
 scalar and a vector at rga4d. The library exports `zeroNamed`, which names each result type.
+Negation of a whole multivector at cga5d takes ×1.13 of the time at pin, for a cause not isolated.
 
 ## Problem
 
@@ -59,8 +60,12 @@ returns `Multivector`, and `MultivectorOf[{E1}] + Multivector1` returns `Multive
   Each product of P04 returns its exact reach, so a sum of two of its results can be wider.
 - **Export.** `pga/multivectors.nim` exports `zeroNamed`, since the patch of D1 reads its result
   types through it. Without that patch, only `+` and `-` read it.
-- **Build.** In three builds by hand of each on 2026-11-15, `import pga` at cga5d peaks at 212 MiB
-  against 207 MiB at pin. At cga6d it takes 13.8 to 14.5 s, against 13.7 to 14.6 s at pin.
+- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.5 MiB against 210.3 MiB at pin.
+  At cga6d it takes 13.18 s against 13.43 s.
+- **Negation at cga5d.** It reads ×1.13 of pin in the evaluation, and ×1.14 in an earlier take of
+  the same day. At the other three algebras it reads ×0.98 to ×1.03. A function that negates
+  alone compiles to the same 16 vector negations under pin and under this proposal. So the cause
+  lies outside the body of negation, and is not isolated.
 - **Overloads.** `-` of two whole multivectors becomes an instance of the generic form, as `+` is
   at pin. Its body writes one assignment for each basis, as the loop of pin does.
 
@@ -90,3 +95,9 @@ vector.
 on Node. With the change, no operation adds one at rga3d, rga4d, cga4d and cga5d. There it holds
 136, 171, 171 and 210 operations. At pin it fails at each of those algebras on `Multivector +`,
 one copy for each call, and on no other operation.
+
+Its evaluation of 2026-11-15 finds three functions moved at each algebra: `+`, `-` and negation of
+whole multivectors. At rga4d each holds 16 lines of C and no call, against 132 to 183 lines and
+32 to 48 calls at pin. There `+` zeroes no byte before it writes, where pin zeroes 128. Sums and
+differences read ×0.99 to ×1.06 of pin, and negation ×0.98 to ×1.13. The other 439 measurands
+read ×0.95 to ×1.07, at a median of ×1.00.

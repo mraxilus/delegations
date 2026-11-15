@@ -1,7 +1,7 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "3ca9ca49c09b0133"
+    "digest": "bcaffa225d6e26f4"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
@@ -69,6 +69,6 @@
   },
   "typed-sums": {
     "url": "https://claude.ai/artifact/NdUQo9YpLqCbYi5SBpUKDB",
-    "digest": "ae4f5030e4908b8b"
+    "digest": "8fb0c02ea080da6b"
   }
 }
