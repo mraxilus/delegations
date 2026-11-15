@@ -19,8 +19,8 @@ import std/[options, os, sequtils, sets, strutils]
 import ../../knoller/src/knoller
 import ./[
   checker, citations_section, coverage, dependencies, domains, duplicates, english, findings,
-  font_families, form, glossary, idioms, justification, kinds, layout, names, plan, prompts, prose,
-  prose_own, provenance, record, toolchain, tree, waits, workflows,
+  font_families, form, glossary, idioms, imports, justification, kinds, layout, names, plan,
+  prompts, prose, prose_own, provenance, record, toolchain, tree, waits, workflows,
 ]
 
 export layout.Entry, layout.directoriesProject, layout.Tree
@@ -166,6 +166,10 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add tree.checkCitationsSection
   # Each project list of own prose names stands in tree, and so does each suite its entry demands.
   result.add tree.checkProjectsProseOwn(PROJECTS_PROSE_OWN)
+  # Import by path stays inside its project, but among projects of checker, and driver reaches
+  #   no package, since it runs before any restore (D1 of #927).
+  result.add tree.checkImportsProject
+  result.add tree.checkImportsDriver
   let
     stamp_now = tree.stampRules
     directories = tree.directoriesProject
