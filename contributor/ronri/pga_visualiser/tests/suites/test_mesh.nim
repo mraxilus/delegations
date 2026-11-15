@@ -383,6 +383,26 @@ suite "Mesh":
       along = if length_squared == 0.0: 0.0 else: clamp(dot_run / length_squared, 0.0, 1.0)
     hypot(at.x - (tail.x + along * run_x), at.y - (tail.y + along * run_y))
 
+  proc halvesOnScreen(
+    placed: var Placement; scale: DrawExtent; view_projection: Matrix4
+  ): seq[(ScreenPosition, ScreenPosition)] =
+    ## Draw line as frame draws it, and give each half that survives clip as screen segment.
+    ##   Ends are mid-points of ribbon's two edges, read through float32 record and
+    ##   `expandRibbon`, shader's reference.
+    MESHES_SCENE.clearMeshes
+    discard MESHES_SCENE.tessellateObject(placed, Ink.Rose.colour, scale)
+    for index in 0..<MESHES_SCENE.ribbons.count:
+      let corners = expandRibbon(MESHES_SCENE.ribbons.records[index], scale.toScale)
+      if corners[0].alpha == 0.0: continue
+      var ends: array[2, ScreenPosition]
+      for side, (first, second) in [(0, 5), (1, 2)]:
+        ends[side] = projectToScreen(view_projection, wide_beside, tall_beside, Position(
+          x: 0.5 * (float(corners[first].x) + float(corners[second].x)),
+          y: 0.5 * (float(corners[first].y) + float(corners[second].y)),
+          z: 0.5 * (float(corners[first].z) + float(corners[second].z)),
+        ))
+      result.add (ends[0], ends[1])
+
   proc worstOffImage(distance, beside, degrees: float; is_near_point: bool): float =
     ## Measure pixels true line beside eye stands off its drawn halves, at worst, in frame.
     ##   Pivot `distance` off; line `beside` eye, at `degrees` to sight. Frame is read as
@@ -419,20 +439,7 @@ suite "Mesh":
       scale = camera.drawExtentFor(eye, frame, tall_beside, reachFar(placed, scene))
       view_projection = camera.initMatrixViewProjection(eye, frame, wide_beside / tall_beside)
       depth_least = if is_near_point: 2.0 * scale.depthNear else: 0.0
-    MESHES_SCENE.clearMeshes
-    discard MESHES_SCENE.tessellateObject(placed[0], Ink.Rose.colour, scale)
-    var halves: seq[(ScreenPosition, ScreenPosition)]
-    for index in 0..<MESHES_SCENE.ribbons.count:
-      let corners = expandRibbon(MESHES_SCENE.ribbons.records[index], scale.toScale)
-      if corners[0].alpha == 0.0: continue
-      var ends: array[2, ScreenPosition]
-      for side, (first, second) in [(0, 5), (1, 2)]:
-        ends[side] = projectToScreen(view_projection, wide_beside, tall_beside, Position(
-          x: 0.5 * (float(corners[first].x) + float(corners[second].x)),
-          y: 0.5 * (float(corners[first].y) + float(corners[second].y)),
-          z: 0.5 * (float(corners[first].z) + float(corners[second].z)),
-        ))
-      halves.add (ends[0], ends[1])
+    let halves = halvesOnScreen(placed[0], scale, view_projection)
     # No half drawn reads as no image at all, which every bound refuses.
     if halves.len == 0: return Inf
     # Sample true line in frame, from just beside eye out to far field.
@@ -523,6 +530,47 @@ suite "Mesh":
           check dot(place - eye, frame.forward) >= FACTOR_CLIP_NEAR * reach
       if is_seen: inc lines_seen
     check lines_seen >= lines_seen_least
+
+
+  test "a line through a body stays on it, with the camera inside and the horizon far out":
+    # Record held as limitation, measured 2026-09-21: line drawn with camera inside body it
+    #   frames stood 0.4 px off body at orbit distance 0.0001, and 3.2 px at 0.00001, with
+    #   horizon half million units out (repository issue 930). Here it must stand 0.1 px.
+    #   Holds reference alone: no kept check reads shaders' own float32 arithmetic here.
+    const
+      distances_orbit = [1.0e-3, 1.0e-4, 1.0e-5, 1.0e-6]  ## Orbit distances inside body.
+      outs_orbit = [
+        Direction(x: 0.3, y: -1.0, z: 0.2), Direction(x: -1.0, y: 0.4, z: 0.5),
+        Direction(x: 0.1, y: 0.2, z: 1.0), Direction(x: 0.7, y: 0.7, z: -0.2),
+      ]
+        ## Ways out from body that camera stands along, each with every distance.
+    let (sun, body) = (Position(x: 0.0, y: 0.0, z: 0.0), Position(x: 1.0, y: 0.0, z: 0.0))
+    var scene = initScene()
+    discard scene.addObject(
+      applyOperation(Operation.Wedge, sun.toMultivector, body.toMultivector), "line", Ink.Rose
+    )
+    # Point 600,000 units out stands horizon about 567,000 out, as field of orrery does.
+    discard scene.addObject(Position(x: 0.0, y: 6.0e5, z: 0.0).toMultivector, "far", Ink.Cobalt)
+    var placed = [
+      placeObject(scene.geometryAt(0), scene.anchorOverrideAt(0)),
+      placeObject(scene.geometryAt(1), scene.anchorOverrideAt(1)),
+    ]
+    for distance in distances_orbit:
+      for out_to in outs_orbit:
+        var camera = cameraAround(body, distance, out_to)
+        let (eye, frame) = camera.moveOriginView
+        camera.reach_near = reachNear(placed, scene, camera.originView, eye, frame.forward)
+        let
+          scale = camera.drawExtentFor(eye, frame, tall_beside, reachFar(placed, scene))
+          view_projection = camera.initMatrixViewProjection(eye, frame, wide_beside / tall_beside)
+          middle = projectToScreen(
+            view_projection, wide_beside, tall_beside, body.toView(camera.originView)
+          )
+        check scale.radiusHorizon > 5.0e5
+        var nearest = Inf
+        for (tail, head) in halvesOnScreen(placed[0], scale, view_projection):
+          nearest = min(nearest, offSegment(middle, tail, head))
+        check nearest < 0.1
 
 
   test "a line's near crossing holds its place with the camera close on the line":
