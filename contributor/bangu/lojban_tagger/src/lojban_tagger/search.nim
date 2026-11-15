@@ -50,7 +50,7 @@
 
 import std/[algorithm, sequtils]
 
-import ../../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 import ./[english, index, runs, tags]
 

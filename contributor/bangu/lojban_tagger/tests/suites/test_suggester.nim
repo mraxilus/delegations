@@ -58,9 +58,10 @@ import std/[
 from std/posix import chmod, Mode, umask
 from std/unicode import Rune, toUTF8
 
+import lojban_parser
+
 import ../../app/exchanges
 from ../../app/suggester {.all.} import BYTES_FIELDS_MAX, COUNT_REDIRECTS_MAX, USAGE
-import ../../../lojban_parser/src/lojban_parser
 
 import ../../src/lojban_tagger/[suggestions, tags]
 import ../../tools/examples

@@ -27,8 +27,11 @@ const
   DIRECTORIES_PROJECT =
     [DIRECTORY_PROJECT / "src", DIRECTORY_PROJECT / "app", DIRECTORY_PROJECT / "tools"]
     ## Folders of modules that suites and tools import beside umbrella of parser.
-  DIRECTORY_PARSER = DIRECTORY_PROJECT.parentDir / "lojban_parser" / "src"
-    ## Folder of umbrella of `lojban_parser`, and of folder of its modules.
+  DIRECTORY_PARSER =
+    DIRECTORY_PROJECT / "dependencies" / "lojban_parser" / "contributor" / "bangu" /
+      "lojban_parser" / "src"
+    ## Folder of umbrella of `lojban_parser`, and of folder of its modules, in clone Atlas
+    ##   restores from `atlas.lock`: search path of `nim.cfg`, so names read are names compiled.
   PATH_UMBRELLA_PARSER = DIRECTORY_PARSER / "lojban_parser.nim"  ## Umbrella of parser.
   FLOOR_MODULES_PARSER = 14  ## Least modules umbrella of parser exports: 16 read on 2026-11-11.
   FLOOR_NAMES_PROJECT = 52  ## Least names read in this project: 58 read on 2026-11-11.

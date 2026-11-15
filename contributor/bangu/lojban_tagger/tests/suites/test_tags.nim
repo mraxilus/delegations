@@ -26,7 +26,7 @@ when compileOption("profiler"):
 import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
-import ../../../lojban_parser/src/lojban_parser
+import lojban_parser
 
 import ../../src/lojban_tagger/[commands, tags]
 import ../../src/lojban_tagger/lists/gismu

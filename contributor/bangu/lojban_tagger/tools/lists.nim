@@ -25,7 +25,7 @@
 
 import std/[options, sequtils, strutils]
 
-from ../../lojban_parser/tools/lists import
+from ../dependencies/lojban_parser/contributor/bangu/lojban_parser/tools/lists import
   DIGEST_GISMU, DIGEST_LUJVO, DIRECTORY_LISTS, KEY_LISTS, readSource, Source
 
 import ../src/lojban_tagger/entries
