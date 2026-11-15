@@ -1411,6 +1411,7 @@ proc nimCameraPanGrab(width, height: cint) {.exportc.} =
     SELECTION_PAGE.len > 0,
     TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
   )
+  when defined(mockup): grabPanMockup()
 
 
 proc nimCameraPanAt(before_x, before_y, after_x, after_y: cfloat; width, height: cint) {.exportc.} =
