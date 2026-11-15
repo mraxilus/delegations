@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 363e393b375ac380 |
-| Pruned  | 49b8f1c6ca50b0bb20472edd1cc819a6d7222045 |
+| Pruned  | 1c3c58b7205100829c4d5b8902a07dde2c05b985 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the `pga`
@@ -490,23 +490,14 @@ scale unlike each other between machines, so no one reference normalises them al
 clock of the page ticks in steps of 100 µs, so a call of a few microseconds is timed in hundreds.
 One mean of 400 anchor lookups read 5.75 to 32 µs on one fresh page, and the first was dearest.
 After an untimed batch, the median of 15 batches of 200 read 6.0 to 7.0 µs in 12 trials. A
-collection or a preemption then spoils one batch, not the figure.
-
-The marker takes the same figure. Its worst mean of 30 pairs read 0.46 to 1.67 ms over 4 pages. Its
-worst median of 9 batches of 5 read 0.48 to 0.62 ms. Both were measured with each outline shaped
-twice.
+collection or a preemption then spoils one batch, not the figure. The marker takes the median of 9
+batches of 5 pairs.
 
 **Sustained load moves a median too.** On 2026-09-30, with three of four cores kept busy, 10 runs of
 the measured page read the anchor at 7.0 to 14.5 µs. Each check but the marker stayed inside its
 bound. Ten such runs on 2026-10-04, with each outline shaped once, read the marker at 0.34 to 0.78
 ms, inside its bound. The gate runs projects one at a time, so no gate run puts that load beside the
 drive. A delegate that shares its cores with other tenants can still.
-
-**A delegate can read a speed check over its bound with no fault present.** With each outline shaped
-twice, nine pages on a fresh delegate read the marker at 0.72 to 2.64 ms, over a bound of 1.7 ms.
-They ran on 2026-10-01, and read the grid at 6.4 to 22.3 ms. Six pages ran the read tally of
-`boundary`, and three ran the build without it, over the same range. The 2.64 ms was the first page
-after a build. The counts hold each fault whatever the clock reads.
 
 **The rendering step of the browser runs on real frames, so each simulated frame waits for one.**
 Resize, scroll, media-query and resize-observer events fire in that step, whatever the clock says.
@@ -1242,8 +1233,8 @@ With a read for each product, the share read 44 to 59% in 12 runs on 2026-10-22,
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
 sampler counts a loop of products as PGA's, at 82 to 94% of about 100 samples. Verified by driven
 check: the page from a file says why once, and the served page agrees with the engine on each side.
-Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
---frames:300 --demo:5038`: the desktop figures above.
+Verified on 2026-10-06, at `295bafc`, by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
+--timings --frames:300 --demo:5038`: the desktop figures above.
 
 ## Values crossing the boundary
 
@@ -3078,9 +3069,7 @@ rather than about the line meant, and both products compile.
 
 **The signs of a turn and a slide are the signs that Lengyel writes.** At the pin, the antiproduct
 of two basis elements is the right complement of the product of their left complements, as
-`/((\m) ⟑ (\n))`. That holds for all 256 pairs. The library at `295bafc` gives the opposite sign for
-84 of them, and there a turn and a slide take the opposite signs. So one stance has a different
-motor at each pin: its six line coefficients change sign, and its antiscalar and scalar stay.
+`/((\m) ⟑ (\n))`. That holds for all 256 pairs, so the signs of a motor follow from the table.
 
 **Neither `exp` nor `log` needs a degenerate branch.** Both read two series of the half-angle,
 `sin(a)/a` and `(a*cos(a) - sin(a))/a³`, which are finite at zero, where they read 1 and `-1/3`. A
@@ -3118,9 +3107,8 @@ back with `carried`. Nothing else in the tree names a motor.
 - the distance and the weight that a rigid motion keeps;
 - the order of composition.
 
-Verified by a probe on 2026-10-22: the complements give the antiproduct for 256 of 256 pairs at
-the pin, and for 172 at `295bafc`. At the signs of `295bafc`, 127 of 481 cases of the C suite fail
-at the pin, the camera's among them. At the signs above, none fails.
+Verified by a probe on 2026-10-22: the complements give the antiproduct for all 256 pairs at the
+pin. Under the opposite signs, 127 cases of the C suite fail, and under these signs none fails.
 
 Assumed: that `unitize` is the motor norm for any unit motor. The suite reads it back for every
 motor that `exp` builds. Nothing renormalises a composed stance. Natively on 2026-09-24, 10^6 turns
@@ -4820,12 +4808,14 @@ commit of pga it builds against, and whether that is head. The pin stands at
 
 **The pin does not wait on a fix of the library, and two fixes that it lacks stand here.** At
 `3d9696e`, the generic `+` copies its constant set of bases at each call on the JS backend. So the
-lattice makes 4.7% more copies than at `295bafc`, as the table below shows. A product also takes
-only the full multivector, so the project reads a plane whole where three bases serve.
+lattice adds 356,725 copies to 9 moving frames, against 340,767 at `295bafc` (V8, optimiser off,
+2026-10-22). A product takes only the full multivector, so the project reads a plane whole where
+three bases serve.
 
 The patches of D3 on the library-head pull request (#702), and of D1 on issue 734, fix both. Both
-apply to `3d9696e`, and with both, typed planes take the placing step of the largest demo from 3.30
-to 2.00 ms. The library takes fixes over time, so the pin moves to each head that holds one.
+apply to `3d9696e`. With both, a scratch copy that placed planes through typed products took the
+placing step of the largest demo from 3.30 to 2.00 ms. That is the median of 5 runs in Chromium, on
+2026-11-03. The library takes fixes over time, so the pin moves to each head that holds one.
 
 **The `head` verb holds the pin to the head, and only a daily run reads it.** `nim r tools/build.nim
 head` compares the directory of the library at the pin with the same directory at the head of
@@ -4859,42 +4849,24 @@ converted from a string that a call returns, as "a value that refers to invalid 
 frame reads without a conversion. Verified by a run: without `static`, 2.4.0 refuses
 `panel.nim(89, 43)`, and `27763495b` builds it.
 
-**Head carries the four projections, so the project calls them from `pga`.** `projectCentral`,
+**The pin carries the four projections, so the project calls them from `pga`.** `projectCentral`,
 `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` have bodies at the pin. Each
 is the definition that the operator table of the library gives. `scene`, `tessellate`, `camera`,
 `interaction` and the suite import `pga` itself.
 
-**Head gives a turn and a slide the signs that Lengyel writes.** Its antiproduct agrees with its
-complements, so the signs of a motor follow from the operator table and not from this project. See
-Motors.
-
-**The multivector `=~` of head is generic, so the scalar `=~` of the suite is generic too.** A
+**The multivector `=~` of the pin is generic, so the scalar `=~` of the suite is generic too.** A
 generic of the library compiles where its caller instantiates it. There, the private scalar `=~` of
 the library and the exported one of the suite are an ambiguous call. A generic over `SomeFloat`
 ranks below the exact match of the library, which then wins inside its own `=~`. Everywhere else the
 suite reads its own. Rejected: a rename of the scalar `=~` of the suite, which changes each of its
 calls.
 
-**The rest of head reaches this project unchanged.** `MultivectorOf[B]` and its aliases, a
-configurable `Coefficient`, and norms that return `MultivectorScalars` compile under every call
-here. Head prints its multivector aliases while it compiles, through `expandMacros`. That adds about
-ten lines to each build log, and changes nothing that is built.
+**The pin prints its multivector aliases while it compiles, through `expandMacros`.** That adds
+about ten lines to each build log, and changes nothing that is built.
 
-**On the page, head makes a frame cheaper in calls, and its lattice dearer in copies.** A probe
-counted calls and copies in V8 with its optimiser off, on 2026-10-22, at `295bafc` and at the pin.
-Each count is of the opening scene, with its plane picked and the camera at 300, after one frame
-that is not counted.
-
-| Count | At `295bafc` | At the pin |
-|-------|--------------|------------|
-| Calls of a frame with no lattice | 25,163 | 16,484 |
-| Calls of a frame with the lattice | 566,902 | 553,658 |
-| Calls that the lattice adds to 9 moving frames | 4,847,207 | 4,817,506 |
-| Copies that the lattice adds to those frames | 340,767 | 356,725 |
-| Copies and calls of a marker and its pulse, over 5 objects | 15,883 and 48,642 | the same |
-
-The counted build is not the build that ships, which runs the optimiser. The lattice uploads the
-same bytes at both pins, and every speed check passes at the pin.
+**On the page, the pin makes a frame cheaper in calls than `295bafc`.** A frame of the opening scene
+with its plane picked and no lattice makes 16,484 calls at the pin, against 25,163. V8 counted them
+with its optimiser off, on 2026-10-22. Each speed check passes at the pin.
 
 **One Atlas defect stands, and the workaround is by hand.** `atlas pin` writes `"items": {}` for a
 repository that carries no nimble file, so the resolved commit is patched into `atlas.lock` by hand.
@@ -4908,25 +4880,20 @@ fetch-deps` clones and checks out `3d9696e`. The nimble file and the lock are by
 afterwards.
 
 Verified by `suites.nim`: the comparison, and the commit of the lock against the nimble file.
-Verified by runs of the verb on 2026-10-22. It exits 0 at the pin. With the lock set to `295bafc`,
-it exits 1 and names both commits. With a commit that the checkout lacks, it exits 1 and names the
-pin.
+Verified by runs of the verb on 2026-10-22 and 2026-11-15: it exits 0 at the pin. With the lock set
+to `295bafc`, it exits 1 and names both commits. With a commit that the checkout lacks, it exits 1
+and names the pin. On 2026-11-03, with a remote whose head holds both patches, it names that head.
 
 Verified: the pinned compiler reports `Nim Compiler Version 2.4.0`, which `compilers.isServedBy` of
 knoller compares with the pin. Its `git hash:` is `14991af742d0833503741fd9a0918133d1bcf8a4`, tag
 `v2.4.0`, which holds commit `27763495b` of pull request 26074, 269 commits back. Tag `v2.2.14`, the
 latest release of 2.2, does not hold that commit. Verified by a run: 2.4.0 reads `☆m` and `-☆(m)` as
 operators, and 2.2.14 refuses `☆m` as an undeclared identifier. Verified by a run on 2.4.0, through
-`koch test`: every suite passes on C, on JS and at reduced capacities. Measured on 2026-10-29, the
-JS suite alone takes 162 s and 168 s on 2.4.0, and 170 s and 163 s on `27763495b`.
+`koch test`: every suite passes on C, on JS and at reduced capacities.
 
 Verified on a copy of the project: `atlas pin` writes `"items": {}`, and changes nothing else in the
 lock, `nimVersion` included. It warns `broken nimble file: nim` for a pin by commit, and nothing for
 2.4.0.
-
-Verified by a run of the `head` verb on 2026-11-03. At the pin, its finding names head `3d9696e`
-and pin `295bafc`, and it exits 1. With the remote of the checkout set to a clone whose head holds
-both patches, the finding names that head, `ef44aa7`, in place of `3d9696e`.
 
 ## Comparison mockups
 
@@ -4958,12 +4925,8 @@ and the pixel stays clear. Rejected: a ring with a cross, which covered that pix
 
 **The panel measures each run against what its steps ask.** A notch out asks the eye's distance to
 Sol to scale by 1.12. A pinch asks it to scale by the ratio of the gaps of the fingers. The verdict
-reads the share of that scale on a log scale:
-
-- `as asked`, from 0.75 to 1.33 of it;
-- `short`, under 0.75;
-- `over`, from 1.33 to 3;
-- `flung`, over 3.
+reads the share of that scale on a log scale. It is `as asked` from 0.75 to 1.33 of it, `short`
+under 0.75, `over` from 1.33 to 3, and `flung` over 3.
 
 A pan asks the focus to move with the pointer. The verdict reads that share along the drag, with
 the same bounds, and `still` under 0.02. A round trip is `returned` where the eye ends within a
@@ -5016,6 +4979,8 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - No tool in this repository measures the palette floors again (Colour palette).
 - The frame-time tail on real hardware is undiagnosed, and this container cannot see it.
 - The conformal metric (`IS_CONFORMAL`) is unfinished in the library, and this build is rigid 4D.
+- The pinned library copies a set at each `+` on JS, and its products take only the full
+  multivector (Dependencies and vendoring).
 - A scene file is little-endian by rule, but only a little-endian host has ever written or read one,
   so the byte-swapping path is unexercised.
 - A page on WebGL1 without `EXT_frag_depth` keeps linear depth. It keeps the fault of the far
