@@ -1609,10 +1609,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.
-- A stamp that names no processor, as that of each record committed here, leaves the machine
-  unknown. Under the stamp `linux amd64, 4 cores`, pin ran `wedge` at cga5d in 97.55 ns on
-  2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in
-  `evaluations/cayley-derivation.json`, at `c2e80da3` and at head. By `/proc/cpuinfo`, the
+- A stamp that names no processor, as that of each baseline and of the evaluations of P02 and
+  P06, leaves the machine unknown. Under the stamp `linux amd64, 4 cores`, pin ran `wedge` at
+  cga5d in 97.55 ns on 2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in
+  `evaluations/cayley-derivation.json`, at `c2e80da3` and at `78d5c3d5`. By `/proc/cpuinfo`, the
   processor of 2026-11-14 and 2026-11-15 is a Xeon of family 6 model 173, and nothing records
   that of 2026-11-05. So a time of one evaluation compares with a time of another only where the
   times of pin agree.
