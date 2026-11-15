@@ -199,8 +199,9 @@ proc runMerge*(
 proc judgeMerged*(root, base, branch: string, toolchains: var Toolchains): Verdict =
   ## Judge clean checkout lacking base as merged with it, as `koch check` does: drift of checkout
   ##   first, then merge in second tree, then `check` of koch of that merge for branch. Mark of
-  ##   `pre-push` hook records tree of branch where that run exits 0, and never else; checkout
-  ##   judged in place gives verdict not merged.
+  ##   `pre-push` hook records tree of branch where that run exits 0 on branch checked out, and
+  ##   never else; checkout judged in place gives verdict not merged.
+  ##   Detached HEAD records no mark, as in place: no branch holds its tree.
   if not root.isMerging(base): return
   result = Verdict(is_merged: true, code: 1, findings: checkBase(readDrift(root, base)))
   if result.findings.len > 0: return
@@ -211,5 +212,8 @@ proc judgeMerged*(root, base, branch: string, toolchains: var Toolchains): Verdi
   let (code, found) = runMerge(merged, branch, toolchains)
   (result.code, result.findings) = (code, found)
   if code != 0 or found.len > 0: return
+  if fieldsGit(root, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip == "HEAD":
+    echo "Detached HEAD holds no branch; nothing recorded for pre-push hook."
+    return
   writeFile(root.fileMark, merged.tree & "\n")
   echo "Tree hash of branch recorded for pre-push hook, as its merge passed."
