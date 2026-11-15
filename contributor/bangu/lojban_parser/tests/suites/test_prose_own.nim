@@ -1,13 +1,13 @@
-## cipra lo du'u lo prosa pe `lojban_parser` cu me lo lojbo se ciska poi le genturfa'i cu tcidu ke'a
-##   .i le prosa cu du ro prosa pagbu pe le ci vreji ge'u .e ro pinka pe le samtci .e le papri ja'i
-##     `#818` .e `D1 a` .e `D2 b` .e `D3 a` .e `D4 a`
-##   .i le datnyvei cu du lo datnyvei poi la'o gy. git .gy. cu ralte ke'a ku'o .e lo datnyvei poi
-##     la'o gy. git .gy. na ralte ke'a zi'e poi no javni be lo nu na jundi cu cmene ke'a
-##   .i lo cipra pe la'o gy. curator .gy. cu tcidu le datnyvei ta'i di'u
-##   .i `reader_prose.nim` cu tcidu ro se ciska
-##   .i ji'a le datnyvei cu cipra lo du'u ro jufra cu krasi pa linji ja'i lo se jdice pe `#818`
-##   .i le cipra pagbu poi se lidne le vi pinka cu cipra le javni pe `reader_prose.nim` sepi'o lo se
-##     ciska poi se finti le cipra pagbu
+## cipra lo du'u lo prosa pe `lojban_parser` me lo jboselci'a poi le genturfa'i cu tcidu ke'a
+##   .i le prosa cu du ro rospau pe le ci vreji ge'u .e ro pinka pe le samtci .e le papri ja'i
+##       `#818` .e `D1 a` .e `D2 b` .e `D3 a` .e `D4 a`
+##   .i le datnyvei cu du lo datnyvei poi `git` ralte ke'a ku'o .e lo datnyvei poi `git` na ralte
+##       ke'a zi'e poi no javni be lo nu na jundi cu cmene ke'a
+##   .i lo cipra pe `curator` tcidu le datnyvei ta'i di'u
+##   .i `reader_prose.nim` tcidu ro selci'a
+##   .i ji'a le datnyvei cu cipra lo du'u ro jufra cu krasi pa linji ja'i lo seljdi pe `#818`
+##   .i le cipypau poi se lidne le vi pinka cu cipra le javni pe `reader_prose.nim` sepi'o lo
+##       selci'a poi selfi'i le cipypau
 
 {.experimental: "strictFuncs".}
 
@@ -22,26 +22,25 @@ import ./reader_prose
 
 const
   DIRECTORY_PROJECT = currentSourcePath().parentDir.parentDir.parentDir
-    ## le genja be le vi se gunka
+    ## le genja be le vi selgu'a
   RECORDS = ["README.md", "PROVENANCE.md", "GLOSSARY.md"]
-    ## le vreji poi `english.nim` cu tcidu ke'a
-    ##   .i ro le vreji cu zvati le genja be le vi se gunka
+    ## le vreji poi `english.nim` tcidu ke'a
+    ##   .i ro le vreji cu zvati le genja be le vi selgu'a
   EXTENSIONS_SOURCE = [".nim", ".nimble", ".html"]
-    ## lo klesi be lo datnyvei poi le cipra be lo gadri cu tcidu lo pinka pe ke'a ne'i le vi se
-    ##   gunka
+    ## lo klesi be lo datnyvei poi le cipra be lo gadri cu tcidu lo pinka pe ke'a ne'i le vi selgu'a
   COUNT_TEXTS_LEAST = 5000
-    ## le klani be lo se ciska poi le cipra cu tcidu ke'a cu na mleca le vi namcu
-    ##   .i se ki'u bo le cipra cu fliba va'o lo nu le tcidu cu tcidu so'u se ciska
+    ## le klani be lo selci'a poi le cipra cu tcidu ke'a na mleca le vi namcu
+    ##   .i se ki'u bo le cipra cu fliba va'o lo nu le tcidu cu tcidu so'u selci'a
   COUNT_LINES_LEAST = 12000
-    ## le klani be lo linji poi le cipra be lo nu punji cu cipra ke'a cu na mleca le vi namcu
+    ## le klani be lo linji poi le cipra be lo nu punji cu cipra ke'a na mleca le vi namcu
     ##   .i se ki'u bo le cipra cu fliba va'o lo nu le cipra cu cipra so'u linji
   COUNT_ERRORS_SHOWN = 40
-    ## le klani be lo srera poi le fliba cipra pagbu cu ciska ke'a cu na zmadu le vi namcu
+    ## le klani be lo srera poi le flicipypau cu ciska ke'a na zmadu le vi namcu
 
 
 proc pathsProse(): seq[string] =
-  ## dunda ro datnyvei pe le vi se gunka poi le cipra cu tcidu lo prosa pe ke'a
-  ##   .i ro cmene be lo datnyvei cu se krasi le genja be le vi se gunka
+  ## dunda ro datnyvei pe le vi selgu'a poi le cipra cu tcidu lo prosa pe ke'a
+  ##   .i ro cmene be lo datnyvei cu selkra le genja be le vi selgu'a
   let (output, code) = execCmdEx("git -C " & DIRECTORY_PROJECT.quoteShell &
     " ls-files --cached --others --exclude-standard .")
   doAssert code == 0, "git lists files of project; got `" & output & "`."
@@ -50,19 +49,19 @@ proc pathsProse(): seq[string] =
 
 
 func textsRead(path, content: string): seq[string] =
-  ## dunda lo se ciska poi le genturfa'i cu tcidu ke'a ne'i ro prosa pagbu pe le datnyvei
-  ##   .i ro porsi be lo canlu lerfu cu se basti pa canlu lerfu
+  ## dunda lo selci'a poi le genturfa'i cu tcidu ke'a ne'i ro rospau pe le datnyvei
+  ##   .i ro porsi be lo calyle'u cu se basti pa calyle'u
   for text in texts(path, content): result.add text.text.splitWhitespace.join(" ")
 
 
 func readingMarked(text: Text): ReadingMarked =
-  ## tcidu le se ciska ta'i lo nu sinxa ro srera
-  ##   .i va'o lo nu le se ciska cu kunti kei le se tcidu cu kunti
+  ## tcidu le selci'a ta'i lo nu sinxa ro srera
+  ##   .i va'o lo nu le selci'a cu kunti kei le se tcidu cu kunti
   if text.text.strip.len > 0: text.text.readTextMarked else: ReadingMarked()
 
 
 func faultsRead(path, content: string): seq[string] =
-  ## dunda lo krinu be ro srera be lo nu punji lo se ciska fi lo linji ne'i le datnyvei
+  ## dunda lo krinu be ro srera be lo nu punji lo selci'a fi lo linji ne'i le datnyvei
   let lines = content.splitLines
   var checked = 0
   for text in texts(path, content):
@@ -71,7 +70,7 @@ func faultsRead(path, content: string): seq[string] =
 
 proc readingsProject(): tuple[readings: seq[(Text, ReadingMarked)], lines: Table[string,
     seq[string]]] =
-  ## tcidu ro se ciska pe le vi se gunka pa roi
+  ## tcidu ro selci'a pe le vi selgu'a pa roi
   ##   .i le re flalu pe le cipra cu pilno le se tcidu
   ##   .i ji'a dunda ro linji pe ro datnyvei
   for path in pathsProse():
@@ -81,12 +80,12 @@ proc readingsProject(): tuple[readings: seq[(Text, ReadingMarked)], lines: Table
 
 
 let PROJECT = readingsProject()
-  ## ro se ciska pe le vi se gunka .e lo se tcidu be ri .e ro linji pe ro datnyvei
+  ## ro selci'a pe le vi selgu'a .e lo se tcidu be ri .e ro linji pe ro datnyvei
 
 
 proc show(found: seq[Error]) =
   ## ciska lo stuzi .e lo krinu be lo pamoi srera be'o poi le klani be ke'a na zmadu
-  ##   `COUNT_ERRORS_SHOWN`
+  ##     `COUNT_ERRORS_SHOWN`
   for error in found[0 ..< min(found.len, COUNT_ERRORS_SHOWN)]:
     echo error.path, ":", error.place.line, ":", error.place.column, ": ", error.why
 
@@ -191,17 +190,22 @@ suite "Internal: Prose of project, in lojban":
     check faultsRead("x.nim", "## | `a` | lo javni   |\n## |     | .i ro valsi |\n").len ==
       0  # `#818`
 
-  test "Later sentence stands two past first line, and broken line two past its own":
+  test "Later sentence stands two past first line, and broken line four past its own":
     check faultsRead("x.nim", "## mi klama\n## .i do cadzu\n") == @["indent"]  # `#818`
     check faultsRead("x.nim", "## mi klama\n##     .i do cadzu\n") == @["indent"]  # `#818`
-    check faultsRead("x.nim", "## mi klama le\n##   zarci\n" &
-      "##   .i do cadzu le\n##     dinju\n").len == 0  # `#818`
-    check faultsRead("x.nim", "## mi klama le\n##     zarci\n") == @["indent"]  # `#818`
-    check faultsRead("README.md", "ni'o mi klama\n  .i do cadzu le\n    dinju\n").len == 0  # `#818`
+    check faultsRead("x.nim", "## mi klama le\n##     zarci\n" &
+      "##   .i do cadzu le\n##       dinju\n").len == 0  # `#890`
+    check faultsRead("x.nim", "## mi klama le\n##   zarci\n") == @["indent"]  # `#890`
+    check faultsRead("x.nim", "## mi klama\n##   .i do cadzu le\n##     dinju\n") ==
+      @["indent"]  # `#890`
+    check faultsRead("README.md", "ni'o mi klama le\n    zarci\n" &
+      "  .i do cadzu le\n      dinju\n").len == 0  # `#890`
+    check faultsRead("README.md", "ni'o mi klama le\n  zarci\n") == @["indent"]  # `#890`
     check faultsRead("README.md", "ni'o mi klama\n.i do cadzu\n") == @["indent"]  # `#818`
-    check faultsRead("README.md", "- ny.mai mi klama le\n    zarci\n" &
-      "  .i do cadzu le\n    dinju\n").len == 0  # `#818`
+    check faultsRead("README.md", "- ny.mai mi klama le\n      zarci\n" &
+      "  .i do cadzu le\n      dinju\n").len == 0  # `#890`
     check faultsRead("pages/x.html", "<!-- mi klama\n       .i do cadzu -->\n").len == 0  # `#818`
+    check faultsRead("pages/x.html", "<!-- mi klama le\n         zarci -->\n").len == 0  # `#890`
 
   test "Paragraph of record opens with ni'o, bullet with ny.mai, and definition bare":
     check faultsRead("README.md", "mi klama\n") == @["opening"]  # `#818`

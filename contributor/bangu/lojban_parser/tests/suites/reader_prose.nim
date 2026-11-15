@@ -1,70 +1,68 @@
-## tcidu lo prosa pe `lojban_parser` ta'i lo lojbo se ciska ja'i `#818`
-##   .i ro lerfu pe lo se ciska cu se tcita lo stuzi pe vo'a ne'i lo datnyvei
+## tcidu lo prosa pe `lojban_parser` ta'i lo jboselci'a ja'i `#818`
+##   .i ro lerfu pe lo selci'a cu se tcita lo stuzi pe vo'a ne'i lo datnyvei
 ##   .i dunda ro srera poi le genturfa'i cu tcita ke'a
-##   .i lo se ciska poi se tcidu cu du lo se ciska poi re glico cipra cu tcidu ke'a
-##   .i se ki'u bo ca lo nu le re cipra cu na tcidu lo prosa pe le vi se gunka ja'i `#817` kei ro le
-##     prosa cu se tcidu su'o cipra
-##   .i le vi datnyvei cu tcidu ro prosa pagbu poi `english.nim` pe `curator/audit/src/` cu tcidu
-##     ke'a ne'i le ci vreji
+##   .i lo selci'a poi se tcidu cu du lo selci'a poi re glicipra cu tcidu ke'a
+##   .i se ki'u bo ca lo nu le re cipra cu na tcidu lo prosa pe le vi selgu'a ja'i `#817` kei ro le
+##       prosa cu se tcidu su'o cipra
+##   .i le vi datnyvei cu tcidu ro rospau poi `english.nim` pe `curator/audit/src/` tcidu ke'a ne'i
+##       le ci vreji
 ##   .i ji'a le vi datnyvei cu tcidu ro pinka poi le cipra be lo gadri cu tcidu ke'a
-##   .i le javni be lo nu fendi lo prosa pagbu cu fukpi lo javni pe `english.nim` .e `fencedOut` pe
-##     `markdown.nim`
-##   .i le vi se gunka cu pilno no da pe la'o gy. curator .gy.
+##   .i le javni be lo nu fendi lo rospau cu fukpi lo javni pe `english.nim` .e `fencedOut` pe
+##       `markdown.nim`
+##   .i le vi selgu'a cu pilno no da pe `curator`
 ##   .i se ki'u bo lo nu cikre pa le re datnyvei cu na mulno pu lo nu le drata datnyvei cu se cipra
-##     ja'i `Article II.9`
+##       ja'i `Article II.9`
 ##   .i ro samtci pagbu cu se tcidu ta'i pa cmene
 ##   .i le vi datnyvei cu sitna le samtci pagbu sepi'o zo la'o pu lo nu le genturfa'i cu tcidu le
-##     samtci pagbu
+##       samtci pagbu
 ##   .i se ki'u bo le gerna cu tcidu le samtci pagbu ta'i pa sumti ja'i le soze moi javni pe
-##     `CLL 21.1`
-##   .i la'o gy. Architect .gy. cu jdice di'u bu'u `#818` ta'i `D1 a`
+##       `CLL 21.1`
+##   .i `Architect` jdice di'u bu'u `#818` ta'i `D1 a`
 ##   .i zo zo poi lidne lo samtci pagbu cu se to'e curmi ki'u lo nu zo zo ka'e sitna zo la'o poi le
-##     vi datnyvei cu jmina ke'a
-##   .i lo judri jorne cu se tcidu ta'i lo se ciska pe vo'a
-##   .i lo sinxa be lo nu basna cu se vimcu
-##   .i ro pinka cu se tcidu ta'i pa se ciska
-##   .i le pinka cu se pagbu lo lamji linji noi ro ke'a cu se krasi lo mintu sinxa bu'u lo mintu
-##     stuzi
-##   .i la'o gy. Architect .gy. cu jdice di'u bu'u `#818` ta'i `D3 a`
+##       vi datnyvei cu jmina ke'a
+##   .i lo judryjo'e cu se tcidu ta'i lo selci'a pe vo'a
+##   .i lo sinxa be lo nu basna cu selvi'u
+##   .i ro pinka cu se tcidu ta'i pa selci'a
+##   .i le pinka cu selpau lo lamli'i noi ro ke'a selkra lo mitsni bu'u lo mitstu
+##   .i `Architect` jdice di'u bu'u `#818` ta'i `D3 a`
 ##   .i va'o lo nu pa linji pe lo pinka cu pagbu lo cartu kei ro pagbu be le linji cu se tcidu ta'i
-##     pa se ciska ki'u lo nu le cipra be lo gadri cu tcidu ji'a le linji
+##       pa selci'a ki'u lo nu le cipra be lo gadri cu tcidu ji'a le linji
 ##   .i lo linji pe lo cartu poi vasru no valsi cu na se tcidu
-##   .i lo liste sinxa poi krasi pa linji pe lo pinka mu'u `- ` cu sinxa gi'e na valsi
-##   .i se ki'u bo le liste sinxa cu na se tcidu
-##   .i lo liste sinxa pe lo vreji cu na se tcidu ji'a
-##   .i lo datni pagbu poi lo cipra cu tcidu ke'a ta'i lo cmene cu na prosa gi'e stali ta'i lo nu lo
-##     cipra cu nitcu ja'i le mumoi sarcu pe `#817`
-##   .i `glossary.nim` cu tcidu ta'i lo cmene le linji be lo valsi be'o .e le linji poi se krasi
-##     `_Avoid_` ne'i le vlaste
-##   .i `provenance.nim` cu tcidu ta'i lo cmene lo sitna be lo cipra be'o poi se krasi `Verified by`
-##   .i le vi datnyvei cu tcidu lo prosa poi sruri ro le datni pagbu
-##   .i lo sitna cu datni pagbu va'o lo nu `provenance.nim` cu facki le sitna
-##   .i le cipra cu facki le sitna va'o lo nu le re valsi .e le lerfu po'u la'o gy. backtick .gy. cu
-##     zvati pa linji ki'u lo nu le cipra cu tcidu le mulno datnyvei
+##   .i lo stesni poi krasi pa linji pe lo pinka mu'u `- ` sinxa gi'e na valsi
+##   .i se ki'u bo le stesni cu na se tcidu
+##   .i lo stesni pe lo vreji cu na se tcidu ji'a
+##   .i lo datnypau poi lo cipra cu tcidu ke'a ta'i lo cmene cu na prosa gi'e stali ta'i lo nu lo
+##       cipra cu nitcu ja'i le mumoi sarcu pe `#817`
+##   .i `glossary.nim` tcidu ta'i lo cmene le linji be lo valsi be'o .e le linji poi selkra
+##       `_Avoid_` ne'i le vlaste
+##   .i `provenance.nim` tcidu ta'i lo cmene lo sitna be lo cipra be'o poi selkra `Verified by`
+##   .i le vi datnyvei cu tcidu lo prosa poi sruri ro le datnypau
+##   .i lo sitna cu datnypau va'o lo nu `provenance.nim` facki le sitna
+##   .i le cipra cu facki le sitna va'o lo nu le re valsi .e le lerfu po'u `backtick` zvati pa linji
+##       ki'u lo nu le cipra cu tcidu le mulno datnyvei
 ##   .i lo sitna poi se fendi fi lo fanmo be lo linji cu prosa
 ##   .i se ki'u bo le vi datnyvei cu tcidu le sitna
-##   .i ro pagbu poi no gerna valsi cu vasru ke'a cu srera
-##   .i ro stuzi poi le gerna cu sisti bu'u ke'a cu srera ji'a
+##   .i ro pagbu poi no genvla cu vasru ke'a srera
+##   .i ro stuzi poi le gerna cu sisti bu'u ke'a srera ji'a
 ##   .i ro srera cu zvati le pamoi lerfu pe le valsi pe vo'a
-##   .i ro valsi poi zo si .a zo sa .a zo su cu vimcu ke'a cu srera ji'a
+##   .i ro valsi poi zo si .a zo sa .a zo su vimcu ke'a srera ji'a
 ##   .i zo fa'o .e ro se lidne be zo fa'o cu srera ji'a
 ##   .i lo prosa pe lo vreji cu vimcu no da gi'e fanmo no da
 ##   .i se ki'u bo ro le valsi cu na se sitna
 ##   .i ku'i le ciska be le valsi cu djica lo nu le valsi cu se sitna
 ##
-## ni'o ji'a le vi datnyvei cu facki lo srera be lo nu punji lo se ciska fi lo linji ja'i `#818`
+## ni'o ji'a le vi datnyvei cu facki lo srera be lo nu punji lo selci'a fi lo linji ja'i `#818`
 ##   .i ro jufra cu krasi pa linji
-##   .i ro ju'agri pe lo vreji cu se krasi zo ni'o
-##   .i ro stedu pe lo vreji poi se tcidu cu se krasi su'o re cmavo po'u zo ni'o
+##   .i ro ju'agri pe lo vreji cu selkra zo ni'o
+##   .i ro stedu pe lo vreji poi se tcidu cu selkra su'o re cmavo po'u zo ni'o
 ##   .i le genturfa'i cu facki ro krasi be lo jufra fi lo tricu
 ##   .i se ki'u bo zo .i poi zvati lo se sitna cu krasi no jufra
-##   .i ji'a zo .i poi se lidne zo zo cu krasi no jufra
+##   .i ji'a zo .i poi se lidne zo zo krasi no jufra
 ##   .i ku'i zo .i poi zvati lo se jmina be zo to cu krasi pa jufra
 ##
 ## ni'o jdima fa lo nu le tcidu be lo pinka cu facki lo lerpoi .e lo lerfu .e lo cmene poi se sitna
-##   .e lo pinka pe la'o gy. Nim .gy. po'o
-##   .i ne'i lo datnyvei pe le vi se gunka le cipra be lo gadri cu tcidu lo pinka pe la'o gy. Nim
-##     .gy. po'o
+##     .e lo pinka pe `Nim` po'o
+##   .i ne'i lo datnyvei pe le vi selgu'a le cipra be lo gadri cu tcidu lo pinka pe `Nim` po'o
 
 {.experimental: "strictFuncs".}
 
@@ -77,40 +75,40 @@ type
   Place* = object
     ## lo stuzi be pa lerfu ne'i lo datnyvei
     ##   .i le stuzi cu du lo namcu pe lo linji .e lo namcu pe lo lerfu ne'i le linji
-    ##   .i ro le re namcu cu se krasi li pa
+    ##   .i ro le re namcu cu selkra li pa
     line*: int  ## lo namcu pe le linji
     column*: int  ## lo namcu pe le lerfu ne'i le linji
 
   Shape* = enum
-    ## lo tarmi be pa se ciska ne'i lo datnyvei
-    ##   .i le tarmi cu jdice lo javni be lo nu punji le se ciska fi lo linji
-    Paragraph  ## lo prosa pagbu pe lo vreji
-    Item  ## lo liste cmima pe lo vreji
+    ## lo tarmi be pa selci'a ne'i lo datnyvei
+    ##   .i le tarmi cu jdice lo javni be lo nu punji le selci'a fi lo linji
+    Paragraph  ## lo rospau pe lo vreji
+    Item  ## lo stecmi pe lo vreji
     Definition  ## lo smuni be pa valsi pe le vlaste
     Heading  ## lo cmene be pa pagbu pe lo vreji
-    Run  ## lo pinka poi ro linji be ke'a cu se krasi lo mintu sinxa bu'u lo mintu stuzi
+    Run  ## lo pinka poi ro linji be ke'a selkra lo mitsni bu'u lo mitstu
     Trailing  ## lo pinka poi lo samtci cu lidne ke'a ne'i lo linji pe ke'a
-    Banner  ## lo pinka poi se sinxa `#[ ]#` gi'e cmene pa pagbu be lo samtci
+    Banner  ## lo pinka poi selsni `#[ ]#` gi'e cmene pa pagbu be lo samtci
     Cell  ## pa pagbu be pa linji pe lo cartu
     Page  ## lo pinka pe le papri
 
   Text* = object
-    ## pa lojbo se ciska poi le cipra cu tcidu ke'a
-    ##   .i ji'a lo stuzi pe ro lerfu pe le se ciska
-    path*: string  ## le pilno cu dunda lo cmene be lo datnyvei poi le se ciska cu se krasi ke'a
-    shape*: Shape  ## lo tarmi be le se ciska ne'i le datnyvei
+    ## pa jboselci'a poi le cipra cu tcidu ke'a
+    ##   .i ji'a lo stuzi pe ro lerfu pe le selci'a
+    path*: string  ## le pilno cu dunda lo cmene be lo datnyvei poi le selci'a cu selkra ke'a
+    shape*: Shape  ## lo tarmi be le selci'a ne'i le datnyvei
     opening*: int
-      ## lo klani be lo cmavo po'u zo ni'o poi krasi le se ciska
+      ## lo klani be lo cmavo po'u zo ni'o poi krasi le selci'a
       ##   .i li ni'u pa va'o lo nu no javni cu jdice le klani
     text*: string
-      ## le se ciska poi le genturfa'i cu tcidu ke'a
+      ## le selci'a poi le genturfa'i cu tcidu ke'a
       ##   .i ro samtci pagbu cu se sitna sepi'o zo la'o
-      ##   .i lo sinxa be lo judri jorne .e lo sinxa be lo nu basna cu se vimcu
+      ##   .i lo sinxa be lo judryjo'e .e lo sinxa be lo nu basna cu selvi'u
     places*: seq[Place]  ## lo stuzi be ro lerfu pe `text` ne'i lo datnyvei
-    faults*: seq[Place]  ## lo stuzi be ro samtci pagbu poi zo zo cu lidne ke'a
+    faults*: seq[Place]  ## lo stuzi be ro samtci pagbu poi zo zo lidne ke'a
 
   Error* = object
-    ## pa srera poi le genturfa'i cu tcita ke'a ne'i lo se ciska
+    ## pa srera poi le genturfa'i cu tcita ke'a ne'i lo selci'a
     ##   .i le stuzi be le srera cu du le stuzi be le pamoi lerfu pe le srera
     path*: string  ## lo cmene be lo datnyvei poi le srera cu zvati ke'a
     place*: Place  ## lo stuzi be le srera
@@ -122,41 +120,46 @@ type
 const
   DELIMITERS = ["gy", "ky", "ty", "py", "dy", "by", "fy", "vy"]
     ## lo valsi poi zo la'o ka'e sitna lo samtci pagbu sepi'o ke'a
-    ##   .i le pamoi valsi poi le samtci pagbu na vasru ke'a ku'o cu se cuxna
+    ##   .i le pamoi valsi poi le samtci pagbu na vasru ke'a selcu'a
   OPENING_COMMENT_HTML = "<!--"  ## lo krasi be lo pinka pe lo papri
   CITATION = "verified by `"
     ## le krasi be lo sitna be lo cipra
     ##   .i `provenance.nim` .e le vi datnyvei cu facki le krasi
-    ##   .i lo barda lerfu cu mintu lo cmalu lerfu ne'i lo nu facki
-  EXT_NIM = ".nim"  ## lo fanmo be lo cmene poi `provenance.nim` cu tcidu ke'a ta'i lo cipra
+    ##   .i lo brale'u cu mintu lo cmale'u ne'i lo nu facki
+  EXT_NIM = ".nim"  ## lo fanmo be lo cmene poi `provenance.nim` tcidu ke'a ta'i lo cipra
   CLOSING_COMMENT_HTML = "-->"  ## lo fanmo be lo pinka pe lo papri
   HEADINGS_FIXED = ["Standards", "Language", "Open questions"]
-    ## lo cmene be lo pagbu poi lo cipra pe la'o gy. curator .gy. cu tcidu ke'a ta'i lo cmene
+    ## lo cmene be lo pagbu poi lo cipra pe `curator` tcidu ke'a ta'i lo cmene
     ##   .i le cmene cu glico gi'e na se tcidu
   OPENING_TITLED = 3
-    ## lo klani be lo cmavo po'u zo ni'o poi krasi le pamoi prosa pagbu poi se lidne lo stedu poi
-    ##   na se tcidu
+    ## lo klani be lo cmavo po'u zo ni'o poi krasi le pamoi prosa pagbu poi se lidne lo stedu poi na
+    ##     se tcidu
   OPENINGS_HEADING = [2: 3, 3: 2]
     ## lo klani be lo cmavo po'u zo ni'o poi krasi lo stedu ja'i lo klani be zoi gy. # .gy.
   TERMINALS_OPENING = [Selmaho.I.toTerminal, Selmaho.Niho.toTerminal]
-    ## lo gerna valsi poi krasi pa jufra .a pa ju'agri
-  RULE_TEXT = "text"  ## lo javni poi le se ciska cu mapti ke'a
+    ## lo genvla poi krasi pa jufra .a pa ju'agri
+  RULE_TEXT = "text"  ## lo javni poi le selci'a cu mapti ke'a
   RULE_QUOTING = "sumti-6"
     ## lo javni poi vasru lo se sitna be zo lu .e zo li'u
-    ##   .i lo jgena po'u `text` poi se vasru lo jgena po'u `sumti-6` cu sinxa lo se sitna
-    ##   .i ku'i lo jgena po'u `text` poi se vasru lo jgena po'u `free` cu sinxa lo se jmina be
-    ##     zo to
+    ##   .i lo jgena po'u `text` poi selvau lo jgena po'u `sumti-6` sinxa lo se sitna
+    ##   .i ku'i lo jgena po'u `text` poi selvau lo jgena po'u `free` sinxa lo se jmina be zo to
   CHARS_LEADING = {' ', '.', '#', '[', '<', '!', '-', '*', '+', '_'}
     ## lo lerfu poi ka'e lidne pa krasi be lo jufra ne'i pa linji
-    ##   .i le lerfu cu du lo canlu lerfu .e lo sinxa be lo pinka .e lo liste sinxa .e lo sinxa be
-    ##     lo nu basna
+    ##   .i le lerfu cu du lo calyle'u .e lo sinxa be lo pinka .e lo stesni .e lo sinxa be lo nu
+    ##       basna
   SHAPES_FLOWING = {Paragraph, Item, Definition, Run, Page}
-    ## lo tarmi be lo se ciska poi ka'e zvati su'o re linji
+    ## lo tarmi be lo selci'a poi ka'e zvati su'o re linji
+  INDENT_SENTENCE = 2
+    ## lo namcu poi lo stuzi be lo na pamoi jufra cu sumji ke'a lo stuzi be le pamoi linji
+  INDENT_BROKEN = 4
+    ## lo namcu poi lo stuzi be lo linji poi lo jufra cu ranji ke'a sumji ke'a lo stuzi be le linji
+    ##     poi krasi le jufra
+    ##   .i `Architect` jdice le namcu bu'u `#890`
 
 
 func fencedOut(markdown: string): string =
-  ## vimcu ro lerfu pe ro linji pe lo samtci poi se bitmu
-  ##   .i le bitmu linji cu se vimcu ji'a
+  ## vimcu ro lerfu pe ro linji pe lo samtci poi selbi'u
+  ##   .i le bimli'i cu se vimcu ji'a
   ##   .i le klani be lo linji .e lo fanmo be ro linji cu stali
   ##   .i fukpi `fencedOut` pe `markdown.nim`
   var is_inside = false
@@ -168,8 +171,8 @@ func fencedOut(markdown: string): string =
 
 
 func matterOut(markdown: string): string =
-  ## vimcu ro lerfu pe lo cfari datni poi se krasi pa linji po'u `---` gi'e se fanmo le bavlamji
-  ##   linji po'u `---`
+  ## vimcu ro lerfu pe lo cfadatni poi selkra pa linji po'u `---` gi'e selfa'o le bavlamji linji
+  ##     po'u `---`
   ##   .i le klani be lo linji cu stali
   ##   .i fukpi `matterOut` pe `english.nim`
   let lines = markdown.splitLines
@@ -187,8 +190,8 @@ func matterOut(markdown: string): string =
 
 func isCarrying(line: string): bool =
   ## jdice lo du'u xu kau le linji cu bevri lo prosa
-  ##   .i ro linji poi na kunti gi'e na sepli linji gi'e na pagbu lo cartu gi'e na stedu linji gi'e
-  ##     na sitna linji cu bevri lo prosa
+  ##   .i ro linji poi na kunti gi'e na sepli'i gi'e na pagbu lo cartu gi'e na sedli'i gi'e na
+  ##       sitli'i cu bevri lo prosa
   ##   .i fukpi `isCarrying` pe `english.nim`
   let s = line.strip
   s.len > 0 and not s.startsWith("|") and not s.startsWith("#") and
@@ -196,8 +199,8 @@ func isCarrying(line: string): bool =
 
 
 func markerLen(line: string): int =
-  ## tcidu lo ni clani be lo liste sinxa poi krasi le linji
-  ##   .i li no jalge va'o lo nu no liste sinxa cu krasi le linji
+  ## tcidu lo ni clani be lo stesni poi krasi le linji
+  ##   .i li no jalge va'o lo nu no stesni cu krasi le linji
   ##   .i fukpi `markerLen` pe `english.nim`
   if line.len > 1 and line[0] in {'-', '*', '+'} and line[1] == ' ': return 2
   var i = 0
@@ -207,19 +210,17 @@ func markerLen(line: string): int =
 
 
 func isField(file, line: string): bool =
-  ## jdice lo du'u xu kau le linji pe lo vreji cu datni pagbu poi lo cipra cu tcidu ke'a ta'i lo
-  ##   cmene
-  ##   .i le datni pagbu cu du le linji be lo valsi .a le linji poi se krasi `_Avoid_` ne'i le
-  ##     vlaste
+  ## jdice lo du'u xu kau le linji pe lo vreji cu datnypau poi lo cipra cu tcidu ke'a ta'i lo cmene
+  ##   .i le datnypau cu du le linji be lo valsi .a le linji poi selkra `_Avoid_` ne'i le vlaste
   let s = line.strip
   file == "GLOSSARY.md" and
     (s.len > 5 and s.startsWith("**") and s.endsWith("**:") or s.startsWith("_Avoid_"))
 
 
 func delimiter(span: string): string =
-  ## dunda lo valsi poi zo la'o cu sitna lo samtci pagbu sepi'o ke'a
+  ## dunda lo valsi poi zo la'o sitna lo samtci pagbu sepi'o ke'a
   ##   .i le valsi cu pamoi lo cmima be `DELIMITERS` be'o poi le samtci pagbu na vasru ke'a ta'i lo
-  ##     valsi
+  ##       valsi
   var words: seq[string]
   for word in span.splitWhitespace: words.add word.strip(chars = {'.', ','}).toLowerAscii
   for candidate in DELIMITERS:
@@ -228,23 +229,22 @@ func delimiter(span: string): string =
 
 
 func wordLast(text: string): string =
-  ## dunda le romoi valsi pe le se ciska ta'i lo cmalu lerfu
-  ##   .i lo denpa sinxa cu se vimcu
+  ## dunda le romoi valsi pe le selci'a ta'i lo cmale'u
+  ##   .i lo depsni cu selvi'u
   let words = text.splitWhitespace
   if words.len == 0: "" else: words[^1].strip(chars = {'.', ','}).toLowerAscii
 
 
 func shaped(path: string, pieces: seq[Piece]): Text =
-  ## zbasu lo se ciska poi le genturfa'i cu tcidu ke'a ku'o fi lo lerfu pe pa prosa pagbu .a pa
-  ##   pinka
+  ## zbasu lo selci'a poi le genturfa'i cu tcidu ke'a ku'o fi lo lerfu pe pa rospau .a pa pinka
   ##   .i ro samtci pagbu cu se sitna sepi'o zo la'o
-  ##   .i lo judri jorne cu se tcidu ta'i lo se ciska pe vo'a
-  ##   .i lo sinxa be lo nu basna cu se vimcu
+  ##   .i lo judryjo'e cu se tcidu ta'i lo selci'a pe vo'a
+  ##   .i lo sinxa be lo nu basna cu selvi'u
   result = Text(path: path)
   var dropped = newSeq[bool](pieces.len)
   # facki ro samtci pagbu
-  #   .i ro lerfu po'u la'o gy. backtick .gy. cu krasi ja fanmo pa samtci pagbu ta'i lo nu
-  #     `spansCollapsed` pe `english.nim` cu tcidu
+  #   .i ro lerfu po'u `backtick` krasi ja fanmo pa samtci pagbu ta'i lo nu `spansCollapsed` pe
+  #       `english.nim` tcidu
   var
     is_span = newSeq[bool](pieces.len)
     is_code = false
@@ -254,7 +254,7 @@ func shaped(path: string, pieces: seq[Piece]): Text =
       is_span[i] = true
     else: is_span[i] = is_code
   # vimcu ro sitna be lo cipra
-  #   .i `provenance.nim` cu tcidu le sitna ta'i lo cmene
+  #   .i `provenance.nim` tcidu le sitna ta'i lo cmene
   var lower = ""
   for piece in pieces: lower.add piece.c.toLowerAscii
   var at = lower.find(CITATION)
@@ -264,8 +264,8 @@ func shaped(path: string, pieces: seq[Piece]): Text =
     if lower[at + CITATION.len ..< close].endsWith(EXT_NIM):
       for m in at .. close: dropped[m] = true
     at = lower.find(CITATION, close + 1)
-  # vimcu `[` .e `](address)` pe ro judri jorne poi na pagbu lo samtci pagbu
-  #   .i se ki'u bo ro judri jorne cu se tcidu ta'i lo se ciska pe vo'a
+  # vimcu `[` .e `](address)` pe ro judryjo'e poi na pagbu lo samtci pagbu
+  #   .i se ki'u bo ro judryjo'e cu se tcidu ta'i lo selci'a pe vo'a
   var i = 0
   while i < pieces.len:
     if pieces[i].c == '[' and not is_span[i]:
@@ -282,7 +282,7 @@ func shaped(path: string, pieces: seq[Piece]): Text =
           i = k
     inc i
   # ciska ro lerfu poi stali
-  #   .i ro samtci pagbu cu se ciska ta'i pa cmene poi se sitna
+  #   .i ro samtci pagbu cu selci'a ta'i pa cmene poi se sitna
   i = 0
   while i < pieces.len:
     let piece = pieces[i]
@@ -323,12 +323,12 @@ func shaped(path: string, pieces: seq[Piece]): Text =
 
 
 func textsRecord*(path, markdown: string): seq[Text] =
-  ## tcidu ro prosa pagbu pe le vreji ta'i pa se ciska
-  ##   .i le prosa pagbu cu du ro liste cmima .e ro porsi be lo sampu linji ta'i lo nu `blocks` pe
-  ##     `english.nim` cu tcidu
-  ##   .i ji'a ro stedu cu se tcidu ta'i pa se ciska
+  ## tcidu ro rospau pe le vreji ta'i pa selci'a
+  ##   .i le rospau cu du ro stecmi .e ro porsi be lo sapli'i ta'i lo nu `blocks` pe `english.nim`
+  ##       tcidu
+  ##   .i ji'a ro stedu cu se tcidu ta'i pa selci'a
   ##   .i ku'i le stedu be le vreji .e lo stedu poi lo cipra cu tcidu ke'a ta'i lo cmene cu na se
-  ##     tcidu
+  ##       tcidu
   ##   .i ro lerfu cu se tcita lo stuzi pe vo'a
   var
     carried: seq[Piece]
@@ -382,18 +382,18 @@ func textsRecord*(path, markdown: string): seq[Text] =
 type
   Comment = object
     ## pa pinka pe lo samtci ge'u .e le linji pe le pinka ge'u .e lo stuzi pe ro lerfu
-    lines: seq[seq[Piece]]  ## lo se ciska pe ro linji poi se lidne lo sinxa be lo pinka
+    lines: seq[seq[Piece]]  ## lo selci'a pe ro linji poi se lidne lo sinxa be lo pinka
     line: int  ## lo linji poi krasi le pinka
     column: int  ## lo stuzi be lo sinxa be le pinka ne'i le linji
     is_doc: bool  ## le sinxa cu du `##`
     is_trailing: bool  ## lo samtci cu lidne le pinka ne'i le linji pe le pinka
-    is_block: bool  ## le pinka cu se sinxa `#[ ]#` .a `##[ ]##`
+    is_block: bool  ## le pinka cu selsni `#[ ]#` .a `##[ ]##`
     tier: int  ## lo klani be lo lerfu po'u zoi gy. [ .gy. poi lidne lo sinxa be le pinka
 
 
 func commentsNim(source: string): seq[Comment] =
   ## facki ro pinka poi na pagbu lo lerpoi .a lo lerfu .a lo cmene poi se sitna ku'o ne'i lo samtci
-  ##   pe la'o gy. Nim .gy.
+  ##     pe `Nim`
   var
     i = 0
     (line, column) = (1, 1)
@@ -502,8 +502,8 @@ func isRowTable(pieces: seq[Piece]): bool =
 
 
 func cellsRow(path: string, pieces: seq[Piece]): seq[Text] =
-  ## tcidu ro pagbu be le linji pe le cartu ta'i pa se ciska
-  ##   .i lo pagbu poi vasru `-` .e `:` po'o cu na se tcidu
+  ## tcidu ro pagbu be le linji pe le cartu ta'i pa selci'a
+  ##   .i lo pagbu poi vasru `-` .e `:` po'o na se tcidu
   var cell: seq[Piece]
   for piece in pieces & @[('|', Place())]:
     if piece.c != '|':
@@ -519,10 +519,10 @@ func cellsRow(path: string, pieces: seq[Piece]): seq[Text] =
 
 
 func textsSource*(path, source: string): seq[Text] =
-  ## tcidu ro pinka pe lo samtci pe la'o gy. Nim .gy. ta'i pa se ciska
-  ##   .i lo lamji pinka poi no samtci cu zvati lo linji pe ke'a zi'e poi se krasi lo mintu sinxa
-  ##     bu'u lo mintu stuzi cu se jorne ta'i pa se ciska
-  ##   .i ro pagbu be ro linji pe lo cartu poi zvati le pinka cu se tcidu ta'i pa se ciska
+  ## tcidu ro pinka pe lo samtci pe `Nim` ta'i pa selci'a
+  ##   .i lo lampinka poi no samtci cu zvati lo linji pe ke'a zi'e poi selkra lo mitsni bu'u lo
+  ##       mitstu cu seljo'e ta'i pa selci'a
+  ##   .i ro pagbu be ro linji pe lo cartu poi zvati le pinka cu se tcidu ta'i pa selci'a
   let comments = source.commentsNim
   var
     k = 0
@@ -538,7 +538,7 @@ func textsSource*(path, source: string): seq[Text] =
     if pieces.isRowTable:
       flush()
       result.add cellsRow(path, pieces)
-      opening = 1  # le prosa pagbu poi se lidne lo cartu cu ju'agri
+      opening = 1  # le rospau poi se lidne lo cartu cu ju'agri
     else:
       var kept = pieces
       while kept.len > 0 and kept[0].c in Whitespace: kept.delete(0)
@@ -568,9 +568,9 @@ func textsSource*(path, source: string): seq[Text] =
 
 
 func textsHtml*(path, source: string): seq[Text] =
-  ## tcidu ro pinka pe le papri ta'i pa se ciska
-  ##   .i ro pinka cu se sinxa `<!-- -->`
-  ##   .i le linji pe ro pinka cu se jorne
+  ## tcidu ro pinka pe le papri ta'i pa selci'a
+  ##   .i ro pinka cu selsni `<!-- -->`
+  ##   .i le linji pe ro pinka cu seljo'e
   var
     (line, column) = (1, 1)
     i = 0
@@ -603,16 +603,16 @@ func textsHtml*(path, source: string): seq[Text] =
 
 
 func place(text: Text, at: int): Place =
-  ## dunda lo stuzi be pa lerfu pe le se ciska ne'i le datnyvei
-  ##   .i va'o lo nu le lerfu cu bartu le se ciska kei dunda lo stuzi be le romoi lerfu
+  ## dunda lo stuzi be pa lerfu pe le selci'a ne'i le datnyvei
+  ##   .i va'o lo nu le lerfu cu bartu le selci'a kei dunda lo stuzi be le romoi lerfu
   if text.places.len == 0: Place(line: 0, column: 0)
   elif at < text.places.len: text.places[at]
   else: text.places[^1]
 
 
 func errorsTree(node: Node, marked: ReadingMarked, text: Text, found: var seq[Error]) =
-  ## jmina lo stuzi poi ro srera jgena pe le tricu cu sisti bu'u ke'a ku'o .e lo javni poi le srera
-  ##   jgena cu sisti ne'i ke'a
+  ## jmina lo stuzi poi ro srejge pe le tricu cu sisti bu'u ke'a ku'o .e lo javni poi le srejge cu
+  ##     sisti ne'i ke'a
   if node.is_terminal: return
   if node.stop.isSome:
     let
@@ -626,11 +626,11 @@ func errorsTree(node: Node, marked: ReadingMarked, text: Text, found: var seq[Er
 
 
 func errors*(text: Text, marked: ReadingMarked): seq[Error] =
-  ## dunda ro srera poi le genturfa'i cu tcita ke'a ne'i le se ciska ku'o .e ro samtci pagbu poi zo
-  ##   zo cu lidne ke'a ku'o pa roi
-  ##   .i `marked` cu se tcidu fi le se ciska
-  ##   .i ki'u bo lo srera jgena pe pa pagbu .e lo srera jgena pe lo se ciska poi vasru le pagbu cu
-  ##     sisti bu'u pa stuzi
+  ## dunda ro srera poi le genturfa'i cu tcita ke'a ne'i le selci'a ku'o .e ro samtci pagbu poi zo
+  ##     zo lidne ke'a ku'o pa roi
+  ##   .i `marked` se tcidu fi le selci'a
+  ##   .i ki'u bo lo srejge pe pa pagbu .e lo srejge pe lo selci'a poi vasru le pagbu cu sisti bu'u
+  ##       pa stuzi
   var found: seq[Error]
   for fault in text.faults:
     found.add Error(path: text.path, place: fault, why: "`zo` before span")
@@ -647,15 +647,15 @@ func errors*(text: Text, marked: ReadingMarked): seq[Error] =
 
 
 func errors*(text: Text): seq[Error] =
-  ## dunda ro srera poi le genturfa'i cu tcita ke'a ne'i le se ciska
-  ##   .i le vi fancu cu tcidu le se ciska gi'e pilno `errors` poi se dunda lo se tcidu
+  ## dunda ro srera poi le genturfa'i cu tcita ke'a ne'i le selci'a
+  ##   .i le vi fancu cu tcidu le selci'a gi'e pilno `errors` poi seldu'a lo se tcidu
   text.errors(text.text.readTextMarked)
 
 
 func openersTree(node: Node, units: seq[Unit], parent: string, found: var seq[int]) =
   ## jmina lo namcu be ro pagbu poi krasi pa jufra .a pa ju'agri pe le jgena
-  ##   .i `parent` cu du lo cmene be le javni pe lo jgena poi vasru le jgena
-  ##   .i lo jgena po'u `text` poi se vasru lo jgena po'u `sumti-6` cu sinxa lo se sitna
+  ##   .i `parent` du lo cmene be le javni pe lo jgena poi vasru le jgena
+  ##   .i lo jgena po'u `text` poi selvau lo jgena po'u `sumti-6` sinxa lo se sitna
   ##   .i se ki'u bo no pagbu pe le se sitna cu se jmina
   if node.is_terminal:
     if node.at < units.len and units[node.at].is_read and
@@ -667,9 +667,9 @@ func openersTree(node: Node, units: seq[Unit], parent: string, found: var seq[in
 
 
 func indentLine(line: string, shape: Shape, is_first: bool): int =
-  ## dunda lo stuzi be le pamoi lerfu pe le se ciska ne'i le linji
+  ## dunda lo stuzi be le pamoi lerfu pe le selci'a ne'i le linji
   ##   .i lo pinka cu kancu le stuzi ba le sinxa be le pinka
-  ##   .i lo vreji cu kancu le stuzi ba le krasi be le linji .a le liste sinxa
+  ##   .i lo vreji cu kancu le stuzi ba le krasi be le linji .a le stesni
   let s = line.strip(trailing = false)
   case shape
   of Run:
@@ -687,17 +687,15 @@ func indentLine(line: string, shape: Shape, is_first: bool): int =
 
 func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
     checked: var int): seq[Error] =
-  ## dunda ro srera be lo nu punji le se ciska fi lo linji ja'i lo se jdice pe `#818`
-  ##   .i `lines` cu du ro linji pe le datnyvei
-  ##   .i `marked` cu se tcidu fi le se ciska
+  ## dunda ro srera be lo nu punji le selci'a fi lo linji ja'i lo seljdi pe `#818`
+  ##   .i `lines` du ro linji pe le datnyvei
+  ##   .i `marked` se tcidu fi le selci'a
   ##   .i ro krasi be lo jufra .e lo ju'agri cu krasi lo linji
-  ##   .i lo jufra poi na pamoi cu zvati lo stuzi poi zmadu lo stuzi be le pamoi linji li re
-  ##   .i ku'i ne'i lo liste cmima lo jufra poi na pamoi cu zvati lo stuzi be le pamoi lerfu pe le
-  ##     liste cmima
-  ##   .i lo linji poi se katna fi pa jufra cu zvati lo stuzi poi zmadu lo stuzi be le linji pe le
-  ##     krasi be le jufra li re
+  ##   .i `INDENT_SENTENCE` jdice lo stuzi be lo na pamoi jufra
+  ##   .i ku'i ne'i lo stecmi lo jufra poi na pamoi cu zvati lo stuzi be le pamoi lerfu pe le stecmi
+  ##   .i `INDENT_BROKEN` jdice lo stuzi be lo linji poi lo jufra cu ranji ke'a
   ##   .i ro ju'agri pe lo pinka cu se lidne lo linji poi vasru lo sinxa be le pinka po'o
-  ##   .i `checked` cu se jmina lo klani be lo linji poi le vi fancu cu cipra ke'a
+  ##   .i `checked` se jmina lo klani be lo linji poi le vi fancu cu cipra ke'a
   template fault(at: Place, reason: string) =
     result.add Error(path: text.path, place: at, why: reason)
   if text.opening >= 0:
@@ -712,8 +710,8 @@ func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
   var (lines_sentence, lines_paragraph) = (newSeq[int](), newSeq[int]())
   for at in openers:
     let unit = marked.units[at]
-    # le pamoi valsi cu krasi le se ciska bu'u lo stuzi be le se ciska
-    #   .i zo ni'o poi se lidne zo ni'o cu pagbu lo krasi be lo ju'agri
+    # le pamoi valsi cu krasi le selci'a bu'u lo stuzi be le selci'a
+    #   .i zo ni'o poi se lidne zo ni'o pagbu lo krasi be lo ju'agri
     if at == 0 or unit.words.len == 0: continue
     if unit.terminal == Selmaho.Niho.toTerminal and marked.units[at - 1].is_read and
         marked.units[at - 1].terminal == Selmaho.Niho.toTerminal:
@@ -751,15 +749,16 @@ func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
       fault(place, "paragraph")
     let wanted =
       if number in lines_paragraph: first
-      elif number in lines_sentence: (if text.shape == Shape.Item: first else: first + 2)
-      else: sentence + 2
+      elif number in lines_sentence:
+        if text.shape == Shape.Item: first else: first + INDENT_SENTENCE
+      else: sentence + INDENT_BROKEN
     if column != wanted: fault(place, "indent")
     if number in lines_paragraph or number in lines_sentence: sentence = wanted
 
 
 func texts*(path, content: string): seq[Text] =
-  ## tcidu ro se ciska pe lo datnyvei ja'i lo klesi be le datnyvei
-  ##   .i le klesi cu du lo vreji .a lo samtci pe la'o gy. Nim .gy. .a lo papri
+  ## tcidu ro selci'a pe lo datnyvei ja'i lo klesi be le datnyvei
+  ##   .i le klesi cu du lo vreji .a lo samtci pe `Nim` .a lo papri
   let extension = path.splitFile.ext
   if extension == ".md": path.textsRecord(content)
   elif extension in [".nim", ".nimble"]: path.textsSource(content)
