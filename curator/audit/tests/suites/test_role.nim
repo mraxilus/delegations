@@ -1,11 +1,13 @@
-## Replicate role rule of CONTRIBUTOR.md, Say which role you are, over pull request bodies.
+## Replicate rules CONTRIBUTOR.md sets for pull request: role line, label, title and form of body.
 ##   Block fixture copies form Claude Code writes today; rule reads its shapes alone, so
 ##     second fixture with other words holds that harness changing its words fails nothing.
+##   Suite reads `textShown` through `{.all.}`, since laws of count read text it gives.
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, unicode, unittest]
-import ../../src/[checker, markdown, role]
+import std/[sequtils, strutils, unicode, unittest]
+import ../../src/[markdown, role {.all.}]
+import ./fixtures
 
 
 const
@@ -14,6 +16,8 @@ const
   CREDIT =
     "_Requested by **Octocat** · [project thread](https://claude.ai/code/project/p?thread=t)_"
     ## Credit line of block Claude Code writes above role line, as it writes it.
+  TEMPLATE_PULL = staticRead("../../../../.github/pull_request_template.md")
+    ## Template of pull request body, as tree holds it.
 
 
 
@@ -177,9 +181,117 @@ suite "Role":
     check checkTitle("claude/setup-5uk08q", "Anything at all").len == 0  # scope fails it
 
 
-  test "template of pull request holds each heading body hook asks for, and no carried rule (#844)":
+  test "template of pull request holds each section of form, in order, and no carried rule (#844)":
     # Carried rule that concerns no item stands in ➖ row of sign-off, so body names none of them.
-    const template_pull = staticRead("../../../../.github/pull_request_template.md")
-    for heading in HEADINGS_PULL:
-      check heading in template_pull.linesHeading
-    check "carried" notin template_pull.section("## Record").toLowerAscii
+    check TEMPLATE_PULL.sections[1 .. ^1].mapIt(it.heading) == @HEADINGS_PULL
+    check "carried" notin TEMPLATE_PULL.toLowerAscii
+
+
+  test "body holds four sections once each, in their order, read outside fenced code (#845)":
+    # Architect ruled on #845: What, Why, Evidence and Next steps, in place of five sections.
+    let form = bodyPull("**Role:** curator")
+    check checkBodyPull(form).len == 0
+    check checkBodyPull(form.replace("\n", "\r\n")).len == 0  # edited on GitHub
+    let old = "**Role:** curator\n\n## Intent\n\nX.\n\n## Scope\n\nX.\n\n## Verification\n\n" &
+      "X.\n\n## Record\n\nX.\n\n## Notes\n\nX.\n"  # template before #845
+    check checkBodyPull(old).mapIt(it.message) == @[
+      "Pull request body holds `## What`, `## Why`, `## Evidence` and `## Next steps`, once " &
+        "each and in that order; got `## Intent`, `## Scope`, `## Verification`, `## Record`, " &
+        "`## Notes`.",
+    ]
+    let turned = form.replace("## Why", "## X").replace("## Evidence", "## Why")
+      .replace("## X", "## Evidence")
+    for (body, got) in [
+      (form.replace("## Next steps\n\nNothing remains.\n", ""),
+        "`## What`, `## Why`, `## Evidence`"),  # one missing
+      (form & "\n## Why\n\nAgain.\n",
+        "`## What`, `## Why`, `## Evidence`, `## Next steps`, `## Why`"),  # one twice
+      (turned, "`## What`, `## Evidence`, `## Why`, `## Next steps`"),  # order turned
+      ("**Role:** curator\n\nText.\n", "``"),  # none
+    ]:
+      check checkBodyPull(body).mapIt(it.message.endsWith("got " & got & ".")) == @[true]
+    for body in [
+      form.replace("The suites pass.\n", "The suites pass.\n\n```md\n## Sign-off\n```\n"),
+      form.replace("Nothing remains.\n", "Nothing remains.\n\n<!--\n## Notes\n-->\n"),
+      form.replace("- One point.\n", "- One point.\n\n### Detail\n\nMore.\n"),
+    ]:
+      check checkBodyPull(body).len == 0  # fence, comment and subheading cut no section
+
+
+  test "each section opens with summary of one to three sentences, then its points (#845)":
+    let form = bodyPull("**Role:** curator")
+    for opening in [
+      "- A point first.", "1. A numbered point.", "| a | b |", "> Quoted.",
+      "```text\nOutput.\n```", "<details><summary>Output</summary>\n\nLong.\n\n</details>",
+      "### Detail\n\nMore.",
+    ]:
+      let found = checkBodyPull(form.replace("This adds one check.", opening))
+      check found.mapIt(it.message) == @[
+        "Section `## What` opens with summary of one to three sentences, then its points; " &
+          "got `" & opening.splitLines[0] & "`.",
+      ]
+    let unfilled = checkBodyPull(form.replace("This adds one check.\n\n- One point.", "<!-- -->"))
+    check unfilled.len == 1 and unfilled[0].message.endsWith("got ``.")  # comment alone
+    check checkBodyPull(TEMPLATE_PULL).mapIt(it.message.endsWith("got ``.")) == @[true].cycle(4)
+    for summary in [
+      "One. Two. Three.", "This adds one\ncheck.", "**What:** this adds one check.",
+    ]:
+      check checkBodyPull(form.replace("This adds one check.", summary)).len == 0
+    check checkBodyPull(form.replace("This adds one check.", "One. Two. Three. Four."))
+      .mapIt(it.message) == @[
+        "Section `## What` opens with summary of one to three sentences, then its points; " &
+          "got `4` sentences.",
+      ]
+
+
+  test "text shown drops comments, folds but their summaries, marks of links, footer of proxy":
+    # Count reads what Architect skims while each fold is closed (#845), and marks outside code.
+    for (body, shown) in [
+      ("See [the gap list (#331)](https://github.com/o/r/pull/331) now.",
+        "See the gap list (#331) now."),
+      ("Run `[a](b)` here.", "Run `[a](b)` here."),  # link in code span shows whole
+      ("A <!-- hidden --> B", "A  B"),
+      ("A\n\n<!-- open to end", "A"),
+      ("`<!--` opens comment.", "`<!--` opens comment."),  # mark in code span shows
+      ("A\n\n<details><summary>Worked example</summary>\n\nLong output.\n\n</details>\n\nB",
+        "A\n\nWorked example\n\nB"),
+      ("A\n\n<DETAILS>\n\nLong.\n\n</DETAILS>\n\nB", "A\n\n\n\nB"),  # no summary, any case
+      ("A\n\n<details><summary>Out</summary>\n<details><summary>In</summary>\nX\n" &
+        "</details>\n</details>\nB", "A\n\nOut\nB"),  # fold inside fold
+      ("A\n\n<details><summary>S</summary>\n\nLong, never closed.", "A\n\nS"),
+      ("Write `<details>` around output.", "Write `<details>` around output."),
+      ("```\n<details>\n```\nA", "```\n<details>\n```\nA"),  # tag in fenced code
+      ("A\n\n---\n_Generated by [Claude Code](https://claude.ai/code/session_x)_\n", "A"),
+      ("A\n\n_Note in italics._", "A\n\n_Note in italics._"),  # no rule above it
+      ("A\n\n---\nB", "A\n\n---\nB"),  # no italic line below rule
+      ("A\r\nB\r\n", "A\nB"),
+    ]:
+      check body.textShown == shown
+    const credit = "🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n" &
+      "https://claude.ai/code/session_01JwuSfA3CRBTcCGri8Ph3ND"
+    check credit.textShown.runeLen == 85  # credit of harness counts, by its link text (#845)
+
+
+  test "body shows at most 2500 characters while each fold is closed, link by its text (#845)":
+    let
+      form = bodyPull("**Role:** curator")
+      full = form & "x".repeat(CHARACTERS_BODY - (form & "x").textShown.runeLen + 1)
+    check full.textShown.runeLen == CHARACTERS_BODY
+    check checkBodyPull(full).len == 0
+    check checkBodyPull(full & "x").mapIt(it.message) == @[
+      "Pull request body shows at most 2500 characters while each fold is closed, with each " &
+        "link counted by its text; fold long output in `<details>`; got `2501`.",
+    ]
+    for body in [
+      full.replace("The suites pass.", "The [suites](https://github.com/o/r/actions/runs/1) pass."),
+      full.replace("\n", "\r\n"),  # edited on GitHub, as runner reads it
+      full & "\n\n---\n_Generated by [Claude Code](https://claude.ai/code/session_x)_",
+    ]:
+      check checkBodyPull(body).len == 0  # link, line end and footer of proxy cost no room
+
+
+  test "example of #845 takes form, and shows 2108 characters with each link by its text":
+    # Review of #845 counts 2,046 characters outside fold, by link text; summary of fold shows
+    #   too, 62 characters and its line end.
+    check checkBodyPull(BODY_EXAMPLE).len == 0
+    check BODY_EXAMPLE.textShown.runeLen == 2108

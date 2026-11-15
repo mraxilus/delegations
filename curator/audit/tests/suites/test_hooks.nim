@@ -123,8 +123,9 @@ func messages(found: seq[Finding]): seq[string] =
 
 
 func closing(text: string): seq[string] =
-  ## Read messages `checkBody` gives pull request body holding text after role line.
-  checkBody("mcp__github__update_pull_request", BRANCH, "", ROLE & "\n\n" & text & "\n", [], false)
+  ## Read messages `checkBody` gives issue body holding text after role line, which closing
+  ##   keyword binds as it binds pull request body, and no form of template binds.
+  checkBody("mcp__github__issue_write", BRANCH, "", ROLE & "\n\n" & text & "\n", [], false)
     .messages
 
 
@@ -363,17 +364,38 @@ suite "Hooks":
     ).len == 0  # queue label beside role label
 
 
-  test "pull request body keeps template headings and shows change":
-    const head = ROLE & "\n\n## Intent\n\nX.\n\n## Scope\n\n- a\n\n"
-    let shown =
-      head & "## Verification\n\n<!-- t -->\nGreen.\n\n## Record\n\n- a\n\n## Notes\n\nNone.\n"
-    check checkBody("mcp__github__create_pull_request", BRANCH, "t", shown, [], true).len == 0
-    let unshown = head & "## Verification\n\n<!-- t -->\n\n## Record\n\n- a\n\n## Notes\n\nNone.\n"
-    check checkBody("mcp__github__create_pull_request", BRANCH, "t", unshown, [], true)
-      .messages.anyIt("show change" in it)
-    let missing = head & "## Verification\n\nGreen.\n\n## Notes\n\nNone.\n"
-    check checkBody("mcp__github__create_pull_request", BRANCH, "t", missing, [], true)
-      .messages.anyIt("`## Record`" in it)
+  test "pull request body takes form of template on each create and each update (#845)":
+    # `check-role` reads body at each event, so hook reads each update too (review of #845).
+    let
+      form = bodyPull(ROLE)
+      old = ROLE & "\n\n## Intent\n\nX.\n\n## Scope\n\n- a\n\n## Verification\n\nGreen.\n\n" &
+        "## Record\n\n- a\n\n## Notes\n\nNone.\n"  # template before #845
+    for tool in TOOLS_PULL:
+      let is_create = tool == "mcp__github__create_pull_request"
+      check checkBody(tool, BRANCH, "t", form, [], is_create).len == 0
+      check checkBody(tool, BRANCH, "t", old, [], is_create).messages
+        .mapIt(it.startsWith("Pull request body holds `## What`")) == @[true]
+      check checkBody(tool, BRANCH, "t", form.replace("One point.", "It fixes #12."), [], is_create)
+        .messages.mapIt(it.startsWith("Body holds closing keyword")) == @[true]
+
+
+  test "example of #845 is refused on two rules alone, which form keeps (#845)":
+    # Review of #845 ran example through hooks of `main`: keyword closing #783 inside point, and
+    #   point of 26 words. So template asks for `Closes #N` alone on last line of Next steps.
+    check checkBody(
+      "mcp__github__create_pull_request",
+      BRANCH,
+      "feat(pga_benchmark): propose maps-noalias",
+      BODY_EXAMPLE,
+      [],
+      true,
+    ).messages == @[
+      "Body holds closing keyword before issue only on line of its own, as `Closes #783`, " &
+        "since GitHub closes issue whatever sentence says; drop keyword, or put issue first, " &
+        "as `#783 stays open`; got `Closes #783`.",
+      "Sentence must hold at most 25 words; split it (ASD-STE100); got `Machine counts under " &
+        "valgrind and gcc 13.3.0, on ...`.",
+    ]
 
 
   test "closing keyword stands before issue only on line of its own (#859)":

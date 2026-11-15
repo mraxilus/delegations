@@ -73,6 +73,63 @@ const
     ## Paragraph of record in lojban, 38 words: `.i` opens each sentence, and no stop closes one,
     ## so English check reads one sentence.
   DIRECTORY_AUDIT* = CURATOR & "/audit"  ## Curator project in fixture tree.
+  BODY_EXAMPLE* =
+      "**Role:** contributor/ronri/pga_benchmark\n\n" &
+      "## What\n" &
+      "This adds the change `maps-noalias`, which marks the operand of each map `noalias`. " &
+      "The body of each map keeps its form, and the Proposals page gains the change.\n\n" &
+      "- One edit to `defineOperator` in `pga/operators.nim` gives the operand of each " &
+      "map the pragma `noalias`.\n" &
+      "- The evaluation, `evaluations/maps-noalias.json`, is taken under Nim 2.4.0 at " &
+      "rga4d and cga5d.\n" &
+      "- The marginalia tab of Proposals gains the change. No other page changes.\n\n" &
+      "## Why\n" &
+      "Under Nim 2.4.0, each map writes its result in place while it reads its operand. " &
+      "Where gcc cannot tell the result from the operand, it emits no vector instruction. " &
+      "[The map-form decision (#783)](https://github.com/mraxilus/delegations/issues/783) " &
+      "ruled for this mark over a change to the form of each map.\n\n" &
+      "- Rejected: read first, `maps-read-first`, as that ruling says. It changes the " &
+      "form of each map, and in loops it sets the order of loads and stores by hand.\n" &
+      "- The gain shows where a routine takes a multivector through its parameters. In " &
+      "a loop over arrays, gcc already sees the two apart.\n\n" &
+      "## Evidence\n" &
+      "The change cuts the instructions of 142 of 451 measured functions, and adds to " &
+      "none. No timed function changes, and every result stays the same.\n\n" &
+      "- `nim r koch check` at `f134e361`: 0 findings. Run 1530 of `check` is green.\n" &
+      "- Machine counts under valgrind and gcc 13.3.0, on 2026-11-01: `reverse` at cga5d " &
+      "falls from 87 instructions to 46, and `dual_weight` at cga5d from 83 to 66.\n" &
+      "- The timed functions compare equal under `objdump`: 111 of 111 at rga4d, and " &
+      "135 of 135 at cga5d.\n" &
+      "- Results hold: where one multivector is both operand and result, Nim 2.4.0 copies " &
+      "through a temporary. The suites pass, 33 of 33 at rga4d and 28 of 28 at cga5d.\n" &
+      "- Published again: [Proposals](https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG).\n\n" &
+      "<details><summary>Worked example: the machine counts, at pin and with the " &
+      "change</summary>\n\n" &
+      "Each cell counts the instructions of one call.\n\n" &
+      "| Figure | Pin | `noalias` |\n" &
+      "|--------|----:|----------:|\n" &
+      "| Measurands with fewer instructions, of 451 | | 142 |\n" &
+      "| Measurands with more instructions, of 451 | | 0 |\n" &
+      "| `reverse` at rga4d | 45 | 27 |\n" &
+      "| `reverse` at cga5d | 87 | 46 |\n" &
+      "| `dual_weight` at cga5d | 83 | 66 |\n" &
+      "| `complement_left` at cga5d | 87 | 63 |\n\n" &
+      "- The cases that hold the promise: `a = ☆a`, `p[] = ☆q[]` with two pointers to " &
+      "one multivector, `x = \\y` with one multivector as both, and `s[1] = ☆s[1]`.\n" &
+      "- The time ratios run ×0.94 to ×1.04 at rga4d and ×0.82 to ×1.11 at cga5d, on " &
+      "code that does not change. The spread of the pages stays ×0.85 to ×1.10, now over " &
+      "3 403 ratios in place of 3 157.\n" &
+      "- The evaluation ran on a core of family 6, model 207. The machine counts and " &
+      "the timed functions were read on model 85. Neither depends on the core, since " &
+      "gcc builds them without `-march`.\n\n" &
+      "</details>\n\n" &
+      "## Next steps\n" &
+      "Nothing remains on this branch. After the merge, the change waits on the Architect, " &
+      "who decides whether the library takes it.\n\n" &
+      "- Closes #783, the map-form decision, when this merges.\n" &
+      "- The library takes `maps-noalias` only when the Architect applies it there, as " &
+      "with each change on the marginalia tab.\n"
+    ## Body #845 gives as example of form, applied to #790, byte for byte as Architect wrote it.
 
 
 func tableHeader*(source: string): seq[seq[string]] =
@@ -89,6 +146,14 @@ func textReadme*(): string =
   ## Render root README.md holding domain table derived from `DOMAINS`.
   result = "# Fixture\n\n| Folder | Name | Theme |\n|---|---|---|\n"
   for d in DOMAINS: result.add "| " & d.folder & " | " & d.name & " | " & d.theme & " |\n"
+
+
+func bodyPull*(line_role: string): string =
+  ## Render pull request body below role line in form of template, i.e. four sections, each
+  ##   opening with summary of one sentence, and one point.
+  line_role & "\n\n## What\n\nThis adds one check.\n\n- One point.\n\n## Why\n\n" &
+    "Each role is typed twice.\n\n## Evidence\n\nThe suites pass.\n\n## Next steps\n\n" &
+    "Nothing remains.\n"
 
 
 func entriesProject*(directory: string, stamp: string): seq[Entry] =
