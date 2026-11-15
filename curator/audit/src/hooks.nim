@@ -1867,8 +1867,8 @@ func contextStart*(
     lines.add prompt.section(HEADING_READ).strip
     lines.add ""
   if drift.len > 0:
-    lines.add "Base changed charter or checker since this branch forked; read each change " &
-      "below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
+    lines.add "Base changed charter or code of stamp since this branch forked; read each " &
+      "change below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
     for f in drift: lines.add "  " & f.render
   lines.add "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` once done, " &
     "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."

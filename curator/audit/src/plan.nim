@@ -35,7 +35,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, sequtils, strutils, tables]
+import std/[algorithm, json, options, strutils, tables]
 import ../../knoller/src/knoller
 import ./[checker, compilers, dependencies, findings, layout, projects, prose_own, toolchain, tree]
 
@@ -60,17 +60,6 @@ type Job* = object  ## Define one project to compile, with compiler it pins.
 func kind*(job: Job): string =
   ## Name how job's compiler is obtained, which CI branches on.
   if job.pin.isCommit: "commit" else: "version"
-
-
-func isKnoller(path: string): bool =
-  ## Decide whether path is source or nimble file of knoller, which driver imports by path.
-  FILES_KNOLLER.anyIt(path == it or path.startsWith(it & "/"))
-
-
-func isChecker*(path: string): bool =
-  ## Decide whether path drives how every project is checked: root files, check sources, and
-  ##   knoller, which check sources import.
-  path in FILES_CHECKER or path.startsWith(DIRECTORY_CHECKER & "/") or path.isKnoller
 
 
 func isCode(directory, path: string): bool =
