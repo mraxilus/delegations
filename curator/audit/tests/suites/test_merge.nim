@@ -385,3 +385,50 @@ suite "Merge":
       check unserved.findings.len == 1 and "No compiler serves" in unserved.findings[0].message
       check not fileExists(root.fileMark) and not fileExists(toolchain / "run.log")
       check runMerge(writeMerge(root, "main"), "curator/older", toolchains).code == 1
+
+
+  test "koch check judges clean checkout lacking base in second tree, and any other in place":
+    # Choice between two paths lives in `judgeCheckout`, which suite reaches; koch hands its
+    #   path in place over as proc, which counts each call here.
+    let
+      root = repoForked()
+      toolchain = toolchainStub()
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    var
+      toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
+      runs_in_place = 0
+    proc judgeInPlace(): int =
+      ## Count judgement in place, and give exit of its own.
+      runs_in_place += 1
+      7
+
+    root.writeInto("notes.md", "Untracked.\n")
+    check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 7  # dirty
+    check runs_in_place == 1 and not dirExists(root / ".git" / DIRECTORY_MERGE)
+    removeFile(root / "notes.md")
+    check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 3  # merged
+    check runs_in_place == 1 and lines(toolchain / "run.log").len == 1
+    root.moveOnBase("GUIDE.md", "# Guide\n\n## Toolchain\n\nPin.\n")
+    check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 1  # drift
+    check runs_in_place == 1
+    discard root.git("merge -q --no-edit main")
+    check judgeCheckout(root, "main", "curator/older", toolchains, judgeInPlace) == 7  # holds base
+    check runs_in_place == 2
+
+
+  test "run in place records tree of HEAD where checkout is clean and on branch, and only there":
+    # Dirty tree records nothing, since no commit holds exactly what passed; detached HEAD
+    #   records nothing, since no branch holds its tree.
+    let root = repoForked()
+    defer: removeDir(root)
+    root.writeInto("notes.md", "Untracked.\n")
+    root.recordMark
+    check not fileExists(root.fileMark)
+    removeFile(root / "notes.md")
+    discard root.git("checkout -q --detach")
+    root.recordMark
+    check not fileExists(root.fileMark)
+    discard root.git("checkout -q curator/older")
+    root.recordMark
+    check readFile(root.fileMark).strip == root.git("rev-parse HEAD^{tree}").strip
