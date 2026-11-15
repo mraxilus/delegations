@@ -2190,14 +2190,12 @@ suiteInProc "Internal: Proposals":
     check parseProposal(record_sign, "", unformed, directory_sign)[1].len == 2  # each form
 
 
-  test "program claim builds on backend it names, JS under Node; backend elsewhere is finding":
+  test "program claim spells command and extension of its backend, JS for Node; no other kind":
     let
       named = %*{"status": "proposed", "builds_on": [], "claims": [
         {"kind": "program", "path": "p.nim", "algebras": ["rga4d"], "backend": "js"},
         {"kind": "program", "path": "q.nim", "algebras": ["rga4d"], "backend": "c"}]}
       (proposal, findings) = parseProposal(record_sign, "", named, directory_sign)
-      misplaced = %*{"status": "proposed", "builds_on": [], "claims": [
-        {"kind": "suites", "backend": "js"}]}
       unknown = %*{"status": "proposed", "builds_on": [], "claims": [
         {"kind": "program", "path": "p.nim", "algebras": ["rga4d"], "backend": "wasm"}]}
     check findings.len == 0 and proposal.claims.len == 2  # both backends known
@@ -2206,7 +2204,12 @@ suiteInProc "Internal: Proposals":
     check commandBackend(%*{"kind": "program"}) == @["c"]  # claim naming none builds C
     check extensionBackend(proposal.claims[0]) == ".js"  # Node reads script by extension
     check extensionBackend(proposal.claims[1]) == ""
-    check parseProposal(record_sign, "", misplaced, directory_sign)[1].len == 1  # other kind
+    for kind in KINDS_CLAIM:
+      if kind == "program": continue
+      let placed = %*{"status": "proposed", "builds_on": [], "claims": [
+        {"kind": kind, "backend": "js"}]}
+      let found = parseProposal(record_sign, "", placed, directory_sign)[1]
+      check found.len == 1 and "Backend" in found[0].message  # no other kind builds on one
     check parseProposal(record_sign, "", unknown, directory_sign)[1].len == 1  # two backends
 
 
@@ -2433,6 +2436,10 @@ suiteInProc "Internal: Evaluations":
     check digestEdits([one], claims, @[]) == digestEdits([reworded], claims, @[])  # prose
     check digestEdits([one], claims, @[]) != digestEdits([one], %*[], @[])  # claims
     check digestEdits([one], claims, @["a"]) != digestEdits([one], claims, @["b"])  # program
+    let
+      built = %*[{"kind": "program", "path": "p.nim", "algebras": ["rga4d"]}]
+      built_js = %*[{"kind": "program", "path": "p.nim", "algebras": ["rga4d"], "backend": "js"}]
+    check digestEdits([one], built, @["a"]) != digestEdits([one], built_js, @["a"])  # backend
 
 
 
@@ -2451,7 +2458,7 @@ suiteInProc "Internal: Figures":
     check inline.figure("proposals/01-p").isNone  # image inside sentence stays text
 
 
-  test "proposal page names each define and backend its claims build with":
+  test "proposal page names each define its claims build with, and JS where claim names it":
     let
       record = Proposal(number: 1, name: "p", directory: "proposals/01-p", title: "P",
         claims: newJArray())
