@@ -1,8 +1,8 @@
 # P07: Compare each part at its own scale
 
 **What it is.** `=~` and `grade` weigh each coefficient against the largest absolute value of its
-own part, bulk or weight, and no longer against 1. In a conformal algebra, `grade` also counts a
-coefficient as zero within rounding of the largest coefficient.
+own part, bulk or weight, and at least 1, where pin weighs it against 1 alone. In a conformal
+algebra, `grade` also counts a coefficient as zero within rounding of the largest coefficient.
 
 **What it is for.** At pin the places of precision fall with the distance from the origin. Here
 they stay level at every distance measured, and `grade` misreads far fewer elements.
@@ -109,7 +109,8 @@ of pin but for an integer part number, and it keeps the import of `./cayleys`.
 - **Not finite.** A multivector with a coefficient that is not finite equals nothing, itself
   included. At pin NaN fails too, but an infinite coefficient equals any finite one. An infinite
   coefficient makes the bound of its part infinite, so `grade` returns none, and `isMixed` reads
-  the multivector as mixed.
+  the multivector as mixed. So `⊛` stops on such an operand, since it reads `m.grade.get`. At pin
+  such an operand can still hold one grade, and `⊛` goes on.
 - **Callers.** No exported signature changes, so no caller changes its text. Each test that reads
   `=~` takes the new rule.
 - **Narrowing.** `toMultivectorOf` still asserts each coefficient that it drops at the comparison
@@ -164,7 +165,7 @@ of pin but for an integer part number, and it keeps the import of `./cayleys`.
 - **P03, `partner-sign`, and P11, `unitize-general`.** Neither edits a line here. A test that P11
   adds to suite Internal compares two multivectors through the public `=~`, as
   `abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`. So that test reads this rule once both land. A run
-  by hand on 2026-10-19 applied this proposal and P11 to a copy of the library at pin. The suites
+  by hand on 2026-11-15 applied this proposal and P11 to a copy of the library at pin. The suites
   passed at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits.
 - **Two zero tests.** P11 keeps its own grade scan in `^∘`, at the comparison tolerance times the
   largest coefficient. So once both land, `grade` and `^∘` can read one element differently. That

@@ -24,11 +24,12 @@ product fills its result with zeros first.
 - **Second table.** `CAYLEY_PARTNER_MEET` is 𝐦 ∨ 𝐧⊟, the meet of its first operand with the
   carrier of its second. The carrier folds in, so the product reads only the coefficients that
   the carrier reaches. It takes two thirds of the multiplies of `∨`.
-- **Operator.** `⊛` holds `partnerContainer(m)` in the intermediate `container`, and returns
-  `partnerMeet(container, m)`. Both steps are private, through a new `as_private` argument of
-  the Cayley2D overload of `defineOperator`, false by default. Their calls stand with the call of
-  `⊡` under `#[ Operator Definitions ]#`. `⊛` takes `inline` and `noinit`, as each generated
-  operator does, so its result takes no zero fill. `operators.nim` no longer imports `options`.
+- **Operator.** `⊛` holds `partnerContainer(m)` in the variable `container`, declared `noinit`,
+  and returns `partnerMeet(container, m)`. Both steps are private, through a new `as_private`
+  argument of the Cayley2D overload of `defineOperator`, false by default. Their calls stand with
+  the call of `⊡` under `#[ Operator Definitions ]#`. `⊛` takes `inline` and `noinit`, as each
+  generated operator does, so its result takes no zero fill. `operators.nim` no longer imports
+  `options`.
 
 The container is quadratic in its operand, so a sign on both reads would square away. On one
 read, the sign is exact when every term of the operand has the same grade.
@@ -50,10 +51,10 @@ read, the sign is exact when every term of the operand has the same grade.
   an operand gets a value that means nothing. `⊛` keeps its signature, so its one caller, the
   alias `partner` in `pga.nim`, does not change.
 - **Two calls.** The chain still calls two functions. Its first step writes into a multivector
-  declared `noinit`, since the compiler zero-fills an intermediate for a call to a `noinit`
-  callee. So the partner keeps two error checks and two calls, and fills no intermediate. The
+  declared `noinit`, since the compiler zero-fills the result of a call that is the operand of a
+  second call. So the partner keeps two error checks and two calls, and fills no intermediate. The
   plain composition `partnerMeet(partnerContainer(m), m)` zero-fills one intermediate in its C at
-  cga5d, so `⊛` keeps the intermediate.
+  cga5d, so `⊛` keeps the variable.
 - **No table of three operands.** The partner is cubic, so no one table of two operands holds it.
   A table of three operands would, and the emitter reads none.
 

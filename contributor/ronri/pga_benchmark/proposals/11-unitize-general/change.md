@@ -25,9 +25,6 @@ touches:
   `TOLERANCE_ABS`, which `^∘` names in its conformal branch alone. With both applied, the
   conformal build stops on `undeclared identifier: 'TOLERANCE_ABS'`. So the second to land adds
   `TOLERANCE_ABS` to the import from `./algebra` under `when IS_CONFORMAL:`.
-- The change `doc-comments` writes in the doc of `unitize` that `^` and `normalizeWeight` cost no
-  call, as `so neither costs call`. With this change `^∘` is not inline, so each costs one. So the
-  second to land replaces `so neither costs call` with `so each costs one call to ^∘`.
 - The changes `doc-comments` and `doc-comments-2` edit docs next to `unitize` and `^` through
   quotes of their own, so either order holds. So does the change `conformal-norms`, which adds
   its tests before the placeholder at the end of Chapter 4. This change adds no test there.

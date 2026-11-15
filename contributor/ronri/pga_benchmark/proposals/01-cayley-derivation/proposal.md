@@ -193,8 +193,9 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
 ## Landing
 
 - **P08, `compound-tables`.** It quotes a line of the header of this file and reads `applyMap`,
-  so it lands after this proposal. Its support, antisupport, cocarrier, center and container follow
-  the carrier, so they join the group of properties.
+  so it lands after this proposal. Its rigid table `CAYLEYS_SUPPORT` follows `CAYLEY_ATTITUDE`,
+  and its conformal tables follow the carrier, so all five join the group of properties.
+- **P03, `partner-sign`.** It builds on this proposal and on P08, so it lands after P08.
 - **Change `cayleys-hygiene`.** It renames an overload of `constructProductInterior`, which this
   proposal deletes, so its edits are void once this proposal lands. Its other idea still applies,
   because this proposal writes the parity k(k−1)/2 of the reverse twice, in `reverse` and in
@@ -203,7 +204,9 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
   proposal lands second, its Replace carries their text under a new digest. If a change lands
   second, its edits of that file apply as written. `doc-comments-2` also edits the import line of
   `tests/suites.nim` that this proposal edits. If `doc-comments-2` lands second, it quotes that
-  line again.
+  line again. A line of `doc-comments` in the header of `pga.nim` points at the TODO of
+  `CAYLEYS_DOT`, which this proposal removes. Whichever of the two lands second drops that
+  pointer.
 - **Dot doc of `doc-comments`.** Its edit that quotes `  CAYLEYS_DOT* = block:` applies after
   this proposal too. It then gives a doc to one table constant, and this proposal gives none. The
   header of `pga/cayleys.nim` states the dot already.

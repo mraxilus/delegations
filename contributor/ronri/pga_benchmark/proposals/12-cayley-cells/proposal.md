@@ -111,9 +111,7 @@ that term.
 - **P08, `compound-tables`.** It lands after P01, so it meets this proposal as P01 does. Its own
   edits of `pga/cayleys.nim` touch other lines and write no cell as `@[...]`.
 - **Changes `cayleys-hygiene` and `doc-comments-2`.** Each edits other lines of
-  `pga/cayleys.nim`, so either order applies. `doc-comments-2` also writes beside `export cayleys`
-  in `pga.nim` that a read of a table at run time allocates. That comment is false once this
-  proposal lands, so whichever lands second drops it.
+  `pga/cayleys.nim`, so either order applies.
 - **This project.** `dense.nim` builds each cell of one row of a scale table as `@[...]`, in one
   line. When the pin moves to a library with this proposal, that line writes `toBasesSigned`.
   `cells.nim` reads either cell already.

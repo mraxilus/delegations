@@ -213,6 +213,10 @@ bare noun (V.3).
   the data of a `seq`, but the C type declares the alignment of the type. A caller that holds
   basis-set types in a `seq` there can stop on an aligned store, as an AVX2 build does. The library
   at pin runs such a program, and names no memory manager.
+- **Time of the whole set.** The whole set takes the alignment that P05 gives it, so the costs in
+  time that P05 names hold here too. A function that keeps a multivector on its stack realigns its
+  frame. In the runs of P05 on the Emerald Rapids Xeon under SSE2, five of seven operations at
+  cga5d ran ×1.07 to ×1.11 of pin.
 - **Callers.** A caller that lets the compiler place its basis-set types does not migrate, since
   every type and operator at pin stays. An operator on whole multivectors keeps its form at pin. A
   product of a whole multivector and a basis-set type had no operator at pin. The field `elements`
@@ -246,8 +250,9 @@ bare noun (V.3).
   macro, as the library defines each operator.
 - Keep the forms in a module of their own, `pga/basis_sets.nim`, as here, or put the same code
   inside `pga/operators.nim`, which builds.
-- Let `pga.nim` name 22 tables in the return types of its aliases, as here, or keep one-line
-  aliases of return type `auto` that name no table.
+- Let `pga.nim` name a table in the return types of 22 aliases, as here, or keep one-line
+  aliases of return type `auto` that name no table. The 22 return types name 20 tables, since
+  `bulk` and `bulkRound` read one, and `weight` and `weightRound` another.
 - Align each basis-set type to at most 64 bytes, as here, or to at most 16 bytes, which `alloc`
   gives, or align past 8 bytes only under a guard on `defined(gcDestructors)`.
 

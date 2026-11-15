@@ -325,15 +325,13 @@ kind is in hand.
   import from `./algebra` under `when IS_CONFORMAL:`.
 - **Changes `doc-comments` and `doc-comments-2`.** They edit docs next to `unitize` and `^` through
   distinct quotes, so either order holds. `doc-comments` writes in the doc of `unitize` that `^`
-  and `normalizeWeight` cost no call, as `so neither costs call`. Without `inline` on `^∘`, each
-  costs one. So the second of `doc-comments` and this change to land replaces that text with
-  `so each costs one call to ^∘`.
+  adds no call of its own, which stays true here.
 - **Sphere of the test of suite Internal.** It has radius one about a random center, through a
   point one unit along each axis and one unit back along the first. So no two of its points lie
   close, as the Architect ruled on 2026-10-16. Random points can lie close, and at cga3d two
   points 0.0037 apart sent a plane through and back to a flat weight of 0.999924. A run by hand on
-  2026-10-19 applied this change alone at pin, and the suites passed at cga3d to cga6d.
-- **Runs by hand.** A run on 2026-10-19 applied P07 and this change to a copy of the library at
+  2026-11-15 applied this change alone at pin, and the suites passed at cga3d to cga6d.
+- **Runs by hand.** A run on 2026-11-15 applied P07 and this change to a copy of the library at
   pin. The suites passed at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits.
 
 ## Evidence

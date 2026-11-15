@@ -205,8 +205,8 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
   `pga/operators.nim`. If P11 lands too, the `unitize` of `pga.nim` stays `^m`, and calls the `^∘`
   of P11. In the table of norm operators, P11 quotes the row of `^∘` and the rule under it, and
   this proposal quotes the heading and the row of `|⊘`. In `tests/suites.nim`, P11 quotes the
-  head of Chapter 4, `conformal-norms` quotes its last test, and this proposal quotes the test of
-  (4.45).
+  head of suite `Internal`, `conformal-norms` quotes the last test of Chapter 4, and this proposal
+  quotes the test of (4.45).
 
 ## Evidence
 

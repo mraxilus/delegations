@@ -26,9 +26,6 @@ to land drops or corrects that line:
 - P03, `partner-sign`, reads no grade in the partner. Then the line that this change adds to the
   doc of `partner` in `pga.nim` is not true. The second to land rewrites it as
   `Requires single-grade multivector; mixed grade has no defined partner, and gets no check.`
-- P11, `unitize-general`, drops `inline` from `^∘` and quotes no line here. This change writes
-  that `^` and `normalizeWeight` cost no call. The second to land replaces
-  `so neither costs call` with `so each costs one call to ^∘`.
 - P12, `cayley-cells`, holds each cell of a table in place, with no `seq`. This change writes in
   the header of `pga.nim` that the tables hold `seq` per cell. It writes in the header of
   `pga/cayleys.nim` that each cell holds `seq`. Both lines are false once P12 lands.
@@ -53,8 +50,8 @@ Three proposals edit lines that this change quotes:
 
 ```nim
 ## Dimensions 2 to 6 supported; `algebra.nim` asserts range at compile time.
-##   Digit encoding of bases admits 9D; build cost is what forbids it.
-##   At 6D dense geometric product is 4 096-term function, and C compiler dominates build.
+##   Digit encoding of bases admits 9D; compile and run time past 6D forbid it.
+##   At 6D dense geometric product is 3 072-term function rigid, 4 096-term conformal.
 ```
 
 ## Edit `pga.nim`
@@ -65,12 +62,12 @@ Three proposals edit lines that this change quotes:
 ```
 
 ```nim
-##   [Cayley1D, Cayley2D] -> defineOperator -> one function per symbol
-##   helpers.nim builds emitted AST; this file only aliases what operators.nim defines.
+##   [Cayley1D, Cayley2D] -> defineOperator -> one function per call
+##   emitters.nim emits function AST; this file aliases operators.nim and multivectors.nim.
 ##
 ## Most operators are derived from (anti)metric and exterior product definitions.
-##   Two, `∧★` and `∨☆`, come from older dual-and-exterior path (cayleys.nim:167).
-##   Both paths give same term counts at 4D; see TODO at cayleys.nim:162 to keep one.
+##   Not so for parts, reverses and squared norms of parts, which `cayleys.nim` constructs.
+##   Dot comes from transwedges; TODO at `CAYLEYS_DOT` would take it from bulk contraction.
 ```
 
 ## Edit `pga.nim`
@@ -80,20 +77,9 @@ Three proposals edit lines that this change quotes:
 ```
 
 ```nim
-##   Measured: zero allocations on every operator at 4D and 5D.
-##   Cayley tables hold `seq` per cell, so reading `CAYLEYS_*` at runtime allocates;
+##   Measured: zero allocations on every operator at rga3d, rga4d, cga4d and cga5d.
+##   Cayley tables hold `seq` per cell, and cost of runtime read of `CAYLEYS_*` is unmeasured;
 ##     inspect them inside `static:` or `const` instead.
-```
-
-## Edit `pga.nim`
-
-```nim
-##   Recommend to always parenthesize complex operations, or used named aliases.
-```
-
-```nim
-##   Recommend to always parenthesize complex operations, or used named aliases.
-##   Library parenthesizes its own mixed expressions for same reason (operators.nim:472).
 ```
 
 ## Edit `pga.nim`
@@ -105,18 +91,6 @@ Three proposals edit lines that this change quotes:
 ```nim
 ##   Each operator is also documented in case symbols are non-obvious for those unfamiliar.
 ##   Read order: this file, then operators.nim's two macros, then cayleys.nim's tables.
-```
-
-## Edit `pga.nim`
-
-```nim
-##   | |∘  | normWeight        | ‖𝐦‖∘        |
-```
-
-```nim
-##   | |∘  | normWeight        | ‖𝐦‖∘        |
-##   | |∙² | normBulkSquared   | ‖𝐦‖∙²       |
-##   | |∘² | normWeightSquared | ‖𝐦‖∘²       |
 ```
 
 ## Edit `pga.nim`
@@ -146,7 +120,7 @@ import ./pga/[algebra, cayleys, multivectors, operators]
 
 ```nim
   import std/nimprof
-  ## Driven by `nim c -d:release --profiler:on --stackTrace:on -r tests/rga/test_4d.nim`.
+  ## Enabled by `--profiler:on --stackTrace:on`, e.g. on `tests/rga4d/test_rga4d.nim`.
 
 import ./pga/[algebra, cayleys, multivectors, operators]
 ```
@@ -159,7 +133,7 @@ import ./pga/[algebra, cayleys, multivectors, operators]
 ```
 
 ```nim
-  ##   Same function as `normalizeWeight`; `^` is template over `^∘`, so neither costs call.
+  ##   Same function as `normalizeWeight`; `^` is template over `^∘`, so adds no call itself.
   ##   Projects higher-dimensional representations of objects into Eucledian space.
 ```
 
@@ -207,7 +181,7 @@ func projectCentralAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (m �
   ## Project 𝐦 centrally onto 𝐧 in antispace, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧★).
 
 func projectOrthogonal*(m, n: Multivector): Multivector {.inline.} = n ∨ (m ∧☆ n)
-  ## Project 𝐦 orthogonally onto 𝐧, i.e. 𝐧 ∨ (𝐦 ∧ 𝐧☆); nearest point of 𝐧 to 𝐦.
+  ## Project 𝐦 orthogonally onto 𝐧, i.e. 𝐧 ∨ (𝐦 ∧ 𝐧☆); for point 𝐦, nearest point of 𝐧.
 
 func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (m ∨☆ n)
   ## Project 𝐦 orthogonally onto 𝐧 in antispace, i.e. 𝐧 ∧ (𝐦 ∨ 𝐧☆).
@@ -233,11 +207,11 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 ```
 
 ```nim
-    ##     Order 4D 2/3-vectors to align as right complements of basis vectors,
-    ##       to consider 4x4 transformation matrix rows as planes, columns as points.
-    ##       I.e. e₄₁ is right complement of e₂₃ and vice versa, so complement is index
-    ##       reversal rather than permutation table, and plane's coefficients sit in
-    ##       matrix row where point's sit in column, with no re-indexing between them.
+  ##     Order 4D 2/3-vectors to align as right complements of basis vectors,
+  ##       to consider 4x4 transformation matrix rows as planes, columns as points.
+  ##       I.e. right complements of e₁, e₂, e₃, e₄ are +e₄₂₃, +e₄₃₁, +e₄₁₂, +e₃₂₁ in order,
+  ##       so plane's coefficients sit in matrix row where point's sit in column,
+  ##       with no re-indexing between them.
 ```
 
 ## Edit `pga/algebra.nim`
@@ -261,7 +235,7 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 
 ```nim
 ## Cayleys exposed to importer so they can inspect algebra's definition.
-##   Compile-time only: each cell holds `seq`, so runtime read of table allocates.
+##   Each cell holds `seq`; library reads tables at compile time only.
 ```
 
 ## Edit `pga/cayleys.nim`
@@ -283,7 +257,7 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 
 ```nim
     # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
-    #   Heap here is compiler's VM only: macros alone read these tables.
+    #   Heap here is compiler's VM only: const blocks and macros alone read these tables.
 ```
 
 ## Edit `pga/cayleys.nim`
@@ -298,10 +272,10 @@ type  ## Define type definitions for algebraic distinctions.
 ```nim
 type  ## Define type definitions for algebraic distinctions.
   Chirality {.pure.} = enum Left, Right  ## Define distinction between PGA operation orientations.
-    ##   Right is library default; left tables are built but nothing reads them.
+    ##   Right is default; left complement serves `\`, and left interior tables reach no operator.
   Partiality {.pure.} = enum Bulk, Weight  ## Define distinction between PGA's disjoint parts.
   Spatiality {.pure.} = enum Base, Anti  ## Define distinction between PGA's spacial duality.
-    ##   Base spans 𝟏..eₙ; anti is its complement under antiscalar.
+    ##   Base works by grade and ∧; anti by antigrade and ∨, i.e. base under complements.
 ```
 
 ## Edit `pga/cayleys.nim`
@@ -323,7 +297,7 @@ type  ## Define type definitions for algebraic distinctions.
 
 ```nim
   ## Construct metric 𝖌 simplified as 1D cayley table.
-  ##   1D table holds signed permutation only: diagonal or basis-swapping metrics.
+  ##   1D table holds one signed basis or none per cell: diagonal, degenerate or swapping metric.
 ```
 
 ## Edit `pga/cayleys.nim`
@@ -357,8 +331,8 @@ type  ## Define type definitions for algebraic distinctions.
 
 ```nim
 # TODO: Represent multivector primitives using more compact data types.
-#   Measured gap this would close: 79 of 315 measurands spend more multiplies than
-#     typed reference, widest being 1 004 against 10 (5D partner).
+#   Measured gap this would close: 128 of 269 typed measurands spend more multiplies than
+#     typed reference, widest being 518 against 10 (cga5d partner).
 ```
 
 ## Edit `pga/multivectors.nim`
@@ -369,7 +343,7 @@ type  ## Define type definitions for algebraic distinctions.
 
 ```nim
   ## Convert multivector to readable string representation.
-  ##   Components at or below tolerance are omitted, so small non-zero prints as nothing.
+  ##   Components at or below tolerance are omitted; all-omitted multivector prints as `0𝟏`.
 ```
 
 ## Edit `pga/operators.nim`
@@ -379,11 +353,11 @@ type  ## Define type definitions for algebraic distinctions.
 ```
 
 ```nim
-## Operator definitions: one function generated per Cayley table.
-##   Cayley cell (i, j) -> k with sign: product of basis i and j lands at index k.
-##   Negative sign emits leading `-`; absent cell leaves its coefficient at zero fill.
-##   Generated functions take pragma from macro's `emitFunc` call, currently empty.
-##   Hand-written below generated block: norms, unitize, support, attitude, properties.
+## Define operators: `defineOperator` generates one function per call, from its Cayley table.
+##   Cayley cell (i, j) lists signed k per term: product of basis i and j adds into each k.
+##   Negative sign emits leading `-`; basis no term reaches gets literal `0.0`.
+##   Generated functions take pragmas `inline` and `noinit` from macro's `emitFunc` call.
+##   Hand-written below generated block: scalar product, norms, unitize, support, ⊞ ⊙ ⊡ ⊛.
 ```
 
 ## Edit `pga/operators.nim`
@@ -418,9 +392,9 @@ type  ## Define type definitions for algebraic distinctions.
 
 ```nim
 ## Law suites keyed to equation numbers of Lengyel's book.
-##   Basis-pair suites run each identity at every pair; sample suites draw from pool.
+##   Basis-pair tests walk basis pairs, some grade-filtered; sample tests draw from seeded pool.
 # TODO: Check which tests should be modified for CGA (after full CGA support).
-#   Norm suites are gated `when IS_RIGID` at line 293; ungated they fail (five suites).
+#   Norm tests 2.87-89, 2.90-94, 2.97-98, 2.99 and dual test 2.103 run only `when IS_RIGID`.
 ```
 
 ## Edit `tests/suites.nim`
@@ -430,5 +404,5 @@ type  ## Define type definitions for algebraic distinctions.
 ```
 
 ```nim
-    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # e1, constructed as e1(1.0)
+    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # e1, i.e. Basis.E1.initElement(1)
 ```

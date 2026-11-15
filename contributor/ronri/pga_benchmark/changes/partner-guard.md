@@ -1,8 +1,9 @@
 # State and assert precondition of partner
 
 `⊛` reads `m.grade.get`, which panics with no message on a multivector of mixed grade.
-This change asserts single grade, with a message. It also puts parentheses around both
-operands of `∨`, since `∨` binds looser than `*`.
+This change asserts single grade, with a message. It also puts parentheses around the left
+operand of `∨`, since `∨` binds looser than `*`. The right operand `⊟m` is a prefix call, which
+binds tighter than either.
 
 P03, `partner-sign`, folds the sign of the partner into its first table. It removes these lines,
 with the grade scan and this assert, so this change is void once P03 lands.
