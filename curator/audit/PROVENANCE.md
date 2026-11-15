@@ -1029,7 +1029,7 @@ Only two kinds of path count. A charter document holds rules of content, which m
 and sections of process, which move none. A delegate forgets both, so each change of the charter
 reaches each older branch, as the Architect asked on #843. The other path is `provenance.nim`
 (`PATH_STAMP`), which holds `RULES`, `SECTIONS_PROCESS` and the digest of the stamp. A change of
-those moves every stamp, and `koch stamp` of an older branch writes the old one.
+those can move every stamp, and `koch stamp` of an older branch writes the old one.
 
 The same module holds the checks of a record too, such as `checkProvenance`, `checkCitations`
 and `isDateIso`. A path cannot tell which part of the module moved, so drift names each change
@@ -1038,17 +1038,21 @@ protection requires, so no setting changes. A static assertion in `base.nim` hol
 to the file beside it, so a rename of that module fails the build.
 
 - Cost: an edit of `provenance.nim` that moves no stamp still sends each older branch to merge
-  `main`. Measured on 2026-11-15 at `174120b68`, over the merges that
-  `git log --first-parent --since=2026-10-02T00:00:00Z --format=%H` lists. Each merge was read
-  with `git diff --name-only --no-renames <merge>^1 <merge>`. 5 of them changed `provenance.nim`,
-  and 1 of those changed no `Rules` row in any record.
+  `main`. Measured on 2026-11-15 over the merges that
+  `git log --first-parent --merges --since=2026-10-02T00:00:00Z --format=%H 174120b68` lists.
+  Each merge was read with `git diff --name-only --no-renames <merge>^1 <merge>`. 5 of them
+  changed `provenance.nim`, and 1 of those changed no `Rules` row in any record.
 - Assumed: a merge that changes no `Rules` row moves no stamp. Duty 1 writes each row in the pull
   request that moves the stamp.
-- Cost: `sections` of `markdown.nim` cuts each document for the stamp (`textStamped`), yet drift
-  names no change of it. Where such a change moves the stamp, the check of the merge reports a
-  stale stamp in each record that the branch wrote. `koch stamp` of the branch then writes the old
-  stamp, until the branch merges `main`. Over the same merges, 6 changed `markdown.nim`. 1 of
-  those left the charter alone, and changed no `Rules` row.
+- Cost: code outside `provenance.nim` feeds the stamp too, and drift names no change of it.
+  `sections` of `markdown.nim` cuts each document for the stamp (`textStamped`).
+  `documentsRules` and `stampRules` of `audit.nim` read each document from the tree and digest
+  them. Where such a change moves the stamp, the check of the merge reports a stale stamp in
+  each record that the branch wrote. `koch stamp` of the branch then writes the old stamp, until
+  the branch merges `main`.
+- Over the same merges, 6 changed `markdown.nim`. 1 of those left the charter alone, and changed
+  no `Rules` row. 2 changed the body of `documentsRules` or `stampRules`, read with `git show` at
+  each end, and each of those changed the charter too.
 
 **The rest of the checker is no governing path, since `koch check` judges each branch with the
 checker of its base.** The Architect ruled so on #893. On a pull request, each job that judges
@@ -1057,10 +1061,11 @@ the same merge, with the koch of that merge (Merge with base). So a branch that 
 of the checker alone meets the checker of its base, on the runner and on the delegate.
 
 - Rejected: drift of each path of the checker. It sends each open branch to merge `main` for
-  parity alone. Measured on 2026-11-15 at `c2e80da35`, over the merges to `main` that
-  `git log --first-parent --since=2026-10-02T00:00:00Z --format=%H c2e80da35` lists. Each merge
-  was read with `git diff --name-only --no-renames <merge>^1 <merge>`. 96 of those 329 merges
-  changed the charter or the checker: 17 the charter alone, 44 the checker alone, and 35 both.
+  parity alone. Measured on 2026-11-15 over the merges to `main` that
+  `git log --first-parent --merges --since=2026-10-02T00:00:00Z --format=%H c2e80da35` lists.
+  Each merge was read with `git diff --name-only --no-renames <merge>^1 <merge>`. 96 of those 329
+  merges changed the charter or the checker: 17 the charter alone, 44 the checker alone, and 35
+  both.
 - The merges of `main` into a branch are what `git rev-list --merges` lists over the same window,
   off that first-parent chain, with a second parent on it. Of those 258, 62 took changes of the
   checker alone, by the same `git diff` of each.
@@ -1174,9 +1179,9 @@ merge passes, as `judgeMerged` decides.
   documentation: GitHub runs no `pull_request` workflow on a conflicting pull request, so the
   runner agrees.
 - Cost: the second tree holds one more checkout and what the suites restore there. Measured with
-  `du` on 2026-11-15, after the run of `koch check` that judged `curator/audit` for this branch.
-  The second tree held 99 MB: the checkout, and 79 MB that the suites of `curator/audit` wrote.
-  Its build held 27 MB.
+  `du` on 2026-11-15, on the four-core Intel Xeon 2.10 GHz container, after one `koch check` of a
+  branch that changes `curator/audit`. The second tree held 99 MB: the checkout, and 79 MB that
+  the suites of `curator/audit` wrote. Its build held 27 MB.
 - Assumed: a second tree takes on what the suites of each project restore, as the branches it
   judges touch that project. Measured with `du` on 2026-11-15, the ignored state of the primary
   checkout of the same container held 573 MB.
@@ -1197,11 +1202,19 @@ merge passes, as `judgeMerged` decides.
   stays. A stub compiler holds the build, its pin, its cache and each path of its key.
 - Verified by `suites/test_merge.nim` for `judgeMerged`, the path that `koch check` takes. Drift
   comes first, and a failed run of the koch of the merge records no mark. A passed run records
-  the tree of the branch, and a detached HEAD records none.
+  the tree of the branch, and a detached HEAD records none. A failed build, and a pin that no
+  compiler serves, each give one finding, exit 1 and no mark. A deleted second tree is added
+  again.
+- Verified by `suites/test_merge.nim` for `judgeCheckout`, which chooses between the second tree
+  and the path in place. It holds `recordMark`, the mark of a run in place, too. `koch.nim` calls
+  the first, and its path in place calls the second.
+- Cost: no suite runs `main` of koch. So the checks of `checkInPlace` in `koch.nim`, their order,
+  and its call of `recordMark` after a green run hold by reading and by hand.
 - Verified by hand on 2026-11-15, by mutants of `merge.nim` on scratch copies, where the suite
-  fails each. One keys `koch.nim` and `koch.nim.cfg` alone, and one builds inside the second
-  tree. One cleans with no `-d`, one cleans a folder that is no worktree, and one marks on each
-  exit.
+  fails each. They key `koch.nim` and `koch.nim.cfg` alone, build inside the second tree, or
+  clean with no `-d`. They clean a folder that is no worktree, or add with no `--force`. They
+  mark on each exit, drop or zero the exit of a finding, or skip the run of a detached HEAD. They
+  judge in place no checkout, mark a detached HEAD in place, or merge each checkout.
 - Verified by hand on 2026-11-15, in the throwaway clone that Drift names. A passed merge records
   the tree of the branch, so `koch hook push` passes its head and refuses the merge commit. A
   conflict gives one finding, and no mark.
