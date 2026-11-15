@@ -20,6 +20,8 @@
 ##     Section outside standard set follows them, and `drive` names it (`proposals.nim`).
 ##   Header cites number and status. Frozen proposal shows pin its last evaluation was taken at,
 ##     since library has moved past it.
+##   Deferred proposal is tested apart from evaluation, so it shows no verdict and no claim at
+##     pin: its chip says so, in place of failing `no evaluation`, and its evidence is its notes.
 ##   Ids carry proposal's name, so list page holds every proposal and contents still lead home.
 ##
 ##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and font
@@ -34,6 +36,11 @@ import std/[json, options, sequtils, strutils, tables]
 
 import ../[changes, markdown, proposals]
 import ./[evaluation, shell]
+
+
+const TEXT_DEFERRED* = "deferred, tested apart"
+  ## Chip text of deferred proposal where evaluation would stand: it waits on release outside
+  ##   project, so general evaluation leaves it out.
 
 
 func citeLinked*(proposal: Proposal, urls: Table[string, string]): string =
@@ -155,6 +162,7 @@ func htmlProposal*(
         proposal.implemented_in[
           0..<min(7, proposal.implemented_in.len)],
       )
+      elif proposal.isDeferred: "deferred"
       elif proposal.isFrozen: "withdrawn"
       else: "proposed"
   let
@@ -216,7 +224,8 @@ func htmlProposal*(
         "</div>"
   result.add htmlDependencies(proposals, proposal, urls) &
       "<dl class=\"depends\"><div><dt>Tried at pin</dt><dd><div class=\"chips\">" &
-      chipsVerdict(evaluation, baselines, spread) & "</div></dd></div></dl></section>"
+      (if proposal.isDeferred and evaluation.isNil: chip(TEXT_DEFERRED, "")
+       else: chipsVerdict(evaluation, baselines, spread)) & "</div></dd></div></dl></section>"
 
   func opening(anchor, section, name, mark: string): string =
     ## Open section of name under its mark, with id contents link to; appendix opens apart.
@@ -228,14 +237,18 @@ func htmlProposal*(
     result.add opening(anchor, section, name, mark)
     case name
     of "Evidence":
-      result.add "<" & part & ">Claims</" & part & ">" & htmlClaims(evaluation) & "<" & part &
-          ">Gains and losses at pin</" & part & ">"
-      let bases = dependencies(proposals, proposal)[0]
-      if bases.len > 0 and not evaluation.isNil:
-        result.add "<p class=\"note\">Proposal is measured with " &
-            bases.mapIt(citeLinked(it, urls)).join(", ") & " applied first, so its figures " &
-            "hold their gains too.</p>"
-      result.add htmlEvidence(evaluation, baselines, spread)
+      if proposal.isDeferred and evaluation.isNil:
+        result.add "<p class=\"note\">Deferred: general evaluation leaves this proposal out, " &
+            "so no claim is checked at pin. Its evidence stands in notes below.</p>"
+      else:
+        result.add "<" & part & ">Claims</" & part & ">" & htmlClaims(evaluation) & "<" & part &
+            ">Gains and losses at pin</" & part & ">"
+        let bases = dependencies(proposals, proposal)[0]
+        if bases.len > 0 and not evaluation.isNil:
+          result.add "<p class=\"note\">Proposal is measured with " &
+              bases.mapIt(citeLinked(it, urls)).join(", ") & " applied first, so its figures " &
+              "hold their gains too.</p>"
+        result.add htmlEvidence(evaluation, baselines, spread)
       let notes = sections.blocks(name)
       if notes.len > 0:
         result.add "<" & part & ">Notes</" & part & ">" &

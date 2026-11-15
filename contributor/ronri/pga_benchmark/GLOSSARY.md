@@ -175,7 +175,7 @@ _Avoid_: patch, fix, diff, case
 **Proposal**:
 A future state of the library, explored before the Architect adopts it. One directory in
 `proposals/` holds its argument, its candidate change and its claims. Its number stays its own,
-cited as `P01`, and its status is proposed, implemented or withdrawn.
+cited as `P01`, and its status is proposed, implemented, withdrawn or deferred.
 _Avoid_: design, plan, RFC
 
 **Evaluation**:
