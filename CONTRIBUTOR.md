@@ -473,11 +473,14 @@ Its `system` verb declares `libbrotli1` where its pages ship `woff2`, because `k
   CI runs, the static checks first, since they are cheap next to the jobs that compile and test.
   A pull request opened before it passes breaks the process, whatever CI later says: the runner
   confirms, and it never discovers. Run it again before every later push.
-- **`check-drift` fails where the charter or the checker moved on `main` after you branched.**
-  Its finding names each section of the charter that changed, and the command that shows the
-  change. Read each change, then merge `origin/main`. Where the finding asks for it, re-audit
-  your project against each change and re-stamp before you push. Only the charter and the
-  checker count, so the code of another project will not stop you. The skill `sync` points here.
+- **`check-drift` fails where the charter or the code of the stamp moved on `main` after you
+  branched.** Its finding names each section of the charter that changed, and the command that
+  shows the change. Read each change, then merge `origin/main`. Where the finding asks for it,
+  re-audit your project against each change and re-stamp before you push. Only these two count,
+  so the checker and the code of another project will not stop you. The skill `sync` points here.
+- **`nim r koch check` judges your branch as merged with `origin/main`, as the runner does.** So
+  the checker of `main` judges your branch, and a change to it needs no merge. Where your branch
+  conflicts with `main`, `koch check` asks for a merge.
 - **Your pull request clears each finding that a new check left in your project.** A curator
   lands a check once the rest of the tree is clean, and a review finding on your project quotes
   what it found. Those findings fail your branch, and a branch that changes their lines, and
