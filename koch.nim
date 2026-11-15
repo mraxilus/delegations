@@ -80,7 +80,7 @@ Verbs:
   check-commits  commits since base: subject form, scope, test before fix, body, record apart
   check-drift    each charter section and checker path base changed since branch forked
   check-schemas  each folder of protobuf schemas branch changed, against version base shipped
-  check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
+  check-role     pull request's role line, label, title and form of body, from ROLE_* env
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
