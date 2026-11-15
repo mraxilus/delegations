@@ -352,13 +352,11 @@ proc runHook(root, event, input: string): int =
       drift = checkBase(readDrift(root, "origin/" & MAIN))
     except CatchableError: discard
     # Record branch works on is read where it exists; new project has none until it writes one.
-    #   File of role is read same way, and branch outside grammar names none.
-    let
-      record = branch_root.pathRecord
-      prompt = branch_root.pathPrompt
+    #   File of role is read same way, in `readPrompt`, where suite reaches it.
+    let record = branch_root.pathRecord
     echo contextStart(
       branch_root,
-      if prompt.len > 0 and fileExists(root / prompt): readFile(root / prompt) else: "",
+      readPrompt(root, branch_root),
       readFile(root / "CONTRIBUTOR.md"),
       "## Carry the unchecked list in the open",
       if record.len > 0 and fileExists(root / record): readFile(root / record) else: "",

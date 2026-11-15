@@ -1948,6 +1948,15 @@ func pathPrompt*(branch: string): string =
   of Role.Contributor: "CONTRIBUTOR.md"
 
 
+proc readPrompt*(root, branch: string): string =
+  ## Read text of file of role branch names (`pathPrompt`), as `start` passes it to
+  ##   `contextStart`; empty outside grammar, or where root holds no such file.
+  ##   Read lives here and not in koch, since no suite runs `main` of koch, and suite reads it
+  ##     over scratch root.
+  let path = branch.pathPrompt
+  if path.len > 0 and fileExists(root / path): readFile(root / path) else: ""
+
+
 func contextStart*(
   branch, prompt, contributor, heading_carried, record: string; drift: seq[Finding]
 ): string =
