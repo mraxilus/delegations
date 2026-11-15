@@ -29,6 +29,7 @@ nim r koch check                                 # repository root: every check 
 nim r koch test contributor/ronri/pga_visualiser  # this project alone, three configurations
 nim r tools/build.nim assets                     # this project: fetch every font face, once
 nim r tools/build.nim web                        # this project: build/pga_visualiser.html
+nim r tools/build.nim mockup                     # this project: build/pga_visualiser_mockup.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
 nim r tools/build.nim desktop                    # this project: binaries/pga_visualiser
 nim r tools/build.nim driven                     # this project: drive the desktop alone
@@ -105,6 +106,67 @@ the C backend. `test_4d_small` runs at capacities small enough that the tests of
 them. `test_4d_browser` runs on the JS backend, and it is the one that holds the formatting of the
 two backends to the same rule.
 
+## Comparison mockups
+
+A comparison mockup is the page of this project with a panel for one open decision. The panel
+switches between the options of that decision. Each scenario builds a small scene where the options
+part most, marks where to aim, and lists the steps to do there. The Architect does the steps under
+each option, and rules on how each one feels as well as on its figures. Only the chosen option is
+then built into the project.
+
+```sh
+nim r tools/build.nim mockup   # this project: build/pga_visualiser_mockup.html
+```
+
+The page that readers run never holds a mockup. The `mockup` verb compiles the bridge with
+`-d:mockup`, and only that define includes `src/browser/mockup.nim`. The verb then appends
+`pages/mockup.html` to the page, and names the page after `TITLE_MOCKUP`. The panel reads the
+comparison from the bridge, so it holds no option and no scenario of its own.
+
+| Part | What it holds |
+| --- | --- |
+| `src/browser/mockup.nim` | The open comparison: question, options, scenes, and hooks. |
+| `src/browser/bridge.nim` | One line under `when defined(mockup)` where options part. |
+| `pages/mockup.html` | The panel: it builds a scenario, marks targets, and measures each run. |
+| `tools/build.nim` | The `mockup` verb, which builds the page with all three. |
+
+No comparison is open now, so the `mockup` verb says so and stops. Each closed comparison stands
+in the history of `src/browser/mockup.nim`, and shows each part. A comparison gives the panel four
+exports:
+
+| Export | What it does |
+| --- | --- |
+| `nimMockupSpec()` | Returns the comparison as JSON: question, options, scenarios, steps. |
+| `nimMockupSetOption(key)` | Picks the option that has that key. |
+| `nimMockupSetUp(index, width, height)` | Builds a scenario, and returns targets with drags. |
+| `nimMockupReadout()` | Returns what the panel measures, such as the eye's distance to Sol. |
+
+To build the mockup for a new decision:
+
+1. Write the question, the options and the scenarios in `src/browser/mockup.nim`. Give each option
+   a key, a name of at most three words, and one or two sentences.
+2. Put each option behind a hook in `mockup.nim`. Call that hook from `bridge.nim` under
+   `when defined(mockup)`, and leave the shared modules as they are.
+3. Make each scenario show the problem at its worst. Build it a scene of its own, which holds only
+   what the case needs. Stand the camera where the options part most, and return the pixels to aim
+   at. The panel marks each pixel with a diamond of chevrons, and a drag with chevrons that grow.
+4. Give each scenario the measure that the panel reads: `wheel`, `trip`, `pinch` or `pan`. Where a
+   decision needs another measure, add it to the panel.
+5. Build the mockup, and drive each scenario under each option in Chromium. The figures must agree
+   with what the probe of the decision measured.
+6. Publish the mockup as an artifact of its own, and link it in the issue of the decision.
+7. When the Architect rules, build the chosen option into the project. In the same pull request,
+   remove the comparison and its hooks, and keep the panel, the verb and this section.
+
+The panel compares what the steps asked with what the eye did. A wheel notch asks the eye's
+distance to Sol to scale by 1.12. A pinch asks it to scale by the ratio of the gaps of the fingers.
+On a log scale, `as asked` is between three quarters and four thirds of what was asked. `short` is
+less, `over` is more up to three times, and `flung` is more than three times.
+
+A pan asks the focus to move with the pointer: the same bounds hold on that share, and `still` is
+under a fiftieth of it. A round trip is `returned` where the eye ends within a hundredth of a home
+distance of its start, and `off` where it ends further.
+
 ## Layout
 
 ```
@@ -123,10 +185,12 @@ src/desktop/panel.nim         the panel the reader edits scene and camera throug
 src/desktop/arena.nim         scratch arena the exporters write through
 src/desktop/image.nim gif.nim PNG and GIF encoders, for storyboard frames
 src/browser/bridge.nim        every value the page draws, compiled through the JS backend
+src/browser/mockup.nim        the open comparison, which `-d:mockup` alone includes
 src/browser/*.ts              DOM, WebGL and event wiring alone; gated file kind
 pages/shell.html              committed markup, with tokens the build fills
-tools/build.nim               the build driver: declare, types, web, drive, desktop,
-                              driven, assets, head, system, clean
+pages/mockup.html             the comparison panel, which the mockup verb appends
+tools/build.nim               the build driver: declare, types, web, mockup, drive,
+                              desktop, driven, assets, head, system, clean
 tools/drive/                  the Playwright harness the drive verb runs
 tests/suites.nim              every law, over one seeded pool of objects
 tests/suites/                 one module for each suite, and the pool they share

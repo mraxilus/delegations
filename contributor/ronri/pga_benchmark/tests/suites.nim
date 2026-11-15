@@ -455,6 +455,18 @@ suiteInProc "Internal: Measurements":
     check median([4.0, 1.0, 3.0, 2.0]) == 2.5  # even count, mean of middle two
 
 
+  test "machine names processor by model name, family and model of first block of cpuinfo":
+    let cpuinfo = "processor\t: 0\nvendor_id\t: GenuineIntel\ncpu family\t: 6\n" &
+      "model\t\t: 173\nmodel name\t: Intel(R) Xeon(R) Processor @ 2.30GHz\n\n" &
+      "processor\t: 1\nmodel\t\t: 85\n"
+    check processor(cpuinfo) ==
+      "Intel(R) Xeon(R) Processor @ 2.30GHz, family 6 model 173"  # second block left alone
+    check processor("") == PROCESSOR_UNRECORDED  # host that describes none
+    check processor("processor\t: 0\nCPU part\t: 0xd0c\n") ==
+      PROCESSOR_UNRECORDED  # block that names no model
+    check machineNow().startsWith(hostOS & " " & hostCPU & ", ")  # stamp of this host
+
+
 
 suiteInProc "Internal: Allocation":
   test "allocation gauge is live under this build":
@@ -682,6 +694,26 @@ suiteInProc "Internal: Inspector":
     check functions.len == 1  # declaration skipped, definition read
     check functions[0].name == "measure0Library_u0__m" and not functions[0].is_inline  # head
     check "getMonoTime" in functions[0].body  # body runs to its closing brace
+
+
+  test "instance of `MultivectorOf` reads as library type of its count, aligned or not":
+    # Case: at 3d9696e, field of P05 and of P04 opens with `NIM_ALIGN(64)`, and instance kept
+    #   its C name, so evaluation of P05 listed each of 38 functions at rga4d as gone and new.
+    for field in ["tyArray__a elements;", "NIM_ALIGN(64) tyArray__a elements;"]:
+      let functions = functionsIn(
+        [
+          "typedef NF tyArray__a[16];",
+          "struct tyObject_MultivectorOf__h {",
+          "\t" & field,
+          "};",
+          "N_LIB_PRIVATE N_NIMCALL(void, negate__u0__m)(tyObject_MultivectorOf__h* m_p0) {",
+          "}",
+        ].join("\n") & "\n",
+        [(16, "Multivector")],
+      )
+      check functions.len == 1  # one definition read
+      if functions.len == 1:
+        check functions[0].parameters == @["Multivector"]  # named by count of its array
 
 
   test "terms inside loops of constant bound count once per trip":
@@ -2314,6 +2346,20 @@ suiteInProc "Internal: Evaluations":
       held = %*{"functions": {"f(M)": counts, "denseF(M)": other}}
     check functionsChanged(before, left_out).len == 0  # built without dense forms by design
     check functionsChanged(before, held).len == 1  # dense form built and moved
+
+
+  test "instance whose number alone moved is no moved function, where one whose counts moved is":
+    let
+      counts = %*{"total": {"multiplies": 3}, "movement": {"bytes_moved": 8}}
+      other = %*{"total": {"multiplies": 4}, "movement": {"bytes_moved": 8}}
+      before = %*{"functions": {"f(M)": counts, "f(M)#u7695": counts}}
+      renumbered = %*{"functions": {"f(M)": counts, "f(M)#u8687": counts}}
+      changed = %*{"functions": {"f(M)": counts, "f(M)#u8687": other}}
+      moved = functionsChanged(before, changed)
+    check functionsChanged(before, renumbered).len == 0  # compiler numbered instance again
+    check moved.len == 2  # counts differ, so instance reads gone and new
+    check moved["f(M)#u7695"]["after"].kind == JNull  # gone under number of pin
+    check moved["f(M)#u8687"]["before"].kind == JNull  # new under number of change
 
 
   test "digest moves with edits, claims and programs, and never with prose":

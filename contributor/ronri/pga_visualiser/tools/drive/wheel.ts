@@ -126,8 +126,8 @@ export async function driveWheel(page: Page): Promise<void> {
   );
 
   // Over empty sky, with nothing selected, wheel has nothing to come in to and does
-  //   nothing. Once it carried eye at separation's scale, and scaled separation by each
-  //   notch until near floor (repository issue 535).
+  //   nothing. Once it carried eye at scale of distance to pivot, and scaled that distance
+  //   by each notch until near floor (repository issue 535).
   await driveHome(page);
   const sky = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
@@ -146,8 +146,8 @@ export async function driveWheel(page: Page): Promise<void> {
     sky.hovered === -1 && sky.selected === 0 && spanOf(still.eye, after_sky.eye) === 0 &&
       after_sky.distance === still.distance,
     `hover ${sky.hovered}, selected ${sky.selected}; eye moved ` +
-      `${spanOf(still.eye, after_sky.eye)}, separation ${still.distance.toFixed(4)} -> ` +
-      `${after_sky.distance.toFixed(4)}`,
+      `${spanOf(still.eye, after_sky.eye)}, distance to the pivot ` +
+      `${still.distance.toFixed(4)} -> ${after_sky.distance.toFixed(4)}`,
   );
 
   // With point `b` selected, wheel dollies about pivot, which stands on it, wherever pointer
@@ -264,21 +264,21 @@ export async function driveWheel(page: Page): Promise<void> {
       `${spanOf(after_menu.pivot, world_picked).toExponential(2)}`,
   );
 
-  // Three notches scale page's separation by what three scale desktop's, one rule for both.
+  // Three notches scale page's distance to pivot by what three scale desktop's: one rule.
   //   Page zoomed by its own rate, `exp(0.0012 × travel)`, and desktop by 1.12 for each notch.
   const ratio_page = after_menu.distance / before_menu.distance;
   const ratio_desktop = (factor_notch ?? 0) ** -3;
   report(
     'and three notches zoom the page by what three notches zoom the desktop',
     Math.abs(ratio_page / ratio_desktop - 1) < 1e-6,
-    `${pixels_notch} px a notch; separation scaled by ${ratio_page.toFixed(9)} on the page, ` +
-      `and ${ratio_desktop.toFixed(9)} on the desktop`,
+    `${pixels_notch} px a notch; distance to the pivot scaled by ` +
+      `${ratio_page.toFixed(9)} on the page, and ${ratio_desktop.toFixed(9)} on the desktop`,
   );
   const ratio_lines = after_lines.distance / before_lines.distance;
   report(
     'and a notch the browser reports in lines zooms as a notch in pixels does',
     Math.abs(ratio_lines * (factor_notch ?? 0) - 1) < 1e-6,
-    `three lines scaled separation by ${ratio_lines.toFixed(9)}, ` +
+    `three lines scaled the distance to the pivot by ${ratio_lines.toFixed(9)}, ` +
       `one notch by ${(1 / (factor_notch ?? 1)).toFixed(9)}`,
   );
 }

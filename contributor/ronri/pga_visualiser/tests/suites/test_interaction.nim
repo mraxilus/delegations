@@ -1005,7 +1005,7 @@ suite "Interaction":
     var risen = opening
     interaction.holdKey(Key.W)
     interaction.driveHeld(risen, 1.0, has_selection = true)
-    # Pivot and separation both stand, because both axes run through pivot.
+    # Pivot and distance to it both stand, because both axes run through pivot.
     check risen.pivot =~ opening.pivot
     check risen.distance =~ opening.distance
     # Eye rose over it, by exactly rate asked for.
@@ -1050,7 +1050,7 @@ suite "Interaction":
     flying.turnFollowing(before, after, wide, tall, has_selection = false)
     check flying.eye =~ opening.eye
     check not (flying.frame.forward =~ opening.frame.forward)
-    # Something picked: pivot and separation stand, and eye is what swings.
+    # Something picked: pivot and distance to it stand, and eye is what swings.
     var orbiting = opening
     orbiting.turnFollowing(before, after, wide, tall, has_selection = true)
     check orbiting.pivot =~ opening.pivot
@@ -1431,7 +1431,7 @@ suite "Interaction":
     # Nothing turned: flight slides and never turns.
     check camera.frame.forward =~ axes_start.forward
     check camera.frame.axis_up =~ axes_start.axis_up
-    # Pivot rides along, so separation stays: flight is ship's, and spends no separation.
+    # Pivot rides along, so distance to it stays: flight is ship's, and spends none of it.
     #   Spent, it ran down to near floor and flight stalled short of pivot (repository
     #   issue 535). Near clip takes its scale from nearest drawn object ahead instead.
     check camera.distance =~ 20.0
@@ -1475,12 +1475,12 @@ suite "Interaction":
     check second > first
     check first + second =~ distanceTravelled(0.0, 1.0, 20.0)
 
-    # Ship's speed is camera's alone: pointer over something near, and separation at near
-    #   floor, leave step as it was. Both set speed once, and flight crawled near pivot.
-    for (depth, separation) in [(some(0.002), 20.0), (none(float), 1.0e-12)]:
+    # Ship's speed is camera's alone: pointer over something near, and distance to pivot at
+    #   near floor, leave step as it was. Both set speed once, and flight crawled near pivot.
+    for (depth, distance) in [(some(0.002), 20.0), (none(float), 1.0e-12)]:
       var ship = Interaction(is_enabled: true, speed_ship: 20.0, depth_pointer: depth)
       ship.holdKey(Key.W)
-      var other = cameraAround(ORIGIN, separation, Direction(x: 1, y: 0, z: 0))
+      var other = cameraAround(ORIGIN, distance, Direction(x: 1, y: 0, z: 0))
       let eye_other = other.eye
       ship.driveHeld(other, 1.0, has_selection = false)
       check norm(other.eye - eye_other) =~ distanceTravelled(0.0, 1.0, 20.0)
@@ -1491,7 +1491,7 @@ suite "Interaction":
 
 
   test "a long flight keeps its pace, and never stalls short of the pivot":
-    # Fault: flight ahead held pivot and spent separation, and separation capped speed, so
+    # Fault: flight ahead held pivot and spent distance to it, and that distance capped speed, so
     #   eye closed on pivot and stalled: 19 units in first ten seconds, then 2.2e-4, 2.3e-9
     #   and 1.1e-12 (repository issue 535). Each later span now covers ship's speed times
     #   its length.
@@ -1510,7 +1510,7 @@ suite "Interaction":
 
   test "plus and minus set the ship's speed with no selection, and dolly with one":
     # Ship's speed is reader's alone, and these two keys are how reader sets it: each
-    #   second held scales it by `FACTOR_DOLLY_SECOND`, as each scales separation with
+    #   second held scales it by `FACTOR_DOLLY_SECOND`, as each scales distance to pivot with
     #   selection. Nothing moves while they set it.
     var
       interaction = Interaction(is_enabled: true, speed_ship: 19.0)
@@ -1551,7 +1551,7 @@ suite "Interaction":
     check interaction.speed_ship =~ 19.0
 
 
-  test "the ship opens at the opening's separation each second, and home leaves it":
+  test "the ship opens at the opening's distance to the pivot each second, and home leaves it":
     # Read once, at open, off frame opening fits: phone opens farther out, so faster.
     check speedOpening(WIDTH_OPENED, HEIGHT_OPENED) =~
         initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).distance
@@ -2233,10 +2233,10 @@ suite "Interaction":
     check missedBy(camera, wide, tall, far, back[1]) < 0.05
 
 
-  test "two fingers on empty sky in free flight hold places at pivot's depth, and keep separation":
+  test "two fingers on empty sky in free flight hold places at the pivot's depth, and keep it":
     # Fault: they held sky itself, which no slide moves, so spread and slide over it moved
     #   nothing, and once zoom out shrank objects from under fingers no pinch moved anything.
-    #   Spread over nothing at all carries pivot along, so separation holds (repository
+    #   Spread over nothing at all carries pivot along, so distance to pivot holds (repository
     #   issue 535).
     const (wide, tall) = (1200, 900)
     let

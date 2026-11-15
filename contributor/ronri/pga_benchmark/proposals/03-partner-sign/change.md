@@ -10,41 +10,68 @@ generated tables, read in a chain, and no grade scan.
 Other edits land in this order against the edits below:
 
 - P01, `cayley-derivation`, lands first and P08, `compound-tables`, second. The tables below
-  read `applyMap` of P01, and the first edit quotes `CAYLEY_CONTAINER` of P08.
+  read `applyMap` of P01. The first edit quotes `CAYLEY_CONTAINER` of P08, and the edit of the
+  conformal calls quotes the call of `⊡` of P08.
+- P12, `cayley-cells`, holds each cell of a table in place. This change builds the cells of
+  `constructSignPartner` as `@[...]`. Whichever of the two lands second writes
+  `BasisSigned(...).toBasesSigned` there.
 - The change `partner-guard` quotes the same two lines of `⊛`, so it is void once this change
   lands. If it lands first, this change quotes its lines, and so removes its assert too.
 - The change `doc-comments` writes a line in `pga.nim` that says `partner` reads grade at run
-  time. That line is stale once this change lands. Whichever of the two lands second drops it.
+  time. That line is stale once this change lands. Whichever of the two lands second rewrites it
+  as `Requires single-grade multivector; mixed grade has no defined partner, and gets no check.`
+- The change `doc-comments-2` adds to the doc of `grade` that `⊛` calls it per object. That
+  clause is stale once this change lands. Whichever of the two lands second drops it.
 - The change `imports-narrow` names each symbol that `pga/operators.nim` imports. Whichever of
   the two lands second adds `CAYLEY_PARTNER_CONTAINER` and `CAYLEY_PARTNER_MEET` to the
-  conformal import of `cayleys`, and drops `grade` from the import of `algebra`.
+  conformal import of `cayleys`, in the merged import of P08.
 
 ## Edit `pga/cayleys.nim`
 
 ```nim
-    CAYLEY_CONTAINER*: Cayley2D =  ## Container, i.e. 𝐦 ∧ (𝐦⊟)☆, 𝐦 twice.
-      CAYLEYS_WEDGE.base.applyMap(
-        CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER),
-        Chirality.Right,
-      )
+    CAYLEY_CONTAINER*: Cayley2D =
+      CAYLEYS_INTERIOR.base.weight.right.applyMap(CAYLEY_CARRIER, Chirality.Right)
 ```
 
 ```nim
-    CAYLEY_CONTAINER*: Cayley2D =  ## Container, i.e. 𝐦 ∧ (𝐦⊟)☆, 𝐦 twice.
-      CAYLEYS_WEDGE.base.applyMap(
-        CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER),
-        Chirality.Right,
-      )
-    CAYLEY_PARTNER_CONTAINER*: Cayley2D = block:  ## Partner step one, (-1)^(gr 𝐦 + 1) (𝐦☆)⊡.
-      # Sign rides left read alone, by grade of its term. Container is quadratic, so sign on
-      #   both reads would square away; on one, it is exact for single-grade operand.
-      var sign: Cayley1D
-      for b in Basis: sign[b] = @[BasisSigned(basis: b, is_negated: int(b.grade) mod 2 == 0)]
-      CAYLEY_CONTAINER
-          .applyMap(CAYLEYS_DUAL.anti.right.applyMap(sign), Chirality.Left)
-          .applyMap(CAYLEYS_DUAL.anti.right, Chirality.Right)
-    CAYLEY_PARTNER_MEET*: Cayley2D =  ## Partner step two, i.e. 𝐭 ∨ 𝐦⊟, meet with carrier.
+    CAYLEY_CONTAINER*: Cayley2D =
+      CAYLEYS_INTERIOR.base.weight.right.applyMap(CAYLEY_CARRIER, Chirality.Right)
+    CAYLEY_PARTNER_CONTAINER*: Cayley2D = block:
+      # Apply sign to left operand alone, by grade of its term.
+      #   Container is quadratic, so sign on both operands would cancel.
+      #   Sign on one operand is exact for operand of single grade.
+      let
+        antidual = CAYLEYS_DUAL.anti.right
+        antidual_signed = antidual.applyMap(constructSignPartner())
+      CAYLEY_CONTAINER.applyMap(antidual_signed, Chirality.Left).applyMap(antidual, Chirality.Right)
+    CAYLEY_PARTNER_MEET*: Cayley2D =
       CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER, Chirality.Right)
+```
+
+The map of the sign is a constructor of its own, as each map of the basis is. Only the conformal
+tables read it.
+
+## Edit `pga/cayleys.nim`
+
+```nim
+
+
+
+#[ Basis Transformations ]#
+```
+
+```nim
+
+
+when IS_CONFORMAL:
+  func constructSignPartner(): Cayley1D {.compileTime, noinit.} =
+    ## Construct Cayley table for sign of partner, i.e. (-1)^(grade(𝐦)+1) 𝐦.
+    for b in Basis:
+      result[b] = @[BasisSigned(basis: b, is_negated: int(b.grade) mod 2 == 0)]
+
+
+
+#[ Basis Transformations ]#
 ```
 
 ## Edit `pga/operators.nim`
@@ -67,7 +94,7 @@ import std/[macros, math]
 
 ```nim
   as_unary: static[bool] = false;
-  is_public: static[bool] = true;
+  as_private: static[bool] = false;
 ): untyped =
   ## Construct multivector product variant using provided Cayley table.
   ##   Private variant serves as step of exported operator, as partner's two tables do.
@@ -89,13 +116,52 @@ import std/[macros, math]
 ```nim
     body = assignments,
     is_quoted = true,
-    is_public = is_public,
+    is_public = not as_private,
   )
 
 
 
 #[ Operator Definitions ]#
 ```
+
+The two steps are generated operators, so their calls stand with the calls of the carrier and
+the container.
+
+## Edit `pga/operators.nim`
+
+```nim
+  defineOperator(
+    symbols = "⊡",
+    docs = "Get container of multivector, i.e. 𝐦 ∧ (𝐦⊟)☆.",
+    cayley = CAYLEY_CONTAINER,
+    as_unary = true,
+  )
+```
+
+```nim
+  defineOperator(
+    symbols = "⊡",
+    docs = "Get container of multivector, i.e. 𝐦 ∧ (𝐦⊟)☆.",
+    cayley = CAYLEY_CONTAINER,
+    as_unary = true,
+  )
+  defineOperator(
+    symbols = "partnerContainer",
+    docs = "Get first step of partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡.",
+    cayley = CAYLEY_PARTNER_CONTAINER,
+    as_unary = true,
+    as_private = true,
+  )
+  defineOperator(
+    symbols = "partnerMeet",
+    docs = "Multiply multivectors through exterior antiproduct with carrier, i.e. 𝐦 ∨ 𝐧⊟.",
+    cayley = CAYLEY_PARTNER_MEET,
+    as_private = true,
+  )
+```
+
+The first step lands in an intermediate declared `noinit`. The compiler zero-fills the
+intermediate of a call that is the operand of a second call.
 
 ## Edit `pga/operators.nim`
 
@@ -107,26 +173,10 @@ import std/[macros, math]
 ```
 
 ```nim
-  defineOperator(
-    symbols = "partnerContainer",
-    docs = "Get first step of partner, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡.",
-    cayley = CAYLEY_PARTNER_CONTAINER,
-    as_unary = true,
-    is_public = false,
-  )
-  defineOperator(
-    symbols = "partnerMeet",
-    docs = "Get antiwedge of first operand with carrier of second, i.e. 𝐭 ∨ 𝐦⊟.",
-    cayley = CAYLEY_PARTNER_MEET,
-    is_public = false,
-  )
-
   func `⊛`*(m: Multivector): Multivector {.inline, noinit.} =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    ##   Sign rides each term by its own grade, so operand of one grade is required; mixed
-    ##     grade has no defined partner, and gets no check.
-    ##   First step writes local declared noinit, since compiler zero-fills temporary of call.
-    var container {.noinit.}: Multivector
-    container = partnerContainer(m)
-    result = partnerMeet(container, m)
+    ##   Sign follows grade of each term, so operand must have single grade.
+    ##   Mixed grade has no defined partner and is not checked.
+    var container {.noinit.} = partnerContainer(m)  # Compiler zero-fills nested call result.
+    partnerMeet(container, m)
 ```

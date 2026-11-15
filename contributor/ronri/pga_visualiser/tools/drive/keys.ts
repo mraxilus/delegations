@@ -29,13 +29,13 @@ export async function driveKeys(page: Page): Promise<void> {
     across < 1e-3 && risen < -1e-3,
     `${across.toFixed(6)} units across the sight line, and z moved ${risen.toFixed(4)}`,
   );
-  // Flight is ship's: pivot rides along, so separation stays. Spent, it ran down to near
+  // Flight is ship's: pivot rides along, so distance to it stays. Spent, it ran down to near
   //   floor and flight stalled short of pivot (repository issue 535).
   const closed = slid.before.distance - slid.after.distance;
   report(
-    'a flight ahead keeps its separation, and turns nothing',
+    'a flight ahead keeps its distance to the pivot, and turns nothing',
     Math.abs(slid.after.azimuth - slid.before.azimuth) < 1e-6 && Math.abs(closed) < 1e-9,
-    `azimuth unchanged; separation ${slid.before.distance.toFixed(4)} -> ` +
+    `azimuth unchanged; distance to the pivot ${slid.before.distance.toFixed(4)} -> ` +
       `${slid.after.distance.toFixed(4)} over ` +
       `${spanOf(slid.before.eye, slid.after.eye).toFixed(4)} units`,
   );
@@ -68,8 +68,8 @@ export async function driveKeys(page: Page): Promise<void> {
   );
 
   // Frustum and furniture read reach to nearest drawn object ahead, so flying in draws
-  //   that scale in by exactly what eye covered. Separation alone kept scale of stance
-  //   reader set off from, and near clip is one four-hundredth of it.
+  //   that scale in by exactly what eye covered. Distance to pivot alone kept scale of
+  //   stance reader set off from, and near clip is one four-hundredth of it.
   const drawn_in = scale_before - scale_after;
   report(
     'flying in draws the frustum scale in with it',

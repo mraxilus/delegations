@@ -241,7 +241,7 @@ async function drivePlaneSides(page: Page): Promise<void> {
     return away;
   }, ground);
 
-  // Eye stays on its own bearing and separation, and rises or falls by `rise` over run.
+  // Eye keeps its own bearing and distance to pivot, and rises or falls by `rise` over run.
   const seenAt = async (rise: number): Promise<number> => {
     await page.evaluate((given) => {
       const eye = nimCameraEye(), pivot = nimCameraPivot(), distance = nimCameraDistance();

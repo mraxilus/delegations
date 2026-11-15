@@ -1,6 +1,6 @@
 {
   "status": "proposed",
-  "builds_on": ["exact-kinds"],
+  "builds_on": ["basis-set-forms"],
   "claims": [
     {
       "kind": "suites"
@@ -8,7 +8,7 @@
     {
       "kind": "program",
       "path": "laws.nim",
-      "algebras": ["rga4d", "cga5d"]
+      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
     }
   ]
 }
