@@ -18,9 +18,9 @@ when compileOption("profiler"):
 import std/[options, os, sequtils, sets, strutils]
 import ../../knoller/src/knoller
 import ./[
-  checker, coverage, dependencies, domains, duplicates, english, findings, font_families, form,
-  glossary, idioms, justification, kinds, layout, names, plan, prompts, prose, prose_own,
-  provenance, record, toolchain, tree, waits, workflows,
+  checker, citations_section, coverage, dependencies, domains, duplicates, english, findings,
+  font_families, form, glossary, idioms, justification, kinds, layout, names, plan, prompts, prose,
+  prose_own, provenance, record, toolchain, tree, waits, workflows,
 ]
 
 export layout.Entry, layout.directoriesProject, layout.Tree
@@ -162,6 +162,8 @@ proc auditTree*(tree: Tree): seq[Finding] =
   # Each section of process stamp leaves out stands in its document, absent document included,
   #   so list cannot rot.
   for k, document in tree.documentsRules: result.add checkSectionsProcess(RULES[k], document)
+  # Each citation of section names section its document holds, in every file audit reads.
+  result.add tree.checkCitationsSection
   # Each project list of own prose names stands in tree, and so does each suite its entry demands.
   result.add tree.checkProjectsProseOwn(PROJECTS_PROSE_OWN)
   let
