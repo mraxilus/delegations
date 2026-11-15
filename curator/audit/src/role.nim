@@ -9,9 +9,12 @@
 ##   Title holds grammar, scope and width of commit subject (`checkCommits`), since merge commit
 ##     takes title as its subject and `main` takes no rewrite after (pull request template).
 ##     `edited` event runs check again on rename.
-##   Role line may stand below attribution block that harness writes first and requires:
-##     marker comment `ccr-projects-attribution`, rendering as nothing, then italic credit
-##     line naming who asked. Block is passed only whole, once and in order.
+##   Role line may stand below block harness writes above it, as Architect ruled on #845: lines
+##     of block take shapes of one entry of `HARNESSES`, whole and in order. Shape is known by
+##     its two ends, never by harness's words, so harness changing its words changes no rule.
+##     Harness writing nothing above role line needs no entry; one writing block no entry
+##     lists fails on its first pull request, and finding quotes each line above role line, so
+##     curator adds its entry.
 ##   `ledger.yml` reads same two facts daily over open items, which samples rather than gates:
 ##     pull request living half hour is almost never open when it runs, and it reports after
 ##     merge rather than before.
@@ -22,31 +25,47 @@
 ##   Cost: comment is unreachable, and is what remains of CONTRIBUTOR.md's first carried rule.
 ##   Cost: labels are searched for expected string rather than compared whole, since label is
 ##     added when work hands across and never removed.
-##   Cost: attribution block is harness's text, held as data in `LINES_ATTRIBUTION`; when
-##     harness changes it, every such pull request fails again, while suite, whose fixture
-##     copies it, stays green.
+##   Cost: stray lines in shapes of listed block pass above role line, as block itself does.
+##   Cost: italic line written in asterisks is other shape, so harness turning to it fails until
+##     its entry changes.
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strutils, unicode]
-import ./[commits, domains, findings]
+import std/[options, sequtils, strutils, unicode]
+import ./[commits, domains, findings, markdown]
+
+
+type
+  Shape = tuple[opening, closing: string]
+    ## Define shape of one line harness writes above role line, known by its two ends alone.
+
+  Harness = object  ## Define block one harness writes above role line of pull request it opens.
+    name {.requiresInit.}: string  ## Harness, as its own documents name it.
+    shapes {.requiresInit.}: seq[Shape]  ## Shape of each line of block, in order.
 
 
 const
   KEY_ROLE* = "**Role:**"  ## Opening of role line, bold as every prompt and template writes it.
   COMMENT_OPEN* = "<!--"  ## Opening of HTML comment, which unfilled template carries after key.
-  LINES_ATTRIBUTION = [
-    (opening: "<!-- ccr-projects-attribution:", closing: "-->"),  # Marker; renders as nothing.
-    (opening: "_Requested by **", closing: "_"),  # Credit in italics, naming who asked.
+  COMMENT_CLOSE = "-->"  ## Closing of HTML comment.
+  SHAPE_COMMENT: Shape = (opening: COMMENT_OPEN, closing: COMMENT_CLOSE)
+    ## Line of HTML comment, which renders as nothing.
+  SHAPE_ITALIC: Shape = (opening: "_", closing: "_")  ## Line in italics, by underscores.
+  HARNESSES = [
+    Harness(name: "Claude Code", shapes: @[SHAPE_COMMENT, SHAPE_ITALIC]),
   ]
-    ## Lines of attribution block above role line, in order, each known by its two ends.
+    ## Block each harness writes above role line, one entry for each harness writing one.
+    ##   Claude Code writes marker naming who asked, then credit line linking its thread.
   ECHO_MAX* = 72
     ## Runes echoed back from opening line: it is whatever somebody typed, and body opening
     ## with whole paragraph would otherwise print that paragraph as finding.
-  LINES_QUOTED* = 4
+  LINES_QUOTED* = block:
     ## Lines above role line finding quotes at most: twice block of longest listed harness, so
     ##   block of new harness shows whole, and body whose role line stands low prints no whole
     ##   opening.
+    var longest = 0
+    for harness in HARNESSES: longest = max(longest, harness.shapes.len)
+    2 * longest
   HEADINGS_PULL* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
     ## Headings pull request template gives.
 
@@ -56,29 +75,60 @@ func shortened*(line: string): string =
   if line.runeLen <= ECHO_MAX: line else: line.runeSubStr(0, ECHO_MAX) & "…"
 
 
-func lineRole*(body: string): string =
-  ## Read first non-blank line below any attribution block, with trailing HTML comment dropped.
-  ##   Unfilled template opens `**Role:** <!-- curator, or ... -->`, which then reads as key
-  ##     alone and fails equality below, rather than passing as line naming no role.
-  ##   Each line of block is passed only whole and in its place, so stray credit line, second
-  ##     block or any other comment still reads as opening.
-  var passed = 0  # Lines of `LINES_ATTRIBUTION` passed so far.
-  for line in body.splitLines:
+func isShaped(line: string, shape: Shape): bool =
+  ## Decide whether stripped line takes shape, i.e. opens with one end and closes with other.
+  line.len >= shape.opening.len + shape.closing.len and line.startsWith(shape.opening) and
+    line.endsWith(shape.closing)
+
+
+func linesOpening(body: string): seq[string] =
+  ## Read each non-blank line of body outside fenced code, stripped, up to first role line and
+  ##   with it; every such line where none stands.
+  for line in body.fencedOut.splitLines:
     let s = line.strip
     if s.len == 0: continue
-    if passed < LINES_ATTRIBUTION.len and s.startsWith(LINES_ATTRIBUTION[passed].opening) and
-        s.endsWith(LINES_ATTRIBUTION[passed].closing):
-      inc passed
-      continue
-    let open = s.find(COMMENT_OPEN)
-    return (if open < 0: s else: s[0 ..< open].strip)
-  ""
+    result.add s
+    if s.startsWith(KEY_ROLE): return
+
+
+func lenBlock(lines: openArray[string]): int =
+  ## Count opening lines that block of first listed harness writing them takes, whole and in
+  ##   order; 0 where block of none opens lines.
+  for harness in HARNESSES:
+    if lines.len < harness.shapes.len: continue
+    var is_block = true
+    for i, shape in harness.shapes: is_block = is_block and lines[i].isShaped(shape)
+    if is_block: return harness.shapes.len
+  0
+
+
+func lineRole*(body: string): string =
+  ## Read opening line of body: first non-blank line outside fenced code below block of listed
+  ##   harness, with trailing HTML comment dropped.
+  ##   Unfilled template opens `**Role:** <!-- curator, or ... -->`, which then reads as key
+  ##     alone and fails equality below, rather than passing as line naming no role.
+  ##   Block is passed only whole and in its place, so lone marker, stray credit line or any
+  ##     other comment still reads as opening.
+  let
+    lines = body.linesOpening
+    at = lines.lenBlock
+  if at >= lines.len: return ""
+  let open = lines[at].find(COMMENT_OPEN)
+  if open < 0: lines[at] else: lines[at][0 ..< open].strip
 
 
 func openingQuoted*(body: string): string =
-  ## Quote what finding on opening of body names, in backticks.
-  ##   TODO: Quote each line above first role line that no listed harness writes.
-  "`" & body.lineRole.shortened & "`"
+  ## Quote what finding on opening of body names, each line in backticks: each line above first
+  ##   role line where line no listed block holds stands there, else opening line alone.
+  ##   Quote holds at most `LINES_QUOTED` lines, each cut to `ECHO_MAX` runes, since body is
+  ##     whatever somebody typed.
+  let lines = body.linesOpening
+  if lines.len <= lines.lenBlock + 1 or not lines[^1].startsWith(KEY_ROLE):
+    return "`" & body.lineRole.shortened & "`"
+  # Quote each line above role line, since one of them is no line of listed block.
+  let above = lines[0 ..< min(lines.high, LINES_QUOTED)].mapIt("`" & it.shortened & "`")
+  above.join(", ") & (if lines.high > LINES_QUOTED: ", …" else: "") & " above `" &
+    lines[^1].shortened & "`"
 
 
 func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
