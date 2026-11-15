@@ -98,7 +98,10 @@ and the operator as the evaluation reads its C:
 - **Change `imports-narrow`.** It names each symbol that `pga/operators.nim` imports from
   `cayleys`. Whichever of the two lands second adds `CayleySandwich` and `CAYLEY_TRANSFORM`.
 - **This project.** The catalogue spells each transform as `(m ⟇⟇~∘ n)` where the library
-  declares the operator, and as the chain at pin. So the measurands time and count it.
+  declares the operator, and as the chain at pin. So the measurands time and count it. The
+  catalogue holds transforms under the rigid metric alone. So when the pin moves to a library
+  with this proposal, the conformal catalogue needs a measurand of `⟇⟇~∘` and `transform`. Else
+  the suites that hold its symbols and aliases to the exports fail at cga4d and cga5d.
 
 ## Evidence
 
