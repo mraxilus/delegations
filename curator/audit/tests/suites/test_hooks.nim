@@ -1060,10 +1060,10 @@ suite "Hooks":
 
 
   test "start context and turn writes":
-    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", "", @[])
+    let text = contextStart(BRANCH, "", "## List\n\n1. one\n\n## Next\n", "## List", "", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
     check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
-    check "outside grammar" in contextStart("claude/x", "", "## List", "", @[])
+    check "outside grammar" in contextStart("claude/x", "", "", "## List", "", @[])
     # Drift prints each finding of `check-drift`: sections changed and command that shows them,
     #   so start asks for new stamp only where finding does (#843).
     let
@@ -1074,7 +1074,7 @@ suite "Hooks":
           "contract`.",
       )
       checker = finding("", 0, "Branch predates checker on base; got `koch.nim`.")
-      drifted = contextStart("curator/x", "", "## List", "", @[drift, checker])
+      drifted = contextStart("curator/x", "", "", "## List", "", @[drift, checker])
     check "\n  GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
     check "\n  Branch predates checker on base; got `koch.nim`.\n" in drifted  # each, not first
     check "re-stamp" notin drifted
@@ -1097,12 +1097,12 @@ suite "Hooks":
     let
       record = "# Provenance\n\n| Field | Value |\n\n## Build\n\nText.\n\n```md\n## Quoted\n" &
         "```\n\n## Open questions\n\n- One.\n"
-      text = contextStart(BRANCH, "## List\n\n1. one\n", "## List", record, @[])
+      text = contextStart(BRANCH, "", "## List\n\n1. one\n", "## List", record, @[])
     check "Record `contributor/ronri/pga_benchmark/PROVENANCE.md`" in text
     check "\n5: ## Build\n13: ## Open questions\n" in text  # each heading, line it opens on
     check "## Quoted" notin text  # heading quoted in fence opens no section
     check text.endsWith(LINE_CARRIED)  # carried list stays last
-    check "Record" notin contextStart(BRANCH, "## List\n", "## List", "", @[])  # none written
+    check "Record" notin contextStart(BRANCH, "", "## List\n", "## List", "", @[])  # none written
 
 
   test "transcript parse finds calls since last message of person":
@@ -1412,9 +1412,9 @@ suite "Hooks":
     check reasonStop(mended, [], has_signoff = true).splitLines[^1] ==
       "The skill /sign-off holds these steps."
     check "/sign-off" notin reasonStop(mended, [])  # plain message holds no sign-off
-    check "/sync" in contextStart("curator/x", "", "## List", "", @[finding("", 0, "d")])
-    check "/sync" notin contextStart("curator/x", "", "## List", "", @[])
-    check contextStart(BRANCH, "## List\n\n1. one\n", "## List", "", @[]).endsWith(
+    check "/sync" in contextStart("curator/x", "", "", "## List", "", @[finding("", 0, "d")])
+    check "/sync" notin contextStart("curator/x", "", "", "## List", "", @[])
+    check contextStart(BRANCH, "", "## List\n\n1. one\n", "## List", "", @[]).endsWith(
       "The skill /triage reports each item of this list that is not met.")
     check "/propose-term" in contextEdit("contributor/ronri/pga_benchmark/GLOSSARY.md")
     check "/propose-term" in contextEdit("GLOSSARY.md")

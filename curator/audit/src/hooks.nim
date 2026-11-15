@@ -1934,11 +1934,20 @@ func pathRecord*(branch: string): string =
   of Role.CuratorProject, Role.Contributor: parsed.get.prefix & FILE_RECORD
 
 
+func pathPrompt*(branch: string): string =
+  ## Read path of file of role branch names, whose reading order `start` prints; empty outside
+  ##   grammar.
+  ##   TODO: Stub names no file until start prints reading order of role; koch reads it already.
+  discard
+
+
 func contextStart*(
-  branch, contributor, heading_carried, record: string; drift: seq[Finding]
+  branch, prompt, contributor, heading_carried, record: string; drift: seq[Finding]
 ): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, headings
   ##   of record, list.
+  ##   Prompt is text of file `pathPrompt` names; empty outside grammar.
+  ##     TODO: Stub prints copy of reading order until it prints section of `prompt`.
   ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
   ##   that shows them, so start asks for new stamp only where finding does.
   ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
@@ -1950,9 +1959,9 @@ func contextStart*(
     lines.add "Branch `" & branch & "` is outside grammar; push to `curator/<name>`, " &
       "`curator/<project>/<name>` or `contributor/<domain>/<project>/<name>` (CLAUDE.md)."
   else:
-    let prompt = if parsed.get.role == Role.Contributor: "CONTRIBUTOR.md" else: "CURATOR.md"
+    let name_prompt = if parsed.get.role == Role.Contributor: "CONTRIBUTOR.md" else: "CURATOR.md"
     lines.add "Role: " & parsed.get.nameRole & ", on branch `" & branch & "`."
-    lines.add "Read first: CONSTITUTION.md, STYLE.md, GLOSSARY.md, then " & prompt &
+    lines.add "Read first: CONSTITUTION.md, STYLE.md, GLOSSARY.md, then " & name_prompt &
       ", then GUIDE.md."
   if drift.len > 0:
     lines.add "Base changed charter or checker since this branch forked; read each change " &
