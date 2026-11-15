@@ -130,9 +130,9 @@ comparison from the bridge, so it holds no option and no scenario of its own.
 | `pages/mockup.html` | The panel: it builds a scenario, marks targets, and measures each run. |
 | `tools/build.nim` | The `mockup` verb, which builds the page with all three. |
 
-The open comparison is D1 of issue 910: the depth that a pan holds, where it begins over empty
-sky. The first comparison, D1 of issue 846, stands in the history of `src/browser/mockup.nim`. A
-comparison gives the panel four exports:
+No comparison is open now, so the `mockup` verb says so and stops. Each closed comparison stands
+in the history of `src/browser/mockup.nim`, and shows each part. A comparison gives the panel four
+exports:
 
 | Export | What it does |
 | --- | --- |
