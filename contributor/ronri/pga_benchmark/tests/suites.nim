@@ -1685,7 +1685,7 @@ suiteInProc "Internal: Gaps":
 
 
   test "cause on inlining counts operators that a measurand times, and no other":
-    # `$` prints and is timed by none, so it crosses no boundary that a measurand pays.
+    # `$` prints and no measurand times it, so it costs no timed call.
     var document = documentStaticFixture()
     document["functions"]["$(Basis)"] = nodeFunction("$", "pga/algebra", false, 0, 0, 0, 0)
     document["measurands"]["reverse"] = %*{
