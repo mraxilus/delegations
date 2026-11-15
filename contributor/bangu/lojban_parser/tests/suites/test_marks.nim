@@ -1,20 +1,42 @@
-## Hold reading that marks each error to its laws (#859): `readTextMarked` reads text as
-##   `readText` does, and reads on past each error, marking it in tree and in NIF.
-##   Text `readText` reads gives same units, tree and NIF, over corpora, past last `su`, and once
-##     each unit of words no stage reads is cut: text before `su` stands first in root, each with
-##     leaf of `su` after it; and words erasure erases, and `fa'o` with words after it, stand as
-##     units of their own, which `readText` reads not (19.13, 19.15).
-##   Text it refuses still gives tree: each unit stands in it once as leaf, in order; refusal of
-##     `readText` is mark of its stage there; and NIF reads back whole (`reader_nif.nim`). Laws
-##     run over corpora, and over texts constructed for each stage, since corpora refuse at
-##     neither quotation nor construct.
-##   Grammar: each branch error node holds that heads `text` is tree its terminals give read
-##     alone; each class `expects` names lets grammar read past place it stops, and each other
-##     class does not.
-##   Cover of error node is least: no terminal it leaves out reads alone, and no two pieces
-##     side by side read as one `text`, since branch over them would leave fewer out, or take
-##     fewer pieces. Cover that ties stays unchecked: no law reads which cover tie gives.
-##   Corpora: as `test_nif.nim` reads them (`corpora.nim`).
+## cipra lo du'u le se tcidu poi sinxa ro srera cu mapti le flalu pe vo'a to `#859` toi
+##   .i `readTextMarked` tcidu lo selci'a ta'i lo nu `readText` tcidu kei gi'e ranji lo nu tcidu ba
+##       ro srera gi'e jarco ro le srera ne'i lo tricu .e lo selci'a be fi `NIF`
+##
+## ni'o va'o lo nu `readText` tcidu lo selci'a kei le pagbu .e le tricu .e le selci'a be fi `NIF` ba
+##     zo su noi romoi cu mintu ne'i le selci'aste va'o lo nu ro pezli pe lo pagbu poi no velru'e cu
+##     tcidu ke'a selvi'u
+##   .i ro selci'a poi lidne zo su zvati le krasi be le genja gi'e lidne lo pezli pe zo su
+##   .i lo valsi poi lo nu vimcu cu vimcu ke'a ku'o .e zo fa'o .e lo valsi poi se lidne zo fa'o
+##       zvati lo pagbu pe vo'a
+##   .i `readText` na tcidu le pagbu to `CLL 19.13` .e `CLL 19.15` toi
+##
+## ni'o ku'i va'o lo nu `readText` to'e curmi lo selci'a kei le se tcidu poi sinxa ro srera cu dunda
+##     lo tricu
+##   .i ro pagbu cu pezli le tricu pa roi ta'i le porsi
+##   .i ne'i le tricu lo nu `readText` to'e curmi cu selsni lo pagbu pe le velru'e poi to'e curmi
+##   .i le selci'a be fi `NIF` cu selraptcidu ta'i lo nu mulno to `reader_nif.nim` toi
+##
+## ni'o le flalu cu cipra le selci'aste .e lo selci'a poi selfi'i fi ro velru'e
+##   .i ki'u bo le selci'aste cu na se to'e curmi ne'i le velru'e pe lo nu sitna ge'u .e le velru'e
+##       pe lo gensu'a
+##
+## ni'o le gerna zo'u ro jimca poi lo srejge cu vasru ke'a zi'e poi selkra `text` du lo tricu poi le
+##     gerna valsi po'o pe le jimca cu dunda ke'a
+##   .i ro klesi poi `expects` cmene ke'a curmi lo nu le gerna cu tcidu ba le stuzi poi le gerna cu
+##       sisti bu'u ke'a
+##   .i ro datlei cu na curmi
+##
+## ni'o lo gacri be lo srejge cu mecrai
+##   .i no genvla poi le gacri cu cliva ke'a se tcidu ta'i pa mulselci'a
+##   .i no re spisa poi lamji cu se tcidu ta'i pa `text`
+##   .i ki'u bo va'o lo nu pa jimca cu kuspe le genvla .a le re spisa kei le gacri cu cliva lo
+##       mecygenvla gi'a pilno lo me'aspi
+##
+## ni'o lo gacri pe lo nu dunli cu na se cipra
+##   .i ki'u bo no flalu cu tcidu lo du'u lo nu dunli cu dunda ma kau poi gacri
+##
+## ni'o le cipra cu tcidu le selci'aste ta'i lo nu `test_nif.nim` tcidu le se ciska liste to
+##     `corpora.nim` toi
 
 {.experimental: "strictFuncs".}
 
@@ -30,74 +52,115 @@ import ./[corpora, reader_nif]
 
 type
   Refused = tuple[key, text: string, strict: ReadingText, marked: ReadingMarked]
-    ## Define text `readText` refuses, with both readings of it.
+    ## lo selci'a poi `readText` to'e curmi ke'a ku'o .e le re se tcidu pe le selci'a
 
-  Pool = object  ## Define texts suite reads, each read once by both readers.
-    count_read: int  ## Texts of corpora that read.
-    differing: seq[string]  ## Key of each text that reads whose reading marked differs.
-    refused: seq[Refused]  ## Each text of corpora refused, then each text constructed.
+  Pool = object
+    ## lo selci'a poi le cipra cu tcidu ke'a
+    ##   .i ro le selci'a cu se tcidu pa roi le re tcidu
+    count_read: int  ## lo te kancu be lo se ciska pe le se ciska liste zi'e poi se tcidu
+    differing: seq[string]
+      ## lo ckiku be ro selci'a poi se tcidu zi'e poi le re se tcidu pe ke'a na mintu
+    refused: seq[Refused]
+      ## ro selci'a pe le selci'aste zi'e poi se to'e curmi ku'o ce'o ro selci'a poi selfi'i
     uncovered: seq[string]
-      ## Key of each text of corpora whose words no tree of it covers, once and in order, as
-      ##   marked reading and reading of its parts give it (`isCovering`).
+      ## lo ckiku be ro selci'a pe le selci'aste zi'e poi su'o tricu pe ke'a na gacri ro valsi pe
+      ##     ke'a pa roi ta'i le porsi
+      ##   .i le se tcidu poi sinxa ro srera ku'o .e le se tcidu pe lo pagbu be le selci'a cu dunda
+      ##       le re tricu to `isCovering` toi
 
 
 const
-  COUNT_READ_LEAST = 1800  ## Texts of corpora that read, of 1,941; law reads each marked.
-  COUNT_REFUSED_LEAST = 100  ## Texts of corpora `readText` refuses, of 1,941; 110 on adding marks.
+  COUNT_READ_LEAST = 1800
+    ## lo mecraiterkancu be lo selci'a pe le selci'aste zi'e poi se tcidu
+    ##   .i le selci'aste cu vasru pasovopa selci'a
+    ##   .i le flalu cu tcidu ro le selci'a sepi'o `readTextMarked`
+  COUNT_REFUSED_LEAST = 100
+    ## lo mecraiterkancu be lo selci'a pe le selci'aste zi'e poi `readText` to'e curmi ke'a
+    ##   .i le selci'aste cu vasru pasovopa selci'a
+    ##   .i ca lo nu jmina le se tcidu poi sinxa ro srera kei `readText` to'e curmi papano selci'a
   COUNT_COVERS_LEAST = 90
-    ## Error nodes that hold branches, in texts refused of corpora and constructed; 94 on adding
-    ##   law of cover.
+    ## lo mecraiterkancu be lo srejge poi vasru lo jimca ku'o ne'i ro selci'a poi se to'e curmi
+    ##   .i le selci'a cu cmima le selci'aste .a lo selci'a poi selfi'i
+    ##   .i ca lo nu jmina le flalu pe lo gacri kei sovo lo srejge cu vasru lo jimca
   COUNT_EXPECTED = 24
-    ## Stops law of `expects` reads: first texts refused by grammar, of corpora then
-    ##   constructed, whose stop takes at most `STOP_EXPECTED_MOST` terminals; 57 qualify.
-    ##   Law reads text there once for each of 124 classes, about 2 s of debug build.
-  STOP_EXPECTED_MOST = 8  ## Terminals before stop, at most, for law of `expects`.
+    ## lo te kancu be lo nu sisti poi le flalu pe `expects` tcidu ke'a
+    ##   .i le flalu cu tcidu le pamoi se ciska poi le gerna cu to'e curmi ke'a
+    ##   .i le selci'a pe le selci'aste cu lidne le selci'a poi selfi'i
+    ##   .i lo nu sisti pe ro le selci'a cu se lidne lo genvla
+    ##   .i lo te kancu be le gerna valsi cu na zmadu `STOP_EXPECTED_MOST`
+    ##   .i muze selci'a cu mapti
+    ##
+    ## ni'o ro le parevo klesi zo'u le flalu cu tcidu le selci'a bu'u le stuzi pa roi
+    ##   .i le nu tcidu cu nitcu lo temci poi jibni `2 s` ne'i lo cikryzba
+  STOP_EXPECTED_MOST = 8
+    ## lo rairterkancu be lo genvla poi lidne lo nu sisti ku'o ne'i le flalu pe `expects`
   TEXTS_CONSTRUCTED = [
+    # `Stream` to'e curmi ki'u lo lerfu ce'o lo lerfu ce'o lo nu basna ce'o lo nu sitna ce'o lo nu
+    #     fendi
     "mi 1987 klama", "mi hello klama", "Mi klama", "zoi gy. gyrations .gy. cu glico",
-    "la .lauras. klama",  # stream: letter, letter, stress, quotation, split
-    "mi xau klama", "ba'e xau klama",  # selma'o, with BAhE marking cmavo
-    "zei mi klama", "mi zei", "si mi klama", "mi klama sa", "bu mi", "mi klama ba'e",  # construct
+    "la .lauras. klama",
+    "mi xau klama", "ba'e xau klama",  # `Selmaho` to lo cmavo be `BAhE` cu tcita le cmavo toi
+    "zei mi klama", "mi zei", "si mi klama", "mi klama sa", "bu mi", "mi klama ba'e",  # `Construct`
+    # `Quotation`
+    #   .i lo nu sitna poi no roi selfa'o ce'o lo nu sitna poi kunti ce'o lo nu sitna poi lo pagbu
+    #       be ke'a cu se vimcu to `CLL 19.13` toi
     "mi cusku lo'u mi klama", "mi cusku lo'u .i mi klama", "mi cusku zo", "lo'u le'u",
-    "mi se cmene zo .djan. si .djordj.",  # quotation: never closed, empty, part erased (19.13)
+    "mi se cmene zo .djan. si .djordj.",
+    # `Grammar`
+    #   .i lo selci'a poi selka'a ce'o lo pagbu ce'o zo lu poi kalri ce'o lo jonma'o ce'o lo
+    #       fa'orma'o
     "mi klama le", "mi klama le .i do citka", "lu mi klama le", "ge mi gi",
-    "mi klama le zarci ku ku",  # grammar: text cut off, part, `lu` open, connective, terminator
-    "si mi 1987 xau klama le",  # each stage at once
-    "si su mi klama", "mi 1987 su klama", "lu mi su do li'u",  # `su` ending text with error
+    "mi klama le zarci ku ku",
+    "si mi 1987 xau klama le",  # ro velru'e cu to'e curmi ne'i pa selci'a
+    # zo su poi fanmo lo selci'a poi vasru lo srera
+    "si su mi klama", "mi 1987 su klama", "lu mi su do li'u",
   ]
-    ## Texts constructed for each stage that refuses, and for each place grammar stops.
+    ## lo selci'a poi selfi'i fi ro velru'e poi to'e curmi ku'o .e ro stuzi poi le gerna cu sisti
+    ##     bu'u ke'a
   TEXTS_PARTED = [
     "mi klama su do", "mi su", "su do", "mi su su do", "ba'e su mi", "mi ui su ui do",
     "mi klama le su do", "lu mi su do", "lo'u mi su do le'u", "mi cusku zo su",
     "mi klama si do", "do sa mi klama", "mi si su do si ko", "mi fa'o .i ko 1987",
-    "ba'e mi si do",  # erasure, and `fa'o` with words after it
+    "ba'e mi si do",  # lo nu vimcu .e zo fa'o .e lo valsi poi se lidne zo fa'o
   ]
-    ## Texts `readText` reads that `su` parts, with error before it, `su` quoted, or none; then
-    ##   texts holding words no stage reads; constructed, since corpora hold no `su` that parts
-    ##   text.
+    ## lo selci'a poi `readText` tcidu ke'a zi'e poi zo su fendi ke'a
+    ##   .i su'o selci'a cu vasru lo srera poi lidne zo su
+    ##   .i su'o selci'a cu vasru zo su poi se sitna
+    ##   .i su'o selci'a cu vasru no srera gi'e na vasru zo su poi se sitna
+    ##   .i ba bo le liste cu vasru lo selci'a poi vasru lo valsi poi no velru'e cu tcidu ke'a
+    ##
+    ## ni'o ro le selci'a cu selfi'i
+    ##   .i ki'u bo no le selci'aste cu vasru zo su poi fendi lo selci'a
   TEXTS_COVERED = [
     "le,nu mi klama", "mi KLAmaku", "zoi gy. a, b .gy. cu glico", "mi klama si si fa'omi do",
     "mi 1987 ui", "ba'e mi si do", "lo'u mi su do", "zo su si si", "mi klama fa'o\t.ui\n",
   ]
-    ## Texts of comma and capital, quotation holding marks, words no unit holds, and word between
-    ##   word and indicator that marks it, for law of cover; constructed.
+    ## lo selci'a poi selfi'i fi le flalu pe lo gacri
+    ##   .i le selci'a cu vasru slaka bu .e lo brale'u .e lo nu sitna poi vasru lo sinxa ku'o .e lo
+    ##       valsi poi no pagbu cu vasru ke'a ku'o .e lo valsi poi zvati lo jbini be lo valsi .e lo
+    ##       cnivla poi tcita le valsi
   EXAMPLES_MARKED = [
+    # le selci'avla cu zvati lo jbini be lo sumti .e lo brirebla poi sruri le selci'avla
     (
       text: "mi 1987 klama",
       module: "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) " &
         "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 " &
         "(tanru_unit_2 130 (BRIVLA 8 13 \"klama\")) (tail_terms)))",
-    ),  # written word stream refuses, between sumti and bridi tail around it
+    ),  # lo selci'avla poi lo porsi be lo valsi cu to'e curmi ke'a
     (
       text: "mi xau klama",
       module: "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (rivbi selmaho 3 6 \"xau\") " &
         "(bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 7 12 \"klama\")) (tail_terms)))",
-    ),  # cmavo no list gives selma'o
+    ),  # lo cmavo poi no liste cu dunda lo selma'o ke'a
+    # zo zei zvati le genja pu ro pagbu poi se tcidu
     (
       text: "zei mi klama",
       module: "(text (rivbi Construct 0 3 \"zei\") (sentence 2 (sumti_6 80 " &
         "(KOhA 4 6 \"mi\")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 7 12 \"klama\")) " &
         "(tail_terms))))",
-    ),  # `zei` joining no word before it, in root before all units read (4.6)
+    ),  # zo zei poi jorne no valsi poi lidne zo zei to `CLL 4.6` toi
+    # zo lo'u zvati pa pagbu poi vasru zo lo'u po'o
+    #   .i lo valsi poi se lidne zo lo'u se tcidu
     (
       text: "mi cusku lo'u .i mi klama",
       module: "(paragraph 0 (sentence 11 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 " &
@@ -105,7 +168,8 @@ const
         "(rivbi Quotation 9 13 \"lohu\") (I 15 16 \"i\") (sentence 11 (sumti_6 80 " &
         "(KOhA 17 19 \"mi\")) (bridi_tail_3 50 " &
         "(tanru_unit_2 130 (BRIVLA 20 25 \"klama\")) (tail_terms))))",
-    ),  # `lo'u` no `le'u` closes stands alone, and words after it read on (19.9, #859)
+    ),  # zo lo'u poi zo le'u na fanmo lo nu sitna pe ke'a to `CLL 19.9` .e `#859` toi
+    # le gerna cu sisti bu'u le fanmo be le selci'a ne'i `sumti-6` noi ckini li soze gi'e denpa
     (
       text: "mi klama le",
       module: "(srera 11 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI " &
@@ -113,35 +177,44 @@ const
         "SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) " &
         "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &
         "(tanru_unit_2 130 (BRIVLA 3 8 \"klama\")) (tail_terms))) (LE 9 11 \"le\"))",
-    ),  # text cut off after `le`: grammar stops at its end, in `sumti-6` 97, which waits
+    ),  # le selci'a cu selka'a ba zo le
+    # le selci'a poi lidne zo su stali ta'i lo nu pu se tcidu kei gi'e lidne lo selci'a poi se lidne
+    #     zo su
     (
       text: "mi klama su do",
       module: "(text (sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 50 " &
         "(tanru_unit_2 130 (BRIVLA 3 8 \"klama\")) (tail_terms))) (rivbi SU 9 11 \"su\") " &
         "(sumti_6 2 (KOhA 12 14 \"do\")))",
-    ),  # `su` ends text before it, which stays as it read, before text after it (ruling on #859)
+    ),  # zo su fanmo lo selci'a poi lidne ri to lo seljdi pe `#859` toi
+    # zo fa'o poi fanmo le selci'a ku'o .e lo valsi poi se lidne zo fa'o zi'e noi stali ta'i lo nu
+    #     selci'a
     (
       text: "mi klama si do fa'o ko",
       module: "(text (terms 2 (sumti_6 81 (KOhA 0 2 \"mi\")) " &
         "(rivbi Erasure 3 8 \"klama\" 9 11 \"si\") (sumti_6 81 (KOhA 12 14 \"do\"))) " &
         "(rivbi FAhO 15 19 \"faho\") (rivbi Stream FAhO 20 22 \"ko\"))",
-    ),  # words `si` erases, with `si`; `fa'o` that ends input, and word after it, as written
+    ),  # lo valsi poi zo si vimcu ke'a kansa zo si
   ]
-    ## Texts constructed, and root node of module `nif.nim` writes for each, byte for byte.
+    ## lo selci'a poi selfi'i
+    ##   .i ro le selci'a cu kansa lo gejyjge pe le selci'a be fi `NIF` be'o poi `nif.nim` ciska
+    ##       ke'a
+    ##   .i le cipra cu cipra ro lerfu pe le gejyjge
 
 
 
-#[ Readers ]#
+#[ ni'o ni'o ni'o lo tcidu ]#
 
 func leaves(node: Node): seq[int] =
-  ## List index of each leaf under node, in order of tree.
+  ## dunda lo liste be lo namcu pe ro pezli poi zvati ne'i le jgena ku'o ta'i le porsi pe le tricu
   if node.is_terminal: return @[node.at]
   for child in node.children: result.add child.leaves
 
 
 func isRead(marked: ReadingMarked, unit: Unit): bool =
-  ## Decide whether some stage reads unit, or refuses it: unit is no `su`, words erasure erases,
-  ##   `fa'o` that ends input, nor word after it.
+  ## jdice lo du'u xu kau su'o velru'e cu tcidu gi'a to'e curmi le pagbu
+  ##   .i su'o velru'e cu tcidu gi'a to'e curmi le pagbu va'o lo nu le pagbu cu na du zo su .a lo
+  ##       valsi poi lo nu vimcu cu vimcu ke'a ku'o .a zo fa'o poi fanmo le selci'a ku'o .a lo valsi
+  ##       poi se lidne zo fa'o
   if unit.is_read: return true
   if unit.refusal in {RefusalText.Su, RefusalText.Erasure, RefusalText.Faho}: return false
   unit.refusal != RefusalText.Stream or
@@ -149,14 +222,15 @@ func isRead(marked: ReadingMarked, unit: Unit): bool =
 
 
 func dropUnread(node: var Node, marked: ReadingMarked) =
-  ## Cut each leaf of unit no stage reads from node, as `isRead` gives.
+  ## vimcu ro pezli pe lo pagbu poi no velru'e cu tcidu ke'a ku'o le jgena ja'i `isRead`
   if node.is_terminal: return
   node.children.keepItIf(not it.is_terminal or marked.isRead(marked.units[it.at]))
   for child in node.children.mitems: child.dropUnread(marked)
 
 
 func isHolding(marked: ReadingMarked, unit: Unit, start: int): bool =
-  ## Decide whether unit holds word whose bytes, as text writes them, hold byte `start`.
+  ## jdice lo du'u xu kau le pagbu cu vasru lo valsi poi lo stuzi be ke'a ta'i lo nu le selci'a cu
+  ##     ciska ke'a cu vasru le stuzi po'u `start`
   for k in unit.words:
     let occurrence = marked.occurrences[k]
     if occurrence.start <= start and start < occurrence.start + occurrence.text.len: return true
@@ -164,11 +238,22 @@ func isHolding(marked: ReadingMarked, unit: Unit, start: int): bool =
 
 
 func isMarking(marked: ReadingMarked, strict: ReadingText): bool =
-  ## Decide whether refusal of `readText` is mark of its stage in marked reading: unit of
-  ##   written word stream refuses holding its byte; unit of rule of 19.16 refusing it, where
-  ##   stream refuses none; unit of selma'o holding its byte, where only selma'o refuses; error
-  ##   node at root with its rule, stopping at its byte, where every unit reads. Unit no stage
-  ##   reads is no refusal, so law reads it not (`isRead`).
+  ## jdice lo du'u xu kau le se tcidu poi sinxa ro srera cu vasru lo sinxa be lo nu `readText` to'e
+  ##     curmi be'o pe le velru'e poi to'e curmi
+  ##   .i ne'i `Stream` le sinxa cu du lo pagbu pe lo selci'avla poi le porsi be lo valsi cu to'e
+  ##       curmi ke'a
+  ##   .i le pagbu cu vasru le stuzi pe le nu to'e curmi
+  ##   .i ne'i lo javni pe `CLL 19.16` le sinxa cu du lo pagbu pe le javni poi to'e curmi
+  ##   .i le porsi be lo valsi cu to'e curmi no da
+  ##
+  ## ni'o ne'i `Selmaho` le sinxa cu du lo pagbu pe lo selma'o zi'e poi vasru le stuzi
+  ##   .i lo selma'o po'o cu to'e curmi
+  ##   .i ne'i `Grammar` le sinxa cu du lo srejge poi zvati le genja gi'e ponse le javni gi'e sisti
+  ##       bu'u le stuzi
+  ##   .i ro pagbu cu se tcidu
+  ##
+  ## ni'o lo pagbu poi no velru'e cu tcidu ke'a na du lo nu to'e curmi
+  ##   .i se ki'u bo le flalu na tcidu le pagbu to `isRead` toi
   let refused = marked.units.filterIt(not it.is_read and marked.isRead(it))
   case strict.refusal
   of RefusalText.Stream:
@@ -188,18 +273,20 @@ func isMarking(marked: ReadingMarked, strict: ReadingText): bool =
     refused.len == 0 and tree.stop.isSome and tree.rule & " " & $tree.number == strict.rule and
       start == strict.start
   of RefusalText.Su, RefusalText.Erasure, RefusalText.Faho: false
-    # `readText` refuses no text for stage that reads no words
+    # `readText` to'e curmi no selci'a ki'u lo velru'e poi tcidu no valsi
 
 
 func terminalsRead(marked: ReadingMarked): seq[Terminal] =
-  ## Give terminal of each unit grammar reads, in order.
+  ## dunda lo genvla pe ro pagbu poi le gerna cu tcidu ke'a ku'o ta'i le porsi
   for unit in marked.units:
     if unit.is_read: result.add unit.terminal
 
 
 func isSameShifted(a, b: Node, by: int): bool =
-  ## Decide whether tree `a` is tree `b` with index of each terminal moved by `by`: same rules,
-  ##   numbers and places grammar stops at, in same order.
+  ## jdice lo du'u xu kau le tricu po'u `a` du le tricu po'u `b` va'o lo nu `by` se jmina fi lo
+  ##     namcu pe ro genvla
+  ##   .i le re tricu cu ponse lo mi'ujva .e lo mitna'u .e lo mitstu poi le gerna cu sisti bu'u ke'a
+  ##       ku'o ta'i lo mitpoi
   if a.is_terminal != b.is_terminal: return false
   if a.is_terminal: return a.at == b.at + by
   if a.rule != b.rule or a.number != b.number or a.children.len != b.children.len: return false
@@ -210,7 +297,8 @@ func isSameShifted(a, b: Node, by: int): bool =
 
 
 func addBranches(node: Node, branches: var seq[Node]) =
-  ## Add each branch error node under `node` holds that heads `text`, which reads alone.
+  ## jmina ro jimca poi lo srejge poi zvati ne'i `node` vasru ke'a zi'e poi selkra `text` zi'e noi
+  ##     se tcidu ta'i pa mulselci'a
   if node.is_terminal: return
   for child in node.children:
     if node.stop.isSome and not child.is_terminal and child.stop.isNone and child.number == 0:
@@ -219,8 +307,9 @@ func addBranches(node: Node, branches: var seq[Node]) =
 
 
 func covers(tree: Node, terminals: openArray[Terminal]): seq[Node] =
-  ## Give each error node of tree that holds branches, and terminals between them: root of text
-  ##   of one part, else each error node of part that text cut into parts holds (`toParts`).
+  ## dunda ro srejge pe le tricu zi'e poi vasru lo jimca .e lo genvla poi zvati lo jbini be le jimca
+  ##   .i dunda le genja va'o lo nu le selci'a cu vasru pa pagbu po'o
+  ##   .i va'o lo drata ku dunda ro srejge pe lo pagbu be le se ciska to `toParts` toi
   if tree.stop.isNone: return
   let
     split = terminals.toParts(0, terminals.len)
@@ -231,32 +320,40 @@ func covers(tree: Node, terminals: openArray[Terminal]): seq[Node] =
 
 
 func classes(): seq[Terminal] =
-  ## Give each class of terminal grammar reads: each selma'o, then `BRIVLA` and `CMENE`.
+  ## dunda ro klesi be lo genvla poi le gerna cu tcidu ke'a
+  ##   .i le klesi cu du ro selma'o ce'o `BRIVLA` ce'o `CMENE`
   for selmaho in Selmaho: result.add selmaho.toTerminal
   result.add TERMINAL_BRIVLA
   result.add TERMINAL_CMENE
 
 
 func isReadPast(terminals: openArray[Terminal], at: int): bool =
-  ## Decide whether grammar reads terminals past place `at`: whole, or stopping after it.
+  ## jdice lo du'u xu kau le gerna cu tcidu le genvla ba le stuzi po'u `at`
+  ##   .i le gerna cu tcidu ro le genvla gi'a sisti ba le stuzi
   let reading = terminals.readGrammar
   reading.is_read or reading.at > at
 
 func isSame(marked: ReadingMarked, strict: ReadingText): bool =
-  ## Decide whether reading marked holds each unit once, as leaf in order, and units, words and
-  ##   NIF of reading that reads past last `su`: root holds tree of each text before it first,
-  ##   each with leaf of `su` after it, which law cuts; and law cuts each leaf of unit no stage
-  ##   reads, as words erasure erases, and `fa'o` with words after it.
+  ## jdice lo du'u xu kau le se tcidu poi sinxa ro srera cu vasru ro pagbu pa roi ta'i lo pezli ta'i
+  ##     le porsi
+  ##   .i ji'a ba zo su noi romoi ku'o le re se tcidu cu vasru lo mitpau .e lo mi'uvla .e lo
+  ##       mitselci'a be fi `NIF`
+  ##   .i le genja cu vasru ca lo krasi le tricu pe ro selci'a poi lidne zo su noi romoi
+  ##   .i ro le tricu cu lidne lo pezli pe zo su
+  ##   .i le flalu cu vimcu le tricu .e le pezli gi'e vimcu ro pezli pe lo pagbu poi no velru'e cu
+  ##       tcidu ke'a mu'u lo valsi poi lo nu vimcu cu vimcu ke'a ku'o .e zo fa'o .e lo valsi poi se
+  ##       lidne zo fa'o
   var
-    first = 0  # first unit past last `su`
-    cut = 0  # children of root up to leaf of last `su`
+    first = 0  # le pamoi pagbu poi se lidne zo su noi romoi
+    cut = 0  # lo te kancu be lo panzi be le genja be'o poi lidne ja du le pezli pe zo su noi romoi
   for k in 0 ..< marked.units.len:
     if not marked.units[k].is_read and marked.units[k].refusal == RefusalText.Su: first = k + 1
   for k in 0 ..< marked.tree.children.len:
     template child: untyped = marked.tree.children[k]
-      ## Alias child of root, which `let` would copy.
+      ## lo datcme be lo panzi be le genja
+      ##   .i `let` zbasu lo fukpi be le panzi
     if first > 0 and child.is_terminal and child.at == first - 1: cut = k + 1
-  var past = marked  # reading of text past last `su`
+  var past = marked  # le se tcidu pe le selci'a poi se lidne zo su noi romoi
   past.tree.children = marked.tree.children[cut .. ^1]
   past.tree.dropUnread(marked)
   let
@@ -274,8 +371,11 @@ func isSame(marked: ReadingMarked, strict: ReadingText): bool =
 
 
 func readPool(): Pool =
-  ## Read each text of corpora by both readers once, keeping each refused; then each text
-  ##   constructed, which `readText` refuses too. Law of cover reads each text of corpora too.
+  ## tcidu ro selci'a pe le selci'aste pa roi sepi'o le re tcidu gi'e ralte ro selci'a poi se to'e
+  ##     curmi
+  ##   .i ba bo tcidu ro selci'a poi selfi'i
+  ##   .i `readText` to'e curmi ji'a ro le selci'a poi selfi'i
+  ##   .i le flalu pe lo gacri cu tcidu ji'a ro selci'a pe le selci'aste
   for (key, text) in textsCorpora():
     let
       strict = text.readText
@@ -295,21 +395,27 @@ suite "Internal: Marks":
   let pool = readPool()
 
   test "Text readText reads gives same units, tree and NIF past last su, over corpora":
-    check pool.differing == newSeq[string]()  # header of `prose.nim`, text that reads as before
-    check pool.count_read >= COUNT_READ_LEAST  # IX.3, guard keeps texts that read
+    # lo selci'a poi se tcidu cu dunda le pu se tcidu
+    check pool.differing == newSeq[string]()  # ja'i le krapinka pe `prose.nim`
+    # lo bandu cu ralte lo selci'a poi se tcidu
+    check pool.count_read >= COUNT_READ_LEAST  # ja'i `IX.3`
     for text in TEXTS_PARTED:
       checkpoint text
       let strict = text.readText
       check strict.is_read and text.readTextMarked.isSame(strict)
-        # header of `prose.nim`, `su` ends text before it, which marked reading keeps
+        # ja'i le krapinka pe `prose.nim` zo su fanmo lo selci'a poi lidne ri
+        #   .i le se tcidu poi sinxa ro srera cu ralte le selci'a
 
 
   test "Each byte of each word lies in one leaf, in order, and each other byte is mark":
-    check pool.uncovered == newSeq[string]()  # header of `nif.nim`, each word ties to bytes
+    # ro valsi cu jorne lo stuzi
+    check pool.uncovered == newSeq[string]()  # ja'i le krapinka pe `nif.nim`
     for text in TEXTS_CONSTRUCTED.toSeq & TEXTS_PARTED.toSeq & TEXTS_COVERED.toSeq:
       checkpoint text
-      check text.readTextMarked.isCovering(text)  # header of `prose.nim`, each word in leaf
-      check readTextParts(text).reading.isCovering(text)  # header of `prose.nim`, live text
+      # ro valsi cu zvati pa pezli
+      check text.readTextMarked.isCovering(text)  # ja'i le krapinka pe `prose.nim`
+      # ro valsi pe lo mivyselci'a cu zvati pa pezli
+      check readTextParts(text).reading.isCovering(text)  # ja'i le krapinka pe `prose.nim`
 
 
   test "Text readText refuses gives tree of each unit once, in order, and its NIF reads back":
@@ -318,7 +424,7 @@ suite "Internal: Marks":
       count = 0
     for (key, text, strict, marked) in pool.refused:
       checkpoint key & ": " & text
-      check not strict.is_read  # law reads only texts refused
+      check not strict.is_read  # le flalu cu tcidu lo se ciska po'o poi se to'e curmi
       if strict.is_read: continue
       if key != "constructed": inc count
       let
@@ -328,8 +434,11 @@ suite "Internal: Marks":
             marked.units[it - 1].words[0] < marked.units[it].words[0]
           ) and held.deduplicate.len == held.len
       if not (is_whole and marked.isMarking(strict) and marked.isReadBack): broken.add key
-    check broken == newSeq[string]()  # header of `prose.nim`, each unit in place, refusal marked
-    check count >= COUNT_REFUSED_LEAST  # IX.3, guard keeps texts refused
+    # ro pagbu cu zvati le stuzi pe vo'a
+    #   .i lo nu to'e curmi cu selsni
+    check broken == newSeq[string]()  # ja'i le krapinka pe `prose.nim`
+    # lo bandu cu ralte lo selci'a poi se to'e curmi
+    check count >= COUNT_REFUSED_LEAST  # ja'i `IX.3`
 
 
   test "Each branch of error node that heads text is tree its terminals give read alone":
@@ -339,18 +448,21 @@ suite "Internal: Marks":
       let
         terminals = marked.terminalsRead
         tree = terminals.readGrammarMarked
-      check tree.leaves == toSeq(0 ..< terminals.len)  # header of `grammar.nim`, each terminal once
+      # ro genvla cu zvati pa roi
+      check tree.leaves == toSeq(0 ..< terminals.len)  # ja'i le krapinka pe `grammar.nim`
       var branches: seq[Node]
       tree.addBranches(branches)
       for branch in branches:
         let
           span = branch.leaves
           alone = terminals[span[0] .. span[^1]].readGrammar
-        check span == toSeq(span[0] .. span[^1])  # header of `grammar.nim`, branch of one span
+        # le jimca cu kuspe pa porsi be lo genvla
+        check span == toSeq(span[0] .. span[^1])  # ja'i le krapinka pe `grammar.nim`
         check alone.is_read and alone.tree.isSameShifted(branch, -span[0])
-          # header of `grammar.nim`, branch is tree its words give alone
+          # ja'i le krapinka pe `grammar.nim` le jimca cu du le tricu poi le valsi po'o pe le jimca
+          #     cu dunda ke'a
         inc count
-    check count >= COUNT_REFUSED_LEAST  # IX.3, guard keeps branches in play
+    check count >= COUNT_REFUSED_LEAST  # ja'i `IX.3` lo bandu cu ralte lo jimca
 
 
   test "Each class expects names lets grammar read past its stop, and each other does not":
@@ -366,9 +478,10 @@ suite "Internal: Marks":
       for class in classes():
         let is_past = (terminals[0 ..< at] & class).isReadPast(at)
         check is_past == tree.stop.get.expected.anyIt(it == class)
-          # header of `grammar.nim`, terminals some derivation reads where grammar stops
+          # ja'i le krapinka pe `grammar.nim` lo genvla poi su'o nu genytcidu cu ka'e tcidu ke'a
+          #     bu'u lo stuzi poi le gerna cu sisti bu'u ke'a
       inc count
-    check count == COUNT_EXPECTED  # IX.3, guard keeps stops in play
+    check count == COUNT_EXPECTED  # ja'i `IX.3` lo bandu cu ralte lo nu sisti
 
 
   test "Worked examples write as module suites hold, byte for byte, and read back":
@@ -376,8 +489,9 @@ suite "Internal: Marks":
       checkpoint text
       let marked = text.readTextMarked
       check marked.toNif == "(.nif27)\n(.lang \"cll-21.1\")\n" & module & "\n"
-        # header of `nif.nim`, error node and unit `unread`
-      check marked.isReadBack  # model of format, and tree rebuilt whole
+        # ja'i le krapinka pe `nif.nim` lo srejge .e lo pagbu po'u `unread`
+      # lo tricu poi selrapyzba ta'i lo mulno
+      check marked.isReadBack  # lo morna pe le tarmi
 
   test "Cover leaves out no terminal that reads alone, nor two pieces that read as one text":
     var count = 0
@@ -388,23 +502,28 @@ suite "Internal: Marks":
         for k, piece in cover.children:
           if piece.is_terminal:
             check not terminals[piece.at .. piece.at].readGrammar.is_read
-              # header of `grammar.nim`, fewest terminals left out
+              # ja'i le krapinka pe `grammar.nim` lo gacri cu cliva lo mecraigenvla
           if k == 0: continue
           let span = cover.children[k - 1].leaves[0] .. piece.leaves[^1]
           check not terminals[span].readGrammar.is_read
-            # header of `grammar.nim`, fewest pieces: two side by side read not as one `text`
+            # ja'i le krapinka pe `grammar.nim` lo gacri cu pilno lo mecraispi
+            #   .i no re spisa poi lamji cu se tcidu ta'i pa `text`
         inc count
-    check count >= COUNT_COVERS_LEAST  # IX.3, guard keeps covers in play
+    check count >= COUNT_COVERS_LEAST  # ja'i `IX.3` lo bandu cu ralte lo gacri
 
 
   test "Error node of text cut into parts holds tree of each part that reads alone":
     for text in ["mi klama le .i do citka", "mi klama le ni'o do citka"]:
       checkpoint text
       let tree = text.readTextMarked.tree
-      check tree.stop.isSome and tree.children.len == 2  # header of `grammar.nim`, two parts
-      check tree.children[0].stop.isSome  # header of `grammar.nim`, part that reads not
+      # le srejge cu vasru re pagbu
+      check tree.stop.isSome and tree.children.len == 2  # ja'i le krapinka pe `grammar.nim`
+      # lo pagbu poi na se tcidu
+      check tree.children[0].stop.isSome  # ja'i le krapinka pe `grammar.nim`
       check tree.children[1].stop.isNone and tree.children[1].number == 0
-        # header of `grammar.nim`, part that reads alone, as `text`
+        # ja'i le krapinka pe `grammar.nim` lo pagbu poi se tcidu ta'i pa mulselci'a
+        #   .i le pagbu cu selkra `text`
     let open = "lu mi klama le .i do citka".readTextMarked.tree
     check open.stop.isSome and open.children.allIt(it.is_terminal or it.stop.isNone)
-      # header of `grammar.nim`, text where `lu` stays open is one part, holding branches
+      # ja'i le krapinka pe `grammar.nim` lo selci'a poi zo lu stali lo ka kalri ne'i ke'a cu du pa
+      #     pagbu poi vasru lo jimca

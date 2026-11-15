@@ -1,19 +1,39 @@
-## Render long articles of lojban Wikipedia as typed Nim module holding verdict parser gives each
-##   paragraph; `build.nim` runs it.
-##   Reads answers of API of Wikipedia saved in one directory, one file to article, as `QUERY`
-##   asks for plain text and revision of page; renders `tests/articles_wikipedia/articles.nim`,
-##   and `NOTICE.md` beside it.
+## ciska lo claro'a pe `Wikipedia` pe la lojban. ta'i pa samtci datnyvei pe `Nim` zi'e poi ponse lo
+##     klesi gi'e vasru lo seljdi be le genturfa'i bei ro ju'agri
+##   .i `build.nim` pilno le vi datnyvei
 ##
-##   Ruling `D5 c` of #819: folder of repository holds long articles under CC BY-SA, which each
-##     run reads, with verdict for each part. Part is paragraph: line of plain text, heading left
-##     out, so suite reads connected text of several sentences as one text of 21.1.
-##   Answers are pinned by one SHA-256 over output of `sha256sum` given every file in order of
-##     name, as `cll.nim` pins pages. Plain text is of revision answer names; revision is pinned
-##     too, since newer revision changes digest.
-##   Verdict is what parser gives at render, as `tatoeba.nim` reads it; suite fails at each
-##     verdict that changes.
-##   Cost: JSON is read here alone, since API of Wikipedia answers in it; no node of it leaves
-##     this module (CONTRIBUTOR.md, Data).
+## ni'o tcidu lo danfu pe `API` pe `Wikipedia`
+##   .i le danfu cu selra'e ne'i pa datnyveiste
+##   .i ro prosa cu ponse pa datnyvei
+##   .i `QUERY` cpedu lo sapselci'a .e lo terga'i be le papri
+##   .i ciska `tests/articles_wikipedia/articles.nim` .e `NOTICE.md` noi lamji `articles.nim`
+##
+## ni'o `Architect` jdice `D5 c` bu'u `#819`
+##   .i pa datnyveiste pe `delegations` vasru lo claro'a poi seljva `CC BY-SA`
+##   .i ro nu cipra cu tcidu le prosa
+##   .i le datnyveiste cu vasru lo seljdi pe ro pagbu
+##
+## ni'o lo pagbu cu du lo ju'agri noi du pa linji pe lo sapselci'a
+##   .i lo cmene be lo ckupaupau cu na se tcidu
+##   .i se ki'u bo le cipra cu tcidu lo jonselci'a poi vasru su'o re jufra ku'o ta'i pa selci'a pe
+##       `CLL 21.1`
+##
+## ni'o pa snina'u pe `SHA-256` stosni le danfu
+##   .i le snina'u cu selzba fi lo selsku be `sha256sum` poi tcidu ro datnyvei ja'i lo porsi be lo
+##       cmene
+##   .i `cll.nim` stosni lo papri ta'i le mintu
+##   .i le sapselci'a cu selkra le terga'i poi le danfu cu cusku lo namcu pe ke'a
+##   .i le terga'i cu selstosni
+##   .i ki'u bo lo ninterga'i cu galfi le snina'u
+##
+## ni'o lo seljdi cu du lo seldu'a be le genturfa'i ca lo nu ciska kei gi'e se tcidu ja'i
+##     `tatoeba.nim`
+##   .i le cipra cu fliba ca ro nu pa seljdi cu cenba
+##
+## ni'o jdima fa lo nu `JSON` se tcidu ne'i le vi datnyvei po'o
+##   .i ki'u bo `API` pe `Wikipedia` spuda sepi'o `JSON`
+##   .i no jgena pe `JSON` cliva le vi datnyvei to le pagbu poi selcme zoi gy. Data .gy. ne'i
+##       `CONTRIBUTOR.md` toi
 
 {.experimental: "strictFuncs".}
 
@@ -23,41 +43,59 @@ import ./[literals, tatoeba]
 
 
 type
-  Paragraph* = object  ## Define one paragraph of article: text, and verdict parser gives it.
-    text*: string  ## Line of plain text, as answer gives it.
-    verdict*: string  ## Refusal and rule parser gives; empty where paragraph reads.
+  Paragraph* = object
+    ## pa ju'agri pe pa prosa
+    ##   .i le klesi cu vasru lo selci'a .e lo seljdi poi le genturfa'i cu dunda ke'a le ju'agri
+    text*: string  ## pa linji pe lo sapselci'a ta'i lo nu le danfu cu dunda le linji
+    verdict*: string
+      ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i cu dunda ke'a
+      ##   .i va'o lo nu le ju'agri cu se tcidu kei le seljdi cu kunti
 
-  Article* = object  ## Define one article as answer gives it.
-    title*: string  ## Title of page.
-    page*: int  ## Number Wikipedia gives page.
-    revision*: int  ## Revision plain text comes from.
-    paragraphs*: seq[Paragraph]  ## Paragraphs in order of article.
+  Article* = object  ## pa prosa ta'i lo nu le danfu cu dunda le prosa
+    title*: string  ## lo cmene be le papri
+    page*: int  ## lo namcu poi `Wikipedia` dunda ke'a le papri
+    revision*: int  ## le terga'i poi le sapselci'a cu selkra ke'a
+    paragraphs*: seq[Paragraph]  ## lo ju'agri ta'i lo porsi pe le prosa
 
-  Articles* = object  ## Define every article read, and digest of answers.
-    articles*: seq[Article]  ## Articles in order of file name.
-    digest*: string  ## SHA-256 over output of `sha256sum` given every answer, by name.
+  Articles* = object  ## ro prosa poi se tcidu ku'o .e lo snina'u be le danfu
+    articles*: seq[Article]  ## lo prosa ta'i lo porsi be lo cmene be lo datnyvei
+    digest*: string
+      ## `SHA-256` pe lo selsku be `sha256sum` poi tcidu ro danfu ja'i lo porsi be lo cmene
 
 
 const
   DIGEST_WIKIPEDIA* = "6bbe766025354f3dd9e7335ccd779cc868dbaddd9d8f2071eeb9680a0a3d0c21"
-    ## SHA-256 over answers for pages 4044, 19 and 70, saved 2026-11-06.
-  URL_API* = "https://jbo.wikipedia.org/w/api.php"  ## Address of API answers come from.
+    ## `SHA-256` pe le danfu pe le ci papri poi lo namcu pe ke'a du li vonovovo .a li paso .a li
+    ##     zeno
+    ##   .i le danfu cu selra'e de'i `2026-11-06`
+  URL_API* = "https://jbo.wikipedia.org/w/api.php"
+    ## le judri be `API` poi le danfu cu selkra ke'a
   QUERY* = "action=query&prop=extracts|revisions&explaintext=1&rvprop=ids|timestamp&" &
       "format=json&formatversion=2&pageids="
-    ## Query each answer gives, before number of page.
+    ## lo preti poi ro danfu cu spuda ke'a
+    ##   .i lo namcu pe le papri cu se jmina fi le fanmo be le preti
   URL_LICENCE_WIKIPEDIA* = "https://creativecommons.org/licenses/by-sa/4.0/"
-    ## Licence of text of lojban Wikipedia.
-  URL_PAGE* = "https://jbo.wikipedia.org/w/index.php?"  ## Address of page, before its query.
-  PATH_ARTICLES* = "tests/articles_wikipedia/articles.nim"  ## Module articles render to.
-  PATH_NOTICE_WIKIPEDIA* = "tests/articles_wikipedia/NOTICE.md"  ## Notice of licence beside it.
-  MARK_HEADING = '='  ## Character opening heading of plain text, left out.
+    ## le crujva pe lo selci'a pe `Wikipedia` pe la lojban.
+  URL_PAGE* = "https://jbo.wikipedia.org/w/index.php?"
+    ## le judri be lo papri
+    ##   .i lo preti pe le papri cu se jmina fi le fanmo be le judri
+  PATH_ARTICLES* = "tests/articles_wikipedia/articles.nim"
+    ## lo datnyvei poi le prosa cu selci'a fi ke'a
+  PATH_NOTICE_WIKIPEDIA* = "tests/articles_wikipedia/NOTICE.md"
+    ## lo notci be le crujva
+    ##   .i le notci cu lamji le samtci datnyvei
+  MARK_HEADING = '='
+    ## lo lerfu poi cfari lo cmene be lo ckupaupau pe lo sapselci'a
+    ##   .i lo cmene be lo ckupaupau cu selvi'u
 
 
 
-#[ Reading ]#
+#[ ni'o ni'o ni'o lo nu tcidu ]#
 
 proc readArticle(path: string): Article =
-  ## Read one answer: title, page, revision, and each paragraph with its verdict.
+  ## tcidu pa danfu
+  ##   .i le danfu cu vasru lo cmene .e lo namcu pe le papri ge'u .e lo terga'i .e ro ju'agri jo'u
+  ##       le seljdi pe le ju'agri
   let node =
     try: parseFile(path)
     except JsonParsingError as error: quit "Answer is no JSON; got `" & error.msg & "`.", 1
@@ -74,7 +112,7 @@ proc readArticle(path: string): Article =
 
 
 proc readArticles*(directory: string): Articles =
-  ## Read every answer of directory, in order of name, with digest of answers.
+  ## tcidu ro danfu pe lo datnyveiste ta'i lo porsi be lo cmene gi'e dunda lo snina'u be le danfu
   var names: seq[string]
   for kind, name in walkDir(directory, relative = true):
     if kind == pcFile and name.endsWith(".json"): names.add name
@@ -91,14 +129,18 @@ proc readArticles*(directory: string): Articles =
 
 
 
-#[ Rendering ]#
+#[ ni'o ni'o ni'o lo nu ciska ]#
 
 func linesParagraph(article: Article, index: int, paragraph: Paragraph): seq[string] =
-  ## Render one paragraph as constructor, one field to line, text split to fit.
+  ## ciska pa ju'agri ta'i lo zbafancu
+  ##   .i ro datnypau cu selci'a fi pa linji
+  ##   .i le selci'a cu se fendi mu'i lo nu mapti
   result.add "    ParagraphWikipedia("
   result.add "      article: " & article.title.toLiteral & ","
   result.add "      index: " & $index & ","
-  let text = paragraph.text.linesLiteral(12, ",")  # pieces fit first line, widest
+  # ro pagbu cu mapti le pamoi linji
+  #   .i lo selci'a pe le pamoi linji cu cfari bu'u lo stuzi poi traji lo ka darno
+  let text = paragraph.text.linesLiteral(12, ",")
   result.add "      text: " & text[0].strip(trailing = false)
   for line in text[1 .. ^1]: result.add repeat(' ', 10) & line.strip(trailing = false)
   result.add "      verdict: " & paragraph.verdict.toLiteral & ","
@@ -106,30 +148,43 @@ func linesParagraph(article: Article, index: int, paragraph: Paragraph): seq[str
 
 
 func toModuleArticles*(articles: Articles): string =
-  ## Render articles as committed module text.
+  ## ciska le prosa ta'i lo selci'a be fi le datnyvei poi selra'e
   var lines = @[
-    "## Hold long articles of lojban Wikipedia, with verdict parser gave each paragraph, for " &
-    "suite.",
-    "##   Written by `nim r tools/build.nim wikipedia <directory>` from answers of API of",
-    "##   Wikipedia, SHA-256 `" & articles.digest[0..31] & "`",
-    "##   `" & articles.digest[32 .. ^1] & "`; never edit by hand, run verb again.",
-    "##   Text of lojban Wikipedia, under licence CC BY-SA 4.0; folder holding module is",
-    "##     distributed under that licence, as `NOTICE.md` beside module gives, never under",
-    "##     licence of repository.",
+    "## ralte lo claro'a pe `Wikipedia` pe la lojban. mu'i le cipra",
+    "##   .i le vi datnyvei cu vasru lo seljdi be le genturfa'i bei ro ju'agri",
+    "##   .i lo minde po'u `nim r tools/build.nim wikipedia <directory>` ciska le vi datnyvei " &
+    "ra'i lo",
+    "##       danfu pe `API` pe `Wikipedia`",
+    "##   .i lo snina'u be le danfu cu du zoi ky. SHA-256 `" & articles.digest[0..31] & "`",
+    "##       `" & articles.digest[32 .. ^1] & "` .ky.",
+    "##   .i lo nu xanga'i le vi datnyvei cu na drani",
+    "##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapypli le minde",
+    "##   .i lo selci'a pe `Wikipedia` pe la lojban. seljva `CC BY-SA 4.0`",
+    "##   .i `NOTICE.md` noi lamji le vi datnyvei cu cusku lo du'u le datnyveiste poi vasru le vi",
+    "##       datnyvei cu seljva le crujva gi'e no roi seljva le crujva pe `delegations`",
     "",
     "{.experimental: \"strictFuncs\".}",
     "",
     "",
     "type",
-    "  ArticleWikipedia* = object  ## Define one article: title, and revision text comes from.",
-    "    title* {.requiresInit.}: string  ## Title of page.",
-    "    revision* {.requiresInit.}: int  ## Revision plain text comes from.",
+    "  ArticleWikipedia* = object",
+    "    ## pa prosa",
+    "    ##   .i le klesi cu vasru lo cmene .e le terga'i poi le selci'a cu selkra ke'a",
+    "    title* {.requiresInit.}: string  ## lo cmene be le papri",
+    "    revision* {.requiresInit.}: int  ## le terga'i poi le sapselci'a cu selkra ke'a",
     "",
-    "  ParagraphWikipedia* = object  ## Define one paragraph: article, place, text and verdict.",
-    "    article* {.requiresInit.}: string  ## Title of article holding paragraph.",
-    "    index* {.requiresInit.}: int  ## Place of paragraph in its article, from one.",
-    "    text* {.requiresInit.}: string  ## Line of plain text, as answer gives it.",
-    "    verdict* {.requiresInit.}: string  ## Refusal and rule parser gave; empty where read.",
+    "  ParagraphWikipedia* = object",
+    "    ## pa ju'agri",
+    "    ##   .i le klesi cu vasru lo prosa .e lo stuzi .e lo selci'a .e lo seljdi",
+    "    article* {.requiresInit.}: string  ## lo cmene be le prosa poi vasru le ju'agri",
+    "    index* {.requiresInit.}: int",
+    "      ## lo namcu pe le ju'agri ne'i le prosa",
+    "      ##   .i le namcu pe le pamoi ju'agri cu du li pa",
+    "    text* {.requiresInit.}: string",
+    "      ## pa linji pe lo sapselci'a ta'i lo nu le danfu cu dunda le linji",
+    "    verdict* {.requiresInit.}: string",
+    "      ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i pu dunda ke'a",
+    "      ##   .i va'o lo nu le ju'agri cu se tcidu kei le seljdi cu kunti",
     "",
     "",
     "const",
@@ -139,17 +194,18 @@ func toModuleArticles*(articles: Articles): string =
     lines.add "    ArticleWikipedia(title: " & article.title.toLiteral & ", revision: " &
         $article.revision & "),"
   lines.add "  ]"
-  lines.add "    ## Articles, in order of number of page as text."
+  lines.add "    ## lo prosa ja'i lo lerpoi porsi be lo namcu pe lo papri"
   lines.add "  PARAGRAPHS_WIKIPEDIA* = ["
   for article in articles.articles:
     for i, paragraph in article.paragraphs: lines.add article.linesParagraph(i + 1, paragraph)
   lines.add "  ]"
-  lines.add "    ## Paragraphs of each article, in order."
+  lines.add "    ## lo ju'agri pe ro prosa ta'i lo porsi"
   lines.join("\n") & "\n"
 
 
 func toNotice*(articles: Articles): string =
-  ## Render notice of licence, with changes made and each article credited by its history.
+  ## ciska lo notci be le crujva
+  ##   .i le notci cu cusku ro nu galfi kei gi'e sitna ro prosa sepi'o lo citri be le prosa
   var lines = @[
     "# Notice",
     "",

@@ -1,29 +1,57 @@
-## Read module of NIF data format, version 2027, by grammar `doc/nif-spec.md` of
-##   `nim-lang/nifspec` writes at `a31513c6`: page reads NIF live reader gives through it, and
-##   suites hold `nif.nim` to it, so writer is held to spec, never to itself.
+## tcidu pa selci'a be fi `NIF 2027` ja'i lo gerna poi `doc/nif-spec.md` pe `nim-lang/nifspec` pe
+##     `a31513c6` ciska ke'a
+##   .i lo papri cu tcidu sepi'o le vi datnyvei lo selci'a be fi `NIF` be'o poi lo tcidu be lo
+##       mivyselci'a cu dunda ke'a
+##   .i lo cipra cu cipra fi `nif.nim` sepi'o le vi datnyvei
+##   .i se ki'u bo lo cipra cu cipra fi le ciska ja'i le velski gi'e no roi cipra fi le ciska ja'i
+##       le ciska
 ##
-##   |------------|------------------------------------------------------------------------|
-##   | Code       | Meaning                                                                |
-##   |------------|------------------------------------------------------------------------|
-##   | readModule | nodes of module of NIF, each escape decoded; `ValueError` where refused |
-##   |------------|------------------------------------------------------------------------|
+##   |--------------|-------------------------------------------------|
+##   | lo cmene     | lo smuni                                        |
+##   |--------------|-------------------------------------------------|
+##   | `readModule` | lo jgena pe lo selci'a be fi `NIF` |
+##   |              | .i ro basysni cu selga'i fi lo stuzi       |
+##   |              | .i `ValueError` va'o lo nu to'e curmi           |
+##   |--------------|-------------------------------------------------|
 ##
-##   Reader takes subset of NIF: directive, compound node, identifier as tag or as atom, integer
-##     of decimal digits, string literal, escape `\xx` and its five shortcuts, whitespace between
-##     them. Every other construct is refused, as symbol, char literal, empty node, line
-##     information and comment; writer writes none, so what reader takes is NIF, and no more.
-##   Grammar of spec this reader follows:
-##     IdentStart is letter, `_`, byte from 128, or escape; IdentChar adds digit (Identifiers).
-##     Escape is `\` with two hex digits of upper case, or one of `n t r | ^` (Escape sequences).
-##     String literal holds byte from 32 that is no control character, byte from 128, `#`, `:`,
-##       whitespace and escape, between `"` (String literals).
-##     Compound node is `(`, tag, nodes, `)`; directive is `(.name ...)` (Directives); node is
-##       atom or compound node, and identifier is atom (Atoms).
-##     Version directive opens module, with no byte before it (Version directive).
-##   Token ends at whitespace, at parenthesis, or at end of module; byte after it, as `@` of
-##     line information or `#` of comment, is refused.
-##   Refusal raises `ValueError`, naming byte and what NIF asks there.
-##   Reader stands apart from writer `nif.nim`, and imports nothing of it, so each holds other.
+## ni'o le tcidu cu tcidu lo pagbu be `NIF` po'o
+##   .i le tcidu cu tcidu lo minde .e lo jgena poi vasru lo tcita .e lo jgena
+##   .i le tcidu cu tcidu lo cmene poi tcita .a lo cmene poi jgena gi'e vasru no jgena
+##   .i le tcidu cu tcidu lo mulna'u poi pilno pano lerfu ku'o .e lo lerpoi .e `\xx` .e lo mu
+##       torbasysni pe `\xx`
+##   .i le tcidu cu tcidu lo kutle'u poi zvati lo jbini be le se tcidu
+##
+## ni'o le tcidu cu to'e curmi ro datytai mu'u lo sinxa .e lo lerfu poi se sitna .e lo kutyjge .e lo
+##     datni be lo linji be'o .e lo pinka
+##   .i le ciska cu ciska no le datytai
+##   .i se ki'u bo ro selci'a poi le tcidu cu tcidu ke'a selci'a fi `NIF` po'o
+##
+## ni'o le tcidu cu jersi lo gerna pe le velski
+##   .i `IdentStart` du lo lerfu .a `_` .a lo stuzi poi na mleca li parebi .a lo basysni
+##   .i `IdentChar` jmina lo namcu lerfu to `Identifiers` toi
+##
+## ni'o `\` krasi lo basysni
+##   .i le basysni cu vasru re lerfu pe li paxa gi'a vasru pa lerfu pe `n t r | ^`
+##   .i le lerfu pe li paxa cu barda lerfu to `Escape sequences` toi
+##   .i lo lerpoi cu vasru ro stuzi poi na mleca li cire gi'e na midle'u ku'o .e ro stuzi poi na
+##       mleca li parebi ku'o .e `#` .e `:` .e lo kutle'u .e lo basysni
+##   .i re `"` sruri le lerpoi to `String literals` toi
+##
+## ni'o lo jgena poi vasru lo tcita .e lo jgena cu du `(` ce'o lo tcita ce'o lo jgena ce'o `)`
+##   .i lo minde cu du `(.name ...)` to `Directives` toi
+##   .i ro jgena cu du lo jgena poi vasru no jgena ku'o .a lo jgena poi vasru lo tcita .e lo jgena
+##   .i ro cmene cu du lo jgena poi vasru no jgena to `Atoms` toi
+##   .i lo minde poi cusku lo namcu pe le tarmi cu krasi le selci'a gi'e se lidne no stuzi to
+##       `Version directive` toi
+##
+## ni'o ro valsi pe `NIF` fanmo bu'u lo kutle'u .a `(` .a `)` .a lo fanmo be le selci'a
+##   .i le tcidu cu to'e curmi ro datstu poi se lidne le valsi mu'u `@` pe lo datni be lo linji ge'u
+##       .a `#` pe lo pinka
+##   .i lo nu to'e curmi cu renro `ValueError` noi cusku lo stuzi .e lo selcpe be `NIF` bu'u le
+##       stuzi
+##
+## ni'o le tcidu cu sepli le ciska po'u `nif.nim` gi'e nerbei no pagbu be `nif.nim`
+##   .i se ki'u bo ro le re datnyvei cu cipra fi le drata
 
 {.experimental: "strictFuncs".}
 
@@ -31,39 +59,54 @@ import std/strutils
 
 
 type
-  KindNif* {.pure.} = enum  ## Define kind of node reader gives.
-    Compound  ## Compound node, `(tag child ...)`; directive too, whose tag opens with `.`.
-    Identifier  ## Identifier standing as atom, as `sumti_6` of error node.
-    Number  ## Integer, as `97`.
-    Literal  ## String literal, as `"mi"`.
+  KindNif* {.pure.} = enum  ## lo klesi be lo jgena poi le tcidu cu dunda ke'a
+    Compound
+      ## lo jgena poi vasru lo tcita .e lo jgena mu'u `(tag child ...)`
+      ##   .i ji'a lo minde noi lo tcita be ke'a cu selkra `.`
+    Identifier  ## lo cmene poi jgena gi'e vasru no jgena mu'u `sumti_6` pe lo srejge
+    Number  ## lo mulna'u mu'u `97`
+    Literal  ## lo lerpoi mu'u `"mi"`
 
-  NodeNif* = object  ## Define node of NIF as read, each escape decoded.
+  NodeNif* = object
+    ## lo jgena pe `NIF` ta'i lo nu se tcidu
+    ##   .i ro basysni cu selga'i fi lo stuzi
     kind*: KindNif
-    text*: string  ## Tag of compound node, identifier, or bytes of string literal; else empty.
-    number*: int  ## Value of integer; zero otherwise.
-    children*: seq[NodeNif]  ## Nodes compound node holds, in order; empty otherwise.
+    text*: string
+      ## lo tcita be lo jgena poi vasru lo tcita .e lo jgena be'o .a lo cmene .a lo stuzi pe lo
+      ##     lerpoi
+      ##   .i va'o lo drata cu kunti
+    number*: int  ## lo mulna'u to va'o lo drata cu du li no toi
+    children*: seq[NodeNif]
+      ## ro jgena poi lo jgena poi vasru lo tcita .e lo jgena cu vasru ke'a ku'o ta'i lo porsi
+      ##   .i va'o lo drata cu kunti
 
-  Reader = object  ## Define module being read, and byte reader stands at.
+  Reader = object  ## lo selci'a poi se tcidu .e lo stuzi poi le tcidu cu zvati ke'a
     text: string
     at: int
 
 
 const
-  WHITESPACE = {' ', '\t', '\n', '\r'}  ## Whitespace of NIF, which parts tokens (Whitespace).
+  WHITESPACE = {' ', '\t', '\n', '\r'}
+    ## lo kutle'u pe `NIF` zi'e noi fendi lo valsi to `Whitespace` toi
   CONTROLS = {'(', ')', '[', ']', '{', '}', '~', '#', '\'', '"', '\\', ':', '@'}
-    ## Control characters of NIF (Control characters).
+    ## lo midle'u pe `NIF` to `Control characters` toi
   OPENERS_IDENTIFIER = {'a'..'z', 'A'..'Z', '_', '\x80'..'\xFF'}
-    ## Bytes opening identifier, escape aside (IdentStart).
+    ## lo stuzi poi ka'e krasi lo cmene
+    ##   .i lo basysni na se kancu to `IdentStart` toi
   DIGITS = {'0'..'9'}
-  HEX = {'0'..'9', 'A'..'F'}  ## Digits of escape, upper case alone (Escape sequences).
+  HEX = {'0'..'9', 'A'..'F'}
+    ## lo lerfu pe li paxa pe lo basysni
+    ##   .i no cmale'u cu cmima to `Escape sequences` toi
   SHORTCUTS = [('n', '\n'), ('t', '\t'), ('r', '\r'), ('|', '\\'), ('^', '"')]
-    ## Shortcut of escape, with byte it gives (Escape sequences).
-  VERSION* = "(.nif27)"  ## Version directive, which opens module with no byte before it.
+    ## ro torbasysni joi lo stuzi poi le basysni cu dunda ke'a to `Escape sequences` toi
+  VERSION* = "(.nif27)"
+    ## lo minde poi cusku lo namcu pe le tarmi gi'e krasi lo selci'a gi'e se lidne no stuzi
 
 
 
 func refuse(reader: Reader, expected: string) {.noreturn.} =
-  ## Refuse module at byte reader stands at, naming what NIF asks there.
+  ## to'e curmi le selci'a bu'u lo stuzi poi le tcidu cu zvati ke'a
+  ##   .i le fancu cu cusku lo selcpe be `NIF` bu'u le stuzi
   let found =
     if reader.at < reader.text.len: "`" & reader.text[reader.at] & "`" else: "end of module"
   raise newException(
@@ -72,23 +115,28 @@ func refuse(reader: Reader, expected: string) {.noreturn.} =
 
 
 func isAt(reader: Reader, bytes: set[char]): bool =
-  ## Decide whether reader stands at byte of set; false at end of module.
+  ## jdice lo du'u le tcidu cu zvati lo stuzi poi cmima le selcmi
+  ##   .i va'o lo nu le tcidu cu zvati lo fanmo be le selci'a kei le jalge cu jitfa
   reader.at < reader.text.len and reader.text[reader.at] in bytes
 
 
 func skipWhitespace(reader: var Reader) =
-  ## Move reader past whitespace.
+  ## muvgau le tcidu lo stuzi poi se lidne lo kutle'u
   while reader.isAt(WHITESPACE): inc reader.at
 
 
 func endToken(reader: Reader) =
-  ## Refuse byte after token, unless whitespace, parenthesis, or end of module stands there.
+  ## to'e curmi lo stuzi poi se lidne lo valsi pe `NIF`
+  ##   .i ku'i le fancu cu curmi lo kutle'u .e `(` .e `)` .e lo fanmo be le selci'a
   if reader.at < reader.text.len and not reader.isAt(WHITESPACE + {'(', ')'}):
     reader.refuse("end of token")
 
 
 func readEscape(reader: var Reader): char =
-  ## Read escape after its `\`: two hex digits of upper case, or shortcut.
+  ## tcidu lo basysni
+  ##   .i le fancu cu cfari bu'u lo stuzi poi se lidne `\`
+  ##   .i le basysni cu du re lerfu pe li paxa ge'u .a pa torbasysni
+  ##   .i le fancu cu curmi lo barda lerfu po'o
   if reader.isAt(HEX) and reader.at + 1 < reader.text.len and reader.text[reader.at + 1] in HEX:
     result = char(parseHexInt(reader.text[reader.at .. reader.at + 1]))
     reader.at += 2
@@ -101,7 +149,9 @@ func readEscape(reader: var Reader): char =
 
 
 func readIdentifier(reader: var Reader): string =
-  ## Read identifier: opener or escape first, then digit among them (Identifiers).
+  ## tcidu lo cmene
+  ##   .i lo krale'u .a lo basysni cu pamoi
+  ##   .i lo nacle'u cu ka'e se lidne le pamoi to `Identifiers` toi
   while reader.at < reader.text.len:
     let c = reader.text[reader.at]
     if c == '\\':
@@ -115,7 +165,8 @@ func readIdentifier(reader: var Reader): string =
 
 
 func readNumber(reader: var Reader): int =
-  ## Read integer of decimal digits, with `-` before it where negative (Numbers).
+  ## tcidu lo mulna'u poi pilno pano lerfu
+  ##   .i va'o lo nu le mulna'u cu mleca li no kei `-` lidne le mulna'u to `Numbers` toi
   let start = reader.at
   if reader.isAt({'-'}): inc reader.at
   if not reader.isAt(DIGITS): reader.refuse("digit")
@@ -124,7 +175,9 @@ func readNumber(reader: var Reader): int =
 
 
 func readLiteral(reader: var Reader): string =
-  ## Read string literal after its `"`, up to `"` closing it (String literals).
+  ## tcidu lo lerpoi
+  ##   .i le fancu cu cfari bu'u lo stuzi poi se lidne `"`
+  ##   .i le fancu cu sisti bu'u `"` poi fanmo le lerpoi to `String literals` toi
   while true:
     if reader.at >= reader.text.len: reader.refuse("`\"` closing string literal")
     let c = reader.text[reader.at]
@@ -142,7 +195,10 @@ func readLiteral(reader: var Reader): string =
 
 
 func readNode(reader: var Reader): NodeNif =
-  ## Read node: compound node with nodes it holds, identifier, integer, or string literal.
+  ## tcidu lo jgena
+  ##   .i le jgena cu du lo jgena poi vasru lo tcita .e lo jgena ku'o .a lo cmene .a lo mulna'u .a
+  ##       lo lerpoi
+  ##   .i va'o lo nu le jgena cu vasru lo jgena kei le fancu cu tcidu ji'a ro le selvau
   if reader.isAt({'('}):
     inc reader.at
     var tag = ""
@@ -170,7 +226,9 @@ func readNode(reader: var Reader): NodeNif =
 
 
 func readModule*(text: string): seq[NodeNif] =
-  ## Read module of NIF: version directive at its first byte, then nodes up to end (Modules).
+  ## tcidu lo selci'a be fi `NIF`
+  ##   .i lo minde poi cusku lo namcu pe le tarmi cu zvati lo pamoi stuzi
+  ##   .i lo jgena cu se lidne le minde gi'e klama lo fanmo be le se ciska to `Modules` toi
   var reader = Reader(text: text)
   if not text.startsWith(VERSION): reader.refuse("version directive `" & VERSION & "`")
   while true:

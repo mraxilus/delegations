@@ -1,39 +1,78 @@
-## Run each check of this project that runs in browser, as verb `drive`: build script and page,
-##   compile each suite of `tests/browser/` and collector to JavaScript, write texts and cases
-##   suites read with what native build gives each, run each suite in headless Chromium
-##   (`drive.nim`), and read page of live text and control page `koch drive` writes with
-##   collector, into `written.json`.
+## pilno ro cipra pe le vi selgu'a ge'u zi'e poi fasnu ne'i lo tcidu be lo papri ku'o ta'i lo minde
+##     po'u `drive`
+##   .i zbasu le samtci .e le papri
+##   .i fanva ro cipra pe `tests/browser/` ge'u .e le crepu fi `JavaScript`
+##   .i ciska lo selci'a .e lo se cipra poi lo cipra cu tcidu ke'a
+##   .i ro le selci'a .e ro le se cipra cu se kansa lo seldu'a be le jbezba
+##   .i pilno ro cipra ne'i `headless Chromium` to `drive.nim` toi
+##   .i tcidu le papri pe lo mivyselci'a ge'u .e le tropapri poi `koch drive` ciska ke'a ku'o sepi'o
+##       le crepu gi'e ciska le se tcidu fi `written.json`
 ##
-##   |-----------|---------------------------------------------------------------------------|
-##   | Code      | Meaning                                                                   |
-##   |-----------|---------------------------------------------------------------------------|
-##   | runDrive  | build, then run each suite and collector in Chromium; exit 1 on failure   |
-##   |-----------|---------------------------------------------------------------------------|
+##   |------------|-------------------------------------------------------------------------------|
+##   | lo fancu   | lo smuni                                                                      |
+##   |------------|-------------------------------------------------------------------------------|
+##   | `runDrive` | zbasu je pilno ro cipra .e le crepu ne'i `Chromium`                           |
+##   |            | .i li pa va'o lo nu fliba                                                     |
+##   |------------|-------------------------------------------------------------------------------|
 ##
-##   Live suite and suite of page run again on page whose rule of content refuses each worker, so
-##     reader gives way to thread of page, as script does where page refuses worker.
-##   Each suite of script runs on page of its own, which loads it alone, by its address: each holds
-##     bridge, as shipped script does, since each script Nim compiles defines its procs as
-##     globals, and second script on page replaces procs of first that share names. Worker of live
-##     suite starts from that address, as worker of script starts from address of script.
-##   Suite of page runs in page built from shell, inline in place of script of page, which suite
-##     holds whole; worker starts from Blob of its text, as worker of page does.
-##   Texts of live suite are constructed, each with word that reaches back, and sentences of
-##     Tatoeba joined; NIF each gives is native build's, as `readTextParts` gives parts of text
-##     read whole, which law of `test_live.nim` holds live text to.
-##   Cases of suite of page are each sample of shell, read whole; texts streamed; text typed piece
-##     by piece, kept open; and edit that starts new reader. Drawing native build gives each is
-##     `drawn` of NIF native live reader gives same pieces, which is NIF of text read whole once
-##     reader ends (`live.nim`, law). Merge of each is `drawnMerged` of its NIF so far, tail left
-##     out, as page merges it.
-##   Each text, case, piece and drawing is file of one string, so no format stands between backend
-##     and page.
-##   Collector reads page of live text with no script, which page reads complete without, as build
-##     draws first sample natively; each font face page declares is bytes of its `data:` source,
-##     written into file of its own named by digest, beside `written.json`, so `koch drive` reads
-##     bytes viewer gets (`font_stacks.nim` of curator). Control page declares none.
-##   Chromium is one `LOJBAN_CHROMIUM` names, else headless shell of Chrome for Testing that
-##     `koch fetch-assets` serves from store of repository, unpacked under `build/chromium/`.
+## ni'o le cipra pe lo mivyselci'a ge'u .e le cipra pe le papri cu rapfau ne'i pa papri poi lo javni
+##     pe lo selvau be ke'a cu to'e curmi ro gunka
+##   .i se ki'u bo lo cilta pe le papri cu basti le gunka pe le tcidu ta'i le samtci va'o lo nu le
+##       papri cu to'e curmi lo gunka
+##
+## ni'o ro cipra pe le samtci cu fasnu ne'i pa papri pe vo'a ge'u zi'e noi cpacu le cipra po'o
+##     sepi'o lo judri be le cipra
+##   .i ro cipra cu vasru le cripu ta'i le samtci poi selbe'i
+##   .i ki'u bo ro samtci poi `Nim` fanva ke'a punji ro fancu pe vo'a lo stuzi poi ro da ka'e pilno
+##       ke'a
+##   .i pa remoi samtci ne'i pa papri cu basti ro fancu pe le pamoi ge'u zi'e poi ke'a .e pa fancu
+##       pe le remoi cu selcme pa cmene
+##   .i le gunka pe le cipra pe lo mivyselci'a cu selkra le judri ta'i lo nu le gunka pe le samtci
+##       cu selkra le judri be le samtci
+##
+## ni'o le cipra pe le papri cu fasnu ne'i pa papri poi selzba fi le calku
+##   .i le cipra cu zvati le selci'a pe le papri gi'e basti le samtci pe le papri gi'e vasru ro
+##       pagbu be le samtci
+##   .i le gunka cu selkra pa `Blob` pe le selci'a pe le cipra ta'i le gunka pe le papri
+##
+## ni'o lo selfinselci'a pe le cipra pe lo mivyselci'a cu vasru pa valsi poi galfi lo pu valsi
+##   .i pa datselci'a cu jorne lo jufra pe `Tatoeba`
+##   .i le jbezba cu dunda le selci'a be fi `NIF` be'o pe ro selci'a ta'i lo nu `readTextParts`
+##       dunda lo pagbu be lo selci'a poi mulseltcidu
+##   .i le flalu pe `test_live.nim` cipra lo du'u lo mivyselci'a cu mintu le pagbu
+##
+## ni'o lo se cipra pe le cipra pe le papri cu du ro mupli pe le calku ge'u zi'e poi mulseltcidu
+##     ku'o .e lo selci'a poi selbe'i ta'i lo porsi be lo valsi ku'o .e pa selci'a poi selci'a ta'i
+##     lo nu ro pagbu cu sepli kei gi'e ca'o kalri ku'o .e pa nu galfi poi rinka lo nu pa ninytcidu
+##     cu cfari
+##   .i le jbezba cu ciska le pixra be ro se cipra sepi'o `drawn`
+##   .i `drawn` pilno le selci'a be fi `NIF` be'o poi le jbetcidu be lo mivyselci'a cu dunda ke'a ca
+##       lo nu cpacu le mitpau
+##   .i va'o lo nu le tcidu cu sisti kei le selci'a cu mintu le selci'a be fi `NIF` be'o pe lo nu
+##       tcidu le mulno se ciska to `live.nim`
+##   .i lo flalu toi
+##
+## ni'o lo nu jmina ro se cipra cu pilno `drawnMerged` le ca selci'a be fi `NIF` be'o pe le se cipra
+##   .i le rebla cu na se jmina ta'i lo nu le papri cu jmina
+##
+## ni'o ro selci'a .e ro se cipra .e ro pagbu .e ro pixra cu datnyvei gi'e vasru pa lerpoi
+##   .i se ki'u bo no tarmi be lo datni cu zvati lo jbini be le sabji samtci .e le papri
+##
+## ni'o le crepu cu tcidu le papri pe lo mivyselci'a ge'u zi'e poi vasru no samtci
+##   .i le papri cu mulseltcidu va'o lo nu no samtci cu zasti
+##   .i ki'u bo lo nu zbasu cu punji lo jbexra be le pamoi mupli le papri
+##
+## ni'o ro lertai poi le papri cu cusku ke'a selkra pa `data:`
+##   .i le crepu cu ciska lo stuzi pe ro lertai fi pa datnyvei pe le lertai
+##   .i le datnyvei cu selcme lo snina'u gi'e zvati lo mlana be `written.json`
+##   .i se ki'u bo `koch drive` tcidu lo stuzi poi lo viska cu cpacu ke'a to `font_stacks.nim` pe
+##       `curator` toi
+##   .i le tropapri cu cusku no lertai
+##
+## ni'o `Chromium` poi selpli cu du lo selcme be `LOJBAN_CHROMIUM`
+##   .i va'o lo drata `Chromium` poi selpli cu du `headless shell` pe `Chrome for Testing` ge'u zi'e
+##       noi `koch fetch-assets` cpacu ke'a lo sorcu pe `delegations` zi'e noi se kalri ne'i
+##       `build/chromium/`
 
 {.experimental: "strictFuncs".}
 
@@ -46,80 +85,117 @@ import ./[drive, page]
 
 
 const
-  PATH_BRIDGE* = "src" / "javascript" / "bridge.nim"  ## Module exposing parser to JavaScript.
-  PATH_SCRIPT* = "build" / "lojban_parser.js"  ## Script verb `javascript` writes from bridge.
-  ROOT_SERVED = "build"  ## Folder backend serves, by path of each file under it.
-  DIRECTORY_DRIVE = ROOT_SERVED / "drive"  ## Folder of each script and text of suites.
-  DIRECTORY_LIVE = DIRECTORY_DRIVE / "live"  ## Folder of texts of live suite, with NIF of each.
-  DIRECTORY_CASES = DIRECTORY_DRIVE / "page"  ## Folder of cases of suite of page.
-  MODE_REFUSED = "refused"  ## Mode of page whose rule of content refuses each worker.
+  PATH_BRIDGE* = "src" / "javascript" / "bridge.nim"
+    ## le datnyvei poi jarco le genturfa'i `JavaScript`
+  PATH_SCRIPT* = "build" / "lojban_parser.js"
+    ## le samtci poi lo minde po'u `javascript` zbasu ke'a le cripu
+  ROOT_SERVED = "build"
+    ## lo vasru poi le sabji samtci cu sabji ke'a
+    ##   .i ro datnyvei ne'i le vasru cu se sabji sepi'o lo judri be vo'a
+  DIRECTORY_DRIVE = ROOT_SERVED / "drive"  ## lo vasru be ro samtci .e ro selci'a pe lo cipra
+  DIRECTORY_LIVE = DIRECTORY_DRIVE / "live"
+    ## lo vasru be lo selci'a pe le cipra pe lo mivyselci'a ge'u ge'u .e le selci'a be fi `NIF` be'o
+    ##     pe ro le selci'a
+  DIRECTORY_CASES = DIRECTORY_DRIVE / "page"  ## lo vasru be lo se cipra pe le cipra pe le papri
+  MODE_REFUSED = "refused"
+    ## lo tadji be lo papri poi lo javni pe lo selvau be ke'a cu to'e curmi ro gunka
   POLICY_REFUSED = ("Content-Security-Policy", "worker-src 'none'")
-    ## Header of page of mode `MODE_REFUSED`, which refuses each worker, as rule of page may.
+    ## lo sedli'i pe lo papri pe `MODE_REFUSED`
+    ##   .i le sedli'i cu to'e curmi ro gunka ta'i lo nu lo javni pe lo papri cu ka'e to'e curmi ro
+    ##       gunka
   SUITES = [("suite_script", ""), ("suite_live", ""), ("suite_live", MODE_REFUSED)]
-    ## Suite of `tests/browser/`, each on page of its own, with mode page gives it: live suite runs
-    ##   twice, once where page refuses worker.
-  PATH_COLLECTOR = "tools" / "drive" / "collector.nim"  ## Collector of what page draws.
+    ## ro cipra pe `tests/browser/` fasnu ne'i pa papri pe le cipra gi'e ponse lo tadji poi le papri
+    ##     cu dunda ke'a
+    ##   .i le cipra pe lo mivyselci'a cu fasnu re roi gi'e pa roi fasnu ne'i lo papri poi to'e
+    ##       curmi lo gunka
+  PATH_COLLECTOR = "tools" / "drive" / "collector.nim"  ## le crepu be lo pixra pe le papri
   DIRECTORY_FONT_FACES = ROOT_SERVED / "font-faces"
-    ## Folder `koch drive` reads; twin of `DIRECTORY_FONT_FACES` of `font_stacks.nim` of curator.
+    ## lo vasru poi `koch drive` tcidu ke'a
+    ##   .i le vasru cu mintu `DIRECTORY_FONT_FACES` pe `font_stacks.nim` pe `curator`
   PATH_CONTROL = DIRECTORY_FONT_FACES / "control.html"
-    ## Control page `koch drive` writes before `drive`; absent outside it.
-  PATH_WRITTEN = DIRECTORY_FONT_FACES / "written.json"  ## What collector read, for `koch drive`.
-  PAGE_CONTROL = "control"  ## Name `written.json` gives control page.
-  PAGE_LIVE = "live"  ## Name `written.json` gives page of live text.
+    ## le tropapri poi `koch drive` ciska ke'a pu lo nu `drive` fasnu
+    ##   .i le tropapri cu na zasti bu'u lo bartu be `koch drive`
+  PATH_WRITTEN = DIRECTORY_FONT_FACES / "written.json"
+    ## lo se tcidu be le crepu be'o poi `koch drive` pilno ke'a
+  PAGE_CONTROL = "control"  ## lo cmene poi `written.json` dunda ke'a le tropapri
+  PAGE_LIVE = "live"  ## lo cmene poi `written.json` dunda ke'a le papri pe lo mivyselci'a
   DIRECTORY_FILES = "files"
-    ## Folder beside `written.json` of each font face page declares, by digest of its bytes.
-  PATH_KOCH = ".." / ".." / ".." / "koch.nim"  ## Driver of repository, asked for Chromium.
+    ## lo vasru poi zvati lo mlana be `written.json` gi'e vasru ro lertai poi le papri cu cusku ke'a
+    ##   .i lo datnyvei pe ro lertai cu selcme lo snina'u pe lo stuzi pe le lertai
+  PATH_KOCH = ".." / ".." / ".." / "koch.nim"
+    ## le jitro samtci pe `delegations` ge'u zi'e poi le vi samtci cu cpedu `Chromium` ke'a
   FILE_CHROMIUM = "chrome-headless-shell-linux64-153.0.8010.12.zip"
-    ## Headless shell of Chrome for Testing 153.0.8010.12, as store of repository names it, version
-    ##   in name (`ARCHIVES` of `curator/audit/src/assets.nim`).
-  DIRECTORY_CHROMIUM = ROOT_SERVED / "chromium"  ## Folder Chromium of store unpacks into.
+    ## `headless shell` pe `Chrome for Testing 153.0.8010.12` ta'i le cmene poi lo sorcu pe
+    ##     `delegations` dunda ke'a
+    ##   .i le cmene cu vasru lo farvi namcu to `ARCHIVES` pe `curator/audit/src/assets.nim` toi
+  DIRECTORY_CHROMIUM = ROOT_SERVED / "chromium"
+    ## lo vasru poi `Chromium` pe le sorcu cu se kalri ne'i ke'a
   PATH_CHROMIUM_UNPACKED = DIRECTORY_CHROMIUM / "chrome-headless-shell-linux64" /
     "chrome-headless-shell"
-    ## Program of Chromium, as archive unpacks it.
+    ## le samtci pe `Chromium` ge'u zi'e noi zvati le vreji poi se kalri
   SENTENCES_LIVE = 12
-    ## Sentences of Tatoeba joined into one text of live suite; script reads each word as piece,
-    ##   about 37 times as long as native build, twice.
+    ## lo du'u xo kau jufra pe `Tatoeba` seljo'e fi pa selci'a pe le cipra pe lo mivyselci'a
+    ##   .i le samtci cu tcidu ro valsi ta'i pa pagbu gi'e nitcu lo temci poi pilji li ji'i cize le
+    ##       temci pe le jbezba ku'o gi'e tcidu le selci'a re roi
   TEXTS_LIVE = [
-    "mi klama .i do cadzu si si si ko",  # `si` erases `cadzu`, `do` and `.i` (19.13)
-    "lu mi klama .i do cadzu li'u .i ko",  # `li'u` reads sentences after `lu` again (19.9)
+    # zo si vimcu zo cadzu .e zo do .e zo .i
+    "mi klama .i do cadzu si si si ko",  # `CLL 19.13`
+    # zo li'u rinka lo nu lo jufra poi se lidne zo lu rapseltcidu
+    "lu mi klama .i do cadzu li'u .i ko",  # `CLL 19.9`
     "zoi gy. café \u{1F600} .gy. cu melbi .i mi klama .i do cadzu si si si ko",
-      # NIF holds rune past U+FFFF before cut; `zoi` quotes it (19.10); escape, since no font
-      #   face project ships draws it (Article X.8)
-    "mi su do .i ko",  # `su` ends text before it (ruling on #859)
-    "lo'u mi su do le'u .i ko",  # `le'u` quotes `su` once it comes (19.9)
+      # le selci'a be fi `NIF` cu vasru pa lerfu poi zmadu `U+FFFF` ku'o pu pa nu katna
+      #   .i zo zoi sitna le lerfu to `CLL 19.10` toi
+      #   .i `\u{1F600}` basti le lerfu ki'u lo nu no lertai poi le vi selgu'a cu benji ke'a pixra
+      #       le lerfu to `Article X.8` toi
+    "mi su do .i ko",  # zo su fanmo le selci'a poi lidne zo su to lo seljdi bu'u `#859` toi
+    "lo'u mi su do le'u .i ko",  # ca lo nu zo le'u klama kei zo su se sitna to `CLL 19.9` toi
   ]
-    ## Constructed texts of live suite, each with word that reaches back.
+    ## lo selfinselci'a pe le cipra pe lo mivyselci'a
+    ##   .i ro le selci'a cu vasru pa valsi poi galfi lo pu valsi
   SKELETON_PAGE = (
     "<!doctype html><html><head><meta charset=\"utf-8\"><title>",
     "</title></head><body data-mode=\"", "\">", "</body></html>",
   )
-    ## Document each suite runs in: opening, then title, then mode, then script, then closing.
+    ## le selci'a be fi `HTML` be'o poi ro cipra cu fasnu ne'i ke'a
+    ##   .i le krasi cu lidne le cmene noi lidne le tadji noi lidne le samtci noi lidne le fanmo
   SKELETON_HOSTED = (
     "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" " &
       "content=\"width=device-width, initial-scale=1\"></head><body data-mode=\"",
     "\">", "</body></html>",
   )
-    ## Document host wraps page in, as published page has none of its own: opening, mode, then
-    ##   page, then closing.
+    ## le selci'a be fi `HTML` be'o poi lo sabji be le papri cu punji le papri ne'i ke'a ki'u lo nu
+    ##     le papri poi se gubgau cu claxu lo ralselci'a pe vo'a
+    ##   .i le krasi cu lidne le tadji noi lidne le papri noi lidne le fanmo
   STREAMED = [
     "mi klama le zarci .i do cadzu si si si ko .i lu mi klama li'u cu xamgu",
-      # `si` erases back into first sentence (19.13); `li'u` closes quotation (19.9)
-    "zoi gy. café .gy. melbi .i mi su do .i ko",  # `zoi` quotes (19.10); `su` (ruling on #859)
+      # zo si vimcu lo valsi pe le pamoi jufra to `CLL 19.13` toi
+      #   .i zo li'u fanmo le nu sitna to `CLL 19.9` toi
+    # zo zoi sitna
+    #   .i zo su to lo seljdi bu'u `#859` toi
+    "zoi gy. café .gy. melbi .i mi su do .i ko",  # `CLL 19.10`
   ]
-    ## Texts suite of page streams word by word, then ends.
+    ## lo selci'a poi le cipra pe le papri cu benji ke'a ta'i lo porsi be lo valsi gi'e ba sisti le
+    ##     tcidu
   TYPED = "mi klama le zarci .i do cadzu .i ko"
-    ## Text suite of page types word by word, and keeps open; constructed.
+    ## lo selci'a poi le cipra pe le papri cu ciska ke'a ta'i lo nu ro valsi cu sepli kei gi'e na
+    ##     sisti le tcidu
+    ##   .i le selci'a cu selfi'i
   EDITED = ["mi klama le zarci", "mi klama"]
-    ## Texts suite of page types in turn; second keeps no text before it, so starts new reader.
+    ## lo selci'a poi le cipra pe le papri cu ciska ke'a ta'i le porsi
+    ##   .i le remoi se ciska cu ralte no pu selci'a
+    ##   .i se ki'u bo le remoi se ciska cu rinka lo nu pa ninytcidu cu cfari
 
 
 
 proc writeTextsLive() =
-  ## Write each text of live suite, and NIF native build gives it, each file of one string.
+  ## ciska ro selci'a pe le cipra pe lo mivyselci'a ge'u ge'u .e le selci'a be fi `NIF` be'o poi le
+  ##     jbezba cu dunda ke'a le selci'a
+  ##   .i ro le selci'a cu zvati pa drata datnyvei poi vasru pa lerpoi po'o
   removeDir(DIRECTORY_LIVE)
   createDir(DIRECTORY_LIVE)
   var sentences: seq[string]
-  for k in 0 ..< SENTENCES_LIVE: sentences.add SENTENCES_TATOEBA[k].text  # slice would copy each
+  # va'o lo nu pilno lo katna kei ro jufra cu selfu'i
+  for k in 0 ..< SENTENCES_LIVE: sentences.add SENTENCES_TATOEBA[k].text
   let texts = @TEXTS_LIVE & @[sentences.join(" .i ")]
   for k in 0 ..< texts.len:
     writeFile(DIRECTORY_LIVE / $k & ".text", texts[k])
@@ -128,7 +204,9 @@ proc writeTextsLive() =
 
 
 func toPieces(text: string): seq[string] =
-  ## Cut text into words, each with whitespace before it, as page streams it.
+  ## katna le selci'a lo valsi
+  ##   .i lo calyle'u cu lidne ro valsi
+  ##   .i le papri cu katna ta'i di'u ca lo nu benji lo porsi be lo valsi
   var at = 0
   while at < text.len:
     var stop = at
@@ -139,8 +217,11 @@ func toPieces(text: string): seq[string] =
 
 
 proc writeCase(k: int, kind: string, pieces: seq[string], nif, tail: string) =
-  ## Write one case of suite of page: kind, each piece, and drawing and line native build gives
-  ##   NIF so far and tail; then drawing and line of tree NIF so far merges to.
+  ## ciska pa se cipra pe le cipra pe le papri
+  ##   .i ciska le klesi .e ro pagbu
+  ##   .i ciska le pixra .e le linji vu'o poi le jbezba cu dunda ke'a le ca selci'a be fi `NIF` be'o
+  ##       .e le rebla
+  ##   .i ba bo ciska le pixra .e le linji vu'o pe le tricu poi le ca selci'a cu se jmina fo ke'a
   let
     path = DIRECTORY_CASES / $k
     drawing = drawn(nif, tail)
@@ -155,8 +236,12 @@ proc writeCase(k: int, kind: string, pieces: seq[string], nif, tail: string) =
 
 
 proc writeCasesPage() =
-  ## Write each case of suite of page: each sample read whole, each text streamed, text typed and
-  ##   edit, with drawing native build gives each.
+  ## ciska ro se cipra pe le cipra pe le papri
+  ##   .i ro mupli cu mulseltcidu
+  ##   .i ro selci'a cu selbe'i ta'i lo porsi be lo valsi
+  ##   .i pa selci'a cu selci'a
+  ##   .i pa nu galfi
+  ##   .i ro se cipra cu se kansa le pixra poi le jbezba cu dunda ke'a
   removeDir(DIRECTORY_CASES)
   createDir(DIRECTORY_CASES)
   var k = 0
@@ -183,8 +268,10 @@ proc writeCasesPage() =
 
 
 proc findChromium(): string =
-  ## Give program of Chromium: one variable names, else one store serves, unpacked; empty where
-  ##   neither gives one.
+  ## dunda le samtci pe `Chromium`
+  ##   .i le samtci cu du lo selcme be `VARIABLE_CHROMIUM`
+  ##   .i va'o lo drata le samtci cu du lo se sabji be le sorcu be'o poi se kalri
+  ##   .i lo kunti lerpoi va'o lo nu le re krasi cu dunda no samtci
   let named = getEnv(VARIABLE_CHROMIUM)
   if named.len > 0:
     if named.fileExists: return named
@@ -200,7 +287,7 @@ proc findChromium(): string =
   removeDir(DIRECTORY_CHROMIUM)
   createDir(DIRECTORY_CHROMIUM)
   let
-    archive = output.strip.splitLines[^1]  # path store serves archive at
+    archive = output.strip.splitLines[^1]  # lo judri poi le sorcu cu sabji le vreji bu'u ke'a
     (unpacked, code_unzip) = execCmdEx(
       "unzip -q " & quoteShell(archive) & " -d " & quoteShell(DIRECTORY_CHROMIUM))
   if code_unzip != 0:
@@ -211,8 +298,10 @@ proc findChromium(): string =
 
 
 proc runSuite(chromium, name, mode: string): int =
-  ## Run one suite on page of its own, in mode page gives it as attribute of body, print each line
-  ##   it reports, and give 1 where it failed.
+  ## pilno pa cipra ne'i pa papri pe le cipra
+  ##   .i le papri cu dunda pa tadji le cipra sepi'o pa ckaji pe `body`
+  ##   .i ciska ro linji poi le cipra cu cusku ke'a
+  ##   .i dunda li pa va'o lo nu le cipra cu fliba
   let
     script = "<script src=\"/drive/" & name & ".js\"></script>"
     headers = (if mode == MODE_REFUSED: @[POLICY_REFUSED] else: @[])
@@ -225,8 +314,10 @@ proc runSuite(chromium, name, mode: string): int =
 
 
 proc runSuitePage(chromium, page, mode: string): int =
-  ## Run suite of page in page built with it, in mode page gives it as attribute of body, print
-  ##   each line it reports, and give 1 where it failed.
+  ## pilno le cipra pe le papri ne'i pa papri poi selzba sepi'o le cipra
+  ##   .i le papri cu dunda pa tadji le cipra sepi'o pa ckaji pe `body`
+  ##   .i ciska ro linji poi le cipra cu cusku ke'a
+  ##   .i dunda li pa va'o lo nu le cipra cu fliba
   let
     headers = (if mode == MODE_REFUSED: @[POLICY_REFUSED] else: @[])
     hosted = SKELETON_HOSTED[0] & mode & SKELETON_HOSTED[1] & page & SKELETON_HOSTED[2]
@@ -238,8 +329,11 @@ proc runSuitePage(chromium, page, mode: string): int =
 
 
 proc toFile(source: string): string =
-  ## Write bytes of `data:` source of font face into file named by their digest, beside
-  ##   `written.json`, and give path relative to it; empty where source is no inlined font.
+  ## ciska lo stuzi pe `source` fi pa datnyvei poi selcme lo snina'u pe le stuzi
+  ##   .i le datnyvei cu zvati lo mlana be `written.json`
+  ##   .i `source` krasi be pa lertai gi'e selkra `data:`
+  ##   .i dunda lo judri be le datnyvei be'o poi selkra `written.json`
+  ##   .i lo kunti lerpoi va'o lo nu `source` na krasi be pa lertai poi selpu'i ne'i le papri
   let
     opening = source.find("data:font/")
     marker = source.find(";base64,", opening)
@@ -254,7 +348,8 @@ proc toFile(source: string): string =
 
 
 proc collected(chromium, page: string): JsonNode =
-  ## Read page with collector, and give what it posts; nil where run failed.
+  ## tcidu le papri sepi'o le crepu gi'e dunda lo selbe'i be le crepu
+  ##   .i `nil` va'o lo nu le nu cipra cu fliba
   let
     script = "<script src=\"/drive/collector.js\"></script>"
     run = chromium.runPage(page.replace("</body>", script & "</body>"), ROOT_SERVED)
@@ -263,9 +358,11 @@ proc collected(chromium, page: string): JsonNode =
 
 
 proc collectPages(chromium: string, faces: Table[string, string]): int =
-  ## Read page of live text, and control page where `koch drive` wrote one, with collector, and
-  ##   write what it read into `written.json`, each font face page declares as file of its own;
-  ##   give 1 where collector failed, or control page declares font face.
+  ## tcidu le papri pe lo mivyselci'a sepi'o le crepu
+  ##   .i va'o lo nu `koch drive` cu ba'o ciska pa tropapri kei tcidu ji'a le tropapri
+  ##   .i ciska lo se tcidu be le crepu fi `written.json`
+  ##   .i ro lertai poi le papri cu cusku ke'a selci'a fi pa datnyvei pe vo'a
+  ##   .i dunda li pa va'o lo nu le crepu cu fliba .a lo nu le tropapri cu cusku pa lertai
   removeDir(DIRECTORY_FONT_FACES / DIRECTORY_FILES)
   createDir(DIRECTORY_FONT_FACES / DIRECTORY_FILES)
   var written = newJObject()
@@ -301,8 +398,10 @@ proc collectPages(chromium: string, faces: Table[string, string]): int =
 
 
 proc runDrive*(): int =
-  ## Build script, page, suites and collector, write texts and cases of suites, then run each
-  ##   suite and collector in Chromium; give 1 where any build, suite or collector failed.
+  ## zbasu le samtci .e le papri .e lo cipra .e le crepu
+  ##   .i ciska lo selci'a .e lo se cipra pe lo cipra
+  ##   .i ba bo pilno ro cipra .e le crepu ne'i `Chromium`
+  ##   .i dunda li pa va'o lo nu su'o nu zbasu .a su'o cipra .a le crepu cu fliba
   if compileJs(PATH_BRIDGE, PATH_SCRIPT) != 0: return 1
   let faces = fontFaces()
   writeFile(PATH_PAGE, builtPage(compiledPage(), faces))

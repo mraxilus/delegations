@@ -1,42 +1,77 @@
-## Answer every verb of this project: `nim r tools/build.nim <command>`, from project directory.
+## spuda ro minde pe le vi selgu'a
+##   .i le minde cu selpli sepi'o `nim r tools/build.nim <command>` bu'u le vasru pe le vi selgu'a
 ##
-##   |-----------|--------------------------------------------------------------------------|
-##   | Command   | Effect                                                                   |
-##   |-----------|--------------------------------------------------------------------------|
-##   | lists     | read `gismu.txt` and `cmavo.txt` lojban-common installs, check each      |
-##   |           | digest against its pin, and write both typed modules under `src/`        |
-##   | head      | read `gismu.txt`, `lujvo.txt` and `cmavo.txt` again, compare each digest |
-##   |           | with its pin, and both rendered modules with what is committed; exit 1   |
-##   |           | where any differs, i.e. Debian moved list                                |
-##   | cll       | read saved pages of CLL 1.1 from directory named after verb, check their |
-##   |           | digest against its pin, and write examples and notice under `tests/cll/` |
-##   | tatoeba   | read export of Tatoeba named after verb, check its digest against its    |
-##   |           | pin, write fixed sample and notice under `tests/sample_tatoeba/`, and    |
-##   |           | print count of each verdict over whole export                            |
-##   | wikipedia | read answers of API of lojban Wikipedia from directory named after verb, |
-##   |           | check their digest against its pin, and write articles and notice under  |
-##   |           | `tests/articles_wikipedia/`                                              |
-##   | translations | fetch Alice and Oz into `build/translations/`, check each digest     |
-##   |           | against its pin, and print count of each verdict of their paragraphs     |
-##   | javascript | compile whole parser to JavaScript, as `src/javascript/bridge.nim`      |
-##   |           | exposes it, into `build/lojban_parser.js`, and print its path and size   |
-##   | page      | build page of live text from `pages/live.html` into `build/`, with font  |
-##   |           | faces store serves and script inline (`tools/page.nim`)                  |
-##   | drive     | build script, run each suite of `tests/browser/` in headless Chromium,   |
-##   |           | and collect control page `koch drive` writes (`tools/browser.nim`)       |
-##   | system    | print packages verbs and suites need, one per line                       |
-##   |-----------|--------------------------------------------------------------------------|
-##   Exit: 0 done, 1 command failed, lists differ or suite failed, 2 usage error.
+##   |----------------|----------------------------------------------------------------------------|
+##   | lo minde       | lo jalge                                                                   |
+##   |----------------|----------------------------------------------------------------------------|
+##   | `lists`        | tcidu `gismu.txt` .e `cmavo.txt` vu'o noi `lojban-common` punji ke'a    |
+##   |                | .i karbi ro snina'u lo stodi pe le snina'u                         |
+##   |                | .i ciska le re datnyvei poi ponse lo klesi ku'o ne'i `src/`                |
+##   | `head`         | raptcidu `gismu.txt` .e `lujvo.txt` .e `cmavo.txt`                      |
+##   |                | .i karbi ro snina'u lo stodi pe le snina'u                         |
+##   |                | .i karbi le re datnyvei poi selzba ku'o le selpu'i                      |
+##   |                | .i sisti sepi'o li pa va'o lo nu su'o da frica                          |
+##   |                | .i le nu frica cu sinxa lo nu `Debian` pu galfi lo liste       |
+##   | `cll`          | tcidu lo papri be `CLL 1.1` noi selra'e ne'i pa vasru         |
+##   |                | .i lo cmene be le vasru cu se lidne le minde                               |
+##   |                | .i karbi lo snina'u pe le papri lo stodi pe le snina'u             |
+##   |                | .i ciska lo mupli .e lo notci ne'i `tests/cll/`                            |
+##   | `tatoeba`      | tcidu lo vreji pe `Tatoeba`                                    |
+##   |                | .i lo cmene be le vreji cu se lidne le minde                               |
+##   |                | .i karbi lo snina'u pe le vreji lo stodi pe le snina'u             |
+##   |                | .i ciska le stomupli .e lo notci ne'i `tests/sample_tatoeba/`           |
+##   |                | .i kancu lo jufra pe le mulvei ja'i ro seljdi gi'e cusku lo namcu   |
+##   | `wikipedia`    | tcidu lo terspu be fi `API` pe `Wikipedia`       |
+##   |                | .i `Wikipedia` selbau la lojban.                          |
+##   |                | .i le terspu cu zvati pa vasru                                           |
+##   |                | .i lo cmene be le vasru cu se lidne le minde                               |
+##   |                | .i karbi lo snina'u pe le terspu lo stodi pe le snina'u          |
+##   |                | .i ciska lo prosa .e lo notci ne'i `tests/articles_wikipedia/`             |
+##   | `translations` | cpacu `Alice` .e `Oz`                              |
+##   |                | .i punji le re prosa `build/translations/`                                 |
+##   |                | .i karbi ro snina'u lo stodi pe le snina'u                         |
+##   |                | .i kancu lo pagbu be le re prosa ja'i ro seljdi gi'e cusku lo namcu      |
+##   | `javascript`   | fanva le mulno genturfa'i fi `JavaScript`                      |
+##   |                | .i `src/javascript/bridge.nim` dunda le genturfa'i lo drata samtci      |
+##   |                | .i le xe fanva cu zvati `build/lojban_parser.js`                           |
+##   |                | .i cusku lo judri .e lo ni le datnyvei cu barda                            |
+##   | `page`         | zbasu le papri pe lo mivyselci'a fi `pages/live.html` ne'i `build/`     |
+##   |                | .i le papri cu vasru lo lertai poi lo sorcu cu sabji ke'a             |
+##   |                | .i le papri cu vasru le samtci ne'i le mintu datnyvei                      |
+##   |                | .i `tools/page.nim` zbasu le papri                                      |
+##   | `drive`        | zbasu le samtci gi'e jitro ro cipra pe `tests/browser/`                    |
+##   |                | .i ro le cipra cu fasnu ne'i `headless Chromium`               |
+##   |                | .i crepu le tropapri poi `koch drive` ciska ke'a                     |
+##   |                | .i `tools/browser.nim` gasnu le vi minde                                |
+##   | `system`       | cusku lo bakfu poi lo minde .e lo cipra cu nitcu ke'a                      |
+##   |                | .i ro linji cu cusku pa bakfu                                              |
+##   |----------------|----------------------------------------------------------------------------|
+## ni'o le jitro samtci cu sisti sepi'o li no va'o lo nu le minde cu mulno
+##   .i le jitro samtci cu sisti sepi'o li pa va'o lo nu le minde cu fliba .a lo nu lo liste cu
+##       frica .a lo nu pa cipra cu fliba
+##   .i le jitro samtci cu sisti sepi'o li re va'o lo nu lo nu pilno cu srera
 ##
-##   Sibling: `lists` and `head` of `lojban_tagger/tools/build.nim` take same steps over lists of
-##     tagger, and read same sources by same pins (`tools/lists.nim`). No driver exports verb, so
-##     steps stand in both (II.9); fix to one is finished only when other is checked.
-##   `head` is verb CONTRIBUTOR.md gives check against outside reference that moves: package
-##     can carry new list with no commit here, and no merge waits on it. It reads `lujvo.txt`
-##     for digest alone, since suites read it as outside text and render nothing of it.
-##   Rejected: reading lists at compile time from package directory, which would make every
-##     build need package; committed lists serve every build, and `head` watches upstream.
-##   Cost: driver runs from project directory, since every path here is relative to it.
+## ni'o lo minde po'u `lists` .e `head` pe `lojban_tagger/tools/build.nim` tunba le vi minde gi'e
+##     pilno le mitytadji ne'i lo liste pe `lojban_tagger` gi'e tcidu le mitkra ja'i le mintu stodi
+##     to `tools/lists.nim` toi
+##   .i no jitro samtci cu dunda pa minde lo drata samtci
+##   .i se ki'u bo le tadji cu zvati ro le re jitro samtci to `II.9` toi
+##   .i va'o lo nu le drata na se cipra kei lo nu cikre pa le re jitro samtci cu na mulno
+##
+## ni'o `CONTRIBUTOR.md` cusku lo minde po'u `head` tezu'e lo nu cipra lo barselsitna poi cenba
+##   .i lo bakfu cu ka'e bevri lo ninste ca lo nu no da selpu'i vi
+##   .i no nu jmina cu denpa lo minde po'u `head`
+##   .i lo minde po'u `head` tcidu `lujvo.txt` tezu'e lo sinxa namcu po'o
+##   .i ki'u bo lo cipra cu tcidu `lujvo.txt` ta'i lo datselci'a gi'e zbasu no datnyvei fi
+##       `lujvo.txt`
+##
+## ni'o se to'e cuxna fa lo nu tcidu lo liste fi le vasru pe le bakfu ca lo nu fanva kei noi rinka
+##     lo nu ro nu zbasu cu nitcu le bakfu
+##   .i lo liste poi selpu'i cu sabji ro nu zbasu
+##   .i lo minde po'u `head` zgana lo krasi be le liste
+##
+## ni'o jdima fa lo nu le jitro samtci cu selpli bu'u le vasru pe le vi selgu'a
+##   .i ki'u bo ro judri vi cu selkra le vasru
 
 {.experimental: "strictFuncs".}
 
@@ -53,7 +88,7 @@ const
       "       nim r tools/build.nim cll <directory>\n" &
       "       nim r tools/build.nim tatoeba <export>\n" &
       "       nim r tools/build.nim wikipedia <directory>\n"
-    ## Text printed on usage error.
+    ## le selci'a poi selsku va'o lo nu lo nu pilno cu srera
   SYSTEM = [
     ("lojban-common", "word lists of Logical Language Group, read by `lists`, `head` and suites"),
     ("coreutils",
@@ -65,14 +100,18 @@ const
     ("unzip", "unpacker of archive of Chromium, which store serves and verb `drive` drives"),
     ("libbrotli1", "decoder of `woff2`, which `koch drive` reads font faces of page through"),
   ]
-    ## Packages verbs need, each with reason (Article II.8); `system` prints names alone.
+    ## lo bakfu poi lo minde cu nitcu ke'a
+    ##   .i ro le bakfu cu kansa lo krinu to `Article II.8` toi
+    ##   .i lo minde po'u `system` cusku lo cmene po'o
 
 
 
-#[ Verbs ]#
+#[ ni'o ni'o ni'o lo minde ]#
 
 proc refuseDigests(sources: openArray[(string, string, string)], module = "lists.nim"): int =
-  ## Report each source whose digest left its pin, given as name, digest and pin; count reports.
+  ## cusku ro krasi poi lo snina'u pe ke'a cliva lo stodi pe ke'a
+  ##   .i ro krasi cu seldu'a ta'i lo cmene .e lo snina'u .e lo stodi
+  ##   .i kancu lo selsku
   for (name, digest, pin) in sources:
     if digest == pin: continue
     stderr.writeLine "Source moved from its pin in `tools/" & module & "`; read diff, then " &
@@ -81,7 +120,7 @@ proc refuseDigests(sources: openArray[(string, string, string)], module = "lists
 
 
 proc writeLists(): int =
-  ## Write both modules where both digests match their pins.
+  ## ciska le re datnyvei va'o lo nu ro le re snina'u cu mapti lo stodi pe vo'a
   let
     gismu = readSource("gismu.txt")
     cmavo = readSource("cmavo.txt")
@@ -98,7 +137,9 @@ proc writeLists(): int =
 
 
 proc compareLists(): int =
-  ## Compare each digest, and both rendered modules with committed ones; 1 where any differs.
+  ## karbi ro snina'u lo stodi pe le snina'u
+  ##   .i karbi le re datnyvei poi selzba ku'o le re datnyvei poi selpu'i
+  ##   .i jarco li pa va'o lo nu su'o da frica
   let
     gismu = readSource("gismu.txt")
     lujvo = readSource("lujvo.txt")
@@ -121,7 +162,8 @@ proc compareLists(): int =
 
 
 proc writeCll(directory: string): int =
-  ## Write examples and notice of CLL 1.1 where digest of pages read matches its pin.
+  ## ciska lo mupli .e lo notci vu'o pe `CLL 1.1` va'o lo nu lo snina'u pe le papri poi se tcidu cu
+  ##     mapti lo stodi pe vo'a
   let book = readBook(directory)
   if refuseDigests([("pages of CLL 1.1", book.digest, DIGEST_CLL)], "cll.nim") > 0: return 1
   createDir(PATH_EXAMPLES.parentDir)
@@ -132,8 +174,9 @@ proc writeCll(directory: string): int =
 
 
 proc writeTatoeba(path: string): int =
-  ## Write fixed sample of Tatoeba and its notice where digest of export matches its pin, and
-  ##   print count of each verdict over whole export.
+  ## ciska le stomupli pe `Tatoeba` ge'u .e lo notci pe le mupli va'o lo nu lo snina'u pe le vreji
+  ##     cu mapti lo stodi pe vo'a
+  ##   .i kancu lo jufra pe le mulvei ja'i ro seljdi gi'e cusku lo namcu
   let (sentences, digest) = readSentences(path)
   if refuseDigests([("export of Tatoeba", digest, DIGEST_TATOEBA)], "tatoeba.nim") > 0: return 1
   let sample = sentences.toSample(digest)
@@ -151,7 +194,8 @@ proc writeTatoeba(path: string): int =
 
 
 proc writeWikipedia(directory: string): int =
-  ## Write articles of Wikipedia and their notice where digest of answers matches its pin.
+  ## ciska lo prosa pe `Wikipedia` ge'u .e lo notci pe le prosa va'o lo nu lo snina'u pe le terspu
+  ##     cu mapti lo stodi pe vo'a
   let
     articles = readArticles(directory)
     digests = [("answers of Wikipedia", articles.digest, DIGEST_WIKIPEDIA)]
@@ -167,7 +211,8 @@ proc writeWikipedia(directory: string): int =
 
 
 proc writeTranslations(): int =
-  ## Fetch each translation, check its digest, and print count of each verdict of its paragraphs.
+  ## cpacu ro xe fanva gi'e karbi lo snina'u pe le xe fanva lo stodi pe le snina'u
+  ##   .i kancu lo pagbu be le xe fanva ja'i ro seljdi gi'e cusku lo namcu
   let root = getCurrentDir()
   for translation in TRANSLATIONS:
     let digest = translation.fetchTranslation(root)
@@ -185,20 +230,27 @@ proc writeTranslations(): int =
 
 
 proc writeJavascript(): int =
-  ## Compile `PATH_BRIDGE`, with whole parser, to `PATH_SCRIPT`, and print path and size.
-  ##   Compiler is one that compiled this driver, never other `nim` that PATH holds.
-  ##   `-d:release` keeps every check, and drops traces of stack and line (`config/nim.cfg` of
-  ##     pin); suites of `tests/browser/` compile with it too, so they hold build that ships.
-  ##   Rejected: `-d:danger`, which drops every check of bounds and range from build caller runs.
+  ## fanva `PATH_BRIDGE` jo'u le mulno genturfa'i fu `PATH_SCRIPT` gi'e cusku lo judri .e lo ni le
+  ##     datnyvei cu barda
+  ##   .i le fanva cu du le fanva poi pu fanva le vi jitro samtci
+  ##   .i le jitro samtci no roi pilno lo datfanva po'u `nim` poi `PATH` vasru ke'a
+  ##
+  ## ni'o `-d:release` ralte ro cipra gi'e vimcu lo vreji be lo nu pilno lo fancu be'o .e lo vreji
+  ##     be lo linji to `config/nim.cfg` pe le selstofanva toi
+  ##   .i lo cipra pe `tests/browser/` se fanva sepi'o `-d:release` ji'a
+  ##   .i se ki'u bo le cipra cu cipra le selzba poi selbe'i lo pilno
+  ##   .i se to'e cuxna fa `-d:danger` noi vimcu ro cipra be lo korbi .e lo selku'e le selzba poi lo
+  ##       pilno cu pilno ke'a
   if compileJs(PATH_BRIDGE, PATH_SCRIPT) != 0: return 1
   echo PATH_SCRIPT
   echo "bytes ", getFileSize(PATH_SCRIPT)
 
 
 proc main(): int =
-  ## Dispatch command named as first argument; `cll`, `tatoeba` and `wikipedia` take path second.
-  ##   Dispatch opens on `case paramStr(1)`, as koch reads it: koch learns `drive`, `head` and
-  ##   `system` from that dispatch alone (`test_driver.nim`).
+  ## gasnu le minde poi le pamoi sumti cu cmene ke'a
+  ##   .i lo minde po'u `cll` .e `tatoeba` .e `wikipedia` cpacu lo judri ta'i le remoi sumti
+  ##   .i le pagbu poi cuxna lo minde cu selkra `case paramStr(1)` ta'i lo nu `koch` tcidu le pagbu
+  ##   .i `koch` cpacu `drive` .e `head` .e `system` le pagbu po'o to `test_driver.nim` toi
   if paramCount() == 2 and paramStr(1) == "cll": return writeCll(paramStr(2))
   if paramCount() == 2 and paramStr(1) == "tatoeba": return writeTatoeba(paramStr(2))
   if paramCount() == 2 and paramStr(1) == "wikipedia": return writeWikipedia(paramStr(2))

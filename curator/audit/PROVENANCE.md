@@ -250,8 +250,8 @@ that opens a comment can change how the parser of `lojban_parser` reads the firs
 **Each entry names its project, the issue of its approval, and the suite that holds its prose.**
 Such a suite reads the prose of its project in its own language, where no rule of English can.
 The entry says whether the audit demands the suite (`should_demand_suite`), and the entry of
-`lojban_parser` demands none. A change to a record of a listed project runs its suites, so a
-record that breaks a suite of its project never merges unseen.
+`lojban_parser` demands its suite. A change to a record of a listed project runs its suites, so
+a record that breaks a suite of its project never merges unseen.
 
 **A static assertion holds each entry to a project directly under `contributor/bangu/`.**
 Language is the subject of that domain alone, so an entry outside it fails the build. The audit
@@ -270,8 +270,8 @@ as the policy of its caller, under Articles.
   reader at all.
 - Cost: the bare `knoller` command knows no list, so it deletes `a` from a comment of lojban. A
   delegate of a listed project runs `koch fix`, and not `knoller` alone.
-- Cost: while an entry demands no suite, no check reads the prose of its project. Ruling D4 a of
-  #818 accepts that.
+- Cost: an entry that demands no suite gives no finding where the tree lacks its suite. So an
+  entry demands its suite once its project holds one.
 - Cost: each rules change re-stamps the record of each listed project. So it runs the suites and
   the driven check of that project, as a change to its code does.
 - Cost: the fixture tree holds each listed project, as it holds each domain. So an entry added to
@@ -279,6 +279,8 @@ as the policy of its caller, under Articles.
 - Verified by `suites/test_prose_own.nim`: a path inside the listed project keeps its own prose, at
   any depth. A longer name, the domain index and the bare folder do not. An entry whose project the
   tree lacks, and a suite that an entry demands and the tree lacks, are findings at their place.
+  Each entry whose project holds its suite demands it, and a suite of the same name in another
+  project leaves the demand unmet.
 - Verified by `suites/test_english.nim` and `suites/test_audit.nim`: a paragraph of lojban in a
   record of the listed project gives no finding of English. In `lojban_tagger` it gives one. A
   record that lacks its header table or a field, or a glossary that lacks a heading, still fails.
@@ -3910,8 +3912,6 @@ pull requests sat on both sides, so the subject of a call does not say which met
 
 ## Open questions
 
-- The entry of `lojban_parser` names `tests/suites/test_prose_own.nim`, which that project does
-  not hold, so the entry demands no suite. #817 stays open until the entry demands it.
 - Whether a run that authenticates as `GITHUB_TOKEN` spends the allowance of the repository or
   the allowance of the account. The repository's would keep the ledger off the budget that
   every delegate shares. Nothing here has measured it.

@@ -2,17 +2,27 @@ discard """
 action: run
 cmd: "nim c --hints:off -d:testing -d:nimUnittestOutputLevel:PRINT_FAILURES $options $file"
 """
-## Run every suite under `suites/` as one program, so lists and standard library compile once.
-##   Shape of `curator/audit/tests/test_suites.nim`, which STYLE.md §6 names as worked example;
-##     written again here, since project imports nothing of curator's, so fix to one is finished
-##     only when other is checked (Article II.9).
-##   Suite stays own module, imported rather than included, so helpers of two suites never
-##     clash, and each still runs alone: `nim r tests/suites/test_<module>.nim`.
-##   Import list is read from directory at compile time, never written: suite added is run.
-##   Abort define is left out, so every failing test reports in one run, not first alone.
-##   Cost: compile error in one suite stops every suite.
+## pilno ro cipra poi zvati `suites/` ta'i pa samtci
+##   .i se ki'u bo le liste .e le fadni samtci pe `Nim` se fanva pa roi
+##
+## ni'o le vi datnyvei cu seltai lo tarmi be `curator/audit/tests/test_suites.nim` noi `STYLE.md §6`
+##     cusku ke'a ta'i lo mupli
+##   .i le tarmi cu rapselci'a vi ki'u lo nu le vi selgu'a cu cpacu no da pe `curator`
+##   .i se ki'u bo lo nu cikre pa le re datnyvei cu mulno va'o lo nu cipra fi le drata kei po'o to
+##       `Article II.9` toi
+##
+## ni'o ro cipra cu zvati lo datnyvei pe vo'a gi'e selcpa sepi'o `import` gi'e na selcpa sepi'o
+##     `include`
+##   .i se ki'u bo lo djufancu pe re cipra cu no roi damba
+##   .i ro cipra cu ka'e gunka ji'a ta'i lo nu sepli sepi'o `nim r tests/suites/test_<module>.nim`
+##   .i lo liste be lo selcpa cu se tcidu fi `suites/` ca lo nu fanva gi'e no roi selci'a
+##   .i se ki'u bo ro cipra poi se jmina cu selpli
+##
+## ni'o no seljdi ca lo nu fanva cu rinka lo nu le samtci cu sisti ba lo pamoi nu fliba
+##   .i se ki'u bo pa nu gunka cu jarco ro cipra poi fliba
+##   .i jdima fa lo nu lo srera pe lo nu fanva pa cipra cu fanta lo nu ro cipra cu gunka
 
-{.warning[UnusedImport]: off.}  # suite runs for effect and exports nothing
+{.warning[UnusedImport]: off.}  # lo cipra cu gunka mu'i lo selja'e gi'e benji no da
 
 {.experimental: "strictFuncs".}
 
@@ -23,8 +33,9 @@ import std/[algorithm, macros, os, strutils]
 
 
 macro importSuites(): untyped =
-  ## Import each `suites/test_*.nim`, sorted, by absolute path; relative path resolves against
-  ##   `macros.nim` rather than this file.
+  ## cpacu ro `suites/test_*.nim` ta'i lo porsi sepi'o lo muljudri
+  ##   .i lo judri poi na mulno cu se tcidu ja'i lo stuzi be `macros.nim` gi'e na se tcidu ja'i lo
+  ##       stuzi be le vi datnyvei
   let directory = currentSourcePath().parentDir / "suites"
   var names: seq[string]
   for kind, name in walkDir(directory, relative = true):
