@@ -1773,11 +1773,11 @@ other project does not select it, and a move of its lock does, as any change of 
 `curator/assayer` requires knoller so (`curator/assayer/PROVENANCE.md`, Package).
 
 - Cost: a change to knoller that breaks assayer shows when the lock of assayer next moves.
-- Verified by `suites/test_plan.nim`, over the tree of this repository, since the imports of
-  assayer are the case. A change to knoller plans `curator/audit` and not `curator/assayer`, and a
-  change to the lock of assayer plans `curator/assayer`.
-- Cost: that test runs with the suites of the audit. So a path import that a change to assayer
-  brings back shows at the next change to the audit or to knoller.
+- Verified by `suites/test_plan.nim`, on a fixture of the case. A change to a source or to the
+  nimble file of knoller plans `curator/audit` and not a project that requires knoller as a
+  package. A change to the lock of that project plans it, and an import by path plans it again.
+- Verified by the import suite of assayer, `test_imports.nim` in `curator/assayer/tests/suites/`.
+  A path import that a change to assayer brings back fails that suite in the same change.
 
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
