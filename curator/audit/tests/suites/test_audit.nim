@@ -34,7 +34,7 @@ suite "Audit":
       DIRECTORY_ALPHA & "/PROVENANCE.md",
       DIRECTORY_AUDIT & "/PROVENANCE.md",
     ]  # every project
-    let curator_only = changed.replaced("CURATOR.md", "# Curator\n\nChanged.\n")
+    let curator_only = changed.replaced("CURATOR.md", TEXT_CURATOR.replace("Duties.", "Changed."))
     check curator_only.auditTree.len == stale.len  # CURATOR.md is not stamped
 
 
@@ -93,6 +93,18 @@ suite "Audit":
     check found.len == 1 and found[0].line == 0  # whole document
     check good.without("GUIDE.md").auditTree
       .anyIt(it.path == "GUIDE.md" and it.message.endsWith("got `## Output contract`."))
+
+
+  test "citation of section its document lacks reaches umbrella, at its line (duty 1)":
+    # Case as found: comment of `koch.nim` cited heading of guide that rename left behind.
+    let
+      good = treeGood()
+      cited = "## Drive checks (GUIDE.md, Work for subagents).\n\n" & STRICT_FUNCS & "\n\ndiscard\n"
+      stale = cited.replace("Work for subagents", "Independent changes")
+    check good.replaced("koch.nim", cited).auditTree.len == 0  # guide of fixture holds it
+    let found = good.replaced("koch.nim", stale).auditTree
+    check found.len == 1 and found[0].path == "koch.nim" and found[0].line == 1  # duty 1
+    check found.len == 1 and found[0].message.endsWith("got `Independent changes`.")
 
 
   test "top-level glossary shape reaches umbrella":

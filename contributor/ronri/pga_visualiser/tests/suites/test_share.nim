@@ -42,7 +42,7 @@ suite "Share":
         ("/c/pga_visualiser/dependencies/replications.mraxilus.gitlab.com/lengyel/" &
           "projective_geometric_algebra_illuminated/pga.nim", Owner.Pga),
         ("/c/pga_visualiser/src/pga_visualiser/objects.nim", Owner.Algebra),
-        ("/c/pga_visualiser/src/pga_visualiser/projections.nim", Owner.Algebra),
+        ("/c/pga_visualiser/src/pga_visualiser/motors.nim", Owner.Algebra),
         ("/c/pga_visualiser/src/pga_visualiser/boundary.nim", Owner.Boundary),
         ("/c/pga_visualiser/src/pga_visualiser/euclid.nim", Owner.Euclidean),
         ("/c/pga_visualiser/src/pga_visualiser/mesh.nim", Owner.Euclidean),

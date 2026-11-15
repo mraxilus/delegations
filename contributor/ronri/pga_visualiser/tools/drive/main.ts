@@ -88,6 +88,7 @@ import { driveHostSave } from './host';
 import { driveVeilCovers } from './veil';
 import { driveViewSection } from './view';
 import { advance, hastenTransitions, simulateClock, waitUntil } from './clock';
+import { driveCounted } from './counted';
 
 declare global {
   interface Window {
@@ -406,10 +407,11 @@ async function driveCoarse(browser: Browser): Promise<void> {
 
 async function main(): Promise<void> {
   const executable = chromiumChosen();
-  const browser = await chromium.launch({
+  const options = {
     ...(executable === undefined ? {} : { executablePath: executable }),
     args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'],
-  });
+  };
+  const browser = await chromium.launch(options);
 
   await driveSimulated(browser);
   await driveMeasured(browser);
@@ -425,6 +427,8 @@ async function main(): Promise<void> {
   await writeFontFaces(browser);
 
   await browser.close();
+  // Browser of its own, since engine flags it counts under are whole process's.
+  await driveCounted(options, `file://${PATH_PAGE}`, SIZE_VIEW);
   console.log(`\n${countRun() - countFailed()} of ${countRun()} checks passed.`);
   process.exit(countFailed() === 0 ? 0 : 1);
 }

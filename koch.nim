@@ -35,6 +35,11 @@
 ##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
 ##     which compiler PATH holds decides nothing.
 ##
+##   Each verb first points git at `.githooks` (`setPathHooks` of `tree.nim`), so each harness
+##     running koch gets git hooks; it reads first, prints nothing, and fails no verb.
+##   Rejected: verb of its own for it, which reaches only harness following instruction, and
+##     adds verb to table, usage text and dispatch.
+##
 ##   Rejected: make (second toolchain, recipe tabs, untested glue); NimScript tasks (compiler
 ##     VM subset, script loaded on every compile, task names shadow compiler commands,
 ##     untestable). Chosen: compiled driver, as Nim's repository builds with `koch`.
@@ -80,7 +85,7 @@ Verbs:
   check-commits  commits since base: subject form, scope, test before fix, body, record apart
   check-drift    each charter section and checker path base changed since branch forked
   check-schemas  each folder of protobuf schemas branch changed, against version base shipped
-  check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
+  check-role     pull request's role line, label, title and form of body, from ROLE_* env
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
@@ -241,7 +246,7 @@ proc refuse(found: seq[Finding], code: int): int =
 proc runHook(root, event, input: string): int =
   ## Answer one hook event from its stdin facts; dispatch over event name.
   ##   `path`, `edit` and `bash` read checkout call acts in, never root alone: subagent works
-  ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes). Call
+  ##     in worktree of its own, on branch of its own (GUIDE.md, Work for subagents). Call
   ##     acting in other repository is that repository's, so these three pass it unread.
   ##   `path` and `edit` read checkout and path of file write names through `fileWritten`, which
   ##     both events and suite call; file outside every checkout reads as none, so both pass it.
@@ -347,9 +352,11 @@ proc runHook(root, event, input: string): int =
       drift = checkBase(readDrift(root, "origin/" & MAIN))
     except CatchableError: discard
     # Record branch works on is read where it exists; new project has none until it writes one.
+    #   File of role is read same way, in `readPrompt`, where suite reaches it.
     let record = branch_root.pathRecord
     echo contextStart(
       branch_root,
+      readPrompt(root, branch_root),
       readFile(root / "CONTRIBUTOR.md"),
       "## Carry the unchecked list in the open",
       if record.len > 0 and fileExists(root / record): readFile(root / record) else: "",
@@ -473,6 +480,7 @@ proc run(options: Options): int =
         else: named.parseJson.getElems.mapIt(it.getStr)
     found = checkRole(options.branchOrDefault, getEnv("ROLE_BODY"), labels)
     found.add checkTitle(options.branchOrDefault, getEnv("ROLE_TITLE"))
+    found.add checkBodyPull(getEnv("ROLE_BODY"))
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
     #   answer leaves in that protocol too: exit 2 with stderr refuses tool before it runs,
@@ -613,11 +621,13 @@ proc run(options: Options): int =
 
 
 proc main(): int =
-  ## Parse options and run; `./koch` alone prints usage, and usage error exits 2.
+  ## Parse options, point git at hooks of checkout, and run; `./koch` alone prints usage, and
+  ##   usage error exits 2.
   let options = parseOptions()
   if options.isNone:
     stderr.write USAGE
     return 2
+  options.get.root.setPathHooks
   options.get.run
 
 

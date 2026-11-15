@@ -29,7 +29,8 @@
 
 import std/[math, options]
 
-import ./[boundary, camera, picking, projections, scene, selection, tessellate]
+import pga
+import ./[boundary, camera, picking, scene, selection, tessellate]
 
 
 

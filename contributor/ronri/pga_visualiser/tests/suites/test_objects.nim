@@ -54,8 +54,8 @@ suite "Objects":
           motor.slide_x.e23 + motor.slide_y.e31 + motor.slide_z.e12 +
           motor.antiscalar.e1234 + initElement(Basis.scalar, motor.scalar)
       let offset = d.toMultivector
-      check motorSliding(offset) =~ (-0.5 * offset[Basis.E1]).e23 +
-          (-0.5 * offset[Basis.E2]).e31 + (-0.5 * offset[Basis.E3]).e12 + 1.0.e1234
+      check motorSliding(offset) =~ (0.5 * offset[Basis.E1]).e23 +
+          (0.5 * offset[Basis.E2]).e31 + (0.5 * offset[Basis.E3]).e12 + 1.0.e1234
 
 
   test "the inner product of two directions is their classical dot product":

@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 363e393b375ac380 |
+| Rules   | 2dab47ba779bfacc |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -226,6 +226,9 @@ can pass 25 words.
   yet are governed. A domain outside the registry is not, and neither is a README below a project
   directory. That arm has its own assertion, because `## Open questions` holds its widening. One
   more assertion holds that a derived path is read, and not merely listed.
+- Verified by `suites/test_english.nim`: each Markdown file that `FILES_ROOT` allows is governed,
+  except `LICENSE.md`. So a root document that `PATHS_ENGLISH` lacks fails the suite, as the entry
+  file would, which each harness reads first.
 
 ## Prose in its own language
 
@@ -380,6 +383,21 @@ are findings, and are never skipped. `.claude` and `.githooks` are root director
   pinned, and the unknown-domain case asserts both the finding and the unchanged list.
   `test_audit.nim` proves that fixture clean under every static check.
 
+**The entry file stands at the root, and `CLAUDE.md` imports it on a line of its own, outside
+code.** `AGENTS.md` is the file that each harness reads first, so its absence is a finding.
+Claude Code loads no import inside code, and this repository writes each path in backticks. So
+an import in a code span would load nothing, and only a check would see it. The check reads the
+line `@AGENTS.md` whole, outside fences, so an import indented as Markdown code counts as none.
+A suite alone cannot hold it, because a change to `CLAUDE.md` alone selects no suite.
+
+- Assumed: Claude Code loads no import inside code. Its documentation said so when read on
+  2026-11-15: import parsing skips code spans and fenced code blocks.
+- A tree without `CLAUDE.md` passes. Assumed: Claude Code then reads `AGENTS.md` itself, as its
+  documentation said when read on 2026-11-14. It still advises the import, which loads once.
+- Verified by `suites/test_layout.nim`: an import that is missing, of another file, in a code
+  span, in a fence and indented. Also an entry file that is missing, with `CLAUDE.md` and
+  without it.
+
 **Only one check reads substance, and it reads a narrow slice.** `checkCitations` resolves
 every claim that opens `Verified by` and names a backticked `.nim` file in the `PROVENANCE.md`
 of a project, against the `tests/` of that project. The split of verified from assumed claims
@@ -431,7 +449,8 @@ each row to a rules document and a `## ` heading.
   cites those sections by heading, so a move leaves each citation with no target, and only each
   contributor may edit that code. Outside the three records,
   `git grep -n -E '(CONTRIBUTOR|GUIDE)\.md' ba1986f98 -- contributor` gives 48 lines, and 36 of
-  them cite a section by its heading.
+  them cite a section by its heading. Such a move gives a finding at each citation that it
+  leaves with no target, held for the project of each (Citations of sections).
 - Rejected: `GUIDE.md` and `CONTRIBUTOR.md` out of the stamp whole. Their rules of content would
   then change with no audit of any project.
 - Cost: an edit of a mixed section, or of the opening above the first `##` heading, moves the
@@ -537,11 +556,21 @@ two ways passes, as a paraphrase passes the duplicates check. Verified by
 Markdown under `curator/`.** `WORDS_PEOPLE` is the avoid list under Architect, Delegate,
 Curator, Contributor and Role, cut to the words for people. It is read whole and without case,
 plural included, outside code spans, fences and tables. A glossary is exempt, because it lists
-the words it avoids.
+the words it avoids. An import line of Claude Code, `@` and a path alone on a line, is skipped
+too, because it holds no prose.
 
 - Rejected: the full avoid list, which holds build, rules and version, plain words everywhere.
 - `identity` is left out, as the word of algebra in `curator/probe`.
 - Contributor prose is not read. Verified by `suites/test_glossary.nim`.
+- `CLAUDE.md` imports `@AGENTS.md` outside code, as Layout says, and without the skip the check
+  reads `AGENTS` there as a word for people. Verified by `suites/test_glossary.nim`, for that
+  line of `CLAUDE.md`. An import inside a sentence stays prose, and so does a line that holds
+  prose after its import.
+- A path holds `/` or `.` before its last character, as `AGENTS.md` does. So a word alone after
+  `@`, as `@agents`, names no file, and the check reads it as prose. Verified by
+  `suites/test_glossary.nim`. Cost: an import of a file at the root with no extension reads as
+  prose. Rejected: a test that the named file exists, since the check reads one file and never
+  the tree.
 
 ## Prompts
 
@@ -554,6 +583,21 @@ not. Code spans and fences pass, which keeps the carried-list example legal.
 - Cost: `II.9`, `duty 10` and a bare year pass by shape, so only a whole date is diary here.
 - Verified by `suites/test_prompts.nim`.
 
+**The entry file is a prompt, and each role file holds its reading order under one heading.**
+`PATHS_PROMPT` lists `AGENTS.md` beside the three role files, because each harness reads it at
+each start. Each role file holds `## Read first, in this order`, and the entry file sends each
+role to that section. The start hook prints it from `CURATOR.md` for a curator branch, and from
+`CONTRIBUTOR.md` for a contributor branch (Hooks on tool calls). A role file that lacks it is a
+finding, since its delegate would find no list, and nothing else would see it.
+`SECTIONS_PROCESS` names that heading in `CONTRIBUTOR.md` alone, because it lists rules
+documents only.
+
+- The start hook prints no section of `COORDINATOR.md`. The coordinator holds no branch, so it
+  gets no reading order from the hook until its trial, as the Architect ruled on #891. The entry
+  file still sends it to that section, so the check holds the heading there too.
+- Verified by `suites/test_prompts.nim`, for each file of the pinned list of roles. The suite
+  also holds a heading cut to `## Read first`, a heading that a fence quotes, and the entry file.
+
 ## Copies
 
 **A paragraph of 25 words or more, written twice, is a finding.** It is reported at its later
@@ -564,6 +608,85 @@ Two copies of one rule drift.
 - Cost: a paragraph reworded by one word passes. The check catches a copy, and never a
   paraphrase.
 - Verified by `suites/test_duplicates.nim`.
+
+## Citations of sections
+
+**A citation of a section that its document lacks is a finding at the line of the citation
+(CURATOR.md, duty 1).** A citation is the name of a Markdown document, a comma, then a
+heading, a bold rule or a quote. A heading or a rule that moves leaves each citation of it with
+no target, and no reader sees that. `citations_section.nim` holds the check, and the static
+pass runs it over every file that the audit reads.
+
+- The name is `NAME.md` in capitals, a path from the root, or a path that opens with `../` or
+  `./`. Backticks around the name are optional, and one code span can hold the whole citation.
+- After the comma, a heading or a bold rule opens with a capital. A quote is text in double
+  quotes or in backticks, and the word `section` or `under` can come before it.
+- A further comma and a capital name a subsection, at any depth inside the section before it.
+  The word `and` and a capital name a second section beside the first.
+- The longest heading that opens the text after the comma wins, because a heading can hold a
+  comma, as (`GUIDE.md`, Prune, never narrate) does.
+- Verified by `suites/test_citations_section.nim`, for each form of the name, the section and
+  the quote.
+
+**The match is lenient, as the Architect ruled on #892 with option b.** It does not compare
+case, or the articles `a`, `an` and `the`, because a telegraphic comment drops its articles
+(Article VI.5). The first words of a heading or of a bold rule pass, up to the first mark. A
+quote passes where the text of its document, outside fences, holds its words one after another.
+
+- Rejected: a word-for-word match. It reports each comment that drops an article of the
+  heading that it cites, which VI.5 asks for and `koch fix` does.
+- Rejected: a quote that must open a heading or a bold rule. Code in pga_benchmark,
+  pga_visualiser and dance_ontology quotes the text of a rule, and that match reports each line.
+- Verified by `suites/test_citations_section.nim`, for each lenient form that passes and each
+  that fails.
+
+**A heading is two to six `#` at column one, then a space, outside fences.** `headings` in
+`markdown.nim` reads it, and the check composes `fencedOut` first, because a fence quotes
+example headings. A bold rule is a line or a list item that opens with bold text. Its text
+runs to the closing `**`, on a later line of its paragraph where it wraps, without its last
+stop or colon. Duties, terms of a glossary and the rules of the guide open that way.
+
+- Rejected: `sections`, which cuts at a `## ` line alone. A citation can name a subsection, as
+  (`GUIDE.md`, Prune, never narrate) names one of level three.
+- Verified by `suites/test_markdown.nim` for the levels, and by `suites/test_citations_section.nim`
+  for a heading inside a fence and for each form of bold rule.
+
+**A document resolves as a reader finds it.** A bare name resolves at the nearest folder above
+the file that holds a file of that name, then at the root. So project code that cites
+`PROVENANCE.md` reads the record of its own project. A path reads from the root, and a path
+that opens with `../` or `./` reads from the folder of the file.
+
+- Cost: a bare name that a project also holds reads the file of that project. So a citation of
+  the root glossary from project code reads the glossary of that project.
+- Cost: a citation of a document that the tree lacks passes. The root documents name the
+  record that each project holds, and the root holds no record of that name.
+- Verified by `suites/test_citations_section.nim`.
+
+**The check reads Markdown outside fences, and the comments of each kind through
+`comments.nim`.** Markdown is cut into paragraphs at each blank line. Comments of consecutive
+lines join, so a citation that wraps reads whole. A comment after code on its line stands
+alone. A test can end two lines of code with two comments, and the second never continues the
+first. A line end reads as a space, and it ends a citation after a whole name.
+
+- Rejected: a read of string literals. A literal split by `&` reads as two broken halves, and
+  the fixtures of the suite would report themselves.
+- Cost: a citation in a string literal, as the message of a finding writes, passes unread.
+- Cost: a reference to a heading of the same document, as (Boundaries), names no document, so
+  a rename of that heading stays unseen.
+- Cost: the check does not read a name with its headings in brackets after it. `CURATOR.md`
+  cites `CONTRIBUTOR.md` for its commit types in that form.
+- Cost: first words pass, so a rename that keeps the first words of a heading keeps its
+  citations. A quote passes on any text of its document, so a rule that moves to another
+  section keeps its quote.
+- Verified by `suites/test_citations_section.nim`, for Markdown and for each kind of comment.
+
+**An article as VI.5, `duty N`, `section N` and `§N` name no heading, so the check skips them.**
+It also skips a lower-case word after the comma, which continues the prose, and a file name,
+which opens a list of documents. Verified by `suites/test_citations_section.nim`.
+
+**A finding inside a contributor project is held for that project (Branch scope).** So the
+check lands while the rest of the tree is clean, and each project clears its own finding when it
+next moves.
 
 ## Font faces
 
@@ -1014,14 +1137,49 @@ runner holds it to that before the merge. The role line says who speaks, and the
 whose work it is. On a pull request both are the role of the branch itself. So `parseBranch`
 derives one string through `nameRole`, and the check is equality rather than presence.
 
+**The job `label` adds the role label before `check-role` reads the labels, as the Architect
+ruled on #845.** It cuts the last part of the branch, for the three shapes of the grammar alone.
+It holds `issues: write` and `pull-requests: write`, and it checks out no code. `check-role`
+checks out koch and holds no scope that writes. So no code of a pull request runs with a token
+that can write, as `watch.yml` and `ledger.yml` hold for their own events.
+
+- The label goes through the REST endpoint of the labels of an issue. Assumed: that endpoint
+  creates a label that a new project lacks, as `CONTRIBUTOR.md` says of each label applied.
+- Assumed, from GitHub documentation (Triggering a workflow): an event of the token of a run
+  starts no other run. So the label starts no second run of `role`, and `check-role` reads it
+  in the same run.
+- `check-role` runs after `label` unless the run is cancelled. Assumed, from GitHub
+  documentation (Using jobs in a workflow): without that condition, a failed `label` skips
+  `check-role`. Assumed, from GitHub documentation (Using conditions to control job execution):
+  a skipped job counts as passed, even as a required check.
+- `labeled` and `unlabeled` start `role`, so the job adds again a role label that a person
+  removes. A label that a person adds runs the check again.
+- The event is `pull_request`, and never `pull_request_target`. The workflow then comes from
+  the branch, so a pull request tests its own jobs on the runner (duty 2). Each branch comes
+  from the one account that can already write, so no code of a pull request gains a power.
+- Cost: the shell holds a second copy of the grammar, and it reads no list of domains, because
+  it checks out nothing. A branch that names a domain that does not exist gets a stray label,
+  and `check-scope` still fails it.
+- Cost: no suite reads the pattern of the branch in `label`, or the condition `!cancelled()` of
+  `check-role`. The runner and the hand check below hold both.
+- Cost: a pull request from a fork gets a token that can only read, so its label stays a task
+  by hand.
+- Cost: `workflows.nim` reads the `permissions` block at the top of a workflow alone. So no check
+  reads the grant of `label`, and no check holds that `check-role` writes nothing.
+- Verified by hand on 2026-11-15. The step of `label`, read from the workflow file, ran under
+  `bash` with a stub for `gh`. Each of the three shapes posted its role, and a branch with a
+  domain that does not exist posted a stray one. Each branch outside the grammar posted nothing.
+  `yq` read the jobs, their grants and the condition of `check-role` as written.
+- Unverified on the runner: only a stub for `gh` drives the step.
+
 **The body comes from the event payload, and the labels come from the API.** The job passes
 the body as `ROLE_BODY`, and the label names as `ROLE_LABELS`, a JSON array. `gh pr view` with
 `--json labels` reads the labels that stand at the moment the check runs. The read is its own
 shell assignment. Under `set -e`, a failed substitution that only sets a variable for one
 command goes unseen. Koch would then read the empty list as a missing label.
 
-- Rejected: the label list of the event payload. GitHub sends `opened` before `labeled`, so
-  that list is empty on `opened`.
+- Rejected: the label list of the event payload. It holds the labels from before `label` ran,
+  so it is empty on `opened`.
 - Cost: the `pull-requests: read` scope, and one API call for each run. The read is shell
   inside `role.yml`, so no suite drives it.
 
@@ -1042,12 +1200,9 @@ may open with a whole paragraph, and the finding is read in a log.
   of its runs, because half live under half an hour.
 - Rejected: `opened` dropped from the trigger. The check then says nothing to a delegate who
   opened a pull request wrongly, which is the reason it exists.
-- An empty label list can still be the state a pull request opens in. No API call creates a
-  pull request and its label together, so a label can land after the run reads the list. The
-  `labeled` event then starts a run that clears it.
-- So the two states carry two messages. The empty one names the event that clears it, and the
-  one that names a wrong label does not. The finding stays red either way. A green run on an
-  empty list would let a pull request opened and merged in one go carry no label.
+- A missing role label takes one finding, which names the job `label` as what adds it. The
+  finding stays red, because a green run on an empty list would let a pull request merge with no
+  label.
 - Cost: an issue carries no branch, so which label it needs stays a judgement, and stays the
   ledger's. A comment is unreachable, and that is what remains of the first carried rule.
 - Cost: the labels are searched for the expected string rather than compared whole. A role
@@ -1064,28 +1219,37 @@ may open with a whole paragraph, and the finding is read in a log.
 comments, and no pull request. Its role string is `coordinator`, which `isStringRole` in the
 `body` hook accepts (section Hooks on messages).
 
-**The role line may stand below the attribution block of a harness.** A harness that starts a
-delegate in a thread writes two lines above each pull request body that it opens, and it
-requires them. First comes a marker, an HTML comment that opens `<!-- ccr-projects-attribution:`
-and renders as nothing. Then comes a credit line in italics that opens `_Requested by **` and
-names who asked. `lineRole` passes each line only whole and in its place. A credit line with no
-marker, a second block or any other comment still reads as the opening line.
+**The role line may stand below the block that a harness writes above it, as the Architect
+ruled on #845.** `HARNESSES` in `role.nim` holds one entry for each harness that writes such a
+block, and each entry lists the shape of each of its lines. A shape is known by its two ends,
+and never by the words of the harness. The entry of Claude Code is one line of HTML comment,
+then one italic line. A harness that writes nothing above the role line needs no entry.
 
-- Rejected: a skip of every leading comment and every italic line. Each would let a stray line
-  pass where the role line belongs.
+- `lineRole` passes a block only whole and in its place. So a lone marker, a lone credit line or
+  any other comment reads as the opening line, and fails.
+- Where a line that no listed block holds stands above the role line, the finding quotes each
+  line above it. A curator then adds the entry of the new harness. The quote holds the role
+  line, and at most `LINES_QUOTED` lines above it, twice the longest listed block. A body with no
+  role line quotes its opening line alone.
+- The opening is read outside fenced code, so a role line that a fence quotes is no role line.
+- Rejected: the words of the harness, held as data. Each change of its words fails every such
+  pull request, while the suite stays green, because its fixture copies them.
+- Rejected: a skip of every leading comment and every italic line. Any count of stray lines
+  would then pass where the role line belongs.
 - Rejected: a request to each delegate to leave the block out. The harness marks the block as
   required, so the delegate would meet two rules that disagree.
-- Cost: the block is the text of the harness, held as data in `LINES_ATTRIBUTION`. Where the
-  harness changes it, each such pull request fails again. The suite stays green, because its
-  fixture copies the block.
-- The `body` hook reads the line through `lineRole` too, so it lets such a pull request through
-  where the hooks run. The ledger reads the block more loosely (section Ledger).
+- Cost: stray lines in the shapes of a listed block pass above the role line, as the block does.
+  An italic line in asterisks is another shape, so a harness that turns to it fails until its
+  entry changes.
+- Cost: a marker with no credit line fails, as a block that is not whole.
+- The `body` hook reads the line through `lineRole` too, and quotes through `openingQuoted`. So
+  hook and runner agree. The ledger reads the block more loosely (section Ledger).
 - Verified by `suites/test_role.nim`: a body below the block reads as the body alone, with `\n`
-  or `\r\n` line ends. Each stray part of a block reads as the opening line.
-- Verified by hand with `nim r koch check-role` and `koch hook body`, recorded 2026-10-03. Before
-  the fix, a body below the block read as an empty opening line. `check-role` exited 1, and the
-  `body` hook refused the body with exit 2. After the fix, the same body reports nothing, and the
-  finding echoes a wrong role below the block.
+  or `\r\n` line ends. So does a body below a block in other words. Each stray part of a block
+  reads as the opening line. The bound is twice the block of Claude Code, and a quote up to it
+  shows no cut. A body with no role line quotes its opening line alone.
+- Verified by hand with `koch check-role`, built from the branch, on 2026-11-15. The body of
+  #449, below the block of Claude Code, takes no finding on its role line.
 
 **The title of a pull request holds the grammar of a commit subject.** The merge commit takes
 the title as its subject, and `main` takes no rewrite after. So `checkTitle` holds the title to
@@ -1101,6 +1265,62 @@ event runs the check again after a rename. The Architect ruled this check on 202
 - Verified by `suites/test_role.nim`. Titles in form pass, and so does a branch outside the
   grammar. The title of #463 fails, as do a final period, a capital summary, a scope off its
   branch, and a width over the limit.
+
+## Body of a pull request
+
+**A pull request body holds the form of the template, as the Architect shaped it on #845.** It
+holds What, Why, Evidence and Next steps, once each and in that order. Each section opens with a
+summary of one to three sentences, then its points. At most `CHARACTERS_BODY` characters show
+while each fold is closed, and a link counts by its text. So the Architect skims the whole of
+what merges at the gate, and evidence costs no room.
+
+`checkBodyPull` in `role.nim` holds the form. `check-role` calls it at each event, and the
+`body` hook calls it at each create and each update of a pull request. So the rule lives once,
+and the hook and the runner agree. The hook holds no rule of its own (section Hooks on tool
+calls).
+
+- Cost: no suite drives `koch check-role`, so no suite reads its call of `checkBodyPull`. The
+  runner and the hand check of #449 below hold it.
+- The headings are read through `sections`, outside fenced code and comments. So a sign-off that
+  a fence quotes, as the body of #895 does, cuts no section.
+- A summary is the first prose block of a section, on its first line that holds text. A list
+  item, a table, a quotation, a heading, fenced code or an HTML tag there opens no summary.
+  `sentences` of `english.nim` counts the sentences of the summary.
+- Every open body is read by the same rules at its next event, as the Architect ruled on #845.
+  No cutoff by date or number stands in `role.nim`.
+- Rejected: a limit of 2,000 characters, which is too tight once each section opens with a
+  summary (#845).
+- The example of #845 keeps two refusals of the hook: a keyword that closes #783 inside a point,
+  and a point of 26 words. So the template asks for `Closes #N` alone on the last line.
+- Verified by `suites/test_role.nim`: each heading missing, doubled, or turned with the next,
+  and a heading in a fence or a comment. It also holds each shape that opens no summary, and a
+  summary of four sentences. Verified by `suites/test_hooks.nim`, for the form on each tool and
+  for the example.
+
+**The count reads what shows while each fold is closed.** `textShown` drops each comment, since a
+comment renders as nothing. A fold, from `<details>` to its `</details>`, shows the text of its
+`<summary>` alone. A link shows its text alone. The last italic line below a `---` rule is the
+footer that the proxy appends after the hook reads the body, so it shows nothing. A `\r` shows
+nothing, since a body edited on GitHub ends each line with `\r\n`.
+
+- Each mark is read outside code. So a tag of a fold, a comment or a link inside a code span or
+  a fence shows whole.
+- A closing tag of a fold with no fold open closes nothing, so the fold after it shows its
+  summary alone.
+- Blank lines may stand between the `---` rule and the footer.
+- The credit of the harness at the end of a body counts, at 85 characters by its link text, as
+  the Architect ruled on #845. So `role.nim` holds no words of a harness.
+- The example of #845 applies the form to #790, and shows 2,108 characters. That is 2,046 outside
+  its fold by link text, as the review on #845 counts them, and the summary of the fold.
+- Cost: a fold marked `open` shows its points, and they count as folded. A last italic line
+  below a `---` rule counts nothing, whoever wrote it.
+- Cost: a link written as a reference counts in full. So do a link and a code span that wrap over
+  a line end, since `markdown.nim` reads both inside one line.
+- Verified by `suites/test_role.nim`, for each law above, the fold marked `open`, the credit and
+  the example. The bound counts characters, and the suite fills it with a character of two bytes.
+- Verified by hand with `koch check-role`, built from the branch, on 2026-11-15. The example of
+  #845 takes no finding. The body of #449 takes the finding of its five old headings, and one
+  for its 4,908 characters shown.
 
 ## Assets
 
@@ -1444,10 +1664,10 @@ is the failure it exists to catch.
   carries its marker first, and a marker renders as nothing. Rejected: the pattern that read
   from the first character, which named each such issue as having no role line. The same
   pattern still names an unfilled template, whose role line opens `**Role:** <!--`.
-- **On a pull request, the role line may also follow the credit line of an attribution block**
-  (section Role). The ledger passes that line after any leading comment, and not only after the
-  marker. That is looser than `lineRole`, as the rest of the ledger reading is. An issue carries
-  no block, so the pattern for issues does not pass the line.
+- **On a pull request, the role line may also follow an italic line**, as the block of Claude
+  Code ends (section Role). The ledger passes any italic line after any leading comment, and it
+  reads no words of a harness. That is looser than `lineRole`, as the rest of the ledger reading
+  is. An issue carries no block, so the pattern for issues does not pass the line.
 - The `permissions` block of `ledger.yml` names `actions: read`, `issues: write` and
   `pull-requests: read`, and nothing else. `workflows.nim` marks `gh pr` as a use of
   `pull-requests`, so a block that leaves that scope out is a finding.
@@ -1493,11 +1713,14 @@ beside the section that each title comes from.
 - The role-line pattern, verified by hand through real `jq` 1.7 on 2026-09-24. The program was
   read from the workflow file, and it was run over fixture bodies. A marker before the role
   line passes, and an unfilled template, a missing role line and a null body are named.
-- The pattern for pull requests, verified by hand through `jq` 1.7 and `gojq` 0.12.19 on
-  2026-10-03. `gh` runs `--jq` through `gojq`, at 0.12.17 in `gh` 2.89.0. The program was read
-  from the workflow file, and it was run over fixture bodies. A role line below the block
-  passes, also unbolded and with `\r\n` line ends. A block over no role line, or over an
-  unfilled template, is named.
+- The pattern for pull requests, verified by hand through `jq` 1.7 on 2026-11-15. The program
+  was read from the workflow file, and it was run over fixture bodies. A role line below the
+  block of Claude Code passes, and so does one below a block in other words, also with `\r\n`
+  line ends. A block over no role line, an unfilled template and a null body are named. A
+  pattern on the words of the harness names the block in other words, so this fixture tells the
+  two apart.
+- Cost: `gh` runs `--jq` through `gojq`, at 0.12.17 in `gh` 2.89.0, so that `gojq` agrees on that
+  pattern is inferred. It holds no lookaround and no back-reference.
 - Verified by hand through a stub for `gh` that serves fixture JSON through real `jq` 1.7,
   2026-09-24. The step runs as the workflow holds it. Over the fixture titles, each expected
   title is named and no other, among them `fix:`, `feat(audit)!:`, `bug:` and `koch:`. Over
@@ -1699,6 +1922,17 @@ at the line that names the copy.
 - Verified by `suites/test_dependencies.nim`: a matching name, another name, a lock that stores no
   name, and a lock that will not parse.
 
+**A package in a folder of its repository restores as any other package.** `curator/assayer`
+requires knoller so, through a name override in its `atlas.config`. Atlas clones the whole
+repository, and `checkCheckouts` finds the directory that the lock names. `atlas changed` then warns
+that the remote of the clone lacks the query of the address in the lock. It exits 0, so the verdict
+stands.
+
+- Verified by `nim r koch test curator/assayer` with Atlas 0.14.7, 2026-11-15, after a delete of
+  `dependencies/`.
+- Cost: a later Atlas that makes that warning a failure turns the restore of assayer red, and the
+  finding names the exit code of `atlas changed`.
+
 ## Scoped checks
 
 **The static pass stays whole-tree, and only compilation is scoped.** A project enters the test
@@ -1741,9 +1975,9 @@ the folder of that source. A statement on several lines, behind a `when` guard, 
 path counts. A comment, or a string outside such a statement, imports nothing. So a project that
 adds an import is selected from then on, with no list to keep.
 
-- Measured on 2026-11-12: `lojban_tagger` imports `src` and `tools` of `lojban_parser`, and
-  `curator/assayer` and `curator/audit` import `src` of knoller. No other project imports another
-  one.
+- Measured on 2026-11-15 by `importersByFolder` over the tree: `lojban_tagger` imports `src` and
+  `tools` of `lojban_parser`, and `curator/audit` imports `src` of knoller. No other project imports
+  another one by its path.
 - Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
 - Rejected: `src` alone, since the tools of the tagger import the tools of the parser.
 - Rejected: the importers of a project for each change to any of its code. A suite of the parser is
@@ -1755,6 +1989,18 @@ adds an import is selected from then on, with no list to keep.
 - Verified by `suites/test_plan.nim`, for each case as found. A change to the source or the tools
   of the parser selects the tagger, and an importer of the tagger too. Each form of import counts,
   and a suite or a record of the parser selects no importer.
+
+**A project that requires another project as a package is no importer of it.** It imports by the
+name of the package, and it compiles the commit that its `atlas.lock` pins. So a change to the
+other project does not select it, and a move of its lock does, as any change of its code does.
+`curator/assayer` requires knoller so (`curator/assayer/PROVENANCE.md`, Package).
+
+- Cost: a change to knoller that breaks assayer shows when the lock of assayer next moves.
+- Verified by `suites/test_plan.nim`, on a fixture of the case. A change to a source or to the
+  nimble file of knoller plans `curator/audit` and not a project that requires knoller as a
+  package. A change to the lock of that project plans it, and an import by path plans it again.
+- Verified by the import suite of assayer, `test_imports.nim` in `curator/assayer/tests/suites/`.
+  A path import that a change to assayer brings back fails that suite in the same change.
 
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
@@ -2645,10 +2891,11 @@ that holds it. The events, each one a verb argument:
   branch changed, as `koch check` does. So a held finding never stands under "fix before push".
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
   history. It holds a post made through `gh api` as `body` holds the post of a tool.
-- `body` refuses a post that lacks the role line or the footer, or breaks the three English
-  counts. It also refuses an issue titled as a commit, or one with no role label or with the
-  label `coordinator`. It refuses a pull request body that leaves the template unfilled. It
-  refuses a closing keyword before an issue outside a line of its own.
+- `body` refuses a post that lacks the role line, or breaks the three English counts. It also
+  refuses an issue titled as a commit, or one with no role label or with the label
+  `coordinator`. It refuses a pull request body out of the form of the template, on each create
+  and each update (section Body of a pull request). It refuses a closing keyword before an issue
+  outside a line of its own.
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
   nor the working line. At the end of any turn, it refuses a sign-off out of shape. It also
   refuses one whose group holds fewer items than the last sign-off that passed. And it refuses
@@ -2658,6 +2905,27 @@ that holds it. The events, each one a verb argument:
   each compaction.
 - `prompt` reads each message of the Architect, and names the skill of its moment, as section
   Skills says.
+
+**`start` prints the reading order from the file of the role, so the list lives once.** The
+section Read first of `CURATOR.md` serves a curator branch of either form, and that of
+`CONTRIBUTOR.md` a contributor branch (`pathPrompt`). A line that names the file opens the list,
+since its item "This file to the end" names no file out of its document. The coordinator holds
+no branch, so it reads as a branch outside the grammar. It gets no list until its trial, as the
+Architect ruled on #891. Prompts says what holds each role file to its heading.
+
+- Rejected: a copy of the list in the hook, which drifts from the file of the role unseen.
+- The read of the file of the role lives in `hooks.nim` (`readPrompt`), and not in koch, because
+  no suite runs `main` of koch.
+- Verified by `suites/test_hooks.nim`, for each arm of the grammar, a role file that lacks the
+  heading, and a branch outside the grammar. The suite also reads the file of the role over a
+  scratch root, for a curator branch and a contributor branch.
+
+**A harness without these hooks gets the start context by a command, and reading holds the
+rest.** `AGENTS.md` tells it to run `nim r koch hook start < /dev/null` at each start. That is
+because `koch hook` reads standard input to its end, and `start` uses none of it. The git hooks
+hold its commits and pushes, once a verb of koch sets the hooks path. Verified by hand on
+2026-11-15, in a fresh clone at `c89a916f8`. There that command printed the start context of a
+curator branch, with the reading order from `CURATOR.md`, and exited 0.
 
 **`start` prints the headings of the record that the branch works on, each with the line where it
 opens.** A contributor branch and a branch of one curator project read the record of their
@@ -2672,20 +2940,13 @@ come through `sections`, so a heading that a fence quotes opens nothing.
 - Rejected: a read in full below a size. That is one more number to keep, for little gain.
 - Verified by `suites/test_hooks.nim`, for each form of branch and for a heading in a fence.
 
-**A post holds one footer, as its last line, and the footer of the proxy serves as that
-footer.** The GitHub proxy appends a footer that links the delegate to each post that ends in
-none. An edit fetches a body, changes it, and sends it back, so the body holds the footer of
-the proxy. Where `body` asked for the plain footer there too, the edit added a second one, as
-the body of #574 shows. So `body` takes either footer as the footer, and refuses a second one
-anywhere, or one above the last line (D1 of #578).
+**`body` reads no footer, as the Architect ruled on #845.** No post asks for one, and no check
+refuses one. The GitHub proxy appends its own footer to a post that does not link its delegate.
+So the count of a pull request body leaves that footer out, by its shape (section Body of a pull
+request).
 
-- A footer quoted in fenced code is no footer, so a post may show one as an example.
-- A pull request body asks for no footer, since the proxy appends one. It still holds one at most.
-- Verified by `suites/test_hooks.nim`, for the body of #574 as found. The suite also holds its
-  domain: the footer of the proxy alone, two plain footers, a footer above the last line, and a
-  quoted one.
-- Cost: the footer of the proxy is read by its opening and its closing, so a change to its
-  address reads as no footer. Then `body` asks for the plain one, and the proxy appends nothing.
+- Verified by `suites/test_hooks.nim`, for a comment and for an issue. Each passes with each
+  form of footer: none, the plain one, the one of the proxy, both, and one above the text.
 
 **A closing keyword stands before an issue only on a line of its own.** GitHub reads `close`,
 `fix` and `resolve`, in each of their forms, before an issue reference in any sentence. It reads
@@ -2736,10 +2997,9 @@ names, else the working directory of the call.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
-At the start it fetches the release tarball where no `nim` is on `PATH`. It sets
-`core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
-exists. Every hook command runs the koch that it built into `binaries/`, and falls back to
-`nim r`.
+At the start it fetches the release tarball where no `nim` is on `PATH`. It writes PATH to
+`CLAUDE_ENV_FILE` where that variable exists. Every hook command runs the koch that it built
+into `binaries/`, and falls back to `nim r`.
 
 The tarball is linux_x64, which is what the cloud runner of Claude Code uses. Verified by hand
 on 2026-10-01, by a fake input to each event, before any delegate ran under the settings file.
@@ -2763,25 +3023,9 @@ the binary that it finds.
   compiler that names the source it read. By hand on 2026-10-03, a first hook built in 2.3 s,
   and a second ran in 0.016 s.
 
-**The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
-writes the tree hash it passed on into `koch-check` in the git directory when the working tree
-is clean. `pre-push` refuses a push whose tree differs. The git directory is the one that
-`git rev-parse --git-dir` names, so a worktree, whose `.git` is a file, keeps its own mark.
+**A hook reaches only Claude Code, and only where it holds this repository alone.** A checkout
+of several repositories reads no project settings.
 
-`commit-msg` runs the commit check over the new subject and the ladder before the commit
-lands. A merge commit passes it, because git writes that subject and the commit check excludes
-merges. Both are two-line shell wrappers that call `hooks.sh`, because git runs a hook as an
-executable and a binary is never committed. A clone reads them once the start hook sets
-`core.hooksPath`, so any other tool reaches CI unchecked, and CI stays the gate.
-
-The subject that `commit-msg` reads is the first paragraph, its lines joined, because git reads
-it so. A finding on an earlier subject stays with `check-commits`, because `--amend` keeps the
-old head among the earlier subjects. One earlier finding cancels one same finding, so a bad
-subject written again still reports. Under `--amend`, the ladder reads the old head as the
-commit before the new one, and `check-commits` reads the true order in CI.
-
-- A hook reaches only Claude Code, and only where it holds this repository alone, because a
-  checkout of several repositories reads no project settings.
 - Rejected: a hook per rule, which puts the rule in two places. Rejected: `nim r` on every
   hook, which recompiles on each source change and costs seconds; the built binary costs
   milliseconds, and `nim r` stays as the fallback.
@@ -2790,6 +3034,57 @@ commit before the new one, and `check-commits` reads the true order in CI.
   relative path then fails to open, and every hooked tool is refused.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
+
+## Git hooks
+
+**The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
+writes the tree hash it passed on into `koch-check` in the git directory when the working tree
+is clean. `pre-push` refuses a push whose tree differs. The git directory is the one that
+`git rev-parse --git-dir` names, so a worktree, whose `.git` is a file, keeps its own mark.
+
+`commit-msg` runs the commit check over the new subject and the ladder before the commit
+lands. A merge commit passes it, because git writes that subject and the commit check excludes
+merges. Both are two-line shell wrappers that call `hooks.sh`, because git runs a hook as an
+executable and a binary is never committed. A clone reads them once a verb of koch sets
+`core.hooksPath`. A tool that never runs koch reaches CI unchecked, so CI stays the gate.
+
+The subject that `commit-msg` reads is the first paragraph, its lines joined, because git reads
+it so. A finding on an earlier subject stays with `check-commits`, because `--amend` keeps the
+old head among the earlier subjects. One earlier finding cancels one same finding, so a bad
+subject written again still reports. Under `--amend`, the ladder reads the old head as the
+commit before the new one, and `check-commits` reads the true order in CI.
+
+- Both git hooks run `.claude/hooks.sh`, a file in the folder of Claude Code, under each
+  harness. That works, because the steps for a push and a commit read no variable of Claude
+  Code. Rejected: a move of the file, which touches each command of `.claude/settings.json`, the
+  suite that reads the file, and the lists of the layout.
+- Verified by hand on 2026-11-15, in a fresh clone at `c89a916f8`, under `env -i`. The
+  environment held `HOME`, `PATH`, `XDG_CACHE_HOME` and `BASE` alone, and `BASE` named the base,
+  since the clone held no `origin/main`. There `commit-msg` refused a subject out of form, and
+  passed one in form. The hook `pre-push` took one ref on standard input, as git gives it, and
+  refused a tree that `koch check` did not pass.
+
+**Each verb of koch points git at `.githooks`, so each harness that runs koch gets the git
+hooks.** `main` calls `setPathHooks` before it dispatches, whatever the verb, as the Architect
+ruled on #891. The setter reads `core.hooksPath` first, and writes it only where it differs.
+So hooks that run at the same time take no lock once it is set. It prints nothing, because CI
+reads the output of `list-projects`, and a hook answers on standard output. A failure of git
+fails no verb, and that covers a lock that another run holds.
+
+- The path is relative, so git finds `.githooks` at the top of each worktree, and one write
+  serves each one. A write of the config leaves the tree clean, so the mark of `koch check`
+  stays safe. No workflow commits or pushes, so CI runs no git hook.
+- Rejected: a verb of its own, which reaches only a harness that follows an instruction.
+- Cost: one read of git on each run of koch. A person who removes the value gets it back at the
+  next verb. A harness that sets a global hooks path of its own loses it in this checkout.
+- Verified by `suites/test_tree.nim`, over real git in scratch repositories. It covers a path
+  unset, another path, the same path, and a lock that another run holds. It also covers a
+  directory in no repository, no git on `PATH`, and a worktree. Under that lock, in that
+  directory and with no git, the setter raises nothing and writes nothing to descriptor 1 or 2.
+- No suite runs `main` of koch, so a check by hand holds its call of the setter. Verified by
+  hand on 2026-11-15, in a fresh clone at `c89a916f8`: `koch list-projects --all`, with koch
+  built from that clone, set the value. It printed its JSON alone, wrote nothing to standard
+  error, and left the tree clean.
 
 ## Paths of write hooks
 
@@ -3455,6 +3750,22 @@ and test, which is what the order of `koch check` rests on.
 - The dead-export rule reads each source once. Rejected: a scan of every source for each export,
   which took 1.1 s of a 2.07 s static pass inside koch on 2026-09-24. With one read, the static
   pass took 1.11 s, 1.15 s and 0.98 s that day. With the scan, it took 1.97 s, 1.96 s and 1.82 s.
+
+**The check of citations costs about half a second of the static pass.** Warm
+`nim r koch check-files` took 12.63 s, 12.82 s and 13.14 s at `9445bbdc7`, which holds the
+check. It took 12.16 s, 12.04 s and 11.86 s at `c2e80da35`, before the check. The runs of the
+two commits alternated, from separate worktrees, each with a cache of its own. All of it was on
+2026-11-14, with Nim 2.4.0, on a four-core Intel Xeon 2.10 GHz container, timed with
+`date +%s.%N`.
+
+- Another build ran on the same machine at the same time, at a load average near 0.9. Each set
+  spreads over 0.3 s to 0.5 s, so the gap of 0.78 s between the medians holds that noise too.
+- Inside one process at `9445bbdc7`, `checkCitationsSection` took 432 ms, 445 ms and 526 ms over
+  three rounds, timed with `std/monotimes`. In those rounds, the whole static pass took 11.7 s to
+  12.0 s.
+- Assumed: most of that time is the scan of the comments of each file whose text holds `.md`.
+  The words of a document are read at its first quote and not before, since most documents are
+  cited by heading alone (Article VII.3).
 
 **A branch that changes the checker costs one project, and not every project.** On 2026-09-24,
 warm `nim r koch check` took 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the

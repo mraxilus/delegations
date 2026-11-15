@@ -16,7 +16,7 @@
 ##
 ##   People words: root glossary names Architect, Delegate, Curator and Contributor and lists
 ##     synonyms to avoid under each; those for people are `WORDS_PEOPLE`, and root files and
-##     curator records are held to them outside code (GUIDE.md, Language). List is people only:
+##     curator records are held to them outside code (GLOSSARY.md, Language). List is people only:
 ##     full avoid list holds build, rules and version, which have plain senses everywhere.
 
 {.experimental: "strictFuncs".}
@@ -160,11 +160,24 @@ func wordsPeopleIn*(line: string): seq[string] =
     i = j
 
 
+func isLineImport(line: string): bool =
+  ## Decide whether line is import of Claude Code, i.e. `@` then path alone on its line.
+  ##   Import names file and holds no prose, and Claude Code loads none inside code, so it
+  ##     stands outside backticks, as `@AGENTS.md` of `CLAUDE.md` does. Import inside sentence
+  ##     stays prose.
+  ##   Path holds `/` or `.` before its last character, so word alone after `@`, as `@agents`
+  ##     or `@agents.`, names no file and stays prose.
+  ##   Cost: import of file at root with no extension reads as prose.
+  let s = line.strip
+  if s.len < 2 or s[0] != '@' or s.find(Whitespace) >= 0: return false
+  s[1 ..< ^1].find({'.', '/'}) >= 0
+
+
 func checkWordsPeople*(path, source: string): seq[Finding] =
-  ## Report people word glossary avoids, outside fenced code, code spans and tables.
+  ## Report people word glossary avoids, outside fenced code, code spans, tables and imports.
   let lines = source.fencedOut.splitLines
   for i, line in lines:
-    if line.strip.startsWith("|"): continue
+    if line.strip.startsWith("|") or line.isLineImport: continue
     for word in line.wordsPeopleIn:
       result.add finding(
         path,

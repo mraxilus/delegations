@@ -68,11 +68,12 @@ Every rule below serves it:
 | `COORDINATOR.md` | Opening prompt for the coordinator delegate | curator |
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, content stamped | curator |
 | `GUIDE.md` | Shared how-to, and rules the constitution points here, content stamped | curator |
-| `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
+| `AGENTS.md` | Entry file that each harness reads first, with the file of each role | curator |
+| `CLAUDE.md` | Import of `AGENTS.md`, which Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <verb>` | curator |
 | `.gitignore`, `.gitattributes` | Artifacts and checkouts out, LF endings | curator |
 | `.github/workflows/check.yml` | Every job of `check`, and the `summarize` gate | curator |
-| `.github/workflows/role.yml` | Role line and label of a pull request, on each event | curator |
+| `.github/workflows/role.yml` | Role label from branch, then role line, title and body | curator |
 | `.github/workflows/watch.yml` | Issue opened when a run goes red on `main` | curator |
 | `.github/workflows/ledger.yml` | Daily read of what GitHub records, into one issue | curator |
 | `.github/workflows/draft.yml` | Ready pull request goes back to draft on a push | curator |
@@ -81,7 +82,7 @@ Every rule below serves it:
 | `.github/workflows/architect.yml` | Label `architect` off an item that closes | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
 | `.claude/skills/`, `.claude/agents/` | Skills, and the agent `record-reviewer` | curator |
-| `.githooks/` | `pre-push` and `commit-msg`, reached through `core.hooksPath` | curator |
+| `.githooks/` | `pre-push` and `commit-msg`, through `core.hooksPath` that koch sets | curator |
 | `.github/pull_request_template.md` | Body that every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/brief.md` | Body that every brief follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body that every process request follows | curator |
@@ -149,7 +150,8 @@ and the shared allowance. This section adds only what differs for a curator.
    and `check-drift` still names it to each older branch.
 
    A new or renamed `##` heading stays stamped until you list it. List a section of process in
-   the pull request that writes it. A listed heading that its document lacks is a finding.
+   the pull request that writes it. A listed heading that its document lacks is a finding. A
+   citation of a section that its document lacks is a finding too.
 
    Do all of this in the same pull request. Read the diff, and re-audit every project
    against each changed rule. Apply what the rule now demands in the records, which duty 11
@@ -258,8 +260,8 @@ and the shared allowance. This section adds only what differs for a curator.
    `watch.yml` watches `check`, `ledger` and `head`, and opens or extends one issue for each
    workflow.
 
-10. **Opening prompts.** `CURATOR.md`, `COORDINATOR.md` and `CONTRIBUTOR.md` open new
-    delegates, so every paragraph is read on every start. Keep each self-contained.
+10. **Opening prompts.** `AGENTS.md`, `CURATOR.md`, `COORDINATOR.md` and `CONTRIBUTOR.md` open
+    new delegates, so every paragraph is read on every start. Keep each self-contained.
     Cut what is dated or written twice, rather than what is merely long. A prompt cut short
     is answered from the model's own defaults instead, and that is a failure no ceiling can
     see. State the rule and its cost, and leave the incident that produced it to
@@ -346,8 +348,9 @@ place, under Settings:
 - Require a pull request before a merge, with no direct pushes.
 - Require these status checks to pass: `summarize`, `check-scope`, `check-commits`,
   `check-role`. `summarize` is the gate for the jobs whose names vary with the change, since
-  those names can never be required checks themselves. `check-role` is its own workflow,
-  because it fires on a label event and the rest do not.
+  those names can never be required checks themselves. `check-role` runs in its own workflow,
+  because it fires on a label event and the rest do not. The job `label` runs before it there,
+  and adds the role label that the branch names.
 - Block force pushes and deletions on `main`. Block a force push on every branch too, through
   a ruleset that targets all branches, because XI.2 holds on every branch.
 - Require every conversation to be resolved before a merge. `CONTRIBUTOR.md`, Before you
@@ -398,7 +401,7 @@ alone.
 | `check-commits` | commits since base | subject and scope; test before fix; body; record apart |
 | `check-drift` | charter and checker base changed | each changed section of charter, and its diff |
 | `check-schemas` | schemas changed, and base | each against the version base shipped |
-| `check-role` | a pull request's body and labels | opening line and label are the branch's role |
+| `check-role` | a pull request's body, title and labels | branch's role; title and body in form |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, the verb, judge font faces |
@@ -472,8 +475,12 @@ left there after it became checkable is the one that teaches the skimming.
 A Claude Code hook is such a way. `.claude/settings.json` names the events. Each hook calls
 one `koch hook` verb and holds no rule of its own, so the rule lives in the audit once. A hook
 reaches only Claude Code, and only where it holds this repository alone, so CI stays the gate
-and the hook shortens the loop. A hook has a suite, as every check has. The git hooks under
-`.githooks/` are the same mechanism for a push and a commit, from any tool in the checkout.
+and the hook shortens the loop. A hook has a suite, as every check has.
+
+The git hooks under `.githooks/` are the same mechanism for a push and a commit. Each verb of
+koch sets `core.hooksPath`, so they hold each tool in a checkout where koch ran once. Under
+another harness, reading holds each other rule of a hook, as `AGENTS.md`, Under another
+harness, says.
 
 ## Output contract
 

@@ -4,6 +4,10 @@
 ##     i.e. date, `#N`, `issue N`, `pull request N` or `run N` in prose, since incident
 ##     belongs in audit record or log and rule alone belongs here (duty 10).
 ##   Code spans and fences pass, so carried-list example naming `#140` stays legal.
+##   File of each role holds reading order of its role under `HEADING_READ`, and `start` prints
+##     that section from there, so list lives once. File lacking heading is finding, since
+##     `start` would print empty list and nothing else would see it; `SECTIONS_PROCESS` names
+##     heading in CONTRIBUTOR.md alone, as it lists rules documents only.
 ##
 ##   Cost: article numbers such as `II.9` and duty numbers pass by shape, and so does
 ##     `2026` alone; only whole date is diary here.
@@ -15,8 +19,12 @@ import ./[findings, markdown, provenance, record]
 
 
 const
-  PATHS_PROMPT* = ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
-    ## Files that open new delegates.
+  PATHS_PROMPT* = ["AGENTS.md", "CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+    ## Files that open new delegates: entry file each harness reads first, and file of each role.
+  PATHS_ROLE* = ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+    ## Files of roles, each holding reading order of its role under `HEADING_READ`.
+  HEADING_READ* = "## Read first, in this order"
+    ## Heading of reading order of each role file; `start` prints that section from there.
   BYTES_PROMPT* = 40_000
     ## Bytes prompt may hold; ceiling guards runaway growth, never trims by length alone.
     ## Number is Architect's.
@@ -82,7 +90,22 @@ func checkSizePrompt(path, source: string): seq[Finding] =
     )
 
 
+func checkHeadingRead(path, source: string): seq[Finding] =
+  ## Report file of role lacking `HEADING_READ`, which `start` prints as reading order of role.
+  ##   Heading is read through `sections`, so heading that fence quotes opens nothing.
+  if path notin PATHS_ROLE: return
+  for part in source.sections:
+    if part.heading == HEADING_READ: return
+  result.add finding(
+    path,
+    0,
+    "Reading order of role that `start` prints is absent; restore its heading, or rename " &
+      "`HEADING_READ` in `prompts.nim`; got `" & HEADING_READ & "`.",
+  )
+
+
 func checkPrompt*(path, source: string): seq[Finding] =
-  ## Run both prompt checks over one prompt.
+  ## Run each prompt check over one prompt: diary, size, and heading of reading order of role.
   result = checkDiary(path, source)
   result.add checkSizePrompt(path, source)
+  result.add checkHeadingRead(path, source)

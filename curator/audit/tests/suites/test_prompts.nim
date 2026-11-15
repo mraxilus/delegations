@@ -24,20 +24,36 @@ suite "Duty 10":
   test "prompt lines naming incidents are findings, fences pass":
     let
       prompt = "# P\n\nRule.\n\n```\nissue 25\n```\n\nSince issue 25, rule.\n"
-      found = checkPrompt("CURATOR.md", prompt)
+      found = checkPrompt("AGENTS.md", prompt)
     check found.mapIt(it.line) == @[9]  # fenced example passes, prose line named
     check found[0].message.endsWith("got `issue 25`.")
 
 
-  test "every file that opens delegate is prompt, coordinator's too":
-    check PATHS_PROMPT == ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+  test "every file that opens delegate is prompt, entry file and coordinator's too":
+    check @PATHS_PROMPT == @["AGENTS.md", "CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+
+
+  test "role file lacking heading of its reading order is finding, since start prints it":
+    # Start prints reading order of role from section under that heading, so file that renames
+    #   it prints empty list, and nothing else sees it. Domain: each role file, pinned, so list
+    #   that drops one fails here; heading absent, cut to its first words, and quoted in fence
+    #   alone; and entry file, which holds no reading order of role.
+    let absent = "Reading order of role that `start` prints is absent; restore its heading, " &
+      "or rename `HEADING_READ` in `prompts.nim`; got `" & HEADING_READ & "`."
+    check @PATHS_ROLE == @["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]  # each role file
+    for path in PATHS_ROLE:
+      check checkPrompt(path, "# Role\n\nDuties.\n").mapIt(it.message) == @[absent]
+      check checkPrompt(path, "# Role\n\n## Read first\n\n1. Read.\n").len == 1  # cut
+      check checkPrompt(path, "# Role\n\n```md\n" & HEADING_READ & "\n```\n").len == 1  # fence
+      check checkPrompt(path, "# Role\n\n" & HEADING_READ & "\n\n1. Read.\n").len == 0
+    check checkPrompt("AGENTS.md", "# Entry\n\nRead file of role.\n").len == 0  # no role
 
 
   test "prompt over its byte ceiling is finding naming size":
     let
       long = "# P\n\n" & "x".repeat(BYTES_PROMPT)
-      found = checkPrompt("CONTRIBUTOR.md", long)
+      found = checkPrompt("AGENTS.md", long)
     check found.len == 1
     check found[0].message == "Prompt over " & $BYTES_PROMPT & " bytes; prune before adding " &
       "(duty 10); got `" & $long.len & "`."
-    check checkPrompt("CONTRIBUTOR.md", "x".repeat(BYTES_PROMPT)).len == 0  # at ceiling
+    check checkPrompt("AGENTS.md", "x".repeat(BYTES_PROMPT)).len == 0  # at ceiling

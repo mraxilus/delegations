@@ -8,12 +8,12 @@
 ##     (`plans.nim`), and verdict falls as testament gives it (`runs.nim`), so file passing here
 ##     passes there. Report reads as test runners that read well write theirs (`reports.nim`).
 ##   Compiler of each pin comes from toolchain of knoller (`compilers.nim`), which serves each pin
-##     from PATH, cache or fetch; package imports knoller by relative path, as `curator/audit` does.
+##     from PATH, cache or fetch. Knoller is package, at commit `atlas.lock` pins, so assayer builds
+##     wherever Atlas fetches that commit, and needs no checkout of repository knoller lives in.
 ##   Command line, `assayer [--jobs:n] [--nim:path] file...`, lives in `command.nim`; umbrella
 ##     runs it as program and exports none of it, since library caller needs none.
 ##
-##   Cost: import of sibling by path makes package one no install carries alone, and pins its
-##     compiler to pin of knoller.
+##   Cost: change to knoller reaches assayer only once lock moves to newer commit.
 
 {.experimental: "strictFuncs".}
 

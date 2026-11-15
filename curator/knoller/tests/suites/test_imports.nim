@@ -1,6 +1,9 @@
 ## Hold every import of knoller to standard library or module inside `src/`.
 ##   Import leaving `src/` reaches sibling project, which install of package lacks; import of
 ##   package needs requirement and lock, and `knoller.nimble` requires compiler alone.
+##   Copied as `curator/assayer/tests/suites/test_imports.nim`, which adds packages its nimble
+##     file requires and files under `tests/`; fix to one is finished only when other is checked
+##     (Article II.9).
 ##   Cost: statement is read by line, not by token: import opening line at column zero, after
 ##     `when …:` there, or two spaces deep in block of such `when`, outside triple-quoted string.
 ##     Import inside routine is unread.

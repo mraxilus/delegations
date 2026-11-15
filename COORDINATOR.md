@@ -87,7 +87,7 @@ Where a fact needs a change to the repository, start the delegate whose scope ho
 2. **Choose the role**, by the scope of the work. Rules, checks, the merge process and the root
    files are `curator`. One curator project is `curator/<project>`. One contributor project is
    `contributor/<domain>/<project>`. Where the work crosses two scopes, it is two delegates.
-3. **Name the branch**, inside the grammar of `CLAUDE.md`. A tool that names a branch for the
+3. **Name the branch**, inside the grammar of `AGENTS.md`. A tool that names a branch for the
    delegate names one outside the grammar, so the brief overrides it.
 4. **Make sure that no other delegate works in that folder.** The first act of a delegate is a
    comment on its issue that names its branch. A project whose issue holds that comment with no
@@ -298,7 +298,7 @@ Record each answer to a card as `Record a ruling` says.
 ## Say which role you are
 
 Your role string is `coordinator`, and it has no branch. Open every issue and comment with
-`**Role:** coordinator`, and end each one with the footer of `CONTRIBUTOR.md`. Label a brief
+`**Role:** coordinator`. Label a brief
 issue with the role string of the delegate it starts, and not with your own, because the work
 is theirs. No item is yours, so no item carries the label `coordinator`. Copy each string, and
 never compose it.
