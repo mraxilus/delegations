@@ -26,13 +26,13 @@ const
   SEED_NAMES = 939  ## Seed of names of project folder that copy is tried under.
   COUNT_NAMES_SEEDED = 32  ## Seeded names tried beside old name and new one.
   LENGTH_NAME_MAX = 16  ## Longest seeded name, first letter included.
+  CHARS_NAME = {'a' .. 'z', '0' .. '9', '_'}  ## Characters of seeded name past first letter.
 
 
 proc nameFolder(rng: var Rand): string =
   ## Draw name of project folder of form `[a-z][a-z0-9_]*`, as audit takes it.
-  const CHARS = {'a' .. 'z', '0' .. '9', '_'}
   result.add rng.sample({'a' .. 'z'})
-  for _ in 2 .. rng.rand(1 .. LENGTH_NAME_MAX): result.add rng.sample(CHARS)
+  for _ in 2 .. rng.rand(1 .. LENGTH_NAME_MAX): result.add rng.sample(CHARS_NAME)
 
 
 func pathsCopied(directory: string): seq[string] =
