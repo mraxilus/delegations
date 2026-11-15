@@ -127,18 +127,18 @@ comparison from the bridge, so it holds no option and no scenario of its own.
 | --- | --- |
 | `src/browser/mockup.nim` | The open comparison: question, options, scenes, and hooks. |
 | `src/browser/bridge.nim` | One line under `when defined(mockup)` where options part. |
-| `pages/mockup.html` | The panel: it builds a scenario, draws rings, and measures each run. |
+| `pages/mockup.html` | The panel: it builds a scenario, marks targets, and measures each run. |
 | `tools/build.nim` | The `mockup` verb, which builds the page with all three. |
 
-No comparison is open now, so the `mockup` verb says so and stops. The first comparison, D1 of
-issue 846, stands in the history of `src/browser/mockup.nim`, and shows each part. A comparison
-gives the panel four exports:
+No comparison is open now, so the `mockup` verb says so and stops. Each closed comparison stands
+in the history of `src/browser/mockup.nim`, and shows each part. A comparison gives the panel four
+exports:
 
 | Export | What it does |
 | --- | --- |
 | `nimMockupSpec()` | Returns the comparison as JSON: question, options, scenarios, steps. |
 | `nimMockupSetOption(key)` | Picks the option that has that key. |
-| `nimMockupSetUp(index, width, height)` | Builds a scenario, and returns pixels to aim at. |
+| `nimMockupSetUp(index, width, height)` | Builds a scenario, and returns targets with drags. |
 | `nimMockupReadout()` | Returns what the panel measures, such as the eye's distance to Sol. |
 
 To build the mockup for a new decision:
@@ -149,8 +149,8 @@ To build the mockup for a new decision:
    `when defined(mockup)`, and leave the shared modules as they are.
 3. Make each scenario show the problem at its worst. Build it a scene of its own, which holds only
    what the case needs. Stand the camera where the options part most, and return the pixels to aim
-   at. The panel draws a ring on each pixel.
-4. Give each scenario the measure that the panel reads: `wheel`, `trip` or `pinch`. Where a
+   at. The panel marks each pixel with a diamond of chevrons, and a drag with chevrons that grow.
+4. Give each scenario the measure that the panel reads: `wheel`, `trip`, `pinch` or `pan`. Where a
    decision needs another measure, add it to the panel.
 5. Build the mockup, and drive each scenario under each option in Chromium. The figures must agree
    with what the probe of the decision measured.
@@ -161,9 +161,11 @@ To build the mockup for a new decision:
 The panel compares what the steps asked with what the eye did. A wheel notch asks the eye's
 distance to Sol to scale by 1.12. A pinch asks it to scale by the ratio of the gaps of the fingers.
 On a log scale, `as asked` is between three quarters and four thirds of what was asked. `short` is
-less, `over` is more up to three times, and `flung` is more than three times. A round trip is
-`returned` where the eye ends within a hundredth of a home distance of its start, and `off` where it
-ends further.
+less, `over` is more up to three times, and `flung` is more than three times.
+
+A pan asks the focus to move with the pointer: the same bounds hold on that share, and `still` is
+under a fiftieth of it. A round trip is `returned` where the eye ends within a hundredth of a home
+distance of its start, and `off` where it ends further.
 
 ## Layout
 

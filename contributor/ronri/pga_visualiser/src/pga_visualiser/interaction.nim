@@ -1072,10 +1072,12 @@ func grabPan*(
   reach_selection = 0.0;
 ) =
   ## Take what right drag holds, as it begins, under pointer where press came down.
-  ##   Free flight holds depth: what pointer is over, or pivot's over nothing. Pivot's depth
-  ##   is where orbit and zoom already centre, so empty space pans what reader looks at.
+  ##   Free flight holds depth: what pointer is over, or over nothing, reach of point last
+  ##   zoom took, as zoom out and pinch read it; see `camera.pointTaken`.
+  ##     Not pivot's depth, which key flight carries along, so pan over empty sky crawled
+  ##     after flight away from what reader looked at (repository issue 910).
   ##   Selection holds point on sphere left drag's orbit holds; see `turnFollowing`.
-  interaction.depth_pan = interaction.depth_pointer.get(camera.distance)
+  interaction.depth_pan = interaction.depth_pointer.get(camera.reachTaken)
   interaction.point_pan = none(Position)
   if not has_selection: return
   let (eye, frame) = camera.sight

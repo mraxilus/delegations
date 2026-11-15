@@ -75,28 +75,35 @@
   .mockup-table td small { display: block; font-family: var(--mono); color: var(--ink-faint); }
   .mockup-verdict-asked, .mockup-verdict-returned { color: var(--accent-ink); }
   .mockup-verdict-flung, .mockup-verdict-off { color: var(--danger); }
-  .mockup-verdict-short, .mockup-verdict-over { color: var(--ink); }
+  .mockup-verdict-short, .mockup-verdict-over, .mockup-verdict-still { color: var(--ink); }
   .mockup-how { margin: 4px 0 0; padding-left: 18px; color: var(--ink-muted); }
   .mockup-read {
     font: 10.5px/1.45 var(--mono); color: var(--ink-faint);
     font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
   }
+  /* Target: diamond of four chevrons pointing out at its corners frames what to aim at. On a
+     pan, chevrons run on from its corner on the side of the drag, in its shape, growing to the
+     drag's end, so still frame shows what to do; motion only adds wave along them. */
   .mockup-ring {
     position: fixed; z-index: 6; pointer-events: none;
-    width: 30px; height: 30px; margin: -16px 0 0 -16px;
-    border: 2px solid var(--accent); border-radius: 999px;
-    box-shadow: 0 0 0 1px var(--bg), inset 0 0 0 1px var(--bg);
+    width: 44px; height: 44px; margin: -22px 0 0 -22px;
   }
-  .mockup-ring::before, .mockup-ring::after {
-    content: ""; position: absolute; background: var(--accent);
+  .mockup-ring svg { display: block; overflow: visible; }
+  .mockup-ring b {
+    position: absolute; left: 38px; top: 0; font: 600 10.5px/1 var(--sans);
+    color: var(--accent-ink); text-shadow: 0 1px 2px var(--bg);
   }
-  .mockup-ring::before { left: 14px; top: 6px; width: 2px; height: 18px; }
-  .mockup-ring::after { top: 14px; left: 6px; height: 2px; width: 18px; }
-  .mockup-ring span {
-    position: absolute; top: 34px; left: 50%; transform: translateX(-50%);
-    white-space: nowrap; font: 600 10.5px/1 var(--sans); color: var(--accent-ink);
-    text-shadow: 0 1px 2px var(--bg);
+  .mockup-chevron-under {
+    fill: none; stroke: var(--bg); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+    opacity: 0.75;
   }
+  .mockup-corner, .mockup-chevron {
+    fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mockup-chevron { animation: mockup-wave 1.6s ease-in-out infinite; }
+  @keyframes mockup-wave { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .mockup-chevron { animation: none; } }
 </style>
 <section class="mockup" id="mockup" aria-label="Comparison mockup">
   <button class="mockup-head" id="mockup-head" type="button" aria-expanded="true">
@@ -132,7 +139,7 @@
   const $ = (id) => document.getElementById(id);
   const VERDICTS = {
     waiting: 'waiting', asked: 'as asked', short: 'short', over: 'over', flung: 'flung',
-    returned: 'returned', off: 'off',
+    returned: 'returned', off: 'off', still: 'still',
   };
   const DOT = ' · ';
   const TIMES = '×';
@@ -166,7 +173,30 @@
     return 'short';
   }
 
+  // Pan's share of pointer's travel, along drag: 1 as asked, 0 still.
+  function verdictPan(got) {
+    if (got > 3) return 'flung';
+    if (got > 1.33) return 'over';
+    if (got >= 0.75) return 'asked';
+    return Math.abs(got) < 0.02 ? 'still' : 'short';
+  }
+
   function result(read, active, scenario) {
+    if (scenario.measure === 'pan') {
+      const from = active.drag_from, to = active.drag;
+      if (!from || !active.focus_from || read.focus.length < 2) return { verdict: 'waiting' };
+      const [dx, dy] = [to[0] - from[0], to[1] - from[1]];
+      const travel = Math.hypot(dx, dy);
+      if (travel < 20) return { verdict: 'waiting' };
+      const [fx, fy] = [read.focus[0] - active.focus_from[0], read.focus[1] - active.focus_from[1]];
+      const got = (fx * dx + fy * dy) / (travel * travel);
+      return {
+        verdict: verdictPan(got),
+        figure: TIMES + figure(got),
+        live: 'pointer ' + figure(travel) + ' px' + DOT + 'focus moved ' + TIMES + figure(got) +
+          ' of it',
+      };
+    }
     if (scenario.measure === 'trip') {
       const off = read.from_set_up / active.home;
       return {
@@ -221,23 +251,66 @@
     $('mockup-table').innerHTML = head + rows.join('');
   }
 
-  function rings(targets) {
+  // Diamond's corners stand this far out; each chevron's arms run this far back and aside.
+  //   Chevrons of drag grow by this share of their arm by drag's end.
+  const RADIUS_DIAMOND = 15;
+  const ARM_CHEVRON = 4.5;
+  const SPACING_CHEVRON = 20;
+  const GROWTH_CHEVRON = 0.67;
+
+  // Chevron with tip at (x, y), pointing at `angle`: dark under, accent over.
+  function chevron(x, y, angle, arm, kind, delay) {
+    const [bx, by] = [Math.cos(angle), Math.sin(angle)];
+    const at = (u, v) => u.toFixed(2) + ' ' + v.toFixed(2);
+    const d = 'M' + at(x - arm * bx - arm * by, y - arm * by + arm * bx) + 'L' + at(x, y) +
+      'L' + at(x - arm * bx + arm * by, y - arm * by - arm * bx);
+    const wave = delay === undefined ? '' : ' style="animation-delay:' + delay.toFixed(2) + 's"';
+    return '<path class="mockup-chevron-under" d="' + d + '"/><path class="' + kind + '"' + wave +
+      ' d="' + d + '"/>';
+  }
+
+  function rings(targets, drags) {
     const box = $('mockup-rings');
     box.textContent = '';
     const c = canvas();
     if (!c || !targets) return;
     const rect = c.getBoundingClientRect();
     targets.forEach((target, i) => {
+      const [x, y] = [rect.left + target[0], rect.top + target[1]];
+      const [dx, dy] = (drags && drags[i]) || [0, 0];
+      const length = Math.hypot(dx, dy);
+      // Diamond turns to face its drag: corner that points along it is drag's first chevron,
+      //   and rest run on from it, growing.
+      const facing = length > 0 ? Math.atan2(dy, dx) : 0;
+      let marks = '';
+      for (let corner = 0; corner < 4; corner++) {
+        const angle = facing + corner * Math.PI / 2;
+        const joins = length > 0 && corner === 0;
+        marks += chevron(RADIUS_DIAMOND * Math.cos(angle), RADIUS_DIAMOND * Math.sin(angle), angle,
+          ARM_CHEVRON, joins ? 'mockup-chevron' : 'mockup-corner', joins ? 0 : undefined);
+      }
+      for (let along = RADIUS_DIAMOND + SPACING_CHEVRON, k = 1; along <= length;
+        along += SPACING_CHEVRON, k++) {
+        const share = (along - RADIUS_DIAMOND) / Math.max(1, length - RADIUS_DIAMOND);
+        marks += chevron(along * Math.cos(facing), along * Math.sin(facing), facing,
+          ARM_CHEVRON * (1 + GROWTH_CHEVRON * share), 'mockup-chevron', k * 0.09);
+      }
       const ring = document.createElement('div');
       ring.className = 'mockup-ring';
-      ring.style.left = (rect.left + target[0]) + 'px';
-      ring.style.top = (rect.top + target[1]) + 'px';
-      const label = document.createElement('span');
-      label.textContent = targets.length > 1 ? 'finger ' + (i + 1) : 'here';
-      ring.appendChild(label);
+      ring.style.left = x + 'px';
+      ring.style.top = y + 'px';
+      ring.innerHTML = '<svg viewBox="-22 -22 44 44" width="44" height="44" aria-hidden="true">' +
+        marks + '</svg>';
+      if (targets.length > 1) {
+        const tag = document.createElement('b');
+        tag.textContent = String(i + 1);
+        ring.appendChild(tag);
+      }
       box.appendChild(ring);
     });
   }
+
+
 
   function stop(message) {
     state.active = null;
@@ -293,10 +366,11 @@
       if (typeof adoptConstructionSelection === 'function') adoptConstructionSelection();
       $('mockup-live').classList.toggle('mockup-error', Boolean(out.error));
       if (out.error) { stop(out.error); return; }
-      rings(out.targets);
+      rings(out.targets, out.drags);
       const read = JSON.parse(nimMockupReadout());
       state.active = { scenario: state.scenario, option: state.option, sol: read.sol,
-        notches: 0, gap_from: 0, gap: 0, home: out.home };
+        notches: 0, gap_from: 0, gap: 0, home: out.home, drag_from: null, drag: null,
+        focus_from: null };
       $('mockup-live').textContent = state.option + DOT +
         state.spec.scenarios[state.scenario].name + DOT + 'set up. Do the steps.';
       if (window.innerWidth < 720) collapse(true);
@@ -331,6 +405,17 @@
     window.addEventListener('touchmove', (e) => {
       if (!state.active || e.touches.length !== 2 || state.active.gap_from <= 0) return;
       state.active.gap = spread(e.touches);
+    }, quiet);
+    // Right drag: where it began, where pointer is, and where focus stood as it began.
+    window.addEventListener('pointerdown', (e) => {
+      if (!state.active || e.button !== 2) return;
+      if (e.target instanceof Element && e.target.closest('#mockup')) return;
+      state.active.drag_from = state.active.drag = [e.clientX, e.clientY];
+      try { state.active.focus_from = JSON.parse(nimMockupReadout()).focus; } catch (x) {}
+    }, quiet);
+    window.addEventListener('pointermove', (e) => {
+      if (!state.active || !state.active.drag_from || !(e.buttons & 2)) return;
+      state.active.drag = [e.clientX, e.clientY];
     }, quiet);
     window.addEventListener('resize', () => stop('Frame changed. Press Set up again.'));
   }

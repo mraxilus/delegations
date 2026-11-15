@@ -2350,12 +2350,13 @@ sphere still turns the view. `radiusHeld` takes the reach of the selection from 
 `reachAimed` reads off the aim that framed it. It is no less than a third of the short side at the
 depth of the pivot, and inside the eye's distance to the pivot.
 
-**A right drag in free flight carries the depth it grabbed, one pixel for one.** `grabPan` takes
-that depth at the press, while hover still reads what the pointer is over, or the depth of the pivot
-over nothing. `panAcross` slides the camera square to the sight, by what one pixel spans at that
-depth. A point at that depth then stays under the cursor, at any canvas height and field of view.
-Rejected: a fixed share of the distance to the pivot for each pixel, which matched the cursor at one
-canvas height alone. It ran 1.74 times the cursor on 900 px at 45 degrees.
+**A right drag in free flight carries the depth it grabbed, one pixel for one.** At the press,
+`grabPan` takes the depth under the pointer, or over nothing the reach of the point that the last
+zoom took. `panAcross` slides the camera square to the sight, so a point at that depth stays under
+the cursor. Rejected: a fixed share of the distance to the pivot for each pixel, which ran 1.74
+times the cursor on 900 px at 45 degrees. Rejected in D1 of #910: the pivot's depth, which key
+flight carries along, and the local scale, which a star out of view can set. Ten home distances
+back, a pan at the pivot's depth moves what the last zoom took by 0.091 of the pointer.
 
 **A right drag with a selection turns across as a left drag along the row of the pivot.** The turn
 goes first, through `turnFollowing`, for the same travel along that row. So the turn for each pixel
@@ -2399,7 +2400,9 @@ with the pivot 19 away. On the middle column the dolly moves alone, and returns 
 - a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
 - an orbit passes over the top and a look under its feet, and a drag goes through the pole;
 - a right drag carries a point held at 2.5, 19 and 4,000 units to its pixel, within 0.01 px;
-- a right drag takes the depth under the pointer, or the pivot's over nothing;
+- a right drag takes the depth under the pointer, or over nothing the reach that the last zoom took;
+- ten home distances back, a right drag over empty sky carries the point that the last zoom took to
+  its pixel, within 0.01 px;
 - a right drag with a selection turns as a left drag along the pivot's row, for the same travel. Its
   point's height scales as the pointer's does, within 0.01 px, on both sides of the row. A level
   drag zooms nothing, inside the band or outside it;
@@ -4899,11 +4902,10 @@ under each option, and rules on feel and figures together. The project then buil
 once. README, Comparison mockups, says how to build the next one.
 
 **The define keeps the comparison out of the page that readers run.** Only `-d:mockup` includes
-`src/browser/mockup.nim`, and the hooks in `bridge.nim` stand under the same define. The `mockup`
-verb writes the mockup to a file of its own, `build/pga_visualiser_mockup.html`. Verified on
-2026-11-14 by `web` here and at `c2e80da3`: both pages hold 7,857,878 bytes. They differ in six
-characters, the line numbers of `bridge.nim` that two assertion messages quote. Rejected: a switch
-read at run time, which ships every option to every reader.
+`src/browser/mockup.nim` and the hooks in `bridge.nim`, and the `mockup` verb writes its page to
+`build/pga_visualiser_mockup.html`. Verified on 2026-11-14: the page from `web` differs from that of
+`c2e80da3` in two line numbers alone. Rejected: a switch read at run time, which ships every option
+to every reader.
 
 **The hooks stand in the bridge, and the shared modules hold only the design that is.** A hook takes
 the place of one call of the bridge, as the wheel zoom does, or runs beside one, as the pinch hooks
@@ -4911,11 +4913,13 @@ do. `mockup.nim` holds each option once, so the comparison reads whole there. Re
 `interaction.nim` under the define, which leave a decided rule beside the rules it beat.
 
 **Each scenario builds a scene of its own, which holds only what its case needs.** That is a small
-system, the stars that the steps aim at, and a star where an option misreads the scale. The set-up
-places each star under its pixel, and the panel draws a ring there. Verified by the probe of #846,
-on the largest demo: a pointer aimed at random misses a far star at 54 of 117 spots. There, the
-stars that mislead the local scale stand where the catalogue puts them. A scene of its own gives
-each run the same case, and shows it plainly.
+system, what the steps aim at, and a star where an option misreads the scale. Verified by the probe
+of #846, on the largest demo: a pointer aimed at random misses a far star at 54 of 117 spots. A
+scene of its own gives each run the same case.
+
+**A diamond of chevrons marks each pixel to aim at, and growing chevrons mark a drag.** It turns
+so a corner faces the drag, and the drag runs on from that corner. A still frame shows what to do,
+and the pixel stays clear. Rejected: a ring with a cross, which covered that pixel.
 
 **The panel measures each run against what its steps ask.** A notch out asks the eye's distance to
 Sol to scale by 1.12. A pinch asks it to scale by the ratio of the gaps of the fingers. The verdict
@@ -4926,12 +4930,11 @@ reads the share of that scale on a log scale:
 - `over`, from 1.33 to 3;
 - `flung`, over 3.
 
-A round trip is `returned` where the eye ends within a hundredth of a home distance of its start,
-and `off` where it ends further. A step that moves the eye too little to see feels like nothing, and
-the figure then says how much it moved.
+A pan asks the focus to move with the pointer. The verdict reads that share along the drag, with
+the same bounds, and `still` under 0.02. A round trip is `returned` where the eye ends within a
+hundredth of a home distance of its start, and `off` further out. The figure says how far it moved.
 
-No comparison is open now. The first, D1 of #846, stands in the history of
-`src/browser/mockup.nim`, and Zoom holds the rule it chose, with its figures.
+No comparison is open. Each closed comparison stands in the history of `src/browser/mockup.nim`.
 
 ## Testing
 
