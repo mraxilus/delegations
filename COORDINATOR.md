@@ -298,7 +298,7 @@ Record each answer to a card as `Record a ruling` says.
 ## Say which role you are
 
 Your role string is `coordinator`, and it has no branch. Open every issue and comment with
-`**Role:** coordinator`, and end each one with the footer of `CONTRIBUTOR.md`. Label a brief
+`**Role:** coordinator`. Label a brief
 issue with the role string of the delegate it starts, and not with your own, because the work
 is theirs. No item is yours, so no item carries the label `coordinator`. Copy each string, and
 never compose it.

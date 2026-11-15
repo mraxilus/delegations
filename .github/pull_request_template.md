@@ -1,38 +1,30 @@
 **Role:** <!-- Write `curator`, `curator/<project>` or `contributor/<domain>/<project>`, the
-role that your branch names. Label this pull request with that same string. Copy it, and never
-compose it. -->
+role that your branch names. Copy it, and never compose it. The `role` workflow labels this
+pull request with that same string. -->
 
-## Intent
+<!-- Each section opens with a summary of one to three sentences, then its points. Outside
+     `<details>`, the body shows at most 2,500 characters, and a link counts by its text.
+     `check-role` and the `body` hook hold this form. -->
 
-<!-- One paragraph: what changes, and why. The title follows `type(scope): summary`, and
+## What
+
+<!-- What changes. A surprise is a point here. The title follows `type(scope): summary`, and
      `check-role` refuses one that does not. -->
 
-## Scope
+## Why
 
-- Branch: `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` or `curator/<name>`
-- Anything that the `check-scope` job allows and a reader would not expect
+<!-- Why it changes. A path that was rejected is a point here, with its reason. -->
 
-## Verification
+## Evidence
 
 <!-- What ran, and on which build: the result of `nim r koch check`, the sample counts, and
-     every figure with its pair.
-     Then show the change. Give a screenshot where it is visual, a worked example where it is
-     not, and one line that says why where neither one fits. The screenshot goes in the
-     message to the Architect and not here, because GitHub takes no image from an API.
-     Link every page that this change published again. A reader opens a page, and a
-     description of one is not a page. -->
+     every figure with its pair. Then show the change with a worked example, or with one line
+     that says why none fits. A screenshot goes in the message to the Architect and not here,
+     because GitHub takes no image from an API. Link every page that this change published
+     again. Put long output inside `<details>`. -->
 
-## Record
+## Next steps
 
-<!-- These boxes are about this change. The standing list of what nothing checks belongs in
-     the conversation and not here. See "Carry the unchecked list in the open". -->
-
-- [ ] PROVENANCE.md holds the design by subsystem, in a commit of its own, each claim marked
-- [ ] GLOSSARY.md holds every term that resolved
-- [ ] Every mistake found earned a test that fails without the fix, and not one written to pass
-- [ ] The assumptions, the trade-offs and the open questions are below
-
-## Notes
-
-<!-- The material assumptions, the choices of representation and staging, and the questions
-     still open. -->
+<!-- What remains after the merge, and who acts. A design question goes to Open questions in
+     the record of the project. If this pull request closes an issue, put `Closes #N` alone on
+     the last line. -->

@@ -11,8 +11,8 @@ file, which each harness reads first. Before any change:
 2. Then read the section Read first of the file of your role, and follow its order. That section
    is the one reading order of each role.
 3. Run `nim r koch check` at the repository root before every push. It must pass.
-4. Open your own pull request as a draft when `koch check` passes, and label it with your role.
-   Drive it green. The Architect merges it.
+4. Open your own pull request as a draft when `koch check` passes. The `role` workflow labels it
+   with your role. Drive it green. The Architect merges it.
 5. Never commit to `main`. Never write outside your scope. Never weaken a test to pass.
 6. Comments are telegraphic. Markdown, issues, pull requests and messages are Simplified
    Technical English, and `GUIDE.md` gives the rules. A glossary term is proposed, and never
