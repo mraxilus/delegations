@@ -230,6 +230,11 @@ type
       ##   readings of one spelling, so spelling is withdrawn and `dolly`, `dollyTo` and
       ##   `repivotToDepth` say which is meant.
     degrees_field_of_view*: float  ## Vertical field of view, in degrees.
+    point_taken: Position  ## World point free flight's zoom out reads its reach from.
+      ## What last zoom took, or pivot where camera was last placed; see `pointTaken`.
+      ##   Flight, turns and pans leave it, as they leave what reader zoomed toward.
+      ##     Not pivot, which held key carries along: after flight out, zoom out read
+      ##     reach home left, and crawled (repository issue 846).
     reach_near*: float  ## How far nearest drawn object stands ahead of eye, along sight.
       ## Scale frustum and furniture take, in place of separation from pivot; see
       ## `scaleLocal`.
@@ -445,8 +450,10 @@ func motorFacing*(eye, pivot: Position): Motor =
 func initCamera*(eye, pivot: Position): Camera =
   ## Construct camera standing at `eye`, facing `pivot`, level, through 45 degree lens.
   ##   Separation is distance between two, held off near bound; see `stanceFacing`.
+  ##   Point zoom out reads its reach from is pivot; see `pointTaken`.
   let stance = stanceFacing(eye, pivot)
-  Camera(motor: stance.motor, depth_pivot: stance.distance, degrees_field_of_view: 45.0)
+  result = Camera(motor: stance.motor, depth_pivot: stance.distance, degrees_field_of_view: 45.0)
+  result.point_taken = result.pivot
 
 
 func initCameraDefault*(width, height: int): Camera =
@@ -573,6 +580,22 @@ func depthClip*(camera: Camera; depth, reach_scene: float): float =
 func distance*(camera: Camera): float = camera.depth_pivot
   ## Read separation of eye from pivot.
   ##   Read-only: see `Camera.depth_pivot` for why no spelling assigns to it.
+
+
+func pointTaken*(camera: Camera): Position = camera.point_taken
+  ## Read world point free flight's zoom out reads its reach from.
+  ##   What last zoom took, or pivot where camera was last placed. `placed` writes pivot,
+  ##   `takePoint` writes what zoom took, and nothing else writes it.
+
+
+func takePoint*(camera: var Camera, point: Position) =
+  ## Note world `point` as what zoom took; see `pointTaken`.
+  camera.point_taken = point
+
+
+func reachTaken*(camera: Camera): float =
+  ## Read how far eye stands from point free flight's zoom out reads; see `pointTaken`.
+  norm(camera.eye.toWorld(camera.origin_view) - camera.point_taken)
 
 
 func eyeCarried(motion, motion_reversed: Multivector): Position =
@@ -1521,6 +1544,8 @@ func placed*(camera: Camera, stance: CameraStance): Camera =
   result.origin_view = stance.origin
   result.motor = stance.motor
   result.depth_pivot = distanceHeld(stance.distance)
+  # Placed camera has zoomed toward nothing yet, so zoom out reads reach from its pivot.
+  result.point_taken = result.pivot.toWorld(result.origin_view)
 
 
 func motorRigid*(m: Multivector): Option[Motor] =

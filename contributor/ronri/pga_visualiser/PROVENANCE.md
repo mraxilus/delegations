@@ -2061,6 +2061,26 @@ Sol stopped 4.96 units from it. The nearest drawn object anywhere in the frame s
 zoom in also locked the wheel. Rejected: a limit of twice the separation, under which no star
 answers after key flight far out until a click selects one.
 
+**A zoom out takes that object only within twice the reach of the point that the last zoom took**
+(`interaction.dollyAt`, D1 of #846). Past it, the zoom out holds that reach on the pointer's ray. So
+the eye backs off by a notch of what the reader looked at. A zoom in still comes to a far star, so
+in and then out returns. The camera keeps the point (`camera.pointTaken`). A zoom sets it to what it
+took, placing the camera sets it to the pivot, and flight, turns and pans leave it.
+
+Verified by the probe of #846 on 2026-11-14, which is not kept, at 117 spots of 1200 by 900. Each
+cell is the median scale of the eye's distance to the pivot of home, where a notch asks 1.12:
+
+| Rule | One notch from home | Ten notches, which ask 3.11 | One notch after a flight out |
+| --- | --- | --- | --- |
+| a. Any depth, rejected. | 7,673. | 21,276. | 879. |
+| b. The distance to the pivot, rejected. | 1.121. | 3.19. | 1.011. |
+| d. The local scale, rejected. | 1.105. | 1.57. | 1.033. |
+| e. The point that the last zoom took. | 1.121. | 3.34. | 1.121. |
+
+Rejected: a cap at twice the distance to the pivot, under which ten notches end over 30 times out
+at 4 of 117 spots. Verified by the comparison mockup, run by the Architect with a mouse and on a
+phone. Option e alone scaled as asked or returned in each of five scenarios.
+
 Rejected: the object nearest the pointer, as a click takes it. At home in the largest demo, a star
 4.26 million units out stands 30 px from the middle, and Sol 53 px. Six wheel events of 400 px
 there left a separation of 280,656, with 1 point drawn. Rejected: the 34 px of a click as the
@@ -2097,8 +2117,9 @@ own line to that object. The sight then leaves what is picked.
 
 **With a selection, an object counts only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the
 orbit distance, either way.** The band holds for the floor of the wheel, and for what two fingers
-hold. Horizon objects are refused, because they are at no place. Free flight takes no band, because
-key flight keeps the separation, so a band about it would refuse every object after a flight.
+hold. Horizon objects are refused, because they are at no place. Free flight's zoom in takes no
+band. Key flight carries the pivot along, so a band about it would refuse every object after a
+flight. Its zoom out reads the point that the last zoom took instead, which flight leaves.
 
 **The zoom stops where a point fills the frame**, because nearer shows nothing more of it. There its
 sphere reaches every corner, and the point is backdrop (Picking). `picking.depthFilling` solves that
@@ -2136,7 +2157,11 @@ floor on flight at the fill of the point ahead, which stops it at each point of 
   under the pointer beats both, and a point 100 px off gives no anchor;
 - a point beats a line through it whose part under the pointer stands 1 unit nearer, at depth 9
   against 10. A line 10 deep beats a star 1000 deep;
-- a point picked alone is held at the fill from half of it, and left where it stands from 19.
+- a point picked alone is held at the fill from half of it, and left where it stands from 19;
+- with nothing selected, a notch out over a far star 2 million deep scales the eye's distance to
+  the point held by 1.12;
+- flown 190 back, a notch out over that star holds 209 on its ray, and three in and out return;
+- a pinch in over two far stars backs the eye off between 1.5 and 3 times.
 
 Verified by driven checks:
 
@@ -2201,7 +2226,8 @@ and pressing `s` keeps the speed up, as a reader means by turning round mid-flig
 zeroes it once the last travel key is up, so a flight resumed after a pause starts from rest.
 
 **Flight carries the pivot along, in every direction.** `travel` slides the whole camera, so the
-separation stays as it was. Rejected: flight ahead that holds the pivot and spends the separation,
+distance to the pivot stays as it was. It leaves the point that the last zoom took, which a zoom out
+reads (Zoom). Rejected: flight ahead that holds the pivot and spends the distance to the pivot,
 which only runs the speed down.
 
 **The frustum and the furniture read what stands ahead, not the separation.** `Camera.reach_near` is
@@ -3710,15 +3736,18 @@ apart. It flew out at 44 of 165 spots. Assumed: that the wheel keeps one fingert
 pointer lands where it is aimed. Assumed: that a reader who pinches toward a far star beside near
 objects first moves it clear of them.
 
-**A pinch in that holds the depth of a far star zooms out about it**, and carries the eye out past
-the solar system. A probe that is not kept pinched in 65 times from home, on 2026-11-06. Of those
-pinches, 18 carry the eye out more than 100 times its distance. With the 72 px of the wheel it is 44
-of 65, and on `main` at `8fe8eb6d` 47 of 65.
+**A pinch in holds no place past twice the reach of the point that the last zoom took.** A pinch
+takes its places as the second finger lands, before it knows its direction. As the fingers first
+close past the slop, each place past twice that reach comes in to it on its finger's ray. A pinch
+out keeps its places, so it still comes to a far star. A probe that is not kept pinched in 65 times
+from home (#846). Of those pinches, 18 carried the eye out over 100 times with places at any depth,
+and none under this rule.
 
 **With nothing selected, a finger over nothing holds a place at a depth the view is about.** That
 depth is the depth of the object of the other finger, where that finger stands on one. Otherwise it
 is the depth of the object shown nearest the middle of the fingers, within `FACTOR_ANCHOR_DEPTH` 2
-of the depth of the pivot. Otherwise it is the depth of the pivot itself. Rejected:
+of the depth of the pivot. Otherwise it is the depth of the pivot itself. In free flight, a pinch
+stands the pivot at the reach of the point that the last zoom took. Rejected:
 
 - the sky itself, which no slide moves, so with both fingers on sky no pinch moved anything;
 - the nearest object ahead, which far out in the orrery is a star off to the side;
@@ -3729,8 +3758,9 @@ does.
 
 **Once the fingers zoom, the pivot stands at the depth of the nearer place held**, as the wheel's
 zoom lands it on an object. The next pinch then scales the same thing, so zoom out after zoom out
-grows by the ratio of the fingers. A slide alone carries the pivot along at its own depth. Places
-over nothing never draw the pivot in, so no pinch runs the separation down (repository issue 535).
+grows by the ratio of the fingers. A slide alone carries the pivot along at the depth it took as
+the fingers landed. Places over nothing never draw the pivot in, so no pinch runs the distance to
+the pivot down (repository issue 535). The nearer place is then the point that the last zoom took.
 
 **An unknown that no finger can move stays where it stands.** The damping holds it there, and a
 correction counts only where it cuts the misses by more than a billionth of them
@@ -4899,30 +4929,8 @@ A round trip is `returned` where the eye ends within a hundredth of a home dista
 and `off` where it ends further. A step that moves the eye too little to see feels like nothing, and
 the figure then says how much it moved.
 
-**The comparison now is D1 of #846**, what free flight's zoom out takes as its anchor. Verified by
-driven run in Chromium on 2026-11-14, at 1200 by 900 and on an emulated Pixel 7. Each cell gives the
-verdict, then how the eye's distance to Sol scaled. For the round trip, it gives how far the eye
-ends from its start, in home distances. One notch out asks 1.12, three notches ask 1.405, and the
-pinch asks 2.174.
-
-| Scenario | a | b | d | e |
-| --- | --- | --- | --- | --- |
-| 1. Far star at home. | Flung, 12,670. | As asked, 1.117. | Short, 1.074. | As asked, 1.117. |
-| 2. After a key flight. | As asked, 1.404. | Short, 1.037. | Short, 1.226. | As asked, 1.404. |
-| 3. Far out. | Flung, 163. | As asked, 1.407. | Short, 1.006. | As asked, 1.417. |
-| 4. Round trip. | Returned, 1.7e-11. | Returned, 1.7e-11. | Off, 27,610. | Returned, 1.7e-11. |
-| 5. Pinch on a phone. | Flung, 44,250. | As asked, 2.017. | As asked, 1.863. | As asked, 2.017. |
-
-These agree with the probe that D1 cites, on the cases that it measured:
-
-- option a carries the eye out over a far star;
-- option b falls short after a key flight;
-- option d falls short far out, and where a star off the line misleads the local scale.
-
-At home, d falls short at 1200 by 900, and scales as asked on the frame of the Architect, by 1.104.
-One notch of a there scaled the eye by 4,455, so home stood about 54 units from Sol, against 19
-here. Assumed: that the reach ahead then comes nearer the distance to the pivot. Assumed: that a
-pinch on a phone moves the camera as the touch that Chromium emulates moves it.
+No comparison is open now. The first, D1 of #846, stands in the history of
+`src/browser/mockup.nim`, and Zoom holds the rule it chose, with its figures.
 
 ## Testing
 

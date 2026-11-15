@@ -1041,6 +1041,118 @@ suite "Camera":
     check held.pivot =~ opened.pivot
 
 
+  test "with no selection a zoom out over a far star holds the pivot's distance on its ray":
+    # Fault: zoom out took far star under pointer at any depth, and carried eye out by
+    #   notch's share of star's depth, out of solar system in one notch (repository issue
+    #   846). Past twice distance to point last zoom took, zoom out holds that distance on
+    #   pointer's ray instead. That point is pivot, where nothing has zoomed since placing.
+    const (wide, tall) = (1440, 900)
+    let
+      opened = cameraAround(ORIGIN, 19.0, Direction(x: 10, y: 15, z: 6))
+      pixel = ScreenPosition(x: 720.0, y: 200.0)
+      heading = headingThrough(opened, opened.frame, wide, tall, pixel)
+      star = opened.eye + 2.0e6 * heading
+      held = opened.eye + 19.0 * heading
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "sun", Ink.Rose)
+    scene.addObject(star.toMultivector, "far star", Ink.Rose)
+    var
+      camera = opened
+      interaction = Interaction(is_enabled: true)
+    interaction.updateCursor(pixel.x, pixel.y)
+    interaction.dollyAtCursor(
+      camera,
+      scene,
+      FACTOR_DOLLY_NOTCH,
+      camera.drawExtentFor(tall, 0.0),
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      has_selection = false,
+    )
+    check norm(camera.eye - held) =~ FACTOR_DOLLY_NOTCH * norm(opened.eye - held)
+    # Eye stays by sun: it backs off along pointer's ray, by notch's share of reach.
+    check norm(camera.eye - ORIGIN) < 1.2 * norm(opened.eye - ORIGIN)
+
+
+  test "after key flight a zoom out reads its distance from the point the last zoom took":
+    # Held `s` carries pivot along, so distance to pivot stays as home left it while eye
+    #   flies out. Point last zoom took stays, and zoom out reads distance from it. Then
+    #   three notches in toward far star and three out bring eye back where it stood.
+    const (wide, tall) = (1440, 900)
+    var flown = cameraAround(ORIGIN, 19.0, Direction(x: 10, y: 15, z: 6))
+    flown.travel(-190.0, 0.0, 0.0)
+    check flown.distance =~ 19.0
+    check norm(flown.eye - ORIGIN) =~ 209.0
+    let
+      pixel = ScreenPosition(x: 720.0, y: 200.0)
+      heading = headingThrough(flown, flown.frame, wide, tall, pixel)
+      star = flown.eye + 2.0e6 * heading
+      held = flown.eye + 209.0 * heading
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "sun", Ink.Rose)
+    scene.addObject(star.toMultivector, "far star", Ink.Rose)
+    var interaction = Interaction(is_enabled: true)
+    interaction.updateCursor(pixel.x, pixel.y)
+    proc notch(camera: var Camera, factor: float) =
+      interaction.dollyAtCursor(
+        camera,
+        scene,
+        factor,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        has_selection = false,
+      )
+    var camera = flown
+    camera.notch(FACTOR_DOLLY_NOTCH)
+    check norm(camera.eye - held) =~ FACTOR_DOLLY_NOTCH * norm(flown.eye - held)
+    var trip = flown
+    for _ in 1..3: trip.notch(1.0 / FACTOR_DOLLY_NOTCH)
+    check norm(trip.eye - star) =~ pow(FACTOR_DOLLY_NOTCH, -3.0) * norm(flown.eye - star)
+    for _ in 1..3: trip.notch(FACTOR_DOLLY_NOTCH)
+    check norm(trip.eye - flown.eye) < 1.0e-9 * norm(flown.eye - star)
+
+
+  test "with no selection a pinch in over far stars holds the pivot's distance":
+    # Pinch takes places as second finger lands, before it knows its direction. Fingers
+    #   that then close past slop hold no place past twice distance to point last zoom took,
+    #   so pinch in over far stars backs eye off by fingers' ratio, as wheel's notch does.
+    const (wide, tall) = (1440, 900)
+    let
+      opened = cameraAround(ORIGIN, 19.0, Direction(x: 10, y: 15, z: 6))
+      landed = [ScreenPosition(x: 620.0, y: 200.0), ScreenPosition(x: 820.0, y: 200.0)]
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "sun", Ink.Rose)
+    for finger in landed:
+      let heading = headingThrough(opened, opened.frame, wide, tall, finger)
+      scene.addObject((opened.eye + 2.0e6 * heading).toMultivector, "far star", Ink.Rose)
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+    for step in 1..10:
+      let spread = 100.0 * (1.0 - 0.06 * float(step))
+      grip.carryGrip(
+        camera,
+        [ScreenPosition(x: 720.0 - spread, y: 200.0), ScreenPosition(x: 720.0 + spread, y: 200.0)],
+        wide,
+        tall,
+      )
+    let scaled = norm(camera.eye - ORIGIN) / norm(opened.eye - ORIGIN)
+    check scaled > 1.5
+    check scaled < 3.0
+
+
   test "the wheel comes in to what the pointer is over, and stops where a point fills the frame":
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)

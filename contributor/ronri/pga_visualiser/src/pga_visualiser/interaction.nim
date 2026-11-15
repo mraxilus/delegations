@@ -318,6 +318,8 @@ type
     reach*: float  ## Length one unit of free flight's slide stands for: mean reach of
       ## places held.
     solution*: array[4, float]  ## Free flight's last answer, which next solve starts from.
+    is_retaken*: bool  ## Whether fingers have passed slop, and places were held at reach.
+      ## Once, as fingers first close or part past slop; see `retakeClosing`.
 
   Interaction* = object  ## Define cursor, drag and press state held between frames.
     is_enabled*: bool  ## Whether picking and overlay run at all; off during storyboard capture.
@@ -872,6 +874,16 @@ proc updateHover*(
 
 #[ Keyboard ]#
 
+func onRayAtDepth(eye, place: Position; forward: Direction; depth: float): Position =
+  ## Read point on eye's ray through `place`, at `depth` along sight.
+  let along = depth / depthAlong(eye, forward, place)
+  Position(
+    x: eye.x + along * (place.x - eye.x),
+    y: eye.y + along * (place.y - eye.y),
+    z: eye.z + along * (place.z - eye.z),
+  )
+
+
 proc dollyAbout*(
   camera: var Camera;
   scene: Scene;
@@ -928,6 +940,10 @@ proc dollyAt*(
   ##     `picking.Rank.Eye`. Over nothing it does nothing: wheel refers to object, and with
   ##     none there it has nothing to come in to (repository issue 535).
   ##       Not pointer's ray at separation, which each notch over empty sky scales toward floor.
+  ##     Its zoom out takes that object within `FACTOR_ANCHOR_DEPTH` of reach to point last
+  ##     zoom took, and past it holds that reach on pointer's ray; see `camera.pointTaken`.
+  ##       Not object at any depth: far star under pointer carried eye out of solar system
+  ##       in one notch (repository issue 846). Zoom in still comes to it (issue 745).
   ##     Selection dollies about pivot, which stands on what is picked, wherever pointer
   ##     stands, so orbit stays on it; see `dollyAbout`.
   if has_selection:
@@ -947,14 +963,26 @@ proc dollyAt*(
     is_banded = false,
   )
   if anchor.isNone: return
-  camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
+  var
+    at = anchor.get.at
+    floor = anchor.get.floor_reach
+  block:
+    let
+      (eye, frame) = camera.sight
+      reach = camera.reachTaken
+    if factor > 1.0 and depthAlong(eye, frame.forward, at) > FACTOR_ANCHOR_DEPTH * reach:
+      at = onRayAtDepth(eye, at, frame.forward, reach)
+      floor = 0.0
+  let taken = at.toWorld(camera.originView)
+  camera.travelToward(factor, at, floor)
   # Separation follows anchor's own depth, so frustum's scale tracks flight.
   #   Crossing as well as standing object: free flight has no orbit for pivot to
   #   anchor, so depth here is scale and nothing else.
   let
     (eye, frame) = camera.sight
-    depth = depthAlong(eye, frame.forward, anchor.get.at)
+    depth = depthAlong(eye, frame.forward, at)
   if depth > 0.0: camera.repivotToDepth(depth)
+  camera.takePoint(taken)
 
 
 func yieldOrHalt*(tween: var CameraTween, has_selection: bool) =
@@ -1502,6 +1530,10 @@ proc gripFingers*(
   ##     Not sky itself, which no slide moves, so pinch on sky after zoom out moves nothing.
   ##     Pivot follows what fingers hold; see `slideGripped`.
   ##   Every place stands on its finger's ray, so first step starts at no miss.
+  ##   Free flight reads pivot's depth as reach to point last zoom took, as its zoom out
+  ##   does; see `dollyAt`.
+  var camera = camera
+  if not has_selection: camera.repivotToDepth(camera.reachTaken)
   let (eye, frame) = camera.sight
   result = GripFingers(
     stance: camera,
@@ -1638,12 +1670,18 @@ func slideGripped(
   camera.reach_near = reach_near
   if grip.gap_from.isNone: return
   let (eye, frame) = camera.sight
-  var depth_held = Inf
+  var
+    depth_held = Inf
+    nearer = grip.fingers[0].place
   for place in grip.fingers:
-    depth_held =
-      min(depth_held, depthAlong(eye, frame.forward, place.place.toView(camera.originView)))
+    let depth = depthAlong(eye, frame.forward, place.place.toView(camera.originView))
+    if depth < depth_held:
+      depth_held = depth
+      nearer = place.place
   if grip.is_open: depth_held = max(depth_held, grip.stance.distance)
   if depth_held > 0.0 and depth_held < Inf: camera.repivotToDepth(depth_held)
+  # Nearer place is what pinch zooms about, as wheel's anchor is; see `camera.pointTaken`.
+  camera.takePoint(nearer)
 
 
 func gapDollied(grip: GripFingers; camera: Camera; width, height: int; along: float): float =
@@ -1713,6 +1751,38 @@ func orbitGripped(
   if turned != 0.0: camera.roll(-turned)
 
 
+func retakeClosing(grip: var GripFingers; fingers: array[2, ScreenPosition]) =
+  ## Hold places past twice pivot's depth at it on their rays, as fingers first close past
+  ## slop, in free flight.
+  ##   Pinch takes places as second finger lands, before it knows its direction, and pinch
+  ##   in about far star carried eye out of solar system (repository issue 846). Pinch out
+  ##   keeps star, as wheel's zoom in does.
+  ##   Pivot's depth is reach to point last zoom took here; see `gripFingers`.
+  if grip.is_orbit or grip.is_retaken or grip.gap_from.isNone: return
+  grip.is_retaken = true
+  let
+    (gap_landed, _) = gapAndAngle(grip.landed)
+    (gap, _) = gapAndAngle(fingers)
+  if gap >= gap_landed: return
+  let
+    (eye, frame) = grip.stance.sight
+    reach = grip.stance.distance
+    origin = grip.stance.originView
+  var reaches = 0.0
+  for finger in grip.fingers.mitems:
+    var held = finger.place.toView(origin)
+    if depthAlong(eye, frame.forward, held) > FACTOR_ANCHOR_DEPTH * reach:
+      held = onRayAtDepth(eye, held, frame.forward, reach)
+      finger.floor = 0.0
+    finger.place = held.toWorld(origin)
+    reaches += norm(held - eye)
+  let reach_held = 0.5 * reaches
+  if reach_held <= 0.0 or grip.reach <= 0.0: return
+  # Slide already solved is in units of `reach`, so it stays where it stood.
+  for unknown in 0..2: grip.solution[unknown] *= grip.reach / reach_held
+  grip.reach = reach_held
+
+
 func carryGrip*(
   grip: var GripFingers; camera: var Camera; fingers: array[2, ScreenPosition]; width, height: int
 ) =
@@ -1722,6 +1792,7 @@ func carryGrip*(
   ##   Free flight slides and rolls, and selection orbits, dollies and rolls about pivot;
   ##   see `slideGripped` and `orbitGripped`.
   grip.noteSlop(fingers)
+  grip.retakeClosing(fingers)
   let held = grip.fingersHeld(fingers)
   if grip.is_orbit: grip.orbitGripped(camera, held, width, height)
   else: grip.slideGripped(camera, held, width, height)
