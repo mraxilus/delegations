@@ -1,20 +1,24 @@
 ## vasru lo lojbo linji pe ro mupli poi se namcu ne'i `CLL 1.1` gi'e vasru su'o lojbo linji
 ##   .i le cipra pe le se ciska girzu cu tcidu le linji
-##   .i le minde po'u `nim r tools/build.nim cll <directory>` cu ciska le datnyvei ra'i lo
-##     papri be `CLL 1.1` be'o poi se zbasu de'i `2016-08-26` .i lo sinxa be le papri be'o
-##     pe la'o gy. SHA-256 .gy. cu du `5baac481b4483b5efc2099de46b3cdc2` ce'o
-##     `4f741db8ee6f6ed41b80a3aad659fa55` .i no prenu cu galfi le datnyvei
-##     .i lo cenba cu se zbasu lo nu rapli pilno le minde
-##   .i le linji cu se lebna fi `CLL 1.1` noi cukta gi'e se dunda la'o gy. Logical Language
-##     Group .gy. .i le datnyveiste poi vasru le vi datnyvei cu se benji ja'i le notci pe le
-##     cukta zi'e poi zvati `NOTICE.md` .i le datnyveiste cu na se benji ja'i le curmi javni
-##     pe la'o gy. delegations .gy.
-##   .i le vi datnyvei cu vasru lo linji pe lo klesi po'u `jbo` .a `jbophrase` .i le vi
-##     datnyvei cu vasru no drata linji .i ro selci pe pa lijgri cu jorne lo bavla'i selci pa
-##     kunti lerfu .i lo kunti lerfu poi fanta lo nu katna le linji cu binxo lo sampu kunti
-##     lerfu .i ro porsi be lo kunti lerfu cu binxo pa kunti lerfu .i lo tcita cu se vimcu .i
-##     va'o lo drata le se ciska cu mintu le se ciska pe le cukta gi'e ralte lo grile'u .e lo
-##     sinxa poi na lojbo
+##   .i le minde po'u `nim r tools/build.nim cll <directory>` cu ciska le datnyvei ra'i lo papri be
+##     `CLL 1.1` be'o poi se zbasu de'i `2016-08-26`
+##   .i lo sinxa be le papri be'o pe la'o gy. SHA-256 .gy. cu du `5baac481b4483b5efc2099de46b3cdc2`
+##     ce'o `4f741db8ee6f6ed41b80a3aad659fa55`
+##   .i no prenu cu galfi le datnyvei
+##   .i lo cenba cu se zbasu lo nu rapli pilno le minde
+##   .i le linji cu se lebna fi `CLL 1.1` noi cukta gi'e se dunda la'o gy. Logical Language Group
+##     .gy.
+##   .i le datnyveiste poi vasru le vi datnyvei cu se benji ja'i le notci pe le cukta zi'e poi zvati
+##     `NOTICE.md`
+##   .i le datnyveiste cu na se benji ja'i le curmi javni pe la'o gy. delegations .gy.
+##   .i le vi datnyvei cu vasru lo linji pe lo klesi po'u `jbo` .a `jbophrase`
+##   .i le vi datnyvei cu vasru no drata linji
+##   .i ro selci pe pa lijgri cu jorne lo bavla'i selci pa kunti lerfu
+##   .i lo kunti lerfu poi fanta lo nu katna le linji cu binxo lo sampu kunti lerfu
+##   .i ro porsi be lo kunti lerfu cu binxo pa kunti lerfu
+##   .i lo tcita cu se vimcu
+##   .i va'o lo drata le se ciska cu mintu le se ciska pe le cukta gi'e ralte lo grile'u .e lo sinxa
+##     poi na lojbo
 
 {.experimental: "strictFuncs".}
 

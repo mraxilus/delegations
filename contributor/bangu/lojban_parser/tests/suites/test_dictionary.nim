@@ -1,24 +1,28 @@
 ## rapli zbasu lo rafsi .e lo gismu vu'o poi `CLL 4` cu cusku ke'a gi'e cipra lo du'u lo nu sisku pe
 ##   `dictionary.nim` cu mapti le se zbasu
 ##   .i le cipra cu sisku ro liste cmima .e ro cmalu rafsi .e ro lerpoi poi se tarmi lo tarmi be lo
-##     cmalu rafsi .a lo rafsi poi vasru vo lerfu .i se ki'u bo le cipra cu tcidu lo mulno se tcidu
-##     be ro sisku fancu to `Article IX.3` toi .i le cipra cu tcidu lo mupli be lo lerpoi poi na
-##     zvati le liste .i lo tsiju cu jdice le mupli .i ro mupli cu se zbasu ta'i lo nu basti pa
-##     lerfu pe pa valsi pe le liste
-##   .i le cipra cu karbi ro nu sisku lo nu tcidu ro liste cmima pe `LIST_GISMU` ta'i lo porsi .i le
-##     nu tcidu cu se ciska vi gi'e sepli lo nu sisku pe `dictionary.nim` ta'i lo nu rapli fendi fi
-##     re pagbu .i se ki'u bo lo sisku liste poi porsi .e le nu sisku cu tugni le liste poi krasi le
-##     sisku liste
+##     cmalu rafsi .a lo rafsi poi vasru vo lerfu
+##   .i se ki'u bo le cipra cu tcidu lo mulno se tcidu be ro sisku fancu to `Article IX.3` toi
+##   .i le cipra cu tcidu lo mupli be lo lerpoi poi na zvati le liste
+##   .i lo tsiju cu jdice le mupli
+##   .i ro mupli cu se zbasu ta'i lo nu basti pa lerfu pe pa valsi pe le liste
+##   .i le cipra cu karbi ro nu sisku lo nu tcidu ro liste cmima pe `LIST_GISMU` ta'i lo porsi
+##   .i le nu tcidu cu se ciska vi gi'e sepli lo nu sisku pe `dictionary.nim` ta'i lo nu rapli fendi
+##     fi re pagbu
+##   .i se ki'u bo lo sisku liste poi porsi .e le nu sisku cu tugni le liste poi krasi le sisku
+##     liste
 ##   .i ro cipra cu dunda pa tsiju le cupra be lo cunso namcu pa roi gi'e cuxna lo mupli pe vo'a
-##     gi'e punji le mupli lo vasru .i lo rapli fancu cu dunda le mupli pe le vasru
+##     gi'e punji le mupli lo vasru
+##   .i lo rapli fancu cu dunda le mupli pe le vasru
 ##   .i la'o gy. CLL .gy. cu cusku lo gismu .e lo lujvo ne'i `CLL 4.4` .e `CLL 4.6` .e `CLL 4.13` .e
-##     `CLL 4.14` .e `CLL 4.15` .i le cipra cu pilno le valsi ta'i lo mupli .i le cipra cu sisku ro
-##     rafsi pe ro le valsi ja'i lo cmene gi'e no roi sisku ja'i lo namcu .i va'o lo nu
-##     la'o gy. CLL .gy. cu dunda lo lujvo gi'e na fendi le lujvo fi lo rafsi kei lo pinka cu vasru
-##     lu le nu fendi cu se sruma li'u .i lo pinka be lo lerpoi poi no krasi cu vasru ke'a cu vasru
-##     lu le lerpoi cu se zbasu li'u
+##     `CLL 4.14` .e `CLL 4.15`
+##   .i le cipra cu pilno le valsi ta'i lo mupli
+##   .i le cipra cu sisku ro rafsi pe ro le valsi ja'i lo cmene gi'e no roi sisku ja'i lo namcu
+##   .i va'o lo nu la'o gy. CLL .gy. cu dunda lo lujvo gi'e na fendi le lujvo fi lo rafsi kei lo
+##     pinka cu vasru lu le nu fendi cu se sruma li'u
+##   .i lo pinka be lo lerpoi poi no krasi cu vasru ke'a cu vasru lu le lerpoi cu se zbasu li'u
 ##   .i lo cipra pe `Internal: Dictionary` cu cipra lo se ckaji poi la'o gy. CLL .gy. na cusku ke'a
-##     .i le se ckaji cu du lo klesi be ro valsi jo'u lo porsi jo'u lo nu ciska jo'u lo datni pagbu
+##   .i le se ckaji cu du lo klesi be ro valsi jo'u lo porsi jo'u lo nu ciska jo'u lo datni pagbu
 
 {.experimental: "strictFuncs".}
 
@@ -35,18 +39,18 @@ const
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"
     ## le paze zunsna poi zoi gy. C .gy. cu sinxa ke'a to le cimoi javni pe `CLL 4.1` toi
   ORDER_VOWELS = "aeiou"
-    ## le mu karsna poi zoi gy. V .gy. cu sinxa ke'a .i zoi gy. V .gy. na sinxa `y` to le pamoi
-    ##   javni pe `CLL 4.1` toi
+    ## le mu karsna poi zoi gy. V .gy. cu sinxa ke'a
+    ##   .i zoi gy. V .gy. na sinxa `y` to le pamoi javni pe `CLL 4.1` toi
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"
     ## lo lerfu pe `CLL 3.1` .e zoi gy. ' .gy. .e slaka bu .e denpa bu
   DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
     ## lo cmavo pe le pano namcu po'u li no bi'o li so ja'i le liste pe `CLL 18.2`
   RAFSI_BLACI = ["bac", "lac", "ba'i", "bai", "la'i", "lai", "bla"]
-    ## lo cmalu rafsi poi le liste pe `CLL 4.6` cu curmi lo nu zo blaci cu ponse ke'a .i ro le rafsi
-    ##   cu se dunda fi lo drata valsi
+    ## lo cmalu rafsi poi le liste pe `CLL 4.6` cu curmi lo nu zo blaci cu ponse ke'a
+    ##   .i ro le rafsi cu se dunda fi lo drata valsi
   GISMU_ASSIGNABLE = ["broda", "brode", "brodi", "brodo", "brodu"]
-    ## ja'i `CLL 4.15` lo brivla poi lo pilno cu ka'e dunda lo smuni ke'a .i ro le brivla cu frica
-    ##   fi lo fanmo karsna po'o to `CLL 4.4` toi
+    ## ja'i `CLL 4.15` lo brivla poi lo pilno cu ka'e dunda lo smuni ke'a
+    ##   .i ro le brivla cu frica fi lo fanmo karsna po'o to `CLL 4.4` toi
   GISMU_COINED = ["cmavo", "lojbo", "lujvo", "mekso"]
     ## lo drata gismu poi se finti ja'i `CLL 4.15`
   GISMU_METRIC_SMALL = [
@@ -70,35 +74,41 @@ const
     "budjo", "dadjo", "muslo", "xriso",
     "jegvo", "semto", "slovo", "xispo",
   ]
-    ## lo kulnu gismu pe `CLL 4.15` ta'i lo porsi pe le papri .i le gismu cu sinxa lo krasi bangu
-    ##   ce'o lo ze drata bangu ce'o lo gugde ce'o lo barda tumla ce'o lo kulnu ce'o lo lijda ce'o
-    ##   lo se cmene poi kuspe su'o re girzu
+    ## lo kulnu gismu pe `CLL 4.15` ta'i lo porsi pe le papri
+    ##   .i le gismu cu sinxa lo krasi bangu ce'o lo ze drata bangu ce'o lo gugde ce'o lo barda
+    ##     tumla ce'o lo kulnu ce'o lo lijda ce'o lo se cmene poi kuspe su'o re girzu
   COUNT_LISTED_4_15 = 92
-    ## lo te kancu be lo gismu poi `CLL 4.15` cu vasru ke'a .i le te kancu cu se kancu ne'i le papri
+    ## lo te kancu be lo gismu poi `CLL 4.15` cu vasru ke'a
+    ##   .i le te kancu cu se kancu ne'i le papri
     ##   .i la'o gy. CLL .gy. cu cusku no te kancu
   SAMPLES_MUTATION = 20000
-    ## lo valsi pe le gismu liste zi'e poi pa lerfu pe ke'a cu se basti .i le cipra cu sisku ro le
-    ##   valsi .i lo tsiju cu jdice le valsi
+    ## lo valsi pe le gismu liste zi'e poi pa lerfu pe ke'a cu se basti
+    ##   .i le cipra cu sisku ro le valsi
+    ##   .i lo tsiju cu jdice le valsi
   FLOOR_UNLISTED = 9450
-    ## lo cnita jimte be lo te kancu be le se galfi poi na zvati le liste .i se ki'u bo le cipra cu
-    ##   ro roi cipra fi lo nu sisku poi facki no da .i le jimte cu xadba li pabisonomu .i ca lo nu
-    ##   le tsiju cu du li no kei le te kancu cu du li pabisonomu
+    ## lo cnita jimte be lo te kancu be le se galfi poi na zvati le liste
+    ##   .i se ki'u bo le cipra cu ro roi cipra fi lo nu sisku poi facki no da
+    ##   .i le jimte cu xadba li pabisonomu
+    ##   .i ca lo nu le tsiju cu du li no kei le te kancu cu du li pabisonomu
   FLOOR_LISTED = 177
-    ## lo cnita jimte be lo te kancu be le se galfi poi du pa drata liste cmima .i se ki'u bo le
-    ##   cipra cu ro roi cipra fi lo nu sisku poi facki pa liste cmima .i le jimte cu xadba li
-    ##   cimuvo .i ca lo nu le tsiju cu du li no kei le te kancu cu du li cimuvo
-  SAMPLES_PAIRS = 20000  ## lo remei be lo valsi poi se karbi .i lo tsiju cu jdice le remei
+    ## lo cnita jimte be lo te kancu be le se galfi poi du pa drata liste cmima
+    ##   .i se ki'u bo le cipra cu ro roi cipra fi lo nu sisku poi facki pa liste cmima
+    ##   .i le jimte cu xadba li cimuvo
+    ##   .i ca lo nu le tsiju cu du li no kei le te kancu cu du li cimuvo
+  SAMPLES_PAIRS = 20000  ## lo remei be lo valsi poi se karbi to lo tsiju cu jdice le remei toi
   STEMS_4_13 = [
     ("gerk", "gerku"), ("zdan", "zdani"), ("logj", "logji"), ("bang", "bangu"),
     ("girz", "girzu"), ("nakn", "nakni"), ("cins", "cinse"),
   ]
-    ## lo rafsi poi vasru vo lerfu gi'e se ciska `CLL 4.13` ne'i lo mupli .i ro rafsi cu kansa lo
-    ##   gismu pe vo'a
+    ## lo rafsi poi vasru vo lerfu gi'e se ciska `CLL 4.13` ne'i lo mupli
+    ##   .i ro rafsi cu kansa lo gismu pe vo'a
 
 
 func positionsNotation(notation: string): seq[string] =
-  ## tcidu lo lerfu poi ro stuzi be lo sinxa pe `CLL 4.1` cu curmi ke'a .i `C` cu curmi lo zunsna .i
-  ##   `V` cu curmi lo karsna .i ro drata sinxa cu curmi vo'a po'o
+  ## tcidu lo lerfu poi ro stuzi be lo sinxa pe `CLL 4.1` cu curmi ke'a
+  ##   .i `C` cu curmi lo zunsna
+  ##   .i `V` cu curmi lo karsna
+  ##   .i ro drata sinxa cu curmi vo'a po'o
   for symbol in notation:
     result.add(
       case symbol
@@ -109,8 +119,8 @@ func positionsNotation(notation: string): seq[string] =
 
 
 iterator texts(positions: seq[string]): string =
-  ## dunda ro lerpoi poi ro stuzi be ke'a cu cpacu pa lerfu le selcmi pe le stuzi .i le romoi stuzi
-  ##   cu traji lo ka sutra cenba
+  ## dunda ro lerpoi poi ro stuzi be ke'a cu cpacu pa lerfu le selcmi pe le stuzi
+  ##   .i le romoi stuzi cu traji lo ka sutra cenba
   var
     at = newSeq[int](positions.len)
     text = newString(positions.len)
@@ -153,7 +163,8 @@ func wordRafsiScanned(text: string): Option[Word] =
 
 func wordsStemScanned(text: string): seq[Word] =
   ## facki lo gismu poi `text` cu krasi ke'a ku'o ta'i lo nu tcidu ro liste cmima ta'i lo porsi gi'e
-  ##   sepli `wordsStem` .i `text` cu bilga lo ka vasru vo lerfu
+  ##   sepli `wordsStem`
+  ##   .i `text` cu bilga lo ka vasru vo lerfu
   if text.len != 4: return
   for i, entry in LIST_GISMU:
     if entry.word.len == 5 and entry.word.startsWith(text): result.add Word(i)
@@ -166,8 +177,9 @@ func isAssigned(rafsi, gismu: string): bool =
 
 
 func rafsiSorted(text: string): seq[string] =
-  ## tcidu lo cmalu rafsi poi le liste cu dunda ke'a lo valsi po'u `text` .i le rafsi cu porsi .i
-  ##   dunda lo kunti va'o lo nu le liste cu claxu le valsi
+  ## tcidu lo cmalu rafsi poi le liste cu dunda ke'a lo valsi po'u `text`
+  ##   .i le rafsi cu porsi
+  ##   .i dunda lo kunti va'o lo nu le liste cu claxu le valsi
   let found = word(text)
   if found.isSome: result = sorted(found.get.entry.rafsi)
 
@@ -179,9 +191,10 @@ proc mutate(text: string): string =
 
 
 proc drawMutated(): seq[(string, string)] =
-  ## cuxna lo valsi pe le gismu liste .i lo te kancu cu du `SAMPLES_MUTATION` .i ro valsi cu kansa
-  ##   lo fukpi be vo'a be'o poi pa lerfu pe ke'a cu se galfi .i lo tsiju cu jdice le nu cuxna .e le
-  ##   nu galfi
+  ## cuxna lo valsi pe le gismu liste
+  ##   .i lo te kancu cu du `SAMPLES_MUTATION`
+  ##   .i ro valsi cu kansa lo fukpi be vo'a be'o poi pa lerfu pe ke'a cu se galfi
+  ##   .i lo tsiju cu jdice le nu cuxna .e le nu galfi
   result = newSeqOfCap[(string, string)](SAMPLES_MUTATION)
   for _ in 1..SAMPLES_MUTATION:
     let source = LIST_GISMU[rand(LIST_GISMU.high)].word
@@ -189,8 +202,9 @@ proc drawMutated(): seq[(string, string)] =
 
 
 proc drawPairs(): seq[(Word, Word)] =
-  ## cuxna lo remei be lo valsi pe le gismu liste .i lo te kancu cu du `SAMPLES_PAIRS` .i lo tsiju
-  ##   cu jdice le nu cuxna
+  ## cuxna lo remei be lo valsi pe le gismu liste
+  ##   .i lo te kancu cu du `SAMPLES_PAIRS`
+  ##   .i lo tsiju cu jdice le nu cuxna
   result = newSeqOfCap[(Word, Word)](SAMPLES_PAIRS)
   for _ in 1..SAMPLES_PAIRS:
     let (i, j) = (rand(LIST_GISMU.high), rand(LIST_GISMU.high))
@@ -198,7 +212,8 @@ proc drawPairs(): seq[(Word, Word)] =
 
 
 iterator samples[T](pool: seq[T]): lent T =
-  ## dunda ro mupli pe le vasru poi pu se zbasu .i fukpi no da
+  ## dunda ro mupli pe le vasru poi pu se zbasu
+  ##   .i fukpi no da
   for i in 0..<pool.len: yield pool[i]
 
 
@@ -215,7 +230,7 @@ suite "Chapter 4":
       if text.len != 5: continue
       let found = wordsStem(text[0..3])
       # ja'i `CLL 4.6` lo rafsi poi vasru vo lerfu cu du lo gismu poi lo fanmo karsna pe ke'a cu se
-      # vimcu
+      #   vimcu
       check w in found  # `CLL 4.6`
       # zo broda pe `CLL 4.4`
       if text.startsWith("brod"): check found.mapIt($it) == @GISMU_ASSIGNABLE
@@ -233,18 +248,22 @@ suite "Chapter 4":
     for notation in ["CVC", "CCV", "CVV", "CV'V"]:
       for text in texts(positionsNotation(notation)):  # ro le cizevono lerpoi
         let found = wordRafsi(text)
-        # ja'i `CLL 4.6` le liste cu jdice lo rafsi .i no rafsi cu rapli se dunda
+        # ja'i `CLL 4.6` le liste cu jdice lo rafsi
+        #   .i no rafsi cu rapli se dunda
         check found == wordRafsiScanned(text)  # `CLL 4.6`
         if found.isSome: inc count_found
-    # ja'i `CLL 4.6` ro cmalu rafsi pe le liste cu se facki .i no drata cu se facki
+    # ja'i `CLL 4.6` ro cmalu rafsi pe le liste cu se facki
+    #   .i no drata cu se facki
     check count_found == count_rafsi  # `CLL 4.6`
     # ja'i `CLL 4.6` lo cmalu rafsi cu vasru ci lerfu
     check wordRafsi("").isNone and wordRafsi("brod").isNone  # `CLL 4.6`
     # ja'i `CLL 4.6` le gismu cu rafsi vo'a gi'e vasru mu lerfu gi'e na cmalu rafsi
     check wordRafsi("sakli").isNone  # `CLL 4.6`
-    # ja'i `CLL 3.1` lo barda lerfu cu zvati lo cmene po'o .i le lerpoi cu se zbasu
+    # ja'i `CLL 3.1` lo barda lerfu cu zvati lo cmene po'o
+    #   .i le lerpoi cu se zbasu
     check wordRafsi("SAL").isNone  # `CLL 3.1`
-    # `CLL 4.6` cu skicu `sal` fo zoi gy. only actual short rafsi .gy. .i `sal` cu rafsi zo sakli
+    # `CLL 4.6` cu skicu `sal` fo zoi gy. only actual short rafsi .gy.
+    #   .i `sal` cu rafsi zo sakli
     check wordRafsi("sal").isSome  # `CLL 4.6`
     # ja'i `CLL 4.6` zo zmadu cu ponse `zma` .e `mau`
     check word("zmadu").get.entry.rafsi == @["zma", "mau"]  # `CLL 4.6`
@@ -261,47 +280,71 @@ suite "Chapter 4":
       check found.isSome and found != word("blaci")  # `CLL 4.6`
       # `CLL 4.6` cu cusku zoi gy. assigned to other gismu .gy.
       check found.isSome and found.get.kind == Kind.Gismu  # `CLL 4.6`
-    # ja'i `CLL 4.6` `mam` po'o cu rafsi zo mamta .i `CLL 4.6` cu cusku
-    # zoi gy. is assigned to it .gy.
+    # ja'i `CLL 4.6` `mam` po'o cu rafsi zo mamta
+    #   .i `CLL 4.6` cu cusku zoi gy. is assigned to it .gy.
     check word("mamta").get.entry.rafsi == @["mam"]  # `CLL 4.6`
     # zo mamta pe `CLL 4.6`
     check not isAssigned("mat", "mamta") and not isAssigned("ma'a", "mamta")  # `CLL 4.6`
-    # `Example 4.32` pe `CLL 4.6` .i zo cumfri .i le nu fendi cu se sruma
+    # `Example 4.32` pe `CLL 4.6`
+    #   .i zo cumfri
+    #   .i le nu fendi cu se sruma
     check isAssigned("cum", "cumki")  # `Example 4.32`
-    # `Example 4.32` pe `CLL 4.6` .i zo cumfri .i le nu fendi cu se sruma
+    # `Example 4.32` pe `CLL 4.6`
+    #   .i zo cumfri
+    #   .i le nu fendi cu se sruma
     check isAssigned("fri", "lifri")  # `Example 4.32`
-    # `Example 4.33` pe `CLL 4.6` .i zo klezba .i `CLL 4.13` cu cusku `kle`
+    # `Example 4.33` pe `CLL 4.6`
+    #   .i zo klezba
+    #   .i `CLL 4.13` cu cusku `kle`
     check isAssigned("kle", "klesi")  # `Example 4.33`
-    # `Example 4.33` pe `CLL 4.6` .i zo klezba .i le nu fendi cu se sruma
+    # `Example 4.33` pe `CLL 4.6`
+    #   .i zo klezba
+    #   .i le nu fendi cu se sruma
     check isAssigned("zba", "zbasu")  # `Example 4.33`
-    # `Example 4.34` pe `CLL 4.6` .i zo kixta'a .i le nu fendi cu se sruma
+    # `Example 4.34` pe `CLL 4.6`
+    #   .i zo kixta'a
+    #   .i le nu fendi cu se sruma
     check isAssigned("kix", "krixa")  # `Example 4.34`
-    # `Example 4.34` pe `CLL 4.6` .i zo kixta'a .i le nu fendi cu se sruma
+    # `Example 4.34` pe `CLL 4.6`
+    #   .i zo kixta'a
+    #   .i le nu fendi cu se sruma
     check isAssigned("ta'a", "tavla")  # `Example 4.34`
-    # `Example 4.35` pe `CLL 4.6` .i zo sniju'o .i le nu fendi cu se sruma
+    # `Example 4.35` pe `CLL 4.6`
+    #   .i zo sniju'o
+    #   .i le nu fendi cu se sruma
     check isAssigned("sni", "sinxa")  # `Example 4.35`
-    # `Example 4.35` pe `CLL 4.6` .i zo sniju'o .i le nu fendi cu se sruma
+    # `Example 4.35` pe `CLL 4.6`
+    #   .i zo sniju'o
+    #   .i le nu fendi cu se sruma
     check isAssigned("ju'o", "djuno")  # `Example 4.35`
-    # `Example 4.36` pe `CLL 4.6` .i zo mampa'u .i `CLL 4.6` cu skicu `mam` fo
-    # zoi gy. is assigned to it .gy.
+    # `Example 4.36` pe `CLL 4.6`
+    #   .i zo mampa'u
+    #   .i `CLL 4.6` cu skicu `mam` fo zoi gy. is assigned to it .gy.
     check isAssigned("mam", "mamta")  # `Example 4.36`
-    # `Example 4.36` pe `CLL 4.6` .i zo mampa'u .i le nu fendi cu se sruma
+    # `Example 4.36` pe `CLL 4.6`
+    #   .i zo mampa'u
+    #   .i le nu fendi cu se sruma
     check isAssigned("pa'u", "patfu")  # `Example 4.36`
-    # `Example 4.37` pe `CLL 4.6` .i zo lerste .i le nu fendi cu se sruma
+    # `Example 4.37` pe `CLL 4.6`
+    #   .i zo lerste
+    #   .i le nu fendi cu se sruma
     check isAssigned("ler", "lerfu")  # `Example 4.37`
-    # `Example 4.37` pe `CLL 4.6` .i zo lerste .i le nu fendi cu se sruma
+    # `Example 4.37` pe `CLL 4.6`
+    #   .i zo lerste
+    #   .i le nu fendi cu se sruma
     check isAssigned("ste", "liste")  # `Example 4.37`
-    check isAssigned("pat", "pante")  # zo patyta'a pe `CLL 4.6` .i le nu fendi cu se sruma
-    check isAssigned("mud", "mudri")  # zo mudysiclu pe `CLL 4.6` .i le nu fendi cu se sruma
-    # zo zuljma pe `CLL 4.6` .i le nu fendi cu se sruma
+    check isAssigned("pat", "pante")  # zo patyta'a pe `CLL 4.6` to le nu fendi cu se sruma toi
+    check isAssigned("mud", "mudri")  # zo mudysiclu pe `CLL 4.6` to le nu fendi cu se sruma toi
+    # zo zuljma pe `CLL 4.6`
+    #   .i le nu fendi cu se sruma
     check isAssigned("zul", "zunle") and isAssigned("jma", "jamfu")  # `CLL 4.6`
-    check isAssigned("ro'i", "rokci")  # zo ro'inre'o pe `CLL 4.6` .i le nu fendi cu se sruma
-    check isAssigned("re'o", "renro")  # zo ro'inre'o pe `CLL 4.6` .i le nu fendi cu se sruma
-    check isAssigned("rok", "rokci")  # zo rokre'o pe `CLL 4.6` .i le nu fendi cu se sruma
+    check isAssigned("ro'i", "rokci")  # zo ro'inre'o pe `CLL 4.6` to le nu fendi cu se sruma toi
+    check isAssigned("re'o", "renro")  # zo ro'inre'o pe `CLL 4.6` to le nu fendi cu se sruma toi
+    check isAssigned("rok", "rokci")  # zo rokre'o pe `CLL 4.6` to le nu fendi cu se sruma toi
     for text in DIGITS:  # ro le pano namcu poi `CLL 18.2` cu cusku ke'a
       let found = word(text)
-      # ja'i `CLL 4.6` ro le namcu cu ponse lo rafsi poi se tarmi `CVC` .i se ki'u bo le gismu liste
-      # cu vasru le namcu
+      # ja'i `CLL 4.6` ro le namcu cu ponse lo rafsi poi se tarmi `CVC`
+      #   .i se ki'u bo le gismu liste cu vasru le namcu
       check found.isSome  # `CLL 4.6`
       if found.isNone: continue
       let w = found.get
@@ -387,7 +430,7 @@ suite "Chapter 4":
         check found.isSome and found.get.kind == Kind.Gismu  # `CLL 4.15`
         if group != @GISMU_METRIC_SMALL and group != @GISMU_ASSIGNABLE:
           # ja'i `CLL 4.15` ro le gismu poi na cmalu ke merli gismu gi'e na du `brod-` cu se fanmo
-          # `o`
+          #   `o`
           check text[^1] == 'o'  # `CLL 4.15`
 
 
@@ -397,11 +440,13 @@ suite "Internal: Dictionary":
     var count_gismu, count_cmavo = 0
     for w in words():
       let is_gismu = w.kind == Kind.Gismu
-      check is_gismu == ($w).isBrivla  # le klesi cu tugni `isBrivla` .i le liste cu vasru no lujvo
+      # le liste cu vasru no lujvo
+      check is_gismu == ($w).isBrivla  # le klesi cu tugni `isBrivla`
       check is_gismu == (($w).len == 5)  # le klesi cu fendi le liste ja'i lo ni clani
       if is_gismu: inc count_gismu else: inc count_cmavo
-    check count_gismu == 1342  # lo nu lo te kancu cu stali .i le liste cu vasru pacivore gismu
-    # lo nu lo te kancu cu stali .i le liste cu vasru sovo cmavo poi ponse lo rafsi
+    check count_gismu == 1342  # lo nu lo te kancu cu stali to le liste cu vasru pacivore gismu toi
+    # lo nu lo te kancu cu stali
+    #   .i le liste cu vasru sovo cmavo poi ponse lo rafsi
     check count_cmavo == 94  # lo nu lo te kancu cu stali
 
 
@@ -409,7 +454,8 @@ suite "Internal: Dictionary":
     for w in words():
       check Word(w.index) == w  # lo valsi poi se zbasu fi lo namcu pe le valsi cu du le valsi
     for i in 1..<LIST_GISMU.len:
-      # lo porsi pe le liste cu du lo porsi be fi lo stuzi .i lo nu sisku cu nitcu di'u
+      # lo porsi pe le liste cu du lo porsi be fi lo stuzi
+      #   .i lo nu sisku cu nitcu di'u
       check $Word(i - 1) < $Word(i)  # lo porsi pe le liste cu du lo porsi be fi lo stuzi
     randomize(0)
     let pool = drawPairs()
@@ -428,7 +474,8 @@ suite "Internal: Dictionary":
   test "Entry fields":
     for w in words():
       let entry = w.entry
-      # lo cmavo cu vasru su'o re lerfu gi'e vasru su'e vo lerfu .i lo gismu cu vasru mu lerfu
+      # lo cmavo cu vasru su'o re lerfu gi'e vasru su'e vo lerfu
+      #   .i lo gismu cu vasru mu lerfu
       check entry.word.len in 2..5  # lo cmavo cu vasru su'o re lerfu gi'e vasru su'e vo lerfu
       check entry.rafsi.len <= 3  # pa stuzi be lo rafsi cu ckini ro tarmi be lo cmalu rafsi
       check entry.rafsi.allIt(it.form.get in FORMS_SHORT)  # ro stuzi cu vasru lo cmalu rafsi
@@ -439,11 +486,12 @@ suite "Internal: Dictionary":
 
   test "Lookups agree with linear scan":
     check word("").isNone  # lo nu sisku lo kunti lerpoi cu facki no da
-    # lo nu sisku le lerpoi cu facki no da ki'u lo nu ciska .i le lerpoi cu se zbasu
-    check word("Gismu").isNone and word("gismu ").isNone  # facki no da .i se zbasu
-    # ja'i lo krasi pagbu .e lo nu jmina lo lerfu kei lo nu sisku cu facki no da .i le lerpoi cu se
-    # zbasu
-    check word("gism").isNone and word("gismuu").isNone  # facki no da .i se zbasu
+    # lo nu sisku le lerpoi cu facki no da ki'u lo nu ciska
+    #   .i le lerpoi cu se zbasu
+    check word("Gismu").isNone and word("gismu ").isNone  # facki no da to se zbasu toi
+    # ja'i lo krasi pagbu .e lo nu jmina lo lerfu kei lo nu sisku cu facki no da
+    #   .i le lerpoi cu se zbasu
+    check word("gism").isNone and word("gismuu").isNone  # facki no da to se zbasu toi
     # lo se sisku cu bilga lo ka vasru vo lerfu
     check wordsStem("").len == 0 and wordsStem("gismu").len == 0  # le jicmu cu vasru vo lerfu
     randomize(0)
@@ -453,7 +501,7 @@ suite "Internal: Dictionary":
     for (source, text) in pool.samples:
       let found = word(text)
       # lo nu sisku ta'i lo nu rapli fendi fi re pagbu cu mintu lo nu tcidu ro liste cmima ta'i lo
-      # porsi
+      #   porsi
       check found == wordScanned(text)  # lo re nu sisku cu mintu
       if found.isNone: inc count_unlisted
       elif text != source: inc count_listed
@@ -466,8 +514,9 @@ suite "Internal: Dictionary":
       for text in texts(positionsNotation(notation)):  # ro le vosopacino lerpoi
         let found = wordsStem(text)
         # lo nu sisku ta'i lo nu rapli fendi fi re pagbu cu mintu lo nu tcidu ro liste cmima ta'i lo
-        # porsi
+        #   porsi
         check found == wordsStemScanned(text)  # lo re nu sisku cu mintu
         count_stemmed += found.len
-    # lo nu lo te kancu cu stali .i ro gismu cu se facki pa roi ta'i lo rafsi poi vasru vo lerfu
+    # lo nu lo te kancu cu stali
+    #   .i ro gismu cu se facki pa roi ta'i lo rafsi poi vasru vo lerfu
     check count_stemmed == 1342  # lo nu lo te kancu cu stali

@@ -1,28 +1,35 @@
-## cipra lo du'u le se tcidu poi sinxa ro srera cu mapti le flalu pe vo'a to `#859` toi .i
-##   `readTextMarked` cu tcidu lo se ciska ta'i lo nu `readText` cu tcidu kei gi'e ranji lo nu tcidu
-##   ba ro srera gi'e jarco ro le srera ne'i lo tricu .e lo se ciska be fi la'o gy. NIF .gy.
+## cipra lo du'u le se tcidu poi sinxa ro srera cu mapti le flalu pe vo'a to `#859` toi
+##   .i `readTextMarked` cu tcidu lo se ciska ta'i lo nu `readText` cu tcidu kei gi'e ranji lo nu
+##     tcidu ba ro srera gi'e jarco ro le srera ne'i lo tricu .e lo se ciska be fi la'o gy. NIF .gy.
 ##   .i va'o lo nu `readText` cu tcidu lo se ciska kei le pagbu .e le tricu .e le se ciska be fi
 ##     la'o gy. NIF .gy. ba zo su noi romoi cu mintu ne'i le se ciska liste va'o lo nu ro pezli pe
-##     lo pagbu poi no ve pruce cu tcidu ke'a cu se vimcu .i ro se ciska poi lidne zo su cu zvati le
-##     krasi be le genja gi'e lidne lo pezli pe zo su .i lo valsi poi lo nu vimcu cu vimcu ke'a ku'o
-##     .e zo fa'o .e lo valsi poi se lidne zo fa'o cu zvati lo pagbu pe vo'a .i `readText` na tcidu
-##     le pagbu to `CLL 19.13` .e `CLL 19.15` toi
+##     lo pagbu poi no ve pruce cu tcidu ke'a cu se vimcu
+##   .i ro se ciska poi lidne zo su cu zvati le krasi be le genja gi'e lidne lo pezli pe zo su
+##   .i lo valsi poi lo nu vimcu cu vimcu ke'a ku'o .e zo fa'o .e lo valsi poi se lidne zo fa'o cu
+##     zvati lo pagbu pe vo'a
+##   .i `readText` na tcidu le pagbu to `CLL 19.13` .e `CLL 19.15` toi
 ##   .i ku'i va'o lo nu `readText` cu to'e curmi lo se ciska kei le se tcidu poi sinxa ro srera cu
-##     dunda lo tricu .i ro pagbu cu pezli le tricu pa roi ta'i le porsi .i ne'i le tricu lo nu
-##     `readText` cu to'e curmi cu se sinxa lo pagbu pe le ve pruce poi to'e curmi .i le se ciska be
-##     fi la'o gy. NIF .gy. cu se rapli tcidu ta'i lo nu mulno to `reader_nif.nim` toi .i le flalu
-##     cu cipra le se ciska liste .e lo se ciska poi se finti fi ro ve pruce .i ki'u bo le se ciska
-##     liste cu na se to'e curmi ne'i le ve pruce pe lo nu sitna ge'u .e le ve pruce pe lo gerna
-##     stura
+##     dunda lo tricu
+##   .i ro pagbu cu pezli le tricu pa roi ta'i le porsi
+##   .i ne'i le tricu lo nu `readText` cu to'e curmi cu se sinxa lo pagbu pe le ve pruce poi to'e
+##     curmi
+##   .i le se ciska be fi la'o gy. NIF .gy. cu se rapli tcidu ta'i lo nu mulno to `reader_nif.nim`
+##     toi
+##   .i le flalu cu cipra le se ciska liste .e lo se ciska poi se finti fi ro ve pruce
+##   .i ki'u bo le se ciska liste cu na se to'e curmi ne'i le ve pruce pe lo nu sitna ge'u .e le ve
+##     pruce pe lo gerna stura
 ##   .i le gerna zo'u ro jimca poi lo srera jgena cu vasru ke'a zi'e poi se krasi `text` cu du lo
-##     tricu poi le gerna valsi po'o pe le jimca cu dunda ke'a .i ro klesi poi `expects` cu cmene
-##     ke'a cu curmi lo nu le gerna cu tcidu ba le stuzi poi le gerna cu sisti bu'u ke'a .i ro drata
-##     klesi cu na curmi
-##   .i lo gacri be lo srera jgena cu mleca traji .i no gerna valsi poi le gacri cu cliva ke'a cu se
-##     tcidu ta'i pa mulno se ciska .i no re spisa poi lamji cu se tcidu ta'i pa `text` .i ki'u bo
-##     va'o lo nu pa jimca cu kuspe le gerna valsi .a le re spisa kei le gacri cu cliva lo mleca
-##     gerna valsi gi'a pilno lo mleca spisa .i lo gacri pe lo nu dunli cu na se cipra .i ki'u bo no
-##     flalu cu tcidu lo du'u lo nu dunli cu dunda ma kau poi gacri
+##     tricu poi le gerna valsi po'o pe le jimca cu dunda ke'a
+##   .i ro klesi poi `expects` cu cmene ke'a cu curmi lo nu le gerna cu tcidu ba le stuzi poi le
+##     gerna cu sisti bu'u ke'a
+##   .i ro drata klesi cu na curmi
+##   .i lo gacri be lo srera jgena cu mleca traji
+##   .i no gerna valsi poi le gacri cu cliva ke'a cu se tcidu ta'i pa mulno se ciska
+##   .i no re spisa poi lamji cu se tcidu ta'i pa `text`
+##   .i ki'u bo va'o lo nu pa jimca cu kuspe le gerna valsi .a le re spisa kei le gacri cu cliva lo
+##     mleca gerna valsi gi'a pilno lo mleca spisa
+##   .i lo gacri pe lo nu dunli cu na se cipra
+##   .i ki'u bo no flalu cu tcidu lo du'u lo nu dunli cu dunda ma kau poi gacri
 ##   .i le cipra cu tcidu le se ciska liste ta'i lo nu `test_nif.nim` cu tcidu le se ciska liste to
 ##     `corpora.nim` toi
 
@@ -40,10 +47,12 @@ import ./[corpora, reader_nif]
 
 type
   Refused = tuple[key, text: string, strict: ReadingText, marked: ReadingMarked]
-    ## lo se ciska poi `readText` cu to'e curmi ke'a .i ji'a le re se tcidu pe le se ciska
+    ## lo se ciska poi `readText` cu to'e curmi ke'a
+    ##   .i ji'a le re se tcidu pe le se ciska
 
   Pool = object
-    ## lo se ciska poi le cipra cu tcidu ke'a .i ro le se ciska cu se tcidu pa roi le re tcidu
+    ## lo se ciska poi le cipra cu tcidu ke'a
+    ##   .i ro le se ciska cu se tcidu pa roi le re tcidu
     count_read: int  ## lo te kancu be lo se ciska pe le se ciska liste zi'e poi se tcidu
     differing: seq[string]
       ## lo ckiku be ro se ciska poi se tcidu zi'e poi le re se tcidu pe ke'a cu na mintu
@@ -51,30 +60,36 @@ type
       ## ro se ciska pe le se ciska liste zi'e poi se to'e curmi ku'o ce'o ro se ciska poi se finti
     uncovered: seq[string]
       ## lo ckiku be ro se ciska pe le se ciska liste zi'e poi su'o tricu pe ke'a cu na gacri ro
-      ##   valsi pe ke'a pa roi ta'i le porsi .i le se tcidu poi sinxa ro srera ku'o .e le se tcidu
-      ##   pe lo pagbu be le se ciska cu dunda le re tricu to `isCovering` toi
+      ##   valsi pe ke'a pa roi ta'i le porsi
+      ##   .i le se tcidu poi sinxa ro srera ku'o .e le se tcidu pe lo pagbu be le se ciska cu dunda
+      ##     le re tricu to `isCovering` toi
 
 
 const
   COUNT_READ_LEAST = 1800
-    ## lo mleca traji te kancu be lo se ciska pe le se ciska liste zi'e poi se tcidu .i le se ciska
-    ##   liste cu vasru pasovopa se ciska .i le flalu cu tcidu ro le se ciska sepi'o
-    ##   `readTextMarked`
+    ## lo mleca traji te kancu be lo se ciska pe le se ciska liste zi'e poi se tcidu
+    ##   .i le se ciska liste cu vasru pasovopa se ciska
+    ##   .i le flalu cu tcidu ro le se ciska sepi'o `readTextMarked`
   COUNT_REFUSED_LEAST = 100
     ## lo mleca traji te kancu be lo se ciska pe le se ciska liste zi'e poi `readText` cu to'e curmi
-    ##   ke'a .i le se ciska liste cu vasru pasovopa se ciska .i ca lo nu jmina le se tcidu poi
-    ##   sinxa ro srera kei `readText` cu to'e curmi papano se ciska
+    ##   ke'a
+    ##   .i le se ciska liste cu vasru pasovopa se ciska
+    ##   .i ca lo nu jmina le se tcidu poi sinxa ro srera kei `readText` cu to'e curmi papano se
+    ##     ciska
   COUNT_COVERS_LEAST = 90
     ## lo mleca traji te kancu be lo srera jgena poi vasru lo jimca ku'o ne'i ro se ciska poi se
-    ##   to'e curmi .i le se ciska cu cmima le se ciska liste .a lo se ciska poi se finti .i ca lo
-    ##   nu jmina le flalu pe lo gacri kei sovo lo srera jgena cu vasru lo jimca
+    ##   to'e curmi
+    ##   .i le se ciska cu cmima le se ciska liste .a lo se ciska poi se finti
+    ##   .i ca lo nu jmina le flalu pe lo gacri kei sovo lo srera jgena cu vasru lo jimca
   COUNT_EXPECTED = 24
-    ## lo te kancu be lo nu sisti poi le flalu pe `expects` cu tcidu ke'a .i le flalu cu tcidu le
-    ##   pamoi se ciska poi le gerna cu to'e curmi ke'a .i le se ciska pe le se ciska liste cu lidne
-    ##   le se ciska poi se finti .i lo nu sisti pe ro le se ciska cu se lidne lo gerna valsi .i lo
-    ##   te kancu be le gerna valsi cu na zmadu `STOP_EXPECTED_MOST` .i muze se ciska cu mapti
-    ##   .i ro le parevo klesi zo'u le flalu cu tcidu le se ciska bu'u le stuzi pa roi .i le nu
-    ##     tcidu cu nitcu lo temci poi jibni `2 s` ne'i lo cikre zbasu
+    ## lo te kancu be lo nu sisti poi le flalu pe `expects` cu tcidu ke'a
+    ##   .i le flalu cu tcidu le pamoi se ciska poi le gerna cu to'e curmi ke'a
+    ##   .i le se ciska pe le se ciska liste cu lidne le se ciska poi se finti
+    ##   .i lo nu sisti pe ro le se ciska cu se lidne lo gerna valsi
+    ##   .i lo te kancu be le gerna valsi cu na zmadu `STOP_EXPECTED_MOST`
+    ##   .i muze se ciska cu mapti
+    ##   .i ro le parevo klesi zo'u le flalu cu tcidu le se ciska bu'u le stuzi pa roi
+    ##   .i le nu tcidu cu nitcu lo temci poi jibni `2 s` ne'i lo cikre zbasu
   STOP_EXPECTED_MOST = 8
     ## lo traji te kancu be lo gerna valsi poi lidne lo nu sisti ku'o ne'i le flalu pe `expects`
   TEXTS_CONSTRUCTED = [
@@ -82,14 +97,16 @@ const
     #   nu fendi
     "mi 1987 klama", "mi hello klama", "Mi klama", "zoi gy. gyrations .gy. cu glico",
     "la .lauras. klama",
-    "mi xau klama", "ba'e xau klama",  # `Selmaho` .i lo cmavo be `BAhE` cu tcita le cmavo
+    "mi xau klama", "ba'e xau klama",  # `Selmaho` to lo cmavo be `BAhE` cu tcita le cmavo toi
     "zei mi klama", "mi zei", "si mi klama", "mi klama sa", "bu mi", "mi klama ba'e",  # `Construct`
-    # `Quotation` .i lo nu sitna poi no roi se fanmo ce'o lo nu sitna poi kunti ce'o lo nu sitna poi
-    #   lo pagbu be ke'a cu se vimcu to `CLL 19.13` toi
+    # `Quotation`
+    #   .i lo nu sitna poi no roi se fanmo ce'o lo nu sitna poi kunti ce'o lo nu sitna poi lo pagbu
+    #     be ke'a cu se vimcu to `CLL 19.13` toi
     "mi cusku lo'u mi klama", "mi cusku lo'u .i mi klama", "mi cusku zo", "lo'u le'u",
     "mi se cmene zo .djan. si .djordj.",
-    # `Grammar` .i lo se ciska poi se katna ce'o lo pagbu ce'o zo lu poi kalri ce'o lo jonma'o ce'o
-    #   lo fa'orma'o
+    # `Grammar`
+    #   .i lo se ciska poi se katna ce'o lo pagbu ce'o zo lu poi kalri ce'o lo jonma'o ce'o lo
+    #     fa'orma'o
     "mi klama le", "mi klama le .i do citka", "lu mi klama le", "ge mi gi",
     "mi klama le zarci ku ku",
     "si mi 1987 xau klama le",  # ro ve pruce cu to'e curmi ne'i pa se ciska
@@ -104,19 +121,21 @@ const
     "mi klama si do", "do sa mi klama", "mi si su do si ko", "mi fa'o .i ko 1987",
     "ba'e mi si do",  # lo nu vimcu .e zo fa'o .e lo valsi poi se lidne zo fa'o
   ]
-    ## lo se ciska poi `readText` cu tcidu ke'a zi'e poi zo su cu fendi ke'a .i su'o se ciska cu
-    ##   vasru lo srera poi lidne zo su .i su'o se ciska cu vasru zo su poi se sitna .i su'o se
-    ##   ciska cu vasru no srera gi'e na vasru zo su poi se sitna
-    ##   .i ba bo le liste cu vasru lo se ciska poi vasru lo valsi poi no ve pruce cu tcidu ke'a .i
-    ##     ro le se ciska cu se finti .i ki'u bo no le se ciska liste cu vasru zo su poi fendi lo se
-    ##     ciska
+    ## lo se ciska poi `readText` cu tcidu ke'a zi'e poi zo su cu fendi ke'a
+    ##   .i su'o se ciska cu vasru lo srera poi lidne zo su
+    ##   .i su'o se ciska cu vasru zo su poi se sitna
+    ##   .i su'o se ciska cu vasru no srera gi'e na vasru zo su poi se sitna
+    ##   .i ba bo le liste cu vasru lo se ciska poi vasru lo valsi poi no ve pruce cu tcidu ke'a
+    ##   .i ro le se ciska cu se finti
+    ##   .i ki'u bo no le se ciska liste cu vasru zo su poi fendi lo se ciska
   TEXTS_COVERED = [
     "le,nu mi klama", "mi KLAmaku", "zoi gy. a, b .gy. cu glico", "mi klama si si fa'omi do",
     "mi 1987 ui", "ba'e mi si do", "lo'u mi su do", "zo su si si", "mi klama fa'o\t.ui\n",
   ]
-    ## lo se ciska poi se finti fi le flalu pe lo gacri .i le se ciska cu vasru slaka bu .e lo barda
-    ##   lerfu .e lo nu sitna poi vasru lo sinxa ku'o .e lo valsi poi no pagbu cu vasru ke'a ku'o .e
-    ##   lo valsi poi zvati lo jbini be lo valsi .e lo cinmo valsi poi tcita le valsi
+    ## lo se ciska poi se finti fi le flalu pe lo gacri
+    ##   .i le se ciska cu vasru slaka bu .e lo barda lerfu .e lo nu sitna poi vasru lo sinxa ku'o
+    ##     .e lo valsi poi no pagbu cu vasru ke'a ku'o .e lo valsi poi zvati lo jbini be lo valsi .e
+    ##     lo cinmo valsi poi tcita le valsi
   EXAMPLES_MARKED = [
     # le se ciska valsi cu zvati lo jbini be lo sumti .e lo bridi rebla poi sruri le se ciska valsi
     (
@@ -137,7 +156,8 @@ const
         "(KOhA 4 6 \"mi\")) (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 7 12 \"klama\")) " &
         "(tail_terms))))",
     ),  # zo zei poi jorne no valsi poi lidne zo zei to `CLL 4.6` toi
-    # zo lo'u cu zvati pa pagbu poi vasru zo lo'u po'o .i lo valsi poi se lidne zo lo'u cu se tcidu
+    # zo lo'u cu zvati pa pagbu poi vasru zo lo'u po'o
+    #   .i lo valsi poi se lidne zo lo'u cu se tcidu
     (
       text: "mi cusku lo'u .i mi klama",
       module: "(paragraph 0 (sentence 11 (sumti_6 80 (KOhA 0 2 \"mi\")) (bridi_tail_3 " &
@@ -172,13 +192,14 @@ const
         "(rivbi FAhO 15 19 \"faho\") (rivbi Stream FAhO 20 22 \"ko\"))",
     ),  # lo valsi poi zo si cu vimcu ke'a cu kansa zo si
   ]
-    ## lo se ciska poi se finti .i ro le se ciska cu kansa lo genja jgena pe le se ciska be fi la'o
-    ##   gy. NIF .gy. be'o poi `nif.nim` cu ciska ke'a .i le cipra cu cipra ro lerfu pe le genja
-    ##   jgena
+    ## lo se ciska poi se finti
+    ##   .i ro le se ciska cu kansa lo genja jgena pe le se ciska be fi la'o gy. NIF .gy. be'o poi
+    ##     `nif.nim` cu ciska ke'a
+    ##   .i le cipra cu cipra ro lerfu pe le genja jgena
 
 
 
-#[ lo tcidu ]#
+#[ ni'o ni'o ni'o lo tcidu ]#
 
 func leaves(node: Node): seq[int] =
   ## dunda lo liste be lo namcu pe ro pezli poi zvati ne'i le jgena ku'o ta'i le porsi pe le tricu
@@ -187,9 +208,10 @@ func leaves(node: Node): seq[int] =
 
 
 func isRead(marked: ReadingMarked, unit: Unit): bool =
-  ## jdice lo du'u xu kau su'o ve pruce cu tcidu gi'a to'e curmi le pagbu .i su'o ve pruce cu tcidu
-  ##   gi'a to'e curmi le pagbu va'o lo nu le pagbu cu na du zo su .a lo valsi poi lo nu vimcu cu
-  ##   vimcu ke'a ku'o .a zo fa'o poi fanmo le se ciska ku'o .a lo valsi poi se lidne zo fa'o
+  ## jdice lo du'u xu kau su'o ve pruce cu tcidu gi'a to'e curmi le pagbu
+  ##   .i su'o ve pruce cu tcidu gi'a to'e curmi le pagbu va'o lo nu le pagbu cu na du zo su .a lo
+  ##     valsi poi lo nu vimcu cu vimcu ke'a ku'o .a zo fa'o poi fanmo le se ciska ku'o .a lo valsi
+  ##     poi se lidne zo fa'o
   if unit.is_read: return true
   if unit.refusal in {RefusalText.Su, RefusalText.Erasure, RefusalText.Faho}: return false
   unit.refusal != RefusalText.Stream or
@@ -214,15 +236,19 @@ func isHolding(marked: ReadingMarked, unit: Unit, start: int): bool =
 
 func isMarking(marked: ReadingMarked, strict: ReadingText): bool =
   ## jdice lo du'u xu kau le se tcidu poi sinxa ro srera cu vasru lo sinxa be lo nu `readText` cu
-  ##   to'e curmi be'o pe le ve pruce poi to'e curmi .i ne'i `Stream` le sinxa cu du lo pagbu pe lo
-  ##   se ciska valsi poi le porsi be lo valsi cu to'e curmi ke'a .i le pagbu cu vasru le stuzi pe
-  ##   le nu to'e curmi .i ne'i lo javni pe `CLL 19.16` le sinxa cu du lo pagbu pe le javni poi to'e
-  ##   curmi .i le porsi be lo valsi cu to'e curmi no da .i ne'i `Selmaho` le sinxa cu du lo pagbu
-  ##   pe lo selma'o zi'e poi vasru le stuzi .i lo selma'o po'o cu to'e curmi .i ne'i `Grammar` le
-  ##   sinxa cu du lo srera jgena poi zvati le genja gi'e ponse le javni gi'e sisti bu'u le stuzi .i
-  ##   ro pagbu cu se tcidu
-  ##   .i lo pagbu poi no ve pruce cu tcidu ke'a cu na du lo nu to'e curmi .i se ki'u bo le flalu na
-  ##     tcidu le pagbu to `isRead` toi
+  ##   to'e curmi be'o pe le ve pruce poi to'e curmi
+  ##   .i ne'i `Stream` le sinxa cu du lo pagbu pe lo se ciska valsi poi le porsi be lo valsi cu
+  ##     to'e curmi ke'a
+  ##   .i le pagbu cu vasru le stuzi pe le nu to'e curmi
+  ##   .i ne'i lo javni pe `CLL 19.16` le sinxa cu du lo pagbu pe le javni poi to'e curmi
+  ##   .i le porsi be lo valsi cu to'e curmi no da
+  ##   .i ne'i `Selmaho` le sinxa cu du lo pagbu pe lo selma'o zi'e poi vasru le stuzi
+  ##   .i lo selma'o po'o cu to'e curmi
+  ##   .i ne'i `Grammar` le sinxa cu du lo srera jgena poi zvati le genja gi'e ponse le javni gi'e
+  ##     sisti bu'u le stuzi
+  ##   .i ro pagbu cu se tcidu
+  ##   .i lo pagbu poi no ve pruce cu tcidu ke'a cu na du lo nu to'e curmi
+  ##   .i se ki'u bo le flalu na tcidu le pagbu to `isRead` toi
   let refused = marked.units.filterIt(not it.is_read and marked.isRead(it))
   case strict.refusal
   of RefusalText.Stream:
@@ -253,8 +279,9 @@ func terminalsRead(marked: ReadingMarked): seq[Terminal] =
 
 func isSameShifted(a, b: Node, by: int): bool =
   ## jdice lo du'u xu kau le tricu po'u `a` cu du le tricu po'u `b` va'o lo nu `by` cu se jmina fi
-  ##   lo namcu pe ro gerna valsi .i le re tricu cu ponse lo mintu javni .e lo mintu namcu .e lo
-  ##   mintu stuzi poi le gerna cu sisti bu'u ke'a ku'o ta'i lo mintu porsi
+  ##   lo namcu pe ro gerna valsi
+  ##   .i le re tricu cu ponse lo mintu javni .e lo mintu namcu .e lo mintu stuzi poi le gerna cu
+  ##     sisti bu'u ke'a ku'o ta'i lo mintu porsi
   if a.is_terminal != b.is_terminal: return false
   if a.is_terminal: return a.at == b.at + by
   if a.rule != b.rule or a.number != b.number or a.children.len != b.children.len: return false
@@ -276,8 +303,9 @@ func addBranches(node: Node, branches: var seq[Node]) =
 
 func covers(tree: Node, terminals: openArray[Terminal]): seq[Node] =
   ## dunda ro srera jgena pe le tricu zi'e poi vasru lo jimca .e lo gerna valsi poi zvati lo jbini
-  ##   be le jimca .i dunda le genja va'o lo nu le se ciska cu vasru pa pagbu po'o .i va'o lo drata
-  ##   dunda ro srera jgena pe lo pagbu be le se ciska to `toParts` toi
+  ##   be le jimca
+  ##   .i dunda le genja va'o lo nu le se ciska cu vasru pa pagbu po'o
+  ##   .i va'o lo drata dunda ro srera jgena pe lo pagbu be le se ciska to `toParts` toi
   if tree.stop.isNone: return
   let
     split = terminals.toParts(0, terminals.len)
@@ -288,27 +316,29 @@ func covers(tree: Node, terminals: openArray[Terminal]): seq[Node] =
 
 
 func classes(): seq[Terminal] =
-  ## dunda ro klesi be lo gerna valsi poi le gerna cu tcidu ke'a .i le klesi cu du ro selma'o ce'o
-  ##   `BRIVLA` ce'o `CMENE`
+  ## dunda ro klesi be lo gerna valsi poi le gerna cu tcidu ke'a
+  ##   .i le klesi cu du ro selma'o ce'o `BRIVLA` ce'o `CMENE`
   for selmaho in Selmaho: result.add selmaho.toTerminal
   result.add TERMINAL_BRIVLA
   result.add TERMINAL_CMENE
 
 
 func isReadPast(terminals: openArray[Terminal], at: int): bool =
-  ## jdice lo du'u xu kau le gerna cu tcidu le gerna valsi ba le stuzi po'u `at` .i le gerna cu
-  ##   tcidu ro le gerna valsi gi'a sisti ba le stuzi
+  ## jdice lo du'u xu kau le gerna cu tcidu le gerna valsi ba le stuzi po'u `at`
+  ##   .i le gerna cu tcidu ro le gerna valsi gi'a sisti ba le stuzi
   let reading = terminals.readGrammar
   reading.is_read or reading.at > at
 
 func isSame(marked: ReadingMarked, strict: ReadingText): bool =
   ## jdice lo du'u xu kau le se tcidu poi sinxa ro srera cu vasru ro pagbu pa roi ta'i lo pezli ta'i
-  ##   le porsi .i ji'a ba zo su noi romoi ku'o le re se tcidu cu vasru lo mintu pagbu .e lo mintu
-  ##   valsi .e lo mintu se ciska be fi la'o gy. NIF .gy. .i le genja cu vasru ca lo krasi le tricu
-  ##   pe ro se ciska poi lidne zo su noi romoi .i ro le tricu cu lidne lo pezli pe zo su .i le
-  ##   flalu cu vimcu le tricu .e le pezli .i ji'a le flalu cu vimcu ro pezli pe lo pagbu poi no ve
-  ##   pruce cu tcidu ke'a mu'u lo valsi poi lo nu vimcu cu vimcu ke'a ku'o .e zo fa'o .e lo valsi
-  ##   poi se lidne zo fa'o
+  ##   le porsi
+  ##   .i ji'a ba zo su noi romoi ku'o le re se tcidu cu vasru lo mintu pagbu .e lo mintu valsi .e
+  ##     lo mintu se ciska be fi la'o gy. NIF .gy.
+  ##   .i le genja cu vasru ca lo krasi le tricu pe ro se ciska poi lidne zo su noi romoi
+  ##   .i ro le tricu cu lidne lo pezli pe zo su
+  ##   .i le flalu cu vimcu le tricu .e le pezli
+  ##   .i ji'a le flalu cu vimcu ro pezli pe lo pagbu poi no ve pruce cu tcidu ke'a mu'u lo valsi
+  ##     poi lo nu vimcu cu vimcu ke'a ku'o .e zo fa'o .e lo valsi poi se lidne zo fa'o
   var
     first = 0  # le pamoi pagbu poi se lidne zo su noi romoi
     cut = 0  # lo te kancu be lo panzi be le genja be'o poi lidne ja du le pezli pe zo su noi romoi
@@ -316,7 +346,8 @@ func isSame(marked: ReadingMarked, strict: ReadingText): bool =
     if not marked.units[k].is_read and marked.units[k].refusal == RefusalText.Su: first = k + 1
   for k in 0 ..< marked.tree.children.len:
     template child: untyped = marked.tree.children[k]
-      ## lo drata cmene be lo panzi be le genja .i `let` cu zbasu lo fukpi be le panzi
+      ## lo drata cmene be lo panzi be le genja
+      ##   .i `let` cu zbasu lo fukpi be le panzi
     if first > 0 and child.is_terminal and child.at == first - 1: cut = k + 1
   var past = marked  # le se tcidu pe le se ciska poi se lidne zo su noi romoi
   past.tree.children = marked.tree.children[cut .. ^1]
@@ -337,8 +368,10 @@ func isSame(marked: ReadingMarked, strict: ReadingText): bool =
 
 func readPool(): Pool =
   ## tcidu ro se ciska pe le se ciska liste pa roi sepi'o le re tcidu gi'e ralte ro se ciska poi se
-  ##   to'e curmi .i ba bo tcidu ro se ciska poi se finti .i `readText` cu to'e curmi ji'a ro le se
-  ##   ciska poi se finti .i le flalu pe lo gacri cu tcidu ji'a ro se ciska pe le se ciska liste
+  ##   to'e curmi
+  ##   .i ba bo tcidu ro se ciska poi se finti
+  ##   .i `readText` cu to'e curmi ji'a ro le se ciska poi se finti
+  ##   .i le flalu pe lo gacri cu tcidu ji'a ro se ciska pe le se ciska liste
   for (key, text) in textsCorpora():
     let
       strict = text.readText
@@ -366,8 +399,8 @@ suite "Internal: Marks":
       checkpoint text
       let strict = text.readText
       check strict.is_read and text.readTextMarked.isSame(strict)
-        # ja'i le krasi pinka pe `prose.nim` zo su cu fanmo lo se ciska poi lidne ri .i le se tcidu
-        #   poi sinxa ro srera cu ralte le se ciska
+        # ja'i le krasi pinka pe `prose.nim` zo su cu fanmo lo se ciska poi lidne ri
+        #   .i le se tcidu poi sinxa ro srera cu ralte le se ciska
 
 
   test "Each byte of each word lies in one leaf, in order, and each other byte is mark":
@@ -397,7 +430,8 @@ suite "Internal: Marks":
             marked.units[it - 1].words[0] < marked.units[it].words[0]
           ) and held.deduplicate.len == held.len
       if not (is_whole and marked.isMarking(strict) and marked.isReadBack): broken.add key
-    # ro pagbu cu zvati le stuzi pe vo'a .i lo nu to'e curmi cu se sinxa
+    # ro pagbu cu zvati le stuzi pe vo'a
+    #   .i lo nu to'e curmi cu se sinxa
     check broken == newSeq[string]()  # ja'i le krasi pinka pe `prose.nim`
     # lo bandu cu ralte lo se ciska poi se to'e curmi
     check count >= COUNT_REFUSED_LEAST  # ja'i `IX.3`
@@ -468,8 +502,8 @@ suite "Internal: Marks":
           if k == 0: continue
           let span = cover.children[k - 1].leaves[0] .. piece.leaves[^1]
           check not terminals[span].readGrammar.is_read
-            # ja'i le krasi pinka pe `grammar.nim` lo gacri cu pilno lo mleca traji spisa .i no re
-            #   spisa poi lamji cu se tcidu ta'i pa `text`
+            # ja'i le krasi pinka pe `grammar.nim` lo gacri cu pilno lo mleca traji spisa
+            #   .i no re spisa poi lamji cu se tcidu ta'i pa `text`
         inc count
     check count >= COUNT_COVERS_LEAST  # ja'i `IX.3` lo bandu cu ralte lo gacri
 
@@ -483,8 +517,8 @@ suite "Internal: Marks":
       # lo pagbu poi na se tcidu
       check tree.children[0].stop.isSome  # ja'i le krasi pinka pe `grammar.nim`
       check tree.children[1].stop.isNone and tree.children[1].number == 0
-        # ja'i le krasi pinka pe `grammar.nim` lo pagbu poi se tcidu ta'i pa mulno se ciska .i le
-        #   pagbu cu se krasi `text`
+        # ja'i le krasi pinka pe `grammar.nim` lo pagbu poi se tcidu ta'i pa mulno se ciska
+        #   .i le pagbu cu se krasi `text`
     let open = "lu mi klama le .i do citka".readTextMarked.tree
     check open.stop.isSome and open.children.allIt(it.is_terminal or it.stop.isNone)
       # ja'i le krasi pinka pe `grammar.nim` lo se ciska poi zo lu cu stali lo ka kalri ne'i ke'a cu

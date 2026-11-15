@@ -1,45 +1,57 @@
 ## rapli lo se tcidu be lo valsi pe le cimoi ckupau .e le vomoi ckupau be `CLL` sepi'o `tanru.nim`
 ##   gi'e cipra lo javni poi `CLL` cu nibli ke'a
 ##   .i lo se ciska valsi .e lo tanru .e lo namcu cu fukpi lo se ciska be `CLL` gi'e no roi fukpi lo
-##     jalge be le genturfa'i .i se ki'u bo le cipra cu cipra lo se tcidu gi'e na rapli le se tcidu
-##     .i `CLL 4.13` cu cusku lo du'u `V` pe zo gerzda cu du li ci .i la'e di'u srera .i ku'i lo
-##     sumji po'u li mubizebi cu drani .i le cipra cu cipra lo du'u le sumji cu du li mubizebi .i lo
-##     pinka be lo lujvo poi `CLL` cu dunda ke'a gi'e na fendi ke'a lo rafsi cu cusku lu lo nu fendi
-##     cu se sruma li'u .i lo pinka be lo valsi poi no krasi cu vasru ke'a cu cusku lu le valsi cu
-##     se zbasu li'u
-##   .i lo javni cu jdice .i lo liste cu dunda lo cmene po'o to `#823` toi .i le cipra cu jarco lo
-##     du'u lo se ciska poi lo javni cu curmi ke'a cu se tcidu .iju lo liste cu vasru le se ciska .i
-##     le cipra cu karbi ro nu to'e curmi lo javni pe `CLL` ge'u zi'e poi le nu to'e curmi cu cusku
-##     ke'a .i lo sinxa be lo porsi be lo valsi cu se cipra ta'i `Stream` .i `readStream` cu tcidu
-##     le sinxa .i `test_stream.nim` cu cipra lo lerfu po'u slaka bu .e lo barda lerfu vu'o poi
-##     `CLL` cu ciska ke'a ne'i lo valsi to `CLL 3.3` .e `CLL 3.9` toi
-##   .i lo te kancu be lo tanru cu na se jimte .i se ki'u bo lo javni cipra cu tcidu lo cunso tanru
-##     poi lo tsiju cu jdice ke'a .i lo te kancu be lo gismu pe ro le tanru cu cmima li pa bi'o li
-##     vo .i ro le gismu cu se cuxna fi lo'i gismu pe le liste .i lo javni cipra cu tcidu ji'a ro
-##     cmima be le liste to `Article IX.3` toi
+##     jalge be le genturfa'i
+##   .i se ki'u bo le cipra cu cipra lo se tcidu gi'e na rapli le se tcidu
+##   .i `CLL 4.13` cu cusku lo du'u `V` pe zo gerzda cu du li ci
+##   .i la'e di'u srera
+##   .i ku'i lo sumji po'u li mubizebi cu drani
+##   .i le cipra cu cipra lo du'u le sumji cu du li mubizebi
+##   .i lo pinka be lo lujvo poi `CLL` cu dunda ke'a gi'e na fendi ke'a lo rafsi cu cusku lu lo nu
+##     fendi cu se sruma li'u
+##   .i lo pinka be lo valsi poi no krasi cu vasru ke'a cu cusku lu le valsi cu se zbasu li'u
+##   .i lo javni cu jdice
+##   .i lo liste cu dunda lo cmene po'o to `#823` toi
+##   .i le cipra cu jarco lo du'u lo se ciska poi lo javni cu curmi ke'a cu se tcidu
+##   .iju lo liste cu vasru le se ciska
+##   .i le cipra cu karbi ro nu to'e curmi lo javni pe `CLL` ge'u zi'e poi le nu to'e curmi cu cusku
+##     ke'a
+##   .i lo sinxa be lo porsi be lo valsi cu se cipra ta'i `Stream`
+##   .i `readStream` cu tcidu le sinxa
+##   .i `test_stream.nim` cu cipra lo lerfu po'u slaka bu .e lo barda lerfu vu'o poi `CLL` cu ciska
+##     ke'a ne'i lo valsi to `CLL 3.3` .e `CLL 3.9` toi
+##   .i lo te kancu be lo tanru cu na se jimte
+##   .i se ki'u bo lo javni cipra cu tcidu lo cunso tanru poi lo tsiju cu jdice ke'a
+##   .i lo te kancu be lo gismu pe ro le tanru cu cmima li pa bi'o li vo
+##   .i ro le gismu cu se cuxna fi lo'i gismu pe le liste
+##   .i lo javni cipra cu tcidu ji'a ro cmima be le liste to `Article IX.3` toi
 ##   .i lo javni cipra poi ciska lo tanru gi'e xruti tcidu le se ciska cu tcidu ji'a lo tanru poi lo
-##     tsiju cu jdice ke'a .i lo te kancu be lo valsi pe ro le tanru cu cmima li pa bi'o li xa .i
-##     su'o le valsi cu cmavo .i ki'u bo lo lujvo cu vasru ji'a lo rafsi be lo cmavo to `CLL 4.6`
-##     toi
-##   .i lo valsi poi no liste cu vasru ke'a cu se cipra ji'a .i le cipra cu tcidu ro lerpoi poi se
-##     tarmi lo tarmi be lo gismu .i le cipra cu tcidu ji'a lo lujvo poi lo tsiju cu jdice ke'a gi'e
-##     se gunma lo rafsi poi se zbasu lo lerfu ja'i ro tarmi .iju lo liste cu dunda le rafsi lo
-##     valsi to `Article IX.4` toi
+##     tsiju cu jdice ke'a
+##   .i lo te kancu be lo valsi pe ro le tanru cu cmima li pa bi'o li xa
+##   .i su'o le valsi cu cmavo
+##   .i ki'u bo lo lujvo cu vasru ji'a lo rafsi be lo cmavo to `CLL 4.6` toi
+##   .i lo valsi poi no liste cu vasru ke'a cu se cipra ji'a
+##   .i le cipra cu tcidu ro lerpoi poi se tarmi lo tarmi be lo gismu
+##   .i le cipra cu tcidu ji'a lo lujvo poi lo tsiju cu jdice ke'a gi'e se gunma lo rafsi poi se
+##     zbasu lo lerfu ja'i ro tarmi
+##   .iju lo liste cu dunda le rafsi lo valsi to `Article IX.4` toi
 ##   .i le se karbi pe lo cmalu traji namcu cu liste ro rafsi poi `CLL 4.11 step 1` .e
-##     `CLL 4.11 step 2` cu curmi ke'a .i `brod` noi se ponse su'o re gismu cu cmima le liste .i le
-##     se karbi cu ralte lo se ciska valsi poi se tcidu ta'i le tanru .i le cipra cu karbi lo namcu
-##     pe lo se ciska be `$` lo cmalu traji namcu pe le se ciska valsi
-##     .i jdima fa lo nu lo te kancu be lo nu jmina .e lo nu tcidu ne'i ro tanru cu na zmadu `4^n`
-##       .i `n` du lo te kancu be lo gismu pe le tanru
-##   .i le mulno sisku cu dunda lo namcu ro porsi be lo se cuxna poi `$` cu tcidu ke'a .i le mulno
-##     sisku cu ralte le pamoi be le porsi poi ponse lo cmalu traji namcu .i `$` cu ciska le mintu
-##     tarmi to `IX.2` toi .i `searchLowest` po'o cu cuxna le mintu porsi ne'i lo cunso liste be lo
-##     te cuxna .i ne'i le liste lo mintu namcu .e lo tcini be lo porsi pe `CLL 4.11 step 5` cu so'i
-##     roi jdice .i lo jdima be ro le re mulno sisku cu du lo pilji be lo te kancu be lo se cuxna pe
-##     ro stuzi
+##     `CLL 4.11 step 2` cu curmi ke'a
+##   .i `brod` noi se ponse su'o re gismu cu cmima le liste
+##   .i le se karbi cu ralte lo se ciska valsi poi se tcidu ta'i le tanru
+##   .i le cipra cu karbi lo namcu pe lo se ciska be `$` lo cmalu traji namcu pe le se ciska valsi
+##   .i jdima fa lo nu lo te kancu be lo nu jmina .e lo nu tcidu ne'i ro tanru cu na zmadu `4^n`
+##   .i `n` du lo te kancu be lo gismu pe le tanru
+##   .i le mulno sisku cu dunda lo namcu ro porsi be lo se cuxna poi `$` cu tcidu ke'a
+##   .i le mulno sisku cu ralte le pamoi be le porsi poi ponse lo cmalu traji namcu
+##   .i `$` cu ciska le mintu tarmi to `IX.2` toi
+##   .i `searchLowest` po'o cu cuxna le mintu porsi ne'i lo cunso liste be lo te cuxna
+##   .i ne'i le liste lo mintu namcu .e lo tcini be lo porsi pe `CLL 4.11 step 5` cu so'i roi jdice
+##   .i lo jdima be ro le re mulno sisku cu du lo pilji be lo te kancu be lo se cuxna pe ro stuzi
 ##   .i lo se cipra ca na vasru lo nu karbi lo cmalu traji namcu pe lo tanru poi vasru su'o pano
-##     valsi kei le mulno sisku .i pa tanru poi vasru pabi valsi cu se karbi fi le mulno sisku ne'i
-##     ro lo krasi pagbu po'o poi lo te kancu be lo valsi pe ke'a cu na zmadu `COUNT_PREFIX_MAX`
+##     valsi kei le mulno sisku
+##   .i pa tanru poi vasru pabi valsi cu se karbi fi le mulno sisku ne'i ro lo krasi pagbu po'o poi
+##     lo te kancu be lo valsi pe ke'a cu na zmadu `COUNT_PREFIX_MAX`
 
 {.experimental: "strictFuncs".}
 
@@ -58,93 +70,114 @@ import ./[rafsi_random, texts_outside]
 
 const
   SAMPLES = 1000
-    ## lo te kancu be lo cunso tanru poi lo javni cipra cu cuxna ke'a .i lo tsiju cu jdice le tanru
+    ## lo te kancu be lo cunso tanru poi lo javni cipra cu cuxna ke'a
+    ##   .i lo tsiju cu jdice le tanru
   FLOOR_SHARED_ROUND = 2
     ## lo cmalu jimte be lo te kancu be lo mupli poi vasru zo brodi .a zo brodo .a zo brodu vu'o poi
-    ##   na romoi .i lo se tcidu be le mupli cu vasru lo pagbu po'u `brod` .i ci le mupli cu se
-    ##   tcidu va'o lo tsiju po'u `0` .i ji'i pa fi'u cinono lo mupli cu vasru pa le gismu
+    ##   na romoi
+    ##   .i lo se tcidu be le mupli cu vasru lo pagbu po'u `brod`
+    ##   .i ci le mupli cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i ji'i pa fi'u cinono lo mupli cu vasru pa le gismu
   FLOOR_LOWEST = 650
     ## lo cmalu jimte be lo te kancu be lo mupli poi lo javni cipra be lo cmalu traji namcu cu tcidu
-    ##   ke'a .i ro le mupli cu vasru su'o re gismu gi'e vasru no gismu poi du zo brodi .a zo brodo
-    ##   .a zo brodu gi'e na romoi .i li zepaso le mupli cu se tcidu va'o lo tsiju po'u `0` .i lo nu
-    ##   ci fi'u vo lo mupli cu se tcidu cu se kanpe
+    ##   ke'a
+    ##   .i ro le mupli cu vasru su'o re gismu gi'e vasru no gismu poi du zo brodi .a zo brodo .a zo
+    ##     brodu gi'e na romoi
+    ##   .i li zepaso le mupli cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i lo nu ci fi'u vo lo mupli cu se tcidu cu se kanpe
   FLOOR_SEARCH = 3400
     ## lo cmalu jimte be lo te kancu be lo cunso tanru poi lo javni cipra be lo nu sisku cu cipra
-    ##   `$` sepi'o ke'a .i li cimunono le tanru cu se tcidu va'o lo tsiju pe le sorcu .i la'e di'u
-    ##   du ro lo cunso se cuxna
+    ##   `$` sepi'o ke'a
+    ##   .i li cimunono le tanru cu se tcidu va'o lo tsiju pe le sorcu
+    ##   .i la'e di'u du ro lo cunso se cuxna
   FLOOR_BROKEN = 3
     ## lo cmalu jimte be lo te kancu be le cunso tanru poi `CLL 4.11 step 5` cu punji `y` lo pamoi
-    ##   te jorne be ke'a .i vo le tanru cu zasti va'o le tsiju
+    ##   te jorne be ke'a
+    ##   .i vo le tanru cu zasti va'o le tsiju
   FLOOR_LUJVO_LIST = 3700
     ## lo cmalu jimte be lo te kancu be lo linji pe `lujvo.txt` ge'u zi'e poi se tcidu ta'i lo tanru
-    ##   poi vasru su'o re valsi .i li cibireno le linji cu se tcidu
+    ##   poi vasru su'o re valsi
+    ##   .i li cibireno le linji cu se tcidu
   SAMPLES_OPTIONS = 5000
     ## lo te kancu be lo cunso liste be lo te cuxna be'o poi lo javni cipra be lo nu sisku cu cuxna
-    ##   ke'a .i lo tsiju cu jdice le liste
+    ##   ke'a
+    ##   .i lo tsiju cu jdice le liste
   FLOOR_TIE = 2500
     ## lo cmalu jimte be lo te kancu be le liste poi lo romoi be lo porsi poi ponse lo cmalu traji
-    ##   namcu ku'o be'o cu frica lo pamoi be le porsi .i li rebipano le liste cu se tcidu va'o lo
-    ##   tsiju po'u `0`
+    ##   namcu ku'o be'o cu frica lo pamoi be le porsi
+    ##   .i li rebipano le liste cu se tcidu va'o lo tsiju po'u `0`
   FLOOR_STATE = 45
     ## lo cmalu jimte be lo te kancu be le liste poi lo nu sisku poi na pilno lo tcini be lo porsi
-    ##   cu cuxna lo drata .i li mubi le liste cu se tcidu va'o lo tsiju po'u `0`
+    ##   cu cuxna lo drata
+    ##   .i li mubi le liste cu se tcidu va'o lo tsiju po'u `0`
   COUNT_PREFIX_MAX = 9
     ## lo barda jimte be lo te kancu be lo valsi pe lo krasi pagbu be lo clani tanru be'o poi se
     ##   karbi fi lo mulno sisku
   FLOOR_FINAL_CMAVO = 25
     ## lo cmalu jimte be lo te kancu be lo rafsi be lo cmavo be'o poi se tarmi `CVV` .a `CCV` gi'e
-    ##   ka'e fanmo lo valsi gi'e se tcidu lo javni cipra be lo fanmo stuzi .i li cino le rafsi cu
-    ##   se vasru le liste
+    ##   ka'e fanmo lo valsi gi'e se tcidu lo javni cipra be lo fanmo stuzi
+    ##   .i li cino le rafsi cu se vasru le liste
   SAMPLES_CMAVO = 500
     ## lo te kancu be lo cunso tanru poi lo remoi javni cipra be lo nu ciska gi'e xruti tcidu cu
-    ##   cuxna ke'a .i lo te kancu be lo valsi pe ro le tanru cu cmima li pa bi'o
-    ##   `COUNT_WORDS_CMAVO_MAX` .i su'o le valsi cu cmavo .i lo tsiju cu jdice le tanru
+    ##   cuxna ke'a
+    ##   .i lo te kancu be lo valsi pe ro le tanru cu cmima li pa bi'o `COUNT_WORDS_CMAVO_MAX`
+    ##   .i su'o le valsi cu cmavo
+    ##   .i lo tsiju cu jdice le tanru
   COUNT_WORDS_CMAVO_MAX = 6
-    ## lo barda jimte be lo te kancu be lo valsi pe le tanru .i lo temci be lo mulno sisku cu binxo
-    ##   lo pilji be lo pu temci bei li ji'i vo ca ro nu jmina pa valsi .i se ki'u bo lo nu li xa cu
-    ##   jimte cu ralte lo nu le cipra cu sutra
+    ## lo barda jimte be lo te kancu be lo valsi pe le tanru
+    ##   .i lo temci be lo mulno sisku cu binxo lo pilji be lo pu temci bei li ji'i vo ca ro nu
+    ##     jmina pa valsi
+    ##   .i se ki'u bo lo nu li xa cu jimte cu ralte lo nu le cipra cu sutra
   FLOOR_CMAVO = 220
-    ## lo cmalu jimte be lo te kancu be le tanru poi vasru lo cmavo .i li remuvo le tanru cu se
-    ##   tcidu va'o lo tsiju po'u `0`
+    ## lo cmalu jimte be lo te kancu be le tanru poi vasru lo cmavo
+    ##   .i li remuvo le tanru cu se tcidu va'o lo tsiju po'u `0`
   FLOOR_SHARED = 20
     ## lo cmalu jimte be lo te kancu be le tanru poi vasru zo brodi .a zo brodo .a zo brodu vu'o poi
-    ##   na romoi .i li reze le tanru cu se tcidu va'o lo tsiju po'u `0`
+    ##   na romoi
+    ##   .i li reze le tanru cu se tcidu va'o lo tsiju po'u `0`
   SAMPLES_FORMS = 2000
-    ## lo te kancu be lo cunso lujvo poi se gunma lo rafsi poi se zbasu lo lerfu sepi'o ro tarmi .i
-    ##   lo tsiju cu jdice le lujvo
+    ## lo te kancu be lo cunso lujvo poi se gunma lo rafsi poi se zbasu lo lerfu sepi'o ro tarmi
+    ##   .i lo tsiju cu jdice le lujvo
   SAMPLES_LETTERS = 20000
-    ## lo te kancu be lo cunso lerpoi poi lo javni cipra be lo klesi cu tcidu ke'a .i lo te kancu be
-    ##   lo lerfu pe ro lerpoi cu cmima li mu bi'o li pano .i lo nu lo lerfu cu zunsna cu cunso fi
-    ##   li pa fi'u re
+    ## lo te kancu be lo cunso lerpoi poi lo javni cipra be lo klesi cu tcidu ke'a
+    ##   .i lo te kancu be lo lerfu pe ro lerpoi cu cmima li mu bi'o li pano
+    ##   .i lo nu lo lerfu cu zunsna cu cunso fi li pa fi'u re
   FLOOR_FUHIVLA = 1400
-    ## lo cmalu jimte be lo te kancu be le lerpoi poi se tcidu ta'i lo fu'ivla .i li pamuvomu le
-    ##   lerpoi cu se tcidu va'o lo tsiju po'u `0`
+    ## lo cmalu jimte be lo te kancu be le lerpoi poi se tcidu ta'i lo fu'ivla
+    ##   .i li pamuvomu le lerpoi cu se tcidu va'o lo tsiju po'u `0`
   FLOOR_CMENE = 4800
-    ## lo cmalu jimte be lo te kancu be le lerpoi poi se tcidu ta'i lo cmene .i li munovoci le
-    ##   lerpoi cu se tcidu va'o lo tsiju po'u `0`
+    ## lo cmalu jimte be lo te kancu be le lerpoi poi se tcidu ta'i lo cmene
+    ##   .i li munovoci le lerpoi cu se tcidu va'o lo tsiju po'u `0`
   SAMPLES_JOINED = 2000
-    ## lo te kancu be lo cunso se jmina .i ro se jmina cu se gunma pa cmavo .a re cmavo vu'o pe lo
-    ##   liste ge'u zi'e poi se krasi lo zunsna gi'e na vasru `y` .i ro se jmina cu se gunma ji'a pa
-    ##   gismu pe lo liste ge'u zi'e poi se tarmi `CCVCV` .i le cmavo cu lidne le gismu .i lo tsiju
-    ##   cu jdice le se jmina .i no javni pe `CLL 4.9` cu nitcu lo denpa bu'u lo jbini be le valsi
+    ## lo te kancu be lo cunso se jmina
+    ##   .i ro se jmina cu se gunma pa cmavo .a re cmavo vu'o pe lo liste ge'u zi'e poi se krasi lo
+    ##     zunsna gi'e na vasru `y`
+    ##   .i ro se jmina cu se gunma ji'a pa gismu pe lo liste ge'u zi'e poi se tarmi `CCVCV`
+    ##   .i le cmavo cu lidne le gismu
+    ##   .i lo tsiju cu jdice le se jmina
+    ##   .i no javni pe `CLL 4.9` cu nitcu lo denpa bu'u lo jbini be le valsi
     ##   .i lo zunsna remei poi krasi le gismu cu zvati le mu lerfu poi krasi le se jmina ta'i lo
-    ##   brivla to `CLL 4.3` toi
+    ##     brivla to `CLL 4.3` toi
   FLOOR_JOINED = 140
-    ## lo cmalu jimte be lo te kancu be le se jmina poi se to'e curmi ta'i lo valsi gunma .i li
-    ##   pamuxa le se jmina cu se tcidu va'o lo tsiju po'u `3` .i so'e lo drata se jmina cu se tcidu
-    ##   ta'i lo lujvo poi ponse lo srera lerfu jorne ku'o gi'a vasru lo zunsna remei poi se lidne
-    ##   lo mumoi lerfu
+    ## lo cmalu jimte be lo te kancu be le se jmina poi se to'e curmi ta'i lo valsi gunma
+    ##   .i li pamuxa le se jmina cu se tcidu va'o lo tsiju po'u `3`
+    ##   .i so'e lo drata se jmina cu se tcidu ta'i lo lujvo poi ponse lo srera lerfu jorne ku'o
+    ##     gi'a vasru lo zunsna remei poi se lidne lo mumoi lerfu
   CONSONANTS_LETTERS = "bcdfgjklmnprstvxz"  ## lo paze zunsna pe `CLL 3.1`
   FLOOR_UNASSIGNED = 1700
     ## lo cmalu jimte be lo te kancu be lo cunso lujvo poi vasru lo rafsi poi le liste cu dunda ke'a
-    ##   no valsi .i ro le lujvo cu se gunma lo rafsi poi se zbasu lo lerfu .i li pazevoci le lujvo
-    ##   cu se tcidu va'o lo tsiju po'u `0` .i ki'u bo so'e lo rafsi poi se zbasu lo lerfu cu sinxa
-    ##   no valsi ne'i ro tarmi
+    ##   no valsi
+    ##   .i ro le lujvo cu se gunma lo rafsi poi se zbasu lo lerfu
+    ##   .i li pazevoci le lujvo cu se tcidu va'o lo tsiju po'u `0`
+    ##   .i ki'u bo so'e lo rafsi poi se zbasu lo lerfu cu sinxa no valsi ne'i ro tarmi
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"
-    ## lo lerfu .e lo sinxa vu'o pe `CLL 3.1` .i le porsi cu mintu le porsi pe `CLL 3.1`
+    ## lo lerfu .e lo sinxa vu'o pe `CLL 3.1`
+    ##   .i le porsi cu mintu le porsi pe `CLL 3.1`
   GISMU_STEM_SHARED = ["brodi", "brodo", "brodu"]
-    ## le vi gismu cu ponse no cmalu rafsi .i se ki'u bo le gismu cu ponse pa rafsi po'o poi na
-    ##   fanmo lo valsi .i le rafsi cu du `brod` .i zo broda .e zo brode cu ponse ji'a `brod`
+    ## le vi gismu cu ponse no cmalu rafsi
+    ##   .i se ki'u bo le gismu cu ponse pa rafsi po'o poi na fanmo lo valsi
+    ##   .i le rafsi cu du `brod`
+    ##   .i zo broda .e zo brode cu ponse ji'a `brod`
   SPELLINGS_CLL = [
     "brivla", "brivalsi", "bridyvla", "bridyvalsi", "mampa'u", "soirsai", "sampli", "bralo'i",
     "zunlyjamfu", "zunlyjma", "zuljamfu", "zuljma", "mamtypatfu", "lerfyliste", "nancyprali",
@@ -160,10 +193,12 @@ const
     ##   se tcidu ta'i pa valsi
   SPELLINGS_CLL_REFUSED = ["patta'a", "mudsiclu", "ro'ire'o", "ro'irre'o"]
     ## ro se ciska valsi pe le vomoi ckupau be `CLL` ge'u zi'e poi le cipra cu sitna ke'a zi'e poi
-    ##   le tcidu cu to'e curmi ke'a .i ro le se ciska valsi cu vasru lo lerfu jorne poi `CLL 4.6`
-    ##   cu to'e curmi ke'a gi'a du lo cmavo gunma be re cmavo
+    ##   le tcidu cu to'e curmi ke'a
+    ##   .i ro le se ciska valsi cu vasru lo lerfu jorne poi `CLL 4.6` cu to'e curmi ke'a gi'a du lo
+    ##     cmavo gunma be re cmavo
   WORDS_GISMU = block:
-    ## ro gismu pe le liste ta'i lo stuzi namcu .i lo cmavo poi ponse lo rafsi cu na se vasru
+    ## ro gismu pe le liste ta'i lo stuzi namcu
+    ##   .i lo cmavo poi ponse lo rafsi cu na se vasru
     var words: seq[Word]
     for i, entry in LIST_GISMU:
       if entry.word.isGismu: words.add Word(i)
@@ -175,9 +210,9 @@ const
       if not entry.word.isGismu: words.add Word(i)
     words
   WORDS_CMAVO_JOINABLE = block:
-    ## ro cmavo pe le cmavo liste ge'u zi'e poi se krasi lo zunsna gi'e vasru no `y` .i no javni pe
-    ##   `CLL 4.9` cu nitcu lo denpa poi lidne lo valsi poi se krasi lo zunsna gi'e se lidne le
-    ##   cmavo
+    ## ro cmavo pe le cmavo liste ge'u zi'e poi se krasi lo zunsna gi'e vasru no `y`
+    ##   .i no javni pe `CLL 4.9` cu nitcu lo denpa poi lidne lo valsi poi se krasi lo zunsna gi'e
+    ##     se lidne le cmavo
     var words: seq[string]
     for entry in LIST_CMAVO:
       if entry.word[0] in CONSONANTS_LETTERS and 'y' notin entry.word: words.add entry.word
@@ -186,36 +221,41 @@ const
     "\u0080", "é", "ĉ", "ʼ", "߿", "ࠀ", "’", "日", "�",
     "￿", "\u{10000}", "\u{1D44E}", "\u{1F600}", "\u{10FFFF}",
   ]
-    ## lo lerfu poi na cmima le lerfu pe `LETTERS` .i le lerfu cu se girzu ja'i lo te kancu be lo
-    ##   stuzi pe la'o gy. UTF-8 .gy. ge'u zi'e poi ro lerfu cu pilno ke'a ja'i `Table 3-6` pe la'o
-    ##   gy. Unicode Standard .gy.
-    ##   .i le lerfu poi pilno re stuzi cu du `é` .e `ĉ` .e lo galfi lerfu poi simsa zoi gy. '
-    ##     .gy. ku'o .e lo pamoi .e lo romoi .i le lerfu poi pilno ci stuzi cu du lo kruvi lerfu poi
-    ##     simsa zoi gy. ' .gy. ku'o .e lo pixra lerfu .e `U+FFFD` .e lo pamoi .e lo romoi .i le
-    ##     lerfu poi pilno vo stuzi cu du lo salpo mekso lerfu .e lo cinmo pixra .e lo pamoi .e lo
-    ##     romoi
-    ##   .i le se cipra cu se ganzu gi'e na du le mulno se cipra .i lo cunso lerfu poi lo tsiju cu
-    ##     jdice ke'a cu se tcidu ne'i lo drata pagbu be le mulno se cipra .i lo te kancu be le
-    ##     cunso lerfu cu du `SAMPLES_FOREIGN`
+    ## lo lerfu poi na cmima le lerfu pe `LETTERS`
+    ##   .i le lerfu cu se girzu ja'i lo te kancu be lo stuzi pe la'o gy. UTF-8 .gy. ge'u zi'e poi
+    ##     ro lerfu cu pilno ke'a ja'i `Table 3-6` pe la'o gy. Unicode Standard .gy.
+    ##   .i le lerfu poi pilno re stuzi cu du `é` .e `ĉ` .e lo galfi lerfu poi simsa zoi gy. ' .gy.
+    ##     ku'o .e lo pamoi .e lo romoi
+    ##   .i le lerfu poi pilno ci stuzi cu du lo kruvi lerfu poi simsa zoi gy. ' .gy. ku'o .e lo
+    ##     pixra lerfu .e `U+FFFD` .e lo pamoi .e lo romoi
+    ##   .i le lerfu poi pilno vo stuzi cu du lo salpo mekso lerfu .e lo cinmo pixra .e lo pamoi .e
+    ##     lo romoi
+    ##   .i le se cipra cu se ganzu gi'e na du le mulno se cipra
+    ##   .i lo cunso lerfu poi lo tsiju cu jdice ke'a cu se tcidu ne'i lo drata pagbu be le mulno se
+    ##     cipra
+    ##   .i lo te kancu be le cunso lerfu cu du `SAMPLES_FOREIGN`
   SAMPLES_FOREIGN = 1000
     ## lo te kancu be lo cunso lerfu poi na cmima la'o gy. ASCII .gy. gi'e se tcidu lo javni cipra
-    ##   pe `Letter` .i lo tsiju cu jdice le lerfu .i lo te kancu be lo stuzi pe la'o gy. UTF-8 .gy.
-    ##   cu se cuxna pu lo drata .i le te kancu cu cmima li re bi'o li vo .i ba bo lo lerfu namcu
-    ##   poi pilno le te kancu cu se cuxna .i se ki'u bo ro linji pe `Table 3-6` cu so'i roi se
-    ##   tcidu
+    ##   pe `Letter`
+    ##   .i lo tsiju cu jdice le lerfu
+    ##   .i lo te kancu be lo stuzi pe la'o gy. UTF-8 .gy. cu se cuxna pu lo drata
+    ##   .i le te kancu cu cmima li re bi'o li vo
+    ##   .i ba bo lo lerfu namcu poi pilno le te kancu cu se cuxna
+    ##   .i se ki'u bo ro linji pe `Table 3-6` cu so'i roi se tcidu
   FLOOR_FOREIGN = 950
-    ## lo cmalu jimte be lo te kancu be lo cunso lerfu poi me la'o gy. scalar value .gy. .i lo me
-    ##   la'o gy. surrogate .gy. cu se vimcu .i li sobixa le lerfu cu se tcidu va'o lo tsiju po'u
-    ##   `0`
+    ## lo cmalu jimte be lo te kancu be lo cunso lerfu poi me la'o gy. scalar value .gy.
+    ##   .i lo me la'o gy. surrogate .gy. cu se vimcu
+    ##   .i li sobixa le lerfu cu se tcidu va'o lo tsiju po'u `0`
   ORDER_CONSONANTS = "bcdfgjklmnprstvxz"
     ## lo paze zunsna poi `C` cu sinxa ke'a ja'i `CLL 4.1 rule 3`
   ORDER_VOWELS = "aeiou"
-    ## lo mu karsna poi `V` cu sinxa ke'a ja'i `CLL 4.1 rule 1` .i `y` na cmima le mu karsna
+    ## lo mu karsna poi `V` cu sinxa ke'a ja'i `CLL 4.1 rule 1`
+    ##   .i `y` na cmima le mu karsna
 
 
 func toTanru(text: string): Tanru =
-  ## zbasu lo tanru lo valsi pe lo liste ge'u zi'e poi `+` cu jorne ke'a .i le cipra cu ciska lo
-  ##   tanru ta'i la'e di'u
+  ## zbasu lo tanru lo valsi pe lo liste ge'u zi'e poi `+` cu jorne ke'a
+  ##   .i le cipra cu ciska lo tanru ta'i la'e di'u
   Tanru(parts: text.split('+').mapIt(it.word.get.toPart))
 
 
@@ -225,49 +265,53 @@ func unlisted(letters: string): Part =
 
 
 func tanruRead(text: string): Option[Tanru] =
-  ## tcidu lo se ciska ta'i pa valsi gi'e dunda lo tanru .i va'o lo nu le se ciska cu se to'e curmi
-  ##   kei cu dunda `none`
+  ## tcidu lo se ciska ta'i pa valsi gi'e dunda lo tanru
+  ##   .i va'o lo nu le se ciska cu se to'e curmi kei cu dunda `none`
   let reading = text.readWord
   if reading.is_word: some(reading.tanru) else: none(Tanru)
 
 
 func kindRead(text: string): Option[Kind] =
-  ## tcidu lo se ciska ta'i pa valsi gi'e dunda lo klesi pe le valsi .i va'o lo nu le se ciska cu se
-  ##   to'e curmi kei cu dunda `none`
+  ## tcidu lo se ciska ta'i pa valsi gi'e dunda lo klesi pe le valsi
+  ##   .i va'o lo nu le se ciska cu se to'e curmi kei cu dunda `none`
   let reading = text.readWord
   if reading.is_word: some(reading.kind) else: none(Kind)
 
 
 func refusalRead(text: string): Option[(Refusal, string)] =
-  ## tcidu lo se ciska gi'e dunda lo krinu be lo nu to'e curmi be'o .e lo tcila .i va'o lo nu le se
-  ##   ciska cu valsi kei cu dunda `none`
+  ## tcidu lo se ciska gi'e dunda lo krinu be lo nu to'e curmi be'o .e lo tcila
+  ##   .i va'o lo nu le se ciska cu valsi kei cu dunda `none`
   let reading = text.readWord
   if reading.is_word: none((Refusal, string)) else: some((reading.refusal, reading.detail))
 
 
 func scoreRead(text: string): Option[int] =
   ## dunda lo namcu lo rafsi pe lo se ciska ta'i lo nu le tcidu cu fendi le se ciska to `CLL 4.12`
-  ##   toi .i va'o lo nu le se ciska cu se to'e curmi kei cu dunda `none`
+  ##   toi
+  ##   .i va'o lo nu le se ciska cu se to'e curmi kei cu dunda `none`
   let reading = text.readWord
   if reading.is_word: some(reading.pieces.score) else: none(int)
 
 
 func spelled(pieces: openArray[Piece]): string =
-  ## ciska lo pagbu ta'i lo lerfu .i ro rafsi cu lidne lo lerfu jorne pe vo'a
+  ## ciska lo pagbu ta'i lo lerfu
+  ##   .i ro rafsi cu lidne lo lerfu jorne pe vo'a
   for piece in pieces: result.add piece.rafsi & LUT_LETTER_BY_HYPHEN[piece.hyphen]
 
 
 func isStemShared(tanru: Tanru): bool =
-  ## jdice lo du'u `$` bilga lo nu ciska `brod` noi se ponse su'o re gismu .i la'e di'u jetnu va'o
-  ##   lo nu le tanru cu vasru zo brodi .a zo brodo .a zo brodu vu'o poi na romoi
+  ## jdice lo du'u `$` bilga lo nu ciska `brod` noi se ponse su'o re gismu
+  ##   .i la'e di'u jetnu va'o lo nu le tanru cu vasru zo brodi .a zo brodo .a zo brodu vu'o poi na
+  ##     romoi
   for i in 0 ..< tanru.parts.high:
     if $tanru.parts[i] in GISMU_STEM_SHARED: return true
   false
 
 
 func withStemShared(tanru: Tanru): Tanru =
-  ## tcidu lo tanru ta'i lo nu lo se ciska be le tanru cu se xruti tcidu .i zo brodi .e zo brodo .e
-  ##   zo brodu vu'o poi na romoi cu binxo lo pagbu po'u `brod` noi sinxa no gismu to `CLL 4.4` toi
+  ## tcidu lo tanru ta'i lo nu lo se ciska be le tanru cu se xruti tcidu
+  ##   .i zo brodi .e zo brodo .e zo brodu vu'o poi na romoi cu binxo lo pagbu po'u `brod` noi sinxa
+  ##     no gismu to `CLL 4.4` toi
   result = tanru
   for i in 0 ..< result.parts.high:
     if $result.parts[i] in GISMU_STEM_SHARED: result.parts[i] = unlisted("brod")
@@ -276,8 +320,8 @@ func withStemShared(tanru: Tanru): Tanru =
 func spellings(tanru: Tanru): seq[seq[string]] =
   ## dunda lo liste be ro porsi be lo rafsi be'o poi `CLL 4.11 step 1` .e `CLL 4.11 step 2` cu curmi
   ##   ke'a ne'i lo tanru poi vasru su'o re gismu
-  ##   .i lo se cuxna cu du lo cmalu rafsi .e lo rafsi poi vasru vo lerfu .e le gismu .i ro le se
-  ##     cuxna cu se pilno va'o lo nu lo tarmi be le se cuxna cu se curmi bu'u le stuzi
+  ##   .i lo se cuxna cu du lo cmalu rafsi .e lo rafsi poi vasru vo lerfu .e le gismu
+  ##   .i ro le se cuxna cu se pilno va'o lo nu lo tarmi be le se cuxna cu se curmi bu'u le stuzi
   result = @[newSeq[string]()]
   for i, part in tanru.parts:
     let
@@ -292,9 +336,10 @@ func spellings(tanru: Tanru): seq[seq[string]] =
 
 func scoreStateless(rafsi: openArray[string]): int =
   ## dunda lo namcu lo rafsi ta'i lo porsi be lo te jorne gi'e ro roi sruma lo du'u lo porsi pe
-  ##   `CLL 4.11 step 5` cu ganlo .i la'e di'u simsa lo sisku poi na pilno lo tcini be lo porsi .i
-  ##   lo javni cipra cu kancu lo nu lo se cuxna be le sisku cu frica lo se cuxna be lo namcu pe
-  ##   `CLL 4.12`
+  ##   `CLL 4.11 step 5` cu ganlo
+  ##   .i la'e di'u simsa lo sisku poi na pilno lo tcini be lo porsi
+  ##   .i lo javni cipra cu kancu lo nu lo se cuxna be le sisku cu frica lo se cuxna be lo namcu pe
+  ##     `CLL 4.12`
   result = scoreRafsi(rafsi[0], rafsi[0].form.get)
   for at in 0 ..< rafsi.len - 1:
     result += scoreJunction(false, rafsi[at], rafsi[at+1], at, rafsi.len).score +
@@ -304,13 +349,15 @@ func scoreStateless(rafsi: openArray[string]): int =
 func searchExhaustive(
   options: seq[seq[string]], as_stateless = false
 ): tuple[first, last: seq[string]] =
-  ## cuxna lo rafsi pe ro stuzi ta'i lo nu dunda lo namcu ro porsi be lo se cuxna .i dunda le pamoi
-  ##   .e le romoi vu'o pe lo porsi poi ponse lo cmalu traji namcu .i se ki'u bo lo javni cipra cu
-  ##   viska lo nu lo porsi be le te cuxna cu jdice va'o lo nu lo namcu cu mintu
-  ##   .i lo javni cipra cu karbi `searchLowest` .e `$` le vi mulno sisku to `IX.2` toi .i le mulno
-  ##     sisku cu pilno lo namcu pe `CLL 4.12` .i va'o lo nu `as_stateless` cu jetnu kei le mulno
-  ##     sisku cu pilno lo namcu poi na pilno lo tcini be lo porsi .i lo temci cu simsa lo pilji be
-  ##     lo te kancu be lo te cuxna pe ro stuzi
+  ## cuxna lo rafsi pe ro stuzi ta'i lo nu dunda lo namcu ro porsi be lo se cuxna
+  ##   .i dunda le pamoi .e le romoi vu'o pe lo porsi poi ponse lo cmalu traji namcu
+  ##   .i se ki'u bo lo javni cipra cu viska lo nu lo porsi be le te cuxna cu jdice va'o lo nu lo
+  ##     namcu cu mintu
+  ##   .i lo javni cipra cu karbi `searchLowest` .e `$` le vi mulno sisku to `IX.2` toi
+  ##   .i le mulno sisku cu pilno lo namcu pe `CLL 4.12`
+  ##   .i va'o lo nu `as_stateless` cu jetnu kei le mulno sisku cu pilno lo namcu poi na pilno lo
+  ##     tcini be lo porsi
+  ##   .i lo temci cu simsa lo pilji be lo te kancu be lo te cuxna pe ro stuzi
   var sequences = @[newSeq[string]()]
   for at_options in options:
     var extended: seq[seq[string]]
@@ -331,12 +378,12 @@ func choicesTanru(tanru: Tanru): seq[seq[string]] =
 
 
 func renderExhaustive(tanru: Tanru): string =
-  ## ciska lo tanru ta'i lo nu dunda lo namcu ro porsi be lo se cuxna poi `$` cu tcidu ke'a .i le
-  ##   pamoi be le porsi poi ponse lo cmalu traji namcu cu se ralte
-  ##   .i lo javni cipra cu karbi `$` le vi mulno sisku to `IX.2` toi .i le re tadji cu pilno lo
-  ##     mintu se cuxna .e lo mintu porsi .e lo mintu namcu pe `CLL 4.12` .i lo temci be le mulno
-  ##     sisku cu binxo lo pilji be lo pu temci ca ro nu jmina pa valsi .i se ki'u bo lo javni cipra
-  ##     cu pilno le mulno sisku ne'i lo tordu tanru po'o
+  ## ciska lo tanru ta'i lo nu dunda lo namcu ro porsi be lo se cuxna poi `$` cu tcidu ke'a
+  ##   .i le pamoi be le porsi poi ponse lo cmalu traji namcu cu se ralte
+  ##   .i lo javni cipra cu karbi `$` le vi mulno sisku to `IX.2` toi
+  ##   .i le re tadji cu pilno lo mintu se cuxna .e lo mintu porsi .e lo mintu namcu pe `CLL 4.12`
+  ##   .i lo temci be le mulno sisku cu binxo lo pilji be lo pu temci ca ro nu jmina pa valsi
+  ##   .i se ki'u bo lo javni cipra cu pilno le mulno sisku ne'i lo tordu tanru po'o
   if tanru.parts.len == 0: return ""
   if tanru.parts.len == 1: return $tanru.parts[0]
   let options = tanru.choicesTanru
@@ -345,13 +392,17 @@ func renderExhaustive(tanru: Tanru): string =
 
 
 proc drawOptions(): seq[seq[seq[string]]] =
-  ## zbasu lo liste be lo te cuxna be'o lo lerfu .i lo te kancu be le liste cu du `SAMPLES_OPTIONS`
-  ##   .i lo tsiju cu jdice le liste .i lo te kancu be lo stuzi pe ro liste cu cmima li re bi'o li
-  ##   mu .i lo te kancu be lo rafsi pe ro stuzi cu cmima li pa bi'o li vo .i ro rafsi cu se tarmi
-  ##   pa tarmi poi `CLL 4.11 step 1` .e `CLL 4.11 step 2` cu curmi ke'a bu'u le stuzi
-  ##   .i lo nu lo rafsi poi na romoi cu se tarmi `CVC` cu cunso fi li pa fi'u re .i se ki'u bo lo
-  ##     porsi pe `CLL 4.11 step 5` cu so'i roi kalri .i ro rafsi poi se tarmi pa tarmi cu ponse lo
-  ##     mintu namcu ta'i lo nu sepli .i se ki'u bo lo mintu namcu cu so'i roi zasti ji'a
+  ## zbasu lo liste be lo te cuxna be'o lo lerfu
+  ##   .i lo te kancu be le liste cu du `SAMPLES_OPTIONS`
+  ##   .i lo tsiju cu jdice le liste
+  ##   .i lo te kancu be lo stuzi pe ro liste cu cmima li re bi'o li mu
+  ##   .i lo te kancu be lo rafsi pe ro stuzi cu cmima li pa bi'o li vo
+  ##   .i ro rafsi cu se tarmi pa tarmi poi `CLL 4.11 step 1` .e `CLL 4.11 step 2` cu curmi ke'a
+  ##     bu'u le stuzi
+  ##   .i lo nu lo rafsi poi na romoi cu se tarmi `CVC` cu cunso fi li pa fi'u re
+  ##   .i se ki'u bo lo porsi pe `CLL 4.11 step 5` cu so'i roi kalri
+  ##   .i ro rafsi poi se tarmi pa tarmi cu ponse lo mintu namcu ta'i lo nu sepli
+  ##   .i se ki'u bo lo mintu namcu cu so'i roi zasti ji'a
   randomize(0)
   result = newSeqOfCap[seq[seq[string]]](SAMPLES_OPTIONS)
   for _ in 1..SAMPLES_OPTIONS:
@@ -368,8 +419,8 @@ proc drawOptions(): seq[seq[seq[string]]] =
 
 
 let OPTIONS_DRAWN = drawOptions()
-  ## lo cunso liste be lo te cuxna be'o poi lo javni cipra be lo nu sisku cu tcidu ke'a .i le liste
-  ##   cu se cuxna pa roi
+  ## lo cunso liste be lo te cuxna be'o poi lo javni cipra be lo nu sisku cu tcidu ke'a
+  ##   .i le liste cu se cuxna pa roi
 
 
 iterator optionsDrawn(): lent seq[seq[string]] =
@@ -378,10 +429,11 @@ iterator optionsDrawn(): lent seq[seq[string]] =
 
 
 func isBrokenFirst(text: string): bool =
-  ## jdice lo du'u le valsi cu vasru `y` noi `CLL 4.11 step 5` cu punji ke'a lo pamoi te jorne .i lo
-  ##   pamoi rafsi cu se tarmi `CVC` .i `y` cu se lidne le rafsi .i `CLL 4.11 step 4b` cu na punji
-  ##   `y` bu'u le te jorne ki'u lo nu le zunsna remei cu se curmi gi'e zbasu no zunsna cimei poi se
-  ##   to'e curmi
+  ## jdice lo du'u le valsi cu vasru `y` noi `CLL 4.11 step 5` cu punji ke'a lo pamoi te jorne
+  ##   .i lo pamoi rafsi cu se tarmi `CVC`
+  ##   .i `y` cu se lidne le rafsi
+  ##   .i `CLL 4.11 step 4b` cu na punji `y` bu'u le te jorne ki'u lo nu le zunsna remei cu se curmi
+  ##     gi'e zbasu no zunsna cimei poi se to'e curmi
   let reading = text.readWord
   if not reading.is_word or reading.pieces.len < 2: return false
   let
@@ -392,10 +444,12 @@ func isBrokenFirst(text: string): bool =
 
 
 func partNamed(rafsi: string): Part =
-  ## facki lo pagbu poi lo rafsi cu sinxa ke'a ku'o gi'e na pilno le tcidu .i lo cmalu rafsi cu
-  ##   sinxa lo valsi ja'i lo liste be lo cmalu rafsi .i lo rafsi poi vasru vo lerfu cu sinxa lo
-  ##   gismu poi le rafsi cu jicmu ke'a va'o lo nu le rafsi cu jicmu pa gismu po'o .i lo rafsi poi
-  ##   vasru mu lerfu cu sinxa vo'a to `CLL 4.6` toi .i va'o lo drata le pagbu cu ralte lo lerfu
+  ## facki lo pagbu poi lo rafsi cu sinxa ke'a ku'o gi'e na pilno le tcidu
+  ##   .i lo cmalu rafsi cu sinxa lo valsi ja'i lo liste be lo cmalu rafsi
+  ##   .i lo rafsi poi vasru vo lerfu cu sinxa lo gismu poi le rafsi cu jicmu ke'a va'o lo nu le
+  ##     rafsi cu jicmu pa gismu po'o
+  ##   .i lo rafsi poi vasru mu lerfu cu sinxa vo'a to `CLL 4.6` toi
+  ##   .i va'o lo drata le pagbu cu ralte lo lerfu
   let found =
     case rafsi.form.get
     of Form.Cvc, Form.Ccv, Form.Cvv: rafsi.wordRafsi
@@ -407,8 +461,10 @@ func partNamed(rafsi: string): Part =
 
 func isShapeBrivla(text: string): bool =
   ## jdice lo du'u lo se ciska cu se tarmi lo tarmi poi `CLL 4.3` cu dunda ke'a lo brivla kei gi'e
-  ##   na pilno le tcidu .i le tarmi cu nitcu lo nu lo romoi lerfu cu karsna .e lo nu lo zunsna
-  ##   remei cu zvati le mu lerfu poi krasi .i `y` .e zoi gy. ' .gy. cu na se kancu
+  ##   na pilno le tcidu
+  ##   .i le tarmi cu nitcu lo nu lo romoi lerfu cu karsna .e lo nu lo zunsna remei cu zvati le mu
+  ##     lerfu poi krasi
+  ##   .i `y` .e zoi gy. ' .gy. cu na se kancu
   var head = ""
   for c in text:
     if c notin {'y', '\''} and head.len < 5: head.add c
@@ -420,7 +476,8 @@ func isShapeBrivla(text: string): bool =
 
 func isShapeGismu(text: string): bool =
   ## jdice lo du'u lo se ciska cu se tarmi lo tarmi be lo gismu ja'i lo du'u ro lerfu cu zunsna ja
-  ##   karsna kei po'o .i le tarmi cu du `CVCCV` .a `CCVCV` to `CLL 4.4` toi
+  ##   karsna kei po'o
+  ##   .i le tarmi cu du `CVCCV` .a `CCVCV` to `CLL 4.4` toi
   var shape = ""
   for c in text: shape.add(if c in "aeiou": 'V' else: 'C')
   shape in ["CVCCV", "CCVCV"]
@@ -428,7 +485,8 @@ func isShapeGismu(text: string): bool =
 
 func isBrokenUp(text: string): bool =
   ## jdice lo du'u lo se ciska cu vasru zo la .a zo doi vu'o poi krasi le se ciska gi'a se lidne no
-  ##   zunsna .i la'e di'u cu fendi lo cmene to `CLL 4.8` toi
+  ##   zunsna
+  ##   .i la'e di'u cu fendi lo cmene to `CLL 4.8` toi
   for i in 0 ..< text.len:
     if i > 0 and text[i - 1] in CONSONANTS_LETTERS: continue
     if text.continuesWith("la", i) or text.continuesWith("doi", i): return true
@@ -436,16 +494,19 @@ func isBrokenUp(text: string): bool =
 
 
 proc drawTanru(): seq[Tanru] =
-  ## zbasu lo cunso tanru .i lo te kancu be le tanru cu du `SAMPLES` .i lo te kancu be lo gismu pe
-  ##   ro tanru cu cmima li pa bi'o li vo .i lo tsiju cu jdice le tanru .i ro gismu cu se cuxna fi
-  ##   lo'i ro gismu pe le liste
+  ## zbasu lo cunso tanru
+  ##   .i lo te kancu be le tanru cu du `SAMPLES`
+  ##   .i lo te kancu be lo gismu pe ro tanru cu cmima li pa bi'o li vo
+  ##   .i lo tsiju cu jdice le tanru
+  ##   .i ro gismu cu se cuxna fi lo'i ro gismu pe le liste
   randomize(0)
   for _ in 1 .. SAMPLES:
     result.add Tanru(parts: newSeqWith(rand(1 .. 4), WORDS_GISMU[rand(WORDS_GISMU.high)].toPart))
 
 
 let TANRU_RANDOM = drawTanru()
-  ## lo cunso tanru poi ro javni cipra cu tcidu ke'a .i le tanru cu se cuxna pa roi
+  ## lo cunso tanru poi ro javni cipra cu tcidu ke'a
+  ##   .i le tanru cu se cuxna pa roi
 
 
 iterator tanruRandom(): lent Tanru =
@@ -454,12 +515,16 @@ iterator tanruRandom(): lent Tanru =
 
 
 proc drawTanruCmavo(): seq[Tanru] =
-  ## zbasu lo cunso tanru .i lo te kancu be le tanru cu du `SAMPLES_CMAVO` .i lo te kancu be lo
-  ##   valsi pe ro tanru cu cmima li pa bi'o `COUNT_WORDS_CMAVO_MAX` .i lo tsiju cu jdice le tanru
-  ##   .i lo romoi valsi cu gismu .i lo nu lo valsi poi na romoi cu cmavo cu cunso fi li pa fi'u ci
+  ## zbasu lo cunso tanru
+  ##   .i lo te kancu be le tanru cu du `SAMPLES_CMAVO`
+  ##   .i lo te kancu be lo valsi pe ro tanru cu cmima li pa bi'o `COUNT_WORDS_CMAVO_MAX`
+  ##   .i lo tsiju cu jdice le tanru
+  ##   .i lo romoi valsi cu gismu
+  ##   .i lo nu lo valsi poi na romoi cu cmavo cu cunso fi li pa fi'u ci
   ##   .i va'o lo drata lo nu le valsi cu du zo brodi .a zo brodo .a zo brodu cu cunso fi li pa fi'u
-  ##   remu .i va'o lo drata le valsi cu gismu .i ro valsi cu se cuxna fi ro valsi pe le liste ge'u
-  ##   zi'e poi cmima le mintu klesi
+  ##     remu
+  ##   .i va'o lo drata le valsi cu gismu
+  ##   .i ro valsi cu se cuxna fi ro valsi pe le liste ge'u zi'e poi cmima le mintu klesi
   randomize(0)
   for _ in 1 .. SAMPLES_CMAVO:
     let count = rand(1 .. COUNT_WORDS_CMAVO_MAX)
@@ -475,18 +540,19 @@ proc drawTanruCmavo(): seq[Tanru] =
 
 
 let TANRU_CMAVO = drawTanruCmavo()
-  ## lo cunso tanru poi lo remoi javni cipra be lo nu ciska gi'e xruti tcidu cu tcidu ke'a .i le
-  ##   tanru cu se cuxna pa roi
+  ## lo cunso tanru poi lo remoi javni cipra be lo nu ciska gi'e xruti tcidu cu tcidu ke'a
+  ##   .i le tanru cu se cuxna pa roi
 
 
 iterator tanruCmavo(): lent Tanru =
-  ## dunda ro cunso tanru pe le remoi sorcu gi'e fukpi no da .i su'o valsi pe le tanru cu cmavo
+  ## dunda ro cunso tanru pe le remoi sorcu gi'e fukpi no da
+  ##   .i su'o valsi pe le tanru cu cmavo
   for i in 0 ..< TANRU_CMAVO.len: yield TANRU_CMAVO[i]
 
 
 iterator textsNotation(notation: string): string =
-  ## dunda ro lerpoi pe pa sinxa poi se ciska sepi'o `C` .e `V` ja'i `CLL 4.1` .i lo romoi stuzi cu
-  ##   traji lo ka sutra cenba
+  ## dunda ro lerpoi pe pa sinxa poi se ciska sepi'o `C` .e `V` ja'i `CLL 4.1`
+  ##   .i lo romoi stuzi cu traji lo ka sutra cenba
   let positions = notation.mapIt(if it == 'C': ORDER_CONSONANTS else: ORDER_VOWELS)
   var at = newSeq[int](positions.len)
   while true:
@@ -503,8 +569,8 @@ iterator textsNotation(notation: string): string =
 
 
 let SEQUENCES_FORMS = drawSequencesLetters(SAMPLES_FORMS, 2 .. 4, seed = 0)
-  ## lo cunso porsi be lo rafsi be'o poi lo javni cipra be lo tarmi cu tcidu ke'a .i le porsi cu se
-  ##   zbasu lo lerfu pa roi to `rafsi_random.nim` toi
+  ## lo cunso porsi be lo rafsi be'o poi lo javni cipra be lo tarmi cu tcidu ke'a
+  ##   .i le porsi cu se zbasu lo lerfu pa roi to `rafsi_random.nim` toi
 
 
 iterator lujvoForms(): lent seq[string] =
@@ -517,12 +583,14 @@ suite "Chapter 3":
   test "Section 3.1":
     var alphabet: set[char]
     for c in ALPHABET: alphabet.incl c
-    # le liste pe `CLL 3.1` .i slaka bu .e denpa bu cu fendi lo slaka to `CLL 3.3` toi
+    # le liste pe `CLL 3.1`
+    #   .i slaka bu .e denpa bu cu fendi lo slaka to `CLL 3.3` toi
     check tanru.LETTERS == alphabet - {',', '.'}  # `CLL 3.1`
     for c in 'a' .. 'z':
       # `CLL 3.1` cu cusku zoi gy. omitting "h", "q", and "w" .gy.
       check (c in tanru.LETTERS) == (c notin {'h', 'q', 'w'})  # `CLL 3.1`
-    # ro lo remuxa stuzi .i lo sinxa be lo porsi be lo valsi cu se cipra ne'i `Internal: Reading`
+    # ro lo remuxa stuzi
+    #   .i lo sinxa be lo porsi be lo valsi cu se cipra ne'i `Internal: Reading`
     for c in char.low .. char.high:
       if c in tanru.LETTERS or c in MARKS_STREAM: continue
       # ja'i lo lerfu liste pe `CLL 3.1`
@@ -530,9 +598,11 @@ suite "Chapter 3":
 
 
   test "Section 3.3":
-    # ja'i `CLL 3.3` `h` na sinxa `'` .i le valsi cu se zbasu
+    # ja'i `CLL 3.3` `h` na sinxa `'`
+    #   .i le valsi cu se zbasu
     check "rohinreho".refusalRead == some((Refusal.Letter, "h"))  # `CLL 3.3`
-    # ja'i `CLL 3.3` `h` na sinxa `'` .i le valsi cu se zbasu
+    # ja'i `CLL 3.3` `h` na sinxa `'`
+    #   .i le valsi cu se zbasu
     check "kixtaha".refusalRead == some((Refusal.Letter, "h"))  # `CLL 3.3`
     # ja'i `CLL 3.3` denpa bu cu zbasu re valsi
     check "bri.vla".refusalRead == some((Refusal.Stream, "."))  # `CLL 3.3`
@@ -552,7 +622,8 @@ suite "Chapter 3":
 suite "Chapter 4":
   test "Section 4.2":
     for text in ["a", "e", "i", "o", "u", "ba", "ce", "di", "fo", "gu"]:
-      # ja'i `CLL 4.2` lo tarmi po'u `V` .e `CV` .i lo denpa cu na se ciska
+      # ja'i `CLL 4.2` lo tarmi po'u `V` .e `CV`
+      #   .i lo denpa cu na se ciska
       check text.kindRead == some(Kind.Cmavo)  # `CLL 4.2`
     for text in ["au", "ei", "ia", "o'u", "u'e", "ki'a", "pei", "mi'o", "coi", "cu'u"]:
       check text.kindRead == some(Kind.Cmavo)  # ja'i `CLL 4.2` lo tarmi po'u `VV` .e `CVV`
@@ -564,18 +635,24 @@ suite "Chapter 4":
     check "lo".tanruRead == some(Tanru(parts: @[unlisted("lo")]))  # `CLL 4.2`
     # ja'i `CLL 4.2` le gismu liste cu vasru le cmavo ki'u lo rafsi be le cmavo
     check "se".tanruRead == some(toTanru("se"))  # `CLL 4.2`
-    # ja'i `CLL 20` zo lo cmima la'o gy. LE .gy. .i le cmavo liste cu vasru zo lo
+    # ja'i `CLL 20` zo lo cmima la'o gy. LE .gy.
+    #   .i le cmavo liste cu vasru zo lo
     check "lo".readWord.selmaho == some(Selmaho.Le)  # `CLL 20`
     check "se".readWord.selmaho == some(Selmaho.Se)  # ja'i `CLL 20` zo se cmima la'o gy. SE .gy.
-    # ja'i `CLL 4.2` le cmavo cu cipra cmavo .i se ki'u bo no liste cu vasru le cmavo
+    # ja'i `CLL 4.2` le cmavo cu cipra cmavo
+    #   .i se ki'u bo no liste cu vasru le cmavo
     check "ku'a'e".readWord.selmaho.isNone  # `CLL 4.2`
     check "klama".readWord.selmaho.isNone  # ja'i `CLL 4.3` no brivla cu ponse lo selma'o
-    # lo rafsi po'u `kau` cu sinxa zo kampu .i le rafsi na sinxa lo cmavo .i le valsi cu se zbasu
+    # lo rafsi po'u `kau` cu sinxa zo kampu
+    #   .i le rafsi na sinxa lo cmavo
+    #   .i le valsi cu se zbasu
     check "kauzba".readWord.selmaho.isNone  # lo rafsi po'u `kau` cu sinxa zo kampu
     for text in ["iseci'i", "punaijecanai", "da'amei"]:
-      # ja'i `CLL 4.2` mu'u `Examples 4.1-2` .i ja'i `CLL 4.3` lo cmavo gunma
+      # ja'i `CLL 4.2` mu'u `Examples 4.1-2`
+      #   .i ja'i `CLL 4.3` lo cmavo gunma
       check text.refusalRead == some((Refusal.Stream, ""))  # `CLL 4.2`
-    # ja'i `CLL 4.2` mu'u `Example 4.3` .i denpa bu cu sinxa lo denpa
+    # ja'i `CLL 4.2` mu'u `Example 4.3`
+    #   .i denpa bu cu sinxa lo denpa
     check "ki'e.u'e".refusalRead == some((Refusal.Stream, "."))  # `CLL 4.2`
 
 
@@ -583,13 +660,15 @@ suite "Chapter 4":
     check "lojban".kindRead == some(Kind.Cmene)  # ja'i `CLL 4.3` zo lojban. cu cmene
     # `CLL 4.3` cu cusku zoi gy. must be compound cmavo .gy.
     check "da'amei".refusalRead == some((Refusal.Stream, ""))  # `CLL 4.3`
-    # ja'i `CLL 4.3` lo zunsna remei po'u `sc` cu se kancu ta'i lo nu `y` cu na se kancu .i se ki'u
-    #   bo le valsi cu brivla .i le valsi cu se zbasu
+    # ja'i `CLL 4.3` lo zunsna remei po'u `sc` cu se kancu ta'i lo nu `y` cu na se kancu
+    #   .i se ki'u bo le valsi cu brivla
+    #   .i le valsi cu se zbasu
     check "bisycla".kindRead.isSome  # `CLL 4.3`
     for text in ["zba", "brai"]:  # le se ciska cu se zbasu
       # ja'i `CLL 4.3` lo nu basna lo slaka poi lidne lo romoi slaka cu nitcu su'o re slaka
       check text.refusalRead == some((Refusal.Shape, ""))  # `CLL 4.3`
-    # ja'i `CLL 4.3` ro brivla cu se fanmo lo karsna .i le valsi cu se zbasu
+    # ja'i `CLL 4.3` ro brivla cu se fanmo lo karsna
+    #   .i le valsi cu se zbasu
     check "bridy".refusalRead == some((Refusal.Shape, ""))  # `CLL 4.3`
 
 
@@ -599,7 +678,8 @@ suite "Chapter 4":
       # ja'i `CLL 4.4` lo gismu pe lo liste cu sinxa vo'a
       check text.tanruRead == some(toTanru(text))  # `CLL 4.4`
     for text in ["kismu", "xismu", "gicmu", "gizmu", "gisnu"]:
-      # ja'i `CLL 4.4` lo tarmi be lo gismu .i ku'i no liste cu vasru le valsi
+      # ja'i `CLL 4.4` lo tarmi be lo gismu
+      #   .i ku'i no liste cu vasru le valsi
       check text.kindRead == some(Kind.Gismu)  # `CLL 4.4`
       # ja'i `CLL 4.4` no smuni cu se dunda
       check text.tanruRead == some(Tanru(parts: @[unlisted(text)]))  # `CLL 4.4`
@@ -615,9 +695,11 @@ suite "Chapter 4":
     # `CLL 4.5` cu cusku zoi gy. mam- .gy. .e zoi gy. -pa'u .gy.
     check "mampa'u".readWord.pieces.mapIt(it.rafsi) == @["mam", "pa'u"]  # `CLL 4.5`
     check "soirsai".tanruRead == some(toTanru("sonci+sanmi"))  # ja'i `CLL 4.5` mu'u `Example 4.26`
-    # ja'i `CLL 4.5` mu'u `Example 4.26` .i `r` cu zvati lo jbini be le re rafsi
+    # ja'i `CLL 4.5` mu'u `Example 4.26`
+    #   .i `r` cu zvati lo jbini be le re rafsi
     check "soirsai".readWord.pieces.spelled == "soirsai"  # `CLL 4.5`
-    # ja'i `CLL 4.5` mu'u `Example 4.26` .i lo jmina lerfu po'u `r`
+    # ja'i `CLL 4.5` mu'u `Example 4.26`
+    #   .i lo jmina lerfu po'u `r`
     check "soirsai".readWord.pieces[0].hyphen == Hyphen.R  # `CLL 4.5`
     # ja'i `CLL 4.5` `Example 4.23` cu se zbasu `Example 4.19`
     check "sampli".tanruRead == some(toTanru("skami+pilno"))  # `CLL 4.5`
@@ -628,7 +710,8 @@ suite "Chapter 4":
     check ($paternal).tanruRead == some(paternal)  # `CLL 4.5`
     # ja'i `CLL 4.5` lo rafsi cu se jorne ta'i lo porsi pe le tanru
     check ($maternal).tanruRead == some(maternal)  # `CLL 4.5`
-    # ja'i `CLL 4.5` le pamoi cu galfi le remoi .i se ki'u bo lo porsi cu se ralte
+    # ja'i `CLL 4.5` le pamoi cu galfi le remoi
+    #   .i se ki'u bo lo porsi cu se ralte
     check $paternal != $maternal  # `CLL 4.5`
 
 
@@ -643,7 +726,8 @@ suite "Chapter 4":
       ("vancysanmi", "vanci+sanmi"),
     ]:
       let pieces = spelling.readWord.pieces
-      # ja'i `CLL 4.6` mu'u `Example 4.27-31` .i le lujvo cu na jdika
+      # ja'i `CLL 4.6` mu'u `Example 4.27-31`
+      #   .i le lujvo cu na jdika
       check spelling.tanruRead == some(toTanru(text_tanru))  # `CLL 4.6`
       # ja'i `CLL 4.6` lo clani rafsi po'o
       check pieces.allIt(it.form in FORMS_UNREDUCED + FORMS_GISMU)  # `CLL 4.6`
@@ -652,7 +736,8 @@ suite "Chapter 4":
       ("sniju'o", "sinxa+djuno"), ("mampa'u", "mamta+patfu"), ("lerste", "lerfu+liste"),
     ]:
       let pieces = spelling.readWord.pieces
-      # ja'i `CLL 4.6` mu'u `Example 4.32-37` .i le lujvo cu mulno jdika
+      # ja'i `CLL 4.6` mu'u `Example 4.32-37`
+      #   .i le lujvo cu mulno jdika
       check spelling.tanruRead == some(toTanru(text_tanru))  # `CLL 4.6`
       # `CLL 4.6` cu cusku zoi gy. made up solely of short rafsi .gy.
       check pieces.allIt(it.form in FORMS_SHORT)  # `CLL 4.6`
@@ -670,13 +755,15 @@ suite "Chapter 4":
     check "mudsiclu".refusalRead == some((Refusal.Hyphen, "mudysiclu"))  # `CLL 4.6`
     # ja'i `CLL 4.6` lo lerfu jorne po'u `n` cu se nitcu
     check "ro'inre'o".tanruRead == some(toTanru("rokci+renro"))  # `CLL 4.6`
-    # ja'i `CLL 4.6` le lujvo cu mintu .i le valsi cu vasru no lerfu jorne
+    # ja'i `CLL 4.6` le lujvo cu mintu
+    #   .i le valsi cu vasru no lerfu jorne
     check "rokre'o".tanruRead == some(toTanru("rokci+renro"))  # `CLL 4.6`
     # `CLL 4.6` cu cusku zoi gy. breaks up into two cmavo .gy.
     check "ro'ire'o".refusalRead == some((Refusal.Stream, ""))  # `CLL 4.6`
     # ja'i `CLL 4.6` `rr` cu du re `r`
     check "ro'irre'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # `CLL 4.6`
-    # `CLL 4.6` cu cusku zoi gy. whiter .gy. .i lo nu fendi cu se sruma
+    # `CLL 4.6` cu cusku zoi gy. whiter .gy.
+    #   .i lo nu fendi cu se sruma
     check "labmau".tanruRead == some(toTanru("blabi+zmadu"))  # `CLL 4.6`
 
 
@@ -691,8 +778,8 @@ suite "Chapter 4":
     for text in ["kulnrblgaria", "gugdrblgaria", "bangrblgaria", "bangrkorea", "kulnrkorea"]:
       check text.kindRead == some(Kind.Fuhivla)  # ja'i `CLL 4.7` mu'u `Examples 4.52-56`
     for text in ["kuarka", "integrale", "cmacrntegrale", "cmacrnintegrale", "dinjrnintegrale"]:
-      # `CLL 4.7` cu cusku zoi gy. valid Stage 4 fu'ivla .gy. .i lo tadji be lo nu jmina pa krasi
-      #   pagbu
+      # `CLL 4.7` cu cusku zoi gy. valid Stage 4 fu'ivla .gy.
+      #   .i lo tadji be lo nu jmina pa krasi pagbu
       check text.kindRead == some(Kind.Fuhivla)  # `CLL 4.7`
     # ja'i `CLL 4.7` zoi gy. integral .gy. ta'i lo dinju zbasu
     check "tarmrnintegrale".kindRead == some(Kind.Fuhivla)  # `CLL 4.7`
@@ -709,7 +796,8 @@ suite "Chapter 4":
     check "kobra".kindRead == some(Kind.Gismu)  # ja'i `CLL 4.7` zo kobra cu simsa lo gismu
     # ja'i `CLL 4.7` lo cipra po'u zoi gy. slinku'i test .gy.
     check "slinku'i".refusalRead == some((Refusal.Slinkuhi, "baslinku'i"))  # `CLL 4.7`
-    # `CLL 4.7` .i le valsi cu se zbasu
+    # `CLL 4.7`
+    #   .i le valsi cu se zbasu
     check "mibroda".refusalRead == some((Refusal.Combination, "mi broda"))  # `CLL 4.7`
 
 
@@ -732,11 +820,14 @@ suite "Chapter 4":
     check "laplas".refusalRead == some((Refusal.Breakup, "la"))  # `CLL 4.8`
     # ja'i `CLL 4.8` le se ciska cu simsa lo'u .i la nas. le'u
     check "ilanas".refusalRead == some((Refusal.Breakup, "la"))  # `CLL 4.8`
-    # ja'i `CLL 4.8` lo zunsna cu lidne zo la .i le valsi cu vasru `nts`
+    # ja'i `CLL 4.8` lo zunsna cu lidne zo la
+    #   .i le valsi cu vasru `nts`
     check "nederlants".kindRead == some(Kind.Cmene)  # `CLL 4.8`
-    # ja'i `CLL 4.8` lo zunsna remei po'o .i `Example 1.1` pe `CLL 1997` cu se vimcu
+    # ja'i `CLL 4.8` lo zunsna remei po'o
+    #   .i `Example 1.1` pe `CLL 1997` cu se vimcu
     check "djandjonz".kindRead == some(Kind.Cmene)  # `CLL 4.8`
-    # ja'i `CLL 4.8` zo la cu pamoi .i le valsi cu se zbasu
+    # ja'i `CLL 4.8` zo la cu pamoi
+    #   .i le valsi cu se zbasu
     check "lars".refusalRead == some((Refusal.Breakup, "la"))  # `CLL 4.8`
     # ja'i `CLL 3.6` `Example 3.8` cu to'e curmi le zunsna remei
     check "djeimz".refusalRead == some((Refusal.Cluster, "mz"))  # `CLL 3.6`
@@ -745,7 +836,8 @@ suite "Chapter 4":
     for text in ["rl", "brlgan"]:
       # ja'i `CLL 3.4` lo zunsna poi slaka mu'u zo rl. .e `Example 3.5`
       check text.kindRead == some(Kind.Cmene)  # `CLL 3.4`
-    # ja'i `CLL 3.4` le valsi cu vasru no slaka .i le valsi cu se zbasu
+    # ja'i `CLL 3.4` le valsi cu vasru no slaka
+    #   .i le valsi cu se zbasu
     check "c".refusalRead == some((Refusal.Shape, ""))  # `CLL 3.4`
 
 
@@ -756,8 +848,9 @@ suite "Chapter 4":
     ]:
       # ja'i `CLL 4.13` pa lujvo cu ponse xa tarmi
       check spelling.tanruRead == some(toTanru("gerku+zdani"))  # `CLL 4.13`
-      # ja'i `CLL 4.13` lo namcu .i `CLL 4.13` cu srera cusku `V` pe zo gerzda .i li mubizebi cu se
-      #   ralte
+      # ja'i `CLL 4.13` lo namcu
+      #   .i `CLL 4.13` cu srera cusku `V` pe zo gerzda
+      #   .i li mubizebi cu se ralte
       check spelling.scoreRead == some(value)  # `CLL 4.13`
     # `CLL 4.13` cu cusku zoi gy. would probably appear ... gerzda .gy.
     check $toTanru("gerku+zdani") == "gerzda"  # `CLL 4.13`
@@ -798,13 +891,16 @@ suite "Chapter 4":
 
 suite "Internal: Reading":
   test "Empty text is refused as Empty":
-    check "".refusalRead == some((Refusal.Empty, ""))  # le se ciska cu kunti .i le tcila cu kunti
+    # le tcila cu kunti
+    check "".refusalRead == some((Refusal.Empty, ""))  # le se ciska cu kunti
 
 
   test "Character outside letters is refused as Letter, naming character":
-    # le pamoi lerfu poi srera .i le valsi cu se zbasu
+    # le pamoi lerfu poi srera
+    #   .i le valsi cu se zbasu
     check "hello".refusalRead == some((Refusal.Letter, "h"))  # le pamoi lerfu poi srera
-    # `w` na cmima le lerfu .i le valsi cu se zbasu
+    # `w` na cmima le lerfu
+    #   .i le valsi cu se zbasu
     check "bwa".refusalRead == some((Refusal.Letter, "w"))  # `w` na cmima le lerfu
     # lo se ciska poi sinxa lo tanru cu na se ciska valsi
     check "datni+vreji".refusalRead == some((Refusal.Letter, "+"))  # lo tanru na se ciska valsi
@@ -814,12 +910,15 @@ suite "Internal: Reading":
 
   test "Character outside letters is named whole, so detail of UTF-8 stays UTF-8":
     check "café".refusalRead ==
-        # lo nu lanli de'i `2026-10-29` cu facki `logic-6` .i lo pu tcila cu du lo stuzi po'u `C3`
+        # lo nu lanli de'i `2026-10-29` cu facki `logic-6`
+        #   .i lo pu tcila cu du lo stuzi po'u `C3`
         some((Refusal.Letter, "é"))  # lo nu lanli de'i `2026-10-29` cu facki `logic-6`
     check "ci’a".refusalRead ==
-        # lo nu lanli de'i `2026-10-29` cu facki `logic-6` .i lo pu tcila cu du lo stuzi po'u `E2`
+        # lo nu lanli de'i `2026-10-29` cu facki `logic-6`
+        #   .i lo pu tcila cu du lo stuzi po'u `E2`
         some((Refusal.Letter, "’"))  # lo nu lanli de'i `2026-10-29` cu facki `logic-6`
-    # pavo lerfu .i lo pamoi .e lo romoi vu'o pe ro te kancu be lo stuzi cu cmima
+    # pavo lerfu
+    #   .i lo pamoi .e lo romoi vu'o pe ro te kancu be lo stuzi cu cmima
     for character in CHARACTERS_FOREIGN:
       for text in [character & "brivla", "bri" & character & "vla", "brivla" & character]:
         # le krasi stuzi .e lo jmina stuzi
@@ -846,39 +945,45 @@ suite "Internal: Reading":
 
 
   test "Mark of stream is refused as Stream, which readStream reads":
-    # ja'i `CLL 3.3` lo canlu lerfu cu fanmo lo valsi .i le tcidu cu vimcu no canlu lerfu
+    # ja'i `CLL 3.3` lo canlu lerfu cu fanmo lo valsi
+    #   .i le tcidu cu vimcu no canlu lerfu
     check " brivla".refusalRead == some((Refusal.Stream, " "))  # `CLL 3.3`
     check "brivla\t".refusalRead == some((Refusal.Stream, "\t"))  # lo canlu lerfu cu fanmo lo valsi
     check "bri vla".refusalRead == some((Refusal.Stream, " "))  # re valsi
-    for c in MARKS_STREAM:  # ro sinxa .i su'o le sinxa cu canlu lerfu
+    for c in MARKS_STREAM:  # ro sinxa to su'o le sinxa cu canlu lerfu toi
       check ("bri" & c & "vla").refusalRead == some((Refusal.Stream, $c))  # `CLL 3.3` .e `CLL 3.9`
     # ja'i `CLL 3.9` lo barda lerfu cu sinxa lo nu basna
     check "BRIVLA".refusalRead == some((Refusal.Stream, "B"))  # `CLL 3.9`
     for c in tanru.LETTERS - {'\''}:  # lo barda lerfu pe ro lerfu
       check ("bri" & c.toUpperAscii & "vla").refusalRead ==
-          # ja'i `CLL 3.9` lo barda lerfu cu sinxa lo nu basna .i le tcidu cu galfi no barda lerfu
-          #   lo cmalu lerfu
+          # ja'i `CLL 3.9` lo barda lerfu cu sinxa lo nu basna
+          #   .i le tcidu cu galfi no barda lerfu lo cmalu lerfu
           some((Refusal.Stream, $c.toUpperAscii))  # `CLL 3.9`
     # ro se ciska valsi pe `CLL` ge'u zi'e poi le cipra cu sitna ke'a
     for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):
-      for i in 0 .. spelling.len:  # ro stuzi .i le re fanmo cu cmima
+      for i in 0 .. spelling.len:  # ro stuzi to le re fanmo cu cmima toi
         let text = spelling[0 ..< i] & "," & spelling[i .. ^1]
         check text.refusalRead ==
-            # ja'i `CLL 3.3` slaka bu cu fendi lo slaka .i lo porsi be lo valsi cu ralte la'e di'u
+            # ja'i `CLL 3.3` slaka bu cu fendi lo slaka
+            #   .i lo porsi be lo valsi cu ralte la'e di'u
             some((Refusal.Stream, ","))  # `CLL 3.3`
 
 
   test "Cmavo run together is refused as Stream, which readStream splits":
-    # ja'i `CLL 4.2` lo'u ga'i nai le'u .i le valsi cu se krasi la'o gy. Tatoeba .gy.
+    # ja'i `CLL 4.2` lo'u ga'i nai le'u
+    #   .i le valsi cu se krasi la'o gy. Tatoeba .gy.
     check "ga'inai".refusalRead == some((Refusal.Stream, ""))  # `CLL 4.2`
-    # ja'i `CLL 4.2` lo'u so'i mei le'u .i le valsi cu se krasi la'o gy. Tatoeba .gy.
+    # ja'i `CLL 4.2` lo'u so'i mei le'u
+    #   .i le valsi cu se krasi la'o gy. Tatoeba .gy.
     check "so'imei".refusalRead == some((Refusal.Stream, ""))  # `CLL 4.2`
 
 
   test "Letters of no class, nor cmavo run together, are refused as Shape":
-    # ja'i `CLL 3.3` lo zunsna remei cu se lidne lo mumoi lerfu .i le valsi cu se zbasu
+    # ja'i `CLL 3.3` lo zunsna remei cu se lidne lo mumoi lerfu
+    #   .i le valsi cu se zbasu
     check "lonubroda".refusalRead == some((Refusal.Shape, ""))  # `CLL 3.3`
-    # ja'i `CLL 3.4` `ia` cu se lidne lo zunsna .i le valsi cu se zbasu
+    # ja'i `CLL 3.4` `ia` cu se lidne lo zunsna
+    #   .i le valsi cu se zbasu
     check "cia".refusalRead == some((Refusal.Shape, ""))  # `CLL 3.4`
     # ja'i `CLL 4.2` `Example 4.3` cu ciska denpa bu
     check "ki'eu'e".refusalRead == some((Refusal.Shape, ""))  # `CLL 4.2`
@@ -893,23 +998,29 @@ suite "Internal: Reading":
   test "Brivla neither gismu nor lujvo reads as fu'ivla where it meets each rule of 4.7":
     # `CLL 3.8` cu cusku zoi gy. possible borrowing .gy.
     check "bongnanba".kindRead == some(Kind.Fuhivla)  # `CLL 3.8`
-    # ja'i `CLL 4.7` le valsi cu mapti ro javni .i le valsi cu se zbasu
+    # ja'i `CLL 4.7` le valsi cu mapti ro javni
+    #   .i le valsi cu se zbasu
     check "brodrzba".kindRead == some(Kind.Fuhivla)  # `CLL 4.7`
-    # ja'i `CLL 4.7` .i ku'i `CLL 4.11` cu dunda zo ci'ormau .i le valsi cu se krasi la'o gy.
-    #   Tatoeba .gy.
+    # ja'i `CLL 4.7`
+    #   .i ku'i `CLL 4.11` cu dunda zo ci'ormau
+    #   .i le valsi cu se krasi la'o gy. Tatoeba .gy.
     check "ci'onmau".kindRead == some(Kind.Fuhivla)  # `CLL 4.7`
-    # ja'i `CLL 4.7` no fu'ivla cu vasru `y` .i le valsi cu se krasi `lujvo.txt`
+    # ja'i `CLL 4.7` no fu'ivla cu vasru `y`
+    #   .i le valsi cu se krasi `lujvo.txt`
     check "natmyrgu'e".refusalRead == some((Refusal.Shape, ""))  # `CLL 4.7`
 
 
   test "Lujvo ending in rafsi of cmavo reads, its last part that cmavo":
-    # ja'i `CLL 4.6` lo rafsi be zo do be'o po'u `doi` .i le valsi cu se zbasu
+    # ja'i `CLL 4.6` lo rafsi be zo do be'o po'u `doi`
+    #   .i le valsi cu se zbasu
     check "zbadoi".tanruRead == some(toTanru("zbasu+do"))  # `CLL 4.6`
-    # ja'i `CLL 4.6` lo rafsi be zo du be'o po'u `du'o` .i le valsi cu se zbasu
+    # ja'i `CLL 4.6` lo rafsi be zo du be'o po'u `du'o`
+    #   .i le valsi cu se zbasu
     check "zbadu'o".tanruRead == some(toTanru("zbasu+du"))  # `CLL 4.6`
     # `CLL 4.11 step 2` cu dunda no javni poi lo lerfu cu ka'e tcidu ke'a
     check "zbadoi".kindRead == some(Kind.Lujvo)  # `CLL 4.11 step 2`
-    # zo co'e cu fanmo le lujvo .i le valsi cu se krasi la'o gy. Tatoeba .gy.
+    # zo co'e cu fanmo le lujvo
+    #   .i le valsi cu se krasi la'o gy. Tatoeba .gy.
     check "nunco'e".tanruRead == some(toTanru("nu+co'e"))  # zo co'e cu fanmo le lujvo
 
 
@@ -918,11 +1029,14 @@ suite "Internal: Reading":
       se = "se".word.get.toPart
       ciska = "ciska".word.get.toPart
       selcia = "selci'a".tanruRead
-    # ja'i `CLL 4.6` lo rafsi be zo se be'o po'u `sel` .i le valsi cu se zbasu
+    # ja'i `CLL 4.6` lo rafsi be zo se be'o po'u `sel`
+    #   .i le valsi cu se zbasu
     check selcia == some(Tanru(parts: @[se, ciska]))  # `CLL 4.6`
-    # ja'i `CLL 9.4` zo se cu galfi .i se ki'u bo le tanru cu ralte zo se
+    # ja'i `CLL 9.4` zo se cu galfi
+    #   .i se ki'u bo le tanru cu ralte zo se
     check selcia.get != Tanru(parts: @[ciska])  # `CLL 9.4`
-    # ja'i `CLL 4.12` `sel` .e `ci'a` cu ponse lo cmalu traji namcu .i le valsi cu se zbasu
+    # ja'i `CLL 4.12` `sel` .e `ci'a` cu ponse lo cmalu traji namcu
+    #   .i le valsi cu se zbasu
     check $selcia.get == "selci'a"  # `CLL 4.12`
     check "nunkla".tanruRead == some(toTanru("nu+klama"))  # `CLL 12.12` cu cusku zo nunkla
     check "nunynau".tanruRead == some(toTanru("nu+nanmu"))  # ja'i `CLL 4.12` mu'u `Example 4.72`
@@ -934,48 +1048,62 @@ suite "Internal: Reading":
 
 
   test "Gismu shape outside list reads as gismu, its part keeping letters":
-    # `CLL 4.4` .i le valsi cu se zbasu
+    # `CLL 4.4`
+    #   .i le valsi cu se zbasu
     check "kukta".tanruRead == some(Tanru(parts: @[unlisted("kukta")]))  # `CLL 4.4`
     # ja'i `CLL 4.4` le valsi cu vasru mu lerfu gi'e se tarmi `CVC/CV`
     check "kukta".kindRead == some(Kind.Gismu)  # `CLL 4.4`
     check "gerkukta".tanruRead ==
-        # zo kukta cu romoi .i le valsi cu se zbasu
+        # zo kukta cu romoi
+        #   .i le valsi cu se zbasu
         some(Tanru(parts: @["gerku".word.get.toPart, unlisted("kukta")]))  # zo kukta cu romoi
 
 
   test "Rafsi no list assigns reads, its part keeping letters":
     check "clozba".tanruRead ==
-        # lo tarmi po'u `CCV` .i le valsi cu se zbasu
+        # lo tarmi po'u `CCV`
+        #   .i le valsi cu se zbasu
         some(Tanru(parts: @[unlisted("clo"), "zbasu".word.get.toPart]))  # lo tarmi po'u `CCV`
     check "kukfyzba".tanruRead ==
-        # lo rafsi poi vasru vo lerfu .i le valsi cu se zbasu
-        some(Tanru(parts: @[unlisted("kukf"), "zbasu".word.get.toPart]))  # vo lerfu .i se zbasu
+        # lo rafsi poi vasru vo lerfu
+        #   .i le valsi cu se zbasu
+        some(Tanru(parts: @[unlisted("kukf"), "zbasu".word.get.toPart]))  # vo lerfu to se zbasu toi
     check "ditybra".tanruRead ==
-        # `dit` .i le valsi cu se krasi la'o gy. Tatoeba .gy.
+        # `dit`
+        #   .i le valsi cu se krasi la'o gy. Tatoeba .gy.
         some(Tanru(parts: @[unlisted("dit"), "barda".word.get.toPart]))  # `dit`
 
 
   test "Shared 4-letter rafsi reads, its part naming no one gismu":
     check "brodyzba".tanruRead ==
-        # mu gismu cu ponse le rafsi .i le valsi cu se zbasu
-        some(Tanru(parts: @[unlisted("brod"), "zbasu".word.get.toPart]))  # mu gismu .i se zbasu
+        # mu gismu cu ponse le rafsi
+        #   .i le valsi cu se zbasu
+        some(Tanru(parts: @[unlisted("brod"), "zbasu".word.get.toPart]))  # mu gismu to se zbasu toi
     check "brodyprenu".tanruRead ==
-        # mu gismu cu ponse le rafsi .i le valsi cu se zbasu
-        some(Tanru(parts: @[unlisted("brod"), "prenu".word.get.toPart]))  # mu gismu .i se zbasu
-    # pa gismu po'o cu ponse `rod` .i le valsi cu se zbasu
+        # mu gismu cu ponse le rafsi
+        #   .i le valsi cu se zbasu
+        some(Tanru(parts: @[unlisted("brod"), "prenu".word.get.toPart]))  # mu gismu to se zbasu toi
+    # pa gismu po'o cu ponse `rod`
+    #   .i le valsi cu se zbasu
     check "rodzba".tanruRead == some(toTanru("broda+zbasu"))  # pa gismu po'o cu ponse `rod`
 
 
   test "Hyphen 4.11 does not give is refused as Hyphen, naming form 4.11 gives":
-    # `y` cu claxu .i le valsi cu se krasi `CLL 4.6`
+    # `y` cu claxu
+    #   .i le valsi cu se krasi `CLL 4.6`
     check "patta'a".refusalRead == some((Refusal.Hyphen, "patyta'a"))  # `CLL 4.6`
-    # `y` cu dukse .i le valsi cu se zbasu
+    # `y` cu dukse
+    #   .i le valsi cu se zbasu
     check "kitymatci".refusalRead == some((Refusal.Hyphen, "kitmatci"))  # `y` cu dukse
-    # `y` pe lo cipra pe zoi gy. tosmabru .gy. .i le valsi cu se zbasu
-    check "kicmatci".refusalRead == some((Refusal.Hyphen, "kicymatci"))  # `tosmabru y` .i se zbasu
-    # `n` .enai `r` .i le valsi cu se krasi `CLL 4.6`
+    # `y` pe lo cipra pe zoi gy. tosmabru .gy.
+    #   .i le valsi cu se zbasu
+    check "kicmatci".refusalRead == some((Refusal.Hyphen, "kicymatci"))  # `tosmabru y`
+    # `n` .enai `r`
+    #   .i le valsi cu se krasi `CLL 4.6`
     check "ro'irre'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # `CLL 4.6`
-    # lo karbi mupli .i lo zunsna cu fanmo le valsi .i le valsi cu se zbasu
+    # lo karbi mupli
+    #   .i lo zunsna cu fanmo le valsi
+    #   .i le valsi cu se zbasu
     check "clozbas".kindRead == some(Kind.Cmene)  # lo karbi mupli
 
 
@@ -997,8 +1125,9 @@ suite "Internal: Reading":
       let reading = spelling.readWord
       check reading.is_word and reading.pieces.spelled == spelling  # lo nu fendi ce'o lo nu ciska
     for text in ["gerku", "kukta", "se", "lo"]:
-      # lo gismu .e lo cmavo cu mulno se tcidu .iju lo liste cu vasru le valsi
-      check text.readWord.pieces.len == 0  # mulno se tcidu .iju se liste
+      # lo gismu .e lo cmavo cu mulno se tcidu
+      #   .iju lo liste cu vasru le valsi
+      check text.readWord.pieces.len == 0  # mulno se tcidu
 
 
 
@@ -1007,7 +1136,8 @@ suite "Internal: Laws":
     var count_shared = 0
     for tanru in tanruRandom():  # `SAMPLES` cu klani lo tanru poi lo tsiju cu jdice ke'a
       if tanru.isStemShared: inc count_shared
-      # lo nu ciska gi'e xruti tcidu .i `brod` cu sinxa no da
+      # lo nu ciska gi'e xruti tcidu
+      #   .i `brod` cu sinxa no da
       check ($tanru).tanruRead == some(tanru.withStemShared)  # lo nu ciska gi'e xruti tcidu
     # le bandu cu zgana lo jicmu poi se ponse su'o re gismu
     check count_shared >= FLOOR_SHARED_ROUND  # le bandu cu zgana lo kansa jicmu
@@ -1037,9 +1167,11 @@ suite "Internal: Laws":
       let
         head = Tanru(parts: @[w.toPart, "zdani".word.get.toPart])
         final = Tanru(parts: @["gerku".word.get.toPart, w.toPart])
-      # lo nu ciska gi'e xruti tcidu .i le gismu cu pamoi
+      # lo nu ciska gi'e xruti tcidu
+      #   .i le gismu cu pamoi
       check ($head).tanruRead == some(head.withStemShared)  # lo nu ciska gi'e xruti tcidu
-      check ($final).tanruRead == some(final)  # lo nu ciska gi'e xruti tcidu .i le gismu cu romoi
+      # le gismu cu romoi
+      check ($final).tanruRead == some(final)  # lo nu ciska gi'e xruti tcidu
 
 
   test "Every short rafsi of list reads as its word, before gismu and after":
@@ -1056,12 +1188,14 @@ suite "Internal: Laws":
     for w in WORDS_CMAVO:  # ro lo sovo cmavo .e ro rafsi
       for one in w.entry.rafsi:
         check joinRafsi([one, "zbasu"]).tanruRead ==
-            # ja'i `CLL 4.6` lo rafsi be lo cmavo cu sinxa le cmavo .i le rafsi cu pamoi
+            # ja'i `CLL 4.6` lo rafsi be lo cmavo cu sinxa le cmavo
+            #   .i le rafsi cu pamoi
             some(Tanru(parts: @[w.toPart, zbasu]))  # `CLL 4.6`
         if one.form.get notin FORMS_FINAL: continue
         check joinRafsi(["zba", one]).tanruRead ==
-            # ja'i `CLL 4.6` ji'a le rafsi cu romoi .i lo liste cu dunda lo cmene le rafsi .i lo
-            #   lerfu cu jdice
+            # ja'i `CLL 4.6` ji'a le rafsi cu romoi
+            #   .i lo liste cu dunda lo cmene le rafsi
+            #   .i lo lerfu cu jdice
             some(Tanru(parts: @[zbasu, w.toPart]))  # `CLL 4.6`
         inc count_final_cmavo
     # le bandu cu zgana lo rafsi be lo cmavo be'o poi fanmo lo valsi
@@ -1081,7 +1215,8 @@ suite "Internal: Laws":
         lowest = min(lowest, rafsi.toPieces.score)
         found_rendering = found_rendering or text == $tanru
       check found_rendering  # le se ciska cu cmima lo se ciska valsi poi `CLL 4.11` cu curmi ke'a
-      # lo cmalu traji namcu pe lo se ciska valsi .i lo mintu namcu cu se curmi to `CLL 4.12` toi
+      # lo cmalu traji namcu pe lo se ciska valsi
+      #   .i lo mintu namcu cu se curmi to `CLL 4.12` toi
       check ($tanru).scoreRead == some(lowest)  # `CLL 4.12`
       inc count_lowest
     check count_lowest >= FLOOR_LOWEST  # le bandu cu ralte so'e le mupli
@@ -1093,7 +1228,8 @@ suite "Internal: Laws":
       # ja'i `CLL 4.12` le cipra cu karbi `$` lo mulno sisku to `IX.2` toi
       check $tanru == tanru.renderExhaustive  # `CLL 4.12`
       inc count
-    # `SAMPLES_CMAVO` cu klani lo tanru poi lo tsiju cu jdice ke'a .i su'o valsi cu cmavo
+    # `SAMPLES_CMAVO` cu klani lo tanru poi lo tsiju cu jdice ke'a
+    #   .i su'o valsi cu cmavo
     for tanru in tanruCmavo():
       # ja'i `CLL 4.12` le cipra cu karbi `$` lo mulno sisku to `IX.2` toi
       check $tanru == tanru.renderExhaustive  # `CLL 4.12`
@@ -1103,7 +1239,8 @@ suite "Internal: Laws":
       let reading = joinRafsi(rafsi).readWord
       if not reading.is_word: continue
       let rendered = $reading.tanru
-      # ja'i `CLL 4.12` .i su'o le pagbu cu se vasru no liste
+      # ja'i `CLL 4.12`
+      #   .i su'o le pagbu cu se vasru no liste
       check rendered == reading.tanru.renderExhaustive  # `CLL 4.12`
       if rendered.isBrokenFirst: inc count_broken
       inc count
@@ -1166,19 +1303,22 @@ suite "Internal: Laws":
 
 
   test "Rendering keeps first of lowest where scores tie, and reads state of run of step 5":
-    # le tanru cu se zbasu .i lo namcu cu mintu bu'u le pamoi stuzi
+    # le tanru cu se zbasu
+    #   .i lo namcu cu mintu bu'u le pamoi stuzi
     let tie_first = toTanru("condi+zmadu")
     # ja'i `CLL 4.12` re se ciska valsi cu ponse lo mintu namcu
     check "cnomau".scoreRead == "coizma".scoreRead  # `CLL 4.12`
     # ja'i `CLL 4.12` le pamoi poi ponse lo cmalu traji namcu to `IX.2` toi
     check $tie_first == tie_first.renderExhaustive  # `CLL 4.12`
-    # le tanru cu se zbasu .i lo namcu cu mintu bu'u lo stuzi poi se lidne le pamoi stuzi
+    # le tanru cu se zbasu
+    #   .i lo namcu cu mintu bu'u lo stuzi poi se lidne le pamoi stuzi
     let tie_later = toTanru("cevni+fenra+trixe+toldi")
     # ja'i `CLL 4.12` re se ciska valsi cu ponse lo mintu namcu
     check "ceirferti'etoldi".scoreRead == "ceirfe'arixtoldi".scoreRead  # `CLL 4.12`
     # ja'i `CLL 4.12` le pamoi poi ponse lo cmalu traji namcu to `IX.2` toi
     check $tie_later == tie_later.renderExhaustive  # `CLL 4.12`
-    let run = toTanru("snuji+vitci+cidja")  # le tanru cu se zbasu .i lo tcini be lo porsi cu jdice
+    # lo tcini be lo porsi cu jdice
+    let run = toTanru("snuji+vitci+cidja")  # le tanru cu se zbasu
     check run.choicesTanru.searchExhaustive(as_stateless = true).first !=
         # ja'i `CLL 4.11 step 5` lo sisku poi na pilno lo tcini cu cuxna lo drata
         run.choicesTanru.searchLowest  # `CLL 4.11 step 5`
@@ -1219,9 +1359,10 @@ suite "Internal: Laws":
         check text.kindRead == some(Kind.Gismu)  # ja'i `CLL 4.4` lo tarmi po'o cu zbasu lo gismu
         check text.tanruRead == some(Tanru(parts: @[
           if listed.isSome: listed.get.toPart else: unlisted(text)
-        ]))  # lo liste cu dunda lo cmene le valsi .i ja le pagbu cu ralte lo lerfu
+        ]))  # ga lo liste cu dunda lo cmene le valsi gi le pagbu cu ralte lo lerfu
         if listed.isSome: inc count_listed else: inc count_unlisted
-    # lo javni be lo nu stali .i ro gismu pe lo liste cu se facki pa roi
+    # lo javni be lo nu stali
+    #   .i ro gismu pe lo liste cu se facki pa roi
     check count_listed == WORDS_GISMU.len  # lo javni be lo nu stali
     check count_unlisted > 0  # le se cipra cu vasru lo lerpoi poi no liste cu vasru ke'a
 
@@ -1235,7 +1376,8 @@ suite "Internal: Laws":
       # ja'i `CLL 4.11` lo tarmi .e lo lerfu jorne po'o
       check reading.is_word and reading.kind == Kind.Lujvo  # `CLL 4.11`
       if not reading.is_word: continue
-      # lo nu fendi cu fatne lo nu jmina .iju lo liste cu dunda le rafsi lo valsi
+      # lo nu fendi cu fatne lo nu jmina
+      #   .iju lo liste cu dunda le rafsi lo valsi
       check reading.pieces.mapIt(it.rafsi) == rafsi  # lo nu fendi cu fatne lo nu jmina
       # lo liste cu dunda lo valsi ro lo pagbu poi le liste cu ka'e dunda lo valsi ke'a
       check reading.tanru.parts == rafsi.mapIt(it.partNamed)  # le liste cu dunda lo cmene ro pagbu
@@ -1254,7 +1396,8 @@ suite "Internal: Laws":
       let reading = text.readWord
       if not reading.is_word or reading.kind notin {Kind.Fuhivla, Kind.Cmene}: continue
       if reading.kind == Kind.Fuhivla:
-        # ja'i `CLL 4.3` lo zunsna remei cu zvati le mu lerfu poi krasi .i lo karsna cu romoi
+        # ja'i `CLL 4.3` lo zunsna remei cu zvati le mu lerfu poi krasi
+        #   .i lo karsna cu romoi
         check text.isShapeBrivla  # `CLL 4.3`
         check not text.isShapeGismu  # ja'i `CLL 4.7` le valsi cu na gismu
         inc count_fuhivla

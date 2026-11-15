@@ -1,9 +1,9 @@
 ## rapli zbasu lo zunsna gunma pe `CLL 3` gi'e cipra lo du'u `clusters.nim` cu mapti le se zbasu
-##   .i lo se cipra cu du le paze zunsna .i se ki'u bo ro zunsna remei .e ro zunsna cimei cu se
-##     liste to `Article IX.3` toi
+##   .i lo se cipra cu du le paze zunsna
+##   .i se ki'u bo ro zunsna remei .e ro zunsna cimei cu se liste to `Article IX.3` toi
 ##   .i le vi cipra cu rapli cusku le javni ja'i lo se ciska pe `CLL` gi'e na pilno lo liste poi
-##     `clusters.nim` cu zbasu ke'a .i se ki'u bo le cipra cu cipra lo nu zbasu le liste kei gi'e na
-##     rapli le nu zbasu
+##     `clusters.nim` cu zbasu ke'a
+##   .i se ki'u bo le cipra cu cipra lo nu zbasu le liste kei gi'e na rapli le nu zbasu
 
 {.experimental: "strictFuncs".}
 
@@ -20,7 +20,8 @@ const
   VOICED = "bdgjvz"  ## lo voksa zunsna pe le liste pe `CLL 3.6`
   UNVOICED = "cfkpstx"  ## lo na'e voksa zunsna pe le liste pe `CLL 3.6`
   LUT_UNVOICED_BY_VOICED = [('b', 'p'), ('d', 't'), ('g', 'k'), ('v', 'f'), ('j', 'c'), ('z', 's')]
-    ## lo linji be le liste pe `CLL 3.6` .i lo voksa zunsna cu pamoi
+    ## lo linji be le liste pe `CLL 3.6`
+    ##   .i lo voksa zunsna cu pamoi
 
 
 func unvoiced(c: char): char =
@@ -56,7 +57,8 @@ suite "Chapter 3":
     check isPairPermissible('f', 'l') and isPairPermissible('v', 'l')  # `CLL 3.6`
     # ja'i `CLL 3.6` zoi gy. ls .gy. .e zoi gy. lz .gy. cu se curmi
     check isPairPermissible('l', 's') and isPairPermissible('l', 'z')  # `CLL 3.6`
-    # `CLL 3.6` .e `Example 3.8` .i `y` cu fendi zoi gy. mz .gy. pe zoi gy. djeimyz .gy.
+    # `CLL 3.6` .e `Example 3.8`
+    #   .i `y` cu fendi zoi gy. mz .gy. pe zoi gy. djeimyz .gy.
     check not isPairPermissible('m', 'z')  # `CLL 3.6`
     # le vomoi javni pe `CLL 3.6` cu cusku zoi gy. mz .gy. po'o gi'e no roi cusku zoi gy. zm .gy.
     check isPairPermissible('z', 'm')  # `CLL 3.6`
@@ -81,7 +83,8 @@ suite "Chapter 3":
     # ja'i `CLL 3.7` lo fatne be lo nibli na jetnu
     check isPairInitial('c', 'n') and not isPairInitial('j', 'n')  # `CLL 3.7`
     for pair in ["bl", "cf", "dj", "jb", "sf", "tc", "xr", "zv"]:
-      # le liste pe `CLL 3.7` .i ro linji be le liste cu vasru pa le remei
+      # le liste pe `CLL 3.7`
+      #   .i ro linji be le liste cu vasru pa le remei
       check isPairInitial(pair[0], pair[1])  # `CLL 3.7`
     for a in ORDER_CONSONANTS:
       for b in ORDER_CONSONANTS:

@@ -1,5 +1,6 @@
-## tcidu la lojban. ja'i lo javni pe la'o gy. CLL .gy. po'o .i tcidu lo lerfu .e ro klesi be lo
-##   valsi .e lo rafsi .e lo tanru .e lo porsi be lo valsi .e lo se ciska
+## tcidu la lojban. ja'i lo javni pe la'o gy. CLL .gy. po'o
+##   .i tcidu lo lerfu .e ro klesi be lo valsi .e lo rafsi .e lo tanru .e lo porsi be lo valsi .e lo
+##     se ciska
 ##   .i le vi datnyvei cu ralju samtci pagbu gi'e rapli benji lo pagbu be ro samtci pagbu be'o poi
 ##     lo pilno cu ka'e pilno ke'a ku'o ta'i lo porsi be lo nu lo tcidu cu cilre le se casnu
 ##
@@ -42,33 +43,35 @@
 ##   |               | lo jalge cu mintu lo se tcidu be le mulno se ciska    |                  |
 ##   |---------------|-------------------------------------------------------|------------------|
 ##
-##   lo porsi be lo nu zbasu lo klesi ca lo nu fanva cu du di'e
-##     .i `EntryGismu` cu lidne `LIST_GISMU`
-##     .i `Selmaho` cu lidne `EntryCmavo`
-##     .i `EntryCmavo` cu lidne `LIST_CMAVO`
-##     .i `LIST_GISMU` cu lidne `Word`
-##     .i `Word` cu lidne `Part`
-##     .i `Part` cu lidne `Tanru`
-##     .i `Places` .e `Word` cu lidne `Link`
-##     .i `Link` .e `Part` cu lidne `TanruUnit`
-##     .i `Pause` .e `Reading` cu lidne `Occurrence`
-##     .i `Occurrence` cu lidne `ReadingStream`
-##     .i `Selmaho` .e `Reading` cu lidne `Terminal`
-##     .i `Node` cu lidne `ReadingGrammar`
-##     .i `Occurrence` .e `Terminal` cu lidne `Unit`
-##     .i `Unit` .e `Node` cu lidne `ReadingText`
-##     .i `Unit` .e `Node` cu lidne `ReadingMarked`
-##     .i `ReadingMarked` .e `Terminal` cu lidne `ReadingParts`
-##     .i `Selmaho` .e `Terminal` cu lidne `ReaderLive`
-##     .i `NodeNif` .e `Terminal` cu lidne `MergeNif`
-##   .i lo liste cu du lo datni poi lo minde po'u `nim r tools/build.nim lists` cu ciska ke'a .i
-##     `Word` cu kuspe ro liste cmima pe le gismu liste .i se ki'u bo lo korbi be `Word` cu se krasi
-##     le liste .i no namcu cu re roi se ciska to `Article II.5` toi
-##   .i le ralju samtci pagbu cu benji no liste .i lo pilno poi djica ro liste cmima cu cpacu
-##     `lists/gismu` .a `lists/cmavo` .i `dictionary` cu tcidu pa liste cmima pe pa valsi .i le
-##     gismu liste cu ralte lo valsi .e lo rafsi gi'e ralte no drata .i le cmavo liste cu ralte lo
-##     valsi .e lo selma'o gi'e ralte no drata .i `lojban_tagger` cu ralte lo glico pagbu be ro
-##     liste be'o .e le mulno ke lujvo liste
+## ni'o lo porsi be lo nu zbasu lo klesi ca lo nu fanva cu du di'e
+##   .i `EntryGismu` cu lidne `LIST_GISMU`
+##   .i `Selmaho` cu lidne `EntryCmavo`
+##   .i `EntryCmavo` cu lidne `LIST_CMAVO`
+##   .i `LIST_GISMU` cu lidne `Word`
+##   .i `Word` cu lidne `Part`
+##   .i `Part` cu lidne `Tanru`
+##   .i `Places` .e `Word` cu lidne `Link`
+##   .i `Link` .e `Part` cu lidne `TanruUnit`
+##   .i `Pause` .e `Reading` cu lidne `Occurrence`
+##   .i `Occurrence` cu lidne `ReadingStream`
+##   .i `Selmaho` .e `Reading` cu lidne `Terminal`
+##   .i `Node` cu lidne `ReadingGrammar`
+##   .i `Occurrence` .e `Terminal` cu lidne `Unit`
+##   .i `Unit` .e `Node` cu lidne `ReadingText`
+##   .i `Unit` .e `Node` cu lidne `ReadingMarked`
+##   .i `ReadingMarked` .e `Terminal` cu lidne `ReadingParts`
+##   .i `Selmaho` .e `Terminal` cu lidne `ReaderLive`
+##   .i `NodeNif` .e `Terminal` cu lidne `MergeNif`
+##   .i lo liste cu du lo datni poi lo minde po'u `nim r tools/build.nim lists` cu ciska ke'a
+##   .i `Word` cu kuspe ro liste cmima pe le gismu liste
+##   .i se ki'u bo lo korbi be `Word` cu se krasi le liste
+##   .i no namcu cu re roi se ciska to `Article II.5` toi
+##   .i le ralju samtci pagbu cu benji no liste
+##   .i lo pilno poi djica ro liste cmima cu cpacu `lists/gismu` .a `lists/cmavo`
+##   .i `dictionary` cu tcidu pa liste cmima pe pa valsi
+##   .i le gismu liste cu ralte lo valsi .e lo rafsi gi'e ralte no drata
+##   .i le cmavo liste cu ralte lo valsi .e lo selma'o gi'e ralte no drata
+##   .i `lojban_tagger` cu ralte lo glico pagbu be ro liste be'o .e le mulno ke lujvo liste
 
 {.experimental: "strictFuncs".}
 

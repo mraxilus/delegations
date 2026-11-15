@@ -2,10 +2,11 @@
 ##   .i le prosa cu du ro prosa pagbu pe le ci vreji ge'u .e ro pinka pe le samtci .e le papri ja'i
 ##     `#818` .e `D1 a` .e `D2 b` .e `D3 a` .e `D4 a`
 ##   .i le datnyvei cu du lo datnyvei poi la'o gy. git .gy. cu ralte ke'a ku'o .e lo datnyvei poi
-##     la'o gy. git .gy. na ralte ke'a zi'e poi no javni be lo nu na jundi cu cmene ke'a .i lo cipra
-##     pe la'o gy. curator .gy. cu tcidu le datnyvei ta'i di'u
-##   .i `reader_prose.nim` cu tcidu ro se ciska .i le cipra pagbu poi se lidne le vi pinka cu cipra
-##     le javni pe `reader_prose.nim` sepi'o lo se ciska poi se finti le cipra pagbu
+##     la'o gy. git .gy. na ralte ke'a zi'e poi no javni be lo nu na jundi cu cmene ke'a
+##   .i lo cipra pe la'o gy. curator .gy. cu tcidu le datnyvei ta'i di'u
+##   .i `reader_prose.nim` cu tcidu ro se ciska
+##   .i le cipra pagbu poi se lidne le vi pinka cu cipra le javni pe `reader_prose.nim` sepi'o lo se
+##     ciska poi se finti le cipra pagbu
 
 {.experimental: "strictFuncs".}
 
@@ -21,20 +22,21 @@ const
   DIRECTORY_PROJECT = currentSourcePath().parentDir.parentDir.parentDir
     ## le genja be le vi se gunka
   RECORDS = ["README.md", "PROVENANCE.md", "GLOSSARY.md"]
-    ## le vreji poi `english.nim` cu tcidu ke'a .i ro le vreji cu zvati le genja be le vi se gunka
+    ## le vreji poi `english.nim` cu tcidu ke'a
+    ##   .i ro le vreji cu zvati le genja be le vi se gunka
   EXTENSIONS_SOURCE = [".nim", ".nimble", ".html"]
     ## lo klesi be lo datnyvei poi le cipra be lo gadri cu tcidu lo pinka pe ke'a ne'i le vi se
     ##   gunka
   COUNT_TEXTS_LEAST = 5000
-    ## le klani be lo se ciska poi le cipra cu tcidu ke'a cu na mleca le vi namcu .i se ki'u bo le
-    ##   cipra cu fliba va'o lo nu le tcidu cu tcidu so'u se ciska
+    ## le klani be lo se ciska poi le cipra cu tcidu ke'a cu na mleca le vi namcu
+    ##   .i se ki'u bo le cipra cu fliba va'o lo nu le tcidu cu tcidu so'u se ciska
   COUNT_ERRORS_SHOWN = 40
     ## le klani be lo srera poi le fliba cipra pagbu cu ciska ke'a cu na zmadu le vi namcu
 
 
 proc pathsProse(): seq[string] =
-  ## dunda ro datnyvei pe le vi se gunka poi le cipra cu tcidu lo prosa pe ke'a .i ro cmene be lo
-  ##   datnyvei cu se krasi le genja be le vi se gunka
+  ## dunda ro datnyvei pe le vi se gunka poi le cipra cu tcidu lo prosa pe ke'a
+  ##   .i ro cmene be lo datnyvei cu se krasi le genja be le vi se gunka
   let (output, code) = execCmdEx("git -C " & DIRECTORY_PROJECT.quoteShell &
     " ls-files --cached --others --exclude-standard .")
   doAssert code == 0, "git lists files of project; got `" & output & "`."
@@ -43,8 +45,8 @@ proc pathsProse(): seq[string] =
 
 
 func textsRead(path, content: string): seq[string] =
-  ## dunda lo se ciska poi le genturfa'i cu tcidu ke'a ne'i ro prosa pagbu pe le datnyvei .i ro
-  ##   porsi be lo canlu lerfu cu se basti pa canlu lerfu
+  ## dunda lo se ciska poi le genturfa'i cu tcidu ke'a ne'i ro prosa pagbu pe le datnyvei
+  ##   .i ro porsi be lo canlu lerfu cu se basti pa canlu lerfu
   for text in texts(path, content): result.add text.text.splitWhitespace.join(" ")
 
 

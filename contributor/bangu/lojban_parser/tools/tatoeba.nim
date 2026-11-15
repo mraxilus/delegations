@@ -1,38 +1,51 @@
 ## cuxna lo stodi mupli be fi lo lojbo jufra pe la'o gy. Tatoeba .gy. be'o poi jarco so'e javni pe
-##   la'o gy. CLL .gy. .i ciska le mupli ta'i pa samtci datnyvei pe la'o gy. Nim .gy. zi'e poi ponse
-##   lo klesi gi'e vasru lo se jdice be le genturfa'i bei ro le jufra .i `build.nim` cu pilno le vi
-##   datnyvei
-##   .i tcidu `jbo_sentences_detailed.tsv` .i le datnyvei cu se cpacu fi le vreji poi `URL_TATOEBA`
-##     cu benji ke'a ku'o ta'i lo nu kalri le vreji .i le datnyvei cu se stodi sinxa sepi'o la'o gy.
-##     SHA-256 .gy. ta'i lo nu `lists.nim` cu stodi sinxa lo liste .i ciska
-##     `tests/sample_tatoeba/sentences.nim` .e `NOTICE.md` noi lamji `sentences.nim`
+##   la'o gy. CLL .gy.
+##   .i ciska le mupli ta'i pa samtci datnyvei pe la'o gy. Nim .gy. zi'e poi ponse lo klesi gi'e
+##     vasru lo se jdice be le genturfa'i bei ro le jufra
+##   .i `build.nim` cu pilno le vi datnyvei
+##   .i tcidu `jbo_sentences_detailed.tsv`
+##   .i le datnyvei cu se cpacu fi le vreji poi `URL_TATOEBA` cu benji ke'a ku'o ta'i lo nu kalri le
+##     vreji
+##   .i le datnyvei cu se stodi sinxa sepi'o la'o gy. SHA-256 .gy. ta'i lo nu `lists.nim` cu stodi
+##     sinxa lo liste
+##   .i ciska `tests/sample_tatoeba/sentences.nim` .e `NOTICE.md` noi lamji `sentences.nim`
 ##
-##   .i la'o gy. Architect .gy. cu jdice `D4 c` bu'u `#819` .i le mupli cu stodi gi'e no roi se
-##     jdice lo tsiju .i ki'u bo le vreji cu zenba po'o .i le mupli cu vrici .i se ki'u bo le jufra
-##     pe le mupli cu jarco ro javni be fi la'o gy. CLL .gy. be'o poi le jufra cu ka'e jarco ke'a
-##   .i lo tcila cu se jarco lo se tcidu pe pa jufra .i lo tarmi be ro javni poi se cmene gi'e zvati
-##     le tricu cu tcila .i lo tarmi cu du le javni jo'u lo tcita be lo panzi be le javni .i va'o lo
-##     nu pa tcita cu rapli kei le tcita cu zvati le tarmi pa roi .i ro gerna valsi cu tcila .i ro
-##     gerna stura poi se skicu `CLL 19.16` gi'e vasru su'o re valsi cu tcila .i ro klesi be lo
-##     valsi be'o .e ro tarmi be lo rafsi be'o .e ro lerfu jorne pe lo lujvo cu tcila .i lo sinxa pe
-##     lo porsi be lo valsi cu tcila .i le sinxa cu du lo denpa jo'u lo nu basna kei jo'u lo lerfu
-##     po'u slaka bu .i lo valsi poi no pagbu cu vasru ke'a cu tcila mu'u lo vimcu valsi .i lo se
-##     ciska poi se sitna cu tcila .i lo nu to'e curmi kei jo'u le javni be le nu to'e curmi cu
+## ni'o la'o gy. Architect .gy. cu jdice `D4 c` bu'u `#819`
+##   .i le mupli cu stodi gi'e no roi se jdice lo tsiju
+##   .i ki'u bo le vreji cu zenba po'o
+##   .i le mupli cu vrici
+##   .i se ki'u bo le jufra pe le mupli cu jarco ro javni be fi la'o gy. CLL .gy. be'o poi le jufra
+##     cu ka'e jarco ke'a
+##   .i lo tcila cu se jarco lo se tcidu pe pa jufra
+##   .i lo tarmi be ro javni poi se cmene gi'e zvati le tricu cu tcila
+##   .i lo tarmi cu du le javni jo'u lo tcita be lo panzi be le javni
+##   .i va'o lo nu pa tcita cu rapli kei le tcita cu zvati le tarmi pa roi
+##   .i ro gerna valsi cu tcila
+##   .i ro gerna stura poi se skicu `CLL 19.16` gi'e vasru su'o re valsi cu tcila
+##   .i ro klesi be lo valsi be'o .e ro tarmi be lo rafsi be'o .e ro lerfu jorne pe lo lujvo cu
 ##     tcila
-##   .i le mupli cu gacri le tcila ta'i lo nu ro roi cuxna lo traji .i lo jufra poi traji lo ka ce'u
-##     jmina so'i tcila poi na pu se jarco cu lidne ro drata jufra .i va'o lo nu dunli kei lo jufra
-##     poi tordu zmadu cu se cuxna .i ba bo va'o lo nu dunli kei lo jufra poi ckini lo mleca namcu
-##     cu se cuxna .i le gacri cu mulno va'o lo nu no jufra cu jmina su'o tcila
-##     .i jdima fa lo nu le mupli na du lo gacri poi traji lo ka ce'u cmalu .i lo nu facki le gacri
-##       poi traji lo ka ce'u cmalu cu cmima la'o gy. NP-hard .gy. .i ku'i lo ni le mupli cu barda
-##       kei cu na zmadu lo pilji be lo ni le traji cmalu gacri cu barda kei bei lo dugri
-##   .i lo se jdice cu du lo se dunda be le genturfa'i ca lo nu ciska .i va'o lo nu le jufra cu se
-##     tcidu kei le se jdice cu kunti .i va'o lo drata le se jdice cu du lo nu to'e curmi kei jo'u
-##     le javni mu'u `Grammar sumti-6 97` .i le cipra cu fliba ca ro nu pa se jdice cu cenba
-##   .i lo minde po'u `tatoeba` cu cusku lo te kancu be ro se jdice ne'i le mulno vreji .i
-##     `PROVENANCE.md` cu cusku le te kancu
-##   .i jdima fa lo nu le minde cu tcidu ro jufra sepi'o le genturfa'i pa roi .i se ki'u bo le nu le
-##     minde cu zukte kei cu mentu li ji'i pa
+##   .i lo sinxa pe lo porsi be lo valsi cu tcila
+##   .i le sinxa cu du lo denpa jo'u lo nu basna kei jo'u lo lerfu po'u slaka bu
+##   .i lo valsi poi no pagbu cu vasru ke'a cu tcila mu'u lo vimcu valsi
+##   .i lo se ciska poi se sitna cu tcila
+##   .i lo nu to'e curmi kei jo'u le javni be le nu to'e curmi cu tcila
+##   .i le mupli cu gacri le tcila ta'i lo nu ro roi cuxna lo traji
+##   .i lo jufra poi traji lo ka ce'u jmina so'i tcila poi na pu se jarco cu lidne ro drata jufra
+##   .i va'o lo nu dunli kei lo jufra poi tordu zmadu cu se cuxna
+##   .i ba bo va'o lo nu dunli kei lo jufra poi ckini lo mleca namcu cu se cuxna
+##   .i le gacri cu mulno va'o lo nu no jufra cu jmina su'o tcila
+##   .i jdima fa lo nu le mupli na du lo gacri poi traji lo ka ce'u cmalu
+##   .i lo nu facki le gacri poi traji lo ka ce'u cmalu cu cmima la'o gy. NP-hard .gy.
+##   .i ku'i lo ni le mupli cu barda kei cu na zmadu lo pilji be lo ni le traji cmalu gacri cu barda
+##     kei bei lo dugri
+##   .i lo se jdice cu du lo se dunda be le genturfa'i ca lo nu ciska
+##   .i va'o lo nu le jufra cu se tcidu kei le se jdice cu kunti
+##   .i va'o lo drata le se jdice cu du lo nu to'e curmi kei jo'u le javni mu'u `Grammar sumti-6 97`
+##   .i le cipra cu fliba ca ro nu pa se jdice cu cenba
+##   .i lo minde po'u `tatoeba` cu cusku lo te kancu be ro se jdice ne'i le mulno vreji
+##   .i `PROVENANCE.md` cu cusku le te kancu
+##   .i jdima fa lo nu le minde cu tcidu ro jufra sepi'o le genturfa'i pa roi
+##   .i se ki'u bo le nu le minde cu zukte kei cu mentu li ji'i pa
 
 {.experimental: "strictFuncs".}
 
@@ -44,25 +57,26 @@ import ./literals
 
 type
   Sentence* = object
-    ## pa jufra pe le vreji .i le klesi cu vasru lo namcu .e lo se ciska .e lo ponse .e lo se tcidu
-    ##   pe le jufra
+    ## pa jufra pe le vreji
+    ##   .i le klesi cu vasru lo namcu .e lo se ciska .e lo ponse .e lo se tcidu pe le jufra
     id*: int  ## lo namcu poi la'o gy. Tatoeba .gy. cu dunda ke'a le jufra
     text*: string  ## le jufra ta'i lo nu le vreji cu ciska le jufra
     owner*: string
-      ## lo cmene be lo ponse be le jufra .i va'o lo nu no da ponse le jufra kei le cmene cu kunti
+      ## lo cmene be lo ponse be le jufra
+      ##   .i va'o lo nu no da ponse le jufra kei le cmene cu kunti
     verdict*: string
-      ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i cu dunda ke'a .i va'o lo nu le
-      ##   jufra cu se tcidu kei le se jdice cu kunti
+      ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i cu dunda ke'a
+      ##   .i va'o lo nu le jufra cu se tcidu kei le se jdice cu kunti
     features*: HashSet[string]  ## lo tcila poi le se tcidu cu jarco ke'a
 
   Sample* = object
-    ## lo se dunda be le vreji .i le klesi cu vasru lo jufra poi se cuxna ku'o .e lo se jdice ne'i
-    ##   le mulno vreji
+    ## lo se dunda be le vreji
+    ##   .i le klesi cu vasru lo jufra poi se cuxna ku'o .e lo se jdice ne'i le mulno vreji
     sentences*: seq[Sentence]  ## lo jufra pe le mupli ta'i lo porsi be lo namcu
     count_features*: int  ## lo te kancu be lo tcila poi su'o jufra pe le mupli cu jarco ke'a
     counts*: CountTable[string]
-      ## lo te kancu be ro se jdice ne'i le mulno vreji .i le se jdice be lo jufra poi se tcidu cu
-      ##   kunti
+      ## lo te kancu be ro se jdice ne'i le mulno vreji
+      ##   .i le se jdice be lo jufra poi se tcidu cu kunti
     count_sentences*: int  ## lo te kancu be lo jufra pe le mulno vreji
     digest*: string  ## la'o gy. SHA-256 .gy. pe le vreji poi se tcidu
 
@@ -76,28 +90,31 @@ const
     ## lo judri poi le vreji cu se cpacu fi ke'a
   URL_LICENCE* = "https://creativecommons.org/licenses/by/2.0/fr/"  ## le curmi javni pe le jufra
   URL_SENTENCE* = "https://tatoeba.org/en/sentences/show/"
-    ## le judri be lo papri be pa jufra .i le namcu pe le jufra cu se jmina fi le fanmo be le judri
+    ## le judri be lo papri be pa jufra
+    ##   .i le namcu pe le jufra cu se jmina fi le fanmo be le judri
   PATH_SENTENCES* = "tests/sample_tatoeba/sentences.nim"
     ## lo datnyvei poi le mupli cu se ciska fi ke'a
   PATH_NOTICE_TATOEBA* = "tests/sample_tatoeba/NOTICE.md"
-    ## lo notci be le curmi javni .i le notci cu lamji le samtci datnyvei
+    ## lo notci be le curmi javni
+    ##   .i le notci cu lamji le samtci datnyvei
   OWNER_NONE = "\\N"  ## lo sinxa poi le vreji cu ciska ke'a va'o lo nu no da ponse le jufra
   WORDS_CONSTRUCT = 3
-    ## lo te kancu be lo valsi pe pa gerna stura .i lo tcila cu kancu su'e le te kancu
+    ## lo te kancu be lo valsi pe pa gerna stura
+    ##   .i lo tcila cu kancu su'e le te kancu
   INDENT_TEXT = 12
     ## lo stuzi poi lo se ciska pe lo clani jufra cu cfari bu'u ke'a ba `text: ` pe le datni pagbu
   INDENT_CONTINUED = 10
-    ## lo stuzi poi ro linji pe le se ciska zi'e poi na pamoi cu cfari bu'u ke'a .i le stuzi cu
-    ##   zmadu le cfari stuzi be le linji pe le datni pagbu fo li vo
+    ## lo stuzi poi ro linji pe le se ciska zi'e poi na pamoi cu cfari bu'u ke'a
+    ##   .i le stuzi cu zmadu le cfari stuzi be le linji pe le datni pagbu fo li vo
 
 
 
-#[ lo tcila ]#
+#[ ni'o ni'o ni'o lo tcila ]#
 
 func addShapes(features: var HashSet[string], node: Node, units: openArray[Unit]) =
-  ## jmina lo tarmi be ro javni poi se cmene gi'e cnita `node` .i le tarmi cu du le javni jo'u lo
-  ##   tcita be lo panzi be le javni .i va'o lo nu pa tcita cu rapli kei le tcita cu zvati le tarmi
-  ##   pa roi
+  ## jmina lo tarmi be ro javni poi se cmene gi'e cnita `node`
+  ##   .i le tarmi cu du le javni jo'u lo tcita be lo panzi be le javni
+  ##   .i va'o lo nu pa tcita cu rapli kei le tcita cu zvati le tarmi pa roi
   if node.is_terminal: return
   var labels: seq[string]
   for child in node.children:
@@ -138,7 +155,7 @@ func reading*(text: string): tuple[verdict: string, features: HashSet[string]] =
 
 
 
-#[ lo nu tcidu ]#
+#[ ni'o ni'o ni'o lo nu tcidu ]#
 
 proc readSentences*(path: string): tuple[sentences: seq[Sentence], digest: string] =
   ## tcidu ro jufra pe le vreji poi zvati `path` ku'o sepi'o le genturfa'i gi'e dunda lo sinxa namcu
@@ -164,14 +181,15 @@ proc readSentences*(path: string): tuple[sentences: seq[Sentence], digest: strin
 
 func isBefore(a, b: Sentence): bool =
   ## jdice lo du'u xu kau `a` cu lidne `b` va'o lo nu le re jufra cu jmina lo mintu te kancu be lo
-  ##   tcila .i lo jufra poi tordu zmadu cu lidne .i va'o lo nu dunli kei lo jufra poi ckini lo
-  ##   mleca namcu cu lidne
+  ##   tcila
+  ##   .i lo jufra poi tordu zmadu cu lidne
+  ##   .i va'o lo nu dunli kei lo jufra poi ckini lo mleca namcu cu lidne
   (a.text.len, a.id) < (b.text.len, b.id)
 
 
 func toSample*(sentences: openArray[Sentence], digest: string): Sample =
-  ## cuxna lo mupli sepi'o lo nu gacri lo tcila ta'i lo nu ro roi cuxna lo traji .i ji'a kancu ro se
-  ##   jdice ne'i ro jufra
+  ## cuxna lo mupli sepi'o lo nu gacri lo tcila ta'i lo nu ro roi cuxna lo traji
+  ##   .i ji'a kancu ro se jdice ne'i ro jufra
   var
     reached: HashSet[string]
     is_chosen = newSeq[bool](sentences.len)
@@ -198,11 +216,12 @@ func toSample*(sentences: openArray[Sentence], digest: string): Sample =
 
 
 
-#[ lo nu ciska ]#
+#[ ni'o ni'o ni'o lo nu ciska ]#
 
 func linesSentence(sentence: Sentence): seq[string] =
-  ## ciska pa jufra ta'i lo zbasu fancu .i va'o lo nu mapti kei le jufra cu se ciska fi pa linji .i
-  ##   va'o lo drata ro datni pagbu cu se ciska fi pa linji
+  ## ciska pa jufra ta'i lo zbasu fancu
+  ##   .i va'o lo nu mapti kei le jufra cu se ciska fi pa linji
+  ##   .i va'o lo drata ro datni pagbu cu se ciska fi pa linji
   let
     id = "id: " & $sentence.id
     owner = "owner: " & sentence.owner.toLiteral
@@ -212,8 +231,8 @@ func linesSentence(sentence: Sentence): seq[string] =
   if line.isFit: return @[line]
   result.add "    SentenceTatoeba("
   result.add "      " & id & ","
-  # ro pagbu cu mapti le pamoi linji .i lo se ciska pe le pamoi linji cu cfari bu'u lo stuzi poi
-  #   traji lo ka darno
+  # ro pagbu cu mapti le pamoi linji
+  #   .i lo se ciska pe le pamoi linji cu cfari bu'u lo stuzi poi traji lo ka darno
   let text = sentence.text.linesLiteral(INDENT_TEXT, ",")
   result.add "      text: " & text[0].strip(trailing = false)
   for line in text[1 .. ^1]: result.add repeat(' ', INDENT_CONTINUED) & line.strip(trailing = false)
@@ -225,36 +244,37 @@ func linesSentence(sentence: Sentence): seq[string] =
 func toModuleSentences*(sample: Sample): string =
   ## ciska le mupli ta'i lo se ciska be fi le datnyvei poi se ralte
   var lines = @[
-    "## ralte lo stodi mupli be fi lo lojbo jufra pe la'o gy. Tatoeba .gy. mu'i le cipra .i le",
-    "##   mupli cu vasru lo se jdice be le genturfa'i bei ro le jufra",
+    "## ralte lo stodi mupli be fi lo lojbo jufra pe la'o gy. Tatoeba .gy. mu'i le cipra",
+    "##   .i le mupli cu vasru lo se jdice be le genturfa'i bei ro le jufra",
     "##   .i lo minde po'u `nim r tools/build.nim tatoeba <export>` cu ciska le vi datnyvei ra'i",
-    "##   `jbo_sentences_detailed.tsv` pe le vreji pe la'o gy. Tatoeba .gy. zi'e pe de'i",
-    "##   `2026-10-31` .i lo sinxa namcu be `jbo_sentences_detailed.tsv` cu du",
-    "##   zoi ky. SHA-256 `" & sample.digest[0..31] & "`",
-    "##   `" & sample.digest[32 .. ^1] & "` .ky. .i lo nu xance galfi le vi datnyvei cu na drani",
+    "##     `jbo_sentences_detailed.tsv` pe le vreji pe la'o gy. Tatoeba .gy. zi'e pe de'i " &
+    "`2026-10-31`",
+    "##   .i lo sinxa namcu be `jbo_sentences_detailed.tsv` cu du zoi ky. SHA-256",
+    "##     `" & sample.digest[0..31] & "` `" & sample.digest[32 .. ^1] & "` .ky.",
+    "##   .i lo nu xance galfi le vi datnyvei cu na drani",
     "##   .i lo nu galfi le vi datnyvei cu nitcu lo nu rapli pilno le minde",
-    "##   .i lo jufra pe la'o gy. Tatoeba .gy. cu se javni la'o gy. CC BY 2.0 FR .gy. .i",
-    "##     `NOTICE.md` noi lamji le vi datnyvei cu cusku lo du'u le datnyveiste poi vasru le vi",
+    "##   .i lo jufra pe la'o gy. Tatoeba .gy. cu se javni la'o gy. CC BY 2.0 FR .gy.",
+    "##   .i `NOTICE.md` noi lamji le vi datnyvei cu cusku lo du'u le datnyveiste poi vasru le vi",
     "##     datnyvei cu se javni le curmi javni gi'e no roi se javni le curmi javni pe la'o gy.",
     "##     delegations .gy.",
-    "##   .i le mupli cu gacri lo tcila pe lo se tcidu ta'i lo nu ro roi cuxna lo traji .i",
-    "##     `tools/tatoeba.nim` cu skicu le tcila",
+    "##   .i le mupli cu gacri lo tcila pe lo se tcidu ta'i lo nu ro roi cuxna lo traji",
+    "##   .i `tools/tatoeba.nim` cu skicu le tcila",
     "",
     "{.experimental: \"strictFuncs\".}",
     "",
     "",
     "type SentenceTatoeba* = object",
-    "  ## pa jufra pe le mupli .i le klesi cu vasru lo namcu .e lo se ciska .e lo ponse .e " &
-    "lo se jdice",
+    "  ## pa jufra pe le mupli",
+    "  ##   .i le klesi cu vasru lo namcu .e lo se ciska .e lo ponse .e lo se jdice",
     "  id* {.requiresInit.}: int",
     "    ## lo namcu poi la'o gy. Tatoeba .gy. cu dunda ke'a le jufra ku'o mu'u `599308`",
     "  text* {.requiresInit.}: string  ## le jufra ta'i lo nu le vreji cu ciska le jufra",
     "  owner* {.requiresInit.}: string",
-    "    ## lo cmene be lo ponse be le jufra .i va'o lo nu no da ponse le jufra kei le cmene " &
-    "cu kunti",
+    "    ## lo cmene be lo ponse be le jufra",
+    "    ##   .i va'o lo nu no da ponse le jufra kei le cmene cu kunti",
     "  verdict* {.requiresInit.}: string",
-    "    ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i pu dunda ke'a .i va'o lo nu",
-    "    ##   le jufra cu se tcidu kei le se jdice cu kunti",
+    "    ## lo nu to'e curmi kei jo'u lo javni vu'o poi le genturfa'i pu dunda ke'a",
+    "    ##   .i va'o lo nu le jufra cu se tcidu kei le se jdice cu kunti",
     "",
     "",
     "const",
@@ -269,14 +289,15 @@ func toModuleSentences*(sample: Sample): string =
 
 
 func toKeyDictionary(text: string): (string, string) =
-  ## dunda lo ckiku be lo vlaste porsi .i lo ka barda lerfu kei .e `_` cu na'e vajni .i va'o lo nu
-  ##   dunli kei lo lerfu namcu cu jdice to `Article X.10` toi
+  ## dunda lo ckiku be lo vlaste porsi
+  ##   .i lo ka barda lerfu kei .e `_` cu na'e vajni
+  ##   .i va'o lo nu dunli kei lo lerfu namcu cu jdice to `Article X.10` toi
   (text.toLowerAscii.replace("_", ""), text)
 
 
 func toNotice*(sample: Sample): string =
-  ## ciska lo notci be le curmi javni .i le notci cu cusku ro nu galfi kei gi'e sitna ro ponse be lo
-  ##   jufra
+  ## ciska lo notci be le curmi javni
+  ##   .i le notci cu cusku ro nu galfi kei gi'e sitna ro ponse be lo jufra
   var lines = @[
     "# Notice",
     "",

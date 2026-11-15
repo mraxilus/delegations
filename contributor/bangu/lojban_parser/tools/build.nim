@@ -1,5 +1,6 @@
-## spuda ro minde pe le vi se gunka .i le minde cu se pilno sepi'o
-##   `nim r tools/build.nim <command>` bu'u le vasru pe le vi se gunka
+## spuda ro minde pe le vi se gunka
+##   .i le minde cu se pilno sepi'o `nim r tools/build.nim <command>` bu'u le vasru pe le vi se
+##     gunka
 ##
 ##   |----------------|----------------------------------------------------------------------------|
 ##   | lo minde       | lo jalge                                                                   |
@@ -46,25 +47,30 @@
 ##   | `system`       | cusku lo bakfu poi lo minde .e lo cipra cu nitcu ke'a                      |
 ##   |                | .i ro linji cu cusku pa bakfu                                              |
 ##   |----------------|----------------------------------------------------------------------------|
-##   le jitro samtci cu sisti sepi'o li no va'o lo nu le minde cu mulno .i le jitro samtci cu
-##     sisti sepi'o li pa va'o lo nu le minde cu fliba .a lo nu lo liste cu frica .a lo nu pa
-##     cipra cu fliba .i le jitro samtci cu sisti sepi'o li re va'o lo nu lo nu pilno cu srera
+## ni'o le jitro samtci cu sisti sepi'o li no va'o lo nu le minde cu mulno
+##   .i le jitro samtci cu sisti sepi'o li pa va'o lo nu le minde cu fliba .a lo nu lo liste cu
+##     frica .a lo nu pa cipra cu fliba
+##   .i le jitro samtci cu sisti sepi'o li re va'o lo nu lo nu pilno cu srera
 ##
-##   .i lo minde po'u `lists` .e `head` pe `lojban_tagger/tools/build.nim` cu tunba le vi minde
-##     gi'e pilno le mintu tadji ne'i lo liste pe `lojban_tagger` gi'e tcidu le mintu krasi ja'i le
-##     mintu stodi to `tools/lists.nim` toi .i no jitro samtci cu dunda pa minde lo drata samtci
-##     .i se ki'u bo le tadji cu zvati ro le re jitro samtci to `II.9` toi .i va'o lo nu le drata
-##     na se cipra kei lo nu cikre pa le re jitro samtci cu na mulno
+## ni'o lo minde po'u `lists` .e `head` pe `lojban_tagger/tools/build.nim` cu tunba le vi minde gi'e
+##   pilno le mintu tadji ne'i lo liste pe `lojban_tagger` gi'e tcidu le mintu krasi ja'i le mintu
+##   stodi to `tools/lists.nim` toi
+##   .i no jitro samtci cu dunda pa minde lo drata samtci
+##   .i se ki'u bo le tadji cu zvati ro le re jitro samtci to `II.9` toi
+##   .i va'o lo nu le drata na se cipra kei lo nu cikre pa le re jitro samtci cu na mulno
 ##   .i `CONTRIBUTOR.md` cu cusku lo minde po'u `head` tezu'e lo nu cipra lo bartu se sitna poi
-##     cenba .i lo bakfu cu ka'e bevri lo cnino liste ca lo nu no da cu se punji vi .i no nu jmina
-##     cu denpa lo minde po'u `head` .i lo minde po'u `head` cu tcidu `lujvo.txt` tezu'e lo sinxa
-##     namcu po'o .i ki'u bo lo cipra cu tcidu `lujvo.txt` ta'i lo drata se ciska gi'e zbasu no
-##     datnyvei fi `lujvo.txt`
+##     cenba
+##   .i lo bakfu cu ka'e bevri lo cnino liste ca lo nu no da cu se punji vi
+##   .i no nu jmina cu denpa lo minde po'u `head`
+##   .i lo minde po'u `head` cu tcidu `lujvo.txt` tezu'e lo sinxa namcu po'o
+##   .i ki'u bo lo cipra cu tcidu `lujvo.txt` ta'i lo drata se ciska gi'e zbasu no datnyvei fi
+##     `lujvo.txt`
 ##   .i se to'e cuxna fa lo nu tcidu lo liste fi le vasru pe le bakfu ca lo nu fanva kei noi rinka
-##     lo nu ro nu zbasu cu nitcu le bakfu .i lo liste poi se punji cu sabji ro nu zbasu .i lo
-##     minde po'u `head` cu zgana lo krasi be le liste
-##   .i jdima fa lo nu le jitro samtci cu se pilno bu'u le vasru pe le vi se gunka .i ki'u bo ro
-##     judri vi cu se krasi le vasru
+##     lo nu ro nu zbasu cu nitcu le bakfu
+##   .i lo liste poi se punji cu sabji ro nu zbasu
+##   .i lo minde po'u `head` cu zgana lo krasi be le liste
+##   .i jdima fa lo nu le jitro samtci cu se pilno bu'u le vasru pe le vi se gunka
+##   .i ki'u bo ro judri vi cu se krasi le vasru
 
 {.experimental: "strictFuncs".}
 
@@ -93,16 +99,18 @@ const
     ("unzip", "unpacker of archive of Chromium, which store serves and verb `drive` drives"),
     ("libbrotli1", "decoder of `woff2`, which `koch drive` reads font faces of page through"),
   ]
-    ## lo bakfu poi lo minde cu nitcu ke'a .i ro le bakfu cu kansa lo krinu to `Article II.8` toi
+    ## lo bakfu poi lo minde cu nitcu ke'a
+    ##   .i ro le bakfu cu kansa lo krinu to `Article II.8` toi
     ##   .i lo minde po'u `system` cu cusku lo cmene po'o
 
 
 
-#[ lo minde ]#
+#[ ni'o ni'o ni'o lo minde ]#
 
 proc refuseDigests(sources: openArray[(string, string, string)], module = "lists.nim"): int =
-  ## cusku ro krasi poi lo sinxa namcu pe ke'a cu cliva lo stodi pe ke'a .i ro krasi cu se dunda
-  ##   ta'i lo cmene .e lo sinxa namcu .e lo stodi .i kancu lo se cusku
+  ## cusku ro krasi poi lo sinxa namcu pe ke'a cu cliva lo stodi pe ke'a
+  ##   .i ro krasi cu se dunda ta'i lo cmene .e lo sinxa namcu .e lo stodi
+  ##   .i kancu lo se cusku
   for (name, digest, pin) in sources:
     if digest == pin: continue
     stderr.writeLine "Source moved from its pin in `tools/" & module & "`; read diff, then " &
@@ -128,8 +136,9 @@ proc writeLists(): int =
 
 
 proc compareLists(): int =
-  ## karbi ro sinxa namcu lo stodi pe le sinxa namcu .i karbi le re datnyvei poi se zbasu ku'o le
-  ##   re datnyvei poi se punji .i jarco li pa va'o lo nu su'o da cu frica
+  ## karbi ro sinxa namcu lo stodi pe le sinxa namcu
+  ##   .i karbi le re datnyvei poi se zbasu ku'o le re datnyvei poi se punji
+  ##   .i jarco li pa va'o lo nu su'o da cu frica
   let
     gismu = readSource("gismu.txt")
     lujvo = readSource("lujvo.txt")
@@ -152,8 +161,8 @@ proc compareLists(): int =
 
 
 proc writeCll(directory: string): int =
-  ## ciska lo mupli .e lo notci vu'o pe la'o gy. CLL 1.1 .gy. va'o lo nu lo sinxa namcu pe le
-  ##   papri poi se tcidu cu mapti lo stodi pe vo'a
+  ## ciska lo mupli .e lo notci vu'o pe la'o gy. CLL 1.1 .gy. va'o lo nu lo sinxa namcu pe le papri
+  ##   poi se tcidu cu mapti lo stodi pe vo'a
   let book = readBook(directory)
   if refuseDigests([("pages of CLL 1.1", book.digest, DIGEST_CLL)], "cll.nim") > 0: return 1
   createDir(PATH_EXAMPLES.parentDir)
@@ -164,9 +173,9 @@ proc writeCll(directory: string): int =
 
 
 proc writeTatoeba(path: string): int =
-  ## ciska le stodi mupli pe la'o gy. Tatoeba .gy. ge'u .e lo notci pe le mupli va'o lo nu lo
-  ##   sinxa namcu pe le vreji cu mapti lo stodi pe vo'a .i kancu lo jufra pe le mulno vreji ja'i ro
-  ##   se jdice gi'e cusku lo namcu
+  ## ciska le stodi mupli pe la'o gy. Tatoeba .gy. ge'u .e lo notci pe le mupli va'o lo nu lo sinxa
+  ##   namcu pe le vreji cu mapti lo stodi pe vo'a
+  ##   .i kancu lo jufra pe le mulno vreji ja'i ro se jdice gi'e cusku lo namcu
   let (sentences, digest) = readSentences(path)
   if refuseDigests([("export of Tatoeba", digest, DIGEST_TATOEBA)], "tatoeba.nim") > 0: return 1
   let sample = sentences.toSample(digest)
@@ -201,8 +210,8 @@ proc writeWikipedia(directory: string): int =
 
 
 proc writeTranslations(): int =
-  ## cpacu ro xe fanva gi'e karbi lo sinxa namcu pe le xe fanva lo stodi pe le sinxa namcu .i kancu
-  ##   lo pagbu be le xe fanva ja'i ro se jdice gi'e cusku lo namcu
+  ## cpacu ro xe fanva gi'e karbi lo sinxa namcu pe le xe fanva lo stodi pe le sinxa namcu
+  ##   .i kancu lo pagbu be le xe fanva ja'i ro se jdice gi'e cusku lo namcu
   let root = getCurrentDir()
   for translation in TRANSLATIONS:
     let digest = translation.fetchTranslation(root)
@@ -220,14 +229,14 @@ proc writeTranslations(): int =
 
 
 proc writeJavascript(): int =
-  ## fanva `PATH_BRIDGE` jo'u le mulno genturfa'i fu `PATH_SCRIPT` gi'e cusku lo judri .e lo ni
-  ##   le datnyvei cu barda
-  ##   .i le fanva cu du le fanva poi pu fanva le vi jitro samtci .i le jitro samtci no roi pilno lo
-  ##     drata fanva po'u `nim` poi `PATH` cu vasru ke'a
+  ## fanva `PATH_BRIDGE` jo'u le mulno genturfa'i fu `PATH_SCRIPT` gi'e cusku lo judri .e lo ni le
+  ##   datnyvei cu barda
+  ##   .i le fanva cu du le fanva poi pu fanva le vi jitro samtci
+  ##   .i le jitro samtci no roi pilno lo drata fanva po'u `nim` poi `PATH` cu vasru ke'a
   ##   .i `-d:release` cu ralte ro cipra gi'e vimcu lo vreji be lo nu pilno lo fancu kei be'o .e lo
-  ##     vreji be lo linji to `config/nim.cfg` pe le se stodi fanva toi .i lo cipra pe
-  ##     `tests/browser/` cu se fanva sepi'o `-d:release` ji'a .i se ki'u bo le cipra cu cipra le se
-  ##     zbasu poi se benji lo pilno
+  ##     vreji be lo linji to `config/nim.cfg` pe le se stodi fanva toi
+  ##   .i lo cipra pe `tests/browser/` cu se fanva sepi'o `-d:release` ji'a
+  ##   .i se ki'u bo le cipra cu cipra le se zbasu poi se benji lo pilno
   ##   .i se to'e cuxna fa `-d:danger` noi vimcu ro cipra be lo korbi .e lo se kuspe le se zbasu poi
   ##     lo pilno cu pilno ke'a
   if compileJs(PATH_BRIDGE, PATH_SCRIPT) != 0: return 1
@@ -236,11 +245,12 @@ proc writeJavascript(): int =
 
 
 proc main(): int =
-  ## gasnu le minde poi le pamoi sumti cu cmene ke'a .i lo minde po'u `cll` .e `tatoeba` .e
-  ##   `wikipedia` cu cpacu lo judri ta'i le remoi sumti
+  ## gasnu le minde poi le pamoi sumti cu cmene ke'a
+  ##   .i lo minde po'u `cll` .e `tatoeba` .e `wikipedia` cu cpacu lo judri ta'i le remoi sumti
   ##   .i le pagbu poi cuxna lo minde cu se krasi `case paramStr(1)` ta'i lo nu la'o gy. koch .gy.
-  ##     cu tcidu le pagbu .i la'o gy. koch .gy. cu cpacu `drive` .e `head` .e `system` le pagbu
-  ##     po'o to `test_driver.nim` toi
+  ##     cu tcidu le pagbu
+  ##   .i la'o gy. koch .gy. cu cpacu `drive` .e `head` .e `system` le pagbu po'o to
+  ##     `test_driver.nim` toi
   if paramCount() == 2 and paramStr(1) == "cll": return writeCll(paramStr(2))
   if paramCount() == 2 and paramStr(1) == "tatoeba": return writeTatoeba(paramStr(2))
   if paramCount() == 2 and paramStr(1) == "wikipedia": return writeWikipedia(paramStr(2))

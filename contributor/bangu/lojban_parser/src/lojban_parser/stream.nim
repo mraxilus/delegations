@@ -1,107 +1,141 @@
-## tcidu lo porsi be lo valsi pe lo lojbo se ciska .i ro valsi cu ponse lo denpa poi lidne le valsi
-##   ku'o .e lo nu basna poi le se ciska cu sinxa ke'a
+## tcidu lo porsi be lo valsi pe lo lojbo se ciska
+##   .i ro valsi cu ponse lo denpa poi lidne le valsi ku'o .e lo nu basna poi le se ciska cu sinxa
+##     ke'a
 ##
 ##   |-----------------|--------------------------------------------------------------------------|
 ##   | lo samtci cmene | lo smuni                                                                 |
 ##   |-----------------|--------------------------------------------------------------------------|
-##   | `Pause`         | lo lidne denpa .i le denpa na zvati gi'a se sinxa denpa bu gi'a se facki |
-##   | `Occurrence`    | lo valsi pe le porsi .i lo stuzi .e lo lerfu .e lo denpa .e lo nu basna  |
+##   | `Pause`         | lo lidne denpa                                                           |
+##   |                 | .i le denpa na zvati gi'a se sinxa denpa bu gi'a se facki                |
+##   | `Occurrence`    | lo valsi pe le porsi                                                     |
+##   |                 | .i lo stuzi .e lo lerfu .e lo denpa .e lo nu basna                       |
 ##   | `ReadingStream` | lo porsi be lo valsi be'o .a lo nu to'e curmi poi ponse lo stuzi         |
 ##   | `readStream`    | tcidu lo valsi pe le se ciska ja'i `CLL` gi'a to'e curmi le se ciska     |
 ##   |-----------------|--------------------------------------------------------------------------|
 ##
-##   .i lo sinxa pe lo porsi be lo valsi cu du di'e to `CLL 3.3` .e `CLL 3.9` toi .i lo kunti lerfu
-##     .e denpa bu cu fendi lo valsi .i denpa bu cu sinxa lo denpa .i slaka bu cu fendi lo slaka
-##     ne'i lo valsi .i lo barda lerfu cu sinxa lo slaka poi se basna
+## ni'o lo sinxa pe lo porsi be lo valsi cu du di'e to `CLL 3.3` .e `CLL 3.9` toi
+##   .i lo kunti lerfu .e denpa bu cu fendi lo valsi
+##   .i denpa bu cu sinxa lo denpa
+##   .i slaka bu cu fendi lo slaka ne'i lo valsi
+##   .i lo barda lerfu cu sinxa lo slaka poi se basna
 ##   .i le genturfa'i cu tcidu pa valsi fi lo se ciska valsi poi zvati lo jbini be lo sinxa ku'o
-##     va'o lo nu le lerfu .e slaka bu .e lo barda lerfu pe le se ciska valsi cu curmi .i va'o lo
-##     drata le genturfa'i cu fendi le se ciska valsi fi lo valsi .i `Architect` cu jdice di'u bu'u
-##     `#811` .i ki'u bo `CLL 4.1` cu cusku lo du'u lo sance pe lo porsi be lo valsi cu se fendi fo
-##     pa tadji po'o .i `CLL 3.3` cu curmi ji'a lo nu lo drani se ciska cu claxu denpa bu
-##     .i lo ve fendi poi se cuxna cu nitcu lo mleca traji denpa poi lo javni cu nitcu ke'a zi'e poi
-##       le se ciska na ciska ke'a .i se ki'u bo le genturfa'i cu facki lo denpa poi le se ciska na
-##       ciska ke'a ku'o va'o po'o lo nu no drata se tcidu be fi le lerfu cu drani .i le genturfa'i
-##       cu tcidu `lo sei` fi `losei` gi'e no roi tcidu `lo se .i` fi `losei`
-##     .i le genturfa'i cu to'e curmi ta'i `Split` lo se ciska valsi poi su'o re ve fendi be fi ke'a
-##       cu nitcu lo mleca traji denpa .i mupli fa `iai` noi ka'e se fendi fi `.i.ai` .a `.ia.i` .i
-##       le genturfa'i cu to'e curmi lo se ciska valsi poi claxu lo ve fendi ku'o ta'i lo nu
-##       `readWord` cu to'e curmi le lerfu
-##     .i lo nu basna cu cuxna fi lo ve fendi ta'i lo nu tavla .i lo se ciska valsi poi claxu lo
-##       barda lerfu cu basna lo slaka po'o poi lidne lo romoi slaka pe le se ciska valsi .i lo se
-##       ciska valsi poi vasru lo barda lerfu cu basna ro slaka poi le barda lerfu cu sinxa ke'a .i
-##       `Architect` cu jdice di'u to `D3 a` bu'u `#811` toi .i se ki'u bo ro brivla cu vasru lo
-##       barda lerfu gi'a fanmo lo slaka poi se kancu mu'i lo nu basna .i le genturfa'i cu tcidu
-##       `mi broda` fi `mibroda` gi'e tcidu `mibro da` fi `MIbroda` gi'e tcidu `e speranto` fi
-##       `.esperanto` to `Example 19.78` toi gi'e tcidu pa fu'ivla fi `klamaku`
-##     .i slaka bu cu fendi lo slaka ta'i lo nu `CLL 3.5` cu fendi lo karsna sepi'o slaka bu .i se
-##       ki'u bo lo barda lerfu cu basna lo slaka poi slaka bu cu sinxa ke'a .i le genturfa'i cu
-##       tcidu pa cmene poi basna `ii` ku'o fi `me,IIn.` .i ja'i `CLL 3.3` slaka bu cu sinxa zoi gy.
-##       no pause between .gy. bu'u lo jbini be lo slaka .i se ki'u bo no ve fendi cu punji lo denpa
-##       lo stuzi be slaka bu .i le genturfa'i cu tcidu zo kai fi `ka,i` gi'e to'e curmi le lerfu
-##       po'u slaka bu .i le genturfa'i cu no roi tcidu lo'u ka .i le'u fi `ka,i` .i ba bo le
-##       genturfa'i cu jdice fi ro slaka bu sepi'o lo valsi poi se cuxna
-##       .i jdima fa lo nu va'o lo nu lo barda lerfu cu zvati kei slaka bu cu ka'e rinka lo nu le se
-##         ciska valsi cu se fendi .i le genturfa'i cu tcidu `crarcia e` fi `crarcI,ae` .i ku'i le
-##         genturfa'i cu tcidu `crarciae` fi `crarcIae` .i va'o lo nu no barda lerfu cu zvati kei
-##         slaka bu cu galfi no valsi
-##     .i lo cmene cu romoi ne'i lo se ciska valsi .i ro cmene cu lidne lo denpa to le remoi javni
-##       pe `CLL 4.9` toi .i lo pagbu be lo cmene cu pagbu pa valsi poi claxu lo denpa to `CLL 4.8`
-##       toi .i se ki'u bo lo zunsna poi le cmene cu lidne ke'a ne'i le se ciska valsi cu pagbu le
-##       cmene
-##       .i se ki'u bo le genturfa'i na tcidu `br .i` fi `bri` .i ku'i le genturfa'i cu tcidu pa
-##         cmene fi `br` noi sepli .i ji'a le genturfa'i cu tcidu pa cmene fi `rl` to `CLL 3.4` toi
-##         .i le genturfa'i cu tcidu lo'u se cusku le'u fi `secusku` gi'e no roi tcidu `secusk .u`
-##         fi `secusku`
-##     .i jdima fa lo nu `CLL` cu dunda no tadji be lo nu fendi to `CLL 4.1` toi .i se ki'u bo le
-##       tadji be lo nu fendi cu se finti le genturfa'i gi'e se zbasu fi lo javni pe `CLL 3.9` .e
-##       `CLL 4.2` .e `CLL 4.7` .e `CLL 4.8` .e `CLL 4.9`
-##       .i ro da poi valsi zo'u le tadji cu troci da .e ro valsi poi lidne da .i se ki'u bo lo
-##         temci cu simsa lo tenfa be lo clani be le se ciska valsi be'o bei li ci .i di'u se kanpe
-##         .i lo valsi poi se ciska ta'i lo nu sepli cu cliva le tadji
-##   .i lo denpa cu mapti `CLL 4.9` .i denpa bu cu sinxa lo denpa .i va'o lo nu lo javni cu nitcu lo
-##     denpa poi le se ciska na ciska ke'a kei le genturfa'i cu facki le denpa ki'u lo nu `CLL 3.3`
-##     cu cusku lo du'u denpa bu cu na'e bilga sinxa lo denpa poi lo drani se ciska cu nibli ke'a
-##     .i se ki'u bo le genturfa'i cu to'e curmi no se ciska ki'u lo denpa poi le se ciska na ciska
-##       ke'a .i ro valsi cu ponse lo denpa poi lidne le valsi
-##     .i le javni poi le genturfa'i cu pilno ke'a cu du di'e .i le remoi javni cu srana lo valsi
-##       poi se fanmo lo zunsna .i le cimoi javni cu srana lo valsi poi se krasi lo karsna .a `y` .i
-##       le vomoi javni cu srana lo cmene .i lo valsi poi lidne le cmene cu drata zo la .e zo lai .e
-##       zo la'i .e zo doi .i le mumoi javni .e `CLL 4.2` cu srana lo romoi slaka poi se basna gi'e
-##       lidne lo brivla .a lo pamoi slaka poi se basna .i le xamoi javni cu srana lo valsi poi se
-##       tarmi `Cy` gi'e lidne lo valsi poi na se tarmi `Cy` .i ji'a zo y cu lidne lo denpa to
-##       `CLL 4.2` toi .i lo pamoi valsi cu se lidne lo denpa va'o lo nu le cimoi javni .a le vomoi
-##       javni cu nitcu le denpa
-##     .i le zemoi javni cu nitcu lo nu lo se ciska poi zo zoi .a zo la'o cu sitna ke'a cu se lidne
-##       pa denpa gi'e lidne pa denpa .i le se ciska cu mulno gi'e du pa valsi pe le porsi .i le
-##       valsi cu se tcita `Foreign` .i le se ciska cu fanmo pu lo se ciska valsi poi rapli ciska le
-##       korbi valsi .i le genturfa'i cu to'e curmi lo se ciska poi vasru le korbi valsi ku'o ta'i
-##       `Quotation` .i ki'u bo `CLL 19.10` cu skicu le korbi valsi fo zoi gy. not found .gy. ne'i
-##       le se ciska .i se ki'u bo le genturfa'i cu to'e curmi `zoi gy. gyrations .gy.` .i `CLL` cu
-##       cusku ji'a lo du'u `Example 19.50` na drani va'o lo nu se ciska
-##   .i lo nu sitna poi zo zo .a zo lo'u cu zbasu ke'a cu sitna lo valsi .i zo lo'u cu sitna lo
-##     valsi poi lidne zo le'u .i se ki'u bo zo zoi .e zo fa'o cu galfi no da va'o lo nu le re valsi
-##     cu zvati le nu sitna to `CLL 19.9` .e `CLL 19.10` toi .i le porsi cu sisti ba zo fa'o poi no
-##     nu sitna cu vasru ke'a to `CLL 19.15` toi
-##   .i slaka bu cu no roi bilga to `CLL 3.3` toi .i se ki'u bo lo valsi cu se tcidu va'o lo nu ri
-##     claxu slaka bu .i slaka bu cu fendi lo slaka .i se ki'u bo ro pagbu poi slaka bu cu korbi
-##     ke'a cu vasru lo karsna .a `y` .a lo zunsna poi ka'e slaka to `CLL 3.4` toi .i le pagbu cu se
-##     fanmo slaka bu .a zoi gy. ' .gy. .a lo korbi be le valsi .i ne'i lo cmavo .e lo gismu .e lo
-##     lujvo re lamji karsna cu pagbu pa karsna gunma noi slaka to `CLL 3.4` toi .i se ki'u bo le
-##     genturfa'i cu to'e curmi slaka bu poi zvati lo jbini be le re karsna .i ja'i `CLL 3.5` .e
-##     `CLL 4.7` lo cmene .e lo fu'ivla cu ka'e fendi re karsna sepi'o slaka bu
-##     .i jdima fa lo nu slaka bu poi lamji `l` .a `m` .a `n` .a `r` cu ka'e rinka lo nu le zunsna
-##       cu slaka .i `CLL 3.4` cu curmi lo nu le zunsna cu slaka kei ja'i lo jicmu .i se ki'u bo le
-##       genturfa'i cu curmi lo nu le zunsna cu slaka
-##   .i lo barda lerfu cu sinxa lo nu basna to `CLL 3.1` .e `CLL 3.9` toi .i lo barda lerfu pe pa
-##     valsi cu cmima pa porsi poi pencu pa karsna .a pa karsna gunma .i le porsi cu vasru lo mulno
-##     slaka .a lo karsna po'o .i le genturfa'i na jdice lo zunsna pe le porsi .i lo brivla cu basna
-##     le slaka poi lidne le romoi slaka .i `y` .e lo zunsna poi slaka cu na se kancu .i ro slaka pe
-##     lo cmavo ja cmene cu ka'e se basna .i lo cmavo ja cmene cu ka'e claxu lo nu basna .i `y` no
-##     roi se basna .i le genturfa'i cu to'e curmi lo barda lerfu poi pencu no karsna mu'u `Mi` noi
-##     krasi pa jufra .i ki'u bo `CLL 4.8` cu pilno lo barda lerfu lo nu sinxa lo nu basna po'o
-##   .i lo stuzi be ro valsi cu du lo stuzi poi le valsi cu cfari bu'u ke'a ne'i le porsi .i lo
-##     stuzi be ro nu to'e curmi cu du lo stuzi poi le valsi .a le sinxa poi se to'e curmi cu cfari
-##     bu'u ke'a .i se ki'u bo lo pilno cu ka'e jarco le stuzi
+##     va'o lo nu le lerfu .e slaka bu .e lo barda lerfu pe le se ciska valsi cu curmi
+##   .i va'o lo drata le genturfa'i cu fendi le se ciska valsi fi lo valsi
+##   .i `Architect` cu jdice di'u bu'u `#811`
+##   .i ki'u bo `CLL 4.1` cu cusku lo du'u lo sance pe lo porsi be lo valsi cu se fendi fo pa tadji
+##     po'o
+##   .i `CLL 3.3` cu curmi ji'a lo nu lo drani se ciska cu claxu denpa bu
+##   .i lo ve fendi poi se cuxna cu nitcu lo mleca traji denpa poi lo javni cu nitcu ke'a zi'e poi
+##     le se ciska na ciska ke'a
+##   .i se ki'u bo le genturfa'i cu facki lo denpa poi le se ciska na ciska ke'a ku'o va'o po'o lo
+##     nu no drata se tcidu be fi le lerfu cu drani
+##   .i le genturfa'i cu tcidu `lo sei` fi `losei` gi'e no roi tcidu `lo se .i` fi `losei`
+##   .i le genturfa'i cu to'e curmi ta'i `Split` lo se ciska valsi poi su'o re ve fendi be fi ke'a
+##     cu nitcu lo mleca traji denpa
+##   .i mupli fa `iai` noi ka'e se fendi fi `.i.ai` .a `.ia.i`
+##   .i le genturfa'i cu to'e curmi lo se ciska valsi poi claxu lo ve fendi ku'o ta'i lo nu
+##     `readWord` cu to'e curmi le lerfu
+##   .i lo nu basna cu cuxna fi lo ve fendi ta'i lo nu tavla
+##   .i lo se ciska valsi poi claxu lo barda lerfu cu basna lo slaka po'o poi lidne lo romoi slaka
+##     pe le se ciska valsi
+##   .i lo se ciska valsi poi vasru lo barda lerfu cu basna ro slaka poi le barda lerfu cu sinxa
+##     ke'a
+##   .i `Architect` cu jdice di'u to `D3 a` bu'u `#811` toi
+##   .i se ki'u bo ro brivla cu vasru lo barda lerfu gi'a fanmo lo slaka poi se kancu mu'i lo nu
+##     basna
+##   .i le genturfa'i cu tcidu `mi broda` fi `mibroda` gi'e tcidu `mibro da` fi `MIbroda` gi'e tcidu
+##     `e speranto` fi `.esperanto` to `Example 19.78` toi gi'e tcidu pa fu'ivla fi `klamaku`
+##   .i slaka bu cu fendi lo slaka ta'i lo nu `CLL 3.5` cu fendi lo karsna sepi'o slaka bu
+##   .i se ki'u bo lo barda lerfu cu basna lo slaka poi slaka bu cu sinxa ke'a
+##   .i le genturfa'i cu tcidu pa cmene poi basna `ii` ku'o fi `me,IIn.`
+##   .i ja'i `CLL 3.3` slaka bu cu sinxa zoi gy. no pause between .gy. bu'u lo jbini be lo slaka
+##   .i se ki'u bo no ve fendi cu punji lo denpa lo stuzi be slaka bu
+##   .i le genturfa'i cu tcidu zo kai fi `ka,i` gi'e to'e curmi le lerfu po'u slaka bu
+##   .i le genturfa'i cu no roi tcidu lo'u ka .i le'u fi `ka,i`
+##   .i ba bo le genturfa'i cu jdice fi ro slaka bu sepi'o lo valsi poi se cuxna
+##   .i jdima fa lo nu va'o lo nu lo barda lerfu cu zvati kei slaka bu cu ka'e rinka lo nu le se
+##     ciska valsi cu se fendi
+##   .i le genturfa'i cu tcidu `crarcia e` fi `crarcI,ae`
+##   .i ku'i le genturfa'i cu tcidu `crarciae` fi `crarcIae`
+##   .i va'o lo nu no barda lerfu cu zvati kei slaka bu cu galfi no valsi
+##   .i lo cmene cu romoi ne'i lo se ciska valsi
+##   .i ro cmene cu lidne lo denpa to le remoi javni pe `CLL 4.9` toi
+##   .i lo pagbu be lo cmene cu pagbu pa valsi poi claxu lo denpa to `CLL 4.8` toi
+##   .i se ki'u bo lo zunsna poi le cmene cu lidne ke'a ne'i le se ciska valsi cu pagbu le cmene
+##   .i se ki'u bo le genturfa'i na tcidu `br .i` fi `bri`
+##   .i ku'i le genturfa'i cu tcidu pa cmene fi `br` noi sepli
+##   .i ji'a le genturfa'i cu tcidu pa cmene fi `rl` to `CLL 3.4` toi
+##   .i le genturfa'i cu tcidu lo'u se cusku le'u fi `secusku` gi'e no roi tcidu `secusk .u` fi
+##     `secusku`
+##   .i jdima fa lo nu `CLL` cu dunda no tadji be lo nu fendi to `CLL 4.1` toi
+##   .i se ki'u bo le tadji be lo nu fendi cu se finti le genturfa'i gi'e se zbasu fi lo javni pe
+##     `CLL 3.9` .e `CLL 4.2` .e `CLL 4.7` .e `CLL 4.8` .e `CLL 4.9`
+##   .i ro da poi valsi zo'u le tadji cu troci da .e ro valsi poi lidne da
+##   .i se ki'u bo lo temci cu simsa lo tenfa be lo clani be le se ciska valsi be'o bei li ci
+##   .i di'u se kanpe
+##   .i lo valsi poi se ciska ta'i lo nu sepli cu cliva le tadji
+##   .i lo denpa cu mapti `CLL 4.9`
+##   .i denpa bu cu sinxa lo denpa
+##   .i va'o lo nu lo javni cu nitcu lo denpa poi le se ciska na ciska ke'a kei le genturfa'i cu
+##     facki le denpa ki'u lo nu `CLL 3.3` cu cusku lo du'u denpa bu cu na'e bilga sinxa lo denpa
+##     poi lo drani se ciska cu nibli ke'a
+##   .i se ki'u bo le genturfa'i cu to'e curmi no se ciska ki'u lo denpa poi le se ciska na ciska
+##     ke'a
+##   .i ro valsi cu ponse lo denpa poi lidne le valsi
+##   .i le javni poi le genturfa'i cu pilno ke'a cu du di'e
+##   .i le remoi javni cu srana lo valsi poi se fanmo lo zunsna
+##   .i le cimoi javni cu srana lo valsi poi se krasi lo karsna .a `y`
+##   .i le vomoi javni cu srana lo cmene
+##   .i lo valsi poi lidne le cmene cu drata zo la .e zo lai .e zo la'i .e zo doi
+##   .i le mumoi javni .e `CLL 4.2` cu srana lo romoi slaka poi se basna gi'e lidne lo brivla .a lo
+##     pamoi slaka poi se basna
+##   .i le xamoi javni cu srana lo valsi poi se tarmi `Cy` gi'e lidne lo valsi poi na se tarmi `Cy`
+##   .i ji'a zo y cu lidne lo denpa to `CLL 4.2` toi
+##   .i lo pamoi valsi cu se lidne lo denpa va'o lo nu le cimoi javni .a le vomoi javni cu nitcu le
+##     denpa
+##   .i le zemoi javni cu nitcu lo nu lo se ciska poi zo zoi .a zo la'o cu sitna ke'a cu se lidne pa
+##     denpa gi'e lidne pa denpa
+##   .i le se ciska cu mulno gi'e du pa valsi pe le porsi
+##   .i le valsi cu se tcita `Foreign`
+##   .i le se ciska cu fanmo pu lo se ciska valsi poi rapli ciska le korbi valsi
+##   .i le genturfa'i cu to'e curmi lo se ciska poi vasru le korbi valsi ku'o ta'i `Quotation`
+##   .i ki'u bo `CLL 19.10` cu skicu le korbi valsi fo zoi gy. not found .gy. ne'i le se ciska
+##   .i se ki'u bo le genturfa'i cu to'e curmi `zoi gy. gyrations .gy.`
+##   .i `CLL` cu cusku ji'a lo du'u `Example 19.50` na drani va'o lo nu se ciska
+##   .i lo nu sitna poi zo zo .a zo lo'u cu zbasu ke'a cu sitna lo valsi
+##   .i zo lo'u cu sitna lo valsi poi lidne zo le'u
+##   .i se ki'u bo zo zoi .e zo fa'o cu galfi no da va'o lo nu le re valsi cu zvati le nu sitna to
+##     `CLL 19.9` .e `CLL 19.10` toi
+##   .i le porsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a to `CLL 19.15` toi
+##   .i slaka bu cu no roi bilga to `CLL 3.3` toi
+##   .i se ki'u bo lo valsi cu se tcidu va'o lo nu ri claxu slaka bu
+##   .i slaka bu cu fendi lo slaka
+##   .i se ki'u bo ro pagbu poi slaka bu cu korbi ke'a cu vasru lo karsna .a `y` .a lo zunsna poi
+##     ka'e slaka to `CLL 3.4` toi
+##   .i le pagbu cu se fanmo slaka bu .a zoi gy. ' .gy. .a lo korbi be le valsi
+##   .i ne'i lo cmavo .e lo gismu .e lo lujvo re lamji karsna cu pagbu pa karsna gunma noi slaka to
+##     `CLL 3.4` toi
+##   .i se ki'u bo le genturfa'i cu to'e curmi slaka bu poi zvati lo jbini be le re karsna
+##   .i ja'i `CLL 3.5` .e `CLL 4.7` lo cmene .e lo fu'ivla cu ka'e fendi re karsna sepi'o slaka bu
+##   .i jdima fa lo nu slaka bu poi lamji `l` .a `m` .a `n` .a `r` cu ka'e rinka lo nu le zunsna cu
+##     slaka
+##   .i `CLL 3.4` cu curmi lo nu le zunsna cu slaka kei ja'i lo jicmu
+##   .i se ki'u bo le genturfa'i cu curmi lo nu le zunsna cu slaka
+##   .i lo barda lerfu cu sinxa lo nu basna to `CLL 3.1` .e `CLL 3.9` toi
+##   .i lo barda lerfu pe pa valsi cu cmima pa porsi poi pencu pa karsna .a pa karsna gunma
+##   .i le porsi cu vasru lo mulno slaka .a lo karsna po'o
+##   .i le genturfa'i na jdice lo zunsna pe le porsi
+##   .i lo brivla cu basna le slaka poi lidne le romoi slaka
+##   .i `y` .e lo zunsna poi slaka cu na se kancu
+##   .i ro slaka pe lo cmavo ja cmene cu ka'e se basna
+##   .i lo cmavo ja cmene cu ka'e claxu lo nu basna
+##   .i `y` no roi se basna
+##   .i le genturfa'i cu to'e curmi lo barda lerfu poi pencu no karsna mu'u `Mi` noi krasi pa jufra
+##   .i ki'u bo `CLL 4.8` cu pilno lo barda lerfu lo nu sinxa lo nu basna po'o
+##   .i lo stuzi be ro valsi cu du lo stuzi poi le valsi cu cfari bu'u ke'a ne'i le porsi
+##   .i lo stuzi be ro nu to'e curmi cu du lo stuzi poi le valsi .a le sinxa poi se to'e curmi cu
+##     cfari bu'u ke'a
+##   .i se ki'u bo lo pilno cu ka'e jarco le stuzi
 
 {.experimental: "strictFuncs".}
 
@@ -113,90 +147,106 @@ import ./[clusters, forms, selmaho, tanru]
 type
   Pause* {.pure.} = enum  ## lo denpa poi lidne pa valsi pe lo porsi to `CLL 3.3` .e `CLL 4.9` toi
     Absent
-      ## denpa bu na zvati .i no javni pe `CLL 4.9` cu nitcu lo denpa .i se ki'u bo le valsi cu ka'e
-      ##   jorne
+      ## denpa bu na zvati
+      ##   .i no javni pe `CLL 4.9` cu nitcu lo denpa
+      ##   .i se ki'u bo le valsi cu ka'e jorne
     Written  ## denpa bu cu sinxa lo denpa
     Inferred
-      ## lo javni pe `CLL 4.9` cu nitcu lo denpa poi le se ciska na ciska ke'a .i se ki'u bo le
-      ##   genturfa'i cu facki le denpa to `CLL 3.3` toi
+      ## lo javni pe `CLL 4.9` cu nitcu lo denpa poi le se ciska na ciska ke'a
+      ##   .i se ki'u bo le genturfa'i cu facki le denpa to `CLL 3.3` toi
 
   Occurrence* = object
-    ## lo valsi pe lo porsi .i le valsi cu ponse lo stuzi .e lo lerfu .e lo denpa .e lo nu basna
+    ## lo valsi pe lo porsi
+    ##   .i le valsi cu ponse lo stuzi .e lo lerfu .e lo denpa .e lo nu basna
     start*: int  ## lo stuzi poi le valsi cu cfari bu'u ke'a ne'i le porsi
     finish*: int
-      ## lo stuzi poi se lidne le romoi lerfu pe le valsi .i le stuzi cu fanmo le valsi .i va'o lo
-      ##   nu zo zoi .a zo la'o cu sitna lo se ciska kei le stuzi cu se lidne le se ciska .i slaka
-      ##   bu poi zvati lo jbini be re valsi pe pa se ciska valsi cu zvati no le re valsi
+      ## lo stuzi poi se lidne le romoi lerfu pe le valsi
+      ##   .i le stuzi cu fanmo le valsi
+      ##   .i va'o lo nu zo zoi .a zo la'o cu sitna lo se ciska kei le stuzi cu se lidne le se ciska
+      ##   .i slaka bu poi zvati lo jbini be re valsi pe pa se ciska valsi cu zvati no le re valsi
     text*: string
-      ## lo lerfu pe le valsi ta'i lo ralju tarmi .i ro lerfu cu cmalu .i slaka bu cu se vimcu to
-      ##   `CLL 3.3` toi
+      ## lo lerfu pe le valsi ta'i lo ralju tarmi
+      ##   .i ro lerfu cu cmalu
+      ##   .i slaka bu cu se vimcu to `CLL 3.3` toi
     pause*: Pause  ## lo denpa poi lidne le valsi
     stress*: Option[int]
-      ## le slaka karsna poi lo barda lerfu cu sinxa lo nu basna be ke'a .i li no cu krasi lo nu
-      ##   kancu lo karsna .e `y` .e lo karsna gunma pe le valsi .i slaka bu cu fendi lo karsna .i
-      ##   no da va'o lo nu le se ciska cu sinxa no nu basna
+      ## le slaka karsna poi lo barda lerfu cu sinxa lo nu basna be ke'a
+      ##   .i li no cu krasi lo nu kancu lo karsna .e `y` .e lo karsna gunma pe le valsi
+      ##   .i slaka bu cu fendi lo karsna
+      ##   .i no da va'o lo nu le se ciska cu sinxa no nu basna
     breaks*: seq[int]
-      ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a ne'i le valsi .i le stuzi cu se porsi to
-      ##   `CLL 3.3` toi
+      ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a ne'i le valsi
+      ##   .i le stuzi cu se porsi to `CLL 3.3` toi
     reading*: Reading  ## le valsi ta'i lo nu `readWord` cu tcidu `text`
 
   ReadingStream* = object  ## lo jalge be lo nu tcidu lo valsi pe lo porsi
     case is_read*: bool
     of true:
       occurrences*: seq[Occurrence]
-        ## ro valsi pe le se ciska ta'i lo porsi .i no valsi cu zvati va'o lo nu le se ciska cu
-        ##   vasru lo sinxa po'o
+        ## ro valsi pe le se ciska ta'i lo porsi
+        ##   .i no valsi cu zvati va'o lo nu le se ciska cu vasru lo sinxa po'o
     of false:
       refusal*: Refusal  ## lo javni poi to'e curmi le porsi
       start*: int
         ## lo stuzi poi lo valsi .a lo sinxa poi se to'e curmi cu cfari bu'u ke'a ne'i le porsi
       detail*: string
         ## le datni pagbu cu du lo lerfu poi se to'e curmi .a lo tarmi poi `CLL 4.11` cu dunda ke'a
-        ##   ku'o .a re ve fendi .i ja le datni pagbu cu du lo korbi valsi pe zo zoi .i no valsi poi
-        ##   ciska le korbi valsi cu fanmo le se ciska .i lo jmive se ciska cu denpa le valsi .i
-        ##   va'o lo drata le datni pagbu cu kunti
+        ##   ku'o .a re ve fendi
+        ##   .i ja le datni pagbu cu du lo korbi valsi pe zo zoi
+        ##   .i no valsi poi ciska le korbi valsi cu fanmo le se ciska
+        ##   .i lo jmive se ciska cu denpa le valsi
+        ##   .i va'o lo drata le datni pagbu cu kunti
 
   Spelling = object  ## lo se ciska valsi poi lo sinxa pe ke'a cu se vimcu
     letters: string  ## lo lerfu ta'i lo ralju tarmi
     places: seq[int]  ## lo stuzi be ro lerfu ne'i le porsi
     capitals: seq[int]
-      ## lo stuzi be ro lerfu poi barda ne'i le se ciska valsi .i le stuzi cu se porsi
-    breaks: seq[int]  ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a .i le stuzi cu se porsi
-    commas: seq[int]  ## lo stuzi be ro slaka bu ne'i le porsi .i le stuzi cu se porsi ta'i `breaks`
+      ## lo stuzi be ro lerfu poi barda ne'i le se ciska valsi
+      ##   .i le stuzi cu se porsi
+    breaks: seq[int]  ## lo stuzi be ro lerfu poi slaka bu cu lidne ke'a to le stuzi cu se porsi toi
+    commas: seq[int]
+      ## lo stuzi be ro slaka bu ne'i le porsi
+      ##   .i le stuzi cu se porsi ta'i `breaks`
 
   Score = object
-    ## lo ve fendi poi le valsi cu fanmo ke'a .i lo mleca traji klani be lo denpa be'o .e lo klani
-    ##   be lo ve fendi poi mintu be'o .e lo valsi poi lidne le valsi
+    ## lo ve fendi poi le valsi cu fanmo ke'a
+    ##   .i lo mleca traji klani be lo denpa be'o .e lo klani be lo ve fendi poi mintu be'o .e lo
+    ##     valsi poi lidne le valsi
     pauses: int  ## lo mleca traji klani be lo denpa pe lo ve fendi poi le valsi cu fanmo ke'a
     ties: int
-      ## lo klani be lo ve fendi poi le valsi cu fanmo ke'a gi'e nitcu lo mleca traji denpa .i li re
-      ##   cu sinxa li su'o re
+      ## lo klani be lo ve fendi poi le valsi cu fanmo ke'a gi'e nitcu lo mleca traji denpa
+      ##   .i li re cu sinxa li su'o re
     befores: seq[int]
-      ## lo krasi be lo valsi poi lidne le valsi ne'i ro ve fendi poi nitcu lo mleca traji denpa .i
-      ##   no da va'o lo nu le valsi cu pamoi
+      ## lo krasi be lo valsi poi lidne le valsi ne'i ro ve fendi poi nitcu lo mleca traji denpa
+      ##   .i no da va'o lo nu le valsi cu pamoi
 
   Split = object  ## lo ve fendi be fi lo se ciska valsi be'o poi nitcu lo mleca traji denpa
     splits: seq[seq[Occurrence]]
-      ## su'e re ve fendi poi nitcu lo mleca traji denpa .i le ve fendi cu se porsi .i no denpa cu
-      ##   se jdice
+      ## su'e re ve fendi poi nitcu lo mleca traji denpa
+      ##   .i le ve fendi cu se porsi
+      ##   .i no denpa cu se jdice
     count: int
-      ## lo klani be lo ve fendi poi nitcu lo mleca traji denpa .i li no .a li pa .a li re .i li re
-      ##   cu sinxa li su'o re
+      ## lo klani be lo ve fendi poi nitcu lo mleca traji denpa
+      ##   .i li no .a li pa .a li re
+      ##   .i li re cu sinxa li su'o re
 
 
 const
   MARKS_BOUNDARY* = Whitespace + {'.'}
-    ## lo sinxa poi fendi lo valsi to `CLL 3.3` toi .i lo kunti lerfu .e denpa bu
+    ## lo sinxa poi fendi lo valsi to `CLL 3.3` toi
+    ##   .i lo kunti lerfu .e denpa bu
   CAPITALS = MARKS_STREAM - MARKS_BOUNDARY - {','}
-    ## lo barda lerfu pe ro lerfu .i lo barda lerfu cu sinxa lo nu basna
+    ## lo barda lerfu pe ro lerfu
+    ##   .i lo barda lerfu cu sinxa lo nu basna
   VOWELS_NUCLEUS = VOWELS + {'y'}
-    ## lo lerfu poi zbasu lo slaka .i le mu karsna .e `y` to `CLL 3.4` .e `CLL 3.9` toi
+    ## lo lerfu poi zbasu lo slaka
+    ##   .i le mu karsna .e `y` to `CLL 3.4` .e `CLL 3.9` toi
   CONSONANTS_SYLLABIC = {'l', 'm', 'n', 'r'}  ## lo zunsna poi ka'e slaka to `CLL 3.4` toi
   KINDS_BRIVLA = {Kind.Gismu, Kind.Lujvo, Kind.Fuhivla}
     ## lo klesi poi basna le slaka po'o poi lidne le romoi slaka to `CLL 3.9` .e `CLL 4.7` toi
   KINDS_DIPHTHONG = {Kind.Cmavo, Kind.Gismu, Kind.Lujvo}
-    ## lo klesi poi re lamji karsna pe ke'a cu zbasu lo karsna gunma .i se ki'u bo slaka bu na ka'e
-    ##   fendi le re karsna to `CLL 3.4` toi
+    ## lo klesi poi re lamji karsna pe ke'a cu zbasu lo karsna gunma
+    ##   .i se ki'u bo slaka bu na ka'e fendi le re karsna to `CLL 3.4` toi
 
 
 func refuse(refusal: Refusal, start: int, detail = ""): ReadingStream =
@@ -206,25 +256,27 @@ func refuse(refusal: Refusal, start: int, detail = ""): ReadingStream =
 
 func isPauseNeeded(prior, next: Occurrence): bool =
   ## jdice lo du'u lo javni pe `CLL 4.9` cu nitcu lo denpa poi zvati lo jbini be le re valsi
-  ##   .i le javni cu du le mumoi javni .e lo javni poi jdice fi lo lerfu to `forms.nim` toi .i le
-  ##     mumoi javni cu srana lo romoi slaka poi se basna gi'e lidne lo brivla .a lo pamoi slaka poi
-  ##     se basna to `CLL 4.2` toi
+  ##   .i le javni cu du le mumoi javni .e lo javni poi jdice fi lo lerfu to `forms.nim` toi
+  ##   .i le mumoi javni cu srana lo romoi slaka poi se basna gi'e lidne lo brivla .a lo pamoi slaka
+  ##     poi se basna to `CLL 4.2` toi
   if isPauseNeeded(prior.text, next.text): return true
   if prior.stress != some(prior.text.nuclei(prior.reading.kind, prior.breaks).high): return false
-  next.reading.kind in KINDS_BRIVLA or next.stress == some(0)  # le mumoi javni .i `CLL 4.2`
+  next.reading.kind in KINDS_BRIVLA or next.stress == some(0)  # le mumoi javni to `CLL 4.2` toi
 
 
 func isPauseNeededFirst(word: Occurrence): bool =
   ## jdice lo du'u lo javni pe `CLL 4.9` cu nitcu lo denpa poi lidne lo valsi poi krasi le porsi
-  ##   .i le javni cu du le cimoi javni .a le vomoi javni .i le cimoi javni cu srana lo valsi poi se
-  ##     krasi lo karsna .a `y` to `CLL 4.2` toi .i le vomoi javni cu srana lo cmene
+  ##   .i le javni cu du le cimoi javni .a le vomoi javni
+  ##   .i le cimoi javni cu srana lo valsi poi se krasi lo karsna .a `y` to `CLL 4.2` toi
+  ##   .i le vomoi javni cu srana lo cmene
   word.text[0] in VOWELS_NUCLEUS or word.reading.kind == Kind.Cmene
 
 
 func isStretchSyllabic(text: string, at, start, finish, step: int): bool =
   ## jdice lo du'u lo pagbu be le valsi cu vasru lo karsna .a `y` .a lo zunsna poi ka'e slaka to
-  ##   `CLL 3.4` toi .i le pagbu cu cfari bu'u slaka bu pe `at` gi'e se farna `step` .i le pagbu cu
-  ##   se fanmo slaka bu .a zoi gy. ' .gy. .a lo korbi be le valsi
+  ##   `CLL 3.4` toi
+  ##   .i le pagbu cu cfari bu'u slaka bu pe `at` gi'e se farna `step`
+  ##   .i le pagbu cu se fanmo slaka bu .a zoi gy. ' .gy. .a lo korbi be le valsi
   var i = at + step
   while i >= start and i < finish and text[i] notin {',', '\''}:
     if text[i].toLowerAscii in VOWELS_NUCLEUS + CONSONANTS_SYLLABIC: return true
@@ -233,8 +285,9 @@ func isStretchSyllabic(text: string, at, start, finish, step: int): bool =
 
 
 func refusalMarks(text: string, start, finish: int): Option[ReadingStream] =
-  ## facki lo pamoi lerfu poi no javni cu curmi ke'a ne'i le se ciska valsi .i le lerfu ka'e du
-  ##   slaka bu .i dunda lo nu to'e curmi bu'u le stuzi be le lerfu
+  ## facki lo pamoi lerfu poi no javni cu curmi ke'a ne'i le se ciska valsi
+  ##   .i le lerfu ka'e du slaka bu
+  ##   .i dunda lo nu to'e curmi bu'u le stuzi be le lerfu
   for at in start ..< finish:
     let symbol = text[at]
     if symbol in tanru.LETTERS or symbol in CAPITALS: continue
@@ -247,8 +300,9 @@ func refusalMarks(text: string, start, finish: int): Option[ReadingStream] =
 
 
 func toSpelling(text: string, start, finish: int): Spelling =
-  ## vimcu lo sinxa le se ciska valsi .i ro barda lerfu cu binxo lo cmalu lerfu .i ro slaka bu cu se
-  ##   vimcu
+  ## vimcu lo sinxa le se ciska valsi
+  ##   .i ro barda lerfu cu binxo lo cmalu lerfu
+  ##   .i ro slaka bu cu se vimcu
   for at in start ..< finish:
     if text[at] == ',':
       result.breaks.add result.letters.len
@@ -260,13 +314,15 @@ func toSpelling(text: string, start, finish: int): Spelling =
 
 
 func nucleusStressed(word: string, kind: Kind, capitals, breaks: openArray[int]): Option[int] =
-  ## facki le slaka karsna poi lo barda lerfu cu basna ke'a .i dunda no da va'o lo nu `CLL 3.9` cu
-  ##   na curmi le nu basna .i mupli fa lo nu lo lerfu .a slaka bu cu fendi le barda lerfu .i ja le
-  ##   barda lerfu cu pencu no slaka karsna .a su'o re slaka karsna .i ja le barda lerfu cu zvati
-  ##   `y` .i ja le barda lerfu na zvati le slaka poi lidne le romoi slaka pe lo brivla .i `y` na se
-  ##   kancu
-  ##   .i `capitals` cu vasru su'o pa namcu .i `capitals` .e `breaks` cu sinxa lo stuzi be lo lerfu
-  ##     pe `word`
+  ## facki le slaka karsna poi lo barda lerfu cu basna ke'a
+  ##   .i dunda no da va'o lo nu `CLL 3.9` cu na curmi le nu basna
+  ##   .i mupli fa lo nu lo lerfu .a slaka bu cu fendi le barda lerfu
+  ##   .i ja le barda lerfu cu pencu no slaka karsna .a su'o re slaka karsna
+  ##   .i ja le barda lerfu cu zvati `y`
+  ##   .i ja le barda lerfu na zvati le slaka poi lidne le romoi slaka pe lo brivla
+  ##   .i `y` na se kancu
+  ##   .i `capitals` cu vasru su'o pa namcu
+  ##   .i `capitals` .e `breaks` cu sinxa lo stuzi be lo lerfu pe `word`
   let (first, last) = (capitals[0], capitals[^1])
   if last - first + 1 != capitals.len: return  # ja'i `CLL 3.9` pa slaka po'o cu barda
   for b in breaks:
@@ -282,8 +338,8 @@ func nucleusStressed(word: string, kind: Kind, capitals, breaks: openArray[int])
     var counted: seq[int]
     for i, nucleus in spans:
       if word[nucleus.a] != 'y': counted.add i
-    # ja'i `CLL 3.9` lo brivla cu basna le slaka poi lidne le romoi slaka .i lo brivla cu vasru su'o
-    #   re slaka to `CLL 4.3` toi
+    # ja'i `CLL 3.9` lo brivla cu basna le slaka poi lidne le romoi slaka
+    #   .i lo brivla cu vasru su'o re slaka to `CLL 4.3` toi
     if touched[0] != counted[^2]: return
   some(touched[0])
 
@@ -291,17 +347,21 @@ func nucleusStressed(word: string, kind: Kind, capitals, breaks: openArray[int])
 func occurrenceWritten(
     spelling: Spelling, span: Slice[int], is_parting = true
 ): Option[Occurrence] =
-  ## tcidu pa valsi fi lo lerfu pe `span` .i le valsi cu ponse lo nu basna poi le barda lerfu cu
-  ##   sinxa ke'a .i dunda no da va'o lo nu no valsi cu se tcidu kei .a lo nu le barda lerfu cu na
-  ##   mapti lo javni pe `CLL 3.9` .i va'o lo nu `is_parting` cu jetnu kei slaka bu cu fendi lo
-  ##   slaka .i va'o lo drata slaka bu cu jdice no valsi .i lo denpa na se jdice
+  ## tcidu pa valsi fi lo lerfu pe `span`
+  ##   .i le valsi cu ponse lo nu basna poi le barda lerfu cu sinxa ke'a
+  ##   .i dunda no da va'o lo nu no valsi cu se tcidu kei .a lo nu le barda lerfu cu na mapti lo
+  ##     javni pe `CLL 3.9`
+  ##   .i va'o lo nu `is_parting` cu jetnu kei slaka bu cu fendi lo slaka
+  ##   .i va'o lo drata slaka bu cu jdice no valsi
+  ##   .i lo denpa na se jdice
   let
     piece = spelling.letters[span]
     reading = piece.readWord
   if not reading.is_word: return
 
-  # tcidu lo nu basna poi lo barda lerfu cu sinxa ke'a .i slaka bu poi zvati lo barda lerfu cu fendi
-  #   le porsi be lo barda lerfu .i to'e curmi lo nu basna poi `CLL 3.9` cu na curmi ke'a
+  # tcidu lo nu basna poi lo barda lerfu cu sinxa ke'a
+  #   .i slaka bu poi zvati lo barda lerfu cu fendi le porsi be lo barda lerfu
+  #   .i to'e curmi lo nu basna poi `CLL 3.9` cu na curmi ke'a
   var capitals, breaks: seq[int]
   for b in spelling.breaks:
     if is_parting and b > span.a and b <= span.b: breaks.add b - span.a
@@ -312,10 +372,11 @@ func occurrenceWritten(
     stress = piece.nucleusStressed(reading.kind, capitals, breaks)
     if stress.isNone: return
 
-  # lo se ciska valsi poi vasru lo barda lerfu cu sinxa ro nu basna sepi'o le barda lerfu .i lo se
-  #   ciska valsi poi vasru no barda lerfu cu basna le slaka po'o poi lidne le romoi slaka pe le se
-  #   ciska valsi to `D3 a` bu'u `#811` toi .i se ki'u bo lo brivla cu vasru lo barda lerfu gi'a se
-  #   lidne no karsna poi se kancu mu'i lo nu basna ne'i le se ciska valsi
+  # lo se ciska valsi poi vasru lo barda lerfu cu sinxa ro nu basna sepi'o le barda lerfu
+  #   .i lo se ciska valsi poi vasru no barda lerfu cu basna le slaka po'o poi lidne le romoi slaka
+  #     pe le se ciska valsi to `D3 a` bu'u `#811` toi
+  #   .i se ki'u bo lo brivla cu vasru lo barda lerfu gi'a se lidne no karsna poi se kancu mu'i lo
+  #     nu basna ne'i le se ciska valsi
   if reading.kind in KINDS_BRIVLA:
     if spelling.capitals.len > 0 and stress.isNone: return
     if spelling.capitals.len == 0 and spelling.letters[span.b + 1 .. ^1].anyIt(it in VOWELS): return
@@ -326,24 +387,29 @@ func occurrenceWritten(
 
 
 func splitWritten(spelling: Spelling, is_parting: bool): Split =
-  ## fendi le se ciska valsi fi lo valsi .i le ve fendi cu nitcu lo mleca traji denpa poi lo javni
-  ##   cu nitcu ke'a zi'e poi le se ciska na ciska ke'a to `CLL 3.3` .e `CLL 4.9` toi .i no denpa cu
-  ##   zvati lo stuzi be slaka bu .i kancu lo ve fendi poi nitcu lo mleca traji denpa .i li re cu
-  ##   sinxa li su'o re .i va'o lo nu `is_parting` cu jetnu kei slaka bu cu fendi lo slaka
-  ##   .i `words[j][i]` cu vasru lo valsi pe lo lerfu po'u `j ..< i` .i `scores[j][i]` cu vasru lo
-  ##     ve fendi poi le valsi cu fanmo ke'a
+  ## fendi le se ciska valsi fi lo valsi
+  ##   .i le ve fendi cu nitcu lo mleca traji denpa poi lo javni cu nitcu ke'a zi'e poi le se ciska
+  ##     na ciska ke'a to `CLL 3.3` .e `CLL 4.9` toi
+  ##   .i no denpa cu zvati lo stuzi be slaka bu
+  ##   .i kancu lo ve fendi poi nitcu lo mleca traji denpa
+  ##   .i li re cu sinxa li su'o re
+  ##   .i va'o lo nu `is_parting` cu jetnu kei slaka bu cu fendi lo slaka
+  ##   .i `words[j][i]` cu vasru lo valsi pe lo lerfu po'u `j ..< i`
+  ##   .i `scores[j][i]` cu vasru lo ve fendi poi le valsi cu fanmo ke'a
   let n = spelling.letters.len
   var
     words = newSeqWith(n + 1, newSeq[Option[Occurrence]](n + 1))
     scores = newSeqWith(n + 1, newSeq[Option[Score]](n + 1))
 
   # dunda lo namcu ro valsi ja'i lo mleca traji klani be lo denpa pe lo ve fendi poi le valsi cu
-  #   fanmo ke'a .i kancu lo nu mintu
+  #   fanmo ke'a
+  #   .i kancu lo nu mintu
   for i in 1 .. n:
     for j in 0 ..< i:
       let word = spelling.occurrenceWritten(j .. i - 1, is_parting)
       if word.isNone: continue
-      if word.get.reading.kind == Kind.Cmene and i < n: continue  # `CLL 4.8` .i lo cmene cu romoi
+      # lo cmene cu romoi
+      if word.get.reading.kind == Kind.Cmene and i < n: continue  # `CLL 4.8`
       words[j][i] = word
       if j == 0:
         scores[j][i] = some(Score(pauses: 0, ties: 1))
@@ -363,8 +429,8 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
           scores[j][i].get.ties = min(2, scores[j][i].get.ties + score.ties)
           scores[j][i].get.befores.add k
 
-  # cuxna lo mleca traji klani be lo denpa pe lo valsi poi fanmo le se ciska valsi .i kancu lo nu
-  #   mintu
+  # cuxna lo mleca traji klani be lo denpa pe lo valsi poi fanmo le se ciska valsi
+  #   .i kancu lo nu mintu
   var lasts: seq[int]
   for j in 1 ..< n:
     if scores[j][n].isNone: continue
@@ -376,8 +442,8 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
       lasts.add j
       result.count = min(2, result.count + score.ties)
 
-  # tcidu su'e re ve fendi poi nitcu lo mleca traji denpa .i le nu tcidu cu cfari bu'u le romoi
-  #   valsi gi'e ca'o klama ro valsi poi lidne
+  # tcidu su'e re ve fendi poi nitcu lo mleca traji denpa
+  #   .i le nu tcidu cu cfari bu'u le romoi valsi gi'e ca'o klama ro valsi poi lidne
   var paths = lasts.mapIt(@[(it, n)])
   while paths.len > 0 and result.splits.len < 2:
     let
@@ -391,23 +457,26 @@ func splitWritten(spelling: Spelling, is_parting: bool): Split =
 
 
 func splitChosen(spelling: Spelling, is_parting: bool): Split =
-  ## cuxna lo valsi pe le se ciska valsi .i va'o lo nu le lerfu cu se tcidu ta'i pa mulno valsi kei
-  ##   cuxna pa valsi .i va'o lo drata cuxna lo ve fendi poi nitcu lo mleca traji denpa .i va'o lo
-  ##   nu `is_parting` cu jetnu kei slaka bu cu fendi lo slaka
+  ## cuxna lo valsi pe le se ciska valsi
+  ##   .i va'o lo nu le lerfu cu se tcidu ta'i pa mulno valsi kei cuxna pa valsi
+  ##   .i va'o lo drata cuxna lo ve fendi poi nitcu lo mleca traji denpa
+  ##   .i va'o lo nu `is_parting` cu jetnu kei slaka bu cu fendi lo slaka
   let whole = spelling.occurrenceWritten(0 .. spelling.letters.high, is_parting)
   if whole.isSome: return Split(splits: @[@[whole.get]], count: 1)
   spelling.splitWritten(is_parting)
 
 
 func refusalWritten(spelling: Spelling, start: int): ReadingStream =
-  ## to'e curmi lo se ciska valsi poi se fendi fi no valsi .i le nu to'e curmi cu zvati le stuzi
-  ##   po'u `start` .i va'o lo nu lo valsi poi le genturfa'i cu tcidu ke'a fi le lerfu cu nitcu lo
-  ##   denpa kei le nu to'e curmi cu zvati le pamoi lerfu po'u slaka bu poi zvati le stuzi be le
-  ##   denpa .i ki'u bo slaka bu cu sinxa no denpa to `CLL 3.3` toi .i va'o lo drata le genturfa'i
-  ##   cu to'e curmi ta'i lo nu `readWord` cu to'e curmi le lerfu .i va'o lo drata le nu to'e curmi
-  ##   cu zvati le pamoi barda lerfu noi na mapti lo javni pe `CLL 3.9`
-  ##   .i lo lerfu poi se fendi fi lo cmavo cu se fendi vi ji'a .i se ki'u bo slaka bu .a lo barda
-  ##     lerfu po'o cu fanta lo nu le lerfu cu se tcidu
+  ## to'e curmi lo se ciska valsi poi se fendi fi no valsi
+  ##   .i le nu to'e curmi cu zvati le stuzi po'u `start`
+  ##   .i va'o lo nu lo valsi poi le genturfa'i cu tcidu ke'a fi le lerfu cu nitcu lo denpa kei le
+  ##     nu to'e curmi cu zvati le pamoi lerfu po'u slaka bu poi zvati le stuzi be le denpa
+  ##   .i ki'u bo slaka bu cu sinxa no denpa to `CLL 3.3` toi
+  ##   .i va'o lo drata le genturfa'i cu to'e curmi ta'i lo nu `readWord` cu to'e curmi le lerfu
+  ##   .i va'o lo drata le nu to'e curmi cu zvati le pamoi barda lerfu noi na mapti lo javni pe
+  ##     `CLL 3.9`
+  ##   .i lo lerfu poi se fendi fi lo cmavo cu se fendi vi ji'a
+  ##   .i se ki'u bo slaka bu .a lo barda lerfu po'o cu fanta lo nu le lerfu cu se tcidu
   var bare = spelling
   (bare.breaks, bare.commas) = (newSeq[int](), newSeq[int]())
   let split = bare.splitChosen(is_parting = false)
@@ -416,7 +485,8 @@ func refusalWritten(spelling: Spelling, start: int): ReadingStream =
     for i, word in split.splits[0]:
       let k = spelling.breaks.find(lo)
       if i > 0 and k >= 0 and isPauseNeeded(split.splits[0][i - 1], word):
-        # ja'i `CLL 3.3` slaka bu na ka'e du lo denpa .i `CLL 3.3` cu cusku zoi gy. cannot be .gy.
+        # ja'i `CLL 3.3` slaka bu na ka'e du lo denpa
+        #   .i `CLL 3.3` cu cusku zoi gy. cannot be .gy.
         return refuse(Refusal.Comma, spelling.commas[k])
       lo += word.text.len
   let whole = spelling.letters.readWord
@@ -428,10 +498,11 @@ func refusalWritten(spelling: Spelling, start: int): ReadingStream =
 
 func refusalCommas(spelling: Spelling, words: openArray[Occurrence]): Option[ReadingStream] =
   ## facki lo pamoi lerfu po'u slaka bu poi na mapti lo javni ja'i lo valsi poi le se ciska valsi cu
-  ##   vasru ke'a .i dunda lo nu to'e curmi bu'u le stuzi be le lerfu .i le lerfu cu zvati lo karsna
-  ##   gunma pe pa cmavo .a pa gismu .a pa lujvo to `CLL 3.4` toi .i ja le lerfu cu zvati lo stuzi
-  ##   poi lo denpa cu bilga zvati ke'a ne'i lo jbini be re valsi .i ki'u bo slaka bu cu se skicu
-  ##   `CLL 3.3` fo zoi gy. cannot be pronounced as pause .gy.
+  ##   vasru ke'a
+  ##   .i dunda lo nu to'e curmi bu'u le stuzi be le lerfu
+  ##   .i le lerfu cu zvati lo karsna gunma pe pa cmavo .a pa gismu .a pa lujvo to `CLL 3.4` toi
+  ##   .i ja le lerfu cu zvati lo stuzi poi lo denpa cu bilga zvati ke'a ne'i lo jbini be re valsi
+  ##   .i ki'u bo slaka bu cu se skicu `CLL 3.3` fo zoi gy. cannot be pronounced as pause .gy.
   var
     lo = 0
     k = 0
@@ -451,14 +522,15 @@ func refusalCommas(spelling: Spelling, words: openArray[Occurrence]): Option[Rea
 
 
 func isForeign(word: Occurrence): bool =
-  ## jdice lo du'u le valsi pe le porsi cu vasru lo se ciska poi zo zoi .a zo la'o cu sitna ke'a .i
-  ##   le se ciska na lojbo to le zemoi javni pe `CLL 4.9` toi
+  ## jdice lo du'u le valsi pe le porsi cu vasru lo se ciska poi zo zoi .a zo la'o cu sitna ke'a
+  ##   .i le se ciska na lojbo to le zemoi javni pe `CLL 4.9` toi
   not word.reading.is_word and word.reading.refusal == Refusal.Foreign
 
 
 func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period: bool): Pause =
-  ## cusku lo denpa poi lidne lo valsi poi se lidne `occurrences` .i denpa bu cu sinxa le denpa .i
-  ##   ja lo javni cu nitcu le denpa
+  ## cusku lo denpa poi lidne lo valsi poi se lidne `occurrences`
+  ##   .i denpa bu cu sinxa le denpa
+  ##   .i ja lo javni cu nitcu le denpa
   ##   .i lo se ciska poi se sitna gi'e na lojbo cu se lidne pa denpa gi'e lidne pa denpa to le
   ##     zemoi javni pe `CLL 4.9` toi
   if is_period: return Pause.Written
@@ -470,14 +542,17 @@ func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period
 
 
 func wordsWritten(text: string, start, finish: int): ReadingStream =
-  ## tcidu lo valsi pe lo se ciska valsi pe lo stuzi po'u `start ..< finish` .i lo denpa na se jdice
-  ##   .i to'e curmi lo pagbu poi no javni cu curmi ke'a .i le pagbu cu sinxa ja lerfu ja ve fendi
+  ## tcidu lo valsi pe lo se ciska valsi pe lo stuzi po'u `start ..< finish`
+  ##   .i lo denpa na se jdice
+  ##   .i to'e curmi lo pagbu poi no javni cu curmi ke'a
+  ##   .i le pagbu cu sinxa ja lerfu ja ve fendi
   let refusal_marks = text.refusalMarks(start, finish)
   if refusal_marks.isSome: return refusal_marks.get
 
-  # cuxna lo valsi poi mapti ro sinxa .i slaka bu cu fendi lo slaka ta'i lo nu `CLL 3.5` cu fendi lo
-  #   karsna sepi'o slaka bu .i se ki'u bo lo barda lerfu cu basna lo slaka poi slaka bu cu sinxa
-  #   ke'a .i ji'a ja'i `CLL 3.3` no ve fendi cu punji lo denpa lo stuzi be slaka bu
+  # cuxna lo valsi poi mapti ro sinxa
+  #   .i slaka bu cu fendi lo slaka ta'i lo nu `CLL 3.5` cu fendi lo karsna sepi'o slaka bu
+  #   .i se ki'u bo lo barda lerfu cu basna lo slaka poi slaka bu cu sinxa ke'a
+  #   .i ji'a ja'i `CLL 3.3` no ve fendi cu punji lo denpa lo stuzi be slaka bu
   let
     spelling = text.toSpelling(start, finish)
     split = spelling.splitChosen(is_parting = true)
@@ -492,10 +567,12 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
 
 
 func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
-  ## facki lo stuzi be lo se ciska poi se sitna .i le se ciska cu cfari bu'u `start` gi'e fanmo pu
-  ##   lo bavla'i se ciska valsi poi ciska `delimiter` .i lo sinxa poi sruri le se ciska cu se vimcu
+  ## facki lo stuzi be lo se ciska poi se sitna
+  ##   .i le se ciska cu cfari bu'u `start` gi'e fanmo pu lo bavla'i se ciska valsi poi ciska
+  ##     `delimiter`
+  ##   .i lo sinxa poi sruri le se ciska cu se vimcu
   ##   .i dunda no da va'o lo nu no se ciska valsi poi ciska `delimiter` cu se lidne to `CLL 19.10`
-  ##   toi
+  ##     toi
   var at = start
   while at < text.len:
     if text[at] in MARKS_BOUNDARY:
@@ -512,41 +589,49 @@ func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
 
 
 func readStream*(text: string, is_lohu = false): ReadingStream =
-  ## tcidu lo valsi pe le se ciska ja'i lo javni pe `CLL` po'o .i ro valsi cu ponse lo denpa poi
-  ##   lidne le valsi ku'o .e lo nu basna poi le se ciska cu sinxa ke'a .i to'e curmi bu'u le pamoi
-  ##   pagbu poi no javni cu curmi ke'a .i le pagbu cu valsi ja sinxa .i cusku le stuzi be le pagbu
+  ## tcidu lo valsi pe le se ciska ja'i lo javni pe `CLL` po'o
+  ##   .i ro valsi cu ponse lo denpa poi lidne le valsi ku'o .e lo nu basna poi le se ciska cu sinxa
+  ##     ke'a
+  ##   .i to'e curmi bu'u le pamoi pagbu poi no javni cu curmi ke'a
+  ##   .i le pagbu cu valsi ja sinxa
+  ##   .i cusku le stuzi be le pagbu
   ##   .i va'o lo nu `is_lohu` cu jetnu kei le se ciska cu cfari ne'i lo valsi poi zo lo'u cu sitna
-  ##   ke'a .i lo jmive se ciska cu tcidu le se ciska ta'i di'u ba zo lo'u noi ca'o denpa
+  ##     ke'a
+  ##   .i lo jmive se ciska cu tcidu le se ciska ta'i di'u ba zo lo'u noi ca'o denpa
   ##   .i lo se ciska poi zo zoi .a zo la'o cu sitna ke'a cu mulno gi'e du pa valsi pe le porsi gi'e
-  ##     na se galfi .i lo nu sitna poi zo zo .a zo lo'u cu zbasu ke'a cu sitna lo valsi .i zo lo'u
-  ##     cu sitna lo valsi poi lidne zo le'u
-  ##     .i se ki'u bo lo cmavo poi se sitna cu galfi no da to `CLL 19.9` toi
-  ##   .i le porsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a .i zo fa'o cu fanmo lo se ciska
-  ##     poi ka'e se tcidu to `CLL 21.1` toi
+  ##     na se galfi
+  ##   .i lo nu sitna poi zo zo .a zo lo'u cu zbasu ke'a cu sitna lo valsi
+  ##   .i zo lo'u cu sitna lo valsi poi lidne zo le'u
+  ##   .i se ki'u bo lo cmavo poi se sitna cu galfi no da to `CLL 19.9` toi
+  ##   .i le porsi cu sisti ba zo fa'o poi no nu sitna cu vasru ke'a
+  ##   .i zo fa'o cu fanmo lo se ciska poi ka'e se tcidu to `CLL 21.1` toi
   var
     occurrences: seq[Occurrence]
     is_period, is_quoting = false
-    is_lohu = is_lohu  # lo valsi poi zo lo'u cu sitna ke'a .i le valsi cu lidne zo le'u
-    # lo nu sitna poi le korbi valsi pe ke'a cu bavla'i .i lo korbi valsi poi fanmo le se ciska
+    is_lohu = is_lohu  # lo valsi poi zo lo'u cu sitna ke'a to le valsi cu lidne zo le'u toi
+    # lo nu sitna poi le korbi valsi pe ke'a cu bavla'i
+    #   .i lo korbi valsi poi fanmo le se ciska
     zoi, closing = none(int)
     at = 0
   while at < text.len:
-    # klama pa'o lo sinxa poi zvati lo jbini be lo valsi .i ralte lo du'u denpa bu cu zvati
+    # klama pa'o lo sinxa poi zvati lo jbini be lo valsi
+    #   .i ralte lo du'u denpa bu cu zvati
     if text[at] in MARKS_BOUNDARY:
       is_period = is_period or text[at] == '.'
       inc at
       continue
 
-    # lebna lo se ciska valsi poi fanmo pu lo bavla'i sinxa poi zvati lo jbini be lo valsi .i tcidu
-    #   lo valsi pe le se ciska valsi
+    # lebna lo se ciska valsi poi fanmo pu lo bavla'i sinxa poi zvati lo jbini be lo valsi
+    #   .i tcidu lo valsi pe le se ciska valsi
     let start = at
     while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
     let written = text.wordsWritten(start, at)
     if not written.is_read: return written
     let words = written.occurrences
 
-    # tcidu le korbi valsi poi fanmo le se ciska poi se sitna .i le se ciska valsi cu vasru pa valsi
-    #   po'o .i le valsi cu se ciska ta'i le korbi valsi to `CLL 19.10` toi
+    # tcidu le korbi valsi poi fanmo le se ciska poi se sitna
+    #   .i le se ciska valsi cu vasru pa valsi po'o
+    #   .i le valsi cu se ciska ta'i le korbi valsi to `CLL 19.10` toi
     if closing.isSome:
       if words.len != 1 or words[0].text != occurrences[closing.get].text:
         return refuse(Refusal.Quotation, start)
@@ -557,15 +642,17 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
       (closing, is_period) = (none(int), false)
       continue
 
-    # jmina ro valsi .i ro valsi cu ponse lo denpa poi lidne le valsi .i jersi lo nu sitna poi le
-    #   valsi cu krasi ja fanmo ke'a
+    # jmina ro valsi
+    #   .i ro valsi cu ponse lo denpa poi lidne le valsi
+    #   .i jersi lo nu sitna poi le valsi cu krasi ja fanmo ke'a
     for i, word in words:
       var occurrence = word
       occurrence.pause = occurrences.pauseBefore(occurrence, is_period = i == 0 and is_period)
       occurrences.add occurrence
 
-      # lo korbi valsi cu fanmo lo se ciska valsi pe vo'a .i le se ciska poi le korbi valsi cu sitna
-      #   ke'a cu fanmo pu lo nu le korbi valsi cu rapli se ciska to `CLL 19.10` toi
+      # lo korbi valsi cu fanmo lo se ciska valsi pe vo'a
+      #   .i le se ciska poi le korbi valsi cu sitna ke'a cu fanmo pu lo nu le korbi valsi cu rapli
+      #     se ciska to `CLL 19.10` toi
       if zoi.isSome:
         if i < words.high: return refuse(Refusal.Quotation, words[i + 1].start)
         let span = text.quoted(at, word.text)
@@ -582,8 +669,9 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
         (zoi, closing, at) = (none(int), some(occurrences.high - 1), span.get.b + 1)
         break
 
-      # zo zo cu sitna lo bavla'i valsi .i zo lo'u cu sitna lo valsi poi lidne zo le'u .i ku'i zo
-      #   le'u poi zo zo cu sitna ke'a cu fanmo no da to `CLL 19.9` toi
+      # zo zo cu sitna lo bavla'i valsi
+      #   .i zo lo'u cu sitna lo valsi poi lidne zo le'u
+      #   .i ku'i zo le'u poi zo zo cu sitna ke'a cu fanmo no da to `CLL 19.9` toi
       if is_quoting:
         is_quoting = false
         continue
@@ -596,9 +684,11 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
       elif selmaho == some(Selmaho.Lohu): is_lohu = true
       elif selmaho == some(Selmaho.Zoi): zoi = some(occurrences.high)
       elif selmaho == some(Selmaho.Faho):
-        # `CLL 19.15` .i le se ciska cu fanmo
+        # `CLL 19.15`
+        #   .i le se ciska cu fanmo
         return ReadingStream(is_read: true, occurrences: occurrences)
     is_period = false
-  # `CLL 19.10` .i no korbi valsi cu zvati
+  # `CLL 19.10`
+  #   .i no korbi valsi cu zvati
   if zoi.isSome: return refuse(Refusal.Quotation, occurrences[zoi.get].start)
   ReadingStream(is_read: true, occurrences: occurrences)

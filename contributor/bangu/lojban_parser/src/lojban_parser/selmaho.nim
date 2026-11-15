@@ -10,19 +10,25 @@
 ##   | `Selmaho.Ui`    | `UI`   | lo cinmo valsi .e lo valsi poi skicu lo nu tavla | `CLL 13`   |
 ##   |-----------------|--------|--------------------------------------------------|------------|
 ##
-##   .i lo selma'o cu gerna klesi lo cmavo to `CLL 4.2` toi .i `CLL 20` cu dunda lo cmene ro selma'o
-##     sepi'o pa cmavo poi sinxa le selma'o ku'o ta'i lo barda lerfu .i `h` cu sinxa zoi gy. ' .gy.
-##     ne'i le cmene .i ro cmima be `Selmaho` cu ciska le cmene ta'i la'o gy. Pascal case .gy. to
-##     `Article V.11` toi .i `Form.Cvc` cu ciska la'o gy. CVC .gy. ta'i la'o gy. Pascal case .gy.
-##     ji'a .i `h` no roi lerfu la lojban. to `CLL 3.3` toi .i se ki'u bo ro `h` pe ro cmima cu
-##     sinxa zoi gy. ' .gy. .i `$` cu rapli ciska lo cmene pe `CLL` ta'i lo barda lerfu .i `h` po'o
-##     cu cmalu .i lo cipra cu cipra lo du'u `$` cu ciska ro cmima ta'i le liste pe `CLL 20` .i se
-##     ki'u bo le liste poi gapru cu mupli gi'e na mulno
-##   .i le cmima cu ralte lo porsi pe le liste pe `CLL 20` .i le porsi cu du lo porsi be le cmene
-##     bei fi lo stuzi .i se ki'u bo `BAI` cu lidne `BAhE`
-##   .i jdima fa lo nu `Selmaho` cu vasru parere cmima .i ro selma'o pe `CLL 20` cu se srana pa
-##     cmima .i le liste cu ciska lo selma'o be ro cmavo ta'i lo cmene to `tools/lists.nim` toi .i
-##     lo cmene poi na zvati le liste pe `CLL 20` cu rinka lo nu le galfi samtci cu fliba
+## ni'o lo selma'o cu gerna klesi lo cmavo to `CLL 4.2` toi
+##   .i `CLL 20` cu dunda lo cmene ro selma'o sepi'o pa cmavo poi sinxa le selma'o ku'o ta'i lo
+##     barda lerfu
+##   .i `h` cu sinxa zoi gy. ' .gy. ne'i le cmene
+##   .i ro cmima be `Selmaho` cu ciska le cmene ta'i la'o gy. Pascal case .gy. to `Article V.11` toi
+##   .i `Form.Cvc` cu ciska la'o gy. CVC .gy. ta'i la'o gy. Pascal case .gy. ji'a
+##   .i `h` no roi lerfu la lojban. to `CLL 3.3` toi
+##   .i se ki'u bo ro `h` pe ro cmima cu sinxa zoi gy. ' .gy.
+##   .i `$` cu rapli ciska lo cmene pe `CLL` ta'i lo barda lerfu
+##   .i `h` po'o cu cmalu
+##   .i lo cipra cu cipra lo du'u `$` cu ciska ro cmima ta'i le liste pe `CLL 20`
+##   .i se ki'u bo le liste poi gapru cu mupli gi'e na mulno
+##   .i le cmima cu ralte lo porsi pe le liste pe `CLL 20`
+##   .i le porsi cu du lo porsi be le cmene bei fi lo stuzi
+##   .i se ki'u bo `BAI` cu lidne `BAhE`
+##   .i jdima fa lo nu `Selmaho` cu vasru parere cmima
+##   .i ro selma'o pe `CLL 20` cu se srana pa cmima
+##   .i le liste cu ciska lo selma'o be ro cmavo ta'i lo cmene to `tools/lists.nim` toi
+##   .i lo cmene poi na zvati le liste pe `CLL 20` cu rinka lo nu le galfi samtci cu fliba
 
 {.experimental: "strictFuncs".}
 
@@ -55,7 +61,8 @@ type
 
 
 const LUT_NAME_BY_SELMAHO = block:
-  ## ciska ro selma'o ta'i lo nu `CLL 20` cu ciska .i ro lerfu poi na du `h` cu barda
+  ## ciska ro selma'o ta'i lo nu `CLL 20` cu ciska
+  ##   .i ro lerfu poi na du `h` cu barda
   var lut: array[Selmaho, string]
   for selmaho in Selmaho:
     for letter in symbolName(selmaho):
@@ -64,15 +71,15 @@ const LUT_NAME_BY_SELMAHO = block:
 
 
 
-#[ lo cmene ]#
+#[ ni'o ni'o ni'o lo cmene ]#
 
 func `$`*(selmaho: Selmaho): string = LUT_NAME_BY_SELMAHO[selmaho]
   ## ciska lo selma'o ta'i lo cmene pe `CLL 20` mu'u `BAhE`
 
 
 func toSelmaho*(name: string): Option[Selmaho] =
-  ## tcidu lo cmene poi `CLL 20` cu dunda ke'a lo selma'o mu'u `BAhE` .i dunda `none` va'o lo nu le
-  ##   liste pe `CLL 20` cu dunda le cmene no selma'o
+  ## tcidu lo cmene poi `CLL 20` cu dunda ke'a lo selma'o mu'u `BAhE`
+  ##   .i dunda `none` va'o lo nu le liste pe `CLL 20` cu dunda le cmene no selma'o
   for selmaho in Selmaho:
     if LUT_NAME_BY_SELMAHO[selmaho] == name: return some(selmaho)
   none(Selmaho)

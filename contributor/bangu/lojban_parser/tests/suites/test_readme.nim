@@ -1,15 +1,19 @@
-## cipra ro minde pe `README.md` ja'i lo minde samtci poi tcidu le minde .i lo minde poi sitna lo se
-##   ciska sepi'o `'` cu vasru no drata lerfu po'u `'` .i se ki'u bo lo minde samtci cu dunda le
-##   mulno se ciska la'o gy. Nim .gy. .a `node`
+## cipra ro minde pe `README.md` ja'i lo minde samtci poi tcidu le minde
+##   .i lo minde poi sitna lo se ciska sepi'o `'` cu vasru no drata lerfu po'u `'`
+##   .i se ki'u bo lo minde samtci cu dunda le mulno se ciska la'o gy. Nim .gy. .a `node`
 ##   .i ro minde cu se krasi pa linji poi se krasi `$ ` ne'i pa girzu be lo linji be'o poi se tcita
-##     `text` .i le minde cu se fanmo le pamoi linji poi se fanmo `'` .i le nu sitna cu se fanmo vi
-##     .i ne'i le se sitna `\x27` cu basti `'`
-##   .i mupli fa lo nu fliba poi se facki de'i `2026-11-11` .i le pamoi minde cu sitna zo la'o ne'i
-##     lo vo'a se ciska be fi la'o gy. Nim .gy. .i le lerfu po'u `'` pe zo la'o cu fanmo le nu sitna
-##     pe lo minde samtci .i se ki'u bo lo minde samtci cu dunda `dy.` la'o gy. Nim .gy. ta'i lo
-##     datnyvei .i lo jalge be le minde cu du li pa
-##   .i `README.md` cu se tcidu ta'i lo se ciska ca lo nu fanva .i no minde pe `README.md` cu se
-##     pilno vi .i ki'u bo ro minde cu rapli fanva le genturfa'i
+##     `text`
+##   .i le minde cu se fanmo le pamoi linji poi se fanmo `'`
+##   .i le nu sitna cu se fanmo vi
+##   .i ne'i le se sitna `\x27` cu basti `'`
+##   .i mupli fa lo nu fliba poi se facki de'i `2026-11-11`
+##   .i le pamoi minde cu sitna zo la'o ne'i lo vo'a se ciska be fi la'o gy. Nim .gy.
+##   .i le lerfu po'u `'` pe zo la'o cu fanmo le nu sitna pe lo minde samtci
+##   .i se ki'u bo lo minde samtci cu dunda `dy.` la'o gy. Nim .gy. ta'i lo datnyvei
+##   .i lo jalge be le minde cu du li pa
+##   .i `README.md` cu se tcidu ta'i lo se ciska ca lo nu fanva
+##   .i no minde pe `README.md` cu se pilno vi
+##   .i ki'u bo ro minde cu rapli fanva le genturfa'i
 
 {.experimental: "strictFuncs".}
 
@@ -24,15 +28,15 @@ const
   OPENING_COMMAND = "$ "
     ## lo krasi be lo pamoi linji be lo minde be'o ne'i lo girzu be lo linji be'o pe `README.md`
   COUNT_COMMANDS_LEAST = 8
-    ## lo mleca traji te kancu be lo minde poi sitna lo se ciska gi'e zvati `README.md` .i ca lo nu
-    ##   jmina le cipra kei `README.md` cu vasru pano minde poi sitna lo se ciska
+    ## lo mleca traji te kancu be lo minde poi sitna lo se ciska gi'e zvati `README.md`
+    ##   .i ca lo nu jmina le cipra kei `README.md` cu vasru pano minde poi sitna lo se ciska
 
 
 
 func commandsQuoted(text: string): seq[tuple[line: int, command: string]] =
   ## dunda ro minde poi sitna lo se ciska sepi'o `'` ku'o .e lo linji poi le minde cu se krasi ke'a
-  ##   .i ro minde cu se krasi pa linji poi se krasi `$ ` .i le minde cu se fanmo le pamoi linji poi
-  ##   se fanmo `'`
+  ##   .i ro minde cu se krasi pa linji poi se krasi `$ `
+  ##   .i le minde cu se fanmo le pamoi linji poi se fanmo `'`
   let lines = text.splitLines
   var k = 0
   while k < lines.len:
