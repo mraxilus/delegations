@@ -10,8 +10,8 @@ This project takes its symbols from The Complete Lojban Language, which the
 
 ## Language
 
-The glossary of [lojban_parser](../lojban_parser/GLOSSARY.md) defines these words of lojban under
-Words of lojban: gismu, cmavo, rafsi, tanru, tanru unit, lujvo and brivla. The Architect selected
+The glossary of the project `lojban_parser` defines these words of lojban under Words of lojban:
+gismu, cmavo, rafsi, tanru, tanru unit, lujvo and brivla. The Architect selected
 each one. This project uses each word with that meaning, and does not write the definitions a
 second time.
 
