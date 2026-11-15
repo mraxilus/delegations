@@ -1131,6 +1131,21 @@ suite "Hooks":
     check "Read first" notin contextStart("claude/x", "", contributor, "## List", "", @[])
 
 
+  test "start reads file of role that branch names, from root of checkout":
+    # Koch passes this text to `contextStart`, and no suite runs `main` of koch, so read is held
+    #   here, over scratch root. Domain: curator branch, contributor branch, branch outside
+    #   grammar, and root lacking file of role.
+    let root = createTempDir("delegations_", "_prompts")
+    defer: removeDir(root)
+    writeFile(root / "CURATOR.md", "# Curator\n")
+    writeFile(root / "CONTRIBUTOR.md", "# Contributor\n")
+    check readPrompt(root, "curator/rules") == "# Curator\n"
+    check readPrompt(root, BRANCH) == "# Contributor\n"
+    check readPrompt(root, "claude/x").len == 0  # outside grammar, though root holds both
+    removeFile(root / "CONTRIBUTOR.md")
+    check readPrompt(root, BRANCH).len == 0  # root lacking file of role
+
+
   test "transcript parse finds calls since last message of person":
     const transcript =
       "{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"do it\"}]}}\n" &
