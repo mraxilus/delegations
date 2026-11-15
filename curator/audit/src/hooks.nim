@@ -403,7 +403,7 @@ func checkBash*(branch, command: string; is_head_pushed: bool): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Never commit to `main`; push to branch inside grammar (CLAUDE.md); got `" & branch & "`.",
+        "Never commit to `main`; push to branch inside grammar (AGENTS.md); got `" & branch & "`.",
       )
     let is_forced = arguments.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-"))
     if sub == "push" and is_forced:
@@ -1885,7 +1885,7 @@ func checkPush*(recorded, tree_pushed: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "`nim r koch check` must pass on exact commit pushed (CLAUDE.md); last green tree `" &
+      "`nim r koch check` must pass on exact commit pushed (AGENTS.md); last green tree `" &
         recorded.strip & "`; got `" & tree_pushed.strip & "`.",
     )
 
@@ -1965,7 +1965,7 @@ func contextStart*(
   var lines: seq[string]
   if parsed.isNone:
     lines.add "Branch `" & branch & "` is outside grammar; push to `curator/<name>`, " &
-      "`curator/<project>/<name>` or `contributor/<domain>/<project>/<name>` (CLAUDE.md)."
+      "`curator/<project>/<name>` or `contributor/<domain>/<project>/<name>` (AGENTS.md)."
   else:
     lines.add "Role: " & parsed.get.nameRole & ", on branch `" & branch & "`."
     lines.add ""
