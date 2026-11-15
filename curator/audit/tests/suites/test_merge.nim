@@ -128,12 +128,32 @@ suite "Merge":
     check root.git("worktree list --porcelain").count("worktree ") == 1  # none added
 
 
-  test "dirty checkout, and checkout holding base, are judged in place":
-    # `readTree` reads uncommitted and untracked files, which merge of commits misses; checkout
-    #   holding base is its own merge. Merge path of `koch check` gives each back unjudged.
+  test "second tree whose folder was deleted by hand is added again, in place of its entry":
+    # Git keeps entry of worktree whose folder is gone, and refuses to add it again unless forced;
+    #   forced add replaces that entry, so no second entry is left.
     let root = repoForked()
     defer: removeDir(root)
-    var toolchains = initToolchains(root, some(Compiler(version: "0.0.0")))  # never asked
+    let first = writeMerge(root, "main")
+    removeDir(first.directory)
+    check "prunable" in root.git("worktree list --porcelain")
+    let again = writeMerge(root, "main")
+    check again.findings.len == 0 and again.directory == first.directory
+    check again.directory.git("rev-parse HEAD^2") == root.git("rev-parse main")
+    check root.git("worktree list --porcelain").count("worktree ") == 2  # checkout, second tree
+    check "prunable" notin root.git("worktree list --porcelain")
+
+
+  test "dirty checkout, and checkout holding base, are judged in place":
+    # `readTree` reads uncommitted and untracked files, which merge of commits misses; checkout
+    #   holding base is its own merge. Merge path of `koch check` gives each back unjudged. Koch
+    #   of merge passes here, so merge made by mistake would leave second tree and mark.
+    let
+      root = repoForked()
+      toolchain = toolchainStub()
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    toolchain.writeInto("exit", "0\n")
+    var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
     root.writeInto("README.md", "Edit in progress.\n")
     check not root.isMerging("main")
     check not judgeMerged(root, "main", "curator/older", toolchains).is_merged
@@ -327,4 +347,41 @@ suite "Merge":
     discard root.git("checkout -q --detach")
     let verdict = judgeMerged(root, "main", "curator/older", toolchains)
     check verdict.is_merged and verdict.code == 0 and verdict.findings.len == 0
+    check lines(toolchain / "run.log").len == 1  # koch of merge ran, and passed
     check not fileExists(root.fileMark)
+
+
+  test "build that fails, and pin of merge that no compiler serves, each give finding and no mark":
+    # Each stops judgement at exit 1, so `koch check` reports it rather than pass. Stub `curl`
+    #   fails as unreachable network would, so pin nothing serves fetches nothing, as in
+    #   `test_compilers.nim` of knoller.
+    let
+      root = repoForked()
+      toolchain = toolchainStub()
+      tools = createTempDir("delegations_", "_tools")
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    defer: removeDir(tools)
+    toolchain.writeInto("exit", "0\n")
+    var toolchains = initToolchains(toolchain, some(Compiler(version: "0.0.0")))
+    root.moveOnBase("koch.nim", "broken\n")
+    let broken = judgeMerged(root, "main", "curator/older", toolchains)
+    check broken.is_merged and broken.code == 1 and broken.findings.len == 1
+    check broken.findings.len == 1 and "failed to build" in broken.findings[0].message
+    check not fileExists(root.fileMark) and not fileExists(toolchain / "run.log")
+    if platform(hostOS, hostCPU).len == 0:
+      # Gap: platform with no tarball builds pin from source through real git, so pin nothing
+      #   serves is held on platform that has tarball alone.
+      skip()
+    else:
+      tools.writeInto("curl", "#!/bin/sh\nexit 6\n")
+      inclFilePermissions(tools / "curl", {fpUserExec})
+      let path = getEnv("PATH")
+      putEnv("PATH", tools & PathSep & path)
+      defer: putEnv("PATH", path)
+      root.moveOnBase("curator/audit/audit.nimble", "requires \"nim == 0.0.2\"\n")
+      let unserved = judgeMerged(root, "main", "curator/older", toolchains)
+      check unserved.is_merged and unserved.code == 1 and unserved.findings.len == 1
+      check unserved.findings.len == 1 and "No compiler serves" in unserved.findings[0].message
+      check not fileExists(root.fileMark) and not fileExists(toolchain / "run.log")
+      check runMerge(writeMerge(root, "main"), "curator/older", toolchains).code == 1
