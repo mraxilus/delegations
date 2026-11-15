@@ -1,7 +1,7 @@
 # lojban_parser
 
-ni'o ni'o ni'o le vi selgu'a cu genturfa'i
-  .i ri tcidu lo jbovla ja'i `The Complete Lojban Language` noi selcme zoi gy. CLL .gy.
+ni'o ni'o ni'o le vi selgu'a cu genturfa'i gi'e tcidu lo jbovla ja'i `The Complete Lojban Language`
+    noi selcme zoi gy. CLL .gy.
 
 ## Standards
 
@@ -19,20 +19,19 @@ ni'o ni'o ni'o zo gismu selsmu zo'e poi frica le velski poi cnita
 ### ni'o ni'o lo valsi pe la lojban.
 
 **gismu**:
-lo cmuvla be fi la lojban. noi vasru mu lerfu gi'e se tarmi `CVC/CV` .a `CCVCV`
+lo jbocmuvla noi vasru mu lerfu gi'e seltai `CVC/CV` .a `CCVCV`
   .i le gimste pe `Logical Language Group` vasru ro gismu
 _Avoid_: root, root word, primitive
 
 **cmavo**:
-lo turvla be fi la lojban. mu'u zo se .a zo nu
-  .i su'o cmavo cu ponse lo rafsi
-  .i mupli fa lo nu zo se ponse zoi gy. sel .gy.
+lo jboturvla mu'u zo se .a zo nu
+  .i su'o cmavo cu ponse lo rafsi mu'u lo nu zo se ponse zoi gy. sel .gy.
 _Avoid_: particle, function word
 
 **rafsi**:
 lo vlapau poi sinxa pa gismu .a pa cmavo ne'i lo lujvo
   .i lo rafsi cu vasru ci lerfu gi'a du pa gismu
-  .iju lo fanmo karsna be ri selvi'u
+  .iju lo fanmo karsna be ri cu selvi'u
 _Avoid_: affix, combining form, stem
 
 **tanru**:
@@ -42,7 +41,7 @@ lo porsi be lo valsi
 _Avoid_: metaphor, phrase
 
 **tanru unit**:
-pa valsi pe lo tanru ge'u joi lo cmavo poi jorne ri
+pa valsi pe lo tanru ge'u joi lo cmavo poi jorne le valsi
   .i zoi gy. tanru-unit .gy. cmene lo taurpau le gerna pe `CLL` to `21.2` .e le javni pe li pamure
       toi
   .i lo jalge be lo cmavo be zoi gy. SE .gy. po'o cu vajni
@@ -56,7 +55,7 @@ lo valsi poi selcmu lo rafsi gi'e vasru lo lerjo'e poi `CLL` to `4.11` toi cu ni
 _Avoid_: compound, composite word
 
 **brivla**:
-lo selbri valsi be fi la lojban. noi gismu ja lujvo ja fu'ivla
+lo lojbo selbri valsi noi gismu ja lujvo ja fu'ivla
   .i lo brivla cu selfa'o lo karsna gi'e vasru lo zunsna remei ne'i lo mu lerfu pe lo cfari be lo
       brivla
 _Avoid_: predicate, content word
@@ -70,6 +69,6 @@ lo brivla poi se lebna fi lo datybau gi'e na gismu gi'e na lujvo ja'i `CLL` to `
 _Avoid_: borrowing, loanword
 
 **selma'o**:
-lo genlei be lo cmavo poi jarco lo du'u le gerna pe `CLL` curmi lo nu ro lo cmavo pe ke'a zvati ma
-    kau to `4.2` toi
+lo cmavo genlei poi jarco lo du'u le gerna pe `CLL` curmi lo nu ro lo cmavo pe ke'a zvati ma kau to
+    `4.2` toi
 _Avoid_: class, part of speech, word class
