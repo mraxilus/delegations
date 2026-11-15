@@ -9,7 +9,7 @@
 ##     every project claims, and sections of process, which move none yet say what delegate
 ##     does; delegate forgets both, so every change of charter reaches each older branch
 ##     (#843). Module of stamp (`PATH_STAMP`) holds `RULES`, `SECTIONS_PROCESS` and digest,
-##     whose change moves every stamp, and `koch stamp` of older branch would write old one.
+##     whose change can move every stamp, and `koch stamp` of older branch would write old one.
 ##     Same module holds checks of record too (`checkProvenance`, `checkCitations`,
 ##     `isDateIso`), and path cannot tell which part moved, so drift names each change of it.
 ##   Cost: edit of module of stamp that moves no stamp still sends each older branch to merge
@@ -51,7 +51,7 @@ import ./[findings, markdown, plan, provenance, tree]
 
 const PATH_STAMP* = DIRECTORY_CHECKER & "/provenance.nim"
   ## Module of stamp, holding `RULES`, `SECTIONS_PROCESS` and digest beside checks of record;
-  ##   change of first three moves every stamp, so drift names each change of module beside
+  ##   change of first three can move every stamp, so drift names each change of module beside
   ##   charter.
 
 
@@ -137,6 +137,6 @@ func checkBase*(drift: Drift): seq[Finding] =
   result.add finding(
     "",
     0,
-    "Branch predates code of stamp on base, which moves every stamp; merge base, then check " &
-      "again, as /sync says; got `" & PATH_STAMP & "`.",
+    "Branch predates code of stamp on base, which can move every stamp; merge base, then " &
+      "check again, as /sync says; got `" & PATH_STAMP & "`.",
   )
