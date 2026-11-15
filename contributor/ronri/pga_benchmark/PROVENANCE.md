@@ -78,7 +78,7 @@ nothing of it was copied.
 **The 2D forms come from an expansion of the definitions.** A script expands each definition
 of Lengyel's exterior algebra on the components of the typed objects. At rga3d its metric is
 e₁² = e₂² = 1 and e₃² = 0. At cga4d it is e₁² = e₂² = 1 and e₃ ∙ e₄ = −1. The expansion
-reproduces the library on every pair of basis elements: 400 cases at rga3d, 1,245 at cga4d.
+reproduces the library on every pair of basis elements: 400 cases at rga3d, 1 245 at cga4d.
 They cover every product, complement, dual, part, attitude, carrier and cocarrier.
 
 The expansion also reproduces the support, center, container and partner on one integer operand of
@@ -233,7 +233,7 @@ reaching code below then falls to zero after the first measurand. Code that gcc 
 never to run is optimised for size, and gcc does not vectorise its loops. So the loop of `+`
 stayed scalar, while the straight-line dense form still became two-wide adds.
 
-At rga4d at `d9be8ae`, gcc estimated 5,215 of the 5,306 blocks of that function never to run.
+At rga4d at `d9be8ae`, gcc estimated 5 215 of the 5 306 blocks of that function never to run.
 It analysed 5 of its loops for vectorisation. Without its guessed profile, it analysed 673 and
 vectorised the loop of `+`. Three alternating runs of each build at rga4d, on `linux amd64,
 4 cores` on 2026-10-03, time the library against its dense form:
@@ -348,8 +348,15 @@ names the module.
 
 It keys every function by symbol and by parameter type stems. A stem drops the hash that the
 compiler puts in the name of a type, since that hash follows the path of its module. So a set of
-an enum reads as `set[Basis]`, and a key holds on every machine. It then counts what the C
-spells:
+an enum reads as `set[Basis]`, and a key holds on every machine.
+
+The compiler gives every instance of `MultivectorOf` one name with a hash. So the inspector names
+each instance after the library type of its count, which it reads from the array of the field.
+A field that carries an alignment opens with `NIM_ALIGN`, as the types of P04 and P05 do, and the
+inspector skips that word. So an aligned type keeps its key, and its evaluation lists no function
+twice.
+
+The inspector then counts what the C spells:
 
 - multiplies, adds, subtractions and divides;
 - `nimZeroMem` calls, intermediates and whole-object copies;
@@ -378,6 +385,7 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 
 - a demangling table with overload indices;
 - a fixture C source with known counts;
+- an instance named by its count, with an aligned field and without;
 - loops of literal, nested and variable bound;
 - divisions inside a loop and inside a callee, and callee folding;
 - movement from stems;
@@ -389,6 +397,21 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 `baseline/runtime_<algebra>.json` records the runtime ones. `baseline/machine_<algebra>.json`
 records the machine measurements, as the next section says. All are schema 1, with a header
 that names algebra, compiler commit, library commit, flags, machine and date.
+
+**The machine names its processor**, as the Architect ruled on 2026-11-15. It gives the system,
+the architecture and the count of cores. Then it gives the model name, family and model of the
+first block of `/proc/cpuinfo` that names one. On the host of 2026-11-15, `machineNow` reads
+`linux amd64, 4 cores, Intel(R) Xeon(R) Processor @ 2.30GHz, family 6 model 173`. That model name
+names no generation of processor, so the family and model tell the generations apart.
+
+A host that describes no processor, as macOS or Windows, writes `processor unrecorded`. Each verb
+that times or counts takes the machine from `machineNow` of `report.nim`, and `sweep` takes the
+stamp of `bench`. `restamp` moves a stamp to a new pin, and keeps the machine of the run that
+timed it.
+
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Measurements`. It reads a
+fixture of two blocks, where the second names another model. It also reads an empty text, and a
+block that names no model.
 
 `guard` compares a fresh inspection against the baseline. Any gated count or bytes moved that
 grew is a finding, rendered as `path:0: message; got value`. Any shrink is a notice. A document
@@ -731,7 +754,7 @@ by ×1.002 to ×1.004 there. Cost: four runs more add about 4 s to a sweep of ab
 `unitized` times six point operations of Lengyel's code, each in the homogeneous form and in the
 unitized form that skips each product with w. It takes three layouts: four floats, his three, and
 three padded to four, so the saved arithmetic shows apart from the smaller layout. It takes 1024
-points in cache and 1,048,576 streamed from memory. Each operation runs behind a call that the
+points in cache and 1 048 576 streamed from memory. Each operation runs behind a call that the
 optimiser does not inline, and writes its result in place, as return value optimisation of C++
 does.
 
@@ -807,7 +830,7 @@ of the four stubs.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`: the function that
 runs the module holds under 2 MB of C. The law fails on suites at module level, where that
-function holds 8,316,057 bytes.
+function holds 8 316 057 bytes.
 
 ## Changes, proposals and evaluations
 
@@ -877,7 +900,7 @@ library implements drops out, since the library holds its edits.
 
 **Each proposal page states its dependencies, and one page lists every proposal.** The page of a
 proposal names what it depends on and what its rejection blocks. Where a proposal is reached through
-another, the page names that one too, as `(through P02)`. The proposals tab of the Proposals page
+another, the page names that one too, as `(through P08)`. The proposals tab of the Proposals page
 gives each proposal its standing, its claims that hold, its dependencies and what it blocks.
 
 Above the table, the tab draws the undecided proposals as a graph, in columns by depth and in rows
@@ -899,14 +922,20 @@ binaries of the pin and of the copy run alternately, 41 times each, so drift of 
 lands on both. The time ratio of a measurand is the median of the ratios of its pairs of runs.
 
 **An evaluation builds without dense forms**, under `-d:pga_benchmark.has_forms_dense=false`.
-A dense form reads tables by their names at pin, and a change may rename them, as
-`cayley-derivation` does. The evaluation compares the library with the pin, so it needs no
-dense form.
+A dense form reads tables by their names at pin, and a change may rename them. The evaluation
+compares the library with the pin, so it needs no dense form.
 
 The pristine counts are the baseline, which holds the dense forms. So a dense form that the changed
 build leaves out is no moved function. At rga4d, P08 moves 2 functions, and P01 and
 `multivector-align` move none. So an evaluation of a change that moves no function reads as
 quiet, and the pages take their spread from it.
+
+**An instance whose number alone moved is no moved function.** The compiler numbers an instance of
+a generic function among every symbol before it. The key of a second instance carries that
+number, as `index(Basis)#u7695` does at rga4d. An edit above the instance moves the number, and
+the key with it. So the comparison pairs a gone key and a new key of one stem and equal counts,
+and reports neither. The cost is that an instance whose number and counts both moved reads as
+gone and as new.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
 else. It compares the peak memory or the seconds that the compiler reports for the pin and for the
@@ -978,9 +1007,12 @@ hold at rga4d, whose metric is diagonal.
 
 Up to 5D the laws of P04 sweep each product over every pair of named types and the whole
 multivector. At 6D they sweep a vector with each type. The compiler takes about 0.05 MiB for each
-term that a form emits. At cga6d every pair takes 18 minutes and 6 106 MiB to build and run. A
-vector with each type there takes 2 minutes and 1 196 MiB. Measured as the peak resident size of
-each build under Nim 2.4.0, 2026-10-29.
+term that a form emits.
+
+At cga6d every pair takes 18 minutes and 6 106 MiB to build and run. A vector with each type there
+takes 2 minutes and 1 196 MiB. Measured as the peak resident size of each build under Nim 2.4.0,
+2026-10-29. The same measure of 2026-11-15 reads 68 s and 1 223 MiB for a vector with each type.
+That run was on a Xeon of family 6 model 173.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
@@ -988,10 +1020,11 @@ cover parse, quote and digest rules, and claim kinds, with the defines a claim m
 names. They cover the programs of a chain of proposals, base first.
 
 The same suites cover proposal numbers taken twice or skipped, and the status that freezes a
-proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and the
-table serialiser at pin. The serialiser reads a cell that holds its terms in place with their count
-too. They cover the algebras that an evaluation measures, with the flag and without it. A digest
-moves with edits, and never with prose.
+proposal. They also cover pairing of runs, NaN shares, and an instance whose number alone moved.
+They cover the success line of the compiler, and the table serialiser at pin. The serialiser
+reads a cell that holds its terms in place with their count too. They cover the algebras that an
+evaluation measures, with the flag and without it. A digest moves with edits, and never with
+prose.
 
 ## Notes
 
@@ -1345,8 +1378,8 @@ Architect ruled on 2026-10-17. The exponential, the logarithm and the square roo
 not on it. The map also leaves out the motor that moves one object onto another, and the dilation
 and the transversion of CGA.
 
-P01 lays out every Cayley table of the library, so most other proposals build on it. The map shows
-how complete the library is, and a faded box is an operator that waits for its table. Other
+P01 lays out every Cayley table of the library. P08 builds on it, and P03 builds on both. The map
+shows how complete the library is, and a faded box is an operator that waits for its table. Other
 proposals count only the tables that the library builds. When the library adds a table, each
 proposal that it concerns takes the new table into account.
 
@@ -1568,22 +1601,32 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 ## Known limitations
 
 - Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Each
-  evaluation committed now measures all four, from one run of `evaluate all --thorough`.
+  evaluation committed now measures all four. Those of P02 and P06 hold 5 runs, and each other
+  holds 41.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.
+- A stamp that names no processor, as that of each record committed here, leaves the machine
+  unknown. Under the stamp `linux amd64, 4 cores`, pin ran `wedge` at cga5d in 97.55 ns on
+  2026-11-05 and in 48.48 ns on 2026-11-14. Both times are in
+  `evaluations/cayley-derivation.json`, at `c2e80da3` and at head. By `/proc/cpuinfo`, the
+  processor of 2026-11-14 and 2026-11-15 is a Xeon of family 6 model 173, and nothing records
+  that of 2026-11-05. So a time of one evaluation compares with a time of another only where the
+  times of pin agree.
 - Movement is modelled from the bytes that the code names, and never measured as cache
   traffic.
 - The inspector reads text patterns of Nim 2.4.0. Another release could spell the same C
   differently. The suite that holds the reader to the nimcache of the test binary is
   what would say so. A loop whose bound is a variable counts once.
-- 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
-  compared. The Architect ruled on 2026-10-06 that they stay unmeasured while the library holds
-  64-bit floats alone. A SIMD form may come as a proposal that keeps 64-bit floats, after a
-  proposal that makes the width of the float configurable.
+- The bench, the references and the gap list hold 64-bit floats alone. The library takes the
+  width of its floats as a build option. A claim runs at 32 bits only where it names that width,
+  as claims of P04, P06 and P07 do. SIMD forms are unmeasured, and the SSE paths of Terathon were
+  not compared. The Architect ruled on 2026-10-06 that a SIMD form may come as a proposal that
+  keeps 64-bit floats. That proposal comes after the width of the float is configurable, and
+  with P06 it is.
 - `sweep` is hand-run only. Three sweeps of five runs at `edb0c9d`, on `linux amd64, 4 cores` on
   2026-10-05 and 2026-10-06, differ by ×1.002 to ×1.004 at the median cell. At the 90th
   percentile they differ by ×1.025 to ×1.030. Five of 319 cells differ by more than ×1.10. The
@@ -1604,7 +1647,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
   grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
-  three zero fills and two error checks. P01 and P08 alone spend 437, 104 and 268. Both are the
+  no zero fill and two error checks. P01 and P08 alone spend 437, 71 and 106. Both are the
   counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
 - Whether the library takes P04, `exact-kinds`, so that each operator from one table returns the
   exact basis-set type of the bases it reaches. At rga4d 16 measurands stand above the byte bound
@@ -1621,6 +1664,14 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   `-m` at ×0.42 to ×0.93 of the pin. It times `m + n` at ×0.70 to ×0.88, at no cost in size. On
   Emerald Rapids under SSE2, `/ m` and `★ m` at cga5d run ×1.10 and ×1.11 of the pin. The
   figures are in `proposals/05-multivector-align/proposal.md`.
+
+  Under P05 and under P04, an AVX2 build can fault where the pin runs. It faults on a multivector
+  in raw storage, which `alloc` aligns to 16 bytes. It also faults on one in a `seq` under
+  `--mm:refc`, whose data the pinned compiler does not align.
+  `proposals/04-exact-kinds/proposal.md` and `proposals/05-multivector-align/proposal.md` state
+  each case. So each of the two holds one more decision, among three options. They are the
+  alignment as now, an alignment of at most 16 bytes, and the alignment as now only under
+  `defined(gcDestructors)`.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library

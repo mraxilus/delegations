@@ -7,7 +7,8 @@ size where that is smaller. Its size and every signature stay as at pin.
 so work that mostly moves data runs faster. The products run in about the same time.
 
 **What it costs.** A function that keeps a multivector on its own stack aligns its frame at each
-call. On one of two cores, most operations at cga5d run slower under SSE2.
+call. On one of two cores, most operations at cga5d run slower under SSE2. An AVX2 build of a caller
+that holds multivectors in raw storage, or in a `seq` under `--mm:refc`, can stop where pin runs.
 
 ## Problem
 
@@ -28,18 +29,22 @@ into a line, so each element touches one line more than it holds:
   `MultivectorOf` gives that set alone the field `elements` with
   `{.align(min(64, sizeof(array[Basis, Coefficient]))).}`. That is 64 bytes at every algebra of
   three dimensions or more at 64 bits. At rga2d a multivector aligns to its own 32 bytes, so it
-  never crosses a line. Every other basis-set type keeps the alignment of its coefficient.
+  never crosses a line. Every other basis-set type keeps the alignment of its coefficient. The
+  `when` tests the set through `<=`, because `==` there adds a warning of a circular dependency.
 - **Size.** A multivector still holds its 2^D coefficients alone, so its size stays 2^D times the
   size of one coefficient.
-- **Each storage.** The pinned compiler honours the alignment in a `seq`, a `ref`, a global and on
-  the stack. So from three dimensions up, each multivector starts on a line in each storage.
-  `layout.nim` holds the size, the alignment and the address in each of them.
+- **Each storage.** Under `--mm:orc`, the default, and `--mm:arc`, the pinned compiler honours the
+  alignment in a `seq`, a `ref`, a global and on the stack. So there each multivector starts on a
+  line in each storage, from three dimensions up at 64 bits and from four at 32 bits. `layout.nim`
+  holds the size, the alignment and the address in each of them, and the alignment of
+  `MultivectorScalars`.
 
 ## Alternatives
 
 | Option | Why it lost |
 |--------|-------------|
-| 16 bytes | Times as 64 bytes on large `seq`s, but finds a line start only through the allocator |
+| 16 bytes | Times as 64 bytes and suits `alloc`, but finds a line start only by the allocator |
+| 64 bytes under `gcDestructors` | Keeps a `seq` under `--mm:refc` valid, but not raw storage |
 | 32 bytes | Starts 32 bytes into a line, and gains nothing on `-m` at some algebras |
 
 ## Costs
@@ -52,15 +57,28 @@ into a line, so each element touches one line more than it holds:
 - **Slower at cga5d on one core.** On the Emerald Rapids Xeon under SSE2, five of seven operations
   at cga5d run ×1.07 to ×1.11 of pin. There each of the five runs of `/ m` and `★ m` reads ×1.04
   to ×1.17, and 16 bytes also runs them slower than pin. On the Cascade Lake Xeon the same five
-  operations gain or hold, so that cost likely depends on the core.
+  operations gain or hold, so that cost likely depends on the core. Under AVX2 there, `m ∙ n` at
+  cga5d reads ×1.21, and 16 bytes reads ×0.98.
 - **Objects of callers.** An object of a caller that holds a multivector beside other fields pads
-  to the new alignment, so it can grow. The type, its field and every signature stay, so no caller
-  must migrate.
+  to the new alignment, so it can grow. The type, its field and every signature stay. So a caller
+  that lets the compiler place its multivectors under `--mm:orc` or `--mm:arc` does not migrate.
+- **Raw storage.** A caller that holds multivectors in memory from `alloc`, `create` or `createU`,
+  or from an allocator of its own, must align each block to 64 bytes from three dimensions up.
+  Those calls align to 16 bytes, and an AVX2 or AVX-512 build faults there on an aligned move.
+  At pin the same program runs, and so does the default SSE2 build of this change. The library at
+  pin leaves memory management to the caller.
+- **Memory manager.** Under `--mm:refc` and `--mm:markAndSweep` the pinned compiler does not align
+  the data of a `seq`, but the C type declares 64 bytes. An AVX2 build of a caller that holds
+  multivectors in a `seq` there stops on an aligned store. At pin the same build runs, and the
+  library passes its suites under `--mm:refc`.
 - **Unmeasured cores.** Both machines are Intel Xeons. No measurement covers an AMD or ARM core.
 
 ## Open decisions
 
 - Take this alignment of the multivector into the library, or keep the alignment of pin.
+- Align the whole set to 64 bytes, as here, to 16 bytes, which `alloc` gives, or to 64 bytes only
+  under `defined(gcDestructors)`. The guard keeps a `seq` under `--mm:refc` valid, and raw storage
+  still needs 64 bytes.
 - Align the whole set alone, as here, or every basis-set type by the rule of P04, `exact-kinds`,
   which gives the whole set the same alignment.
 
@@ -72,6 +90,7 @@ into a line, so each element touches one line more than it holds:
   `alignment` of its count. That is the largest power of two that divides its bytes, and at most 64.
   The second of the two to land quotes the first. For the whole set, that rule gives `min(64,
   size)`, since 2^D coefficients take a power of two bytes. So once P04 lands, its rule spells both.
+  The law of `layout.nim` on `MultivectorScalars` then goes, since P04 aligns that type by count.
 
 ## Evidence
 
@@ -99,11 +118,11 @@ alone. A small `seq` starts at another offset, and this proposal makes it start 
 
 ### Timing
 
-`timing.nim` holds 1024 multivectors in a `seq`, and pairs element i with element (7i + 3) mod 1024.
-It times each operation in a procedure of its own, as the median nanoseconds for each object over 41
-rounds. Each machine ran five alternating runs of pin `d9be8ae`, of 16 bytes and of 64 bytes, on
-one pinned core. A ratio is the median over the runs of 64 bytes to pin. Each cell gives the range
-of that ratio over rga3d, rga4d, cga4d and cga5d.
+`timing.nim` holds 1 024 multivectors in a `seq`, and pairs element i with element (7i + 3) mod
+1 024. It times each operation in a procedure of its own, as the median nanoseconds for each object
+over 41 rounds. Each machine ran five alternating runs of pin `d9be8ae`, of 16 bytes and of 64
+bytes, on one pinned core. A ratio is the median over the runs of 64 bytes to pin. Each cell gives
+the range of that ratio over rga3d, rga4d, cga4d and cga5d.
 
 - **Cascade Lake.** A Xeon, `linux amd64, 4 cores`, under SSE2, on 2026-10-03.
 - **Emerald Rapids.** A Xeon of family 6 model 207, a KVM guest with 4 cores, at a load of 0.2,

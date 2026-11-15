@@ -226,9 +226,9 @@ The bound under which `=~` counts two coefficients equal and `grade` counts one 
 _Avoid_: tolerance, alone in this sense; places
 
 **Homogeneous scalar**:
-The pair x𝟏 + y𝟙 of a scalar and an antiscalar. It stands for the value x/y kept with its weight
-y, as a homogeneous point keeps a position with its weight. Under the rigid metric it is a dual
-number, and under the conformal metric a complex number.
+The pair s𝟏 + t𝟙 of a scalar and an antiscalar, which stands for the value s/t kept with its
+weight t. It is a dual number under the rigid metric, a complex number at cga4d and cga5d, and a
+split-complex number at cga3d and cga6d.
 _Avoid_: magnitude, dual number, dual scalar
 
 **Motion operator**:

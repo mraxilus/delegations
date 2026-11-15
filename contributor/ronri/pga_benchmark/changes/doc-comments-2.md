@@ -7,15 +7,32 @@ It also states the real limit on dimensions. Each basis is one decimal digit, so
 ceiling. No count changes.
 
 Proposal P01, `cayley-derivation`, replaces `pga/cayleys.nim` whole from a digest, and this
-change edits that file too. Whichever lands second is quoted again against the first. If P01
-lands second, its Replace carries the text of this change under a new digest. P01 also edits the
-import line of `tests/suites.nim` that this change quotes, so the second to land quotes that line
-again.
+change edits that file too. If P01 lands second, its Replace carries the text of this change under
+a new digest. If this change lands second, its edits of that file apply as written. P01 also edits
+the import line of `tests/suites.nim` that this change quotes. If this change lands second, it
+quotes that line again.
 
-Two proposals quote lines next to the docs that this change adds, so the second to land quotes the
-first. P05, `multivector-align`, quotes the line under `Multivector* = object`. P07, `part-scale`,
-quotes the doc of `grade`. The width of a coefficient is a build option at pin, so the doc of
-`Multivector` names the width: a multivector at 4D holds 128 bytes at 64 bits.
+P07, `part-scale`, quotes the doc of `grade`, next to the line that this change adds there. Where
+this change lands first, P07 quotes that line too. Where P07 lands first, this change applies as
+written. The width of a coefficient is a build option at pin, so the doc of `Multivector` names
+the width: a multivector at 4D holds 128 bytes at 64 bits.
+
+Two proposals edit lines that this change quotes:
+
+- P04, `exact-kinds`, adds `basis_sets` to the export line of `pga.nim`, which this change
+  splits. The second of the two to land quotes that line again. P09 and P10 build on P04, so each
+  meets this change as P04 does.
+- P10, `homogeneous-scalar`, removes the stand-in `sqrt` and `sqrtAnti` of `tests/suites.nim`. If
+  P10 lands first, the edit of this change that adds a line to the doc of `sqrt` is void. If this
+  change lands first, P10 quotes that line.
+
+Two proposals make a line of this change false. Of this change and each of them, the second to
+land drops that line:
+
+- P03, `partner-sign`, reads no grade in the partner. Then the clause `` `⊛` calls it per object``
+  that this change adds to the doc of `grade` is false.
+- P12, `cayley-cells`, holds each cell of a table in place. Then the comment that this change
+  writes beside `export cayleys`, on a read that allocates, is false.
 
 ## Edit `pga.nim`
 
