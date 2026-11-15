@@ -81,4 +81,4 @@ suite "Article VI":
       if fileExists(root / p.directory / p.suite):
         inc held
         check p.should_demand_suite  # suite present, so audit demands it
-    check held >= 1  # floor: suite of lojban_parser stands in tree
+    check held >= 1  # floor: suite of ricysoho stands in tree

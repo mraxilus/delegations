@@ -67,7 +67,7 @@ const
   DIRECTORY_ALPHA* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
   DIRECTORY_PARSER* = CONTRIBUTOR & "/bangu/ricysoho"
     ## Project list of own prose names, which fixture tree holds for that list's sake.
-  DIRECTORY_TAGGER* = CONTRIBUTOR & "/bangu/lojban_tagger"
+  DIRECTORY_TAGGER* = CONTRIBUTOR & "/bangu/rictadni"
     ## Project of same domain that list of own prose leaves out; fixture tree holds none of it.
   PROSE_LOJBAN* =
       "mi klama le zarci .i do klama le zdani .i le gerku cu viska le mlatu .i le mlatu\n" &
