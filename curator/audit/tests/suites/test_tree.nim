@@ -2,8 +2,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, sets, strutils, tables, tempfiles, unittest]
-import ../../src/[domains, tree]
+import std/[options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
+import ../../src/[domains, layout, tree]
 import ./fixtures
 
 
@@ -208,6 +208,52 @@ suite "Tree":
     # Domain: git names real top through same link, and root spelt real reads as it is.
     check checkoutAt(links / "root", links / "root") == some(root)
     check checkoutAt(root, plain) == some(root)
+
+
+  test "each verb points git at hooks of checkout, quietly, and fails on nothing (#891)":
+    # Case: only start hook of Claude Code set `core.hooksPath`, so other harness committed and
+    #   pushed past git hooks, and runner alone held them. Domain: path unset, other path, same
+    #   path, lock that run at once holds, directory in no repository, and worktree.
+    let
+      root = repoTemp()
+      plain = createTempDir("delegations_", "_plain")
+      tree = root & "_worktree"
+      config = root / ".git" / "config"
+    defer: removeDir(root)
+    defer: removeDir(plain)
+    defer: removeDir(tree)
+    proc named(): string =
+      ## Read hooks path git names in root; empty where unset.
+      execCmdEx("git -C " & root.quoteShell & " config --get core.hooksPath").output.strip
+
+    root.setPathHooks
+    check named() == DIRECTORY_HOOKS  # unset, so written
+    let written = getFileInfo(config).id.file
+    root.setPathHooks
+    check getFileInfo(config).id.file == written  # same path, so read alone and never written
+    discard root.git("config core.hooksPath hooks_of_harness")
+    root.setPathHooks
+    check named() == DIRECTORY_HOOKS  # other path, so written over
+
+    # Lock of run at once fails write, and verb goes on; so does git outside any repository.
+    discard root.git("config core.hooksPath hooks_of_harness")
+    writeFile(config & ".lock", "")
+    root.setPathHooks
+    check named() == "hooks_of_harness"
+    removeFile(config & ".lock")
+    plain.setPathHooks
+    check not dirExists(plain / ".git")
+
+    # Real git runs hook that path names from top of each worktree, so one write serves each.
+    root.setPathHooks
+    root.writeInto(DIRECTORY_HOOKS & "/commit-msg", "#!/bin/sh\ntouch ran\n")
+    inclFilePermissions(root / DIRECTORY_HOOKS / "commit-msg", {fpUserExec})
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'chore(curator): add hook'")
+    check fileExists(root / "ran")
+    discard root.git("worktree add -q -b work " & tree.quoteShell)
+    discard tree.git("commit -q --allow-empty -m 'chore(curator): run hook'")
+    check fileExists(tree / "ran")
 
 
   test "lock that moved with its project and follows its name is move":
