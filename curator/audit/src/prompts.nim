@@ -4,6 +4,10 @@
 ##     i.e. date, `#N`, `issue N`, `pull request N` or `run N` in prose, since incident
 ##     belongs in audit record or log and rule alone belongs here (duty 10).
 ##   Code spans and fences pass, so carried-list example naming `#140` stays legal.
+##   File of each role holds reading order of its role under `HEADING_READ`, and `start` prints
+##     that section from there, so list lives once. File lacking heading is finding, since
+##     `start` would print empty list and nothing else would see it; `SECTIONS_PROCESS` names
+##     heading in CONTRIBUTOR.md alone, as it lists rules documents only.
 ##
 ##   Cost: article numbers such as `II.9` and duty numbers pass by shape, and so does
 ##     `2026` alone; only whole date is diary here.
@@ -88,8 +92,16 @@ func checkSizePrompt(path, source: string): seq[Finding] =
 
 func checkHeadingRead(path, source: string): seq[Finding] =
   ## Report file of role lacking `HEADING_READ`, which `start` prints as reading order of role.
-  ##   TODO: Stub reports nothing until check lands; `checkPrompt` calls it already.
-  discard
+  ##   Heading is read through `sections`, so heading that fence quotes opens nothing.
+  if path notin PATHS_ROLE: return
+  for part in source.sections:
+    if part.heading == HEADING_READ: return
+  result.add finding(
+    path,
+    0,
+    "Reading order of role that `start` prints is absent; restore its heading, or rename " &
+      "`HEADING_READ` in `prompts.nim`; got `" & HEADING_READ & "`.",
+  )
 
 
 func checkPrompt*(path, source: string): seq[Finding] =
