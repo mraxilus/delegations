@@ -54,8 +54,8 @@ const
     ##   some star under every pixel, and anchoring on one thousand units off carried
     ##   eye across field in few notches and clipped scene away behind it.
     ##   Free flight takes object at any depth: wheel there refers to object under pointer,
-    ##   and band about separation left it nothing to refer to once flight had moved on
-    ##   while separation stood (repository issue 535).
+    ##   and band about distance to pivot left it nothing to refer to once flight had moved
+    ##   on while distance to pivot stood (repository issue 535).
     ##   Of objects crowding pointer it takes one nearest eye; see `Rank.Eye`.
     ##   Finger of pinch reaching past fingertip takes object only within it too; see
     ##   `interaction.reachPinch`.
@@ -261,7 +261,8 @@ func pixelsFromCursor*(
 func isInFront*(screen: ScreenPosition): bool = screen.depth > DISTANCE_LIMIT_NEAR
   ## Report whether projected position stands in front of eye.
   ##   Where perspective divide and every pixel distance from it are meaningful.
-  ##   Floor is camera's own, `DISTANCE_LIMIT_NEAR`: no separation camera holds reads behind.
+  ##   Floor is camera's own, `DISTANCE_LIMIT_NEAR`: no distance to pivot camera holds
+  ##   reads behind.
   ##     Not fixed millionth, which reads star of least radius, picked 2.4e-7 off, as behind.
 
 
@@ -535,8 +536,8 @@ func add(hiders: var Hiders, hider: Hider) =
   inc hiders.count
 
 
-func isNearSeparation(depth: float; camera: Camera): bool =
-  ## Report whether depth along sight lies within `FACTOR_ANCHOR_DEPTH` of separation.
+func isNearDistance(depth: float; camera: Camera): bool =
+  ## Report whether depth along sight lies within `FACTOR_ANCHOR_DEPTH` of distance to pivot.
   depth >= camera.distance / FACTOR_ANCHOR_DEPTH and depth <= camera.distance * FACTOR_ANCHOR_DEPTH
 
 
@@ -561,8 +562,8 @@ proc pickWalk(
   ##   `rank` says which object within reach wins; see `Rank`. `reach_eye` is how far, in
   ##   pixels, `Rank.Eye` reaches from cursor; rivals are counted at `RADIUS_CROWD_TOUCH`.
   ##     Past `RADIUS_CROWD_TOUCH` it takes only object within `FACTOR_ANCHOR_DEPTH` of
-  ##     separation: star there is none of what reader means, and held it carried pinch in out
-  ##     about it.
+  ##     distance to pivot: star there is none of what reader means, and held it carried
+  ##     pinch in out about it.
   ##   Exceeds 60-line default: three shape branches are irreducibly different geometry,
   ##   each minimal, sharing `eye`/`frame_camera`/`ray`/`scale` setup computed once.
 
@@ -654,7 +655,7 @@ proc pickWalk(
         distance = pixelsFromCursor(view_projection, width, height, at_view, cursor)
         radius_drawn = radiusPixelsAtDepth(scene.radiusAt(handle), depth, scale.scale)
         radius_pick = max(RADIUS_PICK_POINT, radius_drawn)
-        reach_here = (if depth.isNearSeparation(camera): reach_eye else: RADIUS_CROWD_TOUCH)
+        reach_here = (if depth.isNearDistance(camera): reach_eye else: RADIUS_CROWD_TOUCH)
         reach = (if rank == Rank.Eye: max(reach_here, radius_pick) else: radius_pick)
       if distance > max(RADIUS_CROWD_TOUCH, reach): continue
       # Project only what is within reach, which is few; see `pixelsFromCursor`.
@@ -742,7 +743,7 @@ proc pickWalk(
           )
           if found.isSome:
             let depth = depthAlongSight(view_projection, found.get)
-            if distance_nearest <= RADIUS_CROWD_TOUCH or depth.isNearSeparation(camera):
+            if distance_nearest <= RADIUS_CROWD_TOUCH or depth.isNearDistance(camera):
               consider(1, distance_nearest, depth, false)
       elif distance_nearest <= RADIUS_PICK_LINE: consider(1, distance_nearest, Inf, false)
       if distance_nearest <= RADIUS_CROWD_TOUCH: crowd(1)
@@ -1023,7 +1024,7 @@ func isBackdropUnder*(
 
 func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
   ## Report whether anchor's depth is within `FACTOR_ANCHOR_DEPTH` of orbit distance.
-  depthAlong(scale.eye, scale.forward, anchor).isNearSeparation(camera)
+  depthAlong(scale.eye, scale.forward, anchor).isNearDistance(camera)
 
 
 func positionUnderPointerOn*(
