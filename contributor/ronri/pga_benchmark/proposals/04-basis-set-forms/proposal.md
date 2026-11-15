@@ -87,9 +87,10 @@ is not `Multivector1`, which lists its four bases, and a set of all bases listed
 `emitMultivectorOf`, as the aliases of each grade and parity do. Where a form reaches every
 basis, it names `Multivector`, so each operator of the library takes the result.
 
-A form that reaches no basis is zero for any operands. The pinned compiler instantiates no
-`MultivectorOf` of an empty set: `B.card` stops on `firstOrd(tyEmpty)`, and `index` on an empty
-range. So `typeReached` stops the compile there, and says why.
+A form that reaches no basis is zero for any operands. At pin, `MultivectorOf` of an empty set
+stops the compiler: `B.card` of `{}` stops on `firstOrd(tyEmpty)`, and `index` on an empty range.
+So `typeReached` stops the compile there, and says why. Two edits let the empty type build, as
+Costs says, and an open decision weighs them.
 
 Nim prefers the operator of the library to a generic one that also matches. So an operator on
 whole multivectors stays as at pin, and returns `Multivector`. A product of a whole multivector
@@ -144,7 +145,7 @@ withdrawn.
 lost |
 | Return type `MultivectorOf[reach(...)]` | Built; it is not the same type as its alias |
 | One named type for each set reached | The names would spell the bases, as the generic does |
-| Empty set for a product that reaches none | Pinned compiler stops on `B.card` and on `index` |
+| Empty set for a product that reaches none | Open decision; it needs two edits at pin |
 | Generic product of two whole multivectors | Callers of pin would see a new type |
 | Filtered copy of each table for each pair of types | About 1 700 MiB of compiler memory at 6D |
 | One emitted procedure for each pair | About 6 000 bodies at 5D conformal, most never called |
@@ -179,7 +180,8 @@ bare noun (V.3).
 - **Operators from no table.** These stay on `Multivector` alone: the norms, `unitize`, the
   supports and the projections. So do the cocarrier, center, container and partner, and `-`, `$`
   and `grade`. A caller widens a basis-set type for each of them, and narrows the result back. At
-  pin `+` and `=~` already take any basis-set type. The library names no flat basis-set type.
+  pin `+` and `=~` already take two operands of one basis-set type. The library names no flat
+  basis-set type.
 - **Reach of the table.** The reach is what the table can produce, not what the algebra
   guarantees. A sandwich of a vector comes back as `MultivectorOdd` at each of the nine algebras,
   although its value lies in grade 1. An operator that knows better declares its product set. The
@@ -194,6 +196,11 @@ bare noun (V.3).
   bivector is one, and at rga2d and cga3d the bulk of a bivector. Under the rigid metric the bulk
   dual of the antiscalar is one, and so is the geometric product of two antiscalars. `laws.nim`
   counts them at each algebra.
+- **Empty type.** A basis-set type of no bases compiles each such form, and gives zero. At pin it
+  needs two edits: the size reads `Bases(B).card`, and a `when` skips each loop over an empty set.
+  With them, the laws of this proposal hold each form at rga2d, rga3d, rga4d, cga3d, cga4d and
+  cga5d, and none stops. Their two checks of a stop then check for zero instead. A value of the
+  empty type takes the bytes of one coefficient, as Nim 2.4.0 sizes an array of no element.
 - **Norms.** A norm takes a root of its squared norm, and at pin it returns `MultivectorScalars`.
   So a norm stays on `Multivector`, and this proposal does not cover it. Each squared norm has a
   form, and that form of a vector writes 8 bytes.
@@ -245,7 +252,9 @@ bare noun (V.3).
 - Choose the operators that declare a product set, such as the sandwiches and projections.
 - Generate and test the conformal flat basis-set types.
 - Whether a product that reaches no basis stops the compile, as here, or the library admits a
-  basis-set type of an empty set.
+  basis-set type of an empty set. Two edits build that type at pin, as Costs says.
+- Whether this proposal keeps its own code, or takes the code of the patch of D1 of
+  pga_visualiser, which Evidence compares with it.
 - Write each form by hand as a generic func, as here, or define each from one call of a private
   macro, as the library defines each operator.
 - Keep the forms in a module of their own, `pga/basis_sets.nim`, as here, or put the same code
@@ -340,6 +349,35 @@ Each alias returns the type of its operator, and equals it. Each reverse keeps i
 complement takes grade k to grade N - k. A map that drops the sign of its table fails at rga4d, at
 the right complement of a bivector. A squared norm that reads half its table holds at rga4d, whose
 metric is diagonal. It fails at cga5d, at the squared radius norm of a vector.
+
+### The patch of D1 of pga_visualiser
+
+[The patch of D1](https://github.com/mraxilus/delegations/issues/734#issuecomment-6611896928)
+implements the idea of this proposal for pga_visualiser. Each product and map takes operands of
+any types, and returns the bases that its table reaches. It applies at pin through `git am`, after
+[the patch of D3](https://github.com/mraxilus/delegations/pull/702#issuecomment-6611854105). On
+2026-11-15, with both patches, the suites of the library passed on Nim 2.4.0. They passed 42 of
+42 at rga3d and rga4d, and 37 of 37 at cga4d and cga5d.
+
+pga_visualiser measured the patch on 2026-11-03, on one still frame of its largest demo. There
+its planes go through typed products, and each placement comes out the same in each bit:
+
+| Count | At pin | Planes through typed products |
+|-------|-------:|------------------------------:|
+| Arrays of 16 floats built on JS | 2 320 | 226 |
+| Placing step in Chromium, panel shut | 3.30 ms | 2.00 ms |
+| `placeEvery` on C | 0.43 ms | 0.41 ms |
+
+The patch and this proposal part in six points:
+
+| Point | This proposal | The patch of D1 |
+|-------|---------------|-----------------|
+| Operators | 27 forms, each from one table | each product and map, the norms, `unitize`, supports |
+| Product that reaches no basis | stops the compile | a type of no bases, which converts to zero |
+| Name of a result type | `typeReached` lists each basis | `zeroNamed` of the patch of D3 |
+| Code | a generic func for each form | three templates over the tables |
+| Module | `pga/basis_sets.nim` | `pga/operators.nim` |
+| Laws | every pair of named types, 256 samples | chosen pairs in the suites, 512 samples |
 
 ### Alignment
 
