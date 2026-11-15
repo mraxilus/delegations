@@ -52,6 +52,15 @@
 ##   .i se ki'u bo ro le valsi cu na se sitna
 ##   .i ku'i le ciska be le valsi cu djica lo nu le valsi cu se sitna
 ##
+## ni'o ji'a le vi datnyvei cu facki lo srera be lo nu punji lo se ciska fi lo linji ja'i `#818`
+##   .i ro jufra cu krasi pa linji
+##   .i ro ju'agri pe lo vreji cu se krasi zo ni'o
+##   .i ro stedu pe lo vreji poi se tcidu cu se krasi su'o re cmavo po'u zo ni'o
+##   .i le genturfa'i cu facki ro krasi be lo jufra fi lo tricu
+##   .i se ki'u bo zo .i poi zvati lo se sitna cu krasi no jufra
+##   .i ji'a zo .i poi se lidne zo zo cu krasi no jufra
+##   .i ku'i zo .i poi zvati lo se jmina be zo to cu krasi pa jufra
+##
 ## ni'o jdima fa lo nu le tcidu be lo pinka cu facki lo lerpoi .e lo lerfu .e lo cmene poi se sitna
 ##   .e lo pinka pe la'o gy. Nim .gy. po'o
 ##   .i ne'i lo datnyvei pe le vi se gunka le cipra be lo gadri cu tcidu lo pinka pe la'o gy. Nim
@@ -61,7 +70,7 @@
 
 import std/[options, os, strutils]
 
-import ../../src/lojban_parser/[grammar, prose, stream]
+import ../../src/lojban_parser/[grammar, prose, selmaho, stream]
 
 
 type
@@ -72,10 +81,27 @@ type
     line*: int  ## lo namcu pe le linji
     column*: int  ## lo namcu pe le lerfu ne'i le linji
 
+  Shape* = enum
+    ## lo tarmi be pa se ciska ne'i lo datnyvei
+    ##   .i le tarmi cu jdice lo javni be lo nu punji le se ciska fi lo linji
+    Paragraph  ## lo prosa pagbu pe lo vreji
+    Item  ## lo liste cmima pe lo vreji
+    Definition  ## lo smuni be pa valsi pe le vlaste
+    Heading  ## lo cmene be pa pagbu pe lo vreji
+    Run  ## lo pinka poi ro linji be ke'a cu se krasi lo mintu sinxa bu'u lo mintu stuzi
+    Trailing  ## lo pinka poi lo samtci cu lidne ke'a ne'i lo linji pe ke'a
+    Banner  ## lo pinka poi se sinxa `#[ ]#` gi'e cmene pa pagbu be lo samtci
+    Cell  ## pa pagbu be pa linji pe lo cartu
+    Page  ## lo pinka pe le papri
+
   Text* = object
     ## pa lojbo se ciska poi le cipra cu tcidu ke'a
     ##   .i ji'a lo stuzi pe ro lerfu pe le se ciska
     path*: string  ## le pilno cu dunda lo cmene be lo datnyvei poi le se ciska cu se krasi ke'a
+    shape*: Shape  ## lo tarmi be le se ciska ne'i le datnyvei
+    opening*: int
+      ## lo klani be lo cmavo po'u zo ni'o poi krasi le se ciska
+      ##   .i li ni'u pa va'o lo nu no javni cu jdice le klani
     text*: string
       ## le se ciska poi le genturfa'i cu tcidu ke'a
       ##   .i ro samtci pagbu cu se sitna sepi'o zo la'o
@@ -104,6 +130,28 @@ const
     ##   .i lo barda lerfu cu mintu lo cmalu lerfu ne'i lo nu facki
   EXT_NIM = ".nim"  ## lo fanmo be lo cmene poi `provenance.nim` cu tcidu ke'a ta'i lo cipra
   CLOSING_COMMENT_HTML = "-->"  ## lo fanmo be lo pinka pe lo papri
+  HEADINGS_FIXED = ["Standards", "Language", "Open questions"]
+    ## lo cmene be lo pagbu poi lo cipra pe la'o gy. curator .gy. cu tcidu ke'a ta'i lo cmene
+    ##   .i le cmene cu glico gi'e na se tcidu
+  OPENING_TITLED = 3
+    ## lo klani be lo cmavo po'u zo ni'o poi krasi le pamoi prosa pagbu poi se lidne lo stedu poi
+    ##   na se tcidu
+  OPENINGS_HEADING = [2: 3, 3: 2]
+    ## lo klani be lo cmavo po'u zo ni'o poi krasi lo stedu ja'i lo klani be zoi gy. # .gy.
+  TERMINALS_OPENING = [Selmaho.I.toTerminal, Selmaho.Niho.toTerminal]
+    ## lo gerna valsi poi krasi pa jufra .a pa ju'agri
+  RULE_TEXT = "text"  ## lo javni poi le se ciska cu mapti ke'a
+  RULE_QUOTING = "sumti-6"
+    ## lo javni poi vasru lo se sitna be zo lu .e zo li'u
+    ##   .i lo jgena po'u `text` poi se vasru lo jgena po'u `sumti-6` cu sinxa lo se sitna
+    ##   .i ku'i lo jgena po'u `text` poi se vasru lo jgena po'u `free` cu sinxa lo se jmina be
+    ##     zo to
+  CHARS_LEADING = {' ', '.', '#', '[', '<', '!', '-', '*', '+', '_'}
+    ## lo lerfu poi ka'e lidne pa krasi be lo jufra ne'i pa linji
+    ##   .i le lerfu cu du lo canlu lerfu .e lo sinxa be lo pinka .e lo liste sinxa .e lo sinxa be
+    ##     lo nu basna
+  SHAPES_FLOWING = {Paragraph, Item, Definition, Run, Page}
+    ## lo tarmi be lo se ciska poi ka'e zvati su'o re linji
 
 
 func fencedOut(markdown: string): string =
@@ -278,26 +326,57 @@ func textsRecord*(path, markdown: string): seq[Text] =
   ## tcidu ro prosa pagbu pe le vreji ta'i pa se ciska
   ##   .i le prosa pagbu cu du ro liste cmima .e ro porsi be lo sampu linji ta'i lo nu `blocks` pe
   ##     `english.nim` cu tcidu
+  ##   .i ji'a ro stedu cu se tcidu ta'i pa se ciska
+  ##   .i ku'i le stedu be le vreji .e lo stedu poi lo cipra cu tcidu ke'a ta'i lo cmene cu na se
+  ##     tcidu
   ##   .i ro lerfu cu se tcita lo stuzi pe vo'a
-  var carried: seq[Piece]
+  var
+    carried: seq[Piece]
+    (shape, opening) = (Shape.Paragraph, 1)
+    is_titled = false  # le bavla'i prosa pagbu cu se lidne lo stedu poi na se tcidu
+    is_term = false  # le bavla'i prosa pagbu cu se lidne lo linji be lo valsi pe le vlaste
+  template flush() =
+    if carried.len > 0:
+      var text = shaped(path, carried)
+      (text.shape, text.opening) = (shape, opening)
+      result.add text
+    carried = @[]
   let lines = markdown.fencedOut.matterOut.splitLines
   for i, line in lines:
     let
       opened = line.multiReplace(("<!--", "    "), ("-->", "   "))
       s = opened.strip
-    if not line.isCarrying or s.len == 0 or path.extractFilename.isField(line):
-      if carried.len > 0: result.add shaped(path, carried)
-      carried = @[]
-      continue
-    let
       lead = opened.len - opened.strip(trailing = false).len
-      marker = s.markerLen
-    if marker > 0 and carried.len > 0:
-      result.add shaped(path, carried)
-      carried = @[]
+    if s.startsWith("#"):
+      flush()
+      let level = s.len - s.strip(trailing = false, chars = {'#'}).len
+      is_titled = level == 1 or s[level .. ^1].strip in HEADINGS_FIXED
+      is_term = false
+      if is_titled or level notin 2 .. 3: continue
+      var
+        pieces: seq[Piece]
+        k = level
+      while k < s.len and s[k] == ' ': inc k
+      for m in k ..< s.len: pieces.add (s[m], Place(line: i + 1, column: lead + m + 1))
+      var text = shaped(path, pieces)
+      (text.shape, text.opening) = (Shape.Heading, OPENINGS_HEADING[level])
+      result.add text
+      continue
+    if not line.isCarrying or s.len == 0 or path.extractFilename.isField(line):
+      flush()
+      if s.len > 0: is_term = path.extractFilename.isField(line) and not s.startsWith("_Avoid_")
+      continue
+    let marker = s.markerLen
+    if marker > 0 and carried.len > 0: flush()
+    if carried.len == 0:
+      (shape, opening) =
+        if marker > 0: (Shape.Item, (if is_titled: OPENING_TITLED else: 0))
+        elif is_term: (Shape.Definition, 0)
+        else: (Shape.Paragraph, (if is_titled: OPENING_TITLED else: 1))
+      (is_titled, is_term) = (false, false)
     if carried.len > 0: carried.add ('\n', Place(line: i + 1, column: lead + 1))
     for k in marker ..< s.len: carried.add (s[k], Place(line: i + 1, column: lead + k + 1))
-  if carried.len > 0: result.add shaped(path, carried)
+  flush()
 
 
 type
@@ -309,6 +388,7 @@ type
     is_doc: bool  ## le sinxa cu du `##`
     is_trailing: bool  ## lo samtci cu lidne le pinka ne'i le linji pe le pinka
     is_block: bool  ## le pinka cu se sinxa `#[ ]#` .a `##[ ]##`
+    tier: int  ## lo klani be lo lerfu po'u zoi gy. [ .gy. poi lidne lo sinxa be le pinka
 
 
 func commentsNim(source: string): seq[Comment] =
@@ -332,11 +412,13 @@ func commentsNim(source: string): seq[Comment] =
     if c == '#':
       let (opened_line, opened_column, is_trailing) = (line, column, is_code_before)
       if source.continuesWith("##[", i) or source.continuesWith("#[", i):
-        let is_doc = source.continuesWith("##[", i)
+        let
+          is_doc = source.continuesWith("##[", i)
+          tier = (if source.continuesWith("#[[", i): 2 else: 1)
         var
           depth = 0
           comment = Comment(line: opened_line, column: opened_column, is_doc: is_doc,
-            is_trailing: is_trailing, is_block: true)
+            is_trailing: is_trailing, is_block: true, tier: tier)
           current: seq[Piece]
         while i < source.len:
           if source.continuesWith("##[", i) or source.continuesWith("#[", i):
@@ -430,7 +512,9 @@ func cellsRow(path: string, pieces: seq[Piece]): seq[Text] =
     var letters = ""
     for c in cell: letters.add c.c
     if letters.strip.len > 0 and not letters.strip.allCharsInSet({'-', ':', ' '}):
-      result.add shaped(path, cell)
+      var text = shaped(path, cell)
+      (text.shape, text.opening) = (Shape.Cell, -1)
+      result.add text
     cell = @[]
 
 
@@ -443,13 +527,18 @@ func textsSource*(path, source: string): seq[Text] =
   var
     k = 0
     carried: seq[Piece]
+    (shape, opening) = (Shape.Run, 0)
   template flush() =
-    if carried.len > 0: result.add shaped(path, carried)
+    if carried.len > 0:
+      var text = shaped(path, carried)
+      (text.shape, text.opening) = (shape, opening)
+      result.add text
     carried = @[]
   template carry(pieces: seq[Piece]) =
     if pieces.isRowTable:
       flush()
       result.add cellsRow(path, pieces)
+      opening = 1  # le prosa pagbu poi se lidne lo cartu cu ju'agri
     else:
       var kept = pieces
       while kept.len > 0 and kept[0].c in Whitespace: kept.delete(0)
@@ -462,6 +551,10 @@ func textsSource*(path, source: string): seq[Text] =
         carried.add kept
   while k < comments.len:
     let first = comments[k]
+    (shape, opening) =
+      if first.is_trailing: (Shape.Trailing, -1)
+      elif first.is_block: (Shape.Banner, OPENINGS_HEADING[first.tier + 1])
+      else: (Shape.Run, 0)
     for pieces in first.lines: carry(pieces)
     var j = k + 1
     if not first.is_trailing and not first.is_block:
@@ -497,7 +590,10 @@ func textsHtml*(path, source: string): seq[Text] =
           inc column
         else: inc column
         inc i
-      if pieces.len > 0: result.add shaped(path, pieces)
+      if pieces.len > 0:
+        var text = shaped(path, pieces)
+        (text.shape, text.opening) = (Shape.Page, 0)
+        result.add text
       continue
     if source[i] == '\n':
       inc line
@@ -529,16 +625,16 @@ func errorsTree(node: Node, marked: ReadingMarked, text: Text, found: var seq[Er
   for child in node.children: errorsTree(child, marked, text, found)
 
 
-func errors*(text: Text): seq[Error] =
+func errors*(text: Text, marked: ReadingMarked): seq[Error] =
   ## dunda ro srera poi le genturfa'i cu tcita ke'a ne'i le se ciska ku'o .e ro samtci pagbu poi zo
   ##   zo cu lidne ke'a ku'o pa roi
+  ##   .i `marked` cu se tcidu fi le se ciska
   ##   .i ki'u bo lo srera jgena pe pa pagbu .e lo srera jgena pe lo se ciska poi vasru le pagbu cu
   ##     sisti bu'u pa stuzi
   var found: seq[Error]
   for fault in text.faults:
     found.add Error(path: text.path, place: fault, why: "`zo` before span")
   if text.text.strip.len > 0:
-    let marked = text.text.readTextMarked
     for unit in marked.units:
       if unit.is_read: continue
       let start =
@@ -548,6 +644,117 @@ func errors*(text: Text): seq[Error] =
     errorsTree(marked.tree, marked, text, found)
   for error in found:
     if error notin result: result.add error
+
+
+func errors*(text: Text): seq[Error] =
+  ## dunda ro srera poi le genturfa'i cu tcita ke'a ne'i le se ciska
+  ##   .i le vi fancu cu tcidu le se ciska gi'e pilno `errors` poi se dunda lo se tcidu
+  text.errors(text.text.readTextMarked)
+
+
+func openersTree(node: Node, units: seq[Unit], parent: string, found: var seq[int]) =
+  ## jmina lo namcu be ro pagbu poi krasi pa jufra .a pa ju'agri pe le jgena
+  ##   .i `parent` cu du lo cmene be le javni pe lo jgena poi vasru le jgena
+  ##   .i lo jgena po'u `text` poi se vasru lo jgena po'u `sumti-6` cu sinxa lo se sitna
+  ##   .i se ki'u bo no pagbu pe le se sitna cu se jmina
+  if node.is_terminal:
+    if node.at < units.len and units[node.at].is_read and
+        units[node.at].terminal in TERMINALS_OPENING:
+      found.add node.at
+    return
+  if node.rule == RULE_TEXT and parent == RULE_QUOTING: return
+  for child in node.children: openersTree(child, units, node.rule, found)
+
+
+func indentLine(line: string, shape: Shape, is_first: bool): int =
+  ## dunda lo stuzi be le pamoi lerfu pe le se ciska ne'i le linji
+  ##   .i lo pinka cu kancu le stuzi ba le sinxa be le pinka
+  ##   .i lo vreji cu kancu le stuzi ba le krasi be le linji .a le liste sinxa
+  let s = line.strip(trailing = false)
+  case shape
+  of Run:
+    let body = s.strip(trailing = false, chars = {'#'})
+    body.len - body.strip(trailing = false).len
+  of Page:
+    if is_first:
+      let body = s[min(OPENING_COMMENT_HTML.len, s.len) .. ^1]
+      body.len - body.strip(trailing = false).len
+    else: line.len - s.len - OPENING_COMMENT_HTML.len
+  of Item:
+    line.len - s.len + (if is_first: s.markerLen else: 0)
+  else: line.len - s.len
+
+
+func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
+    checked: var int): seq[Error] =
+  ## dunda ro srera be lo nu punji le se ciska fi lo linji ja'i lo se jdice pe `#818`
+  ##   .i `lines` cu du ro linji pe le datnyvei
+  ##   .i `marked` cu se tcidu fi le se ciska
+  ##   .i ro krasi be lo jufra .e lo ju'agri cu krasi lo linji
+  ##   .i lo jufra poi na pamoi cu zvati lo stuzi poi zmadu lo stuzi be le pamoi linji li re
+  ##   .i ku'i ne'i lo liste cmima lo jufra poi na pamoi cu zvati lo stuzi be le pamoi lerfu pe le
+  ##     liste cmima
+  ##   .i lo linji poi se katna fi pa jufra cu zvati lo stuzi poi zmadu lo stuzi be le linji pe le
+  ##     krasi be le jufra li re
+  ##   .i ro ju'agri pe lo pinka cu se lidne lo linji poi vasru lo sinxa be le pinka po'o
+  ##   .i `checked` cu se jmina lo klani be lo linji poi le vi fancu cu cipra ke'a
+  template fault(at: Place, reason: string) =
+    result.add Error(path: text.path, place: at, why: reason)
+  if text.opening >= 0:
+    let words = text.text.splitWhitespace
+    var count = 0
+    while count < words.len and words[count] == "ni'o": inc count
+    let is_marked = text.shape != Shape.Item or (count < words.len and words[count] == "ny.mai")
+    if count != text.opening or not is_marked: fault(text.place(0), "opening")
+  if text.text.strip.len == 0: return
+  var openers: seq[int]
+  for child in marked.tree.children: openersTree(child, marked.units, RULE_TEXT, openers)
+  var (lines_sentence, lines_paragraph) = (newSeq[int](), newSeq[int]())
+  for at in openers:
+    let unit = marked.units[at]
+    # le pamoi valsi cu krasi le se ciska bu'u lo stuzi be le se ciska
+    #   .i zo ni'o poi se lidne zo ni'o cu pagbu lo krasi be lo ju'agri
+    if at == 0 or unit.words.len == 0: continue
+    if unit.terminal == Selmaho.Niho.toTerminal and marked.units[at - 1].is_read and
+        marked.units[at - 1].terminal == Selmaho.Niho.toTerminal:
+      continue
+    let
+      place = text.place(marked.occurrences[unit.words[0]].start)
+      line = lines[place.line - 1]
+    var leading = line[0 ..< min(place.column - 1, line.len)]
+    if text.shape == Shape.Cell: leading = leading[leading.rfind('|') + 1 .. ^1]
+    if not leading.allCharsInSet(CHARS_LEADING): fault(place, "sentence opens mid-line")
+    elif unit.terminal == Selmaho.Niho.toTerminal: lines_paragraph.add place.line
+    else: lines_sentence.add place.line
+  if text.shape notin SHAPES_FLOWING: return
+  var seen: seq[int]
+  for place in text.places:
+    if place.line notin seen: seen.add place.line
+  var (first, sentence) = (0, 0)
+  for j, number in seen:
+    let
+      line = lines[number - 1]
+      column = line.indentLine(text.shape, j == 0)
+      place = Place(line: number, column: line.len - line.strip(trailing = false).len + 1)
+    inc checked
+    if j == 0:
+      let wanted =
+        case text.shape
+        of Run, Page: 1
+        of Item: column
+        else: 0
+      if column != wanted: fault(place, "indent")
+      (first, sentence) = (wanted, wanted)
+      continue
+    let is_after_bare = number >= 2 and lines[number - 2].strip in ["#", "##"]
+    if (number in lines_paragraph) != (text.shape == Shape.Run and is_after_bare):
+      fault(place, "paragraph")
+    let wanted =
+      if number in lines_paragraph: first
+      elif number in lines_sentence: (if text.shape == Shape.Item: first else: first + 2)
+      else: sentence + 2
+    if column != wanted: fault(place, "indent")
+    if number in lines_paragraph or number in lines_sentence: sentence = wanted
 
 
 func texts*(path, content: string): seq[Text] =
