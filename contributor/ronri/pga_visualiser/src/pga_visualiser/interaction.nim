@@ -107,7 +107,8 @@ const
   #   Time bound dropped clicks hand lingered on; see `isClick`.
 
   FACTOR_DOLLY_NOTCH* = 1.12
-    ## Scale separation by this for each notch of wheel, on both front-ends; see `factorWheel`.
+    ## Scale distance to pivot by this for each notch of wheel, on both front-ends; see
+    ## `factorWheel`.
   PIXELS_NOTCH* = 100.0
     ## Count this much of page's wheel travel as one notch, so page zooms as desktop does.
     ##   Desktop reads whole notches from SDL; page reads pixels.
@@ -311,8 +312,8 @@ type
       ## past it alone, at any frame rate; see `fingersHeld`.
     angle_from*: Option[float]  ## Angle twist counts from, once fingers turn past slop.
     is_orbit*: bool  ## Whether grip orbits selection, rather than slides camera.
-    is_open*: bool  ## Whether free flight's places stand at separation over nothing, with
-      ## no object under either finger nor near pivot's depth to name theirs.
+    is_open*: bool  ## Whether free flight's places stand at distance to pivot over nothing,
+      ## with no object under either finger nor near pivot's depth to name theirs.
     reach_selection*: float  ## Selection's reach from pivot, which orbit's sphere takes.
     middle_last*: ScreenPosition  ## Fingers' middle as orbit last carried it.
     reach*: float  ## Length one unit of free flight's slide stands for: mean reach of
@@ -939,7 +940,7 @@ proc dollyAt*(
   ##     whatever depth it stands, floored where point fills frame; see
   ##     `picking.Rank.Eye`. Over nothing it does nothing: wheel refers to object, and with
   ##     none there it has nothing to come in to (repository issue 535).
-  ##       Not pointer's ray at separation, which each notch over empty sky scales toward floor.
+  ##       Not pointer's ray at distance to pivot, which notches over empty sky scale toward floor.
   ##     Its zoom out takes that object within `FACTOR_ANCHOR_DEPTH` of reach to point last
   ##     zoom took, and past it holds that reach on pointer's ray; see `camera.pointTaken`.
   ##       Not object at any depth: far star under pointer carried eye out of solar system
@@ -975,7 +976,7 @@ proc dollyAt*(
       floor = 0.0
   let taken = at.toWorld(camera.originView)
   camera.travelToward(factor, at, floor)
-  # Separation follows anchor's own depth, so frustum's scale tracks flight.
+  # Distance to pivot follows anchor's own depth, so frustum's scale tracks flight.
   #   Crossing as well as standing object: free flight has no orbit for pivot to
   #   anchor, so depth here is scale and nothing else.
   let
@@ -997,7 +998,8 @@ func yieldOrHalt*(tween: var CameraTween, has_selection: bool) =
 
 
 func factorWheel*(notches: float): float =
-  ## Scale separation for `notches` of wheel turned away from reader, i.e. `FACTOR_DOLLY_NOTCH⁻ⁿ`.
+  ## Scale distance to pivot for `notches` of wheel turned away from reader, i.e.
+  ## `FACTOR_DOLLY_NOTCH⁻ⁿ`.
   ##   One rule for both front-ends, so one notch zooms same on page as on desktop.
   ##     Desktop passes SDL's notches; page passes what `bridge.nimNotchesWheel` counts.
   pow(FACTOR_DOLLY_NOTCH, -notches)
@@ -1145,7 +1147,7 @@ func stretchAcross(
     ratio = max(side * (row - before.y), least) / max(side * (row - after.y), least)
   if not turned.isInFront or depth <= 0.0 or ratio == 1.0: return
   # Eye comes in by what leaves held depth at `ratio` of itself, so held height scales by
-  #   its inverse; pivot's separation gives up same length.
+  #   its inverse; distance to pivot gives up same length.
   camera.dolly((camera.distance - depth * (1.0 - ratio)) / camera.distance)
 
 
@@ -1164,7 +1166,8 @@ func panAcross*(
   ##   holds its own. See `grabPan`.
   ##     One pixel at that depth spans `2*depth*tan(half field)/height` of world, so camera
   ##     slides that far against drag. Slide is square to sight, so depth held stays held.
-  ##     Not rate: fraction of separation for each pixel matches cursor at one canvas height alone.
+  ##     Not rate: fraction of distance to pivot for each pixel matches cursor at one canvas
+  ##     height alone.
   ##   Selection zooms on vertical and orbits on horizontal, so one drag reaches both
   ##   without asking for second button. It holds `point_held` as free flight holds depth;
   ##   see `stretchAcross`.
@@ -1227,9 +1230,9 @@ func driveHeld*(
   ##   Two states, and `has_selection` picks between them.
   ##     Empty selection flies as ship does: travel and turn are about camera's own axes,
   ##     and travel climbs toward ship's own speed, `speed_ship`. Plus and minus scale
-  ##     that speed as they scale separation with selection, and nothing else sets it.
-  ##       Not depth under pointer, nor separation, which runs down each step until flight stalls.
-  ##       Travel carries pivot along, so separation stays as it was.
+  ##     that speed as they scale distance to pivot with selection, and nothing else sets it.
+  ##       Not depth under pointer, nor distance to pivot, which runs down each step until
+  ##       flight stalls. Travel carries pivot along, so distance to pivot stays as it was.
   ##     Selection orbits centroid instead. W and space rise over it, S and control fall,
   ##     and sideways keys swing round it; frame rule holds eye clear either way.
   ##       Slide across ground stood here, and it had no reading once camera stopped being
@@ -1503,7 +1506,7 @@ func reachPinch*(fingers: array[2, ScreenPosition]): float =
   ##   Fingertip past middle of two fingers, and never less than two fingertips: pinch lands
   ##   each finger beside object reader means, not on it, and fingertip's reach alone took
   ##   star behind finger (repository issue 745). Past fingertip, only object within
-  ##   `picking.FACTOR_ANCHOR_DEPTH` of separation answers. Wheel keeps fingertip.
+  ##   `picking.FACTOR_ANCHOR_DEPTH` of distance to pivot answers. Wheel keeps fingertip.
   let gap = hypot(fingers[1].x - fingers[0].x, fingers[1].y - fingers[0].y)
   RADIUS_CROWD_TOUCH + max(RADIUS_CROWD_TOUCH, 0.5 * gap)
 
@@ -1606,7 +1609,7 @@ func slideGripped(
   ##   it on object, so next pinch scales same thing and repeated zoom out grows by fingers'
   ##   ratio. Slide alone carries pivot along at its own depth.
   ##     Places over nothing at all never draw pivot in: pinch in there carries it along,
-  ##     and no pinch runs separation down (repository issue 535).
+  ##     and no pinch runs distance to pivot down (repository issue 535).
   ##   Camera's own nearest reach survives: frame that owns scene stamps it.
   let start = grip.solution
   var
@@ -1711,7 +1714,7 @@ func orbitGripped(
   )
   grip.middle_last = middle
   # Dolly: gap falls as eye backs away, so bisect log of factor between reaches either side.
-  #   Floor bounds log from below: eye comes in by what separation gives up.
+  #   Floor bounds log from below: eye comes in by what distance to pivot gives up.
   let (eye, frame) = camera.sight
   var least = NegInf
   for place in grip.fingers:

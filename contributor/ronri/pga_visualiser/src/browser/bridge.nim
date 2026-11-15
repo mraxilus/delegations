@@ -1460,8 +1460,8 @@ proc nimCameraDistance(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.distance)
 
 proc nimCameraScaleLocal(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.scaleLocal)
   ## Report distance frustum and furniture take their scale from, in world units.
-  ##   Reach to nearest drawn object ahead of eye, or separation where nothing is drawn
-  ##   there; see `camera.scaleLocal`.
+  ##   Reach to nearest drawn object ahead of eye, or distance to pivot where nothing is
+  ##   drawn there; see `camera.scaleLocal`.
 
 proc nimSpeedShip(): cfloat {.exportc.} = cfloat(INTERACTION_PAGE.speed_ship)
   ## Report ship's own speed key flight climbs toward, in world units per second.
@@ -1996,7 +1996,7 @@ proc nimPixelsNotch(): cfloat {.exportc.} = cfloat(PIXELS_NOTCH)
   ## Report how much wheel travel page counts as one notch; see `interaction.PIXELS_NOTCH`.
 
 proc nimFactorDollyNotch(): cfloat {.exportc.} = cfloat(FACTOR_DOLLY_NOTCH)
-  ## Report how much one notch scales separation; see `interaction.FACTOR_DOLLY_NOTCH`.
+  ## Report how much one notch scales distance to pivot; see `interaction.FACTOR_DOLLY_NOTCH`.
 
 proc nimBeginPress(now: cfloat) {.exportc.} =
   ## Forward to `interaction.beginPress`; every press goes through it, camera ones too.
