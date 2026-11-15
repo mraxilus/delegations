@@ -1027,14 +1027,28 @@ later change of a rule of content falsified.
 
 Only two kinds of path count. A charter document holds rules of content, which move the stamp,
 and sections of process, which move none. A delegate forgets both, so each change of the charter
-reaches each older branch, as the Architect asked on #843. The code of the stamp is
-`provenance.nim`, which holds `RULES`, `SECTIONS_PROCESS` and the digest (`PATH_STAMP`). It is
-code of the checker, but a change there moves every stamp, and `koch stamp` of an older branch
-writes the old one.
+reaches each older branch, as the Architect asked on #843. The other path is `provenance.nim`
+(`PATH_STAMP`), which holds `RULES`, `SECTIONS_PROCESS` and the digest of the stamp. A change of
+those moves every stamp, and `koch stamp` of an older branch writes the old one.
 
-Everything else may differ freely. `check-drift` feeds the `summarize` gate that branch
+The same module holds the checks of a record too, such as `checkProvenance`, `checkCitations`
+and `isDateIso`. A path cannot tell which part of the module moved, so drift names each change
+of it. Everything else may differ freely. `check-drift` feeds the `summarize` gate that branch
 protection requires, so no setting changes. A static assertion in `base.nim` holds `PATH_STAMP`
 to the file beside it, so a rename of that module fails the build.
+
+- Cost: an edit of `provenance.nim` that moves no stamp still sends each older branch to merge
+  `main`. Measured on 2026-11-15 at `174120b68`, over the merges that
+  `git log --first-parent --since=2026-10-02T00:00:00Z --format=%H` lists. Each merge was read
+  with `git diff --name-only --no-renames <merge>^1 <merge>`. 5 of them changed `provenance.nim`,
+  and 1 of those changed no `Rules` row in any record.
+- Assumed: a merge that changes no `Rules` row moves no stamp. Duty 1 writes each row in the pull
+  request that moves the stamp.
+- Cost: `sections` of `markdown.nim` cuts each document for the stamp (`textStamped`), yet drift
+  names no change of it. Where such a change moves the stamp, the check of the merge reports a
+  stale stamp in each record that the branch wrote. `koch stamp` of the branch then writes the old
+  stamp, until the branch merges `main`. Over the same merges, 6 changed `markdown.nim`. 1 of
+  those left the charter alone, and changed no `Rules` row.
 
 **The rest of the checker is no governing path, since `koch check` judges each branch with the
 checker of its base.** The Architect ruled so on #893. On a pull request, each job that judges
@@ -1043,10 +1057,13 @@ the same merge, with the koch of that merge (Merge with base). So a branch that 
 of the checker alone meets the checker of its base, on the runner and on the delegate.
 
 - Rejected: drift of each path of the checker. It sends each open branch to merge `main` for
-  parity alone. Measured on 2026-11-15 at `c2e80da35`, with `git log --first-parent` from
-  2026-10-02 and `git diff --name-only` of each merge. 96 of 329 merges to `main` changed the
-  charter or the checker: 17 the charter alone, 44 the checker alone, and 35 both. Of 258 merges
-  of `main` into a branch, 62 took changes of the checker alone.
+  parity alone. Measured on 2026-11-15 at `c2e80da35`, over the merges to `main` that
+  `git log --first-parent --since=2026-10-02T00:00:00Z --format=%H c2e80da35` lists. Each merge
+  was read with `git diff --name-only --no-renames <merge>^1 <merge>`. 96 of those 329 merges
+  changed the charter or the checker: 17 the charter alone, 44 the checker alone, and 35 both.
+- The merges of `main` into a branch are what `git rev-list --merges` lists over the same window,
+  off that first-parent chain, with a second parent on it. Of those 258, 62 took changes of the
+  checker alone, by the same `git diff` of each.
 - Cost: the hooks, `koch fix` and `koch stamp` keep the checker of the branch until it merges the
   base. A merge in the second tree changes none of them.
 - Cost: `check-drift` runs the `base.nim` of each branch. So a branch that predates this rule
@@ -1099,11 +1116,10 @@ on the same merge ref is what holds a stale stamp there.
 - Verified by hand, 2026-11-12, with `main` of that scratch repository edited at Toolchain too.
   A stale head reported one finding, which named both sections and asked for a new stamp. A
   synthetic merge of that head into `main`, with `main` as the first parent, reported nothing.
-- Verified by hand on 2026-11-15, in a throwaway clone at `d4e302682`. There `main` gained one
-  line of `audit.nim` that reports a finding in each tree. The branch older than it passed
-  `check-drift`. Its `koch check` reported that finding, which its own `check-files` did not.
-  An edit of Output contract on `main` then failed `check-drift`, and `koch check` stopped before
-  the merge.
+- Verified by hand on 2026-11-15, in a throwaway clone at `d4e302682`, whose `main` holds a line
+  of `audit.nim` that reports a finding in each tree. A branch older than a change of `audit.nim`
+  alone passes `check-drift`, and its `koch check` reports the finding of the base. One older
+  than an edit of Output contract stops at drift.
 
 ## Merge with base
 
@@ -1137,7 +1153,8 @@ pin of `curator/audit` in the merge names, as `NIM_VERSION` of the merge builds 
 runner.
 
 - Rejected: `nim r` of the merge. It turns each exit of koch into 1, and prints a line of its own,
-  so a failed build reads as findings. Here a failed build is one finding.
+  so a failed build reads as findings. Here a failed build is one finding. Verified by hand on
+  2026-11-15 with Nim 2.4.0: a program that quits with 3 made `nim r` exit with 1.
 - `git ls-tree` reads the key, since it lists each path that HEAD holds. `rev-parse` stops at the
   first path that HEAD lacks.
 - The koch of the merge takes the commit of the base as its base, which its HEAD holds. So it
@@ -1147,18 +1164,29 @@ runner.
 **A dirty checkout, and one that holds the base, are judged in place.** `readTree` reads
 uncommitted and untracked files, which a merge of commits misses. So a dirty checkout is judged
 on the branch, with its own checker, and records no mark. A checkout that holds the base is its
-own merge. A detached HEAD records no mark, since no branch holds its tree. The second tree is
-detached, so its run records none, and the checkout records the tree of the branch.
+own merge.
 
-- Cost: a conflict blocks each push, since no mark is written. GitHub runs no `pull_request`
-  workflow on a conflicting pull request, so the runner agrees.
+A detached HEAD records no mark on either path, since no branch holds its tree. The second tree
+is detached, so its own run records none. The checkout records the tree of the branch where the
+merge passes, as `judgeMerged` decides.
+
+- Cost: a conflict blocks each push, since no mark is written. Assumed from GitHub
+  documentation: GitHub runs no `pull_request` workflow on a conflicting pull request, so the
+  runner agrees.
 - Cost: the second tree holds one more checkout and what the suites restore there. Measured with
-  `du` on 2026-11-15, the ignored state of the primary checkout of a delegate container held
-  573 MB.
+  `du` on 2026-11-15, after the run of `koch check` that judged `curator/audit` for this branch.
+  The second tree held 99 MB: the checkout, and 79 MB that the suites of `curator/audit` wrote.
+  Its build held 27 MB.
+- Assumed: a second tree takes on what the suites of each project restore, as the branches it
+  judges touch that project. Measured with `du` on 2026-11-15, the ignored state of the primary
+  checkout of the same container held 573 MB.
 - Cost: two runs of `koch check` at once in one checkout share one second tree and one build.
-- Cost: `merge-tree --write-tree` needs git 2.38 or newer.
-- Cost: a move of the checkout breaks the link of the second tree, as it breaks each worktree.
-  `git worktree repair`, or a removal of the folder, mends it.
+- Cost: `merge-tree --write-tree` needs git 2.38 or newer. Assumed from the release notes of git
+  2.38.0, which add that mode.
+- Cost: a move of the main checkout breaks the link of its second tree. Run in the moved
+  checkout, `git worktree repair <second tree>` mends it, and `git worktree repair` alone does
+  not. A linked worktree that moves keeps its second tree, since the git dir that holds it stays.
+  Verified by hand on 2026-11-15, in a throwaway repository with git 2.43.0.
 - Cost: `git worktree list` names each second tree. `git worktree remove` of a checkout deletes
   its second tree with its git dir, and leaves the entry of that tree as prunable. Then
   `git worktree prune`, or `git gc`, clears it. Verified by hand on 2026-11-15, in a throwaway
@@ -1166,10 +1194,17 @@ detached, so its run records none, and the checkout records the tree of the bran
 - Verified by `suites/test_merge.nim`, over real git on throwaway repositories. It holds the case
   of #893: the second tree holds the checker of the base, and lines of the branch alone. It also
   holds a conflict, a dirty checkout, a checkout that holds the base, a worktree, and a tree that
-  stays. A stub compiler holds the build, its pin, its cache and its key.
-- Verified by hand on 2026-11-15, in the throwaway clone that Drift names. A merge that passed
-  recorded the tree of the branch. `koch hook push` then passed the head of the branch, and
-  refused the merge commit. A branch in conflict with `main` gave one finding, and no mark.
+  stays. A stub compiler holds the build, its pin, its cache and each path of its key.
+- Verified by `suites/test_merge.nim` for `judgeMerged`, the path that `koch check` takes. Drift
+  comes first, and a failed run of the koch of the merge records no mark. A passed run records
+  the tree of the branch, and a detached HEAD records none.
+- Verified by hand on 2026-11-15, by mutants of `merge.nim` on scratch copies, where the suite
+  fails each. One keys `koch.nim` and `koch.nim.cfg` alone, and one builds inside the second
+  tree. One cleans with no `-d`, one cleans a folder that is no worktree, and one marks on each
+  exit.
+- Verified by hand on 2026-11-15, in the throwaway clone that Drift names. A passed merge records
+  the tree of the branch, so `koch hook push` passes its head and refuses the merge commit. A
+  conflict gives one finding, and no mark.
 
 ## Commits
 
@@ -3139,8 +3174,9 @@ is clean. `pre-push` refuses a push whose tree differs. The git directory is the
 
 A merge with the base can pass in the second tree (Merge with base). Then the checkout records
 the tree of the branch, and never the tree of the merge. A push sends the commits of the
-branch, so only that tree matches. A detached HEAD records no mark, since no branch holds its
-tree, and the second tree is detached.
+branch, so only that tree matches. A detached HEAD records no mark on either path, since no
+branch holds its tree, and the second tree is detached. `suites/test_merge.nim` holds the mark
+of the merge path, which `judgeMerged` writes.
 
 `commit-msg` runs the commit check over the new subject and the ladder before the commit
 lands. A merge commit passes it, because git writes that subject and the commit check excludes
