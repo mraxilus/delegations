@@ -1159,6 +1159,10 @@ detached, so its run records none, and the checkout records the tree of the bran
 - Cost: `merge-tree --write-tree` needs git 2.38 or newer.
 - Cost: a move of the checkout breaks the link of the second tree, as it breaks each worktree.
   `git worktree repair`, or a removal of the folder, mends it.
+- Cost: `git worktree list` names each second tree. `git worktree remove` of a checkout deletes
+  its second tree with its git dir, and leaves the entry of that tree as prunable. Then
+  `git worktree prune`, or `git gc`, clears it. Verified by hand on 2026-11-15, in a throwaway
+  repository with git 2.43.0.
 - Verified by `suites/test_merge.nim`, over real git on throwaway repositories. It holds the case
   of #893: the second tree holds the checker of the base, and lines of the branch alone. It also
   holds a conflict, a dirty checkout, a checkout that holds the base, a worktree, and a tree that
