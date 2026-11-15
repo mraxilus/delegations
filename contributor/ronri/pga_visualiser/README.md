@@ -70,13 +70,12 @@ nim r tools/build.nim desktop
 
 Atlas restores the `pga` library from `atlas.lock` into `dependencies/`, and it is never
 committed. `nim r koch fetch-deps contributor/ronri/pga_visualiser` restores it alone. It is
-pinned at `295bafc`, behind the head of that library. The `head` verb says whether the pin is the
-head, and a workflow runs that verb each day.
+pinned at `3d9696e`, which was the head of that library when the pin last moved. The `head` verb
+says whether the pin is still the head, and a workflow runs that verb each day. See Dependencies
+and vendoring in `PROVENANCE.md`.
 
-Four projection operations are withdrawn at the pin while the library rebuilds them.
-`src/pga_visualiser/projections.nim` stands in for them until they return. See Dependencies and
-vendoring in `PROVENANCE.md`. The algebra that every target builds against is four dimensions with a
-rigid metric. It is set once in `nim.cfg`, so no entry point repeats it.
+The algebra that every target builds against is four dimensions with a rigid metric. It is set
+once in `nim.cfg`, so no entry point repeats it.
 
 `tools/build.nim` assembles the browser page. It compiles the bridge through the JS backend,
 type-checks and emits the TypeScript glue, and inlines the font faces. It folds all of it into one
@@ -176,7 +175,7 @@ src/pga_visualiser/           geometry and model, reachable from either front-en
                               scene, selection, picking, marker, framing, interaction,
                               storyboard, orrery, neighbourhood, starfield, history,
                               format, help, message, wording, timings, ramp
-src/…/projections.nim         projections pga withdrew; deleted when they return
+src/…/motors.nim              motors pga does not yet carry; deleted when it does
 src/desktop/main.nim          desktop entry point: window, event loop, headless runs
 src/desktop/sdl3.nim opengl.nim  bindings to the window system and to GL
 src/desktop/gui.nim gui_shim.cpp  facade over Dear ImGui, and the C++ it needs
@@ -188,9 +187,9 @@ src/browser/bridge.nim        every value the page draws, compiled through the J
 src/browser/mockup.nim        the open comparison, which `-d:mockup` alone includes
 src/browser/*.ts              DOM, WebGL and event wiring alone; gated file kind
 pages/shell.html              committed markup, with tokens the build fills
-pages/mockup.html             the comparison panel, which the mockup verb appends
-tools/build.nim               the build driver: declare, types, web, mockup, drive,
-                              desktop, driven, assets, head, system, clean
+tools/build.nim               the build driver: declare, types, web, drive, desktop,
+                              driven, assets, head, system, clean
+tools/head.nim                the pin of the library against its head, read pure
 tools/drive/                  the Playwright harness the drive verb runs
 tests/suites.nim              every law, over one seeded pool of objects
 tests/suites/                 one module for each suite, and the pool they share

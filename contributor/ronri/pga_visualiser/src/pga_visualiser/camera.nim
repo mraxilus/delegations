@@ -49,8 +49,8 @@
 
 import std/[math, options]
 
-# `pga` arrives through `projections`, which stands in for four it has withdrawn.
-import ./[boundary, motors, projections, tessellate]
+import pga
+import ./[boundary, motors, tessellate]
 
 
 

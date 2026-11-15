@@ -14,4 +14,4 @@ srcDir = "src"
 #   characters that library's head spells its operators with (Nim pull request 26074);
 #   see PROVENANCE.md, Dependencies and vendoring.
 requires "nim == 2.4.0"
-requires "https://gitlab.com/mraxilus/replications#295bafc"
+requires "https://gitlab.com/mraxilus/replications#3d9696e"
