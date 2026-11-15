@@ -11,12 +11,14 @@
 #     Shell holds second copy of grammar, and reads no list of domains, since it checks out
 #     nothing. Cost: branch naming domain that does not exist gets stray label, and
 #     `check-scope` still fails it.
-#   Label goes through REST, which creates label that new project lacks. Event of run token
-#     starts no other run, so label starts no second run, and `check-role` reads it after.
-#   `check-role` runs after `label` unless run is cancelled: failed `label` would otherwise skip
-#     it, and GitHub counts skipped required check as passed. So it runs, and names missing label.
-#   Label events stay: role label person removes is added again, and label added by hand runs
-#     check again.
+#   Assumed: REST creates label new project lacks.
+#   Assumed from GitHub documentation: event of run token starts no other run, so label starts
+#     no second run, and `check-role` reads it after.
+#   `check-role` runs after `label` unless run is cancelled. Assumed from GitHub documentation:
+#     failed `label` would otherwise skip it, and skipped required check counts as passed. So it
+#     runs, and names missing label.
+#   `labeled` and `unlabeled` start `role`, so job adds again role label person removes, and
+#     label added by hand runs check again.
 #   Event is `pull_request`, never `pull_request_target`, as Architect ruled on #845: workflow
 #     then comes from branch, so pull request tests its own jobs on runner (CURATOR.md, duty 2).
 #     Each branch here comes from one account that can already write, so no code gains power
