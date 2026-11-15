@@ -325,9 +325,7 @@ kind is in hand.
   import from `./algebra` under `when IS_CONFORMAL:`.
 - **Changes `doc-comments` and `doc-comments-2`.** They edit docs next to `unitize` and `^` through
   distinct quotes, so either order holds. `doc-comments` writes in the doc of `unitize` that `^`
-  and `normalizeWeight` cost no call, as `so neither costs call`. Without `inline` on `^∘`, each
-  costs one. So the second of `doc-comments` and this change to land replaces that text with
-  `so each costs one call to ^∘`.
+  adds no call of its own, which stays true here.
 - **Sphere of the test of suite Internal.** It has radius one about a random center, through a
   point one unit along each axis and one unit back along the first. So no two of its points lie
   close, as the Architect ruled on 2026-10-16. Random points can lie close, and at cga3d two

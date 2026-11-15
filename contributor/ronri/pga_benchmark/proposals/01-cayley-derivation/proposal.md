@@ -204,8 +204,8 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
   proposal lands second, its Replace carries their text under a new digest. If a change lands
   second, its edits of that file apply as written. `doc-comments-2` also edits the import line of
   `tests/suites.nim` that this proposal edits. If `doc-comments-2` lands second, it quotes that
-  line again. A line of `doc-comments` in the header of `pga.nim` points at the TODO above
-  `CAYLEYS_INTERIOR`, which this proposal removes. Whichever of the two lands second drops that
+  line again. A line of `doc-comments` in the header of `pga.nim` points at the TODO of
+  `CAYLEYS_DOT`, which this proposal removes. Whichever of the two lands second drops that
   pointer.
 - **Dot doc of `doc-comments`.** Its edit that quotes `  CAYLEYS_DOT* = block:` applies after
   this proposal too. It then gives a doc to one table constant, and this proposal gives none. The
