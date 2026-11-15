@@ -23,13 +23,52 @@ const
     ## Build flags driver passes, so measurements name their build.
   IMPLEMENTATIONS* = ["library", "reference", "dense"]
     ## Keys runtime document gives each implementation of measurand.
+  PATH_CPUINFO = "/proc/cpuinfo"  ## File Linux describes each processor in, one block each.
+  PROCESSOR_UNRECORDED* = "processor unrecorded"
+    ## Processor part of machine where host describes none, as macOS and Windows do.
+
+
+func processor*(cpuinfo: string): string =
+  ## Name processor of first block of `/proc/cpuinfo` naming it: model name, family, model.
+  ##   Cloud host may give processors of several generations one model name, so family and
+  ##     model tell them apart, as `family 6 model 173` does.
+  ##   Text that names neither reads `PROCESSOR_UNRECORDED`, so stamp says what it lacks.
+  var name, family, model: string
+  for line in cpuinfo.splitLines:
+    if line.strip.len == 0:
+      if name.len > 0 or family.len > 0 or model.len > 0: break
+      continue
+    let colon = line.find(':')
+    if colon < 0: continue
+    let value = line[colon + 1 .. ^1].strip
+    case line[0 ..< colon].strip
+    of "model name": name = value
+    of "cpu family": family = value
+    of "model": model = value
+    else: discard
+  var parts: seq[string]
+  if name.len > 0: parts.add name
+  if family.len > 0 and model.len > 0: parts.add "family " & family & " model " & model
+  if parts.len == 0: PROCESSOR_UNRECORDED else: parts.join(", ")
+
+
+proc machineNow*(): string =
+  ## Describe machine of this run: system, architecture, cores and processor.
+  ##   Hosts that share first three can time pin at half of each other's time, so processor
+  ##     names which one timed record.
+  let cpuinfo =
+    when defined(linux):
+      try: readFile(PATH_CPUINFO)
+      except IOError: ""
+    else: ""
+  hostOS & " " & hostCPU & ", " & $countProcessors() & " cores, " & processor(cpuinfo)
 
 
 proc takenNow*(): JsonNode =
-  ## Describe this run: date, machine, compiler and library commits, flags.
+  ## Describe this run: date, machine with its processor, compiler and library commits, flags.
   %*{
     "date": now().utc.format("yyyy-MM-dd"),
-    "machine": hostOS & " " & hostCPU & ", " & $countProcessors() & " cores",
+    "machine": machineNow(),
     "nim": COMMIT_NIM,
     "pga": COMMIT_PGA,
     "flags": FLAGS,

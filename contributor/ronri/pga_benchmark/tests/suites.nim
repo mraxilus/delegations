@@ -455,6 +455,18 @@ suiteInProc "Internal: Measurements":
     check median([4.0, 1.0, 3.0, 2.0]) == 2.5  # even count, mean of middle two
 
 
+  test "machine names processor by model name, family and model of first block of cpuinfo":
+    let cpuinfo = "processor\t: 0\nvendor_id\t: GenuineIntel\ncpu family\t: 6\n" &
+      "model\t\t: 173\nmodel name\t: Intel(R) Xeon(R) Processor @ 2.30GHz\n\n" &
+      "processor\t: 1\nmodel\t\t: 85\n"
+    check processor(cpuinfo) ==
+      "Intel(R) Xeon(R) Processor @ 2.30GHz, family 6 model 173"  # second block left alone
+    check processor("") == PROCESSOR_UNRECORDED  # host that describes none
+    check processor("processor\t: 0\nCPU part\t: 0xd0c\n") ==
+      PROCESSOR_UNRECORDED  # block that names no model
+    check machineNow().startsWith(hostOS & " " & hostCPU & ", ")  # stamp of this host
+
+
 
 suiteInProc "Internal: Allocation":
   test "allocation gauge is live under this build":
