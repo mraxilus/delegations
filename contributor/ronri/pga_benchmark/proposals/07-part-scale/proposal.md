@@ -69,7 +69,7 @@ ruled on 2026-10-12.
 | Rounding units in the rigid algebras | The part scale alone misreads far fewer at 32 bits |
 | The split of P11 | At 64 bits it misreads more conformal elements than this bound |
 | `max` in place of the branch | Each step of `max` waits on the last, so a scan takes longer |
-| A loop that tests the part of each basis | `=~` takes 1.6 to 15 times as long, and `grade` 1.3 to 5 times |
+| A loop that tests the part of each basis | `=~` takes 1.6 to 15 times as long, `grade` 1.3 to 5 |
 
 The normals of those two planes differ by 1, and the bound of the whole object would be 1e-4 times
 10 000. Each part takes a scale of its own, as the Architect ruled on 2026-10-06, since the gain
