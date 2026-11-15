@@ -70,9 +70,9 @@ that term.
 - **Build.** The compile-time evaluator holds each value as nodes. An empty `seq` is one node, and a
   cell of this form is several nodes, empty or not. Most cells are empty, so the tables take more
   memory, and the evaluator takes more time to build them. At cga5d and cga6d `import pga` peaks
-  at ×1.50 and ×1.49 of the memory at pin, and takes ×1.66 to ×2.19 of the time over four builds.
+  at ×1.50 and ×1.49 of the memory at pin, and takes ×1.70 to ×2.20 of the time over four builds.
   Four build claims bound it: the peak at most ×1.5 and the time at most ×2.5, at each of the two.
-  At cga5d the peak is 314.8 MiB against 210.5 MiB, so it holds its bound by 0.3%.
+  At cga5d the peak is 314.6 MiB against 210.3 MiB, so it holds its bound by 0.3%.
 - **Run time.** None. Macros alone read the tables, so each operator emits the same C as at pin.
 - **Calls of `seq`.** A caller that reads a cell through another call of `seq`, such as `high` or a
   slice, no longer compiles. No module of the library makes such a call.
