@@ -175,6 +175,7 @@ checked against.
 [basis-set-forms]: https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe
 [multivector-align]: https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh
 [float-width]: https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ
+
 [part-scale]: https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj
 [compound-tables]: https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn
 [object-names]: https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX
