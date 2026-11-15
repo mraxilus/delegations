@@ -174,7 +174,7 @@ bare noun (V.3).
   and the whole multivector give 62 instances of `⟑`, which emit 1 536 terms. They take 102 MiB
   above the 104 MiB of the library alone. A whole table as a static argument of each instance
   costs little: the 63 pairs of `∙`, of which 26 compile, take 22 MiB. A sweep of
-  every form over every pair of types emits about 20 000 terms at rga5d, and peaks at 1 521 MiB.
+  every form over every pair of types emits about 20 000 terms at rga5d, and peaks at 1 580 MiB.
   Compile time is unmeasured, apart from the runs of `laws.nim`.
 - **Operators from no table.** These stay on `Multivector` alone: the norms, `unitize`, the
   supports and the projections. So do the cocarrier, center, container and partner, and `-`, `$`
@@ -312,21 +312,24 @@ product set would spend the 48 of P02. `laws.nim` does not count them.
 `laws.nim` holds each form against the operator of the library, on 256 seeded samples of each type
 or pair. It sweeps each part, map and squared norm over each named type. Up to 5D it sweeps each
 product over every pair of named types and the whole multivector. At 6D a vector pairs with each
-type, on either side. There every pair takes 18 minutes and 6 106 MiB at cga6d, where vector pairs
-take 2 minutes and 1 196 MiB. Where a form stops the compile, the operator of the library gives
-zero on each sample.
+type, on either side. On 2026-10-29 every pair took 18 minutes and 6 106 MiB at cga6d, where vector
+pairs took 2 minutes and 1 196 MiB. Where a form stops the compile, the operator of the library
+gives zero on each sample.
+
+The laws held at each of the nine algebras on 2026-11-15, on `linux amd64, 4 cores`, a Xeon of
+family 6 model 173. The table gives the forms and the peak resident size of each build there.
 
 | Algebra | Pairs of each product | Forms that hold | Forms that stop | Peak of build |
 |---------|-----------------------|----------------:|----------------:|--------------:|
-| rga2d | every pair | 302 | 103 | 318 MiB |
-| rga3d | every pair | 409 | 137 | 342 MiB |
-| rga4d | every pair | 524 | 183 | 630 MiB |
-| rga5d | every pair | 649 | 239 | 1 521 MiB |
-| rga6d | a vector with each type | 216 | 73 | 903 MiB |
-| cga3d | every pair | 472 | 110 | 400 MiB |
-| cga4d | every pair | 595 | 154 | 787 MiB |
-| cga5d | every pair | 728 | 208 | 2 000 MiB |
-| cga6d | a vector with each type | 262 | 81 | 1 196 MiB |
+| rga2d | every pair | 302 | 103 | 307 MiB |
+| rga3d | every pair | 409 | 137 | 356 MiB |
+| rga4d | every pair | 524 | 183 | 656 MiB |
+| rga5d | every pair | 649 | 239 | 1 580 MiB |
+| rga6d | a vector with each type | 216 | 73 | 926 MiB |
+| cga3d | every pair | 472 | 110 | 415 MiB |
+| cga4d | every pair | 595 | 154 | 822 MiB |
+| cga5d | every pair | 728 | 208 | 2 074 MiB |
+| cga6d | a vector with each type | 262 | 81 | 1 223 MiB |
 
 Each alias returns the type of its operator, and equals it. Each reverse keeps its type, and each
 complement takes grade k to grade N - k. A map that drops the sign of its table fails at rga4d, at
