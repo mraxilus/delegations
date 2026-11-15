@@ -379,10 +379,11 @@ token over an App. Without it the ledger reports the gap and the `draft` workflo
 open pull request stale on each merge, which costs more than it saves at this repository's
 merge rate.
 
-The `check-drift` check is the narrow form of the same rule. It reports only where the base
-changed a charter document or the checker. A change of the checker or of a rule of content can
-make green false, and a change of process changes what a delegate does. It reaches the merge
-through the `summarize` gate.
+The `check-drift` check is the narrow form of the same rule, and it reaches the merge through the
+`summarize` gate. It reports only where the base changed a charter document or the code of the
+stamp. A change of a rule of content can make a stamp false, and a change of process changes what
+a delegate does. A change of the checker needs no merge, since `koch check` judges each branch as
+merged with `main`, as the runner does.
 
 ## Checks reference
 
@@ -394,12 +395,12 @@ alone.
 
 | Verb | Reads | Does |
 |------|-------|------|
-| `check` | fresh `origin/main` | every `check-` verb but `check-role`, then `test` and `drive` |
+| `check` | merged `origin/main` | every `check-` verb but `check-role`, then `test` and `drive` |
 | `check-files` | git's view | every static check `auditTree` runs; `Pruned` rows against the log |
 | `check-types` | projects with `package.json` and lock | `npm ci`, then that project's `types` |
 | `check-scope` | changed paths | branch grammar; project paths inside scope |
 | `check-commits` | commits since base | subject and scope; test before fix; body; record apart |
-| `check-drift` | charter and checker base changed | each changed section of charter, and its diff |
+| `check-drift` | charter, stamp code base changed | each changed section of charter, and its diff |
 | `check-schemas` | schemas changed, and base | each against the version base shipped |
 | `check-role` | a pull request's body, title and labels | branch's role; title and body in form |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
@@ -425,6 +426,11 @@ tree. Its body arrives from the event payload as `ROLE_BODY`, and its labels fro
 
 `check` runs the static checks first, because they are cheap next to the jobs that compile and
 test. A finding among them stops the run, except one that duty 3 holds apart.
+
+`check` judges a clean branch that lacks `origin/main` as merged with it, with the koch of that
+merge. The merge stands in a second tree under the git directory. Drift, the name of the branch
+and the mark of the `pre-push` hook read the checkout itself. `curator/audit/PROVENANCE.md`,
+Merge with base, gives the design.
 
 `check` costs minutes whenever a changed project carries a `drive` verb. It then builds the
 page of that project and drives a real browser, exactly as the runner does. A change to

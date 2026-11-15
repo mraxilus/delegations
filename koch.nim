@@ -34,6 +34,9 @@
 ##     (CURATOR.md duty 11). Matrix runs each on its own pin, as `check` does locally:
 ##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
 ##     which compiler PATH holds decides nothing.
+##   `check` judges clean checkout lacking base as merged with it, by koch of that merge, in
+##     second tree under git dir, as runner judges merge ref (`merge.nim`); drift, branch name
+##     and mark read checkout itself. Detached HEAD, as second tree holds, records no mark.
 ##
 ##   Each verb first points git at `.githooks` (`setPathHooks` of `tree.nim`), so each harness
 ##     running koch gets git hooks; it reads first, prints nothing, and fails no verb.
@@ -63,6 +66,7 @@ import ./curator/audit/src/[
   findings,
   fixes,
   hooks,
+  merge,
   plan,
   projects,
   role,
@@ -226,11 +230,6 @@ proc directoriesScoped(options: Options, tree: Tree): seq[string] =
     )
 
 
-proc fileMark(root: string): string =
-  ## Read path of check mark, in git dir git names for this checkout.
-  pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
-
-
 proc branch(checkout: string): string =
   ## Read branch checked out in checkout.
   fieldsGit(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
@@ -392,49 +391,67 @@ proc reportHeld(held: seq[Finding]) =
   held.report
 
 
+proc checkInPlace(options: Options; branch, base: string): int =
+  ## Run every check of `koch check` on checkout itself, then record mark where all pass; exit
+  ##   code. `judgeCheckout` of `merge.nim` calls it for checkout it judges in place.
+  ##   Static checks run first, since they are cheap next to types, suites and drive, which
+  ##     compile and test; any finding among them stops run before those, which run again once
+  ##     finding is fixed.
+  ##   Cost: suite failure shows only after static pass is clean.
+  ##   Cost: no suite runs `main` of koch, so this order, and call of `recordMark` after green
+  ##     run, hold by hand: read on 2026-11-15, and run that day as `nim r koch check` in place
+  ##     on branch holding `origin/main`, which recorded tree of HEAD
+  ##     (`curator/audit/PROVENANCE.md`, Merge with base).
+  let tree = options.root.readTree
+  var found = tree.auditTree
+  found.add findingsPruned(options.root, tree)
+  found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
+  found.add checkHistory(branch, commitsBranch(options.root, base))
+  found.add checkBase(readDrift(options.root, base))
+  found.add checkSchemas(options.root, base)
+
+  # Finding inside project blocks only branch of role owning it (duty 3), and finding on line
+  #   branch changed blocks it wherever it lies; rest blocks here.
+  let (held, own) = splitHeld(branch, found, linesOwned(options.root, tree, base))
+  held.reportHeld
+  if own.len > 0:
+    own.report
+    echo "Types, suites and drive not run; fix findings above, then run again."
+    return 1
+
+  # Compile and test, then ask semantic pass, which runs once restore stands (D1 of #558).
+  found = own
+  found.add runJobsType(options.root, tree, options.directoriesScoped(tree))
+  let jobs = tree.jobs(pathsChanged(options.root, base))
+  found.add runJobsCi(options.root, tree, jobs)
+  let (converted, unread) = checkConversions(options.root, tree, jobs.mapIt(it.directory))
+  found.add converted
+  for warning in unread: echo "warning: " & warning
+
+  # Green run records tree for `pre-push` hook, where checkout is clean and on branch.
+  if found.len == 0: options.root.recordMark
+  found.report
+  if found.len == 0: 0 else: 1
+
+
 proc run(options: Options): int =
   ## Execute command, print findings, return exit code.
   var found: seq[Finding]
   case options.command
   of "check":
-    # Static checks run first, since they are cheap next to types, suites and drive, which
-    #   compile and test; any finding among them stops run before those, which run again once
-    #   finding is fixed.
-    #   Cost: suite failure shows only after static pass is clean.
+    # Clean checkout lacking base is judged as merged with it, by koch of that merge, as runner
+    #   judges merge ref, and any other checkout in place (`judgeCheckout`); drift, branch name
+    #   and mark read this checkout.
+    #   Cost: no suite runs this arm, so its fetch, and proc giving `checkInPlace` branch and
+    #     base, hold by hand (`curator/audit/PROVENANCE.md`, Merge with base).
     if not options.isReadAll({Root, Branch, Base}): return options.refused
-    discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
-    let
-      tree = options.root.readTree
-      (branch, base) = (options.branchOrDefault, options.baseOrDefault)
-    found = tree.auditTree
-    found.add findingsPruned(options.root, tree)
-    found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
-    found.add checkHistory(branch, commitsBranch(options.root, base))
-    found.add checkBase(readDrift(options.root, base))
-    found.add checkSchemas(options.root, base)
-    # Finding inside project blocks only branch of role owning it (duty 3), and finding on
-    #   line branch changed blocks it wherever it lies; rest blocks here.
-    let (held, own) = splitHeld(branch, found, linesOwned(options.root, tree, base))
-    held.reportHeld
-    if own.len > 0:
-      own.report
-      echo "Types, suites and drive not run; fix findings above, then run again."
-      return 1
-    found = own
-    found.add runJobsType(options.root, tree, options.directoriesScoped(tree))
-    let jobs = tree.jobs(pathsChanged(options.root, base))
-    found.add runJobsCi(options.root, tree, jobs)
-    # Conversion asks semantic pass, so it runs once restore stands (D1 of #558).
-    let (converted, unread) = checkConversions(options.root, tree, jobs.mapIt(it.directory))
-    found.add converted
-    for warning in unread: echo "warning: " & warning
-    # Green run on clean tree records tree hash, which `pre-push` hook compares against
-    #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
-    if found.len == 0:
-      if fieldsGit(options.root, ["status", "--porcelain"]).len == 0:
-        writeFile(options.root.fileMark, fieldsGit(options.root, ["rev-parse", "HEAD^{tree}"])[0])
-        echo "Tree hash recorded for pre-push hook."
-      else: echo "Working tree not clean; nothing recorded for pre-push hook."
+    let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
+    # Base runner compares with is fetched fresh; koch of merge is handed commit, fetching none.
+    if base == "origin/" & MAIN: discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
+    var toolchains = initToolchains()
+    return judgeCheckout(
+      options.root, base, branch, toolchains, proc(): int = options.checkInPlace(branch, base)
+    )
   of "check-files":
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     let tree = options.root.readTree

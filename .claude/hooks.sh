@@ -12,6 +12,8 @@
 #   and of knoller, which audit imports by path, at HEAD. Commit, merge or switch of branch that
 #   moves one builds again before hook runs, so no hook runs checker older than checkout holds.
 #   Key reads HEAD and never working tree, so edit in progress builds nothing until committed.
+#     Koch of merge in second tree is keyed on same paths (`merge.nim`), so path added to one
+#     key is added to other (Article II.9).
 #   Trap: `rev-parse` prints first path HEAD lacks back as given, then stops. Knoller comes
 #     last, its source before its nimble file, so older branch keeps stable key and no path
 #     that exists is dropped from it.

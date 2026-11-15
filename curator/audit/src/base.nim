@@ -1,5 +1,5 @@
-## Enforce that branch carries base's rules and checker, i.e. what decides meaning of green, and
-##   name each change of charter to branch that predates it.
+## Enforce that branch carries base's charter and code of stamp, and name each change of charter
+##   to branch that predates it.
 ##   Pull request green against yesterday's `main` can merge into today's and be false on
 ##   arrival: that happened, and `main` ran red until stamp was corrected. GitHub offers
 ##   "require branches to be up to date", which prevents it. That setting is blanket, and this
@@ -8,8 +8,21 @@
 ##   Only two kinds of path matter. Charter (`RULES`) holds rules of content, which move stamp
 ##     every project claims, and sections of process, which move none yet say what delegate
 ##     does; delegate forgets both, so every change of charter reaches each older branch
-##     (#843). Checker (`isChecker`) decides what audit accepts, so branch predating it was
-##     measured by older ruler.
+##     (#843). Module of stamp (`PATH_STAMP`) holds `RULES`, `SECTIONS_PROCESS` and digest,
+##     whose change can move every stamp, and `koch stamp` of older branch would write old one.
+##     Same module holds checks of record too (`checkProvenance`, `checkCitations`,
+##     `isDateIso`), and path cannot tell which part moved, so drift names each change of it.
+##   Cost: edit of module of stamp that moves no stamp still sends each older branch to merge
+##     base (`curator/audit/PROVENANCE.md`, Drift, counts such merges).
+##   Cost: code outside module of stamp feeds stamp too, and drift names no change of it:
+##     `sections` of `markdown.nim` cuts each document (`textStamped`), and `documentsRules` and
+##     `stampRules` of `audit.nim` read each from tree and digest them. Where one moves stamp,
+##     check of merge reports stale stamp in record that branch wrote, and `koch stamp` of
+##     branch writes old one, until it merges base.
+##   Rest of checker is no governing path (#893): `koch check` judges branch as merged with
+##     base, by koch of that merge (`merge.nim`), as runner judges merge ref, so branch is
+##     measured by ruler of base, and drift of it bought parity alone. Cost: hooks, `koch fix`
+##     and `koch stamp` keep checker of branch until it merges base.
 ##   Everything else may differ freely: another project's code cannot make this branch's
 ##     stamp false, and demanding branch be current with all of it is friction for nothing.
 ##
@@ -17,7 +30,7 @@
 ##     one line, with `git diff <fork>..<base> -- <document>` that shows change. So delegate
 ##     reads what changed, and never one sentence on how to merge. It asks for re-audit and
 ##     re-stamp only where stamped text of that document moved (`textStamped`); change of
-##     process alone asks to read and merge. Checker is one finding more, naming its paths.
+##     process alone asks to read and merge. Code of stamp is one finding more, naming it.
 ##   Section is named by heading line, since citation names it so; opening above first heading
 ##     has none, so its first line names it. Section that moved keeps its text, yet stamp reads
 ##     parts in order, so move is change too. Document that differs while no section does, as
@@ -34,8 +47,20 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, tables]
+import std/[os, sequtils, strutils, tables]
 import ./[findings, markdown, plan, provenance, tree]
+
+
+const PATH_STAMP* = DIRECTORY_CHECKER & "/provenance.nim"
+  ## Module of stamp, holding `RULES`, `SECTIONS_PROCESS` and digest beside checks of record;
+  ##   change of first three can move every stamp, so drift names each change of module beside
+  ##   charter.
+
+
+static:
+  # Renamed module would leave drift naming nothing, so path is held to file beside this one.
+  doAssert fileExists(currentSourcePath().parentDir / PATH_STAMP.extractFilename),
+    "Module of stamp stands beside `base.nim`; got `" & PATH_STAMP & "`."
 
 
 type Drift* = object  ## Define what base changed since branch forked, as drift reads it.
@@ -47,8 +72,8 @@ type Drift* = object  ## Define what base changed since branch forked, as drift 
 
 
 func isGoverning*(path: string): bool =
-  ## Decide whether path decides what green means, i.e. charter document or checker.
-  path in RULES or path.isChecker
+  ## Decide whether path is one drift names, i.e. charter document or code of stamp.
+  path in RULES or path == PATH_STAMP
 
 
 proc readDrift*(root, base: string): Drift =
@@ -93,7 +118,7 @@ func headingsChanged(fork, base: string): seq[string] =
 
 func checkBase*(drift: Drift): seq[Finding] =
   ## Report each charter document base changed since branch forked, naming each changed section
-  ##   and command that shows change, then checker branch predates.
+  ##   and command that shows change, then code of stamp branch predates.
   for k, rule in RULES:
     if rule notin drift.gained: continue
     let changed = headingsChanged(drift.rules_fork[k], drift.rules_base[k])
@@ -110,13 +135,10 @@ func checkBase*(drift: Drift): seq[Finding] =
       "Base changed sections since branch forked; read " & shown & action & "; got " &
         changed.mapIt("`" & it & "`").join(", ") & ".",
     )
-  var behind: seq[string]
-  for path in drift.gained:
-    if path.isChecker and path notin behind: behind.add path
-  if behind.len == 0: return
+  if PATH_STAMP notin drift.gained: return
   result.add finding(
     "",
     0,
-    "Branch predates checker on base; merge base, then check again, as /sync says; got `" &
-      behind.join(", ") & "`.",
+    "Branch predates code of stamp on base, which can move every stamp; merge base, then " &
+      "check again, as /sync says; got `" & PATH_STAMP & "`.",
   )

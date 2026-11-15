@@ -1082,11 +1082,15 @@ suite "Hooks":
         "Base changed sections; read `git diff a..origin/main -- GUIDE.md`; got `## Output " &
           "contract`.",
       )
-      checker = finding("", 0, "Branch predates checker on base; got `koch.nim`.")
-      drifted = contextStart("curator/x", "", "", "## List", "", @[drift, checker])
+      stamp = finding("", 0, "Branch predates code of stamp on base; got `provenance.nim`.")
+      drifted = contextStart("curator/x", "", "", "## List", "", @[drift, stamp])
     check "\n  GUIDE.md: Base changed sections" in drifted and "`## Output contract`" in drifted
-    check "\n  Branch predates checker on base; got `koch.nim`.\n" in drifted  # each, not first
+    check "\n  Branch predates code of stamp on base; got `provenance.nim`.\n" in drifted  # each
     check "re-stamp" notin drifted
+    # Drift names charter and code of stamp alone, since checker reaches branch through merge
+    #   `koch check` judges (#893).
+    check "Base changed charter or code of stamp since this branch forked" in drifted
+    check "checker" notin drifted
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])
     check isTurnWriting([Call(name: "mcp__github__issue_write", has_body: true)])
     check not isTurnWriting([Call(name: "mcp__github__update_pull_request")])  # draft toggle

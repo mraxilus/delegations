@@ -34,7 +34,7 @@ gets two parts of what they give:
 - **The start context.** Run `nim r koch hook start < /dev/null` at each start, at each resume
   and after each compaction. It prints what the start hook prints under Claude Code. That is your
   role, the reading order of your role, the headings of your record and the carried list. It
-  also names each change to the charter or the checker since your branch forked.
+  also names each change to the charter or the code of the stamp since your branch forked.
 - **The git hooks.** Each verb of koch sets `core.hooksPath` to `.githooks`, so git runs these
   hooks after the first run of koch. They refuse a commit whose message breaks the rules of
   commits, and a push of a tree that `koch check` did not pass. So they hold a harness that
