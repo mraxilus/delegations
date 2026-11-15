@@ -8,7 +8,9 @@ import ../../../knoller/src/knoller
 import ../../src/[findings, idioms]
 
 
-const LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
+const
+  LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
+  NIMBLE = "x.nimble"  ## Nimble file of package at root, which each path `tests/` lies in.
 
 
 func module(body: string): string =
@@ -18,7 +20,7 @@ func module(body: string): string =
 
 func messages(path, source: string): seq[string] =
   ## Collect messages idioms check reports over source.
-  checkIdioms(path, source).toFindings.mapIt(it.message)
+  checkIdioms(path, source, nimble = NIMBLE).toFindings.mapIt(it.message)
 
 
 func fixed(source: string): Fix =
@@ -112,17 +114,22 @@ suite "Idioms":
         "cmd: \"nim c -r --hints:off -run $options $file\"\njoinable: true\n\"\"\"\n"
       body = IMPORT_PROFILER & "\n\ninclude \"suites.nim\"\n"
       stub = header & module(body)
-      fix = fixIdioms("tests/test_x.nim", stub)
-    check checkIdioms("tests/test_x.nim", stub).mapIt(it.line) == @[3, 4, 5]  # line of each key
+      fix = fixIdioms("tests/test_x.nim", stub, NIMBLE)
+    # Line of each key.
+    check checkIdioms("tests/test_x.nim", stub, nimble = NIMBLE).mapIt(it.line) == @[3, 4, 5]
     check fix.source == "discard \"\"\"\naction: run\n" &
       "cmd: \"nim c --hints:off -run $options $file\"\n\"\"\"\n" & module(body)
     check fix.fixed.mapIt(it.line) == @[3, 4, 5]  # reports name lines as given
-    check checkIdioms("tests/test_x.nim", fix.source).len == 0  # flag alone, so `-run` stays
-    check fixIdioms("tests/test_x.nim", fix.source).fixed.len == 0  # second fix writes nothing
-    check fixIdioms("tests/suites/test_x.nim", stub).source == fix.source  # stub of category (#443)
-    check fixIdioms("tests/suites/suites.nim", stub).source == stub  # name opens no `t`: no stub
+    # Flag alone, so `-run` stays.
+    check checkIdioms("tests/test_x.nim", fix.source, nimble = NIMBLE).len == 0
+    # Second fix writes nothing.
+    check fixIdioms("tests/test_x.nim", fix.source, NIMBLE).fixed.len == 0
+    # Stub of category (#443).
+    check fixIdioms("tests/suites/test_x.nim", stub, NIMBLE).source == fix.source
+    # Name opens no `t`: no stub.
+    check fixIdioms("tests/suites/suites.nim", stub, NIMBLE).source == stub
     let tail = "discard \"\"\"\ncmd: \"nim c $options $file -r\"\n\"\"\"\n" & module(body)
-    check fixIdioms("tests/test_x.nim", tail).source ==
+    check fixIdioms("tests/test_x.nim", tail, NIMBLE).source ==
       "discard \"\"\"\ncmd: \"nim c $options $file\"\n\"\"\"\n" & module(body)  # before quote
 
 
@@ -144,19 +151,23 @@ suite "Idioms":
     check fixed(entry).source ==
       module(IMPORT_PROFILER & "\n\nimport std/os\n\nwhen isMainModule:\n  echo 1\n")
     check fixed(entry).source.isSettled and checkProfiler("a.nim", fixed(entry).source).len == 0
-    let library = module("import std/os\n")
-    check checkProfiler("curator/probe/src/probe.nim", library).len == 1  # umbrella
-    check checkProfiler("curator/probe/src/probe/ring.nim", library).len == 0  # module of it
+    let
+      library = module("import std/os\n")
+      probe = "curator/probe/probe.nimble"  # Nimble file of package of umbrella.
+    check checkProfiler("curator/probe/src/probe.nim", library, probe).len == 1  # umbrella
+    check checkProfiler("curator/probe/src/probe/ring.nim", library, probe).len == 0  # module of it
     check checkProfiler("a.nim", library).len == 0  # neither entry nor umbrella
     let
       header = "discard \"\"\"\naction: run\n\"\"\"\n## Do.\n\n" &
         "{.warning[UnusedImport]: off.}\n\n" & STRICT_FUNCS & "\n"
-      stub = fixIdioms("tests/test_x.nim", header & "import ./suites/test_a\n")
+      stub = fixIdioms("tests/test_x.nim", header & "import ./suites/test_a\n", NIMBLE)
     check stub.source == header & "\n" & IMPORT_PROFILER & "\n\nimport ./suites/test_a\n"
     check stub.fixed.mapIt(it.rule) == @[Rule.ImportProfiler]
-    check fixIdioms("tests/test_x.nim", stub.source).fixed.len == 0  # second fix writes nothing
+    # Second fix writes nothing.
+    check fixIdioms("tests/test_x.nim", stub.source, NIMBLE).fixed.len == 0
     # Stub that includes its suite takes import from it (STYLE.md §3), so fix writes nothing.
-    check fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n").fixed.len == 0
+    let included = header & "include \"suites.nim\"\n"
+    check fixIdioms("tests/test_x.nim", included, NIMBLE).fixed.len == 0
 
 
   test "test echo of unlabelled value is debug output; label or condition passes":
@@ -175,6 +186,21 @@ suite "Idioms":
     check checkPathsMachine("a.nim", "let p = \"/home/me/data\"\n")[0].line == 1
     check checkPathsMachine("a.yml", "run: cd /Users/me\n").len == 1
     check checkPathsMachine("a.nim", "let p = getEnv(\"HOME\")\n").len == 0
+
+
+  test "machine path opens where no name character stands before it, so word holding one passes":
+    # Case as found on #753: word list of `lojban_tagger` defines gismu `xabju` at
+    #   `location/habitat/nest/home/abode x2`, and check read `/home/` inside that text.
+    let found = "  (\"xabju\", \"x1 dwells at location/habitat/nest/home/abode x2\"),\n"
+    check checkPathsMachine("a.nim", found).len == 0  # CONTRIBUTOR.md, System: no path there
+    for word in ["docs/home/index.html", "../home/x", "Shared/Users/x", "ABC:\\x", "~/home/x"]:
+      check checkPathsMachine("a.nim", "let p = \"" & word & "\"\n").len == 0  # path runs on
+    for opened in [
+      "/home/me\n", "let p = r\"C:\\Users\"\n", "path=/home/me\n", "let t = `/home/me`\n",
+      "let l = [\"x\",/home/me]\n", "let u = \"file:///home/me\"\n",
+      "--passC:\"-I/home/me/include\"\n",
+    ]:
+      check checkPathsMachine("a.nim", opened).len == 1  # each opener, flag of one letter too
 
 
   test "tsconfig sets every flag to true, read as text":

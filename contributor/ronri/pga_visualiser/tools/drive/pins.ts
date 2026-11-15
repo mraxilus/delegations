@@ -10,7 +10,8 @@
 //   run says re-measure against previous commit first; failure at multiples of it is fault
 //   this exists for.
 //   Marker's and moving grid's bounds are budgets, and pin no fault: each fault reads inside
-//   spread of unchanged code, so count in `counted.ts` pins it (Article VII.10, VII.12).
+//   spread of unchanged code, so counts pin it, in marker suite and `counted.ts` (Article VII.10,
+//   VII.12).
 //   Figure is median of batches, frame apart, wherever one call is too short to time alone:
 //   single mean of few hundred calls moves with one collection or one preemption.
 
@@ -30,7 +31,7 @@ import { pixelOf } from './wheel';
 export const MILLISECONDS_PICK_HOVER = 2.6; // Fault: scene copied for each handle.
 export const MILLISECONDS_PICK_HOVER_LOADED = 7.2; // Same pick, at 5,038 objects.
 const MICROSECONDS_ANCHOR = 15; // Fault: extent tuple and object copied for each lookup.
-const MILLISECONDS_MARKER_PAIR = 1.1; // Budget; `counted.ts` pins outline summed by sample.
+const MILLISECONDS_MARKER_PAIR = 2.5; // Budget; counts pin outline summed by sample.
 const MILLISECONDS_GRID_MOVING = 26; // Budget; `counted.ts` pins fade sampled at boundary.
 const MILLISECONDS_EMITTING_MOVING = 2; // Fault: ribbon expanded on CPU.
 

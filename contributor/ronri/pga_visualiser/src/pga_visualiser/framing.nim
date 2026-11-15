@@ -166,29 +166,46 @@ func reachFar*(placed: openArray[Placement], scene: Scene): float =
 
 
 func reachNear*(
-  placed: openArray[Placement]; scene: Scene; origin, eye: Position; forward: Direction
+  placed: openArray[Placement]; scene: Scene; origin, eye, pivot: Position; forward: Direction
 ): float =
   ## Measure how near nearest drawn object stands ahead of eye, along sight.
   ##   For `Camera.reach_near`, from frame's own placements.
-  ##   `eye` is about view `origin`; each world place is read about it, in components, so
-  ##   walk builds nothing for each object (Art. VII.1).
+  ##   `eye` and `pivot` are about view `origin`; each world place is read about it, in
+  ##   components, so walk builds nothing for each object (Art. VII.1).
   ##   Depth along sight, never distance, and never behind eye.
   ##     What reader turned away from is not drawn, and scale read off it would follow
   ##     that.
   ##   Object's own middle, with no drawn radius taken off: camera at planet's surface
   ##   then reads that planet's radius rather than zero, and near clip of one
   ##   four-hundredth of it still holds whole planet.
+  ##   Line stands where it passes nearest `pivot`, which is where it is drawn from; see
+  ##   `tessellate`.
+  ##     Never at its support: support, its point nearest world origin, stood 4.7e6 units
+  ##     behind eye of line picked far out, and next object ahead put near clip at 21.3
+  ##     units, so line 2.4e-7 off was cut away (#767).
   ##   Horizon kinds answer nothing, as they do for `reachOfPlacement`: neither stands
   ##   anywhere.
-  ##   Zero where nothing is drawn ahead, which hands scale back to separation.
+  ##   Zero where nothing is drawn ahead, which hands scale back to distance to pivot.
   result = 0.0
   for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
     template place: untyped = placed[handle]  # Alias; `let` deep-copies on JS backend.
     if place.kind notin {Case.PointAt, Case.LineThrough, Case.PlaneOn}: continue
-    let depth = ((place.at.x - origin.x) - eye.x) * forward.x +
-        ((place.at.y - origin.y) - eye.y) * forward.y +
-        ((place.at.z - origin.z) - eye.z) * forward.z
+    var
+      at_x = place.at.x - origin.x
+      at_y = place.at.y - origin.y
+      at_z = place.at.z - origin.z
+    if place.kind == Case.LineThrough:
+      # Slide support along line to its point nearest pivot, in components.
+      let length_squared = place.toward.x * place.toward.x +
+          place.toward.y * place.toward.y + place.toward.z * place.toward.z
+      if length_squared > 0.0:
+        let along = ((pivot.x - at_x) * place.toward.x + (pivot.y - at_y) * place.toward.y +
+            (pivot.z - at_z) * place.toward.z) / length_squared
+        at_x += along * place.toward.x
+        at_y += along * place.toward.y
+        at_z += along * place.toward.z
+    let depth = (at_x - eye.x) * forward.x + (at_y - eye.y) * forward.y + (at_z - eye.z) * forward.z
     if depth <= 0.0: continue
     if result <= 0.0 or depth < result: result = depth
 
@@ -334,8 +351,8 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
   ##     Straight out from sphere's centre was least move. But sphere's centre is not
   ##     middle of what is picked once three objects part them, so that slid view sideways
   ##     and carried pivot off middle that orbit turns about.
-  ##   Pivot is re-stamped at middle's depth, so separation follows eye rather than going
-  ##   stale. Middle stands on sight line after any pick, so there pivot is middle itself.
+  ##   Pivot is re-stamped at middle's depth, so distance to pivot follows eye rather than
+  ##   going stale. Middle stands on sight line after any pick, so there pivot is middle itself.
   ##   Nothing finite named means no bound; horizon objects are bound by their own rule.
   if aim.sphere.isNone: return
   let
@@ -356,20 +373,20 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
 
 func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStance =
   ## Resolve `aim` against camera as it stands into placement ease should end at.
-  ##   Pivot to middle of everything finite picked, and separation pulled back only as far
-  ##   as frame rule demands. Never in: rule is floor, so reader standing further out
+  ##   Pivot to middle of everything finite picked, and distance to pivot pulled back only as
+  ##   far as frame rule demands. Never in: rule is floor, so reader standing further out
   ##   keeps their own framing.
   ##   Turn faces horizon objects only where nothing finite was.
   ##     Finite framing wins outright over facing star, since two can disagree. Star
   ##     behind reader and point in front have no placement showing both, and selection
   ##     with something finite is one reader works on.
   ##   Pivot comes to middle of what was picked even where nothing is pulled back: reader
-  ##   who picks object and turns means to turn about *it*. Bound still decides separation.
+  ##   who picks object and turns means to turn about *it*. Bound still decides distance to pivot.
   ##   Two searches stood here, and both are gone.
-  ##     One bisected separation between where camera stood and distance whole sphere fits,
-  ##     running `isShownAll` at each halving. `camera.stepOutTo` answers in closed form.
+  ##     One bisected distance to pivot between where camera stood and distance whole sphere
+  ##     fits, running `isShownAll` at each halving. `camera.stepOutTo` answers in closed form.
   ##     Other bisected fraction of whole move already showing everything. Move is least by
-  ##     construction now: pivot goes to centroid, and separation gives up exactly what
+  ##     construction now: pivot goes to centroid, and distance to it gives up exactly what
   ##     rule demands.
   ##   Price is named in `CameraAim`: one bounding sphere frames line further out than
   ##   crossing frame would need.
@@ -387,13 +404,13 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     #   in view keeps reader's own framing, as finite selection already fitting does.
     let facing = aim.headingFacing
     if facing.isNone or aim.isBounded(camera, width, height): return settled
-    # Level stance facing that way names that turn, about pivot and at reader's separation:
+    # Level stance facing that way names that turn, about pivot and at reader's distance to it:
     #   direction alone names no roll, and least turn off steep sight leaves view rolled.
     #   Eye and pivot name it, so no pole collapses.
     let length = sqrt(inner(facing.get.toMultivector, facing.get.toMultivector))
     return stanceFacing(pointAlong(pivot, facing.get, -camera.distance / length), pivot, origin)
   # Pull eye back along its own sight, by least step carrying it out to fitting reach.
-  #   Sphere's centre is not pivot, so separation is not that reach; quadratic is what
+  #   Sphere's centre is not pivot, so distance to pivot is not that reach; quadratic is what
   #   accounts for offset between them.
   let
     placed = camera.placed(settled)
@@ -408,9 +425,9 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
 func stanceApproaching*(
   shaped: Kind, radius: float, place: Position, camera: Camera, scale: DrawExtent
 ): Option[CameraStance] =
-  ## Resolve where camera ends after pointer pick: object centred, and come in to.
-  ##   Pivot goes onto object's own anchor, so it sits at middle of frame and orbit turns
-  ##   about it rather than about empty point beside it.
+  ## Resolve where camera ends after pick of object alone: object centred, and come in to.
+  ##   Pivot goes onto `place` on object itself, so it sits at middle of frame and orbit
+  ##   turns about it rather than about empty point beside it.
   ##     Held under pointer before, on whichever pixel reader clicked. Pivot then stood on
   ##     sight line at that object's depth, units away from object itself, and every orbit
   ##     swung object round screen rather than turning it where it stood.
@@ -431,6 +448,8 @@ func stanceApproaching*(
   ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
   ##   behind reader would slide camera back past it rather than turn, which is jump
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
+  ##     Line is exempt: its place is its point nearest eye (ruling of #767), which stands
+  ##     beside eye as often as ahead, and slide there is what that ruling asks.
   ##     Ahead is judged against object's own reach from eye: depth no more than
   ##     `TOLERANCE_ABS` of it stands in eye's plane. Never against fixed millionth,
   ##     which object picked from hundredth of millionth off stands well under.
@@ -438,7 +457,8 @@ func stanceApproaching*(
     (eye, frame) = camera.sight
     centre = place.toView(camera.originView)
     reach_now = distanceBetween(centre.toMultivector, eye.toMultivector)
-  if depthAlong(eye, frame.forward, centre) <= TOLERANCE_ABS * reach_now: return
+  if shaped != Kind.Line and depthAlong(eye, frame.forward, centre) <= TOLERANCE_ABS * reach_now:
+    return
   var depth_end = min(reach_now, camera.distance)
   case shaped
   of Kind.Point:
@@ -455,6 +475,18 @@ func stanceApproaching*(
   some(camera.stanceDollied(camera.stanceRepivotedAt(place), distanceHeld(depth_end)))
 
 
+func positionOnLineNearest(placed: Placement, place: Position): Position =
+  ## Find point of line `placed` places that stands nearest `place`, both in world.
+  ##   Orthogonal projection onto line: `offerAim` brings pivot there for line picked alone.
+  ##     Not support: line's point nearest world origin can stand millions of units off
+  ##     reader, inside object (#767).
+  ##   Held in world, as scene stores line: from star 4.7e6 units out, point lands 4e-11
+  ##   off line, which is fifth of pixel at orbit distance of 2.4e-7, frame 900 high.
+  ##   Support itself where projection has no weight.
+  let line = wedge(placed.at.toMultivector, placed.toward.toMultivector)
+  position(projectOrthogonal(place.toMultivector, line)).get(placed.at)
+
+
 func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): CameraStance =
   ## Turn `stance` about its pivot until sight stands `ANGLE_PLANE_LEAST` off plane of unit
   ## `normal`, by least turn; return it unchanged where sight already stands that far off.
@@ -465,7 +497,7 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
   ##     world up leans to.
   ##     Level direction is meet of plane with plane holding sight and normal, both through
   ##     origin; turned sight is sum of two weightless points, read back unit.
-  ##   Result is level stance facing pivot along turned sight, at stance's own separation,
+  ##   Result is level stance facing pivot along turned sight, at stance's own distance to it,
   ##     as `stanceFor` faces star: least turn off steep sight leaves view rolled.
   ##   Held about stance's own origin, which its pivot is read about.
   let
@@ -507,7 +539,7 @@ func stanceFitted*(
   ## Carry `stance` back out to fit of point picked alone where it lands nearer: ruling of #535.
   ##   Selection never starts nearer than its fit. Far star picked from list then draws as
   ##   disc spanning `FRACTION_HEIGHT_APPROACH_POINT` of frame, and not as sphere at whatever
-  ##   separation wheel over empty sky left.
+  ##   distance to pivot wheel over empty sky left.
   ##   Fit is depth pointer pick of dot comes in to (`stanceApproaching`): own reach where
   ##   that is nearer, as neither moves eye further off than object already stands.
   ##   Only point read as floor dot has fit. Point seen at its size is reader's working
@@ -515,7 +547,7 @@ func stanceFitted*(
   ##     Read by reach from eye, not depth along sight as pointer pick reads it: pick from
   ##     list may stand behind eye or off screen, where depth names nothing.
   ##   Floor, not fit: stance standing further out keeps reader's own scale, as frame rule does.
-  ##   Pivot stands on point after `stanceFor`, so separation is reach to it, and dolly
+  ##   Pivot stands on point after `stanceFor`, so distance to pivot is reach to it, and dolly
   ##   holding pivot carries eye back along sight.
   ##   `placed` is frame's placements, where caller has them; see `aimFor`.
   if picked.len != 1: return stance
@@ -596,6 +628,8 @@ func offerAim*(
   ##     it and comes in to it (`stanceApproaching`); group and horizon shape frame as
   ##     ever, since group has to fit, which one object's reach cannot promise.
   ##   Every other pick of dot alone lands no nearer than its fit (`stanceFitted`).
+  ##   Line alone comes to its point nearest eye, picked by list as by pointer, and never
+  ##   to its support (ruling of #767); see `positionOnLineNearest`.
   ##   `placed` is frame's placements, where caller has them, so every object watched is
   ##   read as frame placed it; pass nothing and each is placed here; see `aimFor`.
   # Take caller's extent, not second derivation.
@@ -603,7 +637,10 @@ func offerAim*(
   let
     aim = aimFor(scene, picked, staged, placed)
     pick = pointer
+    # Selection changed since last offer is pick, by list as by pointer.
+    is_picked_anew = pick.isSome or picked.revision != tween.revision_offered
   pointer = none(PointerPick)
+  tween.revision_offered = picked.revision
   if aim.isNone:
     tween.release()
     return
@@ -639,13 +676,33 @@ func offerAim*(
       placement = placementAt(placed, scene, pick.get.handle)
       shaped = placement.kindFinite
     if shaped.isSome:
+      # Line comes to its point nearest eye (ruling of #767), all else to its own anchor.
+      let place =
+        if shaped.get == Kind.Line: placement.positionOnLineNearest(camera.eyeWorld)
+        else: placement.at
       destination = stanceApproaching(
         shaped.get,
         scene.radiusAt(pick.get.handle),
-        placement.at,
+        place,
         camera,
         scale,
       )
+  # Bring line alone to its point nearest reader, never to its support (ruling of #767).
+  #   Pick reads eye, once. Slide keeps sight, so eye's own nearest point then stands
+  #   further along line, and eye read at each offer would carry camera along it forever.
+  #   Same line offered again, rewritten or shown again, reads pivot and keeps distance:
+  #   pivot on line projects to itself, and nothing moves.
+  if destination.isNone and is_new_goal and staged.isNone and picked.len == 1 and
+      scene.isAlive(picked.at(0)):
+    let placement = placementAt(placed, scene, picked.at(0))
+    if placement.kind == Case.LineThrough:
+      if is_picked_anew:
+        destination = stanceApproaching(
+          Kind.Line, 0.0, placement.positionOnLineNearest(camera.eyeWorld), camera, scale
+        )
+      else:
+        destination =
+          some(camera.stanceRepivotedAt(placement.positionOnLineNearest(camera.pivotWorld)))
   # Frame what pointer pick did not place, and hold dot picked alone off its fit as it lands.
   #   Ruling of #535. Pointer pick's own approach already ends there. Goal already held is
   #   reader's own framing since, kept as lift below keeps it.

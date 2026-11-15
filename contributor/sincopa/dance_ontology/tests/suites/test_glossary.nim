@@ -41,9 +41,10 @@ const
     ##   `front`, are common words page and report say in own sense.
   DANCER_TERMS = ["Lead", "Follow"]
     ## Entries naming dancer, whose rejected words no page may say at all.
-  SAID_IN = ["design", "app", "simulation"]
+  SAID_IN = ["design", "app", "simulation", "src"]
     ## Directories whose string literals reach reader: page written into markup,
-    ##   element set by browser, or row of `simulation/verdicts.md`.
+    ##   element set by browser, or row of `simulation/verdicts.md`.  Literals of `src/` reach
+    ##   reader through Explorer and Reference, which draw and name what model derives.
   DOCUMENTS = ["pages" / "app" / "index.html"]
     ## Pages this project writes by hand rather than from Nim: Explorer's shell.
   HOLDS = [HAND_TO_HAND, [some Arm.Left, some Arm.Right]]

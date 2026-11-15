@@ -3,8 +3,8 @@
 How-to for every delegate: curator, contributor or coordinator. Nothing here binds on its own.
 What binds is in `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md`, and in
 `CURATOR.md` and `COORDINATOR.md`. A section here binds where one of those documents points at
-it. The stamp covers this file too, so a change here re-audits every project, as a change to
-the rules it carries should.
+it. The stamp covers each section of this file except the sections of process. So a change to a
+rule of content here re-audits every project, as it should.
 
 ## Simplified Technical English
 
@@ -46,14 +46,7 @@ leave a comment in code alone, which drops its articles and keeps the rest (Arti
   step.
 
 The `english` check reads three things: sentence length, paragraph length and that short
-table of words. It reads every root document except `LICENSE.md`, and the five templates. It
-also reads the README of each project root and of each domain, and the three records of every
-project.
-
-`PATHS_ENGLISH` in `curator/audit/src/english.nim` holds the root documents and the templates.
-The check derives every other path from the layout, so a new project or a new domain is read
-from its first line. A file below a project directory stays outside the set, and so does any
-other file. Every other rule above holds because you read it.
+table of words. Every other rule above holds because you read it.
 
 ## Names
 
@@ -68,15 +61,8 @@ those standards under `## Standards`, and a project glossary names its own. The 
 - A symbol keeps the case of its standard in prose, and takes the case of its kind in a name
   (`kib_peak`).
 
-The `names` check reads the words of every declared name in Nim. It reports a word from a short
-table of coined abbreviations, each with its one full word. It also reports a run of capitals that
-no glossary lists. It passes what the glossaries list under `## Standards`, their terms, and the
-jargon of V.6. A binding of a library's own name is skipped, because the name is not ours.
-
-The same check holds the first word of a routine (V.3) and the form of a lookup table (V.5). It
-also holds a global that shares its word with a type (V.10). It holds the last word `Of` of a
-routine (V.3) and of a type (V.13). It holds a collection type whose name is its member and a word
-for its form (V.6). The rest of Article V holds because you read it.
+The `names` check holds the words of every name declared in Nim, and a part of the rest of
+Article V. The rest of Article V holds because you read it.
 
 ## The queue and the shared allowance
 
@@ -148,28 +134,17 @@ reads out of your context, so hand it work wherever the work allows.
 
 ## Toolchain
 
-Every project pins its compiler exactly (`CONTRIBUTOR.md`, Toolchain). What follows is how a
-pin is served, installed and moved.
+Every project pins its compiler exactly (`CONTRIBUTOR.md`, Toolchain). Koch serves each pin,
+and so does the `knoller` command for each file that it fixes, so you do not have to install
+it. `curator/audit/PROVENANCE.md`, Toolchain, says how.
 
-- **You do not have to install it.** Koch resolves each pin, and the `knoller` command
-  resolves the pin of each file that it fixes. Each takes the compiler on `PATH` where that one
-  already serves, else one cached under `~/.cache/knoller/nim/<pin>/`, else a fetch. A release
-  arrives as a checksummed tarball in seconds. A commit is cloned from `nim-lang/Nim` and built
-  in minutes. Either fetch is paid once for each pin.
-- **One toolchain serves the whole run.** `$KNOLLER_NIM_DIR` moves the cache, for koch and
-  knoller both. Testament and Atlas come from the toolchain that serves the pin, and its `bin/`
-  leads `PATH`. So a lock is never replayed against another compiler. That is why `koch check`
-  and `koch test` stay green as one command over projects that pin different compilers.
-- **A pin that nothing can serve is a finding of koch, and a warning of knoller.** It names the
-  pin, and the finding names the cache that was tried. The network may be unreachable, or the
-  version may not exist. Neither is a reason to fall back to another compiler in silence.
 - **You may install it yourself, and skip the fetch.** Put a matching `bin/` on `PATH`, or a
-  toolchain at `~/.cache/knoller/nim/<pin>/`. `nim --version` prints `git hash:`, which a
-  commit pin is compared against.
+  toolchain at `~/.cache/knoller/nim/<pin>/`. For a commit pin, `nim --version` must print
+  that commit after `git hash:`.
+- **A pin that nothing can serve is a finding.** Never fall back to another compiler in
+  silence.
 - **A bump of the pin is your work.** Run the suites on the new version. Move the line.
   Record in `PROVENANCE.md` what moved and why.
-- **CI installs your pin for your project alone**, in its own job. No project is held to the
-  compiler of another.
 
 ## How to add a dependency
 
@@ -196,12 +171,14 @@ network for every command, so a project with no packages carries no lock and ski
 
 Every later delegate:
 
-1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code. Take the code in the
-   order that the bootstrap diagram of the umbrella module gives.
+1. Read the headings of `PROVENANCE.md`, then each section that your work touches, and Open
+   questions. The start hook prints those headings, each with the line where it opens. Then
+   read `GLOSSARY.md`, then the code. Take the code in the order that the bootstrap diagram of
+   the umbrella module gives.
 2. `nim r koch test contributor/<domain>/<project>` must be green before you start.
-3. `Rules stamp stale` means that the charter changed after the last audit of this project.
-   The curator re-audits every project in the same pull request as a charter change, so this
-   appears only where your branch is older than one. `CONTRIBUTOR.md`, Before you open a
+3. `Rules stamp stale` means that a rule of content changed after the last audit of this
+   project. The curator re-audits every project in the same pull request as such a change, so
+   this appears only where your branch is older than one. `CONTRIBUTOR.md`, Before you open a
    pull request, gives the steps under `check-drift`. Paste the new stamp in a `docs` commit of its
    own.
 4. Work in small commits. Update `PROVENANCE.md` in the same delivery as each design change,
@@ -213,8 +190,7 @@ Every later delegate:
 
 A correctness check moves time itself (Article IX.12). Install the clock of Playwright, paused,
 before the page loads. Timers, animation frames and `performance.now` then move only when the
-check moves them. Three things stay on real time, and `pga_visualiser` sets each one in
-`tools/drive/clock.ts`:
+check moves them. Three things stay on real time, and the drive sets each one:
 
 - **The rendering step.** Resize, scroll and observer events fire on real frames. So wait for
   one real rendering step before each simulated frame.
@@ -284,6 +260,9 @@ Six moves throughout the work, and not at its end:
    written, and only then. The audit checks the shape of a glossary, and never whether its
    words were chosen. This rule holds by the reading of the Architect, and by nothing else.
 
+A name in code is no term. It follows the charter, and no delegate proposes it or asks the
+Architect for it. The skill `propose-term` points here.
+
 Where the process of Pocock would write an architecture decision record, this repository
 writes the decision into `PROVENANCE.md`, under its subsystem (Article VIII.6). There is no
 `docs/adr/`.
@@ -302,10 +281,10 @@ gets read first.
 **Name each issue and pull request by a short description and its number, as one link**, such
 as `[the ledger fix (#456)](https://github.com/mraxilus/delegations/pull/456)`. A bare number
 gives a reader who did not watch no context, and a name alone gives no way to open the item.
-This holds for every mention in a message, the sign-off included. A row of the sign-off names
-its item already, so its `Where` cell may hold the number alone, still as a link. A reference
-link keeps a line short: write `[#456]`, and give its address once, on a line of its own above
-the sign-off.
+Give this long form at the first mention in a message. After it, the number alone, as `#456`,
+names the same item. A row of the sign-off names its item in its own cells, so the number alone
+may stand in its second cell. Write each link inline, because Claude Code shows a reference link
+as raw text where its address stands below it.
 
 **Paraphrase the Architect in a comment, an issue or a pull request, and never quote.** Say in
 your own words what the Architect ruled or asked. Keep the whole meaning: each condition, each
@@ -318,8 +297,16 @@ where the work comes from.
 `names read head first (V.2)` or `a check that reddens a project (duty 3)`. The Architect does
 not hold the charter by number, so a reference alone sends the reader to look it up. A duty
 takes its own heading in `CURATOR.md` as its description. This holds in each message and each
-post, the sign-off included. A section names itself already, as `CONTRIBUTOR.md, Boundaries`
-does. A record and the code keep the reference alone, because their reader has the charter open.
+post, the sign-off included.
+
+Give the description at the first citation in a message or post. After it, the reference alone,
+as `duty 3`, cites the same article or duty. A section names itself already, as
+`CONTRIBUTOR.md, Boundaries` does. A record and the code keep the reference alone, because their
+reader has the charter open.
+
+**Spell out an acronym or an initialism at its first use**, with the short form after it in
+brackets, as `Simplified Technical English (STE)`. After it, the short form alone serves in that
+message or post. An acronym that the root glossary lists as one a layman knows needs no long form.
 
 **Show the change in that same message.** Give a screenshot where it is visual, and a worked
 example where it is not. Where there is nothing to show, give one sentence that says why.
@@ -337,13 +324,35 @@ red. Read the answer back and stop. The change that the answer implies waits for
 that ask for it. Where the line is genuinely unclear, say what you would do, and ask before
 you do it.
 
+**Answer a request for status from a fresh read of the open items of your role.** Sort them
+as `COORDINATOR.md`, The queue, sorts them, and give each a link and what it waits for. Order
+the ready pull requests so that each merges clean: an earlier stacked branch goes first.
+Contributor work goes before a change to the charter, since `check-drift` then fails every
+open branch until it merges that change. Then name what you still owe. `/triage all` reads every
+open item of the repository.
+
 ### The sign-off
+
+The skill `sign-off` points here.
 
 **Sign off when you stop, and when a pull request goes ready.** You stop when nothing is left,
 or when nothing moves until someone else acts. A pull request that you mark ready waits on the
 Architect, so that turn signs off as `waiting`, even while other work goes on. Each run and
-subagent that has not reported is then a row of the table. The message that ends that turn, and
-the message of a handover, closes with one block, `## Sign-off`. Nothing follows it.
+subagent that has not reported is then a row. The message that ends that turn, and the message
+of a handover, closes with one block, `## Sign-off`. Nothing follows it.
+
+**A sign-off covers all the work since the last message of the Architect.** So the latest
+sign-off replaces each earlier one, and it is enough on its own. A wake, such as the
+end of a run or the report of a subagent, is no message of the Architect. The rows of a pull
+request stay until it merges or closes, whatever the Architect writes in between. Work outside a
+pull request starts again after each message of the Architect.
+
+**Read the open issues on your role in the turn that signs off.** A request can arrive while you
+work, and the reads at the start see none of it. The coordinator reads the `architect` label
+instead, since no item carries its role. A read is a call of `mcp__github__list_issues` or of
+`gh issue list` that names that label, or no label. The `stop` hook refuses a sign-off from a
+turn with no such read. Where it refuses, read them, take first what waits, and reply with one
+line that names it, and no diff.
 
 **Any other turn that ends while your work goes on does not sign off.** A run or a subagent that has
 not reported is such work. Where that turn pushed or posted, its message closes with one line
@@ -362,8 +371,7 @@ add no line that holds no error. Never send the message, a line of it, or its si
 
 ```diff
 - as `#456` asks
-+ as [the ledger fix (#456)][#456] asks
-+ [#456]: https://github.com/mraxilus/delegations/pull/456
++ as [the ledger fix (#456)](https://github.com/mraxilus/delegations/pull/456) asks
 ```
 
 **A wake that changes nothing needs no message.** The echo of your own act is such a wake, as
@@ -376,17 +384,18 @@ line twice.
 The sign-off serves three readers. The Architect reads it first, and set the order of its parts.
 The block says who the delegate is and what it works on, then what happened, then where it
 stands and what waits on the Architect. The next delegate, and the same delegate after a
-compaction, read the same block. Its parts come in this order:
+compaction, read the same block. The `stop` hook reads the shape of each sign-off, whatever its
+turn did. Its parts come in this order:
 
-1. **Role.** The role string, then the branch.
+1. **Role.** The role string, then the word `branch` and the last part of the branch.
 2. **Context.** At most three sentences in the third person. They say what the branch is for,
    and what the Architect asked last.
-3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
+3. **The work.** A rule line, then one group for each pull request, then the table "Outside a
+   pull request.", as The table says.
 4. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
    by number, and decisions as `D1`.
-5. **State.** One word, then the short head of the branch, `pushed` or `not pushed`. Then the
-   pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
-   `red` or `pending`. The word is one of these:
+5. **State.** One word, then the short head of the branch, then `pushed` or `not pushed`. The
+   bold line of each pull request gives its state and its run. The word is one of these:
    - `blocked`: nothing moves until the Architect decides.
    - `waiting`: nothing moves until another delegate or an outside party acts.
    - `done`: nothing is left.
@@ -403,17 +412,14 @@ compaction, read the same block. Its parts come in this order:
 Write each decision so that the Architect can decide it from the block alone.
 
 ```md
-[#310]: https://github.com/mraxilus/delegations/issues/310
-[#331]: https://github.com/mraxilus/delegations/pull/331
-
 **D1.** Keep the names `rga4d` and `cga5d` in the tests?
 - Class: blocks this delegate
-- Where: [names in the tests (#310)][#310]
+- Where: [names in the tests (#310)](https://github.com/mraxilus/delegations/issues/310)
 - Options:
-  - a. Keep: the tests stay as they are, and the root glossary gains two names.
-  - b. Rename: twelve suites change, and the gap list waits one turn.
-- Recommends: a, because both names are the names of the authority.
-- Delay costs: [the gap list (#331)][#331] stays a draft.
+  - **a. Keep:** the tests stay as they are, and the root glossary gains two names.
+  - **b. Rename:** twelve suites change, and the gap list waits one turn.
+- Recommends: **a**, because both names are the names of the authority.
+- Delay costs: [the gap list (#331)](https://github.com/mraxilus/delegations/pull/331) waits.
 ```
 
 - **The question** is one sentence that ends with `?`, verb first where it can be.
@@ -426,19 +432,29 @@ Write each decision so that the Architect can decide it from the block alone.
   exists, because a ruling in chat alone is lost. Label it `architect` the moment a decision
   waits there (`CONTRIBUTOR.md`, Boundaries). Post the ruling there, and take `architect` off in
   the same step, unless another decision still waits there.
-- **Options** are two to four. A label is at most three words. Each consequence is one sentence
-  that says what happens. Where no option fits, the last one is `Other: say which`. A `fact`
-  has no options, no recommendation and no delay cost.
-- **Recommends** names one option, and why, in one sentence.
+- **Options** are two to four. A label is at most three words, and it stands in bold with its
+  letter, as `**a. Keep:**`. Each consequence is one sentence that says what happens. Where no
+  option fits, the last one is `Other: say which`. A `fact` has no options, no recommendation
+  and no delay cost.
+- **Recommends** names one option by its letter in bold, and why, in one sentence.
 - **Delay costs** says what waits while nobody decides.
+
+**A ruling is recorded before it is acted on.** A bare letter answers the only open decision.
+Where two are open, ask which one it answers. Where the words leave a choice open, ask again,
+and choose nothing. A ruling that binds every later delegate goes into the charter, through a
+curator. The skill `rule` points here.
 
 #### A decision explained
 
-**When the Architect replies `decide` to a sign-off that holds decisions, explain them one at a
-time.** Start with `D1`, and give each decision a message of its own. Wait for its ruling before
-you explain the next one. `decide D2` asks for one decision alone. Where the Architect asks about
-one decision in other words, explain it in the same shape. The block stays short for its three
-readers, and the explanation serves the Architect alone.
+**When the Architect types `/explain` after a sign-off that holds decisions, explain them one at
+a time.** The skill `explain` points at this section. The Architect asks for the reasons and
+rules after them, so the explanation recommends and never rules. Start with `D1`, and give each
+decision a message of its own. Wait for its ruling before you explain the next one.
+`/explain D2` asks for one decision alone.
+
+`/explain all` asks for every decision in one message instead, each in the five parts below.
+Where the Architect asks about one decision in other words, explain it in the same shape. The
+block stays short for its three readers, and the explanation serves the Architect alone.
 
 Each explanation has five parts, in this order:
 
@@ -457,67 +473,103 @@ close each turn as The sign-off says.
 
 #### The table
 
-Rows are numbered from 1 and sorted by state, and a state never returns once the next one
-begins.
+The work opens with a rule line, `---`. Each pull request then takes a group: a bold line, and a
+table under it. The bold line links the pull request and gives its state and the run on its
+head, as `draft, run 1052 green`. Then one sentence says what the pull request does. The state
+is `draft`, `ready`, `merged` or `closed`.
 
-- ☑️ done earlier, nobody acts. A row stays only while it is a carried item or another row
-  names it.
-- ✅ done this turn, nobody acts. The last cell is never empty.
-- ⚠️ another delegate or an outside party acts. The last cell opens with that role string, or
+Work outside a pull request takes the last table, under the bold line
+`**Outside a pull request.**`. Each sign-off holds that table, even where the ➖ row is its only
+row.
+
+Each table has the two columns `Item` and `Evidence, or who acts`, because a phone shows the
+first column alone. The first cell opens with the state, then the number of the row and a claim
+of about six words, as `✅ 3. A test covers each rafsi form`. The second cell holds the evidence,
+or who acts. Rows are numbered from 1 across the tables. Inside each table they sort by state,
+and a state never returns once the next one begins:
+
+- ☑️ done, as an earlier sign-off showed. Nobody acts, and the second cell keeps its evidence.
+- ✅ done since the last sign-off. Nobody acts, and the second cell gives the evidence.
+- ⚠️ another delegate or an outside party acts. The second cell opens with that role string, or
   with `outside`, then says on what.
-- ⏸️ the Architect acts. The last cell names the decision, as `D1`.
+- ⏸️ the Architect acts. The second cell names the decision, as `D1`.
 - ⬜ up next, this delegate acts.
+- ➖ a carried rule that concerns no item of the sign-off. One row names each such rule.
 
-A carried item is a row in the state it is in, tagged `(carried N)`. A carried item that does
-not apply is not a row, and goes in the pull request body under Record. An item is a clause a
-reader can verify. No cell holds a semicolon, and an empty cell says there is nothing to say.
-Twelve rows is the ceiling, four of them ☑️. Third person and active voice throughout, and the
-rules of this guide over every sentence. The `Stop` hook holds the shape under Claude Code,
-where it holds this repository alone, and reading holds it elsewhere.
+**Each row of an earlier sign-off since the last message of the Architect comes back.** Its
+words may change and its state may move on, but it never moves to another group. The group of a
+pull request comes back until the pull request merges, or until one sign-off shows it `closed`.
+It comes back past a message of the Architect too, and so does each of its rows.
+
+The `stop` hook counts the items of each group against the last sign-off that it passed. For the
+table "Outside a pull request.", that sign-off is one since the last message of the Architect.
+The hook reads a merge from the subjects of `origin/main`. So fetch `main` before you drop the
+group of a merged pull request.
+
+**A carried rule stands as a row beside the item that it concerns**, with its tag in the second
+cell, as `carried 5` or `carried 3 and 4`. A rule that concerns one pull request stands in its
+group, and is not ➖ for another one. The one ➖ row names each rule that concerns no item, in
+words, with its tags and the reason. So each sign-off names all six rules (`CONTRIBUTOR.md`,
+Carry the unchecked list in the open).
+
+**Twelve rows is the ceiling.** Past it, fold the done rows of one pull request into one row
+that names its first and last item, as `☑️ 1–5. The search, its record and its tests`. A fold
+counts as each item that it names. An item is a clause a reader can verify. No cell holds a
+semicolon. Third person and active voice throughout, and the rules of this guide over every
+sentence.
+
+The `Stop` hook holds the shape under Claude Code, where it holds this repository alone, and
+reading holds it elsewhere.
 
 ```md
-[#310]: https://github.com/mraxilus/delegations/issues/310
-[#331]: https://github.com/mraxilus/delegations/pull/331
-[#332]: https://github.com/mraxilus/delegations/issues/332
-
 ## Sign-off
 
-**Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list`
+**Role:** contributor/bangu/lojban_tagger, branch `lujvo-search`
 
-**Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
-the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
-of each algebra.
+**Context:** This branch lets `tagger find` read a lujvo that the lujvo list lacks, through its
+rafsi. The Architect asked for that search last.
 
-| # | State | Item | Where | Evidence, or who acts |
-| --- | --- | --- | --- | --- |
-| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | [#331] | |
-| 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
-| 3 | ✅ | A worked example shows the gap rows (carried 5) | [#331], Verification | command, output |
-| 4 | ⚠️ | `koch drive` red in pga_visualiser | [#332] | contributor/ronri/pga_visualiser, fix |
-| 5 | ⏸️ | Names in the tests (carried 2) | [#310] | D1 |
-| 6 | ⬜ | cga5d baseline measurement, then the pull request marks ready | `tests/` | this delegate |
+---
 
-**Summary:** The gap list is done and green, and its pull request waits only on D1. Row 4
-belongs to pga_visualiser and blocks nothing here.
+**[Lujvo search (#912)](https://github.com/mraxilus/delegations/pull/912), draft, run 1052 green.**
+`tagger find` reads a lujvo that the lujvo list lacks, through its rafsi, and a test covers each
+rafsi form.
 
-**State:** blocked, at `3f2a9c1`, pushed, [the gap list (#331)][#331] draft, run 412 green
+| Item | Evidence, or who acts |
+| --- | --- |
+| ☑️ 1. The search reads lujvo by rafsi | `a1b2c3d`, run 1041 green |
+| ☑️ 2. The record covers the split | `c3d4e5f`, run 1041 green |
+| ✅ 3. A test covers each rafsi form | `e5f6a7b`, run 1052 green |
+| ✅ 4. The change is shown | carried 5, in the pull request body |
+| ⏸️ 5. A term for unlisted lujvo | carried 6, D1 |
+| ⬜ 6. The ruled term, then ready | this delegate |
+
+**Outside a pull request.**
+
+| Item | Evidence, or who acts |
+| --- | --- |
+| ☑️ 7. The answered issue is closed | carried 1, #904 |
+| ✅ 8. The curator's request is answered | carried 2, #917 |
+| ⚠️ 9. The parser lacks some rafsi | contributor/bangu/lojban_parser, on #915 |
+| ➖ 10. Not needed: draft rule, page link | carried 3 and 4: no push after ready, no page |
+
+**Summary:** The search, its record and the test that the curator asked for are done and green.
+The pull request waits only on D1. Row 9 belongs to lojban_parser and blocks nothing here.
+
+**State:** blocked, at `e5f6a7b`, pushed
 
 **Decisions:**
 
-**D1.** Keep the names `rga4d` and `cga5d` in the tests?
+**D1.** Take `unlisted lujvo` as the term for a lujvo that the lujvo list lacks?
 - Class: blocks this delegate
-- Where: [names in the tests (#310)][#310]
+- Where: [glossary term (#913)](https://github.com/mraxilus/delegations/issues/913)
 - Options:
-  - a. Keep: the tests stay as they are, and the root glossary gains two names.
-  - b. Rename: twelve suites change, and the gap list waits one turn.
-- Recommends: a, because both names are the names of the authority.
-- Delay costs: [the gap list (#331)][#331] stays a draft.
+  - **a. Unlisted lujvo:** the glossary gains one term, and the names in the code read `unlisted`.
+  - **b. Lujvo alone:** the term `lujvo` covers both kinds, and the output marks no difference.
+- Recommends: **a**, because the README already names the lujvo list, so the word reads at once.
+- Delay costs: #912 stays a draft.
 
-**D2.** The cga5d baseline needs 16 GB, and the runner has 7 GB.
-- Class: fact
-- Where: [the gap list (#331)][#331]
-
-**Next step:** Architect: rule on D1 in [names in the tests (#310)][#310].
+**Next step:** Architect: rule on D1 in #913.
 ```
 
 ## Provenance guide
@@ -525,7 +577,7 @@ belongs to pga_visualiser and blocks nothing here.
 Instructions for a delegate who works on a project that keeps a `PROVENANCE.md`. The file
 records who made the work, from what, how far it has been checked, and why the design is the
 way it is. Whoever picks the project up next reads it, human or model. They rebuild it from
-the file and the source, without a repeat of your mistakes.
+the file and the source, without a repeat of your mistakes. The skill `record` points here.
 
 Header table for `PROVENANCE.md`:
 

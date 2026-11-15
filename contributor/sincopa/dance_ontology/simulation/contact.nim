@@ -1,4 +1,4 @@
-## Arms against bodies, and arms against arms.
+## Arms against bodies.
 ##
 ##   Every link of arm is capsule: segment with limb's radius round
 ##     it.  Body is its rig's cylinders.  Test between them is exact on
@@ -8,13 +8,14 @@
 ##     and over-cautious by at most one centimetre right at cap's rim.
 ##   Against its own body arm is allowed to press: clearance asked is
 ##     part's radius alone, so link's axis may touch skin.
-##     Shoulder joint itself sits only three centimetres outside torso,
+##     Shoulder joint itself sits only 8 mm outside torso,
 ##     which is less than limb's radius, so nothing else lets arm hang.
 ##     Cost: arm can sink half its thickness into its own chest.  Accepted
 ##       -- flesh gives about that much, and alternative refuses standing.
 ##   Body's shape -- its axes and each part's section and height band --
-##     is worked out once per stance and handed in, since solver tests
-##     millions of links against it before stance moves.
+##     is worked out once and handed in.  Reader works it out once for each
+##     arm that lies on its body, and tests that arm's forearm and hand
+##     against torso and neck (`isPressingBody`).
 
 {.experimental: "strictFuncs".}
 
@@ -58,9 +59,9 @@ func partGap*(axes: Axes; part_shape: PartShape; a, b: Vector): float =
   ##     nearest approach is found there, and clearance read back along
   ##     radial line -- exact at front and at flank, and shade
   ##     approximate between.
-  ##   Spelt out in scalars: this runs eighteen times for every arm laid;
-  ##     and link wholly above or below band is answered before it is
-  ##     taken into body's terms at all.
+  ##   Spelt out in scalars, and link wholly above or below band is answered
+  ##     before it is taken into body's terms at all.  Reader runs it at most
+  ##     four times for each arm that lies on its body (`isPressingBody`).
   if max(a.z, b.z) < part_shape.bottom or min(a.z, b.z) > part_shape.top:
     return Inf
   let
@@ -107,20 +108,6 @@ func bodyGap*(rig: Rig; shape: BodyShape; a, b: Vector; is_own: bool): Touch =
 func bodyGap*(rig: Rig; stance: Stance; a, b: Vector; is_own: bool): Touch =
   ## Same, from stance.
   bodyGap(rig, toBodyShape(rig, stance), a, b, is_own)
-
-
-func armGap*(rig: Rig; a, b, c, d: Vector; meet: Vector; excuse: float): float =
-  ## Clearance between two links of different arms; infinite where they
-  ## come nearest within `excuse` of `meet`, which is how two arms holding
-  ## one join are let converge on it.
-  let near = closest(a, b, c, d)
-  if excuse > 0.0:
-    let
-      p = a + (b - a) * near.t
-      q = c + (d - c) * near.u
-    if distance(p, meet) < excuse and distance(q, meet) < excuse:
-      return Inf
-  near.gap - 2.0 * rig.limb
 
 
 func isPressingBody*(rig: Rig, stance: Stance, pose: tuple[elbow, wrist, join: Vector]): bool =

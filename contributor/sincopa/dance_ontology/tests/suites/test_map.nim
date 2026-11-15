@@ -275,7 +275,7 @@ suite "Internal: The drawing":
         check picture.spoken.contains(">" & compoundName(here, target) & "<")
 
 
-  test "a compound move is inked in both the arms it hands a hand between":
+  test "a compound move is inked in the arm that acts each way":
     # Ordinary line has one ink because same arm acts whichever way it is
     # read.  Compound move has two, and which one you see depends on which end
     # you are reading from, because that is what compound move is.

@@ -6,7 +6,7 @@ import ./fixtures
 
 
 func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Position =
-  ## Place point on cursor's sight ray at camera's own separation along sight.
+  ## Place point on cursor's sight ray at camera's own distance to pivot along sight.
   ##   Stand-in for something under cursor, where case asks only that zoom hold it.
   let
     heading = headingThrough(camera, camera.frame, width, height, cursor)
@@ -30,13 +30,13 @@ const PLACES_FAR = [
   ## Sample far pivots: 0.41 million units out, two million, and 4.7 million, demo's farthest.
 
 
-func cameraFarAt(place: Position, separation: float): Camera =
-  ## Build camera `separation` from pivot at `place`, view origin moved as frame moves it.
+func cameraFarAt(place: Position, distance: float): Camera =
+  ## Build camera `distance` from pivot at `place`, view origin moved as frame moves it.
   ##   Built at 19 units, where world's doubles hold stance, then dollied in about view
   ##   origin: far pivot named alone by world points carries their step.
   result = cameraAround(place, 19.0, Direction(x: 3, y: -2, z: 1))
   discard result.moveOriginView
-  result.dollyTo(separation)
+  result.dollyTo(distance)
   discard result.moveOriginView
 
 
@@ -57,8 +57,8 @@ template countLiftsIn(body: untyped): int =
 suite "Camera":
   test "a stance named by eye and pivot stands at the eye, faces the pivot, and is level":
     # Whole claim of stance held as rigid motion: eye and pivot name it, and nothing else.
-    #   416 cases. Separation spans five decades, and eye stands off pivot along every one
-    #   of 26 lattice directions, straight above and straight below included: no pole.
+    #   416 cases. Distance to pivot spans five decades, and eye stands off pivot along every
+    #   one of 26 lattice directions, straight above and straight below included: no pole.
     var count = 0
     for i_pivot in 0..3:
       for distance in [0.001, 1.0, 19.0, 4000.0]:
@@ -87,7 +87,7 @@ suite "Camera":
               check abs(dot(axes.axis_right, axes.axis_up)) <= TOLERANCE_TEST
               check abs(dot(axes.axis_up, axes.forward)) <= TOLERANCE_TEST
               check cross(axes.axis_right, axes.axis_up) =~ -axes.forward
-              # Pivot and separation come back out of what carried them in.
+              # Pivot and distance to it come back out of what carried them in.
               check camera.pivot =~ pivot
               check camera.distance =~ max(distance, DISTANCE_LIMIT_NEAR)
               inc count
@@ -183,7 +183,7 @@ suite "Camera":
 
   test "an orbit repeated many times lands where the sum of its steps says":
     # `orbit` composes motion now, so loss accumulates over steps rather than being
-    #   rebuilt away. Pivot and separation must survive every one, because both axes it
+    #   rebuilt away. Pivot and distance to it must survive every one, because both axes it
     #   turns about run through pivot.
     #   Axis is camera's own up, which its own turn leaves standing, so many steps and
     #   one turn of their sum are one motion.
@@ -217,13 +217,13 @@ suite "Camera":
     #   every motion composes near eye. Metre and 150 m, floor orbit had before, at each of
     #   `PLACES_FAR`: domain is any pivot far from world origin, out to demo's farthest.
     const (steps, turn) = (2000, 0.004)
-    for (place, separation) in [
+    for (place, distance) in [
         (PLACES_FAR[0], METRE), (PLACES_FAR[1], METRE), (PLACES_FAR[2], METRE),
         (PLACES_FAR[0], 150.0 * METRE), (PLACES_FAR[1], 150.0 * METRE),
         (PLACES_FAR[2], 150.0 * METRE),
     ]:
       var
-        stepped = cameraFarAt(place, separation)
+        stepped = cameraFarAt(place, distance)
         once = stepped
       let (origin_start, pivot_start, eye_start) = (stepped.originView, stepped.pivot, stepped.eye)
       for _ in 1..steps:
@@ -235,12 +235,12 @@ suite "Camera":
         pivot = stepped.pivot.rebased(stepped.originView, origin_start)
         eye = stepped.eye.rebased(stepped.originView, origin_start)
         eye_once = once.eye.rebased(once.originView, origin_start)
-      check norm(pivot - pivot_start) <= 1.0e-6 * separation
-      check abs(stepped.distance - separation) <= 1.0e-6 * separation
-      check abs(norm(eye - pivot) - separation) <= 1.0e-6 * separation
-      check norm(eye - eye_once) <= 1.0e-6 * separation
-      # Eye went round, half separation or more from where it began.
-      check norm(eye - eye_start) >= 0.5 * separation
+      check norm(pivot - pivot_start) <= 1.0e-6 * distance
+      check abs(stepped.distance - distance) <= 1.0e-6 * distance
+      check abs(norm(eye - pivot) - distance) <= 1.0e-6 * distance
+      check norm(eye - eye_once) <= 1.0e-6 * distance
+      # Eye went round, half distance to pivot or more from where it began.
+      check norm(eye - eye_start) >= 0.5 * distance
 
 
   test "the view origin carries the eye's remainder over exactly, out and back":
@@ -460,8 +460,8 @@ suite "Camera":
     check abs(reachFar(scene) - 302.5) < 1.0e-6
 
 
-  test "the frustum takes its scale from the nearest drawn object, not from the separation":
-    # Separation alone kept scale of stance reader set off from. Near clip is one
+  test "the frustum takes its scale from the nearest drawn object, not the distance to the pivot":
+    # Distance to pivot alone kept scale of stance reader set off from. Near clip is one
     #   four-hundredth of it, so camera flying from opening stance at planet met that
     #   plane long before planet.
     var camera = cameraAround(ORIGIN, 19.0, Direction(x: 12, y: 5, z: 4))
@@ -496,16 +496,16 @@ suite "Camera":
     for handle in 0..<scene.bound:
       if scene.isAlive(handle):
         placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
-    let eye = camera.eye
+    let (eye, pivot) = (camera.eye, camera.pivot)
     # Nearest ahead answers, and one behind is passed over however near it stands.
     #   Eye stands one unit out at +x, so depths are five and thirty one.
-    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 5.0
+    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 5.0
     # Hidden objects are not drawn, so they set no scale.
     scene.setVisible(0, false)
-    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 31.0
-    # Nothing ahead at all reads zero, which hands scale back to separation.
+    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 31.0
+    # Nothing ahead at all reads zero, which hands scale back to distance to pivot.
     scene.setVisible(2, false)
-    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 0.0
+    check reachNear(placed, scene, camera.originView, eye, pivot, camera.frame.forward) =~ 0.0
 
 
   test "a moved camera carries the view origin to its eye, and a still one leaves it standing":
@@ -780,6 +780,15 @@ suite "Camera":
     check camera.depthLogScale(reach) =~ 2.0 / log2(far / camera.distanceNear)
 
 
+  test "a field of view is held inside 10 to 120 degrees, typed or dragged":
+    # Both front-ends' fields write it through `fieldOfViewHeld` (repository issue 632).
+    check fieldOfViewHeld(200.0) =~ DEGREES_FIELD_OF_VIEW_MOST
+    check fieldOfViewHeld(1.0) =~ DEGREES_FIELD_OF_VIEW_LEAST
+    check fieldOfViewHeld(-30.0) =~ DEGREES_FIELD_OF_VIEW_LEAST
+    for degrees in [10.0, 45.0, 90.0, 120.0]:
+      check fieldOfViewHeld(degrees) =~ degrees
+
+
   test "an orbit distance has a floor and no ceiling":
     # Floor is geometry: at zero eye coincides with its pivot and every direction.
     #   derived from line joining them collapses. Ceiling was round number, and
@@ -921,7 +930,7 @@ suite "Camera":
     check camera.pivot =~ ORIGIN
 
 
-  test "one wheel notch scales separation by one rule on both front-ends, and notches compose":
+  test "one notch scales the distance to the pivot alike on both front-ends, and notches compose":
     # Fault: page zoomed by `exp(0.0012 × travel)`, 1.155 for 120 px, and desktop by 1.12 per notch.
     #   Both front-ends now read `factorWheel`: desktop in SDL's notches, page in its travel
     #   over `PIXELS_NOTCH`. Composition lets page sum frame's notches into one dolly.
@@ -932,11 +941,11 @@ suite "Camera":
       check factorWheel(a + b) =~ factorWheel(a) * factorWheel(b)
 
 
-  test "with no selection the wheel over empty sky does nothing, and a pinch keeps separation":
+  test "free flight's wheel does nothing on empty sky, and a pinch keeps the distance to the pivot":
     # Fault: wheel carried eye along pointer's ray at camera's own scale, which was
-    #   separation, and scaled it by each notch: 200 notches over empty sky took it to near
-    #   floor while nearest object stood 0.26 ahead (repository issue 535). Wheel refers to
-    #   object under pointer, and with none there it has nothing to come in to.
+    #   distance to pivot, and scaled it by each notch: 200 notches over empty sky took it to
+    #   near floor while nearest object stood 0.26 ahead (repository issue 535). Wheel refers
+    #   to object under pointer, and with none there it has nothing to come in to.
     const (wide, tall) = (1440, 900)
     let cursor = ScreenPosition(x: 260.0, y: 720.0)
     var camera = cameraAround(ORIGIN, 12.0, Direction(x: 11, y: 6, z: 4))
@@ -956,7 +965,7 @@ suite "Camera":
       )
     check camera.stance == stance
     # Two fingers there hold places at frame's own scale, and slide carries pivot along:
-    #   spread flies eye toward them, and separation holds however far it flies.
+    #   spread flies eye toward them, and distance to pivot holds however far it flies.
     let facing = camera.frame
     var grip = gripFingers(
       camera,
@@ -990,7 +999,7 @@ suite "Camera":
 
 
   test "with no selection the wheel comes in to an object at any depth, and with one dollies":
-    # Point on sight line eight separations out, which free flight's wheel comes in to.
+    # Point on sight line eight times as far as pivot, which free flight's wheel comes in to.
     #   Selection's wheel dollies about pivot, so orbit stays on what is picked.
     const (wide, tall) = (1440, 900)
     let
@@ -1030,6 +1039,118 @@ suite "Camera":
     )
     check held.distance =~ 5.0
     check held.pivot =~ opened.pivot
+
+
+  test "with no selection a zoom out over a far star holds the pivot's distance on its ray":
+    # Fault: zoom out took far star under pointer at any depth, and carried eye out by
+    #   notch's share of star's depth, out of solar system in one notch (repository issue
+    #   846). Past twice distance to point last zoom took, zoom out holds that distance on
+    #   pointer's ray instead. That point is pivot, where nothing has zoomed since placing.
+    const (wide, tall) = (1440, 900)
+    let
+      opened = cameraAround(ORIGIN, 19.0, Direction(x: 10, y: 15, z: 6))
+      pixel = ScreenPosition(x: 720.0, y: 200.0)
+      heading = headingThrough(opened, opened.frame, wide, tall, pixel)
+      star = opened.eye + 2.0e6 * heading
+      held = opened.eye + 19.0 * heading
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "sun", Ink.Rose)
+    scene.addObject(star.toMultivector, "far star", Ink.Rose)
+    var
+      camera = opened
+      interaction = Interaction(is_enabled: true)
+    interaction.updateCursor(pixel.x, pixel.y)
+    interaction.dollyAtCursor(
+      camera,
+      scene,
+      FACTOR_DOLLY_NOTCH,
+      camera.drawExtentFor(tall, 0.0),
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      has_selection = false,
+    )
+    check norm(camera.eye - held) =~ FACTOR_DOLLY_NOTCH * norm(opened.eye - held)
+    # Eye stays by sun: it backs off along pointer's ray, by notch's share of reach.
+    check norm(camera.eye - ORIGIN) < 1.2 * norm(opened.eye - ORIGIN)
+
+
+  test "after key flight a zoom out reads its distance from the point the last zoom took":
+    # Held `s` carries pivot along, so distance to pivot stays as home left it while eye
+    #   flies out. Point last zoom took stays, and zoom out reads distance from it. Then
+    #   three notches in toward far star and three out bring eye back where it stood.
+    const (wide, tall) = (1440, 900)
+    var flown = cameraAround(ORIGIN, 19.0, Direction(x: 10, y: 15, z: 6))
+    flown.travel(-190.0, 0.0, 0.0)
+    check flown.distance =~ 19.0
+    check norm(flown.eye - ORIGIN) =~ 209.0
+    let
+      pixel = ScreenPosition(x: 720.0, y: 200.0)
+      heading = headingThrough(flown, flown.frame, wide, tall, pixel)
+      star = flown.eye + 2.0e6 * heading
+      held = flown.eye + 209.0 * heading
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "sun", Ink.Rose)
+    scene.addObject(star.toMultivector, "far star", Ink.Rose)
+    var interaction = Interaction(is_enabled: true)
+    interaction.updateCursor(pixel.x, pixel.y)
+    proc notch(camera: var Camera, factor: float) =
+      interaction.dollyAtCursor(
+        camera,
+        scene,
+        factor,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        has_selection = false,
+      )
+    var camera = flown
+    camera.notch(FACTOR_DOLLY_NOTCH)
+    check norm(camera.eye - held) =~ FACTOR_DOLLY_NOTCH * norm(flown.eye - held)
+    var trip = flown
+    for _ in 1..3: trip.notch(1.0 / FACTOR_DOLLY_NOTCH)
+    check norm(trip.eye - star) =~ pow(FACTOR_DOLLY_NOTCH, -3.0) * norm(flown.eye - star)
+    for _ in 1..3: trip.notch(FACTOR_DOLLY_NOTCH)
+    check norm(trip.eye - flown.eye) < 1.0e-9 * norm(flown.eye - star)
+
+
+  test "with no selection a pinch in over far stars holds the pivot's distance":
+    # Pinch takes places as second finger lands, before it knows its direction. Fingers
+    #   that then close past slop hold no place past twice distance to point last zoom took,
+    #   so pinch in over far stars backs eye off by fingers' ratio, as wheel's notch does.
+    const (wide, tall) = (1440, 900)
+    let
+      opened = cameraAround(ORIGIN, 19.0, Direction(x: 10, y: 15, z: 6))
+      landed = [ScreenPosition(x: 620.0, y: 200.0), ScreenPosition(x: 820.0, y: 200.0)]
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "sun", Ink.Rose)
+    for finger in landed:
+      let heading = headingThrough(opened, opened.frame, wide, tall, finger)
+      scene.addObject((opened.eye + 2.0e6 * heading).toMultivector, "far star", Ink.Rose)
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+    for step in 1..10:
+      let spread = 100.0 * (1.0 - 0.06 * float(step))
+      grip.carryGrip(
+        camera,
+        [ScreenPosition(x: 720.0 - spread, y: 200.0), ScreenPosition(x: 720.0 + spread, y: 200.0)],
+        wide,
+        tall,
+      )
+    let scaled = norm(camera.eye - ORIGIN) / norm(opened.eye - ORIGIN)
+    check scaled > 1.5
+    check scaled < 3.0
 
 
   test "the wheel comes in to what the pointer is over, and stops where a point fills the frame":
@@ -1120,6 +1241,44 @@ suite "Camera":
       tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
     )
     check norm(camera.eye - planet) =~ filling
+
+
+  test "free flight's wheel onto a line or a plane comes in past its radius, as neither draws one":
+    # Fault: floor of line or plane was its radius, 0.08 where nothing chose one, though
+    #   line is drawn at fixed width and plane at fixed extent. Wheel stopped 0.08 off
+    #   empty place on either.
+    const (wide, tall) = (1440, 900)
+    let
+      opened = cameraAround(ORIGIN, 2.0, Direction(x: 1, y: -3, z: 2))
+      (_, frame) = opened.sight
+      right = ORIGIN + frame.axis_right
+      up = ORIGIN + frame.axis_up
+    var
+      lone_line = initScene()
+      lone_plane = initScene()
+    lone_line.addObject(ORIGIN.toMultivector ∧ right.toMultivector, "line", Ink.Jade)
+    lone_plane.addObject(
+      ORIGIN.toMultivector ∧ right.toMultivector ∧ up.toMultivector, "plane", Ink.Jade
+    )
+    check lone_line.radiusAt(0) == RADIUS_OBJECT_DEFAULT
+    check lone_plane.radiusAt(0) == RADIUS_OBJECT_DEFAULT
+    for scene in [lone_line, lone_plane]:
+      var
+        camera = opened
+        interaction = Interaction(is_enabled: true)
+      interaction.updateCursor(float(wide) / 2.0, float(tall) / 2.0)
+      for _ in 1..40:
+        interaction.dollyAtCursor(
+          camera,
+          scene,
+          0.5,
+          camera.drawExtentFor(tall, 0.0),
+          camera.initMatrixViewProjection(float(wide) / float(tall)),
+          wide,
+          tall,
+          has_selection = false,
+        )
+      check norm(camera.eye - ORIGIN) < 0.01 * RADIUS_OBJECT_DEFAULT
 
 
   test "free flight's wheel onto a point off the middle stops at the depth where it fills":
@@ -1458,7 +1617,7 @@ suite "Camera":
 
 
   test "a right drag in free flight carries the point it holds under the pointer":
-    # Fault: rate stood here, fraction of separation for each pixel, which matched cursor
+    # Fault: rate stood here, share of distance to pivot for each pixel, which matched cursor
     #   at one canvas height alone and ran 1.74 times it on 900 px. Held at three depths,
     #   nearer than pivot, at it and far past it, since grab holds whatever depth it took.
     const (wide, tall) = (1440, 900)
@@ -1488,7 +1647,7 @@ suite "Camera":
       check camera.distance =~ 19.0
 
 
-  test "a right drag holds the depth under the pointer, or the pivot's over nothing":
+  test "a right drag holds the depth under the pointer, or the reach last zoom took over nothing":
     let camera = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
     var interaction = Interaction(is_enabled: true)
     interaction.depth_pointer = some(7.5)
@@ -1497,7 +1656,34 @@ suite "Camera":
     check interaction.point_pan.isNone
     interaction.depth_pointer = none(float)
     interaction.grabPan(camera, 1440, 900, has_selection = false)
-    check interaction.depth_pan =~ camera.distance
+    check interaction.depth_pan =~ camera.reachTaken
+
+
+  test "with no selection a right drag over empty sky keeps what the last zoom took under it":
+    # Fault: drag over nothing held pivot's depth, which key flight carries along, so after
+    #   flight ten home distances back pan moved sun tenth of pointer (repository issue 910).
+    #   It holds reach of point last zoom took, as zoom out and pinch do.
+    const (wide, tall) = (1440, 900)
+    let
+      before = ScreenPosition(x: 720.0, y: 450.0)
+      after = ScreenPosition(x: 960.0, y: 560.0)
+    var
+      camera = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
+      interaction = Interaction(is_enabled: true)
+    camera.travel(-190.0, 0.0, 0.0)
+    interaction.grabPan(camera, wide, tall, has_selection = false)
+    camera.panAcross(
+      before, after, wide, tall, has_selection = false, depth_held = interaction.depth_pan
+    )
+    let seen = projectToScreen(
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      ORIGIN.toView(camera.originView),
+    )
+    check seen.isInFront
+    check abs(seen.x - after.x) < 0.01
+    check abs(seen.y - after.y) < 0.01
 
 
   test "a right drag with a selection zooms by the pointer's heights, and turns along the row":
@@ -1615,8 +1801,8 @@ suite "Camera":
     check once.frame.forward =~ opening.frame.forward
     check returned.eye =~ opening.eye
     check returned.distance =~ opening.distance
-    # Slant out and back: sight returns, and separation takes trace of dollies read at
-    #   two depths. Measured 0.0017 at separation 19.
+    # Slant out and back: sight returns, and distance to pivot takes trace of dollies read
+    #   at two depths. Measured 0.0017 at distance 19 from pivot.
     let (slant_back, _) = dragged(12, slant_press, [slant_release, slant_press])
     check slant_back.frame.forward =~ opening.frame.forward
     check norm(slant_back.eye - opening.eye) < 0.0025
@@ -1742,7 +1928,7 @@ suite "Camera":
       check abs(dot(axes.forward, axes.axis_right)) < TOLERANCE_TEST
       check norm(axes.axis_up) =~ 1.0 and norm(axes.axis_right) =~ 1.0
       check not (moved.eye =~ held.eye)
-      # Separation and lens are camera's, and motor names neither.
+      # Distance to pivot and lens are camera's, and motor names neither.
       check moved.distance =~ held.distance
       check moved.degrees_field_of_view =~ held.degrees_field_of_view
     # Weight zero names no motion: camera stays where it stood.

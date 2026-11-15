@@ -2,9 +2,12 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strformat, strutils, unittest]
+import std/[json, math, options, os, strformat, strutils, tables, unittest]
 
-import ../../design/[marks, parts, plain, rig_page]
+import ../../design/[checks, marks, parts, plain, rig_page]
+import ../../src/dance_ontology/draw/[body, geometry, route, style, terms]
+from ../../design/rig as recording import KEPT_RIG
+from ../../design/rig_page {.all.} import cardsBody, HEAD_BODY
 import ../../tools/title
 from ../../src/dance_ontology/rotation import facing, seenAfter
 
@@ -98,6 +101,70 @@ template holdPage(name: string) =
     checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
     fail()
 
+func pointsDrawn(path_data: string): seq[Point] =
+  ## Read back points one drawn run was smoothed from: `M`, each `Q`'s control, closing `L`.
+  for step in path_data.split({'M', 'Q', 'L'}):
+    let says = step.splitWhitespace
+    if says.len >= 2:
+      result.add (parseFloat(says[0]), parseFloat(says[1]))
+
+func bowedFrame(figure, shade: string; frame: int; swell: float): string =
+  ## Bow one frame of moving figure's half reach in `shade` by `swell` off its own chord.
+  var parts = figure.split("<path ")
+  for i, part in parts:
+    if &"stroke=\"{shade}\"" notin part:
+      continue
+    const opens = "attributeName=\"d\" values=\""
+    let
+      at = part.find(opens) + opens.len
+      shuts = part.find('"', at)
+    var frames = part[at ..< shuts].split(';')
+    let
+      run = pointsDrawn(frames[frame])
+      span = distance(run[0], run[^1])
+      across: Point = ((run[0].y - run[^1].y) / span, (run[^1].x - run[0].x) / span)
+    var bowed: seq[Point]
+    for k, point in run:
+      let lift = swell * sin(PI * float(k) / float(run.high))
+      bowed.add (point.x + across.x * lift, point.y + across.y * lift)
+    frames[frame] = smoothed(bowed)
+    parts[i] = part[0 ..< at] & frames.join(";") & part[shuts .. ^1]
+  parts.join("<path ")
+
+func drawnThrough(figure: string; shades: array[2, string]; point: Point): string =
+  ## Pull still figure's reach smoothly aside until its middle runs through `point`.
+  const opens = "d=\""
+  var
+    parts = figure.split("<path ")
+    found: array[2, int]
+    halves: array[2, seq[Point]]
+  for k, shade in shades:
+    for i, part in parts:
+      if &"stroke=\"{shade}\"" in part:
+        let at = part.find(opens) + opens.len
+        (found[k], halves[k]) = (i, pointsDrawn(part[at ..< part.find('"', at)]))
+  let
+    reach = halves[0] & halves[1][1 .. ^1]
+    middle = reach[halves[0].high]
+  var pulled: seq[Point]
+  for k, along in reach:
+    let pull = sin(PI * float(k) / float(reach.high))
+    pulled.add (along.x + (point.x - middle.x) * pull, along.y + (point.y - middle.y) * pull)
+  let runs = [pulled[0 .. halves[0].high], pulled[halves[0].high .. ^1]]
+  for k in 0..1:
+    let
+      part = parts[found[k]]
+      at = part.find(opens) + opens.len
+    parts[found[k]] = part[0 ..< at] & smoothed(runs[k]) & part[part.find('"', at) .. ^1]
+  parts.join("<path ")
+
+proc refusal(built: Parts): string =
+  ## Say what check of single-hand turns refuses figures for; nothing where it passes them.
+  try:
+    checkSingleTurns(built)
+  except AssertionDefect as refused:
+    result = refused.msg
+
 
 
 suite "Internal: Mark workbench":
@@ -119,11 +186,65 @@ suite "Internal: Mark workbench":
 
 
 
+suite "Internal: The single-hand turns, checked as drawn":
+  ## Check of single-hand turns reads each reach off figures Reference places, so each law
+  ##   draws one figure of them wrong and asks `checks.checkSingleTurns` to refuse it.
+  ##   Found by audit of project (issue 698): check of rule 14 measured straight lines it built
+  ##     itself, so no drawing could fail it, and check of rule 22 measured reaches it routed
+  ##     itself.  Each law covers every kind of figure its rule holds: transition and whole
+  ##     round, which move, or position, edge's still and round's still.
+  test "a moving reach drawn bowed is refused as a wrap (rule 14)":
+    ## Red on 2026-10-23 against check that built its own lines: it passed both figures.
+    ##   Transition and whole round of follow turning on spot, Left to left, at frame six,
+    ##     halfway through first turn.
+    for key in ["tr_fa_0_0_1", "rd_fa_0"]:
+      var built = singleParts()
+      built[key] = bowedFrame(built[key], DEEP[Arm.Left], frame = 6, swell = 4.0)
+      checkpoint key
+      check "bows off its chord" in refusal(built)
+
+
+  test "a settled reach drawn through the lead's chevron is refused (rule 22)":
+    ## Red on 2026-10-23 against check that routed its own reaches: it passed all three.
+    ##   Left to left as follow turns on spot: position, edge's own still, and whole round's
+    ##     still, each at quarter it stands.  Chevron is mark of every settled reach.
+    for (key, quarter) in [("st_fa_0_1", 1), ("tr_fa_0_1_2_still", 1), ("rd_fa_0_still", 0)]:
+      let
+        standing = quarterPose(Manner.FollowAxis, quarter)
+        apex = chevronPoints(standing.place[Dancer.Lead], standing.facing[Dancer.Lead])[1]
+      var built = singleParts()
+      built[key] = drawnThrough(built[key], [DEEP[Arm.Left], INK[Arm.Left]], apex)
+      checkpoint key
+      check "ran through a mark" in refusal(built)
+
+
+
 suite "Internal: Every page this project publishes":
   test "viewer's title reads in title case, as every other does":
     ## Viewer is written by its own module rather than by workbench above, so its title is
     ## held here against same reading rather than left as only one nothing checks.
     check isTitleCased(TITLE)
+
+
+  test "viewer's prose keeps each sentence and each paragraph inside its bound":
+    ## Viewer is written by its own module rather than by workbench above, so its prose is held
+    ##   here to same two bounds as each page of `PAGES` (`plain.WORDS`, `plain.SENTENCES`).
+    ##   Read off markup page carries: header and panel (`rig_page.HEAD_BODY`), then cards
+    ##     (`rig_page.cardsBody`), cut from Reference written above and laid beside stills
+    ##     recording keeps.  Wrapper, style sheets and scripts hold no prose.
+    ##   Regression of finding E-15 of issue 698, as found on 2026-10-22 in audit of project:
+    ##     third paragraph of viewer's header held seven sentences, one of them 26 words long,
+    ##     and no law read viewer's prose.
+    let written = HEAD_BODY &
+        cardsBody(readFile(OUT / "reference.html"), folded(parseFile(KEPT_RIG)))
+    # Bounds below say nothing of markup that holds no paragraph.
+    check written.prose.len > 0
+    for said in written.longSentences:
+      checkpoint "sentence over " & $WORDS & " words: " & said
+      fail()
+    for said in written.longParagraphs:
+      checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
+      fail()
 
 
 
@@ -139,13 +260,21 @@ suite "Internal: The sixteen facings, drawn":
 suite "Internal: The rests and the chains, named by model":
   ## Reference names each chain's rest through `parts.facingRest`, and law reads written page
   ##   back (Article IX.5).
-  test "the Reference heads each chain with the facing it rests at":
+  test "the Reference heads each section of a chain with the name of that chain":
+    ## Cross-name chain stands in C and moves in F; same-name chain stands in D and moves in G.
+    ##   Headings of C, D and G also name facing their chain rests at.
+    ##   Red with G headed `Hand-to-hand chain`, name of cross-name hold, as audit of #698
+    ##     found it.
     let page = readFile(OUT / "reference.html")
     check page.contains(
       "<h2>C &middot; The cross-name chain, " & facingRest(HAND_TO_HAND).name & " at rest</h2>",
     )
     check page.contains(
       "<h2>D &middot; The same-name chain, " & facingRest(PAIRED).name & " at rest</h2>",
+    )
+    check page.contains("<h2>F &middot; The cross-name chain, moving</h2>")
+    check page.contains(
+      "<h2>G &middot; The same-name chain, " & facingRest(PAIRED).name & ", moving</h2>",
     )
 
 

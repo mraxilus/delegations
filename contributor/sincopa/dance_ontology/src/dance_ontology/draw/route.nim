@@ -20,7 +20,15 @@ import std/[algorithm, math, options, sequtils, strformat, strutils]
 import ./[body, geometry, style, terms]
 
 
-const ROUTE_COUNT* = 33  ## Points in every emitted reach, so frames can morph.
+const
+  ROUTE_COUNT* = 33  ## Points in every emitted reach, so frames can morph.
+  PASSES_MAX = 240
+    ## Passes walk round both rims may take, for drawing (`taut`) and for rule 7's measure
+    ##   (`wrapArc`) alike.  Each pass slides each end `RIM_STEP` round its rim, if straight
+    ##   stretch still cuts its body.
+    ##   One limit, so every lock or wrap that measure admits is one drawing can route.  Longest
+    ##     walk of any allowed lock or wrap: 132 passes, low lock on crossed hold with follow
+    ##     turned 85 degrees, where two ends slide mostly in turn.
 
 type
   Body* = tuple  ## One dancer, as routing sees them.
@@ -43,7 +51,9 @@ const WAYS*: array[4, WayRound] = [
 ]  ## Four ways reach can set off.  Which one whole move uses is
   ## settled once, before any of it is drawn -- see `oneWayRound`.
 
-const BREAK* = 11.0  ## Length of gap cut in under reach at crossing.
+const BREAK* = 11.0  ## Margin checks and tests allow round break.
+  ## No drawing code reads it: `hidesAt` sizes each gap as shadow of crossing line, about
+  ##   9.5 square on and up to 19.7 at `GRAZING`, and `gapFor` narrows it near hand.
 
 const SAME_SPOT* = 0.1  ## Apart from which two meetings are one meeting.
   ## Point is written to one decimal (`geometry.numeral`), so two meetings this
@@ -102,27 +112,24 @@ const
     ##   crossing is cut by trim and count of them falls.  Opening after
     ##   that leaves crossing clear of every hand by more than trim reaches,
     ##   so it is drawn every step of way.
-    ## Cost: snake gains 0.19 of its swing over last hundredth of turn,
-    ##   which is 3.8 of line.  Looked at frame by frame and it reads as
+    ## Cost: snake gains 0.26 of its swing over last hundredth of turn,
+    ##   which is 5.2 of line.  Looked at frame by frame and it reads as
     ##   loops opening, not as jump.
 
-## Both knobs above move where two reaches cross, and pair of them is
-##   chosen for that rather than for width alone.
-##   Belief that they could not, which stood while whole set was ruled
-##     out untried, came of comparing two reaches at same point along
-##     each.  They cross where they hold same *place*, at their own
-##     points, and their chords differ: follow's two hands sit up to 20
+## Five knobs above, `SWAN_EASE` to `SWAN_OPENS_AT`, move where two reaches
+##   cross, and they are chosen for that rather than for width alone.
+##   Short argument says they cannot: it compares two reaches at same
+##     point along each.  They cross where they hold same *place*, at their
+##     own points, and their chords differ: follow's two hands sit up to 40
 ##     apart **along** pair's axis wherever follow has turned off half
 ##     turn, so equal-point argument holds only at whole and half turns.
-##   Measured over stretch every hundredth of turn, region where third
-##     crossing arrives once and never dives back under hand mark is
-##     ease 4.5 to 6.0 by swing 0.74 to 0.84, narrowing as ease rises;
-##     5.0 and 0.78 sit inside it on both, half step of ease either way
-##     and middle of swing's range at that ease.
-##   Cost: swan is narrower than it was, and swans are Architect's to
-##     rule on.  Width is matter of looks and stays theirs; what checks
-##     hold is that snake goes round something, stays inside its own
-##     figure, and that count of crossings never falls.
+##   Snake pulls in, then opens late, so third crossing arrives once and
+##     never dives under hand mark while swan bows 22, Architect's width.
+##     One swing for whole stretch cannot: widest that keeps count of
+##     crossings monotonic bows 14.1 (`PROVENANCE.md`, Drawing chain).
+##   Width is matter of looks and stays Architect's; what checks hold is
+##     that snake goes round something, stays inside its own figure, and
+##     that count of crossings never falls.
 
 
 
@@ -134,18 +141,25 @@ func overArm*(turns: float): Arm =
   if turns >= 0: Arm.Left else: Arm.Right
 
 
-func straightArm*(turns: float): Arm =
+func isSwanFaceToBack*(holds: Holds): bool =
+  ## Tell whether pair's swans stand Face-to-back (rule 31).
+  ##   Hand to hand, each lead hand in follow's hand of other name, rests Face-to-face, so its
+  ##     swan, turn and half from rest, faces partners same way.  Same-name pair rests
+  ##     Face-to-back, so its swan stands Face-to-face.  Hold of one hand has no swan.
+  holds[Arm.Left] == some(Arm.Right) and holds[Arm.Right] == some(Arm.Left)
+
+
+func straightArm*(turns: float, is_face_to_back: bool): Arm =
   ## Get which connection runs straight through middle of swan while
   ## other snakes round it (rule 31).
-  ##   Snake is arm that is **over** at first crossing, so straight one
-  ##     is other: Architect's reading, 2026-09-07.  Position is named for
-  ##     that same arm, so `Right over Left swan` has Right going round
-  ##     and Right on top at lead's own crossover.
-  ##   This file argued opposite until then -- that one on top dives only
-  ##     once and so stays visibly straight, while one diving twice has
-  ##     no centre left to be surrounded by anything.  Both draw, and
-  ##     drawing cannot tell which is danced, so ruling settles it.
-  other(overArm(turns))
+  ##   Loop sets which one, and facing at swan sets loop (Architect, 2026-10-06, issue
+  ##     #375).  Face-to-face, pair over at first crossing loops down round arm under, so
+  ##     arm under runs straight, as ruled 2026-10-05.  Face-to-back, pair under loops up
+  ##     round arm over, so arm over runs straight.
+  ##   Position is named for arm on top at lead's own crossover either way, so
+  ##     `Right over Left swan` has Right on top there; which of two goes round is facing's.
+  ##   Both shapes draw, and drawing cannot tell which is danced, so ruling settles it.
+  if is_face_to_back: overArm(turns) else: other(overArm(turns))
 
 
 func wayThrough*(turns: float): float =
@@ -160,7 +174,7 @@ func swanning*(turns: float): float =
   pow(wayThrough(turns), SWAN_EASE)
 
 
-func windShare*(turns: float, arm: Arm): float =
+func windShare*(turns: float, arm: Arm, is_face_to_back: bool): float =
   ## Measure how much of wound pair's swing this connection carries
   ## (rule 31).
   ##   Evenly to whole turn, so frame, cross and diamond are drawn
@@ -173,8 +187,9 @@ func windShare*(turns: float, arm: Arm): float =
   ##     pulls in against it first, then opens out into loops that go
   ##     *round* it -- and it is that order, in from tight and out only
   ##     at end, that keeps third crossing clear of hands all way along.
+  ##   Which of two is straight is facing at swan's (`straightArm`).
   let u = wayThrough(turns)
-  if arm == straightArm(turns): 1 - pow(u, SWAN_EASE)
+  if arm == straightArm(turns, is_face_to_back): 1 - pow(u, SWAN_EASE)
   else: 1 + (SWAN_DRAW_IN - 1) * pow(u, SWAN_DRAWS_AT) +
       (SWAN_SWING - SWAN_DRAW_IN) * pow(u, SWAN_OPENS_AT)
 
@@ -231,19 +246,19 @@ func isSegmentHitting*(p, q: Point; body: Body): bool =
   false
 
 
-func taut*(ends: Ends, way: WayRound, cap = 90): Option[tuple[points: seq[Point],
-    length: float]] =
+func taut*(ends: Ends, way: WayRound): Option[tuple[points: seq[Point], length: float]] =
   ## Pull string tight from hand to hand around two bodies.
   ##   Each end pays out along its own outline, sample by sample, until
   ##     straight stretch between two free ends clears both bodies --
   ##     so reach hugs rim exactly as far as it has to, and where
   ##     straight way is already clear it never hugs at all.
+  ##   None after `PASSES_MAX` passes, where `wrapArc` gives up too.
   var
     bearing_a = bearing(ends.a.x - ends.body_a.centre.x, ends.a.y - ends.body_a.centre.y)
     bearing_b = bearing(ends.b.x - ends.body_b.centre.x, ends.b.y - ends.body_b.centre.y)
     arc_a = @[ends.a]
     arc_b = @[ends.b]
-  for _ in 0..<cap:
+  for _ in 0..<PASSES_MAX:
     let
       free_a = arc_a[^1]
       free_b = arc_b[^1]
@@ -268,12 +283,6 @@ func taut*(ends: Ends, way: WayRound, cap = 90): Option[tuple[points: seq[Point]
 
 func polylineLength*(points: seq[Point]): float =
   ## Get drawn length of run.
-  ##   `result` is given nought before it is added to, which reads redundant
-  ##     and is not: scene table is `const`, so this runs in compiler's
-  ##     virtual machine, and Nim 2.2.8 onward hands float `result` int
-  ##     register where nothing assigned it first, then crashes compiler
-  ##     reading it (`tests/suites/test_route.nim` holds line in place).
-  result = 0.0
   for i in 0..<points.high:
     result += distance(points[i], points[i+1])
 
@@ -373,7 +382,7 @@ func wrapArc*(ends: Ends, way: WayRound): Option[tuple[a, b: float]] =
     free_b = ends.b
     steps_a = 0
     steps_b = 0
-  for _ in 0..<240:
+  for _ in 0..<PASSES_MAX:
     let
       is_hitting_a = isSegmentHitting(free_a, free_b, ends.body_a)
       is_hitting_b = isSegmentHitting(free_a, free_b, ends.body_b)
@@ -692,16 +701,16 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
         # what actually leaves whole huddle.
         for shove in 1..SHOVES:
           var
-            deepest = -1
+            deepest = none(int)
             depth = 0.0
           for k, mark in asked:
             let into = mark.clear - distance(band[i], mark.centre)
             if into > depth:
               depth = into
-              deepest = k
-          if deepest < 0:
+              deepest = some(k)
+          if deepest.isNone:
             break
-          let mark = asked[deepest]
+          let mark = asked[deepest.get]
           # Out to edge, as it already lay; point exactly on
           # mark's centre has no way of its own, so it takes band's.
           var away = (x: band[i].x - mark.centre.x,

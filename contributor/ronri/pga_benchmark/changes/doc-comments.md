@@ -9,26 +9,41 @@ It removes table rows for operators that the library does not define. It replace
 changes.
 
 Proposal P01, `cayley-derivation`, replaces `pga/cayleys.nim` whole from a digest, and this
-change edits that file too. Whichever lands second is quoted again against the first. If P01
-lands second, its Replace carries the text of this change under a new digest. The change
+change edits that file too. If P01 lands second, its Replace carries the text of this change under
+a new digest. If this change lands second, its edits apply as written. The change
 `conformal-norms` edits nearby docs in `pga.nim` and `pga/operators.nim`. The two changes quote
 distinct lines, so they apply in either order.
 
-Once P01 lands, this change drops its edit that quotes `  CAYLEYS_DOT* = block:`. P01 gives the
-dot a doc on that line already. So that edit, applied after P01, gives a line of 136 characters
-with two docs that contradict each other.
+Once P01 lands, this change keeps its edit that quotes `  CAYLEYS_DOT* = block:`. That edit
+applies as written after P01. P01 gives no table constant a doc, and states the dot in the header
+of the file.
 
-Two more proposals make a line of this change stale. Of this change and each of them, the second
+Four more proposals make a line of this change stale. Of this change and each of them, the second
 to land drops or corrects that line:
 
 - P08, `compound-tables`, generates the support from a table. Then the header of
   `pga/operators.nim` that this change writes must not list `support` as written by hand.
-- P03, `partner-sign`, reads no grade in the partner. Then this line, which this change adds to
-  the doc of `partner` in `pga.nim`, is not true:
-  `Requires single-grade multivector: grade is read at runtime and must be definite.`
+- P03, `partner-sign`, reads no grade in the partner. Then the line that this change adds to the
+  doc of `partner` in `pga.nim` is not true. The second to land rewrites it as
+  `Requires single-grade multivector; mixed grade has no defined partner, and gets no check.`
+- P11, `unitize-general`, drops `inline` from `^∘` and quotes no line here. This change writes
+  that `^` and `normalizeWeight` cost no call. The second to land replaces
+  `so neither costs call` with `so each costs one call to ^∘`.
+- P12, `cayley-cells`, holds each cell of a table in place, with no `seq`. This change writes in
+  the header of `pga.nim` that the tables hold `seq` per cell. It writes in the header of
+  `pga/cayleys.nim` that each cell holds `seq`. Both lines are false once P12 lands.
 
-P11, `unitize-general`, drops `inline` from `^∘` and quotes no line here. This change writes that
-`^` and `normalizeWeight` cost no call. Once both land, that doc says that each costs one call.
+Three proposals edit lines that this change quotes:
+
+- P12 removes the TODO of the type block of `pga/cayleys.nim`, under which this change adds a
+  line. That edit is void once P12 lands. If this change lands first, P12 quotes both lines.
+- P04, `basis-set-forms`, adds `basis_sets` to the import line of `pga.nim`, which an edit of this
+  change quotes and keeps. So P04 applies after this change as written. If P04 lands first, this
+  change quotes that line again. P09 and P10 build on P04, so each meets this change as P04 does.
+- P10, `homogeneous-scalar`, replaces the doc and the body of `normRadius` in `pga.nim`. If P10
+  lands first, the edit of this change that adds a line to that doc is void. If this change lands
+  first, P10 applies with no misfit, but the conformal build stops. A doc line then stays under
+  the new body, so P10 quotes both doc lines.
 
 ## Edit `pga.nim`
 

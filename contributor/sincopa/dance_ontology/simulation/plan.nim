@@ -14,7 +14,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[bitops, math]
+import std/[bitops, math, options]
 
 import ./[body, hold, rig, vector]
 from ./shoulder import outside
@@ -36,10 +36,16 @@ type
 
   Capsule* = tuple[a, z: Vector, radius: float]
 
+  Owner = enum  ## What one capsule is part of.
+    Trunk, Limb, Face
+
   Shape = object  ## One capsule's owner, as engine's filters read it.
     who: Body
-    arm: int  ## Arm index nought to three, -1 for trunk, -2 for face.
-    part: int  ## Nought girdle, one upper, two fore, three to five hand; -1 trunk or face.
+    case owner: Owner
+    of Owner.Limb:
+      arm: int  ## Arm index nought to three.
+      part: int  ## Nought girdle, one upper, two fore, three to five hand.
+    of Owner.Trunk, Owner.Face: discard
 
   Style* = object  ## How couple go about turn: one setting among several planner tries.
     gather*: float  ## Newtons per metre, as weight, drawing two joined pairs to one point.
@@ -56,6 +62,10 @@ type
     links*: seq[Link]
     is_away*: bool
     turner*: Body  ## Dancer whose facing carries wind: one at centre of turn.
+    band*: Band  ## Height hold is asked at: crown rises from torso band, torso and neck stay.
+    straight*: Option[Arm]
+      ## Lead's arm whose connection swan runs straight through other's hoop, or none: past
+      ##   whole turn, plan draws hoop round it (`total`).
     lower*, upper*: float  ## Band joined hands are held to, metres.
     shapes: seq[Shape]
     pairs: seq[(int, int)]
@@ -67,6 +77,13 @@ const
   ELBOW_ROOM = ELBOWS_APART + 0.01  ## Metres plan keeps right elbow right of left: judge's own,
                                    ## and room under it.
   ROOMY = 0.04  ## Metres plan would sooner keep from arms and band's edges, where it can.
+  HOOP = 100.0
+    ## Weight drawing swan's hoop round connection that runs straight, past whole turn.
+    ##   Left to itself, planner hands hoop to other pair each half turn, and its last half turn
+    ##     gives it to same pair in both chains: right for Face-to-back C01, wrong for
+    ##     Face-to-face D01 (`PROVENANCE.md`, Rules of chain).
+  HOOP_ROOM = 0.3  ## Turns of writhe hoop is drawn to keep over straight pair.
+  HOOP_FROM = 1.0  ## Turns of wind past which plan draws hoop: swan is wound beyond whole turn.
   FACE_WINDOW = 0.1  ## Of way up within which plan holds hands at torso band: twice judge's
                     ## `rigid.FACING`, so engine following plan has hands down when judged.
 
@@ -258,17 +275,21 @@ func toCapsules*(placed: Placed): seq[Capsule] =
   for who in Body: result.add placed.faces[who]
 
 
-func initProblem*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two): Problem =
-  ## Hold, and every pair of capsules engine collides, by its own filters.
-  result = Problem(links: links, is_away: is_away, turner: turner, lower: 0.0, upper: 3.0)
+func initProblem*(
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, turner = Body.Two
+): Problem =
+  ## Hold at its band, and every pair of capsules engine collides, by its own filters.
+  result = Problem(links: links, is_away: is_away, turner: turner, band: band, lower: 0.0,
+                   upper: 3.0)
   for who in Body:
     for _ in trunkCapsules(rig):
-      result.shapes.add Shape(who: who, arm: -1, part: -1)
+      result.shapes.add Shape(who: who, owner: Owner.Trunk)
   for i in 0..3:
     for part in 0..5:
-      result.shapes.add Shape(who: (if i < 2: Body.One else: Body.Two), arm: i, part: part)
+      result.shapes.add Shape(who: (if i < 2: Body.One else: Body.Two), owner: Owner.Limb,
+                              arm: i, part: part)
   for who in Body:
-    result.shapes.add Shape(who: who, arm: -2, part: -1)
+    result.shapes.add Shape(who: who, owner: Owner.Face)
   var joined: seq[(int, int)]
   for link in links:
     let
@@ -281,21 +302,24 @@ func initProblem*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two):
       let (p, q) = (result.shapes[i], result.shapes[j])
       # Face meets every link of every arm, and partner's girdles: own girdles run from neck,
       # and share its group.
-      if p.arm == -2 or q.arm == -2:
-        let (face, other) = (if p.arm == -2: (p, q) else: (q, p))
-        if other.arm >= 0 and (other.part >= 1 or other.who != face.who): result.pairs.add (i, j)
+      if p.owner == Owner.Face or q.owner == Owner.Face:
+        let (face, other) = (if p.owner == Owner.Face: (p, q) else: (q, p))
+        if other.owner == Owner.Limb and (other.part >= 1 or other.who != face.who):
+          result.pairs.add (i, j)
         continue
       # Own trunk and own girdles share one group.
-      if p.who == q.who and (p.arm < 0 or p.part == 0) and (q.arm < 0 or q.part == 0):
+      if p.who == q.who and (p.owner == Owner.Trunk or p.part == 0) and
+          (q.owner == Owner.Trunk or q.part == 0):
         continue
+      let is_limb_pair = p.owner == Owner.Limb and q.owner == Owner.Limb
       # One arm's own links never meet; girdle meets them but not upper arm it holds.
-      if p.arm >= 0 and p.arm == q.arm:
+      if is_limb_pair and p.arm == q.arm:
         if p.part != 0 and q.part != 0: continue
         if (p.part == 0 and q.part == 1) or (p.part == 1 and q.part == 0): continue
       # Joined hands are one joint apart.
-      if p.part >= 3 and q.part >= 3 and (p.arm, q.arm) in joined: continue
+      if is_limb_pair and p.part >= 3 and q.part >= 3 and (p.arm, q.arm) in joined: continue
       # Dancer's own arms cross below elbow alone: upper arm keeps off their other arm.
-      if p.arm >= 0 and q.arm >= 0 and p.arm != q.arm and p.who == q.who and
+      if is_limb_pair and p.arm != q.arm and p.who == q.who and
           ((p.part == 1 and q.part in 1..2) or (q.part == 1 and p.part in 1..2)):
         result.crossing.add result.pairs.len
       result.pairs.add (i, j)
@@ -609,8 +633,19 @@ type Weighing = object
   last*, bias*: Plan
   weight*, holding*: float  ## On violation, and on staying near `last`.
 
+func straightOver(problem: Problem, placed: Placed): float =
+  ## Turns connection that runs straight winds on itself past hoop's own, either way: below
+  ##   nought where hoop winds more, as swan's does (`vector.writhe`).
+  ##   Each read shoulder to shoulder through lead's join, as reader reads it (`read.polyline`).
+  for link in problem.links:
+    let
+      a = placed.arms[armIndex(link.ends[0].body, link.ends[0].arm)]
+      b = placed.arms[armIndex(link.ends[1].body, link.ends[1].arm)]
+      coil = abs(writhe([a.shoulder, a.elbow, a.wrist, a.join, b.wrist, b.elbow, b.shoulder]))
+    result += (if link.ends[0].arm == problem.straight.get: coil else: -coil)
+
 func total(r: Reckoning, rig: Rig, weighing: Weighing, plan: Plan): float =
-  ## Weigh pose: comfort, weighted violation, stay near last, bias, slack and gather.
+  ## Weigh pose: comfort, weighted violation, stay near last, bias, slack, gather and hoop.
   let problem = weighing.problem
   result = comfort(r.eases, r.waists) +
       weighing.weight * violation(rig, problem, r.placed.arms, r.gaps, r.margins, r.leaps)
@@ -624,6 +659,8 @@ func total(r: Reckoning, rig: Rig, weighing: Weighing, plan: Plan): float =
       first = r.placed.arms[armIndex(one.body, one.arm)].join
       second = r.placed.arms[armIndex(two.body, two.arm)].join
     result += problem.style.gather * distance(first, second)^2
+  if problem.straight.isSome and abs(weighing.wind) > HOOP_FROM:
+    result += HOOP * max(0.0, problem.straightOver(r.placed) + HOOP_ROOM)^2
 
 func firstMoved(freedom: int): int =
   ## First link of its arm that arm freedom moves: collarbone moves girdle on, shoulder
@@ -883,7 +920,7 @@ proc solve*(
   start, last: Plan;
   wind: float;
   before: seq[Capsule];
-  stay = -1.0;
+  stay = none(float);
   iterations = 200;
   bias = default(Plan);
 ): Solved =
@@ -891,7 +928,7 @@ proc solve*(
   ##   Limited-memory quasi-Newton on numerical gradient, bounds by clamping.
   let
     bounds = initBounds(rig, problem.style.margin, problem.links)
-    holding = (if stay >= 0.0: stay else: problem.style.stay)
+    holding = stay.get(problem.style.stay)
   var x = clamped(start, bounds)
   let moving = movedPairs(rig, problem)
   var
@@ -1011,12 +1048,17 @@ func away(wind: float, is_away: bool): float =
   let turned = floorMod(wind + (if is_away: 0.5 else: 0.0), 1.0)
   min(turned, 1.0 - turned)
 
-func bandAt*(rig: Rig; wind, direction: float; is_away: bool; room: float):
+func bandAt*(rig: Rig; band: Band; wind, direction: float; is_away: bool; room: float):
     tuple[lower, upper: float] =
   ## Band plan holds joined hands to: judge's own where judge reads it, with margin, and
   ## continuous between, as carry lets hands down and lifts them.
-  ##   Facing (`rigid.FACING` of way up): torso band and its slack.  Risen going up, from
-  ##     quarter turn away: crown band less its sag.  Coming back, crown band to half way.
+  ##   Held at torso or neck: that band at every wind, with torso band's slack facing, as judge
+  ##     holds it there (`rigid.bandNow`).
+  ##   Over crown, facing (`rigid.FACING` of way up): torso band and its slack.  Risen going up,
+  ##     from quarter turn away: crown band less its sag.  Coming back, crown band to half way.
+  if band != Band.Crown:
+    let held = rig.band[band]
+    return (held.lower - 0.03 + room, held.upper + 0.05 - room)
   let
     torso = rig.band[Band.Torso]
     crown = rig.band[Band.Crown]
@@ -1047,7 +1089,7 @@ func hanging*(apart: float): Plan =
 proc planRest*(rig: Rig, problem: var Problem, tries = 8): tuple[plan: Plan, broken: float] =
   ## Comfiest rest pose found from several starts: couple stand where rest sits easiest.
   ##   Starts are fixed, so plan is same on every build and every core.
-  let (lower, upper) = bandAt(rig, 0.0, 1.0, problem.is_away, problem.style.room)
+  let (lower, upper) = bandAt(rig, problem.band, 0.0, 1.0, problem.is_away, problem.style.room)
   problem.lower = lower
   problem.upper = upper
   result.broken = Inf
@@ -1059,19 +1101,28 @@ proc planRest*(rig: Rig, problem: var Problem, tries = 8): tuple[plan: Plan, bro
       start[j] += 0.4 *
           (spread(float(j * (k + 1 + 17 * problem.style.seed)) * 0.6180339887) - 0.5) *
           float(min(k + problem.style.seed, 1))
-    let solved = solve(rig, problem, start, start, 0.0, @[], stay = 0.0, iterations = 400)
+    let solved = solve(rig, problem, start, start, 0.0, @[], stay = some(0.0), iterations = 400)
     if solved.broken < KEPT and solved.cost < best:
       best = solved.cost
       result = (solved.plan, solved.broken)
 
 proc planPath*(
-  rig: Rig, links: seq[Link], is_away: bool, turns: float, style: Style, turner = Body.Two
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  is_away: bool,
+  turns: float,
+  style: Style,
+  turner = Body.Two,
+  straight = none(Arm),
 ): Path =
   ## Plan couple from rest to `turns` of wind, `turner` turning, moment by moment, as far as
-  ## plan keeps everything.  Stuck, it backs off, nudges arms at standing wind and tries
-  ## again.
-  var problem = initProblem(rig, links, is_away, turner)
+  ## plan keeps everything, joined hands at `band` (`bandAt`).  Stuck, it backs off, nudges
+  ## arms at standing wind and tries again.  Swan's straight pair, where named, draws hoop
+  ## round it past whole turn (`Problem.straight`).
+  var problem = initProblem(rig, band, links, is_away, turner)
   problem.style = style
+  problem.straight = straight
   let rest = planRest(rig, problem)
   if rest.broken >= KEPT: return
   let direction = (if turns >= 0.0: 1.0 else: -1.0)
@@ -1092,7 +1143,7 @@ proc planPath*(
       wind = result.winds[^1]
       last = result.plans[^1]
       target = wind + direction * min(stride, abs(turns) - abs(wind))
-      (lower, upper) = bandAt(rig, target, direction, is_away, style.room)
+      (lower, upper) = bandAt(rig, band, target, direction, is_away, style.room)
     problem.lower = lower
     problem.upper = upper
     let
@@ -1111,17 +1162,17 @@ proc planPath*(
     # Every third time stuck, go back to last moment couple faced and rearrange arms there
     # at standing wind, many leaps, before going on: way down into facing decides way up.
     if failures mod 3 == 0:
-      var facing_at = -1
+      var facing_at = none(int)
       for k in countdown(result.winds.len - 1, 0):
         if min(1.0, away(result.winds[k], is_away) / 0.25) <= FACE_WINDOW:
-          facing_at = k
+          facing_at = some(k)
           break
-      if facing_at > 0:
-        result.winds.setLen(facing_at + 1)
-        result.plans.setLen(facing_at + 1)
+      if facing_at.isSome and facing_at.get > 0:
+        result.winds.setLen(facing_at.get + 1)
+        result.plans.setLen(facing_at.get + 1)
         let
           at = result.winds[^1]
-          (lower_at, upper_at) = bandAt(rig, at, direction, is_away, style.room)
+          (lower_at, upper_at) = bandAt(rig, band, at, direction, is_away, style.room)
         problem.lower = lower_at
         problem.upper = upper_at
         for walk in 0..<12:
@@ -1131,7 +1182,7 @@ proc planPath*(
                                             17 * problem.style.seed) * 0.6180339887) - 0.5) * 2.0
           let
             here = place(rig, result.plans[^1], at, is_away, turner).toCapsules
-            moved = solve(rig, problem, start, result.plans[^1], at, here, stay = 0.0)
+            moved = solve(rig, problem, start, result.plans[^1], at, here, stay = some(0.0))
           if moved.broken < KEPT:
             result.winds.add at
             result.plans.add moved.plan
@@ -1143,7 +1194,7 @@ proc planPath*(
     result.plans.setLen(result.plans.len - back)
     let
       at = result.winds[^1]
-      (lower_at, upper_at) = bandAt(rig, at, direction, is_away, style.room)
+      (lower_at, upper_at) = bandAt(rig, band, at, direction, is_away, style.room)
     problem.lower = lower_at
     problem.upper = upper_at
     for nudge in 0..<4:
@@ -1153,7 +1204,7 @@ proc planPath*(
             (spread(float(j * (nudge + 7 * failures)) * 0.7548776662) - 0.5) * 2.0
       let
         here = place(rig, result.plans[^1], at, is_away, turner).toCapsules
-        nudged = solve(rig, problem, start, result.plans[^1], at, here, stay = 0.02)
+        nudged = solve(rig, problem, start, result.plans[^1], at, here, stay = some(0.02))
       if nudged.broken < KEPT:
         result.winds.add at
         result.plans.add nudged.plan
@@ -1175,7 +1226,9 @@ proc corrected*(rig: Rig, path: Path, i: int, now: Plan): Plan =
   var problem = path.problem
   let
     wind = path.winds[i]
-    (lower, upper) = bandAt(rig, wind, path.direction, problem.is_away, problem.style.room)
+    (lower, upper) = bandAt(
+      rig, problem.band, wind, path.direction, problem.is_away, problem.style.room,
+    )
   problem.lower = lower
   problem.upper = upper
   let

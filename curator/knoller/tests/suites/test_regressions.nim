@@ -1,23 +1,20 @@
 ## Hold each case that review of PGA library and delegate reports found, end to end: source as
 ##   found, comment naming where it came from, run through whole chain as `koch fix` runs it
 ##   (`formatted`), to exact output; second run writes nothing.
-##   Parser of compiler proves needless parentheses. Case 2.2.12 reads rightly asks 2.2.12, which
-##     builds this suite; case only commit pin of `ronri` projects reads, since it holds glyph
-##     operators, asks stub of `stubs.nim`, which gives verdict that pin gives (checked
-##     2026-10-05), since job of knoller runs 2.2.12 alone.
+##   Parser of compiler building this suite, 2.4.0, proves needless parentheses in each case,
+##     glyph cases too: on each, commit `27763495` gave same verdict (checked 2026-10-05).
 ##   Lines quoted are as found; `strictFuncs` and enclosing suite, routine or block around them
 ##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller.
 ##   Each case keeps its domain test in suite of its rule; this suite adds end-to-end form.
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, unittest]
+import std/[os, strutils, tables, unittest]
 import ../../src/knoller/[chain, command, proofs, reports]
-import ./stubs
 
 
 const
-  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.2.12, whose parser answers.
+  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.4.0, whose parser answers.
   HEAD = "{.experimental: \"strictFuncs\".}\n\n"  ## Opening of module chain writes nothing to.
   DISTANCES =
     HEAD &
@@ -66,6 +63,7 @@ const
   FILTERS =
     HEAD &
     "proc p() =\n" &
+    "  ## Do.\n" &
     "  block:\n" &
     "    for f in factors:\n" &
     "      let flags_overlap = f.toFlags and b_flags\n" &
@@ -167,6 +165,7 @@ const
   INTERIOR =
     HEAD &
     "proc p() =\n" &
+    "  ## Do.\n" &
     "  block:\n" &
     "    block:\n" &
     "      for term in product:\n" &
@@ -178,6 +177,7 @@ const
   ALGEBRAS =
     HEAD &
     "proc p() =\n" &
+    "  ## Do.\n" &
     "  block:\n" &
     "      for i in 1 ..< len(prev):\n" &
     "        curr.add(prev[i] & prev[i-1].map(digits => digits & digit_new))\n"
@@ -185,12 +185,14 @@ const
   WEDGES =
     HEAD &
     "proc p() =\n" &
+    "  ## Do.\n" &
     "  block:\n" &
     "        check (∙𝐦 + ∘𝐦 + ■𝐦 + □𝐦) ∧ (∙𝐧 + ∘𝐧 + ■(𝐧) + □(𝐧)) =~ 𝐦 ∧ 𝐧  # 2.68\n"
     ## Line 258 of `tests/suites.nim` at `d9be8ae`, in routine.
   MASK =
     HEAD &
     "proc p() =\n" &
+    "    ## Do.\n" &
     "    let\n" &
     "      mask = not ((2'u^(DIMENSIONS)) - 1)\n" &
     "      digits_invalid = (flags and mask)\n"
@@ -207,12 +209,14 @@ const
   COMPLEMENTS =
     HEAD &
     "proc p() =\n" &
+    "  ## Do.\n" &
     "  for b, 𝐮 in enumerateBasis():\n" &
     "      check \\(/𝐮) =~ 𝐮  # 2.22a\n"
     ## Line 194 of `tests/suites.nim` at `d9be8ae`, in its loop.
   NORMALIZED =
     HEAD &
     "proc p() =\n" &
+    "  ## Do.\n" &
     "  block:\n" &
     "    block:\n" &
     "        if 𝑡 != 0:\n" &
@@ -221,6 +225,7 @@ const
   LINKS =
     HEAD &
     "proc p() =\n" &
+    "  ## Do.\n" &
     "  block:\n" &
     "    while true:\n" &
     "      let\n" &
@@ -231,21 +236,27 @@ const
   ANTISCALAR =
     HEAD &
     "proc p() =\n" &
+    "  ## Do.\n" &
     "  block:\n" &
     "      var 𝐮̅ = /𝐮\n" &
     "      for c in Basis:\n" &
     "        𝐮̅[c] = float(-1^(int(b.grade) * int(b.gradeAnti))) * 𝐮̅[c]\n" &
     "      check \\𝐮 =~ 𝐮̅\n"
     ## Lines 186 to 189 of `tests/suites.nim` at `d9be8ae`, in routine.
-  BARE = HEAD & "func f(): bool =\n  a or\n      b\n"
+  BARE = HEAD & "func f(): bool =\n  ## Decide.\n  a or\n      b\n"
     ## Value that ends routine, as Architect answered on ruling 2.
   HEADED =
-    HEAD & "proc p() =\n  if check(a_long_name, first_condition or second_condition or\n" &
+    HEAD & "proc p() =\n  ## Do.\n" &
+    "  if check(a_long_name, first_condition or second_condition or\n" &
     "    second_condition and first_condition):\n    echo a_long_name\n"
     ## Block head of ruling 10, whose last line stands at body's indent.
-  SIGILS = HEAD & "let\n  s = @(x.items)\n  t = @(f(a))\n  u = @@(x[0])\n  v = @(x)\n"
+  SIGILS =
+    HEAD & "let\n  s = @(x.items)  ## Items.\n  t = @(f(a))  ## Call.\n" &
+    "  u = @@(x[0])  ## Element.\n  v = @(x)  ## Value.\n"
     ## Cases of #541, test commit `8bb10aea`, under one `let`.
-  POWERS = HEAD & "let\n  p = -1 ^ (k)\n  q = -1 ^ (a * b)\n  r = a ^ -b\n"
+  POWERS =
+    HEAD & "let\n  p = -1 ^ (k)  ## Sign.\n  q = -1 ^ (a * b)  ## Sign.\n" &
+    "  r = a ^ -b  ## Power.\n"
     ## Examples of ruling 12, as Architect corrected them, under one `let`.
   MESH =HEAD &
     "proc p() =\n" &
@@ -319,9 +330,11 @@ suite "Regressions":
       "(|∙ ⊖(𝐦 ∧ 𝐧)) div (|∙ (⊖𝐦 ∧ ⊖𝐧))", "|∙ ⊖(𝐦 ∧ 𝐧) div |∙(⊖𝐦 ∧ ⊖𝐧)",
     ).replace(
       "(|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))", "|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)",
-    ), proverStub  # `|∙⊖` would lex one operator, so space stays; stub as commit pin
-    holds HEAD & "let x = - -y\n", HEAD & "let x = - -y\n"  # `- -x` of #521; `--` one token
-    holds HEAD & "let y = - 1\n", HEAD & "let y = - 1\n"  # `-1` would lex one literal (#521)
+    )  # `|∙⊖` would lex one operator, so space stays
+    # `- -x` of #521; `--` one token
+    holds HEAD & "let x = - -y  ## Value.\n", HEAD & "let x = - -y  ## Value.\n"
+    # `-1` would lex one literal (#521)
+    holds HEAD & "let y = - 1  ## Value.\n", HEAD & "let y = - 1  ## Value.\n"
 
 
   test "2. comment table with glyphs stays as written (#526)":
@@ -342,20 +355,23 @@ suite "Regressions":
 
 
   test "4. range takes no space, but beside binary piece or before prefix (ruling 3)":
-    holds HEAD & "let r = 2 .. 6\n", HEAD & "let r = 2..6\n"
-    holds HEAD & "let b = x in 2 .. 6\n", HEAD & "let b = x in 2..6\n"
+    holds HEAD & "let r = 2 .. 6  ## Value.\n", HEAD & "let r = 2..6  ## Value.\n"
+    holds HEAD & "let b = x in 2 .. 6  ## Value.\n", HEAD & "let b = x in 2..6  ## Value.\n"
     holds DIGITS, DIGITS  # `[1 .. ^1]`: `..^` would lex one operator
     holds PARITY, PARITY  # `for j in i + 1 ..< len(digits)`: piece holds binary `+`
 
 
   test "5. symbol operator in bracket glued to operand takes no space (ruling 5)":
-    holds HEAD & "let a = prev[i - 1]\n", HEAD & "let a = prev[i-1]\n"
-    holds ELEMENTS, ELEMENTS.replace("1 .. len", "1..len").replace("(i - 1)", "(i-1)")
+    holds HEAD & "let a = prev[i - 1]  ## Value.\n", HEAD & "let a = prev[i-1]  ## Value.\n"
+    holds ELEMENTS, ELEMENTS.replace("1 .. len", "1..len").replace("(i - 1)", "(i-1)").replace(
+      "Multivector]\n", "Multivector]  ## TODO: Document.\n",
+    )  # binding as found takes doc (VI.1)
     holds SCALAR, SCALAR  # generic list of routine is declaration, so `|` keeps its spaces
 
 
   test "6. one-line routines stay stacked, with no blank line (ruling 4)":
-    holds BORROWS, BORROWS  # template `borrowGradeOperations` of `algebra.nim`
+    # template `borrowGradeOperations` of `algebra.nim`, which takes doc (VI.1, STYLE.md §2)
+    holds BORROWS, BORROWS.replace("(T: typedesc) =\n", "(T: typedesc) =\n  ## TODO: Document.\n")
 
 
   test "7. call keeps hand's breaks, and group one item to line takes trailing comma":
@@ -374,27 +390,31 @@ suite "Regressions":
 
 
   test "9. parentheses go where parser proves it, three kinds, and stay where it does not":
-    holds WEDGES, WEDGES.replace("■(𝐧) + □(𝐧)", "■𝐧 + □𝐧"), proverStub  # after prefix
+    holds WEDGES, WEDGES.replace("■(𝐧) + □(𝐧)", "■𝐧 + □𝐧")  # after prefix
     holds MASK, MASK.replace("2'u^(DIMENSIONS)", "2'u^DIMENSIONS")  # beside binary operator
     holds LINKS, LINKS  # `@PAIRS[task.pair][0]` reads `(@PAIRS)[task.pair][0]` (#539)
-    holds SIGILS, SIGILS.replace("@(x)\n", "@x\n")  # bare operand alone goes
+    holds SIGILS, SIGILS.replace("@(x)  ##", "@x  ##")  # bare operand alone goes
     holds FLAGS, FLAGS.replace("1 .. DIM", "1..DIM").replace("'0')+i", "'0') + i").replace(
       "(i-1)", "(i - 1)",
     ).replace("toBasisFlags(flags)", "flags.toBasisFlags")  # `1'u shl (i-1)` group stays
-    holds HEAD & "let x = b + -(1)\n", HEAD & "let x = b + -(1)\n"  # literal `-1` (ruling 11)
-    holds COMPLEMENTS, COMPLEMENTS, proverStub  # `\/` would lex one operator
-    holds NORMALIZED, NORMALIZED.replace("𝐬/𝑡", "𝐬 / 𝑡"), proverStub  # `^(|𝐦)` stays
-    holds HEAD & "let z = a - (-b) -1\n", HEAD & "let z = a - (-b) -1\n"  # callee of command
+    # literal `-1` (ruling 11)
+    holds HEAD & "let x = b + -(1)  ## Value.\n", HEAD & "let x = b + -(1)  ## Value.\n"
+    holds COMPLEMENTS, COMPLEMENTS  # `\/` would lex one operator
+    holds NORMALIZED, NORMALIZED.replace("𝐬/𝑡", "𝐬 / 𝑡")  # `^(|𝐦)` stays
+    # callee of command
+    holds HEAD & "let z = a - (-b) -1  ## Value.\n", HEAD & "let z = a - (-b) -1  ## Value.\n"
 
 
   test "10. power operator is tight, and exponent that would merge takes parentheses (ruling 12)":
-    holds POWERS, HEAD & "let\n  p = -1^k\n  q = -1^(a * b)\n  r = a^(-b)\n"
-    holds ANTISCALAR, ANTISCALAR, proverStub  # `float(-1^(int(b.grade) * int(b.gradeAnti)))`
+    holds POWERS, HEAD & "let\n  p = -1^k  ## Sign.\n  q = -1^(a * b)  ## Sign.\n" &
+      "  r = a^(-b)  ## Power.\n"
+    holds ANTISCALAR, ANTISCALAR  # `float(-1^(int(b.grade) * int(b.gradeAnti)))`
 
 
   test "11. each report prints at its line in file as given (#521)":
     let outcome = outcome([("tests/suites/test_mesh.nim", MESH)], [], is_check = true)
     check outcome.lines == @[
+      "tests/suites/test_mesh.nim:3: missing-doc to fix",  # routine giving place
       "tests/suites/test_mesh.nim:5: expression-spacing to fix",
       "tests/suites/test_mesh.nim:10: expression-spacing to fix",
       "tests/suites/test_mesh.nim:11: expression-spacing to fix",
@@ -412,10 +432,10 @@ suite "Regressions":
       "tests/suites/test_mesh.nim:28: expression-spacing to fix",
       "tests/suites/test_mesh.nim:29: expression-spacing to fix",
       "tests/suites/test_mesh.nim:29: expression-spacing to fix",
-      "17 to fix.",
-    ]  # line 538 prints as 27, where fixed text holds it at 33, after six lines calls insert
+      "18 to fix.",
+    ]  # line 538 prints as 27, where fixed text holds it at 34, after seven lines inserted
     let written = outcome([("tests/suites/test_mesh.nim", MESH)], [], is_check = false).written
-    check written[0][1].splitLines[32].startsWith("          else: generator.rand(0.5..3.0)) * ")
+    check written[0][1].splitLines[33].startsWith("          else: generator.rand(0.5..3.0)) * ")
     check outcome(written, [], is_check = false).lines == @["0 fixed."]  # second run
 
 
@@ -425,12 +445,14 @@ suite "Regressions":
     let mended =
       STUB.replace(" -r ", " ").replace("\"\"\"\ninclude", "\"\"\"\n\n" & HEAD & "include") & "\n"
     for path in ["tests/rga3d/test_rga3d.nim", "tests/test_rga3d.nim"]:
-      check outcome([(path, STUB)], [], is_check = true).lines == @[
+      let nimbles = {path: "pga.nimble"}.toTable  # nimble file of PGA library, at its root
+      check outcome([(path, STUB)], [], is_check = true, nimbles = nimbles).lines == @[
         path & ": file-ending to fix",
         path & ": strictfuncs to fix",
         path & ":3: stub-keys to fix",
         "3 to fix.",
       ]  # stub of category reports as stub directly under `tests` does
-      let written = outcome([(path, STUB)], [], is_check = false).written
+      let written = outcome([(path, STUB)], [], is_check = false, nimbles = nimbles).written
       check written == @[(path, mended)]
-      check outcome(written, [], is_check = false).lines == @["0 fixed."]  # second run
+      let again = outcome(written, [], is_check = false, nimbles = nimbles)
+      check again.lines == @["0 fixed."]  # second run

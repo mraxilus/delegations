@@ -3,12 +3,13 @@
 ##   Three numbers and no more.  Simulation's whole geometry is capsules against
 ##     cylinders and against each other, which needs distances, projections
 ##     and one rotation, and nothing here knows what body is.
-##   Helpers solver runs in its loop are spelt out in scalars.  On
-##     JavaScript backend tuple operation allocates, and contact tests
-##     run some tens of thousands of times per frame; operators are kept for
-##     paths that run once per pose.
+##   Three helpers are spelt out in scalars: `distance`, `closest` and
+##     `axisNear`; operators serve every other path.  Planner measures each
+##     near pair of capsules by `closest` each time it weighs pose (`plan`),
+##     and reader's contact test runs `axisNear` (`contact`).  What scalars
+##     save there over operators is unmeasured.
 ##     Cost: two spellings of same arithmetic.  Accepted -- scalar ones
-##       are three that run in loop, and each is few lines.
+##       are three, and each is few lines.
 
 {.experimental: "strictFuncs".}
 
@@ -44,7 +45,8 @@ func unit*(a: Vector): Vector =
 func spunBy*(v, axis: Vector; c, s: float): Vector =
   ## Turn `v` about unit `axis` by angle whose cosine and sine are
   ## `c` and `s`, anticlockwise looking down axis (Rodrigues).
-  ##   Form solver's loop wants: swing is known by dot and
+  ##   Form `carried` wants, for arm's forward kinematics and joint readings
+  ##     that reader and laws take (`limb`): swing is known by dot and
   ##     cross of two directions, which are that cosine and sine already, so
   ##     no angle need be taken and its cosine and sine found again.
   let
@@ -193,3 +195,39 @@ func axisGap*(a, b: Vector; centre_x, centre_y, bottom, top: float): float =
     bottom,
     top,
   ).distance
+
+
+# Polylines: how far one winds on itself, and how far it runs in plan.
+func linkedBy(a, b, c, d: Vector): float =
+  ## Turns segment `a` to `b` and segment `c` to `d` wind round each other: solid angle each
+  ## sees other through, over four pi, signed by which way round (Klenin and Langowski 2000).
+  ##   Nought where four ends lie in one plane, or two of them meet.
+  let
+    from_a = c - a
+    from_a_far = d - a
+    from_b = c - b
+    from_b_far = d - b
+  var faces = [cross(from_a, from_a_far), cross(from_a_far, from_b_far),
+               cross(from_b_far, from_b), cross(from_b, from_a)]
+  for face in faces:
+    if norm(face) < 1e-12: return 0.0
+  for face in faces.mitems: face = unit(face)
+  var solid = 0.0
+  for k in 0..3: solid += arcsin(clamp(dot(faces[k], faces[(k + 1) mod 4]), -1.0, 1.0))
+  let way = dot(cross(d - c, b - a), from_a)
+  if way == 0.0: 0.0 else: copySign(solid, way) / (4.0 * PI)
+
+func writhe*(points: openArray[Vector]): float =
+  ## Turns polyline winds on itself: twice `linkedBy` of every two of its segments that share
+  ## no end.  Nought where it lies in one plane, and other way round in mirror.
+  ##   Coil that hoop makes round straight line, as swan's (`read.writhe`, `plan`).
+  for i in 0 ..< points.high:
+    for j in i + 2 ..< points.high:
+      result += 2.0 * linkedBy(points[i], points[i + 1], points[j], points[j + 1])
+
+func runInPlan*(points: openArray[Vector]): float =
+  ## How far polyline runs in plan, in lengths of straight line in plan between its ends: one
+  ## where it runs straight there, and more as it bends.
+  for i in 0 ..< points.high:
+    result += hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y)
+  result /= hypot(points[^1].x - points[0].x, points[^1].y - points[0].y)

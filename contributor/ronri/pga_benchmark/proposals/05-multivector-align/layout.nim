@@ -2,9 +2,11 @@
 ##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   Multivector holds 2^D coefficients, so it aligns to `min(64, size)` and starts on cache line
-##     in every storage caller holds, from three dimensions up.
-##   Laws read width of coefficient from library, so they also hold where P06 (`float-width`)
-##     lands, with line merged as `min(64, sizeof(array[Basis, Coefficient]))`.
+##     in every storage caller holds under `--mm:orc` or `--mm:arc`, from three dimensions up at
+##     64 bits and from four at 32 bits.
+##   Laws read width of coefficient from library, so they hold at each float width.
+##   Law on `MultivectorScalars` goes when P04 (`basis-set-forms`) lands, since P04 aligns it by
+##     count.
 
 {.experimental: "strictFuncs".}
 
@@ -39,6 +41,9 @@ proc main() =
   local[Basis.scalar] = 1.0
   doAssert alignof(Multivector) == ALIGNMENT,  # Aligned to line, or to own size.
     &"Multivector aligns to `{ALIGNMENT}` bytes; got `{alignof(Multivector)}`."
+  doAssert alignof(MultivectorScalars) == alignof(Coefficient),  # Other sets keep alignment.
+    &"Basis-set type other than whole set aligns as coefficient; " &
+      &"got `{alignof(MultivectorScalars)}`."
   doAssert sizeof(Multivector) == SIZE,  # No padding.
     &"Multivector holds its coefficients alone, `{SIZE}` bytes; got `{sizeof(Multivector)}`."
   doAssert offset(addr multivectors[0]) == 0,  # Heap, as `seq`.

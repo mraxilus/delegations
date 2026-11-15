@@ -107,7 +107,7 @@ None.
 - **Change `algebra-hygiene`.** It renames `TOLERANCE_ABS` to `TOLERANCE_REL`, on a line that
   this proposal replaces. Whichever of the two lands second quotes the first, and keeps both the
   new name and `Coefficient`.
-- **P04, `exact-kinds`.** Its basis-set types hold `float`. Whichever of P04 and this proposal
+- **P04, `basis-set-forms`.** Its basis-set types hold `float`. Whichever of P04 and this proposal
   lands second writes them with `Coefficient`, and `alignment` reads `sizeof(Coefficient)`.
 - **Change `doc-comments-2`.** It writes "128 bytes at 4D" under `Multivector`. That holds at 64
   bits alone, since a multivector at 4D holds 64 bytes at 32 bits. Once both land, that doc names
@@ -132,7 +132,7 @@ statements on callers at 32 bits.
 
 ### Same C at 64 bits
 
-The digests of C in the record differ at every algebra, and so do those of `exact-kinds`, which
+The digests of C in the record differ at every algebra, and so do those of `basis-set-forms`, which
 edits no library file. So only the checks by hand show the same C.
 
 Times of that same C still stray beyond the spread of their date. Four evaluations of it, at pin

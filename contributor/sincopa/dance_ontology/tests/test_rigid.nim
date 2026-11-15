@@ -24,7 +24,7 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[atomics, cpuinfo, math, os, random, strformat, strutils, tables, typedthreads,
+import std/[atomics, cpuinfo, math, options, os, random, strformat, strutils, tables, typedthreads,
           unittest]
 
 import ../simulation/[answers, body, hold, limb, read, rig, rigid, vector, walk]
@@ -198,7 +198,7 @@ proc crossedFrom(apart: float): Crossed {.gcsafe, nimcall.} =
           now[who][arm] = toPolar(ownTerms(axes, arm, pose.elbow) -
               ownTerms(axes, arm, pose.shoulder))
       var why = couple.stoppedBy(0).why
-      if why == Stop.None: why = couple.stoppedFree.why
+      if why == Stop.None and couple.stoppedFree.isSome: why = Stop.Swing
       if at == 0.0:
         result.is_holding = why == Stop.None
         if not result.is_holding: break
@@ -767,7 +767,7 @@ suite "Internal: Couple stand for sweep":
                              (0.40, Inf, 0.131), (0.42, Inf, 0.086),
                              (0.44, Inf, 0.077), (0.46, Inf, 0.084)]
 
-  func standAt(walks: openArray[Carry]): float = walks[chosen(walks)].apart
+  func standAt(walks: openArray[Carry]): float = walks[chosen(walks).get].apart
     ## Read distance kept walks chose.
 
 
@@ -789,7 +789,8 @@ suite "Internal: Couple stand for sweep":
   test "stance steps out from hands pinned between torsos":
     ## Kept from before: nearest distance that carries turn is chest to chest.
     check standAt(left_to_left_above) >= 0.40
-    check left_to_left_above[chosen(left_to_left_above)].leap * 2.0 <= left_to_left_above[0].leap
+    let pick = chosen(left_to_left_above).get
+    check left_to_left_above[pick].leap * 2.0 <= left_to_left_above[0].leap
 
 
 
@@ -1197,6 +1198,12 @@ proc overlap(couple: Couple): tuple[depth: float, pair: string] =
 # Mutable: corpus is stood on first law that wants it, then kept for rest.
 var STILLS_POSED: seq[Posed]  ## Corpus of stills, stood once.
 
+func named(strain: Strain): string =
+  ## Joint strain sits at, as echo writes it: which joint, whose, and on which arm.
+  if strain.at.isNone: return "no joint"
+  let at = strain.at.get
+  at.what & " " & $at.who & (if at.arm.isSome: " " & $at.arm.get else: "")
+
 proc poses(): seq[Posed] =
   ## Every still of corpus stood live at its kept answer, once: strain for one
   ## law; overlap, joined hands and parted joints for other.
@@ -1232,7 +1239,7 @@ suite "Internal: Every still stands at ease":
       check where.is_holding
       check still.is_holding
       echo &"    {still.key}: stood {where.apart:.2f}, strain {still.strain.most:.2f} " &
-          &"at {still.strain.what} {still.strain.whose.body} {still.strain.whose.arm}"
+          &"at {still.strain.named}"
       check still.strain.most <= AT_EASE
 
 
@@ -1455,10 +1462,10 @@ suite "Internal: Every still stands at ease":
     ## distances differing in their last bit answer differently, so what is
     ## held is exact repetition: same distance, same numbers.
     for i in 0..1:
-      var got: array[2, float]
+      var got: array[2, Option[float]]
       for run in 0..1:
         let (is_holding, couple) = stood(HUMAN, Band.Crown, WOUND, 1.0, false, Body.Two, 0.44)
-        got[run] = (if is_holding: couple.strainWorst.most else: -1.0)
+        got[run] = (if is_holding: some(couple.strainWorst.most) else: none(float))
         couple.free()
       check got[0] == got[1]
 

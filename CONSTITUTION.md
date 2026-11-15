@@ -313,13 +313,13 @@ CAYLEYS_WEDGE  # module constant
 
 ## Article VI: Documentation is an outline
 
-1. Every declaration gets a doc comment, public or not. The one exception is a one-line
-   mechanical delegation (a borrow, a forward) that stands in a stack under one group comment. A
-   doc is imperative and opens with a verb, and a type opens with "Define …". It holds one
-   summary line that ends in a period, and it cites formal notation inline with `i.e.`. Where you
-   cannot write honest text yet, write the doc `TODO: Document.`, and never leave the doc empty.
-   A generator carries its docs through a required parameter of the emitting helper, so that an
-   undocumented emission cannot compile.
+1. Every declaration except a local, a parameter and a placeholder gets a doc comment, public or
+   not. The one other exception is a one-line mechanical delegation (a borrow, a forward) that
+   stands in a stack under one group comment. A doc is imperative and opens with a verb, and a
+   type opens with "Define …". It holds one summary line that ends in a period, and it cites
+   formal notation inline with `i.e.`. Where you cannot write honest text yet, write the doc
+   `TODO: Document.`, and never leave the doc empty. A generator carries its docs through a
+   required parameter of the emitting helper, so that an undocumented emission cannot compile.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
 3. Length follows weight. Where a façade exists, it carries the full explanation, and the
@@ -331,20 +331,25 @@ CAYLEYS_WEDGE  # module constant
 5. Prose in a comment is telegraphic, with no articles, in every comment of every language in
    the tree. That covers a header, a stage comment, a banner, and glue in a second language.
    A checker enforces it. A file kind that the checker does not read is a file kind that does
-   not exist yet.
+   not exist yet. A project of `bangu` that the Architect approves keeps its comments in its
+   own language, and the checker lists each such project.
 6. Say why, and at what cost. Vagueness is not telegraphic.
 7. A doc that asserts a global property names what enforces it: a test, an annotation that the
    compiler checks, or the generated output. Such a property is no allocation, no exceptions, a
    complexity, or "runs once for each save". Where nothing enforces it, the doc names its
    register from VIII.1: measured, expected or intended.
 8. Prose outside comments is Simplified Technical English, and `GUIDE.md` gives its rules. A
-   comment in code keeps the telegraphic register of VI.5 instead.
+   comment in code keeps the telegraphic register of VI.5 instead. A project of `bangu` that the
+   Architect approves keeps its records in its own language, and the checker lists each such
+   project.
 9. A doc has one position for each shape of declaration, and the expression guide of the
    language fixes it. A reader then finds every doc where the last one was.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
-    comment takes backticks, so that a reader and the checker take it as a name.
+    comment takes backticks, so that a reader and the checker take it as a name. A project of
+    `bangu` that the Architect approves follows its own language for capitals and periods in
+    its comments. The checker lists each such project.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m

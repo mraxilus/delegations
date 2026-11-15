@@ -349,9 +349,10 @@ func position*(frame: Frame): string =
   ##
   ## Workbook asks whether two crossing orders are one position or two.
   ## They are one position and two states.  No couple can pass between them
-  ## without `cut`, so machine that merged them would offer move arms forbid;
-  ## naming scheme that separated them would report new position every time
-  ## arm changed height.  Keeping both readings costs one function.
+  ## without `cut`, but by whole turn held above, through neutral
+  ## (`rotation.canonical`), so machine that merged them would offer move arms
+  ## forbid; naming scheme that separated them would report new position every
+  ## time arm changed height.  Keeping both readings costs one function.
   var plain = frame
   plain.over = none(Side)
   plain.describe

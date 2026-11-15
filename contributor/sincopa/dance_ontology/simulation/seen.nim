@@ -12,9 +12,8 @@
 ##     sweep at every distance couple may stand at; carrying this much at each of
 ##     them would cost tens of times what answering costs.  So sweep is answered
 ##     first, and only one that won is recorded.
-##   Way over crown that walk stops short of all it asks, by whatever stopped it, is recorded as
-##     planned way where that holds further: its moments are stood again from plan, as
-##     `walk.plannedWay` stood them.
+##   Each sweep is recorded as planned way, at band of its hold, however far walk would carry
+##     it: its moments are stood again from plan, as `walk.plannedWay` stood them.
 
 {.experimental: "strictFuncs".}
 
@@ -56,11 +55,11 @@ type
     turns*: float  ## How far it got.
     is_stopped*: bool
     why*: Stop
-    whose*: Hand  ## Whose hand it gave at.
+    whose*: Option[Hand]  ## Whose hand it gave at, or none where nothing gave.
     stills*: seq[Still]
     is_planned*: bool
-      ## Whether planner stood it: still no distance of carried walk held, or sweep's way over
-      ## crown that walk stops short of all it asks (`walk.swept`).
+      ## Whether planner stood it: still no distance of carried walk held, or sweep, whose way
+      ## is planned wherever it holds rest (`walk.swept`).
     strain*: float  ## Worst joint of still, nought at ease and one at end.
     tried*: seq[Option[float]]  ## Strain of each pose its search tried, in order: none gave.
 
@@ -70,7 +69,7 @@ func degrees*(radians: float): float = radians * 180.0 / PI
 
 
 proc toAche(couple: Couple, who: Body, arm: Arm): Ache =
-  ## Read one arm's six joints, each against its own two ends.
+  ## Read one arm's five degrees of freedom (`Dof`), each against its own two ends.
   ##   Twist's ends are swapped for left arm, as `twistEnds` has it, so range
   ##     quoted here is arm's own rather than rig's unmirrored one.
   let
@@ -118,7 +117,7 @@ proc stillAsked(
   head: Body,
   is_either_way: bool,
   who: Body,
-  over: int,
+  over, straight: Option[Arm],
 ): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds.
@@ -129,7 +128,8 @@ proc stillAsked(
   ##   Still no carried walk holds is stood where planned way stands it nearest to ease,
   ##     of every plan that holds (`walk.plannedStill`), as distance is chosen.
   result = Shown(hold: name, band: band, turns: turns, is_stopped: true, why: Stop.None)
-  let where = standing(rig, band, links, turns, is_away, head, is_either_way, who, over)
+  let where = standing(rig, band, links, turns, is_away, head, is_either_way, who, over,
+                       straight)
   if not where.is_holding:
     let planned = plannedStill(
       rig,
@@ -142,6 +142,7 @@ proc stillAsked(
       who,
       should_seek_ease = true,
       over = over,
+      straight = straight,
     )
     result.is_planned = true
     result.tried = planned.tried
@@ -176,9 +177,9 @@ proc shownAsked(
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
   ##     where model has them stand and not somewhere chosen for drawing.
-  ##   Way over crown that walk stops short of all it asks is planned way, as `walk.swept` keeps
-  ##     it: each moment it keeps is stood again from plan (`walk.standMoment`), as
-  ##     `walk.replayedWay` stood it, and none past them.
+  ##   Each way is planned way, as `walk.swept` keeps it where `should_plan`: each moment it
+  ##     keeps is stood again from plan (`walk.standMoment`), as `walk.replayedWay` stood it, and
+  ##     none past them.
   let
     sweep = swept(
       rig,
@@ -204,23 +205,12 @@ proc shownAsked(
   )
   if not best.found_rest:
     return
-  if best.isPlanned:
-    var planned = builtFor(rig, band, links, is_away, head, best.path)
-    for i in 0..<best.path.plans.len:
-      planned.standMoment(best.path, i, is_away)
-      result.stills.add toStill(planned, best.path.winds[i])
-    planned.free()
-    return
-  var couple = build(rig, restStance(rig, best.apart, is_away), band, links, head, is_away)
-  couple.settle()
-  var at = 0.0
-  result.stills.add toStill(couple, at)
-  let most = (if best.is_stopped: best.at else: MOST)
-  while abs(at) < most:
-    couple.turn(who, step, BEATS)
-    at += step
-    result.stills.add toStill(couple, at)
-  couple.free()
+  doAssert best.isPlanned, "Rig sweep holds rest with no plan; got `" & name & "`."
+  var planned = builtFor(rig, band, links, is_away, head, best.path)
+  for i in 0..<best.path.plans.len:
+    planned.standMoment(best.path, i, is_away)
+    result.stills.add toStill(planned, best.path.winds[i])
+  planned.free()
 
 
 
@@ -240,17 +230,20 @@ proc still*(
   head = Body.Two,
   is_either_way = false,
   who = Body.Two,
-  over = -1,
+  over = none(Arm),
+  straight = none(Arm),
 ): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds (`stillAsked`).
   ##   Card that asks what another card asks reads still that one stood, under its own name.
   ##   Reflected twin is not asked here: page mirrors still its twin keeps (`design/twins`).
-  ##   Card that draws crossing names lead's arm laid over (`over`), by ordinal; none below nought.
+  ##   Card that draws crossing names lead's arm laid over (`over`), or none.  Swan names
+  ##     lead's arm it draws straight through other's hoop (`straight`), or none.
   result = kept(
     STILLS,
-    key(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over),
-    stillAsked(rig, band, links, name, turns, is_away, head, is_either_way, who, over),
+    key(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over,
+        $straight),
+    stillAsked(rig, band, links, name, turns, is_away, head, is_either_way, who, over, straight),
   )
   result.hold = name
 

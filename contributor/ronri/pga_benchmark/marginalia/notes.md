@@ -23,7 +23,7 @@ reference, most spend more multiplies than the reference, and this is why.
 
 An instance holds only the coefficients of its own bases, and the norms return two of them. Grade
 restriction still lives in the emission of each product, and the tables stay whole. Proposal P04,
-`exact-kinds`, explores products that return only the bases they reach.
+`basis-set-forms`, explores products that return only the bases they reach.
 
 ## What an out-of-range grade does
 
@@ -56,7 +56,7 @@ operations, the result alone puts them above the byte bound. The norms return
 `MultivectorScalars`, which holds 𝟏 and 𝟙 alone.
 
 An emitter that returns that pair, for a table whose products all land in 𝟏 or 𝟙, closes the rest.
-Proposal P04, `exact-kinds`, returns the kind of exactly the bases that the result reaches,
+Proposal P04, `basis-set-forms`, returns the kind of exactly the bases that the result reaches,
 which here is one coefficient.
 
 ## What the conformal norms compute
@@ -151,24 +151,22 @@ removes the intermediates; the docket shows each projection against the bound.
   func `⊙`*(m: Multivector): Multivector = ⊞m ∨ m
 ```
 
-A multivector is larger than three floats, so a call returns it through a hidden pointer. The
-pinned compiler fills the temporary of each such call with zeros before the call. It does so
-where the callee is `noinit` too. Each product writes every coefficient, so the fill does no
-work. A chain of products, as `⊙`, fills one temporary for each step.
+A multivector is larger than three floats, so a call returns it through a hidden pointer. Where
+the callee is `noinit`, the pinned compiler fills the temporary of the call with zeros before the
+call. Each product writes every coefficient, so the fill does no work. Where the callee fills its
+own result, as `⊞` does, the caller fills nothing. The last step of a chain writes the result in
+place. So the support `∩` fills two temporaries for its three steps, and the center `⊙` fills
+none for its two.
 
 A local declared `noinit` and then assigned takes the result in place, with no fill. A `let`
 does not, where an argument of the call has its type. The alias check of the compiler,
-`isPartOf`, counts a `var` as a fresh location, and not a `let`. Upstream `devel` still omits
-the `let`. It drops the fill of the caller where the callee initializes its result, and keeps
-it for a `noinit` callee. Nimony fills nothing, since it proves that each location is assigned
-before use.
+`isPartOf`, counts a `var` as a fresh location, and not a `let`. Nimony fills nothing, since it
+proves that each location is assigned before use.
 
-In an inline operator, as a projection, such locals change no zeroing in the machine code, so
-the C compiler removes those fills already. In the five compound operators, which are not
-inline, the fills stay in the machine code. With such locals there, the support takes 0.53 of
-its time at `rga4d`, and the center 0.74 at `cga5d`. Proposal P08, `compound-tables`, gives
-each of the five one table and no step, and gains more. Proposal P03, `partner-sign`, writes
-the first step of its partner into such a local.
+The compound operators are not inline, and gcc keeps fills in their machine code. The support at
+`rga4d` clears its two temporaries with `rep stos`. Proposal P08, `compound-tables`, gives each
+compound operator one table and no step. Proposal P03, `partner-sign`, writes the first step of
+its partner into such a local.
 
 ## `Formal.round` under the rigid metric
 

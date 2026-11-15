@@ -8,8 +8,8 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c523b64950d1f7de |
-| Pruned  | 49b8f1c6ca50b0bb20472edd1cc819a6d7222045 |
+| Rules   | 363e393b375ac380 |
+| Pruned  | 1c3c58b7205100829c4d5b8902a07dde2c05b985 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the `pga`
@@ -49,10 +49,12 @@ button, or seen this on real GPU hardware.** Every figure here was software-rend
 names one sense of an older word, and the other senses keep that word. An explicit list spares them,
 rather than a rule.
 
-`handle` names the address of an object, and `slot` still names an `Ink` palette position and a
-timing array position. `pivot` names the orbit centre. `target` still names the object a press
-points at, the DOM event target, a render target and a plain goal. `budget` names real allowances of
-time, pixels and segments. The frame-rate lines are `mark`s, because nothing is held to them.
+`handle` names the address of an object, and `slot` names a place in a pool or a timing ring. A
+palette index names a position in the palette, and an `Ink` names the entry there. `face` alone
+names a face of a mesh and the verb, and a font face is always named in full. `pivot` names the
+orbit centre, and `budget` names real allowances of time, pixels and segments. `target` still names
+the object a press points at, the DOM event target, a render target and a plain goal. The
+frame-rate lines are `mark`s, because nothing is held to them.
 
 **Three names could not be taken, and each says why in place.** `object` is reserved in Nim, so the
 code-position `item` took a role instead. It is `one` where an object is reached through the
@@ -88,7 +90,7 @@ compile, rather than fails to match.
 TypeScript: 44 static text nodes against 6 from scripts. A script sets each tooltip. To set each
 label from a script would empty 44 elements, invent 44 ids, and blank the page until scripts ran.
 
-`tools/build.nim` rewrites `shell.html` on the way out for `@SCRIPT@` and `@EMBED:<face>@`, and
+`tools/build.nim` rewrites `shell.html` on the way out for `@SCRIPT@` and `@EMBED:<font face>@`, and
 `@WORD:<key>@` joins that pass. The real text is in the committed markup, and reads at first paint
 and with scripts refused. A token that names a key the catalogue does not carry stops the build.
 
@@ -160,24 +162,45 @@ and this file does not:
 | `keys`, `wheel`, `pan` | held keys, wheel zoom, mouse pan, what zoom settles onto |
 | `touch`, `construct`, `finger` | pinch, long press, drag construction, crowd, paused drag |
 | `apply`, `framing`, `label`, `view` | pickers, what picking does to camera, names, view section |
+| `acts` | one undo for a whole selection, typed camera fields, hover while camera moves |
 | `chrome`, `comet`, `ground` | hover during gesture, help, horizon comet, lattice's reach |
 | `frame`, `classified`, `diagnostics`, `ramp` | frame's own clocks and counts, tree, colours |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `built`, `pool` | what scene costs, repaired faults, each frame built, drawer |
 | `counted` | calls, copies and bytes of marker, lattice and frame, optimiser off |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
-| `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
+| `message`, `style` | outcome fade, declared CSS |
+| `type`, `canvas` | font faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
 | `surface` | no backdrop filter on the page, and the fill of every surface |
 | `veil` | the veil of a plane over every spot its pick finds it at |
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
-`ceil(0.995n)` equals `n` for every `n` under 200, so a share demands every frame of the 49-frame
+`ceil(0.995n)` equals `n` for every `n` under 200, so a share demands every frame of the 30-frame
 sample of `loaded`. One definition is exported from `scenery` (repository issue 47). The scenery
 check takes the same allowance. Preemption inside its bracket and outside both halves missed one
 frame of 109, of 126 and of 127. Per-frame tolerances stay as they are, because a real accounting
 fault misses on every frame.
+
+**The accounting under the largest demo samples frames slowed to a size it can divide**
+(`loaded.driveLoadedAccounting`). It reads the median scene phase of 30 frames of orbit, and slows
+the page by the ratio that brings it to 6 ms (`Emulation.setCPUThrottlingRate`). A faster machine is
+slowed more, and every phase slows alike. The verdict asks the slowed phase for half the rate times
+the unslowed one. That ratio of two readings of one machine is no limit on time, which the rule on
+real-clock tests forbids (Article IX.12). The check scales by its own workload, so the objection of
+the speed checks to a reference workload does not hold here.
+
+The lower bound allows 3 ms unaccounted, so it bites only past that. In a probe that is not kept, on
+2026-11-08, the unslowed median read 1.3 ms, and 51 of 601 frames reached 2 ms. Slowed 5 times, 30
+of 30 frames account at 7.2 to 7.9 ms in six runs, where the bound bites. On a runner, slowed 4
+times from 1.5 ms, 30 of 30 frames account at 6.4 ms.
+
+Rejected: 25 frames over 2 ms unslowed, the tail of noise, where the lower bound bit on 2. A runner
+read 17 of the 21 needed in 1,875 frames, against 51 of 601 in the probe. Its worst read 2.8 ms.
+Assumed: that the runner was faster or quieter than a delegate, since that sample reads no median.
+Rejected: a longer wait, which answers variance with a timeout, and a fixed rate, which a machine
+fast enough falls under again.
 
 **Count the mechanism that the claim names.** The cadence check of the diagnostics section counts
 `askSlowPass`, the entry of the tick, where asks are `ceil(ticks/5)`. It does not count calls to
@@ -381,6 +404,23 @@ on that side in 1 to 7 of 30 frames, in 3 drives. Rejected: the peak of 30 frame
 scene, which read zero in 2 of those 29 drives. Verified by a run: with the emitting charge taken
 out of `timed`, the check reads time on no frame of 300, and fails.
 
+**The check that the build reports its phases reads the build on frames slowed to many steps of the
+clock** (`diagnostics.drivePhaseSums`). A build under one step of 100 µs reads zero with nothing at
+fault. So the check slows 30 frames by the ratio that brings the median wall time of the frames
+before to 2 ms. Its verdict asks the median build of those frames for half their median wall time,
+less one step. That share of one clock in the other cancels the speed of the machine, and no limit
+on time decides it (Article IX.12). The slowed frames then leave the sample of later checks.
+
+On a delegate on 2026-11-08, the build read 0.3 ms at least and 0.6 ms at the median, unslowed. It
+read zero in none of 160 frames. Slowed 3 times, the medians read 2.0 to 2.3 ms of build against
+2.1 to 2.4 ms of wall, in 3 runs. Single frames slip through the throttle unslowed, at 0.4 ms, so
+the verdict reads medians.
+
+**The page whose clock steps 1 ms runs the same check**, as a machine whose build falls under one
+step. Assumed: that this clock reads the build as the fine clock of a faster machine reads its own.
+Rejected: a build above zero in every frame, which read 18 to 24 of 32 frames consistent there, in
+3 runs. The slowed check read 62 of 62 there, at 1.0 ms of build against 1.0 ms of wall.
+
 **Every wait on the real page is a count of frames, and never a span of time.** `waitUntil` steps
 that page one frame at a time. `settleTurn` waits on the transitions that an element runs, as
 `getAnimations` lists them. No limit on time then decides a verdict (Article IX.12). Rejected: a
@@ -396,8 +436,11 @@ machine).
 
 Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
 2026-09-30, alone and in the gate. The anchor readings are from 11 runs of the measured page up to
-its pins on 2026-09-30, which read 7.0 to 10.0 µs. Another delegate read the anchor and the marker
-in 22 such runs on 2026-10-22, at library `3d9696e`. It has 4 cores of an Intel Xeon at 2.10 GHz.
+its pins, on 2026-09-30. The marker readings are from 11 such runs on 2026-10-04, with each outline
+shaped once for each pair (Marker pulse). A slower delegate read the marker at up to 1.66 ms in 4
+full drives on 2026-10-15. That reading sets its bound (repository issue 635). Another delegate read
+the anchor and the marker in 22 such runs on 2026-10-22, on 4 cores of an Intel Xeon at 2.10 GHz.
+
 Runner readings are from one CI run of the change that set each bound. The runner reading of the
 marker is from the drive job on `d305c68c`.
 
@@ -416,7 +459,7 @@ an edit they read 1.5 to 2.4 ms.
 | Moving frame, median | 3 ms | | 1.3 to 2.0 | |
 | Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
 | Anchor lookup | 15 µs | 5.0 | 3.0 to 10.0 | 280 |
-| Marker and its pulse, worst kind | 1.1 ms | 0.38 | 0.28 to 0.84 | 3.2, budget |
+| Marker and its pulse, worst kind | 2.5 ms | 0.38 | 0.28 to 1.66 | 3.2, budget |
 | Moving grid, median | 26 ms | 4.3 | 5.4 to 17.1 | 26.1, budget |
 | CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
 | Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
@@ -424,10 +467,9 @@ an edit they read 1.5 to 2.4 ms.
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, both with each outline shaped twice, so it
-costs 2.7 times the repair. The repair alone read 0.28 to 0.84 ms in the 22 runs, a spread of 3
-times. So the fault reads inside the spread of unchanged code, and its bound is a budget. The
-slowest of those runs sets 1.3 ms by the rule above, and the bound stands at 1.1 ms. Repository
-issue 635 holds that question for the Architect.
+costs 2.7 times the repair. The repair alone read 0.28 to 1.66 ms across delegates, a spread of
+almost 6 times. So the fault reads inside the spread of unchanged code, and its bound is a budget.
+The point count of the marker suite and a count of the machine pin the fault on every run.
 
 The moving grid fault reads over its bound by 0.1 ms only, inside the spread of unchanged code. So
 its bound is a budget, and the count of calls of the lattice pins the fault.
@@ -452,23 +494,14 @@ scale unlike each other between machines, so no one reference normalises them al
 clock of the page ticks in steps of 100 µs, so a call of a few microseconds is timed in hundreds.
 One mean of 400 anchor lookups read 5.75 to 32 µs on one fresh page, and the first was dearest.
 After an untimed batch, the median of 15 batches of 200 read 6.0 to 7.0 µs in 12 trials. A
-collection or a preemption then spoils one batch, not the figure.
-
-The marker takes the same figure. Its worst mean of 30 pairs read 0.46 to 1.67 ms over 4 pages. Its
-worst median of 9 batches of 5 read 0.48 to 0.62 ms. Both were measured with each outline shaped
-twice.
+collection or a preemption then spoils one batch, not the figure. The marker takes the median of 9
+batches of 5 pairs.
 
 **Sustained load moves a median too.** On 2026-09-30, with three of four cores kept busy, 10 runs of
 the measured page read the anchor at 7.0 to 14.5 µs. Each check but the marker stayed inside its
 bound. Ten such runs on 2026-10-04, with each outline shaped once, read the marker at 0.34 to 0.78
 ms, inside its bound. The gate runs projects one at a time, so no gate run puts that load beside the
 drive. A delegate that shares its cores with other tenants can still.
-
-**A delegate can read a speed check over its bound with no fault present.** With each outline shaped
-twice, nine pages on a fresh delegate read the marker at 0.72 to 2.64 ms, over a bound of 1.7 ms.
-They ran on 2026-10-01, and read the grid at 6.4 to 22.3 ms. Six pages ran the read tally of
-`boundary`, and three ran the build without it, over the same range. The 2.64 ms was the first page
-after a build. The counts hold each fault whatever the clock reads.
 
 **The rendering step of the browser runs on real frames, so each simulated frame waits for one.**
 Resize, scroll, media-query and resize-observer events fire in that step, whatever the clock says.
@@ -573,10 +606,33 @@ as the table gives, and the counts of the other span did not move. Verified by r
 ## Browser front-end
 
 **The page is one self-contained file.** It opens from `file://`, or from an artefact host that
-reaches no font host and no script host. So every face is inlined as base64, and `tools/build.nim
-web` concatenates every script into `pages/shell.html` at its `@SCRIPT@` token. `pages/shell.html`
-stays whole markup, rather than ends mid-`<script>`, because a committed page that cannot parse
-alone is a page that no checker can read.
+reaches no font host and no script host. So every font face is inlined as base64, and
+`tools/build.nim web` concatenates every script into `pages/shell.html` at its `@SCRIPT@` token.
+`pages/shell.html` stays whole markup, rather than ends mid-`<script>`, because a committed page
+that cannot parse alone is a page that no checker can read. The page declares its own doctype,
+charset and viewport, because a copy opened from file has nothing else to declare them. Without them
+that copy rendered in quirks mode, and decoded its text as Windows-1252.
+
+**The page draws through WebGL2 where the browser offers it, and through WebGL1 where it does not.**
+WebGL2 makes per-fragment depth and instancing core, where WebGL1 offers them as extensions. The
+Architect's phone offered WebGL1 without `EXT_frag_depth`, and WebGL2 with `gl_FragDepth`
+(repository issue 743). So on WebGL1 that phone kept linear depth, and the fault of the far field
+with it. The page asks for `webgl2` first, and falls back to `webgl`, so a browser without WebGL2
+still draws. The Architect ruled this order, D8 a, 2026-10-25.
+
+**One source serves both dialects.** Each shader is written once, in GLSL ES 1.00. Under WebGL2 a
+prelude opens it with `#version 300 es`, and maps `attribute`, `varying`, `gl_FragColor` and
+`gl_FragDepthEXT` onto their names in 3.00. A source asks for per-fragment depth through
+`DEPTH_FRAGMENT`, which each prelude defines where that depth exists. Rejected: a second copy of
+each of the nine sources in 3.00, which the sibling rule would hold in step by hand. Rejected:
+WebGL2 alone, which leaves a browser without it with no picture.
+
+Verified by driven check: `driveContextPaths` draws the opening scene through WebGL2, through
+WebGL1, and through WebGL1 without `EXT_frag_depth`. A stand-in browser refuses what each path
+lacks, on a page of its own. Once the picture stands still, WebGL2 and WebGL1 with the extension
+draw it the same to the pixel, and WebGL1 without it draws its own. Verified by a break on purpose:
+on `main`, which asks for WebGL1 alone, the first of these fails. **Unverified**: the Architect's
+phone.
 
 **Scripts share one global scope, rather than import each other.** TypeScript 7 removed `outFile`,
 so the compiler does not bundle, and the page cannot resolve ES imports without a server. Files
@@ -704,9 +760,30 @@ host saves only the extensions on its list, and `.pgascene` is not one. Loading 
 entry of a zip that ends `.pgascene` or `.rgascene`, stored or deflated. Rejected: a JSON scene, a
 second format to read.
 
+**The drawing buffer stays inside the viewport limit of the GL.** The GL clamps a viewport to
+`MAX_VIEWPORT_DIMS`, and a browser can keep a buffer wider than that, as one Firefox does. The scene
+then fills the viewport alone, and draws narrower than its canvas, with a bare band at the right
+(repository issue 725). So `ratioPixel` lowers the device pixel ratio, after its cap of 2.5, until
+the buffer fits that limit on both axes. One ratio serves both axes, so each pixel stays square, and
+the least diameter of a point follows it. Rejected: a viewport set from `drawingBufferWidth`, which
+the GL clamps the same way.
+
+Verified by a probe in the Architect's Firefox 152 on Windows, 2026-10-25. At a pixel ratio of 2, a
+canvas 2,472 px wide kept a buffer of 4,944 by 4,092 under a limit of 4,096. The field filled 4,096
+columns, 0.83 of the width, and left the rest bare. In a second reading, the canvas was 2,816 px
+wide, and the field stopped at 0.73. That Firefox reads back the viewport as asked, so only the
+picture shows the clamp. Rejected: a cap at `MAX_RENDERBUFFER_SIZE` too, which it reports as 2,048
+while it draws a buffer of 4,944.
+
+Verified by driven check: `driveBufferCovered` stands in a viewport limit of 3,300 below a buffer of
+4,000 by 1,750. The page then asks 3,300 by 1,444, and its viewport covers all of it. Verified by a
+break on purpose: without the lowered ratio, the viewport covers 3,300 of 4,000 columns. Chromium
+with SwiftShader cuts a buffer asked at 10,000 to 8,192, its viewport limit, so it shows no band
+unaided. **Unverified**: the page with this fix, in that Firefox.
+
 *Checked.* Verified by a cold run. `clean` removes `build`, `binaries` and `nimcache`. Then `drive`
-fetches every face, builds both front-ends, and drives them with no step run by hand, as the runner
-does. A second run fetches nothing.
+fetches every font face, builds both front-ends, and drives them with no step run by hand, as the
+runner does. A second run fetches nothing.
 
 Verified by type-checker: every script is clean under the three flags above, with no `any` and no
 non-null assertion. Verified by driven check: `driveTypeRoles`, `driveTypeDrawn` and
@@ -716,31 +793,31 @@ Verified by driven check against a stand-in host: a scene saves as a zip and loa
 saves as itself. A declined save offers no link. Verified by `unzip -t`: the zip is sound.
 **Untested**: the real host. **Unverified**: no human has driven this page.
 
-## Faces
+## Font faces
 
-**`drive` fetches faces, and `web` refuses without them**, because a caller who reaches for `web`
-directly is building, rather than being given.
+**`drive` fetches font faces, and `web` refuses without them**, because a caller who reaches for
+`web` directly is building, rather than being given.
 
-**Faces come from the store of the repository, and which faces is this project's.** `koch
+**Font faces come from the store of the repository, and which font faces is this project's.** `koch
 fetch-assets` holds any file fetched at build time: the names, the digests and the fetch, in
-`curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
+`curator/audit/src/assets.nim`. The `assets` verb of this project copies the font faces of both
 front-ends out of it (repository issues 116 and 124). It writes `build/fonts/store.list`, one line
-for each face, naming the store entry it was copied from. `web` compares its input against that
+for each font face, naming the store entry it was copied from. `web` compares its input against that
 entry before it embeds. Verified by a break of it, twice: `store.list` moved away, and one byte
-appended to a copied face.
+appended to a copied font face.
 
 The page takes Commit Mono as the Latin `woff2` of `@fontsource`. It takes Noto Sans at 400 and 600,
 Noto Sans Math, Noto Sans Symbols 2 and Noto Serif, as TrueType from their own releases. The desktop
-takes its own list, `FACES_DESKTOP`, and the two lists share files. Commit Mono is `otf` there,
+takes its own list, `FONT_FACES_DESKTOP`, and the two lists share files. Commit Mono is `otf` there,
 which is what its author publishes, and `stb_truetype` reads its CFF outlines. All are under the SIL
 Open Font License 1.1.
 
-**Three faces, three roles, and nothing else picks between them.** The standard of the Architect is
-Noto Serif for titles, Noto Sans for body, and Commit Mono for code and monospace. The page draws
-them through `--serif`, `--sans` and `--mono`, and the desktop through `guiHeader` and `guiMonoPush`
-with `guiMonoPop`. Material 3 puts text inside components in the label role, so the help tab strip
-and the toggle chips stay sans. The serif takes the headings that name a section, and the name of
-the application itself.
+**Three font faces, three roles, and nothing else picks between them.** The standard of the
+Architect is Noto Serif for titles, Noto Sans for body, and Commit Mono for code and monospace. The
+page draws them through `--serif`, `--sans` and `--mono`, and the desktop through `guiHeader` and
+`guiMonoPush` with `guiMonoPop`. Material 3 puts text inside components in the label role, so the
+help tab strip and the toggle chips stay sans. The serif takes the headings that name a section, and
+the name of the application itself.
 
 **Commit Mono splits its ligatures across two switches, and the page needs both.** The distributed
 `woff2` carries `calt`, which browsers apply unasked, and which most ligatures ride on. The opt-in
@@ -751,103 +828,131 @@ sets are `ss01` to `ss05`, which the arrows and comparisons come from. So the st
 No combination moves a column. Noto Sans Math publishes an `ss01` that the mono stack falls through
 to, and the operators render the same either way.
 
-**Each Noto face of the page ships whole** (Article X.8, as the Architect ruled it on 2026-10-03). A
-Latin subset leaves each character past its range to a face of the viewer's system. `ˍ` and `˷` of
-the notation are two (repository issue 411). The cost is weight: the built page is 7,830,702 bytes,
-against 4,271,072 with the subsets. Measured on 2026-10-03 with `ls -l build/rga_visualiser.html`,
-at `main` and at this change. Rejected: a Noto Sans subset cut for the two accents, which no store
-row hosts without a release.
+**Each Noto font face of the page ships whole** (Article X.8, as the Architect ruled it on
+2026-10-03). A Latin subset leaves each character past its range to a font face of the viewer's
+system. `ˍ` and `˷` of the notation are two (repository issue 411). The cost is weight: the built
+page is 7,830,702 bytes, against 4,271,072 with the subsets. Measured on 2026-10-03 with
+`ls -l build/rga_visualiser.html`, at `main` and at this change. Rejected: a Noto Sans subset cut
+for the two accents, which no store row hosts without a release.
 
-**The maths and symbol faces each take a family of their own, after the text faces in every stack.**
-Within one family, the faces that declare one weight form a set. The engine picks one set for the
-weight asked, and asks only its faces. The order of a stack is then the precedence, as merge order
-is in the desktop atlas. Rejected: those faces under "Noto Sans UI", whose set at 400 to 600 wins
-both weights from the text faces. Liberation Sans then draws 1,156 glyphs of the open drawer.
+**The maths and symbol font faces each take a family of their own, after the text font faces in
+every stack.** Within one family, the font faces that declare one weight form a set. The engine
+picks one set for the weight asked, and asks only its font faces. The order of a stack is then the
+precedence, as merge order is in the desktop atlas. Rejected: those font faces under "Noto Sans UI",
+whose set at 400 to 600 wins both weights from the text font faces. Liberation Sans then draws 1,156
+glyphs of the open drawer.
 
 Rejected: each of them declared again at 400 and at 600, which embeds each file twice, 1,744,560
 bytes more on a page of 7,718,414.
 
-**The maths and symbol faces are declared over 400 to 600.** Each ships one weight. Declared at 400
-alone, they match no semibold text, so a selected label or chip at 600 takes its operators from the
-system. Cost: regular operators beside semibold letters, which the desktop label also draws.
+**The maths and symbol font faces are declared over 400 to 600.** Each ships one weight. Declared at
+400 alone, they still draw at 600, but the browser synthesises their bold. Such a weight is a font
+face that nothing ships (Article X.8). Cost: regular operators beside semibold letters, which the
+desktop label also draws.
 
-**Each face is held to its own load status**, by `driveTypeRoles`, because `document.fonts.check`
-answers true where no face matches at all. Verified by a run, 2026-10-07, in Chrome for Testing 153:
-all six faces load. A read of `CSS.getPlatformFontsForNode` over every element of the open drawer
-finds no glyph from a face of the system. Noto Sans draws 946 glyphs and its semibold 204.
+Verified by a run, 2026-10-23, in the Chromium that Playwright pins, with the range cut to 400.
+`CSS.getPlatformFontsForNode` still names Noto Sans Math and Noto Sans Symbols 2 for operators at
+600. Those operators carry 39% more ink than under the range. Cost: no check fails on that cut,
+since `koch drive` takes the font face at 400 for 600, as the browser does.
 
-**Each element is held to the faces of the stack that the browser resolves for it**, by
-`driveFacesCovered` (`CONTRIBUTOR.md`, Pages and assets). The check reads the computed `font-family`
-and `font-weight` of each element, and holds its text to that stack, at that weight. The value and
-the placeholder of a field count, and so does the text of `::before` and `::after`. A finding names
-the page, the element, the weight and each codepoint that no face of the stack maps.
+**Commit Mono is declared over 400 to 700.** It ships one weight, and so does the desktop atlas.
+Mono asked at 600 or 700 then draws its regular glyphs on both front-ends, and never a bold that the
+browser synthesises (Article X.8). The collector asks each stack at each weight in play, and the
+`<b>` of the drawer brings 700. Verified by a script that is not kept, which runs the verdict of
+`curator/audit/src/font_stacks.nim` at `e6c9d9c0` over `written.json`. It reads two findings on
+`main` at `9b6c445d`, and none here.
 
-**Text that a script writes later is held to every stack in use, and to every stack that a rule
+**Each font face is held to its own load status**, by `driveTypeRoles`, because
+`document.fonts.check` answers true where no font face matches at all. Verified by a run,
+2026-10-07, in Chrome for Testing 153: all six font faces load. A read of
+`CSS.getPlatformFontsForNode` over every element of the open drawer finds no glyph from a font face
+of the system. Noto Sans draws 946 glyphs and its semibold 204.
+
+**Each element is read in the stack that the browser resolves for it, and `koch drive` judges it**
+(`CONTRIBUTOR.md`, Pages and assets). `readFontFaces` reads the computed `font-family` and
+`font-weight` of each element, and writes its text as one run of `build/font-faces/written.json`.
+The value and the placeholder of a field count, and so does the text of `::before` and `::after`.
+`koch drive` resolves each run down its stack, against the `cmap` of each font face, and gives the
+verdict (`curator/audit/src/font_stacks.nim`). A finding names the page, the run, and each codepoint
+that a font face of the system draws.
+
+**Text that a script writes later is one run for each stack in use, and for each stack that a rule
 declares.** `nimCodepointsShown` gives the catalogue, the help, the notation and the units, as
-`--drive-faces` reads them. The strings of the scripts and the text on the page join them. The check
-holds each of these characters to each stack that an element resolves to, and to each stack that a
-rule declares. It does so at each weight that an element resolves to, that a rule declares, and that
-a face declares. A finding for a stack that no element resolves to names the rule by its selector,
-as `rule .later-panel`.
+`--drive-font-faces` reads them. The strings of the scripts and the text on the page join them.
+There is one such run at each weight that an element resolves to, that a rule declares, and that a
+font face declares. Each is named by the element or the rule of its stack, and by its weight, as
+`text written later in rule .later-panel at 600`.
 
-**The check reads the declared stacks through the CSSOM, and the browser resolves each one.** It
+**The collector reads the declared stacks through the CSSOM, and the browser resolves each one.** It
 walks every rule of every sheet, into `@media`, `@supports`, `@layer`, nested rules and imported
 sheets, whether or not the rule matches now. The declarations of each rule go on a probe under a
 hidden holder, so the browser itself resolves `var()` and the `font` shorthand. It resolves them
 against the document as it stands, and again under the custom properties of each rule that declares
-some. It leaves out an `@font-face` rule, which names a face and not a stack. It leaves out a family
-of `inherit` or `unset`, which takes the stack of its parent.
+some. It leaves out an `@font-face` rule, which names a font face and not a stack. It leaves out a
+family of `inherit` or `unset`, which takes the stack of its parent.
 
 Rejected: `var()` read from the custom properties of the root, which misses a value that a rule
 under `@media` declares.
 
 So each stack in use, and each stack that a rule declares, must map every character that the page
-can write. That is why every stack names the maths and symbol families after its own faces. The cost
-is that a stack for titles alone must map the operators too. A checkbox and a file field show no
-text that the page writes, so they are not a stack in use. Both resolve to Arial, and the button of
-a file field shows the words of the browser.
+can write. That is why every stack names the maths and symbol families after its own font faces. The
+cost is that a stack for titles alone must map the operators too. A checkbox and a file field show
+no text that the page writes, so they are not a stack in use. Both resolve to Arial, and the button
+of a file field shows the words of the browser.
 
-The check reads each `@font-face` rule of the shell, and the `cmap` of its file. Within a family, it
-picks the set of faces that declare the weight asked, as the engine does. Where two sets hold that
-weight, the pick is the engine's own. A character counts only where each set, or a family after it,
-draws it, and the families of a stack are tried in order. Rejected: the three stacks read from the
-text of the shell, which pass an element that takes a stack of its own. Rejected:
-`CSS.getPlatformFontsForNode`, which answers only for text that has a layout box now.
+The collector reads each `@font-face` rule through the CSSOM, and writes the bytes of its `data:`
+source to a file named by their SHA-256. So `koch drive` reads the bytes that a viewer receives. The
+collector loads each font face, and writes each one that the browser refused. Within a family, `koch
+drive` picks the set of font faces that declare the weight asked, as the engine does. A family that
+the page does not ship ends the search (Article X.8).
 
-Cost: a stack that no rule declares counts only where an element resolves to it at the check. Such a
+Rejected: the three stacks read from the text of the shell, which pass an element that takes a stack
+of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a layout
+box now.
+
+**The control page proves the collector on each run.** `koch drive` writes
+`build/font-faces/control.html` before the drive, and the drive reads it with the same collector, as
+page `control`. Each of its five numerals stands in one kind of place, and a numeral that the
+collector misses is a finding. The control page has no bridge and no script of this project, so its
+runs hold only what it shows. A run of the verb alone, with no control page, writes the page alone.
+
+Runs keep ASCII, so a stack whose font faces lack Latin fails. The resolver reads each codepoint
+that a run gives.
+
+Cost: a stack that no rule declares counts only where an element resolves to it at the read. Such a
 stack is that of a form control, or a family that a script sets. A bare button resolves to Arial,
 and a bare text area to monospace. Verified by a run, 2026-10-04, in Chrome for Testing 153: each
 button and field that a script builds matches a rule that declares a stack. Verified by a read of
 `src/browser` and the shell, the same day: no script sets a family.
 
-*Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153, with the
-drawer and help open: both checks pass, with `missing none`. The stacks that the rules declare are
-the stacks in use. Verified by breaks on purpose, the same day and the same way:
+*Checked.* Verified by `koch drive` in the gate of this change, in the Chromium that Playwright
+pins: no finding, and the control page gives each numeral. Verified by breaks on purpose,
+2026-10-23, with the collector alone and the resolver of `koch drive`, on the page as it opens:
 
-- `#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with `missing
-  rga_visualiser.html #button-menu span at 400: U+2630`, which the three stacks of the shell pass;
-- `.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element, and fails at 400,
-  600 and 700 with `rule .later-panel` and each codepoint that Commit Mono does not map, U+2630
-  among them. A check of the stacks in use alone passes it;
+- `#button-menu span { font-family: "Commit Mono UI", monospace; }` gives a finding for
+  `#button-menu span` drawing U+2630, which the three stacks of the shell pass. It gives 13 more at
+  each of 400, 600 and 700, as text written later in that stack;
+- `.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element, and gives the
+  same 13 at 400, 600 and 700, named `rule .later-panel`, U+2630 among them. A check of the stacks
+  in use alone passes it;
 - a rule for `.later-panel` sets `font: 600 12px var(--later)` inside `@media (max-width: 10px)`.
-  Inside `@media print`, `:root` declares `--later` as the same stack. The check fails it with the
-  same finding.
+  Inside `@media print`, `:root` declares `--later` as the same stack. It gives the same findings;
+- a collector that skips `::before` and `::after` gives a finding from the control page, for U+4E09
+  in `::before`.
 
-With the maths and symbols declared at 400 alone, the check fails at 600, with U+2715 in
-`button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use it names the
-operators, the bold operands and the chip symbols. With them under "Noto Sans UI" at 400 to 600,
-both checks fail at 400 and at 600, on 2026-10-07. They name the Latin text of each element in the
-sans stack, as `button#button-add at 600: U+0061`. A model that asks each face that holds the weight
-passes that shell. Verified by a run, 2026-10-03: the other page checks pass with the whole faces.
+With the maths and symbols under "Noto Sans UI" at 400 to 600, `koch drive` gives 894 findings. They
+name the Latin text of each element in the sans stack, as `button#button-add` drawing U+0061. For
+Latin in that stack, `CSS.getPlatformFontsForNode` names a font face of the system. Verified by a
+run, 2026-10-03: the other page checks pass with the whole font faces.
 
 **The serif ships at 600 alone, because every title is set at 600.** A weight that nothing ships is
-a face that the browser of the reader invents (Article X.8). The check reads pixels, and not width,
-which cannot part the two faces. The heading shot as the page has it, and again with the interface
-face forced onto it, must make two pictures.
+a font face that the browser of the reader invents (Article X.8). The check reads pixels, and not
+width, which cannot part the two font faces. The heading shot as the page has it, and again with the
+interface font face forced onto it, must make two pictures.
 
 **The desktop draws the same three roles.** `NotoSerif-SemiBold` matches the 600 of the page, and
 `CommitMonoV142-400Regular` sets notation. The supplementary ranges are merged into the mono and
-interface faces, because those rows carry wedges. Commit Mono comes from the repository of its
+interface font faces, because those rows carry wedges. Commit Mono comes from the repository of its
 author, because `@fontsource` ships no TrueType. **Ligatures cannot reach the desktop**, because
 Dear ImGui shapes no text, so no GSUB feature fires.
 
@@ -978,12 +1083,13 @@ Software GL reports no multisampled visual, so thin lines alias.
 
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
-`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
-`--drive-edit`, `--drive-wheel`, and `--drive-help:<tab>`, one for each tab. Each pushes real
-events through the queue of SDL, but `--drive-edit` calls the procs of the buttons (Desktop
-front-end). `driven` runs all of them and reports every failure, and not the first. It asks the
-binary which help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home (Article
-I.4). `drive` chains it, here and on the runner (repository issue 91).
+`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`,
+`--drive-font-faces`, `--drive-edit`, `--drive-wheel`, `--drive-bulk`, `--drive-fields`,
+`--drive-hover`, and `--drive-help:<tab>`, one for each tab. Each pushes real events through the
+queue of SDL, but `--drive-edit`, `--drive-bulk` and `--drive-fields` call the procs that the
+buttons and fields call (Desktop front-end). `driven` runs all of them and reports every failure,
+and not the first. It asks the binary which help tabs exist (`--help-tabs`), so `help.HelpPath`
+stays their one home (Article I.4). `drive` chains it, here and on the runner (repository issue 91).
 
 **A run that reaches a window of Dear ImGui names that window on its motion.** The SDL3 backend of
 Dear ImGui drops motion that names no window of its own. `--drive-select` and `--drive-wheel` name
@@ -997,48 +1103,51 @@ it, so Dear ImGui reads the pointer over the menu as it reads a hand. Verified b
 - undo takes a construction back, and returns the view to where it built from;
 - the choice menu does not swallow the drag after it;
 - every help tab opens with rows in it;
-- a run whose face is missing still does its scripted work;
-- every type role is drawn in a face of its own;
-- every codepoint that each role sets has a glyph in the face of that role;
+- a run whose font face is missing still does its scripted work;
+- every type role is drawn in a font face of its own;
+- every codepoint that each role sets has a glyph in the font face of that role;
 - a scene filled to capacity leaves what follows its list on the window;
 - the menu opens and offers the demo at every size that `orrery` has;
 - an edit opened far out and saved unchanged keeps every coefficient and its radius to the bit;
-- a wheel over the selection menu zooms the view about the pick, as on the page.
+- a wheel over the selection menu zooms the view about the pick, as on the page;
+- a hide or a delete of two picked objects takes one step of undo, as on the page;
+- typed values past the bounds of the view section land inside them, as on the page;
+- hover follows an ease under a still pointer, and drops while a held key moves the camera.
 
-**An absent face is a finding, and never an abort.** Dear ImGui asserts inside `AddFontFromFileTTF`
-where it cannot open a path, and an assertion is SIGABRT rather than a report. `faceAt` resolves
-each face to empty where the file is not there. It says which face is missing, which variable names
-it, and which verb fetches it. The interface draws in what is left.
+**An absent font face is a finding, and never an abort.** Dear ImGui asserts inside
+`AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a report.
+`fontFaceAt` resolves each font face to empty where the file is not there. It says which font face
+is missing, which variable names it, and which verb fetches it. The interface draws in what is left.
 
-Locations come from the environment first, with one `PGA_FONT…` name for each face, and fall back to
-the faces that this build ships. `driven` drives the case by a run of `--drive-keys` with `PGA_FONT`
-naming a path that no machine carries.
+Locations come from the environment first, with one `PGA_FONT…` name for each font face, and fall
+back to the font faces that this build ships. `driven` drives the case by a run of `--drive-keys`
+with `PGA_FONT` naming a path that no machine carries.
 
-**This half ships the faces that it draws with** (Article X.8; repository issue 93).
-`DIRECTORY_FACES` is relative to the binary through `getAppDir()`, so no source names the layout of
-any machine. The faces come from the release repository of the Noto project. A tag and a digest pin
-each family, because the families move on their own: `NotoSans-v2.013`, `NotoSansMath-v2.539` and
-`NotoSansSymbols2-v2.006`. A read of each `cmap` against the ranges that `gui_shim.cpp` declares
-gives the coverage: math holds 1,773 of the 1,952 wanted. The faces cost about 2.5 MB fetched into
-`build/fonts`, because `stb_truetype` reads uncompressed faces.
+**This half ships the font faces that it draws with** (Article X.8; repository issue 93).
+`DIRECTORY_FONT_FACES` is relative to the binary through `getAppDir()`, so no source names the
+layout of any machine. The font faces come from the release repository of the Noto project. A tag
+and a digest pin each family, because the families move on their own: `NotoSans-v2.013`,
+`NotoSansMath-v2.539` and `NotoSansSymbols2-v2.006`. A read of each `cmap` against the ranges that
+`gui_shim.cpp` declares gives the coverage: math holds 1,773 of the 1,952 wanted. The font faces
+cost about 2.5 MB fetched into `build/fonts`, because `stb_truetype` reads uncompressed font faces.
 
-**Every codepoint that the build writes is asked of the face that sets it** (Article X.8).
-`shown.codepointsShown` gathers the text from where it is composed, for `--drive-faces` and for the
-page alike. That is the wording catalogue, help, the notation of each operation, the basis names,
-the wheel and the units. It adds printable ASCII, since a reader names objects in it. `gui.hasGlyph`
-loads each codepoint through the face of each role, as drawing does, and reports each one that would
-draw as `.notdef`. The title role is asked for the panel headings alone, because nothing is merged
-into its face.
+**Every codepoint that the build writes is asked of the font face that sets it** (Article X.8).
+`shown.codepointsShown` gathers the text from where it is composed, for `--drive-font-faces` and for
+the page alike. That is the wording catalogue, help, the notation of each operation, the basis
+names, the wheel and the units. It adds printable ASCII, since a reader names objects in it.
+`gui.hasGlyph` loads each codepoint through the font face of each role, as drawing does, and reports
+each one that would draw as `.notdef`. The title role is asked for the panel headings alone, because
+nothing is merged into its font face.
 
 **Merge order is precedence, and the range lists bind only the legacy path.** From Dear ImGui 1.92,
 a renderer that keeps textures of its own loads each glyph on demand. It takes the glyph from the
-first merged face whose `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`). So the
-check does not read each `cmap` against the range lists, which asks what drawing does not ask.
+first merged font face whose `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`). So
+the check does not read each `cmap` against the range lists, which asks what drawing does not ask.
 
-**The mono role merges the interface face last.** Commit Mono, Noto Sans Math and Noto Sans Symbols
-2 carry no glyph for `ˍ` (U+02CD) or `˷` (U+02F7). Those are the postfix accents of left complement
-and antireverse, and Noto Sans carries both. It comes last, so it supplies only what the three faces
-before it lack. The cost is that its two accents are proportional in a mono line.
+**The mono role merges the interface font face last.** Commit Mono, Noto Sans Math and Noto Sans
+Symbols 2 carry no glyph for `ˍ` (U+02CD) or `˷` (U+02F7). Those are the postfix accents of left
+complement and antireverse, and Noto Sans carries both. It comes last, so it supplies only what the
+three font faces before it lack. The cost is that its two accents are proportional in a mono line.
 
 **A scripted run keeps its own clock.** Each frame drawn advances it by `SECONDS_FRAME_DRIVEN`,
 1/120 s, one frame at the least workable rate (Diagnostics). The opening scene is born at zero.
@@ -1062,10 +1171,10 @@ rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0094, elevation
 `FAIL  a drag from one object onto another opens its choice menu`, and the verb names
 `drive-drag`, with exit 1.
 
-Verified by a run, 2026-10-02: without Noto Sans merged into the mono role, `--drive-faces` reports
-`FAIL every codepoint the Mono face sets has a glyph` with `missing U+02CD, U+02F7`. With it, all
-four roles pass. Verified by a read of each face's `cmap`, 2026-10-02, with a scratch reader: Noto
-Sans holds both codepoints, and the other three faces hold neither.
+Verified by a run, 2026-10-02: without Noto Sans merged into the mono role, `--drive-font-faces`
+reports `FAIL every codepoint the Mono font face sets has a glyph` with `missing U+02CD, U+02F7`.
+With it, all four roles pass. Verified by a read of each font face's `cmap`, 2026-10-02, with a
+scratch reader. Noto Sans holds both codepoints, and the other three font faces hold neither.
 
 Verified by looking, 2026-10-02, at the operations tab that this command draws. Both accents draw as
 `�` without the merge, and as accents with it:
@@ -1109,6 +1218,25 @@ and not what is drawn.
 Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by a
 render: the curve of the page and the plot of the window, before and after, in the pull request.
 
+**Each row of the breakdown of the page shows two figures, a short mean and a settled figure.** The
+short mean covers the last 200 ms, and is what to watch while something changes. The settled figure
+stands in brackets, and is the median of the whole ring, which one slow frame does not move. The
+desktop shows no such rows.
+
+**Where the clock of the page steps 1 ms or more, the settled figure is the mean of the ring.** A
+phase under one step reads 0 in most frames, so the median of those frames reads 0. The mean stays
+fair, because a step falls inside the phase in the share of frames that the phase fills. The page
+reads its step once, on load, and a note above the rows then says why once (repository issue 724).
+The clock of Firefox 158 steps 1 ms, and that of Chromium 0.1 ms.
+
+Rejected: the mean on every browser, which loses the resistance of the median to one slow frame
+where the clock is fine enough.
+
+*Checked.* Verified by driven check, on a page whose clock is cut to whole milliseconds before its
+scripts run. No row that ran this window reads 0.00 in brackets, and the note shows. Without the
+rule, the page fails that check, with 6 of 10 such rows at 0.00. On the real clock of Chromium, the
+brackets keep the median, and no note shows.
+
 ## PGA share
 
 **The diagnostics show the PGA share, and the share of each side of the algebra boundary.** A
@@ -1137,8 +1265,8 @@ samples count. A wait for vsync, or a sample with no page script on its stack, h
 Nim.** `sampler.nim` arms `timer_create` on `CLOCK_THREAD_CPUTIME_ID`, at 250 samples each busy
 second. The handler allocates nothing. It walks out from the innermost frame to the first that
 `share.ownerOfPath` names a side for, and adds one atomically. This runs on Linux alone, in a build
-that keeps stack frames, and elsewhere the rows say why. Rejected: the own profiler of Nim, which
-read 30 to 41% against 26% and made the frame 2.2 times slower.
+that keeps stack frames, and elsewhere the section says why once. Rejected: the own profiler of Nim,
+which read 30 to 41% against 26% and made the frame 2.2 times slower.
 
 **The walk of the frames of Nim reads low against native unwinding.** A sample that lands in the
 push or pop of a small library proc, such as `[]`, misses its frame. On the same samples the walk
@@ -1148,9 +1276,12 @@ measurement found, at 4.515 against 4.506 ms and 4.250 against 4.232 ms for each
 
 **The page samples with the own profiler of the browser, where the browser allows it.** Chromium
 alone has one, and only on a page whose own response carries `Document-Policy: js-profiling`. A page
-opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The rows then say
-why, and give no figure. The profiler gives no interval under 10 ms. Each window of 2 s stops and
-hands in its trace, and the next starts at once, at a cost of 0.2 to 0.3 ms.
+opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The section then
+says why once, in place of its four shares, as the desktop does. Rejected: the reason in each of the
+four rows, where it wrapped into the name of the row.
+
+The profiler gives no interval under 10 ms. Each window of 2 s stops and hands in its trace, and the
+next starts at once, at a cost of 0.2 to 0.3 ms.
 
 **The two front-ends read different shares, because their busy time holds different work.** The busy
 time of the desktop holds the layout of its panel and the submission of its draws. The page leaves
@@ -1178,8 +1309,8 @@ With a read for each product, the share read 44 to 59% in 12 runs on 2026-10-22,
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
 sampler counts a loop of products as PGA's, at 82 to 94% of about 100 samples. Verified by driven
-check: the page from a file says why it cannot sample, and the served page agrees with the engine on
-each side. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
+check: the page from a file says why once, and the served page agrees with the engine on each side.
+Verified on 2026-10-06, at `295bafc`, by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
 --timings --frames:300 --demo:5038`: the desktop figures above.
 
 ## Values crossing the boundary
@@ -1206,9 +1337,9 @@ that `objects` hands out. Nor are the coordinates that `camera` reads for its be
 that `framing` and `picking` read. `camera` reads its carried direction through
 `boundary.directionFrom`, so that crossing counts.
 
-**The arrow of each label comes from the maths face, so the label sets its own line height.** The
-line box of that face stands taller than the box of the text face. With the line height of the text
-face, the two crossing rows stand 5 px above the others.
+**The arrow of each label comes from the maths font face, so the label sets its own line height.**
+The line box of that font face stands taller than the box of the text font face. With the line
+height of the text font face, the two crossing rows stand 5 px above the others.
 
 | Front-end and scene | `euclidean → algebra` | `algebra → euclidean` |
 |---------------------|-----------------------|-----------------------|
@@ -1389,6 +1520,8 @@ Verified by driven check:
 - a still camera over a still scene builds its whole records on every frame;
 - every edit reaches the canvas, and the frame after an undo draws the scene that it restored;
 - a still frame under the largest demo copies fewer values of its own than the scene has objects;
+- a still frame under the largest demo builds fewer multivectors of its own than the scene has
+  objects;
 - each frame build of the page lifts the motor once, still and while a drag orbits;
 - one frame of the page classifies each live object once, in each state that it counts.
 
@@ -1420,11 +1553,11 @@ clock of the page resolves. With every walk run to capacity, the still frame rea
 0.7 ms, as the build that walks to `bound` does. So no speed check can hold that fault.
 
 **`Scene.revision` counts the edits, and every writer sits inside `scene.nim`.** No geometry
-accessor returns a `var`, which would let a caller write with nothing recorded. Undo, redo, clear
-and every load replace the whole scene through `restoreFrom`. That call issues a revision **newer
-than every revision it ever handed out**, which is `max(live, snapshot) + 1`. Rejected: the count of
-the snapshot plus one, which a state between the two already wore. A reader keyed on it then takes
-the new scene for one that it read.
+accessor returns a `var` or a location, which would let a caller write with nothing recorded
+(Algebra boundary). Undo, redo, clear and every load replace the whole scene through `restoreFrom`.
+That call issues a revision **newer than every revision it ever handed out**, which is
+`max(live, snapshot) + 1`. Rejected: the count of the snapshot plus one, which a state between the
+two already wore. A reader keyed on it then takes the new scene for one that it read.
 
 **A placement falls out of date one handle at a time.** `Scene.revisions_placing` stamps each handle
 at the edit that last changed it, and `restoreFrom` stamps every live handle of the snapshot. Every
@@ -1554,9 +1687,9 @@ deuteranopia. So `Cobalt` is derived lighter and bluer (`#5b90c7`), which reopen
 yellow-green at CVD ΔE 0.4, and two blues at normal-vision ΔE 5.6. The axis hues flank the reserved
 arc on both sides, and leave one warm arc and one cool arc, 162° in total. Five hues are what fits.
 
-**A structural slot is never offered as the colour of an object.** `mesh` names the boundary once,
+**A structural ink is never offered as the colour of an object.** `mesh` names the boundary once,
 in `INK_CATEGORICAL_FIRST`, `COUNT_INK_CATEGORICAL`, `inkCategorical` and `categoricalIndex`, and
-both pickers and `inkCycled` derive from it. The structural slots are declared first and the
+both pickers and `inkCycled` derive from it. The structural inks are declared first and the
 categorical run last, so the run is one block, which a `static: doAssert` on the count holds.
 
 The floors below were derived under the `check_palette` of the prototype, which measured them on
@@ -1615,10 +1748,10 @@ weight, so that sign survives. `depthAgainst` is linear in its point. A meet pas
 therefore reports its depth **negated** on every plane met from behind its normal. Such a plane
 picks at 0 of 462 sampled pixels, while the ground plane hides the fault.
 
-**Line.** Two segments meet on the line at its support, and each runs out to one of the two
-vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is a property of the
-*eye*, which forces this shape. An end anchored at a fixed reach from the support stops short of it,
-by about 6.7° for a support 40 units out.
+**Line.** Two segments meet on the line at its point nearest the pivot. Each runs out to one of the
+two vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is a property of
+the *eye*, which forces this shape. An end anchored at a fixed reach from the support stops short of
+it, by about 6.7° for a support 40 units out.
 
 Each segment lies in the plane through the eye that contains the line. The pair therefore draws over
 the true projection of the line, within 1e-16 of screen skew. That skew holds only while the
@@ -1626,6 +1759,13 @@ near-plane crossing is stepped from the end that it stands nearer (Records and s
 from the far end, the two halves part on screen. The far ends sit off the line along the view ray,
 so occlusion is approximate there. `picking` tests both halves through `clipToEyeSide`, a near-plane
 clip written by hand, because this reach puts an endpoint behind the eye.
+
+**The halves meet where the line passes nearest the pivot, and not at its support.** The image is
+the same from any point of the line, so the point only sets what a float32 record holds.
+`DrawScale.pivot` carries the pivot about the view origin, and `picking` and `isLineShownCentrally`
+test the same halves. Rejected: the support, which a line picked far off has 4.7e6 units behind the
+eye. A record stepped from there loses the line where it passes the eye, 1e-8 off. On the page that
+line then ran about 30° off its own image.
 
 **Horizon objects are drawn as sky.** A horizon point is a fixed star at `eye +
 radius_horizon*heading`. A horizon line is a great circle about the eye. A horizon plane is a
@@ -1793,8 +1933,8 @@ the camera stands, and holds where the eye is and which way it faces together. `
 how far along the sight line the pivot stands. Everything else is read back: the eye, the three
 axes, the pivot, and both orbit angles. A value stored beside the stance can go stale against it.
 
-The dolly slides the eye and names the new separation, and the pivot follows. So `repivotToDepth` is
-one assignment, and `travelToward` needs no pivot arithmetic.
+The dolly slides the eye and names the new distance to the pivot, and the pivot follows. So
+`repivotToDepth` is one assignment, and `travelToward` needs no pivot arithmetic.
 
 The reference stance puts the eye at the world origin, with `RIGHT_REFERENCE` at +y, `UP_REFERENCE`
 at +z and `FORWARD_REFERENCE` at −x. Rejected: the reference triple of OpenGL, which puts a fixed
@@ -1811,9 +1951,9 @@ motions, and the first two turn about lines through the reference eye, so neithe
 The heading is the difference of the two points, and its rise and bearing are read out of its inner
 products with the reference axes. The stance is level, with its across axis horizontal. A heading
 along world up has no bearing and turns by none, so the frame stays orthonormal, and nothing clamps.
-`stanceFacing` adds the separation, which is `distanceBetween` the two points. Rejected: a stance
-named by pivot, distance, azimuth and elevation, which carries no roll and collapses at the pole. It
-needs a clamp, `ELEVATION_LIMIT`, that the motor never needs.
+`stanceFacing` adds the distance to the pivot, which is `distanceBetween` the two points. Rejected:
+a stance named by pivot, distance, azimuth and elevation, which carries no roll and collapses at the
+pole. It needs a clamp, `ELEVATION_LIMIT`, that the motor never needs.
 
 **The azimuth reads back in (−π, π].** It comes off the sight direction through `arctan2`, which
 bounds it, and the reading of the panel wraps there too. The ease drives from stored stances rather
@@ -1837,12 +1977,18 @@ object cost what the three of a `Position` cost. `boundary.nim` lifts them where
 once for each frame, not for each object. `picking.pickWalk` derives the eye and frame before its
 walk, and `drawExtentFor` hands every reader one extent, as `mesh.directionAcross` does.
 
-**Each frame reads the eye and frame once, and hands both to every reader.** Each front-end calls
-`moveOriginView` after the ease moves the camera. It moves the view origin to the eye, and reads the
-eye and frame about it off the same lift (Origins). It hands both to the near reach, the extent, the
-frustum and the transform, because each read of `eye` or `frame` lifts the motor again. A hold of
-the aim can move the camera, so a front-end reads again only where the motor moved. Rejected: the
-first read for the transform too, which draws where the camera stood before the hold.
+**Each frame reads the eye and frame once, and again only where the hold moves the camera.** Each
+front-end calls `moveOriginView` after the ease moves the camera. It moves the view origin to the
+eye, and reads the eye and frame about it off the same lift (Origins). It hands both to the near
+reach and the extent, which the aim reads, because each read of `eye` or `frame` lifts the motor
+again. A hold of the aim can move the camera, so a front-end reads again only where the motor moved.
+The frustum and the transform read that second read, so a frame culls and draws from one stance.
+
+The frustum takes the field of view and the height from the extent, and no hold moves either. Its
+near and far depths read the local scale that the near reach of the first read sets. Rejected: the
+first read for the frustum or the transform. It is the stance that the gesture asks for, before a
+hold of the aim moves the camera. Points at the edge of the frame then go out while two fingers
+spread at the floor of the frame rule (Framing). They come back when the fingers stop.
 
 **The overlay shares its extent within a frame by what the camera holds, and never by what it reads
 out.** The browser's `SettingsOverlay` takes the view origin, the motor and the depth. Those are the
@@ -1853,13 +1999,24 @@ eighteen sandwiches to decide whether to skip four. `drivePinAnchor` allows an a
 
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻¹³ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
-`distanceHeld` is the one statement of it.
+`distanceHeld` is the one statement of it. Both distance fields write through it, so a typed zero or
+less lands on the near limit. A field left empty changes nothing on either. Dear ImGui keeps the
+value of a typed entry left empty, and the page does the same, so the two front-ends stay in sync.
 
 It is tiny rather than small: 1.5 cm, so an object a metre wide fills the frame. The stance, the
 records and the transform are held about the view origin, near the eye. So doubles and float32 hold
 that close-up wherever the eye stands (Origins). The near clip is a four-hundredth of the local
 scale, and the logarithmic depth spans it out to a far bound millions of units off. There is no
 ceiling, which would read as a camera bounded to a region, and which nothing downstream needs.
+
+**The field of view is held inside 10 to 120 degrees.** `fieldOfViewHeld` holds
+`DEGREES_FIELD_OF_VIEW_LEAST` and `DEGREES_FIELD_OF_VIEW_MOST`, and both fields write through it,
+typed or dragged. Rejected: bounds on the widget alone, which a typed entry passes in Dear ImGui.
+
+Verified by `--drive-fields` and the page's `driveFieldsHeld`, 2026-10-22. A field of view of 200
+read 120, and 1 read 10. A distance of 0 or -5 read 10⁻¹³, the near limit, and an empty field kept
+a typed 7. On the code of `main` at `85ccefc1`, the page took 200 and 1 as typed, and read 0 and an
+empty field as 0.1. The desktop took a typed 200 too.
 
 **One transform serves the GPU, the picks and markers, about the view origin.** Its translation is
 the remainder of the eye about that origin, under half a world step. `Matrix4` stays in doubles,
@@ -1884,8 +2041,8 @@ field on the camera is dropped by `home`, and by every path that replaces the ca
 
 **Depth is logarithmic, and written for each fragment.** Every fragment shader on both front-ends
 writes `camera.depthClip` of its own view depth, which is `log2(D / near) / log2(far / near)` scaled
-to clip depth. It writes through `EXT_frag_depth` or through the `gl_FragDepth` of GL 3.3, so
-resolution is a fixed fraction of distance at every distance.
+to clip depth. It writes through the `gl_FragDepth` of WebGL2 and of GL 3.3, or through
+`EXT_frag_depth` on WebGL1. So resolution is a fixed fraction of distance at every distance.
 
 Rejected: linear depth with the near plane raised to hold the ratio at 100,000, which spends nearly
 every step inside the first orbit distances. An Android GPU then dropped the whole star field from
@@ -1907,15 +2064,15 @@ Only the changed coefficient is written into the live motor. On the desktop, eac
 double, and never rounds to the four digits that it shows.
 
 Azimuth and elevation stand beside it as readings in degrees, and are never typed, because two
-numbers name no roll. The separation shows only with a selection, which the frame rule measures it
-from. The speed of the ship shows only without one, as a multiple of `SPEED_LIGHT`
+numbers name no roll. The distance to the pivot shows only with a selection, which the frame rule
+measures it from. The speed of the ship shows only without one, as a multiple of `SPEED_LIGHT`
 (`interaction.speedFlying`), whether a key is held or not.
 
 *Checked.* Verified by `suites.nim`:
 
 - a stance named by eye and pivot stands at the eye, faces the pivot, and is level and orthonormal.
   That holds over 416 stances, from 26 directions and over five decades, both poles among them;
-- 2,000 orbit steps land where their sum says, and the pivot, separation and level horizon survive;
+- 2,000 orbit steps land where their sum says, and keep the pivot, its distance and level horizon;
 - the eight floats and the multivector say one motion, which reads unit;
 - the logarithmic depth maps near to −1 and far to +1;
 - it is monotone across every decade that the demo spans;
@@ -1940,32 +2097,86 @@ Verified by driven checks:
 - an anchor lookup takes 3.750 µs, against 488.250 µs keyed on the read-out pivot and angles;
 - the view section shows sixteen coefficients, and a typed one settles on a unit motor;
 - it reads speed with nothing selected, and distance with a selection;
-- each frame build of the page lifts the motor once, still or orbiting, against 11 on `4a478976`.
+- each frame build of the page lifts the motor once, still or orbiting, against 11 on `4a478976`;
+- each frame that a hold moves draws the points, on screen, that a second build at that moment
+  draws. The holds are the frame floor, by fingers and by key, the bound of a sky point and the
+  fill of a point. On `674b910c`, 18 of 72 frames break it at the floor by fingers, and all but 13
+  at the bound of a sky point. The floor by key and the fill hold there too (`driveCullHeld`).
+
+Verified on 2026-10-24 by a harness that is not kept, in Chromium under SwiftShader. With the near
+reach and the extent derived after the hold too, each frame of a spread at the floor draws 327
+points. So does the fix.
 
 Verified by a probe in Chromium under SwiftShader on 2026-10-04, on an Intel Xeon at 2.10 GHz,
 against `4a478976`. Over 80 frames, the records and the transform that each frame hands the GPU
-match in both builds, bit for bit. Assumed: that no reader wants a ceiling on the separation.
+match in both builds, bit for bit. Assumed: that no reader wants the distance to the pivot capped.
 Assumed: that the desktop hands its five readers one read of the stance, which no check counts.
 
 ## Zoom
 
-**In free flight, the wheel zooms toward the object the pointer is over**, which is the map reading
-of a zoom. `picking.anchorZoomAt` answers that object alone, at any depth, since the wheel refers to
-the object under the pointer. Where none answers, the wheel does nothing, since it has nothing to
-come in to (repository issue 535). A pinch is no zoom of its own: its two fingers hold what each
-touched (Two fingers). Rejected: the ground at `z = 0`, which the world does not have, and the level
-through the pivot, which names no place a reader points at.
+**In free flight, the wheel zooms toward the object nearest the eye within a fingertip's reach of
+the pointer** (repository issue 745). That is the map reading of a zoom. Objects that crowd one spot
+on the screen part as the eye comes in, so the nearest is the one a reader reaches first.
+`picking.anchorZoomAt` asks the pick for `Rank.Eye` (Picking). Where none answers, the wheel does
+nothing, since it has nothing to come in to (repository issue 535). A pinch is no zoom of its own:
+its two fingers hold what each touched, by the same rank over a wider reach (Two fingers).
+
+**The object answers at any depth, because the solar system is not special** (repository issue
+745). Where only far stars stand within reach, the reader most likely means one of them, so the zoom
+comes in toward the nearest. At (1020, 180) from home, that is a star 2.04 million units out, 67 px
+off the pointer. Rejected: a limit of twice the nearest drawn depth ahead, under which a zoom toward
+Sol stopped 4.96 units from it. The nearest drawn object anywhere in the frame set that limit, and a
+zoom in also locked the wheel. Rejected: a limit of twice the distance to the pivot, under which no
+star answers after key flight far out until a click selects one.
+
+**A zoom out takes that object only within twice the reach of the point that the last zoom took**
+(`interaction.dollyAt`, D1 of #846). Past it, the zoom out holds that reach on the pointer's ray. So
+the eye backs off by a notch of what the reader looked at. A zoom in still comes to a far star, so
+in and then out returns. The camera keeps the point (`camera.pointTaken`). A zoom sets it to what it
+took, placing the camera sets it to the pivot, and flight, turns and pans leave it.
+
+Verified by the probe of #846 on 2026-11-14, which is not kept, at 117 spots of 1200 by 900. Each
+cell is the median scale of the eye's distance to the pivot of home, where a notch asks 1.12:
+
+| Rule | One notch from home | Ten notches, which ask 3.11 | One notch after a flight out |
+| --- | --- | --- | --- |
+| a. Any depth, rejected. | 7,673. | 21,276. | 879. |
+| b. The distance to the pivot, rejected. | 1.121. | 3.19. | 1.011. |
+| d. The local scale, rejected. | 1.105. | 1.57. | 1.033. |
+| e. The point that the last zoom took. | 1.121. | 3.34. | 1.121. |
+
+Rejected: a cap at twice the distance to the pivot, under which ten notches end over 30 times out
+at 4 of 117 spots. Verified by the comparison mockup, run by the Architect with a mouse and on a
+phone. Option e alone scaled as asked or returned in each of five scenarios.
+
+Rejected: the object nearest the pointer, as a click takes it. At home in the largest demo, a star
+4.26 million units out stands 30 px from the middle, and Sol 53 px. Six wheel events of 400 px
+there left the eye 280,656 from the pivot, with 1 point drawn. Rejected: the 34 px of a click as the
+reach, inside which that star stands alone. Rejected: the ground at `z = 0`, which the world does
+not have, and the level through the pivot, which names no place a reader points at.
+
+**At about one depth, a point beats a line and a line beats a plane**, as in a click
+(`picking.FACTOR_DEPTH_PLACE`). The nearest depth in reach names a place, and every object within
+twice that depth stands at it. A line through a planet stands at the place of the planet, and never
+parts from it as the eye comes in. Beside Earth, such a line passes nearest the ray of a finger at
+a point 4% nearer the eye than Earth.
+
+Rejected: depth alone, under which each finger about Earth took a line through it. The floor of
+that line then held the pinch 0.08 units off Earth (Free flight). Rejected: the rank of a click over
+the whole reach, under which a far star in reach beats a near line. Assumed: that twice the depth
+bounds one place. Beside Earth the line stands 4% nearer, and in the cases measured each far star
+stands over 100,000 times deeper.
 
 **One notch zooms the same on both front-ends** (`interaction.factorWheel`). Each notch scales the
-separation by `FACTOR_DOLLY_NOTCH` 1.12. The desktop reads whole notches from SDL. The page counts
-`PIXELS_NOTCH` 100 px, or `LINES_NOTCH` 3 lines, as one notch (`bridge.nimNotchesWheel`). Both
-counts are expected and not measured, since no real wheel reaches this container.
+distance to the pivot by `FACTOR_DOLLY_NOTCH` 1.12. The desktop reads whole notches from SDL. The
+page counts `PIXELS_NOTCH` 100 px, or `LINES_NOTCH` 3 lines, as one notch
+(`bridge.nimNotchesWheel`). Both counts are assumed, since no real wheel reaches this container.
 
 Rejected: a rate of its own on the page, `exp(0.0012 × travel)`, which drifted from the desktop by
-2% over three notches. Verified by driven check: three notches of 100 px scale the separation by
-0.711780248 on the page, and the desktop's `--drive-wheel` holds the same rule. Three lines scale
-the page as one notch does. Verified by `suites.nim`: notches compose, so a frame that sums them
-zooms as each notch would.
+2% over three notches. Verified by driven check: three notches of 100 px scale the distance to the
+pivot by 0.711780248 on the page. The desktop's `--drive-wheel` holds the same rule. Three lines
+scale the page as one notch does. Verified by `suites.nim`: notches compose, so a frame that sums
+them zooms as each notch would.
 
 **With a selection, the wheel dollies about the pivot, wherever the pointer stands**
 (`interaction.dollyAbout`). The pivot stands on what is picked, so the orbit stays on it however far
@@ -1974,12 +2185,13 @@ own line to that object. The sight then leaves what is picked.
 
 **With a selection, an object counts only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the
 orbit distance, either way.** The band holds for the floor of the wheel, and for what two fingers
-hold. Horizon objects are refused, because they are at no place. Free flight takes no band, because
-key flight keeps the separation, so a band about it would refuse every object after a flight.
+hold. Horizon objects are refused, because they are at no place. Free flight's zoom in takes no
+band. Key flight carries the pivot along, so a band about it would refuse every object after a
+flight. Its zoom out reads the point that the last zoom took instead, which flight leaves.
 
 **The zoom stops where a point fills the frame**, because nearer shows nothing more of it. There its
 sphere reaches every corner, and the point is backdrop (Picking). `picking.depthFilling` solves that
-depth, as the inverse of `isCoveringView`. Free flight floors at the point under the pointer, and a
+depth, as the inverse of `isCoveringView`. Free flight floors at the point it comes in to, and a
 selection at the point in the middle of the frame (`AnchorZoom.floor_reach`). `framing.holdFilled`
 holds the fill for a point picked alone under every other move: a drag, a key and a pinch.
 
@@ -2005,12 +2217,29 @@ floor on flight at the fill of the point ahead, which stops it at each point of 
 - 10 notches in, 20 out and 10 in again bring the distance back to where it began;
 - in free flight, 40 notches onto a point off the middle stop at its fill, with the point 0.5 px or
   less from the pointer;
-- a point picked alone is held at the fill from half of it, and left where it stands from 19.
+- with nothing selected, the zoom at the middle of the home view of the largest demo takes Sol, 19.3
+  deep. With the rank of a click, its anchor stands 4,259,970 deep;
+- at (1020, 180) from home, the zoom takes the star 2.04 million units out, where the rank of a
+  click takes none;
+- a point 50 px off and 10 deep beats a star 10 px off and 1000 deep, which a click takes. A disc
+  under the pointer beats both, and a point 100 px off gives no anchor;
+- a point beats a line through it whose part under the pointer stands 1 unit nearer, at depth 9
+  against 10. A line 10 deep beats a star 1000 deep;
+- a point picked alone is held at the fill from half of it, and left where it stands from 19;
+- with nothing selected, a notch out over a far star 2 million deep scales the eye's distance to
+  the point held by 1.12;
+- flown 190 back, a notch out over that star holds 209 on its ray, and three in and out return;
+- a pinch in over two far stars backs the eye off between 1.5 and 3 times.
 
 Verified by driven checks:
 
 - an object under the pointer drifts 0.000 px across a 3.2× zoom, against 1.957 px with the
   pivot-level anchor;
+- from home with nothing selected, six wheel events of 400 px at the middle carry the target 0.9
+  units. They leave 318 points drawn, with the eye 1.3 from the pivot. With the rank of a click, the
+  target goes 4,261,387 units out, with 1 point drawn and the eye 280,656 from the pivot;
+- six wheel events of 400 px at (1020, 180) from home bring the eye 15.18 times nearer the star
+  beside the pointer. It stood 2.23 million units off, and with the rank of a click the eye stays;
 - a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - 40 notches onto a point picked alone stop at a depth of 0.115882196, against a fill of 0.115882251
   read through float32. Ten more notches move the eye 0;
@@ -2040,13 +2269,13 @@ speed times `1 − e^(−t/τ)`, where τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 per
 
 **The speed of the ship is the camera's own** (repository issue 535). `Interaction.speed_ship` is
 the speed that key flight climbs toward, and neither the pointer nor the pivot sets it. It opens at
-`camera.speedOpening`, the separation of the opening view for each second: 19 units on a wide frame.
-`home` leaves it, as it leaves the lens. Held `+` and `-` scale it by `FACTOR_DOLLY_SECOND`, 4 for
-each second, and nothing moves while they do. With a selection, they dolly instead.
+`camera.speedOpening`, the opening view's distance to the pivot for each second: 19 units on a wide
+frame. `home` leaves it, as it leaves the lens. Held `+` and `-` scale it by `FACTOR_DOLLY_SECOND`,
+4 for each second, and nothing moves while they do. With a selection, they dolly instead.
 
-Rejected: a cap of 1.2 depths under the pointer, with the separation over empty sky. It ran down
-toward zero as flight spent the separation. Rejected: a speed read from the nearest object, because
-a ship needs no other object to move.
+Rejected: a cap of 1.2 depths under the pointer, with the distance to the pivot over empty sky. It
+ran down toward zero as flight spent that distance. Rejected: a speed read from the nearest object,
+because a ship needs no other object to move.
 
 `SPEED_CEILING` is 300 000 units for each second, which crosses the reach of the star field, about
 6.5 million units, in about 22 seconds. `SPEED_FLOOR` is the near floor for each second, which keeps
@@ -2065,13 +2294,14 @@ and pressing `s` keeps the speed up, as a reader means by turning round mid-flig
 zeroes it once the last travel key is up, so a flight resumed after a pause starts from rest.
 
 **Flight carries the pivot along, in every direction.** `travel` slides the whole camera, so the
-separation stays as it was. Rejected: flight ahead that holds the pivot and spends the separation,
+distance to the pivot stays as it was. It leaves the point that the last zoom took, which a zoom out
+reads (Zoom). Rejected: flight ahead that holds the pivot and spends the distance to the pivot,
 which only runs the speed down.
 
-**The frustum and the furniture read what stands ahead, not the separation.** `Camera.reach_near` is
-the reach from the eye to the nearest drawn object ahead. `scaleLocal` hands it to the near clip,
-the far clip, the depth mapping and the furniture's extent. So flying at a planet draws its near
-clip in. The separation answers only where nothing is drawn ahead, as in an empty scene.
+**The frustum and the furniture read what stands ahead, not the distance to the pivot.**
+`Camera.reach_near` is the reach from the eye to the nearest drawn object ahead. `scaleLocal` hands
+it to the near clip, the far clip, the depth mapping and the furniture's extent. So flying at a
+planet draws its near clip in. The distance to the pivot answers only where nothing is drawn ahead.
 
 It is depth along the sight, and never distance, because what a reader turns away from is not drawn.
 It is the middle of the object, with no drawn radius taken off. A camera at the surface of a planet
@@ -2079,16 +2309,25 @@ then reads its radius rather than zero. A near clip of one four-hundredth of tha
 whole planet. It is never the depth of the pointer, which would move the furniture and the depth
 mapping at every pointer move of a still camera.
 
+**A line stands where it passes nearest the pivot**, as it is drawn (Geometry and drawing).
+`reachNear` reads that point in components, as it reads every place. Rejected: its support, the
+point nearest the world origin. A line picked far off has it 4.7e6 units behind the eye. The next
+object ahead then sets the near clip at 21.3 units, and cuts away the line 2.4e-7 ahead.
+
 **It is read once for each frame, and never for each overlay call.** `reachNear` walks every
 placement of the frame, and `ensureViewOverlay` runs many times over one frame: the anchor, each
 marker, each pulse and the hover ring. An overlay call between frames reads the figure of the last
 frame, as it reads the reach of the scene that frame measured.
 
-**The wheel in free flight comes in to the object under the pointer, and does nothing without one**
-(Zoom). `travelToward` carries the eye along its line to that object and holds it on its pixel. The
-floor is the drawn radius of the object, so a run of notches stops at its surface. The floor of a
-point is where its sphere fills the frame. Rejected: the ray of the pointer at the scale of the
-separation where nothing stands there, which runs the separation down to its floor.
+**The wheel in free flight comes in to the object it takes about the pointer, and does nothing
+without one** (Zoom). `travelToward` carries the eye along its line to that object and holds it on
+its pixel. The floor of a point is where its sphere fills the frame. A line and a plane have no
+floor, because only a point is drawn at its radius. Rejected: the ray of the pointer at the distance
+to the pivot where nothing stands there. It runs that distance down to its floor.
+
+Rejected: the radius as the floor of a line or a plane, 0.08 where nothing chose one. A line is
+drawn at a fixed width in pixels, and a plane at a fixed extent. The two lines through Earth then
+held a pinch 0.08 units off it, and a wheel stopped 0.08 off any line or plane.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2100,16 +2339,18 @@ separation where nothing stands there, which runs the separation down to its flo
 - the speed is monotone and under its cap over 4 s, at 0.6321 and 0.9502 of it after one and three
   τ;
 - 120 frames of one span cover what one frame of it covers, at three spans;
-- flight steps at the ship's speed, whatever the pointer is over, at any separation;
+- flight steps at the ship's speed, whatever the pointer is over, at any distance to the pivot;
 - after its climb, a long flight at 19 covers 190.000 units in each 10 s span, and never stalls;
 - `+` and `-` scale the ship's speed by 4 a second, in bounds, and dolly with a selection;
-- the ship opens at the separation of the opening view, and `home` leaves its speed;
-- a held `w` with nothing selected lies along the sight, and keeps the separation;
-- a strafe leaves that separation alone;
-- the wheel over empty sky with nothing selected does nothing over 200 notches, and a spread of two
-  fingers there keeps the separation;
-- free flight's wheel comes in to a point eight separations out, and the selection's dollies about
-  the pivot instead;
+- the ship opens at the distance to the pivot of the opening view, and `home` leaves its speed;
+- a held `w` with nothing selected lies along the sight, and keeps the distance to the pivot;
+- a strafe leaves that distance alone;
+- 40 notches onto a lone line, and onto a lone plane, come within 0.0008 of it, past their radius
+  of 0.08;
+- the wheel over empty sky with nothing selected does nothing over 200 notches, and two fingers
+  spread there keep the distance to the pivot;
+- free flight's wheel comes in to a point eight times as far as the pivot, and the selection's
+  dollies about the pivot instead;
 - 40 notches onto a point stop where its sphere fills the frame, with the point held on its pixel;
 - a travel toward three pixels holds what is under each within half a pixel, in and out;
 - a travel in and back out returns the eye, and a factor of 1e-15 stops at the near floor;
@@ -2120,14 +2361,14 @@ separation where nothing stands there, which runs the separation down to its flo
 Verified by driven checks, in Chromium on 2026-10-07:
 
 - 500 ms of `w` on the opening page moved the eye 3.012 units, 0.000000 across the sight line. The
-  separation stayed at 19.0000;
+  distance to the pivot stayed at 19.0000;
 - a second hold of 2 s flew 27.0067 units, as the first had;
 - held `+` and `-` took the ship's speed from 19.000 to 37.790 and back, and moved the eye 0;
 - twenty notches over empty sky, with nothing selected, moved the eye 0;
-- eight notches low in the frame carried the separation from 19.00 to 4.14. They left the eye 2.063
-  units off the sight axis, which a straight dolly cannot do;
-- the opening page reads a local scale of 14.6842, not the separation of 19.000, and 3.012 units of
-  flight drew it to 11.6727.
+- eight notches low in the frame carried the distance to the pivot from 19.00 to 4.14. They left the
+  eye 2.063 units off the sight axis, which a straight dolly cannot do;
+- the opening page reads a local scale of 14.6842, not the distance to the pivot of 19.000. Then
+  3.012 units of flight drew it to 11.6727.
 
 ## Drags
 
@@ -2175,14 +2416,15 @@ Orbit holds a point on a sphere about the pivot, since the pivot itself never mo
 `radius/sqrt(2)` of the pivot. Beyond, a sheet of the same slope carries on, so a finger off the
 sphere still turns the view. `radiusHeld` takes the reach of the selection from the pivot, which
 `reachAimed` reads off the aim that framed it. It is no less than a third of the short side at the
-depth of the pivot, and inside the separation of the eye.
+depth of the pivot, and inside the eye's distance to the pivot.
 
-**A right drag in free flight carries the depth it grabbed, one pixel for one.** `grabPan` takes
-that depth at the press, while hover still reads what the pointer is over, or the depth of the pivot
-over nothing. `panAcross` slides the camera square to the sight, by what one pixel spans at that
-depth. A point at that depth then stays under the cursor, at any canvas height and field of view.
-Rejected: a fixed share of the separation for each pixel, which matched the cursor at one canvas
-height alone. It ran 1.74 times the cursor on 900 px at 45 degrees.
+**A right drag in free flight carries the depth it grabbed, one pixel for one.** At the press,
+`grabPan` takes the depth under the pointer, or over nothing the reach of the point that the last
+zoom took. `panAcross` slides the camera square to the sight, so a point at that depth stays under
+the cursor. Rejected: a fixed share of the distance to the pivot for each pixel, which ran 1.74
+times the cursor on 900 px at 45 degrees. Rejected in D1 of #910: the pivot's depth, which key
+flight carries along, and the local scale, which a star out of view can set. Ten home distances
+back, a pan at the pivot's depth moves what the last zoom took by 0.091 of the pointer.
 
 **A right drag with a selection turns across as a left drag along the row of the pivot.** The turn
 goes first, through `turnFollowing`, for the same travel along that row. So the turn for each pixel
@@ -2209,9 +2451,9 @@ a sphere that the zoom resizes. The zoom then turns on the count of steps. On th
 130 px drag ended at 11.73 in one step and 10.98 in twelve, and taken once at 11.73 in both.
 
 A slant drag out and back returns the sight exactly, since each step turns as the row's left drag
-does. Its separation keeps a trace of dollies read at two depths: the eye ends 0.0017 off at a
-separation of 19. On the middle column the dolly moves alone, and returns exactly. Rejected: 0.006
-radians and a factor of 1.004 for each pixel, which held the point under the cursor nowhere.
+does. Its distance to the pivot keeps a trace of dollies read at two depths: the eye ends 0.0017 off
+with the pivot 19 away. On the middle column the dolly moves alone, and returns exactly. Rejected:
+0.006 radians and a factor of 1.004 for each pixel, which held the point under the cursor nowhere.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2226,7 +2468,9 @@ radians and a factor of 1.004 for each pixel, which held the point under the cur
 - a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
 - an orbit passes over the top and a look under its feet, and a drag goes through the pole;
 - a right drag carries a point held at 2.5, 19 and 4,000 units to its pixel, within 0.01 px;
-- a right drag takes the depth under the pointer, or the pivot's over nothing;
+- a right drag takes the depth under the pointer, or over nothing the reach that the last zoom took;
+- ten home distances back, a right drag over empty sky carries the point that the last zoom took to
+  its pixel, within 0.01 px;
 - a right drag with a selection turns as a left drag along the pivot's row, for the same travel. Its
   point's height scales as the pointer's does, within 0.01 px, on both sides of the row. A level
   drag zooms nothing, inside the band or outside it;
@@ -2251,12 +2495,14 @@ Verified by driven checks, in Chromium on 2026-09-26:
 - a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000.
 
 Verified by driven check, in Chromium on 2026-10-01: a right drag of 360.6 px over nothing carried
-the pivot 360.6 px at its own depth. The fixed share of separation carried it 626.7 px.
+the pivot 360.6 px at its own depth. The rejected fixed share carried it 626.7 px.
 
-Verified by driven check, in Chromium on 2026-10-02: three vertical right drags with one object
-picked turned the view 0.000000. Each held its point 0.000 px off the cursor's height. The
-separation went from 19.00 to 10.73, to 6.22, then out to 32.09. A drag down from the top, drifting
-2 to 4 px across at each of 24 steps, turned at most 0.0166 radians in one step.
+Verified by driven check, in Chromium on 2026-10-25: three vertical right drags with one object
+picked turned the view 0.000000. Each held its point 0.000 px off the cursor's height. The distance
+to the pivot went from 19.00 to 10.73, out to 55.39, then in to 32.09. The drag below the row of the
+pivot runs last, from far out. At 10.73 units the ground covers the lower half of the frame, and a
+plane short of nine tenths is a handle (Picking). A drag down from the top, drifting 2 to 4 px
+across at each of 24 steps, turned at most 0.0166 radians in one step.
 
 ## Records and shaders
 
@@ -2283,8 +2529,9 @@ cut. The drawn line stands 0.466 px off exact either way, and the written depth 
 
 **The widening runs in the vertex shader on both front-ends.** One `RibbonRecord` of fifteen floats
 crosses the wire for each segment, or sixteen with the `fog` flag, where six CPU vertices cost 42
-floats. An instanced draw expands it: GL 3.3 core on the desktop, and `ANGLE_instanced_arrays` on
-WebGL1. Each vertex derives the across as `cross(head − tail, eye − tail)`.
+floats. An instanced draw expands it: GL 3.3 core on the desktop, WebGL2 core on the page, and
+`ANGLE_instanced_arrays` on WebGL1. Each vertex derives the across as `cross(head − tail, eye −
+tail)`.
 
 **Chain of custody.** The GLSL ships, and `mesh.expandRibbon` is its reference in Nim,
 sibling-marked with both shader sources. The suite holds the reference to the algebra. The near clip
@@ -2508,6 +2755,49 @@ copy by the function that calls `nimCopy`, from the stack. Over 3 frames at 5,03
 9,639 copies of the project and 30,663 of the library, 13,434 a frame in all. With each object
 placed whole by `placeObject`, a counter that is not kept read 64,232 a frame, on 2026-10-05.
 
+**The hang of the selection menu writes its place field by field too** (Interaction model). The
+page hangs the menu on each frame that it shows, and an object built into the result of the hang
+costs one `nimCopy`. `driveMenuHungCopies` hangs a small menu and one larger than the view, from 25
+anchors past, near and between the edges of the canvas. It counts the outermost `nimCopy` calls,
+and fails at one. Rejected: a bound in `driveCopiesStill`, which passes fewer copies than the scene
+has objects. Verified by a read of the emitted code, 2026-10-24: no `nimCopy` stands in
+`pointMenuHung`.
+
+**A read of a geometry builds no multivector.** On the JavaScript backend, `geometryAt` is a
+template whose expansion ends in a `block`. Rejected: a `lent` func there, which builds its default
+result, a fresh multivector of 128 bytes, at each call. It then returns the slot of the scene over
+that result. Placing reads each live object once in a frame, so such a func builds 5,038 in each
+still frame of the largest demo, for nothing.
+
+**The `block` keeps the read a value.** A write through the template fails to compile, as a write
+through a `lent` func does, on both backends (`test_scene`). The slot alone, as the last line of
+the template, is a location that a caller could write with nothing recorded (Scene storage). On the
+C backend `geometryAt` is a `lent` func, which returns a pointer and builds nothing. Rejected: the
+template on both backends, since a `block` on C copies its value into a temporary and out.
+Rejected: `noinit` on the func, which leaves the default result built on the JavaScript backend.
+
+**A count holds the design, as it holds the copies.** `driveBuiltStill` wraps the constructor of
+`Float64Array`, and counts each array of one multivector's length over 3 still frames of the
+largest demo. The check fails at one multivector of the project's own code for each object. One
+that a function of the library builds is counted apart and reported, and never bound. That count
+above zero also shows that the wrapper saw multivectors at all.
+
+Over 3 frames at 5,038 objects the check reads 1,467 multivectors of the project and 7,605 of the
+library. On `64efd55d`, which adds the check to the page of `28c559ae`, it reads 16,581 and 7,605.
+
+Measured on 2026-10-24 on one delegate, on the real clock, by a harness that is not kept. It loads
+the largest demo at 1200 by 900 px under SwiftShader, and reads the median of `ms_place` and
+`ms_build` over about 50 frames. Three runs of `main` at `28c559ae` and of this design ran in turn,
+in ms:
+
+| Diagnostics | Placing, `main` | Placing, after | Build, `main` | Build, after |
+|-------------|-----------------|----------------|---------------|--------------|
+| Shut | 10.8 to 12.0 | 7.7 to 8.1 | 12.7 to 14.0 | 9.5 to 10.0 |
+| Open | 15.2 to 16.9 | 12.0 to 12.8 | 19.1 to 20.7 | 15.9 to 16.9 |
+
+With the diagnostics open, the page also times the placing and the emitting of each object. In each
+run here that adds 3.7 to 5.4 ms to placing, and 5.6 to 7.4 ms to the build.
+
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A sum of blades made 23 arrays for a motor, and a write
 makes one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
@@ -2574,9 +2864,17 @@ A turn and a frame build take 0.93 to 0.94 ms, against 0.86 to 0.94.
 
 Verified by `suites.nim`: placing charges the placing side on each of its seven exits, and a stretch
 that leaves early fails to build. Verified by driven check: a still frame under the largest demo
-copies fewer values than the scene has objects. Verified by a read of the emitted code on
-2026-10-04: no `nimCopy` stands in the six operators, `addRing` or `addDisc` on the JavaScript
-backend. On the C backend each operator is three field stores with no fill.
+copies fewer values than the scene has objects. It also builds fewer multivectors than the scene
+has objects. Verified by `suites.nim`: a geometry read by handle refuses a write, on both backends.
+Verified by a read of the emitted code on 2026-10-04: no `nimCopy` stands in the six operators,
+`addRing` or `addDisc` on the JavaScript backend. On the C backend each operator is three field
+stores with no fill.
+
+Verified by a read of the emitted code of the suite and of probes on 2026-10-24. On C, `geometryAt`
+returns a pointer, and a `block` copies its value into a temporary and out. On JavaScript, a `lent`
+func builds its default result, with `noinit` and without it. Verified by a probe on the same day:
+through a template that ends in the slot alone, a whole write compiles. So do a write of a field
+and a `var` argument.
 
 ## Origins
 
@@ -2642,7 +2940,7 @@ about the world origin (`stanceWorld`). So are the drive's readings of eye, pivo
 *Checked.* Verified by `suites.nim`:
 
 - an orbit 1 m and 150 m wide, 0.41, 2.1 and 4.7 million units out, holds its pivot over 2,000
-  steps. It stays within a millionth of its separation, and lands where one turn of their sum lands;
+  steps. It stays within a millionth of its distance, and lands where one turn of their sum lands;
 - 10,000 moves of 0.3 m out and 10,000 back carry the remainder over exactly. The eye goes 3 km, and
   comes back to within a millionth of a move, and to within one world step as world reads it;
 - a moved camera carries the view origin to its eye, and a still one leaves the origin and the motor
@@ -2706,7 +3004,7 @@ The horizon stands at `FRACTION_HORIZON` 0.9 of the far bound from the eye, and 
 puts it past a billion units. There a test against the bulk reads each point of the horizon as a
 direction, and the assert in `pointFrom` stops the frame loop. The anchor and the pick of a star
 build the same point, so a star past a billion units would have no place to pick. Rejected: a
-ceiling on the separation, which no reader is assumed to want (Camera).
+ceiling on the distance to the pivot, which no reader is assumed to want (Camera).
 
 **A product that a caller builds on the spot is judged against its factors**, because rounding of
 zero carries no scale of its own. `euclid.normalize` and the four direction readers of `boundary`
@@ -2813,7 +3111,7 @@ menu offers. The apply section calls it once a frame, and no path calls it for e
 - a star stays pickable from a camera 1e8 out, whose horizon stands 1.8e9 off the eye.
 
 Verified by a probe that is not kept, on 2026-10-08. The wheel over Sol in the largest demo carries
-the separation to 6.8e9 with no page error. Under the bulk test, the page stops near 5.6e7.
+the eye 6.8e9 from the pivot with no page error. Under the bulk test, the page stops near 5.6e7.
 
 ## Motors
 
@@ -2848,9 +3146,7 @@ rather than about the line meant, and both products compile.
 
 **The signs of a turn and a slide are the signs that Lengyel writes.** At the pin, the antiproduct
 of two basis elements is the right complement of the product of their left complements, as
-`/((\m) ⟑ (\n))`. That holds for all 256 pairs. The library at `295bafc` gives the opposite sign for
-84 of them, and there a turn and a slide take the opposite signs. So one stance has a different
-motor at each pin: its six line coefficients change sign, and its antiscalar and scalar stay.
+`/((\m) ⟑ (\n))`. That holds for all 256 pairs, so the signs of a motor follow from the table.
 
 **Neither `exp` nor `log` needs a degenerate branch.** Both read two series of the half-angle,
 `sin(a)/a` and `(a*cos(a) - sin(a))/a³`, which are finite at zero, where they read 1 and `-1/3`. A
@@ -2888,9 +3184,8 @@ back with `carried`. Nothing else in the tree names a motor.
 - the distance and the weight that a rigid motion keeps;
 - the order of composition.
 
-Verified by a probe on 2026-10-22: the complements give the antiproduct for 256 of 256 pairs at
-the pin, and for 172 at `295bafc`. At the signs of `295bafc`, 127 of 481 cases of the C suite fail
-at the pin, the camera's among them. At the signs above, none fails.
+Verified by a probe on 2026-10-22: the complements give the antiproduct for all 256 pairs at the
+pin. Under the opposite signs, 127 cases of the C suite fail, and under these signs none fails.
 
 Assumed: that `unitize` is the motor norm for any unit motor. The suite reads it back for every
 motor that `exp` builds. Nothing renormalises a composed stance. Natively on 2026-09-24, 10^6 turns
@@ -3007,11 +3302,11 @@ front-end centres its own text.
   **The halo is the backdrop colour, not the marker white.** A halo blends with the background to
   knock the surroundings out of the letters. A contrasting halo dominates them instead (Peterson,
   *Cartographer's Toolkit*; Dawson, *About label halos*). It is `WIDTH_MARKER_LABEL_HALO` 2 px of
-  `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` 0.85, on a 16 px face at weight 600.
+  `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` 0.85, on a 16 px font face at weight 600.
 
-  The desktop sets the label in `FACE_FONT_LABEL`, with the math and symbol faces merged in, so `G =
-  L ∧ c` keeps its wedge. It has no stroked text, so it draws the label at eight one-pixel offsets
-  in the halo colour. The browser stages one SVG `<text>` for each selected handle, with
+  The desktop sets the label in `FONT_FACE_LABEL`, with the math and symbol font faces merged in, so
+  `G = L ∧ c` keeps its wedge. It has no stroked text, so it draws the label at eight one-pixel
+  offsets in the halo colour. The browser stages one SVG `<text>` for each selected handle, with
   `paint-order: stroke`.
 
 **The loop of a plane lies on the plane.** It is traced from the frame of the plane, about the
@@ -3037,6 +3332,18 @@ The worst case of a marker lies along orientation, so a sweep of camera *distanc
 against its own length. The two vanishing points sit at screen distances in a ratio of 314. Rails
 are shortened **after the projection**.
 
+**Each rail is cut to the view before it is sized and drawn** (`cutToView`). With the eye far off a
+line, the cut of a rail at the near plane projects up to 1e17 px out. Uncut, a browser clamps that
+coordinate and draws the rail at 45° where the line runs at 59° (repository issue 767). The cut
+reads its fractions from the end nearer the middle of the view. A fraction read from the far end
+loses whole pixels to rounding.
+
+**Where the support stands behind the eye, the rails start where the line enters the view.** The
+depth of the support then clamps to the near plane, so a gap stated there reads as no pixel in view.
+The rails also run to a shared head that is not on the line, so from a support that far back they
+shed their offset. So `markerRails` finds the point of the line under the entry of its image
+(`placeAtScreen`), and states the gap at its depth.
+
 **The frame of the horizon plane is an expanding circle that becomes the screen edge.** At each
 angle the radius is `progress × half-diagonal`, or the distance to the inset edge, whichever is
 smaller. It runs over `SEGMENTS_MARKER_FRAME` 64 even steps, with `CORNERS_MARKER_FRAME` 4 corner
@@ -3058,6 +3365,7 @@ measured 0.14999999999997 against 0.15.
 - the points of the loop on the plane (1.1e-15 on the antiscalar);
 - each kind reading at most its fixed points out of the algebra, with a pulse and without;
 - the straightness of the rails, and their widest reading over an orientation sweep;
+- the rails of a line whose support stands 4.7e6 units behind the eye, in view and 14.5 px apart;
 - the 68 points of the frame at 296.8 px flat at half progress;
 - a matured hold taken once;
 - a line's label over two orbits of 1,257 steps each, with no isolated step;
@@ -3133,24 +3441,39 @@ distance, once the own radius of a shape is met. That priority is what makes gen
 `RADIUS_PICK_POINT` is 34 CSS px and `RADIUS_PICK_LINE` is 24, sized against a fingertip at phone
 density, and the test of a plane is by area.
 
+**A click ranks by the pointer, and a zoom with nothing selected ranks by the eye**
+(`picking.Rank`). `Rank.Eye` takes the finite object nearest the eye: a point or a line within
+`RADIUS_CROWD_TOUCH` 72 px, or a plane under the pointer (Zoom). A finger of a pinch reaches further
+(Two fingers). Within twice the nearest depth, it ranks by kind as a click does. In both ranks, a
+disc that the cursor lies inside beats every object outside it. Horizon shapes stand nowhere to come
+in to, so `Rank.Eye` takes none.
+
 **Everything drawn is pickable, and the horizon is included.** The rank is point, finite line,
 horizon line, finite plane, and horizon plane. The horizon line is tested against the great circle
 that it draws as. The horizon plane matches every ray, so it comes last. The extent goes through
 `algebraFilled`, the one derivation point, because built field by field, a horizon point is
 unpickable with its multivector twins zero.
 
-**The sky is a click and hold target, and never a drag handle, and so is a plane or a point that
-fills the view.** With a horizon plane visible the cursor is over *something* almost everywhere. A
-press on empty space becomes a camera move precisely because nothing was hovered. A finite plane
-whose disc reaches every corner of the frame (`picking.isCoveringView`) leaves no empty glass at
-all. Every corner is half the diagonal from the middle, 750 px on a 1200×900 frame. Rejected: the
-longer side, 1200 px, under which a plane that covers the whole window still reads as a handle.
+**The sky is a click and hold target and never a drag handle, as is a plane that nearly fills the
+view.** With a horizon plane visible the cursor is over *something* almost everywhere. A press on
+empty space becomes a camera move precisely because nothing was hovered. A finite plane whose disc
+covers nine tenths of the frame or more leaves bare glass only in slivers (repository issue 758). No
+reader aims a press at those. `picking.fractionDiscFilled` reads that share where the disc stands,
+on a grid of 32 columns.
 
-A point fills the frame as the zoom comes in to it, and its drawn sphere is held to the same corners
-(`mesh.radiusDrawnAt`). Rejected: a point that is always a handle, which zoomed in until it covers
-the frame leaves no glass to press. `SLACK_COVERED` 1e-9 lets a disc fall that fraction short of the
-corners and still cover. An eye held at the fill stands one ulp short of it, and a bare `>=` reads
-the point there as a handle.
+Rejected: a disc that reaches every corner of the frame, by its radius about the middle. It reads
+the disc as if it faced the eye, so it reads a slanted plane wrong both ways. A ground covering
+98.2% of the frame, with bare corners, read as a handle under the mouse. A ground covering 53%, all
+of the lower half, read as backdrop with bare glass above it. Rejected: the longer side, 1200 px on
+a 1200×900 frame, which asked more still.
+
+A point is backdrop once it fills the frame, as the zoom comes in to it: its drawn sphere must reach
+every corner (`picking.isCoveringView`, `mesh.radiusDrawnAt`). Every corner is half the diagonal
+from the middle, 750 px on a 1200×900 frame. The zoom toward a point stops at that fill
+(`framing.holdFilled`), so a point keeps the rule of the corners. Rejected: a point that is always a
+handle, which zoomed in until it covers the frame leaves no glass to press. `SLACK_COVERED` 1e-9
+lets a disc fall that fraction short of the corners and still cover. An eye held at the fill stands
+one ulp short of it.
 
 `isBackdropUnder` folds every case into one answer, which `beginDrag`, `destination` and
 `interaction.is_hover_backdrop` read. A click on empty space selects the sky rather than clears the
@@ -3158,11 +3481,16 @@ selection. A tap still treats it as empty space, because a tap on empty space is
 finger has to dismiss a selection. Touch reaches the sky by a long press.
 
 **The pick runs once for each frame, and not for each input event.** A pick walks every live handle,
-which is linear in the scene. Each pointer move marks hover stale, that of a mouse with no button
-down included, and the frame loop picks once after `nimDriveHeld`. The wheel sums its notches and
-the loop applies one dolly, the same zoom, because notches compose (`interaction.factorWheel`).
-Rejected: a pick for each notch, at 83.8 ms of picking for six notches a frame. Three paths pick in
-their handler, because they answer before it returns: `pointerdown`, a touch-down and `handleTap`.
+which is linear in the scene. While a mouse is the pointer, the frame loop picks in every frame
+after `nimDriveHeld`, as the desktop does. Hover then follows what the camera carries under a still
+cursor, and drops while the camera moves (`interaction.updateHover`). That is one pick in each
+frame, the cost that the desktop pays, measured below. A finger leaves no cursor, so only its move
+marks hover stale, and `nimClearHover` drops hover once it lifts.
+
+The wheel sums its notches and the loop applies one dolly, the same zoom, because notches compose
+(`interaction.factorWheel`). Rejected: a pick for each notch, at 83.8 ms of picking for six notches
+a frame. Three paths pick in their handler, because they answer before it returns: `pointerdown`, a
+touch-down and `handleTap`.
 
 **The pick ranks what was drawn.** It takes the placements of the frame and dispatches on
 `Placement.kind`, rather than asks `position`, `direction`, `frame` and `spanPerpendicular` again
@@ -3173,15 +3501,15 @@ that a hover or a wheel names is read from its placement too, so the pick classi
 **The pick rejects a plane before it meets it.** `isBeyondDisc` bounds the screen extent of the disc
 by the silhouette of the sphere that contains it, conservative in the depth and off-axis terms.
 20,000 random configurations with 300 surface samples each found no silhouette point outside the
-bound. `geometryAt` hands back a `lent` view, and `projectToScreen` is three dot products in local
+bound. `geometryAt` reads the slot in place, and `projectToScreen` is three dot products in local
 floats. Rejected: a 4×4 multiply with two typed arrays allocated for each call, which was 43% of a
 15.4 ms pick over 10,000 handles.
 
 **A depth reads as in front down to the floor of the camera.** `isInFront`, and the two tests of a
 pick that share it, take `camera.DISTANCE_LIMIT_NEAR` as the least depth ahead of the eye. No
-separation that the camera holds then reads as behind it. Rejected: a fixed millionth of a unit. A
-pointer pick of a star at least radius stands 2.4e-7 units off it. The ring, the label, the menu and
-every pick then lose the star.
+distance to the pivot that the camera holds then reads as behind it. Rejected: a fixed millionth of
+a unit. A pointer pick of a star at least radius stands 2.4e-7 units off it. The ring, the label,
+the menu and every pick then lose the star.
 
 **A hit on an object reads as ahead by its own reach from the eye.** `positionOnObjectUnder` and
 `rayPlaneHit` read a hit as behind where its depth is no more than a billionth of its distance from
@@ -3201,8 +3529,10 @@ destination, and a removal of an object clears the highlight on both paths.
 - the disc bound sampled from inside the view;
 - the ground hovered from half a unit (backdrop, drag refused) and from forty (drag starts);
 - a point reads as backdrop at 0.8 of its fill depth, as a handle at 1.25 of it and 1,000 units;
-- a disc spanning 965.7 px read as backdrop and one spanning 724.3 px did not, against a corner 750
-  px from the middle;
+- the ground reads as backdrop from 9 units, and as a handle from 12, under nine tenths covered;
+- the ground covering 99.7% of a frame of 1058 by 994 px, with bare corners, reads as backdrop;
+- over 96 seeded stances at two frames, a plane is backdrop exactly where a pick finds it under nine
+  tenths or more of the frame. 87 stances stand clear of the bound, 20 of them over;
 - a point ahead of the eye reads in front and is picked at each decade from 1e-8 to 1,000 units;
 - a point as far behind the eye reads behind;
 - a plane a camera stands millionths off is picked, and found under the pointer.
@@ -3216,6 +3546,12 @@ out. A right drag of 180 px on it moves the view and builds nothing.
 
 Verified by driven check on the page, through pointer events alone (`driveHoverFollowsMouse`). A
 mouse moved onto an object with no button down hovers it, and moved off it hovers nothing.
+
+Verified by `--drive-hover` and the page's `driveHoverWhileMoving`, 2026-10-22. A pick by keyboard
+eased its object under a still pointer, and hover named it once the ease arrived. A right arrow held
+for twelve frames lit hover in none of them, and hover named the pick again three frames after the
+release. On the frame loop of `main` at `85ccefc1`, the page hovered the ground plane after the
+ease, and through all twelve frames.
 
 Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, and from 15.4 to 4.7
 ms at 10,000. A hover pick is 0.7, 1.6 and 3.5 ms at 60, 360 and 5,038.
@@ -3233,11 +3569,19 @@ the choice wheel. Both render paths and `help.nim` read them.
 | shift with either | add it, or drop it again if already picked |
 | right click, selection standing, menu down | reveal the menu, selection untouched |
 
-**The selection menu opens on the click, beside the pointer**, `INSET_MENU_POINTER` 8 px from it.
-It then remembers its offset from the anchor of the object, so an orbit carries it with the
+**The selection menu opens on the click, beside the pointer**, `PIXELS_INSET_MENU_POINTER` 8 px from
+it. It then remembers its offset from the anchor of the object, so an orbit carries it with the
 object. A pick carries its object to the middle of the frame, so the menu rides in and settles
 beside the middle. It is not held back until the ease settles: a menu a third of a second after
-the click reads as a missed click. A menu opened with no pointer sits above the anchor.
+the click reads as a missed click.
+
+**With no pointer, the menu hangs centred above its object.** On both builds it hangs by its bottom
+middle from the point that `interaction.pointMenuHung` names, `PIXELS_LIFT_MENU_SELECTION` 46 px
+above the anchor. A menu that straddled its object would swallow the next drag off it, because a
+Dear ImGui window makes `wantsMouse()` true wherever it sits. Near an edge, the point moves only as
+far as it must to keep all of the menu `PIXELS_MARGIN_MENU_SELECTION` 8 px inside the view. When
+only the point stays inside, half of the menu can go off a side, and all of it off the top. The
+desktop hangs its window with the size from the last frame, and the page with the size of the menu.
 
 **A wheel over the selection menu zooms the view on both front-ends**, as a wheel over the view
 does. The menu scrolls nothing, so it hands its wheel on. On the page, the menu passes its wheel to
@@ -3357,8 +3701,9 @@ pause before the lift is the common touch release, so the centre release of an *
 wheel falls through to `proposalFor`.
 
 `more…` builds nothing, and opens **the own apply picker of the selection menu** over both operands
-in drag order. Rejected: the apply section of the drawer, which buried the two objects. A degenerate
-construction, or one on a full scene, is **refused**, with a message that names why.
+in drag order. On both builds, that picker opens beside the pointer that chose it. Rejected: the
+apply section of the drawer, which buried the two objects. A degenerate construction, or one on a
+full scene, is **refused**, with a message that names why.
 
 **Touch.** A finger on an object constructs, and one on empty space moves the camera. Two fingers
 hold what each touched, and cancel any construction. A long press selects. Once a selection exists,
@@ -3374,9 +3719,7 @@ every selected handle, and `✕` clears. `apply` is hidden for three or more sel
 
 It is **shown by the gestures that pick, and hidden by the ones that build**. Every construction
 leaves its result selected, and a menu over each new object would sit in the way of the next drag.
-Placement is `OFFSET_MENU_SELECTION` 46 px **above** its object. A Dear ImGui window makes
-`wantsMouse()` true wherever it sits, so a menu that straddled its object would swallow the next
-drag off it. The listener for a tap outside excludes the canvas, the drawer and the chip row.
+The listener for a tap outside excludes the canvas, the drawer and the chip row.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -3401,6 +3744,14 @@ Verified by driven checks:
   distance goes from 18.097 to 11.749 on the page, and to 12.881 on the desktop;
 - a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
+
+Verified by `--drive-keys` and the page's `driveMenuHung`, 2026-10-22: a menu that Enter opened
+hangs by its bottom middle on the point of the core. It read (720.0, 404.0) on the desktop, and
+(671.7, 369.3) on the page. On `main` at `85ccefc1`, the page hung it 156 px right and 37 px low.
+The suite holds each edge of the view, and a menu wider than the view.
+
+Verified by `--drive-drag` and the page's `driveMoreAtPointer`: `more…` opens its picker at the
+pointer and its inset, on both. On `main`, the desktop opened it 68 px right of that and 54 px high.
 
 Assumed: that 0.75 s is the right dwell for any hand.
 
@@ -3432,15 +3783,51 @@ about the pivot, so what the middle holds drifts toward the middle of the frame 
 out. Rejected: one solve of four unknowns against both places, which spends the turn on the gap,
 because a turn foreshortens what it carries.
 
-**A finger holds the place on its own ray, at the depth of the object under it.** That object is the
-one a tap there selects: at any depth with nothing selected, and inside the depth band with a
-selection. Rejected: the own point of the object, which the pick finds up to 34 px off the finger.
-Two fingers on one star then held one point, and no spread could zoom.
+**A finger holds the place on its own ray, at the depth of the object it takes.** With nothing
+selected, that object is the one nearest the eye within the reach of the finger, by the rank of the
+wheel (Zoom). With a selection, it is the one a tap there selects, inside the depth band. Rejected:
+the own point of the object, which can stand a full reach off the finger. Two fingers on one star
+then held one point, and no spread could zoom.
+
+Rejected: the object a tap selects, with nothing selected. Near Sol, a finger then often held a star
+millions of units out, and no move of the camera carries that star under its finger. A probe that is
+not kept pinched six times from home about Sol, on a page of 412 by 915, on 2026-11-04. The eye came
+from 261.6 units to 0.083 units from Sol, and to 3.90 units with the object a tap selects.
+
+**A finger of a pinch reaches a fingertip past the middle of the fingers, and never less than two
+fingertips** (`interaction.reachPinch`). Past one fingertip, it takes only an object within
+`FACTOR_ANCHOR_DEPTH` 2 of the distance to the pivot. A pinch lands each finger beside what the
+reader means, and not on it. At home in the largest demo, on a frame of 412 by 915, the planets
+stand in one band across the frame.
+
+A probe that is not kept pinched at a grid of spots within 210 px of Sol, on 2026-11-06. There,
+fingers 60 px apart flew the eye out past 1,000 units at 60 of 165 spots, and at 21 with this reach.
+Each of those 21 stands more than 150 px off the band. Fingers 160 px apart flew out at 39 of 135
+spots, and at 6. Fingers 300 px apart held the depth of a star at 30 of 45 spots, and at none.
+
+Rejected: the 72 px of the wheel, under which a finger 90 px off that band takes a star behind it.
+The eye then flies out past the solar system. Rejected: the wide reach at any depth, under which a
+finger 100 px from a star 8 times deeper than the view takes it. One pinch in then carries the eye
+out 18.5 times, against 4.8. Rejected: a fixed reach of 150 px at any depth. Fingers 300 px apart
+then still held the depth of a star at 14 of 45 spots.
+
+Rejected: half the gap past one fingertip at any depth, which reaches 102 px with fingers 60 px
+apart. It flew out at 44 of 165 spots. Assumed: that the wheel keeps one fingertip, because a
+pointer lands where it is aimed. Assumed: that a reader who pinches toward a far star beside near
+objects first moves it clear of them.
+
+**A pinch in holds no place past twice the reach of the point that the last zoom took.** A pinch
+takes its places as the second finger lands, before it knows its direction. As the fingers first
+close past the slop, each place past twice that reach comes in to it on its finger's ray. A pinch
+out keeps its places, so it still comes to a far star. A probe that is not kept pinched in 65 times
+from home (#846). Of those pinches, 18 carried the eye out over 100 times with places at any depth,
+and none under this rule.
 
 **With nothing selected, a finger over nothing holds a place at a depth the view is about.** That
 depth is the depth of the object of the other finger, where that finger stands on one. Otherwise it
 is the depth of the object shown nearest the middle of the fingers, within `FACTOR_ANCHOR_DEPTH` 2
-of the depth of the pivot. Otherwise it is the depth of the pivot itself. Rejected:
+of the depth of the pivot. Otherwise it is the depth of the pivot itself. In free flight, a pinch
+stands the pivot at the reach of the point that the last zoom took. Rejected:
 
 - the sky itself, which no slide moves, so with both fingers on sky no pinch moved anything;
 - the nearest object ahead, which far out in the orrery is a star off to the side;
@@ -3451,8 +3838,9 @@ does.
 
 **Once the fingers zoom, the pivot stands at the depth of the nearer place held**, as the wheel's
 zoom lands it on an object. The next pinch then scales the same thing, so zoom out after zoom out
-grows by the ratio of the fingers. A slide alone carries the pivot along at its own depth. Places
-over nothing never draw the pivot in, so no pinch runs the separation down (repository issue 535).
+grows by the ratio of the fingers. A slide alone carries the pivot along at the depth it took as
+the fingers landed. Places over nothing never draw the pivot in, so no pinch runs the distance to
+the pivot down (repository issue 535). The nearer place is then the point that the last zoom took.
 
 **An unknown that no finger can move stays where it stands.** The damping holds it there, and a
 correction counts only where it cuts the misses by more than a billionth of them
@@ -3460,8 +3848,9 @@ correction counts only where it cuts the misses by more than a billionth of them
 view by 1.3e-9 radians, on rounding alone.
 
 **The floor of each place is a depth along the sight**, the fill where the wheel stops at that
-object. Past it, the fingers slip. Rejected: a floor on the reach, which a place off the own ray of
-the object never came near. The eye then went on past the fill.
+object. Past it, the fingers slip. A place on a line or a plane has none (Free flight). Rejected: a
+floor on the reach, which a place off the own ray of the object never came near. The eye then went
+on past the fill.
 
 **Both fingers are read once for each frame.** The move of each finger arrives as its own
 `pointermove`. A solve read there chases the new place of one finger and the old place of the other.
@@ -3478,30 +3867,35 @@ lifts, so a third finger lifting back to two takes no old grip.
 - half a pixel past the slop of the gap moves the places by that half pixel's share alone;
 - a hundredth past the slop of the twist rolls the view by that hundredth alone;
 - with nothing drawn, two fingers on empty sky hold places at the depth of the pivot;
-- a spread there keeps the separation, and a twist about the middle rolls by what lies past the
-  slop;
+- a spread there keeps the distance to the pivot, and a twist about the middle rolls by what lies
+  past the slop;
 - places over nothing take the depth of the object shown nearest the fingers, near the pivot's
   depth;
-- a nearer star aside, and a deeper star under the middle of the fingers, do not set that depth;
+- a nearer star aside, and a deeper star under the middle of the fingers, do not set that depth.
+  The deeper star stands within the reach of a finger, and outside its band;
+- two fingers landed 103 px beside a near point, each 10 px from a star 10,000 times deeper, zoom
+  in to the point. With the 72 px of the wheel, they carry the eye 55,374 units out;
 - five pinches in over empty sky each zoom out by more than 4, about the point drawn there;
 - with a selection, the pivot moves less than 1e-9, and the gap and angle of both places hold within
   0.01 px and 1e-9;
 - with a selection, a fivefold pinch off the middle zooms out by more than 3;
-- a spread over one point stops the eye at its floor.
+- a spread over one point stops the eye at its floor;
+- ten pinches about a planet 4e-5 units in radius, with two lines through it, come to its fill.
+  With the radius of a line as its floor, they stop 0.0806 off it.
 
 Verified by driven checks, in Chromium on 2026-10-08:
 
 - fingers on `a` and `c`, over a spread of 1.3, a twist of 0.25 and a slide, held both 0.00 px off;
-- two fingers carried together 316 px held both points 0.00 px off, and left the separation at
-  19.000;
-- a spread and a slide on empty sky came 10.819 in, turned nothing, and drew the separation from
-  19.000 to 7.707;
+- two fingers carried together 316 px held both points 0.00 px off, and left the distance to the
+  pivot at 19.000;
+- a spread and a slide on empty sky came 10.819 in, turned nothing, and drew the distance to the
+  pivot from 19.000 to 7.707;
 - two fingers carried together, wobbling inside the slop, slid 2.288, came 5.0e-6 in and turned
   1.6e-7;
 - a twist of 0.300 on empty sky about the middle turned the picture 0.0900, and moved the eye
   5.9e-6;
 - four pinches in with nothing selected zoomed out by 3.25, 3.70, 3.83 and 3.87;
-- with `o` selected, the pivot moved 2.2e-14 as the separation came from 19.000 to 13.763;
+- with `o` selected, the pivot moved 2.2e-14 as the distance to it came from 19.000 to 13.763;
 - with `o` selected, four pinches in zoomed out by 3.10 to 3.28;
 - a pinch zooming with a selection standing, and the move not taken back.
 
@@ -3512,6 +3906,15 @@ ink, and the `save` of an edit session. That save is the "edit committed" moment
 widgets lack. It is one fixed array plus one cursor, and not two stacks. An entry is a `Step {scene,
 stance}`, and both are plain value types, so a record is a copy and `entries[cursor].scene` is
 exactly the live scene. `CAPACITY_HISTORY` is 32.
+
+**A hide or a delete of the whole selection is one step.** Both menus act through
+`selection.setVisibleAll` and `selection.removeAll`, and record the act once. So one undo takes it
+back on both builds, as one press made it. A delete also ends an edit session against any of the
+objects, which has nothing left to commit to.
+
+Verified by `--drive-bulk` and the page's `driveBulkUndo`, 2026-10-22, with two objects picked. A
+hide and then one undo left both shown, and a delete and then one undo left both standing. On the
+code of `main` at `85ccefc1`, one undo on the page brought back one object of the two, each time.
 
 **The array is a ring.** `first` names the handle that holds the oldest step, and `handleAt` is the
 one place where a timeline position becomes an index. To retire the oldest entry moves one integer.
@@ -3525,9 +3928,9 @@ value it compiles to a `nimCopy` of thirty-two whole scenes, which was 65% of th
 largest demo. `record` writes the fields of a `Step`, and assigns no literal, for that reason.
 
 **The stance rides along, and an orbit is never a step of its own.** Each step records the
-`CameraStance`, the motor and the separation, that the view stood at when the edit of *that step*
-was made. It is read about the world origin, as the scene is stored (Origins). Undo reads it off the
-entry left, and redo off the entry reached. Nothing else of the camera crosses a step.
+`CameraStance`, its motor and distance to the pivot, that the view stood at when the edit of *that
+step* was made. It is read about the world origin, as the scene is stored (Origins). Undo reads it
+off the entry left, and redo off the entry reached. Nothing else of the camera crosses a step.
 
 Rejected: a whole `Camera` in each step, which puts the lens of the edit over the reader's own. Home
 keeps the lens by the same rule.
@@ -3655,9 +4058,10 @@ scene. Reading is written once against `VERSION_SCENE`. The difference of each p
 one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain one step at a time.
 
 Version 3 costs sizes, with `upgradedFrom3` filling `RADIUS_OBJECT_DEFAULT`. The chain refuses a
-radius that is zero, negative or NaN, as it refuses an unknown palette slot. Version 1 costs colours
-alone: its ordinals name a palette that no longer exists, folded by the same cycle that `inkCycled`
-walks. It is bounded by `ORDINAL_INK_HIGH_V1` 14, so a byte that version 1 never wrote is refused.
+radius that is zero, negative or NaN, as it refuses an unknown palette index. Version 1 costs
+colours alone: its ordinals name a palette that no longer exists, folded by the same cycle that
+`inkCycled` walks. It is bounded by `ORDINAL_INK_HIGH_V1` 14, so a byte that version 1 never wrote
+is refused.
 
 **A wrong hue is recoverable, and a refused scene is not.** `loadScene` parses into a staging scene,
 and replaces the caller's only on complete success. It is native-only.
@@ -3894,9 +4298,9 @@ written `` m.`∧ ☆`n ``.
 
 *Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
 every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
-parenthesised on the page. Verified by driven check on the desktop: `--drive-faces` asks each face
-for every codepoint of the notation (Desktop driven checks). On the page, `driveFacesCovered` asks
-the faces that it ships (Faces).
+parenthesised on the page. Verified by driven check on the desktop: `--drive-font-faces` asks each
+font face for every codepoint of the notation (Desktop driven checks). On the page, `koch drive`
+judges what `readFontFaces` reads (Font faces).
 
 ## Naming and number formatting
 
@@ -3942,18 +4346,18 @@ turntable numbers, which carry no roll and stand a rolled view upright.
 `toward` eases that motor as one screw. It takes the motion that carries one stance to the other,
 logs it, scales it by the progress, and puts it back on. `motors.log` flips the sign of a motion
 whose antiscalar is negative, which is the same motion by the shorter arc. A destination just past
-−π then stays next door to a camera short of +π, without being told to. The separation eases
-geometrically beside it, because it is multiplicative.
+−π then stays next door to a camera short of +π, without being told to. The distance to the pivot
+eases geometrically beside it, because it is multiplicative.
 
-**The separation eases from the floor of every separation.** `toward` holds both ends through
-`distanceHeld` before it takes their logarithm, so an ease lands on the separation it was given. A
+**The distance to the pivot eases from ends held off zero.** `toward` holds both ends through
+`distanceHeld` before it takes their logarithm, so an ease lands on the distance it was given. A
 pointer pick of a star at least radius asks for 2.4e-7 units. Rejected: a fixed floor of a millionth
 of a unit, which stood the pivot past the star. Each orbit then swung the star off the middle.
-Verified by `suites.nim`: an ease lands on the separation of its destination at every decade from
-1e-9 to 100, and reads their geometric mean halfway.
+Verified by `suites.nim`: an ease lands on its destination's distance at every decade from 1e-9 to
+100, and reads their geometric mean halfway.
 
-The separation is the own depth of the pivot along the sight, so writing it moves the pivot and
-leaves the eye. A dolly calls `stanceDollied`, which moves the eye and holds the pivot.
+The distance to the pivot is the pivot's own depth along the sight, so writing it moves the pivot
+and leaves the eye. A dolly calls `stanceDollied`, which moves the eye and holds the pivot.
 `stanceRepivoted` is the other half: it slides the whole camera between two pivots, as far as the
 rebuild moved the eye, and keeps the roll.
 
@@ -4016,18 +4420,18 @@ the answer where the offset falls short. The term under the root is `along² −
 `outside` is negative exactly then, so the root is larger than `|along|`. It answers zero where the
 eye already stands far enough, and that zero makes the rule a floor.
 
-Rejected: a search, which bisects the separation and the fraction of the move at about 25
-projections of every watched object for each pick. The move of the closed form is least by
-construction. The pivot goes to the centroid, and the separation gives up exactly what the rule asks
-for. `SLACK_FRAMED` 1e-9 is the one tolerance. A `>=` against a reach that `stepOutTo` lands on
+Rejected: a search, which bisects the distance to the pivot and the fraction of the move. It costs
+about 25 projections of every watched object for each pick. The move of the closed form is least by
+construction. The pivot goes to the centroid, and the distance to it gives up exactly what the rule
+asks for. `SLACK_FRAMED` 1e-9 is the one tolerance. A `>=` against a reach that `stepOutTo` lands on
 exactly reports its own answer unframed, one ulp short of it.
 
 **A plane picked alone from a level view lifts the view off it**, by the ruling of #454. Seen along
 its own face, a plane draws as a sliver, and to centre a sliver shows nothing of it. `stanceLifted`
 turns the stance about its pivot by the least turn that puts the sight `ANGLE_PLANE_LEAST`, 10°, off
 the plane. The eye keeps its side of the plane, and a sight in the plane takes the side that world
-up leans to. The pivot, the separation, the level direction of the sight and a level horizon stay.
-That direction is the meet of the plane with the one that holds the sight and the normal.
+up leans to. The pivot, the distance to it, the level direction of the sight and a level horizon
+stay. That direction is the meet of the plane with the one that holds the sight and the normal.
 
 This is the bound that a star gets: a star off screen turns the view, by the least turn. A sight 10°
 or more off the plane turns nothing, and no other pick turns. The lift applies once, as the pick
@@ -4039,8 +4443,8 @@ draws a sliver. Rejected: a turn to face every picked plane, which swings the vi
 `holdFramed` backs the eye out along its own sight. It uses the closed form that `stanceFor` pulls
 back with, on a camera that `offerAim` takes by `var`. Nothing turns, so the camera slides along the
 bound rather than stopping dead against it. The pivot is stamped again at the depth of the middle,
-so the separation follows the eye. After any pick the middle stands on the sight line, so the pivot
-is the middle itself.
+so the distance to it follows the eye. After any pick the middle stands on the sight line, so the
+pivot is the middle itself.
 
 Rejected: straight out from the centre of the sphere, the least move. That centre is not the middle
 once three objects part them, so the push slides the view and the pivot sideways. Rejected: along
@@ -4106,7 +4510,7 @@ is picked. Every zoom and turn after it then goes about that point.
 - a horizon point is bound to the screen, a horizon line to crossing it, a horizon plane not at all;
 - a plane picked alone from a level view lifts the sight to 10° off it, on the side of the eye;
 - so does a plane seen from below, a sight in the plane, and an upright plane;
-- the pivot, the separation, the level direction and a level horizon stay through that lift;
+- the pivot, the distance to it, the level direction and a level horizon stay through that lift;
 - a sight already 28° off the plane turns nothing, and a point picked turns nothing.
 
 Verified by driven check:
@@ -4126,8 +4530,9 @@ Verified by driven check:
 
 **A pointer pick centres its object, and comes in to it.** A click or a tap on a point or a line
 records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The destination is
-`stanceApproaching`, which puts the pivot on the own anchor of the object. Every pick therefore
-centres, whether a pointer made it or the objects list did.
+`stanceApproaching`, which puts the pivot on the object itself. That is its own anchor, or for a
+line the point nearest the eye. Every pick therefore centres, whether a pointer made it or the
+objects list did.
 
 The camera slides and never turns, so the angles and roll survive. `stanceRepivoted` carries the
 pivot onto the object, and `stanceDollied` sets the reach. Rejected: the object held under the pixel
@@ -4148,23 +4553,24 @@ units. The pivot lands on it there, and it reads in front (Camera aiming, Pickin
 keeps it mid-frame however far out it stands, and however far off the pick starts. The destination
 is held about the place of the star itself, and the ease lands on it exactly (Origins).
 
-**An object behind the reader is left to the frame rule.** To centre one would slide the camera back
-past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers none there,
-and `stanceFor` takes it by its own bound. Ahead is judged against the reach of the object from the
-eye, as a pick judges a hit (Picking). Verified by `suites.nim`: a pointer pick of a small object up
-close comes in to it, and one behind does not.
+**A point or a plane behind the reader is left to the frame rule.** To centre one would slide the
+camera back past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers
+none there, and `stanceFor` takes it by its own bound. Ahead is judged against the reach of the
+object from the eye, as a pick judges a hit (Picking). Verified by `suites.nim`: a pointer pick of a
+small object up close comes in to it, and one behind does not.
 
 **A dot picked alone never lands nearer than its fit**, by the ruling of #535. The fit is the depth
-that a pointer pick of the dot comes in to. The wheel over empty sky can take the separation to
-9.4e-8 with no visible change. Without this floor, a star picked from the list keeps it, and draws
-about 20 px across. `stanceFitted` dollies the destination of the frame rule out to the fit, once,
-as a new goal lands. A separation past the fit stays, and so does a stance set after the pick.
+that a pointer pick of the dot comes in to. The wheel over empty sky can bring the eye 9.4e-8 from
+the pivot with no visible change. Without this floor, a star picked from the list keeps that
+distance, and draws about 20 px across. `stanceFitted` dollies the destination of the frame rule out
+to the fit, once, as a new goal lands. A distance past the fit stays, and so does a stance set after
+the pick.
 
 A point seen at its size has no fit, so the working scale of the reader stays. The fit is capped at
-the reach of the dot, so the eye never moves further off than the dot stands. A group, a line and a
-plane keep the frame rule alone. `stanceFitted` reads the dot by its reach from the eye. Rejected:
-its depth along the sight, which reads every dot behind the eye as seen at its size. Rejected: a fit
-for every point, which takes a point at working scale out to 19.3 units.
+the reach of the dot, so the eye never moves further off than the dot stands. A group and a plane
+keep the frame rule alone, and a line its own rule below. `stanceFitted` reads the dot by its reach
+from the eye. Rejected: its depth along the sight, which reads every dot behind the eye as seen at
+its size. Rejected: a fit for every point, which takes a point at working scale out to 19.3 units.
 
 Verified by `suites.nim`: a point picked from the list never lands nearer than its fit, and one
 further out stays. Verified by a Playwright script that is not kept, in the Chromium of Playwright
@@ -4172,20 +4578,51 @@ under SwiftShader, on 2026-10-05. After 175 notches over empty sky in the demo o
 tick of HD 222237b settles at 2.414e-7 units. The star then draws 7.7 px across in a canvas 771 px
 tall, against 19.9 px at 9.38e-8 without the floor.
 
+**A line picked alone comes to its point nearest the eye, and never to its support**, by the ruling
+of #767. The support is the point of the line nearest the world origin. From a far star, the support
+of `sol ∧ earth` is the centre of Sol, and a pivot there puts the eye inside it. The pivot goes to
+the orthogonal projection of the eye onto the line (`framing.positionOnLineNearest`), by pointer and
+by list alike. The distance to the pivot stays where the line stands further off than that, and else
+the eye comes in to the line's reach. That point stands beside the eye as often as ahead, so a line
+is exempt from the check that refuses an object behind the reader.
+
+**The eye is read once, at the pick.** The slide keeps the sight, so after it the point of the line
+nearest the eye stands further along the line. An eye read at each offer would carry the camera
+along the line without end. The same line offered again, as when it is rewritten or shown again,
+projects the pivot instead and keeps the distance. A pivot on the line projects to itself, so
+nothing moves. A pick is a pointer pick, or a change of `Selection.revision` since the last offer,
+which `CameraTween.revision_offered` holds.
+
+The projection is held in world coordinates, as the scene stores the line. A probe that is not kept
+measured it on 2026-10-25, in exact rational arithmetic. From a star 4.7e6 units out, the pivot
+lands 4.4e-11 off the line. That is a fifth of a pixel at the orbit distance, in a frame 900 px
+high. The frame reads the line from the same point, for its near clip and its drawn halves (Free
+flight, Geometry and drawing).
+
+Rejected: the eye read at each offer. For a line moved across itself in 20 frames, the pivot slides
+9.89 units along it, and the distance loses 51%. Rejected: the frame rule, which centres a lone line
+on its support.
+
 *Checked.* Verified by `suites.nim`:
 
 - a pointer pick lands the object within 0.01 px of the frame's middle, from every angle swept;
 - a pick of a point at least radius lands on its fit, in front and picked, at 1 and 2.36e6 units;
-- its pivot stays on it through an orbit, to a millionth of the separation;
+- its pivot stays on it through an orbit, to a millionth of the distance to the pivot;
 - an orbit of 0.7 by 0.3 then leaves it there;
 - a pointer pick and a pick from the list land on the star from 40 to 3.19e6 units off;
-- their pivot stands on it to a millionth of the separation, and an orbit keeps it there;
+- their pivot stands on it to a millionth of the distance to the pivot, and an orbit keeps it there;
 - the arrival distance equals the fit, and the reach to the object equals it too;
 - a near point and a line keep the orbit distance, and one behind the reader is refused;
+- a line picked alone from 4.7e6 units out, by pointer and by list, lands its pivot on its point
+  nearest the eye to 1e-6;
+- a line moved across itself for 20 frames carries the pivot straight across, and the distance
+  stays, to 1e-9;
+- a line picked far off keeps the near clip short of the pivot, with a point 8,000 units ahead;
+- both its drawn halves pass within a pixel of the middle, and a cursor 200 px off picks it;
 - the arrival of the plane from 12 units and from 1.
 
-That sweep, on the C build on 2026-10-17, reads the worst pivot 1.7e-8 of the separation off. A
-destination held about the view origin of the starting eye read 7.0e-3 off in the same sweep.
+That sweep, on the C build on 2026-10-17, reads the worst pivot off by 1.7e-8 of the distance to it.
+A destination held about the view origin of the starting eye read 7.0e-3 off in the same sweep.
 
 Verified by driven check:
 
@@ -4446,70 +4883,73 @@ does, record which and why, and move forward when it works again. Every pull req
 commit of pga it builds against, and whether that is head. The pin stands at
 `3d9696edbaaa5dca655c3024174bd46fd156d7c6`, which was the head of the library on 2026-10-22.
 
+**The pin does not wait on a fix of the library, and two fixes that it lacks stand here.** At
+`3d9696e`, the generic `+` copies its constant set of bases at each call on the JS backend. So the
+lattice adds 356,725 copies to 9 moving frames, against 340,767 at `295bafc` (V8, optimiser off,
+2026-10-22). A product takes only the full multivector, so the project reads a plane whole where
+three bases serve.
+
+The patches of D3 on the library-head pull request (#702), and of D1 on issue 734, fix both. Both
+apply to `3d9696e`. With both, a scratch copy that placed planes through typed products took the
+placing step of the largest demo from 3.30 to 2.00 ms. That is the median of 5 runs in Chromium, on
+2026-11-03. The library takes fixes over time, so the pin moves to each head that holds one.
+
 **The `head` verb holds the pin to the head, and only a daily run reads it.** `nim r tools/build.nim
 head` compares the directory of the library at the pin with the same directory at the head of
 `replications`. It compares trees and not commits, because a commit elsewhere in that repository
 changes nothing here. A finding exits 1, and `head.yml` then keeps one issue open for this project
 while the pin lags. No merge waits on the verb, because its verdict moves with the library.
 
+**So each new head of the library reaches the issue once.** The finding names the head, and the
+issue gains a comment only where the finding changes. So the day the library takes a fix, a
+comment names that head. The pin then moves straight to that head, once every check passes there.
+
 `tools/head.nim` holds the comparison as pure functions, so the suite reads it on both backends. The
 build driver holds git and the network, and it compiles no project code. Rejected: a comparison of
-commits, which opens an issue for each commit to another directory of `replications`.
+commits, which opens an issue for each commit to another directory of `replications`. Rejected: the
+verb in `check.yml`, where each merge would wait on a library that moves without a commit here.
 
-**The compiler is pinned by commit, and not by release.** Head spells its operators in prefix and
-compound form (`☆m`, `m ∧☆ n`), which needs seven Unicode operator characters that Nim gained in
-pull request 26074. That was merged to `devel`, and carried by no release. So the pin is `requires
-"nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"`, which `toolchain.nim` accepts beside dotted
-versions, and which koch fetches and builds once for each machine.
+**The compiler is pinned to release 2.4.0, the first release that lexes the operators of head.**
+Head spells its operators in prefix and compound form (`☆m`, `m ∧☆ n`). That needs seven Unicode
+operator characters, `⟑ ⟇ ⩓ ⩔ ■ □ ☆`, which Nim gained in pull request 26074. So the pin is
+`requires "nim == 2.4.0"`. Koch fetches its published tarball, and checks it against the digest
+published beside it (`GUIDE.md`, Toolchain).
 
-Rejected: a `devel` label, a moving pin that records nothing verified. Rejected: a wait for a
-release, which is months of standing behind the library that this project exists to exercise. The
-pin moves to a release once one carries 26074. The lexer change reaches the own source of this
-project: `-☆(m)` lexes as the single operator `-☆`, and is spelled `-(☆m)`.
+Rejected: a pin by commit on `devel`. Each machine and each runner then clones and builds the
+compiler, in minutes where a tarball takes seconds. `CONTRIBUTOR.md`, Toolchain, asks for a release
+whenever one will do. Rejected: a `devel` label, a moving pin that records nothing verified.
 
-**Head carries the four projections, so the project calls them from `pga`.** `projectCentral`,
+**The release reaches the own source of this project twice.** The lexer reads `-☆(m)` as the single
+operator `-☆`, so it is spelled `-(☆m)`. The compile-time evaluator refuses a `cstring` constant
+converted from a string that a call returns, as "a value that refers to invalid memory". So
+`TEXT_SCENE_EMPTY` in `panel.nim` folds the call with `static` first, and stays a C string that each
+frame reads without a conversion. Verified by a run: without `static`, 2.4.0 refuses
+`panel.nim(89, 43)`, and `27763495b` builds it.
+
+**The pin carries the four projections, so the project calls them from `pga`.** `projectCentral`,
 `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` have bodies at the pin. Each
 is the definition that the operator table of the library gives. `scene`, `tessellate`, `camera`,
 `interaction` and the suite import `pga` itself.
 
-**Head gives a turn and a slide the signs that Lengyel writes.** Its antiproduct agrees with its
-complements, so the signs of a motor follow from the operator table and not from this project. See
-Motors.
-
-**The multivector `=~` of head is generic, so the scalar `=~` of the suite is generic too.** A
+**The multivector `=~` of the pin is generic, so the scalar `=~` of the suite is generic too.** A
 generic of the library compiles where its caller instantiates it. There, the private scalar `=~` of
 the library and the exported one of the suite are an ambiguous call. A generic over `SomeFloat`
 ranks below the exact match of the library, which then wins inside its own `=~`. Everywhere else the
 suite reads its own. Rejected: a rename of the scalar `=~` of the suite, which changes each of its
 calls.
 
-**The rest of head reaches this project unchanged.** `MultivectorOf[B]` and its aliases, a
-configurable `Coefficient`, and norms that return `MultivectorScalars` compile under every call
-here. Head prints its multivector aliases while it compiles, through `expandMacros`. That adds about
-ten lines to each build log, and changes nothing that is built.
+**The pin prints its multivector aliases while it compiles, through `expandMacros`.** That adds
+about ten lines to each build log, and changes nothing that is built.
 
-**On the page, head makes a frame cheaper in calls, and its lattice dearer in copies.** A probe
-counted calls and copies in V8 with its optimiser off, on 2026-10-22, at `295bafc` and at the pin.
-Each count is of the opening scene, with its plane picked and the camera at 300, after one frame
-that is not counted.
+**On the page, the pin makes a frame cheaper in calls than `295bafc`.** A frame of the opening scene
+with its plane picked and no lattice makes 16,484 calls at the pin, against 25,163. V8 counted them
+with its optimiser off, on 2026-10-22. Each speed check passes at the pin.
 
-| Count | At `295bafc` | At the pin |
-|-------|--------------|------------|
-| Calls of a frame with no lattice | 25,163 | 16,484 |
-| Calls of a frame with the lattice | 566,902 | 553,658 |
-| Calls that the lattice adds to 9 moving frames | 4,847,207 | 4,817,506 |
-| Copies that the lattice adds to those frames | 340,767 | 356,725 |
-| Copies and calls of a marker and its pulse, over 5 objects | 15,883 and 48,642 | the same |
-
-The counted build is not the build that ships, which runs the optimiser. The lattice uploads the
-same bytes at both pins, and every speed check passes at the pin.
-
-**Two Atlas defects stand, and the workaround is by hand.** `atlas pin` writes `"objects": {}` for a
+**One Atlas defect stands, and the workaround is by hand.** `atlas pin` writes `"items": {}` for a
 repository that carries no nimble file, so the resolved commit is patched into `atlas.lock` by hand.
-`atlas` also calls the nimble file "broken" because it cannot parse a commit where it expects a
-version, which is cosmetic. The stored nimble of the lock must equal the committed one exactly, or
-`rep` reverts the pin silently (repository issue 25). The static pass refuses the difference, and
-the suite holds the commit of the lock to the requirement of the nimble file.
+The stored nimble of the lock must equal the committed one exactly, or `rep` reverts the pin
+silently (repository issue 25). The static pass refuses the difference, and the suite holds the
+commit of the lock to the requirement of the nimble file.
 
 *Checked.* Verified by a run on the pinned commit, through `koch test`: every suite on the C
 backend, on JS, and at reduced capacities. Verified: in a worktree with no `dependencies/`, `koch
@@ -4517,13 +4957,59 @@ fetch-deps` clones and checks out `3d9696e`. The nimble file and the lock are by
 afterwards.
 
 Verified by `suites.nim`: the comparison, and the commit of the lock against the nimble file.
-Verified by runs of the verb on 2026-10-22. It exits 0 at the pin. With the lock set to `295bafc`,
-it exits 1 and names both commits. With a commit that the checkout lacks, it exits 1 and names the
-pin.
+Verified by runs of the verb on 2026-10-22 and 2026-11-15: it exits 0 at the pin. With the lock set
+to `295bafc`, it exits 1 and names both commits. With a commit that the checkout lacks, it exits 1
+and names the pin. On 2026-11-03, with a remote whose head holds both patches, it names that head.
 
-Verified: the pinned compiler reports `git hash: 27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which
-`toolchain.runningCompiler` reads. Assumed: that no release carries 26074. 2.2.12, 2.4.0 and 2.6.0
-were asked and none does, which dates the claim rather than proves it.
+Verified: the pinned compiler reports `Nim Compiler Version 2.4.0`, which `compilers.isServedBy` of
+knoller compares with the pin. Its `git hash:` is `14991af742d0833503741fd9a0918133d1bcf8a4`, tag
+`v2.4.0`, which holds commit `27763495b` of pull request 26074, 269 commits back. Tag `v2.2.14`, the
+latest release of 2.2, does not hold that commit. Verified by a run: 2.4.0 reads `☆m` and `-☆(m)` as
+operators, and 2.2.14 refuses `☆m` as an undeclared identifier. Verified by a run on 2.4.0, through
+`koch test`: every suite passes on C, on JS and at reduced capacities.
+
+Verified on a copy of the project: `atlas pin` writes `"items": {}`, and changes nothing else in the
+lock, `nimVersion` included. It warns `broken nimble file: nim` for a pin by commit, and nothing for
+2.4.0.
+
+## Comparison mockups
+
+**A decision about feel is tried before it is built.** `tools/build.nim mockup` builds the page
+with a panel for one open decision. The panel switches between the options of that decision, and
+builds a scene for each scenario where they part. The Architect does the steps of each scenario
+under each option, and rules on feel and figures together. The project then builds the chosen option
+once. README, Comparison mockups, says how to build the next one.
+
+**The define keeps the comparison out of the page that readers run.** Only `-d:mockup` includes
+`src/browser/mockup.nim` and the hooks in `bridge.nim`, and the `mockup` verb writes its page to
+`build/pga_visualiser_mockup.html`. Verified on 2026-11-14: the page from `web` differs from that of
+`c2e80da3` in two line numbers alone. Rejected: a switch read at run time, which ships every option
+to every reader.
+
+**The hooks stand in the bridge, and the shared modules hold only the design that is.** A hook takes
+the place of one call of the bridge, as the wheel zoom does, or runs beside one, as the pinch hooks
+do. `mockup.nim` holds each option once, so the comparison reads whole there. Rejected: options in
+`interaction.nim` under the define, which leave a decided rule beside the rules it beat.
+
+**Each scenario builds a scene of its own, which holds only what its case needs.** That is a small
+system, what the steps aim at, and a star where an option misreads the scale. Verified by the probe
+of #846, on the largest demo: a pointer aimed at random misses a far star at 54 of 117 spots. A
+scene of its own gives each run the same case.
+
+**A diamond of chevrons marks each pixel to aim at, and growing chevrons mark a drag.** It turns
+so a corner faces the drag, and the drag runs on from that corner. A still frame shows what to do,
+and the pixel stays clear. Rejected: a ring with a cross, which covered that pixel.
+
+**The panel measures each run against what its steps ask.** A notch out asks the eye's distance to
+Sol to scale by 1.12. A pinch asks it to scale by the ratio of the gaps of the fingers. The verdict
+reads the share of that scale on a log scale. It is `as asked` from 0.75 to 1.33 of it, `short`
+under 0.75, `over` from 1.33 to 3, and `flung` over 3.
+
+A pan asks the focus to move with the pointer. The verdict reads that share along the drag, with
+the same bounds, and `still` under 0.02. A round trip is `returned` where the eye ends within a
+hundredth of a home distance of its start, and `off` further out. The figure says how far it moved.
+
+No comparison is open. Each closed comparison stands in the history of `src/browser/mockup.nim`.
 
 ## Testing
 
@@ -4570,10 +5056,12 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - No tool in this repository measures the palette floors again (Colour palette).
 - The frame-time tail on real hardware is undiagnosed, and this container cannot see it.
 - The conformal metric (`IS_CONFORMAL`) is unfinished in the library, and this build is rigid 4D.
+- The pinned library copies a set at each `+` on JS, and its products take only the full
+  multivector (Dependencies and vendoring).
 - A scene file is little-endian by rule, but only a little-endian host has ever written or read one,
   so the byte-swapping path is unexercised.
-- A page whose WebGL lacks `EXT_frag_depth` keeps linear depth. It keeps the fault of the far field
-  with it, and the disc of every plane at the depth of its centre.
+- A page on WebGL1 without `EXT_frag_depth` keeps linear depth. It keeps the fault of the far
+  field with it, and the disc of every plane at the depth of its centre.
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
 - Far from the world origin, storage steps: by 17 to 35 m two million units out, as at HD 222237 b
   of the demo. A stance that history restores, and the aim of several objects, step with it
@@ -4581,21 +5069,9 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - A pick made from afar reads the place of its object about the view origin where the camera stands.
   So the pivot lands a world step or so off the object. A probe that is not kept read 176 m at 4.7
   million units, where doubles step by 139 m, on 2026-10-05. A second pick from near read 0.000 m.
-- Far out in a dense field, each of two fingers holds the star that a tap there selects, at the own
-  depth of that star. 1.0e7 units out over Sol, fingers 40 px either side of it held stars 1.43e7
-  off. A spread of four then carried the eye past Sol (Two fingers).
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point that
   it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001. Float32 holds
   about 0.06 of a unit at 530,000 units, and the record stores the vanishing point in it. The near
   crossing is not the cause (Records and shaders).
-- The two front-ends still differ in these inputs. A read of the code on 2026-10-12 found them, and
-  no run has checked them yet:
-  - With no pointer, the page hangs the selection menu from its corner, and the desktop centres it.
-  - `more…` opens its picker at the cursor on the page alone.
-  - Hide or delete of several objects takes one step of undo on the desktop, and one for each
-    object on the page.
-  - The field of view takes any value on the page, and 10 to 120 by drag on the desktop.
-  - An empty distance field reads 0.1 on the page, and the near limit on the desktop.
-  - While the camera moves, the page keeps hover on what slid under a still pointer.
 
 [replications]: https://gitlab.com/mraxilus/replications

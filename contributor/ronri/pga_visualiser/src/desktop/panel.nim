@@ -43,7 +43,7 @@ import std/[options, strformat]
 import pga
 import ./[gui, sampler]
 import ../pga_visualiser/[
-  boundary, camera, format, framing, help, history, message, orrery, picking,
+  boundary, camera, format, framing, help, history, interaction, message, orrery, picking,
   scene, selection, share, tessellate, timings, wording,
 ]
 
@@ -52,9 +52,6 @@ import ../pga_visualiser/[
 #[ Panel Configuration ]#
 
 const
-  INSET_MENU_POINTER = 8.0'f32
-    ## Set how far menu's corner stands from pointer that opened it, in pixels.
-    ##   Context menu's own convention: beside pointer, not under it.
   PATH_MAX* = 256  ## Bound length of export path user may type.
   WIDTH_PANEL* = 440.0'f32
     ## Set width panels open at, in pixels.
@@ -89,9 +86,11 @@ const
   ROWS_OBJECTS_LEAST = 6
     ## Floor on bounded list's height, for window too short to give it more.
     ##   Region smaller than this shows less than one object and scrolls by fractions.
-  TEXT_SCENE_EMPTY: cstring = emptyMessage()
+  TEXT_SCENE_EMPTY: cstring = static(emptyMessage())
     ## Refuse apply for want of operand, in words page refuses it in.
     ##   Folded at compile time: section redraws this every frame scene is empty.
+    ##   `static` folds call to literal before conversion: Nim 2.4.0 refuses `cstring` into
+    ##     string its compile-time evaluator built ("refers to invalid memory").
   MARGIN_MESSAGE = 60.0'f32
     ## Drop outcome this far below window's top, centred across it.
     ##   Same `max(60px, safe-area-inset-top)` page pins its own toast at, and far enough
@@ -231,6 +230,11 @@ type
     is_menu_selection_hovered*: bool  ## Whether pointer was over that menu as last laid out.
       ## Dear ImGui's own reading, as `gui.wantsMouse` is, so both name one frame.
     position_menu_selection*: array[2, cfloat]  ## Where that menu sits, in window pixels.
+    box_menu_selection*: array[4, cfloat]
+      ## Where that menu was laid out last, as left, top, width and height in window pixels.
+      ##   Its size keeps next frame's menu inside view.
+      ##   Read by scripted run's verdict, which asks where menu hangs, not where it was asked to.
+    anchor_menu_selection*: array[2, cfloat]  ## Place of object menu last followed, likewise.
       ## Kept between frames.
       ##   Object it follows can pass behind camera, and menu that vanished for those
       ##   frames would be worse than one staying put.
@@ -334,7 +338,7 @@ func showSelectionMenuAt*(panel: var Panel, pointer: ScreenPosition) =
   panel.showSelectionMenu()
   panel.corner_menu_pointer = some(
     [
-      cfloat(pointer.x) + INSET_MENU_POINTER, cfloat(pointer.y) + INSET_MENU_POINTER,
+      cfloat(pointer.x + PIXELS_INSET_MENU_POINTER), cfloat(pointer.y + PIXELS_INSET_MENU_POINTER),
     ],
   )
 
@@ -1020,6 +1024,22 @@ proc layoutApply*(
 
 #[ View Panel ]#
 
+func commitDistance*(panel: var Panel, camera: var Camera, distance: float) =
+  ## Take distance view section's field settled on, and halt standing tween, as page's does.
+  ##   Zero or below lands on near limit, through `camera.distanceHeld`, as on page
+  ##   (repository issue 632). Typed entry left empty never reaches here: Dear ImGui keeps
+  ##   value field held, as page's field does.
+  camera.dollyTo distance
+  panel.tween_camera.halt()
+
+
+func commitFieldOfView*(camera: var Camera, degrees: float) =
+  ## Take field of view view section's field settled on, held inside its bounds.
+  ##   Through `camera.fieldOfViewHeld`, as page's field is (repository issue 632).
+  ##   Typed entry passes widget's bounds, which hold drag alone.
+  camera.degrees_field_of_view = fieldOfViewHeld(degrees)
+
+
 proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   ## Lay out camera's placement: motor as value, readings derived from it, and lens.
   ##   Motor is value, in grid object's own coefficients stand in. `motorRigid` settles
@@ -1060,8 +1080,7 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
     # Leave unbounded at widget, floored by `distanceHeld` on way in.
     #   No ceiling on orbit distance, and one value it may not take is stated in `camera`.
     if gui.dragFloat("##distance", addr distance, 0.05, 0.0, 0.0):
-      camera.dollyTo float(distance)
-      panel.tween_camera.halt()
+      panel.commitDistance(camera, float(distance))
     gui.tooltip wordingText(TipViewDistance)
   else:
     fieldLabel(wordingText(NameViewSpeed))
@@ -1070,8 +1089,15 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
 
   var field_of_view = cfloat(camera.degrees_field_of_view)
   fieldLabel(wordingText(NameViewLens))
-  if gui.dragFloat("##field_of_view", addr field_of_view, 0.2, 10.0, 120.0):
-    camera.degrees_field_of_view = float(field_of_view)
+  # Widget bounds drag alone: typed value passes them, and `commitFieldOfView` holds it.
+  if gui.dragFloat(
+    "##field_of_view",
+    addr field_of_view,
+    0.2,
+    cfloat(DEGREES_FIELD_OF_VIEW_LEAST),
+    cfloat(DEGREES_FIELD_OF_VIEW_MOST),
+  ):
+    commitFieldOfView(camera, float(field_of_view))
   gui.tooltip wordingText(TipViewLens)
   gui.widthPop()
 
@@ -1375,15 +1401,6 @@ func stepHistory*(
 #[ Selection Menu ]#
 
 const
-  OFFSET_MENU_SELECTION = 46.0'f32
-    ## Lift menu this far above object it follows, in pixels.
-    ##   Above rather than on: ImGui window makes `gui.wantsMouse` true wherever it sits,
-    ##   and menu straddling its object would swallow next drag off it.
-    ##   Clears selection marker too.
-    ##   Matches browser's lift less this row's height, browser measuring in CSS pixels.
-  MARGIN_MENU_SELECTION = 8.0'f32
-    ## Keep menu at least this far inside viewport.
-    ##   Object near edge then does not push half of it off screen.
   PADDING_MENU_PICKER = 36.0'f32
     ## Pad widest notation offered by this much, for combo's frame and arrow.
 
@@ -1446,6 +1463,34 @@ proc layoutSelectionMenuApply(
   gui.tooltip wordingText(TipPickBack)
 
 
+proc hideSelected*(
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
+) =
+  ## Show every picked object where all are hidden, else hide them all, as one step of undo.
+  ##   Selection menu's `hide` does this, as page's does (repository issue 632).
+  let is_all_hidden = panel.selection.isAllHidden(scene)
+  panel.selection.setVisibleAll(scene, is_all_hidden)
+  history.record(scene, camera)
+  panel.say(visibilityMessage(panel.selection.len, is_all_hidden), now)
+
+
+proc deleteSelected*(
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
+) =
+  ## Remove every picked object as one step of undo, and close menu.
+  ##   Selection menu's `delete` does this, as page's does (repository issue 632).
+  ##   Drops open session against one of them, which has nothing left to commit against;
+  ##   same guard `layoutObjects` keeps.
+  let count = panel.selection.len
+  if panel.session.isSome and panel.session.get.handle.isSome and
+      panel.session.get.handle.get in panel.selection:
+    panel.session = none(EditSession)
+  panel.selection.removeAll(scene)
+  history.record(scene, camera)
+  panel.say(deletedMessage(count), now)
+  panel.hideSelectionMenu()
+
+
 proc layoutSelectionMenu*(
   panel: var Panel,
   scene: var Scene,
@@ -1463,6 +1508,7 @@ proc layoutSelectionMenu*(
   ##   state is which is on line so far.
   panel.is_menu_selection_hovered = false
   if not panel.is_menu_selection_shown or panel.selection.len == 0: return
+  if anchor.isSome: panel.anchor_menu_selection = [anchor.get.x, anchor.get.y]
   # Turn pointer's corner into offset from object once both are known.
   #   Menu then follows object at that offset; see `showSelectionMenu`.
   if panel.corner_menu_pointer.isSome:
@@ -1476,10 +1522,16 @@ proc layoutSelectionMenu*(
     let offset = panel.offset_menu_selection.get
     panel.position_menu_selection = [anchor.get.x + offset[0], anchor.get.y + offset[1]]
   elif anchor.isSome:
-    panel.position_menu_selection = [
-      anchor.get.x,
-      max(anchor.get.y - OFFSET_MENU_SELECTION, MARGIN_MENU_SELECTION),
-    ]
+    # Hang from point core names, as page hangs it; see `interaction.pointMenuHung`.
+    #   Size is last frame's: window takes its size from what it holds, once laid out.
+    let hung = pointMenuHung(
+      ScreenPosition(x: anchor.get.x, y: anchor.get.y),
+      gui.viewportWidth(),
+      gui.viewportHeight(),
+      panel.box_menu_selection[2],
+      panel.box_menu_selection[3],
+    )
+    panel.position_menu_selection = [cfloat(hung.x), cfloat(hung.y)]
   # Hang pointer-placed menu from its top-left corner, anchored one from bottom middle.
   #   Anchored menu stands above object; pointer-placed one beside pointer.
   let
@@ -1492,18 +1544,19 @@ proc layoutSelectionMenu*(
     "##selection_menu",
     clamp(
       panel.position_menu_selection[0],
-      MARGIN_MENU_SELECTION,
-      gui.viewportWidth() - MARGIN_MENU_SELECTION,
+      PIXELS_MARGIN_MENU_SELECTION,
+      gui.viewportWidth() - PIXELS_MARGIN_MENU_SELECTION,
     ),
     clamp(
       panel.position_menu_selection[1],
-      MARGIN_MENU_SELECTION,
-      gui.viewportHeight() - MARGIN_MENU_SELECTION,
+      PIXELS_MARGIN_MENU_SELECTION,
+      gui.viewportHeight() - PIXELS_MARGIN_MENU_SELECTION,
     ),
     pivot_x,
     pivot_y,
   ):
     panel.is_menu_selection_hovered = gui.isWindowHovered()
+    panel.box_menu_selection = gui.windowBox()
     if count <= 2:
       layoutSelectionMenuApply(panel, scene, camera, history, now)
       is_line_started = true
@@ -1523,27 +1576,12 @@ proc layoutSelectionMenu*(
       if is_line_started: gui.sameLine()
       is_line_started = true
       if gui.buttonSmall(visibilityLabel(not is_all_hidden, NamePickHide, NamePickShow)):
-        for position in 0..<count:
-          scene.setVisible(panel.selection.at(position), is_all_hidden)
-        history.record(scene, camera)
-        panel.say(visibilityMessage(count, is_all_hidden), now)
+        panel.hideSelected(scene, camera, history, now)
       gui.tooltip wordingText(TipPickVisible)
 
       gui.sameLine()
       if gui.buttonSmall(wordingText(NamePickDelete)):
-        # Read handles out before removing any; removal prunes selection this loop walks.
-        var handles: array[OBJECTS_MAX, int]
-        for position in 0..<count: handles[position] = panel.selection.at(position)
-        # Drop open session against one of these, which has nothing left to commit against.
-        #   Same guard `layoutObjects` keeps.
-        if panel.session.isSome and panel.session.get.handle.isSome and
-            panel.session.get.handle.get in panel.selection:
-          panel.session = none(EditSession)
-        for position in 0..<count: scene.removeObject(handles[position])
-        panel.selection.clear()
-        history.record(scene, camera)
-        panel.say(deletedMessage(count), now)
-        panel.hideSelectionMenu()
+        panel.deleteSelected(scene, camera, history, now)
       gui.tooltip wordingText(TipPickDelete)
 
     gui.sameLine()
@@ -1669,8 +1707,8 @@ proc layoutMenu(
   ##   Same `☰`, same three groups, same order as browser's `.top-menu`: save, load, demo.
   ##   Browser hides these because its chip row is one line on phone; desktop follows it so
   ##   reader meeting both meets one arrangement rather than two (repository issue 136).
-  ##   `☰` is U+2630, same character browser's button carries. Interface face merges symbol
-  ##   range it is in, so it draws here without any face being pushed.
+  ##   `☰` is U+2630, same character browser's button carries. Interface font face merges symbol
+  ##   range it is in, so it draws here without any font face being pushed.
   ##   Paths sit above groups rather than beside their buttons: both groups read them, and
   ##   browser has no such field only because its own save and load go through download and
   ##   file picker rather than through file system.

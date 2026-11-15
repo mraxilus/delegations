@@ -5,7 +5,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, tables, tempfiles, unittest]
+import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/symbols
 
 
@@ -105,6 +105,63 @@ suite "Internal: Symbols":
     check answers["src/b.nim"].reason.contains("undeclared")  # no backend compiles it
     let d = answers["src/d.nim"]  # through its includer, `c.nim`
     check d.reason.len == 0 and d.symbols[(3, 7)].kind == "skLet"
+
+
+  test "compile of file takes each define its request names, and none of its own":
+    # Case held: pass compiled each file under directory `tests` with `-d:testing`, define stubs
+    #   of one repository pass (#886). Domain: name declared under define alone, under `tests`
+    #   and outside, with define named and without.
+    let
+      root = createTempDir("knoller_", "_symbols")
+      source = "when defined(testing):\n  let x = 3\nlet y = x.float\n"
+      cases = [
+        ("tests/a.nim", newSeq[string](), false),  # none of its own under `tests`
+        ("src/a.nim", newSeq[string](), false),
+        ("tests/b.nim", @["-d:testing"], true),
+        ("src/b.nim", @["-d:testing"], true),  # define request names, at any path
+      ]
+    defer: removeDir(root)
+    writeInto(root, "fixture.nimble", "version = \"0.1.0\"\n")
+    for (path, _, _) in cases: writeInto(root, path, source)
+    var requests: seq[Request]
+    for (path, defines, _) in cases:
+      requests.add Request(
+        query: Query(path: path, sites: @[(3, 10)]),
+        root: root,
+        directory: root,
+        includer: path,
+        defines: defines,
+      )
+    let answers = resolve(requests)
+    for (path, _, is_resolved) in cases:
+      check answers.anyIt(it.path == path and (it.reason.len == 0) == is_resolved)
+
+
+  test "requests of one includer share one run, with options of first of them":
+    # Includer compiles once for every file it includes, so options of one request stand for
+    #   all, those of first (`resolve`). Domain: first names define, and second, after it, none.
+    let
+      root = createTempDir("knoller_", "_symbols")
+      files = @[
+        ("fixture.nimble", "version = \"0.1.0\"\n"),
+        ("src/c.nim", "include \"d.nim\"\n"),
+        ("src/d.nim", "when defined(testing):\n  let x = 3\nlet y = x.float\n"),
+      ]
+    defer: removeDir(root)
+    for (path, content) in files: writeInto(root, path, content)
+    let answers = resolve([
+      Request(
+        query: Query(path: "src/d.nim", sites: @[(3, 10)]),
+        root: root,
+        directory: root,
+        includer: "src/c.nim",
+        defines: @["-d:testing"],
+      ),
+      Request(query: Query(path: "src/c.nim"), root: root, directory: root, includer: "src/c.nim"),
+    ])
+    check answers.len == 2  # one run answers both
+    check answers.anyIt(it.path == "src/d.nim" and it.reason.len == 0)  # define of first stands
+    check answers.anyIt(it.path == "src/c.nim" and it.reason.len == 0)
 
 
   test "toolchain with no nimsuggest leaves each file unresolved, and says so":

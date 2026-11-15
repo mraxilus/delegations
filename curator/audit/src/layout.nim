@@ -93,6 +93,15 @@ func directoryProject*(parts: seq[string]): string =
     ""
 
 
+func nimbleProject*(path: string): string =
+  ## Read nimble file of project holding path, which knoller reads tests, stubs and umbrella from
+  ##   (`reports.nim` there); empty for path in no project, such as `koch.nim`.
+  ##   Read from path alone: each project keeps `<project>.nimble` at its root, so file system
+  ##     needs no lookup. Cost: package nested inside project reads as its project.
+  let directory = path.split('/').directoryProject
+  if directory.len == 0: "" else: directory.pathNimble
+
+
 func directoriesProject*(tree: Tree): seq[string] =
   ## Collect project directories present, sorted.
   for e in tree:

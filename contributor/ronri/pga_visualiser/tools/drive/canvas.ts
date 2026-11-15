@@ -203,7 +203,8 @@ export async function driveBlankRefused(page: Page): Promise<void> {
 export async function driveAntialias(page: Page, is_wanted: boolean): Promise<void> {
   const granted = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement | null;
-    return canvas?.getContext('webgl')?.getContextAttributes()?.antialias ?? null;
+    const context = canvas?.getContext('webgl2') ?? canvas?.getContext('webgl');
+    return context?.getContextAttributes()?.antialias ?? null;
   });
   report(
     is_wanted ? "the page on the real clock antialiases, as the reader's page does" :

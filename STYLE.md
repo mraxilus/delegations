@@ -160,13 +160,54 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Give an object field its default inline (`is_negated*: bool = false`).
 - Use `seq`, `Table` and `string` as data structures only at compile time, or in a tool that
   a shell runs once. At runtime, use `string` only for display (`$`, messages).
+- Write data that a person keeps as a module of typed constants, one constructor to each entry.
+  Mark each field whose absence is a mistake `{.requiresInit.}`, so that the compiler names the
+  entry that lacks it:
+
+  ```nim
+  type
+    Claim* = object  ## Define one claim that evaluation checks.
+      kind*: KindClaim
+      path* {.requiresInit.}: string  ## Program that claim runs, relative to its proposal.
+
+  const CLAIMS* = [
+    Claim(kind: KindClaim.Program, path: "width.nim"),
+  ]
+  ```
+
+- Read and write a protobuf message only through the types that `import_proto3` generates from
+  its schema. Check the tag, the length and the checksum of a kept file first. Catch
+  `SerializationError` where the bytes come from outside. Give an `optional` field its default
+  with `get`:
+
+  ```nim
+  import protobuf_serialization, protobuf_serialization/files/type_generator
+  import_proto3 "scene.proto"
+
+  let scene = Protobuf.decode(bytes, Scene)
+  for one in scene.objects: draw(one.label, one.radius.get(RADIUS_DEFAULT))
+  writeFile(path, Protobuf.encode(scene))
+  ```
+
+- Read a committed text format file through a file that `protoc` writes under `build/`. Check
+  the exit code of `protoc`, so a refused text format file stops the compile, and no older file
+  is read. Never let `staticExec` carry the binary itself, because it loses bytes of it. Under
+  `nim check`, Nim runs no command and gives empty output, so guard the read with `nimcheck`,
+  which `nim check` defines:
+
+  ```nim
+  const encoded = gorgeEx("protoc --encode=Scene scene.proto < tour.txtpb > ../build/tour.binpb")
+  static: doAssert encoded.exitCode == 0, "Text format file refused; got `" & encoded.output & "`."
+  const TOUR = when defined(nimcheck): "" else: staticRead("../build/tour.binpb")
+  ```
 
 ## 5. Signatures, imports, calls
 
 - A doc comment is `##`, so an empty doc is `## TODO: Document.` (VI.1). A doc takes one
   position for each shape of declaration (VI.9). A type, a field, a binding and an enum member
   take it after them on the same line, where the joined line fits. Otherwise the doc takes the
-  next line, indented one level.
+  next line, indented one level. Names that one line declares share one doc, which describes
+  each.
 - A one-line routine takes its doc on the next line, indented to the body. A longer routine
   takes it as the first line of the body. A `type` block takes a group doc on the keyword line.
 - Group related bindings under one `const`, `let` or `var` section (X.5).

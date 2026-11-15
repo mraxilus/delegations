@@ -11,6 +11,11 @@ coordinator, and every other delegate works with the Architect directly, as its 
 prompt says. Where this file says what a delegate does for you, that prompt lacks the rule for
 now, so the trial adds it first.
 
+One question goes with those rules. A sign-off covers all the work since the last message of the
+Architect (`GUIDE.md`, The sign-off). In the trial, an answer that you pass reaches a delegate as
+a message from you, and today such a message starts nothing. So the trial first decides whether
+it counts there as a message of the Architect.
+
 ## The Architect's brief
 
 Every rule below serves it:
@@ -234,10 +239,13 @@ order on an issue labelled `curator`, so that a curator changes this file.
 
 ## The digest
 
-The digest is your message to the Architect. It carries every sign-off that arrived since the
-last digest, combined and sorted. Send one when a delegate reports, or when the Architect
-answers a card. Reports that arrive close together go in one digest. Send one whenever the
-Architect asks, too.
+The digest is your message to the Architect. It covers all the work since the last message of
+the Architect, as a sign-off does (`GUIDE.md`, The sign-off). So the latest digest replaces each
+earlier one. It carries the latest sign-off of each delegate that reported since then, combined
+and sorted.
+
+Send one when a delegate reports, or when the Architect answers a card. Reports that arrive
+close together go in one digest. Send one whenever the Architect asks, too.
 
 Its parts come in one order, and a part with nothing in it says `None.`:
 
@@ -254,8 +262,9 @@ Its parts come in one order, and a part with nothing in it says `None.`:
    `Pull request and run`, `Waits on`, `Report`. Sort it `blocked`, `waiting`, then
    `working`, the state of a delegate whose last message closes with the working line. The
    `Report` cell links the full sign-off on GitHub, or that line where no sign-off exists.
-4. **Done.** Each ✅ row since the last digest, under its role string, with its evidence as the
-   delegate wrote it. A delegate that is now `done` is one line here, with its report link.
+4. **Done.** Each ✅ and ☑️ row of those sign-offs, under its role string and its pull request,
+   with its evidence as the delegate wrote it. A delegate that is now `done` is one line here,
+   with its report link.
 5. **Facts.** Each decision of class `fact`, word for word, with its role string.
 6. **Folded.** Each row that you merged into another, or left out, and where it went.
 7. **Not read.** Each source that was out of reach, and why.
@@ -264,9 +273,10 @@ Its parts come in one order, and a part with nothing in it says `None.`:
 ## Combine without hiding
 
 Every row of every sign-off lands in exactly one part of the digest, or in Folded with where it
-went. A decision goes to Decisions or Facts. A ✅ row goes to Done. A ⚠️ or ⬜ row goes to
-the `Waits on` cell of Delegates. A ⏸️ row goes with the card of the decision that it names. A ☑️
-row goes nowhere, because an earlier digest carried it, and the report link holds it.
+went. A decision goes to Decisions or Facts. A ✅ or ☑️ row goes to Done, since the latest
+digest is enough on its own. So does a ➖ row, with each carried rule that it names. A ⚠️ or ⬜
+row goes to the `Waits on` cell of Delegates. A ⏸️ row goes with the card of the decision that
+it names.
 
 - **Keep the words of the delegate.** Never reword a question, an option or a consequence.
   Where one does not fit a card, shorten it, say in the card that you shortened it, and link

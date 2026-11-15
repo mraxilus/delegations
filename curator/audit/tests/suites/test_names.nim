@@ -55,7 +55,8 @@ suite "Names":
       ("proc f(dir_hint: int) = discard\n",
         "Name coins abbreviation; write `directory` (V.6); got `dir_hint`."),
       ("func toJSON() = discard\n",
-        "Acronym stays only where glossary lists it (V.9); got `JSON` in `toJSON`."),
+        "Acronym stays only where glossary lists it (V.9); propose it with /propose-term, or " &
+          "spell it out; got `JSON` in `toJSON`."),
       ("proc getGrade() = discard\n",
         "Action is imperative verb and property is bare noun (V.3); got `getGrade`."),
       ("func gradeOf(m: Multivector): Grade = m.grade\n",

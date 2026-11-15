@@ -134,43 +134,43 @@ const
     ##   this thin.
   PIXELS_WIDTH* {.define: "visualiser.pixels_width".} = 1440
   PIXELS_HEIGHT* {.define: "visualiser.pixels_height".} = 900
-  DIRECTORY_FACES* {.define: "visualiser.directory_faces".} = "../build/fonts"
-    ## Directory shipped faces sit in, relative to binary rather than to any machine.
+  DIRECTORY_FONT_FACES* {.define: "visualiser.directory_font_faces".} = "../build/fonts"
+    ## Directory shipped font faces sit in, relative to binary rather than to any machine.
     ##   `tools/build.nim assets` fetches them there, each pinned by tag and digest, and
-    ##   `binaries/` sits beside `build/` -- so binary and faces move together and neither is
+    ##   `binaries/` sits beside `build/` -- so binary and font faces move together and neither is
     ##   found by absolute path (Article X.8; CONTRIBUTOR.md, "System dependencies").
-  FACE_FONT* {.define: "visualiser.face_font".} = "NotoSans-Regular.ttf"
+  FONT_FACE* {.define: "visualiser.font_face".} = "NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
-    ##   `PGA_FONT` names another outright, for reason `faceAt` gives. Three below follow
+    ##   `PGA_FONT` names another outright, for reason `fontFaceAt` gives. Three below follow
     ##   same pattern.
-  FACE_FONT_MATH* {.define: "visualiser.face_font_math".} = "NotoSansMath-Regular.ttf"
+  FONT_FACE_MATH* {.define: "visualiser.font_face_math".} = "NotoSansMath-Regular.ttf"
     ## Carry operators notation is written with, and Lengyel's bold operands.
     ##   Neither is in Noto Sans; merged into same atlas font; see `gui_shim.cpp`.
-  FACE_FONT_SYMBOL* {.define: "visualiser.face_font_symbol".} = "NotoSansSymbols2-Regular.ttf"
+  FONT_FACE_SYMBOL* {.define: "visualiser.font_face_symbol".} = "NotoSansSymbols2-Regular.ttf"
     ## Carry bulk and weight dual stars and abandon button's cross. Merged same way.
-  FACE_FONT_LABEL* {.define: "visualiser.face_font_label".} = "NotoSans-Bold.ttf"
+  FONT_FACE_LABEL* {.define: "visualiser.font_face_label".} = "NotoSans-Bold.ttf"
     ## Set selected object's name label, heavier than UI text as browser's semibold is.
-    ##   Bold is heaviest weight Noto Sans ships as static face; no semibold there.
-    ##   Own face rather than merged: label alone is set in it, at `HEIGHT_MARKER_LABEL`.
-  FACE_FONT_TITLE* {.define: "visualiser.face_font_title".} = "NotoSerif-SemiBold.ttf"
+    ##   Bold is heaviest weight Noto Sans ships as static font face; no semibold there.
+    ##   Own font face rather than merged: label alone is set in it, at `HEIGHT_MARKER_LABEL`.
+  FONT_FACE_TITLE* {.define: "visualiser.font_face_title".} = "NotoSerif-SemiBold.ttf"
     ## Set every heading, which is title role page's stylesheet names as well.
     ##   Serif against interface's sans, so heading is told from row beneath it by shape
     ##   rather than by weight alone.
     ##   Semibold rather than regular, matching 600 page sets its own titles at: same role
     ##   drawn at same weight through both mechanisms.
-  FACE_FONT_MONO* {.define: "visualiser.face_font_mono".} = "CommitMonoV142-400Regular.otf"
+  FONT_FACE_MONO* {.define: "visualiser.font_face_mono".} = "CommitMonoV142-400Regular.otf"
     ## Set notation, figures and message line: text whose columns carry meaning.
     ##   `otf` rather than `ttf` because that is what its author publishes; `stb_truetype`
     ##   reads its CFF outlines, driven rather than assumed.
     ##   Ligatures it carries are drawn by page and not here: Dear ImGui shapes no text, so
     ##   `liga` and `calt` never fire. Letterforms are shared, ligatures are not.
   ENV_FONT* = "PGA_FONT"
-    ## Environment name carrying interface face's location, where machine keeps its own.
-  ENV_FONT_MATH* = "PGA_FONT_MATH"  ## Environment name carrying operator face's location.
-  ENV_FONT_SYMBOL* = "PGA_FONT_SYMBOL"  ## Environment name carrying symbol face's location.
-  ENV_FONT_LABEL* = "PGA_FONT_LABEL"  ## Environment name carrying label face's location.
-  ENV_FONT_TITLE* = "PGA_FONT_TITLE"  ## Environment name carrying title face's location.
-  ENV_FONT_MONO* = "PGA_FONT_MONO"  ## Environment name carrying mono face's location.
+    ## Environment name carrying interface font face's location, where machine keeps its own.
+  ENV_FONT_MATH* = "PGA_FONT_MATH"  ## Environment name carrying operator font face's location.
+  ENV_FONT_SYMBOL* = "PGA_FONT_SYMBOL"  ## Environment name carrying symbol font face's location.
+  ENV_FONT_LABEL* = "PGA_FONT_LABEL"  ## Environment name carrying label font face's location.
+  ENV_FONT_TITLE* = "PGA_FONT_TITLE"  ## Environment name carrying title font face's location.
+  ENV_FONT_MONO* = "PGA_FONT_MONO"  ## Environment name carrying mono font face's location.
   SIZE_FONT* = 16.0'f32
   PATH_EXPORT_DEFAULT* = "pga_visualiser.png"
 
@@ -404,7 +404,7 @@ type
     is_menu_driven: bool  ## Whether to open top menu at startup, with no click.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; verdict then reads what menu laid out.
-    is_faces_driven: bool  ## Whether to ask each role's face for every codepoint build writes.
+    is_font_faces_driven: bool  ## Whether to ask each role's font face for every codepoint shown.
       ## Headless run then shows no text drawn falls to `.notdef`; see `shown`.
     is_edit_driven: bool  ## Whether to open edit on object far out and save it unchanged.
       ## Headless run then shows what staging keeps of it; see `driveEdit`.
@@ -414,6 +414,12 @@ type
       ## Headless run then shows what each press shed; see `driveEscape`.
     is_chords_driven: bool  ## Whether to hold keys under modifiers, and undo by key printed.
       ## Headless run then shows what control, alt and layout do; see `driveChords`.
+    is_bulk_driven: bool  ## Whether to hide two objects from menu, undo, delete them, undo.
+      ## Headless run then shows each act takes one step of undo; see `driveBulk`.
+    is_fields_driven: bool  ## Whether to hand view section's two fields values past bounds.
+      ## Headless run then shows where each lands; see `driveFields`.
+    is_hover_driven: bool  ## Whether to pick under still pointer, then hold arrow key.
+      ## Headless run then shows when hover stands; see `driveHover`.
     path_help_driven: Option[HelpPath]  ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -433,6 +439,31 @@ type
       ## Eye before space, after it, after control, and after W held under alt.
     count_added, count_undone, count_redone: int
       ## Objects once one is added, then after undo and redo by key printed.
+
+  MoreSeen = object  ## Define what `--drive-drag` found frame after letting go on `more…`.
+    is_picking: bool  ## Whether selection menu stood with its operation picker open.
+    corner: array[2, cfloat]  ## Where that menu sat, by corner pointer placed it from.
+    cursor: ScreenPosition  ## Where pointer let go.
+
+  BulkDrive = object  ## Define what `--drive-bulk` reads between frames, for its verdict.
+    picked: Option[array[2, int]]  ## Two objects it hides, then deletes.
+    shown_hidden, shown_undone: array[2, bool]
+      ## Whether each was shown after hide, and after one undo of it.
+    alive_deleted, alive_undone: array[2, bool]
+      ## Whether each stood after delete, and after one undo of it.
+
+  FieldsDrive = object  ## Define what `--drive-fields` reads, for its verdict.
+    is_run: bool  ## Whether it handed fields their values.
+    degrees_wide, degrees_narrow: float  ## Field of view after 200, and after 1.
+    distance_zero, distance_below: float  ## Distance after 0, and after -5.
+
+  HoverDrive = object  ## Define what `--drive-hover` reads between frames, for its verdict.
+    is_eased: bool  ## Whether pick's ease was seen under way.
+    picked: Option[int]  ## Object keyboard picked, once its ease arrived.
+    hovered_eased: Option[int]  ## Hover then, under pointer that never moved.
+    frame_held: Option[int]  ## Frame arrow key went down.
+    frames_lit: int  ## Frames hover stood while arrow was held.
+    hovered_after: Option[int]  ## Hover once move ended.
 
   WheelDrive = object  ## Define what `--drive-wheel` carries between frames, for its verdict.
     handle: Option[int]  ## Object it picks; none until found by label.
@@ -476,11 +507,14 @@ proc applyOption(options: var Options; key, value: string) =
   of "drive-sky": options.is_sky_driven = true
   of "drive-search": options.is_search_driven = true
   of "drive-menu": options.is_menu_driven = true
-  of "drive-faces": options.is_faces_driven = true
+  of "drive-font-faces": options.is_font_faces_driven = true
   of "drive-edit": options.is_edit_driven = true
   of "drive-wheel": options.is_wheel_driven = true
   of "drive-escape": options.is_escape_driven = true
   of "drive-chords": options.is_chords_driven = true
+  of "drive-bulk": options.is_bulk_driven = true
+  of "drive-fields": options.is_fields_driven = true
+  of "drive-hover": options.is_hover_driven = true
   of "drive-help":
     for path in HelpPath:
       if title(path) == value: options.path_help_driven = some(path)
@@ -490,8 +524,9 @@ proc applyOption(options: var Options; key, value: string) =
     doAssert false,
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
-      "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces, " &
-      "drive-edit, drive-wheel, drive-escape, drive-chords or drive-help; " &
+      "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-font-faces, " &
+      "drive-edit, drive-wheel, drive-escape, drive-chords, drive-bulk, drive-fields, " &
+      "drive-hover or drive-help; " &
       &"got `--{key}`."
 
 
@@ -499,8 +534,9 @@ func isDriven(options: Options): bool =
   ## Report whether any scripted run was asked for.
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
       options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
-      options.is_menu_driven or options.is_faces_driven or options.is_edit_driven or
+      options.is_menu_driven or options.is_font_faces_driven or options.is_edit_driven or
       options.is_wheel_driven or options.is_escape_driven or options.is_chords_driven or
+      options.is_bulk_driven or options.is_fields_driven or options.is_hover_driven or
       options.path_help_driven.isSome
 
 
@@ -527,23 +563,24 @@ proc parseOptions(): Options =
 
 #[ Frame Assembly ]#
 
-proc faceAt(name_environment, face: string): string =
-  ## Read face's location from environment, else from faces this build ships; empty where none.
-  ##   Shipped face is found beside binary rather than at absolute path: no machine's layout is
+proc fontFaceAt(name_environment, font_face: string): string =
+  ## Read font face's location from environment, else from font faces this build ships.
+  ##   Empty where neither holds it.
+  ##   Shipped font face is found beside binary rather than at absolute path: no machine's layout is
   ##   named in source, and checkout moves without editing anything.
-  ##   Environment first because machine keeping its own faces says so rather than rebuilding.
+  ##   Environment first because machine keeping its own font faces says so rather than rebuilding.
   ##   Empty variable counts as unset, since exporting nothing is how shell clears one.
-  ##   Empty result rather than raising: `gui.init` skips face whose path is empty, so
+  ##   Empty result rather than raising: `gui.init` skips font face whose path is empty, so
   ##   interface draws in what is left and run reaches its verdict. Dear ImGui asserts on
   ##   path it cannot open, and assertion is abort rather than finding, so path it cannot
   ##   open must not reach it (repository issue 93).
-  ##   Says which face and what to install, since finding naming neither is one nobody acts
+  ##   Says which font face and what to install, since finding naming neither is one nobody acts
   ##   on.
   let
     named = getEnv(name_environment)
-    path = if named.len > 0: named else: getAppDir() / DIRECTORY_FACES / face
+    path = if named.len > 0: named else: getAppDir() / DIRECTORY_FONT_FACES / font_face
   if fileExists(path): return path
-  echo &"No face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
+  echo &"No font face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
   ""
 
 
@@ -1198,7 +1235,9 @@ proc renderFrame(
   #   `camera.drawExtentFor`.
   var (eye, frame) = camera.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
-  REACH_NEAR = reachNear(placements, scene, camera.originView, eye, frame.forward)
+  REACH_NEAR = reachNear(
+    placements, scene, camera.originView, eye, eye + camera.distance * frame.forward, frame.forward
+  )
   camera.reach_near = REACH_NEAR
 
   # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.
@@ -1542,9 +1581,11 @@ proc handleEvent(
         HISTORY_DESKTOP.record(scene, camera)
       elif outcome.choice == some(DragChoice.More) and outcome.operands.isSome:
         # Hand pair to apply picker, way out of three operations into other twenty-four.
-        #   Both operands selected in drag order (m then n), picker opened where wheel was.
+        #   Both operands selected in drag order (m then n), picker opened beside pointer
+        #   that chose `more…`, as page's `openApplyPickerOnOperands` opens it.
         panel.selection.selectOnly(outcome.operands.get.source)
         panel.selection.toggle(outcome.operands.get.destination)
+        panel.showSelectionMenuAt(interaction.cursor)
         panel.openSelectionMenuPicker()
       button_dragging = none(uint8)
     elif event.button.button.toPointerButton.isSome and interaction.isClick(now):
@@ -1668,6 +1709,11 @@ proc reportTimings(milliseconds: var openArray[float32]) =
       &"max {milliseconds[^1]:.3f} ({1000.0/float(milliseconds[^1]):.1f})"
 
 
+const FRAME_RELEASE_MORE = 9
+  ## Let `--drive-drag` go on `more…` at this frame, and read what opened as frame lays out.
+  ##   Read then: later frames carry menu with its object while camera eases onto pair.
+
+
 proc driveDrag(
   scene: Scene;
   interaction: Interaction;
@@ -1688,7 +1734,7 @@ proc driveDrag(
   ##     Look at capture; do not byte-compare.
   const
     (frame_reach_source, frame_press, frame_reach_target) = (2, 3, 4)
-    (frame_reach_more, frame_release) = (8, 9)
+    (frame_reach_more, frame_release) = (FRAME_RELEASE_MORE - 1, FRAME_RELEASE_MORE)
       ## Reach `more…` wedge two frames past menu opening, then let go on it.
       ##   Shorter runs still capture open menu.
   if count_drawn == frame_reach_more or count_drawn == frame_release:
@@ -2006,6 +2052,123 @@ proc driveWheel(
     sdl3.pushEvent(addr notch)
 
 
+proc driveBulk(
+  drive: var BulkDrive; panel: var Panel; scene: var Scene; camera: var Camera; count_drawn: int;
+  now: float
+) =
+  ## Pick first two objects, hide both from menu and undo once, then delete both and undo
+  ## once, for `--drive-bulk`.
+  ##   Through panel's own `hideSelected` and `deleteSelected`, as menu's buttons call them:
+  ##   headless run has no pointer to press them with, as `--drive-edit` has none.
+  ##   One act for each frame, read next frame, once its layout has run.
+  const frame_first = 3  # Past startup, so first frame's layout has settled.
+  let step = count_drawn - frame_first
+  if step == 0:
+    var handles: array[OBJECTS_MAX, int]
+    if scene.handlesCreated(handles) < 2: return
+    drive.picked = some([handles[0], handles[1]])
+  if drive.picked.isNone: return
+  let picked = drive.picked.get
+  case step
+  of 0, 2:
+    if step == 2:
+      for position, handle in picked: drive.shown_undone[position] = scene.isVisible(handle)
+    panel.selection.selectOnly(picked[0])
+    panel.selection.toggle(picked[1])
+    panel.showSelectionMenu()
+    if step == 0: panel.hideSelected(scene, camera, HISTORY_DESKTOP, now)
+    else: panel.deleteSelected(scene, camera, HISTORY_DESKTOP, now)
+  of 1:
+    for position, handle in picked: drive.shown_hidden[position] = scene.isVisible(handle)
+    discard panel.stepHistory(scene, camera, HISTORY_DESKTOP, is_undo = true)
+  of 3:
+    for position, handle in picked: drive.alive_deleted[position] = scene.isAlive(handle)
+    discard panel.stepHistory(scene, camera, HISTORY_DESKTOP, is_undo = true)
+  of 4:
+    for position, handle in picked: drive.alive_undone[position] = scene.isAlive(handle)
+  else: discard
+
+
+proc driveFields(drive: var FieldsDrive; panel: var Panel; camera: var Camera; count_drawn: int) =
+  ## Hand view section's field of view and distance values past their bounds, for
+  ## `--drive-fields`.
+  ##   Through panel's own `commitFieldOfView` and `commitDistance`, as fields call them:
+  ##   headless run types into no Dear ImGui field, as `--drive-edit` presses no button.
+  ##   Entry left empty never reaches either, since Dear ImGui keeps value field held.
+  ##   Puts camera back, for what run draws after.
+  const frame_first = 3  # Past startup, so first frame's layout has settled.
+  if count_drawn != frame_first: return
+  let camera_before = camera
+  commitFieldOfView(camera, 200.0)
+  drive.degrees_wide = camera.degrees_field_of_view
+  commitFieldOfView(camera, 1.0)
+  drive.degrees_narrow = camera.degrees_field_of_view
+  panel.commitDistance(camera, 0.0)
+  drive.distance_zero = camera.distance
+  panel.commitDistance(camera, -5.0)
+  drive.distance_below = camera.distance
+  camera = camera_before
+  drive.is_run = true
+
+
+const
+  FRAMES_HELD_HOVER = 12
+    ## Hold arrow key `--drive-hover` holds this many frames, reading hover in each.
+  FRAMES_EASE_HOVER = 240
+    ## Wait at most this many frames for pick's ease to arrive: two seconds of scripted clock.
+
+proc pushKey(scancode: Scancode; keycode: uint32; modifiers: uint16; is_down: bool) =
+  ## Post one key event onto SDL's queue, with modifiers held as reader's would be.
+  var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
+  event.key.scancode = uint32(scancode)
+  event.key.keycode = keycode
+  event.key.is_down = is_down
+  event.key.modifiers = modifiers
+  sdl3.pushEvent(addr event)
+
+
+proc driveHover(
+  drive: var HoverDrive; window: Window; panel: Panel; interaction: Interaction; count_drawn: int
+) =
+  ## Rest pointer at middle of view, pick by keyboard, hold right arrow, then let go, for
+  ## `--drive-hover`.
+  ##   Keyboard pick carries its object to middle, under pointer that never moves, so hover
+  ##   must follow ease there. Held arrow then orbits about pick, which stays under pointer,
+  ##   so hover must drop for whole move and come back once it ends, as page's does.
+  ##   Reads in each frame what frame before it picked, once its layout has run.
+  ##   Pointer event names this window, so Dear ImGui reads pointer where view does.
+  const frame_first = 2  # Past startup, so first frame's layout has settled.
+  let step = count_drawn - frame_first
+  case step
+  of 0:
+    var reach = Event(kind: uint32(EventKind.MouseMotion))
+    reach.motion.window_id = sdl3.windowId(window)
+    reach.motion.x = cfloat(PIXELS_WIDTH div 2)
+    reach.motion.y = cfloat(PIXELS_HEIGHT div 2)
+    sdl3.pushEvent(addr reach)
+    return
+  of 1, 2: pushKey(Scancode.BracketRight, uint32(ord(']')), 0, is_down = step == 1)
+  of 3, 4: pushKey(Scancode.Return, 13'u32, 0, is_down = step == 3)  # ASCII carriage return.
+  else: discard
+  if step <= 4: return
+
+  # Hold arrow once pick's ease has arrived, reading what hover settled on first.
+  if drive.frame_held.isNone:
+    if not panel.tween_camera.is_arrived: drive.is_eased = true
+    if step > FRAMES_EASE_HOVER: return
+    if not (drive.is_eased and panel.tween_camera.is_arrived and len(panel.selection) == 1):
+      return
+    drive.picked = some(panel.selection.at(0))
+    drive.hovered_eased = interaction.index_hover
+    drive.frame_held = some(count_drawn)
+    pushKey(Scancode.Right, KEYCODE_RIGHT, 0, is_down = true)
+    return
+  let held = count_drawn - drive.frame_held.get
+  if held in 1..FRAMES_HELD_HOVER and interaction.index_hover.isSome: inc drive.frames_lit
+  if held == FRAMES_HELD_HOVER: pushKey(Scancode.Right, KEYCODE_RIGHT, 0, is_down = false)
+  elif held == FRAMES_HELD_HOVER + 3: drive.hovered_after = interaction.index_hover
+
+
 const KEYS_UNDO_DRIVEN = [
   (Scancode.Right, uint32(1073741903), 0'u16, true),  # SDLK_RIGHT, no modifier: orbit.
   (Scancode.Right, uint32(1073741903), 0'u16, false),
@@ -2173,16 +2336,6 @@ func lettersStanding(panel: Panel, interaction: Interaction): string =
     if is_standing: result.add LETTERS_STANDING[i]
 
 
-proc pushKey(scancode: Scancode; keycode: uint32; modifiers: uint16; is_down: bool) =
-  ## Post one key event onto SDL's queue, with modifiers held as reader's would be.
-  var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
-  event.key.scancode = uint32(scancode)
-  event.key.keycode = keycode
-  event.key.is_down = is_down
-  event.key.modifiers = modifiers
-  sdl3.pushEvent(addr event)
-
-
 proc driveEscape(
   drive: var EscapeDrive;
   window: Window;
@@ -2302,9 +2455,13 @@ proc verdictDriven(
   panel: Panel;
   count_settled: int;
   found_dragging, found_menu_open: bool;
+  more_seen: MoreSeen;
   wheel_drive: WheelDrive;
   escape_drive: EscapeDrive;
   chord_drive: ChordDrive;
+  bulk_drive: BulkDrive;
+  fields_drive: FieldsDrive;
+  hover_drive: HoverDrive;
 ): int =
   ## Judge what `--drive-*` run reached, and report every check pass or fail.
   ##   Answers with number that failed, for caller to exit on.
@@ -2319,14 +2476,14 @@ proc verdictDriven(
     if not is_passing: inc count_failed
     echo (if is_passing: "  ok   " else: " FAIL  ") & name & " -- " & detail
 
-  # Face nobody installed is its own verdict, and fires only in run driven without one.
+  # Font face nobody installed is its own verdict, and fires only in run driven without one.
   #   Claim is that run did its scripted work anyway: focus moved, which is what
-  #   `--drive-keys` is for, while Dear ImGui had no face to set interface in.
+  #   `--drive-keys` is for, while Dear ImGui had no font face to set interface in.
   if not gui.isFontLoaded():
     report(
-      "a face nobody installed leaves the run standing, and names itself",
+      "a font face nobody installed leaves the run standing, and names itself",
       interaction.index_focus.isSome and scene.bound > 0,
-      &"focus {interaction.index_focus}, {scene.bound} objects, no face loaded",
+      &"focus {interaction.index_focus}, {scene.bound} objects, no font face loaded",
     )
 
   if options.is_search_driven:
@@ -2403,15 +2560,15 @@ proc verdictDriven(
       &"radius {radius_saved:.10g} for {RADIUS_EDIT_DRIVEN:.10g}",
     )
 
-  # Faces are their own verdict, and fire only in run that asked for them.
-  #   Claim is that every codepoint each role sets draws from glyph of some face merged into
+  # Font faces are their own verdict, and fire only in run that asked for them.
+  #   Claim is that every codepoint each role sets draws from glyph of some font face merged into
   #   that role's, never from `.notdef` (Article X.8). Title role sets panel headings alone,
   #   and is asked for those; other three are asked for every text build writes.
-  if options.is_faces_driven:
+  if options.is_font_faces_driven:
     let codepoints_shown = codepointsShown()
-    for role in FaceRole:
+    for role in RoleFontFace:
       let codepoints =
-        if role == FaceRole.Title:
+        if role == RoleFontFace.Title:
           codepoints([
             $wordingText(NameHeadApply), $wordingText(NameHeadObjects),
             $wordingText(NameHeadView), $wordingText(NameHeadDiagnostics),
@@ -2422,25 +2579,43 @@ proc verdictDriven(
         if not gui.hasGlyph(role, uint32(codepoint)): missing.add &"U+{codepoint:04X}"
       let named = if missing.len == 0: "none" else: missing.join(", ")
       report(
-        &"every codepoint the {role} face sets has a glyph, and none draws as .notdef",
+        &"every codepoint the {role} font face sets has a glyph, and none draws as .notdef",
         missing.len == 0,
         &"{codepoints.len} codepoints asked, missing {named}",
       )
 
-  # Three roles, three faces, and every run says so.
-  #   Claim is that each role got face of its own rather than falling back to interface
-  #   face: fallback draws readable panel and silently loses distinction between heading,
+  # Three roles, three font faces, and every run says so.
+  #   Claim is that each role got font face of its own rather than falling back to interface
+  #   font face: fallback draws readable panel and silently loses distinction between heading,
   #   body and notation, which is exactly failure nobody would see in headless run.
-  #   Skipped where interface face itself is absent, since that run is already reported
+  #   Skipped where interface font face itself is absent, since that run is already reported
   #   above and asking two questions about one missing directory says nothing new.
   if gui.isFontLoaded():
     report(
-      "each type role is drawn in a face of its own",
+      "each type role is drawn in a font face of its own",
       gui.isFontTitleLoaded() and gui.isFontMonoLoaded(),
       &"title {gui.isFontTitleLoaded()}, mono {gui.isFontMonoLoaded()}, interface true",
     )
 
   if options.is_key_driven:
+    # Check menu Enter opened, with no pointer, hangs centred above its object, as page's
+    #   `menus.ts` holds: bottom middle of box laid out on point core names.
+    let
+      box = panel.box_menu_selection
+      hung = pointMenuHung(
+        ScreenPosition(x: panel.anchor_menu_selection[0], y: panel.anchor_menu_selection[1]),
+        gui.viewportWidth(),
+        gui.viewportHeight(),
+        box[2],
+        box[3],
+      )
+      (middle, bottom) = (box[0] + 0.5 * box[2], box[1] + box[3])
+    report(
+      "a menu opened with no pointer hangs centred above its object",
+      panel.is_menu_selection_shown and abs(middle - hung.x) < 1.0 and abs(bottom - hung.y) < 1.0,
+      &"bottom middle at ({middle:.1f}, {bottom:.1f}), point hung from " &
+        &"({hung.x:.1f}, {hung.y:.1f})",
+    )
     # Check traversal, selection and every kind of camera motion.
     #   Through queue and past Dear ImGui's navigation.
     report(
@@ -2528,6 +2703,18 @@ proc verdictDriven(
       found_dragging and found_menu_open,
       &"dragged {found_dragging}, menu opened {found_menu_open}",
     )
+    # Check `more…` opens picker beside pointer that chose it, as page's `menus.ts` holds.
+    let wanted = [
+      cfloat(more_seen.cursor.x + PIXELS_INSET_MENU_POINTER),
+      cfloat(more_seen.cursor.y + PIXELS_INSET_MENU_POINTER),
+    ]
+    report(
+      "more… opens the operation picker beside the pointer that chose it",
+      more_seen.is_picking and abs(more_seen.corner[0] - wanted[0]) < 1.0 and
+        abs(more_seen.corner[1] - wanted[1]) < 1.0,
+      &"picker open {more_seen.is_picking}, corner at ({more_seen.corner[0]:.1f}, " &
+        &"{more_seen.corner[1]:.1f}), pointer and inset at ({wanted[0]:.1f}, {wanted[1]:.1f})",
+    )
   if options.is_escape_driven:
     # Check one thing shed for each press, in order page's `escape.ts` holds too: after
     #   press k stands what stood before, less first k.
@@ -2592,12 +2779,65 @@ proc verdictDriven(
       &"{wheel_drive.is_over_menu}; distance {before:.3f} -> {after:.3f}, " &
       &"pivot off the point by {off:.2e}",
     )
-    # Check three notches scale separation by core's rule, which page's `wheel.ts` holds too.
+    # Check three notches scale distance to pivot by core's rule, as page's `wheel.ts` does.
     let ratio_rule = factorWheel(float(NOTCHES_WHEEL_DRIVEN))
     report(
       "and three notches zoom the desktop by the rule the page reads",
       before > 0.0 and abs(after / before / ratio_rule - 1.0) < 1.0e-6,
-      &"separation scaled by {after / before:.9f}, rule {ratio_rule:.9f}",
+      &"distance to pivot scaled by {after / before:.9f}, rule {ratio_rule:.9f}",
+    )
+  if options.is_bulk_driven:
+    # Check each act on two picked objects is one step of undo, as page's `acts.ts` holds.
+    let
+      shown_hidden = bulk_drive.shown_hidden
+      shown_undone = bulk_drive.shown_undone
+    report(
+      "hiding two picked objects takes one step of undo, as on the page",
+      bulk_drive.picked.isSome and not (shown_hidden[0] or shown_hidden[1]) and
+          shown_undone[0] and shown_undone[1],
+      &"picked {bulk_drive.picked}; shown after hide {shown_hidden}, after one undo " &
+        &"{shown_undone}",
+    )
+    report(
+      "deleting two picked objects takes one step of undo, as on the page",
+      bulk_drive.picked.isSome and
+          not (bulk_drive.alive_deleted[0] or bulk_drive.alive_deleted[1]) and
+          bulk_drive.alive_undone[0] and bulk_drive.alive_undone[1],
+      &"standing after delete {bulk_drive.alive_deleted}, after one undo " &
+        &"{bulk_drive.alive_undone}",
+    )
+  if options.is_fields_driven:
+    # Check view section's fields hold values past bounds as page's `acts.ts` holds its own.
+    #   Dolly scales distance by ratio, so landing reads near limit to rounding of it.
+    let
+      (zero, below) = (fields_drive.distance_zero, fields_drive.distance_below)
+      slack = DISTANCE_LIMIT_NEAR * 1.0e-9
+    report(
+      "a typed field of view is held inside 10 to 120 degrees, as on the page",
+      fields_drive.is_run and fields_drive.degrees_wide == DEGREES_FIELD_OF_VIEW_MOST and
+          fields_drive.degrees_narrow == DEGREES_FIELD_OF_VIEW_LEAST,
+      &"200 reads {fields_drive.degrees_wide}, 1 reads {fields_drive.degrees_narrow}",
+    )
+    report(
+      "a typed distance at zero or below lands on the near limit, as on the page",
+      fields_drive.is_run and abs(zero - DISTANCE_LIMIT_NEAR) <= slack and
+          abs(below - DISTANCE_LIMIT_NEAR) <= slack,
+      &"0 reads {zero:.6e}, -5 reads {below:.6e}, near limit {DISTANCE_LIMIT_NEAR:.6e}",
+    )
+  if options.is_hover_driven:
+    # Check hover follows ease under still pointer, and drops for whole of held key's move.
+    #   Page's `acts.ts` holds same sequence.
+    report(
+      "hover follows what the camera eases under a still pointer, as on the page",
+      hover_drive.picked.isSome and hover_drive.hovered_eased == hover_drive.picked,
+      &"picked {hover_drive.picked}, hovered {hover_drive.hovered_eased} once settled",
+    )
+    report(
+      "a held key hides hover for its whole move, and it comes back once the move ends",
+      hover_drive.frame_held.isSome and hover_drive.frames_lit == 0 and
+          hover_drive.hovered_after == hover_drive.picked,
+      &"{hover_drive.frames_lit} of {FRAMES_HELD_HOVER} frames lit mid-move, hovered " &
+        &"{hover_drive.hovered_after} after",
     )
   if options.path_help_driven.isSome:
     report(
@@ -2654,6 +2894,8 @@ proc runInteractive(
   var
     found_dragging = false
     found_menu_open = false
+    # Record what `more…` opened, frame after `--drive-drag` lets go on it.
+    more_seen = MoreSeen()
     # Record camera as first held motion key found it.
     #   Picking turns orbit about what was picked, and script selects before it slides, so
     #   opening placement is not what slide starts from.
@@ -2669,6 +2911,10 @@ proc runInteractive(
     # Record what `--drive-escape` and `--drive-chords` read between their frames.
     escape_drive = EscapeDrive()
     chord_drive = ChordDrive()
+    # Record what `--drive-bulk`, `--drive-fields` and `--drive-hover` read, likewise.
+    bulk_drive = BulkDrive()
+    fields_drive = FieldsDrive()
+    hover_drive = HoverDrive()
 
   while is_running:
     # Turn frame's measurements over, on two-frame lifetime frame arenas keep; see `timings`.
@@ -2751,6 +2997,9 @@ proc runInteractive(
         camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE),
       )
     if options.is_chords_driven: driveChords(chord_drive, scene, camera, count_drawn, now)
+    if options.is_bulk_driven: driveBulk(bulk_drive, panel, scene, camera, count_drawn, now)
+    if options.is_fields_driven: driveFields(fields_drive, panel, camera, count_drawn)
+    if options.is_hover_driven: driveHover(hover_drive, window, panel, interaction, count_drawn)
 
     var event: Event
     while sdl3.pollEvent(addr event):
@@ -2811,6 +3060,12 @@ proc runInteractive(
       found_dragging = found_dragging or interaction.is_dragging
       found_menu_open = found_menu_open or interaction.menu.isSome
       if count_drawn == 2: count_settled = len(scene)
+      if options.is_drag_driven and count_drawn == FRAME_RELEASE_MORE:
+        more_seen = MoreSeen(
+          is_picking: panel.is_menu_selection_shown and panel.is_menu_selection_picking,
+          corner: panel.position_menu_selection,
+          cursor: interaction.cursor,
+        )
     # Carry size into next iteration's events, which need it to cast sight ray.
     (width_frame, height_frame) = (int(width), int(height))
     if options.is_timed:
@@ -2865,9 +3120,13 @@ proc runInteractive(
       count_settled,
       found_dragging,
       found_menu_open,
+      more_seen,
       wheel_drive,
       escape_drive,
       chord_drive,
+      bulk_drive,
+      fields_drive,
+      hover_drive,
     )
     if count_failed > 0:
       echo &"\n{count_failed} driven check(s) failed."
@@ -3103,12 +3362,12 @@ proc main() =
   echo &"OpenGL: {gl.getString(gl.VERSION)}"
 
   let
-    path_font = faceAt(ENV_FONT, FACE_FONT)
-    path_font_math = faceAt(ENV_FONT_MATH, FACE_FONT_MATH)
-    path_font_symbol = faceAt(ENV_FONT_SYMBOL, FACE_FONT_SYMBOL)
-    path_font_label = faceAt(ENV_FONT_LABEL, FACE_FONT_LABEL)
-    path_font_title = faceAt(ENV_FONT_TITLE, FACE_FONT_TITLE)
-    path_font_mono = faceAt(ENV_FONT_MONO, FACE_FONT_MONO)
+    path_font = fontFaceAt(ENV_FONT, FONT_FACE)
+    path_font_math = fontFaceAt(ENV_FONT_MATH, FONT_FACE_MATH)
+    path_font_symbol = fontFaceAt(ENV_FONT_SYMBOL, FONT_FACE_SYMBOL)
+    path_font_label = fontFaceAt(ENV_FONT_LABEL, FONT_FACE_LABEL)
+    path_font_title = fontFaceAt(ENV_FONT_TITLE, FONT_FACE_TITLE)
+    path_font_mono = fontFaceAt(ENV_FONT_MONO, FONT_FACE_MONO)
   # Conversion is explicit, since implicit one from `let` is warned on and will be error.
   #   Four bindings outlive call, and Dear ImGui copies each path before returning, so no
   #   pointer here outlives string behind it.
@@ -3126,9 +3385,9 @@ proc main() =
   ), "Dear ImGui must start; got `false` from `gui.init`."
   defer: gui.shutdown()
   # Second line only where there was file to load: absent one is already reported by
-  #   `faceAt`, with what to do about it, and repeating it with empty path says less.
+  #   `fontFaceAt`, with what to do about it, and repeating it with empty path says less.
   if not gui.isFontLoaded() and path_font.len > 0:
-    echo &"Face `{path_font}` would not load; operator notation will draw as boxes."
+    echo &"Font face `{path_font}` would not load; operator notation will draw as boxes."
 
   let renderer = initRenderer()
   var

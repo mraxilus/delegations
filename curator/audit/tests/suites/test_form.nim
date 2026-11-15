@@ -24,6 +24,16 @@ suite "Article X":
     check messages("README.md", "x ".repeat(60) & "y\n", Kind.Markdown).len == 1  # path alone
 
 
+  test "X.1 width passes by each `atlas.lock`, which Atlas writes (D1 of #821)":
+    # Lock holds each line of nimble file as JSON string, behind six spaces and with each quote
+    #   escaped, so its line runs nine runes past its source; nimble file keeps its own width.
+    const line = "      \"" & "x ".repeat(48) & "\",\n"
+    check messages("contributor/ronri/alpha/atlas.lock", line, Kind.Json).len == 0
+    check messages("atlas.lock", line, Kind.Json).len == 0
+    check messages("contributor/ronri/alpha/notatlas.lock", line, Kind.Json).len == 1  # name whole
+    check messages("contributor/ronri/alpha/alpha.json", line, Kind.Json).len == 1
+
+
   test "X.1 line over limit passes only when breaking cannot fix it, in every kind":
     let
       url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)

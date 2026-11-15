@@ -108,8 +108,8 @@ _Avoid_: fly mode, first person, free camera, unconstrained
 
 **Local scale**:
 The distance the frustum, the depth mapping and the furniture take their size from. It is the
-reach from the eye to the nearest drawn object ahead, and the separation from the pivot where
-nothing is drawn there.
+reach from the eye to the nearest drawn object ahead, and the distance to the pivot where nothing is
+drawn there.
 _Avoid_: near reach, working distance, world scale, zoom level
 
 ### The front-ends
@@ -131,7 +131,7 @@ _Avoid_: binding, glue, interop, api
 
 **Page**:
 The one self-contained file the build assembles out of the shell, the bridge, the scripts
-and the faces.
+and the font faces.
 _Avoid_: bundle, artefact, output, document
 
 **Panel**:

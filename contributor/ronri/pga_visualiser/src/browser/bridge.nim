@@ -8,7 +8,7 @@
 ##   ImGui are desktop's presentation over same CPU-side geometry.
 ## Full parity with desktop.
 ##   Add point, apply any catalogue operation to two picked operands, drag from one object
-##   onto another to derive third, edit any object's label, palette slot, visibility or
+##   onto another to derive third, edit any object's label, palette index, visibility or
 ##   raw coefficients, remove object, save or load scene, and orbit/pan/dolly camera by
 ##   drag or typed numbers.
 ##   Entire surface `panel.nim` lays out for Dear ImGui, offered as exported procs
@@ -377,7 +377,7 @@ var
     ## Written by `nimPreviewOperation`, dropped by `nimClearPreview`.
 
 const INK_PREVIEW = Ink.Guide
-  ## Tint preview in this palette slot, muted, reusing `Ink.Guide`'s "construction helper" role.
+  ## Tint preview in this ink, muted, reusing `Ink.Guide`'s "construction helper" role.
 
 
 func toRgbSeq(c: Rgba): seq[float32] = @[c.red, c.green, c.blue]
@@ -418,6 +418,7 @@ var
   FLAT_PAN_HELD = initFlatFloats(3)
   FLAT_MENU = initFlatFloats(3 * (ord(DragChoice.high) + 1))
   FLAT_MENU_CENTRE = initFlatFloats(2)
+  FLAT_MENU_HUNG = initFlatFloats(2)
   FLAT_VIEW: seq[float32] = newSeq[float32](16)
   IS_CULLING = true  ## Whether points outside view are skipped before emitting.
     ## Off only through `nimSetCulling`, for check that culling changes no pixel.
@@ -425,6 +426,11 @@ var
   REACH_NEAR = 0.0  ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
     ## Measured once for each frame, in frame build, from that frame's placements.
     ##   Overlay call landing between frames reads that frame's figure.
+
+
+# Comparison mockup, in page built with `-d:mockup` alone; see `mockup.nim`.
+#   Here, after last global it reads and before first hook that calls it.
+when defined(mockup): include mockup
 
 
 proc flattenRibbonsInto(ribbons: RibbonMesh, destination: var FlatFloats) =
@@ -653,7 +659,7 @@ proc nimObjectLabel(handle: cint): cstring {.exportc.} =
 
 
 proc nimObjectInk(handle: cint): cint {.exportc.} = cint(SCENE_PAGE.inkAt(int(handle)))
-  ## Report object's palette slot, by handle.
+  ## Report object's palette index, by handle.
 
 proc nimObjectVisible(handle: cint): bool {.exportc.} = SCENE_PAGE.isVisible(int(handle))
   ## Report object's visibility, by handle.
@@ -711,14 +717,14 @@ proc nimDefaultLabel(): cstring {.exportc.} = cstring(&"m{SCENE_PAGE.len}")
   ##   For pre-filling edit session.
 
 proc nimDefaultInk(): cint {.exportc.} = cint(SCENE_PAGE.inkNext)
-  ## Report palette slot freshly composed object starts out carrying.
+  ## Report palette index freshly composed object starts out carrying.
   ##   Cycled as every construction path cycles it.
 
 proc nimAddObject(
   coefficients: seq[float], label: cstring, ink_ordinal: cint, radius: cfloat, now: cfloat
 ): cint {.exportc.} =
   ## Commit composing edit session as fresh scene object.
-  ##   Takes label, palette slot and radius session staged; all are editable before
+  ##   Takes label, palette index and radius session staged; all are editable before
   ##   commit, unlike every other construction path.
   ##   Builds `geometry` coefficient by coefficient rather than reusing `nimSceneAddRaw`.
   ##     That one skips `HISTORY_PAGE.record`, stamps `BORNS` to 0.0 and never touches
@@ -828,7 +834,7 @@ proc nimSetLabel(handle: cint, text: cstring) {.exportc.} =
 
 
 proc nimSetInk(handle: cint, ink_ordinal: cint) {.exportc.} =
-  ## Rewrite object's palette slot, by handle.
+  ## Rewrite object's palette index, by handle.
   SCENE_PAGE.setInk(int(handle), Ink(ink_ordinal))
   HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
@@ -912,10 +918,10 @@ proc nimBasisName(index: cint): cstring {.exportc.} = cstring(LUT_NAME_BY_BASIS[
 proc nimBasisGrade(index: cint): cint {.exportc.} = cint(ord(Basis(index).grade))
   ## Report Nth basis element's grade, for grouping coefficient grid.
 
-proc nimInkChoosableSlots(): seq[int] {.exportc.} =
-  ## List palette slots colour picker may offer, as whole-palette ordinals.
+proc nimInkIndicesChoosable(): seq[int] {.exportc.} =
+  ## List palette indices colour picker may offer, as whole-palette ordinals.
   ##   For `nimInkName` and `nimInkColor`.
-  ##   Structural slots left out: object wearing backdrop, world axis or selection outline
+  ##   Structural inks left out: object wearing backdrop, world axis or selection outline
   ##   is invisible or reads as something it is not.
   for index in 0..<COUNT_INK_CATEGORICAL: result.add(ord(inkCategorical(index)))
 
@@ -933,7 +939,7 @@ proc nimInkColor(index: cint): seq[float32] {.exportc.} = Ink(index).colour.toRg
 
 
 proc nimInkBackdrop(): cint {.exportc.} = cint(ord(Ink.Backdrop))
-  ## Report backdrop's palette slot, for label halo drawn in scene's own ground colour.
+  ## Report backdrop's palette index, for label halo drawn in scene's own ground colour.
 
 proc nimBackdropColor(): seq[float32] {.exportc.} = Ink.Backdrop.colour.toRgbSeq
   ## Report canvas backdrop's colour, as `[r, g, b]` triple.
@@ -1063,8 +1069,8 @@ proc nimPointCorners(): seq[float32] {.exportc.} = pointCorners()
   ## Report point quad's static corner buffer; see `mesh.pointCorners`.
 
 proc nimCodepointsShown(): seq[cint] {.exportc.} =
-  ## Report every codepoint build itself writes, with printable ASCII, for page's faces check.
-  ##   Same gathering desktop's `--drive-faces` asks of its atlas; see `shown`.
+  ## Report every codepoint build itself writes, with printable ASCII, for page's font faces check.
+  ##   Same gathering desktop's `--drive-font-faces` asks of its atlas; see `shown`.
   for codepoint in codepointsShown(): result.add cint(codepoint)
 
 
@@ -1167,7 +1173,7 @@ proc nimOverlayMetrics(): seq[float32] {.exportc.} =
   ##   In that order, as `[overlay_line_width, selected_alpha, hover_alpha, label_height,
   ##   halo_width, halo_alpha]`.
   ##   Browser's SVG overlay then strokes markers and drag rubber-band at weights
-  ##   desktop's `main.drawMarker` does, sizes name label's face to
+  ##   desktop's `main.drawMarker` does, sizes name label's font face to
   ##   `marker.HEIGHT_MARKER_LABEL` and its halo to `WIDTH_MARKER_LABEL_HALO` at
   ##   `ALPHA_MARKER_LABEL_HALO`.
   ##   Marker's size is not here: depends on shape marked, and comes back from
@@ -1454,8 +1460,8 @@ proc nimCameraDistance(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.distance)
 
 proc nimCameraScaleLocal(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.scaleLocal)
   ## Report distance frustum and furniture take their scale from, in world units.
-  ##   Reach to nearest drawn object ahead of eye, or separation where nothing is drawn
-  ##   there; see `camera.scaleLocal`.
+  ##   Reach to nearest drawn object ahead of eye, or distance to pivot where nothing is
+  ##   drawn there; see `camera.scaleLocal`.
 
 proc nimSpeedShip(): cfloat {.exportc.} = cfloat(INTERACTION_PAGE.speed_ship)
   ## Report ship's own speed key flight climbs toward, in world units per second.
@@ -1560,8 +1566,19 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
   CAMERA_PAGE.dollyTo float(v)
 
 
-proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA_PAGE.degrees_field_of_view = float(v)
-  ## Rewrite vertical field of view, in degrees.
+proc nimDistanceLimitNear(): cfloat {.exportc.} = cfloat(DISTANCE_LIMIT_NEAR)
+  ## Report nearest eye may orbit to pivot; see `camera.DISTANCE_LIMIT_NEAR`.
+
+proc nimFieldOfViewLeast(): cfloat {.exportc.} = cfloat(DEGREES_FIELD_OF_VIEW_LEAST)
+  ## Report narrowest field of view either front-end lets reader set, in degrees.
+
+proc nimFieldOfViewMost(): cfloat {.exportc.} = cfloat(DEGREES_FIELD_OF_VIEW_MOST)
+  ## Report widest field of view either front-end lets reader set, in degrees.
+
+proc nimSetCameraFov(v: cfloat) {.exportc.} =
+  ## Rewrite vertical field of view, in degrees, held inside its bounds.
+  ##   See `camera.fieldOfViewHeld`, which desktop's field writes through too.
+  CAMERA_PAGE.degrees_field_of_view = fieldOfViewHeld(float(v))
 
 proc nimSetCountingLifts(is_counting: bool) {.exportc.} = setCountingLifts(is_counting)
   ## Open or close tally of motor lifts, for driven checks; see `boundary.setCountingLifts`.
@@ -1589,6 +1606,10 @@ proc nimSetCameraDragging(is_dragging: bool) {.exportc.} =
   ##   Orbit or pan drag, or two fingers on canvas.
   ##   What that means for hover is `interaction.updateHover`'s to say.
   INTERACTION_PAGE.is_dragging_camera = is_dragging
+
+
+proc nimIsMovingCamera(): bool {.exportc.} = INTERACTION_PAGE.isMovingCamera
+  ## Report whether pointer or key moves camera right now; see `interaction.isMovingCamera`.
 
 
 proc nimUpdateHover(width, height: cint) {.exportc.} =
@@ -1694,6 +1715,20 @@ proc nimSelectionAllHidden(): bool {.exportc.} =
   SELECTION_PAGE.isAllHidden(SCENE_PAGE)
 
 
+proc nimSetSelectionVisible(is_visible: bool) {.exportc.} =
+  ## Show or hide every picked object, as one step of undo, as desktop's menu does.
+  ##   Forwards to `selection.setVisibleAll`.
+  SELECTION_PAGE.setVisibleAll(SCENE_PAGE, is_visible)
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
+
+
+proc nimRemoveSelection() {.exportc.} =
+  ## Remove every picked object, as one step of undo, as desktop's menu does.
+  ##   Forwards to `selection.removeAll`, which drops every pick too.
+  SELECTION_PAGE.removeAll(SCENE_PAGE)
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
+
+
 proc nimAnimationMilliseconds(): cint {.exportc.} = cint(ANIMATION_MILLISECONDS)
   ## Report how long this build eases animation for.
   ##   Same `mesh` constant added object grows over, so presentation layer's transitions
@@ -1757,6 +1792,25 @@ proc nimRevealsWithoutPicking(has_selection, is_menu_shown: bool): bool {.export
   ## Say whether menu-revealing click should only reveal, leaving selection alone.
   ##   Forwards to `interaction.isRevealingWithoutPicking`; desktop asks identical question.
   isRevealingWithoutPicking(has_selection, is_menu_shown)
+
+
+proc nimMenuHung(x, y, width, height, width_menu, height_menu: cfloat): FlatBuffer {.exportc.} =
+  ## Report point selection menu hangs from by its bottom middle, where no pointer opened it.
+  ##   Forwards to `interaction.pointMenuHung` for anchor at `x`, `y` in canvas pixels, and
+  ##   menu of that size; desktop's `layoutSelectionMenu` asks same rule.
+  ##   View over `FLAT_MENU_HUNG`.
+  let hung = pointMenuHung(
+    ScreenPosition(x: float(x), y: float(y)),
+    float(width),
+    float(height),
+    float(width_menu),
+    float(height_menu),
+  )
+  FLAT_MENU_HUNG.fill2(float32(hung.x), float32(hung.y))
+
+
+proc nimInsetMenuPointer(): cfloat {.exportc.} = cfloat(PIXELS_INSET_MENU_POINTER)
+  ## Report how far corner of menu pointer opened stands from pointer, as desktop's does.
 
 
 proc nimHelpEntries(): seq[cstring] {.exportc.} =
@@ -1942,7 +1996,7 @@ proc nimPixelsNotch(): cfloat {.exportc.} = cfloat(PIXELS_NOTCH)
   ## Report how much wheel travel page counts as one notch; see `interaction.PIXELS_NOTCH`.
 
 proc nimFactorDollyNotch(): cfloat {.exportc.} = cfloat(FACTOR_DOLLY_NOTCH)
-  ## Report how much one notch scales separation; see `interaction.FACTOR_DOLLY_NOTCH`.
+  ## Report how much one notch scales distance to pivot; see `interaction.FACTOR_DOLLY_NOTCH`.
 
 proc nimBeginPress(now: cfloat) {.exportc.} =
   ## Forward to `interaction.beginPress`; every press goes through it, camera ones too.
@@ -2696,7 +2750,14 @@ proc nimBuildFrame(
   var (eye, frame) = CAMERA_PAGE.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
-  REACH_NEAR = reachNear(placements, SCENE_PAGE, CAMERA_PAGE.originView, eye, frame.forward)
+  REACH_NEAR = reachNear(
+    placements,
+    SCENE_PAGE,
+    CAMERA_PAGE.originView,
+    eye,
+    eye + CAMERA_PAGE.distance * frame.forward,
+    frame.forward,
+  )
   CAMERA_PAGE.reach_near = REACH_NEAR
   # Take framebuffer's height, not window's.
   #   Ribbon's width is measured in pixels drawn, and this build renders at
@@ -2712,8 +2773,6 @@ proc nimBuildFrame(
     )
   SIGHT_FRAME = some(sight)
   template scale: DrawExtent = EXTENT_FRAME
-  # Derive frustum once, for cull of every point below; see `isPointInView`.
-  let bounds = CAMERA_PAGE.viewBoundsFor(eye, frame, scale, float(aspect), REACH_SCENE)
   # Recover width of centred box from aspect, since this build is handed that.
   #   Motor is kept first, so hold that aim makes is seen below.
   let
@@ -2735,6 +2794,9 @@ proc nimBuildFrame(
   )
   # Read both again only where aim's hold moved camera, so transform draws where it stands.
   if CAMERA_PAGE.motor != motor_offered: (eye, frame) = CAMERA_PAGE.sight
+  # Derive frustum once, for cull of every point below; see `isPointInView`.
+  #   Past hold, as desktop's `assembleMeshes` derives it, so cull reads stance frame draws.
+  let bounds = CAMERA_PAGE.viewBoundsFor(eye, frame, scale, float(aspect), REACH_SCENE)
 
   let
     ms_after_camera = performanceNow()

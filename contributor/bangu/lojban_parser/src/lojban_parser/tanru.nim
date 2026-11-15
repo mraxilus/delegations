@@ -1,0 +1,361 @@
+## Read word by rules of CLL alone, as words of its tanru, and render tanru back as word.
+##
+##   |---------------------|-------------------------------------------------------------|
+##   | Code                | Meaning                                                     |
+##   |---------------------|-------------------------------------------------------------|
+##   | Part                | word of tanru: listed word, or letters naming none of list  |
+##   | Tanru               | parts of one tanru, in order; word read whole for itself    |
+##   | readWord            | read text as word by rules of CLL, or refuse it with reason |
+##   | Refusal             | rule of CLL refusing text, or mark of text `zoi` quotes     |
+##   | `$`                 | lujvo form 4.12 scores lowest, or word itself               |
+##   |---------------------|-------------------------------------------------------------|
+##
+##   Rules judge, list names (#823): text reads wherever rules of CLL admit it, whether list
+##     holds it or not. List names word of each part it assigns rafsi; part no list names keeps
+##     its letters and has no meaning here, and `lojban_tagger` refuses it.
+##   Class follows letters, as 4.1 to 4.8 sort them: final consonant marks cmene (4.8);
+##     consonant pair in first five letters, `y` and apostrophe not counted, marks brivla (4.3),
+##     which is gismu by its five letters (4.4), else lujvo by its rafsi (4.6, 4.11), else
+##     fu'ivla where it meets each rule of 4.7; no pair at all marks cmavo (4.2), one, or
+##     several run together.
+##   Brivla meeting each rule of fu'ivla reads as fu'ivla, though its letters split into rafsi
+##     whose hyphens 4.11 sets otherwise: 4.7 forbids fu'ivla to be lujvo, never to look like
+##     one. Else such brivla is refused as `Hyphen`, with form 4.11 gives.
+##   Each refusal names rule of CLL. `Foreign` refuses nothing: it marks text that `zoi` or
+##     `la'o` quotes, which `readStream` holds whole as one occurrence (4.9 rule 7). Nor does
+##     `Faho`: it marks written word after `fa'o` that ends input, which `prose.nim` holds (19.15).
+##     `Stream` names text that `readStream` of `stream.nim` reads: marks of stream, or cmavo
+##       run together (4.2).
+##   Word reads as words of its tanru, never as its spelling: rafsi chosen do not change lujvo
+##     (CLL 4.5), so `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tanru, and
+##     `$` renders form 4.12 prefers. Order of words stays, since tanru is modifier then head
+##     (4.5).
+##   Rafsi of cmavo stands for that cmavo, and tanru keeps it: `selci'a` reads as `se ciska`,
+##     never as `ciska`, since `se` converts it (4.6, 9.4). Lujvo whose last rafsi names cmavo
+##     reads too: 4.11 step 2 takes last rafsi from final gismu, but which word rafsi names is
+##     list's to say, never letters'.
+##   Shared 4-letter rafsi names no one gismu (`brod`, 4.4), so its part keeps letters `brod`.
+##   Cmavo read whole carries its selma'o, which cmavo list gives (chapter 20); cmavo no list
+##     holds, as experimental `ku'a'e`, carries none. Part of lujvo carries none: rafsi can spell
+##     cmavo, as `kau` of `kampu` spells cmavo `kau`, and names no cmavo for it.
+##   Split is first of `splitLujvo`; laws of `test_lujvo.nim` hold it unique over random rafsi
+##     and over lujvo list.
+##   Text is read as written, in canonical form: lowercase letters and apostrophe alone. Space,
+##     comma, period and capital are marks of stream (3.3, 3.9), which `readStream` takes out
+##     before it reads each word here, as it does for `sai,r,goi` and `DI,ky,jvo` of 3.9.
+##   `h` never stands for apostrophe: 3.3 says letter `h` is not used for it, so `h` is refused.
+##   `$` leaves out 4-letter rafsi several gismu share wherever gismu has other rafsi;
+##     `brodi`, `brodo` and `brodu` have none, so their lujvo render with `brod`, and read back
+##     with part `brod` (open question in PROVENANCE).
+##   Cost: `$` searches choices of rafsi position by position, so its time grows linearly with
+##     words (measured, PROVENANCE.md, Figures); `readWord` caps no words.
+
+{.experimental: "strictFuncs".}
+
+import std/[options, sequtils, strutils]
+
+import ./[clusters, dictionary, forms, fuhivla, lujvo {.all.}, selmaho]
+
+
+type
+  Part* = object  ## Define word of tanru: listed word, or letters naming no one word of list.
+    case is_listed*: bool
+    of true:
+      word*: Word  ## Word of gismu list that text or rafsi names (4.6).
+    of false:
+      letters*: string  ## Word read whole, or rafsi, that names none of list, or several.
+
+  Tanru* = object  ## Define tanru: parts of one tanru, gismu and cmavo, in order.
+    parts*: seq[Part]  ## Parts of tanru; one part alone for word read whole.
+
+  Refusal* {.pure.} = enum  ## Define why reader refuses text, word or stream, by rule of CLL.
+    Empty  ## Text holds no character, so no word of any class (4.1).
+    Letter  ## Character no lojban text holds (3.1, 3.3); detail is that character, whole.
+    Apostrophe  ## Apostrophe not between vowels, which alone it joins (3.3).
+    Shape  ## Letters fit no class: no cmavo (4.2), brivla (4.3), cmene (4.8), nor compound.
+    Hyphen  ## Rafsi fit lujvo, but hyphens differ from 4.11; detail is form 4.11 gives.
+    Cluster  ## Consonants cmene or fu'ivla may not hold (3.6, 3.7, 4.7); detail is them.
+    Breakup  ## `la` or `doi` cmene holds after no consonant, so it breaks up (4.8); detail is it.
+    Combination  ## Brivla joins cmavo, gismu and lujvo, so no fu'ivla (4.7); detail is words.
+    Slinkuhi  ## CV cmavo before brivla makes lujvo, so no fu'ivla (4.7); detail is that lujvo.
+    Stream  ## Mark of stream (3.3, 3.9), or cmavo run together (4.2), which `readStream` reads.
+    Stress  ## Capital marks no syllable word may stress, as brivla off penultimate (3.9); stream.
+    Comma  ## Comma at no syllable break: by edge, apostrophe, no syllable, in diphthong (3.3, 3.4).
+    Split  ## Written word splits several ways, each with fewest pauses (3.3); detail is two.
+    Quotation  ## `zoi` or `la'o` with no delimiter, or text it quotes never closing or holding it.
+    Foreign  ## No refusal: text `zoi` or `la'o` quotes, no lojban (4.9 rule 7), stream holds whole.
+    Faho  ## No refusal: written word after `fa'o` that ends input (19.15), which stream reads not.
+
+  Reading* = object  ## Define outcome of reading text as word.
+    case is_word*: bool
+    of true:
+      kind*: Kind  ## Class of word by its letters (4.1).
+      tanru*: Tanru  ## Tanru text reads as.
+      pieces*: seq[Piece]  ## Rafsi as text spells them; empty for word read whole.
+      selmaho*: Option[Selmaho]
+        ## Selma'o cmavo list gives cmavo read whole (chapter 20); none otherwise.
+    of false:
+      refusal*: Refusal  ## Rule refusing text; `Foreign` for text `zoi` or `la'o` quotes.
+      detail*: string  ## Offending character, or form 4.11 gives; empty where whole text offends.
+
+
+const
+  LETTERS* = {
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't',
+    'u', 'v', 'x', 'y', 'z', '\'',
+  }
+    ## Letters word holds in canonical form: vowels, `y`, seventeen consonants and apostrophe
+    ##   (CLL 3.1, 3.6).
+  MARKS_STREAM* = block:
+    ## Characters marking stream rather than word: whitespace between words, period of pause,
+    ##   comma of syllable break (3.3), and capital of stress (3.9), one for each letter.
+    var marks = Whitespace + {',', '.'}
+    for letter in LETTERS - {'\''}: marks.incl letter.toUpperAscii
+    marks
+  VOWELS_JOINED = VOWELS + {'y'}  ## Vowels apostrophe may stand between: `y'y` joins two `y`.
+
+
+func `==`*(a, b: Part): bool =
+  ## Compare parts: listed ones by word, others by letters; listed part never equals other.
+  if a.is_listed != b.is_listed: return false
+  if a.is_listed: a.word == b.word else: a.letters == b.letters
+
+
+func `==`*(a, b: Tanru): bool = a.parts == b.parts
+  ## Compare tanru by parts, in order, cmavo included.
+
+func toPart*(w: Word): Part = Part(is_listed: true, word: w)
+  ## Hold listed word as part of tanru.
+
+func `$`*(part: Part): string = (if part.is_listed: $part.word else: part.letters)
+  ## Render part as list spells its word, or as its letters.
+
+
+
+#[ Reading ]#
+
+func part(piece: Piece): Part =
+  ## Name word piece stands for where list assigns it one (4.6); else keep its letters.
+  let found =
+    case piece.form
+    of Form.Cvc, Form.Ccv, Form.Cvv: piece.rafsi.wordRafsi
+    of Form.Cvcc, Form.Ccvc:
+      let stems = piece.rafsi.wordsStem
+      if stems.len == 1: some(stems[0]) else: none(Word)
+    of Form.Cvccv, Form.Ccvcv: piece.rafsi.word
+  if found.isSome: found.get.toPart else: Part(is_listed: false, letters: piece.rafsi)
+
+
+func refuse(refusal: Refusal, detail = ""): Reading =
+  ## Build reading that refuses text.
+  Reading(is_word: false, refusal: refusal, detail: detail)
+
+
+func character*(text: string, at: int): string =
+  ## Read character opening at byte `at`: lead byte, then each continuation byte it announces,
+  ##   by bit distribution of Table 3-6 of Unicode Standard; byte alone where none follows.
+  let size =
+    case uint8(text[at])
+    of 0xC0'u8..0xDF'u8: 2
+    of 0xE0'u8..0xEF'u8: 3
+    of 0xF0'u8..0xF7'u8: 4
+    else: 1
+  var finish = at + 1
+  while finish < min(text.len, at + size) and (uint8(text[finish]) and 0xC0) == 0x80: inc finish
+  text[at..<finish]
+
+
+func isPairHeld(text: string): bool =
+  ## Test text holds two consonants side by side anywhere, which no cmavo holds (4.2).
+  for i in 0 ..< text.high:
+    if text[i].isConsonant and text[i + 1].isConsonant: return true
+  false
+
+
+func readWhole(text: string, kind: Kind): Reading =
+  ## Read text as one word of its class: listed word where list holds it, else its letters.
+  let
+    listed = text.word
+    part = if listed.isSome: listed.get.toPart else: Part(is_listed: false, letters: text)
+  Reading(
+    is_word: true,
+    kind: kind,
+    tanru: Tanru(parts: @[part]),
+    selmaho: (if kind == Kind.Cmavo: text.selmaho else: none(Selmaho)),
+  )
+
+
+func readCmene(text: string): Reading =
+  ## Read text ending in consonant as cmene by rules of 4.8: syllable, permissible pairs, and
+  ##   no `la`, `lai` or `doi` after no consonant.
+  ##   Syllable stands on vowel, `y`, or consonant that may be syllabic, as `rl` of 3.4 does;
+  ##     lone `c` has none, so it is no word.
+  if not text.anyIt(it in VOWELS + {'y', 'l', 'm', 'n', 'r'}): return refuse(Refusal.Shape)  # 3.4
+  let pair = text.pairForbidden
+  if pair.isSome: return refuse(Refusal.Cluster, pair.get)
+  let sequence = text.breakup
+  if sequence.isSome: return refuse(Refusal.Breakup, sequence.get)
+  readWhole(text, Kind.Cmene)
+
+
+func refusalFuhivla(text: string): Option[Reading] =
+  ## Find first rule of 4.7 that brivla, neither gismu nor lujvo, breaks as fu'ivla; none where
+  ##   it meets each: no `y`, opening cluster of initial pairs, permissible pairs, no
+  ##   combination of words, and slinku'i test.
+  if 'y' in text: return some(refuse(Refusal.Shape))  # 4.7, fu'ivla cannot contain `y`
+  let opening = text.clusterOpeningForbidden
+  if opening.isSome: return some(refuse(Refusal.Cluster, opening.get))  # 4.7, initial pairs
+  let cluster = text.clusterForbidden
+  if cluster.isSome: return some(refuse(Refusal.Cluster, cluster.get))  # 4.7, pairs permissible
+  let words = text.combination
+  if words.isSome: return some(refuse(Refusal.Combination, words.get.join(" ")))  # 4.7
+  let joined = text.slinkuhi
+  if joined.isSome: return some(refuse(Refusal.Slinkuhi, joined.get))  # 4.7, slinku'i test
+  none(Reading)
+
+
+func readLujvo(text: string): Reading =
+  ## Read brivla as lujvo by forms of its rafsi and hyphens of 4.11, list naming parts it can;
+  ##   else as fu'ivla by rules of 4.7, or refuse it, as `Hyphen` where its letters split into
+  ##   rafsi whose hyphens 4.11 sets otherwise.
+  let splits = text.splitLujvo
+  if splits.len > 0:
+    let pieces = splits[0]
+    return Reading(is_word: true, kind: Kind.Lujvo, tanru: Tanru(parts: pieces.mapIt(it.part)),
+        pieces: pieces)
+  let refusal = text.refusalFuhivla
+  if refusal.isNone: return readWhole(text, Kind.Fuhivla)
+  let segments = text.segmentLujvo
+  if segments.len > 0: return refuse(Refusal.Hyphen, joinRafsi(segments[0].mapIt(it.rafsi)))
+  refusal.get
+
+
+func readWord*(text: string): Reading =
+  ## Read text as one word by rules of CLL alone: cmavo, gismu, lujvo, fu'ivla or cmene,
+  ##   whether list holds it or not; text is read as written, in canonical form.
+  ##   Character refused is named whole, so detail of UTF-8 text stays UTF-8; held by test
+  ##     "Character outside letters is named whole, so detail of UTF-8 stays UTF-8" of
+  ##     `test_tanru.nim`.
+  if text.len == 0: return refuse(Refusal.Empty)
+  for at in 0..<text.len:
+    if text[at] in MARKS_STREAM: return refuse(Refusal.Stream, $text[at])
+    if text[at] notin LETTERS: return refuse(Refusal.Letter, text.character(at))
+  for at in 0..<text.len:
+    let is_joining = at > 0 and at < text.high and text[at - 1] in VOWELS_JOINED and
+        text[at + 1] in VOWELS_JOINED
+    if text[at] == '\'' and not is_joining: return refuse(Refusal.Apostrophe)
+
+  # Sort class by letters, as 4.3 tells cmene, brivla and cmavo apart.
+  if text[^1].isConsonant: return readCmene(text)
+  if text.isBrivla:
+    # 4.3, penultimate stress needs two syllables; counted as fu'ivla, since gismu and lujvo
+    #   hold no on-glide
+    if text.syllables(Kind.Fuhivla) < 2: return refuse(Refusal.Shape)
+    if text.isGismu: return readWhole(text, Kind.Gismu)
+    return readLujvo(text)
+  if not text.isPairHeld:
+    if text.isCmavo: return readWhole(text, Kind.Cmavo)
+    if text.splitCompound.len > 0: return refuse(Refusal.Stream)  # 4.2, compound cmavo
+    return refuse(Refusal.Shape)  # no cmavo of 4.2, nor cmavo run together, as `cia` (3.4)
+
+  # Pair past fifth letter, or `y` last: no class of 4.3, as one word. `readStream` splits such
+  #   text where it is words run together, as `lonubarda`.
+  refuse(Refusal.Shape)
+
+
+
+#[ Rendering ]#
+
+func choices(part: Part, is_final: bool): seq[string] {.used.} =  # Used in `test_tanru.nim`.
+  ## List rafsi of part 4.11 allows at its position, steps 1 and 2; cmavo has short rafsi alone.
+  ##   4-letter rafsi several gismu share is left out where gismu has any other.
+  ##   Part no list names offers its letters where their form takes position, or 4-letter
+  ##     rafsi of gismu read whole; cmavo no rafsi stands for, as `lo`, offers none.
+  if not part.is_listed:
+    let shape = part.letters.form
+    if shape.isNone: return
+    if shape.get in FORMS_GISMU:
+      return @[(if is_final: part.letters else: part.letters[0 .. 3])]
+    let forms_allowed = (if is_final: FORMS_FINAL else: FORMS_SHORT + FORMS_UNREDUCED)
+    if shape.get in forms_allowed: result.add part.letters
+    return
+  let entry = part.word.entry
+  if is_final:
+    for one in entry.rafsi:
+      if one.form.get in {Form.Ccv, Form.Cvv}: result.add one
+    if part.word.kind == Kind.Gismu: result.add entry.word
+    return
+  result = entry.rafsi
+  if part.word.kind != Kind.Gismu: return
+  let stem = entry.word[0 .. 3]
+  if stem.wordsStem.len == 1 or result.len == 0: result.add stem
+
+
+func searchLowest(options: seq[seq[string]]): seq[string] {.used.} =  # Used in `test_tanru.nim`.
+  ## Choose rafsi from options of each position, two positions or more, whose sequence 4.12 scores
+  ##   lowest, first in order of options on tie.
+  ##   Dynamic programming over positions: score of 4.12 sums part of each rafsi and of each
+  ##     junction, and junction reads two rafsi beside it and one flag, whether leading run of
+  ##     4.11 step 5 is open (`lujvo.nim`). So time grows linearly with positions (measured,
+  ##     PROVENANCE.md, Figures).
+  ##   Table holds lowest score of rest for each option at each position, in each state of run;
+  ##     walk from first position takes first option reaching it, so tie keeps first in order,
+  ##     as scoring every sequence does (`test_tanru.nim` holds both alike).
+  ##   Rejected: scoring every sequence of options, whose count is their product; PROVENANCE.md,
+  ##     Figures, gives cost of each.
+
+  func step(
+    options: seq[seq[string]]; at, choice, choice_next: int; is_open: bool
+  ): tuple[score: int, is_open_next: bool] =
+    ## Score junction after option `choice` at `at` and option `choice_next` after it, with
+    ##   state of run past it.
+    let
+      (before, after) = (options[at][choice], options[at+1][choice_next])
+      junction = scoreJunction(is_open, before, after, at, options.len)
+    (junction.score + scoreRafsi(after, after.form.get), junction.is_open)
+
+  # Score lowest rest from each option and state of run, last position first.
+  let count = options.len
+  var rest = newSeq[seq[array[bool, int]]](count)
+  rest[^1] = newSeq[array[bool, int]](options[^1].len)
+  for at in countdown(count - 2, 0):
+    rest[at] = newSeq[array[bool, int]](options[at].len)
+    for choice in 0..<options[at].len:
+      for is_open in [false, true]:
+        var lowest = high(int)
+        for choice_next in 0..<options[at+1].len:
+          let (score, is_open_next) = options.step(at, choice, choice_next, is_open)
+          lowest = min(lowest, score + rest[at+1][choice_next][is_open_next])
+        rest[at][choice][is_open] = lowest
+
+  # Walk from first position, taking first option that reaches lowest score.
+  var (choice, total) = (0, high(int))
+  for candidate in 0..<options[0].len:
+    let
+      rafsi_first = options[0][candidate]
+      value = scoreRafsi(rafsi_first, rafsi_first.form.get) +
+          rest[0][candidate][rafsi_first.isRunOpen]
+    if value < total: (choice, total) = (candidate, value)
+  var is_open = options[0][choice].isRunOpen
+  result = @[options[0][choice]]
+  for at in 0 ..< count - 1:
+    for choice_next in 0..<options[at+1].len:
+      let (score, is_open_next) = options.step(at, choice, choice_next, is_open)
+      if score + rest[at+1][choice_next][is_open_next] == rest[at][choice][is_open]:
+        (choice, is_open) = (choice_next, is_open_next)
+        break
+    result.add options[at+1][choice]
+
+
+func `$`*(tanru: Tanru): string =
+  ## Render tanru as word: part alone as itself, else lujvo form 4.12 scores lowest, first in
+  ##   order of choices on tie (`searchLowest`).
+  ##   Tanru with no lujvo form, as one ending in cmavo without CCV or CVV rafsi, renders its
+  ##     parts one space apart, as CLL writes tanru (5.1).
+  if tanru.parts.len == 0: return ""
+  if tanru.parts.len == 1: return $tanru.parts[0]
+  var options = newSeq[seq[string]](tanru.parts.len)
+  for i, part in tanru.parts:
+    options[i] = choices(part, is_final = i == tanru.parts.high)
+    if options[i].len == 0: return tanru.parts.mapIt($it).join(" ")
+  joinRafsi(options.searchLowest)

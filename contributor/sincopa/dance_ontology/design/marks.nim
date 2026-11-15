@@ -11,8 +11,11 @@
 ##   `tests/suites/test_marks.nim` drives `buildPage` for every page, so every gate runs under
 ##     `nim r koch test` (Article IX.6).
 ##   Each chain's parts are built once in process and kept (`LUT_PARTS_BY_NAME`).
-##     Reference places both chains, and their checks read them, so each chain is routed once.
-##     Routing is most of what build costs.
+##     Reference places both chains, and their checks read them, so no figure is built twice.
+##     Routing is most of what build costs.  Check of single-hand turns reads every reach it
+##     measures off figures, yet routes each settled place once more: one decimal of markup
+##     cannot carry turning, so turning is read on that route, and every drawn still is held
+##     to it.
 
 {.experimental: "strictFuncs".}
 
@@ -33,8 +36,8 @@ proc once(name: string, build: proc (): Parts {.nimcall.}): Parts =
     LUT_PARTS_BY_NAME[name] = build()
   LUT_PARTS_BY_NAME[name]
 
-proc singleParts(): Parts = once("single", singleTurnParts)
-  ## Single-hand turns' parts, built once.
+proc singleParts*(): Parts = once("single", singleTurnParts)
+  ## Single-hand turns' parts, built once; `tests/suites/test_marks.nim` reads them too.
 
 proc handParts(): Parts = once("hand", handTurnParts)
   ## Hand-to-hand chain's parts, built once.

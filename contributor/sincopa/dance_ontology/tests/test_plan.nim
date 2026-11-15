@@ -17,7 +17,7 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[math, random, strformat, unittest]
+import std/[math, options, random, strformat, unittest]
 
 import ../simulation/[body, hold, limb, plan {.all.}, rig, rigid, vector, walk]
 import ./fixtures
@@ -38,8 +38,8 @@ const
   HAND_TO_HAND = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
                    Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Cross-name two-hand hold, uncrossed Face-to-face: chain this suite turns.
-  CROSS = 0.5  ## Turns from rest to its cross: shortest wind that lifts hands over crown
-              ## and brings them down again facing.
+  CROSS = 0.5  ## Turns from rest to its cross, Face-to-back: shortest wind of chain that
+              ## lifts hands over crown, where they stay.
   JOINED = 1e-3  ## Metres planned joined hands may sit apart: `plan.KEPT` is millimetre
                 ## squared over whole violation, so one pair is never further.
   TIED = 1e-4  ## Metres engine may part tie of hands stood where plan joins them: tenth of
@@ -93,6 +93,8 @@ proc plainCost(weighing: Weighing, plan: Plan): float =
     let (one, two) = (problem.links[0].ends[0], problem.links[1].ends[0])
     result += problem.style.gather * distance(placed.arms[armIndex(one.body, one.arm)].join,
                                               placed.arms[armIndex(two.body, two.arm)].join)^2
+  if problem.straight.isSome and abs(weighing.wind) > HOOP_FROM:
+    result += HOOP * max(0.0, problem.straightOver(placed) + HOOP_ROOM)^2
 
 
 
@@ -190,9 +192,9 @@ suite "Internal: Planner and engine are one rig":
 
 
   test "judge stops at every arm stood past shoulder's edge, held or free, and names it":
-    ## Upper arm past edge by more than `GIVE_EDGE` stops connection holding it, at that end, as
-    ## swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops couple,
-    ## named by its hand (`stoppedFree`, `gives`).  Arm inside stops nothing by swing.
+    ## Upper arm past edge by more than `GIVE_EDGE` stops connection holding it, named by its
+    ## hand, as swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops
+    ## couple, named by its hand (`stoppedFree`, `gives`).  Arm inside stops nothing by swing.
     ##   Engine's wall keeps every recorded arm inside give, so no recording reaches judge:
     ##     poses here are seeded, and stood where plan places them, nothing stepped.
     ##   Red with no reading of edge in judge: arm past edge and inside both swing ranges
@@ -208,7 +210,7 @@ suite "Internal: Planner and engine are one rig":
                              Body.Two)
       held_couple.placeBodies(start.chests, start.arms)
       for i, link in HAND_TO_HAND:
-        var expected = (why: Stop.None, end_index: -1)
+        var expected = (why: Stop.None, whose: none(Hand))
         for k in 0..1:
           let
             (who, arm) = (link.ends[k].body, link.ends[k].arm)
@@ -218,7 +220,7 @@ suite "Internal: Planner and engine are one rig":
             is_swung = margin(HUMAN.range[Dof.Extend], swing.extend) < -GIVE or
                 margin(HUMAN.range[Dof.Across], swing.across) < -GIVE
           if expected.why != Stop.None or not (is_swung or isPast(stance, arm, pose)): continue
-          expected = (Stop.Swing, k)
+          expected = (Stop.Swing, some(link.ends[k]))
           if not is_swung: inc held_past
         let got = held_couple.stoppedBy(i)
         if expected.why == Stop.Swing:
@@ -227,7 +229,7 @@ suite "Internal: Planner and engine are one rig":
         else:
           inc held_inside
           check got.why != Stop.Swing
-      check held_couple.stoppedFree.why == Stop.None
+      check held_couple.stoppedFree.isNone
       held_couple.free()
       # Same pose, nothing held: every arm is free.
       var free_couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, @[], Body.Two)
@@ -240,11 +242,11 @@ suite "Internal: Planner and engine are one rig":
       if past.len > 0:
         inc free_past
         check free_couple.gives == Stop.Swing
-        check free_couple.stoppedFree == (Stop.Swing, past[0])
+        check free_couple.stoppedFree == some(past[0])
       else:
         inc free_inside
         check free_couple.gives != Stop.Swing
-        check free_couple.stoppedFree.why == Stop.None
+        check free_couple.stoppedFree.isNone
       free_couple.free()
     checkpoint &"held arm stopped by edge alone {held_past}, connection inside {held_inside}, " &
         &"free couple past {free_past}, inside {free_inside}"
@@ -381,7 +383,7 @@ suite "Internal: Planner and engine are one rig":
           i = (k - first_arm) div per_arm
           (owner, part) = ((if i < 2: Body.One else: Body.Two), (k - first_arm) mod per_arm)
         if part >= 1 or owner != who: expected.add k
-      for (a, b) in pairsCollided(initProblem(HUMAN, HAND_TO_HAND, false)):
+      for (a, b) in pairsCollided(initProblem(HUMAN, Band.Crown, HAND_TO_HAND, false)):
         if a == face: paired.add b
         elif b == face: paired.add a
       check paired.len == expected.len
@@ -390,7 +392,7 @@ suite "Internal: Planner and engine are one rig":
 
 
 suite "Internal: Planned turn":
-  let path = planPath(HUMAN, HAND_TO_HAND, false, CROSS, STYLES[0])
+  let path = planPath(HUMAN, Band.Crown, HAND_TO_HAND, false, CROSS, STYLES[0])
 
 
   test "plan winds hand-to-hand from rest to its cross":
@@ -428,7 +430,7 @@ suite "Internal: Planned turn":
 
 
   test "engine sprung toward plan follows it to cross and stands there":
-    ## Engine judges as it judges every walk (`rigid.gives`): nothing through anything,
+    ## Engine judges as it judges every still (`rigid.gives`): nothing through anything,
     ## no joint past its end, hands not parted.
     ##   Red with shoulder aimed at plan's turn outside its rest frame: Reach at first moment.
     ##     Red with collarbone's lift read back with wrong sign: arm met arm at cross.  Both
@@ -485,20 +487,23 @@ suite "Internal: Planner's cost":
     ##     threshold, with mask or leaps not put back after step, with arm placed one link
     ##     too late, with waist's ease not reckoned in body's step, and with trunk's pairs
     ##     left out of body's step, measured 2026-10-04.
+    ##   Two-hand holds name swan's straight pair, and wind runs to swan's turn and half, so
+    ##     hoop is weighed past whole turn too (`plan.Problem.straight`).
     var generator = initRand(20261004)
     const same_name = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
                         Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
     for links in [HAND_TO_HAND, same_name, @[HAND_TO_HAND[0]]]:
       for is_away in [false, true]:
         for style in [STYLES[0], STYLES[13]]:
-          var problem = initProblem(HUMAN, links, is_away)
+          var problem = initProblem(HUMAN, Band.Crown, links, is_away)
           problem.style = style
-          (problem.lower, problem.upper) = bandAt(HUMAN, 0.3, 1.0, is_away, style.room)
+          if links.len == 2: problem.straight = some(Arm.Left)
+          (problem.lower, problem.upper) = bandAt(HUMAN, Band.Crown, 0.3, 1.0, is_away, style.room)
           let
             bounds = initBounds(HUMAN, style.margin, links)
             moving = movedPairs(HUMAN, problem)
           for sample in 0 ..< SAMPLES div 8:
-            let wind = generator.rand(-1.0..1.0)
+            let wind = generator.rand(-1.5..1.5)
             var weighing = Weighing(problem: problem, wind: wind,
                                     last: randomPlan(HUMAN, generator),
                                     weight: [1e3, 1e5, 1e7][sample mod 3],

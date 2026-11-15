@@ -25,7 +25,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[json, os, strformat, strutils, tables]
+import std/[json, options, os, strformat, strutils, tables]
 
 import ./[font_faces, page, twins]
 
@@ -49,15 +49,15 @@ const HEAD_BODY = """
       sphere. Drag the stage to turn the view. Scroll to zoom.</p>
     <p class="lede">Below the stage, each still card of the Reference appears in
       that page's order, with the simulation's still beside the drawing. For each card the
-      simulation turns the dancer that the card turns, lifts the joined hands over that
-      dancer's crown, and then lets the pose settle. An orbit is the dancer at the centre
+      simulation turns the dancer that the card turns, and lifts the joined hands over that
+      dancer's crown. Then it lets the pose settle. An orbit is the dancer at the centre
       turning the other way, so the hands go over their crown. Where that does not hold, it
       plans every arm through the turn, and the engine stands each moment of the plan. A wound still
       keeps the distance where the pose carries the least strain, and a planned still keeps
-      the distance of its plan. Click a card to put
-      it on the stage, and the arrow buttons or the
-      arrow keys step from one card to the next. One list holds the stills first and
-      the sweeps after them.</p>
+      the distance of its plan.</p>
+    <p class="lede">Click a card to put it on the stage. The arrow buttons or the arrow keys
+      step from one card to the next. One list holds the stills first and the sweeps after
+      them.</p>
   </header>
 
   <div class="rigwrap">
@@ -172,18 +172,18 @@ func escaped(text: string): string =
   ## Escape text for markup: ampersand and angle brackets.
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
-func between(text, opener, closer: string; start: int): tuple[at, stop: int] =
-  ## Where text between one opener and closer after it lies; `at` is -1 if none.
+func between(text, opener, closer: string; start: int): Option[tuple[at, stop: int]] =
+  ## Where text between one opener and closer after it lies, or none.
   let opener_at = text.find(opener, start)
-  if opener_at < 0: return (-1, -1)
+  if opener_at < 0: return
   let closer_at = text.find(closer, opener_at + opener.len)
-  if closer_at < 0: return (-1, -1)
-  (opener_at + opener.len, closer_at)
+  if closer_at < 0: return
+  some((at: opener_at + opener.len, stop: closer_at))
 
 func attribute(tag, name: string): string =
   ## One attribute's value off one opening tag.
-  let (start, stop) = between(tag, name & "=\"", "\"", 0)
-  if start < 0: "" else: tag[start..<stop]
+  let span = between(tag, name & "=\"", "\"", 0)
+  if span.isNone: "" else: tag[span.get.at..<span.get.stop]
 
 
 func toCards(html: string): Table[string, seq[Card]] =
@@ -212,28 +212,29 @@ func toCards(html: string): Table[string, seq[Card]] =
     var card = Card(classes: attribute(opening, "class"))
     let asks = attribute(opening, "data-asks")
     if asks.len > 0: card.asks = asks.split(' ')
-    let (id_start, id_stop) = between(whole, "<code>", "</code>", 0)
-    doAssert id_start > 0, "A card on Reference carries no identifier."
-    card.id = whole[id_start..<id_stop]
+    let id = between(whole, "<code>", "</code>", 0)
+    doAssert id.isSome, "A card on Reference carries no identifier."
+    card.id = whole[id.get.at..<id.get.stop]
     let art = whole.find("<div class=\"art")
     doAssert art >= 0, &"A card carries no drawing; got `{card.id}`."
     let
       art_open = whole.find('>', art) + 1
       art_shut = whole.find("</div>", art_open)
     card.art = whole[art_open..<art_shut]
-    let (caption_start, caption_stop) = between(whole, "<figcaption>", "</figcaption>", 0)
-    card.caption = "<figcaption>" & whole[caption_start..<caption_stop] & "</figcaption>"
+    let caption = between(whole, "<figcaption>", "</figcaption>", 0)
+    doAssert caption.isSome, &"A card on Reference carries no caption; got `{card.id}`."
+    card.caption = "<figcaption>" & whole[caption.get.at..<caption.get.stop] & "</figcaption>"
     result.mgetOrPut(section, @[]).add card
 
 func styleSheetReference(html: string): string =
   ## Reference's own style, so its cards look here as they do there.
   var at = 0
   while true:
-    let (start, stop) = between(html, "<style>", "</style>", at)
-    doAssert start >= 0, "Reference carries no style block for its cards."
-    let style = html[start..<stop]
+    let span = between(html, "<style>", "</style>", at)
+    doAssert span.isSome, "Reference carries no style block for its cards."
+    let style = html[span.get.at..<span.get.stop]
     if ".pic {" in style: return "<style>" & style & "</style>"
-    at = stop
+    at = span.get.stop
 
 
 proc cardsBody(reference: string, data: JsonNode): string =
@@ -262,8 +263,8 @@ proc cardsBody(reference: string, data: JsonNode): string =
     titles.add (letter, reference[start..<reference.find("</h2>", start)])
   result.add """<section class="cards"><p class="lede">Every card here comes from the
     Reference, with the same badges, and the simulation's still stands beside it. Where
-    one card asks more than one question, the badge shows the first. The picker above
-    reaches every card.</p>"""
+    one card asks more than one question, the still beside it shows the first, and the badge
+    covers them all. The picker above reaches every card.</p>"""
   for (letter, title) in titles:
     result.add &"<h2>{letter} &middot; {title}</h2><div class=\"grid wide\">"
     for card in cards.getOrDefault(letter):

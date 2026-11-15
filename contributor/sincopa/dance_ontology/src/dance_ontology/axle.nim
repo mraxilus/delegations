@@ -54,10 +54,23 @@ func centre*(stood: FrameState, twist: HalfTurns): (int, int) =
   (axleWidth() div 2 + twist * STEP, AXLE_Y)
 
 
+func placed(stood: FrameState, twist: HalfTurns): HalfTurns =
+  ## Get where twist from this frame stands along axle.
+  ##   Twist itself, but for hold that keeps orientation alone (`isKeepingTwist`), which
+  ##     stands at orientation it keeps: couple who turn for ever stand at two places.
+  if stood.isKeepingTwist:
+    return twist
+  var at = stood
+  at.twist = twist
+  at.canonical.twist
+
+
 func standing*(stood: FrameState): seq[HalfTurns] =
-  ## Get every twist this frame, held at these heights, can stand at.
+  ## Get every twist this frame, held at these heights, can stand at, once each.
+  ##   Same-name pair above stands six: its far swan is two turns from its cross, past every
+  ##     turn workbook offers.
   for twist in -MOST_TURN..MOST_TURN:
-    if stood.isHolding(twist):
+    if stood.isHolding(twist) and placed(stood, twist) == twist:
       result.add twist
 
 
@@ -76,6 +89,8 @@ func arc(stood: FrameState, twist: HalfTurns, is_refused: bool): string =
   ##   Named by way twist turns, seen from above (`turnName`), as frame states on axle are.
   ##     Arc stands for follow's turn one way and lead's turn other, so dancer's right or
   ##     left would be wrong for one of them.
+  ##     Hold that keeps orientation alone names size alone (`turnNameKept`): its arc stands
+  ##       for half turn and turn and half, either way.
   let
     (start_x, start_y) = centre(stood, stood.twist)
     (end_x, end_y) = centre(stood, twist)
@@ -84,7 +99,7 @@ func arc(stood: FrameState, twist: HalfTurns, is_refused: bool): string =
     # than crossing it twice.
     lift = ARC_RISE + reach * 30
     (control_x, control_y) = ((start_x + end_x) div 2, start_y - lift)
-    told = turnName(twist - stood.twist)
+    told = stood.turnNameKept(twist - stood.twist)
   result = "<g class=\"turn" & (if is_refused: " refused" else: "") & "\">" &
       "<path class=\"turn-line\" d=\"M" & $start_x & " " & $(start_y - 58) & "Q" & $control_x &
       " " & $control_y & " " & $end_x & " " & $(end_y - 58) & "\"/>"
@@ -122,15 +137,17 @@ func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurn
   # Arcs: one per place turn can land, refused ones included.
   var drawn: seq[HalfTurns] = @[]
   for offer in turnsOffered(stood):
-    if offer.to.twist == stood.twist or offer.to.twist in drawn:
+    let place = placed(stood, stood.stored(rotates(offer.who, offer.amount)))
+    if place == stood.twist or place in drawn:
       continue
-    drawn.add offer.to.twist
-    result.add arc(stood, offer.to.twist, offer.refused.isSome)
+    drawn.add place
+    result.add arc(stood, place, offer.refused.isSome)
 
   # Frame states standing on axle, each named for its turn and its arms.
   for twist in ends:
     var landing = stood
     landing.twist = twist
+    landing = landing.canonical  # Same-name pair above: other cross is its own frame.
     let
       (centre_x, centre_y) = centre(stood, twist)
       is_reachable = twist != stood.twist
@@ -147,9 +164,9 @@ func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurn
       centre_x - NODE_WIDTH div 2,
       centre_y - frameHeight(NODE_WIDTH) div 2,
       NODE_WIDTH,
-      twist,
+      landing.twist,
     )
-    let name = turnName(twist)
+    let name = stood.turnNameKept(twist)
     result.add "<text class=\"node-name\" x=\"" & $centre_x & "\" y=\"" &
         $(centre_y - frameHeight(NODE_WIDTH) div 2 - NAME_RISE) &
         "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & name & "</text>"

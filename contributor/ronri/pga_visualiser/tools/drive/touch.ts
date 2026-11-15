@@ -374,7 +374,7 @@ export async function drivePinch(page: Page, devtools: CDPSession): Promise<void
     is_sky && depthOf(stood, flown.eye) > 0.1 && turn_sky < 1e-6 &&
       flown.distance < stood.distance && flown.distance > 0.2 * stood.distance,
     `on sky ${is_sky}, eye came ${depthOf(stood, flown.eye).toFixed(3)} in, turned ` +
-      `${turn_sky.toExponential(2)}, separation ${stood.distance.toFixed(4)} -> ` +
+      `${turn_sky.toExponential(2)}, distance to the pivot ${stood.distance.toFixed(4)} -> ` +
       `${flown.distance.toFixed(4)}`,
   );
 

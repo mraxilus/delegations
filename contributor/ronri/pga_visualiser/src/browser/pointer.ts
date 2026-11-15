@@ -39,6 +39,10 @@ let cursor_last: PointLocal | null = null;
 //   both walk whole scene, and pointer or trackpad reports several times between two
 //   frames; see frame loop, which is where each of these is spent.
 let is_hover_stale = false;
+// Whether pointer last on canvas is mouse, whose cursor stays where it was left.
+//   Frame loop then picks in every frame, as desktop's does, so hover follows what slides
+//   under still cursor (repository issue 632). Finger leaves no cursor; see `nimClearHover`.
+let is_cursor_mouse = false;
 let notches_wheel = 0; // Summed wheel notches awaiting one dolly; `sumWheel` says why.
 
 // Touch long-press-to-select / tap-to-toggle / drag-to-construct state.
@@ -86,6 +90,7 @@ canvas.addEventListener('pointerdown', (e) => {
   const rect = canvas.getBoundingClientRect();
   const local = { x: e.clientX - rect.left, y: e.clientY - rect.top };
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  is_cursor_mouse = e.pointerType === 'mouse';
 
   if (e.pointerType === 'mouse') {
     nimUpdateCursor(local.x, local.y);
@@ -168,6 +173,7 @@ canvas.addEventListener('pointermove', (e) => {
   cursor_last = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
   if (e.pointerType === 'mouse') {
+    is_cursor_mouse = true;
     nimUpdateCursor(cursor_last.x, cursor_last.y);
     if (button_mouse_drag !== null && typeof button_mouse_drag === 'number') {
       // Re-check hover for drag's own destination preview -- next frame, not now; see.
@@ -528,11 +534,6 @@ function hideSelectionMenu() {
 //   instead of snapping it back to object's centre next frame -- what every frame used
 //   to do, one frame after click had placed it.
 let offset_menu_selection: PointLocal | null = null;
-// How far menu's corner stands from pointer that opened it, in pixels.
-//   Context menu's own convention: beside pointer, not under it.
-const INSET_MENU_POINTER = 8;
-// How far menu stands above object it was opened over with no pointer, in pixels.
-const LIFT_MENU_ANCHOR = 60;
 
 // Read where last-picked object stands on canvas, or null off screen or behind eye.
 function anchorOfSelectionMenu() {
@@ -557,11 +558,22 @@ function placeSelectionMenu(corner_local: PointLocal) {
     Math.max(8, Math.min(rect.top + corner_local.y, window.innerHeight - 60)) + 'px';
 }
 
+// Hang menu by its bottom middle above object, where no pointer opened it.
+//   Point is `interaction.pointMenuHung`'s, which desktop hangs its own from too.
+function hangSelectionMenu(anchor: PointLocal) {
+  const [width, height] = [menu_selection.offsetWidth, menu_selection.offsetHeight];
+  const hung = nimMenuHung(
+    anchor.x, anchor.y, canvas.clientWidth, canvas.clientHeight, width, height,
+  );
+  const rect = canvas.getBoundingClientRect();
+  menu_selection.style.left = rect.left + (hung[0] ?? 0) - width / 2 + 'px';
+  menu_selection.style.top = rect.top + (hung[1] ?? 0) - height + 'px';
+}
+
 // Open menu beside pointer, and remember where that is from object it is about.
 function positionSelectionMenuAt(position_local: PointLocal) {
-  const corner = {
-    x: position_local.x + INSET_MENU_POINTER, y: position_local.y + INSET_MENU_POINTER,
-  };
+  const inset = nimInsetMenuPointer();
+  const corner = { x: position_local.x + inset, y: position_local.y + inset };
   const anchor = anchorOfSelectionMenu();
   offset_menu_selection = anchor ? { x: corner.x - anchor.x, y: corner.y - anchor.y } : null;
   placeSelectionMenu(corner);
@@ -579,7 +591,7 @@ function updateSelectionMenuPosition() {
       x: anchor.x + offset_menu_selection.x, y: anchor.y + offset_menu_selection.y,
     });
   } else {
-    placeSelectionMenu({ x: anchor.x, y: anchor.y - LIFT_MENU_ANCHOR });
+    hangSelectionMenu(anchor);
   }
 }
 
@@ -619,7 +631,7 @@ menu_selection_hide.addEventListener('click', () => {
   //   back from same place -- `nimSelectionAllHidden` owns what "hidden" means for
   //   whole selection, way row button reads `nimObjectVisible` for one object.
   const show = nimSelectionAllHidden();
-  for (const handle of handles_selection) nimSetVisible(handle, show);
+  nimSetSelectionVisible(show); // One step of undo for whole selection, as desktop takes.
   toast(nimVisibilityMessage(handles_selection.length, show));
   refreshSelectionMenu(null); // Relabels button for what it would now do.
   refreshObjectsUI(); // Selection itself is kept -- hiding doesn't invalidate handle.
@@ -627,7 +639,9 @@ menu_selection_hide.addEventListener('click', () => {
 
 menu_selection_delete.addEventListener('click', () => {
   const n = handles_selection.length;
-  for (const handle of handles_selection) nimRemoveObject(handle);
+  // Session against one of these has nothing left to commit to, as desktop's menu holds.
+  if (handles_selection.some((handle) => isEditing(handle))) endEditSession();
+  nimRemoveSelection(); // One step of undo for whole selection, as desktop takes.
   toast(nimDeletedMessage(n));
   clearSelection();
   refreshObjectsUI();

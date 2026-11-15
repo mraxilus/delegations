@@ -441,7 +441,9 @@ func renderSpokesView(current: Frame, motion: Motion, taken: Option[Frame]): str
       "p",
       "class=\"note\"",
       "A compound move is two moves, so it goes out to " &
-      "the side, inked in both arms that it hands a hand between. Each name " &
+      "the side, inked in both arms. The ink at each end is the arm that " &
+      "acts on the way to it. In a place, that is the arm that takes the " &
+      "hand, and in a cut, it is the arm that ends over. Each name " &
       "says the hand of the follow that the move takes or lets go, in the " &
       "colour of that hand. The rest of the name is the arm of the lead, in " &
       "the deeper shade. Take a spoke, and it becomes the middle.",
@@ -476,8 +478,9 @@ func renderMapView(current: Frame, motion: Motion, taken: Option[Frame]): string
       "p",
       "class=\"note\"",
       "A dashed curve is a compound move, inked in both " &
-      "arms, because it hands a hand from one arm to the other. The ink at " &
-      "each end is the arm that acts on the way to it. The frames you can " &
+      "arms. The ink at each end is the arm that acts on the way to it. In " &
+      "a place, that is the arm that takes the hand, and in a cut, it is the " &
+      "arm that ends over. The frames you can " &
       "reach come forward, the rest go quiet, and the ring moves along the " &
       "line you take. A frame ringed in a solid line is one move away, and a " &
       "dashed ring is a compound move, which is two moves away. Both can be " &

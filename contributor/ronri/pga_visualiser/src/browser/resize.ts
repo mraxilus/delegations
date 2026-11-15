@@ -16,8 +16,17 @@
 //   and reports.
 //   None is saved: these are instruments, not settings.
 let cap_ratio_pixel = 2.5;
+// **Buffer kept inside viewport's limit.** GL clamps viewport to `MAX_VIEWPORT_DIMS`, and
+//   browser can keep buffer wider than that: scene then drew narrower than its canvas, with
+//   bare band at right (#725). Ratio drops on both axes alike, so pixel stays square.
+const [WIDTH_VIEWPORT_MOST = Infinity, HEIGHT_VIEWPORT_MOST = Infinity] =
+  gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array;
 function ratioPixel() {
-  return Math.min(window.devicePixelRatio || 1, cap_ratio_pixel);
+  return Math.min(
+    window.devicePixelRatio || 1, cap_ratio_pixel,
+    WIDTH_VIEWPORT_MOST / Math.max(canvas.clientWidth, 1),
+    HEIGHT_VIEWPORT_MOST / Math.max(canvas.clientHeight, 1),
+  );
 }
 function wireExperiment(id: string, apply: (is_on: boolean) => void) {
   const toggle = elementIfPresent(id);

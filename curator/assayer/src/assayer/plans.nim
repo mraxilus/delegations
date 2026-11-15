@@ -1,6 +1,6 @@
 ## Plan each run of test file: one compile for each backend under each configuration, each into
 ##   cache of its own, with command built as testament builds it (`prepareTestCmd` of
-##   `testament/testament.nim`, Nim 2.2.12).
+##   `testament/testament.nim`, Nim 2.4.0).
 ##   Command is template of header with `$target`, `$options`, `$file`, `$filedir` and `$nim`
 ##     replaced, and leading `nim ` replaced by compiler, as testament replaces each. Compiler is
 ##     quoted for shell, where testament writes it bare.
@@ -14,8 +14,8 @@
 ##     named for path of file, backend and place of configuration (`directoryRun`), as
 ##     `tests/test_k/c_2`: two runs share no cache, so none races another, and run of same file and
 ##     configuration finds its cache again. Report prints that path, so it reads as what it holds.
-##     Testament instead shares one cache across configurations of file, and writes program
-##     beside it, which holds only while configurations run one after another.
+##     Testament keys its cache on configuration too, but writes program beside file, which
+##     holds only while configurations run one after another.
 ##   Program lands inside that directory, and runs from working directory, as testament runs it.
 ##     Log of failed run lands beside it (`pathLog`).
 ##   Template naming what testament fills nothing for refuses file before any run (`nameUnfilled`),

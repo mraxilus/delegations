@@ -106,6 +106,7 @@ type Wording* = enum
   NoteListEmpty, NoteListUnmatched, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
   NoteDiagnosticsShareWaiting, NoteDiagnosticsCrossingWaiting, NoteDiagnosticsShareLinux,
   NoteDiagnosticsShareFrames, NoteDiagnosticsShareBrowser, NoteDiagnosticsSharePolicy,
+  NoteDiagnosticsClockCoarse,
   NoteSaveByHold, NoteSaveBlocked, NameSaveDismiss,
 
   NameTabDrag, NameTabSelect, NameTabMenu, NameTabPanel, NameTabCamera, NameTabKeys,
@@ -351,6 +352,8 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NoteDiagnosticsShareBrowser: "Unavailable: this browser has no sampling profiler.",
   NoteDiagnosticsSharePolicy:
     "Unavailable: this page was not served with Document-Policy: js-profiling.",
+  NoteDiagnosticsClockCoarse:
+    "This browser's clock steps 1 ms or more, so each figure in brackets is a mean, not a median.",
   # Sentence rather than fragment: it stands in its own line under link, not after it.
   NoteSaveByHold: "Or press and hold the image to save it.",
   NoteSaveBlocked:

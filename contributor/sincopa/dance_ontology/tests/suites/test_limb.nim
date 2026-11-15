@@ -69,8 +69,8 @@ suite "Internal: The rig":
       (tips_cone, tips_twist) = gripFreedom(HUMAN, gripAtTips(HUMAN))
     check abs(palm_cone - GRIP_CONE_PALM) < 1e-9 and abs(palm_twist - GRIP_TWIST_PALM) < 1e-9
     check abs(tips_cone - PI) < 1e-9 and abs(tips_twist - PI) < 1e-9
-    var last_cone, last_twist = -1.0
-    for k in 0..SAMPLES_GRIP:
+    var (last_cone, last_twist) = (palm_cone, palm_twist)
+    for k in 1..SAMPLES_GRIP:
       let
         depth = gripAtPalm(HUMAN) +
             (gripAtTips(HUMAN) - gripAtPalm(HUMAN)) * float(k) / float(SAMPLES_GRIP)

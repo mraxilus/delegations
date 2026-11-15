@@ -55,7 +55,7 @@ suite "Tokens":
     check "a=-1".spellings == @["a", "=-", "1"]  # `=-` is one token, as lexer reads it
     check "0..<n".spellings == @["0", "..<", "n"]  # number stops before range
     check "x*: int".spellings == @["x", "*", ":", "int"]  # `*` before lone `:` stands alone
-    check "☆m".spellings == @["☆", "m"]  # glyph of commit pin opens operator
+    check "☆m".spellings == @["☆", "m"]  # glyph of 2.4.0 opens operator
 
 
   test "minus before digit opens number after whitespace or opening, never after operand":

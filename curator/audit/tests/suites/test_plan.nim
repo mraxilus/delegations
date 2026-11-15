@@ -2,14 +2,14 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, os, sequtils, unittest]
-import ../../src/[domains, plan, projects, toolchain]
+import std/[json, os, sequtils, tables, unittest]
+import ../../src/[domains, layout, plan, projects, toolchain]
 import ./fixtures
 
 
 const
   DIRECTORIES = [DIRECTORY_ALPHA, DIRECTORY_AUDIT]
-    ## Project directories fixture tree holds, in sorted order selection returns them:
+    ## Unlisted project directories fixture tree holds, in sorted order selection returns them:
     ## `contributor` sorts before `curator`.
   DIRECTORY_IMPORTING = CURATOR & "/assayer"  ## Curator project importing knoller, besides driver.
   DIRECTORY_PROBE = CURATOR & "/probe"  ## Curator project importing no knoller.
@@ -28,7 +28,7 @@ suite "Plan":
       @[DIRECTORY_ALPHA]  # page
 
 
-  test "record change alone selects nothing, so rules propagation compiles nothing":
+  test "record change of unlisted project selects nothing, so rules propagation compiles none":
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/PROVENANCE.md"]).len == 0  # stamp only
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/GLOSSARY.md"]).len == 0  # terms only
     # README runs nothing.
@@ -41,6 +41,21 @@ suite "Plan":
     # Record beside code still selects, since code changed.
     let mixed = [DIRECTORY_ALPHA & "/PROVENANCE.md", DIRECTORY_ALPHA & "/src/a.nim"]
     check projectsTest(DIRECTORIES, mixed) == @[DIRECTORY_ALPHA]
+
+
+  test "record change of project keeping its own prose selects it, whose suite holds that prose":
+    # Case: records of `lojban_parser` move to lojban, by ruling `D4 a` of #818, and no rule of
+    #   English reads them. Domain: each record of listed project and of project of same domain
+    #   list leaves out, rules propagation over both, and importer of listed project.
+    let directories = [DIRECTORY_PARSER, DIRECTORY_TAGGER]
+    for file in FILES_PROJECT:
+      check projectsTest(directories, [DIRECTORY_PARSER & "/" & file]) == @[DIRECTORY_PARSER]
+      check projectsTest(directories, [DIRECTORY_TAGGER & "/" & file]).len == 0  # left out
+    check projectsTest(directories, directories.mapIt(it & "/PROVENANCE.md")) ==
+      @[DIRECTORY_PARSER]  # rules propagation compiles listed project alone
+    let importers = {DIRECTORY_PARSER & "/src": @[DIRECTORY_TAGGER]}.toTable
+    check projectsTest(directories, [DIRECTORY_PARSER & "/README.md"], importers) ==
+      @[DIRECTORY_PARSER]  # importer reads no record
 
 
   test "project gains type check by carrying node manifest and its lock":
@@ -165,18 +180,73 @@ suite "Plan":
         entry(DIRECTORY_IMPORTING & "/src/assayer/command.nim",
             "import ../../../knoller/src/knoller/[compilers, pins]\n"),
         entry(DIRECTORY_KNOLLER & "/src/knoller.nim", "import ./knoller/[pins]\n"),
-        entry(DIRECTORY_PROBE & "/src/probe.nim", "## Names `knoller/src/knoller` in comment.\n"),
+        entry(DIRECTORY_PROBE & "/src/probe.nim", "## import ../../knoller/src/knoller\n"),
       ]
-      importers = tree.directoriesImporting(directories)
+      importers = tree.importersByFolder(directories)
       from_import = @[entry(DIRECTORY_PROBE & "/src/probe.nim",
           "from ../../knoller/src/knoller import NIM\n")]
-    check importers == @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]  # comment and own path import none
-    check from_import.directoriesImporting([DIRECTORY_PROBE]) == @[DIRECTORY_PROBE]  # `from` too
+    check importers ==
+      {FILES_KNOLLER[0]: @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]}.toTable  # comment, own path none
+    check from_import.importersByFolder([DIRECTORY_PROBE]) ==
+      {FILES_KNOLLER[0]: @[DIRECTORY_PROBE]}.toTable  # `from` too
     check projectsTest(directories, [FILES_KNOLLER[0] & "/knoller/pins.nim"], importers) ==
         @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # each importer, and knoller
     check projectsTest(directories, [FILES_KNOLLER[1]], importers) ==
         @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # nimble file names pin
     check projectsTest(directories, ["koch.nim"], importers) == @[DIRECTORY_AUDIT]  # driver alone
+
+
+  test "source of project selects each project importing it by path, and their importers":
+    # Case as found (#832): lojban_tagger imports lojban_parser by relative path, and change to
+    #   parser compiled no suite of tagger, so break of tagger merged unseen (#878).
+    let
+      parser = CONTRIBUTOR & "/ronri/parser"
+      tagger = CONTRIBUTOR & "/ronri/tagger"
+      reader = CONTRIBUTOR & "/ronri/reader"
+      tree = @[
+        entry(parser & "/parser.nimble", TEXT_NIMBLE),
+        entry(parser & "/src/parser.nim", "import ./parser/[nif]\n"),
+        entry(tagger & "/tagger.nimble", TEXT_NIMBLE),
+        entry(tagger & "/src/tagger/runs.nim", "import std/strutils, ../../../parser/src/parser\n"),
+        entry(reader & "/reader.nimble", TEXT_NIMBLE),
+        entry(reader & "/src/reader.nim", "from ../../tagger/src/tagger/runs import nil\n"),
+      ]
+    check tree.jobs([parser & "/src/parser/nif.nim"]).mapIt(it.directory) ==
+      @[parser, reader, tagger]  # importer of importer too
+    check tree.jobs([parser & "/parser.nimble"]).mapIt(it.directory) ==
+      @[parser, reader, tagger]  # nimble file names pin
+    check tree.jobs([tagger & "/src/tagger/runs.nim"]).mapIt(it.directory) == @[reader, tagger]
+    check tree.jobs([parser & "/tests/suites/test_nif.nim"]).mapIt(it.directory) ==
+      @[parser]  # suite alone, which no importer reads
+    check tree.jobs([parser & "/PROVENANCE.md"]).len == 0  # record
+
+
+  test "folder importer imports selects it, in each form of import, and comment none":
+    # Case as found: `tools/lists.nim` of lojban_tagger imports `tools/lists` of lojban_parser,
+    #   and its suite imports that tool, so change to that tool compiled no suite of tagger.
+    let
+      parser = CONTRIBUTOR & "/ronri/parser"
+      tagger = CONTRIBUTOR & "/ronri/tagger"
+      pinned = @[entry(parser & "/parser.nimble", TEXT_NIMBLE),
+          entry(tagger & "/tagger.nimble", TEXT_NIMBLE)]
+      tool = pinned & @[entry(tagger & "/tools/lists.nim", "import ../../parser/tools/lists\n")]
+    check tool.jobs([parser & "/tools/lists.nim"]).mapIt(it.directory) == @[parser, tagger]
+    check tool.jobs([parser & "/tests/test_lists.nim"]).mapIt(it.directory) ==
+      @[parser]  # folder no importer imports
+    for source in [
+      "import\n  std/strutils,\n  ../../parser/src/parser\n",  # statement on several lines
+      "import ../../parser/src/[\n  nif,\n  merge,\n]\n",  # list of modules in brackets
+      "when defined(js): import ../../parser/src/parser\n",  # behind guard
+      "import \"../../parser/src/parser\"\n",  # quoted path
+    ]:
+      let imported = pinned & @[entry(tagger & "/src/tagger.nim", source)]
+      check imported.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser, tagger]
+    for source in [
+      "# import ../../parser/src/parser\n",  # comment
+      "let path = \"../../parser/src/parser\"\n",  # string outside import
+    ]:
+      let named = pinned & @[entry(tagger & "/src/tagger.nim", source)]
+      check named.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser]
 
 
   test "path inside no project selects nothing by itself":
@@ -192,7 +262,8 @@ suite "Plan":
     check selected.len == 1
     check selected[0].directory == DIRECTORY_ALPHA
     check selected[0].pin == PIN
-    check tree.jobsAll.len == DIRECTORIES.len  # `--all` names every project
+    check tree.jobsAll.mapIt(it.directory) ==
+      @[DIRECTORY_PARSER, DIRECTORY_ALPHA, DIRECTORY_AUDIT]  # `--all` names every project
     let unpinned = tree.replaced(DIRECTORY_ALPHA & "/alpha.nimble", "requires \"nim >= 2.2.4\"\n")
     check unpinned.jobs([DIRECTORY_ALPHA & "/src/alpha.nim"]).len == 0  # nothing to install
 

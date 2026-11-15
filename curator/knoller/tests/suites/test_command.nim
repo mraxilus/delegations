@@ -9,14 +9,14 @@
 
 import std/[importutils, options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[command, compilers, edits, proofs, reports, rewrites, rules, symbols]
-from ../../src/knoller/command {.all.} import joined, Part
+from ../../src/knoller/command {.all.} import joined, nimblesNearest, Part
 import ./stubs
 
 
 const
-  DIRTY = "let X = a+b # c\nproc f(a: int; b: string) = discard\n"
-    ## Nim source breaking spacing, comment gap and separators, and lacking `strictFuncs`.
-  CLEAN = "{.experimental: \"strictFuncs\".}\n\nlet X = a + b  # c\n"  ## Nim source fix leaves.
+  DIRTY = "let X = a+b ## Sum.\nproc f(a: int; b: string) = discard\n  ## Do.\n"
+    ## Nim source breaking spacing, doc gap and separators, and lacking `strictFuncs`.
+  CLEAN = "{.experimental: \"strictFuncs\".}\n\nlet X = a + b  ## Sum.\n"  ## Nim source fix leaves.
   README = currentSourcePath().parentDir.parentDir.parentDir / "README.md"
     ## Record listing every rule id output cites.
   SUITES =
@@ -27,10 +27,10 @@ const
     ## Testament stub whose `cmd` holds `-r`.
   UMBRELLA = "{.experimental: \"strictFuncs\".}\n\nimport ./p/a\n"
     ## Library umbrella lacking profiler import.
-  GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet S = @(x) + @(x[0])\n"
+  GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet S = @(x) + @(x[0])  ## Sequences.\n"
     ## Nim source holding group parser proves needless, and group it refuses.
-  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.2.12, whose parser answers.
-  COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Commit pin of `ronri` projects.
+  NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.4.0, whose parser answers.
+  COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Full commit of Nim, as pin names it.
   UNSERVED = "Parser proved no removal, since no compiler serves pin; got `"
     ## Opening of warning of pin no compiler serves, as `proversPin` writes it.
   UNSETTLED =
@@ -66,9 +66,12 @@ proc outcomeEvery(
     result = outcome(files, locked, is_check, directory, proofs, failure)
 
 
-func shown(path, directory, source: string): seq[string] =
-  ## Print check of one file path names from directory, path read as `<path>`.
-  let outcome = outcome([(path, source)], [], is_check = true, directory)
+func shown(path, directory, source, nimble: string): seq[string] =
+  ## Print check of one file path names from directory, beside nimble file nearest it, path read
+  ##   as `<path>`.
+  let outcome = outcome(
+    [(path, source)], [], is_check = true, directory, nimbles = {path: nimble}.toTable
+  )
   outcome.lines.mapIt(it.replace(path, "<path>"))
 
 
@@ -153,7 +156,9 @@ suite "Command line":
 
 
   test "finding left prints at its line in file as given, as each rewrite does":
-    let outcome = outcome([("a.nim", "let A = 1\nlet B = not x == y\n")], [], is_check = true)
+    let
+      source = "let A = 1  ## One.\nlet B = not x == y  ## Same.\n"
+      outcome = outcome([("a.nim", source)], [], is_check = true)
     check outcome.lines.len == 4
     check outcome.lines[0 .. 1] == @["a.nim: strictfuncs to fix", "a.nim:1: single-bindings to fix"]
     check outcome.lines[2].startsWith("a.nim:2: not-over-binary left: ")  # fix moves it to 5
@@ -165,6 +170,8 @@ suite "Command line":
     #   entry block, names and waits never, so it exited 0 on each source below (#557); domain is
     #   each rule of knoller static pass of `curator/audit` reads that fixers can leave, as left.
     #   Rule fixers always clear (trailing whitespace, banners, `strictFuncs`, stub keys) is none.
+    #   Fixed wait reads where caller says drive code alone, which command line never says, so
+    #   `test_chain.nim` holds it (#886).
     let module = "{.experimental: \"strictFuncs\".}\n\n"
     for (path, source, rule) in [
       ("a.nim", module & "const TEXT = \"" & "word ".repeat(24) & "\"\n", Rule.LineWidth),
@@ -179,7 +186,6 @@ suite "Command line":
       ("a.nim", module & "{.push inline.}\nproc f() = discard\n{.pop.}\n", Rule.PushForeign),
       ("tests/test_a.nim", module & "include \"suites.nim\"\n", Rule.HeaderStub),
       ("tests/suites/test_a.nim", module & "echo x\n", Rule.OutputDebug),
-      ("tests/suites/test_a.nim", module & "sleep(1)\n", Rule.WaitFixed),
       ("a.nim", module & "proc f(ctx: int) = discard\n", Rule.Abbreviation),
       ("a.nim", module & "proc f(quiet: bool) = discard\n", Rule.NameBoolean),
       ("a.nim", module & "const LUT_GRADE = 1\n", Rule.TableLookup),
@@ -193,12 +199,25 @@ suite "Command line":
       ("a.nim", module & "import ./a\n\nimport std/os\n", Rule.RankImport),  # blank line apart
       ("a.nim", module & "const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n", Rule.BindingsSingle),
     ]:
-      let outcome = outcome([(path, source)], [], is_check = true)
+      let outcome =
+        outcome([(path, source)], [], is_check = true, nimbles = {path: "a.nimble"}.toTable)
       check outcome.code == 1  # violation fails run
       check outcome.lines.anyIt(it.startsWith(path) and (" " & rule.id & " left: ") in it)
     let fenced = outcome([("a.nims", "#!fix off\nlet a = 1 \n#!fix on\n")], [], is_check = true)
     check fenced.lines.anyIt("inside them trailing-whitespace breaks once at line 2" in it)
     check fenced.code == 1  # fence keeps line from fixer, never from finding
+
+
+  test "command line reads no file as drive code, so fixed wait passes under `tests` or `tools`":
+    # Case held: command line read each file under directory `tests` or `tools`, at any depth, as
+    #   drive code, which is layout of this repository, so it reported fixed wait of drive in any
+    #   repository (#886). Domain: each directory, at root of package and below it, and neither.
+    let module = "{.experimental: \"strictFuncs\".}\n\nsleep(1)\n"
+    for path in ["tests/suites/test_a.nim", "tools/build.nim", "src/tools/a.nim", "a.nim"]:
+      let outcome =
+        outcome([(path, module)], [], is_check = true, nimbles = {path: "a.nimble"}.toTable)
+      check not outcome.lines.anyIt(Rule.WaitFixed.id in it)  # fixed wait unread
+      check outcome.code == 0
 
 
   test "check reads no glossary, so acronym in name of another repository passes":
@@ -207,7 +226,7 @@ suite "Command line":
     #   (D2 of #572).
     let source =
         "import std/json\n\nfunc toJSON*(text: string): JsonNode = parseJson(text)\n" &
-        "type GLContext* = object\n"
+        "  ## Parse.\ntype GLContext* = object  ## Context.\n"
     for path in ["a.nim", "a.nims", "a.nimble"]:
       let
         given = if path.endsWith(".nim"): "{.experimental: \"strictFuncs\".}\n\n" & source
@@ -216,9 +235,19 @@ suite "Command line":
       check outcome.lines == @["0 to fix."] and outcome.code == 0
 
 
+  test "command line sets no mode of articles, so it drops word reading as article anywhere":
+    # Mode of articles is caller's policy (`chain.nim`), and command line holds none, so `a` of
+    #   lojban, which joins two names as `or`, goes as English article does.
+    let outcome = outcome([("a.nims", "# la .alis. a la .bob. cu klama\n")], [], is_check = true)
+    check outcome.lines == @["a.nims:1: article-in-comment to fix", "1 to fix."]
+    check outcome.code == 1  # change due fails check
+    let fixed = outcome([("a.nims", "# la .alis. a la .bob. cu klama\n")], [], is_check = false)
+    check fixed.written == @[("a.nims", "# la .alis. la .bob. cu klama\n")]  # fix writes word away
+
+
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":
     let
-      fenced = "let A = 1\n#!fix off\nlet B = 1+2\n#!fix on\n"
+      fenced = "let A = 1  ## One.\n#!fix off\nlet B = 1+2  ## Sum.\n#!fix on\n"
       outcome = outcome([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
       "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
@@ -241,11 +270,84 @@ suite "Command line":
     for (source, rule, inside, outside) in [
       (SUITES, "test-blank-lines", ("suites.nim", "/p/tests"), ("tests/suites.nim", "/p")),
       (STUB, "stub-keys", ("test_p.nim", "/p/tests"), ("p/tests/test_p.nim", "/")),
-      (UMBRELLA, "profiler-import", ("p.nim", "/p/src"), ("../p/src/p.nim", "/p/tests")),
+      (UMBRELLA, "profiler-import", ("p.nim", "/p/src"), ("../src/p.nim", "/p/tests")),
     ]:
-      let lines = shown(inside[0], inside[1], source)
+      let lines = shown(inside[0], inside[1], source, "/p/p.nimble")
       check lines.anyIt(rule in it)  # rule reads path whole, from inside its directory too
-      check lines == shown(outside[0], outside[1], source)
+      check lines == shown(outside[0], outside[1], source, "/p/p.nimble")
+
+
+  test "nimble file nearest each file, read from disk, decides its tests, stubs and umbrella":
+    # Case held: command line read umbrella as `<folder>/src/<folder>.nim` of path, so package
+    #   at root of clone whose folder bears other name had none, and it read directory `tests`
+    #   anywhere in path, so stub needed no package (#886). Domain: package at root of clone,
+    #   package nested inside it, directory of two nimble files, and tree with none above.
+    let
+      root = createTempDir("knoller_", "_clone")  # folder named apart from package
+      bare = createTempDir("knoller_", "_bare")
+    defer:
+      removeDir(root)
+      removeDir(bare)
+    root.writeTree([
+      ("foo.nimble", "version = \"0.1.0\"\n"),
+      ("src/foo.nim", UMBRELLA),
+      ("inner/inner.nimble", "version = \"0.1.0\"\n"),
+      ("inner/tests/test_a.nim", STUB),
+      ("pair/a.nimble", "version = \"0.1.0\"\n"),
+      ("pair/b.nimble", "version = \"0.1.0\"\n"),
+      ("pair/tests/test_a.nim", STUB),
+    ])
+    bare.writeTree([("tests/test_a.nim", STUB)])
+    let
+      paths = ["src/foo.nim", "inner/tests/test_a.nim", "pair/tests/test_a.nim"]
+      nimbles = paths.nimblesNearest(root)
+    check nimbles == {
+      "src/foo.nim": slashed(root / "foo.nimble"),
+      "inner/tests/test_a.nim": slashed(root / "inner" / "inner.nimble"),
+    }.toTable  # directory of two nimble files names no package, as nimble refuses it
+    let lines = outcome(
+      paths.mapIt((it, readFile(root / it))), [], is_check = true, root, nimbles = nimbles
+    ).lines
+    check "src/foo.nim: profiler-import to fix" in lines  # umbrella of package at root of clone
+    check "inner/tests/test_a.nim:3: stub-keys to fix" in lines  # stub of nearest package
+    check not lines.anyIt(it.startsWith("pair/") and "stub-keys" in it)  # no package, no stub
+    let
+      alone = ["tests/test_a.nim"]
+      outside = outcome(
+        [(alone[0], STUB)], [], is_check = true, bare, nimbles = alone.nimblesNearest(bare)
+      )
+    check alone.nimblesNearest(bare).len == 0  # no nimble file above
+    check not outside.lines.anyIt("stub-keys" in it)  # so no stub rule
+
+
+  test "command line built from this source reads nimble file above each file it is run on":
+    # `main` reads nimble file nearest each file from disk and hands it to `outcome`, so run
+    #   built from this source drives that wiring (Article IX.6). Domain: package `foo` at root
+    #   of clone named `clone`, umbrella that its nimble file names, and drive code none names.
+    let
+      root = createTempDir("knoller_", "_built")
+      clone = root / "clone"  # folder named apart from package
+      binary = root / "knoller".addFileExt(ExeExt)
+      source = currentSourcePath().parentDir.parentDir.parentDir / "src" / "knoller.nim"
+      head = "## Do.\n\n{.experimental: \"strictFuncs\".}\n\nimport std/os\n\n"
+    defer: removeDir(root)
+    clone.writeTree([
+      ("foo.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+      ("src/foo.nim", head & "export os\n"),  # umbrella lacking profiler import
+      ("tools/build.nim", head & "sleep(10)\n"),
+    ])
+    check execCmd("git -C " & clone.quoteShell & " init -q") == 0
+    check execCmd("git -C " & clone.quoteShell & " add -A") == 0
+    let build = @[NIM, "c", "--hints:off", "--nimcache:" & root / "cache", "-o:" & binary, source]
+    check execCmdEx(build.mapIt(it.quoteShell).join(" ")).exitCode == 0  # one command rebuilds
+    let
+      run = @[binary, "--check", "--nim:" & NIM, "src", "tools"]
+      (output, code) = execCmdEx(run.mapIt(it.quoteShell).join(" "), workingDir = clone)
+    check output.splitLines.filterIt(it.len > 0) == @[
+      "src/foo.nim: profiler-import to fix",  # umbrella of `foo.nimble`, whatever folder holds it
+      "1 to fix.",
+    ]  # and no fixed wait under `tools`, since no caller names drive code
+    check code == 1  # change due under `--check`
 
 
   test "directory names Nim files git lists under it, sorted; one naming none says why":
@@ -341,7 +443,8 @@ suite "Command line":
 
 
   test "conversion semantic pass settles is fixed first, and pass that resolves none warns":
-    const source = "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): float = x.float * 2\n"
+    const source =
+      "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): float = x.float * 2\n  ## Double.\n"
     var answer = Answer(path: "a.nim")
     answer.symbols[(3, 30)] = Symbol(kind: "skType")
     answer.symbols[(3, 28)] = Symbol(kind: "skParam")
@@ -389,8 +492,27 @@ suite "Command line":
     check "p/src/a.nim:3: type-conversion to fix" in outcome.lines
 
 
+  test "command line passes no define, so file under `tests` compiles as any other does":
+    # Case held: semantic pass compiled each file under directory `tests` with `-d:testing`, define
+    #   stubs of this repository pass, so command line read stubs of any repository as this one's
+    #   (#886). Domain: name declared under define alone, under `tests` and outside it.
+    let
+      root = createTempDir("knoller_", "_defines")
+      source = "when defined(testing):\n  let x = 3\nlet y = x.float\n"
+      files = [("p/tests/a.nim", source), ("p/src/a.nim", source)]
+    defer: removeDir(root)
+    root.writeTree(@[("p/p.nimble", "version = \"0.1.0\"\n")] & @files)
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let answers = files.resolveConversions("", root, toolchains)
+    for (path, _) in files:
+      check "undeclared" in answers[path].reason  # `x` stands under define none passes
+
+
   test "rename planned is written first, and rename refused warns where it is declared":
-    const source = "{.experimental: \"strictFuncs\".}\n\nfunc twice(Count: int): int = Count * 2\n"
+    const source =
+      "{.experimental: \"strictFuncs\".}\n\nfunc twice(Count: int): int = Count * 2\n  ## Double.\n"
     let
       rename = Rename(
         path: "a.nim", line: 3, column: 11, name: "Count", renamed: "count", rule: Rule.CaseName
@@ -457,8 +579,9 @@ suite "Command line":
       check outcome.written.len == 0 and outcome.code == 0  # nothing due, nothing left
       check outcome.lines.len == 2 and outcome.lines[^1] == "0 to fix."
       check outcome.lines[0].startsWith("needless-parentheses warning: ")  # one line, before count
-    let dirty =
-      outcomeProven([("a.nim", DIRTY & "let S = @(x) + 1\n")], [], true, "/", proverFailing)
+    let dirty = outcomeProven(
+      [("a.nim", DIRTY & "let S = @(x) + 1  ## One.\n")], [], true, "/", proverFailing
+    )
     check dirty.code == 1 and dirty.lines[^1] == "4 to fix."  # other rules still due
     check dirty.lines[^2] == "needless-parentheses warning: Compiler ran no probe; got `x`."
 

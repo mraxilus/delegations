@@ -6,12 +6,11 @@ algebra, W(𝐦) is the weight norm √(𝐦 ∘ 𝐦), as at pin. In the confor
 weight norm for a round object, and √|𝐦 ∘ 𝐦| for any other element.
 
 A round object holds one grade, and its round weight is not negligible beside √|𝐦 ∘ 𝐦|. The
-façade and the doc of `^` state the rule, and a line under the table of norm operators defines
-W(𝐦). The doc of the weight norm says that √(𝐦 ∘ 𝐦) is that norm in the rigid algebra alone.
-This change also drops `inline` from `^∘`, since its conformal body is large. Chapter 4 gains one
-test at its head, and keeps its placeholder, which change `conformal-norms` replaces. Suite
-Internal gains one test for motion operators, moved elements, and a plane sent through a sphere
-and back.
+façade and the doc of `^` state the rule, and the doc of `normalizeWeight` defines W(𝐦). The doc
+of the weight norm says that √(𝐦 ∘ 𝐦) is that norm in the rigid algebra alone. This change also
+drops `inline` from `^∘`, since its conformal body is large. Suite Internal gains one test. It
+covers motion operators, moved elements, each round and flat object, and a plane sent through a
+sphere and back.
 
 This change applies at pin and builds on no other. Other edits reach code that this change
 touches:
@@ -20,13 +19,18 @@ touches:
   in `toRoundPoint` are declared `Coefficient`.
 - P07, `part-scale`, edits `=~` and `grade`, and no line here. The test of suite Internal compares
   two multivectors through the public `=~`, so it reads the rule of P07 once both land.
-- The change `algebra-hygiene` renames `TOLERANCE_ABS`, which `^∘` names. The second to land
-  carries the new name into `^∘`.
-- The change `doc-comments` writes that `^` and `normalizeWeight` cost no call. With this change
-  `^∘` is not inline, so each costs one. Once both land, that doc says so.
+- The change `algebra-hygiene` renames `TOLERANCE_ABS`, which `^∘`, `laws.nim` and `limits.nim`
+  name. The second to land carries the new name into `^∘` and into both programs.
+- The change `imports-narrow` names each symbol that `pga/operators.nim` imports. Its list lacks
+  `TOLERANCE_ABS`, which `^∘` names in its conformal branch alone. With both applied, the
+  conformal build stops on `undeclared identifier: 'TOLERANCE_ABS'`. So the second to land adds
+  `TOLERANCE_ABS` to the import from `./algebra` under `when IS_CONFORMAL:`.
+- The change `doc-comments` writes in the doc of `unitize` that `^` and `normalizeWeight` cost no
+  call, as `so neither costs call`. With this change `^∘` is not inline, so each costs one. So the
+  second to land replaces `so neither costs call` with `so each costs one call to ^∘`.
 - The changes `doc-comments` and `doc-comments-2` edit docs next to `unitize` and `^` through
-  quotes of their own, so either order holds. So does the change `conformal-norms`, which
-  replaces the placeholder of Chapter 4 that this change keeps.
+  quotes of their own, so either order holds. So does the change `conformal-norms`, which adds
+  its tests before the placeholder at the end of Chapter 4. This change adds no test there.
 
 ## Edit `pga.nim`
 
@@ -38,7 +42,6 @@ touches:
 ```nim
 ##   | ^∘  | normalizeWeight   | 𝐦 ÷ W(𝐦)    |
 ##   |-----|-------------------|-------------|
-##   W(𝐦): coined divisor, ‖𝐦‖∘ for round object in CGA, else √|𝐦∘𝐦|; Lengyel gives none.
 ```
 
 ## Edit `pga.nim`
@@ -55,7 +58,7 @@ func unitize*(m: Multivector): Multivector {.inline.} = ^m
 func normalizeWeight*(m: Multivector): Multivector {.inline.} = ^∘m
   ## Normalize multivector so its weight has unit antiscalar magnitude, i.e. 𝐦 ÷ W(𝐦).
   ##   In RGA, W(𝐦) = ‖𝐦‖∘ = √(𝐦∘𝐦) for any element.
-  ##   In CGA, W(𝐦) = ‖𝐦‖∘ for round object, i.e. weight of its carrier 𝐦 ∧ 𝐞∞; else √|𝐦∘𝐦|.
+  ##   In CGA, W(𝐦) = ‖𝐦‖∘ for round object, i.e. weight of its carrier 𝐦 ∧ eₙ; else √|𝐦∘𝐦|.
   ##     Round object holds one grade, and its round weight is not negligible beside √|𝐦∘𝐦|.
   ##     Each test counts size at or under tolerance times scale it is compared with as zero.
   ##   Performs no-op where W(𝐦) is 0.
@@ -75,7 +78,7 @@ func `|∘`*(m: Multivector): MultivectorScalars {.inline.} =
 ```nim
 func `|∘`*(m: Multivector): MultivectorScalars {.inline.} =
   ## Get (round) weight norm of multivector as size of (round) weight components.
-  ##   In RGA, ‖𝐦‖∘ = √(𝐦∘𝐦); in CGA, √(𝐦∘𝐦) is radius norm ‖𝐦‖⊘ instead (4.45).
+  ##   In RGA, ‖𝐦‖∘ = √(𝐦∘𝐦); in CGA, √(𝐦∘𝐦) is radius norm ‖𝐦‖⊘ instead.
 ```
 
 ## Edit `pga/operators.nim`
@@ -154,7 +157,7 @@ suite "Internal":
 
 
 when IS_CONFORMAL:
-  proc toRoundPoint(m: Multivector): Multivector =
+  func toRoundPoint(m: Multivector): Multivector =
     ## Lift Euclidean part of multivector to round point of radius zero.
     var distance_squared: Coefficient = 0.0
     for b in Basis.scalar.succ..Basis.origin.pred:
@@ -184,20 +187,16 @@ when IS_CONFORMAL:
       result = result ∧ position.toRoundPoint
 
 
-  proc sampleReflector(): Multivector =
-    ## Sample random sphere or plane, any element of antigrade one.
-    for b in Basis:
-      if b.grade == Grade.high.pred: result[b] = gauss()
-
-
 
 suite "Internal":
   test "`^∘`(m: Multivector): Multivector":
     when IS_RIGID: skip()  # Round and flat objects exist in CGA alone.
     else:
-      const 𝐞∞ = initElement(Basis.infinity)
       for _ in 1 .. SAMPLES div 8:
-        let 𝐯 = ^(3 ∧ (sampleReflector() ⟇ sampleReflector()))
+        let
+          𝐚 = sampleMultivector(@[Grade.vectorAnti])
+          𝐛 = sampleMultivector(@[Grade.vectorAnti])
+          𝐯 = ^(3 ∧ (𝐚 ⟇ 𝐛))
         check abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙  # Product of two reflections ends unit.
         let 𝐦 = 𝐯 ⟇ samplePoint() ⟇ ~∘𝐯
         check toMultivector(|∘(^𝐦)) =~ 𝟙  # Moved round point keeps unit round weight.
@@ -205,34 +204,17 @@ suite "Internal":
         let 𝐬 = sampleSphere()
         var 𝐠 = samplePoint()
         for _ in 2 ..< DIMENSIONS - 1: 𝐠 = 𝐠 ∧ samplePoint()
-        𝐠 = 𝐠 ∧ 𝐞∞
+        𝐠 = 𝐠 ∧ 𝐞ₙ
         let 𝐠_back = 𝐬 ⟇ (𝐬 ⟇ 𝐠 ⟇ ~∘𝐬) ⟇ ~∘𝐬
         check toMultivector(|□(^𝐠_back)) =~ 𝟙  # Plane sent through sphere and back stays unit.
 
-
-```
-
-## Edit `tests/suites.nim`
-
-```nim
-suite "Chapter 4":
-```
-
-```nim
-suite "Chapter 4":
-  test "Section 4.3: round object unitizes by round weight, flat object by flat weight":
-    when IS_RIGID: skip()  # Round and flat objects exist in CGA alone.
-    else:
-      const 𝐞∞ = initElement(Basis.infinity)
-      for _ in 1 .. SAMPLES div 8:
-        let 𝐫 = samplePoint()
-        check 𝐫 ∘ 𝐫 =~ 0  # 4.45
-        var 𝐮 = 𝐫
+        var 𝐮 = samplePoint()
+        check 𝐮 ∘ 𝐮 =~ 0  # Round point holds radius zero.
         for grade in 1..<DIMENSIONS:
           let scale = 3 * gauss()
-          check toMultivector(|∘(^(scale ∧ 𝐮))) =~ 𝟙  # Section 4.3, round object
+          check toMultivector(|∘(^(scale ∧ 𝐮))) =~ 𝟙  # Round object ends at unit round weight.
           if grade < DIMENSIONS - 1:
-            check toMultivector(|□(^(scale ∧ (𝐮 ∧ 𝐞∞)))) =~ 𝟙  # Section 4.3, flat object
+            check toMultivector(|□(^(scale ∧ (𝐮 ∧ 𝐞ₙ)))) =~ 𝟙  # Carrier ends at unit flat weight.
           𝐮 = 𝐮 ∧ samplePoint()
 
 

@@ -164,8 +164,8 @@ func spokesFrame*(here: Frame): seq[Spoke] =
     let compounded = compound(here, target)
     if compounded.isNone:
       continue
-    # Compound move hands follow's hand from one of lead's arms to
-    # other, so it has arm going out and different one coming back.
+    # Compound move has arm going out and different one coming back: arm
+    # that ends up holding, for `place`, or on top, for `cut` (`compoundSide`).
     # Drawing is inked in both: one arm for line that only ever means one.
     named.add Spoke(
       to: target,

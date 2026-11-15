@@ -204,6 +204,27 @@ func keepNaming*(selection: var Selection; before, after: Scene) =
 
 
 
+#[ Acting on Picks ]#
+
+func setVisibleAll*(selection: Selection, scene: var Scene, is_visible: bool) =
+  ## Show or hide every picked object, as one act.
+  ##   Caller records act once on undo timeline, so one undo brings all of it back; both
+  ##   front-ends' selection menus act through here (repository issue 632).
+  for position in 0..<selection.count:
+    scene.setVisible(selection.handles[position], is_visible)
+
+
+func removeAll*(selection: var Selection, scene: var Scene) =
+  ## Remove every picked object, as one act, and drop every pick with it.
+  ##   Recorded once by caller, as `setVisibleAll` is.
+  ##   Picks go too: freed handle goes straight to next add, so pick left behind would
+  ##   reattach to unrelated new object.
+  for position in 0..<selection.count:
+    scene.removeObject(selection.handles[position])
+  selection.clear()
+
+
+
 #[ Pulse Clock ]#
 
 const SECONDS_STEP_PULSE_MAX* = 0.1

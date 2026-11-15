@@ -10,18 +10,33 @@
 //     in decimal, and Chromium paints `disc` as shape rather than glyph.
 //   Each string is read with `font-family` and `font-weight` of element drawing it, and
 //     `text-transform` applied, since uppercase of character is other codepoint.
+//   Each string is written with every codepoint it draws, ASCII included, as Architect ruled
+//     (D1 b of repository issue 751): verdict judges character past ASCII for its font face,
+//     and every character for bold browser synthesises, which falls mostly on ASCII.
+//     Codepoint below space is control character, such as line feed of markup, and draws no
+//     glyph, so is not written; string drawing no other is not written.
 //   Every `details` opens first, and every element shows: element behind tab or filter that
 //     `:has()` rules hide still carries computed style, so every state of page reads in one
 //     pass. Showing is for cost alone: Chromium styles hidden element on demand, one by one,
 //     where page shown whole is styled in one pass; gain on these pages unmeasured. `display`
-//     sets no font property, so no verdict moves.
+//     sets no font property, so no finding moves.
+//   Control page `koch drive` writes is read by this same collector, as page `control`. It holds
+//     numeral in paragraph, placeholder, `::before`, SVG text and text script writes on load, so
+//     place this collector skips is numeral `koch drive` reports missing (`main.ts`).
 //   Cost: page is read at one viewport, Playwright's default; string or stack that `@media`
 //     gates on other width is unread.
 //   Cost: page is read in state it opens on. Text that script writes only once reader acts,
 //     as Explorer writes moves of frame reached, is unread until then.
 
 import type { Page } from '@playwright/test';
-import type { Declared } from './faces';
+
+/** One `@font-face` rule as browser's CSSOM serialises it. */
+export interface Declared {
+  family: string;
+  weight: string;
+  range: string;
+  source: string;
+}
 
 /** One string page draws in one element, with stack and weight it is drawn at. */
 export interface Run {
@@ -47,8 +62,7 @@ export interface Written {
 }
 
 /**
- * Read every run beyond ASCII page draws, every font face it declares, and what each font face
- * loaded.
+ * Read every string page draws, every font face it declares, and what each font face loaded.
  */
 export async function readWritten(page: Page): Promise<Written> {
   return await page.evaluate(async () => {
@@ -84,28 +98,30 @@ export async function readWritten(page: Page): Promise<Written> {
       }
       return text;
     };
-    // Keep codepoints beyond ASCII that text draws, once each.
-    const beyondAscii = (text: string): number[] => {
+    // Keep codepoints that text draws, ASCII included, once each; one below space draws no glyph.
+    const drawn = (text: string): number[] => {
       const codepoints = new Set<number>();
       for (const character of text) {
-        const codepoint = character.codePointAt(0) ?? 0;
-        if (codepoint > 0x7F) codepoints.add(codepoint);
+        const codepoint = character.codePointAt(0);
+        if (codepoint === undefined) {
+          throw new Error(`A string yields an empty character; got \`${text}\`.`);
+        }
+        if (codepoint >= 0x20) codepoints.add(codepoint);
       }
       return [...codepoints];
     };
     // Record text element draws under one pseudo-element, styled as that one is.
-    //   Style is read only past ASCII test: case of ASCII letter is ASCII letter.
+    //   Style is read only for string that draws: no other has run.
     const add = (element: Element, pseudo: string, text: string, style_pseudo = pseudo):
         void => {
-      if (beyondAscii(text).length === 0) return;
+      if (drawn(text).length === 0) return;
       const style = getComputedStyle(element, style_pseudo || null);
       const transform = style.textTransform;
-      const codepoints = beyondAscii(
+      const codepoints = drawn(
         transform === 'uppercase' ? text.toUpperCase() :
           transform === 'lowercase' ? text.toLowerCase() :
           transform === 'capitalize' ? text + text.toUpperCase() : text,
       );
-      if (codepoints.length === 0) return;
       runs.push({
         element: `${described(element)}${pseudo}`,
         stack: style.fontFamily,
