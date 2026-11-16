@@ -310,14 +310,15 @@ and the shared allowance. This section adds only what differs for a curator.
     nothing inside it but one line of its lock. It is a registry change, so a root branch
     `curator/<name>` makes it, and the Architect rules on each new name. `check-scope` passes
     each exact rename, and the line of a moved `atlas.lock` that names its nimble copy
-    (`curator/audit/src/scope.nim`). Each project then renames its inside, on a branch of its
-    new name.
+    (`scope.nim` and `tree.nim` of `curator/audit/src`). Each project then renames its inside, on
+    a branch of its new name.
 
     Before the branch, trial the move in a throwaway clone of `main`, and keep the result in
     your answer on the request. Each failure inside a project is that project's to fix first,
     on an issue from you (duty 11). A suite that writes the name of its own folder or nimble
     file is such a failure. Each branch of the old name merges or closes first, since its scope
-    is the old folder, which the move empties.
+    is the old folder, which the move empties. Until the merge, the project opens no new branch
+    of the old name, and your answer on the request says so.
 
     List each name outside the project with `git grep -n -i '<old>'`, which finds the names in
     capitals too. A path or list that code reads, and prose that describes the design, change
@@ -325,14 +326,15 @@ and the shared allowance. This section adds only what differs for a curator.
 
     For each project, a `docs` commit moves the records with no edit, and a `refactor` commit
     moves the rest. It also renames the nimble file, writes the lock line, and mends each list
-    of the checker that names the folder. `GUIDE.md` and the records of the curator projects
-    follow in commits of their own, and a new stamp comes last. The `path` hook refuses the lock
-    line, since it judges one write and reads no move. So ask the Architect for leave to write
-    that line with the shell, and `check-scope` holds it.
+    of the checker that names the folder. `GUIDE.md`, the code and suites of the curator
+    projects, and their records follow in commits of their own. Where an edit moves the stamp,
+    re-stamp last (duty 1). The `path` hook refuses the lock line, since it judges one write and
+    reads no move. So ask the Architect for leave to write that line with the shell, and
+    `check-scope` holds it.
 
-    After the merge, add the new label beside the old one on each open issue of the project. A
-    label comes into being when it is applied. Open one issue for each moved project, labelled
-    with its new role, and one for each other project whose code names it.
+    After the merge, add the new label beside the old one on each open issue of the project.
+    Copy its role string (`CONTRIBUTOR.md`, Boundaries). Open one issue for each moved project,
+    labelled with its new role, and one for each other project whose code names it.
 
     The moved project renames its module folder and each name that follows it, and writes the
     meaning of its name in its records. It proposes each change to a contract before it makes
