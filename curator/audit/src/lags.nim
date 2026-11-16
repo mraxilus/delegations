@@ -10,7 +10,7 @@
 ##     left out by `:(exclude)`. Count of commits is Architect's ruling; records left out is
 ##     curator's choice, since re-stamp writes stamp row into record of every project and no
 ##     code. Record of project keeping its own prose is left out too, though plan reads it as
-##     code (`prose_own.nim`): its own suite reads it, and no importer compiles it.
+##     code (`prose_own.nim`): its own suite reads it, and no project that locks it compiles it.
 ##   Folder base no longer holds moved or went; line says so, and names last commit of base that
 ##     changed folder, which removed it, where git names one, since count of such folder says
 ##     nothing of where it went.
