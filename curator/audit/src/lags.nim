@@ -10,6 +10,7 @@
 ##     line says so, and names last commit of base that changed folder, which removed it, where
 ##     git names one, since count of such folder says nothing of where it went.
 ##   Commit git lacks, as of branch no fetch brought, leaves count unread, and its line says so.
+##     Base git lacks names no lag at all, since each commit would read as lacked.
 ##   Lines, never finding: lag is work of project holding lock, which moves lock when it wants
 ##     what changed, and lock that lags builds as it did. `koch check` prints them against
 ##     `origin/main`, and `start` hook prints same lines, since both print `noticesLag`.
@@ -78,7 +79,11 @@ proc itemsRepository*(path, lock: string): seq[Locked] =
 proc readLags*(root, base: string): seq[Lag] =
   ## Read what base did since commit of each item of each lock of tree that names folder of this
   ##   repository: commits that changed folder, whether base holds it, and where it went.
+  ##   Base git lacks, as where fetch failed or no `origin` stands, names no lag: each item would
+  ##     read as commit git lacks, which names wrong cause.
   ##   Read of git that fails leaves its field as it stood, so line says what stays unread.
+  try: discard fieldsGit(root, ["rev-parse", "--verify", "--quiet", base & "^{commit}"])
+  except IOError: return
   for path in root.listPaths:
     if path.extractFilename != FILE_LOCK: continue
     for locked in itemsRepository(path, readFile(root / path)):
