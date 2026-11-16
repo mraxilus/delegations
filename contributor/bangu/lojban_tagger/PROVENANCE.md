@@ -43,10 +43,16 @@ folder of the parser in that clone. So no import and no search path leads out of
 this project. A move of the folder of the parser then changes no module here while the lock
 stays. The Architect ruled this route on #920, so that the curator can move both folders.
 
-Verified by hand, 2026-11-15: in a throwaway worktree, with the folder of the parser moved to
-`contributor/bangu/ricysoho`, `nim r koch test contributor/bangu/lojban_tagger` passes. A move of
-the folder of this project holds the same way, since each of its paths stays inside it
-(expected).
+Verified by hand at `dc0e19cb`, 2026-11-15, in a throwaway worktree that moves both folders and
+both nimble files, as step 3 of #920 does. There this folder stands at `contributor/bangu/rictadni`,
+the parser at `contributor/bangu/ricysoho`, and the lock line that names the nimble file follows.
+`nim r koch test contributor/bangu/rictadni` passes in that worktree.
+
+No code here names the folder of this project or its nimble file. Verified by hand with
+`git grep -F lojban_tagger.nimble` and `git grep -E 'bangu/lojban_tagger|\.\./lojban_tagger'` over
+each Nim file, 2026-11-15. Only a doc comment of `suites/test_build.nim` names the nimble file.
+Verified by `suites/test_build.nim`, which copies a project under 34 folder names: the old name, the
+new one and 32 seeded names.
 
 - Origin: this repository on GitHub, `https://github.com/mraxilus/delegations`, in the folder
   `contributor/bangu/lojban_parser`. The commit is `0d6eaaebb95eeecc84359b6b4bf7da8c0715f26c`,
