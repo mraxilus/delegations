@@ -164,7 +164,7 @@ Use Atlas, once for each project, inside your project directory.
 A project of this repository is a package too, and never a path (`CONTRIBUTOR.md`,
 Dependencies). A requirement reads no folder, so Atlas finds the project through
 `atlas.config`. Do these steps in place of step 2, as `curator/assayer` requires knoller and
-`contributor/bangu/lojban_tagger` requires lojban_parser:
+`contributor/bangu/rictadni` requires lojban_parser:
 
 1. In `atlas.config`, map the name of the package to its folder under `nameOverrides`, as
    `"knoller": "https://github.com/mraxilus/delegations?subdir=curator/knoller"` does.
