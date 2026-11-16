@@ -13,9 +13,9 @@
 ##     project.
 ##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
 ##     check sources are that project's code and select it as any code does. Change inside
-##     folder of project that Nim source of other project imports by relative path, as `src`
-##     or `tools`, or to its nimble file, selects that importer, then importers of those
-##     until none is added, since each compiles what it imports (`importersByFolder`).
+##     folder of project that Nim source of other project imports or includes by relative
+##     path, as `src` or `tools`, or to its nimble file, selects that importer, then importers
+##     of those until none is added, since each compiles what it imports (`importersByFolder`).
 ##     Knoller is one such project, driver's among its importers; folder no importer
 ##     imports, as its suites, reaches none. Nothing selects
 ##     every project: push run on `main` plans against push's own base and weekly run
@@ -27,8 +27,8 @@
 ##   Rendered plan drives one CI job per project, each installing that project's own pin, so
 ##     wall time is slowest changed project rather than sum of all. Entry carries `kind`,
 ##     since version is installed by setup action and commit is built from source.
-##   Cost: import is read from text of source, so path that macro builds or `include` names
-##     selects no importer.
+##   Cost: import is read from text of source, by one reader (`imports.nim`), so path that
+##     macro builds selects no importer.
 ##   Cost: rot checker change brings to unchanged project is unseen until that project next
 ##     changes, and so is rot from outside repository, such as runner image moving under
 ##     pinned compiler; weekly run compiles what merged inside its window, nothing more.
@@ -37,7 +37,9 @@
 
 import std/[algorithm, json, options, strutils, tables]
 import ../../knoller/src/knoller
-import ./[checker, compilers, dependencies, findings, layout, projects, prose_own, toolchain, tree]
+import ./[
+  checker, compilers, dependencies, findings, imports, layout, projects, prose_own, toolchain, tree,
+]
 
 
 const
@@ -82,47 +84,20 @@ func pathNimble(directory: string): string =
   directory & "/" & directory.nameProject & EXTENSIONS[Dialect.Package]
 
 
-func pathsImported(folder, source: string): seq[string] =
-  ## Resolve each relative path that `import` or `from` of Nim source names against folder
-  ##   holding source, on one line or several, behind `when` guard or quoted; comment, or
-  ##   string outside such statement, imports nothing, and path climbing past root none.
-  var
-    depth = 0  # Brackets statement holds open.
-    is_open = false  # Statement runs on to next line.
-  for line in source.splitLines:
-    var s = line.split('#')[0].strip
-    if not is_open:
-      if s.startsWith("when ") and ':' in s: s = s[s.find(':') + 1 .. ^1].strip
-      if not (s == "import" or s.startsWith("import ") or s.startsWith("from ")): continue
-    depth += s.count('[') - s.count(']')
-    is_open = depth > 0 or s.endsWith(",") or s == "import"
-    for word in s.split({' ', ',', '[', ']', '\t', '"'}):
-      if not (word.startsWith("./") or word.startsWith("../")): continue
-      var
-        parts = folder.split('/')
-        is_inside = true
-      for part in word.split('/'):
-        if part == "..":
-          if parts.len == 0:
-            is_inside = false
-            break
-          parts.setLen(parts.len - 1)
-        elif part.len > 0 and part != ".":
-          parts.add part
-      if is_inside and parts.len > 0: result.add parts.join("/")
-
-
 func importersByFolder*(
   tree: Tree, directories: openArray[string]
 ): Table[string, seq[string]] =
   ## Map each folder of project, as `src` or `tools`, to those of directories whose Nim source
-  ##   imports path inside it by relative path, sorted; read from source, so project gains
-  ##   importer by its import alone.
+  ##   imports or includes path inside it by relative path, sorted; read from source by reader
+  ##   of `imports.nim`, so project gains importer by its import alone.
   for e in tree:
     if not e.path.endsWith(EXTENSIONS[Dialect.Module]): continue
     let importer = e.path.split('/').directoryProject
     if importer notin directories: continue
-    for path in pathsImported(e.path.rsplit('/', maxsplit = 1)[0], e.content):
+    for one in e.content.imports:
+      if not one.target.isRelative: continue
+      let path = resolve(e.path.rsplit('/', maxsplit = 1)[0], one.target)
+      if path.len == 0: continue
       let imported = path.split('/').directoryProject
       if imported.len == 0 or imported == importer: continue
       # First folder below project holds whatever import reaches through it.
@@ -207,27 +182,35 @@ func directoriesVerb*(tree: Tree, directories: openArray[string], verb: string):
     if verb in tree.driver(directory).verbsDispatch(CASE_DRIVER): result.add directory
 
 
-proc packagesSystem*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
-  ## Read system packages every selected project declares, sorted.
+proc packagesSystem*(
+  root: string, tree: Tree, directories: openArray[string]
+): tuple[packages: seq[string], failed: seq[Finding]] =
+  ## Read system packages every selected project declares, sorted, and finding naming each
+  ##   driver that fails.
   ##   Sorted so output is stable between runs: caller pipes it into installer, and list
   ##   reordering itself would read as change where nothing changed.
   var targets: seq[Target]
   for directory in tree.directoriesVerb(directories, VERB_SYSTEM):
     targets.add Target(directory: directory)
-  packagesSystem(root, targets).sorted
+  result = packagesSystem(root, targets)
+  result.packages.sort
 
 
-proc systemRepository*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
-  ## Read what whole machine needs: koch's own packages, plus every named project's, sorted.
+proc systemRepository*(
+  root: string, tree: Tree, directories: openArray[string]
+): tuple[packages: seq[string], failed: seq[Finding]] =
+  ## Read what whole machine needs: koch's own packages, plus every named project's, sorted, and
+  ##   finding naming each driver that fails.
   ##   Answer to "what must be installed before any of this runs" is one command rather than
   ##   prose somewhere, which is what rule koch enforces asks of every project, koch included.
   ##   koch's own are unconditional; project's arrive by that project declaring them, so caller
   ##   naming one project gets that project's alone and is served by `packagesSystem`.
-  var names: seq[string]
-  for (package, _) in SYSTEM_KOCH: names.add package
-  for package in packagesSystem(root, tree, directories):
-    if package notin names: names.add package
-  names.sorted
+  for (package, _) in SYSTEM_KOCH: result.packages.add package
+  let (packages, failed) = packagesSystem(root, tree, directories)
+  for package in packages:
+    if package notin result.packages: result.packages.add package
+  result.packages.sort
+  result.failed = failed
 
 
 proc runJobsType*(root: string, tree: Tree, directories: openArray[string]): seq[Finding] =

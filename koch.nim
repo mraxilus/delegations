@@ -66,6 +66,7 @@ import ./curator/audit/src/[
   findings,
   fixes,
   hooks,
+  lags,
   merge,
   plan,
   projects,
@@ -345,10 +346,15 @@ proc runHook(root, event, input: string): int =
     }}
     0
   of "start":
-    var drift: seq[Finding]
+    var
+      drift: seq[Finding]
+      notices: seq[string]
     try:
       discard fieldsGit(root, ["fetch", "-q", "origin", MAIN])
       drift = checkBase(readDrift(root, "origin/" & MAIN))
+    except CatchableError: discard
+    # Commits of lock that lag `main` read what fetch brought, or what checkout held before.
+    try: notices = noticesLag(readLags(root, "origin/" & MAIN), "origin/" & MAIN)
     except CatchableError: discard
     # Record branch works on is read where it exists; new project has none until it writes one.
     #   File of role is read same way, in `readPrompt`, where suite reaches it.
@@ -360,6 +366,7 @@ proc runHook(root, event, input: string): int =
       "## Carry the unchecked list in the open",
       if record.len > 0 and fileExists(root / record): readFile(root / record) else: "",
       drift,
+      notices,
     )
     0
   of "push":
@@ -414,6 +421,8 @@ proc checkInPlace(options: Options; branch, base: string): int =
   #   branch changed blocks it wherever it lies; rest blocks here.
   let (held, own) = splitHeld(branch, found, linesOwned(options.root, tree, base))
   held.reportHeld
+  # Commit of lock that lags `main` is named, and fails nothing (D2 of #927); start prints same.
+  for line in noticesLag(readLags(options.root, "origin/" & MAIN), "origin/" & MAIN): echo line
   if own.len > 0:
     own.report
     echo "Types, suites and drive not run; fix findings above, then run again."
@@ -603,15 +612,18 @@ proc run(options: Options): int =
     # Named project answers for that project, which is what runner asks per matrix job.
     #   Named none answers for machine: koch's own packages and every project's, unscoped,
     #   since question is what must be installed rather than what one change touched.
+    #   Driver that fails is named on stderr, since runner pipes stdout into installer, and exit
+    #   is 1, so step that installs goes red rather than suite that needs package (#934).
     if not options.isReadAll({Root}, has_project = true): return options.refused
     let
       tree = options.root.readTree
-      named =
+      (named, failed) =
         if options.project.len > 0:
           packagesSystem(options.root, tree, [options.project.strip(chars = {'/'})])
         else: systemRepository(options.root, tree, tree.directoriesProject)
     for package in named: echo package
-    return 0
+    for f in failed: stderr.write f.render & "\n"
+    return if failed.len > 0: 1 else: 0
   of "list-projects":
     if not options.isReadAll({Root, Base, All, Recent, Drive, Head}, has_project = true):
       return options.refused

@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, os, strutils, tempfiles, unittest]
+import std/[json, os, sequtils, strutils, tempfiles, unittest]
 import ../../src/[font_stacks, projects]
 import ./fixtures
 
@@ -26,11 +26,41 @@ suite "Article IX":
     #   line carrying whitespace is dropped rather than installed.
     let root = createTempDir("delegations_", "_lines")
     defer: removeDir(root)
-    check linesIn(root, "printf", ["curl\ncoreutils\n"]) == @["curl", "coreutils"]
-    check linesIn(root, "printf", ["curl\n\n\ncoreutils\n"]) == @["curl", "coreutils"]
-    check linesIn(root, "printf", ["b.nim(3, 5) Warning: x\ncurl\n"]) == @["curl"]
-    check linesIn(root, "printf", [""]).len == 0  # verb printing nothing declares nothing
-    check linesIn(root, "false", []).len == 0  # verb that failed contributes nothing
+    check linesIn(root, "printf", ["curl\ncoreutils\n"]).lines == @["curl", "coreutils"]
+    check linesIn(root, "printf", ["curl\n\n\ncoreutils\n"]).lines == @["curl", "coreutils"]
+    check linesIn(root, "printf", ["b.nim(3, 5) Warning: x\ncurl\n"]).lines == @["curl"]
+    check linesIn(root, "printf", [""]).lines.len == 0  # verb printing nothing declares nothing
+    check linesIn(root, "false", []) ==
+      (lines: newSeq[string](), code: 1, failure: "")  # verb that failed contributes nothing
+    check linesIn(root, "sh", ["-c", "echo curl; echo a >&2; echo b >&2; exit 2"]) ==
+      (lines: newSeq[string](), code: 2, failure: "b")  # exit and last line of stderr, kept
+
+
+  test "driver that fails is finding naming it, and each other driver still declares (#934)":
+    # Case as found (#934): driver of lojban_tagger imported package through `tools/lists.nim`,
+    #   so it failed to compile before Atlas restored any, `koch list-packages` printed nothing
+    #   and exited 0, and stub stopped later at `protoc: not found`. Domain: driver that prints,
+    #   driver compiler refuses, verb that exits other than 0, and verb that prints nothing.
+    let root = createTempDir("delegations_", "_system")
+    defer: removeDir(root)
+    const verb = "import std/os\nif paramStr(1) == \"" & VERB_SYSTEM & "\": "
+    root.writeInto("contributor/ronri/prints/" & FILE_DRIVER, verb & "echo \"curl\"\n")
+    root.writeInto(
+      "contributor/ronri/imports/" & FILE_DRIVER, "import lists_absent\n" & verb & "echo \"git\"\n"
+    )
+    root.writeInto("contributor/ronri/refuses/" & FILE_DRIVER, verb & "quit(3)\n")
+    root.writeInto("contributor/ronri/quiet/" & FILE_DRIVER, verb & "discard\n")
+    let (packages, failed) = packagesSystem(
+      root,
+      ["prints", "imports", "refuses", "quiet"].mapIt(Target(directory: "contributor/ronri/" & it)),
+    )
+    check packages == @["curl"]  # each driver that runs declares its own
+    check failed.mapIt(it.path) == @[
+      "contributor/ronri/imports/" & FILE_DRIVER, "contributor/ronri/refuses/" & FILE_DRIVER,
+    ]  # driver that runs and prints nothing fails nothing
+    check "got exit `1`" in failed[0].message  # compiler refused driver
+    check "lists_absent" in failed[0].message  # last line of its stderr, which says why
+    check "got exit `1`" in failed[1].message  # `nim r` gives 1 for each code of verb but 0
 
 
   test "IX.6 testament drives each project and reports failures":

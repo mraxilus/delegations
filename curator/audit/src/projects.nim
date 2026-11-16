@@ -108,14 +108,19 @@ proc runIn*(directory, program: string; arguments: openArray[string]; bin = ""):
   process.close
 
 
-proc linesIn*(directory, program: string; arguments: openArray[string]; bin = ""): seq[string] =
-  ## Run program with arguments in directory and read its stdout as lines; empty on non-zero exit.
+proc linesIn*(
+  directory, program: string; arguments: openArray[string]; bin = ""
+): tuple[lines: seq[string], code: int, failure: string] =
+  ## Run program with arguments in directory; read its stdout as lines, empty on non-zero exit,
+  ##   its exit code, and last line of its stderr.
   ##   Streaming variant above is for checks, whose product is their verdict; this is for
   ##   verb whose product is its output.
   ##   Line carrying whitespace is dropped: contract is one bare name per line, and only
   ##   thing else reaching this stream is compiler complaining, which always spells position
-  ##   before its message. Compiler that complained still fails, since caller installs what
-  ##   this returns and absent package names itself.
+  ##   before its message.
+  ##   Stderr is read once stdout ends, and its last line kept: compiler says there why driver
+  ##     failed, so caller names it. Cost: program writing pipe's worth to stderr before it
+  ##     closes stdout waits on that pipe, which is read after.
   let process = startProcess(
     program,
     args = arguments,
@@ -124,11 +129,16 @@ proc linesIn*(directory, program: string; arguments: openArray[string]; bin = ""
     options = {poUsePath},
   )
   defer: process.close
-  let output = process.outputStream.readAll
-  if process.waitForExit != 0: return
+  let
+    output = process.outputStream.readAll
+    failure = process.errorStream.readAll
+  result.code = process.waitForExit
+  for line in failure.splitLines:
+    if line.strip.len > 0: result.failure = line.strip
+  if result.code != 0: return
   for line in output.splitLines:
     let s = line.strip
-    if s.len > 0 and not s.contains({' ', '\t'}): result.add s
+    if s.len > 0 and not s.contains({' ', '\t'}): result.lines.add s
 
 
 proc runVerb(root: string; targets: openArray[Target]; verb, failed: string): seq[Finding] =
@@ -179,20 +189,33 @@ proc runHead*(root: string, targets: openArray[Target]): seq[Finding] =
   runVerb(root, targets, VERB_HEAD, "Head check failed")
 
 
-proc packagesSystem*(root: string, targets: openArray[Target]): seq[string] =
-  ## Read system packages every project declares, through each project's own verb.
+proc packagesSystem*(
+  root: string, targets: openArray[Target]
+): tuple[packages: seq[string], failed: seq[Finding]] =
+  ## Read system packages every project declares, through each project's own verb, and finding
+  ##   naming each driver that fails.
   ##   Read rather than listed: workflow installing these names no project, exactly as it
   ##   names none for compiler matrix, so package arrives by being declared.
-  ##   Verb that fails contributes nothing rather than raising: caller is installing, and
-  ##   check that runs afterwards is what reports project whose driver will not run.
+  ##   Driver that fails gives no package and one finding, with its exit code and last line of
+  ##     its stderr; nothing raises, since caller installs what each other driver declares.
+  ##     Rejected: failure giving nothing and no finding, since `koch list-packages` then prints
+  ##     nothing and exits 0, so run installs none and stops at tool it lacks (#934).
   for target in targets:
-    for package in linesIn(
+    let (lines, code, failure) = linesIn(
       root / target.directory,
       target.bin.pathNim,
       ["r", "--hints:off", FILE_DRIVER, VERB_SYSTEM],
       target.bin,
-    ):
-      if package notin result: result.add package
+    )
+    if code != 0:
+      let said = if failure.len > 0: " and `" & failure & "`" else: ""
+      result.failed.add finding(
+        target.directory & "/" & FILE_DRIVER,
+        0,
+        "System packages unread, since driver failed; got exit `" & $code & "`" & said & ".",
+      )
+    for package in lines:
+      if package notin result.packages: result.packages.add package
 
 
 proc runTests*(root: string, targets: openArray[Target]): seq[Finding] =

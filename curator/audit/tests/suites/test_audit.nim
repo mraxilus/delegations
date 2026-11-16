@@ -107,6 +107,23 @@ suite "Audit":
     check found.len == 1 and found[0].message.endsWith("got `Independent changes`.")
 
 
+  test "import by path into other project, and package of driver, reach umbrella (D1 of #927)":
+    let
+      head = "## Read parser.\n\n" & STRICT_FUNCS & "\n\n"
+      tree = treeGood().with(
+        entry(
+          DIRECTORY_ALPHA & "/src/alpha.nim",
+          head & "import ../../../bangu/lojban_parser/src/lojban_parser\n",
+        ),
+        entry(DIRECTORY_ALPHA & "/tools/build.nim", head & "import knoller\n"),
+      )
+      found = tree.auditTree
+    check found.filterIt("reaches into other project" in it.message).mapIt((it.path, it.line)) ==
+      @[(DIRECTORY_ALPHA & "/src/alpha.nim", 5)]
+    check found.filterIt("Driver imports no package" in it.message).mapIt((it.path, it.line)) ==
+      @[(DIRECTORY_ALPHA & "/tools/build.nim", 5)]
+
+
   test "top-level glossary shape reaches umbrella":
     let termless =
       treeGood().replaced("GLOSSARY.md", "# delegations\n\nWords.\n\n## Standards\n\n## Language\n")

@@ -1843,15 +1843,19 @@ proc readPrompt*(root, branch: string): string =
 
 
 func contextStart*(
-  branch, prompt, contributor, heading_carried, record: string; drift: seq[Finding]
+  branch, prompt, contributor, heading_carried, record: string;
+  drift: seq[Finding];
+  lags: openArray[string] = [],
 ): string =
-  ## Compose text `start` adds to context: role, read order, grammar warning, drift, headings
-  ##   of record, list.
+  ## Compose text `start` adds to context: role, read order, grammar warning, drift, commits of
+  ##   lock that lag `main`, headings of record, list.
   ##   Prompt is text of file `pathPrompt` names; empty outside grammar. Read order is its section
   ##     under `HEADING_READ`, whole, so list lives in file of role alone. Line naming file opens
   ##     it, since item `This file to the end` names no file out of its document.
   ##   Drift is each finding of `check-drift`, one to line: sections base changed and command
   ##   that shows them, so start asks for new stamp only where finding does.
+  ##   Lags are lines `noticesLag` of `lags.nim` renders, which `koch check` prints too; each
+  ##     stands as given, and fails nothing (D2 of #927).
   ##   Record is text of file `pathRecord` names; empty where branch has none yet. Delegate
   ##     reads its headings, then each section work touches, and Open questions (GUIDE.md); line
   ##     each heading opens on lets it read that section alone.
@@ -1870,6 +1874,7 @@ func contextStart*(
     lines.add "Base changed charter or code of stamp since this branch forked; read each " &
       "change below, then merge `origin/main` (`check-drift`). " & LINE_SYNC
     for f in drift: lines.add "  " & f.render
+  for line in lags: lines.add line
   lines.add "Turn that pushed or posted ends with `" & HEADING_SIGNOFF & "` once done, " &
     "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
   if record.len > 0:

@@ -161,11 +161,33 @@ Use Atlas, once for each project, inside your project directory.
    in the module header that uses it (Article II.8). Record the origin, the commit and the
    licence in `PROVENANCE.md` (Article XI.3).
 
+A project of this repository is a package too, and never a path (`CONTRIBUTOR.md`,
+Dependencies). A requirement reads no folder, so Atlas finds the project through
+`atlas.config`. Do these steps in place of step 2, as `curator/assayer` requires knoller and
+`contributor/bangu/rictadni` requires lojban_parser:
+
+1. In `atlas.config`, map the name of the package to its folder under `nameOverrides`, as
+   `"knoller": "https://github.com/mraxilus/delegations?subdir=curator/knoller"` does.
+2. Write `requires "<name>#<commit>"` into your nimble file by hand, with the newest commit of
+   `main` that changed that folder. `atlas use` reads the commit as a part of the name, and
+   refuses it.
+3. Run `atlas install`. It clones the whole repository into `dependencies/<name>`, and checks
+   out that commit.
+4. Write `--path:"dependencies/<name>/<folder>/src"` into `nim.cfg`, above the section of
+   Atlas. Atlas joins `srcDir` to the root of the clone, so the path in its own section reaches
+   nothing.
+
+Then run step 3. To take a later commit, write it into the requirement, and run `atlas install`
+and `atlas pin` again. Until then, `koch check` and the start hook name each such commit that
+lags `main`. The notice counts each later commit of `main` that changed the folder outside its
+records. That notice fails nothing, since the lock builds as it did.
+
 `nim r koch fetch-deps --all` restores the checkouts of every project from its lock, and
 `koch test` restores before it runs. The lock stores a copy of your nimble file, and
 `atlas rep` writes that copy back. So a requirement edited without a regenerated lock is
-reverted, and the static pass reports the difference before that happens. Atlas needs the
-network for every command, so a project with no packages carries no lock and skips this step.
+reverted, and the static pass reports the difference before that happens. A cold restore clones
+each package, so it needs the network, and a warm `dependencies/` restores with none. A project
+with no packages carries no lock, and skips this step.
 
 ## How to build on a project
 

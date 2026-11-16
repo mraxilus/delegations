@@ -2,8 +2,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, os, sequtils, tables, unittest]
-import ../../src/[domains, layout, plan, projects, toolchain]
+import std/[json, os, sequtils, tables, tempfiles, unittest]
+import ../../src/[domains, findings, layout, plan, projects, toolchain]
 import ./fixtures
 
 
@@ -266,12 +266,14 @@ suite "Plan":
       "import ../../parser/src/[\n  nif,\n  merge,\n]\n",  # list of modules in brackets
       "when defined(js): import ../../parser/src/parser\n",  # behind guard
       "import \"../../parser/src/parser\"\n",  # quoted path
+      "include \"../../parser/src/parser.nim\"\n",  # include, which compiles what it names
     ]:
       let imported = pinned & @[entry(tagger & "/src/tagger.nim", source)]
       check imported.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser, tagger]
     for source in [
       "# import ../../parser/src/parser\n",  # comment
       "let path = \"../../parser/src/parser\"\n",  # string outside import
+      "const page = \"\"\"\nimport ../../parser/src/parser\n\"\"\"\n",  # line of long string
     ]:
       let named = pinned & @[entry(tagger & "/src/tagger.nim", source)]
       check named.jobs([parser & "/src/parser.nim"]).mapIt(it.directory) == @[parser]
@@ -310,12 +312,36 @@ suite "Plan":
     # No project here declares anything, so what comes back is koch's own alone, which
     #   makes this readable without running any project's verb.
     check systemRepository(".", treeGood(), newSeq[string]()) ==
-      @["coreutils", "curl", "git", "libbrotli1", "tar"]
+      (packages: @["coreutils", "curl", "git", "libbrotli1", "tar"], failed: newSeq[Finding]())
     check SYSTEM_KOCH.mapIt(it[0]).deduplicate.len == SYSTEM_KOCH.len  # each package once
     for (package, why) in SYSTEM_KOCH:
       check package.len > 0
       check why.len > 0  # reason in field outlives one in comment (CONTRIBUTOR.md)
       check ' ' notin package  # verb prints bare names; reason would arrive as package name
+
+
+  test "driver that fails is finding through tree, so `list-packages` cannot exit 0 (#934)":
+    # Case: `koch list-packages` reads drivers through tree form of `packagesSystem`, and through
+    #   `systemRepository` where it names no project; no suite read either form, so finding of
+    #   driver that fails could drop there, and verb print nothing and exit 0 again. Domain:
+    #   driver that prints and driver compiler refuses, each read through both forms.
+    let root = createTempDir("delegations_", "_system")
+    defer: removeDir(root)
+    const
+      prints = CONTRIBUTOR & "/ronri/prints"
+      refuses = CONTRIBUTOR & "/ronri/refuses"
+      dispatch = "case paramStr(1)\nof \"" & VERB_SYSTEM & "\": echo \"curl\"\nelse: quit(2)\n"
+    let tree = @[
+      entry(prints & "/" & FILE_DRIVER, "import std/os\n" & dispatch),
+      entry(refuses & "/" & FILE_DRIVER, "import std/os\nimport lists_absent\n" & dispatch),
+    ]
+    for e in tree: root.writeInto(e.path, e.content)
+    let (packages, failed) = packagesSystem(root, tree, [prints, refuses])
+    check packages == @["curl"]  # driver that runs still declares
+    check failed.mapIt(it.path) == @[refuses & "/" & FILE_DRIVER]  # driver that fails is named
+    let whole = systemRepository(root, tree, [prints, refuses])
+    check "git" in whole.packages and "curl" in whole.packages  # koch's own beside project's
+    check whole.failed.mapIt(it.path) == @[refuses & "/" & FILE_DRIVER]  # so verb exits 1
 
 
   test "plan renders as matrix entries CI reads":

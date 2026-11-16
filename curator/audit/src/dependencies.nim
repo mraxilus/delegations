@@ -4,11 +4,14 @@
 ##   imports (`requireLiterals`). Project requiring packages carries `atlas.lock` (`atlas pin`);
 ##   `deps/` stays out of repository and `atlas rep` restores it from lock.
 ##   Pure part parses text; effect part runs Atlas in project directory with `--noexec`.
-##   Atlas 0.9.0 `rep` exits 1 after restoring checkout (its submodule step fails), so
-##     success is judged by `atlas changed` exiting 0 afterwards, i.e. checkouts match lock.
+##   Exit of `rep` is discarded, since it can fail where each checkout matches lock: Atlas
+##     0.14.7 exits 1 where it cannot read its list of packages, which it caches in `.cache` of
+##     `dependencies/`. Success is judged by `atlas changed` exiting 0 afterwards.
 ##   `atlas changed` exits 0 when checkout is absent entirely, warning only, so existence of
 ##     every directory lock names is demanded first; without it, restore that fetched
-##     nothing reports success (measured on Atlas 0.9.0, 2026-09-06).
+##     nothing reports success (Atlas 0.14.7, 2026-11-16).
+##   Cost: `atlas changed` exits 0 while it warns that commit differs, so checkout that `rep`
+##     cannot move to commit of lock gives no finding (Atlas 0.14.7, 2026-11-16).
 ##
 ##   Lock also stores whole nimble file, and `atlas rep` writes that copy back over project's
 ##     file. So requirement edited without regenerating lock is reverted, and silently:
@@ -22,9 +25,13 @@
 ##
 ##   Cost: lock storing no copy is compared against nothing, since one lock is thin evidence
 ##     for demanding key, and lock with no copy reverts nothing either way.
-##   Cost: Atlas needs network for every command, even with zero packages, so runner
-##     touches only projects holding lock file; layout demands lock where packages are
-##     required.
+##   Restore needs network only where checkout is cold, since verdict reads no cache: over warm
+##     checkouts with network cut, `atlas changed` exits 0, and so does `atlas --noexec rep` where
+##     its cache stands too (Atlas 0.14.7, 2026-11-16; PROVENANCE.md, Dependencies, has time).
+##     Project holding no lock has nothing to restore, and Atlas exits 1 there, reading no lock;
+##     so runner touches only projects holding lock file, and layout demands lock where packages
+##     are required.
+##   Cost: cold restore clones each package, so it needs network.
 
 {.experimental: "strictFuncs".}
 
@@ -181,7 +188,7 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
 
 
 proc restoreAll*(root: string, targets: openArray[Target]): seq[Finding] =
-  ## Restore every project holding lock file; projects without one need no network.
+  ## Restore every project holding lock file; project without one has nothing to restore.
   for target in targets:
     if fileExists(root / target.directory / FILE_LOCK):
       result.add restoreDependencies(root, target)
