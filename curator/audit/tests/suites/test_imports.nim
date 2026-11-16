@@ -182,3 +182,20 @@ suite "Driver":
       check tree.reached.mapIt((it[0], it[1])) == @[(project & "/" & FILE_DRIVER, 2)]
       check tree.reached[0][2].endsWith("got " & got & ".")
     check own.without(project & "/" & FILE_DRIVER).reached.len == 0  # project with no driver
+
+
+  test "driver reaching two packages names first, depth first in order source names them":
+    # Domain: one module naming two packages, and module naming own module that reaches one
+    #   package before it names other; finding names first package source reaches.
+    const project = CONTRIBUTOR & "/ronri/alpha"
+    let tree = @[
+      entry(project & "/" & FILE_DRIVER, "import std/os\nimport ./lists\n"),
+      entry(project & "/tools/lists.nim", "import knoller\nimport npeg\n"),
+      entry(project & "/tools/verbs.nim", "import ./lists\nimport npeg\n"),
+    ]
+    check tree.reached.mapIt((it[0], it[1])) == @[(project & "/" & FILE_DRIVER, 2)]
+    check tree.reached[0][2].endsWith("got `knoller` in `tools/lists.nim`.")  # first it names
+    let deep = tree.replaced(project & "/" & FILE_DRIVER, "import std/os\nimport ./verbs\n")
+    check deep.reached[0][2].endsWith(
+      "got `knoller` in `tools/lists.nim`."
+    )  # module it names first is read before package it names second
