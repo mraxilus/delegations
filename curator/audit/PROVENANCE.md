@@ -2040,12 +2040,13 @@ every project that holds a lock. It judges success by `atlas changed` exiting ze
 - A restore needs the network only where its checkouts are cold, since the verdict reads no cache.
   Verified by hand on the same copy, with the cache warm and the network cut. `atlas --noexec rep`
   and `atlas changed` each exited 0, also where `rep` moved the checkout from another commit to the
-  commit of the lock. In three runs at `eace8f13c`, `rep` took 0.12 s, 0.10 s and 0.10 s. Each run
-  was timed with `date +%s.%N`, on the four-core Intel Xeon 2.10 GHz container of Figures. A run of
-  2026-11-15 with `dependencies/` removed exited 1, since it could not clone.
+  commit of the lock. In three runs on that copy, from the tree at `eace8f13c`, `rep` took 0.12 s,
+  0.10 s and 0.10 s. Each run was timed with `date +%s.%N`, on the four-core Intel Xeon 2.10 GHz
+  container of Figures. A run of 2026-11-15 with `dependencies/` removed exited 1, since it could
+  not clone.
 - Cost: a dependency used by two projects is cloned twice, since each project restores into its
   own folder. Verified on 2026-11-16 by `git grep deps` over each `atlas.config` at `78c3e19f6`:
-  each of the four names `dependencies`, which Atlas reads inside its own project.
+  each names `dependencies`, which Atlas reads inside its own project.
 - A project with no lock skips Atlas, since it has nothing to restore. Atlas 0.14.7 exits 1 there,
   because it reads no lock, verified by hand on a copy of `curator/probe`, 2026-11-15.
 - Verified by `suites/test_dependencies.nim` for the parser and the lock-less skip. The Atlas
@@ -2121,9 +2122,10 @@ file of `FILES_PROJECT` in that folder.
   Against the re-stamp `22dd79185`, the plain count gives the pin of lojban_parser in the lock of
   lojban_tagger a lag of 1. This count gives 0. Verified by hand with git, 2026-11-16.
 - The records of a project that keeps its own prose are left out too, though the plan reads them as
-  its code (`prose_own.nim`). Its own suite reads them, and no importer compiles them. Verified on
-  2026-11-16 by `git grep` for `staticRead`, `slurp` and `staticExec` over the tree at `78c3e19f6`.
-  The one read of a record of the parser is its own `tests/suites/test_readme.nim`.
+  its code (`prose_own.nim`). Its own suite reads them, and no project that locks it reads them as
+  it compiles. Verified on 2026-11-16 by `git grep` for `staticRead`, `slurp`, `staticExec`, `gorge`
+  and `gorgeEx` over the tree at `78c3e19f6`. The one read of a record of the parser is its own
+  `tests/suites/test_readme.nim`.
 - Cost: a record that the code of a package reads, as by `staticRead`, changes what the lock
   builds, and counts nothing.
 - Where `main` no longer holds the folder, the line says that it moved or went. It names the last
@@ -2225,9 +2227,8 @@ package and the module that imports it.
   standard library, and modules of the project by path, by bare name and by `include`. It is also a
   cycle, the name of a package, a `pkg/` name, a file that the tree lacks, and a module of another
   project.
-- Cost: inside one process, the check of paths took 173 ms, 198 ms and 169 ms over the tree. The
-  rejection of the tokens of knoller above gives how they were measured. Figures gives the pair for
-  the static pass.
+- Cost: inside one process, the check of drivers took 47 ms, 40 ms and 40 ms over the tree, as
+  Figures gives. Figures also gives the pair for the static pass.
 
 ## Scoped checks
 
@@ -2272,7 +2273,7 @@ several lines, behind a `when` guard, or with a quoted path counts. A comment, a
 such a statement, and a line inside a long string import nothing. So a project that adds an import
 is selected from then on, with no list to keep.
 
-- Measured on 2026-11-15 by `importersByFolder` over the tree at `be4825550`: `curator/audit`
+- Measured on 2026-11-16 by `importersByFolder` over the tree at `17f439c14`: `curator/audit`
   imports `src` of knoller, and no other project imports another one by its path. The check of
   paths of section Imports holds that, since only the checker may.
 - Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
