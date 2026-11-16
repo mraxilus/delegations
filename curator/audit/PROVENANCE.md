@@ -3832,6 +3832,7 @@ steps that no section holds.
 | `record` | A design changes | The diff goes to `record-reviewer` |
 | `enact` | A new check reddens a project | None |
 | `steward` | The harness drives a pull request | None |
+| `move` | A project takes a new folder or domain | None |
 
 **A hook that sees the moment of a skill names the skill, as the Architect ruled on D2 of
 #870.** A description leaves the model to notice the moment, and the hook sees it. The line
@@ -3847,6 +3848,8 @@ is a hint, and it refuses nothing.
   record.
 - The drift finding names `sync`, and the finding of an acronym names `propose-term`.
 - koch names `enact` in the heading of the findings that it holds.
+- No hook names `move`, since no hook sees a request for a move. It arrives as an issue, or as
+  words of the Architect that hold no token.
 - Verified by `suites/test_hooks.nim`, `suites/test_base.nim` and `suites/test_names.nim`.
 
 - Rejected: the word `decide` for `explain`, which a delegate reads as a request to decide.
