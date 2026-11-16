@@ -5,16 +5,25 @@
 ##     override of `atlas.config` maps package to it, and Atlas writes it into lock so. Address
 ##     with no folder names whole repository, which Atlas reads as no one package, so it names
 ##     no item here.
-##   Lag is `git rev-list --count <commit>..<base> -- <folder>`, as Architect ruled: commits of
-##     base that changed folder since commit of lock. Folder base no longer holds moved or went;
-##     line says so, and names last commit of base that changed folder, which removed it, where
-##     git names one, since count of such folder says nothing of where it went.
+##   Lag is count of commits of base that changed folder outside its records (`FILES_PROJECT`)
+##     since commit of lock: `git rev-list --count <commit>..<base> -- <folder>`, each record
+##     left out by `:(exclude)`. Count of commits is Architect's ruling; records left out is
+##     curator's choice, since re-stamp writes stamp row into record of every project and no
+##     code, and plain count then made each lock lag after each re-stamp, by commit that changes
+##     nothing it builds. Record of project keeping its own prose is left out too, though plan
+##     reads it as code (`prose_own.nim`): its own suite reads it, and no importer compiles it.
+##   Folder base no longer holds moved or went; line says so, and names last commit of base that
+##     changed folder, which removed it, where git names one, since count of such folder says
+##     nothing of where it went.
 ##   Commit git lacks, as of branch no fetch brought, leaves count unread, and its line says so.
 ##     Base git lacks names no lag at all, since each commit would read as lacked.
 ##   Lines, never finding: lag is work of project holding lock, which moves lock when it wants
 ##     what changed, and lock that lags builds as it did. `koch check` prints them against
 ##     `origin/main`, and `start` hook prints same lines, since both print `noticesLag`.
 ##
+##   Rejected: plain count of each commit that changed folder, which re-stamp alone moves.
+##   Cost: record that code of package reads, as by `staticRead`, changes what lock builds, and
+##     counts nothing.
 ##   Cost: git lists tree once, and runs three times for each item of this repository.
 ##   Cost: address of this repository is named here once; fork or rename of repository names
 ##     another, and notice falls silent.
@@ -23,13 +32,14 @@
 
 import std/[json, options, os, strutils, uri]
 import ../../knoller/src/knoller
-import ./tree
+import ./[layout, tree]
 
 
 const
   ADDRESS_REPOSITORY* = "https://github.com/mraxilus/delegations"
     ## Address of this repository, as lock names package that one of its folders holds.
   KEY_FOLDER = "subdir="  ## Key of query naming folder of repository that package stands in.
+  MAGIC_EXCLUDE = ":(exclude)"  ## Magic of git pathspec leaving path out of what others name.
   WIDTH_COMMIT = 9  ## Characters of commit that line shows, as records of this repository do.
 
 
@@ -43,7 +53,8 @@ type
   Lag* = object  ## Define what base did to folder of locked item since its commit.
     locked*: Locked  ## Item of lock.
     count*: Option[int]
-      ## Commits of base that changed folder since commit of item; none where git cannot count.
+      ## Commits of base that changed folder outside its records since commit of item; none
+      ##   where git cannot count.
     is_held*: bool  ## Base holds folder.
     gone*: Option[string]
       ## Last commit of base that changed folder it no longer holds, short; none where base
@@ -56,6 +67,13 @@ func trimmed(address: string): string =
   result.removeSuffix('/')
   result.removeSuffix(".git")
   result.removeSuffix('/')
+
+
+func pathsCode(folder: string): seq[string] =
+  ## Name folder as pathspecs of git that leave out its records, so commit changing record alone
+  ##   changes none of them.
+  result = @[folder]
+  for record in FILES_PROJECT: result.add MAGIC_EXCLUDE & folder & "/" & record
 
 
 proc itemsRepository*(path, lock: string): seq[Locked] =
@@ -78,7 +96,8 @@ proc itemsRepository*(path, lock: string): seq[Locked] =
 
 proc readLags*(root, base: string): seq[Lag] =
   ## Read what base did since commit of each item of each lock of tree that names folder of this
-  ##   repository: commits that changed folder, whether base holds it, and where it went.
+  ##   repository: commits that changed folder outside its records, whether base holds it, and
+  ##   where it went.
   ##   Base git lacks, as where fetch failed or no `origin` stands, names no lag: each item would
   ##     read as commit git lacks, which names wrong cause.
   ##   Read of git that fails leaves its field as it stood, so line says what stays unread.
@@ -93,7 +112,8 @@ proc readLags*(root, base: string): seq[Lag] =
       try:
         let range = locked.commit & ".." & base
         lag.count = some(
-          fieldsGit(root, ["rev-list", "--count", range, "--", locked.folder])[0].strip.parseInt
+          fieldsGit(root, @["rev-list", "--count", range, "--"] & locked.folder.pathsCode)[0]
+            .strip.parseInt
         )
       except IOError, ValueError: discard
       if not lag.is_held:
@@ -105,8 +125,8 @@ proc readLags*(root, base: string): seq[Lag] =
 
 
 func noticesLag*(lags: openArray[Lag], base: string): seq[string] =
-  ## Render heading, then one line for each item whose folder base changed since its commit, no
-  ##   longer holds, or git cannot count against; empty where none lags.
+  ## Render heading, then one line for each item whose folder base changed outside its records
+  ##   since its commit, no longer holds, or git cannot count against; empty where none lags.
   for lag in lags:
     let
       item = lag.locked
@@ -121,7 +141,8 @@ func noticesLag*(lags: openArray[Lag], base: string): seq[string] =
       result.add head & " names commit git lacks, so its lag behind `" & base & "` is unread."
     elif lag.count.get > 0:
       let commits = if lag.count.get == 1: " commit that changes `" else: " commits that change `"
-      result.add head & " lags `" & base & "` by " & $lag.count.get & commits & item.folder & "`."
+      result.add head & " lags `" & base & "` by " & $lag.count.get & commits & item.folder &
+        "` outside its records."
   if result.len == 0: return
   result.insert(
     "Commits of `atlas.lock` that name folder of this repository and lag `" & base &
