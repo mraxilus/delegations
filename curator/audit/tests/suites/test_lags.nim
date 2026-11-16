@@ -163,8 +163,9 @@ suite "Lag":
 
 
   test "lag reads base alone, and never HEAD of branch that moved past it":
-    # Domain: commit of branch that changes folder, which counts none, and branch that still
-    #   holds folder base moved, which reads as moved at commit of base.
+    # Domain: two commits of branch that change folder, which count none, and branch that still
+    #   holds folder base moved, which reads as moved at commit of base. Two commits of HEAD
+    #   against one of base tell count of base from count of HEAD.
     let root = repoTemp()
     defer: removeDir(root)
     root.writeInto("curator/knoller/src/knoller.nim", "discard\n")
@@ -179,7 +180,9 @@ suite "Lag":
     discard root.git("checkout -q -b curator/work")
     root.writeInto("curator/knoller/src/knoller.nim", "discard 1\n")
     discard root.git("commit -q -a -m 'fix(knoller): change on branch'")
-    check readLags(root, "main")[0].count == some(0)  # commit of HEAD past base counts none
+    root.writeInto("curator/knoller/src/knoller.nim", "discard 2\n")
+    discard root.git("commit -q -a -m 'fix(knoller): change again on branch'")
+    check readLags(root, "main")[0].count == some(0)  # commits of HEAD past base count none
     discard root.git("checkout -q main")
     discard root.git("mv curator/knoller curator/kneader")
     discard root.git("commit -q -m 'refactor(curator): move knoller'")
@@ -188,7 +191,7 @@ suite "Lag":
     let lag = readLags(root, "main")[0]
     check not lag.is_held  # base moved folder that HEAD still holds
     check lag.gone == some(moved)  # commit of base that moved it, and never of HEAD
-    check lag.count == some(1)  # move counts, and commit of HEAD does not
+    check lag.count == some(1)  # move counts, and neither commit of HEAD does
 
 
   test "base git lacks names no lag, rather than each commit of lock as one git lacks":
