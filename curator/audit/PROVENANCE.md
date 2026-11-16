@@ -924,7 +924,8 @@ and the move is visible in review, so the cost is disorder rather than damage.
 - Rejected: an ignore line for the stray nimble copy, which hides a file from the audit.
 - Cost: the `path` hook judges the path of one write, and reads no move. So it refuses a write
   tool on the name line of a moved lock, which `check-scope` passes. The curator writes that line
-  with a command of the shell, which `bash` judges by no path. Verified by hand on 2026-11-15, in
+  with a command of the shell, which `bash` judges by no path. The Architect gives leave for it at
+  each move (`CURATOR.md`, duty 13). Verified by hand on 2026-11-15, in
   Claude Code: `path` refused the Edit tool on `contributor/bangu/rictadni/atlas.lock`, and
   `koch check-scope` then passed the line.
 - Verified by `suites/test_scope.nim`: a moved path is exempt on the curator root alone, and a move
@@ -3848,8 +3849,8 @@ is a hint, and it refuses nothing.
   record.
 - The drift finding names `sync`, and the finding of an acronym names `propose-term`.
 - koch names `enact` in the heading of the findings that it holds.
-- No hook names `move`, since no hook sees a request for a move. It arrives as an issue, or as
-  words of the Architect that hold no token.
+- Rejected: a word of `prompt` for `move`. The words `move` and `rename` name many acts that move
+  no project, as the move of a lock or of a stamp. So the hint would misfire.
 - Verified by `suites/test_hooks.nim`, `suites/test_base.nim` and `suites/test_names.nim`.
 
 - Rejected: the word `decide` for `explain`, which a delegate reads as a request to decide.
