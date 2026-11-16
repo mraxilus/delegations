@@ -4,8 +4,8 @@
 ##   imports (`requireLiterals`). Project requiring packages carries `atlas.lock` (`atlas pin`);
 ##   `deps/` stays out of repository and `atlas rep` restores it from lock.
 ##   Pure part parses text; effect part runs Atlas in project directory with `--noexec`.
-##   Exit of `rep` is discarded, since it fails where each checkout matches lock: Atlas 0.14.7
-##     exits 1 where it cannot read its list of packages, which it caches in `.cache` of
+##   Exit of `rep` is discarded, since it can fail where each checkout matches lock: Atlas
+##     0.14.7 exits 1 where it cannot read its list of packages, which it caches in `.cache` of
 ##     `dependencies/`. Success is judged by `atlas changed` exiting 0 afterwards.
 ##   `atlas changed` exits 0 when checkout is absent entirely, warning only, so existence of
 ##     every directory lock names is demanded first; without it, restore that fetched
