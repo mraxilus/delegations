@@ -25,11 +25,12 @@
 ##
 ##   Cost: lock storing no copy is compared against nothing, since one lock is thin evidence
 ##     for demanding key, and lock with no copy reverts nothing either way.
-##   Restore needs network only where checkout or cache is cold: over warm `dependencies/`, cache
-##     included, with network cut, `atlas --noexec rep` and `atlas changed` each exit 0 (Atlas
-##     0.14.7, 2026-11-16; PROVENANCE.md, Dependencies, has time). Project holding no lock has
-##     nothing to restore, and Atlas exits 1 there, reading no lock; so runner touches only
-##     projects holding lock file, and layout demands lock where packages are required.
+##   Restore needs network only where checkout is cold, since verdict reads no cache: over warm
+##     checkouts with network cut, `atlas changed` exits 0, and so does `atlas --noexec rep` where
+##     its cache stands too (Atlas 0.14.7, 2026-11-16; PROVENANCE.md, Dependencies, has time).
+##     Project holding no lock has nothing to restore, and Atlas exits 1 there, reading no lock;
+##     so runner touches only projects holding lock file, and layout demands lock where packages
+##     are required.
 ##   Cost: cold restore clones each package, so it needs network.
 
 {.experimental: "strictFuncs".}
