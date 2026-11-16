@@ -7,7 +7,9 @@ file, which each harness reads first. Before any change:
    `curator/<project>/<name>` follow `CURATOR.md`. `contributor/<domain>/<project>/<name>`
    follows `CONTRIBUTOR.md`, and writes only under `contributor/<domain>/<project>/`. The
    `coordinator` follows `COORDINATOR.md`, holds no branch, and writes no file. A branch that a
-   tool named for you (`claude/...`) is outside the grammar, so push to one inside it.
+   tool named for you (`claude/...`) is outside the grammar. So check out a branch inside it at
+   once, except as the root curator, which keeps `main` detached (`CURATOR.md`, Branch and
+   commits).
 2. Then read the section Read first of the file of your role, and follow its order. That section
    is the one reading order of each role.
 3. Run `nim r koch check` at the repository root before every push. It must pass.
