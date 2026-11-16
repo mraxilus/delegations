@@ -24,7 +24,8 @@
 ##   Rejected: plain count of each commit that changed folder, which re-stamp alone moves.
 ##   Cost: record that code of package reads, as by `staticRead`, changes what lock builds, and
 ##     counts nothing.
-##   Cost: git lists tree once, and runs three times for each item of this repository.
+##   Cost: git lists tree once and reads base once, then runs twice for each item of this
+##     repository, and once more for each item whose folder base no longer holds.
 ##   Cost: address of this repository is named here once; fork or rename of repository names
 ##     another, and notice falls silent.
 

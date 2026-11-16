@@ -198,8 +198,8 @@ proc packagesSystem*(
   ##   names none for compiler matrix, so package arrives by being declared.
   ##   Driver that fails gives no package and one finding, with its exit code and last line of
   ##     its stderr; nothing raises, since caller installs what each other driver declares.
-  ##     Failure that gave nothing and no finding let `koch list-packages` exit 0 with nothing
-  ##     printed, so run installed none and stopped later at tool it lacked (#934).
+  ##     Rejected: failure giving nothing and no finding, since `koch list-packages` then prints
+  ##     nothing and exits 0, so run installs none and stops at tool it lacks (#934).
   for target in targets:
     let (lines, code, failure) = linesIn(
       root / target.directory,
