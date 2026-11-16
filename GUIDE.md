@@ -179,8 +179,8 @@ Dependencies). A requirement reads no folder, so Atlas finds the project through
 
 Then run step 3. To take a later commit, write it into the requirement, and run `atlas install`
 and `atlas pin` again. Until then, `koch check` and the start hook name each such commit that
-lags `main`, with the count of commits that changed its folder since. That notice fails nothing,
-since the lock builds as it did.
+lags `main`. The notice counts each later commit of `main` that changed the folder outside its
+records. That notice fails nothing, since the lock builds as it did.
 
 `nim r koch fetch-deps --all` restores the checkouts of every project from its lock, and
 `koch test` restores before it runs. The lock stores a copy of your nimble file, and
