@@ -28,7 +28,7 @@
 import std/[algorithm, json, math, os, osproc, sequtils, strutils, tables]
 
 import ./[changes, guard, head, report]
-from ./proposals import flagsDefine
+from ./proposals import commandBackend, extensionBackend, flagsDefine
 
 
 type
@@ -490,13 +490,15 @@ proc checkClaims(
             is_holding = false
             detail.add algebra.name & " " & side_changed[i] & " differs"
     of "program":
-      let program = candidate.path & "/" & claim{"path"}.getStr  # relative to proposal
+      let
+        program = candidate.path & "/" & claim{"path"}.getStr  # relative to proposal
+        extension = extensionBackend(claim)
       for name in claim{"algebras"}:
         let algebra = algebraNamed(name.getStr, algebras)
-        var arguments = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on",
-          "--noNimblePath", "-d:release", "--path:" & copy,
-          "--nimcache:" & directory / "cache_program_" & algebra.name,
-          "-o:" & directory / "program_" & algebra.name, "-r"]
+        var arguments = commandBackend(claim) & @["--hints:off", "--warnings:off",
+          "--skipParentCfg:on", "--noNimblePath", "-d:release", "--path:" & copy,
+          "--nimcache:" & directory / "cache_program_" & algebra.name & extension.replace('.', '_'),
+          "-o:" & directory / "program_" & algebra.name & extension, "-r"]
         arguments.add definesAlgebra(algebra)
         arguments.add flagsDefine(claim)
         arguments.add program

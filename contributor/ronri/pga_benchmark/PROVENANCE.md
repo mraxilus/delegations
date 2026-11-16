@@ -894,6 +894,13 @@ default, as P06 holds its own suites at 32 bits. The defines are part of the cla
 the digest of the evaluation. The page names each define beside its claim. Rejected: a config
 file beside each program. It would reach programs alone, and the digest would not read it.
 
+**A program claim may name `backend`**, `c` or `js`, and C is its default. A JS claim builds for
+Node through `nim js -d:nodejs`, and `-r` runs the script there, as it runs a C binary. So a
+program can count what the JS backend does, as `copies.nim` of P14 counts each `nimCopy` call. The
+backend is part of the claim, so it moves the digest of the evaluation, and the page names JS
+beside its claim. Rejected: a claim kind of its own for JS. It would repeat each rule of a program
+claim, and add only the command and the extension of its output.
+
 **Proposals build on each other as a graph without cycles,** as the Architect ruled on
 2026-10-04. The Architect decides each proposal on its own. So each one lists in `builds_on` the
 proposals whose changes it needs, and an empty list says that it needs none. Rejected: one base
@@ -1022,8 +1029,8 @@ That run was on a Xeon of family 6 model 173.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
-cover parse, quote and digest rules, and claim kinds, with the defines a claim may name and the page
-names. They cover the programs of a chain of proposals, base first.
+cover parse, quote and digest rules, and claim kinds, with the defines and the backend that a claim
+may name, and the page names. They cover the programs of a chain of proposals, base first.
 
 The same suites also cover pairing of runs, NaN shares, and an instance whose number alone moved.
 They cover the success line of the compiler, and the table serialiser at pin. The serialiser reads a
