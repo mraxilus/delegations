@@ -111,3 +111,17 @@ suite "Lag":
       gone = readLags(root, "main")[0]
     check not gone.is_held
     check gone.gone == some(moved)  # commit of base that moved folder
+
+
+  test "base git lacks names no lag, rather than each commit of lock as one git lacks":
+    # Case: start hook runs in checkout whose fetch failed, or that has no `origin` at all, and
+    #   each item then read as commit git lacks, which named wrong cause.
+    let root = repoTemp()
+    defer: removeDir(root)
+    root.writeInto(LOCK, textLock([
+      ("knoller", ADDRESS_REPOSITORY & "?subdir=curator%2Fknoller", COMMIT_LACKED),
+    ]))
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'build(assayer): lock knoller'")
+    check readLags(root, "main").len == 1  # base git holds reads each item
+    check readLags(root, "origin/main").len == 0  # base git lacks reads none
