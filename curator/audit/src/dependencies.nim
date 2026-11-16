@@ -3,15 +3,21 @@
 ##   package, and knoller reads its pin from same literals (`pins.nim`), whose scan this module
 ##   imports (`requireLiterals`). Project requiring packages carries `atlas.lock` (`atlas pin`);
 ##   `deps/` stays out of repository and `atlas rep` restores it from lock.
-##   Pure part parses text; effect part runs Atlas in project directory with `--noexec`.
+##   Pure part parses text and compares commits; effect part runs Atlas in project directory
+##     with `--noexec`, and reads commit of each checkout through git.
 ##   Exit of `rep` is discarded, since it can fail where each checkout matches lock: Atlas
 ##     0.14.7 exits 1 where it cannot read its list of packages, which it caches in `.cache` of
-##     `dependencies/`. Success is judged by `atlas changed` exiting 0 afterwards.
+##     `dependencies/`. Success is judged by each checkout lock names, then by `atlas changed`
+##     exiting 0.
 ##   `atlas changed` exits 0 when checkout is absent entirely, warning only, so existence of
 ##     every directory lock names is demanded first; without it, restore that fetched
 ##     nothing reports success (Atlas 0.14.7, 2026-11-16).
-##   Cost: `atlas changed` exits 0 while it warns that commit differs, so checkout that `rep`
-##     cannot move to commit of lock gives no finding (Atlas 0.14.7, 2026-11-16).
+##   `atlas changed` exits 0 too while it warns that commit differs, so commit each present
+##     checkout stands at is held to commit lock holds for it; without it, checkout that `rep`
+##     cannot move to commit of lock gives no finding (Atlas 0.14.7, 2026-11-16; #947).
+##     Directory holding no commit git reads is finding too, since nothing shows it matches; so
+##     is item naming no commit, as `atlas changed` warns commit differs there (Atlas 0.14.7).
+##   Cost: one run of git for each item of each lock, at each restore.
 ##
 ##   Lock also stores whole nimble file, and `atlas rep` writes that copy back over project's
 ##     file. So requirement edited without regenerating lock is reverted, and silently:
@@ -36,6 +42,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, strutils]
+from ../../knoller/src/knoller/command import runGit
 import ../../knoller/src/knoller
 import ./[findings, projects]
 
@@ -50,19 +57,29 @@ const
     ## Opening of finding both lock readers report when JSON will not parse.
 
 
+type Checkout* = object  ## Define one checkout lock names, and commit lock holds for it.
+  name*: string  ## Name of item, as lock keys it.
+  directory*: string  ## Directory of checkout, project-relative, `$deps` resolved.
+  commit*: string  ## Commit lock holds for checkout; empty where item names none.
+
+
 func requirements*(nimble: string): seq[string] =
   ## Collect required packages from nimble text, `nim` excluded.
   for requirement in nimble.requireLiterals:
     if requirement.namePackage.toLowerAscii != NIM: result.add requirement
 
 
-proc directoriesLock*(lock: string, directory_deps = DIRECTORY_DEPS): seq[string] =
-  ## Read checkout directories lock names, `$deps` resolved to project-relative directory.
+proc checkoutsLock*(lock: string, directory_deps = DIRECTORY_DEPS): seq[Checkout] =
+  ## Read checkouts lock names with their commits, `$deps` resolved to project-relative directory.
   let node = parseJson(lock)
   if "items" notin node: return
-  for _, item in node["items"]:
+  for name, item in node["items"]:
     if "dir" notin item: continue
-    result.add item["dir"].getStr.replace("$deps", directory_deps)
+    result.add Checkout(
+      name: name,
+      directory: item["dir"].getStr.replace("$deps", directory_deps),
+      commit: item{"commit"}.getStr,
+    )
 
 
 proc directoryDeps*(config: string): string =
@@ -153,25 +170,62 @@ proc checkNameNimble*(path_nimble, path_lock, lock: string): seq[Finding] =
   )
 
 
+func checkCommitCheckout*(
+  path_lock: string, checkout: Checkout, commit_found: Option[string]
+): seq[Finding] =
+  ## Report checkout standing at other commit than lock holds for it, or at none git reads.
+  ##   Finding names item and both commits, which `atlas changed` names only in its warning.
+  if commit_found.isNone:
+    return @[finding(
+      path_lock,
+      0,
+      "Checkout holds no commit git reads after restore; got `" & checkout.directory & "`.",
+    )]
+  if commit_found.get == checkout.commit: return
+  result.add finding(
+    path_lock,
+    0,
+    "Checkout stands at other commit than lock holds after restore; got `" & commit_found.get &
+      "` for `" & checkout.name & "` at `" & checkout.commit & "`.",
+  )
+
+
+proc readHead(directory: string): Option[string] =
+  ## Read commit `HEAD` of checkout at directory names; none where git reads none there.
+  ##   Git reads `.git` of directory alone, since plain directory under project would read
+  ##     `HEAD` of repository holding it, which for knoller is package's own.
+  ##   Exit decides, never output: git that reads no commit still prints `HEAD` it was given.
+  let (output, _, code) = runGit(directory, ["--git-dir=.git", "rev-parse", "HEAD"])
+  if code != 0: return
+  some(output.strip)
+
+
 proc checkCheckouts*(root, directory: string): seq[Finding] =
-  ## Report checkout lock names that is absent on disk, and lock that will not parse.
+  ## Report checkout lock names that is absent on disk or stands at other commit than lock
+  ##   holds, and lock that will not parse.
+  ##   One parse of lock serves both; absent checkout reads no commit, so it is one finding.
   let
     path_lock = directory & "/" & FILE_LOCK
     path_config = root / directory / ATLAS_CONFIG
     directory_deps =
       if fileExists(path_config): readFile(path_config).directoryDeps else: DIRECTORY_DEPS
-  var directories: seq[string]
+  var checkouts: seq[Checkout]
   try:
-    directories = readFile(root / path_lock).directoriesLock(directory_deps)
+    checkouts = readFile(root / path_lock).checkoutsLock(directory_deps)
   except CatchableError as e:
     return @[finding(path_lock, 0, UNREADABLE & e.msg & "`.")]
-  for checkout in directories:
-    if not dirExists(root / directory / checkout):
-      result.add finding(path_lock, 0, "Checkout absent after restore; got `" & checkout & "`.")
+  for checkout in checkouts:
+    let path = root / directory / checkout.directory
+    if not dirExists(path):
+      result.add finding(
+        path_lock, 0, "Checkout absent after restore; got `" & checkout.directory & "`."
+      )
+      continue
+    result.add checkCommitCheckout(path_lock, checkout, path.readHead)
 
 
 proc restoreDependencies(root: string, target: Target): seq[Finding] =
-  ## Restore project's checkouts from lock through Atlas, judged by presence then `changed`.
+  ## Restore project's checkouts from lock through Atlas, judged by each checkout, then `changed`.
   ##   Atlas comes from same toolchain as compiler, since it records compiler it ran under
   ##   and warns of environment mismatch when lock was written by another.
   echo "== " & target.directory

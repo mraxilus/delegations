@@ -2022,7 +2022,8 @@ points hold here.
 **Atlas holds the packages of each project.** Requirements sit in `<project>.nimble`, and
 checkouts in the ignored folder that `atlas.config` names. Exact commits sit in a committed
 `atlas.lock`, and paths in a committed `nim.cfg`. `koch fetch-deps` runs `atlas --noexec rep` in
-every project that holds a lock. It judges success by `atlas changed` exiting zero.
+every project that holds a lock. It judges success first by each checkout that the lock names,
+then by a zero exit of `atlas changed`.
 
 - Rejected: one Atlas project at the root. Atlas 0.9.0 has no shared-workspace model, and a
   root `nim.cfg` would leak every dependency into every project through parent-config lookup.
@@ -2030,13 +2031,9 @@ every project that holds a lock. It judges success by `atlas changed` exiting ze
 - Koch discards the exit of `atlas rep`, since `rep` can fail where each checkout matches the
   lock. Atlas 0.14.7 exits 1 where it cannot read its list of packages, which it keeps in
   `dependencies/.cache`. Verified by hand, 2026-11-16, with the checkout of knoller at the commit
-  of the lock, no cache, and the network cut by `unshare -n`. On a copy of `curator/assayer`, `rep`
-  exited 1 and `atlas changed` exited 0. In a clone at `eace8f13c`,
+  of the lock, no cache, and the network cut by `unshare -n`. On a copy of `curator/assayer`, and
+  in a clone at `3dad30abe`, `rep` exited 1 and `atlas changed` exited 0. In that clone,
   `koch fetch-deps curator/assayer` gave no finding.
-- Cost: `atlas changed` exits 0 while it warns that a commit differs. So a checkout that `rep`
-  cannot move to the commit of the lock gives no finding. Verified by hand in both places, with a
-  lock that names a commit that the clone lacks. `rep` exited 1 and `changed` exited 0, and
-  `koch fetch-deps` exited 0 with no finding. The checkout stayed at its own commit.
 - A restore needs the network only where its checkouts are cold, since the verdict reads no cache.
   Verified by hand on the same copy, with the cache warm and the network cut. `atlas --noexec rep`
   and `atlas changed` each exited 0, also where `rep` moved the checkout from another commit to the
@@ -2054,15 +2051,44 @@ every project that holds a lock. It judges success by `atlas changed` exiting ze
   here: the same flow on the runner.
 
 **`atlas changed` alone does not prove that a restore happened.** It exits 0 while it warns `repo
-missing!`, so a restore that fetches nothing reports success. `checkCheckouts` reads the `dir` of
-every lock item, and resolves `$deps` to the directory that the project's `atlas.config` names. That
-is `dependencies` (Article V.9), or Atlas's own `deps` when the file names none. It then demands
-that the directory exists before `atlas changed` is consulted.
+missing!`, and also while it warns that a commit differs. So a restore that fetches nothing, or
+that leaves a checkout at another commit, reports success. `checkCheckouts` reads the `dir` and the
+`commit` of every lock item, and resolves `$deps` to the directory that the project's
+`atlas.config` names. That is `dependencies` (Article V.9), or Atlas's own `deps` when the file
+names none. It demands that each directory exists, and that git reads the commit of its item there,
+before koch reads the exit of `atlas changed`.
 
-Verified by hand with Atlas 0.14.7, 2026-11-16, on a copy of `curator/assayer` with no checkout:
-`atlas changed` exited 0, and warned `repo missing!`. Cost: the lock is parsed twice for each
-restore. Verified by `suites/test_dependencies.nim` over a project with and without the directory,
-and over a lock that is not JSON.
+- A checkout at another commit is a finding that names the lock, the item and both commits. A
+  directory where git reads no commit is a finding too, since nothing shows that it matches. An item
+  that names no commit is a finding too, as `atlas changed` warns `commit differs` there
+  (`lockfiles.nim` of Atlas 0.14.7, line 215). An absent checkout reads no commit, so it stays one
+  finding.
+- Git reads the `.git` of the directory alone. A plain directory under the project would read the
+  `HEAD` of the repository that holds it. For knoller, that is the repository of the package.
+- Rejected: the verdict of `atlas changed` alone, which exits 0 while it warns `commit differs`.
+  Verified by hand with Atlas 0.14.7, 2026-11-16, on the container of Figures, with the network cut.
+  On a copy of `curator/assayer`, the lock named `0123456789…`, a commit that the clone of knoller
+  lacks. `rep` exited 1, and `changed` exited 0 with the warning
+  `commit differs; found: c5670c44c… lockfile has: 0123456789…`.
+- Verified by hand with Atlas 0.14.7, 2026-11-16, in a clone at `3dad30abe`, on the container of
+  Figures. With the network cut, a lock that names a commit that the clone lacks gives one finding,
+  which names `knoller`, `c5670c44c` and `0123456789`. With the network cut, the lock of the tree
+  gives none, since `rep` moves the checkout to `11403468a`. With the network,
+  `koch fetch-deps --all` cloned each package and gave no finding, and each checkout stood at the
+  commit of its lock.
+- Verified by hand with Atlas 0.14.7, 2026-11-16, on a copy of `curator/assayer` with no checkout:
+  `atlas changed` exited 0, and warned `repo missing!`.
+- Cost: koch parses the lock at each restore, beside `rep` and `changed`, which each parse it too.
+  One parse of koch serves both demands.
+- Cost: one run of git for each item of each lock, at each restore. Over the eight warm checkouts of
+  `contributor/bangu/rictadni` in the clone at `3dad30abe`, `checkCheckouts` took 14.86 ms to
+  18.65 ms for each call. At `f846d7b76`, which reads no commit, it took 0.19 ms to 0.37 ms. Each
+  side ran fifteen rounds of ten calls, alternated, and `std/monotimes` timed them. The machine was
+  the four-core Intel Xeon 2.10 GHz container of Figures, with Nim 2.4.0 and git 2.43.0, on
+  2026-11-16.
+- Verified by `suites/test_dependencies.nim` over a project with and without the directory, and
+  over a lock that is not JSON. It also holds a checkout at the commit of its lock, at another
+  commit and at none, through real git.
 
 **The lock silently reverts an edit to the nimble file.** `atlas.lock` stores a whole copy of
 the nimble file under `nimbleFile.content`, and `atlas rep` writes it back over the file. So a
