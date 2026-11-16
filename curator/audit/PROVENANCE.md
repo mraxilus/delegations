@@ -2099,7 +2099,9 @@ the commit of the lock.
 - Where `main` no longer holds the folder, the line says that it moved or went. It names the last
   commit of `main` that changed the folder, which removed it, where git names one. A count there
   holds the removal, and says nothing of where the folder went.
-- A commit that git lacks leaves the count unread, and the line says so.
+- A commit that git lacks leaves the count unread, and the line says so. A base that git lacks
+  names no lag at all, since each commit would read as lacked, as in a checkout with no `origin`.
+  Verified by `suites/test_lags.nim`.
 - The lines fail nothing and add no finding, as the ruling asks. A lock that lags builds as it did,
   and its project moves it when it wants what changed (`GUIDE.md`, How to add a dependency).
 - `koch check` prints the lines after the held findings, from the tree that it judges. So the koch
