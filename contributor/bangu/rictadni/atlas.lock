@@ -72,7 +72,7 @@
     ""
   ],
   "nimbleFile": {
-    "filename": "lojban_tagger.nimble",
+    "filename": "rictadni.nimble",
     "content": [
       "# Package description read by Atlas and nimble; requirements live here (Article II.8).",
       "#   Lojban is read through `lojban_parser`, sibling project of this repository: parser exists",

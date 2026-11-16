@@ -43,7 +43,7 @@ const
     ## Folder of domain whose project alone may keep its own prose, since its subject is language.
   PROJECTS_PROSE_OWN* = [
     ProjectProseOwn(
-      directory: "contributor/bangu/lojban_parser",
+      directory: "contributor/bangu/ricysoho",
       issue: 818,
       suite: "tests/suites/test_prose_own.nim",
       should_demand_suite: true,
