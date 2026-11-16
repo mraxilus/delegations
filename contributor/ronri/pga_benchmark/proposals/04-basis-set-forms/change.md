@@ -15,8 +15,8 @@ Nim reads the set of a generic type as it is spelled, so `{Basis.E1..Basis.E4}` 
 listed are two types. Each alias of pin lists its bases, and `Multivector` spells the range of all
 bases. So `typeReached` lists the bases it reaches, and names `Multivector` where it reaches all.
 A reverse keeps each basis, so `~` and `~∘` return `MultivectorOf[A]`, the type of the operand.
-A form that reaches no basis stops the compile, since the pinned compiler instantiates no
-`MultivectorOf` of an empty set.
+A form that reaches no basis stops the compile, since `MultivectorOf` of an empty set stops the
+compiler at pin.
 
 `pga/basis_sets.nim` and `pga.nim` enable `openSym`. Without it, each use of a form of two
 operands prints the warning `IgnoredSymbolInjection`, which the library at pin does not print.
