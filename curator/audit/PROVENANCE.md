@@ -2059,21 +2059,23 @@ names none. It demands that each directory exists, and that git reads the commit
 before koch reads the exit of `atlas changed`.
 
 - A checkout at another commit is a finding that names the lock, the item and both commits. A
-  directory where git reads no commit is a finding too, since nothing shows that it matches. An
-  absent checkout reads no commit, so it stays one finding.
+  directory where git reads no commit is a finding too, since nothing shows that it matches. An item
+  that names no commit is a finding too, as `atlas changed` warns `commit differs` there
+  (`lockfiles.nim` of Atlas 0.14.7, line 215). An absent checkout reads no commit, so it stays one
+  finding.
 - Git reads the `.git` of the directory alone. A plain directory under the project would read the
   `HEAD` of the repository that holds it. For knoller, that is the repository of the package.
-- Rejected: the verdict of `atlas changed` alone. Verified by hand with Atlas 0.14.7, 2026-11-16, on
-  a copy of `curator/assayer` and in a clone at `eace8f13c`, with the network cut. The lock named
-  `0123456789…`, a commit that the clone of knoller lacks. `rep` exited 1, and `changed` exited 0
-  with the warning `commit differs; found: c5670c44c… lockfile has: 0123456789…`. The checkout
-  stayed at `c5670c44c`. There `koch fetch-deps curator/assayer` judged by `changed` alone, and
-  printed `0 finding(s)`.
-- Verified by hand with Atlas 0.14.7, 2026-11-16, in a clone at `3dad30abe`. With the same lock and
-  the network cut, `koch fetch-deps curator/assayer` exited 1 with one finding. It names `knoller`,
-  `c5670c44c` and `0123456789`. With the lock of the tree and the network still cut, `rep` moved the
-  checkout to `11403468a`, and koch gave no finding. With the network, `koch fetch-deps --all`
-  cloned each package and gave no finding. Each checkout stood at the commit of its lock.
+- Rejected: the verdict of `atlas changed` alone, which exits 0 while it warns `commit differs`.
+  Verified by hand with Atlas 0.14.7, 2026-11-16, on the container of Figures, with the network cut.
+  On a copy of `curator/assayer`, the lock named `0123456789…`, a commit that the clone of knoller
+  lacks. `rep` exited 1, and `changed` exited 0 with the warning
+  `commit differs; found: c5670c44c… lockfile has: 0123456789…`.
+- Verified by hand with Atlas 0.14.7, 2026-11-16, in a clone at `3dad30abe`, on the container of
+  Figures. With the network cut, a lock that names a commit that the clone lacks gives one finding,
+  which names `knoller`, `c5670c44c` and `0123456789`. With the network cut, the lock of the tree
+  gives none, since `rep` moves the checkout to `11403468a`. With the network,
+  `koch fetch-deps --all` cloned each package and gave no finding, and each checkout stood at the
+  commit of its lock.
 - Verified by hand with Atlas 0.14.7, 2026-11-16, on a copy of `curator/assayer` with no checkout:
   `atlas changed` exited 0, and warned `repo missing!`.
 - Cost: koch parses the lock at each restore, beside `rep` and `changed`, which each parse it too.
