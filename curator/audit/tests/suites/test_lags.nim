@@ -49,6 +49,17 @@ suite "Items":
     check itemsRepository(LOCK, "{}").len == 0  # lock of no items
 
 
+  test "address of this repository whose query names no folder names no item":
+    # Domain: query of other key alone, `subdir` empty, and `subdir` of separator alone; each
+    #   names whole repository, which Atlas reads as no one package.
+    let lock = textLock([
+      ("keyed", ADDRESS_REPOSITORY & "?ref=main", COMMIT_KNOLLER),
+      ("empty", ADDRESS_REPOSITORY & "?subdir=", COMMIT_KNOLLER),
+      ("root", ADDRESS_REPOSITORY & "?ref=main&subdir=%2F", COMMIT_KNOLLER),
+    ])
+    check itemsRepository(LOCK, lock).len == 0  # whole repository is no folder of it
+
+
 
 suite "Notice":
   test "notice names count, folder gone and commit git lacks, and nothing where folder holds still":
@@ -149,6 +160,35 @@ suite "Lag":
     check noticesLag(readLags(root, "main"), "main")[1].endsWith(
       "lags `main` by 2 commits that change `" & PARSER & "` outside its records."
     )
+
+
+  test "lag reads base alone, and never HEAD of branch that moved past it":
+    # Domain: commit of branch that changes folder, which counts none, and branch that still
+    #   holds folder base moved, which reads as moved at commit of base.
+    let root = repoTemp()
+    defer: removeDir(root)
+    root.writeInto("curator/knoller/src/knoller.nim", "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(knoller): open'")
+    let locked = root.git("rev-parse HEAD").strip
+    root.writeInto(LOCK, textLock([
+      ("knoller", ADDRESS_REPOSITORY & "?subdir=curator%2Fknoller", locked),
+    ]))
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'build(assayer): lock knoller'")
+    discard root.git("checkout -q -b curator/work")
+    root.writeInto("curator/knoller/src/knoller.nim", "discard 1\n")
+    discard root.git("commit -q -a -m 'fix(knoller): change on branch'")
+    check readLags(root, "main")[0].count == some(0)  # commit of HEAD past base counts none
+    discard root.git("checkout -q main")
+    discard root.git("mv curator/knoller curator/kneader")
+    discard root.git("commit -q -m 'refactor(curator): move knoller'")
+    let moved = root.git("rev-parse --short HEAD").strip
+    discard root.git("checkout -q curator/work")
+    let lag = readLags(root, "main")[0]
+    check not lag.is_held  # base moved folder that HEAD still holds
+    check lag.gone == some(moved)  # commit of base that moved it, and never of HEAD
+    check lag.count == some(1)  # move counts, and commit of HEAD does not
 
 
   test "base git lacks names no lag, rather than each commit of lock as one git lacks":
