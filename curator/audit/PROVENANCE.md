@@ -2022,11 +2022,16 @@ every project that holds a lock. It judges success by `atlas changed` exiting ze
 - Rejected: one Atlas project at the root. Atlas 0.9.0 has no shared-workspace model, and a
   root `nim.cfg` would leak every dependency into every project through parent-config lookup.
   The constitution also wants each dependency justified where it is imported (II.8).
-- Costs, verified by hand with Atlas 0.9.0, 2026-09-05. Atlas clones `nim-lang/packages` before
-  any command, so it needs the network even for zero packages, which is why a lock-less
-  project skips it. `atlas rep` exits 1 after a restore, because its submodule step fails, and
-  that is why `atlas changed` gives the verdict. A dependency used by two projects is cloned
-  twice.
+- Costs, verified by hand with Atlas 0.9.0, 2026-09-05. `atlas rep` exits 1 after a restore,
+  because its submodule step fails, and that is why `atlas changed` gives the verdict. A
+  dependency used by two projects is cloned twice.
+- A restore needs the network only where its checkouts are cold. Verified by hand with Atlas
+  0.14.7, 2026-11-15, on a copy of `curator/assayer` with a warm `dependencies/` and the network
+  cut by `unshare -n`. `atlas --noexec rep` and `atlas changed` each exited 0, and the restore took
+  0.10 s, 0.09 s and 0.11 s in three runs. With `dependencies/` removed, the restore exited 1, since
+  it could not clone.
+- A project with no lock skips Atlas, since it has nothing to restore. Atlas 0.14.7 exits 1 there,
+  because it reads no lock, verified by hand on a copy of `curator/probe`, 2026-11-15.
 - Verified by `suites/test_dependencies.nim` for the parser and the lock-less skip. The Atlas
   command flow was verified by hand on a throwaway project, 2026-09-05. Assumed, and not verified
   here: the same flow on the runner.
@@ -2083,6 +2088,101 @@ stands.
 - Cost: a later Atlas that makes that warning a failure turns the restore of assayer red, and the
   finding names the exit code of `atlas changed`.
 
+**`koch check` and the start hook name each lock whose commit lags `main` in a folder of this
+repository.** An item of `atlas.lock` names this repository where its address, with the
+query cut, is the address of this repository (`ADDRESS_REPOSITORY` in `lags.nim`). Its folder is
+the `subdir` of that query, which Atlas writes into the lock from the name override of
+`atlas.config`. The count is `git rev-list --count <commit>..origin/main -- <folder>`, as the
+Architect ruled on D2 of #927. So it counts the commits of `main` that changed that folder since
+the commit of the lock.
+
+- Where `main` no longer holds the folder, the line says that it moved or went. It names the last
+  commit of `main` that changed the folder, which removed it, where git names one. A count there
+  holds the removal, and says nothing of where the folder went.
+- A commit that git lacks leaves the count unread, and the line says so.
+- The lines fail nothing and add no finding, as the ruling asks. A lock that lags builds as it did,
+  and its project moves it when it wants what changed (`GUIDE.md`, How to add a dependency).
+- `koch check` prints the lines after the held findings, from the tree that it judges. So the koch
+  of a merge prints them in the second tree. The start hook prints the same lines after the drift,
+  since both print `noticesLag`.
+- Rejected: the address of the remote `origin`, which a person may spell for SSH or a proxy. Cost:
+  a fork or a rename of the repository names another address, and the notice falls silent.
+- Rejected: a count for an address with no folder, which names the whole repository. Atlas finds no
+  one package there (`curator/assayer/PROVENANCE.md`, Package).
+- Cost: git lists the tree once, and runs three times for each item of this repository. The read
+  took 31 ms, 30 ms and 28 ms over this tree, inside one process, measured 2026-11-16.
+- Verified by `suites/test_lags.nim`, for each form of address and each line, and by real git on a
+  throwaway repository, through a move of the folder. Verified by `suites/test_hooks.nim`: the start
+  hook prints the lines after the drift, unchanged.
+- Verified by hand, 2026-11-15: `nim r koch hook start < /dev/null` printed one line, for `knoller`
+  at `11403468a`, 5 commits behind `origin/main`, and none for lojban_parser. Against `72a00713c`,
+  which moves the parser to `contributor/bangu/ricysoho`, the line of lojban_tagger names that move.
+
+## Imports
+
+**One reader reads each module that Nim source names, and the plan and two checks read it.**
+`imports.nim` reads each `import`, `include` and `from` by line. A statement opens its line, past a
+`when` guard on that line. It runs on while a bracket stays open, while a line ends in a comma, or
+while the keyword stands alone. A module is each word between commas, or the prefix before a
+bracket joined to each member. A comment, a string outside such a statement, and each line inside
+a long string name nothing.
+
+- Rejected: the tokens of knoller. Over each Nim file of the tree, they took 1.5 s in the build
+  that koch runs. The check of paths took 0.18 s by line, each measured with `std/monotimes` on
+  2026-11-15.
+- Cost: a block comment, and `"""` inside a string of one line, mislead the reader. A path that a
+  macro builds names nothing.
+- Verified by `suites/test_imports.nim`, for each form of statement and each text that names
+  nothing.
+
+**An import by path from one project into another is a finding at its line.** The finding names the
+project that the import reaches, and asks for a package that `atlas.lock` pins (`CONTRIBUTOR.md`,
+Dependencies). An importer by path compiles whatever the checkout holds, and a move of either
+folder breaks it. A path into the clone under `dependencies/` stays inside its own project, so it
+passes. The compiler tries a bare name in the folder of its source first, so only a path that opens
+`./` or `../` leaves a project.
+
+- The checker is the one exception, as the Architect ruled on D1 of #927. Root `koch.nim`,
+  `curator/audit` and `curator/knoller` build as one program from each checkout, and the audit
+  imports knoller by path. An import between those two projects stands (`PROJECTS_CHECKER`). An
+  import from either into any other project is a finding, as any other.
+- A line takes one finding for each project that it reaches, so a bracket of modules is one.
+- Verified by `nim r koch check-files` over the whole tree at `853a986af`, 2026-11-15: 0 findings.
+  On a copy of `d565311c8^1`, which is `main` before #905, the check named 2 imports of knoller in
+  assayer, and 16 of lojban_parser in lojban_tagger.
+- Cost: a `--path` of `nim.cfg` into another project is unread, and none stands in the tree, read
+  on 2026-11-15. NimScript and nimble files are unread, as the plan reads modules alone.
+- Verified by `suites/test_imports.nim`, for the imports of lojban_tagger as found, each form of
+  statement, and the exception of the checker. Verified by `suites/test_audit.nim`: the finding
+  reaches `auditTree`.
+
+**A driver imports no package, itself or through a module of its project.** `koch list-packages`
+runs the verb `system` of each driver before the runner restores `dependencies/`. So a driver that
+imports a package does not compile there, and the runner installs none of what it declares (#934).
+The check follows each import of the driver through the modules of its project. The first package
+that it reaches is a finding at the line of the driver that leads there. The finding names the
+package and the module that imports it.
+
+- The test for a package: a module that opens `std/` is the standard library, as STYLE.md §5 writes
+  it. A module of the project is a Nim file that the tree holds there. It resolves from the folder
+  of the module that names it. Any other module is a package. That is a name that the folder lacks,
+  which a search path of `nim.cfg` finds, or a `pkg/` name. It is also a file that the tree lacks,
+  as in the clone under `dependencies/`.
+- A module of another project that the driver reaches by path is read no further, since the check
+  of paths reports that import.
+- Cost: a module of the standard library written without `std/` reads as a package, as knoller
+  ranks it (`rankImport`). Each driver of the tree writes `std/`, read on 2026-11-15.
+- Verified by `nim r koch check-files` over the whole tree at `853a986af`, 2026-11-15: 0 findings.
+  On a copy of `c83a6a204`, the test commit of #934, the check named line 42 of the driver of
+  lojban_tagger. That line imports `./lists`, and `tools/lists.nim` imports the parser from its
+  clone.
+- Verified by `suites/test_imports.nim`, for the case as found and its domain. The domain is the
+  standard library, and modules of the project by path, by bare name and by `include`. It is also a
+  cycle, the name of a package, a `pkg/` name, a file that the tree lacks, and a module of another
+  project.
+- Cost: inside one process, the check of paths took 0.18 s and the check of drivers 0.04 s over the
+  tree, measured 2026-11-15. Figures gives the pair for the static pass.
+
 ## Scoped checks
 
 **The static pass stays whole-tree, and only compilation is scoped.** A project enters the test
@@ -2120,25 +2220,26 @@ change to the nimble file of the project selects each of its importers too. That
 and the packages that they compile with. The importers of an importer are selected in turn, until
 none is added.
 
-The plan reads each relative `import` and `from` of each Nim source, and resolves the path against
-the folder of that source. A statement on several lines, behind a `when` guard, or with a quoted
-path counts. A comment, or a string outside such a statement, imports nothing. So a project that
-adds an import is selected from then on, with no list to keep.
+The plan reads each relative `import`, `include` and `from` of each Nim source, through the
+reader of section Imports. It resolves the path against the folder of that source. A statement on
+several lines, behind a `when` guard, or with a quoted path counts. A comment, a string outside
+such a statement, and a line inside a long string import nothing. So a project that adds an import
+is selected from then on, with no list to keep.
 
-- Measured on 2026-11-15 by `importersByFolder` over the tree: `lojban_tagger` imports `src` and
-  `tools` of `lojban_parser`, and `curator/audit` imports `src` of knoller. No other project imports
-  another one by its path.
+- Measured on 2026-11-15 by `importersByFolder` over the tree: `curator/audit` imports `src` of
+  knoller, and no other project imports another by its path. The check of paths of section
+  Imports holds that, since only the checker may.
 - Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
-- Rejected: `src` alone, since the tools of the tagger import the tools of the parser.
+- Rejected: `src` alone, which misses an import of another folder, such as `tools`.
 - Rejected: the importers of a project for each change to any of its code. A suite of the parser is
   no folder that an importer imports, so that compiles more for no gain.
 - Cost: an importer turns red on a change to the surface of the folder that it imports, until it
   follows. So that project keeps the old name while its importer moves.
-- Cost: the plan reads the text of each import. So a path that a macro builds, or an `include` of
-  another project, selects no importer.
+- Cost: the plan reads the text of each import. So a path that a macro builds selects no importer.
 - Verified by `suites/test_plan.nim`, for each case as found. A change to the source or the tools
   of the parser selects the tagger, and an importer of the tagger too. Each form of import counts,
-  and a suite or a record of the parser selects no importer.
+  an `include` among them, and a line inside a long string does not. A suite or a record of the
+  parser selects no importer.
 
 **A project that requires another project as a package is no importer of it.** It imports by the
 name of the package, and it compiles the commit that its `atlas.lock` pins. So a change to the
@@ -2203,8 +2304,29 @@ the list is the project's.
 
 Only bare names survive the read. The contract is one name to a line. The one other thing
 that reaches that stream is the compiler complaining, which always spells a position first. So
-a line that carries whitespace is dropped. A compiler that complained still fails, because the
-absent package names itself.
+a line that carries whitespace is dropped.
+
+**A driver that fails is a finding that names it, and `koch list-packages` exits 1.** A driver that
+fails gives no package. With no finding, the verb would print nothing and exit 0. The runner would
+then install nothing, and a suite would fail later at the tool that it lacks. That is the case of
+#934, where the driver of lojban_tagger imported a package and a suite stopped at `protoc: not
+found`. The finding carries the exit code and the last line of the stderr of the driver, where the
+compiler says why. It goes to stderr, since the runner pipes stdout into `apt-get`.
+
+- The exit is 1, so the step of the runner that installs goes red, as its shell runs with `-e`.
+  Verified by hand, 2026-11-15, under `bash -eo pipefail`, which GitHub Actions names for its steps:
+  the assignment of the packages stopped the step.
+- `nim r` exits 1 for each failure of the verb, so the code in the finding is 1.
+- Each driver that compiles prints what it printed, and the verb exits 0 for it. Verified by hand,
+  2026-11-15, for each project with a `system` verb, on a checkout with no `dependencies/`, as the
+  runner holds one.
+- Verified by hand, 2026-11-15, on a copy of `c83a6a204`, the test commit of #934. The verb named
+  `tools/build.nim` of lojban_tagger, with the error of the compiler, and exited 1. The check of
+  section Imports names that driver before any run.
+- Verified by `suites/test_projects.nim`, for a driver that prints, one that the compiler refuses, a
+  verb that exits other than 0, and one that prints nothing.
+- Cost: stderr is read once stdout ends. So a driver that writes a pipe's worth to stderr before it
+  closes stdout waits on that pipe.
 
 **Koch declares its own system packages, as the rule it enforces asks of every project.**
 `SYSTEM_KOCH` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
@@ -3052,9 +3174,9 @@ that holds it. The events, each one a verb argument:
   nor the working line. At the end of any turn, it refuses a sign-off out of shape. It also
   refuses one whose group holds fewer items than the last sign-off that passed. And it refuses
   `#N` outside a link, and an article or a duty cited with no description.
-- `start` prints the role, the read order, each finding of drift, the headings of the record
-  that the branch works on, and the carried list. It prints at the start, at resume and after
-  each compaction.
+- `start` prints the role, the read order, each finding of drift, and each commit of a lock that
+  lags `main` (section Dependencies). Then it prints the headings of the record that the branch
+  works on, and the carried list. It prints at the start, at resume and after each compaction.
 - `prompt` reads each message of the Architect, and names the skill of its moment, as section
   Skills says.
 
@@ -3928,6 +4050,19 @@ two commits alternated, from separate worktrees, each with a cache of its own. A
 - Assumed: most of that time is the scan of the comments of each file whose text holds `.md`.
   The words of a document are read at its first quote and not before, since most documents are
   cited by heading alone (Article VII.3).
+
+**The checks of imports cost about a fifth of a second of the static pass.** Warm
+`koch check-files`, built as `nim r` builds it, took 12.68 s, 12.47 s and 12.60 s at `22dd79185`,
+which holds the checks. It took 12.77 s, 12.38 s and 12.47 s at `b033bae0d`, before them. The runs
+of the two commits alternated over one tree, each build with a cache of its own. All of it was on
+2026-11-16, with Nim 2.4.0, on a four-core Intel Xeon 2.10 GHz container. The runs were timed with
+`date +%s.%N`, at a load average near 0.9.
+
+- The medians differ by 0.13 s, inside the spread of each set, which is 0.21 s and 0.39 s.
+- Inside one process, the check of paths took 183 ms, 180 ms and 169 ms over three rounds. The
+  check of drivers took 47 ms, 40 ms and 40 ms. Each was timed with `std/monotimes` on 2026-11-15.
+- The plan reads the same reader. In the same rounds, `importersByFolder` took 183 ms, 170 ms and
+  175 ms. Its own reader took 206 ms, 202 ms and 208 ms at `20c8cf176`.
 
 **A branch that changes the checker costs one project, and not every project.** On 2026-09-24,
 warm `nim r koch check` took 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the
