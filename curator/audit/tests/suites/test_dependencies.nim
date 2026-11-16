@@ -2,9 +2,22 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, strutils, tempfiles, unittest]
+import std/[json, options, os, sequtils, strutils, tempfiles, unittest]
 import ../../src/[dependencies, projects]
 import ./fixtures
+
+
+const
+  LOCK = "curator/assayer/atlas.lock"  ## Lock of #947, which names knoller.
+  COMMIT_LACKED = "0123456789abcdef0123456789abcdef01234567"
+    ## Commit lock of #947 named, which clone of knoller lacked.
+  COMMIT_FOUND = "c5670c44cd00b01f709da5bb05530b8042828c7c"
+    ## Commit checkout of #947 stayed at, which `atlas changed` found.
+
+
+func textLock(name, commit: string): string =
+  ## Render lock naming one checkout under `$deps`, at commit, as Atlas writes its item.
+  pretty(%*{"items": {name: {"dir": "$deps/" & name, "commit": commit}}}) & "\n"
 
 
 
@@ -18,27 +31,86 @@ suite "Dependencies":
     check requirements("when defined(windows):\n  requires \"winim\"\n") == @["winim"]  # cost
 
 
-  test "lock names its checkout directories, deps placeholder resolved":
-    check TEXT_LOCK.directoriesLock == @["deps/replications.example.invalid"]  # one item
-    check directoriesLock("{}").len == 0  # no items table
-    check directoriesLock("{\"items\": {}}").len == 0  # empty items
-    check TEXT_LOCK.directoriesLock("dependencies") ==
+  test "lock names its checkouts, each at its commit, deps placeholder resolved":
+    check TEXT_LOCK.checkoutsLock == @[Checkout(
+      name: "replications.example.invalid",
+      directory: "deps/replications.example.invalid",
+      commit: "0123456789abcdef",
+    )]  # one item
+    check checkoutsLock("{}").len == 0  # no items table
+    check checkoutsLock("{\"items\": {}}").len == 0  # empty items
+    check TEXT_LOCK.checkoutsLock("dependencies").mapIt(it.directory) ==
       @["dependencies/replications.example.invalid"]
+    check checkoutsLock("{\"items\": {\"a\": {\"dir\": \"$deps/a\"}}}").mapIt(it.commit) ==
+      @[""]  # item naming no commit reads empty, so each commit found differs
     check directoryDeps("{\"deps\": \"dependencies\"}") == "dependencies"  # V.9 name
     check directoryDeps("{\"deps\": \"\"}") == "deps"  # empty name takes default
     check directoryDeps("{}") == "deps"  # no key takes default
 
 
-  test "checkout absent after restore is finding":
+  test "checkout absent after restore is finding, and only finding of its item":
     # `atlas changed` exits 0 while warning `repo missing!`, so restore fetching nothing
-    #   reports success. Measured on Atlas 0.9.0, 2026-09-06; 0.14.7, which pinned toolchain
-    #   ships, is unmeasured.
+    #   reports success. Measured on Atlas 0.9.0, 2026-09-06, and on 0.14.7, 2026-11-16.
+    #   Absent checkout reads no commit, so its item gives no second finding.
     let root = createTempDir("delegations_", "_lock")
     defer: removeDir(root)
     root.writeInto("curator/probe/atlas.lock", TEXT_LOCK)
-    check checkCheckouts(root, "curator/probe").len == 1  # directory absent
-    createDir(root / "curator/probe/deps/replications.example.invalid")
-    check checkCheckouts(root, "curator/probe").len == 0  # directory present
+    check checkCheckouts(root, "curator/probe").mapIt(it.message) ==
+      @["Checkout absent after restore; got `deps/replications.example.invalid`."]  # absent, once
+    let checkout = root / "curator/probe/deps/replications.example.invalid"
+    createDir(checkout.parentDir)
+    moveDir(repoTemp(), checkout)
+    root.writeInto(
+      "curator/probe/atlas.lock",
+      textLock("replications.example.invalid", checkout.git("rev-parse HEAD").strip),
+    )
+    check checkCheckouts(root, "curator/probe").len == 0  # present, at commit of lock
+
+
+  test "checkout at other commit than lock holds is finding, naming lock, item and both commits":
+    # Case as found (#947): lock of assayer named commit that clone of knoller lacked, so `rep`
+    #   left checkout at its own commit, and `atlas changed` exited 0 while it warned that
+    #   commit differs (Atlas 0.14.7, 2026-11-16). `koch fetch-deps curator/assayer` gave no
+    #   finding. Domain: checkout at other commit, at commit of lock, and at none git reads.
+    let knoller = Checkout(
+      name: "knoller", directory: "dependencies/knoller", commit: COMMIT_LACKED
+    )
+    check checkCommitCheckout(LOCK, knoller, some(COMMIT_FOUND)).mapIt(
+      (it.path, it.line, it.message)
+    ) == @[(
+      LOCK,
+      0,
+      "Checkout stands at other commit than lock holds after restore; got `" & COMMIT_FOUND &
+        "` for `knoller` at `" & COMMIT_LACKED & "`.",
+    )]  # case as found, both commits named
+    check checkCommitCheckout(LOCK, knoller, some(COMMIT_LACKED)).len == 0  # at commit of lock
+    check checkCommitCheckout(LOCK, knoller, none(string)).mapIt(it.message) ==
+      @["Checkout holds no commit git reads after restore; got `dependencies/knoller`."]
+
+
+  test "restore reads commit of each checkout through git, never of repository holding it":
+    # Same case where mechanism runs: checkout at other commit, plain directory under
+    #   repository whose commit lock names, and repository of no commit. Plain directory would
+    #   read commit of repository holding it, which for knoller is package's own.
+    let root = repoTemp()  # Project stands in repository, as each project here does.
+    defer: removeDir(root)
+    let checkout = root / "curator/probe/deps/knoller"
+    createDir(checkout.parentDir)
+    moveDir(repoTemp(), checkout)
+    let
+      commit_checkout = checkout.git("rev-parse HEAD").strip
+      commit_root = root.git("rev-parse HEAD").strip
+    root.writeInto("curator/probe/atlas.lock", textLock("knoller", COMMIT_LACKED))
+    check checkCheckouts(root, "curator/probe").mapIt(it.message) == @[
+      "Checkout stands at other commit than lock holds after restore; got `" &
+        commit_checkout & "` for `knoller` at `" & COMMIT_LACKED & "`.",
+    ]  # other commit, read through git
+    removeDir(checkout / ".git")
+    root.writeInto("curator/probe/atlas.lock", textLock("knoller", commit_root))
+    let unread = @["Checkout holds no commit git reads after restore; got `deps/knoller`."]
+    check checkCheckouts(root, "curator/probe").mapIt(it.message) == unread  # plain directory
+    discard checkout.git("init -q -b main")
+    check checkCheckouts(root, "curator/probe").mapIt(it.message) == unread  # no commit yet
 
 
   test "unreadable lock is finding, never crash":
