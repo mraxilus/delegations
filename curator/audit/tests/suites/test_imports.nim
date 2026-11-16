@@ -8,8 +8,9 @@ import ./fixtures
 
 
 const
-  TAGGER = DIRECTORY_TAGGER  ## Project that imported parser by path, then as package (#934).
-  PARSER = DIRECTORY_PARSER  ## Project tagger reads.
+  TAGGER = CONTRIBUTOR & "/bangu/lojban_tagger"
+    ## Folder of tagger as found at `0d6eaaeb`, which imported parser by path until #934.
+  PARSER = CONTRIBUTOR & "/bangu/lojban_parser"  ## Folder of parser as found there.
   PROBE = CURATOR & "/probe"  ## Curator project outside checker.
   SOURCE_CHECKER = DIRECTORY_DRIVER & "/src"  ## Folder of check sources, inside checker.
 
