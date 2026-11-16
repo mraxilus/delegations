@@ -15,7 +15,8 @@
 ##   `atlas changed` exits 0 too while it warns that commit differs, so commit each present
 ##     checkout stands at is held to commit lock holds for it; without it, checkout that `rep`
 ##     cannot move to commit of lock gives no finding (Atlas 0.14.7, 2026-11-16; #947).
-##     Directory holding no commit git reads is finding too, since nothing shows it matches.
+##     Directory holding no commit git reads is finding too, since nothing shows it matches; so
+##     is item naming no commit, as `atlas changed` warns commit differs there (Atlas 0.14.7).
 ##   Cost: one run of git for each item of each lock, at each restore.
 ##
 ##   Lock also stores whole nimble file, and `atlas rep` writes that copy back over project's
