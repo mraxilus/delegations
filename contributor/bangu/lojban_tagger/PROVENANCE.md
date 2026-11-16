@@ -771,8 +771,8 @@ and `protoc` is 3.21.12.
 **The driver imports no package, so `koch list-packages` runs its verb `system` before Atlas
 restores any.** CI installs each package that `system` prints, and only then restores
 `dependencies/` (`.github/workflows/check.yml`). Where the driver does not compile there,
-`koch list-packages` prints no package and exits 0. CI then installs none, and the stub does not
-compile (Tests). So `lists` and `head` run `tools/lists.nim` as a program of its own, as
+`koch list-packages` names the driver and exits 1. CI then stops before it installs any package,
+and no suite runs. So `lists` and `head` run `tools/lists.nim` as a program of its own, as
 `examples` runs `tools/examples.nim`, since that module reads the parser package. Verified by hand
 with Nim 2.4.0 on 2026-11-15: with `dependencies/` moved aside, `nim r koch list-packages
 contributor/bangu/lojban_tagger` prints each package that `system` declares.
