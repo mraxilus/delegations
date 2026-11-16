@@ -2022,14 +2022,24 @@ every project that holds a lock. It judges success by `atlas changed` exiting ze
 - Rejected: one Atlas project at the root. Atlas 0.9.0 has no shared-workspace model, and a
   root `nim.cfg` would leak every dependency into every project through parent-config lookup.
   The constitution also wants each dependency justified where it is imported (II.8).
-- Costs, verified by hand with Atlas 0.9.0, 2026-09-05. `atlas rep` exits 1 after a restore,
-  because its submodule step fails, and that is why `atlas changed` gives the verdict. A
-  dependency used by two projects is cloned twice.
-- A restore needs the network only where its checkouts are cold. Verified by hand with Atlas
-  0.14.7, 2026-11-15, on a copy of `curator/assayer` with a warm `dependencies/` and the network
-  cut by `unshare -n`. `atlas --noexec rep` and `atlas changed` each exited 0, and the restore took
-  0.10 s, 0.09 s and 0.11 s in three runs. With `dependencies/` removed, the restore exited 1, since
-  it could not clone.
+- Koch discards the exit of `atlas rep`, since `rep` can fail where each checkout matches the
+  lock. Atlas 0.14.7 exits 1 where it cannot read its list of packages, which it keeps in
+  `dependencies/.cache`. Verified by hand, 2026-11-16, with the checkout of knoller at the commit
+  of the lock, no cache, and the network cut by `unshare -n`. On a copy of `curator/assayer`, `rep`
+  exited 1 and `atlas changed` exited 0. In a clone at `eace8f13c`,
+  `koch fetch-deps curator/assayer` gave no finding.
+- Cost: `atlas changed` exits 0 while it warns that a commit differs. So a checkout that `rep`
+  cannot move to the commit of the lock gives no finding. Verified by hand in both places, with a
+  lock that names a commit that the clone lacks. `rep` exited 1 and `changed` exited 0, and
+  `koch fetch-deps` exited 0 with no finding. The checkout stayed at its own commit.
+- A restore needs the network only where its checkouts are cold, since the verdict reads no cache.
+  Verified by hand on the same copy, with the cache warm and the network cut. `atlas --noexec rep`
+  and `atlas changed` each exited 0, also where `rep` moved the checkout from another commit to the
+  commit of the lock. In three runs, `rep` took 0.12 s, 0.10 s and 0.10 s. Each run was timed with
+  `date +%s.%N`, on the four-core Intel Xeon 2.10 GHz container of Figures. A run of 2026-11-15
+  with `dependencies/` removed exited 1, since it could not clone.
+- Cost: a dependency used by two projects is cloned twice, since each project restores into its
+  own folder. Verified by hand with Atlas 0.9.0, 2026-09-05.
 - A project with no lock skips Atlas, since it has nothing to restore. Atlas 0.14.7 exits 1 there,
   because it reads no lock, verified by hand on a copy of `curator/probe`, 2026-11-15.
 - Verified by `suites/test_dependencies.nim` for the parser and the lock-less skip. The Atlas
@@ -2042,7 +2052,8 @@ every lock item, and resolves `$deps` to the directory that the project's `atlas
 is `dependencies` (Article V.9), or Atlas's own `deps` when the file names none. It then demands
 that the directory exists before `atlas changed` is consulted.
 
-Measured on Atlas 0.9.0 by a delete of `deps/` and a re-run. Cost: the lock is parsed twice for each
+Verified by hand with Atlas 0.14.7, 2026-11-16, on a copy of `curator/assayer` with no checkout:
+`atlas changed` exited 0, and warned `repo missing!`. Cost: the lock is parsed twice for each
 restore. Verified by `suites/test_dependencies.nim` over a project with and without the directory,
 and over a lock that is not JSON.
 
@@ -2092,10 +2103,21 @@ stands.
 repository.** An item of `atlas.lock` names this repository where its address, with the
 query cut, is the address of this repository (`ADDRESS_REPOSITORY` in `lags.nim`). Its folder is
 the `subdir` of that query, which Atlas writes into the lock from the name override of
-`atlas.config`. The count is `git rev-list --count <commit>..origin/main -- <folder>`, as the
-Architect ruled on D2 of #927. So it counts the commits of `main` that changed that folder since
-the commit of the lock.
+`atlas.config`. The lag is the count of the commits of `main` that changed that folder outside its
+records, since the commit of the lock. Git gives it as
+`git rev-list --count <commit>..origin/main -- <folder>`, with an `:(exclude)` pathspec for each
+file of `FILES_PROJECT` in that folder.
 
+- A count of commits is the ruling of the Architect on D2 of #927. To leave out the records is the
+  choice of the curator. A re-stamp writes the stamp row into the record of each project and no
+  code, so the lock builds as it did.
+- Rejected: the plain count of each commit that changed the folder, which a re-stamp alone moves.
+  Against the re-stamp `22dd79185`, the plain count gives the lock of lojban_parser a lag of 1, and
+  this count gives 0. Verified by hand with git, 2026-11-16.
+- The records of a project that keeps its own prose are left out too, though the plan reads them as
+  its code (`prose_own.nim`). Its own suite reads them, and no importer compiles them.
+- Cost: a record that the code of a package reads, as by `staticRead`, changes what the lock
+  builds, and counts nothing.
 - Where `main` no longer holds the folder, the line says that it moved or went. It names the last
   commit of `main` that changed the folder, which removed it, where git names one. A count there
   holds the removal, and says nothing of where the folder went.
@@ -2106,19 +2128,30 @@ the commit of the lock.
   and its project moves it when it wants what changed (`GUIDE.md`, How to add a dependency).
 - `koch check` prints the lines after the held findings, from the tree that it judges. So the koch
   of a merge prints them in the second tree. The start hook prints the same lines after the drift,
-  since both print `noticesLag`.
+  since both print `noticesLag`. Verified by hand, 2026-11-16: `nim r koch check` at `eace8f13c`
+  merged the branch with `origin/main` at `81dcf9a33`. The koch of that merge printed the heading
+  and the item of knoller, before the suites ran.
+- Cost: no suite runs `main` of koch, so its two calls of `noticesLag` hold by hand alone. The run
+  above holds the call of `check`, and the run of the start hook below holds the other.
 - Rejected: the address of the remote `origin`, which a person may spell for SSH or a proxy. Cost:
   a fork or a rename of the repository names another address, and the notice falls silent.
 - Rejected: a count for an address with no folder, which names the whole repository. Atlas finds no
   one package there (`curator/assayer/PROVENANCE.md`, Package).
-- Cost: git lists the tree once, and runs three times for each item of this repository. The read
-  took 31 ms, 30 ms and 28 ms over this tree, inside one process, measured 2026-11-16.
+- Cost: git lists the tree once and reads the base once. It then runs two times for each item of
+  this repository, and once more for each item whose folder the base no longer holds. Inside one
+  process at `eace8f13c`, the read took 27 ms to 37 ms in six rounds. The plain count of
+  `68c04dcd8` took 32 ms to 54 ms in six rounds. The rounds of the two alternated over one tree,
+  against `origin/main` at `81dcf9a33`. They were timed with `std/monotimes` on the four-core
+  Intel Xeon 2.10 GHz container of Figures, with Nim 2.4.0, on 2026-11-16.
 - Verified by `suites/test_lags.nim`, for each form of address and each line, and by real git on a
-  throwaway repository, through a move of the folder. Verified by `suites/test_hooks.nim`: the start
-  hook prints the lines after the drift, unchanged.
-- Verified by hand, 2026-11-15: `nim r koch hook start < /dev/null` printed one line, for `knoller`
-  at `11403468a`, 5 commits behind `origin/main`, and none for lojban_parser. Against `72a00713c`,
-  which moves the parser to `contributor/bangu/ricysoho`, the line of lojban_tagger names that move.
+  throwaway repository. There it holds a move of the folder, a branch past the base, and each record
+  that changes alone. Verified by `suites/test_hooks.nim`: the start hook prints the lines after the
+  drift, unchanged.
+- Verified by hand, 2026-11-16: `nim r koch hook start < /dev/null` at `eace8f13c` printed two lines
+  against `origin/main` at `81dcf9a33`. They are the heading, and the item of `knoller` at
+  `11403468a`, 1 commit behind. That commit is `94fe644b1`, which changes a suite of knoller. No
+  item named lojban_parser. Against `72a00713c`, which moves the parser to
+  `contributor/bangu/ricysoho`, the line of lojban_tagger names that move.
 
 ## Imports
 
@@ -2129,9 +2162,11 @@ while the keyword stands alone. A module is each word between commas, or the pre
 bracket joined to each member. A comment, a string outside such a statement, and each line inside
 a long string name nothing.
 
-- Rejected: the tokens of knoller. Over each Nim file of the tree, they took 1.5 s in the build
-  that koch runs. The check of paths took 0.18 s by line, each measured with `std/monotimes` on
-  2026-11-15.
+- Rejected: the tokens of knoller. Over each Nim file of the tree at `eace8f13c`, `tokens` took
+  1.43 s, 1.41 s and 1.43 s in three rounds. Over the same tree, the check of paths took 173 ms,
+  198 ms and 169 ms by line. Both ran inside one process, built as `nim r koch` builds, and each
+  round was timed with `std/monotimes`. That was on the four-core Intel Xeon 2.10 GHz container of
+  Figures, with Nim 2.4.0, on 2026-11-16.
 - Cost: a block comment, and `"""` inside a string of one line, mislead the reader. A path that a
   macro builds names nothing.
 - Verified by `suites/test_imports.nim`, for each form of statement and each text that names
@@ -2309,15 +2344,22 @@ that reaches that stream is the compiler complaining, which always spells a posi
 a line that carries whitespace is dropped.
 
 **A driver that fails is a finding that names it, and `koch list-packages` exits 1.** A driver that
-fails gives no package. With no finding, the verb would print nothing and exit 0. The runner would
-then install nothing, and a suite would fail later at the tool that it lacks. That is the case of
-#934, where the driver of lojban_tagger imported a package and a suite stopped at `protoc: not
-found`. The finding carries the exit code and the last line of the stderr of the driver, where the
-compiler says why. It goes to stderr, since the runner pipes stdout into `apt-get`.
+fails gives no package. The finding carries the exit code and the last line of the stderr of the
+driver, where the compiler says why. It goes to stderr, since the runner pipes stdout into
+`apt-get`.
 
-- The exit is 1, so the step of the runner that installs goes red, as its shell runs with `-e`.
-  Verified by hand, 2026-11-15, under `bash -eo pipefail`, which GitHub Actions names for its steps:
-  the assignment of the packages stopped the step.
+- Rejected: a failed driver that gives no finding. The verb then prints nothing and exits 0, so the
+  runner installs nothing, and a suite stops at the tool it lacks (`protoc: not found`, #934).
+- The exit is 1, so the step of the runner that installs goes red. The step names no `shell`, so
+  GitHub Actions runs it as `bash -e {0}`. Under `-e`, the assignment of the packages fails the step
+  where koch exits 1. Verified by hand, 2026-11-16, under `bash -e`, with the lines of that step and
+  `echo` in place of `apt-get`. The clone was at `eace8f13c`, with `tools/build.nim` and
+  `tools/lists.nim` of lojban_tagger at `c83a6a204`. The step stopped at the assignment, before any
+  install.
+- Cost: no suite runs `main` of koch, so its print of the finding and its exit hold by hand.
+  Verified by hand in the same clone: koch named the driver on stderr and exited 1, with
+  lojban_tagger named and with no project named. With the driver as committed, it printed the
+  packages of lojban_tagger, wrote nothing to stderr, and exited 0.
 - `nim r` exits 1 for each failure of the verb, so the code in the finding is 1.
 - Each driver that compiles prints what it printed, and the verb exits 0 for it. Verified by hand,
   2026-11-15, for each project with a `system` verb, on a checkout with no `dependencies/`, as the
@@ -2326,7 +2368,8 @@ compiler says why. It goes to stderr, since the runner pipes stdout into `apt-ge
   `tools/build.nim` of lojban_tagger, with the error of the compiler, and exited 1. The check of
   section Imports names that driver before any run.
 - Verified by `suites/test_projects.nim`, for a driver that prints, one that the compiler refuses, a
-  verb that exits other than 0, and one that prints nothing.
+  verb that exits other than 0, and one that prints nothing. Verified by `suites/test_plan.nim`: the
+  form that reads the tree and `systemRepository`, which koch calls, each give the finding.
 - Cost: stderr is read once stdout ends. So a driver that writes a pipe's worth to stderr before it
   closes stdout waits on that pipe.
 
