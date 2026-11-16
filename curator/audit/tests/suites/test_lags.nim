@@ -4,12 +4,13 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, strutils, unittest]
-import ../../src/lags
+import ../../src/[lags, layout]
 import ./fixtures
 
 
 const
   LOCK = "curator/assayer/atlas.lock"  ## Lock that names knoller, as assayer holds it.
+  LOCK_TAGGER = "contributor/bangu/lojban_tagger/atlas.lock"  ## Lock that names lojban_parser.
   COMMIT_KNOLLER = "11403468a97c0d3ae922182d894606e2688504e9"  ## Commit assayer locks, at #899.
   COMMIT_OTHER = "29c11c7264289cc4c423f0e0662effbc5fdc6f61"  ## Commit of package of no folder.
   COMMIT_LACKED = "0123456789abcdef0123456789abcdef01234567"  ## Commit no repository holds.
@@ -67,9 +68,9 @@ suite "Notice":
     check lines[0].startsWith("Commits of `atlas.lock` ") and "fail nothing" in lines[0]
     check lines[1 .. ^1] == @[
       "  " & LOCK & ": `knoller` at `11403468a` lags `origin/main` by 5 commits that change " &
-        "`curator/knoller`.",
+        "`curator/knoller` outside its records.",
       "  " & LOCK & ": `knoller` at `11403468a` lags `origin/main` by 1 commit that changes " &
-        "`curator/knoller`.",
+        "`curator/knoller` outside its records.",
       "  " & LOCK & ": `knoller` at `11403468a` names `curator/knoller`, which `origin/main` " &
         "no longer holds: it moved or went at `72a00713c`.",
       "  " & LOCK & ": `knoller` at `11403468a` names `curator/knoller`, which `origin/main` " &
@@ -111,6 +112,43 @@ suite "Lag":
       gone = readLags(root, "main")[0]
     check not gone.is_held
     check gone.gone == some(moved)  # commit of base that moved folder
+
+
+  test "lag counts no commit that changes only records of folder, and each that changes code":
+    # Case: re-stamp `22dd79185` wrote stamp row into `PROVENANCE.md` of each project, and no
+    #   code, so plain count made lock of lojban_tagger lag lojban_parser by commit that changes
+    #   nothing lock builds. Domain: each record alone, records together, nested README, which
+    #   is code, and record beside code.
+    let root = repoTemp()
+    defer: removeDir(root)
+    root.writeInto(PARSER & "/src/lojban_parser.nim", "discard\n")
+    for record in FILES_PROJECT: root.writeInto(PARSER & "/" & record, "# lojban_parser\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(lojban_parser): open'")
+    let locked = root.git("rev-parse HEAD").strip
+    root.writeInto(LOCK_TAGGER, textLock([
+      ("lojban_parser", ADDRESS_REPOSITORY & "?subdir=" & PARSER.replace("/", "%2F"), locked),
+    ]))
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'build(lojban_tagger): lock lojban_parser'")
+    for record in FILES_PROJECT:
+      root.writeInto(PARSER & "/" & record, "# lojban_parser\n\nStamp row.\n")
+      discard root.git("commit -q -a -m 'chore(curator): re-stamp each project'")
+      check readLags(root, "main")[0].count == some(0)  # record alone changes nothing lock builds
+    for record in FILES_PROJECT: root.writeInto(PARSER & "/" & record, "# lojban_parser\n")
+    discard root.git("commit -q -a -m 'chore(curator): re-stamp each project again'")
+    check readLags(root, "main")[0].count == some(0)  # records together
+    root.writeInto(PARSER & "/design/README.md", "# Design\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'docs(lojban_parser): describe design'")
+    check readLags(root, "main")[0].count == some(1)  # nested README is code, as plan reads it
+    root.writeInto(PARSER & "/PROVENANCE.md", "# lojban_parser\n\nChange.\n")
+    root.writeInto(PARSER & "/src/lojban_parser.nim", "discard 1\n")
+    discard root.git("commit -q -a -m 'fix(lojban_parser): change'")
+    check readLags(root, "main")[0].count == some(2)  # record beside code counts, as code changed
+    check noticesLag(readLags(root, "main"), "main")[1].endsWith(
+      "lags `main` by 2 commits that change `" & PARSER & "` outside its records."
+    )
 
 
   test "base git lacks names no lag, rather than each commit of lock as one git lacks":
