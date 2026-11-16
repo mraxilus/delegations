@@ -910,7 +910,7 @@ suite "Hooks":
     check at >= 0
     if at >= 0:
       let example = guide[at + "```md\n".len ..< guide.find("\n```", at)]
-      check checkSignoff(example, "contributor/bangu/lojban_tagger/lujvo-search")
+      check checkSignoff(example, "contributor/bangu/rictadni/lujvo-search")
         .messages == newSeq[string]()
 
 

@@ -234,7 +234,7 @@ can pass 25 words.
 
 **A project of `bangu` that the Architect approves keeps its records and its comments in its own
 language.** `PROJECTS_PROSE_OWN` in `prose_own.nim` names each such project, as ruling D4 a of
-#818 approves `lojban_parser`. The English check reads none of its three records, and the check
+#818 approves `ricysoho`. The English check reads none of its three records, and the check
 of articles reads none of its comments. `koch fix` deletes no word of those comments that reads as
 an article, and the plan reads each of those records as code. Every other check reads the
 project. Its comments follow their own language for capitals and periods too (VI.10), as the
@@ -245,12 +245,12 @@ In lojban, `a` joins two names as "or" does. So the check reads `# la .alis. a l
 as a comment that holds an article, and the fixer deletes `a`, which changes what the comment
 says. Lojban closes no sentence with a stop, so a paragraph of lojban reads as one long sentence.
 A capital marks stress in lojban (CLL 3.9), and a period marks a pause (CLL 3.3). So a capital
-that opens a comment can change how the parser of `lojban_parser` reads the first word.
+that opens a comment can change how the parser of `ricysoho` reads the first word.
 
 **Each entry names its project, the issue of its approval, and the suite that holds its prose.**
 Such a suite reads the prose of its project in its own language, where no rule of English can.
 The entry says whether the audit demands the suite (`should_demand_suite`), and the entry of
-`lojban_parser` demands its suite. A change to a record of a listed project runs its suites, so
+`ricysoho` demands its suite. A change to a record of a listed project runs its suites, so
 a record that breaks a suite of its project never merges unseen.
 
 **A static assertion holds each entry to a project directly under `contributor/bangu/`.**
@@ -282,7 +282,7 @@ as the policy of its caller, under Articles.
   Each entry whose project holds its suite demands it, and a suite of the same name in another
   project leaves the demand unmet.
 - Verified by `suites/test_english.nim` and `suites/test_audit.nim`: a paragraph of lojban in a
-  record of the listed project gives no finding of English. In `lojban_tagger` it gives one. A
+  record of the listed project gives no finding of English. In `rictadni` it gives one. A
   record that lacks its header table or a field, or a glossary that lacks a heading, still fails.
 - Verified by `suites/test_prose.nim`, `suites/test_fixes.nim` and `suites/test_audit.nim`: the
   comment of lojban passes in Nim, cfg and TypeScript, and `koch fix` keeps its `a`. The fence
@@ -922,6 +922,11 @@ and the move is visible in review, so the cost is disorder rather than damage.
 - Rejected: a move that leaves the lock line stale. The next pull request of the project would
   then clear a finding that the move made.
 - Rejected: an ignore line for the stray nimble copy, which hides a file from the audit.
+- Cost: the `path` hook judges the path of one write, and reads no move. So it refuses a write
+  tool on the name line of a moved lock, which `check-scope` passes. The curator writes that line
+  with a command of the shell, which `bash` judges by no path. Verified by hand on 2026-11-15, in
+  Claude Code: `path` refused the Edit tool on `contributor/bangu/rictadni/atlas.lock`, and
+  `koch check-scope` then passed the line.
 - Verified by `suites/test_scope.nim`: a moved path is exempt on the curator root alone, and a move
   never widens a project branch. The name line of a lock passes. Another name, a second edit, an
   edit in place and a file other than a lock each fail.
@@ -1572,8 +1577,8 @@ a copy from two different font faces.
   as served by the other. Neither project can check that. The store owns the shape of the row,
   so the store holds the law.
 
-**The store holds archives too, in a table of their own.** The Architect ruled on 2026-11-11 that
-`drive` of lojban_parser runs the headless shell of Chrome for Testing, pinned (D1 a of #864).
+**The store holds archives too, in a table of their own.** `drive` of ricysoho runs the headless
+shell of Chrome for Testing, pinned, by ruling D1 a of #864.
 Each delegate pins each browser that its project drives. An archive maps no codepoints, so its
 row is the name, the whole address and the digest. Its name carries its version, since each
 release keeps one upstream file name, `chrome-headless-shell-linux64.zip`. The project unpacks
@@ -1585,7 +1590,7 @@ it under `build/`, so the store holds its bytes alone, and trusts them as it tru
   same version, as `chromium_headless_shell-1243`.
 - Rejected: the Chrome of the image of the runner, and the package `chromium` of Ubuntu, which
   installs a snap. No pin holds either. Rejected: the Chromium that Playwright fetches, since it
-  comes through node, which the ruling on #859 takes away from lojban_parser.
+  comes through node, which the ruling on #859 takes away from ricysoho.
 - Cost: the suite fetches no archive. So a wrong digest shows at the first fetch of its project,
   which refuses the bytes. The digest of this row was read from the bytes by hand on 2026-11-11.
 - Cost: a cold store of a job that asks for the archive takes 119.8 MB more. `check.yml` caches
@@ -1724,7 +1729,7 @@ break it, and the port happens in that same pull request. A new format follows t
 Its specification calls it a format for the communication of compilers and for data exchange
 between languages. The root glossary names it at commit `a31513c6` of `nifspec`, version 2027
 (#856). No schema reads NIF, so a law of the suite of each format holds its writer and its reader
-to each other. The writer of `lojban_parser` holds such a law over its corpora (#855).
+to each other. The writer of `ricysoho` holds such a law over its corpora (#855).
 
 - Verified by reading `doc/nif-spec.md` of `nim-lang/nifspec` at `a31513c6` on 2026-11-10. Its
   title names the format, and its section Version 2027 gives the directive `(.nif27)`, which
@@ -2263,11 +2268,12 @@ several lines, behind a `when` guard, or with a quoted path counts. A comment, a
 such a statement, and a line inside a long string import nothing. So a project that adds an import
 is selected from then on, with no list to keep.
 
-- Measured on 2026-11-15 by `importersByFolder` over the tree: `curator/audit` imports `src` of
-  knoller, and no other project imports another by its path. The check of paths of section
-  Imports holds that, since only the checker may.
+- Measured on 2026-11-15 by `importersByFolder` over the tree at `be4825550`: `curator/audit`
+  imports `src` of knoller, and no other project imports another one by its path. The check of
+  paths of section Imports holds that, since only the checker may.
 - Rejected: knoller alone, by the text of its path, which compiles no importer of another project.
-- Rejected: `src` alone, which misses an import of another folder, such as `tools`.
+- Rejected: `src` alone, since a tool of one project can import a tool of another, and `src`
+  alone would select no importer of that tool.
 - Rejected: the importers of a project for each change to any of its code. A suite of the parser is
   no folder that an importer imports, so that compiles more for no gain.
 - Cost: an importer turns red on a change to the surface of the folder that it imports, until it
@@ -2385,9 +2391,9 @@ command answers what a machine needs before any of this runs. To name a project 
 meaning for each job that the runner asks for.
 
 **The jobs `test` and `drive` each install what their project declares.** A suite can load a
-library or run a command that the `system` verb declares. The suites of lojban_tagger load
-`libssl3` and run `openssl` on the branch of its suggester (#780). They passed only because the
-image of the runner held both. A project that declares nothing installs nothing, so the jobs of
+library or run a command that the `system` verb declares. The suites of rictadni load
+`libssl3` and run `openssl` (#780), so without the install they pass only on an image that holds
+both. A project that declares nothing installs nothing, so the jobs of
 `curator/audit` and `curator/knoller` keep their time.
 
 - Cost: a job whose project declares packages spends an `apt-get update` and an install. The
@@ -2638,7 +2644,7 @@ code.
 - A prefix names a path only where it opens one. That is where no letter, digit, `_`, `.` or `~`
   stands before it, since a word or a path ends on each of those. A flag of one letter before it
   opens a path too, as `-I/home/me` does. So a word that holds a prefix names no path, as
-  `nest/home/abode` in the word list of `lojban_tagger` (#753).
+  `nest/home/abode` in the word list of `rictadni` (#753).
 - Rejected: a list of the characters that open a token, as a quote, a space, `=`, `(` and `:`. It
   passes a path after `[`, `,`, a backtick or the third slash of `file:///home/me`.
 - Cost: a path written after a letter that opens no flag passes, as `x/home/me`, since the check

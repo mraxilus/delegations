@@ -546,7 +546,7 @@ The `Stop` hook holds the shape under Claude Code, where it holds this repositor
 ```md
 ## Sign-off
 
-**Role:** contributor/bangu/lojban_tagger, branch `lujvo-search`
+**Role:** contributor/bangu/rictadni, branch `lujvo-search`
 
 **Context:** This branch lets `tagger find` read a lujvo that the lujvo list lacks, through its
 rafsi. The Architect asked for that search last.
@@ -572,11 +572,11 @@ rafsi form.
 | --- | --- |
 | ☑️ 7. The answered issue is closed | carried 1, #904 |
 | ✅ 8. The curator's request is answered | carried 2, #917 |
-| ⚠️ 9. The parser lacks some rafsi | contributor/bangu/lojban_parser, on #915 |
+| ⚠️ 9. The parser lacks some rafsi | contributor/bangu/ricysoho, on #915 |
 | ➖ 10. Not needed: draft rule, page link | carried 3 and 4: no push after ready, no page |
 
 **Summary:** The search, its record and the test that the curator asked for are done and green.
-The pull request waits only on D1. Row 9 belongs to lojban_parser and blocks nothing here.
+The pull request waits only on D1. Row 9 belongs to ricysoho and blocks nothing here.
 
 **State:** blocked, at `e5f6a7b`, pushed
 

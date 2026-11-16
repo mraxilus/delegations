@@ -41,6 +41,8 @@ itself fails where two blocks of a card touch, and a control page of the project
 | [P11 Unitize general][unitize-general] | proposal | one unitize rule for any element |
 | [P12 Cayley cells][cayley-cells] | proposal | each cell of a table an array with its count |
 | [P13 Transform operator][transform-operator] | proposal | one operator for a transform by motor |
+| [P14 Typed sums][typed-sums] | proposal | sum and difference of any two basis-set types |
+| [P99 Nimony port][nimony-port] | deferred | the library ported to Nimony, until its release |
 
 Progress and Performance show the library as it is. A **proposal** page shows a future state of the
 library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the same
@@ -48,6 +50,9 @@ shape, so the next exploration starts from the same frame. Each proposal page st
 proposal depends on, and what its rejection blocks. The Proposals page names every proposal, draws
 the undecided ones as a graph, and shows each selected proposal in place. Its second tab holds the
 marginalia: small changes tried at pin, and notes on the library.
+
+A **deferred** proposal waits on a release outside this project, as P99 waits on Nimony. It is
+tested and reported once, its number counts down from P99, and the Architect asks for each update.
 
 The library map on the Progress page reads the state of each box from the library at pin and from
 the catalogue. A box has a table of its own, or the library builds it from other operators, or the
@@ -183,3 +188,6 @@ checked against.
 [unitize-general]: https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy
 [cayley-cells]: https://claude.ai/artifact/Jjeg6CQWsiY3s8b8D7KWmE
 [transform-operator]: https://claude.ai/artifact/G5en4TE1nRNxAuoCHHAhsw
+
+[typed-sums]: https://claude.ai/artifact/NdUQo9YpLqCbYi5SBpUKDB
+[nimony-port]: https://claude.ai/artifact/L3Em5xnxr3K4CUyUo4AWN9

@@ -114,6 +114,11 @@ Every rule below serves it:
   `curator/<project>/`, with commit scope `<project>`, exactly like a contributor branch.
 - The commit types and the regression rule are those of `CONTRIBUTOR.md` (Branch and
   commits; Tests are paramount). Duty 4 says where a regression test of the checker lives.
+- **The primary checkout.** The root curator does each item in a worktree, and keeps its
+  primary checkout detached at `main`. Each hook builds koch from `HEAD` of that checkout
+  (`.claude/hooks.sh`). So the hooks of the curator run the checker of `main`, and never one
+  that is not merged. The detached checkout also makes the hooks refuse each write and commit
+  in it. So the app shows no work of the curator, and its sign-off links each open pull request.
 - A branch that a tool named for you (`claude/...`) is outside the grammar and fails
   `check-scope`.
   Push to a branch inside it, and where the tool decides the name, ask the Architect.

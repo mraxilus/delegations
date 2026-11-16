@@ -12,9 +12,16 @@
 ##   Number is proposal's for good, as RFC's is: allotted in order, never reused, and cited as
 ##     `P01`. Path and title both carry it, and `checkNumbers` holds them unique and gapless,
 ##     so no number is freed for another proposal.
-##   Status is `proposed`, `implemented` (with library commit) or `withdrawn`. Proposal that is
-##     not proposed is frozen: it stays, with its last evaluation, so its citation still leads
-##     to what was proposed and measured, and it is no longer applied at pin.
+##   Numbers run in two blocks, as Architect ruled on 2026-11-15: from P01 up, and from P99 down
+##     through `NUMBERS_TOP` for proposal that waits on release outside project when it opens.
+##     So such proposal takes no number of running block, whose next number another delegate
+##     may be about to take.
+##   Status is `proposed`, `implemented` (with library commit), `withdrawn` or `deferred`.
+##     Proposal that is not proposed is frozen: it stays, with its last evaluation, so its
+##     citation still leads to what was proposed and measured, and it is no longer applied at pin.
+##   Deferred proposal waits on release outside project, as Architect ruled on 2026-11-15: it is
+##     tested and reported when it opens, outside general evaluation, and updated only where
+##     Architect asks, so no run of every proposal reaches it.
 ##
 ##   Change is optional: proposal that only adds programs above library carries none. Claims
 ##     are data rather than prose, so evaluation checks them and page shows verdicts beside them.
@@ -25,6 +32,8 @@
 ##     memory or seconds compiler reports).
 ##   `suites` or `program` claim may name `defines`, each `name=value`, and its builds pass each
 ##     as `-d:`, so claim holds at build option other than library's default.
+##   `program` claim may name `backend`, `c` or `js`; JS builds for Node, which `-r` runs, so
+##     program can count what JS backend does, such as its copies.
 ##
 ##   Argument has one shape, so every page reads in same order: summary of three labelled
 ##     paragraphs, what it is, is for and costs; then sections Problem, Idea, Alternatives,
@@ -51,7 +60,7 @@ import ./[changes, guard, markdown]
 
 type
   StatusProposal* {.pure.} = enum  ## Define where proposal stands.
-    Proposed, Implemented, Withdrawn
+    Proposed, Implemented, Withdrawn, Deferred
   Proposal* = object  ## Define one proposal exploration as read from its directory.
     number*: int  ## Number path and title carry, as `2`; zero where path gives none.
     name*: string  ## Directory name after number, as `typed-multivectors`.
@@ -73,9 +82,13 @@ const
   KINDS_CLAIM* = ["suites", "tables", "program", "count", "build"]
     ## Claim kinds evaluation knows how to check.
   KINDS_DEFINED = ["suites", "program"]  ## Claim kinds whose builds take defines of their own.
+  BACKENDS = ["c", "js"]  ## Backends `program` claim can build on; C where it names none.
   WIDTH_NUMBER = 2  ## Digits number is written with, zero-padded, in path and citation.
-  WORDS_STATUS = ["proposed", "implemented", "withdrawn"]
+  WORDS_STATUS* = ["proposed", "implemented", "withdrawn", "deferred"]
     ## Status as `claims.json` spells it, in `StatusProposal` order.
+  NUMBERS_TOP* = 90..99
+    ## Numbers of block that counts down from P99, for proposal that waits on outside release.
+    ##   Cost: running block holds 89 proposals before it meets this block.
   LABELS_SUMMARY* = ["What it is", "What it is for", "What it costs"]
     ## Labels of three paragraphs that open `proposal.md`, each in bold, in order.
   SECTIONS_PROPOSAL* = [
@@ -113,8 +126,13 @@ func isImplemented*(proposal: Proposal): bool =
 
 
 func isFrozen*(proposal: Proposal): bool =
-  ## Tell whether proposal is implemented or withdrawn, so no longer applied at pin.
+  ## Tell whether proposal is implemented, withdrawn or deferred, so no longer applied at pin.
   proposal.status != StatusProposal.Proposed
+
+
+func isDeferred*(proposal: Proposal): bool =
+  ## Tell whether proposal waits on release outside project, tested apart from evaluation.
+  proposal.status == StatusProposal.Deferred
 
 
 func parseProposal*(
@@ -214,7 +232,8 @@ func parseProposal*(
   if status notin WORDS_STATUS:
     findings.add Finding(
       path: directory & "/claims.json",
-      message: "Status must be proposed, implemented or withdrawn; got `" & status & "`.",
+      message: "Status must be proposed, implemented, withdrawn or deferred; got `" & status &
+          "`.",
     )
   else:
     proposal.status = StatusProposal(WORDS_STATUS.find(status))
@@ -248,6 +267,14 @@ func parseProposal*(
             $defines & "`.",
       )
       continue
+    let backend = claim{"backend"}
+    if not backend.isNil and (kind != "program" or backend.kind != JString or
+        backend.getStr notin BACKENDS):
+      findings.add Finding(
+        path: directory & "/claims.json",
+        message: "Backend needs `program` claim, and `c` or `js`; got `" & $backend & "`.",
+      )
+      continue
     proposal.claims.add claim
   (proposal, findings)
 
@@ -255,6 +282,16 @@ func parseProposal*(
 func flagsDefine*(claim: JsonNode): seq[string] =
   ## Spell defines claim names as compiler flags, in order; none where it names none.
   for define in claim{"defines"}.getElems: result.add "-d:" & define.getStr
+
+
+func commandBackend*(claim: JsonNode): seq[string] =
+  ## Spell compiler command of backend claim names, with its defines; C where it names none.
+  if claim{"backend"}.getStr == "js": @["js", "-d:nodejs"] else: @["c"]
+
+
+func extensionBackend*(claim: JsonNode): string =
+  ## Spell extension of program backend claim names emits; Node reads script by `.js`.
+  if claim{"backend"}.getStr == "js": ".js" else: ""
 
 
 func programs*(proposal: Proposal): seq[string] =
@@ -270,7 +307,8 @@ func programs*(proposals: openArray[Proposal]): seq[string] =
 
 
 func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
-  ## Hold numbers unique and gapless from one, so none is freed or taken twice.
+  ## Hold numbers unique, and gapless in each block, so none is freed or taken twice: running
+  ##   block from one up, and `NUMBERS_TOP` from its top down.
   var seen: seq[int]
   for proposal in proposals:
     if proposal.number == 0: continue
@@ -280,13 +318,20 @@ func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
         message: "Proposal number is taken; got `" & proposal.citation & "`.",
       )
     seen.add proposal.number
-  for number in 1..max(seen & @[0]):
-    if number notin seen:
-      result.add Finding(
-        path: "proposals",
-        message: "Proposal numbers skip one, so it was freed; got `P" &
-            align($number, WIDTH_NUMBER, '0') & "` missing.",
-      )
+  let
+    running = seen.filterIt(it notin NUMBERS_TOP)
+    top = seen.filterIt(it in NUMBERS_TOP)
+  var missing: seq[int]
+  for number in 1..max(running & @[0]):
+    if number notin seen: missing.add number
+  for number in countdown(NUMBERS_TOP.b, min(top & @[NUMBERS_TOP.b + 1])):
+    if number notin seen: missing.add number
+  for number in missing:
+    result.add Finding(
+      path: "proposals",
+      message: "Proposal numbers skip one, so it was freed; got `P" &
+          align($number, WIDTH_NUMBER, '0') & "` missing.",
+    )
 
 
 func visit(
@@ -317,7 +362,8 @@ func visit(
   if found[0].isFrozen:
     findings.add Finding(
       path: directory,
-      message: "Proposal builds on withdrawn proposal; got `" & found[0].citation & "`.",
+      message: "Proposal builds on " & WORDS_STATUS[ord(found[0].status)] & " proposal; got `" &
+          found[0].citation & "`.",
     )
     return
   walk.add name
