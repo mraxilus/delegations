@@ -191,6 +191,31 @@ jobs:
           path: ${{ matrix.dir }}/${{ steps.locked.outputs.folder }}
           key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
 
+      # Store `koch fetch-assets` fills, restored for `curator/audit` alone: its suite is only one
+      #   that reads store, and it fetches each font face row store lacks. So it is one writer,
+      #   and each entry it saves holds every font face row, since `actions/cache` saves only
+      #   where key missed and job passed. Key of its own, since first job to finish takes each
+      #   new key.
+      #   Prefixes `assets-<os>-` of `drive` and `assets-audit-<os>-` here differ at eighth
+      #   character, so neither `restore-keys` reaches other job's entries.
+      #   No `mkdir`: restore makes path, suite writes store where restore missed, and on exact
+      #   hit post step saves nothing.
+      #   Rejected: key of `drive` in each `test` job. Job that fetched nothing would save each
+      #     new key without its new rows: `test` of `curator/assayer` ended in 30 s, where `drive`
+      #     of ricysoho took 105 s (runner, 2026-11-16). Each `test` job would also restore
+      #     122,461,885 B, in about 2.6 s (`drive` of ricysoho, runner, 2026-11-16).
+      #   Rejected: `actions/cache/restore` of entry of `drive`. That entry holds what first
+      #     `drive` job to save had fetched, which need not be every row suite reads, so suite
+      #     would fetch rest on each run.
+      #   Cost: one more entry, of font faces alone, 5,670,612 B raw; restore and save on runner
+      #     are unmeasured.
+      - if: matrix.dir == 'curator/audit'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/koch/assets
+          key: assets-audit-${{ runner.os }}-${{ hashFiles('curator/audit/src/assets.nim') }}
+          restore-keys: assets-audit-${{ runner.os }}-
+
       - env:
           PROJECT: ${{ matrix.dir }}
         run: nim r koch test "$PROJECT"
