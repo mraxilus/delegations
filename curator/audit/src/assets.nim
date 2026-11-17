@@ -47,6 +47,12 @@
 ##     `check.yml` gets from keying cache on file holding digests, one layer down.
 ##   Fetched file is checked before it is kept, and kept by moving into place, so half-written
 ##     download is never mistaken for verified one -- same shape `fetchRelease` uses.
+##   Fetch that fails writes one line to log, stdout unless caller names other, naming file,
+##     address and why bytes did not land (`lineFailure`): cause curl printed, its lines joined
+##     (`causeCurl`), or digest bytes carry. So run log names cause.
+##   Rejected: retry of fetch, which answers variance of check with retry (CONTRIBUTOR.md, Tests
+##     are paramount). Suite waits on bytes digests pin instead: `test` job of `curator/audit`
+##     restores store under key of its own (`check.yml`), and fetch takes only what entry lacks.
 ##
 ##   Cost: `sha256sum` and `curl` are shelled out to; `koch list-packages` declares both. Digest is
 ##     read by `digest` of knoller, not copied here, so one reader serves both fetches and
@@ -62,7 +68,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, strutils]
+import std/[os, osproc, sequtils, strutils]
 import ../../knoller/src/knoller
 import ./findings
 
@@ -288,32 +294,63 @@ func unknown*(file: string): seq[Finding] =
   )]
 
 
-proc fetchAsset(root, file: string): bool =
+func causeCurl*(said: string, code: int): string =
+  ## Read cause of failed fetch from what curl printed: its non-empty lines, stripped and joined
+  ##   by one space, else `curl exited <code>`.
+  ##   Joined, since curl prints some errors over several lines, as error 60 over six, and
+  ##     `lineFailure` is one line.
+  let lines = said.splitLines.mapIt(it.strip).filterIt(it.len > 0)
+  if lines.len > 0: lines.join(" ") else: "curl exited " & $code
+
+
+func lineFailure*(file, address, why: string): string =
+  ## Render line naming asset whose bytes did not land, its address, and why not.
+  ##   Opens with word, so project builds, which take line opening with `/` as path, skip it.
+  "Asset could not be fetched or checked; got `" & why & "` for `" & file & "` from `" &
+      address & "`."
+
+
+proc fetchLanding*(landing, address, digest: string): string =
+  ## Fetch address into landing path, keeping bytes only where they carry digest; empty where
+  ##   they landed, else why not, on one line.
+  ##   Why not is cause curl printed (`causeCurl`), or digest bytes carry. Bytes that did not
+  ##     land leave landing path by one removal, which serves both.
+  removeFile(landing)
+  let
+    (written, code) = execCmdEx(quoteShellCommand(["curl", "-o", landing, "-sSLf", address]))
+    got = if code == 0: landing.digest else: ""
+    why =
+      if code != 0: causeCurl(written, code)
+      elif got != digest: "digest " & got & ", wanted " & digest
+      else: ""
+  if why.len > 0: removeFile(landing)
+  why
+
+
+proc fetchAsset(root, file: string, log: File): bool =
   ## Fetch asset into store and keep it only when its bytes carry declared digest.
   ##   Downloaded beside destination and moved in once checked, so half-written file is never
-  ##   read as verified one.
+  ##   read as verified one. Fetch that does not land writes `lineFailure` to log, so run log
+  ##   names cause.
   let (address, digest) = (file.address, file.digestDeclared)
   if address.len == 0 or digest.len == 0: return false
   createDir(root)
   let landing = root / digest & ".fetching"
-  removeFile(landing)
   defer: removeFile(landing)
-  if execCmdEx("curl -sSLf -o " & quoteShell(landing) & " " & quoteShell(address))[1] != 0:
-    return false
-  let got = landing.digest
-  if got != digest:
-    echo "Asset does not carry digest declared for it; wanted `" & digest & "`, got `" &
-      got & "`."
+  let why = fetchLanding(landing, address, digest)
+  if why.len > 0:
+    log.writeLine lineFailure(file, address, why)
+    log.flushFile  # as `echo` flushes, so line outlives run that dies after it
     return false
   moveFile(landing, root / digest)
   true
 
 
-proc assetIn*(root, file: string): string =
+proc assetIn*(root, file: string, log = stdout): string =
   ## Read path to asset in store, fetching it when store holds none; empty when it cannot.
   ##   Entry already present is trusted without re-reading its bytes: name is digest, so
   ##   file at that path either carries it or was never written there by this.
   let path = pathStore(root, file)
   if path.len == 0: return ""
   if fileExists(path): return path
-  if fetchAsset(root, file): path else: ""
+  if fetchAsset(root, file, log): path else: ""
