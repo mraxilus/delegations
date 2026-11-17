@@ -6,8 +6,8 @@ ni'o ni'o ni'o le vi selgu'a cu genturfa'i la lojban.
 ni'o zo ricyso'o noi lujvo fo lu tricu sombo li'u cu sinxa lo sombo be lo tricu
   .i le vi selgu'a cu se cmene zo ricyso'o ki'u lo nu le genturfa'i cu zbasu lo tricu pe ro jufra
   .i lo cmene be ro selgu'a pe `bangu` cu sinxa lo gunka poi kurji lo tricu ku'o ja'i `#920`
-  .i `h` basti zoi gy. ' .gy. ne'i ro judri be lo datnyvei be'o .e ro cmene pe `Nim` .e le cmene be
-      le vabycne
+  .i `h` basti zoi gy. ' .gy. ne'i ro judri be lo datnyvei be'o .e ro cmene pe `Nim` ge'u .e
+      `RICYSOHO_LISTS`
   .i ki'u bo `Nim` .e `shell` cu pilno zoi gy. ' .gy. lo drata
 
 ni'o le genturfa'i cu jdice ro valsi ja'i lo javni pe `CLL` po'o
