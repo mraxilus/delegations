@@ -354,7 +354,7 @@ ni'o lo pagbu poi lidne zo su noi romoi cu stali va'o lo nu le genturfa'i cu tci
   .i ba bo lo nu jmina cu cusku lo namcu be lo jgena be'o noi krasi li no ba le re minde ku'o .e lo
       krinu to `suites/test_merge.nim` toi
 
-ni'o lo minde po'u `javascript` zbasu `build/lojban_parser.js` noi samtci be fi `JavaScript` le
+ni'o lo minde po'u `javascript` zbasu `build/ricysoho.js` noi samtci be fi `JavaScript` le
     genturfa'i
   .i lo papri cu cpacu le samtci sepi'o lo jgena po'u `script` gi'e pilno ci fancu poi ro da ka'e
       pilno ke'a
@@ -467,7 +467,7 @@ nim r tools/build.nim cll <directory>             # write examples of CLL again 
 nim r tools/build.nim tatoeba <export>            # write sample of Tatoeba again from its export
 nim r tools/build.nim wikipedia <directory>       # write articles of Wikipedia again from answers
 nim r tools/build.nim translations                # fetch Alice and Oz, which suites then read
-nim r tools/build.nim javascript                  # compile parser to build/lojban_parser.js
+nim r tools/build.nim javascript                  # compile parser to build/ricysoho.js
 nim r tools/build.nim page                        # build page of live text, one file in build/
 nim r tools/build.nim drive                       # run suites of script and page in Chromium
 nim r tools/build.nim system                      # print packages verbs and suites need
@@ -514,11 +514,10 @@ ni'o lo batke po'u `Merge` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi l
 
 | built file, under `build/` | published at |
 | --- | --- |
-| lojban_parser.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
+| ricysoho.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
 
 ni'o lo minde po'u `page` zbasu le papri `pages/live.html`
-  .i ko rapli gubgau le papri fi `build/lojban_parser.html` ba ro cenba poi galfi lo selja'o be le
-      papri
+  .i ko rapli gubgau le papri fi `build/ricysoho.html` ba ro cenba poi galfi lo selja'o be le papri
   .i ko punji `URL` ne'i `pull request` .e lo notci poi cusku lo du'u le selgu'a cu bredi
 
 ## ni'o ni'o ni'o lo ca ckaji be le genturfa'i
