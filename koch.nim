@@ -250,6 +250,9 @@ proc runHook(root, event, input: string): int =
   ##     acting in other repository is that repository's, so these three pass it unread.
   ##   `path` and `edit` read checkout and path of file write names through `fileWritten`, which
   ##     both events and suite call; file outside every checkout reads as none, so both pass it.
+  ##   `path` judges through `checkPathEditMoved`, which suite calls too: name line of moved lock
+  ##     passes, as `check-scope` does, against base koch compares with, i.e. env `BASE`, else
+  ##     `origin/main`.
   let branch_root = root.branch
   case event
   of "path", "bash", "body", "edit", "stop":
@@ -262,7 +265,10 @@ proc runHook(root, event, input: string): int =
       if tool notin TOOLS_EDIT: return 0
       let written = fileWritten(root, directory, data{"tool_input"})
       if written.isNone: return 0
-      refuse(checkPathEdit(written.get.checkout.branch, written.get.path), 2)
+      let
+        (checkout, path) = written.get
+        base = getEnv("BASE", "origin/" & MAIN)
+      refuse(checkPathEditMoved(checkout, checkout.branch, path, base, tool, data{"tool_input"}), 2)
     of "bash":
       let
         command = data{"tool_input", "command"}.getStr
