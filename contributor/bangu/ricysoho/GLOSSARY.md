@@ -1,4 +1,4 @@
-# lojban_parser
+# ricysoho
 
 ni'o ni'o ni'o le vi selgu'a cu genturfa'i gi'e tcidu lo jbovla ja'i `The Complete Lojban Language`
     noi selcme zoi gy. CLL .gy.
