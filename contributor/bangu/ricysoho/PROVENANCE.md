@@ -14,15 +14,14 @@ ni'o ni'o ni'o le vi selgu'a cu selgu'a `contributor` gi'e selkra lo selmi'e be 
   .i le selmi'e cu dunda pa se zukte po'o le vi selgu'a
   .i le selzu'e cu nu zbasu lo mulno genturfa'i be la lojban. be'o noi ka'e tcidu ro drajbovla .e ro
       drajboselci'a
-  .i ja'i le selmi'e `rictadni` tcidu la lojban. sepi'o le genturfa'i noi na pagbu
-      `rictadni`
+  .i ja'i le selmi'e `rictadni` tcidu la lojban. sepi'o le genturfa'i noi na pagbu `rictadni`
 
 ni'o le vi selgu'a cu tcidu lo jbovla .e lo porsi be lo jbovla ja'i lo javni pe `CLL` po'o gi'e
     tcidu lo selci'a ja'i le gerna pe `CLL 21.1`
   .i pu lo nu le gerna cu tcidu kei lo javni pe `CLL 19.16` galfi lo valsi
 
-ni'o `rictadni` tcidu la lojban. sepi'o le ralju samtci pagbu be le genturfa'i gi'e ralte no
-    fukpi be lo samtci pagbu be le genturfa'i
+ni'o `rictadni` tcidu la lojban. sepi'o le ralju samtci pagbu be le genturfa'i gi'e ralte no fukpi
+    be lo samtci pagbu be le genturfa'i
   .i ci pagbu be le genturfa'i cu ponse lo tunba ne'i `rictadni`
   .i lo stedu be ro le ci pagbu cu cusku lo cmene be le tunba ja'i `Article II.9`
 
@@ -33,9 +32,9 @@ ni'o le pamoi pagbu cu du `tools/lists.nim`
 
 ni'o lo samtci pe `rictadni` zi'e poi galfi lo vlaste cu cpacu ji'a xa cmene `tools/lists.nim`
   .i lo stedu be le samtci cu cusku le xa cmene
-  .i lo nu galfi `src` .a `tools` pe le vi selgu'a cu rinka lo nu fanva lo cipra pe `rictadni`
-      ji'a ki'u lo nu lo platu pe `koch` cuxna ro selgu'a poi cpacu lo datnyveiste be lo drata se
-      gunka to `#882` toi
+  .i lo nu galfi `src` .a `tools` pe le vi selgu'a cu rinka lo nu fanva lo cipra pe `rictadni` ji'a
+      ki'u lo nu lo platu pe `koch` cuxna ro selgu'a poi cpacu lo datnyveiste be lo drata se gunka
+      to `#882` toi
   .i se ki'u bo lo nu galfi poi spofu `rictadni` rinka lo nu su'o cipra cu fliba
   .i lo xancipra be di'u cu tcidu `curator/audit/src/plan.nim` de'i li renorexa pi'e papa pi'e pavo
 
@@ -89,13 +88,12 @@ ni'o **ro datni poi le genturfa'i cu ralte ke'a seltcu le javni pe `CLL`**
   .i `CLL 4.11` .e `CLL 4.12` pilno lo rafsi be ro valsi pe lo tanru be'o lo nu jmina gi'e dunda lo
       namcu
   .i se ki'u bo le gimste cu ralte ro gismu .e lo rafsi be ro gismu
-  .i `rictadni` ralte lo glipau be le gimste be'o .e le mulno ke jvoste ki'u lo nu
-      `rictadni` sisku sepi'o le glipau .e le jvoste
+  .i `rictadni` ralte lo glipau be le gimste be'o .e le mulno ke jvoste ki'u lo nu `rictadni` sisku
+      sepi'o le glipau .e le jvoste
 
 ni'o le ma'oste cu ralte ro cmavo .e lo selma'o be ro cmavo
   .i le gerna cu nitcu le cmavo .e le selma'o
-  .i lo nu pilno lo pa valsi po'o .e lo gismu po'o cu selcu'a `rictadni` gi'e selra'e
-      `rictadni`
+  .i lo nu pilno lo pa valsi po'o .e lo gismu po'o cu selcu'a `rictadni` gi'e selra'e `rictadni`
 
 ## ni'o ni'o ni'o lo zunsna gunma .e lo tarmi
 
@@ -1787,7 +1785,7 @@ ni'o **ci fancu cu dunda le genturfa'i `JavaScript`**
   .i `src/javascript/live_text.nim` dunda `parseLojbanLive(options)` lo drata samtci to le ckupaupau
       po'u lu lo jmive se ciska ne'i lo samtci pe lo papri li'u toi
   .i le minde po'u `javascript` fanva le ci fancu jo'u le mulno genturfa'i fi `JavaScript` fu
-      `build/lojban_parser.js` Verified by `browser/suite_script.nim`.
+      `build/ricysoho.js` Verified by `browser/suite_script.nim`.
   .i `browser/suite_live.nim` cipra di'u ji'a
   .i le minde po'u `drive` pilno le cipra ne'i `headless Chromium` to le ckupaupau po'u lu lo cipra
       ne'i `Chromium` li'u toi
@@ -3114,8 +3112,8 @@ ni'o jdima fa lo nu ca ro nu jarco ro pagbu cu rapselxra
   .i se ki'u bo lo temci poi jdima lo nu pixra pa claselci'a cu ckini le ni le selci'a cu clani kei
       ta'i lo linji
 
-ni'o **le papri cu tcidu lo selci'a be fi `NIF` sepi'o `src/ricysoho/nif_read.nim` noi tcidu
-    ja'i le velski**
+ni'o **le papri cu tcidu lo selci'a be fi `NIF` sepi'o `src/ricysoho/nif_read.nim` noi tcidu ja'i le
+    velski**
   .i lo cipra cu tcidu ji'a lo selci'a be fi `NIF` sepi'o le tcidu
   .i se ki'u bo lo cipra cu cipra lo du'u le ciska cu mapti le velski kei gi'e no roi cipra lo du'u
       le ciska cu mapti vo'a
@@ -3188,7 +3186,7 @@ ni'o jdima fa lo nu le samtci cu punji no fancu pe lo nu jmina lo stuzi poi ro d
 
 ni'o **le papri cu se gubgau
   .i `README` cusku `URL` pe le papri**
-  .i lo minde po'u `page` zbasu le papri ta'i pa datnyvei po'u `build/lojban_parser.html`
+  .i lo minde po'u `page` zbasu le papri ta'i pa datnyvei po'u `build/ricysoho.html`
   .i jdima fa lo nu no cipra cu cipra lo du'u le papri poi se gubgau cu mintu le selzba
   .i se ki'u bo lo cenba poi galfi le papri cu se rapli gubgau ta'i lo xance to
       `CONTRIBUTOR.md, Before you open a pull request` toi
@@ -3261,7 +3259,7 @@ ni'o **lo cipra pe le samtci cu fasnu ne'i `headless Chromium` sepi'o lo minde p
 
 ni'o ro le cipra cu fanva le cripu sepi'o `-d:release` ta'i lo minde po'u `javascript`
   .i se ki'u bo le cripu cu stali lo ka mapti le genturfa'i
-  .i no cipra cu cpacu `build/lojban_parser.js`
+  .i no cipra cu cpacu `build/ricysoho.js`
 
 ni'o **`suites/test_driver.nim` tcidu le jitro samtci ta'i `koch`**
   .i `koch` cpacu `drive` .e `head` .e `system` pa pagbu poi cuxna lo minde gi'e selkra
@@ -3583,8 +3581,8 @@ ni'o le jicmu cu du `40718874` no'u le romoi cenba pe `#828`
       kau kei li re
 
 - ny.mai **lo nu le fanva cu cipra le ralju samtci pagbu**
-  .i `nim check --hints:off src/ricysoho.nim` gunka ze'a `0.95 s` .e `0.94 s` .e `0.93 s`
-      sepi'o `Nim 2.4.0` gi'e gunka ze'a `0.79 s` .e `0.77 s` .e `0.79 s` sepi'o `Nim 2.2.12`
+  .i `nim check --hints:off src/ricysoho.nim` gunka ze'a `0.95 s` .e `0.94 s` .e `0.93 s` sepi'o
+      `Nim 2.4.0` gi'e gunka ze'a `0.79 s` .e `0.77 s` .e `0.79 s` sepi'o `Nim 2.2.12`
   .i se ki'u bo `Nim 2.2.12` zmadu `Nim 2.4.0` lo ka sutra kei lo jibni be `0.15 s` ma'i le vi nu
       merli
 - ny.mai **ro cipra ca lo nu le sorcu cu kunti**
@@ -4131,8 +4129,8 @@ ni'o lo namcu cu selmre de'i `2026-11-11` sepi'o le stofanva .e `Intel Xeon` noi
     gi'e vasru vo pagbu poi skami
 
 - ny.mai **le papri**
-  .i `build/lojban_parser.html` vasru `4,435,252 bytes` ca `56bfadd7` gi'e vasru `4,319,737 bytes`
-      ca `ad2d62a4` noi ca ke'a le nu jmina cu na zvati
+  .i le selzbapapri cu vasru `4,435,252 bytes` ca `56bfadd7` gi'e vasru `4,319,737 bytes` ca
+      `ad2d62a4` noi ca ke'a le nu jmina cu na zvati
   .i le samtci pe le papri cu vasru `1,623,696 bytes` ca `56bfadd7` gi'e vasru `1,508,777 bytes` ca
       `ad2d62a4` gi'e vasru le papri .e le nu pixra .e le nu jmina
   .i le samtci poi lo minde po'u `javascript` zbasu ke'a vasru `1,146,066 bytes`
