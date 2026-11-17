@@ -3364,33 +3364,35 @@ applies its input. Each other refusal stays as scope gives it, and so does each 
 or a read fails.
 
 - Rejected: a write of that line by the shell, which takes a ruling of the Architect at each move.
-- Cost: the hook copies how each tool applies a change. The Edit tool refuses an `old_string`
-  that the file lacks, and one that repeats without `replace_all`. So the first occurrence is the
-  one that it replaces wherever it writes, and it takes a `$` in `new_string` as written. Verified
-  by hand in Claude Code 2.1.326 on 2026-11-17, on a scratch file. Where the harness changes how a
-  tool applies a change, the hook judges other text, and `check-scope` still judges the lock.
-- Cost: a move with `mv` alone leaves the new paths untracked, so git names no rename. The hook
-  then refuses the line until git stages the move.
-- Cost: a write of such a lock runs up to three more commands of git and one read of a file. A
-  lock that no rename names takes two of them and no read. Every other write runs none of them.
-- Measured by hand on 2026-11-17, on a delegate container with 4 processors, an Intel Xeon
-  Processor at 2.10GHz. Each figure is the mean of 50 runs of the built `koch hook path`, in four
-  rounds, at `7b26e4b0e` and then at `d1fe51d42`. In a scratch repository with the lock of
-  `lojban_tagger` as found, the name line takes 11.8 to 13.8 ms, then 18.1 to 21.0 ms. An edit of
-  its moved nimble file takes 12.6 to 13.3 ms, then 11.5 to 14.3 ms, so its ranges overlap.
-- Verified by `suites/test_hooks.nim`, for the move of `lojban_tagger` to `rictadni` as found, in
-  a scratch repository. The name line passes from each write tool, with the move staged and then
-  committed. Another line, another name, a lock that stayed and a file other than a lock keep the
-  refusal. So do a branch of another role, a base that git lacks and a directory in no repository.
-  The suite also holds the text that each tool leaves, and each input that gives none.
+- Cost: the hook copies how each tool applies a change. The Edit tool refuses an `old_string` that
+  the file lacks, and one that repeats without `replace_all`. So it replaces the first occurrence
+  wherever it writes, and takes a `$` in `new_string` as written. Verified by hand in Claude Code
+  2.1.326 on 2026-11-17, on a scratch file on the container of Figures. Where the harness changes
+  how a tool applies a change, the hook judges other text, and `check-scope` still judges the lock.
+- Cost: a move with `mv` alone leaves the new paths untracked, so git names no rename. The hook then
+  refuses the line until git stages the move.
+- Cost: a write of such a lock runs up to three more commands of git and one read of a file. A lock
+  that no rename names takes two of them and no read. Every other write runs none of them, as
+  `checkPathEditMoved` at `d1fe51d42` reads.
+- Measured by hand on 2026-11-17, on the container of Figures. Each figure is the mean of 50 runs of
+  the built `koch hook path`, in four rounds, at `7b26e4b0e` and then at `d1fe51d42`. In a scratch
+  repository with the lock of `lojban_tagger` as found, the name line takes 11.8 to 13.8 ms, then
+  18.1 to 21.0 ms. An edit of its moved nimble file takes 12.6 to 13.3 ms, then 11.5 to 14.3 ms, so
+  its ranges overlap.
+- Verified by `suites/test_hooks.nim`, for the move of `lojban_tagger` to `rictadni` as found, in a
+  scratch repository. The name line passes from Write, Edit and MultiEdit with the move staged, and
+  from Edit once committed. Another line, another name, a lock that stayed and a file other than a
+  lock keep the refusal. So do a branch of another role, a base that git lacks and a directory in no
+  repository. The suite also holds the text that each tool leaves, and each input that gives none.
 - No suite runs `main` of koch, so its call of the routine holds by hand. Verified by hand on
-  2026-11-17, by fake inputs to the built koch in the repository of the figures. Koch at `7b26e4b0e`
-  refuses the name line with exit 2, and koch at `d1fe51d42` passes it with exit 0. Another line
-  still exits 2, and so does the name line after a move with `mv` alone, until `git add`. Then
-  `koch check-scope` passes the committed line.
-- Verified by hand on 2026-11-17, by 17 breaks of `hooks.nim` at `d1fe51d42` in a scratch copy.
-  Sixteen fail a new test, by an assertion or an exception. The one that passes drops the guard on
-  the shape of the path, which saves the runs of git and changes no verdict.
+  2026-11-17, by fake inputs to the built koch in the repository of the figures. At `7b26e4b0e` koch
+  refuses the name line with exit 2, and at `d1fe51d42` it passes it with exit 0. Another line still
+  exits 2, as does the name line after `mv` alone, until `git add`. `koch check-scope` then passes
+  the committed line.
+- Verified by hand on 2026-11-17, on the container of Figures, by 17 breaks of a scratch copy of
+  `hooks.nim` at `d1fe51d42`, each against `suites/test_hooks.nim`. Sixteen fail a test of #950, by
+  an assertion or an exception. The one that passes drops the guard on the shape of the path, which
+  saves the runs of git and changes no verdict.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
