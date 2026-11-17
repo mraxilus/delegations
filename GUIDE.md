@@ -576,7 +576,7 @@ rafsi form.
 | ➖ 10. Not needed: draft rule, page link | carried 3 and 4: no push after ready, no page |
 
 **Summary:** The search, its record and the test that the curator asked for are done and green.
-The pull request waits only on D1. Row 9 belongs to ricysoho and blocks nothing here.
+The pull request waits only on D1. Row 9 belongs to ricyso'o and blocks nothing here.
 
 **State:** blocked, at `e5f6a7b`, pushed
 
