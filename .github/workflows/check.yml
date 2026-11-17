@@ -202,8 +202,8 @@ jobs:
       #   hit post step saves nothing.
       #   Rejected: key of `drive` in each `test` job. Job that fetched nothing would save each
       #     new key without its new rows: `test` of `curator/assayer` ended in 30 s, where `drive`
-      #     of ricysoho took 105 s (runner, 2026-11-16). Each `test` job would also restore
-      #     122,461,885 B, in about 2.6 s (`drive` of ricysoho, runner, 2026-11-16).
+      #     of ricyso'o took 105 s (runner, 2026-11-16). Each `test` job would also restore
+      #     122,461,885 B, in about 2.6 s (`drive` of ricyso'o, runner, 2026-11-16).
       #   Rejected: `actions/cache/restore` of entry of `drive`. That entry holds what first
       #     `drive` job to save had fetched, which need not be every row suite reads, so suite
       #     would fetch rest on each run.
