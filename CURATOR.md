@@ -328,9 +328,8 @@ and the shared allowance. This section adds only what differs for a curator.
     moves the rest. It also renames the nimble file, writes the lock line, and mends each list
     of the checker that names the folder. `GUIDE.md`, the code and suites of the curator
     projects, and their records follow in commits of their own. Where an edit moves the stamp,
-    re-stamp last (duty 1). The `path` hook refuses the lock line, since it judges one write and
-    reads no move. So ask the Architect for leave to write that line with the shell, and
-    `check-scope` holds it.
+    re-stamp last (duty 1). Once git stages the move, the `path` hook passes the lock line as
+    `check-scope` does, so the Edit tool writes it.
 
     After the merge, add the new label beside the old one on each open issue of the project.
     Copy its role string (`CONTRIBUTOR.md`, Boundaries). Open one issue for each moved project,
