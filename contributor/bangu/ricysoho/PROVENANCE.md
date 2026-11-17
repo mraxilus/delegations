@@ -33,13 +33,13 @@ ni'o le pamoi pagbu cu du `tools/lists.nim`
 ni'o lo samtci pe `rictadni` zi'e poi galfi lo vlaste cu cpacu ji'a xa cmene `tools/lists.nim`
   .i lo stedu be le samtci cu cusku le xa cmene
   .i `rictadni` cu fanva le cenba pe le vi selgu'a zi'e poi `atlas.lock` pe `rictadni` cu sinxa ke'a
-  .i se ki'u bo lo nu galfi `src` .a `tools` pe le vi selgu'a cu rinka no lo nu lo cipra pe
+  .i se ki'u bo lo nu galfi `src` .a `tools` vu'o pe le vi selgu'a cu rinka no lo nu lo cipra pe
       `rictadni` cu fliba
   .i se ki'u bo lo nu galfi poi spofu `rictadni` cu se facki ca lo nu `rictadni` cu galfi
       `atlas.lock` pe vo'a
   .i `koch check` cusku le cenba ne'i pa linji noi rinka no lo nu fliba to `#948` toi
-  .i lo xancipra be di'u cu tcidu `curator/audit/src/plan.nim` .e `curator/audit/src/lags.nim` de'i
-      li renorexa pi'e papa pi'e paze
+  .i lo xancipra be di'u de'i li renorexa pi'e papa pi'e paze cu pilno `nim r koch check` gi'e tcidu
+      `curator/audit/src/plan.nim` .e `curator/audit/src/lags.nim`
 
 ni'o le turni be le vi selgu'a cu du `The Complete Lojban Language` noi selcme zoi gy. CLL .gy.
   .i `CLL` selci'a `John Woldemar Cowan` gi'e seldu'a `Logical Language Group`
