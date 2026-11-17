@@ -922,12 +922,10 @@ and the move is visible in review, so the cost is disorder rather than damage.
 - Rejected: a move that leaves the lock line stale. The next pull request of the project would
   then clear a finding that the move made.
 - Rejected: an ignore line for the stray nimble copy, which hides a file from the audit.
-- Cost: the `path` hook judges the path of one write, and reads no move. So it refuses a write
-  tool on the name line of a moved lock, which `check-scope` passes. The curator writes that line
-  with a command of the shell, which `bash` judges by no path. The Architect gives leave for it at
-  each move (`CURATOR.md`, duty 13). Verified by hand on 2026-11-15, in
-  Claude Code: `path` refused the Edit tool on `contributor/bangu/rictadni/atlas.lock`, and
-  `koch check-scope` then passed the line.
+- The `path` hook passes the same line before the write, so the Edit tool writes it (section Hooks
+  on tool calls). It reads the rename from git, staged or committed, and judges the text that the
+  write leaves. Verified by `suites/test_hooks.nim`, for the move of `lojban_tagger` to `rictadni`
+  as found.
 - Verified by `suites/test_scope.nim`: a moved path is exempt on the curator root alone, and a move
   never widens a project branch. The name line of a lock passes. Another name, a second edit, an
   edit in place and a file other than a lock each fail.
@@ -3242,7 +3240,7 @@ The rule stays in the audit, once, and the hook reads the fact of its event and 
 that holds it. The events, each one a verb argument:
 
 - `path` refuses a write inside the repository but outside the scope of the branch, before the
-  write.
+  write. It passes the name line of a moved lock, as `check-scope` does.
 - `edit` runs the static checks after a write inside the repository, and returns the findings
   of that file as context. It splits them by the branch of the checkout and the lines that the
   branch changed, as `koch check` does. So a held finding never stands under "fix before push".
@@ -3351,6 +3349,48 @@ names, else the working directory of the call.
   primary. They refuse a commit and a write there, and pass both in a scratch repository.
 - Cost: only the first git command of a shell line is read. A second one with another `-C`
   is held to the branch of the first.
+
+**`path` passes the name line of a moved lock as `check-scope` does, as the Architect ruled on
+#950.** A move of a project changes one line of its lock, the line that names its nimble copy
+(section Branch scope). Where scope refuses a write of `contributor/<domain>/<project>/atlas.lock`
+on a root curator branch, `checkPathEditMoved` reads git in the checkout of the write. It reads
+the merge base with the base of koch, which is `BASE`, else `origin/main`. Then it reads each
+rename from that merge base to the working tree, so a staged move counts as a committed one.
+Where a rename names the lock as its new side, the hook passes the write only where `isLockMoved`
+holds.
+
+The hook runs before the write, so `textWritten` gives the text after it, as each write tool
+applies its input. Each other refusal stays as scope gives it, and so does each refusal where git
+or a read fails.
+
+- Rejected: a write of that line by the shell, which takes a ruling of the Architect at each move.
+- Cost: the hook copies how each tool applies a change. The Edit tool refuses an `old_string`
+  that the file lacks, and one that repeats without `replace_all`. So the first occurrence is the
+  one that it replaces wherever it writes, and it takes a `$` in `new_string` as written. Verified
+  by hand in Claude Code 2.1.326 on 2026-11-17, on a scratch file. Where the harness changes how a
+  tool applies a change, the hook judges other text, and `check-scope` still judges the lock.
+- Cost: a move with `mv` alone leaves the new paths untracked, so git names no rename. The hook
+  then refuses the line until git stages the move.
+- Cost: a write of such a lock runs up to three more commands of git and one read of a file. A
+  lock that no rename names takes two of them and no read. Every other write runs none of them.
+- Measured by hand on 2026-11-17, on a delegate container with 4 processors, an Intel Xeon
+  Processor at 2.10GHz. Each figure is the mean of 50 runs of the built `koch hook path`, in four
+  rounds, at `7b26e4b0e` and then at `d1fe51d42`. In a scratch repository with the lock of
+  `lojban_tagger` as found, the name line takes 11.8 to 13.8 ms, then 18.1 to 21.0 ms. An edit of
+  its moved nimble file takes 12.6 to 13.3 ms, then 11.5 to 14.3 ms, so its ranges overlap.
+- Verified by `suites/test_hooks.nim`, for the move of `lojban_tagger` to `rictadni` as found, in
+  a scratch repository. The name line passes from each write tool, with the move staged and then
+  committed. Another line, another name, a lock that stayed and a file other than a lock keep the
+  refusal. So do a branch of another role, a base that git lacks and a directory in no repository.
+  The suite also holds the text that each tool leaves, and each input that gives none.
+- No suite runs `main` of koch, so its call of the routine holds by hand. Verified by hand on
+  2026-11-17, by fake inputs to the built koch in the repository of the figures. Koch at `7b26e4b0e`
+  refuses the name line with exit 2, and koch at `d1fe51d42` passes it with exit 0. Another line
+  still exits 2, and so does the name line after a move with `mv` alone, until `git add`. Then
+  `koch check-scope` passes the committed line.
+- Verified by hand on 2026-11-17, by 17 breaks of `hooks.nim` at `d1fe51d42` in a scratch copy.
+  Sixteen fail a new test, by an assertion or an exception. The one that passes drops the guard on
+  the shape of the path, which saves the runs of git and changes no verdict.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
