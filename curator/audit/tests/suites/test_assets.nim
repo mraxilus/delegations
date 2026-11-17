@@ -3,12 +3,33 @@
 ##     `font_files.nim` as browser reads them, i.e. codepoint maps to glyph other than `.notdef`.
 ##     Static pass reads rows and never bytes, so suite alone reads bytes of store.
 ##   Cost: test fetches each font face store lacks, so cold store needs network and about 6 MB.
+##   Fetch itself is held on `file://` addresses, which curl reads with no network; cause and
+##     line of fetch that fails are held on text curl printed, and on fake `curl` first on
+##     `PATH`, which fails as curl does with no network or server, and skips where it cannot run.
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, unittest]
+import std/[os, osproc, strutils, tempfiles, unittest]
 import ../../src/[assets, font_files]
 from ../../../knoller/src/knoller import DIRECTORY_CACHE
+
+
+const
+  DIGEST_ABC = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    ## SHA-256 of `abc`, i.e. FIPS 180-2 Appendix B.1.
+  DIGEST_EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ## SHA-256 of no bytes, which empty answer of server carries.
+  CAUSE_RESOLVE = "curl: (6) Could not resolve host: cdn.jsdelivr.net"
+    ## What curl 8.5.0 prints for fetch of store with network cut, 2026-11-17.
+  TEXT_CURL_60 =
+      "curl: (60) SSL certificate problem: self-signed certificate\n" &
+      "More details here: https://curl.se/docs/sslcerts.html\n" &
+      "\n" &
+      "curl failed to verify the legitimacy of the server and therefore could not\n" &
+      "establish a secure connection to it. To learn more about this situation and\n" &
+      "how to fix it, please visit the web page mentioned above.\n"
+    ## What curl 8.5.0 prints for error 60 under `-sS`: six lines, one blank.
+    ##   Read off `openssl s_server` serving certificate no authority signed, 2026-11-17.
 
 
 func toSlices(codepoints: seq[int]): seq[Slice[int]] =
@@ -32,6 +53,24 @@ func toText(ranges: seq[Slice[int]]): string =
       else: bounds.a.toHexLower & "-" & bounds.b.toHexLower
     )
   tokens.join(" ")
+
+
+template withCurl(bin, script: string, body: untyped) =
+  ## Run body with fake `curl` first on `PATH`: script under `sh`, which fetches nothing.
+  ##   So fetch that fails is held as curl fails, with no network.
+  ##   Fake answers `--probe` by its full path first, so test skips where it cannot run.
+  createDir(bin)
+  writeFile(bin / "curl", "#!/bin/sh\n[ \"$1\" = --probe ] && exit 0\n" & script & "\n")
+  setFilePermissions(bin / "curl", {fpUserRead, fpUserWrite, fpUserExec})
+  if execCmdEx(quoteShellCommand([bin / "curl", "--probe"])).exitCode != 0:
+    # Gap: directory mounted `noexec` runs no fake, and shell would reach real curl and
+    #   network, so fake fetch is held where directory runs it (Article IX.9).
+    skip()
+  else:
+    let found = getEnv("PATH")
+    putEnv("PATH", bin & PathSep & found)
+    try: body
+    finally: putEnv("PATH", found)
 
 
 
@@ -179,6 +218,90 @@ suite "Assets":
     for row in declaration().strip.splitLines:
       check not row.startsWith('/')  # never absolute path
       check not row.fileExists  # nor relative one that happens to resolve
+
+
+  test "fetch says why bytes did not land, in curl's own words or by digest, and keeps none":
+    # Case as found (#953): scheduled run of `check` on `main` at `7786ce6` failed at
+    #   `check path.len > 0` of font face test below, and its log named no cause, since fetch
+    #   dropped what curl printed. Domain: curl fails, bytes carry other digest, bytes carry
+    #   declared one; landing path holds bytes exactly where why is empty.
+    let directory = createTempDir("test_assets_", "_fetch")
+    defer: removeDir(directory)
+    let
+      landing = directory / "landing"
+      source = directory / "source"
+      empty = directory / "empty"
+      missing = directory / "missing"
+    writeFile(source, "abc")
+    writeFile(empty, "")
+    writeFile(landing, "stale")
+    let failed = fetchLanding(landing, "file://" & missing, DIGEST_ABC)
+    check failed.startsWith("curl: (37) ")  # curl's own error, its exit code first
+    check missing in failed  # names what curl could not read
+    check '\n' notin failed  # one line, which message of fetch carries whole
+    check not fileExists(landing)  # stale bytes at landing path gone, never read as landed
+    check fetchLanding(landing, "file://" & empty, DIGEST_ABC) ==
+        "digest " & DIGEST_EMPTY & ", wanted " & DIGEST_ABC  # refused, both digests named
+    check not fileExists(landing)  # bytes curl wrote and digest refused never kept
+    check fetchLanding(landing, "file://" & source, DIGEST_ABC).len == 0  # landed, no why
+    check readFile(landing) == "abc"  # bytes of address, at landing path
+
+
+  test "cause of fetch that fails is what curl printed, on one line, else its exit code":
+    # Curl prints some errors over several lines, as error 60 over six, so lines join.
+    check causeCurl(TEXT_CURL_60, 60) ==
+        "curl: (60) SSL certificate problem: self-signed certificate " &
+        "More details here: https://curl.se/docs/sslcerts.html " &
+        "curl failed to verify the legitimacy of the server and therefore could not " &
+        "establish a secure connection to it. To learn more about this situation and " &
+        "how to fix it, please visit the web page mentioned above."  # six lines, one apart
+    check causeCurl(CAUSE_RESOLVE & "\n", 6) == CAUSE_RESOLVE  # one line, as printed
+    check causeCurl("", 143) == "curl exited 143"  # nothing printed still gives cause
+    check causeCurl("\n \n", 7) == "curl exited 7"  # blank lines print nothing
+
+
+  test "fetch reads its cause through every line curl printed, else through its exit code":
+    # Fake `curl` prints error 60 as curl 8.5.0 does, so fetch is held on six lines with no
+    #   server, and on curl that prints nothing.
+    let directory = createTempDir("test_assets_", "_curl")
+    defer: removeDir(directory)
+    let (landing, said) = (directory / "landing", directory / "said")
+    writeFile(said, TEXT_CURL_60)
+    withCurl(directory / "bin", "cat " & said.quoteShell & " >&2; exit 60"):
+      check fetchLanding(landing, "https://localhost/x", DIGEST_ABC) ==
+          causeCurl(TEXT_CURL_60, 60)  # six lines read as one
+    withCurl(directory / "bin", "exit 7"):
+      check fetchLanding(landing, "https://localhost/x", DIGEST_ABC) ==
+          "curl exited 7"  # printed nothing, yet cause named
+      check not fileExists(landing)  # nothing landed
+
+
+  test "line of fetch that fails names file, address and why, and never reads as path":
+    # Project builds take lines of `koch fetch-assets` that open with `/`, or name file that
+    #   exists, as paths, as test of rows above says; line opening with word passes neither.
+    const font_face = "NotoSans-Regular.ttf"
+    let line = lineFailure(font_face, font_face.address, CAUSE_RESOLVE)
+    check "`" & font_face & "`" in line  # file
+    check "`" & font_face.address & "`" in line  # address
+    check "`" & CAUSE_RESOLVE & "`" in line  # why
+    check not line.startsWith('/')  # never absolute path
+    check not line.fileExists  # nor relative one
+
+
+  test "fetch that does not land writes its line to log, so log of run names cause":
+    # Case as found (#953): log of run named no cause. Fake `curl` fails as curl does with
+    #   network cut, and what `assetIn` writes to its log is what log of run shows.
+    const font_face = "NotoSans-Regular.ttf"
+    let directory = createTempDir("test_assets_", "_log")
+    defer: removeDir(directory)
+    let written = directory / "log"
+    withCurl(directory / "bin", "echo " & CAUSE_RESOLVE.quoteShell & " >&2; exit 6"):
+      var log = open(written, fmWrite)
+      let path = assetIn(directory / "store", font_face, log)
+      log.close
+      check path.len == 0  # not landed, so no path
+      check readFile(written) ==
+          lineFailure(font_face, font_face.address, CAUSE_RESOLVE) & "\n"  # one line, whole
 
 
   test "each font face row carries codepoints its file maps, read from its bytes (Article X.8)":
