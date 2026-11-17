@@ -1630,9 +1630,9 @@ fetch that fails.
   which names `curl: (6) Could not resolve host: cdn.jsdelivr.net`, and the store stayed empty.
   With either one set, the line names `curl: (7) Failed to connect to 127.0.0.1 port <p>`
   instead, where `<p>` is the port of the proxy.
-- Cost: a cold store still waits on the network. On the same machine and date, one of six cold
-  runs of the suite failed through the proxy. Its line named `curl: (18) Transferred a partial
-  file` for `NotoSansSymbols2-Regular.ttf`, and the store kept no bytes of it.
+- Cost: a cold store still waits on the network. On the same machine and date, a cold run of the
+  suite failed through the proxy. Its line named `curl: (18) Transferred a partial file` for
+  `NotoSansSymbols2-Regular.ttf`, and the store kept no bytes of it.
 
 **The store holds archives too, in a table of their own.** `drive` of ricysoho runs the headless
 shell of Chrome for Testing, pinned, by ruling D1 a of #864.
