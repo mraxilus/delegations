@@ -2,7 +2,8 @@
 ##   Hook is mechanism and not rule: it calls koch verb and holds no rule of its own
 ##     (CURATOR.md, What no check can reach). Every finding here is one audit already states
 ##     for gate; this module reads hook's fact and names check holding it, so rule lives once.
-##   Events, by verb argument: `path` refuses write inside repository and outside branch scope;
+##   Events, by verb argument: `path` refuses write inside repository and outside branch scope,
+##     but passes name line of moved lock, as `check-scope` does (#950);
 ##     `edit` returns static findings after write; `bash` refuses commit or push on `main` or
 ##     outside grammar, rewrite of pushed history, and push past pre-push hook, since `koch check`
 ##     holds what each project clears on its own branch (duty 3); `body` holds post before it
@@ -29,7 +30,9 @@
 ##   Pure functions take strings and return findings; procs read transcript JSON, body files and
 ##     file of role `start` prints (`readPrompt`), since `parseJson` and file reads are
 ##     effectful. `fileWritten` runs git too, through `checkoutAt`, since git names checkout
-##     holding file.
+##     holding file. `checkPathEditMoved` runs git and reads lock where scope refuses write of
+##     contributor lock on root curator branch, since rename and old lock live in git; text
+##     write leaves is pure (`textWritten`).
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
 ##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, context, rule line,
@@ -54,6 +57,8 @@
 ##     what turn did is read from there.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
+##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
+##     changes that, hook judges other text than tool writes, and `check-scope` still judges lock.
 ##   Cost: window reads field `origin.kind` of harness; where no entry carries it, window starts
 ##     with turn, so only sign-offs of that turn are compared, and no group past it.
 ##   Cost: sign-off whose groups do not read takes findings of its shape alone, so group it drops
@@ -72,11 +77,12 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, sequtils, strutils, uri]
+from ../../knoller/src/knoller/chain import FILE_LOCK
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
 from ./prompts import HEADING_READ
 from ./toolchain import DIRECTORY_DRIVER
-from ./tree import checkoutAt
+from ./tree import checkoutAt, fieldsGit, textAt
 
 
 type
@@ -341,6 +347,86 @@ func checkPathEdit*(branch, path: string): seq[Finding] =
   ##     them on pull request.
   if path.isAbsolute: return
   checkScope(branch, [path])
+
+
+func textWritten*(tool, text: string; tool_input: JsonNode): Option[string] =
+  ## Read text file holds after write, from text before it and input of tool.
+  ##   `Write` gives `content`. `Edit` puts `new_string` for `old_string`, each occurrence where
+  ##     `replace_all`, else first. `MultiEdit` applies its `edits` in order, each on text edit
+  ##     before it leaves.
+  ##   None where tool names no text, or would refuse: `old_string` empty, or absent from text.
+  ##     Edit tool refuses repeated `old_string` without `replace_all` too, so first occurrence is
+  ##     one it replaces wherever it writes, and `$` of `new_string` stays as written (verified
+  ##     by hand, PROVENANCE.md, Hooks on tool calls).
+  ##   Cost: copy of how each tool applies change, which harness may change unseen; `path` then
+  ##     judges other text than tool writes, and `check-scope` still judges lock before merge.
+
+  func edited(text: string, edit: JsonNode): Option[string] =
+    ## Put `new_string` of edit for its `old_string`, each one where `replace_all`, else first;
+    ##   none where edit names no `old_string`, or text lacks it.
+    if edit{"old_string"}.isNil or edit{"new_string"}.isNil: return none(string)
+    let
+      (text_old, text_new) = (edit{"old_string"}.getStr, edit{"new_string"}.getStr)
+      at = if text_old.len == 0: -1 else: text.find(text_old)
+    if at < 0: none(string)
+    elif edit{"replace_all"}.getBool: some(text.replace(text_old, text_new))
+    else: some(text[0..<at] & text_new & text[at+text_old.len .. ^1])
+
+  # Read whole text of Write, else edits of Edit or MultiEdit; other tool names no text.
+  if tool == "Write":
+    if tool_input{"content"}.isNil: return none(string)
+    return some(tool_input{"content"}.getStr)
+  let edits =
+    case tool
+    of "Edit": @[tool_input]
+    of "MultiEdit": tool_input{"edits"}.getElems
+    else: @[]
+  if edits.len == 0: return none(string)
+
+  # Apply each edit in order, on text edit before it leaves; edit tool refuses gives none.
+  result = some(text)
+  for edit in edits:
+    result = result.get.edited(edit)
+    if result.isNone: return
+
+
+proc checkPathEditMoved*(
+  checkout, branch, path, base, tool: string; tool_input: JsonNode
+): seq[Finding] =
+  ## Report write outside scope branch names, as `checkPathEdit` does, but pass write that keeps
+  ##   lock moved, as `check-scope` passes it (`isLockMoved`), as Architect ruled on #950.
+  ##   Move of project changes one line of its lock, which names its nimble copy, so Edit tool
+  ##     writes that line on root curator branch, and every other refusal stays as scope gives it.
+  ##   Rename is read from merge base of `base` to working tree, so move `git mv` stages counts as
+  ##     committed one does. Old lock is read at merge base, and text after write through
+  ##     `textWritten`, since hook runs before write lands.
+  ##   Base git lacks, or read that fails, keeps refusal.
+  ##   Cost: up to three runs of git and one read of file, for each write of contributor lock that
+  ##     scope refuses on root curator branch; lock no rename names takes two runs and no read.
+  ##     Every other write runs none of them.
+
+  # Judge by scope first; only refused lock of contributor project on root curator reads git.
+  result = checkPathEdit(branch, path)
+  let
+    parsed = branch.parseBranch
+    parts = path.split('/')
+  if result.len == 0 or parsed.isNone or parsed.get.role != Role.Curator: return
+  if parts.len != 4 or parts[0] != CONTRIBUTOR or parts[3] != FILE_LOCK: return
+
+  # Pass write whose text keeps lock moved, from rename whose new side is path.
+  try:
+    let
+      fork = fieldsGit(checkout, ["merge-base", base, "HEAD"])[0].strip
+      renamed = fieldsGit(
+        checkout, ["diff", "-z", "--name-status", "--find-renames", "--diff-filter=R", fork]
+      )
+    for i in countup(0, renamed.len - 3, 3):  # Score, old path, new path.
+      if renamed[i+2] != path: continue
+      let
+        lock_from = textAt(checkout, fork, renamed[i+1])
+        lock_to = textWritten(tool, readFile(checkout / path), tool_input)
+      if lock_to.isSome and isLockMoved(renamed[i+1], path, lock_from, lock_to.get): return @[]
+  except IOError, OSError: discard  # Base git lacks, or read failed: refusal stays.
 
 
 func segments(command: string): seq[seq[string]] =

@@ -270,6 +270,128 @@ suite "Hooks":
     check refused(root, %*{"file_path": code}, "curator/x").len == 1  # records alone
 
 
+  test "write hook reads text write leaves, from input of each tool (#950)":
+    # `path` judges write before it lands, so it applies input of tool to text before write. Edit
+    #   tool refuses `old_string` text lacks, and repeated one without `replace_all`, so first
+    #   occurrence is one it replaces wherever it writes.
+    func written(tool: string, input: JsonNode): Option[string] =
+      ## Read text write leaves in file holding `a b a`.
+      textWritten(tool, "a b a\n", input)
+
+    # Read whole text of Write, and each edit applied as tool applies it.
+    check written("Write", %*{"content": "c\n"}) == some("c\n")
+    check written("Edit", %*{"old_string": "a", "new_string": "c"}) == some("c b a\n")  # first
+    check written("Edit", %*{"old_string": "a", "new_string": "c", "replace_all": false}) ==
+      some("c b a\n")
+    check written("Edit", %*{"old_string": "a", "new_string": "c", "replace_all": true}) ==
+      some("c b c\n")  # each occurrence
+    check written("MultiEdit", %*{"edits": [
+      {"old_string": "a", "new_string": "c"},
+      {"old_string": "c b", "new_string": "d"},
+    ]}) == some("d a\n")  # in order, each on text edit before it leaves
+
+    # Give none where tool names no text, or would refuse.
+    for (tool, input) in [
+      ("Write", %*{"file_path": "x"}),  # no content
+      ("Edit", %*{"old_string": "d", "new_string": "c"}),  # text lacks it
+      ("Edit", %*{"old_string": "", "new_string": "c"}),  # names nothing to replace
+      ("Edit", %*{"new_string": "c"}),
+      ("Edit", %*{"old_string": "a"}),
+      ("MultiEdit", %*{"edits": [
+        {"old_string": "a", "new_string": "c", "replace_all": true},
+        {"old_string": "a", "new_string": "d"},
+      ]}),  # second edit finds none of what first replaced
+      ("MultiEdit", %*{"edits": newJArray()}),  # no edit
+      ("MultiEdit", %*{"file_path": "x"}),
+      ("NotebookEdit", %*{"new_source": "c"}),  # no text of file
+      ("Bash", %*{"content": "c\n", "old_string": "a", "new_string": "c"}),  # no write tool
+    ]:
+      check written(tool, input).isNone
+
+
+  test "path hook passes name line of moved lock alone, as check-scope does (#950)":
+    # Case as found: in move of `lojban_tagger` to `contributor/bangu/rictadni`, `path` refused
+    #   Edit tool on name line of its lock, though `check-scope` passed that line (#950).
+    #   Domain: that line from each write tool, with move staged and committed; other line, other
+    #   name, lock that stayed, file other than lock, branch of other role, base git lacks, and
+    #   directory in no repository.
+    proc refused(
+      checkout, branch, path, tool: string; input: JsonNode; base = "main"
+    ): seq[string] =
+      ## Read refusals of write, through routine `koch hook path` calls.
+      checkPathEditMoved(checkout, branch, path, base, tool, input).messages
+
+    # Commit project and its lock on `main`, beside project that stays; move it with `git mv`.
+    let
+      root = repoTemp()
+      scratch = createTempDir("delegations_", "_scratch")
+      directory_from = "contributor/bangu/lojban_tagger"
+      lock = DIRECTORY_TAGGER & "/atlas.lock"
+      stayed = DIRECTORY_PARSER & "/atlas.lock"
+      nimble = DIRECTORY_TAGGER & "/rictadni.nimble"
+      branch = "curator/move-tagger"
+      (name_from, name_to) = ("\"lojban_tagger.nimble\"", "\"rictadni.nimble\"")
+    defer: removeDir(root)
+    defer: removeDir(scratch)
+    root.writeInto(directory_from & "/lojban_tagger.nimble", TEXT_NIMBLE)
+    root.writeInto(
+      directory_from & "/atlas.lock", lockWith(TEXT_NIMBLE).replace("\"probe.nimble\"", name_from)
+    )
+    root.writeInto(DIRECTORY_PARSER & "/ricysoho.nimble", TEXT_NIMBLE)
+    root.writeInto(
+      stayed, lockWith(TEXT_NIMBLE).replace("\"probe.nimble\"", "\"ricysoho.nimble\"")
+    )
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'build(rictadni): pin'")
+    discard root.git("checkout -q -b " & branch)
+    discard root.git("mv " & directory_from & " " & DIRECTORY_TAGGER)
+    discard root.git("mv " & DIRECTORY_TAGGER & "/lojban_tagger.nimble " & nimble)
+    let
+      text = readFile(root / lock)
+      edit_name = %*{"old_string": name_from, "new_string": name_to}
+      edit_version = %*{"old_string": "0.1.0", "new_string": "0.2.0"}
+      refusal = checkPathEdit(branch, lock).messages
+    check refusal.len == 1  # scope alone refuses each write of lock
+
+    # Pass name line from each write tool, with move staged.
+    check refused(root, branch, lock, "Edit", edit_name).len == 0
+    check refused(root, branch, lock, "Write", %*{"content": text.replace(name_from, name_to)})
+      .len == 0
+    check refused(root, branch, lock, "MultiEdit", %*{"edits": [edit_name]}).len == 0
+
+    # Refuse each other write of that lock, as scope refuses it.
+    for (tool, input) in [
+      ("Edit", edit_version),  # other line
+      ("Edit", %*{"old_string": name_from, "new_string": "\"gamma.nimble\""}),  # name of no folder
+      ("MultiEdit", %*{"edits": [edit_name, edit_version]}),  # other line beside name line
+      ("Write", %*{"content": text.replace(name_from, name_to) & "\n"}),  # line added
+      ("Edit", %*{"old_string": name_to, "new_string": name_from}),  # text lacks it
+      ("NotebookEdit", %*{"new_source": name_to}),  # tool names no text of file
+    ]:
+      check refused(root, branch, lock, tool, input) == refusal
+
+    # Refuse lock that stayed, file other than lock, branch of other role, and git that fails.
+    let refusal_stayed = checkPathEdit(branch, stayed).messages
+    check refusal_stayed.len == 1
+    check refused(root, branch, stayed, "Edit", %*{
+      "old_string": "\"ricysoho.nimble\"", "new_string": name_to,
+    }) == refusal_stayed
+    check refused(root, branch, stayed, "Write", %*{"content": readFile(root / stayed)}) ==
+      refusal_stayed  # its own text, one line from old text of moved lock
+    check refused(root, branch, nimble, "Edit", edit_version) ==
+      checkPathEdit(branch, nimble).messages
+    for other in ["contributor/bangu/lojban_tagger/move", "curator/audit/move"]:
+      let refusal_other = checkPathEdit(other, lock).messages
+      check refusal_other.len == 1
+      check refused(root, other, lock, "Edit", edit_name) == refusal_other
+    check refused(root, branch, lock, "Edit", edit_name, base = "origin/main") == refusal
+    check refused(scratch, branch, lock, "Edit", edit_name) == refusal  # no repository
+
+    # Pass name line once move is committed too.
+    discard root.git("commit -q -m 'refactor(rictadni): move lojban_tagger here'")
+    check refused(root, branch, lock, "Edit", edit_name).len == 0
+
+
   test "git commands read through shell operators and options":
     check commandsGit("git -c a=b push -u origin x && echo ok") == @[@["push", "-u", "origin", "x"]]
     check commandsGit("cd x; git commit -m 'a' | cat") == @[@["commit", "-m", "'a'"]]
