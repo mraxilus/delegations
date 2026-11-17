@@ -8,7 +8,7 @@
 ##     carries version, since each release keeps one upstream file name. First three columns are
 ##     what any such file needs. Asset wanting field neither row holds, as variant set, makes
 ##     third shape. Said here so next reader does not assume either shape answers it.
-##   Archive is tool, as headless shell of Chrome for Testing that `drive` of ricysoho
+##   Archive is tool, as headless shell of Chrome for Testing that `drive` of ricyso'o
 ##     runs (repository issue 864). Its trust is store's: digest pinned here, bytes checked on
 ##     fetch. Nim tarball differs, since its digest comes from upstream at fetch time (below).
 ##
@@ -210,7 +210,7 @@ const
     ##   Codepoints follow bytes: suite reads them off bytes digest checks, so digest moved
     ##   without them fails suite.
   ARCHIVES* = [
-    # Headless shell of Chrome for Testing, which `drive` of ricysoho unpacks and runs.
+    # Headless shell of Chrome for Testing, which `drive` of ricyso'o unpacks and runs.
     #   Pinned, so runner and each delegate machine drive same bytes (repository issue 864).
     ("chrome-headless-shell-linux64-153.0.8010.12.zip",
       CHROME_FOR_TESTING & "153.0.8010.12/linux64/chrome-headless-shell-linux64.zip",

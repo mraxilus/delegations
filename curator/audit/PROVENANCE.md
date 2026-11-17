@@ -234,7 +234,7 @@ can pass 25 words.
 
 **A project of `bangu` that the Architect approves keeps its records and its comments in its own
 language.** `PROJECTS_PROSE_OWN` in `prose_own.nim` names each such project, as ruling D4 a of
-#818 approves `ricysoho`. The English check reads none of its three records, and the check
+#818 approves `ricyso'o`. The English check reads none of its three records, and the check
 of articles reads none of its comments. `koch fix` deletes no word of those comments that reads as
 an article, and the plan reads each of those records as code. Every other check reads the
 project. Its comments follow their own language for capitals and periods too (VI.10), as the
@@ -245,12 +245,12 @@ In lojban, `a` joins two names as "or" does. So the check reads `# la .alis. a l
 as a comment that holds an article, and the fixer deletes `a`, which changes what the comment
 says. Lojban closes no sentence with a stop, so a paragraph of lojban reads as one long sentence.
 A capital marks stress in lojban (CLL 3.9), and a period marks a pause (CLL 3.3). So a capital
-that opens a comment can change how the parser of `ricysoho` reads the first word.
+that opens a comment can change how the parser of `ricyso'o` reads the first word.
 
 **Each entry names its project, the issue of its approval, and the suite that holds its prose.**
 Such a suite reads the prose of its project in its own language, where no rule of English can.
 The entry says whether the audit demands the suite (`should_demand_suite`), and the entry of
-`ricysoho` demands its suite. A change to a record of a listed project runs its suites, so
+`ricyso'o` demands its suite. A change to a record of a listed project runs its suites, so
 a record that breaks a suite of its project never merges unseen.
 
 **A static assertion holds each entry to a project directly under `contributor/bangu/`.**
@@ -1607,8 +1607,8 @@ fetch that fails.
   misses, the suite writes the store itself.
 - Rejected: the key of `drive` in each `test` job. The first job to finish takes each new key. So
   a job that fetched nothing would save it without the new rows. On the runner, 2026-11-16,
-  `test` of `curator/assayer` took 30 s, where `drive` of ricysoho took 105 s. Each `test` job
-  would also restore 122,461,885 B, in about 2.6 s, as `drive` of ricysoho did on the runner that
+  `test` of `curator/assayer` took 30 s, where `drive` of ricyso'o took 105 s. Each `test` job
+  would also restore 122,461,885 B, in about 2.6 s, as `drive` of ricyso'o did on the runner that
   day.
 - Rejected: `actions/cache/restore` of the entry of `drive`. That entry holds what the first
   `drive` job to save had fetched, which need not be every row that the suite reads. So the suite
@@ -1635,7 +1635,7 @@ fetch that fails.
   suite failed through the proxy. Its line named `curl: (18) Transferred a partial file` for
   `NotoSansSymbols2-Regular.ttf`, and the store kept no bytes of it.
 
-**The store holds archives too, in a table of their own.** `drive` of ricysoho runs the headless
+**The store holds archives too, in a table of their own.** `drive` of ricyso'o runs the headless
 shell of Chrome for Testing, pinned, by ruling D1 a of #864.
 Each delegate pins each browser that its project drives. An archive maps no codepoints, so its
 row is the name, the whole address and the digest. Its name carries its version, since each
@@ -1648,7 +1648,7 @@ it under `build/`, so the store holds its bytes alone, and trusts them as it tru
   same version, as `chromium_headless_shell-1243`.
 - Rejected: the Chrome of the image of the runner, and the package `chromium` of Ubuntu, which
   installs a snap. No pin holds either. Rejected: the Chromium that Playwright fetches, since it
-  comes through node, which the ruling on #859 takes away from ricysoho.
+  comes through node, which the ruling on #859 takes away from ricyso'o.
 - Cost: the suite fetches no archive. So a wrong digest shows at the first fetch of its project,
   which refuses the bytes. The digest of this row was read from the bytes by hand on 2026-11-11.
 - Cost: a cold store of a job that asks for the archive takes 119.8 MB more. `check.yml` caches
@@ -1788,7 +1788,7 @@ break it, and the port happens in that same pull request. A new format follows t
 Its specification calls it a format for the communication of compilers and for data exchange
 between languages. The root glossary names it at commit `a31513c6` of `nifspec`, version 2027
 (#856). No schema reads NIF, so a law of the suite of each format holds its writer and its reader
-to each other. The writer of `ricysoho` holds such a law over its corpora (#855).
+to each other. The writer of `ricyso'o` holds such a law over its corpora (#855).
 
 - Verified by reading `doc/nif-spec.md` of `nim-lang/nifspec` at `a31513c6` on 2026-11-10. Its
   title names the format, and its section Version 2027 gives the directive `(.nif27)`, which
@@ -2626,7 +2626,7 @@ declaration, `curator/audit/src/assets.nim`, and the entry of `drive` serves eac
 The `test` job of `curator/audit` keeps an entry of its own, as Assets says. On the runner the
 fetch is 6.6 s cold, and the copy into `build/fonts` is milliseconds, recorded 2026-09-11.
 
-- Verified on the runner, 2026-11-16: the `drive` job of ricysoho restored the entry of its key
+- Verified on the runner, 2026-11-16: the `drive` job of ricyso'o restored the entry of its key
   whole, 122,461,885 B, in about 2.6 s.
 - Rejected: a cache of `build/fonts` keyed on the driver of a project, which keeps the cheap
   half and misses the expensive one.
