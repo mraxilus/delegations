@@ -2868,7 +2868,7 @@ ni'o **`parseLojbanLive` jarco lo tcidu be lo mivyselci'a
   .i `Architect` jdice ro le re jufra bu'u `#859` Verified by `browser/suite_live.nim`.
   .i lo minde po'u `drive` pilno le cipra ne'i `headless Chromium`
 
-ni'o **le gunka cu du le samtci gi'e selcme `ricysoho live`**
+ni'o **le gunka cu du le samtci gi'e selcme `ricyso'o live`**
   .i le gunka cu selkra lo judri poi le papri cu cpacu le samtci ke'a
   .i va'o lo drata le gunka cu selkra lo selci'a pe le samtci ta'i `Blob`
   .i lo du'u le gunka cu selkra `Blob` cu selru'a ki'u lo nu no cipra cu punji le samtci ne'i lo
