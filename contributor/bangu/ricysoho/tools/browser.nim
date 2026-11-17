@@ -87,7 +87,7 @@ import ./[drive, page]
 const
   PATH_BRIDGE* = "src" / "javascript" / "bridge.nim"
     ## le datnyvei poi jarco le genturfa'i `JavaScript`
-  PATH_SCRIPT* = "build" / "lojban_parser.js"
+  PATH_SCRIPT* = "build" / "ricysoho.js"
     ## le samtci poi lo minde po'u `javascript` zbasu ke'a le cripu
   ROOT_SERVED = "build"
     ## lo vasru poi le sabji samtci cu sabji ke'a

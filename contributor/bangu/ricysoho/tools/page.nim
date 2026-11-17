@@ -48,7 +48,7 @@ const
   PATH_SHELL* = "pages" / "live.html"  ## le calku poi le papri cu selzba ne'i ke'a
   PATH_ENTRY = "src" / "browser" / "page.nim"  ## le krasi datnyvei pe le samtci pe le papri
   PATH_COMPILED = "build" / "page" / "page.js"  ## le se fanva samtci pe le papri
-  PATH_PAGE* = "build" / "lojban_parser.html"  ## le selzbapapri
+  PATH_PAGE* = "build" / "ricysoho.html"  ## le selzbapapri
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
     ## le jitro samtci pe `delegations` ge'u zi'e poi le vi samtci cu cpedu lo lertai ke'a
   TOKEN_EMBED = "@EMBED:"

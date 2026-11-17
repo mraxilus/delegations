@@ -71,7 +71,7 @@ type
 
 
 const
-  KEY_LISTS* = "LOJBAN_PARSER_LISTS"
+  KEY_LISTS* = "RICYSOHO_LISTS"
     ## lo cmene be lo vabycne poi basti lo datnyveiste poi le liste cu se tcidu fi ke'a
   DIRECTORY_LISTS* = "/usr/share/lojban"
     ## lo datnyveiste poi `lojban-common` noi bakfu cu punji le liste ke'a

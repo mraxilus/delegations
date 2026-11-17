@@ -33,7 +33,7 @@
 ##   |                | .i kancu lo pagbu be le re prosa ja'i ro seljdi gi'e cusku lo namcu      |
 ##   | `javascript`   | fanva le mulno genturfa'i fi `JavaScript`                      |
 ##   |                | .i `src/javascript/bridge.nim` dunda le genturfa'i lo drata samtci      |
-##   |                | .i le xe fanva cu zvati `build/lojban_parser.js`                           |
+##   |                | .i le xe fanva cu zvati `build/ricysoho.js`                           |
 ##   |                | .i cusku lo judri .e lo ni le datnyvei cu barda                            |
 ##   | `page`         | zbasu le papri pe lo mivyselci'a fi `pages/live.html` ne'i `build/`     |
 ##   |                | .i le papri cu vasru lo lertai poi lo sorcu cu sabji ke'a             |
