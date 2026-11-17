@@ -33,7 +33,7 @@
 ##   |                | .i kancu lo pagbu be le re prosa ja'i ro seljdi gi'e cusku lo namcu      |
 ##   | `javascript`   | fanva le mulno genturfa'i fi `JavaScript`                      |
 ##   |                | .i `src/javascript/bridge.nim` dunda le genturfa'i lo drata samtci      |
-##   |                | .i le xe fanva cu zvati `build/lojban_parser.js`                           |
+##   |                | .i le xe fanva cu zvati `build/ricysoho.js`                           |
 ##   |                | .i cusku lo judri .e lo ni le datnyvei cu barda                            |
 ##   | `page`         | zbasu le papri pe lo mivyselci'a fi `pages/live.html` ne'i `build/`     |
 ##   |                | .i le papri cu vasru lo lertai poi lo sorcu cu sabji ke'a             |
@@ -51,8 +51,8 @@
 ##       frica .a lo nu pa cipra cu fliba
 ##   .i le jitro samtci cu sisti sepi'o li re va'o lo nu lo nu pilno cu srera
 ##
-## ni'o lo minde po'u `lists` .e `head` pe `lojban_tagger/tools/build.nim` tunba le vi minde gi'e
-##     pilno le mitytadji ne'i lo liste pe `lojban_tagger` gi'e tcidu le mitkra ja'i le mintu stodi
+## ni'o lo minde po'u `lists` .e `head` pe `rictadni/tools/build.nim` tunba le vi minde gi'e
+##     pilno le mitytadji ne'i lo liste pe `rictadni` gi'e tcidu le mitkra ja'i le mintu stodi
 ##     to `tools/lists.nim` toi
 ##   .i no jitro samtci cu dunda pa minde lo drata samtci
 ##   .i se ki'u bo le tadji cu zvati ro le re jitro samtci to `II.9` toi

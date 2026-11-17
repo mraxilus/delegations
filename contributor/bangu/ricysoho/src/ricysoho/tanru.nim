@@ -20,7 +20,7 @@
 ## ni'o va'o lo nu lo liste cu dunda lo rafsi pe lo pagbu lo valsi kei le liste cu jarco le valsi
 ##   .i lo pagbu poi no liste cu vasru ke'a ralte lo lerfu pe vo'a gi'e selsmu no da ne'i le vi
 ##       selgu'a
-##   .i `lojban_tagger` to'e curmi le pagbu
+##   .i `rictadni` to'e curmi le pagbu
 ##
 ## ni'o lo lerfu pe lo valsi cu jdice lo klesi ja'i `CLL 4.1` bi'i `CLL 4.8`
 ##   .i lo fanmo zunsna cu sinxa lo cmene to `CLL 4.8` toi

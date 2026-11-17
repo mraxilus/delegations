@@ -30,7 +30,7 @@ when compileOption("profiler"):
 
 import std/[options, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[grammar {.all.}, prose, selmaho, stream]
+import ../../src/ricysoho/[grammar {.all.}, prose, selmaho, stream]
 import ../articles_wikipedia/articles
 import ../cll/examples
 import ../sample_tatoeba/sentences

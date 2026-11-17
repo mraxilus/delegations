@@ -73,7 +73,7 @@
 
 import std/[algorithm, asyncjs, jsffi, unicode]
 
-import ../lojban_parser/[live, nif]
+import ../ricysoho/[live, nif]
 
 
 type
@@ -122,7 +122,7 @@ type
     count_turns: int  ## lo nu `event loop` carna kei poi tcidu ne'i lo paprycilta
 
 
-const NAME_WORKER = "lojban_parser live"
+const NAME_WORKER = "ricyso'o live"
   ## lo cmene be lo gunka be lo mivyselci'a
   ##   .i ki'u le cmene le samtci cu djuno lo du'u le samtci cu sidju le papri lo nu tcidu kei gi'e
   ##       na sidju pa gunka poi le papri cu dunda lo selgu'a pe le papri ke'a

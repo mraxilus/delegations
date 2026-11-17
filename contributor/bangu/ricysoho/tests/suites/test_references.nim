@@ -43,7 +43,7 @@ when compileOption("profiler"):
 
 import std/unittest
 
-import ../../src/lojban_parser/lujvo
+import ../../src/ricysoho/lujvo
 
 
 func isLujvo(word: string): bool =

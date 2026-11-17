@@ -85,7 +85,7 @@
 
 import std/[options, strutils, tables, unicode]
 
-import ../lojban_parser/[grammar, merge, nif_read]
+import ../ricysoho/[grammar, merge, nif_read]
 
 
 type

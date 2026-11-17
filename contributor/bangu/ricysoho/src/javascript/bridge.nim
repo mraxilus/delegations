@@ -1,6 +1,6 @@
 ## dunda le tcidu be lo selci'a `JavaScript` ta'i re fancu
 ##   .i `nim r tools/build.nim javascript` fanva le re fancu jo'u le mulno genturfa'i fi
-##       `JavaScript` fu `build/lojban_parser.js`
+##       `JavaScript` fu `build/ricysoho.js`
 ##   .i `parseLojban(text)` jarco lo selja'o be `readText` ta'i lo sapydai
 ##   .i `parseLojbanToNif(text)` jarco le tricu ta'i lo selci'a be fi `NIF`
 ##
@@ -70,7 +70,7 @@ when compileOption("profiler"):
 
 import std/[jsffi, options]
 
-import ../lojban_parser  # le ralju datnyvei tezu'e `$` pe ro klesi mu'u `KOhA` pe `Selmaho`
+import ../ricysoho  # le ralju datnyvei tezu'e `$` pe ro klesi mu'u `KOhA` pe `Selmaho`
 # le tcidu be lo mivyselci'a be'o po'u `parseLojbanLive` tcidu ne'i lo gunka va'o lo nu le papri cu
 #     dunda pa gunka
 import ./live_text

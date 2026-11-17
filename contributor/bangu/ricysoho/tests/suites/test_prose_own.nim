@@ -1,4 +1,4 @@
-## cipra lo du'u lo prosa pe `lojban_parser` me lo jboselci'a poi le genturfa'i cu tcidu ke'a
+## cipra lo du'u lo prosa pe `ricyso'o` me lo jboselci'a poi le genturfa'i cu tcidu ke'a
 ##   .i le prosa cu du ro rospau pe le ci vreji ge'u .e ro pinka pe le samtci .e le papri ja'i
 ##       `#818` .e `D1 a` .e `D2 b` .e `D3 a` .e `D4 a`
 ##   .i le datnyvei cu du lo datnyvei poi `git` ralte ke'a ku'o .e lo datnyvei poi `git` na ralte
@@ -17,7 +17,7 @@ when compileOption("profiler"):
 
 import std/[os, osproc, sequtils, strutils, tables, unittest]
 
-import ../../src/lojban_parser/prose
+import ../../src/ricysoho/prose
 import ./reader_prose
 
 

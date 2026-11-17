@@ -22,8 +22,8 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[grammar, prose, selmaho, stream]
-import ../../src/lojban_parser/lists/cmavo
+import ../../src/ricysoho/[grammar, prose, selmaho, stream]
+import ../../src/ricysoho/lists/cmavo
 
 
 const

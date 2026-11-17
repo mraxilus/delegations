@@ -71,7 +71,7 @@
 import std/[asyncjs, dom, jsffi]
 
 import ../javascript/[bridge, live_text]
-import ../lojban_parser/nif
+import ../ricysoho/nif
 import ./draw
 
 

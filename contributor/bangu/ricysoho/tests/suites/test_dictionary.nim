@@ -33,8 +33,8 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[dictionary, forms]
-import ../../src/lojban_parser/lists/gismu
+import ../../src/ricysoho/[dictionary, forms]
+import ../../src/ricysoho/lists/gismu
 
 
 const

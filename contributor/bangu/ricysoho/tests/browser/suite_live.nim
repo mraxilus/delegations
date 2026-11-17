@@ -49,7 +49,7 @@
 import std/[asyncjs, jsffi, strutils, unicode]
 
 import ../../src/javascript/[bridge, live_text]
-import ../../src/lojban_parser/[live, nif]
+import ../../src/ricysoho/[live, nif]
 import ./report
 
 

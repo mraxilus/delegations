@@ -32,7 +32,7 @@ when compileOption("profiler"):
 
 import std/[options, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[dictionary, forms, tanru, tanru_units]
+import ../../src/ricysoho/[dictionary, forms, tanru, tanru_units]
 
 
 const

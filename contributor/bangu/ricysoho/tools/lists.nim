@@ -3,10 +3,10 @@
 ##   .i ji'a stosni le jvoste noi lo cipra cu tcidu ke'a ta'i lo datselci'a
 ##   .i tcidu `gismu.txt` .e `cmavo.txt` ta'i lo nu `lojban-common` noi bakfu ne'i `Debian` punji le
 ##       re datnyvei
-##   .i ciska `src/lojban_parser/lists/gismu.nim` .e `cmavo.nim`
+##   .i ciska `src/ricysoho/lists/gismu.nim` .e `cmavo.nim`
 ##   .i `build.nim` pilno le vi datnyvei
 ##
-## ni'o le galfi samtci pe `lojban_tagger/tools/lists.nim` cpacu `Source` .e `readSource` .e
+## ni'o le galfi samtci pe `rictadni/tools/lists.nim` cpacu `Source` .e `readSource` .e
 ##     `KEY_LISTS` .e `DIRECTORY_LISTS` .e `DIGEST_GISMU` .e `DIGEST_LUJVO` le vi datnyvei
 ##   .i se ki'u bo ro le xa selcpa cu selpli su'o samtci poi na pagbu le genturfa'i
 ##   .i ji'a ro stosni cu selci'a pa roi gi'e selpli le re selgu'a
@@ -32,7 +32,7 @@
 ##
 ## ni'o no samtci datnyvei cu selzba fi `lujvo.txt`
 ##   .i ki'u bo le jvoste cu dunda lo smuni gi'e no roi dunda lo ka drani
-##   .i se ki'u bo le jvoste cu stali `lojban_tagger`
+##   .i se ki'u bo le jvoste cu stali `rictadni`
 ##
 ## ni'o lo cipra cu tcidu le datnyvei poi selpu'i ku'o ta'i lo datselci'a
 ##   .i le vi datnyvei cu stosni le datnyvei sepi'o lo snina'u
@@ -55,7 +55,7 @@
 
 import std/[enumutils, options, os, osproc, strutils]
 
-import ../src/lojban_parser/[entries, selmaho]
+import ../src/ricysoho/[entries, selmaho]
 
 
 type
@@ -71,7 +71,7 @@ type
 
 
 const
-  KEY_LISTS* = "LOJBAN_PARSER_LISTS"
+  KEY_LISTS* = "RICYSOHO_LISTS"
     ## lo cmene be lo vabycne poi basti lo datnyveiste poi le liste cu se tcidu fi ke'a
   DIRECTORY_LISTS* = "/usr/share/lojban"
     ## lo datnyveiste poi `lojban-common` noi bakfu cu punji le liste ke'a
@@ -85,9 +85,9 @@ const
     ## `SHA-256` pe `cmavo.txt` pe `1.5+dfsg.1-4` pe `lojban-common`
     ##   .i lo stedu be le datnyvei cu cusku lo detri po'u zoi gy. 26 August 2002 .gy.
     ##   .i lo cipra cu tcidu le datnyvei ta'i lo datselci'a
-  PATH_GISMU* = "src/lojban_parser/lists/gismu.nim"
+  PATH_GISMU* = "src/ricysoho/lists/gismu.nim"
     ## lo datnyvei poi le gimste cu selci'a fi ke'a
-  PATH_CMAVO* = "src/lojban_parser/lists/cmavo.nim"
+  PATH_CMAVO* = "src/ricysoho/lists/cmavo.nim"
     ## lo datnyvei poi le ma'oste cu selci'a fi ke'a
   NOTICE_GISMU = [
     ".i le vi datnyvei cu selzba fi lo datni poi `Logical Language Group` rinka lo nu ke'a zifre " &

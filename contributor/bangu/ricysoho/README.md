@@ -1,7 +1,14 @@
-# lojban_parser
+# ricyso'o
 
 ni'o ni'o ni'o le vi selgu'a cu genturfa'i la lojban.
   .i le genturfa'i cu ka'e tcidu ro drajboselci'a gi'e tcidu lo jbovla .e lo vlapoi .e lo selci'a
+
+ni'o zo ricyso'o noi lujvo fo lu tricu sombo li'u cu sinxa lo sombo be lo tricu
+  .i le vi selgu'a cu se cmene zo ricyso'o ki'u lo nu le genturfa'i cu zbasu lo tricu pe ro jufra
+  .i lo cmene be ro selgu'a pe `bangu` cu sinxa lo gunka poi kurji lo tricu ku'o ja'i `#920`
+  .i `h` basti zoi gy. ' .gy. ne'i ro judri be lo datnyvei be'o .e ro cmene pe `Nim` ge'u .e
+      `RICYSOHO_LISTS`
+  .i ki'u bo `Nim` .e `shell` cu pilno zoi gy. ' .gy. lo drata
 
 ni'o le genturfa'i cu jdice ro valsi ja'i lo javni pe `CLL` po'o
   .i se ki'u bo le genturfa'i cu tcidu lo valsi
@@ -13,7 +20,7 @@ ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o g
     kau poi cmavo cu jorne ro taurpau
 
 ```text
-$ nim r --hints:off --path:src --eval:'import lojban_parser
+$ nim r --hints:off --path:src --eval:'import ricysoho
 for text in ["bridyvalsi", "kukta", "clozba", "mudsiclu", "lojban"]:
   let r = readWord(text)
   if r.is_word: echo text, ": ", r.kind, " ", r.tanru.parts, ", renders as ", r.tanru
@@ -41,7 +48,7 @@ ni'o le genturfa'i cu tcidu lo vlapoi pe lo selci'a
   .i ro valsi cu ponse lo denpa poi lidne ri ku'o .e lo nu basna poi lo brale'u cu sinxa ke'a
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/options, lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/options, ricysoho
 let r = readStream(".i mi klama le RE NANmu")
 for o in r.occurrences: echo o.text, ": ", o.reading.kind, ", pause ", o.pause,
   (if o.stress.isSome: ", stress on syllable " & $o.stress.get else: "")'
@@ -63,7 +70,7 @@ ni'o le genturfa'i cu fendi lo selci'avla poi vasru so'i valsi ku'o gi'e cuxna l
     po'o nitcu lo mecraide'a
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/strutils, lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/strutils, ricysoho
 for text in ["laplas.", "secusku", "mibroda", "MIbroda", ".esperanto"]:
   let r = readStream(text)
   if r.is_read:
@@ -91,7 +98,7 @@ ni'o le genturfa'i cu tcidu lo selci'a ja'i lo gerna pe `CLL 21.1`
   .i se ki'u bo ro genvla cu vasru lo valsi be pa gensu'a
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils, wordwrap], lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/[sequtils, strutils, wordwrap], ricysoho
 for text in ["mi klama le zarci", "ti gerku si mlatu",
     "la\x27o dy. Goethe .dy. cu me la\x27o ly. Homo sapiens .ly.", "mi klama le"]:
   let r = readText(text)
@@ -115,7 +122,7 @@ ni'o `toNif` ciska le tricu fi lo selci'a be fi `NIF 2027` noi raltai `Nim 3`
   .i se ki'u bo lo drata samtci cu ka'e tcidu le tricu gi'e pilno no pagbu be le genturfa'i
 
 ```text
-$ nim r --hints:off --path:src --eval:'import lojban_parser
+$ nim r --hints:off --path:src --eval:'import ricysoho
 stdout.write readText("me\x27o vo").toNif'
 (.nif27)
 (.lang "cll-21.1")
@@ -169,7 +176,7 @@ ni'o lo valsi poi lo pagbu be le genturfa'i cu to'e curmi ke'a selvau pa genvla 
       sisti vi ku'o gi'e vasru lo klesi be ro genvla poi le gerna ka'e tcidu ke'a vi
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], ricysoho
 for line in readTextMarked("mi 1987 klama le").toNif.strip.splitLines: echo line.wrapWords(100)'
 (.nif27)
 (.lang "cll-21.1")
@@ -217,7 +224,7 @@ ni'o zo fa'o poi fanmo lo selci'a cu se tcita zoi gy. FAhO .gy.
   .i lo lerfu be le valsi cu mintu lo lerfu poi `CLL` ciska ke'a
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], ricysoho
 for line in readTextMarked("mi klama si do su ko fa\x27o 1234").toNif.strip.splitLines:
   echo line.wrapWords(100)'
 (.nif27)
@@ -246,7 +253,7 @@ ni'o ro cenba pe `push` jarco lo stuzi poi le selci'a be fi `NIF` cu selka'a bu'
   .i lo bavla'i cenba cu basti lo rebla
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], ricysoho
 proc show(what: string, change: ChangeNif) =
   echo what, ": cut back to ", change.at, ", byte ", change.start
   for (kind, nif) in [("out ", change.text), ("tail", change.tail)]:
@@ -294,7 +301,7 @@ ni'o `mergeParts` goi ko'a jmina lo pagbu ja'i lo selci'a be fi `NIF` po'o noi l
   .i `is_whole` jetnu
 
 ```text
-$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], lojban_parser
+$ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], ricysoho
 for text in ["mi klama .i do cadzu ni\x27o ko sipna", "mi klama .i x .i ko sipna",
     "mi klama .i le .i ko"]:
   let merged = readTextParts(text).reading.toNifParts.mergeParts
@@ -347,7 +354,7 @@ ni'o lo pagbu poi lidne zo su noi romoi cu stali va'o lo nu le genturfa'i cu tci
   .i ba bo lo nu jmina cu cusku lo namcu be lo jgena be'o noi krasi li no ba le re minde ku'o .e lo
       krinu to `suites/test_merge.nim` toi
 
-ni'o lo minde po'u `javascript` zbasu `build/lojban_parser.js` noi samtci be fi `JavaScript` le
+ni'o lo minde po'u `javascript` zbasu `build/ricysoho.js` noi samtci be fi `JavaScript` le
     genturfa'i
   .i lo papri cu cpacu le samtci sepi'o lo jgena po'u `script` gi'e pilno ci fancu poi ro da ka'e
       pilno ke'a
@@ -379,8 +386,8 @@ ni'o lo minde po'u `drive` cipra lo du'u le samtci cu mintu le jbezba ne'i `head
   .i lo kajde be lo fanva cu selvi'u vi
 
 ```text
-$ nim r --hints:off koch drive contributor/bangu/lojban_parser
-== contributor/bangu/lojban_parser
+$ nim r --hints:off koch drive contributor/bangu/ricysoho
+== contributor/bangu/ricysoho
 [Suite] Internal: JavaScript build
   [OK] Each sentence of Tatoeba sample takes verdict native build gave it
   [OK] Object of text that reads holds occurrences, units and tree
@@ -427,9 +434,8 @@ ni'o lo cipra cu selcme lo cmene be le ckupau
   .i lo cmene be lo cipra poi `CLL` na casnu ke'a cu cfari fi `Internal:`
 
 ni'o le gimste .e le ma'oste cu seldu'a `Logical Language Group` gi'e zifre fi ro da
-  .i le vi selgu'a cu ralte le re liste ta'i lo samtci pagbu pe `Nim` ne'i
-      `src/lojban_parser/lists/` gi'e ralte lo valsi .e lo rafsi be ro gismu be'o .e lo valsi .e lo
-      selma'o be ro cmavo
+  .i le vi selgu'a cu ralte le re liste ta'i lo samtci pagbu pe `Nim` ne'i `src/ricysoho/lists/`
+      gi'e ralte lo valsi .e lo rafsi be ro gismu be'o .e lo valsi .e lo selma'o be ro cmavo
   .i lo cipra cu tcidu ji'a le jvoste .e le mulma'oste noi datselci'a bu'u lo stuzi poi
       `lojban-common` noi bakfu cu punji le liste ke'a
 
@@ -454,21 +460,21 @@ ni'o `tests/articles_wikipedia/` vasru ci claro'a noi seljva `CC BY-SA 4.0` zi'e
 
 ```sh
 nim r koch check                                  # from repository root: every check
-nim r koch test contributor/bangu/lojban_parser   # this project alone
+nim r koch test contributor/bangu/ricysoho   # this project alone
 nim r tools/build.nim lists                       # from project root: write both lists again
 nim r tools/build.nim head                        # compare lists with lojban-common
 nim r tools/build.nim cll <directory>             # write examples of CLL again from saved pages
 nim r tools/build.nim tatoeba <export>            # write sample of Tatoeba again from its export
 nim r tools/build.nim wikipedia <directory>       # write articles of Wikipedia again from answers
 nim r tools/build.nim translations                # fetch Alice and Oz, which suites then read
-nim r tools/build.nim javascript                  # compile parser to build/lojban_parser.js
+nim r tools/build.nim javascript                  # compile parser to build/ricysoho.js
 nim r tools/build.nim page                        # build page of live text, one file in build/
 nim r tools/build.nim drive                       # run suites of script and page in Chromium
 nim r tools/build.nim system                      # print packages verbs and suites need
 ```
 
-ni'o lo nu zbasu cu nitcu lo fanva poi `lojban_parser.nimble` stodi ke'a ku'o .e lo fadni samtci pe
-    `Nim` po'o
+ni'o lo nu zbasu cu nitcu lo fanva poi `ricysoho.nimble` stodi ke'a ku'o .e lo fadni samtci pe `Nim`
+    po'o
   .i lo minde po'u `lists` .e `head` ge'u .e lo cipra be lo datselci'a cu nitcu ji'a `lojban-common`
       noi bakfu ku'o .e `sha256sum` pe `coreutils`
   .i lo minde po'u `system` cusku le re bakfu
@@ -508,11 +514,10 @@ ni'o lo batke po'u `Merge` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi l
 
 | built file, under `build/` | published at |
 | --- | --- |
-| lojban_parser.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
+| ricysoho.html | https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4 |
 
 ni'o lo minde po'u `page` zbasu le papri `pages/live.html`
-  .i ko rapli gubgau le papri fi `build/lojban_parser.html` ba ro cenba poi galfi lo selja'o be le
-      papri
+  .i ko rapli gubgau le papri fi `build/ricysoho.html` ba ro cenba poi galfi lo selja'o be le papri
   .i ko punji `URL` ne'i `pull request` .e lo notci poi cusku lo du'u le selgu'a cu bredi
 
 ## ni'o ni'o ni'o lo ca ckaji be le genturfa'i
@@ -577,8 +582,8 @@ ni'o le ci vreji .e ro pinka pe le samtci .e le papri cu me lo jboselci'a poi le
   .i le cipra cu fliba ji'a va'o lo nu pa jufra cu krasi lo midju be pa linji
   .i `Architect` jdice di'u bu'u `#818`
 
-ni'o `lojban_tagger` tcidu la lojban. sepi'o le genturfa'i gi'e ralte no fukpi be lo pagbu be le
+ni'o `rictadni` tcidu la lojban. sepi'o le genturfa'i gi'e ralte no fukpi be lo pagbu be le
     genturfa'i
-  .i lo samtci pe `lojban_tagger` zi'e poi galfi lo vlaste cu cpacu lo tcidu be le liste be'o .e lo
-      stodi be le liste be'o `tools/lists.nim`
+  .i lo samtci pe `rictadni` zi'e poi galfi lo vlaste cu cpacu lo tcidu be le liste be'o .e lo stodi
+      be le liste be'o `tools/lists.nim`
   .i no prenu cu tcidu ro lo jufra pe le vi selci'a

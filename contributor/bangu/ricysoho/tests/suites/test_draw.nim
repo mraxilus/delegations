@@ -20,7 +20,7 @@ when compileOption("profiler"):
 import std/[algorithm, strutils, unittest]
 
 import ../../src/browser/draw
-import ../../src/lojban_parser/[live, nif, nif_read, prose]
+import ../../src/ricysoho/[live, nif, nif_read, prose]
 import ./corpora
 
 
