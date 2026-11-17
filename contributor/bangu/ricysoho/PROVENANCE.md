@@ -32,11 +32,14 @@ ni'o le pamoi pagbu cu du `tools/lists.nim`
 
 ni'o lo samtci pe `rictadni` zi'e poi galfi lo vlaste cu cpacu ji'a xa cmene `tools/lists.nim`
   .i lo stedu be le samtci cu cusku le xa cmene
-  .i lo nu galfi `src` .a `tools` pe le vi selgu'a cu rinka lo nu fanva lo cipra pe `rictadni` ji'a
-      ki'u lo nu lo platu pe `koch` cuxna ro selgu'a poi cpacu lo datnyveiste be lo drata se gunka
-      to `#882` toi
-  .i se ki'u bo lo nu galfi poi spofu `rictadni` rinka lo nu su'o cipra cu fliba
-  .i lo xancipra be di'u cu tcidu `curator/audit/src/plan.nim` de'i li renorexa pi'e papa pi'e pavo
+  .i `rictadni` cu fanva le cenba pe le vi selgu'a zi'e poi `atlas.lock` pe `rictadni` cu sinxa ke'a
+  .i se ki'u bo lo nu galfi `src` .a `tools` pe le vi selgu'a cu rinka no lo nu lo cipra pe
+      `rictadni` cu fliba
+  .i se ki'u bo lo nu galfi poi spofu `rictadni` cu se facki ca lo nu `rictadni` cu galfi
+      `atlas.lock` pe vo'a
+  .i `koch check` cusku le cenba ne'i pa linji noi rinka no lo nu fliba to `#948` toi
+  .i lo xancipra be di'u cu tcidu `curator/audit/src/plan.nim` .e `curator/audit/src/lags.nim` de'i
+      li renorexa pi'e papa pi'e paze
 
 ni'o le turni be le vi selgu'a cu du `The Complete Lojban Language` noi selcme zoi gy. CLL .gy.
   .i `CLL` selci'a `John Woldemar Cowan` gi'e seldu'a `Logical Language Group`
@@ -238,7 +241,7 @@ ni'o **le nu fendi cu tugni lo te karbi genturfa'i poi satci**
   .i ne'i lo vopa valsi go le nu fendi cu facki pa lujvo gi `CLL` zbasu pa lujvo
   .i `camxes` .e `vlatai` .e `is_valid_lujvo` pe `jbofihe` ge'u .e `latkerlo-jvotci` jdice fi le
       valsi
-  .i le seljdi cu se tcidu de'i li renorexa pi'e pano pi'e revo mu'i lo selgu'a po'u `rictadni`
+  .i le seljdi cu se tcidu de'i li renorexa pi'e pano pi'e revo
   .i va'o lo nu le satci samtci cu na tugni mu'u `saircli` .e `branlatu` kei le vi selgu'a cu jersi
       `CLL` Verified by `suites/test_references.nim`.
   .i le cipra cu sitna lo javni poi jdice fi ro valsi
@@ -3581,8 +3584,8 @@ ni'o le jicmu cu du `40718874` no'u le romoi cenba pe `#828`
       kau kei li re
 
 - ny.mai **lo nu le fanva cu cipra le ralju samtci pagbu**
-  .i `nim check --hints:off src/ricysoho.nim` gunka ze'a `0.95 s` .e `0.94 s` .e `0.93 s` sepi'o
-      `Nim 2.4.0` gi'e gunka ze'a `0.79 s` .e `0.77 s` .e `0.79 s` sepi'o `Nim 2.2.12`
+  .i `nim check --hints:off src/lojban_parser.nim` gunka ze'a `0.95 s` .e `0.94 s` .e `0.93 s`
+      sepi'o `Nim 2.4.0` gi'e gunka ze'a `0.79 s` .e `0.77 s` .e `0.79 s` sepi'o `Nim 2.2.12`
   .i se ki'u bo `Nim 2.2.12` zmadu `Nim 2.4.0` lo ka sutra kei lo jibni be `0.15 s` ma'i le vi nu
       merli
 - ny.mai **ro cipra ca lo nu le sorcu cu kunti**
