@@ -10,20 +10,20 @@
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 ni'o ni'o ni'o le vi selgu'a cu selgu'a `contributor` gi'e selkra lo selmi'e be `Architect` be'o .e
-    lo genturfa'i pagbu be `lojban_tagger`
+    lo genturfa'i pagbu be `rictadni`
   .i le selmi'e cu dunda pa se zukte po'o le vi selgu'a
   .i le selzu'e cu nu zbasu lo mulno genturfa'i be la lojban. be'o noi ka'e tcidu ro drajbovla .e ro
       drajboselci'a
-  .i ja'i le selmi'e `lojban_tagger` tcidu la lojban. sepi'o le genturfa'i noi na pagbu
-      `lojban_tagger`
+  .i ja'i le selmi'e `rictadni` tcidu la lojban. sepi'o le genturfa'i noi na pagbu
+      `rictadni`
 
 ni'o le vi selgu'a cu tcidu lo jbovla .e lo porsi be lo jbovla ja'i lo javni pe `CLL` po'o gi'e
     tcidu lo selci'a ja'i le gerna pe `CLL 21.1`
   .i pu lo nu le gerna cu tcidu kei lo javni pe `CLL 19.16` galfi lo valsi
 
-ni'o `lojban_tagger` tcidu la lojban. sepi'o le ralju samtci pagbu be le genturfa'i gi'e ralte no
+ni'o `rictadni` tcidu la lojban. sepi'o le ralju samtci pagbu be le genturfa'i gi'e ralte no
     fukpi be lo samtci pagbu be le genturfa'i
-  .i ci pagbu be le genturfa'i cu ponse lo tunba ne'i `lojban_tagger`
+  .i ci pagbu be le genturfa'i cu ponse lo tunba ne'i `rictadni`
   .i lo stedu be ro le ci pagbu cu cusku lo cmene be le tunba ja'i `Article II.9`
 
 ni'o le pamoi pagbu cu du `tools/lists.nim`
@@ -31,12 +31,12 @@ ni'o le pamoi pagbu cu du `tools/lists.nim`
   .i le cimoi pagbu cu du `ending` noi sivyfancu ne'i `tanru_units.nim`
   .i lo nu cikre pa tunba cu mulno va'o lo nu cipra fi le datytunba kei po'o
 
-ni'o lo samtci pe `lojban_tagger` zi'e poi galfi lo vlaste cu cpacu ji'a xa cmene `tools/lists.nim`
+ni'o lo samtci pe `rictadni` zi'e poi galfi lo vlaste cu cpacu ji'a xa cmene `tools/lists.nim`
   .i lo stedu be le samtci cu cusku le xa cmene
-  .i lo nu galfi `src` .a `tools` pe le vi selgu'a cu rinka lo nu fanva lo cipra pe `lojban_tagger`
+  .i lo nu galfi `src` .a `tools` pe le vi selgu'a cu rinka lo nu fanva lo cipra pe `rictadni`
       ji'a ki'u lo nu lo platu pe `koch` cuxna ro selgu'a poi cpacu lo datnyveiste be lo drata se
       gunka to `#882` toi
-  .i se ki'u bo lo nu galfi poi spofu `lojban_tagger` rinka lo nu su'o cipra cu fliba
+  .i se ki'u bo lo nu galfi poi spofu `rictadni` rinka lo nu su'o cipra cu fliba
   .i lo xancipra be di'u cu tcidu `curator/audit/src/plan.nim` de'i li renorexa pi'e papa pi'e pavo
 
 ni'o le turni be le vi selgu'a cu du `The Complete Lojban Language` noi selcme zoi gy. CLL .gy.
@@ -65,7 +65,7 @@ ni'o `CLL 5 7 9 12 15` cusku lo du'u lo cmavo cu jorne ma kau valsi
       valsi pu lo nu le gerna cu tcidu
 
 ni'o lo cmene be la lojban. cu vasru lo cmalu lerfu po'o mu'u zo lojban.
-  .i `Architect` jdice di'u fi `lojban_tagger`
+  .i `Architect` jdice di'u fi `rictadni`
   .i ne'i la lojban. lo brale'u cu sinxa lo nu basna poi na fadni to `CLL 3.9` toi
   .i lo cmene be la lojban. cu vasru no brale'u
   .i ku'i lo cmene be lo cukta be'o .e lo vlaste .e lo notci pe `Logical Language Group` ge'u .e lo
@@ -89,13 +89,13 @@ ni'o **ro datni poi le genturfa'i cu ralte ke'a seltcu le javni pe `CLL`**
   .i `CLL 4.11` .e `CLL 4.12` pilno lo rafsi be ro valsi pe lo tanru be'o lo nu jmina gi'e dunda lo
       namcu
   .i se ki'u bo le gimste cu ralte ro gismu .e lo rafsi be ro gismu
-  .i `lojban_tagger` ralte lo glipau be le gimste be'o .e le mulno ke jvoste ki'u lo nu
-      `lojban_tagger` sisku sepi'o le glipau .e le jvoste
+  .i `rictadni` ralte lo glipau be le gimste be'o .e le mulno ke jvoste ki'u lo nu
+      `rictadni` sisku sepi'o le glipau .e le jvoste
 
 ni'o le ma'oste cu ralte ro cmavo .e lo selma'o be ro cmavo
   .i le gerna cu nitcu le cmavo .e le selma'o
-  .i lo nu pilno lo pa valsi po'o .e lo gismu po'o cu selcu'a `lojban_tagger` gi'e selra'e
-      `lojban_tagger`
+  .i lo nu pilno lo pa valsi po'o .e lo gismu po'o cu selcu'a `rictadni` gi'e selra'e
+      `rictadni`
 
 ## ni'o ni'o ni'o lo zunsna gunma .e lo tarmi
 
@@ -223,7 +223,7 @@ ni'o `hyphensRafsi` .e `score` pilno le mitpau
   .i se ki'u bo ro javni cu pa roi selci'a
   .i le pagbu cu stali lo ka sivni
   .i `tanru.nim` .e lo cipra cu cpacu ro sinxa `lujvo.nim` mu'i lo nu pilno le pagbu
-  .i se ki'u bo le ralju samtci pagbu cu dunda no nincme `lojban_tagger` to `#832` toi
+  .i se ki'u bo le ralju samtci pagbu cu dunda no nincme `rictadni` to `#832` toi
       Verified by `suites/test_lujvo.nim`.
 
 ni'o le cipra cu tcidu lo mupli poi lo tsiju cu jdice ke'a
@@ -240,7 +240,7 @@ ni'o **le nu fendi cu tugni lo te karbi genturfa'i poi satci**
   .i ne'i lo vopa valsi go le nu fendi cu facki pa lujvo gi `CLL` zbasu pa lujvo
   .i `camxes` .e `vlatai` .e `is_valid_lujvo` pe `jbofihe` ge'u .e `latkerlo-jvotci` jdice fi le
       valsi
-  .i le seljdi cu se tcidu de'i li renorexa pi'e pano pi'e revo mu'i lo selgu'a po'u `lojban_tagger`
+  .i le seljdi cu se tcidu de'i li renorexa pi'e pano pi'e revo mu'i lo selgu'a po'u `rictadni`
   .i va'o lo nu le satci samtci cu na tugni mu'u `saircli` .e `branlatu` kei le vi selgu'a cu jersi
       `CLL` Verified by `suites/test_references.nim`.
   .i le cipra cu sitna lo javni poi jdice fi ro valsi
@@ -262,7 +262,7 @@ ni'o **pa samtci cu galfi ro liste lo samtci pe `Nim` zi'e poi vasru lo klesi
   .i le vi selgu'a cu ralte le jalge**
   .i lo minde po'u `nim r tools/build.nim lists` tcidu le re datnyvei gi'e karbi `SHA-256` pe ro
       datnyvei ge'u lo stodi pe le datnyvei zi'e poi zvati `tools/lists.nim`
-  .i ba bo le minde cu ciska `src/lojban_parser/lists/gismu.nim` .e `cmavo.nim`
+  .i ba bo le minde cu ciska `src/ricysoho/lists/gismu.nim` .e `cmavo.nim`
 
 ni'o ro le re datnyvei poi le minde cu ciska ke'a du lo samtci pagbu poi vasru lo stodatni poi ponse
     lo klesi
@@ -325,7 +325,7 @@ ni'o se to'e cuxna fa lo nu ralte le se ciska datnyvei ta'i lo nu na galfi kei k
   .i se to'e cuxna fa lo nu tcidu le bakfu ca lo nu fanva kei kei ki'u lo nu le nu tcidu cu rinka lo
       nu ro nu zbasu cu nitcu le bakfu
 
-ni'o `Architect` jdice fi `lojban_tagger` fe lo du'u le liste cu so'u roi cenba
+ni'o `Architect` jdice fi `rictadni` fe lo du'u le liste cu so'u roi cenba
   .i se ki'u bo lo nu ralte le liste cu drani
   .i di'u jetnu ji'a ne'i le vi selgu'a
 
@@ -628,8 +628,8 @@ ni'o **va'o lo nu pa tanru cu ponse no jvotai kei le genturfa'i cu ciska lo pagb
   .i le tanru cu selfa'o lo cmavo poi ponse no rafsi poi seltai `CCV` .a `CVV` ku'o ku'o mu'u
       `cusku se` gi'a vasru lo cmavo poi ponse no rafsi Verified by `suites/test_tanru.nim`.
 
-ni'o `lojban_tagger` ralte lo sinxa po'u `+` pe le jvoste
-  .i `readTanru` pe `tags.nim` pe `lojban_tagger` tcidu le sinxa
+ni'o `rictadni` ralte lo sinxa po'u `+` pe le jvoste
+  .i `readTanru` pe `tags.nim` pe `rictadni` tcidu le sinxa
   .i `toTanru` pe `tags.nim` ciska le sinxa
 
 ## ni'o ni'o ni'o lo porsi be lo valsi
@@ -1224,7 +1224,7 @@ ni'o **lo tanru cu se fendi fi lo taurpau
   .i ro taurpau cu vasru pa pagbu be le tanru be'o .e lo cmavo poi jorne le pagbu**
   .i zoi gy. tanru-unit .gy. cmene lo taurpau le gerna pe `CLL` to `CLL 21.1` .e le javni pe li
       pamure toi
-  .i `Architect` cuxna le cmene tezu'e `lojban_tagger` bu'u `#768`
+  .i `Architect` cuxna le cmene tezu'e `rictadni` bu'u `#768`
 
 ni'o lo cmavo be zoi gy. SE .gy. cu jorne lo bavla'i brivla .a lo bavla'i pagbu poi selcme zoi gy.
     equivalent unit .gy. `CLL 9.4`
@@ -2621,7 +2621,7 @@ ni'o jdima fa lo nu ne'i lo cikryzba lo samtci poi pilno ro cipra cu nitcu lo zm
 ni'o **`mergeParts` jmina lo pagbu be lo selci'a ja'i lo selci'a be fi `NIF` po'o gi'e to'e curmi no
     srera**
   .i lo papri .a lo cikre cu ponse lo selci'a be fi `NIF` gi'e ponse no tricu
-  .i se ki'u bo `src/lojban_parser/merge.nim` vasru lo samtci poi rapyzba lo tricu
+  .i se ki'u bo `src/ricysoho/merge.nim` vasru lo samtci poi rapyzba lo tricu
   .i pa nu pilno pa fancu cu jmina ro lo pagbu be le nu rapyzba
   .i `Architect` jdice di'u to `D1 b` bu'u `#859` toi
 
@@ -2867,7 +2867,7 @@ ni'o **`parseLojbanLive` jarco lo tcidu be lo mivyselci'a
   .i `Architect` jdice ro le re jufra bu'u `#859` Verified by `browser/suite_live.nim`.
   .i lo minde po'u `drive` pilno le cipra ne'i `headless Chromium`
 
-ni'o **le gunka cu du le samtci gi'e selcme `lojban_parser live`**
+ni'o **le gunka cu du le samtci gi'e selcme `ricysoho live`**
   .i le gunka cu selkra lo judri poi le papri cu cpacu le samtci ke'a
   .i va'o lo drata le gunka cu selkra lo selci'a pe le samtci ta'i `Blob`
   .i lo du'u le gunka cu selkra `Blob` cu selru'a ki'u lo nu no cipra cu punji le samtci ne'i lo
@@ -3114,7 +3114,7 @@ ni'o jdima fa lo nu ca ro nu jarco ro pagbu cu rapselxra
   .i se ki'u bo lo temci poi jdima lo nu pixra pa claselci'a cu ckini le ni le selci'a cu clani kei
       ta'i lo linji
 
-ni'o **le papri cu tcidu lo selci'a be fi `NIF` sepi'o `src/lojban_parser/nif_read.nim` noi tcidu
+ni'o **le papri cu tcidu lo selci'a be fi `NIF` sepi'o `src/ricysoho/nif_read.nim` noi tcidu
     ja'i le velski**
   .i lo cipra cu tcidu ji'a lo selci'a be fi `NIF` sepi'o le tcidu
   .i se ki'u bo lo cipra cu cipra lo du'u le ciska cu mapti le velski kei gi'e no roi cipra lo du'u
@@ -3246,8 +3246,8 @@ ni'o `suites/test_tanru.nim` cipra le tcidu
   .i `suites/test_stream.nim` cipra le tcidu be lo porsi be lo valsi
   .i `suites/test_tanru_units.nim` cipra lo nu fendi lo tanru lo taurpau
 
-ni'o no cipra pe le vi selgu'a cu selfu'i ne'i `lojban_tagger`
-  .i lo cipra pe `lojban_tagger` cipra lo samtci pagbu pe `lojban_tagger` po'o
+ni'o no cipra pe le vi selgu'a cu selfu'i ne'i `rictadni`
+  .i lo cipra pe `rictadni` cipra lo samtci pagbu pe `rictadni` po'o
   .i lo javni be lo nu tcita .e lo nu sisku cu selvau le samtci pagbu
 
 ni'o ro xusra cu sitna lo krasi be vo'a
@@ -3517,7 +3517,7 @@ ni'o se to'e cuxna fa lo nu ro linji pe pa pinka cu se tcidu ta'i pa selci'a ki'
 ## ni'o ni'o ni'o lo fanva samtci
 
 ni'o **le fanva cu selsto ta'i lo nu satci**
-  .i `requires "nim == 2.4.0"` ne'i `lojban_parser.nimble` stodi le fanva ta'i lo nu ro selgu'a pe
+  .i `requires "nim == 2.4.0"` ne'i `ricysoho.nimble` stodi le fanva ta'i lo nu ro selgu'a pe
       `delegations` stodi le fanva to `D1 a` bu'u `#775` toi
   .i le vi selgu'a cu nitcu le fadni samtci pe `Nim` po'o
   .i se ki'u bo le vi selgu'a cu ponse no stela
@@ -3583,7 +3583,7 @@ ni'o le jicmu cu du `40718874` no'u le romoi cenba pe `#828`
       kau kei li re
 
 - ny.mai **lo nu le fanva cu cipra le ralju samtci pagbu**
-  .i `nim check --hints:off src/lojban_parser.nim` gunka ze'a `0.95 s` .e `0.94 s` .e `0.93 s`
+  .i `nim check --hints:off src/ricysoho.nim` gunka ze'a `0.95 s` .e `0.94 s` .e `0.93 s`
       sepi'o `Nim 2.4.0` gi'e gunka ze'a `0.79 s` .e `0.77 s` .e `0.79 s` sepi'o `Nim 2.2.12`
   .i se ki'u bo `Nim 2.2.12` zmadu `Nim 2.4.0` lo ka sutra kei lo jibni be `0.15 s` ma'i le vi nu
       merli
