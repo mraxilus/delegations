@@ -1507,9 +1507,12 @@ that the shape is settled for all time.
   library fails each read of `woff2` by name, and every other suite still runs. Rejected:
   `fc-query` as the reader, which adds fontconfig to every machine and reads its charset rather
   than the `cmap`.
-- Cost: the test fetches each font face that the store lacks. Measured on 2026-10-04 on the machine
-  of Figures: into an empty store, it fetched 5,670,612 bytes in 2.5 s. Warm, it took 0.08 s.
-  The `test` job of the runner restores no store, so it fetches on each run.
+- Cost: the test fetches each font face that the store lacks. Measured on 2026-11-17 in the cloud
+  container of Claude Code, at `32b589292`. Each range holds three runs, from the start of the
+  suite to its exit. Into an empty store, it fetched 5,670,612 bytes in 3.8 to 5.0 s, and warm it
+  took 0.078 to 0.085 s. With one entry removed, it took 0.32 to 0.47 s, and wrote that entry
+  alone. The `test` job of `curator/audit` restores an entry of its own, so a run there fetches
+  only what that entry lacks.
 
 The name is general, and names no class of file. So a second class needs no rename across
 projects that a curator may not edit.
@@ -1544,7 +1547,7 @@ a copy from two different font faces.
   Noto. Its two `woff2` rows are the only subsets of `@fontsource` in the store.
 - Cost: a whole font face is 610 to 780 KB of TrueType, where its Latin subset is about 13 KB. A
   page that inlines it as base64 carries about a third more again.
-- One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
+- One digest reader serves both fetches. `fetchLanding` reads the bytes that it fetched through
   `digest` of knoller, so the parse that the suites of knoller test also guards the store.
 - Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
   fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
@@ -1576,6 +1579,61 @@ a copy from two different font faces.
   as served by the other. Neither project can check that. The store owns the shape of the row,
   so the store holds the law.
 
+**A fetch that fails names its cause, and a run of the suite waits on the bytes that the digests
+pin.** The routine `fetchLanding` takes a landing path, an address and a digest. It gives why the
+bytes did not land, and an empty answer means that they landed. One removal clears the landing
+path for both causes of a failure.
+
+A fetch that fails writes one line, `lineFailure`, to the log that `assetIn` takes, which is
+stdout unless its caller names another. The line names the file, its address and the cause. The
+cause is what curl printed, with its lines joined by one space in `causeCurl`, or the digest that
+the bytes carry. Curl 8.5.0 prints error 60 over six lines, so the join keeps the line whole.
+Where curl prints nothing, the cause is its exit code. So the log of a run names the cause of each
+fetch that fails.
+
+- Rejected: a retry of the fetch. A check that waits on the network would then answer variance
+  with a retry, which `CONTRIBUTOR.md`, Tests are paramount, forbids. That rule asks a check to
+  wait on what it really waits on. The suite waits on the bytes of each font face, which their
+  digests pin, so the runner keeps those bytes.
+- **The `test` job of `curator/audit` alone restores the store, under a key of its own.** Its
+  suite is the only one that reads the store, and it fetches each font face row that the store
+  lacks. `actions/cache` saves only where the key missed and the job passed. So each entry that
+  this job saves holds every font face row, and it is the one writer of its key.
+- The key `assets-audit-<os>-<hash>` and the key `assets-<os>-<hash>` of `drive` differ at their
+  eighth character. So neither `restore-keys` reaches the entries of the other job. The rules of
+  each save are read in the `README.md` and the `action.yml` of `actions/cache` v6, 2026-11-17.
+- No step makes the path. A restore makes it. The log of `drive` shows that the restore runs
+  `tar -xf -P -C`, and in a probe on 2026-11-17 that made a missing path. Where the restore
+  misses, the suite writes the store itself.
+- Rejected: the key of `drive` in each `test` job. The first job to finish takes each new key. So
+  a job that fetched nothing would save it without the new rows. On the runner, 2026-11-16,
+  `test` of `curator/assayer` took 30 s, where `drive` of ricysoho took 105 s. Each `test` job
+  would also restore 122,461,885 B, in about 2.6 s, as `drive` of ricysoho did on the runner that
+  day.
+- Rejected: `actions/cache/restore` of the entry of `drive`. That entry holds what the first
+  `drive` job to save had fetched, which need not be every row that the suite reads. So the suite
+  would fetch the rest on each run.
+- Cost: one more entry, of the font faces alone, 5,670,612 bytes raw. The restore and the save on
+  the runner are unmeasured.
+- Verified by `suites/test_assets.nim`. A fetch that curl fails gives the error of curl, and a
+  fetch of other bytes names both digests. No bytes stay at the landing path in either case.
+  The suite also joins the six lines of error 60 into one, and holds that the line names the
+  file, the address and the cause.
+- Verified by `suites/test_assets.nim` through a fake `curl` first on `PATH`, which fails with no
+  network. Through it, `fetchLanding` gives the cause that `causeCurl` reads, and `assetIn` writes
+  the line to its log. The flush after the line is not held: the test closes the log, and that
+  flushes it. Where the fake cannot run, as from a mount `noexec`, both tests skip with that
+  reason, and reach no network.
+- Verified by hand at `32b589292` with curl 8.5.0, in the cloud container of Claude Code,
+  2026-11-17. The network was cut by `unshare -n`, `https_proxy` and `HTTPS_PROXY` were unset,
+  and the store was empty. Then `koch fetch-assets NotoSans-Regular.ttf` failed with the line,
+  which names `curl: (6) Could not resolve host: cdn.jsdelivr.net`, and the store stayed empty.
+  With either one set, the line names `curl: (7) Failed to connect to 127.0.0.1 port <p>`
+  instead, where `<p>` is the port of the proxy.
+- Cost: a cold store still waits on the network. On the same machine and date, one of six cold
+  runs of the suite failed through the proxy. Its line named `curl: (18) Transferred a partial
+  file` for `NotoSansSymbols2-Regular.ttf`, and the store kept no bytes of it.
+
 **The store holds archives too, in a table of their own.** `drive` of ricysoho runs the headless
 shell of Chrome for Testing, pinned, by ruling D1 a of #864.
 Each delegate pins each browser that its project drives. An archive maps no codepoints, so its
@@ -1593,7 +1651,8 @@ it under `build/`, so the store holds its bytes alone, and trusts them as it tru
 - Cost: the suite fetches no archive. So a wrong digest shows at the first fetch of its project,
   which refuses the bytes. The digest of this row was read from the bytes by hand on 2026-11-11.
 - Cost: a cold store of a job that asks for the archive takes 119.8 MB more. `check.yml` caches
-  the store on the hash of `assets.nim`, so the new row starts a new entry of the cache.
+  the store on the hash of `assets.nim` in `drive`, and in the `test` job of `curator/audit`. So
+  the new row starts a new entry of each cache.
 - Cost: each new release of the browser is a new row, with a new name and digest, by a curator.
 
 **A `/common/` tree is deferred.** The bar for admitting anything to one: the curator and at
@@ -2562,10 +2621,12 @@ already selected. It inherits the scoping, `--all` and `--recent` from there.
 
 **The shared store is cached, and `build/fonts` is not.** `koch fetch-assets` fetches into
 `~/.cache/koch/assets`, and that store is the repository's. So the cache keys on its
-declaration, `curator/audit/src/assets.nim`, and one entry serves the job of every project. On
-the runner the fetch is 6.6 s cold, and the copy into `build/fonts` is milliseconds, recorded
-2026-09-11.
+declaration, `curator/audit/src/assets.nim`, and the entry of `drive` serves each `drive` job.
+The `test` job of `curator/audit` keeps an entry of its own, as Assets says. On the runner the
+fetch is 6.6 s cold, and the copy into `build/fonts` is milliseconds, recorded 2026-09-11.
 
+- Verified on the runner, 2026-11-16: the `drive` job of ricysoho restored the entry of its key
+  whole, 122,461,885 B, in about 2.6 s.
 - Rejected: a cache of `build/fonts` keyed on the driver of a project, which keeps the cheap
   half and misses the expensive one.
 - A looser `restore-keys` entry is safe here by construction rather than by check. The store
@@ -4360,8 +4421,6 @@ pull requests sat on both sides, so the subject of a call does not say which met
 - Whether a run that authenticates as `GITHUB_TOKEN` spends the allowance of the repository or
   the allowance of the account. The repository's would keep the ledger off the budget that
   every delegate shares. Nothing here has measured it.
-- Whether the cache of the store restores on a `drive` run. The key `assets-<os>-…` saved an
-  entry on the runner, 2026-09-12, and no run is recorded that restored one.
 - Whether `watch.yml` fires from a `main` run that went red on its own. Each recorded firing
   was dispatched at a run already known to be red. So the reading and the reporting are proven,
   and the selection of the trigger is not. A red `main` is not worth causing to prove it.
@@ -4374,8 +4433,6 @@ pull requests sat on both sides, so the subject of a call does not say which met
   each site. The usage list of `WINDING` in `mesh.nim` at `c5c65db` holds the site that `def`
   answers with `items`. So a rename that an implicit call refuses could be planned, at one more
   command for each rename.
-- Whether the `test` job of `curator/audit` should restore the store, as the `drive` job does.
-  Without it, each run fetches 5.7 MB of font faces before the suite holds the rows to their bytes.
 - Whether NIF replaces Protocol Buffers once every project moves to Nim 3, as the Architect
   wondered on 2026-11-10. A law of each suite would then hold the versions of each format, where
   `buf breaking` holds them now.
