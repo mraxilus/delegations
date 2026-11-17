@@ -33,9 +33,9 @@ when compileOption("profiler"):
 
 import std/[importutils, options, sequtils, strutils, tables, unittest]
 
-import ../../src/lojban_parser/grammar {.all.}
-import ../../src/lojban_parser/nif {.all.}
-import ../../src/lojban_parser/[prose, selmaho]
+import ../../src/ricysoho/grammar {.all.}
+import ../../src/ricysoho/nif {.all.}
+import ../../src/ricysoho/[prose, selmaho]
 import ./[corpora, reader_nif]
 
 

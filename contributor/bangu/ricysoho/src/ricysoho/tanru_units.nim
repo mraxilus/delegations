@@ -14,7 +14,7 @@
 ##   | `tanruUnits` | fendi lo pagbu be lo tanru fi lo taurpau                              |
 ##   |--------------|---------------------------------------------------------------------------|
 ##
-## ni'o `ending` noi sivni cu tunba `ending` pe `lojban_tagger/src/lojban_tagger/runs.nim` to
+## ni'o `ending` noi sivni cu tunba `ending` pe `rictadni/src/lojban_tagger/runs.nim` to
 ##     `Article II.9` toi
 ##   .i `ending` pe le vi datnyvei cu tcidu lo pagbu pu lo nu fendi
 ##   .i `ending` pe `runs.nim` tcidu lo taurpau ba lo nu fendi ta'i lo simsa

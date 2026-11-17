@@ -24,8 +24,8 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, tables, unittest]
 
-import ../../src/lojban_parser/[dictionary, forms, selmaho, stream, tanru]
-import ../../src/lojban_parser/lists/[cmavo, gismu]
+import ../../src/ricysoho/[dictionary, forms, selmaho, stream, tanru]
+import ../../src/ricysoho/lists/[cmavo, gismu]
 
 
 const

@@ -1,4 +1,4 @@
-## tcidu lo prosa pe `lojban_parser` ta'i lo jboselci'a ja'i `#818`
+## tcidu lo prosa pe `ricysoho` ta'i lo jboselci'a ja'i `#818`
 ##   .i ro lerfu pe lo selci'a cu se tcita lo stuzi pe vo'a ne'i lo datnyvei
 ##   .i dunda ro srera poi le genturfa'i cu tcita ke'a
 ##   .i lo selci'a poi se tcidu cu du lo selci'a poi re glicipra cu tcidu ke'a
@@ -76,7 +76,7 @@
 
 import std/[options, os, strutils]
 
-import ../../src/lojban_parser/[grammar, prose, selmaho, stream]
+import ../../src/ricysoho/[grammar, prose, selmaho, stream]
 
 
 type

@@ -70,7 +70,7 @@ when compileOption("profiler"):
 
 import std/[jsffi, options]
 
-import ../lojban_parser  # le ralju datnyvei tezu'e `$` pe ro klesi mu'u `KOhA` pe `Selmaho`
+import ../ricysoho  # le ralju datnyvei tezu'e `$` pe ro klesi mu'u `KOhA` pe `Selmaho`
 # le tcidu be lo mivyselci'a be'o po'u `parseLojbanLive` tcidu ne'i lo gunka va'o lo nu le papri cu
 #     dunda pa gunka
 import ./live_text

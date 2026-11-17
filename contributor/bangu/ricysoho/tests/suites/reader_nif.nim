@@ -42,7 +42,7 @@
 
 import std/[options, sequtils, strutils, tables]
 
-import ../../src/lojban_parser/[grammar, merge, nif, nif_read, prose, selmaho, stream, tanru]
+import ../../src/ricysoho/[grammar, merge, nif, nif_read, prose, selmaho, stream, tanru]
 
 export merge, nif_read
 

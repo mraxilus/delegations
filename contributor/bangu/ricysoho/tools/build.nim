@@ -51,8 +51,8 @@
 ##       frica .a lo nu pa cipra cu fliba
 ##   .i le jitro samtci cu sisti sepi'o li re va'o lo nu lo nu pilno cu srera
 ##
-## ni'o lo minde po'u `lists` .e `head` pe `lojban_tagger/tools/build.nim` tunba le vi minde gi'e
-##     pilno le mitytadji ne'i lo liste pe `lojban_tagger` gi'e tcidu le mitkra ja'i le mintu stodi
+## ni'o lo minde po'u `lists` .e `head` pe `rictadni/tools/build.nim` tunba le vi minde gi'e
+##     pilno le mitytadji ne'i lo liste pe `rictadni` gi'e tcidu le mitkra ja'i le mintu stodi
 ##     to `tools/lists.nim` toi
 ##   .i no jitro samtci cu dunda pa minde lo drata samtci
 ##   .i se ki'u bo le tadji cu zvati ro le re jitro samtci to `II.9` toi

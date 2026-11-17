@@ -53,8 +53,8 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[clusters, dictionary, forms, lujvo {.all.}, tanru]
-import ../../src/lojban_parser/lists/gismu
+import ../../src/ricysoho/[clusters, dictionary, forms, lujvo {.all.}, tanru]
+import ../../src/ricysoho/lists/gismu
 import ./[rafsi_random, texts_outside]
 
 

@@ -14,7 +14,7 @@
 
 import std/[options, random, strutils]
 
-import ../../src/lojban_parser/forms
+import ../../src/ricysoho/forms
 
 
 const

@@ -87,7 +87,7 @@ when compileOption("profiler"):
 
 import std/[options, random, strutils, unittest]
 
-import ../../src/lojban_parser/[merge, nif, nif_read, prose]
+import ../../src/ricysoho/[merge, nif, nif_read, prose]
 import ./[corpora, texts_built]
 
 

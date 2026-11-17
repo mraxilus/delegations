@@ -50,8 +50,8 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, sets, strutils, tables, unittest]
 
-import ../../src/lojban_parser/[clusters, forms]
-import ../../src/lojban_parser/lists/[cmavo, gismu]
+import ../../src/ricysoho/[clusters, forms]
+import ../../src/ricysoho/lists/[cmavo, gismu]
 import ./texts_outside
 
 

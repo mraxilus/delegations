@@ -73,14 +73,14 @@
 ##
 ## ni'o le gimste cu ralte lo valsi .e lo rafsi .e no drata
 ##   .i le ma'oste cu ralte lo valsi .e lo selma'o .e no drata
-##   .i `lojban_tagger` ralte lo glipau be ro liste be'o .e le mulno ke jvoste
+##   .i `rictadni` ralte lo glipau be ro liste be'o .e le mulno ke jvoste
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"):
   import std/nimprof
 
-import ./lojban_parser/[
+import ./ricysoho/[
   clusters, dictionary, entries, forms, fuhivla, grammar, live, lujvo, merge, nif, nif_read,
   prose, selmaho, stream, tanru, tanru_units,
 ]

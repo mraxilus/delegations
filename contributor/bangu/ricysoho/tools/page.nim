@@ -41,7 +41,7 @@
 import std/[base64, os, osproc, strutils, tables]
 
 import ../src/browser/draw
-import ../src/lojban_parser/[nif, prose]
+import ../src/ricysoho/[nif, prose]
 
 
 const

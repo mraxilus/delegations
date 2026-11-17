@@ -12,7 +12,7 @@ when compileOption("profiler"):
 
 import std/unittest
 
-import ../../src/lojban_parser/clusters
+import ../../src/ricysoho/clusters
 
 
 const

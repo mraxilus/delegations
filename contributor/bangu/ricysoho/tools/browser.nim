@@ -79,7 +79,7 @@
 import std/[base64, json, os, osproc, strutils, tables]
 
 import ../src/browser/draw
-import ../src/lojban_parser/[live, nif, prose]
+import ../src/ricysoho/[live, nif, prose]
 import ../tests/sample_tatoeba/sentences
 import ./[drive, page]
 

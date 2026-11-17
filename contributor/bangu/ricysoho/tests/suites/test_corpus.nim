@@ -52,7 +52,7 @@ when compileOption("profiler"):
 
 import std/[options, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/prose
+import ../../src/ricysoho/prose
 import ../cll/examples
 
 

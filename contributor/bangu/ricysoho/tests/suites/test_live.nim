@@ -58,7 +58,7 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[grammar, live, nif, prose, selmaho, stream]
+import ../../src/ricysoho/[grammar, live, nif, prose, selmaho, stream]
 import ../sample_tatoeba/sentences
 import ./[corpora, reader_nif, texts_built]
 

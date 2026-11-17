@@ -53,7 +53,7 @@ when compileOption("profiler"):
 import std/[jsffi, strutils, unittest]
 
 import ../../src/javascript/bridge
-import ../../src/lojban_parser/[nif, prose]
+import ../../src/ricysoho/[nif, prose]
 import ../sample_tatoeba/sentences
 import ../suites/reader_nif
 import ./report

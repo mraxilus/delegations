@@ -45,8 +45,8 @@ when compileOption("profiler"):
 
 import std/[options, os, random, sequtils, strutils, sugar, unittest]
 
-import ../../src/lojban_parser/[entries, selmaho]
-import ../../src/lojban_parser/lists/[cmavo, gismu]
+import ../../src/ricysoho/[entries, selmaho]
+import ../../src/ricysoho/lists/[cmavo, gismu]
 import ../../tools/lists
 import ./texts_outside
 
@@ -65,7 +65,7 @@ const
     ## lo lerfu poi lo valsi .e lo rafsi vu'o pe le liste cu vasru ke'a
   LETTERS_RANDOM = "abcdefgijklmnoprstuvxyz'"
     ## lo lerfu poi lo cunvla .e lo cunrafsi cu selcu'a fi ke'a
-  TEXT_MODULE_GISMU = staticRead("../../src/lojban_parser/lists/gismu.nim")
+  TEXT_MODULE_GISMU = staticRead("../../src/ricysoho/lists/gismu.nim")
     ## le datnyvei pe le gimste zi'e poi selra'e ku'o ta'i lo lerpoi
 
   LINE_HEADER =
@@ -293,7 +293,7 @@ const
     ## lo stecmi pe ro mupli'i poi vasru pa cmavo po'o
     ##   .i lo prenu cu tcidu le stecmi
     ##   .i lo ma'orgunma .e lo jufpau cu selvi'u
-  TEXT_MODULE_CMAVO = staticRead("../../src/lojban_parser/lists/cmavo.nim")
+  TEXT_MODULE_CMAVO = staticRead("../../src/ricysoho/lists/cmavo.nim")
     ## le datnyvei pe le ma'oste zi'e poi selra'e ku'o ta'i lo lerpoi
 
 

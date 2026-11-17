@@ -53,7 +53,7 @@
 
 import std/[algorithm, options, os, osproc, sequtils, sets, strutils, tables]
 
-import ../src/lojban_parser/[grammar, lujvo, prose, stream]
+import ../src/ricysoho/[grammar, lujvo, prose, stream]
 import ./literals
 
 

@@ -30,8 +30,8 @@ when compileOption("profiler"):
 
 import std/[options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_parser/[dictionary, forms, selmaho, tanru]
-import ../../src/lojban_parser/lists/[cmavo, gismu]
+import ../../src/ricysoho/[dictionary, forms, selmaho, tanru]
+import ../../src/ricysoho/lists/[cmavo, gismu]
 import ./texts_outside
 
 

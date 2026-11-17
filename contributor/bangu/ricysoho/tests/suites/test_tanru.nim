@@ -70,10 +70,10 @@ when compileOption("profiler"):
 import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
-import ../../src/lojban_parser/[
+import ../../src/ricysoho/[
   clusters, dictionary, forms, fuhivla, lujvo {.all.}, selmaho, tanru {.all.},
 ]
-import ../../src/lojban_parser/lists/[cmavo, gismu]
+import ../../src/ricysoho/lists/[cmavo, gismu]
 import ./[rafsi_random, texts_outside]
 
 
