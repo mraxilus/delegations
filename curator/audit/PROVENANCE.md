@@ -1614,7 +1614,8 @@ fetch that fails.
   `drive` job to save had fetched, which need not be every row that the suite reads. So the suite
   would fetch the rest on each run.
 - Cost: one more entry, of the font faces alone, 5,670,612 bytes raw. On the runner, 2026-11-17,
-  its first save sent 2,467,703 B in about 0.9 s. The restore on the runner is unmeasured.
+  its first save sent 2,467,703 B in about 0.9 s, and a restore of it took about 1.2 s. After that
+  exact hit, the post step saved nothing, as the log of the job shows.
 - Verified by `suites/test_assets.nim`. A fetch that curl fails gives the error of curl, and a
   fetch of other bytes names both digests. No bytes stay at the landing path in either case.
   The suite also joins the six lines of error 60 into one, and holds that the line names the
