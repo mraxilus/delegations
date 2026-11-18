@@ -194,6 +194,15 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
 7. Before you merge several states or paths into one, enumerate every behaviour that the old
    design carried for each state: visibility, enablement, position, timing. Read the old code
    to do it. A request that names one behaviour to keep is not a licence to drop the rest.
+8. Make each routine correct for each value of each type that it takes. A routine can hold
+   several forms, as a fast table beside a general chain. Where a form is correct for some values
+   only, give those values a type that holds no other value. Only that type reaches that form,
+   and no test of a value at runtime selects it. Where no type can hold those values, as for an
+   empty input, a runtime test can select the form. Every other type keeps the general form.
+
+   Where these types are instances of one generic type, as `MultivectorOf[B]` is, each routine
+   that takes one instance takes every instance. Where a value has no result, the routine follows
+   IV.4: its return type says so, or it fails at the earliest boundary.
 
 ```nim
 func `==`*(m, n: Multivector): bool {.error:
@@ -471,8 +480,10 @@ if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads
    with two spaces before the comment marker. A failing test names the page to reopen. Without an
    authority, name suites and tests by the behaviour that they hold.
 2. Test laws, and not examples. Those laws are antisymmetry, round trips, inverses, ordering,
-   conservation, idempotence, intended non-commutativity, degenerate cases, and the
-   equivalence of an optimised implementation against a reference one.
+   conservation, idempotence, intended non-commutativity, and degenerate cases. They also include
+   the equivalence of an optimised implementation against a reference one, over every value of
+   each type that the optimised one takes. The reference reads the same value, and never a part
+   of it.
 3. Enumerate a small finite domain exhaustively. Property-check a large one over seeded
    random samples, which are deterministic and reproducible. Bias the corpus towards
    structured cases: basis elements first, then mostly single-grade objects, with mixed grade
