@@ -121,6 +121,27 @@ Constructed. The pool is a fixed arena, and a caller holds a handle into it and 
 reference. Each dynamic buffer has one arena, and the arena owns its lifetime. A step that
 needs a temporary takes it from a scratch arena that is reset as a whole.
 
+## IV.8 and IX.2: The types of the operands select the form
+
+```nim
+func `⟇⟇~∘`*[A, B: static Bases](m: MultivectorOf[A], n: MultivectorOf[B]): auto {.inline.} =
+  ## Transform 𝐦 by 𝐧, each of any type, i.e. 𝐧 ⟇ 𝐦 ⟇ 𝐧̰.
+  ##   Narrower type takes table of bases of `A` and `B` alone, built when code compiles.
+  ##     E.g. for motor type at rga4d, reads 8 of 16 bases of 𝐧.
+  ##   Whole `Multivector` keeps chain of three steps, i.e. (𝐧 ⟇ 𝐦) ⟇ 𝐧̰.
+  ...
+
+# Not antieven table for every `Multivector`: transform by flector would give zero.
+```
+
+Constructed, in the types of `multivectors.nim` at `3d9696e`, since the reference at `16dbc17`
+holds no `MultivectorOf`. The operator takes every instance. A narrower type takes a table built
+from its bases when the code compiles, and the whole `Multivector` keeps the chain of three steps.
+At rga4d the motor type is `MultivectorEven`, so its table reads 8 bases of 𝐧 and not 16. One
+table of antieven pairs for every `Multivector` reads no antiodd part, so each transform by a
+flector gives zero. The law of IX.2 gives one dense 𝐧 to the operator and to the chain, so it
+trips on that table.
+
 ## V.9: Acronyms a layman knows, and paths in full
 
 ```text
