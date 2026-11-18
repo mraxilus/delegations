@@ -81,7 +81,7 @@ Every rule below serves it:
 | `.github/workflows/head.yml` | Daily `head` of each project, into one issue for each | curator |
 | `.github/workflows/architect.yml` | Label `architect` off an item that closes | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
-| `.claude/skills/`, `.claude/agents/` | Skills, and the agent `record-reviewer` | curator |
+| `.claude/skills/`, `.claude/agents/` | Skills, and the templates of subagents | curator |
 | `.githooks/` | `pre-push` and `commit-msg`, through `core.hooksPath` that koch sets | curator |
 | `.github/pull_request_template.md` | Body that every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/brief.md` | Body that every brief follows | curator |
