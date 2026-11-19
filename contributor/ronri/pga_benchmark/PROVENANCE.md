@@ -1016,8 +1016,9 @@ on 2026-11-08: the laws of P12 ran on copies of P12 with each cell.
 
 A basis-set form of P04 that reaches no basis returns the type of no bases. At each type and pair
 that they sweep, its laws hold each value to the library, which gives zero there. They hold each
-map and product to the bases that the library gives on single bases of its operands, and so to no
-basis where it gives none. A squared norm reads pairs of bases, so its laws hold its value alone.
+map and product to the bases that the library gives on single bases of its operands. So a form
+holds no basis where the library gives none. A squared norm reads pairs of bases, so its laws hold
+its value alone.
 
 Where a map drops the sign of its table, the laws fail at rga4d. Where `⟑` takes one basis more,
 written as zero, they fail there too. Where a squared norm reads half its table, they fail at cga5d
@@ -1029,8 +1030,8 @@ multivector. At 6D they sweep a vector with each type.
 
 At cga6d every pair takes 7 minutes and 4 831 MiB to build and run. A vector with each type there
 takes 2 minutes and 1 458 MiB. Each figure is the wall time of the build and the run, and the peak
-resident size of the largest process of the build, one build after the other. Measured under Nim
-2.4.0 on 2026-11-19, on a Xeon of family 6 model 207.
+resident size of the largest process of the build. The builds ran one after the other. Measured
+under Nim 2.4.0 on 2026-11-19, on a Xeon of family 6 model 207.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
