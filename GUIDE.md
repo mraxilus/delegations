@@ -170,18 +170,63 @@ return it confirmed.
 - **These steps hold for each subagent of a kind in `.claude/agents/`.** A subagent that stands
   in for a tool that you lack, as `web-fetch` for a page, is tool use, and takes none of them.
   Start work that a kind covers through that kind, and never through a general type.
-- **Predict each subagent in the chat as you start it.** Write from what you know, and read
-  nothing new for it. Predict each judgement that it will make, and the work that it will do,
-  with its form. Give each claim a percentage, so that the reflection can test it.
+- **The prediction is the last message of a turn of its own, which starts no subagent.** Start
+  a short background timer first, such as `sleep 5`. Its end wakes you, and the next turn
+  starts the subagent. A block serves only the calls of that next turn.
+- **The block stands in the chat.** A block in thinking reaches neither the chat nor the hook,
+  and a block in the turn of its call is no evidence. Never write a prediction to a file, and
+  never give a subagent the path of a live transcript. A subagent can read both.
+- **Write from what you know, and read nothing new for the prediction.** Predict each judgement
+  that the subagent will make, and the work that it will do, with its form.
+
+Each claim follows these rules for forecasting:
+
+- **Each claim stands on the side that you believe, from 51% to 98%.**
+- **Each claim has a resolution criterion.** A reader can resolve it from the report, the critic
+  and the tree alone.
+- **A number is three percentiles: the 10th, the 50th and the 90th.** In the table, its
+  confidence is 80%, the mass between its 10th and 90th percentiles. Its state is ✅ where the
+  result falls between them, and a result on either percentile counts as inside.
+- **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
+  base rate (issue #964).
+- **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
+  scores by the log score of the distribution of its percentiles, with a floor. The track record
+  is a calibration curve with its 90% credible band.
+- **The table has no column for the score, and no second forecast follows the report.**
+- **Each new term goes through the glossary process first.**
+
+Then the subagent runs, and these steps follow:
+
+- **The prediction of a critic is optional, and a resolver takes none.**
+- **A missing prediction is a miss.** Name it in your reply, and count it as a miss in the
+  reflection, with its cause. Write no block after its call.
+- **A change to the prompt of a running subagent takes no new prediction.** The reflection
+  counts each change as a miss, and names its cause.
 - **A critic runs after each subagent, before your reflection.** It is a fresh subagent too.
   Its prompt holds the first prompt, the report, and the paths of the evidence, but never your
   prediction. It checks each claim against the evidence, and never does the work again. Scale
-  it to the stakes: it samples a survey, and it runs the checks of a build again.
-- **Predict the critic in one line once you read the report.** No critic checks a critic.
-- **Write the reflection when the critic reports**, before any sign-off or working line. It
-  sets the prediction against the report and the critic. Where they disagree, the evidence
-  decides, and the reflection says which way and why. It names the cause of each miss, and the
-  read that would have shown it.
+  it to the stakes: it samples a survey, and it runs the checks of a build again. No critic
+  checks a critic.
+- **The resolver marks every prediction, after the critic.** Its prompt holds each claim with
+  its resolution criterion and with no percentage, the report, and the report of the critic.
+- **Write the reflection when the critic reports**, before any sign-off or working line. Give
+  the subagent and the critic each a line. Each line holds the tokens summed over its requests,
+  the cost at list price, the calls and the time. The tokens of a request are its input, cache
+  write, cache read and output tokens. Each request counts once, by its `requestId`.
+- **The table has the columns `State`, `Confidence`, `Predicted` and `Result`.** The states are
+  ✅ a hit, ⬜ a miss, and ⏸️ a claim that waits on a later event. The state ➖ marks a claim
+  that is ambiguous or annulled, and the row gives its cause. A claim that holds only in part
+  is a miss. Each cell under `Predicted` quotes a claim of the block word for word.
+- **The reflection gives the cause of each miss, and of each hit at 60% or less.** Where the
+  report and the critic disagree, the evidence decides, and the reflection says which way and
+  why.
+- **Answer the resolver in the turn that receives its report**, before any sign-off or working
+  line. Where its mark of a claim differs from yours, give one line that says which way the
+  evidence decides.
+- **The `stop` hook holds these steps at the end of each turn.** It refuses a call of a kind
+  with no block in the turn before it. It refuses a report of a critic with no reflection after
+  it. It refuses a cell under `Predicted` that quotes no block that a call took. A reply to a
+  refusal passes unread, so the hook holds no step there.
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
@@ -191,26 +236,37 @@ return it confirmed.
 **Subagent:** reviewer of the diff of `curator/asset-fetch`, fresh context.
 **Basis:** what this delegate knows, with no new read.
 
-- Judgement: the race to save one shared key leads the findings (70%).
-- Judgement: no test is weakened (85%).
-- Work: four to eight findings, each with `file:line` (60%).
+- Judgement: the race to save one shared key leads the findings (70%). Resolution criterion:
+  it is the first finding of the report.
+- Judgement: no test is weakened (85%). Resolution criterion: the critic finds no assertion
+  that the diff removes or loosens.
+- Judgement: it names the lock of the store as a second risk (60%). Resolution criterion: the
+  report names the lock in a finding.
+- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and
+  90th percentiles. Resolution criterion: the sum of the usage of its requests.
+
+**Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the reviewer.
 ```
 
 ```md
 ## Reflection
 
-**Subagent:** reviewer of the diff of `curator/asset-fetch`, 160,000 tokens, 57 calls, 15 min.
-**Critic:** 50,000 tokens, which failed one claim and held five.
+**Subagent:** reviewer of the diff of `curator/asset-fetch`, 170,000 tokens and $1.10 at list
+price, 57 calls, 15 min.
+**Critic:** 50,000 tokens and $0.35 at list price, 20 calls, 6 min. It held five claims of the
+report and failed one.
 
-| Predicted | Result | Verdict |
-| --- | --- | --- |
-| The race leads (70%) | it leads, as high | hit |
-| No test is weakened (85%) | none is | hit |
-| Four to eight findings (60%) | six | hit |
+| State | Confidence | Predicted | Result |
+| --- | --- | --- | --- |
+| ✅ | 70% | the race to save one shared key leads the findings | it leads, as high |
+| ✅ | 85% | no test is weakened | none is (the critic read each test of the diff) |
+| ⬜ | 60% | it names the lock of the store as a second risk | it names no lock |
+| ✅ | 80% | tokens summed over its requests: 100,000, 160,000 and 300,000 | 170,000, inside |
 
 - **Not predicted:** the line of the log that no test reads.
 - **Disagreement:** none.
-- **Cause of each miss:** none.
+- **Cause of each miss:** the lock: I read the store of `main`, which takes no lock.
+- **Cause of each hit at 60% or less:** none.
 - **Change:** none.
 ```
 
