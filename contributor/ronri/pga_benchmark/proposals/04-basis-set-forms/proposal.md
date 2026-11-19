@@ -7,8 +7,8 @@ table can reach. Scaling, the norms, unitizing, the operators built from others 
 take any type through these forms.
 
 **What it is for.** A form writes only the coefficients that it reaches, so a dot product or a
-squared norm writes one number and not a whole multivector. The type of the result also says
-what it is.
+squared norm writes one number, not a whole multivector. The type of the result also says what it
+is.
 
 **What it costs.** The compiler builds a body for each type or pair of types that a program uses.
 A form that reaches no basis returns the type of no bases, whose value is zero. Each type aligns
@@ -122,8 +122,8 @@ reaches none, and so does the geometric product of two antiscalars.
 
 ### Operators built from others
 
-Each routine takes every type that its operators take, by the rule that a routine is correct for
-each value of each type that it takes (IV.8):
+Each routine takes every type that its operators take. That follows the rule that a routine is
+correct for each value of each type that it takes (IV.8):
 
 - **Scaling.** `*` and `∧` with a scalar on either side keep the type of the multivector.
 - **Norms.** Each norm reads the scalar or the antiscalar of the form of its squared norm, through
@@ -184,17 +184,21 @@ withdrawn.
 
 ## Costs
 
-- **Compile memory.** {{MEMORY}}
+- **Compile cost.** With P14 and this proposal, a program that imports the library alone
+  builds at cga5d in 5.9 s, and peaks at 211 MiB. At pin it takes 5.4 to 5.6 s and 207 MiB. At
+  cga6d it takes 15.3 s and 530 MiB, against 14.7 to 14.8 s and 522 MiB. A form costs only where
+  a program uses it. The laws build every form over every pair of named types, and peak at
+  1 545 MiB at cga5d.
 - **Reach of the table.** The reach is what the table can produce, not what the algebra
   guarantees. A sandwich of a vector comes back as `MultivectorOdd` at each of the nine algebras,
   although its value lies in grade 1. A later proposal can declare a result set (D7 a).
 - **Operators built from others.** Each takes the type that its tables reach in turn, which can
   hold bases where terms cancel. The partner widens its operand to read its grade, as at pin.
 - **Type of no bases.** A caller can get a result type that it does not expect. A value of that
-  type takes 8 bytes at 64 bits, since Nim 2.4.0 sizes an array of no element as one element.
-- **Alignment.** A basis-set type whose bytes are not a power of two, as 3, 5, 6 and 10 floats at
-  64 bits, can still cross a line of the cache. Only padding would prevent that, and padding
-  costs more than the line.
+  type takes 8 bytes at 64 bits, the size of one coefficient.
+- **Alignment.** Some basis-set types hold bytes that are not a power of two, as 3, 5, 6 and 10
+  floats at 64 bits. Such a type can still cross a line of the cache. Only padding would prevent
+  that, and padding costs more than the line.
 - **Caller objects.** A field of a basis-set type aligns its object to 16 bytes, where pin aligns
   it to 8. So an object that holds one beside other fields pads to 16, and so does each `seq` or
   array of such objects. At rga4d, a motor and an `int32` take 80 bytes and not 72. A vector and a
@@ -203,7 +207,13 @@ withdrawn.
   storage stays valid. An allocator of a caller's own must align each block to 16 bytes too.
 - **Memory manager.** No record tests a `seq` of basis-set types under `--mm:refc` or
   `--mm:markAndSweep`. The library at pin names no memory manager.
-- **Time.** {{TIME}}
+- **Time.** The whole set aligns to 16 bytes from rga3d up at 64 bits, where pin aligns it to
+  8. In the evaluation, the 111 measurands at rga4d and the 135 at cga5d read ×0.99 to ×1.02 of
+  pin. The highest are `+` at rga4d, which P14 gives, and the selections of a grade at cga5d.
+- **Static reading.** The inspector keeps the functions of the library by the module in their C
+  name. Seven functions of pin now take in that name the module of the bench that calls them, so
+  the reading holds them no more. They are `+`, `-` and negation of whole multivectors, and the
+  four projections.
 - **Aliases.** Each alias returns `auto`, which has no use at pin. So its signature no longer
   states its type, and a caller reads the type from its operator.
 - **Callers.** A caller that lets the compiler place its basis-set types does not migrate, since
@@ -213,9 +223,9 @@ withdrawn.
 
 ## Open decisions
 
-None. The Architect ruled each decision of this proposal: D6 a, D7 a, D8 a, D9 b, D10 b, D11 b,
-D12 b, D13 b and D51 b, on
-[the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921).
+None. The Architect ruled each decision of this proposal on
+[the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921). The rulings
+are D6 a, D7 a, D8 a, D9 b, D10 b, D11 b, D12 b, D13 b and D51 b.
 
 ## Landing
 
@@ -233,10 +243,10 @@ D12 b, D13 b and D51 b, on
 - **Float width.** Each basis-set type holds `Coefficient`, and `alignment` reads its size. So a
   32-bit build aligns by the same rule, and at least to 4 bytes. `laws.nim` holds this at 32 bits
   at each algebra up to 5D.
-- **Shared quotes.** These quote text that this proposal edits, so whichever of the two lands
-  second quotes it again: the changes `conformal-norms`, `doc-comments`, `doc-comments-2` and
-  `partner-guard`, and P03, P07, P10, P11 and P13. P13, `transform-operator`, is written again by
-  type after this proposal.
+- **Shared quotes.** These texts quote lines that this proposal edits: the changes
+  `conformal-norms`, `doc-comments`, `doc-comments-2` and `partner-guard`, and P03, P07, P10, P11
+  and P13. Whichever of each pair lands second quotes them again. P13, `transform-operator`, is
+  written again by type after this proposal.
 
 ## Evidence
 
@@ -278,7 +288,21 @@ Where the library gives NaN, as the radius norm of a scalar at cga3d does, the f
 the same coefficient. Each alias returns the type of its operator, and equals it and the library.
 Each reverse keeps its type, and each complement takes grade k to grade N - k.
 
-{{LAWS_TABLE}}
+The laws held at each of the nine algebras in the evaluation of 2026-11-19, and at 32 bits at
+seven. Builds by hand on the same day, three at once, on the machine of the evaluation, gave these
+figures:
+
+| Algebra | Pairs of each product | Forms that hold | Of them with no basis | Peak of build |
+|---------|-----------------------|----------------:|----------------------:|--------------:|
+| rga2d | every pair | 465 | 105 | 394 MiB |
+| rga3d | every pair | 618 | 139 | 539 MiB |
+| rga4d | every pair | 791 | 185 | 722 MiB |
+| rga5d | every pair | 984 | 241 | 1 247 MiB |
+| rga6d | a vector with each type | 397 | 75 | 1 212 MiB |
+| cga3d | every pair | 682 | 115 | 616 MiB |
+| cga4d | every pair | 866 | 159 | 843 MiB |
+| cga5d | every pair | 1 070 | 213 | 1 545 MiB |
+| cga6d | a vector with each type | 494 | 86 | 1 490 MiB |
 
 ### The patch of D1 of pga_visualiser
 
@@ -303,8 +327,38 @@ things:
 
 ### Alignment
 
-{{ALIGNMENT}}
+`timing.nim` times a stand-in for each count of floats, since a stand-in reads no library. Each
+stand-in has its own sum and negation, which return by value, as the library writes its operators.
+`timing.nim` exits zero when it runs, and its figures never guard. The evaluation runs it at rga4d.
+
+It ran twice by hand on 2026-11-19, on `linux amd64, 4 cores`, a Xeon of family 6 model 207. Each
+cell is the median of 41 rounds over 1 024 objects, as a ratio to the natural layout, in both runs:
+
+| Floats | `alignment` | 16 bytes: sum, negation | 64 bytes: sum, negation |
+|-------:|------------:|-------------------------|-------------------------|
+| 3 | 8, natural | ×3.2, ×5.0 to ×5.6 | ×3.5 to ×3.6, ×5.5 to ×6.2 |
+| 4 | 16 | ×0.81 to ×0.82, ×0.83 to ×0.84 | ×1.65 to ×1.68, ×1.72 to ×1.73 |
+| 5 | 8, natural | ×2.14 to ×2.15, ×2.19 | ×2.20, ×2.34 |
+| 6 | 16 | ×0.90, ×0.91 | ×1.00 to ×1.01, ×1.06 to ×1.07 |
+| 8 | 16 | ×0.80 to ×0.81, ×0.85 | ×0.73, ×0.84 |
+| 10 | 16 | ×0.86 to ×0.87, ×0.89 to ×0.90 | ×1.21, ×1.23 to ×1.24 |
+| 16 | 16 | ×0.80 to ×0.81, ×0.83 | ×0.76 to ×0.77, ×0.82 |
+
+Where `alignment` takes 16 bytes, a stand-in runs ×0.80 to ×0.91 of the natural layout. A layout
+that pads, as 3 and 5 floats at 16 bytes, runs ×2.1 to ×5.6, so `alignment` never pads. At 64
+bytes, 4 and 10 floats pad and run ×1.21 to ×1.73. There 8 and 16 floats run ×0.73 to ×0.84,
+against ×0.80 to ×0.85 at 16 bytes.
 
 ### Evaluation
 
-{{EVALUATION}}
+Its evaluation of 2026-11-19 passes each claim at pin, with P14 applied first. The suites of the
+library pass 44 tests at rga4d and 39 at cga5d, with the 5 tests of the suite `Typed operators`.
+`laws.nim` holds at the nine algebras, and at 32 bits at seven. The 111 measurands at rga4d and the
+135 at cga5d read ×0.99 to ×1.02 of pin, as Costs gives.
+
+The static reading names seven functions that move: `+`, `-` and negation of whole multivectors,
+and `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti`. Each
+has a reading at pin and none after the change. In the C of the bench, the central projection is
+`projectCentral_u0__measurements` with this proposal, after the module that calls it. Under P14
+alone it carries the name of the library, so the inspector finds it there. Their times read ×1.00
+to ×1.02 of pin.
