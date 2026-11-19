@@ -358,6 +358,9 @@ const
     ##   write them; first of them ends claim (7016134603), where no confidence stands before it
     ##   (7018501890).
   POINT_DECIMAL = '.'  ## Mark between digits and decimal part of percentage, as in `(62.5%)`.
+  PIPE = '|'  ## Mark between cells of row of table.
+  PIPE_ESCAPED = "\\" & PIPE
+    ## Pipe as cell of table must write it; cell and claim each read it as `PIPE` (7022872980).
   SEPARATOR_LABEL = ": "  ## Mark after label of claim, as in `Judgement: `.
   SEPARATOR_LABEL_BOLD = ":" & BOLD & " "
     ## Mark after label of claim in bold, as in `**Judgement:** `: colon inside bold, then space
@@ -2085,7 +2088,8 @@ func labelClaim(claim: string): string =
 func claims(text: string): seq[string] =
   ## Read each claim of block text, with its label and without it, as reflection may quote it.
   ##   Claim is bullet with no indent, to next blank line, next line opening bullet at any
-  ##     indent, or end of block; each run of whitespace reads as one space (7016134603).
+  ##     indent, or end of block; each run of whitespace reads as one space (7016134603), and
+  ##     `\|` reads as `|`, as cell reads it (7022872980).
   ##   Claim runs up to its confidence: last percentage in brackets before first of its
   ##     percentiles and its resolution criterion, or before its end; percentage before
   ##     confidence stays in claim (7018501890). With no percentage there, claim runs up to that
@@ -2103,7 +2107,7 @@ func claims(text: string): seq[string] =
     elif line.strip.len == 0 or line.isBullet: is_open = false
     elif is_open: bullets[^1].add "\n" & line
   for bullet in bullets:
-    let text = bullet.collapsed
+    let text = bullet.collapsed.replace(PIPE_ESCAPED, $PIPE)
     var stop = text.len
     for mark in MARKS_CLAIM:
       let at = text.find(mark)
