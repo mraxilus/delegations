@@ -43,8 +43,8 @@ const
   TURNS_PLANNED = [
     (card: "One hand, same name · above", positive: MOST),
     (card: "One hand, cross name · above", positive: MOST),
-    (card: "Chain, cross name · above", positive: 1.5275),
-    (card: "Chain, same name · above", positive: MOST),
+    (card: "Chain, cross name · above", positive: 1.7100),
+    (card: "Chain, same name · above", positive: 1.6625),
     (card: "Chain, cross name · high", positive: 0.8438),
     (card: "Chain, same name · high", positive: 0.6500),
     (card: "Chain, cross name · low", positive: 0.8650),
@@ -53,26 +53,30 @@ const
     ## Turns plan carries each rig sweep from rest, at band of its hold, way that turns positive,
     ##   follow turning: furthest of every style toward all sweep asks (`walk.MOST`), own path
     ##   and its mirror's (`walk.pathsFor`), engine standing each moment (`walk.replayedWay`,
-    ##   `rigid.gives`).  Rig keeps that way alone (`seen.shown`), so table floors no other.
+    ##   `rigid.gives`), each chain through swan its card draws (`rig.sweptSwan`).  Rig keeps that
+    ##   way alone (`seen.shown`), so table floors no other.
     ##   Keyed by card and level as rig names its sweep, in order of `design/rig.SHOWN`, so
     ##     `floors` prints table row for row.
     ##   Measured by `nim r tools/build.nim floors`, which prints each row with style and start
-    ##     of its path.  Rows above: 2026-10-12, on physics of `6ef96eaf`, same again
-    ##     2026-10-20, and same again 2026-10-29, on physics of `fd756cfb`:
-    ##     One hand, same name: style 0 to +2.5, from 1.169 m on 2026-10-29.
-    ##     One hand, cross name: style 2 to +2.5, from 0.966 m on 2026-10-29.
-    ##     Chain, cross name: style 13, from 0.957 m, to 1.5275.
-    ##     Chain, same name: style 4, from 0.417 m.
-    ##   Rows held high and low: 2026-10-29, on physics of `fd756cfb`, each to where no plan
-    ##     carries turn further:
+    ##     of its path: every row 2026-11-19, on physics of `032503f2`, each to where no plan
+    ##     carries turn further.  Rows other than chains above read as on 2026-10-29, on physics
+    ##     of `fd756cfb`:
+    ##     One hand, same name: style 0 to +2.5, from 1.169 m.
+    ##     One hand, cross name: style 2 to +2.5, from 0.966 m.
+    ##     Chain, cross name: style 4, from 1.123 m, to 1.71.
+    ##     Chain, same name: style 1, from 0.509 m, to 1.6625.
     ##     Chain, cross name, high: style 1, from 1.115 m.
     ##     Chain, same name, high: style 14, from 0.670 m.
     ##     Chain, cross name, low: style 11, from 1.105 m.
     ##     Chain, same name, low: style 3, from 0.389 m.
-    ##   Edge holds cross-name chain near there, its upper arm riding plan's six degrees inside:
-    ##     plan with edge's margin at 0 or 3 degrees, other margins kept, stands no path past
-    ##     1.540 or 1.526, and plan with no edge term none past 1.4475, engine stopping each by
-    ##     swing where upper arm passes edge's give.  Measured 2026-10-12 by probes outside tree.
+    ##   Each chain above stops soon past swan, since no plan that winds swan as card draws it
+    ##     carries chain further.  Plan that draws hoop only up to swan carries same-name chain to
+    ##     1.6675 and cross-name chain to 1.6988, measured 2026-11-19 by probe outside tree.
+    ##     Cost: same-name chain's floor falls from 2.5 to 1.6625, which waits on Architect
+    ##       (`PROVENANCE.md`, Open questions).  Plan that names no swan carries that chain to 2.5,
+    ##       winding swan otherwise than drawn.
+    ##     Rejected: plan that names no swan, which edge stops near 1.53 of turn on cross-name
+    ##       chain, and which crosses twice at its swan.
   REASON_WHOLE = "lead's turn of same-name chain held above, from Face-to-back, to whole " &
       "turn: no plan inside shoulder's edge passes 0.71 of turn, and no wall tried carries walk " &
       "there but by chance"
@@ -970,6 +974,8 @@ suite "Internal: Simulation against Reference":
     ##     hand leaves its band; same-name chain held above stops at +1.80, by lead's wrist, and
     ##     at -1.66, by arm through arm.  Rig there holds `Chain, cross name · above` to 1.24 and
     ##     `Chain, same name · above` to +1.78, and keeps no way that turns negative.
+    ##     Cost: same-name chain's floor, 1.6625, lies under that +1.78, so law no longer reads
+    ##       it short (`TURNS_PLANNED`).
     let
       by_rig = turnsHeldRig(parseFile(KEPT_RIG))
       ways_rig = SHOWN.len
