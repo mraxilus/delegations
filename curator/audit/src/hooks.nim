@@ -351,6 +351,9 @@ const
     ## Words that open percentiles and resolution criterion of claim, which end it, as its
     ##   percentage in brackets does (7016134603).
   SEPARATOR_LABEL = ": "  ## Mark after label of claim, as in `Judgement: `.
+  FULL_STOP = '.'
+    ## Mark that ends sentence; claim with no mark ends before one final one of its bullet
+    ##   (7017902016).
   LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
     "miss, with its cause, and write no block for it. Write each missing reflection now, and " &
@@ -2040,7 +2043,8 @@ func claims(text: string): seq[string] =
   ##   Claim is bullet with no indent, to next blank line, next line opening bullet at any
   ##     indent, or end of block, each run of whitespace read as one space (7016134603).
   ##   Claim runs up to its percentage in brackets, its percentiles from `, as the 10th`, or its
-  ##     resolution criterion, whichever comes first, or to end of bullet where none stands.
+  ##     resolution criterion, whichever comes first (7016134603); where none stands, it ends
+  ##     before one final full stop of its bullet (7017902016).
   ##   Label is text before first `: ` of claim; `: ` that only resolution criterion holds
   ##     opens none, so bullet with no label reads whole.
   var
@@ -2062,6 +2066,7 @@ func claims(text: string): seq[string] =
       if text.isPercentage(at):
         stop = at
         break
+    if stop == text.len and text.endsWith(FULL_STOP): dec stop  # no mark: one full stop goes
     let claim = text[0 ..< stop].strip
     if claim.len == 0: continue
     result.add claim
@@ -2078,8 +2083,9 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
   ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
   ##     each is finding, as cell that quotes no claim is.
   ##   Cell equals one claim of block call took, with or without its label (7016134603), each
-  ##     run of whitespace read as one space; fragment of claim, or claim with its percentage,
-  ##     is none. Cell `No prediction` passes too, in that case of letters alone: it counts
+  ##     run of whitespace read as one space; fragment of claim, claim with its percentage, or
+  ##     claim with no mark that keeps final full stop of its bullet (7017902016), is none.
+  ##     Cell `No prediction` passes too, in that case of letters alone: it counts
   ##     missing prediction in row of its own, with cause of miss under `Result` (7015791554).
   let lines = text.splitLines
   var i = 0
@@ -2112,8 +2118,8 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
           0,
           "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" & HEADING_PREDICTION &
             "` block that call took, up to its percentage, percentiles or resolution criterion, " &
-            "with or without its label, or `" & NO_PREDICTION & "` (GUIDE.md, Prediction, " &
-            "critic and reflection); got `" & cell & "`.",
+            "or before final full stop of bullet with none, with or without its label, or `" &
+            NO_PREDICTION & "` (GUIDE.md, Prediction, critic and reflection); got `" & cell & "`.",
         )
     return
   @[finding(
