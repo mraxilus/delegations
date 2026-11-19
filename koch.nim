@@ -338,9 +338,11 @@ proc runHook(root, event, input: string): int =
           turn.text, branch_root, turn.signoffs_earlier, subjects, turn.signoffs_before
         )
       let unread = checkSignoffRead(turn.text, turn.calls)
-      if found.len == 0 and unread.len == 0: return 0
+      # Blocks of subagents hold at end of every model turn, for kinds root names now.
+      let blocks = turn.subagents.checkBlocks(readKinds(root))
+      if found.len == 0 and unread.len == 0 and blocks.len == 0: return 0
       let has_signoff = turn.text.isSignoff
-      echo %*{"decision": "block", "reason": reasonStop(found, unread, has_signoff)}
+      echo %*{"decision": "block", "reason": reasonStop(found, unread, has_signoff, blocks)}
       0
   of "prompt":
     # Line names skill of moment message holds; it adds context, and never blocks message.
