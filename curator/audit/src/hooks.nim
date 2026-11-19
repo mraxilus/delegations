@@ -11,8 +11,9 @@
 ##     pull request form, and closing keyword before issue on line of its own alone; `stop`
 ##     refuses end of turn that pushed or posted and closes with neither sign-off block nor
 ##     working line, sign-off out of shape whatever its turn did, end of any turn whose message
-##     names `#N` outside link or cites charter reference with no description, and sign-off
-##     from turn that read no open issue of its role; `start` prints role, read order, each
+##     names `#N` outside link or cites charter reference with no description, sign-off from
+##     turn that read no open issue of its role, and call of subagent of kind that no block of
+##     model turn before it predicts; `start` prints role, read order, each
 ##     finding of drift, headings of record branch works on, and carried list; `prompt` reads
 ##     each message of Architect; `push` and `msg` serve git hooks.
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
@@ -55,6 +56,11 @@
 ##     alone, since it starts again at each message of Architect. Transcript names message
 ##     person typed by `origin.kind`, which no wake carries; turn still starts at wake, since
 ##     what turn did is read from there.
+##   Blocks of subagents hold at end of each model turn, as Architect ruled on #962
+##     (`checkBlocks`): call of subagent of kind takes `## Prediction` block of model turn
+##     just before its own, which starts no subagent. Model turn ends where model stops, never
+##     at `user` entry, so block checks read model turns, and every other check reads turn since
+##     message of person. Kinds are read from templates at each stop (`readKinds`).
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -76,7 +82,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, sequtils, strutils, uri]
+import std/[algorithm, json, options, os, sequtils, strutils, uri]
 from ../../knoller/src/knoller/chain import FILE_LOCK
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 from ./glossary import GLOSSARY_ROOT
@@ -119,6 +125,26 @@ type
     labels*: seq[string]  ## Input `labels`, which list of issues filters on.
     state*: string  ## Input `state`, lowercase, which list of issues filters on; empty where none.
 
+  Place* = object  ## Define where one item of transcript stands: its model turn, and its order.
+    turn*: int  ## Index of model turn holding item, from 0.
+    at*: int  ## Index of item in order of transcript, over items of every entry.
+
+  Subagent* = object  ## Define one `Agent` call of transcript, i.e. subagent it starts.
+    kind*: string  ## Input `subagent_type`, such as `builder`.
+    description*: string  ## Input `description`.
+    place*: Place  ## Where call stands.
+
+  Block* = object  ## Define one `## Prediction` block of assistant text.
+    text*: string  ## Lines after heading, to end of block, each fenced line blanked.
+    place*: Place  ## Where text item holding block stands.
+
+  Subagents* = object  ## Define what transcript says about subagents, by model turn.
+    turns*: int  ## Count of model turns; last one is current.
+    calls*: seq[Subagent]  ## Each `Agent` call, in order.
+    predictions*: seq[Block]  ## Each `## Prediction` block, in order.
+    thinking*: seq[Place]  ## Each item of type `thinking` or `redacted_thinking`.
+    texts*: seq[Place]  ## Each item of type `text`.
+
   Turn* = object  ## Define what transcript says about turn since last message of person.
     calls*: seq[Call]  ## Tool calls in order.
     text*: string  ## Text of last assistant message.
@@ -127,6 +153,7 @@ type
     signoffs_before*: seq[seq[string]]
       ## Text of each sign-off before that message, one list for each window that holds one,
       ##   oldest first; empty where no entry names message of Architect by `origin.kind`.
+    subagents*: Subagents  ## What whole transcript says about subagents, by model turn.
 
   Word = object  ## Define one word of shell text, as shell passes it to command.
     text: string  ## Word with quotes and escapes taken out.
@@ -280,6 +307,20 @@ const
     ## Phrases of message of Architect that asks where work stands, or what delegate owes.
   WORD_MERGED = "merged"  ## Word of message of Architect that reports merge.
   LETTERS_OPTION = {'a' .. 'd'}  ## Letters that name option of decision.
+  DIRECTORY_AGENTS* = ".claude/agents"
+    ## Folder whose `*.md` templates name each kind of subagent by `name:` of front matter.
+  TOOL_AGENT = "Agent"  ## Tool that starts subagent.
+  REASON_TOOL = "tool_use"
+    ## Stop reason of message that ends in tool call; every other one ends model turn.
+  TYPES_THINKING = ["thinking", "redacted_thinking"]  ## Types of item that hold thinking.
+  KINDS_EXEMPT* = ["critic", "resolver"]
+    ## Kinds whose call passes with no block: prediction of critic is optional (6975216328),
+    ##   and resolver marks prediction, so it takes none.
+  HEADING_PREDICTION* = "## Prediction"  ## Heading of block that predicts subagent.
+  LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
+    "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
+    "miss, with its cause, and write no block for it:"
+    ## Line opening part of refusal of `stop` that blocks of subagents take.
 
 
 func isStringRole*(s: string): bool =
@@ -1818,13 +1859,86 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
   )]
 
 
-func reasonStop*(found, unread: openArray[Finding]; has_signoff = false): string =
+func blocksTaken(subagents: Subagents; kinds: openArray[string]): seq[int] =
+  ## Read index in `predictions` of block each call took, by index of call; -1 where none.
+  ##   Block serves calls of next model turn alone, and only from turn that starts no subagent of
+  ##     any type (`D2 a` of 6982373798), since prediction is last message of turn of its own,
+  ##     which timer ends, and next turn starts subagent (6980006567).
+  ##   Each call of kind that is not exempt takes earliest block no call took, in order of
+  ##     calls; exempt call takes block only where one is left after them.
+  ##   Call of type no template names is tool use, and takes none.
+  result = newSeqWith(subagents.calls.len, -1)
+  var first = 0
+  while first < subagents.calls.len:
+    let turn = subagents.calls[first].place.turn
+    var stop = first
+    while stop < subagents.calls.len and subagents.calls[stop].place.turn == turn: inc stop
+    if turn > 0 and not subagents.calls.anyIt(it.place.turn == turn - 1):
+      var free = toSeq(0 ..< subagents.predictions.len)
+        .filterIt(subagents.predictions[it].place.turn == turn - 1)
+      for is_exempt in [false, true]:
+        for k in first ..< stop:
+          let kind = subagents.calls[k].kind
+          if free.len == 0 or kind notin kinds or (kind in KINDS_EXEMPT) != is_exempt: continue
+          result[k] = free[0]
+          free.delete(0)
+    first = stop
+
+
+func checkPredictions(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
+  ## Report each call of current model turn, of kind that is not exempt, that took no block.
+  ##   Missing prediction asks for no block, since block after call is no evidence: reply names
+  ##     it, and reflection counts it as miss, with its cause (6979936148).
+  ##   Block in turn of call adds that block stands in earlier turn, and thinking with no text
+  ##     before call adds that block in thinking reaches neither chat nor hook (`D3 a` of
+  ##     6982373798). Call of earlier turn was held at its own stop.
+  let
+    taken = subagents.blocksTaken(kinds)
+    current = subagents.turns - 1
+  for k, call in subagents.calls:
+    if call.place.turn != current or call.kind notin kinds or call.kind in KINDS_EXEMPT or
+        taken[k] >= 0:
+      continue
+    template isBefore(other: Place): bool =
+      ## Decide whether place stands in turn of call, before it.
+      other.turn == current and other.at < call.place.at
+    let
+      is_written = subagents.predictions.anyIt(it.place.isBefore)
+      is_thought = subagents.thinking.anyIt(it.isBefore) and not subagents.texts.anyIt(it.isBefore)
+    var hint = ""
+    if is_written:
+      hint = ", and block in turn of call, which is no evidence: block stands in earlier turn"
+    elif is_thought:
+      hint = ", and thinking with no text before call: block in thinking reaches neither " &
+        "chat nor hook"
+    result.add finding(
+      "",
+      0,
+      "Call of subagent of kind takes `" & HEADING_PREDICTION & "` block of model turn just " &
+        "before its own, which starts no subagent (GUIDE.md, Prediction, critic and " &
+        "reflection); got none for `" & call.kind & "` call `" & call.description & "`" & hint &
+        ".",
+    )
+
+
+func checkBlocks*(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
+  ## Report what `stop` holds of prediction, critic and reflection at end of each model turn,
+  ##   whether or not turn pushed or posted.
+  subagents.checkPredictions(kinds)
+
+
+func reasonStop*(
+  found, unread: openArray[Finding]; has_signoff = false; blocks: openArray[Finding] = []
+): string =
   ## Render why `stop` hook refuses message ending turn, one finding to line.
   ##   Message is on screen once hook reads it, so delegate replies with diff of each error
   ##     alone; whole message sent again reads twice (D1 of #570), and so does each line of it.
   ##   Reply passes unread, since `stop_hook_active` is set, so its `-` line refuses nothing.
   ##   Unread queue takes read in place of diff: what waits there can change sign-off, so
   ##     delegate takes it first and replies with one line naming it (#742).
+  ##   Blocks of subagents take part of their own after those two, and no diff, since what
+  ##     each asks is new text: missing prediction is named in reply as miss, with no block
+  ##     (6979936148).
   ##   Refused message holding sign-off closes with line naming skill that holds its steps.
   var parts: seq[string]
   if found.len > 0:
@@ -1836,6 +1950,7 @@ func reasonStop*(found, unread: openArray[Finding]; has_signoff = false): string
     parts.add "Read queue before this sign-off stands (GUIDE.md, Output contract): list open " &
       "issues that line below names, take first what waits there, and reply with one line " &
       "naming it, and no diff:\n" & unread.mapIt(it.message).join("\n")
+  if blocks.len > 0: parts.add LINE_BLOCKS & "\n" & blocks.mapIt(it.message).join("\n")
   if has_signoff: parts.add LINE_SIGNOFF
   parts.join("\n")
 
@@ -1924,6 +2039,32 @@ proc readPrompt*(root, branch: string): string =
   ##     over scratch root.
   let path = branch.pathPrompt
   if path.len > 0 and fileExists(root / path): readFile(root / path) else: ""
+
+
+func nameMatter(text: string): string =
+  ## Read value of `name:` line of front matter, i.e. lines between opening `---` and next one;
+  ##   empty where text opens with none, or matter names none.
+  let lines = text.splitLines
+  if lines.len == 0 or lines[0].strip != "---": return ""
+  for line in lines.toOpenArray(1, lines.high):
+    if line.strip == "---": return ""
+    if line.startsWith("name:"): return line["name:".len .. ^1].strip(chars = Whitespace + {'"'})
+  ""
+
+
+proc readKinds*(root: string): seq[string] =
+  ## Read each kind of subagent root names: `name:` of front matter of each `*.md` template of
+  ##   `.claude/agents/`, sorted; none where folder is missing.
+  ##   Kinds are read at each stop and never listed in code, so template added is kind at once.
+  ##   Read lives here and not in koch, since no suite runs `main` of koch, and suite reads it
+  ##     over scratch root.
+  let directory = root / DIRECTORY_AGENTS
+  if not dirExists(directory): return
+  for kind, path in walkDir(directory):
+    if kind notin {pcFile, pcLinkToFile} or not path.endsWith(".md"): continue
+    let name = readFile(path).nameMatter
+    if name.len > 0: result.add name
+  result.sort
 
 
 func contextStart*(
@@ -2048,6 +2189,96 @@ func isTurnWriting*(calls: openArray[Call]): bool =
   false
 
 
+func turnsModel(entries: openArray[JsonNode]): seq[int] =
+  ## Read index of model turn of each entry, from 0.
+  ##   Model turn ends at assistant entry whose `stop_reason` is string other than `tool_use`.
+  ##     Harness writes each item of message as entry of its own, each with reason of message,
+  ##     so turn ends at last entry of its message, by `message.id`; entry with no id is message
+  ##     of its own.
+  ##   `user` entry of text opens no model turn, since harness writes skill body, summary of
+  ##     compaction and notice of restart inside one; model turn ends only where model stops.
+  ##   End of last message closes current turn and opens none, so entries after it stay there.
+  ##   Entry with no `stop_reason` ends no turn: harness that streams writes none before its
+  ##     message ends (assumed), and its last entry still ends turn.
+  var
+    ends: seq[int]
+    pending = -1  # Entry that ends turn, unless next assistant entry continues its message.
+    id_pending = ""
+  for i, e in entries:
+    if e{"type"}.getStr != "assistant": continue
+    let id = e{"message", "id"}.getStr
+    if pending >= 0 and (id.len == 0 or id != id_pending): ends.add pending
+    pending = -1
+    let reason = e{"message", "stop_reason"}
+    if reason != nil and reason.kind == JString and reason.getStr != REASON_TOOL:
+      (pending, id_pending) = (i, id)
+  var turn = 0
+  for i in 0 ..< entries.len:
+    result.add turn
+    if turn < ends.len and ends[turn] == i: inc turn
+
+
+func isHeadingTop(line: string): bool =
+  ## Decide whether line is heading of level 1 or 2: one or two `#`, then space, after indent.
+  ##   Heading is `#` run then space, so `#962 holds` is none, and `###` opens deeper one.
+  let s = line.strip(trailing = false)
+  s.startsWith("# ") or s.startsWith("## ")
+
+
+func blocksText(lines: openArray[string], heading: string): seq[tuple[line: int, text: string]] =
+  ## Read each block of text item that opens with heading line, from lines with fences blanked:
+  ##   line of heading, and text after it to next heading of level 1 or 2, working line, or end.
+  for i, line in lines:
+    if line.strip != heading: continue
+    var stop = i + 1
+    while stop < lines.len and not lines[stop].isHeadingTop and
+        not lines[stop].strip.startsWith(LABEL_WORKING):
+      inc stop
+    result.add (line: i, text: lines.toOpenArray(i + 1, stop - 1).join("\n"))
+
+
+func toSubagents(entries: openArray[JsonNode]): Subagents =
+  ## Read each `Agent` call, `## Prediction` block, thinking and text of transcript, in order,
+  ##   with model turn of each.
+  ##   Fence reads over joined text of each entry, as `parseTurn` joins it, so fence crossing two
+  ##     items reads right; each item still ends its own block. Fence is `fencedOut`'s, so tilde
+  ##     fence and indented code are text.
+  let turns = entries.turnsModel
+  result.turns = (if turns.len == 0: 1 else: turns[^1] + 1)
+  var at = 0
+  for i, e in entries:
+    if e{"type"}.getStr != "assistant": continue
+    let
+      turn = turns[i]
+      items = e{"message", "content"}.getElems
+
+    # Blank fenced lines of joined text, then read each item over its own lines.
+    var pieces: seq[seq[string]]
+    for item in items:
+      pieces.add(if item{"type"}.getStr == "text": item{"text"}.getStr.splitLines else: @[])
+    let shown = pieces.concat.join("\n").fencedOut.splitLines
+    var line = 0  # First line of item in `shown`.
+    for k, item in items:
+      let place = Place(turn: turn, at: at)
+      inc at
+      case item{"type"}.getStr
+      of "text":
+        result.texts.add place
+        let stop = line + pieces[k].len
+        for found in blocksText(shown.toOpenArray(line, stop - 1), HEADING_PREDICTION):
+          result.predictions.add Block(text: found.text, place: place)
+        line = stop
+      of TYPES_THINKING[0], TYPES_THINKING[1]: result.thinking.add place
+      of "tool_use":
+        if item{"name"}.getStr != TOOL_AGENT: continue
+        result.calls.add Subagent(
+          kind: item{"input", "subagent_type"}.getStr,
+          description: item{"input", "description"}.getStr,
+          place: place,
+        )
+      else: discard
+
+
 proc parseTurn*(transcript: string): Turn =
   ## Read tool calls since last message person wrote, text of last assistant message, and each
   ##   earlier sign-off: since last message of Architect, and before it by window.
@@ -2065,6 +2296,7 @@ proc parseTurn*(transcript: string): Turn =
     if line.strip.len == 0: continue
     try: entries.add line.parseJson
     except JsonParsingError, ValueError: discard
+  result.subagents = entries.toSubagents
   var
     start = 0
     window = 0
