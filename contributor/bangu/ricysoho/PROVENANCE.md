@@ -1910,17 +1910,16 @@ ni'o se to'e cuxna fa `-d:danger` noi vimcu ro cipra be lo korbi .e lo selku'e l
   .i le minde cu pilno le fanva poi pu fanva le jitro samtci
 
 ni'o **jdima fa lo nu lo dilcu be lo temci pe lo nu le samtci cu tcidu kei bei lo temci pe lo nu le
-    jbezba cu tcidu cu jibni li cize**
+    jbezba cu tcidu cu jibni li re ze**
   .i se ki'u bo `parseLojban` jgari le cilta pe lo pilno be vo'a ca lo nu tcidu
   .i lo tcidu be lo mivyselci'a cu tcidu ne'i lo gunka va'o lo nu le papri cu dunda pa gunka to le
       ckupaupau po'u lu lo jmive se ciska ne'i lo samtci pe lo papri li'u toi
 
-ni'o lo mijytei pe lo nu tcidu pa selci'a pe le mupli cu du `16 ms` fa'u `14 ms`
-  .i ne'i le jbezba lo mijytei cu du `0.45 ms` fa'u `0.35 ms`
-  .i lo rairclatei cu du `459 ms` fa'u `416 ms`
-  .i ne'i le jbezba lo rairclatei cu du `11 ms` fa'u `10 ms`
-  .i le pagbu poi selcme lu le selzba pe `JavaScript` li'u ne'i le ckupaupau poi selcme lu lo namcu
-      li'u cusku le tadji
+ni'o lo mijytei pe lo nu tcidu pa selci'a pe le mupli cu du `5.3 ms` fa'u `5.1 ms`
+  .i ne'i le jbezba lo mijytei cu du `0.19 ms` fa'u `0.19 ms`
+  .i lo rairclatei cu du `140 ms` fa'u `179 ms`
+  .i ne'i le jbezba lo rairclatei cu du `5.6 ms` fa'u `5.0 ms`
+  .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u cusku le tadji
 
 ni'o bu'u `ff4fb895` le minde cu ciska `1,143,359 bytes` gi'e cusku lo ni le datnyvei cu barda
   .i le samtci cu vasru ji'a lo tcidu be lo jmive se ciska to le ckupaupau po'u lu lo namcu pe lo
@@ -4234,8 +4233,19 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
       `555 ms` ca `70948d7a`
 - ny.mai **lo nu `ReaderLive` cu tcidu ro valsi pa roi**
   .i le samtci cu selzba sepi'o `-d:release`
-  .i le midju be lo re temci cu du `19.6 s` .e `20.1 s` ca `40bee07a` gi'e du `10.3 s` .e `10.4 s`
-      ca `70948d7a`
+  .i le midju be lo mu temci cu du `19,048 ms` .e `19,411 ms` ca `40bee07a` gi'e du `10,065 ms` .e
+      `10,005 ms` ca `70948d7a`
+- ny.mai **lo nu tcidu pa jufra pe le mupli pe `Tatoeba`**
+  .i ro samtci cu tcidu ro le recivo jufra pa roi gi'e ba bo tcidu ro jufra pa roi gi'e merli ro
+      temci be lo nu tcidu pa jufra
+  .i le samtci pe `JavaScript` cu selzba ta'i lo minde po'u `javascript` gi'e pilno `parseLojban`
+      sepi'o `node 22.23.4`
+  .i le jbezba cu selzba sepi'o `-d:release` gi'e pilno `readText`
+  .i ro samtci cu gunka re roi ca `70948d7a`
+  .i ne'i le samtci pe `JavaScript` lo mijytei cu du `5.269 ms` .e `5.071 ms`
+  .i ne'i le samtci pe `JavaScript` lo rairclatei cu du `140.0 ms` .e `179.2 ms`
+  .i ne'i le jbezba lo mijytei cu du `0.194 ms` .e `0.187 ms`
+  .i ne'i le jbezba lo rairclatei cu du `5.559 ms` .e `4.965 ms`
 - ny.mai **lo nu `parseLojbanToNif` cu tcidu ro selci'a ne'i `Chromium 153.0.8010.12`**
   .i `Playwright 1.63.0` cu jitro `Chromium`
   .i ro le temci cu temci pa nu gunka
@@ -4260,6 +4270,31 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
   .i le samtci cu pilno `5,447,545,469 instructions` ca `6ae76ec0` gi'e pilno
       `4,996,542,223 instructions` ca `1da9df3d` noi sinxa ro jvasni .e lo kraselcmi .e ro se cuxna
       ta'i pa namcu
+- ny.mai **lo temci pe ro fancu po'o**
+  .i ro samtci cu pilno ro fancu sepi'o pa `proc` poi pa `{.volatile.}` cu ralte ke'a
+  .i ro fancu cu tcidu lo se pilno be vo'a pe lo nu `readTextMarked` cu tcidu le selci'agri
+  .i ro nu gunka cu dunda le midju be lo ze temci
+  .i le namcu poi di'e cu cmima le pamoi girzu be lo nu gunka
+  .i re drata girzu cu rapli le nu gunka
+  .i `fillSets` cu pilno `606.5 ms` .e `657.9 ms` ca `426321ff` gi'e pilno `236.4 ms` .e `232.9 ms`
+      ca `23d039e8`
+  .i `choose` cu pilno `411.9 ms` .e `412.0 ms` ca `23d039e8` gi'e pilno `336.9 ms` .e `375.2 ms` ca
+      `4714f43c`
+  .i `fillSets` cu pilno `243.7 ms` .e `233.5 ms` ca `4714f43c` gi'e pilno `171.1 ms` .e `194.0 ms`
+      ca `6ae76ec0`
+  .i `toCompletions` cu pilno `123.7 ms` .e `123.0 ms` ca `6ae76ec0` gi'e pilno `118.0 ms` .e
+      `117.3 ms` ca `1da9df3d`
+  .i `choose` cu pilno `347.5 ms` .e `344.0 ms` ca `6ae76ec0` gi'e pilno `305.7 ms` .e `306.4 ms` ca
+      `1da9df3d`
+  .i ne'i ro remei pe le pamoi girzu lo temci pe lo fancu poi le remei cu na cenba ke'a cu cenba
+      su'e `19.5%`
+  .i ne'i ro remei pe le re drata girzu le cenba cu du su'e `43.6%`
+  .i ne'i re girzu lo nu `fillSets` cu sutra ca `23d039e8` .e `6ae76ec0` cu zmadu le cenba ne'i ro
+      remei
+  .i lo nu `choose` cu sutra ca `4714f43c` cu na zmadu le cenba ne'i su'o remei pe ro girzu
+  .i lo nu `toCompletions` cu sutra ca `1da9df3d` cu na zmadu le cenba ne'i su'o remei pe ro girzu
+  .i lo nu `choose` cu sutra ca `1da9df3d` cu zmadu le cenba ne'i le pamoi girzu po'o
+  .i ku'i ne'i ro remei lo nu `choose` cu sutra ca `4714f43c` .e `1da9df3d` cu zmadu li no
 - ny.mai **lo cipra ne'i lo cikryzba**
   .i le cikryzba cu selzba sepi'o `-d:testing`
   .i ro temci cu temci pa nu gunka
