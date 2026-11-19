@@ -3,8 +3,8 @@
 **What it is.** `+` and `-` take two multivectors of any basis-set types, or a scalar beside a
 multivector of any type, and negation takes any type. Two operands of one type keep that type.
 Two types give the exact union of their bases, as the named type with exactly those bases where
-one exists. Each body writes one assignment for each basis at compile time, so no set is read at
-run time.
+one exists. Each body writes one loop for each run of consecutive bases, at constant bounds, so no
+set is read at run time.
 
 **What it is for.** At pin, `+` takes two operands of one type, and `-` and each sum with a
 scalar take whole multivectors alone. So a caller widens a vector and a bivector to add them, and
@@ -13,8 +13,7 @@ bases at each call.
 
 **What it costs.** A sum of two types can take a type that no alias names, as a scalar and a
 vector at rga4d take a type of 5 bases. The library exports `zeroNamed`, which names each result
-type. Negation of a whole multivector at cga5d takes ×1.58 of the time at pin, for a cause not
-isolated.
+type. In the bench, a sum of whole multivectors at rga4d takes ×1.02 of the time at pin.
 
 ## Problem
 
@@ -36,9 +35,11 @@ pga_visualiser traced to this `+` the growth of the copies of its lattice at `3d
 - **Names.** `zeroNamed[R]()` gives the zero of the named type whose bases are `R`. Where no named
   type has them, it gives `MultivectorOf[R]`, with `R` built again in the order of the bases. Nim
   compares two static sets as each is written, so equal sets then give one type.
-- **Bodies.** `emitCombinedByBasis` writes one assignment for each basis of the union, at a
-  constant basis. A basis that one operand lacks reads as zero. `emitNegatedByBasis` writes each
-  negation the same way.
+- **Bodies.** `emitCombinedByRun` writes one loop for each run of consecutive bases of the union,
+  at constant bounds. Each operand holds each basis of a run alike, so a basis that one operand
+  lacks reads as zero. `emitNegatedByRun` writes each negation the same way. The Architect ruled
+  the loop on 2026-11-19, on
+  [the order of the work (#959)](https://github.com/mraxilus/delegations/issues/959).
 - **Signatures.** `+` and `-` of two operands take `MultivectorOf[A]` and `MultivectorOf[B]`, and
   negation takes `MultivectorOf[B]`. Each sum and difference with a scalar takes
   `MultivectorOf[B]`, and reads the scalar as a value of the type of the scalar basis alone. So
@@ -51,9 +52,10 @@ pga_visualiser traced to this `+` the growth of the copies of its lattice at `3d
 The edits start from
 [the patch of D3](https://github.com/mraxilus/delegations/pull/702#issuecomment-6611854105) of
 pga_visualiser, as it applies to pin through `git am`. They take the exact union in place of its
-named type with the fewest bases, and add the sums with a scalar. At rga4d,
-`Multivector1 + Multivector2` returns `MultivectorOf[{E1, E2, E3, E4, E41, ..., E12}]`, of 10
-bases. `MultivectorOf[{E1}] + Multivector1` returns `Multivector1`.
+named type with the fewest bases, and a loop for each run in place of its line for each basis.
+They also add the sums with a scalar. At rga4d, `Multivector1 + Multivector2` returns
+`MultivectorOf[{E1, E2, E3, E4, E41, ..., E12}]`, of 10 bases. `MultivectorOf[{E1}] + Multivector1`
+returns `Multivector1`.
 
 ## Alternatives
 
@@ -61,6 +63,7 @@ bases. `MultivectorOf[{E1}] + Multivector1` returns `Multivector1`.
 |--------|-------------|
 | Named type with the fewest bases that holds both | The Architect ruled the exact union |
 | Loop over the set, as at pin | It reads the set at run time, and copies it on JS |
+| One line for each basis, as the patch of D3 | A register spills at cga5d, and alone it is scalar |
 | No sum of two types | A caller widens both operands, then narrows the result |
 | Sums with a scalar for `Multivector` alone | Each routine takes every instance (IV.8) |
 
@@ -71,17 +74,14 @@ bases. `MultivectorOf[{E1}] + Multivector1` returns `Multivector1`.
   prints that type with its bases.
 - **Export.** `pga/multivectors.nim` exports `zeroNamed`, since the patch of D1 reads its result
   types through it.
-- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.5 MiB against 210.3 MiB at pin.
-  At cga6d it takes 13.48 s against 13.76 s, so ×0.98.
-- **Negation at cga5d.** It reads ×1.58 of pin in the evaluation of 2026-11-19, and ×1.60 in an
-  earlier take of the same day. The text with the named type of the fewest bases read ×1.13 there
-  on 2026-11-15, with the same body of negation.
-  At rga4d it reads ×1.00. A function that negates alone compiles to the same 16 vector negations
-  under pin and under this proposal. So the cause lies outside the body of negation, and is not
-  isolated.
+- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.7 MiB against 210.5 MiB at pin.
+  At cga6d it takes 13.26 s against 13.11 s, so ×1.01.
+- **Sum at rga4d.** In the bench, `+` of whole multivectors reads ×1.02 of pin at rga4d, about
+  0.09 ns. Its loop holds the same 8 vector sums as the code of pin, and takes them in turn on
+  three registers. The cause of the 0.09 ns is not isolated.
 - **Overloads.** `+` and `-` of two whole multivectors, and each sum with a scalar, become
-  instances of the generic forms. Each body writes one assignment for each basis, as the loop of
-  pin does.
+  instances of the generic forms. Each body loops over each run of bases, as pin loops over the
+  set.
 
 ## Open decisions
 
@@ -114,8 +114,31 @@ on Node. With the change, no operation adds one at rga3d, rga4d, cga4d and cga5d
 one copy for each call, and on no other operation.
 
 Its evaluation of 2026-11-19 finds three functions moved at each algebra: `+`, `-` and negation
-of whole multivectors. At rga4d each holds 16 lines of C and no call, against 132 to 183 lines and
-32 to 48 calls at pin. There `+` zeroes no byte before it writes, where pin zeroes 128. At rga4d
-the three read ×1.00 of pin, and the other 108 measurands read ×0.98 to ×1.01. At cga5d sums and
-differences read ×1.00 to ×1.01, and the other 132 measurands read ×0.98 to ×1.05. Negation there
-reads ×1.58, as Costs gives.
+of whole multivectors. Each loops over the one run of the whole set, in 127 to 178 lines of C at
+rga4d against 132 to 183 at pin. There `+` zeroes no byte before it writes and moves 384 bytes,
+where pin zeroes 128 and moves 512. At rga4d negation and difference read ×1.00 of pin, `+` reads
+×1.02, and the other 108 measurands read ×0.99 to ×1.01. At cga5d the three read ×1.00, and the
+other 132 measurands read ×0.98 to ×1.00.
+
+One line for each basis costs time in two ways, which a loop for each run avoids. In the timed loop
+at cga5d, the compiler loads all 16 vectors of a negation before it stores any, and keeps the sign
+mask too. SSE2 has 16 registers, so one value spills to the stack for each object. Alone, across a
+boundary that the optimiser cannot see through, each line compiles to scalar code. There the loop
+of pin and the loop for each run compile to vector code. A check that the result and the operand
+do not overlap guards that code.
+
+Runs by hand on 2026-11-19 give these medians of paired ratios against pin. They ran on
+`linux amd64, 4 cores`, a Xeon of family 6 model 207, with Nim `14991af`, gcc 13.3.0 and
+`-d:release`. Each bench take is 41 alternating runs, and each take alone is 21.
+
+| Measure | Algebra | One line for each basis | Loop for each run |
+|---------|---------|------------------------:|------------------:|
+| Negation in the bench | cga5d | ×1.58, ×1.59 | ×1.00, ×0.99 |
+| Negation alone | cga5d | ×1.27, ×1.31 | ×1.00, ×1.00 |
+| Sum alone | cga5d | ×1.30, ×1.42 | ×1.00, ×1.00 |
+| Difference alone | cga5d | ×1.30, ×1.40 | ×1.00, ×1.00 |
+| Negation alone | rga4d | ×1.27, ×1.27 | ×1.00, ×1.00 |
+| Sum and difference alone | rga4d | ×1.20, ×1.20 | ×1.00, ×1.00 |
+
+The same line for each basis read ×1.13 of pin for negation at cga5d on 2026-11-15, on a host of the
+same model. So the size of the cost of the spill varies with the host, and the spill does not.
