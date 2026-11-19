@@ -91,15 +91,36 @@ func `=~`*[B: static Bases](m, n: MultivectorOf[B]): bool =
 func toMultivectorOf*[A, B: static Bases](m: MultivectorOf[A]): MultivectorOf[B] {.inline.} =
   ## Convert between compatible multivector forms.
   for b in A:
-    doAssert b in B or m[b] =~ 0.0, 
-      &"Attempt to convert mutlivector with coefficient conflict; got `{m[b]}` for `{b}`."
+```
+
+```nim
+func toMultivectorOf*[A, B: static Bases](m: MultivectorOf[A]): MultivectorOf[B] {.inline.} =
+  ## Convert between compatible multivector forms.
+  when Bases(A).card > 0:  # Skip empty set: its `index` returns empty range, which Nim refuses.
+    result = convertByBasis[A, B](m)
+
+
+func convertByBasis[A, B: static Bases](m: MultivectorOf[A]): MultivectorOf[B] {.inline.} =
+  ## Convert multivector of at least one basis between compatible forms, basis by basis.
+  for b in A:
+```
+
+## Edit `pga/multivectors.nim`
+
+```nim
     if b in B:
       result[b] = m[b]
+```
 
+```nim
+    when Bases(B).card > 0:  # Skip empty set: its `index` returns empty range, which Nim refuses.
+      if b in B:
+        result[b] = m[b]
+```
 
-# TODO: Define to converters for every compatible multivector forms.
-#   I.e. for all compatible demotions and promotion to full multivector.
+## Edit `pga/multivectors.nim`
 
+```nim
 func toMultivector*[B: static Bases](m: MultivectorOf[B]): Multivector {.inline.} =
   ## TODO: Define via macro.
   for b in B:
@@ -107,20 +128,6 @@ func toMultivector*[B: static Bases](m: MultivectorOf[B]): Multivector {.inline.
 ```
 
 ```nim
-func toMultivectorOf*[A, B: static Bases](m: MultivectorOf[A]): MultivectorOf[B] {.inline.} =
-  ## Convert between compatible multivector forms.
-  when Bases(A).card > 0:  # Skip empty set: its `index` returns empty range, which Nim refuses.
-    for b in A:
-      doAssert b in B or m[b] =~ 0.0,
-        &"Attempt to convert mutlivector with coefficient conflict; got `{m[b]}` for `{b}`."
-      when Bases(B).card > 0:
-        if b in B:
-          result[b] = m[b]
-
-
-# TODO: Define to converters for every compatible multivector forms.
-#   I.e. for all compatible demotions and promotion to full multivector.
-
 func toMultivector*[B: static Bases](m: MultivectorOf[B]): Multivector {.inline.} =
   ## TODO: Define via macro.
   when Bases(B).card > 0:  # Skip empty set: its `index` returns empty range, which Nim refuses.
