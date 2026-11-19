@@ -1,9 +1,12 @@
 # Sums and differences of any two basis-set types
 
-`+` and `-` take two multivectors of any basis-set types, and negation takes any type. Each body
-writes one assignment for each basis at compile time, so no set is read at run time. The edits of
-`pga/multivectors.nim` are the patch of D3 of pga_visualiser. Its four tests stand in a suite of
-their own, `Arithmetic`, at the end of `tests/suites.nim`. Every edit quotes text of pin.
+`+` and `-` take two multivectors of any basis-set types, a scalar beside a multivector of any
+type, and negation takes any type. Two operands of one type keep that type. Two types give the
+exact union of their bases, as the named type with exactly those bases where one exists. Each
+body writes one assignment for each basis at compile time, so no set is read at run time. The
+edits of `pga/multivectors.nim` start from the patch of D3 of pga_visualiser. Its tests stand in
+a suite of their own, `Arithmetic`, at the end of `tests/suites.nim`. Every edit quotes text of
+pin.
 
 ## Edit `pga/multivectors.nim`
 
@@ -12,6 +15,19 @@ func `+`*[B: static Bases](m, n: MultivectorOf[B]): MultivectorOf[B] {.inline, n
   ## Add multivectors, i.e. 𝐦 + 𝐧.
   for b in B:
     result[b] = m[b] + n[b]
+
+
+func `+`*(s: Coefficient, m: Multivector): Multivector {.inline, noinit.} =
+  ## Add scalar and multivector, i.e. 𝐬 + 𝐦.
+  result[Basis.scalar] = s + m[Basis.scalar]
+  for b in Basis.scalar.succ..Basis.scalarAnti:
+    result[b] = m[b]
+
+
+
+template `+`*(m: Multivector, s: Coefficient): Multivector =
+  ## Add multivector and scalar, i.e. 𝐦 + 𝐬.
+  s + m
 ```
 
 ```nim
@@ -55,27 +71,18 @@ func zeroNamed*[R: static Bases](): auto {.inline.} =
   when i < 0: default(MultivectorOf[basesCanonical(R)]) else: emitZeroNamed(i)
 
 
-func basesCombined(a, b: Bases): Bases {.compileTime.} =
-  ## Choose bases of sum or difference of multivectors with bases `a` and `b`.
-  ##   I.e. shared bases if same, else smallest named type holding both, else full multivector.
-  if a == b: return a
-  result = {Basis.scalar..Basis.scalarAnti}
-  for named in basesNamed():
-    if a + b <= named and card(named) < card(result):
-      result = named
-
-
 func zeroCombined[A, B: static Bases](): auto {.inline.} =
   ## Get zero of type of sum or difference of multivectors with bases `A` and `B`.
   ##   One type is kept as written, so it stays itself whatever form its set is written in.
-  when A == B: default(MultivectorOf[A]) else: zeroNamed[basesCombined(A, B)]()
+  ##   Two types give exact union of their bases, as each product of a table reaches its bases.
+  when A == B: default(MultivectorOf[A]) else: zeroNamed[A + B]()
 
 
-macro emitCombinedByBasis(R, A, B: static Bases, r, m, n: untyped, op: static string): untyped =
-  ## Emit one assignment per basis of `R`, each at constant basis, so no set is read at runtime.
-  ##   Basis absent from an operand reads as zero.
+macro emitCombinedByBasis(A, B: static Bases, r, m, n: untyped, op: static string): untyped =
+  ## Emit one assignment per basis of union of `A` and `B`, each at constant basis.
+  ##   So no set is read at runtime; basis absent from one operand reads that operand as zero.
   result = newStmtList()
-  for basis in R:
+  for basis in A + B:
     let
       b = newCall(ident"Basis", newLit(ord(basis)))
       left = quote do: `m`[`b`]
@@ -83,8 +90,8 @@ macro emitCombinedByBasis(R, A, B: static Bases, r, m, n: untyped, op: static st
       value =
         if basis in A and basis in B: infix(left, op, right)
         elif basis in A: left
-        elif basis in B: (if op == "-": prefix(right, "-") else: right)
-        else: newCall(ident"Coefficient", newLit(0))
+        elif op == "-": prefix(right, "-")
+        else: right
     result.add quote do:
       `r`[`b`] = `value`
 
@@ -102,8 +109,28 @@ func `+`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): typeof(zeroCombined[A, B]()) {.inline, noinit.} =
   ## Add multivectors, i.e. 𝐦 + 𝐧.
-  ##   Different types promote to smallest named type holding both, else full multivector.
-  emitCombinedByBasis(basesCombined(A, B), A, B, result, m, n, "+")
+  ##   Different types give exact union of their bases, named where a named type has them.
+  emitCombinedByBasis(A, B, result, m, n, "+")
+
+
+func `+`*[B: static Bases](
+  s: Coefficient, m: MultivectorOf[B],
+): typeof(zeroCombined[B, {Basis.scalar}]()) {.inline, noinit.} =
+  ## Add scalar and multivector, i.e. 𝐬 + 𝐦.
+  ##   Result holds bases of 𝐦 and scalar, named where a named type has them.
+  var 𝐬 {.noinit.}: MultivectorOf[{Basis.scalar}]
+  𝐬[Basis.scalar] = s
+  emitCombinedByBasis({Basis.scalar}, B, result, 𝐬, m, "+")
+
+
+func `+`*[B: static Bases](
+  m: MultivectorOf[B], s: Coefficient,
+): typeof(zeroCombined[B, {Basis.scalar}]()) {.inline, noinit.} =
+  ## Add multivector and scalar, i.e. 𝐦 + 𝐬.
+  ##   Result holds bases of 𝐦 and scalar, named where a named type has them.
+  var 𝐬 {.noinit.}: MultivectorOf[{Basis.scalar}]
+  𝐬[Basis.scalar] = s
+  emitCombinedByBasis(B, {Basis.scalar}, result, m, 𝐬, "+")
 ```
 
 ## Edit `pga/multivectors.nim`
@@ -119,6 +146,20 @@ func `-`*(m, n: Multivector): Multivector {.inline, noinit.} =
   ## Subtract multivectors, i.e. 𝐦 − 𝐧.
   for b in Basis:
     result[b] = m[b] - n[b]
+
+
+func `-`*(s: Coefficient, m: Multivector): Multivector {.inline, noinit.} =
+  ## Subtract multivector from scalar, i.e. 𝐬 − 𝐦.
+  result[Basis.scalar] = s - m[Basis.scalar]
+  for b in Basis.scalar.succ..Basis.scalarAnti:
+    result[b] = -m[b]
+
+
+func `-`*(m: Multivector, s: Coefficient): Multivector {.inline, noinit.} =
+  ## Subtract scalar from multivector, i.e. 𝐦 − 𝐬.
+  result[Basis.scalar] = m[Basis.scalar] - s
+  for b in Basis.scalar.succ..Basis.scalarAnti:
+    result[b] = m[b]
 ```
 
 ```nim
@@ -131,8 +172,28 @@ func `-`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B],
 ): typeof(zeroCombined[A, B]()) {.inline, noinit.} =
   ## Subtract multivectors, i.e. 𝐦 − 𝐧.
-  ##   Different types promote to smallest named type holding both, else full multivector.
-  emitCombinedByBasis(basesCombined(A, B), A, B, result, m, n, "-")
+  ##   Different types give exact union of their bases, named where a named type has them.
+  emitCombinedByBasis(A, B, result, m, n, "-")
+
+
+func `-`*[B: static Bases](
+  s: Coefficient, m: MultivectorOf[B],
+): typeof(zeroCombined[B, {Basis.scalar}]()) {.inline, noinit.} =
+  ## Subtract multivector from scalar, i.e. 𝐬 − 𝐦.
+  ##   Result holds bases of 𝐦 and scalar, named where a named type has them.
+  var 𝐬 {.noinit.}: MultivectorOf[{Basis.scalar}]
+  𝐬[Basis.scalar] = s
+  emitCombinedByBasis({Basis.scalar}, B, result, 𝐬, m, "-")
+
+
+func `-`*[B: static Bases](
+  m: MultivectorOf[B], s: Coefficient,
+): typeof(zeroCombined[B, {Basis.scalar}]()) {.inline, noinit.} =
+  ## Subtract scalar from multivector, i.e. 𝐦 − 𝐬.
+  ##   Result holds bases of 𝐦 and scalar, named where a named type has them.
+  var 𝐬 {.noinit.}: MultivectorOf[{Basis.scalar}]
+  𝐬[Basis.scalar] = s
+  emitCombinedByBasis(B, {Basis.scalar}, result, m, 𝐬, "-")
 ```
 
 ## Edit `tests/suites.nim`
@@ -155,8 +216,19 @@ proc sampleOf[B: static Bases](): typeof(zeroNamed[B]()) =
   for b in B: result[b] = gauss(0.0, 1.0)
 
 
+func basesType[B: static Bases](m: MultivectorOf[B]): Bases =
+  ## Read bases of type of multivector.
+  B
+
+
+func coefficientOr[B: static Bases](m: MultivectorOf[B], b: Basis): Coefficient =
+  ## Read coefficient of basis, or zero where type lacks it.
+  if b in B: m[b] else: Coefficient(0)
+
+
 template checkCombined(A, B: static Bases, R: typedesc) =
   ## Check sum and difference of samples over `A` and `B` are of type `R`, exact at each basis.
+  ##   `R` holds exact union of `A` and `B`.
   for _ in 0 ..< SAMPLES:
     let
       m = sampleOf[A]()
@@ -165,13 +237,33 @@ template checkCombined(A, B: static Bases, R: typedesc) =
       difference = m - n
     check sum is R
     check difference is R
-    let (sum_full, difference_full) = (sum.toMultivector, difference.toMultivector)
+    check basesType(sum) == A + B
     for b in Basis:
-      let
-        x = if b in A: m[b] else: Coefficient(0)
-        y = if b in B: n[b] else: Coefficient(0)
-      check sum_full[b] == x + y
-      check difference_full[b] == x - y
+      let (x, y) = (m.coefficientOr(b), n.coefficientOr(b))
+      check sum.coefficientOr(b) == x + y
+      check difference.coefficientOr(b) == x - y
+
+
+template checkUnion(A, B: static Bases) =
+  ## Check sum and difference of samples over `A` and `B` take exact union of their bases.
+  checkCombined(A, B, typeof(zeroNamed[A + B]()))
+
+
+template checkScaled(B: static Bases) =
+  ## Check sums and differences of scalar and sample over `B` hold `B` and scalar, exact.
+  for _ in 0 ..< SAMPLES:
+    let
+      m = sampleOf[B]()
+      s = gauss(0.0, 1.0)
+    for r in [s + m, m + s, s - m, m - s]:
+      check r is typeof(zeroNamed[B + {Basis.scalar}]())
+      check basesType(r) == B + {Basis.scalar}
+    for b in Basis:
+      let (x, t) = (m.coefficientOr(b), if b == Basis.scalar: s else: Coefficient(0))
+      check (s + m).coefficientOr(b) == t + x
+      check (m + s).coefficientOr(b) == x + t
+      check (s - m).coefficientOr(b) == t - x
+      check (m - s).coefficientOr(b) == x - t
 
 
 const
@@ -196,20 +288,37 @@ suite "Arithmetic":
     checkCombined(SCATTERED, SCATTERED, MultivectorOf[SCATTERED])
 
 
-  test "`+`, `-`(m: MultivectorOf[A], n: MultivectorOf[B]): promote to smallest named type":
-    checkCombined({Basis.scalar}, BIVECTORS, MultivectorEven)
+  test "`+`, `-`(m: MultivectorOf[A], n: MultivectorOf[B]): take named type of exact union":
     checkCombined({Basis.scalar}, {Basis.scalarAnti}, MultivectorScalars)
     checkCombined(VECTORS, ODD, MultivectorOdd)
-    when int(Grade.high) >= 3:
-      checkCombined(VECTORS, NAMED[3], MultivectorOdd)
     checkCombined(VECTORS_FIRST, VECTORS, Multivector1)
-    checkCombined(VECTOR_FIRST, VECTORS_FIRST, Multivector1)
-
-
-  test "`+`, `-`(m: MultivectorOf[A], n: MultivectorOf[B]): else promote to full multivector":
-    checkCombined(VECTORS, BIVECTORS, Multivector)
-    checkCombined({Basis.scalar}, SCATTERED, Multivector)
     checkCombined(ODD, EVEN, Multivector)
+
+
+  test "`+`, `-`(m: MultivectorOf[A], n: MultivectorOf[B]): else take exact union":
+    checkUnion({Basis.scalar}, VECTORS)
+    checkUnion({Basis.scalar}, BIVECTORS)
+    checkUnion(VECTORS, BIVECTORS)
+    checkUnion(VECTOR_FIRST, VECTORS_FIRST)
+    checkUnion({Basis.scalar}, SCATTERED)
+
+
+  test "`+`, `-`(m: MultivectorOf[A], n: MultivectorOf[B]): give one type in either order":
+    let
+      s = sampleOf[{Basis.scalar}]()
+      v = sampleOf[VECTORS]()
+      w = sampleOf[SCATTERED]()
+    check typeof(s + v) is typeof(v + s)
+    check typeof(s - v) is typeof(v - s)
+    check typeof(w + v) is typeof(v + w)
+
+
+  test "`+`, `-`(s: Coefficient, m: MultivectorOf[B]): hold bases of 𝐦 and scalar, exact":
+    checkScaled(ALL)
+    checkScaled(VECTORS)
+    checkScaled(EVEN)
+    checkScaled(SCATTERED)
+    checkScaled({Basis.scalar})
 
 
   test "`-`(m: MultivectorOf[B]): keep type, exact at each basis":
