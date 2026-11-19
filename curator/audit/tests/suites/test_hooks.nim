@@ -2189,8 +2189,12 @@ suite "Hooks":
     check blocksHeld(rejected) == @[refusalCall("builder", "Build the fix")]
 
     # Kind is first word after `**Subagent:**` on first line of block that opens with it, after
-    #   any indent, as written up to whitespace; block with no such line, or whose word is no
-    #   kind, names no kind and serves no call, and hint says so.
+    #   any indent, up to whitespace. Ruling 7022770415 of #969: before match, word drops case,
+    #   backticks, bold or italic marks, and final comma, so `**Subagent:** Builder of the fix`
+    #   names `builder`. Block with no such line, or whose word is no kind, names no kind and
+    #   serves no call, and hint says so. Cases as found are probes S02 to S16 of critic of
+    #   pairing build: build `05cb3bbd` read word as written, so kind with capital, as table of
+    #   guide spells it, or in backticks, italics or bold, or with comma, named none.
     proc heldAfter(text: string, kinds: openArray[string] = KINDS): seq[string] =
       ## Read findings of builder call after block that holds text, then one claim, in turn
       ##   before its own.
@@ -2199,26 +2203,73 @@ suite "Hooks":
 
     for text in ["**Subagent:** builder of the fix.", "  **Subagent:** builder of the fix.",
         "**Subagent:**  builder\tof the fix.", "**Subagent:** builder",
+        "**Subagent:**builder of the fix.", "**Subagent:** builder (fresh context) of the fix.",
         "**Basis:** none.\n**Subagent:** builder of the fix.",
         "- Judgement: it is first (70%).\n\n**Subagent:** builder of the fix.",
-        "**Subagent:** builder of the fix.\n**Subagent:** reviewer of the diff."]:
+        "**Subagent:** builder of the fix.\n**Subagent:** reviewer of the diff.",
+        "**Subagent:** Builder of the fix.", "**Subagent:** `builder` of the fix.",
+        "**Subagent:** builder, fresh context.", "**Subagent:** *builder* of the fix.",
+        "**Subagent:** **builder** of the fix.", "**Subagent:** BUILDER, of the fix."]:
       check heldAfter(text).len == 0
     check heldAfter("**Subagent:** reviewer of the diff.\n**Subagent:** builder of the fix.") ==
       @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]  # first line alone
     for first in ["**Subagent:**", "**Subagent:** the builder of the fix."]:
       check heldAfter(first & "\n**Subagent:** builder of the fix.") ==
         @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]  # first line names none
+
+    # Word keeps each other mark, second comma, and its words, and label keeps its case and
+    #   marks, so each of these names no kind.
     for text in ["**Basis:** what this delegate knows.", "**Subagent:**",
-        "**Subagent:** Builder of the fix.", "**Subagent:** the builder of the fix.",
-        "**Subagent:** `builder` of the fix.", "**Subagent:** builder, fresh context.",
-        "**Subagent:** surveyor of the fix.", "**Subagent:** web-fetch of the page.",
-        "Subagent: builder of the fix.", "**Subagent** builder of the fix.",
+        "**Subagent:**\nbuilder of the fix.", "**Subagent:** the builder of the fix.",
+        "**Subagent:** a builder of the fix.", "**Subagent:** builders of the fix.",
+        "**Subagent:** builder: the fix.", "**Subagent:** builder. Of the fix.",
+        "**Subagent:** builder,, of the fix.", "**Subagent:** ,builder of the fix.",
+        "**Subagent:** \"builder\" of the fix.", "**Subagent:** (builder) of the fix.",
+        "**Subagent:** b`uild`er of the fix.", "**Subagent:** ** builder of the fix.",
+        "**Subagent:** builder of the fix.", "**Subagent:** surveyor of the fix.",
+        "**Subagent:** web-fetch of the page.", "Subagent: builder of the fix.",
+        "**Subagent** builder of the fix.", "**Subagent**: builder of the fix.",
+        "**subagent:** builder of the fix.", "**SUBAGENT:** builder of the fix.",
         "- **Subagent:** builder of the fix.", "The **Subagent:** builder of the fix.",
-        "```\n**Subagent:** builder of the fix.\n```"]:
+        "> **Subagent:** builder of the fix.", "```\n**Subagent:** builder of the fix.\n```"]:
       check heldAfter(text) == @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]
     let repository = readKinds(currentSourcePath().parentDir / "../../../..")
     check heldAfter("**Subagent:** surveyor of the fix.", repository) ==
       @[refusalCall("builder", "Build the fix", hintNamed("`surveyor`"))]  # kind of templates
+
+    # Kind that word names is name its template gives: hint gives that name, and call of
+    #   template whose name holds capital takes block whose word holds none.
+    check heldAfter("**Subagent:** **Reviewer**, of the diff.") ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]
+    check blocksHeld(build & lineSaid("## Prediction\n\n**Subagent:** builder of the fix.\n\n" &
+      "- Judgement: it builds (70%).") & wake & linesAgent("Builder", "Build the fix") & ran,
+      ["Builder"]).len == 0
+
+    # Law: word of each kind, in each case, inside each mark of code, italic or bold, with final
+    #   comma or none, outside or inside marks, names that kind, exempt kind too, so its call
+    #   takes block and reflection quotes its claim.
+    const
+      wraps = ["", "`", "*", "**", "***", "_", "__"]
+        ## Marks that word may stand inside: none, code, italic, bold, and both.
+      forms = 320
+        ## Words of law: kinds of `KINDS`, four cases, and twenty forms of marks and comma.
+    var lenient = 0
+    for kind in KINDS:
+      for word in [kind, kind.capitalizeAscii, kind.toUpperAscii,
+          toSeq(kind.pairs).mapIt(if it[0] mod 2 == 0: it[1].toUpperAscii else: it[1]).join]:
+        for wrap in wraps:
+          for comma in ["", "outside", "inside"]:
+            if wrap.len == 0 and comma == "inside": continue
+            let written = case comma
+              of "outside": wrap & word & wrap & ","
+              of "inside": wrap & word & "," & wrap
+              else: wrap & word & wrap
+            check blocksHeld(build & lineSaid("## Prediction\n\n**Subagent:** " & written &
+              " of the fix.\n\n- Judgement: it builds (70%).") & wake &
+              linesAgent(kind, "Do it") & ran & lineHandback(kind, "a" & kind) & checked &
+              lineSaid(reflectedProbe("it builds"))).len == 0
+            inc lenient
+    check lenient == forms
 
     # Hint names what nearest free block names, earliest first inside its turn; it stands where
     #   no call took that block, inside turns call looks back over, and hint of turn of call
