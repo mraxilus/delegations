@@ -82,6 +82,11 @@ bases. `MultivectorOf[{E1}] + Multivector1` returns `Multivector1`.
   instances of the generic forms. Each body writes one assignment for each basis, as the loop of
   pin does.
 
+## Open decisions
+
+None. The Architect ruled the exact union of two types (D53 b) and the export of `zeroNamed`
+(D54 a), on [the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921).
+
 ## Landing
 
 - **P04, `basis-set-forms`.** It edits the type of `pga/multivectors.nim`, and this proposal edits
