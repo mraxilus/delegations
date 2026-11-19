@@ -3128,6 +3128,16 @@ suite "Hooks":
       check quoted(bullet, "a") == @[refusalCell("a")]
       check quoted(bullet, ("a (70%)" & form & " b").splitWhitespace.join(" ")).len == 0
 
+    # Of two forms of criterion in one bullet, first one ends claim, whichever form it is, as
+    #   first of `, as the 10th` and criterion does.
+    for (first, second) in [("Resolution criterion:", "**Resolution criterion:**"),
+        ("**Resolution criterion:**", "Resolution criterion:"),
+        ("resolution criterion:", "Resolution Criterion:")]:
+      let bullet = "- a (70%). " & first & " b (80%). " & second & " c (90%)."
+      check quoted(bullet, "a").len == 0
+      check quoted(bullet, "a (70%). " & first & " b") ==
+        @[refusalCell("a (70%). " & first & " b")]
+
 
   test "label is one word that opens with capital, then `: ` (7018501890 of #969)":
     # Ruling 7018501890 of #969: label is one word that opens with capital, then `: `, as
