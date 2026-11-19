@@ -3960,13 +3960,16 @@ text of each entry, so a fence that crosses two items reads right. The fence is 
 - Verified by `suites/test_hooks.nim`: each end of a block, a fence in a block or across two
   items, and each heading that opens none.
 
-**A call of a kind takes a block of the model turn just before its own.** That turn must start
-no subagent (`D2 a` of comment 6982373798). Each prediction is the last message of a turn of its
-own, and the next turn starts the subagent (comment 6980006567). So a block in the turn of its
-call, or two turns back, is no evidence. In the order of the calls, each call of a kind that is
-not exempt takes the earliest free block of that turn. An exempt call takes a block only where
-one is left after them.
+**A call of a kind takes a block of an earlier model turn, where no subagent starts between
+them.** The hook looks back from the turn before the call, past each turn that starts no
+subagent, at any count of turns (comment 7014974932). A turn that starts a subagent of any type
+ends the look back, and its blocks are no evidence (`D2 a` of comment 6982373798). Each call of a
+kind that is not exempt takes the earliest free block of those turns, in the order of the calls.
+An exempt call takes a block only where one is left after them.
 
+- Each prediction is the last message of a turn of its own (comment 6980006567). So a block in
+  the turn of its call is no evidence (comment 7014974932). A reply to a refusal, or a wake by
+  another event, can come between a block and its call, and the block still serves it.
 - The exempt kinds are `critic` and `resolver`. The prediction of a critic is optional (comment
   6975216328). No comment exempts the resolver: that is a choice, since its work is to mark a
   prediction.
@@ -3984,6 +3987,9 @@ one is left after them.
   use before a call of a kind. It holds the earliest free block for up to three blocks, with each
   count of calls up to the count of blocks. It also holds more calls than blocks, an exempt call
   beside them, and a call of an earlier turn.
+- Verified by `suites/test_hooks.nim`, for the look back: a reply to a refusal, a hand-back or a
+  message of the Architect before the call. It holds each count of turns up to four, and blocks
+  one to a turn. It holds a call of each type that ends the look back, and calls that share it.
 
 **Each report of a critic takes a `## Reflection` heading of its own after it** (comment
 6974524232). A report takes one of these shapes in the current model turn. The first is a `user`
@@ -4058,29 +4064,22 @@ The hook reads none of them.
 - The hook never reads the rules for forecasting of `D1 a` of comment 6982373798, as the side of
   a claim or its percentiles. It never reads the resolution criterion of a claim (comment
   6982623146), or the effort of a critic (comment 6977822742).
-- A reply to a refusal of `stop` is a model turn of its own. So the block of a refused turn
-  stands two turns before the next call, and `stop` refuses that call. Verified by
-  `suites/test_hooks.nim`, through the cases of its rules: each reason of a stop ends a turn, and
-  a block two turns back is refused.
-- A wake by another event, as a hand-back or a message of the Architect, can come between a
-  block and the wake of its timer. Its turn then puts the block two turns before the call, and
-  `stop` refuses the call. A call in the turn of that wake takes the block. Verified by hand
-  (below), on a transcript of each case.
+- The hook sets no limit on the count of turns, so a block written many turns before its call
+  still serves it. A call takes the earliest free block, so a block that a reply writes again
+  stays free, and the reflection quotes the first. Verified by `suites/test_hooks.nim`.
 - A reply to a refusal passes unread. So the hook never holds a call, a report of a critic or a
   reflection in it. The next stop holds only its own turn. Verified by hand (below): a call of a
   `builder` with no block in a reply passes, and so does the next stop.
 - A call through a tool other than `Agent` is no call, so a harness that names that tool
   otherwise gives the hook no call.
 
-**Verified by hand on 2026-11-19, through koch built at `b81eec72`.** `koch hook stop` on small
+**Verified by hand on 2026-11-19, through koch built at `61233948`.** `koch hook stop` on small
 transcripts in the shape of the harness passes or refuses each case of the guide. These
 transcripts also hold each case of a cost above that is verified by hand. No suite runs `main`
 of koch, so this run holds the dispatch of the stop branch.
 
-- Each of 72 breaks of the rules fails a test of `suites/test_hooks.nim`, on that day. A break is
-  one edit of a scratch copy of `hooks.nim` at `b81eec72`, with which the suite builds and runs.
-- Three more breaks fail a test of the suite at `430601f8`, on that day. They are an exempt
-  `surveyor`, a cut at the last working line, and a hand-back of any critic that cancels a result.
+- Each of 79 breaks of the rules fails a test of `suites/test_hooks.nim`, on that day. A break is
+  one edit of a scratch copy of `hooks.nim` at `61233948`, with which the suite builds and runs.
 
 **Figures of the frozen copy of the transcript of the delegate on #962.** The copy holds 1,384
 entries, from 2026-11-18T09:34Z to 2026-11-19T09:19Z. 1,147 of them carry no `version`, and 237
@@ -4097,20 +4096,23 @@ copy give its own figures.
   11 `Agent` calls carry the status `async_launched`, and the `agentId` of each is the `from` of
   a later hand-back. The other call, of `web-fetch` with `run_in_background` false, has the status
   `completed`, and its result holds its report.
-- A replay runs `koch hook stop`, built at `b81eec72`, at each of the 54 stops that the 54
+- A replay runs `koch hook stop`, built at `61233948`, at each of the 54 stops that the 54
   entries `stop_hook_summary` mark. A script in Python reads the copy with its `json` module. For
   each stop, it gives the hook the copy up to the last `assistant` entry before that stop. It
   sets `stop_hook_active` where the turn opens with the feedback of `stop`. It runs from the root
-  of a checkout of this branch, whose templates give the kinds.
+  of a checkout on `curator/subagent-blocks`, the branch that each sign-off of the copy names.
+  Its templates give the kinds.
 - Of the 54 stops, 33 pass and 8 pass unread. The other checks alone refuse 8, which are the 8
   stops whose feedback of `stop` the copy holds. The block checks refuse 5, for 3 missing
-  predictions and 27 cells that quote no block that a call took.
+  predictions and 21 cells that quote no block that a call took.
 - In each of those 5, each block of the delegate stands in the turn of a call, in a later turn,
   or in a fence. Each refusal follows the rules as written. The copy holds one call made by the
   protocol of comment 6980006567, and its reflection passes the quote check. No report of a
   critic lacks its reflection.
-- Cost: `koch hook stop` on the whole copy, of 8.1 MB, takes a median of 297, 239 and 241 ms at
-  the base `1c31f494`, in three sets. It takes 251, 248 and 248 ms at `b81eec72`, in sets that
+- Counted from 1, the call of `critic` in entry 384 takes the block in entry 370, which predicts
+  the call of `reviewer` in entry 325. So 6 cells at the stop of entry 413 quote a taken block.
+- Cost: `koch hook stop` on the whole copy, of 8.1 MB, takes a median of 265, 247 and 252 ms at
+  the base `40bee07a`, in three sets. It takes 271, 251 and 244 ms at `61233948`, in sets that
   alternate run by run with those. Each figure is 20 runs on 2026-11-19, on 4 cores of an Intel
   Xeon at 2.10 GHz.
 
@@ -4645,6 +4647,4 @@ pull requests sat on both sides, so the subject of a call does not say which met
   terms as words that a name may take (`exemptions`), so it acts as a rule of content. Neither
   the stamp nor drift reads it, so a standard that `main` drops reaches no older branch before
   the merge.
-- Whether a block stays evidence across a turn that starts no subagent, as a reply to a refusal
-  or a wake by another event.
 - How a reflection names a prediction that is missing, where no claim of its own stands to quote.
