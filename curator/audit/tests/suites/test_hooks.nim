@@ -2014,8 +2014,9 @@ suite "Hooks":
       .len == 0
 
     # Call of any type between them ends turns hook looks back over, so block left over serves no
-    #   later call: kind, exempt kind and type no template names, in background or foreground.
-    for kind in ["builder", "critic", "resolver", "web-fetch", "general-purpose"]:
+    #   later call: kind, exempt kind, type no template names, and no type, which harness runs
+    #   as general subagent (C1 of critic of pairing build), in background or foreground.
+    for kind in ["builder", "critic", "resolver", "web-fetch", "general-purpose", ""]:
       for between in [linesAgent(kind), linesForeground(kind, "false", "completed")]:
         let found = blocksHeld(asked & lineSaid(predicted & "\n" & predicted) & wake & between &
           started & called)
@@ -2241,11 +2242,46 @@ suite "Hooks":
       @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`") & ", and block in turn " &
         "of call, which is no evidence: block stands in earlier turn")]
 
-    # Exempt call takes only block of its own kind; call of type no template names, or of no
-    #   type, takes none, though block names no kind, so reflection quotes none of it.
-    for (prediction, count) in [(predicting("resolver"), 0), (PREDICTION, 2)]:
+    # Exempt call takes only block of its own kind, never block of other exempt kind (C3 of
+    #   critic of pairing build); call of type no template names, or of no type, takes none,
+    #   though block names no kind, so reflection quotes none of it.
+    for (prediction, count) in [(predicting("resolver"), 0), (PREDICTION, 2),
+        (predicting("critic"), 2)]:
       check blocksHeld(review & lineSaid(prediction) & wake & linesAgent("resolver") & ran &
         checked & lineSaid(REFLECTION)).len == count
+
+    # Exempt call looks back over turns any call does: block of critic before call of builder
+    #   serves no later critic (C25), and of two blocks of critic it takes nearest (C26).
+    let
+      refused = @[refusalCell("the race to save one shared key leads the findings"),
+        refusalCell("four to eight findings, each with `file:line`")]
+      far = named("critic", "the critic fails one claim")
+      near = named("critic", "the critic holds each claim")
+    check blocksHeld(review & lineSaid(predicting("critic")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") &
+      checked & lineSaid(REFLECTION)) == refused
+    check blocksHeld(review & lineSaid(far) & wake & lineSaid(near) & wake & checked &
+      lineSaid(reflectedProbe("the critic fails one claim", "the critic holds each claim"))) ==
+      @[refusalCell("the critic fails one claim")]
+
+    # Two blocks of one kind in two text items of one turn, with tool call between them: call
+    #   takes earliest, so reflection that quotes it passes, and claim of later one is refused
+    #   (C12).
+    check blocksHeld(build & lineSaid(named("builder", "claim 1 holds"), "tool_use") &
+      linesCall("ls") & lineSaid(named("builder", "claim 2 holds")) & wake &
+      linesAgent("builder") & ran & lineHandback("builder", "abuilder") & checked &
+      lineSaid(reflectedProbe("claim 1 holds", "claim 2 holds"))) ==
+      @[refusalCell("claim 2 holds")]
+
+    # Cost: later block of kind, written before call, replaces earlier block of that kind, as
+    #   guide states (7022770415). So of two blocks for two subagents of one kind, first call
+    #   takes block of nearer turn, and reflection that quotes other one is refused (probe F4).
+    check blocksHeld(review & lineSaid(named("reviewer", "diff one has a race")) &
+      lineUser("Review diff two too.", "human") &
+      lineSaid(named("reviewer", "diff two has no race")) & wake &
+      linesAgent("reviewer", "Review diff one") & ran & lineHandback("reviewer", "areviewer") &
+      checked & lineSaid(reflectedProbe("diff one has a race"))) ==
+      @[refusalCell("diff one has a race")]
     for kind in ["", "web-fetch"]:
       check blocksHeld(review & lineSaid(nameless) & wake & linesAgent(kind) & ran & checked &
         lineSaid(reflectedProbe("it builds"))) == @[refusalCell("it builds")]
@@ -2836,6 +2872,22 @@ suite "Hooks":
       check quoted(bullet, claim).len == 0
       for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
 
+    # Mark between two percentages ends no claim, full stop too, so confidence stays last one
+    #   (KC3 of critic of claim build).
+    for joint in [". ", ", ", "; ", " "]:
+      let bullet = "- a (10%)" & joint & "b (20%)."
+      check quoted(bullet, "a (10%)" & joint & "b").len == 0
+      check quoted(bullet, "a") == @[refusalCell("a")]
+
+    # Mark that stands twice in bullet ends claim at its first place (KC1).
+    for (bullet, refused) in [
+        ("- a. Resolution criterion: b. Resolution criterion: c.", "a. Resolution criterion: b"),
+        ("- a, as the 10th b, as the 10th c.", "a, as the 10th b"),
+        ("- a (70%). Resolution criterion: b (20%). Resolution criterion: c.",
+          "a (70%). Resolution criterion: b")]:
+      check quoted(bullet, "a").len == 0
+      check quoted(bullet, refused) == @[refusalCell(refused)]
+
 
   test "percentage in brackets may hold decimal part, as `(62.5%)` (D5 b of #969)":
     # Ruling 7016134603, D5 b of #969: claim runs up to its percentage, which ruling 7018501890
@@ -3008,6 +3060,16 @@ suite "Hooks":
 
     # Bullet that is no claim, as question, reads as one.
     check quoted("- Judgement: does it hold?", "does it hold?").len == 0
+
+    # Percentage in brackets after confidence, before mark or end, is last one, so claim runs
+    #   past its confidence up to it (probe F20 of critic of claim build).
+    const after = "- Judgement: the replay refuses fewer stops (70%), as 2 of 54 (4%). " &
+      "Resolution criterion: the replay."
+    for cell in ["the replay refuses fewer stops (70%), as 2 of 54",
+        "Judgement: the replay refuses fewer stops (70%), as 2 of 54"]:
+      check quoted(after, cell).len == 0
+    check quoted(after, "the replay refuses fewer stops") ==
+      @[refusalCell("the replay refuses fewer stops")]
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
