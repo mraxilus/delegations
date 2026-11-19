@@ -183,6 +183,12 @@ func toArms(still: JsonNode, links: seq[Link]): Arms =
     result.add [toArmPose(still, link.ends[0].body, link.ends[0].arm, join),
                 toArmPose(still, link.ends[1].body, link.ends[1].arm, join)]
 
+func momentRig(recording: JsonNode, m: int): JsonNode =
+  ## Moment `m` of rig sweep, kept as still keeps its one moment, so still's readers read it
+  ## (`toArms`).
+  %*{"tag": recording["tag"], "radii": recording["radii"], "points": [recording["points"][m]],
+     "joins": [recording["joins"][m]]}
+
 func capsuleAt(frame: JsonNode, i: int): tuple[a, z: Vector] =
   ## Two ends of `i`th capsule of one recorded moment.
   ((frame[6*i].getFloat, frame[6*i+1].getFloat, frame[6*i+2].getFloat),
@@ -609,6 +615,59 @@ suite "Internal: Simulation against Reference":
         check runInPlan(stood, pole) <= runInPlan(stood, hoop)
         inc swans
     check swans == 4
+
+
+  test "every chain rig sweeps over crown winds its swan as card draws it":
+    ## Rig sweeps each chain way that turns positive (`seen.shown`), through swan C01 or D01
+    ##   draws.  Sweep carries past that swan, and each moment at its wind nearest swan stands
+    ##   as card's still does (law above): three crossings round pair card draws straight, which
+    ##   winds on itself less than hoop (`read.writhe`) and runs no further in plan
+    ##   (`read.runInPlan`).
+    ##   Domain: rig's two chains swept over crown.  Rig keeps moment every stride
+    ##     (`plan.STRIDE`), so sweep that passes swan keeps one within stride of it, and plan that
+    ##     poses arms again keeps several moments at one wind (`walk.atSwan`).
+    ##     Cost: rig keeps no way that turns negative, so no law reads swept swan of C07 or D07.
+    ##   Red as swept before, measured 2026-11-19: cross-name chain crossed twice at +1.49;
+    ##     same-name chain crossed once at +1.49, and at +1.45 three times round lead's right
+    ##     pair, where D01 draws left straight.
+    let sweeps = parseFile(KEPT_RIG)["sweeps"]
+    var swans = 0
+    for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
+      let
+        key = &"{tag}{STEPS.low + 1:02}"
+        ask = ask_by_key[key]
+        straight = straightArm(STEPS[STEPS.low], isSwanFaceToBack(arms)).toArm
+        pole = (if ask.links[0].ends[0].arm == straight: 0 else: 1)
+        hoop = 1 - pole
+      check ask.turns > 0.0
+      for i, cut in SHOWN:
+        let links = cut.arms.mapIt(Link(ends: [(Body.One, it[0]), (Body.Two, it[1])]))
+        if cut.band != Band.Crown or links != ask.links: continue
+        let sweep = sweeps[i]
+        check sweep["hold"].getStr == cut.name and sweep["band"].getStr == BANDS[ord(cut.band)]
+        var
+          nearest = 0
+          furthest = 0.0
+        for m in 0..<heldMoments(sweep):
+          let turns = sweep["at"][m].getFloat
+          furthest = max(furthest, turns)
+          if abs(turns - ask.turns) < abs(sweep["at"][nearest].getFloat - ask.turns): nearest = m
+        let at = sweep["at"][nearest].getFloat
+        checkpoint &"`{cut.name}` swept over crown holds to `{furthest:+.4f}`, and stands " &
+            &"nearest `{key}` at `{at:+.4f}`."
+        check furthest + PLACE_RIG / 2.0 >= ask.turns
+        check abs(at - ask.turns) <= STRIDE + PLACE_RIG
+        for m in 0..<heldMoments(sweep):
+          if sweep["at"][m].getFloat != at: continue
+          let stood = toArms(momentRig(sweep, m), ask.links)
+          checkpoint &"Moment `{m}` crosses `{crossings(stood).len}` times.  Lead's {straight} " &
+              &"pair winds `{writhe(stood, pole)}` and runs `{runInPlan(stood, pole)}`; other " &
+              &"winds `{writhe(stood, hoop)}` and runs `{runInPlan(stood, hoop)}`."
+          check crossings(stood).len == 3
+          check abs(writhe(stood, pole)) < abs(writhe(stood, hoop))
+          check runInPlan(stood, pole) <= runInPlan(stood, hoop)
+        inc swans
+    check swans == 2
 
 
   test "every still stands easiest pose that held, and its search tried every pose short of ease":
