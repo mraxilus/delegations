@@ -148,7 +148,8 @@ type
     text*: string  ## Lines after heading, to end of block, each fenced line blanked.
     place*: Place  ## Where text item holding block stands.
     is_counted*: bool
-      ## Heading stands above first `## Sign-off` of last text of its turn, or in other text.
+      ## Heading stands above first `## Sign-off` or working line of last text of its turn, or
+      ##   in other text.
 
   Subagents* = object  ## Define what transcript says about subagents, by model turn.
     turns*: int  ## Count of model turns; last one is current.
@@ -2023,8 +2024,8 @@ func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Findi
   ## Report each report of critic in current model turn with no `## Reflection` block of its own
   ##   after it, and each table of reflection of turn that quotes no block call took.
   ##   Reports match headings earliest first, so n reports need n headings, and heading counts
-  ##     above first `## Sign-off` of last text of turn alone, since reflection comes before any
-  ##     sign-off or working line (6974524232).
+  ##     above first `## Sign-off` or working line of last text of turn alone, whichever comes
+  ##     first, since reflection comes before any sign-off or working line (6974524232).
   ##   Cell quotes block word for word once each run of whitespace on both sides is one space,
   ##     against block call used (6975486646); block no call took is no evidence, so reflection
   ##     quotes none of it (6980006567).
@@ -2043,8 +2044,8 @@ func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Findi
       "",
       0,
       "Report of critic takes `" & HEADING_REFLECTION & "` block of its own after it, above " &
-        "any sign-off (GUIDE.md, Prediction, critic and reflection); got none for report `" &
-        $(n + 1) & "` of `" & $reports.len & "` in this turn.",
+        "any sign-off or working line (GUIDE.md, Prediction, critic and reflection); got none " &
+        "for report `" & $(n + 1) & "` of `" & $reports.len & "` in this turn.",
     )
   let quoted = subagents.blocksTaken(kinds).filterIt(it >= 0)
     .mapIt(subagents.predictions[it].text.collapsed)
@@ -2356,14 +2357,20 @@ func isHeadingTop(line: string): bool =
   s.startsWith("# ") or s.startsWith("## ")
 
 
+func isLineWorking(line: string): bool =
+  ## Decide whether line is working line for blocks: label opening it, after strip.
+  ##   Block ends at it, and reflection counts only above first one of last text of turn, so one
+  ##     read serves both.
+  line.strip.startsWith(LABEL_WORKING)
+
+
 func blocksText(lines: openArray[string], heading: string): seq[tuple[line: int, text: string]] =
   ## Read each block of text item that opens with heading line, from lines with fences blanked:
   ##   line of heading, and text after it to next heading of level 1 or 2, working line, or end.
   for i, line in lines:
     if line.strip != heading: continue
     var stop = i + 1
-    while stop < lines.len and not lines[stop].isHeadingTop and
-        not lines[stop].strip.startsWith(LABEL_WORKING):
+    while stop < lines.len and not lines[stop].isHeadingTop and not lines[stop].isLineWorking:
       inc stop
     result.add (line: i, text: lines.toOpenArray(i + 1, stop - 1).join("\n"))
 
@@ -2416,7 +2423,8 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
   let turns = entries.turnsModel
   result.turns = (if turns.len == 0: 1 else: turns[^1] + 1)
 
-  # Read entry of last assistant text of each turn, whose sign-off ends reflections that count.
+  # Read entry of last assistant text of each turn, whose first sign-off or working line ends
+  #   reflections that count.
   var texts_last = newSeqWith(result.turns, -1)
   for i, e in entries:
     if e{"type"}.getStr == "assistant" and
@@ -2437,11 +2445,11 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
     for item in items:
       pieces.add(if item{"type"}.getStr == "text": item{"text"}.getStr.splitLines else: @[])
     let shown = pieces.concat.join("\n").fencedOut.splitLines
-    var signoff = shown.len  # First line of sign-off, in last text of turn alone.
+    var cut = shown.len  # First line of sign-off or working line, in last text of turn alone.
     if i == texts_last[turn]:
       for j, line in shown:
-        if line.strip == HEADING_SIGNOFF:
-          signoff = j
+        if line.strip == HEADING_SIGNOFF or line.isLineWorking:
+          cut = j
           break
     var line = 0  # First line of item in `shown`.
     for k, item in items:
@@ -2455,7 +2463,7 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
           result.predictions.add Block(text: found.text, place: place, is_counted: true)
         for found in blocksText(shown.toOpenArray(line, stop - 1), HEADING_REFLECTION):
           result.reflections.add Block(
-            text: found.text, place: place, is_counted: line + found.line < signoff
+            text: found.text, place: place, is_counted: line + found.line < cut
           )
         line = stop
       of TYPES_THINKING[0], TYPES_THINKING[1]: result.thinking.add place
