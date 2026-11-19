@@ -46,8 +46,8 @@ func basesExpected(a, b: Bases): Bases =
   a + b
 
 
-macro holdNamedOf(value: typed, expected: static Bases): untyped =
-  ## Hold that value whose bases a named type has exactly takes that named type.
+macro holdTypeNamed(value: typed, expected: static Bases): untyped =
+  ## Hold that value whose bases some named type has exactly takes that named type.
   ##   Nim compares static sets as written, so equal sets spelled apart would be two types.
   result = newStmtList()
   for name in NAMES:
@@ -70,8 +70,8 @@ template holdPair(r: var Rand, M, N: typedesc) =
         (sum, difference, negation) = (m + n, m - n, -m)
       doAssert basesType(typeof(sum)) == expected and basesType(typeof(difference)) == expected,
         "Sum and difference must take bases rule gives; got " & $typeof(sum) & "."
-      holdNamedOf(sum, expected)
-      holdNamedOf(difference, expected)
+      holdTypeNamed(sum, expected)
+      holdTypeNamed(difference, expected)
       doAssert typeof(negation) is M, "Negation must keep type of operand."
       for b in Basis:
         let (x, y) = (m.coefficientOr(b), n.coefficientOr(b))
@@ -104,7 +104,7 @@ template holdScalars(r: var Rand, M: typedesc) =
         results = [s + m, m + s, s - m, m - s]
       doAssert basesType(typeof(results[0])) == expected,
         "Sum with scalar must hold bases of operand and scalar; got " & $typeof(results[0]) & "."
-      holdNamedOf(results[0], expected)
+      holdTypeNamed(results[0], expected)
       for b in Basis:
         let (x, t) = (m.coefficientOr(b), if b == Basis.scalar: float(s) else: 0.0)
         doAssert results[0].coefficientOr(b) == t + x and results[1].coefficientOr(b) == x + t,
