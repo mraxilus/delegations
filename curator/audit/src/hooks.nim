@@ -351,6 +351,7 @@ const
     ## Words that open percentiles and resolution criterion of claim, as samples of GUIDE.md
     ##   write them; first of them ends claim (7016134603), where no confidence stands before it
     ##   (7018501890).
+  POINT_DECIMAL = '.'  ## Mark between digits and decimal part of percentage, as in `(62.5%)`.
   SEPARATOR_LABEL = ": "  ## Mark after label of claim, as in `Judgement: `.
   FULL_STOP = '.'
     ## Mark that ends sentence; claim with no mark ends before one final one of its bullet
@@ -2032,11 +2033,17 @@ func isBullet(line: string): bool =
 
 
 func isPercentage(text: string, at: int): bool =
-  ## Decide whether percentage in brackets opens at `at` of text: space, `(`, digits, `%)`.
+  ## Decide whether percentage in brackets opens at `at` of text: space, `(`, digits, then point
+  ##   and digits where it has decimal part, as `(62.5%)`, then `%)`. Ruling 7016134603 ends
+  ##   claim at its percentage, and digits alone would narrow it.
   if not text.continuesWith(" (", at): return false
   var i = at + 2
   while i < text.len and text[i] in Digits: inc i
-  i > at + 2 and text.continuesWith("%)", i)
+  if i == at + 2: return false
+  if i + 1 < text.len and text[i] == POINT_DECIMAL and text[i + 1] in Digits:
+    i += 2
+    while i < text.len and text[i] in Digits: inc i
+  text.continuesWith("%)", i)
 
 
 func claims(text: string): seq[string] =
