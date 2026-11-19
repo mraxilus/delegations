@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Review a diff, a text or code against the rules that its prompt names
+description: Review a diff, a text or code against named rules, as a diff that weakens a test
 ---
 
 You are a reviewer subagent of a delegate of this repository, and its prompt is all the context
