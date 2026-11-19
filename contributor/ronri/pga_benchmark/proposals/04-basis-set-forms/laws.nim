@@ -16,7 +16,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, macros, random, sequtils, strformat, strutils, tables]
+import std/[algorithm, macros, math, random, sequtils, strformat, strutils, tables]
 
 import pga
 import pga/multivectors {.all.}  # Private `alignment`, which laws hold.
@@ -104,6 +104,15 @@ func whole(s: Coefficient): Coefficient {.inline.} = s
   ## Keep scalar, as library takes it.
 
 
+func agrees(m, n: Multivector): bool =
+  ## Tell whether two whole multivectors agree at each basis: approximately equal, or both NaN.
+  ##   Radius norm of some samples roots negative square, in library too, so both sides read NaN.
+  for basis in Basis:
+    let (a, b) = (m[basis], n[basis])
+    if not (a =~ b or (a.isNaN and b.isNaN)): return false
+  true
+
+
 macro defineChecksLayout(): untyped =
   ## Define check of size and alignment of each named basis-set type, from its count of bases.
   result = newStmtList()
@@ -152,13 +161,13 @@ func emitHold(operator: string, names: seq[string], held, empty: NimNode): NimNo
       if card(bases(typeof(`symbol`(sample(`kind_m`))))) == 0: `empty`.inc `key`
       for _ in 1..SAMPLES:
         let m = sample(`kind_m`)
-        doAssert `symbol`(m).toMultivector =~ `symbol`(whole(m)).toMultivector, `message`
+        doAssert agrees(`symbol`(m).toMultivector, `symbol`(whole(m)).toMultivector), `message`
   quote do:
     `held`.inc `key`
     if card(bases(typeof(`symbol`(sample(`kind_m`), sample(`kind_n`))))) == 0: `empty`.inc `key`
     for _ in 1..SAMPLES:
       let (m, n) = (sample(`kind_m`), sample(`kind_n`))
-      doAssert `symbol`(m, n).toMultivector =~ `symbol`(whole(m), whole(n)).toMultivector,
+      doAssert agrees(`symbol`(m, n).toMultivector, `symbol`(whole(m), whole(n)).toMultivector),
         `message`
 
 
@@ -218,8 +227,8 @@ macro holdAliases(): untyped =
         block:
           `operands`
           doAssert typeof(`aliased`) is typeof(`forwarded`), `message_type`
-          doAssert `aliased`.toMultivector =~ `forwarded`.toMultivector, `message_value`
-          doAssert `aliased`.toMultivector =~ `widened`.toMultivector, `message_whole`
+          doAssert agrees(`aliased`.toMultivector, `forwarded`.toMultivector), `message_value`
+          doAssert agrees(`aliased`.toMultivector, `widened`.toMultivector), `message_whole`
 
 
 macro holdTypesGraded(): untyped =
@@ -291,9 +300,10 @@ proc main(): int =
   doAssert alignof(typeof(p ∧ m)) == alignment(card(bases(typeof(p ∧ m)))),
     "Type product returns must align by same rule as named ones."
   doAssert (p ∧ q) is Multivector2, "Vector wedge vector must be bivector, equal to its alias."
-  doAssert ($typeof(p ∧ q)).startsWith("MultivectorOf[{"),
-    "Alias must add no type, so type prints as generic with its bases."
-  echo "basis-set-forms: vector wedge vector prints as ", $typeof(p ∧ q)
+  doAssert $typeof(p ∧ q) == "Multivector2",
+    "Named result must print as its alias, since `zeroNamed` names its type."
+  echo "basis-set-forms: vector wedge vector prints as ", $typeof(p ∧ q), ", no basis as ",
+    $typeof(none)
   doAssert (m ∙ n) is Multivector,
     "Product of two whole multivectors must stay library's, so no caller sees change."
   doAssert (p ∙ m) is Multivector0, "Dot of vector and whole multivector must be scalar."
