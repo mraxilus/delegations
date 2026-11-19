@@ -182,8 +182,8 @@ doc of the type there names the pair the homogeneous scalar, and no longer dual 
 
 - **Order.** After P04, since the module takes its basis-set forms `⟑` and `⟇`.
 - **Imports of `pga.nim`.** This proposal adds `scalars` to the import and export lines of
-  `pga.nim`, and `std/options` above them. P04 adds `basis_sets` to the same lines, and this edit
-  quotes them as P04 leaves them. The change `doc-comments` keeps these lines, so the quotes of
+  `pga.nim`, and `std/options` above them. P04 leaves these lines as at pin, and this edit quotes
+  them so. The change `doc-comments` keeps these lines, so the quotes of
   this proposal fit after it. If this proposal lands first, that change quotes the import line
   again. The change `doc-comments-2` edits the export line, so the second of the two to land
   quotes it again.
