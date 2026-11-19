@@ -773,7 +773,11 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
   ##       jvasni
   ##   .i ro selcmi cu kanpe ro jvasni pa roi
   ##
-  ## ni'o ro jvasni cu ponse pa liste be lo cmima poi denpa ke'a ne'i ro selcmi to `waiting` toi
+  ## ni'o lo cmima poi denpa pa jvasni ne'i pa selcmi cu porsi ta'i lo nu ro le cmima cu jarco le
+  ##     bavla'i to `firsts` .e `lasts` .e `nexts` toi
+  ##   .i lo namcu poi sinxa ro cmima cu zmadu le stuna'u pe le cmima ne'i le selcmi fo li pa
+  ##   .i se ki'u bo li no cu sinxa lo nu no cmima cu zasti
+  ##   .i le porsi cu jmina lo cmima ja'i le porsi pe lo nu jmina
   ##   .i lo te kancu be lo cmima cu zensmi lo ni le selci'a cu clani
   ##   .i ro cmima cu cpacu lo ninstu
   ##
@@ -802,9 +806,13 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
     let added: Item = item
     template bodyAdded: untyped = GRAMMAR_EBNF.productions[added.production].body
       ## sinxa le porsi be lo sinxa pe le basyjva pe le selmincmi
-    if added.dot < bodyAdded.len and not bodyAdded[added.dot].is_terminal:
-      waiting[i][bodyAdded[added.dot].code].add result[i].len
     result[i].add added
+    nexts[i].add 0
+    if added.dot < bodyAdded.len and not bodyAdded[added.dot].is_terminal:
+      let slot = i * count_nonterminals + bodyAdded[added.dot].code
+      if lasts[slot] == 0: firsts[slot] = result[i].len
+      else: nexts[i][lasts[slot] - 1] = result[i].len
+      lasts[slot] = result[i].len
 
   template advance(i: int, item: Item) =
     ## jmina le cmima poi klama lo jvasni le selcmi pe `i` va'o lo nu le cmima cu na pu zvati ri
@@ -814,16 +822,21 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
   result = newSeq[seq[Item]](terminals.len + 1)
   let count_nonterminals = GRAMMAR_EBNF.heads.len
   var
-    waiting = newSeq[seq[seq[int]]](terminals.len + 1)  # lo cmima ja'i lo jvasni poi selde'a
+    firsts = newSeq[int]((terminals.len + 1) * count_nonterminals)
+      # le pamoi cmima poi denpa ro jvasni ne'i ro selcmi
+    lasts = newSeq[int]((terminals.len + 1) * count_nonterminals)
+      # le romoi cmima poi denpa ro jvasni ne'i ro selcmi
+    nexts = newSeq[seq[int]](terminals.len + 1)
+      # le bavla'i cmima poi denpa le jvasni pe ro cmima ne'i ro selcmi
     predicted = newSeqWith(count_nonterminals, -1)  # lo selcmi poi le jvasni pu se kanpe ne'i ke'a
     seen = initHashSet[int]()  # lo cmima poi klama lo jvasni ne'i le ca selcmi
-  for i in 0..terminals.len: waiting[i] = newSeq[seq[int]](count_nonterminals)
   predicted[GRAMMAR_EBNF.start] = 0
   for p in GRAMMAR_EBNF.heads[GRAMMAR_EBNF.start]: add(0, (p, 0, 0))
   for i in 0..terminals.len:
     # ro cmima pe le selcmi cu se tcidu pa roi
-    #   .i `predicted` .e `seen` cu cpacu no ninstu ne'i le selcmi va'o lo nu `seen` cu na zenba
-    #   .i `waiting` .e le liste be lo cmima cu zenba ta'i lo cmima
+    #   .i `firsts` .e `lasts` .e `predicted` .e `seen` cu cpacu no ninstu ne'i le selcmi va'o lo nu
+    #       `seen` cu na zenba
+    #   .i `nexts` .e le liste be lo cmima cu zenba ta'i lo cmima
     seen.clear
     if is_everywhere:
       for head in 0 ..< count_nonterminals:
@@ -844,11 +857,11 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
       #   .i se ki'u bo le nu tcidu cu pilno lo stuna'u
       if item.dot == body.len:
         let head = GRAMMAR_EBNF.productions[item.production].head
-        var j = 0
-        while j < waiting[item.origin][head].len:
-          let waiter = result[item.origin][waiting[item.origin][head][j]]
+        var at = firsts[item.origin * count_nonterminals + head]
+        while at != 0:
+          let waiter = result[item.origin][at - 1]
           advance(i, (waiter.production, waiter.dot + 1, waiter.origin))
-          inc j
+          at = nexts[item.origin][at - 1]
         continue
 
       # tcidu lo genvla gi'a kanpe lo jvasni
