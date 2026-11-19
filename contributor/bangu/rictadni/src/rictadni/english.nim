@@ -10,7 +10,7 @@
 ##   | meanings(english)        | every meaning whose English holds each word given       |
 ##   |--------------------------|---------------------------------------------------------|
 ##
-##   English of gismu list stays here, and its words and rafsi stand in `lojban_parser`, as
+##   English of gismu list stays here, and its words and rafsi stand in `ricysoho`, as
 ##     Architect ruled: English gives meaning, never validity. Both lists are cut from one
 ##     `gismu.txt`, so entry `i` here is English of `Word(i)` there; static check holds it, entry
 ##     for entry, so list moved on one side alone fails build.
@@ -35,7 +35,7 @@
 
 import std/[algorithm, options, sequtils, strutils]
 
-import lojban_parser
+import ricysoho
 
 import ./[entries, tags]
 import ./lists/[gismu, lujvo]
@@ -61,11 +61,11 @@ static:
   doAssert WORDS_FUNCTION.isSorted,
     "Function words should be sorted for binary search; got `" & $WORDS_FUNCTION & "`."
   doAssert LIST_GISMU.len == int(high(Word)) + 1,
-    "English should be given for each word of gismu list of `lojban_parser`; got `" &
+    "English should be given for each word of gismu list of `ricysoho`; got `" &
     $LIST_GISMU.len & "` entries."
   for i, entry in LIST_GISMU:
     doAssert $Word(i) == entry.word,
-      "English should follow gismu list of `lojban_parser`, entry for entry; got `" & entry.word &
+      "English should follow gismu list of `ricysoho`, entry for entry; got `" & entry.word &
       "`."
 
 

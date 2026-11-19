@@ -3,7 +3,7 @@
 ##   Each assertion folds example CLL gives, or tanru of `ciska`, `vreji` and `gunka` where
 ##     section gives none holding SE. Tanru is read as text, so no rafsi choice enters; where
 ##     CLL gives lujvo, its words are those reader gives it.
-##   Fold itself is that of `lojban_parser`, whose suite `test_tanru_units.nim` holds it; this
+##   Fold itself is that of `ricysoho`, whose suite `test_tanru_units.nim` holds it; this
 ##     suite holds runs alone.
 
 {.experimental: "strictFuncs".}
@@ -13,7 +13,7 @@ when compileOption("profiler"):
 
 import std/[options, unittest]
 
-import lojban_parser
+import ricysoho
 
 import ../../src/rictadni/[runs, tags]
 

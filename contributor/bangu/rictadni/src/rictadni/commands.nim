@@ -30,7 +30,7 @@
 
 import std/[options, sequtils, strutils]
 
-import lojban_parser
+import ricysoho
 
 import ./[english, index, search, tags]
 

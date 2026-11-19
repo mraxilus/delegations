@@ -13,7 +13,7 @@
 ##   | suggestions  | gismu model suggests for passage, checked by lists   |             |
 ##   |--------------|------------------------------------------------------|-------------|
 ##
-##   Lojban is read through `lojban_parser`: letters, forms, rafsi, words of gismu list, and fold
+##   Lojban is read through `ricysoho`: letters, forms, rafsi, words of gismu list, and fold
 ##     of tanru into tanru units stand there, by rules of CLL alone. This project holds policy of
 ##     tag, English of gismu list, and whole lujvo list, as Architect ruled.
 ##     Surface of parser stays off this surface, so each module needing it imports parser itself.
@@ -25,7 +25,7 @@
 ##     Tag -> [Entity, Term]
 ##     [LIST_GISMU, COUNT_TAGS_MAX] -> PROMPT_SYSTEM
 ##   Lists are data that `nim r tools/build.nim lists` renders; `Word` is index into gismu list of
-##     `lojban_parser`, and English here follows that list entry for entry (`english.nim`).
+##     `ricysoho`, and English here follows that list entry for entry (`english.nim`).
 ##   `Reference`, `toReference` and its `toText` stay off surface: `suggestions` exports them for
 ##     `app/exchanges.nim` alone, which imports that module itself (Article I.6).
 

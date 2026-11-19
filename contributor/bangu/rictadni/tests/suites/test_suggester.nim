@@ -58,7 +58,7 @@ import std/[
 from std/posix import chmod, Mode, umask
 from std/unicode import Rune, toUTF8
 
-import lojban_parser
+import ricysoho
 
 import ../../app/exchanges
 from ../../app/suggester {.all.} import BYTES_FIELDS_MAX, COUNT_REDIRECTS_MAX, USAGE

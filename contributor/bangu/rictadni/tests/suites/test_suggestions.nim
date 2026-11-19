@@ -25,7 +25,7 @@ when compileOption("profiler"):
 
 import std/[algorithm, json, options, random, sequtils, strutils, sugar, unittest]
 
-import lojban_parser
+import ricysoho
 
 import ../../src/rictadni/[commands, english, suggestions {.all.}, tags]
 import ../../src/rictadni/lists/gismu
