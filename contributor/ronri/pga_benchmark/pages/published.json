@@ -1,7 +1,7 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "51201ba9aa4644b4"
+    "digest": "713717586023d56b"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
@@ -17,15 +17,15 @@
   },
   "basis-set-forms": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "e195a1e9fd86976f"
+    "digest": "3c30697a3118c6a3"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "098ac1cac6c7c39c"
+    "digest": "b0afc0e70c5fc71a"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "8cf86609cdebd4b5"
+    "digest": "fed5ba9544529c8d"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
@@ -41,11 +41,11 @@
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "5a0bff429b6f963c"
+    "digest": "62117267ce136081"
   },
   "homogeneous-scalar": {
     "url": "https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D",
-    "digest": "78baa827bc97a479"
+    "digest": "ff2e73227b31a9d0"
   },
   "unitize-general": {
     "url": "https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy",
@@ -69,7 +69,7 @@
   },
   "typed-sums": {
     "url": "https://claude.ai/artifact/NdUQo9YpLqCbYi5SBpUKDB",
-    "digest": "cf867b89d17713cd"
+    "digest": "c4f7286c52815edb"
   },
   "nimony-port": {
     "url": "https://claude.ai/artifact/L3Em5xnxr3K4CUyUo4AWN9",
