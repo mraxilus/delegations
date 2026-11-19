@@ -272,9 +272,7 @@ const
   LINE_GLOSSARY* = "A glossary takes only a term that the Architect selected; the skill " &
     "/propose-term holds the steps."
     ## Line `edit` adds after write to glossary.
-  LINE_RECORD* = "The skill /record holds the steps, and the agent record-reviewer reads " &
-    "the diff."
-    ## Line `edit` adds after write to record.
+  LINE_RECORD* = "The skill /record holds the steps."  ## Line `edit` adds after write to record.
   PHRASES_STATUS = [
     "status", "merge order", "next step", "next steps", "priority list", "update the list",
     "duties", "duty", "anything left",
