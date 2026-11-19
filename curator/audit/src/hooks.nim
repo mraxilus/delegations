@@ -353,6 +353,15 @@ const
   NO_PREDICTION = "No prediction"
     ## Cell under `Predicted` of row that counts missing prediction as miss (7015791554).
   MARKERS_BULLET = {'-', '*', '+'}  ## Characters that open bullet, before space.
+  MARKS_ITEM = {'.', ')'}  ## Marks after number of item of numbered list, as `1.` or `1)`.
+  DIGITS_ITEM = 9  ## Digits that number of item holds at most, as CommonMark reads it.
+  SPACES_INDENT = {' ', '\t'}  ## Characters of indent, and of gap after marker of item.
+  COLUMNS_TAB = 4  ## Columns between stops of tab, as CommonMark reads indent.
+  INDENT_INSIDE = 2
+    ## Columns of indent from which line stands inside bullet of claim, as `- ` opens it.
+  NUMBER_INSIDE = "1"
+    ## Number of item that breaks paragraph of claim from inside its bullet (CommonMark, List
+    ##   items), as Markdown lets list that opens at 1 alone break paragraph.
   MARK_PERCENTILES = ", as the 10th"
     ## Words that open percentiles of claim, as samples of GUIDE.md write them; where they are
     ##   first mark, claim ends at them and no percentage ends it, since they state its confidence
@@ -2063,6 +2072,31 @@ func isBullet(line: string): bool =
   s.len > 1 and s[0] in MARKERS_BULLET and s[1] == ' '
 
 
+func isItem(line: string): bool =
+  ## Decide whether line opens item of list, as Markdown reads it right under claim (choice):
+  ##   marker of bullet, or one to `DIGITS_ITEM` digits then `.` or `)`, each then space, tab or
+  ##   end of line.
+  ##   From `INDENT_INSIDE` columns of indent, line stands inside bullet of claim, and there only
+  ##     marker or number 1, with text after it, breaks paragraph (CommonMark, List items).
+  ##   Cost: from six columns, Markdown reads such line as text of claim, yet it opens item here,
+  ##     as bullet at any indent ends claim.
+  var
+    column = 0  # Column of first character after indent; tab reaches next stop.
+    i = 0
+  while i < line.len and line[i] in SPACES_INDENT:
+    column = (if line[i] == '\t': column - column mod COLUMNS_TAB + COLUMNS_TAB else: column + 1)
+    inc i
+  let start = i
+  if i < line.len and line[i] in MARKERS_BULLET: inc i
+  else:
+    while i < line.len and i - start < DIGITS_ITEM and line[i] in Digits: inc i
+    if i == start or i >= line.len or line[i] notin MARKS_ITEM: return false
+    inc i
+  if i < line.len and line[i] notin SPACES_INDENT: return false
+  column < INDENT_INSIDE or (line[i .. ^1].strip.len > 0 and
+    (line[start] in MARKERS_BULLET or line[start ..< i - 1] == NUMBER_INSIDE))
+
+
 func isPercentage(text: string, at: int): bool =
   ## Decide whether percentage in brackets opens at `at` of text: space, `(`, digits, then point
   ##   and digits where it has decimal part, as `(62.5%)`, then `%)`. Ruling 7016134603 ends
@@ -2117,20 +2151,21 @@ func stopClaim(text: string): int =
 func claims(text: string): seq[string] =
   ## Read each claim of block text, with its label and without it, as reflection may quote it.
   ##   Claim is bullet with no indent, to next blank line, next line opening bullet at any
-  ##     indent, or end of block; each run of whitespace reads as one space (7016134603), and
-  ##     `\|` reads as `|`, as cell reads it (7022872980).
+  ##     indent, next line opening other item (`isItem`, choice), or end of block; each run of
+  ##     whitespace reads as one space (7016134603), and `\|` reads as `|`, as cell reads it
+  ##     (7022872980).
   ##   Claim ends where `stopClaim` reads: at its percentiles, at its confidence, at its
   ##     resolution criterion, or before final full stop of its bullet.
   ##   Label opens claim, as `labelClaim` reads it; `: ` inside sentence opens none, so such
   ##     claim reads whole (7018501890).
   var
     bullets: seq[string]
-    is_open = false  # Line continues last bullet: no blank line or bullet since it opened.
+    is_open = false  # Line continues last bullet: no blank line or item since it opened.
   for line in text.splitLines:
     if line.isBullet and line[0] in MARKERS_BULLET:
       bullets.add line[2 .. ^1]
       is_open = true
-    elif line.strip.len == 0 or line.isBullet: is_open = false
+    elif line.strip.len == 0 or line.isBullet or line.isItem: is_open = false
     elif is_open: bullets[^1].add "\n" & line
   for bullet in bullets:
     let
