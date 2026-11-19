@@ -257,6 +257,25 @@ func refusalCell(cell: string): string =
     "`No prediction` (GUIDE.md, Prediction, critic and reflection); got `" & cell & "`."
 
 
+func refusalCall(kind, description: string, hint = ""): string =
+  ## Write finding of call of kind that took no block, with hint after its description.
+  "Call of subagent of kind takes `## Prediction` block of model turn before its own, and " &
+    "after each earlier turn that starts subagent (GUIDE.md, Prediction, critic and " &
+    "reflection); got none for `" & kind & "` call `" & description & "`" & hint & "."
+
+
+func hintNamed(named: string): string =
+  ## Write hint that block of turns call looks back over names other kind or none, as rule of
+  ##   7017187857 on #969 states it; named is kind in backticks, or `no kind`.
+  ", and block of such turn names " & named & ": block serves only call of kind that first " &
+    "word of its `**Subagent:**` line names"
+
+
+func predicting(kind: string): string =
+  ## Write `PREDICTION` for subagent of kind, which first word of its `**Subagent:**` line names.
+  PREDICTION.replace("**Subagent:** builder of", "**Subagent:** " & kind & " of")
+
+
 
 suite "Hooks":
   test "role string grammar":
@@ -1870,19 +1889,22 @@ suite "Hooks":
         "its own, and after each earlier turn that starts subagent (GUIDE.md, Prediction, " &
         "critic and reflection); got none for `builder` call `Do the work`."]
 
-    # Block in turn that starts subagent of any type is no evidence; block two turns back is,
-    #   since D1 c of #969 (test below).
+    # Block in turn that starts subagent of any type is no evidence, though it names kind of call;
+    #   block two turns back is, since D1 c of #969 (test below).
     check blocksHeld(asked & lineSaid(PREDICTION) & wake & lineSaid("Waiting.") & wake &
       linesAgent("builder") & started).len == 0
     for kind in ["web-fetch", "builder"]:
-      check blocksHeld(asked & linesAgent(kind) & lineSaid(PREDICTION) & wake &
+      check blocksHeld(asked & linesAgent(kind) & lineSaid(predicting("reviewer")) & wake &
         linesAgent("reviewer") & started).anyIt("`reviewer`" in it)
 
-    # One block serves one call, earliest call first; exempt call takes what is left.
+    # One block serves one call, earliest call of its kind first; call of other kind takes block
+    #   that names its kind, and exempt call takes only block of its own kind (7017187857).
     let two = blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("builder") &
       linesAgent("reviewer") & started)
     check two.len == 1 and "`reviewer`" in two[0]
-    check blocksHeld(asked & lineSaid(PREDICTION & "\n" & PREDICTION) & wake &
+    check blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("builder", "First") &
+      linesAgent("builder", "Second") & started) == @[refusalCall("builder", "Second")]
+    check blocksHeld(asked & lineSaid(PREDICTION & "\n" & predicting("reviewer")) & wake &
       linesAgent("builder") & linesAgent("reviewer") & started).len == 0
     check blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("critic") &
       linesAgent("builder") & started).len == 0
@@ -1895,7 +1917,8 @@ suite "Hooks":
       for m in 1 .. n:
         var blocks, rows: seq[string]
         for b in 1 .. n:
-          blocks.add "## Prediction\n\n- Judgement: claim " & $b & " holds (70%)."
+          blocks.add "## Prediction\n\n**Subagent:** builder of claim " & $b &
+            ".\n\n- Judgement: claim " & $b & " holds (70%)."
           rows.add "| ✅ | 70% | claim " & $b & " holds | it holds |"
         let found = blocksHeld(asked & lineSaid(blocks.join("\n\n")) & wake &
           linesAgent("builder").repeat(m) & started & lineHandback("builder", "abuilder") &
@@ -1928,7 +1951,7 @@ suite "Hooks":
     # Call of such type takes no block, so later call of kind in its turn takes it, as critic of
     #   hook on #962 found for `web-fetch` in foreground.
     for kind in ["general-purpose", "web-fetch", "Explore"]:
-      check blocksHeld(asked & lineSaid(PREDICTION) & wake &
+      check blocksHeld(asked & lineSaid(predicting("reviewer")) & wake &
         linesForeground(kind, "false", "completed") & linesAgent("reviewer") & started).len == 0
 
     # Call of earlier turn was held at its own stop.
@@ -1957,52 +1980,55 @@ suite "Hooks":
       message = lineUser("Is the reviewer running?", "human") & lineSaid("Not yet.")
       waited = wake & lineSaid("Waiting.")
       called = wake & linesAgent("reviewer") & started
+      predicted = predicting("reviewer")  # Block that names kind of call, as 7017187857 asks.
     for between in [reply, handback, message]:
-      check blocksHeld(asked & lineSaid(PREDICTION) & between & called).len == 0
+      check blocksHeld(asked & lineSaid(predicted) & between & called).len == 0
 
     # Block serves call at each count of turns between them, and across each kind of turn at once.
     for count in 0 .. 4:
-      check blocksHeld(asked & lineSaid(PREDICTION) & waited.repeat(count) & called).len == 0
-    check blocksHeld(asked & lineSaid(PREDICTION) & reply & handback & message & waited & called)
+      check blocksHeld(asked & lineSaid(predicted) & waited.repeat(count) & called).len == 0
+    check blocksHeld(asked & lineSaid(predicted) & reply & handback & message & waited & called)
       .len == 0
 
     # Call of any type between them ends turns hook looks back over, so block left over serves no
     #   later call: kind, exempt kind and type no template names, in background or foreground.
     for kind in ["builder", "critic", "resolver", "web-fetch", "general-purpose"]:
       for between in [linesAgent(kind), linesForeground(kind, "false", "completed")]:
-        let found = blocksHeld(asked & lineSaid(PREDICTION & "\n" & PREDICTION) & wake & between &
+        let found = blocksHeld(asked & lineSaid(predicted & "\n" & predicted) & wake & between &
           started & called)
         check found.len == 1 and found[0].endsWith(refused)
 
     # Block in turn that starts subagent, before or after its call, is no evidence, and adds no
     #   hint; block in turn of call adds its hint, after turns with no block.
     for kind in ["builder", "web-fetch"]:
-      for earlier in [lineSaid(PREDICTION, "tool_use") & linesAgent(kind),
-          linesAgent(kind) & lineSaid(PREDICTION, "tool_use")]:
+      for earlier in [lineSaid(predicted, "tool_use") & linesAgent(kind),
+          linesAgent(kind) & lineSaid(predicted, "tool_use")]:
         check blocksHeld(asked & earlier & started & waited & called) == @["Call of subagent of " &
           "kind takes `## Prediction` block of model turn before its own, and after each " &
           "earlier turn that starts subagent (GUIDE.md, Prediction, critic and reflection); " &
           "got none for `reviewer` call `Do the work`."]
-    let inside = blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("web-fetch") &
-      started & waited & wake & lineSaid(PREDICTION, "tool_use") & linesAgent("reviewer") & started)
+    let inside = blocksHeld(asked & lineSaid(predicted) & wake & linesAgent("web-fetch") &
+      started & waited & wake & lineSaid(predicted, "tool_use") & linesAgent("reviewer") & started)
     check inside.len == 1 and inside[0].endsWith("block stands in earlier turn.")
 
-    # Each call takes earliest free block of turns hook looks back over: of n blocks, one in each
-    #   turn, and m calls, blocks after first m are taken by no call.
+    # Each call takes block of nearest of turns hook looks back over (7017187857): of n blocks,
+    #   one in each turn, and m calls, blocks before last m are taken by no call.
     for n in 1 .. 3:
       for m in 1 .. n:
         var turns, rows: seq[string]
         for b in 1 .. n:
-          turns.add lineSaid("## Prediction\n\n- Judgement: claim " & $b & " holds (70%).")
+          turns.add lineSaid("## Prediction\n\n**Subagent:** builder of claim " & $b &
+            ".\n\n- Judgement: claim " & $b & " holds (70%).")
           rows.add "| ✅ | 70% | claim " & $b & " holds | it holds |"
         let found = blocksHeld(asked & turns.join(wake) & wake &
           linesAgent("builder").repeat(m) & started & lineHandback("builder", "abuilder") &
           linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
           lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
-        check found == toSeq(m + 1 .. n).mapIt(refusalCell("claim " & $it & " holds"))
+        check found == toSeq(1 .. n - m).mapIt(refusalCell("claim " & $it & " holds"))
 
-    # Calls of one turn share turns hook looks back over, and exempt call takes what is left.
-    check blocksHeld(asked & lineSaid(PREDICTION) & waited & wake & lineSaid(PREDICTION) & wake &
+    # Calls of one turn share turns hook looks back over, and each takes block that names its
+    #   kind; exempt call takes only block of its own kind, and none ahead of other calls.
+    check blocksHeld(asked & lineSaid(PREDICTION) & waited & wake & lineSaid(predicted) & wake &
       linesAgent("critic") & linesAgent("builder") & linesAgent("reviewer") & started).len == 0
     let short = blocksHeld(asked & lineSaid(PREDICTION) & waited & wake & linesAgent("critic") &
       linesAgent("builder") & linesAgent("reviewer") & started)
@@ -2015,15 +2041,228 @@ suite "Hooks":
       lineSaid("The critic runs.") & lineHandback("critic")
     check blocksHeld(flow & lineSaid(REFLECTION)).len == 0
 
-    # Cost: block that reply to refusal writes again stays free, since call takes earliest one,
-    #   so reflection quotes block as first written.
+    # Block that reply to refusal writes again serves call, since call takes block of nearest
+    #   turn (7017187857), so reflection quotes block as written again, and not as first written.
     let mended = asked & lineSaid(PREDICTION) & refusal &
       lineSaid(PREDICTION.replace("four to eight", "five to nine")) & wake &
       linesAgent("builder") & started & lineHandback("builder", "abuilder") &
       linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
-    check blocksHeld(mended & lineSaid(REFLECTION)).len == 0
-    check blocksHeld(mended & lineSaid(REFLECTION.replace("four to eight", "five to nine"))) ==
-      @[refusalCell("five to nine findings, each with `file:line`")]
+    check blocksHeld(mended & lineSaid(REFLECTION.replace("four to eight", "five to nine")))
+      .len == 0
+    check blocksHeld(mended & lineSaid(REFLECTION)) ==
+      @[refusalCell("four to eight findings, each with `file:line`")]
+
+
+  test "block serves only call of kind it names, nearest turn first (7017187857 of #969)":
+    # Ruling 7017187857 of #969, how block pairs: block serves only call of kind that its
+    #   `**Subagent:**` line names, as `**Subagent:** reviewer of …`, so late block for reviewer
+    #   serves no builder and no critic; it replaces pairing by order alone. Same comment, which
+    #   block: where turns before call hold more than one free block for it, call takes block of
+    #   nearest earlier turn, and earliest block inside that turn; it replaces "earliest" of
+    #   ruling on timer (6980006567). Cases as found are probes of critic of D1 c of #969, where
+    #   build `61233948` refused Q1, which keeps guide, and passed Q2 and Q3, whose block was
+    #   written after call it names.
+    const
+      header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+      layouts = 48
+        ## Cases of law of nearest turn: each layout of one or two blocks to turn, over two or
+        ##   three turns, with each count of calls up to count of blocks.
+    func predictedProbe(kind, claim: string): string =
+      ## Write block of probe for subagent of kind, holding one claim, with its working line.
+      "## Prediction\n\n**Subagent:** " & kind & " of the fix, fresh context.\n**Basis:** what " &
+        "this delegate knows, with no new read.\n\n- Judgement: " & claim & " (60%). " &
+        "Resolution criterion: the report says so.\n\n**Working:** a timer of 5 seconds wakes " &
+        "this delegate, and the next turn starts it."
+
+    func reflectedProbe(cells: varargs[string]): string =
+      ## Write reflection of probe, whose rows hold cells under `Predicted`.
+      "## Reflection\n\n**Subagent:** builder, 170,000 tokens and $1.10 at list price, 57 " &
+        "calls, 15 min.\n**Critic:** 50,000 tokens and $0.35 at list price, 20 calls, 6 min." &
+        "\n\n" & header & cells.mapIt("| ✅ | 60% | " & it & " | it holds |").join("\n") &
+        "\n\n- **Cause of each miss:** none.\n- **Change:** none."
+
+    func named(kind, claim: string): string =
+      ## Write block for subagent of kind, holding one claim.
+      "## Prediction\n\n**Subagent:** " & kind & " of the fix.\n\n- Judgement: " & claim & " (70%)."
+
+    let
+      timer = linesCall("sleep 5")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      ran = lineSaid("It runs.\n\n**Working:** the subagent runs, and its report wakes this " &
+        "delegate.")
+      review = lineUser("Review the diff of curator/asset-fetch.", "human")
+      build = lineUser("Build the fix of curator/asset-fetch.", "human")
+      checked = linesAgent("critic", "Critic of the fix") & ran & lineHandback("critic", "acritic")
+
+    # Q1: block for reviewer, then plan changes, and block for builder stands in turn just before
+    #   its call, as guide asks; builder takes its own block, and reflection that quotes it passes.
+    let guided = review & timer &
+      lineSaid(predictedProbe("reviewer", "the reviewer finds no race")) &
+      lineUser("Build the fix first, then review it.", "human") & timer &
+      lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") & checked &
+      lineSaid(reflectedProbe("the builder adds two commits"))
+    check blocksHeld(guided).len == 0
+
+    # Q2: block for reviewer, written after its call, serves no later builder; hint names kind of
+    #   block.
+    let late = review & linesAgent("reviewer", "Review the fix") & ran &
+      lineUser("Where is the prediction?", "human") &
+      lineSaid(predictedProbe("reviewer", "the reviewer finds no race")) &
+      lineHandback("reviewer", "areviewer") & lineSaid("The reviewer reported.") &
+      lineUser("Go on.", "human") & linesAgent("builder", "Build the fix") & ran
+    check blocksHeld(late) == @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]
+
+    # Q3: block for reviewer, written after its report, serves no critic, so reflection that
+    #   quotes it is refused.
+    let hindsight = review & linesAgent("reviewer", "Review the fix") & ran &
+      lineHandback("reviewer", "areviewer") &
+      lineSaid(predictedProbe("reviewer", "the reviewer finds no race")) &
+      lineUser("Run the critic.", "human") & lineSaid("Noted.") & wake & checked &
+      lineSaid(reflectedProbe("the reviewer finds no race"))
+    check blocksHeld(hindsight) == @[refusalCell("the reviewer finds no race")]
+
+    # Q4: optional block of critic, written after report of builder, serves critic called two
+    #   turns later, as break Z2 of critic of D1 c asks.
+    let optional = build & timer &
+      lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") & timer &
+      lineSaid(predictedProbe("critic", "the critic fails one claim")) &
+      lineUser("Is the critic running?", "human") & lineSaid("Not yet.") & wake & checked &
+      lineSaid(reflectedProbe("the builder adds two commits", "the critic fails one claim"))
+    check blocksHeld(optional).len == 0
+
+    # Block six or more turns back serves its call, as break Z1 of critic of D1 c asks.
+    for count in 5 .. 8:
+      check blocksHeld(build & timer & lineSaid(predictedProbe("builder", "it holds")) &
+        (wake & lineSaid("Waiting.")).repeat(count) & wake &
+        linesAgent("builder", "Build the fix") & ran).len == 0
+
+    # Three groups of calls: block for reviewer before call of `web-fetch` serves no later
+    #   reviewer, as break Z3 of critic of D1 c asks.
+    let grouped = build & timer &
+      lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake &
+      linesAgent("builder", "Build the fix") & ran & lineHandback("builder", "abuilder") & timer &
+      lineSaid(predictedProbe("reviewer", "the reviewer finds no race")) & wake &
+      linesAgent("web-fetch", "Read the page") & lineSaid("Fetched.") &
+      lineUser("Go on.", "human") & linesAgent("reviewer", "Review the fix") & ran
+    check blocksHeld(grouped) == @[refusalCall("reviewer", "Review the fix")]
+
+    # Cost, probe Q5: call that harness rejects starts no subagent, yet takes block and ends turns
+    #   that later call looks back over, so its retry is refused.
+    let
+      rejection = $(%*{"type": "assistant", "message": {"content": [{
+        "type": "tool_use", "id": "toolu_rejected", "name": "Agent",
+        "input": {"subagent_type": "builder", "description": "Build the fix", "prompt": "Do it."},
+      }], "stop_reason": "tool_use"}}) & "\n" & $(%*{"type": "user", "message": {"content": [{
+        "type": "tool_result", "tool_use_id": "toolu_rejected", "is_error": true,
+        "content": "The tool use was rejected.",
+      }]}, "toolUseResult": "Error: The tool use was rejected."}) & "\n"
+      rejected = build & timer &
+        lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake & rejection &
+        lineSaid("The call was rejected.") & lineUser("Try again.", "human") &
+        linesAgent("builder", "Build the fix") & ran
+    check blocksHeld(rejected) == @[refusalCall("builder", "Build the fix")]
+
+    # Kind is first word after `**Subagent:**` on first line of block that opens with it, after
+    #   any indent, as written up to whitespace; block with no such line, or whose word is no
+    #   kind, names no kind and serves no call, and hint says so.
+    proc heldAfter(text: string, kinds: openArray[string] = KINDS): seq[string] =
+      ## Read findings of builder call after block that holds text, then one claim, in turn
+      ##   before its own.
+      blocksHeld(build & lineSaid("## Prediction\n\n" & text & "\n\n- Judgement: it builds " &
+        "(70%).") & wake & linesAgent("builder", "Build the fix") & ran, kinds)
+
+    for text in ["**Subagent:** builder of the fix.", "  **Subagent:** builder of the fix.",
+        "**Subagent:**  builder\tof the fix.", "**Subagent:** builder",
+        "**Basis:** none.\n**Subagent:** builder of the fix.",
+        "- Judgement: it is first (70%).\n\n**Subagent:** builder of the fix.",
+        "**Subagent:** builder of the fix.\n**Subagent:** reviewer of the diff."]:
+      check heldAfter(text).len == 0
+    check heldAfter("**Subagent:** reviewer of the diff.\n**Subagent:** builder of the fix.") ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]  # first line alone
+    for text in ["**Basis:** what this delegate knows.", "**Subagent:**",
+        "**Subagent:** Builder of the fix.", "**Subagent:** the builder of the fix.",
+        "**Subagent:** `builder` of the fix.", "**Subagent:** builder, fresh context.",
+        "**Subagent:** surveyor of the fix.", "**Subagent:** web-fetch of the page.",
+        "Subagent: builder of the fix.", "**Subagent** builder of the fix.",
+        "- **Subagent:** builder of the fix.", "The **Subagent:** builder of the fix.",
+        "```\n**Subagent:** builder of the fix.\n```"]:
+      check heldAfter(text) == @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]
+    let repository = readKinds(currentSourcePath().parentDir / "../../../..")
+    check heldAfter("**Subagent:** surveyor of the fix.", repository) ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`surveyor`"))]  # kind of templates
+
+    # Hint names what nearest free block names, earliest first inside its turn; it stands where
+    #   no call took that block, inside turns call looks back over, and hint of turn of call
+    #   follows it.
+    let nameless = "## Prediction\n\n- Judgement: it builds (70%)."
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake &
+      lineSaid(predicting("critic") & "\n" & nameless) & wake &
+      linesAgent("builder", "Build the fix") & ran) ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`critic`"))]
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake &
+      lineSaid(nameless & "\n\n" & predicting("critic")) & wake &
+      linesAgent("builder", "Build the fix") & ran) ==
+      @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake & linesAgent("reviewer") &
+      linesAgent("builder", "Build the fix") & ran) == @[refusalCall("builder", "Build the fix")]
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake & linesAgent("web-fetch") &
+      ran & wake & linesAgent("builder", "Build the fix") & ran) ==
+      @[refusalCall("builder", "Build the fix")]
+    check blocksHeld(build & lineSaid(predicting("reviewer")) & wake &
+      lineSaid(PREDICTION, "tool_use") & linesAgent("builder", "Build the fix") & ran) ==
+      @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`") & ", and block in turn " &
+        "of call, which is no evidence: block stands in earlier turn")]
+
+    # Exempt call takes only block of its own kind; call of type no template names, or of no
+    #   type, takes none, though block names no kind, so reflection quotes none of it.
+    for (prediction, count) in [(predicting("resolver"), 0), (PREDICTION, 2)]:
+      check blocksHeld(review & lineSaid(prediction) & wake & linesAgent("resolver") & ran &
+        checked & lineSaid(REFLECTION)).len == count
+    for kind in ["", "web-fetch"]:
+      check blocksHeld(review & lineSaid(nameless) & wake & linesAgent(kind) & ran & checked &
+        lineSaid(reflectedProbe("it builds"))) == @[refusalCell("it builds")]
+
+    # Calls of two kinds in one turn each take block of own kind from nearest turn, in either
+    #   order of calls, so claims of blocks of farther turn are refused.
+    for calls in [@["reviewer", "builder"], @["builder", "reviewer"]]:
+      check blocksHeld(review &
+        lineSaid(named("builder", "b0") & "\n\n" & named("reviewer", "r0")) & wake &
+        lineSaid(named("reviewer", "r1") & "\n\n" & named("builder", "b1")) & wake &
+        calls.mapIt(linesAgent(it)).join & ran & checked & lineSaid("## Reflection\n\n" & header &
+        ["b0", "r0", "r1", "b1"].mapIt("| ✅ | 70% | " & it & " | it holds |").join("\n") & "\n")) ==
+        @[refusalCell("b0"), refusalCell("r0")]
+
+    # Each layout of one or two blocks to turn, over two and three turns: m calls of one kind in
+    #   one turn take first m blocks, nearest turn first and earliest first inside it, and claim
+    #   of each other block is refused.
+    var cases = 0
+    for turns in 2 .. 3:
+      for mask in 0 ..< (1 shl turns):  # Turn `t` holds two blocks where bit `t` is set.
+        var
+          texts: seq[string]  # Blocks of each turn, earliest turn first.
+          numbers: seq[seq[int]]  # Number of each block of each turn, from 1.
+          count = 0
+        for t in 0 ..< turns:
+          var blocks: seq[string]
+          numbers.add @[]
+          for _ in 0 .. (mask shr t and 1):
+            inc count
+            numbers[^1].add count
+            blocks.add named("builder", "claim " & $count & " holds")
+          texts.add blocks.join("\n\n")
+        var order: seq[int]  # Numbers of blocks, nearest turn first, earliest first inside it.
+        for t in countdown(turns - 1, 0): order.add numbers[t]
+        let rows = toSeq(1 .. count).mapIt("| ✅ | 70% | claim " & $it & " holds | it holds |")
+        for m in 1 .. count:
+          let found = blocksHeld(build & texts.mapIt(lineSaid(it)).join(wake) & wake &
+            linesAgent("builder").repeat(m) & ran & lineHandback("builder", "abuilder") &
+            checked & lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
+          check found == toSeq(1 .. count).filterIt(it notin order[0 ..< m])
+            .mapIt(refusalCell("claim " & $it & " holds"))
+          inc cases
+    check cases == layouts
 
 
   test "kinds are names of front matter of templates under `.claude/agents`, read at stop":
@@ -2230,9 +2469,13 @@ suite "Hooks":
     let unused = asked & lineSaid(PREDICTION) & wake & lineSaid("No subagent.") &
       lineHandback("critic")
     check blocksHeld(unused & lineSaid(REFLECTION)).len == 2
-    let critic = asked & lineSaid(PREDICTION) & wake & linesAgent("critic") &
-      lineSaid("The critic runs.") & lineHandback("critic")
-    check blocksHeld(critic & lineSaid(REFLECTION)).len == 0  # prediction of critic is optional
+
+    # Prediction of critic is optional, and block that names `critic` serves its call; block for
+    #   other kind serves no critic, so reflection quotes none of it (7017187857).
+    for (kind, count) in [("critic", 0), ("builder", 2), ("reviewer", 2)]:
+      let critic = asked & lineSaid(predicting(kind)) & wake & linesAgent("critic") &
+        lineSaid("The critic runs.") & lineHandback("critic")
+      check blocksHeld(critic & lineSaid(REFLECTION)).len == count
 
     # Reflection quotes nothing with no table, no row, or empty cell.
     check reflected("No table.").anyIt("column `Predicted` (GUIDE.md" in it)
@@ -2311,8 +2554,10 @@ suite "Hooks":
       for cell in cells: rows.add "| ✅ | 70% | " & cell & " | it holds |\n"
       blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
     proc passes(bullets, cell: string): bool =
-      ## Decide whether cell passes, where block that call took holds bullets alone.
-      reflected([cell], asked & lineSaid("## Prediction\n\n" & bullets & "\n") & calls).len == 0
+      ## Decide whether cell passes, where block that call took holds bullets alone, after line
+      ##   that names kind of call (7017187857).
+      reflected([cell], asked & lineSaid("## Prediction\n\n**Subagent:** reviewer of the diff." &
+        "\n\n" & bullets & "\n") & calls).len == 0
 
     # Each claim passes, with and without its label, one to table and all in one.
     for (label, claim) in claims:
