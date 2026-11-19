@@ -13,7 +13,8 @@ bases at each call.
 
 **What it costs.** A sum of two types can take a type that no alias names, as a scalar and a
 vector at rga4d take a type of 5 bases. The library exports `zeroNamed`, which names each result
-type.
+type. Negation of a whole multivector at cga5d takes ×1.60 of the time at pin, for a cause not
+isolated.
 
 ## Problem
 
@@ -70,6 +71,13 @@ bases. `MultivectorOf[{E1}] + Multivector1` returns `Multivector1`.
   prints that type with its bases.
 - **Export.** `pga/multivectors.nim` exports `zeroNamed`, since the patch of D1 reads its result
   types through it.
+- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.5 MiB against 210.3 MiB at pin.
+  At cga6d it takes 14.18 s against 13.59 s, so ×1.04.
+- **Negation at cga5d.** It reads ×1.60 of pin in the evaluation of 2026-11-19. The text with the
+  named type of the fewest bases read ×1.13 there on 2026-11-15, with the same body of negation.
+  At rga4d it reads ×1.00. A function that negates alone compiles to the same 16 vector negations
+  under pin and under this proposal. So the cause lies outside the body of negation, and is not
+  isolated.
 - **Overloads.** `+` and `-` of two whole multivectors, and each sum with a scalar, become
   instances of the generic forms. Each body writes one assignment for each basis, as the loop of
   pin does.
@@ -99,4 +107,9 @@ on Node. With the change, no operation adds one at rga3d, rga4d, cga4d and cga5d
 136, 171, 171 and 210 operations. At pin it fails at each of those algebras on `Multivector +`,
 one copy for each call, and on no other operation.
 
-No evaluation of this text stands yet, so no figure of time or build stands here.
+Its evaluation of 2026-11-19 finds three functions moved at each algebra: `+`, `-` and negation
+of whole multivectors. At rga4d each holds 16 lines of C and no call, against 132 to 183 lines and
+32 to 48 calls at pin. There `+` zeroes no byte before it writes, where pin zeroes 128. At rga4d
+the three read ×0.99 to ×1.00 of pin, and the other 108 measurands read ×0.97 to ×1.00. At cga5d
+sums and differences read ×1.00, and the other 132 measurands read ×0.99 to ×1.04. Negation there
+reads ×1.60, as Costs gives.
