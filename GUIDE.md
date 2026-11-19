@@ -136,6 +136,11 @@ subagent.
 | Driver | runs a page or program through real events | what it shows, as pictures and output |
 | Builder | makes one change in its own worktree | its commits, its `koch check`, its choices |
 | Critic | checks the report of a subagent | each claim held, failed or unchecked |
+| Resolver | marks how each claim of a prediction resolves | each state, with its evidence |
+
+Each template pins `model: opus` and the effort of its kind. A critic runs at the effort of the
+subagent that it checks, or higher. So where that subagent runs above the level of the critic,
+give that level as the `effort` of the call that starts the critic.
 
 ### A fresh context
 

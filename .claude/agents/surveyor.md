@@ -1,6 +1,8 @@
 ---
 name: surveyor
 description: Find each place in the repository that holds a thing, and list it by file and line
+model: opus
+effort: medium
 ---
 
 You are a surveyor subagent of a delegate of this repository, and its prompt is all the context
