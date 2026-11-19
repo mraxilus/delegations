@@ -4,7 +4,8 @@
 ##   Each form of basis-set types equals operator of library on whole multivectors, at each named
 ##     type and at pairs of types that `DIMENSIONS_SWEPT` sets. Each form compiles: one that
 ##     reaches no basis returns type of no bases, which widens to zero, as library gives there.
-##     Its type holds exactly bases its table reaches, and each named alias returns that type.
+##     Each map and product takes exactly bases that operator of library gives on single bases of
+##     its operands, and each named alias returns that type.
 ##   Scaling, norms, unitizing and operators built from others hold alike, and each alias that
 ##     takes any type forwards to its operator, in value and type.
 ##   Each named basis-set type holds its coefficients unpadded, aligned to `alignment` of its
@@ -113,6 +114,17 @@ func agrees(m, n: Multivector): bool =
   true
 
 
+func unit(basis: Basis): Multivector =
+  ## Get whole multivector of one basis at unit coefficient.
+  result[basis] = Coefficient(1)
+
+
+func basesNonzero(m: Multivector): Bases =
+  ## Get bases where whole multivector holds nonzero coefficient.
+  for basis in Basis:
+    if m[basis] != 0: result.incl basis
+
+
 macro defineChecksLayout(): untyped =
   ## Define check of size and alignment of each named basis-set type, from its count of bases.
   result = newStmtList()
@@ -142,13 +154,18 @@ func namesTyped(): seq[string] {.compileTime.} =
   namesGraded() & @["MultivectorEven", "MultivectorOdd"]
 
 
-func emitHold(operator: string, names: seq[string], held, empty: NimNode): NimNode {.compileTime.} =
+func emitHold(
+  operator: string, names: seq[string], held, empty: NimNode, exact = false
+): NimNode {.compileTime.} =
   ## Emit law of one form at one type or pair: equal to library on whole operands. Count it held,
   ##   and count it again where its type holds no basis. Name `Coefficient` samples scalar.
+  ##   Exact form also takes bases that operator of library gives on single bases, no more.
   let
     symbol = nnkAccQuoted.newTree(ident(operator))
     message = newLit("Form must equal operator of library at " & operator & " of " &
       names.join(" and ") & ".")
+    message_exact = newLit("Form must take exactly bases library gives on single bases at " &
+      operator & " of " & names.join(" and ") & ".")
     (kind_m, kind_n) = (ident(names[0]), ident(names[^1]))
     key =
       if names.len == 1: operator & "𝐦"
@@ -156,15 +173,35 @@ func emitHold(operator: string, names: seq[string], held, empty: NimNode): NimNo
       elif names[1] == "Coefficient": "𝐦 " & operator & " s"
       else: "𝐦 " & operator & " 𝐧"
   if names.len == 1:
+    let reach =
+      if not exact: newEmptyNode()
+      else:
+        quote do:
+          var reached: Bases
+          for x in bases(`kind_m`): reached = reached + basesNonzero(`symbol`(unit(x)))
+          doAssert bases(typeof(`symbol`(sample(`kind_m`)))) == reached, `message_exact`
     return quote do:
       `held`.inc `key`
       if card(bases(typeof(`symbol`(sample(`kind_m`))))) == 0: `empty`.inc `key`
+      block:
+        `reach`
       for _ in 1..SAMPLES:
         let m = sample(`kind_m`)
         doAssert agrees(`symbol`(m).toMultivector, `symbol`(whole(m)).toMultivector), `message`
+  let reach =
+    if not exact: newEmptyNode()
+    else:
+      quote do:
+        var reached: Bases
+        for x in bases(`kind_m`):
+          for y in bases(`kind_n`): reached = reached + basesNonzero(`symbol`(unit(x), unit(y)))
+        doAssert bases(typeof(`symbol`(sample(`kind_m`), sample(`kind_n`)))) == reached,
+          `message_exact`
   quote do:
     `held`.inc `key`
     if card(bases(typeof(`symbol`(sample(`kind_m`), sample(`kind_n`))))) == 0: `empty`.inc `key`
+    block:
+      `reach`
     for _ in 1..SAMPLES:
       let (m, n) = (sample(`kind_m`), sample(`kind_n`))
       doAssert agrees(`symbol`(m, n).toMultivector, `symbol`(whole(m), whole(n)).toMultivector),
@@ -177,13 +214,16 @@ macro holdForms(held, empty: CountTable[string]): untyped =
   ##   Pairs are every pair up to `DIMENSIONS_SWEPT`, and vector with each type past it.
   ##   Two whole multivectors keep operator of library, so no pair holds them both.
   ##   Partner reads grade of its operand, so it holds at each grade alone.
+  ##   Each map and product holds exactly; squared norm reads pairs of bases, so it holds value.
   result = newStmtList()
   let
     names = namesTyped()
     maps = @OPERATORS_MAPS & @OPERATORS_NORMS & OPERATORS_COMPOSED & (
       if IS_CONFORMAL: @OPERATORS_MAPS_CONFORMAL & @OPERATORS_NORMS_CONFORMAL else: @[])
   for operator in maps:
-    for name in names: result.add emitHold(operator, @[name], held, empty)
+    let exact = (operator in OPERATORS_MAPS or operator in OPERATORS_MAPS_CONFORMAL) and
+      not operator.startsWith("|")
+    for name in names: result.add emitHold(operator, @[name], held, empty, exact)
   if IS_CONFORMAL:
     for name in namesGraded(): result.add emitHold("⊛", @[name], held, empty)
   for operator in OPERATORS_SCALED:
@@ -195,7 +235,7 @@ macro holdForms(held, empty: CountTable[string]): untyped =
       for right in names & "Multivector":
         if left == right and left == "Multivector": continue
         if DIMENSIONS > DIMENSIONS_SWEPT and "Multivector1" notin [left, right]: continue
-        result.add emitHold(operator, @[left, right], held, empty)
+        result.add emitHold(operator, @[left, right], held, empty, exact = true)
 
 
 macro holdAliases(): untyped =
