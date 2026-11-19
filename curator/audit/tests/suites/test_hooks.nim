@@ -1982,11 +1982,26 @@ suite "Hooks":
         linesForeground("web-fetch", "false", "completed")]:
       check blocksHeld(taken & other & read).len == 0
 
+    # Attachment of type other than `queued_command` is no report, whatever its origin.
+    for kind in ["hook_blocking_error", "task_reminder", "hook_additional_context"]:
+      let attached = $(%*{"type": "attachment", "attachment": {"type": kind, "origin": {
+        "kind": "peer", "from": "a1", "name": "critic", "handback": true,
+      }}}) & "\n"
+      check blocksHeld(taken & attached & read).len == 0
+
     # Result whose agent sends later hand-back points at it, so two entries make one report.
     let pointed = taken & linesForeground("critic", "false", "completed", "a9") &
       lineHandback("critic", "a9")
     check blocksHeld(pointed & reflected).len == 0
     check blocksHeld(pointed & read).len == 1
+
+    # Later hand-back of other agent points at no result, and nor does any where result names no
+    #   agent, so result stays report: case of critic of hook on #962, hand-back of builder.
+    for (agent, later) in [("a9", lineHandback("builder", "abuilder")),
+        ("a9", lineQueued("builder", "abuilder")), ("", lineHandback("builder", ""))]:
+      let alone = taken & linesForeground("critic", "false", "completed", agent) & later
+      check blocksHeld(alone & read).len == 1
+      check blocksHeld(alone & reflected).len == 0
 
     # Each report takes heading after it, earliest report first.
     let before = lineUser("Next.", "human") & lineSaid(REFLECTION, "tool_use") & linesCall("ls")
@@ -2003,6 +2018,8 @@ suite "Hooks":
     const signed = "## Sign-off\n\n**Role:** curator, at `main`\n"
     check blocksHeld(taken & report & lineSaid(signed & "\n" & REFLECTION)).len == 1
     check blocksHeld(taken & report & lineSaid(REFLECTION & "\n" & signed)).len == 0
+    check blocksHeld(taken & report & lineSaid(signed & "\n" & REFLECTION & "\n" & signed)).len ==
+      1  # first of two sign-offs
     check blocksHeld(taken & report & lineSaid(signed & "\n" & REFLECTION, "tool_use") &
       linesCall("ls") & lineSaid("Done.")).len == 0  # earlier text of turn
     check blocksHeld(taken & report & lineSaid("Form:\n\n```md\n" & REFLECTION & "```\n")).len == 1
@@ -2107,6 +2124,18 @@ suite "Hooks":
     check reflected(header).anyIt("got none under `| State | Confidence | Predicted |" in it)
     check reflected(header & "| ✅ | 70% |  | it leads |").anyIt("empty cell in row `1`" in it)
     check reflected(header & "| ✅ | 70% |").anyIt("empty cell in row `1`" in it)  # short row
+
+    # Row whose cell is `-` is row: separator holds dashes or colons in each cell, not in one.
+    check reflected(header & "| ⬜ | - | the race to save one shared key leads the findings | - |")
+      .len == 0
+
+    # Each reflection of turn takes quote check, also one below sign-off or working line, which
+    #   answers no report.
+    for cut in ["## Sign-off\n\n**Role:** curator, at `main`\n", "**Working:** it runs.\n"]:
+      check blocksHeld(taken & lineSaid(REFLECTION & "\n" & cut & "\n## Reflection\n\n" & header &
+        "| ⬜ | 60% | not quoted | x |\n")) == @["Cell under `Predicted` stands word for word in " &
+          "`## Prediction` block that call took (GUIDE.md, Prediction, critic and reflection); " &
+          "got `not quoted`."]
 
     # First table with column `Predicted` is read, and no other.
     check reflected("| Item | Cost |\n| --- | --- |\n| run | $1 |\n\n" & header &
