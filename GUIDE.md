@@ -172,7 +172,8 @@ return it confirmed.
   Start work that a kind covers through that kind, and never through a general type.
 - **The prediction is the last message of a turn of its own, which starts no subagent.** Start
   a short background timer first, such as `sleep 5`. Its end wakes you, and the next turn
-  starts the subagent. A block serves only the calls of that next turn.
+  starts the subagent. A block serves a later call where no subagent starts between them,
+  whatever the count of turns between.
 - **The block stands in the chat.** A block in thinking reaches neither the chat nor the hook,
   and a block in the turn of its call is no evidence. Never write a prediction to a file, and
   never give a subagent the path of a live transcript. A subagent can read both.
@@ -224,9 +225,9 @@ Then the subagent runs, and these steps follow:
   line. Where its mark of a claim differs from yours, give one line that says which way the
   evidence decides.
 - **The `stop` hook holds these steps at the end of each turn.** It refuses a call of a kind
-  with no block in the turn before it. It refuses a report of a critic with no reflection after
-  it. It refuses a cell under `Predicted` that quotes no block that a call took. A reply to a
-  refusal passes unread, so the hook holds no step there.
+  that no block serves. It refuses a report of a critic with no reflection after it. It refuses
+  a cell under `Predicted` that quotes no block that a call took. A reply to a refusal passes
+  unread, so the hook holds no step there.
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
