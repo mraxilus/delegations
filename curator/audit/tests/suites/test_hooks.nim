@@ -3345,6 +3345,48 @@ suite "Hooks":
     check quoted("- Q\\|1: a (70%).", "a").len == 0  # pipe of label reads first
 
 
+  test "line right under claim that opens item ends claim (choice on #969)":
+    # Choice of delegate, which no comment names: line right under claim that Markdown opens as
+    #   item, as `1. ` or marker with tab, ends that claim, since Markdown reads it as new item.
+    #   Cases as found are probes F08 and F09 of critic of claim build: build `1f4d159a` read such
+    #   line as text of claim above it, so its percentage became confidence of that claim.
+    for (bullets, cells) in [
+        ("- Judgement: the race leads the findings (70%). Resolution criterion: it is first.\n" &
+          "- Judgement: no test is weakened (85%).\n1. Work: four commits (60%).",
+          @["the race leads the findings", "no test is weakened"]),
+        ("- Judgement: no test is weakened (85%).\n-\tWork: four commits (60%).",
+          @["no test is weakened"])]:
+      for cell in cells: check quoted(bullets, cell).len == 0
+      check quoted(bullets, "four commits") == @[refusalCell("four commits")]  # opens no claim
+
+    # Law: each form under claim `a b`, at each indent, ends claim where pandoc 3.1.3 of GFM
+    #   breaks paragraph, and goes on with claim where it reads text of claim. Below two columns
+    #   each marker of item ends claim; from two, line stands inside bullet, where only marker or
+    #   number 1 with text after it ends claim (CommonMark, List items).
+    const
+      indents = ["", " ", "  ", "   ", "    ", "\t", "     "]
+        ## Indents of zero to five columns, tab as four.
+      forms = [("1. c", true), ("1) c", true), ("1.\tc", true), ("-\tc", true), ("*\tc", true),
+        ("+\tc", true), ("- c", true), ("* c", true), ("2. c", false), ("10) c", false),
+        ("123456789. c", false), ("2.\tc", false), ("1.", false), ("2)", false), ("*", false),
+        ("+", false), ("1. ", false)]
+        ## Lines that open item below two columns, and whether they open one from two columns.
+      texts = ["1234567890. c", "1.c", "c", "c (70%)"]
+        ## Lines that open no item: ten digits, no space after mark, and text.
+      lines = 147
+        ## Cases of law: each form and each text at each indent.
+    var laid = 0
+    for indent in indents:
+      let is_inside = indent.len >= 2 or indent == "\t"
+      for (form, is_inside_item) in @forms & texts.mapIt((it, false)):
+        let
+          bullets = "- a b\n" & indent & form
+          is_item = form notin texts and (not is_inside or is_inside_item)
+        check (quoted(bullets, "a b").len == 0) == is_item
+        inc laid
+    check laid == lines
+
+
   test "costs of read of claim stay as record names them (#969)":
     # Record, Quotes of claims, names these costs, which critic of build of D5 b found by probe;
     #   each holds here so that change to it shows.
