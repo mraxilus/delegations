@@ -3036,14 +3036,14 @@ suite "Hooks":
     #   `Judgement:` or `Work:`; colon inside sentence makes no label, so cell quotes whole claim
     #   there. Cases as found are probes M3, M4 and M5 of critic of build of D5 b: build
     #   `b8491db8` read text before first `: ` of claim as label, so it passed part after colon
-    #   of claim with no label (M4), and claim without its words before colon (M5). Bold label
-    #   (M3) holds no `: `, so cell that drops it is refused, as before.
+    #   of claim with no label (M4), and claim without its words before colon (M5). Ruling
+    #   7022872980 makes bold label (M3) label, so cell may drop it (test below).
     for (found, cells, refused) in [
         ("- **Judgement:** the race to save one shared key leads the findings (70%). " &
           "Resolution criterion: the report says so.",
-          @["**Judgement:** the race to save one shared key leads the findings"],
-          @["the race to save one shared key leads the findings",
-            "Judgement: the race to save one shared key leads the findings"]),
+          @["**Judgement:** the race to save one shared key leads the findings",
+            "the race to save one shared key leads the findings"],
+          @["Judgement: the race to save one shared key leads the findings"]),
         ("- the refusal names one cause: the missing block (70%). Resolution criterion: the " &
           "report says so.", @["the refusal names one cause: the missing block"],
           @["the missing block", "the refusal names one cause"]),
@@ -3068,11 +3068,10 @@ suite "Hooks":
       check quoted(bullet, opening & ": a b").len == 0
       check quoted(bullet, "a b") == @[refusalCell("a b")]
 
-    # Capital word and `: ` inside claim, or after bold label, make no label: label opens claim.
+    # Capital word and `: ` inside claim make no label: label opens claim.
     for (bullet, whole, refused) in [
         ("- a Judgement: b (70%).", "a Judgement: b", @["b", "Judgement: b", "a"]),
         ("- the hook says Work: b c (70%).", "the hook says Work: b c", @["b c", "Work: b c"]),
-        ("- **Judgement:** Work: b (70%).", "**Judgement:** Work: b", @["Work: b", "b"]),
         ("- Judgement:  a b (70%).", "Judgement: a b", @["Judgement:", "Judgement: a"]),
         ("- Judgement: (70%).", "Judgement:", @["Judgement"])]:
       check quoted(bullet, whole).len == 0
@@ -3103,6 +3102,42 @@ suite "Hooks":
         check quoted(claimed, cell) == @[refusalCell(cell)]
         inc flipped
     check flipped == letters
+
+
+  test "label in bold is label, so cell may drop it (7022872980 of #969)":
+    # Ruling 7022872980 of #969: label in bold, as `**Judgement:**`, is label, so cell may drop
+    #   it. Case as found is probe M3 of critic of build of D5 b, as test above holds it: build
+    #   `1f4d159a` read bold label as text, so it refused cell that drops it.
+    # Label and its colon in bold, then space, at start of claim: claim passes with it and
+    #   without it; part after first `: ` of rest, label with no bold or no colon, and claim
+    #   that drops label but keeps its marks are refused.
+    for label in ["Judgement", "Work", "Result", "Cost", "A", "NOTE", "WorK"]:
+      let
+        bold = "**" & label & ":**"
+        bullet = "- " & bold & " a: b (70%)."
+      for cell in [bold & " a: b", "a: b"]: check quoted(bullet, cell).len == 0
+      for cell in ["b", bold & " b", label & ": a: b", "**" & label & "** a: b", "**** a: b",
+          ":** a: b"]:
+        check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Other bold or marked text makes no label, so cell quotes whole claim: colon outside bold,
+    #   italic, bold of underscores, bold and italic, two words, lower case, empty bold, space
+    #   inside bold, and no space after.
+    for opening in ["**Judgement**:", "*Judgement:*", "__Judgement:__", "***Judgement:***",
+        "**Big Work:**", "**judgement:**", "**:**", "** Judgement:**", "**Judgement: **"]:
+      let bullet = "- " & opening & " a b (70%)."
+      check quoted(bullet, opening & " a b").len == 0
+      check quoted(bullet, "a b") == @[refusalCell("a b")]
+    check quoted("- **Judgement:**a b (70%).", "**Judgement:**a b").len == 0
+    check quoted("- **Judgement:**a b (70%).", "a b") == @[refusalCell("a b")]
+
+    # Claim drops one label alone, bold or not, at its start; bold label inside claim is text.
+    for (bullet, cells, refused) in [
+        ("- **Judgement:** Work: b (70%).", @["**Judgement:** Work: b", "Work: b"], @["b"]),
+        ("- Judgement: **Work:** b (70%).", @["Judgement: **Work:** b", "**Work:** b"], @["b"]),
+        ("- a **Judgement:** b (70%).", @["a **Judgement:** b"], @["b", "**Judgement:** b"])]:
+      for cell in cells: check quoted(bullet, cell).len == 0
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
 
 
   test "finding of empty cell names `No prediction` as form of miss (D2 c of #969)":
