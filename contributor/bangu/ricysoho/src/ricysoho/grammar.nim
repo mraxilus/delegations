@@ -1300,11 +1300,11 @@ func readParts(terminals: openArray[Terminal], first, last: int, trees: var seq[
   ##       ja'i le nu `toParts` katna
   let split = terminals.toParts(first, last)
   for part in split.parts:
-    let tree = terminals.readPart(part)
+    var tree = terminals.readPart(part)
     if tree.isNone: return false
-    # fukpi
-    #   .i ki'u bo `get` na dunda lo me `lvalue` me'u noi `move` nitcu ke'a ne'i `JavaScript`
-    trees.add tree.get
+    # muvgau le tricu gi'e fukpi no jgena
+    #   .i `get` dunda lo me `lvalue` me'u noi `move` nitcu ke'a ki'u lo nu `tree` cu me `var`
+    trees.add move(tree.get)
   split.inner >= last or terminals.readParts(split.inner, last, trees)
 
 
@@ -1460,8 +1460,8 @@ func readGrammar*(terminals: openArray[Terminal]): ReadingGrammar =
   ##   .i va'o lo nu le selci'a cu se to'e curmi kei lo nu tcidu ro pagbu cu tcidu le selci'a re roi
   let split = terminals.toParts(0, terminals.len)
   if split.parts.len > 1 or split.inner < terminals.len:
-    let built = terminals.buildText(0, terminals.len)
-    if built.isSome: return ReadingGrammar(is_read: true, tree: built.get)
+    var built = terminals.buildText(0, terminals.len)
+    if built.isSome: return ReadingGrammar(is_read: true, tree: move(built.get))
   terminals.readWhole
 
 
