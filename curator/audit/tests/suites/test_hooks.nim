@@ -2780,12 +2780,14 @@ suite "Hooks":
       check passes(bullet, claim)
       check passes(bullet, bullet[2 .. ^1]) == (bullet[2 .. ^1] == claim)
 
-    # Brackets with no percentage in them, and other words, end nothing, so claim reads them.
+    # Brackets with no percentage in them, and other words, end nothing, so claim reads them;
+    #   criterion in lower case is mark, by choice of delegate (test below).
     for bullet in ["- a (duty 2) b", "- a (70 %) b", "- a (about 70%) b", "- a(70%) b",
-        "- a (%) b", "- a (70% b", "- a, as the 50th b", "- a as the 10th b",
-        "- a. resolution criterion. b"]:
+        "- a (%) b", "- a (70% b", "- a, as the 50th b", "- a as the 10th b"]:
       check passes(bullet, bullet[2 .. ^1])
       check not passes(bullet, "a")
+    check passes("- a. resolution criterion. b", "a")
+    check not passes("- a. resolution criterion. b", "a. resolution criterion. b")
 
     # Label is one word that opens with capital, then `: `, at start of claim (7018501890, test
     #   below); `: ` of resolution criterion alone opens none.
@@ -3078,6 +3080,53 @@ suite "Hooks":
         ("- a (62.5%) b (7.5%), as the 10th c.", "a (62.5%) b (7.5%)", @["a (62.5%) b", "a"])]:
       check quoted(bullet, claim).len == 0
       for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+
+  test "criterion with or without bold, in any case, is mark that ends claim (choice on #969)":
+    # Choice of delegate, which no comment names: mark of resolution criterion is read with or
+    #   without bold marks and in any case of letters, so `**Resolution criterion:**` and
+    #   `Resolution Criterion:` end claim too, and percentage of criterion is no confidence.
+    #   Cases as found are probes F02, F03 and F07 of critic of claim build: build `1f4d159a`
+    #   read words of samples alone, so percentage of such criterion ended claim.
+    for (found, refused) in [
+        ("- Judgement: the race leads the findings (70%). **Resolution criterion:** the critic " &
+          "holds at least 4 of 5 claims (80%).", "the race leads the findings (70%). " &
+          "**Resolution criterion:** the critic holds at least 4 of 5 claims"),
+        ("- Judgement: the race leads the findings (70%). **Resolution criterion:** it is the " &
+          "first finding.", "the race leads the findings (70%)"),
+        ("- Judgement: the race leads the findings (70%). Resolution Criterion: at least 4 of 5 " &
+          "claims (80%) hold.", "the race leads the findings (70%). Resolution Criterion: at " &
+          "least 4 of 5 claims")]:
+      check quoted(found, "the race leads the findings").len == 0
+      check quoted(found, refused) == @[refusalCell(refused)]
+
+    # Law: words of criterion in each case, plain, bold, or bold with colon outside, end claim at
+    #   confidence before them, or at them where none stands there.
+    const
+      cases = ["Resolution criterion", "resolution criterion", "Resolution Criterion",
+        "RESOLUTION CRITERION", "rEsOlUtIoN cRiTeRiOn"]
+        ## Cases of letters of words of criterion.
+      marks = 30
+        ## Bullets of law: each case, three forms of bold, with confidence before or none.
+    var laid = 0
+    for words in cases:
+      for form in [words & ":", "**" & words & ":**", "**" & words & "**:"]:
+        for (bullet, claim) in [("- a (70%). " & form & " b (80%).", "a"),
+            ("- a c. " & form & " b (80%).", "a c")]:
+          check quoted(bullet, claim).len == 0
+          check quoted(bullet, bullet[2 .. ^2]) == @[refusalCell(bullet[2 .. ^2])]
+          inc laid
+    check laid == marks
+
+    # Choice leaves out each other form, so later percentage stays confidence there: criterion
+    #   after semicolon or comma, plural, on next line with no full stop, italic, bold of
+    #   underscores, and other words (probes F04, F05 and F06).
+    for form in ["; resolution criterion:", ", resolution criterion:", ". Resolution criteria:",
+        "\n  Resolution criterion:", ". *Resolution criterion:*", ". __Resolution criterion:__",
+        ". Criterion:", ". Resolution:"]:
+      let bullet = "- a (70%)" & form & " b (80%)."
+      check quoted(bullet, "a") == @[refusalCell("a")]
+      check quoted(bullet, ("a (70%)" & form & " b").splitWhitespace.join(" ")).len == 0
 
 
   test "label is one word that opens with capital, then `: ` (7018501890 of #969)":
