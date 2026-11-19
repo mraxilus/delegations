@@ -224,11 +224,17 @@ Then the subagent runs, and these steps follow:
   that is ambiguous or annulled, and the row gives its cause. A claim that holds only in part
   is a miss.
 - **Each cell under `Predicted` is one whole claim of the block, with or without its label.** A
-  claim is a bullet at the top level of the block, and its label is the text before its first
-  `: `, as `Judgement`. The claim ends at the first of its percentage in brackets, the words
-  `, as the 10th` or the words `. Resolution criterion`. Where none of these stands, it ends
-  before one final full stop of its bullet. A part of a claim, or a claim with its percentage,
-  quotes no claim.
+  claim is a bullet at the top level of the block. Its label is one word that opens with a
+  capital, then `: `, as `Judgement`. Other text before a `: ` makes no label, as a word in
+  lower case or more than one word. Bold text, as `**Judgement:**`, makes no label either, so a
+  cell quotes it with the claim. A part of a claim, or a claim with its confidence, quotes no
+  claim.
+- **A claim ends at its confidence**, the last percentage in brackets, as `(70%)` or `(62.5%)`,
+  before its percentiles, its resolution criterion or its end. Its percentiles open with the
+  words `, as the 10th`, and its resolution criterion with the words `. Resolution criterion`. A
+  percentage before its confidence stays in the claim. Where no percentage stands there, the
+  claim ends at the first of those words. Where none of these stands, it ends before one final
+  full stop of its bullet.
 - **The reflection gives the cause of each miss, and of each hit at 60% or less.** Where the
   report and the critic disagree, the evidence decides, and the reflection says which way and
   why.
