@@ -143,6 +143,12 @@ The gap list reads the baseline of each algebra.
 - **Cause of each miss:** the diff was smaller than the delegate read.
 """
     ## Block that answers report of critic, each cell under `Predicted` quoting `PREDICTION`.
+  RULE_CELL = "Cell under `Predicted` is one whole claim of `## Prediction` block that call " &
+    "took, up to its confidence, percentiles or resolution criterion, or before final full " &
+    "stop of bullet with none, with or without its label of one capital word, or " &
+    "`No prediction` (GUIDE.md, Prediction, critic and reflection)"
+    ## Rule that finding of each cell under `Predicted` states, as rules of D2 c, D5 b,
+    ##   7017902016 and 7018501890 of #969 give it.
 
 
 func messages(found: seq[Finding]): seq[string] =
@@ -252,10 +258,13 @@ proc blocksHeld(transcript: string, kinds: openArray[string] = KINDS): seq[strin
 func refusalCell(cell: string): string =
   ## Write finding of cell under `Predicted` that is neither whole claim of block call took nor
   ##   `No prediction`, as rules of D5 b, 7017902016 and 7018501890 of #969 state it.
-  "Cell under `Predicted` is one whole claim of `## Prediction` block that call took, up to " &
-    "its confidence, percentiles or resolution criterion, or before final full stop of bullet " &
-    "with none, with or without its label of one capital word, or `No prediction` (GUIDE.md, " &
-    "Prediction, critic and reflection); got `" & cell & "`."
+  RULE_CELL & "; got `" & cell & "`."
+
+
+func refusalEmpty(row: int): string =
+  ## Write finding of empty cell under `Predicted` in row, which states rule as `refusalCell`
+  ##   does, so it names `No prediction` as form of miss.
+  RULE_CELL & "; got empty cell in row `" & $row & "`."
 
 
 func refusalCall(kind, description: string, hint = ""): string =
@@ -2935,6 +2944,42 @@ suite "Hooks":
         check quoted(claimed, cell) == @[refusalCell(cell)]
         inc flipped
     check flipped == letters
+
+
+  test "finding of empty cell names `No prediction` as form of miss (D2 c of #969)":
+    # Ruling 7015791554, D2 c of #969: row of missing prediction holds exactly `No prediction`
+    #   under `Predicted`, and guide names form. Case as found is item 13 of part 5 of report of
+    #   critic of build of D5 b: finding of empty cell asked for claim word for word alone, and
+    #   named no `No prediction`, though cell left empty most likely counts missed prediction.
+    const
+      header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+      missing = "| ⬜ | - | No prediction | it never ran |\n"
+        ## Row of missing prediction, which passes wherever its reflection stands.
+    let
+      asked = lineUser("Build the check.", "human")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      calls = wake & linesAgent("builder") & lineSaid("Started.") &
+        lineHandback("builder", "abuilder") & linesAgent("critic") & lineSaid("The critic runs.") &
+        lineHandback("critic")
+      taken = asked & lineSaid(PREDICTION) & calls
+      missed = asked & lineSaid("Read.") & calls
+      alone = asked & wake & linesAgent("critic") & lineSaid("The critic runs.") &
+        lineHandback("critic")
+
+    # Empty cell in each row, two empty cells, short row, and cell of whitespace alone, where call
+    #   took block, where no call took one, and where critic alone ran: finding states rule of
+    #   each cell, `No prediction` in it.
+    for before in [taken, missed, alone]:
+      for (rows, found) in [
+          ("| ⬜ | 60% |  | missed |\n", @[refusalEmpty(1)]),
+          (missing & "| ⬜ | 60% |  | missed |\n" & missing, @[refusalEmpty(2)]),
+          (missing & missing & "| ⬜ | 60% |  | missed |\n", @[refusalEmpty(3)]),
+          ("| ⬜ | 60% |  | a |\n| ⬜ | 60% |  | b |\n", @[refusalEmpty(1), refusalEmpty(2)]),
+          ("| ⬜ | 60% |\n", @[refusalEmpty(1)]),
+          ("| ⬜ | 60% |  \t  | missed |\n", @[refusalEmpty(1)])]:
+        let held = blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
+        check held == found
+        check held.allIt("`No prediction` (GUIDE.md, Prediction, critic and reflection)" in it)
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
