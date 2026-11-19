@@ -186,7 +186,7 @@ Each claim follows these rules for forecasting:
   and the tree alone.
 - **A number is three percentiles: the 10th, the 50th and the 90th.** In the table, its
   confidence is 80%, the mass between its 10th and 90th percentiles. Its state is ✅ where the
-  result falls between them.
+  result falls between them, and a result on either percentile counts as inside.
 - **Once the log of claims exists, the start hook prints the past figures of each kind**, as a
   base rate (issue #964).
 - **The log scores each claim by the baseline score of Metaculus, from the log score.** A number
@@ -225,7 +225,8 @@ Then the subagent runs, and these steps follow:
   evidence decides.
 - **The `stop` hook holds these steps at the end of each turn.** It refuses a call of a kind
   with no block in the turn before it. It refuses a report of a critic with no reflection after
-  it. It refuses a cell under `Predicted` that quotes no block that a call took.
+  it. It refuses a cell under `Predicted` that quotes no block that a call took. A reply to a
+  refusal passes unread, so the hook holds no step there.
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
