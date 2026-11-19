@@ -363,7 +363,7 @@ const
     "reflection)"
     ## Rule that finding of each cell under `Predicted` states, empty or quoting no claim, so
     ##   each names `No prediction` as form of miss (7015791554).
-  LINE_BLOCKS* ="Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
+  LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
     "miss, with its cause, and write no block for it. Write each missing reflection now, and " &
     "mend each cell under `Predicted` that is no whole claim of block that call took:"
