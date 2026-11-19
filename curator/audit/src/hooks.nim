@@ -356,7 +356,14 @@ const
   FULL_STOP = '.'
     ## Mark that ends sentence; claim with no mark ends before one final one of its bullet
     ##   (7017902016).
-  LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
+  RULE_CELL = "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" &
+    HEADING_PREDICTION & "` block that call took, up to its confidence, percentiles or " &
+    "resolution criterion, or before final full stop of bullet with none, with or without its " &
+    "label of one capital word, or `" & NO_PREDICTION & "` (GUIDE.md, Prediction, critic and " &
+    "reflection)"
+    ## Rule that finding of each cell under `Predicted` states, empty or quoting no claim, so
+    ##   each names `No prediction` as form of miss (7015791554).
+  LINE_BLOCKS* ="Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
     "miss, with its cause, and write no block for it. Write each missing reflection now, and " &
     "mend each cell under `Predicted` that is no whole claim of block that call took:"
@@ -2099,7 +2106,8 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
   ##   `No prediction`.
   ##   Table is run of lines opening with `|`, header first; text is fenced out already.
   ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
-  ##     each is finding, as cell that quotes no claim is.
+  ##     each is finding, as cell that quotes no claim is; empty cell states rule of cell too,
+  ##     so it names `No prediction`, which row of missed prediction holds.
   ##   Cell equals one claim of block call took, with or without its label (7016134603) of one
   ##     capital word (7018501890), each run of whitespace read as one space; fragment of
   ##     claim, claim with other label before it, claim with its confidence
@@ -2128,20 +2136,9 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
     for n, row in rows:
       let cell = (if column < row.len: row[column].collapsed else: "")
       if cell.len == 0:
-        result.add finding(
-          "", 0, "Cell under `" & COLUMN_PREDICTED & "` quotes claim of block word for word; " &
-            "got empty cell in row `" & $(n + 1) & "`."
-        )
+        result.add finding("", 0, RULE_CELL & "; got empty cell in row `" & $(n + 1) & "`.")
       elif cell != NO_PREDICTION and cell notin quoted:
-        result.add finding(
-          "",
-          0,
-          "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" & HEADING_PREDICTION &
-            "` block that call took, up to its confidence, percentiles or resolution criterion, " &
-            "or before final full stop of bullet with none, with or without its label of one " &
-            "capital word, or `" & NO_PREDICTION & "` (GUIDE.md, Prediction, critic and " &
-            "reflection); got `" & cell & "`.",
-        )
+        result.add finding("", 0, RULE_CELL & "; got `" & cell & "`.")
     return
   @[finding(
     "", 0, "Reflection holds table whose header has column `" & COLUMN_PREDICTED & "` " &
