@@ -71,11 +71,125 @@ suite "Declarations":
       "func f(): int = 1\n  ## One.\n",
       "const\n  N = a +\n    b\n    ## Sum.\n",
       "const\n  T = [\n    1,\n  ]\n    ## Table.\n",
-      "type\n  ## Group.\n  A = int\n",
       "const N = 3  # Why.\n  ## Size.\n",
       "proc f() =\n  let x = 1\n  ## Next.\n",
     ]:
       check kept.isSettled
+
+
+  test "doc above its declaration moves after it: onto its line where it fits, else next line":
+    # Case held: `type Order` of `pga/cayleys.nim` of PGA library at `3d9696e`, line 47, whose doc
+    #   stands on line above it (ruling on rule 5 of #443).
+    let order = "\n## Define type definition for transwedge order.\n" &
+      "type Order = distinct range[0..DIMENSIONS]\n#func `<=`(a, b: Order): bool {.borrow.}\n"
+    check checkDocs("a.nim", order).mapIt((it.line, it.message)) == @[
+      (3, "Doc stands after its declaration, never above it; got it above `type Order`."),
+    ]
+    check order.fixed == "\ntype Order = distinct range[0..DIMENSIONS]  ## Define type " &
+      "definition for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
+    check order.fixed.isSettled
+    check fixDocs("a.nim", order).origin == @[1, 3, 4, 5]  # joined line traces to declaration
+    let kinds = "# Sizes.\n## Size.\nconst N* = 3\n\n## Mass.\nlet m = 1.0\n\n" &
+      "type\n  Box = object  ## Box.\n    width: int  ## Width.\n\n" &
+      "    ## Depth.\n    depth: int\n" &
+      "  Kind = enum  ## Kind.\n    A  ## First.\n\n    ## Second.\n    B\n\n" &
+      "## Name, " & "x".repeat(60) & ".\nconst NAME = \"" & "y".repeat(40) & "\"\n\n" &
+      "## Pair,\n##   held twice.\nconst P = (1, 1)\n\n## Table.\nconst T = [\n  1,\n]\n"
+    check checkDocs("a.nim", kinds).mapIt(it.line) == @[3, 6, 13, 18, 21, 25, 28]
+    check kinds.fixed == "# Sizes.\nconst N* = 3  ## Size.\n\nlet m = 1.0  ## Mass.\n\n" &
+      "type\n  Box = object  ## Box.\n    width: int  ## Width.\n\n    depth: int  ## Depth.\n" &
+      "  Kind = enum  ## Kind.\n    A  ## First.\n\n    B  ## Second.\n\n" &
+      "const NAME = \"" & "y".repeat(40) & "\"\n  ## Name, " & "x".repeat(60) & ".\n\n" &
+      "const P = (1, 1)\n  ## Pair,\n  ##   held twice.\n\nconst T = [\n  1,\n]  ## Table.\n"
+        # where missing doc writes it: joined where it fits, else next line; value at its close
+    check kinds.fixed.isSettled
+
+
+  test "doc that block, value or declaration above may own, and doc of local binding, stay":
+    for kept in [
+      "proc f() =\n  ## Do.\n  echo 1\n\n  ## Note.\n  let x = 1\n  echo x\n",  # local binding
+      "type\n  Box = object\n\n    ## Box.\n    width: int\n",  # type's own, as missing doc reads
+      "const A = 1  ## One.\n## Two.\nconst B = 2\n",  # right below declaration: hand decides
+      "const\n  A = [\n    1,\n  ]\n  ## Doc.\n  B = 2\n",  # after value over lines
+      "## Size.\nconst N = 3  ## Count.\n",  # declaration holding doc of its own
+    ]:
+      check kept.isSettled
+
+
+  test "one-line doc inside value over lines moves after `=` where it fits, else after close":
+    let breach = "const\n  Cayley1D* =\n    ## Define map.\n    array[Basis, seq[BasisSigned]]\n" &
+      "  TABLE = [\n    ## Table.\n    1,\n  ]\n" &
+      "proc f() =\n  ## Do.\n  let pairs = @[\n    ## Pairs.\n    (1, 2),\n  ]\n  echo pairs\n"
+    check checkDocs("a.nim", breach).mapIt((it.line, it.message)) == @[
+      (2, "Doc of value over lines stands after `=` ending its first line; got it below " &
+        "`const Cayley1D`."),
+      (5, "Doc of value over brackets stands after its close; got it below `const TABLE`."),
+      (11, "Doc of value over brackets stands after its close; got it below `let pairs`."),
+    ]
+    check breach.fixed == "const\n  Cayley1D* =  ## Define map.\n" &
+      "    array[Basis, seq[BasisSigned]]\n  TABLE = [\n    1,\n  ]  ## Table.\n" &
+      "proc f() =\n  ## Do.\n  let pairs = @[\n    (1, 2),\n  ]  ## Pairs.\n  echo pairs\n"
+        # where `nim doc` reads it, as `Cayley1D* =  ## …` of `pga/cayleys.nim` writes it
+    check breach.fixed.isSettled
+
+
+  test "doc inside value opening `block` reports, and stays for hand":
+    # Case held: `lut_grade_by_basis` of `func grade*` in `pga/algebra.nim` of PGA library at
+    #   `3d9696e`, line 343, whose doc opens body of `block:`, where `nim doc` reads none
+    #   (ruling on rule 5 of #443).
+    let grade = "func grade*(b: Basis): Grade {.noinit.} =\n" &
+      "  ## Count number of vector basis elements present in factorization of basis.\n" &
+      "  ##   I.e. number of full dimensions occupied by given basis.\n" &
+      "  const lut_grade_by_basis = block:\n    ## Construct LUT for grade of basis element.\n" &
+      "    var lut: array[Basis, Grade]\n" &
+      "    for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)\n    lut\n\n" &
+      "  lut_grade_by_basis[b]\n"
+    check checkDocs("a.nim", grade).mapIt((it.line, it.message)) == @[
+      (4, "Doc of value opening `block` stands after `=`, with `block` on next line; got it " &
+        "below `const lut_grade_by_basis`."),
+    ]
+    check grade.fixed == grade  # no comment alone gives value opening `block` doc `nim doc` reads
+
+
+  test "next-line doc of several lines, or under line holding comment, stands one level in":
+    let breach = "const\n  N = 3\n      ## Size,\n      ##   in units.\n" &
+      "  WHY = 1  # Reason.\n      ## Why.\n"
+    check checkDocs("a.nim", breach).mapIt((it.line, it.message)) == @[
+      (2, "Doc on next line stands one level in; got indent `6`."),
+      (5, "Doc on next line stands one level in; got indent `6`."),
+    ]
+    check breach.fixed == "const\n  N = 3\n    ## Size,\n    ##   in units.\n" &
+      "  WHY = 1  # Reason.\n    ## Why.\n"
+    check breach.fixed.isSettled
+
+
+  test "routine's doc opens line after its signature, at indent of its body":
+    let breach = "proc f() =  ## Do.\n  discard\nfunc g(): int = 1  ## One.\n" &
+      "proc h() =\n\n  ## Do.\n  discard\nproc k() =\n      ## Do.\n  discard\n" &
+      "func m(): int = 2\n    ## Two.\n"
+    check checkDocs("a.nim", breach).mapIt((it.line, it.message)) == @[
+      (1, "Doc of routine stands on line after its signature; got it on signature line of " &
+        "`proc f`."),
+      (3, "Doc of routine stands on line after its signature; got it on signature line of " &
+        "`func g`."),
+      (4, "Doc of routine stands on line right after its signature; got blank line above it " &
+        "in `proc h`."),
+      (8, "Doc of routine stands at indent of its body; got indent `6` in `proc k`."),
+      (11, "Doc of routine stands at indent of its body; got indent `4` in `func m`."),
+    ]
+    check breach.fixed == "proc f() =\n  ## Do.\n  discard\nfunc g(): int = 1\n  ## One.\n" &
+      "proc h() =\n  ## Do.\n  discard\nproc k() =\n  ## Do.\n  discard\n" &
+      "func m(): int = 2\n  ## Two.\n"
+    check breach.fixed.isSettled
+
+
+  test "one-line doc under bare `type` joins keyword line, as group doc of block":
+    let breach = "type\n  ## Group.\n  A = int  ## One.\n"
+    check checkDocs("a.nim", breach).mapIt((it.line, it.message)) == @[
+      (1, "Group doc of `type` section stands on keyword line; got it on next line."),
+    ]
+    check breach.fixed == "type  ## Group.\n  A = int  ## One.\n"
+    check breach.fixed.isSettled
 
 
   test "parameter drops type its literal default gives exactly":
