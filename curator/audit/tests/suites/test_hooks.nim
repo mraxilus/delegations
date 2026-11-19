@@ -251,10 +251,11 @@ proc blocksHeld(transcript: string, kinds: openArray[string] = KINDS): seq[strin
 
 func refusalCell(cell: string): string =
   ## Write finding of cell under `Predicted` that is neither whole claim of block call took nor
-  ##   `No prediction`, as rule of D5 b of #969 states it.
+  ##   `No prediction`, as rules of D5 b and 7017902016 of #969 state it.
   "Cell under `Predicted` is one whole claim of `## Prediction` block that call took, up to " &
-    "its percentage, percentiles or resolution criterion, with or without its label, or " &
-    "`No prediction` (GUIDE.md, Prediction, critic and reflection); got `" & cell & "`."
+    "its percentage, percentiles or resolution criterion, or before final full stop of bullet " &
+    "with none, with or without its label, or `No prediction` (GUIDE.md, Prediction, critic " &
+    "and reflection); got `" & cell & "`."
 
 
 func refusalCall(kind, description: string, hint = ""): string =
@@ -2535,7 +2536,7 @@ suite "Hooks":
         ("Judgement: ", "the race leads the findings"),
         ("Work: ", "tokens summed over its requests: 100,000, 160,000 and 300,000"),
         ("Calls: ", "10th 150, 50th 260, 90th 420"),
-        ("Judgement: ", "no test is weakened."),
+        ("Judgement: ", "no test is weakened"),
       ]
         ## Label and claim of each bullet of `predicted`, as rulings cut them.
       fragments = 111
@@ -2585,16 +2586,19 @@ suite "Hooks":
       check reflected([cell]) == @[refusalCell(cell)]
 
     # Claim that keeps its percentage, percentiles, resolution criterion or whole bullet is
-    #   refused, and so is claim of bullet with no mark cut before end of bullet.
+    #   refused, and so is claim of bullet with no mark that keeps its final full stop
+    #   (7017902016).
     for cell in ["the race leads the findings (70%)",
         "Judgement: the race leads the findings (70%)", "the race leads the findings (70%).",
         "the race leads the findings (70%). Resolution criterion: it is the first finding.",
         "tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and " &
-          "90th percentiles", "10th 150, 50th 260, 90th 420.", "no test is weakened"]:
+          "90th percentiles", "10th 150, 50th 260, 90th 420.", "no test is weakened.",
+        "Judgement: no test is weakened."]:
       check reflected([cell]) == @[refusalCell(cell)]
 
     # Claim ends at first mark, in any order: percentage in brackets of any count of digits,
-    #   `, as the 10th`, or `. Resolution criterion`; with none, it runs to end of bullet.
+    #   `, as the 10th`, or `. Resolution criterion`; with none, it runs to end of bullet, before
+    #   one final full stop (7017902016, test below).
     for (bullet, claim) in [("- a b (5%) c", "a b"), ("- a b (70%) c", "a b"),
         ("- a b (100%) c", "a b"), ("- a b, as the 10th c", "a b"),
         ("- a b. Resolution criterion: c", "a b"),
@@ -2602,7 +2606,7 @@ suite "Hooks":
         ("- a b, as the 10th c (70%). Resolution criterion: d", "a b"),
         ("- a b. Resolution criterion: c (70%), as the 10th d", "a b"),
         ("- a b. Resolution criterion: c, as the 10th d (70%)", "a b"),
-        ("- a b c (60%) d (70%)", "a b c"), ("- a b", "a b"), ("- a b.", "a b.")]:
+        ("- a b c (60%) d (70%)", "a b c"), ("- a b", "a b"), ("- a b.", "a b")]:
       check passes(bullet, claim)
       check passes(bullet, bullet[2 .. ^1]) == (bullet[2 .. ^1] == claim)
 
@@ -2683,6 +2687,62 @@ suite "Hooks":
       for (label, claim) in claims:
         for cell in [label & claim, claim]:
           check reflected([cell], before) == @[refusalCell(cell)]
+
+
+  test "claim with no mark ends before one final full stop of its bullet (7017902016 of #969)":
+    # Ruling 7017902016 of #969: claim with no percentage, no percentiles and no resolution
+    #   criterion ends before one final full stop of its bullet. Case as found is stop of entry
+    #   882 of copy of transcript of delegate on #962 (record, Blocks of subagents): reflection
+    #   quoted two bullets of block of entry 817 that hold no mark, and cut final full stop of
+    #   each, which build `b8491db8` refused.
+    let
+      asked = lineUser("Research the practice of forecasting.", "human")
+      calls = lineUser("<task-notification>timer</task-notification>", "task-notification") &
+        linesAgent("researcher") & lineSaid("Started.") &
+        lineHandback("researcher", "aresearcher") & linesAgent("critic") &
+        lineSaid("The critic runs.") & lineHandback("critic")
+    proc passes(bullets, cell: string): bool =
+      ## Decide whether cell passes, where block that call of `researcher` took holds bullets
+      ##   alone.
+      blocksHeld(asked & lineSaid("## Prediction\n\n**Subagent:** researcher of forecasting " &
+        "practice, fresh context.\n\n" & bullets & "\n") & calls & lineSaid("## Reflection\n\n" &
+        "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 80% | " &
+        cell & " | it holds |\n"), ["critic", "researcher"]).len == 0
+
+    # Case as found: each cell drops final full stop of its bullet, with or without label, and
+    #   passes; cell that keeps it is refused.
+    const found = "- Tokens, summed over its requests: 10th percentile 1 million, median 3 " &
+      "million, 90th percentile 8 million.\n- Cost at list price: 10th percentile $1.50, median " &
+      "$3.50, 90th percentile $8."
+    for cell in ["Tokens, summed over its requests: 10th percentile 1 million, median 3 " &
+        "million, 90th percentile 8 million",
+        "10th percentile 1 million, median 3 million, 90th percentile 8 million",
+        "Cost at list price: 10th percentile $1.50, median $3.50, 90th percentile $8",
+        "10th percentile $1.50, median $3.50, 90th percentile $8"]:
+      check passes(found, cell)
+      check not passes(found, cell & ".")
+
+    # Claim with no mark ends before one final full stop, whatever whitespace or wrap ends its
+    #   bullet, and before no other mark; full stop inside claim stays, and so does one before
+    #   mark, since claim with mark ends at mark.
+    for (bullet, cells, refused) in [
+        ("- a b", @["a b"], @["a b.", "a"]),
+        ("- a b.", @["a b"], @["a b.", "a"]),
+        ("- a b..", @["a b."], @["a b..", "a b"]),
+        ("- a b.\t ", @["a b"], @["a b."]),
+        ("- a\n  b.", @["a b"], @["a b.", "a"]),
+        ("- a. b.", @["a. b"], @["a. b.", "a"]),
+        ("- Judgement: a b.", @["Judgement: a b", "a b"], @["Judgement: a b.", "a b."]),
+        ("- a b?", @["a b?"], @["a b"]),
+        ("- a b!", @["a b!"], @["a b"]),
+        ("- a b.)", @["a b.)"], @["a b.", "a b"]),
+        ("- a b. (70%)", @["a b."], @["a b", "a b. (70%)"]),
+        ("- a b. (70%).", @["a b."], @["a b", "a b. (70%)"]),
+        ("- a b., as the 10th c.", @["a b."], @["a b"]),
+        ("- a b. Resolution criterion: c.", @["a b"], @["a b.", "a b. Resolution criterion: c"]),
+        ("- a b (70%).", @["a b"], @["a b.", "a b (70%)"])]:
+      for cell in cells: check passes(bullet, cell)
+      for cell in refused: check not passes(bullet, cell)
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
