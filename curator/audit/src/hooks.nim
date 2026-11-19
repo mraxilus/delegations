@@ -14,7 +14,8 @@
 ##     names `#N` outside link or cites charter reference with no description, sign-off from
 ##     turn that read no open issue of its role, call of subagent of kind that no block of
 ##     earlier model turn predicts with no subagent started between them, report of critic
-##     with no reflection after it, and cell of reflection that quotes no block call took;
+##     with no reflection after it, and cell of reflection that is neither whole claim of block
+##     call took nor `No prediction`;
 ##     `start` prints role, read order, each finding of drift, headings of record branch works
 ##     on, and carried list; `prompt` reads each message of Architect; `push` and `msg` serve
 ##     git hooks.
@@ -61,10 +62,11 @@
 ##   Blocks of subagents hold at end of each model turn, as Architect ruled on #962 and #969
 ##     (`checkBlocks`): call of subagent of kind takes `## Prediction` block of model turn
 ##     before its own, and after each earlier turn that starts subagent; each report of critic
-##     takes `## Reflection` block after it; each cell under `Predicted` of reflection quotes
-##     block call took. Model turn ends where model stops, never at `user` entry, so block
-##     checks read model turns, and every other check reads turn since message of person. Kinds
-##     are read from templates at each stop (`readKinds`).
+##     takes `## Reflection` block after it; each cell under `Predicted` of reflection is one
+##     whole claim of block call took, with or without its label, or `No prediction`. Model
+##     turn ends where model stops, never at `user` entry, so block checks read model turns,
+##     and every other check reads turn since message of person. Kinds are read from templates
+##     at each stop (`readKinds`).
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -340,10 +342,17 @@ const
   STATUS_LAUNCHED = "async_launched"
     ## Status of result of `Agent` call that runs in background: launch notice, and no report.
   COLUMN_PREDICTED = "Predicted"  ## Column of table of reflection whose cells quote claims.
+  NO_PREDICTION = "No prediction"
+    ## Cell under `Predicted` of row that counts missing prediction as miss (7015791554).
+  MARKERS_BULLET = {'-', '*', '+'}  ## Characters that open bullet, before space.
+  MARKS_CLAIM = [", as the 10th", ". Resolution criterion"]
+    ## Words that open percentiles and resolution criterion of claim, which end it, as its
+    ##   percentage in brackets does (7016134603).
+  SEPARATOR_LABEL = ": "  ## Mark after label of claim, as in `Judgement: `.
   LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
     "miss, with its cause, and write no block for it. Write each missing reflection now, and " &
-    "mend each cell under `Predicted` that quotes no block that call took:"
+    "mend each cell under `Predicted` that is no whole claim of block that call took:"
     ## Line opening part of refusal of `stop` that blocks of subagents take.
 
 
@@ -1979,12 +1988,66 @@ func collapsed(text: string): string =
   text.splitWhitespace.join(" ")
 
 
+func isBullet(line: string): bool =
+  ## Decide whether line opens bullet: `-`, `*` or `+`, then space, after any indent.
+  let s = line.strip(trailing = false)
+  s.len > 1 and s[0] in MARKERS_BULLET and s[1] == ' '
+
+
+func isPercentage(text: string, at: int): bool =
+  ## Decide whether percentage in brackets opens at `at` of text: space, `(`, digits, `%)`.
+  if not text.continuesWith(" (", at): return false
+  var i = at + 2
+  while i < text.len and text[i] in Digits: inc i
+  i > at + 2 and text.continuesWith("%)", i)
+
+
+func claims(text: string): seq[string] =
+  ## Read each claim of block text, with its label and without it, as reflection may quote it.
+  ##   Claim is bullet with no indent, to next blank line, next line opening bullet at any
+  ##     indent, or end of block, each run of whitespace read as one space (7016134603).
+  ##   Claim runs up to its percentage in brackets, its percentiles from `, as the 10th`, or its
+  ##     resolution criterion, whichever comes first, or to end of bullet where none stands.
+  ##   Label is text before first `: ` of claim; `: ` that only resolution criterion holds
+  ##     opens none, so bullet with no label reads whole.
+  var
+    bullets: seq[string]
+    is_open = false  # Line continues last bullet: no blank line or bullet since it opened.
+  for line in text.splitLines:
+    if line.isBullet and line[0] in MARKERS_BULLET:
+      bullets.add line[2 .. ^1]
+      is_open = true
+    elif line.strip.len == 0 or line.isBullet: is_open = false
+    elif is_open: bullets[^1].add "\n" & line
+  for bullet in bullets:
+    let text = bullet.collapsed
+    var stop = text.len
+    for mark in MARKS_CLAIM:
+      let at = text.find(mark)
+      if at >= 0: stop = min(stop, at)
+    for at in 0 ..< stop:
+      if text.isPercentage(at):
+        stop = at
+        break
+    let claim = text[0 ..< stop].strip
+    if claim.len == 0: continue
+    result.add claim
+    let at = claim.find(SEPARATOR_LABEL)
+    if at >= 0 and claim.len > at + SEPARATOR_LABEL.len:
+      result.add claim[at + SEPARATOR_LABEL.len .. ^1]
+
+
 func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
   ## Report reflection whose first table with column `Predicted` is missing or holds no row, and
-  ##   each cell under that column that is empty or stands in no block call took.
+  ##   each cell under that column that is empty, or is neither claim of block call took nor
+  ##   `No prediction`.
   ##   Table is run of lines opening with `|`, header first; text is fenced out already.
   ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
-  ##     each is finding, as cell that quotes no block is.
+  ##     each is finding, as cell that quotes no claim is.
+  ##   Cell equals one claim of block call took, with or without its label (7016134603), each
+  ##     run of whitespace read as one space; fragment of claim, or claim with its percentage,
+  ##     is none. Cell `No prediction` passes too, in that case of letters alone: it counts
+  ##     missing prediction in row of its own, with cause of miss under `Result` (7015791554).
   let lines = text.splitLines
   var i = 0
   while i < lines.len:
@@ -2010,13 +2073,14 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
           "", 0, "Cell under `" & COLUMN_PREDICTED & "` quotes claim of block word for word; " &
             "got empty cell in row `" & $(n + 1) & "`."
         )
-      elif not quoted.anyIt(cell in it):
+      elif cell != NO_PREDICTION and cell notin quoted:
         result.add finding(
           "",
           0,
-          "Cell under `" & COLUMN_PREDICTED & "` stands word for word in `" &
-            HEADING_PREDICTION & "` block that call took (GUIDE.md, Prediction, critic and " &
-            "reflection); got `" & cell & "`.",
+          "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" & HEADING_PREDICTION &
+            "` block that call took, up to its percentage, percentiles or resolution criterion, " &
+            "with or without its label, or `" & NO_PREDICTION & "` (GUIDE.md, Prediction, " &
+            "critic and reflection); got `" & cell & "`.",
         )
     return
   @[finding(
@@ -2027,14 +2091,14 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
 
 func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
   ## Report each report of critic in current model turn with no `## Reflection` block of its own
-  ##   after it, and each table of reflection of turn that quotes no block call took.
+  ##   after it, and each table of reflection of turn that quotes no claim call took.
   ##   Reports match headings earliest first, so n reports need n headings, and heading counts
   ##     above first `## Sign-off` or working line of last text of turn alone, whichever comes
   ##     first, since reflection comes before any sign-off or working line (6974524232).
   ##   Cell quotes block word for word (6975486646), and only block call used (6980006567): block
   ##     no call took is no evidence, so reflection quotes none of it.
-  ##   Each run of whitespace on both sides reads as one space before compare; no ruling holds
-  ##     that, so it is choice.
+  ##   Cell quotes whole claim of block, with or without its label (7016134603), or is
+  ##     `No prediction` (7015791554); each run of whitespace collapses, as ruling holds.
   let
     current = subagents.turns - 1
     reports = subagents.reports.filterIt(it.turn == current)
@@ -2054,7 +2118,7 @@ func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Findi
         "for report `" & $(n + 1) & "` of `" & $reports.len & "` in this turn.",
     )
   let quoted = subagents.blocksTaken(kinds).filterIt(it >= 0)
-    .mapIt(subagents.predictions[it].text.collapsed)
+    .mapIt(subagents.predictions[it].text.claims).concat
   for reflection in subagents.reflections:
     if reflection.place.turn == current: result.add findingsTable(reflection.text, quoted)
 
