@@ -3410,6 +3410,20 @@ suite "Hooks":
     check quoted(after, "the replay refuses fewer stops") ==
       @[refusalCell("the replay refuses fewer stops")]
 
+    # From six columns of indent, Markdown reads line under claim as text of claim, yet item or
+    #   bullet there ends claim, as each does at two columns (test of line under claim above).
+    for form in ["1. c", "1) c", "-\tc", "- c", "* c"]:
+      check quoted("- a b\n      " & form, "a b").len == 0
+      check quoted("- a b\n      " & form, "a b " & form.splitWhitespace.join(" ")).len == 1
+
+    # Capital word and colon that open claim make label, whatever sentence they open, as `Koch:`
+    #   of probe F17 of critic of claim build (7022872980); capital outside `A` to `Z` makes none.
+    const capital = "- Koch: the check passes at the head (80%). Resolution criterion: the log."
+    for cell in ["Koch: the check passes at the head", "the check passes at the head"]:
+      check quoted(capital, cell).len == 0
+    check quoted("- Écart: a b (70%).", "Écart: a b").len == 0
+    check quoted("- Écart: a b (70%).", "a b") == @[refusalCell("a b")]
+
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
     # Delegate copies form from samples, so sample reflection quotes sample prediction, which
