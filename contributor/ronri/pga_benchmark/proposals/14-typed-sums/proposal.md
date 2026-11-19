@@ -74,11 +74,11 @@ returns `Multivector1`.
   prints that type with its bases.
 - **Export.** `pga/multivectors.nim` exports `zeroNamed`, since the patch of D1 reads its result
   types through it.
-- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.5 MiB against 210.3 MiB at pin.
-  At cga6d it takes 13.48 s against 13.76 s, so ×0.98.
+- **Build.** In the evaluation, `import pga` at cga5d peaks at 210.7 MiB against 210.5 MiB at pin.
+  At cga6d it takes 13.26 s against 13.11 s, so ×1.01.
 - **Sum at rga4d.** In the bench, `+` of whole multivectors reads ×1.02 of pin at rga4d, about
-  0.08 ns. Its loop holds the same 8 vector sums as the code of pin, and takes them in turn on
-  three registers. The cause of the 0.08 ns is not isolated.
+  0.09 ns. Its loop holds the same 8 vector sums as the code of pin, and takes them in turn on
+  three registers. The cause of the 0.09 ns is not isolated.
 - **Overloads.** `+` and `-` of two whole multivectors, and each sum with a scalar, become
   instances of the generic forms. Each body loops over each run of bases, as pin loops over the
   set.
@@ -114,11 +114,11 @@ on Node. With the change, no operation adds one at rga3d, rga4d, cga4d and cga5d
 one copy for each call, and on no other operation.
 
 Its evaluation of 2026-11-19 finds three functions moved at each algebra: `+`, `-` and negation
-of whole multivectors. At rga4d each holds 16 lines of C and no call, against 132 to 183 lines and
-32 to 48 calls at pin. There `+` zeroes no byte before it writes, where pin zeroes 128. At rga4d
-the three read ×1.00 of pin, and the other 108 measurands read ×0.98 to ×1.01. At cga5d sums and
-differences read ×1.00 to ×1.01, and the other 132 measurands read ×0.98 to ×1.05. Negation there
-reads ×1.58, as Costs gives.
+of whole multivectors. Each loops over the one run of the whole set, in 127 to 178 lines of C at
+rga4d against 132 to 183 at pin. There `+` zeroes no byte before it writes and moves 384 bytes,
+where pin zeroes 128 and moves 512. At rga4d negation and difference read ×1.00 of pin, `+` reads
+×1.02, and the other 108 measurands read ×0.99 to ×1.01. At cga5d the three read ×1.00, and the
+other 132 measurands read ×0.98 to ×1.00.
 
 One line for each basis costs time in two ways, which a loop for each run avoids. In the timed loop
 at cga5d, the compiler loads all 16 vectors of a negation before it stores any, and keeps the sign
