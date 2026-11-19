@@ -283,10 +283,16 @@ named type, and so each operator built from others. Up to 5D it sweeps each prod
 pair of named types and the whole multivector. At 6D a vector pairs with each type, on either
 side. Each scaling holds with the scalar on either side of each named type.
 
-Where a form reaches no basis, its type holds no basis, and the library gives zero on each sample.
-Where the library gives NaN, as the radius norm of a scalar at cga3d does, the form gives NaN in
-the same coefficient. Each alias returns the type of its operator, and equals it and the library.
-Each reverse keeps its type, and each complement takes grade k to grade N - k.
+Each map and product also takes exactly the bases that the operator of the library gives on single
+bases of its operands. So where the library gives no basis there, the form takes the type of no
+bases, and the library gives zero on each sample. A squared norm reads pairs of bases, so its laws
+hold its value alone. Where the library gives NaN, as the radius norm of a scalar at cga3d does,
+the form gives NaN in the same coefficient.
+
+Each alias returns the type of its operator, and equals it and the library. Each reverse keeps its
+type, and each complement takes grade k to grade N - k. A copy whose maps drop the sign of their
+table fails at rga4d. A copy whose `⟑` takes one basis more, written as zero, fails there too,
+where a law on values alone holds. Each copy ran by hand with Nim 2.4.0 on 2026-11-19.
 
 The laws held at each of the nine algebras in the evaluation of 2026-11-19, and at 32 bits at
 seven. Builds by hand on the same day, three at once, on the machine of the evaluation, gave these
