@@ -337,6 +337,10 @@ const
   LABEL_SUBAGENT = "**Subagent:**"
     ## Opening of line of block whose first word after it names kind of call that block serves
     ##   (7017187857).
+  MARKS_KIND = {'`', '*', '_'}
+    ## Marks of code, bold and italic that word of kind may stand inside; match drops them, with
+    ##   case and final comma (7022770415).
+  COMMA = ','  ## Mark after word of kind that match drops, once, as in `builder,` (7022770415).
   HEADING_REFLECTION* = "## Reflection"  ## Heading of block that answers report of critic.
   KIND_CRITIC = "critic"  ## Kind whose report asks for reflection.
   KIND_PEER = "peer"  ## Kind `origin.kind` of entry gives hand-back of subagent.
@@ -1907,15 +1911,22 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
 
 
 func kindNamed(text: string, kinds: openArray[string]): string =
-  ## Read kind block text names: first word after `**Subagent:**` on first line of block that
-  ##   opens with it, after any indent; empty where no line opens so, or that word is no kind
-  ##   (7017187857).
-  ##   Word runs to next whitespace, so kind in backticks, or with comma after it, is no kind.
+  ## Read kind block text names: first word after `**Subagent:**` (7017187857), on first line
+  ##   of block that opens with it, after any indent; empty where no line opens so, or that word
+  ##   is no kind.
+  ##   Word runs to next whitespace. Match drops its case, each mark of `MARKS_KIND` around it,
+  ##     and one final comma (7022770415), so `**Builder**,` names `builder`; kind read is name
+  ##     its template gives. Each other mark stays, so `builder:` and `builder.` name none.
   for line in text.splitLines:
     let s = line.strip(trailing = false)
     if not s.startsWith(LABEL_SUBAGENT): continue
     let words = s[LABEL_SUBAGENT.len .. ^1].splitWhitespace
-    return (if words.len > 0 and words[0] in kinds: words[0] else: "")
+    if words.len == 0: return ""
+    var word = words[0].strip(chars = MARKS_KIND)
+    if word.endsWith(COMMA): word = word[0 ..< word.high].strip(leading = false, chars = MARKS_KIND)
+    for kind in kinds:
+      if cmpIgnoreCase(kind, word) == 0: return kind
+    return ""
   ""
 
 
