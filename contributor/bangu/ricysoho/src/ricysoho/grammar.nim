@@ -996,6 +996,7 @@ func extend(next: var Choice, closures: openArray[int]) =
   ## jmina lo te kancu be lo javni sinxa pe pa panzi `next`
   ##   .i le pamoi te kancu be le panzi cu mulno bu'u le romoi stuzi pe `next`
   ##   .i `closures` cu tcidu le liste pe le panzi ne'i `Chart.choices` gi'e fukpi no liste
+  ##   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
   next.closures[^1] += closures[0]
   for c in 1 ..< closures.len: next.closures.add closures[c]
 
@@ -1058,6 +1059,7 @@ func choose(chart: var Chart, head, start, finish: int): bool =
       ##   .i lo nu pilno `let` cu rinka lo nu fukpi le porsi
     if span == 0 and body.anyIt(it.is_terminal or not GRAMMAR_EBNF.nullable[it.code]): continue
     # `[]` cu dunda le liste gi'e fukpi no da ki'u lo nu `chart` cu me `var`
+    #   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
     if span > 0 and (not is_completed or p notin chart.completions[finish][completed]): continue
 
     # tcidu ro sinxa pe le basyjva pu lo bavla'i sinxa
