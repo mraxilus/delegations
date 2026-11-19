@@ -200,7 +200,8 @@ Then the subagent runs, and these steps follow:
 
 - **The prediction of a critic is optional, and a resolver takes none.**
 - **A missing prediction is a miss.** Name it in your reply, and count it as a miss in the
-  reflection, with its cause. Write no block after its call.
+  reflection, with its cause. Write no block after its call. Its row in the table holds exactly
+  `No prediction` under `Predicted`, and the cause of the miss under `Result`.
 - **A change to the prompt of a running subagent takes no new prediction.** The reflection
   counts each change as a miss, and names its cause.
 - **A critic runs after each subagent, before your reflection.** It is a fresh subagent too.
@@ -217,7 +218,12 @@ Then the subagent runs, and these steps follow:
 - **The table has the columns `State`, `Confidence`, `Predicted` and `Result`.** The states are
   ✅ a hit, ⬜ a miss, and ⏸️ a claim that waits on a later event. The state ➖ marks a claim
   that is ambiguous or annulled, and the row gives its cause. A claim that holds only in part
-  is a miss. Each cell under `Predicted` quotes a claim of the block word for word.
+  is a miss.
+- **Each cell under `Predicted` is one whole claim of the block, with or without its label.** A
+  claim is a bullet at the top level of the block, and its label is the text before its first
+  `: `, as `Judgement`. The claim ends at the first of its percentage in brackets, the words
+  `, as the 10th` or the words `. Resolution criterion`. Where none of these stands, it ends at
+  the end of its bullet. A part of a claim, or a claim with its percentage, quotes no claim.
 - **The reflection gives the cause of each miss, and of each hit at 60% or less.** Where the
   report and the critic disagree, the evidence decides, and the reflection says which way and
   why.
@@ -226,8 +232,8 @@ Then the subagent runs, and these steps follow:
   evidence decides.
 - **The `stop` hook holds these steps at the end of each turn.** It refuses a call of a kind
   that no block serves. It refuses a report of a critic with no reflection after it. It refuses
-  a cell under `Predicted` that quotes no block that a call took. A reply to a refusal passes
-  unread, so the hook holds no step there.
+  a cell under `Predicted` that is neither a whole claim of a block that a call took, nor
+  `No prediction`. A reply to a refusal passes unread, so the hook holds no step there.
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
