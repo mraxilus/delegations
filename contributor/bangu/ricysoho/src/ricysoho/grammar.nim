@@ -923,8 +923,8 @@ func refusal(sets: openArray[seq[Item]]): ReadingGrammar =
 
 
 type
-  Completions = seq[Table[(int, int), seq[int]]]
-    ## lo basyjva poi mulno ne'i ro selcmi ku'o ja'i lo jvasni .e lo kraselcmi
+  Completions = seq[Table[int, seq[int]]]
+    ## lo basyjva poi mulno ne'i ro selcmi ku'o ja'i lo jvasni .e lo kraselcmi to `keyCompleted` toi
 
   Choice = object
     ## le cumtricu pe pa jvasni bu'u pa selku'e
@@ -941,21 +941,37 @@ type
     ## lo mulcmi pe le selci'a ge'u .e lo selcu'a poi selfa'i ca lo nu cuxna le tricu
     completions: Completions
     terminals: seq[Terminal]
-    choices: Table[(int, int, int), Option[Choice]]
-      ## lo selcu'a ja'i lo jvasni .e lo krasi .e lo fanmo
-    open: HashSet[(int, int, int)]
+    choices: Table[int, Option[Choice]]
+      ## lo selcu'a ja'i lo jvasni .e lo krasi .e lo fanmo to `keyChosen` toi
+    open: HashSet[int]
       ## lo selku'e poi ca'o selcu'a gi'e ka'e selrapcpa ki'u lo nu pa jvasni cu xruti vo'a
+
+
+func keyCompleted(width, head, start: int): int =
+  ## lo namcu poi sinxa lo jvasni .e lo kraselcmi ne'i `Completions`
+  ##   .i `width` du lo klani be lo selcmi
+  ##   .i pa namcu po'o cu sinxa le re namcu ki'u lo nu lo nu sisku sepi'o pa namcu cu sutra zmadu
+  ##       lo nu sisku sepi'o lo porsi
+  head * width + start
+
+
+func keyChosen(width, head, start, finish: int): int =
+  ## lo namcu poi sinxa lo jvasni .e lo krasi .e lo fanmo ne'i `Chart.choices`
+  ##   .i le namcu cu mleca li re te'a ci pa va'o lo nu `width` cu mleca li pa no no pa
+  ##   .i se ki'u bo `JavaScript` cu cusku no nu dukse
+  (head * width + start) * width + finish
 
 
 func toCompletions(sets: openArray[seq[Item]]): Completions =
   ## fendi ro mulcmi ja'i le selcmi poi le cmima cu fanmo ne'i ke'a ku'o .e le jvasni .e le selcmi
   ##     poi le cmima cu cfari ne'i ke'a
-  result = newSeq[Table[(int, int), seq[int]]](sets.len)
+  result = newSeq[Table[int, seq[int]]](sets.len)
   for i, items in sets:
     for item in items:
       let production = GRAMMAR_EBNF.productions[item.production]
       if item.dot != production.body.len: continue
-      result[i].mgetOrPut((production.head, item.origin), @[]).add item.production
+      let key = keyCompleted(sets.len, production.head, item.origin)
+      result[i].mgetOrPut(key, @[]).add item.production
     for key in result[i].keys.toSeq: result[i][key].sort
 
 
@@ -992,7 +1008,7 @@ func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
   if symbol.is_terminal:
     return finish == start + 1 and int(chart.terminals[start]) == symbol.code
   (start == finish and GRAMMAR_EBNF.nullable[symbol.code]) or
-    (symbol.code, start) in chart.completions[finish]
+    keyCompleted(chart.completions.len, symbol.code, start) in chart.completions[finish]
 
 
 func choose(chart: var Chart, head, start, finish: int): bool =
@@ -1027,13 +1043,14 @@ func choose(chart: var Chart, head, start, finish: int): bool =
   ##   .i le te kancu pu clasmi le selku'e be le panzi
   ##   .i va'o lo nu pa kravla pu ca'o kalri kei le jdima pu zmadu le selci'a lo ka zenba to `#849`
   ##       toi
-  let key = (head, start, finish)
+  let key = keyChosen(chart.completions.len, head, start, finish)
   if key in chart.choices: return chart.choices[key].isSome
   if chart.open.containsOrIncl(key): return false
   defer: chart.open.excl(key)
   let
     span = finish - start
-    is_completed = span == 0 or (head, start) in chart.completions[finish]
+    completed = keyCompleted(chart.completions.len, head, start)
+    is_completed = span == 0 or completed in chart.completions[finish]
   var best = none(Choice)
   for p in GRAMMAR_EBNF.heads[head]:
     template body: untyped = GRAMMAR_EBNF.productions[p].body
@@ -1041,7 +1058,7 @@ func choose(chart: var Chart, head, start, finish: int): bool =
       ##   .i lo nu pilno `let` cu rinka lo nu fukpi le porsi
     if span == 0 and body.anyIt(it.is_terminal or not GRAMMAR_EBNF.nullable[it.code]): continue
     # `[]` cu dunda le liste gi'e fukpi no da ki'u lo nu `chart` cu me `var`
-    if span > 0 and (not is_completed or p notin chart.completions[finish][(head, start)]): continue
+    if span > 0 and (not is_completed or p notin chart.completions[finish][completed]): continue
 
     # tcidu ro sinxa pe le basyjva pu lo bavla'i sinxa
     #   .i bu'u ro stuzi le na'e mulno poi mecrai lo ka mulgau lo jvasni vi cu selra'e
@@ -1076,7 +1093,8 @@ func choose(chart: var Chart, head, start, finish: int): bool =
           if k == body.high - 1 and not chart.isDerived(body[^1], bound, finish): continue  # morsi
           if not chart.choose(symbol.code, m, bound): continue
           var next = partial.get
-          next.extend(chart.choices[(symbol.code, m, bound)].get.closures)
+          let chosen = keyChosen(chart.completions.len, symbol.code, m, bound)
+          next.extend(chart.choices[chosen].get.closures)
           next.bounds.add bound
           nexts.offer(bound - start, next)
       partials = nexts
@@ -1103,7 +1121,7 @@ func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
   ##   .i ki'u bo ro ju'agri cu rinka lo nu le javni pe li vo cu punji pa jgena ne'i pa jgena to
   ##       `#849` toi
   let
-    key = (head, start, finish)
+    key = keyChosen(chart.completions.len, head, start, finish)
     production = chart.choices[key].get.production
     bounds = chart.choices[key].get.bounds
   template addChildren(into: var seq[Node]) =
@@ -1561,7 +1579,8 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
   #   .i le stedu cu du lo javni poi selcme gi'e ponse lo mecraina'u vi
   var heads = newSeq[Table[int, int]](count)
   for finish in 1 .. count:
-    for (head, start) in chart.completions[finish].keys:
+    for key in chart.completions[finish].keys:
+      let (head, start) = (key div chart.completions.len, key mod chart.completions.len)
       if start >= finish or GRAMMAR_EBNF.numbers[head].isNone: continue
       let is_outer = finish notin heads[start] or
         GRAMMAR_EBNF.numbers[head].get < GRAMMAR_EBNF.numbers[heads[start][finish]].get
