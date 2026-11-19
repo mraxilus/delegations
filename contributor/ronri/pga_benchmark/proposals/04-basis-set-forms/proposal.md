@@ -208,9 +208,9 @@ withdrawn.
 - **Memory manager.** No record tests a `seq` of basis-set types under `--mm:refc` or
   `--mm:markAndSweep`. The library at pin names no memory manager.
 - **Time.** The whole set aligns to 16 bytes from rga3d up at 64 bits, where pin aligns it to
-  8. In two takes of the evaluation, the 111 measurands at rga4d and the 135 at cga5d read ×0.98
-  to ×1.03 of pin. The highest are `+` at rga4d, which P14 gives, and at cga5d the weight
-  expansion and the selection of an antigrade, which read ×1.00 to ×1.03 across the two takes.
+  8. In the evaluation, the 111 measurands at rga4d and the 135 at cga5d read ×0.99 to ×1.02 of
+  pin. The highest are `+` at rga4d, which P14 gives, and the selection of an antigrade at cga5d.
+  Two earlier takes of the same day read ×0.98 to ×1.03.
 - **Static reading.** The inspector keeps the functions of the library by the module in their C
   name. Seven functions of pin now take in that name the module of the bench that calls them, so
   the reading holds them no more. They are `+`, `-` and negation of whole multivectors, and the
@@ -363,7 +363,7 @@ against ×0.80 to ×0.85 at 16 bytes.
 Its evaluation of 2026-11-19 passes each claim at pin, with P14 applied first. The suites of the
 library pass 44 tests at rga4d and 39 at cga5d, with the 5 tests of the suite `Typed operators`.
 `laws.nim` holds at the nine algebras, and at 32 bits at seven. The 111 measurands at rga4d and the
-135 at cga5d read ×0.98 to ×1.03 of pin in two takes, as Costs gives.
+135 at cga5d read ×0.99 to ×1.02 of pin, as Costs gives.
 
 The static reading names seven functions that move: `+`, `-` and negation of whole multivectors,
 and `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti`. Each
