@@ -359,6 +359,9 @@ const
     ##   (7018501890).
   POINT_DECIMAL = '.'  ## Mark between digits and decimal part of percentage, as in `(62.5%)`.
   SEPARATOR_LABEL = ": "  ## Mark after label of claim, as in `Judgement: `.
+  SEPARATOR_LABEL_BOLD = ":" & BOLD & " "
+    ## Mark after label of claim in bold, as in `**Judgement:** `: colon inside bold, then space
+    ##   (7022872980).
   FULL_STOP = '.'
     ## Mark that ends sentence; claim with no mark ends before one final one of its bullet
     ##   (7017902016).
@@ -2068,11 +2071,15 @@ func isPercentage(text: string, at: int): bool =
 
 func labelClaim(claim: string): string =
   ## Read label that opens claim, with its `: `: one word of letters whose first is capital, as
-  ##   `Judgement: ` (7018501890); empty where claim opens with none.
-  if claim.len == 0 or claim[0] notin UppercaseLetters: return ""
-  var i = 1
+  ##   `Judgement: ` (7018501890), or such word and its colon in bold, then space, as
+  ##   `**Judgement:** ` (7022872980); empty where claim opens with none.
+  let
+    start = (if claim.startsWith(BOLD): BOLD.len else: 0)  # First character of word.
+    separator = (if start > 0: SEPARATOR_LABEL_BOLD else: SEPARATOR_LABEL)
+  if start >= claim.len or claim[start] notin UppercaseLetters: return ""
+  var i = start + 1
   while i < claim.len and claim[i] in Letters: inc i
-  if claim.continuesWith(SEPARATOR_LABEL, i): claim[0 ..< i + SEPARATOR_LABEL.len] else: ""
+  if claim.continuesWith(separator, i): claim[0 ..< i + separator.len] else: ""
 
 
 func claims(text: string): seq[string] =
