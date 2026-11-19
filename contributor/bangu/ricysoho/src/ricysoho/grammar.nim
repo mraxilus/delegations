@@ -954,12 +954,21 @@ func isFewer(a, b: seq[int]): bool =
   false
 
 
-func offer(partials: var seq[Option[Choice]], i: int, candidate: Choice) =
+func offer(partials: var seq[Option[Choice]], i: int, candidate: sink Choice) =
   ## ralte le cumselcu'a bu'u le stuzi pe `i` va'o lo nu le cumselcu'a cu mleca le selra'e lo ka
   ##     mulgau lo jvasni
   ##   .i va'o lo nu dunli kei le pamoi cu stali
+  ##   .i le cumselcu'a cu se muvgau gi'e se fukpi no roi
   if partials[i].isNone or candidate.closures.isFewer(partials[i].get.closures):
     partials[i] = some(candidate)
+
+
+func extend(next: var Choice, closures: openArray[int]) =
+  ## jmina lo te kancu be lo javni sinxa pe pa panzi `next`
+  ##   .i le pamoi te kancu be le panzi cu mulno bu'u le romoi stuzi pe `next`
+  ##   .i `closures` cu tcidu le liste pe le panzi ne'i `Chart.choices` gi'e fukpi no liste
+  next.closures[^1] += closures[0]
+  for c in 1 ..< closures.len: next.closures.add closures[c]
 
 
 func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
@@ -973,9 +982,12 @@ func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
     (symbol.code, start) in chart.completions[finish]
 
 
-func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
+func choose(chart: var Chart, head, start, finish: int): bool =
   ## cuxna le cumtricu poi `head` binxo le genvla pe `start ..< finish` sepi'o ke'a zi'e poi mecrai
   ##     lo ka mulgau lo jvasni bu'u ro stuzi
+  ##   .i le se cuxna cu zvati `chart.choices`
+  ##   .i le jalge cu jarco lo du'u xu kau le se cuxna cu zasti
+  ##   .i se ki'u bo lo nu pilno le selcu'a cu fukpi no liste
   ##   .i le pamoi stuzi cu krasi lo nu cuxna
   ##   .i va'o lo nu dunli kei le pamoi basti javni cu jinga
   ##   .i ba bo lo sinxa poi zmadu lo ka clani cu jinga
@@ -1003,24 +1015,28 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   ##   .i va'o lo nu pa kravla pu ca'o kalri kei le jdima pu zmadu le selci'a lo ka zenba to `#849`
   ##       toi
   let key = (head, start, finish)
-  if key in chart.choices: return chart.choices[key]
-  if chart.open.containsOrIncl(key): return none(Choice)
+  if key in chart.choices: return chart.choices[key].isSome
+  if chart.open.containsOrIncl(key): return false
   defer: chart.open.excl(key)
-  let span = finish - start
+  let
+    span = finish - start
+    is_completed = span == 0 or (head, start) in chart.completions[finish]
   var best = none(Choice)
   for p in GRAMMAR_EBNF.heads[head]:
     template body: untyped = GRAMMAR_EBNF.productions[p].body
       ## sinxa le porsi be lo sinxa pe le basyjva po'u `p`
       ##   .i lo nu pilno `let` cu rinka lo nu fukpi le porsi
     if span == 0 and body.anyIt(it.is_terminal or not GRAMMAR_EBNF.nullable[it.code]): continue
-    if span > 0 and p notin chart.completions[finish].getOrDefault((head, start)): continue
+    # `[]` cu dunda le liste gi'e fukpi no da ki'u lo nu `chart` cu me `var`
+    if span > 0 and (not is_completed or p notin chart.completions[finish][(head, start)]): continue
 
     # tcidu ro sinxa pe le basyjva pu lo bavla'i sinxa
     #   .i bu'u ro stuzi le na'e mulno poi mecrai lo ka mulgau lo jvasni vi cu selra'e
     #   .i ro sinxa cu curmi lo nu lo sinxa poi se lidne cu ponse lo bazgenvla
     var
       # le mecraiterkancu be lo genvla poi ro rebla be le porsi cu binxo ke'a
-      rests = newSeq[int](body.len + 1)
+      #   .i le porsi cu zvati le dukse be le samtci gi'e cpacu no ninstu
+      rests: array[WIDTH_BODY, int]
       partials = newSeq[Option[Choice]](span + 1)
     for k in countdown(body.high, 0):
       let length = (if body[k].is_terminal: 1 else: GRAMMAR_EBNF.lengths[body[k].code])
@@ -1045,11 +1061,9 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
         for bound in countdown(finish - rests[k + 1], low):
           if not chart.isDerived(symbol, m, bound): continue
           if k == body.high - 1 and not chart.isDerived(body[^1], bound, finish): continue  # morsi
-          let child = chart.choose(symbol.code, m, bound)
-          if child.isNone: continue
+          if not chart.choose(symbol.code, m, bound): continue
           var next = partial.get
-          next.closures[^1] += child.get.closures[0]
-          next.closures.add child.get.closures[1 .. ^1]
+          next.extend(chart.choices[(symbol.code, m, bound)].get.closures)
           next.bounds.add bound
           nexts.offer(bound - start, next)
       partials = nexts
@@ -1057,8 +1071,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
     var whole = partials[span].get
     inc whole.closures[^1]  # `head` mulno bu'u le fanmo be le selku'e
     if best.isNone or whole.closures.isFewer(best.get.closures): best = some(whole)
+  result = best.isSome
   chart.choices[key] = best
-  best
 
 
 func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
@@ -1110,7 +1124,7 @@ func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
   var
     chart = Chart(completions: sets.toCompletions, terminals: @terminals)
     nodes: seq[Node]
-  doAssert chart.choose(GRAMMAR_EBNF.start, 0, terminals.len).isSome,
+  doAssert chart.choose(GRAMMAR_EBNF.start, 0, terminals.len),
       "Text grammar reads should derive tree."
   chart.addNodes(GRAMMAR_EBNF.start, 0, terminals.len, nodes)
   # le javni pe li no cu selcme
@@ -1566,7 +1580,7 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
     if cover.head.isNone:
       result.add Node(is_terminal: true, at: first + start)
     else:
-      doAssert chart.choose(cover.head.get, start, cover.finish).isSome,
+      doAssert chart.choose(cover.head.get, start, cover.finish),
           "Span completions hold should derive tree."
       # le javni cu selcme
       #   .i se ki'u bo lo jgena cu pa mei
