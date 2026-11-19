@@ -867,9 +867,8 @@ own lines do. So a change that still applies at head still says what it meant.
 A section `## Add` holds a new file whole, and applies only where no file stands at its path. A
 file that head adds under the same path makes the addition stale, so it is a finding and never an
 overwrite. So a proposal that adds a module is a change of the library, and its laws import the
-library alone. P04 adds `pga/basis_sets.nim` this way, and P10 adds `pga/scalars.nim`. Rejected: a
-prototype beside the library, which P04 was. Each proposal on it then imported the prototype, and
-no evaluation built the library that the proposals described.
+library alone. P10 adds `pga/scalars.nim` this way. Rejected: a prototype beside the library, since
+no evaluation builds the library that the proposals on a prototype describe.
 
 Verified by `test_rga4d.nim`, suite `Internal: Changes`.
 
@@ -1006,26 +1005,33 @@ best run of each binary, and not the usual run.
 The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
 the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. A copy of P10 whose
 root takes the smaller part by its own root fails the law of the small part at cga3d and cga4d.
+Verified by hand on 2026-10-24: the laws of P10 ran on a copy of P10 with that fault.
 `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and `limits.nim` its limits
 over long chains and frames, at rga3d, rga4d, cga4d and cga5d.
 
 `proposals/12-cayley-cells/laws.nim` holds the size of the cell of P12 tight at each of the nine
 algebras. A copy whose cell holds three terms under the conformal metric fails it at cga3d. A copy
-whose cell holds one term there stops the build, where `add` names the full cell.
+whose cell holds one term there stops the build, where `add` names the full cell. Verified by hand
+on 2026-11-08: the laws of P12 ran on copies of P12 with each cell.
 
-A basis-set form of P04 that reaches no basis stops the compile. So its laws hold such a form to
-zero in the library, at each type and pair that they sweep. Where a map drops the sign of its
-table, the laws fail at rga4d. Where a squared norm reads half its table, they fail at cga5d and
-hold at rga4d, whose metric is diagonal.
+A basis-set form of P04 that reaches no basis returns the type of no bases. At each type and pair
+that they sweep, its laws hold each value to the library, which gives zero there. They hold each
+map and product to the bases that the library gives on single bases of its operands. So a form
+holds no basis where the library gives none. A squared norm reads pairs of bases, so its laws hold
+its value alone.
+
+Where a map drops the sign of its table, the laws fail at rga4d. Where `⟑` takes one basis more,
+written as zero, they fail there too. Where a squared norm reads half its table, they fail at cga5d
+and hold at rga4d, whose metric is diagonal. Verified by hand on 2026-11-19: the laws of P04 ran
+under Nim 2.4.0 on a copy of the library with each fault.
 
 Up to 5D the laws of P04 sweep each product over every pair of named types and the whole
-multivector. At 6D they sweep a vector with each type. The compiler takes about 0.05 MiB for each
-term that a form emits.
+multivector. At 6D they sweep a vector with each type.
 
-At cga6d every pair takes 18 minutes and 6 106 MiB to build and run. A vector with each type there
-takes 2 minutes and 1 196 MiB. Measured as the peak resident size of each build under Nim 2.4.0,
-2026-10-29. The same measure of 2026-11-15 reads 68 s and 1 223 MiB for a vector with each type.
-That run was on a Xeon of family 6 model 173.
+At cga6d every pair takes 7 minutes and 4 831 MiB to build and run. A vector with each type there
+takes 2 minutes and 1 458 MiB. Each figure is the wall time of the build and the run, and the peak
+resident size of the largest process of the build. The builds ran one after the other. Measured
+under Nim 2.4.0 on 2026-11-19, on a Xeon of family 6 model 207.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
@@ -1066,12 +1072,11 @@ P99, `nimony-port`, holds the patches of its compiler, the record of its deviati
 regression program, each as Markdown. The program is Markdown and no module, since Nimony refuses
 the line `{.experimental: "strictFuncs".}` that `STYLE.md` asks of every module.
 
-**The Architect reads each proposal, and implements it in the library over time,** as the
-Architect ruled on 2026-10-04. So no sign-off asks whether the library takes a proposal, and each
-one stays `proposed` until the library or the Architect settles it. The Architect states each
-rejection, and that proposal is then withdrawn. The Architect may never state an adoption, since
-a try to implement can lead elsewhere. So a new commit of the library is where an adoption
-shows.
+**The Architect reads each proposal, and rules on its adoption** on
+[the list of decisions (#921)](https://github.com/mraxilus/delegations/issues/921). The Architect
+also states each rejection, and that proposal is then withdrawn. An adopted proposal stays
+`proposed` until a commit of the library holds it, since a try to implement can lead elsewhere. So
+a new commit of the library is where an implementation shows.
 
 The daily `head` workflow opens an issue for this project when the head moves past the pin. This
 project then checks each proposal that is not frozen against that head, and updates it, or sets
@@ -1703,33 +1708,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Open questions
 
-- Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
-  grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
-  no zero fill and two error checks. P01 and P08 alone spend 437, 71 and 106. Both are the
-  counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
-- Whether the library takes P04, `basis-set-forms`, so that each operator from one table returns the
-  exact basis-set type of the bases it reaches. At rga4d 16 measurands stand above the byte bound
-  only because they write a whole multivector for one coefficient, and at cga5d 15 do. Each is a
-  dot, an antidot or a squared norm. Under P04 each of them writes 8 bytes on a basis-set type.
-  The measurands hold whole multivectors, so they keep the operators of the library.
-- Whether the library takes P05, `multivector-align`. It aligns the whole set to `min(64, size)`,
-  one cache line from three dimensions up, so it pads no multivector. P04 aligns every basis-set
-  type to `alignment` of its count instead, as the Architect ruled on 2026-10-04. That is the
-  largest power of two that divides their bytes, at most 64, and it gives the whole set the same.
-  Both edit the one definition of `MultivectorOf`, so the second to land quotes the first.
-
-  On two machines and three instruction sets, a caller that holds multivectors in a `seq` times
-  `-m` at ×0.42 to ×0.93 of the pin. It times `m + n` at ×0.70 to ×0.88, at no cost in size. On
-  Emerald Rapids under SSE2, `/ m` and `★ m` at cga5d run ×1.10 and ×1.11 of the pin. The
-  figures are in `proposals/05-multivector-align/proposal.md`.
-
-  Under P05 and under P04, an AVX2 build can fault where the pin runs. It faults on a multivector
-  in raw storage, which `alloc` aligns to 16 bytes. It also faults on one in a `seq` under
-  `--mm:refc`, whose data the pinned compiler does not align.
-  `proposals/04-basis-set-forms/proposal.md` and `proposals/05-multivector-align/proposal.md` state
-  each case. So each of the two holds one more decision, among three options. They are the
-  alignment as now, an alignment of at most 16 bytes, and the alignment as now only under
-  `defined(gcDestructors)`.
 - When Nimony has a release, whether to port the library again at that release, or to update P99,
   `nimony-port`. Its open decisions also name 20 optional changes of its review, and 15 defects of
   Nimony that wait to be reported.
