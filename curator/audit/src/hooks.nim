@@ -2026,9 +2026,10 @@ func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Findi
   ##   Reports match headings earliest first, so n reports need n headings, and heading counts
   ##     above first `## Sign-off` or working line of last text of turn alone, whichever comes
   ##     first, since reflection comes before any sign-off or working line (6974524232).
-  ##   Cell quotes block word for word once each run of whitespace on both sides is one space,
-  ##     against block call used (6975486646); block no call took is no evidence, so reflection
-  ##     quotes none of it (6980006567).
+  ##   Cell quotes block word for word (6975486646), and only block call used (6980006567): block
+  ##     no call took is no evidence, so reflection quotes none of it.
+  ##   Each run of whitespace on both sides reads as one space before compare; no ruling holds
+  ##     that, so it is choice.
   let
     current = subagents.turns - 1
     reports = subagents.reports.filterIt(it.turn == current)
