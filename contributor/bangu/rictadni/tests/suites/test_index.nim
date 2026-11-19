@@ -344,6 +344,19 @@ suite "Internal: Index":
     check readIndex(" " & HEADER_INDEX & "\n").isRefused(1, " " & HEADER_INDEX)  # exact header
 
 
+  test "writer opens file with `rictadni index 1`, and reader takes `lojban_tagger index 1` too":
+    # Ruling of D1 on #946: tools write new name alone, and each reader still takes old one, so
+    #   index written before rename still opens, then writes back under new name.
+    var index: Index
+    index.addTags("notes", [readTanru("datni").get])
+    check index.toText == "rictadni index 1\nnotes\tdatni\n"  # new name written
+    for header in ["rictadni index 1", "lojban_tagger index 1"]:
+      let loaded = readIndex(header & "\nnotes\tdatni\n")
+      check loaded.is_loaded  # each name read
+      if loaded.is_loaded: check loaded.index.toText == index.toText  # written back as new
+    check readIndex("rictadni index 2\n").isRefused(1, "rictadni index 2")  # other version
+
+
   test "reader refuses bad line by its number, ending in text read":
     let opening = HEADER_INDEX & "\nalpha\tdatni\n"
     check readIndex(opening & "beta datni\n").isRefused(3, "beta datni")  # tab missing

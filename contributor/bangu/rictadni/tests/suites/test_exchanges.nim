@@ -542,7 +542,7 @@ func problemLineFormat(bytes: string): string =
   ## Build problem reader gives for file whose format line differs: first line file holds, line
   ##   break included, as `toEcho` shows it.
   let close = bytes.find('\n')
-  "Exchange should open with `lojban_tagger exchange 2\\u{A}`; got `" &
+  "Exchange should open with `rictadni exchange 2\\u{A}`; got `" &
       bytes[0 .. (if close < 0: bytes.high else: close)].toEcho & "`."
 
 
@@ -1427,14 +1427,40 @@ suite "Internal: Exchange":
     let
       file = frameReference(MESSAGE_EXAMPLE)
       older = "lojban_tagger exchange 1\nlabel recorded 2026-10-29\nrequest 7\nGET /a\n"
-    check "".readExchange.problem == "Exchange should open with `lojban_tagger exchange " &
+    check "".readExchange.problem == "Exchange should open with `rictadni exchange " &
         "2\\u{A}`; got ``."  # empty file, value visible as empty
-    check older.readExchange.problem == "Exchange should open with `lojban_tagger exchange " &
+    check older.readExchange.problem == "Exchange should open with `rictadni exchange " &
         "2\\u{A}`; got `lojban_tagger exchange 1\\u{A}`."  # text format of version 1: first line
     check file.replace("\n", "\r\n").readExchange.problem == "Exchange should open with " &
-        "`lojban_tagger exchange 2\\u{A}`; got `lojban_tagger exchange 2\\u{D}\\u{A}`."  # line ends
-    for text in ["{\"label\": \"x\"}", "Lojban_tagger exchange 2\n", "lojban_tagger exchange 2"]:
+        "`rictadni exchange 2\\u{A}`; got `rictadni exchange 2\\u{D}\\u{A}`."  # line ends
+    for text in ["{\"label\": \"x\"}", "Rictadni exchange 2\n", "rictadni exchange 2",
+        "Lojban_tagger exchange 2\n", "lojban_tagger exchange 2", "rictadni exchange 1\n"]:
       check text.readExchange.problem == problemLineFormat(text)  # JSON, capital, no line break
+
+
+  test "writer opens file with `rictadni exchange 2`, and reader takes `lojban_tagger exchange 2`":
+    # Ruling of D1 on #946: tools write new name alone, and each reader still takes old one, so
+    #   exchange recorded before rename still replays; frame past old line is read as whole.
+    let
+      hop = example("page").toExchanges(Service.Claude)[0]
+      line_old = "lojban_tagger exchange 2\n"
+      older = line_old & toFixedReference(uint32(MESSAGE_EXAMPLE.len)) &
+          toFixedReference(checksumReference(MESSAGE_EXAMPLE)) & MESSAGE_EXAMPLE
+      recorded = older.readExchange
+    check LINE_FORMAT_EXCHANGE == "rictadni exchange 2\n"  # new name written
+    check hop.toBytes.startsWith("rictadni exchange 2\n")  # writer opens file with it
+    check recorded.is_read  # old line read
+    if recorded.is_read:
+      check recorded.exchange == hop  # message past old line read whole
+      check recorded.exchange.toBytes == frameReference(MESSAGE_EXAMPLE)  # written back as new
+    check older[0 ..< line_old.len + 4].readExchange.problem ==
+        problemFrame(4)  # frame past old line counts from its end
+    check (older & "x").readExchange.problem ==
+        problemLength(uint32(MESSAGE_EXAMPLE.len), MESSAGE_EXAMPLE.len + 1)  # byte appended
+    let changed = older[0 ..< line_old.len + 4] & toFixedReference(0) &
+        older[line_old.len + 8 .. ^1]
+    check changed.readExchange.problem == problemChecksum(0,
+        checksumReference(MESSAGE_EXAMPLE))  # checksum read past old line
 
 
   test "each cut of exchange file, and bytes appended, are refused naming part where file ends":
@@ -1574,7 +1600,7 @@ suite "Internal: Exchange":
         found.len - AT_MESSAGE)  # case as found: counts alone, never byte of request
     for (url, shown) in URLS_PAGE:
       check ("GET " & url & "\n").readExchange.problem == "Exchange should open with " &
-          "`lojban_tagger exchange 2\\u{A}`; got `GET " & shown & "\\u{A}`."  # request line first
+          "`rictadni exchange 2\\u{A}`; got `GET " & shown & "\\u{A}`."  # request line first
       check frameReference(toFieldBytes(1, url & " \xED\xA0\x80")).readExchange.problem ==
           "Label should be well-formed UTF-8; got `" & shown & " \xEF\xBF\xBD\xEF\xBF\xBD" &
           "\xEF\xBF\xBD`."  # label naming URL, ill-formed
@@ -2180,6 +2206,7 @@ suite "Internal: Send":
       check head.values("authorization") == bearers  # one bearer where credential given, else none
       check head.values("accept-encoding") == @["identity"]  # no coding reader cannot read
       check head.values("user-agent") == @[USER_AGENT]  # agent of tool
+      check USER_AGENT == "rictadni"  # new name alone (#946)
       check head.lines.countIt(CREDENTIAL_SUITE in it) == bearers.len  # credential nowhere else
     listener.close()
 

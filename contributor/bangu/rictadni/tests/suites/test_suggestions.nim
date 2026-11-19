@@ -118,9 +118,9 @@ const
     ## Prompt caching guide of OpenRouter: `session_id` as key of sticky routing.
   URL_COMPLETION = "https://openrouter.ai/docs/api/api-reference/chat/create-a-chat-completion"
     ## Chat completion reference of OpenRouter: `session_id` at most 256 characters.
-  ID_SESSION_STICKY = "lojban_tagger"
+  ID_SESSION_STICKY = "rictadni"
     ## Session OpenRouter body names, project choice: one for every request, as `URL_CACHING`
-    ##   keeps one endpoint for one session.
+    ##   keeps one endpoint for one session; name of project, as D1 on #946 ruled.
   CHARACTERS_SESSION_MAX = 256  ## Most characters of `session_id`, as `URL_COMPLETION` gives.
   URL_OVERVIEW = "https://platform.claude.com/docs/en/api/overview"
     ## API overview: `anthropic-workspace-id` required with key scoped to no workspace.

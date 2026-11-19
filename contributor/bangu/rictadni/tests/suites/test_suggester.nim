@@ -104,12 +104,15 @@ const
   NIM = getCurrentCompilerExe()  ## Compiler building suite, which builds `suggester` too.
   PATH_APP = currentSourcePath().parentDir.parentDir.parentDir / "app" / "suggester.nim"
     ## Source of `suggester`, found from this file.
-  KEY_SERVICE = "LOJBAN_TAGGER_SERVICE"  ## Environment name binary reads service from.
-  KEY_ENDPOINT = "LOJBAN_TAGGER_ENDPOINT"  ## Environment name binary reads endpoint from.
-  KEY_MODEL = "LOJBAN_TAGGER_MODEL"  ## Environment name binary reads model from.
-  KEY_EFFORT = "LOJBAN_TAGGER_EFFORT"  ## Environment name binary reads effort from.
-  KEY_CREDENTIAL = "LOJBAN_TAGGER_API_KEY"  ## Environment name binary reads credential from first.
-  KEY_WORKSPACE = "LOJBAN_TAGGER_WORKSPACE"  ## Environment name binary reads workspace from.
+  KEY_SERVICE = "RICTADNI_SERVICE"  ## Environment name binary reads service from.
+  KEY_ENDPOINT = "RICTADNI_ENDPOINT"  ## Environment name binary reads endpoint from.
+  KEY_MODEL = "RICTADNI_MODEL"  ## Environment name binary reads model from.
+  KEY_EFFORT = "RICTADNI_EFFORT"  ## Environment name binary reads effort from.
+  KEY_CREDENTIAL = "RICTADNI_API_KEY"  ## Environment name binary reads credential from first.
+  KEY_WORKSPACE = "RICTADNI_WORKSPACE"  ## Environment name binary reads workspace from.
+  OPENING_KEY = "RICTADNI_"  ## Opening of each environment name binary reads.
+  OPENING_KEY_OLD = "LOJBAN_TAGGER_"
+    ## Opening binary reads where name of `OPENING_KEY` is unset: opening before rename (#946).
   KEY_BASE = "ANTHROPIC_BASE_URL"  ## Environment name agent reads endpoint from; binary never does.
   LUT_KEY_CREDENTIAL_BY_SERVICE: array[Service, string] =
     ["ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", ""]
@@ -118,9 +121,13 @@ const
     ## Variables binary reads credential from, under any service.
   NAMES_PROXY = ["HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"]
     ## Proxy variables, in both cases curl and host set.
-  NAMES_BLANK = @[KEY_EFFORT, KEY_ENDPOINT, KEY_MODEL, KEY_SERVICE, KEY_WORKSPACE] &
-      NAMES_CREDENTIAL & @NAMES_PROXY
-    ## Variables each run blanks where test gives no value: each binary reads, and every proxy.
+  NAMES_BLANK = block:
+    ## Variables each run blanks where test gives no value: each binary reads, old name of each
+    ##   too, and every proxy.
+    let names = @[KEY_EFFORT, KEY_ENDPOINT, KEY_MODEL, KEY_SERVICE, KEY_WORKSPACE] &
+        NAMES_CREDENTIAL & @NAMES_PROXY
+    names & names.filterIt(it.startsWith(OPENING_KEY)).mapIt(it.replace(OPENING_KEY,
+        OPENING_KEY_OLD))
   MS_POLL = 5
     ## Most milliseconds `poll` waits for event while child runs; exit of child ends loop, so no
     ##   verdict reads time.
@@ -515,6 +522,11 @@ proc bindRefusing(): AsyncSocket =
 
 
 #[ Runs ]#
+
+func toKeyOld(key: string): string =
+  ## Name binary reads where `key` is unset or empty: `key` under opening before rename (#946).
+  key.replace(OPENING_KEY, OPENING_KEY_OLD)
+
 
 func toPrefix(environment: openArray[(string, string)]): string =
   ## Render shell prefix: each name of `NAMES_BLANK` blank unless environment gives it value,
@@ -927,10 +939,12 @@ suite "Internal: Suggester":
     for example in EXAMPLES:
       for service in [Service.Claude, Service.OpenRouter]:
         let exchanges = example.toExchanges(service)
-        check binary.runLine([(KEY_WORKSPACE, "wrkspc_01AbCdEf")], example.toCommand(service),
+        # Shell sets workspace, under new name and old, and model under old (#946).
+        check binary.runLine([(KEY_WORKSPACE, "wrkspc_01AbCdEf"), (KEY_WORKSPACE.toKeyOld,
+            "wrkspc_01AbCdEf"), (KEY_MODEL.toKeyOld, MODEL_SUITE)], example.toCommand(service),
             folder = folder) == toExited(service.readReply(exchanges[^1].reply),
             example.toPassage, service.toSettings.model, exchanges.mapIt(noteReplayed(
-            DIRECTORY_EXAMPLES, it.request, it.label)))  # replayed, though shell sets workspace
+            DIRECTORY_EXAMPLES, it.request, it.label)))  # replayed, though shell sets them
 
 
   test "worked example lacking name, argument or tags does not compile, as rule of data asks":
@@ -1301,7 +1315,7 @@ suite "Internal: Suggester":
       stopServer(server)
 
 
-  test "workspace of `LOJBAN_TAGGER_WORKSPACE` goes in header of `claude`, and none where empty":
+  test "workspace of `RICTADNI_WORKSPACE` goes in header of `claude`, and none where empty":
     # Review finding wire-2, 2026-10-29: key scoped to no workspace got 400 on every request, and
     #   no variable named workspace, so `anthropic-workspace-id` never went.
     let
@@ -1357,7 +1371,7 @@ suite "Internal: Suggester":
     check not dirExists(missing)  # replay makes nothing
 
 
-  test "credential comes from `LOJBAN_TAGGER_API_KEY` first, then usual name of service":
+  test "credential comes from `RICTADNI_API_KEY` first, then usual name of service":
     let
       text = example("lojban")
       passage = text.argument.toPassage
@@ -1412,11 +1426,11 @@ suite "Internal: Suggester":
       text = example("lojban")
       passage = text.argument.toPassage
       found = Service.Claude.toSettings(server.port)
-      refused = "Credential should be set in `LOJBAN_TAGGER_API_KEY` alone, since host of " &
+      refused = "Credential should be set in `RICTADNI_API_KEY` alone, since host of " &
           "endpoint is not `api.anthropic.com`; got ``.\n"
     check binary.run(found.toEnvironment.filterIt(it[0] != KEY_CREDENTIAL) &
         @[("ANTHROPIC_API_KEY", CREDENTIAL_SUITE)], [text.argument]) == Exited(report: refused,
-        code: 2)  # case as found: endpoint on loopback names `LOJBAN_TAGGER_API_KEY` alone
+        code: 2)  # case as found: endpoint on loopback names `RICTADNI_API_KEY` alone
     var count_usual, count_refused = 0
     for service in [Service.Claude, Service.OpenRouter]:
       let
@@ -1451,7 +1465,7 @@ suite "Internal: Suggester":
               LABEL_SUITE)])  # usual name read for host of default endpoint, without case
           continue
         inc count_refused
-        check exited == Exited(report: "Credential should be set in `LOJBAN_TAGGER_API_KEY` " &
+        check exited == Exited(report: "Credential should be set in `RICTADNI_API_KEY` " &
             "alone, since host of endpoint is not `" & host & "`; got ``.\n",
             code: 2)  # other host reads first name alone, and says why
     check count_usual == 6 and count_refused == 8  # both sides of law, for both services
@@ -2340,68 +2354,68 @@ suite "Internal: Suggester":
       chat = @[(KEY_SERVICE, "chat"), (KEY_ENDPOINT, endpoint), (KEY_MODEL, MODEL_SUITE)]
     for (modes, environment, problem) in [
       (every, @[(KEY_SERVICE, "bogus")], "Service should be `claude`, `openrouter` or `chat`; " &
-          "got `bogus` for `LOJBAN_TAGGER_SERVICE`."),
+          "got `bogus` for `RICTADNI_SERVICE`."),
       (every, @[(KEY_SERVICE, "Claude")], "Service should be `claude`, `openrouter` or " &
-          "`chat`; got `Claude` for `LOJBAN_TAGGER_SERVICE`."),  # spelled as enum, no fold
+          "`chat`; got `Claude` for `RICTADNI_SERVICE`."),  # spelled as enum, no fold
       (every, @[(KEY_EFFORT, "extreme")], "Effort should be `low`, `medium`, `high`, `xhigh` " &
-          "or `max`; got `extreme` for `LOJBAN_TAGGER_EFFORT`."),
+          "or `max`; got `extreme` for `RICTADNI_EFFORT`."),
       (every, @[(KEY_ENDPOINT, "http://api.example.org/v1")], "Endpoint should be https, or " &
-          "http to loopback host; got `http://api.example.org/v1` for `LOJBAN_TAGGER_ENDPOINT`."),
+          "http to loopback host; got `http://api.example.org/v1` for `RICTADNI_ENDPOINT`."),
       (every, @[(KEY_ENDPOINT, "api.example.org/v1")], PROBLEM_ENDPOINT_URL &
-          "`api.example.org/v1` for `LOJBAN_TAGGER_ENDPOINT`."),  # no URL, so no scheme to name
+          "`api.example.org/v1` for `RICTADNI_ENDPOINT`."),  # no URL, so no scheme to name
       (every, @[(KEY_ENDPOINT, "https:///v1/messages")], PROBLEM_ENDPOINT_URL &
-          "`https:///v1/messages` for `LOJBAN_TAGGER_ENDPOINT`."),  # https, yet no host
+          "`https:///v1/messages` for `RICTADNI_ENDPOINT`."),  # https, yet no host
       (every, @[(KEY_ENDPOINT, "https://api.example.org/v1 x")], PROBLEM_ENDPOINT_URL &
-          "`https://api.example.org/v1 x` for `LOJBAN_TAGGER_ENDPOINT`."),  # https, yet whitespace
+          "`https://api.example.org/v1 x` for `RICTADNI_ENDPOINT`."),  # https, yet whitespace
       (every, @[(KEY_ENDPOINT, "https://api.anthropic.com:65536/v1/messages")],
           PROBLEM_ENDPOINT_PORT & "`https://api.anthropic.com:65536/v1/messages` for " &
-          "`LOJBAN_TAGGER_ENDPOINT`."),  # recheck claim regressions-app-5, 2026-10-29: named scheme
+          "`RICTADNI_ENDPOINT`."),  # recheck claim regressions-app-5, 2026-10-29: named scheme
       (every, @[(KEY_ENDPOINT, "https://api.anthropic.com:0/v1/messages")], PROBLEM_ENDPOINT_PORT &
-          "`https://api.anthropic.com:0/v1/messages` for `LOJBAN_TAGGER_ENDPOINT`."),  # as found
+          "`https://api.anthropic.com:0/v1/messages` for `RICTADNI_ENDPOINT`."),  # as found
       (every, @[(KEY_ENDPOINT, "http://127.0.0.1:99091/v1/messages")], PROBLEM_ENDPOINT_PORT &
-          "`http://127.0.0.1:99091/v1/messages` for `LOJBAN_TAGGER_ENDPOINT`."),  # http to loopback
+          "`http://127.0.0.1:99091/v1/messages` for `RICTADNI_ENDPOINT`."),  # http to loopback
       (every, @[(KEY_SERVICE, "chat")], "Endpoint should be named for service `chat`; got `` " &
-          "for `LOJBAN_TAGGER_ENDPOINT`."),
+          "for `RICTADNI_ENDPOINT`."),
       (every, chat[0..1], "Model should be named for service `chat`; got `` for " &
-          "`LOJBAN_TAGGER_MODEL`."),
+          "`RICTADNI_MODEL`."),
       (every, @[(KEY_WORKSPACE, "wrkspc_a\rb")], PROBLEM_WORKSPACE & "`wrkspc_a\\u{D}b` for " &
-          "`LOJBAN_TAGGER_WORKSPACE`."),  # carriage return would split header
+          "`RICTADNI_WORKSPACE`."),  # carriage return would split header
       (every, @[(KEY_WORKSPACE, "wrkspc_a\nb")], PROBLEM_WORKSPACE & "`wrkspc_a\\u{A}b` for " &
-          "`LOJBAN_TAGGER_WORKSPACE`."),
+          "`RICTADNI_WORKSPACE`."),
       (every, @[(KEY_WORKSPACE, "wrkspc_a b")], PROBLEM_WORKSPACE & "`wrkspc_a b` for " &
-          "`LOJBAN_TAGGER_WORKSPACE`."),
+          "`RICTADNI_WORKSPACE`."),
       (every, @[(KEY_WORKSPACE, "workspace_a")], PROBLEM_WORKSPACE & "`workspace_a` for " &
-          "`LOJBAN_TAGGER_WORKSPACE`."),  # opening other than ID of workspace
+          "`RICTADNI_WORKSPACE`."),  # opening other than ID of workspace
       (every, @[(KEY_WORKSPACE, WORKSPACE_LONG)], PROBLEM_WORKSPACE & "`" & WORKSPACE_LONG &
-          "` for `LOJBAN_TAGGER_WORKSPACE`."),  # one byte past cap
+          "` for `RICTADNI_WORKSPACE`."),  # one byte past cap
       (every, @[(KEY_SERVICE, "openrouter"), (KEY_WORKSPACE, "wrkspc_a")], "Workspace should " &
-          "be named for service `claude` alone; got `wrkspc_a` for `LOJBAN_TAGGER_WORKSPACE`."),
+          "be named for service `claude` alone; got `wrkspc_a` for `RICTADNI_WORKSPACE`."),
       (every, chat & @[(KEY_WORKSPACE, " ")], "Workspace should be named for service `claude` " &
-          "alone; got ` ` for `LOJBAN_TAGGER_WORKSPACE`."),  # any value set, blank included
+          "alone; got ` ` for `RICTADNI_WORKSPACE`."),  # any value set, blank included
       (sending, @[(KEY_ENDPOINT, endpoint), (KEY_CREDENTIAL, "sk-ant-sec\rret")],
           "Credential should hold visible ASCII alone; got byte `13` at `10` for " &
-          "`LOJBAN_TAGGER_API_KEY`."),  # carriage return would split header
+          "`RICTADNI_API_KEY`."),  # carriage return would split header
       (sending, @[(KEY_ENDPOINT, endpoint), (KEY_CREDENTIAL, "sk-or-secret")],
           "Credential should be issued by service `claude`; got opening `sk-or-` for " &
-          "`LOJBAN_TAGGER_API_KEY`."),
+          "`RICTADNI_API_KEY`."),
       (sending, @[("ANTHROPIC_API_KEY", "sk-or-secret")], "Credential should be issued by " &
           "service `claude`; got opening `sk-or-` for `ANTHROPIC_API_KEY`."),  # default endpoint
       (sending, @[(KEY_SERVICE, "openrouter"), ("OPENROUTER_API_KEY", "sk-ant-secret")],
           "Credential should be issued by service `openrouter`; got opening `sk-ant-` for " &
           "`OPENROUTER_API_KEY`."),
-      (sending, @[], "Credential should be set in `LOJBAN_TAGGER_API_KEY` or " &
+      (sending, @[], "Credential should be set in `RICTADNI_API_KEY` or " &
           "`ANTHROPIC_API_KEY`; got ``."),  # review finding rules-3, 2026-10-29: was `got none.`
       (sending, @[(KEY_SERVICE, "openrouter"), ("ANTHROPIC_API_KEY", "sk-ant-secret")],
-          "Credential should be set in `LOJBAN_TAGGER_API_KEY` or `OPENROUTER_API_KEY`; got " &
+          "Credential should be set in `RICTADNI_API_KEY` or `OPENROUTER_API_KEY`; got " &
           "``."),  # usual name of other service unread
       (sending, @[(KEY_ENDPOINT, endpoint)], "Credential should be set in " &
-          "`LOJBAN_TAGGER_API_KEY` alone, since host of endpoint is not `api.anthropic.com`; " &
+          "`RICTADNI_API_KEY` alone, since host of endpoint is not `api.anthropic.com`; " &
           "got ``."),  # endpoint off host of service reads first name alone
       (sending, @[(KEY_SERVICE, "openrouter"), (KEY_ENDPOINT, endpoint), ("OPENROUTER_API_KEY",
-          "sk-or-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY` alone, since " &
+          "sk-or-secret")], "Credential should be set in `RICTADNI_API_KEY` alone, since " &
           "host of endpoint is not `openrouter.ai`; got ``."),
       (sending, chat & @[("ANTHROPIC_API_KEY", "sk-ant-secret"), ("OPENROUTER_API_KEY",
-          "sk-or-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY`; got ``."),
+          "sk-or-secret")], "Credential should be set in `RICTADNI_API_KEY`; got ``."),
     ]:
       for flags in modes:
         let exited = binary.run(environment, flags & @[example("lojban").argument])
@@ -2410,6 +2424,41 @@ suite "Internal: Suggester":
             it[1] notin exited.report)  # value of credential never named
     check server.heard.len == 0  # nothing sent
     check not dirExists(directory_case)  # nothing written
+    stopServer(server)
+
+
+  test "each name `LOJBAN_TAGGER_*` is read where its name `RICTADNI_*` is unset or empty":
+    # Ruling of D1 on #946: each reader still takes old name, so variable set before rename still
+    #   works, and problem names variable read; new name wins where both are set.
+    let
+      server = startServer()
+      endpoint = urlLoopback(server.port, PATH_SERVICE)
+      argument = example("lojban").argument
+    for (key, value, problem) in [
+      (KEY_SERVICE, "bogus", "Service should be `claude`, `openrouter` or `chat`; got `bogus` " &
+          "for `"),
+      (KEY_EFFORT, "extreme", "Effort should be `low`, `medium`, `high`, `xhigh` or `max`; got " &
+          "`extreme` for `"),
+      (KEY_ENDPOINT, "http://api.example.org/v1", "Endpoint should be https, or http to " &
+          "loopback host; got `http://api.example.org/v1` for `"),
+      (KEY_WORKSPACE, "bogus", PROBLEM_WORKSPACE & "`bogus` for `"),
+      (KEY_CREDENTIAL, "sk-or-secret", "Credential should be issued by service `claude`; got " &
+          "opening `sk-or-` for `"),
+    ]:
+      let old = key.toKeyOld
+      for environment in [@[(old, value)], @[(key, ""), (old, value)]]:  # unset, then empty
+        check binary.run(environment, [argument]) ==
+            Exited(report: problem & old & "`.\n", code: 2)  # old name read, and named
+      check binary.run(@[(key, value), (old, "other")], [argument]) ==
+          Exited(report: problem & key & "`.\n", code: 2)  # new name wins
+    let chat = @[(KEY_SERVICE, "chat"), (KEY_ENDPOINT, endpoint)]
+    check binary.run(chat, [argument]) == Exited(report: "Model should be named for service " &
+        "`chat`; got `` for `" & KEY_MODEL & "`.\n", code: 2)  # neither name gives model
+    for environment in [@[(KEY_MODEL.toKeyOld, MODEL_SUITE)], @[(KEY_MODEL, ""),
+        (KEY_MODEL.toKeyOld, MODEL_SUITE)]]:
+      check binary.run(chat & environment, [argument]) == Exited(report: "Credential should be " &
+          "set in `" & KEY_CREDENTIAL & "`; got ``.\n", code: 2)  # old name gives model
+    check server.heard.len == 0  # nothing sent
     stopServer(server)
 
 
