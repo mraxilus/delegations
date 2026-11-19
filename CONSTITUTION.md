@@ -176,9 +176,9 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
    at once.
 
    Where a failed case still carries a meaningful value, return that value beside a named flag.
-   A message ends by echoing each value in backticks, context included, as in
-   ``"…; got `{value}` for `{key}`."``, so an empty value stays visible. An expensive check runs
-   under the assertions flag.
+   A message echoes each value in backticks, context included, so that an empty value stays
+   visible. ``"…; got `{value}` for `{key}`."`` is one such form, and a message need not take
+   it. An expensive check runs under the assertions flag.
 5. Decide the policy for each special case: zero, empty, NaN, overflow, and a zero norm. Express it
    in the return type, as IV.4 has it. Where no invalid value is possible, return the plain value.
    Compare computed floats only through a relative tolerance with an absolute floor, and poison
@@ -331,12 +331,17 @@ CAYLEYS_WEDGE  # module constant
    required parameter of the emitting helper, so that an undocumented emission cannot compile.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
+   The two spaces count from where the sentence of the parent starts. A capitalised word with a
+   colon, as `TODO:` or `Cost:`, is a tag, and its sentence starts after it. A line two spaces
+   deeper that opens in lowercase continues the sentence above it, and is no claim of its own.
 3. Length follows weight. Where a façade exists, it carries the full explanation, and the
    procedure that it forwards to carries one line. The length of a doc follows the weight of
    the concept, and not the size of the body.
 4. Inside a function, each paragraph that a blank line opens takes one short comment that
-   names the goal of the stage, verb first. A reader who skims only the comments reconstructs
-   the algorithm. Never narrate the syntax.
+   names the goal of the stage, verb first. The comment completes the sentence "This stage runs
+   to …", so it names why the stage runs, and never how. Where you cannot write it yet, write
+   `TODO: Describe stage's purpose.` in its place. A reader who skims only the comments
+   reconstructs the algorithm. Never narrate the syntax.
 5. Prose in a comment is telegraphic, with no articles, in every comment of every language in
    the tree. That covers a header, a stage comment, a banner, and glue in a second language.
    A checker enforces it. A file kind that the checker does not read is a file kind that does
@@ -356,9 +361,9 @@ CAYLEYS_WEDGE  # module constant
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
     capitalised where they open a sentence. An identifier, a literal or a path inside a
-    comment takes backticks, so that a reader and the checker take it as a name. A project of
-    `bangu` that the Architect approves follows its own language for capitals and periods in
-    its comments. The checker lists each such project.
+    comment takes backticks, so that a reader and the checker take it as a name. A citation of
+    the charter, as STYLE.md §5, takes none. A project of `bangu` that the Architect approves
+    follows its own language for capitals and periods, and the checker lists it.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
@@ -467,9 +472,9 @@ if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads
 ##   NOTE: Partially true in current implementation, but should be at end state.
 
 # TODO: Represent multivector primitives using more compact data types.
-#   At cost of additional meta-programming, this affords:
-#     - More optimization with SoA (how much more over SIMD of multivectors?),
-#     - Simpler reasoning about objects resulting from operations.
+#         At cost of additional meta-programming, this affords:
+#           - More optimization with SoA (how much more over SIMD of multivectors?),
+#           - Simpler reasoning about objects resulting from operations.
 ```
 
 ## Article IX: Tests replicate the authority
@@ -628,9 +633,11 @@ suite "Chapter 2":
     That covers exports, pragmas and attributes, and a list of flags. Alphabetical order is
     dictionary order: case and `_` are ignored, and a tie falls to the code point. Pragmas sort
     in two groups, the bare pragmas first, then those that take an argument.
-11. Definitions that exist under one configuration sit together in one conditional block inside
-    their section. The configurations come in one fixed order across the project. Inside a
-    routine, a nested helper comes first, after the doc.
+11. Definitions that exist under one configuration sit in a conditional block beside the family
+    that they belong to. Definitions of one configuration that stand next to each other share one
+    block. Where a family differs by configuration, its blocks stand next to each other. The
+    configuration that a build gets by default comes first. Inside a routine, a nested helper
+    comes first, after the doc.
 12. A parameter with a default states its type only where the default does not fix it, and a
     field states its type always. Only a literal fixes it, `default(T)` and `none(T)` among
     them, so a default from a named constant states its type.

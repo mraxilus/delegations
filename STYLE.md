@@ -18,7 +18,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   apart with a qualifier.
 - `func` is the default for a deterministic transformation of a value.
 - `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
-  `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
+  `var` parameter, because `strictFuncs` does not count a write to it as a side effect. A lock,
+  a wait and a signal are effects all the same, since another thread sees each one.
 - Where both mutable and immutable access matter, define an overload pair of `func`s, because
   a `func` may take a `var` parameter. Raw access into storage becomes a `template` pair only
   where the project measured the cost of the call and recorded it:
@@ -97,7 +98,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - `{.error: "...".}` for a poisoned operation, and for one that is planned and not written
   yet.
 - `{.used.}` with a trailing comment that names the consumer, for a private symbol that
-  another module uses.
+  another module uses and its own module never uses.
 - No `{.push.}` of an ordinary pragma, so that the pragmas of a routine stay visible where it
   is defined. A push that `{.pop.}` closes over one block of foreign bindings (`header:`,
   `importc`) is allowed. No pragma scattered as superstition.
@@ -117,6 +118,16 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Validate a static configuration in `static: doAssert`, with ``&"…; got `{X}`."``.
 - Write `{x=}` in a message where the value alone would not say which binding it is
   (`{digits=}`).
+- An interpolated string takes each value in braces, and never joins a value to it by `&`. A
+  join of plain literals and values stays `&`, since interpolation costs more at runtime. A long
+  interpolated string breaks over lines, as literals joined by `&`, only where its text does
+  not fit on one line.
+- A tool reports each finding through `knoller/report`, in one of two forms. On a terminal, a
+  lowercase summary follows the location and the rule. Then come the source line with a marker,
+  the `actual` and `expect` values in two columns, and a `help:` line. In a pipe or a log, one
+  line reads ``path:line:column: rule: actual="…" expect="…" message="…"``, with each value
+  quoted and escaped. A check of the terminal picks the form, and a flag forces either one.
+  Color shows only on a terminal, and `NO_COLOR` turns it off.
 - Put an expensive check under `when compileOption("assertions"):`. Put the profiler import in
   every entry module, library umbrella and test entry alike, right after the pragmas, on two
   lines:
@@ -215,7 +226,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   `import std/[bitops, options]`, one blank line, then `import ./[algebra {.all.}, helpers]`.
   A single module takes no bracket (`import std/math`). Use `{.all.}` only for deliberate
   access to internals, from a sibling or a test. A private symbol that a sibling reaches that
-  way carries `{.used.}`, and a comment that names the sibling:
+  way, and that its own module never uses, carries `{.used.}`, and a comment that names the
+  sibling:
 
   ```nim
   func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in `cayleys.nim`.
@@ -371,6 +383,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
       for 𝐦, _, _ in multivectorsRandom():
         check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
   ```
+
+  The reason of a skip trails it, as above. It may also stand on the comment line right above
+  the skip, at its indent, or in an `echo` there.
 
 - A citation comment is `#`, two spaces after the assertion: `check 𝐮 ∧ 𝐯 =~ -(𝐯 ∧ 𝐮)  # 2.4`
   (IX.1).
