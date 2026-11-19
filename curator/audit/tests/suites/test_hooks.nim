@@ -249,6 +249,14 @@ proc blocksHeld(transcript: string, kinds: openArray[string] = KINDS): seq[strin
   transcript.parseTurn.subagents.checkBlocks(kinds).messages
 
 
+func refusalCell(cell: string): string =
+  ## Write finding of cell under `Predicted` that is neither whole claim of block call took nor
+  ##   `No prediction`, as rule of D5 b of #969 states it.
+  "Cell under `Predicted` is one whole claim of `## Prediction` block that call took, up to " &
+    "its percentage, percentiles or resolution criterion, with or without its label, or " &
+    "`No prediction` (GUIDE.md, Prediction, critic and reflection); got `" & cell & "`."
+
+
 
 suite "Hooks":
   test "role string grammar":
@@ -1880,7 +1888,8 @@ suite "Hooks":
       linesAgent("builder") & started).len == 0
 
     # Each call takes earliest free block of turn before: of n blocks and m calls, blocks after
-    #   first m are taken by no call, so cell that quotes one of them is finding.
+    #   first m are taken by no call, so cell that quotes one of them is finding, in text of
+    #   D5 b of #969.
     const header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
     for n in 1 .. 3:
       for m in 1 .. n:
@@ -1892,9 +1901,7 @@ suite "Hooks":
           linesAgent("builder").repeat(m) & started & lineHandback("builder", "abuilder") &
           linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
           lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
-        check found == toSeq(m + 1 .. n).mapIt("Cell under `Predicted` stands word for word in " &
-          "`## Prediction` block that call took (GUIDE.md, Prediction, critic and reflection); " &
-          "got `claim " & $it & " holds`.")
+        check found == toSeq(m + 1 .. n).mapIt(refusalCell("claim " & $it & " holds"))
 
     # Kinds `critic` and `resolver` are exempt, named here and not read from code; each other
     #   kind is held.
@@ -1992,9 +1999,7 @@ suite "Hooks":
           linesAgent("builder").repeat(m) & started & lineHandback("builder", "abuilder") &
           linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
           lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
-        check found == toSeq(m + 1 .. n).mapIt("Cell under `Predicted` stands word for word in " &
-          "`## Prediction` block that call took (GUIDE.md, Prediction, critic and reflection); " &
-          "got `claim " & $it & " holds`.")
+        check found == toSeq(m + 1 .. n).mapIt(refusalCell("claim " & $it & " holds"))
 
     # Calls of one turn share turns hook looks back over, and exempt call takes what is left.
     check blocksHeld(asked & lineSaid(PREDICTION) & waited & wake & lineSaid(PREDICTION) & wake &
@@ -2018,9 +2023,7 @@ suite "Hooks":
       linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
     check blocksHeld(mended & lineSaid(REFLECTION)).len == 0
     check blocksHeld(mended & lineSaid(REFLECTION.replace("four to eight", "five to nine"))) ==
-      @["Cell under `Predicted` stands word for word in `## Prediction` block that call took " &
-        "(GUIDE.md, Prediction, critic and reflection); got `five to nine findings, each with " &
-        "`file:line``."]
+      @[refusalCell("five to nine findings, each with `file:line`")]
 
 
   test "kinds are names of front matter of templates under `.claude/agents`, read at stop":
@@ -2138,9 +2141,12 @@ suite "Hooks":
     check blocksHeld(taken & report & read & lineUser("Next.", "human") & lineSaid("Noted.")).len ==
       0
 
-    # Refusal asks for missing reflection now, and for mend of cell that quotes no block.
+    # Refusal asks for missing reflection now, and for mend of cell that is no whole claim of
+    #   block, as D5 b of #969 asks.
     let reason = reasonStop([], [], blocks = @[finding("", 0, "Report of critic.")])
-    check "Write each missing reflection now" in reason and "mend each cell under" in reason
+    check "Write each missing reflection now" in reason
+    check "mend each cell under `Predicted` that is no whole claim of block that call took" in
+      reason
 
 
   test "reflection counts above first sign-off or working line of last text of turn (#962)":
@@ -2211,10 +2217,10 @@ suite "Hooks":
       "it leads |\n| ⬜ | 60% | four to eight findings, each with `a \\| b` | three |",
       asked & lineSaid(wrapped) & calls).len == 0
 
-    # Case as found: sample of `GUIDE.md` before #962 quotes claims short, with percentage.
-    check reflected(header & "| ✅ | 70% | The race leads (70%) | it leads |") == @[
-      "Cell under `Predicted` stands word for word in `## Prediction` block that call took " &
-        "(GUIDE.md, Prediction, critic and reflection); got `The race leads (70%)`."]
+    # Case as found: sample of `GUIDE.md` before #962 quotes claims short, with percentage;
+    #   refusal states rule of D5 b of #969.
+    check reflected(header & "| ✅ | 70% | The race leads (70%) | it leads |") ==
+      @[refusalCell("The race leads (70%)")]
 
     # Block in turn of call, and block no call took, are no quote.
     let late = asked & lineSaid("Read.") & wake & lineSaid(PREDICTION, "tool_use") &
@@ -2244,9 +2250,7 @@ suite "Hooks":
     #   answers no report.
     for cut in ["## Sign-off\n\n**Role:** curator, at `main`\n", "**Working:** it runs.\n"]:
       check blocksHeld(taken & lineSaid(REFLECTION & "\n" & cut & "\n## Reflection\n\n" & header &
-        "| ⬜ | 60% | not quoted | x |\n")) == @["Cell under `Predicted` stands word for word in " &
-          "`## Prediction` block that call took (GUIDE.md, Prediction, critic and reflection); " &
-          "got `not quoted`."]
+        "| ⬜ | 60% | not quoted | x |\n")) == @[refusalCell("not quoted")]
 
     # First table with column `Predicted` is read, and no other.
     check reflected("| Item | Cost |\n| --- | --- |\n| run | $1 |\n\n" & header &
@@ -2256,6 +2260,184 @@ suite "Hooks":
     # Reflection of earlier turn was held at its own stop.
     check blocksHeld(taken & lineSaid("## Reflection\n\nNo table.\n") & lineUser("Next.", "human") &
       lineSaid("Noted.")).len == 0
+
+
+  test "each cell is whole claim of block call took, or `No prediction` (D2 c and D5 b of #969)":
+    # Ruling 7016134603, D5 b of #969: each cell under `Predicted` equals one claim of block that
+    #   call took, with or without its label; claim runs up to its percentage, its percentiles or
+    #   its resolution criterion, and runs of whitespace collapse as before. Ruling 7015791554,
+    #   D2 c of #969: reflection counts missing prediction in row of its own, whose cell holds
+    #   exactly `No prediction`, with cause of miss under `Result`; quote check passes that one
+    #   exact cell. Cases as found are costs of record, Blocks of subagents: cell standing in
+    #   block passed, as `-`, and reflection of missing prediction where no call took block
+    #   could not pass.
+    const
+      header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+      predicted = """
+## Prediction
+
+**Subagent:** reviewer of the diff, fresh context.
+**Basis:** what this delegate knows, with no new read.
+
+- Judgement: the race leads the findings (70%). Resolution criterion: it is the first finding.
+- Work: tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and
+  90th percentiles. Resolution criterion: the sum of the usage of its requests.
+- Calls: 10th 150, 50th 260, 90th 420. Resolution criterion: the count of its calls.
+- Judgement: no test is weakened.
+
+**Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the reviewer.
+"""
+        ## Block in form of `GUIDE.md`, with each mark that ends claim, and bullet with none.
+      claims = [
+        ("Judgement: ", "the race leads the findings"),
+        ("Work: ", "tokens summed over its requests: 100,000, 160,000 and 300,000"),
+        ("Calls: ", "10th 150, 50th 260, 90th 420"),
+        ("Judgement: ", "no test is weakened."),
+      ]
+        ## Label and claim of each bullet of `predicted`, as rulings cut them.
+      fragments = 111
+        ## Runs of words of `claims` that are neither claim nor claim without its label.
+    let
+      asked = lineUser("Review the diff.", "human")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      calls = wake & linesAgent("reviewer") & lineSaid("Started.") &
+        lineHandback("reviewer", "areviewer") & linesAgent("critic") &
+        lineSaid("The critic runs.") & lineHandback("critic")
+      taken = asked & lineSaid(predicted) & calls
+    proc reflected(cells: openArray[string]; before = taken): seq[string] =
+      ## Read findings of reflection whose rows hold cells under `Predicted`, after report of
+      ##   critic.
+      var rows = ""
+      for cell in cells: rows.add "| ✅ | 70% | " & cell & " | it holds |\n"
+      blocksHeld(before & lineSaid("## Reflection\n\n" & header & rows))
+    proc passes(bullets, cell: string): bool =
+      ## Decide whether cell passes, where block that call took holds bullets alone.
+      reflected([cell], asked & lineSaid("## Prediction\n\n" & bullets & "\n") & calls).len == 0
+
+    # Each claim passes, with and without its label, one to table and all in one.
+    for (label, claim) in claims:
+      check reflected([label & claim]).len == 0
+      check reflected([claim]).len == 0
+    check reflected(claims.mapIt(it[0] & it[1]) & claims.mapIt(it[1])).len == 0
+
+    # Each other run of words of claim is fragment, and refused: each word alone, cut that drops
+    #   end or start of claim, and part after second `: `.
+    var runs = 0
+    for (label, claim) in claims:
+      let words = (label & claim).splitWhitespace
+      for first in 0 ..< words.len:
+        for last in first ..< words.len:
+          let cell = words[first .. last].join(" ")
+          if cell in [label & claim, claim]: continue
+          check reflected([cell]) == @[refusalCell(cell)]
+          inc runs
+    check runs == fragments
+
+    # Marker of bullet, cut inside word, and line of block that is no bullet each are no claim.
+    for cell in ["-", "- Judgement: the race leads the findings", "he race leads the findings",
+        "the race leads the finding", "reviewer of the diff, fresh context.",
+        "**Basis:** what this delegate knows, with no new read."]:
+      check reflected([cell]) == @[refusalCell(cell)]
+
+    # Claim that keeps its percentage, percentiles, resolution criterion or whole bullet is
+    #   refused, and so is claim of bullet with no mark cut before end of bullet.
+    for cell in ["the race leads the findings (70%)",
+        "Judgement: the race leads the findings (70%)", "the race leads the findings (70%).",
+        "the race leads the findings (70%). Resolution criterion: it is the first finding.",
+        "tokens summed over its requests: 100,000, 160,000 and 300,000, as the 10th, 50th and " &
+          "90th percentiles", "10th 150, 50th 260, 90th 420.", "no test is weakened"]:
+      check reflected([cell]) == @[refusalCell(cell)]
+
+    # Claim ends at first mark, in any order: percentage in brackets of any count of digits,
+    #   `, as the 10th`, or `. Resolution criterion`; with none, it runs to end of bullet.
+    for (bullet, claim) in [("- a b (5%) c", "a b"), ("- a b (70%) c", "a b"),
+        ("- a b (100%) c", "a b"), ("- a b, as the 10th c", "a b"),
+        ("- a b. Resolution criterion: c", "a b"),
+        ("- a b (70%), as the 10th c. Resolution criterion: d", "a b"),
+        ("- a b, as the 10th c (70%). Resolution criterion: d", "a b"),
+        ("- a b. Resolution criterion: c (70%), as the 10th d", "a b"),
+        ("- a b. Resolution criterion: c, as the 10th d (70%)", "a b"),
+        ("- a b c (60%) d (70%)", "a b c"), ("- a b", "a b"), ("- a b.", "a b.")]:
+      check passes(bullet, claim)
+      check passes(bullet, bullet[2 .. ^1]) == (bullet[2 .. ^1] == claim)
+
+    # Brackets with no percentage in them, and other words, end nothing, so claim reads them.
+    for bullet in ["- a (duty 2) b", "- a (70 %) b", "- a (about 70%) b", "- a(70%) b",
+        "- a (%) b", "- a (70% b", "- a, as the 50th b", "- a as the 10th b",
+        "- a. resolution criterion. b"]:
+      check passes(bullet, bullet[2 .. ^1])
+      check not passes(bullet, "a")
+
+    # Label is text before first `: ` of claim; `: ` of resolution criterion alone opens none.
+    for (bullet, cells, refused) in [
+        ("- Judgement: a b (70%).", @["Judgement: a b", "a b"], @["Judgement:", "b"]),
+        ("- Judgement: a: b (70%).", @["Judgement: a: b", "a: b"], @["b", "Judgement: a"]),
+        ("- a b. Resolution criterion: c d.", @["a b"], @["c d.", "a b. Resolution criterion"]),
+        ("- Judgement:a b (70%).", @["Judgement:a b"], @["a b"])]:
+      for cell in cells: check passes(bullet, cell)
+      for cell in refused: check not passes(bullet, cell)
+
+    # Bullet runs over each line to next blank line or bullet, indented or not, whitespace
+    #   collapsed, so claim and its mark may wrap; nested bullet ends it and opens no claim.
+    for (bullets, claim) in [("- Judgement: a\n  b (70%)", "a b"),
+        ("- Judgement: a\nb (70%)", "a b"), ("- a b\n  (70%) c", "a b"),
+        ("- a b, as the\n  10th c", "a b"), ("- a b.\n  Resolution criterion: c", "a b"),
+        ("- a  b\t(70%)", "a b"), ("- a b\n- c d (70%)", "c d")]:
+      check passes(bullets, claim)
+    for (bullets, claim, refused) in [("- a b\n\n  c (70%)", "a b", "a b c"),
+        ("- a b\n- c d (70%)", "a b", "a b - c d"), ("- a b\n  - c d (70%)", "a b", "c d"),
+        ("- a b\n  - c d (70%)", "a b", "a b - c d"), ("- a b\n  * c d (70%)", "a b", "a b * c d")]:
+      check passes(bullets, claim)
+      check not passes(bullets, refused)
+
+    # Bullet opens with `-`, `*` or `+` and space, at no indent; other line opens no claim.
+    for marker in ["-", "*", "+"]:
+      check passes(marker & " a b (70%)", "a b")
+    for bullets in ["  - a b (70%)", "\t- a b (70%)", "1. a b (70%)", "-a b (70%)", "a b (70%)",
+        "> - a b (70%)"]:
+      check not passes(bullets, "a b")
+
+    # Pipe of claim reads as `\|` in cell.
+    check passes("- a `x | y` b (70%)", "a `x \\| y` b")
+
+    # `No prediction` passes where no call took block, where critic alone ran, and where call
+    #   took block, beside claims; its whitespace collapses, as each cell's does.
+    let
+      missed = asked & lineSaid("Read.") & calls
+      alone = asked & wake & linesAgent("critic") & lineSaid("The critic runs.") &
+        lineHandback("critic")
+    for before in [missed, alone, taken]:
+      check reflected(["No prediction"], before).len == 0
+      check reflected(["No  prediction", "No\tprediction"], before).len == 0
+    check reflected(claims.mapIt(it[1]) & @["No prediction", "No prediction"]).len == 0
+
+    # Each other case of letters, and each mark or word added, is refused.
+    var cased = 0
+    for i, c in "No prediction":
+      if c notin Letters: continue
+      var cell = "No prediction"
+      cell[i] = (if c.isUpperAscii: c.toLowerAscii else: c.toUpperAscii)
+      for before in [missed, alone, taken]:
+        check reflected([cell], before) == @[refusalCell(cell)]
+      inc cased
+    check cased == "Noprediction".len
+    for cell in ["no prediction", "NO PREDICTION", "No prediction.", "No prediction:",
+        "No predictions", "Noprediction", "No prediction (70%)", "No prediction of builder"]:
+      for before in [missed, alone, taken]:
+        check reflected([cell], before) == @[refusalCell(cell)]
+
+    # Claim of block no call took is refused, with its label or without it: block in turn of
+    #   call, and block of turn after which no call starts.
+    let
+      late = asked & lineSaid("Read.") & wake & lineSaid(predicted, "tool_use") &
+        linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
+        linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
+      unused = asked & lineSaid(predicted) & wake & lineSaid("No subagent.") &
+        lineHandback("critic")
+    for before in [late, unused]:
+      for (label, claim) in claims:
+        for cell in [label & claim, claim]:
+          check reflected([cell], before) == @[refusalCell(cell)]
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
