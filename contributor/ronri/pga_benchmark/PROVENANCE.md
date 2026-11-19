@@ -1022,9 +1022,9 @@ hold at rga4d, whose metric is diagonal.
 Up to 5D the laws of P04 sweep each product over every pair of named types and the whole
 multivector. At 6D they sweep a vector with each type.
 
-At cga6d every pair takes {{EVERY}} to build and run. A vector with each type there takes {{VECTOR}}.
-Measured as the peak resident size of each build under Nim 2.4.0, on 2026-11-19, on a Xeon of
-family 6 model 207.
+At cga6d every pair takes 7 minutes and 4 831 MiB to build and run. A vector with each type there
+takes 2 minutes and 1 458 MiB. Measured as the peak resident size of each build under Nim 2.4.0,
+on 2026-11-19, on a Xeon of family 6 model 207.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
