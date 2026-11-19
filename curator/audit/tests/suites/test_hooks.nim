@@ -1828,8 +1828,8 @@ suite "Hooks":
 
   test "call of kind takes block of model turn before its own, which starts no subagent (#962)":
     # Ruling 6980006567: prediction is last message of turn of its own, timer wakes delegate, and
-    #   next turn starts subagent. `D2 a` of 6982373798: block serves calls of next turn alone,
-    #   and only from turn that starts no subagent.
+    #   next turn starts subagent. `D2 a` of 6982373798: block serves only from turn that starts
+    #   no subagent. D1 c of #969 replaces its limit to next turn (test below).
     let
       asked = lineUser("Build the check.", "human")
       read = lineSaid("Read.")
@@ -1858,14 +1858,14 @@ suite "Hooks":
     #   before call.
     for after in [lineSaid(PREDICTION, "tool_use"), lineThought()]:
       let late = blocksHeld(asked & read & wake & linesAgent("builder") & after & started)
-      check late == @["Call of subagent of kind takes `## Prediction` block of model turn just " &
-        "before its own, which starts no subagent (GUIDE.md, Prediction, critic and " &
-        "reflection); got none for `builder` call `Do the work`."]
+      check late == @["Call of subagent of kind takes `## Prediction` block of model turn before " &
+        "its own, and after each earlier turn that starts subagent (GUIDE.md, Prediction, " &
+        "critic and reflection); got none for `builder` call `Do the work`."]
 
-    # Block two turns back, or in turn that starts subagent of any type, is no evidence.
-    let back = blocksHeld(asked & lineSaid(PREDICTION) & wake & lineSaid("Waiting.") & wake &
-      linesAgent("builder") & started)
-    check back.len == 1 and back[0].endsWith("call `Do the work`.")  # no hint of turn of call
+    # Block in turn that starts subagent of any type is no evidence; block two turns back is,
+    #   since D1 c of #969 (test below).
+    check blocksHeld(asked & lineSaid(PREDICTION) & wake & lineSaid("Waiting.") & wake &
+      linesAgent("builder") & started).len == 0
     for kind in ["web-fetch", "builder"]:
       check blocksHeld(asked & linesAgent(kind) & lineSaid(PREDICTION) & wake &
         linesAgent("reviewer") & started).anyIt("`reviewer`" in it)
@@ -1927,6 +1927,100 @@ suite "Hooks":
     # Call of earlier turn was held at its own stop.
     check blocksHeld(asked & read & wake & linesAgent("builder") & started &
       lineUser("Thanks.", "human") & lineSaid("Noted.")).len == 0
+
+
+  test "block serves later call across turns that start no subagent (D1 c of #969)":
+    # Ruling 7014974932, D1 c of #969: block of prediction serves later call of subagent, where no
+    #   subagent starts between them, whatever count of turns between; hook looks back from turn
+    #   of call, past each turn that starts no subagent. Ruling replaces limit to next turn of
+    #   `D2 a` of 6982373798, and block in turn of its call stays no evidence. Cases as found are
+    #   those D1 of #969 asks about: reply to refusal, and wake by hand-back or by message of
+    #   Architect, between block and call.
+    const
+      header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+      refused = "got none for `reviewer` call `Do the work`."
+    let
+      asked = lineUser("Review the diff.", "human")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      started = lineSaid("Started.")
+      refusal = lineUser("Stop hook feedback:\nMend message that ends this turn.") &
+        $(%*{"type": "attachment", "attachment": {"type": "hook_blocking_error"}}) & "\n"
+      reply = refusal & lineSaid("```diff\n- see #964\n+ see [the log (#964)](x)\n```")
+      handback = lineHandback("builder", "abuilder") & lineSaid("The builder reported.")
+      message = lineUser("Is the reviewer running?", "human") & lineSaid("Not yet.")
+      waited = wake & lineSaid("Waiting.")
+      called = wake & linesAgent("reviewer") & started
+    for between in [reply, handback, message]:
+      check blocksHeld(asked & lineSaid(PREDICTION) & between & called).len == 0
+
+    # Block serves call at each count of turns between them, and across each kind of turn at once.
+    for count in 0 .. 4:
+      check blocksHeld(asked & lineSaid(PREDICTION) & waited.repeat(count) & called).len == 0
+    check blocksHeld(asked & lineSaid(PREDICTION) & reply & handback & message & waited & called)
+      .len == 0
+
+    # Call of any type between them ends turns hook looks back over, so block left over serves no
+    #   later call: kind, exempt kind and type no template names, in background or foreground.
+    for kind in ["builder", "critic", "resolver", "web-fetch", "general-purpose"]:
+      for between in [linesAgent(kind), linesForeground(kind, "false", "completed")]:
+        let found = blocksHeld(asked & lineSaid(PREDICTION & "\n" & PREDICTION) & wake & between &
+          started & called)
+        check found.len == 1 and found[0].endsWith(refused)
+
+    # Block in turn that starts subagent, before or after its call, is no evidence, and adds no
+    #   hint; block in turn of call adds its hint, after turns with no block.
+    for kind in ["builder", "web-fetch"]:
+      for earlier in [lineSaid(PREDICTION, "tool_use") & linesAgent(kind),
+          linesAgent(kind) & lineSaid(PREDICTION, "tool_use")]:
+        check blocksHeld(asked & earlier & started & waited & called) == @["Call of subagent of " &
+          "kind takes `## Prediction` block of model turn before its own, and after each " &
+          "earlier turn that starts subagent (GUIDE.md, Prediction, critic and reflection); " &
+          "got none for `reviewer` call `Do the work`."]
+    let inside = blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("web-fetch") &
+      started & waited & wake & lineSaid(PREDICTION, "tool_use") & linesAgent("reviewer") & started)
+    check inside.len == 1 and inside[0].endsWith("block stands in earlier turn.")
+
+    # Each call takes earliest free block of turns hook looks back over: of n blocks, one in each
+    #   turn, and m calls, blocks after first m are taken by no call.
+    for n in 1 .. 3:
+      for m in 1 .. n:
+        var turns, rows: seq[string]
+        for b in 1 .. n:
+          turns.add lineSaid("## Prediction\n\n- Judgement: claim " & $b & " holds (70%).")
+          rows.add "| ✅ | 70% | claim " & $b & " holds | it holds |"
+        let found = blocksHeld(asked & turns.join(wake) & wake &
+          linesAgent("builder").repeat(m) & started & lineHandback("builder", "abuilder") &
+          linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
+          lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
+        check found == toSeq(m + 1 .. n).mapIt("Cell under `Predicted` stands word for word in " &
+          "`## Prediction` block that call took (GUIDE.md, Prediction, critic and reflection); " &
+          "got `claim " & $it & " holds`.")
+
+    # Calls of one turn share turns hook looks back over, and exempt call takes what is left.
+    check blocksHeld(asked & lineSaid(PREDICTION) & waited & wake & lineSaid(PREDICTION) & wake &
+      linesAgent("critic") & linesAgent("builder") & linesAgent("reviewer") & started).len == 0
+    let short = blocksHeld(asked & lineSaid(PREDICTION) & waited & wake & linesAgent("critic") &
+      linesAgent("builder") & linesAgent("reviewer") & started)
+    check short.len == 1 and short[0].endsWith(refused)
+
+    # Reflection quotes block that call took across turns, and block of earlier call stays taken
+    #   once later call starts.
+    let flow = asked & lineSaid(PREDICTION) & reply & message & wake & linesAgent("builder") &
+      started & lineHandback("builder", "abuilder") & linesAgent("critic") &
+      lineSaid("The critic runs.") & lineHandback("critic")
+    check blocksHeld(flow & lineSaid(REFLECTION)).len == 0
+
+    # Cost: block that reply to refusal writes again stays free, since call takes earliest one,
+    #   so reflection quotes block as first written.
+    let mended = asked & lineSaid(PREDICTION) & refusal &
+      lineSaid(PREDICTION.replace("four to eight", "five to nine")) & wake &
+      linesAgent("builder") & started & lineHandback("builder", "abuilder") &
+      linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
+    check blocksHeld(mended & lineSaid(REFLECTION)).len == 0
+    check blocksHeld(mended & lineSaid(REFLECTION.replace("four to eight", "five to nine"))) ==
+      @["Cell under `Predicted` stands word for word in `## Prediction` block that call took " &
+        "(GUIDE.md, Prediction, critic and reflection); got `five to nine findings, each with " &
+        "`file:line``."]
 
 
   test "kinds are names of front matter of templates under `.claude/agents`, read at stop":
