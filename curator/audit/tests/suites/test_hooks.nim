@@ -129,6 +129,20 @@ The gap list reads the baseline of each algebra.
 **Working:** a timer of 5 seconds wakes this delegate, and the next turn starts the builder.
 """
     ## Block that predicts subagent, as last message of turn of its own (6980006567).
+  REFLECTION = """
+## Reflection
+
+**Subagent:** builder of the block check, 160,000 tokens and $2.10 at list price, 57 calls.
+**Critic:** 50,000 tokens and $0.70, 20 calls, 6 min.
+
+| State | Confidence | Predicted | Result |
+| --- | --- | --- | --- |
+| ✅ | 70% | the race to save one shared key leads the findings | it leads, as high |
+| ⬜ | 60% | four to eight findings, each with `file:line` | three, at `hooks.nim:12` |
+
+- **Cause of each miss:** the diff was smaller than the delegate read.
+"""
+    ## Block that answers report of critic, each cell under `Predicted` quoting `PREDICTION`.
 
 
 func messages(found: seq[Finding]): seq[string] =
@@ -197,6 +211,36 @@ func linesAgent(kind: string, description = "Do the work"): string =
     answer = %*{"type": "user", "message": {"content": [{
       "type": "tool_result", "tool_use_id": "toolu_" & kind, "content": "Async agent launched.",
     }]}, "toolUseResult": {"status": "async_launched", "agentId": "a" & kind}}
+  $call & "\n" & $answer & "\n"
+
+
+func lineHandback(name: string, agent = "a1", is_handback = true): string =
+  ## Write transcript line of hand-back of subagent of kind name, as harness writes report of
+  ##   subagent that ran in background.
+  $(%*{"type": "user", "isMeta": true, "origin": {
+    "kind": "peer", "from": agent, "name": name, "handback": is_handback,
+  }, "message": {"content": "[Subagent hand-back] Report."}}) & "\n"
+
+
+func lineQueued(name: string, agent = "a1"): string =
+  ## Write transcript line of hand-back that arrives inside model turn, queued as attachment.
+  $(%*{"type": "attachment", "attachment": {"type": "queued_command", "prompt": "Report.",
+    "origin": {"kind": "peer", "from": agent, "name": name, "handback": true},
+  }}) & "\n"
+
+
+func linesForeground(kind, background, status: string; agent = "a1"): string =
+  ## Write transcript lines of `Agent` call of kind whose input `run_in_background` is
+  ##   background, `true` or `false`, or absent where empty, and its result of status.
+  var input = %*{"subagent_type": kind, "description": "Check it", "prompt": "Check."}
+  if background.len > 0: input["run_in_background"] = %(background == "true")
+  let
+    call = %*{"type": "assistant", "message": {"content": [{
+      "type": "tool_use", "id": "toolu_f" & kind, "name": "Agent", "input": input,
+    }], "stop_reason": "tool_use"}}
+    answer = %*{"type": "user", "message": {"content": [{
+      "type": "tool_result", "tool_use_id": "toolu_f" & kind, "content": "Report.",
+    }]}, "toolUseResult": {"status": status, "agentId": agent}}
   $call & "\n" & $answer & "\n"
 
 
@@ -1863,3 +1907,145 @@ suite "Hooks":
     check "Reply with a diff" notin alone and "write no block for it" in alone
     check every.startsWith("Mend message") and every.find("Read queue") < every.find(LINE_BLOCKS)
     check every.splitLines[^1] == LINE_SIGNOFF
+
+
+  test "report of critic takes reflection of its own after it, above any sign-off (#962)":
+    # Ruling 6974524232: turn that receives report of critic holds `## Reflection` block, before
+    #   any sign-off or working line. Shapes of report are those transcript of delegate on #962
+    #   holds, and result of call in foreground, which harness gave its call of `web-fetch`.
+    let
+      taken = lineUser("Build the check.", "human") & lineSaid(PREDICTION) &
+        lineUser("<task-notification>timer</task-notification>", "task-notification") &
+        linesAgent("builder") & lineSaid("Started.") & lineHandback("builder", "abuilder") &
+        linesAgent("critic") & lineSaid("The critic runs.")
+      read = lineSaid("Read.")
+      reflected = lineSaid(REFLECTION)
+      report = lineHandback("critic")
+      queued = lineUser("Next.", "human") & linesCall("ls") & lineQueued("critic")
+    for shape in [report, linesForeground("critic", "false", "completed"), queued]:
+      check blocksHeld(taken & shape & read) ==
+        @["Report of critic takes `## Reflection` block of its own after it, above any " &
+          "sign-off (GUIDE.md, Prediction, critic and reflection); got none for report `1` of " &
+          "`1` in this turn."]
+      check blocksHeld(taken & shape & reflected).len == 0
+
+    # Hand-back of other kind, entry that is no hand-back, launch notice and result of call in
+    #   background each are no report.
+    for other in [lineHandback("builder"), lineHandback("critic", is_handback = false),
+        lineQueued("builder"), linesForeground("critic", "false", "async_launched"),
+        linesForeground("critic", "true", "completed"), linesForeground("critic", "", "completed"),
+        linesForeground("web-fetch", "false", "completed")]:
+      check blocksHeld(taken & other & read).len == 0
+
+    # Result whose agent sends later hand-back points at it, so two entries make one report.
+    let pointed = taken & linesForeground("critic", "false", "completed", "a9") &
+      lineHandback("critic", "a9")
+    check blocksHeld(pointed & reflected).len == 0
+    check blocksHeld(pointed & read).len == 1
+
+    # Each report takes heading after it, earliest report first.
+    let before = lineUser("Next.", "human") & lineSaid(REFLECTION, "tool_use") & linesCall("ls")
+    check blocksHeld(taken & before & lineQueued("critic") & read).len == 1
+    let two = taken & lineHandback("critic", "a1") & lineSaid(REFLECTION, "tool_use") &
+      linesCall("ls") & lineQueued("critic", "a2")
+    check blocksHeld(two & read).anyIt("got none for report `2` of `2`" in it)
+    check blocksHeld(two & reflected).len == 0
+    let one = blocksHeld(taken & lineHandback("critic", "a1") & linesCall("ls") &
+      lineQueued("critic", "a2") & reflected)
+    check one.len == 1 and "got none for report `2` of `2`" in one[0]  # one heading, two reports
+
+    # In last text of turn, heading counts above first sign-off alone; in fence, it counts not.
+    const signed = "## Sign-off\n\n**Role:** curator, at `main`\n"
+    check blocksHeld(taken & report & lineSaid(signed & "\n" & REFLECTION)).len == 1
+    check blocksHeld(taken & report & lineSaid(REFLECTION & "\n" & signed)).len == 0
+    check blocksHeld(taken & report & lineSaid(signed & "\n" & REFLECTION, "tool_use") &
+      linesCall("ls") & lineSaid("Done.")).len == 0  # earlier text of turn
+    check blocksHeld(taken & report & lineSaid("Form:\n\n```md\n" & REFLECTION & "```\n")).len == 1
+
+    # Report of earlier turn was held at its own stop.
+    check blocksHeld(taken & report & read & lineUser("Next.", "human") & lineSaid("Noted.")).len ==
+      0
+
+    # Refusal asks for missing reflection now, and for mend of cell that quotes no block.
+    let reason = reasonStop([], [], blocks = @[finding("", 0, "Report of critic.")])
+    check "Write each missing reflection now" in reason and "mend each cell under" in reason
+
+
+  test "each cell under `Predicted` quotes block that call took, word for word (#962)":
+    # Ruling 6975486646: hook refuses reflection whose cells under `Predicted` stand in no earlier
+    #   block. Ruling 6980006567: reflection quotes only block that call used.
+    const header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+    let
+      asked = lineUser("Build the check.", "human")
+      wake = lineUser("<task-notification>timer</task-notification>", "task-notification")
+      calls = wake & linesAgent("builder") & lineSaid("Started.") &
+        lineHandback("builder", "abuilder") & linesAgent("critic") & lineSaid("The critic runs.") &
+        lineHandback("critic")
+      taken = asked & lineSaid(PREDICTION) & calls
+    proc reflected(table: string, before = taken): seq[string] =
+      ## Read findings of reflection holding table, after report of critic.
+      blocksHeld(before & lineSaid("## Reflection\n\n**Subagent:** builder.\n\n" & table &
+        "\n- **Change:** none.\n"))
+    check blocksHeld(taken & lineSaid(REFLECTION)).len == 0
+
+    # Whitespace collapses on both sides, and `\|` reads as `|`.
+    let wrapped = PREDICTION.replace("shared key leads", "shared key\n  leads")
+      .replace("each with `file:line`", "each with `a | b`")
+    check reflected(header &
+      "| ✅ | 70% |  the race  to save one shared key leads the findings | it leads |").len == 0
+    check reflected(header & "| ✅ | 70% | the race to save one shared key leads the findings | " &
+      "it leads |\n| ⬜ | 60% | four to eight findings, each with `a \\| b` | three |",
+      asked & lineSaid(wrapped) & calls).len == 0
+
+    # Case as found: sample of `GUIDE.md` before #962 quotes claims short, with percentage.
+    check reflected(header & "| ✅ | 70% | The race leads (70%) | it leads |") == @[
+      "Cell under `Predicted` stands word for word in `## Prediction` block that call took " &
+        "(GUIDE.md, Prediction, critic and reflection); got `The race leads (70%)`."]
+
+    # Block in turn of call, and block no call took, are no quote.
+    let late = asked & lineSaid("Read.") & wake & lineSaid(PREDICTION, "tool_use") &
+      linesAgent("builder") & lineSaid("Started.") & lineHandback("builder", "abuilder") &
+      linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
+    check blocksHeld(late & lineSaid(REFLECTION)).len == 2
+    let unused = asked & lineSaid(PREDICTION) & wake & lineSaid("No subagent.") &
+      lineHandback("critic")
+    check blocksHeld(unused & lineSaid(REFLECTION)).len == 2
+    let critic = asked & lineSaid(PREDICTION) & wake & linesAgent("critic") &
+      lineSaid("The critic runs.") & lineHandback("critic")
+    check blocksHeld(critic & lineSaid(REFLECTION)).len == 0  # prediction of critic is optional
+
+    # Reflection quotes nothing with no table, no row, or empty cell.
+    check reflected("No table.").anyIt("column `Predicted` (GUIDE.md" in it)
+    check reflected("| State | Result |\n| --- | --- |\n| ✅ | it leads |")
+      .anyIt("column `Predicted` (GUIDE.md" in it)
+    check reflected(header).anyIt("got none under `| State | Confidence | Predicted |" in it)
+    check reflected(header & "| ✅ | 70% |  | it leads |").anyIt("empty cell in row `1`" in it)
+    check reflected(header & "| ✅ | 70% |").anyIt("empty cell in row `1`" in it)  # short row
+
+    # First table with column `Predicted` is read, and no other.
+    check reflected("| Item | Cost |\n| --- | --- |\n| run | $1 |\n\n" & header &
+      "| ✅ | 70% | the race to save one shared key leads the findings | it leads |\n\n" & header &
+      "| ✅ | 1% | not quoted | x |").len == 0
+
+    # Reflection of earlier turn was held at its own stop.
+    check blocksHeld(taken & lineSaid("## Reflection\n\nNo table.\n") & lineUser("Next.", "human") &
+      lineSaid("Noted.")).len == 0
+
+
+  test "samples of GUIDE.md hold shape that block checks read (#962)":
+    # Delegate copies form from samples, so sample reflection quotes sample prediction, which
+    #   call takes, as section reads as committed.
+    const guide = staticRead("../../../../GUIDE.md")
+    func sample(heading: string): string =
+      ## Read text of sample in fence that opens with heading; empty where guide holds none.
+      let at = guide.find("```md\n" & heading & "\n")
+      if at < 0: return ""
+      guide[at + "```md\n".len ..< guide.find("\n```", at)] & "\n"
+    check sample(HEADING_PREDICTION).len > 0 and sample(HEADING_REFLECTION).len > 0
+    let transcript = lineUser("Review the diff.", "human") & lineSaid(sample(HEADING_PREDICTION)) &
+      lineUser("<task-notification>timer</task-notification>", "task-notification") &
+      linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
+      linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
+      lineSaid(sample(HEADING_REFLECTION))
+    check transcript.parseTurn.subagents.predictions.len == 1
+    check blocksHeld(transcript).len == 0
