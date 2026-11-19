@@ -3918,12 +3918,12 @@ where that base sits in that span, and only groups of pull requests elsewhere.
 
 ## Blocks of subagents
 
-**`stop` holds some of the steps for each subagent of a kind, at the end of each model
-turn.** `GUIDE.md`, Prediction, critic and reflection, gives the steps, as the Architect ruled
-them in comments on #962 and #969. `checkBlocks` holds these: a prediction before each call, a
-reflection after each report of a critic, and a quote in each cell of a reflection. It reads
-every model turn, whether or not the turn pushed or posted, because the turn of a prediction
-writes nothing. Reading holds each other step.
+**`stop` holds some of the steps for each subagent of a kind, at the end of each model turn.**
+`GUIDE.md`, Prediction, critic and reflection, gives the steps, as the Architect ruled them in
+comments on #962 and #969. `checkBlocks` holds these: a prediction before each call, a reflection
+after each report of a critic, and a quote in each cell of a reflection. It reads every model
+turn, whether or not it pushed or posted, because the turn of a prediction writes nothing.
+Reading holds each other step.
 
 **A model turn ends where the model stops.** It ends at an `assistant` entry whose `stop_reason`
 is a string other than `tool_use`. The harness writes each item of a message as an entry of its
@@ -3935,11 +3935,9 @@ closes the current turn, and each entry after it stays in that turn.
   summary and a restart notice that way, inside a turn whose model goes on. So the block checks
   read model turns, and each other check of `stop` reads the turn that `parseTurn` reads.
 - An entry with no `stop_reason`, or with one that is no string, ends no turn. Assumed: a harness
-  that streams writes no reason before its message ends, and the last entry of the message still
-  ends the turn.
+  that streams writes no reason before its message ends, and the last entry still ends the turn.
 - Verified by `suites/test_hooks.nim`: a skill body after a call, each reason of a stop, and two
-  entries of one message. It also holds an entry with no reason, and one whose reason is no
-  string, as JSON `null`.
+  entries of one message. It also holds an entry with no reason, and one whose reason is `null`.
 
 **A kind is the `name:` of the front matter of each `*.md` template under `.claude/agents/`.**
 `readKinds` reads the templates at each stop, so a template that is added is a kind at once, and
@@ -3960,36 +3958,42 @@ text of each entry, so a fence that crosses two items reads right. The fence is 
 - Verified by `suites/test_hooks.nim`: each end of a block, a fence in a block or across two
   items, and each heading that opens none.
 
-**A call of a kind takes a block of an earlier model turn, where no subagent starts between
-them.** The hook looks back from the turn before the call, past each turn that starts no
-subagent, at any count of turns (comment 7014974932). A turn that starts a subagent of any type
-ends the look back, and its blocks are no evidence (`D2 a` of comment 6982373798). Each call of a
-kind that is not exempt takes the earliest free block of those turns, in the order of the calls.
-An exempt call takes a block only where one is left after them.
+**A block names a kind in its line `**Subagent:**`** (comment 7017187857). The kind is the first
+word after that label, on the first line of the block that opens with it, as `kindNamed` reads
+it. A block with no such line, or whose word is no kind, names no kind and serves no call.
+Choice: the line may open after an indent, and the word keeps its case up to the next whitespace.
+So a kind in backticks is none. Verified by `suites/test_hooks.nim`, for each form of the line.
+
+**A call of a kind takes a block that names its kind, of an earlier model turn, where no subagent
+starts between them.** The hook looks back from the turn before the call, past each turn that
+starts no subagent, at any count of turns (comment 7014974932). A turn that starts a subagent of
+any type ends the turns that the hook looks back over (comment 7014974932). Its blocks are no
+evidence (`D2 a` of comment 6982373798). Of the free blocks there that name its kind, the call
+takes the block of the nearest turn (comment 7017187857). Inside that turn, it takes the earliest.
 
 - Each prediction is the last message of a turn of its own (comment 6980006567). So a block in
   the turn of its call is no evidence (comment 7014974932). A reply to a refusal, or a wake by
   another event, can come between a block and its call, and the block still serves it.
-- The exempt kinds are `critic` and `resolver`. The prediction of a critic is optional (comment
-  6975216328). No comment exempts the resolver: that is a choice, since its work is to mark a
-  prediction.
+- Calls of one turn take blocks in their order. An exempt call, of `critic` or `resolver`, takes
+  only a block of its kind (comment 7017187857). The prediction of a critic is optional (comment
+  6975216328). No comment exempts the resolver: that is a choice, since it marks a prediction.
 - A missing prediction asks for no block, because a block after the call is no evidence
-  (comment 6979936148). The finding names the kind and the `description` of the call. A block
-  before the call, in its turn, adds that a block stands in an earlier turn. Thinking with no text
-  before the call adds that a block in thinking reaches neither the chat nor the hook (`D3 a` of
-  comment 6982373798). A block or thinking after the call adds no hint.
+  (comment 6979936148). The finding names the kind and the `description` of the call. Where free
+  blocks of the turns that the call looks back over name another kind or none, a hint gives what
+  the nearest names. A block before the call, in its turn, adds that a block stands in an earlier
+  turn. Thinking with no text before the call adds that a block in thinking reaches neither the
+  chat nor the hook (`D3 a` of comment 6982373798). A block or thinking after it adds no hint.
 - A call of an earlier turn is held at its own stop, so it takes no finding again. A call in a
-  reply to a refusal is held at no stop (a cost below).
-- A change to the prompt of a running subagent takes no new prediction (comment 6975348319).
-  `stop` reads no message to a running subagent, so it asks for none.
+  reply to a refusal is held at no stop (a cost below). A change to the prompt of a running
+  subagent takes no new prediction (comment 6975348319), so `stop` asks for none.
 - Verified by `suites/test_hooks.nim`: the pass, each refusal and each hint, and no hint after
-  the call. It also holds the exempt kinds by name, each other kind of this repository, and tool
-  use before a call of a kind. It holds the earliest free block for up to three blocks, with each
-  count of calls up to the count of blocks. It also holds more calls than blocks, an exempt call
-  beside them, and a call of an earlier turn.
-- Verified by `suites/test_hooks.nim`, for the look back: a reply to a refusal, a hand-back or a
-  message of the Architect before the call. It holds each count of turns up to four, and blocks
-  one to a turn. It holds a call of each type that ends the look back, and calls that share it.
+  the call. It holds the exempt kinds by name, each other kind of this repository, and tool use
+  before a call of a kind. It holds a block for a `builder` after one for a `reviewer`, and a
+  late block for a `reviewer` before a `builder` or a `critic`.
+- Verified by `suites/test_hooks.nim`, for the turns that the hook looks back over: a reply, a
+  hand-back or a message of the Architect before the call. It holds each count of turns back from
+  one to nine, and three groups of calls. It holds each layout of one or two blocks to a turn,
+  over two and three turns, with each count of calls.
 
 **Each report of a critic takes a `## Reflection` heading of its own after it** (comment
 6974524232). A report takes one of these shapes in the current model turn. The first is a `user`
@@ -4004,16 +4008,14 @@ of `critic` whose `run_in_background` is false.
   points at no hand-back.
 - Reports take headings earliest first, so n reports need n headings.
 - In the last text of the turn, a heading counts only above the first `## Sign-off` or working
-  line, whichever comes first (comment 6974524232). The working line is the line that ends a
-  block, so one read serves both.
+  line (comment 6974524232). The working line also ends a block, so one read serves both.
 - Cost: a call of `critic` with no `run_in_background` gives no report by its result. The harness
   runs such a call in the background, and its hand-back is the report.
 - Rejected: a missing field read as the foreground. Under that read, a launch whose status is not
   `async_launched` counts as a report, so `stop` refuses the turn that makes the launch.
 - Verified by `suites/test_hooks.nim`: each shape, each entry that is no report, a pair, a
-  hand-back of another subagent, and two reports. A hand-back of another critic makes a second
-  report. It also holds each order of sign-off and working line in the last text, and a fence.
-  It holds two sign-offs, and two working lines around a reflection.
+  hand-back of another subagent, and two reports. It holds each order of sign-off and working
+  line in the last text, a fence, two sign-offs, and two working lines around a reflection.
 
 **Each cell under `Predicted` is one whole claim of a block that a call took, or `No prediction`.**
 Comment 6975486646 rules the quote, and comment 6980006567 rules that a reflection quotes only a
@@ -4024,8 +4026,9 @@ below the sign-off or the working line too.
 
 - A claim is a bullet with no indent that opens with `- `, `* ` or `+ `. It runs to the next blank
   line, the next bullet at any indent, or the end of its block. It ends at the first of its
-  percentage in brackets, `, as the 10th` and `. Resolution criterion`, or else at the end of its
-  bullet. Its label is the text before its first `: `.
+  percentage in brackets, `, as the 10th` and `. Resolution criterion`. With none of these, it
+  ends before one final full stop of its bullet (comment 7017902016). Its label is the text
+  before its first `: `.
 - A claim and a cell each read a run of whitespace as one space (comment 7016134603), and a cell
   reads `\|` as `|`. A part of a claim, as `-`, and a claim with its percentage are each a finding.
   The cell `No prediction` passes in that case of letters alone, where a call took a block or none.
@@ -4035,13 +4038,12 @@ below the sign-off or the working line too.
 - Rejected: a label up to the first `: ` of the bullet, which reads a resolution criterion as one.
 - A reflection with no such table, a table with no row under its header, and an empty cell are
   each a finding. No comment holds them. They are a choice, because each quotes no claim.
-- Cost: a bullet with no mark keeps its final full stop. So a cell that drops it is a finding, as
-  at the stop of entry 882 below. A bullet that is no claim, as a question, reads as one.
+- Cost: a bullet that is no claim, as a question, reads as one.
 - Verified by `suites/test_hooks.nim`: each refusal, whitespace, `\|`, the first table, a separator
   row, and a reflection below the sign-off. It holds each claim with and without its label, and
-  refuses each other run of its words. It holds each mark, a bullet with no mark, a wrap, each
-  marker, and `No prediction` with and without a block. Its case as found is a cell that shortens
-  its claim and adds its percentage. The suite also holds the samples of `GUIDE.md` to the check.
+  refuses each other run of its words. It holds each mark, a wrap, each marker, `No prediction`
+  with and without a block, and the samples of `GUIDE.md`. It holds a bullet with no mark, with
+  no final full stop, with one, and with two. It holds a full stop before a mark, and entry 882.
 
 **The block findings take a part of their own in the refusal, after the diff and the queue.** It
 asks for no diff, because each thing that it asks for is new text. It asks the delegate to name
@@ -4051,13 +4053,16 @@ block that a call took. Verified by `suites/test_hooks.nim`.
 
 **Costs, which reading holds:**
 
-- Blocks pair with calls by order alone. The hook never reads which subagent a block names, so a
-  cell may quote a claim of another subagent.
-- The hook never reads the state, the confidence, or the columns other than `Predicted`
-  (comments 6980233163 and 7004976005).
-- The hook never reads the figures of the header of a reflection: tokens, cost, calls and time.
-- The hook never reads whether the resolver ran, or what it marked (comments 6982623146 and
-  6983032935).
+- A block written after the call that it names still serves a later call of its own kind, where
+  no subagent starts between them. A cell may quote a block that another call took.
+- A call that the harness rejects starts no subagent, yet the hook reads it as a call. So it
+  takes a block, and it ends the turns that a later call looks back over, which refuses its
+  retry. Verified by `suites/test_hooks.nim`.
+- Of two blocks of a kind, a call takes the one of the nearer turn. So a block written again in a
+  later turn replaces the first. Verified by `suites/test_hooks.nim`.
+- The hook never reads the state, the confidence, or the columns other than `Predicted` (comments
+  6980233163 and 7004976005). Nor does it read the tokens, cost, calls and time of a reflection.
+  It never reads whether the resolver ran, or what it marked (comments 6982623146 and 6983032935).
 - The hook never reads the rules for forecasting of `D1 a` of comment 6982373798, as the side of
   a claim or its percentiles. It never reads the resolution criterion of a claim (comment
   6982623146), or the effort of a critic (comment 6977822742). The words that open percentiles
@@ -4065,9 +4070,6 @@ block that a call took. Verified by `suites/test_hooks.nim`.
 - No comment holds these choices of the guide, which the hook never reads. A number takes the
   confidence 80%, the mass between its 10th and 90th percentiles, and is a hit on either one or
   between them. The delegate answers the resolver in the turn of its report, after the reflection.
-- The hook sets no limit on the count of turns, so a block written many turns before its call
-  still serves it. A call takes the earliest free block, so a block that a reply writes again
-  stays free, and the reflection quotes the first. Verified by `suites/test_hooks.nim`.
 - A reply to a refusal passes unread, since `stop_hook_active` is set, as the stop branch of
   `koch.nim` holds. So the hook never holds a call, a report of a critic or a reflection in it.
   The next stop holds only its own turn. No suite runs `main` of koch, so a run by hand verifies
@@ -4075,20 +4077,18 @@ block that a call took. Verified by `suites/test_hooks.nim`.
 - A call through a tool other than `Agent` is no call, so a harness that names that tool
   otherwise gives the hook no call.
 
-**Verified by hand on 2026-11-19, through koch built at `b8491db8`.** `koch hook stop` passes or
+**Verified by hand on 2026-11-19, through koch built at `05cb3bbd`.** `koch hook stop` passes or
 refuses each case of the guide, on small transcripts in the shape of the harness. They also hold
 each cost above that is verified by hand. No suite runs `main` of koch, so this run holds the
-dispatch of the stop branch. A row of `No prediction` passes where no call took a block, and
-where a critic ran alone. A cell of `-` is refused, and its row passes with `No prediction`.
+dispatch of the stop branch. A late block for a `reviewer` serves no later `builder` or `critic`.
 
-- Each of 109 breaks of the rules fails a test of `suites/test_hooks.nim`, on that day. A break
-  is one edit of a scratch copy of `hooks.nim` at `b8491db8`, with which the suite builds and runs.
+- Each of 139 breaks of the rules fails a test of `suites/test_hooks.nim`, on that day. A break
+  is one edit of a scratch copy of `hooks.nim` at `05cb3bbd`, with which the suite builds and runs.
 
 **Figures of the frozen copy of the transcript of the delegate on #962.** The copy holds 1,384
-entries, from 2026-11-18T09:34Z to 2026-11-19T09:19Z. 1,147 of them carry no `version`, and 237
-carry `2.1.328`. The `json` module of Python 3.13 reads each line, and each figure below counts
-those reads, on 2026-11-19. The tree keeps no copy of a transcript, and the same reads of another
-copy give its own figures.
+entries, from 2026-11-18T09:34Z to 2026-11-19T09:19Z. The `json` module of Python 3.13 reads each
+line, and each figure below counts those reads, on 2026-11-19. The tree keeps no copy of a
+transcript, and the same reads of another copy give its own figures.
 
 - The 672 `assistant` entries hold 314 messages, one item to an entry. Each message carries one
   stop reason over all its entries. 41 of the 54 messages that end a turn hold more than one
@@ -4099,22 +4099,22 @@ copy give its own figures.
   11 `Agent` calls carry the status `async_launched`, and the `agentId` of each is the `from` of
   a later hand-back. The other call, of `web-fetch` with `run_in_background` false, has the status
   `completed`, and its result holds its report.
-- A replay runs `koch hook stop`, built at `b8491db8`, at each of the 54 stops that the 54
-  entries `stop_hook_summary` mark. For each stop, it gives the hook the copy up to the last
-  `assistant` entry before that stop. It sets `stop_hook_active` where the turn opens with the
-  feedback of `stop`. It runs from the root of a checkout on `curator/subagent-blocks`, the branch
-  that each sign-off of the copy names. Its templates give the kinds.
-- Of the 54 stops, 33 pass and 8 pass unread. The other checks refuse the 8 stops whose feedback
-  of `stop` the copy holds, 7 of them alone. The block checks refuse 6, for 3 missing predictions
-  and 29 cells that are no whole claim of a block that a call took.
-- At 5 of those 6, each block of the delegate stands in the turn of a call, in a later turn, or in
-  a fence. Each refusal follows the rules as written. No report of a critic lacks its reflection.
-- Counted from 1, the call of `critic` in entry 384 takes the block of entry 370, for the call of
-  `reviewer` in entry 325. At the stop of entry 413, 6 cells keep the percentage of its claims.
-- The one call made by the protocol of comment 6980006567, in entry 821, takes its block. At the
-  stop of entry 882, its reflection quotes 6 claims whole, and cuts the full stop of 2.
-- Cost: `koch hook stop` on the whole copy, of 8.1 MB, takes a median of 244 ms at `61233948`
-  and 242 ms at `b8491db8`. Each median is of 20 runs on 2026-11-19, which alternate between the
+- A replay runs `koch hook stop`, built at `05cb3bbd`, at each of the 54 stops that the entries
+  `stop_hook_summary` mark. It gives the hook the copy up to the last `assistant` entry before the
+  stop. It sets `stop_hook_active` where the turn opens with the feedback of `stop`. It runs from a
+  checkout on `curator/subagent-blocks`, the branch of each sign-off, whose templates give kinds.
+- Of the 54 stops, 33 pass and 8 pass unread. The other checks alone refuse the 8 stops whose
+  feedback of `stop` the copy holds. The block checks refuse 5, for 3 missing predictions and 27
+  cells that are no whole claim of a block that a call took.
+- At each of those 5, each block of the delegate stands in the turn of a call, in a later turn, or
+  in a fence. Each refusal follows the rules as written. No report of a critic lacks its reflection.
+- Entries count from 1. The 8 blocks name `reviewer` and `builder` in entry 370, then `critic`,
+  `builder`, `builder`, `critic`, `builder` and `researcher`. Only the last, in entry 817, serves a
+  call, the call of `researcher` in entry 821, made by the protocol of comment 6980006567.
+- So the 7 cells of the stop of entry 413 quote blocks that no call took. At the stop of entry 882,
+  the reflection quotes 8 claims whole, 2 of them before the final full stop of their bullet.
+- Cost: `koch hook stop` on the whole copy, of 8.1 MB, takes a median of 245 ms at `05cb3bbd`
+  and 266 ms at `b8491db8`. Each median is of 20 runs on 2026-11-19, which alternate between the
   builds, on 4 cores of an Intel Xeon at 2.10 GHz.
 
 ## Skills
