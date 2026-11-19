@@ -368,8 +368,8 @@ nothing is inferred from content.
 
 An unknown root directory, a stray file in a root or domain folder, and an unregistered domain
 are findings, and are never skipped. `.claude` and `.githooks` are root directories beside
-`.github`, unchecked inside. The hooks, the permission rules, the skill and the
-`record-reviewer` live in the first, and git's own hooks in the second.
+`.github`, unchecked inside. The hooks, the permission rules, the skills and the templates of
+subagents live in the first, and git's own hooks in the second.
 
 - Rejected: an early return under `curator/`, which drops an unknown head in silence, so a
   misplaced project leaves the audit.
@@ -3934,7 +3934,7 @@ steps that no section holds.
 | `sign-off` | The turn stops | None |
 | `propose-term` | A concept needs a word | None |
 | `merged` | A pull request merged | Its worktree and branch removed |
-| `record` | A design changes | The diff goes to `record-reviewer` |
+| `record` | A design changes | The diff goes to a `reviewer` |
 | `enact` | A new check reddens a project | None |
 | `steward` | The harness drives a pull request | None |
 | `move` | A project takes a new folder or domain | None |
