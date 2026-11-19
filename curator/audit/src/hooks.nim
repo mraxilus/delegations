@@ -348,8 +348,9 @@ const
     ## Cell under `Predicted` of row that counts missing prediction as miss (7015791554).
   MARKERS_BULLET = {'-', '*', '+'}  ## Characters that open bullet, before space.
   MARKS_CLAIM = [", as the 10th", ". Resolution criterion"]
-    ## Words that open percentiles and resolution criterion of claim, which end it, as its
-    ##   percentage in brackets does (7016134603).
+    ## Words that open percentiles and resolution criterion of claim, as samples of GUIDE.md
+    ##   write them; first of them ends claim (7016134603), where no confidence stands before it
+    ##   (7018501890).
   SEPARATOR_LABEL = ": "  ## Mark after label of claim, as in `Judgement: `.
   FULL_STOP = '.'
     ## Mark that ends sentence; claim with no mark ends before one final one of its bullet
@@ -2041,10 +2042,12 @@ func isPercentage(text: string, at: int): bool =
 func claims(text: string): seq[string] =
   ## Read each claim of block text, with its label and without it, as reflection may quote it.
   ##   Claim is bullet with no indent, to next blank line, next line opening bullet at any
-  ##     indent, or end of block, each run of whitespace read as one space (7016134603).
-  ##   Claim runs up to its percentage in brackets, its percentiles from `, as the 10th`, or its
-  ##     resolution criterion, whichever comes first (7016134603); where none stands, it ends
-  ##     before one final full stop of its bullet (7017902016).
+  ##     indent, or end of block; each run of whitespace reads as one space (7016134603).
+  ##   Claim runs up to its confidence: last percentage in brackets before first of its
+  ##     percentiles and its resolution criterion, or before its end; percentage before
+  ##     confidence stays in claim (7018501890). With no percentage there, claim runs up to that
+  ##     first mark (7016134603); with none, it ends before one final full stop of its bullet
+  ##     (7017902016).
   ##   Label is text before first `: ` of claim; `: ` that only resolution criterion holds
   ##     opens none, so bullet with no label reads whole.
   var
@@ -2062,7 +2065,7 @@ func claims(text: string): seq[string] =
     for mark in MARKS_CLAIM:
       let at = text.find(mark)
       if at >= 0: stop = min(stop, at)
-    for at in 0 ..< stop:
+    for at in countdown(stop - 1, 0):  # last percentage first: it is confidence
       if text.isPercentage(at):
         stop = at
         break
@@ -2083,8 +2086,9 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
   ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
   ##     each is finding, as cell that quotes no claim is.
   ##   Cell equals one claim of block call took, with or without its label (7016134603), each
-  ##     run of whitespace read as one space; fragment of claim, claim with its percentage, or
-  ##     claim with no mark that keeps final full stop of its bullet (7017902016), is none.
+  ##     run of whitespace read as one space; fragment of claim, claim with its confidence
+  ##     (7018501890), or claim with no mark that keeps final full stop of its bullet
+  ##     (7017902016), is none.
   ##     Cell `No prediction` passes too, in that case of letters alone: it counts
   ##     missing prediction in row of its own, with cause of miss under `Result` (7015791554).
   let lines = text.splitLines
@@ -2117,7 +2121,7 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
           "",
           0,
           "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" & HEADING_PREDICTION &
-            "` block that call took, up to its percentage, percentiles or resolution criterion, " &
+            "` block that call took, up to its confidence, percentiles or resolution criterion, " &
             "or before final full stop of bullet with none, with or without its label, or `" &
             NO_PREDICTION & "` (GUIDE.md, Prediction, critic and reflection); got `" & cell & "`.",
         )
