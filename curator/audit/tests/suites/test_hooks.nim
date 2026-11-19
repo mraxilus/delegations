@@ -2982,6 +2982,34 @@ suite "Hooks":
         check held.allIt("`No prediction` (GUIDE.md, Prediction, critic and reflection)" in it)
 
 
+  test "costs of read of claim stay as record names them (#969)":
+    # Record, Quotes of claims, names these costs, which critic of build of D5 b found by probe;
+    #   each holds here so that change to it shows.
+    # Indent of one to three spaces, `1.`, or tab after marker opens no claim, so no cell quotes
+    #   that bullet.
+    for bullet in [" - a b (70%).", "   - a b (70%).", "-\ta b (70%).", "*\ta b (70%).",
+        "1. a b (70%).", "1) a b (70%)."]:
+      for cell in ["a b", bullet.strip.split(maxsplit = 1)[1]]:
+        check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Block that writes `\|` keeps it in its claim; cell reads `\|` as `|`, so only cell that
+    #   writes `\\|` quotes that claim.
+    const piped = "- Judgement: a \\| b (70%)."
+    for cell in ["a \\\\| b", "Judgement: a \\\\| b"]: check quoted(piped, cell).len == 0
+    for cell in ["a \\| b", "Judgement: a \\| b"]:
+      check quoted(piped, cell) == @[refusalCell(cell.replace("\\|", "|"))]
+
+    # Claim with percentiles holds no confidence in brackets, so percentage in brackets in its
+    #   text is last one before its percentiles, and claim ends there.
+    const ranged = "- Work: a (5%) b: 1, 2 and 3, as the 10th, 50th and 90th percentiles."
+    for cell in ["Work: a", "a"]: check quoted(ranged, cell).len == 0
+    for cell in ["a (5%) b: 1, 2 and 3", "Work: a (5%) b: 1, 2 and 3"]:
+      check quoted(ranged, cell) == @[refusalCell(cell)]
+
+    # Bullet that is no claim, as question, reads as one.
+    check quoted("- Judgement: does it hold?", "does it hold?").len == 0
+
+
   test "samples of GUIDE.md hold shape that block checks read (#962)":
     # Delegate copies form from samples, so sample reflection quotes sample prediction, which
     #   call takes, as section reads as committed.
