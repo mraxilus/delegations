@@ -172,8 +172,12 @@ return it confirmed.
   Start work that a kind covers through that kind, and never through a general type.
 - **The prediction is the last message of a turn of its own, which starts no subagent.** Start
   a short background timer first, such as `sleep 5`. Its end wakes you, and the next turn
-  starts the subagent. A block serves a later call where no subagent starts between them,
-  whatever the count of turns between.
+  starts the subagent. A block of such a turn serves a later call where no subagent starts
+  between them, whatever the count of turns between.
+- **The line `**Subagent:**` gives the kind first, then `of` and what the subagent does**, as
+  `**Subagent:** reviewer of the diff`. A block serves only a call of the kind that the first
+  word of this line names. Where more than one block serves a call, the call takes the block of
+  the nearest earlier turn. Inside that turn, it takes the earliest block.
 - **The block stands in the chat.** A block in thinking reaches neither the chat nor the hook,
   and a block in the turn of its call is no evidence. Never write a prediction to a file, and
   never give a subagent the path of a live transcript. A subagent can read both.
@@ -222,8 +226,9 @@ Then the subagent runs, and these steps follow:
 - **Each cell under `Predicted` is one whole claim of the block, with or without its label.** A
   claim is a bullet at the top level of the block, and its label is the text before its first
   `: `, as `Judgement`. The claim ends at the first of its percentage in brackets, the words
-  `, as the 10th` or the words `. Resolution criterion`. Where none of these stands, it ends at
-  the end of its bullet. A part of a claim, or a claim with its percentage, quotes no claim.
+  `, as the 10th` or the words `. Resolution criterion`. Where none of these stands, it ends
+  before one final full stop of its bullet. A part of a claim, or a claim with its percentage,
+  quotes no claim.
 - **The reflection gives the cause of each miss, and of each hit at 60% or less.** Where the
   report and the critic disagree, the evidence decides, and the reflection says which way and
   why.
