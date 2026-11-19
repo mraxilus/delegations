@@ -1925,8 +1925,8 @@ suite "Hooks":
     for shape in [report, linesForeground("critic", "false", "completed"), queued]:
       check blocksHeld(taken & shape & read) ==
         @["Report of critic takes `## Reflection` block of its own after it, above any " &
-          "sign-off (GUIDE.md, Prediction, critic and reflection); got none for report `1` of " &
-          "`1` in this turn."]
+          "sign-off or working line (GUIDE.md, Prediction, critic and reflection); got none " &
+          "for report `1` of `1` in this turn."]
       check blocksHeld(taken & shape & reflected).len == 0
 
     # Hand-back of other kind, entry that is no hand-back, launch notice and result of call in
@@ -1969,6 +1969,47 @@ suite "Hooks":
     # Refusal asks for missing reflection now, and for mend of cell that quotes no block.
     let reason = reasonStop([], [], blocks = @[finding("", 0, "Report of critic.")])
     check "Write each missing reflection now" in reason and "mend each cell under" in reason
+
+
+  test "reflection counts above first sign-off or working line of last text of turn (#962)":
+    # Case as found by critic of hook on #962: reflection below working line of last text of
+    #   turn counted, so turn passed. Ruling 6974524232 asks for it before any sign-off or
+    #   working line.
+    const
+      signed = "## Sign-off\n\n**Role:** curator, at `main`\n"
+      working = "**Working:** the resolver runs next.\n"
+    let
+      taken = lineUser("Build the check.", "human") & lineSaid(PREDICTION) &
+        lineUser("<task-notification>timer</task-notification>", "task-notification") &
+        linesAgent("builder") & lineSaid("Started.") & lineHandback("builder", "abuilder") &
+        linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic")
+      missing = @["Report of critic takes `## Reflection` block of its own after it, above " &
+        "any sign-off or working line (GUIDE.md, Prediction, critic and reflection); got none " &
+        "for report `1` of `1` in this turn."]
+    check blocksHeld(taken & lineSaid("The critic held each claim.\n\n" & working & "\n" &
+      REFLECTION)) == missing
+
+    # Heading counts where it stands above each sign-off and working line of last text: each
+    #   order of reflection `R`, sign-off `S` and working line `W`, each of last two or not.
+    for order in ["R", "RS", "SR", "RW", "WR", "RSW", "RWS", "SRW", "SWR", "WRS", "WSR"]:
+      var parts: seq[string]
+      for part in order:
+        parts.add(if part == 'R': REFLECTION elif part == 'S': signed else: working)
+      check blocksHeld(taken & lineSaid(parts.join("\n"))) ==
+        (if order[0] == 'R': newSeq[string]() else: missing)
+
+    # Working line of earlier text of turn, or in fence, ends nothing.
+    check blocksHeld(taken & lineSaid(working & "\n" & REFLECTION, "tool_use") & linesCall("ls") &
+      lineSaid("Done.")).len == 0
+    check blocksHeld(taken & lineSaid("Form:\n\n```md\n" & working & "```\n\n" & REFLECTION))
+      .len == 0
+
+    # Line that ends block of prediction is line that ends reflections that count, and no other.
+    for (line, is_working) in [("**Working:** x", true), ("  **Working:** x", true),
+        ("**Working:**", true), ("Then **Working:** x", false), ("Working: x", false)]:
+      let ended = lineSaid("## Prediction\n- a\n" & line & "\n- b").parseTurn.subagents
+      check (ended.predictions.mapIt(it.text) == @["- a"]) == is_working
+      check (blocksHeld(taken & lineSaid(line & "\n" & REFLECTION)) == missing) == is_working
 
 
   test "each cell under `Predicted` quotes block that call took, word for word (#962)":
