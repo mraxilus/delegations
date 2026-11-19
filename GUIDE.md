@@ -176,8 +176,11 @@ return it confirmed.
   between them, whatever the count of turns between.
 - **The line `**Subagent:**` gives the kind first, then `of` and what the subagent does**, as
   `**Subagent:** reviewer of the diff`. A block serves only a call of the kind that the first
-  word of this line names. Where more than one block serves a call, the call takes the block of
-  the nearest earlier turn. Inside that turn, it takes the earliest block.
+  word of this line names. The hook reads that word with no regard to case, backticks, bold or
+  italic marks, or a final comma. So `**Subagent:** Builder of the fix` names `builder`.
+- **Where more than one block serves a call, the call takes the block of the nearest earlier
+  turn.** Inside that turn, it takes the earliest block. So a later block of a kind, written
+  before the call, replaces an earlier block of that kind.
 - **The block stands in the chat.** A block in thinking reaches neither the chat nor the hook,
   and a block in the turn of its call is no evidence. Never write a prediction to a file, and
   never give a subagent the path of a live transcript. A subagent can read both.
@@ -224,17 +227,21 @@ Then the subagent runs, and these steps follow:
   that is ambiguous or annulled, and the row gives its cause. A claim that holds only in part
   is a miss.
 - **Each cell under `Predicted` is one whole claim of the block, with or without its label.** A
-  claim is a bullet at the top level of the block. Its label is one word that opens with a
-  capital, then `: `, as `Judgement`. Other text before a `: ` makes no label, as a word in
-  lower case or more than one word. Bold text, as `**Judgement:**`, makes no label either, so a
-  cell quotes it with the claim. A part of a claim, or a claim with its confidence, quotes no
-  claim.
+  claim is a bullet at the top level of the block. Its label stands at its start: any run with
+  no space that opens with a capital letter, then `: `, as `Q1:` or `Follow-up:`. A label in
+  bold, as `**Judgement:**`, is a label too. Other text before a `: ` makes no label, as a word
+  in lower case or more than one word. A part of a claim, or a claim with its confidence, quotes
+  no claim.
 - **A claim ends at its confidence**, the last percentage in brackets, as `(70%)` or `(62.5%)`,
-  before its percentiles, its resolution criterion or its end. Its percentiles open with the
-  words `, as the 10th`, and its resolution criterion with the words `. Resolution criterion`. A
-  percentage before its confidence stays in the claim. Where no percentage stands there, the
-  claim ends at the first of those words. Where none of these stands, it ends before one final
-  full stop of its bullet.
+  before its resolution criterion or its end. A percentage before its confidence stays in the
+  claim. Where no percentage stands there, the claim ends at its resolution criterion. Where
+  neither stands, it ends before one final full stop of its bullet.
+- **A claim with percentiles takes no confidence in brackets**, since its percentiles state its
+  confidence. It ends at its percentiles, which open with the words `, as the 10th`. A
+  percentage in brackets in its text, as `(10% cached)`, stays in the claim.
+- **A resolution criterion opens with the words `. Resolution criterion`**, in any case of
+  letters, with or without bold. So `. **Resolution criterion:**` ends a claim too. A line right
+  under a claim that opens an item, as `1. ` or a marker and a tab, ends that claim.
 - **The reflection gives the cause of each miss, and of each hit at 60% or less.** Where the
   report and the critic disagree, the evidence decides, and the reflection says which way and
   why.
