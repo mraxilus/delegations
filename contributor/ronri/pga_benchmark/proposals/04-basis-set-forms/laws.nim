@@ -27,8 +27,8 @@ const
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
   DIMENSIONS_SWEPT = 5
     ## Highest dimension laws hold each product at every pair of types at; past it, vector pairs
-    ##   with each type, either side. Every pair at cga6d builds and runs in 18 minutes, peaking
-    ##   at 6 106 MiB; vector pairs there take 2 minutes and 1 196 MiB.
+    ##   with each type, either side. Every pair at cga6d builds and runs in 7 minutes, peaking
+    ##   at 4 831 MiB; vector pairs there take 2 minutes and 1 458 MiB.
   ALIGNMENTS_NAMED = [(3, 8), (4, 16), (5, 8), (6, 16), (8, 16), (10, 16), (16, 16)]
     ## Count of coefficients of each named basis-set type, rga3d to cga5d, aligned at 64 bits.
   OPERATORS_MAPS = ["∙", "∘", "/", "\\", "~", "~∘", "★", "☆", "⊖", "|∙²", "|∘²"]
