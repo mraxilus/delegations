@@ -1903,6 +1903,16 @@ suite "Hooks":
     for kind in ["builder", "reviewer"]:
       check blocksHeld(asked & read & wake & linesAgent(kind) & started).len == 1
 
+    # Each other kind of this repository is held, so no kind joins exempt kinds in silence, as
+    #   critic of fixes on #962 found for `surveyor`.
+    let repository = readKinds(currentSourcePath().parentDir / "../../../..")
+    var held = 0
+    for kind in repository:
+      if kind notin ["critic", "resolver"]:
+        check blocksHeld(asked & read & wake & linesAgent(kind) & started, repository).len == 1
+        inc held
+    check held >= 1  # loop holds at least one kind
+
     # Type no template names is tool use; with no folder, no type is kind.
     for kind in ["general-purpose", "web-fetch", "Explore"]:
       check blocksHeld(asked & read & wake & linesAgent(kind) & started).len == 0
@@ -2003,6 +2013,12 @@ suite "Hooks":
       check blocksHeld(alone & read).len == 1
       check blocksHeld(alone & reflected).len == 0
 
+    # Later hand-back of other critic agent points at no result either, so turn holds two
+    #   reports, as critic of fixes on #962 found.
+    for later in [lineHandback("critic", "a8"), lineQueued("critic", "a8")]:
+      let twice = taken & linesForeground("critic", "false", "completed", "a9") & later
+      check blocksHeld(twice & reflected).anyIt("got none for report `2` of `2`" in it)
+
     # Each report takes heading after it, earliest report first.
     let before = lineUser("Next.", "human") & lineSaid(REFLECTION, "tool_use") & linesCall("ls")
     check blocksHeld(taken & before & lineQueued("critic") & read).len == 1
@@ -2052,8 +2068,9 @@ suite "Hooks":
       REFLECTION)) == missing
 
     # Heading counts where it stands above each sign-off and working line of last text: each
-    #   order of reflection `R`, sign-off `S` and working line `W`, each of last two or not.
-    for order in ["R", "RS", "SR", "RW", "WR", "RSW", "RWS", "SRW", "SWR", "WRS", "WSR"]:
+    #   order of reflection `R`, sign-off `S` and working line `W`, each of last two or not, and
+    #   two working lines around it, as critic of fixes on #962 found.
+    for order in ["R", "RS", "SR", "RW", "WR", "RSW", "RWS", "SRW", "SWR", "WRS", "WSR", "WRW"]:
       var parts: seq[string]
       for part in order:
         parts.add(if part == 'R': REFLECTION elif part == 'S': signed else: working)
