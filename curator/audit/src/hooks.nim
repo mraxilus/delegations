@@ -357,10 +357,11 @@ const
     ## Words that open percentiles of claim, as samples of GUIDE.md write them; where they are
     ##   first mark, claim ends at them and no percentage ends it, since they state its confidence
     ##   (7023048202).
-  MARK_CRITERION = ". Resolution criterion"
-    ## Words that open resolution criterion of claim, as samples of GUIDE.md write them; where
-    ##   they are first mark, claim ends at them (7016134603), or at confidence before them
-    ##   (7018501890).
+  MARKS_CRITERION = [". resolution criterion", ". " & BOLD & "resolution criterion"]
+    ## Words that open resolution criterion of claim, as samples of GUIDE.md write them, in lower
+    ##   case: claim reads them in any case of letters, bold or not, so criterion in such form
+    ##   makes no later percentage confidence (choice). Where they are first mark, claim ends at
+    ##   them (7016134603), or at confidence before them (7018501890).
   POINT_DECIMAL = '.'  ## Mark between digits and decimal part of percentage, as in `(62.5%)`.
   PIPE = '|'  ## Mark between cells of row of table.
   PIPE_ESCAPED = "\\" & PIPE
@@ -2097,9 +2098,15 @@ func stopClaim(text: string): int =
   ##     criterion, or before its end; percentage before confidence stays in claim (7018501890).
   ##     With no percentage there, claim runs up to criterion (7016134603); with neither, it ends
   ##     before one final full stop of its bullet (7017902016).
+  ##   Criterion is first of `MARKS_CRITERION` in text in lower case, whose places are those of
+  ##     text, since case of ASCII letter keeps its length.
   let
     ranged = text.find(MARK_PERCENTILES)
-    criterion = text.find(MARK_CRITERION)
+    lower = text.toLowerAscii
+  var criterion = -1  # First place of criterion; -1 where text holds none.
+  for mark in MARKS_CRITERION:
+    let at = lower.find(mark)
+    if at >= 0 and (criterion < 0 or at < criterion): criterion = at
   if ranged >= 0 and (criterion < 0 or ranged < criterion): return ranged
   result = (if criterion >= 0: criterion else: text.len)
   for at in countdown(result - 1, 0):  # last percentage first: it is confidence
