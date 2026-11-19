@@ -137,6 +137,10 @@ subagent.
 | Builder | makes one change in its own worktree | its commits, its `koch check`, its choices |
 | Critic | checks the report of a subagent | each claim held, failed or unchecked |
 
+Each template pins `model: opus` and the effort of its kind. A critic runs at the effort of the
+subagent that it checks, or higher. So where that subagent runs above the level of the critic,
+give that level as the `effort` of the call that starts the critic.
+
 ### A fresh context
 
 - **Each subagent starts fresh.** Never fork one, since a fork takes your whole conversation,
