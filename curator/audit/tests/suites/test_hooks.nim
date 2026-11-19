@@ -2182,6 +2182,9 @@ suite "Hooks":
       check heldAfter(text).len == 0
     check heldAfter("**Subagent:** reviewer of the diff.\n**Subagent:** builder of the fix.") ==
       @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]  # first line alone
+    for first in ["**Subagent:**", "**Subagent:** the builder of the fix."]:
+      check heldAfter(first & "\n**Subagent:** builder of the fix.") ==
+        @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]  # first line names none
     for text in ["**Basis:** what this delegate knows.", "**Subagent:**",
         "**Subagent:** Builder of the fix.", "**Subagent:** the builder of the fix.",
         "**Subagent:** `builder` of the fix.", "**Subagent:** builder, fresh context.",
