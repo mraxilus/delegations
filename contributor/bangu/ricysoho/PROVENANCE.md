@@ -4295,6 +4295,8 @@ ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e 
   .i lo nu `toCompletions` cu sutra ca `1da9df3d` cu na zmadu le cenba ne'i su'o remei pe ro girzu
   .i lo nu `choose` cu sutra ca `1da9df3d` cu zmadu le cenba ne'i le pamoi girzu po'o
   .i ku'i ne'i ro remei lo nu `choose` cu sutra ca `4714f43c` .e `1da9df3d` cu zmadu li no
+  .i `Architect` jdice bu'u `#975` lo du'u le cuxna pe `4714f43c` .e `1da9df3d` cu stali ki'u le
+      namcu pe lo nu kancu .e lo nu ro remei pe `choose` cu jarco lo nu sutra
 - ny.mai **lo cipra ne'i lo cikryzba**
   .i le cikryzba cu selzba sepi'o `-d:testing`
   .i ro temci cu temci pa nu gunka
