@@ -1057,7 +1057,9 @@ func readTextMarked*(text: string): ReadingMarked =
   for u in ending ..< result.units.len: result.tree.children.add Node(is_terminal: true, at: u)
 
 
-func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
+func readTextParts*(
+    charts: var ChartsKept, text: string, is_live, is_lohu = false
+): ReadingParts =
   ## tcidu lo selci'a ta'i lo nu `readTextMarked` tcidu kei gi'e zbasu lo jgena pe ro pagbu poi le
   ##     so'i nu tcidu cu katna ke'a
   ##   .i ro pagbu cu se tcidu ta'i pa mulno se ciska to `readGrammarParts` toi
@@ -1081,6 +1083,8 @@ func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
   ##     selfa'o bu'u lo fanmo be lo selci'a
   ##   .i se ki'u bo lo mivyselci'a cu katna ba lo krasi valsi po'o poi zvati le selci'a poi se
   ##       lidne zo su noi romoi
+  ##
+  ## ni'o `charts` cu ralte le mulcmi pe le romoi pagbu poi se tcidu to `readGrammarParts` toi
   result = text.readUnits(is_lohu)
   template reading: untyped = result.reading
     ## lo datcme be le se tcidu pe le pagbu
@@ -1092,7 +1096,7 @@ func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
     let
       is_last = k == texts.high
       (read, terminals) = reading.units.toTerminals(texts[k])
-      (parts, open) = terminals.readGrammarParts(is_live and is_last)
+      (parts, open) = charts.readGrammarParts(terminals, is_live and is_last)
     var tree = Node(is_terminal: false, rule: "text", number: 0, children: parts)
     tree.remap(read, if is_last: ending else: texts[k].b + 1)
     if read.len < texts[k].len: tree.placeRefused(reading.units.mapIt(it.is_read), texts[k])
@@ -1100,3 +1104,9 @@ func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
     if is_last: result.open = open.mapIt(read[it])
     else: reading.tree.children.add Node(is_terminal: true, at: texts[k].b + 1)
   for u in ending ..< reading.units.len: reading.tree.children.add Node(is_terminal: true, at: u)
+
+
+func readTextParts*(text: string, is_live, is_lohu = false): ReadingParts =
+  ## tcidu lo selci'a ta'i lo nu `readTextParts` tcidu kei sepi'o lo mulcmi poi cnino
+  var charts: ChartsKept
+  charts.readTextParts(text, is_live, is_lohu)

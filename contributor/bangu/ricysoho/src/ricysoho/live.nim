@@ -270,6 +270,9 @@ type
       ##   .i lo fanmo be le selci'a cu tcidu ba le stuzi
       ##   .i ki'u bo lo famvla pe lo kravla poi lidne zo fa'o cu ka'e sitna zo fa'o
     is_ended: bool  ## lo du'u lo fanmo be le mivyselci'a cu pu se tcidu
+    charts: ChartsKept
+      ## lo mulcmi pe le romoi pagbu poi se tcidu
+      ##   .i ro lo spisa cu tisna lo selcmi po'o pe lo valsi poi cnino to `fillSets` toi
 
 
 func initReaderLive*(): ReaderLive =
@@ -511,7 +514,7 @@ func readFrom(reader: var ReaderLive, start: int, is_final: bool): ReadingParts 
   let
     last = (if reader.stop.isSome and not is_final: min(ending, reader.stop.get) else: ending)
     is_lohu = reader.openers.anyIt(it.selmaho == Selmaho.Lohu and it.at < start)
-  result = readTextParts(reader.text[start ..< last], is_live = not is_final, is_lohu)
+  result = reader.charts.readTextParts(reader.text[start ..< last], is_live = not is_final, is_lohu)
   reader.count_read += last - start
   for occurrence in result.reading.occurrences.mitems:
     (occurrence.start, occurrence.finish) = (occurrence.start + start, occurrence.finish + start)

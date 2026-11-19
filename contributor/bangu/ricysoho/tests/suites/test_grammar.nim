@@ -157,6 +157,9 @@ const
     ##   .i le selci'a cu du lo selci'a poi pagbu le selci'agri gi'e vasru pa cmima be `CUTTING`
     ##       ku'o .e lo selci'a pe le vi datnyvei ge'u .e le selci'a poi jorne lo ju'agri pe pa
     ##       prosa to `Article IX.3` toi
+  COUNT_KEPT_LEAST = 500
+    ## lo dzijimte be lo te kancu be lo se ciska poi le flalu pe lo mulcmi poi stali cu tcidu ke'a
+    ##   .i ro le selci'a cu cimoi lo selci'a gi'e vasru su'o ci genvla to `Article IX.3` toi
   COUNT_PARTS_JOINED = 64
     ## lo te kancu be lo pagbu poi le nu tcidu ro pagbu cu katna le se ciska poi jorne lo ju'agri pe
     ##     pa prosa ku'o fi ke'a
@@ -512,6 +515,33 @@ suite "Internal: Grammar":
     let terminals = TEXTS_PASSES[1].terminalsRead.get
     # zo tu'e cu ca'o kalri
     check terminals.toParts(0, terminals.len) == (@[0 .. 1, 2 .. 3], 4)  # `statement-3`
+
+
+  test "Chart filled from kept columns is chart filled anew, as words join and change":
+    var texts = @TEXTS_PASSES
+    for example in EXAMPLES_CLL: texts.add example.rows.join(" ")
+    for sentence in SENTENCES_TATOEBA: texts.add sentence.text
+    var
+      whole, everywhere: Chart  # le mulcmi poi stali ca ro nu tcidu
+      count = 0
+    for k, text in texts:
+      if k mod 3 != 0: continue  # ro cimoi selci'a ki'u lo jdima be le cipra
+      let terminals = text.terminalsRead
+      if terminals.isNone or terminals.get.len < 3: continue
+      let
+        read = terminals.get
+        steps = [
+          read[0 ..< 1], read[0 ..< read.len div 2], read[0 ..< read.len - 1], read,
+          read[0 ..< read.len - 2] & read[^1], read,
+        ]
+          ## le selci'a cu zenba gi'e ba bo cenba lo genvla poi lidne le romoi
+      for step in steps:
+        var whole_fresh, everywhere_fresh: Chart
+        check whole.readWhole(step).shape == whole_fresh.readWhole(step).shape
+        let islands = everywhere.islands(step, 0, step.len).mapIt(it.shape)
+        check islands == everywhere_fresh.islands(step, 0, step.len).mapIt(it.shape)
+      inc count
+    check count >= COUNT_KEPT_LEAST  # `Article IX.3`
 
 
   test "Passes read text of article joined part by part, its open tu'e too":
