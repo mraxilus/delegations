@@ -12,8 +12,9 @@
 ##     refuses end of turn that pushed or posted and closes with neither sign-off block nor
 ##     working line, sign-off out of shape whatever its turn did, end of any turn whose message
 ##     names `#N` outside link or cites charter reference with no description, sign-off from
-##     turn that read no open issue of its role, and call of subagent of kind that no block of
-##     model turn before it predicts; `start` prints role, read order, each
+##     turn that read no open issue of its role, call of subagent of kind that no block of
+##     model turn before it predicts, report of critic with no reflection after it, and cell of
+##     reflection that quotes no block call took; `start` prints role, read order, each
 ##     finding of drift, headings of record branch works on, and carried list; `prompt` reads
 ##     each message of Architect; `push` and `msg` serve git hooks.
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
@@ -58,9 +59,11 @@
 ##     what turn did is read from there.
 ##   Blocks of subagents hold at end of each model turn, as Architect ruled on #962
 ##     (`checkBlocks`): call of subagent of kind takes `## Prediction` block of model turn
-##     just before its own, which starts no subagent. Model turn ends where model stops, never
-##     at `user` entry, so block checks read model turns, and every other check reads turn since
-##     message of person. Kinds are read from templates at each stop (`readKinds`).
+##     just before its own, which starts no subagent; each report of critic takes
+##     `## Reflection` block after it; each cell under `Predicted` of reflection quotes block
+##     call took. Model turn ends where model stops, never at `user` entry, so block checks read
+##     model turns, and every other check reads turn since message of person. Kinds are read
+##     from templates at each stop (`readKinds`).
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -79,6 +82,11 @@
 ##   Cost: `stop` cannot tell coordinator, which holds no branch, from delegate; where it runs
 ##     for coordinator, whose message is digest, turn that posted is asked once for sign-off,
 ##     and second stop passes.
+##   Cost: blocks pair with calls by order alone, so hook never reads which subagent block
+##     names; it never reads state, confidence or figures of header of reflection, run of
+##     resolver, or rules of forecasting, so reading holds those.
+##   Cost: reply to refusal of `stop` is model turn of its own, so block whose turn is refused
+##     stands two turns before call that follows reply.
 
 {.experimental: "strictFuncs".}
 
@@ -132,16 +140,22 @@ type
   Subagent* = object  ## Define one `Agent` call of transcript, i.e. subagent it starts.
     kind*: string  ## Input `subagent_type`, such as `builder`.
     description*: string  ## Input `description`.
+    id*: string  ## Id of tool use, which its result names.
+    is_foreground*: bool  ## Input `run_in_background` is false, so result can hold report.
     place*: Place  ## Where call stands.
 
-  Block* = object  ## Define one `## Prediction` block of assistant text.
+  Block* = object  ## Define one `## Prediction` or `## Reflection` block of assistant text.
     text*: string  ## Lines after heading, to end of block, each fenced line blanked.
     place*: Place  ## Where text item holding block stands.
+    is_counted*: bool
+      ## Heading stands above first `## Sign-off` of last text of its turn, or in other text.
 
   Subagents* = object  ## Define what transcript says about subagents, by model turn.
     turns*: int  ## Count of model turns; last one is current.
     calls*: seq[Subagent]  ## Each `Agent` call, in order.
     predictions*: seq[Block]  ## Each `## Prediction` block, in order.
+    reflections*: seq[Block]  ## Each `## Reflection` block, in order.
+    reports*: seq[Place]  ## Each report of critic: hand-back, or result of call in foreground.
     thinking*: seq[Place]  ## Each item of type `thinking` or `redacted_thinking`.
     texts*: seq[Place]  ## Each item of type `text`.
 
@@ -317,9 +331,17 @@ const
     ## Kinds whose call passes with no block: prediction of critic is optional (6975216328),
     ##   and resolver marks prediction, so it takes none.
   HEADING_PREDICTION* = "## Prediction"  ## Heading of block that predicts subagent.
+  HEADING_REFLECTION* = "## Reflection"  ## Heading of block that answers report of critic.
+  KIND_CRITIC = "critic"  ## Kind whose report asks for reflection.
+  KIND_PEER = "peer"  ## Kind `origin.kind` of entry gives hand-back of subagent.
+  TYPE_QUEUED = "queued_command"  ## Type of attachment that hand-back queued inside turn takes.
+  STATUS_LAUNCHED = "async_launched"
+    ## Status of result of `Agent` call that runs in background: launch notice, and no report.
+  COLUMN_PREDICTED = "Predicted"  ## Column of table of reflection whose cells quote claims.
   LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
     "reflection), with no diff for lines below. Name each missing prediction in your reply as " &
-    "miss, with its cause, and write no block for it:"
+    "miss, with its cause, and write no block for it. Write each missing reflection now, and " &
+    "mend each cell under `Predicted` that quotes no block that call took:"
     ## Line opening part of refusal of `stop` that blocks of subagents take.
 
 
@@ -1921,10 +1943,119 @@ func checkPredictions(subagents: Subagents; kinds: openArray[string]): seq[Findi
     )
 
 
+func cellsRow(line: string): seq[string] =
+  ## Read stripped cells of pipe-table row, `\|` read as `|`; none where line opens with no `|`.
+  let s = line.strip
+  if not s.startsWith("|"): return
+  var
+    cell = ""
+    i = 1
+  while i < s.len:
+    if s[i] == '\\' and i + 1 < s.len and s[i + 1] == '|':
+      cell.add '|'
+      i += 2
+      continue
+    if s[i] == '|':
+      result.add cell.strip
+      cell = ""
+    else: cell.add s[i]
+    inc i
+  if cell.strip.len > 0: result.add cell.strip
+
+
+func isRowSeparator(cells: openArray[string]): bool =
+  ## Decide whether row is `| --- | --- |` rule under header.
+  cells.len > 0 and cells.allIt(it.len > 0 and it.allCharsInSet({'-', ':'}))
+
+
+func collapsed(text: string): string =
+  ## Read text with each run of whitespace as one space, and none at either end.
+  text.splitWhitespace.join(" ")
+
+
+func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
+  ## Report reflection whose first table with column `Predicted` is missing or holds no row, and
+  ##   each cell under that column that is empty or stands in no block call took.
+  ##   Table is run of lines opening with `|`, header first; text is fenced out already.
+  ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
+  ##     each is finding, as cell that quotes no block is.
+  let lines = text.splitLines
+  var i = 0
+  while i < lines.len:
+    if not lines[i].strip.startsWith("|"):
+      inc i
+      continue
+    var stop = i
+    while stop < lines.len and lines[stop].strip.startsWith("|"): inc stop
+    let column = lines[i].cellsRow.find(COLUMN_PREDICTED)
+    if column < 0:
+      i = stop
+      continue
+    let rows = lines[i + 1 ..< stop].mapIt(it.cellsRow).filterIt(not it.isRowSeparator)
+    if rows.len == 0:
+      return @[finding(
+        "", 0, "Table of reflection holds row under its header; got none under `" &
+          lines[i].strip & "`."
+      )]
+    for n, row in rows:
+      let cell = (if column < row.len: row[column].collapsed else: "")
+      if cell.len == 0:
+        result.add finding(
+          "", 0, "Cell under `" & COLUMN_PREDICTED & "` quotes claim of block word for word; " &
+            "got empty cell in row `" & $(n + 1) & "`."
+        )
+      elif not quoted.anyIt(cell in it):
+        result.add finding(
+          "",
+          0,
+          "Cell under `" & COLUMN_PREDICTED & "` stands word for word in `" &
+            HEADING_PREDICTION & "` block that call took (GUIDE.md, Prediction, critic and " &
+            "reflection); got `" & cell & "`.",
+        )
+    return
+  @[finding(
+    "", 0, "Reflection holds table whose header has column `" & COLUMN_PREDICTED & "` " &
+      "(GUIDE.md, Prediction, critic and reflection); got none."
+  )]
+
+
+func checkReflections(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
+  ## Report each report of critic in current model turn with no `## Reflection` block of its own
+  ##   after it, and each table of reflection of turn that quotes no block call took.
+  ##   Reports match headings earliest first, so n reports need n headings, and heading counts
+  ##     above first `## Sign-off` of last text of turn alone, since reflection comes before any
+  ##     sign-off or working line (6974524232).
+  ##   Cell quotes block word for word once each run of whitespace on both sides is one space,
+  ##     against block call used (6975486646); block no call took is no evidence, so reflection
+  ##     quotes none of it (6980006567).
+  let
+    current = subagents.turns - 1
+    reports = subagents.reports.filterIt(it.turn == current)
+  var free = subagents.reflections.filterIt(it.place.turn == current and it.is_counted)
+    .mapIt(it.place.at)
+  for n, report in reports:
+    var k = 0
+    while k < free.len and free[k] <= report.at: inc k
+    if k < free.len:
+      free.delete(k)
+      continue
+    result.add finding(
+      "",
+      0,
+      "Report of critic takes `" & HEADING_REFLECTION & "` block of its own after it, above " &
+        "any sign-off (GUIDE.md, Prediction, critic and reflection); got none for report `" &
+        $(n + 1) & "` of `" & $reports.len & "` in this turn.",
+    )
+  let quoted = subagents.blocksTaken(kinds).filterIt(it >= 0)
+    .mapIt(subagents.predictions[it].text.collapsed)
+  for reflection in subagents.reflections:
+    if reflection.place.turn == current: result.add findingsTable(reflection.text, quoted)
+
+
 func checkBlocks*(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
   ## Report what `stop` holds of prediction, critic and reflection at end of each model turn,
   ##   whether or not turn pushed or posted.
-  subagents.checkPredictions(kinds)
+  subagents.checkPredictions(kinds) & subagents.checkReflections(kinds)
 
 
 func reasonStop*(
@@ -2237,26 +2368,81 @@ func blocksText(lines: openArray[string], heading: string): seq[tuple[line: int,
     result.add (line: i, text: lines.toOpenArray(i + 1, stop - 1).join("\n"))
 
 
+func isReport(origin: JsonNode): bool =
+  ## Decide whether origin of entry names hand-back of critic: kind `peer`, name `critic`.
+  origin{"kind"}.getStr == KIND_PEER and origin{"name"}.getStr == KIND_CRITIC
+
+
+func isReportEntry(
+  entries: openArray[JsonNode], i: int; calls: openArray[Subagent]
+): bool =
+  ## Decide whether entry `i` is report of critic: hand-back as `user` entry, hand-back queued
+  ##   inside turn as attachment `queued_command`, or result of call of critic in foreground.
+  ##   Result with status `async_launched` is launch notice, and result whose `agentId` sends
+  ##     later hand-back points at that one, so neither is report.
+  let e = entries[i]
+  case e{"type"}.getStr
+  of "attachment":
+    return e{"attachment", "type"}.getStr == TYPE_QUEUED and e{"attachment", "origin"}.isReport
+  of "user": discard
+  else: return false
+  if e{"origin"}.isReport and e{"origin", "handback"}.getBool: return true
+  let tool = e{"toolUseResult"}
+  if tool{"status"}.getStr == STATUS_LAUNCHED: return false
+  var is_result = false  # Result of call of critic in foreground.
+  for item in e{"message", "content"}.getElems:
+    let id = item{"tool_use_id"}.getStr
+    if item{"type"}.getStr == "tool_result" and id.len > 0 and
+        calls.anyIt(it.id == id and it.kind == KIND_CRITIC and it.is_foreground):
+      is_result = true
+  if not is_result: return false
+
+  # Read later hand-back of same agent, which result points at.
+  let agent = tool{"agentId"}.getStr
+  for later in entries.toOpenArray(i + 1, entries.high):
+    let origin =
+      if later{"type"}.getStr == "attachment": later{"attachment", "origin"} else: later{"origin"}
+    if agent.len > 0 and origin{"kind"}.getStr == KIND_PEER and origin{"from"}.getStr == agent:
+      return false
+  true
+
+
 func toSubagents(entries: openArray[JsonNode]): Subagents =
-  ## Read each `Agent` call, `## Prediction` block, thinking and text of transcript, in order,
+  ## Read each `Agent` call, block, report of critic, thinking and text of transcript, in order,
   ##   with model turn of each.
   ##   Fence reads over joined text of each entry, as `parseTurn` joins it, so fence crossing two
   ##     items reads right; each item still ends its own block. Fence is `fencedOut`'s, so tilde
   ##     fence and indented code are text.
   let turns = entries.turnsModel
   result.turns = (if turns.len == 0: 1 else: turns[^1] + 1)
+
+  # Read entry of last assistant text of each turn, whose sign-off ends reflections that count.
+  var texts_last = newSeqWith(result.turns, -1)
+  for i, e in entries:
+    if e{"type"}.getStr == "assistant" and
+        e{"message", "content"}.getElems.anyIt(it{"type"}.getStr == "text"):
+      texts_last[turns[i]] = i
+
   var at = 0
   for i, e in entries:
-    if e{"type"}.getStr != "assistant": continue
-    let
-      turn = turns[i]
-      items = e{"message", "content"}.getElems
+    let turn = turns[i]
+    if e{"type"}.getStr != "assistant":
+      if entries.isReportEntry(i, result.calls): result.reports.add Place(turn: turn, at: at)
+      inc at
+      continue
+    let items = e{"message", "content"}.getElems
 
     # Blank fenced lines of joined text, then read each item over its own lines.
     var pieces: seq[seq[string]]
     for item in items:
       pieces.add(if item{"type"}.getStr == "text": item{"text"}.getStr.splitLines else: @[])
     let shown = pieces.concat.join("\n").fencedOut.splitLines
+    var signoff = shown.len  # First line of sign-off, in last text of turn alone.
+    if i == texts_last[turn]:
+      for j, line in shown:
+        if line.strip == HEADING_SIGNOFF:
+          signoff = j
+          break
     var line = 0  # First line of item in `shown`.
     for k, item in items:
       let place = Place(turn: turn, at: at)
@@ -2266,14 +2452,21 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
         result.texts.add place
         let stop = line + pieces[k].len
         for found in blocksText(shown.toOpenArray(line, stop - 1), HEADING_PREDICTION):
-          result.predictions.add Block(text: found.text, place: place)
+          result.predictions.add Block(text: found.text, place: place, is_counted: true)
+        for found in blocksText(shown.toOpenArray(line, stop - 1), HEADING_REFLECTION):
+          result.reflections.add Block(
+            text: found.text, place: place, is_counted: line + found.line < signoff
+          )
         line = stop
       of TYPES_THINKING[0], TYPES_THINKING[1]: result.thinking.add place
       of "tool_use":
         if item{"name"}.getStr != TOOL_AGENT: continue
+        let background = item{"input", "run_in_background"}
         result.calls.add Subagent(
           kind: item{"input", "subagent_type"}.getStr,
           description: item{"input", "description"}.getStr,
+          id: item{"id"}.getStr,
+          is_foreground: background != nil and background.kind == JBool and not background.getBool,
           place: place,
         )
       else: discard
