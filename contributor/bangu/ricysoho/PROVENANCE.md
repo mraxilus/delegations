@@ -1009,6 +1009,8 @@ ni'o jdima fa lo nu `CLL` dunda lo namcu ro le javni pe vo'a ja'i lo gerna pe `Y
   .i lo selci'a poi lo genturfa'i poi na cuxna cu sisti ne'i ke'a cu ka'e se tcidu le vi genturfa'i
   .i de'i `2026-11-06` lo na'e zmiku cipra cu facki lo du'u `CLL 1.1` na vasru lo gerna pe `YACC`
 
+## ni'o ni'o ni'o lo nu cuxna lo tricu
+
 ni'o **le tricu cu du le cumtricu poi vasru lo mecraijva poi mulno pu ro genvla
   .i le pamoi gerna valsi cu krasi lo nu cuxna**
   .i se ki'u bo lo gensu'a poi romoi cfari cu vasru ro valsi poi ka'e pagbu le gensu'a
@@ -1079,6 +1081,8 @@ ni'o se to'e cuxna fa lo nu zbasu poi ne'i ke'a ro panzi cu dunda lo jgena pe vo
     te zu'e lo nu le rirni cu fukpi
   .i lo temci pe le nu zbasu cu pu zensmi lo pilji be lo klani be le selci'a be'o bei le klani
   .i ki'u bo ro ju'agri cu jmina li pa lo'o lo ni le tricu pe le javni pe li vo cu condi
+
+## ni'o ni'o ni'o lo pagbu .e lo nu to'e curmi
 
 ni'o **le gerna cu tcidu ro pagbu be lo selci'a gi'e zbasu lo tricu poi sruri le pagbu gi'e mintu le
     tricu pe lo nu tcidu le mulselci'a**
