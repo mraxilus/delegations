@@ -2767,11 +2767,12 @@ suite "Hooks":
     # Claim ends at its confidence, last percentage in brackets of any count of digits before
     #   first of `, as the 10th` and `. Resolution criterion`, in any order, or before its end
     #   (7018501890, test below); with no percentage there, at that first mark; with none, it
-    #   runs to end of bullet, before one final full stop (7017902016, test below).
+    #   runs to end of bullet, before one final full stop (7017902016, test below). Claim whose
+    #   percentiles come first runs to them, and keeps each percentage (7023048202, test below).
     for (bullet, claim) in [("- a b (5%) c", "a b"), ("- a b (70%) c", "a b"),
         ("- a b (100%) c", "a b"), ("- a b, as the 10th c", "a b"),
         ("- a b. Resolution criterion: c", "a b"),
-        ("- a b (70%), as the 10th c. Resolution criterion: d", "a b"),
+        ("- a b (70%), as the 10th c. Resolution criterion: d", "a b (70%)"),
         ("- a b, as the 10th c (70%). Resolution criterion: d", "a b"),
         ("- a b. Resolution criterion: c (70%), as the 10th d", "a b"),
         ("- a b. Resolution criterion: c, as the 10th d (70%)", "a b"),
@@ -2945,7 +2946,8 @@ suite "Hooks":
 
     # Law over one to three percentages, with words after last one or none, before each end:
     #   claim runs up to last percentage and keeps each one before it; cut before earlier one,
-    #   claim that keeps last one, and whole bullet are refused.
+    #   claim that keeps last one, and whole bullet are refused. Claim with percentiles runs up
+    #   to them and keeps each percentage (7023048202), so each cut before them is refused.
     const
       ends = ["", ".", ". Resolution criterion: z.", ", as the 10th z."]
         ## Ends of bullet after its words: none, full stop, and each mark.
@@ -2963,16 +2965,21 @@ suite "Hooks":
             text.add " (" & $(10 * n) & "%)"
             if n < count: text.add " w" & $n
           let bullet = "- " & text & tail & ending
-          check quoted(bullet, cuts[^1]).len == 0
-          for cell in cuts[0 ..< cuts.high] & @[text, bullet[2 .. ^1]]:
-            check quoted(bullet, cell) == @[refusalCell(cell)]
+          if ending.startsWith(", as the 10th"):
+            check quoted(bullet, text & tail).len == 0
+            for cell in cuts & (if tail.len > 0: @[text] else: @[]) & @[bullet[2 .. ^1]]:
+              check quoted(bullet, cell) == @[refusalCell(cell)]
+          else:
+            check quoted(bullet, cuts[^1]).len == 0
+            for cell in cuts[0 ..< cuts.high] & @[text, bullet[2 .. ^1]]:
+              check quoted(bullet, cell) == @[refusalCell(cell)]
           inc laid
     check laid == layouts
 
     # Percentage after first mark is no confidence, and two percentages may stand side by side.
     for (bullet, claim, refused) in [
         ("- a (10%) b. Resolution criterion: c (20%).", "a", @["a (10%) b"]),
-        ("- a (10%) b, as the 10th c (20%). Resolution criterion: d (30%).", "a", @["a (10%) b"]),
+        ("- a (10%) b, as the 10th c (20%). Resolution criterion: d (30%).", "a (10%) b", @["a"]),
         ("- a b. Resolution criterion: c (20%).", "a b", @["a b. Resolution criterion: c"]),
         ("- a (10%) (20%).", "a (10%)", @["a", "a (10%) (20%)"]),
         ("- a (10%) b. (20%).", "a (10%) b.", @["a", "a (10%) b"])]:
@@ -3023,12 +3030,54 @@ suite "Hooks":
       check quoted("- " & whole & ".", whole).len == 0
       check quoted("- " & whole & ".", "a b") == @[refusalCell("a b")]
 
-    # Decimal percentage is confidence where it stands last, and stays in claim where it does not.
+    # Decimal percentage is confidence where it stands last, and stays in claim where it does not,
+    #   as in claim with percentiles (7023048202).
     for (bullet, claim) in [("- a (1.5%) b (62.5%).", "a (1.5%) b"),
         ("- a (62.5%) b (70%).", "a (62.5%) b"), ("- a b (62.5%)", "a b"),
-        ("- a b (62.5%), as the 10th c.", "a b")]:
+        ("- a b (62.5%), as the 10th c.", "a b (62.5%)")]:
       check quoted(bullet, claim).len == 0
       check quoted(bullet, bullet[2 .. ^1]) == @[refusalCell(bullet[2 .. ^1])]
+
+
+  test "claim with percentiles runs to them, and keeps each percentage (7023048202 of #969)":
+    # Ruling 7023048202 of #969: percentiles of number claim state its confidence, so claim with
+    #   percentiles takes no confidence in brackets. It runs to its percentiles, and percentage in
+    #   brackets in its text, as `(10% cached)`, stays in claim. Cases as found are probe F11 of
+    #   critic of claim build and cost that record named: build `1f4d159a` ended such claim at
+    #   last percentage of its text, so it refused cell that quotes claim whole.
+    const found = "- Work: refused stops (of 54): 2 (4%), 3 (6%) and 5 (9%), as the 10th, 50th " &
+      "and 90th percentiles. Resolution criterion: the replay."
+    for cell in ["refused stops (of 54): 2 (4%), 3 (6%) and 5 (9%)",
+        "Work: refused stops (of 54): 2 (4%), 3 (6%) and 5 (9%)"]:
+      check quoted(found, cell).len == 0
+    for cell in ["refused stops (of 54): 2 (4%), 3 (6%) and 5", "refused stops (of 54): 2",
+        "refused stops (of 54): 2 (4%), 3 (6%) and 5 (9%), as the 10th, 50th and 90th " &
+          "percentiles"]:
+      check quoted(found, cell) == @[refusalCell(cell)]
+
+    # Example of ruling, and cost that record named, whose expected result changes by ruling.
+    const
+      cached = "- Work: tokens: 1, 2 and 3 million (10% cached), as the 10th, 50th and 90th " &
+        "percentiles."
+      ranged = "- Work: a (5%) b: 1, 2 and 3, as the 10th, 50th and 90th percentiles."
+    check quoted(cached, "tokens: 1, 2 and 3 million (10% cached)").len == 0
+    check quoted(cached, "tokens: 1, 2 and 3 million") ==
+      @[refusalCell("tokens: 1, 2 and 3 million")]
+    for cell in ["a (5%) b: 1, 2 and 3", "Work: a (5%) b: 1, 2 and 3"]:
+      check quoted(ranged, cell).len == 0
+    for cell in ["Work: a", "a"]: check quoted(ranged, cell) == @[refusalCell(cell)]
+
+    # Percentiles must be first mark: percentage after them ends nothing, and criterion before
+    #   them leaves claim at its confidence, since percentiles then belong to criterion.
+    for (bullet, claim, refused) in [
+        ("- Work: tokens: 1, 2 and 3, as the 10th, 50th and 90th percentiles (80%). Resolution " &
+          "criterion: the sum.", "tokens: 1, 2 and 3", @["tokens: 1, 2 and 3, as the 10th"]),
+        ("- a (5%) b (70%), as the 10th c (20%).", "a (5%) b (70%)", @["a (5%) b", "a"]),
+        ("- a (5%) b (70%). Resolution criterion: c, as the 10th d.", "a (5%) b",
+          @["a (5%) b (70%)", "a"]),
+        ("- a (62.5%) b (7.5%), as the 10th c.", "a (62.5%) b (7.5%)", @["a (62.5%) b", "a"])]:
+      check quoted(bullet, claim).len == 0
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
 
 
   test "label is one word that opens with capital, then `: ` (7018501890 of #969)":
@@ -3256,13 +3305,6 @@ suite "Hooks":
         "1. a b (70%).", "1) a b (70%)."]:
       for cell in ["a b", bullet.strip.split(maxsplit = 1)[1]]:
         check quoted(bullet, cell) == @[refusalCell(cell)]
-
-    # Claim with percentiles holds no confidence in brackets, so percentage in brackets in its
-    #   text is last one before its percentiles, and claim ends there.
-    const ranged = "- Work: a (5%) b: 1, 2 and 3, as the 10th, 50th and 90th percentiles."
-    for cell in ["Work: a", "a"]: check quoted(ranged, cell).len == 0
-    for cell in ["a (5%) b: 1, 2 and 3", "Work: a (5%) b: 1, 2 and 3"]:
-      check quoted(ranged, cell) == @[refusalCell(cell)]
 
     # Bullet that is no claim, as question, reads as one.
     check quoted("- Judgement: does it hold?", "does it hold?").len == 0
