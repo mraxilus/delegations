@@ -105,7 +105,7 @@ func whole(s: Coefficient): Coefficient {.inline.} = s
   ## Keep scalar, as library takes it.
 
 
-func agrees(m, n: Multivector): bool =
+func isAgreeing(m, n: Multivector): bool =
   ## Tell whether two whole multivectors agree at each basis: approximately equal, or both NaN.
   ##   Radius norm of some samples roots negative square, in library too, so both sides read NaN.
   for basis in Basis:
@@ -155,7 +155,7 @@ func namesTyped(): seq[string] {.compileTime.} =
 
 
 func emitHold(
-  operator: string, names: seq[string], held, empty: NimNode, exact = false
+  operator: string, names: seq[string], held, empty: NimNode, is_exact = false
 ): NimNode {.compileTime.} =
   ## Emit law of one form at one type or pair: equal to library on whole operands. Count it held,
   ##   and count it again where its type holds no basis. Name `Coefficient` samples scalar.
@@ -174,7 +174,7 @@ func emitHold(
       else: "𝐦 " & operator & " 𝐧"
   if names.len == 1:
     let reach =
-      if not exact: newEmptyNode()
+      if not is_exact: newEmptyNode()
       else:
         quote do:
           var reached: Bases
@@ -187,9 +187,9 @@ func emitHold(
         `reach`
       for _ in 1..SAMPLES:
         let m = sample(`kind_m`)
-        doAssert agrees(`symbol`(m).toMultivector, `symbol`(whole(m)).toMultivector), `message`
+        doAssert isAgreeing(`symbol`(m).toMultivector, `symbol`(whole(m)).toMultivector), `message`
   let reach =
-    if not exact: newEmptyNode()
+    if not is_exact: newEmptyNode()
     else:
       quote do:
         var reached: Bases
@@ -204,7 +204,7 @@ func emitHold(
       `reach`
     for _ in 1..SAMPLES:
       let (m, n) = (sample(`kind_m`), sample(`kind_n`))
-      doAssert agrees(`symbol`(m, n).toMultivector, `symbol`(whole(m), whole(n)).toMultivector),
+      doAssert isAgreeing(`symbol`(m, n).toMultivector, `symbol`(whole(m), whole(n)).toMultivector),
         `message`
 
 
@@ -221,9 +221,9 @@ macro holdForms(held, empty: CountTable[string]): untyped =
     maps = @OPERATORS_MAPS & @OPERATORS_NORMS & OPERATORS_COMPOSED & (
       if IS_CONFORMAL: @OPERATORS_MAPS_CONFORMAL & @OPERATORS_NORMS_CONFORMAL else: @[])
   for operator in maps:
-    let exact = (operator in OPERATORS_MAPS or operator in OPERATORS_MAPS_CONFORMAL) and
+    let is_exact = (operator in OPERATORS_MAPS or operator in OPERATORS_MAPS_CONFORMAL) and
       not operator.startsWith("|")
-    for name in names: result.add emitHold(operator, @[name], held, empty, exact)
+    for name in names: result.add emitHold(operator, @[name], held, empty, is_exact)
   if IS_CONFORMAL:
     for name in namesGraded(): result.add emitHold("⊛", @[name], held, empty)
   for operator in OPERATORS_SCALED:
@@ -235,7 +235,7 @@ macro holdForms(held, empty: CountTable[string]): untyped =
       for right in names & "Multivector":
         if left == right and left == "Multivector": continue
         if DIMENSIONS > DIMENSIONS_SWEPT and "Multivector1" notin [left, right]: continue
-        result.add emitHold(operator, @[left, right], held, empty, exact = true)
+        result.add emitHold(operator, @[left, right], held, empty, is_exact = true)
 
 
 macro holdAliases(): untyped =
@@ -267,8 +267,8 @@ macro holdAliases(): untyped =
         block:
           `operands`
           doAssert typeof(`aliased`) is typeof(`forwarded`), `message_type`
-          doAssert agrees(`aliased`.toMultivector, `forwarded`.toMultivector), `message_value`
-          doAssert agrees(`aliased`.toMultivector, `widened`.toMultivector), `message_whole`
+          doAssert isAgreeing(`aliased`.toMultivector, `forwarded`.toMultivector), `message_value`
+          doAssert isAgreeing(`aliased`.toMultivector, `widened`.toMultivector), `message_whole`
 
 
 macro holdTypesGraded(): untyped =
