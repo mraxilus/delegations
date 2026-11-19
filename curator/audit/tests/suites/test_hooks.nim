@@ -2172,8 +2172,10 @@ suite "Hooks":
       lineUser("Go on.", "human") & linesAgent("reviewer", "Review the fix") & ran
     check blocksHeld(grouped) == @[refusalCall("reviewer", "Review the fix")]
 
-    # Cost, probe Q5: call that harness rejects starts no subagent, yet takes block and ends turns
-    #   that later call looks back over, so its retry is refused.
+    # Ruling 7022770415 of #969: hook skips `Agent` call whose result has `is_error` and no
+    #   `agentId`, so such call takes no block and ends no turns that later call looks back over;
+    #   call that launched keeps its effect. Case as found is probe Q5 of critic of D1 c: build
+    #   `05cb3bbd` read call that harness rejects as call, so it refused its retry.
     let
       rejection = $(%*{"type": "assistant", "message": {"content": [{
         "type": "tool_use", "id": "toolu_rejected", "name": "Agent",
@@ -2186,7 +2188,61 @@ suite "Hooks":
         lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake & rejection &
         lineSaid("The call was rejected.") & lineUser("Try again.", "human") &
         linesAgent("builder", "Build the fix") & ran
-    check blocksHeld(rejected) == @[refusalCall("builder", "Build the fix")]
+    check blocksHeld(rejected).len == 0
+
+    func answered(kind: string; error, answer: JsonNode; is_foreground = false): string =
+      ## Write transcript lines of `Agent` call of kind and its result, whose item holds error as
+      ##   `is_error` and whose entry holds answer as `toolUseResult`; each is absent where nil.
+      var
+        input = %*{"subagent_type": kind, "description": "Build the fix", "prompt": "Do it."}
+        item = %*{"type": "tool_result", "tool_use_id": "toolu_r" & kind, "content": "Error."}
+        entry = %*{"type": "user", "message": {"content": []}}
+      if is_foreground: input["run_in_background"] = %false
+      if error != nil: item["is_error"] = error
+      entry["message"]["content"].add item
+      if answer != nil: entry["toolUseResult"] = answer
+      $(%*{"type": "assistant", "message": {"content": [{
+        "type": "tool_use", "id": "toolu_r" & kind, "name": "Agent", "input": input,
+      }], "stop_reason": "tool_use"}}) & "\n" & $entry & "\n"
+
+    proc retried(between: string): seq[string] =
+      ## Read findings of retry of builder whose block stands before call that between writes.
+      blocksHeld(build & timer &
+        lineSaid(predictedProbe("builder", "the builder adds two commits")) & wake & between &
+        lineSaid("The call was answered.") & lineUser("Try again.", "human") &
+        linesAgent("builder", "Build the fix") & ran)
+
+    # Result with `is_error` and no `agentId` skips call of each type, so retry takes block;
+    #   `toolUseResult` that is text, absent, or object with no agent or empty one names none.
+    let
+      error = %true
+      unnamed = [%"Error: The tool use was rejected.", nil, %*{"status": "error"},
+        %*{"agentId": ""}]
+    for kind in ["builder", "critic", "resolver", "web-fetch", ""]:
+      for answer in unnamed:
+        check retried(answered(kind, error, answer)).len == 0
+
+    # Call that launched names its agent, so it keeps its effect with `is_error` too: it takes
+    #   block of its kind and ends turns, so retry is refused. So does result with no `is_error`,
+    #   or with one that is false or no boolean.
+    for kind in ["builder", "web-fetch"]:
+      check retried(answered(kind, error, %*{"agentId": "a1", "status": "completed"})) ==
+        @[refusalCall("builder", "Build the fix")]
+      for flag in [nil, %false, %"true", %1]:
+        check retried(answered(kind, flag, %"Error: The tool use was rejected.")) ==
+          @[refusalCall("builder", "Build the fix")]
+
+    # Skipped call of current turn asks for no block, and skipped call of critic in foreground
+    #   gives no report; call that launched still asks for each.
+    let read = lineSaid("Read.")
+    check blocksHeld(build & read & wake & answered("builder", error, %"Error.") & ran).len == 0
+    check blocksHeld(build & read & wake & answered("builder", error, %*{"agentId": "a1"}) & ran) ==
+      @[refusalCall("builder", "Build the fix")]
+    check blocksHeld(build & read & wake &
+      answered("critic", error, %"Error.", is_foreground = true) & ran).len == 0
+    check blocksHeld(build & read & wake &
+      answered("critic", error, %*{"agentId": "a1"}, is_foreground = true) & ran).anyIt(
+      it.startsWith("Report of critic takes `## Reflection` block"))
 
     # Kind is first word after `**Subagent:**` on first line of block that opens with it, after
     #   any indent, up to whitespace. Ruling 7022770415 of #969: before match, word drops case,
