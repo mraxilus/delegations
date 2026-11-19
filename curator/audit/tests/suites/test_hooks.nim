@@ -251,9 +251,9 @@ proc blocksHeld(transcript: string, kinds: openArray[string] = KINDS): seq[strin
 
 func refusalCell(cell: string): string =
   ## Write finding of cell under `Predicted` that is neither whole claim of block call took nor
-  ##   `No prediction`, as rules of D5 b and 7017902016 of #969 state it.
+  ##   `No prediction`, as rules of D5 b, 7017902016 and 7018501890 of #969 state it.
   "Cell under `Predicted` is one whole claim of `## Prediction` block that call took, up to " &
-    "its percentage, percentiles or resolution criterion, or before final full stop of bullet " &
+    "its confidence, percentiles or resolution criterion, or before final full stop of bullet " &
     "with none, with or without its label, or `No prediction` (GUIDE.md, Prediction, critic " &
     "and reflection); got `" & cell & "`."
 
@@ -275,6 +275,19 @@ func hintNamed(named: string): string =
 func predicting(kind: string): string =
   ## Write `PREDICTION` for subagent of kind, which first word of its `**Subagent:**` line names.
   PREDICTION.replace("**Subagent:** builder of", "**Subagent:** " & kind & " of")
+
+
+proc quoted(bullets, cell: string): seq[string] =
+  ## Read findings of reflection whose one row holds cell under `Predicted`, after report of
+  ##   critic, where block that call of `reviewer` took holds bullets alone.
+  let prediction = "## Prediction\n\n**Subagent:** reviewer of the diff, fresh context.\n\n" &
+    bullets & "\n"
+  blocksHeld(lineUser("Review the diff.", "human") & lineSaid(prediction) &
+    lineUser("<task-notification>timer</task-notification>", "task-notification") &
+    linesAgent("reviewer") & lineSaid("Started.") & lineHandback("reviewer", "areviewer") &
+    linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
+    lineSaid("## Reflection\n\n| State | Confidence | Predicted | Result |\n" &
+      "| --- | --- | --- | --- |\n| ✅ | 70% | " & cell & " | it holds |\n"))
 
 
 
@@ -2599,9 +2612,10 @@ suite "Hooks":
         "Judgement: no test is weakened."]:
       check reflected([cell]) == @[refusalCell(cell)]
 
-    # Claim ends at first mark, in any order: percentage in brackets of any count of digits,
-    #   `, as the 10th`, or `. Resolution criterion`; with none, it runs to end of bullet, before
-    #   one final full stop (7017902016, test below).
+    # Claim ends at its confidence, last percentage in brackets of any count of digits before
+    #   first of `, as the 10th` and `. Resolution criterion`, in any order, or before its end
+    #   (7018501890, test below); with no percentage there, at that first mark; with none, it
+    #   runs to end of bullet, before one final full stop (7017902016, test below).
     for (bullet, claim) in [("- a b (5%) c", "a b"), ("- a b (70%) c", "a b"),
         ("- a b (100%) c", "a b"), ("- a b, as the 10th c", "a b"),
         ("- a b. Resolution criterion: c", "a b"),
@@ -2609,7 +2623,7 @@ suite "Hooks":
         ("- a b, as the 10th c (70%). Resolution criterion: d", "a b"),
         ("- a b. Resolution criterion: c (70%), as the 10th d", "a b"),
         ("- a b. Resolution criterion: c, as the 10th d (70%)", "a b"),
-        ("- a b c (60%) d (70%)", "a b c"), ("- a b", "a b"), ("- a b.", "a b")]:
+        ("- a b c (60%) d (70%)", "a b c (60%) d"), ("- a b", "a b"), ("- a b.", "a b")]:
       check passes(bullet, claim)
       check passes(bullet, bullet[2 .. ^1]) == (bullet[2 .. ^1] == claim)
 
@@ -2746,6 +2760,68 @@ suite "Hooks":
         ("- a b (70%).", @["a b"], @["a b.", "a b (70%)"])]:
       for cell in cells: check passes(bullet, cell)
       for cell in refused: check not passes(bullet, cell)
+
+
+  test "confidence ends claim: last percentage in brackets before its marks (7018501890 of #969)":
+    # Ruling 7018501890 of #969: claim runs up to its own confidence, last percentage in brackets
+    #   before its percentiles, its resolution criterion or its end; percentage inside text of
+    #   claim stays in claim. So for `- the replay refuses 2 of 54 stops (4%) or fewer (70%).`,
+    #   cell `the replay refuses 2 of 54 stops (4%) or fewer` passes, and its part is refused.
+    #   Cases as found are probes M1 and M2 of critic of build of D5 b: build `b8491db8` ended
+    #   claim at its first percentage, so it refused whole claim and passed its part.
+    const found = "- Result: the replay refuses 2 of 54 stops (4%) or fewer (70%). Resolution " &
+      "criterion: the report says so.\n- Judgement: no test is weakened (85%). Resolution " &
+      "criterion: the report says so."
+    for cell in ["the replay refuses 2 of 54 stops (4%) or fewer",
+        "Result: the replay refuses 2 of 54 stops (4%) or fewer", "no test is weakened"]:
+      check quoted(found, cell).len == 0
+    for cell in ["the replay refuses 2 of 54 stops", "Result: the replay refuses 2 of 54 stops",
+        "the replay refuses 2 of 54 stops (4%) or fewer (70%)"]:
+      check quoted(found, cell) == @[refusalCell(cell)]
+
+    # Example of ruling, with no label and no resolution criterion.
+    const example = "- the replay refuses 2 of 54 stops (4%) or fewer (70%)."
+    check quoted(example, "the replay refuses 2 of 54 stops (4%) or fewer").len == 0
+    for cell in ["the replay refuses 2 of 54 stops", "the replay refuses 2 of 54 stops (4%)",
+        "the replay refuses 2 of 54 stops (4%) or fewer (70%)",
+        "the replay refuses 2 of 54 stops (4%) or fewer (70%)."]:
+      check quoted(example, cell) == @[refusalCell(cell)]
+
+    # Law over one to three percentages, with words after last one or none, before each end:
+    #   claim runs up to last percentage and keeps each one before it; cut before earlier one,
+    #   claim that keeps last one, and whole bullet are refused.
+    const
+      ends = ["", ".", ". Resolution criterion: z.", ", as the 10th z."]
+        ## Ends of bullet after its words: none, full stop, and each mark.
+      layouts = 24
+        ## Bullets of law: three counts of percentages, two tails, and each end.
+    var laid = 0
+    for count in 1 .. 3:
+      for tail in ["", " y"]:
+        for ending in ends:
+          var
+            text = "w0"
+            cuts: seq[string]  # Text before each percentage, in order.
+          for n in 1 .. count:
+            cuts.add text
+            text.add " (" & $(10 * n) & "%)"
+            if n < count: text.add " w" & $n
+          let bullet = "- " & text & tail & ending
+          check quoted(bullet, cuts[^1]).len == 0
+          for cell in cuts[0 ..< cuts.high] & @[text, bullet[2 .. ^1]]:
+            check quoted(bullet, cell) == @[refusalCell(cell)]
+          inc laid
+    check laid == layouts
+
+    # Percentage after first mark is no confidence, and two percentages may stand side by side.
+    for (bullet, claim, refused) in [
+        ("- a (10%) b. Resolution criterion: c (20%).", "a", @["a (10%) b"]),
+        ("- a (10%) b, as the 10th c (20%). Resolution criterion: d (30%).", "a", @["a (10%) b"]),
+        ("- a b. Resolution criterion: c (20%).", "a b", @["a b. Resolution criterion: c"]),
+        ("- a (10%) (20%).", "a (10%)", @["a", "a (10%) (20%)"]),
+        ("- a (10%) b. (20%).", "a (10%) b.", @["a", "a (10%) b"])]:
+      check quoted(bullet, claim).len == 0
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
