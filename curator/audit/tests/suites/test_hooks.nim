@@ -145,10 +145,10 @@ The gap list reads the baseline of each algebra.
     ## Block that answers report of critic, each cell under `Predicted` quoting `PREDICTION`.
   RULE_CELL = "Cell under `Predicted` is one whole claim of `## Prediction` block that call " &
     "took, up to its confidence, percentiles or resolution criterion, or before final full " &
-    "stop of bullet with none, with or without its label of one capital word, or " &
-    "`No prediction` (GUIDE.md, Prediction, critic and reflection)"
+    "stop of bullet with none, with or without its label of one word that opens with capital, " &
+    "or `No prediction` (GUIDE.md, Prediction, critic and reflection)"
     ## Rule that finding of each cell under `Predicted` states, as rules of D2 c, D5 b,
-    ##   7017902016 and 7018501890 of #969 give it.
+    ##   7017902016, 7018501890 and 7022872980 of #969 give it.
 
 
 func messages(found: seq[Finding]): seq[string] =
@@ -3052,18 +3052,20 @@ suite "Hooks":
       for cell in cells: check quoted(found, cell).len == 0
       for cell in refused: check quoted(found, cell) == @[refusalCell(cell)]
 
-    # Label of one word of letters whose first is capital, then `: `, at start of claim: claim
-    #   passes with it and without it, and part after first `: ` of rest of claim is refused.
-    for label in ["Judgement", "Work", "Result", "Cost", "Tokens", "A", "NOTE", "WorK"]:
+    # Label of one word whose first is capital, then `: `, at start of claim: claim passes with it
+    #   and without it, and part after first `: ` of rest of claim is refused. Ruling 7022872980
+    #   makes any run with no space such word, as `Q1` (test below).
+    for label in ["Judgement", "Work", "Result", "Cost", "Tokens", "A", "NOTE", "WorK", "Q1",
+        "Follow-up", "Judgement's", "Judgement."]:
       let bullet = "- " & label & ": a: b (70%)."
       for cell in [label & ": a: b", "a: b"]: check quoted(bullet, cell).len == 0
       for cell in ["b", label & ": b", "a"]: check quoted(bullet, cell) == @[refusalCell(cell)]
 
     # Other text before `: ` is no label, so cell quotes whole claim: word in lower case, two or
-    #   more words, word with mark, digit or hyphen, bold, and words of sentence.
+    #   more words, word that opens with mark, bold word, and words of sentence.
     for opening in ["judgement", "jUDGEMENT", "work", "Cost at list price", "Big Work",
-        "Tokens, summed over its requests", "Q1", "Follow-up", "Judgement's", "*Judgement*",
-        "**Judgement**", "`Judgement`", "_Judgement_", "Judgement.", "the refusal names one cause"]:
+        "Tokens, summed over its requests", "*Judgement*", "**Judgement**", "`Judgement`",
+        "_Judgement_", "the refusal names one cause"]:
       let bullet = "- " & opening & ": a b (70%)."
       check quoted(bullet, opening & ": a b").len == 0
       check quoted(bullet, "a b") == @[refusalCell("a b")]
@@ -3111,7 +3113,7 @@ suite "Hooks":
     # Label and its colon in bold, then space, at start of claim: claim passes with it and
     #   without it; part after first `: ` of rest, label with no bold or no colon, and claim
     #   that drops label but keeps its marks are refused.
-    for label in ["Judgement", "Work", "Result", "Cost", "A", "NOTE", "WorK"]:
+    for label in ["Judgement", "Work", "Result", "Cost", "A", "NOTE", "WorK", "Q1", "Follow-up"]:
       let
         bold = "**" & label & ":**"
         bullet = "- " & bold & " a: b (70%)."
@@ -3138,6 +3140,40 @@ suite "Hooks":
         ("- a **Judgement:** b (70%).", @["a **Judgement:** b"], @["b", "**Judgement:** b"])]:
       for cell in cells: check quoted(bullet, cell).len == 0
       for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+
+  test "label is any run with no space that opens with capital, then `: ` (7022872980 of #969)":
+    # Ruling 7022872980 of #969: label is any run with no space that opens with capital letter,
+    #   then `: `, so `Q1:` and `Follow-up:` are labels. Cases as found are probes F21 and F22 of
+    #   critic of claim build: build `1f4d159a` read label as letters alone, so it refused cell
+    #   that drops `Follow-up:` or `Q1:`.
+    for (found, cell) in [
+        ("- Follow-up: the critic asks for one more test (60%). Resolution criterion: its " &
+          "report.", "the critic asks for one more test"),
+        ("- Q1: the race leads the findings (70%). Resolution criterion: it is first.",
+          "the race leads the findings")]:
+      check quoted(found, cell).len == 0
+      check quoted(found, found[2 ..< found.find(" (")]).len == 0
+
+    # Law: capital letter, then each class of character, is label, in bold or not; run that opens
+    #   with other character, or holds space, is none.
+    const
+      tails = ["", "1", "bc", "-up", "'s", ".", "_b", "/b", "(b)", "#2", "`b`", "*b", ":"]
+        ## Rest of run after its capital: none, digit, letters, and each mark.
+      openings = ["a1", "1a", "-a", "'a", ".a", "_a", "`a`", "(a)", "#a", "R b", "R1 b"]
+        ## Runs that open with no capital, or hold space.
+      laws = 48
+        ## Bullets of law: each tail and each opening, in bold and not.
+    var laid = 0
+    for (runs, is_label) in [(tails.mapIt("R" & it), true), (openings.toSeq, false)]:
+      for run in runs:
+        for label in [run & ": ", "**" & run & ":** "]:
+          let bullet = "- " & label & "a: b (70%)."
+          check quoted(bullet, label & "a: b").len == 0
+          check (quoted(bullet, "a: b").len == 0) == is_label
+          check quoted(bullet, "b") == @[refusalCell("b")]
+          inc laid
+    check laid == laws
 
 
   test "finding of empty cell names `No prediction` as form of miss (D2 c of #969)":
