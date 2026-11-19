@@ -28,8 +28,8 @@ from std/unicode import Rune, toUTF8, validateUtf8
 
 import lojban_parser
 
-import ../../src/lojban_tagger/[commands, tags]
-import ../../src/lojban_tagger/lists/gismu
+import ../../src/rictadni/[commands, tags]
+import ../../src/rictadni/lists/gismu
 
 
 const

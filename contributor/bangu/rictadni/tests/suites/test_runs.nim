@@ -15,7 +15,7 @@ import std/[options, unittest]
 
 import lojban_parser
 
-import ../../src/lojban_tagger/[runs, tags]
+import ../../src/rictadni/[runs, tags]
 
 
 func folded(text: string): seq[TanruUnit] =

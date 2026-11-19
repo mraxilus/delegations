@@ -17,7 +17,7 @@ when compileOption("profiler"):
 
 import std/[os, osproc, sequtils, strutils, unittest]
 
-import ../../src/lojban_tagger/[commands, index, tags]
+import ../../src/rictadni/[commands, index, tags]
 
 
 type
@@ -28,7 +28,7 @@ type
 
 
 const
-  PREFIX_DIRECTORY = "lojban_tagger_suite_tagger_"  ## Opening of temporary directory name.
+  PREFIX_DIRECTORY = "rictadni_suite_tagger_"  ## Opening of temporary directory name.
   KEY_INDEX = "LOJBAN_TAGGER_INDEX"  ## Environment name `app/tagger.nim` reads index path from.
   NIM = getCurrentCompilerExe()  ## Compiler building suite, which builds `tagger` too.
   PATH_APP = currentSourcePath().parentDir.parentDir.parentDir / "app" / "tagger.nim"

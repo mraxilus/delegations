@@ -1,6 +1,6 @@
 ## Convert English of gismu list, and lujvo list, into typed Nim modules project commits.
 ##   Reads `gismu.txt` and `lujvo.txt` as Debian package `lojban-common` installs them, and
-##   renders `src/lojban_tagger/lists/gismu.nim` and `lujvo.nim`; `build.nim` runs it.
+##   renders `src/rictadni/lists/gismu.nim` and `lujvo.nim`; `build.nim` runs it.
 ##   Runs as own program for verbs `lists` and `head` of `build.nim`, as
 ##     `nim r tools/lists.nim <lists|head>`: module reads parser package, which driver imports
 ##     none of, so `koch list-packages` runs driver before Atlas restores any package
@@ -32,14 +32,14 @@ import std/[options, os, sequtils, strutils]
 from ../dependencies/lojban_parser/contributor/bangu/lojban_parser/tools/lists import
   DIGEST_GISMU, DIGEST_LUJVO, DIRECTORY_LISTS, KEY_LISTS, readSource, Source
 
-import ../src/lojban_tagger/entries
+import ../src/rictadni/entries
 
 export DIGEST_GISMU, DIGEST_LUJVO, DIRECTORY_LISTS, KEY_LISTS, readSource, Source
 
 
 const
-  PATH_GISMU* = "src/lojban_tagger/lists/gismu.nim"  ## Module gismu list renders to.
-  PATH_LUJVO* = "src/lojban_tagger/lists/lujvo.nim"  ## Module lujvo list renders to.
+  PATH_GISMU* = "src/rictadni/lists/gismu.nim"  ## Module gismu list renders to.
+  PATH_LUJVO* = "src/rictadni/lists/lujvo.nim"  ## Module lujvo list renders to.
   WIDTH = 100  ## Column limit of Article X.1, which rendered lines keep.
   LETTERS_LOJBAN = {'a' .. 'z', '\''}  ## Characters word of kept lujvo line may hold.
   NOTICE = [

@@ -42,7 +42,7 @@ when compileOption("profiler"):
 import std/[json, options, os]
 
 import ../app/exchanges
-import ../src/lojban_tagger/suggestions
+import ../src/rictadni/suggestions
 
 
 type

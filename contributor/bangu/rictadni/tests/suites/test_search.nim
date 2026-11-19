@@ -36,7 +36,7 @@ import std/[algorithm, options, random, sequtils, strutils, unittest]
 
 import lojban_parser
 
-import ../../src/lojban_tagger/[english, index, runs, search, tags]
+import ../../src/rictadni/[english, index, runs, search, tags]
 
 
 type

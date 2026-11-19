@@ -187,7 +187,7 @@ when defined(ssl):
 
 import protobuf_serialization
 
-import ../src/lojban_tagger/suggestions
+import ../src/rictadni/suggestions
 from ./exchanges_schema import nil
 
 

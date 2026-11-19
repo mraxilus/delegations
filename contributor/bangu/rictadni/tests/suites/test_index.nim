@@ -27,8 +27,8 @@ import std/[algorithm, options, random, sequtils, strutils, unittest]
 
 import lojban_parser
 
-import ../../src/lojban_tagger/[index, tags]
-import ../../src/lojban_tagger/lists/gismu
+import ../../src/rictadni/[index, tags]
+import ../../src/rictadni/lists/gismu
 
 
 type

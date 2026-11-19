@@ -34,7 +34,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import ./lojban_tagger/[commands, english, entries, index, search, suggestions, tags]
+import ./rictadni/[commands, english, entries, index, search, suggestions, tags]
 
 export commands, english, entries, index, search, tags
 export suggestions except Reference, toReference, toText
