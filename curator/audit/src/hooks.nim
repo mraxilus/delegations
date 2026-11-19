@@ -13,10 +13,11 @@
 ##     working line, sign-off out of shape whatever its turn did, end of any turn whose message
 ##     names `#N` outside link or cites charter reference with no description, sign-off from
 ##     turn that read no open issue of its role, call of subagent of kind that no block of
-##     model turn before it predicts, report of critic with no reflection after it, and cell of
-##     reflection that quotes no block call took; `start` prints role, read order, each
-##     finding of drift, headings of record branch works on, and carried list; `prompt` reads
-##     each message of Architect; `push` and `msg` serve git hooks.
+##     earlier model turn predicts with no subagent started between them, report of critic
+##     with no reflection after it, and cell of reflection that quotes no block call took;
+##     `start` prints role, read order, each finding of drift, headings of record branch works
+##     on, and carried list; `prompt` reads each message of Architect; `push` and `msg` serve
+##     git hooks.
 ##   `path` and `edit` judge file inside repository alone: file outside it reaches no commit,
 ##     so both pass it unread, as Architect approved on #847. Both read file through
 ##     `fileWritten`: path `pathWritten` names in normal form, through each link `pathReal`
@@ -57,13 +58,13 @@
 ##     alone, since it starts again at each message of Architect. Transcript names message
 ##     person typed by `origin.kind`, which no wake carries; turn still starts at wake, since
 ##     what turn did is read from there.
-##   Blocks of subagents hold at end of each model turn, as Architect ruled on #962
+##   Blocks of subagents hold at end of each model turn, as Architect ruled on #962 and #969
 ##     (`checkBlocks`): call of subagent of kind takes `## Prediction` block of model turn
-##     just before its own, which starts no subagent; each report of critic takes
-##     `## Reflection` block after it; each cell under `Predicted` of reflection quotes block
-##     call took. Model turn ends where model stops, never at `user` entry, so block checks read
-##     model turns, and every other check reads turn since message of person. Kinds are read
-##     from templates at each stop (`readKinds`).
+##     before its own, and after each earlier turn that starts subagent; each report of critic
+##     takes `## Reflection` block after it; each cell under `Predicted` of reflection quotes
+##     block call took. Model turn ends where model stops, never at `user` entry, so block
+##     checks read model turns, and every other check reads turn since message of person. Kinds
+##     are read from templates at each stop (`readKinds`).
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -1884,28 +1885,32 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
 
 func blocksTaken(subagents: Subagents; kinds: openArray[string]): seq[int] =
   ## Read index in `predictions` of block each call took, by index of call; -1 where none.
-  ##   Block serves calls of next model turn alone, and only from turn that starts no subagent of
-  ##     any type (`D2 a` of 6982373798), since prediction is last message of turn of its own,
-  ##     which timer ends, and next turn starts subagent (6980006567).
-  ##   Each call of kind that is not exempt takes earliest block no call took, in order of
-  ##     calls; exempt call takes block only where one is left after them.
+  ##   Block serves later call where no subagent starts between them, whatever count of turns
+  ##     between (7014974932): hook looks back from turn of calls over each turn after latest
+  ##     earlier turn holding `Agent` call of any type, up to turn before theirs.
+  ##   So block of turn that starts subagent is no evidence (`D2 a` of 6982373798), and nor is
+  ##     block of turn of call, since prediction is last message of turn of its own (6980006567).
+  ##   Each call of kind that is not exempt takes earliest block of those turns no call took, in
+  ##     order of calls; exempt call takes block only where one is left after them.
   ##   Call of type no template names is tool use, and takes none.
   result = newSeqWith(subagents.calls.len, -1)
-  var first = 0
+  var
+    first = 0
+    turn_before = -1  # Latest turn that starts subagent before turn of `first`; -1 where none.
   while first < subagents.calls.len:
     let turn = subagents.calls[first].place.turn
     var stop = first
     while stop < subagents.calls.len and subagents.calls[stop].place.turn == turn: inc stop
-    if turn > 0 and not subagents.calls.anyIt(it.place.turn == turn - 1):
-      var free = toSeq(0 ..< subagents.predictions.len)
-        .filterIt(subagents.predictions[it].place.turn == turn - 1)
-      for is_exempt in [false, true]:
-        for k in first ..< stop:
-          let kind = subagents.calls[k].kind
-          if free.len == 0 or kind notin kinds or (kind in KINDS_EXEMPT) != is_exempt: continue
-          result[k] = free[0]
-          free.delete(0)
-    first = stop
+    let turns_back = turn_before + 1 ..< turn
+    var free = toSeq(0 ..< subagents.predictions.len)
+      .filterIt(subagents.predictions[it].place.turn in turns_back)
+    for is_exempt in [false, true]:
+      for k in first ..< stop:
+        let kind = subagents.calls[k].kind
+        if free.len == 0 or kind notin kinds or (kind in KINDS_EXEMPT) != is_exempt: continue
+        result[k] = free[0]
+        free.delete(0)
+    (first, turn_before) = (stop, turn)
 
 
 func checkPredictions(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
@@ -1937,10 +1942,10 @@ func checkPredictions(subagents: Subagents; kinds: openArray[string]): seq[Findi
     result.add finding(
       "",
       0,
-      "Call of subagent of kind takes `" & HEADING_PREDICTION & "` block of model turn just " &
-        "before its own, which starts no subagent (GUIDE.md, Prediction, critic and " &
-        "reflection); got none for `" & call.kind & "` call `" & call.description & "`" & hint &
-        ".",
+      "Call of subagent of kind takes `" & HEADING_PREDICTION & "` block of model turn before " &
+        "its own, and after each earlier turn that starts subagent (GUIDE.md, Prediction, " &
+        "critic and reflection); got none for `" & call.kind & "` call `" & call.description &
+        "`" & hint & ".",
     )
 
 
