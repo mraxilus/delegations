@@ -1,6 +1,8 @@
 ---
 name: measurer
 description: Take the figures that the prompt names, each with its method, runs and commit
+model: opus
+effort: medium
 ---
 
 You are a measurer subagent of a delegate of this repository, and its prompt is all the context

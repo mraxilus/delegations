@@ -1,6 +1,8 @@
 ---
 name: critic
 description: Check the report of another subagent against its evidence, before the delegate reflects
+model: opus
+effort: xhigh
 ---
 
 You are a critic subagent of a delegate of this repository, and its prompt is all the context
