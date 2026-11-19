@@ -783,10 +783,11 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
   ##
   ## ni'o `predicted` cu rinka lo nu ro jvasni cu se kanpe pa roi ne'i ro selcmi
   ##   .i se ki'u bo ro cmima pe lo nu kanpe cu frica
-  ##   .i ro cmima pe lo nu tcidu lo genvla cu frica ki'u lo nu ro cmima poi pu klama cu frica
-  ##   .i lo cmima pe lo nu tcidu lo genvla cu frica ro cmima poi klama lo jvasni
-  ##   .i se ki'u bo `seen` cu ralte lo cmima po'o poi klama lo jvasni ne'i le ca selcmi
-  ##   .i le porsi be lo nu jmina cu stali
+  ##   .i ro cmima pe lo nu tcidu lo genvla cu frica ki'u lo nu ro cmima pe le pu selcmi cu frica
+  ##   .i lo cmima pe lo nu tcidu lo genvla cu frica ro cmima poi pagre lo jvasni
+  ##   .i se ki'u bo `seen` cu ralte lo cmima po'o poi pagre lo jvasni ne'i le ca selcmi
+  ##   .i ro selcmi cu vasru lo cmima ja'i le porsi pe lo nu jmina
+  ##   .i `refusal` cu pilno le porsi ca lo nu cuxna
   ##
   ## ni'o pa namcu po'o cu sinxa pa cmima ne'i `seen` gi'e selzba sepi'o lo nu pilji
   ##   .i ki'u bo `shl` cu katna lo namcu ne'i `JavaScript`
@@ -815,7 +816,7 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
       lasts[slot] = result[i].len
 
   template advance(i: int, item: Item) =
-    ## jmina le cmima poi klama lo jvasni le selcmi pe `i` va'o lo nu le cmima cu na pu zvati ri
+    ## jmina le cmima poi pagre lo jvasni le selcmi pe `i` va'o lo nu le cmima cu na pu zvati ri
     let advanced: Item = item
     if not seen.containsOrIncl(advanced.key): add(i, advanced)
 
@@ -829,7 +830,7 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
     nexts = newSeq[seq[int]](terminals.len + 1)
       # le bavla'i cmima poi denpa le jvasni pe ro cmima ne'i ro selcmi
     predicted = newSeqWith(count_nonterminals, -1)  # lo selcmi poi le jvasni pu se kanpe ne'i ke'a
-    seen = initHashSet[int]()  # lo cmima poi klama lo jvasni ne'i le ca selcmi
+    seen = initHashSet[int]()  # lo cmima poi pagre lo jvasni ne'i le ca selcmi
   predicted[GRAMMAR_EBNF.start] = 0
   for p in GRAMMAR_EBNF.heads[GRAMMAR_EBNF.start]: add(0, (p, 0, 0))
   for i in 0..terminals.len:
@@ -837,6 +838,8 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
     #   .i `firsts` .e `lasts` .e `predicted` .e `seen` cu cpacu no ninstu ne'i le selcmi va'o lo nu
     #       `seen` cu na zenba
     #   .i `nexts` .e le liste be lo cmima cu zenba ta'i lo cmima
+    #   .i lo temci pe `seen.clear` cu zensmi lo ni `seen` cu barda
+    #   .i lo temci pe ro nu mulno cu zensmi lo klani be le porsi poi le nu mulno cu tcidu ke'a
     seen.clear
     if is_everywhere:
       for head in 0 ..< count_nonterminals:
@@ -950,15 +953,16 @@ type
 func keyCompleted(width, head, start: int): int =
   ## lo namcu poi sinxa lo jvasni .e lo kraselcmi ne'i `Completions`
   ##   .i `width` du lo klani be lo selcmi
-  ##   .i pa namcu po'o cu sinxa le re namcu ki'u lo nu lo nu sisku sepi'o pa namcu cu sutra zmadu
-  ##       lo nu sisku sepi'o lo porsi
+  ##   .i pa namcu po'o cu sinxa le re namcu
+  ##   .i `PROVENANCE.md` cu jarco le krinu .e le namcu
   head * width + start
 
 
 func keyChosen(width, head, start, finish: int): int =
   ## lo namcu poi sinxa lo jvasni .e lo krasi .e lo fanmo ne'i `Chart.choices`
-  ##   .i le namcu cu mleca li re te'a ci pa va'o lo nu `width` cu mleca li pa no no pa
-  ##   .i se ki'u bo `JavaScript` cu cusku no nu dukse
+  ##   .i le gerna cu vasru ci ci re jvasni
+  ##   .i le namcu cu mleca li re te'a ci pa va'o lo nu `width` cu na zmadu li re mu vo ci
+  ##   .i va'o lo nu `width` cu zmadu li re mu vo ci kei `JavaScript` cu cusku lo nu dukse
   (head * width + start) * width + finish
 
 
@@ -987,7 +991,9 @@ func offer(partials: var seq[Option[Choice]], i: int, candidate: sink Choice) =
   ## ralte le cumselcu'a bu'u le stuzi pe `i` va'o lo nu le cumselcu'a cu mleca le selra'e lo ka
   ##     mulgau lo jvasni
   ##   .i va'o lo nu dunli kei le pamoi cu stali
-  ##   .i le cumselcu'a cu se muvgau gi'e se fukpi no roi
+  ##   .i ne'i `C` le cumselcu'a cu se muvgau gi'e se fukpi no roi
+  ##   .i ne'i `JavaScript` lo nu cpacu le cumselcu'a cu fukpi le liste pe le cumselcu'a ci roi
+  ##   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
   if partials[i].isNone or candidate.closures.isFewer(partials[i].get.closures):
     partials[i] = some(candidate)
 
@@ -1058,7 +1064,8 @@ func choose(chart: var Chart, head, start, finish: int): bool =
       ## sinxa le porsi be lo sinxa pe le basyjva po'u `p`
       ##   .i lo nu pilno `let` cu rinka lo nu fukpi le porsi
     if span == 0 and body.anyIt(it.is_terminal or not GRAMMAR_EBNF.nullable[it.code]): continue
-    # `[]` cu dunda le liste gi'e fukpi no da ki'u lo nu `chart` cu me `var`
+    # `[]` cu dunda le liste sepi'o `lent` gi'e fukpi no da
+    #   .i se to'e cuxna fa `getOrDefault` noi fukpi le liste
     #   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
     if span > 0 and (not is_completed or p notin chart.completions[finish][completed]): continue
 
@@ -1067,7 +1074,10 @@ func choose(chart: var Chart, head, start, finish: int): bool =
     #   .i ro sinxa cu curmi lo nu lo sinxa poi se lidne cu ponse lo bazgenvla
     var
       # le mecraiterkancu be lo genvla poi ro rebla be le porsi cu binxo ke'a
-      #   .i le porsi cu zvati le dukse be le samtci gi'e cpacu no ninstu
+      #   .i le klani be le porsi cu stodi
+      #   .i se ki'u bo ne'i `C` le porsi cu cpacu no ninstu
+      #   .i ne'i `JavaScript` ro basyjva cu zbasu pa `Int32Array`
+      #   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
       rests: array[WIDTH_BODY, int]
       partials = newSeq[Option[Choice]](span + 1)
     for k in countdown(body.high, 0):
