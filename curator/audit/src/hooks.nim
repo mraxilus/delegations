@@ -2046,6 +2046,15 @@ func isPercentage(text: string, at: int): bool =
   text.continuesWith("%)", i)
 
 
+func labelClaim(claim: string): string =
+  ## Read label that opens claim, with its `: `: one word of letters whose first is capital, as
+  ##   `Judgement: ` (7018501890); empty where claim opens with none.
+  if claim.len == 0 or claim[0] notin UppercaseLetters: return ""
+  var i = 1
+  while i < claim.len and claim[i] in Letters: inc i
+  if claim.continuesWith(SEPARATOR_LABEL, i): claim[0 ..< i + SEPARATOR_LABEL.len] else: ""
+
+
 func claims(text: string): seq[string] =
   ## Read each claim of block text, with its label and without it, as reflection may quote it.
   ##   Claim is bullet with no indent, to next blank line, next line opening bullet at any
@@ -2055,8 +2064,8 @@ func claims(text: string): seq[string] =
   ##     confidence stays in claim (7018501890). With no percentage there, claim runs up to that
   ##     first mark (7016134603); with none, it ends before one final full stop of its bullet
   ##     (7017902016).
-  ##   Label is text before first `: ` of claim; `: ` that only resolution criterion holds
-  ##     opens none, so bullet with no label reads whole.
+  ##   Label opens claim, as `labelClaim` reads it; `: ` inside sentence opens none, so such
+  ##     claim reads whole (7018501890).
   var
     bullets: seq[string]
     is_open = false  # Line continues last bullet: no blank line or bullet since it opened.
@@ -2080,9 +2089,8 @@ func claims(text: string): seq[string] =
     let claim = text[0 ..< stop].strip
     if claim.len == 0: continue
     result.add claim
-    let at = claim.find(SEPARATOR_LABEL)
-    if at >= 0 and claim.len > at + SEPARATOR_LABEL.len:
-      result.add claim[at + SEPARATOR_LABEL.len .. ^1]
+    let label = claim.labelClaim
+    if label.len > 0 and claim.len > label.len: result.add claim[label.len .. ^1]
 
 
 func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
@@ -2092,8 +2100,9 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
   ##   Table is run of lines opening with `|`, header first; text is fenced out already.
   ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
   ##     each is finding, as cell that quotes no claim is.
-  ##   Cell equals one claim of block call took, with or without its label (7016134603), each
-  ##     run of whitespace read as one space; fragment of claim, claim with its confidence
+  ##   Cell equals one claim of block call took, with or without its label (7016134603) of one
+  ##     capital word (7018501890), each run of whitespace read as one space; fragment of
+  ##     claim, claim with other label before it, claim with its confidence
   ##     (7018501890), or claim with no mark that keeps final full stop of its bullet
   ##     (7017902016), is none.
   ##     Cell `No prediction` passes too, in that case of letters alone: it counts
@@ -2129,8 +2138,9 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
           0,
           "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" & HEADING_PREDICTION &
             "` block that call took, up to its confidence, percentiles or resolution criterion, " &
-            "or before final full stop of bullet with none, with or without its label, or `" &
-            NO_PREDICTION & "` (GUIDE.md, Prediction, critic and reflection); got `" & cell & "`.",
+            "or before final full stop of bullet with none, with or without its label of one " &
+            "capital word, or `" & NO_PREDICTION & "` (GUIDE.md, Prediction, critic and " &
+            "reflection); got `" & cell & "`.",
         )
     return
   @[finding(
