@@ -324,13 +324,15 @@ comes out the same in each bit:
 | Placing step in Chromium, panel shut | 3.30 ms | 2.00 ms |
 | `placeEvery` on C | 0.43 ms | 0.41 ms |
 
-This proposal takes the operators, emitters and tests of the patch as they are, and adds four
+This proposal takes the operators, emitters and tests of the patch as they are, and adds five
 things:
 
 - the alignment of each type, as D13 b rules;
 - the aliases of `pga.nim` that take any type, as D12 b and the rule of IV.8 ask;
 - guards that read `Bases(B).card`, as the type does;
-- the helper `basesType` of the suite of P14, in place of its own helper.
+- the helper `basesType` of the suite of P14, in place of its own helper;
+- a private `convertByBasis` that holds the loop of `toMultivectorOf`, so that no edit quotes the
+  line of pin that ends with a space.
 
 ### Alignment
 
