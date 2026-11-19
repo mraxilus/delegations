@@ -353,9 +353,13 @@ const
   NO_PREDICTION = "No prediction"
     ## Cell under `Predicted` of row that counts missing prediction as miss (7015791554).
   MARKERS_BULLET = {'-', '*', '+'}  ## Characters that open bullet, before space.
-  MARKS_CLAIM = [", as the 10th", ". Resolution criterion"]
-    ## Words that open percentiles and resolution criterion of claim, as samples of GUIDE.md
-    ##   write them; first of them ends claim (7016134603), where no confidence stands before it
+  MARK_PERCENTILES = ", as the 10th"
+    ## Words that open percentiles of claim, as samples of GUIDE.md write them; where they are
+    ##   first mark, claim ends at them and no percentage ends it, since they state its confidence
+    ##   (7023048202).
+  MARK_CRITERION = ". Resolution criterion"
+    ## Words that open resolution criterion of claim, as samples of GUIDE.md write them; where
+    ##   they are first mark, claim ends at them (7016134603), or at confidence before them
     ##   (7018501890).
   POINT_DECIMAL = '.'  ## Mark between digits and decimal part of percentage, as in `(62.5%)`.
   PIPE = '|'  ## Mark between cells of row of table.
@@ -2085,16 +2089,31 @@ func labelClaim(claim: string): string =
   if stop < 0 or ' ' in claim[start ..< stop]: "" else: claim[0 ..< stop + separator.len]
 
 
+func stopClaim(text: string): int =
+  ## Read where claim of collapsed bullet text ends, from first of its marks.
+  ##   Claim whose percentiles come first ends at them, and no percentage in brackets ends it,
+  ##     since percentiles state its confidence (7023048202).
+  ##   Other claim runs up to its confidence: last percentage in brackets before its resolution
+  ##     criterion, or before its end; percentage before confidence stays in claim (7018501890).
+  ##     With no percentage there, claim runs up to criterion (7016134603); with neither, it ends
+  ##     before one final full stop of its bullet (7017902016).
+  let
+    ranged = text.find(MARK_PERCENTILES)
+    criterion = text.find(MARK_CRITERION)
+  if ranged >= 0 and (criterion < 0 or ranged < criterion): return ranged
+  result = (if criterion >= 0: criterion else: text.len)
+  for at in countdown(result - 1, 0):  # last percentage first: it is confidence
+    if text.isPercentage(at): return at
+  if result == text.len and text.endsWith(FULL_STOP): dec result  # no mark: one full stop goes
+
+
 func claims(text: string): seq[string] =
   ## Read each claim of block text, with its label and without it, as reflection may quote it.
   ##   Claim is bullet with no indent, to next blank line, next line opening bullet at any
   ##     indent, or end of block; each run of whitespace reads as one space (7016134603), and
   ##     `\|` reads as `|`, as cell reads it (7022872980).
-  ##   Claim runs up to its confidence: last percentage in brackets before first of its
-  ##     percentiles and its resolution criterion, or before its end; percentage before
-  ##     confidence stays in claim (7018501890). With no percentage there, claim runs up to that
-  ##     first mark (7016134603); with none, it ends before one final full stop of its bullet
-  ##     (7017902016).
+  ##   Claim ends where `stopClaim` reads: at its percentiles, at its confidence, at its
+  ##     resolution criterion, or before final full stop of its bullet.
   ##   Label opens claim, as `labelClaim` reads it; `: ` inside sentence opens none, so such
   ##     claim reads whole (7018501890).
   var
@@ -2107,17 +2126,9 @@ func claims(text: string): seq[string] =
     elif line.strip.len == 0 or line.isBullet: is_open = false
     elif is_open: bullets[^1].add "\n" & line
   for bullet in bullets:
-    let text = bullet.collapsed.replace(PIPE_ESCAPED, $PIPE)
-    var stop = text.len
-    for mark in MARKS_CLAIM:
-      let at = text.find(mark)
-      if at >= 0: stop = min(stop, at)
-    for at in countdown(stop - 1, 0):  # last percentage first: it is confidence
-      if text.isPercentage(at):
-        stop = at
-        break
-    if stop == text.len and text.endsWith(FULL_STOP): dec stop  # no mark: one full stop goes
-    let claim = text[0 ..< stop].strip
+    let
+      text = bullet.collapsed.replace(PIPE_ESCAPED, $PIPE)
+      claim = text[0 ..< text.stopClaim].strip
     if claim.len == 0: continue
     result.add claim
     let label = claim.labelClaim
