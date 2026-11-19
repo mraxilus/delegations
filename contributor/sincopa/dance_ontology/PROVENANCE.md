@@ -1685,20 +1685,20 @@ of the rig. The positive way of the same-name chain turns to +1.88 there, from 0
 of each sweep, whatever the walk does (Planned sweep).
 
 Verified by `suites/test_asks.nim`. It reads `design/rig.json` alone (Rig viewer). It reads every
-moment that a sweep held above holds, from a quarter turn away. That is 243 moments, on the way
-that each sweep turns positive. Each joined hand is carried at 1.7346 m at least, against 1.705 m,
-in `Chain, cross name · above` at 1.5275 of a turn. Measured 2026-10-25 by a copy of the reading of
+moment that a sweep held above holds, from a quarter turn away. That is 225 moments, on the way
+that each sweep turns positive. Each joined hand is carried at 1.7348 m at least, against 1.705 m,
+in `Chain, cross name · above` at 1.3075 of a turn. Measured 2026-11-19 by a copy of the reading of
 the law in Python 3.11.
 
 Red first, on the recording of the wall alone: 64 of 212 moments of the rig held a joined hand under
 the band. Read 2026-10-12.
 
 The law holds the carried point to the lower edge of the band less `SAG`, 1.705 m, as the laws of
-the stills do. The ruling quotes the band itself, 1.735 to 2.00 m. Read against 1.735 m, the joins
-of `Chain, cross name · above` lie under it at one moment of the rig, at 1.714 and 1.727 m. That
-moment is at 1.2525 of a turn, in a planned turn.
+the stills do. The ruling quotes the band itself, 1.735 to 2.00 m. Read against 1.735 m, no join of
+the rig lies under it. The lowest is in `Chain, cross name · above`, at 1.753 m and 1.3975 of a
+turn.
 
-The carried points of 7 moments of the rig lie between 1.705 and 1.735 m. Measured 2026-10-25 by the
+The carried point of 1 moment of the rig lies between 1.705 and 1.735 m. Measured 2026-11-19 by the
 same copy of the law.
 
 The law allows for the rounding of the rig, 0.3 mm in `design/rig.json`. Every sweep of the rig is
@@ -2317,6 +2317,41 @@ Rejected, each measured over the 32 plans of D01 on 2026-11-03:
   crossed five times.
 - The pull of this section from a half turn, at weight 20. No plan reached the swan.
 
+**A chain swept over the crown winds its swan as the card draws it.** The rig sweeps each chain on
+the way that turns positive, through the swan of C01 or D01 (Planned sweep). Its plan draws the same
+hoop past a whole turn (`walk.plannedWay`). Each moment at the wind nearest the swan must stand the
+swan as its card draws it (`walk.keepsStraight`). A path is cut before the first such moment that
+does not (`walk.replayedWay`), because a still of that card holds no such pose. So the furthest way
+that the rig keeps winds the swan of the card.
+
+| Sweep over the crown | Turn | Crossings in plan | Straight pair: writhe, run | Hoop: writhe, run |
+| --- | --- | --- | --- | --- |
+| Cross name, before | +1.4925 | 2 | +0.04, 1.49 | -0.62, 3.26 |
+| Cross name | +1.4975 | 3 | +0.02, 1.87 | -0.33, 3.33 |
+| Same name, before | +1.4900 | 1 | -0.13, 1.45 | -0.07, 1.50 |
+| Same name | +1.4925 | 3 | -0.15, 1.55 | -0.40, 1.75 |
+
+Read from `design/rig.json` by the law in `test_asks.nim`, "every chain rig sweeps over crown winds
+its swan as card draws it". The law asks each sweep to pass its swan, and reads each moment at the
+wind nearest it. It read the rows before on the recording of `40bee07a`, where it fails, on
+2026-11-19.
+
+Near its swan, the same-name chain stands one joint at the end of its range (`rigid.roomAt`). That
+holds at each moment read from +1.458 to +1.523 of a turn. Measured 2026-11-19 by a probe outside
+the tree.
+
+Cost: the same-name chain swept over the crown stops at 1.6625 of a turn. A plan that names no swan
+carries it to 2.5. The cross-name chain goes to 1.71, where a plan that names no swan stops it at
+1.5275 (Planned sweep). The floor of the same-name chain waits on the Architect (Open questions).
+
+Rejected, each measured 2026-11-19 by a probe outside the tree:
+
+- The hoop with no cut at the swan. The furthest way of the cross-name chain then crosses twice at
+  its swan. That of the same-name chain crosses five times, and stops at 1.6725.
+- The hoop only up to the swan. The same-name chain then turns to 1.6675, and the cross-name chain
+  to 1.6988. At its swan the same-name chain lays the right pair on top at all three crossings,
+  where D01 draws right, left and right.
+
 ## Planner's cost
 
 **The planner weighs a step of one freedom by what that step moves, and the cost is the same to the
@@ -2423,8 +2458,8 @@ way keeps no moment that gave. So no sweep of the rig keeps the moment of a stop
 rig has such a moment to leave out.
 
 A way that ends short of 2.5 turns names nothing that gave, because no planned pose stands further
-on. Five of the eight sweeps of the rig end so. The rig viewer says "no plan carries the turn
-further". Which stop such a way names is open (Open questions).
+on. Every chain of the rig ends so, six of the eight sweeps. The rig viewer says "no plan carries
+the turn further". Which stop such a way names is open (Open questions).
 
 Rejected: a stop read off the terms of the plan. One solve past the end of the cross-name chain
 broke several terms at once, each by about a millimetre. Those were hands apart, arms within their
@@ -2437,16 +2472,17 @@ moment, at one turn, and the rig viewer plays every moment.
 
 **How far the plan carries each sweep, on the way that turns positive.** Each line gives where its
 path starts, its moments and the winds that they stand at. It also gives how far the walk of the
-report turns the same hold. Measured 2026-10-25 in `design/rig.json` and `simulation/verdicts.md`.
+report turns the same hold. Measured 2026-10-25 in `design/rig.json` and `simulation/verdicts.md`,
+and the two chains held above 2026-11-19.
 
 - `One hand, same name · above` turns to 2.5, from 1.169 m, in 139 moments at 139 winds. Its walk
   turns to 2.5.
 - `One hand, cross name · above` turns to 2.5, from 0.966 m, in 218 moments at 135 winds. Its walk
   turns to 2.5.
-- `Chain, cross name · above` turns to 1.5275, from 0.957 m, in 139 moments at 91 winds. Its walk
-  turns to 1.26.
-- `Chain, same name · above` turns to 2.5, from 0.417 m, in 207 moments at 150 winds. Its walk
-  turns to +1.80.
+- `Chain, cross name · above` turns to 1.71, from 1.123 m, in 149 moments at 106 winds, through its
+  swan (Planned swan). Its walk turns to 1.26.
+- `Chain, same name · above` turns to 1.6625, from 0.509 m, in 145 moments at 98 winds, through its
+  swan. Its walk turns to +1.80.
 - `Chain, cross name · high` turns to 0.8438, from 1.115 m, in 127 moments at 47 winds. Its walk
   turns to 1.20.
 - `Chain, same name · high` turns to 0.65, from 0.670 m, in 51 moments at 35 winds. Its walk turns
@@ -2456,10 +2492,11 @@ report turns the same hold. Measured 2026-10-25 in `design/rig.json` and `simula
 - `Chain, same name · low` turns to 0.74, from 0.389 m, in 59 moments at 39 winds. Its walk turns to
   +0.48.
 
-The cross-name chain held above stands by style 13 and its mirror, and the same-name chain by style
-4 and its mirror (`TURNS_PLANNED`). `tools/build.nim floors` planned each hold held above both ways
-on 2026-10-12. The negative way of each reached as far as its positive way. Each way that the rig
-keeps, held above, high or low, is a row of `TURNS_PLANNED`.
+The cross-name chain held above stands by style 4, from 1.123 m, and the same-name chain by style 1,
+from 0.509 m. `tools/build.nim floors` printed both on 2026-11-19 (`TURNS_PLANNED`). It planned
+each single hand held above both ways on 2026-10-12, and the negative way of each reached as far as
+its positive way. The negative way of each chain through its swan is unmeasured. Each way that the
+rig keeps, held above, high or low, is a row of `TURNS_PLANNED`.
 
 **Held low and high, the plan carries three of the four chains further than the walk.** Held low,
 it carries them to 0.865 and 0.74 of a turn, where the walk turns them to 0.80 and 0.48. Held high,
@@ -2467,16 +2504,13 @@ it carries them to 0.8438 and 0.65, where the walk turns them to 1.20 and 0.10. 
 far a pair held low or high turns, counted from its rest. Its recommendation reads the walk, which
 blocks both pairs held low between 0.48 and 0.80 of a turn. The Architect rules D1.
 
-**The edge holds the cross-name chain near 1.53 turns.** Over the last part of the turn an upper arm
-rides the six degrees that the plan keeps inside the edge. At 38 of the 91 turns that the rig
-stands, from 0.45 of a turn on, the nearest arm lies 5.9 to 6.1 degrees inside. No arm of the rig
-comes nearer than 5.98 degrees.
+**Each chain held above ends soon past its swan.** No plan that winds the swan as drawn carries the
+cross-name chain past 1.71 of a turn, or the same-name chain past 1.6625 (Planned swan). What ends
+each there is unmeasured.
 
-With the edge margin of the plan at 0 or 3 degrees, and its other margins kept, no path stands past
-1.540 or 1.526 turns. So the margin of six degrees costs about a hundredth of a turn. With no edge
-term at all, 15 of 32 paths plan past 1.5275, to 1.6225 at most. The engine stands none of them
-past 1.4475. Each lays an upper arm past the give of the edge, and the engine stops it by swing
-there. Measured 2026-10-12 by probes outside the tree.
+Rejected: a plan that names no swan. It crosses twice at the swan of the cross-name chain (Planned
+swan). The edge of the shoulder stops it near 1.53 turns there, measured 2026-10-12 by probes
+outside the tree.
 
 **Three laws hold every moment of every sweep of the rig, and each reads `design/rig.json` alone.**
 Verified by `suites/test_asks.nim`:
@@ -2508,8 +2542,9 @@ carries it (`TURNS_PLANNED`), less half the rounding of the rig. Those are the e
 positive: four held above, two held high and two held low. The law reads no other recording (Rig
 viewer), and it reads the furthest moment that each way holds.
 
-Red first, on the recordings of `bc656d30`: 2 of the 4 ways held above fell short. The cross-name
-chain held to 1.24, and the same-name chain to +1.78.
+Red first, on the recordings of `bc656d30`: 2 of the 4 ways held above fell short of the floors of
+that day. The cross-name chain held to 1.24, and the same-name chain to +1.78. Against the floors
+of this tree, 1.71 and 1.6625, the law reads the first as short, and not the second.
 
 Red first for the ways held low and high, on a copy of the rig recording of `fd756cfb`. The copy
 keeps the first half of the moments of each such way. On it the law names all four ways short of
@@ -2529,14 +2564,15 @@ at the band of its hold, the way that the rig keeps, which turns positive. It pr
 `TURNS_PLANNED` for each sweep, keyed by its card and its level, and the style and start of its
 path. Its rows come in the order of `design/rig.SHOWN`.
 
-The table holds the values that `floors` printed on 2026-10-12 for the sweeps held above, and on
-2026-10-29 for those held low and high. On 2026-10-20 it printed the same rows, styles and starts
-again. On 2026-10-29 it printed the same rows and styles for the sweeps above. That run took 16 min
-18 s, and 57 min 10 s of user time, on four cores, for all eight sweeps.
+The table holds the values that `floors` printed on 2026-11-19, on the physics of `032503f2`. For
+the six sweeps other than the chains held above, these are the rows, styles and starts that it
+printed on 2026-10-29. The run of 2026-11-19 took 15 min 36 s, and 42 min 24 s of user time, on
+four cores that one probe shared.
 
 Cost: the law reads each floor as a figure, and does not plan again. A change that carries a chain
 less far fails the law. A change that carries it further passes, and its floor stays short until
-`floors` runs again.
+`floors` runs again. The floor of the same-name chain held above is 1.6625, where a plan that names
+no swan carries it to 2.5. That floor waits on the Architect (Open questions).
 
 Cost: the rig plans every sweep in every style (`planAhead`). With them, a full
 `tools/build.nim record` took 20 min 4 s on 2026-10-25 (Figures).
@@ -3456,6 +3492,16 @@ the suites. `result +=` on a float in `limb.comfort`, `plan.comfort`, `plan.cram
   hands at the edge of the band, wraps the arms of the follow round the head instead.
 - **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 0.70,
   and D01 and D07 0.68, in `design/rig.json` (Planned swan).
+- **Whether the floor of the same-name chain held above falls from 2.5 to 1.6625.** No plan that
+  winds its swan as drawn carries it further, and none that draws the hoop only up to the swan
+  (Planned swan). So the law of the floors no longer reads +1.78, the regression of `bc656d30`, as
+  short (Planned sweep). The Architect rules whether that cost stands, or the chain keeps a plan
+  that winds its swan otherwise than drawn.
+- **Whether a moving card that ends at a swan asks for the swan as drawn.** The cards of F and G ask
+  whether the couple carry the chain that far (`modelled.moving`). The walk answers first, and then
+  the plan, and neither names the swan (`walk.isReaching`, `walk.isPlannedReaching`). So a turn
+  that ends at a swan wound otherwise than drawn answers yes. The Architect rules whether such a
+  card asks for its swan, as its still does.
 - **D06 crosses four times in plan, where its card draws two.** The left upper arm of the follow
   crosses the right arm of the lead near the shoulders, with the couple 0.36 m apart. No law holds
   the crossings of a position other than a swan. Measured 2026-11-03 from `design/rig.json`.
@@ -3510,10 +3556,11 @@ the suites. `result +=` on a float in `limb.comfort`, `plan.comfort`, `plan.cram
   distance.** A planned way stands the poses of a plan, each at the distance of the plan. The
   Architect rules whether the glossary widens the term, or a planned way takes a name of its own.
 - **The report reads the walk alone, where the rig keeps the planned turn.** The report blocks the
-  cross-name chain held above at 1.26, by a hand off its band, and the rig carries it to 1.5275.
-  The report stops the same-name chain held above at -1.66 and +1.80, and the plan carries it to
-  2.5 both ways. Held low and high, the two differ too (Planned sweep). Read 2026-10-25 in
-  `simulation/verdicts.md`. The Architect rules whether the report reads the planned turn too.
+  cross-name chain held above at 1.26, by a hand off its band, and the rig carries it to 1.71.
+  The report stops the same-name chain held above at -1.66 and +1.80, and the rig carries it to
+  1.6625 on the way that turns positive. Held low and high, the two differ too (Planned sweep). Read
+  2026-10-25 in `simulation/verdicts.md`, and 2026-11-19 in `design/rig.json`. The Architect rules
+  whether the report reads the planned turn too.
 
   If it does, its reading of strain takes the twist off four points of the arm (`read.tightest`). On
   planned poses that twist lies -101 to +76 degrees from the twist of the engine. So the reading
