@@ -173,6 +173,7 @@ proc shownAsked(
   step: float,
   is_away: bool,
   head: Body,
+  swan: Option[Swan],
 ): Shown =
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
@@ -191,6 +192,7 @@ proc shownAsked(
       is_away = is_away,
       head = head,
       should_plan = true,
+      swan = swan,
     )
     best = (if step >= 0.0: sweep.positive else: sweep.negative)
   result = Shown(
@@ -256,7 +258,8 @@ proc shown*(
   step = STEP,
   is_away = false,
   head = Body.Two,
+  swan = none(Swan),
 ): Shown =
   ## Walk one way from wherever it carries furthest, keeping every moment whole
-  ## (`shownAsked`).
-  shownAsked(rig, band, links, name, who, step, is_away, head)
+  ## (`shownAsked`).  Chain names swan its way that turns positive winds (`walk.swept`).
+  shownAsked(rig, band, links, name, who, step, is_away, head, swan)
