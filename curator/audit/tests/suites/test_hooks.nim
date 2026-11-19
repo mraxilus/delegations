@@ -2824,6 +2824,41 @@ suite "Hooks":
       for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
 
 
+  test "percentage in brackets may hold decimal part, as `(62.5%)` (D5 b of #969)":
+    # Ruling 7016134603, D5 b of #969: claim runs up to its percentage, which ruling 7018501890
+    #   names its confidence; digits alone narrowed it. Case as found is probe M6 of critic of
+    #   build of D5 b: build `b8491db8` read no percentage in `(62.5%)`, so it refused claim cut
+    #   before it, and passed claim that keeps it.
+    const found = "- Judgement: the race to save one shared key leads the findings (62.5%). " &
+      "Resolution criterion: the report says so.\n- Judgement: no test is weakened (85%). " &
+      "Resolution criterion: the report says so."
+    for cell in ["the race to save one shared key leads the findings",
+        "Judgement: the race to save one shared key leads the findings"]:
+      check quoted(found, cell).len == 0
+    for cell in ["the race to save one shared key leads the findings (62.5%)",
+        "Judgement: the race to save one shared key leads the findings (62.5%)"]:
+      check quoted(found, cell) == @[refusalCell(cell)]
+
+    # Percentage is digits, then point and digits where it has decimal part, then `%)`; other
+    #   text in brackets is none, so claim keeps it.
+    for percentage in ["(0.5%)", "(62.5%)", "(99.99%)", "(100.0%)", "(7%)", "(05%)"]:
+      let whole = "a b " & percentage & " c"
+      check quoted("- " & whole & ".", "a b").len == 0
+      check quoted("- " & whole & ".", whole) == @[refusalCell(whole)]
+    for brackets in ["(62.%)", "(.5%)", "(62,5%)", "(6.2.5%)", "(62.5 %)", "(62. 5%)",
+        "(62 .5%)", "( 62.5%)", "(62.5)", "(62.5%", "(62..5%)"]:
+      let whole = "a b " & brackets & " c"
+      check quoted("- " & whole & ".", whole).len == 0
+      check quoted("- " & whole & ".", "a b") == @[refusalCell("a b")]
+
+    # Decimal percentage is confidence where it stands last, and stays in claim where it does not.
+    for (bullet, claim) in [("- a (1.5%) b (62.5%).", "a (1.5%) b"),
+        ("- a (62.5%) b (70%).", "a (62.5%) b"), ("- a b (62.5%)", "a b"),
+        ("- a b (62.5%), as the 10th c.", "a b")]:
+      check quoted(bullet, claim).len == 0
+      check quoted(bullet, bullet[2 .. ^1]) == @[refusalCell(bullet[2 .. ^1])]
+
+
   test "samples of GUIDE.md hold shape that block checks read (#962)":
     # Delegate copies form from samples, so sample reflection quotes sample prediction, which
     #   call takes, as section reads as committed.
