@@ -750,6 +750,10 @@ const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
 
 #[ ni'o ni'o ni'o lo nu tcidu ]#
 
+const WIDTH_BODY = GRAMMAR_EBNF.productions.mapIt(it.body.len).max + 1
+  ## lo namcu poi zmadu ro stuzi pe lo nu tcidu ne'i ro basyjva
+
+
 func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[Item]] =
   ## tisna lo selcmi pe `Earley`
   ##   .i le selcmi pe `i` vasru lo cmima poi su'o cumtricu cu klama ke'a ba lo nu tcidu lo genvla
@@ -769,42 +773,62 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
   ##       jvasni
   ##   .i ro selcmi cu kanpe ro jvasni pa roi
   ##
-  ## ni'o ne'i ro selcmi `waiting` .e `predicted` vasru lo pagbu
-  ##   .i ro jvasni cu ponse pa le pagbu
+  ## ni'o ro jvasni cu ponse pa liste be lo cmima poi denpa ke'a ne'i ro selcmi to `waiting` toi
   ##   .i lo te kancu be lo cmima cu zensmi lo ni le selci'a cu clani
   ##   .i ro cmima cu cpacu lo ninstu
+  ##
+  ## ni'o `predicted` cu rinka lo nu ro jvasni cu se kanpe pa roi ne'i ro selcmi
+  ##   .i se ki'u bo ro cmima pe lo nu kanpe cu frica
+  ##   .i ro cmima pe lo nu tcidu lo genvla cu frica ki'u lo nu ro cmima poi pu klama cu frica
+  ##   .i lo cmima pe lo nu tcidu lo genvla cu frica ro cmima poi klama lo jvasni
+  ##   .i se ki'u bo `seen` cu ralte lo cmima po'o poi klama lo jvasni ne'i le ca selcmi
+  ##   .i le porsi be lo nu jmina cu stali
+  ##
+  ## ni'o pa namcu po'o cu sinxa pa cmima ne'i `seen` gi'e selzba sepi'o lo nu pilji
+  ##   .i ki'u bo `shl` cu katna lo namcu ne'i `JavaScript`
   ##
   ## ni'o lo porsi be lo sinxa pe lo basyjva cu selcme pa `template`
   ##   .i `let` na selpli ki'u lo nu `let` fukpi le porsi ca ro cmima
   ##   .i lo na'e zmiku cipra cu tcidu lo samtci pe `C` zi'e poi le fanva cu ciska ke'a
   ##   .i lo cmima cu vasru ci namcu gi'e selfu'i ta'i lo nu fukpi le ci namcu
 
+  template key(item: Item): int =
+    ## lo namcu poi sinxa le cmima ne'i le ca selcmi
+    (item.production * WIDTH_BODY + item.dot) * (terminals.len + 1) + item.origin
+
   template add(i: int, item: Item) =
-    ## jmina le cmima le selcmi pe `i` pa roi
+    ## jmina le cmima le selcmi pe `i`
     ##   .i le selcmi cu fendi le cmima ja'i le jvasni poi le cmima cu denpa ke'a
     let added: Item = item
-    if not seen[i].containsOrIncl(added):
-      template bodyAdded: untyped = GRAMMAR_EBNF.productions[added.production].body
-        ## sinxa le porsi be lo sinxa pe le basyjva pe le selmincmi
-      if added.dot < bodyAdded.len and not bodyAdded[added.dot].is_terminal:
-        waiting[i][bodyAdded[added.dot].code].add result[i].len
-      result[i].add added
+    template bodyAdded: untyped = GRAMMAR_EBNF.productions[added.production].body
+      ## sinxa le porsi be lo sinxa pe le basyjva pe le selmincmi
+    if added.dot < bodyAdded.len and not bodyAdded[added.dot].is_terminal:
+      waiting[i][bodyAdded[added.dot].code].add result[i].len
+    result[i].add added
+
+  template advance(i: int, item: Item) =
+    ## jmina le cmima poi klama lo jvasni le selcmi pe `i` va'o lo nu le cmima cu na pu zvati ri
+    let advanced: Item = item
+    if not seen.containsOrIncl(advanced.key): add(i, advanced)
 
   result = newSeq[seq[Item]](terminals.len + 1)
   let count_nonterminals = GRAMMAR_EBNF.heads.len
   var
-    seen = newSeq[HashSet[Item]](terminals.len + 1)
     waiting = newSeq[seq[seq[int]]](terminals.len + 1)  # lo cmima ja'i lo jvasni poi selde'a
-    predicted = newSeq[seq[bool]](terminals.len + 1)
-  for i in 0..terminals.len:
-    waiting[i] = newSeq[seq[int]](count_nonterminals)
-    predicted[i] = newSeq[bool](count_nonterminals)
+    predicted = newSeqWith(count_nonterminals, -1)  # lo selcmi poi le jvasni pu se kanpe ne'i ke'a
+    seen = initHashSet[int]()  # lo cmima poi klama lo jvasni ne'i le ca selcmi
+  for i in 0..terminals.len: waiting[i] = newSeq[seq[int]](count_nonterminals)
+  predicted[GRAMMAR_EBNF.start] = 0
   for p in GRAMMAR_EBNF.heads[GRAMMAR_EBNF.start]: add(0, (p, 0, 0))
   for i in 0..terminals.len:
+    # ro cmima pe le selcmi cu se tcidu pa roi
+    #   .i `predicted` .e `seen` cu cpacu no ninstu ne'i le selcmi va'o lo nu `seen` cu na zenba
+    #   .i `waiting` .e le liste be lo cmima cu zenba ta'i lo cmima
+    seen.clear
     if is_everywhere:
       for head in 0 ..< count_nonterminals:
-        if GRAMMAR_EBNF.numbers[head].isNone or predicted[i][head]: continue
-        predicted[i][head] = true
+        if GRAMMAR_EBNF.numbers[head].isNone or predicted[head] == i: continue
+        predicted[head] = i
         for p in GRAMMAR_EBNF.heads[head]: add(i, (p, 0, i))
     var k = 0
     while k < result[i].len:
@@ -823,7 +847,7 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
         var j = 0
         while j < waiting[item.origin][head].len:
           let waiter = result[item.origin][waiting[item.origin][head][j]]
-          add(i, (waiter.production, waiter.dot + 1, waiter.origin))
+          advance(i, (waiter.production, waiter.dot + 1, waiter.origin))
           inc j
         continue
 
@@ -833,10 +857,11 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
         if i < terminals.len and int(terminals[i]) == symbol.code:
           add(i + 1, (item.production, item.dot + 1, item.origin))
         continue
-      if not predicted[i][symbol.code]:
-        predicted[i][symbol.code] = true
+      if predicted[symbol.code] != i:
+        predicted[symbol.code] = i
         for p in GRAMMAR_EBNF.heads[symbol.code]: add(i, (p, 0, i))
-      if GRAMMAR_EBNF.nullable[symbol.code]: add(i, (item.production, item.dot + 1, item.origin))
+      if GRAMMAR_EBNF.nullable[symbol.code]:
+        advance(i, (item.production, item.dot + 1, item.origin))
 
 
 func toRule(head: int): tuple[name: string, number: int] =
