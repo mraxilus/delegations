@@ -2,8 +2,9 @@
 ##   Evaluation compiles this against changed library at each algebra its claim names; exit code
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   Laws: for named types P and Q, each coefficient of 𝐦 + 𝐧 and 𝐦 − 𝐧 is sum or difference of
-##     coefficients at that basis, absent one read as zero; result is P where P is Q, else named
-##     type with fewest bases holding both, first in order of library on tie; −𝐦 keeps its type.
+##     coefficients at that basis, absent one read as zero; result is P where P is Q, else exact
+##     union of their bases, as named type with exactly those bases where one has them.
+##   −𝐦 keeps its type; s + 𝐦, 𝐦 + s, s − 𝐦 and 𝐦 − s hold bases of 𝐦 and scalar, by same rule.
 ##   Pairs sweep every named type algebra declares with every one, on either side.
 
 {.experimental: "strictFuncs".}
@@ -40,21 +41,22 @@ func coefficientOr[B: static Bases](m: MultivectorOf[B], b: Basis): float =
   if b in B: float(m[b]) else: 0.0
 
 
-macro namedDeclared(): untyped =
-  ## List each named type algebra declares, as bracket of types, in order of `NAMES`.
-  result = nnkBracket.newTree()
+func basesExpected(a, b: Bases): Bases =
+  ## Choose bases rule gives sum of types over `a` and `b`: exact union of both.
+  a + b
+
+
+macro holdTypeNamed(value: typed, expected: static Bases): untyped =
+  ## Hold that value whose bases some named type has exactly takes that named type.
+  ##   Nim compares static sets as written, so equal sets spelled apart would be two types.
+  result = newStmtList()
   for name in NAMES:
     let kind = ident(name)
     result.add quote do:
-      when declared(`kind`): basesType(`kind`) else: {Basis.scalar..Basis.scalarAnti}
-
-
-func basesExpected(a, b: Bases): Bases =
-  ## Choose bases rule gives sum of types over `a` and `b`, read from named types algebra declares.
-  if a == b: return a
-  result = {Basis.scalar..Basis.scalarAnti}
-  for named in namedDeclared():
-    if a + b <= named and card(named) < card(result): result = named
+      when declared(`kind`):
+        when basesType(`kind`) == `expected`:
+          doAssert typeof(`value`) is `kind`, "Named bases must take named type; got " &
+            $typeof(`value`) & "."
 
 
 template holdPair(r: var Rand, M, N: typedesc) =
@@ -68,6 +70,8 @@ template holdPair(r: var Rand, M, N: typedesc) =
         (sum, difference, negation) = (m + n, m - n, -m)
       doAssert basesType(typeof(sum)) == expected and basesType(typeof(difference)) == expected,
         "Sum and difference must take bases rule gives; got " & $typeof(sum) & "."
+      holdTypeNamed(sum, expected)
+      holdTypeNamed(difference, expected)
       doAssert typeof(negation) is M, "Negation must keep type of operand."
       for b in Basis:
         let (x, y) = (m.coefficientOr(b), n.coefficientOr(b))
@@ -89,6 +93,37 @@ macro holdNamed(r: var Rand, count: var int): untyped =
           `count`.inc
 
 
+template holdScalars(r: var Rand, M: typedesc) =
+  ## Hold sums and differences of scalar and one type, on each sample.
+  block:
+    const expected = basesExpected(basesType(M), {Basis.scalar})
+    for _ in 0 ..< SAMPLES:
+      let
+        m = r.sample(M)
+        s = Coefficient(r.rand(-1.0 .. 1.0))
+        results = [s + m, m + s, s - m, m - s]
+      doAssert basesType(typeof(results[0])) == expected,
+        "Sum with scalar must hold bases of operand and scalar; got " & $typeof(results[0]) & "."
+      holdTypeNamed(results[0], expected)
+      for b in Basis:
+        let (x, t) = (m.coefficientOr(b), if b == Basis.scalar: float(s) else: 0.0)
+        doAssert results[0].coefficientOr(b) == t + x and results[1].coefficientOr(b) == x + t,
+          "Sum with scalar must add scalar at its basis alone."
+        doAssert results[2].coefficientOr(b) == t - x and results[3].coefficientOr(b) == x - t,
+          "Difference with scalar must subtract at each basis."
+
+
+macro holdScalarsNamed(r: var Rand, count: var int): untyped =
+  ## Hold sums and differences of scalar and each named type algebra declares, and count them.
+  result = newStmtList()
+  for name in NAMES:
+    let kind = ident(name)
+    result.add quote do:
+      when declared(`kind`):
+        holdScalars(`r`, `kind`)
+        `count`.inc
+
+
 macro holdTypesNamed(): untyped =
   ## Hold that sum of one named type keeps that type, and is not generic of same bases.
   ##   Nim compares static sets as written, so equal sets spelled apart would be two types.
@@ -106,10 +141,12 @@ proc main() =
   var
     r = initRand(SEED)
     pairs = 0
+    types = 0
   holdNamed(r, pairs)
+  holdScalarsNamed(r, types)
   holdTypesNamed()
   echo &"{DIMENSIONS}D, conformal {IS_CONFORMAL}: laws hold at {pairs} pairs of named types, " &
-    &"on {SAMPLES} samples each."
+    &"and at {types} types beside a scalar, on {SAMPLES} samples each."
 
 
 main()
