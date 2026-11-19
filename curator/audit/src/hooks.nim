@@ -368,8 +368,8 @@ const
   RULE_CELL = "Cell under `" & COLUMN_PREDICTED & "` is one whole claim of `" &
     HEADING_PREDICTION & "` block that call took, up to its confidence, percentiles or " &
     "resolution criterion, or before final full stop of bullet with none, with or without its " &
-    "label of one capital word, or `" & NO_PREDICTION & "` (GUIDE.md, Prediction, critic and " &
-    "reflection)"
+    "label of one word that opens with capital, or `" & NO_PREDICTION & "` (GUIDE.md, " &
+    "Prediction, critic and reflection)"
     ## Rule that finding of each cell under `Predicted` states, empty or quoting no claim, so
     ##   each names `No prediction` as form of miss (7015791554).
   LINE_BLOCKS* = "Hold prediction, critic and reflection (GUIDE.md, Prediction, critic and " &
@@ -2070,16 +2070,16 @@ func isPercentage(text: string, at: int): bool =
 
 
 func labelClaim(claim: string): string =
-  ## Read label that opens claim, with its `: `: one word of letters whose first is capital, as
-  ##   `Judgement: ` (7018501890), or such word and its colon in bold, then space, as
-  ##   `**Judgement:** ` (7022872980); empty where claim opens with none.
+  ## Read label that opens claim, with its `: `: run with no space whose first character is
+  ##   capital letter, as `Judgement: `, `Q1: ` or `Follow-up: `, or such run and its colon in
+  ##   bold, then space, as `**Judgement:** ` (7022872980); empty where claim opens with none.
+  ##   Run ends at first separator after its capital; capital is `A` to `Z` alone.
   let
-    start = (if claim.startsWith(BOLD): BOLD.len else: 0)  # First character of word.
+    start = (if claim.startsWith(BOLD): BOLD.len else: 0)  # First character of run.
     separator = (if start > 0: SEPARATOR_LABEL_BOLD else: SEPARATOR_LABEL)
   if start >= claim.len or claim[start] notin UppercaseLetters: return ""
-  var i = start + 1
-  while i < claim.len and claim[i] in Letters: inc i
-  if claim.continuesWith(separator, i): claim[0 ..< i + separator.len] else: ""
+  let stop = claim.find(separator, start + 1)  # End of run.
+  if stop < 0 or ' ' in claim[start ..< stop]: "" else: claim[0 ..< stop + separator.len]
 
 
 func claims(text: string): seq[string] =
@@ -2128,8 +2128,9 @@ func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
   ##   Reflection with no such table, table with no row, and empty cell each quote nothing, so
   ##     each is finding, as cell that quotes no claim is; empty cell states rule of cell too,
   ##     so it names `No prediction`, which row of missed prediction holds.
-  ##   Cell equals one claim of block call took, with or without its label (7016134603) of one
-  ##     capital word (7018501890), each run of whitespace read as one space; fragment of
+  ##   Cell equals one claim of block call took, with or without its label (7016134603), run
+  ##     that opens with capital, bold or not (7022872980), each run of whitespace read as one
+  ##     space; fragment of
   ##     claim, claim with other label before it, claim with its confidence
   ##     (7018501890), or claim with no mark that keeps final full stop of its bullet
   ##     (7017902016), is none.
