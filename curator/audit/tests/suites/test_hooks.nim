@@ -254,8 +254,8 @@ func refusalCell(cell: string): string =
   ##   `No prediction`, as rules of D5 b, 7017902016 and 7018501890 of #969 state it.
   "Cell under `Predicted` is one whole claim of `## Prediction` block that call took, up to " &
     "its confidence, percentiles or resolution criterion, or before final full stop of bullet " &
-    "with none, with or without its label, or `No prediction` (GUIDE.md, Prediction, critic " &
-    "and reflection); got `" & cell & "`."
+    "with none, with or without its label of one capital word, or `No prediction` (GUIDE.md, " &
+    "Prediction, critic and reflection); got `" & cell & "`."
 
 
 func refusalCall(kind, description: string, hint = ""): string =
@@ -2634,7 +2634,8 @@ suite "Hooks":
       check passes(bullet, bullet[2 .. ^1])
       check not passes(bullet, "a")
 
-    # Label is text before first `: ` of claim; `: ` of resolution criterion alone opens none.
+    # Label is one word that opens with capital, then `: `, at start of claim (7018501890, test
+    #   below); `: ` of resolution criterion alone opens none.
     for (bullet, cells, refused) in [
         ("- Judgement: a b (70%).", @["Judgement: a b", "a b"], @["Judgement:", "b"]),
         ("- Judgement: a: b (70%).", @["Judgement: a: b", "a: b"], @["b", "Judgement: a"]),
@@ -2726,17 +2727,20 @@ suite "Hooks":
         "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n| ✅ | 80% | " &
         cell & " | it holds |\n"), ["critic", "researcher"]).len == 0
 
-    # Case as found: each cell drops final full stop of its bullet, with or without label, and
-    #   passes; cell that keeps it is refused.
+    # Case as found: each cell drops final full stop of its bullet, and passes; cell that keeps
+    #   it is refused. Text before `: ` of each bullet is several words, so it is no label, and
+    #   part after it is refused (7018501890, test below).
     const found = "- Tokens, summed over its requests: 10th percentile 1 million, median 3 " &
       "million, 90th percentile 8 million.\n- Cost at list price: 10th percentile $1.50, median " &
       "$3.50, 90th percentile $8."
     for cell in ["Tokens, summed over its requests: 10th percentile 1 million, median 3 " &
         "million, 90th percentile 8 million",
-        "10th percentile 1 million, median 3 million, 90th percentile 8 million",
-        "Cost at list price: 10th percentile $1.50, median $3.50, 90th percentile $8",
-        "10th percentile $1.50, median $3.50, 90th percentile $8"]:
+        "Cost at list price: 10th percentile $1.50, median $3.50, 90th percentile $8"]:
       check passes(found, cell)
+      check not passes(found, cell & ".")
+    for cell in ["10th percentile 1 million, median 3 million, 90th percentile 8 million",
+        "10th percentile $1.50, median $3.50, 90th percentile $8"]:
+      check not passes(found, cell)
       check not passes(found, cell & ".")
 
     # Claim with no mark ends before one final full stop, whatever whitespace or wrap ends its
@@ -2857,6 +2861,80 @@ suite "Hooks":
         ("- a b (62.5%), as the 10th c.", "a b")]:
       check quoted(bullet, claim).len == 0
       check quoted(bullet, bullet[2 .. ^1]) == @[refusalCell(bullet[2 .. ^1])]
+
+
+  test "label is one word that opens with capital, then `: ` (7018501890 of #969)":
+    # Ruling 7018501890 of #969: label is one word that opens with capital, then `: `, as
+    #   `Judgement:` or `Work:`; colon inside sentence makes no label, so cell quotes whole claim
+    #   there. Cases as found are probes M3, M4 and M5 of critic of build of D5 b: build
+    #   `b8491db8` read text before first `: ` of claim as label, so it passed part after colon
+    #   of claim with no label (M4), and claim without its words before colon (M5). Bold label
+    #   (M3) holds no `: `, so cell that drops it is refused, as before.
+    for (found, cells, refused) in [
+        ("- **Judgement:** the race to save one shared key leads the findings (70%). " &
+          "Resolution criterion: the report says so.",
+          @["**Judgement:** the race to save one shared key leads the findings"],
+          @["the race to save one shared key leads the findings",
+            "Judgement: the race to save one shared key leads the findings"]),
+        ("- the refusal names one cause: the missing block (70%). Resolution criterion: the " &
+          "report says so.", @["the refusal names one cause: the missing block"],
+          @["the missing block", "the refusal names one cause"]),
+        ("- Cost at list price: $15 to $35 (60%). Resolution criterion: the sum of its requests.",
+          @["Cost at list price: $15 to $35"], @["$15 to $35", "list price: $15 to $35"])]:
+      for cell in cells: check quoted(found, cell).len == 0
+      for cell in refused: check quoted(found, cell) == @[refusalCell(cell)]
+
+    # Label of one word of letters whose first is capital, then `: `, at start of claim: claim
+    #   passes with it and without it, and part after first `: ` of rest of claim is refused.
+    for label in ["Judgement", "Work", "Result", "Cost", "Tokens", "A", "NOTE", "WorK"]:
+      let bullet = "- " & label & ": a: b (70%)."
+      for cell in [label & ": a: b", "a: b"]: check quoted(bullet, cell).len == 0
+      for cell in ["b", label & ": b", "a"]: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Other text before `: ` is no label, so cell quotes whole claim: word in lower case, two or
+    #   more words, word with mark, digit or hyphen, bold, and words of sentence.
+    for opening in ["judgement", "jUDGEMENT", "work", "Cost at list price", "Big Work",
+        "Tokens, summed over its requests", "Q1", "Follow-up", "Judgement's", "*Judgement*",
+        "**Judgement**", "`Judgement`", "_Judgement_", "Judgement.", "the refusal names one cause"]:
+      let bullet = "- " & opening & ": a b (70%)."
+      check quoted(bullet, opening & ": a b").len == 0
+      check quoted(bullet, "a b") == @[refusalCell("a b")]
+
+    # Capital word and `: ` inside claim, or after bold label, make no label: label opens claim.
+    for (bullet, whole, refused) in [
+        ("- a Judgement: b (70%).", "a Judgement: b", @["b", "Judgement: b", "a"]),
+        ("- the hook says Work: b c (70%).", "the hook says Work: b c", @["b c", "Work: b c"]),
+        ("- **Judgement:** Work: b (70%).", "**Judgement:** Work: b", @["Work: b", "b"]),
+        ("- Judgement:  a b (70%).", "Judgement: a b", @["Judgement:", "Judgement: a"]),
+        ("- Judgement: (70%).", "Judgement:", @["Judgement"])]:
+      check quoted(bullet, whole).len == 0
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Other label before whole claim, label before claim that has none, and label twice are
+    #   refused.
+    for (bullet, refused) in [
+        ("- Judgement: a b (70%).", @["Work: a b", "Result: a b", "judgement: a b",
+          "Judgement: Judgement: a b", "Work: Judgement: a b"]),
+        ("- a b (70%).", @["Judgement: a b", "Work: a b"]),
+        ("- Cost at list price: a b (70%).", @["Cost: a b", "Work: Cost at list price: a b"])]:
+      for cell in refused: check quoted(bullet, cell) == @[refusalCell(cell)]
+
+    # Cell that differs from claim only in case of one letter is refused, with label or without.
+    const
+      claimed = "- Judgement: the Race leads (70%)."
+        ## Bullet whose claim holds letters of each case, in its label and after it.
+      letters = 33
+        ## Letters of `Judgement: the Race leads` and of `the Race leads`, each flipped once.
+    var flipped = 0
+    for claim in ["Judgement: the Race leads", "the Race leads"]:
+      check quoted(claimed, claim).len == 0
+      for i, c in claim:
+        if c notin Letters: continue
+        var cell = claim
+        cell[i] = (if c.isUpperAscii: c.toLowerAscii else: c.toUpperAscii)
+        check quoted(claimed, cell) == @[refusalCell(cell)]
+        inc flipped
+    check flipped == letters
 
 
   test "samples of GUIDE.md hold shape that block checks read (#962)":
