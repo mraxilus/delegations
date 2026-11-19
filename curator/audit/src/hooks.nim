@@ -13,9 +13,9 @@
 ##     working line, sign-off out of shape whatever its turn did, end of any turn whose message
 ##     names `#N` outside link or cites charter reference with no description, sign-off from
 ##     turn that read no open issue of its role, call of subagent of kind that no block of
-##     earlier model turn predicts with no subagent started between them, report of critic
-##     with no reflection after it, and cell of reflection that is neither whole claim of block
-##     call took nor `No prediction`;
+##     earlier model turn naming that kind predicts with no subagent started between them,
+##     report of critic with no reflection after it, and cell of reflection that is neither
+##     whole claim of block call took nor `No prediction`;
 ##     `start` prints role, read order, each finding of drift, headings of record branch works
 ##     on, and carried list; `prompt` reads each message of Architect; `push` and `msg` serve
 ##     git hooks.
@@ -60,13 +60,13 @@
 ##     person typed by `origin.kind`, which no wake carries; turn still starts at wake, since
 ##     what turn did is read from there.
 ##   Blocks of subagents hold at end of each model turn, as Architect ruled on #962 and #969
-##     (`checkBlocks`): call of subagent of kind takes `## Prediction` block of model turn
-##     before its own, and after each earlier turn that starts subagent; each report of critic
-##     takes `## Reflection` block after it; each cell under `Predicted` of reflection is one
-##     whole claim of block call took, with or without its label, or `No prediction`. Model
-##     turn ends where model stops, never at `user` entry, so block checks read model turns,
-##     and every other check reads turn since message of person. Kinds are read from templates
-##     at each stop (`readKinds`).
+##     (`checkBlocks`): call of subagent of kind takes `## Prediction` block that names its
+##     kind, of model turn before its own and after each earlier turn that starts subagent,
+##     nearest turn first; each report of critic takes `## Reflection` block after it; each
+##     cell under `Predicted` of reflection is one whole claim of block call took, with or
+##     without its label, or `No prediction`. Model turn ends where model stops, never at
+##     `user` entry, so block checks read model turns, and every other check reads turn since
+##     message of person. Kinds are read from templates at each stop (`readKinds`).
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -85,11 +85,10 @@
 ##   Cost: `stop` cannot tell coordinator, which holds no branch, from delegate; where it runs
 ##     for coordinator, whose message is digest, turn that posted is asked once for sign-off,
 ##     and second stop passes.
-##   Cost: blocks pair with calls by order alone, so hook never reads which subagent block
-##     names; it never reads state, confidence or figures of header of reflection, run of
+##   Cost: hook never reads state, confidence or figures of header of reflection, run of
 ##     resolver, or rules of forecasting, so reading holds those.
-##   Cost: reply to refusal of `stop` is model turn of its own, so block whose turn is refused
-##     stands two turns before call that follows reply.
+##   Cost: block written after call it names still serves later call of its own kind, and
+##     `Agent` call harness rejects starts no subagent, yet ends turns later call looks back over.
 
 {.experimental: "strictFuncs".}
 
@@ -335,6 +334,9 @@ const
     ## Kinds whose call passes with no block: prediction of critic is optional (6975216328),
     ##   and resolver marks prediction, so it takes none.
   HEADING_PREDICTION* = "## Prediction"  ## Heading of block that predicts subagent.
+  LABEL_SUBAGENT = "**Subagent:**"
+    ## Opening of line of block whose first word after it names kind of call that block serves
+    ##   (7017187857).
   HEADING_REFLECTION* = "## Reflection"  ## Heading of block that answers report of critic.
   KIND_CRITIC = "critic"  ## Kind whose report asks for reflection.
   KIND_PEER = "peer"  ## Kind `origin.kind` of entry gives hand-back of subagent.
@@ -1892,46 +1894,71 @@ func checkSignoffRead*(message: string, calls: openArray[Call]): seq[Finding] =
   )]
 
 
-func blocksTaken(subagents: Subagents; kinds: openArray[string]): seq[int] =
+func kindNamed(text: string, kinds: openArray[string]): string =
+  ## Read kind block text names: first word after `**Subagent:**` on first line of block that
+  ##   opens with it, after any indent; empty where no line opens so, or that word is no kind
+  ##   (7017187857).
+  ##   Word runs to next whitespace, so kind in backticks, or with comma after it, is no kind.
+  for line in text.splitLines:
+    let s = line.strip(trailing = false)
+    if not s.startsWith(LABEL_SUBAGENT): continue
+    let words = s[LABEL_SUBAGENT.len .. ^1].splitWhitespace
+    return (if words.len > 0 and words[0] in kinds: words[0] else: "")
+  ""
+
+
+func turnsBack(subagents: Subagents, turn: int): Slice[int] =
+  ## Read turns that call of turn looks back over: each turn after latest earlier turn holding
+  ##   `Agent` call of any type, up to turn before its own (7014974932).
+  var before = -1  # Latest turn before `turn` that starts subagent; -1 where none.
+  for call in subagents.calls:
+    if call.place.turn < turn: before = call.place.turn
+  before + 1 ..< turn
+
+
+func nearestFirst(subagents: Subagents, blocks: seq[int]): seq[int] =
+  ## Sort indices in `predictions`: block of nearest turn first, and earliest block first inside
+  ##   one turn (7017187857).
+  blocks.sortedByIt((-subagents.predictions[it].place.turn, it))
+
+
+func blocksTaken(subagents: Subagents, kinds: openArray[string]): seq[int] =
   ## Read index in `predictions` of block each call took, by index of call; -1 where none.
   ##   Block serves later call where no subagent starts between them, whatever count of turns
-  ##     between (7014974932): hook looks back from turn of calls over each turn after latest
-  ##     earlier turn holding `Agent` call of any type, up to turn before theirs.
+  ##     between (7014974932), so call looks back over turns `turnsBack` gives.
   ##   So block of turn that starts subagent is no evidence (`D2 a` of 6982373798), and nor is
   ##     block of turn of call, since prediction is last message of turn of its own (6980006567).
-  ##   Each call of kind that is not exempt takes earliest block of those turns no call took, in
-  ##     order of calls; exempt call takes block only where one is left after them.
+  ##   Block serves only call of kind it names (`kindNamed`), exempt kind too, and call takes
+  ##     free one of nearest of those turns, earliest in that turn (`nearestFirst`); calls of one
+  ##     turn take in their order (7017187857).
   ##   Call of type no template names is tool use, and takes none.
   result = newSeqWith(subagents.calls.len, -1)
-  var
-    first = 0
-    turn_before = -1  # Latest turn that starts subagent before turn of `first`; -1 where none.
-  while first < subagents.calls.len:
-    let turn = subagents.calls[first].place.turn
-    var stop = first
-    while stop < subagents.calls.len and subagents.calls[stop].place.turn == turn: inc stop
-    let turns_back = turn_before + 1 ..< turn
-    var free = toSeq(0 ..< subagents.predictions.len)
-      .filterIt(subagents.predictions[it].place.turn in turns_back)
-    for is_exempt in [false, true]:
-      for k in first ..< stop:
-        let kind = subagents.calls[k].kind
-        if free.len == 0 or kind notin kinds or (kind in KINDS_EXEMPT) != is_exempt: continue
-        result[k] = free[0]
-        free.delete(0)
-    (first, turn_before) = (stop, turn)
+  let named = subagents.predictions.mapIt(it.text.kindNamed(kinds))
+  for k, call in subagents.calls:
+    if call.kind notin kinds: continue
+    let
+      back = subagents.turnsBack(call.place.turn)
+      free = toSeq(0 ..< subagents.predictions.len)
+        .filterIt(subagents.predictions[it].place.turn in back and named[it] == call.kind)
+        .filterIt(it notin result)
+    if free.len > 0: result[k] = subagents.nearestFirst(free)[0]
 
 
-func checkPredictions(subagents: Subagents; kinds: openArray[string]): seq[Finding] =
+func checkPredictions(subagents: Subagents, kinds: openArray[string]): seq[Finding] =
   ## Report each call of current model turn, of kind that is not exempt, that took no block.
   ##   Missing prediction asks for no block, since block after call is no evidence: reply names
   ##     it, and reflection counts it as miss, with its cause (6979936148).
+  ##   Block no call took, of turns call looks back over, adds what nearest one names: other
+  ##     kind, or none, since block serves only call of kind it names (7017187857).
   ##   Block in turn of call adds that block stands in earlier turn, and thinking with no text
   ##     before call adds that block in thinking reaches neither chat nor hook (`D3 a` of
   ##     6982373798). Call of earlier turn was held at its own stop.
   let
     taken = subagents.blocksTaken(kinds)
     current = subagents.turns - 1
+    back = subagents.turnsBack(current)
+    left = subagents.nearestFirst(toSeq(0 ..< subagents.predictions.len)
+      .filterIt(subagents.predictions[it].place.turn in back and it notin taken))
   for k, call in subagents.calls:
     if call.place.turn != current or call.kind notin kinds or call.kind in KINDS_EXEMPT or
         taken[k] >= 0:
@@ -1943,10 +1970,16 @@ func checkPredictions(subagents: Subagents; kinds: openArray[string]): seq[Findi
       is_written = subagents.predictions.anyIt(it.place.isBefore)
       is_thought = subagents.thinking.anyIt(it.isBefore) and not subagents.texts.anyIt(it.isBefore)
     var hint = ""
+    if left.len > 0:
+      let named = subagents.predictions[left[0]].text.kindNamed(kinds)
+      hint = ", and block of such turn names " &
+        (if named.len > 0: "`" & named & "`" else: "no kind") &
+        ": block serves only call of kind that first word of its `" & LABEL_SUBAGENT &
+        "` line names"
     if is_written:
-      hint = ", and block in turn of call, which is no evidence: block stands in earlier turn"
+      hint.add ", and block in turn of call, which is no evidence: block stands in earlier turn"
     elif is_thought:
-      hint = ", and thinking with no text before call: block in thinking reaches neither " &
+      hint.add ", and thinking with no text before call: block in thinking reaches neither " &
         "chat nor hook"
     result.add finding(
       "",
