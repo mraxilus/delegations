@@ -66,7 +66,8 @@
 ##     cell under `Predicted` of reflection is one whole claim of block call took, with or
 ##     without its label, or `No prediction`. Model turn ends where model stops, never at
 ##     `user` entry, so block checks read model turns, and every other check reads turn since
-##     message of person. Kinds are read from templates at each stop (`readKinds`).
+##     message of person. Kinds are read from templates at each stop (`readKinds`). `Agent` call
+##     whose result has `is_error` and no `agentId` is skipped, as harness rejected it.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `path` copies how each write tool applies change (`textWritten`); where harness
@@ -87,8 +88,9 @@
 ##     and second stop passes.
 ##   Cost: hook never reads state, confidence or figures of header of reflection, run of
 ##     resolver, or rules of forecasting, so reading holds those.
-##   Cost: block written after call it names still serves later call of its own kind, and
-##     `Agent` call harness rejects starts no subagent, yet ends turns later call looks back over.
+##   Cost: block written after call it names still serves later call of its own kind, and later
+##     block of kind replaces earlier one, so of blocks for two subagents of one kind, first call
+##     takes block of nearer turn.
 
 {.experimental: "strictFuncs".}
 
@@ -2552,12 +2554,28 @@ func isReportEntry(
   true
 
 
+func usesRejected(e: JsonNode): seq[string] =
+  ## Read id of each tool use whose result entry gives as rejected by harness: item
+  ##   `tool_result` whose `is_error` is true, in `user` entry whose `toolUseResult` names no
+  ##   `agentId`, so no subagent started (7022770415).
+  ##   Call that launched names its agent, so entry that names one rejects none, and call keeps
+  ##     its effect (7022770415).
+  if e{"type"}.getStr != "user" or e{"toolUseResult", "agentId"}.getStr.len > 0: return
+  for item in e{"message", "content"}.getElems:
+    let id = item{"tool_use_id"}.getStr
+    if item{"type"}.getStr == "tool_result" and item{"is_error"}.getBool and id.len > 0:
+      result.add id
+
+
 func toSubagents(entries: openArray[JsonNode]): Subagents =
   ## Read each `Agent` call, block, report of critic, thinking and text of transcript, in order,
   ##   with model turn of each.
   ##   Fence reads over joined text of each entry, as `parseTurn` joins it, so fence crossing two
   ##     items reads right; each item still ends its own block. Fence is `fencedOut`'s, so tilde
   ##     fence and indented code are text.
+  ##   Call whose result gives it as rejected (`usesRejected`) drops out before that entry is
+  ##     read as report, so it takes no block, ends no turns, asks for no block, and its result
+  ##     is no report (7022770415).
   let turns = entries.turnsModel
   result.turns = (if turns.len == 0: 1 else: turns[^1] + 1)
 
@@ -2573,6 +2591,8 @@ func toSubagents(entries: openArray[JsonNode]): Subagents =
   for i, e in entries:
     let turn = turns[i]
     if e{"type"}.getStr != "assistant":
+      let rejected = e.usesRejected
+      if rejected.len > 0: result.calls.keepItIf(it.id notin rejected)
       if entries.isReportEntry(i, result.calls): result.reports.add Place(turn: turn, at: at)
       inc at
       continue
