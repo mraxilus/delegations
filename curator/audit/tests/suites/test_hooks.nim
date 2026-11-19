@@ -3212,6 +3212,41 @@ suite "Hooks":
         check held.allIt("`No prediction` (GUIDE.md, Prediction, critic and reflection)" in it)
 
 
+  test "claim reads `\\|` as `|`, as cell does (7022872980 of #969)":
+    # Ruling 7022872980 of #969: check reads `\|` as `|` in claim too, as it does in cell, so
+    #   cell that quotes such claim with `\|` passes. Case as found is cost that record named:
+    #   build `1f4d159a` kept `\|` in claim, so cell that copied it was refused, and only cell
+    #   that wrote `\\|` quoted it. Expected result of that check changes by ruling.
+    const piped = "- Judgement: a \\| b (70%)."
+    for cell in ["a \\| b", "Judgement: a \\| b"]: check quoted(piped, cell).len == 0
+    for cell in ["a \\\\| b", "Judgement: a \\\\| b"]:
+      check quoted(piped, cell) == @[refusalCell(cell.replace("\\\\|", "\\|"))]
+
+    # Law: each count of pipes up to three, each one bare or escaped in block, quotes as cell that
+    #   escapes each one, and refuses cell that escapes any one twice.
+    const pipes = 14  ## Bullets of law: two forms of each of one, two and three pipes.
+    var laid = 0
+    for count in 1 .. 3:
+      for mask in 0 ..< (1 shl count):  # Pipe `n` is escaped in block where bit `n` is set.
+        var written, cell: string
+        for n in 0 ..< count:
+          written.add "w" & $n & (if (mask shr n and 1) == 1: " \\| " else: " | ")
+          cell.add "w" & $n & " \\| "
+        let bullet = "- " & written & "end (70%)."
+        check quoted(bullet, cell & "end").len == 0
+        for n in 0 ..< count:
+          let twice = cell.replace("w" & $n & " \\| ", "w" & $n & " \\\\| ") & "end"
+          check quoted(bullet, twice).len == 1
+        inc laid
+    check laid == pipes
+
+    # Two backslashes before pipe of block read as one, as in cell, and other escape stays.
+    check quoted("- a \\\\| b (70%).", "a \\\\| b").len == 0
+    check quoted("- a \\\\| b (70%).", "a \\| b") == @[refusalCell("a | b")]
+    check quoted("- a \\* b (70%).", "a \\* b").len == 0
+    check quoted("- Q\\|1: a (70%).", "a").len == 0  # pipe of label reads first
+
+
   test "costs of read of claim stay as record names them (#969)":
     # Record, Quotes of claims, names these costs, which critic of build of D5 b found by probe;
     #   each holds here so that change to it shows.
@@ -3221,13 +3256,6 @@ suite "Hooks":
         "1. a b (70%).", "1) a b (70%)."]:
       for cell in ["a b", bullet.strip.split(maxsplit = 1)[1]]:
         check quoted(bullet, cell) == @[refusalCell(cell)]
-
-    # Block that writes `\|` keeps it in its claim; cell reads `\|` as `|`, so only cell that
-    #   writes `\\|` quotes that claim.
-    const piped = "- Judgement: a \\| b (70%)."
-    for cell in ["a \\\\| b", "Judgement: a \\\\| b"]: check quoted(piped, cell).len == 0
-    for cell in ["a \\| b", "Judgement: a \\| b"]:
-      check quoted(piped, cell) == @[refusalCell(cell.replace("\\|", "|"))]
 
     # Claim with percentiles holds no confidence in brackets, so percentage in brackets in its
     #   text is last one before its percentiles, and claim ends there.
