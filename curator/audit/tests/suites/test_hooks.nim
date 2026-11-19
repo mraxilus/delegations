@@ -1774,6 +1774,14 @@ suite "Hooks":
     check (lineSaid("One.", "tool_use") & lineSaid("Two.")).parseTurn.subagents.turns == 1
     check (lineAssistant("One.") & lineSaid("Two.")).parseTurn.subagents.turns == 1
 
+    # Reason that is no string, as JSON `null`, ends no turn either.
+    for reason in [newJNull(), %1, %true, %*["end_turn"], %*{"type": "end_turn"}]:
+      let entry = %*{"type": "assistant", "message": {
+        "content": [{"type": "text", "text": "One."}]
+      }}
+      entry["message"]["stop_reason"] = reason
+      check ($entry & "\n" & lineSaid("Two.")).parseTurn.subagents.turns == 1
+
     # Entries of one message end one turn, at its last entry, as harness writes each item apart.
     func lineItem(message: string, item: JsonNode): string =
       ## Write transcript line of entry of message holding item, which stops for `end_turn`.
@@ -1846,6 +1854,14 @@ suite "Hooks":
     check blocksHeld(asked & read & wake & lineThought() & lineSaid("Now.", "tool_use") &
       linesAgent("builder") & started).allIt("thinking" notin it)  # text before call
 
+    # Block or thinking after call, in its turn, adds no hint, since each hint reads what stands
+    #   before call.
+    for after in [lineSaid(PREDICTION, "tool_use"), lineThought()]:
+      let late = blocksHeld(asked & read & wake & linesAgent("builder") & after & started)
+      check late == @["Call of subagent of kind takes `## Prediction` block of model turn just " &
+        "before its own, which starts no subagent (GUIDE.md, Prediction, critic and " &
+        "reflection); got none for `builder` call `Do the work`."]
+
     # Block two turns back, or in turn that starts subagent of any type, is no evidence.
     let back = blocksHeld(asked & lineSaid(PREDICTION) & wake & lineSaid("Waiting.") & wake &
       linesAgent("builder") & started)
@@ -1862,13 +1878,41 @@ suite "Hooks":
       linesAgent("builder") & linesAgent("reviewer") & started).len == 0
     check blocksHeld(asked & lineSaid(PREDICTION) & wake & linesAgent("critic") &
       linesAgent("builder") & started).len == 0
-    for kind in KINDS_EXEMPT:
+
+    # Each call takes earliest free block of turn before: of n blocks and m calls, blocks after
+    #   first m are taken by no call, so cell that quotes one of them is finding.
+    const header = "| State | Confidence | Predicted | Result |\n| --- | --- | --- | --- |\n"
+    for n in 1 .. 3:
+      for m in 1 .. n:
+        var blocks, rows: seq[string]
+        for b in 1 .. n:
+          blocks.add "## Prediction\n\n- Judgement: claim " & $b & " holds (70%)."
+          rows.add "| ✅ | 70% | claim " & $b & " holds | it holds |"
+        let found = blocksHeld(asked & lineSaid(blocks.join("\n\n")) & wake &
+          linesAgent("builder").repeat(m) & started & lineHandback("builder", "abuilder") &
+          linesAgent("critic") & lineSaid("The critic runs.") & lineHandback("critic") &
+          lineSaid("## Reflection\n\n" & header & rows.join("\n") & "\n"))
+        check found == toSeq(m + 1 .. n).mapIt("Cell under `Predicted` stands word for word in " &
+          "`## Prediction` block that call took (GUIDE.md, Prediction, critic and reflection); " &
+          "got `claim " & $it & " holds`.")
+
+    # Kinds `critic` and `resolver` are exempt, named here and not read from code; each other
+    #   kind is held.
+    for kind in ["critic", "resolver"]:
       check blocksHeld(asked & read & wake & linesAgent(kind) & started).len == 0
+    for kind in ["builder", "reviewer"]:
+      check blocksHeld(asked & read & wake & linesAgent(kind) & started).len == 1
 
     # Type no template names is tool use; with no folder, no type is kind.
     for kind in ["general-purpose", "web-fetch", "Explore"]:
       check blocksHeld(asked & read & wake & linesAgent(kind) & started).len == 0
     check blocksHeld(asked & read & wake & linesAgent("builder") & started, []).len == 0
+
+    # Call of such type takes no block, so later call of kind in its turn takes it, as critic of
+    #   hook on #962 found for `web-fetch` in foreground.
+    for kind in ["general-purpose", "web-fetch", "Explore"]:
+      check blocksHeld(asked & lineSaid(PREDICTION) & wake &
+        linesForeground(kind, "false", "completed") & linesAgent("reviewer") & started).len == 0
 
     # Call of earlier turn was held at its own stop.
     check blocksHeld(asked & read & wake & linesAgent("builder") & started &
@@ -1887,6 +1931,7 @@ suite "Hooks":
     writeFile(agents / "notes.txt", "---\nname: notes\n---\n")  # no template
     writeFile(agents / "draft.md", "name: draft\n")  # no front matter
     writeFile(agents / "late.md", "---\nmodel: opus\n---\nname: late\n")  # name below matter
+    writeFile(agents / "nested.md", "---\nmetadata:\n  name: nested\n---\n")  # name of inner map
     check readKinds(root) == @["builder", "critic"]
 
     # Each exempt kind is template of this repository, so no rename leaves it dead.
