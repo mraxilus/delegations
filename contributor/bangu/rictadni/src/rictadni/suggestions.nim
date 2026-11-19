@@ -269,9 +269,10 @@ const
   VERSION_ANTHROPIC = "2026-10-21"  ## Version of Messages API body is written for.
   BETA_FALLBACK = "server-side-fallback-2026-07-01"  ## Beta `fallbacks: "default"` needs.
   NAME_SCHEMA = "lojban_tags"  ## Name Chat Completions gives schema of answer.
-  ID_SESSION = "lojban_tagger"
+  ID_SESSION = "rictadni"
     ## Session OpenRouter body names: one for every request, so sticky routing sends each to
     ##   endpoint caching system text, which passage would key apart; at most 256 characters.
+    ##   Name of project, as D1 on #946 ruled; first request after rename can miss cache once.
     ##   Cost: requests of one account go to one endpoint while it answers, never spread.
     ##     https://openrouter.ai/docs/guides/best-practices/prompt-caching
   RUNES_SHOWN* = 200  ## Most characters of outside text report shows.
