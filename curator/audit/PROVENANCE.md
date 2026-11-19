@@ -3923,7 +3923,7 @@ where that base sits in that span, and only groups of pull requests elsewhere.
 comments on #962 and #969. `checkBlocks` holds these: a prediction before each call, a reflection
 after each report of a critic, and a quote in each cell of a reflection. It reads every model
 turn, whether or not it pushed or posted, because the turn of a prediction writes nothing.
-Reading holds each other step.
+Section Quotes of claims gives the quote, and reading holds each other step.
 
 **A model turn ends where the model stops.** It ends at an `assistant` entry whose `stop_reason`
 is a string other than `tool_use`. The harness writes each item of a message as an entry of its
@@ -4017,34 +4017,6 @@ of `critic` whose `run_in_background` is false.
   hand-back of another subagent, and two reports. It holds each order of sign-off and working
   line in the last text, a fence, two sign-offs, and two working lines around a reflection.
 
-**Each cell under `Predicted` is one whole claim of a block that a call took, or `No prediction`.**
-Comment 6975486646 rules the quote, and comment 6980006567 rules that a reflection quotes only a
-block that a call used. Comment 7016134603 holds a cell to one whole claim, with or without its
-label, and comment 7015791554 rules the cell `No prediction`. The check reads the first table
-whose header holds `Predicted`, in each `## Reflection` block of the current turn. It reads one
-below the sign-off or the working line too.
-
-- A claim is a bullet with no indent that opens with `- `, `* ` or `+ `. It runs to the next blank
-  line, the next bullet at any indent, or the end of its block. It ends at the first of its
-  percentage in brackets, `, as the 10th` and `. Resolution criterion`. With none of these, it
-  ends before one final full stop of its bullet (comment 7017902016). Its label is the text
-  before its first `: `.
-- A claim and a cell each read a run of whitespace as one space (comment 7016134603), and a cell
-  reads `\|` as `|`. A part of a claim, as `-`, and a claim with its percentage are each a finding.
-  The cell `No prediction` passes in that case of letters alone, where a call took a block or none.
-- Choice: no comment names the read of `\|`, the three markers, or a label read inside the claim
-  alone. Nor does one name a line with no indent that goes on with a bullet, or a nested bullet
-  that ends one. The collapse of whitespace in `No prediction` is a choice too.
-- Rejected: a label up to the first `: ` of the bullet, which reads a resolution criterion as one.
-- A reflection with no such table, a table with no row under its header, and an empty cell are
-  each a finding. No comment holds them. They are a choice, because each quotes no claim.
-- Cost: a bullet that is no claim, as a question, reads as one.
-- Verified by `suites/test_hooks.nim`: each refusal, whitespace, `\|`, the first table, a separator
-  row, and a reflection below the sign-off. It holds each claim with and without its label, and
-  refuses each other run of its words. It holds each mark, a wrap, each marker, `No prediction`
-  with and without a block, and the samples of `GUIDE.md`. It holds a bullet with no mark, with
-  no final full stop, with one, and with two. It holds a full stop before a mark, and entry 882.
-
 **The block findings take a part of their own in the refusal, after the diff and the queue.** It
 asks for no diff, because each thing that it asks for is new text. It asks the delegate to name
 each missing prediction in the reply as a miss, with no block (comment 6979936148). It asks for
@@ -4060,30 +4032,36 @@ block that a call took. Verified by `suites/test_hooks.nim`.
   retry. Verified by `suites/test_hooks.nim`.
 - Of two blocks of a kind, a call takes the one of the nearer turn. So a block written again in a
   later turn replaces the first. Verified by `suites/test_hooks.nim`.
-- The hook never reads the state, the confidence, or the columns other than `Predicted` (comments
-  6980233163 and 7004976005). Nor does it read the tokens, cost, calls and time of a reflection.
-  It never reads whether the resolver ran, or what it marked (comments 6982623146 and 6983032935).
+- The hook never reads a column of the table other than `Predicted`, as the state or the
+  confidence (comments 6980233163 and 7004976005). Nor does it read the tokens, cost, calls and
+  time of a reflection. It never reads whether the resolver ran, or what it marked (comments
+  6982623146 and 6983032935).
 - The hook never reads the rules for forecasting of `D1 a` of comment 6982373798, as the side of
   a claim or its percentiles. It never reads the resolution criterion of a claim (comment
-  6982623146), or the effort of a critic (comment 6977822742). The words that open percentiles
-  and a resolution criterion only end a claim (comment 7016134603).
+  6982623146), or the effort of a critic (comment 6977822742). It reads the confidence, the
+  percentiles and the resolution criterion of a claim only to find where the claim ends (section
+  Quotes of claims).
 - No comment holds these choices of the guide, which the hook never reads. A number takes the
   confidence 80%, the mass between its 10th and 90th percentiles, and is a hit on either one or
-  between them. The delegate answers the resolver in the turn of its report, after the reflection.
+  between them. The delegate answers the resolver in the turn that receives its report, because
+  the resolver reports after the reflection.
 - A reply to a refusal passes unread, since `stop_hook_active` is set, as the stop branch of
-  `koch.nim` holds. So the hook never holds a call, a report of a critic or a reflection in it.
-  The next stop holds only its own turn. No suite runs `main` of koch, so a run by hand verifies
-  this (below). A call of a `builder` with no block in a reply passes, and so does the next stop.
+  `koch.nim` holds. So the hook never holds a call, a report of a critic or a reflection in it
+  (`D4 a` of comment 7016134603). The next stop holds only its own turn. No suite runs `main` of
+  koch, so a run by hand verifies this (below). A call of a `builder` with no block in a reply
+  passes, and so does the next stop.
 - A call through a tool other than `Agent` is no call, so a harness that names that tool
   otherwise gives the hook no call.
 
-**Verified by hand on 2026-11-19, through koch built at `05cb3bbd`.** `koch hook stop` passes or
+**Verified by hand on 2026-11-19, through koch built at `1f4d159a`.** `koch hook stop` passes or
 refuses each case of the guide, on small transcripts in the shape of the harness. They also hold
 each cost above that is verified by hand. No suite runs `main` of koch, so this run holds the
 dispatch of the stop branch. A late block for a `reviewer` serves no later `builder` or `critic`.
 
-- Each of 139 breaks of the rules fails a test of `suites/test_hooks.nim`, on that day. A break
-  is one edit of a scratch copy of `hooks.nim` at `05cb3bbd`, with which the suite builds and runs.
+- Probes M1 to M6 of the critic of the build of D5 b give the verdicts of comment 7018501890. M1
+  and M6 pass. M2, M3, M4 and M5 are each refused for the one cell that is a part of a claim.
+- Each of 155 breaks of the rules fails a test of `suites/test_hooks.nim`, on that day. A break
+  is one edit of a scratch copy of `hooks.nim` at `1f4d159a`, with which the suite builds and runs.
 
 **Figures of the frozen copy of the transcript of the delegate on #962.** The copy holds 1,384
 entries, from 2026-11-18T09:34Z to 2026-11-19T09:19Z. The `json` module of Python 3.13 reads each
@@ -4099,23 +4077,120 @@ transcript, and the same reads of another copy give its own figures.
   11 `Agent` calls carry the status `async_launched`, and the `agentId` of each is the `from` of
   a later hand-back. The other call, of `web-fetch` with `run_in_background` false, has the status
   `completed`, and its result holds its report.
-- A replay runs `koch hook stop`, built at `05cb3bbd`, at each of the 54 stops that the entries
+- A replay runs `koch hook stop`, built at `1f4d159a`, at each of the 54 stops that the entries
   `stop_hook_summary` mark. It gives the hook the copy up to the last `assistant` entry before the
   stop. It sets `stop_hook_active` where the turn opens with the feedback of `stop`. It runs from a
   checkout on `curator/subagent-blocks`, the branch of each sign-off, whose templates give kinds.
 - Of the 54 stops, 33 pass and 8 pass unread. The other checks alone refuse the 8 stops whose
   feedback of `stop` the copy holds. The block checks refuse 5, for 3 missing predictions and 27
-  cells that are no whole claim of a block that a call took.
+  cells that are no whole claim of a block that a call took. Each of the 27 keeps its confidence.
 - At each of those 5, each block of the delegate stands in the turn of a call, in a later turn, or
   in a fence. Each refusal follows the rules as written. No report of a critic lacks its reflection.
 - Entries count from 1. The 8 blocks name `reviewer` and `builder` in entry 370, then `critic`,
   `builder`, `builder`, `critic`, `builder` and `researcher`. Only the last, in entry 817, serves a
   call, the call of `researcher` in entry 821, made by the protocol of comment 6980006567.
-- So the 7 cells of the stop of entry 413 quote blocks that no call took. At the stop of entry 882,
-  the reflection quotes 8 claims whole, 2 of them before the final full stop of their bullet.
-- Cost: `koch hook stop` on the whole copy, of 8.1 MB, takes a median of 245 ms at `05cb3bbd`
-  and 266 ms at `b8491db8`. Each median is of 20 runs on 2026-11-19, which alternate between the
+- So each of the 7 cells of the stop of entry 413 is a claim of a block that no call took, with
+  its confidence. At the stop of entry 882, the reflection quotes 8 claims whole, 2 of them before
+  the final full stop of their bullet.
+- The copy holds no bullet with two percentages, or with a decimal one, so each claim ends where it
+  ended at `05cb3bbd`. The 2 bullets of entry 817 with no mark open with words such as
+  `Cost at list price`, so neither has a label (comment 7018501890). The reflection quotes each
+  whole. So each stop gives its verdict of `05cb3bbd`, and refuses the same cells. Only the words
+  of the finding of a cell change, at the 4 stops that refuse a cell.
+- Cost: `koch hook stop` on the whole copy, of 8.1 MB, takes a median of 240 ms at `05cb3bbd`
+  and 239 ms at `1f4d159a`. Each median is of 20 runs on 2026-11-19, which alternate between the
   builds, on 4 cores of an Intel Xeon at 2.10 GHz.
+
+## Quotes of claims
+
+**Each cell under `Predicted` is one whole claim of a block that a call took, or `No prediction`.**
+Comment 6975486646 rules the quote, and comment 6980006567 rules that a reflection quotes only a
+block that a call used. Comment 7016134603 holds a cell to one whole claim, with or without its
+label, and comment 7015791554 rules the cell `No prediction`. Comment 7018501890 rules where a
+claim ends, and what its label is. `claims` reads the claims of a block, and `findingsTable` reads
+the cells. Section Blocks of subagents gives which call takes which block.
+
+- The check reads the first table whose header holds `Predicted`, in each `## Reflection` block
+  of the current turn. It reads one below the sign-off or the working line too.
+- A cell equals a claim, or the claim without its label, and no other run of words. So a part of
+  a claim, as `-`, and a claim with its confidence are each a finding. So are another label
+  before a claim, and a cell that differs from a claim in the case of one letter. A part passes
+  only where it is itself a claim of a block that a call took.
+- The cell `No prediction` passes in that case of letters alone, where a call took a block or
+  none (comment 7015791554).
+- A reflection with no such table, a table with no row under its header, and an empty cell are
+  each a finding. No comment holds them. They are a choice, because each quotes no claim. The
+  finding of an empty cell states the rule of a cell, as the finding of a cell does. So it names
+  `No prediction`, which a row of a missing prediction holds.
+
+**A claim is a bullet with no indent that opens with `- `, `* ` or `+ `.** It runs to the next
+blank line, the next bullet at any indent, or the end of its block. No comment names this read.
+It is the form of the samples of `GUIDE.md`, where each claim is a bullet at the top level.
+
+- Choice: each of the three markers opens a claim, because Markdown opens a bullet with each one.
+- Choice: a line with no indent goes on with the bullet above it, as Markdown reads it. So a claim
+  that wraps with no indent stays one claim.
+- Choice: a nested bullet ends a claim and opens none, because it stands below the top level.
+- Cost: an indent of one to three spaces, `1.`, or a tab after the marker opens no claim.
+  Markdown shows each as an item of a list, yet a cell quotes nothing of that bullet.
+- Cost: a bullet that is no claim, as a question, reads as one.
+
+**A claim ends at its confidence, the last percentage in brackets before its percentiles, its
+resolution criterion or its end** (comment 7018501890). A percentage before the confidence stays
+in the claim. Where no percentage stands there, the claim ends at the first of `, as the 10th`
+and `. Resolution criterion` (comment 7016134603). Where none of these stands, it ends before one
+final full stop of its bullet (comment 7017902016). So the claim of `- a (4%) b (70%).` is
+`a (4%) b`.
+
+- A percentage in brackets is a space, `(`, digits, a point and digits where it has a decimal
+  part, then `%)`. So `(62.5%)` is one. Comment 7016134603 ends a claim at its percentage, and
+  digits alone would narrow that (probe M6 of the critic of the build of D5 b).
+- Choice: other text in brackets is no percentage, as `(70 %)`, `(about 70%)` or `(.5%)`. The
+  guide writes a confidence as `(70%)`, and a looser read would end a claim at a figure of its text.
+- Choice: the words `, as the 10th` and `. Resolution criterion` open percentiles and a resolution
+  criterion, because the samples of `GUIDE.md` write them so. No comment names these words.
+- Rejected: the first percentage as the end. It refused a whole claim that holds a percentage in
+  its text, and passed the part before that percentage (probes M1 and M2).
+- Cost: a claim with percentiles holds no confidence in brackets. So a percentage in brackets in
+  its text is the last one before its percentiles, and the claim ends there.
+
+**A label is one word that opens with a capital, then `: `, at the start of a claim** (comment
+7018501890), as `Judgement` or `Work`. A cell may quote the claim with or without it (comment
+7016134603). Any other text before a `: ` makes no label, so a cell quotes the whole claim there.
+
+- Choice: the word holds letters alone, as each label of the ruling and of the samples does. So
+  `Q1:`, `Follow-up:` and `Judgement's:` open no label, and their claims read whole.
+- Rejected: the text before the first `: ` of a claim as its label. It passed the part after a
+  colon inside a sentence (probe M4), and the part after words such as `Cost at list price` (M5).
+- Cost: bold text, as `**Judgement:**`, opens no label, so a cell quotes it with the claim (M3).
+
+**A cell and a claim each read a run of whitespace as one space, and a cell reads `\|` as `|`.**
+Comment 7016134603 rules the read of whitespace, so a claim that wraps in its block still quotes.
+No comment names the read of `\|`. A cell of a table must escape a pipe, so this read lets a claim
+that holds a pipe still quote word for word.
+
+- Choice: `No prediction` collapses its whitespace too, because comment 7016134603 collapses each
+  cell and names no exception.
+- Cost: a block that writes `\|` keeps it in its claim, so only a cell that writes `\\|` quotes
+  that claim.
+
+**Verified by `suites/test_hooks.nim`.** It holds each refusal, whitespace, `\|`, the first table,
+a separator row, and a reflection below the sign-off. It holds each claim with and without its
+label, and refuses each other run of its words. It holds each mark, a wrap, each marker, and each
+form that opens no claim. It holds `No prediction` with and without a block, and the samples of
+`GUIDE.md`.
+
+- For the end at a full stop: a bullet with no mark, with no final full stop, with one, and with
+  two. It also holds a full stop before a mark, and entry 882.
+- For the confidence: probes M1 and M2, and one to three percentages before each end. It holds a
+  percentage after the first mark, a decimal percentage (probe M6), and text in brackets that is
+  none.
+- For the label: probes M3 to M5, a label of one word, and each other text before `: `. It holds
+  a capital word inside a claim, another label before a claim, and a flip of the case of each
+  letter.
+- For the empty cell: an empty cell in each row, a short row, and a cell of whitespace alone.
+- For the costs: an indent of one or three spaces, a tab after the marker, and a numbered item.
+  It holds `\|` in a block, a percentage in a claim with percentiles, and a question.
 
 ## Skills
 
