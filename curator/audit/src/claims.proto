@@ -21,18 +21,21 @@ message Log {
 message Claim {
   string date = 1;  // Day of reflection, as `2026-11-20`, in UTC.
   string delegate = 2;  // Id of delegate: `sessionId` of its transcript.
-  string kind = 3;  // Kind of subagent, as `reviewer`.
-  string model = 4;  // Model harness ran subagent on, as `claude-opus-5-5`.
-  string effort = 5;  // Effort of call, else of template of its kind, as `high`.
-  string text = 6;  // Claim, as cell under `Predicted` quotes it.
-  double confidence = 7;  // Confidence of claim, from 0.51 to 0.98; 0.8 for number.
-  State state = 8;  // State reflection marks.
-  Marker marker = 9;  // Who marked state.
-  int64 tokens = 10;  // Tokens of subagent, summed over its requests, as reflection gives them.
-  double cost = 11;  // Cost of subagent in dollars, at list price, as reflection gives it.
-  string address = 12;  // Id of delegate, `uuid` of entry of reflection, and row, by `/`.
-  Number number = 13;  // Percentiles and outcome of claim that is number; absent otherwise.
-  string result = 14;  // Cell under `Result`.
+  string project = 3;  // Role of branch that writes row, as `curator/audit`; `curator` outside it.
+  string kind = 4;  // Kind of subagent, as `reviewer`.
+  string call = 5;  // Id of tool use of call that claim takes.
+  string model = 6;  // Model harness ran subagent on, as `claude-opus-5-5`.
+  string effort = 7;  // Effort of call, else of template of its kind, as `high`.
+  string text = 8;  // Claim, as cell under `Predicted` quotes it.
+  double confidence = 9;  // Confidence of claim, from 0.51 to 0.98; 0.8 for number.
+  State state = 10;  // State reflection marks.
+  Marker marker = 11;  // Who marked state.
+  int64 tokens = 12;  // Tokens of subagent, summed over its requests, as reflection gives them.
+  double cost = 13;  // Cost of subagent in dollars, at list price, as reflection gives it.
+  string address = 14;  // Id of delegate, `uuid` of entry of reflection, and row, by `/`.
+  string key = 15;  // Delegate, call, position of claim in its block, and state, by `/`.
+  Number number = 16;  // Percentiles and outcome of claim that is number; absent otherwise.
+  string result = 17;  // Cell under `Result`.
 }
 
 // Define number claim: its three percentiles, and value its result gives.

@@ -324,16 +324,11 @@ proc runHook(root, event, input: string): int =
       0
     else:
       # Each row of reflection of turn reaches log of claims at every stop, reply to refusal
-      #   too; address keeps row from second write, and failed write blocks no turn.
+      #   too; key keeps row from second write, and failed write blocks no turn (`logStop`).
       let
         turn = readFile(data{"transcript_path"}.getStr).parseTurn
         kinds = readKinds(root)
-      try:
-        discard appendClaims(
-          root, branch_root, pathWaiting(), turn.subagents.claimsTurn(kinds, readEfforts(root))
-        )
-      except IOError, OSError:
-        stderr.writeLine "Log of claims is not written; got `" & getCurrentExceptionMsg() & "`."
+      discard logStop(root, branch_root, pathWaiting(), turn.subagents)
       # Second block after one refusal passes, so blocked turn cannot loop forever.
       if data{"stop_hook_active"}.getBool: return 0
       var found = checkNumbersBare(turn.text)
@@ -535,8 +530,8 @@ proc run(options: Options): int =
       branch = options.root.branch
       (moved, path) = moveClaims(options.root, branch, pathWaiting())
     if path.len == 0:
-      stderr.writeLine "Log of claims is written on branch inside grammar alone; got `" &
-        branch & "`."
+      stderr.writeLine "Rows outside tree are of root curator, so root branch alone takes them; " &
+        "got `" & branch & "`."
       return 1
     echo $moved & " row(s) moved to `" & path & "`."
     return 0

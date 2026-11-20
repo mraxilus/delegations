@@ -1,20 +1,23 @@
 ## Log each scored claim of each reflection, as text format of `claims.proto`, where role writes.
 ##   Claim is row of first table with column `Predicted` of `## Reflection` block of current
-##     model turn, whose cell is whole claim of block call took; `No prediction`, and cell quoting
-##     no claim, give none, since no claim or call stands behind them (#964).
+##     model turn, whose cell is whole claim of block call took; `No prediction`, cell quoting no
+##     claim, and cell under `State` that no marker opens give none (#964). Reflection counts
+##     wherever it stands in turn, below sign-off too, since its marks hold there.
 ##   Claim takes latest call before reflection whose block holds it, of kind line `**Subagent:**`
 ##     of reflection names, else of any kind, so claim of block of critic takes call of critic.
 ##   Kind is `subagent_type` of call; model is `resolvedModel` of its result, else its input
 ##     `model`; effort is input `effort`, else `effort:` of its template (`readEfforts`).
-##   State is marker opening first cell, and confidence is percentage of second. Tokens and cost
-##     are first `<n> tokens` and `$<x>` of line `**Subagent:**`; call of critic that line does
-##     not name reads line `**Critic:**`.
+##   State is marker opening cell under `State`, and confidence is percentage of cell under
+##     `Confidence`. Tokens and cost are first `<n> tokens` and `$<x>` of line `**Subagent:**`;
+##     call of critic that line does not name reads line `**Critic:**`.
 ##   Number claim, whose bullet ends at percentiles (`isNumber`), takes last three numbers of its
 ##     text; its outcome is first number of its cell under `Result`, as GUIDE.md asks.
 ##   Date, delegate and address come from entry of reflection: `timestamp`, `sessionId`, `uuid`.
-##   Log is `claims.txtpb` of scope branch writes (`pathLog`); other checkout writes file outside
-##     tree, which `moveClaims` empties into log of branch. Row whose address either file holds
-##     is never written again, so reply to refusal, which `stop` reads too, adds no row twice.
+##   Key is delegate, id of call, position of claim in its block, and state: reflection written
+##     again adds no row, and later mark of claim that waits adds one (`keysIn`).
+##   Log is `claims.txtpb` of scope branch writes (`pathLog`), with project its role names; other
+##     checkout writes file outside tree, with project `curator`, since root curator alone keeps
+##     checkout outside grammar. `moveClaims` empties that file into log of root branch alone.
 ##   Text format is written here, one row to line; suite reads it back through `buf`.
 ##
 ##   Rejected: `protobuf_serialization`, which writes bytes, and would be first dependency of
@@ -43,7 +46,9 @@ type
   Claim* = object  ## Define one row of log: message `Claim` of `claims.proto`.
     date*: string  ## Day of reflection, as `2026-11-20`.
     delegate*: string  ## `sessionId` of entry of reflection, which names delegate.
+    project*: string  ## Role string of branch that writes row, as `curator/audit`.
     kind*: string  ## Kind of call claim takes.
+    call*: string  ## Id of tool use of that call.
     model*: string  ## Model of that call.
     effort*: string  ## Effort of that call, else of template of its kind.
     text*: string  ## Claim, as cell under `Predicted` quotes it.
@@ -52,6 +57,7 @@ type
     tokens*: int  ## Tokens line of reflection gives for call.
     cost*: float  ## Dollars line of reflection gives for call.
     address*: string  ## Delegate, `uuid` of entry of reflection, and row from 1, by `/`.
+    key*: string  ## Delegate, call, position of claim in its block, and state, by `/`.
     number*: Option[Number]  ## Percentiles and outcome; none where claim is no number.
     result*: string  ## Cell under `Result`.
 
@@ -69,7 +75,7 @@ const
     "writes it (#964).\n#   Text format of message `Log` of `curator/audit/src/claims.proto`.\n"
     ## Comment new log opens with, which names its schema.
   FIELD_LOG = "claims"  ## Field of `Log` each row fills.
-  FIELD_ADDRESS = "address: \""  ## Opening of address of row, as `lineClaim` writes it.
+  FIELD_KEY = "key: \""  ## Opening of key of row, as `lineClaim` writes it.
   COLUMNS = ["State", "Confidence", COLUMN_PREDICTED, "Result"]
     ## Columns of table of reflection, in order of their cells in `rowsTable`.
   MARKERS_STATE = [("✅", State.Hit), ("⬜", State.Miss), ("➖", State.Annulled),
@@ -194,10 +200,11 @@ func callTaken(
 
 
 func claimsTurn*(
-  subagents: Subagents; kinds: openArray[string]; efforts: Table[string, string]
+  subagents: Subagents; kinds: openArray[string]; efforts: Table[string, string]; project: string
 ): seq[Claim] =
   ## Read claim of each row of each reflection of current model turn whose cell under `Predicted`
-  ##   is whole claim of block call took, in order of reflections and rows.
+  ##   is whole claim of block call took, and whose cell under `State` opens with marker, in order
+  ##   of reflections and rows, each of project.
   let
     current = subagents.turns - 1
     taken = subagents.blocksTaken(kinds)
@@ -208,30 +215,37 @@ func claimsTurn*(
       figures_subagent = reflection.text.figuresLine(LABELS_SUBAGENT)
       figures_critic = reflection.text.figuresLine(LABELS_CRITIC)
     for n, row in reflection.text.rowsTable:
-      let quoted = row[2]
-      if quoted.len == 0 or quoted == NO_PREDICTION: continue
+      let
+        quoted = row[2]
+        state = row[0].stateCell
+      if quoted.len == 0 or quoted == NO_PREDICTION or state == State.Unspecified: continue
       let k = subagents.callTaken(taken, reflection, quoted, named)
       if k < 0: continue
       let
         call = subagents.calls[k]
+        prediction = subagents.predictions[taken[k]].text
         figures = (if call.kind == KIND_CRITIC and call.kind != named: figures_critic
           else: figures_subagent)
       var claim = Claim(
         date: reflection.timestamp[0 ..< min(LENGTH_DATE, reflection.timestamp.len)],
         delegate: reflection.delegate,
+        project: project,
         kind: call.kind,
+        call: call.id,
         model: call.model,
         effort: (if call.effort.len > 0: call.effort else: efforts.getOrDefault(call.kind)),
         text: quoted,
         confidence: row[1].confidenceCell,
-        state: row[0].stateCell,
+        state: state,
         tokens: figures.tokens,
         cost: figures.cost,
         address: reflection.delegate & "/" & reflection.uuid & "/" & $(n + 1),
+        key: [reflection.delegate, call.id, $prediction.positionClaim(quoted), NAMES_STATE[state]]
+          .join("/"),
         result: row[3],
       )
       let numbers = quoted.numbersIn
-      if subagents.predictions[taken[k]].text.isNumber(quoted) and numbers.len >= 3:
+      if prediction.isNumber(quoted) and numbers.len >= 3:
         let outcome = row[3].numbersIn
         claim.number = some(Number(
           low: numbers[^3],
@@ -268,7 +282,9 @@ func lineClaim*(claim: Claim): string =
     fields.add name & ": " & value
   if claim.date.len > 0: put "date", claim.date.quotedText
   if claim.delegate.len > 0: put "delegate", claim.delegate.quotedText
+  if claim.project.len > 0: put "project", claim.project.quotedText
   if claim.kind.len > 0: put "kind", claim.kind.quotedText
+  if claim.call.len > 0: put "call", claim.call.quotedText
   if claim.model.len > 0: put "model", claim.model.quotedText
   if claim.effort.len > 0: put "effort", claim.effort.quotedText
   if claim.text.len > 0: put "text", claim.text.quotedText
@@ -278,6 +294,7 @@ func lineClaim*(claim: Claim): string =
   if claim.tokens != 0: put "tokens", $claim.tokens
   if claim.cost != 0: put "cost", $claim.cost
   if claim.address.len > 0: put "address", claim.address.quotedText
+  if claim.key.len > 0: put "key", claim.key.quotedText
   if claim.number.isSome:
     let number = claim.number.get
     var inside = @["low: " & $number.low, "median: " & $number.median, "high: " & $number.high]
@@ -287,14 +304,14 @@ func lineClaim*(claim: Claim): string =
   FIELD_LOG & " { " & fields.join(" ") & " }"
 
 
-func addressesIn*(text: string): HashSet[string] =
-  ## Read address of each row of log text: quoted value after first `address: "` of each line.
-  ##   Quote inside string is escaped, so `address: "` stands only where field opens.
+func keysIn*(text: string): HashSet[string] =
+  ## Read key of each row of log text: quoted value after first `key: "` of each line.
+  ##   Quote inside string is escaped, so `key: "` stands only where field opens.
   for line in text.splitLines:
-    let at = line.find(FIELD_ADDRESS)
+    let at = line.find(FIELD_KEY)
     if at < 0: continue
     let
-      start = at + FIELD_ADDRESS.len
+      start = at + FIELD_KEY.len
       stop = line.find('"', start)
     if stop > start: result.incl line[start ..< stop]
 
@@ -307,6 +324,13 @@ func pathLog*(branch: string): string =
   case parsed.get.role
   of Role.Curator: PATH_LOG_CURATOR
   of Role.CuratorProject, Role.Contributor: parsed.get.prefix & FILE_LOG
+
+
+func projectBranch*(branch: string): string =
+  ## Read project rows of branch belong to: role string of branch inside grammar, else `curator`,
+  ##   since root curator alone keeps checkout outside it (CURATOR.md, Branch and commits).
+  let parsed = branch.parseBranch
+  if parsed.isSome: parsed.get.nameRole else: CURATOR
 
 
 proc pathWaiting*(): string =
@@ -328,8 +352,8 @@ proc writeLines(path, text: string) =
 
 
 proc appendClaims*(root, branch, waiting: string; claims: openArray[Claim]): int =
-  ## Add each claim whose address neither log of branch nor file `waiting` holds to log of branch,
-  ##   else to `waiting`; count claims written.
+  ## Add each claim whose key neither log of branch nor file `waiting` holds to log of branch, else
+  ##   to `waiting`; count claims written.
   let
     relative = branch.pathLog
     path = (if relative.len > 0: root / relative else: waiting)
@@ -337,30 +361,47 @@ proc appendClaims*(root, branch, waiting: string; claims: openArray[Claim]): int
     known: HashSet[string]
     text = ""
   for file in [path, waiting]:
-    if fileExists(file): known.incl readFile(file).addressesIn
+    if fileExists(file): known.incl readFile(file).keysIn
   for claim in claims:
-    if claim.address in known: continue
-    known.incl claim.address
+    if claim.key in known: continue
+    known.incl claim.key
     text.add claim.lineClaim & "\n"
     inc result
   if text.len > 0: writeLines(path, text)
 
 
 proc moveClaims*(root, branch, waiting: string): tuple[moved: int, path: string] =
-  ## Move each row of file `waiting` whose address log of branch lacks into that log, then remove
-  ##   `waiting`; count rows moved, with path of log from root. Path is empty where branch writes
-  ##   no log, and `waiting` then stays.
-  result.path = branch.pathLog
-  if result.path.len == 0 or not fileExists(waiting): return
+  ## Move each row of file `waiting` whose key log of branch lacks into that log, then remove
+  ##   `waiting`; count rows moved, with path of log from root. Only root branch of curator takes
+  ##   them, since their project is `curator`; path is empty for each other branch, and `waiting`
+  ##   then stays.
+  let parsed = branch.parseBranch
+  if parsed.isNone or parsed.get.role != Role.Curator: return
+  result.path = PATH_LOG_CURATOR
+  if not fileExists(waiting): return
   let
     path = root / result.path
-    known = (if fileExists(path): readFile(path).addressesIn else: initHashSet[string]())
+    known = (if fileExists(path): readFile(path).keysIn else: initHashSet[string]())
   var text = ""
   for line in readFile(waiting).splitLines:
     if not line.startsWith(FIELD_LOG & " "): continue
-    let addresses = line.addressesIn
-    if addresses.len > 0 and addresses.toSeq[0] in known: continue
+    let keys = line.keysIn
+    if keys.len > 0 and keys.toSeq[0] in known: continue
     text.add line & "\n"
     inc result.moved
   if text.len > 0: writeLines(path, text)
   removeFile(waiting)
+
+
+proc logStop*(root, branch, waiting: string; subagents: Subagents): int =
+  ## Add claims of current model turn to log of branch, else to `waiting`, as `stop` does at each
+  ##   stop; count claims written, or -1 where read or write fails. Error goes to stderr, so log
+  ##   that cannot be written refuses no turn.
+  try:
+    appendClaims(
+      root, branch, waiting,
+      subagents.claimsTurn(readKinds(root), readEfforts(root), branch.projectBranch),
+    )
+  except IOError, OSError:
+    stderr.writeLine "Log of claims is not written; got `" & getCurrentExceptionMsg() & "`."
+    -1

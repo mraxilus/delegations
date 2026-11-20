@@ -2224,16 +2224,23 @@ func claims*(text: string): seq[string] =
     if label.len > 0 and claim.len > label.len: result.add claim[label.len .. ^1]
 
 
+func positionClaim*(text, claim: string): int =
+  ## Read position from 1 of first bullet of block text whose claim, with or without its label,
+  ##   is claim; 0 where none holds it.
+  for k, bullet in text.bulletsClaim:
+    let
+      whole = bullet[0 ..< bullet.stopClaim].strip
+      label = whole.labelClaim
+    if claim == whole or (label.len > 0 and claim == whole[label.len .. ^1]): return k + 1
+
+
 func isNumber*(text, claim: string): bool =
   ## Decide whether claim, with or without its label, is number of block text: claim of bullet
   ##   whose percentiles end it, as `stopClaim` reads them (7023048202).
-  for text in text.bulletsClaim:
-    let
-      stop = text.stopClaim
-      whole = text[0 ..< stop].strip
-      label = whole.labelClaim
-    if claim != whole and (label.len == 0 or claim != whole[label.len .. ^1]): continue
-    if text.continuesWith(MARK_PERCENTILES, stop): return true
+  let position = text.positionClaim(claim)
+  if position == 0: return false
+  let bullet = text.bulletsClaim[position - 1]
+  bullet.continuesWith(MARK_PERCENTILES, bullet.stopClaim)
 
 
 func findingsTable(text: string, quoted: openArray[string]): seq[Finding] =
