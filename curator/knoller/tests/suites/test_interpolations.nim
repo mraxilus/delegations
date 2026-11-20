@@ -75,6 +75,8 @@ suite "Interpolations":
     check wrap.found.len == 1
     check wrap.fixed == "let m = &\"a {x} b {y}.\"\n"
     check WRAPS.isSettled  # lines 99 and 877 of library, as found
+    check ("let m = &\"" & "x".repeat(60) & "{a}\" &\n  &\"" & "y".repeat(40) & "\"\n").isSettled
+      # joined, line would hold 114 runes as one token, which width check lets stand
 
 
   test "concatenation with no interpolated literal stays `&`":
