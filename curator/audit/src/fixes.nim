@@ -16,14 +16,15 @@
 ##     of its pin: 2.2.12 lexes as names glyphs that 2.4.0 lexes as operators. Pin nothing
 ##     serves proves nothing, and run prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
-##     from what `initContext` reads: rename of abbreviation (V.6), and to case of name's kind
-##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
-##     one rename where both rules ask at one name; and type conversion `x.T`
-##     (`conversions.nim`), each from semantic pass (`symbols.nim`); alias of each landmark
-##     index (V.8), from names of project (`packages.nim`); then dead export of checker
-##     (`checker.nim`), whose `*` goes where its own module calls it. Fix of named files reads
-##     tree whole, and rename writing file it leaves out is refused. File holding candidate
-##     that compiles on no backend is left to hand, with its error.
+##     from what `initContext` reads: rename of abbreviation (V.6), to case of name's kind
+##     (V.1, V.11), and to cut of V.2 that words of project decide (`cuts.nim`), across files,
+##     planned whole or refused whole (`names.nim`, `rewrites.nim`), one rename where several
+##     rules ask at one name; type conversion `x.T` (`conversions.nim`), each from semantic pass
+##     (`symbols.nim`); alias of each landmark index (V.8), from names of project
+##     (`packages.nim`); then dead export of checker (`checker.nim`), whose `*` goes where its
+##     own module calls it. Fix of named files reads tree whole, and rename writing file it
+##     leaves out is refused. File holding candidate that compiles on no backend is left to
+##     hand, with its error.
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`) is never written, and layout
 ##     checks read none of it: rewrite would leave lock's copy stale, and Atlas reads that as
 ##     change of package.
@@ -159,12 +160,30 @@ func scopeRename(tree: Tree, rename: Rename): seq[(string, string)] =
       result.add (e.path, e.content)
 
 
+func namesProjects(
+  tree: Tree, libraries = initTable[string, seq[string]]()
+): Table[string, NamesPackage] =
+  ## Read names of each project from its `.nim` modules (`namesPackage`), and aliases of library
+  ##   it builds on too, as `libraries` holds its modules, by nimble file; empty name stands for
+  ##   files at root, which lie in no project.
+  var modules: Table[string, seq[string]]
+  for e in tree:
+    if e.path.endsWith(".nim"): modules.mgetOrPut(e.path.nimbleProject, @[]).add e.content
+  for project, sources in modules:
+    result[project] = namesPackage(sources, libraries.getOrDefault(project))
+
+
 func renames(
-  tree: Tree, entries: openArray[Entry], locked: openArray[string]
+  tree: Tree,
+  entries: openArray[Entry],
+  locked: openArray[string],
+  names: Table[string, NamesPackage],
 ): seq[(Rename, string)] =
   ## Read rename of each declaration in entries, as names check reads it with words glossaries
-  ##   admit, and refusal known before semantic pass: coined abbreviation (V.6), and case of
-  ##   name's kind (V.1, V.11), which spells abbreviation out too and takes its place.
+  ##   admit, and refusal known before semantic pass: coined abbreviation (V.6), case of name's
+  ##   kind (V.1, V.11), which spells abbreviation out too and takes its place, and name cut
+  ##   (V.2), from axis values and words of project (`names`), which joins case rename of same
+  ##   declaration into one rename of rule of case (`composed`).
   let directories = tree.directoriesProject
   var glossaries: seq[(string, string)]
   for e in tree:
@@ -174,7 +193,10 @@ func renames(
     if not e.isKindNim or e.path in locked: continue
     let
       exempt = glossaries.exemptions(e.path)
-      recased = renamesCase(e.content, exempt)
+      package = names.getOrDefault(e.path.nimbleProject)
+      recased = renamesCase(e.content, exempt).composed(
+        renamesCut(e.content, package.axes, package.words, exempt)
+      )
     for (line, column, name, renamed) in renamesAbbreviation(e.content, exempt):
       if recased.anyIt(it.line == line and it.column == column): continue
       let rename = Rename(
@@ -203,13 +225,14 @@ func queriesSemantic*(
   tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
 ): seq[Query] =
   ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
-  ##   §5), and every site of each name rename of abbreviation (V.6) or case (V.1, V.11) would
-  ##   write, across its scope. File fix leaves as written, and rename refused already, ask
+  ##   §5), and every site of each name rename of abbreviation (V.6), case (V.1, V.11) or cut
+  ##   (V.2) would write, across its scope; cut reads names of project from tree, as library adds
+  ##   no axis value or word. File fix leaves as written, and rename refused already, ask
   ##   nothing; one query holds all one file is asked.
   var asked: seq[Query]
   for e in entries:
     if e.isKindNim and e.path notin locked: asked.add queryConversion(e.path, e.content)
-  for (rename, refusal) in renames(tree, entries, locked):
+  for (rename, refusal) in renames(tree, entries, locked, tree.namesProjects):
     if refusal.len == 0: asked.add rename.queries(tree.scopeRename(rename))
   for query in asked:
     if query.sites.len == 0 and query.names.len == 0: continue
@@ -265,9 +288,9 @@ func initContext*(
 ): Context =
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
-  ##   of each abbreviation and case in entries, refused where it would write file entries
+  ##   of each abbreviation, case and cut in entries, refused where it would write file entries
   ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export,
-  ##   defaults of its configurations, and names of its modules (`namesPackage`), aliases of
+  ##   defaults of its configurations, and names of its modules (`namesProjects`), aliases of
   ##   library it builds on among them, as `libraries` holds its modules by nimble file.
   ##   Uses and pures (`readFacts`) read nothing yet.
   var paths, sources, suites: seq[string]
@@ -285,10 +308,10 @@ func initContext*(
   for project, sources in modules:
     result.configurations[project] = readConfigurations(sources)
     result.constants[project] = sources.mapIt(it.constantsExported).concat
-    result.names[project] = namesPackage(sources, libraries.getOrDefault(project))
+  result.names = tree.namesProjects(libraries)
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
-  for (rename, refusal) in renames(tree, entries, locked):
+  for (rename, refusal) in renames(tree, entries, locked, result.names):
     if refusal.len > 0:
       result.plans.add Plan(rename: rename, refusal: refusal)
       continue
