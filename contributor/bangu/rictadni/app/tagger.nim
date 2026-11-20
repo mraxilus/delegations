@@ -17,7 +17,7 @@ when compileOption("profiler"):
 
 import std/[os, strutils]
 
-import ../src/lojban_tagger
+import ../src/rictadni
 
 
 const

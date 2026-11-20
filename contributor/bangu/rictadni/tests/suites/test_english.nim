@@ -16,10 +16,10 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, strutils, unittest]
 
-import lojban_parser
+import ricysoho
 
-import ../../src/lojban_tagger/[english, entries, tags]
-import ../../src/lojban_tagger/lists/[gismu, lujvo]
+import ../../src/rictadni/[english, entries, tags]
+import ../../src/rictadni/lists/[gismu, lujvo]
 
 
 const

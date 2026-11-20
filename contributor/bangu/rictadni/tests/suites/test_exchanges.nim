@@ -95,7 +95,7 @@ import ../../app/exchanges
 from ../../app/exchanges {.all.} import
   AT_CHECKSUM, AT_LENGTH, AT_MESSAGE, checksum, dropSecretsText, LINE_FORMAT_EXCHANGE,
   removeDotSegments
-import ../../src/lojban_tagger/suggestions
+import ../../src/rictadni/suggestions
 import ../../tools/examples
 
 
@@ -1199,13 +1199,13 @@ when defined(ssl):
       except OSError as error:
         result = "Command `openssl` should run; got `" & error.msg & "`."
 
-    result.directory = createTempDir("lojban_tagger_tls_", "")
+    result.directory = createTempDir("rictadni_tls_", "")
     writeFile(result.directory / "openssl.cnf", CONFIGURATION_OPENSSL)
     var commands = @[
       @["genpkey", "-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:prime256v1", "-out",
           "root.key"],
       @["req", "-config", "openssl.cnf", "-x509", "-new", "-key", "root.key", "-sha256",
-          "-days", "1", "-subj", "/CN=lojban_tagger test root", "-addext",
+          "-days", "1", "-subj", "/CN=rictadni test root", "-addext",
           "basicConstraints=critical,CA:TRUE", "-addext", "keyUsage=critical,keyCertSign",
           "-out", "root.crt"],
     ]
@@ -1218,7 +1218,7 @@ when defined(ssl):
       commands.add @["genpkey", "-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:prime256v1",
           "-out", name & ".key"]
       commands.add @["req", "-config", "openssl.cnf", "-new", "-key", name & ".key", "-subj",
-          "/CN=lojban_tagger test leaf", "-out", name & ".csr"]
+          "/CN=rictadni test leaf", "-out", name & ".csr"]
       commands.add @["x509", "-req", "-in", name & ".csr", "-CA", "root.crt", "-CAkey",
           "root.key", "-set_serial", $(ord(leaf) + 2), "-days", "1", "-sha256", "-extfile",
           name & ".ext", "-out", name & ".crt"]

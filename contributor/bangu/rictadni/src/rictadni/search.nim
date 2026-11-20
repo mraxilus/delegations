@@ -50,7 +50,7 @@
 
 import std/[algorithm, sequtils]
 
-import lojban_parser
+import ricysoho
 
 import ./[english, index, runs, tags]
 

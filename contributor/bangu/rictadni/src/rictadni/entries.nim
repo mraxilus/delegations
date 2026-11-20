@@ -22,7 +22,7 @@
 ##     frequency, notes and place structure of lujvo are left out.
 ##     Cost: verb wanting one of those changes converter and both lists in one commit.
 ##   Gismu list keeps word and English: rafsi of each word stand in gismu list of
-##     `lojban_parser`, which reads them by rules of CLL, and English gives meaning, never
+##     `ricysoho`, which reads them by rules of CLL, and English gives meaning, never
 ##     validity, so it stays here, as Architect ruled. Type takes qualifier `English`, since
 ##     parser exports its own `EntryGismu` from module of this name, which no qualifier tells
 ##     apart. Word stays beside English, so `english.nim` holds both lists to one order.

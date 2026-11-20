@@ -15,7 +15,7 @@ English word that leads to one. The system uses only the compound and parsable n
 
 The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, first edition, 1997,
 from the Logical Language Group. The text used is the edition at `lojban.github.io/cll`, which is
-the first edition with errata. This project reads each word through `lojban_parser`, which
+the first edition with errata. This project reads each word through `ricyso'o`, which
 replicates chapters 3 and 4, and the fold of chapters 5, 7, 9, 12 and 15. This project replicates
 the tag of 4.5 and 4.11 itself. It also replicates what a group does to a run of tanru units in
 chapters 5, 12 and 15. The suites carry the names of those chapters, and each assertion cites its
@@ -27,38 +27,41 @@ keeps its capital, as The Complete Lojban Language does. So do the word lists, t
 group, and a name in code such as `Notation.Lojban`, whose case Article V sets. Verified by
 `suites/test_suggestions.nim`, for each line of the report and of the system text.
 
-## Reading through lojban_parser
+## Reading through ricysoho
 
-**This project reads lojban through `lojban_parser`, and holds no copy of its modules.**
-`lojban_parser` reads any lojban that the rules of CLL admit, as the Architect ruled. The letters,
-the forms and the lujvo stand there, with the words and rafsi of the gismu list. So do the reader
-of a word, its rendering and the fold of a tanru, each with its suite. This project holds the
-policy of a tag, the English of the gismu list, the whole lujvo list, and the runs that search
-ranks by. The Architect ruled that the tagger alone restricts words.
+**This project reads lojban through the package `ricysoho`, and holds no copy of its modules.**
+`ricysoho` is the package of the project `ricyso'o`, which reads any lojban that the rules of CLL
+admit, as the Architect ruled. The letters, the forms and the lujvo stand there, with the words
+and rafsi of the gismu list. So do the reader of a word, its rendering and the fold of a tanru,
+each with its suite. This project holds the policy of a tag, the English of the gismu list, the
+whole lujvo list, and the runs that search ranks by. The Architect ruled that the tagger alone
+restricts words.
 
 **This project requires the parser as a package, at one commit of `main` that `atlas.lock`
 pins.** Each module that reads lojban imports the umbrella of the parser by the name of its
-package. Atlas clones this repository into `dependencies/lojban_parser`, and `nim.cfg` names the
+package. Atlas clones this repository into `dependencies/ricysoho`, and `nim.cfg` names the
 folder of the parser in that clone. So no import and no search path leads out of the folder of
 this project. A move of the folder of the parser then changes no module here while the lock
 stays. The Architect ruled this route on #920, so that the curator can move both folders.
 
-Verified by hand at `dc0e19cb`, 2026-11-15, in a throwaway worktree that moves both folders and
-both nimble files, as step 3 of #920 does. There this folder stands at `contributor/bangu/rictadni`,
-the parser at `contributor/bangu/ricysoho`, and the lock line that names the nimble file follows.
-`nim r koch test contributor/bangu/rictadni` passes in that worktree.
+Verified by the move of both folders, `7d1eec65` of #944, with the lock at `0d6eaaeb`. It renames
+each file of this project, and changes only the line of `atlas.lock` that names the nimble file,
+by `git diff -M 7d1eec65^1 7d1eec65` on 2026-11-19. Its push run of `check` passes the suites of
+this project.
 
 No code here names the folder of this project or its nimble file. Verified by hand with
-`git grep -F lojban_tagger.nimble` and `git grep -E 'bangu/lojban_tagger|\.\./lojban_tagger'` over
-each Nim file, 2026-11-15. Only a doc comment of `suites/test_build.nim` names the nimble file.
+`git grep -E 'rictadni\.nimble|bangu/rictadni|\.\./rictadni' -- '*.nim'` in this folder,
+2026-11-19.
+Only a doc comment of `suites/test_build.nim` names the folder, where it quotes its case.
 Verified by `suites/test_build.nim`, which copies a project under 34 folder names: the old name, the
 new one and 32 seeded names.
 
 - Origin: this repository on GitHub, `https://github.com/mraxilus/delegations`, in the folder
-  `contributor/bangu/lojban_parser`. The commit is `0d6eaaebb95eeecc84359b6b4bf7da8c0715f26c`,
-  the merge of #890. It is the newest commit of `main` that changes the parser, on 2026-11-15.
-  The licence is the Prosperity Public License 3.0.0, as `lojban_parser.nimble` gives it.
-- `atlas.config` maps the name `lojban_parser` to that address, with the folder as `?subdir=`,
+  `contributor/bangu/ricysoho`. The commit is `b57515d4794b5617a6383d87677b0f0cf3172b04`,
+  the merge of #961, dated 2026-11-18. On 2026-11-19 it is the newest commit of `main` that
+  changes the parser. The licence is the Prosperity Public License 3.0.0, as `ricysoho.nimble`
+  gives it.
+- `atlas.config` maps the name `ricysoho` to that address, with the folder as `?subdir=`,
   since a requirement reads no folder. `curator/assayer` requires knoller the same way.
   `curator/assayer/PROVENANCE.md`, Package, gives each form that Atlas 0.14.7 refuses, verified
   there and not here.
@@ -72,26 +75,27 @@ new one and 32 seeded names.
   reaches past the umbrella that the parser presents.
 - Cost: a change to the parser reaches this project only when the lock moves to a newer commit.
   So a change to the parser selects no suite of this project, and a move of the lock selects them.
-  Verified by hand with `nim r koch list-projects`, 2026-11-15. A probe commit that changes a
-  source of the parser plans `lojban_parser` alone. One that changes `atlas.lock` plans this
+  Verified by hand with `nim r koch list-projects` at `3b692a0c`, 2026-11-19. A probe commit that
+  changes a source of the parser plans `ricysoho` alone. One that changes `atlas.lock` plans this
   project.
 - Cost: `atlas.config`, `nim.cfg`, `tools/lists.nim` and `suites/test_names.nim` name the folder
   of the parser as the clone holds it. So a move of the lock past a move of the parser changes all
   four.
-- Cost: the clone holds the whole repository, 52 MiB by `du -sh dependencies/lojban_parser` on
-  2026-11-15, against no clone for an import by path.
+- Cost: the clone holds the whole repository, 55 MiB by `du -sh dependencies/ricysoho` on
+  2026-11-19, against no clone for an import by path.
 - Cost: `atlas changed` warns that the remote of the clone differs from the address in the lock,
   since the clone has no query. It still exits 0, so the restore of koch passes. Verified by hand
   with Atlas 0.14.7, 2026-11-15.
 - Cost: the umbrella compiles every module of the parser, the grammar among them, so each compile
   from an empty cache takes longer (Figures).
-- Verified by hand, 2026-11-15: with no `dependencies/`, `nim r koch fetch-deps
-  contributor/bangu/lojban_tagger` restores the lock with no finding, and `nim r koch test
-  contributor/bangu/lojban_tagger` then passes. `nim check --processing:filenames
-  --listFullPaths:on` reads the parser only from the clone, for `src/lojban_tagger.nim`,
-  `suggester`, `tools/build.nim` and `suites/test_tags.nim`.
-- Verified by hand with `git grep -F ../lojban_parser/` over each Nim file, 2026-11-15: none names
-  it, against 16 at `0d6eaaeb`.
+- Verified by hand at `3b692a0c`, 2026-11-19: with no `dependencies/`, `nim r koch fetch-deps
+  contributor/bangu/rictadni` restores the lock with no finding, and `nim r koch test
+  contributor/bangu/rictadni` then passes. `nim check --processing:filenames --listFullPaths:on`
+  reads the parser only from the clone, and nothing from its folder in the tree, for
+  `src/rictadni.nim`, `suggester` and `suites/test_tags.nim`. `tools/build.nim` reads none of it.
+- Verified by hand with `git grep -E '\.\./(lojban_parser|ricysoho)/' -- '*.nim'` in this folder,
+  2026-11-19: none names either. At `0d6eaaeb`, where each import went by path, the same pattern
+  finds each one in `contributor/bangu/lojban_tagger`.
 
 **This project names its own types and constants apart from those of the parser.** The parser
 exports `Reading` and `Refusal` for one word, so the types of a tag take the qualifier `Tag`, as
@@ -104,7 +108,7 @@ directives that open its NIF, so the first line of an index file is `HEADER_INDE
 Rejected: `index.HEADER` at each use, which leaves each later module that imports both to meet
 the clash. The lists of the parser stay off its umbrella, so the two `LIST_GISMU` meet only where
 a module imports both lists. Nim reads `LETTERS` and the `Letters` of `std/strutils` as one name,
-so the code writes `lojban_parser.LETTERS`. Verified by hand with Nim 2.4.0, 2026-11-07: an
+so the code writes `ricysoho.LETTERS`. Verified by hand with Nim 2.4.0, 2026-11-07: an
 `EntryGismu` of this project, and an unqualified `LETTERS`, each stop the compile as an ambiguous
 identifier. At `831d902d`, a bare `HEADER` stops the compile of `suites/test_index.nim` the same
 way, verified by hand with Nim 2.4.0 on 2026-11-11. `Reading` and `Refusal` fall under the same
@@ -119,8 +123,8 @@ It asks that a derived work state the facts of its derivation and give the addre
 The header of each rendered module does both.
 
 **The lists are committed as typed Nim, and a converter renders them.** `nim r tools/build.nim
-lists` reads both files, checks the SHA-256 of each against a pin of `lojban_parser`, and
-writes `src/lojban_tagger/lists/gismu.nim` and `lujvo.nim`. Each is a module of typed constants,
+lists` reads both files, checks the SHA-256 of each against a pin of `ricysoho`, and
+writes `src/rictadni/lists/gismu.nim` and `lujvo.nim`. Each is a module of typed constants,
 and its header names that verb, as the rule of data asks (CONTRIBUTOR.md, Data). The compiler
 checks each field against the types of `entries.nim`.
 
@@ -160,7 +164,7 @@ one commit. Verified by `suites/test_lists.nim`, on lines copied from both files
 ruled that the parser keeps the rafsi of each gismu and cmavo, and that the English stays here.
 Both converters keep each line of one `gismu.txt`, so entry `i` here is the English of `Word(i)`
 of the parser. The converter takes the reader of each source and both pins from
-`lojban_parser/tools/lists.nim`, so one pin serves both lists.
+`ricysoho/tools/lists.nim`, so one pin serves both lists.
 
 A static check of `english.nim` holds both lists to one order, word for word. So a list that moves
 on one side alone stops the build. Verified by hand on 2026-11-07 with Nim 2.4.0, on a copy outside
@@ -220,10 +224,10 @@ holds, a cmene or a fu'ivla. Verified by `suites/test_tags.nim` and `suites/test
 
 ## What cmavo bind
 
-**A tag folds into tanru units by the fold of `lojban_parser`.** A tanru unit is one word with the
+**A tag folds into tanru units by the fold of `ricyso'o`.** A tanru unit is one word with the
 cmavo that bind it, as the grammar of CLL names it (21.2, rule 152). The Architect ruled that the
 project uses that name (#768). The provenance of the parser holds each rule of the fold, and the
-suite `test_tanru_units.nim` of `lojban_parser` holds them. Search ranks by these units (Index and
+suite `test_tanru_units.nim` of `ricyso'o` holds them. Search ranks by these units (Index and
 search), so each cost of the fold shows in the rank:
 
 - `co` inverts the order of a tanru (5.8), but the fold keeps the written order. So the rank does
@@ -406,8 +410,10 @@ cache, and `chat` caches nothing. Rejected: the definitions too, at five times t
 by `suites/test_suggestions.nim`.
 
 Cost: the text goes with each request, and the cache helps only within its lifetime. It is 23,699
-bytes, against 24,918 bytes for the list with cmavo at `bf9c82d8`, by one command on 2026-10-31:
-`nim r --hints:off --path:src --eval:'import lojban_tagger/suggestions; echo PROMPT_SYSTEM.len'`.
+bytes by one command on 2026-11-19:
+`nim r --hints:off --path:src --eval:'import rictadni/suggestions; echo PROMPT_SYSTEM.len'`.
+The list with cmavo gave 24,918 bytes at `bf9c82d8` on 2026-10-31, by the same command with the
+module `lojban_tagger/suggestions`.
 
 **The passage is data inside one element.** Its `&`, `<`, `>` and `"` are escaped, so it can
 never close the element. The URL in the element keeps its scheme, host, port and path, so no user
@@ -425,9 +431,9 @@ Cost: the tool counts the words after `readTag`, so the cap of six words saves n
 of the reading. It saves only the time to list and print the gismu and the report. For 18 words,
 that took 2.81 µs at most over four runs on Nim 2.2.12 (Figures). Open questions asks about it.
 
-Cost: `tagger read` and `tagger tag` have no cap of words. `$` is the render of `lojban_parser`,
+Cost: `tagger read` and `tagger tag` have no cap of words. `$` is the render of `ricyso'o`,
 which searches the choices of rafsi by dynamic programming. Its time grows linearly with the words
-of the tag (PROVENANCE of `lojban_parser`). The lujvo of 18 words in `TEXT_GIVEN_LONG` renders in
+of the tag (PROVENANCE of `ricyso'o`). The lujvo of 18 words in `TEXT_GIVEN_LONG` renders in
 under 0.1 ms in release (Figures).
 
 **The tool speaks the wire format of each of three services.**
@@ -764,7 +770,7 @@ holds the committed lujvo list to no rule of form. It holds each word only to th
 
 ## Toolchain
 
-**The compiler is pinned exactly**: `requires "nim == 2.4.0"` in `lojban_tagger.nimble`, as every
+**The compiler is pinned exactly**: `requires "nim == 2.4.0"` in `rictadni.nimble`, as every
 project of the repository pins it (D1 a on #775). The verbs `lists` and `head` also need
 `lojban-common` and `sha256sum`, which the verb `system` declares. `suggester` and the stub
 compile with `-d:ssl`, so each needs `libssl3` when it starts. `suggester` checks hosts against
@@ -781,8 +787,8 @@ restores any.** CI installs each package that `system` prints, and only then res
 (`curator/audit/PROVENANCE.md`, System packages). CI then stops before it installs any package,
 and no suite runs. So `lists` and `head` run `tools/lists.nim` as a program of its own, as
 `examples` runs `tools/examples.nim`, since that module reads the parser package. Verified by hand
-with Nim 2.4.0 on 2026-11-15: with `dependencies/` moved aside, `nim r koch list-packages
-contributor/bangu/lojban_tagger` prints each package that `system` declares.
+with Nim 2.4.0 on 2026-11-19: with `dependencies/` moved aside, `nim r koch list-packages
+contributor/bangu/rictadni` prints each package that `system` declares.
 
 Verified by `suites/test_build.nim`, which runs the driver in a copy of the project without
 `dependencies/`. The suite refuses a driver that imports a package by path or by name, since that
@@ -941,3 +947,8 @@ byte for byte, and the source of the parser differs only in `lujvo.nim` and `tan
   keeps the format, the effort and the thinking on the fallback model.
 - **Servers of plain `chat`.** No run tried a server of plain Chat Completions.
 - **Title and textarea.** The reader reads their content as markup, where HTML reads it as text.
+- **The names that files and people hold.** These keep the old name: the format lines
+  `lojban_tagger exchange 2` and `lojban_tagger index 1`, the package `lojban_tagger` of the
+  schema, and the folder `lojban_tagger/index`. So do the variables `LOJBAN_TAGGER_*`, the user
+  agent and the ID of the session. D1 on #946 asks the Architect how they move. The options are
+  the new name with the old one still read, the old name kept, or the new name alone.

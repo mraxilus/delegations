@@ -58,12 +58,12 @@ import std/[
 from std/posix import chmod, Mode, umask
 from std/unicode import Rune, toUTF8
 
-import lojban_parser
+import ricysoho
 
 import ../../app/exchanges
 from ../../app/suggester {.all.} import BYTES_FIELDS_MAX, COUNT_REDIRECTS_MAX, USAGE
 
-import ../../src/lojban_tagger/[suggestions, tags]
+import ../../src/rictadni/[suggestions, tags]
 import ../../tools/examples
 from ../../tools/examples {.all.} import DIRECTORY_EXAMPLES
 
@@ -100,7 +100,7 @@ type
 
 
 const
-  PREFIX_DIRECTORY = "lojban_tagger_suite_suggester_"  ## Opening of temporary directory name.
+  PREFIX_DIRECTORY = "rictadni_suite_suggester_"  ## Opening of temporary directory name.
   NIM = getCurrentCompilerExe()  ## Compiler building suite, which builds `suggester` too.
   PATH_APP = currentSourcePath().parentDir.parentDir.parentDir / "app" / "suggester.nim"
     ## Source of `suggester`, found from this file.

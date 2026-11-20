@@ -124,7 +124,7 @@
 import std/[json, options, sequtils, strutils]
 from std/unicode import runes
 
-import lojban_parser
+import ricysoho
 
 import ./[commands, tags]
 import ./lists/gismu
@@ -397,7 +397,7 @@ func constructPattern(): string {.compileTime.} =
   ##     https://platform.claude.com/docs/en/build-with-claude/structured-outputs
   result = "^["
   for character in char.low..char.high:
-    if character in lojban_parser.LETTERS - {'y', '\''}: result.add character
+    if character in ricysoho.LETTERS - {'y', '\''}: result.add character
   result.add "]{5}$"
 
 

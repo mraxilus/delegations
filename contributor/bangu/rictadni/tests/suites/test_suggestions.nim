@@ -25,10 +25,10 @@ when compileOption("profiler"):
 
 import std/[algorithm, json, options, random, sequtils, strutils, sugar, unittest]
 
-import lojban_parser
+import ricysoho
 
-import ../../src/lojban_tagger/[commands, english, suggestions {.all.}, tags]
-import ../../src/lojban_tagger/lists/gismu
+import ../../src/rictadni/[commands, english, suggestions {.all.}, tags]
+import ../../src/rictadni/lists/gismu
 import ../../tools/examples
 
 

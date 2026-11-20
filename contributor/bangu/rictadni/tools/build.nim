@@ -19,7 +19,7 @@
 ##
 ##   `head` is verb CONTRIBUTOR.md gives check against outside reference that moves: package
 ##     can carry new list with no commit here, and no merge waits on it.
-##   Sibling: `lists` and `head` of `lojban_parser/tools/build.nim` take same steps over lists of
+##   Sibling: `lists` and `head` of `ricysoho/tools/build.nim` take same steps over lists of
 ##     parser, and read same sources by same pins (`tools/lists.nim`). Each driver renders and
 ##     watches lists of its own project, and no driver exports verb, so steps stand in both,
 ##     here in `tools/lists.nim` (II.9); fix to one is finished only when other is checked.

@@ -26,10 +26,10 @@ when compileOption("profiler"):
 import std/[options, random, sequtils, strutils, unittest]
 from std/unicode import Rune, toUTF8, validateUtf8
 
-import lojban_parser
+import ricysoho
 
-import ../../src/lojban_tagger/[commands, tags]
-import ../../src/lojban_tagger/lists/gismu
+import ../../src/rictadni/[commands, tags]
+import ../../src/rictadni/lists/gismu
 
 
 const
@@ -48,7 +48,7 @@ const
   COUNT_WORDS_CMAVO_MAX = 6
     ## Most words of such tag, at which floors below were read.
     ##   Cost: law reaches no longer tag, though render grows linearly with its words
-    ##     (PROVENANCE of `lojban_parser`).
+    ##     (PROVENANCE of `ricysoho`).
     ##   TODO: Widen past six words, and read floors below again.
   FLOOR_ROUND_CMAVO = 450
     ## Least of them free of `brodi`, `brodo` and `brodu` before last word: 473 read at seed `0`.
@@ -208,7 +208,7 @@ iterator tagsCmavo(): lent Tag =
 suite "Chapter 3":
   test "Section 3.1":
     for c in char.low .. char.high:  # 256 bytes; inner comma in 3.3, ends and capitals internal
-      if c in lojban_parser.LETTERS or c in {',', 'A' .. 'Z'}: continue
+      if c in ricysoho.LETTERS or c in {',', 'A' .. 'Z'}: continue
       check ("bri" & c & "vla").refusalRead == some((RefusalTag.Letter, $c))  # 3.1, alphabet
 
 
