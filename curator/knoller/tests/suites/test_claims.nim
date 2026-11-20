@@ -308,7 +308,7 @@ suite "Claims":
         "##                                  recording named, or of all four\n",
           # deeper line continues aligned column
       "let count_items = 1  ## Count of items.\n## | count_items | items |\n",  # table row
-      "let count_items = 1  ## Count of items.\n## Read count_items -> size\n",  # diagram
+      "let count_items = 1  ## Count of items.\n## count_items -> size\n",  # diagram
       "# RULE 3.  `\"Slots lie off side of`\n# `lead/follow.\"`  Six spots: default, and one\n" &
         "# slightly forward.\n",  # two spaces after sentence end inside quote
       "# Rule 7's measure stops here.\n",  # possessive, no typed literal
@@ -318,6 +318,13 @@ suite "Claims":
       "let md = 1  ## Count.\n# Read STYLE.md once.\n",  # citation, though file declares part
     ]:
       check kept.isSettled
+
+
+  test "arrow inside backticks or between words of prose marks no diagram":
+    check "## Read row (`|`), diagram (`->`), or code of\n##   three fences.\n".isSettled
+      # line 15 of `outlines.nim` of `knoller`: wrap below quoted arrow
+    check "let count_items = 1  ## Count of items.\n## Read count_items -> size.\n".fixed ==
+      "let count_items = 1  ## Count of items.\n## Read `count_items` -> size.\n"
 
 
   test "commented code and fenced code hold no prose":

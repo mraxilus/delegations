@@ -176,6 +176,16 @@ suite "Outlines":
     check HEADER.isSettled  # lines 1 to 12 and 35 to 37 of `pga.nim`
     check "## Do.\n##   ```nim\n##   let x =\n##       f(1)\n##   ```\n".isSettled
     check "## Do.\n##   a -> b\n##        -> c\n".isSettled
+    check "## Do.\n##   [boundary, camera, scene]\n##     -> orrery\n".isSettled  # group, arrow
+
+
+  test "arrow inside backticks or between words of prose marks no diagram":
+    let quoted = "## Diagram (`->`) holds no step,\n##     past summary.\n"
+    check checkOutlines("a.nim", quoted).mapIt(it.line) == @[2]  # summary is line 1
+    check quoted.fixed == "## Diagram (`->`) holds no step,\n##   past summary.\n"
+    let prose = "## Neck round 0.39 -> 0.37,\n##     so torso takes it.\n"
+    check checkOutlines("a.nim", prose).mapIt(it.line) == @[2]  # arrow of measure, not of diagram
+    check prose.fixed == "## Neck round 0.39 -> 0.37,\n##   so torso takes it.\n"
 
 
   test "comment whose first line stands at even step is commented code, so no outline":
