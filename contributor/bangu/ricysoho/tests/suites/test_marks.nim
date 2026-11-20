@@ -28,7 +28,7 @@
 ##
 ## ni'o lo gacri be lo srejge cu mecrai
 ##   .i no genvla poi le gacri cu cliva ke'a se tcidu ta'i pa mulselci'a
-##   .i 02 spisa poi lamji cu se tcidu ta'i pa `text`
+##   .i naku su'o re spisa poi lamji cu se tcidu ta'i pa `text`
 ##   .i ki'u bo va'o lo nu pa jimca cu kuspe le genvla .a le re spisa kei le gacri cu cliva lo
 ##       mecygenvla gi'a pilno lo me'aspi
 ##
@@ -509,7 +509,7 @@ suite "Internal: Marks":
           let span = cover.children[k - 1].leaves[0] .. piece.leaves[^1]
           check not terminals[span].readGrammar.is_read
             # ja'i le krapinka pe `grammar.nim` lo gacri cu pilno lo mecraispi
-            #   .i 02 spisa poi lamji cu se tcidu ta'i pa `text`
+            #   .i naku su'o re spisa poi lamji cu se tcidu ta'i pa `text`
         inc count
     check count >= COUNT_COVERS_LEAST  # ja'i `IX.3` lo bandu cu ralte lo gacri
 

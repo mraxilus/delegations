@@ -165,7 +165,7 @@ func readEscape(reader: var Reader): char =
     if reader.isAt({shortcut}):
       inc reader.at
       return decoded
-  reader.refuse("re lerfu pe li paxa ge'u .a pa torbasysni")
+  reader.refuse("re lerfu pe li 16 ge'u .a pa torbasysni")
 
 
 func readIdentifier(reader: var Reader): string =
@@ -189,7 +189,7 @@ func readNumber(reader: var Reader): int =
   ##   .i va'o lo nu le mulna'u cu mleca li 0 kei `-` lidne le mulna'u to `Numbers` toi
   let start = reader.at
   if reader.isAt({'-'}): inc reader.at
-  if not reader.isAt(DIGITS): reader.refuse("pa lerfu pe li pano")
+  if not reader.isAt(DIGITS): reader.refuse("pa lerfu pe li 10")
   while reader.isAt(DIGITS): inc reader.at
   parseInt(reader.text[start ..< reader.at])
 

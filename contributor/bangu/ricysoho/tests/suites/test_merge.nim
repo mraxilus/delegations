@@ -318,7 +318,7 @@ const
     ##   .i ro le selci'a cu kansa lo pagbu be lo krinu be'o .e lo namcu pe lo jgena poi lo nu jmina
     ##       cu cusku ke'a
     ##   .i li 0 cu krasi lo nu kancu lo jgena poi se lidne lo minde
-    ##   .i va'o lo nu lo nu jmina cu cusku no jgena kei le namcu cu du li ni'u pa
+    ##   .i va'o lo nu lo nu jmina cu cusku no jgena kei le namcu cu du li ni'u 1
 
 
 

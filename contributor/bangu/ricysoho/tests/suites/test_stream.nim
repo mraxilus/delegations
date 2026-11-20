@@ -82,7 +82,7 @@ const
     ##   .i le flalu pe slaka bu ne'i lo denpa cu cuxna le remei
   FLOOR_COMMA_PAUSE = 190
     ## lo mecrailai be le remei poi nitcu lo denpa poi zvati lo jbini be le re cmavo
-    ##   .i 2012mei cu se tcidu ca lo nu lo tsiju cu du `4`
+    ##   .i 201 boi remei cu se tcidu ca lo nu lo tsiju cu du `4`
   FLOOR_GLIDE_READ = 40
     ## lo mecrailai be lo brale'u poi le flalu pe lo sakli karsna cu tcidu ke'a ta'i pa brivla
     ##   .i 40 brale'u cu se tcidu bu'u le slaka poi lidne le romoi slaka

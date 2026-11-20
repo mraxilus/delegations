@@ -195,7 +195,7 @@ type
     held: int
       ## lo namcu pe lo romoi jgena poi vasru lo pagbu poi se tcidu
       ##   .i le romoi jgena cu du le jgena .a lo jgena poi lidne le jgena
-      ##   .i va'o lo nu no jgena cu vasru lo pagbu poi se tcidu kei le namcu cu du li ni'u pa
+      ##   .i va'o lo nu no jgena cu vasru lo pagbu poi se tcidu kei le namcu cu du li ni'u 1
     is_parted: bool
       ## lo du'u su'o pagbu be lo selci'a pe le jgena cu pu selbe'i bu'u le jgena .a lo jgena poi
       ##     lidne le jgena
@@ -325,7 +325,7 @@ func addLeaves(node: Node, leaves: var seq[int]) =
 func stopMost(node: Node): int =
   ## jarco lo romoi pagbu poi le gerna cu sisti bu'u ke'a ne'i le tricu
   ##   .i lo srejge cu sinxa le stuzi poi le gerna cu sisti bu'u ke'a
-  ##   .i va'o lo nu le gerna cu sisti bu'u no pagbu kei jarco li ni'u pa
+  ##   .i va'o lo nu le gerna cu sisti bu'u no pagbu kei jarco li ni'u 1
   if node.is_terminal: return -1
   result = (if node.stop.isSome: node.stop.get.at else: -1)
   for k in 0 ..< node.children.len: result = max(result, node.children[k].stopMost)
@@ -431,7 +431,7 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
     ##   .i `let` da'i fukpi le valsi
   let cleans = occurrences.toCleans
   # ro valsi cu ponse lo namcu pe lo pagbu poi vasru le valsi
-  #   .i li ni'u pa cu sinxa lo nu no pagbu cu vasru le valsi
+  #   .i li ni'u 1 cu sinxa lo nu no pagbu cu vasru le valsi
   var holders = newSeq[int](occurrences.len)
   for w in 0 ..< occurrences.len: holders[w] = -1
   for u in 0 ..< units.len:
@@ -758,7 +758,7 @@ func addItems(
     #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du lo klani be le panzi
     first_su = children.len
     # lo romoi pezli be zo su ne'i le panzi
-    #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du li ni'u pa
+    #   .i va'o lo nu no pezli be zo su cu zvati kei le namcu cu du li ni'u 1
     last_su = -1
     # lo pamoi pezli poi se lidne le selci'a
     #   .i ro le pezli cu du zo fa'o poi fanmo le selci'a ku'o .a lo valsi poi se lidne zo fa'o
@@ -854,7 +854,7 @@ func addOpeners(
     # ro pagbu cu ponse lo stuzi poi lo selku'e be lo panzi poi vasru le pagbu cu krasi bu'u ke'a
     owners = newSeq[int](units.len)
     # ro valsi cu ponse lo namcu pe lo pagbu poi vasru le valsi
-    #   .i li ni'u pa cu sinxa lo nu no pagbu cu vasru le valsi
+    #   .i li ni'u 1 cu sinxa lo nu no pagbu cu vasru le valsi
     holders = newSeq[int](occurrences.len)
     erased_first = int.high  # lo stuzi pe lo pamoi valsi poi lo nu vimcu cu pu vimcu ke'a
     added: seq[OpenerLive]

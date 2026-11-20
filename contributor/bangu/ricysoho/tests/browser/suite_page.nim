@@ -3,8 +3,8 @@
 ##   .i le papri cu selzba fi le mitcalku
 ##   .i le vi cipra cu du le samtci pe le papri gi'e basti `src/browser/page.nim` gi'e vasru ro
 ##       pagbu be `src/browser/page.nim`
-##   .i ki'u bo va'o lo nu 12moi samtci pe `Nim` zvati le papri kei le remoi samtci cu basti lo
-##       fancu pe le pamoi to `tools/browser.nim` toi
+##   .i ki'u bo va'o lo nu pa boi remoi samtci pe `Nim` zvati le papri kei le remoi samtci cu basti
+##       lo fancu pe le pamoi to `tools/browser.nim` toi
 ##
 ## ni'o le cipra cu karbi lo selja'o be le papri be'o pe ro se cipra poi le sabji samtci cu sabji
 ##     ke'a ku'o le pixra poi le jbezba cu dunda ke'a

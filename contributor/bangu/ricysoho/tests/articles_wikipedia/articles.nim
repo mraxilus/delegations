@@ -26,7 +26,7 @@ type
     article* {.requiresInit.}: string  ## lo cmene be le prosa poi vasru le ju'agri
     index* {.requiresInit.}: int
       ## lo namcu pe le ju'agri ne'i le prosa
-      ##   .i le namcu pe le pamoi ju'agri cu du li pa
+      ##   .i le namcu pe le pamoi ju'agri cu du li 1
     text* {.requiresInit.}: string
       ## pa linji pe lo sapselci'a ta'i lo nu le danfu cu dunda le linji
     verdict* {.requiresInit.}: string

@@ -233,7 +233,8 @@ suite "Chapter 4":
       check w in found  # `CLL 4.6`
       # zo broda pe `CLL 4.4`
       if text.startsWith("brod"): check found.mapIt($it) == @GISMU_ASSIGNABLE
-      else: check found == @[w]  # ja'i `CLL 4.4` 02 gismu cu frica fi lo fanmo karsna po'o
+      else: check found == @[w]
+        # ja'i `CLL 4.4` naku su'o re gismu cu frica fi lo fanmo karsna po'o
 
 
   test "Section 4.6":

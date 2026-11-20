@@ -91,7 +91,7 @@ suite "Chapter 3":
         for c in ORDER_CONSONANTS:  # ro le 4913 zunsna cimei
           let is_expected = isPairPermissible(a, b) and isPairInitial(b, c) and
               a & b & c notin ["ndj", "ndz", "ntc", "nts"]
-          check isTriplePermissible(a, b, c) == is_expected  # le 33mei javni pe `CLL 3.7`
+          check isTriplePermissible(a, b, c) == is_expected  # le ci boi cimei javni pe `CLL 3.7`
     for triple in ["ndj", "ndz", "ntc", "nts"]:
       check isPairPermissible(triple[0], triple[1]) and isPairInitial(triple[1], triple[2])
       # `CLL 3.7` cusku le zunsna cimei gi'e to'e curmi ri

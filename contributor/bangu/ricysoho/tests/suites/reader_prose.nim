@@ -107,7 +107,7 @@ type
     shape*: Shape  ## lo tarmi be le selci'a ne'i le datnyvei
     opening*: int
       ## lo klani be lo cmavo po'u zo ni'o poi krasi le selci'a
-      ##   .i li ni'u pa va'o lo nu no javni cu jdice le klani
+      ##   .i li ni'u 1 va'o lo nu no javni cu jdice le klani
     text*: string
       ## le selci'a poi le genturfa'i cu tcidu ke'a
       ##   .i ro samtci pagbu cu se sitna sepi'o zo la'o
@@ -797,7 +797,7 @@ func faultsLayout*(text: Text, lines: seq[string], marked: ReadingMarked,
 
 func spanUnits(node: Node): tuple[first, last: int] =
   ## dunda lo stuna'u be le pamoi pagbu be'o .e lo stuna'u be le romoi pagbu pe le jgena
-  ##   .i va'o lo nu le jgena cu vasru no pagbu kei le romoi stuna'u cu du li ni'u pa
+  ##   .i va'o lo nu le jgena cu vasru no pagbu kei le romoi stuna'u cu du li ni'u 1
   if node.is_terminal: return (node.at, node.at)
   result = (int.high, -1)
   for child in node.children:

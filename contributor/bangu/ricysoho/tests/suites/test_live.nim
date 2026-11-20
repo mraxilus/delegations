@@ -131,7 +131,7 @@ const
     ##       roi
   COST_MOST = 12.0
     ## lo zmaraifrinu be lo stuzi poi se tcidu bei lo stuzi pe le selci'a ca lo nu ro valsi cu spisa
-    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li 8 pi re
+    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li 8 pi 2
     ##   .i ki'u bo ro spisa cu raptcidu lo jufra poi ca'o kalri
   COST_TWICE_MOST = 2.2
     ## lo zmaraifrinu be lo stuzi poi le selci'a poi re roi clani cu tcidu ke'a bei lo stuzi poi le
@@ -464,7 +464,7 @@ func countCut(piece: string, sentences: openArray[string]): int =
   ##   .i ro le jufra poi le porsi cu tcidu ke'a po'o vasru pa cmavo be zoi gy. I .gy. .a zoi gy.
   ##       NIhO .gy. be'o noi pamoi valsi be le jufra
   ##   .i ku'i le pamoi jufra cu ka'e vasru no le cmavo
-  ##   .i va'o lo nu la'e di'u na jetnu kei jarco li ni'u pa
+  ##   .i va'o lo nu la'e di'u na jetnu kei jarco li ni'u 1
   if sentences.join != piece: return -1
   for k in 0 ..< sentences.len:
     let reading = sentences[k].readStream

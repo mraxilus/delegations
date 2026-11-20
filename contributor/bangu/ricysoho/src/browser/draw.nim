@@ -112,7 +112,7 @@ type
       ##   .i lo kunti lerpoi va'o lo nu no selci'a cu zasti
     parent*: int
       ## lo namcu pe le selpu'i poi gapru le vi selpu'i
-      ##   .i li ni'u pa va'o le genja
+      ##   .i li ni'u 1 va'o le genja
     words*: int
       ## lo du'u le karda cu vasru xo kau valsi
       ##   .i li 0 va'o lo nu le selpu'i cu tanxe
@@ -330,7 +330,7 @@ func placed(
   ##   .i lo midju be le tanxe cu midju lo selpu'i poi cnita le tanxe
   ##   .i dunda lo ni le jgena cu gapru le karda kei .e lo midju .e lo namcu vu'o pe le selpu'i pe
   ##       le jgena
-  ##   .i va'o lo nu le jgena cu vasru no valsi kei le ni gapru cu du li ni'u pa
+  ##   .i va'o lo nu le jgena cu vasru no valsi kei le ni gapru cu du li ni'u 1
   ##
   ## ni'o lo tanxe cu ponse lo namcu pe `boxes`
   ##   .i lo karda cu ponse lo namcu pe `cards`

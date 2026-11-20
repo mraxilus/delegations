@@ -535,12 +535,12 @@ suite "Chapter 4":
     check "ninmu".form == some(Form.Cvccv)  # `Example 4.18` pe `CLL 4.4`
     for text in ["creka", "lijda", "blanu", "mamta", "cukta", "patfu", "nanmu", "ninmu"]:
       check text.isGismu  # `Examples 4.11-18` pe `CLL 4.4`
-    for text in texts(positionsNotation("CVCCV")):  # ro le para2825 lerpoi
+    for text in texts(positionsNotation("CVCCV")):  # ro le 122825 lerpoi
       let expected = if isPairPermissible(text[2], text[3]): some(Form.Cvccv) else: none(Form)
       # ja'i `CLL 4.4` lo midju zunsna remei pe `CVC/CV` bilga lo ka se curmi po'o
       check text.form == expected  # `CLL 4.4`
     var count_ccvcv = 0
-    for text in texts(positionsNotation("CCVCV")):  # ro le para2825 lerpoi
+    for text in texts(positionsNotation("CCVCV")):  # ro le 122825 lerpoi
       let expected = if isPairInitial(text[0], text[1]): some(Form.Ccvcv) else: none(Form)
       # `CLL 4.4` skicu lo zunsna remei poi krasi `CCVCV` ku'o fo zoi gy. permissible initial pair
       #     .gy.
@@ -567,7 +567,7 @@ suite "Chapter 4":
       lut_words_by_stem.mgetOrPut(text[0..3], @[]).add text
     for stem, words in lut_words_by_stem:
       if stem == "brod": check words == @["broda", "brode", "brodi", "brodo", "brodu"]  # `CLL 4.4`
-      # ja'i `CLL 4.4` 02 datygi'u cu frica fi lo fanmo karsna po'o
+      # ja'i `CLL 4.4` naku su'o re datygi'u cu frica fi lo fanmo karsna po'o
       else: check words.len == 1
     check lut_words_by_stem.hasKey("brod")  # ja'i `CLL 4.4` mu brivla cu ka'e basti ro selbri
     for text in words_cmavo:
@@ -658,7 +658,7 @@ suite "Chapter 4":
       #   .i `CLL 4.6` cusku zoi gy. in place of .gy.
       check isPairPermissible(second.hyphenBefore, second[0])  # `CLL 4.6`
     for first in vowels_paired:
-      for second in vowels_paired:  # ro le 1772412mei
+      for second in vowels_paired:  # ro le 177241 boi remei
         # `CLL 4.6` skicu lo nu `CVV` lidne `CVV` kei fo zoi gy. would be no consonant cluster .gy.
         check not isBrivla(first & second)  # `CLL 4.6`
         # `CLL 4.6` cusku zoi gy. hyphen is always required .gy.

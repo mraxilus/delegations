@@ -134,7 +134,7 @@ const
     ##   .i lo tsiju cu jdice le tanru
   COUNT_WORDS_CMAVO_MAX = 6
     ## lo brajimte be lo te kancu be lo valsi pe le tanru
-    ##   .i lo temci be lo mulsisku cu binxo lo pilji be lo pu temci bei li ji'i vo ca ro nu jmina
+    ##   .i lo temci be lo mulsisku cu binxo lo pilji be lo pu temci bei li ji'i 4 ca ro nu jmina
     ##       pa valsi
     ##   .i se ki'u bo lo nu li 6 cu jimte cu ralte lo nu le cipra cu sutra
   FLOOR_CMAVO = 220

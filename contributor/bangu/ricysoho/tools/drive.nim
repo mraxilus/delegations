@@ -69,7 +69,7 @@ type RunPage* = object  ## lo selsku be lo papri ca pa nu cipra
     ## ro datnyvei poi le papri cu benji ke'a fi lo judri ku'o ta'i le judri
   code*: int
     ## le famna'u pe le papri
-    ##   .i le namcu cu du li ni'u pa va'o lo nu le papri cu cusku no fanmo pu le rairtei
+    ##   .i le namcu cu du li ni'u 1 va'o lo nu le papri cu cusku no fanmo pu le rairtei
   is_done*: bool  ## le papri pu cusku lo fanmo be vo'a
 
 

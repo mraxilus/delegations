@@ -731,7 +731,7 @@ const LUT_CHAIN_BY_ENDS* = GRAMMAR_EBNF.constructChains
 
 func constructNumbers(grammar: Grammar): Table[string, int] {.compileTime.} =
   ## zbasu lo namcu pe ro javni poi selcme ja'i lo cmene be le javni
-  ##   .i cipra lo du'u 02 javni cu ponse lo mitcme .a lo mitna'u
+  ##   .i cipra lo du'u naku su'o re javni cu ponse lo mitcme .a lo mitna'u
   ##   .i se ki'u bo lo cmene cu dunda lo namcu
   ##   .i lo namcu cu dunda lo cmene
   var named: Table[int, string]

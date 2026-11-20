@@ -47,7 +47,7 @@
 ## ni'o lo minde po'u `tatoeba` cusku lo te kancu be ro se jdice ne'i le mulvei
 ##   .i `PROVENANCE.md` cusku le te kancu
 ##   .i jdima fa lo nu le minde cu tcidu ro jufra sepi'o le genturfa'i pa roi
-##   .i se ki'u bo le nu le minde cu zukte cu mentu li ji'i pa
+##   .i se ki'u bo le nu le minde cu zukte cu mentu li ji'i 1
 
 {.experimental: "strictFuncs".}
 

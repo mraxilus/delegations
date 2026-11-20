@@ -7,8 +7,8 @@
 ## ni'o le cipra cu vasru le cripu ta'i le cipra pe le samtci
 ##   .i ki'u bo ro samtci poi `Nim` fanva ke'a punji ro fancu pe vo'a lo stuzi poi ro da ka'e pilno
 ##       ke'a
-##   .i se ki'u bo 12moi samtci ne'i pa papri cu basti ro fancu pe le pamoi ge'u zi'e poi ke'a .e
-##       pa fancu pe le remoi cu selcme pa cmene
+##   .i se ki'u bo pa boi remoi samtci ne'i pa papri cu basti ro fancu pe le pamoi ge'u zi'e poi
+##       ke'a .e pa fancu pe le remoi cu selcme pa cmene
 ##   .i se ki'u bo va'o lo nu pa sepcipra cu zvati lo mlana be le samtci kei le cipra cu tcidu lo
 ##       spofu samtci
 ##

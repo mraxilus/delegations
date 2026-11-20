@@ -25,8 +25,8 @@
 ##   .i ro cipra cu vasru le cripu ta'i le samtci poi selbe'i
 ##   .i ki'u bo ro samtci poi `Nim` fanva ke'a punji ro fancu pe vo'a lo stuzi poi ro da ka'e pilno
 ##       ke'a
-##   .i 12moi samtci ne'i pa papri cu basti ro fancu pe le pamoi ge'u zi'e poi ke'a .e pa fancu
-##       pe le remoi cu selcme pa cmene
+##   .i pa boi remoi samtci ne'i pa papri cu basti ro fancu pe le pamoi ge'u zi'e poi ke'a .e pa
+##       fancu pe le remoi cu selcme pa cmene
 ##   .i le gunka pe le cipra pe lo mivyselci'a cu selkra le judri ta'i lo nu le gunka pe le samtci
 ##       cu selkra le judri be le samtci
 ##

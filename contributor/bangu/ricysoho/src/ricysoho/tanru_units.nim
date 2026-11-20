@@ -310,7 +310,7 @@ func placeOpening(parts: openArray[Part]): int =
   ## facki lo stuzi poi se lidne le porsi
   ##   .i le porsi cu porsi lo cmavo poi jorne gi'e traji lo ka jibni le fanmo gi'e zvati no girzu
   ##       gi'e lidne su'o re taurpau
-  ##   .i lo jalge cu du li ni'u pa va'o lo nu no porsi cu mapti
+  ##   .i lo jalge cu du li ni'u 1 va'o lo nu no porsi cu mapti
   for at in countdown(parts.len, 1):
     if not parts[at - 1].isBinding or (at < parts.len and parts[at].isBinding): continue
     if parts.depthAt(at) == 0 and parts.countItems(at, parts.len) >= 2: return at
