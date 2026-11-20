@@ -224,7 +224,7 @@ func isOneLine(v: View; i, indent: int): bool =
   v.isHeadRoutine(i) and v.code[i].indentWidth == indent and v.lineLast(i) == i
 
 
-func hasBody(v: View; head, last: int): bool =
+func isBodied(v: View; head, last: int): bool =
   ## Decide whether routine from line `head` to `last` holds body: `=` at depth 0, outside
   ##   backticks, that joins no operator.
   var
@@ -399,7 +399,7 @@ func items(v: View; a, b: int; declared: seq[string]): seq[Item] =
         item.branches.add v.items(opener + 1, close, declared)
     item.is_one_line = toSeq(item.head + 1 .. item.last).allIt(not v.isCode(it))
     if item.form == Form.Routine and not item.is_one_line:
-      item.is_one_line = not v.hasBody(item.head, item.last)
+      item.is_one_line = not v.isBodied(item.head, item.last)
     item.is_documented = toSeq(item.head .. item.last).anyIt("##" in v.kept[it])
     result.add item
     i = item.last + 1
