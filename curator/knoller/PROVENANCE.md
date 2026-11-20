@@ -2096,47 +2096,60 @@ warning beside those of fences.
   or one that quits at its top level, is a program, which no import runs.
 - A commented-out print is no code, and passes.
 - Verified by `suites/test_debugs.nim`, which quotes the build-time printer of
-  `pga/multivectors.nim` at `3d9696e`, and by `suites/test_fixes.nim` of `curator/audit`.
-- Verified by hand with knoller at `c9cb792d` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  `pga/multivectors.nim` at `3d9696e`, and by `suites/test_fixes.nim` of `curator/audit`. Each
+  printer warns in a module, a test, a script and a nimble file. A module that breaks no other
+  rule exits clean with its warning. A fix writes none of it, and the fix of the audit leaves no
+  finding.
+- Verified by hand with knoller at `44b16354` on the PGA library at `3d9696e`, 2026-11-20. A driver
   imports `knoller` and runs `warnDebug` alone on each file that
   `git ls-files '*.nim' '*.nims' '*.nimble'` lists, with a nimble file at the root of the
   library. It gives 1 warning, at line 83 of `pga/multivectors.nim`, as the ruling counts.
-- Verified by hand with that driver over the repository at `c9cb792d`, 2026-11-20. It gives no
+- Verified by hand with that driver over the repository at `44b16354`, 2026-11-20. It gives no
   warning. The one top-level `echo` of `pga_benchmark` stands in a program that quits.
 - Cost: an echo inside a routine passes, since the text cannot tell output from debug output.
-  So does a print of a tree by `repr`.
+  An echo of a tree by `repr` there passes too, since `repr` prints any value.
 
 ## Skips
 
-**Each gap of coverage shows in the run (IX.9).** The Architect ruled so on rule 17 of #443, with
-no placeholder for a reason. A skip gives its reason after it on its line, as STYLE.md §6 writes
-it. The reason may also stand on the comment line right above the skip, at its indent. It may
-stand in an echo of text there too, which the run prints. Each report stays for hand, since no
-text gives the reason (`checkSkips`).
+**Each gap of coverage shows in the run (IX.9).** The Architect ruled so on rule 17 of #443, and
+ruled that no fix writes a reason. A skip gives its reason after it on its line, as STYLE.md §6
+writes it. The reason may also stand on the comment line right above the skip, at its indent. It
+may stand in an echo of text there too, which the run prints. Each report stays for hand, since
+no text gives the reason (`checkSkips`).
 
+- The check reads each file under `tests` of its package. The static pass of `koch check` does
+  not read its reports yet. Knoller's command line and the warnings of fences read them, as they
+  read each check of the chain.
 - A skip that is the whole body of a branch may give its reason right above the head of that
-  branch.
+  branch. This is knoller's reading, and the ruling does not name it. On one line, as
+  `when IS_CONFORMAL: skip()`, the reason above the head is the reason above the skip, and two
+  lines read alike. Its cases are lines 120 to 122 and 219 to 221 of
+  `tests/suites/test_picking.nim` of `pga_visualiser`, which pass.
 - A placeholder test, whose code is `skip()` alone, gives its reason in a name that opens with
   `TODO:`.
 - A comment that opens with `TODO` inside a test that runs names a gap that the run never shows,
   so it reports. A comment that gives the reason of a skip is no gap. A test whose body skips at
-  its own level never runs, so it holds no gap.
-- A test under a `when` with no other branch leaves the run under that configuration, so it
+  its own level shows in the run as skipped, so it holds no gap.
+- A test under a `when` with no other branch leaves the run where its condition is false, so it
   reports, once for each test. `when isMainModule:` names no configuration.
-- A test under `quote do:` is generated code, and so is a skip under it. Neither is part of its
-  file.
+- A test under `quote do:` is generated code, and so is a skip under it. So neither reports.
 - Verified by `suites/test_skips.nim`. Its cases quote `tests/suites.nim` of the PGA library at
   `3d9696e`, and each case names its cut.
-- Verified by hand with knoller at `c9cb792d` on the PGA library at `3d9696e`, 2026-11-20. A driver
+- Verified by hand with knoller at `44b16354` on the PGA library at `3d9696e`, 2026-11-20. A driver
   imports `knoller` and runs `checkSkips` alone on each file that
   `git ls-files '*.nim' '*.nims' '*.nimble'` lists, with a nimble file at the root of the
   library. It gives 8 reports, as the ruling counts. They are lines 288, 308, 331, 346, 358, 371,
   380 and 432 of `tests/suites.nim`.
-- Verified by hand with that driver over the repository at `c9cb792d`, 2026-11-20. It gives 44
+- Verified by hand with that driver over the repository at `44b16354`, 2026-11-20. It gives 44
   reports, each a test of `pga_visualiser` under a bare gate. Of them, 17 stand under a gate
-  inside a suite, and 27 under a gate around a whole suite. The ruling counts 17 there.
-- Cost: a scanner on lines, never a parser. A test reads from a line that opens with `test` and
-  ends in `:`, and a line at its indent or shallower ends it.
+  inside a suite, and 27 under a gate around a whole suite. The ruling counts 17 there, as 16
+  tests under a gate and 1 skip. That skip gives its reason above the head of its branch, so it
+  passes here.
+- Cost: knoller reads the lines with a scanner, and never with a parser. A test reads from a line
+  that opens with `test` and ends in `:`, and a line at its indent or shallower ends it. So a
+  test on one line, as `test "a": skip()`, and a head as `test("a"):` are unread. A line of a
+  string at column 0 inside a test ends its body there.
+- Cost: any comment right above a skip reads as its reason, a commented-out line of code too.
 
 ## Fixed waits
 
@@ -2183,6 +2196,8 @@ there is unverified.
 
 ## Open questions
 
+- Does a test under a gate around a whole suite report, as one under a gate inside a suite does?
+  27 of the 44 reports of `pga_visualiser` stand under such a gate.
 - Nimble 0.26.2, which 2.4.0 ships, is not verified with the `?subdir=curator/knoller` form of a
   git URL. Its check needs the package list of nimble, which the proxy of the machine of a
   delegate refuses with status 405. Atlas reads the form through an override (`## Package`).
