@@ -32,7 +32,7 @@ const
   EXAMPLE_ERROR = (
     # `CLL 6.2`
     text: "mi klama le .i ko",  # zo le krasi pa sumti poi no valsi cu fanmo ke'a
-    head: "srera · stuzi li paci",
+    head: "srera · 13",
     rule: "ne'i sumti-6",
   )
     ## pa selci'a .e lo selsku be le tanxe pe le selci'a

@@ -307,8 +307,8 @@ func labelError(node: NodeNif): tuple[head, rule, expected: string] =
       if child.text == TAG_EXPECTS:
         for terminal in child.children: expected.add terminal.text
     else: discard
-  let byte_stop = (if numbers.len > 0: "li " & numbers[0].counted else: "zo'e")
-  ("srera · stuzi " & byte_stop, "ne'i " & rule, expected.join(" "))
+  let byte_stop = (if numbers.len > 0: $numbers[0] else: "?")
+  ("srera · " & byte_stop, "ne'i " & rule, expected.join(" "))
 
 
 
