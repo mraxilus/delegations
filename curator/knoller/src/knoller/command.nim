@@ -966,7 +966,10 @@ proc planRenames*(
         rule: r.rule,
         is_local: r.is_local,
       )
-      if r.refusal.len > 0: result.add Plan(rename: rename, refusal: r.refusal)
+      if r.refusal.len > 0:
+        var early = rename
+        early.path = path  # refused before pass: path as command line names it, as below
+        result.add Plan(rename: early, refusal: r.refusal)
       else: renames.add rename
     for (line, column, name, full) in renamesAbbreviation(source, JARGON):
       if recased.anyIt(it.line == line and it.column == column): continue
