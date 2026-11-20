@@ -480,8 +480,7 @@ func branchesStatic(source: string; constants: openArray[string]): seq[Branch] =
           if code[j].indentWidth > indent: continue
           let word = s.identifierAt(0)
           if word notin ["elif", "else"]: break
-          let opening = code[j].indentWidth + word.len
-          let (f, l) = code[j].conditionAt(opening)
+          let (f, l) = code[j].conditionAt(code[j].indentWidth + word.len)
           if word == "elif" and (f < 0 or not code[j][f ..< l].isStaticCondition(names)):
             is_static = false
           let colon = if word == "else": code[j].find(':') else: l

@@ -131,8 +131,9 @@ suite "Compile-time family":
       ("", false),  # no use, so no stage reads it
     ]
     for (uses, is_member) in cases:
-      let source = module(STAGED & "func c(): int =\n  1\n" & uses)
-      let expected = if is_member: @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func c`.")] else: @[]
+      let
+        source = module(STAGED & "func c(): int =\n  1\n" & uses)
+        expected = if is_member: @[(LINES_HEAD + 2, MESSAGE_MEMBER & "`func c`.")] else: @[]
       check source.families == expected
       if is_member:
         check source.fixedFamilies.contains("func c(): int {.compileTime.} =\n")
@@ -364,8 +365,9 @@ suite "Branch on what build fixes":
 
 
   test "fix settles, and reports each line it rewrites by rule":
-    let source = module("proc p() =\n  if X:\n    echo 1\n  let v = if Y: 1 else: 2\n")
-    let fix = fixBranches("a.nim", source, CONSTANTS)
+    let
+      source = module("proc p() =\n  if X:\n    echo 1\n  let v = if Y: 1 else: 2\n")
+      fix = fixBranches("a.nim", source, CONSTANTS)
     check fix.fixed.mapIt((it.line, it.rule)) ==
       @[(LINES_HEAD + 2, Rule.StaticWhen), (LINES_HEAD + 4, Rule.StaticWhen)]
     check checkBranches("a.nim", fix.source, CONSTANTS).len == 0
