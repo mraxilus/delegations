@@ -92,7 +92,7 @@ suite "Configurations":
     for kept in [
       "when IS_CONFORMAL:\n  a()\nb()\nwhen IS_CONFORMAL:\n  c()\n",  # definition between
       "when IS_CONFORMAL:\n  a()\n# Carriers.\nwhen IS_CONFORMAL:\n  c()\n",  # comment between
-      "when IS_CONFORMAL:\n  a()\nelse:\n  b()\nwhen IS_CONFORMAL:\n  c()\n",  # other branch
+      "when IS_RIGID:\n  a()\nelse:\n  b()\nwhen IS_RIGID:\n  c()\n",  # other branch, default first
       "when IS_RIGID:\n  a()\nwhen IS_CONFORMAL:\n  c()\n",  # family differing by configuration
       "when isMainModule:\n  a()\nwhen isMainModule:\n  c()\n",  # entry block, no configuration
     ]:
