@@ -11,6 +11,7 @@
 ##   | `ReadingGrammar`     | lo tricu pe le selci'a .a lo stistu .ebo lo stijva       |
 ##   | `readGrammar`        | tcidu lo genvla ja'i le gerna pe `CLL 21.1`                    |
 ##   | `readGrammarMarked`  | tcidu lo genvla gi'e zbasu lo tricu poi sinxa lo stistu   |
+##   | `ChartsKept`         | lo mulcmi pe le romoi pagbu poi se tcidu to `live.nim` toi          |
 ##   | `LUT_CHAIN_BY_ENDS`  | lo javni poi jbini re javni                                         |
 ##   |                      | .i ro jgena cu vasru le bavla'i po'o                                |
 ##   | `LUT_NUMBER_BY_RULE` | lo namcu pe ro javni pe `CLL 21.1` ja'i lo cmene be le javni        |
@@ -140,6 +141,11 @@
 ##   .i ba bo le gacri cu vasru lo mleca traji pagbu to `islands` toi
 ##   .i va'o lo nu ro selcmi cu kanpe ro javni poi selcme kei le selcmi cu facki ro ricpau
 ##   .i lo du'u le selci'a pu na'e mapti lo javni bu'u ma kau na vajni
+##
+## ni'o `ChartsKept` cu ralte lo mulcmi pe le romoi pagbu poi se tcidu
+##   .i ro spisa be lo mivyselci'a cu tisna lo selcmi po'o poi se lidne le pamoi genvla poi cenba
+##   .i jdima fa lo nu le mulcmi cu stali ca lo nu le samtci cu denpa lo bavla'i spisa
+##   .i `PROVENANCE.md` cu jarco le jdima .e le namcu
 ##
 ## ni'o jdima fa lo nu le nu zbasu lo srejge pe pa mulselci'a cu tcidu le mulselci'a pa roi
 ##   .i ca lo nu `readGrammar` to'e curmi kei `readGrammar` tcidu le mulselci'a pa roi
@@ -795,6 +801,8 @@ type
     ## lo mulcmi pe le romoi pagbu poi se tcidu
     ##   .i ro selcmi pe le mulcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali
     ##   .i se ki'u bo lo tcidu be lo mivyselci'a cu tisna lo selcmi po'o pe lo valsi poi cnino
+    ##   .i `ReaderLive` pe `live.nim` cu ralte ke'a gi'e benji ke'a fi `readTextParts` pe
+    ##       `prose.nim`
     whole: Chart  ## le mulcmi pe `readWhole`
     everywhere: Chart  ## le mulcmi pe `islands`
 
@@ -844,7 +852,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   ##
   ## ni'o le fancu cu ralte ro selcmi pe `chart` poi ro genvla poi lidne ke'a cu mintu lo genvla pe
   ##     `terminals`
-  ##   .i ki'u bo ro selcmi cu sarcu lo genvla po'o poi lidne ke'a
+  ##   .i ki'u bo ro selcmi cu nitcu lo genvla po'o poi lidne ke'a
   ##   .i ba bo le fancu cu tcidu le genvla pe le romoi selcmi poi stali gi'e tisna ro selcmi poi se
   ##       lidne ri
   ##   .i ji'a le fancu cu vimcu ro cmima pe `completions` .e `choices` poi le selcmi pe ke'a cu
