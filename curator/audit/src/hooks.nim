@@ -364,9 +364,10 @@ const
   COLUMNS_TAB = 4  ## Columns between stops of tab, as CommonMark reads indent.
   INDENT_INSIDE = 2
     ## Columns of indent from which line stands inside bullet of claim, as `- ` opens it.
-  NUMBER_INSIDE = "1"
-    ## Number of item that breaks paragraph of claim from inside its bullet (CommonMark, List
-    ##   items), as Markdown lets list that opens at 1 alone break paragraph.
+  NUMBER_INSIDE = 1
+    ## Value of number of item that breaks paragraph of claim from inside its bullet (CommonMark,
+    ##   List items), as Markdown lets list that opens at 1 alone break paragraph; `01.` and
+    ##   `001)` open at 1 too, as pandoc 3.1.3 of GFM reads them.
   MARK_PERCENTILES = ", as the 10th"
     ## Words that open percentiles of claim, as samples of GUIDE.md write them; where they are
     ##   first mark, claim ends at them and no percentage ends it, since they state its confidence
@@ -2099,7 +2100,8 @@ func isItem(line: string): bool =
   ##   marker of bullet, or one to `DIGITS_ITEM` digits then `.` or `)`, each then space, tab or
   ##   end of line.
   ##   From `INDENT_INSIDE` columns of indent, line stands inside bullet of claim, and there only
-  ##     marker or number 1, with text after it, breaks paragraph (CommonMark, List items).
+  ##     marker or number of value 1, with text after it, breaks paragraph (CommonMark, List
+  ##     items); value reads past leading zeros, so `01.` breaks it as `1.` does.
   ##   Cost: from six columns, Markdown reads such line as text of claim, yet it opens item here,
   ##     as bullet at any indent ends claim.
   var
@@ -2116,7 +2118,7 @@ func isItem(line: string): bool =
     inc i
   if i < line.len and line[i] notin SPACES_INDENT: return false
   column < INDENT_INSIDE or (line[i .. ^1].strip.len > 0 and
-    (line[start] in MARKERS_BULLET or line[start ..< i - 1] == NUMBER_INSIDE))
+    (line[start] in MARKERS_BULLET or line[start ..< i - 1].parseInt == NUMBER_INSIDE))
 
 
 func isPercentage(text: string, at: int): bool =
