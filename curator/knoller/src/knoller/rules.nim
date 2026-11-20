@@ -75,8 +75,11 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   OutputDebug = "debug output"  ## Test leaves no unlabelled `echo` outside condition.
   WaitFixed = "fixed wait"  ## Drive code waits on condition or clock, never span of real time.
   ListUnordered = "unordered list"  ## List language leaves unordered is alphabetised.
+  BlockConfiguration = "configuration block"
+    ## Adjacent blocks of one configuration share one, and default configuration comes first.
   LinesBlankTest = "test blank lines"  ## Blank lines beside suite and test follow tier.
   LinesBlankHelper = "helper blank lines"  ## Nested helper takes one blank line each side.
+  LinesBlankDefinition = "definition blank lines"  ## Blank lines before definition follow its kind.
   PositionDoc = "doc position"  ## Doc stands where shape of declaration puts it.
   DefaultLiteral = "literal default"  ## Parameter with literal default states no type.
   SpacingExpression = "expression spacing"  ## Space stands only where expression rule puts it.
