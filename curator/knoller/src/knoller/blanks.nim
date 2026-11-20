@@ -268,3 +268,14 @@ func fixBlanks*(path, source: string; nimble = ""): Fix =
       else: Rule.LinesBlankTest
     result.fixed.add initReport(path, run.line + 1, rule)
   if found.len > 0: result.origin = origin
+
+
+func checkDefinitions*(path, source: string): seq[Report] =
+  ## Report blank lines before definition at module level other than X.2 asks for its kind.
+  ##   Reports nothing yet; its reading lands with its suite.
+  discard
+
+
+func fixDefinitions*(path, source: string): Fix =
+  ## Set each run `checkDefinitions` reports to count X.2 asks, last run first.
+  result.source = source

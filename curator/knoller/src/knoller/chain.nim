@@ -20,8 +20,8 @@
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent;
-##   - blank lines beside suites, tests and helpers, then doc position and literal defaults,
-##     since doc joined or type dropped changes width wrapping measures;
+##   - blank lines beside suites, tests and helpers, and between definitions, then doc position
+##     and literal defaults, since doc joined or type dropped changes width wrapping measures;
 ##   - spacing before wrapping, since spaces it adds are width wrapping measures;
 ##   - wrapping last, separators, signatures, calls, continuations, then trailing separators:
 ##     layouts join groups with separator they read, call layout breaks line at operator where
@@ -126,7 +126,10 @@ func steps(dialect: Dialect, should_drop_articles = true, has_format_value = fal
     guarded(fixGenerations), guarded(fixCommands), proving(fixParentheses),
   ]
   result.add dialect.stepsIdiom
-  result.add @[placing(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
+  result.add @[
+    placing(fixBlanks), guarded(fixDefinitions), guarded(fixDocs), guarded(fixDefaults),
+    widening(fixSpacing),
+  ]
   result.add STEPS_WRAPPING
   result.add @[guarded(fixDocsMissing), guarded(fixCommentsAbove), guarded(fixStages)]
 
@@ -159,8 +162,9 @@ func checkFormattingUnfenced(
       checkMixtures, checkNegations, checkTargets, checkCommands,
     ]
     checks_after = [
-      checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures, checkCalls,
-      checkContinuations, checkTrailing, checkDocsMissing, checkCommentsAbove, checkStages,
+      checkDefinitions, checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures,
+      checkCalls, checkContinuations, checkTrailing, checkDocsMissing, checkCommentsAbove,
+      checkStages,
     ]
 
   # Run checks in order of chain, blank lines between, which read nimble file nearest file.
