@@ -2,7 +2,8 @@
 ##   and `proc` stays for effect or randomness; compiler proves each, and fixer writes `func`.
 ##   Syntax picks candidates (`candidatesPure`), since it cannot prove routine pure: `proc` with
 ##     body, of no foreign pragma, taking no routine, outside code macro emits (`quote`,
-##     `genAst`) and template substitutes, whose body
+##     `genAst`), code template substitutes, and code `compiles` tests, whose verdict clean
+##     check of module never proves, whose body
 ##   - names no effect of `EFFECTS`: output, input, files, clock, random numbers, environment,
 ##     process, address, and lock, wait and signal, which another thread sees (ruling of rule 11,
 ##     #443), though compiler checks routine taking lock in its `var` parameter as `func`;
@@ -101,7 +102,8 @@ const
     "uint64", "uint8",
   ]
     ## Types `system` declares, whose call is conversion rather than routine.
-  MARKS_EMITTED = ["quote", "genAst"]  ## Calls whose block holds code macro emits.
+  MARKS_EMITTED = ["compiles", "genAst", "quote"]
+    ## Calls whose block holds code macro emits, or code whose compile is itself under test.
   KEYWORD_PROC = "proc"  ## Keyword of routine rule reads.
   KEYWORD_FUNC = "func"  ## Keyword fixer writes for it.
 
