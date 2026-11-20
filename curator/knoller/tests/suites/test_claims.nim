@@ -29,12 +29,12 @@ const
     "template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in " &
     "cayleys.nim.\n" &
     "template `in`(c: char, b: BasisDigits): bool = c in string(b)\n"
-    ## Lines 117 to 127 of `pga/algebra.nim` of PGA library at `3d9696e`.
+    ## Lines 118 to 128 of `pga/algebra.nim` of PGA library at `3d9696e`.
   TO_BASIS =
     "func toBasis(b: BasisDigits): Basis {.compileTime, noinit, used.} =  # Used in " &
     "\"cayleys.nim\".\n" &
     "  ## Convert digit representation of basis to associated basis.\n"
-    ## Lines 229 and 230 of `pga/algebra.nim` at `3d9696e`.
+    ## Lines 230 and 231 of `pga/algebra.nim` at `3d9696e`.
   CAYLEY =
     "  Cayley2D* =  ## Define data structure for constructing binary algebra operations.\n" &
     "    array[Basis, array[Basis, seq[BasisSigned]]]  # Support conformal operators with " &
@@ -49,7 +49,7 @@ const
     "scalars/even/odd).\n" &
     "  ##     The ideal would be using sub ranges (e.g. E1..E4 for grade 1, E41..E12 for " &
     "grade 2).\n"
-    ## Lines 33 to 36 of `pga/multivectors.nim` at `3d9696e`, trailing space of line 33 dropped.
+    ## Lines 34 to 37 of `pga/multivectors.nim` at `3d9696e`, trailing space of line 34 dropped.
   INDEX =
     "func index[B: static Bases](b: Basis): range[0 .. B.card-1] {.inline, noinit.} =\n" &
     "  ## Convert basis to subset index.\n" &
@@ -187,18 +187,18 @@ suite "Claims":
   test "path, literal and name of library take backticks, and quoted path trades quotes":
     check BORROWS.found == [4, 5, 6, 10].mapIt(
       (it, "Path in comment stands in backticks; got `cayleys.nim`.")
-    )  # lines 120, 121, 122 and 126 of `pga/algebra.nim`
+    )  # lines 121, 122, 123 and 127 of `pga/algebra.nim`
     check BORROWS.fixed == BORROWS.replace("# Used in cayleys.nim.", "# Used in `cayleys.nim`.")
     check TO_BASIS.found == @[
       (1, "Path in comment stands in backticks; got `\"cayleys.nim\"`."),
-    ]  # line 229 of `pga/algebra.nim`
+    ]  # line 230 of `pga/algebra.nim`
     check TO_BASIS.fixed == TO_BASIS.replace("\"cayleys.nim\"", "`cayleys.nim`")
     check CAYLEY.found == @[(3, "Name in comment stands in backticks; got `seq`.")]
     check CAYLEY.fixed == CAYLEY.replace("Avoid seq as", "Avoid `seq` as")
     check SUBTYPES.found == @[
       (4, "Literal in comment stands in backticks; got `E1..E4`."),
       (4, "Literal in comment stands in backticks; got `E41..E12`."),
-    ]  # line 36 of `pga/multivectors.nim`
+    ]  # line 37 of `pga/multivectors.nim`
     check SUBTYPES.fixed == SUBTYPES.replace(
       "(e.g. E1..E4 for grade 1, E41..E12 for", "(e.g. `E1..E4` for grade 1, `E41..E12` for"
     )
