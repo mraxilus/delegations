@@ -144,6 +144,12 @@ func isBanner(v: View, i: int): bool =
     (line.startsWith("#[[ ") and line.endsWith(" ]]#"))
 
 
+func isDoc(kept: string): bool =
+  ## Decide whether comment of line, strings blanked, is `##` doc: first `#` opens it.
+  let at = kept.find('#')
+  at >= 0 and kept.continuesWith("##", at)
+
+
 func wordFirst(code: string): string =
   ## Read leading identifier of code line.
   let s = code.strip
@@ -400,7 +406,7 @@ func items(v: View; a, b: int; declared: seq[string]): seq[Item] =
     item.is_one_line = toSeq(item.head + 1 .. item.last).allIt(not v.isCode(it))
     if item.form == Form.Routine and not item.is_one_line:
       item.is_one_line = not v.isBodied(item.head, item.last)
-    item.is_documented = toSeq(item.head .. item.last).anyIt("##" in v.kept[it])
+    item.is_documented = toSeq(item.head .. item.last).anyIt(v.kept[it].isDoc)
     result.add item
     i = item.last + 1
 
