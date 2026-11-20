@@ -37,7 +37,8 @@ import ../../src/ricysoho/grammar {.all.}
 import ../../src/ricysoho/nif {.all.}
 import ../../src/ricysoho/[prose, selmaho]
 import ./[corpora, reader_nif]
-from ./reader_prose import errorsMessage
+from std/unicode import validateUtf8
+from ./reader_prose import errorsMessage, textsRecord
 
 
 const
@@ -97,9 +98,21 @@ const
     VERSION & "\n(a 'b')",  # `Char literals` noi le ciska na ciska ke'a
     VERSION & "\n(a 0x1F)",  # `Numbers` to le ciska cu ciska lo namcu poi pilno pano lerfu po'o toi
     VERSION & "\n(a -x)",  # `Numbers` to lo lerfu pe li pano cu se lidne `-` toi
+    VERSION & "\n(a `)",  # lo lerfu po'u `backtick` na ka'e zvati pa samtci pagbu
   ]
     ## lo selci'a be fi `NIF` be'o poi le tcidu cu to'e curmi ke'a
     ##   .i ro le selci'a cu se to'e curmi `NIF` gi'a vasru lo tarmi poi le ciska na ciska ke'a
+  MODULES_FOUND = [
+    (VERSION & "\n(a \"b", "le stuzi cu fanmo le selci'a"),  # lo fanmo
+    (" (.nif27)", "lo kutle'u cu zvati le stuzi"),  # lo kutle'u
+    (VERSION & "\n(a @)", "`@` cu zvati le stuzi"),  # lo lerfu poi le notci cu sitna ke'a
+    (VERSION & "\n(a `)", "lo me `byte` me'u po'u li soxa cu zvati le stuzi"),
+      # lo lerfu po'u `backtick`
+    (VERSION & "\n(a \"\x01\")", "lo me `byte` me'u po'u li pa cu zvati le stuzi"),
+      # lo lerfu poi na se viska
+  ]
+    ## lo selci'a be fi `NIF` .e lo pagbu be lo notci
+    ##   .i le pagbu cu cusku lo zvati be le stuzi poi le tcidu cu to'e curmi bu'u ke'a
 
 
 
@@ -114,6 +127,16 @@ func names(): seq[string] =
   for selmaho in Selmaho: result.add $selmaho.toTerminal
   result.add $TERMINAL_BRIVLA
   result.add $TERMINAL_CMENE
+
+
+func pathsWord(node: Node, reading: ReadingText, word: string, trail: seq[string],
+    found: var seq[seq[string]]) =
+  ## jmina lo porsi be ro javni poi sruri lo genvla poi le valsi cu krasi ke'a
+  if node.is_terminal:
+    let unit = reading.units[node.at]
+    if unit.words.len > 0 and reading.occurrences[unit.words[0]].text == word: found.add trail
+    return
+  for child in node.children: child.pathsWord(reading, word, trail & node.rule, found)
 
 
 
@@ -214,3 +237,33 @@ suite "Internal: NIF":
       checkpoint message
       check message.len > 0  # le tcidu cu to'e curmi
       check message.errorsMessage.len == 0  # lo jboselci'a
+      check message.validateUtf8 == -1  # lo selci'a pe `UTF-8`
+
+
+  test "Each refusal of reader puts its place in main bridi, outside each relative clause":
+    for module in MODULES_REFUSED:
+      checkpoint module
+      var message = ""
+      try: discard module.readModule
+      except ValueError as error: message = error.msg
+      checkpoint message
+      let texts = textsRecord("notci.md", message)
+      check texts.len == 1  # pa rospau
+      if texts.len != 1: continue
+      let reading = texts[0].text.readText
+      check reading.is_read
+      if not reading.is_read: continue
+      var paths: seq[seq[string]]
+      reading.tree.pathsWord(reading, "bu'u", @[], paths)
+      check paths.len == 1  # pa zo bu'u po'o
+      for path in paths: check "relative-clause" notin path  # le stuzi pe le ralju bridi
+
+
+  test "Reader names what stands where it refuses: end, whitespace, byte it shows, or its number":
+    for (module, phrase) in MODULES_FOUND:
+      checkpoint module
+      var message = ""
+      try: discard module.readModule
+      except ValueError as error: message = error.msg
+      checkpoint message
+      check phrase in message

@@ -89,6 +89,7 @@ import std/[options, random, strutils, unittest]
 
 import ../../src/ricysoho/[merge, nif, nif_read, prose]
 import ./[corpora, texts_built]
+from std/unicode import validateUtf8
 from ./reader_prose import errorsMessage
 
 
@@ -261,13 +262,14 @@ const
   MODULES_MALFORMED = [
     ("", "lo minde poi `nif.nim` cu ciska ke'a cu na krasi le selci'a be fi `NIF`", -1),
       # no minde
-    (HEADER & "(sentence 0", "`NIF` cu cpedu `)` poi fanmo le jgena", -1),
+    (HEADER & "(sentence 0", "ku'o cu cpedu `)` poi fanmo le jgena", -1),
       # lo jgena poi no roi selfa'o
     (HEADER & "(FOO 0 2 \"mi\")\n", "le cmene po'u `FOO` cu cmene no klesi be lo genvla", 0),
       # lo klesi poi cmene no selma'o
     (HEADER & "(sumti_6 1 (KOhA 0 2 \"mi\"))\n", "cu nitcu re fanmo be pa porsi", 0),
       # no porsi pe `CLL 21.1`
-    (HEADER & "(sumti_6 80 97 (KOhA 0 2 \"mi\"))\n", "cu nitcu su'e pa mulna'u", 0),
+    (HEADER & "(sumti_6 80 97 (KOhA 0 2 \"mi\"))\n",
+      "cu nitcu su'e pa mulna'u po'u lo namcu pe le javni", 0),
       # lo namcu pe lo javni poi fanmo lo porsi
       #   .i lo cmene be le javni cu jarco le namcu to lo seljdi pe `#859` pe `comment 6805527878`
       #       toi
@@ -276,9 +278,10 @@ const
       #   .i le jgena cu ka'e se tcidu ta'i no datytricu
     (HEADER & "(sumti_9 (KOhA 0 2 \"mi\"))\n", "`sumti_9` cu nitcu lo cmene be pa javni", 0),
       # lo cmene be no javni
-    (HEADER & "(KOhA 0 \"mi\")\n", "cu nitcu lo re mulna'u .e lo lerpoi pe ro valsi", 0),
+    (HEADER & "(KOhA 0 \"mi\")\n", "cu nitcu lo re mulna'u .e lo lerpoi vu'o pe ro valsi", 0),
       # lo valsi poi ponse no famstu
-    (HEADER & "(KOhA \"x\" 0 \"mi\")\n", "cu nitcu lo re mulna'u .e lo lerpoi pe ro valsi", 0),
+    (HEADER & "(KOhA \"x\" 0 \"mi\")\n",
+      "cu nitcu lo re mulna'u .e lo lerpoi vu'o pe ro valsi", 0),
       # lo valsi poi lo lerpoi cu krasi ke'a
     (HEADER & "(srera 0 sumti_6)\n", "cu nitcu lo stuzi poi le gerna cu sisti bu'u ke'a", 0),
       # lo srejge pe no `nitcu`
@@ -291,6 +294,19 @@ const
     (HEADER & "(sumti_6 (KOhA 0 2 \"mi\") 5)\n",
       "pa jgena pe le selci'a be fi `NIF` cu nitcu lo tcita", 0),
       # lo jgena poi na se tcita
+    (HEADER & "(sumti\\60x 1 (KOhA 0 2 \"mi\"))\n",
+      "le jgena poi se tcita lo cmene poi le notci na ka'e sitna ke'a", 0),
+      # lo tcita poi vasru lo lerfu po'u `backtick`
+    (HEADER & "(a\\60b 0 2 \"mi\")\n", "le cmene po'u lo cmene poi le notci na ka'e sitna ke'a", 0),
+      # lo klesi poi vasru lo lerfu po'u `backtick`
+    (HEADER & "(sumti\\0A\\0Ax 1 (KOhA 0 2 \"mi\"))\n",
+      "le jgena poi se tcita lo cmene poi le notci na ka'e sitna ke'a", 0),
+      # lo tcita poi vasru re lerfu poi fanmo lo linji
+    (HEADER & "(s\xFF (KOhA 0 2 \"mi\"))\n",
+      "le jgena poi se tcita lo cmene poi le notci na ka'e sitna ke'a", 0),
+      # lo tcita poi vasru pa me `byte` me'u poi zmadu li pazeci
+    (HEADER & "(srera 0 sumti_6 (nitcu 5))\n", "le cmene po'u lo kunti cmene", 0),
+      # lo genvla poi se cmene no da
     (
       HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
         "(FOO 8 10 \"do\")\n",
@@ -644,3 +660,4 @@ suite "Internal: Merge of parts":
       checkpoint merged.reason
       check not merged.is_merged  # lo nu jmina cu to'e curmi
       check merged.reason.errorsMessage.len == 0  # lo jboselci'a
+      check merged.reason.validateUtf8 == -1  # lo selci'a pe `UTF-8`
