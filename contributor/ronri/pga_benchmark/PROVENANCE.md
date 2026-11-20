@@ -386,9 +386,10 @@ twice.
 
 **A typed motor reads as half of every basis.** The motor holds the antieven half of the bases in
 each algebra. So its count names the stem `MultivectorMotor`, and movement sizes that stem as half
-of `Multivector`. A count names one stem, the first that holds it, as at rga2d, where the motor
-and the scalars hold two bases each. So each instance of the motor's count reads as motor. At
-rga3d `MultivectorEven` holds as many bases, and moves the same bytes.
+of `Multivector`. A count names the first stem that holds it, so at rga2d the motor reads as
+`MultivectorScalars`, which holds the same two bases. Elsewhere each type of half of the bases
+reads as motor, as `MultivectorEven` and `MultivectorOdd` do, at the same bytes. So the stem tells
+a motor from no flector part.
 
 **The inspector keeps the functions of the library, of the reference and of the dense forms.** It
 knows each one by the module in its C name. The compiler names an instance of a generic after the
@@ -444,7 +445,8 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
   generic at the typed motor;
 - each transform, which reads its motor at its type exactly where the library takes that type;
 - a fixture C source with known counts;
-- an instance named by its count, with an aligned field and without;
+- an instance named by its count, with an aligned field and without, and by the first of two
+  stems of one count;
 - loops of literal, nested and variable bound;
 - divisions inside a loop and inside a callee, and callee folding;
 - movement from stems, and the size of the typed motor;
