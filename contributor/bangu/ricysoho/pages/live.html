@@ -117,11 +117,11 @@ pre .open { color: var(--open); }
 .edge { stroke: var(--muted); stroke-width: 1.2; fill: none; }
 .part.open .box { fill: var(--open-wash); stroke: var(--open); }
 </style>
-<main class="page">
+<main class="page" lang="jbo">
   <header>
     <div class="eyebrow">ricyso'o · lo mivyselci'a</div>
     <h1>tricu be lo mivyselci'a</h1>
-    <p class="lede">ko ciska lo jboselci'a .i le tricu cu zenba ca lo nu ro valsi cu klama .i pa
+    <p class="lede">ko ciska lo jboselci'a .i le tricu cu zenba ca ro nu pa valsi cu klama .i pa
       gunka cu tcidu le selci'a ta'i lo mivyselci'a gi'e dunda ro cenba be le selci'a be fi
       <code>NIF</code> .i le vi papri cu pilno ro cenba gi'e pixra ro pagbu sepi'o le selci'a be fi
       <code>NIF</code> po'o .i lo valsi poi galfi lo pu valsi cu katna le selci'a be fi
@@ -137,10 +137,11 @@ pre .open { color: var(--open); }
       </div>
       <textarea id="source" maxlength="2000" rows="2" spellcheck="false" autocomplete="off"
         autocapitalize="off">@SOURCE@</textarea>
-      <span class="hint">lo valsi poi se jmina le fanmo cu klama le mintu tcidu .i ro drata nu
-        cenba cu rinka lo nu pa cnino tcidu cu cfari .i zo benji cu rinka lo nu le selci'a cu se
-        benji ta'i ro valsi .i zo jmina cu jmina ro mulno pagbu le tricu poi pa nu tcidu le
-        mulselci'a cu dunda ke'a .i le nu jmina cu ralte ro srera bu'u le stuzi be ri</span>
+      <span class="hint">lo valsi poi se jmina fi le fanmo be le selci'a cu klama le tcidu poi pu
+        tcidu le selci'a .i ro drata nu cenba cu rinka lo nu pa cnino tcidu cu cfari .i le batke
+        po'u zo benji cu rapli benji le selci'a .i ca ro nu benji le batke cu benji pa valsi po'o
+        .i le batke po'u zo jmina cu jmina ro mulpau le tricu poi pa nu tcidu le mulselci'a cu
+        dunda ke'a .i le nu jmina cu ralte ro srera bu'u le stuzi be ri</span>
     </div>
     <div class="controls" aria-label="lo mupli">
       <button type="button" class="stream" id="stream">benji</button>
@@ -156,9 +157,9 @@ pre .open { color: var(--open); }
         <span class="mono">lu mi klama li'u cu xamgu</span><span class="tag">sitna</span>
       </button>
       <button type="button" data-sample="zoi gy. café .gy. melbi">
-        <span class="mono">zoi gy. café .gy. melbi</span><span class="tag">zoi</span></button>
+        <span class="mono">zoi gy. café .gy. melbi</span><span class="tag">zo zoi</span></button>
       <button type="button" data-sample="mi su do .i ko">
-        <span class="mono">mi su do .i ko</span><span class="tag">su</span></button>
+        <span class="mono">mi su do .i ko</span><span class="tag">zo su</span></button>
     </div>
     <p class="status" id="status" role="status" aria-live="polite">@STATUS@</p>
   </section>
@@ -173,20 +174,22 @@ pre .open { color: var(--open); }
   </section>
 
   <details open>
-    <summary>le selci'a be fi <code>NIF</code> poi pu selbe'i</summary>
+    <summary>le selci'a be fi <code>NIF</code> be'o poi pu selbe'i</summary>
     <pre id="nif">@NIF@</pre>
   </details>
 
-  <footer>ro blanu tanxe cu sinxa pa javni pe <code>CLL 21.1</code> .a lo porsi be lo javni poi
-    ro le se porsi cu ponse pa panzi po'o .i le tanxe cu cmene le javni poi jibni le valsi .e le
-    javni poi traji lo ka bartu .e le te kancu .i ro xunre tanxe cu sinxa pa srera jgena po'u
-    <code>srera</code> bu'u le stuzi poi le gerna cu sisti bu'u ke'a .i lo karda poi lo korbi be
-    ke'a cu porsi lo cmalu linji cu sinxa pa jgena po'u <code>rivbi</code> noi vasru lo valsi poi
-    no genvla cu vasru ke'a .i lo pagbu poi selska lo najypelxu cu ca'o kalri .i le bavla'i nu
-    cenba cu basti ri .i le nu jmina cu vimcu ro valsi poi lo nu vimcu .a zo <code>fa'o</code> cu
-    vimcu ke'a .i ji'a le nu jmina cu vimcu ro pagbu poi lidne le romoi cmavo po'u zo
-    <code>su</code> .i simsa fa lo nu tcidu le mulselci'a pa roi .i le nu jmina cu ralte ro srera
-    bu'u le stuzi be ri gi'e jmina le pagbu poi sruri ri .i le genturfa'i pe
+  <footer>ro blanu tanxe cu sinxa pa javni pe <code>CLL 21.1</code> .a lo porsi be lo javni be'o
+    poi ro cmima be ke'a cu ponse pa panzi po'o .i le tanxe cu jarco lo cmene be le javni poi
+    jibni le valsi .i ba bo le tanxe cu jarco lo cmene be le javni poi traji lo ka bartu ku'o gi'e
+    jarco le te kancu .i ro xunre tanxe cu sinxa pa srera jgena po'u <code>srera</code> bu'u le
+    stuzi poi le gerna cu sisti bu'u ke'a .i le namcu pe le xunre tanxe cu te kancu lo me
+    <code>byte</code> me'u poi lidne le stuzi .i lo karda poi lo korbi be ke'a cu porsi lo cmalu
+    linji cu sinxa pa jgena po'u <code>rivbi</code> noi vasru lo valsi poi no genvla cu vasru ke'a
+    .i lo najypelxu pagbu cu ca'o kalri .i le bavla'i nu cenba cu basti le pagbu .i le nu jmina
+    cu vimcu ro valsi poi lo nu vimcu .a zo <code>fa'o</code> cu vimcu ke'a .i ji'a le nu jmina cu
+    vimcu ro pagbu poi lidne le romoi be lo me zo <code>su</code> .i simsa fa lo nu tcidu le
+    mulselci'a pa roi .i le nu jmina cu ralte ro srera bu'u le stuzi be ri gi'e jmina le pagbu poi
+    sruri ro srera .i le genturfa'i pe
     <code>ricyso'o</code> cu se fanva fi <code>JavaScript</code> fo <code>Nim</code> .i le
     genturfa'i cu gunka ne'i le do skami</footer>
 </main>
