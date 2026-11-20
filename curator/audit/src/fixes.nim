@@ -77,7 +77,8 @@ type
     ## Define what fix of entries writes and reports, and what it asks parser.
     written: seq[Entry]  ## Entry to write, with new text.
     fixed, refused, left: seq[Finding]  ## Rewrite, scope finding, finding left.
-    warned: seq[Finding]  ## Warning: fence that keeps its lines, or file fixers do not settle.
+    warned: seq[Finding]
+      ## Warning: fence that keeps its lines, debug output, or file fixers do not settle.
     asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
 
 
@@ -353,6 +354,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     is_drive = e.path.isCodeDrive,
     configurations = context.configurations.getOrDefault(e.path.nimbleProject),
   ).toFindings
+  result.warned.add warnDebug(e.path, e.content, e.path.nimbleProject).toFindings
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:

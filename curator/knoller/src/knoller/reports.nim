@@ -130,6 +130,7 @@ const
   EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
   DIRECTORY_SOURCE = "src"  ## Directory of package that nimble puts its umbrella in.
   DIRECTORY_TESTS = "tests"  ## Directory of package that testament reads its tests from.
+  DIRECTORY_TOOLS = "tools"  ## Directory of package that holds its programs of build and check.
   EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
     ## Extension of file of each dialect.
   HEADER_TESTAMENT* = "discard \"\"\""
@@ -153,6 +154,13 @@ func partTests(path, nimble: string): seq[string] =
   ## Read names of path below directory `tests` of its package; empty where it lies elsewhere.
   let part = path.partPackage(nimble)
   if part.len > 1 and part[0] == DIRECTORY_TESTS: part[1 .. ^1] else: @[]
+
+
+func isFileTool*(path, nimble: string): bool =
+  ## Decide whether path lies under directory `tools` of its package, at any depth; `nimble` is
+  ##   nimble file nearest path, as `isFileTest` reads it.
+  let part = path.partPackage(nimble)
+  part.len > 1 and part[0] == DIRECTORY_TOOLS
 
 
 func isFileTest*(path, nimble: string): bool =
