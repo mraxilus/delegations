@@ -252,8 +252,8 @@ under `--check`.
 - Each line of output is a line of the file as given. A finding left in the fixed text traces
   back through the fix, as a rewrite does. A line that the fix inserts has no line as given, so
   a finding there prints with the path alone.
-- `koch fix` needs no such trace. It prints no check of the fixed text, and each edit before
-  knoller keeps its lines.
+- `koch fix` prints no check of the fixed text. A marker that moves a trailing doc adds a line, so
+  the fix traces each later report back through it (`originApplied`).
 - Verified by `suites/test_command.nim`. One file named from two directories prints the same
   lines, and a finding left prints at its line as given.
 - Verified by hand, 2026-10-04, with the built binary. `--check` of a directory outside a git
@@ -729,9 +729,9 @@ at its head, as `'reset' can have side effects` does where `reset` writes throug
 - Rejected: `chkFile` of `nimsuggest` with a dirty file. Under `-d:pga.dimensions=3`, it reports a
   false `constant expression expected` in `pga/algebra.nim`, by hand with 2.4.0, 2026-11-20.
 - Cost: a file takes one check for the source as given, and one for each round of its candidates.
-  One check of `pga/algebra.nim` adds 0.63 s, where no check runs without the rule. That is the
-  median of three runs of the command of `checked`, with its flags, on stdin and a fresh cache. It
-  ran with 2.4.0 on 4 cores at 2.10 GHz, 2026-11-20.
+  One check of `pga/algebra.nim` adds 0.61 to 0.76 s, where no check runs without the rule. Six
+  runs of the command of `checked`, with its flags, on stdin and a fresh cache, gave that range.
+  They ran with 2.4.0 on 4 cores at 2.10 GHz, 2026-11-20, under two different loads.
 - Cost: a generic body checks where its own module instantiates it. So an instantiation in another
   module that the compiler would refuse is unread. A case holds it through a second module, whose
   `$` calls `echo`.
@@ -752,10 +752,10 @@ the landmark aliases.
 - The command line asks for each module that a file names (`resolveMarkers`, `resolvePures`). It
   reads every Nim file that git lists in the project of the file.
 - The command line names no define for either pass, as D2 a of #886 rules. So each file compiles
-  as its project alone compiles it. The pure rule reads each configuration that the caller names.
-  So a caller such as `koch` can pass each configuration of the stubs, and read each `when` branch
-  that one of them takes. The marker rule reads the answers that the caller passes, and its checks
-  of hints and of `{.all.}` use no define.
+  as its project alone compiles it. The pure rule reads each configuration that its caller names
+  (`provenPure`). `resolvePures` names one, with no define, and `koch fix` reads through it. So
+  neither caller reads a branch that only a stub define takes. The marker rule reads the answers
+  that the caller passes, and its checks of hints and of `{.all.}` use no define.
 - `koch fix` passes both facts, through `readFacts` of `curator/audit`, which calls these readers
   (`## Facts of the compiler` of its record). Neither rule reaches the static pass of `koch check`,
   which waits for step 4 of #443.
@@ -2773,8 +2773,11 @@ one literal, is no compound, and a tuple is no group.
 - It is the reverse of `to<Target>` subject first, which leaves a compound argument as a prefix
   call. So neither fixer undoes the other.
 - The fixer takes 8 passes at most (`PASSES_MAX`). Each pass writes the calls whose spans hold no
-  other call, so the inner call goes first. So a nest of 9 leaves its outer call for the next run.
-  The bound is a choice, and the depth of the nests in the library is unmeasured.
+  other call, so the inner call goes first. So one call of the fixer leaves the outer call of a
+  nest of 9. The bound is a choice, and the depth of the nests in the library is unmeasured.
+- The chain calls the fixer again in each of its rounds (`ROUNDS_MAX`), so one run of knoller
+  settles a nest of 16. A deeper nest leaves its file as written, with the warning that it still
+  changes. Verified by hand on the chain, 2026-11-20, with nests of 8, 9, 16 and 17.
 - A generic call and a call over lines report, and stay for hand.
 - Verified by `suites/test_prefixes.nim` and `suites/test_regressions.nim`.
 
