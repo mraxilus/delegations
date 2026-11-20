@@ -126,12 +126,13 @@ a mistyped flag never sends a paid request. Put `--` before a text that holds su
 | `RICTADNI_WORKSPACE` | none | Workspace ID for a key that no workspace scopes |
 
 Each variable still reads under its name before the rename, as `LOJBAN_TAGGER_MODEL` for
-`RICTADNI_MODEL`, where the new name is unset or empty.
+`RICTADNI_MODEL`, where the variable of the new name is unset or empty.
 
-Where `RICTADNI_API_KEY` is unset, `claude` reads `ANTHROPIC_API_KEY`, and `openrouter`
-reads `OPENROUTER_API_KEY`. Each reads that name only for the host of its default endpoint. So a
-key that you set for other tools never goes to another host. The report names the variable that
-it read, and never the key. Put the key in the environment, never on the command line.
+Where `RICTADNI_API_KEY` and `LOJBAN_TAGGER_API_KEY` are both unset, `claude` reads
+`ANTHROPIC_API_KEY`, and `openrouter` reads `OPENROUTER_API_KEY`. Each reads that name only for
+the host of its default endpoint. So a key that you set for other tools never goes to another
+host. The report names the variable that it read, and never the key. Put the key in the
+environment, never on the command line.
 
 Get a Claude key at `https://platform.claude.com/settings/keys`, and scope it to one workspace
 when you create it. Otherwise, set `RICTADNI_WORKSPACE` to the ID of the workspace, which
