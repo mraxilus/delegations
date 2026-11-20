@@ -2247,10 +2247,14 @@ suite "Hooks":
     # Kind is first word after `**Subagent:**` on first line of block that opens with it, after
     #   any indent, up to whitespace. Ruling 7022770415 of #969: before match, word drops case,
     #   backticks, bold or italic marks, and final comma, so `**Subagent:** Builder of the fix`
-    #   names `builder`. Block with no such line, or whose word is no kind, names no kind and
-    #   serves no call, and hint says so. Cases as found are probes S02 to S16 of critic of
-    #   pairing build: build `05cb3bbd` read word as written, so kind with capital, as table of
-    #   guide spells it, or in backticks, italics or bold, or with comma, named none.
+    #   names `builder`. Ruling 7027197745 of #969: label reads in any case, with its colon
+    #   inside or outside bold, and word drops final full stop or colon too, so line
+    #   `**subagent:** builder. of the fix` names `builder`. Block with no such line, or whose
+    #   word is no kind, names no kind and serves no call, and hint says so. Cases as found are
+    #   probes S02 to S16
+    #   of critic of pairing build: build `05cb3bbd` read word as written, so kind with capital,
+    #   as table of guide spells it, or in backticks, italics or bold, or with comma, named none;
+    #   build `9d4b7eff` read label as written, so S05, S10 and S15 named none.
     proc heldAfter(text: string, kinds: openArray[string] = KINDS): seq[string] =
       ## Read findings of builder call after block that holds text, then one claim, in turn
       ##   before its own.
@@ -2265,7 +2269,12 @@ suite "Hooks":
         "**Subagent:** builder of the fix.\n**Subagent:** reviewer of the diff.",
         "**Subagent:** Builder of the fix.", "**Subagent:** `builder` of the fix.",
         "**Subagent:** builder, fresh context.", "**Subagent:** *builder* of the fix.",
-        "**Subagent:** **builder** of the fix.", "**Subagent:** BUILDER, of the fix."]:
+        "**Subagent:** **builder** of the fix.", "**Subagent:** BUILDER, of the fix.",
+        "**Subagent:** builder: the fix.", "**Subagent:** builder. Of the fix.",
+        "**Subagent**: builder of the fix.", "**subagent:** builder of the fix.",
+        "**SUBAGENT:** builder of the fix.", "**subagent**: builder of the fix.",
+        "**subagent:** builder. of the fix", "**Subagent:** `builder`. of the fix.",
+        "**Subagent:** **builder**: of the fix.", "  **sUbAgEnT**:  Builder,\tof the fix."]:
       check heldAfter(text).len == 0
     check heldAfter("**Subagent:** reviewer of the diff.\n**Subagent:** builder of the fix.") ==
       @[refusalCall("builder", "Build the fix", hintNamed("`reviewer`"))]  # first line alone
@@ -2273,19 +2282,23 @@ suite "Hooks":
       check heldAfter(first & "\n**Subagent:** builder of the fix.") ==
         @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]  # first line names none
 
-    # Word keeps each other mark, second comma, and its words, and label keeps its case and
-    #   marks, so each of these names no kind.
+    # Word keeps each other mark, second final mark, and its words, and label keeps its marks
+    #   but colon, so each of these names no kind; strike and semicolon are such marks (X5 of
+    #   critic of last build).
     for text in ["**Basis:** what this delegate knows.", "**Subagent:**",
         "**Subagent:**\nbuilder of the fix.", "**Subagent:** the builder of the fix.",
         "**Subagent:** a builder of the fix.", "**Subagent:** builders of the fix.",
-        "**Subagent:** builder: the fix.", "**Subagent:** builder. Of the fix.",
         "**Subagent:** builder,, of the fix.", "**Subagent:** ,builder of the fix.",
+        "**Subagent:** builder.. of the fix.", "**Subagent:** builder,. of the fix.",
+        "**Subagent:** builder:, of the fix.", "**Subagent:** builder; of the fix.",
+        "**Subagent:** ~~builder~~ of the fix.", "**Subagent:** .builder of the fix.",
         "**Subagent:** \"builder\" of the fix.", "**Subagent:** (builder) of the fix.",
         "**Subagent:** b`uild`er of the fix.", "**Subagent:** ** builder of the fix.",
         "**Subagent:** builder of the fix.", "**Subagent:** surveyor of the fix.",
         "**Subagent:** web-fetch of the page.", "Subagent: builder of the fix.",
-        "**Subagent** builder of the fix.", "**Subagent**: builder of the fix.",
-        "**subagent:** builder of the fix.", "**SUBAGENT:** builder of the fix.",
+        "**Subagent** builder of the fix.", "__Subagent:__ builder of the fix.",
+        "*Subagent:* builder of the fix.", "***Subagent:*** builder of the fix.",
+        "**Subagent:**: builder of the fix.", "**Sub agent:** builder of the fix.",
         "- **Subagent:** builder of the fix.", "The **Subagent:** builder of the fix.",
         "> **Subagent:** builder of the fix.", "```\n**Subagent:** builder of the fix.\n```"]:
       check heldAfter(text) == @[refusalCall("builder", "Build the fix", hintNamed("no kind"))]
@@ -2302,29 +2315,36 @@ suite "Hooks":
       ["Builder"]).len == 0
 
     # Law: word of each kind, in each case, inside each mark of code, italic or bold, with final
-    #   comma or none, outside or inside marks, names that kind, exempt kind too, so its call
-    #   takes block and reflection quotes its claim.
+    #   comma, full stop or colon or none, outside or inside marks, names that kind, exempt kind
+    #   too, so its call takes block and reflection quotes its claim; so does plain word after
+    #   label in each case, with colon inside or outside bold (7022770415, 7027197745).
     const
       wraps = ["", "`", "*", "**", "***", "_", "__"]
         ## Marks that word may stand inside: none, code, italic, bold, and both.
-      forms = 320
-        ## Words of law: kinds of `KINDS`, four cases, and twenty forms of marks and comma.
+      ends = [",", ".", ":"]
+        ## Marks after word that match drops, once, outside or inside marks.
+      labels = ["**Subagent:**", "**subagent:**", "**SUBAGENT:**", "**Subagent**:",
+        "**sUbAgEnT**:"]
+        ## Forms of label: cases of letters, with colon inside or outside bold.
+      forms = 816
+        ## Cases of law: kinds of `KINDS` in four cases, each in 46 forms of marks after first
+        ##   label, and plain after each of five labels.
     var lenient = 0
     for kind in KINDS:
       for word in [kind, kind.capitalizeAscii, kind.toUpperAscii,
           toSeq(kind.pairs).mapIt(if it[0] mod 2 == 0: it[1].toUpperAscii else: it[1]).join]:
+        var lines = labels.mapIt(it & " " & word)
         for wrap in wraps:
-          for comma in ["", "outside", "inside"]:
-            if wrap.len == 0 and comma == "inside": continue
-            let written = case comma
-              of "outside": wrap & word & wrap & ","
-              of "inside": wrap & word & "," & wrap
-              else: wrap & word & wrap
-            check blocksHeld(build & lineSaid("## Prediction\n\n**Subagent:** " & written &
-              " of the fix.\n\n- Judgement: it builds (70%).") & wake &
-              linesAgent(kind, "Do it") & ran & lineHandback(kind, "a" & kind) & checked &
-              lineSaid(reflectedProbe("it builds"))).len == 0
-            inc lenient
+          lines.add labels[0] & " " & wrap & word & wrap
+          for mark in ends:
+            lines.add labels[0] & " " & wrap & word & wrap & mark
+            if wrap.len > 0: lines.add labels[0] & " " & wrap & word & mark & wrap
+        for line in lines:
+          check blocksHeld(build & lineSaid("## Prediction\n\n" & line &
+            " of the fix.\n\n- Judgement: it builds (70%).") & wake &
+            linesAgent(kind, "Do it") & ran & lineHandback(kind, "a" & kind) & checked &
+            lineSaid(reflectedProbe("it builds"))).len == 0
+          inc lenient
     check lenient == forms
 
     # Hint names what nearest free block names, earliest first inside its turn; it stands where
