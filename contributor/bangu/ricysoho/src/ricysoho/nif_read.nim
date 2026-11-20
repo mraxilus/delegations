@@ -17,7 +17,7 @@
 ## ni'o le tcidu cu tcidu lo pagbu be `NIF` po'o
 ##   .i le tcidu cu tcidu lo minde .e lo jgena poi vasru lo tcita .e lo jgena
 ##   .i le tcidu cu tcidu lo cmene poi tcita .a lo cmene poi jgena gi'e vasru no jgena
-##   .i le tcidu cu tcidu lo mulna'u poi pilno pano lerfu ku'o .e lo lerpoi .e `\xx` .e lo mu
+##   .i le tcidu cu tcidu lo mulna'u poi pilno 10 lerfu ku'o .e lo lerpoi .e `\xx` .e lo mu
 ##       torbasysni pe `\xx`
 ##   .i le tcidu cu tcidu lo kutle'u poi zvati lo jbini be le se tcidu
 ##
@@ -27,14 +27,14 @@
 ##   .i se ki'u bo ro selci'a poi le tcidu cu tcidu ke'a selci'a fi `NIF` po'o
 ##
 ## ni'o le tcidu cu jersi lo gerna pe le velski
-##   .i `IdentStart` du lo lerfu .a `_` .a lo stuzi poi na mleca li parebi .a lo basysni
+##   .i `IdentStart` du lo lerfu .a `_` .a lo stuzi poi na mleca li 128 .a lo basysni
 ##   .i `IdentChar` jmina lo namcu lerfu to `Identifiers` toi
 ##
 ## ni'o `\` krasi lo basysni
-##   .i le basysni cu vasru re lerfu pe li paxa gi'a vasru pa lerfu pe `n t r | ^`
-##   .i le lerfu pe li paxa cu barda lerfu to `Escape sequences` toi
-##   .i lo lerpoi cu vasru ro stuzi poi na mleca li cire gi'e na midle'u ku'o .e ro stuzi poi na
-##       mleca li parebi ku'o .e `#` .e `:` .e lo kutle'u .e lo basysni
+##   .i le basysni cu vasru re lerfu pe li 16 gi'a vasru pa lerfu pe `n t r | ^`
+##   .i le lerfu pe li 16 cu barda lerfu to `Escape sequences` toi
+##   .i lo lerpoi cu vasru ro stuzi poi na mleca li 32 gi'e na midle'u ku'o .e ro stuzi poi na
+##       mleca li 128 ku'o .e `#` .e `:` .e lo kutle'u .e lo basysni
 ##   .i re `"` sruri le lerpoi to `String literals` toi
 ##
 ## ni'o lo jgena poi vasru lo tcita .e lo jgena cu du `(` ce'o lo tcita ce'o lo jgena ce'o `)`
@@ -49,8 +49,8 @@
 ##       .a `#` pe lo pinka
 ##   .i lo nu to'e curmi cu renro `ValueError` noi cusku lo stuzi .e lo selcpe be `NIF` bu'u le
 ##       stuzi
-##   .i le notci pe `ValueError` cu jboselci'a gi'e cusku le stuzi ta'i lo cmavo pe `PA` to `D1 a`
-##       pe `#987` toi
+##   .i le notci pe `ValueError` cu jboselci'a to `D1 a` pe `#987` toi gi'e cusku le stuzi ta'i lo
+##       lerfu pe li 10
 ##   .i `test_nif.nim` cipra di'u
 ##
 ## ni'o le tcidu cu sepli le ciska po'u `nif.nim` gi'e nerbei no pagbu be `nif.nim`
@@ -78,7 +78,7 @@ type
       ## lo tcita be lo jgena poi vasru lo tcita .e lo jgena be'o .a lo cmene .a lo stuzi pe lo
       ##     lerpoi
       ##   .i va'o lo drata cu kunti
-    number*: int  ## lo mulna'u to va'o lo drata cu du li no toi
+    number*: int  ## lo mulna'u to va'o lo drata cu du li 0 toi
     children*: seq[NodeNif]
       ## ro jgena poi lo jgena poi vasru lo tcita .e lo jgena cu vasru ke'a ku'o ta'i lo porsi
       ##   .i va'o lo drata cu kunti
@@ -98,7 +98,7 @@ const
     ##   .i lo basysni na se kancu to `IdentStart` toi
   DIGITS = {'0'..'9'}
   HEX = {'0'..'9', 'A'..'F'}
-    ## lo lerfu pe li paxa pe lo basysni
+    ## lo lerfu pe li 16 pe lo basysni
     ##   .i no cmale'u cu cmima to `Escape sequences` toi
   SHORTCUTS = [('n', '\n'), ('t', '\t'), ('r', '\r'), ('|', '\\'), ('^', '"')]
     ## ro torbasysni joi lo stuzi poi le basysni cu dunda ke'a to `Escape sequences` toi
@@ -107,16 +107,6 @@ const
   BYTES_VISIBLE = {'!'..'~'} - {'`'}
     ## lo me `byte` me'u poi le notci cu sitna ke'a ta'i pa samtci pagbu
 
-
-
-func toCmavo(count: Natural): string =  # selpli ne'i `draw.nim` .e `test_draw.nim`
-  ## dunda le namcu ta'i lo cmavo pe `PA` mu'u lu paci li'u
-  ##   .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
-  ##   .i se ki'u bo ro notci pe lo nu to'e curmi .e ro linji pe le papri cu cusku ro namcu poi na
-  ##       zvati lo samtci pagbu ku'o ta'i lo cmavo pe `PA`
-  ##   .i ro cmavo cu mapti `CLL 18.2`
-  const lut_cmavo_by_digit = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
-  for digit in $count: result.add lut_cmavo_by_digit[ord(digit) - ord('0')]
 
 
 func refuse(reader: Reader, expected: string) {.noreturn.} =
@@ -129,8 +119,8 @@ func refuse(reader: Reader, expected: string) {.noreturn.} =
     elif reader.text[reader.at] in WHITESPACE: "lo kutle'u cu zvati le stuzi"
     elif reader.text[reader.at] in BYTES_VISIBLE:
       "`" & reader.text[reader.at] & "` cu zvati le stuzi"
-    else: "lo me `byte` me'u po'u li " & ord(reader.text[reader.at]).toCmavo & " cu zvati le stuzi"
-  raise newException(ValueError, "`NIF` bu'u le stuzi poi " & reader.at.toCmavo &
+    else: "lo me `byte` me'u po'u li " & $ord(reader.text[reader.at]) & " cu zvati le stuzi"
+  raise newException(ValueError, "`NIF` bu'u le stuzi poi " & $reader.at &
       " me `byte` me'u cu lidne ke'a ku'o cu cpedu " & expected & " .i ku'i " & found)
 
 
@@ -165,7 +155,7 @@ func endToken(reader: Reader) =
 func readEscape(reader: var Reader): char =
   ## tcidu lo basysni
   ##   .i le fancu cu cfari bu'u lo stuzi poi se lidne `\`
-  ##   .i le basysni cu du re lerfu pe li paxa ge'u .a pa torbasysni
+  ##   .i le basysni cu du re lerfu pe li 16 ge'u .a pa torbasysni
   ##   .i le fancu cu curmi lo barda lerfu po'o
   if reader.isAt(HEX) and reader.at + 1 < reader.text.len and reader.text[reader.at + 1] in HEX:
     result = char(parseHexInt(reader.text[reader.at .. reader.at + 1]))
@@ -175,7 +165,7 @@ func readEscape(reader: var Reader): char =
     if reader.isAt({shortcut}):
       inc reader.at
       return decoded
-  reader.refuse("re lerfu pe li paxa ge'u .a pa torbasysni")
+  reader.refuse("re lerfu pe li 16 ge'u .a pa torbasysni")
 
 
 func readIdentifier(reader: var Reader): string =
@@ -195,11 +185,11 @@ func readIdentifier(reader: var Reader): string =
 
 
 func readNumber(reader: var Reader): int =
-  ## tcidu lo mulna'u poi pilno pano lerfu
-  ##   .i va'o lo nu le mulna'u cu mleca li no kei `-` lidne le mulna'u to `Numbers` toi
+  ## tcidu lo mulna'u poi pilno 10 lerfu
+  ##   .i va'o lo nu le mulna'u cu mleca li 0 kei `-` lidne le mulna'u to `Numbers` toi
   let start = reader.at
   if reader.isAt({'-'}): inc reader.at
-  if not reader.isAt(DIGITS): reader.refuse("pa lerfu pe li pano")
+  if not reader.isAt(DIGITS): reader.refuse("pa lerfu pe li 10")
   while reader.isAt(DIGITS): inc reader.at
   parseInt(reader.text[start ..< reader.at])
 

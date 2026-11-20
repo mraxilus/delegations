@@ -115,7 +115,7 @@ type
     of false:
       part*: Option[int]
         ## lo namcu pe lo jgena poi se to'e curmi
-        ##   .i li no cu krasi lo nu kancu lo jgena poi se lidne lo minde
+        ##   .i li 0 cu krasi lo nu kancu lo jgena poi se lidne lo minde
         ##   .i va'o lo nu le selci'a na se tcidu kei le datnypau cu kunti
       reason*: string  ## lo seltcu be le selci'a be fi `NIF`
 
@@ -269,7 +269,7 @@ func isHoldingError(node: NodeNif): bool =
 func reach(node: NodeNif): int =
   ## dunda lo stuzi poi se lidne lo romoi valsi poi lo jgena pe `NIF` vasru ke'a
   ##   .i lo ni le valsi cu dizlo cu na vajni
-  ##   .i va'o lo nu le jgena cu vasru no valsi kei dunda li no
+  ##   .i va'o lo nu le jgena cu vasru no valsi kei dunda li 0
   if node.kind != KindNif.Compound: return 0
   for k in 0 ..< node.children.len:
     template child: untyped = node.children[k]

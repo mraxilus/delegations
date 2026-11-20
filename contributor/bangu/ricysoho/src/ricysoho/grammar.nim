@@ -4,7 +4,7 @@
 ##   |----------------------|---------------------------------------------------------------------|
 ##   | lo cmene             | lo smuni                                                            |
 ##   |----------------------|---------------------------------------------------------------------|
-##   | `EBNF`               | le bibi ci'ejva pe `CLL 21.1` ta'i le selci'a pe le cukta      |
+##   | `EBNF`               | le 88 ci'ejva pe `CLL 21.1` ta'i le selci'a pe le cukta      |
 ##   | `Terminal`           | lo selma'o .a `BRIVLA` .a `CMENE` vu'o noi genlei lo valsi     |
 ##   | `Node`               | lo javni poi selcme gi'e vasru lo panzi ku'o .a pa genvla    |
 ##   | `Stop`               | lo stistu .e lo genvla poi le gerna ka'e tcidu ke'a vi    |
@@ -24,7 +24,7 @@
 ##
 ## ni'o ca lo nu fanva kei ro javni cu selga'i fi lo basyjva
 ##   .i se ki'u bo no javni cu selci'a re roi to `Article II.9` toi
-##   .i lo cipra pe lo nu fanva cu cipra lo du'u le gerna cu vasru lo bibi javni kei .e lo du'u ro
+##   .i lo cipra pe lo nu fanva cu cipra lo du'u le gerna cu vasru lo 88 javni kei .e lo du'u ro
 ##       cmene be lo javni cu selski kei .e lo du'u ro nu galfi .e ro nu gunma cu fasnu pa roi
 ##   .i le nu galfi cu selci'a ne'i `REWRITES`
 ##   .i le nu gunma cu selci'a ne'i `GROUPINGS`
@@ -41,18 +41,18 @@
 ## ni'o `...` zmadu `&` lo ka jorne
 ##   .i `&` zmadu `|` lo ka jorne
 ##   .i lo porsi cu zmadu `&` lo ka jorne
-##   .i mupli fa lo nu `ZEhA [PU [NAI]]` zvati lo jbini be re `&` ne'i le javni pe li panocino
+##   .i mupli fa lo nu `ZEhA [PU [NAI]]` zvati lo jbini be re `&` ne'i le javni pe li 1030
 ##
 ## ni'o `CLL 21.1` na cusku lo du'u xu kau lo porsi cu zmadu `&` lo ka jorne
 ##   .i le romoi jicmu gerna pe `YACC` zi'e noi `CLL 21.1` sitna lo namcu pe ke'a pilno lo drata nu
-##       gunma ne'i le javni pe li sozere po'o
+##       gunma ne'i le javni pe li 972 po'o
 ##   .i ne'i le javni ku `&` poi jorne lo temtcita .e lo cmavo be `CAhA` cu zvati ne'i `[NAhE]` .e
 ##       `[KI]`
 ##   .i se ki'u bo `GROUPINGS` ciska lo cukla grile'u pe le nu gunma
 ##   .i jdima fa lo nu `EBNF` stali lo ka mintu le selci'a pe le cukta
 ##   .i le nu gunma cu selci'a fi pa linji poi lamji `EBNF`
 ##
-## ni'o le javni pe li papanono .e li papanopa cu cusku lo du'u lo gensu'a cu galfi lo valsi pu lo
+## ni'o le javni pe li 1100 .e li 1101 cu cusku lo du'u lo gensu'a cu galfi lo valsi pu lo
 ##     nu le gerna cu tcidu
 ##   .i ro le gensu'a cu selsni pa valsi
 ##   .i `ZO any-word` selsni `ZO`
@@ -88,7 +88,7 @@
 ##   .i mupli fa `YACC`
 ##
 ## ni'o jdima fa lo nu lo temci pe lo nu tcidu ta'i `Earley` cu ka'e zensmi lo tenfa be lo te kancu
-##     be lo gerna valsi be'o bei li ci
+##     be lo gerna valsi be'o bei li 3
 ##   .i lo nu cuxna lo tricu cu karbi lo te kancu be lo javni sinxa poi mulno ne'i ro se kuspe poi
 ##       le tricu cu vasru ke'a
 ##   .i se ki'u bo `readGrammar` tcidu ro pagbu be le selci'a
@@ -292,7 +292,7 @@ type
     heads: seq[seq[int]]  ## lo basyjva pe ro jvasni ja'i le porsi pe le selcu'a
     nullable: seq[bool]  ## le jvasni cu ka'e binxo lo kutpoi
     lengths: seq[int]  ## lo mecraiterkancu be lo genvla poi ro jvasni cu binxo ke'a
-    start: int  ## lo stuna'u pe `text` noi du le javni pe li no
+    start: int  ## lo stuna'u pe `text` noi du le javni pe li 0
 
   Builder = object  ## lo gerna poi ca'o selzba fi lo pagbu be pa javni pe `EBNF`
     grammar: Grammar
@@ -323,7 +323,7 @@ type
       at*: int  ## lo stuna'u pe le genvla ne'i lo genvla poi se tcidu
     of false:
       rule*: string  ## lo cmene be le javni mu'u `sumti-6`
-      number*: int  ## lo namcu pe le javni ne'i `CLL 21.1` mu'u li soze
+      number*: int  ## lo namcu pe le javni ne'i `CLL 21.1` mu'u li 97
       children*: seq[Node]
       stop*: Option[Stop] = none(Stop)
         ## lo stistu pe le gerna va'o lo nu le jgena cu sinxa lo srera
@@ -366,7 +366,7 @@ const
   ]
     ## lo gensu'a poi le gerna cu tcidu ke'a ta'i pa valsi
     ##   .i `prose.nim` jmina le valsi pe ro gensu'a pu lo nu le gerna cu tcidu to le javni pe li
-    ##       papanono .e li papanopa toi
+    ##       1100 .e li 1101 toi
   GROUPINGS = [
     (
       "[NAhE] (time [space] | space [time]) & CAhA [KI]",
@@ -375,13 +375,13 @@ const
   ]
     ## lo nu gunma poi `CLL 21.1` na jdice fi ke'a
     ##   .i le romoi jicmu gerna pe `YACC` zi'e po'u `grammar.300` dunda le nu gunma
-    ##   .i ne'i `grammar.300` le javni pe li sozere cu curmi lo nu lo cmavo be `NAhE` cu lidne lo
-    ##       temci tcita po'o .a lo cmavo be `CAhA` po'o to le javni pe li sozeci .e li sozebi toi
+    ##   .i ne'i `grammar.300` le javni pe li 972 cu curmi lo nu lo cmavo be `NAhE` cu lidne lo
+    ##       temci tcita po'o .a lo cmavo be `CAhA` po'o to le javni pe li 973 .e li 978 toi
     ##   .i lo cmavo be `KI` cu ka'e se lidne lo temtcita .a lo cmavo be `CAhA` to le javni pe li
-    ##       sozeze toi
+    ##       977 toi
   COUNT_RULES = 88
     ## lo te kancu be le ciste javni pe `CLL 21.1`
-    ##   .i le javni pe li papanono .e li papanopa cu na se kancu
+    ##   .i le javni pe li 1100 .e li 1101 cu na se kancu
   BOUND_LENGTH = 1 shl 20
     ## lo jimte be lo mecraiterkancu be lo genvla pe ro jvasni
     ##   .i le jimte cu zmadu ro te kancu poi selfa'i
@@ -724,14 +724,14 @@ const LUT_CHAIN_BY_ENDS* = GRAMMAR_EBNF.constructChains
   ## lo javni pe ro porsi noi ro jgena pe ke'a vasru le bavla'i po'o
   ##   .i lo namcu pe le javni poi krasi le porsi ku'o .e lo namcu pe le javni poi fanmo le porsi cu
   ##       ckiku le porsi
-  ##   .i mupli fa lo porsi poi selkra `terms` noi ckini li bino ku'o gi'e selfa'o `sumti-6` noi
-  ##       ckini li soze
+  ##   .i mupli fa lo porsi poi selkra `terms` noi ckini li 80 ku'o gi'e selfa'o `sumti-6` noi
+  ##       ckini li 97
   ##   .i le porsi cu porsi ro javni poi jbini le re javni ne'i `CLL 21.1`
 
 
 func constructNumbers(grammar: Grammar): Table[string, int] {.compileTime.} =
   ## zbasu lo namcu pe ro javni poi selcme ja'i lo cmene be le javni
-  ##   .i cipra lo du'u no re javni cu ponse lo mitcme .a lo mitna'u
+  ##   .i cipra lo du'u naku su'o re javni cu ponse lo mitcme .a lo mitna'u
   ##   .i se ki'u bo lo cmene cu dunda lo namcu
   ##   .i lo namcu cu dunda lo cmene
   var named: Table[int, string]
@@ -747,7 +747,7 @@ func constructNumbers(grammar: Grammar): Table[string, int] {.compileTime.} =
 
 const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
   ## lo namcu pe ro javni poi selcme ne'i `CLL 21.1` ja'i lo cmene be le javni
-  ##   .i mupli fa li soze noi du le namcu pe `sumti-6`
+  ##   .i mupli fa li 97 noi du le namcu pe `sumti-6`
   ##   .i `NIF` ciska lo cmene po'o be le javni poi fanmo ro porsi
   ##   .i lo tcidu be `NIF` cu cpacu le namcu le vi stodi
   ##   .i `Architect` jdice di'u bu'u `#859` to `comment 6805527878` toi
@@ -761,7 +761,7 @@ const WIDTH_BODY = GRAMMAR_EBNF.productions.mapIt(it.body.len).max + 1
 
 const WIDTH_KEY = high(int32) div GRAMMAR_EBNF.heads.len
   ## lo namcu poi zmadu lo krasi be ro pagbu
-  ##   .i ro lo namcu pe `keyCompleted` cu mleca li re te'a ci pa
+  ##   .i ro lo namcu pe `keyCompleted` cu mleca li 2 te'a 31
   ##   .i `fillSets` cu cipra lo du'u lo te kancu be lo genvla pe ro pagbu cu mleca le namcu
 
 
@@ -828,8 +828,8 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   ##
   ## ni'o lo cmima poi denpa pa jvasni ne'i pa selcmi cu porsi ta'i lo nu ro le cmima cu jarco le
   ##     bavla'i to `firsts` .e `lasts` .e `nexts` toi
-  ##   .i lo namcu poi sinxa ro cmima cu zmadu le stuna'u pe le cmima ne'i le selcmi fo li pa
-  ##   .i se ki'u bo li no cu sinxa lo nu no cmima cu zasti
+  ##   .i lo namcu poi sinxa ro cmima cu zmadu le stuna'u pe le cmima ne'i le selcmi fo li 1
+  ##   .i se ki'u bo li 0 cu sinxa lo nu no cmima cu zasti
   ##   .i le porsi cu jmina lo cmima ja'i le porsi pe lo nu jmina
   ##   .i lo te kancu be lo cmima cu zensmi lo ni le selci'a cu clani
   ##   .i ro cmima cu cpacu lo ninstu
@@ -980,7 +980,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
 
 
 func toRule(head: int): tuple[name: string, number: int] =
-  ## dunda lo cmene .e lo namcu vu'o pe le javni pe le jvasni mu'u `sumti-6` .e li soze
+  ## dunda lo cmene .e lo namcu vu'o pe le javni pe le jvasni mu'u `sumti-6` .e li 97
   ##   .i lo djujva cu cpacu le cmene .e le namcu vu'o pe le javni poi vasru le djujva
   let name = GRAMMAR_EBNF.names[head]
   for i, other in GRAMMAR_EBNF.names:
@@ -1034,9 +1034,9 @@ func keyCompleted(head, start: int): int =
 
 func keyChosen(width, head, start, finish: int): int =
   ## lo namcu poi sinxa lo jvasni .e lo krasi .e lo fanmo ne'i `Chart.open`
-  ##   .i le gerna cu vasru ci ci re jvasni
-  ##   .i le namcu cu mleca li re te'a ci pa va'o lo nu `width` cu na zmadu li re mu vo ci
-  ##   .i va'o lo nu `width` cu zmadu li re mu vo ci kei `JavaScript` cu cusku lo nu dukse
+  ##   .i le gerna cu vasru 332 jvasni
+  ##   .i le namcu cu mleca li 2 te'a 31 va'o lo nu `width` cu na zmadu li 2543
+  ##   .i va'o lo nu `width` cu zmadu li 2543 kei `JavaScript` cu cusku lo nu dukse
   (head * width + start) * width + finish
 
 
@@ -1204,7 +1204,7 @@ func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
   ##   .i le nu zbasu cu fukpi no `closures` pe le selcu'a
   ##   .i lo temci pe lo nu fukpi bu'u ro jgena cu pu zensmi lo pilji be lo klani be le selci'a be'o
   ##       bei le klani
-  ##   .i ki'u bo ro ju'agri cu rinka lo nu le javni pe li vo cu punji pa jgena ne'i pa jgena to
+  ##   .i ki'u bo ro ju'agri cu rinka lo nu le javni pe li 4 cu punji pa jgena ne'i pa jgena to
   ##       `#849` toi
   let
     key = keyCompleted(head, start)
@@ -1244,7 +1244,7 @@ func readWhole(chart: var Chart, terminals: openArray[Terminal]): ReadingGrammar
   doAssert chart.choose(GRAMMAR_EBNF.start, 0, terminals.len),
       "Text grammar reads should derive tree."
   chart.addNodes(GRAMMAR_EBNF.start, 0, terminals.len, nodes)
-  # le javni pe li no cu selcme
+  # le javni pe li 0 cu selcme
   #   .i se ki'u bo lo jgena cu pa mei
   ReadingGrammar(is_read: true, tree: nodes.pop)
 
@@ -1261,22 +1261,22 @@ func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
 const
   OPENERS* = [Selmaho.Tuhe, Selmaho.Lu, Selmaho.To]
     ## lo selma'o poi krasi lo selci'a ne'i lo selci'a
-    ##   .i le selma'o cu pagbu `statement-3` .e `sumti-6` .e `free` to le javni pe li pavo .e li
-    ##       soze .e li cire toi
+    ##   .i le selma'o cu pagbu `statement-3` .e `sumti-6` .e `free` to le javni pe li 14 .e li
+    ##       97 .e li 32 toi
   CLOSERS* = [Selmaho.Tuhu, Selmaho.Lihu, Selmaho.Toi]
     ## lo famvla pe ro kravla ja'i le porsi pe `OPENERS`
   JOINS = {Selmaho.Ja, Selmaho.Joi, Selmaho.Bihi, Selmaho.Gaho, Selmaho.Bo}
     ## lo selma'o poi se lidne `I` gi'e jorne lo jufra ta'i lo me `jek` me'u .a lo me `joik` me'u .a
     ##     `BO`
     ##   .i le selma'o cu ka'e se lidne lo cmavo be `NA` be'o .e lo cmavo be `SE` to le javni pe li
-    ##       pare .e li paci toi
+    ##       12 .e li 13 toi
   TAGS = {
     Selmaho.Nahe, Selmaho.Se, Selmaho.Bai, Selmaho.Nai, Selmaho.Ki, Selmaho.Cuhe, Selmaho.Zi,
     Selmaho.Pu, Selmaho.Zeha, Selmaho.Va, Selmaho.Faha, Selmaho.Mohi, Selmaho.Veha, Selmaho.Viha,
     Selmaho.Fehe, Selmaho.Tahe, Selmaho.Roi, Selmaho.Zaho, Selmaho.Caha, Selmaho.Pa, Selmaho.Na,
     Selmaho.Ja, Selmaho.Joi,
   }
-    ## lo selma'o pe lo tcita poi lidne `BO` ne'i `statement-2` to le javni pe li paci .e `stag` toi
+    ## lo selma'o pe lo tcita poi lidne `BO` ne'i `statement-2` to le javni pe li 13 .e `stag` toi
     ##   .i lo porsi be le selma'o be'o poi selfa'o `BO` jorne lo jufra
   RULE_TEXT_1 = ("text-1", 2)
     ## lo cmene .e lo namcu vu'o pe le javni poi vasru lo se ciska ju'agri
@@ -1307,7 +1307,7 @@ func isJoining(terminals: openArray[Terminal], at: int): bool =
   ##   .i va'o lo nu le cmavo cu lidne lo me `jek` me'u .a lo me `joik` kei le cmavo cu jorne
   ##   .i lo cmavo be `NA` be'o .e lo cmavo be `SE` cu ka'e zvati lo jbini
   ##   .i va'o lo nu le cmavo cu lidne lo porsi be lo tcita poi selfa'o `BO` kei le cmavo cu jorne
-  ##       to le javni pe li pare .e li paci toi
+  ##       to le javni pe li 12 .e li 13 toi
   ##   .i ro le cmavo poi jorne cu vasru no ju'agri pe vo'a
   var k = at + 1
   while k < terminals.len and terminals[k].isAmong({Selmaho.Na, Selmaho.Se}): inc k
@@ -1403,7 +1403,7 @@ func toParts(
 func shift(node: var Node, by: int) =
   ## jmina `by` ro stuzi poi le gerna cu sisti bu'u ke'a ku'o .e lo stuna'u pe ro genvla pe le tricu
   ##   .i va'o lo nu pa pagbu cu se tcidu ta'i lo nu sepli kei le stuna'u pe le krasi be le pagbu cu
-  ##       du li no
+  ##       du li 0
   if node.is_terminal: node.at += by
   else:
     if node.stop.isSome: node.stop.get.at += by
@@ -1413,7 +1413,7 @@ func shift(node: var Node, by: int) =
 func readPart(terminals: openArray[Terminal], part: Slice[int]): Option[Node] =
   ## tcidu le genvla pe le pagbu ta'i lo selci'a poi sepli
   ##   .i zbasu lo tricu
-  ##   .i ne'i le tricu le stuna'u pe le krasi be le mulselci'a cu du li no
+  ##   .i ne'i le tricu le stuna'u pe le krasi be le mulselci'a cu du li 0
   var reading = terminals.toOpenArray(part.a, part.b).readWhole
   if not reading.is_read: return none(Node)
   var tree = move(reading.tree)
@@ -1423,8 +1423,8 @@ func readPart(terminals: openArray[Terminal], part: Slice[int]): Option[Node] =
 
 func isGroup(nodes: openArray[Node], terminals: openArray[Terminal], head: Selmaho): bool =
   ## jdice lo du'u xu kau le jgena cu du lo genvla pe `head` ge'u ce'o lo zifre galfi po'o
-  ##   .i mupli fa `I #` ja'i le javni pe li pano
-  ##   .i mupli fa `NIhO ... #` ja'i le javni pe li vo
+  ##   .i mupli fa `I #` ja'i le javni pe li 10
+  ##   .i mupli fa `NIhO ... #` ja'i le javni pe li 4
   ##   .i va'o lo nu lo me `jek` me'u .a lo me `joik` me'u .a lo tcita .a lo cmavo be `BO` cu zvati
   ##       vi kei lo jufra cu jorne
   var k = 0
@@ -1479,7 +1479,7 @@ func assemble(
   ##   .i le tricu pe le pagbu cu se lebna fi `parts`
   ##   .i le nu lebna cu krasi `at` gi'e mapti le porsi poi `readParts` dunda ke'a
   ##   .i le jgena poi sruri cu du `text 0` .e `text-1 2` .e `paragraphs 4` .e `paragraph 10` to le
-  ##       javni pe li no bi'o li pano toi
+  ##       javni pe li 0 bi'o li 10 toi
   ##
   ## ni'o ro pagbu cu vasru lo jgena
   ##   .i ro le jgena cu ckini pa javni po'o
@@ -1498,10 +1498,10 @@ func assemble(
 
   # le pamoi pagbu cu dunda `text 0` .e lo jgena pe `text-1` zi'e poi lidne le ju'agri pe le pagbu
   #   .i ro ju'agri cu selvau lo girzu poi vasru lo cmavo be `NIhO` gi'e lidne le ju'agri ku'o .e lo
-  #       jgena pe `paragraph` to le javni pe li re .e li vo toi
+  #       jgena pe `paragraph` to le javni pe li 2 .e li 4 toi
   var
     text = move(trees[0])
-    text_1 = text.children.pop  # le javni pe li no cu selfa'o `text-1`
+    text_1 = text.children.pop  # le javni pe li 0 cu selfa'o `text-1`
     paragraphs: seq[tuple[group, nodes: seq[Node]]]
   if text_1.children.len > 0 and text_1.children[^1].isRule(RULE_PARAGRAPHS):
     var first_paragraphs = text_1.children.pop
@@ -1524,7 +1524,7 @@ func assemble(
       if not part.children.isGroup(terminals, Selmaho.I): return none(Node)
       if paragraphs.len == 0:
         if text_1.children.anyIt(it.is_terminal and terminals[it.at] == Selmaho.Niho.toTerminal):
-          # le javni pe li re cu selkra `I` .a `NIhO` gi'e no roi selkra le re mei
+          # le javni pe li 2 cu selkra `I` .a `NIhO` gi'e no roi selkra le re mei
           return none(Node)
         for node in part.children.mitems: text_1.children.add move(node)
         if has_paragraph: paragraphs.add (newSeq[Node](), move(nodes))
@@ -1534,11 +1534,11 @@ func assemble(
     elif head == Selmaho.Niho.toTerminal:
       if not part.children.isGroup(terminals, Selmaho.Niho): return none(Node)
       if paragraphs.len == 0:
-        if text_1.children.len > 0: return none(Node)  # le javni pe li re cu selkra pa girzu po'o
+        if text_1.children.len > 0: return none(Node)  # le javni pe li 2 cu selkra pa girzu po'o
         for node in part.children.mitems: text_1.children.add move(node)
         if has_paragraph: paragraphs.add (newSeq[Node](), move(nodes))
       else:
-        if not has_paragraph: return none(Node)  # le javni pe li vo cu vasru `paragraph` ba `NIhO`
+        if not has_paragraph: return none(Node)  # le javni pe li 4 cu vasru `paragraph` ba `NIhO`
         paragraphs.add (move(part.children), move(nodes))
     else:
       return none(Node)
@@ -1560,7 +1560,7 @@ func assemble(
   # punji ro ju'agri ne'i le ju'agri poi lidne ke'a
   #   .i le nu punji cu krasi le romoi ju'agri
   #   .i ro ju'agri cu vasru le girzu pe le bavla'i ju'agri ge'u .e le rebla poi se lidne le girzu
-  #       to le javni pe li vo toi
+  #       to le javni pe li 4 toi
   var rest: seq[Node]
   for k in countdown(paragraphs.high, 0):
     var children = @[RULE_PARAGRAPH.toNode(move(paragraphs[k].nodes))]
@@ -1651,13 +1651,13 @@ func islands(chart: var Chart, terminals: openArray[Terminal], first, last: int)
   ## ni'o ro ricpau cu du lo javni poi selcme gi'e kuspe le selku'e pe le ricpau gi'e ponse lo
   ##     mecraina'u
   ##   .i va'o lo nu le valsi pe le selku'e cu se tcidu ta'i lo nu sepli kei le javni cu du le javni
-  ##       pe li no zi'e po'u `text`
+  ##       pe li 0 zi'e po'u `text`
   ##   .i se ki'u bo le ricpau cu du le tricu poi le valsi cu dunda ke'a ta'i lo nu sepli
   ##
   ## ni'o se to'e cuxna fa lo javni poi ponse lo zmaraina'u
   ##   .i ki'u bo lo datcumtricu pe le selku'e cu ka'e vasru le javni
-  ##   .i mupli fa lo nu lu mi klama li'u se tcidu ta'i `sumti-tail` noi ckini li papapa ku'o .enai
-  ##       `sentence` noi ckini li vono
+  ##   .i mupli fa lo nu lu mi klama li'u se tcidu ta'i `sumti-tail` noi ckini li 111 ku'o .enai
+  ##       `sentence` noi ckini li 40
   ##   .i ne'i `sumti-tail` zo mi sinxa lo ponse be le klama
   ##
   ## ni'o `chart` cu ralte ro selcmi poi stali to `fillSets` toi
@@ -1720,7 +1720,7 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
 
 func markPart(charts: var ChartsKept, terminals: openArray[Terminal], part: Slice[int]): Node =
   ## tcidu le pagbu ta'i lo selci'a poi sepli gi'e zbasu lo tricu
-  ##   .i ne'i le tricu le stuna'u pe le krasi be le mulselci'a cu du li no
+  ##   .i ne'i le tricu le stuna'u pe le krasi be le mulselci'a cu du li 0
   ##   .i va'o lo nu le gerna cu to'e curmi le pagbu kei zbasu lo srejge pe le pagbu zi'e poi vasru
   ##       lo ricpau poi mapti `CLL 21.1` to `islands` toi
   ##   .i `charts` cu ralte le mulcmi pe le pagbu

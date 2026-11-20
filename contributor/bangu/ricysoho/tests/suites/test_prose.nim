@@ -53,7 +53,7 @@ const
     ##     porsi
   FLOOR_ERASED = 150
     ## lo mecraiterkancu be lo stuzi poi le flalu pe lo nu vimcu cu tcidu ke'a
-    ##   .i le flalu cu tcidu paxare stuzi
+    ##   .i le flalu cu tcidu 162 stuzi
     ##   .i le stuzi cu zvati lo jbini be lo valsi pe ro mupli poi vasru no nu vimcu
     ##   .i ku'i le flalu cu tcidu no stuzi poi se lidne zo zo .a zo zoi .a zo la'o
 
@@ -123,7 +123,7 @@ suite "Chapter 6":
 suite "Chapter 13":
   test "Section 13.1-2":
     # lo cnivla cu krasi le selci'a
-    #   .i le javni pe li no cu tcidu le cnivla
+    #   .i le javni pe li 0 cu tcidu le cnivla
     check ".ui la djan klama".terminalsRead.get[0] ==
         Selmaho.Ui.toTerminal  # `CLL 13.2` mupli
     check ".ui mi facki fi le mi mapku".terminalsRead.isSome  # `CLL 13.9` mupli
@@ -318,7 +318,7 @@ suite "Internal: Prose":
       check ("zo " & entry.word).terminalsRead ==
           some(@[Selmaho.Zo.toTerminal])  # `CLL 19.10`
       inc count
-    # musobi valsi pe le liste cu vasru pa cmavo
+    # 598 valsi pe le liste cu vasru pa cmavo
     check count >= 590  # ja'i `IX.3` lo bandu cu ralte lo cmavo pe le liste
 
 
@@ -337,4 +337,4 @@ suite "Internal: Prose":
     check "la la .uras. klama".terminalsRead.isSome  # `CLL 21.1`
     # lo cmavo be `LAU` cu nitcu pa lervla
     check "la lau .ras. klama".refusalRead ==
-        some((RefusalText.Grammar, 8))  # le javni pe li sobize pe `CLL 21.1`
+        some((RefusalText.Grammar, 8))  # le javni pe li 987 pe `CLL 21.1`

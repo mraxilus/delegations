@@ -40,12 +40,12 @@ const
     ## lo zmaraiterkancu be lo cmavo be `SE` be'o pe pa porsi poi lo jvacipra pe lo nu jmina cu
     ##     fendi ke'a
   COUNT_CHAINS = 1 + 4 + 16 + 64 + 256
-    ## lo te kancu be lo porsi be `SE` be'o poi lo nilclani be ke'a cu du li no bi'o `LENGTH_CHAIN`
+    ## lo te kancu be lo porsi be `SE` be'o poi lo nilclani be ke'a cu du li 0 bi'o `LENGTH_CHAIN`
   LENGTH_GROUPED = 2
     ## lo zmadu traji nilclani be lo porsi be lo cmavo poi jorne be'o be'o poi lo jvacipra cu punji
     ##     ke'a lo stuzi poi lidne lo girzu poi vasru pa tanru pagbu po'o
   COUNT_GROUPED = 1 + 4 + 16
-    ## lo te kancu be lo porsi be `BINDING` be'o poi lo nilclani be ke'a cu du li no bi'o
+    ## lo te kancu be lo porsi be `BINDING` be'o poi lo nilclani be ke'a cu du li 0 bi'o
     ##     `LENGTH_GROUPED`
   BINDING = ["se", "te", "na'e", "nu"]
     ## lo cmavo poi jorne zi'e poi lo jvacipra cu cuxna ke'a
@@ -110,7 +110,7 @@ func placesOracle(chain: openArray[string]): Places =
 
 
 func chains(alphabet: openArray[string], length: int): seq[seq[string]] =
-  ## liste ro porsi be lo valsi pe `alphabet` be'o poi lo nilclani be ke'a cu du li no bi'o `length`
+  ## liste ro porsi be lo valsi pe `alphabet` be'o poi lo nilclani be ke'a cu du li 0 bi'o `length`
   ##   .i lo tordu cu pamoi
   result = @[newSeq[string]()]
   for size in 1 .. length:

@@ -41,7 +41,7 @@
 ##     ka clani
 ##   .i va'o lo nu ro valsi pe lo seljonju'a pe `Tatoeba` spisa kei lo stuzi poi se tcidu cu na
 ##       zmadu lo pilji be `COST_MOST` bei lo stuzi pe le jufra
-##   .i va'o lo nu le selci'a cu clani re roi kei lo stuzi poi se tcidu cu du lo pilji be li re bei
+##   .i va'o lo nu le selci'a cu clani re roi kei lo stuzi poi se tcidu cu du lo pilji be li 2 bei
 ##       lo stuzi poi pu se tcidu
 ##
 ## ni'o lo mupli cu jarco lo cenba pe ro spisa
@@ -95,6 +95,9 @@ type
 const
   SEED = 859  ## lo tsiju be lo cunso nu katna .e lo selci'a poi selzba
   COUNT_BUILT = 300  ## lo klani be lo selci'a poi selzba fi lo valsi poi galfi lo pu valsi
+  DRAWS_NUMBERED = 40
+    ## lo klani be lo cunso nu katna be ro selci'a pe le flalu pe denpa bu .e slaka bu poi zvati lo
+    ##     jbini be lo lerfu
   PIECE_MOST = 6
     ## lo stuzi pe lo cunspi be lo selci'a poi selzba cu na zmadu le stodi
     ##   .i se ki'u bo lo spisa cu katna lo valsi
@@ -102,12 +105,12 @@ const
     ## lo stuzi pe lo cunspi be lo selci'a pe le selci'aste cu na zmadu le stodi
     ##   .i lo selci'a poi vasru pa jufra cu selraptcidu ca ro spisa
     ##   .i se ki'u bo da'i va'o lo nu ro valsi cu spisa kei lo jdima cu du `100 s` ne'i lo cikryzba
-    ##   .i le temci cu du lo pilji be li pavo bei lo temci be lo nu tcidu le selci'aste ta'i lo
+    ##   .i le temci cu du lo pilji be li 14 bei lo temci be lo nu tcidu le selci'aste ta'i lo
     ##       mulno
   COUNT_CORPORA_LEAST = 950
     ## lo selci'a poi cmima le selci'aste gi'e se tcidu ta'i lo mivyselci'a
-    ##   .i ro remoi se ciska pe le pasovopa selci'a cu se tcidu
-    ##   .i ki'u bo lo jdima be ro selci'a cu du lo pilji be li ci bei lo jdima be lo nu tcidu le
+    ##   .i ro remoi se ciska pe le 1941 selci'a cu se tcidu
+    ##   .i ki'u bo lo jdima be ro selci'a cu du lo pilji be li 3 bei lo jdima be lo nu tcidu le
     ##       selci'a ta'i lo mulno
     ##   .i lo jdima be lo nu tcidu lo xadba be le selci'aste cu jibni `12 s` ne'i lo cikryzba
 
@@ -117,13 +120,13 @@ const
   COUNT_SENTENCES_CORPORA_LEAST = 450
     ## lo selci'a poi cmima le selci'aste gi'e se tcidu ta'i lo nu tcidu ro jufra pe ke'a ta'i lo
     ##     porsi
-    ##   .i ro vomoi se ciska pe le pasovopa selci'a cu se tcidu
+    ##   .i ro vomoi se ciska pe le 1941 selci'a cu se tcidu
     ##   .i le flalu poi tcidu ro remoi se ciska cu na tcidu le selci'a
     ##   .i di'u selcu'a ki'u lo jdima be le cipra
   COUNT_SENTENCES_LEAST = 600
     ## lo jufra poi le porsi be lo valsi cu tcidu ke'a po'o zi'e noi le flalu pe le nu katna cu
     ##     cipra ke'a ne'i lo selci'a poi selzba
-    ##   .i ca lo nu le flalu cu se jmina kei le jufra cu xazeze mei
+    ##   .i ca lo nu le flalu cu se jmina kei le jufra cu 677 mei
     ##   .i ki'u bo pa jufra po'o cu ka'e katna lo valsi gi'a krasi ne'i lo nu sitna
   SENTENCES_COST = 30
     ## lo seljonju'a pe `Tatoeba`
@@ -131,7 +134,7 @@ const
     ##       roi
   COST_MOST = 12.0
     ## lo zmaraifrinu be lo stuzi poi se tcidu bei lo stuzi pe le selci'a ca lo nu ro valsi cu spisa
-    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li bi pi re
+    ##   .i ca lo nu le flalu cu se jmina kei le frinu cu du li 8 pi 2
     ##   .i ki'u bo ro spisa cu raptcidu lo jufra poi ca'o kalri
   COST_TWICE_MOST = 2.2
     ## lo zmaraifrinu be lo stuzi poi le selci'a poi re roi clani cu tcidu ke'a bei lo stuzi poi le
@@ -187,9 +190,9 @@ const
   TEXTS_SA_PARTED = [
     # le cuncipra pe le flalu pe lo mivyselci'a cu facki le selci'a
     #   .i zo sa na selraptcidu
-    "ni'o .i sa 1987 zo .i si",
-    "mi klama .i sa 1987 zo .i si do",  # lo valsi poi se lidne zo si
-    "ni'o .i sa 1987 1988 zo .i si",  # re valsi poi le porsi be lo valsi cu to'e curmi ke'a
+    "ni'o .i sa html zo .i si",
+    "mi klama .i sa html zo .i si do",  # lo valsi poi se lidne zo si
+    "ni'o .i sa html http zo .i si",  # re valsi poi le porsi be lo valsi cu to'e curmi ke'a
     # le cuncipra pe le flalu pe lo mivyselci'a cu facki le selci'a
     #   .i zo bu .e ba bo zo ba'e se to'e curmi
     "ui lo sa bu ba'e le si",
@@ -257,9 +260,9 @@ const
     ##   .i le romoi cu pu se tcidu ta'i lo srera ca lo nu zo su pu vimcu lo selci'a poi lidne zo su
   CUTS_ENDED = [
     (text: "tu'u si fa'o lo", cuts: toSeq(1 .. 14)),
-    (text: "gy ku xyz ba'e gy si fa'o zo sa 1987", cuts: @[2, 6, 7, 12, 17, 22, 25, 31, 33, 34]),
+    (text: "gy ku xyz ba'e gy si fa'o zo sa html", cuts: @[2, 6, 7, 12, 17, 22, 25, 31, 33, 34]),
     (
-      text: "cu sa'a sa'a li'u si fa'o ni'o 1987 .i",
+      text: "cu sa'a sa'a li'u si fa'o ni'o html .i",
       cuts: @[4, 5, 8, 13, 19, 23, 25, 26, 31, 36],
     ),
   ]
@@ -316,11 +319,11 @@ const
     #   .i se ki'u bo `NIF` selka'a bu'u le jufra poi pu vasru zo klama
     ),  # `CLL 19.13`
     (
-      pieces: @["mi 1987 klama .i ", "su ko "],
+      pieces: @["mi html klama .i ", "su ko "],
       changes: @[
         (
           28, 0, "(sentence 0 (sumti_6 80 (KOhA 0 2 \"mi\")) " &
-            "(rivbi Stream Letter 3 7 \"1987\") (bridi_tail_3 50 " &
+            "(rivbi Stream Letter 3 7 \"html\") (bridi_tail_3 50 " &
             "(tanru_unit_2 130 (BRIVLA 8 13 \"klama\")) (tail_terms)))\n",
           "(text_1 0 (I 15 16 \"i\"))\n",
         ),
@@ -464,7 +467,7 @@ func countCut(piece: string, sentences: openArray[string]): int =
   ##   .i ro le jufra poi le porsi cu tcidu ke'a po'o vasru pa cmavo be zoi gy. I .gy. .a zoi gy.
   ##       NIhO .gy. be'o noi pamoi valsi be le jufra
   ##   .i ku'i le pamoi jufra cu ka'e vasru no le cmavo
-  ##   .i va'o lo nu la'e di'u na jetnu kei jarco li ni'u pa
+  ##   .i va'o lo nu la'e di'u na jetnu kei jarco li ni'u 1
   if sentences.join != piece: return -1
   for k in 0 ..< sentences.len:
     let reading = sentences[k].readStream
@@ -474,6 +477,22 @@ func countCut(piece: string, sentences: openArray[string]): int =
       if reading.occurrences[n].isOpener != (n == 0 and (k > 0 or reading.occurrences[0].isOpener)):
         return -1
     inc result
+
+
+func isSettledTyped(typed: string, at: int): bool =
+  ## jdice lo du'u xu kau le lerfu pe `at` cu fendi lo selci'avla ca lo nu `typed` po'o cu se ciska
+  ##   .i lo kutle'u cu fendi
+  ##   .i denpa bu poi zvati lo jbini be re lerfu pe `0` bi'o `9` cu na fendi
+  ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `0` bi'o `9` cu na fendi
+  ##   .i ki'u bo lo lerfu poi ba se ciska cu jdice lo du'u xu kau ri sinxa zo pi
+  ##   .i le fancu cu ciska le javni pe `D1 a` ji'a gi'e pilno no fancu pe `stream.nim` .e
+  ##       `live.nim`
+  let c = typed[at]
+  if c in Whitespace: return true
+  if c != '.': return false
+  let is_after_digit = at > 0 and typed[at - 1] in Digits
+  if at == typed.high: return not is_after_digit
+  not (is_after_digit and typed[at + 1] in Digits)
 
 
 func readLive(
@@ -519,7 +538,10 @@ func readLive(
     apply(change)
     last = at
     var ending = at  # le selci'a poi ca zvati gi'e fanmo bu'u le romoi sinxa poi jbini lo valsi
-    while ending > 0 and text[ending - 1] notin MARKS_BOUNDARY: dec ending
+    # lo lerfu poi se lidne `at` cu na zvati ca ro nu se ciska
+    #   .i ki'u bo `isSettledTyped` tcidu lo pagbu po'o poi se ciska
+    let typed = text[0 ..< at]
+    while ending > 0 and not typed.isSettledTyped(ending - 1): dec ending
     if is_growing and ending > 0:
       let grown = readTextParts(text[0 ..< ending], is_live = true).reading.toNifParts
       result.is_grown = result.is_grown and result.nif & change.tail == grown
@@ -746,6 +768,28 @@ suite "Internal: Live text":
       inc count
     # lo bandu cu ralte lo selci'a poi vasru za'u pa pagbu be le selci'a
     check count >= COUNT_PARTED_LEAST  # `IX.3`
+
+
+  test "Decimal point and digit group read typed byte by byte or in pieces as read whole, and grow":
+    # `Architect` jdice `D1 a` bu'u `#991`
+    #   .i denpa bu poi romoi gi'e se lidne pa lerfu cu sinxa lo denpa
+    #   .i ba lo nu lo lerfu cu se ciska ba ke'a kei denpa bu cu sinxa zo pi
+    #   .i ro selci'a cu se tcidu ta'i lo nu ro lerfu cu spisa kei .e lo nu lo cunso stuzi cu katna
+    #   .i lo spisa poi vasru so'i lerfu cu se benji ca lo nu lo selci'a cu se jmina fi le papri
+    var rng = initRand(SEED)
+    for text in [
+        "li 3.14 .i li 1,000", "mi viska 3. do", "li 1,000.5 du li 1,000 su'i pi 5",
+        "li 3,14 du li ci", "mi fa'o 3.5 do", "mi fa'o 1,000.5 do", "zoi 5 2.5 5 5",
+        "mi viska li 3."]:
+      for draw in 0 .. DRAWS_NUMBERED:
+        let cuts = (if draw == 0: toSeq(1 ..< text.len) else: text.cutsRandom(rng, PIECE_MOST))
+        checkpoint text & " cut at " & $cuts
+        let live = text.readLive(cuts, is_growing = true)
+        # le flalu pe le stedu be `live.nim`
+        check live.nif == readTextParts(text).reading.toNifParts
+        check live.is_held  # le stedu be `live.nim`
+        check live.is_grown  # le stedu be `live.nim`
+        check live.is_tied  # `ChangeNif` pe `live.nim`
 
 
   test "Bytes read grow with length of text, word by word":
