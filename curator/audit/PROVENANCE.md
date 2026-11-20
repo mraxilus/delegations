@@ -3140,6 +3140,14 @@ names the nimble file of each project where a file declares one (`nimbleProject`
   declares `formatValue`, and joins where no file of the tree does.
 - Cost: a `formatValue` that a dependency declares, outside the tree, is unread.
 
+**The context of a fix reads two more facts of each project for a fixer of one file.** These are
+the defaults of its configurations (rule 14 of #443), and the constants that each of its modules
+exports (rule 12). The fix and the fence warning of each entry take those of its project. The
+record of `curator/knoller` gives the reason of each (`## Configuration blocks` and `## Staging`).
+
+- Verified by `suites/test_fixes.nim`. A two-way `when` swaps, and a branch on a constant of
+  another module becomes `when`. Each does so only where the tree holds the module of the constant.
+
 **An entry block that binds moves into `proc main` (V.10).** The fixer puts the body in
 `proc main` above the block, and the block calls `main()`. The routine takes the doc
 `TODO: Document.` (VI.1), because only a reader can say what it does. The body keeps its lines
