@@ -265,6 +265,29 @@ suite "Style §5":
       failed["pga/algebra.nim"].reason == "error"
 
 
+  test "use maps to file of package by its path below root, whatever form root takes":
+    # Case of CI on Windows: root of `createTempDir` reads `\` there and answers name files with
+    #   `/`, so no use matched prefix of root; ancestor of root can read in short form too.
+    #   Domain: root as answers name it, short ancestor, root of Windows, separator at end, and
+    #   file outside package that ends as file of package does.
+    let files = @[("a.nim", "func helper(x: int): int = x + 1\n"),
+                  ("b.nim", "import ./a {.all.}\n\necho helper(1)\n")]
+    func answered(root, used: string): seq[(string, Answer)] =
+      var answer = Answer(path: "a.nim")
+      answer.usages[(1, 10)] = @[
+        Symbol(section: "def", name: "a.helper", signature: "int", file: root & "/a.nim",
+          line: 1, column: 5),
+        Symbol(section: "use", name: "a.helper", signature: "int", file: used, line: 3, column: 5),
+      ]
+      @[("b.nim", answer)]
+    const named = "/r/long/knoller_x"
+    for given in [named, "/r/LONG~1/knoller_x", "\\r\\LONG~1\\knoller_x", named & "/"]:
+      let uses = usesPackage(files, answered(named, named & "/b.nim"), given)
+      check uses["a.nim"].privates[(1, 5)] == UsePrivate(siblings: @["b.nim"])
+    let outside = usesPackage(files, answered(named, "/r/long/lib/b.nim"), named)
+    check outside["a.nim"].privates[(1, 5)].siblings.len == 0
+
+
   test "semantic pass answers every use of private symbol, across modules of entry":
     let
       root = createTempDir("knoller_", "_markers")
