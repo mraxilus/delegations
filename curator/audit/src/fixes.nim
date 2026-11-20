@@ -75,7 +75,8 @@ type
     ## Define what fix of entries writes and reports, and what it asks parser.
     written: seq[Entry]  ## Entry to write, with new text.
     fixed, refused, left: seq[Finding]  ## Rewrite, scope finding, finding left.
-    warned: seq[Finding]  ## Warning: fence that keeps its lines, or file fixers do not settle.
+    warned: seq[Finding]
+      ## Warning: fence that keeps its lines, debug output, or file fixers do not settle.
     asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
 
 

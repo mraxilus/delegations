@@ -8,8 +8,9 @@
 ##     gives it above itself. Placeholder, whose code is `skip()` alone, gives its reason in name
 ##     opening with `TODO:`.
 ##   TODO inside test that runs names gap run never shows, so it reports; TODO giving reason of
-##     skip is none, and test whose body skips at its own level never runs, so it holds no gap.
-##   Test under `when` with no other branch leaves run under that configuration, so it reports;
+##     skip is none, and test whose body skips at its own level shows in run as skipped, so it
+##     holds no gap.
+##   Test under `when` with no other branch leaves run where its condition is false, so it reports;
 ##     `when isMainModule:` names no configuration. Code under `quote do:` is generated, so its
 ##     skip and TODO are none of file's.
 ##
@@ -124,7 +125,7 @@ func checkSkips*(path, source, nimble: string): seq[Report] =
           path, k + 1, Rule.ReasonSkip, MESSAGE_SKIP & lines[k].codeText(views[k]) & "`."
         )
 
-    # TODO inside test that runs is gap; test skipping at its own level never runs.
+    # TODO inside test that runs is gap; test skipping at its own level shows as skipped.
     let is_running = not steps.anyIt(lines[it].indentWidth == level and code[it].strip == CALL_SKIP)
     if is_running:
       for k in body:
@@ -134,7 +135,7 @@ func checkSkips*(path, source, nimble: string): seq[Report] =
         if k notin reasons and marker.startsWith(WORD_GAP):
           result.add initReport(path, k + 1, Rule.ReasonSkip, MESSAGE_GAP & text & "`.")
 
-    # Test under `when` with no other branch leaves run under that configuration; innermost
+    # Test under `when` with no other branch leaves run where its condition is false; innermost
     #   such gate reports, once for each test.
     for j in heads:
       let

@@ -116,6 +116,7 @@ path:line: <rule-id> fixed
 path: unsettled: <message>
 path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
+path:line: debug-output warning: <message>
 path: type-conversion warning: <message>
 path:line: name-case warning: <message>
 needless-parentheses warning: <message>
@@ -202,8 +203,8 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |
 | `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
 | `stub-header` | A stub `tests/test_*.nim` carries a testament header. No fix reaches it. |
-| `debug-output` | A test prints no value without a label, outside a condition. Others only warn. |
-| `skip-reason` | A skip gives its reason, and a gap in coverage is a test that skips. |
+| `debug-output` | A test labels what it prints outside a condition. Other debug output warns. |
+| `skip-reason` | A skip gives its reason, and a gap is a test that skips. No fix reaches it. |
 | `fixed-wait` | Drive code waits on a condition or a clock, and never sleeps. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |

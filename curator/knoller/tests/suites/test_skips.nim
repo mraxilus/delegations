@@ -85,7 +85,7 @@ suite "Skips":
     check "  test \"a\":\n    check b  # Name opening with `TODO:` passes.\n".found.len == 0
       # comment that names word, and opens with none, marks no gap
     check "  test \"a\":\n    skip()  # Waits on parser.\n    # TODO: Write law.\n".found.len == 0
-      # test that never runs shows in run as skipped
+      # test skipping at its own level shows in run as skipped
 
 
   test "test under bare `when` reports, and test under `when` with other branch passes":

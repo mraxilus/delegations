@@ -14,8 +14,10 @@
 ##     `path:line: <rule-id> left: <message>` for finding left for hand, as every check of
 ##     knoller reads fixed text (`checkSource`), static pass's among them;
 ##     `path:line: fence-held warning: <message>` for each fence, naming each rule broken
-##     inside it with count and first line, so no fenced line goes unseen (`checkFenceHeld`); then
-##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
+##     inside it with count and first line, so no fenced line goes unseen (`checkFenceHeld`);
+##     `path:line: debug-output warning: <message>` for each debug output, which no fix removes
+##     (`warnDebug`); then count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its
+##     location is path alone.
 ##   Every line printed is line of file as given: finding left in fixed text is traced back
 ##     through fix (`traced`), as each rewrite is. Finding on line fix inserts has no line as
 ##     given, so it prints at line `0`, path alone, and its message echoes its text.
@@ -111,7 +113,8 @@ type
   Part = object  ## Define what fix of one file gives, before `joined` sorts it into outcome.
     path: string  ## Path as named.
     written: seq[(string, string)]  ## Path and new text, where file changes.
-    fixed, left, held: seq[Report]  ## Rewrite, finding left and fence warning, unsorted.
+    fixed, left, held: seq[Report]
+      ## Rewrite, finding left, and warning of fence or debug output, unsorted.
     unsettled: string  ## Why fixers leave file as written (`Fix.unsettled`); empty if settled.
     asked: seq[string]  ## Source chain asked parser about and no answer holds yet.
 
