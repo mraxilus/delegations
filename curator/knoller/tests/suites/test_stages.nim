@@ -44,8 +44,9 @@ const
     "      for n in Basis:\n        cayley[m][n] = @[]\n\n" &
     "    for n in Basis:\n      if cayley[m][n].len == 0: continue\n\n" &
     "      # Filter by n operands.\n      cayley[m][n] = @[]\n"
-    ## Lines 721 to 739 of `pga/cayleys.nim` at `3d9696e`, parameters and last stage cut:
-    ##   paragraph of line 736 holds two lines of code alone.
+    ## Lines 721 to 741 of `pga/cayleys.nim` at `3d9696e`, parameters cut, and last stage cut to
+    ##   its comment and one line at its indent: paragraph of line 736 holds two lines of code
+    ##   alone.
 
 
 func fixed(source: string): string =

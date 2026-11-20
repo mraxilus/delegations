@@ -177,7 +177,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `generic-suffix` | A type closes with `Of` only where an alias of it takes its bare name. |
 | `collection-name` | A collection type takes the plural of its member, not a word for its form. |
 | `article-in-comment` | A comment holds no article. |
-| `comment-form` | A claim opens with a capital and closes with a period; a name takes backticks. |
+| `comment-form` | A claim takes a capital and a period. A path, literal or name takes backticks. |
 | `doc-outline` | A nuance stands two spaces past where the sentence of its parent starts. |
 | `doc-summary` | A doc holds one summary line, whose sentence ends in a period. |
 | `message-value` | A message echoes its value in backticks. |
@@ -217,7 +217,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `trailing-separator` | A list of one item to a line ends in a separator. |
 | `missing-doc` | A declaration takes a doc, and `## TODO: Document.` waits for its text. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
-| `stage-comment` | A stage of three lines or more opens with a comment, where another stage does. |
+| `stage-comment` | A stage of three lines of code or more opens with a comment if another does. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
 

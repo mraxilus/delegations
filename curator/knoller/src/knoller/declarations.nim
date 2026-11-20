@@ -23,8 +23,9 @@
 ##     opening with note stays for hand, since its outline may elaborate note or text.
 ##   Missing doc passes one-line borrow or forward stacked under group comment (VI.1), code
 ##     inside `quote do:`, whose generator carries docs through parameter, and doc on line above
-##     at declaration's indent, which stands out of place rather than missing. Stack is run of
-##     routines on one line each, at one indent, group comment right above it, `#` and never doc.
+##     declaration that is no routine, at its indent, which stands out of place rather than
+##     missing. Stack is run of routines on one line each, at one indent, group comment right
+##     above it, `#` and never doc.
 ##   Forward declaration takes doc of its routine, since `nim doc` reads doc there and drops doc
 ##     of definition (read in `nim doc` of Nim 2.2.12 and 2.4.0); fixer leaves its move for hand.
 ##   Doc position (VI.9): each doc stands where `nim doc` reads it, in one position for each
@@ -62,6 +63,8 @@
 ##     first line in `block:` or inside bracket, where `nim doc` reads none (`nim jsondoc` of
 ##     Nim 2.2.12 and 2.4.0).
 ##   Cost: doc trailing first line of value over brackets, or of signature, stays unread there.
+##   Cost: doc at start of file moves onto declaration right below it, though `nim doc` reads it
+##     as doc of module (`nim jsondoc` of Nim 2.4.0).
 ##   Cost: routine on one line reads as forward where its body after `= ` is shorter than
 ##     `BODY_FORWARD_MAX`, so short helper standing under group comment passes too.
 ##   Cost: forward declaration reads by name alone: routine without body where any overload of

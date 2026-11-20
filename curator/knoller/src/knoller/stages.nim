@@ -17,8 +17,7 @@
 ##   Fixer writes `PLACEHOLDER` above paragraph, at its indent, where line fits; check and fixer
 ##     share one reading (`stages`), so rule is written once (Article II.1).
 ##
-##   Rejected: broad form, i.e. every paragraph blank line opens, which wrote 45 lines on PGA
-##               library at `3d9696e`; Architect narrowed it to routines that comment stage.
+##   Rejected: broad form, i.e. every paragraph blank line opens: 45 lines by count on #443.
 ##   Cost: scanner, never parser: routine reads from line opening with its keyword and name,
 ##           so lambda's body reads as lines of routine holding it, and test as `test "…":`.
 ##   Cost: line inside string spanning lines is no line of code, so long literal counts its
