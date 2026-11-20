@@ -225,6 +225,15 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, [entry(path, unfenced)]).warned.len == 0  # no fence, none
 
 
+  test "fix warns of each debug output, and writes none of it (VIII.5)":
+    let
+      path = "curator/audit/src/a.nim"
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\nexpandMacros:\n  m()\n"
+    check fixEntries(BRANCH_CURATOR, [entry(path, source)]).warned.mapIt(it.render) == @[
+      path & ":5: Code leaves no debug output, which nothing reads (VIII.5); got `expandMacros:`.",
+    ]
+
+
   test "fix keeps word of project keeping its own prose, and drops article elsewhere (VI.5)":
     # Case: `a` of lojban joins two names as `or`, so fix deleting it from comment of
     #   `lojban_parser` changes what comment says. Domain: comment and fence warning, in listed
