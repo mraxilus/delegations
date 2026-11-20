@@ -31,6 +31,7 @@ when compileOption("profiler"):
 import std/[options, random, sequtils, strutils, unittest]
 
 import ../../src/ricysoho/[grammar {.all.}, prose, selmaho, stream]
+import ../../src/ricysoho/lists/cmavo
 import ../articles_wikipedia/articles
 import ../cll/examples
 import ../sample_tatoeba/sentences
@@ -168,6 +169,13 @@ const
   COUNT_PARTS_JOINED = 74
     ## lo te kancu be lo pagbu poi le nu tcidu ro pagbu cu katna le se ciska poi jorne lo ju'agri pe
     ##     pa prosa ku'o fi ke'a
+  WORDS_DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi sinxa lo lerfu pe `0` bi'o `9` to `CLL 18.2` toi
+  COUNT_PA = 46
+    ## lo te kancu be lo cmavo pe `PA` ne'i le liste pe `cmavo.nim`
+  COUNT_HELD_LEAST = 2100
+    ## lo dzijimte be lo te kancu be lo selcmi poi lo valsi pe `PA` cu se lidne ke'a zi'e poi le
+    ##     flalu pe lo nu fanta cu tcidu ke'a to `Article IX.3` toi
 
 
 
@@ -241,7 +249,7 @@ func isCutting(text: string): bool =
 func textJoined(): string =
   ## zbasu pa selci'a lo ju'agri poi se tcidu ba zo ni'o zi'e pe le prosa po'u `lo jbobau`
   ##   .i lo sinxa be lo ju'agri .a lo jufra be'o poi krasi le ju'agri cu selvi'u
-  ##   .i zo ni'o zvati lo jbini be ro re lamji ju'agri
+  ##   .i zo ni'o zvati lo jbini be ro boi remei be lo lamji ju'agri
   ##
   ## ni'o le 23moi ju'agri pe le prosa cu selfa'o zo tu'e
   ##   .i le 29moi ju'agri cu vasru zo tu'u po'o gi'e na se tcidu
@@ -430,6 +438,26 @@ suite "Chapter 18":
         @[2 .. 2, 4 .. 5, 9 .. 9]  # `CLL 18.147`
 
 
+  test "Each pair of words of PA reads as one number before moi, and as two where boi parts them":
+    # ro porsi be lo valsi pe `PA` cu du pa namcu
+    #   .i zo boi fendi re namcu poi lamji to `CLL 18.6` toi
+    var words: seq[string]  # ro cmavo pe `PA` pe le liste
+    for entry in LIST_CMAVO:
+      if entry.selmaho == Selmaho.Pa: words.add entry.word
+    check words.len == COUNT_PA
+    for a in words:
+      for b in words:
+        checkpoint a & " " & b
+        check ("le " & a & " " & b & " moi").numbersRead == @[1 .. 2]  # `CLL 18.6`
+        check ("le " & a & " boi " & b & " moi").numbersRead == @[1 .. 1, 3 .. 3]  # `CLL 18.6`
+    # ro lerfu pe `0` bi'o `9` cu du pa valsi pe `PA` to `CLL 18.2` toi
+    for a in '0' .. '9':
+      for b in '0' .. '9':
+        checkpoint a & b
+        check ("le " & a & b & "moi").numbersRead == @[1 .. 2]  # `CLL 18.6`
+        check ("le " & a & " boi " & b & "moi").numbersRead == @[1 .. 1, 3 .. 3]  # `CLL 18.6`
+
+
   test "Section 18.16":
     check "li fu'a reboi ci su'i du li mu".treeRead.isSome  # `CLL 18.110`
     # lo pu tadji be lo nu cuxna lo tricu pu cirko le mupli po'u `CLL 18.111`
@@ -603,7 +631,11 @@ suite "Internal: Grammar":
   test "Chart filled from kept columns is chart filled anew, as number grows word by word":
     # lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
     #   .i se ki'u bo pa valsi pe `PA` poi se jmina cu cenba le selcmi poi lidne ke'a
-    for text in ["le pa no moi", "li su'i pa re ci du li xa", "le pa boi no moi"]:
+    var texts = @["li su'i pa re ci du li xa"]
+    for a in WORDS_DIGITS:
+      for b in WORDS_DIGITS:
+        texts.add @["le " & a & " " & b & " moi", "le " & a & " boi " & b & " moi"]
+    for text in texts:
       checkpoint text
       let read = text.terminalsRead.get
       var whole, everywhere: Chart  # le mulcmi poi stali ca ro nu tcidu
@@ -619,6 +651,35 @@ suite "Internal: Grammar":
         check whole.readWhole(step).shape == whole_fresh.readWhole(step).shape
         let islands = everywhere.islands(step, 0, step.len).mapIt(it.shape)
         check islands == everywhere_fresh.islands(step, 0, step.len).mapIt(it.shape)
+
+
+  test "Chart records no completion of number before word of PA, in either mode":
+    # lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
+    #   .i le nu cuxna lo tricu .e lo ricpau cu tcidu `completions` po'o
+    #   .i se ki'u bo `choose` cu cuxna no namcu poi mulno pu lo valsi pe `PA`
+    var texts = @TEXTS_PASSES
+    for example in EXAMPLES_CLL: texts.add example.rows.join(" ")
+    for sentence in SENTENCES_TATOEBA: texts.add sentence.text
+    for a in WORDS_DIGITS:
+      for b in WORDS_DIGITS: texts.add "le " & a & " " & b & " moi"
+    var count = 0
+    for text in texts:
+      let read = text.terminalsRead
+      if read.isNone: continue
+      for is_everywhere in [false, true]:
+        var chart: Chart
+        discard chart.fillSets(read.get, is_everywhere)
+        chart.fillCompletions
+        for i in 1 ..< read.get.len:
+          if read.get[i] != Selmaho.Pa.toTerminal: continue
+          checkpoint text & " at " & $i
+          # le nu cuxna cu facki no namcu poi fanmo pu le valsi
+          var is_held = true
+          for start in 0 ..< i:
+            if chart.choose(HEAD_NUMBER, start, i): is_held = false
+          check is_held
+          inc count
+    check count >= COUNT_HELD_LEAST  # `Article IX.3`
 
 
   test "Chart filled in one mode and then in the other is chart filled anew":

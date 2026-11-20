@@ -98,6 +98,8 @@ const
   DRAWS_NUMBERED = 40
     ## lo klani be lo cunso nu katna be ro selci'a pe le flalu pe denpa bu .e slaka bu poi zvati lo
     ##     jbini be lo lerfu
+  WORDS_DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi sinxa lo lerfu pe `0` bi'o `9` to `CLL 18.2` toi
   PIECE_MOST = 6
     ## lo stuzi pe lo cunspi be lo selci'a poi selzba cu na zmadu le stodi
     ##   .i se ki'u bo lo spisa cu katna lo valsi
@@ -796,7 +798,11 @@ suite "Internal: Live text":
     # `Architect` jdice `D3 a` bu'u `#991`
     #   .i lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
     #   .i se ki'u bo pa valsi pe `PA` poi se ciska cu cenba lo tricu pe lo pu valsi
-    for text in ["le pano moi .i le 10moi", "li su'i pareci du li xa", "le pa boi no moi"]:
+    var texts = @["le pano moi .i le 10moi", "li su'i pareci du li xa"]
+    for a in WORDS_DIGITS:
+      for b in WORDS_DIGITS:
+        texts.add "le " & a & " " & b & " moi .i le " & a & " boi " & b & " moi"
+    for text in texts:
       checkpoint text
       let live = text.readLive(toSeq(1 ..< text.len), is_growing = true)
       check live.nif == readTextParts(text).reading.toNifParts  # le flalu pe le stedu be `live.nim`

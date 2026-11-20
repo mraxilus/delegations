@@ -25,7 +25,7 @@ import ./corpora
 
 
 const
-  STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro xo kau moi se ciska pe lo selci'agri
+  STEP_CORPORA = 8  ## lo du'u lo flalu cu tcidu ro boi xo kau moi se ciska pe lo selci'agri
   COUNT_TEXTS_LEAST = 200
     ## lo du'u lo flalu cu tcidu su'o xo kau selci'a
     ##   .i lo flalu pu tcidu 243 selci'a ca lo nu le cipra cu se jmina
