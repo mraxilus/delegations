@@ -570,7 +570,7 @@ ni'o so mupli cu na'e mapti su'o javni pe `CLL 21.1`
   .i `Architect` jdice di'u bu'u `#815`
   .i `PROVENANCE.md` cmene le javni poi ro le so mupli cu na'e mapti ke'a
 
-ni'o le genturfa'i cu tcidu 16469 lo 17495 jufra pe `Tatoeba`
+ni'o le genturfa'i cu tcidu 16493 lo 17495 jufra pe `Tatoeba`
   .i ro klesi be lo drata cu na'e mapti su'o javni pe `CLL 1.1`
   .i `PROVENANCE.md` cmene ro klesi .e lo javni .e lo namcu pe le klesi
   .i lo cipra cu cipra ro jdice pe le mupli gi'e sitna lo javni poi ro jufra poi se to'e curmi cu
