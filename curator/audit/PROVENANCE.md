@@ -1251,6 +1251,10 @@ newest first. It demands that the commit immediately before every `fix` is a `te
 scope, one test to one fix, with nothing between them. So the priority of the Architect,
 "every mistake becomes a test", holds by a check and not by prose alone.
 
+- The subjects keep each line of history together (`git log --topo-order`). In order of date, a
+  merge of a branch built at the same time puts its commits between a test and its fix. Verified
+  by `suites/test_tree.nim`, with two branches whose dates interleave.
+
 - Rejected: any earlier `test` of the scope on the branch. One token test then satisfies every
   later fix, so it measures the order of kinds and nothing of the pairing.
 - Rejected: a match across the history of `main`, which needs the whole log. It would still
@@ -3130,6 +3134,23 @@ the two lines after the last pragma that opens the module, with a blank line on 
 - An unseeded random in a test keeps a check and no fixer, because the seed is a choice.
 - Verified by `suites/test_form.nim`, `suites/test_prose.nim`, `suites/test_idioms.nim` and
   `suites/test_checker.nim`. The tree holds no finding of these four rules.
+
+**The chain joins an interpolated string only in a project that declares no `formatValue`.**
+Interpolation calls `formatValue` in place of `$`, so a join could print a value otherwise where a
+project declares one (rule 21 of #443). The context of a fix reads each `.nim` file of the tree. It
+names the nimble file of each project where a file declares one (`nimbleProject`).
+
+- Verified by `suites/test_fixes.nim`: a join stays split where another file of the project
+  declares `formatValue`, and joins where no file of the tree does.
+- Cost: a `formatValue` that a dependency declares, outside the tree, is unread.
+
+**The context of a fix reads two more facts of each project for a fixer of one file.** These are
+the defaults of its configurations (rule 14 of #443), and the constants that each of its modules
+exports (rule 12). The fix and the fence warning of each entry take those of its project. The
+record of `curator/knoller` gives the reason of each (`## Configuration blocks` and `## Staging`).
+
+- Verified by `suites/test_fixes.nim`. A two-way `when` swaps, and a branch on a constant of
+  another module becomes `when`. Each does so only where the tree holds the module of the constant.
 
 **An entry block that binds moves into `proc main` (V.10).** The fixer puts the body in
 `proc main` above the block, and the block calls `main()`. The routine takes the doc

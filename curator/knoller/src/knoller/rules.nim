@@ -49,6 +49,10 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   OutlineDoc = "doc outline"  ## Nuance stands two spaces past where parent's sentence starts.
   SummaryDoc = "doc summary"  ## Doc holds one summary line, whose sentence ends in period.
   ValueMessage = "message value"  ## Message echoes its value in backticks.
+  BracesInterpolation = "interpolation braces"
+    ## Interpolated string takes each value in braces, and joins none to it by `&`.
+  EchoMessage = "message echo"
+    ## Message echoes each value in backticks, before `got` and with none, and states claim first.
   AndWithOr = "and with or"  ## Condition mixing `and` with `or` parenthesises each `and`.
   NotOverBinary = "not over binary"  ## `not` over binary expression takes parentheses.
   ParenthesesNeedless = "needless parentheses"  ## Parentheses parser groups anyway go.
@@ -66,13 +70,21 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   KeysStub = "stub keys"  ## Test stub leaves out `-r`, `batchable` and `joinable`.
   ConsumerUsed = "used consumer"  ## `{.used.}` carries comment naming its consumer.
   PushForeign = "push foreign"  ## `{.push.}` stands only over foreign bindings `{.pop.}` closes.
+  FamilyCompileTime = "compile-time family"
+    ## Routine compile time alone runs carries `compileTime`, as its family does, and no runtime
+    ##   pragma.
+  StaticWhen = "when static"  ## Branch on what build fixes is `when`, never `if`.
   SeedRandom = "random seed"  ## Suite importing `std/random` seeds it.
   HeaderStub = "stub header"  ## Test stub carries testament header.
-  OutputDebug = "debug output"  ## Test leaves no unlabelled `echo` outside condition.
+  OutputDebug = "debug output"  ## Test leaves no unlabelled `echo`; other debug output warns.
+  ReasonSkip = "skip reason"  ## Skip gives reason, gap skips, and no test leaves run.
   WaitFixed = "fixed wait"  ## Drive code waits on condition or clock, never span of real time.
   ListUnordered = "unordered list"  ## List language leaves unordered is alphabetised.
+  BlockConfiguration = "configuration block"
+    ## Adjacent blocks of one configuration share one, and default configuration comes first.
   LinesBlankTest = "test blank lines"  ## Blank lines beside suite and test follow tier.
   LinesBlankHelper = "helper blank lines"  ## Nested helper takes one blank line each side.
+  LinesBlankDefinition = "definition blank lines"  ## Blank lines before definition follow its kind.
   PositionDoc = "doc position"  ## Doc stands where shape of declaration puts it.
   DefaultLiteral = "literal default"  ## Parameter with literal default states no type.
   SpacingExpression = "expression spacing"  ## Space stands only where expression rule puts it.

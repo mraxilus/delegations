@@ -136,7 +136,7 @@ suite "Fixes":
     check written[0].content == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
         "\n\n\n#[ Section ]#\n\n" &
         "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
-        "  ## TODO: Document.\nproc g(a: int) = discard\n  ## TODO: Document.\n" &
+        "  ## TODO: Document.\n\nproc g(a: int) = discard\n  ## TODO: Document.\n\n" &
         "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
         "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
         "  second_item_named_at_length_so_list_crosses_column,\n]  ## TODO: Document.\n" &
@@ -145,7 +145,8 @@ suite "Fixes":
 
 
   test "layout checks read Nim syntax; import and list checks read `.nim` alone":
-    let breach = "import std/os\nimport std/strutils\nlet a = b+c  ## Sum.\n"
+    let breach = "import std/os\nimport std/strutils\n\nlet a = b+c  ## Sum.\n"
+      # blank line after imports, as X.2 asks
     check checkFormatting("a.nims", breach, Kind.NimScript).toFindings.allIt("X.9" in it.message)
     check checkFormatting("a.nim", breach, Kind.Nim).len == 2  # brackets too
     check checkFormatting("a.md", breach, Kind.Markdown).len == 0
@@ -207,15 +208,16 @@ suite "Fixes":
     check checkFormatting(path, unfenced, Kind.Nim).anyIt(
       it.line == 5 and it.rule == Rule.WrappingCall,
     )  # rows join unfenced
-    # after fence alone, and doc each binding takes
+    # after fence alone, and blank line and doc each binding takes
     check checkFormatting(path, source, Kind.Nim).mapIt((it.line, it.rule)) == @[
-      (12, Rule.SpacingExpression), (5, Rule.DocMissing), (12, Rule.DocMissing),
+      (12, Rule.LinesBlankDefinition), (12, Rule.SpacingExpression), (5, Rule.DocMissing),
+      (12, Rule.DocMissing),
     ]
     let plan = fixEntries(BRANCH_CURATOR, [entry(path, source)])
     check plan.written[0].content == source.replace(
       "  #!fix on\n)\n", "  #!fix on\n)  ## TODO: Document.\n"
-    ).replace("let n = matrix(1+2)\n", "let n = matrix(1 + 2)  ## TODO: Document.\n")
-      # rows kept, blank line too
+    ).replace("let n = matrix(1+2)\n", "\nlet n = matrix(1 + 2)  ## TODO: Document.\n")
+      # rows kept, blank line inside them too
     check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
     check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0
     check plan.warned.mapIt(it.render) == @[
@@ -223,6 +225,18 @@ suite "Fixes":
         "times from line 7 (X.1); got lines `6` to `10`.",
     ]  # what breaks inside fence, by rule
     check fixEntries(BRANCH_CURATOR, [entry(path, unfenced)]).warned.len == 0  # no fence, none
+
+
+  test "fix warns of each debug output, and writes none of it (VIII.5)":
+    let
+      path = "curator/audit/src/a.nim"
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\nexpandMacros:\n  m()\n"
+      plan = fixEntries(BRANCH_CURATOR, [entry(path, source)])
+    check plan.warned.mapIt(it.render) == @[
+      path & ":5: Code leaves no debug output, which nothing reads (VIII.5); got `expandMacros:`.",
+    ]
+    check plan.written.len == 0  # source stays as written
+    check plan.left.len == 0  # warning, never finding
 
 
   test "fix keeps word of project keeping its own prose, and drops article elsewhere (VI.5)":
@@ -312,7 +326,9 @@ suite "Fixes":
       "let a = 1 + 2  ## Sum.\n" & FENCE_OFF & "\nlet b = 1+2\n"  # fence keeps doc out too
     let quoted =
       "let s = \"\"\"\n" & FENCE_OFF & "\n\"\"\"  ## Text.\nlet b = 1+2  ## Sum.\n"
-    check checkFormatting(path, quoted, Kind.NimScript).mapIt(it.line) == @[4]
+    check checkFormatting(path, quoted, Kind.NimScript).mapIt((it.line, it.rule)) == @[
+      (4, Rule.LinesBlankDefinition), (4, Rule.SpacingExpression),
+    ]  # each check reaches line after string
 
 
   test "fence crossing bracket leaves whole file as written, and is its one finding":
@@ -360,6 +376,50 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, [tree[0]]).written.len == 0  # no context: nothing known
     let again = @[plan.written[0], tree[1]]
     check fixEntries(BRANCH_CURATOR, [again[0]], context = initContext(again)).written.len == 0
+
+
+  test "fix reads defaults of configurations over modules of project (X.11)":
+    let
+      constants = "## Do.\n\n" & STRICT_FUNCS & "\n\nconst\n" &
+        "  IS_CONFORMAL* {.define: \"a.is_conformal\".} = false  ## Flat parts.\n" &
+        "  IS_RIGID* = not IS_CONFORMAL  ## Round parts alone.\n"
+      formal = "## Do.\n\n" & STRICT_FUNCS & "\n\ntype Formal*[T] = object  ## Hold parts.\n" &
+        "  when IS_CONFORMAL:\n    flat*, round*: T\n  else:\n    round*: T\n"
+      tree = @[
+        entry("curator/audit/src/a.nim", constants), entry("curator/audit/src/b.nim", formal)
+      ]
+      written = fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree)).written
+    check written.len == 1
+    check "when IS_RIGID:" in written[0].content and "when IS_CONFORMAL:" notin written[0].content
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree[1 .. 1])).written
+      .allIt("when IS_CONFORMAL:" in it.content)  # project holds no constant, so no order
+
+
+  test "fix reads constants other modules of project export (STYLE.md §3)":
+    let
+      constants = "## Do.\n\n" & STRICT_FUNCS & "\n\nconst COUNT* = 3  ## Parts.\n"
+      branch = "## Do.\n\n" & STRICT_FUNCS & "\n\nimport ./a\n\n\nproc p*() =\n  ## Print.\n" &
+        "  if COUNT > 2:\n    echo 1\n"
+      tree = @[
+        entry("curator/audit/src/a.nim", constants), entry("curator/audit/src/b.nim", branch)
+      ]
+      written = fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree)).written
+    check written.len == 1
+    check "  when COUNT > 2:" in written[0].content
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree[1 .. 1])).written
+      .allIt("  if COUNT > 2:" in it.content)  # project holds no constant, so branch is runtime
+
+
+  test "join of interpolated string stays split in project whose file declares `formatValue`":
+    let
+      path = "curator/audit/src/a.nim"
+      module = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet m = &\"y is {y}, from \" & $x  ## Text.\n"
+      format = "## Do.\n\n" & STRICT_FUNCS & "\n\nproc formatValue*(result: var string; " &
+        "value: int; specifier: string) =\n  ## Write value.\n  result.add $value\n"
+      tree = @[entry(path, module), entry("curator/audit/src/b.nim", format)]
+    check fixEntries(BRANCH_CURATOR, [tree[0]], context = initContext(tree[0 .. 0])).written[0]
+      .content == module.replace("from \" & $x", "from {x}\"")
+    check fixEntries(BRANCH_CURATOR, [tree[0]], context = initContext(tree)).written.len == 0
 
 
   test "semantic pass settles conversion first; file compiling nowhere is left with its error":
@@ -421,18 +481,20 @@ suite "Fixes":
         [entry(path, head & "when isMainModule:\n  let count = 1\n  echo count\n")],
       )
     check plan.written.mapIt(it.content) == @[
-      head & "proc main() =\n  ## TODO: Document.\n  let count = 1\n  echo count\n\n\n" &
+      head & "\nproc main() =\n  ## TODO: Document.\n  let count = 1\n  echo count\n\n\n" &
         "when isMainModule:\n  main()\n",
-    ]  # V.10
-    check plan.fixed.mapIt((it.line, it.message)) == @[(9, "entry block (V.10)")]
+    ]  # V.10, and X.2 before routine after imports
+    check plan.fixed.mapIt((it.line, it.message)) == @[
+      (9, "entry block (V.10)"), (0, "definition blank lines (X.2)"),
+    ]  # blank line before `proc main`, which fix inserts, so at line `0`
     check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0  # second fix writes nothing
     let held = fixEntries(
       BRANCH_CURATOR,
-      [entry(path, head & "when isMainModule:\n  var count {.global.} = 0\n")],
-    )
+      [entry(path, head & "\nwhen isMainModule:\n  var count {.global.} = 0\n")],
+    )  # two blank lines after imports, as X.2 asks, so fix writes nothing
     check held.written.len == 0
     check held.left.mapIt((it.line, it.message)) == @[
-      (9, "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
+      (10, "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
         "`{.global.}` binds at module level alone; got `count`."),
     ]  # V.10
 
@@ -467,16 +529,18 @@ suite "Fixes":
     answers[1].globals["count"] = @[]
     let plan = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, answers))
     check plan.written.mapIt(it.content) == @[
-      head & "proc runAll*(): int = 1\n  ## Run.\nconst COUNT* = 2  ## Count.\n",
-      head & IMPORT_PROFILER & "\n\nimport ./a\n\nproc main() =\n  ## TODO: Document.\n" &
+      head & "proc runAll*(): int = 1\n  ## Run.\n\nconst COUNT* = 2  ## Count.\n",
+      head & IMPORT_PROFILER & "\n\nimport ./a\n\n\nproc main() =\n  ## TODO: Document.\n" &
         "  let count = runAll()\n  echo count\n\n\nwhen isMainModule:\n  main()\n",
     ]  # V.1, V.10
     check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
       (a.path, 5, "name case (V.1)"),
+      (a.path, 7, "definition blank lines (X.2)"),
       (b.path, 11, "name case (V.1)"),
       (b.path, 11, "name case (V.1)"),
       (b.path, 12, "name case (V.1)"),
       (b.path, 11, "entry block (V.10)"),
+      (b.path, 0, "definition blank lines (X.2)"),
     ]  # each report at line of source as given, by rule knoller's check names
     check plan.left.len == 0
     let again = plan.written

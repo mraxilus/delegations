@@ -367,6 +367,19 @@ const
     "\n" &
     "    result[operand] = @[product.basis]\n"
     ## Lines 357 to 387 of `pga/cayleys.nim` at `3d9696e` (rule 4 of #443).
+  BASIS_FLAGS =
+    HEAD &
+    "func toBasis(b: BasisFlags): Basis {.compileTime, noinit.} =\n" &
+    "  ## Convert binary flag representation of basis to associated basis.\n" &
+    "  const lut_basis_by_flags = block:\n" &
+    "    const size_of_flags = BasisFlags(1 shl DIMENSIONS)\n" &
+    "    var lut: array[size_of_flags, Option[Basis]]\n" &
+    "    for b in Basis: lut[b.toFlags] = some(b)\n" &
+    "    lut\n" &
+    "\n" &
+    "  doAssert lut_basis_by_flags[b].isSome, &\"Found invalid basis flags: {int(b):b}\"\n" &
+    "  lut_basis_by_flags[b].get\n"
+    ## Lines 235 to 244 of `pga/algebra.nim` at `3d9696e` (rule 6 of #443).
   ORDER =
     HEAD &
     "## Define type definition for transwedge order.\n" &
@@ -375,6 +388,12 @@ const
     ## Lines 46 to 48 of `pga/cayleys.nim` at `3d9696e` (rule 5 of #443).
 
 var KNOWN = Proofs()  ## Answers of parser by source, held across cases, as one run holds them.
+
+
+func staged(source: string): string =
+  ## Write what compile-time family writes on snippet: `noinit` goes from compile-time routine
+  ##   (STYLE.md §2, rule 10 of #443).
+  source.replace("{.compileTime, noinit.}", "{.compileTime.}")
 
 
 proc fixedBy(source: string; prover: Prover): Fix =
@@ -428,7 +447,7 @@ suite "Regressions":
   test "4. range takes no space, but beside binary piece or before prefix (ruling 3)":
     holds HEAD & "let r = 2 .. 6  ## Value.\n", HEAD & "let r = 2..6  ## Value.\n"
     holds HEAD & "let b = x in 2 .. 6  ## Value.\n", HEAD & "let b = x in 2..6  ## Value.\n"
-    holds DIGITS, DIGITS  # `[1 .. ^1]`: `..^` would lex one operator
+    holds DIGITS, DIGITS.staged  # `[1 .. ^1]`: `..^` would lex one operator
     holds PARITY, PARITY  # `for j in i + 1 ..< len(digits)`: piece holds binary `+`
 
 
@@ -446,7 +465,7 @@ suite "Regressions":
 
 
   test "7. call keeps hand's breaks, and group one item to line takes trailing comma":
-    holds ENUM, ENUM.replace(" for a `", " for `")  # split by its trailing comma; X.9 articles
+    holds ENUM, ENUM.staged.replace(" for a `", " for `")  # split by trailing comma; X.9 articles
     holds ANTI, ANTI.replace("Cayley1D; complements", "Cayley1D, complements")  # breaks kept
     holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements").replace(
       "          )\n        )\n", "          ),\n        )\n",
@@ -540,7 +559,7 @@ suite "Regressions":
 
 
   test "15. paragraph of routine that comments stage takes placeholder (#443)":
-    holds EXOMORPHISM, EXOMORPHISM.replace(
+    holds EXOMORPHISM, EXOMORPHISM.staged.replace(
       "  result = metric\n\n", "  result = metric\n\n  # TODO: Describe stage's purpose.\n"
     )  # rule 4: paragraph of line 365 of `pga/cayleys.nim`, which holds no stage comment
 
@@ -549,3 +568,8 @@ suite "Regressions":
     holds ORDER, HEAD & "type Order = distinct range[0..DIMENSIONS]  ## Define type definition " &
       "for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
       # rule 5: line 47 of `pga/cayleys.nim`; commented code below it stays
+
+
+  test "17. bare value of message takes backticks (#443)":
+    holds BASIS_FLAGS, BASIS_FLAGS.staged.replace(": {int(b):b}\"", ": `{int(b):b}`\"")
+      # rule 6: line 243 of `pga/algebra.nim`, whose value stands bare

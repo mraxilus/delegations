@@ -105,7 +105,8 @@ check, and a script or a package takes those of any Nim code (`## Idioms`).
   one file, then gives the source to `formatted`.
 - The caller also gives the facts of each file that its text does not hold. They are the mode of
   its articles (`## Articles`), its nearest nimble file (`## Layout of a package`), and whether it
-  is drive code (`## Fixed waits`).
+  is drive code (`## Fixed waits`). It gives the constants that the other modules of its package
+  export (`## Staging`), and the defaults of its configurations (`## Configuration blocks`).
 - The header of `chain.nim` gives the order of the fixers, and why each one comes where it does.
 - The chain can run all its rounds again, and `## Wraps` gives why.
 - Verified by `suites/test_chain.nim`: a source that breaks each layout rule settles in one run,
@@ -605,9 +606,10 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 
 - The cases come from the PGA library at `d9be8ae` and `3d9696e`, from `dance_ontology` (#539),
   and from `rga_visualiser` (#521). Others come from the rulings of #533, #526 and #443.
-- The cases of rules 2 to 5 of #443 quote the library at `3d9696e`. Verified by hand, 2026-11-20,
-  with the suite of `048c3c36` against knoller at each commit. Each fails at `4245dca8`, before
-  those rules, and the case of rule 2 alone fails at `3a6cf5e9`.
+- The cases of rules 2 to 6 of #443 quote the library at `3d9696e`. Verified by hand, 2026-11-20,
+  with the suite of `060c3a76` against knoller at each commit. Each fails at `4245dca8`, before
+  those rules. The cases of rules 2 and 6 alone fail at `3a6cf5e9`, and that of rule 6 alone at
+  `d018a6c0`.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
 - Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
@@ -845,6 +847,135 @@ literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `O
 **A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
 which fixers widen, which wraps follow, and what the chain holds where none fits.
 
+## Definition blank lines
+
+**The run of blank lines before a definition takes the count that X.2 gives it (#443, rule
+13).** The Architect ruled it so in chat on 2026-11-18, with the answers Q1 to Q3.
+`checkDefinitions` and `fixDefinitions` of `blanks.nim` share one reading (`gapsDefinition`). The
+rule reads each run between two items at module level. It also reads each run between two items
+of each branch of a `when` there, since `when` opens no scope. The rule reads no run before the
+first item of a level.
+
+- An item is a code line at the indent of its level, with the lines that it holds. These are its
+  brackets, its deeper lines, its doc, and each `elif`, `else`, `of`, `except` or `finally` branch.
+- A routine, a declaration block (`type`, `const`, `let`, `var`) and a declarative call are
+  definitions. A declarative call calls a template or a macro that the module declares, or a
+  routine `define…`. A `when` counts as the definition that it holds first, and below it as the
+  one that it holds last.
+- An item is one line where its head line holds all its code. A routine with no body, as a
+  borrow, is one line too, since only width wraps its signature.
+- An item with a `##` doc on its head line or inside it is documented. A `##` inside a `#` comment
+  is no doc. A doc right above an item stands with it, but does not make it documented.
+- A `#` comment or a `##` doc at the indent of the definition, right above it, stands with it. So
+  the run above them is the run that the rule reads, and the report names the head line.
+- The rule reads the run only where the item above is a definition or an import. A pragma line,
+  a statement, a banner or a free comment above it opens what follows, so the rule reads no run
+  there. A free comment has a blank line under it.
+
+**The definition below the run sets its count, and the item above decides each stack.** The
+counts read the bullets of X.2 in this order:
+
+- A declarative call after another stacks in its family, so no line and one line pass. Knoller
+  cannot tell two families apart, so a run of two or more becomes one.
+- A declarative call after a routine takes up to two, as the call of a template right under it
+  (STYLE.md §2).
+- An undocumented one-line routine after another stacks in its group. Up to two lines pass, since
+  X.2 gives no count between two groups. The first helper of a group takes two.
+- A declaration block after another takes one.
+- A documented one-line definition that no bullet above names takes one after any definition
+  (Q3). So a documented call after a routine takes up to two, as a call does.
+- Knoller reads Q3 after the imports too, since Q3 says that the definition below a run sets its
+  count.
+- Every other definition takes two, a routine of several lines among them (Q2). So the check
+  reports one line and three lines.
+- Inside a second-tier section, each count caps at one, since siblings there take one (X.2). Q1
+  makes Wedge, Norms, Unitize and Support second tier. The nearest banner above the definition,
+  outside a string, gives the section. Knoller changes the tier of no banner, so the library writes
+  `#[[ ]]#` by hand where a section is second tier.
+- The fixer sets each run to the nearest count that passes, last run first.
+- The rule reads no run between two single bindings of one keyword on adjacent lines, since they
+  share one keyword (X.5). `single-bindings` merges them earlier in the chain.
+- Runs beside a banner, before a suite or a test, and beside a nested helper stay with
+  `banner-spacing`, `test-blank-lines` and `helper-blank-lines`.
+- Rejected: two lines after the imports for each definition, since the definition below a run
+  sets its count (Q3).
+- Rejected: a fence marker as a separator. It is a comment, so it stands with the definition
+  below it.
+- Cost: the rule reads no definition inside a `when` of a routine body, or of an `if` at module
+  level. How often the library and the projects hold one is unmeasured.
+- Cost: a declarative call in command form, with a generic bracket, or with a space before `(`,
+  reads as a statement.
+- The rule joins `checkFormatting` and the chain. The static pass of `curator/audit` does not
+  read it until the projects fix their runs (step 4 of #443).
+- Verified by `suites/test_definitions.nim`. It holds one case of each shape that rule 13 of #443
+  names. A law runs over each pair of forms, each count from 0 to 3 and each tier.
+- Verified by `suites/test_chain.nim` and `suites/test_command.nim`, which pin the output of the
+  chain and the command line.
+- Verified by measurement at commit `14bab954`, 2026-11-20, with a driver that calls
+  `checkDefinitions` and `fixDefinitions` alone on each file of the PGA library at `3d9696e`. The
+  hand change of Q1 stands at `operators.nim` lines 298, 319, 365 and 393. With it, the check
+  gives 23 reports, and the fix adds 16 blank lines and removes 9.
+  Without it, the check gives 33 reports, and the fix adds 28 blank lines and removes 9, by `diff`.
+  One line that it removes holds spaces alone. A second check of each fixed copy gives 0 reports.
+- Verified by the suites of the fixed copy with the hand change, under Nim 2.4.0 on 2026-11-20.
+  `rga3d` gives 33 OK, 0 FAILED and 5 SKIPPED. `cga3d` gives 28 OK, 0 FAILED and 10 SKIPPED.
+- Verified by measurement at commit `14bab954`, 2026-11-20, with the same driver over the `.nim`,
+  `.nims` and `.nimble` files that git tracks in each project. Knoller gives 36, audit 42,
+  assayer 5, probe 5 and `pga_benchmark` 316. `pga_visualiser` gives 193, `dance_ontology` 531,
+  `rictadni` 24 and `ricysoho` 117, which is 1,269.
+
+## Configuration blocks
+
+**Definitions of one configuration that stand next to each other share one block, and the
+configuration that a build gets by default comes first (X.11).** The Architect ruled so on rule
+14 of #443, as option b. Knoller never moves a definition out of its family
+(`checkConfigurations`, `fixConfigurations`).
+
+- Two blocks of one configuration, each with no other branch, join only where blank lines alone
+  stand between them. The fix deletes the head of the second block, so its body follows the
+  first, with the blank lines between as written. A definition or a comment between keeps the two
+  apart, since what stands there can belong to the family of either. Conditions that read alike,
+  spaces aside, are one configuration.
+- A two-way `when` whose condition is false by default puts its default last, so it reports. The
+  fix swaps its branches. The new head names the complement by the constant that names it, as
+  `IS_RIGID* = not IS_CONFORMAL`, or else with `not`.
+- The default comes from the define of the package. A module-level constant with a `define` or
+  `booldefine` pragma and a literal `true` or `false` gives it, with its type stated or not. So
+  does a constant written `not` of such a constant. The audit reads them over each project
+  (`readConfigurations`). Knoller reads them over the modules of its run alone, so a run on
+  `pga/cayleys.nim` alone gives no report.
+- A condition that no define gives names no order, as `defined(js)`, which the target sets.
+  `isMainModule` and `compileOption(…)` name no configuration.
+- The rule reads each `when` at module level or in a branch of one, in a type section, and among
+  the fields of an object. A `when` inside a routine holds no definition, so it is unread.
+- A head with a trailing comment stays for hand, so the fix writes no comment away. So does a body
+  whose indent differs from the block that it joins.
+- Verified by `suites/test_configurations.nim`, which quotes `Formal` of `pga/cayleys.nim` and the
+  constants of `pga/algebra.nim` of the PGA library at `3d9696e`, and by `suites/test_fixes.nim`
+  of `curator/audit`. They hold each bullet above, and the two costs below.
+- Verified by hand with knoller at `0b795b5f` on the PGA library at `3d9696e`, 2026-11-20. A
+  driver imports `knoller`, reads the defaults of the package, and runs the check and the fix on
+  each file that `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 1 report, at line 37
+  of `pga/cayleys.nim`, which is `Formal`, the place that the ruling names. The fix swaps its
+  branches in 4 lines. The ruling gives `Formal` a hand change in their place: `round` with no
+  condition, and `flat` under `when IS_CONFORMAL`.
+- Verified by hand with Nim 2.4.0 on the copy that the fix wrote, 2026-11-20. Each suite builds
+  and runs by `nim c -r -d:testing -d:nimUnittestAbortOnError:on` and the matrix line of its stub.
+  rga3d gives 33 OK, 5 SKIPPED and 0 FAILED, and cga3d gives 28 OK, 10 SKIPPED and 0 FAILED, as
+  the library as given does.
+- Verified by hand with that driver over the repository at `0b795b5f`, 2026-11-20. It gives no
+  report. Only `HAS_FORMS_DENSE` of `pga_benchmark` gives a default, and it guards no two-way
+  branch.
+- Rejected: a join of every block of one configuration in a section, which takes `■` and `□` of
+  `pga/operators.nim` out of their family.
+- Cost: knoller reads the lines with a scanner, and never with a parser. A body runs while its
+  lines stand deeper than its head, so a line of a string at column 0 ends it. A branch on the
+  line of its head, as `when C: a`, and a chain with `elif` are unread.
+- Cost: the rule reads the order of a two-way branch alone. So two blocks of complementary
+  configurations side by side, with the default last, pass, though X.11 asks for the default
+  first there too. A scan of each pair of blocks in the library and the repository at
+  `0b795b5f` finds no such pair, 2026-11-20.
+
 ## Docs
 
 **Each declaration takes a doc where its shape puts it, and `## TODO: Document.` waits for its
@@ -1010,8 +1141,8 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   routine body.
 - Cost: a doc at the start of a file moves onto a declaration right below it. `nim doc` reads it as
   the doc of the module. No Nim file of the tree at `93613d68` opens with a doc right above a
-  declaration, read on 2026-11-20. Verified by `suites/test_declarations.nim`, and by hand with
-  `nim jsondoc` of 2.4.0, 2026-11-20.
+  declaration. Verified by a script over each file that `git ls-files '*.nim'` lists, 2026-11-20.
+  Verified by `suites/test_declarations.nim`, and by hand with `nim jsondoc` of 2.4.0, 2026-11-20.
 
 ## Stages
 
@@ -1038,7 +1169,7 @@ It writes only where the line fits `LINE_MAX`, and otherwise the report stays fo
 - The floor of three lines is the Architect's. The routines of the PGA library that comment a stage
   hold 50 paragraphs of three lines of code or more. Of them, 43 open with a comment. Of the 16
   paragraphs of one line, 6 do. Both figures are the count on #443 of 2026-11-18, unmeasured here.
-- Rejected: the broad form, every paragraph that a blank line opens, which #443 counts at 45 lines.
+- Rejected: the broad form, every paragraph that a blank line opens: 45 lines of the library, #443.
 - Rejected: `# TODO: Describe stage.`, which asks for no purpose (VI.4).
 - Verified by `suites/test_stages.nim`. Its cases quote the macro `defineOperator` of
   `pga/operators.nim` and the routine `filterBases` of `pga/cayleys.nim` at `3d9696e`, and each
@@ -1184,27 +1315,6 @@ another. Article I.4 asks the columns to align as the eye reads them, so reading
   Architect.
 - Verified by `suites/test_chain.nim`: a table row that holds a glyph, padded as the hand's font
   shows it, passes the whole chain as written.
-
-**A message echoes each value after `got` in backticks (IV.4).** The check reads the
-concatenation from the literal that holds `; got ` to its end. Each interpolation and each
-operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
-such as `got none.`, echoes no value and is no finding.
-
-- The fixer puts a backtick on each side of a bare value, inside the literals around it.
-- A value that ends the message has no literal after it, so the message takes a fixed shape. A
-  backtick goes at the end of the literal before the value, and `& "`."` goes after it. So the
-  message ends on its value, as IV.4 asks.
-- A value whose operator binds as loosely as `&`, or more loosely, keeps its finding, since the
-  appended literal would join that operator. So `"got " & a == b` stays.
-- The rule reads every value of the tail, so a context after the value takes backticks too, as
-  `for {manner}` does.
-- A joining `&` stands on the line where its operand ends. Nim continues a line that a binary
-  operator ends, so a line that `&` opens is the next statement, such as an `&"…"` result.
-- An operand ends at its line, so a bracket that opens the next line opens the next statement.
-  A comment after a joining `&` is no operand, and the operand follows it on the next line.
-- A test that builds the old text in the same form changes with it. A test that asserts the
-  text in another form changes by hand, as two tests of `test_record.nim` do.
-- Verified by `suites/test_messages.nim`.
 
 **A condition that mixes `and` with `or` takes parentheses around each `and` (X.4).** The parser
 already groups it so, because `and` binds tighter than `or`. So the parentheses move no reading.
@@ -1363,6 +1473,105 @@ layout, and its `))` becomes `)`.
 - The rewrite never widens a line: `(` becomes a space, and its `)` goes. The chain runs it before
   the call layout, so the layout reads the command form. Verified by `suites/test_commands.nim` and
   `suites/test_chain.nim`.
+
+## Messages
+
+**A message echoes each value after `got` in backticks (IV.4).** The check reads the
+concatenation from the literal that holds `; got ` to its end. Each interpolation and each
+operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
+such as `got none.`, echoes no value and is no finding.
+
+- The fixer puts a backtick on each side of a bare value, inside the literals around it.
+- A value that ends the message has no literal after it, so the message takes a fixed shape. A
+  backtick goes at the end of the literal before the value, and `& "`."` goes after it. So the
+  message ends on its value, in the form that IV.4 gives as its example.
+- A value whose operator binds as loosely as `&`, or more loosely, keeps its finding, since the
+  appended literal would join that operator. So `"got " & a == b` stays.
+- The rule reads every value of the tail, so a context after the value takes backticks too, as
+  `for {manner}` does.
+- An `&` that joins two operands stands on the line where the first one ends. Nim continues a
+  line that a binary operator ends, so a line that `&` opens is the next statement, such as an
+  `&"…"` result.
+- An operand ends at its line, so a bracket that opens the next line opens the next statement.
+  A comment after such an `&` is no operand, and the operand follows it on the next line.
+- A test that builds the old text in the same form changes with it. A test that asserts the
+  text in another form takes an edit by hand.
+- Verified by `suites/test_messages.nim`.
+
+**Each value of a message stands in backticks, wherever it stands, and a value that opens its
+claim stays for hand (IV.4).** The Architect ruled so on rule 6 of #443, with no demand for the
+form `; got`. A message is an argument of a call that takes one (`CALLS_MESSAGE`). It is the
+second argument of `assert`, `doAssert` and `newException`. It is the first of `error`, `quit`,
+`raiseAssert` and `warning`. It is also the value of the pragmas `error`, `warning` and `fatal`.
+
+- The value of a pragma is a message only where the innermost bracket around it is `{.`. So a
+  field, an argument or a binding of that name holds no message.
+- A message that holds no literal, as one that a binding holds, is none.
+- The check reads the concatenation of a message from its first operand, as the rule of message
+  value reads its tail. Each interpolation and each operand must stand inside a backtick span,
+  counted from the start of the message.
+- A value that the rule of message value reads, after `; got ` in its literal, takes no second
+  report.
+- The fixer writes the backticks as the rule of message value does. An operand that ends a message
+  takes `& "`"` after it, and no period, since such a message takes a form of its own.
+- A value that opens its claim, with words after it, stays for hand, since a fix cannot reword
+  the claim. Its report names the words after it.
+- A message under `quote do:` reads too, since the macro writes it into code. A name that the
+  macro splices there is an operand.
+- Verified by `suites/test_echoes.nim`. It quotes each message of the library at `3d9696e` that the
+  rule reports, and the message of `tools/cll.nim` of `ricysoho` that a binding `error` tripped.
+- Verified by hand with knoller at `c3c34ca8` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkEchoes` and `fixEchoes` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 4 reports, and the fix changes the 3
+  lines that the ruling counts. The value that opens its claim keeps its report, and a second run
+  writes nothing.
+- Cost: a message that a binding holds, or that a routine of the project builds, stays unread.
+
+**An interpolated string takes each value in braces, never by `&` (STYLE.md §3).** The Architect
+ruled so on rule 21 of #443, after ruling D3 on `&"y is {y}, from " & $x`. A concatenation that
+holds an interpolated literal, `&"…"` or `fmt"…"`, and joins an operand or a literal to it by `&`
+takes one report. The fix joins it into one interpolated literal.
+
+- The check reads each expression of each depth by precedence, as the check of conditions does
+  (`segments`, `tailCommand`). An operator that binds more loosely than `&` splits the
+  expression, so each operand of `&` stays whole, and `dir / name` joins as one value.
+- A concatenation with no interpolated literal passes, as `"E" & $b` at `pga/algebra.nim:268`
+  does. By the page's figure for ruling D1, interpolation costs 5 to 15 ns more for each message
+  than `&`. So the fix never turns a plain join into one.
+- The fix keeps the prefix of the first interpolated literal, `&` or `fmt`. `$x` becomes `{x}`,
+  since `formatValue` of `std/strformat` turns a value to text by `$`, read in 2.4.0. A group under
+  `$` gives its content. A plain
+  literal joins as text, with each brace doubled. A backtick round a value stays (IV.4).
+- A wrap of literals whose joined line would not fit `LINE_MAX` passes, since X.1 lets a long
+  string break so. The fit counts runes alone, since the width check lets a line of one long
+  token stand. A wrap whose joined line fits is joined.
+- A value stays for hand, with its report, where it holds a quote, a brace, a backslash or a
+  backtick. So does one that holds a line break or a colon outside brackets. So do a raw or long
+  literal and a comment between two operands, and a concatenation whose joined line would not fit.
+- A literal stays for hand too where the kept literal would read its escapes otherwise, since
+  `fmt"…"` is raw and `&"…"` is not. So does an escape by number, which can spell a brace.
+- The chain runs the fixer only where the project declares no `formatValue`, which
+  interpolation calls in place of `$` (`isDeclaringFormatValue`). The audit reads each `.nim`
+  file of the tree. The command line reads each file of the run in a Nim dialect. Each groups
+  them by nimble file. The check still reports there, and the report stays for hand.
+- Verified by `suites/test_interpolations.nim`, `suites/test_command.nim`, and
+  `suites/test_fixes.nim` of `curator/audit`. Verified by hand, 2026-11-20, with each mutant built
+  alone in its own cache. A mutant that drops the guard in the command line or in the audit fails
+  its suite. So does each mutant that drops a guard of a value or a literal for hand.
+- Verified by hand with knoller at `008ecfa1` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkInterpolations` and `fixInterpolations` alone on each file
+  that `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives no report, since each wrap of
+  the library would join past `LINE_MAX`, at 122 and 123 runes.
+- Verified by hand with that driver over the repository at `008ecfa1`, 2026-11-20. It gives 53
+  reports, and the fix joins 24, each settled, since a second run writes nothing.
+- The ruling of 2026-11-19 counts 44 reports and 21 fixes. Three wraps join here at exactly 100
+  runes, which X.1 allows. They are lines 2796 and 2804 of `src/desktop/main.nim` of
+  `pga_visualiser`, and line 408 of `design/checks.nim` of `dance_ontology`. The cause of the
+  other 6 reports, each in `dance_ontology`, is unmeasured.
+- Cost: a `formatValue` that a dependency declares, or a file outside the run of the command
+  line, is unread.
+- Cost: a wrap that holds a value and does not fit stays whole for hand, though a join inside one
+  of its lines would fit.
 
 ## Wraps
 
@@ -2005,6 +2214,198 @@ diagnostic.
   `randomize(0)` does, because both fix the sequence.
 - Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
 
+**Other debug output warns, and fails no check (VIII.5).** The Architect ruled so on rule 19 of
+#443. A fix would change what the code prints, so knoller fixes none (`warnDebug`). The warning
+fails no check, as the warning of a fence does. The command line and the audit print each
+warning beside those of fences.
+
+- A build-time printer warns in any file: `expandMacros`, `dumpTree`, `dumpAstGen` and
+  `dumpLisp`. So do an echo of a syntax tree, as `echo n.treeRepr`, and `debugEcho`.
+- An `echo` at the top level of a library module warns, since it prints on each import. A
+  library module lies outside `tests` and `tools` of its package. A module with an entry block,
+  or one that quits at its top level, is a program, which no import runs.
+- A commented-out print is no code, and passes.
+- Verified by `suites/test_debugs.nim`, which quotes the build-time printer of
+  `pga/multivectors.nim` at `3d9696e`, and by `suites/test_fixes.nim` of `curator/audit`. Each
+  printer warns in a module, a test, a script and a nimble file. A module that breaks no other
+  rule exits clean with its warning. A fix writes none of it, and the fix of the audit leaves no
+  finding.
+- Verified by hand with knoller at `44b16354` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `warnDebug` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists, with a nimble file at the root of the
+  library. It gives 1 warning, at line 83 of `pga/multivectors.nim`, as the ruling counts.
+- Verified by hand with that driver over the repository at `44b16354`, 2026-11-20. It gives no
+  warning. The one top-level `echo` of `pga_benchmark` stands in a program that quits.
+- Cost: an echo inside a routine passes, since the text cannot tell output from debug output.
+  An echo of a tree by `repr` there passes too, since `repr` prints any value.
+
+## Skips
+
+**Each gap of coverage shows in the run (IX.9).** The Architect ruled so on rule 17 of #443, and
+ruled that no fix writes a reason. A skip gives its reason after it on its line, as STYLE.md §6
+writes it. The reason may also stand on the comment line right above the skip, at its indent. It
+may stand in an echo of text there too, which the run prints. Each report stays for hand, since
+no text gives the reason (`checkSkips`).
+
+- The check reads each file under `tests` of its package. The static pass of `koch check` does
+  not read its reports yet. Knoller's command line and the warnings of fences read them, as they
+  read each check of the chain.
+- A skip that is the whole body of a branch may give its reason right above the head of that
+  branch. This is knoller's reading, and the ruling does not name it. On one line, as
+  `when IS_CONFORMAL: skip()`, the reason above the head is the reason above the skip, and two
+  lines read alike. Its cases are lines 120 to 122 and 219 to 221 of
+  `tests/suites/test_picking.nim` of `pga_visualiser`, which pass.
+- A placeholder test, whose code is `skip()` alone, gives its reason in a name that opens with
+  `TODO:`.
+- A comment that opens with `TODO` inside a test that runs names a gap that the run never shows,
+  so it reports. A comment that gives the reason of a skip is no gap. A test whose body skips at
+  its own level shows in the run as skipped, so it holds no gap.
+- A test under a `when` with no other branch leaves the run where its condition is false, so it
+  reports, once for each test. `when isMainModule:` names no configuration.
+- A test under `quote do:` is generated code, and so is a skip under it. So neither reports.
+- Verified by `suites/test_skips.nim`. Its cases quote `tests/suites.nim` of the PGA library at
+  `3d9696e`, and each case names its cut.
+- Verified by hand with knoller at `44b16354` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkSkips` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists, with a nimble file at the root of the
+  library. It gives 8 reports, as the ruling counts. They are lines 288, 308, 331, 346, 358, 371,
+  380 and 432 of `tests/suites.nim`.
+- Verified by hand with that driver over the repository at `44b16354`, 2026-11-20. It gives 44
+  reports, each a test of `pga_visualiser` under a bare gate. Of them, 17 stand under a gate
+  inside a suite, and 27 under a gate around a whole suite. The ruling counts 17 there, as 16
+  tests under a gate and 1 skip. That skip gives its reason above the head of its branch, so it
+  passes here.
+- Cost: knoller reads the lines with a scanner, and never with a parser. A test reads from a line
+  that opens with `test` and ends in `:`, and a line at its indent or shallower ends it. So a
+  test on one line, as `test "a": skip()`, and a head as `test("a"):` are unread. A line of a
+  string at column 0 inside a test ends its body there.
+- Cost: any comment right above a skip reads as its reason, a commented-out line of code too.
+
+## Staging
+
+**A routine that compile time alone runs is a member of the compile-time family, and each member
+carries its own `compileTime` (STYLE.md §2).** `checkFamilies` reads the members of one module. A
+member is one of these routines:
+
+- A routine whose pragmas hold `compileTime`, or that nests in a macro, a `static:` block or a
+  compile-time routine. `is_compile_time` of `declared.nim` reads it so, as `action-verb` does,
+  in the same walk that reads the head of each routine (`heads`).
+- A private routine whose every use lies in a member, a macro, a `static:` block or the value of
+  a `const`. That is the incidental const evaluation of STYLE.md §2. The greatest such set holds,
+  so two members that call each other stay members.
+
+The rule reads the uses and the module so:
+
+- A use of a routine is a mention of its name outside its own block. An operator has no name
+  that a use spells. So the rule reads its uses by the mentions of the type of its first
+  parameter. A mention in a `type` section, an iterator or a template defines that type, and is
+  no use. Such code runs where it is used. So `==` on `Order` of `pga/cayleys.nim` is a member.
+- The body of `quote` or `genAst` is code that a macro emits. A use there is a runtime use, and a
+  routine that it declares is no member, though it nests in a macro.
+- The family is staged where one routine of the module carries its own `compileTime`. A module
+  where no routine carries it passes, as `pga/multivectors.nim` does.
+- An iterator and a template pass, since Nim refuses `compileTime` on both. A macro runs by its
+  keyword, and carries no pragma for it.
+- Rejected: a family of the whole project, which reports a helper of one macro in a module that
+  stages nothing else (rule 10 of #443).
+- Rejected: a nested routine under the pragma of its parent, since STYLE.md §2 asks the family
+  to carry the pragma "the same way".
+- Cost: a field, a binding or a parameter that spells the name of a routine reads as a use. So
+  it keeps the routine out of the family. That gives fewer findings, never a false one.
+- Cost: a runtime use of an operator through a field, as `w.o == w.o`, names no type of it. So the
+  operator reads as a member, and the fix stages a routine that runtime calls. The build fails.
+- Cost: two private routines that call each other, with no use outside the pair, read as members.
+  So the fix stages code that no build runs.
+- Verified by `suites/test_staging.nim`, which pins each cost above.
+
+**A member of a staged family carries no runtime pragma.** The runtime pragmas are `inline`,
+`noinit`, `noinline` and `codegenDecl`. Each acts on generated code alone, and the compiler
+generates no code for a compile-time routine (the Nim manual, the `compileTime` pragma). So each of
+them is superstition there.
+
+- Cost: a module that stages nothing passes. So a routine that nests in its macro or its `static:`
+  block keeps its runtime pragma.
+
+**The fix writes on the line that the pragmas stand on, else on the line that closes the
+parameters (`Head.last`).** It drops each runtime pragma, and puts `compileTime` among the bare
+pragmas in dictionary order, before the pragmas that take an argument (X.10). So `{.borrow.}`
+becomes `{.borrow, compileTime.}`. Where the line holds no pragma block, the fix opens
+`{.compileTime.}` before the `=` of the body.
+
+- The fix widens its line, so it is a widener (`## Wraps`). Off a held line it writes freely, and
+  the wrapping after it lays the line out.
+- The chain runs it after the idioms and before the wrapping, on a module alone. A script and a
+  nimble file run in the VM alone, so no pragma there acts on generated code.
+- Cost: a pragma block that spans lines is unread, so its routine stays for hand.
+- Verified by `suites/test_staging.nim`. Verified by `suites/test_regressions.nim`: each snippet of
+  the library with `noinit` on a compile-time routine loses it in the output of the chain.
+- Verified by hand with Nim 2.4.0, 2026-11-20. An iterator or a template with the pragma gives
+  `invalid pragma: compileTime`. A `when` on a static parameter in a macro gives `cannot evaluate
+  at compile time`.
+
+**A branch on what the build fixes is `when`, and never `if` (STYLE.md §3).** `checkBranches`
+reports an `if` where its condition, and each `elif` of its chain, read only these:
+
+- literals and operators, and the type after `is` or `isnot`;
+- each name that a `const` binds at module level in the file;
+- each local `const` above the branch in its routine;
+- each constant that another module of the package exports;
+- static and typedesc parameters, and placeholders, of each routine around the branch;
+- `defined`, `declared`, `compileOption`, `compiles` and `sizeof`, whatever their argument;
+- `len`, `high`, `low`, `ord` and `card` of a static value.
+
+Any other name or call reads as runtime, so its chain passes.
+
+- A runtime parameter, a loop variable, and a `let` or `var` shadow a constant of the same name,
+  so that name reads as runtime. A `let` or `var` shadows from above the branch in its routine,
+  or from module level.
+- An `if` in the value of a `const`, a macro, a `static:` block or a compile-time routine passes,
+  since it is no runtime branch. Nim 2.4.0 cannot evaluate a static parameter of a macro in
+  `when`, so `if not as_unary` of `pga/operators.nim` stays.
+- The fix writes `when` for `if`, and keeps each `elif` and `else`. A statement whose branch
+  declares a name stays for hand, since `when` opens no scope (STYLE.md §1). A fix that widens a
+  narrow line past `LINE_MAX` stays for hand too.
+- Rejected: a constant read from the case of its name. A global `let` or `var` takes that case
+  too, as `IS_TALLYING` of `pga_visualiser` does, and the build fixes neither.
+- Cost: a constant of a package that the run does not read, such as the library that a project
+  imports, reads as runtime. So `if IS_CONFORMAL` of `pga_benchmark` passes. A missing constant
+  adds no false report.
+- Cost: a constant counts in each file of its package, whether the file imports its module or
+  not. So a runtime name of the same spelling that a dependency gives reads as fixed by the build.
+  The fix then writes a `when` that the build refuses.
+- Cost: a condition that spans lines is unread.
+- Verified by `suites/test_staging.nim`.
+
+**The caller gives the constants that the other modules of the package export.** The rule reads
+one file, as each rule of knoller does. So the caller reads the constants of each module
+(`constantsExported`), and passes them in (`constants`). A step of the kind `Reading` takes them,
+as a placed step takes the nimble file (`## Layout of a package`).
+
+- The command line reads them from each module of the run, by the nimble file of its package
+  (`constantsPackage`).
+- The audit reads them from each `.nim` file of the tree, by the nimble file of its project
+  (`initContext` of `fixes.nim`). The fix and the fence warning of each entry take those of its
+  project.
+- Verified by `suites/test_staging.nim`, over two modules of one package and one module alone, and
+  by `suites/test_fixes.nim` of `curator/audit`, over two modules of one project.
+
+**Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
+A driver ran `checkFamilies` and `fixFamilies`, then `checkBranches` and `fixBranches`, each
+alone, on a copy of the library, with the code of knoller at `8088d980`. `knoller --check` lists
+the same lines.
+
+- Compile-time family: 21 reports over 21 lines, and the fix writes +21 −21 lines. That is the
+  diff of the page of rule 10, line for line. The check finds nothing on the fixed copy.
+- Branch on what the build fixes: 3 reports over 3 lines of `tests/suites.nim`, and the fix
+  writes +3 −3 lines. The check finds nothing on the fixed copy.
+- Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and
+  5 skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For the branch, rga4d, where
+  `DIMENSIONS != 3` holds, gives 33 OK, 0 failed and 5 skipped.
+- The driver read each project of the repository at `8088d980` as one package, by `git ls-files`
+  of its `.nim` files. The projects take 18 reports of the family: `ricysoho` 14,
+  `dance_ontology` 3 and `pga_benchmark` 1. They take 3 reports of the branch: `pga_benchmark` 2
+  and `pga_visualiser` 1.
+
 ## Fixed waits
 
 **A fixed wait in drive code is a finding, and the caller decides which file is drive code.** The
@@ -2050,6 +2451,12 @@ there is unverified.
 
 ## Open questions
 
+- Does a documented declarative call after a routine take one, as Q3 gives a documented
+  one-line definition, or up to two, as a call does? Knoller gives it up to two now.
+- Do two blocks of complementary configurations side by side, with the default last, report, and
+  does the fix swap them? X.11 asks for the default first, and no place holds such a pair yet.
+- Does a test under a gate around a whole suite report, as one under a gate inside a suite does?
+  27 of the 44 reports of `pga_visualiser` stand under such a gate.
 - Nimble 0.26.2, which 2.4.0 ships, is not verified with the `?subdir=curator/knoller` form of a
   git URL. Its check needs the package list of nimble, which the proxy of the machine of a
   delegate refuses with status 405. Atlas reads the form through an override (`## Package`).

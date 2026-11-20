@@ -116,6 +116,7 @@ path:line: <rule-id> fixed
 path: unsettled: <message>
 path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
+path:line: debug-output warning: <message>
 path: type-conversion warning: <message>
 path:line: name-case warning: <message>
 needless-parentheses warning: <message>
@@ -181,6 +182,8 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `doc-outline` | A nuance stands two spaces past where the sentence of its parent starts. |
 | `doc-summary` | A doc holds one summary line, whose sentence ends in a period. |
 | `message-value` | A message echoes its value in backticks. |
+| `interpolation-braces` | An interpolated string takes each value in braces, never by `&`. |
+| `message-echo` | A message echoes each value in backticks, wherever it stands. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
 | `needless-parentheses` | Parentheses go where the parser of the compiler reads the same tree. |
@@ -198,13 +201,18 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `stub-keys` | A stub leaves out `-r`, `batchable` and `joinable`. |
 | `used-consumer` | A `{.used.}` carries a comment that names its consumer. No fix reaches it. |
 | `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |
+| `compile-time-family` | A compile-time family carries `compileTime`, and no runtime pragma. |
+| `when-static` | A runtime branch on what the build fixes is `when`, never `if`. |
 | `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
 | `stub-header` | A stub `tests/test_*.nim` carries a testament header. No fix reaches it. |
-| `debug-output` | A test prints no value without a label, outside a condition. No fix reaches it. |
+| `debug-output` | A test labels what it prints outside a condition. Other debug output warns. |
+| `skip-reason` | A skip gives its reason, and a gap is a test that skips. No fix reaches it. |
 | `fixed-wait` | Drive code waits on a condition or a clock, and never sleeps. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
+| `configuration-block` | Blocks of one configuration join. In `when … else` the default is first. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
 | `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
+| `definition-blank-lines` | Blank lines before a definition follow its kind and the kind above. |
 | `doc-position` | A doc stands where the shape of its declaration puts it. |
 | `literal-default` | A parameter with a literal default states no type. |
 | `expression-spacing` | A space stands only where the expression rule puts it. |

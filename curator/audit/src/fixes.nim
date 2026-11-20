@@ -32,6 +32,9 @@
 ##     of.
 ##   Knoller reads tests, stubs and umbrella from nimble file nearest each file, and its caller
 ##     finds that file; koch gives that of project holding it (`nimbleProject`).
+##   Knoller reads what other modules of project tell fixer of one file, and `initContext` reads
+##     it over tree by project: whether file declares `formatValue`, constants each module
+##     exports, and defaults of configurations.
 ##   Knoller reads fixed waits where its caller says file is drive code, and koch says so of
 ##     `tests/` and `tools/` of each project (`waits.isCodeDrive`), so fence warning counts them
 ##     where static pass reads them.
@@ -68,12 +71,19 @@ type
     answers: Table[string, Answer]  ## Semantic pass's answer for each file asked, by path.
     plans: seq[Plan]  ## Rename of each declaration coining abbreviation, planned or refused.
     proofs: Table[string, Proofs]  ## Answers of parser of project's compiler, by path.
+    formatting: seq[string]
+      ## Nimble file of each project declaring `formatValue`, whose interpolated strings never join.
+    configurations: Table[string, Configurations]
+      ## Defaults of configurations of each project, read from its modules, by nimble file.
+    constants: Table[string, seq[string]]
+      ## Constants modules of each project export, read as fixed by build, by nimble file.
 
   Fixed* = tuple
     ## Define what fix of entries writes and reports, and what it asks parser.
     written: seq[Entry]  ## Entry to write, with new text.
     fixed, refused, left: seq[Finding]  ## Rewrite, scope finding, finding left.
-    warned: seq[Finding]  ## Warning: fence that keeps its lines, or file fixers do not settle.
+    warned: seq[Finding]
+      ## Warning: fence that keeps its lines, debug output, or file fixers do not settle.
     asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
 
 
@@ -237,7 +247,8 @@ func initContext*(
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
   ##   of each abbreviation and case in entries, refused where it would write file entries
-  ##   leave out.
+  ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export
+  ##   and defaults of its configurations.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
@@ -245,6 +256,14 @@ func initContext*(
       sources.add e.content
     if e.path.isCalling: suites.add e.content
   result.dead = exportsDead(paths, sources, suites).deduplicate
+  var modules: Table[string, seq[string]]
+  for e in tree:
+    if not e.path.endsWith(".nim"): continue
+    if e.content.isDeclaringFormatValue: result.formatting.add e.path.nimbleProject
+    modules.mgetOrPut(e.path.nimbleProject, @[]).add e.content
+  for project, sources in modules:
+    result.configurations[project] = readConfigurations(sources)
+    result.constants[project] = sources.mapIt(it.constantsExported).concat
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
   for (rename, refusal) in renames(tree, entries, locked):
@@ -300,7 +319,8 @@ func fixSource(
       result.fixed.add step.fixed
 
   # Run chain of knoller's fixers until source settles; unsettled source keeps edits above.
-  #   Articles stay in file of project keeping its own prose (`isProseOwn`).
+  #   Articles stay in file of project keeping its own prose (`isProseOwn`), and interpolated
+  #   strings stay split in project declaring `formatValue`.
   let fix = formatted(
     path,
     base,
@@ -308,6 +328,9 @@ func fixSource(
     context.proofs.getOrDefault(path),
     should_drop_articles = not path.isProseOwn,
     nimble = path.nimbleProject,
+    has_format_value = path.nimbleProject in context.formatting,
+    configurations = context.configurations.getOrDefault(path.nimbleProject),
+    constants = context.constants.getOrDefault(path.nimbleProject),
   )
   result.source = fix.source
   result.asked = fix.asked
@@ -338,7 +361,10 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     should_drop_articles = not e.path.isProseOwn,
     nimble = e.path.nimbleProject,
     is_drive = e.path.isCodeDrive,
+    configurations = context.configurations.getOrDefault(e.path.nimbleProject),
+    constants = context.constants.getOrDefault(e.path.nimbleProject),
   ).toFindings
+  result.warned.add warnDebug(e.path, e.content, e.path.nimbleProject).toFindings
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:
