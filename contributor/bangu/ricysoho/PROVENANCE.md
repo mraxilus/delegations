@@ -778,16 +778,29 @@ ni'o **ro lerfu pe `0` bi'o `9` cu du pa valsi poi le genturfa'i cu tcidu ke'a t
   .i se ki'u bo le genturfa'i cu tcidu lo'u pa no moi le'u fi zoi gy. 10moi .gy.
   .i le lerfu na se basna
   .i ne'i lo javni pe `CLL 4.9` le lerfu cu na karsna gi'e na zunsna
-  .i slaka bu poi zvati lo jbini be re lerfu cu se to'e curmi ta'i `Comma` to `CLL 3.3` toi
-  .i denpa bu poi zvati lo jbini be re lerfu cu sinxa lo denpa to `CLL 3.3` toi
-  .i se ki'u bo le genturfa'i cu tcidu lo'u li ci pa vo le'u fi zoi gy. li 3.14 .gy.
-      Verified by `suites/test_stream.nim`.
-  .i ne'i lo cipra po'u `Internal: Stream`
+  .i ne'i lo cipra po'u `Internal: Stream` Verified by `suites/test_stream.nim`.
 
-ni'o se to'e cuxna fa lo nu denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi
-  .i ki'u bo `CLL 3.3` cusku lo du'u denpa bu cu sinxa lo denpa
-  .i ku'i lo glico selci'a cu sinxa zo pi ta'i denpa bu
+ni'o **denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi se tcidu ta'i zo pi
+  .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu du pa valsi poi se tcidu ta'i zo
+      ki'o**
+  .i `Architect` jdice di'u bu'u `#991` ta'i `D1 a`
+  .i se ki'u bo le genturfa'i cu tcidu lo'u li ci pi pa vo le'u fi zoi gy. li 3.14 .gy.
+  .i le genturfa'i cu tcidu lo'u li pa ki'o no no no le'u fi zoi gy. li 1,000 .gy.
+  .i lo drata slaka bu poi se lidne pa lerfu cu se to'e curmi ta'i `Comma` mu'u zoi gy. 3,14 .gy.
+  .i denpa bu poi na se lidne pa lerfu cu sinxa lo denpa mu'u zoi gy. 3. do .gy.
+      Verified by `suites/test_stream.nim`.
+  .i le tricu pe ro le namcu cu du le tricu pe le cmavo Verified by `suites/test_corpus.nim`.
+  .i ji'a le mivyselci'a cu tcidu le namcu ta'i lo nu ro lerfu cu se ciska
+      Verified by `suites/test_live.nim`.
+
+ni'o le nu tcidu denpa bu ta'i zo pi cu frica `CLL 3.3` noi cusku lo du'u denpa bu cu sinxa lo denpa
+  .i ku'i lo denpa poi zvati lo jbini be re lerfu cu galfi no namcu to `CLL 18.6` toi
   .i lo mupli po'u `CLL 18.6` du lo'u ci pi pa vo pa mu le'u
+  .i lo mupli po'u `CLL 18.11` du lo'u pa ki'o re ci vo ki'o mu xa ze le'u
+
+ni'o se to'e cuxna fa lo nu ro slaka bu poi se lidne pa lerfu cu se tcidu ta'i zo ki'o
+  .i ki'u bo da'i le genturfa'i cu tcidu zoi gy. 3,14 .gy. ta'i li 3014
+  .i ku'i so'i ciska cu ciska li 3 pi 14 ta'i zoi gy. 3,14 .gy.
 
 ni'o jdima fa lo nu lo genturfa'i poi jersi `CLL 3.1` cu to'e curmi lo selci'a poi vasru le lerfu
   .i lo vreji .e lo pinka pe le samtci cu vasru le lerfu
@@ -1563,7 +1576,7 @@ ni'o **va'o lo nu lo lerfu pe `0` bi'o `9` cu basti ro cmavo pe `CLL 18.2` ne'i 
       Verified by `suites/test_corpus.nim`.
   .i le tricu cu se kancu ta'i ro javni .e ro klesi be lo genvla
   .i le cipra cu claxu lo mupli poi vasru slaka bu ki'u lo nu slaka bu poi zvati lo jbini be re
-      lerfu pe `0` bi'o `9` cu se to'e curmi
+      lerfu pe `0` bi'o `9` cu se tcidu ta'i zo ki'o gi'a se to'e curmi
 
 ni'o **va'o lo nu lo mupli cu na'e mapti su'o javni pe `CLL 21.1` kei le genturfa'i cu tinbe
     `CLL 21.1`
@@ -3582,6 +3595,7 @@ ni'o **lo lerfu pe `0` bi'o `9` cu basti lo cmavo pe `CLL 18.2` va'o lo nu lo na
       `byte` me'u
 
 ni'o se to'e cuxna fa lo nu ro cmavo pe `CLL 18.2` cu se basti
+  .i `Architect` jdice di'u bu'u `#991` ta'i `D2 a`
   .i ki'u bo lo nu basti pa cmavo poi no drata cmavo cu lamji ke'a cu vimcu pa lerfu po'o
   .i ca `f7a6b5c6` le selci'a cu vasru 4673 cmavo pe `CLL 18.2` poi na se sitna
   .i se ki'u bo lo nu basti ro le cmavo cu vimcu 4673 me `byte` me'u
