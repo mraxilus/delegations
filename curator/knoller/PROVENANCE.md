@@ -2084,6 +2084,60 @@ diagnostic.
   `randomize(0)` does, because both fix the sequence.
 - Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
 
+**Other debug output warns, and fails no check (VIII.5).** The Architect ruled so on rule 19 of
+#443. A fix would change what the code prints, so knoller fixes none (`warnDebug`). The warning
+fails no check, as the warning of a fence does. The command line and the audit print each
+warning beside those of fences.
+
+- A build-time printer warns in any file: `expandMacros`, `dumpTree`, `dumpAstGen` and
+  `dumpLisp`. So do an echo of a syntax tree, as `echo n.treeRepr`, and `debugEcho`.
+- An `echo` at the top level of a library module warns, since it prints on each import. A
+  library module lies outside `tests` and `tools` of its package. A module with an entry block,
+  or one that quits at its top level, is a program, which no import runs.
+- A commented-out print is no code, and passes.
+- Verified by `suites/test_debugs.nim`, which quotes the build-time printer of
+  `pga/multivectors.nim` at `3d9696e`, and by `suites/test_fixes.nim` of `curator/audit`.
+- Verified by hand with knoller at `c9cb792d` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `warnDebug` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists, with a nimble file at the root of the
+  library. It gives 1 warning, at line 83 of `pga/multivectors.nim`, as the ruling counts.
+- Verified by hand with that driver over the repository at `c9cb792d`, 2026-11-20. It gives no
+  warning. The one top-level `echo` of `pga_benchmark` stands in a program that quits.
+- Cost: an echo inside a routine passes, since the text cannot tell output from debug output.
+  So does a print of a tree by `repr`.
+
+## Skips
+
+**Each gap of coverage shows in the run (IX.9).** The Architect ruled so on rule 17 of #443, with
+no placeholder for a reason. A skip gives its reason after it on its line, as STYLE.md §6 writes
+it. The reason may also stand on the comment line right above the skip, at its indent. It may
+stand in an echo of text there too, which the run prints. Each report stays for hand, since no
+text gives the reason (`checkSkips`).
+
+- A skip that is the whole body of a branch may give its reason right above the head of that
+  branch.
+- A placeholder test, whose code is `skip()` alone, gives its reason in a name that opens with
+  `TODO:`.
+- A comment that opens with `TODO` inside a test that runs names a gap that the run never shows,
+  so it reports. A comment that gives the reason of a skip is no gap. A test whose body skips at
+  its own level never runs, so it holds no gap.
+- A test under a `when` with no other branch leaves the run under that configuration, so it
+  reports, once for each test. `when isMainModule:` names no configuration.
+- A test under `quote do:` is generated code, and so is a skip under it. Neither is part of its
+  file.
+- Verified by `suites/test_skips.nim`. Its cases quote `tests/suites.nim` of the PGA library at
+  `3d9696e`, and each case names its cut.
+- Verified by hand with knoller at `c9cb792d` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkSkips` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists, with a nimble file at the root of the
+  library. It gives 8 reports, as the ruling counts. They are lines 288, 308, 331, 346, 358, 371,
+  380 and 432 of `tests/suites.nim`.
+- Verified by hand with that driver over the repository at `c9cb792d`, 2026-11-20. It gives 44
+  reports, each a test of `pga_visualiser` under a bare gate. Of them, 17 stand under a gate
+  inside a suite, and 27 under a gate around a whole suite. The ruling counts 17 there.
+- Cost: a scanner on lines, never a parser. A test reads from a line that opens with `test` and
+  ends in `:`, and a line at its indent or shallower ends it.
+
 ## Fixed waits
 
 **A fixed wait in drive code is a finding, and the caller decides which file is drive code.** The
