@@ -172,7 +172,18 @@ return it confirmed.
   Start work that a kind covers through that kind, and never through a general type.
 - **The prediction is the last message of a turn of its own, which starts no subagent.** Start
   a short background timer first, such as `sleep 5`. Its end wakes you, and the next turn
-  starts the subagent. A block serves only the calls of that next turn.
+  starts the subagent. A block of such a turn serves a later call where no subagent starts
+  between them, whatever the count of turns between. A subagent of any type counts here, tool use
+  too.
+- **The line `**Subagent:**` gives the kind first, then `of` and what the subagent does**, as
+  `**Subagent:** reviewer of the diff`. A block serves only a call of the kind that the first
+  word of this line names. The hook reads the label in any case, with its colon inside or
+  outside the bold. It reads that word in any case, and drops backticks, bold or italic marks
+  around it, and a final comma, full stop or colon. So `**subagent:** Builder. of the fix` names
+  `builder`.
+- **Where more than one block serves a call, the call takes the block of the nearest earlier
+  turn.** Inside that turn, it takes the earliest block. So a block of a later turn, written
+  before the call, replaces a block of that kind of an earlier turn.
 - **The block stands in the chat.** A block in thinking reaches neither the chat nor the hook,
   and a block in the turn of its call is no evidence. Never write a prediction to a file, and
   never give a subagent the path of a live transcript. A subagent can read both.
@@ -199,7 +210,8 @@ Then the subagent runs, and these steps follow:
 
 - **The prediction of a critic is optional, and a resolver takes none.**
 - **A missing prediction is a miss.** Name it in your reply, and count it as a miss in the
-  reflection, with its cause. Write no block after its call.
+  reflection, with its cause. Write no block after its call. Its row in the table holds exactly
+  `No prediction` under `Predicted`, and the cause of the miss under `Result`.
 - **A change to the prompt of a running subagent takes no new prediction.** The reflection
   counts each change as a miss, and names its cause.
 - **A critic runs after each subagent, before your reflection.** It is a fresh subagent too.
@@ -216,7 +228,24 @@ Then the subagent runs, and these steps follow:
 - **The table has the columns `State`, `Confidence`, `Predicted` and `Result`.** The states are
   ✅ a hit, ⬜ a miss, and ⏸️ a claim that waits on a later event. The state ➖ marks a claim
   that is ambiguous or annulled, and the row gives its cause. A claim that holds only in part
-  is a miss. Each cell under `Predicted` quotes a claim of the block word for word.
+  is a miss.
+- **Each cell under `Predicted` is one whole claim of the block, with or without its label.** A
+  claim is a bullet at the top level of the block. Its label opens it: any run with no space
+  that opens with a capital from `A` to `Z`, then `: `, as `Q1:` or `Follow-up:`. A label in
+  bold, as `**Judgement:**`, `**Judgement**:`, `__Judgement:__` or `***Judgement:***`, is a
+  label too. Other text before a `: ` makes no label, as a word in lower case or more than one
+  word. A part of a claim, or a claim with its confidence, quotes no claim.
+- **A claim ends at its confidence**, the last percentage in brackets, as `(70%)` or `(62.5%)`,
+  before its resolution criterion or its end. A percentage before its confidence stays in the
+  claim. Where no percentage stands there, the claim ends at its resolution criterion. Where
+  neither stands, it ends before one final full stop of its bullet.
+- **A claim with percentiles takes no confidence in brackets**, since its percentiles state its
+  confidence. It ends at its percentiles, which open with the words `, as the 10th`. A
+  percentage in brackets in its text, as `(10% cached)`, stays in the claim.
+- **A resolution criterion opens with the words `. Resolution criterion`**, in any case of
+  letters, plain or in italics, bold or both. So `. **Resolution criterion:**` and
+  `. *Resolution criterion:*` end a claim too. A line right under a claim that opens an item, as
+  `1. ` or a marker and a tab, ends that claim.
 - **The reflection gives the cause of each miss, and of each hit at 60% or less.** Where the
   report and the critic disagree, the evidence decides, and the reflection says which way and
   why.
@@ -224,9 +253,10 @@ Then the subagent runs, and these steps follow:
   line. Where its mark of a claim differs from yours, give one line that says which way the
   evidence decides.
 - **The `stop` hook holds these steps at the end of each turn.** It refuses a call of a kind
-  with no block in the turn before it. It refuses a report of a critic with no reflection after
-  it. It refuses a cell under `Predicted` that quotes no block that a call took. A reply to a
-  refusal passes unread, so the hook holds no step there.
+  other than `critic` and `resolver` that no block serves. It refuses a report of a critic with
+  no reflection after it. It refuses a cell under `Predicted` that is neither a whole claim of a
+  block that a call took, nor `No prediction`. A reply to a refusal passes unread, so the hook
+  holds no step there.
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
