@@ -87,6 +87,17 @@ suite "Compile-time family":
       module("func f(): int {.compileTime.} =\n  func g(): int {.compileTime.} = 1\n  g()\n")
 
 
+  test "STYLE.md §2 member whose pragma block spans lines stays for hand":
+    # Probe of reviewer: fix wrote block into block left open on line, which Nim refuses.
+    let spanning = module(
+      "func anchor(): int {.compileTime.} =\n  ## Anchor.\n  0\n\n\nfunc g(): int {.used,\n" &
+        "    inline.} =\n  ## Give one.\n  1\n\n\nconst C = g()  ## One.\n"
+    )
+    check spanning.families.mapIt(it[0]) == @[LINES_HEAD + 6]  # report stays
+    check spanning.fixedFamilies == spanning
+    check formatted("a.nim", spanning, Dialect.Module).source == spanning
+
+
   test "STYLE.md §2 routine runtime may call keeps its runtime pragmas":
     for pragma in PRAGMAS_RUNTIME:
       let source = module("func f(): int {." & pragma & ".} = 1\nlet x = f()\n")
