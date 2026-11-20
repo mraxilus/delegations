@@ -617,6 +617,8 @@ block, with no `*`. It is a routine, an operator among them, a type or a single 
 
 - The caller asks each module in the entry of each file that opens it with `{.all.}`. So the
   uses of that file and of the module stand in one answer.
+- A use maps to the file of the package that its path ends with, below the folder that the root
+  names. So a backslash or a short ancestor, as Windows writes a root, changes no use.
 - The site of a name is its last byte, and the site of an operator is the first byte past its
   backtick. The implicit `result` of a routine answers at columns 0 to 5, so a site at column 5
   of `func toBasis` answers `result`. Verified by hand with the `nimsuggest` of 2.4.0, 2026-11-20.
