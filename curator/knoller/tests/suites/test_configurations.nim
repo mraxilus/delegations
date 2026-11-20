@@ -55,6 +55,8 @@ suite "Configurations":
     ]).defaults == {"HAS_FORMS_DENSE": true}.toTable  # line 45 of `measurements.nim` of benchmark
     let routine = readConfigurations(["proc p() =\n  ## Do.\n  let IS_X = not IS_CONFORMAL\n"])
     check routine.defaults.len == 0  # binding of routine names no configuration
+    check readConfigurations(["const IS_FAST* {.booldefine.}: bool = false\n"]).defaults ==
+      {"IS_FAST": false}.toTable  # binding that states its type
 
 
   test "two-way branch putting default last reports, and fix swaps its branches":
