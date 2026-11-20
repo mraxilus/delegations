@@ -3414,31 +3414,38 @@ suite "Hooks":
       for cell in cells: check quoted(bullets, cell).len == 0
       check quoted(bullets, "four commits") == @[refusalCell("four commits")]  # opens no claim
 
-    # Law: each form under claim `a b`, at each indent, ends claim where pandoc 3.1.3 of GFM
-    #   breaks paragraph, and goes on with claim where it reads text of claim. Below two columns
-    #   each marker of item ends claim; from two, line stands inside bullet, where only marker or
-    #   number 1 with text after it ends claim (CommonMark, List items).
+    # Law: each form under claim `a b`, or under claim `a b d` that wraps once, at each indent,
+    #   ends claim where pandoc 3.1.3 of GFM breaks paragraph, and goes on with claim where it
+    #   reads text of claim. Below two columns each marker of item ends claim; from two, line
+    #   stands inside bullet, where only marker or number of value 1 with text after it ends
+    #   claim (CommonMark, List items), so `01.` does as `1.` does. Cases as found are `01. c` and
+    #   `001) c` of critic of last build, where build `9d4b7eff` compared text `01` with `1`, and
+    #   its breaks X9 and X2, which no test caught: wrapped claim, and colon after number.
     const
       indents = ["", " ", "  ", "   ", "    ", "\t", "     "]
         ## Indents of zero to five columns, tab as four.
       forms = [("1. c", true), ("1) c", true), ("1.\tc", true), ("-\tc", true), ("*\tc", true),
-        ("+\tc", true), ("- c", true), ("* c", true), ("2. c", false), ("10) c", false),
-        ("123456789. c", false), ("2.\tc", false), ("1.", false), ("2)", false), ("*", false),
+        ("+\tc", true), ("- c", true), ("* c", true), ("01. c", true), ("001) c", true),
+        ("2. c", false), ("10) c", false), ("123456789. c", false), ("2.\tc", false),
+        ("0. c", false), ("02. c", false), ("1.", false), ("2)", false), ("*", false),
         ("+", false), ("1. ", false)]
         ## Lines that open item below two columns, and whether they open one from two columns.
-      texts = ["1234567890. c", "1.c", "c", "c (70%)"]
-        ## Lines that open no item: ten digits, no space after mark, and text.
-      lines = 147
-        ## Cases of law: each form and each text at each indent.
+      texts = ["1234567890. c", "1.c", "1: c", "c", "c (70%)"]
+        ## Lines that open no item: ten digits, no space after mark, colon, and text.
+      openers = [("- a b\n", "a b"), ("- a b\n  d\n", "a b d")]
+        ## Claims above each line: on one line, and wrapped once.
+      lines = 364
+        ## Cases of law: each form and each text at each indent, under each claim.
     var laid = 0
-    for indent in indents:
-      let is_inside = indent.len >= 2 or indent == "\t"
-      for (form, is_inside_item) in @forms & texts.mapIt((it, false)):
-        let
-          bullets = "- a b\n" & indent & form
-          is_item = form notin texts and (not is_inside or is_inside_item)
-        check (quoted(bullets, "a b").len == 0) == is_item
-        inc laid
+    for (opener, claim) in openers:
+      for indent in indents:
+        let is_inside = indent.len >= 2 or indent == "\t"
+        for (form, is_inside_item) in @forms & texts.mapIt((it, false)):
+          let
+            bullets = opener & indent & form
+            is_item = form notin texts and (not is_inside or is_inside_item)
+          check (quoted(bullets, claim).len == 0) == is_item
+          inc laid
     check laid == lines
 
 
