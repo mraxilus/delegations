@@ -417,7 +417,7 @@ suite "Fixes":
     #   module of project, in library of project alone, in other project, and nowhere.
     let
       alias = "## Do.\n\n" & STRICT_FUNCS & "\n\n" &
-        "template vector*[G: Grade | GradeAnti](t: typedesc[G]): G = G(1)\n  ## Alias grade.\n"
+          "template vector*[G: Grade | GradeAnti](t: typedesc[G]): G = G(1)\n  ## Alias grade.\n"
       bare = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet VECTOR = Grade(1)  ## Grade of vectors.\n"
       aliased = bare.replace("Grade(1)", "Grade.vector")
       tree = @[
@@ -430,12 +430,12 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, plan.written, context = initContext(again)).written.len == 0
     let
       libraries = {DIRECTORY_AUDIT & "/audit.nimble": @[alias]}.toTable
-      library = initContext(tree[1 .. 1], libraries = libraries)
+      library = initContext(tree[1..1], libraries = libraries)
     check fixEntries(BRANCH_CURATOR, [tree[1]], context = library).written.mapIt(it.content) ==
-      @[aliased]  # library of project alone names alias
+        @[aliased]  # library of project alone names alias
     let other = @[entry("curator/beta/src/a.nim", alias), tree[1]]
     check fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(other)).written.len == 0
-    let alone = initContext(tree[1 .. 1])
+    let alone = initContext(tree[1..1])
     check fixEntries(BRANCH_CURATOR, [tree[1]], context = alone).written.len == 0  # no alias
 
 
@@ -450,15 +450,15 @@ suite "Fixes":
       declaring = entry(
         DIRECTORY_AUDIT & "/src/a.nim",
         head & "func initPoint*(x: int): int = x\n  ## Point.\n\n" &
-          "template one*(t: typedesc[Grade]): Grade = Grade(1)\n  ## One.\n\n" &
-          "template first*(t: typedesc[Grade]): Grade = Grade(1)\n  ## First.\n\n" &
-          "template second*(t: typedesc[Grade]): Grade = Grade(2)\n  ## Second.\n",
+        "template one*(t: typedesc[Grade]): Grade = Grade(1)\n  ## One.\n\n" &
+        "template first*(t: typedesc[Grade]): Grade = Grade(1)\n  ## First.\n\n" &
+        "template second*(t: typedesc[Grade]): Grade = Grade(2)\n  ## Second.\n",
       )
       calling = entry(
         DIRECTORY_AUDIT & "/src/b.nim",
         head & "let\n  NORTH* = X.initPoint  ## North.\n  SOUTH* = Y.initPoint  ## South.\n" &
-          "  WEST* = initPoint(Z)  ## West.\n  FIRST* = Grade(1)  ## First.\n\n" & FENCE_OFF &
-          "\nlet SECOND* = Grade(2)  ## Second.\n" & FENCE_ON & "\n",
+        "  WEST* = initPoint(Z)  ## West.\n  FIRST* = Grade(1)  ## First.\n\n" & FENCE_OFF &
+        "\nlet SECOND* = Grade(2)  ## Second.\n" & FENCE_ON & "\n",
       )
       tree = @[declaring, calling]
       plan = fixEntries(BRANCH_CURATOR, [calling], context = initContext(tree))
@@ -471,9 +471,9 @@ suite "Fixes":
     ]  # dotted calls take form more calls take, so report none
     check plan.warned.mapIt(it.message) == @[
       "Fence keeps its lines as written, and inside them landmark-alias breaks once at line 12 " &
-        "(X.1); got lines `11` to `13`.",
+      "(X.1); got lines `11` to `13`.",
     ]  # names reach fence too
-    let alone = fixEntries(BRANCH_CURATOR, [calling], context = initContext(tree[1 .. 1]))
+    let alone = fixEntries(BRANCH_CURATOR, [calling], context = initContext(tree[1..1]))
     check alone.left.len == 0  # project declares neither constructor nor alias
     check alone.warned.allIt("nothing inside breaks a rule" in it.message)
 
@@ -524,7 +524,7 @@ suite "Fixes":
       module = entry(
         DIRECTORY_AUDIT & "/src/a.nim",
         head & "const LIMIT = 3  ## Limit.\n\nfunc other(x: int): int = x  # Plain.\n" &
-          "  ## Same.\n\nlet SUM* = 1+2  ## Sum.\n",
+        "  ## Same.\n\nlet SUM* = 1+2  ## Sum.\n",
       )
       reaching = entry(
         DIRECTORY_AUDIT & "/src/b.nim", head & "import ./a {.all.}\n\nlet COPY* = LIMIT  ## Copy.\n"
@@ -546,7 +546,7 @@ suite "Fixes":
       (
         module.path,
         head & "const LIMIT {.used.} = 3  # Used in `b.nim`.\n  ## Limit.\n\n" &
-          "func other(x: int): int = x  # Plain.\n  ## Same.\n\nlet SUM* = 1 + 2  ## Sum.\n",
+        "func other(x: int): int = x  # Plain.\n  ## Same.\n\nlet SUM* = 1 + 2  ## Sum.\n",
       ),
       (reaching_none.path, head & "import ./a\n"),
     ]  # STYLE.md §5
@@ -566,7 +566,7 @@ suite "Fixes":
     let again = plan.written & @[reaching, unresolved]
     check fixEntries(BRANCH_CURATOR, again, context = initContext(again, again)).written.len == 0
     check fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree)).written.mapIt(
-      it.path
+      it.path,
     ) == @[module.path]  # no uses: spacing alone
 
 
@@ -580,7 +580,7 @@ suite "Fixes":
       proven = entry(
         DIRECTORY_AUDIT & "/src/a.nim",
         head & "proc twice*(x: int): int = x * 2\n  ## Double.\n\n" & FENCE_OFF &
-          "\nproc thrice*(x: int): int = x * 3\n  ## Triple.\n" & FENCE_ON & "\n",
+        "\nproc thrice*(x: int): int = x * 3\n  ## Triple.\n" & FENCE_ON & "\n",
       )
       unproven = entry(
         DIRECTORY_AUDIT & "/src/b.nim", head & "proc half*(x: int): int = x div 2\n  ## Halve.\n"
@@ -603,7 +603,7 @@ suite "Fixes":
     ]  # fence keeps `proc`, X.1
     check plan.warned.filterIt(it.path == unproven.path).mapIt(it.message) == @[
       "Compiler proved no routine pure, so each `proc` stays as written (STYLE.md §1); got " &
-        "`source checks clean in no configuration: undeclared identifier: 'x'`.",
+      "`source checks clean in no configuration: undeclared identifier: 'x'`.",
     ]
     check fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree)).written.len == 0
 
@@ -619,13 +619,13 @@ suite "Fixes":
       head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
       nimble = "version = \"0.1.0\"\nrequires \"nim == " & compilerRunning().version & "\"\n"
       alias = head & "template vector*[G: Grade | GradeAnti](t: typedesc[G]): G = G(1)\n" &
-        "  ## Alias grade.\n"
+          "  ## Alias grade.\n"
       tree = @[
         entry("curator/fixture/fixture.nimble", nimble),
         entry(
           "curator/fixture/src/a.nim",
           head & "func helper(x: int): int = x + 1\n  ## Add one.\n\n" &
-            "proc twice*(x: int): int = x * 2\n  ## Double.\n",
+          "proc twice*(x: int): int = x * 2\n  ## Double.\n",
         ),
         entry(
           "curator/fixture/src/b.nim",
@@ -640,8 +640,8 @@ suite "Fixes":
     writeInto(root, "curator/fixture/dependencies/library/algebra.nim", alias)  # git lists none
     discard root.git("add " & tree.mapIt(it.path).join(" "))
     let (uses, pures, libraries) = readFacts(root, tree)
-    check toSeq(uses.getOrDefault(tree[1].path).privates.values).mapIt(it.siblings) ==
-      @[@["b.nim"]]  # `b.nim` reaches `helper`, which `a.nim` never uses
+    check uses.getOrDefault(tree[1].path).privates.values.toSeq.mapIt(it.siblings) ==
+        @[@["b.nim"]]  # `b.nim` reaches `helper`, which `a.nim` never uses
     check pures.getOrDefault(tree[1].path).sites == @[(8, 0)]
     check "root.nim" notin uses and "root.nim" notin pures  # root lies in no project
     check libraries == {"curator/fixture/fixture.nimble": @[alias]}.toTable
@@ -650,7 +650,7 @@ suite "Fixes":
       written = fixEntries(BRANCH_CURATOR, tree, context = context).written
     check written.mapIt(it.path) == @[tree[1].path, tree[3].path]
     check written.anyIt(
-      "func helper(x: int): int {.used.} = x + 1  # Used in `b.nim`." in it.content
+      "func helper(x: int): int {.used.} = x + 1  # Used in `b.nim`." in it.content,
     )  # rule 7
     check written.anyIt("func twice*(x: int): int = x * 2" in it.content)  # rule 11
     check written.anyIt(it.content == tree[3].content.replace("Grade(1)", "Grade.vector"))
@@ -809,8 +809,8 @@ suite "Fixes":
       (glued.path, @[(5, 6), (7, 13)], @["SCALAR_ANTI"]),
       (cased.path, @[(5, 4)], @["BASIS_ANTI"]),
     ]  # one rename for both rules, never case rename `ANTIBASIS` beside it
-    check queriesSemantic(tree[1 .. 2], [glued, cased]).mapIt((it.path, it.names)) ==
-      @[(cased.path, @["ANTIBASIS"])]  # no module declares either word, so case rename alone
+    check queriesSemantic(tree[1..2], [glued, cased]).mapIt((it.path, it.names)) ==
+        @[(cased.path, @["ANTIBASIS"])]  # no module declares either word, so case rename alone
     var answers = @[Answer(path: glued.path), Answer(path: cased.path)]
     for site in [(5, 6), (7, 13)]:
       answers[0].symbols[site] =

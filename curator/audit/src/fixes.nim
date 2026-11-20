@@ -208,7 +208,7 @@ func renames(
       exempt = glossaries.exemptions(e.path)
       package = names.getOrDefault(e.path.nimbleProject)
       recased = renamesCase(e.content, exempt).composed(
-        renamesCut(e.content, package.axes, package.words, exempt)
+        renamesCut(e.content, package.axes, package.words, exempt),
       )
     for (line, column, name, renamed) in renamesAbbreviation(e.content, exempt):
       if recased.anyIt(it.line == line and it.column == column): continue
@@ -296,7 +296,7 @@ proc readFacts*(
   let
     absolute = root.absolutePath
     files = entries.filterIt(
-      it.isKindNim and it.path notin locked and it.path.nimbleProject.len > 0
+      it.isKindNim and it.path notin locked and it.path.nimbleProject.len > 0,
     ).mapIt((it.path, it.content))
   var toolchains = initToolchains()
   result.uses = files.resolveMarkers("", absolute, toolchains)
@@ -405,7 +405,7 @@ func fixSource(
     pures = context.pures.getOrDefault(path)
     (funcs, purified) = editsPure(path, source, pures, fence.lines, semantic)
   semantic.add funcs
-  result.fixed.add (marked & purified).toFindings
+  result.fixed.add toFindings(marked & purified)
 
   # Leave for hand each marker and `func` no edit writes, each index no alias edit writes, as
   #   choice of aliases, and each call of constructor, which no fix writes, in order of lines;
@@ -419,7 +419,7 @@ func fixSource(
     let
       at = unwritten.find((report.line, report.rule))
       is_warned = report.rule notin {Rule.UsedMarker, Rule.PureFunc} and
-        report.line - 1 in fence.lines
+          report.line - 1 in fence.lines
     if at >= 0: unwritten.delete at
     elif not is_warned: kept.add report
   result.left = kept.sortedByIt(it.line).toFindings
@@ -454,7 +454,7 @@ func fixSource(
       has_format_value = path.nimbleProject in context.formatting,
       configurations = context.configurations.getOrDefault(path.nimbleProject),
       constants = context.constants.getOrDefault(path.nimbleProject),
-    )
+    ),
   )
   result.source = fix.source
   result.asked = fix.asked
@@ -497,7 +497,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
       0,
       Rule.UsedMarker,
       "Semantic pass resolved no use, so each private symbol and `{.all.}` stays as written; " &
-        "got `" & uses.reason & "`.",
+      "got `" & uses.reason & "`.",
     ).toFinding
   let pures = context.pures.getOrDefault(e.path)
   if pures.reason.len > 0:
@@ -506,7 +506,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
       0,
       Rule.PureFunc,
       "Compiler proved no routine pure, so each `proc` stays as written; got `" & pures.reason &
-        "`.",
+      "`.",
     ).toFinding
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
