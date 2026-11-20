@@ -723,20 +723,129 @@ proc resolveConversions*(
         if requests[k].query.path == answer.path: result[keys[k]] = answer
 
 
+proc scopeProject(
+  project: string;
+  files: openArray[(string, string)];
+  directory: string;
+  listings: var Table[string, seq[(string, string)]],
+): seq[(string, string)] =
+  ## Read path, relative to project, and text of each Nim file git lists under project, each
+  ##   file named in place of its listed text, and named file git does not list beside them.
+  var named = initTable[string, string]()
+  for (path, source) in files:
+    let absolute = path.toAbsolute(directory)
+    if absolute.startsWith(project & "/"): named[absolute.relativePath(project, '/')] = source
+  for (file, text) in project.filesListed(listings):
+    result.add (file, named.getOrDefault(file, text))
+  for file, source in named:
+    if file notin result.mapIt(it[0]): result.add (file, source)
+
+
 proc resolveMarkers(
   files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
 ): Table[string, Uses] =
-  ## Resolve, through semantic pass, uses of each private symbol and `{.all.}` import of files
-  ##   of Nim dialect, keyed by path as named.
-  discard
+  ## Resolve, through semantic pass, uses of private symbols and `{.all.}` imports of modules
+  ##   files name, keyed by path as named. Pass reads every Nim file git lists in project of
+  ##   file, nearest directory holding nimble file, and asks each module some file there opens
+  ##   with `{.all.}` in entry of that file, with toolchain `bin` gives, as project alone compiles
+  ##   it, since command line names no define (`symbols.nim`). Each `{.all.}` pass finds reaching
+  ##   nothing must check clean without it too, else it reaches what pass cannot read, as
+  ##   symbol macro declares; file checking clean on no backend confirms nothing.
+  var
+    seen = initTable[string, Pinning]()
+    listings = initTable[string, seq[(string, string)]]()
+    gathered = initTable[string, Table[string, Uses]]()  # Uses of each file, by project.
+  for (path, source) in files:
+    if path.dialect != some(Dialect.Module): continue
+    let
+      absolute = path.toAbsolute(directory)
+      project = absolute.parentDir.project
+    if project notin gathered:
+      let
+        scope = project.scopeProject(files, directory, listings)
+        opened = scope.modulesOpened
+        (bin, reason) = bin(absolute, nim, seen, toolchains)
+      var uses = initTable[string, Uses]()
+      if opened.len > 0 and reason.len > 0:
+        for (importer, module) in opened:
+          uses[importer] = Uses(reason: reason)
+          uses[module] = Uses(reason: reason)
+      elif opened.len > 0:
+        var
+          texts = initTable[string, string]()
+          answers: seq[(string, Answer)]
+        for (file, text) in scope: texts[file] = text
+        for importer in opened.mapIt(it[0]).deduplicate:
+          let requests = opened.filterIt(it[0] == importer).mapIt(Request(
+            query: queryUses(it[1], texts[it[1]]),
+            root: project,
+            directory: project,
+            includer: scope.includer(importer),
+            bin: bin,
+          ))
+          for answer in resolve(requests): answers.add (importer, answer)
+        uses = usesPackage(scope, answers, project)
+
+        # Confirm each `{.all.}` reaching nothing: file checks clean without it, where with it.
+        let compiler = if bin.len == 0: NIM else: bin / NIM
+        for importer in opened.mapIt(it[0]).deduplicate:
+          if importer notin uses: continue
+          let
+            text = texts[importer]
+            (prefix, suffix) = scope.enclosing(importer)
+            folder = (project / importer).parentDir
+            (before, defines) = checkedBackend(prefix & text & suffix, folder, compiler, [])
+          if not before.is_clean: continue
+          for site in toSeq(uses[importer].imports.keys):
+            if uses[importer].imports[site]: continue
+            var only = Uses()
+            only.imports[site] = false
+            let without = text.applied(editsMarkers(importer, text, only, [])[0])
+            if not checked(prefix & without & suffix, folder, compiler, defines).is_clean:
+              uses[importer].imports[site] = true
+      gathered[project] = uses
+    result[path] = gathered[project].getOrDefault(absolute.relativePath(project, '/'))
 
 
 proc resolvePures(
   files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
 ): Table[string, Pures] =
-  ## Prove, through compiler, each `proc` of files of Nim dialect that checks as `func`, keyed by
-  ##   path as named.
-  discard
+  ## Prove, through compiler, each `proc` of modules files name that checks as `func`, keyed by
+  ##   path as named. Candidates read across every Nim file git lists in project of file,
+  ##   nearest directory holding nimble file; each proves in its own directory, with toolchain
+  ##   `bin` gives, as project alone compiles it, since command line names no define
+  ##   (`symbols.nim`). Included file proves inside text of file including it.
+  var
+    seen = initTable[string, Pinning]()
+    listings = initTable[string, seq[(string, string)]]()
+    found = initTable[string, (seq[(string, string)], Table[string, seq[(int, int)]])]()
+  for (path, source) in files:
+    if path.dialect != some(Dialect.Module): continue
+    let
+      absolute = path.toAbsolute(directory)
+      project = absolute.parentDir.project
+    if project notin found:
+      let scope = project.scopeProject(files, directory, listings)
+      found[project] = (scope, candidatesPure(scope))
+    let
+      (scope, candidates) = found[project]
+      relative = absolute.relativePath(project, '/')
+      sites = candidates.getOrDefault(relative)
+    if sites.len == 0: continue
+    let (bin, reason) = bin(absolute, nim, seen, toolchains)
+    if reason.len > 0:
+      result[path] = Pures(reason: reason)
+      continue
+    let (prefix, suffix) = scope.enclosing(relative)
+    result[path] = provenPure(
+      source,
+      sites,
+      absolute.parentDir,
+      if bin.len == 0: NIM else: bin / NIM,
+      [newSeq[string]()],
+      prefix,
+      suffix,
+    )
 
 
 proc planRenames*(

@@ -260,6 +260,24 @@ func isTest(path: string): bool =
   path.split('/')[0] == FOLDER_TESTS
 
 
+func itemsOpened(files: openArray[(string, string)]): seq[(string, ImportAll, string)] =
+  ## Read each item `{.all.}` opens in files of package, as importer, item, and module of package
+  ##   it names; module that file of package includes is none, since it is no module.
+  let paths = files.mapIt(it[0])
+  for (path, text) in files:
+    for item in text.importsAll:
+      let module = path.pathImported(item.module, paths)
+      if module.len > 0 and files.includer(module) == module: result.add (path, item, module)
+
+
+func modulesOpened*(files: openArray[(string, string)]): seq[(string, string)] =
+  ## Read each module of package that file of package imports with `{.all.}`, as importer and
+  ##   module, each pair once: semantic pass asks each module in entry of its importer.
+  ##   Files are path and text of every Nim file of package, paths relative to its root.
+  for (importer, _, module) in files.itemsOpened:
+    if (importer, module) notin result: result.add (importer, module)
+
+
 func usesPackage*(
   files: openArray[(string, string)]; answers: openArray[(string, Answer)]; root: string
 ): Table[string, Uses] =
@@ -267,16 +285,11 @@ func usesPackage*(
   ##   Files are path and text of every Nim file of package; each answer is importer's, as path
   ##   of file whose entry it ran in, and its module's uses, every configuration counting. File
   ##   whose answer holds reason resolves nothing, and says why.
-  let paths = files.mapIt(it[0])
+  let
+    paths = files.mapIt(it[0])
+    opened = files.itemsOpened
   var texts = initTable[string, string]()
   for (path, text) in files: texts[path] = text
-
-  # Each item of package `{.all.}` opens, with module of package it names.
-  var opened: seq[(string, ImportAll, string)]  # Importer, item, module.
-  for (path, text) in files:
-    for item in text.importsAll:
-      let module = path.pathImported(item.module, paths)
-      if module.len > 0 and files.includer(module) == module: opened.add (path, item, module)
 
   # Files using each private symbol of each module opened, from every answer of module.
   var users = initTable[(string, (int, int)), HashSet[string]]()

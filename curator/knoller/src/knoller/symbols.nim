@@ -190,6 +190,15 @@ func declaredAt(symbol: Symbol, path: string, site: (int, int)): Symbol =
   )
 
 
+func pathIncluded(file, line: string): string =
+  ## Read path, relative to directory of files, that `include` on line of file names; empty where
+  ##   line holds none.
+  let s = line.strip
+  if not s.startsWith("include "): return
+  let named = s["include ".len .. ^1].strip(chars = {'"', ' '})
+  normalizedPath(file.parentDir / (if named.endsWith(".nim"): named else: named & ".nim")).slashed
+
+
 func includer*(files: openArray[(string, string)], path: string): string =
   ## Read file whose `include` names path, followed up to file nothing includes; path itself
   ##   where nothing includes it. Files are path and text, paths relative to one directory.
@@ -199,15 +208,21 @@ func includer*(files: openArray[(string, string)], path: string): string =
     for (file, text) in files:
       if not file.endsWith(".nim"): continue
       for line in text.splitLines:
-        let s = line.strip
-        if not s.startsWith("include "): continue
-        let
-          named = s["include ".len .. ^1].strip(chars = {'"', ' '})
-          target = file.parentDir / (if named.endsWith(".nim"): named else: named & ".nim")
-        if target.normalizedPath.slashed == result: found = file
+        if file.pathIncluded(line) == result: found = file
       if found.len > 0: break
     if found.len == 0: return
     result = found
+
+
+func enclosing*(files: openArray[(string, string)], path: string): (string, string) =
+  ## Read text of file whose `include` names path, before and after that line, so text it
+  ##   includes checks inside them; both empty where nothing includes path.
+  for (file, text) in files:
+    if not file.endsWith(".nim"): continue
+    let lines = text.split('\n')
+    for k, line in lines:
+      if file.pathIncluded(line) != path: continue
+      return (lines[0 ..< k].mapIt(it & "\n").join, lines[k + 1 .. ^1].join("\n"))
 
 
 func lineRedirected*(
