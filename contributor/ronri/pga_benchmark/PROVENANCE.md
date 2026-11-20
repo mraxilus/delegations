@@ -231,7 +231,8 @@ typed. Its library side then reads that pool, and the inspector keys it by the s
 reads a typed operand. A motor holds its antieven part alone, so the typed image loses no
 coefficient.
 
-Only the motor has a typed pool, so a typed name of any other kind stops the build.
+Only the motor of a transform reads at its type. The catalogue stops its build where it types any
+other operand. The namer of pools and the inspector refuse a typed name of any other kind.
 
 - Rejected: every typed operand at its type. P04 takes each type, so each evaluation that builds
   on P04 would then time its forms in every measurand, beside the change that it weighs.
@@ -239,7 +240,8 @@ Only the motor has a typed pool, so a typed name of any other kind stops the bui
 Verified by `test_rga4d.nim` and the other stubs. Suite `Chapter 2` and the `Wiki` suites run
 through the widening, and suite `Internal: Measurements` runs every measurand over the pools. That
 suite also holds the typed pool to the widened one, and the name of each pool. It holds that a
-typed name of any other kind stops the build.
+typed name of any other kind stops the build. Suite `Internal: Catalogue` holds the guard of the
+catalogue on each measurand, typed and not.
 
 ## Measurements
 
@@ -388,8 +390,8 @@ twice.
 each algebra. So its count names the stem `MultivectorMotor`, and movement sizes that stem as half
 of `Multivector`. A count names the first stem that holds it, so at rga2d the motor reads as
 `MultivectorScalars`, which holds the same two bases. Elsewhere each type of half of the bases
-reads as motor, as `MultivectorEven` and `MultivectorOdd` do, at the same bytes. So the stem tells
-a motor from no flector part.
+reads as motor, as `MultivectorEven` and `MultivectorOdd` do, at the same bytes. So the stem does
+not tell a motor from a flector part, or from any other type of half of the bases.
 
 **The inspector keeps the functions of the library, of the reference and of the dense forms.** It
 knows each one by the module in its C name. The compiler names an instance of a generic after the
@@ -444,6 +446,7 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 - the law that no helper of the timed calls takes the symbol of a head, save the library's
   generic at the typed motor;
 - each transform, which reads its motor at its type exactly where the library takes that type;
+- the stem of a typed operand, which is the motor's alone;
 - a fixture C source with known counts;
 - an instance named by its count, with an aligned field and without, and by the first of two
   stems of one count;
