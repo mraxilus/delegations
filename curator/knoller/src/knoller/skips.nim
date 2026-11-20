@@ -1,6 +1,6 @@
 ## Enforce that each gap of coverage shows in run (Article IX.9): skip gives its reason, gap is
 ##   placeholder test that skips, and no test leaves run under bare `when`, as Architect ruled on
-##   rule 17 of #443. No fix, since only author knows reason.
+##   rule 17 of #443. No fix, since no text gives reason.
 ##   Test is `test "…":` and lines deeper than it, in file under `tests` of its package. Reason of
 ##     skip trails it on its line, as STYLE.md §6 writes it, or stands on comment line right above
 ##     it at its indent, or in echo of text there, which run prints. Placeholder, whose code is
@@ -124,8 +124,9 @@ func checkSkips*(path, source, nimble: string): seq[Report] =
     let is_running = not steps.anyIt(lines[it].indentWidth == level and code[it].strip == CALL_SKIP)
     if is_running:
       for k in body:
-        let text = lines[k].comment(views[k])
-        let marker = text.strip(chars = {'#', ' '}, trailing = false)
+        let
+          text = lines[k].comment(views[k])
+          marker = text.strip(chars = {'#', ' '}, trailing = false)
         if k notin reasons and marker.startsWith(WORD_GAP):
           result.add initReport(path, k + 1, Rule.ReasonSkip, MESSAGE_GAP & text & "`.")
 

@@ -1,7 +1,7 @@
 ## Hold that each gap of coverage shows in run (Article IX.9), as Architect ruled on rule 17 of
 ##   #443: skip gives its reason after it, on comment line right above it at its indent, or in echo
 ##   of text there. Gap inside test that runs, and test under bare `when`, report too; each stays
-##   for hand, since only author knows reason.
+##   for hand, since no text gives reason.
 
 {.experimental: "strictFuncs".}
 
