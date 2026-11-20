@@ -3190,10 +3190,11 @@ suite "Hooks":
       for cell in ["b", label & ": b", "a"]: check quoted(bullet, cell) == @[refusalCell(cell)]
 
     # Other text before `: ` is no label, so cell quotes whole claim: word in lower case, two or
-    #   more words, word that opens with mark, bold word, and words of sentence.
+    #   more words, word that opens with mark, and words of sentence. Bold word before `: ` is
+    #   label (7027197745, test below).
     for opening in ["judgement", "jUDGEMENT", "work", "Cost at list price", "Big Work",
-        "Tokens, summed over its requests", "*Judgement*", "**Judgement**", "`Judgement`",
-        "_Judgement_", "the refusal names one cause"]:
+        "Tokens, summed over its requests", "*Judgement*", "`Judgement`", "_Judgement_",
+        "the refusal names one cause"]:
       let bullet = "- " & opening & ": a b (70%)."
       check quoted(bullet, opening & ": a b").len == 0
       check quoted(bullet, "a b") == @[refusalCell("a b")]
@@ -3238,28 +3239,36 @@ suite "Hooks":
     # Ruling 7022872980 of #969: label in bold, as `**Judgement:**`, is label, so cell may drop
     #   it. Case as found is probe M3 of critic of build of D5 b, as test above holds it: build
     #   `1f4d159a` read bold label as text, so it refused cell that drops it.
-    # Label and its colon in bold, then space, at start of claim: claim passes with it and
-    #   without it; part after first `: ` of rest, label with no bold or no colon, and claim
-    #   that drops label but keeps its marks are refused.
-    for label in ["Judgement", "Work", "Result", "Cost", "A", "NOTE", "WorK", "Q1", "Follow-up"]:
-      let
-        bold = "**" & label & ":**"
-        bullet = "- " & bold & " a: b (70%)."
-      for cell in [bold & " a: b", "a: b"]: check quoted(bullet, cell).len == 0
-      for cell in ["b", bold & " b", label & ": a: b", "**" & label & "** a: b", "**** a: b",
-          ":** a: b"]:
-        check quoted(bullet, cell) == @[refusalCell(cell)]
+    # Ruling 7027197745 of #969: bold label with its colon outside bold, `__Judgement:__` and
+    #   `***Judgement:***` are labels too. Cases as found are in D2 of report of last build,
+    #   and its critic: build `9d4b7eff` read each as text, so it refused cell that drops it.
+    # Label and its colon in each form of bold, then space, at start of claim: claim passes with
+    #   it and without it; part after first `: ` of rest, label with no bold or no colon, and
+    #   claim that drops label but keeps its marks are refused.
+    const forms = [("**", ":**"), ("**", "**:"), ("__", ":__"), ("***", ":***")]
+      ## Opening and closing of each form of bold label, with colon inside or outside bold.
+    for (opening, closing) in forms:
+      for label in ["Judgement", "Work", "Result", "Cost", "A", "NOTE", "WorK", "Q1", "Follow-up"]:
+        let
+          bold = opening & label & closing
+          bullet = "- " & bold & " a: b (70%)."
+        for cell in [bold & " a: b", "a: b"]: check quoted(bullet, cell).len == 0
+        for cell in ["b", bold & " b", label & ": a: b", opening & label & opening & " a: b",
+            opening & opening & " a: b", closing & " a: b"]:
+          check quoted(bullet, cell) == @[refusalCell(cell)]
 
-    # Other bold or marked text makes no label, so cell quotes whole claim: colon outside bold,
-    #   italic, bold of underscores, bold and italic, two words, lower case, empty bold, space
-    #   inside bold, and no space after.
-    for opening in ["**Judgement**:", "*Judgement:*", "__Judgement:__", "***Judgement:***",
-        "**Big Work:**", "**judgement:**", "**:**", "** Judgement:**", "**Judgement: **"]:
+    # Other bold or marked text makes no label, so cell quotes whole claim: italic, bold of
+    #   underscores or bold and italic with colon outside, italic around bold, bold around
+    #   italic, two words, lower case, empty bold, space inside bold, and no space after.
+    for opening in ["*Judgement:*", "_Judgement:_", "__Judgement__:", "***Judgement***:",
+        "_**Judgement:**_", "**_Judgement:_**", "**Big Work:**", "**judgement:**", "**:**",
+        "** Judgement:**", "**Judgement: **", "**Judgement** :"]:
       let bullet = "- " & opening & " a b (70%)."
       check quoted(bullet, opening & " a b").len == 0
       check quoted(bullet, "a b") == @[refusalCell("a b")]
-    check quoted("- **Judgement:**a b (70%).", "**Judgement:**a b").len == 0
-    check quoted("- **Judgement:**a b (70%).", "a b") == @[refusalCell("a b")]
+    for opening in ["**Judgement:**", "**Judgement**:"]:
+      check quoted("- " & opening & "a b (70%).", opening & "a b").len == 0
+      check quoted("- " & opening & "a b (70%).", "a b") == @[refusalCell("a b")]
 
     # Claim drops one label alone, bold or not, at its start; bold label inside claim is text.
     for (bullet, cells, refused) in [
@@ -3283,19 +3292,20 @@ suite "Hooks":
       check quoted(found, cell).len == 0
       check quoted(found, found[2 ..< found.find(" (")]).len == 0
 
-    # Law: capital letter, then each class of character, is label, in bold or not; run that opens
-    #   with other character, or holds space, is none.
+    # Law: capital letter, then each class of character, is label, in each form of bold or not
+    #   (7027197745); run that opens with other character, or holds space, is none.
     const
       tails = ["", "1", "bc", "-up", "'s", ".", "_b", "/b", "(b)", "#2", "`b`", "*b", ":"]
         ## Rest of run after its capital: none, digit, letters, and each mark.
       openings = ["a1", "1a", "-a", "'a", ".a", "_a", "`a`", "(a)", "#a", "R b", "R1 b"]
         ## Runs that open with no capital, or hold space.
-      laws = 48
-        ## Bullets of law: each tail and each opening, in bold and not.
+      laws = 120
+        ## Bullets of law: each tail and each opening, plain and in four forms of bold.
     var laid = 0
     for (runs, is_label) in [(tails.mapIt("R" & it), true), (openings.toSeq, false)]:
       for run in runs:
-        for label in [run & ": ", "**" & run & ":** "]:
+        for label in [run & ": ", "**" & run & ":** ", "**" & run & "**: ", "__" & run & ":__ ",
+            "***" & run & ":*** "]:
           let bullet = "- " & label & "a: b (70%)."
           check quoted(bullet, label & "a: b").len == 0
           check (quoted(bullet, "a: b").len == 0) == is_label
