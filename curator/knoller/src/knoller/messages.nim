@@ -43,6 +43,19 @@ type
     literal: int  ## Index of Text token where operand is literal; `-1` for expression.
     is_interpolated: bool  ## Literal is `&"…"` or `fmt"…"`, whose `{…}` are values.
 
+  KindRun {.pure.} = enum  ## Define what one operand of concatenation is to literal it joins into.
+    Interpolated  ## Interpolated literal, `&"…"` or `fmt"…"`, whose text joins as written.
+    Plain  ## Plain literal, whose text joins with each brace doubled.
+    Value  ## Operand that is no literal, which joins in braces.
+    Unread  ## Raw or other prefixed literal, which one literal cannot hold alike.
+
+  Join = object  ## Define one concatenation joining operand or literal to interpolated literal.
+    line: int  ## Zero-based line concatenation opens on.
+    first: int  ## Byte offset where concatenation starts.
+    after: int  ## Byte offset after its end.
+    got: string  ## First operand joined to first interpolated literal, as written.
+    text: string  ## One literal concatenation joins into; empty where it stays for hand.
+
 
 const
   MARKER = "; got "  ## Text message's tail follows.
@@ -63,6 +76,10 @@ const
   PRAGMAS_MESSAGE = ["error", "fatal", "warning"]  ## Pragmas whose value is message.
   PRECEDENCE_CONCATENATION = 7
     ## Precedence of `&` (Nim manual, Operators), which each operator of shaped value exceeds.
+  CHARS_UNREAD = {'"', '{', '}', '\\', '`', '\n'}
+    ## Characters value cannot hold inside braces: each fails to compile there or reads otherwise.
+  ESCAPES_NUMERIC = {'x', 'u', 'U'} + Digits
+    ## Escape letters whose character may spell brace, which interpolation then reads as value.
 
 
 func content(t: Token, source: string): (int, int) =
@@ -404,11 +421,175 @@ func fixEchoes*(path, source: string): Fix =
   fixEchoes(path, source, EVERY)
 
 
+func kindRun(run: seq[Element]; tokens: openArray[Token]; source: string): KindRun =
+  ## Read what operand of concatenation is: interpolated or plain literal, value, or literal of
+  ##   other prefix, which one literal cannot hold alike.
+  let
+    first = run[0].first
+    last = run[^1].last
+  if tokens[last].kind != KindToken.Text or last - first > 1: return KindRun.Value
+  if last == first: return KindRun.Plain
+  if tokens[first].after != tokens[last].first: return KindRun.Value
+  if tokens.isInterpolated(last, source): KindRun.Interpolated else: KindRun.Unread
+
+
+func isColonBare(text: string): bool =
+  ## Decide whether text holds `:` outside brackets, which interpolation reads as its format.
+  var depth = 0
+  for c in text:
+    case c
+    of '(', '[', '{': inc depth
+    of ')', ']', '}': dec depth
+    of ':':
+      if depth == 0: return true
+    else: discard
+
+
+func isEscapeNumeric(text: string): bool =
+  ## Decide whether text holds escape by number, whose character may spell brace.
+  for k in 0 ..< text.high:
+    if text[k] == '\\' and text[k + 1] in ESCAPES_NUMERIC: return true
+
+
+func joining(
+  part: seq[Element]; tokens: openArray[Token]; partners: openArray[int]; source: string
+): seq[Join] =
+  ## Read concatenation one operand of looser operator spans, where it holds interpolated literal,
+  ##   with literal it joins into; none where no `&` joins it, or other operator of `&`'s level.
+  var runs = @[newSeq[Element]()]
+  for e in part:
+    if e.kind == KindElement.Binary and e.precedence == PRECEDENCE_CONCATENATION:
+      if tokens[e.first].spelling(source) != "&": return
+      runs.add newSeq[Element]()
+    else: runs[^1].add e
+  if runs.len < 2 or runs.anyIt(it.len == 0): return
+  let
+    kinds = runs.mapIt(it.kindRun(tokens, source))
+    head = kinds.find(KindRun.Interpolated)
+  if head < 0: return  # plain join stays `&`, which costs less than interpolation (D1)
+  let
+    first = runs[0][0].first
+    last = runs[^1][^1].last
+    prefix = tokens[runs[head][0].first].spelling(source)
+  var
+    content = ""
+    got = ""
+    is_read = toSeq(first .. last).allIt(tokens[it].kind != KindToken.Comment)
+
+  # Join text of each operand, each value in braces, and read whether one literal holds it alike.
+  for r, run in runs:
+    let
+      a = run[0].first
+      b = run[^1].last
+    if r != head and got.len == 0:
+      got = source[tokens[a].first ..< tokens[b].after].splitLines.mapIt(it.strip).join(" ")
+    case kinds[r]
+    of KindRun.Interpolated, KindRun.Plain:
+      let
+        (start, stop) = tokens[b].content(source)
+        text = source[start ..< stop]
+        is_other = kinds[r] == KindRun.Plain or tokens[a].spelling(source) != prefix
+      if source.continuesWith(QUOTE_LONG, tokens[b].first): is_read = false
+      # `fmt"…"` is raw, `&"…"` reads escapes: text of other form reads otherwise in kept one.
+      if is_other and (prefix != "&" or kinds[r] == KindRun.Interpolated) and
+          ('\\' in text or '"' in text):
+        is_read = false
+      if kinds[r] == KindRun.Plain:
+        if text.isEscapeNumeric: is_read = false
+        content.add text.multiReplace(("{", "{{"), ("}", "}}"))
+      else: content.add text
+    of KindRun.Value:
+      var (start, stop) = (tokens[a].first, tokens[b].after)
+      # Braces turn value to text by `$` (`formatValue`), so `$x` reads `x`, and group its content.
+      if run.len == 2 and run[0].kind == KindElement.Prefix and tokens[a].spelling(source) == "$":
+        let operand = run[1].first
+        start = tokens[operand].first
+        if tokens[operand].kind == KindToken.Open and tokens[operand].spelling(source) == "(" and
+            partners[operand] == b:
+          (start, stop) = (tokens[operand].after, tokens[b].first)
+      let text = source[start ..< stop].strip
+      if text.anyIt(it in CHARS_UNREAD) or text.isColonBare: is_read = false
+      content.add "{" & text & "}"
+    of KindRun.Unread: is_read = false
+
+  # Wrap of literals whose joined line would not fit passes (X.1).
+  let
+    starts = source.lineStarts
+    line = tokens[first].line
+    joined = prefix & "\"" & content & "\""
+    ending = source.find('\n', tokens[last].after)
+    rest = source[tokens[last].after ..< (if ending < 0: source.len else: ending)]
+    is_fit = not (source[starts[line] ..< tokens[first].first] & joined & rest).isWide
+    is_wrap = tokens[last].lineLast(source) > line
+  if is_wrap and not is_fit and kinds.allIt(it in {KindRun.Interpolated, KindRun.Plain}): return
+  result.add Join(
+    line: line,
+    first: tokens[first].first,
+    after: tokens[last].after,
+    got: got,
+    text: if is_read and is_fit: joined else: "",
+  )
+
+
+func joins(source: string): seq[Join] =
+  ## Read each concatenation joining operand or literal to interpolated literal by `&`, in each
+  ##   expression of each depth, split where operator binds looser than `&` (`precedence.nim`).
+  let
+    tokens = source.tokens
+    partners = tokens.partners
+  for segment in segments(tokens, partners, 0, tokens.high, source):
+    var part: seq[Element]
+    for e in segment.tailCommand(tokens):
+      if e.kind == KindElement.Binary and e.precedence < PRECEDENCE_CONCATENATION:
+        result.add part.joining(tokens, partners, source)
+        part = @[]
+      else: part.add e
+    result.add part.joining(tokens, partners, source)
+
+
 func checkInterpolations*(path, source: string): seq[Report] =
-  ## Report concatenation that joins value or literal to interpolated literal by `&`.
-  discard
+  ## Report concatenation joining value or literal to interpolated literal by `&` (STYLE.md §3).
+  ##   Named by its suite and `chain.nim` alone until static pass calls it (`fixes.nim`).
+  for join in source.joins.sortedByIt(it.first):
+    result.add initReport(
+      path,
+      join.line + 1,
+      Rule.BracesInterpolation,
+      "Interpolated string takes each value in braces, never by `&`; got `" & join.got & "`.",
+    )
 
 
 func fixInterpolations*(path, source: string): Fix =
-  ## Join concatenation into one interpolated literal, each value in braces, where it reads alike.
+  ## Join each concatenation into its one literal where it reads alike and joined line fits
+  ##   `LINE_MAX`; join of wrap removes lines it spans, and `origin` traces each line left.
   result.source = source
+  var joins = source.joins.filterIt(it.text.len > 0).sortedByIt(it.first)
+  if joins.len == 0: return
+
+  # Join all; drop join whose line two joins widen past `LINE_MAX`, until none is left to drop.
+  var shaped: string
+  while joins.len > 0:
+    shaped = ""
+    var
+      at = 0
+      lines: seq[int]
+    for join in joins:
+      shaped.add source[at ..< join.first]
+      lines.add shaped.count('\n')
+      shaped.add join.text
+      at = join.after
+    shaped.add source[at .. ^1]
+    let wide = toSeq(0 ..< joins.len).filterIt(shaped.split('\n')[lines[it]].isWide)
+    if wide.len == 0: break
+    joins = toSeq(0 ..< joins.len).filterIt(it notin wide).mapIt(joins[it])
+  if joins.len == 0: return
+  result.source = shaped
+
+  # Trace each line left to its input line; each line join removes folds into line above it.
+  var removed: seq[int]
+  for join in joins:
+    let line = source[0 ..< join.first].count('\n')
+    for k in 1 .. source[join.first ..< join.after].count('\n'): removed.add line + k
+    result.fixed.add initReport(path, join.line + 1, Rule.BracesInterpolation)
+  if removed.len > 0:
+    result.origin = toSeq(0 .. source.count('\n')).filterIt(it notin removed).mapIt(it + 1)
