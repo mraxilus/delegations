@@ -32,6 +32,9 @@
 ##     of.
 ##   Knoller reads tests, stubs and umbrella from nimble file nearest each file, and its caller
 ##     finds that file; koch gives that of project holding it (`nimbleProject`).
+##   Knoller reads what other modules of project tell fixer of one file, and `initContext` reads
+##     it over tree by project: whether file declares `formatValue`, constants each module
+##     exports, and defaults of configurations.
 ##   Knoller reads fixed waits where its caller says file is drive code, and koch says so of
 ##     `tests/` and `tools/` of each project (`waits.isCodeDrive`), so fence warning counts them
 ##     where static pass reads them.
@@ -72,6 +75,8 @@ type
       ## Nimble file of each project declaring `formatValue`, whose interpolated strings never join.
     configurations: Table[string, Configurations]
       ## Defaults of configurations of each project, read from its modules, by nimble file.
+    constants: Table[string, seq[string]]
+      ## Constants modules of each project export, read as fixed by build, by nimble file.
 
   Fixed* = tuple
     ## Define what fix of entries writes and reports, and what it asks parser.
@@ -242,7 +247,8 @@ func initContext*(
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
   ##   of each abbreviation and case in entries, refused where it would write file entries
-  ##   leave out; and project of each file declaring `formatValue`.
+  ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export
+  ##   and defaults of its configurations.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
@@ -255,7 +261,9 @@ func initContext*(
     if not e.path.endsWith(".nim"): continue
     if e.content.isDeclaringFormatValue: result.formatting.add e.path.nimbleProject
     modules.mgetOrPut(e.path.nimbleProject, @[]).add e.content
-  for project, sources in modules: result.configurations[project] = readConfigurations(sources)
+  for project, sources in modules:
+    result.configurations[project] = readConfigurations(sources)
+    result.constants[project] = sources.mapIt(it.constantsExported).concat
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
   for (rename, refusal) in renames(tree, entries, locked):
@@ -322,6 +330,7 @@ func fixSource(
     nimble = path.nimbleProject,
     has_format_value = path.nimbleProject in context.formatting,
     configurations = context.configurations.getOrDefault(path.nimbleProject),
+    constants = context.constants.getOrDefault(path.nimbleProject),
   )
   result.source = fix.source
   result.asked = fix.asked
@@ -353,6 +362,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     nimble = e.path.nimbleProject,
     is_drive = e.path.isCodeDrive,
     configurations = context.configurations.getOrDefault(e.path.nimbleProject),
+    constants = context.constants.getOrDefault(e.path.nimbleProject),
   ).toFindings
   result.warned.add warnDebug(e.path, e.content, e.path.nimbleProject).toFindings
   if fence.lines.len > 0:
