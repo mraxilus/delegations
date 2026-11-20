@@ -109,11 +109,16 @@ reflection below says what it cost.
 
 ### When to start one
 
-- **Start a subagent for read-only work, or for a change that is independent and well
-  defined.** Read-only work is a search, a review, a reproduction, a measurement or a read of
-  sources. Two changes are independent when neither one changes code or a test that the other
-  one reads or writes. Neither one waits on the other to merge. A change is well defined when
-  its prompt can say what done means.
+- **Do a single task yourself.** Start a subagent only where at least two independent tasks
+  wait, and do one of them yourself while it runs. A subagent costs its prompt, its prediction,
+  its critic, its resolver and its reflection, and you wait while it runs alone.
+- **A check is the one exception.** Start a `critic`, a `resolver` or a `reviewer` even where no
+  other task waits, since a fresh read finds what the writer misses.
+- **Give a subagent read-only work, or a change that is independent and well defined.**
+  Read-only work is a search, a reproduction, a measurement or a read of sources. Two changes
+  are independent when neither one changes code or a test that the other one reads or writes.
+  Neither one waits on the other to merge. A change is well defined when its prompt can say what
+  done means.
 - **Do small work yourself**, as a few calls, a lookup in one known place, or a file that you
   will edit. A subagent costs more than such work, and returns less.
 - **Give one area of code one writer.** Two writers of one area make choices that disagree,
