@@ -31,8 +31,9 @@ import ./[form, precedence, reports, tokens]
 
 
 type
-  Value = object  ## Define one value tail echoes: where it stands, text it lacks.
+  Value = object  ## Define one value message echoes: where it stands, text it lacks.
     line: int  ## Zero-based line value stands on.
+    first: int  ## Byte offset where value starts in source.
     text: string  ## Value as written, e.g. `{manner}` or `$count`.
     inserts: seq[(int, string)]  ## Byte offset and text of each insert; empty where none can.
 
@@ -52,6 +53,14 @@ const
     ## Keywords ending expression operand of concatenation.
   BACKTICK = '`'  ## Mark value stands between.
   ENDING = " & \"`.\""  ## Literal shape appends after value ending concatenation.
+  ENDING_ECHO = " & \"`\""
+    ## Literal shape appends after value ending message, which takes form of its own (rule 6).
+  CALLS_MESSAGE = [
+    ("assert", 1), ("doAssert", 1), ("error", 0), ("newException", 1), ("quit", 0),
+    ("raiseAssert", 0), ("warning", 0),
+  ]
+    ## Routine that takes message, and index of argument that holds it.
+  PRAGMAS_MESSAGE = ["error", "fatal", "warning"]  ## Pragmas whose value is message.
   PRECEDENCE_CONCATENATION = 7
     ## Precedence of `&` (Nim manual, Operators), which each operator of shaped value exceeds.
 
@@ -87,17 +96,14 @@ func pieceAt(tokens: openArray[Token], partners: openArray[int], k: int, source:
     inc j
 
 
-func chainFrom(
-  tokens: openArray[Token], partners: openArray[int], k: int, source: string
+func chainOn(
+  tokens: openArray[Token], partners: openArray[int], head: Piece, source: string
 ): seq[Piece] =
-  ## Read concatenation from literal token `k` to its end: each `&` followed by operand.
-  result.add Piece(first: k, last: k, literal: k)
-  if tokens.isInterpolated(k, source):
-    result[0].first = k - 1
-    result[0].is_interpolated = true
+  ## Read concatenation from its first operand to its end: each `&` followed by operand.
+  result.add head
   var
-    at = k + 1
-    last = k  # Last token of operand before next `&`.
+    at = head.last + 1
+    last = head.last  # Last token of operand before next `&`.
   while at + 1 < tokens.len:
     while at < tokens.len and tokens[at].kind == KindToken.Comment: inc at
     if at + 1 >= tokens.len or tokens[at].spelling(source) != "&": break
@@ -114,6 +120,17 @@ func chainFrom(
     at = piece.last + 1
 
 
+func chainFrom(
+  tokens: openArray[Token], partners: openArray[int], k: int, source: string
+): seq[Piece] =
+  ## Read concatenation from literal token `k` to its end.
+  var head = Piece(first: k, last: k, literal: k)
+  if tokens.isInterpolated(k, source):
+    head.first = k - 1
+    head.is_interpolated = true
+  chainOn(tokens, partners, head, source)
+
+
 func isShapeable(
   piece: Piece, tokens: openArray[Token], partners: openArray[int], source: string
 ): bool =
@@ -126,7 +143,12 @@ func isShapeable(
 
 
 func valuesBare(
-  chain: seq[Piece], tokens: openArray[Token], partners: openArray[int], tail: int, source: string
+  chain: seq[Piece];
+  tokens: openArray[Token];
+  partners: openArray[int];
+  tail: int;
+  source: string;
+  ending = ENDING;
 ): seq[Value] =
   ## Read every bare value of chain past byte offset `tail`, with backticks or shape it lacks.
   ##   Backticks of literals are counted from tail, where every span of message before `got`
@@ -138,6 +160,7 @@ func valuesBare(
       if is_inside or tokens[piece.first].first < tail: continue
       var value = Value(
         line: tokens[piece.first].line,
+        first: tokens[piece.first].first,
         text: source[tokens[piece.first].first ..< tokens[piece.last].after],
       )
       let
@@ -148,7 +171,7 @@ func valuesBare(
         value.inserts.add (tokens[next].content(source)[0], $BACKTICK)
       elif previous >= 0 and p == chain.high and piece.isShapeable(tokens, partners, source):
         value.inserts.add (tokens[previous].content(source)[1], $BACKTICK)
-        value.inserts.add (tokens[piece.last].after, ENDING)
+        value.inserts.add (tokens[piece.last].after, ending)
       result.add value  # Without literal before it, no backtick has place.
       continue
 
@@ -177,6 +200,7 @@ func valuesBare(
       if not is_inside and k >= tail:
         result.add Value(
           line: source[0 ..< k].count('\n'),
+          first: k,
           text: source[k .. close],
           inserts: @[(k, $BACKTICK), (close + 1, $BACKTICK)],
         )
@@ -212,10 +236,10 @@ func checkMessages*(path, source: string): seq[Report] =
     )
 
 
-func fixMessages*(path, source: string; held: Held): Fix =
-  ## Insert backticks or shape each bare value lacks; value whose insert would widen held line
-  ##   it lands on stays whole, with every other value of that line.
-  var values = source.tails.filterIt(it.inserts.len > 0)
+func inserted(path, source: string; found: seq[Value]; held: Held; rule: Rule): Fix =
+  ## Insert backticks or shape each value lacks; value whose insert would widen held line it
+  ##   lands on stays whole, with every other value of that line.
+  var values = found.filterIt(it.inserts.len > 0)
   result.source = source
   if values.len == 0: return
   let
@@ -241,7 +265,12 @@ func fixMessages*(path, source: string; held: Held): Fix =
       if not touched[k].anyIt(it in widened): kept.add value
     values = kept
   result.source = shaped.join("\n")
-  for value in values: result.fixed.add initReport(path, value.line + 1, Rule.ValueMessage)
+  for value in values: result.fixed.add initReport(path, value.line + 1, rule)
+
+
+func fixMessages*(path, source: string; held: Held): Fix =
+  ## Insert backticks or shape each bare value of tail lacks, where held line stays narrow.
+  inserted(path, source, source.tails, held, Rule.ValueMessage)
 
 
 func fixMessages*(path, source: string): Fix =
@@ -249,14 +278,125 @@ func fixMessages*(path, source: string): Fix =
   fixMessages(path, source, EVERY)
 
 
+func argument(
+  tokens: openArray[Token]; partners: openArray[int]; k, index: int; source: string
+): int =
+  ## Read first token of argument `index` of call whose name is token `k`, in call form or in
+  ##   command form, over lines that comma ends; `-1` where call takes no such argument.
+  if k + 1 >= tokens.len: return -1
+  let
+    t = tokens[k]
+    open = tokens[k + 1]
+    is_call = open.kind == KindToken.Open and open.first == t.after and
+      open.spelling(source) == "("
+  if not is_call and (open.line != t.line or open.first == t.after or
+      open.kind in {KindToken.Close, KindToken.Comma, KindToken.Semicolon, KindToken.Comment} or
+      (open.kind == KindToken.Operator and open.spelling(source) notin ["&", "$"])):
+    return -1
+  let close = if is_call: partners[k + 1] else: tokens.len
+  var
+    j = if is_call: k + 2 else: k + 1
+    count = 0
+  if is_call and j >= close: return -1
+  while j < close:
+    if count == index: return j
+    let u = tokens[j]
+    if u.kind == KindToken.Open and partners[j] > j:
+      j = partners[j] + 1
+      continue
+    if u.kind == KindToken.Comma: inc count
+    elif not is_call and j > k + 1 and u.line > tokens[j - 1].lineLast(source) and
+        tokens[j - 1].kind != KindToken.Comma and
+        not (tokens[j - 1].kind == KindToken.Operator and tokens[j - 1].spelling(source) == "&"):
+      return -1  # Statement of command form ends at line that comma or `&` does not end.
+    inc j
+  -1
+
+
+func messages(tokens: openArray[Token], partners: openArray[int], source: string): seq[seq[Piece]] =
+  ## Read concatenation of each message: argument of call that takes message (`CALLS_MESSAGE`),
+  ##   or value of pragma (`PRAGMAS_MESSAGE`), where it holds literal.
+  for k, t in tokens:
+    if t.kind != KindToken.Word: continue
+    let name = t.spelling(source)
+    var first = -1
+    for (call, index) in CALLS_MESSAGE:
+      if name == call: first = argument(tokens, partners, k, index, source)
+    if name in PRAGMAS_MESSAGE and k + 2 < tokens.len and tokens[k + 1].spelling(source) == ":":
+      first = k + 2
+    if first < 0: continue
+    let head = pieceAt(tokens, partners, first, source)
+    if head.last < head.first: continue
+    let chain = chainOn(tokens, partners, head, source)
+    if chain.anyIt(it.literal >= 0): result.add chain
+
+
+func opening(
+  chain: seq[Piece], tokens: openArray[Token], source: string
+): tuple[line: int, value, rest: string] =
+  ## Read value that opens claim of message, and text of its literal after it; empty value
+  ##   where message opens with text, or holds no text after value.
+  let head = chain[0]
+  if head.literal < 0:
+    if chain.len < 2 or chain[1].literal < 0: return
+    let (start, stop) = tokens[chain[1].literal].content(source)
+    result = (
+      tokens[head.first].line,
+      source[tokens[head.first].first ..< tokens[head.last].after],
+      source[start ..< stop].strip(chars = Whitespace + {BACKTICK}),
+    )
+  elif head.is_interpolated:
+    let (start, stop) = tokens[head.literal].content(source)
+    var k = start
+    while k < stop and source[k] in Whitespace + {BACKTICK}: inc k
+    if k + 1 >= stop or source[k] != '{' or source[k + 1] == '{': return
+    let close = source.find('}', k)
+    if close < 0 or close >= stop: return
+    result = (
+      source[0 ..< k].count('\n'),
+      source[k .. close],
+      source[close + 1 ..< stop].strip(chars = Whitespace + {BACKTICK}),
+    )
+  if not result.rest.anyIt(it in Letters): result.value = ""
+
+
+func echoes(source: string): tuple[bare: seq[Value], opened: seq[(int, string, string)]] =
+  ## Read each bare value of message that tail of message value does not read, and each value
+  ##   that opens claim of its message, with text after it.
+  let
+    tokens = source.tokens
+    partners = tokens.partners
+    tailed = source.tails.mapIt(it.first)
+  for chain in messages(tokens, partners, source):
+    let start = tokens[chain[0].first].first
+    for value in valuesBare(chain, tokens, partners, start, source, ENDING_ECHO):
+      if value.first notin tailed and value notin result.bare: result.bare.add value
+    let (line, value, rest) = chain.opening(tokens, source)
+    if value.len > 0 and (line, value, rest) notin result.opened:
+      result.opened.add (line, value, rest)
+
+
 func checkEchoes*(path, source: string): seq[Report] =
-  ## Report bare value of message, before `got` or with none, and value that opens its claim.
-  discard
+  ## Report bare value of message, before `got` or with none, and value that opens its claim of
+  ##   message, which stays for hand (IV.4).
+  ##   Named by its suite and `chain.nim` alone until static pass calls it (`fixes.nim`).
+  let (bare, opened) = source.echoes
+  var found: seq[(int, int, string)]
+  for value in bare:
+    found.add (value.line, value.first,
+      "Message echoes each value in backticks, so empty value stays visible; got `" &
+        value.text & "`.")
+  for (line, value, rest) in opened:
+    found.add (line, int.high,
+      "Message states its claim before its value, so hand rewords it; got `" & value &
+        "` before `" & rest & "`.")
+  for (line, _, message) in found.sortedByIt((it[0], it[1])):
+    result.add initReport(path, line + 1, Rule.EchoMessage, message)
 
 
 func fixEchoes*(path, source: string; held: Held): Fix =
   ## Insert backticks each bare value of message lacks, where held line stays narrow.
-  result.source = source
+  inserted(path, source, source.echoes.bare, held, Rule.EchoMessage)
 
 
 func fixEchoes*(path, source: string): Fix =
