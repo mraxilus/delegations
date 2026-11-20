@@ -679,7 +679,7 @@ sibling.
 
 **A `proc` whose body shows no effect becomes a `func` where the compiler checks it as one (STYLE.md
 §1, Article IV.3).** The Architect ruled D1 a of rule 11 of #443 on 2026-11-18. Syntax picks each
-candidate, since it cannot prove a routine pure, and the compiler proves it (`purity.nim`).
+candidate, since it cannot prove a routine pure, and the compiler checks it (`purity.nim`).
 
 - A candidate is a `proc` with a body, of no foreign pragma, that takes no routine. It stands
   outside code that `quote` or `genAst` emits, a template substitutes, or `compiles` tests.
@@ -698,8 +698,14 @@ candidate, since it cannot prove a routine pure, and the compiler proves it (`pu
   `pga_visualiser`.
 - Rejected: the compiler alone, which checks a routine that takes a lock as a `func`.
 - Cost: an effect is read from names, so a name of `EFFECTS` that means another thing keeps its
-  routine a `proc`. That gives fewer reports, and never a false one.
-- Verified by `suites/test_purity.nim`.
+  routine a `proc`. That cost removes reports, and adds none.
+- Cost: the compiler accepts a write through a parameter of `ref` type that is not `var`, where a
+  routine of a library makes the write. `[]=` of `std/json` is such a routine. So the rule reports
+  `mergeAllocations` of `pga_benchmark`, which changes the node that its caller passes.
+- Cost: a default argument is no part of the body. So `initToolchains` of knoller reads as pure,
+  though its default reads the environment.
+- Verified by `suites/test_purity.nim`. Verified by a probe with Nim 2.4.0, 2026-11-20: a `func`
+  that changes a node of its parameter through `[]=` of `std/json` compiles under `strictFuncs`.
 
 **The compiler checks the source with each candidate written `func`, read from stdin in the
 directory of the file (`checked` of `symbols.nim`).** So its imports and its `nim.cfg` resolve as
@@ -766,7 +772,12 @@ checkouts of each lock and the engine of `dance_ontology`.
   `pga_visualiser`, as the ruling counts.
 - Pure routines: 51 reports. `pga_visualiser` takes 33, `dance_ontology` 13, `rictadni` 3,
   `pga_benchmark` 1 and `knoller` 1. The ruling counts 22, as 16 and 6. The page names no list of
-  pure routines of the standard library, so `TRANSFORMS` is the list of this rule.
+  pure routines of the standard library, so `TRANSFORMS` is the list of this rule. The cause of
+  the difference is unmeasured.
+- The count of pure routines is a floor. `src/desktop/main.nim` of `pga_visualiser` proved
+  nothing, since the clone of the run lacked one of its dependencies. So did
+  `proposals/04-basis-set-forms/laws.nim` of `pga_benchmark`, which checks clean on no
+  configuration.
 - Cost, measured in that run: `pga_visualiser` took 132 s for pure routines and 38 s for markers.
 
 ## Tests
