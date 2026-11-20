@@ -27,7 +27,8 @@
 @font-face { font-family: "Commit Mono"; font-weight: 700;
   src: url(@EMBED:commit-mono-latin-700-normal.woff2@) format("woff2"); }
 
-/* Layout: one column; field and samples, then one drawing for each part, then NIF so far. */
+/* le se ciska .e lo mupli cu gapru ro pixra be lo pagbu
+   .i ro pixra cu gapru le selci'a be fi NIF */
 :root {
   --bg: #f4f6f9; --surface: #ffffff; --ink: #1a2130; --muted: #5a6475; --rule: #ccd3de;
   --accent: #2650c4; --accent-wash: #e5ebfa; --fail: #b3261e; --fail-wash: #fbe8e6;
@@ -65,7 +66,7 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; }
 header, section, figure { display: grid; gap: 10px; min-width: 0; margin: 0; }
 [hidden] { display: none; }
 .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--muted); }
+  color: var(--muted); }
 .lede, .hint, footer, .mode { color: var(--muted); }
 .hint, footer, .mode { font-size: 13px; }
 .field { display: grid; gap: 8px; }
@@ -116,71 +117,80 @@ pre .open { color: var(--open); }
 .edge { stroke: var(--muted); stroke-width: 1.2; fill: none; }
 .part.open .box { fill: var(--open-wash); stroke: var(--open); }
 </style>
-<main class="page">
+<main class="page" lang="jbo">
   <header>
-    <div class="eyebrow">ricyso'o · live text</div>
-    <h1>The tree of live text</h1>
-    <p class="lede">Type lojban, and the tree grows as each word arrives. A worker reads the
-      text as live text, piece by piece, and gives each change of its NIF. This page applies
-      each change, and draws each part from the NIF alone. A word that reaches back, as
-      <code>si</code> or <code>li'u</code>, cuts the NIF back to where it lands.</p>
+    <div class="eyebrow">ricyso'o · lo mivyselci'a</div>
+    <h1>tricu be lo mivyselci'a</h1>
+    <p class="lede">ko ciska lo jboselci'a .i le tricu cu zenba ca ro nu pa valsi cu klama .i pa
+      gunka cu tcidu le selci'a ta'i lo mivyselci'a gi'e dunda ro cenba be le selci'a be fi
+      <code>NIF</code> .i le vi papri cu pilno ro cenba gi'e pixra ro pagbu sepi'o le selci'a be fi
+      <code>NIF</code> po'o .i lo valsi poi galfi lo pu valsi cu katna le selci'a be fi
+      <code>NIF</code> bu'u le stuzi poi le valsi cu klama ke'a .i mupli fa zo <code>si</code> .e zo
+      <code>li'u</code></p>
   </header>
 
-  <section aria-label="Input">
+  <section aria-label="le se ciska">
     <div class="field">
       <div class="field-head">
-        <label for="source">Lojban text</label>
-        <span class="mode" id="mode">The script has not run.</span>
+        <label for="source">lo jboselci'a</label>
+        <span class="mode" id="mode">le samtci na pu gunka</span>
       </div>
       <textarea id="source" maxlength="2000" rows="2" spellcheck="false" autocomplete="off"
         autocapitalize="off">@SOURCE@</textarea>
-      <span class="hint">A word added at the end goes to the same reader. Any other edit starts
-        a new reader. Stream sends the text again, one word at a time. Merge joins each completed
-        part into the tree that one pass over the text gives, and keeps each error in its
-        place.</span>
+      <span class="hint">lo valsi poi se jmina fi le fanmo be le selci'a cu klama le tcidu poi pu
+        tcidu le selci'a .i ro drata nu cenba cu rinka lo nu pa cnino tcidu cu cfari .i le batke
+        po'u zo benji cu rapli benji le selci'a .i ca ro nu benji le batke cu benji pa valsi po'o
+        .i le batke po'u zo jmina cu jmina ro mulpau le tricu poi pa nu tcidu le mulselci'a cu
+        dunda ke'a .i le nu jmina cu ralte ro srera bu'u le stuzi be ri</span>
     </div>
-    <div class="controls" aria-label="Samples">
-      <button type="button" class="stream" id="stream">Stream</button>
-      <button type="button" class="stream" id="merge">Merge</button>
+    <div class="controls" aria-label="lo mupli">
+      <button type="button" class="stream" id="stream">benji</button>
+      <button type="button" class="stream" id="merge">jmina</button>
       <button type="button" data-sample="mi klama le zarci .i do cadzu">
-        <span class="mono">mi klama le zarci .i do cadzu</span><span class="tag">reads</span>
+        <span class="mono">mi klama le zarci .i do cadzu</span><span class="tag">se tcidu</span>
       </button>
       <button type="button" data-sample="mi klama le .i ko">
-        <span class="mono">mi klama le .i ko</span><span class="tag">error</span></button>
+        <span class="mono">mi klama le .i ko</span><span class="tag">srera</span></button>
       <button type="button" data-sample="ti gerku si mlatu">
-        <span class="mono">ti gerku si mlatu</span><span class="tag">erasure</span></button>
+        <span class="mono">ti gerku si mlatu</span><span class="tag">vimcu</span></button>
       <button type="button" data-sample="lu mi klama li'u cu xamgu">
-        <span class="mono">lu mi klama li'u cu xamgu</span><span class="tag">quotation</span>
+        <span class="mono">lu mi klama li'u cu xamgu</span><span class="tag">sitna</span>
       </button>
       <button type="button" data-sample="zoi gy. café .gy. melbi">
-        <span class="mono">zoi gy. café .gy. melbi</span><span class="tag">zoi</span></button>
+        <span class="mono">zoi gy. café .gy. melbi</span><span class="tag">zo zoi</span></button>
       <button type="button" data-sample="mi su do .i ko">
-        <span class="mono">mi su do .i ko</span><span class="tag">su</span></button>
+        <span class="mono">mi su do .i ko</span><span class="tag">zo su</span></button>
     </div>
     <p class="status" id="status" role="status" aria-live="polite">@STATUS@</p>
   </section>
 
-  <figure aria-label="Tree of each part">
+  <figure aria-label="lo tricu be ro pagbu">
     <div class="parts" id="parts">@DIAGRAM@</div>
   </figure>
 
-  <section id="merged" aria-label="Tree of parts merged" hidden>
+  <section id="merged" aria-label="lo tricu be lo pagbu poi se jmina" hidden>
     <p class="status" id="merged-status" role="status" aria-live="polite"></p>
     <div class="parts" id="merged-parts"></div>
   </section>
 
   <details open>
-    <summary>NIF so far</summary>
+    <summary>le selci'a be fi <code>NIF</code> be'o poi pu selbe'i</summary>
     <pre id="nif">@NIF@</pre>
   </details>
 
-  <footer>Each blue box is a rule of CLL 21.1, or a chain of rules that each hold the next
-    alone: it names the rule nearest the words, then the outermost rule and the count. A red
-    box is an error node, <code>srera</code>, at the byte where the grammar stops. A dashed card
-    is a word that no terminal holds, <code>rivbi</code>. A part in amber is still open: the
-    next change replaces it. Merge drops each word that erasure or <code>fa'o</code> leaves out,
-    and each part before the last <code>su</code>, as one pass does. It keeps each error in its
-    place, and joins the parts around it. The parser is compiled from the Nim source of
-    <code>ricyso'o</code> to JavaScript, and it runs in your browser.</footer>
+  <footer>ro blanu tanxe cu sinxa pa javni pe <code>CLL 21.1</code> .a lo porsi be lo javni be'o
+    poi ro cmima be ke'a cu ponse pa panzi po'o .i le tanxe cu jarco lo cmene be le javni poi
+    jibni le valsi .i ba bo le tanxe cu jarco lo cmene be le javni poi traji lo ka bartu ku'o gi'e
+    jarco le te kancu .i ro xunre tanxe cu sinxa pa srera jgena po'u <code>srera</code> bu'u le
+    stuzi poi le gerna cu sisti bu'u ke'a .i le namcu pe le xunre tanxe cu te kancu lo me
+    <code>byte</code> me'u poi lidne le stuzi .i lo karda poi lo korbi be ke'a cu porsi lo cmalu
+    linji cu sinxa pa jgena po'u <code>rivbi</code> noi vasru lo valsi poi no genvla cu vasru ke'a
+    .i lo najypelxu pagbu cu ca'o kalri .i le bavla'i nu cenba cu basti le pagbu .i le nu jmina
+    cu vimcu ro valsi poi lo nu vimcu .a zo <code>fa'o</code> cu vimcu ke'a .i ji'a le nu jmina cu
+    vimcu ro pagbu poi lidne le romoi be lo me zo <code>su</code> .i simsa fa lo nu tcidu le
+    mulselci'a pa roi .i le nu jmina cu ralte ro srera bu'u le stuzi be ri gi'e jmina le pagbu poi
+    sruri ro srera .i le genturfa'i pe
+    <code>ricyso'o</code> cu se fanva fi <code>JavaScript</code> fo <code>Nim</code> .i le
+    genturfa'i cu gunka ne'i le do skami</footer>
 </main>
 <script>@SCRIPT@</script>

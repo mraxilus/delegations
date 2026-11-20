@@ -227,6 +227,15 @@ func said(letters: string): string =
   letters.replace('h', '\'')
 
 
+func counted(count: int): string =
+  ## dunda le namcu ta'i lo cmavo pe `PA` mu'u lu paci li'u
+  ##   .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
+  ##   .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `PA`
+  ##   .i ro cmavo cu mapti `CLL 18.2`
+  const lut_cmavo_by_digit = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+  for digit in $count: result.add lut_cmavo_by_digit[ord(digit) - ord('0')]
+
+
 func isCompound(node: NodeNif): bool =
   ## jdice lo du'u le jgena cu cmima `KindNif.Compound` gi'e na minde
   node.kind == KindNif.Compound and not node.text.startsWith(".")
@@ -300,7 +309,7 @@ func labelError(node: NodeNif): tuple[head, rule, expected: string] =
         for terminal in child.children: expected.add terminal.text
     else: discard
   let byte_stop = (if numbers.len > 0: $numbers[0] else: "?")
-  ("srera · byte " & byte_stop, "in " & rule, expected.join(" "))
+  ("srera · " & byte_stop, "ne'i " & rule, expected.join(" "))
 
 
 
@@ -362,13 +371,13 @@ func placed(
   if under.len == 0:
     if not is_error: return (-1, 0, -1, false)
     let label = node.labelError
-    return card(KindPlace.Error, cards, @[label.head, label.rule], "needs " & label.expected, 0)
+    return card(KindPlace.Error, cards, @[label.head, label.rule], "nitcu " & label.expected, 0)
   var box = Place(kind: (if is_error: KindPlace.Error else: KindPlace.Rule),
       x: sum div under.len, height: height + 1, first: int.high, last: -1, parent: -1)
   if is_error:
     let label = node.labelError
     box.lines = @[label.head, label.rule]
-    box.title = "needs " & label.expected
+    box.title = "nitcu " & label.expected
   else:
     let label = node.labelRule
     box.lines = (if label.outer.len > 0: @[label.inner, label.outer] else: @[label.inner])
@@ -451,12 +460,6 @@ func svg*(part: PartDrawn, label: string): string =
       "\">" & marks.join("") & "</svg>"
 
 
-func counted(count: int, one, many: string): string =
-  ## dunda le namcu .e le valsi be le se kancu
-  ##   .i le valsi cu du `one` .a `many`
-  $count & " " & (if count == 1: one else: many)
-
-
 func readParts(module: string): seq[NodeNif] =
   ## dunda ro jgena poi na minde gi'e pagbu le selci'a be fi `NIF` ku'o ta'i le porsi
   for node in module.readModule:
@@ -473,7 +476,7 @@ func drawn*(nif, tail: string): DrawingLive =
     parts = nif.readParts
     opened = (VERSION & "\n" & tail).readParts
   except ValueError as error:
-    result.status = "NIF unread · " & error.msg
+    result.status = "NIF na se tcidu · " & error.msg
     return
   for k in 0 ..< parts.len + opened.len:
     let
@@ -486,16 +489,16 @@ func drawn*(nif, tail: string): DrawingLive =
       of KindPlace.Unread: result.count_unread += place.words
       of KindPlace.Error: inc result.count_errors
       of KindPlace.Rule: discard
-    let label = "Part " & $(k + 1) & (if is_open: ", open" else: "") & ": " & node.text.spoken
+    let label = "le " & counted(k + 1) & "moi pagbu" & (if is_open: " · ca'o kalri" else: "") &
+        ": " & node.text.spoken
     result.html.add "<figure class=\"part" & (if is_open: " open" else: "") & "\">" &
         part.svg(label) & "</figure>"
   result.count_parts = parts.len
   result.count_open = opened.len
-  result.status = counted(parts.len, "part", "parts") & " · " &
-      counted(result.count_words, "word", "words") & " · " &
-      counted(result.count_errors, "error", "errors") & " · " &
-      counted(result.count_unread, "word unread", "words unread") &
-      (if opened.len > 0: " · " & counted(opened.len, "part open", "parts open") else: "")
+  result.status = counted(parts.len) & " pagbu · " & counted(result.count_words) & " valsi · " &
+      counted(result.count_errors) & " srera · " & counted(result.count_unread) &
+      " valsi poi na se tcidu" &
+      (if opened.len > 0: " · " & counted(opened.len) & " pagbu poi ca'o kalri" else: "")
 
 
 func drawnMerged*(nif: string): DrawingLive =
@@ -509,16 +512,15 @@ func drawnMerged*(nif: string): DrawingLive =
   let merged = nif.mergeParts
   if not merged.is_merged:
     result.is_refused = true
-    result.status = "Merge refused"
-    if merged.part.isSome: result.status.add " · part " & $(merged.part.get + 1)
+    result.status = "le nu jmina cu se to'e curmi"
+    if merged.part.isSome: result.status.add " · le " & counted(merged.part.get + 1) & "moi pagbu"
     result.status.add " · " & merged.reason
     return
   result = drawn(merged.nif, "")
   if merged.is_whole:
-    result.status = "Merged · one tree · " & counted(result.count_words, "word", "words") &
-        " · as one pass reads the text"
+    result.status = "se jmina · pa tricu · " & counted(result.count_words) &
+        " valsi · simsa lo nu tcidu le mulselci'a pa roi"
     return
-  result.status = "Merged · " & counted(result.count_parts, "tree", "trees") & " · " &
-      counted(result.count_words, "word", "words") & " · " &
-      counted(result.count_errors, "error", "errors") & " · " &
-      counted(result.count_unread, "word unread", "words unread")
+  result.status = "se jmina · " & counted(result.count_parts) & " tricu · " &
+      counted(result.count_words) & " valsi · " & counted(result.count_errors) & " srera · " &
+      counted(result.count_unread) & " valsi poi na se tcidu"

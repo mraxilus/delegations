@@ -3234,7 +3234,26 @@ ni'o ro lertai poi le papri cu cusku ke'a selci'a le crepu fi pa datnyvei pe vo'
     selcme lo snina'u pe ke'a
   .i `koch drive` cipra di'u de'i `2026-11-11` gi'e jarco no selfa'i
 
-ni'o **lo batke po'u `Merge` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
+ni'o **ro selci'a poi le papri cu ciska ke'a cu jboselci'a**
+  .i `Architect` cpedu di'u
+  .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
+      Verified by `suites/test_stream.nim`.
+  .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `CLL 18.2`
+      Verified by `suites/test_draw.nim`.
+  .i ku'i ro tanxe cu ciska lo stuzi .e lo namcu ta'i `0` bi'o `9`
+  .i ki'u bo ro tanxe cu jarco su'e pa ze lerfu ne'i le pamoi linji be vo'a
+      Verified by `suites/test_draw.nim`.
+  .i se to'e cuxna fa lo nu ro tanxe cu cusku lo namcu ta'i lo cmavo pe `PA`
+  .i le se to'e cuxna cu katna le krasi be ro srera tanxe
+  .i lo barda lerfu cu sinxa lo nu basna to `CLL 3.9` toi
+  .i se ki'u bo le papri na binxo lo selci'a lo barda lerfu
+  .i lo cmene be lo javni pe `CLL 21.1` .e `NIF` cu stali ki'u lo nu ri cmene
+  .i le papri cu cusku lo glico selci'a po'o poi `nif_read.nim` .e `merge.nim` cu dunda ke'a ca lo
+      nu le papri na ka'e tcidu `NIF` kei .a lo nu lo nu jmina cu se to'e curmi
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki di'u ta'i lo nu le genturfa'i cu tcidu ro
+      selci'a pe le papri
+
+ni'o **lo batke po'u `jmina` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
     ke'a**
   .i le batke cu jmina lo selci'a be fi `NIF` be'o poi ca zasti ku'o gi'e na jmina le rebla
   .i ki'u bo lo bavla'i cenba cu basti le rebla
@@ -3255,7 +3274,7 @@ ni'o le linji cu sinxa pa tricu va'o lo nu lo nu jmina cu jarco lo tricu pe lo n
   .i ta'i lo xance de'i `2026-11-11` lo se galfi samtci poi kancu le jgena ta'i lo nu li no cu krasi
       cu fliba le cipra
 
-ni'o le cipra cu jitro lo trotci ta'i le papri gi'e danre `Merge` ca ro mupli gi'e cipra lo du'u le
+ni'o le cipra cu jitro lo trotci ta'i le papri gi'e danre `jmina` ca ro mupli gi'e cipra lo du'u le
     pixra cu mintu lo selja'o be lo jbena nu jmina
   .i su'o mupli cu se jmina fo lo tricu pe lo nu tcidu le mulselci'a
   .i le mupli po'u `mi klama le .i ko` ralte le srera pe vo'a
