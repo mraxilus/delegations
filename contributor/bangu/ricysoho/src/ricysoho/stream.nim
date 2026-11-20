@@ -250,6 +250,13 @@ type
 
 
 const
+  DIGITS_STREAM* = {'0'..'9'}
+    ## lo lerfu pe `0` bi'o `9`
+    ##   .i ro le lerfu cu sinxa pa cmavo pe `PA` to `CLL 18.2` toi
+    ##   .i `CLL 3.1` na liste le lerfu
+    ##   .i ku'i `Architect` cpedu lo nu le genturfa'i cu tcidu le lerfu
+  LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+    ## lo cmavo pe `PA` poi ro lerfu pe `DIGITS_STREAM` cu sinxa ke'a to `CLL 18.2` toi
   MARKS_BOUNDARY* = Whitespace + {'.'}
     ## lo sinxa poi fendi lo valsi to `CLL 3.3` toi
     ##   .i lo kutle'u .e denpa bu
@@ -561,8 +568,9 @@ func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period
   if is_needed: Pause.Inferred else: Pause.Absent
 
 
-func wordsWritten(text: string, start, finish: int): ReadingStream =
+func wordsLetters(text: string, start, finish: int): ReadingStream =
   ## tcidu lo valsi pe lo selci'avla pe lo stuzi po'u `start ..< finish`
+  ##   .i le selci'avla cu vasru no lerfu pe `DIGITS_STREAM`
   ##   .i lo denpa na seljdi
   ##   .i to'e curmi lo pagbu poi no javni cu curmi ke'a
   ##   .i le pagbu cu sinxa ja lerfu ja ve fendi
@@ -584,6 +592,31 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   let refusal_commas = spelling.refusalCommas(split.splits[0])
   if refusal_commas.isSome: return refusal_commas.get
   ReadingStream(is_read: true, occurrences: split.splits[0])
+
+
+func wordsWritten(text: string, start, finish: int): ReadingStream =
+  ## tcidu lo valsi pe lo selci'avla pe lo stuzi po'u `start ..< finish`
+  ##   .i ro lerfu pe `DIGITS_STREAM` cu du pa valsi poi le genturfa'i cu tcidu ke'a ta'i le cmavo
+  ##       poi le lerfu cu sinxa ke'a
+  ##   .i se ki'u bo zoi gy. 10moi .gy. cu se tcidu ta'i zo pa .e zo no .e zo moi
+  ##   .i `wordsLetters` tcidu ro drata pagbu
+  var
+    occurrences: seq[Occurrence]
+    at = start
+  while at < finish:
+    if text[at] in DIGITS_STREAM:
+      occurrences.add Occurrence(
+        start: at, finish: at + 1, text: $text[at], stress: none(int),
+        reading: LUT_CMAVO_BY_DIGIT[ord(text[at]) - ord('0')].readWord,
+      )
+      inc at
+      continue
+    let first = at
+    while at < finish and text[at] notin DIGITS_STREAM: inc at
+    let letters = text.wordsLetters(first, at)
+    if not letters.is_read: return letters
+    occurrences.add letters.occurrences
+  ReadingStream(is_read: true, occurrences: occurrences)
 
 
 func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
