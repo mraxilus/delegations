@@ -28,7 +28,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[options, sequtils, strutils, unittest]
+import std/[options, random, sequtils, strutils, unittest]
 
 import ../../src/ricysoho/[grammar {.all.}, prose, selmaho, stream]
 import ../articles_wikipedia/articles
@@ -160,6 +160,11 @@ const
   COUNT_KEPT_LEAST = 500
     ## lo dzijimte be lo te kancu be lo se ciska poi le flalu pe lo mulcmi poi stali cu tcidu ke'a
     ##   .i ro le selci'a cu cimoi lo selci'a gi'e vasru su'o ci genvla to `Article IX.3` toi
+  STRIDE_KEPT = 3
+    ## lo te kancu be lo selci'a poi le flalu pe lo mulcmi poi stali cu tcidu pa ke'a
+    ##   .i le flalu cu tcidu ro cimoi selci'a ki'u lo jdima be le cipra
+  SEED_KEPT = 975
+    ## lo tsiju be lo cunso stuzi poi le flalu pe lo mulcmi poi stali cu vimcu lo genvla bu'u ke'a
   COUNT_PARTS_JOINED = 64
     ## lo te kancu be lo pagbu poi le nu tcidu ro pagbu cu katna le se ciska poi jorne lo ju'agri pe
     ##     pa prosa ku'o fi ke'a
@@ -523,23 +528,35 @@ suite "Internal: Grammar":
     for sentence in SENTENCES_TATOEBA: texts.add sentence.text
     var
       whole, everywhere: Chart  # le mulcmi poi stali ca ro nu tcidu
+      previous: seq[Terminal]  # le genvla pe le pu nu tcidu
+      rng = initRand(SEED_KEPT)
       count = 0
     for k, text in texts:
-      if k mod 3 != 0: continue  # ro cimoi selci'a ki'u lo jdima be le cipra
+      if k mod STRIDE_KEPT != 0: continue
       let terminals = text.terminalsRead
       if terminals.isNone or terminals.get.len < 3: continue
       let
         read = terminals.get
+        cut = rng.rand(1 .. read.len - 2)  # le stuzi be le genvla poi se vimcu
         steps = [
           read[0 ..< 1], read[0 ..< read.len div 2], read[0 ..< read.len - 1], read,
-          read[0 ..< read.len - 2] & read[^1], read,
+          read[0 ..< read.len - 2] & read[^1], read[0 ..< cut] & read[cut + 1 .. ^1], read,
         ]
-          ## le selci'a cu zenba gi'e ba bo cenba lo genvla poi lidne le romoi
+          ## le selci'a cu zenba gi'e ba bo cenba lo genvla poi lidne le romoi gi'e ba bo vimcu
+          ##     lo genvla poi zvati le midju
       for step in steps:
-        var whole_fresh, everywhere_fresh: Chart
+        var
+          same = 0  # lo te kancu be lo genvla poi stali
+          whole_fresh, everywhere_fresh: Chart
+        while same < min(previous.len, step.len) and previous[same] == step[same]: inc same
+        # ro spisa cu tisna lo selcmi po'o poi se lidne le pamoi genvla poi cenba
+        let filled = if previous.len == 0: step.len + 1 else: step.len - same
+        check whole.fillSets(step, is_everywhere = false) == filled
+        check everywhere.fillSets(step, is_everywhere = true) == filled
         check whole.readWhole(step).shape == whole_fresh.readWhole(step).shape
         let islands = everywhere.islands(step, 0, step.len).mapIt(it.shape)
         check islands == everywhere_fresh.islands(step, 0, step.len).mapIt(it.shape)
+        previous = step
       inc count
     check count >= COUNT_KEPT_LEAST  # `Article IX.3`
 
