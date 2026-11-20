@@ -70,6 +70,10 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   KeysStub = "stub keys"  ## Test stub leaves out `-r`, `batchable` and `joinable`.
   ConsumerUsed = "used consumer"  ## `{.used.}` carries comment naming its consumer.
   PushForeign = "push foreign"  ## `{.push.}` stands only over foreign bindings `{.pop.}` closes.
+  FamilyCompileTime = "compile-time family"
+    ## Routine compile time alone runs carries `compileTime`, as its family does, and no runtime
+    ##   pragma.
+  StaticWhen = "when static"  ## Branch on what build fixes is `when`, never `if`.
   SeedRandom = "random seed"  ## Suite importing `std/random` seeds it.
   HeaderStub = "stub header"  ## Test stub carries testament header.
   OutputDebug = "debug output"  ## Test leaves no unlabelled `echo` outside condition.

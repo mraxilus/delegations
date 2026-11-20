@@ -83,6 +83,8 @@ const CITATIONS*: array[Rule, string] = [
   Rule.KeysStub: "STYLE.md §6",
   Rule.ConsumerUsed: "STYLE.md §2",
   Rule.PushForeign: "STYLE.md §2",
+  Rule.FamilyCompileTime: "STYLE.md §2",
+  Rule.StaticWhen: "STYLE.md §3",
   Rule.SeedRandom: "STYLE.md §6",
   Rule.HeaderStub: "STYLE.md §6",
   Rule.OutputDebug: "VIII.5",
