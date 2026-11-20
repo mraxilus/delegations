@@ -88,12 +88,18 @@ suite "Article V.2":
       "c_complement", "c_dual", "product_complement",  # meaning decides: reading holds it
       "FLOAT_WIDTH", "STRING_LONG",  # type word first is no shape (#443)
       "bulkFlat", "weight_round",  # axis values alone: first names thing
-      "antique", "antic",  # glued word names no word of package, or holds three letters too few
+      "antique", "antic",  # glued word names no word of package
       "m_flags", "mx_grade",  # value of one letter before no property, or value of two letters
     ]:
       check passing.stated == ""
     check "left_name".stated(axes = []) == ""  # wrapper of library is no axis value
     check "antibasis".stated(words = []) == ""
+
+
+  test "word glued after `anti` holds three letters or more, so shorter one reads as no shape":
+    # Case of review of record: `antic` passes by its word alone, so floor held no case.
+    check "antiabc".stated(words = ["abc"]) == ANTI & "; got `antiabc`."
+    check "antiab".stated(words = ["ab"]) == ""
 
 
   test "rename writes order of cut in case of name's kind, abbreviation spelled out":

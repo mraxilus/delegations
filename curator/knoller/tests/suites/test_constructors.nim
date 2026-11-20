@@ -59,6 +59,7 @@ suite "Style §5":
       "let a = initElement(x + y)\n",  # compound first argument
       "let a = initElement()\n",  # no argument
       "let a = initElement[float](x)\n",  # generic call
+      "let a = initElement x\n",  # command call
       "let a = (x + y).initElement\n",  # compound receiver
       "import pga/multivectors\nlet a = multivectors.initElement(x)\n",  # module path
       "let a = initTable[string, int]()\nlet b = t.initTable\n",  # constructor no file declares

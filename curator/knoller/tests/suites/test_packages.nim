@@ -142,3 +142,38 @@ suite "Names of package":
       "`scalar_anti` stays for hand, since it is refused:"))
     check "p/src/a.nim:12: name-cut left: Name puts `anti` after word it qualifies, as " &
       "`scalarAnti`; got `antiscalar`." in outcome.lines
+
+
+  test "planner that refuses composed rename writes neither its case part nor its cut":
+    # Cost of record: `composed` joins case rename and cut of one declaration into one rename,
+    #   so one refusal leaves both; `name_right` reads as template `nameRight` here.
+    let root = createTempDir("knoller_", "_composed")
+    defer: removeDir(root)
+    const source =
+      "{.experimental: \"strictFuncs\".}\n\n" &
+      "type Chiral*[T] = object  ## Pair of sides.\n" &
+      "  left*, right*: T  ## Side.\n\n" &
+      "template nameRight*(): int = 1\n  ## Right name.\n\n\n" &
+      "proc f*(rightName: int): int =\n" &
+      "  ## Add.\n" &
+      "  rightName + nameRight()\n"
+    root.writeTree([("p/p.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+                    ("p/src/a.nim", source)])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = [("p/src/a.nim", source)]
+      nimbles = nimblesNearest(["p/src/a.nim"], root)
+      plans = files.planRenames([], "", root, toolchains, nimbles)
+    check plans.mapIt((it.rename.name, it.rename.renamed, it.rename.rule, it.refusal.len > 0)) ==
+      @[("rightName", "name_right", Rule.CaseName, true)]
+    let outcome = outcome(files, [], false, root, plans = plans, nimbles = nimbles)
+    for written in outcome.written:
+      for name in ["right_name", "name_right"]: check name notin written[1]
+    check "p/src/a.nim:10: name-case left: Parameter is `snake_case`; got `rightName`." in
+      outcome.lines
+    check "p/src/a.nim:10: name-cut left: Name opens with head, axis value `right` last; got " &
+      "`rightName`." in outcome.lines
+    check outcome.lines.anyIt(it.startsWith("p/src/a.nim:10: name-case warning: Rename to " &
+      "`name_right` stays for hand, since it is refused:"))
