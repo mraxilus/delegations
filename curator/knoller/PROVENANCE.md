@@ -605,8 +605,9 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 
 - The cases come from the PGA library at `d9be8ae` and `3d9696e`, from `dance_ontology` (#539),
   and from `rga_visualiser` (#521). Others come from the rulings of #533, #526 and #443.
-- The cases of rules 2 to 5 of #443 quote the library at `3d9696e`. Verified by hand, 2026-11-20:
-  each fails at `4245dca8`, before those rules, and the case of rule 2 fails at `3a6cf5e9`.
+- The cases of rules 2 to 5 of #443 quote the library at `3d9696e`. Verified by hand, 2026-11-20,
+  with the suite of `048c3c36` against knoller at each commit. Each fails at `4245dca8`, before
+  those rules, and the case of rule 2 alone fails at `3a6cf5e9`.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
 - Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
@@ -874,7 +875,8 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
   comment is a `#` comment. A `##` doc right above the run is no group comment. Inside a
   routine, it is the doc of that routine.
 - Code in `quote do:` passes too, since its generator carries its docs through a parameter. So
-  does a doc on the line above, at the indent of the declaration, because it stands out of place.
+  does a doc on the line above a declaration that is no routine, at its indent, because it stands
+  out of place.
 - The rule reads the end of each line from its tokens. A string, the closing `"""` of a long
   string and a character literal hold no bracket and no comment for it. A line whose last token
   is `,`, or an operator that ends in `=` or `&`, continues its statement.
@@ -961,11 +963,11 @@ ruled so on rule 5 of #443. For most shapes that position is where `nim doc` rea
 position and missing doc read one place for each declaration (`placements`), and where its doc
 stands (`target`). So each doc that the fixer of one writes, the check of the other passes.
 
-- For three shapes STYLE.md §5 alone sets the position. `nim doc` reads the group doc of a bare
-  `type` in neither place. It reads the doc of a routine in each place that the fix moves it from.
-  These places are the signature line, the line after a blank line, and another indent. Verified
-  by hand with `nim jsondoc` of 2.4.0, 2026-11-20, on one probe of each shape.
-
+- For the group doc of a bare `type` and for the doc of a routine, STYLE.md §5 alone sets the
+  position. `nim doc` reads the group doc on neither the keyword line nor the next line. It reads
+  the doc of a routine in each place that the fix moves it from. These places are the signature
+  line, the line after a blank line, and another indent. Verified by hand with `nim jsondoc` of
+  2.4.0, 2026-11-20, on one probe of each shape.
 - A one-line doc of a type, a field, a binding or an enum member stands on its line, where the
   joined line fits `LINE_MAX`. Two spaces stand before its `##`. Otherwise it takes the next line,
   one level in. A trailing doc that widens its line past `LINE_MAX` moves there.
@@ -992,19 +994,24 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   section, at any depth. A keyword line that holds one declaration is one too. A line that
   continues an expression declares nothing.
 - Verified by `suites/test_declarations.nim`, for each shape and for each doc that stays. The cases
-  of `type Order` and `lut_grade_by_basis` are quoted from the PGA library at `3d9696e`.
-- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
-  runs `checkDocs` and `fixDocs` alone on each file that `git ls-files` lists. It gives 2 reports.
-  The fix writes 1 line and removes 2 at `type Order`, and leaves the doc under `block:` for hand.
-- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20, against the
-  rule before these shapes. The shapes add 14 reports, and each is a doc inside `block` that stays
-  for hand. The 22 reports of the rule before stay as they were.
+  of `type Order` and `lut_grade_by_basis` quote the PGA library at `3d9696e`.
+- Verified by hand with knoller at `048c3c36` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkDocs` and `fixDocs` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 2 reports. The fix writes 1 line and
+  removes 2 at `type Order`, and leaves the doc under `block:` for hand.
+- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. Knoller at
+  `048c3c36` gives 36 reports. Knoller at `4245dca8`, before these shapes, gives 22 of them, at the
+  same places. Each of the other 14 is a doc inside `block` that stays for hand.
 - Cost: a doc that trails the first line of a value over brackets, or of a signature over lines,
   stays, though `nim doc` reads none there.
 - Cost: a doc above a routine stays, and neither rule reads it, though `nim doc` reads none there.
   Missing doc then writes `## TODO: Document.` in the body, so the doc above and the placeholder
   both stand. Verified by hand through the whole chain, 2026-11-20, on one probe of each kind of
   routine body.
+- Cost: a doc at the start of a file moves onto a declaration right below it. `nim doc` reads it as
+  the doc of the module. No Nim file of the tree at `93613d68` opens with a doc right above a
+  declaration, read on 2026-11-20. Verified by `suites/test_declarations.nim`, and by hand with
+  `nim jsondoc` of 2.4.0, 2026-11-20.
 
 ## Stages
 
@@ -1012,6 +1019,7 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
 stage (VI.4).** The Architect ruled this narrow form on rule 4 of #443. The paragraph must hold
 three lines of code or more (`LINES_CODE_MIN`). The fixer writes `# TODO: Describe stage's
 purpose.` above the paragraph, at its indent, as `## TODO: Document.` waits for the text of a doc.
+It writes only where the line fits `LINE_MAX`, and otherwise the report stays for hand.
 
 - A body is the lines below the `=` that ends a signature, deeper than the head, for each kind of
   routine. The lines below `test "…":` are a body too. A routine nested in a body cuts the
@@ -1027,20 +1035,20 @@ purpose.` above the paragraph, at its indent, as `## TODO: Document.` waits for 
   first line counts as none, and so does a fence marker.
 - The first stage opens after the doc of the routine, so a comment right below the doc opens it.
 - A line of code is a line whose view of code holds code, so a comment line counts as none.
-- The floor of three lines is the Architect's. The curator counted the routines of the PGA library
-  that comment a stage, on #443. In them, 43 of the 50 paragraphs of three lines of code or more
-  open with a comment. Of the 16 paragraphs of one line, 6 do.
-- Rejected: the broad form, every paragraph that a blank line opens. It wrote 45 lines on the PGA
-  library at `3d9696e`, and the Architect narrowed it.
-- Rejected: the placeholder `# TODO: Describe stage.`. A stage comment names why its stage runs,
-  as VI.4 says, so the placeholder asks for the purpose.
-- Verified by `suites/test_stages.nim`. The macro `defineOperator` of `pga/operators.nim` and the
-  routine `filterBases` of `pga/cayleys.nim` at `3d9696e` are quoted as found.
-- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
-  runs `checkStages` and `fixStages` alone on each file that `git ls-files` lists. It gives 7
-  reports, and the fix writes 7 lines. They are lines 365, 465 and 504 of
-  `pga/cayleys.nim`, and lines 41, 45, 94 and 98 of `pga/operators.nim`.
-- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. It gives 209
+- The floor of three lines is the Architect's. The routines of the PGA library that comment a stage
+  hold 50 paragraphs of three lines of code or more. Of them, 43 open with a comment. Of the 16
+  paragraphs of one line, 6 do. Both figures are the count on #443 of 2026-11-18, unmeasured here.
+- Rejected: the broad form, every paragraph that a blank line opens, which #443 counts at 45 lines.
+- Rejected: `# TODO: Describe stage.`, which asks for no purpose (VI.4).
+- Verified by `suites/test_stages.nim`. Its cases quote the macro `defineOperator` of
+  `pga/operators.nim` and the routine `filterBases` of `pga/cayleys.nim` at `3d9696e`, and each
+  case names its cut.
+- Verified by hand with knoller at `048c3c36` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkStages` and `fixStages` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 7 reports, and the fix writes 7 lines.
+  They are lines 365, 465 and 504 of `pga/cayleys.nim`, and lines 41, 45, 94 and 98 of
+  `pga/operators.nim`.
+- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. It gives 207
   reports, which no check of `koch check` reads yet.
 - Cost: a routine reads from a line that opens with its keyword and its name. So the body of a
   lambda reads as lines of the routine that holds it, and a test reads as `test "…":` alone.
@@ -1579,15 +1587,16 @@ spaces past `Implement`.
 - The fixer sets each line two spaces past the sentence of its parent, as the parent stands once
   moved. So the lines below a moved line move with it. A comment whose move would widen a line
   past `LINE_MAX` stays for hand, whole, and its reports stay.
-- Verified by `suites/test_outlines.nim`. The cases of `pga/multivectors.nim`, `pga/operators.nim`,
-  `pga/algebra.nim` and `pga.nim` of the PGA library at `3d9696e` are quoted as found.
-- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
-  runs `checkOutlines` and `fixOutlines` alone on each file that `git ls-files '*.nim' '*.nims'
-  '*.nimble'` lists. It gives 11 reports, and the fix moves 18 lines. Of those,
-  17 are the lines under tags that the curator counted for the ruling. The other is line 354 of
-  `pga/algebra.nim`, a nuance one space short.
-- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. It gives 3,200
-  reports, and the fix moves 2,424 lines. No check of `koch check` reads them yet.
+- Verified by `suites/test_outlines.nim`. Its cases quote `pga/multivectors.nim`,
+  `pga/operators.nim`, `pga/algebra.nim` and `pga.nim` of the PGA library at `3d9696e`, and each
+  case names its cut.
+- Verified by hand with knoller at `048c3c36` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkOutlines` and `fixOutlines` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 11 reports, and the fix moves 18
+  lines. Of those, 17 are the lines under tags that the ruling on the tags of rule 3 of #443
+  counts. The other is line 354 of `pga/algebra.nim`, a nuance one space short.
+- Verified by hand with that driver over the repository at `3a6cf5e9`, 2026-11-20. It gives 3,195
+  reports, and the fix moves 2,416 lines. No check of `koch check` reads them yet.
 - Cost: a line of a table, a diagram or code stays where its parent moves.
 
 **A doc holds one summary line, and its sentence ends in a period (VI.1).** The first line of a
@@ -1623,18 +1632,18 @@ bare. The rule reads no string that a generator passes as a doc.
   comparison after a name. It is also a line that ends in `=`, a keyword line that ends in `:`,
   or a nested marker.
 - A line without a step holds no prose, as the outline reads it (`isStepless`). Nor does an
-  aligned column, that is two spaces or more between words outside backticks. Nor does a deeper
-  line that continues one, or a `#` line that reads as code.
-- Two spaces after a closing mark, a comma or a semicolon space the clauses of a sentence, and
-  align no column. The header of `simulation/rig.nim` of `dance_ontology` writes them so, and
+  aligned column, that is two spaces or more between words outside backticks and quotes. Nor does
+  a deeper line that continues one, or a `#` line that reads as code.
+- Two spaces after a closing mark, a comma or a semicolon stand between the clauses of a sentence,
+  and align no column. The header of `simulation/rig.nim` of `dance_ontology` writes them so, and
   `suites/test_claims.nim` quotes it as found at `e9ac1be1`.
 - A path is a word with a file extension of `EXTENSIONS_FILE`, as `cayleys.nim`, or a folder that
   a slash closes, as `draw/`. Backticks replace its double quotes, as EXAMPLES.md, I.6 writes it.
   A capitalised name with an extension and no folder, as Node.js, names a product, and stands
   bare.
 - A literal is a range, a typed literal or a hex literal, as `E1..E4`, `1'e1` and `0xFF`. Literals
-  that only operators part take one pair, fillers between them included, as in
-  `1'e1 ∧ 1'e2 ∧ ... ∧ 1'en`. A possessive, as `7's`, is none.
+  with only operators and fillers between them take one pair, as in `1'e1 ∧ 1'e2 ∧ ... ∧ 1'en`. A
+  possessive, as `7's`, is none.
 - A name is a Nim type that is no English word (`TYPES_BARE`), as `seq` and `int`. It is also an
   identifier that the file declares in a shape that no English word takes. That shape holds `_`, a
   digit after a letter, or an inner capital. So a name in capitals alone takes `_` or a digit,
@@ -1644,11 +1653,11 @@ bare. The rule reads no string that a generator passes as a doc.
   lowercase word, as `sqrt`, or one capitalised word, as `Basis`. So is an enum member alone, and
   a word with a letter outside ASCII, which is formal notation.
 - A citation is a Markdown file named in capitals alone, as STYLE.md or PROVENANCE.md, and it
-  stands bare. The question of the ruling named charter and record files together. A path with a
-  folder takes backticks.
-- Rejected: the declarations of the whole project. One file is all that a check of knoller reads,
-  so a name that another file declares stays bare.
-- Verified by `suites/test_claims.nim`, with each library line that a report names, as found.
+  stands bare. A record file stands bare too, since the ruling on rule 2 of #443 answers for
+  charter and record files together. A path with a folder takes backticks.
+- Cost: a name that another file declares stays bare, since a check of knoller reads one file.
+- Verified by `suites/test_claims.nim`. Its cases quote each library line that a report names, and
+  each case names its cut.
 
 **A claim ends where its sentence must close, and a wrap reads no end.** A claim ends at the last
 line of a comment, before a shallower line, before a line without a step, and before a bullet.
@@ -1666,24 +1675,25 @@ runs on to a line of the same depth or deeper is a wrap. The rule reads no mark 
   code that it labels. A comment of one line that holds one word or opens with a citation is a
   label too.
 - `e.g.` and `i.e.` close no sentence, so a line that ends on one is cut.
-- Verified by `suites/test_claims.nim`. The library lines of each answer are quoted as found: lines
-  163 and 165 of `pga/algebra.nim`, and lines 30 and 229 of `pga.nim`.
+- Verified by `suites/test_claims.nim`. It quotes the library lines of each answer: lines 163 and
+  165 of `pga/algebra.nim`, and lines 30 and 229 of `pga.nim`.
 
 **The fix writes each backtick, period and capital, and leaves each cut for hand.** A claim that
 ends on a function word (`WORDS_CUT`), on another mark, or on `e.g.` is cut. So is a lowercase line
 after a sentence end. A fix would hide the cut, so each one stays for hand. Backticks and a period
-that would widen a line past `LINE_MAX` stay for hand too. A capital widens nothing, so it is
-written.
+that would widen a line past `LINE_MAX` stay for hand too. A capital widens nothing, so the fix
+writes it.
 
-- The check and the fixer share one reading (`prose`), so the rule is written once (Article II.1).
+- The check and the fixer share one reading (`prose`), so one place holds the rule (Article II.1).
 - The fixer runs after the fixer of articles, so a claim whose article goes takes its capital
   after (`chain.nim`).
-- Verified by hand on the PGA library at `3d9696e`, 2026-11-20. A driver imports `knoller` and
-  runs `checkClaims` and `fixClaims` alone on each file that `git ls-files` lists. It gives 13
-  reports, and the fix changes the 12 lines that the card of rule 2 gives. A second
-  run writes nothing, and `knoller --check` keeps the count of each other rule.
-- Cost: two spaces inside a line, outside backticks, read as an aligned column, so a sentence
-  spaced so reads none.
+- Verified by hand with knoller at `048c3c36` on the PGA library at `3d9696e`, 2026-11-20. A driver
+  imports `knoller` and runs `checkClaims` and `fixClaims` alone on each file that
+  `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 13 reports. The fix changes the 12
+  lines of the diff on the library that D1 a of #443 accepted. A second run writes nothing, and
+  `knoller --check` keeps the count of each other rule.
+- Cost: two spaces between words, outside backticks and quotes and after no closing mark, comma or
+  semicolon, read as an aligned column. So a sentence with two such spaces holds no prose.
 - Cost: a `#` comment of code at an odd step that reads as no code, as `# echo x`, reads as prose.
   A `#` line of prose that holds a call glued to a name reads as code, so it takes no report.
 
