@@ -250,7 +250,7 @@ type
 
 
 const
-  DIGITS_STREAM* = {'0'..'9'}
+  DIGITS_STREAM = {'0'..'9'}
     ## lo lerfu pe `0` bi'o `9`
     ##   .i ro le lerfu cu sinxa pa cmavo pe `PA` to `CLL 18.2` toi
     ##   .i `CLL 3.1` na liste le lerfu
