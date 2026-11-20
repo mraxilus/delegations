@@ -145,7 +145,8 @@ suite "Fixes":
 
 
   test "layout checks read Nim syntax; import and list checks read `.nim` alone":
-    let breach = "import std/os\nimport std/strutils\nlet a = b+c  ## Sum.\n"
+    let breach = "import std/os\nimport std/strutils\n\nlet a = b+c  ## Sum.\n"
+      # blank line after imports, as X.2 asks
     check checkFormatting("a.nims", breach, Kind.NimScript).toFindings.allIt("X.9" in it.message)
     check checkFormatting("a.nim", breach, Kind.Nim).len == 2  # brackets too
     check checkFormatting("a.md", breach, Kind.Markdown).len == 0
@@ -207,15 +208,16 @@ suite "Fixes":
     check checkFormatting(path, unfenced, Kind.Nim).anyIt(
       it.line == 5 and it.rule == Rule.WrappingCall,
     )  # rows join unfenced
-    # after fence alone, and doc each binding takes
+    # after fence alone, and blank line and doc each binding takes
     check checkFormatting(path, source, Kind.Nim).mapIt((it.line, it.rule)) == @[
-      (12, Rule.SpacingExpression), (5, Rule.DocMissing), (12, Rule.DocMissing),
+      (12, Rule.LinesBlankDefinition), (12, Rule.SpacingExpression), (5, Rule.DocMissing),
+      (12, Rule.DocMissing),
     ]
     let plan = fixEntries(BRANCH_CURATOR, [entry(path, source)])
     check plan.written[0].content == source.replace(
       "  #!fix on\n)\n", "  #!fix on\n)  ## TODO: Document.\n"
-    ).replace("let n = matrix(1+2)\n", "let n = matrix(1 + 2)  ## TODO: Document.\n")
-      # rows kept, blank line too
+    ).replace("let n = matrix(1+2)\n", "\nlet n = matrix(1 + 2)  ## TODO: Document.\n")
+      # rows kept, blank line inside them too
     check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
     check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0
     check plan.warned.mapIt(it.render) == @[
@@ -312,7 +314,9 @@ suite "Fixes":
       "let a = 1 + 2  ## Sum.\n" & FENCE_OFF & "\nlet b = 1+2\n"  # fence keeps doc out too
     let quoted =
       "let s = \"\"\"\n" & FENCE_OFF & "\n\"\"\"  ## Text.\nlet b = 1+2  ## Sum.\n"
-    check checkFormatting(path, quoted, Kind.NimScript).mapIt(it.line) == @[4]
+    check checkFormatting(path, quoted, Kind.NimScript).mapIt((it.line, it.rule)) == @[
+      (4, Rule.LinesBlankDefinition), (4, Rule.SpacingExpression),
+    ]  # each check reaches line after string
 
 
   test "fence crossing bracket leaves whole file as written, and is its one finding":
@@ -433,18 +437,20 @@ suite "Fixes":
         [entry(path, head & "when isMainModule:\n  let count = 1\n  echo count\n")],
       )
     check plan.written.mapIt(it.content) == @[
-      head & "proc main() =\n  ## TODO: Document.\n  let count = 1\n  echo count\n\n\n" &
+      head & "\nproc main() =\n  ## TODO: Document.\n  let count = 1\n  echo count\n\n\n" &
         "when isMainModule:\n  main()\n",
-    ]  # V.10
-    check plan.fixed.mapIt((it.line, it.message)) == @[(9, "entry block (V.10)")]
+    ]  # V.10, and X.2 before routine after imports
+    check plan.fixed.mapIt((it.line, it.message)) == @[
+      (9, "entry block (V.10)"), (0, "definition blank lines (X.2)"),
+    ]  # blank line before `proc main`, which fix inserts, so at line `0`
     check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0  # second fix writes nothing
     let held = fixEntries(
       BRANCH_CURATOR,
-      [entry(path, head & "when isMainModule:\n  var count {.global.} = 0\n")],
-    )
+      [entry(path, head & "\nwhen isMainModule:\n  var count {.global.} = 0\n")],
+    )  # two blank lines after imports, as X.2 asks, so fix writes nothing
     check held.written.len == 0
     check held.left.mapIt((it.line, it.message)) == @[
-      (9, "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
+      (10, "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
         "`{.global.}` binds at module level alone; got `count`."),
     ]  # V.10
 
@@ -479,16 +485,18 @@ suite "Fixes":
     answers[1].globals["count"] = @[]
     let plan = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, answers))
     check plan.written.mapIt(it.content) == @[
-      head & "proc runAll*(): int = 1\n  ## Run.\nconst COUNT* = 2  ## Count.\n",
-      head & IMPORT_PROFILER & "\n\nimport ./a\n\nproc main() =\n  ## TODO: Document.\n" &
+      head & "proc runAll*(): int = 1\n  ## Run.\n\nconst COUNT* = 2  ## Count.\n",
+      head & IMPORT_PROFILER & "\n\nimport ./a\n\n\nproc main() =\n  ## TODO: Document.\n" &
         "  let count = runAll()\n  echo count\n\n\nwhen isMainModule:\n  main()\n",
     ]  # V.1, V.10
     check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
       (a.path, 5, "name case (V.1)"),
+      (a.path, 7, "definition blank lines (X.2)"),
       (b.path, 11, "name case (V.1)"),
       (b.path, 11, "name case (V.1)"),
       (b.path, 12, "name case (V.1)"),
       (b.path, 11, "entry block (V.10)"),
+      (b.path, 0, "definition blank lines (X.2)"),
     ]  # each report at line of source as given, by rule knoller's check names
     check plan.left.len == 0
     let again = plan.written
