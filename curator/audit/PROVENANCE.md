@@ -3144,13 +3144,23 @@ names the nimble file of each project where a file declares one (`nimbleProject`
   declares `formatValue`, and joins where no file of the tree does.
 - Cost: a `formatValue` that a dependency declares, outside the tree, is unread.
 
-**The context of a fix reads two more facts of each project for a fixer of one file.** These are
+**The context of a fix reads three more facts of each project for a fixer of one file.** These are
 the defaults of its configurations (rule 14 of #443), and the constants that each of its modules
-exports (rule 12). The fix and the fence warning of each entry take those of its project. The
-record of `curator/knoller` gives the reason of each (`## Configuration blocks` and `## Staging`).
+exports (rule 12). The third is the names of its modules (rules 8, 9 and 15). The fix and the
+fence warning of each entry take those of its project. The record of `curator/knoller` gives the
+reason of each (`## Configuration blocks`, `## Staging` and `## Names of a package`).
 
+- The names come from `namesPackage` of knoller, by nimble file. The aliases of the library that
+  the project builds on join them, from the modules that `readFacts` reads (`## Facts of the
+  compiler`).
+- The queries of the semantic pass read the names of the tree alone, since a library adds no axis
+  value and no word. So a cut rename asks the pass for each site, as a case rename does. It joins
+  the case rename of its declaration into one rename, whose rule is that of the case.
 - Verified by `suites/test_fixes.nim`. A two-way `when` swaps, and a branch on a constant of
   another module becomes `when`. Each does so only where the tree holds the module of the constant.
+- Verified by `suites/test_fixes.nim`. A landmark index takes an alias of another module of its
+  project, or of its library alone, and never one of another project. A glued `anti` renames at
+  each use, where another module of the project declares its word.
 
 **An entry block that binds moves into `proc main` (V.10).** The fixer puts the body in
 `proc main` above the block, and the block calls `main()`. The routine takes the doc
@@ -3237,7 +3247,8 @@ the root files, which import across projects. A rename that would write a file t
 leaves out is refused, and the finding stays for the hand.
 
 - A rename reports the rule of the check that knoller names, such as `name case (V.1)`. A name
-  that breaks its case and coins an abbreviation takes one rename, which settles both rules.
+  that breaks its case and coins an abbreviation takes one rename, which settles both rules. So
+  does a name that breaks its case and its cut (V.2).
 - Verified by `suites/test_fixes.nim`, which renames across two files of a tree.
 
 **The entry move alone has a second proof, on commit `c4c0d400`, which holds more entry blocks.**
@@ -3245,6 +3256,74 @@ Verified by hand, 2026-10-04, with the same program and the engine of `dance_ont
 block moved, and the parser read each written file to the same tree once its body returns under
 its block. `nim check` gave each written file the same result before and after, and a second run
 moved nothing.
+
+## Facts of the compiler
+
+**`koch fix` reads the uses of private symbols, the pure routines and the library of each project
+through the readers of knoller's command line.** `readFacts` calls `resolveMarkers`, `resolvePures`
+and `modulesLibrary`, which knoller exports for it. So koch and the command line read each fact
+alike (Article II.1). The fix verb of `koch.nim` passes the facts to `initContext`, as it passes
+the answers of the semantic pass. The record of knoller gives each rule (`## Sibling markers`,
+`## Pure routines` and `## Names of a package`).
+
+- Each reader reads the project of a file as git lists it, with the checkouts of its lock.
+- A file at the root lies in no project, so it asks for no fact. The readers of knoller read the
+  whole tree as the project of such a file.
+- The readers name no define, as D2 a of #886 rules for the command line. So rules 7 and 11 read a
+  file under `tests/` without `-d:testing`, though the conversion pass names it (`## Semantic
+  pass`).
+- Rejected: a second reading in the audit that passes the defines of the stubs. It writes the
+  reading twice, and the counts of the two callers drift apart.
+- Cost: a branch that only `-d:testing` takes is unread by rules 7 and 11.
+- Verified by `suites/test_fixes.nim`, through the real compiler on a fresh repository. It holds a
+  marker, a `func`, and an alias of a library that only `nim.cfg` names.
+
+**The fix writes the edits of rules 7, 9 and 11 before the chain, in the order of the command
+line.** The renames come first, then the conversions, the landmark aliases, the sibling markers and
+`func`. A marker that moves a trailing doc to the next line moves that line. So each later report
+traces back to the line as given (`originApplied`).
+
+- Each finding of these rules that no edit writes stays for hand, and prints as a finding left. So
+  does each call of a constructor that the package calls both ways, since no fix writes a form.
+- A fenced landmark index or constructor call counts in the warning of its fence, which reads the
+  names. A fenced marker or `proc` prints as left, since the fence warning reads no uses and no
+  pures.
+- A file whose uses or pures the compiler resolved none prints a warning with its reason.
+- Verified by `suites/test_fixes.nim`, with uses and pures written by hand, and with the names of
+  a tree.
+
+**Verified by run, 2026-11-20, over the nine projects, with the checkouts of each lock and the
+engine of `dance_ontology`.** `koch fix --dry-run --all --branch:main` reports each of the five
+rules where `knoller --check <project>` reports it, with the same counts. Both read the files of
+`e31b5d15`, with Nim 2.4.0. The dry run over the repository ran at `cbf1e68b`, so both tools ran
+again on `curator/audit` and `curator/knoller`, whose files differ there. A comparison matched
+each report of the two outputs by rule, path and line.
+
+| Rule | Project | Rewrites | Left for hand |
+| --- | --- | --- | --- |
+| 7 | `pga_visualiser` | 1 | 0 |
+| 8 | `knoller` | 3 | 0 |
+| 8 | `pga_benchmark` | 0 | 5 |
+| 8 | `pga_visualiser` | 0 | 1 |
+| 8 | `dance_ontology` | 0 | 1 |
+| 9 | `pga_benchmark` | 2 | 0 |
+| 9 | `pga_visualiser` | 1 | 0 |
+| 11 | `pga_visualiser` | 33 | 1 |
+| 11 | `dance_ontology` | 13 | 0 |
+| 11 | `rictadni` | 3 | 0 |
+| 11 | `pga_benchmark` | 1 | 1 |
+| 11 | `knoller` | 1 | 0 |
+| 15, constructor | `pga_visualiser` | 0 | 1 |
+
+- Each other project takes none of these rules. The compound argument of rule 15 gives the same
+  counts as before the wiring.
+- Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
+  it once. So the table counts sites. A file that knoller proves nothing of prints one warning in
+  each tool.
+- Cost: the dry run over the repository took 330 s at `329659da`, before the wiring, and 875 s at
+  `cbf1e68b`, after it. Koch ran as `nim r` builds it, once at each commit, on this container with
+  four cores, which other delegates shared. The time added is the compiler, which each project
+  asks for uses and pures.
 
 ## Parser proof
 
