@@ -848,22 +848,24 @@ which fixers widen, which wraps follow, and what the chain holds where none fits
 
 ## Configuration blocks
 
-**Definitions of one configuration standing next to each other share one block, and the
+**Definitions of one configuration that stand next to each other share one block, and the
 configuration that a build gets by default comes first (X.11).** The Architect ruled so on rule
-14 of #443, as option b: knoller never moves a definition out of its family
+14 of #443, as option b. Knoller never moves a definition out of its family
 (`checkConfigurations`, `fixConfigurations`).
 
-- Two blocks of one configuration join only where blank lines alone stand between them. The fix
-  deletes the head of the second block, so its body follows the first, with the blank lines
-  between as written. A definition or a comment between keeps the two apart, since what stands
-  there can belong to the family of either.
+- Two blocks of one configuration, each with no other branch, join only where blank lines alone
+  stand between them. The fix deletes the head of the second block, so its body follows the
+  first, with the blank lines between as written. A definition or a comment between keeps the two
+  apart, since what stands there can belong to the family of either. Conditions that read alike,
+  spaces aside, are one configuration.
 - A two-way `when` whose condition is false by default puts its default last, so it reports. The
   fix swaps its branches. The new head names the complement by the constant that names it, as
   `IS_RIGID* = not IS_CONFORMAL`, or else with `not`.
 - The default comes from the define of the package. A module-level constant with a `define` or
-  `booldefine` pragma and a literal `true` or `false` gives it. So does a constant written `not`
-  of such a constant. Knoller reads them over the modules of each package of a run, and the audit
-  over each project (`readConfigurations`).
+  `booldefine` pragma and a literal `true` or `false` gives it, with its type stated or not. So
+  does a constant written `not` of such a constant. The audit reads them over each project
+  (`readConfigurations`). Knoller reads them over the modules of its run alone, so a run on
+  `pga/cayleys.nim` alone gives no report.
 - A condition that no define gives names no order, as `defined(js)`, which the target sets.
   `isMainModule` and `compileOption(…)` name no configuration.
 - The rule reads each `when` at module level or in a branch of one, in a type section, and among
@@ -871,25 +873,30 @@ configuration that a build gets by default comes first (X.11).** The Architect r
 - A head with a trailing comment stays for hand, so the fix writes no comment away. So does a body
   whose indent differs from the block that it joins.
 - Verified by `suites/test_configurations.nim`, which quotes `Formal` of `pga/cayleys.nim` and the
-  constants of `pga/algebra.nim` of the PGA library at `3d9696e`.
-- Verified by hand with knoller at `d7178a5b` on the PGA library at `3d9696e`, 2026-11-20. A
+  constants of `pga/algebra.nim` of the PGA library at `3d9696e`, and by `suites/test_fixes.nim`
+  of `curator/audit`. They hold each bullet above, and the two costs below.
+- Verified by hand with knoller at `0b795b5f` on the PGA library at `3d9696e`, 2026-11-20. A
   driver imports `knoller`, reads the defaults of the package, and runs the check and the fix on
   each file that `git ls-files '*.nim' '*.nims' '*.nimble'` lists. It gives 1 report, at line 37
-  of `pga/cayleys.nim`, as the ruling counts. The fix swaps the branches of `Formal` in 4 lines.
-  The ruling gives `Formal` a hand change in its place: `round` with no condition, and `flat`
-  under `when IS_CONFORMAL`.
-- Verified by hand on that fixed copy, 2026-11-20. rga3d gives 33 OK, 5 SKIPPED and 0 FAILED, and
-  cga3d gives 28 OK, 10 SKIPPED and 0 FAILED, as the library as given does.
-- Verified by hand with that driver over the repository at `d7178a5b`, 2026-11-20. It gives no
-  report. The one constant of a define, `HAS_FORMS_DENSE` of `pga_benchmark`, guards no two-way
+  of `pga/cayleys.nim`, which is `Formal`, the place that the ruling names. The fix swaps its
+  branches in 4 lines. The ruling gives `Formal` a hand change in their place: `round` with no
+  condition, and `flat` under `when IS_CONFORMAL`.
+- Verified by hand with Nim 2.4.0 on the copy that the fix wrote, 2026-11-20. Each suite builds
+  and runs by `nim c -r -d:testing -d:nimUnittestAbortOnError:on` and the matrix line of its stub.
+  rga3d gives 33 OK, 5 SKIPPED and 0 FAILED, and cga3d gives 28 OK, 10 SKIPPED and 0 FAILED, as
+  the library as given does.
+- Verified by hand with that driver over the repository at `0b795b5f`, 2026-11-20. It gives no
+  report. Only `HAS_FORMS_DENSE` of `pga_benchmark` gives a default, and it guards no two-way
   branch.
-- Rejected: a join of every block of one configuration in a section. It moves `■` and `□` of
-  `pga/operators.nim` away from `∙` and `∘`, out of their family.
+- Rejected: a join of every block of one configuration in a section, which takes `■` and `□` of
+  `pga/operators.nim` out of their family.
 - Cost: knoller reads the lines with a scanner, and never with a parser. A body runs while its
   lines stand deeper than its head, so a line of a string at column 0 ends it. A branch on the
   line of its head, as `when C: a`, and a chain with `elif` are unread.
-- Cost: two blocks of complementary configurations side by side, with the default last, pass. The
-  ruling names the swap of a two-way branch alone.
+- Cost: the rule reads the order of a two-way branch alone. So two blocks of complementary
+  configurations side by side, with the default last, pass, though X.11 asks for the default
+  first there too. A scan of each pair of blocks in the library and the repository at
+  `0b795b5f` finds no such pair, 2026-11-20.
 
 ## Docs
 
@@ -2241,6 +2248,8 @@ there is unverified.
 
 ## Open questions
 
+- Do two blocks of complementary configurations side by side, with the default last, report, and
+  does the fix swap them? X.11 asks for the default first, and no place holds such a pair yet.
 - Does a test under a gate around a whole suite report, as one under a gate inside a suite does?
   27 of the 44 reports of `pga_visualiser` stand under such a gate.
 - Nimble 0.26.2, which 2.4.0 ships, is not verified with the `?subdir=curator/knoller` form of a
