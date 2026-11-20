@@ -130,8 +130,18 @@ func refuse(reader: Reader, expected: string) {.noreturn.} =
     elif reader.text[reader.at] in BYTES_VISIBLE:
       "`" & reader.text[reader.at] & "` cu zvati le stuzi"
     else: "lo me `byte` me'u po'u li " & ord(reader.text[reader.at]).toCmavo & " cu zvati le stuzi"
-  raise newException(ValueError, "`NIF` cu cpedu " & expected & " bu'u le stuzi poi " &
-      reader.at.toCmavo & " me `byte` me'u cu lidne ke'a .i ku'i " & found)
+  raise newException(ValueError, "`NIF` bu'u le stuzi poi " & reader.at.toCmavo &
+      " me `byte` me'u cu lidne ke'a ku'o cu cpedu " & expected & " .i ku'i " & found)
+
+
+func toSumti(name: string): string {.used.} =  # selpli ne'i `merge.nim`
+  ## dunda pa sumti poi sinxa le cmene ne'i lo notci pe lo nu to'e curmi
+  ##   .i va'o lo nu ro lerfu pe le cmene cu cmima `BYTES_VISIBLE` kei le sumti cu samtci pagbu
+  ##   .i lo kunti cmene .e lo cmene poi vasru lo drata me `byte` me'u cu se skicu ta'i lo
+  ##       jboselci'a
+  if name.len == 0: "lo kunti cmene"
+  elif name.allCharsInSet(BYTES_VISIBLE): "`" & name & "`"
+  else: "lo cmene poi le notci na ka'e sitna ke'a"
 
 
 func isAt(reader: Reader, bytes: set[char]): bool =

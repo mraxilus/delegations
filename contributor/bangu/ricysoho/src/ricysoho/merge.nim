@@ -92,6 +92,7 @@
 import std/[options, strutils, tables]
 
 import ./[dictionary, grammar, nif, nif_read, prose, selmaho, tanru]
+from ./nif_read {.all.} import toSumti
 
 
 type
@@ -140,7 +141,9 @@ func toTerminal*(name: string): Terminal =
   if name == $TERMINAL_CMENE: return TERMINAL_CMENE
   let named = name.toSelmaho
   if named.isNone:
-    raise newException(ValueError, "le cmene po'u `" & name & "` cu cmene no klesi be lo genvla")
+    raise newException(
+      ValueError, "le cmene po'u " & name.toSumti & " cu cmene no klesi be lo genvla"
+    )
   named.get.toTerminal
 
 
@@ -161,7 +164,9 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
   ##   .i va'o lo nu le velru'e cu du `Stream` kei lo lerfu cu stali
   ##   .i va'o lo nu le jgena cu vasru no tarmi poi `nif.nim` ciska ke'a kei renro `ValueError`
   template refuse(shape: string) =
-    raise newException(ValueError, "le jgena poi se tcita `" & node.text & "` cu nitcu " & shape)
+    raise newException(
+      ValueError, "le jgena poi se tcita " & node.text.toSumti & " cu nitcu " & shape
+    )
 
   if node.kind != KindNif.Compound:
     raise newException(ValueError, "pa jgena pe le selci'a be fi `NIF` cu nitcu lo tcita")
@@ -173,13 +178,13 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
       terminal.add ' '
       terminal.add node.children[k].text
       inc k
-    if (node.children.len - k) mod 3 != 0: refuse("lo re mulna'u .e lo lerpoi pe ro valsi")
+    if (node.children.len - k) mod 3 != 0: refuse("lo re mulna'u .e lo lerpoi vu'o pe ro valsi")
     var literals: seq[string]
     for m in countup(k, node.children.high, 3):
       let is_word = node.children[m].kind == KindNif.Number and
         node.children[m + 1].kind == KindNif.Number and
         node.children[m + 2].kind == KindNif.Literal
-      if not is_word: refuse("lo re mulna'u .e lo lerpoi pe ro valsi")
+      if not is_word: refuse("lo re mulna'u .e lo lerpoi vu'o pe ro valsi")
       literals.add node.children[m + 2].text
     let
       is_kept = terminal.startsWith(TAG_UNREAD & " " & RefusalText.Stream.spelling)
@@ -213,7 +218,7 @@ func toTree*(node: NodeNif, terminals: var seq[TerminalNif]): Node =
   if rule notin LUT_NUMBER_BY_RULE: refuse("lo cmene be pa javni pe `CLL 21.1`")
   var count = 0
   while count < node.children.len and node.children[count].kind == KindNif.Number: inc count
-  if count > 1: refuse("su'e pa mulna'u po'u lo namcu be le javni poi krasi le porsi")
+  if count > 1: refuse("su'e pa mulna'u po'u lo namcu pe le javni poi krasi le porsi")
   result = Node(is_terminal: false, rule: rule, number: LUT_NUMBER_BY_RULE[rule])
   for k in count ..< node.children.len: result.children.add node.children[k].toTree(terminals)
   if count == 1:
