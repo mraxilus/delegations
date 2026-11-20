@@ -78,7 +78,7 @@ suite "Definitions":
 
   test "documented one-line definition takes one after any definition, as one below sets (Q3)":
     # Cases: `algebra.nim:336`, two after documented one-line; `cayleys.nim:664` and
-    #   `multivectors.nim:355`, two after routine of several lines; `algebra.nim:323`, one.
+    #   `multivectors.nim:355`, two after routine of several lines; `algebra.nim:325`, one.
     let docs = "template low*[G: Grade | GradeAnti](t: typedesc[G]): G = G(0)\n" &
       "  ## Alias (anti)scalar's (anti)grade index.\n\n\n" &
       "template high*[G: Grade | GradeAnti](t: typedesc[G]): G = G(DIMENSIONS)\n" &
@@ -96,7 +96,9 @@ suite "Definitions":
     )
     for settled in [docs.fixed, long.fixed]:
       check settled.isSettled
-    let one = "template vector*(t: typedesc[G]): G =\n  G(1)\n\n" &
+    let one = "template vectorAnti*[G: Grade | GradeAnti](t: typedesc[G]): G =\n" &
+      "  ## Alias antigrade of (anti)vectors.\n" &
+      "  when G is GradeAnti: G(1) else: G(DIMENSIONS - 1)\n\n" &
       "template vectorLast*(t: typedesc[Basis]): Basis = Basis(DIMENSIONS)\n  ## Alias.\n"
     check one.isSettled
 
@@ -196,6 +198,40 @@ suite "Definitions":
     let first = second.replace("#[[ Norms ]]#", "#[ Norms ]#")
     check first.messages == @["6: " & TWO & "1`.", "10: " & TWO & "1`."]
     check first.fixed.isSettled
+
+
+  test "each pair of forms takes count X.2 gives it, and second tier caps each bound at one":
+    # Law over small domain: form above, form below, count 0 to 3, and tier of section. Row
+    #   gives counts first-tier run passes with; second tier caps each bound at one (Q1).
+    const
+      FORMS = [
+        ("call", "foo(1)\n"),
+        ("routine", "proc r*() =\n  ## Do.\n  discard\n"),
+        ("helper", "func h(): int = 1\n"),
+        ("documented", "func d*(): int = 1  ## Count.\n"),
+        ("block", "const\n  A* = 1  ## Count.\n"),
+      ]  ## Name and text of each form, a call of template module declares among them.
+      COUNTS = [
+        [0 .. 1, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # call above
+        [0 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # routine of several lines above
+        [0 .. 2, 2 .. 2, 0 .. 2, 1 .. 1, 2 .. 2],  # undocumented one-line helper above
+        [0 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # documented one-line routine above
+        [2 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 1 .. 1],  # declaration block above
+      ]  ## Counts passing between form above, by row, and form below, by column, as `FORMS`.
+    for a in 0 ..< FORMS.len:
+      for b in 0 ..< FORMS.len:
+        for is_second in [false, true]:
+          for count in 0 .. 3:
+            let
+              banner = if is_second: "#[[ Parts. ]]#\n\n" else: ""
+              head = "template foo*(x: int) = discard  ## Do.\n\n\n" & banner & FORMS[a][1]
+              source = head & "\n".repeat(count) & FORMS[b][1]
+              line = head.count('\n') + count + 1
+              first = COUNTS[a][b]
+              passed = if is_second: min(first.a, 1) .. min(first.b, 1) else: first
+            checkpoint FORMS[a][0] & " then " & FORMS[b][0] & ", " & $count & " blank lines, " &
+              (if is_second: "second tier" else: "first tier")
+            check checkDefinitions(PATH, source).anyIt(it.line == line) == (count notin passed)
 
 
   test "never read: run beside banner or nested helper, after statement or pragma, in string":
