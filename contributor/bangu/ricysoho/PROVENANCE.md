@@ -3234,15 +3234,24 @@ ni'o ro lertai poi le papri cu cusku ke'a selci'a le crepu fi pa datnyvei pe vo'
     selcme lo snina'u pe ke'a
   .i `koch drive` cipra di'u de'i `2026-11-11` gi'e jarco no selfa'i
 
-ni'o **ro selci'a pe le papri cu jboselci'a**
+ni'o **ro selci'a poi le papri cu ciska ke'a cu jboselci'a**
   .i `Architect` cpedu di'u
   .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
-  .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `PA` Verified by `suites/test_draw.nim`.
-  .i lo stuzi pe lo pixra .e lo javni .e `NIF` cu stali lo namcu poi selci'a ta'i `0` bi'o `9`
+      Verified by `suites/test_stream.nim`.
+  .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `CLL 18.2`
+      Verified by `suites/test_draw.nim`.
+  .i ku'i ro tanxe cu ciska lo stuzi .e lo namcu ta'i `0` bi'o `9`
+  .i ki'u bo ro tanxe cu jarco su'e pa ze lerfu ne'i le pamoi linji be vo'a
+      Verified by `suites/test_draw.nim`.
+  .i se to'e cuxna fa lo nu ro tanxe cu cusku lo namcu ta'i lo cmavo pe `PA`
+  .i le se to'e cuxna cu katna le krasi be ro srera tanxe
   .i lo barda lerfu cu sinxa lo nu basna to `CLL 3.9` toi
   .i se ki'u bo le papri na binxo lo selci'a lo barda lerfu
-  .i ku'i le papri cu cusku lo glico selci'a po'o poi `merge.nim` .e `nif.nim` cu dunda ke'a
-      ca lo nu lo nu jmina cu se to'e curmi
+  .i lo cmene be lo javni pe `CLL 21.1` .e `NIF` cu stali ki'u lo nu ri cmene
+  .i le papri cu cusku lo glico selci'a po'o poi `nif_read.nim` .e `merge.nim` cu dunda ke'a ca lo
+      nu le papri na ka'e tcidu `NIF` kei .a lo nu lo nu jmina cu se to'e curmi
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki di'u ta'i lo nu le genturfa'i cu tcidu ro
+      selci'a pe le papri
 
 ni'o **lo batke po'u `jmina` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
     ke'a**
