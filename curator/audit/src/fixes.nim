@@ -301,7 +301,7 @@ proc readFacts*(
   var toolchains = initToolchains()
   result.uses = files.resolveMarkers("", absolute, toolchains)
   result.pures = files.resolvePures("", absolute, toolchains)
-  var nimbles = initTable[string, string]()  # Absolute path of each nimble file, by its own.
+  var nimbles = initTable[string, string]()  # Absolute path of each nimble file, by tree's.
   for (path, _) in files: nimbles[path.nimbleProject] = absolute / path.nimbleProject
   let libraries = nimbles.modulesLibrary
   for nimble, path in nimbles:
@@ -409,7 +409,8 @@ func fixSource(
 
   # Leave for hand each marker and `func` no edit writes, each index no alias edit writes, as
   #   choice of aliases, and each call of constructor, which no fix writes, in order of lines;
-  #   each edit answers one report of its rule on its line.
+  #   each edit answers one report of its rule on its line. Fence warning counts fenced report
+  #   of rule reading names, and reads no uses or pures.
   var
     unwritten = (aliasing & marked & purified).mapIt((it.line, it.rule))
     kept: seq[Report]
@@ -417,9 +418,10 @@ func fixSource(
       checkLandmarks(path, source, names.landmarks) & checkConstructors(path, source, names.calls):
     let
       at = unwritten.find((report.line, report.rule))
-      is_compiled = report.rule in {Rule.UsedMarker, Rule.PureFunc}
+      is_warned = report.rule notin {Rule.UsedMarker, Rule.PureFunc} and
+        report.line - 1 in fence.lines
     if at >= 0: unwritten.delete at
-    elif is_compiled or report.line - 1 notin fence.lines: kept.add report
+    elif not is_warned: kept.add report
   result.left = kept.sortedByIt(it.line).toFindings
 
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped. Fence
