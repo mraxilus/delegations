@@ -538,6 +538,7 @@ func movesLine(source: string): seq[MoveDoc] =
     ## Join doc to line `k`, two spaces before its marker.
     lines[k].strip(leading = false) & ' '.repeat(GAP_COMMENT) & doc
 
+  # Read each line of code opening there, outside brackets, with doc lines below it.
   for d in 0 ..< lines.len:
     let first = firsts[d]
     if first < 0 or code[d].strip.len == 0 or spanned[d] or depths[d] > 0 or lasts[d] < 0:
@@ -724,6 +725,7 @@ func movesPlaced(source: string): seq[MoveDoc] =
       held.add k
       inc k
 
+  # Read doc of each declaration from its placement, above it or below routine's signature.
   for p in found:
     let indent = p.first.indentWidth
     if p.kind != KindName.Routine:
