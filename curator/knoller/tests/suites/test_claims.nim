@@ -128,6 +128,32 @@ const
     "    #   for 𝐦, 𝐧, 𝐨 in sampleMultivectors():\n"
     ## Lines 69 to 72 and 211 to 216 of `pga/multivectors.nim`, and lines 433 to 435 of
     ##   `tests/suites.nim`, at `3d9696e`: code commented one space past marker.
+  RIG =
+    "## Every measurement simulation is built from, each with where it came from.\n" &
+    "##\n" &
+    "##   Rig is tape's numbers: rounds of torso, neck and head,\n" &
+    "##     lengths of arm's three links, and how far each joint will go before\n" &
+    "##     it hurts.  Radii and reaches are derived from them, never entered.\n" &
+    "##   Figures are mixed-sex midpoints of ANSUR II (2012) medians, with\n" &
+    "##     NASA-STD-3000 and AAOS tables for joints.  Male / female:\n" &
+    "##       chest round 1.00 / 0.92 and waist 0.94 / 0.86, so one-cylinder\n" &
+    "##         torso takes 0.95;  neck round 0.39 / 0.34 -> 0.37;  head 0.57 / 0.55\n" &
+    "##         -> 0.56;  stature 1.76 / 1.62 -> crown at 1.69;  acromion height\n" &
+    "##         1.44 / 1.33 -> shoulders at 1.40;  biacromial breadth 0.40 / 0.36\n" &
+    "##         with joint's centre two centimetres or so inside bone\n" &
+    "##         -> shoulders 0.18 out from axis;  acromion to radiale 0.34 /\n" &
+    "##         0.31 less that offset -> upper arm of 0.31;  radiale to stylion\n" &
+    "##         0.27 / 0.24 -> forearm of 0.25;  grip's centre about 0.08 past wrist\n" &
+    "##         crease;  hand length 0.193 / 0.180 -> hand of 0.19;  palm length 0.116 /\n" &
+    "##         0.108 -> 0.11;  hand breadth 0.088 / 0.078 -> 0.083;  hand round 0.212 /\n" &
+    "##         0.187 -> 0.20;  forearm round 0.27 -> limb radius 0.045.\n" &
+    "##       Relaxed hand: middle finger at rest with arm hanging, 32, 27 and 10 degrees at\n" &
+    "##         its three joints (Lee and Jung 2010, forty adults), curled further so hanging\n" &
+    "##         hand shortens to 0.77 of straight, as measured (Garrett 1971) -> fingertip 0.15\n" &
+    "##         from wrist crease, about 30 degrees toward palm.  Derived: no study measures\n" &
+    "##         that distance.\n"
+    ## Lines 1 to 23 of `simulation/rig.nim` of `dance_ontology` at `e9ac1be1`: two spaces after
+    ##   `;` space clauses of one sentence.
   LIBRARY = [
     BORROWS, TO_BASIS, CAYLEY, SUBTYPES, INDEX, EQUATIONS, ORDERING, OPERATORS, CARRIER,
     GENERATED, SCALARS, COMMENTED,
@@ -325,6 +351,11 @@ suite "Claims":
       # line 15 of `outlines.nim` of `knoller`: wrap below quoted arrow
     check "let count_items = 1  ## Count of items.\n## Read count_items -> size.\n".fixed ==
       "let count_items = 1  ## Count of items.\n## Read `count_items` -> size.\n"
+
+
+  test "two spaces after comma or semicolon space clauses, and align no column":
+    check RIG.isSettled  # lines 9 to 18 of `simulation/rig.nim`, as found
+    check "## Read a;  write b,  then close.\n".isSettled
 
 
   test "commented code and fenced code hold no prose":
