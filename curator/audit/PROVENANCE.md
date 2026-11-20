@@ -3158,6 +3158,7 @@ reason of each (`## Configuration blocks`, `## Staging` and `## Names of a packa
   the case rename of its declaration into one rename, whose rule is that of the case.
 - A cut rename keeps each word that the glossaries list, as the case rename of the audit keeps it.
   Knoller takes its jargon alone, so where a glossary lists a word, the two tools can differ.
+  Verified by `suites/test_fixes.nim`, with a glossary and with none.
 - Verified by `suites/test_fixes.nim`. A two-way `when` swaps, and a branch on a constant of
   another module becomes `when`. Each does so only where the tree holds the module of the constant.
 - Verified by `suites/test_fixes.nim`. A landmark index takes an alias of another module of its
@@ -3274,9 +3275,9 @@ the answers of the semantic pass. The record of knoller gives each rule (`## Sib
 - The readers name no define, as D2 a of #886 rules for the command line. So rules 7 and 11 read a
   file under `tests/` without `-d:testing`, though the conversion pass names it (`## Semantic
   pass`).
-- Rejected: a second reading in the audit that passes the defines of the stubs. It writes the
-  reading twice, and the counts of the two callers drift apart.
-- Cost: a branch that only `-d:testing` takes is unread by rules 7 and 11.
+- Rejected: a second reading in the audit with the defines of the stubs, since the counts of the
+  two callers would drift apart.
+- Cost: rules 7 and 11 read no branch that only `-d:testing` takes.
 - Verified by `suites/test_fixes.nim`, through the real compiler on a fresh repository. It holds a
   marker, a `func`, and an alias of a library that only `nim.cfg` names.
 
@@ -3287,9 +3288,13 @@ traces back to the line as given (`originApplied`).
 
 - Each finding of these rules that no edit writes stays for hand, and prints as a finding left. So
   does each call of a constructor that the package calls both ways, since no fix writes a form.
-- An edit of a marker or a `func` answers one finding of its rule on its line. The indexes that the
-  alias edits leave are read again from the source that they wrote, which keeps its lines. So
-  knoller and the fix read what an alias edit leaves alike.
+- An edit of a marker or a `func` answers one finding of its rule on its line. Knoller drops each
+  report on a line that holds an edit of its rule, so the two tools can differ there. Unverified,
+  since no case puts two such findings on one line.
+- The fix reads again each index that the alias edits leave, from the source that they wrote,
+  which keeps its lines. It reads the calls of constructors on the source as given. Knoller checks
+  its fixed text instead. So an index that a conversion writes bare reports in knoller alone, until
+  the next run writes its alias.
 - Cost: two markers or two `func` on one line match their edits by line and rule alone. So where
   one of them stays, the finding left can name the other one. How often a line holds two is
   unmeasured.
@@ -3298,15 +3303,15 @@ traces back to the line as given (`originApplied`).
   pures.
 - A file whose uses or pures the compiler resolved none prints a warning with its reason.
 - Verified by `suites/test_fixes.nim`, with uses and pures written by hand, and with the names of
-  a tree. It holds an index of several aliases before and after a written one, and the words that
-  a glossary lists.
+  a tree. It holds an index of several aliases before and after a written one, and a fenced call
+  of a constructor.
 
 **Verified by run, 2026-11-20, over the nine projects, with the checkouts of each lock and the
 engine of `dance_ontology`.** `koch fix --dry-run --all --branch:main` reports each of the five
 rules where `knoller --check <project>` reports it, with the same counts. Both read the files of
 `e31b5d15`, with Nim 2.4.0. The dry run over the repository ran at `cbf1e68b`, so both tools ran
-again on `curator/audit` and `curator/knoller`, whose files differ there. A comparison matched
-each report of the two outputs by rule, path and line.
+again on `curator/audit` and `curator/knoller`, whose files differ there. A script outside the
+tree matched each report of the two outputs by rule, path and line.
 
 | Rule | Project | Rewrites | Left for hand |
 | --- | --- | --- | --- |
@@ -3326,15 +3331,22 @@ each report of the two outputs by rule, path and line.
 
 - Each other project takes none of these rules. The compound argument of rule 15 gives the same
   counts as before the wiring.
+- The rewrites of rule 11 in `pga_benchmark` and `knoller` are `mergeAllocations` and
+  `initToolchains`, the false reports that `## Pure routines` of knoller names.
+- The run read the code before `4998481a` and `ea179bdf`. The first changes no count, since the run
+  left no index of rule 9 for hand. The second changes only the warning of a refused rename, and
+  the table counts that rename as one site.
 - Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
   it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
   proves nothing of, and each tool prints it once.
 - Cost: the dry run over the repository took 330 s at `329659da`, before the wiring, and 875 s at
-  `cbf1e68b`, after it. Each figure is one run of the debug build that `nim r` makes, on 4 cores at
-  2.10 GHz. The load of the two runs differed, and no file records it.
-- Cost: a pair back to back on `curator/knoller`, 2026-11-20, gives 25.9 s before and 77.9 s after.
-  Each is one run, under a load of 1.0 to 1.9. The time added is unprofiled. The compiler calls
-  for uses and pures, and the queries of each cut rename, add to it.
+  `cbf1e68b`, after it. The tree of the second run held the refactor of `63df2e45`, uncommitted.
+  Each figure is one run of the debug build that `nim r` makes, on 4 cores at 2.10 GHz. The load
+  of the two runs differed, and no file records it.
+- Cost: over the files of `curator/knoller` at `a6903afe`, `koch fix --dry-run` built at `329659da`
+  took 25.9 s, and built at `a6903afe` took 77.9 s. Each is one run, back to back on 2026-11-20,
+  under a load of 1.0 to 1.9. The time added is unprofiled. The compiler calls for uses and
+  pures, and the queries of each cut rename, add to it.
 
 ## Parser proof
 
