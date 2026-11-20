@@ -478,6 +478,27 @@ suite "Fixes":
     check alone.warned.allIt("nothing inside breaks a rule" in it.message)
 
 
+  test "fenced call of constructor counts in warning of its fence, as fenced index does":
+    # Case of review of record: case of fence held index alone, so fence that dropped call of
+    #   constructor passed suite.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      declaring = entry(
+        DIRECTORY_AUDIT & "/src/a.nim", head & "func initPoint*(x: int): int = x\n  ## Point.\n"
+      )
+      calling = entry(
+        DIRECTORY_AUDIT & "/src/b.nim",
+        head & "let\n  NORTH* = X.initPoint  ## North.\n  SOUTH* = Y.initPoint  ## South.\n\n" &
+        FENCE_OFF & "\nlet WEST* = initPoint(Z)  ## West.\n" & FENCE_ON & "\n",
+      )
+      plan = fixEntries(BRANCH_CURATOR, [calling], context = initContext(@[declaring, calling]))
+    check plan.left.len == 0
+    check plan.warned.mapIt(it.message) == @[
+      "Fence keeps its lines as written, and inside them conversion-prefix breaks once at line " &
+      "10 (X.1); got lines `9` to `11`.",
+    ]  # call of form fewer calls take, fenced
+
+
   test "index alias edit leaves stays for hand, whatever its place beside written one":
     # Case of critic of wiring: kept report matched edit by line and rule alone, so where index
     #   of several aliases stood before written one, `koch fix` kept report of written index and
