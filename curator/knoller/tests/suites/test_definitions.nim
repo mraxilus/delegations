@@ -200,6 +200,13 @@ suite "Definitions":
     check first.fixed.isSettled
 
 
+  test "doc is `##` comment on head line or inside item, never `##` inside `#` comment":
+    # Probe of reviewer: comment holding `##` read as doc, so one line passed after routine.
+    let source = "proc r*() =\n  ## Do.\n  discard\n\nfunc b(): int = 1  # Not ## a doc.\n"
+    check source.messages == @["5: " & TWO & "1`."]
+    check source.replace("# Not ## a doc.", "## Count.").isSettled  # doc on head line
+
+
   test "each pair of forms takes count X.2 gives it, and second tier caps each bound at one":
     # Law over small domain: form above, form below, count 0 to 3, and tier of section. Row
     #   gives counts first-tier run passes with; second tier caps each bound at one (Q1).
