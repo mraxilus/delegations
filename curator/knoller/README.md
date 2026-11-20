@@ -74,12 +74,18 @@ knoller [--check] [--nim:path] path...
   compile. The pass runs in the nearest directory that holds a nimble file, with the compiler that
   proves parentheses. A file that the pass cannot resolve keeps its conversions, and prints one
   warning that says why. A toolchain with no `nimsuggest` beside its compiler, or on `PATH`,
-  resolves no file, and the warning names the tool.
+  resolves no file, and the warning names the tool. A receiver in `SCREAMING_SNAKE_CASE` is a
+  global, so a value, and its conversion is a candidate too, as `FLOAT_TOLERANCE.float` is.
 - A name in the case of another kind (V.1, V.11), or one that coins an abbreviation (V.6), is
   renamed at every use. Knoller reads each Nim file that git lists under the nearest directory
   that holds a nimble file, and writes only the files you name. A rename that would write another
   file stays as written, and prints one warning at its declaration that says why. Run knoller on
   `.` at the root of a project to let such a rename write every file it reaches.
+- A name whose words break the cut of V.2 is renamed at every use too. A property leads its value
+  of one letter, so `𝐦_grade` becomes `grade_𝐦`. A word glued after `anti` leads it, so
+  `antibasis` becomes `basis_anti`. An axis value goes last, so `left_name` becomes `name_left`.
+  An axis value is a field of a wrapper that the package declares, as `Chiral[T]` holds `left`.
+  Where the name also breaks its case, one rename settles both.
 - A name that holds a value in another representation leads with a name of its chain, where it
   holds one (V.2): `c_dual_flags = c.dual.toFlags`, never `flags_c`. A `to<Target>` call, a type
   conversion or `$` at the end of a chain of steps changes the representation. A step is a field
@@ -91,6 +97,11 @@ knoller [--check] [--nim:path] path...
   macro, `static:` block or compile-time routine that it nests in. A `define…` is a macro, and an
   `emit…` is a `func` or a `proc` that returns `NimNode`. The kind never fixes the verb, so a
   macro of another name passes. Knoller renames nothing here either.
+- A landmark index that a conversion writes bare becomes the alias of its type (V.8), so
+  `Grade(1)` becomes `Grade.vector`. Where two aliases name one index, knoller writes `low` or
+  `high`, so `Grade(0)` becomes `Grade.low`. An alias is a template or a routine whose one
+  parameter is `typedesc[T]`. Knoller reads aliases from the package and from the library under
+  each `--path` of the `nim.cfg` beside its nimble file.
 - A routine closes with `Of` only where its name spells a generic type (V.3). Knoller reads that
   from the words alone. The first word is `to`, `init`, `emit`, `construct` or `define`, and two
   words or more follow it, as in `toMultivectorOf`. A type closes with `Of` only where an alias of
@@ -104,6 +115,12 @@ knoller [--check] [--nim:path] path...
   first argument (STYLE.md §5). A module path, such as `tessellate.emitObject`, stays. Knoller
   cannot rewrite four shapes in place, so each is a finding for hand. They are a receiver above
   the dot, a generic call, a command call, and arguments that open below the bracket.
+- A `to<Target>` call by dot on a compound argument in parentheses becomes a prefix call
+  (STYLE.md §5), so `(a + b).toX(c)` becomes `toX(a + b, c)`. A constructor `init…` that the
+  package declares takes one call form. Knoller reports each call in the form that fewer calls
+  across the package take, or in both forms where they tie, and writes neither form.
+- Knoller reads the names of a package from its modules that the run names, by the nimble file
+  of the package. Files with no nimble file above read as one package.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
