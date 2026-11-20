@@ -1,5 +1,5 @@
-## Enforce how message ends: echoing value in backticks, ``"…; got `{value}`."`` (Article IV.4),
-##   and fix it (`koch fix`).
+## Enforce how message echoes each value in backticks, ``"…; got `{value}`."`` (Article IV.4), and
+##   that interpolated string takes each value in braces (STYLE.md §3); fix both (`koch fix`).
 ##   Message is concatenation of literals and operands joined by `&`, one literal of which holds
 ##     `; got `. Literal is plain, long, raw (`r"…"`), or interpolated (`&"…"`, `fmt"…"`).
 ##     Tail runs from `got` to concatenation's end, across lines that `&` ends.
@@ -18,11 +18,27 @@
 ##     loose or looser (`"got " & a == b`) would take appended literal into another operand,
 ##     so it stays, finding and all.
 ##   Checks and fixer share one reading (`tails`), so each rule is written once (Article II.1).
+##   Each value of message stands in backticks, wherever it stands, as Architect ruled on rule 6
+##     of #443 (`checkEchoes`): message is argument of call that takes one (`CALLS_MESSAGE`), or
+##     value of pragma (`PRAGMAS_MESSAGE`), where it holds literal. Value tail of message value
+##     reads takes no second report; value opening its claim, words after it, stays for hand.
+##   Interpolated string takes each value in braces, never by `&`, as Architect ruled on rule 21
+##     of #443 (`checkInterpolations`): concatenation holding interpolated literal and joining
+##     operand or literal to it by `&` reports, read by precedence (`segments`), split where
+##     operator binds looser than `&`. Fixer joins it into one literal: prefix of first
+##     interpolated literal kept, `$x` as `{x}`, text of plain literal with each brace doubled.
+##   Wrap of literals whose joined line would not fit `LINE_MAX`, by runes alone, passes (X.1).
+##     Value holding quote, brace, backslash, backtick, line break or colon outside brackets,
+##     raw or long literal, escape kept literal reads otherwise, comment between operands, and
+##     join that would not fit stay for hand, report and all. Chain runs fixer only where project
+##     declares no `formatValue`, which interpolation calls in place of `$` (`chain.nim`).
 ##
 ##   Fixer is widener (`reports.nim`): off held line it writes backtick or shape that widens
 ##     line past `LINE_MAX`, and chain wraps line after; on held line, as in its two-argument
 ##     form, value whose backtick would widen narrow line stays, finding and all.
 ##   Cost: scanner, never parser; format through `%` (`"$1" % [x]`) is unread.
+##   Cost: `formatValue` of dependency is unread, and wrap holding value that would not fit
+##           stays whole, though join inside one of its lines would fit.
 
 {.experimental: "strictFuncs".}
 
