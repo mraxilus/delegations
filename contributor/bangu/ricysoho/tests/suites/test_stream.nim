@@ -31,6 +31,14 @@ import ../../src/ricysoho/lists/[cmavo, gismu]
 const
   LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
     ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
+  MARKS_NUMBERED = ['1', '.', ',', ' ']
+    ## lo lerfu poi le flalu pe `D1 a` cu zbasu lo selci'a sepi'o ke'a
+  LENGTH_NUMBERED_MOST = 7
+    ## lo selci'a poi le flalu cu zbasu ke'a cu vasru su'e ze lerfu
+    ##   .i se ki'u bo pa slaka bu cu ka'e lidne mu lerfu
+  COUNT_NUMBERED = 21845
+    ## lo te kancu be ro selci'a poi le flalu cu tcidu ke'a
+    ##   .i ro le selci'a cu vasru su'e ze lerfu pe `MARKS_NUMBERED`
   SAMPLES = 1000
     ## lo cunpoi poi lo flalu cu cuxna ke'a sepi'o lo tsiju ku'o .e lo cunjvo poi le girzu cu cuxna
     ##     ke'a
@@ -709,6 +717,38 @@ suite "Chapter 4":
 
 
 
+func numberedRead(written: string): tuple[words: seq[string], refused: Option[int]] =
+  ## tcidu `written` ja'i `D1 a` gi'e dunda lo valsi .a le stuzi pe slaka bu poi se to'e curmi
+  ##   .i ro lerfu pe `0` bi'o `9` cu du pa valsi
+  ##   .i denpa bu poi zvati lo jbini be re lerfu cu du pa valsi
+  ##   .i denpa bu poi na zvati lo jbini be re lerfu cu fendi
+  ##   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu du pa valsi
+  ##   .i slaka bu poi na mapti di'u cu se to'e curmi
+  ##   .i le fancu cu ciska le javni ji'a gi'e pilno no fancu pe `stream.nim`
+  for at, c in written:
+    case c
+    of '0' .. '9': result.words.add $c
+    of '.':
+      if at > 0 and written[at - 1] in Digits and at + 1 < written.len and
+          written[at + 1] in Digits:
+        result.words.add "."
+    of ',':
+      var count = 0
+      while at + 1 + count < written.len and written[at + 1 + count] in Digits: inc count
+      if at == 0 or written[at - 1] notin Digits or count != 3: return (result.words, some(at))
+      result.words.add ","
+    else: discard  # lo kutle'u cu fendi
+
+
+func cmavoNumbered(word: string): string =
+  ## dunda le cmavo poi le valsi pe `numberedRead` cu sinxa ke'a
+  case word
+  of ".": "pi"
+  of ",": "ki'o"
+  else: LUT_CMAVO_BY_DIGIT[ord(word[0]) - ord('0')]
+
+
+
 suite "Internal: Stream":
   test "Each digit reads as word of PA that names it in 18.2, one word for each digit":
     for digit in '0' .. '9':
@@ -742,7 +782,10 @@ suite "Internal: Stream":
         ("li 1,000.5", @["li", "1", ",", "0", "0", "0", ".", "5"],
           @["li", "pa", "ki'o", "no", "no", "no", "pi", "mu"]),
         ("le 1,000moi", @["le", "1", ",", "0", "0", "0", "moi"],
-          @["le", "pa", "ki'o", "no", "no", "no", "moi"])]:
+          @["le", "pa", "ki'o", "no", "no", "no", "moi"]),
+        # slaka bu poi se lidne su'o vo lerfu cu du zo ki'o ji'a
+        ("li 1234,567", @["li", "1", "2", "3", "4", ",", "5", "6", "7"],
+          @["li", "pa", "re", "ci", "vo", "ki'o", "mu", "xa", "ze"])]:
       checkpoint text
       check text.wordsRead == some(words)  # `CLL 18.2`
       check text.cmavoRead == some(cmavo)  # `CLL 18.2`
@@ -757,6 +800,32 @@ suite "Internal: Stream":
       some(@[Pause.Absent, Pause.Absent, Pause.Absent, Pause.Written])  # `CLL 3.3`
     check "li .5".pausesRead == some(@[Pause.Absent, Pause.Written])  # `CLL 3.3`
     check "1.ai".pausesRead == some(@[Pause.Absent, Pause.Written])  # `CLL 3.3`
+
+
+  test "Each text of digits, periods, commas and spaces after li reads as ruling D1 a reads it":
+    # `Architect` jdice `D1 a` bu'u `#991`
+    #   .i le flalu cu tcidu ro selci'a poi `MARKS_NUMBERED` cu zbasu ke'a
+    #   .i `numberedRead` cu ciska le javni gi'e pilno no fancu pe `stream.nim`
+    var
+      count = 0
+      written = @[""]  # ro selci'a poi le flalu cu tcidu ke'a ja'i le ni ke'a cu clani
+    while written.len > 0:
+      var longer: seq[string]
+      for text in written:
+        let (words, refused) = text.numberedRead
+        checkpoint "li " & text
+        if refused.isSome:
+          # slaka bu poi na mapti `D1 a` cu se to'e curmi bu'u le stuzi pe vo'a
+          let refusal = ("li " & text).refusalRead
+          check refusal.isSome and refusal.get[1] == 3 + refused.get
+        else:
+          check ("li " & text).wordsRead == some(@["li"] & words)  # `CLL 18.2`
+          check ("li " & text).cmavoRead == some(@["li"] & words.mapIt(it.cmavoNumbered))
+        inc count
+        if text.len < LENGTH_NUMBERED_MOST:
+          for mark in MARKS_NUMBERED: longer.add text & mark
+      written = longer
+    check count == COUNT_NUMBERED  # `IX.3`
 
 
   test "Words joined by spaces read as readWord reads each, at byte where each opens":

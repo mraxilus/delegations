@@ -196,6 +196,32 @@ const
         "(rivbi Erasure 3 8 \"klama\" 9 11 \"si\") (sumti_6 81 (KOhA 12 14 \"do\"))) " &
         "(rivbi FAhO 15 19 \"faho\") (rivbi Stream FAhO 20 22 \"ko\"))",
     ),  # lo valsi poi zo si vimcu ke'a kansa zo si
+    # `Architect` jdice `D1 a` bu'u `#991`
+    #   .i denpa bu .e slaka bu poi zvati lo jbini be lo lerfu cu pagbu pa selci'avla
+    (
+      text: "li 3.1,4 du",
+      module: "(srera 9 sumti_6 (nitcu BAI BIhI BU BY CAhA COI CUhE DOI FAhA FEhE FUhA GA GAhO " &
+        "GUhA JOI JOhI KE KI LAU LAhE MAhO MOhE MOhI NAhE NAhU NIhE PA PEhO PU SE SEI SOI TAhE " &
+        "TEI TO VA VEI VEhA VIhA VUhU XI ZAhO ZEhA ZI) (LI 0 2 \"li\") (rivbi Stream Comma 3 8 " &
+        "\"3.1,4\") (bridi_tail_3 0 (tanru_unit_2 130 (GOhA 9 11 \"du\")) (tail_terms)))",
+    ),  # pa selci'avla poi vasru denpa bu .e slaka bu poi na mapti cu se to'e curmi ta'i pa pagbu
+    (
+      text: "li 3,14.5 du",
+      module: "(srera 10 sumti_6 (nitcu BAI BIhI BU BY CAhA COI CUhE DOI FAhA FEhE FUhA GA GAhO " &
+        "GUhA JOI JOhI KE KI LAU LAhE MAhO MOhE MOhI NAhE NAhU NIhE PA PEhO PU SE SEI SOI TAhE " &
+        "TEI TO VA VEI VEhA VIhA VUhU XI ZAhO ZEhA ZI) (LI 0 2 \"li\") (rivbi Stream Comma 3 9 " &
+        "\"3,14.5\") (bridi_tail_3 0 (tanru_unit_2 130 (GOhA 10 12 \"du\")) (tail_terms)))",
+    ),  # denpa bu poi zvati lo jbini be re lerfu cu na fendi le selci'avla poi se to'e curmi
+    (
+      text: "mi fa'o 3.5 do",
+      module: "(text (sumti_6 2 (KOhA 0 2 \"mi\")) (rivbi FAhO 3 7 \"faho\") (rivbi Stream FAhO " &
+        "8 11 \"3.5\") (rivbi Stream FAhO 12 14 \"do\"))",
+    ),  # denpa bu poi zvati lo jbini be re lerfu cu na fendi lo valsi poi se lidne zo fa'o
+    (
+      text: "mi fa'o 1,000.5 do",
+      module: "(text (sumti_6 2 (KOhA 0 2 \"mi\")) (rivbi FAhO 3 7 \"faho\") (rivbi Stream FAhO " &
+        "8 15 \"1,000.5\") (rivbi Stream FAhO 16 18 \"do\"))",
+    ),  # lo namcu poi vasru zo ki'o .e zo pi cu du pa valsi poi se lidne zo fa'o
   ]
     ## lo selci'a poi selfi'i
     ##   .i ro le selci'a cu kansa lo gejyjge pe le selci'a be fi `NIF` be'o poi `nif.nim` ciska
