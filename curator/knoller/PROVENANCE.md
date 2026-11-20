@@ -104,8 +104,9 @@ check, and a script or a package takes those of any Nim code (`## Idioms`).
 - `curator/audit` maps each kind of Nim onto a dialect. It applies the fixers that need more than
   one file, then gives the source to `formatted`.
 - The caller also gives the facts of each file that its text does not hold. They are the mode of
-  its articles (`## Articles`), its nearest nimble file (`## Layout of a package`), and whether it
-  is drive code (`## Fixed waits`).
+  its articles (`## Articles`), its nearest nimble file (`## Layout of a package`), whether it
+  is drive code (`## Fixed waits`), and the constants that the other modules of its package
+  export (`## Staging`).
 - The header of `chain.nim` gives the order of the fixers, and why each one comes where it does.
 - The chain can run all its rounds again, and `## Wraps` gives why.
 - Verified by `suites/test_chain.nim`: a source that breaks each layout rule settles in one run,
@@ -2083,6 +2084,109 @@ diagnostic.
 - Cost: labelled debug output passes, and reading holds it. A seeded `initRand` passes as
   `randomize(0)` does, because both fix the sequence.
 - Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
+
+## Staging
+
+**A routine that compile time alone runs is a member of the compile-time family, and each member
+carries its own `compileTime` (STYLE.md §2).** `checkFamilies` reads the members of one module. A
+member is one of these routines:
+
+- A routine whose pragmas hold `compileTime`, or that nests in a macro, a `static:` block or a
+  compile-time routine. `is_compile_time` of `declared.nim` reads it so, as `action-verb` does,
+  in the same walk that reads the head of each routine (`heads`).
+- A private routine whose every use lies in a member, a macro, a `static:` block or the value of
+  a `const`. That is the incidental const evaluation of STYLE.md §2. The greatest such set holds,
+  so two members that call each other stay members.
+
+The rule reads the uses and the module so:
+
+- A use of a routine is a mention of its name outside its own block. An operator has no name
+  that a use spells, so it reads by the mentions of the type of its first parameter. A mention in
+  a `type` section, an iterator or a template defines that type, and is no use, since such code
+  runs where it is used. So `==` on `Order` of `pga/cayleys.nim` is a member.
+- The body of `quote` or `genAst` is code that a macro emits. A use there is a runtime use, and a
+  routine that it declares is no member, though it nests in a macro.
+- The family is staged where one routine of the module carries its own `compileTime`. A module
+  where no routine carries it passes, as `pga/multivectors.nim` does.
+- An iterator and a template pass, since Nim refuses `compileTime` on both. A macro runs by its
+  keyword, and carries no pragma for it.
+- Rejected: a family of the whole project, which issue 443 rules out. It also reports a helper of
+  one macro in a module that stages nothing else.
+- Rejected: the pragma of the parent covers a nested routine. STYLE.md §2 asks the family to
+  carry the pragma "the same way", so `constructPart` and `generateUpTo` carry their own.
+- Cost: a field, a binding or a parameter that spells the name of a routine reads as a use, and
+  keeps the routine out of the family. That gives fewer findings, never a false one.
+- Verified by `suites/test_staging.nim`.
+
+**A compile-time routine carries no runtime pragma.** The runtime pragmas are `inline`, `noinit`,
+`noinline` and `codegenDecl`. Each acts on generated code alone, and the compiler generates no code
+for a compile-time routine. So each of them is superstition there.
+
+**The fix writes on the line that the pragmas stand on, else on the line that closes the
+parameters (`Head.last`).** It drops each runtime pragma, and puts `compileTime` among the bare
+pragmas in dictionary order, before the pragmas that take an argument (X.10). Where the line holds
+no pragma block, it opens `{.compileTime.}` before the `=` of the body. So `{.borrow.}` becomes
+`{.borrow, compileTime.}`.
+
+- The fix widens its line, so it is a widener (`## Wraps`). Off a held line it writes freely, and
+  the wrapping after it lays the line out.
+- The chain runs it after the idioms and before the wrapping, on a module alone. A script and a
+  nimble file run in the VM alone, so no pragma there acts on generated code.
+- Cost: a pragma block that spans lines is unread, so its runtime pragma stays for hand.
+- Verified by `suites/test_staging.nim`. Verified by `suites/test_regressions.nim`: four snippets of
+  the library lose `noinit` in the output of the whole chain.
+
+**A branch on what the build fixes is `when`, and never `if` (STYLE.md §3).** `checkBranches`
+reports an `if` where its condition, and each `elif` of its chain, read only these:
+
+- literals and operators, and the type after `is` or `isnot`;
+- constants: a name that a `const` binds at module level in the file, a local `const` above the
+  branch in its routine, and each constant that another module of the package exports;
+- static and typedesc parameters, and placeholders, of each routine around the branch;
+- `defined`, `declared`, `compileOption`, `compiles` and `sizeof`, whatever their argument;
+- `len`, `high`, `low`, `ord` and `card` of a static value.
+
+Any other name or call reads as runtime, so its chain passes.
+
+- An `if` in the value of a `const`, a macro, a `static:` block or a compile-time routine passes,
+  since it is no runtime branch. Nim 2.4.0 cannot evaluate a static parameter of a macro in
+  `when`, so `if not as_unary` of `pga/operators.nim` stays.
+- The fix writes `when` for `if`, and keeps each `elif` and `else`. A statement whose branch
+  declares a name stays for hand, since `when` opens no scope (STYLE.md §1). A fix that widens a
+  narrow line past `LINE_MAX` stays for hand too.
+- Rejected: a constant read from the case of its name. A global `let` or `var` takes that case
+  too, as `IS_TALLYING` of `pga_visualiser` does, and the build fixes neither.
+- Cost: a constant of a package that the run does not read, such as the library that a project
+  imports, reads as runtime. So `if IS_CONFORMAL` of `pga_benchmark` passes. That gives fewer
+  findings, never a false one.
+- Cost: a condition that spans lines is unread.
+- Verified by `suites/test_staging.nim`.
+
+**The caller gives the constants that the other modules of the package export.** The rule reads
+one file, as each rule of knoller does. So the caller reads the constants of each module
+(`constantsExported`), and passes them in (`constants`). A step of the kind `Reading` takes them,
+as a placed step takes the nimble file (`## Layout of a package`).
+
+- The command line reads them from each module of the run, by the nimble file of its package
+  (`constantsPackage`).
+- Cost: `curator/audit` passes none yet. So `koch fix` and its dry run read the constants of the
+  file alone, until `fixes.nim` passes those of the package. That edit is outside this project.
+- Verified by `suites/test_staging.nim`: two modules of one package, and one module alone.
+
+**Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
+A driver ran `checkFamilies` and `fixFamilies`, then `checkBranches` and `fixBranches`, each
+alone, on a copy of the library, with knoller at `0d58caae`. `knoller --check` lists the same lines.
+
+- Compile-time family: 21 reports over 21 lines, and the fix writes +21 −21 lines. That is the
+  diff of the page of rule 10, line for line. The check finds nothing on the fixed copy.
+- Branch on what the build fixes: 3 reports over 3 lines of `tests/suites.nim`, and the fix
+  writes +3 −3 lines. The check finds nothing on the fixed copy.
+- Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and
+  5 skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For the branch, rga4d, where
+  `DIMENSIONS != 3` holds, gives 33 OK, 0 failed and 5 skipped.
+- The projects of the repository, each read as one package by `git ls-files`, take 4 reports of
+  the family (`pga_benchmark` 1, `dance_ontology` 3) and 3 of the branch (`pga_benchmark` 2,
+  `pga_visualiser` 1).
 
 ## Fixed waits
 
