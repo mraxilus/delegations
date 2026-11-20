@@ -189,9 +189,9 @@ func checkFormatting*(
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
   ##   In every dialect: X.9 trailing comments and spaces, X.2 banners, IV.4 messages, X.4
   ##   conditions and needless parentheses, STYLE.md §5 `to<Target>` calls and dotted call
-  ##   statements, suites and tests, STYLE.md §1 helpers, doc position, X.12 defaults, and X.3 and
-  ##   STYLE.md §5 separators, signatures, calls, operator breaks, continuations and trailing
-  ##   separators, and X.1 comments above.
+  ##   statements, suites and tests, STYLE.md §1 helpers, X.2 blank lines between definitions, doc
+  ##   position, X.12 defaults, and X.3 and STYLE.md §5 separators, signatures, calls, operator
+  ##   breaks, continuations and trailing separators, and X.1 comments above.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
   ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
   ##   alone. Needless parentheses read `proofs`, so no answer reports none; tests and profiler

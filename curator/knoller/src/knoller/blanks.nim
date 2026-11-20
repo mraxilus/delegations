@@ -18,6 +18,13 @@
 ##   Reads code view (`views.codeOnly`), so `suite`, `test` or `proc` inside fixture string never
 ##     moves. Run lying inside string or block comment spanning lines is never read.
 ##   Checks and fixer share one reading (`runs`), so each rule is written once (Article II.1).
+##   Run before definition at module level, or in `when` branch there, takes count X.2 gives
+##     definition below it (`checkDefinitions`): declarative calls of one family stack, one-line
+##     helpers stack, declaration block after another and documented one-line definition take
+##     one, every other definition two, and inside second-tier section two becomes one (#443).
+##     `when` counts as definition it holds first, below it as one it holds last; run after
+##     pragma line, statement, banner or free comment is not read. Fixer shares its reading
+##     (`gapsDefinition`).
 ##
 ##   Cost: helper inside `when`, `if` or loop of routine body is unread, since X.11 asks helper
 ##     first in body.
