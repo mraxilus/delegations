@@ -11,9 +11,11 @@
 ##     past where sentence of parent starts (VI.2), so line below `# TODO: Implement …` stands two
 ##     spaces past `Implement`. Wrap of sentence stands so too, since ruling lets summary wrap two
 ##     spaces deeper.
-##   Line holds no step where it is table row (`|`), diagram (`->`), or code between fences of
-##     three backticks; blank line holds none. `#` comment whose first line stands at even step is
-##     commented code, as `#func` is, so it holds no outline.
+##   Line holds no step where it is table row (`|`), diagram, or code between fences of three
+##     backticks; blank line holds none. Diagram stands one item each side of each arrow `->`,
+##     outside backticks (`isDiagram`), so arrow that prose quotes or writes marks none. `#`
+##     comment whose first line stands at even step is commented code, as `#func` is, so it
+##     holds no outline.
 ##   Doc holds one summary line (VI.1): in first paragraph, line at summary step after line that
 ##     closes sentence is second summary, which moves two spaces past summary's sentence; after
 ##     line that runs on, summary wraps at its own step, and stays for hand, since hand alone knows
@@ -123,16 +125,30 @@ func comments*(source: string): seq[Comment] =
     result.add Comment(kind: kind, lines: @[line])
 
 
+func isDiagram(text: string): bool =
+  ## Decide whether text is line of diagram, outside backticks: one item, i.e. name or bracket
+  ##   group, stands each side of each arrow `->`, or bracket group stands alone.
+  var
+    plain = ""
+    is_code = false
+  for c in text:
+    if c == '`': is_code = not is_code
+    elif not is_code: plain.add c
+  let items = plain.split("->").mapIt(it.strip)
+  if items.len == 1: return items[0].len > 1 and items[0][0] == '[' and items[0][^1] == ']'
+  items.allIt(it.len == 0 or ' ' notin it or (it[0] == '[' and it[^1] == ']'))
+
+
 func isStepless*(lines: seq[LineComment]): seq[bool] =
-  ## Decide of each line whether it holds no step: blank, table row, diagram, or code between
-  ##   fences of three backticks, fences included.
+  ## Decide of each line whether it holds no step: blank, table row, diagram (`isDiagram`), or
+  ##   code between fences of three backticks, fences included.
   var is_fenced = false
   for l in lines:
     if l.text.startsWith("```"):
       result.add true
       is_fenced = not is_fenced
       continue
-    result.add is_fenced or l.text.strip.len == 0 or l.text.startsWith("|") or "->" in l.text
+    result.add is_fenced or l.text.strip.len == 0 or l.text.startsWith("|") or l.text.isDiagram
 
 
 func outline(c: Comment): Outline =
