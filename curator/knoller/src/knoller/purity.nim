@@ -23,6 +23,10 @@
 ##     keeps every `proc`, with reason. Source C does not check is asked on JavaScript backend,
 ##     as semantic pass asks it (`symbols.nim`). All candidates are asked at once; error inside
 ##     routine refuses it, and error outside every candidate asks each alone.
+##   Compiler also keeps `proc` of candidate taking parameter whose type points, `ref`, `ptr` or
+##     `pointer`, distinct one too, since other holder or thread can change it during call
+##     (ruling `D1 a` of #980); `var` alone keeps none, as §1 lets `func` write it. Check of each
+##     type stands after source, so no line moves, and its error refuses its routine (`probed`).
 ##   Included file checks inside text of file including it, which caller passes around it
 ##     (`prefix`, `suffix`), since included file compiles inside its includer alone.
 ##   Fixer writes `func` for `proc`, same width, so no line moves or widens; site holding no
@@ -30,10 +34,13 @@
 ##
 ##   Cost: effect is read from names, so name of `EFFECTS` used otherwise, as field `write`,
 ##     keeps routine `proc`; fewer reports, never false one.
-##   Cost: compiler accepts write library routine makes through `ref` parameter that is not
-##     `var`, as `[]=` of `std/json` makes, and default argument is no part of body, so
+##   Cost: compiler accepts write library routine makes through `ref` in field or container of
+##     parameter, as `[]=` of `std/json` makes, and default argument is no part of body, so
 ##     `initToolchains` reads as pure though its default reads environment. Each adds false
 ##     report.
+##   Cost: `ref` in field or container of parameter, type naming generic parameter, type no scope
+##     at end of module names, and `cstring`, which reads as string, keep no `proc`, though other
+##     holder can change what each reaches. Each can add false report.
 ##   Cost: generic body checks where module instantiates it alone, so instantiation in other
 ##     module that compiler would refuse is unread, and can add false report.
 ##   Cost: one `nim check` of file for each configuration and round, 0.61 to 0.76 s for module of
@@ -59,6 +66,9 @@ type
     first: int  ## Index of `proc` token.
     body: seq[int]  ## Index of each token of body, comment left out.
     lines: Slice[int]  ## Zero-based lines from `proc` to end of body.
+    types: seq[string]
+      ## Type of each parameter group as written; group its default alone types reads as `typeof`
+      ##   of default. Compiler reads `var` type as type it holds, so `var` of `ref` points too.
     is_candidate: bool  ## Shape admits it: body, no foreign pragma, no routine taken, own code.
 
 
@@ -113,6 +123,13 @@ const
     ## Calls whose block holds code macro emits, or code whose compile is itself under test.
   KEYWORD_PROC = "proc"  ## Keyword of routine rule reads.
   KEYWORD_FUNC = "func"  ## Keyword fixer writes for it.
+  NAME_POINTING = "knollerPointing"  ## Template of check, under name no source of project takes.
+  CHECK_POINTING = "\nfrom std/typetraits import nil\n\ntemplate " & NAME_POINTING &
+    "(t: typedesc): bool =\n  typetraits.distinctBase(t) is ref or " &
+    "typetraits.distinctBase(t) is ptr or\n    typetraits.distinctBase(t) is pointer\n"
+    ## Template written after source: whether type points, distinct one included.
+  MESSAGE_POINTING = "parameter of `ref` or `ptr` type keeps routine `proc`"
+    ## Error of check whose type points.
 
 
 func ids(names: openArray[string]): HashSet[string] =
@@ -128,6 +145,41 @@ func lastBody(indents: openArray[int], line, indent: int): int =
     if indents[k] < 0: continue
     if indents[k] <= indent: break
     result = k
+
+
+func parameterTypes(
+  source: string; tokens: openArray[Token]; partners: openArray[int]; open: int
+): seq[string] =
+  ## Read type of each parameter group of list opening at token `open`, as written; group its
+  ##   default alone types reads as `typeof` of default.
+  var
+    first, last = -1  # Tokens of type or default read now; first is -1 while names read.
+    is_default, is_done = false  # Default read; group read already, so rest of it skipped.
+  template read() =
+    if first >= 0 and last >= first and not is_done:
+      let text = source[tokens[first].first ..< tokens[last].after]
+      result.add (if is_default: "typeof(" & text & ")" else: text)
+    is_done = true
+
+  var k = open + 1
+  while k < partners[open]:
+    let
+      t = tokens[k]
+      s = t.spelling(source)
+    if t.kind in {KindToken.Comma, KindToken.Semicolon}:
+      if first >= 0 or is_done:  # Separator after type or default ends group, between names not.
+        read()
+        (first, last, is_default, is_done) = (-1, -1, false, false)
+    elif t.kind == KindToken.Operator and s == ":" and first < 0 and not is_done: first = k + 1
+    elif t.kind == KindToken.Operator and s == "=" and not is_done:
+      if first >= 0: read()  # Type read, so its default is skipped.
+      else: (first, is_default) = (k + 1, true)
+    elif t.kind != KindToken.Comment and first >= 0 and not is_done:
+      last = if t.kind == KindToken.Open and partners[k] > k: partners[k] else: k
+    if t.kind == KindToken.Open and partners[k] > k: k = partners[k]
+    inc k
+  read()
+  result = result.deduplicate
 
 
 func routines(source: string): seq[Routine] =
@@ -153,6 +205,7 @@ func routines(source: string): seq[Routine] =
     var
       j = k + 2
       bodied = -1
+      parameters = -1  # Token opening list of parameters.
       words_head: seq[string]
     while j < tokens.len and tokens[j].line == tokens[j - 1].line:
       let s = tokens[j].spelling(source)
@@ -161,12 +214,15 @@ func routines(source: string): seq[Routine] =
         bodied = j
         break
       if tokens[j].kind == KindToken.Open and partners[j] > j:
+        if s == "(" and parameters < 0: parameters = j
         for m in j .. partners[j]:
           if tokens[m].kind == KindToken.Word: words_head.add tokens[m].spelling(source)
         j = partners[j] + 1
         continue
       if tokens[j].kind == KindToken.Word: words_head.add s
       inc j
+
+    if parameters >= 0: routine.types = parameterTypes(source, tokens, partners, parameters)
 
     # Body: rest of `=` line, else lines indented deeper than head.
     let head_line = t.line
@@ -273,6 +329,25 @@ func written(source: string; sites: openArray[(int, int)]): string =
     result[at ..< at + KEYWORD_FUNC.len] = KEYWORD_FUNC
 
 
+func probed(
+  source: string; found: openArray[Routine]; sites: openArray[(int, int)]; prefix, suffix: string
+): (string, Table[int, (int, int)]) =
+  ## Write source with `func` at each site, inside prefix and suffix, then check of each type of
+  ##   parameter of each routine at sites, whose error refuses it; table maps zero-based line of
+  ##   each error to site. Type no scope at end of module names reads unread (`compiles`).
+  var text = prefix & source.written(sites) & suffix
+  if not text.endsWith('\n'): text.add '\n'
+  text.add CHECK_POINTING
+  for routine in found:
+    if routine.site notin sites: continue
+    for t in routine.types:
+      let call = NAME_POINTING & "(" & t & ")"
+      text.add "when compiles(" & call & "):\n"
+      result[1][text.count('\n')] = routine.site
+      text.add "  when " & call & ": {.error: \"" & MESSAGE_POINTING & "\".}\n"
+  result[0] = text
+
+
 proc provenPure*(
   source: string;
   sites: openArray[(int, int)];
@@ -288,7 +363,8 @@ proc provenPure*(
   if sites.len == 0: return
   let
     offset = prefix.count('\n')
-    spans = source.routines.filterIt(it.site in sites).mapIt((it.site, it.lines))
+    found = source.routines.filterIt(it.site in sites)
+    spans = found.mapIt((it.site, it.lines))
   var
     refused: seq[(int, int)]
     proving = 0
@@ -302,18 +378,23 @@ proc provenPure*(
       continue
     inc proving
 
-    # Ask open candidates at once; error inside routine refuses it, else ask each alone.
+    # Ask open candidates at once; error inside routine, or of check of its parameter, refuses
+    #   it, else ask each alone.
     var open = @sites.filterIt(it notin refused)
     while open.len > 0:
-      let after = checked(prefix & source.written(open) & suffix, directory, nim, defines)
+      let
+        (text, checks) = probed(source, found, open, prefix, suffix)
+        after = checked(text, directory, nim, defines)
       if after.is_clean: break
       var hit: seq[(int, int)]
       for (line, _) in after.errors:
+        let pointing = checks.getOrDefault(line - 1, (0, 0))
+        if pointing in open and pointing notin hit: hit.add pointing
         for (site, lines) in spans:
           if site in open and line - offset - 1 in lines and site notin hit: hit.add site
       if hit.len == 0:
         for site in open:
-          if not checked(prefix & source.written([site]) & suffix, directory, nim, defines)
+          if not checked(probed(source, found, [site], prefix, suffix)[0], directory, nim, defines)
               .is_clean:
             refused.add site
         break

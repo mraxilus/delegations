@@ -83,9 +83,10 @@ knoller [--check] [--nim:path] path...
   and an import of another project is not read. An `{.all.}` goes only where its file also checks
   clean without it.
 - A `proc` whose body shows no effect becomes a `func` where the compiler checks it as one under
-  `strictFuncs` (`func-pure`). A lock, a wait and a signal count as effects. The compiler reads the
-  file from stdin in its own directory, so nothing is written there. A file that checks clean on
-  no backend keeps each `proc`, and prints one warning that says why.
+  `strictFuncs` (`func-pure`). A lock, a wait and a signal count as effects. A parameter of a
+  `ref` or `ptr` type keeps the `proc`, since another holder can change its object during the
+  call. The compiler reads the file from stdin in its own directory, so nothing is written there.
+  A file that checks clean on no backend keeps each `proc`, and prints one warning that says why.
 - A name in the case of another kind (V.1, V.11), or one that coins an abbreviation (V.6), is
   renamed at every use. Knoller reads each Nim file that git lists under the nearest directory
   that holds a nimble file, and writes only the files you name. A rename that would write another
