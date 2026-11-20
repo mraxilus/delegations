@@ -346,6 +346,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     nimble = e.path.nimbleProject,
     is_drive = e.path.isCodeDrive,
   ).toFindings
+  result.warned.add warnDebug(e.path, e.content, e.path.nimbleProject).toFindings
   if fence.lines.len > 0:
     for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:

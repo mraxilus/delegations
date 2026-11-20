@@ -63,8 +63,8 @@
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
-  chain, compilers, conversions, edits, fences, messages, names, parentheses, pins, proofs, reports,
-  rewrites, rules, symbols,
+  chain, compilers, conversions, edits, fences, idioms, messages, names, parentheses, pins, proofs,
+  reports, rewrites, rules, symbols,
 ]
 
 
@@ -191,7 +191,7 @@ func part(
     nimble_layout = if nimble.len == 0: "" else: nimble.toAbsolute(directory)
     fence = source.fence
     held = checkFenceHeld(layout, source, dialect, proofs, nimble = nimble_layout)
-  result.held = held.shownAs(path)
+  result.held = (held & warnDebug(layout, source, nimble_layout)).shownAs(path)
   if fence.lines.len > 0: result.asked.add source.questions(proofs)
   var
     renamed: seq[Edit]
