@@ -133,6 +133,12 @@ func addUnary(
 
 #[ Catalogue ]#
 
+func isTypingSound(p: Measurand): bool =
+  ## Hold that measurand types no operand, or motor of transform alone, as pools and stems of
+  ##   inspector assume. Reached by `tests/suites.nim` through `{.all.}`.
+  p.typed.card == 0 or (p.typed == {1} and $p.operands[1] == "Motor")
+
+
 const CATALOGUE* = block:
   ## Every operation library exports under this algebra, general measurands first.
   var catalogue: seq[Measurand]
@@ -716,10 +722,8 @@ const CATALOGUE* = block:
   catalogue
 
 static:
-  # Typed operand is motor of transform alone: pools and stems of inspector name motor alone.
   for p in CATALOGUE:
-    doAssert p.typed.card == 0 or (p.typed == {1} and $p.operands[1] == "Motor"),
-      "Catalogue types motor of transform alone; got `" & p.id & "`."
+    doAssert p.isTypingSound, "Catalogue types motor of transform alone; got `" & p.id & "`."
 
 
 const MISSING* = block:
