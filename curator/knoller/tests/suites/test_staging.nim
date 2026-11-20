@@ -347,6 +347,22 @@ suite "Branch on what build fixes":
     check source.fixedBranches == source
 
 
+  test "STYLE.md §3 if expression is static only where each elif below its line is":
+    # Case held: `contributor/ronri/pga_visualiser/src/desktop/main.nim` 3145 opens `if` in
+    #   binding, and puts its `elif` on line below, which reading of its own line alone missed.
+    let
+      runtime = module(
+        "proc p(x: int) =\n  let v = if X: 1\n    elif x > 1: 2\n    else: 3\n  echo v\n"
+      )
+      fixed = module(
+        "proc p() =\n  let v = if X: 1\n    elif defined(linux): 2\n    else: 3\n  echo v\n"
+      )
+    check runtime.branches.len == 0
+    check runtime.fixedBranches == runtime
+    check fixed.branches == @[(LINES_HEAD + 2, MESSAGE_BRANCH & "`if X`.")]
+    check fixed.fixedBranches == fixed.replace("= if X", "= when X")
+
+
   test "STYLE.md §1 branch that declares name stays for hand, as when opens no scope":
     let
       given = module("proc p() =\n  if X:\n    let y = 1\n    echo y\n  else:\n    echo 2\n")
