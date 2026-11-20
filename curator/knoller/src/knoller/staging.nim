@@ -458,22 +458,37 @@ func branchesStatic(source: string; constants: openArray[string]): seq[Branch] =
       if first < 0: continue
 
       # Names build fixes here: constants, local constants above, and static parameters and
-      #   placeholders of each routine around line.
-      var names = global
+      #   placeholders of each routine around line. Runtime parameter, binding or loop variable
+      #   of one name shadows constant, so its name reads as runtime.
+      var names, shadowed = newSeq[string]()
+      names.add global
       for k, h in heads:
         if not extents[k].isHolding(one) or h.line == one: continue
         names.add h.placeholders
+        var group: seq[string]  # names sharing type of next piece: `a, b: static int`
         for piece in h.parameters.split({',', ';'}):
-          let colon = piece.find(':')
+          let
+            name = piece.strip.identifierAt(0)
+            colon = piece.find(':')
+          if colon < 0 and '=' in piece:  # default whose literal fixes type at runtime
+            shadowed.add name
+            continue
+          if name.len > 0: group.add name
           if colon < 0: continue
           let kind = piece[colon + 1 .. ^1].strip.identifierAt(0)
-          if kind in ["static", "typedesc", "type"]:
-            names.add piece[0 ..< colon].strip.identifierAt(0)
+          if kind in ["static", "typedesc", "type"]: names.add group else: shadowed.add group
+          group = @[]
         for d in declared:
-          if d.kind == KindName.Binding and d.is_constant and d.reach == Reach.Local and
-              d.line < one and extents[k].isHolding(d.line):
-            names.add d.name
-      # Group of parameters shares type of its last member: `a, b: static int`.
+          if d.kind != KindName.Binding or d.reach != Reach.Local or d.line >= one or
+              not extents[k].isHolding(d.line):
+            continue
+          if d.is_constant: names.add d.name else: shadowed.add d.name
+      for j in 0 ..< i:
+        let s = code[j].strip
+        if not s.startsWith("for ") or " in " notin s or code.lastBlock(j, j) < i: continue
+        for variable in s["for ".len ..< s.find(" in ")].split(','):
+          shadowed.add variable.strip(chars = {' ', '(', ')'}).identifierAt(0)
+      names = names.filterIt(it notin shadowed)
       if not line[first ..< last].isStaticCondition(names): continue
 
       # Chain: `elif` on same line after condition, or lines below at its indent.
