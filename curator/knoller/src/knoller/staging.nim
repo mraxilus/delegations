@@ -8,6 +8,8 @@
 ##     is read by name; operator has no name use spells, so it is read by mentions of type of its
 ##     first parameter, where mention in `type` section, iterator or template defines that type's
 ##     interface and is no use. Greatest such set holds, so members calling each other stay.
+##   Body of `quote` or `genAst` is code macro emits, which runs where macro puts it: use there
+##     is runtime, and routine declared there is no member, though it nests in macro.
 ##   Family is members of one module, staged where one routine carries its own `compileTime`;
 ##     module staging none passes. Each member carries its own pragma, nested one too; iterator
 ##     and template pass, since Nim refuses `compileTime` on both, and macro runs by its keyword.
@@ -71,15 +73,19 @@ func lastBlock(lines: openArray[string], first, last: int): int =
     result = k
 
 
-func regions(lines: openArray[string]): tuple[fixed, typed: seq[Extent]] =
-  ## Read blocks compile time alone runs, `const` and `static:`, and `type` sections.
+func regions(lines: openArray[string]): tuple[fixed, typed, quoted: seq[Extent]] =
+  ## Read blocks compile time alone runs, `const` and `static:`, `type` sections, and bodies of
+  ##   `quote` and `genAst`, which macro emits as code.
   for k, line in lines:
     let
       s = line.strip
       word = s.identifierAt(0)
+      words = s.wordsCode
       extent = (k + 1, lines.lastBlock(k, k) + 1)
     if word == "const" or s.startsWith("static:"): result.fixed.add extent
     elif word == "type": result.typed.add extent
+    if ("quote" in words and s.endsWith("do:")) or ("genAst" in words and s.endsWith(":")):
+      result.quoted.add (k + 2, extent[1])
 
 
 func mentions(lines: openArray[string], name: string): seq[int] =
@@ -111,7 +117,7 @@ func members(source: string): seq[Member] =
   let
     lines = source.codeOnly.splitLines
     heads = source.heads
-    (fixed, typed) = lines.regions
+    (fixed, typed, quoted) = lines.regions
   if not heads.anyIt(PRAGMA_STAGE in it.pragmas): return
   var
     extents: seq[Extent]
@@ -138,7 +144,10 @@ func members(source: string): seq[Member] =
 
   # Hold greatest set: drop private routine one of whose uses compile time does not alone run.
   var
-    is_member = heads.mapIt(it.is_compile_time or (not it.is_exported and it.keyword != "macro"))
+    is_member = heads.mapIt(
+      not quoted.isInside(it.line) and
+        (it.is_compile_time or (not it.is_exported and it.keyword != "macro"))
+    )
     is_changed = true
   while is_changed:
     is_changed = false
@@ -146,6 +155,9 @@ func members(source: string): seq[Member] =
       if not is_member[k] or h.is_compile_time: continue
       var is_staged = uses[k].len > 0
       for line in uses[k]:
+        if quoted.isInside(line):
+          is_staged = false
+          break
         if staged.isInside(line): continue
         var is_held = false
         for j in 0 ..< heads.len:
