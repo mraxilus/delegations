@@ -413,6 +413,7 @@ suiteInProc "Internal: Measurements":
     when declared(POOL_MOTOR_TYPED):
       check static(namePoolLibrary(Kind.Motor, none(int), is_typed = true)) == "POOL_MOTOR_TYPED"
       check static(namePoolLibrary(Kind.Motor, none(int))) == "POOL_MOTOR_WIDENED"
+      check not compiles(static(namePoolLibrary(Kind.Point, none(int), is_typed = true)))  # none
     check static(namePoolLibrary(Kind.General, none(int), is_typed = true)) == "POOL_GENERAL"
     for p in CATALOGUE:
       checkpoint p.id
