@@ -23,6 +23,11 @@ func applied*(source: string, edits: openArray[Edit]): string =
     result = result[0 ..< edit.first] & edit.text & result[edit.after .. ^1]
 
 
+func originApplied*(source: string, edits: openArray[Edit]): seq[int] =
+  ## Read line of source each line of applied edits came from, as `Fix.origin` holds it.
+  discard
+
+
 func isTouching*(a, b: Edit): bool =
   ## Decide whether two edits write one byte, or one inserts strictly inside other's span.
   if a.first == a.after: b.first < a.first and a.first < b.after

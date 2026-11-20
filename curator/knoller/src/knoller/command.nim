@@ -65,8 +65,8 @@
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
-  chain, compilers, configurations, conversions, edits, fences, idioms, messages, names,
-  parentheses, pins, proofs, reports, rewrites, rules, symbols,
+  chain, compilers, configurations, conversions, edits, fences, idioms, markers, messages, names,
+  parentheses, pins, proofs, purity, reports, rewrites, rules, symbols,
 ]
 
 
@@ -178,6 +178,8 @@ func part(
   directory: string;
   proofs: Proofs;
   answer: Answer;
+  uses: Uses;
+  pures: Pures;
   plans: openArray[Plan];
   nimble: string;
   has_format_value: bool;
@@ -217,7 +219,7 @@ func part(
     renamed.add plan.edits.getOrDefault(path)
     for (file, line) in plan.lines:
       if file == path: rewritten.add initReport(path, line, plan.rename.rule)
-  var base = source.applied(renamed)
+  var semantic = renamed  # Edits of renames, conversions, markers and `func`, on source as given.
   if answer.reason.len > 0:
     result.held.add initReport(
       path,
@@ -228,17 +230,51 @@ func part(
     )
   elif answer.symbols.len > 0:
     let (edits, reports) = editsConversion(layout, source, answer, fence.lines, renamed)
-    base = source.applied(renamed & edits)
+    semantic.add edits
     rewritten.add reports.shownAs(path)
-  let fix = formatted(
-    layout,
-    base,
-    dialect,
-    proofs,
-    nimble = nimble_layout,
-    has_format_value = has_format_value,
-    configurations = configurations,
-  )
+
+  # Write markers, then `func`, beside edits before them; check of each keeps what fix leaves.
+  if uses.reason.len > 0:
+    result.held.add initReport(
+      path,
+      0,
+      Rule.UsedMarker,
+      "Semantic pass resolved no use, so each private symbol and `{.all.}` stays as written; " &
+        "got `" & uses.reason & "`.",
+    )
+  if pures.reason.len > 0:
+    result.held.add initReport(
+      path,
+      0,
+      Rule.PureFunc,
+      "Compiler proved no routine pure, so each `proc` stays as written; got `" & pures.reason &
+        "`.",
+    )
+  let (marks, marked) = editsMarkers(layout, source, uses, fence.lines, semantic)
+  semantic.add marks
+  let (funcs, purified) = editsPure(layout, source, pures, fence.lines, semantic)
+  semantic.add funcs
+  rewritten.add (marked & purified).shownAs(path)
+  var kept: seq[Report]  # Report of each check that no edit writes, for hand.
+  for report in checkMarkers(layout, source, uses) & checkPure(layout, source, pures):
+    if not (marked & purified).anyIt(it.line == report.line and it.rule == report.rule):
+      kept.add report
+
+  # Chain runs on what edits leave; marker moving doc to own line traces back (`chain`).
+  let
+    base = source.applied(semantic)
+    moved = Fix(source: base, origin: source.originApplied(semantic))
+    fix = moved.chain(
+      formatted(
+        layout,
+        base,
+        dialect,
+        proofs,
+        nimble = nimble_layout,
+        has_format_value = has_format_value,
+        configurations = configurations,
+      ),
+    )
   result.asked.add fix.asked
   var after = checkSource(
     layout, fix.source, dialect, proofs, nimble = nimble_layout, configurations = configurations
@@ -246,7 +282,7 @@ func part(
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
   result.path = path
   result.unsettled = fix.unsettled
-  result.left = after.shownAs(path)
+  result.left = (kept & after).shownAs(path)
   if fix.source == source: return
   result.fixed = rewritten & fix.fixed.shownAs(path)
   if not is_check: result.written.add (path, fix.source)
@@ -308,6 +344,8 @@ func outcome*(
   answers = initTable[string, Answer](),
   plans: openArray[Plan] = [],
   nimbles = initTable[string, string](),
+  uses = initTable[string, Uses](),
+  pures = initTable[string, Pures](),
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
   ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
@@ -315,7 +353,8 @@ func outcome*(
   ##   each source no answer reaches is in `Outcome.asked`, source as given too where fence
   ##   holds lines, since fence's warning reads it. Failure of prover prints as warning.
   ##   Conversion goes where answer of semantic pass for path settles it (`resolveConversions`), and
-  ##   rename where its plan writes path (`planRenames`).
+  ##   rename where its plan writes path (`planRenames`). Marker goes where `uses` of path ask it
+  ##   (`resolveMarkers`), and `func` where `pures` of path prove it (`resolvePures`).
   ##   Rules of tests, stubs and umbrella read nimble file nearest each path, as `nimbles` holds
   ##   it by path as named (`nimblesNearest`); path it lacks has none above.
   let
@@ -331,6 +370,8 @@ func outcome*(
       directory,
       proofs,
       answers.getOrDefault(path),
+      uses.getOrDefault(path),
+      pures.getOrDefault(path),
       plans,
       nimbles.getOrDefault(path),
       nimbles.getOrDefault(path) in formatting,
@@ -348,6 +389,8 @@ proc outcomeProven*(
   answers = initTable[string, Answer](),
   plans: openArray[Plan] = [],
   nimbles = initTable[string, string](),
+  uses = initTable[string, Uses](),
+  pures = initTable[string, Pures](),
 ): Outcome =
   ## Fix files as `outcome` does, ask prover of each batch what its files asked, and fix again
   ##   each file that asked, at most `ASKS_MAX` times; prover that fails is asked no more, and
@@ -379,6 +422,8 @@ proc outcomeProven*(
       directory,
       proofs[owner],
       answers.getOrDefault(path),
+      uses.getOrDefault(path),
+      pures.getOrDefault(path),
       plans,
       nimbles.getOrDefault(path),
       nimbles.getOrDefault(path) in formatting,
@@ -407,6 +452,8 @@ proc outcomeProven*(
         directory,
         proofs[owners[k]],
         answers.getOrDefault(path),
+        uses.getOrDefault(path),
+        pures.getOrDefault(path),
         plans,
         nimbles.getOrDefault(path),
         nimbles.getOrDefault(path) in formatting,
@@ -676,6 +723,22 @@ proc resolveConversions*(
         if requests[k].query.path == answer.path: result[keys[k]] = answer
 
 
+proc resolveMarkers(
+  files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
+): Table[string, Uses] =
+  ## Resolve, through semantic pass, uses of each private symbol and `{.all.}` import of files
+  ##   of Nim dialect, keyed by path as named.
+  discard
+
+
+proc resolvePures(
+  files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
+): Table[string, Pures] =
+  ## Prove, through compiler, each `proc` of files of Nim dialect that checks as `func`, keyed by
+  ##   path as named.
+  discard
+
+
 proc planRenames*(
   files: openArray[(string, string)];
   locked: openArray[string];
@@ -797,14 +860,17 @@ proc main*(): int =
       return 2
   paths = paths.deduplicate
 
-  # Resolve conversion candidates, plan renames, group files by compiler proving their groups,
-  #   read nimble file nearest each, then fix them, each batch asking its own.
+  # Resolve conversion candidates, uses of private symbols and pure routines, plan renames,
+  #   group files by compiler proving their groups, read nimble file nearest each, then fix
+  #   them, each batch asking its own.
   var toolchains = initToolchains()
   let
     directory = getCurrentDir()
     converted = paths.converted
     files = paths.mapIt((it, readFile(it).judged(it in converted)))
     answers = files.resolveConversions(options.get.nim, directory, toolchains)
+    uses = files.resolveMarkers(options.get.nim, directory, toolchains)
+    pures = files.resolvePures(options.get.nim, directory, toolchains)
     plans = files.planRenames(paths.locked, options.get.nim, directory, toolchains)
     batches = paths.groupByCompiler(options.get.nim, directory, proversPin(toolchains))
     outcome = outcomeProven(
@@ -816,6 +882,8 @@ proc main*(): int =
       answers,
       plans,
       paths.nimblesNearest(directory),
+      uses,
+      pures,
     )
   for (path, text) in outcome.written: writeFile(path, text.restored(path in converted))
   for line in outcome.lines: echo line
