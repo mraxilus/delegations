@@ -24,6 +24,7 @@ import ../src/pga_benchmark/pages/[
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, RUNS_EVALUATION, algebrasEvaluated, digestEdits, functionsChanged, compareNan,
   readLibrary, compileCost, pairTimes
+from ../src/pga_benchmark/catalogue {.all.} import isTypingSound
 from ../src/pga_benchmark/inspect import keyLibrary, keyedCatalogue
 from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
@@ -363,6 +364,20 @@ suiteInProc "Internal: Catalogue":
         check p.expression == "(m ⟇⟇~∘ n)" and p.headEmitted == "⟇⟇~∘"  # one function to count
       else:
         check p.expression == "((n ⟇ m) ⟇ (~∘ n))" and p.headEmitted == ""  # chain, as D08 names
+
+
+  test "catalogue may type motor of transform alone, and its build stops else":
+    when compiles(Kind.Motor):
+      for p in CATALOGUE:
+        checkpoint p.id
+        var (bare, marked) = (p, p)
+        bare.typed = {}
+        marked.typed = {1}
+        check bare.isTypingSound
+        let is_transform = p.id.startsWith("transform_") and p.operands[1] == Kind.Motor
+        check marked.isTypingSound == is_transform
+    else:
+      skip()  # algebra holds no motor
 
 
   test "aliases match every name library's umbrella exports":
