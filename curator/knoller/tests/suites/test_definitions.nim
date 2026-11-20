@@ -214,32 +214,32 @@ suite "Definitions":
     # Law over small domain: form above, form below, count 0 to 3, and tier of section. Row
     #   gives counts first-tier run passes with; second tier caps each bound at one (Q1).
     const
-      FORMS = [
+      forms = [
         ("call", "foo(1)\n"),
         ("routine", "proc r*() =\n  ## Do.\n  discard\n"),
         ("helper", "func h(): int = 1\n"),
         ("documented", "func d*(): int = 1  ## Count.\n"),
         ("block", "const\n  A* = 1  ## Count.\n"),
-      ]  ## Name and text of each form, a call of template module declares among them.
-      COUNTS = [
+      ]  ## Name and text of each form, call of template module declares among them.
+      counts = [
         [0 .. 1, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # call above
         [0 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # routine of several lines above
         [0 .. 2, 2 .. 2, 0 .. 2, 1 .. 1, 2 .. 2],  # undocumented one-line helper above
         [0 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 2 .. 2],  # documented one-line routine above
         [2 .. 2, 2 .. 2, 2 .. 2, 1 .. 1, 1 .. 1],  # declaration block above
-      ]  ## Counts passing between form above, by row, and form below, by column, as `FORMS`.
-    for a in 0 ..< FORMS.len:
-      for b in 0 ..< FORMS.len:
+      ]  ## Counts passing between form above, by row, and form below, by column, as `forms`.
+    for a in 0 ..< forms.len:
+      for b in 0 ..< forms.len:
         for is_second in [false, true]:
           for count in 0 .. 3:
             let
               banner = if is_second: "#[[ Parts. ]]#\n\n" else: ""
-              head = "template foo*(x: int) = discard  ## Do.\n\n\n" & banner & FORMS[a][1]
-              source = head & "\n".repeat(count) & FORMS[b][1]
+              head = "template foo*(x: int) = discard  ## Do.\n\n\n" & banner & forms[a][1]
+              source = head & "\n".repeat(count) & forms[b][1]
               line = head.count('\n') + count + 1
-              first = COUNTS[a][b]
+              first = counts[a][b]
               passed = if is_second: min(first.a, 1) .. min(first.b, 1) else: first
-            checkpoint FORMS[a][0] & " then " & FORMS[b][0] & ", " & $count & " blank lines, " &
+            checkpoint forms[a][0] & " then " & forms[b][0] & ", " & $count & " blank lines, " &
               (if is_second: "second tier" else: "first tier")
             check checkDefinitions(PATH, source).anyIt(it.line == line) == (count notin passed)
 
