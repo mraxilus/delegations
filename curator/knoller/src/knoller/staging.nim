@@ -315,9 +315,9 @@ func fixFamilies*(path, source: string; held: Held): Fix =
   for member in source.members:
     let h = member.head
     if member.is_staged and not h.isCarryingRuntime: continue
-    let
-      k = h.last - 1
-      written = lines[k].rewritten(code[k], code.depthAt(h.line - 1, k))
+    let k = h.last - 1
+    if code[k].rfind("{.") >= 0 and code[k].blockPragma.open < 0: continue  # block spans lines
+    let written = lines[k].rewritten(code[k], code.depthAt(h.line - 1, k))
     if held.isHeld(h.last) and written.isWide and not lines[k].isWide: continue
     lines[k] = written
     code[k] = written.codeOnly
