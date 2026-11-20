@@ -3572,14 +3572,19 @@ ni'o **lo lerfu pe `0` bi'o `9` cu basti lo cmavo pe `CLL 18.2` va'o lo nu lo na
   .i ro valsi poi zo zo .a zo lu .a zo lo'u sitna ke'a cu stali
       Verified by `suites/test_prose_own.nim`.
   .i ro notci pe `nif_read.nim` cu mapti le javni ji'a Verified by `suites/test_nif.nim`.
-  .i de'i `2026-11-20` lo na'e zmiku cipra cu kancu lo lerfu pe ro selci'a poi `texts` pe
-      `reader_prose.nim` dunda ke'a
-  .i le selci'a cu vasru 965304 lerfu ca `bba232bb` gi'e vasru 963396 lerfu ca `5541c12e`
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu kancu lo me `byte` me'u pe ro selci'a poi `texts` pe
+      `reader_prose.nim` dunda ke'a ne'i ro datnyvei poi `suites/test_prose_own.nim` tcidu ke'a
+  .i ji'a le cipra cu kancu lo valsi poi se tcidu `readStream` gi'e du pa lerfu pe `0` bi'o `9`
+      gi'e na se sitna
+  .i ca `f7a6b5c6` le selci'a cu vasru 974423 me `byte` me'u .e 1918 le valsi
+  .i ro le valsi cu basti pa cmavo poi vasru re lerfu
+  .i se ki'u bo va'o lo nu ro namcu cu selci'a ta'i lo cmavo kei le selci'a cu vasru 976341 me
+      `byte` me'u
 
 ni'o se to'e cuxna fa lo nu ro cmavo pe `CLL 18.2` cu se basti
   .i ki'u bo lo nu basti pa cmavo poi no drata cmavo cu lamji ke'a cu vimcu pa lerfu po'o
-  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u lo nu basti ro cmavo cu vimcu 6553 lerfu
-      lo 965304 lerfu ca `bba232bb`
+  .i ca `f7a6b5c6` le selci'a cu vasru 4673 cmavo pe `CLL 18.2` poi na se sitna
+  .i se ki'u bo lo nu basti ro le cmavo cu vimcu 4673 me `byte` me'u
 
 ni'o **lo famyma'o .a zo cu selvi'u va'o lo nu le tricu pe lo genturfa'i poi na cuxna cu stali**
   .i zo cu selvi'u ba lo sumka'i .a lo cmene .a lo se sitna .a lo fanmo cmavo po'o
