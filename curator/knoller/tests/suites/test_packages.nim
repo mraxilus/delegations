@@ -53,6 +53,27 @@ suite "Names of package":
     check "chiral" in names.words and "name" in names.words
 
 
+  test "what fixers leave reports by check of chain, and fence names rule of package names":
+    # Domain: alias that would widen its line past `LINE_MAX`, generic `to<Target>` of compound
+    #   argument, and bare index inside fence; each stays as written, and reports as left or in
+    #   warning of its fence.
+    let
+      kept =
+        "{.experimental: \"strictFuncs\".}\n\n" &
+        "let g = " & 'x'.repeat(81) & " + Grade(1)\n" &  # 100 runes, and alias gives 104
+        "let h = (a + b).toX[int]\n" &
+        "#!fix off\nlet f = Grade(1)\n#!fix on\n"
+      files = [("p/src/algebra.nim", ALGEBRA), ("p/src/kept.nim", kept)]
+      nimbles = {"p/src/algebra.nim": "p/p.nimble", "p/src/kept.nim": "p/p.nimble"}.toTable
+      lines = outcome(files, [], is_check = true, nimbles = nimbles).lines
+    check "p/src/kept.nim:3: landmark-alias left: Landmark index stands as its alias, " &
+      "`Grade.vector`; got `Grade(1)`." in lines
+    check "p/src/kept.nim:4: conversion-prefix left: Conversion of compound argument is prefix " &
+      "call, as `toMultivector(a + b)`; got `(a + b).toX`." in lines
+    check lines.anyIt(it.startsWith("p/src/kept.nim:5: fence-held warning:") and
+      "landmark-alias" in it)
+
+
   test "library package builds on gives aliases, by `--path` of `nim.cfg` beside nimble file":
     check pathConfigured("--path:\"dependencies/x\"") == "dependencies/x"
     check pathConfigured("--path:lib") == "lib"
