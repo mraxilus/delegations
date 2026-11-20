@@ -19,7 +19,8 @@
 ##     same round;
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
-##     reads that indent;
+##     reads that indent; compile-time family of module after them, whose pragmas widen or narrow
+##     head that wrapping lays out;
 ##   - blank lines beside suites, tests and helpers, then doc position and literal defaults,
 ##     since doc joined or type dropped changes width wrapping measures;
 ##   - spacing before wrapping, since spaces it adds are width wrapping measures;
@@ -96,8 +97,8 @@
 import std/[algorithm, options, sequtils, strutils]
 import ./[
   articles, blanks, claims, commands, declarations, entry, fences, form, generations, idioms,
-  messages, names, outlines, parentheses, precedence, reports, spacing, stages, targets, waits,
-  wrapping,
+  messages, names, outlines, parentheses, precedence, reports, spacing, stages, staging, targets,
+  waits, wrapping,
 ]
 
 
@@ -126,6 +127,7 @@ func steps(dialect: Dialect, should_drop_articles = true, has_format_value = fal
     guarded(fixGenerations), guarded(fixCommands), proving(fixParentheses),
   ]
   result.add dialect.stepsIdiom
+  if dialect == Dialect.Module: result.add widening(fixFamilies)
   result.add @[placing(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
   result.add STEPS_WRAPPING
   result.add @[guarded(fixDocsMissing), guarded(fixCommentsAbove), guarded(fixStages)]
@@ -171,7 +173,7 @@ func checkFormattingUnfenced(
   result.add checkParentheses(path, view, proofs)
   if dialect == Dialect.Module:
     result.add checkBracketsImport(path, view) & checkLists(path, view) &
-        checkProfiler(path, view, nimble)
+        checkProfiler(path, view, nimble) & checkFamilies(path, view)
 
 
 func checkFormatting*(
@@ -188,11 +190,11 @@ func checkFormatting*(
   ##   statements, suites and tests, STYLE.md §1 helpers, doc position, X.12 defaults, and X.3 and
   ##   STYLE.md §5 separators, signatures, calls, operator breaks, continuations and trailing
   ##   separators, and X.1 comments above.
-  ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
-  ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
-  ##   alone. Needless parentheses read `proofs`, so no answer reports none; tests and profiler
-  ##   import read `nimble`; capitals and periods of comment read where comments drop articles
-  ##   (`should_drop_articles`).
+  ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists, STYLE.md §3
+  ##   profiler import and STYLE.md §2 compile-time family. Fenced lines are read by none, and
+  ##   fence fix cannot read is reported alone. Needless parentheses read `proofs`, so no answer
+  ##   reports none; tests and profiler import read `nimble`; capitals and periods of comment
+  ##   read where comments drop articles (`should_drop_articles`).
   let fence = source.fence
   if fence.fault >= 0: return checkFence(path, fence)
   let found = checkFormattingUnfenced(
