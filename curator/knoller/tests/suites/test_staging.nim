@@ -223,6 +223,17 @@ suite "Compile-time family":
       check source.fixedFamilies == module(STAGED & written & "\n  true\nconst C = c()\n")
 
 
+  test "X.1 fix keeps held line narrow, and writes freely off held line, as widener does":
+    let
+      head = "func c(" & "x".repeat(70) & ": int): int ="
+      source = module(STAGED & head & "\n  1\nconst C = c(1)\n")
+    check head.len + " {.compileTime.}".len > 100  # pragma would widen line past limit
+    check source.families.len == 1
+    check source.fixedFamilies == source  # every line held
+    check fixFamilies("a.nim", source, Held()).source ==
+      source.replace("): int =\n", "): int {.compileTime.} =\n")
+
+
   test "fix settles, and reports each line it rewrites by rule":
     let source = module(
       STAGED &
@@ -345,6 +356,11 @@ suite "Branch on what build fixes":
     let source = module("proc p(x: int) =\n  if X:\n    echo 1\n  elif x > 1:\n    echo 2\n")
     check source.branches.len == 0
     check source.fixedBranches == source
+    let
+      runtime = module("proc p(x: int) =\n  let v = if X: 1 elif x > 1: 2 else: 3\n  echo v\n")
+      fixed = module("proc p() =\n  let v = if X: 1 elif Y: 2 else: 3\n  echo v\n")
+    check runtime.branches.len == 0  # `elif` of same line joins chain
+    check fixed.fixedBranches == fixed.replace("= if X", "= when X")
 
 
   test "STYLE.md §3 if expression is static only where each elif below its line is":
