@@ -423,7 +423,7 @@ ni'o lo cipra be le samtci cu cipra ro jdice pe le mupli pe `Tatoeba`
 
 ni'o le vi selgu'a cu fukpi `The Complete Lojban Language` noi `John Woldemar Cowan` ciska ke'a
   .i `Logical Language Group` dunda `CLL`
-  .i le vi selgu'a cu jersi `1.1` noi selzba de'i li 2016 pi'e bi pi'e 26 gi'e romoi bu'u
+  .i le vi selgu'a cu jersi `1.1` noi selzba de'i li 2016 pi'e 8 pi'e 26 gi'e romoi bu'u
       `lojban.org/publications/cll/`
 
 ni'o `CLL 3` ciska lo lerfu .e lo zunsna gunma .e lo slaka .e lo nu basna .e lo sinxa be lo vlapoi
