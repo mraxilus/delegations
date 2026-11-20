@@ -65,8 +65,8 @@
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
-  chain, compilers, configurations, conversions, edits, fences, idioms, messages, names,
-  parentheses, pins, proofs, reports, rewrites, rules, staging, symbols,
+  chain, compilers, configurations, conversions, cuts, edits, fences, idioms, landmarks, messages,
+  names, packages, parentheses, pins, proofs, reports, rewrites, rules, staging, symbols,
 ]
 
 
@@ -85,6 +85,8 @@ Options:
   ASKS_MAX = 8
     ## Rounds of asking parser at most; each answers sources chain asked, and tree settles in
     ##   three (`PROVENANCE.md`, Content fixes).
+  FILE_CONFIGURATION = "nim.cfg"
+    ## Configuration beside nimble file, whose search path names library package builds on.
 
 
 type
@@ -183,15 +185,18 @@ func part(
   has_format_value: bool;
   constants: seq[string];
   configurations: Configurations;
+  names: NamesPackage;
 ): Part =
   ## Fix one file of Nim dialect, as `outcome` does: what file writes and reports, and what it
-  ##   asks parser. Renames planned whole across files, and conversion semantic pass settles,
-  ##   are written first, from source as given; file whose candidate pass could not resolve
-  ##   keeps each conversion, and rename refused warns where it is declared, each saying why.
+  ##   asks parser. Renames planned whole across files, conversion semantic pass settles, and alias
+  ##   of each landmark index, are written first, from source as given; file whose candidate pass
+  ##   could not resolve keeps each conversion, and rename refused warns where it is declared,
+  ##   each saying why.
   ##   Rules of tests, stubs and umbrella read nimble file nearest file, read whole as path is.
   ##   Interpolated strings join only where package declares no `formatValue` (`has_format_value`).
   ##   Branch on what build fixes reads `constants` other modules of package export, and
-  ##   configuration blocks read defaults of package (`configurations`).
+  ##   configuration blocks read defaults of package (`configurations`). Name cut, landmark alias
+  ##   and calls of constructor read names of package (`names`).
   let
     dialect = path.dialect.get
     layout = path.toAbsolute(directory)
@@ -205,6 +210,7 @@ func part(
       nimble = nimble_layout,
       constants = constants,
       configurations = configurations,
+      names = names,
     )
   result.held = (held & warnDebug(layout, source, nimble_layout)).shownAs(path)
   if fence.lines.len > 0: result.asked.add source.questions(proofs)
@@ -225,7 +231,7 @@ func part(
     renamed.add plan.edits.getOrDefault(path)
     for (file, line) in plan.lines:
       if file == path: rewritten.add initReport(path, line, plan.rename.rule)
-  var base = source.applied(renamed)
+  var converted: seq[Edit]
   if answer.reason.len > 0:
     result.held.add initReport(
       path,
@@ -236,11 +242,14 @@ func part(
     )
   elif answer.symbols.len > 0:
     let (edits, reports) = editsConversion(layout, source, answer, fence.lines, renamed)
-    base = source.applied(renamed & edits)
+    converted = edits
     rewritten.add reports.shownAs(path)
+  let (aliased, reports) =
+    editsLandmark(layout, source, names.landmarks, fence.lines, renamed & converted)
+  rewritten.add reports.shownAs(path)
   let fix = formatted(
     layout,
-    base,
+    source.applied(renamed & converted & aliased),
     dialect,
     proofs,
     nimble = nimble_layout,
@@ -257,6 +266,7 @@ func part(
     nimble = nimble_layout,
     constants = constants,
     configurations = configurations,
+    names = names,
   )
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
   result.path = path
@@ -323,6 +333,22 @@ func nimblesConfigurations(
   for nimble, each in sources: result[nimble] = readConfigurations(each)
 
 
+func namesByPackage(
+  files: openArray[(string, string)];
+  nimbles: Table[string, string];
+  libraries: Table[string, seq[string]];
+): Table[string, NamesPackage] =
+  ## Read names of each package from its modules of run, and aliases of library it builds on too
+  ##   (`libraries`), by nimble file as `nimbles` holds it; empty name stands for files with no
+  ##   nimble file above, which read as one package.
+  var sources: Table[string, seq[string]]
+  for (path, source) in files:
+    if path.dialect != some(Dialect.Module): continue
+    sources.mgetOrPut(nimbles.getOrDefault(path), @[]).add source
+  for nimble, each in sources:
+    result[nimble] = namesPackage(each, libraries.getOrDefault(nimble))
+
+
 func outcome*(
   files: openArray[(string, string)],
   locked: openArray[string],
@@ -333,6 +359,7 @@ func outcome*(
   answers = initTable[string, Answer](),
   plans: openArray[Plan] = [],
   nimbles = initTable[string, string](),
+  libraries = initTable[string, seq[string]](),
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
   ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
@@ -345,10 +372,13 @@ func outcome*(
   ##   it by path as named (`nimblesNearest`); path it lacks has none above. Branch on what build
   ##   fixes reads constants each module of run exports, by that nimble file (`constantsPackage`),
   ##   and configuration blocks read defaults of package by it too (`nimblesConfigurations`).
+  ##   Name cut, landmark alias and calls of constructor read names of package by it as well,
+  ##   and aliases of library it builds on, as `libraries` holds its modules (`namesByPackage`).
   let
     formatting = files.nimblesFormatting(nimbles)
     constants = files.constantsPackage(nimbles)
     configurations = files.nimblesConfigurations(nimbles)
+    names = files.namesByPackage(nimbles, libraries)
   var parts: seq[Part]
   for (path, source) in files:
     if path.dialect.isNone or path in locked: continue
@@ -364,6 +394,7 @@ func outcome*(
       nimbles.getOrDefault(path) in formatting,
       constants.getOrDefault(nimbles.getOrDefault(path)),
       configurations.getOrDefault(nimbles.getOrDefault(path)),
+      names.getOrDefault(nimbles.getOrDefault(path)),
     )
   parts.joined(is_check, [failure])
 
@@ -377,6 +408,7 @@ proc outcomeProven*(
   answers = initTable[string, Answer](),
   plans: openArray[Plan] = [],
   nimbles = initTable[string, string](),
+  libraries = initTable[string, seq[string]](),
 ): Outcome =
   ## Fix files as `outcome` does, ask prover of each batch what its files asked, and fix again
   ##   each file that asked, at most `ASKS_MAX` times; prover that fails is asked no more, and
@@ -389,6 +421,7 @@ proc outcomeProven*(
     formatting = files.nimblesFormatting(nimbles)
     constants = files.constantsPackage(nimbles)
     configurations = files.nimblesConfigurations(nimbles)
+    names = files.namesByPackage(nimbles, libraries)
   var
     proofs = newSeq[Proofs](batches.len)
     failures = newSeq[string](batches.len)
@@ -414,6 +447,7 @@ proc outcomeProven*(
       nimbles.getOrDefault(path) in formatting,
       constants.getOrDefault(nimbles.getOrDefault(path)),
       configurations.getOrDefault(nimbles.getOrDefault(path)),
+      names.getOrDefault(nimbles.getOrDefault(path)),
     )
 
   # Ask prover of each batch what its files asked, then fix again each file that asked.
@@ -443,6 +477,7 @@ proc outcomeProven*(
         nimbles.getOrDefault(path) in formatting,
         constants.getOrDefault(nimbles.getOrDefault(path)),
         configurations.getOrDefault(nimbles.getOrDefault(path)),
+        names.getOrDefault(nimbles.getOrDefault(path)),
       )
   parts.joined(is_check, failures)
 
@@ -712,25 +747,33 @@ proc planRenames*(
   files: openArray[(string, string)];
   locked: openArray[string];
   nim, directory: string;
-  toolchains: var Toolchains,
+  toolchains: var Toolchains;
+  nimbles = initTable[string, string]();
 ): seq[Plan] =
-  ## Plan each rename case of name's kind (V.1, V.11) or coined abbreviation (V.6) asks in files
-  ##   of Nim dialect, as `names.nim` reads it with jargon alone exempt, since knoller reads no
-  ##   glossary. Rename reads every Nim file git lists in project of declaring file, nearest
-  ##   directory holding nimble file, and is refused where it would write file not named
-  ##   (D2 of #558); local binding reads its own file alone. Plan's paths are paths as named.
+  ## Plan each rename case of name's kind (V.1, V.11), coined abbreviation (V.6) or name cut
+  ##   (V.2) asks in files of Nim dialect, as `names.nim` and `cuts.nim` read it with jargon alone
+  ##   exempt, since knoller reads no glossary; one rename settles each rule declaration breaks.
+  ##   Name cut reads names of package of each file, by nimble file as `nimbles` holds it.
+  ##   Rename reads every Nim file git lists in project of declaring file, nearest directory
+  ##   holding nimble file, and is refused where it would write file not named (D2 of #558);
+  ##   local binding reads its own file alone. Plan's paths are paths as named.
   ##   Rename refused before semantic pass, as `renamesCase` refuses it, is plan with reason.
   var
     seen = initTable[string, Pinning]()
     listings = initTable[string, seq[(string, string)]]()
-  let named = files.mapIt(it[0].toAbsolute(directory))
+  let
+    named = files.mapIt(it[0].toAbsolute(directory))
+    packages = files.namesByPackage(nimbles, initTable[string, seq[string]]())
   for (path, source) in files:
     if path.dialect.isNone or path in locked: continue
     let
       absolute = path.toAbsolute(directory)
       project = absolute.parentDir.project
       relative = absolute.relativePath(project, '/')
-      recased = renamesCase(source, JARGON)
+      names = packages.getOrDefault(nimbles.getOrDefault(path))
+      recased = renamesCase(source, JARGON).composed(
+        renamesCut(source, names.axes, names.words, JARGON),
+      )
     var renames: seq[Rename]
     for r in recased:
       let rename = Rename(
@@ -807,6 +850,37 @@ proc locked(paths: openArray[string]): seq[string] =
   nimblesLocked(locks)
 
 
+func pathConfigured(line: string): string =
+  ## Read directory line of `nim.cfg` adds to search path: `--path:"x"`, `-p:x` or `path = "x"`;
+  ##   empty where line adds none.
+  let text = line.strip
+  for opening in ["--path", "-p", "path"]:
+    if not text.startsWith(opening): continue
+    let rest = text[opening.len .. ^1].strip
+    if rest.len == 0 or rest[0] notin {':', '='}: continue
+    return rest[1 .. ^1].strip.strip(chars = {'"'})
+
+
+proc modulesLibrary(nimbles: Table[string, string]): Table[string, seq[string]] =
+  ## Read source of each module of library each package builds on, under each directory `nim.cfg`
+  ##   beside its nimble file adds to search path, by nimble file as `nimbles` holds it; path
+  ##   holding variable, or naming no directory, reads none, as library not restored does.
+  for nimble in toSeq(nimbles.values).deduplicate:
+    let
+      root = nimble.parentDir
+      configuration = root / FILE_CONFIGURATION
+    if not fileExists(configuration): continue
+    var sources: seq[string]
+    for line in readFile(configuration).splitLines:
+      let held = line.pathConfigured
+      if held.len == 0 or '$' in held: continue
+      let library = if held.isAbsolute: held else: root / held
+      if not dirExists(library): continue
+      for path in walkDirRec(library):
+        if path.endsWith(EXTENSIONS[Dialect.Module]): sources.add readFile(path)
+    if sources.len > 0: result[nimble] = sources
+
+
 proc main*(): int =
   ## Fix files command line names; print outcome; return exit code.
   let options = parseOptions(commandLineParams())
@@ -829,15 +903,17 @@ proc main*(): int =
       return 2
   paths = paths.deduplicate
 
-  # Resolve conversion candidates, plan renames, group files by compiler proving their groups,
-  #   read nimble file nearest each, then fix them, each batch asking its own.
+  # Resolve conversion candidates, read nimble file nearest each file, plan renames, group files
+  #   by compiler proving their groups, then fix them, each batch asking its own; library each
+  #   package builds on gives aliases of its landmarks.
   var toolchains = initToolchains()
   let
     directory = getCurrentDir()
     converted = paths.converted
     files = paths.mapIt((it, readFile(it).judged(it in converted)))
     answers = files.resolveConversions(options.get.nim, directory, toolchains)
-    plans = files.planRenames(paths.locked, options.get.nim, directory, toolchains)
+    nimbles = paths.nimblesNearest(directory)
+    plans = files.planRenames(paths.locked, options.get.nim, directory, toolchains, nimbles)
     batches = paths.groupByCompiler(options.get.nim, directory, proversPin(toolchains))
     outcome = outcomeProven(
       files,
@@ -847,7 +923,8 @@ proc main*(): int =
       batches,
       answers,
       plans,
-      paths.nimblesNearest(directory),
+      nimbles,
+      nimbles.modulesLibrary,
     )
   for (path, text) in outcome.written: writeFile(path, text.restored(path in converted))
   for line in outcome.lines: echo line
