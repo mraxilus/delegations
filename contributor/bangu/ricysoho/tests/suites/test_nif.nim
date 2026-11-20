@@ -15,8 +15,8 @@
 ##   .i `test_marks.nim` raptcidu le selci'a ta'i lo nu sinxa ro srera
 ##
 ## ni'o lo cipra pe lo selzba pe `JavaScript` pilno le tcidu pe le vi cipra gi'e cipra le mitfla
-##     ne'i ro vomoi jufra pe le mupli pe `Tatoeba` gi'e cipra fi le mitmupli po'u `EXAMPLE_NIF` to
-##     `tests/test_javascript.nim` toi
+##     ne'i ro boi vomoi jufra pe le mupli pe `Tatoeba` gi'e cipra fi le mitmupli po'u `EXAMPLE_NIF`
+##     to `tests/test_javascript.nim` toi
 ##
 ## ni'o le selci'aste cu vasru lo stuzi poi na mleca li 128 .e lo krastu poi zmadu li 1023 .e
 ##     lo pagbu poi vasru su'o re valsi
@@ -196,7 +196,7 @@ suite "Internal: NIF":
 
 
   test "Two ends give one chain, as 21.1 gives chain from terms to sumti-6":
-    # ro remei poi lo porsi cu jorne ke'a se kancu pa roi
+    # ro boi remei poi lo porsi cu jorne ke'a se kancu pa roi
     check LUT_CHAIN_BY_ENDS.len == COUNT_CHAINS  # `CLL 21.1`
     # le javni pe li 80 bi'o 97
     #   .i ro le javni cu vasru lo bavla'i javni

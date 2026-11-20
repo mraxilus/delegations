@@ -118,6 +118,9 @@ const IDS_REFUSED = [
   # `NAI` se lidne no cmavo be `KOhA`
   #   .i le jufra cu vasru `mi nai`
   3083055,  # le javni pe li 97
+  # lo mekso poi klani lo sumti cu nitcu zo vei
+  #   .i ku'i le jufra cu vasru lo'u lo pare fe'i re sovda le'u
+  3668385,  # le javni pe li 300
   # lo cmavo be `MOhE` cu lidne lo sumti
   #   .i ku'i `namcrgogolo` brivla
   3807272,  # le javni pe li 385
@@ -150,9 +153,6 @@ const IDS_REFUSED = [
   # `nu` lidne lo bridi
   #   .i ku'i `lo ckafi` vasru no selbri
   5181396,  # le javni pe li 152
-  # `ke` lidne lo selbri
-  #   .i ku'i `514 prenu` cu sumti gi'e vasru no cmavo pe `MOI`
-  5181650,  # le javni pe li 152
   # lo lerfu po'u zoi gy. ' .gy. zvati lo jbini be re karsna gi'e no roi zvati lo datstu
   #   .i le jufra cu vasru `mi''a`
   5181743,  # `CLL 3.3`

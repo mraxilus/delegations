@@ -5,8 +5,8 @@
 ##       ciska le mupli
 ##   .i lo dacti pe `parseLojban` mintu `ReadingText` ro datnypau
 ##
-## ni'o va'o lo nu ro vomoi jufra pe le mupli cu se tcidu kei `JS` ciska lo selci'a be fi `NIF` be'o
-##     pe le jufra
+## ni'o va'o lo nu ro boi vomoi jufra pe le mupli cu se tcidu kei `JS` ciska lo selci'a be fi `NIF`
+##     be'o pe le jufra
 ##   .i le selci'a cu se tcidu ta'i le velski be le tarmi gi'e rapyzba le multricu pe le jufra
 ##       sepi'o le tcidu pe le jbena cipra to `suites/reader_nif.nim` toi
 ##   .i `parseLojbanToNif` dunda lo selci'a be fi `NIF` be'o poi mintu le selci'a pe le mupli poi le
@@ -60,7 +60,7 @@ import ./report
 
 
 const
-  STRIDE_NIF = 4  ## le flalu pe `NIF` tcidu ro vomoi jufra pe le mupli
+  STRIDE_NIF = 4  ## le flalu pe `NIF` tcidu ro boi vomoi jufra pe le mupli
   COUNT_TREES_LEAST = 40
     ## lo du'u xo kau lo 519 jufra poi le flalu cu cuxna ke'a se tcidu
     ##   .i le flalu cu tcidu le tricu pe ro le jufra

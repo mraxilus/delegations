@@ -8,7 +8,7 @@
 ##
 ## ni'o le cipra pe le papri cu cipra lo du'u le papri cu jarco le mitxra ne'i `JavaScript` to
 ##     `tests/browser/suite_page.nim` toi
-##   .i lo flalu cu tcidu ro bimoi se ciska pe lo selci'agri
+##   .i lo flalu cu tcidu ro boi bimoi se ciska pe lo selci'agri
 ##   .i le jbezba cu tcidu ro le selci'a ta'i lo nu tcidu le mulselci'a
 ##   .i lo flalu cu tcidu ji'a le selci'a be fi `NIF` be'o poi le jbezba cu dunda ke'a
 
@@ -51,7 +51,7 @@ type ReadingDrawn = tuple[key: string, nif: string, parts: seq[NodeNif]]
 
 
 func readPool(): seq[ReadingDrawn] =
-  ## tcidu ro bimoi se ciska pe lo selci'agri ta'i lo nu tcidu le mulselci'a
+  ## tcidu ro boi bimoi se ciska pe lo selci'agri ta'i lo nu tcidu le mulselci'a
   ##   .i ro le selci'a cu se kansa le selci'a be fi `NIF` be'o pe vo'a .e le pagbu pe vo'a
   let texts = textsCorpora()
   for k in countup(0, texts.high, STEP_CORPORA):

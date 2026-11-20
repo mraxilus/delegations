@@ -57,6 +57,9 @@ const KEYS_REFUSED = [
   # `(` na'e lerfu la lojban.
   #   .i lo cukla grile'u cu sruri `to ... toi`
   ("lo jbobau", 9),  # `CLL 3.1`
+  # zo ro .e lo'u su'o re le'u cu nitcu zo boi poi zvati lo jbini be le re namcu
+  #   .i va'o lo drata le gerna cu tcidu lo'u ro su'o re le'u ta'i pa namcu
+  ("lo jbobau", 13),  # `CLL 18.6`
   # `tu'u` fanmo `tu'e` pe le 23moi linji
   #   .i va'o lo nu sepli kei `tu'u` fanmo no da
   ("lo jbobau", 29),  # le javni pe li 14
