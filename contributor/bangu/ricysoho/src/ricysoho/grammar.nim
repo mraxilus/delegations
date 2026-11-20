@@ -765,23 +765,36 @@ func headNamed(grammar: Grammar, name: string): int {.compileTime.} =
   doAssert false, "Rule should take name; got `" & name & "`."
 
 
-const HEAD_NUMBER = GRAMMAR_EBNF.headNamed("number")  ## le jvasni pe `number` noi ckini li 812
+const
+  HEAD_NUMBER = GRAMMAR_EBNF.headNamed("number")  ## le jvasni pe `number` noi ckini li 812
+  HEAD_LERFU_STRING = GRAMMAR_EBNF.headNamed("lerfu-string")
+    ## le jvasni pe `lerfu-string` noi ckini li 817
+  TERMINALS_JOINING = [
+    Selmaho.Pa.toTerminal, Selmaho.By.toTerminal, Selmaho.Bu.toTerminal, Selmaho.Lau.toTerminal,
+    Selmaho.Tei.toTerminal,
+  ]
+    ## lo genvla poi ka'e cfari lo valsi pe `PA` .a lo lerfu valsi
+    ##   .i ro valsi pe `PA` .a lo lerfu valsi ka'e jorne lo namcu .a lo lerfu porsi poi lidne ke'a
+    ##       to le javni pe li 812 .e li 817 .e li 987 toi
 
 
-func isPaAt(terminals: openArray[Terminal], at: int): bool =
-  ## jdice lo du'u xu kau le genvla pe `at` cu cmima `PA`
+func isJoiningAt(terminals: openArray[Terminal], at: int): bool =
+  ## jdice lo du'u xu kau le genvla pe `at` cu cmima `TERMINALS_JOINING`
   ##   .i va'o lo nu `at` cu zvati le fanmo kei le jalge cu du `false`
-  at < terminals.len and terminals[at] == Selmaho.Pa.toTerminal
+  at < terminals.len and terminals[at] in TERMINALS_JOINING
 
 
 func isHeld(head: int, terminals: openArray[Terminal], at: int): bool =
   ## jdice lo du'u xu kau le jvasni cu na ka'e mulno bu'u le stuzi pe `at`
-  ##   .i lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
+  ##   .i lo namcu .e lo lerfu porsi cu na mulno pu lo valsi pe `PA` .a lo lerfu valsi to
+  ##       `CLL 17.9` .e `CLL 18.6` toi
   ##   .i se ki'u bo ro porsi be lo valsi pe `PA` cu du pa namcu
   ##   .i mupli fa lo nu le genturfa'i cu tcidu lo'u le pano moi le'u ta'i lo 10moi
-  ##   .i zo boi fendi re namcu poi lamji mu'u lo'u le pa boi no moi le'u
-  ##   .i `Architect` jdice di'u bu'u `#991` ta'i `D3 a`
-  head == HEAD_NUMBER and terminals.isPaAt(at)
+  ##   .i ji'a lo'u by. cy. le'u cu du pa lerfu porsi to `CLL 17.25` toi
+  ##   .i zo boi fendi re porsi poi lamji mu'u lo'u le pa boi no moi le'u .e lo'u xy. boi ro le'u
+  ##   .i `Architect` jdice lo namcu bu'u `#991` ta'i `D3 a`
+  ##   .i ba bo `Architect` jdice lo lerfu porsi bu'u `#992` ta'i `D1 a`
+  (head == HEAD_NUMBER or head == HEAD_LERFU_STRING) and terminals.isJoiningAt(at)
 
 
 const WIDTH_BODY = GRAMMAR_EBNF.productions.mapIt(it.body.len).max + 1
@@ -881,9 +894,9 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   ##   .i lo cmima cu vasru ci namcu gi'e selfu'i ta'i lo nu fukpi le ci namcu
   ##
   ## ni'o le fancu cu ralte ro selcmi pe `chart` poi ro genvla poi lidne ke'a cu mintu lo genvla pe
-  ##     `terminals` zi'e poi le bavla'i genvla cu stali lo ka ce'u cmima `PA`
+  ##     `terminals` zi'e poi le bavla'i genvla cu stali lo ka ce'u cmima `TERMINALS_JOINING`
   ##   .i ki'u bo ro selcmi cu nitcu lo genvla po'o poi lidne ke'a ku'o .e lo du'u xu kau le bavla'i
-  ##       genvla cu cmima `PA` to `isHeld` toi
+  ##       genvla cu cmima `TERMINALS_JOINING` to `isHeld` toi
   ##   .i ba bo le fancu cu tcidu le genvla pe le romoi selcmi poi stali gi'e tisna ro selcmi poi se
   ##       lidne ri
   ##   .i ji'a le fancu cu vimcu ro cmima pe `completions` .e `choices` poi le selcmi pe ke'a cu
@@ -929,8 +942,10 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   if chart.sets.len > 0 and chart.is_everywhere == is_everywhere:
     let most = min(chart.terminals.len, terminals.len)
     while same < most and chart.terminals[same] == terminals[same]: inc same
-    # le selcmi pe `same` cu stali va'o lo nu le bavla'i genvla cu stali lo ka ce'u cmima `PA`
-    first = (if chart.terminals.isPaAt(same) == terminals.isPaAt(same): same + 1 else: same)
+    # le selcmi pe `same` cu stali va'o lo nu le bavla'i genvla cu stali lo ka ce'u cmima
+    #     `TERMINALS_JOINING`
+    first =
+      (if chart.terminals.isJoiningAt(same) == terminals.isJoiningAt(same): same + 1 else: same)
   result = terminals.len + 1 - first
   chart.is_everywhere = is_everywhere
   chart.sets.setLen(first)
@@ -954,7 +969,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   else:
     # le romoi selcmi poi stali cu tcidu le genvla poi se lidne ri
     #   .i le selcmi poi lidne le pamoi genvla poi cenba cu cnino va'o lo nu le genvla .e le pu
-    #       genvla cu frica lo ka ce'u cmima `PA` kei to `isHeld` toi
+    #       genvla cu frica lo ka ce'u cmima `TERMINALS_JOINING` kei to `isHeld` toi
     #   .i lo cmima poi se kanpe ne'i lo selcmi poi cnino cu na stali
     for head in 0 ..< count_nonterminals:
       if chart.predicted[head] >= first: chart.predicted[head] = -1
