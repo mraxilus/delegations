@@ -136,7 +136,8 @@ func addUnary(
 func isTypingSound(p: Measurand): bool =
   ## Hold that measurand types no operand, or motor of transform alone, as pools and stems of
   ##   inspector assume. Reached by `tests/suites.nim` through `{.all.}`.
-  p.typed.card == 0 or (p.typed == {1} and $p.operands[1] == "Motor")
+  p.typed.card == 0 or
+    (p.typed == {1} and $p.operands[1] == "Motor" and p.expression == EXPRESSION_TRANSFORM)
 
 
 const CATALOGUE* = block:
