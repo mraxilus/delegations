@@ -8,6 +8,7 @@
 ##   | lo cmene         | lo smuni                                                                 |
 ##   |------------------|--------------------------------------------------------------------------|
 ##   | `ReaderLive`     | le ca selci'a .e `NIF` poi pu selbe'i .e lo kravla poi denpa      |
+##   |                  | .i ji'a le mulcmi pe le romoi pagbu poi se tcidu to `ChartsKept` toi     |
 ##   | `ChangeNif`      | lo cenba pe pa spisa ne'i `NIF`                                          |
 ##   |                  | .i re stuzi .e lo jgena .e lo rebla                                      |
 ##   | `initReaderLive` | lo mivyselci'atcidu noi `NIF` pe ke'a vasru lo minde po'o         |
@@ -29,6 +30,8 @@
 ##
 ## ni'o ro spisa cu na raptcidu le mulselci'a gi'e tcidu le selci'a poi selkra le pagbu poi ca'o
 ##     kalri
+##   .i le mulcmi pe le pagbu cu stali to `ChartsKept` toi
+##   .i se ki'u bo ro spisa cu tisna lo selcmi po'o pe lo valsi poi cnino
 ##   .i lo valsi poi galfi lo pu valsi cu rinka lo nu raptcidu le selci'a poi selkra lo jgena poi le
 ##       valsi cu klama ke'a
 ##   .i `NIF` selka'a bu'u lo stuzi poi le jgena cu krasi bu'u ke'a
@@ -270,6 +273,9 @@ type
       ##   .i lo fanmo be le selci'a cu tcidu ba le stuzi
       ##   .i ki'u bo lo famvla pe lo kravla poi lidne zo fa'o cu ka'e sitna zo fa'o
     is_ended: bool  ## lo du'u lo fanmo be le mivyselci'a cu pu se tcidu
+    charts: ChartsKept
+      ## lo mulcmi pe le romoi pagbu poi se tcidu
+      ##   .i ro lo spisa cu tisna lo selcmi po'o pe lo valsi poi cnino to `fillSets` toi
 
 
 func initReaderLive*(): ReaderLive =
@@ -511,7 +517,7 @@ func readFrom(reader: var ReaderLive, start: int, is_final: bool): ReadingParts 
   let
     last = (if reader.stop.isSome and not is_final: min(ending, reader.stop.get) else: ending)
     is_lohu = reader.openers.anyIt(it.selmaho == Selmaho.Lohu and it.at < start)
-  result = readTextParts(reader.text[start ..< last], is_live = not is_final, is_lohu)
+  result = reader.charts.readTextParts(reader.text[start ..< last], is_live = not is_final, is_lohu)
   reader.count_read += last - start
   for occurrence in result.reading.occurrences.mitems:
     (occurrence.start, occurrence.finish) = (occurrence.start + start, occurrence.finish + start)
