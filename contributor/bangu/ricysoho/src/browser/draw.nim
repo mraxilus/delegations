@@ -86,6 +86,7 @@
 import std/[options, strutils, tables, unicode]
 
 import ../ricysoho/[grammar, merge, nif_read]
+from ../ricysoho/nif_read {.all.} import toCmavo
 
 
 type
@@ -225,15 +226,6 @@ func said(letters: string): string =
   ## dunda le valsi ta'i le selci'a be la lojban.
   ##   .i `'` basti ro `h` pe `NIF`
   letters.replace('h', '\'')
-
-
-func counted(count: int): string =
-  ## dunda le namcu ta'i lo cmavo pe `PA` mu'u lu paci li'u
-  ##   .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
-  ##   .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `PA`
-  ##   .i ro cmavo cu mapti `CLL 18.2`
-  const lut_cmavo_by_digit = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
-  for digit in $count: result.add lut_cmavo_by_digit[ord(digit) - ord('0')]
 
 
 func isCompound(node: NodeNif): bool =
@@ -489,16 +481,16 @@ func drawn*(nif, tail: string): DrawingLive =
       of KindPlace.Unread: result.count_unread += place.words
       of KindPlace.Error: inc result.count_errors
       of KindPlace.Rule: discard
-    let label = "le " & counted(k + 1) & "moi pagbu" & (if is_open: " · ca'o kalri" else: "") &
+    let label = "le " & (k + 1).toCmavo & "moi pagbu" & (if is_open: " · ca'o kalri" else: "") &
         ": " & node.text.spoken
     result.html.add "<figure class=\"part" & (if is_open: " open" else: "") & "\">" &
         part.svg(label) & "</figure>"
   result.count_parts = parts.len
   result.count_open = opened.len
-  result.status = counted(parts.len) & " pagbu · " & counted(result.count_words) & " valsi · " &
-      counted(result.count_errors) & " srera · " & counted(result.count_unread) &
+  result.status = parts.len.toCmavo & " pagbu · " & result.count_words.toCmavo & " valsi · " &
+      result.count_errors.toCmavo & " srera · " & result.count_unread.toCmavo &
       " valsi poi na se tcidu" &
-      (if opened.len > 0: " · " & counted(opened.len) & " pagbu poi ca'o kalri" else: "")
+      (if opened.len > 0: " · " & opened.len.toCmavo & " pagbu poi ca'o kalri" else: "")
 
 
 func drawnMerged*(nif: string): DrawingLive =
@@ -513,14 +505,14 @@ func drawnMerged*(nif: string): DrawingLive =
   if not merged.is_merged:
     result.is_refused = true
     result.status = "le nu jmina cu se to'e curmi"
-    if merged.part.isSome: result.status.add " · le " & counted(merged.part.get + 1) & "moi pagbu"
+    if merged.part.isSome: result.status.add " · le " & (merged.part.get + 1).toCmavo & "moi pagbu"
     result.status.add " · " & merged.reason
     return
   result = drawn(merged.nif, "")
   if merged.is_whole:
-    result.status = "se jmina · pa tricu · " & counted(result.count_words) &
+    result.status = "se jmina · pa tricu · " & result.count_words.toCmavo &
         " valsi · simsa lo nu tcidu le mulselci'a pa roi"
     return
-  result.status = "se jmina · " & counted(result.count_parts) & " tricu · " &
-      counted(result.count_words) & " valsi · " & counted(result.count_errors) & " srera · " &
-      counted(result.count_unread) & " valsi poi na se tcidu"
+  result.status = "se jmina · " & result.count_parts.toCmavo & " tricu · " &
+      result.count_words.toCmavo & " valsi · " & result.count_errors.toCmavo & " srera · " &
+      result.count_unread.toCmavo & " valsi poi na se tcidu"

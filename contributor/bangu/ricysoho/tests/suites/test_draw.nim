@@ -21,6 +21,7 @@ import std/[algorithm, strutils, unittest]
 
 import ../../src/browser/draw {.all.}
 import ../../src/ricysoho/[live, nif, nif_read, prose]
+from ../../src/ricysoho/nif_read {.all.} import toCmavo
 import ./corpora
 
 
@@ -241,9 +242,9 @@ suite "Internal: Drawing of live text":
 
 
   test "Each count of a line is its digits, each as cmavo of PA":
-    for digit in 0 .. 9: check counted(digit) == LUT_CMAVO_BY_DIGIT[digit]  # `CLL 18.2`
-    check counted(105) == "panomu"  # `CLL 18.2`
-    check counted(2000) == "renonono"  # `CLL 18.2`
+    for digit in 0 .. 9: check digit.toCmavo == LUT_CMAVO_BY_DIGIT[digit]  # `CLL 18.2`
+    check 105.toCmavo == "panomu"  # `CLL 18.2`
+    check 2000.toCmavo == "renonono"  # `CLL 18.2`
 
   test "Merge names one tree of one pass, else what trees hold, and refusal of NIF in red":
     let

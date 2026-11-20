@@ -6,13 +6,13 @@
 ##   .i se ki'u bo lo cipra cu cipra fi le ciska ja'i le velski gi'e no roi cipra fi le ciska ja'i
 ##       le ciska
 ##
-##   |--------------|-------------------------------------------------|
-##   | lo cmene     | lo smuni                                        |
-##   |--------------|-------------------------------------------------|
-##   | `readModule` | lo jgena pe lo selci'a be fi `NIF` |
-##   |              | .i ro basysni cu selga'i fi lo stuzi       |
-##   |              | .i `ValueError` va'o lo nu to'e curmi           |
-##   |--------------|-------------------------------------------------|
+##   |--------------|---------------------------------------|
+##   | lo cmene     | lo smuni                              |
+##   |--------------|---------------------------------------|
+##   | `readModule` | lo jgena pe lo selci'a be fi `NIF`    |
+##   |              | .i ro basysni cu selga'i fi lo stuzi  |
+##   |              | .i `ValueError` va'o lo nu to'e curmi |
+##   |--------------|---------------------------------------|
 ##
 ## ni'o le tcidu cu tcidu lo pagbu be `NIF` po'o
 ##   .i le tcidu cu tcidu lo minde .e lo jgena poi vasru lo tcita .e lo jgena
@@ -49,6 +49,9 @@
 ##       .a `#` pe lo pinka
 ##   .i lo nu to'e curmi cu renro `ValueError` noi cusku lo stuzi .e lo selcpe be `NIF` bu'u le
 ##       stuzi
+##   .i le notci pe `ValueError` cu jboselci'a gi'e cusku le stuzi ta'i lo cmavo pe `PA` to `D1 a`
+##       pe `#987` toi
+##   .i `test_nif.nim` cipra di'u
 ##
 ## ni'o le tcidu cu sepli le ciska po'u `nif.nim` gi'e nerbei no pagbu be `nif.nim`
 ##   .i se ki'u bo ro le re datnyvei cu cipra fi le drata
@@ -101,17 +104,44 @@ const
     ## ro torbasysni joi lo stuzi poi le basysni cu dunda ke'a to `Escape sequences` toi
   VERSION* = "(.nif27)"
     ## lo minde poi cusku lo namcu pe le tarmi gi'e krasi lo selci'a gi'e se lidne no stuzi
+  BYTES_VISIBLE = {'!'..'~'} - {'`'}
+    ## lo me `byte` me'u poi le notci cu sitna ke'a ta'i pa samtci pagbu
 
+
+
+func toCmavo(count: Natural): string =  # selpli ne'i `draw.nim` .e `test_draw.nim`
+  ## dunda le namcu ta'i lo cmavo pe `PA` mu'u lu paci li'u
+  ##   .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
+  ##   .i se ki'u bo ro notci pe lo nu to'e curmi .e ro linji pe le papri cu cusku ro namcu poi na
+  ##       zvati lo samtci pagbu ku'o ta'i lo cmavo pe `PA`
+  ##   .i ro cmavo cu mapti `CLL 18.2`
+  const lut_cmavo_by_digit = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
+  for digit in $count: result.add lut_cmavo_by_digit[ord(digit) - ord('0')]
 
 
 func refuse(reader: Reader, expected: string) {.noreturn.} =
   ## to'e curmi le selci'a bu'u lo stuzi poi le tcidu cu zvati ke'a
-  ##   .i le fancu cu cusku lo selcpe be `NIF` bu'u le stuzi
+  ##   .i le fancu cu cusku lo selcpe be `NIF` bu'u le stuzi .e lo zvati be le stuzi
+  ##   .i lo kutle'u cu se cusku ta'i zo kutle'u
+  ##   .i lo me `byte` me'u poi na cmima `BYTES_VISIBLE` cu se cusku ta'i lo namcu pe vo'a
   let found =
-    if reader.at < reader.text.len: "`" & reader.text[reader.at] & "`" else: "end of module"
-  raise newException(
-    ValueError, "NIF should hold " & expected & " at byte " & $reader.at & "; got " & found & "."
-  )
+    if reader.at >= reader.text.len: "le stuzi cu fanmo le selci'a"
+    elif reader.text[reader.at] in WHITESPACE: "lo kutle'u cu zvati le stuzi"
+    elif reader.text[reader.at] in BYTES_VISIBLE:
+      "`" & reader.text[reader.at] & "` cu zvati le stuzi"
+    else: "lo me `byte` me'u po'u li " & ord(reader.text[reader.at]).toCmavo & " cu zvati le stuzi"
+  raise newException(ValueError, "`NIF` bu'u le stuzi poi " & reader.at.toCmavo &
+      " me `byte` me'u cu lidne ke'a ku'o cu cpedu " & expected & " .i ku'i " & found)
+
+
+func toSumti(name: string): string {.used.} =  # selpli ne'i `merge.nim`
+  ## dunda pa sumti poi sinxa le cmene ne'i lo notci pe lo nu to'e curmi
+  ##   .i va'o lo nu ro lerfu pe le cmene cu cmima `BYTES_VISIBLE` kei le sumti cu samtci pagbu
+  ##   .i lo kunti cmene .e lo cmene poi vasru lo drata me `byte` me'u cu se skicu ta'i lo
+  ##       jboselci'a
+  if name.len == 0: "lo kunti cmene"
+  elif name.allCharsInSet(BYTES_VISIBLE): "`" & name & "`"
+  else: "lo cmene poi le notci na ka'e sitna ke'a"
 
 
 func isAt(reader: Reader, bytes: set[char]): bool =
@@ -129,7 +159,7 @@ func endToken(reader: Reader) =
   ## to'e curmi lo stuzi poi se lidne lo valsi pe `NIF`
   ##   .i ku'i le fancu cu curmi lo kutle'u .e `(` .e `)` .e lo fanmo be le selci'a
   if reader.at < reader.text.len and not reader.isAt(WHITESPACE + {'(', ')'}):
-    reader.refuse("end of token")
+    reader.refuse("lo kutle'u .a `(` .a `)`")
 
 
 func readEscape(reader: var Reader): char =
@@ -145,7 +175,7 @@ func readEscape(reader: var Reader): char =
     if reader.isAt({shortcut}):
       inc reader.at
       return decoded
-  reader.refuse("escape of two hex digits, or shortcut")
+  reader.refuse("re lerfu pe li paxa ge'u .a pa torbasysni")
 
 
 func readIdentifier(reader: var Reader): string =
@@ -161,7 +191,7 @@ func readIdentifier(reader: var Reader): string =
       result.add c
       inc reader.at
     else: break
-  if result.len == 0: reader.refuse("identifier")
+  if result.len == 0: reader.refuse("lo cmene")
 
 
 func readNumber(reader: var Reader): int =
@@ -169,7 +199,7 @@ func readNumber(reader: var Reader): int =
   ##   .i va'o lo nu le mulna'u cu mleca li no kei `-` lidne le mulna'u to `Numbers` toi
   let start = reader.at
   if reader.isAt({'-'}): inc reader.at
-  if not reader.isAt(DIGITS): reader.refuse("digit")
+  if not reader.isAt(DIGITS): reader.refuse("pa lerfu pe li pano")
   while reader.isAt(DIGITS): inc reader.at
   parseInt(reader.text[start ..< reader.at])
 
@@ -179,7 +209,7 @@ func readLiteral(reader: var Reader): string =
   ##   .i le fancu cu cfari bu'u lo stuzi poi se lidne `"`
   ##   .i le fancu cu sisti bu'u `"` poi fanmo le lerpoi to `String literals` toi
   while true:
-    if reader.at >= reader.text.len: reader.refuse("`\"` closing string literal")
+    if reader.at >= reader.text.len: reader.refuse("`\"` poi fanmo le lerpoi")
     let c = reader.text[reader.at]
     if c == '"':
       inc reader.at
@@ -191,7 +221,7 @@ func readLiteral(reader: var Reader): string =
         (ord(c) >= ord(' ') and c notin CONTROLS):
       result.add c
       inc reader.at
-    else: reader.refuse("byte that string literal holds")
+    else: reader.refuse("pa me `byte` me'u poi lo lerpoi ka'e vasru ke'a")
 
 
 func readNode(reader: var Reader): NodeNif =
@@ -211,7 +241,7 @@ func readNode(reader: var Reader): NodeNif =
     while true:
       reader.skipWhitespace
       if reader.isAt({')'}): break
-      if reader.at >= reader.text.len: reader.refuse("`)` closing node")
+      if reader.at >= reader.text.len: reader.refuse("`)` poi fanmo le jgena")
       result.children.add reader.readNode
     inc reader.at
   elif reader.isAt({'"'}):
@@ -221,7 +251,7 @@ func readNode(reader: var Reader): NodeNif =
     result = NodeNif(kind: KindNif.Number, number: reader.readNumber)
   elif reader.isAt(OPENERS_IDENTIFIER + {'\\'}):
     result = NodeNif(kind: KindNif.Identifier, text: reader.readIdentifier)
-  else: reader.refuse("node")
+  else: reader.refuse("pa jgena")
   reader.endToken
 
 
@@ -230,7 +260,7 @@ func readModule*(text: string): seq[NodeNif] =
   ##   .i lo minde poi cusku lo namcu pe le tarmi cu zvati lo pamoi stuzi
   ##   .i lo jgena cu se lidne le minde gi'e klama lo fanmo be le se ciska to `Modules` toi
   var reader = Reader(text: text)
-  if not text.startsWith(VERSION): reader.refuse("version directive `" & VERSION & "`")
+  if not text.startsWith(VERSION): reader.refuse("le minde po'u `" & VERSION & "`")
   while true:
     reader.skipWhitespace
     if reader.at >= text.len: break

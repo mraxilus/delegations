@@ -670,6 +670,16 @@ func errors*(text: Text): seq[Error] =
   text.errors(text.text.readTextMarked)
 
 
+func errorsMessage*(message: string): seq[Error] =
+  ## dunda ro srera poi le genturfa'i cu tcita ke'a ne'i pa notci pe lo samtci
+  ##   .i ro samtci pagbu pe le notci cu se tcidu ta'i pa cmene ja'i `shaped`
+  ##   .i va'o lo nu le notci cu na du pa rospau kei dunda pa srera
+  let texts = textsRecord("notci.md", message)
+  if texts.len != 1:
+    return @[Error(path: "notci.md", place: Place(line: 1, column: 1), why: "not one paragraph")]
+  texts[0].errors
+
+
 func openersTree(node: Node, units: seq[Unit], parent: string, found: var seq[int]) =
   ## jmina lo namcu be ro pagbu poi krasi pa jufra .a pa ju'agri pe le jgena
   ##   .i `parent` du lo cmene be le javni pe lo jgena poi vasru le jgena
