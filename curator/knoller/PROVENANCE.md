@@ -850,11 +850,12 @@ which fixers widen, which wraps follow, and what the chain holds where none fits
 
 **The run of blank lines before a definition takes the count that X.2 gives it (#443, rule
 13).** `checkDefinitions` and `fixDefinitions` of `blanks.nim` share one reading (`gapsDefinition`).
-The rule reads each run between two items at module level, and between two items of each branch of
-a `when` there, since `when` opens no scope. The first item of a level is not read.
+The rule reads each run between two items at module level. It also reads each run between two
+items of each branch of a `when` there, since `when` opens no scope. The first item of a level is
+not read.
 
-- An item is a code line at the indent of its level, with the lines that it holds: its brackets,
-  its deeper lines, its doc, and each `elif`, `else`, `of`, `except` or `finally` branch.
+- An item is a code line at the indent of its level, with the lines that it holds. These are its
+  brackets, its deeper lines, its doc, and each `elif`, `else`, `of`, `except` or `finally` branch.
 - A routine, a declaration block (`type`, `const`, `let`, `var`) and a declarative call are
   definitions. A declarative call calls a template or a macro that the module declares, or a
   routine `define…`. A `when` counts as the definition that it holds first, and below it as the
@@ -885,7 +886,7 @@ counts read the bullets of X.2 in this order:
   banner, so the library writes `#[[ ]]#` by hand where a section is second tier.
 - The fixer sets each run to the nearest count that passes, last run first.
 - Two single bindings of one keyword on adjacent lines are not read, since they share one keyword
-  (X.5), and `single-bindings` merges them first in the chain.
+  (X.5). `single-bindings` merges them earlier in the chain.
 - Runs beside a banner, before a suite or a test, and beside a nested helper stay with
   `banner-spacing`, `test-blank-lines` and `helper-blank-lines`.
 - Rejected: two lines after the imports for each definition. Q3 says that the definition below a
@@ -898,18 +899,20 @@ counts read the bullets of X.2 in this order:
 - The rule joins `checkFormatting` and the chain. The static pass of `curator/audit` does not
   read it until the projects fix their runs (step 4 of #443).
 - Verified by `suites/test_definitions.nim`, with each case of the library that the page of rule 13
-  names, and by `suites/test_chain.nim` and `suites/test_command.nim`, which pin the output of the
-  chain and the command line.
+  names. Verified by `suites/test_chain.nim` and `suites/test_command.nim`, which pin the output of
+  the chain and the command line.
 - Verified by measurement at commit `fd84031e`, 2026-11-20, with a driver that runs the rule alone
-  on each file of the PGA library at `3d9696e`. With the hand change of Q1 at `operators.nim` lines
-  298, 319, 365 and 393, the check gives 23 reports, and the fix adds 16 blank lines and removes 9.
+  on each file of the PGA library at `3d9696e`. The hand change of Q1 stands at `operators.nim`
+  lines 298, 319, 365 and 393. With it, the check gives 23 reports, and the fix adds 16 blank lines
+  and removes 9.
   Without it, the check gives 33 reports, and the fix adds 27 blank lines and removes 8. A second
   check of each fixed copy gives 0 reports.
-- Verified by the suites of the fixed copy with the hand change, under Nim 2.4.0: `rga3d` gives
-  33 OK, 0 FAILED and 5 SKIPPED, and `cga3d` gives 28 OK, 0 FAILED and 10 SKIPPED.
+- Verified by the suites of the fixed copy with the hand change, under Nim 2.4.0. `rga3d` gives
+  33 OK, 0 FAILED and 5 SKIPPED. `cga3d` gives 28 OK, 0 FAILED and 10 SKIPPED.
 - Verified by measurement at commit `fd84031e`, 2026-11-20, over the files that git tracks in each
-  project: knoller 35, audit 42, assayer 5, probe 5, `pga_benchmark` 316, `pga_visualiser` 193 and
-  `dance_ontology` 531, which is 1,127. `rictadni` gives 24 and `ricysoho` 117.
+  project. The counts are knoller 35, audit 42, assayer 5, probe 5, `pga_benchmark` 316,
+  `pga_visualiser` 193 and `dance_ontology` 531, which is 1,127. `rictadni` gives 24 and `ricysoho`
+  117.
 
 ## Docs
 
