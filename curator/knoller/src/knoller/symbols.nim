@@ -95,6 +95,11 @@ type
     defines: seq[string]  ## Options it takes before entry.
     queries: seq[Query]
 
+  Checked* = object  ## Define what compiler says of text it checks from stdin.
+    errors*: seq[(int, string)]  ## One-based line in text, and message, of each error there.
+    is_clean*: bool  ## Compiler ran, and reported no error.
+    reason*: string  ## Why compiler did not run; empty where it ran.
+
   Asked = object  ## Define `nimsuggest` run started: process, file of commands, file of answers.
     process: Process  ## Run itself; nil where `missing` says why none started.
     commands: string  ## Path of file process reads commands from.
@@ -115,6 +120,9 @@ const
   COMMAND_INCLUDED = "dus"
     ## Command resolving site of included file: its definition first, then each use of it.
   TEMP_PREFIX = "knoller_suggest_"  ## Opening of name of each temporary file of run.
+  FILE_STDIN = "stdinfile.nim"  ## File name compiler gives source it reads from stdin.
+  CODES_MISSING = [126, 127]  ## Exit codes of shell where compiler did not start.
+  MARK_ERROR = " Error: "  ## Text between place and message of error line of compiler.
   TEMP_COMMANDS = ".commands"  ## Extension of file run reads commands from.
   TEMP_ANSWERS = ".answers"  ## Extension of file run writes answers to.
 
@@ -322,3 +330,40 @@ proc resolve*(requests: openArray[Request]): seq[Answer] =
       for i, answer in answers:
         result.add(if answer.reason.len == 0 or again[i].reason.len > 0: answer else: again[i])
     k += PARALLEL
+
+func toErrors(output: string): seq[(int, string)] =
+  ## Read line and message of each error compiler reports in text it read from stdin:
+  ##   `stdinfile.nim(L, C) Error: …`.
+  for line in output.splitLines:
+    if not line.startsWith(FILE_STDIN & "("): continue
+    let
+      close = line.find(')')
+      marker = line.find(MARK_ERROR)
+    if close < 0 or marker < close: continue
+    let place = line[FILE_STDIN.len + 1 ..< close].split(',')
+    try: result.add (place[0].strip.parseInt, line[marker + MARK_ERROR.len .. ^1])
+    except ValueError: discard
+
+
+proc checked*(text, directory, nim: string; defines: openArray[string]): Checked =
+  ## Check text by compiler `nim` under defines, read from stdin in directory, so its imports and
+  ##   configuration resolve as for file there and nothing is written there; cache sits in
+  ##   private temporary directory removed after. Reason says why compiler did not run.
+  let cache = createTempDir("knoller_check_", "")
+  defer: removeDir(cache)
+  let command = (@[nim, "check", "--hints:off", "--warnings:off", "--nimcache:" & cache] &
+    @defines & @["-"]).mapIt(it.quoteShell).join(" ")
+  let (output, code) =
+    try:
+      execCmdEx(
+        command, options = {poStdErrToStdOut, poEvalCommand}, workingDir = directory, input = text
+      )
+    except OSError as e: (e.msg, CODES_MISSING[1])
+  let last = if output.strip.len == 0: "no output" else: output.strip.splitLines[^1]
+  if code in CODES_MISSING:
+    result.reason = "compiler did not run: " & last
+    return
+  result.errors = output.toErrors
+  result.is_clean = code == 0 and result.errors.len == 0
+  if not result.is_clean and result.errors.len == 0: result.errors.add (0, last)
+

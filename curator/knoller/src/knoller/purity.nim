@@ -33,8 +33,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, os, osproc, sequtils, sets, strutils, tables, tempfiles]
-import ./[declared, edits, reports, tokens, views]
+import std/[algorithm, sequtils, sets, strutils, tables]
+import ./[declared, edits, reports, symbols, tokens, views]
 
 
 type
@@ -51,10 +51,6 @@ type
     body: seq[int]  ## Index of each token of body, comment left out.
     lines: Slice[int]  ## Zero-based lines from `proc` to end of body.
     is_candidate: bool  ## Shape admits it: body, no foreign pragma, no routine taken, own code.
-
-  Error = object  ## Define error compiler reports in text it checks.
-    line: int  ## One-based line in text.
-    message: string
 
 
 const
@@ -107,29 +103,11 @@ const
   MARKS_EMITTED = ["quote", "genAst"]  ## Calls whose block holds code macro emits.
   KEYWORD_PROC = "proc"  ## Keyword of routine rule reads.
   KEYWORD_FUNC = "func"  ## Keyword fixer writes for it.
-  FILE_STDIN = "stdinfile.nim"  ## File name compiler gives source it reads from stdin.
-  CODES_MISSING = [126, 127]  ## Exit codes of shell where compiler did not start.
 
 
 func ids(names: openArray[string]): HashSet[string] =
   ## Read names as Nim compares them (`identity`).
   for name in names: result.incl name.identity
-
-
-func indents(source: string): seq[int] =
-  ## Read indent of each line of code, `-1` for blank or comment line.
-  for line in source.codeOnly.splitLines:
-    result.add(if line.strip.len == 0: -1 else: line.indentWidth)
-
-
-func parents(indents: openArray[int], line: int): seq[int] =
-  ## Read each line opening block around zero-based line, nearest first.
-  var depth = indents[line]
-  if depth < 0: return
-  for k in countdown(line - 1, 0):
-    if indents[k] >= 0 and indents[k] < depth:
-      result.add k
-      depth = indents[k]
 
 
 func lastBody(indents: openArray[int], line, indent: int): int =
@@ -276,44 +254,6 @@ func candidatesPure*(files: openArray[(string, string)]): Table[string, seq[(int
   for (path, routine, _) in found: result.mgetOrPut(path, @[]).add routine.site
 
 
-func toErrors(output: string): seq[Error] =
-  ## Read each error compiler reports in text it read from stdin: `stdinfile.nim(L, C) Error: …`.
-  for line in output.splitLines:
-    if not line.startsWith(FILE_STDIN & "("): continue
-    let
-      close = line.find(')')
-      marker = line.find(" Error: ")
-    if close < 0 or marker < close: continue
-    let place = line[FILE_STDIN.len + 1 ..< close].split(',')
-    try: result.add Error(line: place[0].strip.parseInt, message: line[marker + 8 .. ^1])
-    except ValueError: discard
-
-
-proc checked(
-  text, directory, nim: string; defines: openArray[string]
-): tuple[errors: seq[Error], is_clean: bool, reason: string] =
-  ## Check text by compiler `nim` under defines, read from stdin in directory, cache in private
-  ##   temporary directory removed after; reason says why compiler did not run.
-  let cache = createTempDir("knoller_purity_", "")
-  defer: removeDir(cache)
-  let command = (@[nim, "check", "--hints:off", "--warnings:off", "--nimcache:" & cache] &
-    @defines & @["-"]).mapIt(it.quoteShell).join(" ")
-  let (output, code) =
-    try:
-      execCmdEx(
-        command, options = {poStdErrToStdOut, poEvalCommand}, workingDir = directory, input = text
-      )
-    except OSError as e: (e.msg, CODES_MISSING[1])
-  let last = if output.strip.len == 0: "no output" else: output.strip.splitLines[^1]
-  if code in CODES_MISSING:
-    result.reason = "compiler did not run: " & last
-    return
-  result.errors = output.toErrors
-  result.is_clean = code == 0 and result.errors.len == 0
-  if not result.is_clean and result.errors.len == 0:
-    result.errors.add Error(line: 0, message: last)
-
-
 func written(source: string; sites: openArray[(int, int)]): string =
   ## Write `func` for `proc` at each site, same width, so every line and column holds.
   let starts = source.lineStarts
@@ -347,7 +287,7 @@ proc provenPure*(
     let before = checked(prefix & source & suffix, directory, nim, defines)
     if before.reason.len > 0: reasons.add before.reason
     if not before.is_clean:
-      if before.errors.len > 0: reasons.add before.errors[0].message
+      if before.errors.len > 0: reasons.add before.errors[0][1]
       continue
     inc proving
 
@@ -357,9 +297,9 @@ proc provenPure*(
       let after = checked(prefix & source.written(open) & suffix, directory, nim, defines)
       if after.is_clean: break
       var hit: seq[(int, int)]
-      for e in after.errors:
+      for (line, _) in after.errors:
         for (site, lines) in spans:
-          if site in open and e.line - offset - 1 in lines and site notin hit: hit.add site
+          if site in open and line - offset - 1 in lines and site notin hit: hit.add site
       if hit.len == 0:
         for site in open:
           if not checked(prefix & source.written([site]) & suffix, directory, nim, defines)
