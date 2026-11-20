@@ -7,7 +7,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, strutils, tables, unittest]
+import std/[options, os, sequtils, strutils, tables, unittest]
 import ../../../knoller/src/knoller
 import ../../src/[findings, fixes, form, kinds, symbols, tree]
 import ./fixtures
@@ -606,6 +606,54 @@ suite "Fixes":
         "`source checks clean in no configuration: undeclared identifier: 'x'`.",
     ]
     check fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree)).written.len == 0
+
+
+  test "facts of each project read from disk under root, as knoller's command line reads them":
+    # Case held: `koch fix` read no uses, pures or library from disk, so rules 7, 9 and 11 of #443
+    #   read nothing there, where knoller's command line reads each (`resolveMarkers`,
+    #   `resolvePures`, `modulesLibrary`). Domain: private symbol sibling reaches through
+    #   `{.all.}`, `proc` compiler proves pure, alias of library `nim.cfg` names, which no file of
+    #   tree holds, and file at root, which lies in no project and asks none.
+    let
+      root = repoTemp()
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      nimble = "version = \"0.1.0\"\nrequires \"nim == " & compilerRunning().version & "\"\n"
+      alias = head & "template vector*[G: Grade | GradeAnti](t: typedesc[G]): G = G(1)\n" &
+        "  ## Alias grade.\n"
+      tree = @[
+        entry("curator/fixture/fixture.nimble", nimble),
+        entry(
+          "curator/fixture/src/a.nim",
+          head & "func helper(x: int): int = x + 1\n  ## Add one.\n\n" &
+            "proc twice*(x: int): int = x * 2\n  ## Double.\n",
+        ),
+        entry(
+          "curator/fixture/src/b.nim",
+          head & "import ./a {.all.}\n\nlet ONE* = helper(0)  ## One.\n",
+        ),
+        entry("curator/fixture/src/c.nim", head & "let VECTOR* = Grade(1)  ## Grade of vectors.\n"),
+        entry("root.nim", head & "proc thrice*(x: int): int = x * 3\n  ## Triple.\n"),
+      ]
+    defer: removeDir(root)
+    for e in tree: writeInto(root, e.path, e.content)
+    writeInto(root, "curator/fixture/nim.cfg", "--path:\"dependencies/library\"\n")
+    writeInto(root, "curator/fixture/dependencies/library/algebra.nim", alias)  # git lists none
+    discard root.git("add " & tree.mapIt(it.path).join(" "))
+    let (uses, pures, libraries) = readFacts(root, tree)
+    check toSeq(uses.getOrDefault(tree[1].path).privates.values).mapIt(it.siblings) ==
+      @[@["b.nim"]]  # `b.nim` reaches `helper`, which `a.nim` never uses
+    check pures.getOrDefault(tree[1].path).sites == @[(8, 0)]
+    check "root.nim" notin uses and "root.nim" notin pures  # root lies in no project
+    check libraries == {"curator/fixture/fixture.nimble": @[alias]}.toTable
+    let
+      context = initContext(tree, tree, uses = uses, pures = pures, libraries = libraries)
+      written = fixEntries(BRANCH_CURATOR, tree, context = context).written
+    check written.mapIt(it.path) == @[tree[1].path, tree[3].path]
+    check written.anyIt(
+      "func helper(x: int): int {.used.} = x + 1  # Used in `b.nim`." in it.content
+    )  # rule 7
+    check written.anyIt("func twice*(x: int): int = x * 2" in it.content)  # rule 11
+    check written.anyIt(it.content == tree[3].content.replace("Grade(1)", "Grade.vector"))
 
 
   test "abbreviation renames at every use across files, or is refused whole where fix reaches not":
