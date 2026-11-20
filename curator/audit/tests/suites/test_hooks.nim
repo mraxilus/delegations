@@ -3107,7 +3107,9 @@ suite "Hooks":
     #   without bold marks and in any case of letters, so `**Resolution criterion:**` and
     #   `Resolution Criterion:` end claim too, and percentage of criterion is no confidence.
     #   Cases as found are probes F02, F03 and F07 of critic of claim build: build `1f4d159a`
-    #   read words of samples alone, so percentage of such criterion ended claim.
+    #   read words of samples alone, so percentage of such criterion ended claim. Ruling
+    #   7027197745 of #969: after full stop, criterion in italics, in bold, or in both ends claim
+    #   too, as `. *Resolution criterion:*`; build `9d4b7eff` read italics as text.
     for (found, refused) in [
         ("- Judgement: the race leads the findings (70%). **Resolution criterion:** the critic " &
           "holds at least 4 of 5 claims (80%).", "the race leads the findings (70%). " &
@@ -3120,17 +3122,26 @@ suite "Hooks":
       check quoted(found, "the race leads the findings").len == 0
       check quoted(found, refused) == @[refusalCell(refused)]
 
-    # Law: words of criterion in each case, plain, bold, or bold with colon outside, end claim at
-    #   confidence before them, or at them where none stands there.
+    # Law: words of criterion in each case, plain, or in each form of italics, bold or both, with
+    #   colon inside or outside marks, end claim at confidence before them, or at them where none
+    #   stands there (7027197745).
     const
       cases = ["Resolution criterion", "resolution criterion", "Resolution Criterion",
         "RESOLUTION CRITERION", "rEsOlUtIoN cRiTeRiOn"]
         ## Cases of letters of words of criterion.
-      marks = 30
-        ## Bullets of law: each case, three forms of bold, with confidence before or none.
+      wraps = [("*", "*"), ("_", "_"), ("**", "**"), ("__", "__"), ("***", "***"),
+        ("_**", "**_"), ("**_", "_**"), ("*__", "__*"), ("__*", "*__"), ("___", "___")]
+        ## Opening and closing of each form of italics, bold, and both.
+      marks = 210
+        ## Bullets of law: each case, plain and in twenty forms of marks, with confidence before
+        ##   or none.
     var laid = 0
     for words in cases:
-      for form in [words & ":", "**" & words & ":**", "**" & words & "**:"]:
+      var forms = @[words & ":"]
+      for (opening, closing) in wraps:
+        forms.add opening & words & ":" & closing
+        forms.add opening & words & closing & ":"
+      for form in forms:
         for (bullet, claim) in [("- a (70%). " & form & " b (80%).", "a"),
             ("- a c. " & form & " b (80%).", "a c")]:
           check quoted(bullet, claim).len == 0
@@ -3139,11 +3150,13 @@ suite "Hooks":
     check laid == marks
 
     # Choice leaves out each other form, so later percentage stays confidence there: criterion
-    #   after semicolon or comma, plural, on next line with no full stop, italic, bold of
-    #   underscores, and other words (probes F04, F05 and F06).
-    for form in ["; resolution criterion:", ", resolution criterion:", ". Resolution criteria:",
-        "\n  Resolution criterion:", ". *Resolution criterion:*", ". __Resolution criterion:__",
-        ". Criterion:", ". Resolution:"]:
+    #   after semicolon or comma, in italics there too, plural, on next line with no full stop,
+    #   with no space after full stop, in four marks, struck, and other words (probes F04, F05
+    #   and F06).
+    for form in ["; resolution criterion:", ", resolution criterion:", "; *Resolution criterion:*",
+        ". Resolution criteria:", "\n  Resolution criterion:", ".*Resolution criterion:*",
+        ". ****Resolution criterion:****", ". ~~Resolution criterion:~~", ". Criterion:",
+        ". Resolution:"]:
       let bullet = "- a (70%)" & form & " b (80%)."
       check quoted(bullet, "a") == @[refusalCell("a")]
       check quoted(bullet, ("a (70%)" & form & " b").splitWhitespace.join(" ")).len == 0
@@ -3152,7 +3165,9 @@ suite "Hooks":
     #   first of `, as the 10th` and criterion does.
     for (first, second) in [("Resolution criterion:", "**Resolution criterion:**"),
         ("**Resolution criterion:**", "Resolution criterion:"),
-        ("resolution criterion:", "Resolution Criterion:")]:
+        ("resolution criterion:", "Resolution Criterion:"),
+        ("*Resolution criterion:*", "Resolution criterion:"),
+        ("Resolution criterion:", "_**Resolution criterion:**_")]:
       let bullet = "- a (70%). " & first & " b (80%). " & second & " c (90%)."
       check quoted(bullet, "a").len == 0
       check quoted(bullet, "a (70%). " & first & " b") ==
