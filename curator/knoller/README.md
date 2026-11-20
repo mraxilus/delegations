@@ -91,8 +91,8 @@ knoller [--check] [--nim:path] path...
   that holds a nimble file, and writes only the files you name. A rename that would write another
   file stays as written, and prints one warning at its declaration that says why. Run knoller on
   `.` at the root of a project to let such a rename write every file it reaches.
-- A name whose words break the cut of V.2 is renamed at every use too. A property leads its value
-  of one letter, so `𝐦_grade` becomes `grade_𝐦`. A word glued after `anti` leads it, so
+- Knoller renames a name whose words break the cut of V.2 at every use too. A property leads its
+  value of one letter, so `𝐦_grade` becomes `grade_𝐦`. A word glued after `anti` leads it, so
   `antibasis` becomes `basis_anti`. An axis value goes last, so `left_name` becomes `name_left`.
   An axis value is a field of a wrapper that the package declares, as `Chiral[T]` holds `left`.
   Where the name also breaks its case, one rename settles both.
@@ -205,7 +205,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `notation` | The notation of the source holds over case only for an immutable global. |
 | `global-word` | A global shares no word with a type. |
 | `representation-head` | A name holding a value in another representation leads with it. |
-| `name-cut` | A name opens with its head: a property before its value, an axis value last. |
+| `name-cut` | A name opens with its head: property first, `anti` after its word, axis value last. |
 | `routine-suffix` | A routine closes with `Of` only where its name spells a generic type. |
 | `generic-suffix` | A type closes with `Of` only where an alias of it takes its bare name. |
 | `collection-name` | A collection type takes the plural of its member, not a word for its form. |

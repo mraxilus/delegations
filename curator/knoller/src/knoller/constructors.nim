@@ -12,8 +12,9 @@
 ##
 ##   Cost: text reads no symbol, so routine of other module spelled as constructor of package
 ##     counts as it; field is `snake_case` (V.1), so none reads as routine.
-##   Cost: call forms of other routines stay unread (Architect's ruling, #443): reading every
-##     routine reads `len` and `add` that package borrows or overloads, as library does.
+##   Cost: call forms of other routines stay unread (Architect's ruling, #443), so routine other
+##     than constructor may take both forms; page of #443 shows reading every routine reads
+##     `len`, `countSetBits` and `abs` library borrows or overloads.
 
 {.experimental: "strictFuncs".}
 

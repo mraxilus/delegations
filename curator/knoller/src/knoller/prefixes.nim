@@ -5,10 +5,10 @@
 ##     Plain is name with calls, indexes and fields glued after it, as `targets.nim` reads it,
 ##     and `to<Target>` is `to` and capital, as there, so `($rule).toLowerAscii` becomes
 ##     `toLowerAscii($rule)`.
-##   Fix gives parentheses of group to call, so `(a).toX(c)` becomes `toX(a, c)`, and `.` binding
-##     tighter than any prefix operator before it moves no reading. Rewrite is reverse of
-##     `to<Target>` subject first, which leaves compound argument prefix call, so neither undoes
-##     other.
+##   Fix gives parentheses of group to call, so `(a + b).toX(c)` becomes `toX(a + b, c)`, and
+##     `.` binding tighter than any prefix operator before it moves no reading. Rewrite is
+##     reverse of `to<Target>` subject first, which leaves compound argument prefix call, so
+##     neither undoes other.
 ##   No fixer, check reports still: generic call (`(a + b).toX[T]`), and call spanning lines,
 ##     whose layout hand chose.
 ##

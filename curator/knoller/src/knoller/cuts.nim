@@ -6,11 +6,13 @@
 ##   - property after its one-letter value: `m_norm_bulk`, where one-letter word opens name and
 ##     property follows it (`PROPERTIES`), so property leads, as `norm_bulk_m`;
 ##   - `anti` glued first: `antibasis`, where word after `anti` is word names of package take
-##     alone, so `anti` follows it, as `basis_anti`, since V.2 spells `scalarAnti`;
+##     alone, of three letters or more (`LENGTH_GLUED_MIN`), so `anti` follows it, as
+##     `basis_anti`, since V.2 spells `scalarAnti`;
 ##   - axis value first: `left_name`, where first words are axis values and other word follows,
 ##     so axis values go last, as `name_left`. Axis value is field of wrapper of V.7 package
-##     declares (`axesDeclared`): generic object of one placeholder, named for adjective closing
-##     with `-al`, whose every field takes that placeholder, as `Chiral[T]` holds `left`.
+##     declares (`axesDeclared`): generic object of one placeholder and two fields or more, named
+##     for adjective closing with `-al`, whose every field takes that placeholder, as `Chiral[T]`
+##     holds `left`.
 ##   Name of axis values alone passes, since first value names thing, as `bulkFlat` does. Word of
 ##     library package imports is no axis value, so caller reads package's names alone.
 ##   Every other order needs meaning of its words, so reading holds it: `c_complement`,
