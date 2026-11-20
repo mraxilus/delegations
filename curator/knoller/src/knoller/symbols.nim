@@ -385,3 +385,13 @@ proc checked*(text, directory, nim: string; defines: openArray[string]): Checked
   result.is_clean = code == 0 and result.errors.len == 0
   if not result.is_clean and result.errors.len == 0: result.errors.add (0, last)
 
+
+proc checkedBackend*(
+  text, directory, nim: string; defines: openArray[string]
+): tuple[checked: Checked, defines: seq[string]] =
+  ## Check text as `checked` does, on C backend, else on JavaScript where C refuses it, as
+  ##   semantic pass asks file C rejects; defines name backend that answered.
+  result = (checked(text, directory, nim, defines), @defines)
+  if result.checked.is_clean or result.checked.reason.len > 0: return
+  let js = checked(text, directory, nim, @defines & @[BACKEND_JS])
+  if js.is_clean: result = (js, @defines & @[BACKEND_JS])

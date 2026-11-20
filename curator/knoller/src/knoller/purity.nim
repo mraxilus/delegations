@@ -288,11 +288,7 @@ proc provenPure*(
     reasons: seq[string]
   for configuration in (if configurations.len == 0: @[newSeq[string]()] else: @configurations):
     # Backend whose source as given checks clean: C, else JavaScript, as semantic pass asks.
-    var defines = configuration
-    var before = checked(prefix & source & suffix, directory, nim, defines)
-    if not before.is_clean and before.reason.len == 0:
-      let js = checked(prefix & source & suffix, directory, nim, defines & @[BACKEND_JS])
-      if js.is_clean: (defines, before) = (defines & @[BACKEND_JS], js)
+    let (before, defines) = checkedBackend(prefix & source & suffix, directory, nim, configuration)
     if before.reason.len > 0: reasons.add before.reason
     if not before.is_clean:
       if before.errors.len > 0: reasons.add before.errors[0][1]
