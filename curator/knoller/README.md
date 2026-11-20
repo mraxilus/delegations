@@ -181,6 +181,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `doc-outline` | A nuance stands two spaces past where the sentence of its parent starts. |
 | `doc-summary` | A doc holds one summary line, whose sentence ends in a period. |
 | `message-value` | A message echoes its value in backticks. |
+| `message-echo` | A message echoes each value in backticks, wherever it stands. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
 | `needless-parentheses` | Parentheses go where the parser of the compiler reads the same tree. |

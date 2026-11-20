@@ -64,6 +64,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.OutlineDoc: "VI.2",
   Rule.SummaryDoc: "VI.1",
   Rule.ValueMessage: "IV.4",
+  Rule.EchoMessage: "IV.4",
   Rule.AndWithOr: "X.4",
   Rule.NotOverBinary: "X.4",
   Rule.ParenthesesNeedless: "X.4",

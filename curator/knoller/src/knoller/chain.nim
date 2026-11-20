@@ -120,8 +120,8 @@ func steps(dialect: Dialect, should_drop_articles = true): seq[Step] =
   else: result.add guarded(fixBackticks)
   result.add guarded(fixOutlines)
   result.add @[
-    widening(fixMessages), widening(fixMixtures), guarded(fixTargets), guarded(fixGenerations),
-    guarded(fixCommands), proving(fixParentheses),
+    widening(fixMessages), widening(fixEchoes), widening(fixMixtures), guarded(fixTargets),
+    guarded(fixGenerations), guarded(fixCommands), proving(fixParentheses),
   ]
   result.add dialect.stepsIdiom
   result.add @[placing(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
@@ -153,8 +153,8 @@ func checkFormattingUnfenced(
   ##   and periods only where comments drop articles.
   let
     checks_before = [
-      checkComments, checkBanners, checkOutlines, checkMessages, checkMixtures, checkNegations,
-      checkTargets, checkCommands,
+      checkComments, checkBanners, checkOutlines, checkMessages, checkEchoes, checkMixtures,
+      checkNegations, checkTargets, checkCommands,
     ]
     checks_after = [
       checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures, checkCalls,

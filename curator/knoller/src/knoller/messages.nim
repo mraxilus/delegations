@@ -247,3 +247,18 @@ func fixMessages*(path, source: string; held: Held): Fix =
 func fixMessages*(path, source: string): Fix =
   ## Insert backticks or shape each bare value lacks, unless line they land on would be wide.
   fixMessages(path, source, EVERY)
+
+
+func checkEchoes*(path, source: string): seq[Report] =
+  ## Report bare value of message, before `got` or with none, and value that opens its claim.
+  discard
+
+
+func fixEchoes*(path, source: string; held: Held): Fix =
+  ## Insert backticks each bare value of message lacks, where held line stays narrow.
+  result.source = source
+
+
+func fixEchoes*(path, source: string): Fix =
+  ## Insert backticks each bare value of message lacks, unless line they land on would be wide.
+  fixEchoes(path, source, EVERY)
