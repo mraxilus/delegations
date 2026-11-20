@@ -516,7 +516,7 @@ suite "Command line":
 
   test "private symbol and `{.all.}` resolve in project of file, and run fixes each it reports":
     # Domain: symbol sibling reaches and own module never uses; `{.all.}` reaching nothing, and
-    #   one reaching symbol a template declares, which pass cannot read, so compile keeps it.
+    #   one reaching symbol template declares, which pass cannot read, so compile keeps it.
     let root = createTempDir("knoller_", "_markers")
     defer: removeDir(root)
     const pragma = "{.experimental: \"strictFuncs\".}\n\n"

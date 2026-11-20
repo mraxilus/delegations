@@ -166,12 +166,13 @@ func itemAll(
   tokens: openArray[Token]; indexes: openArray[int]; prefix, source: string; names: seq[string]
 ): seq[ImportAll] =
   ## Read item of import whose tokens `indexes` hold, where `{.all.}` follows its module.
-  let starts = source.lineStarts
-  let at = toSeq(0 ..< indexes.len).filterIt(
-    tokens[indexes[it]].spelling(source) == "{." and it + 2 < indexes.len and
-      tokens[indexes[it + 1]].spelling(source) == PRAGMA_ALL and
-      tokens[indexes[it + 2]].spelling(source) == ".}"
-  )
+  let
+    starts = source.lineStarts
+    at = toSeq(0 ..< indexes.len).filterIt(
+      tokens[indexes[it]].spelling(source) == "{." and it + 2 < indexes.len and
+        tokens[indexes[it + 1]].spelling(source) == PRAGMA_ALL and
+        tokens[indexes[it + 2]].spelling(source) == ".}"
+    )
   if at.len == 0 or at[0] == 0: return
   let
     path = indexes[0 ..< at[0]]
