@@ -198,6 +198,9 @@ suite "Definitions":
     let first = second.replace("#[[ Norms ]]#", "#[ Norms ]#")
     check first.messages == @["6: " & TWO & "1`.", "10: " & TWO & "1`."]
     check first.fixed.isSettled
+    let quoted = "const TEXT = \"\"\"\n#[[ Parts. ]]#\n\"\"\"  ## Text.\n\n\n" &
+      "proc a*() =\n  ## Do.\n  discard\n\n\nproc b*() =\n  ## Do.\n  discard\n"
+    check quoted.isSettled  # probe of critic: banner inside string gives no tier
 
 
   test "doc is `##` comment on head line or inside item, never `##` inside `#` comment":
