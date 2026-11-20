@@ -3924,7 +3924,7 @@ comments on #962 and #969. `checkBlocks` holds these: a prediction before each c
 after each report of a critic, and a quote in each cell of a reflection. It reads every model
 turn, whether or not it pushed or posted, because the turn of a prediction writes nothing.
 Section Quotes of claims gives the quote, and reading holds each other step. Section Runs of the
-block check gives the runs that verify both sections against real transcripts.
+block check gives the runs that verify both sections, on small transcripts and on a real one.
 
 **A model turn ends where the model stops.** It ends at an `assistant` entry whose `stop_reason`
 is a string other than `tool_use`. The harness writes each item of a message as an entry of its
@@ -3972,18 +3972,21 @@ kind, names no kind.
   marks, and the word each other mark, since the rulings name these marks alone. So
   `__Subagent:__`, `builder;`, `~~builder~~` and `builder,,` name no kind.
 - Verified by `suites/test_hooks.nim`: a law of each kind of the suite in four cases, inside each
-  mark, with each final mark or none. The law also runs after each form of the label. It holds
-  an indent, no space after the label, and a later label line. As no kind, it holds another word
-  first, a plural, several other marks, and another label.
+  mark, with each final mark or none. The plain word also runs after each of five forms of the
+  label. It holds an indent, no space after the label, and a later label line. As no kind, it
+  holds another word first, a plural, several other marks, and another label.
 
 **A call of a kind takes a block that names its kind, of an earlier model turn, where no subagent
 starts between them.** The hook looks back from the turn before the call, past each turn that
-starts no subagent, at any count of turns (comment 7014974932). A turn that starts a subagent of
-any type ends the turns that the hook looks back over (comment 7014974932). Its blocks are no
-evidence (`D2 a` of comment 6982373798). Of the free blocks there that name its kind, the call
-takes the block of the nearest turn (comment 7017187857). Inside that turn, it takes the earliest
-(comments 7017187857 and 7027197745).
+starts no subagent, at any count of turns (comment 7014974932). A turn that starts a subagent
+ends the turns that the hook looks back over, and its blocks are no evidence (`D2 a` of comment
+6982373798). Of the free blocks there that name its kind, the call takes the block of the nearest
+turn (comment 7017187857). Inside that turn, it takes the earliest (comments 7017187857 and
+7027197745).
 
+- Choice: a call of any type ends those turns, tool use as `web-fetch` too. The ruling names no
+  type, and the harness starts a subagent for each such call. Rejected: a call of a kind alone,
+  which lets a block serve a call across a `web-fetch` call between them.
 - Each prediction is the last message of a turn of its own (comment 6980006567). So a block in
   the turn of its call is no evidence (comment 7014974932). A reply to a refusal, or a wake by
   another event, can come between a block and its call, and the block still serves it.
@@ -4053,8 +4056,9 @@ block that a call took. Verified by `suites/test_hooks.nim`.
 
 **Costs, which reading holds:**
 
-- A block written after the call that it names still serves a later call of its own kind, where
-  no subagent starts between them. A cell may quote a block that another call took.
+- A block in a turn after the call that it names still serves a later call of its kind, where no
+  subagent starts between them. A block in the turn of that call serves none. A cell may quote a
+  block that another call took.
 - A block of a later turn replaces a block of its kind of an earlier turn, as the guide states
   (comments 7022770415 and 7027197745). Inside one turn, the earliest serves. So of two blocks
   for two subagents of one kind, the first call takes the block of the nearer turn. Verified by
@@ -4119,7 +4123,8 @@ read. It is the form of the samples of `GUIDE.md`, where each claim is a bullet 
   it. So a wrap that opens with `2. ` stays in its claim. Rejected: each number at each indent,
   which cuts such a wrap. Rejected: the text `1` alone, which keeps `01. c` in its claim.
 - Verified by hand with pandoc 3.1.3 of GFM, on 2026-11-19, for each form at each indent up to
-  six columns. On 2026-11-20, pandoc gives the verdict of the law for each of its 364 cases.
+  six columns. On 2026-11-20, pandoc gives the verdict of the law for each of its cases, which
+  the test counts as `lines`.
   Verified by `suites/test_hooks.nim`, for each form at each indent up to five columns, a tab as
   four. The law runs under a claim on one line, and under one that wraps once. It holds probes
   F08 and F09 of the critic of the claim build.
@@ -4226,8 +4231,8 @@ form that opens no claim. It holds `No prediction` with and without a block, and
 refuses each case of the guide and a reply to a refusal, on small transcripts in the shape of the
 harness. No suite runs `main` of koch, so this run holds the dispatch of the stop branch. A row
 of `No prediction` passes where no call took a block, and a cell of `-` is refused. Each of the
-92 probes of the earlier critics gives its reason of `9d4b7eff`, but 3. Probes S05, S10 and S15
-now pass, since the label and the word of the kind line read as comment 7027197745 rules.
+92 probes of the earlier critics gives the verdict that the rulings ask. Probes S05, S10 and S15
+pass, since the label and the word of the kind line read as comment 7027197745 rules.
 
 - Each of 222 breaks of the rules fails a test of `suites/test_hooks.nim`, on 2026-11-20. A break
   is one edit of a scratch copy of `hooks.nim` at `ff2fa434`, with which the suite builds and runs.
@@ -4250,14 +4255,15 @@ transcript, so another copy gives its own figures.
   a later hand-back. The call of `web-fetch` in the foreground has the status `completed`, and its
   result holds its report. No result of an `Agent` call has `is_error`, so no call is skipped.
 - By that read, each of the 14 lines `**Subagent:**` writes its kind in lower case with no marks.
-  No line of a block holds a bold label, a label of other marks, `\|`, percentiles or an item
-  under a claim. One claim holds `resolution criterion` with no full stop before it, so it ends
-  nothing.
+  No claim of a block opens with a bold label or a label of other marks. No claim holds `\|` or
+  percentiles, and no item stands right under a claim. One claim holds `resolution criterion`
+  with no full stop before it, so it ends nothing.
 - A tool that includes `hooks.nim` at `ff2fa434` runs `toSubagents`, `kindNamed`, `blocksTaken`
   and `claims` over the copy, and gives the same output at `9d4b7eff`. Entries count from 1. The
   8 blocks name `reviewer` and `builder` in entry 370, then `critic`, `builder`, `builder`,
   `critic`, `builder` and `researcher`. Only the last, in entry 817, serves a call, the call of
-  `researcher` in entry 821. They hold 106 claims.
+  `researcher` in entry 821. They hold 55 claims, 51 with a label, which `claims` reads as 106
+  forms of a cell.
 - A replay runs `koch hook stop` at each of the 54 stops that the entries `stop_hook_summary` mark.
   It reads the copy up to the last `assistant` entry before the stop, from a checkout on
   `curator/subagent-blocks`. It sets `stop_hook_active` in each reply to a refusal of `stop`.
@@ -4266,13 +4272,16 @@ transcript, so another copy gives its own figures.
   predictions and 27 cells that are no whole claim of a block that a call took. Each of the 27
   keeps its confidence, and no report of a critic lacks its reflection.
 - At each of those 5, each block of the delegate stands in the turn of a call, in a later turn, or
-  in a fence. So each of the 7 cells of the stop of entry 413 is a claim of a block that no call
-  took. At the stop of entry 882, the reflection quotes 8 claims whole, 2 before a full stop.
-- Each of the 54 stops gives its reason of `9d4b7eff` word for word.
-- Cost: `koch hook stop` on the whole copy takes a median of 236 ms at `9d4b7eff` and 244 ms at
-  `ff2fa434`. A second set gives 226 ms and 242 ms. Each median is of 20 runs on 2026-11-20,
-  which alternate between the builds. Each set spans about 120 ms, so the gap stays inside it.
-  They ran on 4 cores of a Xeon at 2.10 GHz. The load over one minute was 0.69 to 0.78, as
+  in a fence. So each of the 7 cells of the stop of entry 413 is a claim, with its confidence, of
+  a block that no call took. At the stop of entry 882, the reflection quotes 8 claims whole, 2
+  before a full stop.
+- At `40bee07a`, the base of this pull request, each stop gives the same verdict and refuses the
+  same items. At the 5 stops that the block checks refuse, the rule of a call and the rule of a
+  cell read in other words. The other 49 reasons are the same word for word.
+- Cost: `koch hook stop` on the whole copy takes a median of 227 ms at `40bee07a` and 241 ms at
+  `ff2fa434`. A second set gives 246 ms and 239 ms. Each median is of 20 runs on 2026-11-20,
+  which alternate between the builds. Each set spans 97 to 121 ms, so the gap stays inside it.
+  They ran on 4 cores of a Xeon at 2.10 GHz. The load over one minute was 0.40 to 0.57, as
   `/proc/loadavg` gave it before and after each set.
 
 ## Skills
