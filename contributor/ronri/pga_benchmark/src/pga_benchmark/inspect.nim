@@ -40,6 +40,7 @@ const
 func stemLibrary(k: Kind, is_typed: bool): string =
   ## Read C stem library takes for operand: `float` for scalar, motor's stem where typed, since
   ##   catalogue types motor alone and stops build else, and dense multivector else.
+  ##   Reached by `tests/suites.nim` through `{.all.}`.
   if k == Kind.Scalar: "float" elif is_typed: STEM_MOTOR else: "Multivector"
 
 
@@ -48,8 +49,9 @@ func stemReference(k: Kind): string =
   if k == Kind.Scalar: "float" elif k == Kind.General: "Multivector" else: $k
 
 
-func keyLibrary*(p: Measurand): string =
+func keyLibrary(p: Measurand): string =
   ## Get key of library function measurand's expression calls; empty where it composes several.
+  ##   Reached by `tests/suites.nim` through `{.all.}`.
   if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
   let head = p.headEmitted

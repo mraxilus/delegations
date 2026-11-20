@@ -25,7 +25,7 @@ from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, RUNS_EVALUATION, algebrasEvaluated, digestEdits, functionsChanged, compareNan,
   readLibrary, compileCost, pairTimes
 from ../src/pga_benchmark/catalogue {.all.} import isTypingSound
-from ../src/pga_benchmark/inspect import keyLibrary, keyedCatalogue
+from ../src/pga_benchmark/inspect {.all.} import keyLibrary, keyedCatalogue, stemLibrary
 from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
 
@@ -745,6 +745,16 @@ suiteInProc "Internal: Inspector":
         is_transform = p.id.startsWith("transform_")
         expected: set[0..1] = (if is_typed_library and is_transform: {1} else: {})
       check p.typed == expected
+
+
+  test "typed stem is motor's alone, and a typed stem of any other kind fails":
+    when compiles(Kind.Point):
+      check stemLibrary(Kind.Motor, is_typed = true) == STEM_MOTOR
+      expect AssertionDefect:
+        discard stemLibrary(Kind.Point, is_typed = true)
+    else:
+      skip()  # algebra holds no typed kind
+
 
   test "functions are split and counted from fixture C":
     const
