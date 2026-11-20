@@ -178,6 +178,8 @@ const
   CMAVO_INSIDE = ["pi", "pi'e", "ki'o"]
     ## lo cmavo pe `PA` poi ka'e zvati lo jbini be re lerfu pe pa namcu
     ##   .i lo mupli po'u `CLL 18.6` .e `CLL 18.11` .e `CLL 18.74` cu pilno le cmavo
+  MARKS_INSIDE = [".", ","]
+    ## lo sinxa poi zvati lo jbini be re lerfu pe pa namcu gi'e se tcidu ta'i zo pi .a zo ki'o
   CMAVO_BEFORE = ["ni'u", "ma'u", "ji'i", "pi"]
     ## lo cmavo pe `PA` poi ka'e zvati lo jbini be zo li .e lo namcu
   WORDS_NUMBERED = ["li", "me'o"]
@@ -865,7 +867,7 @@ func digitRead(occurrence: Occurrence): int =
 func faultsNumbers*(occurrences: openArray[Occurrence]): seq[tuple[start: int, why: string]] =
   ## dunda ro namcu poi na mapti le javni be lo nu ciska lo lerfu pe `0` bi'o `9` ku'o .e lo krinu
   ##   .i pa namcu cu du lo porsi be lo valsi poi sinxa lo lerfu gi'e ka'e vasru lo cmavo pe
-  ##       `CMAVO_INSIDE`
+  ##       `CMAVO_INSIDE` .a lo sinxa pe `MARKS_INSIDE`
   ##   .i va'o lo nu le namcu cu vasru su'o re lerfu gi'a se lidne pa cmavo pe `WORDS_NUMBERED` kei
   ##       le namcu cu vasru no cmavo pe `CMAVO_DIGITS`
   ##   .i re lerfu poi lamji cu zvati pa selci'avla
@@ -891,7 +893,8 @@ func faultsNumbers*(occurrences: openArray[Occurrence]): seq[tuple[start: int, w
       while last + 1 < occurrences.len:
         let next = occurrences[last + 1]
         if next.digitRead >= 0: digits.add last + 1
-        elif not next.reading.is_word or next.text notin CMAVO_INSIDE: break
+        elif not next.reading.is_word or
+            (next.text notin CMAVO_INSIDE and next.text notin MARKS_INSIDE): break
         inc last
       var before = at - 1
       while before >= 0 and occurrences[before].text in CMAVO_BEFORE: dec before

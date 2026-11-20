@@ -713,11 +713,11 @@ func writtenAt(text: string, at: int): Slice[int] =
   ## dunda lo stuzi pe le selci'avla poi vasru le stuzi po'u `at`
   ##   .i le stuzi cu du lo porsi be lo stuzi poi no sinxa poi zvati lo jbini be lo valsi cu fendi
   ##       ke'a
-  doAssert at < text.len and text[at] notin MARKS_BOUNDARY,
+  doAssert at < text.len and not text.isBoundary(at),
       "Stream should refuse byte of written word; got byte " & $at & "."
   var (a, b) = (at, at)
-  while a > 0 and text[a - 1] notin MARKS_BOUNDARY: dec a
-  while b + 1 < text.len and text[b + 1] notin MARKS_BOUNDARY: inc b
+  while a > 0 and not text.isBoundary(a - 1): dec a
+  while b + 1 < text.len and not text.isBoundary(b + 1): inc b
   a .. b
 
 
@@ -820,7 +820,7 @@ func occurrenceEnded*(text: string, first, last: int): Occurrence =
   ##   .i le valsi cu ralte le stuzi ta'i lo nu selci'a kei gi'e ralte lo denpa poi denpa bu cu
   ##       ciska ke'a pu le valsi to `CLL 19.15` toi
   var k = first
-  while k > 0 and text[k - 1] in MARKS_BOUNDARY: dec k
+  while k > 0 and text.isBoundary(k - 1): dec k
   Occurrence(
     start: first, finish: last, text: text[first ..< last],
     pause: (if '.' in text[k ..< first]: Pause.Written else: Pause.Absent),
@@ -857,7 +857,7 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
   while not stream.is_read:
     let span = blanked.writtenAt(stream.start)
     var k = span.a
-    while k > 0 and text[k - 1] in MARKS_BOUNDARY: dec k
+    while k > 0 and text.isBoundary(k - 1): dec k
     refused.add Occurrence(
       start: span.a, finish: span.b + 1, text: text[span],
       pause: (if '.' in text[k ..< span.a]: Pause.Written else: Pause.Absent),
@@ -951,11 +951,11 @@ func readUnits(text: string, is_lohu = false): ReadingParts =
     units.add Unit(words: @[ending], is_read: false, refusal: RefusalText.Faho)
     var at = occurrences[ending].finish
     while at < text.len:
-      if text[at] in MARKS_BOUNDARY:
+      if text.isBoundary(at):
         inc at
         continue
       let first = at
-      while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
+      while at < text.len and not text.isBoundary(at): inc at
       units.add Unit(words: @[occurrences.len], is_read: false, refusal: RefusalText.Stream)
       occurrences.add text.occurrenceEnded(first, at)
   units = units.sortedByIt(it.words[0])

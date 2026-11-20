@@ -470,6 +470,15 @@ func toSpans(region: ReadingParts, leaves: openArray[seq[int]], first: int): seq
     for u in leaves[k]: next = max(next, units[u].words[^1] + 1)
 
 
+func isBoundarySettled*(text: string, at: int): bool =
+  ## jdice lo du'u le lerfu poi zvati `at` cu fendi lo selci'avla ca ro nu lo selci'a cu se jmina
+  ##   .i denpa bu poi romoi gi'e se lidne pa lerfu pe `0` bi'o `9` cu na fendi
+  ##   .i ki'u bo lo lerfu poi ba se ciska cu ka'e binxo lo nu denpa bu cu sinxa zo pi
+  ##   .i lo nu tcidu lo mulselci'a cu pilno `isBoundary` po'o
+  text.isBoundary(at) and
+    not (at == text.high and text[at] == '.' and at > 0 and text[at - 1] in {'0' .. '9'})
+
+
 func byteQuoted(text: string, at: int, delimiter: string): int =
   ## jarco lo stuzi poi krasi lo selci'a poi zo zoi sitna ke'a
   ##   .i zo zoi krasi bu'u `at`
@@ -478,11 +487,11 @@ func byteQuoted(text: string, at: int, delimiter: string): int =
   ##   .i va'o lo drata le stuzi cu se lidne lo selci'avla poi vasru zo zoi
   ##   .i ca la'e di'u le selci'avla cu vasru le koivla
   var a = at
-  while a < text.len and text[a] notin MARKS_BOUNDARY: inc a
+  while a < text.len and not text.isBoundary(a): inc a
   var b = a
-  while b < text.len and text[b] in MARKS_BOUNDARY: inc b
+  while b < text.len and text.isBoundary(b): inc b
   var c = b
-  while c < text.len and text[c] notin MARKS_BOUNDARY: inc c
+  while c < text.len and not text.isBoundary(c): inc c
   if text[b ..< c].toLowerAscii.replace(",", "") == delimiter: c else: a
 
 
@@ -492,11 +501,11 @@ func isSpelled(text: string, first, last: int, delimiter: string): bool =
   ##     ke'a to `CLL 19.10` toi
   var at = first
   while at < last:
-    if text[at] in MARKS_BOUNDARY:
+    if text.isBoundary(at):
       inc at
       continue
     let start = at
-    while at < last and text[at] notin MARKS_BOUNDARY: inc at
+    while at < last and not text.isBoundary(at): inc at
     if text[start ..< at].toLowerAscii.replace(",", "") == delimiter: return true
   false
 
@@ -513,7 +522,7 @@ func readFrom(reader: var ReaderLive, start: int, is_final: bool): ReadingParts 
   ##   .i ku'i lo fanmo be le se tcidu cu se kancu ba lo selci'a poi se lidne zo fa'o
   var ending = reader.text.len
   if not is_final:
-    while ending > start and reader.text[ending - 1] notin MARKS_BOUNDARY: dec ending
+    while ending > start and not reader.text.isBoundarySettled(ending - 1): dec ending
   let
     last = (if reader.stop.isSome and not is_final: min(ending, reader.stop.get) else: ending)
     is_lohu = reader.openers.anyIt(it.selmaho == Selmaho.Lohu and it.at < start)
@@ -552,9 +561,9 @@ func boundary(reader: ReaderLive, at: int): int =
   ##   .i ki'u bo le porsi be lo valsi cu tcidu ro selci'avla ta'i lo mulno
   ##   .i va'o lo nu no jgena cu zvati le stuzi kei le stuzi cu du lo krasi be le selci'a
   result = at
-  while result > 0 and reader.text[result - 1] notin MARKS_BOUNDARY:
+  while result > 0 and not reader.text.isBoundary(result - 1):
     var first = result - 1
-    while first > 0 and reader.text[first - 1] notin MARKS_BOUNDARY: dec first
+    while first > 0 and not reader.text.isBoundary(first - 1): dec first
     var k = reader.items.high
     while k >= 0 and reader.items[k].start > first: dec k
     result = (if k >= 0: reader.items[k].start else: 0)
@@ -941,11 +950,11 @@ func addRest(reader: var ReaderLive, first: int): ChangeNif =
   result = ChangeNif(at: reader.nif.len, start: first)
   var at = first
   while at < reader.ending:
-    if reader.text[at] in MARKS_BOUNDARY:
+    if reader.text.isBoundary(at):
       inc at
       continue
     let start = at
-    while at < reader.ending and reader.text[at] notin MARKS_BOUNDARY: inc at
+    while at < reader.ending and not reader.text.isBoundary(at): inc at
     let
       ended = ReadingMarked(
         occurrences: @[reader.text.occurrenceEnded(start, at)],
@@ -982,7 +991,7 @@ func readChange(reader: var ReaderLive, at: int, is_final: bool): ChangeNif =
   if region.faho.isNone: return
   let faho = region.reading.byteAt(region.faho.get)
   var stop = faho
-  while stop < reader.text.len and reader.text[stop] notin MARKS_BOUNDARY: inc stop
+  while stop < reader.text.len and not reader.text.isBoundary(stop): inc stop
   reader.stop = some(stop)
   # lo panzi poi vasru zo fa'o
   #   .i lo fanmo be le selci'a cu raptcidu bu'u lo selku'e be le panzi
@@ -1008,7 +1017,7 @@ func push*(reader: var ReaderLive, piece: string): ChangeNif =
   doAssert not reader.is_ended, "Live text should take no piece after its end."
   reader.text.add piece
   var ending = reader.text.len  # le se tcidu cu fanmo ba le romoi sinxa poi jbini lo valsi
-  while ending > reader.ending and reader.text[ending - 1] notin MARKS_BOUNDARY: dec ending
+  while ending > reader.ending and not reader.text.isBoundarySettled(ending - 1): dec ending
   if ending == reader.ending:
     return ChangeNif(at: reader.nif.len, start: reader.start_tail, tail: reader.tail)  # no cnino
   for n in 0 ..< reader.openers.len:

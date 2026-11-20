@@ -257,6 +257,12 @@ const
     ##   .i ku'i `Architect` cpedu lo nu le genturfa'i cu tcidu le lerfu
   LUT_CMAVO_BY_DIGIT = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
     ## lo cmavo pe `PA` poi ro lerfu pe `DIGITS_STREAM` cu sinxa ke'a to `CLL 18.2` toi
+  WORD_DECIMAL = "pi"
+    ## le cmavo poi denpa bu cu sinxa ke'a va'o lo nu zvati lo jbini be re lerfu
+    ##   .i lo mupli po'u `CLL 18.6` cu pilno zo pi
+  WORD_GROUP = "ki'o"
+    ## le cmavo poi slaka bu cu sinxa ke'a va'o lo nu se lidne pa lerfu gi'e lidne ci lerfu po'o
+    ##   .i lo mupli po'u `CLL 18.11` cu pilno zo ki'o
   MARKS_BOUNDARY* = Whitespace + {'.'}
     ## lo sinxa poi fendi lo valsi to `CLL 3.3` toi
     ##   .i lo kutle'u .e denpa bu
@@ -568,6 +574,18 @@ func pauseBefore(occurrences: openArray[Occurrence], word: Occurrence, is_period
   if is_needed: Pause.Inferred else: Pause.Absent
 
 
+func isBoundary*(text: string, at: int): bool =
+  ## jdice lo du'u xu kau le lerfu poi zvati `at` cu fendi lo selci'avla
+  ##   .i lo kutle'u cu fendi
+  ##   .i denpa bu cu fendi va'o po'o lo nu na zvati lo jbini be re lerfu pe `DIGITS_STREAM`
+  ##   .i ki'u bo denpa bu poi zvati lo jbini be re lerfu cu sinxa zo pi to `D1 a` pe `#991` toi
+  let c = text[at]
+  if c in Whitespace: return true
+  if c != '.': return false
+  not (at > 0 and text[at - 1] in DIGITS_STREAM and at + 1 < text.len and
+      text[at + 1] in DIGITS_STREAM)
+
+
 func wordsLetters(text: string, start, finish: int): ReadingStream =
   ## tcidu lo valsi pe lo selci'avla pe lo stuzi po'u `start ..< finish`
   ##   .i le selci'avla cu vasru no lerfu pe `DIGITS_STREAM`
@@ -599,6 +617,12 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
   ##   .i ro lerfu pe `DIGITS_STREAM` cu du pa valsi poi le genturfa'i cu tcidu ke'a ta'i le cmavo
   ##       poi le lerfu cu sinxa ke'a
   ##   .i se ki'u bo zoi gy. 10moi .gy. cu se tcidu ta'i zo pa .e zo no .e zo moi
+  ##   .i denpa bu poi zvati lo jbini be re lerfu cu du pa valsi poi le genturfa'i cu tcidu ke'a
+  ##       ta'i zo pi
+  ##   .i slaka bu poi se lidne pa lerfu gi'e lidne ci lerfu po'o cu du pa valsi poi le
+  ##       genturfa'i cu tcidu ke'a ta'i zo ki'o
+  ##   .i `Architect` jdice di'u bu'u `#991` ta'i `D1 a`
+  ##   .i lo drata slaka bu poi se lidne pa lerfu cu se to'e curmi to `CLL 3.3` toi
   ##   .i `wordsLetters` tcidu ro drata pagbu
   var
     occurrences: seq[Occurrence]
@@ -608,6 +632,18 @@ func wordsWritten(text: string, start, finish: int): ReadingStream =
       occurrences.add Occurrence(
         start: at, finish: at + 1, text: $text[at], stress: none(int),
         reading: LUT_CMAVO_BY_DIGIT[ord(text[at]) - ord('0')].readWord,
+      )
+      inc at
+      continue
+    if at > start and text[at - 1] in DIGITS_STREAM and text[at] in {'.', ','}:
+      # denpa bu cu zvati ne'i le selci'avla va'o po'o lo nu lo lerfu cu lidne ke'a to
+      #     `isBoundary` toi
+      var count = 0  # lo klani be lo lerfu poi slaka bu cu lidne ke'a
+      while at + 1 + count < finish and text[at + 1 + count] in DIGITS_STREAM: inc count
+      if text[at] == ',' and count != 3: return refuse(Refusal.Comma, at)
+      occurrences.add Occurrence(
+        start: at, finish: at + 1, text: $text[at], stress: none(int),
+        reading: (if text[at] == '.': WORD_DECIMAL else: WORD_GROUP).readWord,
       )
       inc at
       continue
@@ -627,15 +663,15 @@ func quoted(text: string, start: int, delimiter: string): Option[Slice[int]] =
   ##   .i dunda no da va'o lo nu no selci'avla poi ciska `delimiter` se lidne to `CLL 19.10` toi
   var at = start
   while at < text.len:
-    if text[at] in MARKS_BOUNDARY:
+    if text.isBoundary(at):
       inc at
       continue
     let first = at
-    while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
+    while at < text.len and not text.isBoundary(at): inc at
     if text[first ..< at].toLowerAscii.replace(",", "") != delimiter: continue
     var (a, b) = (start, first - 1)
-    while a <= b and text[a] in MARKS_BOUNDARY: inc a
-    while b >= a and text[b] in MARKS_BOUNDARY: dec b
+    while a <= b and text.isBoundary(a): inc a
+    while b >= a and text.isBoundary(b): dec b
     return some(a .. b)
   none(Slice[int])
 
@@ -670,7 +706,7 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
   while at < text.len:
     # klama pa'o lo sinxa poi zvati lo jbini be lo valsi
     #   .i ralte lo du'u denpa bu cu zvati
-    if text[at] in MARKS_BOUNDARY:
+    if text.isBoundary(at):
       is_period = is_period or text[at] == '.'
       inc at
       continue
@@ -678,7 +714,7 @@ func readStream*(text: string, is_lohu = false): ReadingStream =
     # lebna lo selci'avla poi fanmo pu lo bavla'i sinxa poi zvati lo jbini be lo valsi
     #   .i tcidu lo valsi pe le selci'avla
     let start = at
-    while at < text.len and text[at] notin MARKS_BOUNDARY: inc at
+    while at < text.len and not text.isBoundary(at): inc at
     let written = text.wordsWritten(start, at)
     if not written.is_read: return written
     let words = written.occurrences

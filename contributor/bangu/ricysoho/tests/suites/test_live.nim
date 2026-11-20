@@ -519,7 +519,9 @@ func readLive(
     apply(change)
     last = at
     var ending = at  # le selci'a poi ca zvati gi'e fanmo bu'u le romoi sinxa poi jbini lo valsi
-    while ending > 0 and text[ending - 1] notin MARKS_BOUNDARY: dec ending
+    # lo lerfu poi se lidne `at` cu na zvati ca ro nu se ciska
+    #   .i ki'u bo `isBoundarySettled` tcidu lo pagbu po'o poi se ciska
+    while ending > 0 and not text[0 ..< at].isBoundarySettled(ending - 1): dec ending
     if is_growing and ending > 0:
       let grown = readTextParts(text[0 ..< ending], is_live = true).reading.toNifParts
       result.is_grown = result.is_grown and result.nif & change.tail == grown
