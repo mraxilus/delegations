@@ -124,6 +124,7 @@ const
   COMMAND_SITE = "def"  ## Command resolving site of entry itself: its definition alone.
   COMMAND_INCLUDED = "dus"
     ## Command resolving site of included file: its definition first, then each use of it.
+  COMMAND_USES = "use"  ## Command listing definition and every use of each symbol at site.
   TEMP_PREFIX = "knoller_suggest_"  ## Opening of name of each temporary file of run.
   FILE_STDIN = "stdinfile.nim"  ## File name compiler gives source it reads from stdin.
   CODES_MISSING = [126, 127]  ## Exit codes of shell where compiler did not start.
@@ -249,6 +250,8 @@ proc ask(entry: Entry, is_js: bool): Asked =
     for (line, column) in query.sites:
       commands.add command & " \"" & file & "\":" & $line & ":" & $column & "\n"
     for name in query.names: commands.add "globalSymbols " & name & "\n"
+    for (line, column) in query.usages:
+      commands.add COMMAND_USES & " \"" & file & "\":" & $line & ":" & $column & "\n"
   commands.add "quit\n"
 
   # Run through shell, which redirects both streams to files.
@@ -298,6 +301,14 @@ proc readAnswers(entry: Entry, asked: Asked): seq[Answer] =
           if symbol.isSome and symbol.get.name.split('.')[^1].identity == name.identity:
             found.add symbol.get
       answer.globals[name] = found
+      inc at
+    for site in query.usages:
+      var found: seq[Symbol]
+      if at < blocks.len:
+        for line in blocks[at]:
+          let symbol = line.toSymbol
+          if symbol.isSome: found.add symbol.get
+      answer.usages[site] = found
       inc at
     result.add answer
 
