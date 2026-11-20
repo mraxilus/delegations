@@ -24,6 +24,7 @@ import ../src/pga_benchmark/pages/[
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, RUNS_EVALUATION, algebrasEvaluated, digestEdits, functionsChanged, compareNan,
   readLibrary, compileCost, pairTimes
+from ../src/pga_benchmark/inspect import keyedCatalogue
 from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
 
@@ -635,6 +636,55 @@ suiteInProc "Internal: Inspector":
     check found.len == 1
     if found.len == 1:
       check found[0].parameters == @["set[Basis]"]
+
+  test "library generic that timed calls instantiate is kept by its head, and helper there is not":
+    # Case: under P04, sum, difference, negation and four projections are generic, and timed
+    #   calls instantiate them first, so C names them after module `measurements`; evaluations
+    #   of P04, P09 and P10 at rga4d and cga5d read none of those seven.
+    # Domain: each kind of module as `bench` builds it, and dense forms and timed calls as built
+    #   from elsewhere, against head of catalogue and helper of bench, through `keyedCatalogue`,
+    #   which `inspect` writes its document by.
+    const
+      parameters = "(tyObject_Multivector__h* m_p0, tyObject_Multivector__h* n_p1, " &
+        "tyObject_Multivector__h* Result) {"
+      modules = [  # module suffix; kept with head; kept with helper's symbol
+        ("OOZdependenciesZprojective_geometric_algebra_illuminatedZpgaZoperators", true, true),
+        ("referenceZrigid3", true, true),
+        ("dense", true, true),
+        ("OOZsrcZpga95benchmarkZdense", true, true),  # dense form, built from elsewhere
+        ("measurements", true, false),
+        ("OOZsrcZpga95benchmarkZmeasurements", true, false),  # timed calls, as suites build them
+        ("pools", false, false),  # other module of bench
+        ("OOZpgaZoperators", false, false),  # library outside its checkout
+      ]
+      heads_mangled = ["plus__u0", "projectCentral_u0"]  # `+` encoded, and plain identifier
+      helper_mangled = "fold_u0"  # helper of bench in `measurements`
+    let heads = CATALOGUE.heads
+    check "+" in heads and "projectCentral" in heads and "fold" notin heads
+    var
+      fixture: seq[string]
+      expected: seq[string]
+    for (module, is_kept_head, is_kept_helper) in modules:
+      for (mangled, is_kept) in [(heads_mangled[0], is_kept_head),
+          (heads_mangled[1], is_kept_head), (helper_mangled, is_kept_helper)]:
+        let name = mangled & "__" & module
+        fixture.add "static N_INLINE(void, " & name & ")" & parameters & "\n}"
+        if is_kept: expected.add name
+    let kept = keyedCatalogue(functionsIn(fixture.join("\n"))).mapIt(it[1].name)
+    check kept.sorted == expected.sorted
+
+  test "no helper of timed calls takes symbol of head, so filter keeps none at pin":
+    # Law: library at pin instantiates its own functions, so each function of `measurements`
+    #   here is helper of bench; one that shared head of measurand would join library's.
+    const count_timed_least = 1  # functions of timed calls law must read, so it is not vacuous
+    let heads = CATALOGUE.heads
+    var count_timed = 0
+    for f in INSPECTED:
+      if f.isTimed:
+        inc count_timed
+        checkpoint f.name
+        check f.symbol notin heads
+    check count_timed >= count_timed_least
 
   test "functions are split and counted from fixture C":
     const
