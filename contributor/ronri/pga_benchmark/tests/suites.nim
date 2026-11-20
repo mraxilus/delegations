@@ -111,8 +111,8 @@ proc emitTestsReference(measurands: seq[Measurand], section: string): NimNode {.
     let
       expression = parseExpr(p.expression)
       reference = parseExpr(p.reference)
-      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade))
-      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade))
+      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade, 0 in p.typed))
+      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade, 1 in p.typed))
       m_reference = parseExpr(namePoolReference(p.operands[0]))
       n_reference = parseExpr(namePoolReference(p.operands[1]))
       name = newLit(p.id & "  # " & p.cite)
@@ -181,8 +181,8 @@ macro checkTransformsAnyNorm(measurands: static seq[Measurand]): untyped =
     let
       expression = parseExpr(p.expression)
       reference = parseExpr(p.reference)
-      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade))
-      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade))
+      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade, 0 in p.typed))
+      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade, 1 in p.typed))
       m_reference = parseExpr(namePoolReference(p.operands[0]))
       n_reference = parseExpr(namePoolReference(p.operands[1]))
       name = newLit(p.id & " at motor scaled by 2  # " & p.cite)
@@ -238,8 +238,8 @@ macro checkFormsDense(measurands: static seq[Measurand]): untyped =
       dense =
         if p.arity == 2: newCall(ident(p.nameDense), m, n)
         else: newCall(ident(p.nameDense), m)
-      pool_m = parseExpr(namePoolLibrary(p.operands[0], p.grade))
-      pool_n = parseExpr(namePoolLibrary(p.operands[1], p.grade))
+      pool_m = parseExpr(namePoolLibrary(p.operands[0], p.grade, 0 in p.typed))
+      pool_n = parseExpr(namePoolLibrary(p.operands[1], p.grade, 1 in p.typed))
       name = newLit(p.id)
     result.add quote do:
       test `name`:
@@ -398,6 +398,29 @@ suiteInProc "Internal: Dense forms":
 
 
 suiteInProc "Internal: Measurements":
+  test "typed pool of motors holds antieven part of each widened motor, which holds nothing else":
+    # Law: library reads motor of transform at its own type where it can, so typed image must
+    #   lose no coefficient of widened one; motor is motion operator, antieven alone.
+    when declared(POOL_MOTOR_TYPED):
+      for i in 0..<OBJECTS:
+        for b in Basis:
+          if b in BASES_MOTOR: check POOL_MOTOR_TYPED[i][b] == POOL_MOTOR_WIDENED[i][b]
+          else: check POOL_MOTOR_WIDENED[i][b] == 0.0
+    else:
+      skip()  # algebra holds no typed motor
+
+  test "operand read at its type takes typed pool, and widened one else":
+    when declared(POOL_MOTOR_TYPED):
+      check static(namePoolLibrary(Kind.Motor, none(int), is_typed = true)) == "POOL_MOTOR_TYPED"
+      check static(namePoolLibrary(Kind.Motor, none(int))) == "POOL_MOTOR_WIDENED"
+    check static(namePoolLibrary(Kind.General, none(int), is_typed = true)) == "POOL_GENERAL"
+    for p in CATALOGUE:
+      checkpoint p.id
+      when declared(POOL_MOTOR_TYPED):  # motor of transform alone reads at its type
+        check p.typed.card == 0 or (p.typed == {1} and p.operands[1] == Kind.Motor)
+      else:
+        check p.typed.card == 0
+
   test "every pool starts on cache line":
     # Pool off line puts 128-byte multivector across three lines, not two, and typed object
     #   across lines in other patterns, so library and reference read different layouts.
@@ -414,6 +437,7 @@ suiteInProc "Internal: Measurements":
       heldToLine(POOL_POINT_WIDENED)
       heldToLine(POOL_LINE_WIDENED)
       heldToLine(POOL_MOTOR_WIDENED)
+      heldToLine(POOL_MOTOR_TYPED)
     when declared(POOL_PLANE):
       heldToLine(POOL_PLANE)
       heldToLine(POOL_PLANE_WIDENED)

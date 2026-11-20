@@ -37,9 +37,10 @@ const
     ## Key component read shares with its `var` twin; read is declared first.
 
 
-func stemLibrary(k: Kind): string =
-  ## Read C stem library takes for operand: `float` for scalar, dense multivector else.
-  if k == Kind.Scalar: "float" else: "Multivector"
+func stemLibrary(k: Kind, is_typed: bool): string =
+  ## Read C stem library takes for operand: `float` for scalar, unnamed instance where typed,
+  ##   dense multivector else.
+  if k == Kind.Scalar: "float" elif is_typed: "MultivectorOf" else: "Multivector"
 
 
 func stemReference(k: Kind): string =
@@ -54,7 +55,7 @@ func keyLibrary(p: Measurand): string =
   let head = p.headEmitted
   if head.len == 0: return ""
   var stems: seq[string]
-  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i], i in p.typed)
   head & "(" & stems.join(",") & ")"
 
 
@@ -77,7 +78,7 @@ func keyDense(p: Measurand): string =
   ## Get key of dense form of general measurand; empty on typed one, which has none.
   if p.reference.len > 0: return ""
   var stems: seq[string]
-  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i], is_typed = false)
   p.nameDense & "(" & stems.join(",") & ")"
 
 

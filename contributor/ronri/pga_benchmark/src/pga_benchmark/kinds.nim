@@ -42,6 +42,12 @@ else:
     General, Scalar
 
 
+func basesAntieven(): Bases {.compileTime.} =
+  ## Choose bases of even antigrade, which motion operator holds alone.
+  for b in Basis:
+    if int(b.gradeAnti) mod 2 == 0: result.incl b
+
+
 const
   OBJECTS* {.define: "pga_benchmark.objects".} = (when defined(testing): 64 else: 1024)
     ## Objects per sample pool; small under `-d:testing` so suites stay quick.
@@ -54,6 +60,8 @@ const
     (sizeof(MultivectorScalars) div sizeof(Coefficient), "MultivectorScalars"),
   ]
     ## Name library type of each element count, since C names every `MultivectorOf` alike.
+  BASES_MOTOR* = basesAntieven()
+    ## Bases of motor, its antieven part; transform reads motor at this type where library can.
 
 static:
   doAssert OBJECTS >= 2, "Pool should hold at least two objects; got `" & $OBJECTS & "`."

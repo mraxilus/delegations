@@ -36,6 +36,9 @@ type
       ## Kind of `m` and of `n`; second is `General` and unread for unary measurand.
     grade*: Option[int]
       ## Grade `General` operands are drawn at, where operation needs k-vector; none = mixed.
+    typed*: set[0..1]
+      ## Operands library reads at their own type, not widened; motor of transform alone, where
+      ##   library declares its typed form.
     reference*: string
       ## Reference expression over same names, e.g. `wedge(m, n)`; empty where none.
     cite*: string  ## Book equation, e.g. `2.17`, or `wiki:<Page>` where library suites cite none.
@@ -58,6 +61,8 @@ const
   ALIAS_NORM_BULK = when IS_RIGID: "normBulk" else: "normBulkRound"  ## Library's name for `|∙ m`.
   ALIAS_NORM_WEIGHT = when IS_RIGID: "normWeight" else: "normWeightRound"
     ## Library's name for `|∘ m`.
+  IS_TRANSFORM_TYPED = compiles(default(Multivector) ⟇⟇~∘ default(MultivectorOf[BASES_MOTOR]))
+    ## Library's transform takes motor at its own type, as P13 by type adds; motor then stays so.
   IS_TRANSFORM_DECLARED = declared(`⟇⟇~∘`)
     ## Library declares sandwich operator, as `transform-operator` adds; transforms then time it.
   SYMBOL_TRANSFORM = when IS_TRANSFORM_DECLARED: "⟇⟇~∘" else: ""  ## Library's transform symbol.
@@ -95,6 +100,7 @@ func addTyped(catalogue: var seq[Measurand], rows: openArray[RowTyped]) {.compil
       arity: (if row.operand_n == Kind.General: 1 else: 2),
       operands: [row.operand_m, row.operand_n],
       grade: none(int),
+      typed: (if IS_TRANSFORM_TYPED and row.expression == EXPRESSION_TRANSFORM: {1} else: {}),
       reference: row.reference,
       cite: row.cite,
     )
