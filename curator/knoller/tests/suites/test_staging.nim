@@ -158,6 +158,9 @@ suite "Compile-time family":
     check pair.families.mapIt(it[1]) ==
       @["b", "a", "b"].mapIt(MESSAGE_MEMBER & "`func " & it & "`.")
       # greatest set: pair calling each other stays in family, forward declaration among them
+    check module(STAGED & "func b(n: int): int\nfunc a(n: int): int =\n  b(n)\n" &
+      "func b(n: int): int =\n  a(n)\n").families.len == 3
+      # cost, probe of critic: pair with no use outside it reads as member too
 
 
   test "STYLE.md §2 operator reads as member by type of its parameter":
@@ -177,6 +180,10 @@ suite "Compile-time family":
     check given.fixedFamilies ==
       module(body.replace("{.borrow.}", "{.borrow, compileTime.}"))
     check module(body & "proc p() =\n  for o in O: echo o == O(1)\n").families.len == 0
+    let field = body & "type W = object  ## Hold order.\n  o: O\n" &
+      "proc p*(w: W) =\n  ## Print.\n  echo w.o == w.o\n"
+    check module(field).families.len == 1
+      # cost, probe of reviewer: runtime use through field names no `O`, so operator reads as member
 
 
   test "STYLE.md §2 family is module, staged where one member carries its own compileTime":
