@@ -44,11 +44,13 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   WordGlobal = "global word"  ## Global shares no word with type.
   HeadRepresentation = "representation head"
     ## Name holding value in another representation leads with that value.
+  CutName = "name cut"  ## Name opens with its head where words decide order of cut.
   SuffixRoutine = "routine suffix"
     ## Routine closes with `Of` only where its name spells generic type.
   SuffixGeneric = "generic suffix"
     ## Type closes with `Of` only where alias of its instance takes its bare name.
   NameCollection = "collection name"  ## Collection type takes plural of its member.
+  AliasLandmark = "landmark alias"  ## Landmark index stands as alias its type declares.
   ArticleInComment = "article in comment"  ## Comment drops its articles.
   FormComment = "comment form"
     ## Claim of comment opens with capital and closes with period; each name stands in backticks.
@@ -63,6 +65,8 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   NotOverBinary = "not over binary"  ## `not` over binary expression takes parentheses.
   ParenthesesNeedless = "needless parentheses"  ## Parentheses parser groups anyway go.
   SubjectTarget = "to<Target> subject first"  ## `to<Target>` call takes its subject first.
+  PrefixConversion = "conversion prefix"
+    ## Conversion of compound argument is prefix call, and constructor takes one call form.
   CallGeneration = "generation call"  ## Call of `define…` or `emit…` routine is prefix call.
   CommandDotted = "dotted command"  ## Dotted call statement of one call argument drops `(`.
   ReturnResult = "return result"  ## Routine never ends on `return result`.

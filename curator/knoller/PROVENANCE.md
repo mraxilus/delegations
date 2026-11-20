@@ -475,7 +475,8 @@ keeps its own.
 - The edits apply once, before the chain, on the source as given. They move no line, so the fence
   holds, and no edit lands on a fenced line.
 - A receiver that is a module the file imports, or a capitalised name, asks nothing. That keeps
-  the pass to the few files that hold a candidate.
+  the pass to the few files that hold a candidate. A global is the one capitalised name that
+  asks, and its check waits (`## Conversion prefix`).
 - `knoller --check` runs the pass on each file that holds a candidate, and reports each
   conversion as due (D1 a of #558). A file that holds none asks nothing, so a run on a clean tree
   compiles nothing more. At `da2edae` no file of the four projects held one.
@@ -790,6 +791,9 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
   with the suite of `060c3a76` against knoller at each commit. Each fails at `4245dca8`, before
   those rules. The cases of rules 2 and 6 alone fail at `3a6cf5e9`, and that of rule 6 alone at
   `d018a6c0`.
+- The cases of rules 8, 9 and 15 of #443 quote the library at `3d9696e`. Rules 9 and 15 read
+  the names of a package, so their cases run through `outcome`. Verified by hand with Nim 2.4.0,
+  2026-11-20: each fails with knoller at `d6bc8979`, before those rules.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
 - Each case asks the parser of the compiler that builds the suite, 2.4.0 in the job of knoller.
@@ -2352,6 +2356,53 @@ is a finding, and V.6 gives it the name `Meshes`.
   after it is a finding.
 - Verified by `suites/test_names.nim`, for each word for a form.
 
+**A name opens with its head where its words decide the order (V.2), by D1 a of #443.** V.2 cuts
+the qualifiers of a name from its end, and each shorter name still names the thing. Most orders
+need the meaning of the words, so reading holds them. Three shapes need no meaning, so the rule
+`name-cut` reads them (`cuts.nim`):
+
+- A property follows a value of one letter, as `m_norm_bulk` and `𝐦_grade` do. The property
+  leads, so the names become `norm_bulk_m` and `grade_𝐦`. The properties are `grade`, `norm`,
+  `centroid`, `parity` and `order` (`PROPERTIES`).
+- A word glued after `anti` is a word of the names of the package, as in `antibasis`. That word
+  leads, so the name becomes `basis_anti`, as V.2 spells `scalarAnti`.
+- An axis value opens the name, and a word that is no axis value follows it, as in `left_name`.
+  The axis values go last, so the name becomes `name_left`.
+
+**An axis value is a field of a wrapper that the package declares (V.7).** A wrapper is a generic
+object of one placeholder, whose name closes with `-al`, and whose every field takes that
+placeholder (`axesDeclared`). So `Chiral[T]` gives `left` and `right`. A name of axis values alone
+passes, since its first value names the thing, as `bulkFlat` does.
+
+- A word of a library that the package imports is no axis value, so the caller reads the modules
+  of the package alone (`## Names of a package`).
+- Rejected: the type word first, as in `FLOAT_WIDTH`, as a fourth shape. Its names are chosen on
+  purpose (D1 a of #443).
+- Rejected: an order that needs the meaning of its words, as `c_complement` and
+  `constructVectorParity` need. Reading holds it, as it holds the cut of `representation-head`.
+- Cost: the shapes read words, and never meaning. A word of one letter that names no value, or a
+  property word that names another noun, reads as a shape too.
+
+**The rename writes the new order at every use, through the semantic pass, as the case rename
+does (`## Semantic pass`).** `renamesCut` writes the words in the case of the kind of the name,
+and spells out each coined abbreviation (V.6). `composed` joins it with the case rename of the
+same declaration, so one new name settles both rules, under the rule of the case. A name in the
+notation of its source is renamed too, since no letter changes its case.
+
+- The rename is refused before the semantic pass where the case rename is refused, as for a name
+  that foreign code reads. It is refused for a constant that a define gives, since the fix never
+  renames a define (D1 a of #443).
+- The planner refuses the rest. `antiscalar` becomes `scalar_anti`, which Nim reads as the
+  template `scalarAnti`. So the finding stays for hand, and that binding needs a name for what it
+  holds.
+- Verified by `suites/test_cuts.nim`, and through the semantic pass by `suites/test_packages.nim`.
+- Verified by the run of `## Names of a package`: the check reports 20 names of the library, 12
+  properties, 4 glued `anti` and 4 axis values. The fix renames 17 of them over 24 lines, the
+  diff of the page of rule 8, line for line. Line 617 of `pga/cayleys.nim` takes the prefix call
+  of rule 15 too. The fix leaves the 3 `antiscalar` with a warning each.
+- In the projects of the repository at `ea44619d`, the check reports 1 name in `knoller`, 5 in
+  `pga_benchmark`, 1 in `pga_visualiser` and 1 in `dance_ontology`. Each is a glued `anti`.
+
 ## Idioms
 
 **Each idiom of STYLE.md and Article X.5 that one line shows is read on the code-only view.** So a
@@ -2585,6 +2636,135 @@ the same lines.
   of its `.nim` files. The projects take 18 reports of the family: `ricysoho` 14,
   `dance_ontology` 3 and `pga_benchmark` 1. They take 3 reports of the branch: `pga_benchmark` 2
   and `pga_visualiser` 1.
+
+## Names of a package
+
+**A rule of one file that needs the names of its package takes them from the caller
+(`NamesPackage`).** Rule 8 of #443 reads the axis values and the words of the names of the
+package. Rule 9 reads the aliases of the package and of its library, and rule 15 reads the calls
+of each constructor. Each rule reads one file, as each rule of knoller does. So the caller reads
+the package, as it reads the constants of the staging rules (`## Staging`).
+
+- `namesPackage` reads the names from the modules of the package, and the aliases from the modules
+  of its library too.
+- `checkFormatting`, `checkSource` and `checkFenceHeld` take the names (`names`). Empty names
+  report none, so a caller that passes none keeps these rules silent.
+- The command line reads the names from the modules of the run, by the nimble file of their
+  package (`namesByPackage`). The files with no nimble file above read as one package. So the
+  PGA library, which holds no nimble file, reads whole where the run names its root.
+- It reads the library of each package from each directory that the `nim.cfg` beside its nimble
+  file adds to the search path (`modulesLibrary`). A path that holds a variable, or names no
+  directory, reads none, as a library that no lock restored does.
+- It writes the alias of each landmark before the chain, beside the renames and the type
+  conversions. It plans each cut rename with the case rename of its declaration (`composed`).
+- Cost: `koch fix` passes no names yet, so it writes no name cut and no landmark alias, and
+  reports no constructor. To wire it, `curator/audit` reads `namesPackage` for each project,
+  passes it to each check, plans `renamesCut` through `composed`, and applies `editsLandmark`
+  before `formatted`. The fix of a compound `to<Target>` runs in the chain, and the conversion of
+  a global in the type conversion, so both reach `koch fix` already.
+- Cost: a run that names some files of a package reads the names of those files alone. Run
+  knoller on `.` at the root of a project to read them all.
+- Verified by `suites/test_packages.nim`, on modules of two packages in one run, and on a library
+  under `nim.cfg` in a fresh tree. It holds that the check of the chain and the warning of a
+  fence read the names, so what the fix leaves reports.
+
+**Verified by run, 2026-11-20, on the PGA library at `3d9696e`.** A copy of the library stood in
+the index of a fresh git repository, with no commit and no nimble file. `knoller --check .` and
+`knoller .` ran at its root with the code of `ea44619d` and Nim 2.4.0. A driver counted each check
+on the library as given. It counted each project of the repository at `ea44619d` too, from the
+`.nim` files that git lists there. The PGA projects took the copy of the library as their library.
+
+- A diff against the copy that knoller of `0cc02bf4` fixes holds the lines of rules 8, 9 and 15
+  alone. The type conversion of a global gives one line more, against knoller of `d018a6c0`.
+- On the fixed copy, these rules find nothing more to fix. They leave the 3 `antiscalar` and the
+  2 calls of `initElement` for hand, and `knoller --check` gives `0 to fix`.
+- The fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and 5
+  skipped, and cga3d gives 28 OK, 0 failed and 10 skipped.
+- The driver gives the same counts on the projects at `3a6cf5e9`. At `c8a7a413`, it gives the
+  counts of the page of #443 for rules 9 and 15. Rule 15 takes 42 reports there, and rule 9
+  takes 3. That tree holds the call that the page cites at line 810 of `test_camera.nim`, and
+  the trees above hold it at line 860.
+
+## Landmarks
+
+**A landmark index that a conversion writes bare becomes the alias of its type (V.8), by D1 a of
+#443.** `landmarks.nim` reads each alias: a template or a routine at module level whose one
+parameter is `typedesc[T]`, which returns `T`, and whose body is one expression. It reads the body
+for each type that `T` stands for. So `Grade(1)` becomes `Grade.vector`, and `GradeAnti(1)`
+becomes `GradeAnti.vectorAnti`.
+
+- The body takes its branch of `when` on the type, as `when G is GradeAnti`, and reads another
+  alias through, as `I.low`.
+- An index is a constant: a literal, a name, or arithmetic of them (`CHARS_INDEX`). So `sample`
+  of `pga_benchmark`, whose body converts `rand(-1.0..1.0)`, names no index.
+- An alias that branches on the configuration names no index, as `origin` does. An alias under
+  `when` exists in one configuration alone, as `infinity` does, so the fix never writes it.
+- The bare form is a conversion `T(…)` whose argument, spaces aside, is the index of an alias of
+  `T`. The body of the alias itself passes.
+- Where two aliases name one index, the fix writes `low` or `high`, so `Grade(0)` becomes
+  `Grade.low`. The Architect ruled so in D1 a of #443. The library at `3d9696e` names these two
+  indexes of `Grade` in 21 places, and 20 of them write `low` or `high`. V.8 cites `Grade.high`.
+  Any other choice stays for hand.
+- The edits apply before the chain, on the source as given, as the type conversions do. An edit on
+  a fenced line, or one that would widen a narrow line past `LINE_MAX`, stays for hand.
+- Rejected: `Basis.low` and `Basis.high` as indexes. Both are builtin, and `ord(Basis.high) + 1`
+  counts the bases in other projects.
+- Cost: where no alias names an index, as for `Basis.scalar.succ`, the rule is silent. A new
+  alias is a choice of design.
+- Cost: the fix reads no import. A module that sees the type and not its alias would fail to
+  build, and the build of the fixed tree reads it.
+- Verified by `suites/test_landmarks.nim` and `suites/test_regressions.nim`.
+- Verified by the run of `## Names of a package`: the aliases of the library name 9 indexes. The
+  check reports 7 bare indexes over 5 lines of `tests/suites.nim`. The fix writes each alias over
+  +5 −5 lines, the diff of the page of rule 9, line for line.
+- In the projects of the repository, the check reports 2 in `pga_benchmark` and 1 in
+  `pga_visualiser`. Verified by hand with knoller at `ea44619d`, 2026-11-20, on a copy of
+  `pga_visualiser`. Its library stood at the path that its `nim.cfg` names, and the fix wrote
+  `Grade.low` for `Grade(0)` at `objects.nim:139`.
+
+## Conversion prefix
+
+**A `to<Target>` call by dot on a compound argument becomes a prefix call (STYLE.md §5), by D1 a
+of #443.** A compound argument is a group in parentheses that holds an expression with an
+operator. The call takes the parentheses of the group, so `(not b.toFlags and mask).toBasis`
+becomes `toBasis(not b.toFlags and mask)` (`prefixes.nim`). A group of one plain operand, or of
+one literal, is no compound, and a tuple is no group.
+
+- The fixer runs in the chain before the needless parentheses, so `^((|𝐦).toMultivector)`
+  becomes `^toMultivector(|𝐦)` in one run.
+- It is the reverse of `to<Target>` subject first, which leaves a compound argument as a prefix
+  call. So neither fixer undoes the other.
+- A generic call and a call over lines report, and stay for hand.
+- Verified by `suites/test_prefixes.nim` and `suites/test_regressions.nim`.
+
+**A dotted type conversion of a global becomes `T(x)`.** A global is in `SCREAMING_SNAKE_CASE`
+(V.1), so it is a value, and never a type or a module. So a receiver that ends on a global of two
+characters or more stays a candidate of `type-conversion`, and the semantic pass settles it. One
+capital is a placeholder (V.12), and asks nothing.
+
+- `checkConversions` passes over the conversion of a global until the static pass reads the rule
+  (step 4 of #443). So `knoller` and `koch fix` write it, and `koch check` reports it in no
+  project. Cost: until then, the check and the fix disagree for a global.
+- Verified by `suites/test_conversions.nim`.
+
+**A constructor that the package calls both ways reports for hand.** A constructor is an `init…`
+routine that the package declares (V.3). A call takes the dot on a plain receiver, or a prefix
+call on a plain first argument (`constructors.nim`). The check reports each call of the form that
+fewer calls across the package take, or of both forms where they tie. No fix writes a form, since
+text cannot tell whether the first argument is the subject (D1 a of #443).
+
+- A prefix call whose first argument is compound takes neither form, since the dot cannot take it
+  without parentheses. A generic call takes neither form too.
+- Rejected: a reading of the call forms of every routine. It reports `len` and `add`, which a
+  package borrows or overloads (D1 a of #443).
+- Verified by `suites/test_constructors.nim`.
+- Verified by the run of `## Names of a package`: the library takes 5 reports. The fix writes the
+  2 compound arguments and the global of `pga/algebra.nim:88`, over +3 −3 lines. It leaves the 2
+  calls of `initElement` for hand, beside 4 dotted calls.
+- In the projects of the repository, the check of compound arguments and constructors reports 4 in
+  `knoller` and 2 in `audit`. It reports 18 in `pga_benchmark`, 23 in `pga_visualiser`, 12 in
+  `dance_ontology`, 6 in `rictadni` and 5 in `ricysoho`. The conversions of globals there are
+  unmeasured.
 
 ## Fixed waits
 

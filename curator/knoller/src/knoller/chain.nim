@@ -11,12 +11,13 @@
 ##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
 ##     none, so every later fixer reads body where it stands;
 ##   - content next (articles in comments, form and outline of each comment, backticks of IV.4
-##     messages, parentheses of X.4 conditions, `to<Target>` subject first, prefix call of
-##     `define…` and `emit…`, command form of dotted call statement, needless parentheses gone),
-##     since each changes width of its line; articles go before form, so claim whose article goes
-##     takes its capital after; prefix call goes before command form, which then reads no dotted
-##     call of either; parentheses go before spacing, which glues prefix operator they leave in
-##     same round;
+##     messages, parentheses of X.4 conditions, prefix call of `to<Target>` of compound argument,
+##     `to<Target>` subject first, prefix call of `define…` and `emit…`, command form of dotted
+##     call statement, needless parentheses gone), since each changes width of its line; articles
+##     go before form, so claim whose article goes takes its capital after; prefix call goes
+##     before command form, which then reads no dotted call of either; parentheses go before
+##     spacing, which glues prefix operator they leave in same round, and after prefix call of
+##     compound argument, so `^(toX(|m))` loses group that call takes in same round;
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent; compile-time family of module after them, whose pragmas widen or narrow
@@ -83,6 +84,10 @@
 ##   Caller says of each file whether it is drive code (`is_drive`), false by default. Folders of
 ##     drive code are habit of caller's repository, as its verbs are, so knoller holds none, and
 ##     command line says none, so it reads fixed waits nowhere.
+##   Caller names what names of package tell rules of one file (`names`, `packages.nim`): name
+##     cut, landmark alias and calls of constructor read them, and empty names report none.
+##     Their fixes stand outside chain: rename of name cut through semantic pass, and alias of
+##     landmark as edit before chain, as type conversion is.
 ##
 ##   Rejected: nimpretty, which sets one space before trailing comment where X.9 asks two,
 ##     and `;` between parameters where STYLE.md §5 asks `,`; fork of nimpretty's layouter,
@@ -97,9 +102,9 @@
 
 import std/[algorithm, options, sequtils, strutils]
 import ./[
-  articles, blanks, claims, commands, configurations, declarations, entry, fences, form,
-  generations, idioms, messages, names, outlines, parentheses, precedence, reports, skips, spacing,
-  stages, staging, targets, waits, wrapping,
+  articles, blanks, claims, commands, configurations, constructors, cuts, declarations, entry,
+  fences, form, generations, idioms, landmarks, messages, names, outlines, packages, parentheses,
+  precedence, prefixes, reports, skips, spacing, stages, staging, targets, waits, wrapping,
 ]
 
 
@@ -124,8 +129,8 @@ func steps(dialect: Dialect, should_drop_articles = true, has_format_value = fal
   result.add guarded(fixOutlines)
   if not has_format_value: result.add guarded(fixInterpolations)
   result.add @[
-    widening(fixMessages), widening(fixEchoes), widening(fixMixtures), guarded(fixTargets),
-    guarded(fixGenerations), guarded(fixCommands), proving(fixParentheses),
+    widening(fixMessages), widening(fixEchoes), widening(fixMixtures), guarded(fixPrefixes),
+    guarded(fixTargets), guarded(fixGenerations), guarded(fixCommands), proving(fixParentheses),
   ]
   result.add dialect.stepsIdiom
   if dialect == Dialect.Module: result.add @[widening(fixFamilies), reading(fixBranches)]
@@ -161,15 +166,17 @@ func checkFormattingUnfenced(
   should_drop_articles: bool;
   constants: seq[string];
   configurations: Configurations;
+  names: NamesPackage;
 ): seq[Report] =
   ## Run on view each check `checkFormatting` holds that dialect takes; fence is caller's.
   ##   Parentheses check reads answers of parser, so it names only groups they prove, checks of
-  ##   tests and profiler import read nimble file nearest file, and comment form reads capitals
-  ##   and periods only where comments drop articles.
+  ##   tests and profiler import read nimble file nearest file, comment form reads capitals and
+  ##   periods only where comments drop articles, and name cut, landmark alias and calls of
+  ##   constructor read names of package.
   let
     checks_before = [
       checkComments, checkBanners, checkOutlines, checkInterpolations, checkMessages, checkEchoes,
-      checkMixtures, checkNegations, checkTargets, checkCommands,
+      checkMixtures, checkNegations, checkPrefixes, checkTargets, checkCommands,
     ]
     checks_after = [
       checkDefinitions, checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures,
@@ -185,6 +192,8 @@ func checkFormattingUnfenced(
   result.add checkBlanks(path, view, nimble)
   for check in checks_after: result.add check(path, view)
   result.add checkParentheses(path, view, proofs)
+  result.add checkCuts(path, view, names.axes, names.words) &
+      checkLandmarks(path, view, names.landmarks) & checkConstructors(path, view, names.calls)
   if dialect == Dialect.Module:
     result.add checkBracketsImport(path, view) & checkLists(path, view) &
         checkProfiler(path, view, nimble) & checkFamilies(path, view) &
@@ -199,6 +208,7 @@ func checkFormatting*(
   should_drop_articles = true;
   constants: seq[string] = @[];
   configurations = Configurations();
+  names = NamesPackage();
 ): seq[Report] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
@@ -213,6 +223,8 @@ func checkFormatting*(
   ##   none, and fence fix cannot read is reported alone. Needless parentheses read `proofs`, so
   ##   no answer reports none; tests and profiler import read `nimble`; capitals and periods of
   ##   comment read where comments drop articles (`should_drop_articles`).
+  ##   In every dialect too, from names of package (`names`): V.2 name cut, V.8 landmark alias and
+  ##   STYLE.md §5 calls of constructor, beside its compound `to<Target>`, which reads file alone.
   let fence = source.fence
   if fence.fault >= 0: return checkFence(path, fence)
   let found = checkFormattingUnfenced(
@@ -224,6 +236,7 @@ func checkFormatting*(
     should_drop_articles,
     constants,
     configurations,
+    names,
   )
   found.filterIt(it.line - 1 notin fence.lines)
 
@@ -251,6 +264,7 @@ func checkSource*(
   is_drive = false;
   constants: seq[string] = @[];
   configurations = Configurations();
+  names = NamesPackage();
 ): seq[Report] =
   ## Report each rule knoller reads in source: those `checkFormatting` holds, off fenced lines,
   ##   and those static pass of `curator/audit` reads (`checkStatic`), on every line, so finding
@@ -258,7 +272,7 @@ func checkSource*(
   ##   Articles are read only where comments drop them (`should_drop_articles`), and tests from
   ##   nimble file nearest file (`nimble`); caller says whether file is drive code (`is_drive`).
   checkFormatting(
-    path, source, dialect, proofs, nimble, should_drop_articles, constants, configurations
+    path, source, dialect, proofs, nimble, should_drop_articles, constants, configurations, names
   ) & checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
 
 
@@ -413,6 +427,7 @@ func checkFenceHeld*(
   is_drive = false;
   constants: seq[string] = @[];
   configurations = Configurations();
+  names = NamesPackage();
 ): seq[Report] =
   ## Report each run of fenced lines, markers included, as one warning at its first line: each
   ##   rule broken inside it, in order of `Rule`, with count and first line, so whoever runs fix
@@ -422,12 +437,12 @@ func checkFenceHeld*(
   ##     number: each check `checkSource` holds, those static pass reads among them. Source with
   ##     no fence runs none. Needless parentheses count where `proofs` answer for source as given
   ##     (`questions`), articles where comments drop them (`should_drop_articles`), tests where
-  ##     nimble file nearest file puts them (`nimble`), and fixed waits where caller says file is
-  ##     drive code (`is_drive`).
+  ##     nimble file nearest file puts them (`nimble`), fixed waits where caller says file is
+  ##     drive code (`is_drive`), and rules reading names of package where caller names them.
   let fence = source.fence
   if fence.fault >= 0 or fence.lines.len == 0: return
   let found = checkFormattingUnfenced(
-    path, source, dialect, proofs, nimble, should_drop_articles, constants, configurations
+    path, source, dialect, proofs, nimble, should_drop_articles, constants, configurations, names
   ) & checkStatic(path, source, dialect, should_drop_articles, nimble, is_drive)
 
   # Count each rule broken inside each run, keep its first line, and name each in `Rule` order.
