@@ -174,9 +174,11 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `notation` | The notation of the source holds over case only for an immutable global. |
 | `global-word` | A global shares no word with a type. |
 | `representation-head` | A name holding a value in another representation leads with it. |
+| `name-cut` | A name opens with its head: a property before its value, an axis value last. |
 | `routine-suffix` | A routine closes with `Of` only where its name spells a generic type. |
 | `generic-suffix` | A type closes with `Of` only where an alias of it takes its bare name. |
 | `collection-name` | A collection type takes the plural of its member, not a word for its form. |
+| `landmark-alias` | A landmark index stands as the alias that its type declares, never bare. |
 | `article-in-comment` | A comment holds no article. |
 | `comment-form` | A claim takes a capital and a period. A path, literal or name takes backticks. |
 | `doc-outline` | A nuance stands two spaces past where the sentence of its parent starts. |
@@ -188,6 +190,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
 | `needless-parentheses` | Parentheses go where the parser of the compiler reads the same tree. |
 | `to-target-subject-first` | A `to<Target>` call takes its plain subject first. |
+| `conversion-prefix` | A conversion of a compound is a prefix call. A constructor takes one form. |
 | `generation-call` | A call of a `define…` or `emit…` routine is a prefix call. |
 | `dotted-command` | A dotted call statement of one call or group argument takes command form. |
 | `return-result` | A routine never ends on `return result`. |
