@@ -698,9 +698,9 @@ suiteInProc "Internal: Inspector":
     let kept = keyedCatalogue(functionsIn(fixture.join("\n"))).mapIt(it[1].name)
     check kept.sorted == expected.sorted
 
-  test "no helper of timed calls takes symbol of head, so filter keeps none at pin":
-    # Law: library at pin instantiates its own functions, so each function of `measurements`
-    #   here is helper of bench; one that shared head of measurand would join library's.
+  test "no helper of timed calls takes symbol of head, save generic at typed motor":
+    # Law: each function of `measurements` here is helper of bench, save instance of library's
+    #   generic that timed transform makes first at typed motor; helper sharing head would join it.
     const count_timed_least = 1  # functions of timed calls law must read, so it is not vacuous
     let heads = CATALOGUE.heads
     var count_timed = 0
@@ -708,8 +708,25 @@ suiteInProc "Internal: Inspector":
       if f.isTimed:
         inc count_timed
         checkpoint f.name
-        check f.symbol notin heads
+        check f.symbol notin heads or STEM_MOTOR in f.parameters
     check count_timed >= count_timed_least
+
+
+  test "transform reads its motor at its type exactly where library takes that type":
+    # Probe spelled here apart from catalogue's, so catalogue that types no motor fails.
+    const is_typed_library =
+      when IS_RIGID: compiles(default(Multivector) ⟇⟇~∘ default(MultivectorOf[BASES_MOTOR]))
+      else: false
+    var is_emitted = false  # instance at typed motor, which timed transform calls
+    for f in INSPECTED:
+      if f.symbol == "⟇⟇~∘" and STEM_MOTOR in f.parameters: is_emitted = true
+    check is_emitted == is_typed_library
+    for p in CATALOGUE:
+      checkpoint p.id
+      let
+        is_transform = p.id.startsWith("transform_")
+        expected: set[0..1] = (if is_typed_library and is_transform: {1} else: {})
+      check p.typed == expected
 
   test "functions are split and counted from fixture C":
     const
@@ -1139,7 +1156,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         if f.symbol != p.emitted: continue
         var arity = 0
         for stem in f.parameters:
-          if stem == "Multivector" or stem == "float": inc arity
+          if stem in ["Multivector", STEM_MOTOR, "float"]: inc arity
         if arity == int(p.arity): is_found = true
       check is_found  # every spelled operator is emitted at its arity
     when IS_RIGID and DIMENSIONS == 4:
