@@ -473,6 +473,13 @@ func branchesStatic(source: string; constants: openArray[string]): seq[Branch] =
         if e < last: continue
         let (f, l) = line.conditionAt(e + 4)
         if f < 0 or not line[f ..< l].isStaticCondition(names): is_static = false
+      if not is_statement:
+        # Expression continues on lines deeper than its own; each `elif` there joins chain.
+        for j in i + 1 .. code.lastBlock(i, i):
+          let s = code[j].strip
+          if s.identifierAt(0) != "elif": continue
+          let (f, l) = code[j].conditionAt(code[j].indentWidth + 4)
+          if f < 0 or not code[j][f ..< l].isStaticCondition(names): is_static = false
       if is_statement:
         is_declaring = code.isDeclaring(i, line[last + 1 .. ^1])
         let indent = line.indentWidth
