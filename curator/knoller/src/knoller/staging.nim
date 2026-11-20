@@ -42,6 +42,21 @@ const
   KEYWORDS_EXPANDED = ["iterator", "template"]
     ## Keywords of routine whose body runs where it is used, so mention there defines type.
   MODIFIERS_TYPE = ["var", "sink", "lent", "ptr", "ref"]  ## Words standing before type name.
+  WORDS_OPERATOR = [
+    "and", "div", "false", "in", "mod", "nil", "not", "notin", "of", "or", "shl", "shr", "true",
+    "xor",
+  ]
+    ## Words of condition that are operator or literal, which build fixes where operands are.
+  WORDS_TYPE = ["is", "isnot"]  ## Words whose right operand is type, which build fixes.
+  CALLS_BUILD = ["compileOption", "compiles", "declared", "defined", "sizeof"]
+    ## Calls build answers whatever their argument.
+  CALLS_VALUE = ["card", "high", "len", "low", "ord"]
+    ## Calls that stay static where their argument is: length, bounds, ordinal, cardinal.
+  KEYWORDS_DECLARING = [
+    "const", "converter", "func", "iterator", "let", "macro", "method", "proc", "template", "type",
+    "var",
+  ]
+    ## Keywords declaring name, which `when` lets reach block around branch.
 
 
 type
@@ -304,18 +319,220 @@ func fixFamilies*(path, source: string): Fix =
   fixFamilies(path, source, EVERY)
 
 
+func isStaticCondition(code: string, fixed: openArray[string]): bool =
+  ## Decide whether condition reads only what build fixes: literals, operators, names `fixed`
+  ##   holds, calls build answers, length, bounds, ordinal and cardinal of static value, and
+  ##   type after `is`.
+  var
+    k = 0
+    is_read = false
+  while k < code.len:
+    let c = code[k]
+    if c in {'0' .. '9'}:
+      while k < code.len and code[k] in CHARS_NAME + {'\''}: inc k
+      is_read = true
+      continue
+    if c == '.':
+      if k + 1 < code.len and code[k + 1] == '.':
+        k += 2
+        continue
+      let word = code.identifierAt(k + 1)
+      if word.len > 0 and word notin CALLS_VALUE: return false
+      k += 1 + word.len
+      continue
+    if c notin CHARS_NAME:
+      inc k
+      continue
+    let
+      word = code.identifierAt(k)
+      after = k + word.len
+    var next = after
+    while next < code.len and code[next] == ' ': inc next
+    is_read = true
+    if word in WORDS_TYPE:
+      # Type follows `is`, with its brackets: `T is seq[int]`.
+      let name = code.identifierAt(next)
+      k = next + name.len
+      if k < code.len and code[k] == '[' and code.closing(k) > k: k = code.closing(k) + 1
+      continue
+    if word in CALLS_BUILD:
+      if next >= code.len or code[next] != '(' or code.closing(next) < 0: return false
+      k = code.closing(next) + 1
+      continue
+    if word notin WORDS_OPERATOR and word notin fixed and
+        not (word in CALLS_VALUE and next < code.len and code[next] == '('):
+      return false
+    k = after
+  is_read
+
+
+func conditionAt(code: string, at: int): tuple[first, last: int] =
+  ## Find condition of `if` or `elif` whose keyword ends at index: from it to `:` closing it
+  ##   outside brackets, both exclusive; `(-1, -1)` where line holds no such `:`.
+  var depth = 0
+  for k in at ..< code.len:
+    let c = code[k]
+    if c in {'(', '[', '{'}: inc depth
+    elif c in {')', ']', '}'}:
+      dec depth
+      if depth < 0: return (-1, -1)
+    elif c == ':' and depth == 0: return (at, k)
+  (-1, -1)
+
+
+func wordsAt(code, word: string): seq[int] =
+  ## Find index of each `word` of code standing alone, so `elif` never reads as `if`.
+  var at = code.find(word)
+  while at >= 0:
+    let
+      before = at == 0 or code[at - 1] notin CHARS_NAME
+      after = at + word.len >= code.len or code[at + word.len] notin CHARS_NAME
+    if before and after: result.add at
+    at = code.find(word, at + word.len)
+
+
+func isDeclaring(lines: openArray[string], k: int, tail: string): bool =
+  ## Decide whether branch opening at zero-based line `k` declares name in its body, at its own
+  ##   level: text after its `:`, or lines below deeper than it.
+  if tail.strip.identifierAt(0) in KEYWORDS_DECLARING: return true
+  let indent = lines[k].indentWidth
+  var level = -1
+  for j in k + 1 ..< lines.len:
+    let s = lines[j].strip
+    if s.len == 0: continue
+    let width = lines[j].indentWidth
+    if width <= indent: break
+    if level < 0: level = width
+    if width == level and s.identifierAt(0) in KEYWORDS_DECLARING: return true
+  false
+
+
+type
+  Branch = object  ## Define `if` on what build fixes, as fix reads it.
+    line: int  ## One-based line of `if`.
+    at: int  ## Index of `if` in its line.
+    condition: string  ## Condition, as written.
+    is_declaring: bool  ## One branch declares name, which `when` would reach block around.
+
+
+func branchesStatic(source: string; constants: openArray[string]): seq[Branch] =
+  ## Read each `if` whose condition, and each `elif` of its chain, reads only what build fixes,
+  ##   outside value of `const`, macro, `static:` block and compile-time routine.
+  let
+    lines = source.split('\n')
+    code = source.codeOnly.split('\n')
+    heads = source.heads
+    (fixed, _, _) = code.regions
+    declared = source.declarations
+  var
+    passed = fixed
+    extents: seq[Extent]
+  for h in heads:
+    let extent = (h.line, code.lastBlock(h.line - 1, h.last - 1) + 1)
+    extents.add extent
+    if h.keyword == "macro" or h.is_compile_time: passed.add extent
+  var global = @constants
+  for d in declared:
+    if d.kind == KindName.Binding and d.is_constant and d.reach == Reach.Global: global.add d.name
+
+  for i, line in code:
+    let one = i + 1
+    if passed.isInside(one): continue
+    for at in line.wordsAt("if"):
+      let (first, last) = line.conditionAt(at + 2)
+      if first < 0: continue
+
+      # Names build fixes here: constants, local constants above, and static parameters and
+      #   placeholders of each routine around line.
+      var names = global
+      for k, h in heads:
+        if not extents[k].isHolding(one) or h.line == one: continue
+        names.add h.placeholders
+        for piece in h.parameters.split({',', ';'}):
+          let colon = piece.find(':')
+          if colon < 0: continue
+          let kind = piece[colon + 1 .. ^1].strip.identifierAt(0)
+          if kind in ["static", "typedesc", "type"]:
+            names.add piece[0 ..< colon].strip.identifierAt(0)
+        for d in declared:
+          if d.kind == KindName.Binding and d.is_constant and d.reach == Reach.Local and
+              d.line < one and extents[k].isHolding(d.line):
+            names.add d.name
+      # Group of parameters shares type of its last member: `a, b: static int`.
+      if not line[first ..< last].isStaticCondition(names): continue
+
+      # Chain: `elif` on same line after condition, or lines below at its indent.
+      var
+        is_static = true
+        is_declaring = false
+      let is_statement = line[0 ..< at].strip.len == 0
+      for e in line.wordsAt("elif"):
+        if e < last: continue
+        let (f, l) = line.conditionAt(e + 4)
+        if f < 0 or not line[f ..< l].isStaticCondition(names): is_static = false
+      if is_statement:
+        is_declaring = code.isDeclaring(i, line[last + 1 .. ^1])
+        let indent = line.indentWidth
+        for j in i + 1 ..< code.len:
+          let s = code[j].strip
+          if s.len == 0: continue
+          if code[j].indentWidth < indent: break
+          if code[j].indentWidth > indent: continue
+          let word = s.identifierAt(0)
+          if word notin ["elif", "else"]: break
+          let opening = code[j].indentWidth + word.len
+          let (f, l) = code[j].conditionAt(opening)
+          if word == "elif" and (f < 0 or not code[j][f ..< l].isStaticCondition(names)):
+            is_static = false
+          let colon = if word == "else": code[j].find(':') else: l
+          if colon >= 0 and code.isDeclaring(j, code[j][colon + 1 .. ^1]): is_declaring = true
+      if not is_static: continue
+      result.add Branch(
+        line: one,
+        at: at,
+        condition: lines[i][first ..< last].strip,
+        is_declaring: is_declaring,
+      )
+
+
 func checkBranches*(path, source: string; constants: seq[string] = @[]): seq[Report] =
   ## Report `if` whose condition reads only what build fixes, outside code compile time alone runs
   ##   (STYLE.md §3); `constants` names constants other modules of package export.
-  discard
+  for branch in source.branchesStatic(constants):
+    result.add initReport(
+      path,
+      branch.line,
+      Rule.StaticWhen,
+      "Branch on static distinction is `when`; got `if " & branch.condition & "`.",
+    )
 
 
 func fixBranches*(path, source: string; constants: seq[string]): Fix =
   ## Write `when` for each `if` check reports, where branch declares no name and line fits.
   result.source = source
+  var lines = source.split('\n')
+  let branches = source.branchesStatic(constants)
+  for k in countdown(branches.high, 0):
+    let branch = branches[k]
+    if branch.is_declaring: continue
+    let
+      line = lines[branch.line - 1]
+      written = line[0 ..< branch.at] & "when" & line[branch.at + 2 .. ^1]
+    if written.isWide and not line.isWide: continue
+    lines[branch.line - 1] = written
+    result.fixed.insert(initReport(path, branch.line, Rule.StaticWhen), 0)
+  result.source = lines.join("\n")
 
 
 func constantsExported*(source: string): seq[string] =
   ## Read name of each constant module exports at its level, which branch of other module of its
   ##   package reads as fixed by build.
-  discard
+  let code = source.codeOnly.split('\n')
+  for d in source.declarations:
+    if d.kind != KindName.Binding or not d.is_constant or d.reach != Reach.Global: continue
+    let line = code[d.line - 1]
+    for at in line.wordsAt(d.name):
+      let k = at + d.name.len
+      if k < line.len and line[k] == '*':
+        result.add d.name
+        break

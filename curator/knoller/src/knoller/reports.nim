@@ -93,6 +93,8 @@ type
 
   Placed* = proc (path, source, nimble: string): Fix {.nimcall, noSideEffect.}
     ## Define fixer whose rule reads where file lies in its package, from nimble file nearest it.
+  Reader* = proc (path, source: string; constants: seq[string]): Fix {.nimcall, noSideEffect.}
+    ## Define fixer whose rule reads names of constants other modules of its package export.
 
   KindStep* {.pure.} = enum
     ## Define how step reads lines held, answers of parser and nimble file nearest file.
@@ -100,6 +102,7 @@ type
     Widening  ## Widener, off held lines.
     Proving  ## Fixer writing what parser proves, guarded on every line.
     Placing  ## Fixer reading nimble file nearest file, guarded on every line.
+    Reading  ## Fixer reading constants other modules of package export, guarded on every line.
 
   Step* = object  ## Define one fixer of chain, of one kind.
     case kind*: KindStep
@@ -107,6 +110,7 @@ type
     of KindStep.Widening: widener*: Widener
     of KindStep.Proving: proven*: Proven
     of KindStep.Placing: placed*: Placed
+    of KindStep.Reading: reader*: Reader
 
   Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
     Module  ## `.nim`, which module's idiom checks and fixers read too.
@@ -189,14 +193,28 @@ func placing*(placed: Placed): Step =
   Step(kind: KindStep.Placing, placed: placed)
 
 
-func run*(step: Step; path, source: string; held: Held; proofs = Proofs(); nimble = ""): Fix =
+func reading*(reader: Reader): Step =
+  ## Construct step of fixer reading constants other modules of package export.
+  Step(kind: KindStep.Reading, reader: reader)
+
+
+func run*(
+  step: Step;
+  path, source: string;
+  held: Held;
+  proofs = Proofs();
+  nimble = "";
+  constants: seq[string] = @[];
+): Fix =
   ## Run step on source: widener reads held lines, prover step reads answers, placed fixer reads
-  ##   nimble file nearest file, guarded fixer reads none of them.
+  ##   nimble file nearest file, reading fixer reads constants of package, guarded fixer reads
+  ##   none of them.
   case step.kind
   of KindStep.Guarded: step.fixer(path, source)
   of KindStep.Widening: step.widener(path, source, held)
   of KindStep.Proving: step.proven(path, source, proofs)
   of KindStep.Placing: step.placed(path, source, nimble)
+  of KindStep.Reading: step.reader(path, source, constants)
 
 
 func isHeld*(held: Held, line: int): bool =

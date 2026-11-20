@@ -64,7 +64,7 @@
 import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
   chain, compilers, conversions, edits, fences, messages, names, parentheses, pins, proofs, reports,
-  rewrites, rules, symbols,
+  rewrites, rules, staging, symbols,
 ]
 
 
@@ -178,6 +178,7 @@ func part(
   plans: openArray[Plan];
   nimble: string;
   has_format_value: bool;
+  constants: seq[string];
 ): Part =
   ## Fix one file of Nim dialect, as `outcome` does: what file writes and reports, and what it
   ##   asks parser. Renames planned whole across files, and conversion semantic pass settles,
@@ -185,12 +186,15 @@ func part(
   ##   keeps each conversion, and rename refused warns where it is declared, each saying why.
   ##   Rules of tests, stubs and umbrella read nimble file nearest file, read whole as path is.
   ##   Interpolated strings join only where package declares no `formatValue` (`has_format_value`).
+  ##   Branch on what build fixes reads `constants` other modules of package export.
   let
     dialect = path.dialect.get
     layout = path.toAbsolute(directory)
     nimble_layout = if nimble.len == 0: "" else: nimble.toAbsolute(directory)
     fence = source.fence
-    held = checkFenceHeld(layout, source, dialect, proofs, nimble = nimble_layout)
+    held = checkFenceHeld(
+      layout, source, dialect, proofs, nimble = nimble_layout, constants = constants
+    )
   result.held = held.shownAs(path)
   if fence.lines.len > 0: result.asked.add source.questions(proofs)
   var
@@ -224,10 +228,18 @@ func part(
     base = source.applied(renamed & edits)
     rewritten.add reports.shownAs(path)
   let fix = formatted(
-    layout, base, dialect, proofs, nimble = nimble_layout, has_format_value = has_format_value
+    layout,
+    base,
+    dialect,
+    proofs,
+    nimble = nimble_layout,
+    has_format_value = has_format_value,
+    constants = constants,
   )
   result.asked.add fix.asked
-  var after = checkSource(layout, fix.source, dialect, proofs, nimble = nimble_layout)
+  var after = checkSource(
+    layout, fix.source, dialect, proofs, nimble = nimble_layout, constants = constants
+  )
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
   result.path = path
   result.unsettled = fix.unsettled
@@ -271,6 +283,16 @@ func nimblesFormatting(
     if path.dialect.isSome and source.isDeclaringFormatValue: result.add nimbles.getOrDefault(path)
 
 
+func constantsPackage(
+  files: openArray[(string, string)], nimbles: Table[string, string]
+): Table[string, seq[string]] =
+  ## Read constants each module of run exports, by nimble file of its package as `nimbles` holds
+  ##   it; empty name stands for files with no nimble file above.
+  for (path, source) in files:
+    if path.dialect == some(Dialect.Module):
+      result.mgetOrPut(nimbles.getOrDefault(path), @[]).add source.constantsExported
+
+
 func outcome*(
   files: openArray[(string, string)],
   locked: openArray[string],
@@ -291,7 +313,9 @@ func outcome*(
   ##   rename where its plan writes path (`planRenames`).
   ##   Rules of tests, stubs and umbrella read nimble file nearest each path, as `nimbles` holds
   ##   it by path as named (`nimblesNearest`); path it lacks has none above.
-  let formatting = files.nimblesFormatting(nimbles)
+  let
+    formatting = files.nimblesFormatting(nimbles)
+    constants = files.constantsPackage(nimbles)
   var parts: seq[Part]
   for (path, source) in files:
     if path.dialect.isNone or path in locked: continue
@@ -305,6 +329,7 @@ func outcome*(
       plans,
       nimbles.getOrDefault(path),
       nimbles.getOrDefault(path) in formatting,
+      constants.getOrDefault(nimbles.getOrDefault(path)),
     )
   parts.joined(is_check, [failure])
 
@@ -328,6 +353,7 @@ proc outcomeProven*(
   let
     read = files.filterIt(it[0].dialect.isSome and it[0] notin locked)
     formatting = files.nimblesFormatting(nimbles)
+    constants = files.constantsPackage(nimbles)
   var
     proofs = newSeq[Proofs](batches.len)
     failures = newSeq[string](batches.len)
@@ -351,6 +377,7 @@ proc outcomeProven*(
       plans,
       nimbles.getOrDefault(path),
       nimbles.getOrDefault(path) in formatting,
+      constants.getOrDefault(nimbles.getOrDefault(path)),
     )
 
   # Ask prover of each batch what its files asked, then fix again each file that asked.
@@ -378,6 +405,7 @@ proc outcomeProven*(
         plans,
         nimbles.getOrDefault(path),
         nimbles.getOrDefault(path) in formatting,
+        constants.getOrDefault(nimbles.getOrDefault(path)),
       )
   parts.joined(is_check, failures)
 
