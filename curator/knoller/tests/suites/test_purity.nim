@@ -215,6 +215,15 @@ suite "Style §1":
     check broken.sites.len == 0 and broken.reason.contains("type mismatch")
 
 
+  test "module JavaScript backend alone compiles proves its candidates there":
+    # Case: `design/rig_view.nim:72` of `dance_ontology`, which imports `std/jsffi`; C backend
+    #   refuses it, so it proved nothing, where semantic pass asks JavaScript backend too.
+    let source = "{.experimental: \"strictFuncs\".}\n\nimport std/jsffi\n\n" &
+      "proc f(x: int): int = x + 1\n\nlet o = newJsObject()\n"
+    check proven(source).sites == @[(5, 0)]
+    check proven(source & "proc g(p: ref int): int =\n  p[] = 1\n  2\n").sites == @[(5, 0)]
+
+
   test "included file checks inside text of file including it":
     let
       directory = createTempDir("knoller_", "_purity")
