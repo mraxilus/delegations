@@ -129,3 +129,9 @@ suite "Configurations":
       nimbles = {"pga/algebra.nim": "pga.nimble", "pga/cayleys.nim": "pga.nimble"}.toTable,
     )
     check outcome.lines.anyIt(it == "pga/cayleys.nim:3: configuration-block to fix")
+    let part = outcome(
+      [("pga/cayleys.nim", FORMAL)], [], is_check = true,
+      nimbles = {"pga/cayleys.nim": "pga.nimble"}.toTable,
+    )
+    check not part.lines.anyIt("configuration-block" in it)
+      # run on part of package reads defaults of its own files alone
