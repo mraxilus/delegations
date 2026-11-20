@@ -293,6 +293,7 @@ suite "Branch on what build fixes":
       ("declared(foo) and compiles(foo())", true),
       ("compileOption(\"profiler\")", true),
       ("sizeof(int) == 8", true),
+      ("X > 1.5 and Y < 0x1F and X != 2'u8", true),  # literals of float, hexadecimal and suffix
       ("L == 2", true),  # local constant reaches branch
       ("x == 1", false),  # runtime binding
       ("X == x", false),
