@@ -205,6 +205,7 @@ suite "Style §5":
         ("pga/operators.nim", "import ./[algebra {.all.}, cayleys]\n"),
         ("pga/rig.nim", "from ./algebra {.all.} import toFlags\n"),
         ("tests/suites.nim", "import ../pga/[algebra {.all.}]\n"),
+        ("pga/bench.nim", "import pga/[cayleys {.all.}]\n"),  # module of other package (Q3)
       ]
 
     func answered(site: (int, int); lines: seq[Symbol]): Answer =
@@ -228,7 +229,7 @@ suite "Style §5":
       answers = @[
         ("pga/cayleys.nim", answered(count, @[
           symbol("def", "algebra.countSetBits", "pga/algebra.nim", 1, 5),
-          symbol("use", "bitops.countSetBits", "pga/cayleys.nim", 9, 3),  # other symbol
+          symbol("use", "bitops.countSetBits", "pga/algebra.nim", 1, 33),  # borrowed, own line
           symbol("use", "algebra.countSetBits", "pga/cayleys.nim", 7, 3),
           symbol("use", "algebra.countSetBits", "tests/suites.nim", 5, 3),
         ])),
@@ -252,6 +253,7 @@ suite "Style §5":
     check not uses["pga/operators.nim"].imports[(1, 10)]  # reaches nothing
     check uses["pga/rig.nim"].imports[(1, 7)]  # names private `toFlags` in its text
     check uses["tests/suites.nim"].imports[(1, 15)]  # suite reaches, and makes no sibling (Q1)
+    check "pga/bench.nim" notin uses  # `pga/cayleys` names no file of package, so unread (Q3)
     let failed = usesPackage(files, @[("pga/cayleys.nim", Answer(path: "pga/algebra.nim",
       reason: "error"))], ROOT_FIXTURE)
     check failed["pga/cayleys.nim"].reason == "error" and
