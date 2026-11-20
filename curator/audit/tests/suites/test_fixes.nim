@@ -374,6 +374,23 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, [again[0]], context = initContext(again)).written.len == 0
 
 
+  test "fix reads defaults of configurations over modules of project (X.11)":
+    let
+      constants = "## Do.\n\n" & STRICT_FUNCS & "\n\nconst\n" &
+        "  IS_CONFORMAL* {.define: \"a.is_conformal\".} = false  ## Flat parts.\n" &
+        "  IS_RIGID* = not IS_CONFORMAL  ## Round parts alone.\n"
+      formal = "## Do.\n\n" & STRICT_FUNCS & "\n\ntype Formal*[T] = object  ## Hold parts.\n" &
+        "  when IS_CONFORMAL:\n    flat*, round*: T\n  else:\n    round*: T\n"
+      tree = @[
+        entry("curator/audit/src/a.nim", constants), entry("curator/audit/src/b.nim", formal)
+      ]
+      written = fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree)).written
+    check written.len == 1
+    check "when IS_RIGID:" in written[0].content and "when IS_CONFORMAL:" notin written[0].content
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree[1 .. 1])).written
+      .allIt("when IS_CONFORMAL:" in it.content)  # project holds no constant, so no order
+
+
   test "join of interpolated string stays split in project whose file declares `formatValue`":
     let
       path = "curator/audit/src/a.nim"

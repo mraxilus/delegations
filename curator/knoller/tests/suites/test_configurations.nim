@@ -67,6 +67,18 @@ suite "Configurations":
     check fixConfigurations("a.nim", "when not IS_FAST:\n  b()\nelse:\n  a()\n", own).fixed.len == 0
 
 
+  test "branch in branch of `when` reads order, and head with comment stays for hand":
+    check "when DIMENSIONS > 3:\n  when IS_CONFORMAL:\n    a()\n  else:\n    b()\n".found
+      .mapIt(it[0]) == @[2]  # `when` opens no scope
+    for left in [
+      "when IS_CONFORMAL:  # Flat parts.\n  a()\nelse:\n  b()\n",  # comment on head of branch
+      "when IS_CONFORMAL:\n  a()\nwhen IS_CONFORMAL:  # Carriers.\n  b()\n",  # on head it joins
+      "when IS_CONFORMAL:\n  a()\nwhen IS_CONFORMAL:\n    b()\n",  # body at other indent
+    ]:
+      check left.found.len == 1
+      check left.fixed == left  # fix writes no comment away, and moves no body to other indent
+
+
   test "branch whose default no define gives, or that holds no definition, passes":
     for kept in [
       "when defined(js):\n  a()\nelse:\n  b()\n",  # target sets symbol, so no define gives it
@@ -95,6 +107,10 @@ suite "Configurations":
       "when IS_RIGID:\n  a()\nelse:\n  b()\nwhen IS_RIGID:\n  c()\n",  # other branch, default first
       "when IS_RIGID:\n  a()\nwhen IS_CONFORMAL:\n  c()\n",  # family differing by configuration
       "when isMainModule:\n  a()\nwhen isMainModule:\n  c()\n",  # entry block, no configuration
+      "when compileOption(\"x\"):\n  a()\nwhen compileOption(\"x\"):\n  b()\n",  # option, none
+      "when IS_CONFORMAL:\n  a()\nwhen IS_RIGID:\n  b()\n",  # cost: order of two-way branch alone
+      "when IS_CONFORMAL:\n  let s = \"\"\"\nx\n\"\"\"\nwhen IS_CONFORMAL:\n  b()\n",
+        # cost: line of string at column 0 ends body
     ]:
       check kept.found.len == 0
       check kept.fixed == kept
