@@ -3156,6 +3156,8 @@ reason of each (`## Configuration blocks`, `## Staging` and `## Names of a packa
 - The queries of the semantic pass read the names of the tree alone, since a library adds no axis
   value and no word. So a cut rename asks the pass for each site, as a case rename does. It joins
   the case rename of its declaration into one rename, whose rule is that of the case.
+- A cut rename keeps each word that the glossaries list, as the case rename of the audit keeps it.
+  Knoller takes its jargon alone, so where a glossary lists a word, the two tools can differ.
 - Verified by `suites/test_fixes.nim`. A two-way `when` swaps, and a branch on a constant of
   another module becomes `when`. Each does so only where the tree holds the module of the constant.
 - Verified by `suites/test_fixes.nim`. A landmark index takes an alias of another module of its
@@ -3285,12 +3287,19 @@ traces back to the line as given (`originApplied`).
 
 - Each finding of these rules that no edit writes stays for hand, and prints as a finding left. So
   does each call of a constructor that the package calls both ways, since no fix writes a form.
+- An edit of a marker or a `func` answers one finding of its rule on its line. The indexes that the
+  alias edits leave are read again from the source that they wrote, which keeps its lines. So
+  knoller and the fix read what an alias edit leaves alike.
+- Cost: two markers or two `func` on one line match their edits by line and rule alone. So where
+  one of them stays, the finding left can name the other one. How often a line holds two is
+  unmeasured.
 - A fenced landmark index or constructor call counts in the warning of its fence, which reads the
   names. A fenced marker or `proc` prints as left, since the fence warning reads no uses and no
   pures.
 - A file whose uses or pures the compiler resolved none prints a warning with its reason.
 - Verified by `suites/test_fixes.nim`, with uses and pures written by hand, and with the names of
-  a tree.
+  a tree. It holds an index of several aliases before and after a written one, and the words that
+  a glossary lists.
 
 **Verified by run, 2026-11-20, over the nine projects, with the checkouts of each lock and the
 engine of `dance_ontology`.** `koch fix --dry-run --all --branch:main` reports each of the five
@@ -3308,22 +3317,24 @@ each report of the two outputs by rule, path and line.
 | 8 | `dance_ontology` | 0 | 1 |
 | 9 | `pga_benchmark` | 2 | 0 |
 | 9 | `pga_visualiser` | 1 | 0 |
-| 11 | `pga_visualiser` | 33 | 1 |
+| 11 | `pga_visualiser` | 33 | 1 warning |
 | 11 | `dance_ontology` | 13 | 0 |
 | 11 | `rictadni` | 3 | 0 |
-| 11 | `pga_benchmark` | 1 | 1 |
+| 11 | `pga_benchmark` | 1 | 1 warning |
 | 11 | `knoller` | 1 | 0 |
 | 15, constructor | `pga_visualiser` | 0 | 1 |
 
 - Each other project takes none of these rules. The compound argument of rule 15 gives the same
   counts as before the wiring.
 - Knoller prints a refused rename twice, as a warning and as a finding left, and `koch fix` prints
-  it once. So the table counts sites. A file that knoller proves nothing of prints one warning in
-  each tool.
+  it once. So the table counts sites. Each warning of rule 11 is of a whole file that the compiler
+  proves nothing of, and each tool prints it once.
 - Cost: the dry run over the repository took 330 s at `329659da`, before the wiring, and 875 s at
-  `cbf1e68b`, after it. Koch ran as `nim r` builds it, once at each commit, on this container with
-  four cores, which other delegates shared. The time added is the compiler, which each project
-  asks for uses and pures.
+  `cbf1e68b`, after it. Each figure is one run of the debug build that `nim r` makes, on 4 cores at
+  2.10 GHz. The load of the two runs differed, and no file records it.
+- Cost: a pair back to back on `curator/knoller`, 2026-11-20, gives 25.9 s before and 77.9 s after.
+  Each is one run, under a load of 1.0 to 1.9. The time added is unprofiled. The compiler calls
+  for uses and pures, and the queries of each cut rename, add to it.
 
 ## Parser proof
 
