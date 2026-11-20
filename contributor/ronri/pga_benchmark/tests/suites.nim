@@ -717,15 +717,13 @@ suiteInProc "Internal: Inspector":
     const is_typed_library =
       when IS_RIGID: compiles(default(Multivector) ⟇⟇~∘ default(MultivectorOf[BASES_MOTOR]))
       else: false
-    var
-      is_emitted = false  # instance at typed motor, which timed transform calls
-      keys: seq[string]
+    var is_emitted = false  # instance at typed motor, which timed transform calls
     for f in INSPECTED:
-      keys.add f.key
       if f.symbol == "⟇⟇~∘" and STEM_MOTOR in f.parameters: is_emitted = true
     check is_emitted == is_typed_library
+    let keys = keyedCatalogue(INSPECTED).mapIt(it[0])  # keys of document, as gap list joins them
     for p in CATALOGUE:
-      if 1 in p.typed: check p.keyLibrary in keys  # gap list joins measurand to its counts by key
+      if 1 in p.typed: check p.keyLibrary in keys
     for p in CATALOGUE:
       checkpoint p.id
       let
@@ -802,7 +800,7 @@ suiteInProc "Internal: Inspector":
     check "getMonoTime" in functions[0].body  # body runs to its closing brace
 
 
-  test "instance of `MultivectorOf` reads as library type of its count, aligned or not":
+  test "instance of `MultivectorOf` reads as first type of its count, aligned or not":
     # Case: at 3d9696e, field of P05 and of P04 opens with `NIM_ALIGN(64)`, and instance kept
     #   its C name, so evaluation of P05 listed each of 38 functions at rga4d as gone and new.
     for field in ["tyArray__a elements;", "NIM_ALIGN(64) tyArray__a elements;"]:
