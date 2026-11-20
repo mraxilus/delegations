@@ -86,7 +86,6 @@
 import std/[options, strutils, tables, unicode]
 
 import ../ricysoho/[grammar, merge, nif_read]
-from ../ricysoho/nif_read {.all.} import toCmavo
 
 
 type
@@ -481,16 +480,16 @@ func drawn*(nif, tail: string): DrawingLive =
       of KindPlace.Unread: result.count_unread += place.words
       of KindPlace.Error: inc result.count_errors
       of KindPlace.Rule: discard
-    let label = "le " & (k + 1).toCmavo & "moi pagbu" & (if is_open: " · ca'o kalri" else: "") &
+    let label = "le " & $(k + 1) & "moi pagbu" & (if is_open: " · ca'o kalri" else: "") &
         ": " & node.text.spoken
     result.html.add "<figure class=\"part" & (if is_open: " open" else: "") & "\">" &
         part.svg(label) & "</figure>"
   result.count_parts = parts.len
   result.count_open = opened.len
-  result.status = parts.len.toCmavo & " pagbu · " & result.count_words.toCmavo & " valsi · " &
-      result.count_errors.toCmavo & " srera · " & result.count_unread.toCmavo &
+  result.status = $parts.len & " pagbu · " & $result.count_words & " valsi · " &
+      $result.count_errors & " srera · " & $result.count_unread &
       " valsi poi na se tcidu" &
-      (if opened.len > 0: " · " & opened.len.toCmavo & " pagbu poi ca'o kalri" else: "")
+      (if opened.len > 0: " · " & $opened.len & " pagbu poi ca'o kalri" else: "")
 
 
 func drawnMerged*(nif: string): DrawingLive =
@@ -505,14 +504,14 @@ func drawnMerged*(nif: string): DrawingLive =
   if not merged.is_merged:
     result.is_refused = true
     result.status = "le nu jmina cu se to'e curmi"
-    if merged.part.isSome: result.status.add " · le " & (merged.part.get + 1).toCmavo & "moi pagbu"
+    if merged.part.isSome: result.status.add " · le " & $(merged.part.get + 1) & "moi pagbu"
     result.status.add " · " & merged.reason
     return
   result = drawn(merged.nif, "")
   if merged.is_whole:
-    result.status = "se jmina · pa tricu · " & result.count_words.toCmavo &
+    result.status = "se jmina · 1 tricu · " & $result.count_words &
         " valsi · simsa lo nu tcidu le mulselci'a pa roi"
     return
-  result.status = "se jmina · " & result.count_parts.toCmavo & " tricu · " &
-      result.count_words.toCmavo & " valsi · " & result.count_errors.toCmavo & " srera · " &
-      result.count_unread.toCmavo & " valsi poi na se tcidu"
+  result.status = "se jmina · " & $result.count_parts & " tricu · " &
+      $result.count_words & " valsi · " & $result.count_errors & " srera · " &
+      $result.count_unread & " valsi poi na se tcidu"
