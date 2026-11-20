@@ -65,6 +65,8 @@ suite "Skips":
       check kept.found.len == 0
     check ("  test \"a\":\n    # Small build cannot hold it.\n    if SMALL:\n      skip()\n" &
       "    else:\n      check b\n").found.len == 0  # reason right above branch that skips
+    check ("  test \"a\":\n    # Small build cannot hold it.\n    if SMALL:\n      skip()\n" &
+      "      check c\n").found.len == 1  # skip opening branch is not its whole body
     for bare in [
       "  test \"a\":\n    when IS_RIGID:\n      check b\n      # Rigid alone.\n" &
         "    when IS_CONFORMAL: skip()\n",  # comment at other indent
