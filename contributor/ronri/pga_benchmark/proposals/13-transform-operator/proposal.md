@@ -1,10 +1,10 @@
 # P13: One operator for the transform of a multivector, built from the types of its operands
 
-**What it is.** `m ⟇⟇~∘ n` transforms 𝐦 by the operator 𝐧, through the sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ as one
-operator. Its typed form builds
-the table of that sandwich from the types of both operands, when the code compiles. So each value
-of each type transforms exactly, and the result takes the bases that the table reaches. Two full
-multivectors take the three steps of pin. The alias `transform` of `pga.nim` reads the operator.
+**What it is.** `m ⟇⟇~∘ n` transforms 𝐦 by 𝐧 in one call: the sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰, which pin spells
+in three steps. Its typed form builds the table of that sandwich from the types of both operands,
+when the code compiles. So each value of each type transforms exactly, and the result takes the
+bases that the table reaches. Two full multivectors take the three steps of pin. The alias
+`transform` of `pga.nim` reads the operator.
 
 **What it is for.** At pin a transform spells three steps, two antiproducts and an antireverse,
 which is gap cause D08. With this proposal the transform by a motor type is one function. At
