@@ -754,8 +754,9 @@ the landmark aliases.
   So a caller such as `koch` can pass each configuration of the stubs, and read each `when` branch
   that one of them takes. The marker rule reads the answers that the caller passes, and its checks
   of hints and of `{.all.}` use no define.
-- The audit passes neither fact yet, so neither rule reaches the static pass of `koch check`. That
-  waits for step 4 of #443.
+- `koch fix` passes both facts, through `readFacts` of `curator/audit`, which calls these readers
+  (`## Facts of the compiler` of its record). Neither rule reaches the static pass of `koch check`,
+  which waits for step 4 of #443.
 - Verified by `suites/test_command.nim`, on a fresh repository through the real compiler, and by
   `suites/test_purity.nim` for the configurations.
 
@@ -2688,11 +2689,10 @@ the package, as it reads the constants of the staging rules (`## Staging`).
 - Cost: where the planner refuses a composed rename, its case part goes too (`composed` of
   `cuts.nim`). So a name that breaks both rules keeps the case of another kind, and its warning
   says why. Verified by `suites/test_packages.nim`.
-- Cost: `koch fix` passes no names yet, so it writes no name cut and no landmark alias, and
-  reports no constructor. To wire it, `curator/audit` reads `namesPackage` for each project,
-  passes it to each check, plans `renamesCut` through `composed`, and applies `editsLandmark`
-  before `formatted`. The fix of a compound `to<Target>` runs in the chain, and the conversion of
-  a global in the type conversion, so both reach `koch fix` already.
+- `koch fix` passes the names of each project too, through `namesPackage` (`## Content fixes` of
+  the record of `curator/audit`). So it writes the name cut and the landmark alias, and leaves each
+  constructor call for hand. The static pass of `koch check` reads none of these rules until step 4
+  of #443.
 - Cost: a run that names some files of a package reads the names of those files alone. Run
   knoller on `.` at the root of a project to read them all.
 - Verified by `suites/test_packages.nim`, on modules of two packages in one run, and on a library
