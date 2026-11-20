@@ -570,6 +570,44 @@ suite "Fixes":
     ) == @[module.path]  # no uses: spacing alone
 
 
+  test "`proc` compiler proves pure becomes `func`, through pures of context; fenced one stays":
+    # Case held: `koch fix` passed no pures, so it kept `proc pointCorners*()` at line 1390 of
+    #   `src/pga_visualiser/mesh.nim`, which compiler checks as `func` and knoller writes so (rule
+    #   11 of #443, STYLE.md §1). Domain: routine pures prove, fenced one, left for hand, file
+    #   compiler proved nothing of, which warns, and no pures.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      proven = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "proc twice*(x: int): int = x * 2\n  ## Double.\n\n" & FENCE_OFF &
+          "\nproc thrice*(x: int): int = x * 3\n  ## Triple.\n" & FENCE_ON & "\n",
+      )
+      unproven = entry(
+        DIRECTORY_AUDIT & "/src/b.nim", head & "proc half*(x: int): int = x div 2\n  ## Halve.\n"
+      )
+      tree = @[proven, unproven]
+    var pures = initTable[string, Pures]()
+    pures[proven.path] = Pures(sites: @[(5, 0), (9, 0)])
+    pures[unproven.path] =
+      Pures(reason: "source checks clean in no configuration: undeclared identifier: 'x'")
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree, pures = pures))
+    check plan.written.mapIt((it.path, it.content)) == @[
+      (proven.path, proven.content.replace("proc twice", "func twice")),
+    ]  # STYLE.md §1
+    check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
+      (proven.path, 5, "func pure (STYLE.md §1)"),
+    ]
+    check plan.left.mapIt((it.path, it.line, it.message)) == @[
+      (proven.path, 9, "Routine with no effect beyond its parameters is `func` (STYLE.md §1); " &
+        "got `proc thrice`."),
+    ]  # fence keeps `proc`, X.1
+    check plan.warned.filterIt(it.path == unproven.path).mapIt(it.message) == @[
+      "Compiler proved no routine pure, so each `proc` stays as written (STYLE.md §1); got " &
+        "`source checks clean in no configuration: undeclared identifier: 'x'`.",
+    ]
+    check fixEntries(BRANCH_CURATOR, tree, context = initContext(tree, tree)).written.len == 0
+
+
   test "abbreviation renames at every use across files, or is refused whole where fix reaches not":
     let
       head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
