@@ -391,6 +391,21 @@ suite "Fixes":
       .allIt("when IS_CONFORMAL:" in it.content)  # project holds no constant, so no order
 
 
+  test "fix reads constants other modules of project export (STYLE.md §3)":
+    let
+      constants = "## Do.\n\n" & STRICT_FUNCS & "\n\nconst COUNT* = 3  ## Parts.\n"
+      branch = "## Do.\n\n" & STRICT_FUNCS & "\n\nimport ./a\n\n\nproc p*() =\n  ## Print.\n" &
+        "  if COUNT > 2:\n    echo 1\n"
+      tree = @[
+        entry("curator/audit/src/a.nim", constants), entry("curator/audit/src/b.nim", branch)
+      ]
+      written = fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree)).written
+    check written.len == 1
+    check "  when COUNT > 2:" in written[0].content
+    check fixEntries(BRANCH_CURATOR, [tree[1]], context = initContext(tree[1 .. 1])).written
+      .allIt("  if COUNT > 2:" in it.content)  # project holds no constant, so branch is runtime
+
+
   test "join of interpolated string stays split in project whose file declares `formatValue`":
     let
       path = "curator/audit/src/a.nim"
