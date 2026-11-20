@@ -21,6 +21,8 @@ ni'o le genturfa'i cu tcidu ro lerfu pe `0` bi'o `9` ta'i le cmavo pe `PA` poi l
   .i se ki'u bo le genturfa'i cu tcidu lo'u li pa so bi ze le'u fi zoi gy. li 1987 .gy.
   .i `CLL 3.1` na liste le lerfu
   .i ku'i `Architect` cpedu lo nu le genturfa'i cu tcidu le lerfu
+  .i denpa bu poi zvati lo jbini be re lerfu cu se tcidu ta'i zo pi mu'u zoi gy. li 3.14 .gy.
+  .i slaka bu poi lidne ci lerfu po'o cu se tcidu ta'i zo ki'o mu'u zoi gy. li 1,000 .gy.
 
 ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o gi'e jarco lo du'u ma
     kau poi cmavo cu jorne ro taurpau
