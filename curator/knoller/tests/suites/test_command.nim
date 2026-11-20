@@ -8,7 +8,9 @@
 {.experimental: "strictFuncs".}
 
 import std/[importutils, options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/[command, compilers, edits, proofs, reports, rewrites, rules, symbols]
+import ../../src/knoller/[
+  command, compilers, edits, markers, proofs, purity, reports, rewrites, rules, symbols,
+]
 from ../../src/knoller/command {.all.} import
   joined, nimblesNearest, Part, resolveMarkers, resolvePures
 import ./stubs
@@ -490,6 +492,24 @@ suite "Command line":
       "0 to fix.",
     ]
     check unread.code == 0  # warning changes no exit code
+
+
+  test "pass of markers or of pure routines that resolves none warns, and changes no exit code":
+    # Case of review of record of rules 7 and 11: each warning of `part` stood with no test.
+    const source =
+      "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): int = x * 2\n  ## Double.\n"
+    let failed = outcome(
+      [("a.nim", source)],
+      [],
+      is_check = true,
+      uses = {"a.nim": Uses(reason: "no nimsuggest serves pin")}.toTable,
+      pures = {"a.nim": Pures(reason: "source checks clean in no configuration")}.toTable,
+    )
+    check "a.nim: marker-used warning: Semantic pass resolved no use, so each private symbol " &
+      "and `{.all.}` stays as written; got `no nimsuggest serves pin`." in failed.lines
+    check "a.nim: func-pure warning: Compiler proved no routine pure, so each `proc` stays as " &
+      "written; got `source checks clean in no configuration`." in failed.lines
+    check failed.code == 0
 
 
   test "file holding conversion candidate is resolved in its project, and none other is asked":
