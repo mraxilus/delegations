@@ -112,6 +112,10 @@ suite "Echoes":
       "let error = &\"Count {n}.\"\n",  # binding named as call
       "quit(1)\n",  # code, no message
       "doAssert x, message\n",  # message held by name, so no literal
+      "let r = Outcome(error: \"bad \" & $x)\n",  # field named as pragma, outside pragma
+      "foo(warning: \"bad \" & name)\n",  # argument named so
+      "try:\n  discard\nexcept OSError as error:\n  stderr.write error.msg & \"\\n\"\n",
+        # binding named so
     ]:
       check kept.isSettled
 
