@@ -9,7 +9,7 @@
 
 import std/[options, os, sequtils, strutils, tables, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[findings, fixes, form, kinds, symbols, tree]
+import ../../src/[findings, fixes, form, glossary, kinds, symbols, tree]
 import ./fixtures
 
 
@@ -853,6 +853,22 @@ suite "Fixes":
       (glued.path, 7, "name cut (V.2)"),
       (cased.path, 5, "name case (V.1)"),
     ]  # joined rename takes rule of case, as knoller names it
+
+
+  test "cut rename keeps word that glossary of project lists, as case rename of audit keeps it":
+    # Case of critic of wiring: no case held which words cut rename keeps, so cut taking jargon
+    #   alone passed suite; glossary of project lists `tmp`, which V.6 spells out elsewhere.
+    #   Domain: glossary of project, and none.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      words = entry(DIRECTORY_AUDIT & "/src/a.nim", head & "func scalar*(): int = 1\n  ## One.\n")
+      glued = entry(DIRECTORY_AUDIT & "/src/b.nim", head & "const ANTISCALAR_TMP* = 2  ## Two.\n")
+      glossary = entry(DIRECTORY_AUDIT & "/" & GLOSSARY_ROOT,
+        "# Glossary\n\n" & HEADING_STANDARDS & "\n\n- `tmp`: temporary.\n")
+    check queriesSemantic(@[words, glued, glossary], [glued]).mapIt(it.names) ==
+        @[@["SCALAR_ANTI_TMP"]]  # V.2, word glossary lists stays
+    check queriesSemantic(@[words, glued], [glued]).mapIt(it.names) ==
+        @[@["SCALAR_ANTI_TEMPORARY"]]  # V.2 and V.6 in one rename
 
 
   test "rename fix cannot prove stays for hand with its reason, and asks semantic pass nothing":
