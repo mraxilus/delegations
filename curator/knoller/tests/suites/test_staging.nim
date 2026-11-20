@@ -150,6 +150,14 @@ suite "Compile-time family":
         check source.fixedFamilies.contains("func c(): int {.compileTime.} =\n")
     let exported = module(STAGED & "func c*(): int =\n  1\nconst C = c()\n")
     check exported.families.len == 0  # other module may call it at runtime
+    let chained = module(STAGED & "func c(): int =\n  1\nfunc d(): int =\n  c()\nconst C = d()\n")
+    check chained.families.mapIt(it[1]) == @["c", "d"].mapIt(MESSAGE_MEMBER & "`func " & it & "`.")
+      # use inside other private member counts as use there
+    let pair = module(STAGED & "func b(n: int): int\nfunc a(n: int): int =\n  b(n)\n" &
+      "func b(n: int): int =\n  a(n)\nconst C = a(3)\n")
+    check pair.families.mapIt(it[1]) ==
+      @["b", "a", "b"].mapIt(MESSAGE_MEMBER & "`func " & it & "`.")
+      # greatest set: pair calling each other stays in family, forward declaration among them
 
 
   test "STYLE.md §2 operator reads as member by type of its parameter":
@@ -339,6 +347,7 @@ suite "Branch on what build fixes":
       ("proc p(n: static int) =\n  if n > 2:\n    echo 1\n", true),
       ("proc p(G: typedesc) =\n  if G is int:\n    echo 1\n", true),
       ("proc p[T](t: T) =\n  if T is SomeFloat:\n    echo 1\n", true),
+      ("proc p[T](t: T) =\n  if T isnot int:\n    echo 1\n", true),
       ("proc p(n: int) =\n  if n > 2:\n    echo 1\n", false),
     ]
     for (body, is_static) in cases:
