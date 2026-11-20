@@ -631,7 +631,8 @@ block, with no `*`. It is a routine, an operator among them, a type or a single 
   symbol of `M`.
 - A comment names a sibling where it holds the file name of each sibling that reaches the symbol,
   in any spelling, as `# Used in cayleys.nim.` does. The comment rule decides the backticks.
-- A file whose answer holds a reason resolves nothing, and prints one warning.
+- A file whose answer holds a reason resolves nothing, and prints one warning. Verified by
+  `suites/test_command.nim`, for the warning.
 
 **Own use also reads from the hints of the compiler, as Q2 reads it.** The caller checks each module
 that a file opens with `{.all.}`, with the hint `XDeclaredButNotUsed` on. Where the compiler gives
@@ -727,10 +728,11 @@ at its head, as `'reset' can have side effects` does where `reset` writes throug
   false `constant expression expected` in `pga/algebra.nim`, by hand with 2.4.0, 2026-11-20.
 - Cost: a file takes one check for the source as given, and one for each round of its candidates.
   One check of `pga/algebra.nim` adds 0.63 s, where no check runs without the rule. That is the
-  median of three runs of `nim check --hints:off -` on stdin, with 2.4.0 on 4 cores at 2.10 GHz,
-  2026-11-20.
+  median of three runs of the command of `checked`, with its flags, on stdin and a fresh cache. It
+  ran with 2.4.0 on 4 cores at 2.10 GHz, 2026-11-20.
 - Cost: a generic body checks where its own module instantiates it. So an instantiation in another
-  module that the compiler would refuse is unread.
+  module that the compiler would refuse is unread. A case holds it through a second module, whose
+  `$` calls `echo`.
 - Verified by `suites/test_purity.nim`, and by `suites/test_command.nim` for the warning.
 
 **The fix writes `func` for `proc`, which has the same width.** So no line moves and no line
@@ -754,7 +756,8 @@ the landmark aliases.
   of hints and of `{.all.}` use no define.
 - The audit passes neither fact yet, so neither rule reaches the static pass of `koch check`. That
   waits for step 4 of #443.
-- Verified by `suites/test_command.nim`, on a fresh repository through the real compiler.
+- Verified by `suites/test_command.nim`, on a fresh repository through the real compiler, and by
+  `suites/test_purity.nim` for the configurations.
 
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
 `knoller --check pga.nim pga tests`, built at `bca6a142`, reports `func-pure` at
@@ -788,8 +791,7 @@ checkouts of each lock and the engine of `dance_ontology`.
   nothing, since the run had no `dependencies/imgui`. Nor did
   `proposals/04-basis-set-forms/laws.nim` of `pga_benchmark`, which checks clean on no
   configuration.
-- Cost: in that run, `pga_visualiser` took 132 s for pure routines and 38 s for markers, on a
-  machine that the run did not name. Neither pass runs without its rule.
+- Cost: the time of each pass over the projects is unmeasured as a pair.
 
 ## Tests
 
@@ -2390,7 +2392,7 @@ of `representation-head`. Three shapes need no meaning, so the rule `name-cut` r
 - A word glued after `anti` is a word of the names of the package, as in `antibasis`. That word
   leads, so the name becomes `basis_anti`, as V.2 spells `scalarAnti`. The word holds three
   letters or more (`LENGTH_GLUED_MIN`), so a short word of the package, as a value of one letter,
-  never reads as glued.
+  never reads as glued. The floor of 3 over 2 is a choice.
 - An axis value opens the name, and a word that is no axis value follows it, as in `left_name`.
   The axis values go last, so the name becomes `name_left`.
 
@@ -2727,6 +2729,7 @@ becomes `GradeAnti.vectorAnti`.
 - The body takes its branch of `when` on the type, as `when G is GradeAnti`, and reads another
   alias through, as `I.low`. It reads through 8 aliases at most (`DEPTH_MAX`), so a cycle of
   aliases ends. The bound is a choice, and the depth that the library needs is unmeasured.
+  Verified by `suites/test_landmarks.nim`, through two aliases that name each other.
 - An index is a constant: a literal, a name, or arithmetic of them (`CHARS_INDEX`). So `sample`
   of `pga_benchmark`, whose body converts `rand(-1.0..1.0)`, names no index.
 - An alias that branches on the configuration names no index, as `origin` does. An alias under
@@ -2768,8 +2771,8 @@ one literal, is no compound, and a tuple is no group.
 - It is the reverse of `to<Target>` subject first, which leaves a compound argument as a prefix
   call. So neither fixer undoes the other.
 - The fixer takes 8 passes at most (`PASSES_MAX`). Each pass writes the calls whose spans hold no
-  other call, so the inner call goes first. The bound is a choice, and the depth of the nests in
-  the library is unmeasured.
+  other call, so the inner call goes first. So a nest of 9 leaves its outer call for the next run.
+  The bound is a choice, and the depth of the nests in the library is unmeasured.
 - A generic call and a call over lines report, and stay for hand.
 - Verified by `suites/test_prefixes.nim` and `suites/test_regressions.nim`.
 
