@@ -824,7 +824,7 @@ type
   Chart = object
     ## lo mulcmi pe pa pagbu ge'u .e lo selcu'a poi selfa'i ca lo nu cuxna le tricu
     ##   .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali kei .e lo nu le
-    ##       bavla'i genvla cu stali lo ka ce'u cmima `PA` to `fillSets` toi
+    ##       bavla'i genvla cu stali lo ka ce'u cmima `TERMINALS_JOINING` to `fillSets` toi
     terminals: seq[Terminal]  ## lo genvla poi le selcmi cu tcidu ke'a
     is_everywhere: bool  ## le tadji pe le romoi nu tisna to `fillSets` toi
     sets: seq[seq[Item]]  ## le selcmi pe `Earley`
@@ -842,7 +842,7 @@ type
   ChartsKept* = object
     ## lo mulcmi pe le romoi pagbu poi se tcidu
     ##   .i ro selcmi pe le mulcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali kei .e
-    ##       lo nu le bavla'i genvla cu stali lo ka ce'u cmima `PA`
+    ##       lo nu le bavla'i genvla cu stali lo ka ce'u cmima `TERMINALS_JOINING`
     ##   .i se ki'u bo lo tcidu be lo mivyselci'a cu tisna lo selcmi po'o pe lo valsi poi cnino
     ##   .i `ReaderLive` pe `live.nim` cu ralte ke'a gi'e benji ke'a fi `readTextParts` pe
     ##       `prose.nim`
