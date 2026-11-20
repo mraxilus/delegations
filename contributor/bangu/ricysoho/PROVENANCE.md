@@ -1662,11 +1662,11 @@ ni'o jdima fa lo nu lo gacri poi ro roi cuxna lo traji cu na du lo gacri poi tra
   .i se to'e cuxna fa lo nu le cipra cu tcidu le mulvei ca ro nu benji lo cenba
   .i le nu tcidu cu seldi'a lo temci poi jibni `38 s` ne'i lo selzba pe `debug`
 
-ni'o le mupli cu vasru 234 jufra noi jarco 599 tcila .e 86 lo 88 javni poi selcme ne'i
+ni'o le mupli cu vasru 236 jufra noi jarco 601 tcila .e 86 lo 88 javni poi selcme ne'i
     `CLL 21.1`
   .i no jufra pe le vreji cu jarco `rp-expression` .a `rp-operand`
   .i `suites/test_grammar.nim` cipra le re javni sepi'o `CLL 18.16`
-  .i de'i `2026-11-06` lo nu lanli poi na'e zmiku gi'e pilno le minde cu jarco di'u
+  .i de'i `2026-11-20` lo nu lanli poi na'e zmiku gi'e pilno le minde cu jarco di'u
 
 ni'o **le cipra cu cipra ro seljdi pe le mupli**
   .i lo jufra poi se tcidu cu bilga lo nu se tcidu
@@ -1680,7 +1680,7 @@ ni'o **le cipra cu cipra ro seljdi pe le mupli**
 
 ni'o **ro klesi be lo nu to'e curmi ne'i le mulvei cu na'e mapti su'o javni be fi `CLL 1.1`**
   .i le minde cu cusku le te kancu ne'i le vreji pe de'i `2026-10-31`
-  .i 16469 jufra cu se tcidu
+  .i 16493 jufra cu se tcidu
 
 ni'o pa klesi cu du lo nu to'e curmi kei jo'u lo javni poi le genturfa'i cu sisti ne'i ke'a
   .i ne'i le lijgri liste ro klesi cu kansa pa jufra pe le mupli ge'u .e lo javni be fi `CLL` be'o
@@ -1689,19 +1689,21 @@ ni'o pa klesi cu du lo nu to'e curmi kei jo'u lo javni poi le genturfa'i cu sist
 
 ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` sepi'o le jufra pe le
     klesi zi'e pe le mupli ge'u .e lo datyju'a pe le klesi
+  .i de'i `2026-11-20` lo nu lanli poi na'e zmiku cu tcidu le klesi po'u `Grammar number 812`
+  .i de'i `2026-11-20` le minde cu cusku ro te kancu pe le lijgri liste
 
 | Refusal | Count | Sentence | Rule broken |
 | --- | --- | --- | --- |
-| Selmaho | 485 | 2808680 | chapter 20 |
-| Stream Letter | 93 | 3843946 | 3.1 |
+| Selmaho | 488 | 2808680 | chapter 20 |
+| Stream Letter | 62 | 3843946 | 3.1 |
 | Grammar bridi-tail 50 | 48 | 2853152 | 152 |
 | Grammar sumti-6 97 | 47 | 2577894 | 97 |
 | Grammar selbri-4 134 | 36 | 2253980 | 134 |
 | Grammar terms-1 81 | 34 | 645284 | 97 |
-| Stream Stress | 29 | 5912012 | 3.9 |
+| Stream Stress | 30 | 5912012 | 3.9 |
 | Stream Shape | 28 | 4412245 | 4.1 |
 | Grammar tanru-unit-2 152 | 24 | 2864592 | 152 |
-| Stream Hyphen | 23 | 1484737 | 4.11 |
+| Stream Hyphen | 24 | 1484737 | 4.11 |
 | Grammar paragraphs 4 | 21 | 2793895 | 97 |
 | Grammar tail-terms 71 | 14 | 1576931 | 111 |
 | Grammar sumti-tail-1 112 | 13 | 5181396 | 152 |
@@ -1719,8 +1721,8 @@ ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` s
 | Grammar gihek 818 | 4 | 2108189 | 131 |
 | Grammar selbri-1 131 | 4 | 8738058 | 40 |
 | Grammar selbri-2 132 | 4 | 4167581 | 112 |
+| Grammar sumti 90 | 4 | 3083055 | 97 |
 | Stream Quotation | 4 | 3807297 | 19.10 |
-| Grammar sumti 90 | 3 | 3083055 | 97 |
 | Stream Slinkuhi | 3 | 2159050 | 4.7 |
 | Stream Split | 3 | 4285480 | 3.3 |
 | Grammar gek 807 | 2 | 3989793 | 97 |
@@ -1735,6 +1737,7 @@ ni'o de'i `2026-11-06` lo nu lanli poi na'e zmiku cu tcidu ro klesi ja'i `CLL` s
 | Grammar gek-sentence 54 | 1 | 645249 | 972 |
 | Grammar interval 932 | 1 | 2688629 | 161 |
 | Grammar linkargs 160 | 1 | 8721221 | 160 |
+| Grammar number 812 | 1 | 5181650 | 152 |
 | Grammar selbri-6 136 | 1 | 2024281 | 97 |
 | Grammar statement-1 12 | 1 | 2988210 | 152 |
 | Grammar tense-modal 815 | 1 | 10789002 | 152 |
