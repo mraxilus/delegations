@@ -3248,14 +3248,28 @@ ni'o **ro selci'a poi le papri cu ciska ke'a cu jboselci'a**
   .i lo barda lerfu cu sinxa lo nu basna to `CLL 3.9` toi
   .i se ki'u bo le papri na binxo lo selci'a lo barda lerfu
   .i lo cmene be lo javni pe `CLL 21.1` .e `NIF` cu stali ki'u lo nu ri cmene
-  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u ro selci'a pe le papri cu jboselci'a
-      kei ta'i lo nu le genturfa'i cu tcidu ro le selci'a
+  .i lo cmene po'u `byte` cu cmene pa klesi pe `Nim` gi'e stali ji'a
+  .i jdima fa lo nu pa glico valsi cu zvati lo jboselci'a
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u ro selci'a poi pagbu le papri gi'e na
+      zvati lo tanxe cu jboselci'a kei ta'i lo nu le genturfa'i cu tcidu ro le selci'a ca lo nu le
+      papri cu tcidu ro mupli gi'e jmina
   .i ro notci pe lo nu to'e curmi pe `nif_read.nim` cu jboselci'a ja'i `D1 a` pe `#987`
+      Verified by `suites/test_nif.nim`.
+  .i le notci cu cusku le stuzi pe le ralju bridi
       Verified by `suites/test_nif.nim`.
   .i ro notci pe lo nu to'e curmi pe `merge.nim` cu jboselci'a ji'a
       Verified by `suites/test_merge.nim`.
+  .i lo kunti cmene .e lo cmene poi pa samtci pagbu na ka'e vasru ke'a cu se skicu ta'i lo
+      jboselci'a
+      Verified by `suites/test_merge.nim`.
   .i le notci cu cusku le stuzi ta'i lo cmavo pe `PA` ki'u lo nu le papri cu jarco le notci ne'i pa
       linji
+  .i lo kutle'u cu se cusku ta'i zo kutle'u
+  .i lo lerfu po'u `backtick` .e lo me `byte` me'u poi na se viska cu se cusku ta'i lo namcu pe vo'a
+      Verified by `suites/test_nif.nim`.
+  .i se to'e cuxna fa lo nu ro me `byte` me'u poi zvati le stuzi cu se sitna ta'i pa samtci pagbu
+  .i ki'u bo lo lerfu po'u `backtick` .e lo lerfu poi na se viska cu katna le samtci pagbu
+  .i jdima fa lo nu le notci na cusku lo klesi be lo kutle'u poi zvati le stuzi
 
 ni'o **lo batke po'u `jmina` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
     ke'a**
