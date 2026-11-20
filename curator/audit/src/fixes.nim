@@ -77,6 +77,10 @@ type
       ## Defaults of configurations of each project, read from its modules, by nimble file.
     constants: Table[string, seq[string]]
       ## Constants modules of each project export, read as fixed by build, by nimble file.
+    names: Table[string, NamesPackage]
+      ## Names of each project, aliases of library it builds on among them, by nimble file.
+    uses: Table[string, Uses]  ## Use of each private symbol and `{.all.}` of each file, by path.
+    pures: Table[string, Pures]  ## Each `proc` compiler checks as `func` in each file, by path.
 
   Fixed* = tuple
     ## Define what fix of entries writes and reports, and what it asks parser.
@@ -238,17 +242,31 @@ proc checkConversions*(
         result.found.add checkConversions(e.path, e.content, answer).toFindings
 
 
+proc readFacts*(
+  root: string, entries: openArray[Entry], locked: openArray[string] = []
+): tuple[
+  uses: Table[string, Uses], pures: Table[string, Pures], libraries: Table[string, seq[string]]
+] =
+  ## Read what fixers of entries ask compiler and disk beyond semantic pass: none yet, since no
+  ##   fixer reads uses, pures or library (`initContext`).
+  discard
+
+
 func initContext*(
   tree: Tree,
   entries: openArray[Entry] = [],
   answers: openArray[Answer] = [],
   locked: openArray[string] = [],
+  uses = initTable[string, Uses](),
+  pures = initTable[string, Pures](),
+  libraries = initTable[string, seq[string]](),
 ): Context =
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
   ##   of each abbreviation and case in entries, refused where it would write file entries
   ##   leave out; and, by project, each file declaring `formatValue`, constants its modules export
   ##   and defaults of its configurations.
+  ##   Uses, pures and modules of library each project builds on (`readFacts`) read nothing yet.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.isExporting:
