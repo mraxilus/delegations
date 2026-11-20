@@ -227,15 +227,19 @@ image, so the two implementations read equivalent operands.
 `POOL_MOTOR_TYPED` holds the antieven part of each widened motor, at `MultivectorOf[BASES_MOTOR]`.
 Where the library's `⟇⟇~∘` takes that type, the catalogue marks the motor of each transform as
 typed. Its library side then reads that pool, and the inspector keys it by the stem
-`MultivectorOf`. At the pin no transform takes it, so no measurand reads a typed operand. A motor
-holds its antieven part alone, so the typed image loses no coefficient.
+`MultivectorMotor` (Inspector and movement). At the pin no transform takes it, so no measurand
+reads a typed operand. A motor holds its antieven part alone, so the typed image loses no
+coefficient.
 
-- Rejected: every typed operand at its type. The order of the work in #959 types the motor of a
-  transform alone, so each other measurand keeps the operands of the pin.
+Only the motor has a typed pool, so a typed name of any other kind stops the build.
+
+- Rejected: every typed operand at its type. P04 takes each type, so each evaluation that builds
+  on P04 would then time its forms in every measurand, beside the change that it weighs.
 
 Verified by `test_rga4d.nim` and the other stubs. Suite `Chapter 2` and the `Wiki` suites run
 through the widening, and suite `Internal: Measurements` runs every measurand over the pools. That
-suite also holds the typed pool to the widened one, and holds the name of each pool.
+suite also holds the typed pool to the widened one, and the name of each pool. It holds that a
+typed name of any other kind stops the build.
 
 ## Measurements
 
@@ -375,10 +379,16 @@ compiler puts in the name of a type, since that hash follows the path of its mod
 an enum reads as `set[Basis]`, and a key holds on every machine.
 
 The compiler gives every instance of `MultivectorOf` one name with a hash. So the inspector names
-each instance after the library type of its count, which it reads from the array of the field.
+each instance after the type of its count, which it reads from the array of the field.
 A field that carries an alignment opens with `NIM_ALIGN`, as the types of P04 and P05 do, and the
 inspector skips that word. So an aligned type keeps its key, and its evaluation lists no function
 twice.
+
+**A typed motor reads as half of every basis.** The motor holds the antieven half of the bases in
+each algebra. So its count names the stem `MultivectorMotor`, and movement sizes that stem as half
+of `Multivector`. A count names one stem, the first that holds it, as at rga2d, where the motor
+and the scalars hold two bases each. So each instance of the motor's count reads as motor. At
+rga3d `MultivectorEven` holds as many bases, and moves the same bytes.
 
 **The inspector keeps the functions of the library, of the reference and of the dense forms.** It
 knows each one by the module in its C name. The compiler names an instance of a generic after the
@@ -430,12 +440,14 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 - a demangling table with overload indices;
 - each kind of module, against a head of the catalogue and a helper of the bench, through
   `keyedCatalogue`, which the entry calls;
-- the law that no helper of the timed calls takes the symbol of a head, at the pin;
+- the law that no helper of the timed calls takes the symbol of a head, save the library's
+  generic at the typed motor;
+- each transform, which reads its motor at its type exactly where the library takes that type;
 - a fixture C source with known counts;
 - an instance named by its count, with an aligned field and without;
 - loops of literal, nested and variable bound;
 - divisions inside a loop and inside a callee, and callee folding;
-- movement from stems;
+- movement from stems, and the size of the typed motor;
 - the nimcache of the test binary itself, which holds every catalogued symbol at its arity.
 
 ## Baseline and guard
