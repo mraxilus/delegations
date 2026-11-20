@@ -44,6 +44,8 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
     ## Type closes with `Of` only where alias of its instance takes its bare name.
   NameCollection = "collection name"  ## Collection type takes plural of its member.
   ArticleInComment = "article in comment"  ## Comment drops its articles.
+  OutlineDoc = "doc outline"  ## Nuance stands two spaces past where parent's sentence starts.
+  SummaryDoc = "doc summary"  ## Doc holds one summary line, whose sentence ends in period.
   ValueMessage = "message value"  ## Message echoes its value in backticks.
   AndWithOr = "and with or"  ## Condition mixing `and` with `or` parenthesises each `and`.
   NotOverBinary = "not over binary"  ## `not` over binary expression takes parentheses.

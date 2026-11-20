@@ -177,6 +177,8 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `generic-suffix` | A type closes with `Of` only where an alias of it takes its bare name. |
 | `collection-name` | A collection type takes the plural of its member, not a word for its form. |
 | `article-in-comment` | A comment holds no article. |
+| `doc-outline` | A nuance stands two spaces past where the sentence of its parent starts. |
+| `doc-summary` | A doc holds one summary line, whose sentence ends in a period. |
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |

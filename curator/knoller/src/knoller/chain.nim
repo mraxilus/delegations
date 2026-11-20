@@ -10,12 +10,12 @@
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
 ##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
 ##     none, so every later fixer reads body where it stands;
-##   - content next (articles in comments, backticks of IV.4 messages, parentheses of X.4
-##     conditions, `to<Target>` subject first, prefix call of `define…` and `emit…`, command
-##     form of dotted call statement, needless parentheses gone), since each changes width of
-##     its line; prefix call goes before command form, which then reads no dotted call of
-##     either; parentheses go before spacing, which glues prefix operator they leave in same
-##     round;
+##   - content next (articles in comments, outline of each comment, backticks of IV.4 messages,
+##     parentheses of X.4 conditions, `to<Target>` subject first, prefix call of `define…` and
+##     `emit…`, command form of dotted call statement, needless parentheses gone), since each
+##     changes width of its line; prefix call goes before command form, which then reads no
+##     dotted call of either; parentheses go before spacing, which glues prefix operator they
+##     leave in same round;
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent;
@@ -94,7 +94,7 @@
 import std/[algorithm, options, sequtils, strutils]
 import ./[
   articles, blanks, commands, declarations, entry, fences, form, generations, idioms, messages,
-  names, parentheses, precedence, reports, spacing, stages, targets, waits, wrapping,
+  names, outlines, parentheses, precedence, reports, spacing, stages, targets, waits, wrapping,
 ]
 
 
@@ -114,6 +114,7 @@ func steps(dialect: Dialect, should_drop_articles = true): seq[Step] =
   result = @STEPS_FORM
   result.add guarded(fixBlockEntry)
   if should_drop_articles: result.add guarded(fixArticles)
+  result.add guarded(fixOutlines)
   result.add @[
     widening(fixMessages), widening(fixMixtures), guarded(fixTargets), guarded(fixGenerations),
     guarded(fixCommands), proving(fixParentheses),
@@ -147,8 +148,8 @@ func checkFormattingUnfenced(
   ##   of tests and profiler import read nimble file nearest file.
   let
     checks_before = [
-      checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkTargets,
-      checkCommands,
+      checkComments, checkBanners, checkOutlines, checkMessages, checkMixtures, checkNegations,
+      checkTargets, checkCommands,
     ]
     checks_after = [
       checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures, checkCalls,
