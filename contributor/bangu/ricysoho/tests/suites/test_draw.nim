@@ -216,6 +216,27 @@ suite "Internal: Drawing of live text":
     check drawing.count_errors == 1
     check "class=\"box err\"" in drawing.html
 
+
+  test "Error box shows its whole head, wherever in the text the grammar stops":
+    # lo catlu be le jboselci'a pe le papri cu facki le srera
+    #   .i le tanxe cu katna le krasi be le se ciska be ri
+    #   .i se ki'u bo le tanxe na jarco le stuzi
+    let texts = [
+      "cu",  # le gerna cu sisti bu'u li no
+      EXAMPLE_ERROR.text,  # le gerna cu sisti bu'u li paci
+      "mi klama le zarci .i ".repeat(60) & EXAMPLE_ERROR.text,  # bu'u lo namcu poi zmadu li pa ki'o
+    ]
+    for text in texts:
+      let drawing = drawn(readTextParts(text).reading.toNifParts, "")
+      var count = 0
+      for node in readTextParts(text).reading.toNifParts.readModule:
+        if node.kind != KindNif.Compound or node.text.startsWith("."): continue
+        for place in node.laidOut.places:
+          if place.kind != KindPlace.Error: continue
+          check (">" & place.lines[0] & "<") in drawing.html
+          inc count
+      check count >= 1
+
   test "Merge names one tree of one pass, else what trees hold, and refusal of NIF in red":
     let
       whole = drawnMerged(readTextParts("mi klama .i ko").reading.toNifParts)
