@@ -600,13 +600,13 @@ symbol carries `{.used.}` and a comment that names the sibling (Article I.6, STY
 §5).** An `{.all.}` that reaches no private symbol goes. The Architect ruled D1 a on rule 7 of
 issue #443 on 2026-11-18. The ruling gives three answers, and `markers.nim` holds each:
 
-- Q1 no: a suite that reaches an internal needs no marker, since a test reaches internals by
+- Q1 no. A suite that reaches an internal needs no marker, since a test reaches internals by
   design. So a sibling is a module of the package outside its `tests`.
-- Q2 yes: the marker stands only where its own module never uses the symbol. The library marks
+- Q2 yes. The marker stands only where its own module never uses the symbol. The library marks
   its symbols so, and the compiler confirms it. Each of the five marks of `pga/algebra.nim`
   silences a real hint that the symbol is not used.
-- Q3 no: an `{.all.}` import of a module outside the package is not read. Its markers belong to
-  its own package.
+- Q3 no. Knoller reads no `{.all.}` import of a module outside the package. Its markers belong to
+  its own package, as the page of #443 proposes.
 
 **The semantic pass lists each use of each private symbol, through the command `use` of
 `nimsuggest`.** A private symbol is a name that a module declares at top level, outside the entry
@@ -623,8 +623,8 @@ block, with no `*`. It is a routine, an operator among them, a type or a single 
   those of the definition at the site.
 - A use inside the name itself counts as none, since the template `[]` of `pga/algebra.nim`
   answers its own name as a use.
-- An implicit call counts: `for d in x` calls `items`, and `x[i]` calls `[]`. Verified by hand on
-  the library: `items` of `pga/algebra.nim` answers a use at `pga/cayleys.nim:372`.
+- An implicit call counts, as `for d in x` calls `items` and `x[i]` calls `[]`. Verified by hand
+  on the library, where `items` of `pga/algebra.nim` answers a use at `pga/cayleys.nim:372`.
 - `from M {.all.} import a, b` names its reach in its text, so it reaches where it names a private
   symbol of `M`.
 - A comment names a sibling where it holds the file name of each sibling that reaches the symbol,
@@ -632,8 +632,8 @@ block, with no `*`. It is a routine, an operator among them, a type or a single 
 - A file whose answer holds a reason resolves nothing, and prints one warning.
 
 **Own use also reads from the hints of the compiler, as Q2 reads it.** The caller checks each module
-that a file opens with `{.all.}`, with the hint `XDeclaredButNotUsed` on. An unmarked symbol that
-the compiler hints none of is used by its module. A marked symbol takes no hint, so its own use
+that a file opens with `{.all.}`, with the hint `XDeclaredButNotUsed` on. Where the compiler gives
+no hint on an unmarked symbol, its module uses it. A marked symbol takes no hint, so its own use
 reads from the semantic pass alone.
 
 - The case is `BANDS` of `design/rig.nim:77` of `dance_ontology`. `design/floors.nim` reaches it,
@@ -643,26 +643,26 @@ reads from the semantic pass alone.
 - Rejected: the hints alone. A marker silences the hint, so a marked symbol would read as used by
   nothing.
 - Cost: a module that checks clean on no backend gives no hints. Its uses read from the pass alone.
-- Cost: a line that declares several bindings is unread, and a forward declaration answers its
-  routine as a use. A use inside a template body of the module counts as a use of the module. The
-  compiler can count it only where the template expands. Each gives fewer reports, and never a
+- Cost: the pass reads no line that declares several bindings, and a forward declaration answers
+  its routine as a use. A use inside a template body of the module counts as a use of the module.
+  The compiler can count it only where the template expands. Each gives fewer reports, and never a
   false one.
 - Verified by `suites/test_markers.nim`, through answers by hand and through the real `nimsuggest`,
   and by `suites/test_command.nim`, through the case of `BANDS`.
 
-**An `{.all.}` that the pass finds reaching nothing must also check clean without it.** The caller
-checks the file without it, where the file checks clean with it, through `nim check` on stdin
-(`checked` of `symbols.nim`). Else the import reaches what the pass cannot read, as a symbol that
-a template declares, and it stays. A file that checks clean on no backend confirms nothing, and
-the reading of the pass stands.
+**An `{.all.}` that reaches nothing, as the pass finds, must also check clean without it.** The
+caller checks the file without it, where the file checks clean with it, through `nim check` on
+stdin (`checked` of `symbols.nim`). Else the import reaches what the pass cannot read, as a symbol
+that a template declares, and it stays. A file that checks clean on no backend confirms nothing,
+and the reading of the pass stands.
 
 - Verified by `suites/test_command.nim`, through an `{.all.}` that reaches a symbol that a
   template declares.
 
-**The fix puts `used` among the bare pragmas in dictionary order (X.10), else opens `{.used.}`.**
-The pragma opens after the name and its placeholders, and for a routine after its parameters and
-return type. The comment `# Used in `x.nim`.` trails the line that holds the pragma, and names each
-sibling.
+**The fix puts `used` among the bare pragmas of a block in dictionary order (X.10), or opens
+`{.used.}` where the declaration holds no block.** The pragma opens after the name and its
+placeholders, and for a routine after its parameters and return type. The comment
+``# Used in `x.nim`.`` trails the line that holds the pragma, and names each sibling.
 
 - A doc cannot share its line with a plain comment. So a trailing doc moves to the next line, one
   level in, as the ruling accepts. That edit inserts a line before the chain runs, so the caller
@@ -685,9 +685,10 @@ candidate, since it cannot prove a routine pure, and the compiler checks it (`pu
   outside code that `quote` or `genAst` emits, a template substitutes, or `compiles` tests.
 - Its body names no effect of `EFFECTS`. Those are output, input, files, the clock, random numbers,
   the environment, a process and an address, and a lock, a wait and a signal.
-- The ruling counts a lock, a wait and a signal as effects, since another thread sees each one.
+- STYLE.md §1 counts a lock, a wait and a signal as effects, since another thread sees each one.
   The compiler checks each routine of the store of `simulation/walk.nim` of `dance_ontology` as a
-  `func`. But the answer of `claimed` depends on the order of the threads.
+  `func`. But the answer of `claimed` depends on the order of the threads. So it is no
+  deterministic transformation of its arguments, as the ruling says.
 - Its body reads no global `var` of the project. It calls no routine that the project declares
   nowhere and `TRANSFORMS` does not hold, so a call that syntax cannot read never counts as pure.
 - A call is a name glued before `(` or `[…](`, a name glued after `.`, or a name that opens a
@@ -704,30 +705,31 @@ candidate, since it cannot prove a routine pure, and the compiler checks it (`pu
   `mergeAllocations` of `pga_benchmark`, which changes the node that its caller passes.
 - Cost: a default argument is no part of the body. So `initToolchains` of knoller reads as pure,
   though its default reads the environment.
-- Verified by `suites/test_purity.nim`. Verified by a probe with Nim 2.4.0, 2026-11-20: a `func`
-  that changes a node of its parameter through `[]=` of `std/json` compiles under `strictFuncs`.
+- Verified by `suites/test_purity.nim`, with a case for each cost that adds a false report.
 
 **The compiler checks the source with each candidate written `func`, read from stdin in the
 directory of the file (`checked` of `symbols.nim`).** So its imports and its `nim.cfg` resolve as
 for the file itself, and nothing is written in the tree. The error of a refused candidate stands
-at its head, as `'generateUpTo' can have side effects` does.
+at its head, as `'reset' can have side effects` does where `reset` writes through a `ref`.
 
 - A configuration whose source as given does not check clean proves nothing. A file that no
   configuration proves keeps each `proc`, with its reason, and prints one warning.
 - Where C refuses the source as given, the check asks the JavaScript backend, as the semantic pass
   does. So `design/rig_view.nim` of `dance_ontology`, which imports `std/jsffi`, proves its
   routines.
-- All candidates of a file are checked at once. An error inside a routine refuses it, and an error
-  outside every candidate asks each candidate alone. A candidate stays where any configuration
-  refuses it.
+- The compiler checks all candidates of a file at once. An error inside a routine refuses it, and
+  an error outside every candidate asks each candidate alone. A candidate stays where any
+  configuration refuses it.
 - An included file checks inside the text of the file that includes it (`enclosing`).
-- Rejected: `chkFile` of `nimsuggest` with a dirty file. Its recompile of `pga/algebra.nim` under
-  `-d:pga.dimensions=3` reports `constant expression expected` at line 237, where a full compile
-  reports none. From the stub it exits 1. Verified by hand with 2.4.0, 2026-11-20.
-- Cost: one check of `pga/algebra.nim` takes 0.6 s, measured with 2.4.0, 2026-11-20. A file takes
-  one check for the source as given, and one for each round of its candidates.
+- Rejected: `chkFile` of `nimsuggest` with a dirty file. Under `-d:pga.dimensions=3`, it reports a
+  false `constant expression expected` in `pga/algebra.nim`, by hand with 2.4.0, 2026-11-20.
+- Cost: a file takes one check for the source as given, and one for each round of its candidates.
+  One check of `pga/algebra.nim` adds 0.63 s, where no check runs without the rule. That is the
+  median of three runs of `nim check --hints:off -` on stdin, with 2.4.0 on 4 cores at 2.10 GHz,
+  2026-11-20.
 - Cost: a generic body checks where its own module instantiates it. So an instantiation in another
   module that the compiler would refuse is unread.
+- Verified by `suites/test_purity.nim`, and by `suites/test_command.nim` for the warning.
 
 **The fix writes `func` for `proc`, which has the same width.** So no line moves and no line
 widens. A fenced line keeps its `proc`, and so does a span that another fixer writes. The check
@@ -738,14 +740,16 @@ and the fix read the same sites, which the caller passes (`Pures`).
 **The caller passes the facts of both rules, as the type conversion takes its answer.** A rule
 reads one file, as each rule of knoller does. So the caller asks the semantic pass and the compiler
 across the project. It passes `Uses` and `Pures` to the check and the fix of each file. The edits
-apply before the chain, on the source as given, beside those of the conversion and the renames.
+apply before the chain, on the source as given, beside those of the conversion, the renames and
+the landmark aliases.
 
 - The command line asks for each module that a file names (`resolveMarkers`, `resolvePures`). It
   reads every Nim file that git lists in the project of the file.
 - The command line names no define for either pass, as D2 a of #886 rules. So each file compiles
-  as its project alone compiles it. Both rules read each configuration that the caller names. So
-  a caller such as `koch` can pass each configuration of the stubs, and read each `when` branch
-  that one of them takes.
+  as its project alone compiles it. The pure rule reads each configuration that the caller names.
+  So a caller such as `koch` can pass each configuration of the stubs, and read each `when` branch
+  that one of them takes. The marker rule reads the answers that the caller passes, and its checks
+  of hints and of `{.all.}` use no define.
 - The audit passes neither fact yet, so neither rule reaches the static pass of `koch check`. That
   waits for step 4 of #443.
 - Verified by `suites/test_command.nim`, on a fresh repository through the real compiler.
@@ -753,8 +757,8 @@ apply before the chain, on the source as given, beside those of the conversion a
 **Verified by run, 2026-11-20, on the PGA library at `3d9696e`, with a nimble file at its root.**
 `knoller --check pga.nim pga tests`, built at `bca6a142`, reports `func-pure` at
 `pga/algebra.nim:172`. It reports `marker-used` at `pga/operators.nim:10` and `tests/suites.nim:11`.
-It took 18 s with every rule of knoller. A driver then ran the resolvers of the command line and
-the fix of one rule alone, on a copy of the library.
+The counts below come from a driver outside the tree. It calls the resolvers of the command line,
+then the fix of one rule alone, on a copy of the library.
 
 - Sibling markers: 2 reports, and the fix writes +2 −2 lines. Each drops an `{.all.}` that reaches
   no private symbol, as the ruling counts.
@@ -763,22 +767,27 @@ the fix of one rule alone, on a copy of the library.
 - Each fixed copy builds with Nim 2.4.0 and passes its suites. rga3d gives 33 OK, 0 failed and 5
   skipped, and cga3d gives 28 OK, 0 failed and 10 skipped. For pure routines, rga5d gives 33 OK, 0
   failed and 5 skipped, and the loop of `generateUpTo` runs there.
+- Cost: `knoller --check pga.nim pga tests` takes 1.6 s at `7fea1e2d`, without both rules, and
+  17.8 s at `e6c931b1`, with them. It ran on 4 cores at 2.10 GHz, under a load near 2 from other
+  work. Each figure is the median of three runs, each with an empty cache of Nim, 2026-11-20. The
+  output differs by the 3 reports alone.
 
-**Verified by run, 2026-11-20, over the nine projects of the repository, with the code of knoller
-at `bca6a142`.** The driver read each project as one package, by `git ls-files`, with the
+**Verified by run, 2026-11-20, over the projects of the repository at `16a573cc`, with the code of
+knoller at `bca6a142`.** The driver read each project as one package, by `git ls-files`, with the
 checkouts of each lock and the engine of `dance_ontology`.
 
 - Sibling markers: 1 report, the `{.all.}` of `tests/suites/test_marker.nim:9` of
   `pga_visualiser`, as the ruling counts.
 - Pure routines: 51 reports. `pga_visualiser` takes 33, `dance_ontology` 13, `rictadni` 3,
-  `pga_benchmark` 1 and `knoller` 1. The ruling counts 22, as 16 and 6. The page names no list of
-  pure routines of the standard library, so `TRANSFORMS` is the list of this rule. The cause of
-  the difference is unmeasured.
+  `pga_benchmark` 1 and `knoller` 1. The ruling counts 22, as 16 and 6. The page names a short
+  list of pure routines of the standard library, and does not give it. So `TRANSFORMS` is the list
+  of this rule. The cause of the difference is unmeasured (`## Open questions`).
 - The count of pure routines is a floor. `src/desktop/main.nim` of `pga_visualiser` proved
-  nothing, since the clone of the run lacked one of its dependencies. So did
+  nothing, since the run had no `dependencies/imgui`. Nor did
   `proposals/04-basis-set-forms/laws.nim` of `pga_benchmark`, which checks clean on no
   configuration.
-- Cost, measured in that run: `pga_visualiser` took 132 s for pure routines and 38 s for markers.
+- Cost: in that run, `pga_visualiser` took 132 s for pure routines and 38 s for markers, on a
+  machine that the run did not name. Neither pass runs without its rule.
 
 ## Tests
 
@@ -2825,6 +2834,8 @@ there is unverified.
 
 ## Open questions
 
+- Why does rule 11 report 51 routines where the ruling counts 22? `pga_visualiser` takes 33
+  against 16, and `dance_ontology` 13 against 6.
 - Does a documented declarative call after a routine take one, as Q3 gives a documented
   one-line definition, or up to two, as a call does? Knoller gives it up to two now.
 - Do two blocks of complementary configurations side by side, with the default last, report, and
