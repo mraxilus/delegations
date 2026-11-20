@@ -61,8 +61,11 @@ const
   ALIAS_NORM_BULK = when IS_RIGID: "normBulk" else: "normBulkRound"  ## Library's name for `|∙ m`.
   ALIAS_NORM_WEIGHT = when IS_RIGID: "normWeight" else: "normWeightRound"
     ## Library's name for `|∘ m`.
-  IS_TRANSFORM_TYPED = compiles(default(Multivector) ⟇⟇~∘ default(MultivectorOf[BASES_MOTOR]))
+  IS_TRANSFORM_TYPED =
+    when IS_RIGID: compiles(default(Multivector) ⟇⟇~∘ default(MultivectorOf[BASES_MOTOR]))
+    else: false
     ## Library's transform takes motor at its own type, as P13 by type adds; motor then stays so.
+    ##   Probed under rigid metric alone, which alone holds transforms, since probe builds table.
   IS_TRANSFORM_DECLARED = declared(`⟇⟇~∘`)
     ## Library declares sandwich operator, as `transform-operator` adds; transforms then time it.
   SYMBOL_TRANSFORM = when IS_TRANSFORM_DECLARED: "⟇⟇~∘" else: ""  ## Library's transform symbol.
