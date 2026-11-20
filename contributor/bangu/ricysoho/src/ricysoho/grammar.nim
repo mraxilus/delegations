@@ -798,8 +798,8 @@ type
     everywhere: Chart  ## le mulcmi pe `islands`
 
 
-func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: bool) =
-  ## tisna lo selcmi pe `Earley`
+func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: bool): int =
+  ## tisna lo selcmi pe `Earley` gi'e dunda lo te kancu be lo selcmi poi le fancu cu tisna ke'a
   ##   .i le selcmi pe `i` vasru lo cmima poi su'o cumtricu cu klama ke'a ba lo nu tcidu lo genvla
   ##       noi lo te kancu be ke'a cu du `i`
   ##   .i ca lo nu kanpe pa jvasni poi ka'e binxo lo kutpoi kei le cmima cu pagre le jvasni
@@ -889,6 +889,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
     let most = min(chart.terminals.len, terminals.len)
     while same < most and chart.terminals[same] == terminals[same]: inc same
     first = same + 1
+  result = terminals.len + 1 - first
   chart.sets.setLen(first)
   chart.sets.setLen(terminals.len + 1)
   chart.firsts.setLen(first * count_nonterminals)
@@ -1219,7 +1220,7 @@ func readWhole(chart: var Chart, terminals: openArray[Terminal]): ReadingGrammar
   ##     javni poi selcme
   ##   .i to'e curmi bu'u le stuzi poi ro cumtricu cu sisti bu'u ke'a
   ##   .i `chart` cu ralte ro selcmi poi stali to `fillSets` toi
-  chart.fillSets(terminals, is_everywhere = false)
+  discard chart.fillSets(terminals, is_everywhere = false)
   var is_whole = false
   for item in chart.sets[^1]:
     let
@@ -1651,7 +1652,7 @@ func islands(chart: var Chart, terminals: openArray[Terminal], first, last: int)
   ## ni'o `chart` cu ralte ro selcmi poi stali to `fillSets` toi
   let count = last - first
   if count == 0: return
-  chart.fillSets(terminals.toOpenArray(first, last - 1), is_everywhere = true)
+  discard chart.fillSets(terminals.toOpenArray(first, last - 1), is_everywhere = true)
   chart.fillCompletions
 
   # le stedu be lo ricpau poi kuspe ro selku'e ku'o ja'i le krasi .e le fanmo
