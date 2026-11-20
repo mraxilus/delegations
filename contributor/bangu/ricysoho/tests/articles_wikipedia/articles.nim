@@ -682,7 +682,7 @@ const
       text: "lo lojbo gerna cu se krasi lo bridi logji .i lo valsi cu se krasi lo xa bangu po'u " &
           "lo jugbau jo'u lo glibau jo'u lo sanbau jo'u lo xinbau jo'u lo rabybau jo'u lo " &
           "rukybau .i zmiku lo ka finti lo valsi poi traji lo ka simsa lo valsi be ro by.",
-      verdict: "",
+      verdict: "Grammar number 812",
     ),
     ParagraphWikipedia(
       article: "lo jbobau",

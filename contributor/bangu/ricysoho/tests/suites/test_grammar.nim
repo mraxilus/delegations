@@ -166,7 +166,7 @@ const
     ##   .i le flalu cu tcidu ro boi cimoi selci'a ki'u lo jdima be le cipra
   SEED_KEPT = 975
     ## lo tsiju be lo cunso stuzi poi le flalu pe lo mulcmi poi stali cu vimcu lo genvla bu'u ke'a
-  COUNT_PARTS_JOINED = 74
+  COUNT_PARTS_JOINED = 71
     ## lo te kancu be lo pagbu poi le nu tcidu ro pagbu cu katna le se ciska poi jorne lo ju'agri pe
     ##     pa prosa ku'o fi ke'a
   WORDS_DIGITS = ["no", "pa", "re", "ci", "vo", "mu", "xa", "ze", "bi", "so"]
@@ -174,8 +174,16 @@ const
   COUNT_PA = 46
     ## lo te kancu be lo cmavo pe `PA` ne'i le liste pe `cmavo.nim`
   COUNT_HELD_LEAST = 2100
-    ## lo dzijimte be lo te kancu be lo selcmi poi lo valsi pe `PA` cu se lidne ke'a zi'e poi le
-    ##     flalu pe lo nu fanta cu tcidu ke'a to `Article IX.3` toi
+    ## lo dzijimte be lo te kancu be lo selcmi poi lo valsi pe `PA` .a lo lerfu valsi cu se lidne
+    ##     ke'a zi'e poi le flalu pe lo nu fanta cu tcidu ke'a to `Article IX.3` toi
+  WORDS_BU = [".abu", "slaka bu"]  ## lo lerfu valsi poi zo bu cu lidne ke'a to `CLL 17.4` toi
+  COUNT_BY = 27  ## lo te kancu be lo cmavo pe `BY` ne'i le liste pe `cmavo.nim`
+  SELMAHO_JOINING = [Selmaho.Pa, Selmaho.By, Selmaho.Bu, Selmaho.Lau, Selmaho.Tei]
+    ## lo selma'o be lo valsi poi ka'e jorne lo namcu .a lo lerfu porsi poi lidne ke'a
+    ##   .i ro valsi pe `PA` .e ro lerfu valsi cu cfari pa cmima to le javni pe li 812 .e li 817
+    ##       .e li 987 toi
+  HEAD_LERFU = GRAMMAR_EBNF.headNamed("lerfu-string")
+    ## le jvasni pe `lerfu-string` noi ckini li 817
 
 
 
@@ -309,6 +317,29 @@ func numbersRead(text: string): seq[Slice[int]] =
   tree.get.numbers
 
 
+func runs(node: Node): seq[Slice[int]] =
+  ## liste lo selku'e be ro jgena pe `number` .a `lerfu-string` ja'i le porsi pe le tricu
+  ##   .i le jgena cu ka'e vasru pa valsi po'o
+  ##   .i lo jgena poi pagbu lo drata jgena pe le re javni cu na se liste
+  if node.is_terminal: return
+  if node.rule in ["number", "lerfu-string"]: return @[node.leaves[0] .. node.leaves[^1]]
+  for child in node.children: result.add child.runs
+
+
+func runsRead(text: string): seq[Slice[int]] =
+  ## tcidu lo selci'a sepi'o `readText` gi'e liste lo selku'e be ro jgena pe `number` .a
+  ##     `lerfu-string`
+  ##   .i `readText` jorne ro valsi .e zo bu poi lidne ke'a ku'o lo lerfu valsi to `CLL 17.4` toi
+  let reading = text.readText
+  doAssert reading.is_read, "Text of example should read; got `" & text & "`."
+  reading.tree.runs
+
+
+func isJoining(terminal: Terminal): bool =
+  ## jdice lo du'u xu kau le genvla cu cmima `SELMAHO_JOINING`
+  SELMAHO_JOINING.anyIt(it.toTerminal == terminal)
+
+
 func shape(node: Node, words: openArray[string], dropped: openArray[int]): string =
   ## ciska le tricu ta'i lo javni noi vasru lo valsi
   ##   .i lo valsi pe `dropped` na selci'a
@@ -420,6 +451,41 @@ suite "Chapter 5":
     #   .i selfi'i
     check "le xamgu be le ctuca zdani".spansRead("sumti-6") ==
         @[0 .. 5, 3 .. 5]  # `CLL 5.7`
+
+
+
+suite "Chapter 17":
+  test "Section 17.9":
+    # zo boi fanmo lo lerfu porsi .e lo namcu
+    #   .i va'o lo nu re le porsi cu lamji kei zo boi cu sarcu to `CLL 17.9` toi
+    check ".abu dunda by. cy.".runsRead == @[0 .. 0, 2 .. 3]  # `CLL 17.25`
+    check ".abu dunda by. boi cy.".runsRead == @[0 .. 0, 2 .. 2, 4 .. 4]  # `CLL 17.26`
+    check "xy. boi ro prenu cu prami".runsRead == @[0 .. 0, 2 .. 2]  # `CLL 17.27`
+    # lo nu claxu zo boi cu rinka lo nu lo'u xy. ro le'u cu du pa lerfu porsi
+    check "xy. ro prenu cu prami".treeRead.isNone  # `CLL 17.27`
+    check "mi viska re boi vy.".runsRead == @[2 .. 2, 4 .. 4]  # `CLL 17.9`
+    # lo nu claxu zo boi cu rinka lo nu lo'u re vy. le'u cu du pa namcu
+    check "mi viska re vy.".treeRead.isNone  # `CLL 17.9` .e le javni pe li 812
+    check "le pa lau by. moi".runsRead == @[1 .. 3]  # le javni pe li 812 .e li 987
+    check "le by. tei cy. dy. foi moi".runsRead == @[1 .. 5]  # le javni pe li 817 .e li 987
+
+
+  test "Each pair of letter and number words is one run before moi, and two where boi parts them":
+    # lo lerfu porsi .e lo namcu cu na mulno pu lo valsi pe `PA` .a lo lerfu valsi
+    #   .i zo boi fendi re porsi poi lamji to `CLL 17.9` toi
+    var
+      letters = @WORDS_BU  # ro lerfu valsi pe le liste .e `WORDS_BU`
+      digits: seq[string]  # ro cmavo pe `PA` pe le liste
+    for entry in LIST_CMAVO:
+      if entry.selmaho == Selmaho.By: letters.add entry.word
+      elif entry.selmaho == Selmaho.Pa: digits.add entry.word
+    check letters.len == COUNT_BY + WORDS_BU.len
+    for a in letters & digits:
+      for b in letters & digits:
+        if a in digits and b in digits: continue  # le flalu pe `CLL 18.6` cu cipra le remei
+        checkpoint a & " " & b
+        check ("le " & a & " " & b & " moi").runsRead == @[1 .. 2]  # `CLL 17.9`
+        check ("le " & a & " boi " & b & " moi").runsRead == @[1 .. 1, 3 .. 3]  # `CLL 17.9`
 
 
 
@@ -610,13 +676,14 @@ suite "Internal: Grammar":
         while same < min(previous.len, step.len) and previous[same] == step[same]: inc same
         # ro spisa cu tisna lo selcmi po'o poi se lidne le pamoi genvla poi cenba
         #   .i ji'a le selcmi poi lidne le genvla cu se tisna va'o lo nu le genvla .e le pu genvla
-        #       cu frica lo ka ce'u cmima `PA`
-        #   .i ki'u bo le genvla cu jdice lo du'u xu kau pa namcu cu mulno ne'i le selcmi
+        #       cu frica lo ka ce'u cmima `SELMAHO_JOINING`
+        #   .i ki'u bo le genvla cu jdice lo du'u xu kau pa namcu .a pa lerfu porsi cu mulno ne'i le
+        #       selcmi
         let
-          is_pa_kept = same < previous.len and previous[same] == Selmaho.Pa.toTerminal
-          is_pa_step = same < step.len and step[same] == Selmaho.Pa.toTerminal
+          is_joining_kept = same < previous.len and previous[same].isJoining
+          is_joining_step = same < step.len and step[same].isJoining
           filled =
-            if previous.len == 0 or is_pa_kept != is_pa_step: step.len + 1 - same
+            if previous.len == 0 or is_joining_kept != is_joining_step: step.len + 1 - same
             else: step.len - same
         check whole.fillSets(step, is_everywhere = false) == filled
         check everywhere.fillSets(step, is_everywhere = true) == filled
@@ -628,12 +695,15 @@ suite "Internal: Grammar":
     check count >= COUNT_KEPT_LEAST  # `Article IX.3`
 
 
-  test "Chart filled from kept columns is chart filled anew, as number grows word by word":
-    # lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
-    #   .i se ki'u bo pa valsi pe `PA` poi se jmina cu cenba le selcmi poi lidne ke'a
-    var texts = @["li su'i pa re ci du li xa"]
-    for a in WORDS_DIGITS:
-      for b in WORDS_DIGITS:
+  test "Chart filled from kept columns is chart filled anew, as run grows word by word":
+    # lo namcu .e lo lerfu porsi cu na mulno pu lo valsi pe `PA` .a lo lerfu valsi to `CLL 17.9`
+    #     .e `CLL 18.6` toi
+    #   .i se ki'u bo pa valsi poi se jmina gi'e cmima `SELMAHO_JOINING` cu cenba le selcmi poi
+    #       lidne ke'a
+    let words = @WORDS_DIGITS & @WORDS_BU & @["by", "lo'a"]  # lo valsi poi jorne lo porsi
+    var texts = @["li su'i pa re ci du li xa", ".abu dunda by. cy. .i xy. boi ro prenu cu prami"]
+    for a in words:
+      for b in words:
         texts.add @["le " & a & " " & b & " moi", "le " & a & " boi " & b & " moi"]
     for text in texts:
       checkpoint text
@@ -643,9 +713,9 @@ suite "Internal: Grammar":
         let step = read[0 ..< count]
         var whole_fresh, everywhere_fresh: Chart
         # ro spisa cu tisna le selcmi poi se lidne le valsi poi se jmina
-        #   .i va'o lo nu le valsi cu cmima `PA` kei ji'a le selcmi poi lidne le valsi cu se
-        #       tisna
-        let filled = (if count == 1 or step[^1] == Selmaho.Pa.toTerminal: 2 else: 1)
+        #   .i va'o lo nu le valsi cu cmima `SELMAHO_JOINING` kei ji'a le selcmi poi lidne le valsi
+        #       cu se tisna
+        let filled = (if count == 1 or step[^1].isJoining: 2 else: 1)
         check whole.fillSets(step, is_everywhere = false) == filled
         check everywhere.fillSets(step, is_everywhere = true) == filled
         check whole.readWhole(step).shape == whole_fresh.readWhole(step).shape
@@ -653,15 +723,17 @@ suite "Internal: Grammar":
         check islands == everywhere_fresh.islands(step, 0, step.len).mapIt(it.shape)
 
 
-  test "Chart records no completion of number before word of PA, in either mode":
-    # lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
+  test "Chart records no number or lerfu string closed before word that joins it, in either mode":
+    # lo namcu .e lo lerfu porsi cu na mulno pu lo valsi pe `PA` .a lo lerfu valsi to `CLL 17.9`
+    #     .e `CLL 18.6` toi
     #   .i le nu cuxna lo tricu .e lo ricpau cu tcidu `completions` po'o
-    #   .i se ki'u bo `choose` cu cuxna no namcu poi mulno pu lo valsi pe `PA`
+    #   .i se ki'u bo `choose` cu cuxna no namcu .e no lerfu porsi poi mulno pu le valsi
     var texts = @TEXTS_PASSES
     for example in EXAMPLES_CLL: texts.add example.rows.join(" ")
     for sentence in SENTENCES_TATOEBA: texts.add sentence.text
-    for a in WORDS_DIGITS:
-      for b in WORDS_DIGITS: texts.add "le " & a & " " & b & " moi"
+    let words = @WORDS_DIGITS & @WORDS_BU & @["by"]  # lo valsi poi jorne lo porsi
+    for a in words:
+      for b in words: texts.add "le " & a & " " & b & " moi"
     var count = 0
     for text in texts:
       let read = text.terminalsRead
@@ -671,12 +743,13 @@ suite "Internal: Grammar":
         discard chart.fillSets(read.get, is_everywhere)
         chart.fillCompletions
         for i in 1 ..< read.get.len:
-          if read.get[i] != Selmaho.Pa.toTerminal: continue
+          if not read.get[i].isJoining: continue
           checkpoint text & " at " & $i
-          # le nu cuxna cu facki no namcu poi fanmo pu le valsi
+          # le nu cuxna cu facki no namcu .e no lerfu porsi poi fanmo pu le valsi
           var is_held = true
           for start in 0 ..< i:
-            if chart.choose(HEAD_NUMBER, start, i): is_held = false
+            for head in [HEAD_NUMBER, HEAD_LERFU]:
+              if chart.choose(head, start, i): is_held = false
           check is_held
           inc count
     check count >= COUNT_HELD_LEAST  # `Article IX.3`
