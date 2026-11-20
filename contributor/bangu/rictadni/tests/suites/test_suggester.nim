@@ -1235,6 +1235,32 @@ suite "Internal: Suggester":
           passage, settings_b.model, [])  # other endpoint misses it, under its own stamp
 
 
+  test "exchange recorded under session `lojban_tagger` before rename still replays":
+    # Review finding F1 of #982: stamp and compare of replay read whole body, which names session
+    #   of OpenRouter, so exchange recorded before rename went missing; reader takes old session
+    #   too, as D1 on #946 rules, and nothing is written under either request.
+    let
+      text = example("lojban")
+      passage = text.argument.toPassage
+      settings = Service.OpenRouter.toSettings
+      request = requestService(settings, passage)
+      older = request.replace("\"session_id\":\"rictadni\"", "\"session_id\":\"lojban_tagger\"")
+      reply = toReplyAnswer(Service.OpenRouter, text.answer, settings.model)
+      bytes = Exchange(label: LABEL_SUITE, request: older, reply: reply).toBytes
+    check older != request  # body of OpenRouter names session
+    for (mode, notes) in [("replay", newSeq[string]()),
+        ("record", @[noteCredential(KEY_CREDENTIAL)])]:
+      let directory_case = directory / ("session_old_" & mode)
+      createDir(directory_case)
+      writeFile(pathExchange(directory_case, older), "lojban_tagger exchange 2\n" &
+          bytes["rictadni exchange 2\n".len .. ^1])  # file as recorded before rename: old line too
+      check binary.run(settings.toEnvironment, ["--" & mode & ":" & directory_case,
+          text.argument]) == toExited(Service.OpenRouter.readReply(reply), passage,
+          settings.model, notes & @[noteReplayed(directory_case, older,
+          LABEL_SUITE)])  # old session read
+      check not fileExists(pathExchange(directory_case, request))  # nothing under new request
+
+
   test "replay note names label made printable and cut, as report names other outside text":
     # Regression, found in suite review: note named label as file held it, control bytes raw.
     let

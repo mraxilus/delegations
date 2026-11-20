@@ -152,7 +152,7 @@ suite "Internal: Tagger":
     #   still names index; new name wins where both are set.
     let
       (path_new, path_old) = (directory / "named_new", directory / "named_old")
-      kept = toIndex([("notes", @["datni"])]).toText
+      kept = "lojban_tagger index 1\nnotes\tdatni\n"  # file as person holds it, old header too
     writeFile(path_old, kept)
     for prefix in ["env -u " & KEY_INDEX, KEY_INDEX & "="]:  # unset, then empty
       let shown = binary.runTaggerUnder(prefix & " " & KEY_INDEX_OLD & "=" & quoteShell(path_old),
@@ -173,7 +173,7 @@ suite "Internal: Tagger":
       (path_new, path_old) = (data / "rictadni" / "index", data / "lojban_tagger" / "index")
       prefix = "env -u " & KEY_INDEX & " -u " & KEY_INDEX_OLD & " XDG_DATA_HOME=" &
           quoteShell(data)
-      kept = toIndex([("notes", @["datni"])]).toText
+      kept = "lojban_tagger index 1\nnotes\tdatni\n"  # file as person holds it, old header too
     createDir(path_old.parentDir)
     writeFile(path_old, kept)
     check binary.runTaggerUnder(prefix, ["show"]).output == "notes\tdatni\n"  # old folder read
@@ -184,6 +184,15 @@ suite "Internal: Tagger":
     writeFile(path_old, toIndex([("other", @["vreji"])]).toText)
     check binary.runTaggerUnder(prefix, ["show"]).output ==
         "notes\tdatni\nphoto\tpixra\n"  # new folder wins once it holds index
+
+    # Review finding F5 of #982: empty variable reads as unset, so both names empty name
+    #   folder of data; before change, empty `LOJBAN_TAGGER_INDEX` named path `""`.
+    let
+      data_empty = directory / "data_empty"
+      emptied = KEY_INDEX & "= " & KEY_INDEX_OLD & "= XDG_DATA_HOME=" & quoteShell(data_empty)
+    check binary.runTaggerUnder(emptied, ["tag", "photo", "pixra"]).code == 0
+    check readFile(data_empty / "rictadni" / "index") ==
+        toIndex([("photo", @["pixra"])]).toText  # both empty read as unset
 
 
   test "absent index file reads as empty, and only change makes it":

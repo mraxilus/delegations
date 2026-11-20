@@ -213,7 +213,7 @@ const
     ##   cap, while length route reads pieces of `BufferSize`, 4,000 bytes, one spanning cap.
   CREDENTIAL_SUITE = "credential-for-suite"  ## Credential requests here carry, where one does.
   CREDENTIAL_GIVEN = some(Credential(CREDENTIAL_SUITE))  ## `CREDENTIAL_SUITE`, as `send` takes it.
-  NAME_CREDENTIAL = "LOJBAN_TAGGER_API_KEY"  ## Variable each credential here is read from.
+  NAME_CREDENTIAL = "RICTADNI_API_KEY"  ## Variable each credential here is read from first.
   SYMBOLS_SECRET = "!#$%&*+=?@^|~"  ## Bytes random secrets are spelled from; no problem holds one.
   DIGITS_STAMP = {'0'..'9', 'a'..'f'}  ## Digits stamp is written in.
   TEXT_PASSAGE = "Alice <b>&amp;</b> \"her sister\"\non bank\xE2\x80\xA6"
@@ -1461,6 +1461,31 @@ suite "Internal: Exchange":
         older[line_old.len + 8 .. ^1]
     check changed.readExchange.problem == problemChecksum(0,
         checksumReference(MESSAGE_EXAMPLE))  # checksum read past old line
+
+    # Review finding F7 of #982: frame past old line held at three points alone; each cut, and
+    #   each byte changed, is held now, as for file of new line.
+    let at_old = line_old.len  # Byte length of message opens at, past old line.
+    for count in 0 ..< older.len:
+      let
+        named = $count & ": "
+        expected =
+          if count < at_old: problemLineFormat(older[0 ..< count])
+          elif count < at_old + 8: problemFrame(count - at_old)
+          else: problemLength(older.readFixedReference(at_old), count - at_old - 8)
+      check named & older[0 ..< count].readExchange.problem ==
+          named & expected  # domain: every cut of file of old line, in part it ends in
+    for at in 0 ..< older.len:
+      let
+        named = $at & ": "
+        changed = older.flipBit(8 * at)
+        expected =
+          if at < at_old: problemLineFormat(changed)
+          elif at < at_old + 4: problemLength(changed.readFixedReference(at_old),
+              older.len - at_old - 8)
+          else: problemChecksum(changed.readFixedReference(at_old + 4),
+              checksumReference(changed[at_old + 8 .. ^1]))
+      check named & changed.readExchange.problem ==
+          named & expected  # domain: lowest bit of each byte changed, in part holding it
 
 
   test "each cut of exchange file, and bytes appended, are refused naming part where file ends":
