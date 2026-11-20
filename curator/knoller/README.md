@@ -77,10 +77,10 @@ knoller [--check] [--nim:path] path...
   resolves no file, and the warning names the tool.
 - A sibling can reach a private symbol through `{.all.}`. Where its own module never uses it, the
   symbol takes `{.used.}` and a comment that names the sibling (`marker-used`). An `{.all.}` that
-  reaches no private symbol goes. Knoller asks `nimsuggest` where each use of each private symbol stands,
-  in the entry of each file that opens its module with `{.all.}`. A suite needs no marker, and an
-  import of another project is not read. An `{.all.}` goes only where its file also checks clean
-  without it.
+  reaches no private symbol goes. Knoller asks `nimsuggest` where each use of each private symbol
+  stands, in the entry of each file that opens its module with `{.all.}`. A suite needs no marker,
+  and an import of another project is not read. An `{.all.}` goes only where its file also checks
+  clean without it.
 - A `proc` whose body shows no effect becomes a `func` where the compiler checks it as one under
   `strictFuncs` (`func-pure`). A lock, a wait and a signal count as effects. The compiler reads the
   file from stdin in its own directory, so nothing is written there. A file that checks clean on
