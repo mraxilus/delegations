@@ -1,5 +1,5 @@
-## Enforce blank lines beside suites, tests and nested helpers in Nim source (Article X.2;
-##   STYLE.md §1), and fix them (`koch fix`).
+## Enforce blank lines beside suites, tests and nested helpers, and between definitions, in Nim
+##   source (Article X.2, STYLE.md §1), and fix them (`koch fix`).
 ##   Under `tests/` of package (`reports.isFileTest`): suite is first tier and takes three blank
 ##     lines before it; test is second tier and takes two. First child follows its opener at
 ##     once, i.e. test opening suite and suite opening `when` body: no blank line. Suite or test
@@ -19,12 +19,14 @@
 ##     moves. Run lying inside string or block comment spanning lines is never read.
 ##   Checks and fixer share one reading (`runs`), so each rule is written once (Article II.1).
 ##   Run before definition at module level, or in `when` branch there, takes count X.2 gives
-##     definition below it (`checkDefinitions`): declarative calls of one family stack, one-line
-##     helpers stack, declaration block after another and documented one-line definition take
-##     one, every other definition two, and inside second-tier section two becomes one (#443).
-##     `when` counts as definition it holds first, below it as one it holds last; run after
-##     pragma line, statement, banner or free comment is not read. Fixer shares its reading
-##     (`gapsDefinition`).
+##     definition below it (`checkDefinitions`): declarative calls of one family stack,
+##     declarative call after routine takes up to two, undocumented one-line helpers stack,
+##     declaration block after another and documented one-line definition take one, every other
+##     definition two, and inside second-tier section each count caps at one (#443). Item is
+##     documented by `##` doc on its head line or inside it; nearest banner above, outside
+##     strings, gives tier. `when` counts as definition it holds first, below it as one it holds
+##     last; run after pragma line, statement, banner or free comment is not read. Fixer shares
+##     its reading (`gapsDefinition`).
 ##
 ##   Cost: helper inside `when`, `if` or loop of routine body is unread, since X.11 asks helper
 ##     first in body.
@@ -486,7 +488,7 @@ func gapsDefinition(source: string): seq[Gap] =
 
 func checkDefinitions*(path, source: string): seq[Report] =
   ## Report blank lines before definition at module level other than X.2 asks for its kind.
-  ##   Named by its suite, `checkFormatting` and `fixes.nim` alone until static pass calls it.
+  ##   Named by its suite and `checkFormatting` alone until static pass calls it.
   for gap in source.gapsDefinition:
     let text =
       case gap.target
