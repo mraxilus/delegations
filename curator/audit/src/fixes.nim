@@ -38,6 +38,10 @@
 ##     it over tree by project: whether file declares `formatValue`, constants each module
 ##     exports, defaults of configurations, and names of its modules, with aliases of library
 ##     it builds on, which no file of tree holds, so caller reads library from disk.
+##   Finding of rule resting on names of project that fix leaves stays for hand, as knoller's
+##     command line leaves it: index whose alias no edit writes, and call of constructor, which
+##     no fix writes (STYLE.md §5). Fenced line counts in warning of its fence, which reads
+##     names too.
 ##   Knoller reads fixed waits where its caller says file is drive code, and koch says so of
 ##     `tests/` and `tools/` of each project (`waits.isCodeDrive`), so fence warning counts them
 ##     where static pass reads them.
@@ -56,7 +60,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, sets, strutils, tables]
+import std/[algorithm, options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[
   checker, findings, glossary, kinds, layout, names, plan, prose_own, scope, symbols, toolchain,
@@ -335,11 +339,13 @@ func warnUnsettled*(path: string, fix: Fix): seq[Finding] =
 
 func fixSource(
   path, source: string; kind: Kind; fence: Fence; context: Context
-): tuple[source: string, fixed, warned: seq[Finding], asked: seq[string]] =
+): tuple[source: string, fixed, left, warned: seq[Finding], asked: seq[string]] =
   ## Write edits semantic pass and tree settle, off fenced lines, then fix rest by knoller
   ##   (`formatted`); none of those edits moves line, so every report names line of source as
-  ##   given. Source knoller cannot settle keeps those edits alone, with warning that says why
-  ##   (`warnUnsettled`), since rename planned whole reaches other files too.
+  ##   given. Report of rule reading names of project that no edit writes is left for hand, off
+  ##   fenced lines, which warning of fence counts. Source knoller cannot settle keeps those
+  ##   edits alone, with warning that says why (`warnUnsettled`), since rename planned whole
+  ##   reaches other files too.
 
   # Write edits semantic pass and names of project settle, off fenced lines: renames,
   #   conversions, then alias of each landmark index; no line moves, so fence holds.
@@ -360,6 +366,19 @@ func fixSource(
   semantic.add aliased
   result.fixed.add aliasing.toFindings
   var base = source.applied(semantic)
+
+  # Leave for hand each index no alias edit writes, as choice of aliases, and each call of
+  #   constructor, which no fix writes, in order of lines; each edit answers one report on its
+  #   line.
+  var
+    unwritten = aliasing.mapIt(it.line)
+    kept: seq[Report]
+  for report in checkLandmarks(path, source, names.landmarks) &
+      checkConstructors(path, source, names.calls):
+    let at = if report.rule == Rule.AliasLandmark: unwritten.find(report.line) else: -1
+    if at >= 0: unwritten.delete at
+    elif report.line - 1 notin fence.lines: kept.add report
+  result.left = kept.sortedByIt(it.line).toFindings
 
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
@@ -414,6 +433,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
     is_drive = e.path.isCodeDrive,
     configurations = context.configurations.getOrDefault(e.path.nimbleProject),
     constants = context.constants.getOrDefault(e.path.nimbleProject),
+    names = context.names.getOrDefault(e.path.nimbleProject),
   ).toFindings
   result.warned.add warnDebug(e.path, e.content, e.path.nimbleProject).toFindings
   if fence.lines.len > 0:
@@ -446,6 +466,7 @@ func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
   let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
   for source in fix.asked:
     if (e.path, source) notin result.asked: result.asked.add (e.path, source)
+  result.left.add fix.left
   result.warned.add fix.warned
   if fix.source == e.content: return
   result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)
@@ -472,9 +493,10 @@ func fixEntries*(
   branch: string, entries: openArray[Entry], locked: openArray[string] = [], context = Context()
 ): Fixed =
   ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
-  ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
-  ##   for each fence, which keeps its lines as written, naming each rule broken among them
-  ##   (`checkFenceHeld`), and for each file knoller's fixers do not settle (`warnUnsettled`).
+  ##   written with reason (nimble file `locked` names, fence fix cannot read), finding left for
+  ##   hand of each rule resting on context that fix leaves, and one warning for each fence,
+  ##   which keeps its lines as written, naming each rule broken among them (`checkFenceHeld`),
+  ##   and for each file knoller's fixers do not settle (`warnUnsettled`).
   ##   `context` carries what tree tells fixers across modules, as `initContext` reads it,
   ##   and answers of parser; each source chain asks and no answer holds is in `asked`, source
   ##   as given too where fence holds lines, since its warning reads it.
