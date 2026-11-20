@@ -446,9 +446,12 @@ func branchesStatic(source: string; constants: openArray[string]): seq[Branch] =
     let extent = (h.line, code.lastBlock(h.line - 1, h.last - 1) + 1)
     extents.add extent
     if h.keyword == "macro" or h.is_compile_time: passed.add extent
-  var global = @constants
+  var global, runtime: seq[string]
+  global.add constants
   for d in declared:
-    if d.kind == KindName.Binding and d.is_constant and d.reach == Reach.Global: global.add d.name
+    if d.kind != KindName.Binding or d.reach != Reach.Global: continue
+    if d.is_constant: global.add d.name else: runtime.add d.name
+  global = global.filterIt(it notin runtime)  # global `let` or `var` shadows constant of package
 
   for i, line in code:
     let one = i + 1
