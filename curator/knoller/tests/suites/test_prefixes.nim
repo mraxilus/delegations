@@ -20,6 +20,13 @@ func isSettled(source: string): bool =
   checkPrefixes("a.nim", source).len == 0 and fixPrefixes("a.nim", source).fixed.len == 0
 
 
+func nested(depth: int): string =
+  ## Write line of `to<Target>` call nested `depth` deep, each around compound argument.
+  result = "(a + b).toX"
+  for _ in 2 .. depth: result = "(" & result & " + c).toX"
+  result = "let m = " & result & "\n"
+
+
 
 suite "Style §5":
   test "`to<Target>` of compound argument by dot becomes prefix call, group's parentheses its own":
@@ -40,6 +47,15 @@ suite "Style §5":
     check found.mapIt((it.line, it.rule)) == @[(2, Rule.PrefixConversion)]
     check found[0].message.endsWith("got `(a + b).toMultivector`.")
     check fixPrefixes("a.nim", "let m = (a + b).toX\n").fixed.mapIt(it.line) == @[1]
+
+
+  test "fixer takes 8 passes at most, inner call first, so deeper nest waits for next run":
+    # Case of review of record: `PASSES_MAX` held no case; each pass writes calls whose spans
+    #   hold none, so nest of 8 settles in one run, and nest of 9 leaves its outer call.
+    check nested(8).fixed.isSettled
+    let left = nested(9).fixed
+    check checkPrefixes("a.nim", left).len == 1
+    check left.fixed.isSettled
 
 
   test "plain group, literal, tuple, call and other name stay; generic and wrapped call report":

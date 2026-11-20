@@ -97,6 +97,16 @@ suite "Article V.8":
     check landmarksDeclared(["proc a*(t: typedesc[T]): T = T(1)\n"]).len == 1  # routine too
 
 
+  test "aliases that name each other name no index, and walk through them ends":
+    # Case of review of record: `DEPTH_MAX` held no case, so walk through cycle could run on;
+    #   `p` and `q` name each other, and `r` alone names index.
+    const source = "template p*(t: typedesc[Grade]): Grade = t.q\n  ## P.\n\n" &
+      "template q*(t: typedesc[Grade]): Grade = t.p\n  ## Q.\n\n" &
+      "template r*(t: typedesc[Grade]): Grade = Grade(2)\n  ## R.\n"
+    check landmarksDeclared([source]).mapIt((it.name, it.index, it.aliases)) ==
+      @[("Grade", "2", @["r"])]
+
+
   test "index is constant expression, so body sampling value names no landmark":
     # Case held: `sample` read as alias of `Coefficient`, so `Coefficient(rand(-1.0..1.0))` was
     #   reported as its index; line 95 of `proposals/04-basis-set-forms/laws.nim` of

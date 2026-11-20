@@ -6,7 +6,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, sequtils, strutils, tables, tempfiles, unittest]
+import std/[os, osproc, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[edits, purity, rules]
 
 
@@ -187,11 +187,25 @@ suite "Style §1":
     check proven(source).sites == @[source.site("proc merge")]
 
 
-  test "generic body checks where its own module instantiates it, and nowhere else":
-    # Cost of record: instantiation in other module that compiler would refuse is unread.
-    let source = "{.experimental: \"strictFuncs\".}\n\nproc shown[T](x: T): string =\n" &
-      "  $x\n\necho shown(1)\n"
-    check proven(source).sites == @[source.site("proc shown")]
+  test "generic body checks where its own module instantiates it, so other module goes unread":
+    # Cost of record: `b.nim` instantiates `shown` with type whose `$` calls `echo`, so check of
+    #   `b.nim` refuses `func shown`; check of `a.nim` alone proves it.
+    let directory = createTempDir("knoller_", "_generic")
+    defer: removeDir(directory)
+    const
+      source = "{.experimental: \"strictFuncs\".}\n\nproc shown*[T](x: T): string =\n" &
+        "  $x\n\necho shown(1)\n"
+      importer = "{.experimental: \"strictFuncs\".}\n\nimport a\n\ntype Loud = object\n\n" &
+        "proc `$`(l: Loud): string =\n  echo \"loud\"\n  \"l\"\n\necho shown(Loud())\n"
+    writeFile(directory / "a.nim", source)
+    writeFile(directory / "b.nim", importer)
+    let sites = candidatesPure([("a.nim", source)]).getOrDefault("a.nim")
+    check provenPure(source, sites, directory, getCurrentCompilerExe(), [DEFINES_NONE]).sites ==
+      @[source.site("proc shown")]
+    writeFile(directory / "a.nim", source.replace("proc shown", "func shown"))
+    let (output, code) = execCmdEx(getCurrentCompilerExe().quoteShell & " check --hints:off " &
+      (directory / "b.nim").quoteShell)
+    check code != 0 and "'shown' can have side effects" in output
 
 
   test "proc calling project proc that stays stays, and proc calling candidate is candidate":
