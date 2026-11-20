@@ -499,15 +499,15 @@ ni'o lo minde po'u `page` .e `drive` cpacu lo lertai pe le papri sepi'o `koch fe
 
 ## ni'o ni'o ni'o lo papri
 
-ni'o [`Lojban live tree`](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) pixra lo tricu be lo
-    mivyselci'a ca lo nu lo prenu cu ciska le selci'a
+ni'o [`tricu be lo mivyselci'a`](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) pixra lo
+    tricu be lo mivyselci'a ca lo nu lo prenu cu ciska le selci'a
   .i lo gunka cu tcidu ro pagbu be le selci'a ca lo nu le pagbu cu klama
-  .i le papri cu pixra ro pagbu ja'i lo selci'a be fi `NIF` poi le gunka cu dunda ke'a
-  .i lo pagbu poi ca'o kalri cu selska lo najypelxu
+  .i le papri cu pixra ro pagbu ja'i lo selci'a be fi `NIF` be'o poi le gunka cu dunda ke'a
+  .i lo pagbu poi ca'o kalri cu skari lo najypelxu
   .i lo valsi poi galfi lo pu valsi mu'u zo si .a zo li'u katna lo selci'a be fi `NIF` bu'u lo stuzi
       be lo selga'i be le valsi
 
-ni'o lo batke po'u `Merge` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi lo nu tcidu le
+ni'o lo batke po'u `jmina` jmina ro mulpau sepi'o `mergeParts` fi pa tricu poi lo nu tcidu le
     mulselci'a cu jarco ke'a
   .i va'o lo nu lo srera cu stali kei ro porsi be lo pagbu poi sruri le srera cu se jmina
   .i le srera cu stali

@@ -25,10 +25,10 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, strutils, unittest]
 
-import lojban_parser
+import ricysoho
 
-import ../../src/lojban_tagger/[index, tags]
-import ../../src/lojban_tagger/lists/gismu
+import ../../src/rictadni/[index, tags]
+import ../../src/rictadni/lists/gismu
 
 
 type
@@ -342,6 +342,19 @@ suite "Internal: Index":
     check readIndex("lojban_tagger index 2\n").isRefused(1, "lojban_tagger index 2")  # version
     check readIndex("notes\tdatni\n").isRefused(1, "notes\tdatni")  # entity before header
     check readIndex(" " & HEADER_INDEX & "\n").isRefused(1, " " & HEADER_INDEX)  # exact header
+
+
+  test "writer opens file with `rictadni index 1`, and reader takes `lojban_tagger index 1` too":
+    # Ruling of D1 on #946: tools write new name alone, and each reader still takes old one, so
+    #   index written before rename still opens, then writes back under new name.
+    var index: Index
+    index.addTags("notes", [readTanru("datni").get])
+    check index.toText == "rictadni index 1\nnotes\tdatni\n"  # new name written
+    for header in ["rictadni index 1", "lojban_tagger index 1"]:
+      let loaded = readIndex(header & "\nnotes\tdatni\n")
+      check loaded.is_loaded  # each name read
+      if loaded.is_loaded: check loaded.index.toText == index.toText  # written back as new
+    check readIndex("rictadni index 2\n").isRefused(1, "rictadni index 2")  # other version
 
 
   test "reader refuses bad line by its number, ending in text read":

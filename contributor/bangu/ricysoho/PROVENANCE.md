@@ -965,6 +965,48 @@ ni'o **ro selcmi pe `Earley` fendi lo cmima be vo'a ja'i lo jvasni poi le cmima 
   .i cipra ji'a fa `suites/test_corpus.nim`
   .i ro le cipra cu jarco lo du'u le tricu .e le nu to'e curmi cu stodi
 
+ni'o **le genturfa'i cu cipra lo nu rapli kei va'o po'o lo nu pa cmima cu pagre lo jvasni**
+  .i `predicted` cu rinka lo nu ro jvasni cu se kanpe pa roi ne'i ro selcmi
+  .i se ki'u bo ro cmima pe lo nu kanpe cu frica
+  .i ro cmima pe lo nu tcidu lo genvla cu frica ro drata cmima
+  .i `seen` cu ralte lo cmima poi pagre lo jvasni ne'i le ca selcmi po'o
+  .i ro selcmi cu vasru lo cmima ja'i le porsi pe lo nu jmina
+  .i `refusal` cu pilno le porsi ca lo nu cuxna Verified by `suites/test_grammar.nim`.
+  .i cipra ji'a fa `suites/test_corpus.nim`
+  .i ro le cipra cu jarco lo du'u le tricu .e le nu to'e curmi cu stodi
+  .i de'i `2026-11-19` lo na'e zmiku cipra cu facki lo du'u ro mulcmi poi `readTextMarked` cu zbasu
+      ke'a ne'i le selci'agri cu mintu lo mulcmi pe lo genturfa'i poi ralte ro cmima
+
+ni'o se to'e cuxna fa lo nu ro selcmi cu ralte ro cmima ta'i lo ci namcu
+  .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u jarco le jdima
+
+ni'o **lo cmima poi denpa pa jvasni ne'i pa selcmi cu porsi ta'i lo nu ro le cmima cu jarco le
+    bavla'i**
+  .i re liste po'o cu vasru le pamoi .e le romoi cmima pe ro selcmi .e ro jvasni
+  .i se ki'u bo ro jvasni cu cpacu no liste ne'i ro selcmi
+  .i lo nu mulno cu tcidu le porsi gi'e viska lo cmima poi jmina ca lo nu tcidu
+  .i ku'i no se tcidu cu nitcu le cmima poi jmina ca lo nu tcidu
+  .i ki'u bo ro cmima cu pagre ro jvasni poi ka'e binxo lo kutpoi ca lo nu kanpe
+  .i de'i `2026-11-19` lo na'e zmiku cipra cu facki di'u sepi'o lo samtci poi na tcidu le cmima ku'o
+      gi'e tcidu ro selci'a pe le selci'agri
+
+ni'o **pa namcu po'o cu sinxa ro cmima pe `seen` .e ro jvasni .e lo kraselcmi pe `Completions` .e ro
+    se cuxna**
+  .i le namcu cu selzba sepi'o lo nu pilji ki'u lo nu `shl` cu katna lo namcu ne'i `JavaScript`
+  .i `Completions` .e `Chart.choices` cu fendi lo cmima ja'i le fanmo selcmi
+  .i ne'i ro selcmi le namcu cu pilno `WIDTH_KEY` gi'e na pilno le klani be le pagbu
+  .i se ki'u bo ro namcu cu stali va'o lo nu le pagbu cu zenba
+      Verified by `suites/test_grammar.nim`.
+  .i ro namcu pe `keyCompleted` cu mleca li re te'a ci pa va'o lo nu lo te kancu be lo genvla pe ro
+      pagbu cu mleca `WIDTH_KEY`
+  .i `fillSets` cu cipra di'u
+  .i `Chart.open` cu pilno le klani be le pagbu
+  .i le gerna cu vasru ci ci re jvasni
+  .i se ki'u bo le namcu pe `Chart.open` cu mleca li re te'a ci pa va'o lo nu le selci'a poi
+      `readWhole` .a `islands` cu tcidu ke'a cu vasru su'e re mu vo re genvla
+  .i va'o lo nu le selci'a cu vasru za'u re mu vo re genvla kei `JavaScript` cu cusku lo nu dukse
+  .i de'i `2026-11-19` lo na'e zmiku cipra cu facki di'u sepi'o `node 22.23.4`
+
 ni'o se to'e cuxna fa lo nu tcidu ro cmima be le kraselcmi ca ro nu mulno kei noi lo temci pe ke'a
     zensmi lo pilji be lo klani be le selcmi be'o bei le klani
   .i lu lo namcu li'u cusku le re namcu
@@ -974,6 +1016,8 @@ ni'o jdima fa lo nu `CLL` dunda lo namcu ro le javni pe vo'a ja'i lo gerna pe `Y
   .i `CLL 1.1` dunda `EBNF` po'o
   .i lo selci'a poi lo genturfa'i poi na cuxna cu sisti ne'i ke'a cu ka'e se tcidu le vi genturfa'i
   .i de'i `2026-11-06` lo na'e zmiku cipra cu facki lo du'u `CLL 1.1` na vasru lo gerna pe `YACC`
+
+## ni'o ni'o ni'o lo nu cuxna lo tricu
 
 ni'o **le tricu cu du le cumtricu poi vasru lo mecraijva poi mulno pu ro genvla
   .i le pamoi gerna valsi cu krasi lo nu cuxna**
@@ -1006,6 +1050,15 @@ ni'o **lo panzi be lo basyjva cu no roi kuspe lo genvla poi le sinxa poi se lidn
   .i ne'i `CLL 18.16` le cipra cu tcidu `Example 18.111` noi selcri va'o lo nu lo selcu'a cu nitcu
       lo selku'e poi ca'o kalri
 
+ni'o **lo nu cuxna cu ralte ro se cuxna ne'i le selcu'a gi'e jarco lo du'u xu kau le se cuxna cu
+    zasti**
+  .i ro jvasni cu tcidu le se cuxna pe ro panzi be vo'a ne'i le selcu'a gi'e fukpi no liste
+  .i ne'i `C` lo cumselcu'a cu se muvgau
+  .i ne'i `JavaScript` lo nu cpacu pa cumselcu'a cu fukpi le liste pe le cumselcu'a ci roi
+  .i de'i `2026-11-19` lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript` poi
+      `Nim 2.4.0` cu zbasu ke'a
+  .i se to'e cuxna fa lo nu jarco le se cuxna kei noi fukpi re liste ca ro nu pilno le selcu'a
+
 ni'o **le romoi sinxa pe lo basyjva cu selfa'o le fanmo be lo selku'e be le basyjva**
   .i se ki'u bo lo nu cuxna cu pilno pa korbi po'o lo nu le romoi sinxa cu selfa'o
   .i se to'e cuxna fa lo nu pilno ro korbi ro sinxa kei noi lo jdima pe ke'a pu zensmi lo pilji be
@@ -1037,6 +1090,8 @@ ni'o se to'e cuxna fa lo nu zbasu poi ne'i ke'a ro panzi cu dunda lo jgena pe vo
   .i lo temci pe le nu zbasu cu pu zensmi lo pilji be lo klani be le selci'a be'o bei le klani
   .i ki'u bo ro ju'agri cu jmina li pa lo'o lo ni le tricu pe le javni pe li vo cu condi
 
+## ni'o ni'o ni'o lo pagbu .e lo nu to'e curmi
+
 ni'o **le gerna cu tcidu ro pagbu be lo selci'a gi'e zbasu lo tricu poi sruri le pagbu gi'e mintu le
     tricu pe lo nu tcidu le mulselci'a**
   .i va'o lo nu zo tu'e .e zo lu .e zo to na ca'o kalri kei ro valsi po'u zo ni'o zi'e poi na se
@@ -1050,6 +1105,11 @@ ni'o **le gerna cu tcidu ro pagbu be lo selci'a gi'e zbasu lo tricu poi sruri le
       Verified by `suites/test_grammar.nim`.
   .i le cipra cu jarco lo du'u lo se tcidu pe lo nu tcidu ro pagbu cu mintu lo se tcidu pe lo nu
       tcidu le mulselci'a ne'i ro selci'agri
+
+ni'o **`readParts` fukpi lo tricu pe ro pagbu**
+  .i ki'u bo `move` pe `get` cu zbasu lo samtci pe `JavaScript` noi fliba ca lo nu gunka
+  .i de'i `2026-11-19` lo na'e zmiku cipra cu facki di'u sepi'o `Chromium 153.0.8010.12`
+  .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u jarco le jdima
 
 ni'o **zo .i jorne lo jufra va'o lo nu lo me `jek` me'u .a lo me `joik` me'u .a lo tcita poi selfa'o
     lo cmavo be `BO` cu se lidne zo .i** to le javni pe li pare .e li paci toi
@@ -1858,17 +1918,16 @@ ni'o se to'e cuxna fa `-d:danger` noi vimcu ro cipra be lo korbi .e lo selku'e l
   .i le minde cu pilno le fanva poi pu fanva le jitro samtci
 
 ni'o **jdima fa lo nu lo dilcu be lo temci pe lo nu le samtci cu tcidu kei bei lo temci pe lo nu le
-    jbezba cu tcidu cu jibni li cize**
+    jbezba cu tcidu cu jibni li re ze**
   .i se ki'u bo `parseLojban` jgari le cilta pe lo pilno be vo'a ca lo nu tcidu
   .i lo tcidu be lo mivyselci'a cu tcidu ne'i lo gunka va'o lo nu le papri cu dunda pa gunka to le
       ckupaupau po'u lu lo jmive se ciska ne'i lo samtci pe lo papri li'u toi
 
-ni'o lo mijytei pe lo nu tcidu pa selci'a pe le mupli cu du `16 ms` fa'u `14 ms`
-  .i ne'i le jbezba lo mijytei cu du `0.45 ms` fa'u `0.35 ms`
-  .i lo rairclatei cu du `459 ms` fa'u `416 ms`
-  .i ne'i le jbezba lo rairclatei cu du `11 ms` fa'u `10 ms`
-  .i le pagbu poi selcme lu le selzba pe `JavaScript` li'u ne'i le ckupaupau poi selcme lu lo namcu
-      li'u cusku le tadji
+ni'o lo mijytei pe lo nu tcidu pa selci'a pe le mupli cu du `5.3 ms` fa'u `5.1 ms`
+  .i ne'i le jbezba lo mijytei cu du `0.19 ms` fa'u `0.19 ms`
+  .i lo rairclatei cu du `140 ms` fa'u `179 ms`
+  .i ne'i le jbezba lo rairclatei cu du `5.6 ms` fa'u `5.0 ms`
+  .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u cusku le tadji
 
 ni'o bu'u `ff4fb895` le minde cu ciska `1,143,359 bytes` gi'e cusku lo ni le datnyvei cu barda
   .i le samtci cu vasru ji'a lo tcidu be lo jmive se ciska to le ckupaupau po'u lu lo namcu pe lo
@@ -2074,7 +2133,8 @@ ni'o **le samtci cu dunda `parseLojbanToNif(text)` noi jarco le selci'a be fi `N
   .i le cipra cu cipra ro lerfu pe le selci'a be fi `NIF` be'o pe `CLL 6.98` gi'e cipra `null`
 
 ni'o **jdima fa lo nu le flalu cu raptcidu ro selci'a pe le selci'aste**
-  .i se ki'u bo ne'i lo cikryzba le cipra pe `NIF` nitcu lo temci poi jibni `12 s`
+  .i se ki'u bo ne'i lo cikryzba le cipra pe `NIF` nitcu lo temci poi jibni `4 s`
+  .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u jarco le temci
   .i lo nu ciska .e lo nu raptcidu .e lo nu rapyzba cu nitcu lo temci poi jibni `0.45 s`
   .i le pagbu poi selcme lu lo selci'a be fi `NIF` li'u ne'i le ckupaupau poi selcme lu lo namcu pe
       lo pagbu .e `NIF` li'u jarco lo termre
@@ -2350,7 +2410,8 @@ ni'o **jdima fa lo nu va'o lo nu le selci'a cu se to'e curmi kei le tcidu poi ja
 ni'o **jdima fa lo nu le cipra pe lo srera cu tcidu ro selci'a pe le selci'aste sepi'o le re tcidu
     gi'e tcidu ro pagbu be le selci'a**
   .i le flalu pe le gacri cu tcidu le pagbu
-  .i se ki'u bo ne'i lo cikryzba le cipra cu nitcu lo temci poi jibni `25 s`
+  .i se ki'u bo ne'i lo cikryzba le cipra cu nitcu lo temci poi jibni `12 s`
+  .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u jarco le temci
   .i le flalu pe `expects` tcidu revo nu sisti
   .i ro le pareva klesi zo'u le flalu cu tcidu ro nu sisti pa roi
   .i lu lo namcu pe lo srera sinxa .e lo jmive se ciska li'u jarco lo termre .e lo termre pe lo
@@ -2366,6 +2427,34 @@ ni'o **lo tcidu be lo mivyselci'a cu tcidu lo selci'a ro spisa
   .i ro pagbu poi se to'e curmi gi'e zvati lo jbini be re pagbu cu go'i ji'a
   .i le tarmi cu seljdi `Architect` bu'u `#859` Verified by `suites/test_live.nim`
   .i le cipra cu tcidu le mupli
+
+ni'o **lo tcidu be lo mivyselci'a cu ralte lo mulcmi pe le romoi pagbu poi se tcidu**
+  .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali
+  .i se ki'u bo ro spisa cu tisna lo selcmi po'o poi se lidne le pamoi genvla poi cenba
+      Verified by `suites/test_grammar.nim`.
+  .i le cipra cu tcidu ro cimoi selci'a pe le selci'agri ta'i lo nu le selci'a cu zenba gi'e cenba
+  .i ji'a le cipra cu vimcu pa genvla pe le midju be ro selci'a
+  .i le cipra cu karbi le se tcidu pe le mulcmi poi stali .e le se tcidu pe lo mulcmi poi cnino
+  .i ji'a le cipra cu karbi lo te kancu be lo selcmi poi `fillSets` cu tisna ke'a .e lo te kancu be
+      lo genvla poi na stali
+  .i ji'a le cipra pe `suites/test_live.nim` cu tcidu ta'i le mulcmi poi stali
+      Verified by `suites/test_live.nim`.
+  .i va'o lo nu `is_everywhere` cu cenba kei `fillSets` cu tisna ro selcmi
+      Verified by `suites/test_grammar.nim`.
+  .i ro se cuxna pe pa fanmo cu tcidu lo selcmi po'o poi na zmadu le fanmo
+  .i ji'a no se cuxna cu nitcu lo selku'e poi ca'o kalri to lu lo nu cuxna lo tricu li'u toi
+  .i se ki'u bo ro se cuxna pe lo selcmi poi stali cu stali
+  .i lo ni le mulcmi cu barda cu na se merli
+  .i `Architect` jdice di'u bu'u `#975`
+  .i ne'i le jbezba le mulcmi poi stali cu rinka lo nu `ReaderLive` cu pilno lo samtci minde poi
+      mleca fo `62.8%`
+  .i jdima fa lo nu lo nu tcidu le mulselci'a cu pilno lo samtci minde poi zmadu fo `2.7%` ne'i le
+      jbezba
+  .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u jarco le namcu
+
+ni'o se to'e cuxna fa lo nu ro spisa cu tisna ro selcmi pe le pagbu poi ca'o kalri
+  .i va'o lo nu ro valsi cu spisa kei ne'i le jbezba le se to'e cuxna cu pilno lo temci poi jibni lo
+      pilji be li re pi xa bei le temci pe le mulcmi poi stali
 
 ni'o **ca lo fanmo lo selci'a be fi `NIF` be'o pe lo selci'a poi se tcidu fi ro spisa cu mintu lo
     selci'a be fi `NIF` be'o pe lo pagbu be le selci'a poi se tcidu ta'i lo nu tcidu le mulselci'a**
@@ -2582,15 +2671,15 @@ ni'o **jdima fa lo nu lo stuzi poi ro nu tcidu cu tcidu ke'a zenba ca lo nu le s
 ni'o **jdima fa lo nu le cipra pe lo mivyselci'a cu tcidu ro remoi se ciska pe le selci'aste
   .i le selci'a cu selka'a fi lo spisa poi na zmadu `96 bytes`**
   .i lo selci'a poi vasru pa jufra cu selraptcidu ca ro spisa
+  .i ku'i le mulcmi pe le jufra cu stali to `fillSets` toi
   .i se ki'u bo va'o lo nu ro valsi cu spisa kei ne'i lo cikryzba lo jdima cu du lo temci poi jibni
-      `100 s` zi'e noi du lo pilji be li pavo bei lo temci pe lo nu tcidu le selci'aste ta'i lo
-      mulno
+      `7.6 s` zi'e noi du lo pilji be li ci bei lo temci pe lo nu tcidu le selci'aste ta'i lo mulno
 
 ni'o lo selci'a poi selzba cu selka'a fi lo spisa poi na zmadu `6 bytes`
   .i le flalu pe lo jdima cu tcidu ta'i lo nu ro valsi cu spisa
 
-ni'o ki'u la'e di'u ne'i lo cikryzba le cipra cu nitcu lo temci poi jibni `34 s`
-  .i lu lo namcu pe lo srera sinxa .e lo jmive se ciska li'u jarco lo termre
+ni'o ki'u la'e di'u ne'i lo cikryzba le cipra cu nitcu lo temci poi jibni `6.3 s`
+  .i lu lo namcu pe lo nu zbasu lo mulcmi .e lo tricu li'u jarco le temci
 
 ni'o **va'o lo nu lo spisa cu se tcidu fi ro jufra kei le spisa cu dunda lo selci'a be fi `NIF` be'o
     poi mintu le selci'a poi le spisa cu dunda va'o lo nu se tcidu ta'i lo mulno**
@@ -2612,10 +2701,11 @@ ni'o **lo cenba poi `combine` dunda ke'a mapti ro flalu pe lo cenba**
   .i le cipra cu cipra lo nu le selci'a be fi `NIF` cu stali .e lo nu le rebla cu zenba .e lo nu
       jorne ne'i le mitselci'a
 
-ni'o jdima fa lo nu ne'i lo cikryzba lo samtci poi pilno ro cipra cu nitcu lo zmatei poi jibni
-    `12 s`
-  .i le re flalu .e le cipra pe le jitro cu jmina le temci to lu lo namcu pe lo jmive se ciska ne'i
-      lo samtci pe lo papri li'u toi
+ni'o jdima fa lo nu ne'i lo cikryzba lo samtci poi pilno ro cipra cu nitcu lo zmatei
+  .i le re flalu .e le cipra pe le jitro cu jmina le temci
+  .i ca `ff4fb895` le zmatei cu jibni `12 s` to lu lo namcu pe lo jmive se ciska ne'i lo samtci pe
+      lo papri li'u toi
+  .i le zmatei pe le ca samtci cu na selmre
 
 ## ni'o ni'o ni'o lo nu jmina lo pagbu
 
@@ -3144,7 +3234,44 @@ ni'o ro lertai poi le papri cu cusku ke'a selci'a le crepu fi pa datnyvei pe vo'
     selcme lo snina'u pe ke'a
   .i `koch drive` cipra di'u de'i `2026-11-11` gi'e jarco no selfa'i
 
-ni'o **lo batke po'u `Merge` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
+ni'o **ro selci'a poi le papri cu ciska ke'a cu jboselci'a**
+  .i `Architect` cpedu di'u
+  .i le genturfa'i na tcidu lo namcu poi selci'a ta'i `0` bi'o `9`
+      Verified by `suites/test_stream.nim`.
+  .i se ki'u bo le linji cu cusku ro namcu ta'i lo cmavo pe `CLL 18.2`
+      Verified by `suites/test_draw.nim`.
+  .i ku'i ro tanxe cu ciska lo stuzi .e lo namcu ta'i `0` bi'o `9`
+  .i ki'u bo ro tanxe cu jarco su'e pa ze lerfu ne'i le pamoi linji be vo'a
+      Verified by `suites/test_draw.nim`.
+  .i se to'e cuxna fa lo nu ro tanxe cu cusku lo namcu ta'i lo cmavo pe `PA`
+  .i le se to'e cuxna cu katna le krasi be ro srera tanxe
+  .i lo barda lerfu cu sinxa lo nu basna to `CLL 3.9` toi
+  .i se ki'u bo le papri na binxo lo selci'a lo barda lerfu
+  .i lo cmene be lo javni pe `CLL 21.1` .e `NIF` cu stali ki'u lo nu ri cmene
+  .i lo cmene po'u `byte` cu cmene pa klesi pe `Nim` gi'e stali ji'a
+  .i jdima fa lo nu pa glico valsi cu zvati lo jboselci'a
+  .i de'i `2026-11-20` lo na'e zmiku cipra cu facki lo du'u ro selci'a poi pagbu le papri gi'e na
+      zvati lo tanxe cu jboselci'a kei ta'i lo nu le genturfa'i cu tcidu ro le selci'a ca lo nu le
+      papri cu tcidu ro mupli gi'e jmina
+  .i ro notci pe lo nu to'e curmi pe `nif_read.nim` cu jboselci'a ja'i `D1 a` pe `#987`
+      Verified by `suites/test_nif.nim`.
+  .i le notci cu cusku le stuzi pe le ralju bridi
+      Verified by `suites/test_nif.nim`.
+  .i ro notci pe lo nu to'e curmi pe `merge.nim` cu jboselci'a ji'a
+      Verified by `suites/test_merge.nim`.
+  .i lo kunti cmene .e lo cmene poi pa samtci pagbu na ka'e vasru ke'a cu se skicu ta'i lo
+      jboselci'a
+      Verified by `suites/test_merge.nim`.
+  .i le notci cu cusku le stuzi ta'i lo cmavo pe `PA` ki'u lo nu le papri cu jarco le notci ne'i pa
+      linji
+  .i lo kutle'u cu se cusku ta'i zo kutle'u
+  .i lo lerfu po'u `backtick` .e lo me `byte` me'u poi na se viska cu se cusku ta'i lo namcu pe vo'a
+      Verified by `suites/test_nif.nim`.
+  .i se to'e cuxna fa lo nu ro me `byte` me'u poi zvati le stuzi cu se sitna ta'i pa samtci pagbu
+  .i ki'u bo lo lerfu po'u `backtick` .e lo lerfu poi na se viska cu katna le samtci pagbu
+  .i jdima fa lo nu le notci na cusku lo klesi be lo kutle'u poi zvati le stuzi
+
+ni'o **lo batke po'u `jmina` jmina ro mulpau fo pa tricu poi lo nu tcidu le mulselci'a cu jarco
     ke'a**
   .i le batke cu jmina lo selci'a be fi `NIF` be'o poi ca zasti ku'o gi'e na jmina le rebla
   .i ki'u bo lo bavla'i cenba cu basti le rebla
@@ -3165,7 +3292,7 @@ ni'o le linji cu sinxa pa tricu va'o lo nu lo nu jmina cu jarco lo tricu pe lo n
   .i ta'i lo xance de'i `2026-11-11` lo se galfi samtci poi kancu le jgena ta'i lo nu li no cu krasi
       cu fliba le cipra
 
-ni'o le cipra cu jitro lo trotci ta'i le papri gi'e danre `Merge` ca ro mupli gi'e cipra lo du'u le
+ni'o le cipra cu jitro lo trotci ta'i le papri gi'e danre `jmina` ca ro mupli gi'e cipra lo du'u le
     pixra cu mintu lo selja'o be lo jbena nu jmina
   .i su'o mupli cu se jmina fo lo tricu pe lo nu tcidu le mulselci'a
   .i le mupli po'u `mi klama le .i ko` ralte le srera pe vo'a
@@ -4163,6 +4290,133 @@ ni'o lo namcu cu selmre de'i `2026-11-11` sepi'o le stofanva .e `Intel Xeon` noi
       zo su vasru no srejge
   .i le drata cu dunda panopaze porsi be lo pagbu
   .i socize le porsi cu se tcidu po'o ta'i le tarmi poi lo nu jmina cu dunda ke'a
+
+## ni'o ni'o ni'o lo namcu pe lo nu zbasu lo mulcmi .e lo tricu
+
+ni'o ro namcu cu selmre de'i `2026-11-19` sepi'o `Nim 2.4.0` .e `gcc 13.3.0` .e `Intel Xeon` noi
+    slilu `2.30 GHz` gi'e vasru vo pagbu poi skami
+  .i ne'i ro remei lo nu gunka cu dikni lo ka ce'u pilno ma kau kei li re
+
+- ny.mai **lo nu `readText` cu tcidu ro selci'a ta'i lo mulno**
+  .i pa samtci poi selzba sepi'o `-d:release` cu tcidu ro le pasovopa selci'a pe
+      `suites/corpora.nim` sepi'o `readText`
+  .i `callgrind` pe `valgrind 3.22.0` cu kancu `8,826,527,874 instructions` pe le samtci ca
+      `40bee07a` gi'e kancu `5,042,323,693 instructions` ca `70948d7a`
+  .i ne'i di'u `readText` cu pilno `8,802,461,641 instructions` .e `5,018,041,223 instructions`
+  .i le midju be lo so temci cu du `1,137 ms` .e `1,010 ms` ca `40bee07a` gi'e du `560 ms` .e
+      `555 ms` ca `70948d7a`
+- ny.mai **lo nu `ReaderLive` cu tcidu ro valsi pa roi**
+  .i le samtci cu selzba sepi'o `-d:release`
+  .i le midju be lo mu temci cu du `19,048 ms` .e `19,411 ms` ca `40bee07a` gi'e du `10,065 ms` .e
+      `10,005 ms` ca `70948d7a`
+- ny.mai **lo nu tcidu pa jufra pe le mupli pe `Tatoeba`**
+  .i ro samtci cu tcidu ro le recivo jufra pa roi gi'e ba bo tcidu ro jufra pa roi gi'e merli ro
+      temci be lo nu tcidu pa jufra
+  .i le samtci pe `JavaScript` cu selzba ta'i lo minde po'u `javascript` gi'e pilno `parseLojban`
+      sepi'o `node 22.23.4`
+  .i le jbezba cu selzba sepi'o `-d:release` gi'e pilno `readText`
+  .i ro samtci cu gunka re roi ca `70948d7a`
+  .i ne'i le samtci pe `JavaScript` lo mijytei cu du `5.269 ms` .e `5.071 ms`
+  .i ne'i le samtci pe `JavaScript` lo rairclatei cu du `140.0 ms` .e `179.2 ms`
+  .i ne'i le jbezba lo mijytei cu du `0.194 ms` .e `0.187 ms`
+  .i ne'i le jbezba lo rairclatei cu du `5.559 ms` .e `4.965 ms`
+- ny.mai **lo nu `parseLojbanToNif` cu tcidu ro selci'a ne'i `Chromium 153.0.8010.12`**
+  .i `Playwright 1.63.0` cu jitro `Chromium`
+  .i ro le temci cu temci pa nu gunka
+  .i le samtci pe lo minde po'u `javascript` cu tcidu ze'a `35.7 s` .e `35.3 s` ca `40bee07a` gi'e
+      tcidu ze'a `14.4 s` .e `13.5 s` ca `70948d7a`
+- ny.mai **lo jdima pe ro cuxna**
+  .i ro remei cu kancu le samtci pe `readText` ca pa cuxna .e le patfu be le cuxna
+  .i `426321ff` bi'o `1da9df3d` cu muvgau le tricu pe ro pagbu
+  .i le samtci cu pilno `8,826,527,874 instructions` ca `40bee07a` gi'e pilno
+      `8,778,808,051 instructions` ca `426321ff` noi muvgau le tricu
+  .i le samtci cu pilno `4,996,542,223 instructions` ca `1da9df3d` noi muvgau le tricu gi'e pilno
+      `5,042,323,693 instructions` ca `70948d7a` noi fukpi le tricu
+  .i le samtci cu pilno `8,778,808,051 instructions` ca `426321ff` gi'e pilno
+      `6,771,456,404 instructions` ca `23d039e8` noi ralte lo cmima po'o poi pagre lo jvasni
+  .i `sets.containsOrIncl` pe `fillSets` cu pilno `2,171,205,505 instructions` ca `40bee07a` gi'e
+      pilno `293,061,258 instructions` ca `70948d7a`
+  .i le samtci cu pilno `6,771,456,404 instructions` ca `23d039e8` gi'e pilno
+      `5,898,993,672 instructions` ca `4714f43c` noi fukpi no liste ca lo nu pilno le selcu'a gi'e
+      punji `rests` ne'i lo porsi poi le klani be ke'a cu stodi
+  .i le samtci cu pilno `5,898,993,672 instructions` ca `4714f43c` gi'e pilno
+      `5,447,545,469 instructions` ca `6ae76ec0` noi porsi lo cmima poi denpa pa jvasni
+  .i le samtci cu pilno `5,447,545,469 instructions` ca `6ae76ec0` gi'e pilno
+      `4,996,542,223 instructions` ca `1da9df3d` noi sinxa ro jvasni .e lo kraselcmi .e ro se cuxna
+      ta'i pa namcu
+- ny.mai **lo temci pe ro fancu po'o**
+  .i ro samtci cu pilno ro fancu sepi'o pa `proc` poi pa `{.volatile.}` cu ralte ke'a
+  .i ro fancu cu tcidu lo se pilno be vo'a pe lo nu `readTextMarked` cu tcidu le selci'agri
+  .i ro nu gunka cu dunda le midju be lo ze temci
+  .i le namcu poi di'e cu cmima le pamoi girzu be lo nu gunka
+  .i re drata girzu cu rapli le nu gunka
+  .i `fillSets` cu pilno `606.5 ms` .e `657.9 ms` ca `426321ff` gi'e pilno `236.4 ms` .e `232.9 ms`
+      ca `23d039e8`
+  .i `choose` cu pilno `411.9 ms` .e `412.0 ms` ca `23d039e8` gi'e pilno `336.9 ms` .e `375.2 ms` ca
+      `4714f43c`
+  .i `fillSets` cu pilno `243.7 ms` .e `233.5 ms` ca `4714f43c` gi'e pilno `171.1 ms` .e `194.0 ms`
+      ca `6ae76ec0`
+  .i `toCompletions` noi ca se cmene `fillCompletions` cu pilno `123.7 ms` .e `123.0 ms` ca
+      `6ae76ec0` gi'e pilno `118.0 ms` .e `117.3 ms` ca `1da9df3d`
+  .i `choose` cu pilno `347.5 ms` .e `344.0 ms` ca `6ae76ec0` gi'e pilno `305.7 ms` .e `306.4 ms` ca
+      `1da9df3d`
+  .i ne'i ro remei pe le pamoi girzu lo temci pe lo fancu poi le remei cu na cenba ke'a cu cenba
+      su'e `19.5%`
+  .i ne'i ro remei pe le re drata girzu le cenba cu du su'e `43.6%`
+  .i ne'i re girzu lo nu `fillSets` cu sutra ca `23d039e8` .e `6ae76ec0` cu zmadu le cenba ne'i ro
+      remei
+  .i lo nu `choose` cu sutra ca `4714f43c` cu na zmadu le cenba ne'i su'o remei pe ro girzu
+  .i lo nu `toCompletions` cu sutra ca `1da9df3d` cu na zmadu le cenba ne'i su'o remei pe ro girzu
+  .i lo nu `choose` cu sutra ca `1da9df3d` cu zmadu le cenba ne'i le pamoi girzu po'o
+  .i ku'i ne'i ro remei lo nu `choose` cu sutra ca `4714f43c` .e `1da9df3d` cu zmadu li no
+  .i `Architect` jdice bu'u `#975` lo du'u le cuxna pe `4714f43c` .e `1da9df3d` cu stali ki'u le
+      namcu pe lo nu kancu .e lo nu ro remei pe `choose` cu jarco lo nu sutra
+- ny.mai **lo mulcmi poi stali**
+  .i ro remei cu kancu `f29a1d18` .e `17bfe087` noi ralte le mulcmi
+  .i ro namcu pe le vi pagbu cu selmre de'i `2026-11-20`
+  .i ro jbezba cu selzba sepi'o `-d:release`
+  .i `ReaderLive` cu tcidu ro valsi pa roi ne'i ro selci'a ze'a `9,370 ms` .e `9,438 ms` ca
+      `f29a1d18` gi'e tcidu ze'a `3,638 ms` .e `3,576 ms` ca `17bfe087`
+  .i ro le temci cu midju lo mu temci
+  .i `callgrind` pe `valgrind 3.22.0` cu kancu lo samtci minde pe pa nu gunka be le samtci
+  .i le samtci cu pilno `83,692,770,501 instructions` ca `f29a1d18` gi'e pilno
+      `31,157,907,256 instructions` ca `17bfe087`
+  .i `readText` cu tcidu ro selci'a ta'i lo mulno ze'a `575.3 ms` .e `545.9 ms` ca `f29a1d18` gi'e
+      tcidu ze'a `583.7 ms` .e `570.6 ms` ca `17bfe087`
+  .i ro le temci cu midju lo so temci
+  .i le samtci cu pilno `5,060,390,829 instructions` ca `f29a1d18` gi'e pilno
+      `5,196,807,403 instructions` ca `17bfe087`
+  .i `Playwright 1.63.0` cu jitro `Chromium 153.0.8010.12` gi'e pilno le samtci pe lo minde po'u
+      `javascript`
+  .i `parseLojbanLive` cu tcidu ro valsi pa roi ne'i ro panomoi se ciska ze'a `24,942 ms` .e
+      `24,994 ms` ca `f29a1d18` gi'e tcidu ze'a `13,029 ms` .e `12,382 ms` ca `17bfe087`
+  .i `parseLojbanToNif` cu tcidu ro selci'a ze'a `12,735 ms` .e `12,230 ms` ca `f29a1d18` gi'e
+      tcidu ze'a `12,194 ms` .e `11,798 ms` ca `17bfe087`
+  .i ro le temci pe `Chromium` cu temci pa nu gunka
+- ny.mai **lo cipra ne'i lo cikryzba**
+  .i le cikryzba cu selzba sepi'o `-d:testing`
+  .i ro temci cu temci pa nu gunka
+  .i le cipra pe `suites/test_nif.nim` poi raptcidu ro tricu pe le selci'agri cu gunka ze'a `5.7 s`
+      .e `5.8 s` ca `40bee07a` gi'e gunka ze'a `4.1 s` .e `3.0 s` ca `774c9ffb`
+  .i le cipra pe `suites/test_live.nim` poi tcidu ro remoi se ciska ta'i lo spisa cu gunka ze'a
+      `16.2 s` .e `16.4 s` ca `40bee07a` gi'e gunka ze'a `8.5 s` .e `7.7 s` ca `774c9ffb`
+  .i `suites/test_marks.nim` cu gunka ze'a `23.2 s` .e `22.5 s` ca `40bee07a` gi'e gunka ze'a
+      `11.5 s` .e `12.6 s` ca `774c9ffb`
+  .i pa samtci poi selzba sepi'o `-d:testing` cu tcidu ro le pasovopa selci'a ta'i lo mulno ze'a
+      `5.1 s` .e `5.8 s` ca `40bee07a` gi'e tcidu ze'a `2.6 s` .e `2.7 s` ca `774c9ffb`
+  .i le samtci cu tcidu ro valsi pa roi ne'i ro remoi se ciska ze'a `40.9 s` .e `43.7 s` ca
+      `40bee07a` gi'e tcidu ze'a `20.7 s` .e `20.4 s` ca `774c9ffb`
+  .i `774c9ffb` .e `f29a1d18` cu ponse lo mintu samtci
+  .i le namcu pe `f29a1d18` .e `17bfe087` cu selmre de'i `2026-11-20`
+  .i ro le temci pe ri cu vasru lo nu cfari le samtci
+  .i le cipra pe `suites/test_live.nim` poi tcidu ro remoi se ciska ta'i lo spisa cu gunka ze'a
+      `7.4 s` .e `7.6 s` ca `f29a1d18` gi'e gunka ze'a `6.4 s` .e `6.3 s` ca `17bfe087`
+  .i le samtci cu tcidu ro selci'a ta'i lo mulno ze'a `2.57 s` .e `2.62 s` ca `f29a1d18` gi'e tcidu
+      ze'a `2.66 s` .e `2.62 s` ca `17bfe087`
+  .i le samtci cu tcidu ro valsi pa roi ne'i ro remoi se ciska ze'a `19.0 s` .e `18.6 s` ca
+      `f29a1d18` gi'e tcidu ze'a `7.6 s` .e `7.5 s` ca `17bfe087`
+  .i le flalu pe lo mulcmi poi stali pe `suites/test_grammar.nim` cu gunka ze'a `10.5 s` .e
+      `10.6 s` ca `17bfe087`
 
 ## Open questions
 

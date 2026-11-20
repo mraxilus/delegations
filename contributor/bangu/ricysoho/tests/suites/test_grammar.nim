@@ -28,7 +28,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[options, sequtils, strutils, unittest]
+import std/[options, random, sequtils, strutils, unittest]
 
 import ../../src/ricysoho/[grammar {.all.}, prose, selmaho, stream]
 import ../articles_wikipedia/articles
@@ -157,6 +157,14 @@ const
     ##   .i le selci'a cu du lo selci'a poi pagbu le selci'agri gi'e vasru pa cmima be `CUTTING`
     ##       ku'o .e lo selci'a pe le vi datnyvei ge'u .e le selci'a poi jorne lo ju'agri pe pa
     ##       prosa to `Article IX.3` toi
+  COUNT_KEPT_LEAST = 500
+    ## lo dzijimte be lo te kancu be lo se ciska poi le flalu pe lo mulcmi poi stali cu tcidu ke'a
+    ##   .i ro le selci'a cu cimoi lo selci'a gi'e vasru su'o ci genvla to `Article IX.3` toi
+  STRIDE_KEPT = 3
+    ## lo te kancu be lo selci'a poi le flalu pe lo mulcmi poi stali cu tcidu pa ke'a
+    ##   .i le flalu cu tcidu ro cimoi selci'a ki'u lo jdima be le cipra
+  SEED_KEPT = 975
+    ## lo tsiju be lo cunso stuzi poi le flalu pe lo mulcmi poi stali cu vimcu lo genvla bu'u ke'a
   COUNT_PARTS_JOINED = 64
     ## lo te kancu be lo pagbu poi le nu tcidu ro pagbu cu katna le se ciska poi jorne lo ju'agri pe
     ##     pa prosa ku'o fi ke'a
@@ -512,6 +520,60 @@ suite "Internal: Grammar":
     let terminals = TEXTS_PASSES[1].terminalsRead.get
     # zo tu'e cu ca'o kalri
     check terminals.toParts(0, terminals.len) == (@[0 .. 1, 2 .. 3], 4)  # `statement-3`
+
+
+  test "Chart filled from kept columns is chart filled anew, as words join and change":
+    var texts = @TEXTS_PASSES
+    for example in EXAMPLES_CLL: texts.add example.rows.join(" ")
+    for sentence in SENTENCES_TATOEBA: texts.add sentence.text
+    var
+      whole, everywhere: Chart  # le mulcmi poi stali ca ro nu tcidu
+      previous: seq[Terminal]  # le genvla pe le pu nu tcidu
+      rng = initRand(SEED_KEPT)
+      count = 0
+    for k, text in texts:
+      if k mod STRIDE_KEPT != 0: continue
+      let terminals = text.terminalsRead
+      if terminals.isNone or terminals.get.len < 3: continue
+      let
+        read = terminals.get
+        cut = rng.rand(1 .. read.len - 2)  # le stuzi be le genvla poi se vimcu
+        steps = [
+          read[0 ..< 1], read[0 ..< read.len div 2], read[0 ..< read.len - 1], read,
+          read[0 ..< read.len - 2] & read[^1], read[0 ..< cut] & read[cut + 1 .. ^1], read,
+        ]
+          ## le selci'a cu zenba gi'e ba bo cenba lo genvla poi lidne le romoi gi'e ba bo vimcu
+          ##     lo genvla poi zvati le midju
+      for step in steps:
+        var
+          same = 0  # lo te kancu be lo genvla poi stali
+          whole_fresh, everywhere_fresh: Chart
+        while same < min(previous.len, step.len) and previous[same] == step[same]: inc same
+        # ro spisa cu tisna lo selcmi po'o poi se lidne le pamoi genvla poi cenba
+        let filled = if previous.len == 0: step.len + 1 else: step.len - same
+        check whole.fillSets(step, is_everywhere = false) == filled
+        check everywhere.fillSets(step, is_everywhere = true) == filled
+        check whole.readWhole(step).shape == whole_fresh.readWhole(step).shape
+        let islands = everywhere.islands(step, 0, step.len).mapIt(it.shape)
+        check islands == everywhere_fresh.islands(step, 0, step.len).mapIt(it.shape)
+        previous = step
+      inc count
+    check count >= COUNT_KEPT_LEAST  # `Article IX.3`
+
+
+  test "Chart filled in one mode and then in the other is chart filled anew":
+    # lo catlu be le mulcmi poi stali cu facki le srera
+    #   .i le pamoi tadji cu tisna le mulcmi
+    #   .i ba bo le drata tadji cu tisna le mulcmi
+    #   .i ku'i le mulcmi cu ralte lo selcmi pe le pamoi tadji
+    for text in TEXTS_PASSES:
+      let read = text.terminalsRead.get
+      var whole_first, islands_first, whole_fresh, everywhere_fresh: Chart
+      discard whole_first.readWhole(read)
+      let islands = whole_first.islands(read, 0, read.len).mapIt(it.shape)
+      check islands == everywhere_fresh.islands(read, 0, read.len).mapIt(it.shape)
+      discard islands_first.islands(read, 0, read.len)
+      check islands_first.readWhole(read).shape == whole_fresh.readWhole(read).shape
 
 
   test "Passes read text of article joined part by part, its open tu'e too":

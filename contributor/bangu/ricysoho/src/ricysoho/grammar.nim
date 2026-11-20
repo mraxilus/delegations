@@ -11,6 +11,7 @@
 ##   | `ReadingGrammar`     | lo tricu pe le selci'a .a lo stistu .ebo lo stijva       |
 ##   | `readGrammar`        | tcidu lo genvla ja'i le gerna pe `CLL 21.1`                    |
 ##   | `readGrammarMarked`  | tcidu lo genvla gi'e zbasu lo tricu poi sinxa lo stistu   |
+##   | `ChartsKept`         | lo mulcmi pe le romoi pagbu poi se tcidu to `live.nim` toi          |
 ##   | `LUT_CHAIN_BY_ENDS`  | lo javni poi jbini re javni                                         |
 ##   |                      | .i ro jgena cu vasru le bavla'i po'o                                |
 ##   | `LUT_NUMBER_BY_RULE` | lo namcu pe ro javni pe `CLL 21.1` ja'i lo cmene be le javni        |
@@ -140,6 +141,11 @@
 ##   .i ba bo le gacri cu vasru lo mleca traji pagbu to `islands` toi
 ##   .i va'o lo nu ro selcmi cu kanpe ro javni poi selcme kei le selcmi cu facki ro ricpau
 ##   .i lo du'u le selci'a pu na'e mapti lo javni bu'u ma kau na vajni
+##
+## ni'o `ChartsKept` cu ralte lo mulcmi pe le romoi pagbu poi se tcidu
+##   .i ro spisa be lo mivyselci'a cu tisna lo selcmi po'o poi se lidne le pamoi genvla poi cenba
+##   .i jdima fa lo nu le mulcmi cu stali ca lo nu le samtci cu denpa lo bavla'i spisa
+##   .i `PROVENANCE.md` cu jarco le jdima .e le namcu
 ##
 ## ni'o jdima fa lo nu le nu zbasu lo srejge pe pa mulselci'a cu tcidu le mulselci'a pa roi
 ##   .i ca lo nu `readGrammar` to'e curmi kei `readGrammar` tcidu le mulselci'a pa roi
@@ -750,8 +756,59 @@ const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
 
 #[ ni'o ni'o ni'o lo nu tcidu ]#
 
-func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[Item]] =
-  ## tisna lo selcmi pe `Earley`
+const WIDTH_BODY = GRAMMAR_EBNF.productions.mapIt(it.body.len).max + 1
+  ## lo namcu poi zmadu ro stuzi pe lo nu tcidu ne'i ro basyjva
+
+const WIDTH_KEY = high(int32) div GRAMMAR_EBNF.heads.len
+  ## lo namcu poi zmadu lo krasi be ro pagbu
+  ##   .i ro lo namcu pe `keyCompleted` cu mleca li re te'a ci pa
+  ##   .i `fillSets` cu cipra lo du'u lo te kancu be lo genvla pe ro pagbu cu mleca le namcu
+
+
+type
+  Completions = seq[Table[int, seq[int]]]
+    ## lo basyjva poi mulno ne'i ro selcmi ku'o ja'i lo jvasni .e lo kraselcmi to `keyCompleted` toi
+
+  Choice = object
+    ## le cumtricu pe pa jvasni bu'u pa selku'e
+    ##   .i le tricu cu cuxna le cumtricu
+    closures: seq[int]
+      ## lo te kancu be lo javni sinxa pe le cumki tricu zi'e poi mulno bu'u ro stuzi pe le se kuspe
+      ##   .i le pamoi te kancu cu ckini le krasi be le selku'e
+      ##   .i lo genturfa'i poi tcidu ro valsi pu lo bavla'i valsi cu mulgau le jvasni bu'u le stuzi
+      ##       pu lo nu tcidu le genvla pe le stuzi
+    production: int
+    bounds: seq[int]  ## lo stuzi be lo fanmo be ro sinxa pe le basyjva
+
+  Chart = object
+    ## lo mulcmi pe pa pagbu ge'u .e lo selcu'a poi selfa'i ca lo nu cuxna le tricu
+    ##   .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali to `fillSets` toi
+    terminals: seq[Terminal]  ## lo genvla poi le selcmi cu tcidu ke'a
+    is_everywhere: bool  ## le tadji pe le romoi nu tisna to `fillSets` toi
+    sets: seq[seq[Item]]  ## le selcmi pe `Earley`
+    firsts: seq[int]  ## le pamoi cmima poi denpa ro jvasni ne'i ro selcmi
+    lasts: seq[int]  ## le romoi cmima poi denpa ro jvasni ne'i ro selcmi
+    nexts: seq[seq[int]]  ## le bavla'i cmima poi denpa le jvasni pe ro cmima ne'i ro selcmi
+    predicted: seq[int]  ## lo selcmi poi le jvasni pu se kanpe ne'i ke'a
+    completions: Completions  ## to `fillCompletions` toi
+    count_completed: int  ## lo te kancu be lo selcmi poi `completions` cu fendi ke'a
+    choices: seq[Table[int, Option[Choice]]]
+      ## lo selcu'a ja'i le fanmo .e lo jvasni .e lo krasi to `keyCompleted` toi
+    open: HashSet[int]
+      ## lo selku'e poi ca'o selcu'a gi'e ka'e selrapcpa ki'u lo nu pa jvasni cu xruti vo'a
+
+  ChartsKept* = object
+    ## lo mulcmi pe le romoi pagbu poi se tcidu
+    ##   .i ro selcmi pe le mulcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali
+    ##   .i se ki'u bo lo tcidu be lo mivyselci'a cu tisna lo selcmi po'o pe lo valsi poi cnino
+    ##   .i `ReaderLive` pe `live.nim` cu ralte ke'a gi'e benji ke'a fi `readTextParts` pe
+    ##       `prose.nim`
+    whole: Chart  ## le mulcmi pe `readWhole`
+    everywhere: Chart  ## le mulcmi pe `islands`
+
+
+func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: bool): int =
+  ## tisna lo selcmi pe `Earley` gi'e dunda lo te kancu be lo selcmi poi le fancu cu tisna ke'a
   ##   .i le selcmi pe `i` vasru lo cmima poi su'o cumtricu cu klama ke'a ba lo nu tcidu lo genvla
   ##       noi lo te kancu be ke'a cu du `i`
   ##   .i ca lo nu kanpe pa jvasni poi ka'e binxo lo kutpoi kei le cmima cu pagre le jvasni
@@ -769,46 +826,128 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
   ##       jvasni
   ##   .i ro selcmi cu kanpe ro jvasni pa roi
   ##
-  ## ni'o ne'i ro selcmi `waiting` .e `predicted` vasru lo pagbu
-  ##   .i ro jvasni cu ponse pa le pagbu
+  ## ni'o lo cmima poi denpa pa jvasni ne'i pa selcmi cu porsi ta'i lo nu ro le cmima cu jarco le
+  ##     bavla'i to `firsts` .e `lasts` .e `nexts` toi
+  ##   .i lo namcu poi sinxa ro cmima cu zmadu le stuna'u pe le cmima ne'i le selcmi fo li pa
+  ##   .i se ki'u bo li no cu sinxa lo nu no cmima cu zasti
+  ##   .i le porsi cu jmina lo cmima ja'i le porsi pe lo nu jmina
   ##   .i lo te kancu be lo cmima cu zensmi lo ni le selci'a cu clani
   ##   .i ro cmima cu cpacu lo ninstu
+  ##
+  ## ni'o `predicted` cu rinka lo nu ro jvasni cu se kanpe pa roi ne'i ro selcmi
+  ##   .i se ki'u bo ro cmima pe lo nu kanpe cu frica
+  ##   .i ro cmima pe lo nu tcidu lo genvla cu frica ki'u lo nu ro cmima pe le pu selcmi cu frica
+  ##   .i lo cmima pe lo nu tcidu lo genvla cu frica ro cmima poi pagre lo jvasni
+  ##   .i se ki'u bo `seen` cu ralte lo cmima po'o poi pagre lo jvasni ne'i le ca selcmi
+  ##   .i ro selcmi cu vasru lo cmima ja'i le porsi pe lo nu jmina
+  ##   .i `refusal` cu pilno le porsi ca lo nu cuxna
+  ##
+  ## ni'o pa namcu po'o cu sinxa pa cmima ne'i `seen` gi'e selzba sepi'o lo nu pilji
+  ##   .i ki'u bo `shl` cu katna lo namcu ne'i `JavaScript`
   ##
   ## ni'o lo porsi be lo sinxa pe lo basyjva cu selcme pa `template`
   ##   .i `let` na selpli ki'u lo nu `let` fukpi le porsi ca ro cmima
   ##   .i lo na'e zmiku cipra cu tcidu lo samtci pe `C` zi'e poi le fanva cu ciska ke'a
   ##   .i lo cmima cu vasru ci namcu gi'e selfu'i ta'i lo nu fukpi le ci namcu
+  ##
+  ## ni'o le fancu cu ralte ro selcmi pe `chart` poi ro genvla poi lidne ke'a cu mintu lo genvla pe
+  ##     `terminals`
+  ##   .i ki'u bo ro selcmi cu nitcu lo genvla po'o poi lidne ke'a
+  ##   .i ba bo le fancu cu tcidu le genvla pe le romoi selcmi poi stali gi'e tisna ro selcmi poi se
+  ##       lidne ri
+  ##   .i ji'a le fancu cu vimcu ro cmima pe `completions` .e `choices` poi le selcmi pe ke'a cu
+  ##       cnino
+  ##   .i va'o lo nu `is_everywhere` cu cenba kei le fancu cu tisna ro selcmi
+  ##
+  ## ni'o lo temci pe lo nu karbi lo genvla cu zensmi lo te kancu be lo genvla poi stali
+  ##   .i lo temci pe lo nu fukpi lo genvla cu zensmi lo te kancu be lo genvla poi cnino
+  ##   .i `setLen` cu cpacu lo ninstu va'o lo nu le mulcmi cu zenba po'o
+  ##   .i le nu tcidu le romoi selcmi poi stali cu tcidu ro cmima pe ri pa roi
+  ##   .i lo na'e zmiku cipra cu tcidu lo samtci pe `C` .e `JavaScript` pe le vi pagbu
+  ##   .i ne'i `JavaScript` lo nu tcidu pa cmima cu fukpi le ci namcu pe ri
+
+  template key(item: Item): int =
+    ## lo namcu poi sinxa le cmima ne'i le ca selcmi
+    (item.production * WIDTH_BODY + item.dot) * (terminals.len + 1) + item.origin
 
   template add(i: int, item: Item) =
-    ## jmina le cmima le selcmi pe `i` pa roi
+    ## jmina le cmima le selcmi pe `i`
     ##   .i le selcmi cu fendi le cmima ja'i le jvasni poi le cmima cu denpa ke'a
     let added: Item = item
-    if not seen[i].containsOrIncl(added):
-      template bodyAdded: untyped = GRAMMAR_EBNF.productions[added.production].body
-        ## sinxa le porsi be lo sinxa pe le basyjva pe le selmincmi
-      if added.dot < bodyAdded.len and not bodyAdded[added.dot].is_terminal:
-        waiting[i][bodyAdded[added.dot].code].add result[i].len
-      result[i].add added
+    template bodyAdded: untyped = GRAMMAR_EBNF.productions[added.production].body
+      ## sinxa le porsi be lo sinxa pe le basyjva pe le selmincmi
+    chart.sets[i].add added
+    chart.nexts[i].add 0
+    if added.dot < bodyAdded.len and not bodyAdded[added.dot].is_terminal:
+      let slot = i * count_nonterminals + bodyAdded[added.dot].code
+      if chart.lasts[slot] == 0: chart.firsts[slot] = chart.sets[i].len
+      else: chart.nexts[i][chart.lasts[slot] - 1] = chart.sets[i].len
+      chart.lasts[slot] = chart.sets[i].len
 
-  result = newSeq[seq[Item]](terminals.len + 1)
+  template advance(i: int, item: Item) =
+    ## jmina le cmima poi pagre lo jvasni le selcmi pe `i` va'o lo nu le cmima cu na pu zvati ri
+    let advanced: Item = item
+    if not seen.containsOrIncl(advanced.key): add(i, advanced)
+
+  doAssert terminals.len < WIDTH_KEY, "Part should hold fewer terminals than WIDTH_KEY."
   let count_nonterminals = GRAMMAR_EBNF.heads.len
   var
-    seen = newSeq[HashSet[Item]](terminals.len + 1)
-    waiting = newSeq[seq[seq[int]]](terminals.len + 1)  # lo cmima ja'i lo jvasni poi selde'a
-    predicted = newSeq[seq[bool]](terminals.len + 1)
-  for i in 0..terminals.len:
-    waiting[i] = newSeq[seq[int]](count_nonterminals)
-    predicted[i] = newSeq[bool](count_nonterminals)
-  for p in GRAMMAR_EBNF.heads[GRAMMAR_EBNF.start]: add(0, (p, 0, 0))
-  for i in 0..terminals.len:
+    same = 0  # lo te kancu be lo genvla poi stali
+    first = 0  # le pamoi selcmi poi le fancu cu tisna ke'a
+    seen = initHashSet[int]()  # lo cmima poi pagre lo jvasni ne'i le ca selcmi
+  if chart.sets.len > 0 and chart.is_everywhere == is_everywhere:
+    let most = min(chart.terminals.len, terminals.len)
+    while same < most and chart.terminals[same] == terminals[same]: inc same
+    first = same + 1
+  result = terminals.len + 1 - first
+  chart.is_everywhere = is_everywhere
+  chart.sets.setLen(first)
+  chart.sets.setLen(terminals.len + 1)
+  chart.firsts.setLen(first * count_nonterminals)
+  chart.firsts.setLen((terminals.len + 1) * count_nonterminals)
+  chart.lasts.setLen(first * count_nonterminals)
+  chart.lasts.setLen((terminals.len + 1) * count_nonterminals)
+  chart.nexts.setLen(first)
+  chart.nexts.setLen(terminals.len + 1)
+  chart.count_completed = min(chart.count_completed, first)
+  chart.completions.setLen(chart.count_completed)
+  chart.choices.setLen(min(chart.choices.len, first))
+  chart.choices.setLen(terminals.len + 1)
+  chart.terminals.setLen(same)
+  for i in same ..< terminals.len: chart.terminals.add terminals[i]
+  if first == 0:
+    chart.predicted = newSeqWith(count_nonterminals, -1)
+    chart.predicted[GRAMMAR_EBNF.start] = 0
+    for p in GRAMMAR_EBNF.heads[GRAMMAR_EBNF.start]: add(0, (p, 0, 0))
+  else:
+    # le romoi selcmi poi stali cu tcidu le genvla poi se lidne ri
+    #   .i lo cmima poi se kanpe ne'i lo selcmi poi cnino cu na stali
+    for head in 0 ..< count_nonterminals:
+      if chart.predicted[head] >= first: chart.predicted[head] = -1
+    if same < terminals.len:
+      for k in 0 ..< chart.sets[same].len:
+        let item = chart.sets[same][k]
+        template body: untyped = GRAMMAR_EBNF.productions[item.production].body
+          ## sinxa le porsi be lo sinxa pe le basyjva pe le cmima
+        let is_scanned = item.dot < body.len and body[item.dot].is_terminal and
+          int(terminals[same]) == body[item.dot].code
+        if is_scanned: add(same + 1, (item.production, item.dot + 1, item.origin))
+  for i in first .. terminals.len:
+    # ro cmima pe le selcmi cu se tcidu pa roi
+    #   .i `firsts` .e `lasts` .e `predicted` .e `seen` cu cpacu no ninstu ne'i le selcmi va'o lo nu
+    #       `seen` cu na zenba
+    #   .i `nexts` .e le liste be lo cmima cu zenba ta'i lo cmima
+    #   .i lo temci pe `seen.clear` cu zensmi lo ni `seen` cu barda
+    #   .i lo temci pe ro nu mulno cu zensmi lo klani be le porsi poi le nu mulno cu tcidu ke'a
+    seen.clear
     if is_everywhere:
       for head in 0 ..< count_nonterminals:
-        if GRAMMAR_EBNF.numbers[head].isNone or predicted[i][head]: continue
-        predicted[i][head] = true
+        if GRAMMAR_EBNF.numbers[head].isNone or chart.predicted[head] == i: continue
+        chart.predicted[head] = i
         for p in GRAMMAR_EBNF.heads[head]: add(i, (p, 0, i))
     var k = 0
-    while k < result[i].len:
-      let item = result[i][k]
+    while k < chart.sets[i].len:
+      let item = chart.sets[i][k]
       template body: untyped = GRAMMAR_EBNF.productions[item.production].body
         ## sinxa le porsi be lo sinxa pe le basyjva pe le cmima
       inc k
@@ -820,11 +959,11 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
       #   .i se ki'u bo le nu tcidu cu pilno lo stuna'u
       if item.dot == body.len:
         let head = GRAMMAR_EBNF.productions[item.production].head
-        var j = 0
-        while j < waiting[item.origin][head].len:
-          let waiter = result[item.origin][waiting[item.origin][head][j]]
-          add(i, (waiter.production, waiter.dot + 1, waiter.origin))
-          inc j
+        var at = chart.firsts[item.origin * count_nonterminals + head]
+        while at != 0:
+          let waiter = chart.sets[item.origin][at - 1]
+          advance(i, (waiter.production, waiter.dot + 1, waiter.origin))
+          at = chart.nexts[item.origin][at - 1]
         continue
 
       # tcidu lo genvla gi'a kanpe lo jvasni
@@ -833,10 +972,11 @@ func fillSets(terminals: openArray[Terminal], is_everywhere = false): seq[seq[It
         if i < terminals.len and int(terminals[i]) == symbol.code:
           add(i + 1, (item.production, item.dot + 1, item.origin))
         continue
-      if not predicted[i][symbol.code]:
-        predicted[i][symbol.code] = true
+      if chart.predicted[symbol.code] != i:
+        chart.predicted[symbol.code] = i
         for p in GRAMMAR_EBNF.heads[symbol.code]: add(i, (p, 0, i))
-      if GRAMMAR_EBNF.nullable[symbol.code]: add(i, (item.production, item.dot + 1, item.origin))
+      if GRAMMAR_EBNF.nullable[symbol.code]:
+        advance(i, (item.production, item.dot + 1, item.origin))
 
 
 func toRule(head: int): tuple[name: string, number: int] =
@@ -884,41 +1024,34 @@ func refusal(sets: openArray[seq[Item]]): ReadingGrammar =
   )
 
 
-type
-  Completions = seq[Table[(int, int), seq[int]]]
-    ## lo basyjva poi mulno ne'i ro selcmi ku'o ja'i lo jvasni .e lo kraselcmi
-
-  Choice = object
-    ## le cumtricu pe pa jvasni bu'u pa selku'e
-    ##   .i le tricu cu cuxna le cumtricu
-    closures: seq[int]
-      ## lo te kancu be lo javni sinxa pe le cumki tricu zi'e poi mulno bu'u ro stuzi pe le se kuspe
-      ##   .i le pamoi te kancu cu ckini le krasi be le selku'e
-      ##   .i lo genturfa'i poi tcidu ro valsi pu lo bavla'i valsi cu mulgau le jvasni bu'u le stuzi
-      ##       pu lo nu tcidu le genvla pe le stuzi
-    production: int
-    bounds: seq[int]  ## lo stuzi be lo fanmo be ro sinxa pe le basyjva
-
-  Chart = object
-    ## lo mulcmi pe le selci'a ge'u .e lo selcu'a poi selfa'i ca lo nu cuxna le tricu
-    completions: Completions
-    terminals: seq[Terminal]
-    choices: Table[(int, int, int), Option[Choice]]
-      ## lo selcu'a ja'i lo jvasni .e lo krasi .e lo fanmo
-    open: HashSet[(int, int, int)]
-      ## lo selku'e poi ca'o selcu'a gi'e ka'e selrapcpa ki'u lo nu pa jvasni cu xruti vo'a
+func keyCompleted(head, start: int): int =
+  ## lo namcu poi sinxa lo jvasni .e lo kraselcmi ne'i pa selcmi pe `Completions` .e `Chart.choices`
+  ##   .i pa namcu po'o cu sinxa le re namcu
+  ##   .i le namcu cu stali va'o lo nu lo selcmi cu zenba
+  ##   .i `PROVENANCE.md` cu jarco le krinu .e le namcu
+  head * WIDTH_KEY + start
 
 
-func toCompletions(sets: openArray[seq[Item]]): Completions =
-  ## fendi ro mulcmi ja'i le selcmi poi le cmima cu fanmo ne'i ke'a ku'o .e le jvasni .e le selcmi
-  ##     poi le cmima cu cfari ne'i ke'a
-  result = newSeq[Table[(int, int), seq[int]]](sets.len)
-  for i, items in sets:
-    for item in items:
+func keyChosen(width, head, start, finish: int): int =
+  ## lo namcu poi sinxa lo jvasni .e lo krasi .e lo fanmo ne'i `Chart.open`
+  ##   .i le gerna cu vasru ci ci re jvasni
+  ##   .i le namcu cu mleca li re te'a ci pa va'o lo nu `width` cu na zmadu li re mu vo ci
+  ##   .i va'o lo nu `width` cu zmadu li re mu vo ci kei `JavaScript` cu cusku lo nu dukse
+  (head * width + start) * width + finish
+
+
+func fillCompletions(chart: var Chart) =
+  ## fendi ro mulcmi pe lo selcmi poi `completions` na pu fendi ke'a ku'o ja'i le selcmi poi le
+  ##     cmima cu fanmo ne'i ke'a ku'o .e le jvasni .e le selcmi poi le cmima cu cfari ne'i ke'a
+  chart.completions.setLen(chart.sets.len)
+  for i in chart.count_completed ..< chart.sets.len:
+    for item in chart.sets[i]:
       let production = GRAMMAR_EBNF.productions[item.production]
       if item.dot != production.body.len: continue
-      result[i].mgetOrPut((production.head, item.origin), @[]).add item.production
-    for key in result[i].keys.toSeq: result[i][key].sort
+      let key = keyCompleted(production.head, item.origin)
+      chart.completions[i].mgetOrPut(key, @[]).add item.production
+    for key in chart.completions[i].keys.toSeq: chart.completions[i][key].sort
+  chart.count_completed = chart.sets.len
 
 
 func isFewer(a, b: seq[int]): bool =
@@ -929,12 +1062,24 @@ func isFewer(a, b: seq[int]): bool =
   false
 
 
-func offer(partials: var seq[Option[Choice]], i: int, candidate: Choice) =
+func offer(partials: var seq[Option[Choice]], i: int, candidate: sink Choice) =
   ## ralte le cumselcu'a bu'u le stuzi pe `i` va'o lo nu le cumselcu'a cu mleca le selra'e lo ka
   ##     mulgau lo jvasni
   ##   .i va'o lo nu dunli kei le pamoi cu stali
+  ##   .i ne'i `C` le cumselcu'a cu se muvgau gi'e se fukpi no roi
+  ##   .i ne'i `JavaScript` lo nu cpacu le cumselcu'a cu fukpi le liste pe le cumselcu'a ci roi
+  ##   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
   if partials[i].isNone or candidate.closures.isFewer(partials[i].get.closures):
     partials[i] = some(candidate)
+
+
+func extend(next: var Choice, closures: openArray[int]) =
+  ## jmina lo te kancu be lo javni sinxa pe pa panzi `next`
+  ##   .i le pamoi te kancu be le panzi cu mulno bu'u le romoi stuzi pe `next`
+  ##   .i `closures` cu tcidu le liste pe le panzi ne'i `Chart.choices` gi'e fukpi no liste
+  ##   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
+  next.closures[^1] += closures[0]
+  for c in 1 ..< closures.len: next.closures.add closures[c]
 
 
 func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
@@ -945,12 +1090,15 @@ func isDerived(chart: Chart, symbol: Symbol, start, finish: int): bool =
   if symbol.is_terminal:
     return finish == start + 1 and int(chart.terminals[start]) == symbol.code
   (start == finish and GRAMMAR_EBNF.nullable[symbol.code]) or
-    (symbol.code, start) in chart.completions[finish]
+    keyCompleted(symbol.code, start) in chart.completions[finish]
 
 
-func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
+func choose(chart: var Chart, head, start, finish: int): bool =
   ## cuxna le cumtricu poi `head` binxo le genvla pe `start ..< finish` sepi'o ke'a zi'e poi mecrai
   ##     lo ka mulgau lo jvasni bu'u ro stuzi
+  ##   .i le se cuxna cu zvati `chart.choices`
+  ##   .i le jalge cu jarco lo du'u xu kau le se cuxna cu zasti
+  ##   .i se ki'u bo lo nu pilno le selcu'a cu fukpi no liste
   ##   .i le pamoi stuzi cu krasi lo nu cuxna
   ##   .i va'o lo nu dunli kei le pamoi basti javni cu jinga
   ##   .i ba bo lo sinxa poi zmadu lo ka clani cu jinga
@@ -977,25 +1125,35 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
   ##   .i le te kancu pu clasmi le selku'e be le panzi
   ##   .i va'o lo nu pa kravla pu ca'o kalri kei le jdima pu zmadu le selci'a lo ka zenba to `#849`
   ##       toi
-  let key = (head, start, finish)
-  if key in chart.choices: return chart.choices[key]
-  if chart.open.containsOrIncl(key): return none(Choice)
-  defer: chart.open.excl(key)
-  let span = finish - start
+  let key = keyCompleted(head, start)
+  if key in chart.choices[finish]: return chart.choices[finish][key].isSome
+  let opened = keyChosen(chart.sets.len, head, start, finish)
+  if chart.open.containsOrIncl(opened): return false
+  defer: chart.open.excl(opened)
+  let
+    span = finish - start
+    is_completed = span == 0 or key in chart.completions[finish]
   var best = none(Choice)
   for p in GRAMMAR_EBNF.heads[head]:
     template body: untyped = GRAMMAR_EBNF.productions[p].body
       ## sinxa le porsi be lo sinxa pe le basyjva po'u `p`
       ##   .i lo nu pilno `let` cu rinka lo nu fukpi le porsi
     if span == 0 and body.anyIt(it.is_terminal or not GRAMMAR_EBNF.nullable[it.code]): continue
-    if span > 0 and p notin chart.completions[finish].getOrDefault((head, start)): continue
+    # `[]` cu dunda le liste sepi'o `lent` gi'e fukpi no da
+    #   .i se to'e cuxna fa `getOrDefault` noi fukpi le liste
+    #   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
+    if span > 0 and (not is_completed or p notin chart.completions[finish][key]): continue
 
     # tcidu ro sinxa pe le basyjva pu lo bavla'i sinxa
     #   .i bu'u ro stuzi le na'e mulno poi mecrai lo ka mulgau lo jvasni vi cu selra'e
     #   .i ro sinxa cu curmi lo nu lo sinxa poi se lidne cu ponse lo bazgenvla
     var
       # le mecraiterkancu be lo genvla poi ro rebla be le porsi cu binxo ke'a
-      rests = newSeq[int](body.len + 1)
+      #   .i le klani be le porsi cu stodi
+      #   .i se ki'u bo ne'i `C` le porsi cu cpacu no ninstu
+      #   .i ne'i `JavaScript` ro basyjva cu zbasu pa `Int32Array`
+      #   .i lo na'e zmiku cipra cu tcidu le samtci pe `C` .e `JavaScript`
+      rests: array[WIDTH_BODY, int]
       partials = newSeq[Option[Choice]](span + 1)
     for k in countdown(body.high, 0):
       let length = (if body[k].is_terminal: 1 else: GRAMMAR_EBNF.lengths[body[k].code])
@@ -1020,11 +1178,9 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
         for bound in countdown(finish - rests[k + 1], low):
           if not chart.isDerived(symbol, m, bound): continue
           if k == body.high - 1 and not chart.isDerived(body[^1], bound, finish): continue  # morsi
-          let child = chart.choose(symbol.code, m, bound)
-          if child.isNone: continue
+          if not chart.choose(symbol.code, m, bound): continue
           var next = partial.get
-          next.closures[^1] += child.get.closures[0]
-          next.closures.add child.get.closures[1 .. ^1]
+          next.extend(chart.choices[bound][keyCompleted(symbol.code, m)].get.closures)
           next.bounds.add bound
           nexts.offer(bound - start, next)
       partials = nexts
@@ -1032,8 +1188,8 @@ func choose(chart: var Chart, head, start, finish: int): Option[Choice] =
     var whole = partials[span].get
     inc whole.closures[^1]  # `head` mulno bu'u le fanmo be le selku'e
     if best.isNone or whole.closures.isFewer(best.get.closures): best = some(whole)
-  chart.choices[key] = best
-  best
+  result = best.isSome
+  chart.choices[finish][key] = best
 
 
 func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
@@ -1051,9 +1207,9 @@ func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
   ##   .i ki'u bo ro ju'agri cu rinka lo nu le javni pe li vo cu punji pa jgena ne'i pa jgena to
   ##       `#849` toi
   let
-    key = (head, start, finish)
-    production = chart.choices[key].get.production
-    bounds = chart.choices[key].get.bounds
+    key = keyCompleted(head, start)
+    production = chart.choices[finish][key].get.production
+    bounds = chart.choices[finish][key].get.bounds
   template addChildren(into: var seq[Node]) =
     ## jmina lo jgena pe ro sinxa pe le basyjva fi `into` ja'i le porsi
     var at = start
@@ -1070,27 +1226,33 @@ func addNodes(chart: Chart, head, start, finish: int, nodes: var seq[Node]) =
   addChildren(nodes[^1].children)
 
 
-func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
+func readWhole(chart: var Chart, terminals: openArray[Terminal]): ReadingGrammar =
   ## tcidu lo genvla pe le selci'a ja'i le gerna pe `CLL 21.1` pa roi gi'e zbasu lo tricu pe lo
   ##     javni poi selcme
   ##   .i to'e curmi bu'u le stuzi poi ro cumtricu cu sisti bu'u ke'a
-  let sets = terminals.fillSets
+  ##   .i `chart` cu ralte ro selcmi poi stali to `fillSets` toi
+  discard chart.fillSets(terminals, is_everywhere = false)
   var is_whole = false
-  for item in sets[^1]:
+  for item in chart.sets[^1]:
     let
       production = GRAMMAR_EBNF.productions[item.production]
       is_text = production.head == GRAMMAR_EBNF.start and item.origin == 0
     if is_text and item.dot == production.body.len: is_whole = true
-  if not is_whole: return sets.refusal
-  var
-    chart = Chart(completions: sets.toCompletions, terminals: @terminals)
-    nodes: seq[Node]
-  doAssert chart.choose(GRAMMAR_EBNF.start, 0, terminals.len).isSome,
+  if not is_whole: return chart.sets.refusal
+  chart.fillCompletions
+  var nodes: seq[Node]
+  doAssert chart.choose(GRAMMAR_EBNF.start, 0, terminals.len),
       "Text grammar reads should derive tree."
   chart.addNodes(GRAMMAR_EBNF.start, 0, terminals.len, nodes)
   # le javni pe li no cu selcme
   #   .i se ki'u bo lo jgena cu pa mei
   ReadingGrammar(is_read: true, tree: nodes.pop)
+
+
+func readWhole(terminals: openArray[Terminal]): ReadingGrammar =
+  ## tcidu lo genvla pe le selci'a sepi'o lo mulcmi poi cnino
+  var chart: Chart
+  chart.readWhole(terminals)
 
 
 
@@ -1479,7 +1641,7 @@ func toError(reading: ReadingGrammar, children: sink seq[Node]): Node =
   )
 
 
-func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
+func islands(chart: var Chart, terminals: openArray[Terminal], first, last: int): seq[Node] =
   ## gacri le genvla pe `first ..< last` sepi'o lo ricpau poi mapti `CLL 21.1` ku'o .e lo genvla poi
   ##     zvati lo jbini be le ricpau
   ##   .i le gacri cu vasru lo mecraigenvla poi zvati lo jbini
@@ -1497,19 +1659,19 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
   ##   .i mupli fa lo nu lu mi klama li'u se tcidu ta'i `sumti-tail` noi ckini li papapa ku'o .enai
   ##       `sentence` noi ckini li vono
   ##   .i ne'i `sumti-tail` zo mi sinxa lo ponse be le klama
+  ##
+  ## ni'o `chart` cu ralte ro selcmi poi stali to `fillSets` toi
   let count = last - first
   if count == 0: return
-  var chart = Chart(
-    completions:
-      terminals.toOpenArray(first, last - 1).fillSets(is_everywhere = true).toCompletions,
-    terminals: terminals[first ..< last],
-  )
+  discard chart.fillSets(terminals.toOpenArray(first, last - 1), is_everywhere = true)
+  chart.fillCompletions
 
   # le stedu be lo ricpau poi kuspe ro selku'e ku'o ja'i le krasi .e le fanmo
   #   .i le stedu cu du lo javni poi selcme gi'e ponse lo mecraina'u vi
   var heads = newSeq[Table[int, int]](count)
   for finish in 1 .. count:
-    for (head, start) in chart.completions[finish].keys:
+    for key in chart.completions[finish].keys:
+      let (head, start) = (key div WIDTH_KEY, key mod WIDTH_KEY)
       if start >= finish or GRAMMAR_EBNF.numbers[head].isNone: continue
       let is_outer = finish notin heads[start] or
         GRAMMAR_EBNF.numbers[head].get < GRAMMAR_EBNF.numbers[heads[start][finish]].get
@@ -1541,7 +1703,7 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
     if cover.head.isNone:
       result.add Node(is_terminal: true, at: first + start)
     else:
-      doAssert chart.choose(cover.head.get, start, cover.finish).isSome,
+      doAssert chart.choose(cover.head.get, start, cover.finish),
           "Span completions hold should derive tree."
       # le javni cu selcme
       #   .i se ki'u bo lo jgena cu pa mei
@@ -1550,22 +1712,30 @@ func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
     start = cover.finish
 
 
-func markPart(terminals: openArray[Terminal], part: Slice[int]): Node =
+func islands(terminals: openArray[Terminal], first, last: int): seq[Node] =
+  ## gacri le genvla pe `first ..< last` sepi'o lo mulcmi poi cnino
+  var chart: Chart
+  chart.islands(terminals, first, last)
+
+
+func markPart(charts: var ChartsKept, terminals: openArray[Terminal], part: Slice[int]): Node =
   ## tcidu le pagbu ta'i lo selci'a poi sepli gi'e zbasu lo tricu
   ##   .i ne'i le tricu le stuna'u pe le krasi be le mulselci'a cu du li no
   ##   .i va'o lo nu le gerna cu to'e curmi le pagbu kei zbasu lo srejge pe le pagbu zi'e poi vasru
   ##       lo ricpau poi mapti `CLL 21.1` to `islands` toi
-  var reading = terminals.toOpenArray(part.a, part.b).readWhole
+  ##   .i `charts` cu ralte le mulcmi pe le pagbu
+  var reading = charts.whole.readWhole(terminals.toOpenArray(part.a, part.b))
   if reading.is_read:
     result = move(reading.tree)
     result.shift(part.a)
     return
-  result = reading.toError(terminals.islands(part.a, part.b + 1))
+  result = reading.toError(charts.everywhere.islands(terminals, part.a, part.b + 1))
   result.stop.get.at += part.a
 
 
 func markText(
-    terminals: openArray[Terminal], first, last: int, ignored: openArray[int] = []
+    charts: var ChartsKept, terminals: openArray[Terminal], first, last: int,
+    ignored: openArray[int] = [],
 ): seq[Node] =
   ## dunda lo pagbu be le selci'a pe le genvla pe `first ..< last` ta'i lo nu le nu tcidu ro pagbu
   ##     cu katna to `toParts` toi
@@ -1575,12 +1745,12 @@ func markText(
   ##   .i va'o lo nu zo lu .a zo to cu ca'o kalri kei le pagbu poi vasru le kravla cu selfa'o `last`
   ##   .i lo kravla poi `ignored` vasru ke'a se tcidu ta'i lo sapygenvla
   let split = terminals.toParts(first, last, ignored)
-  for part in split.parts: result.add terminals.markPart(part)
-  if split.inner < last: result.add terminals.markText(split.inner, last, ignored)
+  for part in split.parts: result.add charts.markPart(terminals, part)
+  if split.inner < last: result.add charts.markText(terminals, split.inner, last, ignored)
 
 
 func readGrammarParts*(
-    terminals: openArray[Terminal], is_live = false
+    charts: var ChartsKept, terminals: openArray[Terminal], is_live = false
 ): tuple[parts: seq[Node], open: seq[int]] =
   ## tcidu lo genvla ja'i le gerna pe `CLL 21.1` gi'e zbasu lo jgena pe ro pagbu ta'i lo nu le nu
   ##     tcidu ro pagbu cu katna
@@ -1594,8 +1764,19 @@ func readGrammarParts*(
   ##   .i se ki'u bo ro jufra poi se lidne le kravla cu se tcidu ta'i lo nu sepli to `is_live` toi
   ##   .i `open` dunda lo stuna'u pe ro le kravla
   ##   .i le famvla cu raptcidu le kravla
+  ##
+  ## ni'o `charts` cu ralte le mulcmi pe le romoi pagbu poi se tcidu
+  ##   .i se ki'u bo lo nu tcidu le pagbu poi zenba cu tisna lo selcmi po'o pe lo valsi poi cnino
   let open = (if is_live: terminals.unclosed(0, terminals.len) else: @[])
-  (terminals.markText(0, terminals.len, open), open)
+  (charts.markText(terminals, 0, terminals.len, open), open)
+
+
+func readGrammarParts*(
+    terminals: openArray[Terminal], is_live = false
+): tuple[parts: seq[Node], open: seq[int]] =
+  ## tcidu lo genvla ta'i lo nu `readGrammarParts` tcidu kei sepi'o lo mulcmi poi cnino
+  var charts: ChartsKept
+  charts.readGrammarParts(terminals, is_live)
 
 
 func readGrammarMarked*(terminals: openArray[Terminal]): Node =
@@ -1614,6 +1795,8 @@ func readGrammarMarked*(terminals: openArray[Terminal]): Node =
   let
     split = terminals.toParts(0, terminals.len)
     is_parted = split.parts.len > 1 or split.inner < terminals.len
+  var charts: ChartsKept
   reading.toError(
-    if is_parted: terminals.markText(0, terminals.len) else: terminals.islands(0, terminals.len)
+    if is_parted: charts.markText(terminals, 0, terminals.len)
+    else: terminals.islands(0, terminals.len)
   )
