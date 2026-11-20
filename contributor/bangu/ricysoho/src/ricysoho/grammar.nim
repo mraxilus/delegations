@@ -756,6 +756,33 @@ const LUT_NUMBER_BY_RULE* = GRAMMAR_EBNF.constructNumbers
 
 #[ ni'o ni'o ni'o lo nu tcidu ]#
 
+func headNamed(grammar: Grammar, name: string): int {.compileTime.} =
+  ## dunda le stuna'u pe le jvasni pe le javni poi se cmene `name`
+  ##   .i lo djujva pe le javni cu ponse le cmene ji'a gi'e ponse no namcu
+  for code in 0 ..< grammar.names.len:
+    if grammar.names[code] == name and grammar.numbers[code].isSome: return code
+  doAssert false, "Rule should take name; got `" & name & "`."
+
+
+const HEAD_NUMBER = GRAMMAR_EBNF.headNamed("number")  ## le jvasni pe `number` noi ckini li 812
+
+
+func isPaAt(terminals: openArray[Terminal], at: int): bool =
+  ## jdice lo du'u xu kau le genvla pe `at` cu valsi pe `PA`
+  ##   .i va'o lo nu `at` cu zvati le fanmo kei le jalge cu du `false`
+  at < terminals.len and terminals[at] == Selmaho.Pa.toTerminal
+
+
+func isHeld(head: int, terminals: openArray[Terminal], at: int): bool =
+  ## jdice lo du'u xu kau le jvasni cu na ka'e mulno bu'u le stuzi pe `at`
+  ##   .i lo namcu cu na mulno pu lo valsi pe `PA` to `CLL 18.6` toi
+  ##   .i se ki'u bo ro porsi be lo valsi pe `PA` cu du pa namcu
+  ##   .i mupli fa lo nu le genturfa'i cu tcidu lo'u le pano moi le'u ta'i le pamoi be li 10
+  ##   .i zo boi fendi re namcu poi lamji mu'u lo'u le pa boi no moi le'u
+  ##   .i `Architect` jdice di'u bu'u `#991` ta'i `D3 a`
+  head == HEAD_NUMBER and terminals.isPaAt(at)
+
+
 const WIDTH_BODY = GRAMMAR_EBNF.productions.mapIt(it.body.len).max + 1
   ## lo namcu poi zmadu ro stuzi pe lo nu tcidu ne'i ro basyjva
 
@@ -782,7 +809,8 @@ type
 
   Chart = object
     ## lo mulcmi pe pa pagbu ge'u .e lo selcu'a poi selfa'i ca lo nu cuxna le tricu
-    ##   .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali to `fillSets` toi
+    ##   .i ro selcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali gi'e le bavla'i
+    ##       genvla cu stali lo ka ce'u valsi pe `PA` to `fillSets` toi
     terminals: seq[Terminal]  ## lo genvla poi le selcmi cu tcidu ke'a
     is_everywhere: bool  ## le tadji pe le romoi nu tisna to `fillSets` toi
     sets: seq[seq[Item]]  ## le selcmi pe `Earley`
@@ -799,7 +827,8 @@ type
 
   ChartsKept* = object
     ## lo mulcmi pe le romoi pagbu poi se tcidu
-    ##   .i ro selcmi pe le mulcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali
+    ##   .i ro selcmi pe le mulcmi cu stali va'o lo nu ro genvla poi lidne le selcmi cu stali gi'e
+    ##       le bavla'i genvla cu stali lo ka ce'u valsi pe `PA`
     ##   .i se ki'u bo lo tcidu be lo mivyselci'a cu tisna lo selcmi po'o pe lo valsi poi cnino
     ##   .i `ReaderLive` pe `live.nim` cu ralte ke'a gi'e benji ke'a fi `readTextParts` pe
     ##       `prose.nim`
@@ -851,8 +880,9 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   ##   .i lo cmima cu vasru ci namcu gi'e selfu'i ta'i lo nu fukpi le ci namcu
   ##
   ## ni'o le fancu cu ralte ro selcmi pe `chart` poi ro genvla poi lidne ke'a cu mintu lo genvla pe
-  ##     `terminals`
-  ##   .i ki'u bo ro selcmi cu nitcu lo genvla po'o poi lidne ke'a
+  ##     `terminals` gi'e poi le bavla'i genvla cu stali lo ka ce'u valsi pe `PA`
+  ##   .i ki'u bo ro selcmi cu nitcu lo genvla po'o poi lidne ke'a ku'o .e lo du'u xu kau le bavla'i
+  ##       genvla cu valsi pe `PA` to `isHeld` toi
   ##   .i ba bo le fancu cu tcidu le genvla pe le romoi selcmi poi stali gi'e tisna ro selcmi poi se
   ##       lidne ri
   ##   .i ji'a le fancu cu vimcu ro cmima pe `completions` .e `choices` poi le selcmi pe ke'a cu
@@ -898,7 +928,8 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
   if chart.sets.len > 0 and chart.is_everywhere == is_everywhere:
     let most = min(chart.terminals.len, terminals.len)
     while same < most and chart.terminals[same] == terminals[same]: inc same
-    first = same + 1
+    # le selcmi pe `same` cu stali va'o lo nu le bavla'i genvla cu stali lo ka ce'u valsi pe `PA`
+    first = (if chart.terminals.isPaAt(same) == terminals.isPaAt(same): same + 1 else: same)
   result = terminals.len + 1 - first
   chart.is_everywhere = is_everywhere
   chart.sets.setLen(first)
@@ -921,17 +952,20 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
     for p in GRAMMAR_EBNF.heads[GRAMMAR_EBNF.start]: add(0, (p, 0, 0))
   else:
     # le romoi selcmi poi stali cu tcidu le genvla poi se lidne ri
+    #   .i le selcmi poi lidne le pamoi genvla poi cenba cu cnino va'o lo nu le genvla .e le pu
+    #       genvla cu frica lo ka ce'u valsi pe `PA` kei to `isHeld` toi
     #   .i lo cmima poi se kanpe ne'i lo selcmi poi cnino cu na stali
     for head in 0 ..< count_nonterminals:
       if chart.predicted[head] >= first: chart.predicted[head] = -1
-    if same < terminals.len:
-      for k in 0 ..< chart.sets[same].len:
-        let item = chart.sets[same][k]
+    let last = first - 1  # le romoi selcmi poi stali
+    if last < terminals.len:
+      for k in 0 ..< chart.sets[last].len:
+        let item = chart.sets[last][k]
         template body: untyped = GRAMMAR_EBNF.productions[item.production].body
           ## sinxa le porsi be lo sinxa pe le basyjva pe le cmima
         let is_scanned = item.dot < body.len and body[item.dot].is_terminal and
-          int(terminals[same]) == body[item.dot].code
-        if is_scanned: add(same + 1, (item.production, item.dot + 1, item.origin))
+          int(terminals[last]) == body[item.dot].code
+        if is_scanned: add(first, (item.production, item.dot + 1, item.origin))
   for i in first .. terminals.len:
     # ro cmima pe le selcmi cu se tcidu pa roi
     #   .i `firsts` .e `lasts` .e `predicted` .e `seen` cu cpacu no ninstu ne'i le selcmi va'o lo nu
@@ -959,6 +993,7 @@ func fillSets(chart: var Chart, terminals: openArray[Terminal], is_everywhere: b
       #   .i se ki'u bo le nu tcidu cu pilno lo stuna'u
       if item.dot == body.len:
         let head = GRAMMAR_EBNF.productions[item.production].head
+        if head.isHeld(terminals, i): continue
         var at = chart.firsts[item.origin * count_nonterminals + head]
         while at != 0:
           let waiter = chart.sets[item.origin][at - 1]
@@ -1047,7 +1082,7 @@ func fillCompletions(chart: var Chart) =
   for i in chart.count_completed ..< chart.sets.len:
     for item in chart.sets[i]:
       let production = GRAMMAR_EBNF.productions[item.production]
-      if item.dot != production.body.len: continue
+      if item.dot != production.body.len or production.head.isHeld(chart.terminals, i): continue
       let key = keyCompleted(production.head, item.origin)
       chart.completions[i].mgetOrPut(key, @[]).add item.production
     for key in chart.completions[i].keys.toSeq: chart.completions[i][key].sort

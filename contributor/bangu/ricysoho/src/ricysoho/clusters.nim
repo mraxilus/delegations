@@ -97,7 +97,7 @@ const
         lut[a][b] = not (is_doubled or is_voicing_mixed or is_sibilant_both or is_named)
     lut
   LUT_INITIAL_BY_PAIR = block:
-    ## jdice ro remei ja'i le liste pe `CLL 3.7`
+    ## jdice ro boi remei ja'i le liste pe `CLL 3.7`
     var lut: PairsJudged
     for pair in PAIRS_INITIAL: lut[pair[0]][pair[1]] = true
     lut
