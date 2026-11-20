@@ -4,7 +4,8 @@
 ##   Parser of compiler building this suite, 2.4.0, proves needless parentheses in each case,
 ##     glyph cases too: on each, commit `27763495` gave same verdict (checked 2026-10-05).
 ##   Lines quoted are as found; `strictFuncs` and enclosing suite, routine or block around them
-##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller.
+##     only give them place to stand. Rulings cited are those of #533, PGA review of knoller,
+##     and of rules of #443, each case of which names its rule.
 ##   Each case keeps its domain test in suite of its rule; this suite adds end-to-end form.
 
 {.experimental: "strictFuncs".}
@@ -302,6 +303,76 @@ const
     ## Whole `tests/rga3d/test_rga3d.nim` of PGA library at `d9be8ae`, no newline after its last
     ##   line (#443).
 
+  USED_IN =
+    HEAD &
+    "# Borrow necessary functions for using distinct types (i.e. for added type safety).\n" &
+    "#   Ideally Nim would have feature to auto borrow everything, but prevent interop.\n" &
+    "func `&`(a, b: BasisDigits): BasisDigits {.borrow, compileTime.}\n" &
+    "func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in" &
+    " cayleys.nim.\n" &
+    "func `not`(a: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in" &
+    " cayleys.nim.\n" &
+    "func `xor`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in" &
+    " cayleys.nim.\n" &
+    "func countSetBits(b: BasisFlags): int {.borrow, compileTime.}\n" &
+    "func len(b: BasisDigits): int {.borrow, compileTime.}\n" &
+    "iterator items(b: BasisDigits): char = (for d in string(b): yield d)\n" &
+    "template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in" &
+    " cayleys.nim.\n" &
+    "template `in`(c: char, b: BasisDigits): bool = c in string(b)\n"
+    ## Lines 118 to 128 of `pga/algebra.nim` of PGA library at `3d9696e` (rule 2 of #443).
+  PRIMITIVES =
+    HEAD &
+    "# TODO: Represent multivector primitives using more compact data types.\n" &
+    "#   E.g. Point, Line, Plane, Volume, Motor, Flector.\n" &
+    "#   At cost of additional meta-programming, this affords:\n" &
+    "#     - More optimization with SoA (how much more over SIMD of multivectors?),\n" &
+    "#     - Simpler reasoning about objects resulting from operations.\n" &
+    "#     - IDE support for recognizing resulting objects from operations.\n" &
+    "#   Perhaps base library should only contain full multivector operations for simplicity?\n" &
+    "#     I.e. to serve more as learning reference, optimising where necessary.\n" &
+    "# TODO: Implement SIMD cayley table based macros for operating on arrays of Multivectors.\n"
+    ## Lines 3 to 11 of `pga/multivectors.nim` at `3d9696e` (rule 3 of #443).
+  EXOMORPHISM =
+    HEAD &
+    "func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noinit.} =\n" &
+    "  ## Construct metric exomorphism 𝐆 from metric 𝖌 simplified as 1D cayley table.\n" &
+    "  ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧).\n" &
+    "  ##   Likewise with `constructAnti` applied on output:\n" &
+    "  ##     𝔾 via 𝔾𝐦 = 𝐆̲𝐦̲̅, i.e. right complement of 𝐦, left complement of result.\n" &
+    "  ##     Equivalent to expanding as 𝔾 via 𝔾(𝐦 ∨ 𝐧) = (𝔾𝐦) ∨ (𝔾𝐧).\n" &
+    "  result = metric\n" &
+    "\n" &
+    "  for operand in Basis:\n" &
+    "    if operand.grade <= Grade.vector: continue\n" &
+    "    var\n" &
+    "      bases: seq[BasisSigned]\n" &
+    "      is_degenerate = false\n" &
+    "\n" &
+    "    # Determine if any vector component of basis is degenerate.\n" &
+    "    for d in operand.toDigits:\n" &
+    "      let basis = BasisDigits($d).toBasis\n" &
+    "      if result[basis].len == 0:\n" &
+    "        is_degenerate = true\n" &
+    "        break\n" &
+    "      bases.add(result[basis])\n" &
+    "    if is_degenerate: continue\n" &
+    "\n" &
+    "    # Reconstruct resulting signed basis from vector components.\n" &
+    "    var product = multiplyExterior(bases[0], bases[1])\n" &
+    "    assert not product.is_degenerate\n" &
+    "    if len(bases) > 2:\n" &
+    "      for i in 2..<bases.len:\n" &
+    "        product = multiplyExterior(product.basis, bases[i])\n" &
+    "\n" &
+    "    result[operand] = @[product.basis]\n"
+    ## Lines 357 to 387 of `pga/cayleys.nim` at `3d9696e` (rule 4 of #443).
+  ORDER =
+    HEAD &
+    "## Define type definition for transwedge order.\n" &
+    "type Order = distinct range[0..DIMENSIONS]\n" &
+    "#func `<=`(a, b: Order): bool {.borrow.}\n"
+    ## Lines 46 to 48 of `pga/cayleys.nim` at `3d9696e` (rule 5 of #443).
 
 var KNOWN = Proofs()  ## Answers of parser by source, held across cases, as one run holds them.
 
@@ -456,3 +527,25 @@ suite "Regressions":
       check written == @[(path, mended)]
       let again = outcome(written, [], is_check = false, nimbles = nimbles)
       check again.lines == @["0 fixed."]  # second run
+
+
+  test "13. path in comment takes backticks, and labels of borrows keep their form (#443)":
+    holds USED_IN, USED_IN.replace("# Used in cayleys.nim.", "# Used in `cayleys.nim`.")
+      # rule 2: lines 121, 122, 123 and 127 of `pga/algebra.nim`
+
+
+  test "14. nuance under tag stands two spaces past sentence after tag (#443)":
+    holds PRIMITIVES, PRIMITIVES.replace("\n#   ", "\n#         ")
+      # rule 3: lines 4 to 10 of `pga/multivectors.nim` gain six spaces, two past `Represent`
+
+
+  test "15. paragraph of routine that comments stage takes placeholder (#443)":
+    holds EXOMORPHISM, EXOMORPHISM.replace(
+      "  result = metric\n\n", "  result = metric\n\n  # TODO: Describe stage's purpose.\n"
+    )  # rule 4: paragraph of line 365 of `pga/cayleys.nim`, which holds no stage comment
+
+
+  test "16. doc above type joins its line (#443)":
+    holds ORDER, HEAD & "type Order = distinct range[0..DIMENSIONS]  ## Define type definition " &
+      "for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
+      # rule 5: line 47 of `pga/cayleys.nim`; commented code below it stays
