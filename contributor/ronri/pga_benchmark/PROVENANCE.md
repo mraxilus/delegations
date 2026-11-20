@@ -40,8 +40,9 @@ for, and it names that form.
 
 The transform measurands spell the motor sandwich as a chain of three steps, since the library at
 pin has no operator for it. Where the library declares `⟇⟇~∘`, as P13 adds, they spell
-`(m ⟇⟇~∘ n)` and name its one function. So an evaluation of P13 times and counts the operator,
-and D08 names the chain at pin.
+`(m ⟇⟇~∘ n)` and name its one function. P13 builds its table from the types of both operands, so
+the motor reads the typed pool where the operator takes it (Widening and pools). So an evaluation
+of P13 times and counts the table of a motor, and D08 names the chain at pin.
 
 Expressions are strings, fully parenthesised, because the header of the library warns that
 `∨` parses as additive and `∧` as multiplicative. They are lowered by `parseExpr` where the
@@ -69,8 +70,8 @@ expression compiles against the library. The set of symbols equals the set of ex
 operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set of aliases
 equals the exports of the umbrella. At pin, each transform spells the chain.
 
-Verified by the evaluation of P13 on 2026-11-15: each transform counts `⟇⟇~∘`, 82 multiplies at
-rga4d and 23 at rga3d.
+Verified by the evaluation of P13 on 2026-11-20. Each transform counts `⟇⟇~∘` at a motor type: 82
+multiplies at rga4d, and 23 at rga3d.
 
 ## Reference
 
