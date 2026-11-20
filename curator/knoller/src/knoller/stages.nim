@@ -1,11 +1,12 @@
 ## Enforce that each stage of routine or test opens with comment naming its purpose (Article VI.4),
 ##   and write placeholder where none stands (`koch fix`).
-##   Body: lines below `=` that ends signature, deeper than head, of each routine kind; and lines
-##     below `test "…":`, deeper than it. Routine nested in body is no stage of its owner: its
-##     lines cut owner's paragraph, and its body reads as its own (STYLE.md §1).
-##   Paragraph: run of lines with text and no blank line between, at any depth of body, so inside
-##     loop or branch too. Line inside string or comment spanning lines opens no paragraph, and
-##     blank line there ends none. Code under `quote do:` is generator's, so it opens none.
+##   Body is lines below `=` that ends signature, deeper than head, of each routine kind; and
+##     lines below `test "…":`, deeper than it. Routine nested in body is no stage of routine
+##     holding it: its lines cut paragraph there, and its body reads as its own (STYLE.md §1).
+##   Paragraph is run of lines with text and no blank line between, at any depth of body, so
+##     inside loop or branch too. Line inside string or comment spanning lines opens no
+##     paragraph, and blank line there ends none. Code under `quote do:` is generator's, so it
+##     opens none.
 ##   Narrow form, as Architect ruled on rule 4 of #443: paragraph that blank line opens takes stage
 ##     comment as its first line, where another stage of its routine opens with one, and where it
 ##     holds `LINES_CODE_MIN` lines of code or more. Stage comment is own-line `#` comment, TODO
@@ -15,11 +16,11 @@
 ##     share one reading (`stages`), so rule is written once (Article II.1).
 ##
 ##   Rejected: broad form, i.e. every paragraph blank line opens, which wrote 45 lines on PGA
-##     library at `3d9696e`; Architect narrowed it to routines whose author comments stage.
-##   Cost: scanner, never parser: routine reads from line opening with its keyword and name, so
-##     lambda's body reads as lines of its owner, and test as `test "…":` alone.
-##   Cost: line inside string spanning lines is no line of code, so long literal counts its first
-##     line alone.
+##               library at `3d9696e`; Architect narrowed it to routines that comment stage.
+##   Cost: scanner, never parser: routine reads from line opening with its keyword and name,
+##           so lambda's body reads as lines of routine holding it, and test as `test "…":`.
+##   Cost: line inside string spanning lines is no line of code, so long literal counts its
+##           first line alone.
 
 {.experimental: "strictFuncs".}
 

@@ -37,7 +37,8 @@
 ##     other code, or that declaration holds as its own, stays: either may own it.
 ##   One-line doc inside value over lines, where `nim doc` reads none, moves after `=` ending
 ##     first line where it fits, else after close of value; inside value opening `block`, it
-##     stays for hand, as missing doc leaves such value. Binding of any reach reads so.
+##     stays for hand, as missing doc leaves such value. Binding of any reach reads so, and so
+##     doc missing doc counts on first line inside value moves, or waits for hand.
 ##   Routine's doc opens line after its signature, at indent of its body: doc on signature line,
 ##     after blank line or off that indent moves there. One-line doc under bare `type` joins
 ##     keyword line, as group doc of block.
@@ -57,11 +58,10 @@
 ##     where `nim doc` reads it (`target`), and missing doc writes from it (`writesDoc`).
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); declaration it cannot place surely stays.
-##   Cost: doc opening line right below declaration's counts for missing doc though value runs
-##     on past it, as first line in `block:` or inside bracket, where `nim doc` reads none
-##     (`nim jsondoc` of Nim 2.2.12 and 2.4.0); doc position moves it, or reports it for hand.
-##   Cost: doc trailing first line of value over brackets, or first line of signature over
-##     lines, stays, though `nim doc` reads none there.
+##   Cost: doc opening line right below declaration's counts though value runs on past it, as
+##     first line in `block:` or inside bracket, where `nim doc` reads none (`nim jsondoc` of
+##     Nim 2.2.12 and 2.4.0).
+##   Cost: doc trailing first line of value over brackets, or of signature, stays unread there.
 ##   Cost: routine on one line reads as forward where its body after `= ` is shorter than
 ##     `BODY_FORWARD_MAX`, so short helper standing under group comment passes too.
 ##   Cost: forward declaration reads by name alone: routine without body where any overload of
