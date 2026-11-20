@@ -14,15 +14,24 @@
 ##   Folder new on branch, or gone from base, has nothing shipped to hold it to, and passes.
 ##   Message deleted whole passes: bytes carry no message name, so format retired is decision,
 ##     not drift. Field of its type is deleted too, and that deletion is held.
+##   New package moves, as Architect ruled on #981 (comment 7053327767): `buf` pairs messages of
+##     two sides by full name, and rule `FILE_SAME_PACKAGE` refuses new package of file of same
+##     path. So where one package of base is gone and one new package stands, each shipped
+##     schema reads under new package first (`underPackage`), and each field stays held, file
+##     renamed or not.
+##     New package beside `Any`, `service` or `extend` is refused, since full name of message
+##       reaches data or path there; so is folder whose packages split, so that none maps to one.
 ##
 ##   Cost: import resolves against schema's own folder, as Nim library of Status and
 ##     `protobufjs` resolve it, so schema importing from another folder fails to compile here.
 ##   Cost: `buf` is fetched where store lacks it (`bufbuild.nim`), and only where branch changed
 ##     schema in folder base also holds.
+##   Cost: package whose messages move into other package of its folder, which base holds
+##     already, is held by `FILE_SAME_PACKAGE` alone, on file of same path.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, osproc, strutils]
+import std/[algorithm, json, options, os, osproc, sequtils, strutils]
 from ../../knoller/src/knoller/command import runGit
 import ./[bufbuild, findings, tree]
 
@@ -34,6 +43,12 @@ const
     ## Config each module carries: category holding bytes and JSON text, never file layout,
     ##   and rule holding presence of each field.
   CODE_BREAKING = 100  ## Exit code of `buf` where it found breaking change or compile error.
+  OPENING_PACKAGE = "package "  ## Opening of statement that declares package of schema.
+  NAME_ANY = "google.protobuf.Any"  ## Type whose data names full name of message it holds.
+  OPENINGS_FULL_NAME = ["service ", "extend "]
+    ## Openings of statements whose full name reaches path of method, or name of extension.
+  MARKS_BEFORE_NAME = Whitespace + {'(', '<'}
+    ## Marks that may stand before qualified name of type, as in `(pkg.Message)`.
   SIDES = ["before", "after"]  ## Module folders under work: shipped, then branch.
 
 
@@ -83,13 +98,79 @@ proc findingsBreaking*(output, folder: string): seq[Finding] =
       )
 
 
+func packageDeclared*(text: string): string =
+  ## Read package schema text declares: name after `package` of first line opening with it, up to
+  ##   `;`; empty where text declares none.
+  for line in text.splitLines:
+    let statement = line.strip
+    if statement.startsWith(OPENING_PACKAGE) and statement.endsWith(";"):
+      return statement[OPENING_PACKAGE.len ..< statement.high].strip
+  ""
+
+
+func packagesDeclared(schemas: openArray[(string, string)]): seq[string] =
+  ## Read each package schemas declare, once, sorted.
+  for (_, text) in schemas:
+    let name = text.packageDeclared
+    if name notin result: result.add name
+  result.sort
+
+
+func isFullNameExposed*(text: string): bool =
+  ## Decide whether schema text holds `google.protobuf.Any`, or statement opening `service` or
+  ##   `extend`: there full name of message reaches type URL, path of method, or name of extension.
+  if NAME_ANY in text: return true
+  for line in text.splitLines:
+    let statement = line.strip
+    if OPENINGS_FULL_NAME.anyIt(statement.startsWith(it)): return true
+
+
+func underPackage*(text, old, new: string): string =
+  ## Write schema text under package `new` in place of `old`: its statement `package`, and each
+  ##   name qualified by `old` after space, `(` or `<`, or after `.` that opens full name.
+  ##   Name that this misses fails to compile under `new`, so check refuses rather than passes.
+  let
+    statement = OPENING_PACKAGE & old & ";"
+    qualified = old & "."
+  var i = 0
+  while i < text.len:
+    let before = (if i > 0: text[i - 1] else: '\n')
+    if before in Whitespace and text.continuesWith(statement, i):
+      result.add OPENING_PACKAGE & new & ";"
+      i += statement.len
+      continue
+    let is_opened = before == '.' and (i < 2 or text[i - 2] in MARKS_BEFORE_NAME)
+    if i > 0 and (before in MARKS_BEFORE_NAME or is_opened) and text.continuesWith(qualified, i):
+      result.add new & "."
+      i += qualified.len
+      continue
+    result.add text[i]
+    inc i
+
+
 proc breakingFindings*(
   binary, folder: string; before, after: openArray[(string, string)]
 ): seq[Finding] =
   ## Run `buf breaking` of schemas `after` against schemas `before`, each `(name, text)` of
   ##   `folder`, with each side written under scratch work as module of its own.
+  ##   Where one package of `before` is gone and one new package stands, `before` reads under it
+  ##     (`underPackage`); new package beside full name in data, or split of packages, is finding.
+  let
+    gone = packagesDeclared(before).filterIt(it notin packagesDeclared(after))
+    added = packagesDeclared(after).filterIt(it notin packagesDeclared(before))
+    moved = "`" & gone.join("`, `") & "` to `" & added.join("`, `") & "`"
+  var shipped = @before
+  if gone.len > 0 and added.len > 0:
+    if before.anyIt(it[1].isFullNameExposed) or after.anyIt(it[1].isFullNameExposed):
+      return @[finding(folder, 0, "Schema folder takes new package beside `Any`, `service` or " &
+        "`extend`, where full name of message reaches data or path; keep package; got " &
+        moved & ".")]
+    if gone.len != 1 or added.len != 1:
+      return @[finding(folder, 0, "Schema folder changes package, and no one package of base " &
+        "maps to one of branch, so no field is held; move one package whole; got " & moved & ".")]
+    shipped = before.mapIt((it[0], it[1].underPackage(gone[0], added[0])))
   let work = getTempDir() / "koch_schemas_" & $getCurrentProcessId()
-  for (side, schemas) in [(SIDES[0], @before), (SIDES[1], @after)]:
+  for (side, schemas) in [(SIDES[0], shipped), (SIDES[1], @after)]:
     createDir(work / side)
     writeFile(work / side / "buf.yaml", CONFIG_BREAKING)
     for (name, text) in schemas: writeFile(work / side / name, text)

@@ -201,3 +201,17 @@ suite "Schemas":
       ])
     check found.len == 1
     check found.allIt("no one package of base maps to one of branch" in it.message)
+
+
+  test "package of schema reads, and qualified name moves under new package where it opens":
+    let text = "syntax = \"proto3\";\n\npackage a.b;\n\nmessage M {\n  .a.b.N n = 1;\n" &
+      "  a.b.N m = 2;\n  x.a.b.N o = 3;\n}\n"
+    check text.packageDeclared == "a.b"
+    check "syntax = \"proto3\";\n".packageDeclared == ""
+    let moved = text.underPackage("a.b", "c")
+    check moved.packageDeclared == "c"
+    check "  .c.N n = 1;" in moved and "  c.N m = 2;" in moved
+    check "  x.a.b.N o = 3;" in moved  # name of other package that ends so stays
+    check not SHIPPED.isFullNameExposed
+    check (SHIPPED & "\nservice Gallery {\n}\n").isFullNameExposed
+    check (SHIPPED & "\n  extend Object {\n}\n").isFullNameExposed
