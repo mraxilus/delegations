@@ -217,7 +217,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `trailing-separator` | A list of one item to a line ends in a separator. |
 | `missing-doc` | A declaration takes a doc, and `## TODO: Document.` waits for its text. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
-| `stage-comment` | A stage after a blank line opens with a comment, where another stage does. |
+| `stage-comment` | A stage of three lines or more opens with a comment, where another stage does. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
 

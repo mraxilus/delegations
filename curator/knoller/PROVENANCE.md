@@ -1001,6 +1001,10 @@ stands (`target`). So each doc that the fixer of one writes, the check of the ot
   for hand. The 22 reports of the rule before stay as they were.
 - Cost: a doc that trails the first line of a value over brackets, or of a signature over lines,
   stays, though `nim doc` reads none there.
+- Cost: a doc above a routine stays, and neither rule reads it, though `nim doc` reads none there.
+  Missing doc then writes `## TODO: Document.` in the body, so the doc above and the placeholder
+  both stand. Verified by hand through the whole chain, 2026-11-20, on one probe of each kind of
+  routine body.
 
 ## Stages
 
