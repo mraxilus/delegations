@@ -390,6 +390,12 @@ const
 var KNOWN = Proofs()  ## Answers of parser by source, held across cases, as one run holds them.
 
 
+func staged(source: string): string =
+  ## Write what compile-time family writes on snippet: `noinit` goes from compile-time routine
+  ##   (STYLE.md §2, rule 10 of #443).
+  source.replace("{.compileTime, noinit.}", "{.compileTime.}")
+
+
 proc fixedBy(source: string; prover: Prover): Fix =
   ## Fix module source by whole chain, as `koch fix` does: ask parser what chain asks, and fix
   ##   again, until chain asks nothing.
@@ -441,7 +447,7 @@ suite "Regressions":
   test "4. range takes no space, but beside binary piece or before prefix (ruling 3)":
     holds HEAD & "let r = 2 .. 6  ## Value.\n", HEAD & "let r = 2..6  ## Value.\n"
     holds HEAD & "let b = x in 2 .. 6  ## Value.\n", HEAD & "let b = x in 2..6  ## Value.\n"
-    holds DIGITS, DIGITS  # `[1 .. ^1]`: `..^` would lex one operator
+    holds DIGITS, DIGITS.staged  # `[1 .. ^1]`: `..^` would lex one operator
     holds PARITY, PARITY  # `for j in i + 1 ..< len(digits)`: piece holds binary `+`
 
 
@@ -459,7 +465,7 @@ suite "Regressions":
 
 
   test "7. call keeps hand's breaks, and group one item to line takes trailing comma":
-    holds ENUM, ENUM.replace(" for a `", " for `")  # split by its trailing comma; X.9 articles
+    holds ENUM, ENUM.staged.replace(" for a `", " for `")  # split by trailing comma; X.9 articles
     holds ANTI, ANTI.replace("Cayley1D; complements", "Cayley1D, complements")  # breaks kept
     holds PRODUCT, PRODUCT.replace("Cayley2D; complements", "Cayley2D, complements").replace(
       "          )\n        )\n", "          ),\n        )\n",
@@ -553,7 +559,7 @@ suite "Regressions":
 
 
   test "15. paragraph of routine that comments stage takes placeholder (#443)":
-    holds EXOMORPHISM, EXOMORPHISM.replace(
+    holds EXOMORPHISM, EXOMORPHISM.staged.replace(
       "  result = metric\n\n", "  result = metric\n\n  # TODO: Describe stage's purpose.\n"
     )  # rule 4: paragraph of line 365 of `pga/cayleys.nim`, which holds no stage comment
 
@@ -565,5 +571,5 @@ suite "Regressions":
 
 
   test "17. bare value of message takes backticks (#443)":
-    holds BASIS_FLAGS, BASIS_FLAGS.replace(": {int(b):b}\"", ": `{int(b):b}`\"")
+    holds BASIS_FLAGS, BASIS_FLAGS.staged.replace(": {int(b):b}\"", ": `{int(b):b}`\"")
       # rule 6: line 243 of `pga/algebra.nim`, whose value stands bare
