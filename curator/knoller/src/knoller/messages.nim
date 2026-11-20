@@ -347,6 +347,13 @@ func argument(
   -1
 
 
+func isInPragma(tokens: openArray[Token]; partners: openArray[int]; k: int; source: string): bool =
+  ## Decide whether token `k` stands in pragma bracket `{. .}`, innermost bracket around it.
+  for j in countdown(k - 1, 0):
+    if tokens[j].kind == KindToken.Open and partners[j] > k:
+      return tokens[j].spelling(source) == "{."
+
+
 func messages(tokens: openArray[Token], partners: openArray[int], source: string): seq[seq[Piece]] =
   ## Read concatenation of each message: argument of call that takes message (`CALLS_MESSAGE`),
   ##   or value of pragma (`PRAGMAS_MESSAGE`), where it holds literal.
@@ -356,7 +363,8 @@ func messages(tokens: openArray[Token], partners: openArray[int], source: string
     var first = -1
     for (call, index) in CALLS_MESSAGE:
       if name == call: first = argument(tokens, partners, k, index, source)
-    if name in PRAGMAS_MESSAGE and k + 2 < tokens.len and tokens[k + 1].spelling(source) == ":":
+    if name in PRAGMAS_MESSAGE and k + 2 < tokens.len and tokens[k + 1].spelling(source) == ":" and
+        tokens.isInPragma(partners, k, source):
       first = k + 2
     if first < 0: continue
     let head = pieceAt(tokens, partners, first, source)
