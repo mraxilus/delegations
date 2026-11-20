@@ -178,8 +178,9 @@ return it confirmed.
 - **The line `**Subagent:**` gives the kind first, then `of` and what the subagent does**, as
   `**Subagent:** reviewer of the diff`. A block serves only a call of the kind that the first
   word of this line names. The hook reads the label in any case, with its colon inside or
-  outside the bold. It reads that word with no regard to case, backticks, bold or italic marks,
-  or a final comma, full stop or colon. So `**subagent:** Builder. of the fix` names `builder`.
+  outside the bold. It reads that word in any case, and drops backticks, bold or italic marks
+  around it, and a final comma, full stop or colon. So `**subagent:** Builder. of the fix` names
+  `builder`.
 - **Where more than one block serves a call, the call takes the block of the nearest earlier
   turn.** Inside that turn, it takes the earliest block. So a block of a later turn, written
   before the call, replaces a block of that kind of an earlier turn.
@@ -229,8 +230,8 @@ Then the subagent runs, and these steps follow:
   that is ambiguous or annulled, and the row gives its cause. A claim that holds only in part
   is a miss.
 - **Each cell under `Predicted` is one whole claim of the block, with or without its label.** A
-  claim is a bullet at the top level of the block. Its label stands at its start: any run with
-  no space that opens with a capital letter, then `: `, as `Q1:` or `Follow-up:`. A label in
+  claim is a bullet at the top level of the block. Its label opens it: any run with no space
+  that opens with a capital from `A` to `Z`, then `: `, as `Q1:` or `Follow-up:`. A label in
   bold, as `**Judgement:**`, `**Judgement**:`, `__Judgement:__` or `***Judgement:***`, is a
   label too. Other text before a `: ` makes no label, as a word in lower case or more than one
   word. A part of a claim, or a claim with its confidence, quotes no claim.
@@ -252,9 +253,10 @@ Then the subagent runs, and these steps follow:
   line. Where its mark of a claim differs from yours, give one line that says which way the
   evidence decides.
 - **The `stop` hook holds these steps at the end of each turn.** It refuses a call of a kind
-  that no block serves. It refuses a report of a critic with no reflection after it. It refuses
-  a cell under `Predicted` that is neither a whole claim of a block that a call took, nor
-  `No prediction`. A reply to a refusal passes unread, so the hook holds no step there.
+  other than `critic` and `resolver` that no block serves. It refuses a report of a critic with
+  no reflection after it. It refuses a cell under `Predicted` that is neither a whole claim of a
+  block that a call took, nor `No prediction`. A reply to a refusal passes unread, so the hook
+  holds no step there.
 - **A lesson that recurs changes a prompt, a template or this section.** One that does not
   recur stays in the reflection.
 
