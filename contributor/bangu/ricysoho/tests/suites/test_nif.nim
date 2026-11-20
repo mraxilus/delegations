@@ -37,6 +37,7 @@ import ../../src/ricysoho/grammar {.all.}
 import ../../src/ricysoho/nif {.all.}
 import ../../src/ricysoho/[prose, selmaho]
 import ./[corpora, reader_nif]
+from ./reader_prose import errorsMessage
 
 
 const
@@ -95,6 +96,7 @@ const
     VERSION & "\n(a .)",  # `Empty` noi le ciska na ciska ke'a
     VERSION & "\n(a 'b')",  # `Char literals` noi le ciska na ciska ke'a
     VERSION & "\n(a 0x1F)",  # `Numbers` to le ciska cu ciska lo namcu poi pilno pano lerfu po'o toi
+    VERSION & "\n(a -x)",  # `Numbers` to lo lerfu pe li pano cu se lidne `-` toi
   ]
     ## lo selci'a be fi `NIF` be'o poi le tcidu cu to'e curmi ke'a
     ##   .i ro le selci'a cu se to'e curmi `NIF` gi'a vasru lo tarmi poi le ciska na ciska ke'a
@@ -201,3 +203,14 @@ suite "Internal: NIF":
       checkpoint module
       expect ValueError:  # `MODULES_REFUSED` to lo pagbu be le velski cu lamji ro le selci'a toi
         discard module.readModule
+
+
+  test "Each refusal of reader reads as lojban, each span of code as name":
+    for module in MODULES_REFUSED:
+      checkpoint module
+      var message = ""
+      try: discard module.readModule
+      except ValueError as error: message = error.msg
+      checkpoint message
+      check message.len > 0  # le tcidu cu to'e curmi
+      check message.errorsMessage.len == 0  # lo jboselci'a

@@ -89,6 +89,7 @@ import std/[options, random, strutils, unittest]
 
 import ../../src/ricysoho/[merge, nif, nif_read, prose]
 import ./[corpora, texts_built]
+from ./reader_prose import errorsMessage
 
 
 const
@@ -258,28 +259,42 @@ const
     ##     mupli kei .e lo jgena poi lo nu jmina lo mivypau cu dunda ke'a ta'i le tarmi pe
     ##     `EXAMPLES_KEPT`
   MODULES_MALFORMED = [
-    ("", "should open with directives", -1),  # no minde
-    (HEADER & "(sentence 0", "NIF should hold", -1),  # lo jgena poi no roi selfa'o
-    (HEADER & "(FOO 0 2 \"mi\")\n", "should name selma'o", 0),  # lo klesi poi cmene no selma'o
-    (HEADER & "(sumti_6 1 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),  # no porsi pe `CLL 21.1`
-    (HEADER & "(sumti_6 80 97 (KOhA 0 2 \"mi\"))\n", "number of rule opening", 0),
+    ("", "lo minde poi `nif.nim` cu ciska ke'a cu na krasi le selci'a be fi `NIF`", -1),
+      # no minde
+    (HEADER & "(sentence 0", "`NIF` cu cpedu `)` poi fanmo le jgena", -1),
+      # lo jgena poi no roi selfa'o
+    (HEADER & "(FOO 0 2 \"mi\")\n", "le cmene po'u `FOO` cu cmene no klesi be lo genvla", 0),
+      # lo klesi poi cmene no selma'o
+    (HEADER & "(sumti_6 1 (KOhA 0 2 \"mi\"))\n", "cu nitcu re fanmo be pa porsi", 0),
+      # no porsi pe `CLL 21.1`
+    (HEADER & "(sumti_6 80 97 (KOhA 0 2 \"mi\"))\n", "cu nitcu su'e pa mulna'u", 0),
       # lo namcu pe lo javni poi fanmo lo porsi
       #   .i lo cmene be le javni cu jarco le namcu to lo seljdi pe `#859` pe `comment 6805527878`
       #       toi
-    (HEADER & "(sumti_6 97 (KOhA 0 2 \"mi\"))\n", "two ends of chain", 0),
+    (HEADER & "(sumti_6 97 (KOhA 0 2 \"mi\"))\n", "cu nitcu re fanmo be pa porsi", 0),
       # lo jgena poi pagbu no porsi ta'i lo nu `NIF` pu ciska ke'a
       #   .i le jgena cu ka'e se tcidu ta'i no datytricu
-    (HEADER & "(sumti_9 (KOhA 0 2 \"mi\"))\n", "name of rule of 21.1", 0),  # lo cmene be no javni
-    (HEADER & "(KOhA 0 \"mi\")\n", "bytes and letters", 0),  # lo valsi poi ponse no famstu
-    (HEADER & "(srera 0 sumti_6)\n", "byte, rule and terminals", 0),  # lo srejge pe no `nitcu`
-    (HEADER & "(srera 0 sumti_6 97 (nitcu BRIVLA))\n", "byte, rule and terminals", 0),
+    (HEADER & "(sumti_9 (KOhA 0 2 \"mi\"))\n", "`sumti_9` cu nitcu lo cmene be pa javni", 0),
+      # lo cmene be no javni
+    (HEADER & "(KOhA 0 \"mi\")\n", "cu nitcu lo re mulna'u .e lo lerpoi pe ro valsi", 0),
+      # lo valsi poi ponse no famstu
+    (HEADER & "(KOhA \"x\" 0 \"mi\")\n", "cu nitcu lo re mulna'u .e lo lerpoi pe ro valsi", 0),
+      # lo valsi poi lo lerpoi cu krasi ke'a
+    (HEADER & "(srera 0 sumti_6)\n", "cu nitcu lo stuzi poi le gerna cu sisti bu'u ke'a", 0),
+      # lo srejge pe no `nitcu`
+    (HEADER & "(srera 0 sumti_6 97 (nitcu BRIVLA))\n",
+      "cu nitcu lo stuzi poi le gerna cu sisti bu'u ke'a", 0),
       # lo namcu pe lo javni poi le gerna cu sisti ne'i ke'a
       #   .i lo cmene be le javni cu jarco le namcu to `#859` pe `comment 6806614095` toi
-    (HEADER & "(srera 0 sumti_9 (nitcu BRIVLA))\n", "name of rule of 21.1", 0),  # cmene no javni
+    (HEADER & "(srera 0 sumti_9 (nitcu BRIVLA))\n", "`srera` cu nitcu lo cmene be pa javni", 0),
+      # cmene no javni
+    (HEADER & "(sumti_6 (KOhA 0 2 \"mi\") 5)\n",
+      "pa jgena pe le selci'a be fi `NIF` cu nitcu lo tcita", 0),
+      # lo jgena poi na se tcita
     (
       HEADER & "(sumti_6 0 (LI 0 4 \"meho\") (number 310 (PA 5 7 \"vo\")))\n" &
         "(FOO 8 10 \"do\")\n",
-      "should name selma'o", 1,
+      "le cmene po'u `FOO` cu cmene no klesi be lo genvla", 1,
     ),  # lo remoi jgena cu cmene no selma'o
   ]
     ## lo selci'a be fi `NIF` be'o poi lo nu jmina cu to'e curmi ke'a
@@ -620,3 +635,12 @@ suite "Internal: Merge of parts":
     # lo srejge poi vasru no tarmi poi le ciska cu dunda ke'a
     expect ValueError:  # lo nu rapyzba cu to'e curmi
       discard readModule(HEADER & "(srera 0 sumti_6)\n")[2].toTree(terminals)
+
+
+  test "Each refusal of merge reads as lojban, each span of code as name":
+    for (module, reason, part) in MODULES_MALFORMED:
+      checkpoint module
+      let merged = module.mergeParts
+      checkpoint merged.reason
+      check not merged.is_merged  # lo nu jmina cu to'e curmi
+      check merged.reason.errorsMessage.len == 0  # lo jboselci'a
