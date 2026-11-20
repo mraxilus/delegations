@@ -208,6 +208,25 @@ suite "Command line":
     check fenced.code == 1  # fence keeps line from fixer, never from finding
 
 
+  test "command line keeps each join of package whose file declares `formatValue`":
+    let
+      module = "{.experimental: \"strictFuncs\".}\n\nlet m = &\"y is {y}, from \" & $x  ## Text.\n"
+      format = "{.experimental: \"strictFuncs\".}\n\nproc formatValue*(result: var string; " &
+        "value: int; specifier: string) =\n  ## Write value.\n  result.add $value\n"
+      due = "a/a.nim:3: interpolation-braces to fix"
+    for (files, nimbles, is_due) in [
+      (@[("a/a.nim", module)], @{"a/a.nim": "a/a.nimble"}, true),
+      (@[("a/a.nim", module), ("a/b.nim", format)],
+        @{"a/a.nim": "a/a.nimble", "a/b.nim": "a/a.nimble"}, false),  # one package
+      (@[("a/a.nim", module), ("b/b.nim", format)],
+        @{"a/a.nim": "a/a.nimble", "b/b.nim": "b/b.nimble"}, true),  # other package
+    ]:
+      let outcome = outcome(files, [], is_check = true, nimbles = nimbles.toTable)
+      check outcome.lines.anyIt(it.startsWith(due)) == is_due
+      check outcome.lines.anyIt(it.startsWith("a/a.nim:3: interpolation-braces left: ")) ==
+        not is_due
+
+
   test "command line reads no file as drive code, so fixed wait passes under `tests` or `tools`":
     # Case held: command line read each file under directory `tests` or `tools`, at any depth, as
     #   drive code, which is layout of this repository, so it reported fixed wait of drive in any

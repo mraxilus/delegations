@@ -362,6 +362,18 @@ suite "Fixes":
     check fixEntries(BRANCH_CURATOR, [again[0]], context = initContext(again)).written.len == 0
 
 
+  test "join of interpolated string stays split in project whose file declares `formatValue`":
+    let
+      path = "curator/audit/src/a.nim"
+      module = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet m = &\"y is {y}, from \" & $x  ## Text.\n"
+      format = "## Do.\n\n" & STRICT_FUNCS & "\n\nproc formatValue*(result: var string; " &
+        "value: int; specifier: string) =\n  ## Write value.\n  result.add $value\n"
+      tree = @[entry(path, module), entry("curator/audit/src/b.nim", format)]
+    check fixEntries(BRANCH_CURATOR, [tree[0]], context = initContext(tree[0 .. 0])).written[0]
+      .content == module.replace("from \" & $x", "from {x}\"")
+    check fixEntries(BRANCH_CURATOR, [tree[0]], context = initContext(tree)).written.len == 0
+
+
   test "semantic pass settles conversion first; file compiling nowhere is left with its error":
     let
       path = "curator/audit/src/a.nim"

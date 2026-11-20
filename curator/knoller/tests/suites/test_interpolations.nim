@@ -106,3 +106,11 @@ suite "Interpolations":
       source.replace("from \" & $x", "from {x}\"")
     check formatted("a.nim", source, Dialect.Module, has_format_value = true).source == source
       # `formatValue` of project could print value other than `$`
+
+
+  test "routine `formatValue` of any spelling marks its source, and binding of that name none":
+    let signature = "(result: var string; value: Thing; specifier: string) = discard\n"
+    check ("proc formatValue*" & signature).isDeclaringFormatValue
+    check ("func format_value" & signature).isDeclaringFormatValue  # Nim reads one name
+    check not "let formatValue = 1\n".isDeclaringFormatValue
+    check not "proc format(x: int): string = $x\n".isDeclaringFormatValue
