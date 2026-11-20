@@ -41,6 +41,10 @@
 ##     it over tree by project: whether file declares `formatValue`, constants each module
 ##     exports, defaults of configurations, and names of its modules, with aliases of library
 ##     it builds on, which no file of tree holds, so caller reads library from disk.
+##   Uses of private symbols and pure routines come from compiler, and library from disk:
+##     `readFacts` reads them under root through readers of knoller's command line
+##     (`resolveMarkers`, `resolvePures`, `modulesLibrary`), so both read alike, and koch passes
+##     them to `initContext`, as it passes answers of semantic pass.
 ##   Finding of rule resting on context that fix leaves stays for hand, as knoller's command line
 ##     leaves it: marker and `func` no edit writes, index whose alias no edit writes, and call
 ##     of constructor, which no fix writes (STYLE.md §5). Fenced line of rule reading names
@@ -64,8 +68,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, sequtils, sets, strutils, tables]
+import std/[algorithm, options, os, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
+from ../../knoller/src/knoller/command import modulesLibrary, resolveMarkers, resolvePures
 import ./[
   checker, findings, glossary, kinds, layout, names, plan, prose_own, scope, symbols, toolchain,
   waits,
@@ -280,9 +285,27 @@ proc readFacts*(
 ): tuple[
   uses: Table[string, Uses], pures: Table[string, Pures], libraries: Table[string, seq[string]]
 ] =
-  ## Read what fixers of entries ask compiler and disk beyond semantic pass: none yet, since no
-  ##   fixer reads uses, pures or library (`initContext`).
-  discard
+  ## Read, from disk under root, what fixers of entries ask beyond semantic pass of
+  ##   `queriesSemantic`, through knoller's own readers, so `koch fix` reads them as command
+  ##   line does: use of each private symbol and `{.all.}` (`resolveMarkers`), and each `proc`
+  ##   compiler checks as `func` (`resolvePures`), by path; and modules of library each project
+  ##   builds on, under each `--path` of `nim.cfg` beside its nimble file (`modulesLibrary`), by
+  ##   nimble file. Each reads project of file as git lists it there, with no define, as command
+  ##   line names none; file at root lies in no project, so it asks none, as nimble file
+  ##   `locked` names asks none.
+  let
+    absolute = root.absolutePath
+    files = entries.filterIt(
+      it.isKindNim and it.path notin locked and it.path.nimbleProject.len > 0
+    ).mapIt((it.path, it.content))
+  var toolchains = initToolchains()
+  result.uses = files.resolveMarkers("", absolute, toolchains)
+  result.pures = files.resolvePures("", absolute, toolchains)
+  var nimbles = initTable[string, string]()  # Absolute path of each nimble file, by its own.
+  for (path, _) in files: nimbles[path.nimbleProject] = absolute / path.nimbleProject
+  let libraries = nimbles.modulesLibrary
+  for nimble, path in nimbles:
+    if path in libraries: result.libraries[nimble] = libraries[path]
 
 
 func initContext*(
