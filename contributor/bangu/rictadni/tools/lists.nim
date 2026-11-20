@@ -1,6 +1,6 @@
 ## Convert English of gismu list, and lujvo list, into typed Nim modules project commits.
 ##   Reads `gismu.txt` and `lujvo.txt` as Debian package `lojban-common` installs them, and
-##   renders `src/lojban_tagger/lists/gismu.nim` and `lujvo.nim`; `build.nim` runs it.
+##   renders `src/rictadni/lists/gismu.nim` and `lujvo.nim`; `build.nim` runs it.
 ##   Runs as own program for verbs `lists` and `head` of `build.nim`, as
 ##     `nim r tools/lists.nim <lists|head>`: module reads parser package, which driver imports
 ##     none of, so `koch list-packages` runs driver before Atlas restores any package
@@ -13,7 +13,7 @@
 ##     more, and gloss is present. Other shapes (phrase for word, no gloss, `,` in tanru) are
 ##     left out, and module header counts them, so cut stays visible.
 ##   Reader of each source, key naming its directory, and SHA-256 pin of each file are those of
-##     `lojban_parser/tools/lists.nim`, re-exported for suites: both projects
+##     `ricysoho/tools/lists.nim`, re-exported for suites: both projects
 ##     read one `gismu.txt`, and English here follows parser's list entry for entry, so one pin
 ##     serves both. Debian moving list makes `lists` refuse and `head` report, never silent
 ##     rewrite of committed list.
@@ -29,17 +29,17 @@
 
 import std/[options, os, sequtils, strutils]
 
-from ../dependencies/lojban_parser/contributor/bangu/lojban_parser/tools/lists import
+from ../dependencies/ricysoho/contributor/bangu/ricysoho/tools/lists import
   DIGEST_GISMU, DIGEST_LUJVO, DIRECTORY_LISTS, KEY_LISTS, readSource, Source
 
-import ../src/lojban_tagger/entries
+import ../src/rictadni/entries
 
 export DIGEST_GISMU, DIGEST_LUJVO, DIRECTORY_LISTS, KEY_LISTS, readSource, Source
 
 
 const
-  PATH_GISMU* = "src/lojban_tagger/lists/gismu.nim"  ## Module gismu list renders to.
-  PATH_LUJVO* = "src/lojban_tagger/lists/lujvo.nim"  ## Module lujvo list renders to.
+  PATH_GISMU* = "src/rictadni/lists/gismu.nim"  ## Module gismu list renders to.
+  PATH_LUJVO* = "src/rictadni/lists/lujvo.nim"  ## Module lujvo list renders to.
   WIDTH = 100  ## Column limit of Article X.1, which rendered lines keep.
   LETTERS_LOJBAN = {'a' .. 'z', '\''}  ## Characters word of kept lujvo line may hold.
   NOTICE = [
@@ -186,7 +186,7 @@ func toModuleGismu*(entries: openArray[EntryGismuEnglish], digest: string): stri
     digest,
     [
       "Entries keep order of list: gismu and cmavo carrying rafsi, alphabetically.",
-      "Rafsi of each word stand in gismu list of `lojban_parser`, entry for entry.",
+      "Rafsi of each word stand in gismu list of `ricysoho`, entry for entry.",
     ],
   )
   lines.add "const LIST_GISMU* = ["

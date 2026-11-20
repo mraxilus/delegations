@@ -42,7 +42,7 @@ when compileOption("profiler"):
 import std/[json, options, os]
 
 import ../app/exchanges
-import ../src/lojban_tagger/suggestions
+import ../src/rictadni/suggestions
 
 
 type
@@ -201,10 +201,12 @@ func toExchanges*(example: Example, service: Service): seq[Exchange] =
 func toCommand*(example: Example, service: Service): string =
   ## Render shell command replaying example under service from `DIRECTORY_EXAMPLES`, which
   ##   project folder runs: service named, and endpoint, model, effort and workspace set empty,
-  ##   so no setting shell exports reaches run.
-  "LOJBAN_TAGGER_SERVICE=" & $service & " LOJBAN_TAGGER_ENDPOINT= " &
-      "LOJBAN_TAGGER_MODEL= LOJBAN_TAGGER_EFFORT= LOJBAN_TAGGER_WORKSPACE= " &
-      "binaries/suggester --replay:" & DIRECTORY_EXAMPLES & " " & example.argument.quoteShell
+  ##   under new name and under old one that `suggester` still reads (#946), so no setting
+  ##   shell exports reaches run.
+  "RICTADNI_SERVICE=" & $service & " RICTADNI_ENDPOINT= RICTADNI_MODEL= RICTADNI_EFFORT= " &
+      "RICTADNI_WORKSPACE= LOJBAN_TAGGER_ENDPOINT= LOJBAN_TAGGER_MODEL= LOJBAN_TAGGER_EFFORT= " &
+      "LOJBAN_TAGGER_WORKSPACE= binaries/suggester --replay:" & DIRECTORY_EXAMPLES & " " &
+      example.argument.quoteShell
 
 
 proc writeExamples*(directory: string) =

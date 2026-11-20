@@ -3,7 +3,7 @@
 ##   package `lojban-common`, SHA-256 `f2fc4cff4f265ad02717d56733b4627f`
 ##   `fa78c616db78dcaa44caab694e1dd5b7`; never edit by hand, run verb again.
 ##   Entries keep order of list: gismu and cmavo carrying rafsi, alphabetically.
-##   Rafsi of each word stand in gismu list of `lojban_parser`, entry for entry.
+##   Rafsi of each word stand in gismu list of `ricysoho`, entry for entry.
 ##   Derived from material Logical Language Group placed in public domain; facts of
 ##     derivation stated here as group asks: columns cut to fields of `entries.nim`,
 ##     carriage returns removed, spaces at field ends trimmed. Further information about

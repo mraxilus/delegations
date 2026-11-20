@@ -22,8 +22,8 @@ when compileOption("profiler"):
 
 import std/[options, os, random, sequtils, strutils, sugar, unittest]
 
-import ../../src/lojban_tagger/entries
-import ../../src/lojban_tagger/lists/[gismu, lujvo]
+import ../../src/rictadni/entries
+import ../../src/rictadni/lists/[gismu, lujvo]
 import ../../tools/lists
 
 
@@ -34,9 +34,9 @@ const
   COUNT_LINES_LUJVO = 3846  ## Lines of `lujvo.txt` that `DIGEST_LUJVO` pins, none blank.
   CHARACTERS_TEXT = "abcdefxyz0123'/()[]$;\""  ## Characters random words are spelled from.
   LETTERS_LOJBAN = {'a'..'z', '\''}  ## Characters word of either list holds.
-  TEXT_MODULE_GISMU = staticRead("../../src/lojban_tagger/lists/gismu.nim")
+  TEXT_MODULE_GISMU = staticRead("../../src/rictadni/lists/gismu.nim")
     ## Committed module of gismu list, as text.
-  TEXT_MODULE_LUJVO = staticRead("../../src/lojban_tagger/lists/lujvo.nim")
+  TEXT_MODULE_LUJVO = staticRead("../../src/rictadni/lists/lujvo.nim")
     ## Committed module of lujvo list, as text.
 
   LINE_HEADER =

@@ -8,11 +8,11 @@
 ##   | readTag             | read text as tag, or refuse it with reason                  |
 ##   | RefusalTag          | why text is no tag                                          |
 ##   | `$`                 | lujvo form 4.12 scores lowest, or gismu itself              |
-##   | tanruUnits          | tag folded into tanru units, as `lojban_parser` folds tanru |
+##   | tanruUnits          | tag folded into tanru units, as `ricysoho` folds tanru |
 ##   | toTanru, readTanru  | words joined by `+`, as lujvo list writes tanru             |
 ##   |---------------------|-------------------------------------------------------------|
 ##
-##   Reader of `lojban_parser` reads each word by rules of CLL alone, and so do its rendering and
+##   Reader of `ricysoho` reads each word by rules of CLL alone, and so do its rendering and
 ##     fold of tanru; this module holds policy of tag. Architect ruled that tagger alone restricts
 ##     words: tag holds words of list, last one gismu.
 ##   Text that reader refuses, or reads as no gismu nor lujvo, is no tag. Its refusal is `Hyphen`
@@ -36,8 +36,8 @@
 ##   `$` rejects 4-letter rafsi several gismu share (`brod`) wherever gismu has other rafsi,
 ##     so rendered tag reads back as itself; `brodi`, `brodo` and `brodu` have none, so their
 ##     lujvo render with `brod` and read as `RefusalTag.Ambiguous` (open question in PROVENANCE).
-##   Cost: `$` is render of `lojban_parser`, which searches choices of rafsi by dynamic
-##     programming in time linear in words of tag (PROVENANCE of `lojban_parser`); lujvo of 18
+##   Cost: `$` is render of `ricysoho`, which searches choices of rafsi by dynamic
+##     programming in time linear in words of tag (PROVENANCE of `ricysoho`); lujvo of 18
 ##     words that `test_suggestions.nim` holds renders in under 0.1 ms in release (measured,
 ##     Figures of PROVENANCE). `readTag` caps no words.
 
@@ -45,7 +45,7 @@
 
 import std/[options, sequtils, strutils]
 
-import lojban_parser
+import ricysoho
 
 
 type
@@ -83,7 +83,7 @@ func isGismuAlone*(tag: Tag): bool = tag.words.allIt(it.kind == Kind.Gismu)
   ## Test tag holds gismu alone, i.e. no cmavo converts or groups them.
 
 func tanruUnits*(tag: Tag): seq[TanruUnit] = tag.words.mapIt(it.toPart).tanruUnits
-  ## Fold words of tag into tanru units, by fold of `lojban_parser`.
+  ## Fold words of tag into tanru units, by fold of `ricysoho`.
 
 
 
@@ -120,7 +120,7 @@ func readTag*(text: string): ReadingTag =
   let letters = text.strip.toLowerAscii.replace(",", "")
   if letters.len == 0: return refuse(letters, RefusalTag.Empty)
   for at in 0..<letters.len:
-    if letters[at] notin lojban_parser.LETTERS:
+    if letters[at] notin ricysoho.LETTERS:
       return refuse(letters, RefusalTag.Letter, letters.character(at))
   let reading = letters.readWord
   if not reading.is_word:
@@ -156,7 +156,7 @@ func readTag*(text: string): ReadingTag =
 #[ Rendering ]#
 
 func `$`*(tag: Tag): string = $Tanru(parts: tag.words.mapIt(it.toPart))
-  ## Render tag as gismu, or as lujvo form 4.12 scores lowest, as `lojban_parser` renders tanru.
+  ## Render tag as gismu, or as lujvo form 4.12 scores lowest, as `ricysoho` renders tanru.
 
 
 func toTanru*(tag: Tag): string =

@@ -3,10 +3,10 @@
 `+` and `-` take two multivectors of any basis-set types, a scalar beside a multivector of any
 type, and negation takes any type. Two operands of one type keep that type. Two types give the
 exact union of their bases, as the named type with exactly those bases where one exists. Each
-body writes one assignment for each basis at compile time, so no set is read at run time. The
-edits of `pga/multivectors.nim` start from the patch of D3 of pga_visualiser. Its tests stand in
-a suite of their own, `Arithmetic`, at the end of `tests/suites.nim`. Every edit quotes text of
-pin.
+body writes one loop for each run of consecutive bases, at constant bounds, so no set is read at
+run time. The edits of `pga/multivectors.nim` start from the patch of D3 of pga_visualiser. Its
+tests stand in a suite of their own, `Arithmetic`, at the end of `tests/suites.nim`. Every edit
+quotes text of pin.
 
 ## Edit `pga/multivectors.nim`
 
@@ -78,31 +78,49 @@ func zeroCombined[A, B: static Bases](): auto {.inline.} =
   when A == B: default(MultivectorOf[A]) else: zeroNamed[A + B]()
 
 
-macro emitCombinedByBasis(A, B: static Bases, r, m, n: untyped, op: static string): untyped =
-  ## Emit one assignment per basis of union of `A` and `B`, each at constant basis.
-  ##   So no set is read at runtime; basis absent from one operand reads that operand as zero.
-  result = newStmtList()
+func runsOf(A, B: Bases): seq[Slice[Basis]] {.compileTime.} =
+  ## Split union of `A` and `B` into runs of consecutive bases, each held alike by each operand.
   for basis in A + B:
+    if result.len > 0 and ord(result[^1].b) + 1 == ord(basis) and
+        (result[^1].b in A) == (basis in A) and (result[^1].b in B) == (basis in B):
+      result[^1].b = basis
+    else:
+      result.add basis..basis
+
+
+macro emitCombinedByRun(A, B: static Bases, r, m, n: untyped, op: static string): untyped =
+  ## Emit one loop per run of consecutive bases of union of `A` and `B`, at constant bounds.
+  ##   So no set is read at runtime; basis absent from one operand reads that operand as zero.
+  ##   Loop, as at pin: one line per basis spills register at cga5d under SSE2.
+  result = newStmtList()
+  for run in runsOf(A, B):
     let
-      b = newCall(ident"Basis", newLit(ord(basis)))
+      b = genSym(nskForVar, "b")
+      first = newCall(ident"Basis", newLit(ord(run.a)))
+      last = newCall(ident"Basis", newLit(ord(run.b)))
       left = quote do: `m`[`b`]
       right = quote do: `n`[`b`]
       value =
-        if basis in A and basis in B: infix(left, op, right)
-        elif basis in A: left
+        if run.a in A and run.a in B: infix(left, op, right)
+        elif run.a in A: left
         elif op == "-": prefix(right, "-")
         else: right
     result.add quote do:
-      `r`[`b`] = `value`
+      for `b` in `first`..`last`:
+        `r`[`b`] = `value`
 
 
-macro emitNegatedByBasis(B: static Bases, r, m: untyped): untyped =
-  ## Emit one negation per basis of `B`, each at constant basis, so no set is read at runtime.
+macro emitNegatedByRun(B: static Bases, r, m: untyped): untyped =
+  ## Emit one loop of negation per run of consecutive bases of `B`, at constant bounds.
   result = newStmtList()
-  for basis in B:
-    let b = newCall(ident"Basis", newLit(ord(basis)))
+  for run in runsOf(B, B):
+    let
+      b = genSym(nskForVar, "b")
+      first = newCall(ident"Basis", newLit(ord(run.a)))
+      last = newCall(ident"Basis", newLit(ord(run.b)))
     result.add quote do:
-      `r`[`b`] = -`m`[`b`]
+      for `b` in `first`..`last`:
+        `r`[`b`] = -`m`[`b`]
 
 
 func `+`*[A, B: static Bases](
@@ -110,7 +128,7 @@ func `+`*[A, B: static Bases](
 ): typeof(zeroCombined[A, B]()) {.inline, noinit.} =
   ## Add multivectors, i.e. 𝐦 + 𝐧.
   ##   Different types give exact union of their bases, named where a named type has them.
-  emitCombinedByBasis(A, B, result, m, n, "+")
+  emitCombinedByRun(A, B, result, m, n, "+")
 
 
 func `+`*[B: static Bases](
@@ -120,7 +138,7 @@ func `+`*[B: static Bases](
   ##   Result holds bases of 𝐦 and scalar, named where a named type has them.
   var 𝐬 {.noinit.}: MultivectorOf[{Basis.scalar}]
   𝐬[Basis.scalar] = s
-  emitCombinedByBasis({Basis.scalar}, B, result, 𝐬, m, "+")
+  emitCombinedByRun({Basis.scalar}, B, result, 𝐬, m, "+")
 
 
 func `+`*[B: static Bases](
@@ -130,7 +148,7 @@ func `+`*[B: static Bases](
   ##   Result holds bases of 𝐦 and scalar, named where a named type has them.
   var 𝐬 {.noinit.}: MultivectorOf[{Basis.scalar}]
   𝐬[Basis.scalar] = s
-  emitCombinedByBasis(B, {Basis.scalar}, result, m, 𝐬, "+")
+  emitCombinedByRun(B, {Basis.scalar}, result, m, 𝐬, "+")
 ```
 
 ## Edit `pga/multivectors.nim`
@@ -165,7 +183,7 @@ func `-`*(m: Multivector, s: Coefficient): Multivector {.inline, noinit.} =
 ```nim
 func `-`*[B: static Bases](m: MultivectorOf[B]): MultivectorOf[B] {.inline, noinit.} =
   ## Negate multivector, i.e. −𝐦.
-  emitNegatedByBasis(B, result, m)
+  emitNegatedByRun(B, result, m)
 
 
 func `-`*[A, B: static Bases](
@@ -173,7 +191,7 @@ func `-`*[A, B: static Bases](
 ): typeof(zeroCombined[A, B]()) {.inline, noinit.} =
   ## Subtract multivectors, i.e. 𝐦 − 𝐧.
   ##   Different types give exact union of their bases, named where a named type has them.
-  emitCombinedByBasis(A, B, result, m, n, "-")
+  emitCombinedByRun(A, B, result, m, n, "-")
 
 
 func `-`*[B: static Bases](
@@ -183,7 +201,7 @@ func `-`*[B: static Bases](
   ##   Result holds bases of 𝐦 and scalar, named where a named type has them.
   var 𝐬 {.noinit.}: MultivectorOf[{Basis.scalar}]
   𝐬[Basis.scalar] = s
-  emitCombinedByBasis({Basis.scalar}, B, result, 𝐬, m, "-")
+  emitCombinedByRun({Basis.scalar}, B, result, 𝐬, m, "-")
 
 
 func `-`*[B: static Bases](
@@ -193,7 +211,7 @@ func `-`*[B: static Bases](
   ##   Result holds bases of 𝐦 and scalar, named where a named type has them.
   var 𝐬 {.noinit.}: MultivectorOf[{Basis.scalar}]
   𝐬[Basis.scalar] = s
-  emitCombinedByBasis(B, {Basis.scalar}, result, m, 𝐬, "-")
+  emitCombinedByRun(B, {Basis.scalar}, result, m, 𝐬, "-")
 ```
 
 ## Edit `tests/suites.nim`
