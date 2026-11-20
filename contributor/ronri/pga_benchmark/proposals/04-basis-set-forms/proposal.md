@@ -210,11 +210,7 @@ withdrawn.
 - **Time.** The whole set aligns to 16 bytes from rga3d up at 64 bits, where pin aligns it to
   8. In the evaluation, the 111 measurands at rga4d and the 135 at cga5d read ×0.99 to ×1.02 of
   pin. The highest are `+` at rga4d, which P14 gives, and the selection of an antigrade at cga5d.
-  Two earlier takes of the same day read ×0.98 to ×1.03.
-- **Static reading.** The inspector keeps the functions of the library by the module in their C
-  name. Seven functions of pin now take in that name the module of the bench that calls them, so
-  the reading holds them no more. They are `+`, `-` and negation of whole multivectors, and the
-  four projections.
+  Four takes of the same C on 2026-11-19 read ×0.98 to ×1.03 in all.
 - **Aliases.** Each alias returns `auto`, which has no use at pin. So its signature no longer
   states its type, and a caller reads the type from its operator.
 - **Callers.** A caller that lets the compiler place its basis-set types does not migrate, since
@@ -365,9 +361,8 @@ library pass 44 tests at rga4d and 39 at cga5d, with the 5 tests of the suite `T
 `laws.nim` holds at the nine algebras, and at 32 bits at seven. The 111 measurands at rga4d and the
 135 at cga5d read ×0.99 to ×1.02 of pin, as Costs gives.
 
-The static reading names seven functions that move: `+`, `-` and negation of whole multivectors,
-and `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti`. Each
-has a reading at pin and none after the change. In the C of the bench, the central projection is
-`projectCentral_u0__measurements` with this proposal, after the module that calls it. Under P14
-alone it carries the name of the library, so the inspector finds it there. Their times read ×1.00
-to ×1.02 of pin.
+The static reading names three functions that move at both algebras: `+`, `-` and negation of
+whole multivectors. Each moves as under P14 alone, which gives their forms. `+` writes its result
+with no zero fill, so at rga4d it moves 384 bytes against 512 at pin. The difference and the
+negation each spend five lines of C less. The four projections read as at pin, and the times of
+all seven read ×0.99 to ×1.02 of pin.

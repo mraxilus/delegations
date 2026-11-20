@@ -368,6 +368,26 @@ A field that carries an alignment opens with `NIM_ALIGN`, as the types of P04 an
 inspector skips that word. So an aligned type keeps its key, and its evaluation lists no function
 twice.
 
+**The inspector keeps the functions of the library, of the reference and of the dense forms.** It
+knows each one by the module in its C name. The compiler names an instance of a generic after the
+module that instantiates it first. In the build of `bench`, the timed calls in `measurements`
+instantiate each generic that no code of the library instantiates first. There it sits beside the
+helpers of the bench. So the inspector also keeps a function of `measurements` whose symbol is the
+head of a measurand.
+
+A bench build at rga4d under P04, by hand on 2026-11-19, names seven generics after that module.
+They are the sum, the difference and the negation of whole multivectors, and the four projections.
+The evaluations `basis-set-forms.json`, `object-names.json` and `homogeneous-scalar.json` lose none
+of them at rga4d and cga5d.
+
+The cost is that a generic of the library whose symbol no measurand names still drops from the
+list. So does a generic that another module of the bench instantiates first. A function of
+`measurements` that took the symbol of a head would join it. A law of the suite holds that no
+helper of the bench does so at the pin.
+
+- Rejected: every function of `measurements`. Its helpers, such as `fold` and `isAnyNan`, would
+  then join the comparison of each evaluation as functions that move.
+
 The inspector then counts what the C spells:
 
 - multiplies, adds, subtractions and divides;
@@ -396,6 +416,9 @@ what a user of the library gets by default.
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. It covers:
 
 - a demangling table with overload indices;
+- each kind of module, against a head of the catalogue and a helper of the bench, through
+  `keyedCatalogue`, which the entry calls;
+- the law that no helper of the timed calls takes the symbol of a head, at the pin;
 - a fixture C source with known counts;
 - an instance named by its count, with an aligned field and without;
 - loops of literal, nested and variable bound;
