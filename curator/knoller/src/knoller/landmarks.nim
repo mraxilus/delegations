@@ -6,9 +6,11 @@
 ##     (`aliasesDeclared`). `T` is type, or placeholder whose constraint lists types
 ##     (`[G: Grade | GradeAnti]`).
 ##   Body is read for each type (`indexNamed`): `when G is GradeAnti: … else: …` takes branch of
-##     type; conversion to placeholder or to type itself, as `G(1)`, names index; `t.low`, `G.low`
-##     or `T.low` names index alias `low` names, read through it. Other `when` branches on
-##     configuration, as `origin` does, and other body names no index, so no bare form matches.
+##     type; conversion of constant to placeholder or to type itself, as `G(1)`, names index;
+##     `t.low`, `G.low` or `T.low` names index alias `low` names, read through it. Constant is
+##     literal, name and arithmetic (`CHARS_INDEX`), so `sample` of `Coefficient(rand(…))` names
+##     none. Other `when` branches on configuration, as `origin` does, and other body names no
+##     index, so no bare form matches it.
 ##   Alias declared under `when`, as `infinity` is, exists in one configuration alone, so fix
 ##     never writes it, and it names no index here.
 ##   Bare form is conversion `T(…)` whose argument, spaces aside, is index of alias of `T`
@@ -62,6 +64,9 @@ const
   ALIASES_PREFERRED = ["low", "high"]
     ## Alias fix writes where several name one index, as library writes grade (#443).
   DEPTH_MAX = 8  ## Aliases read through one another at most.
+  CHARS_INDEX = {'A' .. 'Z', 'a' .. 'z', '0' .. '9', '_', '+', '-', '*'}
+    ## Characters constant index is written in: literal, name and arithmetic, never call, field,
+    ##   float, range or string.
 
 
 func spaceless(text: string): string =
@@ -174,13 +179,14 @@ func indexNamed(aliases: openArray[Alias]; name, kind: string; depth = 0): strin
         if condition[1].strip == kind: branches[0 ..< otherwise].strip
         else: branches[otherwise + "else:".len .. ^1].strip
 
-    # Read conversion to placeholder or type itself, else alias read through.
+    # Read conversion of constant to placeholder or type itself, else alias read through.
     let
       head = body.identifierAt(0)
       rest = body[head.len .. ^1]
     if head notin selves: return
     if rest.startsWith("(") and rest.closingAt(0) == rest.high:
-      return rest[1 ..< rest.high].spaceless
+      let index = rest[1 ..< rest.high].spaceless
+      return (if index.len > 0 and index.allIt(it in CHARS_INDEX): index else: "")
     if rest.startsWith(".") and rest[1 .. ^1].identifierAt(0) == rest[1 .. ^1]:
       return aliases.indexNamed(rest[1 .. ^1], kind, depth + 1)
     return
