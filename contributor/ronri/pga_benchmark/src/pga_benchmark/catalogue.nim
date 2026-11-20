@@ -715,6 +715,12 @@ const CATALOGUE* = block:
     )
   catalogue
 
+static:
+  # Typed operand is motor of transform alone: pools and stems of inspector name motor alone.
+  for p in CATALOGUE:
+    doAssert p.typed.card == 0 or (p.typed == {1} and $p.operands[1] == "Motor"),
+      "Catalogue types motor of transform alone; got `" & p.id & "`."
+
 
 const MISSING* = block:
   ## Operations reference carries and library lacks, each one gap; ids spelled alike.
