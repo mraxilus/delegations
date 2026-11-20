@@ -339,10 +339,15 @@ const
   LABEL_SUBAGENT = "**Subagent:**"
     ## Opening of line of block whose first word after it names kind of call that block serves
     ##   (7017187857).
+  LABELS_SUBAGENT = ["**subagent:**", "**subagent**:"]
+    ## Forms of `LABEL_SUBAGENT` that line opens with, in lower case: match reads it in any case,
+    ##   with colon inside or outside bold (7027197745).
   MARKS_KIND = {'`', '*', '_'}
     ## Marks of code, bold and italic that word of kind may stand inside; match drops them, with
-    ##   case and final comma (7022770415).
-  COMMA = ','  ## Mark after word of kind that match drops, once, as in `builder,` (7022770415).
+    ##   case and final mark of `MARKS_END_KIND` (7022770415).
+  MARKS_END_KIND = {',', '.', ':'}
+    ## Marks after word of kind that match drops, once, as in `builder,` (7022770415) and
+    ##   `builder.` or `builder:` (7027197745).
   HEADING_REFLECTION* = "## Reflection"  ## Heading of block that answers report of critic.
   KIND_CRITIC = "critic"  ## Kind whose report asks for reflection.
   KIND_PEER = "peer"  ## Kind `origin.kind` of entry gives hand-back of subagent.
@@ -1936,16 +1941,25 @@ func kindNamed(text: string, kinds: openArray[string]): string =
   ## Read kind block text names: first word after `**Subagent:**` (7017187857), on first line
   ##   of block that opens with it, after any indent; empty where no line opens so, or that word
   ##   is no kind.
+  ##   Label reads in any case, with colon inside or outside bold (7027197745), so
+  ##     `**subagent**:` opens such line; each other form, as `__Subagent:__`, opens none.
   ##   Word runs to next whitespace. Match drops its case, each mark of `MARKS_KIND` around it,
-  ##     and one final comma (7022770415), so `**Builder**,` names `builder`; kind read is name
-  ##     its template gives. Each other mark stays, so `builder:` and `builder.` name none.
+  ##     and one final mark of `MARKS_END_KIND` (7022770415, 7027197745), so `**Builder**,` and
+  ##     `builder.` name `builder`; kind read is name its template gives. Each other mark stays,
+  ##     so `builder;` and `builder..` name none.
   for line in text.splitLines:
-    let s = line.strip(trailing = false)
-    if not s.startsWith(LABEL_SUBAGENT): continue
-    let words = s[LABEL_SUBAGENT.len .. ^1].splitWhitespace
+    let
+      s = line.strip(trailing = false)
+      lower = s.toLowerAscii
+    var at = -1  # End of label that line opens with; -1 where it opens with none.
+    for label in LABELS_SUBAGENT:
+      if lower.startsWith(label): at = label.len
+    if at < 0: continue
+    let words = s[at .. ^1].splitWhitespace
     if words.len == 0: return ""
     var word = words[0].strip(chars = MARKS_KIND)
-    if word.endsWith(COMMA): word = word[0 ..< word.high].strip(leading = false, chars = MARKS_KIND)
+    if word.len > 0 and word[^1] in MARKS_END_KIND:
+      word = word[0 ..< word.high].strip(leading = false, chars = MARKS_KIND)
     for kind in kinds:
       if cmpIgnoreCase(kind, word) == 0: return kind
     return ""
