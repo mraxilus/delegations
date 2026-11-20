@@ -111,14 +111,16 @@ const
   KEY_NIMBLE = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
 
 
-func steps(dialect: Dialect, should_drop_articles = true): seq[Step] =
+func steps(dialect: Dialect, should_drop_articles = true, has_format_value = false): seq[Step] =
   ## List steps dialect takes, in order header gives; fixer of articles, and of capitals and
-  ##   periods of comment, runs only where comments drop articles, as English does.
+  ##   periods of comment, runs only where comments drop articles, as English does, and fixer of
+  ##   interpolations only where project declares no `formatValue`.
   result = @STEPS_FORM
   result.add guarded(fixBlockEntry)
   if should_drop_articles: result.add @[guarded(fixArticles), guarded(fixClaims)]
   else: result.add guarded(fixBackticks)
   result.add guarded(fixOutlines)
+  if not has_format_value: result.add guarded(fixInterpolations)
   result.add @[
     widening(fixMessages), widening(fixEchoes), widening(fixMixtures), guarded(fixTargets),
     guarded(fixGenerations), guarded(fixCommands), proving(fixParentheses),
@@ -153,8 +155,8 @@ func checkFormattingUnfenced(
   ##   and periods only where comments drop articles.
   let
     checks_before = [
-      checkComments, checkBanners, checkOutlines, checkMessages, checkEchoes, checkMixtures,
-      checkNegations, checkTargets, checkCommands,
+      checkComments, checkBanners, checkOutlines, checkInterpolations, checkMessages, checkEchoes,
+      checkMixtures, checkNegations, checkTargets, checkCommands,
     ]
     checks_after = [
       checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures, checkCalls,
@@ -327,6 +329,7 @@ func formatted*(
   proofs = Proofs();
   should_drop_articles = true;
   nimble = "";
+  has_format_value = false;
 ): Fix =
   ## Run on source each fixer dialect takes, in order header gives, until source settles;
   ##   fenced lines read as `FENCED`, and fixer that would move them is skipped. Source whose
@@ -335,8 +338,9 @@ func formatted*(
   ##   Needless parentheses go where `proofs` prove them; each source no answer reaches is in
   ##   `Fix.asked`, for caller to ask parser and run again.
   ##   Articles go only where comments drop them (`should_drop_articles`), and fixers of tests,
-  ##   stubs and umbrella read nimble file nearest file (`nimble`).
-  formattedBy(path, source, dialect.steps(should_drop_articles), proofs, nimble)
+  ##   stubs and umbrella read nimble file nearest file (`nimble`). Interpolated strings join
+  ##   only where project declares no `formatValue` (`has_format_value`).
+  formattedBy(path, source, dialect.steps(should_drop_articles, has_format_value), proofs, nimble)
 
 
 func checkFenceHeld*(

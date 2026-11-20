@@ -49,6 +49,8 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   OutlineDoc = "doc outline"  ## Nuance stands two spaces past where parent's sentence starts.
   SummaryDoc = "doc summary"  ## Doc holds one summary line, whose sentence ends in period.
   ValueMessage = "message value"  ## Message echoes its value in backticks.
+  BracesInterpolation = "interpolation braces"
+    ## Interpolated string takes each value in braces, and joins none to it by `&`.
   EchoMessage = "message echo"
     ## Message echoes each value in backticks, before `got` and with none, and states claim first.
   AndWithOr = "and with or"  ## Condition mixing `and` with `or` parenthesises each `and`.

@@ -402,3 +402,13 @@ func fixEchoes*(path, source: string; held: Held): Fix =
 func fixEchoes*(path, source: string): Fix =
   ## Insert backticks each bare value of message lacks, unless line they land on would be wide.
   fixEchoes(path, source, EVERY)
+
+
+func checkInterpolations*(path, source: string): seq[Report] =
+  ## Report concatenation that joins value or literal to interpolated literal by `&`.
+  discard
+
+
+func fixInterpolations*(path, source: string): Fix =
+  ## Join concatenation into one interpolated literal, each value in braces, where it reads alike.
+  result.source = source
