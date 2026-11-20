@@ -91,7 +91,7 @@ suite "Compile-time family":
     # Probe of reviewer: fix wrote block into block left open on line, which Nim refuses.
     let spanning = module(
       "func anchor(): int {.compileTime.} =\n  ## Anchor.\n  0\n\n\nfunc g(): int {.used,\n" &
-        "    inline.} =\n  ## Give one.\n  1\n\n\nconst C = g()  ## One.\n"
+        "    inline.} =\n  ## Give one.\n  1\n\nconst C = g()  ## One.\n"
     )
     check spanning.families.mapIt(it[0]) == @[LINES_HEAD + 6]  # report stays
     check spanning.fixedFamilies == spanning

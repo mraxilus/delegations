@@ -21,8 +21,8 @@
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent; compile-time family of module after them, whose pragmas widen or narrow
 ##     head that wrapping lays out, then branch on what build fixes, whose `when` widens its line;
-##   - blank lines beside suites, tests and helpers, then doc position and literal defaults,
-##     since doc joined or type dropped changes width wrapping measures;
+##   - blank lines beside suites, tests and helpers, and between definitions, then doc position
+##     and literal defaults, since doc joined or type dropped changes width wrapping measures;
 ##   - spacing before wrapping, since spaces it adds are width wrapping measures;
 ##   - wrapping last, separators, signatures, calls, continuations, then trailing separators:
 ##     layouts join groups with separator they read, call layout breaks line at operator where
@@ -130,7 +130,10 @@ func steps(dialect: Dialect, should_drop_articles = true, has_format_value = fal
   result.add dialect.stepsIdiom
   if dialect == Dialect.Module: result.add @[widening(fixFamilies), reading(fixBranches)]
   result.add configuring(fixConfigurations)
-  result.add @[placing(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
+  result.add @[
+    placing(fixBlanks), guarded(fixDefinitions), guarded(fixDocs), guarded(fixDefaults),
+    widening(fixSpacing),
+  ]
   result.add STEPS_WRAPPING
   result.add @[guarded(fixDocsMissing), guarded(fixCommentsAbove), guarded(fixStages)]
 
@@ -169,8 +172,9 @@ func checkFormattingUnfenced(
       checkMixtures, checkNegations, checkTargets, checkCommands,
     ]
     checks_after = [
-      checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures, checkCalls,
-      checkContinuations, checkTrailing, checkDocsMissing, checkCommentsAbove, checkStages,
+      checkDefinitions, checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures,
+      checkCalls, checkContinuations, checkTrailing, checkDocsMissing, checkCommentsAbove,
+      checkStages,
     ]
 
   # Run checks in order of chain: configuration blocks, which read defaults of package, then
@@ -200,9 +204,9 @@ func checkFormatting*(
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
   ##   In every dialect: X.9 trailing comments and spaces, X.2 banners, IV.4 messages, X.4
   ##   conditions and needless parentheses, STYLE.md §5 `to<Target>` calls and dotted call
-  ##   statements, suites and tests, STYLE.md §1 helpers, doc position, X.12 defaults, and X.3 and
-  ##   STYLE.md §5 separators, signatures, calls, operator breaks, continuations and trailing
-  ##   separators, and X.1 comments above.
+  ##   statements, suites and tests, STYLE.md §1 helpers, X.2 blank lines between definitions, doc
+  ##   position, X.12 defaults, and X.3 and STYLE.md §5 separators, signatures, calls, operator
+  ##   breaks, continuations and trailing separators, and X.1 comments above.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists, STYLE.md §3
   ##   profiler import, STYLE.md §2 compile-time family and STYLE.md §3 branch on what build
   ##   fixes, which reads `constants` other modules of package export. Fenced lines are read by

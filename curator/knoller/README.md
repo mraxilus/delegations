@@ -212,7 +212,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `configuration-block` | Blocks of one configuration join. In `when … else` the default is first. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
 | `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
-| `definition-blank-lines` | The blank lines before a definition follow its kind. |
+| `definition-blank-lines` | Blank lines before a definition follow its kind and the kind above. |
 | `doc-position` | A doc stands where the shape of its declaration puts it. |
 | `literal-default` | A parameter with a literal default states no type. |
 | `expression-spacing` | A space stands only where the expression rule puts it. |

@@ -154,7 +154,7 @@ suite "Chain":
     check fix.source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
         "\n\n\n#[ Section ]#\n\n" &
         "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
-        "  ## TODO: Document.\nproc g(a: int) = discard\n  ## TODO: Document.\n" &
+        "  ## TODO: Document.\n\nproc g(a: int) = discard\n  ## TODO: Document.\n\n" &
         "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
         "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
         "  second_item_named_at_length_so_list_crosses_column,\n]  ## TODO: Document.\n" &
@@ -172,12 +172,13 @@ suite "Chain":
 
   test "dialect decides idiom fixers and checks: module reads them, script does not":
     let breach = "import std/os\nimport std/strutils\nlet a = b+c  ## Sum.\n"
-    check checkFormatting("a.nims", breach, Dialect.Script).allIt(it.rule == Rule.SpacingExpression)
-    check checkFormatting("a.nim", breach, Dialect.Module).len == 2  # brackets too
+    check checkFormatting("a.nims", breach, Dialect.Script).mapIt(it.rule) ==
+      @[Rule.LinesBlankDefinition, Rule.SpacingExpression]  # X.2 gives doc after imports one
+    check checkFormatting("a.nim", breach, Dialect.Module).len == 3  # brackets too
     check formatted("a.nims", breach, Dialect.Script).source ==
-      "import std/os\nimport std/strutils\nlet a = b + c  ## Sum.\n"  # imports left to module
+      "import std/os\nimport std/strutils\n\nlet a = b + c  ## Sum.\n"  # imports left to module
     check formatted("a.nim", breach, Dialect.Module).source == STRICT_FUNCS &
-      "\n\nimport std/[os, strutils]\nlet a = b + c  ## Sum.\n"  # pragma and bracket too
+      "\n\nimport std/[os, strutils]\n\nlet a = b + c  ## Sum.\n"  # pragma and bracket too
 
 
   test "idioms of any Nim code reach script and package, checks and fixers, module's do not":
@@ -211,10 +212,11 @@ suite "Chain":
     )  # rows join
     # after fence, and doc each binding takes
     check checkFormatting("a.nim", source, Dialect.Module).mapIt((it.line, it.rule)) == @[
-      (12, Rule.SpacingExpression), (5, Rule.DocMissing), (12, Rule.DocMissing),
-    ]
+      (12, Rule.LinesBlankDefinition), (12, Rule.SpacingExpression), (5, Rule.DocMissing),
+      (12, Rule.DocMissing),
+    ]  # declaration block after another takes one (X.2)
     check formatted("a.nim", source, Dialect.Module).source == source.replace(
-      "  #!fix on\n)\n", "  #!fix on\n)  ## TODO: Document.\n"
+      "  #!fix on\n)\n", "  #!fix on\n)  ## TODO: Document.\n\n"
     ).replace("let n = matrix(1+2)\n", "let n = matrix(1 + 2)  ## TODO: Document.\n")
 
 
@@ -226,24 +228,27 @@ suite "Chain":
       held = checkFenceHeld("a.nims", source, Dialect.Script)
     check held.len == 1 and held[0].line == 2 and held[0].rule == Rule.FenceHeld  # at marker
     check held[0].message == "Fence keeps its lines as written, and inside them " &
-      "not-over-binary breaks once at line 4, single-bindings once at line 3 and " &
-      "expression-spacing 2 times from line 3" &
+      "not-over-binary breaks once at line 4, single-bindings once at line 3, " &
+      "definition-blank-lines once at line 3 and expression-spacing 2 times from line 3" &
       "; got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
-    check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted ==
-      @[(3, Rule.SpacingExpression), (4, Rule.NotOverBinary), (5, Rule.SpacingExpression)]
+    check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted == @[
+      (3, Rule.LinesBlankDefinition), (3, Rule.SpacingExpression), (4, Rule.NotOverBinary),
+      (5, Rule.SpacingExpression),
+    ]
       # same lines report same unfenced
     check formatted("a.nims", source, Dialect.Script).source == source  # fenced lines unwritten
 
 
   test "each fence gives one line: clean one breaks nothing, and open one runs to last line":
     let
-      source = "let A = 1+2  ## Sum.\n" & FENCE_OFF & "\nlet B = 1+2  ## Sum.\n" & FENCE_ON &
-        "\nlet C = 3  ## Three.\n" & FENCE_OFF & "\nlet D = 4  ## Four.\n"
+      source = "let A = 1+2  ## Sum.\n\n" & FENCE_OFF & "\nlet B = 1+2  ## Sum.\n" & FENCE_ON &
+        "\n\nlet C = 3  ## Three.\n\n" & FENCE_OFF & "\nlet D = 4  ## Four.\n"
+        # one blank line before each block, as X.2 asks
       held = checkFenceHeld("a.nims", source, Dialect.Script)
-    check held.mapIt(it.line) == @[2, 6]  # one for each fence
-    check held[0].message.contains(" expression-spacing breaks once at line 3; got")  # 1 outside
+    check held.mapIt(it.line) == @[3, 9]  # one for each fence
+    check held[0].message.contains(" expression-spacing breaks once at line 4; got")  # 1 outside
     check held[1].message == "Fence keeps its lines as written, and nothing inside breaks a " &
-      "rule; got lines `6` to `7`."
+      "rule; got lines `9` to `10`."
     check checkFenceHeld("a.nims", "let a = 1+2\n", Dialect.Script).len == 0  # no fence, no line
 
 
@@ -252,11 +257,12 @@ suite "Chain":
       FENCE_OFF & "\nimport std/[strutils, os]\nlet A = 1  ## One.\nlet B = 2  ## Two.\n" &
         "proc f(): int =\n  ## Do.\n  return result\n"
     check checkFenceHeld("a.nim", source, Dialect.Module)[0].message.contains(
-      "inside them return-result breaks once at line 7, bracket-import once at line 2 and " &
-        "single-bindings once at line 3; got",
+      "inside them return-result breaks once at line 7, bracket-import once at line 2, " &
+        "single-bindings once at line 3 and definition-blank-lines 2 times from line 3; got",
     )
     check checkFenceHeld("a.nims", source, Dialect.Script)[0].message.contains(
-      "inside them return-result breaks once at line 7 and single-bindings once at line 3; got",
+      "inside them return-result breaks once at line 7, single-bindings once at line 3 and " &
+        "definition-blank-lines 2 times from line 3; got",
     )  # script keeps its imports
 
 

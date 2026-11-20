@@ -110,8 +110,9 @@ suite "Findings":
           checkReturns("a.nim", @["proc f(): int =", "  return result"]) &
           checkKeysStub("tests/test_a.nim", stub, "a.nimble")
     check found.toFindings.mapIt(it.message) == @[
-      "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
-      "line 3 (X.1); got lines `2` to `4`.",  # fence warning
+      "Fence keeps its lines as written, and inside them definition-blank-lines breaks once " &
+      "at line 3 and expression-spacing once at line 3 (X.1); got lines `2` to `4`.",
+        # fence warning, of two rules
       "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
       "written (X.1); got `#!fix off` and `#!fix on` either side.",
       "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none.",
