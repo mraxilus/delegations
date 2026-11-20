@@ -16,6 +16,12 @@ ni'o le genturfa'i cu jdice ro valsi ja'i lo javni pe `CLL` po'o
   .i le genturfa'i cu tcidu lo pagbu be lo tanru pe pa gismu .a pa cmavo .a pa lujvo gi'e to'e curmi
       ro datselci'a gi'e cusku lo javni poi to'e curmi ri
 
+ni'o le genturfa'i cu tcidu ro lerfu pe `0` bi'o `9` ta'i le cmavo pe `PA` poi le lerfu cu sinxa
+    ke'a to `CLL 18.2` toi
+  .i se ki'u bo le genturfa'i cu tcidu lo'u li pa so bi ze le'u fi zoi gy. li 1987 .gy.
+  .i `CLL 3.1` na liste le lerfu
+  .i ku'i `Architect` cpedu lo nu le genturfa'i cu tcidu le lerfu
+
 ni'o le genturfa'i cu ciska lo lujvo poi sinxa pa tanru gi'e selnei `CLL` ku'o gi'e jarco lo du'u ma
     kau poi cmavo cu jorne ro taurpau
 
@@ -177,13 +183,13 @@ ni'o lo valsi poi lo pagbu be le genturfa'i cu to'e curmi ke'a selvau pa genvla 
 
 ```text
 $ nim r --hints:off --path:src --eval:'import std/[strutils, wordwrap], ricysoho
-for line in readTextMarked("mi 1987 klama le").toNif.strip.splitLines: echo line.wrapWords(100)'
+for line in readTextMarked("mi html klama le").toNif.strip.splitLines: echo line.wrapWords(100)'
 (.nif27)
 (.lang "cll-21.1")
 (srera 16 sumti_6 (nitcu BAI BU BY CAhA COI CUhE DOI FAhA FEhE FIhO GOI GOhA GUhA JAI KE KI KOhA LA
 LAU LAhE LE LI LOhU LU ME MOhI NA NAhE NOI NU NUhA PA PU SE SEI SOI TAhE TEI TO VA VEI VEhA VIhA XI
 ZAhO ZEI ZEhA ZI ZO ZOI BRIVLA) (sentence 0 (sumti_6 80 (KOhA 0 2 "mi")) (rivbi Stream Letter 3 7
-"1987") (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 8 13 "klama")) (tail_terms))) (LE 14 16 "le"))
+"html") (bridi_tail_3 50 (tanru_unit_2 130 (BRIVLA 8 13 "klama")) (tail_terms))) (LE 14 16 "le"))
 ```
 
 ni'o `CLL` dunda no cmene le jgena
@@ -195,8 +201,8 @@ ni'o lo srejge cu selcme zo srera noi selsmu lu ko'a srera li'u
   .i lo pagbu poi no genvla cu vasru ke'a selcme zo rivbi noi selsmu lu ko'a rivbi ko'e li'u
   .i ki'u bo le gerna cu tcidu lo valsi poi sruri le pagbu
 
-ni'o le genturfa'i cu to'e curmi zoi gy. 1987 .gy. ca lo nu tcidu lo vlapoi
-  .i se ki'u bo zoi gy. 1987 .gy. selvau `(rivbi Stream Letter 3 7 "1987")` noi se lidne lo sumti
+ni'o le genturfa'i cu to'e curmi zoi gy. html .gy. ca lo nu tcidu lo vlapoi
+  .i se ki'u bo zoi gy. html .gy. selvau `(rivbi Stream Letter 3 7 "html")` noi se lidne lo sumti
       gi'e lidne lo brirebla
 
 ni'o le selci'a cu fanmo ba zo le
@@ -570,7 +576,7 @@ ni'o le genturfa'i cu tcidu 16469 lo 17495 jufra pe `Tatoeba`
   .i lo cipra cu cipra ro jdice pe le mupli gi'e sitna lo javni poi ro jufra poi se to'e curmi cu
       na'e mapti ke'a
 
-ni'o le genturfa'i cu tcidu 69 lo 86 pagbu be le ci prosa
+ni'o le genturfa'i cu tcidu 76 lo 86 pagbu be le ci prosa
   .i lo traji be lo ka clani cu vasru 458 valsi
   .i le genturfa'i cu tcidu 783 lo 856 pagbu be `Alice` be'o .e 56 lo 173 clapau be `Oz`
   .i ro le nu to'e curmi cu drani ja'i `CLL`

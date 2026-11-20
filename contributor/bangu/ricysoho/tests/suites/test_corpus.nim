@@ -61,7 +61,7 @@ const
     ## lo cmavo pe `PA` poi ro lerfu pe `0` bi'o `9` cu sinxa ke'a to `CLL 18.2` toi
   COUNT_DIGITS_LEAST = 200
     ## lo mecrailai be lo mupli poi vasru lo cmavo pe `CLL 18.2` gi'e se tcidu
-    ##   .i ca lo nu jmina le flalu kei 208 mupli cu se tcidu
+    ##   .i ca lo nu jmina le flalu kei 218 mupli cu se tcidu
   NUMBERS_WRONG = [
     # zoi gy. reserved for experimental purposes .gy.
     #   .i claxu lo selma'o
