@@ -82,8 +82,8 @@ chain is counted from its two tables, and the operator as the evaluation reads i
   compiler, the first time a program calls it. At cga6d a full multivector by a motor type adds
   4.7 s to the build of a program. It also adds 35 MiB to the peak of the compiler. At rga4d it
   adds 0.06 s, inside the spread of the builds.
-- **Build of `import pga`.** It builds no table. In the evaluation, it takes 10.41 s at cga6d
-  against 10.64 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.5 MiB, as at pin.
+- **Build of `import pga`.** It builds no table. In the evaluation, it takes 10.43 s at cga6d
+  against 9.91 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.5 MiB, as at pin.
 - **Size.** At rga4d the function holds 82 lines of C, inline in each caller.
 - **Dimensions.** The adds grow faster than the multiplies. For a full 𝐦 by a motor type, the
   table spends 408 multiplies and 2 191 adds at cga5d, against 2 048 and 1 984 of the chain. At
@@ -137,9 +137,9 @@ The laws also hold the type of each result to the bases that the chain reaches, 
 equal to the chain. Five count claims hold the multiplies of each transform measurand: 82 at rga4d
 and 23 at rga3d. The operator spends no zero fill, intermediate or error check there.
 
-Its evaluation of 2026-11-20 times the transforms at ×0.28 of pin at rga4d, 20.3 to 20.6 ns
-against 71.6 ns. At rga3d they take ×0.27, 4.9 ns against 17.9 ns. The other measurands read
-×0.93 to ×1.08. The suites pass at the four algebras, with the two tests of this proposal.
+Its evaluation of 2026-11-20 times the transforms at ×0.28 of pin at rga4d, 19.9 ns against 71.6
+to 71.7 ns. At rga3d they take ×0.27, 4.8 ns against 17.9 ns. The other measurands read ×0.95 to
+×1.08. The suites pass at the four algebras, with the two tests of this proposal.
 
 The counts of the chain, of the other algebras and of the forms that lost come from scripts that
 read the tables of pin. The build of one call is the median of four builds of a program with the
