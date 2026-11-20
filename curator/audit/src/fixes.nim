@@ -407,15 +407,17 @@ func fixSource(
   semantic.add funcs
   result.fixed.add toFindings(marked & purified)
 
-  # Leave for hand each marker and `func` no edit writes, each index no alias edit writes, as
-  #   choice of aliases, and each call of constructor, which no fix writes, in order of lines;
-  #   each edit answers one report of its rule on its line. Fence warning counts fenced report
-  #   of rule reading names, and reads no uses or pures.
+  # Leave for hand each marker and `func` no edit writes, each index alias edits leave, as
+  #   choice of aliases, and each call of constructor, which no fix writes, in order of lines.
+  #   Edit of marker or `func` answers one report of its rule on its line; index is read again
+  #   from source alias edits wrote, which keeps its lines, as knoller reads what fixers leave.
+  #   Fence warning counts fenced report of rule reading names, and reads no uses or pures.
   var
-    unwritten = (aliasing & marked & purified).mapIt((it.line, it.rule))
+    unwritten = (marked & purified).mapIt((it.line, it.rule))
     kept: seq[Report]
   for report in checkMarkers(path, source, uses) & checkPure(path, source, pures) &
-      checkLandmarks(path, source, names.landmarks) & checkConstructors(path, source, names.calls):
+      checkLandmarks(path, source.applied(aliased), names.landmarks) &
+      checkConstructors(path, source, names.calls):
     let
       at = unwritten.find((report.line, report.rule))
       is_warned = report.rule notin {Rule.UsedMarker, Rule.PureFunc} and
