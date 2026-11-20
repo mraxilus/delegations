@@ -73,6 +73,7 @@ suite "Declarations":
       "const\n  T = [\n    1,\n  ]\n    ## Table.\n",
       "const N = 3  # Why.\n  ## Size.\n",
       "proc f() =\n  let x = 1\n  ## Next.\n",
+      "const N = 3  ## Size,\n             ##   in units.\n",  # continued trailing doc
     ]:
       check kept.isSettled
 
@@ -89,6 +90,8 @@ suite "Declarations":
       "definition for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
     check order.fixed.isSettled
     check fixDocs("a.nim", order).origin == @[1, 3, 4, 5]  # joined line traces to declaration
+    check "## Size.\nconst N = 3\n".fixed == "const N = 3  ## Size.\n"
+      # start of file stands above doc; cost: `nim doc` reads it as doc of module
     let kinds = "# Sizes.\n## Size.\nconst N* = 3\n\n## Mass.\nlet m = 1.0\n\n" &
       "type\n  Box = object  ## Box.\n    width: int  ## Width.\n\n" &
       "    ## Depth.\n    depth: int\n" &

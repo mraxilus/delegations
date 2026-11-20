@@ -131,6 +131,9 @@ suite "Stages":
     let above = "proc owner() =\n  ## Own.\n\n  # Split lines of file, for count below.\n" &
       "  func split(): seq[string] = @[]\n\n  let d = 1\n  let e = d\n  echo e\n"
     check above.isSettled  # comment above helper is helper's, so owner comments no stage
+    let over = above.replace("  func split(): seq[string] = @[]\n",
+      "  proc helper() =\n    let a = 1\n    echo a\n")
+    check over.isSettled  # comment above helper whose body spans lines is helper's too
     let staged = above.replace("  let d = 1\n", "  # Count lines.\n  let n = 1\n\n  let d = 1\n")
     check checkStages("a.nim", staged).mapIt(it.line) == @[10]  # owner comments its own stage
 

@@ -288,12 +288,17 @@ suite "Claims":
     check "## Read all, e.g.\n".found == @[
       (1, "Claim of comment ends cut short, so hand closes it; got `e.g.`."),
     ]
+    check "## Read all, i.e.\n".found == @[
+      (1, "Claim of comment ends cut short, so hand closes it; got `i.e.`."),
+    ]
     let lowered = "## Read file.\n## then write it.\n"
     check lowered.found == @[
       (2, "Line of comment opens in lowercase after sentence end, so hand mends it; got " &
         "`then`."),
     ]
-    for cut in ["## Read file of\n", "## Read file,\n", "## Read all, e.g.\n", lowered]:
+    for cut in [
+      "## Read file of\n", "## Read file,\n", "## Read all, e.g.\n", "## Read all, i.e.\n", lowered,
+    ]:
       check cut.fixed == cut
 
 
