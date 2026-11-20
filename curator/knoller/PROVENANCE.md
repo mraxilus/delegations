@@ -705,9 +705,8 @@ candidate, since it cannot prove a routine pure, and the compiler checks it (`pu
 - Rejected: the compiler alone, which checks a routine that takes a lock as a `func`.
 - Cost: an effect is read from names, so a name of `EFFECTS` that means another thing keeps its
   routine a `proc`. That cost removes reports, and adds none.
-- Cost: the compiler accepts a write through a parameter of `ref` type that is not `var`, where a
-  routine of a library makes the write. `[]=` of `std/json` is such a routine. So the rule reports
-  `mergeAllocations` of `pga_benchmark`, which changes the node that its caller passes.
+- Cost: the compiler accepts a write that a routine of a library makes through a `ref` inside a
+  field or a container of a parameter. `[]=` of `std/json` is such a routine.
 - Cost: a default argument is no part of the body. So `initToolchains` of knoller reads as pure,
   though its default reads the environment.
 - Verified by `suites/test_purity.nim`, with a case for each cost that adds a false report.
@@ -736,6 +735,29 @@ at its head, as `'reset' can have side effects` does where `reset` writes throug
   module that the compiler would refuse is unread. A case holds it through a second module, whose
   `$` calls `echo`.
 - Verified by `suites/test_purity.nim`, and by `suites/test_command.nim` for the warning.
+
+**A routine that takes a parameter of a `ref` or `ptr` type stays a `proc` (D1 a of #980).** The
+Architect ruled so on 2026-11-20. Another holder of the object, or another thread, can change it
+during the call. So the routine is no deterministic transformation of its arguments, whether it
+writes or only reads.
+
+- The compiler answers whether each parameter type points: a `ref`, a `ptr` or a `pointer`, and a
+  `distinct` one of each. The check of each type stands after the source, so no line moves, and its
+  error refuses its routine (`probed`).
+- A parameter that its default alone types reads as `typeof` of the default.
+- A `var` parameter of a value type keeps no routine a `proc`, as the Architect ruled, since
+  STYLE.md §1 lets a `func` write it. A `var` of a `ref` type points all the same.
+- Rejected: a `var` or a large object, which Nim passes by address, since a thread changes it
+  only where its caller shares memory.
+- Rejected: a `ref` only in a project that starts threads, since one file cannot show which threads
+  share a `ref`.
+- Rejected: strict funcs for the whole build. They also count the `[]` read of `std/json` as an
+  effect, as in `medianTouched` of `pga_benchmark` (by hand with 2.4.0, 2026-11-20).
+- Cost: a `ref` inside a field or a container of a parameter stays unread. So do a type that names
+  a generic parameter, and a type that no scope at the end of the module names. A `cstring` reads
+  as a string, so it stays unread too. Each can add a false report.
+- Verified by `suites/test_purity.nim`, with a case for each kind of type that points, and one for
+  each cost.
 
 **The fix writes `func` for `proc`, which has the same width.** So no line moves and no line
 widens. A fenced line keeps its `proc`, and so does a span that another fixer writes. The check
@@ -790,6 +812,9 @@ checkouts of each lock and the engine of `dance_ontology`.
   `pga_benchmark` 1 and `knoller` 1. The ruling counts 22, as 16 and 6. The page names a short
   list of pure routines of the standard library, and does not give it. So `TRANSFORMS` is the list
   of this rule. The cause of the difference is unmeasured (`## Open questions`).
+- With D1 a of #980, 50 remain, since `mergeAllocations` stays a `proc`. Over the same tree,
+  `koch fix --dry-run --branch:main` of the five projects, built at `a4ece9d7` and at `2f049cfe`,
+  differs by that report alone, 4,901 changes against 4,900 (2026-11-20).
 - The count of pure routines is a floor. `src/desktop/main.nim` of `pga_visualiser` proved
   nothing, since the run had no `dependencies/imgui`. Nor did
   `proposals/04-basis-set-forms/laws.nim` of `pga_benchmark`, which checks clean on no
@@ -2858,8 +2883,12 @@ there is unverified.
 
 ## Open questions
 
-- Why does rule 11 report 51 routines where the ruling counts 22? `pga_visualiser` takes 33
+- Why does rule 11 report 50 routines where the ruling counts 22? `pga_visualiser` takes 33
   against 16, and `dance_ontology` 13 against 6.
+- Does rule 11 report each `func` that takes a parameter of a `ref` or `ptr` type now, so that its
+  fix writes `proc`? A text search finds about 134 of them.
+- Does an effect in a default argument keep the `proc`, as the default of `initToolchains` reads the
+  environment?
 - Does a documented declarative call after a routine take one, as Q3 gives a documented
   one-line definition, or up to two, as a call does? Knoller gives it up to two now.
 - Do two blocks of complementary configurations side by side, with the default last, report, and
