@@ -478,6 +478,28 @@ suite "Fixes":
     check alone.warned.allIt("nothing inside breaks a rule" in it.message)
 
 
+  test "index alias edit leaves stays for hand, whatever its place beside written one":
+    # Case of critic of wiring: kept report matched edit by line and rule alone, so where index
+    #   of several aliases stood before written one, `koch fix` kept report of written index and
+    #   dropped its own. Domain: index of several aliases before and after written one.
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      declaring = entry(
+        DIRECTORY_AUDIT & "/src/a.nim",
+        head & "template vector*(t: typedesc[Grade]): Grade = Grade(1)\n  ## Vector.\n\n" &
+        "template two*(t: typedesc[Grade]): Grade = Grade(2)\n  ## Two.\n\n" &
+        "template pair*(t: typedesc[Grade]): Grade = Grade(2)\n  ## Pair.\n",
+      )
+    for order in ["[Grade(1), Grade(2)]", "[Grade(2), Grade(1)]"]:
+      let
+        given = head & "let PAIR* = " & order & "  ## Pair.\n"
+        calling = entry(DIRECTORY_AUDIT & "/src/b.nim", given)
+        plan = fixEntries(BRANCH_CURATOR, [calling], context = initContext(@[declaring, calling]))
+      check plan.written.mapIt(it.content) == @[given.replace("Grade(1)", "Grade.vector")]
+      check plan.left.mapIt((it.line, it.message)) == @[(5, "Landmark index stands as one of " &
+        "its aliases, `Grade.two` or `Grade.pair` (V.8); got `Grade(2)`.")]
+
+
   test "join of interpolated string stays split in project whose file declares `formatValue`":
     let
       path = "curator/audit/src/a.nim"
