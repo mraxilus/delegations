@@ -329,7 +329,10 @@ func isStaticCondition(code: string, fixed: openArray[string]): bool =
   while k < code.len:
     let c = code[k]
     if c in {'0' .. '9'}:
-      while k < code.len and code[k] in CHARS_NAME + {'\''}: inc k
+      # Literal runs on through its fraction and suffix: `1.5`, `0x1F`, `2'u8`.
+      while k < code.len and (code[k] in CHARS_NAME + {'\''} or
+          (code[k] == '.' and k + 1 < code.len and code[k + 1] in {'0' .. '9'})):
+        inc k
       is_read = true
       continue
     if c == '.':
