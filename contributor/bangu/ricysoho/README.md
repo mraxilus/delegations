@@ -499,8 +499,8 @@ ni'o lo minde po'u `page` .e `drive` cpacu lo lertai pe le papri sepi'o `koch fe
 
 ## ni'o ni'o ni'o lo papri
 
-ni'o [`Lojban live tree`](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) pixra lo tricu be lo
-    mivyselci'a ca lo nu lo prenu cu ciska le selci'a
+ni'o [`tricu be lo mivyselci'a`](https://claude.ai/artifact/9fNo34mRzibNSs3a8QX7k4) pixra lo
+    tricu be lo mivyselci'a ca lo nu lo prenu cu ciska le selci'a
   .i lo gunka cu tcidu ro pagbu be le selci'a ca lo nu le pagbu cu klama
   .i le papri cu pixra ro pagbu ja'i lo selci'a be fi `NIF` poi le gunka cu dunda ke'a
   .i lo pagbu poi ca'o kalri cu selska lo najypelxu
