@@ -1,10 +1,10 @@
 # One operator for the transform of a multivector, built from the types of its operands
 
-`⟇⟇~∘` transforms 𝐦 by the operator 𝐧, that is 𝐧 ⟇ 𝐦 ⟇ 𝐧̰. Its typed form builds the table of that
-sandwich from the types of both operands, when the code compiles. So each value of each type
-transforms exactly. Two full multivectors take the three steps of pin. `pga.nim` names the operator
-`transform`, and two tests of the suite `Typed operators` hold both to the chain. Every edit quotes
-text of P04.
+`⟇⟇~∘` transforms 𝐦 by the operator 𝐧, through the sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ as one operator. Its typed
+form builds the table of that sandwich from the types of both operands, when the code compiles. So
+each value of each type transforms exactly. Two full multivectors take the three steps of pin.
+`pga.nim` names the operator `transform`, and two tests of the suite `Typed operators` hold both to
+the chain. Every edit quotes text of P04.
 
 ## Edit `pga/operators.nim`
 

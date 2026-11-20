@@ -1,6 +1,7 @@
 # P13: One operator for the transform of a multivector, built from the types of its operands
 
-**What it is.** `m ⟇⟇~∘ n` transforms 𝐦 by the operator 𝐧, that is 𝐧 ⟇ 𝐦 ⟇ 𝐧̰. Its typed form builds
+**What it is.** `m ⟇⟇~∘ n` transforms 𝐦 by the operator 𝐧, through the sandwich 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ as one
+operator. Its typed form builds
 the table of that sandwich from the types of both operands, when the code compiles. So each value
 of each type transforms exactly, and the result takes the bases that the table reaches. Two full
 multivectors take the three steps of pin. The alias `transform` of `pga.nim` reads the operator.
@@ -28,12 +29,12 @@ runtime baselines.
 
 ## Idea
 
-- **Table from types.** `constructSandwich` expands 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ term by term. It walks the bases
-  of the type of 𝐦, and the pairs of bases of the type of 𝐧. It reads `CAYLEYS_WEDGE_DOT.anti` and
-  `CAYLEYS_REVERSE.anti`, so the table follows the metric and the orientation of the library. It
-  runs when the code compiles, for each pair of types that a caller passes. So a motor type reads
-  its antieven pairs alone, and a flector type its antiodd pairs. The operator is then correct for
-  each value of each type that it takes (IV.8), as the Architect ruled (D49 f).
+- **Table from types.** `constructSandwich` expands 𝐧 ⟇ 𝐦 ⟇ 𝐧̰ term by term, from
+  `CAYLEYS_WEDGE_DOT.anti` and `CAYLEYS_REVERSE.anti`. So the table follows the metric and the
+  orientation of the library. It walks the bases of the type of 𝐦, and the pairs of bases of the
+  type of 𝐧, when the code compiles. So a motor type reads its antieven pairs alone, and a flector
+  type its antiodd pairs. The operator is then correct for each value of each type that it takes
+  (IV.8), as the Architect ruled (D49 f).
 - **Pairs.** The coefficients of 𝐧 commute, so the terms of 𝐧ᵢ𝐧ⱼ and 𝐧ⱼ𝐧ᵢ merge into one pair.
   A pair of two bases sums both orders, which comes out even in each of the nine algebras. Its
   product reads 2𝐧ᵢ, as 𝐧ᵢ + 𝐧ᵢ, so each term of the rigid table weighs ±1.
@@ -59,8 +60,8 @@ runtime baselines.
   the chain sum their terms in other orders, so they agree within the tolerance of `=~` alone.
   The other test holds two full multivectors to the chain exactly, and the alias to the operator.
 
-Each cell gives multiplies, and adds with subtractions, for a full 𝐦 and a motor type 𝐧. The
-chain is counted from its two tables, and the operator as the evaluation reads its C:
+Each cell gives multiplies, and adds with subtractions, for a full 𝐦 by a motor type. The chain
+is counted from its two tables, and the operator as the evaluation reads its C:
 
 | Algebra | Chain | This proposal | Reference, point | Time of transforms, of pin |
 |---------|-------|---------------|------------------|----------------------------|
@@ -85,10 +86,10 @@ chain is counted from its two tables, and the operator as the evaluation reads i
 - **Build of `import pga`.** It builds no table. In the evaluation, it takes 10.43 s at cga6d
   against 9.91 s at pin, with P04 and P14 under it. At cga5d it peaks at 210.5 MiB, as at pin.
 - **Size.** At rga4d the function holds 82 lines of C, inline in each caller.
-- **Dimensions.** The adds grow faster than the multiplies. For a full 𝐦 by a motor type, the
-  table spends 408 multiplies and 2 191 adds at cga5d, against 2 048 and 1 984 of the chain. At
-  rga6d it spends 1 192 and 8 927 against 6 144 and 6 016, and at cga6d 1 584 and 16 479 against
-  8 192 and 8 064.
+- **Dimensions.** The adds grow faster than the multiplies. For a full 𝐦 by a motor type at
+  cga5d, the table spends 408 multiplies and 2 191 adds. The chain spends 2 048 and 1 984 there.
+  At rga6d the table spends 1 192 and 8 927, against 6 144 and 6 016 of the chain. At cga6d it
+  spends 1 584 and 16 479, against 8 192 and 8 064.
 
 ## Open decisions
 
@@ -120,11 +121,11 @@ waits on [the typed transform of P13 (#990)](https://github.com/mraxilus/delegat
   so whichever of the two lands second quotes the other.
 - **This project.** The catalogue spells each transform as `(m ⟇⟇~∘ n)` where the library
   declares the operator, and as the chain at pin. Where the operator takes a motor at its type,
-  the motor reads the typed pool of motors, so the measurands time and count this table. The
-  catalogue holds transforms under the rigid metric alone. So when the pin moves to a library
-  with this proposal, the conformal catalogue needs a measurand of `⟇⟇~∘` and `transform`. Else
-  the suites that hold its symbols and aliases to the exports fail at cga4d and cga5d. At rga3d
-  and rga4d the suites of this project pass against it.
+  the motor reads the typed pool of motors, so the measurands time and count this table. Against
+  the library of this proposal, the suites of this project pass at rga3d and rga4d. At cga4d and
+  cga5d, the suites that hold its symbols and aliases to the exports fail. The catalogue holds
+  transforms under the rigid metric alone, so its conformal part then needs a measurand of `⟇⟇~∘`
+  and `transform`.
 
 ## Evidence
 
@@ -142,6 +143,6 @@ to 71.7 ns. At rga3d they take ×0.27, 4.8 ns against 17.9 ns. The other measura
 ×1.08. The suites pass at the four algebras, with the two tests of this proposal.
 
 The counts of the chain, of the other algebras and of the forms that lost come from scripts that
-read the tables of pin. The build of one call is the median of four builds of a program with the
-call, against four without it. The scripts are not committed, so these figures are assumed until
-a claim holds them.
+read the tables of pin. So do the counts of the open decision. The build of one call is the median
+of four builds of a program with the call, against four without it. The scripts are not committed,
+so these figures are assumed until a claim holds them.
