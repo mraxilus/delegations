@@ -995,6 +995,43 @@ fixer of one writes, the check of the other passes.
 - Cost: a doc that trails the first line of a value over brackets, or of a signature over lines,
   stays, though `nim doc` reads none there.
 
+## Stages
+
+**A paragraph that a blank line opens takes a stage comment, where its routine comments another
+stage (VI.4).** The Architect ruled this narrow form on rule 4 of #443. The paragraph must hold
+three lines of code or more (`LINES_CODE_MIN`). The fixer writes `# TODO: Describe stage's
+purpose.` above the paragraph, at its indent, as `## TODO: Document.` waits for the text of a doc.
+
+- A body is the lines below the `=` that ends a signature, deeper than the head, for each kind of
+  routine. The lines below `test "…":` are a body too. A routine nested in a body cuts the
+  paragraphs of the routine that holds it, and its body reads as its own (STYLE.md §1).
+- A paragraph is a run of lines with text and no blank line between them, at any depth of the
+  body. A line inside a string or a comment that spans lines opens no paragraph, and a blank line
+  there ends none. Code under `quote do:` belongs to its generator, so it opens none.
+- A stage comment is a `#` comment on its own line, first in the paragraph. Any comment counts, a
+  TODO among them, since text cannot tell whether it names the purpose. A trailing comment on the
+  first line counts as none, and so does a fence marker.
+- The first stage opens after the doc of the routine, so a comment right below the doc opens it.
+- A line of code is a line whose view of code holds code, so a comment line counts as none.
+- The floor of three lines is the Architect's. The curator counted the routines of the PGA library
+  that comment a stage, on #443. In them, 43 of the 50 paragraphs of three lines of code or more
+  open with a comment. Of the 16 paragraphs of one line, 6 do.
+- Rejected: the broad form, every paragraph that a blank line opens. It wrote 45 lines on the PGA
+  library at `3d9696e`, and the Architect narrowed it.
+- Rejected: the placeholder `# TODO: Describe stage.`. A stage comment names why its stage runs,
+  as VI.4 says, so the placeholder asks for the purpose.
+- Verified by `suites/test_stages.nim`. The macro `defineOperator` of `pga/operators.nim` and the
+  routine `filterBases` of `pga/cayleys.nim` at `3d9696e` are quoted as found.
+- Verified by hand on the PGA library at `3d9696e`, 2026-11-20, with a driver that runs
+  `checkStages` and `fixStages` alone. It gives 7 reports, and the fix writes 7 lines. They are
+  lines 365, 465 and 504 of `pga/cayleys.nim`, and lines 41, 45, 94 and 98 of `pga/operators.nim`.
+- Verified by hand with that driver over each Nim file that git lists, 2026-11-20. It gives 211
+  reports, which no check of `koch check` reads yet.
+- Cost: a routine reads from a line that opens with its keyword and its name. So the body of a
+  lambda reads as lines of the routine that holds it, and a test reads as `test "…":` alone.
+- Cost: a line inside a string that spans lines is no line of code, so a long literal counts its
+  first line alone.
+
 ## Spaces
 
 **Each space inside an expression takes the count of the list of X.9.** A binary operator and
