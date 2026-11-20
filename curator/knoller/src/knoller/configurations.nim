@@ -86,6 +86,7 @@ func readConfigurations*(sources: openArray[string]): Configurations =
         if close < 0: continue
         words = rest[2 ..< close].split(AllChars - IdentChars).filterIt(it.len > 0)
         rest = rest[close + 2 .. ^1].strip(trailing = false)
+      if rest.startsWith(':'): rest = rest[max(rest.find('='), 0) .. ^1]  # type stated, as `: bool`
       if not rest.startsWith('='): continue
       let value = rest[1 .. ^1].strip
       if PRAGMAS_DEFINE.anyIt(it in words) and value in ["true", "false"]:
@@ -253,7 +254,7 @@ func checkConfigurations*(path, source: string; configurations: Configurations):
 
 func fixConfigurations*(path, source: string; configurations: Configurations): Fix =
   ## Join blocks of one configuration side by side, and swap two-way branch putting default last,
-  ##   lowest site first, reading source again after each, so lines above keep their numbers.
+  ##   last site first, reading source again after each, so lines above keep their numbers.
   var
     lines = source.split('\n')
     origin = toSeq(1 .. lines.len)
