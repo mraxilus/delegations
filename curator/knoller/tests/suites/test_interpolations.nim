@@ -20,6 +20,13 @@ const
     "      &\" got `{terms}` for `{chirality}` `{operand}`.\"\n"
     ## Lines 99 to 101 of `pga/algebra.nim` and 877 and 878 of `pga/cayleys.nim` of PGA library
     ##   at `3d9696e`: joined, lines would hold 122 and 123 runes.
+  RIG =
+    "      result.text = &\"{{\\\"key\\\":\\\"{ask.key}\\\"," &
+    "\\n\\\"hold\\\":\\\"{ask.key}\\\",\\n\" &\n" &
+    "          &\"\\\"band\\\":\\\"{BANDS[ord(Band.Crown)]}\\\"," &
+    "\\n\\\"mirror\\\":\\\"{keeper}\\\"}}\"\n"
+    ## Lines 244 and 245 of `design/rig.nim` of `dance_ontology` at `441fc785`, which fix joined
+    ##   while width check read joined line as fit.
   NAME =
     "func toBasisName(b: BasisDigits): string {.compileTime, noinit.} =\n" &
     "  ## Convert basis' digits to string (with S/E prefix).\n" &
@@ -63,6 +70,7 @@ suite "Interpolations":
       ("let m = $x & &\" is {y}.\"\n", "let m = &\"{x} is {y}.\"\n"),  # read back
       ("let m = &\"got `\" & $x & \"`.\"\n", "let m = &\"got `{x}`.\"\n"),  # backticks stay
       ("let m = &\"at {x} \" & dir / name\n", "let m = &\"at {x} {dir / name}\"\n"),
+      ("let m = &\"a {x} \" & $(b + c)\n", "let m = &\"a {x} {b + c}\"\n"),  # group under `$`
         # operator binding tighter than `&` holds its operand
     ]:
       check source.found.len == 1
@@ -75,8 +83,9 @@ suite "Interpolations":
     check wrap.found.len == 1
     check wrap.fixed == "let m = &\"a {x} b {y}.\"\n"
     check WRAPS.isSettled  # lines 99 and 877 of library, as found
+    check RIG.isSettled  # joined, line would hold one long token, which width check lets stand
     check ("let m = &\"" & "x".repeat(60) & "{a}\" &\n  &\"" & "y".repeat(40) & "\"\n").isSettled
-      # joined, line would hold 114 runes as one token, which width check lets stand
+      # same shape at 114 runes
 
 
   test "concatenation with no interpolated literal stays `&`":
@@ -94,6 +103,11 @@ suite "Interpolations":
       "let m = &\"x {y} \" & r\"\\d\"\n",  # raw literal
       "let m = &\"\"\"x {y} \"\"\" & $z\n",  # long literal
       "let m = &\"x {y} \" & # count\n  $z\n",  # comment between pieces
+      "let m = &\"x {y} \" & $'\\n'\n",  # backslash of escape in value
+      "let m = &\"x {y} \" & f(a,\n  b)\n",  # line break in value
+      "let m = fmt\"x {y}\" & \"\\t\"\n",  # escape that raw `fmt` reads as two characters
+      "let m = &\"x {y}\" & fmt\"\\d\"\n",  # raw backslash that `&` reads as escape
+      "let m = &\"x {y}\" & \"\\x7B\"\n",  # escape by number, which spells brace
     ]:
       check left.isLeft
 

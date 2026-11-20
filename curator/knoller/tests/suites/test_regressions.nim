@@ -367,6 +367,19 @@ const
     "\n" &
     "    result[operand] = @[product.basis]\n"
     ## Lines 357 to 387 of `pga/cayleys.nim` at `3d9696e` (rule 4 of #443).
+  BASIS_FLAGS =
+    HEAD &
+    "func toBasis(b: BasisFlags): Basis {.compileTime, noinit.} =\n" &
+    "  ## Convert binary flag representation of basis to associated basis.\n" &
+    "  const lut_basis_by_flags = block:\n" &
+    "    const size_of_flags = BasisFlags(1 shl DIMENSIONS)\n" &
+    "    var lut: array[size_of_flags, Option[Basis]]\n" &
+    "    for b in Basis: lut[b.toFlags] = some(b)\n" &
+    "    lut\n" &
+    "\n" &
+    "  doAssert lut_basis_by_flags[b].isSome, &\"Found invalid basis flags: {int(b):b}\"\n" &
+    "  lut_basis_by_flags[b].get\n"
+    ## Lines 235 to 244 of `pga/algebra.nim` at `3d9696e` (rule 6 of #443).
   ORDER =
     HEAD &
     "## Define type definition for transwedge order.\n" &
@@ -549,3 +562,8 @@ suite "Regressions":
     holds ORDER, HEAD & "type Order = distinct range[0..DIMENSIONS]  ## Define type definition " &
       "for transwedge order.\n#func `<=`(a, b: Order): bool {.borrow.}\n"
       # rule 5: line 47 of `pga/cayleys.nim`; commented code below it stays
+
+
+  test "17. bare value of message takes backticks (#443)":
+    holds BASIS_FLAGS, BASIS_FLAGS.replace(": {int(b):b}\"", ": `{int(b):b}`\"")
+      # rule 6: line 243 of `pga/algebra.nim`, whose value stands bare

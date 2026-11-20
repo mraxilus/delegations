@@ -25,6 +25,11 @@ const
     "  assert norm[Basis.scalar] == 0 or norm[Basis.scalarAnti] == 0,\n" &
     "    &\"`{norm=}` must be a bulk xor weight norm, not geometric norm.\"\n"
     ## Lines 104 and 105 of `tests/suites.nim` at `3d9696e`.
+  CLL =
+    "      except XmlError as error:\n" &
+    "        quit \"Page is no XML; got `\" & error.msg & \"` for `\" & name & \"`.\", 1\n"
+    ## Lines 336 and 337 of `tools/cll.nim` of `ricysoho` at `441fc785`: binding `error` of
+    ##   exception read as pragma of message, so fix doubled backticks message held.
   KEPT =
     "  doAssert DIMENSIONS in 2..6,\n" &
     "    &\"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`.\"\n" &
@@ -104,6 +109,11 @@ suite "Echoes":
       ("doAssert(x > 0, &\"Bad {x}.\")\n", "doAssert(x > 0, &\"Bad `{x}`.\")\n"),
       ("{.error: &\"Bad {X}.\".}\n", "{.error: &\"Bad `{X}`.\".}\n"),
       ("{.fatal: \"Bad \" & X & \".\".}\n", "{.fatal: \"Bad `\" & X & \"`.\".}\n"),
+      ("{.warning: &\"Bad {X}.\".}\n", "{.warning: &\"Bad `{X}`.\".}\n"),
+      ("macro m(): untyped =\n  ## Make.\n  result = quote do:\n    doAssert x, &\"Bad {y}.\"\n",
+        "macro m(): untyped =\n  ## Make.\n  result = quote do:\n" &
+          "    doAssert x, &\"Bad `{y}`.\"\n"),
+        # message that macro writes into code
     ]:
       check source.found.len == 1
       check source.fixed == mended
@@ -114,6 +124,7 @@ suite "Echoes":
       "doAssert x, message\n",  # message held by name, so no literal
       "let r = Outcome(error: \"bad \" & $x)\n",  # field named as pragma, outside pragma
       "foo(warning: \"bad \" & name)\n",  # argument named so
+      CLL,  # lines 336 and 337 of `tools/cll.nim` of `ricysoho` at `441fc785`
       "try:\n  discard\nexcept OSError as error:\n  stderr.write error.msg & \"\\n\"\n",
         # binding named so
     ]:

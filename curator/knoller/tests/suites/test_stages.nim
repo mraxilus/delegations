@@ -155,3 +155,12 @@ suite "Stages":
       "suite \"S\":\n  # Make.\n  let a = 1\n\n  let b = a\n  let c = b\n  echo c\n",
     ]:
       check kept.isSettled
+
+
+  test "placeholder that would widen its line past `LINE_MAX` stays, report and all":
+    let
+      deep = " ".repeat(70)
+      source = "proc p() =\n" & deep & "# Read.\n" & deep & "let a = 1\n\n" & deep &
+        "let b = a\n" & deep & "let c = b\n" & deep & "echo c\n"
+    check checkStages("a.nim", source).mapIt(it.line) == @[5]
+    check source.fixed == source  # placeholder at indent 70 would hold 103 runes
