@@ -65,8 +65,8 @@
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
-  chain, compilers, configurations, conversions, edits, fences, idioms, messages, names,
-  parentheses, pins, proofs, reports, rewrites, rules, staging, symbols,
+  chain, compilers, configurations, conversions, edits, fences, idioms, markers, messages, names,
+  parentheses, pins, proofs, purity, reports, rewrites, rules, staging, symbols,
 ]
 
 
@@ -178,6 +178,8 @@ func part(
   directory: string;
   proofs: Proofs;
   answer: Answer;
+  uses: Uses;
+  pures: Pures;
   plans: openArray[Plan];
   nimble: string;
   has_format_value: bool;
@@ -225,7 +227,7 @@ func part(
     renamed.add plan.edits.getOrDefault(path)
     for (file, line) in plan.lines:
       if file == path: rewritten.add initReport(path, line, plan.rename.rule)
-  var base = source.applied(renamed)
+  var semantic = renamed  # Edits of renames, conversions, markers and `func`, on source as given.
   if answer.reason.len > 0:
     result.held.add initReport(
       path,
@@ -236,18 +238,52 @@ func part(
     )
   elif answer.symbols.len > 0:
     let (edits, reports) = editsConversion(layout, source, answer, fence.lines, renamed)
-    base = source.applied(renamed & edits)
+    semantic.add edits
     rewritten.add reports.shownAs(path)
-  let fix = formatted(
-    layout,
-    base,
-    dialect,
-    proofs,
-    nimble = nimble_layout,
-    has_format_value = has_format_value,
-    constants = constants,
-    configurations = configurations,
-  )
+
+  # Write markers, then `func`, beside edits before them; check of each keeps what fix leaves.
+  if uses.reason.len > 0:
+    result.held.add initReport(
+      path,
+      0,
+      Rule.UsedMarker,
+      "Semantic pass resolved no use, so each private symbol and `{.all.}` stays as written; " &
+        "got `" & uses.reason & "`.",
+    )
+  if pures.reason.len > 0:
+    result.held.add initReport(
+      path,
+      0,
+      Rule.PureFunc,
+      "Compiler proved no routine pure, so each `proc` stays as written; got `" & pures.reason &
+        "`.",
+    )
+  let (marks, marked) = editsMarkers(layout, source, uses, fence.lines, semantic)
+  semantic.add marks
+  let (funcs, purified) = editsPure(layout, source, pures, fence.lines, semantic)
+  semantic.add funcs
+  rewritten.add (marked & purified).shownAs(path)
+  var kept: seq[Report]  # Report of each check that no edit writes, for hand.
+  for report in checkMarkers(layout, source, uses) & checkPure(layout, source, pures):
+    if not (marked & purified).anyIt(it.line == report.line and it.rule == report.rule):
+      kept.add report
+
+  # Chain runs on what edits leave; marker moving doc to own line traces back (`chain`).
+  let
+    base = source.applied(semantic)
+    moved = Fix(source: base, origin: source.originApplied(semantic))
+    fix = moved.chain(
+      formatted(
+        layout,
+        base,
+        dialect,
+        proofs,
+        nimble = nimble_layout,
+        has_format_value = has_format_value,
+        constants = constants,
+        configurations = configurations,
+      ),
+    )
   result.asked.add fix.asked
   var after = checkSource(
     layout,
@@ -261,7 +297,7 @@ func part(
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
   result.path = path
   result.unsettled = fix.unsettled
-  result.left = after.shownAs(path)
+  result.left = (kept & after).shownAs(path)
   if fix.source == source: return
   result.fixed = rewritten & fix.fixed.shownAs(path)
   if not is_check: result.written.add (path, fix.source)
@@ -333,6 +369,8 @@ func outcome*(
   answers = initTable[string, Answer](),
   plans: openArray[Plan] = [],
   nimbles = initTable[string, string](),
+  uses = initTable[string, Uses](),
+  pures = initTable[string, Pures](),
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
   ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
@@ -340,7 +378,8 @@ func outcome*(
   ##   each source no answer reaches is in `Outcome.asked`, source as given too where fence
   ##   holds lines, since fence's warning reads it. Failure of prover prints as warning.
   ##   Conversion goes where answer of semantic pass for path settles it (`resolveConversions`), and
-  ##   rename where its plan writes path (`planRenames`).
+  ##   rename where its plan writes path (`planRenames`). Marker goes where `uses` of path ask it
+  ##   (`resolveMarkers`), and `func` where `pures` of path prove it (`resolvePures`).
   ##   Rules of tests, stubs and umbrella read nimble file nearest each path, as `nimbles` holds
   ##   it by path as named (`nimblesNearest`); path it lacks has none above. Branch on what build
   ##   fixes reads constants each module of run exports, by that nimble file (`constantsPackage`),
@@ -359,6 +398,8 @@ func outcome*(
       directory,
       proofs,
       answers.getOrDefault(path),
+      uses.getOrDefault(path),
+      pures.getOrDefault(path),
       plans,
       nimbles.getOrDefault(path),
       nimbles.getOrDefault(path) in formatting,
@@ -377,6 +418,8 @@ proc outcomeProven*(
   answers = initTable[string, Answer](),
   plans: openArray[Plan] = [],
   nimbles = initTable[string, string](),
+  uses = initTable[string, Uses](),
+  pures = initTable[string, Pures](),
 ): Outcome =
   ## Fix files as `outcome` does, ask prover of each batch what its files asked, and fix again
   ##   each file that asked, at most `ASKS_MAX` times; prover that fails is asked no more, and
@@ -409,6 +452,8 @@ proc outcomeProven*(
       directory,
       proofs[owner],
       answers.getOrDefault(path),
+      uses.getOrDefault(path),
+      pures.getOrDefault(path),
       plans,
       nimbles.getOrDefault(path),
       nimbles.getOrDefault(path) in formatting,
@@ -438,6 +483,8 @@ proc outcomeProven*(
         directory,
         proofs[owners[k]],
         answers.getOrDefault(path),
+        uses.getOrDefault(path),
+        pures.getOrDefault(path),
         plans,
         nimbles.getOrDefault(path),
         nimbles.getOrDefault(path) in formatting,
@@ -708,6 +755,139 @@ proc resolveConversions*(
         if requests[k].query.path == answer.path: result[keys[k]] = answer
 
 
+proc scopeProject(
+  project: string;
+  files: openArray[(string, string)];
+  directory: string;
+  listings: var Table[string, seq[(string, string)]],
+): seq[(string, string)] =
+  ## Read path, relative to project, and text of each Nim file git lists under project, each
+  ##   file named in place of its listed text, and named file git does not list beside them.
+  var named = initTable[string, string]()
+  for (path, source) in files:
+    let absolute = path.toAbsolute(directory)
+    if absolute.startsWith(project & "/"): named[absolute.relativePath(project, '/')] = source
+  for (file, text) in project.filesListed(listings):
+    result.add (file, named.getOrDefault(file, text))
+  for file, source in named:
+    if file notin result.mapIt(it[0]): result.add (file, source)
+
+
+proc resolveMarkers(
+  files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
+): Table[string, Uses] =
+  ## Resolve, through semantic pass, uses of private symbols and `{.all.}` imports of modules
+  ##   files name, keyed by path as named. Pass reads every Nim file git lists in project of
+  ##   file, nearest directory holding nimble file, and asks each module some file there opens
+  ##   with `{.all.}` in entry of that file, with toolchain `bin` gives, as project alone compiles
+  ##   it, since command line names no define (`symbols.nim`). Each module opened checks with
+  ##   hints, so symbol compiler hints none of is used by module, as Q2 reads it. Each `{.all.}`
+  ##   pass finds reaching nothing must check clean without it too, else it reaches what pass
+  ##   cannot read, as symbol macro declares; file checking clean on no backend confirms nothing.
+  var
+    seen = initTable[string, Pinning]()
+    listings = initTable[string, seq[(string, string)]]()
+    gathered = initTable[string, Table[string, Uses]]()  # Uses of each file, by project.
+  for (path, source) in files:
+    if path.dialect != some(Dialect.Module): continue
+    let
+      absolute = path.toAbsolute(directory)
+      project = absolute.parentDir.project
+    if project notin gathered:
+      let
+        scope = project.scopeProject(files, directory, listings)
+        opened = scope.modulesOpened
+        (bin, reason) = bin(absolute, nim, seen, toolchains)
+      var uses = initTable[string, Uses]()
+      if opened.len > 0 and reason.len > 0:
+        for (importer, module) in opened:
+          uses[importer] = Uses(reason: reason)
+          uses[module] = Uses(reason: reason)
+      elif opened.len > 0:
+        var
+          texts = initTable[string, string]()
+          answers: seq[(string, Answer)]
+        for (file, text) in scope: texts[file] = text
+        for importer in opened.mapIt(it[0]).deduplicate:
+          let requests = opened.filterIt(it[0] == importer).mapIt(Request(
+            query: queryUses(it[1], texts[it[1]]),
+            root: project,
+            directory: project,
+            includer: scope.includer(importer),
+            bin: bin,
+          ))
+          for answer in resolve(requests): answers.add (importer, answer)
+
+        # Read hints of each module opened, as compiler confirms which symbol it never uses.
+        let compiler = if bin.len == 0: NIM else: bin / NIM
+        var unused = initTable[string, seq[(int, string)]]()
+        for module in opened.mapIt(it[1]).deduplicate:
+          let (hinted, _) =
+            checkedBackend(texts[module], (project / module).parentDir, compiler, [], true)
+          if hinted.is_clean: unused[module] = hinted.unused
+        uses = usesPackage(scope, answers, project, unused)
+
+        # Confirm each `{.all.}` reaching nothing: file checks clean without it, where with it.
+        for importer in opened.mapIt(it[0]).deduplicate:
+          if importer notin uses: continue
+          let
+            text = texts[importer]
+            (prefix, suffix) = scope.enclosing(importer)
+            folder = (project / importer).parentDir
+            (before, defines) = checkedBackend(prefix & text & suffix, folder, compiler, [])
+          if not before.is_clean: continue
+          for site in toSeq(uses[importer].imports.keys):
+            if uses[importer].imports[site]: continue
+            var only = Uses()
+            only.imports[site] = false
+            let without = text.applied(editsMarkers(importer, text, only, [])[0])
+            if not checked(prefix & without & suffix, folder, compiler, defines).is_clean:
+              uses[importer].imports[site] = true
+      gathered[project] = uses
+    result[path] = gathered[project].getOrDefault(absolute.relativePath(project, '/'))
+
+
+proc resolvePures(
+  files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
+): Table[string, Pures] =
+  ## Prove, through compiler, each `proc` of modules files name that checks as `func`, keyed by
+  ##   path as named. Candidates read across every Nim file git lists in project of file,
+  ##   nearest directory holding nimble file; each proves in its own directory, with toolchain
+  ##   `bin` gives, as project alone compiles it, since command line names no define
+  ##   (`symbols.nim`). Included file proves inside text of file including it.
+  var
+    seen = initTable[string, Pinning]()
+    listings = initTable[string, seq[(string, string)]]()
+    found = initTable[string, (seq[(string, string)], Table[string, seq[(int, int)]])]()
+  for (path, source) in files:
+    if path.dialect != some(Dialect.Module): continue
+    let
+      absolute = path.toAbsolute(directory)
+      project = absolute.parentDir.project
+    if project notin found:
+      let scope = project.scopeProject(files, directory, listings)
+      found[project] = (scope, candidatesPure(scope))
+    let
+      (scope, candidates) = found[project]
+      relative = absolute.relativePath(project, '/')
+      sites = candidates.getOrDefault(relative)
+    if sites.len == 0: continue
+    let (bin, reason) = bin(absolute, nim, seen, toolchains)
+    if reason.len > 0:
+      result[path] = Pures(reason: reason)
+      continue
+    let (prefix, suffix) = scope.enclosing(relative)
+    result[path] = provenPure(
+      source,
+      sites,
+      absolute.parentDir,
+      if bin.len == 0: NIM else: bin / NIM,
+      [newSeq[string]()],
+      prefix,
+      suffix,
+    )
+
+
 proc planRenames*(
   files: openArray[(string, string)];
   locked: openArray[string];
@@ -829,14 +1009,17 @@ proc main*(): int =
       return 2
   paths = paths.deduplicate
 
-  # Resolve conversion candidates, plan renames, group files by compiler proving their groups,
-  #   read nimble file nearest each, then fix them, each batch asking its own.
+  # Resolve conversion candidates, uses of private symbols and pure routines, plan renames,
+  #   group files by compiler proving their groups, read nimble file nearest each, then fix
+  #   them, each batch asking its own.
   var toolchains = initToolchains()
   let
     directory = getCurrentDir()
     converted = paths.converted
     files = paths.mapIt((it, readFile(it).judged(it in converted)))
     answers = files.resolveConversions(options.get.nim, directory, toolchains)
+    uses = files.resolveMarkers(options.get.nim, directory, toolchains)
+    pures = files.resolvePures(options.get.nim, directory, toolchains)
     plans = files.planRenames(paths.locked, options.get.nim, directory, toolchains)
     batches = paths.groupByCompiler(options.get.nim, directory, proversPin(toolchains))
     outcome = outcomeProven(
@@ -848,6 +1031,8 @@ proc main*(): int =
       answers,
       plans,
       paths.nimblesNearest(directory),
+      uses,
+      pures,
     )
   for (path, text) in outcome.written: writeFile(path, text.restored(path in converted))
   for line in outcome.lines: echo line

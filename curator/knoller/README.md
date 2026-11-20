@@ -75,6 +75,16 @@ knoller [--check] [--nim:path] path...
   proves parentheses. A file that the pass cannot resolve keeps its conversions, and prints one
   warning that says why. A toolchain with no `nimsuggest` beside its compiler, or on `PATH`,
   resolves no file, and the warning names the tool.
+- A sibling can reach a private symbol through `{.all.}`. Where its own module never uses it, the
+  symbol takes `{.used.}` and a comment that names the sibling (`marker-used`). An `{.all.}` that
+  reaches no private symbol goes. Knoller asks `nimsuggest` where each use of each private symbol
+  stands, in the entry of each file that opens its module with `{.all.}`. A suite needs no marker,
+  and an import of another project is not read. An `{.all.}` goes only where its file also checks
+  clean without it.
+- A `proc` whose body shows no effect becomes a `func` where the compiler checks it as one under
+  `strictFuncs` (`func-pure`). A lock, a wait and a signal count as effects. The compiler reads the
+  file from stdin in its own directory, so nothing is written there. A file that checks clean on
+  no backend keeps each `proc`, and prints one warning that says why.
 - A name in the case of another kind (V.1, V.11), or one that coins an abbreviation (V.6), is
   renamed at every use. Knoller reads each Nim file that git lists under the nearest directory
   that holds a nimble file, and writes only the files you name. A rename that would write another
@@ -118,6 +128,8 @@ path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
 path:line: debug-output warning: <message>
 path: type-conversion warning: <message>
+path: marker-used warning: <message>
+path: func-pure warning: <message>
 path:line: name-case warning: <message>
 needless-parentheses warning: <message>
 N fixed.
@@ -155,6 +167,8 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | Id | Rule |
 |----|------|
 | `type-conversion` | A type conversion is a prefix call, `T(x)`, and never `x.T`. |
+| `marker-used` | A private symbol a sibling reaches carries its marker. An `{.all.}` reaches one. |
+| `func-pure` | A routine with no effect beyond its parameters is a `func`. |
 | `trailing-whitespace` | A line ends in no space, tab or carriage return. |
 | `file-ending` | A file ends in exactly one newline, so an empty file breaks it. |
 | `line-ending` | A line holds no carriage return. No fix reaches it. |

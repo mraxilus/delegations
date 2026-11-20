@@ -9,7 +9,8 @@
 
 import std/[importutils, options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[command, compilers, edits, proofs, reports, rewrites, rules, symbols]
-from ../../src/knoller/command {.all.} import joined, nimblesNearest, Part
+from ../../src/knoller/command {.all.} import
+  joined, nimblesNearest, Part, resolveMarkers, resolvePures
 import ./stubs
 
 
@@ -511,6 +512,85 @@ suite "Command line":
     check answers["p/src/a.nim"].symbols[(3, 8)].kind == "skType"
     let outcome = outcome(files, [], is_check = true, directory = root, answers = answers)
     check "p/src/a.nim:3: type-conversion to fix" in outcome.lines
+
+
+  test "private symbol and `{.all.}` resolve in project of file, and run fixes each it reports":
+    # Domain: symbol sibling reaches and own module never uses; `{.all.}` reaching nothing, and
+    #   one reaching symbol template declares, which pass cannot read, so compile keeps it.
+    let root = createTempDir("knoller_", "_markers")
+    defer: removeDir(root)
+    const pragma = "{.experimental: \"strictFuncs\".}\n\n"
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\n"),
+      ("p/a.nim", pragma & "func helper(x: int): int = x + 1\n\nfunc other*(x: int): int = x\n" &
+        "\ntemplate declare() =\n  func hidden(x: int): int = x\n\ndeclare()\n"),
+      ("p/b.nim", pragma & "import ./a {.all.}\n\necho helper(1)\n"),
+      ("p/c.nim", pragma & "import ./a {.all.}\n\necho other(1)\n"),
+      ("p/d.nim", pragma & "import ./a {.all.}\n\necho hidden(1)\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = ["p/a.nim", "p/b.nim", "p/c.nim", "p/d.nim"].mapIt((it, readFile(root / it)))
+      uses = files.resolveMarkers("", root, toolchains)
+      checked = outcome(files, [], is_check = true, directory = root, uses = uses)
+      fixed = outcome(files, [], is_check = false, directory = root, uses = uses)
+    check "p/a.nim:3: marker-used to fix" in checked.lines
+    check "p/c.nim:3: marker-used to fix" in checked.lines
+    check checked.lines.filterIt("marker-used" in it).len == 2  # `b.nim` and `d.nim` reach
+    var texts = initTable[string, string]()
+    for (path, text) in fixed.written: texts[path] = text
+    check "func helper(x: int): int {.used.} = x + 1  # Used in `b.nim`." in texts["p/a.nim"]
+    check texts["p/c.nim"].contains("import ./a\n")
+
+
+  test "private symbol its own module uses inside interpolated string takes no marker (Q2)":
+    # Case: `BANDS` of `design/rig.nim:77` of `dance_ontology`, which `design/floors.nim` reaches
+    #   and `rig.nim` uses inside `&"…{BANDS[…]}…"` alone; pass lists no use there, as strformat
+    #   parses braces from text, and compiler counts it, so it hints none (ruling of rule 7).
+    let root = createTempDir("knoller_", "_interpolated")
+    defer: removeDir(root)
+    const pragma = "{.experimental: \"strictFuncs\".}\n\n"
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\n"),
+      ("p/rig.nim", pragma & "import std/strformat\n\nconst BANDS = [\"low\", \"high\"]\n\n" &
+        "func label*(k: int): string = &\"band {BANDS[k]}\"\n\nconst LONE = 3\n"),
+      ("p/floors.nim", pragma & "from ./rig {.all.} import BANDS, LONE\n\necho BANDS[0], LONE\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = ["p/rig.nim", "p/floors.nim"].mapIt((it, readFile(root / it)))
+      uses = files.resolveMarkers("", root, toolchains)
+      lines = outcome(files, [], is_check = true, directory = root, uses = uses).lines
+    check lines.filterIt("marker-used" in it) == @["p/rig.nim:9: marker-used to fix"]  # `LONE`
+
+
+  test "`proc` compiler proves resolves in project of file, and run fixes it, included or not":
+    let root = createTempDir("knoller_", "_pures")
+    defer: removeDir(root)
+    const pragma = "{.experimental: \"strictFuncs\".}\n\n"
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\n"),
+      ("p/a.nim", pragma & "proc twice*(x: int): int = x * 2\n\nproc shout*(x: int) = echo x\n"),
+      ("p/tests/test_b.nim", pragma & "type Cell = object\n  x: int\n\ninclude \"suites.nim\"\n"),
+      ("p/tests/suites.nim", "proc read(c: Cell): int = c.x\n\necho read(Cell(x: 1))\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = ["p/a.nim", "p/tests/suites.nim"].mapIt((it, readFile(root / it)))
+      pures = files.resolvePures("", root, toolchains)
+      checked = outcome(files, [], is_check = true, directory = root, pures = pures)
+    check pures["p/a.nim"].sites == @[(3, 0)]  # `shout` names output, so stays
+    check pures["p/tests/suites.nim"].sites == @[(1, 0)]  # `Cell` stands in its includer
+    check "p/a.nim:3: func-pure to fix" in checked.lines
+    check "p/tests/suites.nim:1: func-pure to fix" in checked.lines
+    let fixed = outcome(files, [], is_check = false, directory = root, pures = pures)
+    check fixed.written.anyIt(it[0] == "p/a.nim" and "func twice*(x: int): int = x * 2" in it[1])
 
 
   test "command line passes no define, so file under `tests` compiles as any other does":
