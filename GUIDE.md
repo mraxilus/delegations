@@ -173,7 +173,8 @@ return it confirmed.
 - **The prediction is the last message of a turn of its own, which starts no subagent.** Start
   a short background timer first, such as `sleep 5`. Its end wakes you, and the next turn
   starts the subagent. A block of such a turn serves a later call where no subagent starts
-  between them, whatever the count of turns between.
+  between them, whatever the count of turns between. A subagent of any type counts here, tool use
+  too.
 - **The line `**Subagent:**` gives the kind first, then `of` and what the subagent does**, as
   `**Subagent:** reviewer of the diff`. A block serves only a call of the kind that the first
   word of this line names. The hook reads the label in any case, with its colon inside or
