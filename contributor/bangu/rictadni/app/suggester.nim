@@ -447,6 +447,8 @@ proc exchange(
   ##     past request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body
   ##     past `bytes_max` is refused once read.
   ##   Exchange file that stands but cannot be read is refused, naming first line of error.
+  ##   Where request has no file, same request under old session of OpenRouter is read
+  ##     (`requestsRead`), so exchange recorded before rename replays (#946); write keeps request.
   ##   Refusal names problem in words of tool first, then path, so long directory never hides
   ##     either: outside text, directory and error, is made printable and cut alone, and name
   ##     holding stamp stays whole. Note names path as refusal does.
@@ -480,29 +482,42 @@ proc exchange(
   if command.mode != Mode.Live and command.directory.isShared:
     return refuse("writable by every user at " & shown_directory)
 
+  # Read exchange of request, else of same request under old session where its file alone
+  #   stands (`requestsRead`, #946); record mode writes under request alone.
+  var (request_read, path_read, shown_read) = (request, path, shown)
+  if command.mode != Mode.Live and not fileExists(path):
+    for held in request.requestsRead[1 .. ^1]:
+      let name_held = held.stamp & ".exchange"
+      if fileExists(command.directory.joinVerbatim(name_held)):
+        (request_read, path_read, shown_read) = (held, command.directory.joinVerbatim(
+            name_held), shown_directory.joinVerbatim(name_held))
+        break
+  let bytes_read_max = request_read.len + bytes_max + BYTES_FIELDS_MAX
+
   # Replay exchange of same request within its caps, as mode and `isReplayed` choose.
-  if command.mode != Mode.Live and fileExists(path):
+  if command.mode != Mode.Live and fileExists(path_read):
     var bytes = ""
     try:
-      if getFileInfo(path, followSymlink = false).kind != pcFile:
-        return refuse("link or other than file at " & shown)
-      if getFileSize(path) > bytes_file_max:
-        return refuse("larger than " & $bytes_file_max & " bytes at " & shown)
-      bytes = readFile(path)
+      if getFileInfo(path_read, followSymlink = false).kind != pcFile:
+        return refuse("link or other than file at " & shown_read)
+      if getFileSize(path_read) > bytes_read_max:
+        return refuse("larger than " & $bytes_read_max & " bytes at " & shown_read)
+      bytes = readFile(path_read)
     except CatchableError as error:
-      return refuse("unreadable: " & error.toLine & " at " & shown)
+      return refuse("unreadable: " & error.toLine & " at " & shown_read)
     let recorded = bytes.readExchange
     if not recorded.is_read:
       var problem = recorded.problem  # Words of reader, value it echoes made printable and cut.
       problem.removeSuffix('.')
-      return refuse(problem & " at " & shown)
-    if recorded.exchange.request != request: return refuse("other request at " & shown)
+      return refuse(problem & " at " & shown_read)
+    if recorded.exchange.request != request_read:
+      return refuse("other request at " & shown_read)
     if recorded.exchange.reply.body.len > bytes_max:
-      return refuse("body over " & $bytes_max & " bytes at " & shown)
+      return refuse("body over " & $bytes_max & " bytes at " & shown_read)
     if command.mode == Mode.Replay or recorded.exchange.reply.isReplayed(service):
       let label = recorded.exchange.label.toPrintable(RUNES_SHOWN)
       return Exchanged(is_replied: true, reply: recorded.exchange.reply,
-          note: "Reply replayed from `" & shown & "`: " & label & ".")
+          note: "Reply replayed from `" & shown_read & "`: " & label & ".")
   if command.mode == Mode.Replay: return refuse("missing at " & shown)
 
   # Send within deadline, through proxy environment names.
