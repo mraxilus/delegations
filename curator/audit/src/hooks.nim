@@ -90,10 +90,10 @@
 ##     and second stop passes.
 ##   Cost: hook never reads state, confidence or figures of header of reflection, run of
 ##     resolver, or rules of forecasting, so reading holds those.
-##   Cost: block written after call it names still serves later call of its own kind, and block
-##     of later turn replaces block of its kind of earlier turn, while inside one turn call takes
-##     earliest (7027197745); so of blocks for two subagents of one kind, first call takes block
-##     of nearer turn.
+##   Cost: block in turn after call it names still serves later call of its own kind; block in
+##     turn of that call serves none. Block of later turn replaces block of its kind of earlier
+##     turn, while inside one turn call takes earliest (7027197745); so of blocks for two
+##     subagents of one kind, first call takes block of nearer turn.
 ##   Cost: call that starts subagent and then fails with result that has `is_error` and no
 ##     `agentId` is skipped too, as rejected call is.
 
