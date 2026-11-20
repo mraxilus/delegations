@@ -2668,6 +2668,9 @@ the package, as it reads the constants of the staging rules (`## Staging`).
   directory, reads none, as a library that no lock restored does.
 - It writes the alias of each landmark before the chain, beside the renames and the type
   conversions. It plans each cut rename with the case rename of its declaration (`composed`).
+- Cost: where the planner refuses a composed rename, its case part goes too (`composed` of
+  `cuts.nim`). So a name that breaks both rules keeps the case of another kind, and its warning
+  says why.
 - Cost: `koch fix` passes no names yet, so it writes no name cut and no landmark alias, and
   reports no constructor. To wire it, `curator/audit` reads `namesPackage` for each project,
   passes it to each check, plans `renamesCut` through `composed`, and applies `editsLandmark`
