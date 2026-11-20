@@ -1827,6 +1827,27 @@ and name reserved passes too. The shipped version is the schema at the tip of ba
   type, where one exists, is deleted too, and the check holds that deletion.
 - Cost: a folder new on the branch, or gone from base, passes, because nothing shipped holds it.
 
+**A folder that takes a new package reads its shipped schemas under it before `buf` compares
+them.** `buf` pairs the messages of two sides by their full names, so under a new package it pairs
+none. Its rule `FILE_SAME_PACKAGE` refuses the new package of a file of the same path, and a
+renamed file passes each break. So where one package of base is gone and one new package stands,
+`underPackage` rewrites each shipped schema. It writes the new package, into its qualified names
+too. The Architect ruled this on #981 (comment 7053327767).
+
+- A new package beside an `Any`, a `service` or an `extend` is refused, since there the full name
+  reaches data or a path. So is a folder whose packages split, so that no one package of base maps
+  to one of the branch.
+- A qualified name that the rewrite misses fails to compile, so a miss refuses and never passes. A
+  name of another package that ends the same way stays.
+- Verified by `suites/test_schemas.nim`: a new package alone, a break under it, and a renamed
+  file. It also holds a qualified name, each of `Any`, `service` and `extend`, and a split of
+  packages.
+- Rejected: `except: [FILE_SAME_PACKAGE]`. Measured 2026-11-20 with `buf` 1.75.0 on
+  `exchanges.proto` of rictadni, a new package with a retyped and a renumbered field then gives 0
+  findings. Read under the new package, the same change gives 3.
+- Cost: a package may move its messages into another package that its folder holds already.
+  `FILE_SAME_PACKAGE` alone holds that move, on a file of the same path.
+
 **`buf` 1.75.0 comes from the registry of npm, checked against its SHA-512.** npm serves the
 binary of each platform as a tarball, and publishes its digest beside it. `bufbuild.nim` pins
 the version and the digest. The tarball is checked before it is unpacked, and the binary moves
